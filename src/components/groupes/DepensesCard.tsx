@@ -77,62 +77,63 @@ export default function DepensesCard({ expenses, groupId, onRefresh, user, membe
   };
 
   return (
-    <div className="bg-white rounded-[0.75rem] p-6 border border-[#1C2620]/10 shadow-sm relative active:scale-[0.98] active:opacity-95 transition-all duration-150 cursor-pointer">
+    <div className="glass p-6 relative transition-all duration-300">
       <div className="flex justify-between items-start mb-2">
-        <h2 className="font-display text-xl text-[#1C2620]">Dépenses <span className="font-serif italic font-bold">du voyage</span></h2>
+        <h2 className="font-display font-bold text-xl text-[#17402C]">Dépenses <span className="font-serif italic font-normal text-[#17402C]">du voyage</span></h2>
         <div className="flex items-center gap-2">
-          <span className="font-mono text-[10px] uppercase tracking-widest text-[#1C2620]/60 bg-[#1C2620]/5 px-2 py-0.5 rounded-full">{expenses.total}€</span>
+          <span className="glass-pill">{expenses.total}€</span>
         </div>
       </div>
       
       <div className="flex justify-between items-center mb-6">
         <button
           onClick={() => setShowBalanceModal(true)}
-          className="text-xs font-medium text-[#17402C] hover:underline font-sans"
+          className="glass-capsule-btn py-1 px-3 text-xs font-semibold"
         >
-          Historique
+          <span className="relative z-10">Historique</span>
         </button>
         <button 
           onClick={() => setIsAdding(!isAdding)}
-          className="px-3 py-1.5 rounded-full bg-[#33463C] text-white font-sans font-medium text-xs hover:bg-[#33463C]/90 transition-colors flex items-center gap-1"
+          className="glass-capsule-btn primary py-1.5 px-3 text-xs font-bold flex items-center gap-1"
         >
-          <Icon name={isAdding ? "XMarkIcon" : "PlusIcon"} size={12} /> {isAdding ? 'Annuler' : 'Ajouter'}
+          <Icon name={isAdding ? "XMarkIcon" : "PlusIcon"} size={12} className="relative z-10" />
+          <span className="relative z-10">{isAdding ? 'Annuler' : 'Ajouter'}</span>
         </button>
       </div>
 
       {isAdding && (
-        <form onSubmit={handleAddExpense} className="mb-6 bg-[#E7E3D6]/20 p-4 rounded-2xl border border-[#1C2620]/10">
+        <form onSubmit={handleAddExpense} className="mb-6 glass-sub-card p-4 rounded-2xl">
           <div className="flex flex-wrap gap-3 mb-3">
             <div className="flex-1 min-w-[200px]">
-              <label className="block text-[10px] font-mono text-[#1C2620]/60 uppercase tracking-widest mb-1.5">Titre</label>
+              <label className="block text-[10px] font-mono text-[#5C6B5E] uppercase tracking-widest mb-1.5 font-bold">Titre</label>
               <input 
                 type="text" 
                 autoFocus
                 value={newTitle}
                 onChange={e => setNewTitle(e.target.value)}
                 placeholder="Ex: Plein d'essence..." 
-                className="w-full bg-white border border-[#1C2620]/10 rounded-xl py-2 px-4 text-sm text-[#1C2620] focus:outline-none focus:ring-2 focus:ring-[#33463C]/20"
+                className="glass-input w-full text-xs"
                 disabled={loading}
               />
             </div>
             <div className="w-24">
-              <label className="block text-[10px] font-mono text-[#1C2620]/60 uppercase tracking-widest mb-1.5">Montant (€)</label>
+              <label className="block text-[10px] font-mono text-[#5C6B5E] uppercase tracking-widest mb-1.5 font-bold">Montant (€)</label>
               <input 
                 type="number" 
                 step="0.01"
                 value={newAmount}
                 onChange={e => setNewAmount(e.target.value)}
                 placeholder="Ex: 45.50" 
-                className="w-full bg-white border border-[#1C2620]/10 rounded-xl py-2 px-4 text-sm text-[#1C2620] focus:outline-none focus:ring-2 focus:ring-[#33463C]/20"
+                className="glass-input w-full text-xs"
                 disabled={loading}
               />
             </div>
             <div className="w-full sm:w-40">
-              <label className="block text-[10px] font-mono text-[#1C2620]/60 uppercase tracking-widest mb-1.5">Payé par</label>
+              <label className="block text-[10px] font-mono text-[#5C6B5E] uppercase tracking-widest mb-1.5 font-bold">Payé par</label>
               <select 
                 value={paidBy}
                 onChange={e => setPaidBy(e.target.value)}
-                className="w-full bg-white border border-[#1C2620]/10 rounded-xl py-2 px-4 text-sm text-[#1C2620] focus:outline-none focus:ring-2 focus:ring-[#33463C]/20"
+                className="glass-input w-full text-xs"
                 disabled={loading}
               >
                 <option value="">(Moi-même)</option>
@@ -148,94 +149,94 @@ export default function DepensesCard({ expenses, groupId, onRefresh, user, membe
             <button 
               type="submit"
               disabled={!newTitle.trim() || !newAmount || loading}
-              className="px-6 py-2 bg-[#1C2620] text-white rounded-xl text-xs font-semibold disabled:opacity-50"
+              className="glass-capsule-btn primary py-2 px-5 text-xs font-bold disabled:opacity-50"
             >
-              Enregistrer
+              <span className="relative z-10">Enregistrer</span>
             </button>
           </div>
         </form>
       )}
       
-      <div className="grid grid-cols-3 gap-2 mb-8">
-        <div className="bg-[#E7E3D6]/30 p-3 rounded-xl border border-[#1C2620]/5">
-          <p className="font-mono text-[9px] uppercase tracking-widest text-[#1C2620]/50 mb-1">Total engagé</p>
-          <p className="font-mono font-bold text-lg text-[#1C2620]">{expenses.total}€</p>
+      <div className="grid grid-cols-3 gap-2 mb-6">
+        <div className="glass-sub-card p-3 rounded-xl">
+          <p className="font-mono text-[9px] uppercase tracking-widest text-[#5C6B5E] mb-1 font-bold">Total engagé</p>
+          <p className="font-mono font-bold text-lg text-[#17402C]">{expenses.total}€</p>
         </div>
-        <div className="bg-[#E7E3D6]/30 p-3 rounded-xl border border-[#1C2620]/5">
-          <p className="font-mono text-[9px] uppercase tracking-widest text-[#1C2620]/50 mb-1">Par personne</p>
-          <p className="font-mono font-bold text-lg text-[#1C2620]">{expenses.perPerson}€</p>
+        <div className="glass-sub-card p-3 rounded-xl">
+          <p className="font-mono text-[9px] uppercase tracking-widest text-[#5C6B5E] mb-1 font-bold">Par personne</p>
+          <p className="font-mono font-bold text-lg text-[#17402C]">{expenses.perPerson}€</p>
         </div>
-        <div className="bg-[#1C2620]/5 p-3 rounded-xl border border-[#1C2620]/10">
-          <p className="font-mono text-[9px] uppercase tracking-widest text-[#1C2620]/50 mb-1">Vous devez</p>
+        <div className="glass-sub-card p-3 rounded-xl">
+          <p className="font-mono text-[9px] uppercase tracking-widest text-[#5C6B5E] mb-1 font-bold">Vous devez</p>
           <p className="font-mono font-bold text-lg text-[#17402C]">{expenses.userBalance}€</p>
         </div>
       </div>
       
-      <div className="space-y-4 mb-6">
+      <div className="space-y-3 mb-6">
         {expenses.items.length === 0 && (
-          <p className="text-center text-sm text-[#1C2620]/50 py-2">Aucune dépense enregistrée.</p>
+          <p className="text-center text-sm text-[#5C6B5E] py-2">Aucune dépense enregistrée.</p>
         )}
         {expenses.items.map((item) => (
-          <div key={item.id} className="flex items-center justify-between group p-2 hover:bg-[#E7E3D6]/20 rounded-xl transition-colors">
+          <div key={item.id} className="flex items-center justify-between group p-3 glass-sub-card rounded-xl">
             <div className="flex items-start gap-3">
-              <div className="w-8 h-8 rounded-full bg-[#E7E3D6] flex items-center justify-center text-[#1C2620]/50 flex-shrink-0 mt-0.5">
-                <Icon name="CurrencyEuroIcon" size={14} />
+              <div className="w-8 h-8 rounded-full glass-sub-card flex items-center justify-center text-[#17402C] flex-shrink-0 mt-0.5">
+                <Icon name="CurrencyEuroIcon" size={14} className="relative z-10" />
               </div>
               <div>
-                <h3 className="font-sans font-semibold text-sm text-[#1C2620]">{item.title}</h3>
-                <p className="text-[11px] text-[#1C2620]/50 font-sans">{item.payer}</p>
+                <h3 className="font-sans font-bold text-sm text-[#17402C]">{item.title}</h3>
+                <p className="text-[11px] text-[#5C6B5E] font-sans">{item.payer}</p>
               </div>
             </div>
             <div className="flex items-center gap-4">
               <div className="text-right">
-                <p className="font-mono font-bold text-sm text-[#1C2620]">{item.amount}€</p>
-                <p className="font-mono text-[9px] uppercase tracking-widest text-[#1C2620]/40">{item.parts} parts</p>
+                <p className="font-mono font-bold text-sm text-[#17402C]">{item.amount}€</p>
+                <p className="font-mono text-[9px] uppercase tracking-widest text-[#5C6B5E]">{item.parts} parts</p>
               </div>
               <button 
                 onClick={() => handleDeleteExpense(item.id)}
-                className="p-1.5 text-[#1C2620]/30 hover:text-red-500 transition-colors opacity-0 group-hover:opacity-100"
+                className="glass-capsule-btn p-1.5 text-red-600 opacity-0 group-hover:opacity-100"
                 title="Supprimer"
               >
-                <Icon name="TrashIcon" size={14} />
+                <Icon name="TrashIcon" size={14} className="relative z-10" />
               </button>
             </div>
           </div>
         ))}
       </div>
       
-      <div className="bg-[#E7E3D6]/40 rounded-xl p-4 flex flex-col sm:flex-row items-center justify-between gap-4 border border-[#1C2620]/5">
-        <p className="text-xs text-[#1C2620]/70 font-sans leading-relaxed">
+      <div className="glass-sub-card rounded-2xl p-4 flex flex-col sm:flex-row items-center justify-between gap-4">
+        <p className="text-xs text-[#5C6B5E] font-sans leading-relaxed">
           {expenses.userDebts}
         </p>
         <button 
           onClick={handleEquilibrer}
-          className="w-full sm:w-auto px-4 py-2 bg-[#1C2620] text-white rounded-full text-xs font-medium hover:bg-[#1C2620]/80 transition-colors whitespace-nowrap"
+          className="w-full sm:w-auto glass-capsule-btn primary py-2 px-4 text-xs font-bold whitespace-nowrap"
         >
-          Équilibrer les comptes
+          <span className="relative z-10">Équilibrer les comptes</span>
         </button>
       </div>
 
       {showBalanceModal && (
-        <div className="fixed inset-0 bg-black/60 z-[100] flex items-center justify-center p-4">
-          <div className="bg-white rounded-[0.75rem] p-8 max-w-md w-full shadow-2xl relative active:scale-[0.98] active:opacity-95 transition-all duration-150 cursor-pointer">
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-md z-[100] flex items-center justify-center p-4">
+          <div className="glass rounded-2xl p-6 sm:p-8 max-w-md w-full relative">
             <button 
               onClick={() => setShowBalanceModal(false)}
-              className="absolute top-6 right-6 text-[#1C2620]/50 hover:text-[#1C2620]"
+              className="glass-capsule-btn p-2 absolute top-6 right-6"
             >
-              <Icon name="XMarkIcon" size={24} />
+              <Icon name="XMarkIcon" size={18} className="relative z-10" />
             </button>
-            <h2 className="font-display text-2xl text-[#1C2620] mb-4">Équilibre <span className="font-serif italic font-bold">des comptes</span></h2>
-            <p className="text-sm text-[#1C2620]/80 mb-6">
+            <h2 className="font-display font-bold text-2xl text-[#17402C] mb-4">Équilibre <span className="font-serif italic font-normal text-[#17402C]">des comptes</span></h2>
+            <p className="text-sm text-[#5C6B5E] mb-6">
               Simulation du calcul des dettes pour {expenses.items.length > 0 ? expenses.items.length : 0} dépenses.
             </p>
-            <div className="bg-[#E7E3D6]/30 p-4 rounded-xl mb-6 border border-[#1C2620]/10">
-              <p className="text-center font-mono text-sm text-[#1C2620]">Vous ne devez rien à personne pour l'instant (démo statique).</p>
+            <div className="glass-sub-card p-4 rounded-xl mb-6">
+              <p className="text-center font-mono text-sm text-[#17402C] font-semibold">Vous ne devez rien à personne pour l'instant (démo statique).</p>
             </div>
             <button 
               onClick={() => setShowBalanceModal(false)}
-              className="w-full py-3 bg-[#1C2620] text-white rounded-xl text-sm font-semibold"
+              className="w-full glass-capsule-btn primary py-3 text-xs font-bold"
             >
-              Fermer
+              <span className="relative z-10">Fermer</span>
             </button>
           </div>
         </div>

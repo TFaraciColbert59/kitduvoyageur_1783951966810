@@ -24,6 +24,11 @@ interface ExplorerMapProps {
   compact?: boolean;
   /** Désactive la géolocalisation automatique au montage (ex. cockpit départ). */
   disableGeolocate?: boolean;
+  /**
+   * Position sûre des contrôles : jamais sous la bottom bar mobile ni derrière
+   * la liste flottante desktop. Mobile → haut sous le header ; desktop → colonne droite.
+   */
+  safeControls?: boolean;
 }
 
 const TOPO_TILE = {
@@ -60,6 +65,7 @@ export default function ExplorerMap({
   controlsPosition = 'left',
   compact = false,
   disableGeolocate = false,
+  safeControls = false,
 }: ExplorerMapProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const mapRef = useRef<LeafletMap | null>(null);
@@ -77,6 +83,18 @@ export default function ExplorerMap({
   }, []);
   // Uniformité : le même jeu de boutons compact que « Préparer la randonnée », partout.
   const effectiveCompact = true;
+
+  // Position sûre (safeControls) : mobile → haut sous le header (jamais sous la
+  // bottom bar / le sheet) ; desktop → colonne droite (jamais derrière la liste).
+  const controlPos = safeControls
+    ? isAutoCompact
+      ? { zoom: 'left-3 top-[64px]', tiles: 'right-3 top-[64px]' }
+      : { zoom: 'right-3 bottom-[88px]', tiles: 'right-3 bottom-3' }
+    : effectiveCompact
+      ? { zoom: 'left-3 bottom-3', tiles: 'right-3 bottom-3' }
+      : controlsPosition === 'left'
+        ? { zoom: 'left-4 top-[180px]', tiles: 'left-4 bottom-[85px]' }
+        : { zoom: 'right-3 top-3', tiles: 'right-3 bottom-14' };
   const userTrackPolylineRef = useRef<import('leaflet').Polyline | null>(null);
   const userDraggingRef = useRef(false);
 
@@ -127,7 +145,9 @@ export default function ExplorerMap({
   useEffect(() => {
     if (!containerRef.current || mapRef.current || typeof window === 'undefined') return;
 
-    import('leaflet').then((L) => {
+    import('leaflet').then((LModule) => {
+      const L = (LModule as any).default || LModule;
+      if (!containerRef.current || mapRef.current) return;
       if ((containerRef.current as any)?._leaflet_id) {
         (containerRef.current as any)._leaflet_id = null;
       }
@@ -151,6 +171,7 @@ export default function ExplorerMap({
         doubleClickZoom: true,
         boxZoom: true,
         keyboard: true,
+        tap: false,
         // GPU canvas — plus rapide sur mobile bas de gamme, évite les repaints SVG
         preferCanvas: true,
       });
@@ -186,6 +207,14 @@ export default function ExplorerMap({
       setMapInstance(map);
       setMapReady(true);
       onMapReady?.();
+
+      // Ensure immediate sizing
+      setTimeout(() => {
+        try { map.invalidateSize(); } catch { /* ignore */ }
+      }, 100);
+      setTimeout(() => {
+        try { map.invalidateSize(); } catch { /* ignore */ }
+      }, 400);
     });
 
     return () => {
@@ -201,6 +230,20 @@ export default function ExplorerMap({
     };
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  // ResizeObserver for dynamic layout size changes
+  useEffect(() => {
+    if (!containerRef.current || !mapRef.current || !mapReady) return;
+    const observer = new ResizeObserver(() => {
+      if (mapRef.current && (mapRef.current as any)._loaded) {
+        try {
+          mapRef.current.invalidateSize();
+        } catch { /* ignore */ }
+      }
+    });
+    observer.observe(containerRef.current);
+    return () => observer.disconnect();
+  }, [mapReady]);
 
   // Auto-geolocation on mount — désactivé si disableGeolocate (ex. cockpit départ)
   useEffect(() => {
@@ -247,7 +290,8 @@ export default function ExplorerMap({
   // Switch tile layer
   useEffect(() => {
     if (!mapRef.current || !mapReady) return;
-    import('leaflet').then((L) => {
+    import('leaflet').then((LModule) => {
+      const L = (LModule as any).default || LModule;
       if (tileLayerRef.current) {
         try { mapRef.current!.removeLayer(tileLayerRef.current as unknown as import('leaflet').Layer); } catch { /* ignore */ }
       }
@@ -268,7 +312,8 @@ export default function ExplorerMap({
   useEffect(() => {
     const validLoc = userLocation ? toValidLatLng(userLocation[0], userLocation[1]) : null;
     if (!mapRef.current || !mapReady || !validLoc) return;
-    import('leaflet').then((L) => {
+    import('leaflet').then((LModule) => {
+      const L = (LModule as any).default || LModule;
       if (userMarkerRef.current) {
         try { mapRef.current!.removeLayer(userMarkerRef.current); } catch { /* ignore */ }
       }
@@ -316,7 +361,8 @@ export default function ExplorerMap({
   // Live GPS Track Polyline (from userPositions)
   useEffect(() => {
     if (!mapRef.current || !mapReady || !userPositions || userPositions.length < 2) return;
-    import('leaflet').then((L) => {
+    import('leaflet').then((LModule) => {
+      const L = (LModule as any).default || LModule;
       const validLatLngs: [number, number][] = [];
       for (const p of userPositions) {
         const pt = toValidLatLng(p?.latitude, p?.longitude);
@@ -412,7 +458,8 @@ export default function ExplorerMap({
   useEffect(() => {
     if (!mapReady || !trails.length || !mapRef.current) return;
     if (locationState === 'located' || locationState === 'locating') return;
-    import('leaflet').then((L) => {
+    import('leaflet').then((LModule) => {
+      const L = (LModule as any).default || LModule;
       const coords: [number, number][] = [];
       trails.forEach((t) => {
         const pt = toValidLatLng(t?.lat, t?.lng);
@@ -454,24 +501,81 @@ export default function ExplorerMap({
   };
 
   return (
-    <div className="relative w-full h-full min-h-[140px] md:min-h-[220px] bg-[#EAE6DF] overflow-hidden select-none">
-      <div ref={containerRef} className="w-full h-full z-0" />
+    <div className="relative w-full h-full bg-[#EAE6DF] overflow-hidden select-none" style={{ width: '100%', height: '100%', touchAction: 'none' }}>
+      <div ref={containerRef} className="w-full h-full z-0" style={{ width: '100%', height: '100%', touchAction: 'none' }} />
 
       {mapReady && mapInstance && trails.length > 0 && (
         <TrailLayer map={mapInstance} trails={trails} selectedTrailId={selectedTrailId} onTrailClick={onTrailClick} />
       )}
 
-{/* Floating Zoom Controls (+ / −) — même style que les boutons des cartes */}
-      <div className={`absolute z-[400] pointer-events-auto flex flex-col gap-1.5 ${effectiveCompact ? 'left-2 bottom-2' : controlsPosition === 'left' ? 'left-4 top-[180px]' : 'right-3 top-3'}`}>
-        <button onClick={handleZoomIn} title="Zoom avant" aria-label="Zoom avant" className="glass interactive h-8 w-8 !rounded-full flex items-center justify-center text-[color:var(--label-tertiary)] cursor-pointer active:scale-95">+</button>
-        <button onClick={handleZoomOut} title="Zoom arrière" aria-label="Zoom arrière" className="glass interactive h-8 w-8 !rounded-full flex items-center justify-center text-[color:var(--label-tertiary)] cursor-pointer active:scale-95">−</button>
+      {/* Floating Zoom Controls (+ / −) — Liquid Glass haute lisibilité */}
+      <div className={`absolute z-[400] pointer-events-auto flex flex-col gap-1.5 ${controlPos.zoom}`}>
+        <button
+          onClick={handleZoomIn}
+          title="Zoom avant"
+          aria-label="Zoom avant"
+          className="glass bg-white/85 hover:bg-white interactive h-8 w-8 !rounded-full flex items-center justify-center text-[#17402C] font-bold text-base border border-white/60  cursor-pointer active:scale-95 transition-all"
+        >
+          +
+        </button>
+        <button
+          onClick={handleZoomOut}
+          title="Zoom arrière"
+          aria-label="Zoom arrière"
+          className="glass bg-white/85 hover:bg-white interactive h-8 w-8 !rounded-full flex items-center justify-center text-[#17402C] font-bold text-base border border-white/60  cursor-pointer active:scale-95 transition-all"
+        >
+          −
+        </button>
       </div>
 
-      {/* Tile switcher (Carte / Relief / Satellite) — même style que les boutons des cartes */}
-      <div className={`absolute z-30 pointer-events-auto flex items-center gap-1.5 ${effectiveCompact ? 'right-2 bottom-2' : controlsPosition === 'left' ? 'left-4 bottom-[85px]' : 'right-3 bottom-14'}`}>
-        <button onClick={() => handleTileChange('osm')} title="Carte" aria-label="Carte" className={`glass interactive h-8 w-8 !rounded-full flex items-center justify-center transition-all cursor-pointer ${tileMode === 'osm' ? 'ring-2 ring-sage-500/50 text-[color:var(--label)]' : 'text-[color:var(--label-tertiary)]'}`}><svg width="12" height="12" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24"><path d="M3 6l6-3 6 3 6-3v12l-6 3-6-3-6 3V6z"></path><path d="M9 3v12"></path><path d="M15 6v12"></path></svg></button>
-        <button onClick={() => handleTileChange('topo')} title="Relief" aria-label="Relief" className={`glass interactive h-8 w-8 !rounded-full flex items-center justify-center transition-all cursor-pointer ${tileMode === 'topo' ? 'ring-2 ring-sage-500/50 text-[color:var(--label)]' : 'text-[color:var(--label-tertiary)]'}`}><svg width="12" height="12" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24"><path d="M8 3l4 8 5-5 5 15H2L8 3z"></path></svg></button>
-        <button onClick={() => handleTileChange('satellite')} title="Satellite" aria-label="Satellite" className={`glass interactive h-8 w-8 !rounded-full flex items-center justify-center transition-all cursor-pointer ${tileMode === 'satellite' ? 'ring-2 ring-sage-500/50 text-[color:var(--label)]' : 'text-[color:var(--label-tertiary)]'}`}><svg width="12" height="12" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"></circle><path d="M12 2a14.5 14.5 0 0 0 0 20 14.5 14.5 0 0 0 0-20"></path><path d="M2 12h20"></path></svg></button>
+      {/* Tile switcher (Carte / Relief / Satellite) — Liquid Glass haute lisibilité avec état actif bien visible */}
+      <div className={`absolute z-[400] pointer-events-auto flex items-center gap-1.5 ${controlPos.tiles}`}>
+        <button
+          onClick={() => handleTileChange('osm')}
+          title="Carte standard"
+          aria-label="Carte standard"
+          className={`interactive h-8 w-8 !rounded-full flex items-center justify-center transition-all cursor-pointer  ${
+            tileMode === 'osm'
+              ? 'bg-[#17402C] text-white ring-2 ring-white '
+              : 'glass bg-white/85 hover:bg-white text-[#17402C] border border-white/60'
+          }`}
+        >
+          <svg width="13" height="13" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
+            <path d="M3 6l6-3 6 3 6-3v12l-6 3-6-3-6 3V6z"></path>
+            <path d="M9 3v12"></path>
+            <path d="M15 6v12"></path>
+          </svg>
+        </button>
+        <button
+          onClick={() => handleTileChange('topo')}
+          title="Relief / Topo"
+          aria-label="Relief / Topo"
+          className={`interactive h-8 w-8 !rounded-full flex items-center justify-center transition-all cursor-pointer  ${
+            tileMode === 'topo'
+              ? 'bg-[#17402C] text-white ring-2 ring-white '
+              : 'glass bg-white/85 hover:bg-white text-[#17402C] border border-white/60'
+          }`}
+        >
+          <svg width="13" height="13" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
+            <path d="M8 3l4 8 5-5 5 15H2L8 3z"></path>
+          </svg>
+        </button>
+        <button
+          onClick={() => handleTileChange('satellite')}
+          title="Satellite"
+          aria-label="Satellite"
+          className={`interactive h-8 w-8 !rounded-full flex items-center justify-center transition-all cursor-pointer  ${
+            tileMode === 'satellite'
+              ? 'bg-[#17402C] text-white ring-2 ring-white '
+              : 'glass bg-white/85 hover:bg-white text-[#17402C] border border-white/60'
+          }`}
+        >
+          <svg width="13" height="13" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
+            <circle cx="12" cy="12" r="10"></circle>
+            <path d="M12 2a14.5 14.5 0 0 0 0 20 14.5 14.5 0 0 0 0-20"></path>
+            <path d="M2 12h20"></path>
+          </svg>
+        </button>
       </div>
     </div>
   );

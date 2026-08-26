@@ -13,13 +13,13 @@ const VARIANT_STYLES: Record<CardVariant, React.CSSProperties> = {
     background: '#FAF8F5',
     border: '1px solid #E8E4D8',
     borderRadius: '8px',
-    boxShadow: '0 2px 6px rgba(11,31,23,0.06), 0 4px 12px rgba(11,31,23,0.05)',
+    boxShadow: '0 2px 6px rgba(23,64,44,0.06), 0 4px 12px rgba(23,64,44,0.05)',
   },
   elevated: {
     background: '#FAF8F5',
     border: '1px solid #E8E4D8',
     borderRadius: '8px',
-    boxShadow: '0 6px 16px rgba(11,31,23,0.08), 0 12px 32px rgba(11,31,23,0.06)',
+    boxShadow: '0 6px 16px rgba(23,64,44,0.08), 0 12px 32px rgba(23,64,44,0.06)',
   },
   outlined: {
     background: '#FAF8F5',

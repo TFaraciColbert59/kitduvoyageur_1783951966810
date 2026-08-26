@@ -62,7 +62,7 @@ export default function HomepageFAQSection() {
             >
               <button
                 onClick={() => setOpen(open === i ? null : i)}
-                className="w-full flex items-center justify-between px-5 py-4 text-left min-h-[56px] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#2D5A3D] focus-visible:ring-inset"
+                className="w-full flex items-center justify-between px-5 py-4 text-left min-h-[56px] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#5B7F55] focus-visible:ring-inset"
                 aria-expanded={open === i}
               >
                 <span className="text-sm font-medium text-[#1A1F1C] pr-4">{faq.q}</span>

@@ -4,63 +4,50 @@ import React from 'react';
 import Link from 'next/link';
 import Header from '@/components/Header';
 import EditProfileView from '@/components/compte/EditProfileView';
-import MobilePageShell from '@/components/mobile-nav/MobilePageShell';
+import CompteBackground from '@/components/compte/CompteBackground';
+import { useHapticFeedback } from '@/hooks/useHapticFeedback';
 
 export default function EditProfilePage() {
+  const { triggerHaptic } = useHapticFeedback();
+
   return (
-    <>
+    <div className="min-h-screen relative font-sans text-[#17402C]">
+      <CompteBackground />
+
       {/* DESKTOP */}
       <div className="hidden md:block">
-        <div className="min-h-screen bg-[#F5F2E8]">
+        <div className="h-dvh overflow-hidden bg-transparent">
           <Header />
-          <div className="pt-16"><EditProfileView /></div>
+          <main className="h-full overflow-y-auto pt-20 sm:pt-24 pb-8">
+            <EditProfileView />
+          </main>
         </div>
       </div>
 
       {/* MOBILE */}
-      <div className="block md:hidden">
-        {/* Mobile top bar with back button */}
-        <div
-          style={{
-            position: 'fixed',
-            top: 0,
-            left: 0,
-            right: 0,
-            zIndex: 60,
-            background: '#0B1F17',
-            padding: '12px 16px',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'space-between',
-          }}
-        >
+      <div className="block md:hidden pb-32">
+        {/* Mobile top bar Liquid Glass */}
+        <div className="sticky top-0 z-40 px-4 pt-3 pb-2.5 flex items-center justify-between gap-2 backdrop-blur-md bg-white/70 border-b border-white/60">
           <Link
             href="/compte"
-            style={{
-              display: 'flex',
-              alignItems: 'center',
-              gap: '8px',
-              color: 'white',
-              textDecoration: 'none',
-              fontSize: '13px',
-              fontWeight: 600,
-              padding: '8px 4px',
-            }}
+            onClick={() => triggerHaptic('light')}
+            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-white/90 text-xs font-bold text-[#17402C] border border-white shadow-2xs transition-all active:scale-95 cursor-pointer"
           >
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-              <path d="M19 12H5" /><polyline points="12 19 5 12 12 5" />
-            </svg>
-            Retour
+            <span className="text-sm font-bold">‹</span>
+            <span>Mon Compte</span>
           </Link>
-          <span style={{ fontSize: '13px', fontWeight: 700, color: 'rgba(255,255,255,0.8)' }}>
+
+          <span className="font-display font-extrabold text-sm text-[#17402C]">
             Modifier mon profil
           </span>
-          <div style={{ width: '60px' }} />
+
+          <div className="w-16" />
         </div>
-        <div style={{ paddingTop: 'calc(env(safe-area-inset-top) + 60px)' }}>
+
+        <div className="pt-2 px-2">
           <EditProfileView />
         </div>
       </div>
-    </>
+    </div>
   );
 }

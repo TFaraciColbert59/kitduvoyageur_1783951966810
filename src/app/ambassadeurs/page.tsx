@@ -35,11 +35,11 @@ export default function AmbassadeursPage() {
       <div className="block md:hidden">
         <MobilePageShell>
           <div style={{ padding: '16px' }}>
-            <h1 style={{ fontSize: '20px', fontWeight: 800, color: '#1C2620', marginBottom: '8px', fontFamily: 'var(--font-display)' }}>Ambassadeurs</h1>
-            <p style={{ fontSize: '13px', color: 'rgba(28,38,32,0.6)', marginBottom: '16px' }}>Partagez votre passion, gagnez des commissions.</p>
+            <h1 style={{ fontSize: '20px', fontWeight: 800, color: '#17402C', marginBottom: '8px', fontFamily: 'var(--font-display)' }}>Ambassadeurs</h1>
+            <p style={{ fontSize: '13px', color: 'rgba(23,64,44,0.6)', marginBottom: '16px' }}>Partagez votre passion, gagnez des commissions.</p>
             <div style={{ display: 'flex', gap: '8px', marginBottom: '16px' }}>
-              <button onClick={() => setActiveTab('programme')} style={{ padding: '8px 14px', borderRadius: '8px', background: activeTab === 'programme' ? '#17402C' : '#F4F1EA', color: activeTab === 'programme' ? 'white' : 'rgba(28,38,32,0.6)', border: 'none', fontSize: '12px', cursor: 'pointer' }}>Programme</button>
-              <button onClick={() => setActiveTab('dashboard')} style={{ padding: '8px 14px', borderRadius: '8px', background: activeTab === 'dashboard' ? '#17402C' : '#F4F1EA', color: activeTab === 'dashboard' ? 'white' : 'rgba(28,38,32,0.6)', border: 'none', fontSize: '12px', cursor: 'pointer' }}>Dashboard</button>
+              <button onClick={() => setActiveTab('programme')} style={{ padding: '8px 14px', borderRadius: '8px', background: activeTab === 'programme' ? '#17402C' : '#F4F1EA', color: activeTab === 'programme' ? 'white' : 'rgba(23,64,44,0.6)', border: 'none', fontSize: '12px', cursor: 'pointer' }}>Programme</button>
+              <button onClick={() => setActiveTab('dashboard')} style={{ padding: '8px 14px', borderRadius: '8px', background: activeTab === 'dashboard' ? '#17402C' : '#F4F1EA', color: activeTab === 'dashboard' ? 'white' : 'rgba(23,64,44,0.6)', border: 'none', fontSize: '12px', cursor: 'pointer' }}>Dashboard</button>
             </div>
             <button onClick={() => setApplyOpen(true)} style={{ width: '100%', padding: '14px', background: '#17402C', color: 'white', border: 'none', borderRadius: '12px', fontSize: '14px', fontWeight: 600, cursor: 'pointer', marginTop: '12px' }}>Devenir ambassadeur</button>
           </div>

@@ -106,7 +106,7 @@ export const MobilePreparationView: React.FC<MobilePreparationViewProps> = ({
       )}
 
       {/* ── LARGE REAL INTERACTIVE MAP (62vh) ── */}
-      <div className="relative w-full h-[62vh] min-h-[430px] z-0 shadow-lg border-b border-[#1C2620]/10 overflow-hidden">
+      <div className="relative w-full h-[62vh] min-h-[430px] z-0  border-b border-[#17402C]/10 overflow-hidden">
         <ExplorerMap
           trails={mapTrails as any}
           selectedTrailId={String(route.id)}
@@ -125,13 +125,13 @@ export const MobilePreparationView: React.FC<MobilePreparationViewProps> = ({
                 router.push('/explorer');
               }
             }}
-            className="w-8 h-8 rounded-full bg-[#1C2620]/80 backdrop-blur-md text-white border border-white/20 shadow-lg flex items-center justify-center pointer-events-auto active:scale-95 transition-all text-sm font-bold cursor-pointer"
+            className="w-8 h-8 rounded-full bg-[#17402C]/80 backdrop-blur-md text-white border border-white/20  flex items-center justify-center pointer-events-auto active:scale-95 transition-all text-sm font-bold cursor-pointer"
             aria-label="Retour"
           >
             ←
           </button>
 
-          <div className="bg-[#1C2620]/80 backdrop-blur-md text-white border border-white/20 rounded-full px-3 py-1 shadow-lg flex items-center gap-2 pointer-events-auto max-w-[72%]">
+          <div className="bg-[#17402C]/80 backdrop-blur-md text-white border border-white/20 rounded-full px-3 py-1  flex items-center gap-2 pointer-events-auto max-w-[72%]">
             <span className="text-[11px] font-bold font-display truncate">{route.name}</span>
             <span className="text-[9px] font-mono text-white/70 uppercase tracking-wider shrink-0">{diffLabel}</span>
           </div>
@@ -219,16 +219,16 @@ export const MobilePreparationView: React.FC<MobilePreparationViewProps> = ({
       {/* Modal Date de Départ Mobile */}
       {showDateModal && (
         <div className="fixed inset-0 z-[100] flex items-end sm:items-center justify-center p-4 bg-black/50 backdrop-blur-sm pointer-events-auto">
-          <div className="bg-white rounded-3xl p-6 max-w-sm w-full shadow-2xl border border-black/[0.08] space-y-4 animate-slide-up">
+          <div className="bg-white rounded-3xl p-6 max-w-sm w-full  border border-black/[0.08] space-y-4 animate-slide-up">
             <div>
-              <h3 className="text-base font-bold text-[#0B1F17]">Date de votre départ</h3>
+              <h3 className="text-base font-bold text-[#17402C]">Date de votre départ</h3>
               <p className="text-xs text-[#6B7A72] mt-0.5">
                 Planifiez cette randonnée dans votre espace Mon Matériel.
               </p>
             </div>
 
             <div>
-              <label className="block text-xs font-semibold text-[#0B1F17] mb-1.5">
+              <label className="block text-xs font-semibold text-[#17402C] mb-1.5">
                 Quand partez-vous ?
               </label>
               <input
@@ -236,7 +236,7 @@ export const MobilePreparationView: React.FC<MobilePreparationViewProps> = ({
                 value={targetDate}
                 min={new Date().toISOString().split('T')[0]}
                 onChange={(e) => setTargetDate(e.target.value)}
-                className="w-full bg-[#FBFAF6] border border-black/10 rounded-xl px-3.5 py-2.5 text-xs text-[#0B1F17] outline-none font-mono focus:border-[#17402C]"
+                className="w-full bg-[#FBFAF6] border border-black/10 rounded-xl px-3.5 py-2.5 text-xs text-[#17402C] outline-none font-mono focus:border-[#17402C]"
               />
             </div>
 
@@ -265,7 +265,7 @@ export const MobilePreparationView: React.FC<MobilePreparationViewProps> = ({
                   setShowDateModal(false);
                   router.push('/compte');
                 }}
-                className="flex-1 py-2.5 rounded-xl text-xs font-bold bg-[#17402C] text-white hover:bg-[#0B1F17] shadow-sm"
+                className="flex-1 py-2.5 rounded-xl text-xs font-bold bg-[#17402C] text-white hover:bg-[#17402C] "
               >
                 Enregistrer →
               </button>

@@ -46,11 +46,11 @@ export default function OfflineBanner() {
             gap: '10px',
             padding: '10px 14px',
             borderRadius: '14px',
-            background: 'rgba(11,31,23,0.95)',
+            background: 'rgba(23,64,44,0.95)',
             backdropFilter: 'blur(16px) saturate(1.4)',
             WebkitBackdropFilter: 'blur(16px) saturate(1.4)',
             border: '1px solid rgba(255,255,255,0.12)',
-            boxShadow: '0 8px 24px rgba(11,31,23,0.25)',
+            boxShadow: '0 8px 24px rgba(23,64,44,0.25)',
           }}
         >
           <span
@@ -58,7 +58,7 @@ export default function OfflineBanner() {
               width: '8px',
               height: '8px',
               borderRadius: '50%',
-              background: '#A3C4A3',
+              background: '#A6C1A0',
               boxShadow: '0 0 0 3px rgba(163,196,163,0.2)',
               flexShrink: 0,
             }}

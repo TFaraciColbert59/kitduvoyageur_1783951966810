@@ -53,7 +53,7 @@ export default function CompletionView({
       initial={{ opacity: 0, scale: 0.98 }}
       animate={{ opacity: 1, scale: 1 }}
       exit={{ opacity: 0, scale: 0.98 }}
-      className="fixed inset-0 z-50 bg-gradient-to-b from-[#17402C] via-[#0B1F17] to-[#06120C] text-white overflow-y-auto select-none flex flex-col items-center py-10 px-4"
+      className="fixed inset-0 z-50 bg-gradient-to-b from-[#17402C] via-[#365233] to-[#06120C] text-white overflow-y-auto select-none flex flex-col items-center py-10 px-4"
     >
       {/* Background glow effects */}
       <div className="absolute inset-0 pointer-events-none bg-[radial-gradient(ellipse_at_50%_20%,rgba(168,200,160,0.25)_0%,transparent_60%)]" />
@@ -131,7 +131,7 @@ export default function CompletionView({
         </div>
 
         {/* Mini Elevation Track Card */}
-        <div className="h-32 rounded-2xl border border-[#C6DCBE]/15 bg-gradient-to-br from-[#2D6B4A]/40 to-[#06120C]/60 relative overflow-hidden p-3 flex flex-col justify-between">
+        <div className="h-32 rounded-2xl border border-[#C6DCBE]/15 bg-gradient-to-br from-[#365233]/40 to-[#06120C]/60 relative overflow-hidden p-3 flex flex-col justify-between">
           <svg className="absolute inset-0 w-full h-full" viewBox="0 0 380 140" preserveAspectRatio="none">
             <g fill="none" stroke="#C6DCBE" strokeWidth="0.5" opacity="0.25">
               <path d="M0,120 Q80,80 160,90 T340,60 T400,50" />
@@ -184,7 +184,7 @@ export default function CompletionView({
         {/* Main CTA Button: Voir mon aventure */}
         <button
           onClick={onViewCarnet}
-          className="w-full py-4 bg-[#A8C8A0] text-[#06120C] font-semibold text-sm rounded-2xl shadow-xl flex items-center justify-between px-5 transition-transform active:scale-98"
+          className="w-full py-4 bg-[#A8C8A0] text-[#06120C] font-semibold text-sm rounded-2xl  flex items-center justify-between px-5 transition-transform active:scale-98"
         >
           <span>
             Voir mon <em className="font-serif italic font-normal text-[#17402C]">aventure</em>

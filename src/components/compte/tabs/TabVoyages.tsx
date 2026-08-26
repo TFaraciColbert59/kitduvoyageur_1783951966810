@@ -1,4 +1,4 @@
-'use client';
+﻿'use client';
 
 import React from 'react';
 import Link from 'next/link';
@@ -28,10 +28,10 @@ export default function TabVoyages({ prochainVoyage, clubs, loading }: TabVoyage
               <span className="text-[10px] font-mono font-bold uppercase tracking-wider px-2.5 py-1 rounded-full bg-[#E1EBDD] text-[#17402C]">
                 🧭 Prochain Départ
               </span>
-              <h3 className="text-xl sm:text-2xl font-bold text-[#0B1F17] mt-2">
+              <h3 className="text-xl sm:text-2xl font-bold text-[#17402C] mt-2">
                 {prochainVoyage.title}
               </h3>
-              <p className="text-xs text-[#5C6B63] font-mono mt-1">
+              <p className="text-xs text-[#5A7064] font-mono mt-1">
                 {prochainVoyage.date_range}
               </p>
             </div>
@@ -41,14 +41,14 @@ export default function TabVoyages({ prochainVoyage, clubs, loading }: TabVoyage
                 <p className="text-2xl font-bold font-mono text-[#17402C] leading-none">
                   {prochainVoyage.days_left}
                 </p>
-                <p className="text-[10px] font-semibold text-[#5C6B63] mt-0.5">
+                <p className="text-[10px] font-semibold text-[#5A7064] mt-0.5">
                   jours restants
                 </p>
               </div>
 
               <Link
                 href={`/groupes/${prochainVoyage.group_id}`}
-                className="px-4 py-2.5 rounded-xl bg-[#17402C] text-white text-xs font-bold shadow-xs active:scale-95 transition-transform"
+                className="px-4 py-2.5 rounded-xl bg-[#17402C] text-white text-xs font-bold  active:scale-95 transition-transform"
               >
                 Gérer le départ
               </Link>
@@ -58,16 +58,16 @@ export default function TabVoyages({ prochainVoyage, clubs, loading }: TabVoyage
       ) : (
         <div className="bg-white rounded-3xl p-6 sm:p-8 border border-black/[0.06] shadow-2xs flex flex-col sm:flex-row sm:items-center justify-between gap-4">
           <div>
-            <h3 className="font-bold text-base text-[#0B1F17]">
+            <h3 className="font-bold text-base text-[#17402C]">
               Aucun voyage planifié
             </h3>
-            <p className="text-xs text-[#5C6B63] mt-1 max-w-md">
+            <p className="text-xs text-[#5A7064] mt-1 max-w-md">
               Créez une nouvelle expédition, invitez vos compagnons et préparez votre itinéraire.
             </p>
           </div>
           <Link
             href="/preparer-randonnee"
-            className="px-5 py-2.5 rounded-xl bg-[#17402C] hover:bg-[#0B1F17] text-white text-xs font-bold shadow-xs active:scale-95 transition-transform shrink-0 text-center"
+            className="px-5 py-2.5 rounded-xl bg-[#17402C] hover:bg-[#17402C] text-white text-xs font-bold  active:scale-95 transition-transform shrink-0 text-center"
           >
             + Planifier un voyage
           </Link>
@@ -78,10 +78,10 @@ export default function TabVoyages({ prochainVoyage, clubs, loading }: TabVoyage
       <div className="bg-white rounded-3xl p-5 sm:p-6 border border-black/[0.06] shadow-2xs">
         <div className="flex items-center justify-between mb-4">
           <div>
-            <h3 className="font-bold text-sm text-[#0B1F17] flex items-center gap-1.5">
+            <h3 className="font-bold text-sm text-[#17402C] flex items-center gap-1.5">
               <span>👥</span> Groupes & Clubs de Rando
             </h3>
-            <p className="text-xs text-[#5C6B63]">
+            <p className="text-xs text-[#5A7064]">
               {clubs?.length ?? 0} club{(clubs?.length ?? 0) > 1 ? 's' : ''} actif{(clubs?.length ?? 0) > 1 ? 's' : ''}
             </p>
           </div>
@@ -96,12 +96,12 @@ export default function TabVoyages({ prochainVoyage, clubs, loading }: TabVoyage
         </div>
 
         {!clubs || clubs.length === 0 ? (
-          <div className="py-6 text-center text-[#5C6B63]">
+          <div className="py-6 text-center text-[#5A7064]">
             <p className="text-2xl mb-2">🏕️</p>
             <p className="text-xs">Vous n'avez rejoint aucun groupe pour le moment.</p>
             <Link
               href="/groupes"
-              className="inline-block mt-3 px-4 py-2 rounded-full bg-[#F4F1EB] hover:bg-[#EBE7DF] text-[#0B1F17] text-xs font-bold transition-colors"
+              className="inline-block mt-3 px-4 py-2 rounded-full bg-[#F4F1EB] hover:bg-[#EBE7DF] text-[#17402C] text-xs font-bold transition-colors"
             >
               Rejoindre un club
             </Link>
@@ -119,15 +119,15 @@ export default function TabVoyages({ prochainVoyage, clubs, loading }: TabVoyage
                     🏕️
                   </div>
                   <div className="min-w-0">
-                    <p className="font-bold text-xs text-[#0B1F17] truncate group-hover:text-[#17402C] transition-colors">
+                    <p className="font-bold text-xs text-[#17402C] truncate group-hover:text-[#17402C] transition-colors">
                       {club.name}
                     </p>
-                    <p className="text-[10px] font-mono text-[#5C6B63]">
+                    <p className="text-[10px] font-mono text-[#5A7064]">
                       {club.members_count} membres · {club.role}
                     </p>
                   </div>
                 </div>
-                <span className="text-xs text-[#5C6B63] group-hover:translate-x-0.5 transition-transform">
+                <span className="text-xs text-[#5A7064] group-hover:translate-x-0.5 transition-transform">
                   →
                 </span>
               </Link>

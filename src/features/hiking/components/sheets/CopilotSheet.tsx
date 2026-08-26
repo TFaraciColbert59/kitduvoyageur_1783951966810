@@ -60,14 +60,14 @@ export default function CopilotSheet({
         animate={{ y: 0 }}
         exit={{ y: '100%' }}
         transition={{ type: 'spring', damping: 25, stiffness: 200 }}
-        className="w-full max-w-md bg-[#FBFAF6] text-[#0B1F17] rounded-t-[34px] pt-3 pb-10 px-4 shadow-2xl max-h-[85vh] overflow-y-auto space-y-4"
+        className="w-full max-w-md bg-[#FBFAF6] text-[#17402C] rounded-t-[34px] pt-3 pb-10 px-4  max-h-[85vh] overflow-y-auto space-y-4"
       >
         {/* Grabber */}
-        <div className="w-10 h-1 bg-[#0B1F17]/14 rounded-full mx-auto" />
+        <div className="w-10 h-1 bg-[#17402C]/14 rounded-full mx-auto" />
 
         {/* Glowing Orb */}
         <div className="text-center">
-          <div className="w-18 h-18 rounded-full mx-auto bg-gradient-to-br from-[#EAF1E5] via-[#A8C8A0] to-[#17402C] shadow-lg animate-pulse relative border-2 border-white/40" />
+          <div className="w-18 h-18 rounded-full mx-auto bg-gradient-to-br from-[#EAF1E5] via-[#A6C1A0] to-[#17402C]  animate-pulse relative border-2 border-white/40" />
           <h2 className="text-xl font-medium tracking-tight mt-2">
             Copilote <em className="font-serif italic text-[#17402C]">{routeName || 'de randonnée'}</em>
           </h2>
@@ -84,7 +84,7 @@ export default function CopilotSheet({
               className={`p-3 rounded-2xl text-xs leading-relaxed max-w-[85%] ${
                 m.sender === 'me'
                   ? 'ml-auto bg-[#17402C] text-white rounded-br-xs'
-                  : 'mr-auto bg-[#EAF1E5] text-[#0B1F17] border border-[#A8C8A0]/40 rounded-bl-xs'
+                  : 'mr-auto bg-[#EAF1E5] text-[#17402C] border border-[#A6C1A0]/40 rounded-bl-xs'
               }`}
             >
               {m.text}
@@ -106,7 +106,7 @@ export default function CopilotSheet({
               <button
                 key={q}
                 onClick={() => handleAskQuick(q)}
-                className="px-3 py-1.5 rounded-full text-[11px] font-medium bg-[#F4F1EA] text-[#0B1F17] hover:bg-[#E9E4D9] border border-[#0B1F17]/06 active:scale-95 transition-transform"
+                className="px-3 py-1.5 rounded-full text-[11px] font-medium bg-[#F4F1EA] text-[#17402C] hover:bg-[#E9E4D9] border border-[#17402C]/06 active:scale-95 transition-transform"
               >
                 {q}
               </button>
@@ -116,7 +116,7 @@ export default function CopilotSheet({
 
         <button
           onClick={onClose}
-          className="w-full py-3 bg-[#17402C] text-white font-bold text-xs rounded-2xl shadow-lg mt-2"
+          className="w-full py-3 bg-[#17402C] text-white font-bold text-xs rounded-2xl  mt-2"
         >
           Fermer le Copilote
         </button>

@@ -1,4 +1,4 @@
-'use client';
+﻿'use client';
 
 import React from 'react';
 import Link from 'next/link';
@@ -25,10 +25,10 @@ export default function TabActivite({ activities, badges, loading }: TabActivite
         <div className="bg-white rounded-3xl p-5 sm:p-6 border border-black/[0.06] shadow-2xs">
           <div className="flex items-center justify-between mb-4">
             <div>
-              <h3 className="font-bold text-sm text-[#0B1F17] flex items-center gap-1.5">
+              <h3 className="font-bold text-sm text-[#17402C] flex items-center gap-1.5">
                 <span>🏅</span> Badges & Distinctions
               </h3>
-              <p className="text-xs text-[#5C6B63] mt-0.5">
+              <p className="text-xs text-[#5A7064] mt-0.5">
                 {earnedBadges.length} badge{earnedBadges.length > 1 ? 's' : ''} débloqué{earnedBadges.length > 1 ? 's' : ''}
               </p>
             </div>
@@ -49,7 +49,7 @@ export default function TabActivite({ activities, badges, loading }: TabActivite
               >
                 <span className="text-lg">⭐</span>
                 <div>
-                  <p className="text-xs font-bold text-[#0B1F17] leading-tight">{b.title}</p>
+                  <p className="text-xs font-bold text-[#17402C] leading-tight">{b.title}</p>
                   <p className="text-[10px] font-mono text-[#17402C] font-semibold">Débloqué</p>
                 </div>
               </div>
@@ -61,24 +61,24 @@ export default function TabActivite({ activities, badges, loading }: TabActivite
       {/* Flux d'activité */}
       <div className="bg-white rounded-3xl p-5 sm:p-6 border border-black/[0.06] shadow-2xs">
         <div className="flex items-center justify-between mb-4">
-          <h3 className="font-bold text-sm text-[#0B1F17] flex items-center gap-1.5">
+          <h3 className="font-bold text-sm text-[#17402C] flex items-center gap-1.5">
             <span>⚡</span> Activité récente
           </h3>
-          <span className="text-[10px] font-mono font-semibold text-[#5C6B63]">
+          <span className="text-[10px] font-mono font-semibold text-[#5A7064]">
             Temps réel
           </span>
         </div>
 
         {!activities || activities.length === 0 ? (
-          <div className="py-10 text-center text-[#5C6B63]">
+          <div className="py-10 text-center text-[#5A7064]">
             <p className="text-3xl mb-2">🏔️</p>
-            <p className="text-xs font-semibold text-[#0B1F17]">Aucune activité pour le moment</p>
-            <p className="text-[11px] text-[#5C6B63] max-w-xs mx-auto mt-1">
+            <p className="text-xs font-semibold text-[#17402C]">Aucune activité pour le moment</p>
+            <p className="text-[11px] text-[#5A7064] max-w-xs mx-auto mt-1">
               Vos prochaines sorties, carnets partagés et interactions apparaîtront ici.
             </p>
             <Link
               href="/preparer-randonnee"
-              className="inline-flex items-center gap-1.5 mt-4 px-4 py-2 rounded-full bg-[#17402C] text-white text-xs font-bold shadow-xs active:scale-95 transition-transform"
+              className="inline-flex items-center gap-1.5 mt-4 px-4 py-2 rounded-full bg-[#17402C] text-white text-xs font-bold  active:scale-95 transition-transform"
             >
               <span>+ Préparer une aventure</span>
             </Link>
@@ -92,7 +92,7 @@ export default function TabActivite({ activities, badges, loading }: TabActivite
                     {act.icon_type === 'badge' ? '🏅' : act.icon_type === 'order' ? '📦' : '⚡'}
                   </div>
                   <div>
-                    <p className="text-xs text-[#0B1F17] font-medium leading-snug">
+                    <p className="text-xs text-[#17402C] font-medium leading-snug">
                       {act.text}
                     </p>
                     {act.highlight && (
@@ -102,7 +102,7 @@ export default function TabActivite({ activities, badges, loading }: TabActivite
                     )}
                   </div>
                 </div>
-                <span className="text-[10px] font-mono text-[#5C6B63] shrink-0 whitespace-nowrap">
+                <span className="text-[10px] font-mono text-[#5A7064] shrink-0 whitespace-nowrap">
                   {act.time}
                 </span>
               </div>

@@ -3,48 +3,54 @@
 import React from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { motion } from 'framer-motion';
 import { useHapticFeedback } from '@/hooks/useHapticFeedback';
 
-export type CommunityHubTab = 'fil' | 'groupes' | 'clubs' | 'carnets';
+export type CommunityHubTab = 'fil' | 'carnets' | 'clubs' | 'groupes' | 'evenements' | 'entraide';
 
 interface CommunityHubNavProps {
   activeTab: CommunityHubTab;
   onTabChange?: (tab: CommunityHubTab) => void;
+  layoutVariant?: 'horizontal' | 'vertical';
   badgeCounts?: {
     fil?: number;
-    groupes?: number;
-    clubs?: number;
     carnets?: number;
+    clubs?: number;
+    groupes?: number;
+    evenements?: number;
+    entraide?: number;
   };
 }
 
-const TABS: Array<{ key: CommunityHubTab; label: string; href: string; emoji: string }> = [
-  { key: 'fil', label: 'Fil', href: '/communaute', emoji: '✨' },
-  { key: 'groupes', label: 'Groupes', href: '/groupes', emoji: '👥' },
-  { key: 'clubs', label: 'Clubs', href: '/clubs', emoji: '🏕️' },
-  { key: 'carnets', label: 'Carnets', href: '/carnets', emoji: '📖' },
+const TABS: Array<{ key: CommunityHubTab; label: string; href: string }> = [
+  { key: 'fil', label: 'Fil d\'actualité', href: '/communaute?tab=fil' },
+  { key: 'carnets', label: 'Carnets de voyage', href: '/communaute?tab=carnets' },
+  { key: 'clubs', label: 'Clubs & Collectifs', href: '/communaute?tab=clubs' },
+  { key: 'groupes', label: 'Groupes d\'expédition', href: '/communaute?tab=groupes' },
+  { key: 'evenements', label: 'Événements & Sorties', href: '/communaute?tab=evenements' },
+  { key: 'entraide', label: 'Entraide & Q&A', href: '/communaute?tab=entraide' },
 ];
 
 export default function CommunityHubNav({
   activeTab,
   onTabChange,
+  layoutVariant = 'horizontal',
   badgeCounts = {},
 }: CommunityHubNavProps) {
   const { triggerHaptic } = useHapticFeedback();
   const pathname = usePathname();
 
-  const handleTabClick = (tab: (typeof TABS)[number], e: React.MouseEvent) => {
+  const handleTabClick = (tabKey: CommunityHubTab, e: React.MouseEvent) => {
     triggerHaptic('light');
     if (onTabChange) {
-      onTabChange(tab.key);
+      e.preventDefault();
+      onTabChange(tabKey);
     }
   };
 
-  return (
-    <div className="w-full bg-[#F5F2E8] border-b border-[#1C2620]/10 px-3 py-2 sticky top-0 z-30 backdrop-blur-md bg-opacity-95">
-      <div className="flex items-center justify-between gap-1 max-w-lg mx-auto bg-black/5 p-1 rounded-2xl">
-        {TABS.map(tab => {
+  if (layoutVariant === 'vertical') {
+    return (
+      <nav className="w-full glass p-1.5 rounded-2xl flex flex-col gap-1">
+        {TABS.map((tab) => {
           const isActive = activeTab === tab.key;
           const badge = badgeCounts[tab.key];
 
@@ -52,19 +58,53 @@ export default function CommunityHubNav({
             <Link
               key={tab.key}
               href={tab.href}
-              onClick={(e) => handleTabClick(tab, e)}
-              className={`relative flex-1 flex items-center justify-center gap-1.5 py-2 px-2.5 rounded-xl text-xs font-semibold transition-all select-none ${
+              onClick={(e) => handleTabClick(tab.key, e)}
+              className={`flex items-center gap-2.5 px-3 py-1.5 rounded-xl text-[11px] font-semibold select-none transition-all ${
                 isActive
-                  ? 'bg-white text-[#17402C] shadow-sm font-bold'
-                  : 'text-[#5C6B5E] hover:text-[#1C2620]'
+                  ? 'bg-gradient-to-r from-white/95 to-white/75 text-[#17402C] font-bold border border-white/80'
+                  : 'text-[#365233] hover:bg-white/40 hover:text-[#17402C]'
               }`}
             >
-              <span className="text-xs">{tab.emoji}</span>
+              <span className="truncate flex-1">{tab.label}</span>
+              {badge !== undefined && badge > 0 && (
+                <span
+                  className={`text-[9px] px-1.5 py-0.2 rounded-full font-mono font-bold shrink-0 ${
+                    isActive ? 'bg-[#17402C]/10 text-[#17402C]' : 'bg-[#365233]/10 text-[#365233]'
+                  }`}
+                >
+                  {badge}
+                </span>
+              )}
+            </Link>
+          );
+        })}
+      </nav>
+    );
+  }
+
+  return (
+    <div className="w-full flex justify-center py-2 sticky top-0 z-30 bg-[#FBFAF6]/80 backdrop-blur-md">
+      <div className="glass-capsule-bar flex items-center justify-between gap-1 w-full max-w-xl p-1 overflow-x-auto">
+        {TABS.map((tab) => {
+          const isActive = activeTab === tab.key;
+          const badge = badgeCounts[tab.key];
+
+          return (
+            <Link
+              key={tab.key}
+              href={tab.href}
+              onClick={(e) => handleTabClick(tab.key, e)}
+              className={`glass-capsule-segment flex-1 flex items-center justify-center gap-1.5 py-2 px-2.5 text-xs font-semibold select-none transition-all whitespace-nowrap ${
+                isActive ? 'active text-[#17402C]' : 'text-[#365233]'
+              }`}
+            >
               <span>{tab.label}</span>
               {badge !== undefined && badge > 0 && (
-                <span className={`text-[10px] px-1.5 py-0.2 rounded-full font-mono ${
-                  isActive ? 'bg-[#17402C]/10 text-[#17402C]' : 'bg-black/10 text-[#5C6B5E]'
-                }`}>
+                <span
+                  className={`text-[10px] px-1.5 py-0.5 rounded-full font-mono ${
+                    isActive ? 'bg-[#17402C]/10 text-[#17402C]' : 'bg-[#365233]/10 text-[#365233]'
+                  }`}
+                >
                   {badge}
                 </span>
               )}

@@ -82,7 +82,7 @@ const itemStyle: React.CSSProperties = {
   display: 'flex',
   alignItems: 'center',
   gap: '12px',
-  color: '#0B1F17',
+  color: '#17402C',
   fontSize: '15px',
   fontWeight: 400,
   textDecoration: 'none',
@@ -93,7 +93,7 @@ const itemStyle: React.CSSProperties = {
 const scrimStyle: React.CSSProperties = {
   position: 'fixed',
   inset: 0,
-  background: 'rgba(11,31,23,0.55)',
+  background: 'rgba(23,64,44,0.55)',
   backdropFilter: 'blur(2px)',
   WebkitBackdropFilter: 'blur(2px)',
   zIndex: 50,
@@ -108,7 +108,7 @@ const panelStyle: React.CSSProperties = {
   maxWidth: '360px',
   background: '#FBFAF6',
   zIndex: 51,
-  boxShadow: '20px 0 60px rgba(11,31,23,0.25)',
+  boxShadow: '20px 0 60px rgba(23,64,44,0.25)',
   display: 'flex',
   flexDirection: 'column',
   overflow: 'hidden',
@@ -224,7 +224,7 @@ export default function MobileDrawer({ isOpen, onClose, onSearchOpen }: MobileDr
               {/* Header */}
               <header
                 style={{
-                  background: '#0B1F17',
+                  background: '#17402C',
                   color: '#fff',
                   padding: 'calc(40px + env(safe-area-inset-top)) 20px 22px',
                   position: 'relative',
@@ -389,7 +389,7 @@ export default function MobileDrawer({ isOpen, onClose, onSearchOpen }: MobileDr
                               textAlign: 'left',
                             }}
                           >
-                            <LkvIcon name="search" size={20} color="#0B1F17" />
+                            <LkvIcon name="search" size={20} color="#17402C" />
                             <span style={{ flex: 1 }}>{item.label}</span>
                             <LkvIcon name="chevron-right" size={16} color="#AEB7B1" />
                           </button>
@@ -401,9 +401,9 @@ export default function MobileDrawer({ isOpen, onClose, onSearchOpen }: MobileDr
                           style={{
                             ...itemStyle,
                             background: isActive
-                              ? 'rgba(11,31,23,0.04)'
+                              ? 'rgba(23,64,44,0.04)'
                               : hoveredItem === item.href
-                              ? 'rgba(11,31,23,0.03)'
+                              ? 'rgba(23,64,44,0.03)'
                               : 'transparent',
                             fontWeight: isActive ? 500 : 400,
                           }}
@@ -413,7 +413,7 @@ export default function MobileDrawer({ isOpen, onClose, onSearchOpen }: MobileDr
                           <LkvIcon
                             name={item.icon}
                             size={20}
-                            color={isActive ? '#17402C' : '#0B1F17'}
+                            color={isActive ? '#17402C' : '#17402C'}
                           />
                           <span style={{ flex: 1 }}>{item.label}</span>
                           <LkvIcon
@@ -433,7 +433,7 @@ export default function MobileDrawer({ isOpen, onClose, onSearchOpen }: MobileDr
               <footer
                 style={{
                   padding: '14px 16px calc(20px + env(safe-area-inset-bottom))',
-                  borderTop: '1px solid rgba(11,31,23,0.06)',
+                  borderTop: '1px solid rgba(23,64,44,0.06)',
                   background: '#F4F1EA',
                 }}
               >
@@ -447,13 +447,13 @@ export default function MobileDrawer({ isOpen, onClose, onSearchOpen }: MobileDr
                     padding: '12px',
                     background: '#FBFAF6',
                     borderRadius: '14px',
-                    border: '1px solid rgba(11,31,23,0.05)',
+                    border: '1px solid rgba(23,64,44,0.05)',
                     textDecoration: 'none',
                   }}
                 >
                   <LkvIcon name="star" size={20} color="#17402C" />
                   <div>
-                    <div style={{ fontSize: '13px', fontWeight: 600, color: '#0B1F17' }}>
+                    <div style={{ fontSize: '13px', fontWeight: 600, color: '#17402C' }}>
                       Premium Voyageur
                     </div>
                     <div style={{ fontSize: '11px', color: '#6B7A72' }}>

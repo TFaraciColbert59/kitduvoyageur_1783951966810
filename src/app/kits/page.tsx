@@ -95,9 +95,9 @@ export default function KitsPage() {
 
       {/* ── DESKTOP ── */}
       <div className="hidden md:block">
-        <div className="min-h-screen relative">
+        <div data-lkv-material-theme="light" className="h-dvh overflow-hidden relative">
           <Header />
-          <main className="max-w-[var(--page-max-w)] mx-auto px-4 sm:px-6 lg:px-8 pt-28 pb-20">
+          <main className="h-full overflow-y-auto max-w-[var(--page-max-w)] mx-auto px-4 sm:px-6 lg:px-8 pt-24 pb-20">
             <header className="mb-8">
               <Eyebrow>Kits Prêts à Partir</Eyebrow>
               <h1 className="font-display font-bold text-4xl text-[#17402C] mt-1 mb-3">

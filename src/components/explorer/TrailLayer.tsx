@@ -24,12 +24,19 @@ export default function TrailLayer({ map, trails, selectedTrailId, onTrailClick,
 
     let isMounted = true;
 
-    Promise.all([
-      import('leaflet'),
-      import('leaflet.markercluster')
-    ]).then(([LModule]) => {
+    import('leaflet').then(async (LModule) => {
       if (!isMounted) return;
-      const L = LModule.default || LModule;
+      const L = (LModule as any).default || LModule;
+      if (typeof window !== 'undefined') {
+        (window as any).L = L;
+      }
+      try {
+        await import('leaflet.markercluster');
+      } catch (err) {
+        console.warn('[TrailLayer] leaflet.markercluster import warning:', err);
+      }
+
+      if (!isMounted) return;
 
       // Clean up previous layer group thoroughly
       if (layerGroupRef.current) {
@@ -46,33 +53,34 @@ export default function TrailLayer({ map, trails, selectedTrailId, onTrailClick,
 
       if (!trails.length) return;
 
-      // Create a MarkerClusterGroup
-      // @ts-expect-error - leaflet.markercluster types not available
-      const clusterGroup = L.markerClusterGroup({
-        showCoverageOnHover: false,
-        maxClusterRadius: 45,
-        spiderfyOnMaxZoom: true,
-        iconCreateFunction: function (cluster: any) {
-          const count = cluster.getChildCount();
-          const html = `
-            <div style="
-              background: #1C2620;
-              color: white;
-              font-weight: 700;
-              font-size: 11px;
-              width: 32px;
-              height: 32px;
-              border-radius: 50%;
-              display: flex;
-              align-items: center;
-              justify-content: center;
-              box-shadow: 0 2px 6px rgba(0,0,0,0.15);
-              border: 2px solid white;
-            ">${count}</div>
-          `;
-          return L.divIcon({ html, className: '', iconSize: [32, 32], iconAnchor: [16, 16] });
-        }
-      });
+      // Create a MarkerClusterGroup (with fallback to standard layerGroup)
+      const clusterGroup = typeof (L as any).markerClusterGroup === 'function'
+        ? (L as any).markerClusterGroup({
+            showCoverageOnHover: false,
+            maxClusterRadius: 45,
+            spiderfyOnMaxZoom: true,
+            iconCreateFunction: function (cluster: any) {
+              const count = cluster.getChildCount();
+              const html = `
+                <div style="
+                  background: #17402C;
+                  color: white;
+                  font-weight: 700;
+                  font-size: 11px;
+                  width: 32px;
+                  height: 32px;
+                  border-radius: 50%;
+                  display: flex;
+                  align-items: center;
+                  justify-content: center;
+                  box-shadow: 0 2px 6px rgba(0,0,0,0.15);
+                  border: 2px solid white;
+                ">${count}</div>
+              `;
+              return L.divIcon({ html, className: '', iconSize: [32, 32], iconAnchor: [16, 16] });
+            }
+          })
+        : L.layerGroup();
 
       // Regular group for geoJSON lines & start point markers so they don't get clustered
       const linesGroup = L.layerGroup();
@@ -169,7 +177,7 @@ export default function TrailLayer({ map, trails, selectedTrailId, onTrailClick,
                   lineJoin: 'round',
                 },
               });
-              geoJsonLayer.on('click', (e) => {
+              geoJsonLayer.on('click', (e: any) => {
                 L.DomEvent.stopPropagation(e);
                 onTrailClick?.(trail);
               });
@@ -243,15 +251,15 @@ export default function TrailLayer({ map, trails, selectedTrailId, onTrailClick,
           if (label) {
             const html = `
               <div style="
-                background: ${isSelected ? '#1C2620' : 'white'};
-                color: ${isSelected ? 'white' : '#1C2620'};
+                background: ${isSelected ? '#17402C' : 'white'};
+                color: ${isSelected ? 'white' : '#17402C'};
                 font-weight: 700;
                 font-size: 11px;
                 padding: 4px 10px;
                 border-radius: 999px;
                 box-shadow: 0 2px 6px rgba(0,0,0,0.08);
                 white-space: nowrap;
-                border: 1px solid ${isSelected ? '#1C2620' : '#E8E4D8'};
+                border: 1px solid ${isSelected ? '#17402C' : '#E8E4D8'};
                 cursor: pointer;
                 display: flex;
                 align-items: center;
@@ -259,7 +267,7 @@ export default function TrailLayer({ map, trails, selectedTrailId, onTrailClick,
               ">${label}</div>`;
             const icon = L.divIcon({ html, className: '', iconSize: [54, 24], iconAnchor: [27, 12] });
             const marker = L.marker([lat, lng], { icon, zIndexOffset: isSelected ? 1000 : 10 });
-            marker.on('click', (e) => {
+            marker.on('click', (e: any) => {
               L.DomEvent.stopPropagation(e);
               onTrailClick?.(trail);
             });

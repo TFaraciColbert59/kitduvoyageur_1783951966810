@@ -1,6 +1,7 @@
 import React, { Suspense } from 'react';
 import KitConfiguratorWizard from '@/app/ai-configurator/components/KitConfiguratorWizard';
 import MobilePageShell from '@/components/mobile-nav/MobilePageShell';
+import CompteBackground from '@/components/compte/CompteBackground';
 
 const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://lekitduvoyageur.fr';
 
@@ -11,9 +12,9 @@ export const metadata = {
 
 function WizardFallback() {
   return (
-    <div style={{ minHeight: '100vh', background: '#EBE7DE', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: '16px' }}>
-      <div style={{ width: '40px', height: '40px', border: '3px solid #1C3829', borderTopColor: 'transparent', borderRadius: '50%', animation: 'spin 1s linear infinite' }} />
-      <p style={{ fontSize: '14px', color: '#5C6E60', fontWeight: 500 }}>Chargement du configurateur IA…</p>
+    <div className="w-full h-full flex flex-col items-center justify-center gap-5 min-h-[60vh]">
+      <div className="w-10 h-10 rounded-full border-2 border-[#17402C] border-t-transparent animate-spin" />
+      <p className="text-xs font-mono font-bold text-[#5A7064]">Initialisation de l&apos;intelligence terrain…</p>
     </div>
   );
 }
@@ -23,7 +24,7 @@ export default function ConfiguratorPage() {
     '@context': 'https://schema.org',
     '@type': 'WebPage',
     name: 'Configurateur IA · Le Kit du Voyageur',
-    description: 'Assistant intelligent pour composer votre sac \u00e0 dos d\'aventure en temps r\u00e9el.',
+    description: 'Assistant intelligent pour composer votre sac à dos d\'aventure en temps réel.',
     url: `${siteUrl}/ai-configurator`,
     isPartOf: { '@id': `${siteUrl}/#website` },
   };
@@ -38,25 +39,30 @@ export default function ConfiguratorPage() {
   };
 
   return (
-    <>
+    <div className="min-h-screen md:h-dvh md:overflow-hidden text-[#17402C] selection:bg-[#17402C]/10 font-sans relative">
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(webPageSchema) }} suppressHydrationWarning />
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbSchema) }} suppressHydrationWarning />
-      {/* DESKTOP */}
-      <div className="hidden md:block">
-        <div style={{ minHeight: '100vh', background: '#EBE7DE', padding: '32px 0', display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
-          <Suspense fallback={<WizardFallback />}><KitConfiguratorWizard /></Suspense>
-        </div>
+
+      {/* Fond canopée dorée immersif */}
+      <CompteBackground />
+
+      {/* ── DESKTOP COCKPIT (hidden md:flex) ── */}
+      <div className="hidden md:flex flex-col h-full overflow-hidden p-4 lg:p-6 max-w-[1600px] w-full mx-auto">
+        <Suspense fallback={<WizardFallback />}>
+          <KitConfiguratorWizard />
+        </Suspense>
       </div>
 
-      {/* MOBILE */}
-      <div className="block md:hidden">
-        <MobilePageShell>
-          <div style={{ minHeight: '100dvh', background: '#EBE7DE' }}>
-            <Suspense fallback={<WizardFallback />}><KitConfiguratorWizard /></Suspense>
+      {/* ── MOBILE NATIVE VIEW (block md:hidden) ── */}
+      <div className="block md:hidden min-h-screen">
+        <MobilePageShell videoBackground={false} background="transparent">
+          <div className="px-3 pt-3 pb-32">
+            <Suspense fallback={<WizardFallback />}>
+              <KitConfiguratorWizard isMobile={true} />
+            </Suspense>
           </div>
         </MobilePageShell>
-        
       </div>
-    </>
+    </div>
   );
 }

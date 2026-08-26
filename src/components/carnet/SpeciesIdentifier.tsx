@@ -1,6 +1,9 @@
 'use client';
 
 import React, { useState, useCallback, useRef } from 'react';
+import Icon from '@/components/ui/AppIcon';
+import GlassIconButton from '@/components/ui/GlassIconButton';
+import { useHapticFeedback } from '@/hooks/useHapticFeedback';
 
 interface SpeciesResult {
   name: string;
@@ -13,14 +16,13 @@ interface SpeciesResult {
 
 interface Props {
   momentId?: string;
-  /** Callback si on veut remonter le résultat au parent */
   onIdentified?: (species: SpeciesResult) => void;
 }
 
 const CONFIDENCE_COLORS: Record<SpeciesResult['confidence'], string> = {
-  haute: 'text-green-600 bg-green-50 border-green-200',
-  moyenne: 'text-amber-600 bg-amber-50 border-amber-200',
-  faible: 'text-red-500 bg-red-50 border-red-200',
+  haute: 'text-emerald-900 bg-emerald-50 border-emerald-200',
+  moyenne: 'text-amber-900 bg-amber-50 border-amber-200',
+  faible: 'text-rose-900 bg-rose-50 border-rose-200',
 };
 
 const GROUP_ICONS: Record<SpeciesResult['group'], string> = {
@@ -36,7 +38,6 @@ function fileToBase64(file: File): Promise<string> {
     const reader = new FileReader();
     reader.onload = () => {
       const result = reader.result as string;
-      // Retirer le préfixe data:...;base64,
       resolve(result.split(',')[1]);
     };
     reader.onerror = reject;
@@ -44,48 +45,48 @@ function fileToBase64(file: File): Promise<string> {
   });
 }
 
-/**
- * SpeciesIdentifier — bouton photo + appel API + affichage résultat.
- * Usage : <SpeciesIdentifier momentId={moment.id} onIdentified={...} />
- */
 export default function SpeciesIdentifier({ momentId, onIdentified }: Props) {
+  const { triggerHaptic } = useHapticFeedback();
   const [state, setState] = useState<'idle' | 'loading' | 'done' | 'error'>('idle');
   const [species, setSpecies] = useState<SpeciesResult | null>(null);
   const [preview, setPreview] = useState<string | null>(null);
   const inputRef = useRef<HTMLInputElement>(null);
 
-  const handleFile = useCallback(async (file: File) => {
-    if (!file.type.startsWith('image/')) return;
+  const handleFile = useCallback(
+    async (file: File) => {
+      if (!file.type.startsWith('image/')) return;
+      triggerHaptic('medium');
 
-    // Prévisualisation locale
-    const objectUrl = URL.createObjectURL(file);
-    setPreview(objectUrl);
-    setState('loading');
-    setSpecies(null);
+      const objectUrl = URL.createObjectURL(file);
+      setPreview(objectUrl);
+      setState('loading');
+      setSpecies(null);
 
-    try {
-      const base64 = await fileToBase64(file);
-      const res = await fetch('/api/carnet/identify-species', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          momentId: momentId || null,
-          imageBase64: base64,
-          mimeType: file.type,
-        }),
-      });
+      try {
+        const base64 = await fileToBase64(file);
+        const res = await fetch('/api/carnet/identify-species', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            momentId: momentId || null,
+            imageBase64: base64,
+            mimeType: file.type,
+          }),
+        });
 
-      if (!res.ok) throw new Error('Erreur API');
-      const data: SpeciesResult = await res.json();
-      setSpecies(data);
-      setState('done');
-      onIdentified?.(data);
-    } catch {
-      setState('error');
-    } finally {
-      URL.revokeObjectURL(objectUrl);
-    }
-  }, [momentId, onIdentified]);
+        if (!res.ok) throw new Error('Erreur API');
+        const data: SpeciesResult = await res.json();
+        setSpecies(data);
+        setState('done');
+        onIdentified?.(data);
+      } catch {
+        setState('error');
+      } finally {
+        URL.revokeObjectURL(objectUrl);
+      }
+    },
+    [momentId, onIdentified, triggerHaptic]
+  );
 
   const reset = useCallback(() => {
     setState('idle');
@@ -95,7 +96,7 @@ export default function SpeciesIdentifier({ momentId, onIdentified }: Props) {
   }, []);
 
   return (
-    <div className="mt-2">
+    <div className="glass bg-white/90 backdrop-blur-xl p-4 rounded-3xl border border-white shadow-xs space-y-3">
       {/* Input caché */}
       <input
         ref={inputRef}
@@ -111,63 +112,99 @@ export default function SpeciesIdentifier({ momentId, onIdentified }: Props) {
       />
 
       {state === 'idle' && (
-        <button
-          id="identify-species-btn"
-          onClick={() => inputRef.current?.click()}
-          className="w-full flex items-center gap-2.5 py-2.5 px-3 border border-dashed border-[#C8C0A8] rounded-xl text-sm text-[#7A8A7D] hover:border-[#2D5A27] hover:text-[#2D5A27] hover:bg-[#EDF7F0] transition-all"
-        >
-          <span className="text-lg">📸</span>
-          <span className="font-medium">Identifier une espèce</span>
-          <span className="ml-auto text-[11px] text-[#A0A89D]">Prends une photo</span>
-        </button>
-      )}
-
-      {state === 'loading' && (
-        <div className="flex items-center gap-2.5 py-3 px-3 bg-[#F5F2EA] rounded-xl border border-[#E8E4D8]">
-          <span className="text-lg animate-spin inline-block">🔍</span>
-          <span className="text-sm text-[#5A6A5D]">Identification en cours…</span>
+        <div className="text-center py-4 space-y-3">
+          <span className="text-3xl block">🌿</span>
+          <div>
+            <h4 className="font-display font-bold text-sm text-[#17402C]">
+              Identifier une espèce sur votre parcours
+            </h4>
+            <p className="text-xs text-[#5C6B5E] max-w-xs mx-auto leading-relaxed mt-0.5">
+              Prenez une photo de fleur, champignon, arbre ou animal rencontré pour analyse IA instantanée.
+            </p>
+          </div>
+          <button
+            type="button"
+            onClick={() => {
+              triggerHaptic('selection');
+              inputRef.current?.click();
+            }}
+            className="glass-capsule-btn primary !min-h-[38px] !py-2 !px-5 !text-xs !font-bold !gap-2"
+          >
+            <span>📸</span>
+            <span>Prendre une photo</span>
+          </button>
         </div>
       )}
 
-      {state === 'error' && (
-        <div className="flex items-center gap-2.5 py-2.5 px-3 bg-red-50 rounded-xl border border-red-200">
-          <span className="text-lg">⚠️</span>
-          <span className="text-sm text-red-500 flex-1">Identification impossible.</span>
-          <button onClick={reset} className="text-xs text-red-400 underline">Réessayer</button>
+      {state === 'loading' && (
+        <div className="text-center py-6 space-y-3">
+          <div className="w-8 h-8 rounded-full border-2 border-[#17402C] border-t-transparent animate-spin mx-auto" />
+          <p className="text-xs font-mono font-bold text-[#17402C]">
+            Analyse taxonomique IA en cours...
+          </p>
         </div>
       )}
 
       {state === 'done' && species && (
-        <div className="bg-white rounded-xl border border-[#E8E4D8] overflow-hidden">
-          {preview && (
-            <div className="h-28 bg-[#F5F2EA] overflow-hidden">
-              {/* Image preview est pas rechargée depuis objectUrl car on l'a révoqué */}
+        <div className="space-y-3 animate-fade-in">
+          <div className="flex items-start justify-between gap-3">
+            <div className="flex items-center gap-2.5">
+              <div className="w-10 h-10 rounded-2xl bg-emerald-50 border border-emerald-200 flex items-center justify-center text-xl shrink-0">
+                {GROUP_ICONS[species.group] || '🌿'}
+              </div>
+              <div>
+                <h4 className="font-display font-bold text-sm text-[#17402C]">
+                  {species.common_name || species.name}
+                </h4>
+                <p className="text-[10px] font-mono italic text-[#5C6B5E]">
+                  {species.name}
+                </p>
+              </div>
+            </div>
+
+            <span
+              className={`glass-pill text-[9px] font-mono font-bold shrink-0 border ${
+                CONFIDENCE_COLORS[species.confidence]
+              }`}
+            >
+              Confiance {species.confidence}
+            </span>
+          </div>
+
+          <p className="text-xs text-[#2D4536] leading-relaxed pl-1">
+            {species.description}
+          </p>
+
+          {species.is_protected && (
+            <div className="p-2 rounded-2xl bg-amber-50 border border-amber-200/60 flex items-center gap-2 text-xs text-amber-900 font-medium">
+              <span>⚠️</span>
+              <span>Espèce protégée — Ne pas cueillir ni déranger.</span>
             </div>
           )}
-          <div className="p-3">
-            <div className="flex items-start gap-2 mb-1.5">
-              <span className="text-xl">{GROUP_ICONS[species.group]}</span>
-              <div className="flex-1 min-w-0">
-                <p className="text-sm font-bold text-[#1C2620] leading-tight">{species.common_name}</p>
-                <p className="text-[11px] text-[#A0A89D] italic">{species.name}</p>
-              </div>
-              <span className={`flex-shrink-0 px-1.5 py-0.5 rounded-full text-[10px] font-semibold border ${CONFIDENCE_COLORS[species.confidence]}`}>
-                {species.confidence}
-              </span>
-            </div>
-            <p className="text-xs text-[#5A6A5D] leading-relaxed">{species.description}</p>
-            {species.is_protected && (
-              <p className="text-[11px] text-amber-600 font-semibold mt-1.5">
-                ⚠️ Espèce protégée — ne pas cueillir/capturer
-              </p>
-            )}
+
+          <div className="pt-2 border-t border-[#17402C]/10 flex justify-end">
             <button
+              type="button"
               onClick={reset}
-              className="mt-2 text-[11px] text-[#A0A89D] underline"
+              className="glass-capsule-btn !min-h-[30px] !py-1 !px-3 !text-xs !font-bold"
             >
-              Identifier une autre photo
+              <span>Nouvelle analyse</span>
             </button>
           </div>
+        </div>
+      )}
+
+      {state === 'error' && (
+        <div className="text-center py-4 space-y-2 text-rose-700">
+          <span className="text-2xl block">⚠️</span>
+          <p className="text-xs font-bold">Impossible d'identifier cette photo.</p>
+          <button
+            type="button"
+            onClick={reset}
+            className="glass-capsule-btn !min-h-[30px] !py-1 !px-3 !text-xs !font-bold"
+          >
+            <span>Réessayer</span>
+          </button>
         </div>
       )}
     </div>

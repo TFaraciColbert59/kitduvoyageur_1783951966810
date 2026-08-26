@@ -5,6 +5,8 @@ import Link from 'next/link';
 import Icon from '@/components/ui/AppIcon';
 import 'leaflet/dist/leaflet.css';
 
+import GlassIconButton from '@/components/ui/GlassIconButton';
+
 interface ParcoursCardProps {
   groupId?: string;
   trail?: any;
@@ -25,7 +27,6 @@ export default function ParcoursCard({ groupId, trail, meta }: ParcoursCardProps
     if (!containerRef.current || typeof window === 'undefined') return;
     const container = containerRef.current;
 
-    // Remove existing map if previously initialized on this container
     if (mapRef.current) {
       try { mapRef.current.remove(); } catch {}
       mapRef.current = null;
@@ -53,7 +54,6 @@ export default function ParcoursCard({ groupId, trail, meta }: ParcoursCardProps
         keepBuffer: 6,
       }).addTo(map);
 
-      // Construct realistic GPS polyline based on distance and start coords
       let routeCoords: [number, number][] = [];
       if (trail?.geojson?.coordinates && Array.isArray(trail.geojson.coordinates)) {
         routeCoords = trail.geojson.coordinates.map((pt: [number, number]) => [pt[1], pt[0]]);
@@ -72,7 +72,6 @@ export default function ParcoursCard({ groupId, trail, meta }: ParcoursCardProps
         ];
       }
 
-      // Outer contrasting halo
       L.polyline(routeCoords, {
         color: '#FFFFFF',
         weight: 8,
@@ -81,7 +80,6 @@ export default function ParcoursCard({ groupId, trail, meta }: ParcoursCardProps
         lineJoin: 'round',
       }).addTo(map);
 
-      // Main GPS line
       const polyline = L.polyline(routeCoords, {
         color: '#17402C',
         weight: 5,
@@ -94,7 +92,6 @@ export default function ParcoursCard({ groupId, trail, meta }: ParcoursCardProps
         map.fitBounds(polyline.getBounds(), { padding: [28, 28] });
       }
 
-      // Start Marker (Green pin)
       L.circleMarker(routeCoords[0], {
         radius: 7,
         color: '#FFFFFF',
@@ -103,7 +100,6 @@ export default function ParcoursCard({ groupId, trail, meta }: ParcoursCardProps
         weight: 2.5,
       }).addTo(map).bindPopup(`📍 <strong>Départ</strong> : ${trailName}`);
 
-      // Summit / Middle Marker
       const midIndex = Math.floor(routeCoords.length / 2);
       if (midIndex > 0 && midIndex < routeCoords.length - 1) {
         L.circleMarker(routeCoords[midIndex], {
@@ -117,7 +113,6 @@ export default function ParcoursCard({ groupId, trail, meta }: ParcoursCardProps
 
       mapRef.current = map;
 
-      // Invalidate size after layout mounts to ensure 100% tile coverage
       setTimeout(() => {
         if (mapRef.current) {
           mapRef.current.invalidateSize();
@@ -161,55 +156,68 @@ export default function ParcoursCard({ groupId, trail, meta }: ParcoursCardProps
   };
 
   return (
-    <div className="bg-white rounded-[22px] p-5 sm:p-6 border border-[#1C2620]/8 shadow-sm relative overflow-hidden transition-all duration-150">
+    <div className="glass bg-white/90 backdrop-blur-xl p-4 sm:p-6 rounded-3xl border border-white shadow-xs relative overflow-hidden transition-all duration-300">
       <div className="flex justify-between items-start mb-3">
         <div>
-          <h2 className="font-display text-xl text-[#1C2620]">
-            Le <span className="font-serif italic font-bold text-[#17402C]">parcours GPS</span>
+          <h2 className="font-display font-bold text-lg sm:text-xl text-[#17402C]">
+            Le <span className="font-serif italic font-normal text-[#17402C]">parcours GPS</span>
           </h2>
-          <div className="flex items-center gap-2 mt-1">
-            <span className="font-mono text-[10px] uppercase tracking-widest text-[#17402C] bg-[#17402C]/10 px-2.5 py-0.5 rounded-full font-bold">
+          <div className="flex items-center gap-1.5 mt-1">
+            <span className="glass-pill text-[10px] font-mono font-bold text-[#17402C]">
               {meta?.durationDays || 3} jours
             </span>
-            <span className="font-mono text-[10px] uppercase tracking-widest text-[#1C2620]/70 bg-[#1C2620]/5 px-2.5 py-0.5 rounded-full font-semibold">
+            <span className="glass-pill text-[10px] font-mono font-bold text-[#17402C]">
               {distanceKm} km
             </span>
           </div>
         </div>
-        <div className="flex gap-2">
+        <div className="flex items-center gap-2">
           <button
+            type="button"
             onClick={handleDownloadGpx}
-            className="px-3 py-1.5 rounded-full bg-[#17402C]/5 text-[#17402C] font-mono font-medium text-xs hover:bg-[#17402C]/10 transition-colors flex items-center gap-1.5 active:scale-95"
+            className="flex items-center gap-1 text-xs font-bold text-[#17402C] hover:opacity-80"
+            title="Télécharger la trace GPX"
           >
-            <Icon name="ArrowDownTrayIcon" size={12} /> GPX
+            <span className="text-[11px] font-bold">GPX</span>
+            <GlassIconButton
+              size="sm"
+              title="Télécharger GPX"
+              icon={<Icon name="ArrowDownTrayIcon" size={12} />}
+            />
           </button>
           <Link
             href="/explorer"
-            className="px-3 py-1.5 rounded-full bg-[#17402C] text-white font-mono font-medium text-xs hover:bg-[#122E20] transition-colors flex items-center gap-1.5 active:scale-95"
+            className="flex items-center gap-1 text-xs font-bold text-[#17402C] hover:opacity-80"
+            title="Ouvrir la carte interactive"
           >
-            Carte →
+            <span className="text-[11px] font-bold">Carte</span>
+            <GlassIconButton
+              size="sm"
+              title="Ouvrir la carte"
+              icon={<Icon name="ArrowRightIcon" size={12} />}
+            />
           </Link>
         </div>
       </div>
       
-      <p className="text-xs text-[#1C2620]/80 mb-4 font-normal leading-relaxed">
+      <p className="text-xs text-[#5C6B5E] mb-4 font-normal leading-relaxed">
         {meta?.description || `Tracé de ${trailName} avec dénivelé cumulé de +${elevationGain} m.`}
       </p>
       
       {/* Real Interactive Leaflet Map */}
-      <div className="h-48 sm:h-56 bg-[#E7E3D6]/40 rounded-2xl relative overflow-hidden border border-[#1C2620]/10 mb-3 z-0 shadow-inner">
+      <div className="h-48 sm:h-56 glass-sub-card rounded-2xl relative overflow-hidden mb-3 z-0">
         <div ref={containerRef} className="w-full h-full z-0" />
       </div>
       
       <div className="flex flex-wrap items-center gap-4 text-[10px] font-mono uppercase tracking-widest text-[#5C6B5E]">
-        <span className="flex items-center gap-1.5 font-semibold text-[#17402C]">
+        <span className="flex items-center gap-1.5 font-bold text-[#17402C]">
           <span className="w-3 h-[2px] bg-[#17402C]" /> Tracé GPS actif
         </span>
-        <span className="flex items-center gap-1.5 font-semibold">
-          <Icon name="ArrowTrendingUpIcon" size={12} /> +{elevationGain} m D+
+        <span className="flex items-center gap-1.5 font-bold text-[#17402C]">
+          <Icon name="ArrowTrendingUpIcon" size={12} className="relative z-10" /> +{elevationGain} m D+
         </span>
-        <span className="flex items-center gap-1.5">
-          <Icon name="MapPinIcon" size={12} /> {trailName}
+        <span className="flex items-center gap-1.5 font-semibold">
+          <Icon name="MapPinIcon" size={12} className="relative z-10" /> {trailName}
         </span>
       </div>
     </div>

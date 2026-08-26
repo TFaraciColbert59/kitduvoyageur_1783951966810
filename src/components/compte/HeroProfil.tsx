@@ -4,7 +4,7 @@ import React from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
 import Icon from '@/components/ui/AppIcon';
-import { UserProfile } from '@/lib/mock/compte-marceline';
+import { UserProfile } from '@/lib/types/profile';
 
 interface HeroProfilProps {
   profile: UserProfile;
@@ -14,7 +14,7 @@ interface HeroProfilProps {
 
 export default function HeroProfil({ profile, onEditProfile, onShareProfile }: HeroProfilProps) {
   return (
-    <div className="relative w-full rounded-[0.75rem] sm:rounded-[3rem] overflow-hidden shadow-2xl min-h-[440px] sm:min-h-[500px] flex flex-col justify-between p-6 sm:p-10 lg:p-14 text-white font-sans border border-white/10">
+    <div className="relative w-full rounded-[1.75rem] overflow-hidden border border-white/50 shadow-md min-h-[300px] flex flex-col justify-between p-5 sm:p-7 font-sans">
       {/* Photographic Mountain Hero Background */}
       <div className="absolute inset-0 z-0">
         <Image
@@ -22,34 +22,34 @@ export default function HeroProfil({ profile, onEditProfile, onShareProfile }: H
           alt="Montagnes alpins"
           fill
           priority
-          sizes="(max-width: 1200px) 100vw, 1200px"
+          sizes="(max-width: 1400px) 100vw, 1400px"
           className="object-cover"
         />
-        {/* Dark Gradient Overlay for optimal readability */}
-        <div className="absolute inset-0 bg-gradient-to-b from-black/30 via-[#132219]/60 to-[#132219]/95" />
+        {/* Soft Multi-stop Gradient Overlay */}
+        <div className="absolute inset-0 bg-gradient-to-t from-[#17402C]/90 via-[#17402C]/40 to-black/20" />
       </div>
 
       {/* Top Header Row inside Hero */}
-      <div className="relative z-10 flex flex-col sm:flex-row justify-between items-start gap-4">
-        {/* Badge Pill */}
-        <div className="inline-flex items-center gap-2 px-4 py-1.5 bg-[#132219]/80 backdrop-blur-md rounded-full text-xs font-mono font-bold uppercase tracking-widest text-[#A3C9A8] border border-white/15 shadow-lg">
-          <span className="w-2 h-2 rounded-full bg-[#D4A359] animate-pulse" />
+      <div className="relative z-10 flex items-center justify-between gap-4">
+        {/* Badge Pill — pill verre */}
+        <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-white/85 backdrop-blur-md border border-white/60 text-[10px] font-mono font-bold uppercase tracking-widest text-[#17402C] shadow-sm">
+          <span className="w-2 h-2 rounded-full bg-[#C89A3B]" />
           <span>{profile.role_badge}</span>
         </div>
 
-        {/* Action Buttons Top Right (Only Modifier & Partager) */}
-        <div className="flex items-center gap-3 w-full sm:w-auto justify-end">
+        {/* Action Buttons Top Right */}
+        <div className="flex items-center gap-2.5">
           <button
             onClick={onEditProfile}
-            className="px-4 py-2 bg-white/10 hover:bg-white/20 backdrop-blur-md border border-white/20 rounded-full text-xs font-extrabold text-white transition-all flex items-center justify-center gap-2"
+            className="glass-capsule-btn !bg-white/85 backdrop-blur-md text-xs font-bold !py-1.5 !px-3.5 shadow-sm hover:!bg-white cursor-pointer"
           >
-            <Icon name="PencilIcon" size={14} />
+            <Icon name="PencilSquareIcon" size={14} />
             <span>Modifier profil</span>
           </button>
-          
+
           <button
             onClick={onShareProfile}
-            className="px-4 py-2 bg-[#2D5A3D] hover:bg-[#132219] text-white rounded-full text-xs font-extrabold transition-all shadow-lg flex items-center justify-center gap-2 hover:scale-105"
+            className="glass-capsule-btn primary !bg-[#17402C]/90 backdrop-blur-md text-xs font-bold !py-1.5 !px-3.5 shadow-sm cursor-pointer"
           >
             <Icon name="ShareIcon" size={14} />
             <span>Partager</span>
@@ -57,87 +57,79 @@ export default function HeroProfil({ profile, onEditProfile, onShareProfile }: H
         </div>
       </div>
 
-      {/* Bottom Content Area */}
-      <div className="relative z-10 mt-8 flex flex-col lg:flex-row items-start lg:items-end justify-between gap-8">
-        
-        <div className="flex flex-col sm:flex-row items-start sm:items-end gap-6 max-w-3xl">
-          {/* Avatar with Edit Camera Badge */}
-          <div className="relative shrink-0">
-            <div className="w-24 h-24 sm:w-32 sm:h-32 rounded-full overflow-hidden border-4 border-white/30 shadow-2xl bg-[#132219] relative">
-              <Image
-                src={profile.avatar_url || '/assets/images/no_image.png'}
-                alt={`${profile.first_name} ${profile.last_name}`}
-                fill
-                sizes="128px"
-                className="object-cover"
-              />
-            </div>
-            <button
-              onClick={onEditProfile}
-              className="absolute bottom-1 right-1 w-8 h-8 rounded-full bg-[#D4A359] text-white flex items-center justify-center shadow-lg border-2 border-[#132219] hover:scale-110 transition-transform"
-              title="Changer de photo"
-            >
-              <Icon name="CameraIcon" size={16} />
-            </button>
-          </div>
-
-          {/* Title & Bio */}
-          <div className="space-y-3">
-            <h1 className="font-display font-900 text-4xl sm:text-6xl text-white tracking-tight leading-none">
-              {profile.first_name}{' '}
-              <span className="font-serif italic font-normal text-[#E6C587]">
-                {profile.last_name}
-              </span>
-            </h1>
-
-            <p className="text-sm sm:text-base text-white/90 font-medium leading-relaxed max-w-xl">
-              {profile.bio}
-            </p>
-
-            {/* Meta Row */}
-            <div className="flex flex-wrap items-center gap-4 text-xs font-medium text-white/80 pt-1">
-              <span className="flex items-center gap-1.5 bg-[#132219]/60 px-3.5 py-1 rounded-full border border-white/10">
-                <Icon name="MapPinIcon" size={14} className="text-[#D4A359]" />
-                {profile.location}
-              </span>
-              <span className="flex items-center gap-1.5 bg-[#132219]/60 px-3.5 py-1 rounded-full border border-white/10">
-                <Icon name="CalendarIcon" size={14} className="text-[#A3C9A8]" />
-                {profile.tenure}
-              </span>
-              <span className="flex items-center gap-1.5 bg-[#132219]/60 px-3.5 py-1 rounded-full border border-white/10">
-                <Icon name="ClockIcon" size={14} className="text-[#A3C9A8]" />
-                {profile.last_active}
-              </span>
-              <Link
-                href="/profil"
-                className="flex items-center gap-1.5 bg-emerald-950/80 hover:bg-emerald-900 px-3.5 py-1 rounded-full border border-emerald-400/30 text-emerald-200 transition-colors shadow-md cursor-pointer"
-                title="Trust Score de confiance certifié LKDV"
+      {/* Bottom Main Identity Card — Single unified glass container */}
+      <div className="glass relative z-10 mt-6 rounded-2xl p-5 sm:p-6 border border-white/60 shadow-lg text-[#17402C]">
+        <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-5">
+          
+          <div className="flex items-start sm:items-center gap-4.5 max-w-2xl">
+            {/* Avatar with Camera action */}
+            <div className="relative shrink-0">
+              <div className="w-18 h-18 sm:w-20 sm:h-20 rounded-full overflow-hidden border-2 border-white shadow-md bg-[#17402C] relative">
+                <Image
+                  src={profile.avatar_url || '/assets/images/no_image.png'}
+                  alt={`${profile.first_name} ${profile.last_name}`}
+                  fill
+                  sizes="80px"
+                  className="object-cover"
+                />
+              </div>
+              <button
+                onClick={onEditProfile}
+                className="absolute -bottom-1 -right-1 w-6 h-6 rounded-full bg-[#C89A3B] text-white flex items-center justify-center border border-white hover:scale-110 transition-transform shadow cursor-pointer"
+                title="Changer de photo"
               >
-                <span>🛡️</span>
-                <span className="font-mono font-bold">Trust Score : {profile.trust_score ?? 50}/100</span>
-              </Link>
+                <Icon name="CameraIcon" size={12} />
+              </button>
+            </div>
+
+            {/* Names & Bio */}
+            <div className="space-y-1.5">
+              <h1 className="font-display font-bold text-2xl sm:text-3xl tracking-tight text-[#17402C] leading-tight">
+                {profile.first_name}{' '}
+                <span className="font-serif italic font-normal text-[#8C6418]">
+                  {profile.last_name}
+                </span>
+              </h1>
+
+              <p className="text-xs sm:text-sm text-[#365233] leading-relaxed font-medium">
+                {profile.bio}
+              </p>
+
+              {/* Meta tags */}
+              <div className="flex flex-wrap items-center gap-2 pt-1 text-[11px] font-mono text-[#5A7064]">
+                <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-lg bg-[#17402C]/5 border border-[#17402C]/5 font-sans font-medium text-xs text-[#365233]">
+                  <Icon name="MapPinIcon" size={12} className="text-[#8C6418]" />
+                  {profile.location}
+                </span>
+                <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-lg bg-[#17402C]/5 border border-[#17402C]/5 font-sans font-medium text-xs text-[#365233]">
+                  <Icon name="CalendarIcon" size={12} className="text-[#5B7F55]" />
+                  {profile.tenure}
+                </span>
+                <Link
+                  href="/profil"
+                  className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-lg bg-[#5B7F55]/10 border border-[#5B7F55]/20 hover:bg-[#5B7F55]/20 transition-colors text-xs font-bold text-[#17402C] cursor-pointer"
+                  title="Trust Score de confiance certifié LKDV"
+                >
+                  <span>🛡️</span>
+                  <span>Trust Score : {profile.trust_score ?? 50}/100</span>
+                </Link>
+              </div>
             </div>
           </div>
-        </div>
 
-        {/* SINGLE INVENTORY BUTTON - GREENISH LIQUID GLASS EFFECT */}
-        <div className="w-full lg:w-auto flex justify-end shrink-0">
-          <Link
-            href="/compte"
-            className="group relative w-full sm:w-auto px-6 py-3 bg-emerald-950/40 hover:bg-emerald-900/50 backdrop-blur-xl border border-emerald-400/30 hover:border-emerald-300/60 text-emerald-100 font-display font-800 text-xs sm:text-sm rounded-full shadow-lg shadow-emerald-950/30 transition-all hover:scale-105 active:scale-95 flex items-center justify-center gap-3 overflow-hidden"
-          >
-            {/* Shimmer light glass shine */}
-            <div className="absolute inset-0 bg-gradient-to-r from-transparent via-emerald-300/10 to-transparent translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-1000 pointer-events-none" />
-            <div className="w-7 h-7 rounded-full bg-emerald-500/20 border border-emerald-400/30 text-emerald-300 flex items-center justify-center text-xs shrink-0">
-              🎒
-            </div>
-            <span className="tracking-wide">Mon Compte</span>
-            <div className="w-6 h-6 rounded-full bg-emerald-400/20 group-hover:bg-emerald-400/30 flex items-center justify-center text-emerald-300 transition-colors shrink-0">
+          {/* Quick CTA Matériel */}
+          <div className="shrink-0 self-end md:self-center">
+            <Link
+              href="/materiel"
+              className="glass-capsule-btn primary text-xs font-bold !py-2.5 !px-4 flex items-center gap-2 shadow-sm"
+            >
+              <span>🎒</span>
+              <span>Mon Matériel</span>
               <Icon name="ArrowRightIcon" size={12} />
-            </div>
-          </Link>
-        </div>
+            </Link>
+          </div>
 
+        </div>
       </div>
     </div>
   );

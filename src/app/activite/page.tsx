@@ -10,10 +10,10 @@ type Tab = 'vous' | 'communaute' | 'amis';
 function SkeletonFeedItem() {
   return (
     <div className="flex gap-3 px-4 py-3 animate-pulse">
-      <div className="rounded-full flex-shrink-0" style={{ width: '40px', height: '40px', background: 'rgba(28,38,32,0.1)' }} />
+      <div className="rounded-full flex-shrink-0" style={{ width: '40px', height: '40px', background: 'rgba(23,64,44,0.1)' }} />
       <div className="flex-1 flex flex-col gap-2 pt-1">
-        <div className="h-3 rounded-full" style={{ background: 'rgba(28,38,32,0.1)', width: '55%' }} />
-        <div className="h-3 rounded-full" style={{ background: 'rgba(28,38,32,0.07)', width: '80%' }} />
+        <div className="h-3 rounded-full" style={{ background: 'rgba(23,64,44,0.1)', width: '55%' }} />
+        <div className="h-3 rounded-full" style={{ background: 'rgba(23,64,44,0.07)', width: '80%' }} />
       </div>
     </div>
   );
@@ -28,7 +28,7 @@ function VousTab({ isLoggedIn }: { isLoggedIn: boolean }) {
             <path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z" /><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z" />
           </svg>
         </div>
-        <h3 className="font-display font-bold text-lg" style={{ color: '#1C2620' }}>Vos carnets de voyage</h3>
+        <h3 className="font-display font-bold text-lg" style={{ color: '#17402C' }}>Vos carnets de voyage</h3>
         <p className="text-sm" style={{ color: '#5C6B5E' }}>Connectez-vous pour accéder à vos carnets et historique de sorties.</p>
         <Link href="/connexion" className="px-6 py-3 rounded-full font-semibold text-sm" style={{ background: '#17402C', color: 'white' }}>Se connecter</Link>
       </div>
@@ -36,18 +36,18 @@ function VousTab({ isLoggedIn }: { isLoggedIn: boolean }) {
   }
   return (
     <div className="flex flex-col gap-4 px-4 py-4">
-      <Link href="/carnets" className="flex items-center gap-3 rounded-2xl p-4" style={{ background: '#EDEAE0', border: '1px solid rgba(28,38,32,0.1)' }} aria-label="Mes carnets de voyage">
+      <Link href="/carnets" className="flex items-center gap-3 rounded-2xl p-4" style={{ background: '#EDEAE0', border: '1px solid rgba(23,64,44,0.1)' }} aria-label="Mes carnets de voyage">
         <div className="flex items-center justify-center rounded-xl flex-shrink-0" style={{ width: '44px', height: '44px', background: 'rgba(58,110,165,0.15)' }}>
           <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#3A6EA5" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z" /><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z" /></svg>
         </div>
-        <div className="flex-1"><p className="font-semibold text-sm" style={{ color: '#1C2620' }}>Mes carnets</p><p className="text-xs mt-0.5" style={{ color: '#5C6B5E' }}>Récits et photos de vos aventures</p></div>
+        <div className="flex-1"><p className="font-semibold text-sm" style={{ color: '#17402C' }}>Mes carnets</p><p className="text-xs mt-0.5" style={{ color: '#5C6B5E' }}>Récits et photos de vos aventures</p></div>
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#5C6B5E" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><polyline points="9 18 15 12 9 6" /></svg>
       </Link>
-      <Link href="/mes-aventures" className="flex items-center gap-3 rounded-2xl p-4" style={{ background: '#EDEAE0', border: '1px solid rgba(28,38,32,0.1)' }} aria-label="Historique de mes sorties">
+      <Link href="/mes-aventures" className="flex items-center gap-3 rounded-2xl p-4" style={{ background: '#EDEAE0', border: '1px solid rgba(23,64,44,0.1)' }} aria-label="Historique de mes sorties">
         <div className="flex items-center justify-center rounded-xl flex-shrink-0" style={{ width: '44px', height: '44px', background: 'rgba(92,138,58,0.15)' }}>
           <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#5C8A3A" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12" /></svg>
         </div>
-        <div className="flex-1"><p className="font-semibold text-sm" style={{ color: '#1C2620' }}>Historique de sorties</p><p className="text-xs mt-0.5" style={{ color: '#5C6B5E' }}>Toutes vos randonnées passées</p></div>
+        <div className="flex-1"><p className="font-semibold text-sm" style={{ color: '#17402C' }}>Historique de sorties</p><p className="text-xs mt-0.5" style={{ color: '#5C6B5E' }}>Toutes vos randonnées passées</p></div>
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#5C6B5E" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><polyline points="9 18 15 12 9 6" /></svg>
       </Link>
       <div className="flex flex-col gap-2"><SkeletonFeedItem /><SkeletonFeedItem /></div>
@@ -65,9 +65,9 @@ function CommunauteTab() {
   return (
     <div className="flex flex-col gap-3 px-4 py-4">
       {links.map((l) => (
-        <Link key={l.href} href={l.href} className="flex items-center gap-3 rounded-2xl p-4" style={{ background: '#EDEAE0', border: '1px solid rgba(28,38,32,0.1)' }} aria-label={l.label}>
+        <Link key={l.href} href={l.href} className="flex items-center gap-3 rounded-2xl p-4" style={{ background: '#EDEAE0', border: '1px solid rgba(23,64,44,0.1)' }} aria-label={l.label}>
           <span className="text-2xl flex-shrink-0" aria-hidden="true">{l.icon}</span>
-          <div className="flex-1"><p className="font-semibold text-sm" style={{ color: '#1C2620' }}>{l.label}</p><p className="text-xs mt-0.5" style={{ color: '#5C6B5E' }}>{l.desc}</p></div>
+          <div className="flex-1"><p className="font-semibold text-sm" style={{ color: '#17402C' }}>{l.label}</p><p className="text-xs mt-0.5" style={{ color: '#5C6B5E' }}>{l.desc}</p></div>
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#5C6B5E" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><polyline points="9 18 15 12 9 6" /></svg>
         </Link>
       ))}
@@ -115,8 +115,8 @@ export default function ActivitePage() {
         <MobilePageShell background="#E7E3D6">
           <main id="main-content" style={{ background: '#E7E3D6', minHeight: '100dvh' }}>
             {/* Segmented control */}
-            <div style={{ padding: '12px 16px', position: 'sticky', top: 0, background: 'rgba(231, 227, 214, 0.95)', backdropFilter: 'blur(8px)', borderBottom: '1px solid rgba(28,38,32,0.08)', zIndex: 10 }}>
-              <div role="tablist" aria-label="Sections Activité" className="flex rounded-xl p-1" style={{ background: 'rgba(28,38,32,0.08)' }}>
+            <div style={{ padding: '12px 16px', position: 'sticky', top: 0, background: 'rgba(231, 227, 214, 0.95)', backdropFilter: 'blur(8px)', borderBottom: '1px solid rgba(23,64,44,0.08)', zIndex: 10 }}>
+              <div role="tablist" aria-label="Sections Activité" className="flex rounded-xl p-1" style={{ background: 'rgba(23,64,44,0.08)' }}>
                 {tabs.map((tab) => (
                   <button
                     key={tab.id} role="tab" aria-selected={activeTab === tab.id} aria-controls={`panel-${tab.id}`} id={`tab-${tab.id}`}

@@ -22,14 +22,14 @@ export default function TimelineJours({ jours, hebergements }: TimelineJoursProp
   return (
     <div className="relative">
       {/* Vertical line */}
-      <div className="absolute left-4 top-0 bottom-0 w-px bg-[#1C2620]/10" aria-hidden="true" />
+      <div className="absolute left-4 top-0 bottom-0 w-px bg-[#17402C]/10" aria-hidden="true" />
 
       <div className="space-y-8">
         {items.map((item, idx) => (
           <div key={idx} className="relative pl-12">
             {/* Circle marker */}
             {item.type === 'jour' && (
-              <div className="absolute left-0 top-0 w-8 h-8 rounded-full bg-[#1C2620] text-white flex items-center justify-center text-xs font-mono font-bold z-10">
+              <div className="absolute left-0 top-0 w-8 h-8 rounded-full bg-[#17402C] text-white flex items-center justify-center text-xs font-mono font-bold z-10">
                 {(item.data as CarnetJour).dayNumber}
               </div>
             )}

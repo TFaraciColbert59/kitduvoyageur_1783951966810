@@ -16,6 +16,8 @@ import { getOrganizationSchema, getWebsiteSchema } from '@/lib/seo-utils';
 import ReactQueryProvider from '@/components/ReactQueryProvider';
 import PageTransition from '@/components/ui/PageTransition';
 import CustomCursor from '@/components/ui/CustomCursor';
+import PrefetchRoutes from '@/components/PrefetchRoutes';
+import NativeAppBootstrap from '@/components/NativeAppBootstrap';
 
 // Fonts
 const dmSans = DM_Sans({
@@ -23,7 +25,7 @@ const dmSans = DM_Sans({
   variable: '--font-sans',
   display: 'swap',
   weight: ['300', '400', '500', '600', '700'],
-  preload: false,
+  preload: true,
 });
 
 const manrope = Manrope({
@@ -223,6 +225,8 @@ export default function RootLayout({
               <SearchProvider>
                 <ErrorBoundaryWrapper>
                   <ReactQueryProvider>
+                    <NativeAppBootstrap />
+                    <PrefetchRoutes />
                     <Suspense fallback={null}>
                       <GoogleAnalytics />
                     </Suspense>

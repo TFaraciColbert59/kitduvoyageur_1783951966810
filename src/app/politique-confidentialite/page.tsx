@@ -13,14 +13,14 @@ export const metadata = {
 
 function MobilePCContent() {
   const s: React.CSSProperties = { marginBottom: '24px' };
-  const h2: React.CSSProperties = { fontSize: '14px', fontWeight: 600, color: '#1C2620', marginBottom: '8px', paddingBottom: '6px', borderBottom: '1px solid rgba(11,31,23,0.06)' };
-  const p: React.CSSProperties = { fontSize: '13px', color: 'rgba(28,38,32,0.8)', lineHeight: '1.6' };
+  const h2: React.CSSProperties = { fontSize: '14px', fontWeight: 600, color: '#17402C', marginBottom: '8px', paddingBottom: '6px', borderBottom: '1px solid rgba(23,64,44,0.06)' };
+  const p: React.CSSProperties = { fontSize: '13px', color: 'rgba(23,64,44,0.8)', lineHeight: '1.6' };
   const link: React.CSSProperties = { color: '#17402C', textDecoration: 'underline', fontSize: '13px' };
   return (
     <div style={{ padding: '16px' }}>
       <p style={{ fontSize: '11px', fontFamily: 'var(--font-mono)', color: '#17402C', letterSpacing: '0.14em', textTransform: 'uppercase', marginBottom: '12px' }}>RGPD · Données personnelles</p>
-      <h1 style={{ fontSize: '24px', fontWeight: 800, color: '#1C2620', marginBottom: '8px', fontFamily: 'var(--font-display)' }}>Politique de confidentialité</h1>
-      <p style={{ fontSize: '12px', color: 'rgba(28,38,32,0.5)', marginBottom: '24px' }}>Conformément au RGPD (UE) 2016/679 et à la loi Informatique et Libertés</p>
+      <h1 style={{ fontSize: '24px', fontWeight: 800, color: '#17402C', marginBottom: '8px', fontFamily: 'var(--font-display)' }}>Politique de confidentialité</h1>
+      <p style={{ fontSize: '12px', color: 'rgba(23,64,44,0.5)', marginBottom: '24px' }}>Conformément au RGPD (UE) 2016/679 et à la loi Informatique et Libertés</p>
 
       <section style={s}><h2 style={h2}>1. Responsable du traitement</h2><p style={p}>Le Kit du Voyageur (SAS). DPO : <a href="mailto:dpo@lekitduvoyageur.fr" style={link}>dpo@lekitduvoyageur.fr</a></p></section>
       <section style={s}><h2 style={h2}>2. Données collectées</h2><p style={p}>Nous collectons : données d&apos;identification (nom, email), données de navigation (IP anonymisée), données de transaction (historique commandes), données de profil (préférences voyage), données générées par l&apos;IA. Aucune donnée sensible (Art. 9 RGPD) n&apos;est collectée.</p></section>
@@ -32,13 +32,13 @@ function MobilePCContent() {
       <section style={s}><h2 style={h2}>8. Sécurité</h2><p style={p}>Chiffrement TLS 1.3, AES-256, authentification JWT, RLS Supabase, mots de passe hachés (bcrypt), sauvegardes quotidiennes.</p></section>
       <section style={s}><h2 style={h2}>9. Cookies</h2><p style={p}>Voir notre <Link href="/cookies" style={link}>Politique de gestion des cookies</Link>.</p></section>
 
-      <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px', paddingTop: '16px', borderTop: '1px solid rgba(11,31,23,0.06)' }}>
+      <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px', paddingTop: '16px', borderTop: '1px solid rgba(23,64,44,0.06)' }}>
         <Link href="/mentions-legales" style={link}>Mentions légales</Link>
-        <span style={{ color: 'rgba(28,38,32,0.2)', fontSize: '12px' }}>·</span>
+        <span style={{ color: 'rgba(23,64,44,0.2)', fontSize: '12px' }}>·</span>
         <Link href="/cgu" style={link}>CGU</Link>
-        <span style={{ color: 'rgba(28,38,32,0.2)', fontSize: '12px' }}>·</span>
+        <span style={{ color: 'rgba(23,64,44,0.2)', fontSize: '12px' }}>·</span>
         <Link href="/cgv" style={link}>CGV</Link>
-        <span style={{ color: 'rgba(28,38,32,0.2)', fontSize: '12px' }}>·</span>
+        <span style={{ color: 'rgba(23,64,44,0.2)', fontSize: '12px' }}>·</span>
         <Link href="/cookies" style={link}>Cookies</Link>
       </div>
     </div>

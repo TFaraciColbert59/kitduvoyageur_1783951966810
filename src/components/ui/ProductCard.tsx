@@ -39,7 +39,7 @@ export interface ProductCardProps {
 const CONDITION_BADGES: Record<string, { label: string; bg: string; text: string }> = {
   neuf: { label: 'Neuf', bg: 'bg-[#E1EBDD]', text: 'text-[#17402C]' },
   excellent: { label: 'Excellent', bg: 'bg-[#E1EBDD]', text: 'text-[#17402C]' },
-  bon: { label: 'Bon état', bg: 'bg-[#F4F1EB]', text: 'text-[#0B1F17]' },
+  bon: { label: 'Bon état', bg: 'bg-[#F4F1EB]', text: 'text-[#17402C]' },
   moyen: { label: 'État moyen', bg: 'bg-amber-100', text: 'text-amber-900' },
   usé: { label: 'Usé', bg: 'bg-amber-100', text: 'text-amber-900' },
   à_réparer: { label: 'À réparer', bg: 'bg-amber-200', text: 'text-amber-950' },
@@ -103,7 +103,7 @@ export default function ProductCard({
   if (viewMode === 'list') {
     return (
       <div
-        className={`group bg-white rounded-2xl p-3 sm:p-4 border transition-all duration-200 shadow-2xs hover:shadow-md flex items-center justify-between gap-3 sm:gap-4 font-sans ${
+        className={`group bg-white rounded-2xl p-3 sm:p-4 border transition-all duration-200 shadow-2xs hover: flex items-center justify-between gap-3 sm:gap-4 font-sans ${
           isInCart
             ? 'border-[#17402C] bg-[#FBFAF6] ring-1 ring-[#17402C]/20'
             : isOwned
@@ -139,7 +139,7 @@ export default function ProductCard({
               )}
             </div>
 
-            <h4 className="font-bold text-sm text-[#0B1F17] truncate leading-tight group-hover:text-[#17402C] transition-colors">
+            <h4 className="font-bold text-sm text-[#17402C] truncate leading-tight group-hover:text-[#17402C] transition-colors">
               {product.name}
             </h4>
 
@@ -152,7 +152,7 @@ export default function ProductCard({
               {product.quantity && product.quantity > 1 && (
                 <>
                   <span>·</span>
-                  <span className="font-bold text-[#0B1F17]">Qté : {product.quantity}</span>
+                  <span className="font-bold text-[#17402C]">Qté : {product.quantity}</span>
                 </>
               )}
             </div>
@@ -169,7 +169,7 @@ export default function ProductCard({
                     triggerHaptic('light');
                     onEdit();
                   }}
-                  className="px-3 py-1.5 rounded-full text-xs font-semibold bg-[#F4F1EB] text-[#0B1F17] hover:bg-[#EBE7DF] active:scale-95 transition-transform"
+                  className="px-3 py-1.5 rounded-full text-xs font-semibold bg-[#F4F1EB] text-[#17402C] hover:bg-[#EBE7DF] active:scale-95 transition-transform"
                 >
                   Modifier
                 </button>
@@ -197,7 +197,7 @@ export default function ProductCard({
                   triggerHaptic('selection');
                   onAddToKit();
                 }}
-                className="px-3.5 py-1.5 rounded-full text-xs font-bold bg-[#17402C] text-white shadow-xs active:scale-95 transition-transform"
+                className="px-3.5 py-1.5 rounded-full text-xs font-bold bg-[#17402C] text-white  active:scale-95 transition-transform"
               >
                 + Ajouter au kit
               </button>
@@ -213,7 +213,7 @@ export default function ProductCard({
                   className={`px-3.5 py-1.5 rounded-full text-xs font-bold transition-all active:scale-95 shadow-2xs flex items-center gap-1.5 ${
                     isInCart
                       ? 'bg-[#17402C] text-white ring-2 ring-[#17402C]/30'
-                      : 'bg-[#17402C] text-white hover:bg-[#0B1F17]'
+                      : 'bg-[#17402C] text-white hover:bg-[#17402C]'
                   }`}
                   title={isInCart ? 'Article présent dans votre panier' : 'Ajouter au panier'}
                 >
@@ -232,7 +232,7 @@ export default function ProductCard({
      ────────────────────────────────────────────────────────────────────────── */
   return (
     <div
-      className={`group bg-white rounded-2xl overflow-hidden border transition-all duration-300 shadow-2xs hover:shadow-lg flex flex-col justify-between font-sans ${
+      className={`group bg-white rounded-2xl overflow-hidden border transition-all duration-300 shadow-2xs hover: flex flex-col justify-between font-sans ${
         isInCart
           ? 'border-[#17402C] ring-2 ring-[#17402C]/20 bg-[#FBFAF6]'
           : isOwned
@@ -255,23 +255,23 @@ export default function ProductCard({
         {/* Top Badges */}
         <div className="absolute top-2.5 left-2.5 right-2.5 flex items-center justify-between gap-1 pointer-events-none">
           {product.category && (
-            <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-white/90 backdrop-blur-md text-[#0B1F17] shadow-xs truncate max-w-[130px]">
+            <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-[#FBFAF6] backdrop-blur-md text-[#17402C]  truncate max-w-[130px]">
               {getCategoryIcon(product.category)} {product.category}
             </span>
           )}
 
           {isInCart && (
-            <span className="text-[10px] font-mono font-bold px-2 py-0.5 rounded-full bg-[#17402C] text-white shadow-xs ml-auto">
+            <span className="text-[10px] font-mono font-bold px-2 py-0.5 rounded-full bg-[#17402C] text-white  ml-auto">
               ✓ Panier ({cartQuantity})
             </span>
           )}
           {!isInCart && isOwned && (
-            <span className="text-[10px] font-mono font-bold px-2 py-0.5 rounded-full bg-[#E1EBDD] text-[#17402C] shadow-xs ml-auto border border-[#A9C6B0]">
+            <span className="text-[10px] font-mono font-bold px-2 py-0.5 rounded-full bg-[#E1EBDD] text-[#17402C]  ml-auto border border-[#A9C6B0]">
               ✓ Possédé
             </span>
           )}
           {!isInCart && !isOwned && cond && (
-            <span className={`text-[10px] font-mono font-bold px-2 py-0.5 rounded-full shadow-xs ml-auto ${cond.bg} ${cond.text}`}>
+            <span className={`text-[10px] font-mono font-bold px-2 py-0.5 rounded-full  ml-auto ${cond.bg} ${cond.text}`}>
               {cond.label}
             </span>
           )}
@@ -292,7 +292,7 @@ export default function ProductCard({
             {product.brand || 'Le Kit du Voyageur'}
           </p>
           <Link href={productUrl} className="block group-hover:text-[#17402C] transition-colors">
-            <h3 className="font-bold text-[#0B1F17] text-xs sm:text-sm leading-snug line-clamp-2 mt-0.5">
+            <h3 className="font-bold text-[#17402C] text-xs sm:text-sm leading-snug line-clamp-2 mt-0.5">
               {product.name}
             </h3>
           </Link>
@@ -322,7 +322,7 @@ export default function ProductCard({
                     triggerHaptic('light');
                     onEdit();
                   }}
-                  className="flex-1 py-2 rounded-xl text-xs font-semibold bg-[#F4F1EB] text-[#0B1F17] hover:bg-[#EBE7DF] active:scale-95 transition-transform text-center"
+                  className="flex-1 py-2 rounded-xl text-xs font-semibold bg-[#F4F1EB] text-[#17402C] hover:bg-[#EBE7DF] active:scale-95 transition-transform text-center"
                 >
                   Modifier
                 </button>
@@ -350,7 +350,7 @@ export default function ProductCard({
                   triggerHaptic('selection');
                   onAddToKit();
                 }}
-                className="w-full py-2.5 rounded-xl text-xs font-bold bg-[#17402C] text-white hover:bg-[#0B1F17] shadow-xs active:scale-95 transition-transform"
+                className="w-full py-2.5 rounded-xl text-xs font-bold bg-[#17402C] text-white hover:bg-[#17402C]  active:scale-95 transition-transform"
               >
                 + Ajouter au kit
               </button>
@@ -366,7 +366,7 @@ export default function ProductCard({
               className={`w-full py-2.5 rounded-xl text-xs font-bold flex items-center justify-center gap-1.5 transition-all active:scale-95 shadow-2xs ${
                 isInCart
                   ? 'bg-[#17402C] text-white ring-2 ring-[#17402C]/30'
-                  : 'bg-[#17402C] text-white hover:bg-[#0B1F17]'
+                  : 'bg-[#17402C] text-white hover:bg-[#17402C]'
               }`}
             >
               <span>{isInCart ? `✓ Dans le panier (${cartQuantity})` : '+ Ajouter au panier'}</span>

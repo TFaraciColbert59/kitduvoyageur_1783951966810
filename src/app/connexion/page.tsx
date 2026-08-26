@@ -82,39 +82,39 @@ function AuthForm() {
     <main id="main-content" style={{ paddingTop: '80px', minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '80px 16px 32px' }}>
       <div style={{ width: '100%', maxWidth: '400px' }}>
         <div style={{ textAlign: 'center', marginBottom: '24px' }}>
-          <h1 style={{ fontSize: '24px', fontWeight: 700, color: '#1C2620' }}>{mode === 'connexion' ? 'Bon retour, aventurier' : "Rejoindre l'expédition"}</h1>
-          <p style={{ color: 'rgba(28,38,32,0.5)', fontSize: '14px', marginTop: '4px' }}>{mode === 'connexion' ? 'Connectez-vous pour accéder à vos kits.' : "Créez votre carnet d'expédition numérique."}</p>
+          <h1 style={{ fontSize: '24px', fontWeight: 700, color: '#17402C' }}>{mode === 'connexion' ? 'Bon retour, aventurier' : "Rejoindre l'expédition"}</h1>
+          <p style={{ color: 'rgba(23,64,44,0.5)', fontSize: '14px', marginTop: '4px' }}>{mode === 'connexion' ? 'Connectez-vous pour accéder à vos kits.' : "Créez votre carnet d'expédition numérique."}</p>
         </div>
 
-        <div style={{ display: 'flex', borderRadius: '40px', border: '1px solid rgba(11,31,23,0.06)', background: '#FBFAF6', padding: '4px', marginBottom: '20px' }}>
+        <div style={{ display: 'flex', borderRadius: '40px', border: '1px solid rgba(23,64,44,0.06)', background: '#FBFAF6', padding: '4px', marginBottom: '20px' }}>
           {(['connexion', 'inscription'] as const).map((m) => (
-            <button key={m} onClick={() => { setMode(m); setError(''); setConfirmationSent(false); }} style={{ flex: 1, padding: '10px', borderRadius: '40px', border: 'none', fontSize: '14px', fontWeight: 600, cursor: 'pointer', background: mode === m ? '#1C2620' : 'transparent', color: mode === m ? 'white' : 'rgba(28,38,32,0.5)' }}>{m === 'connexion' ? 'Connexion' : 'Inscription'}</button>
+            <button key={m} onClick={() => { setMode(m); setError(''); setConfirmationSent(false); }} style={{ flex: 1, padding: '10px', borderRadius: '40px', border: 'none', fontSize: '14px', fontWeight: 600, cursor: 'pointer', background: mode === m ? '#17402C' : 'transparent', color: mode === m ? 'white' : 'rgba(23,64,44,0.5)' }}>{m === 'connexion' ? 'Connexion' : 'Inscription'}</button>
           ))}
         </div>
 
-        <div style={{ background: '#FBFAF6', borderRadius: '12px', border: '1px solid rgba(11,31,23,0.06)', padding: '24px' }}>
+        <div style={{ background: '#FBFAF6', borderRadius: '12px', border: '1px solid rgba(23,64,44,0.06)', padding: '24px' }}>
           {confirmationSent ? (
             <div style={{ textAlign: 'center' }}>
               <div style={{ width: '48px', height: '48px', borderRadius: '50%', background: 'rgba(16,185,129,0.1)', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 12px' }}><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#10b981" strokeWidth="2"><polyline points="20 6 9 17 4 12" /></svg></div>
-              <p style={{ fontWeight: 700, color: '#1C2620', marginBottom: '8px' }}>Vérifiez vos emails !</p>
-              <p style={{ fontSize: '13px', color: 'rgba(28,38,32,0.6)', marginBottom: '16px' }}>Un email a été envoyé à <strong>{email}</strong>.</p>
+              <p style={{ fontWeight: 700, color: '#17402C', marginBottom: '8px' }}>Vérifiez vos emails !</p>
+              <p style={{ fontSize: '13px', color: 'rgba(23,64,44,0.6)', marginBottom: '16px' }}>Un email a été envoyé à <strong>{email}</strong>.</p>
               <button onClick={() => { setMode('connexion'); setConfirmationSent(false); }} style={{ width: '100%', padding: '12px', borderRadius: '10px', background: '#1C3829', color: 'white', border: 'none', fontWeight: 600, fontSize: '14px', cursor: 'pointer' }}>Passer à la connexion →</button>
             </div>
           ) : (
             <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
               {mode === 'inscription' && (
-                <input id="name" type="text" autoComplete="name" value={name} onChange={(e) => setName(e.target.value)} placeholder="Prénom" aria-label="Prénom" style={{ padding: '10px 14px', borderRadius: '10px', border: '1px solid rgba(11,31,23,0.06)', background: '#FBFAF6', fontSize: '14px', color: '#1C2620' }} />
+                <input id="name" type="text" autoComplete="name" value={name} onChange={(e) => setName(e.target.value)} placeholder="Prénom" aria-label="Prénom" style={{ padding: '10px 14px', borderRadius: '10px', border: '1px solid rgba(23,64,44,0.06)', background: '#FBFAF6', fontSize: '14px', color: '#17402C' }} />
               )}
-              <input id="email" type="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="Adresse email" autoComplete="email" aria-label="Adresse email" style={{ padding: '10px 14px', borderRadius: '10px', border: '1px solid rgba(11,31,23,0.06)', background: '#FBFAF6', fontSize: '14px', color: '#1C2620' }} />
-              <input id="password" type="password" value={password} onChange={(e) => setPassword(e.target.value)} placeholder={mode === 'inscription' ? 'Minimum 8 caractères' : 'Mot de passe'} autoComplete={mode === 'inscription' ? 'new-password' : 'current-password'} aria-label={mode === 'inscription' ? 'Mot de passe' : 'Mot de passe'} style={{ padding: '10px 14px', borderRadius: '10px', border: '1px solid rgba(11,31,23,0.06)', background: '#FBFAF6', fontSize: '14px', color: '#1C2620' }} />
+              <input id="email" type="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="Adresse email" autoComplete="email" aria-label="Adresse email" style={{ padding: '10px 14px', borderRadius: '10px', border: '1px solid rgba(23,64,44,0.06)', background: '#FBFAF6', fontSize: '14px', color: '#17402C' }} />
+              <input id="password" type="password" value={password} onChange={(e) => setPassword(e.target.value)} placeholder={mode === 'inscription' ? 'Minimum 8 caractères' : 'Mot de passe'} autoComplete={mode === 'inscription' ? 'new-password' : 'current-password'} aria-label={mode === 'inscription' ? 'Mot de passe' : 'Mot de passe'} style={{ padding: '10px 14px', borderRadius: '10px', border: '1px solid rgba(23,64,44,0.06)', background: '#FBFAF6', fontSize: '14px', color: '#17402C' }} />
               {error && <div style={{ background: '#FEE2E2', border: '1px solid #FECACA', padding: '10px', borderRadius: '10px', fontSize: '13px', color: '#DC2626' }}>{error}</div>}
               <button type="submit" disabled={loading} style={{ background: '#17402C', color: 'white', border: 'none', padding: '14px', borderRadius: '12px', fontSize: '15px', fontWeight: 600, cursor: loading ? 'not-allowed' : 'pointer', opacity: loading ? 0.6 : 1 }}>
                 {loading ? (mode === 'connexion' ? 'Connexion…' : 'Création…') : (mode === 'connexion' ? 'Se connecter' : 'Créer mon compte')}
               </button>
             </form>
           )}
-          <div style={{ marginTop: '16px', paddingTop: '16px', borderTop: '1px solid rgba(11,31,23,0.06)', textAlign: 'center' }}>
-            <p style={{ fontSize: '12px', color: 'rgba(28,38,32,0.5)' }}>
+          <div style={{ marginTop: '16px', paddingTop: '16px', borderTop: '1px solid rgba(23,64,44,0.06)', textAlign: 'center' }}>
+            <p style={{ fontSize: '12px', color: 'rgba(23,64,44,0.5)' }}>
               {mode === 'connexion' ? "Pas encore de compte ? " : "Déjà un compte ? "}
               <button type="button" onClick={() => { setMode(mode === 'connexion' ? 'inscription' : 'connexion'); setError(''); setConfirmationSent(false); }} style={{ color: '#17402C', fontWeight: 500, background: 'none', border: 'none', cursor: 'pointer', textDecoration: 'underline' }}>
                 {mode === 'connexion' ? "S'inscrire" : 'Se connecter'}

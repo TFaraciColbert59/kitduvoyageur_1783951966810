@@ -2,16 +2,22 @@
 
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import Header from '@/components/Header';
-import Footer from '@/components/Footer';
 import Icon from '@/components/ui/AppIcon';
 import Image from 'next/image';
 import Link from 'next/link';
 import BackButton from '@/components/ui/BackButton';
+import { BackgroundVideo } from '@/components/materiel/BackgroundVideo';
+import CommunityHubNav from '@/components/social/CommunityHubNav';
+import CarnetVerticalTabs from '@/components/carnets/CarnetVerticalTabs';
+import CarnetHubHero from '@/components/carnets/CarnetHubHero';
+import CarnetHubCard from '@/components/carnets/CarnetHubCard';
+import CarnetRightSidebar from '@/components/carnets/CarnetRightSidebar';
 import { createClient } from '@/lib/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import CommentItem from '@/components/communaute/CommentItem';
 import MobilePageShell from '@/components/mobile-nav/MobilePageShell';
 import MobileCarnetsHub from '@/components/carnets/MobileCarnetsHub';
+import CompteBackground from '@/components/compte/CompteBackground';
 import { SkeletonCarnetCard } from '@/components/ui/Skeleton';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
@@ -126,7 +132,7 @@ function CarnetModal({
     <div className="fixed inset-0 z-50 bg-black/70 backdrop-blur-sm flex items-center justify-center p-4 overflow-y-auto">
       <div className="bg-[#EDEAE0] border border-[#C8C3B0] rounded-2xl w-full max-w-2xl my-4">
         <div className="flex items-center justify-between p-6 border-b border-[#C8C3B0]">
-          <h2 className="font-display font-700 text-[#1C2620] text-xl">
+          <h2 className="font-display font-700 text-[#17402C] text-xl">
             {initial ? 'Modifier le carnet' : 'Nouveau carnet d\'expédition'}
           </h2>
           <button onClick={onClose} className="p-2 rounded-xl hover:bg-[#C8C3B0]/40 transition-colors">
@@ -136,34 +142,34 @@ function CarnetModal({
         <div className="p-6 space-y-5 max-h-[70vh] overflow-y-auto">
           <div>
             <label className="text-xs font-700 text-[#5C6B5E] uppercase tracking-wider block mb-1.5">Titre *</label>
-            <input className="w-full bg-white border border-[#C8C3B0] rounded-xl px-4 py-2.5 text-sm text-[#1C2620] focus:outline-none focus:ring-2 focus:ring-[#17402C]/30" placeholder="Ex: Circuit des Annapurnas — 18 jours" value={form.title} onChange={(e) => set('title', e.target.value)} />
+            <input className="w-full bg-white border border-[#C8C3B0] rounded-xl px-4 py-2.5 text-sm text-[#17402C] focus:outline-none focus:ring-2 focus:ring-[#17402C]/30" placeholder="Ex: Circuit des Annapurnas — 18 jours" value={form.title} onChange={(e) => set('title', e.target.value)} />
           </div>
           <div>
             <label className="text-xs font-700 text-[#5C6B5E] uppercase tracking-wider block mb-1.5">Destination *</label>
-            <input className="w-full bg-white border border-[#C8C3B0] rounded-xl px-4 py-2.5 text-sm text-[#1C2620] focus:outline-none focus:ring-2 focus:ring-[#17402C]/30" placeholder="Ex: Népal, Corse, Islande..." value={form.destination} onChange={(e) => set('destination', e.target.value)} />
+            <input className="w-full bg-white border border-[#C8C3B0] rounded-xl px-4 py-2.5 text-sm text-[#17402C] focus:outline-none focus:ring-2 focus:ring-[#17402C]/30" placeholder="Ex: Népal, Corse, Islande..." value={form.destination} onChange={(e) => set('destination', e.target.value)} />
           </div>
           <div className="grid grid-cols-2 gap-4">
             <div>
               <label className="text-xs font-700 text-[#5C6B5E] uppercase tracking-wider block mb-1.5">Date de départ</label>
-              <input type="date" className="w-full bg-white border border-[#C8C3B0] rounded-xl px-4 py-2.5 text-sm text-[#1C2620] focus:outline-none focus:ring-2 focus:ring-[#17402C]/30" value={form.start_date} onChange={(e) => set('start_date', e.target.value)} />
+              <input type="date" className="w-full bg-white border border-[#C8C3B0] rounded-xl px-4 py-2.5 text-sm text-[#17402C] focus:outline-none focus:ring-2 focus:ring-[#17402C]/30" value={form.start_date} onChange={(e) => set('start_date', e.target.value)} />
             </div>
             <div>
               <label className="text-xs font-700 text-[#5C6B5E] uppercase tracking-wider block mb-1.5">Date de retour</label>
-              <input type="date" className="w-full bg-white border border-[#C8C3B0] rounded-xl px-4 py-2.5 text-sm text-[#1C2620] focus:outline-none focus:ring-2 focus:ring-[#17402C]/30" value={form.end_date} onChange={(e) => set('end_date', e.target.value)} />
+              <input type="date" className="w-full bg-white border border-[#C8C3B0] rounded-xl px-4 py-2.5 text-sm text-[#17402C] focus:outline-none focus:ring-2 focus:ring-[#17402C]/30" value={form.end_date} onChange={(e) => set('end_date', e.target.value)} />
             </div>
           </div>
           <div>
             <label className="text-xs font-700 text-[#5C6B5E] uppercase tracking-wider block mb-1.5">Description</label>
-            <textarea rows={4} className="w-full bg-white border border-[#C8C3B0] rounded-xl px-4 py-2.5 text-sm text-[#1C2620] focus:outline-none focus:ring-2 focus:ring-[#17402C]/30 resize-none" placeholder="Décrivez votre expédition, les conditions, les moments forts..." value={form.description} onChange={(e) => set('description', e.target.value)} />
+            <textarea rows={4} className="w-full bg-white border border-[#C8C3B0] rounded-xl px-4 py-2.5 text-sm text-[#17402C] focus:outline-none focus:ring-2 focus:ring-[#17402C]/30 resize-none" placeholder="Décrivez votre expédition, les conditions, les moments forts..." value={form.description} onChange={(e) => set('description', e.target.value)} />
           </div>
           <div>
             <label className="text-xs font-700 text-[#5C6B5E] uppercase tracking-wider block mb-1.5">URL de la photo de couverture</label>
-            <input className="w-full bg-white border border-[#C8C3B0] rounded-xl px-4 py-2.5 text-sm text-[#1C2620] focus:outline-none focus:ring-2 focus:ring-[#17402C]/30" placeholder="https://..." value={form.cover_image} onChange={(e) => set('cover_image', e.target.value)} />
+            <input className="w-full bg-white border border-[#C8C3B0] rounded-xl px-4 py-2.5 text-sm text-[#17402C] focus:outline-none focus:ring-2 focus:ring-[#17402C]/30" placeholder="https://..." value={form.cover_image} onChange={(e) => set('cover_image', e.target.value)} />
           </div>
           <div className="grid grid-cols-2 gap-4">
             <div>
               <label className="text-xs font-700 text-[#5C6B5E] uppercase tracking-wider block mb-1.5">Météo</label>
-              <input className="w-full bg-white border border-[#C8C3B0] rounded-xl px-4 py-2.5 text-sm text-[#1C2620] focus:outline-none focus:ring-2 focus:ring-[#17402C]/30" placeholder="Ex: Ensoleillé, tempête J5..." value={form.weather} onChange={(e) => set('weather', e.target.value)} />
+              <input className="w-full bg-white border border-[#C8C3B0] rounded-xl px-4 py-2.5 text-sm text-[#17402C] focus:outline-none focus:ring-2 focus:ring-[#17402C]/30" placeholder="Ex: Ensoleillé, tempête J5..." value={form.weather} onChange={(e) => set('weather', e.target.value)} />
             </div>
             <div>
               <label className="text-xs font-700 text-[#5C6B5E] uppercase tracking-wider block mb-1.5">Note parcours ({form.route_rating}/10)</label>
@@ -172,14 +178,14 @@ function CarnetModal({
           </div>
           <div>
             <label className="text-xs font-700 text-[#5C6B5E] uppercase tracking-wider block mb-1.5">Tags (séparés par des virgules)</label>
-            <input className="w-full bg-white border border-[#C8C3B0] rounded-xl px-4 py-2.5 text-sm text-[#1C2620] focus:outline-none focus:ring-2 focus:ring-[#17402C]/30" placeholder="himalaya, autonomie, haute-altitude..." value={form.tags} onChange={(e) => set('tags', e.target.value)} />
+            <input className="w-full bg-white border border-[#C8C3B0] rounded-xl px-4 py-2.5 text-sm text-[#17402C] focus:outline-none focus:ring-2 focus:ring-[#17402C]/30" placeholder="himalaya, autonomie, haute-altitude..." value={form.tags} onChange={(e) => set('tags', e.target.value)} />
           </div>
           <div>
             <label className="text-xs font-700 text-[#5C6B5E] uppercase tracking-wider block mb-2">Visibilité</label>
             <div className="grid grid-cols-3 gap-2">
               {VISIBILITY_OPTS.map((opt) => (
                 <button key={opt.value} type="button" onClick={() => set('visibility', opt.value)} className={`p-3 rounded-xl border-2 text-left transition-all ${form.visibility === opt.value ? 'border-[#17402C] bg-[#17402C]/5' : 'border-[#C8C3B0] hover:border-[#17402C]/40'}`}>
-                  <p className="text-sm font-600 text-[#1C2620]">{opt.label}</p>
+                  <p className="text-sm font-600 text-[#17402C]">{opt.label}</p>
                   <p className="text-[10px] text-[#5C6B5E] mt-0.5">{opt.desc}</p>
                 </button>
               ))}
@@ -187,7 +193,7 @@ function CarnetModal({
           </div>
           <div className="flex items-center justify-between p-4 bg-white rounded-xl border border-[#C8C3B0]">
             <div>
-              <p className="text-sm font-600 text-[#1C2620]">Carnet collaboratif</p>
+              <p className="text-sm font-600 text-[#17402C]">Carnet collaboratif</p>
               <p className="text-xs text-[#5C6B5E]">Permettre à d&apos;autres membres de contribuer</p>
             </div>
             <button type="button" onClick={() => set('is_collaborative', !form.is_collaborative)} className={`w-12 h-6 rounded-full transition-all relative ${form.is_collaborative ? 'bg-[#17402C]' : 'bg-[#C8C3B0]'}`}>
@@ -293,7 +299,7 @@ function CarnetDetailModal({
     <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4 overflow-y-auto">
       <div className="bg-[#EDEAE0] border border-[#C8C3B0] rounded-2xl w-full max-w-3xl my-4 overflow-hidden">
         {/* Cover Hero */}
-        <div className="relative h-64 overflow-hidden bg-[#1C2620]">
+        <div className="relative h-64 overflow-hidden bg-[#17402C]">
           {carnet.cover_image ? (
             <Image src={carnet.cover_image} alt={carnet.cover_image_alt || carnet.title} fill className="object-cover" />
           ) : (
@@ -366,7 +372,7 @@ function CarnetDetailModal({
             ].map((s) => (
               <div key={s.label} className="p-4 text-center">
                 <p className="text-base mb-0.5">{s.icon}</p>
-                <p className="font-display font-700 text-[#1C2620] text-sm">{s.value}</p>
+                <p className="font-display font-700 text-[#17402C] text-sm">{s.value}</p>
                 <p className="text-[10px] text-[#5C6B5E]">{s.label}</p>
               </div>
             ))}
@@ -375,7 +381,7 @@ function CarnetDetailModal({
           <div className="p-6 space-y-6">
             {/* Dates */}
             {(carnet.start_date || carnet.end_date) && (
-              <div className="flex items-center gap-4 p-4 bg-[#1C2620] rounded-xl">
+              <div className="flex items-center gap-4 p-4 bg-[#17402C] rounded-xl">
                 <Icon name="CalendarDaysIcon" size={20} className="text-[#17402C] flex-shrink-0" />
                 <div className="flex flex-wrap items-center gap-4 text-sm">
                   {carnet.start_date && (
@@ -407,7 +413,7 @@ function CarnetDetailModal({
             {carnet.description && (
               <div>
                 <p className="text-[10px] font-mono text-[#5C6B5E] uppercase tracking-wider mb-3">Récit d&apos;expédition</p>
-                <p className="text-sm text-[#1C2620] leading-relaxed whitespace-pre-line">{carnet.description}</p>
+                <p className="text-sm text-[#17402C] leading-relaxed whitespace-pre-line">{carnet.description}</p>
               </div>
             )}
 
@@ -417,7 +423,7 @@ function CarnetDetailModal({
                 <Icon name="CloudIcon" size={18} className="text-[#5C6B5E] flex-shrink-0 mt-0.5" />
                 <div>
                   <p className="text-[10px] font-mono text-[#5C6B5E] uppercase tracking-wider mb-1">Conditions météo</p>
-                  <p className="text-sm text-[#1C2620]">{carnet.weather}</p>
+                  <p className="text-sm text-[#17402C]">{carnet.weather}</p>
                 </div>
               </div>
             )}
@@ -433,7 +439,7 @@ function CarnetDetailModal({
                         {point.day ?? i + 1}
                       </div>
                       <div className="flex-1">
-                        <p className="text-sm font-600 text-[#1C2620]">{point.label}</p>
+                        <p className="text-sm font-600 text-[#17402C]">{point.label}</p>
                         {point.lat != null && point.lng != null && (
                           <p className="text-[10px] text-[#5C6B5E] font-mono">{point.lat.toFixed(4)}, {point.lng.toFixed(4)}</p>
                         )}
@@ -450,7 +456,7 @@ function CarnetDetailModal({
                 <p className="text-[10px] font-mono text-[#5C6B5E] uppercase tracking-wider mb-2">Tags</p>
                 <div className="flex flex-wrap gap-2">
                   {carnet.tags.map((tag) => (
-                    <span key={tag} className="text-xs bg-[#1C2620] text-white/70 px-3 py-1.5 rounded-full">#{tag}</span>
+                    <span key={tag} className="text-xs bg-[#17402C] text-white/70 px-3 py-1.5 rounded-full">#{tag}</span>
                   ))}
                 </div>
               </div>
@@ -468,7 +474,7 @@ function CarnetDetailModal({
                   <span>{carnet.likes_count} réactions</span>
                 </button>
                 {showReactions && (
-                  <div className="absolute bottom-full left-0 mb-2 bg-white border border-[#C8C3B0] rounded-xl p-2 flex gap-1 shadow-lg z-10">
+                  <div className="absolute bottom-full left-0 mb-2 bg-white border border-[#C8C3B0] rounded-xl p-2 flex gap-1  z-10">
                     {REACTION_OPTS.map((r) => (
                       <button key={r.key} onClick={() => { onLike(carnet, r.key); setShowReactions(false); }} title={r.label} className={`w-9 h-9 rounded-lg flex items-center justify-center text-lg hover:bg-[#E7E3D6] transition-colors ${carnet.user_reaction === r.key ? 'bg-[#17402C]/10' : ''}`}>
                         {r.emoji}
@@ -489,7 +495,7 @@ function CarnetDetailModal({
 
               {/* Author link */}
               {carnet.author_id && (
-                <Link href={`/profil/${carnet.author_id}`} className="ml-auto flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-600 border border-[#C8C3B0] text-[#5C6B5E] hover:text-[#1C2620] transition-all">
+                <Link href={`/profil/${carnet.author_id}`} className="ml-auto flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-600 border border-[#C8C3B0] text-[#5C6B5E] hover:text-[#17402C] transition-all">
                   <Icon name="UserCircleIcon" size={15} />
                   Voir le profil
                 </Link>
@@ -587,7 +593,7 @@ function DeleteModal({ open, onClose, onConfirm, deleting }: { open: boolean; on
           <div className="w-14 h-14 rounded-2xl bg-red-100 flex items-center justify-center mx-auto mb-3">
             <Icon name="TrashIcon" size={24} className="text-red-500" />
           </div>
-          <h3 className="font-display font-700 text-[#1C2620] text-lg mb-1">Supprimer ce carnet ?</h3>
+          <h3 className="font-display font-700 text-[#17402C] text-lg mb-1">Supprimer ce carnet ?</h3>
           <p className="text-sm text-[#5C6B5E]">Cette action est irréversible. Tous les commentaires et réactions seront supprimés.</p>
         </div>
         <div className="flex gap-3">
@@ -628,7 +634,7 @@ function CarnetCard({
     : null;
 
   return (
-    <div className="bg-[#EDEAE0] border border-[#C8C3B0] rounded-2xl overflow-hidden hover:shadow-lg transition-shadow">
+    <div className="bg-[#EDEAE0] border border-[#C8C3B0] rounded-2xl overflow-hidden hover: transition-shadow">
       {/* Cover — clickable to open detail */}
       <button onClick={() => onViewDetail(carnet)} className="w-full relative h-52 overflow-hidden bg-[#C8C3B0] block">
         {carnet.cover_image ? (
@@ -681,7 +687,7 @@ function CarnetCard({
             {carnet.author?.full_name?.[0] ?? '?'}
           </Link>
           <div className="flex-1 min-w-0">
-            <Link href={`/profil/${carnet.author_id}`} className="text-sm font-600 text-[#1C2620] truncate hover:text-[#17402C] transition-colors block">{carnet.author?.full_name ?? 'Anonyme'}</Link>
+            <Link href={`/profil/${carnet.author_id}`} className="text-sm font-600 text-[#17402C] truncate hover:text-[#17402C] transition-colors block">{carnet.author?.full_name ?? 'Anonyme'}</Link>
             <p className="text-[10px] text-[#5C6B5E]">Trust {carnet.author?.trust_score ?? 0}</p>
           </div>
           <div className="text-right flex-shrink-0">
@@ -724,7 +730,7 @@ function CarnetCard({
               <span>{carnet.likes_count}</span>
             </button>
             {showReactions && (
-              <div className="absolute bottom-full left-0 mb-2 bg-white border border-[#C8C3B0] rounded-xl p-2 flex gap-1 shadow-lg z-10">
+              <div className="absolute bottom-full left-0 mb-2 bg-white border border-[#C8C3B0] rounded-xl p-2 flex gap-1  z-10">
                 {REACTION_OPTS.map((r) => (
                   <button key={r.key} onClick={() => { onLike(carnet, r.key); setShowReactions(false); }} title={r.label} className={`w-8 h-8 rounded-lg flex items-center justify-center text-base hover:bg-[#E7E3D6] transition-colors ${carnet.user_reaction === r.key ? 'bg-[#17402C]/10' : ''}`}>
                     {r.emoji}
@@ -737,7 +743,7 @@ function CarnetCard({
           {/* Comments — opens detail modal */}
           <button
             onClick={() => onViewDetail(carnet)}
-            className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-600 border border-[#C8C3B0] text-[#5C6B5E] hover:border-[#1C2620]/30 transition-all"
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-600 border border-[#C8C3B0] text-[#5C6B5E] hover:border-[#17402C]/30 transition-all"
           >
             <Icon name="ChatBubbleLeftIcon" size={13} />
             <span>{carnet.comments_count}</span>
@@ -755,7 +761,7 @@ function CarnetCard({
           {/* View detail */}
           <Link
             href={`/carnets/${carnet.id}`}
-            className="ml-auto flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-600 bg-[#1C2620] text-white hover:bg-[#1C2620]/80 transition-all"
+            className="ml-auto flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-600 bg-[#17402C] text-white hover:bg-[#17402C]/80 transition-all"
           >
             <Icon name="ArrowTopRightOnSquareIcon" size={13} />
             Page complète
@@ -764,7 +770,7 @@ function CarnetCard({
           {/* Share */}
           <button
             onClick={() => onShare(carnet)}
-            className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-600 border border-[#C8C3B0] text-[#5C6B5E] hover:border-[#1C2620]/30 transition-all"
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-600 border border-[#C8C3B0] text-[#5C6B5E] hover:border-[#17402C]/30 transition-all"
           >
             <Icon name="ShareIcon" size={13} />
           </button>
@@ -996,162 +1002,123 @@ export default function CarnetsPage() {
 
   return (
     <>
+      {/* ── DESKTOP (3-Column Fullscreen 100dvh + CompteBackground) ── */}
       <div className="hidden md:block">
-        <div className="min-h-screen bg-[#E7E3D6] text-[#1C2620]">
-      <Header />
+        <div className="h-[100dvh] max-h-[100dvh] overflow-hidden bg-transparent font-sans text-[#17402C] relative flex flex-col">
+          <CompteBackground />
+          <Header />
+          <main className="flex-1 min-h-0 overflow-hidden w-full max-w-[1440px] mx-auto px-4 sm:px-6 lg:px-8 pt-24 pb-4 flex gap-5">
+            {/* COLONNE GAUCHE (Nav & Vertical Tabs) - 230px */}
+            <aside className="w-[230px] shrink-0 h-full overflow-y-auto custom-scrollbar flex flex-col gap-3">
+              <CommunityHubNav layoutVariant="vertical" activeTab="carnets" />
+              <CarnetVerticalTabs
+                activeFilter={filter}
+                onSelectFilter={(f) => setFilter(f as typeof filter)}
+                myCarnetsCount={user ? carnets.filter(c => c.author_id === user.id).length : 0}
+                favoritesCount={user ? carnets.filter(c => c.user_favorited).length : 0}
+                totalCount={carnets.length}
+              />
+            </aside>
 
-      {/* Hero */}
-      <section className="bg-[#1C2620] pt-24 pb-12">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <BackButton variant="ghost" className="text-xs mb-8 text-white/70 hover:text-white" />
-          <p className="text-[10px] font-mono text-[#17402C] tracking-[0.2em] uppercase mb-2">Communauté</p>
-          <div className="flex flex-col lg:flex-row lg:items-end lg:justify-between gap-6">
-            <div>
-              <h1 className="font-display font-800 text-white text-3xl tracking-tight mb-2">
-                Carnets d&apos;expédition
-              </h1>
-              <p className="text-white/50 text-sm max-w-xl">
-                Partagez vos aventures, découvrez les récits de la communauté, réagissez et sauvegardez vos inspirations.
-              </p>
-            </div>
-            <button
-              onClick={() => { setEditCarnet(null); setShowCreate(true); }}
-              className="flex items-center gap-2 px-5 py-3 bg-[#17402C] text-white rounded-xl font-700 text-sm hover:bg-[#17402C]/90 transition-colors self-start lg:self-auto"
-            >
-              <Icon name="PlusIcon" size={16} />
-              Nouveau carnet
-            </button>
-          </div>
-        </div>
-      </section>
+            {/* COLONNE CENTRALE (Scrollable Unique) */}
+            <div className="flex-1 min-w-0 h-full overflow-y-auto custom-scrollbar pr-2 space-y-5">
+              {/* Breadcrumbs */}
+              <div className="flex items-center gap-2 text-xs font-medium text-[#5C6B5E]">
+                <Link href="/communaute" className="hover:text-[#17402C] transition-colors">Communauté</Link>
+                <Icon name="ChevronRightIcon" size={12} className="text-[#5C6B5E]" />
+                <span className="text-[#17402C] font-semibold">Carnets d&apos;expédition</span>
+              </div>
 
-      {/* Filters */}
-      <div className="sticky top-16 z-30 bg-[#1C2620]/95 backdrop-blur-md border-b border-white/10">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex items-center gap-0 overflow-x-auto">
-            {[
-              { id: 'all', label: 'Tous les carnets', icon: 'GlobeAltIcon' },
-              { id: 'mine', label: 'Mes carnets', icon: 'UserIcon' },
-              { id: 'favorites', label: 'Mes favoris', icon: 'BookmarkIcon' },
-            ].map((tab) => (
-              <button
-                key={tab.id}
-                onClick={() => setFilter(tab.id as typeof filter)}
-                className={`flex items-center gap-2 px-5 py-4 text-sm font-600 border-b-2 transition-all whitespace-nowrap ${filter === tab.id ? 'border-[#17402C] text-[#17402C]' : 'border-transparent text-white/50 hover:text-white'}`}
-              >
-                <Icon name={tab.icon} size={14} />
-                {tab.label}
-              </button>
-            ))}
-          </div>
-        </div>
-      </div>
+              {/* Hub Hero */}
+              <CarnetHubHero
+                totalCarnets={carnets.length}
+                onCreateClick={() => {
+                  if (!user) {
+                    showToast('Connectez-vous pour rédiger un carnet.');
+                    return;
+                  }
+                  setEditCarnet(null);
+                  setShowCreate(true);
+                }}
+              />
 
-      {/* Content */}
-      {/* Main sections */}
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-12">
-        {/* Create Section */}
-        <section>
-          <h2 className="text-xl font-bold mb-4">✨ Créer</h2>
-          <button
-            onClick={() => { setEditCarnet(null); setShowCreate(true); }}
-            className="px-4 py-2 bg-[#17402C] text-white rounded-lg hover:bg-[#17402C]/90 transition"
-          >
-            Créer un carnet depuis zéro
-          </button>
-          {/* Future: button to create from a finished adventure */}
-        </section>
-
-        {/* My Carnets Section */}
-        <section>
-          <h2 className="text-xl font-bold mb-4">📚 Mes carnets</h2>
-          <div className="flex gap-4 mb-4">
-            <button
-              onClick={() => setFilter('drafts')}
-              className={`px-3 py-1 rounded ${filter === 'drafts' ? 'bg-[#17402C] text-white' : 'bg-gray-200 text-black'}`}
-            >
-              Brouillons ({carnets.filter(c => c.author_id === user?.id && c.visibility === 'private').length})
-            </button>
-            <button
-              onClick={() => setFilter('published')}
-              className={`px-3 py-1 rounded ${filter === 'published' ? 'bg-[#17402C] text-white' : 'bg-gray-200 text-black'}`}
-            >
-              Publiés ({carnets.filter(c => c.author_id === user?.id && c.visibility !== 'private').length})
-            </button>
-          </div>
-          <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
-            {carnets
-              .filter(c => c.author_id === user?.id)
-              .filter(c => {
-                if (filter === 'drafts') return c.visibility === 'private';
-                if (filter === 'published') return c.visibility !== 'private';
-                return true;
-              })
-              .map(c => (
-                <CarnetCard
-                  key={c.id}
-                  carnet={c}
-                  currentUserId={user?.id}
-                  onViewDetail={setDetailCarnet}
-                  onEdit={(c) => { setEditCarnet(c); setShowCreate(true); }}
-                  onDelete={setDeleteCarnet}
-                  onLike={handleLike}
-                  onFavorite={handleFavorite}
-                  onShare={handleShare}
+              {/* Barre de Recherche & Filtre rapide */}
+              <div className="glass rounded-2xl p-2.5 flex items-center gap-3">
+                <Icon name="MagnifyingGlassIcon" size={16} className="text-[#5C6B5E] ml-2 shrink-0" />
+                <input
+                  className="w-full bg-transparent border-none text-xs sm:text-sm text-[#17402C] placeholder-[#5C6B5E] focus:outline-none"
+                  placeholder="Rechercher une destination, un massif ou un titre (ex: Vercors, Chartreuse)..."
+                  value={search}
+                  onChange={(e) => setSearch(e.target.value)}
                 />
-              ))}
-          </div>
-        </section>
+                {search && (
+                  <button
+                    type="button"
+                    onClick={() => setSearch('')}
+                    className="p-1 rounded-full hover:bg-black/5 text-[#5C6B5E]"
+                  >
+                    <Icon name="XMarkIcon" size={14} />
+                  </button>
+                )}
+              </div>
 
-        {/* Discover Section */}
-        <section>
-          <h2 className="text-xl font-bold mb-4">🌍 Découvrir</h2>
-          {/* Search */}
-          <div className="mb-6 relative">
-            <Icon name="MagnifyingGlassIcon" size={16} className="absolute left-4 top-1/2 -translate-y-1/2 text-[#5C6B5E]" />
-            <input
-              className="w-full bg-[#EDEAE0] border border-[#C8C3B0] rounded-xl pl-10 pr-4 py-3 text-sm text-[#1C2620] focus:outline-none focus:ring-2 focus:ring-[#17402C]/30"
-              placeholder="Rechercher par titre ou destination..."
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
+              {/* Feed de carnets */}
+              <section className="space-y-3">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <h2 className="font-display font-bold text-lg text-[#17402C]">
+                      {filter === 'mine' ? 'Mes carnets d’expédition' : filter === 'favorites' ? 'Mes récits favoris' : 'Récits & Expéditions'}
+                    </h2>
+                    <span className="glass-pill text-[10px] font-mono font-bold">
+                      {filtered.length} récits
+                    </span>
+                  </div>
+                </div>
+
+                {loading ? (
+                  <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+                    {[1, 2, 3, 4].map((i) => (
+                      <SkeletonCarnetCard key={i} />
+                    ))}
+                  </div>
+                ) : filtered.length === 0 ? (
+                  <div className="glass p-12 text-center rounded-2xl">
+                    <span className="text-3xl block mb-2">🏔️</span>
+                    <p className="text-sm font-bold text-[#17402C]">Aucun carnet trouvé</p>
+                    <p className="text-xs text-[#5C6B5E] mt-1">
+                      Essayez de modifier votre recherche ou soyez le premier à partager cette aventure !
+                    </p>
+                  </div>
+                ) : (
+                  <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+                    {filtered.map((c) => (
+                      <CarnetHubCard
+                        key={c.id}
+                        carnet={c}
+                        currentUserId={user?.id}
+                        onLike={handleLike}
+                        onFavorite={handleFavorite}
+                        onShare={handleShare}
+                      />
+                    ))}
+                  </div>
+                )}
+              </section>
+            </div>
+
+            {/* COLONNE DROITE (Widgets Sidebar) - 300px */}
+            <CarnetRightSidebar
+              totalCarnets={carnets.length}
+              featuredCarnet={carnets[0]}
             />
-          </div>
-          {loading ? (
-            <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
-              {[1, 2, 3, 4, 5, 6].map((i) => (
-                <SkeletonCarnetCard key={i} />
-              ))}
-            </div>
-          ) : (
-            <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
-              {carnets
-                .filter(c => c.visibility === 'public')
-                .filter(c => !search || c.title.toLowerCase().includes(search.toLowerCase()) || c.destination.toLowerCase().includes(search.toLowerCase()))
-                .map(c => (
-                  <CarnetCard
-                    key={c.id}
-                    carnet={c}
-                    currentUserId={user?.id}
-                    onViewDetail={setDetailCarnet}
-                    onEdit={(c) => { setEditCarnet(c); setShowCreate(true); }}
-                    onDelete={setDeleteCarnet}
-                    onLike={handleLike}
-                    onFavorite={handleFavorite}
-                    onShare={handleShare}
-                  />
-                ))}
-            </div>
-          )}
-        </section>
-      </div>
-
-      <Footer />
+          </main>
         </div>
       </div>
 
       {/* MOBILE VIEW */}
-      <div className="block md:hidden">
-        <MobilePageShell background="#FBFAF6">
+      <div className="block md:hidden min-h-screen relative font-sans text-[#17402C]">
+        <CompteBackground />
+        <MobilePageShell videoBackground={false} background="transparent">
           <MobileCarnetsHub
             carnets={carnets}
             myCarnets={user ? carnets.filter(c => c.author_id === user.id) : []}
@@ -1173,6 +1140,7 @@ export default function CarnetsPage() {
               setEditCarnet(null);
               setShowCreate(true);
             }}
+            onRefresh={loadCarnets}
           />
         </MobilePageShell>
       </div>
@@ -1204,7 +1172,7 @@ export default function CarnetsPage() {
 
       {/* Toast */}
       {toast && (
-        <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-50 bg-[#1C2620] text-white px-5 py-3 rounded-xl text-sm font-600 shadow-xl">
+        <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-50 bg-[#17402C] text-white px-5 py-3 rounded-xl text-sm font-600 ">
           {toast}
         </div>
       )}

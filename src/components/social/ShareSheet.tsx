@@ -118,21 +118,22 @@ export default function ShareSheet({
           animate={{ y: 0 }}
           exit={{ y: '100%' }}
           transition={{ type: 'spring', damping: 28, stiffness: 350 }}
-          className="relative z-10 w-full max-w-lg bg-[#14281E]/80 backdrop-blur-2xl text-white rounded-t-3xl p-5 pb-8 shadow-2xl border-t border-white/20 flex flex-col gap-4 max-h-[80vh] overflow-y-auto"
+          className="relative z-10 w-full max-w-lg glass text-[#17402C] rounded-t-3xl p-5 pb-8 flex flex-col gap-4 max-h-[80vh] overflow-y-auto"
         >
           {/* Drag handle */}
-          <div className="w-10 h-1 bg-white/30 rounded-full mx-auto shrink-0" />
+          <div className="w-10 h-1 bg-[#17402C]/20 rounded-full mx-auto shrink-0" />
 
           {/* Header */}
-          <div className="flex items-center justify-between pb-2 border-b border-white/10 shrink-0">
-            <h3 className="font-display font-bold text-base text-white flex items-center gap-2">
+          <div className="flex items-center justify-between pb-2 border-b border-[#17402C]/10 shrink-0">
+            <h3 className="font-display font-bold text-base text-[#17402C] flex items-center gap-2">
               <span>↗️</span>
               <span>Transférer / Partager</span>
             </h3>
             <button
               type="button"
               onClick={onClose}
-              className="w-8 h-8 rounded-full bg-white/10 flex items-center justify-center text-white/70 hover:bg-white/20 transition-colors"
+              className="w-9 h-9 rounded-full glass-capsule-btn flex items-center justify-center text-[#17402C] p-0 shrink-0"
+              aria-label="Fermer"
             >
               <Icon name="XMarkIcon" size={16} />
             </button>
@@ -143,16 +144,16 @@ export default function ShareSheet({
             <button
               type="button"
               onClick={handleCopy}
-              className="flex items-center justify-center gap-2 py-3 px-4 bg-white/10 hover:bg-white/15 active:scale-[0.98] border border-white/15 rounded-2xl text-xs font-bold text-white transition-all shadow-sm"
+              className="flex items-center justify-center gap-2 py-3 px-4 bg-white hover:bg-[#FAF8F5] active:scale-[0.98] border border-[#17402C]/15 rounded-2xl text-xs font-bold text-[#17402C] transition-all "
             >
-              <LkvIcon name="bookmark" size={16} color="#A8C4A2" />
+              <LkvIcon name="bookmark" size={16} color="#17402C" />
               <span>{copied ? '✓ Lien copié !' : 'Copier le lien'}</span>
             </button>
 
             <button
               type="button"
               onClick={handleNativeShare}
-              className="flex items-center justify-center gap-2 py-3 px-4 bg-[#A8C4A2] hover:bg-[#96b88f] active:scale-[0.98] text-[#17402C] rounded-2xl text-xs font-bold transition-all shadow-md"
+              className="flex items-center justify-center gap-2 py-3 px-4 bg-[#17402C] hover:bg-[#365233] active:scale-[0.98] text-white rounded-2xl text-xs font-bold transition-all "
             >
               <Icon name="PaperAirplaneIcon" size={16} />
               <span>Partage externe</span>
@@ -161,7 +162,7 @@ export default function ShareSheet({
 
           {/* Send to Travel Groups */}
           <div className="pt-2">
-            <p className="text-[11px] font-mono uppercase tracking-wider text-[#A8C4A2] mb-2">
+            <p className="text-[11px] font-mono uppercase tracking-wider text-[#A6C1A0] mb-2">
               Envoyer dans vos groupes de voyage ({groups.length})
             </p>
 
@@ -194,7 +195,7 @@ export default function ShareSheet({
                         className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all ${
                           isSent
                             ? 'bg-emerald-500 text-white'
-                            : 'bg-white/10 hover:bg-[#A8C4A2] hover:text-[#17402C] text-white'
+                            : 'bg-white/10 hover:bg-[#A6C1A0] hover:text-[#17402C] text-white'
                         }`}
                       >
                         {isSent ? '✓ Envoyé' : isSending ? 'Envoi...' : 'Envoyer'}

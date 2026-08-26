@@ -8,25 +8,21 @@ import { useAuth } from '@/contexts/AuthContext';
 import { createClient } from '@/lib/supabase/client';
 import { useHapticFeedback } from '@/hooks/useHapticFeedback';
 
-/* ─── Tokens Design System LKDV ─────────────────────────────────────────── */
+/* ─── Tokens Design System LKDV (palette officielle Liquid Glass v2.0) ─── */
 const C = {
-  paper: '#F5F3EE',
-  paperCard: '#FBFAF6',
-  stone: '#F4F1EB',
-  stoneHover: '#EBE7DF',
-  ink900: '#0B1F17',
-  ink700: '#2C3A33',
-  ink500: '#5C6B63',
-  ink300: '#B9C4BE',
-  forest950: '#06130E',
-  forest900: '#0B1F17',
+  paper: 'transparent',
+  paperCard: 'rgba(255, 255, 255, 0.90)',
+  stone: 'rgba(255, 255, 255, 0.65)',
+  ink900: '#17402C',
+  ink700: '#365233',
+  ink500: '#5A7064',
+  ink300: '#8FA396',
   forest800: '#17402C',
-  forest700: '#23583E',
+  forest900: '#365233',
   sage100: '#E1EBDD',
-  sage300: '#A9C6B0',
-  sage500: '#7FA97A',
-  warm500: '#C9924A',
-  white: '#FFFFFF',
+  sage300: '#A6C1A0',
+  sage500: '#5B7F55',
+  white: 'rgba(255, 255, 255, 0.85)',
 };
 
 /* ─── Types ────────────────────────────────────────────────────────────── */
@@ -360,10 +356,10 @@ export default function MobileCompteV2() {
   if (!user && !loading) {
     return (
       <div className="min-h-screen flex flex-col items-center justify-center p-6 text-center" style={{ background: C.paper }}>
-        <div className="w-20 h-20 rounded-full flex items-center justify-center mb-4 text-3xl shadow-sm" style={{ background: C.stone }}>
+        <div className="w-20 h-20 rounded-full flex items-center justify-center mb-4 text-3xl" style={{ background: C.stone }}>
           🧭
         </div>
-        <h2 className="text-2xl font-bold mb-2 font-serif" style={{ color: C.ink900 }}>
+        <h2 className="text-2xl font-display font-bold tracking-tight mb-2" style={{ color: C.ink900 }}>
           Votre Carnet Personnel
         </h2>
         <p className="text-sm max-w-xs mb-6 font-serif italic" style={{ color: C.ink500 }}>
@@ -372,8 +368,7 @@ export default function MobileCompteV2() {
         <Link
           href="/connexion?mode=connexion"
           onClick={() => triggerHaptic('selection')}
-          className="px-8 py-3.5 rounded-full text-sm font-bold text-white shadow-md transition-transform active:scale-95"
-          style={{ background: C.forest800 }}
+          className="glass-capsule-btn primary"
         >
           Se connecter
         </Link>
@@ -448,8 +443,7 @@ export default function MobileCompteV2() {
             triggerHaptic('selection');
             window.location.reload();
           }}
-          className="px-6 py-2.5 rounded-full text-xs font-bold text-white shadow-sm"
-          style={{ background: C.forest800 }}
+          className="glass-capsule-btn primary"
         >
           Réessayer
         </button>
@@ -458,22 +452,22 @@ export default function MobileCompteV2() {
   }
 
   return (
-    <div className="min-h-screen pb-28 font-sans selection:bg-[#17402C]/10" style={{ background: C.paper }}>
+    <div className="min-h-screen pb-36 font-sans selection:bg-[#17402C]/10 bg-transparent">
       {/* ══════════════════════════════════════════════════════════════════════
-          1. HEADER COMPACT & STATUT
+          1. HEADER COMPACT & STATUT (Frosted Liquid Glass)
          ══════════════════════════════════════════════════════════════════════ */}
-      <header className="sticky top-0 z-30 px-4 py-2 flex items-center justify-between backdrop-blur-xl border-b border-black/[0.04]" style={{ background: 'rgba(245, 243, 238, 0.92)' }}>
+      <header className="sticky top-0 z-30 px-4 pt-[max(10px,env(safe-area-inset-top))] pb-2.5 flex items-center justify-between backdrop-blur-xl border-b border-white/70 bg-white/80 shadow-2xs">
         {/* User Handle avec dropdown indicator */}
         <button
           onClick={() => {
             triggerHaptic('light');
             setRewardModalOpen(true);
           }}
-          className="flex items-center gap-1.5 text-base font-bold tracking-tight text-left focus:outline-none"
+          className="flex items-center gap-1.5 text-base font-bold tracking-tight text-left focus:outline-none cursor-pointer"
           style={{ color: C.ink900 }}
         >
           <span>{handleName}</span>
-          <span className="text-xs px-1.5 py-0.5 rounded-full font-mono font-semibold" style={{ background: C.sage100, color: C.forest800 }}>
+          <span className="glass-pill font-mono bg-white/80 border-white">
             Niv.{String(levelNum).padStart(2, '0')}
           </span>
           <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round">
@@ -487,7 +481,7 @@ export default function MobileCompteV2() {
             href="/alertes"
             onClick={() => triggerHaptic('light')}
             aria-label="Alertes et notifications"
-            className="w-9 h-9 rounded-full flex items-center justify-center transition-colors active:scale-90"
+            className="w-9 h-9 rounded-full flex items-center justify-center transition-all bg-white/80 border border-white active:scale-90 shadow-2xs cursor-pointer"
             style={{ color: C.ink900 }}
           >
             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
@@ -501,7 +495,7 @@ export default function MobileCompteV2() {
               setMenuOpen(true);
             }}
             aria-label="Options et paramètres"
-            className="w-9 h-9 rounded-full flex items-center justify-center transition-colors active:scale-90"
+            className="w-9 h-9 rounded-full flex items-center justify-center transition-all bg-white/80 border border-white active:scale-90 shadow-2xs cursor-pointer"
             style={{ color: C.ink900 }}
           >
             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
@@ -514,324 +508,324 @@ export default function MobileCompteV2() {
       </header>
 
       {/* ══════════════════════════════════════════════════════════════════════
-          2. IDENTITÉ & STATISTIQUES (Style Instagram / Apple)
+          2. IDENTITÉ & STATISTIQUES (Cockpit Liquid Glass)
          ══════════════════════════════════════════════════════════════════════ */}
-      <section className="px-5 pt-3 pb-2">
-        <div className="flex items-center gap-5 mb-3">
-          {/* Avatar 88px avec anneau actif et bouton édition */}
-          <div className="relative shrink-0">
-            <div
-              className="w-[84px] h-[84px] rounded-full overflow-hidden flex items-center justify-center p-[2px] shadow-sm relative cursor-pointer active:scale-95 transition-transform"
-              style={{
-                background: `linear-gradient(135deg, ${C.sage300}, ${C.forest800})`,
-              }}
-              onClick={() => {
-                triggerHaptic('light');
-                router.push('/compte/modifier');
-              }}
-            >
-              <div className="w-full h-full rounded-full overflow-hidden bg-[#F4F1EB] flex items-center justify-center">
-                {avatarUrl ? (
-                  // eslint-disable-next-line @next/next/no-img-element
-                  <img src={avatarUrl} alt={fullName} className="w-full h-full object-cover" />
-                ) : (
-                  <span className="text-2xl font-bold font-serif" style={{ color: C.forest800 }}>
-                    {firstName.charAt(0)}
-                  </span>
-                )}
-              </div>
-            </div>
-            {/* Badge caméra */}
-            <button
-              onClick={() => {
-                triggerHaptic('light');
-                router.push('/compte/modifier');
-              }}
-              aria-label="Modifier la photo"
-              className="absolute bottom-0 right-0 w-7 h-7 rounded-full text-white flex items-center justify-center shadow-md border-2 border-[#F5F3EE] active:scale-90 transition-transform"
-              style={{ background: C.forest800 }}
-            >
-              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
-                <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z" />
-                <circle cx="12" cy="13" r="4" />
-              </svg>
-            </button>
-          </div>
-
-          {/* Statistiques épurées */}
-          <div className="flex-1 grid grid-cols-3 gap-1 text-center">
-            <button
-              onClick={() => {
-                triggerHaptic('selection');
-                setTab('voyages');
-              }}
-              className="flex flex-col items-center py-1 rounded-xl transition-colors active:bg-black/[0.04]"
-            >
-              <span className="text-lg font-bold tracking-tight leading-none" style={{ color: C.ink900 }}>
-                {totalVoyages}
-              </span>
-              <span className="text-[11px] mt-1 font-medium" style={{ color: C.ink500 }}>
-                Voyages
-              </span>
-            </button>
-            <button
-              onClick={() => {
-                triggerHaptic('selection');
-                setTab('carnets');
-              }}
-              className="flex flex-col items-center py-1 rounded-xl transition-colors active:bg-black/[0.04]"
-            >
-              <span className="text-lg font-bold tracking-tight leading-none" style={{ color: C.ink900 }}>
-                {totalCarnets}
-              </span>
-              <span className="text-[11px] mt-1 font-medium" style={{ color: C.ink500 }}>
-                Carnets
-              </span>
-            </button>
-            <div className="flex flex-col items-center py-1">
-              <span className="text-lg font-bold tracking-tight leading-none" style={{ color: C.ink900 }}>
-                {formatCount(followers)}
-              </span>
-              <span className="text-[11px] mt-1 font-medium" style={{ color: C.ink500 }}>
-                Abonnés
-              </span>
-            </div>
-          </div>
-        </div>
-
-        {/* Nom & Badges de statut */}
-        <div className="space-y-1">
-          <div className="flex items-center gap-1.5 flex-wrap">
-            <h1 className="text-base font-bold tracking-tight" style={{ color: C.ink900 }}>
-              {fullName}
-            </h1>
-            <svg width="15" height="15" viewBox="0 0 24 24" fill={C.forest800}>
-              <path d="M12 1l2.4 2.2 3.2-.4.8 3.2 3 1.4-1.2 3 1.2 3-3 1.4-.8 3.2-3.2-.4L12 20l-2.4-1.4-3.2.4-.8-3.2-3-1.4 1.2-3-1.2-3 3-1.4.8-3.2 3.2.4L12 1zm-1.2 12.6l6-6-1.4-1.4-4.6 4.6-2-2-1.4 1.4 3.4 3.4z" />
-            </svg>
-            <span
-              onClick={() => setRewardModalOpen(true)}
-              className="inline-flex items-center gap-1 text-[10px] font-bold px-2 py-0.5 rounded-full cursor-pointer"
-              style={{ background: C.sage100, color: C.forest800 }}
-            >
-              🛡️ Trust {trustScore}/100
-            </span>
-          </div>
-
-          <p className="text-xs font-mono" style={{ color: C.ink500 }}>
-            {handle} · {levelTitle}
-          </p>
-
-          {/* Bio poétique en typographie sérif italique */}
-          {bio && (
-            <p className="text-sm font-serif italic leading-snug pt-1" style={{ color: C.ink900 }}>
-              {bio}
-            </p>
-          )}
-
-          {/* Localisation & Page publique */}
-          <div className="flex items-center gap-3 text-xs pt-1.5 flex-wrap" style={{ color: C.ink500 }}>
-            {location && (
-              <span className="inline-flex items-center gap-1">
-                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
-                  <path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0z" />
-                  <circle cx="12" cy="10" r="3" />
-                </svg>
-                {location}
-              </span>
-            )}
-            <Link
-              href={`/profil/${user?.id}`}
-              onClick={() => triggerHaptic('light')}
-              className="font-medium hover:underline inline-flex items-center gap-1"
-              style={{ color: C.forest800 }}
-            >
-              <span>Page publique</span>
-              <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round">
-                <path d="M7 17l9.2-9.2M17 17V8H8" />
-              </svg>
-            </Link>
-          </div>
-        </div>
-
-        {/* Actions Rapides */}
-        <div className="flex items-center gap-2 pt-4">
-          <Link
-            href="/compte/modifier"
-            onClick={() => triggerHaptic('light')}
-            className="flex-1 h-9 rounded-xl font-medium text-xs text-white flex items-center justify-center gap-1.5 shadow-sm transition-transform active:scale-95"
-            style={{ background: C.forest800 }}
-          >
-            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
-              <path d="M17 3l4 4L8 20l-5 1 1-5L17 3z" />
-            </svg>
-            Modifier
-          </Link>
-          <button
-            onClick={handleShareProfile}
-            className="flex-1 h-9 rounded-xl font-medium text-xs flex items-center justify-center gap-1.5 border border-black/[0.08] transition-transform active:scale-95"
-            style={{ background: C.stone, color: C.ink900 }}
-          >
-            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
-              <circle cx="18" cy="5" r="3" />
-              <circle cx="6" cy="12" r="3" />
-              <circle cx="18" cy="19" r="3" />
-              <line x1="8.59" y1="13.51" x2="15.42" y2="17.49" />
-              <line x1="15.41" y1="6.51" x2="8.59" y2="10.49" />
-            </svg>
-            Partager
-          </button>
-          <button
-            onClick={() => {
-              triggerHaptic('selection');
-              setMenuOpen(true);
-            }}
-            aria-label="Options"
-            className="w-9 h-9 rounded-xl flex items-center justify-center border border-black/[0.08] transition-transform active:scale-95"
-            style={{ background: C.stone, color: C.ink900 }}
-          >
-            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
-              <circle cx="12" cy="12" r="3" />
-              <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z" />
-            </svg>
-          </button>
-        </div>
-      </section>
-
-      {/* ══════════════════════════════════════════════════════════════════════
-          3. RAIL HIGHLIGHTS (Stories / Voyages Épinglés)
-         ══════════════════════════════════════════════════════════════════════ */}
-      <section className="py-3">
-        <div className="flex gap-4 px-5 overflow-x-auto scrollbar-none snap-x">
-          {highlights.map((h) => (
-            <Link
-              key={h.id}
-              href={`/groupes/${h.id}`}
-              onClick={() => triggerHaptic('light')}
-              className="flex flex-col items-center gap-1.5 shrink-0 snap-start active:scale-95 transition-transform"
-              style={{ width: 62 }}
-            >
+      <section className="px-3 pt-3 pb-1">
+        <div className="glass rounded-3xl p-4 sm:p-5 border border-white/80 bg-white/85 backdrop-blur-xl shadow-xs">
+          <div className="flex items-center gap-4 mb-3">
+            {/* Avatar 84px avec anneau actif et bouton édition */}
+            <div className="relative shrink-0">
               <div
-                className="w-[60px] h-[60px] rounded-full p-[2px] shadow-sm relative flex items-center justify-center"
+                className="w-[78px] h-[78px] rounded-full overflow-hidden flex items-center justify-center p-[2px] relative cursor-pointer active:scale-95 transition-transform shadow-xs"
                 style={{
-                  background: `linear-gradient(145deg, ${C.sage300}, ${C.forest800})`,
+                  background: `linear-gradient(135deg, ${C.sage300}, ${C.forest800})`,
+                }}
+                onClick={() => {
+                  triggerHaptic('light');
+                  router.push('/compte/modifier');
                 }}
               >
-                <div
-                  className="w-full h-full rounded-full bg-cover bg-center"
-                  style={{
-                    backgroundImage: h.cover ? `url(${h.cover})` : `linear-gradient(135deg, ${C.forest800}, ${C.forest900})`,
-                  }}
-                />
+                <div className="w-full h-full rounded-full overflow-hidden bg-white/90 flex items-center justify-center">
+                  {avatarUrl ? (
+                    // eslint-disable-next-line @next/next/no-img-element
+                    <img src={avatarUrl} alt={fullName} className="w-full h-full object-cover" />
+                  ) : (
+                    <span className="text-2xl font-bold font-serif" style={{ color: C.forest800 }}>
+                      {firstName.charAt(0)}
+                    </span>
+                  )}
+                </div>
               </div>
-              <span className="text-[11px] font-medium truncate w-full text-center" style={{ color: C.ink900 }}>
-                {h.label}
-              </span>
-            </Link>
-          ))}
-
-          {/* Bouton Nouveau voyage */}
-          <Link
-            href="/nouveau-groupe"
-            onClick={() => triggerHaptic('selection')}
-            className="flex flex-col items-center gap-1.5 shrink-0 snap-start active:scale-95 transition-transform"
-            style={{ width: 62 }}
-          >
-            <div className="w-[60px] h-[60px] rounded-full border-2 border-dashed border-black/20 flex items-center justify-center bg-white/40">
-              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke={C.ink500} strokeWidth="2" strokeLinecap="round">
-                <path d="M12 5v14M5 12h14" />
-              </svg>
-            </div>
-            <span className="text-[11px] font-medium" style={{ color: C.ink500 }}>
-              Nouveau
-            </span>
-          </Link>
-        </div>
-      </section>
-
-      {/* ══════════════════════════════════════════════════════════════════════
-          4. ONGLETS STICKY & TOGGLE VUE (Grille / Liste)
-         ══════════════════════════════════════════════════════════════════════ */}
-      <div
-        className="sticky top-[49px] z-20 flex items-center justify-between px-4 border-t border-b border-black/[0.06] backdrop-blur-xl"
-        style={{ background: 'rgba(245, 243, 238, 0.94)' }}
-      >
-        <div className="flex items-center gap-1 flex-1 overflow-x-auto scrollbar-none py-1">
-          {([
-            { id: 'tout', label: 'Activité' },
-            { id: 'carnets', label: 'Carnets' },
-            { id: 'voyages', label: 'Voyages' },
-            { id: 'materiel', label: 'Équipement' },
-          ] as { id: TabKey; label: string }[]).map((t) => {
-            const isActive = tab === t.id;
-            return (
+              {/* Badge caméra */}
               <button
-                key={t.id}
+                onClick={() => {
+                  triggerHaptic('light');
+                  router.push('/compte/modifier');
+                }}
+                aria-label="Modifier la photo"
+                className="absolute bottom-0 right-0 w-6 h-6 rounded-full text-white flex items-center justify-center border-2 border-white active:scale-90 transition-transform shadow-2xs cursor-pointer"
+                style={{ background: C.forest800 }}
+              >
+                <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z" />
+                  <circle cx="12" cy="13" r="4" />
+                </svg>
+              </button>
+            </div>
+
+            {/* Statistiques épurées */}
+            <div className="flex-1 grid grid-cols-3 gap-1 text-center">
+              <button
                 onClick={() => {
                   triggerHaptic('selection');
-                  setTab(t.id);
+                  setTab('voyages');
                 }}
-                className="relative px-3 py-2.5 text-xs font-semibold whitespace-nowrap transition-colors"
-                style={{ color: isActive ? C.ink900 : C.ink500 }}
+                className="flex flex-col items-center py-1.5 rounded-xl transition-all active:scale-95 hover:bg-white/60 cursor-pointer"
               >
-                {t.label}
-                {isActive && (
-                  <motion.div
-                    layoutId="compte-tab-active"
-                    transition={{ type: 'spring', stiffness: 450, damping: 30 }}
-                    className="absolute bottom-0 left-2 right-2 h-[2px] rounded-full"
-                    style={{ background: C.forest800 }}
-                  />
-                )}
+                <span className="text-lg font-bold tracking-tight leading-none" style={{ color: C.ink900 }}>
+                  {totalVoyages}
+                </span>
+                <span className="text-[11px] mt-1 font-medium" style={{ color: C.ink500 }}>
+                  Voyages
+                </span>
               </button>
-            );
-          })}
-        </div>
+              <button
+                onClick={() => {
+                  triggerHaptic('selection');
+                  setTab('carnets');
+                }}
+                className="flex flex-col items-center py-1.5 rounded-xl transition-all active:scale-95 hover:bg-white/60 cursor-pointer"
+              >
+                <span className="text-lg font-bold tracking-tight leading-none" style={{ color: C.ink900 }}>
+                  {totalCarnets}
+                </span>
+                <span className="text-[11px] mt-1 font-medium" style={{ color: C.ink500 }}>
+                  Carnets
+                </span>
+              </button>
+              <div className="flex flex-col items-center py-1.5">
+                <span className="text-lg font-bold tracking-tight leading-none" style={{ color: C.ink900 }}>
+                  {formatCount(followers)}
+                </span>
+                <span className="text-[11px] mt-1 font-medium" style={{ color: C.ink500 }}>
+                  Abonnés
+                </span>
+              </div>
+            </div>
+          </div>
 
-        {/* Toggle Grille / Liste (pour carnets et voyages) */}
-        {tab !== 'materiel' && (
-          <div className="flex items-center gap-0.5 pl-2 border-l border-black/[0.08]">
-            <button
-              onClick={() => {
-                triggerHaptic('light');
-                setViewMode('grid');
-              }}
-              aria-label="Vue Grille"
-              className="p-1.5 rounded-lg transition-colors"
-              style={{
-                background: viewMode === 'grid' ? C.stone : 'transparent',
-                color: viewMode === 'grid' ? C.ink900 : C.ink300,
-              }}
-            >
-              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                <rect x="3" y="3" width="7" height="7" rx="1" />
-                <rect x="14" y="3" width="7" height="7" rx="1" />
-                <rect x="3" y="14" width="7" height="7" rx="1" />
-                <rect x="14" y="14" width="7" height="7" rx="1" />
+          {/* Nom & Badges de statut */}
+          <div className="space-y-1">
+            <div className="flex items-center gap-1.5 flex-wrap">
+              <h1 className="text-[19px] font-display font-bold tracking-tight" style={{ color: C.ink900 }}>
+                {fullName}
+              </h1>
+              <svg width="15" height="15" viewBox="0 0 24 24" fill={C.forest800}>
+                <path d="M12 1l2.4 2.2 3.2-.4.8 3.2 3 1.4-1.2 3 1.2 3-3 1.4-.8 3.2-3.2-.4L12 20l-2.4-1.4-3.2.4-.8-3.2-3-1.4 1.2-3-1.2-3 3-1.4.8-3.2 3.2.4L12 1zm-1.2 12.6l6-6-1.4-1.4-4.6 4.6-2-2-1.4 1.4 3.4 3.4z" />
               </svg>
+              <span
+                onClick={() => setRewardModalOpen(true)}
+                className="glass-pill cursor-pointer bg-white/80 border-white hover:bg-white transition-all active:scale-95"
+              >
+                🛡️ Trust {trustScore}/100
+              </span>
+            </div>
+
+            <p className="text-xs font-mono" style={{ color: C.ink500 }}>
+              {handle} · {levelTitle}
+            </p>
+
+            {/* Bio poétique en typographie sérif italique */}
+            {bio && (
+              <p className="text-sm font-serif italic leading-snug pt-1" style={{ color: C.ink900 }}>
+                {bio}
+              </p>
+            )}
+
+            {/* Localisation & Page publique */}
+            <div className="flex items-center gap-3 text-xs pt-1.5 flex-wrap" style={{ color: C.ink500 }}>
+              {location && (
+                <span className="inline-flex items-center gap-1 font-medium">
+                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
+                    <path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0z" />
+                    <circle cx="12" cy="10" r="3" />
+                  </svg>
+                  {location}
+                </span>
+              )}
+              <Link
+                href={`/profil/${user?.id}`}
+                onClick={() => triggerHaptic('light')}
+                className="font-bold hover:underline inline-flex items-center gap-1 transition-all"
+                style={{ color: C.forest800 }}
+              >
+                <span>Page publique</span>
+                <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round">
+                  <path d="M7 17l9.2-9.2M17 17V8H8" />
+                </svg>
+              </Link>
+            </div>
+          </div>
+
+          {/* Actions Rapides */}
+          <div className="flex items-center gap-2 pt-4">
+            <Link
+              href="/compte/modifier"
+              onClick={() => triggerHaptic('light')}
+              className="glass-capsule-btn primary flex-1 !py-2.5 text-xs font-bold"
+            >
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
+                <path d="M17 3l4 4L8 20l-5 1 1-5L17 3z" />
+              </svg>
+              Modifier
+            </Link>
+            <button
+              onClick={handleShareProfile}
+              className="glass-capsule-btn secondary flex-1 !py-2.5 text-xs font-bold"
+            >
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
+                <circle cx="18" cy="5" r="3" />
+                <circle cx="6" cy="12" r="3" />
+                <circle cx="18" cy="19" r="3" />
+                <line x1="8.59" y1="13.51" x2="15.42" y2="17.49" />
+                <line x1="15.41" y1="6.51" x2="8.59" y2="10.49" />
+              </svg>
+              Partager
             </button>
             <button
               onClick={() => {
-                triggerHaptic('light');
-                setViewMode('list');
+                triggerHaptic('selection');
+                setMenuOpen(true);
               }}
-              aria-label="Vue Liste"
-              className="p-1.5 rounded-lg transition-colors"
-              style={{
-                background: viewMode === 'list' ? C.stone : 'transparent',
-                color: viewMode === 'list' ? C.ink900 : C.ink300,
-              }}
+              aria-label="Options"
+              className="glass-capsule-btn w-10 !py-2.5"
             >
               <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
-                <line x1="8" y1="6" x2="21" y2="6" />
-                <line x1="8" y1="12" x2="21" y2="12" />
-                <line x1="8" y1="18" x2="21" y2="18" />
-                <circle cx="4" cy="6" r="1" fill="currentColor" />
-                <circle cx="4" cy="12" r="1" fill="currentColor" />
-                <circle cx="4" cy="18" r="1" fill="currentColor" />
+                <circle cx="12" cy="12" r="3" />
+                <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z" />
               </svg>
             </button>
           </div>
-        )}
+        </div>
+      </section>
+
+      {/* ══════════════════════════════════════════════════════════════════════
+          3. RAIL HIGHLIGHTS (Stories / Voyages Épinglés — Frosted Glass Tray)
+         ══════════════════════════════════════════════════════════════════════ */}
+      <section className="px-3 py-1.5">
+        <div className="glass rounded-3xl p-3 border border-white/80 bg-white/80 backdrop-blur-xl shadow-xs">
+          <div className="flex gap-3 overflow-x-auto scrollbar-none snap-x">
+            {highlights.map((h) => (
+              <Link
+                key={h.id}
+                href={`/groupes/${h.id}`}
+                onClick={() => triggerHaptic('light')}
+                className="flex flex-col items-center gap-1 shrink-0 snap-start active:scale-95 transition-transform cursor-pointer"
+                style={{ width: 62 }}
+              >
+                <div
+                  className="w-[54px] h-[54px] rounded-full p-[2px] relative flex items-center justify-center shadow-2xs"
+                  style={{
+                    background: `linear-gradient(145deg, ${C.sage300}, ${C.forest800})`,
+                  }}
+                >
+                  <div
+                    className="w-full h-full rounded-full bg-cover bg-center border border-white"
+                    style={{
+                      backgroundImage: h.cover ? `url(${h.cover})` : `linear-gradient(135deg, ${C.forest800}, ${C.forest900})`,
+                    }}
+                  />
+                </div>
+                <span className="text-[10px] font-bold truncate w-full text-center" style={{ color: C.ink900 }}>
+                  {h.label}
+                </span>
+              </Link>
+            ))}
+
+            {/* Bouton Nouveau voyage */}
+            <Link
+              href="/nouveau-groupe"
+              onClick={() => triggerHaptic('selection')}
+              className="flex flex-col items-center gap-1 shrink-0 snap-start active:scale-95 transition-transform cursor-pointer"
+              style={{ width: 62 }}
+            >
+              <div className="w-[54px] h-[54px] rounded-full border-2 border-dashed border-[#17402C]/30 flex items-center justify-center bg-white/90 backdrop-blur-md shadow-2xs">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke={C.forest800} strokeWidth="2.5" strokeLinecap="round">
+                  <path d="M12 5v14M5 12h14" />
+                </svg>
+              </div>
+              <span className="text-[10px] font-bold" style={{ color: C.forest800 }}>
+                Nouveau
+              </span>
+            </Link>
+          </div>
+        </div>
+      </section>
+
+      {/* ══════════════════════════════════════════════════════════════════════
+          4. ONGLETS FLOTTANTS & TOGGLE VUE (Segmented Capsule Liquid Glass)
+         ══════════════════════════════════════════════════════════════════════ */}
+      <div className="sticky top-[48px] z-20 px-3 py-1.5">
+        <div className="glass rounded-2xl p-1 border border-white/80 bg-white/85 backdrop-blur-2xl shadow-xs flex items-center justify-between gap-1">
+          <div className="flex items-center gap-1 flex-1 overflow-x-auto scrollbar-none">
+            {([
+              { id: 'tout', label: 'Activité', icon: '⚡' },
+              { id: 'carnets', label: 'Carnets', icon: '📖' },
+              { id: 'voyages', label: 'Voyages', icon: '⛺' },
+              { id: 'materiel', label: 'Équipement', icon: '🎒' },
+            ] as { id: TabKey; label: string; icon: string }[]).map((t) => {
+              const isActive = tab === t.id;
+              return (
+                <button
+                  key={t.id}
+                  onClick={() => {
+                    triggerHaptic('selection');
+                    setTab(t.id);
+                  }}
+                  className={`relative px-3 py-1.5 text-xs font-extrabold whitespace-nowrap rounded-xl transition-all cursor-pointer flex items-center gap-1.5 z-10 ${
+                    isActive ? 'text-white' : 'text-[#17402C]/70 hover:text-[#17402C] hover:bg-white/40'
+                  }`}
+                >
+                  {isActive && (
+                    <motion.div
+                      layoutId="compte-tab-active"
+                      transition={{ type: 'spring', stiffness: 500, damping: 35 }}
+                      className="absolute inset-0 rounded-xl bg-[#17402C] shadow-xs -z-10"
+                    />
+                  )}
+                  <span className="text-[11px]">{t.icon}</span>
+                  <span>{t.label}</span>
+                </button>
+              );
+            })}
+          </div>
+
+          {/* Toggle Grille / Liste (pour carnets et voyages) */}
+          {tab !== 'materiel' && (
+            <div className="flex items-center gap-0.5 pl-1.5 pr-0.5 border-l border-[#17402C]/10">
+              <button
+                onClick={() => {
+                  triggerHaptic('light');
+                  setViewMode('grid');
+                }}
+                aria-label="Vue Grille"
+                className={`p-1.5 rounded-lg transition-all cursor-pointer ${
+                  viewMode === 'grid'
+                    ? 'bg-[#17402C] text-white shadow-2xs'
+                    : 'text-[#17402C]/50 hover:bg-white/60'
+                }`}
+              >
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2">
+                  <rect x="3" y="3" width="7" height="7" rx="1.5" />
+                  <rect x="14" y="3" width="7" height="7" rx="1.5" />
+                  <rect x="3" y="14" width="7" height="7" rx="1.5" />
+                  <rect x="14" y="14" width="7" height="7" rx="1.5" />
+                </svg>
+              </button>
+              <button
+                onClick={() => {
+                  triggerHaptic('light');
+                  setViewMode('list');
+                }}
+                aria-label="Vue Liste"
+                className={`p-1.5 rounded-lg transition-all cursor-pointer ${
+                  viewMode === 'list'
+                    ? 'bg-[#17402C] text-white shadow-2xs'
+                    : 'text-[#17402C]/50 hover:bg-white/60'
+                }`}
+              >
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round">
+                  <line x1="8" y1="6" x2="21" y2="6" />
+                  <line x1="8" y1="12" x2="21" y2="12" />
+                  <line x1="8" y1="18" x2="21" y2="18" />
+                  <circle cx="4" cy="6" r="1.2" fill="currentColor" />
+                  <circle cx="4" cy="12" r="1.2" fill="currentColor" />
+                  <circle cx="4" cy="18" r="1.2" fill="currentColor" />
+                </svg>
+              </button>
+            </div>
+          )}
+        </div>
       </div>
 
       {/* ══════════════════════════════════════════════════════════════════════
@@ -840,11 +834,11 @@ export default function MobileCompteV2() {
 
       {/* ── ONGLET : ÉQUIPEMENT & INVENTAIRE ── */}
       {tab === 'materiel' && (
-        <section className="p-4 space-y-4">
+        <section className="p-3 space-y-3">
           {/* Synthèse du pack */}
-          <div className="p-4 rounded-2xl border border-black/[0.06] shadow-xs flex items-center justify-between" style={{ background: C.white }}>
+          <div className="glass p-4 rounded-3xl border border-white/80 bg-white/85 backdrop-blur-xl flex items-center justify-between shadow-xs">
             <div>
-              <span className="text-[10px] font-mono uppercase tracking-wider font-semibold" style={{ color: C.forest800 }}>
+              <span className="text-[10px] font-mono uppercase tracking-wider font-bold" style={{ color: C.forest800 }}>
                 🎒 Mon Matériel de Randonnée
               </span>
               <h3 className="text-base font-bold" style={{ color: C.ink900 }}>
@@ -857,10 +851,9 @@ export default function MobileCompteV2() {
             <Link
               href="/compte"
               onClick={() => triggerHaptic('selection')}
-              className="px-3.5 py-2 rounded-xl text-xs font-bold text-white shadow-xs active:scale-95 transition-transform flex items-center gap-1"
-              style={{ background: C.forest800 }}
+              className="glass-capsule-btn primary !py-2 !px-3.5 text-xs font-bold"
             >
-              <span>Mon Compte</span>
+              <span>Détails</span>
               <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
                 <path d="M5 12h14M12 5l7 7-7 7" />
               </svg>
@@ -876,12 +869,11 @@ export default function MobileCompteV2() {
                   triggerHaptic('light');
                   setSelectedGearCat(cat.key);
                 }}
-                className="px-3 py-1.5 rounded-full text-xs font-medium whitespace-nowrap flex items-center gap-1.5 transition-colors border"
-                style={{
-                  background: selectedGearCat === cat.key ? C.forest800 : C.white,
-                  color: selectedGearCat === cat.key ? C.white : C.ink900,
-                  borderColor: selectedGearCat === cat.key ? C.forest800 : 'rgba(0,0,0,0.06)',
-                }}
+                className={`glass-pill whitespace-nowrap !py-1.5 cursor-pointer ${
+                  selectedGearCat === cat.key
+                    ? '!bg-[#17402C] !text-white !border-[#17402C]'
+                    : '!bg-white/80 !border-white/80'
+                }`}
               >
                 <span>{cat.icon}</span>
                 <span>{cat.label}</span>
@@ -891,7 +883,7 @@ export default function MobileCompteV2() {
 
           {/* Liste des équipements */}
           {filteredGear.length === 0 ? (
-            <div className="p-8 text-center rounded-2xl border border-dashed border-black/10 bg-white/40">
+            <div className="glass p-8 text-center rounded-3xl border border-dashed border-[#17402C]/20 bg-white/70 backdrop-blur-xl shadow-xs">
               <p className="text-3xl mb-2">🎒</p>
               <h4 className="font-serif text-sm font-bold" style={{ color: C.ink900 }}>
                 Aucun équipement dans cette catégorie
@@ -901,8 +893,7 @@ export default function MobileCompteV2() {
               </p>
               <Link
                 href="/compte"
-                className="inline-flex items-center gap-1 px-4 py-2 rounded-full text-xs font-bold text-white"
-                style={{ background: C.forest800 }}
+                className="glass-capsule-btn primary inline-flex"
               >
                 + Ajouter du matériel
               </Link>
@@ -912,11 +903,10 @@ export default function MobileCompteV2() {
               {filteredGear.map((item) => (
                 <div
                   key={item.id}
-                  className="p-3.5 rounded-xl border border-black/[0.04] flex items-center justify-between shadow-2xs"
-                  style={{ background: C.white }}
+                  className="glass p-3.5 rounded-2xl border border-white/80 bg-white/85 backdrop-blur-xl flex items-center justify-between shadow-2xs transition-all active:scale-[0.99]"
                 >
                   <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 rounded-lg flex items-center justify-center text-lg" style={{ background: C.stone }}>
+                    <div className="w-10 h-10 rounded-xl flex items-center justify-center text-lg bg-white/90 border border-white shadow-2xs">
                       {item.category?.toLowerCase() === 'couchage' ? '🛏' : item.category?.toLowerCase() === 'navigation' ? '🗺️' : '📦'}
                     </div>
                     <div>
@@ -928,7 +918,7 @@ export default function MobileCompteV2() {
                       </p>
                     </div>
                   </div>
-                  <span className="text-[10px] font-mono uppercase px-2 py-0.5 rounded font-semibold" style={{ background: C.sage100, color: C.forest800 }}>
+                  <span className="glass-pill bg-emerald-50 text-emerald-800 border-emerald-200">
                     Possédé
                   </span>
                 </div>
@@ -937,12 +927,12 @@ export default function MobileCompteV2() {
           )}
 
           {/* Raccourci Boutique pour compléter */}
-          <div className="p-4 rounded-2xl border border-black/[0.06] flex items-center justify-between" style={{ background: 'linear-gradient(135deg, #17402C, #0B1F17)', color: '#fff' }}>
+          <div className="glass p-4 rounded-3xl border border-white/80 bg-white/85 backdrop-blur-xl flex items-center justify-between shadow-xs">
             <div>
-              <h4 className="text-sm font-bold">Compléter mon sac</h4>
-              <p className="text-xs text-white/70">Trouver les équipements ultralégers manquants.</p>
+              <h4 className="text-sm font-bold" style={{ color: C.ink900 }}>Compléter mon sac</h4>
+              <p className="text-xs" style={{ color: C.ink500 }}>Trouver les équipements ultralégers manquants.</p>
             </div>
-            <Link href="/boutique" className="px-3.5 py-1.5 rounded-full bg-white text-[#17402C] text-xs font-bold shadow-xs">
+            <Link href="/boutique" className="glass-capsule-btn primary text-xs font-bold">
               Boutique →
             </Link>
           </div>
@@ -953,7 +943,7 @@ export default function MobileCompteV2() {
       {tab !== 'materiel' && (
         <section>
           {filteredContent.length === 0 ? (
-            <div className="p-12 text-center">
+            <div className="glass m-3 p-10 text-center rounded-3xl border border-white/80 bg-white/80 backdrop-blur-xl shadow-xs">
               <p className="text-4xl mb-3">🏔️</p>
               <h3 className="font-serif text-base font-bold mb-1" style={{ color: C.ink900 }}>
                 {tab === 'carnets' ? 'Aucun carnet rédigé' : 'Aucun voyage enregistré'}
@@ -964,8 +954,7 @@ export default function MobileCompteV2() {
               <Link
                 href={tab === 'carnets' ? '/carnets/nouveau' : '/nouveau-groupe'}
                 onClick={() => triggerHaptic('selection')}
-                className="inline-flex items-center gap-1.5 px-5 py-2.5 rounded-full text-xs font-bold text-white shadow-sm"
-                style={{ background: C.forest800 }}
+                className="glass-capsule-btn primary inline-flex !py-2.5 text-xs font-bold"
               >
                 <span>{tab === 'carnets' ? 'Écrire un carnet' : 'Créer un voyage'}</span>
                 <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
@@ -974,15 +963,15 @@ export default function MobileCompteV2() {
               </Link>
             </div>
           ) : viewMode === 'grid' ? (
-            /* VUE GRILLE 3 COLONNES (Style Instagram / Apple) */
-            <div className="grid grid-cols-3 gap-[2px] p-[2px]">
+            /* VUE GRILLE 3 COLONNES LIQUID GLASS AVEC COINS ARRONDIS */
+            <div className="grid grid-cols-3 gap-2.5 p-3">
               {filteredContent.map((c) => {
                 if (c.kind === 'note') {
                   return (
                     <div
                       key={c.id}
-                      className="aspect-square p-3 flex flex-col justify-between rounded-sm shadow-2xs"
-                      style={{ background: C.forest900, color: C.white }}
+                      className="aspect-square p-3 flex flex-col justify-between rounded-2xl border border-white/40 shadow-2xs backdrop-blur-xl active:scale-95 transition-all"
+                      style={{ background: 'rgba(23, 64, 44, 0.90)', color: C.white }}
                     >
                       <p className="font-serif italic text-xs leading-snug text-white/95 line-clamp-4">
                         {c.quote}
@@ -1000,11 +989,11 @@ export default function MobileCompteV2() {
                       key={c.id}
                       href={c.kind === 'carnet' ? `/carnets/${c.id}` : `/groupes/${c.id}`}
                       onClick={() => triggerHaptic('light')}
-                      className="col-span-2 aspect-[2/1] relative bg-cover bg-center overflow-hidden rounded-sm block active:opacity-90"
+                      className="col-span-2 aspect-[2/1] relative bg-cover bg-center overflow-hidden rounded-2xl border border-white/70 shadow-2xs block active:scale-[0.98] transition-all cursor-pointer"
                       style={{ backgroundImage: `url(${c.cover})` }}
                     >
                       <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent" />
-                      <div className="absolute top-2 right-2 w-6 h-6 rounded-md bg-black/40 backdrop-blur-md flex items-center justify-center text-white">
+                      <div className="absolute top-2 right-2 w-6 h-6 rounded-lg bg-black/40 backdrop-blur-md flex items-center justify-center text-white">
                         <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                           <polygon points="6 4 20 12 6 20 6 4" />
                         </svg>
@@ -1022,14 +1011,14 @@ export default function MobileCompteV2() {
                     key={`${c.kind}-${c.id}`}
                     href={c.kind === 'carnet' ? `/carnets/${c.id}` : c.kind === 'groupe' ? `/groupes/${c.id}` : `/clubs/${c.slug || c.id}`}
                     onClick={() => triggerHaptic('light')}
-                    className="aspect-square relative bg-cover bg-center overflow-hidden rounded-sm block active:opacity-90 transition-opacity"
+                    className="aspect-square relative bg-cover bg-center overflow-hidden rounded-2xl border border-white/70 shadow-2xs block active:scale-95 transition-all cursor-pointer"
                     style={{
                       backgroundImage: c.cover ? `url(${c.cover})` : `linear-gradient(135deg, ${C.forest800}, ${C.forest900})`,
                       backgroundColor: C.stone,
                     }}
                   >
                     {/* Badge de Type en haut à droite */}
-                    <div className="absolute top-2 right-2 w-5 h-5 rounded-md bg-black/35 backdrop-blur-md flex items-center justify-center text-white text-[10px]">
+                    <div className="absolute top-2 right-2 w-5 h-5 rounded-md bg-black/40 backdrop-blur-md flex items-center justify-center text-white text-[10px]">
                       {c.kind === 'carnet' ? (
                         <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                           <rect x="4" y="5" width="16" height="14" rx="2" />
@@ -1044,7 +1033,7 @@ export default function MobileCompteV2() {
 
                     {/* Likes ou Nombre de membres en bas à gauche */}
                     {c.likes > 0 && (
-                      <div className="absolute bottom-1.5 left-1.5 flex items-center gap-1 text-[10px] font-bold text-white drop-shadow-md">
+                      <div className="absolute bottom-1.5 left-1.5 flex items-center gap-1 text-[10px] font-bold text-white drop-shadow-sm">
                         <svg width="10" height="10" viewBox="0 0 24 24" fill="currentColor">
                           <path d="M12 21s-8-5-8-11a5 5 0 0 1 9-3 5 5 0 0 1 9 3c0 6-8 11-8 11h-2z" />
                         </svg>
@@ -1056,8 +1045,8 @@ export default function MobileCompteV2() {
               })}
             </div>
           ) : (
-            /* VUE LISTE ÉLÉGANTE (Cartes horizontales soignées) */
-            <div className="p-3 space-y-3">
+            /* VUE LISTE ÉLÉGANTE (Cartes horizontales Liquid Glass) */
+            <div className="p-3 space-y-2.5">
               {filteredContent.map((c) => {
                 if (c.kind === 'note') return null;
                 return (
@@ -1065,33 +1054,32 @@ export default function MobileCompteV2() {
                     key={`${c.kind}-${c.id}`}
                     href={c.kind === 'carnet' ? `/carnets/${c.id}` : c.kind === 'groupe' ? `/groupes/${c.id}` : `/clubs/${c.slug || c.id}`}
                     onClick={() => triggerHaptic('light')}
-                    className="flex gap-3.5 p-2.5 rounded-2xl border border-black/[0.06] shadow-2xs active:scale-[0.98] transition-transform"
-                    style={{ background: C.white }}
+                    className="glass flex gap-3.5 p-3 rounded-2xl border border-white/80 bg-white/85 backdrop-blur-xl active:scale-[0.98] transition-all shadow-xs cursor-pointer"
                   >
                     <div
-                      className="w-24 h-24 rounded-xl shrink-0 bg-cover bg-center"
+                      className="w-22 h-22 rounded-xl shrink-0 bg-cover bg-center border border-white/60 shadow-2xs"
                       style={{
                         backgroundImage: c.cover ? `url(${c.cover})` : `linear-gradient(135deg, ${C.forest800}, ${C.forest900})`,
                       }}
                     />
                     <div className="flex-1 flex flex-col justify-between py-0.5">
                       <div>
-                        <span className="text-[10px] font-mono uppercase tracking-wider font-semibold" style={{ color: C.forest800 }}>
+                        <span className="text-[10px] font-mono uppercase tracking-wider font-bold" style={{ color: C.forest800 }}>
                           {c.kind === 'carnet' ? 'Récit d\'aventure' : 'Expédition'}
                         </span>
                         <h4 className="text-sm font-bold leading-tight mt-0.5" style={{ color: C.ink900 }}>
                           {c.title}
                         </h4>
-                        <p className="text-xs mt-0.5" style={{ color: C.ink500 }}>
+                        <p className="text-xs mt-0.5 font-medium" style={{ color: C.ink500 }}>
                           📍 {c.sub}
                         </p>
                       </div>
                       <div className="flex items-center gap-2 mt-2">
-                        <span className="text-[10px] font-mono px-2 py-0.5 rounded font-semibold" style={{ background: C.sage100, color: C.forest800 }}>
+                        <span className="glass-pill bg-white/90 border-white">
                           {c.status || 'Publié'}
                         </span>
                         {c.likes > 0 && (
-                          <span className="text-[11px] font-medium flex items-center gap-1" style={{ color: C.ink500 }}>
+                          <span className="text-[11px] font-bold flex items-center gap-1" style={{ color: C.ink500 }}>
                             ❤️ {c.likes}
                           </span>
                         )}
@@ -1128,10 +1116,9 @@ export default function MobileCompteV2() {
               animate={{ y: 0 }}
               exit={{ y: '100%' }}
               transition={{ type: 'spring', damping: 30, stiffness: 350 }}
-              className="relative w-full max-w-lg rounded-t-3xl p-6 shadow-2xl z-10 space-y-4"
-              style={{ background: C.paperCard }}
+              className="relative w-full max-w-lg rounded-t-3xl p-6 z-10 space-y-4 backdrop-blur-2xl bg-white/95 border-t border-white shadow-2xl"
             >
-              <div className="w-12 h-1.5 rounded-full mx-auto -mt-2 mb-2 bg-black/20" />
+              <div className="w-12 h-1.5 rounded-full mx-auto -mt-2 mb-2 bg-[#17402C]/15" />
               <div className="flex items-center justify-between">
                 <div>
                   <span className="text-[10px] font-mono uppercase tracking-wider font-semibold" style={{ color: C.forest800 }}>
@@ -1141,7 +1128,7 @@ export default function MobileCompteV2() {
                     Niveau {levelNum} · {levelTitle}
                   </h3>
                 </div>
-                <button onClick={() => setRewardModalOpen(false)} className="p-1 rounded-full text-black/40">
+                <button onClick={() => setRewardModalOpen(false)} className="p-1 rounded-full text-[#17402C]/40">
                   ✕
                 </button>
               </div>
@@ -1152,7 +1139,7 @@ export default function MobileCompteV2() {
                   <span style={{ color: C.forest800 }}>{currentXp} XP</span>
                   <span style={{ color: C.ink500 }}>Objectif : {nextLevelXp} XP</span>
                 </div>
-                <div className="w-full h-2.5 rounded-full overflow-hidden bg-black/10">
+                <div className="w-full h-2.5 rounded-full overflow-hidden bg-[#17402C]/10">
                   <div
                     className="h-full rounded-full"
                     style={{
@@ -1167,7 +1154,7 @@ export default function MobileCompteV2() {
               </div>
 
               {/* Trust Score */}
-              <div className="p-3.5 rounded-2xl flex items-center justify-between border border-black/[0.04]" style={{ background: C.white }}>
+              <div className="p-3.5 rounded-2xl flex items-center justify-between border border-[#17402C]/10" style={{ background: C.white }}>
                 <div className="flex items-center gap-3">
                   <span className="text-2xl">🛡️</span>
                   <div>
@@ -1190,15 +1177,15 @@ export default function MobileCompteV2() {
                   Badges débloqués
                 </h4>
                 <div className="flex gap-2">
-                  <div className="flex-1 p-2.5 rounded-xl border border-black/5 text-center" style={{ background: C.white }}>
+                  <div className="flex-1 p-2.5 rounded-xl border border-[#17402C]/10 text-center" style={{ background: C.white }}>
                     <span className="text-xl">🏔️</span>
                     <p className="text-[10px] font-bold mt-1" style={{ color: C.ink900 }}>Sommets 3000</p>
                   </div>
-                  <div className="flex-1 p-2.5 rounded-xl border border-black/5 text-center" style={{ background: C.white }}>
+                  <div className="flex-1 p-2.5 rounded-xl border border-[#17402C]/10 text-center" style={{ background: C.white }}>
                     <span className="text-xl">⛺</span>
                     <p className="text-[10px] font-bold mt-1" style={{ color: C.ink900 }}>Bivouac Master</p>
                   </div>
-                  <div className="flex-1 p-2.5 rounded-xl border border-black/5 text-center" style={{ background: C.white }}>
+                  <div className="flex-1 p-2.5 rounded-xl border border-[#17402C]/10 text-center" style={{ background: C.white }}>
                     <span className="text-xl">✍️</span>
                     <p className="text-[10px] font-bold mt-1" style={{ color: C.ink900 }}>Auteur Pro</p>
                   </div>
@@ -1211,8 +1198,7 @@ export default function MobileCompteV2() {
                   triggerHaptic('selection');
                   setRewardModalOpen(false);
                 }}
-                className="w-full py-3 rounded-xl text-center text-xs font-bold text-white block shadow-sm"
-                style={{ background: C.forest800 }}
+                className="glass-capsule-btn primary w-full"
               >
                 Voir toutes mes récompenses & avantages
               </Link>
@@ -1242,18 +1228,17 @@ export default function MobileCompteV2() {
               animate={{ y: 0 }}
               exit={{ y: '100%' }}
               transition={{ type: 'spring', damping: 30, stiffness: 350 }}
-              className="relative w-full max-w-lg rounded-t-3xl p-5 shadow-2xl z-10 max-h-[85vh] overflow-y-auto"
-              style={{ background: C.paperCard }}
+              className="relative w-full max-w-lg rounded-t-3xl p-5 z-10 max-h-[85vh] overflow-y-auto backdrop-blur-2xl bg-white/95 border-t border-white shadow-2xl"
             >
-              <div className="w-12 h-1.5 rounded-full mx-auto -mt-1 mb-4 bg-black/20" />
+              <div className="w-12 h-1.5 rounded-full mx-auto -mt-1 mb-4 bg-[#17402C]/15" />
 
-              <div className="flex items-center justify-between pb-3 border-b border-black/[0.06] mb-3">
+              <div className="flex items-center justify-between pb-3 border-b border-[#17402C]/10 mb-3">
                 <h3 className="text-base font-bold" style={{ color: C.ink900 }}>
                   Paramètres & Navigation
                 </h3>
                 <button
                   onClick={() => setMenuOpen(false)}
-                  className="w-7 h-7 rounded-full flex items-center justify-center text-black/50"
+                  className="w-7 h-7 rounded-full flex items-center justify-center text-[#17402C]/50"
                 >
                   ✕
                 </button>
@@ -1277,19 +1262,19 @@ export default function MobileCompteV2() {
                       triggerHaptic('light');
                       setMenuOpen(false);
                     }}
-                    className="flex items-center justify-between p-3 rounded-xl transition-colors active:bg-black/[0.04]"
+                    className="flex items-center justify-between p-3 rounded-xl transition-colors active:bg-[#17402C]/5"
                     style={{ color: C.ink900 }}
                   >
                     <div className="flex items-center gap-3">
                       <span className="text-base">{item.icon}</span>
                       <span className="text-xs font-semibold">{item.label}</span>
                     </div>
-                    <span className="text-xs text-black/30 font-bold">›</span>
+                    <span className="text-xs text-[#17402C]/30 font-bold">›</span>
                   </Link>
                 ))}
 
                 {/* Séparateur & Déconnexion */}
-                <div className="pt-3 mt-2 border-t border-black/[0.06]">
+                <div className="pt-3 mt-2 border-t border-[#17402C]/10">
                   <button
                     onClick={async () => {
                       triggerHaptic('warning');
@@ -1299,7 +1284,7 @@ export default function MobileCompteV2() {
                         router.push('/connexion');
                       }
                     }}
-                    className="w-full flex items-center gap-3 p-3 rounded-xl text-xs font-bold text-red-600 active:bg-red-50 transition-colors"
+                    className="w-full flex items-center gap-3 p-3 rounded-xl text-xs font-bold text-[#A8443A] active:bg-[#A8443A]/10 transition-colors"
                   >
                     <span>🚪</span>
                     <span>Se déconnecter</span>
@@ -1318,7 +1303,7 @@ export default function MobileCompteV2() {
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: 20 }}
-            className="fixed bottom-24 left-1/2 -translate-x-1/2 z-50 px-4 py-2.5 rounded-full text-xs font-bold text-white shadow-xl flex items-center gap-2 border border-white/20"
+            className="fixed bottom-24 left-1/2 -translate-x-1/2 z-50 px-4 py-2.5 rounded-full text-xs font-bold text-white  flex items-center gap-2 border border-white/20"
             style={{ background: C.forest900 }}
           >
             <span>✓</span>

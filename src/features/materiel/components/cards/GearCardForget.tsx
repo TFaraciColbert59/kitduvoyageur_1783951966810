@@ -23,31 +23,31 @@ export function GearCardForget({ data, className }: { data: ForgetData; classNam
 
   return (
     <GlassCard as="article" interactive ariaLabelledBy="forget-title" className={className}>
-      <div className="p-3.5 sm:p-5 flex flex-col justify-between h-full gap-3 sm:gap-4">
+      <div className="p-2.5 sm:p-5 flex flex-col justify-between h-full gap-1.5 sm:gap-4">
         {/* Header with Title & Large Metric */}
-        <div className="flex items-start justify-between pr-8 md:pr-10">
-          <div className="space-y-0.5 sm:space-y-1">
+        <div className="flex items-start justify-between pr-7 md:pr-10">
+          <div className="space-y-0.5">
             <Eyebrow>Checklist</Eyebrow>
-            <h2 id="forget-title" className="text-[15px] sm:text-[20px] font-display font-bold text-[#17402C] leading-tight">
+            <h2 id="forget-title" className="text-[13px] sm:text-[20px] font-display font-bold text-[#17402C] leading-tight truncate">
               À ne pas oublier
             </h2>
           </div>
           <div className="text-right shrink-0">
-            <span className={`text-[24px] sm:text-[36px] font-mono font-bold leading-none ${data.forgetRemaining === 0 ? 'text-[#17402C]' : 'text-[#A8443A]'}`}>
+            <span className={`text-[18px] sm:text-[36px] font-mono font-bold leading-none ${data.forgetRemaining === 0 ? 'text-[#17402C]' : 'text-[#A8443A]'}`}>
               {data.forgetRemaining}
             </span>
-            <span className="block text-[9px] sm:text-[10.5px] font-semibold uppercase tracking-wider text-[#5A7064]">
-              {data.forgetRemaining === 0 ? 'Tout prêt' : 'restant(s)'}
+            <span className="block text-[8px] sm:text-[10.5px] font-semibold uppercase tracking-wider text-[#5A7064]">
+              {data.forgetRemaining === 0 ? 'Prêt' : 'restant(s)'}
             </span>
           </div>
         </div>
 
         {/* Mini Checklist List */}
-        <div className="glass-sub-card p-2 sm:p-2.5 flex flex-col gap-1.5 sm:gap-2">
-          {items.slice(0, 3).map((item, idx) => (
-            <div key={idx} className="flex items-center gap-2 px-1 py-0.5 rounded-lg text-[11px] sm:text-xs font-medium text-[#17402C]">
-              <span className={`glass-check-circle ${item.is_checked ? 'checked' : ''}`}>
-                {item.is_checked && <Check size={10} strokeWidth={3} />}
+        <div className="glass-sub-card p-1.5 sm:p-2.5 flex flex-col gap-1 sm:gap-2">
+          {items.slice(0, 2).map((item, idx) => (
+            <div key={idx} className="flex items-center gap-1.5 px-0.5 py-0.2 rounded-lg text-[10px] sm:text-xs font-medium text-[#17402C]">
+              <span className={`glass-check-circle ${item.is_checked ? 'checked' : ''} !w-3.5 !h-3.5`}>
+                {item.is_checked && <Check size={8} strokeWidth={3} />}
               </span>
               <span className={`flex-1 truncate ${item.is_checked ? 'line-through opacity-60 text-[#365233]' : ''}`}>
                 {item.name}
@@ -57,8 +57,8 @@ export function GearCardForget({ data, className }: { data: ForgetData; classNam
         </div>
 
         {/* Progress Bar */}
-        <div className="space-y-1">
-          <div className="flex items-center justify-between text-[11px] sm:text-xs font-semibold text-[#365233]">
+        <div className="space-y-0.5 sm:space-y-1">
+          <div className="flex items-center justify-between text-[10px] sm:text-xs font-semibold text-[#365233]">
             <span>Complétude</span>
             <span className="font-mono text-[#17402C]">{pct}%</span>
           </div>
@@ -67,12 +67,12 @@ export function GearCardForget({ data, className }: { data: ForgetData; classNam
 
         {/* Footer */}
         <div className="flex items-center justify-between pt-0.5">
-          <span className="text-[10px] sm:text-xs text-[#5A7064] truncate max-w-[110px] sm:max-w-[140px]">
+          <span className="text-[9.5px] sm:text-xs text-[#5A7064] truncate max-w-[80px] sm:max-w-[140px]">
             {data.nextDepartLabel ?? 'Aucun départ'}
           </span>
-          <Link href="/materiel/forget" className="glass-capsule-btn secondary text-[10px] sm:text-xs h-6.5 sm:h-7 px-2.5">
-            <span>Voir tout</span>
-            <ArrowRight size={12} />
+          <Link href="/materiel/forget" className="glass-capsule-btn secondary text-[9.5px] sm:text-xs !h-6 sm:!h-7 !px-2 sm:!px-2.5">
+            <span>Voir</span>
+            <ArrowRight size={10} />
           </Link>
         </div>
       </div>

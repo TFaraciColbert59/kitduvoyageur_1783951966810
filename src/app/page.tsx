@@ -30,7 +30,7 @@ export default function HomePage() {
       
       {/* ── DESKTOP & DIRECT VIEW ── */}
       <div>
-        <div className="min-h-screen bg-[#F7FAF8] font-sans text-[#1C2620]">
+        <div className="min-h-screen bg-[#F7FAF8] font-sans text-[#17402C]">
           <Header />
           
           {/* ── HERO ── */}
@@ -45,7 +45,7 @@ export default function HomePage() {
               {/* Left Text */}
               <div className="flex-1 max-w-2xl pt-10">
                 <p className="text-[10px] font-mono tracking-[0.2em] uppercase text-[#7A8A7D] mb-4">ÉDITION AUTOMNE - ET REFUGES PARTENAIRES</p>
-                <h1 className="text-5xl sm:text-6xl lg:text-7xl font-semibold text-[#1C2620] leading-[1.1] mb-6">
+                <h1 className="text-5xl sm:text-6xl lg:text-7xl font-semibold text-[#17402C] leading-[1.1] mb-6">
                   Là où la carte<br />
                   <span className="font-serif italic text-[#8BAF7C] font-normal">se termine.</span>
                 </h1>
@@ -55,7 +55,7 @@ export default function HomePage() {
                 <div className="flex flex-col sm:flex-row items-center gap-4 mb-16">
                   <Link
                     href="/ai-configurator"
-                    className="inline-flex items-center gap-2 px-6 py-3.5 bg-white text-[#1C2620] font-semibold rounded-full hover:bg-gray-50 transition-all shadow-sm border border-[#E8E4D8] text-sm"
+                    className="inline-flex items-center gap-2 px-6 py-3.5 bg-white text-[#17402C] font-semibold rounded-full hover:bg-gray-50 transition-all  border border-[#E8E4D8] text-sm"
                   >
                     Composer mon sac 
                     <svg width="14" height="14" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
@@ -72,7 +72,7 @@ export default function HomePage() {
                 <div className="flex items-center gap-4">
                   <div className="flex items-center gap-1 text-[#D9B382]">
                     <svg width="16" height="16" fill="currentColor" viewBox="0 0 24 24"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
-                    <span className="text-3xl font-bold text-[#1C2620] leading-none ml-1">4,9</span>
+                    <span className="text-3xl font-bold text-[#17402C] leading-none ml-1">4,9</span>
                   </div>
                   <p className="text-[10px] uppercase font-mono tracking-widest text-[#7A8A7D] leading-tight">
                     1 350+ VOYAGEURS RECOMMANDENT<br/>LEUR SÉJOUR
@@ -82,32 +82,32 @@ export default function HomePage() {
 
               {/* Right Card */}
               <div className="w-full max-w-[340px] flex-shrink-0">
-                <div className="bg-[#1C2620]/5 backdrop-blur-xl border border-white/20 rounded-[0.75rem] p-6 shadow-2xl shadow-black/5 relative overflow-hidden">
+                <div className="bg-[#17402C]/5 backdrop-blur-xl border border-white/20 rounded-[0.75rem] p-6  shadow-black/5 relative overflow-hidden">
                   <div className="absolute inset-0 bg-gradient-to-br from-white/40 to-white/10" />
                   <div className="relative z-10">
                     <p className="text-[9px] font-mono tracking-widest text-[#5A6A5D] uppercase mb-1">ESPACE DE RÉSERVE</p>
-                    <h3 className="text-xl font-bold text-[#1C2620] mb-6">Cabane du Grand Vaneau</h3>
+                    <h3 className="text-xl font-bold text-[#17402C] mb-6">Cabane du Grand Vaneau</h3>
                     
                     <div className="flex items-center gap-4 mb-8">
                       <div className="flex-1 bg-white/50 rounded-xl p-3 border border-white/40">
                         <p className="text-[9px] uppercase tracking-widest text-[#7A8A7D] mb-0.5">Arrivée</p>
-                        <p className="text-sm font-semibold text-[#1C2620]">Ven. 24 sept.</p>
+                        <p className="text-sm font-semibold text-[#17402C]">Ven. 24 sept.</p>
                       </div>
                       <div className="flex-1 bg-white/50 rounded-xl p-3 border border-white/40">
                         <p className="text-[9px] uppercase tracking-widest text-[#7A8A7D] mb-0.5">Départ</p>
-                        <p className="text-sm font-semibold text-[#1C2620]">Lun. 27 sept.</p>
+                        <p className="text-sm font-semibold text-[#17402C]">Lun. 27 sept.</p>
                       </div>
                     </div>
 
                     <div className="flex items-end justify-between mb-6">
                       <div>
-                        <span className="text-2xl font-bold text-[#1C2620]">248 €</span>
+                        <span className="text-2xl font-bold text-[#17402C]">248 €</span>
                         <span className="text-[#7A8A7D] text-xs"> / nuit</span>
                       </div>
                       <span className="text-[10px] text-[#5A6A5D]">Taxes comprises</span>
                     </div>
 
-                    <Link href="/explorer" className="block w-full text-center py-3.5 bg-white text-[#1C2620] font-semibold rounded-full shadow-sm hover:shadow-md transition-all text-sm border border-[#E8E4D8]">
+                    <Link href="/explorer" className="block w-full text-center py-3.5 bg-white text-[#17402C] font-semibold rounded-full  hover: transition-all text-sm border border-[#E8E4D8]">
                       Réserver cet abri
                     </Link>
                   </div>
@@ -120,9 +120,9 @@ export default function HomePage() {
           <section className="py-24 px-4 bg-white">
             <div className="max-w-[1200px] mx-auto">
               <div className="flex flex-col md:flex-row md:items-end justify-between gap-6 mb-16">
-                <h2 className="text-4xl md:text-5xl font-semibold text-[#1C2620] leading-[1.1]">
+                <h2 className="text-4xl md:text-5xl font-semibold text-[#17402C] leading-[1.1]">
                   Trois façons<br />
-                  <span className="font-serif italic text-[#2D5A3D] font-normal">de se perdre.</span>
+                  <span className="font-serif italic text-[#17402C] font-normal">de se perdre.</span>
                 </h2>
                 <p className="text-[#7A8A7D] text-sm max-w-sm uppercase font-mono tracking-wide leading-relaxed">
                   Trois cartes qui suivent la même règle : moins d'équipement, plus de silence. Découvrez celle qui vous ressemble aujourd'hui.
@@ -142,7 +142,7 @@ export default function HomePage() {
                   />
                   <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent" />
                   <div className="absolute top-4 left-4 right-4 flex justify-between items-start">
-                    <span className="bg-white/90 backdrop-blur-sm px-3 py-1.5 rounded-full text-[10px] font-bold text-[#1C2620] tracking-wide uppercase">3 Jours / 50 km</span>
+                    <span className="bg-[#FBFAF6] backdrop-blur-sm px-3 py-1.5 rounded-full text-[10px] font-bold text-[#17402C] tracking-wide uppercase">3 Jours / 50 km</span>
                     <span className="w-8 h-8 rounded-full bg-white/20 backdrop-blur-md flex items-center justify-center text-white"><svg width="14" height="14" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24"><path d="M5 12h14M12 5l7 7-7 7"/></svg></span>
                   </div>
                   <div className="absolute bottom-6 left-6 right-6">
@@ -167,7 +167,7 @@ export default function HomePage() {
                   />
                   <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent" />
                   <div className="absolute top-4 left-4 right-4 flex justify-between items-start">
-                    <span className="bg-white/90 backdrop-blur-sm px-3 py-1.5 rounded-full text-[10px] font-bold text-[#1C2620] tracking-wide uppercase">2 Jours</span>
+                    <span className="bg-[#FBFAF6] backdrop-blur-sm px-3 py-1.5 rounded-full text-[10px] font-bold text-[#17402C] tracking-wide uppercase">2 Jours</span>
                     <span className="w-8 h-8 rounded-full bg-white/20 backdrop-blur-md flex items-center justify-center text-white"><svg width="14" height="14" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24"><path d="M5 12h14M12 5l7 7-7 7"/></svg></span>
                   </div>
                   <div className="absolute bottom-6 left-6 right-6">
@@ -191,7 +191,7 @@ export default function HomePage() {
                   />
                   <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent" />
                   <div className="absolute top-4 left-4 right-4 flex justify-between items-start">
-                    <span className="bg-white/90 backdrop-blur-sm px-3 py-1.5 rounded-full text-[10px] font-bold text-[#1C2620] tracking-wide uppercase">1 Jour</span>
+                    <span className="bg-[#FBFAF6] backdrop-blur-sm px-3 py-1.5 rounded-full text-[10px] font-bold text-[#17402C] tracking-wide uppercase">1 Jour</span>
                     <span className="w-8 h-8 rounded-full bg-white/20 backdrop-blur-md flex items-center justify-center text-white"><svg width="14" height="14" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24"><path d="M5 12h14M12 5l7 7-7 7"/></svg></span>
                   </div>
                   <div className="absolute bottom-6 left-6 right-6">
@@ -207,7 +207,7 @@ export default function HomePage() {
           </section>
 
           {/* ── MANIFESTO ── */}
-          <section className="bg-[#1C2620] py-24 px-4 text-white">
+          <section className="bg-[#17402C] py-24 px-4 text-white">
             <div className="max-w-[1200px] mx-auto flex flex-col lg:flex-row items-center gap-16">
               <div className="flex-1 max-w-xl">
                 <p className="text-[10px] font-mono tracking-widest uppercase text-[#8BAF7C] mb-6">NOTRE PROMESSE</p>
@@ -221,7 +221,7 @@ export default function HomePage() {
                 </p>
                 <Link
                   href="/manifeste"
-                  className="inline-flex items-center gap-2 px-6 py-3 bg-white text-[#1C2620] font-semibold rounded-full hover:bg-gray-200 transition-all text-sm mb-16"
+                  className="inline-flex items-center gap-2 px-6 py-3 bg-white text-[#17402C] font-semibold rounded-full hover:bg-gray-200 transition-all text-sm mb-16"
                 >
                   Lire notre manifeste
                   <svg width="14" height="14" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
@@ -250,7 +250,7 @@ export default function HomePage() {
               <div className="flex-1 w-full">
                 <div className="relative rounded-[0.75rem] overflow-hidden aspect-[4/5] lg:aspect-auto lg:h-[700px]">
                   <img src="https://images.unsplash.com/photo-1454496522488-7a8e488e8606?w=1000&q=80" alt="Montagne" className="w-full h-full object-cover" />
-                  <div className="absolute inset-0 bg-gradient-to-t from-[#1C2620] via-transparent to-transparent opacity-80" />
+                  <div className="absolute inset-0 bg-gradient-to-t from-[#17402C] via-transparent to-transparent opacity-80" />
                   <div className="absolute bottom-8 left-8 right-8">
                     <p className="text-[9px] font-mono tracking-widest uppercase text-[#8BAF7C] mb-2">ALPES FRANÇAISES</p>
                     <p className="text-lg font-semibold text-white">Trois jours dans la Chartreuse</p>
@@ -267,7 +267,7 @@ export default function HomePage() {
                 <div className="relative rounded-[0.75rem] overflow-hidden aspect-square bg-[#E8E4D8]">
                   <img src="https://images.unsplash.com/photo-1550ed4e1b-3b47bd21096a?w=1000&q=80" alt="Sac à dos en toile cirée" className="w-full h-full object-cover" />
                   <div className="absolute top-6 left-6">
-                    <span className="bg-white/90 backdrop-blur px-3 py-1.5 rounded-full text-[10px] font-bold text-[#1C2620] tracking-wide uppercase shadow-sm">
+                    <span className="bg-[#FBFAF6] backdrop-blur px-3 py-1.5 rounded-full text-[10px] font-bold text-[#17402C] tracking-wide uppercase ">
                       Édition artisanale
                     </span>
                   </div>
@@ -276,8 +276,8 @@ export default function HomePage() {
 
               <div className="flex-1 max-w-md">
                 <p className="text-[10px] font-mono tracking-widest uppercase text-[#7A8A7D] mb-6">LE SAC ESSENTIEL</p>
-                <h2 className="text-4xl md:text-5xl font-semibold text-[#1C2620] leading-[1.1] mb-6">
-                  45 L, <span className="font-serif italic text-[#2D5A3D] font-normal">toile cirée</span>,<br/>
+                <h2 className="text-4xl md:text-5xl font-semibold text-[#17402C] leading-[1.1] mb-6">
+                  45 L, <span className="font-serif italic text-[#17402C] font-normal">toile cirée</span>,<br/>
                   rien de superflu.
                 </h2>
                 <p className="text-[#5A6A5D] text-sm leading-relaxed mb-10">
@@ -287,29 +287,29 @@ export default function HomePage() {
                 <div className="grid grid-cols-2 gap-y-6 mb-10">
                   <div>
                     <p className="text-[9px] font-mono tracking-widest uppercase text-[#7A8A7D] mb-1">VOLUME</p>
-                    <p className="text-sm font-semibold text-[#1C2620]">45 litres</p>
+                    <p className="text-sm font-semibold text-[#17402C]">45 litres</p>
                   </div>
                   <div>
                     <p className="text-[9px] font-mono tracking-widest uppercase text-[#7A8A7D] mb-1">POIDS À SEC</p>
-                    <p className="text-sm font-semibold text-[#1C2620]">1,4 kg</p>
+                    <p className="text-sm font-semibold text-[#17402C]">1,4 kg</p>
                   </div>
                   <div>
                     <p className="text-[9px] font-mono tracking-widest uppercase text-[#7A8A7D] mb-1">TISSU</p>
-                    <p className="text-sm font-semibold text-[#1C2620]">Coton huilé 22 oz</p>
+                    <p className="text-sm font-semibold text-[#17402C]">Coton huilé 22 oz</p>
                   </div>
                   <div>
                     <p className="text-[9px] font-mono tracking-widest uppercase text-[#7A8A7D] mb-1">GARANTIE</p>
-                    <p className="text-sm font-semibold text-[#1C2620]">À vie</p>
+                    <p className="text-sm font-semibold text-[#17402C]">À vie</p>
                   </div>
                 </div>
 
-                <p className="text-3xl font-bold text-[#1C2620] mb-8">340 €</p>
+                <p className="text-3xl font-bold text-[#17402C] mb-8">340 €</p>
 
                 <div className="flex items-center gap-4">
-                  <button className="px-8 py-3.5 bg-[#1C2620] text-white font-semibold rounded-full hover:bg-[#2D3F35] transition-all text-sm shadow-sm">
+                  <button className="px-8 py-3.5 bg-[#17402C] text-white font-semibold rounded-full hover:bg-[#2D3F35] transition-all text-sm ">
                     Ajouter au sac
                   </button>
-                  <Link href="/boutique" className="text-sm font-semibold text-[#1C2620] hover:text-[#2D5A3D] transition-colors">
+                  <Link href="/boutique" className="text-sm font-semibold text-[#17402C] hover:text-[#17402C] transition-colors">
                     Voir la fiche
                   </Link>
                 </div>

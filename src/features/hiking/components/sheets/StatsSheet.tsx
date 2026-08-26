@@ -58,10 +58,10 @@ export default function StatsSheet({
         animate={{ y: 0 }}
         exit={{ y: '100%' }}
         transition={{ type: 'spring', damping: 25, stiffness: 200 }}
-        className="w-full max-w-md bg-[#FBFAF6] text-[#0B1F17] rounded-t-[34px] pt-3 pb-10 px-4 shadow-2xl max-h-[85vh] overflow-y-auto space-y-5"
+        className="w-full max-w-md bg-[#FBFAF6] text-[#17402C] rounded-t-[34px] pt-3 pb-10 px-4  max-h-[85vh] overflow-y-auto space-y-5"
       >
         {/* Grabber */}
-        <div className="w-10 h-1 bg-[#0B1F17]/14 rounded-full mx-auto" />
+        <div className="w-10 h-1 bg-[#17402C]/14 rounded-full mx-auto" />
 
         {/* Sheet Header */}
         <div className="flex items-center justify-between px-2">
@@ -75,7 +75,7 @@ export default function StatsSheet({
           </div>
           <button
             onClick={onClose}
-            className="w-8 h-8 rounded-full bg-[#E9E4D9] flex items-center justify-center text-[#6B7A72] hover:text-[#0B1F17]"
+            className="w-8 h-8 rounded-full bg-[#E9E4D9] flex items-center justify-center text-[#6B7A72] hover:text-[#17402C]"
           >
             ✕
           </button>
@@ -154,7 +154,7 @@ export default function StatsSheet({
         </div>
 
         {/* Voltage Speed card (bonus, data-driven) */}
-        <div className="p-4 bg-[#06120C] text-white rounded-[0.75rem] space-y-3 shadow-xl">
+        <div className="p-4 bg-[#06120C] text-white rounded-[0.75rem] space-y-3 ">
           <div className="flex items-baseline justify-between">
             <div className="text-sm font-medium">
               Vitesse <em className="font-serif italic text-[#C6DCBE]">instantanée</em>

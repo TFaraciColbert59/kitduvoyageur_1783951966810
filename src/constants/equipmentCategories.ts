@@ -9,7 +9,7 @@ export interface EquipmentCategory {
 
 export const EQUIPMENT_CATEGORIES: EquipmentCategory[] = [
   { key: 'all', label: 'Tout le matériel', icon: '🎒', color: '#17402C', bgLight: '#E1EBDD', order: 0 },
-  { key: 'Sacs à dos', label: 'Sacs & Portage', icon: '🎒', color: '#2D6B4A', bgLight: '#E1EBDD', order: 1 },
+  { key: 'Sacs à dos', label: 'Sacs & Portage', icon: '🎒', color: '#17402C', bgLight: '#E1EBDD', order: 1 },
   { key: 'Couchage', label: 'Couchage & Tentes', icon: '🛏️', color: '#1A4D36', bgLight: '#DDEAE2', order: 2 },
   { key: 'Bivouac', label: 'Bivouac & Abris', icon: '🏕️', color: '#275841', bgLight: '#DCECE0', order: 3 },
   { key: 'Vêtements', label: 'Vêtements & Vestes', icon: '🧥', color: '#3A6B56', bgLight: '#E3EFE9', order: 4 },

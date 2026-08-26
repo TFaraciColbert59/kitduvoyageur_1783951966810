@@ -2,8 +2,21 @@
 
 import React, { useEffect, useState, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
+import { motion } from 'framer-motion';
+import {
+  X,
+  MapPin,
+  Clock,
+  TrendingUp,
+  Backpack,
+  Compass,
+  Download,
+  Check,
+  Sparkles,
+  Share2,
+  Mountain,
+} from 'lucide-react';
 import type { MapTrail } from './types';
-import { getChatCompletion, GEMINI_PROVIDER, GEMINI_DEFAULT_MODEL } from '@/lib/ai/chatCompletion';
 import { useOfflineDownload } from '@/hooks/useOfflineDownload';
 import { listOfflineRoutes } from '@/lib/offlineStorage';
 import {
@@ -21,27 +34,37 @@ interface Props {
 
 const SCORE_LABELS: { key: keyof MapTrail; label: string; icon: string }[] = [
   { key: 'adventure_score', label: 'Aventure', icon: '⛰️' },
-  { key: 'nature_score', label: 'Nature', icon: '🌿' },
-  { key: 'panorama_score', label: 'Panorama', icon: '🔭' },
+  { key: 'nature_score', label: 'Immersion Nature', icon: '🌿' },
+  { key: 'panorama_score', label: 'Points de vue', icon: '🔭' },
 ];
 
-function ScoreBar({ value, color }: { value: number; color: string }) {
+const SUB_CARD_INSET = 'inset 0 1px 1px rgba(255, 255, 255, 0.4)';
+
+function ScoreBar({ value }: { value: number }) {
   return (
-    <div className="w-full h-1.5 bg-[#E8E4D8] rounded-full overflow-hidden">
+    <div className="glass-progress w-full">
       <div
-        className="h-full rounded-full transition-all duration-700"
-        style={{ width: `${Math.min(100, value)}%`, backgroundColor: color }}
+        className="glass-progress-fill"
+        style={{ width: `${Math.min(100, Math.max(0, value))}%` }}
       />
     </div>
   );
 }
 
-function InfoChip({ icon, label, value }: { icon: React.ReactNode; label: string; value: string }) {
+function StatPill({
+  icon,
+  label,
+  value,
+}: {
+  icon: React.ReactNode;
+  label: string;
+  value: string;
+}) {
   return (
-    <div className="flex flex-col items-center gap-1 flex-1 bg-[#F5F2EA] rounded-xl py-3 px-2 text-center">
-      <div className="text-[#1C2620]">{icon}</div>
-      <span className="text-[10px] text-[#7A8A7D] font-mono uppercase tracking-wide">{label}</span>
-      <span className="text-sm font-bold text-[#1C2620] leading-tight">{value}</span>
+    <div className="glass-sub-card p-2.5 flex flex-col items-center justify-center text-center gap-0.5" style={{ boxShadow: SUB_CARD_INSET }}>
+      <div className="text-[#17402C]">{icon}</div>
+      <span className="text-[10px] uppercase tracking-wider text-[#5A7064] font-semibold">{label}</span>
+      <span className="text-xs sm:text-sm font-mono font-bold text-[#17402C]">{value}</span>
     </div>
   );
 }
@@ -52,19 +75,17 @@ export default function TrailDetailPanel({ trail, onClose }: Props) {
   const diffColor = getDifficultyColor(trail.difficulty);
   const diffLabel = getDifficultyLabel(trail.difficulty);
 
-  const [description, setDescription] = useState<string | null>(null);
-  const [loadingAI, setLoadingAI] = useState<boolean>(false);
+  const [description, setDescription] = useState<string | null>(trail.ai_description || null);
   const [isOfflineAvailable, setIsOfflineAvailable] = useState<boolean>(false);
-
-  const cacheKey = `gemini_desc_${trail.id}`;
-
   const offline = useOfflineDownload();
 
-  // Vérifier si la randonnée est déjà disponible hors-ligne
+  // Check offline status
   useEffect(() => {
-    listOfflineRoutes().then((routes) => {
-      setIsOfflineAvailable(routes.some((r) => r.routeId === String(trail.id)));
-    }).catch(() => {});
+    listOfflineRoutes()
+      .then((routes) => {
+        setIsOfflineAvailable(routes.some((r) => r.routeId === String(trail.id)));
+      })
+      .catch(() => {});
   }, [trail.id]);
 
   const handleOfflineToggle = useCallback(async () => {
@@ -78,356 +99,231 @@ export default function TrailDetailPanel({ trail, onClose }: Props) {
     }
   }, [isOfflineAvailable, offline, trail]);
 
-  // Generate AI Description
-  useEffect(() => {
-    let isMounted = true;
-
-    // 1. Check local storage cache first to save quota
-    try {
-      const cached = localStorage.getItem(cacheKey);
-      if (cached) {
-        setDescription(cached);
-        setLoadingAI(false);
-        return;
-      }
-    } catch {}
-
-    // 2. Description réelle déjà générée en base (trail_metadata.ai_description) :
-    //    inutile de rappeler Gemini (économise le quota et évite les erreurs 429).
-    if (trail.ai_description) {
-      setDescription(trail.ai_description);
-      setLoadingAI(false);
-      return;
+  const handleShare = () => {
+    if (navigator.share) {
+      navigator.share({
+        title: trail.name,
+        text: `Découvre ce sentier de randonnée sur Le Kit du Voyageur : ${trail.name}`,
+        url: window.location.href,
+      }).catch(() => {});
     }
-
-    async function generateDescription() {
-      setDescription(null);
-      setLoadingAI(true);
-      try {
-        const prompt = `Agis comme un guide de montagne expert et passionné. Génère une description riche, détaillée et inspirante pour cette randonnée, en utilisant un formatage Markdown élégant.
-
-Voici les données de la randonnée :
-- Nom : ${trail.name}
-- Distance : ${trail.distance_km || '?'} km
-- Durée estimée : ${trail.duration_hours || '?'} heures
-- Dénivelé positif : +${trail.elevation_gain || '?'} mètres
-- Difficulté technique : ${trail.difficulty || '?'}
-- Localisation/Massif : ${trail.ref || ''} ${trail.network ? ' / ' + trail.network : ''}
-- Score Aventure : ${trail.adventure_score || '?'} / 100
-- Score Nature : ${trail.nature_score || '?'} / 100
-- Score Panorama : ${trail.panorama_score || '?'} / 100
-
-Structure ta réponse de cette manière :
-1. **L'Expérience** : Un premier paragraphe immersif et captivant qui donne envie de faire cette randonnée (ambiance, paysages, sensation).
-2. **L'Effort & Le Terrain** : Un deuxième paragraphe qui analyse le ratio distance/dénivelé/durée. Explique très concrètement à quoi s'attendre (est-ce raide ? long ? familial ?). 
-3. **Le Conseil du Guide** : Une phrase courte finale avec un conseil pratique (ex: eau, chaussures, météo) lié à ce type de profil.
-
-Ne sois pas redondant, ne fais pas juste la liste des chiffres, mais utilise-les pour créer un vrai récit. N'invente pas de noms de villes ou de sommets si tu ne les connais pas, reste concentré sur l'ambiance et la typologie de l'effort.`;
-
-        const response: any = await getChatCompletion(
-          GEMINI_PROVIDER,
-          GEMINI_DEFAULT_MODEL,
-          [{ role: 'user', content: prompt }]
-        );
-
-        if (isMounted) {
-          const text = response?.text || response?.content || response?.choices?.[0]?.message?.content;
-          if (text) {
-            setDescription(text);
-            try { localStorage.setItem(cacheKey, text); } catch {}
-          } else {
-            setDescription("Description générée non disponible.");
-          }
-        }
-      } catch (err: any) {
-        // Quota/rate-limit Gemini, réseau, etc. : silencieux côté console,
-        // on sert la description réelle stockée (ai_description) en repli.
-        console.warn('[TrailDetailPanel] Description IA indisponible:', err?.message || err);
-        if (isMounted) {
-          // Fallback gracefully if API quota is reached or network fails
-          if (trail.ai_description) {
-            setDescription(trail.ai_description);
-          } else {
-            const dist = trail.distance_km ? `${trail.distance_km} km` : '';
-            const elev = trail.elevation_gain ? `+${trail.elevation_gain}m de dénivelé` : '';
-            const diff = trail.difficulty ? `niveau ${trail.difficulty.toLowerCase()}` : '';
-            setDescription(`Magnifique itinéraire de randonnée ${dist} ${elev} (${diff}). Profitez d'un cadre naturel préservé et d'une belle immersion en plein air.`);
-          }
-        }
-      } finally {
-        if (isMounted) setLoadingAI(false);
-      }
-    }
-
-    generateDescription();
-
-    return () => { isMounted = false; };
-  }, [trail, cacheKey]);
-
-  // Close on Escape
-  useEffect(() => {
-    const handleKey = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') onClose();
-    };
-    window.addEventListener('keydown', handleKey);
-    return () => window.removeEventListener('keydown', handleKey);
-  }, [onClose]);
-
-  // Prevent body scroll
-  useEffect(() => {
-    document.body.style.overflow = 'hidden';
-    return () => { document.body.style.overflow = ''; };
-  }, []);
+  };
 
   return (
-    <>
-      {/* Backdrop */}
-      <div
-        className="fixed inset-0 z-[600] bg-black/30 backdrop-blur-[2px] animate-fadeIn"
-        onClick={onClose}
-      />
-
-      {/* Panel — slides in from right */}
-      <div className="fixed top-0 right-0 h-full w-full max-w-[420px] z-[700] flex flex-col bg-white shadow-2xl animate-slideInRight overflow-hidden">
-        {/* Hero image */}
-        <div className="relative w-full h-52 flex-shrink-0 bg-[#E7E3D6]">
+    <motion.div
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      exit={{ opacity: 0 }}
+      className="fixed inset-0 z-[1000] flex justify-end bg-[#17402C]/25 backdrop-blur-sm"
+      onClick={onClose}
+    >
+      <motion.div
+        initial={{ x: '100%' }}
+        animate={{ x: 0 }}
+        exit={{ x: '100%' }}
+        transition={{ type: 'spring', stiffness: 350, damping: 32 }}
+        onClick={(e) => e.stopPropagation()}
+        className="glass w-full max-w-lg h-full border-l-0 flex flex-col justify-between overflow-hidden pb-[calc(env(safe-area-inset-bottom,0px)+74px)] md:pb-0"
+        style={{
+          borderRadius: 0,
+          borderRight: 'none',
+          borderTop: 'none',
+          borderBottom: 'none',
+        }}
+      >
+        {/* Header Hero Image */}
+        <div className="relative w-full h-52 sm:h-60 shrink-0 bg-stone-900">
           <img
             src={imgUrl}
             alt={trail.name}
             className="w-full h-full object-cover"
           />
-          {/* Gradient overlay */}
-          <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-black/20" />
+          <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/30 to-transparent" />
 
-          {/* Close button */}
-          <button
-            onClick={onClose}
-            className="absolute top-4 right-4 w-9 h-9 rounded-full bg-black/40 backdrop-blur-sm flex items-center justify-center text-white hover:bg-black/60 transition-colors"
-          >
-            <svg width="14" height="14" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
-              <line x1="18" y1="6" x2="6" y2="18" /><line x1="6" y1="6" x2="18" y2="18" />
-            </svg>
-          </button>
+          {/* Top Actions */}
+          <div className="absolute top-3 left-3 right-3 flex items-center justify-between z-10">
+            <span
+              className="rounded-[9px] px-[7px] py-[2px] text-[10px] font-bold"
+              style={{
+                background: 'rgba(255, 255, 255, 0.92)',
+                border: '1px solid rgba(255, 255, 255, 0.60)',
+                color: diffColor,
+              }}
+            >
+              {diffLabel}
+            </span>
 
-          {/* Difficulty badge */}
-          <div
-            className="absolute top-4 left-4 px-2.5 py-1 rounded-full text-white text-xs font-bold shadow"
-            style={{ backgroundColor: diffColor }}
-          >
-            {diffLabel}
+            <div className="flex items-center gap-1.5">
+              <button
+                type="button"
+                onClick={handleShare}
+                className="w-8 h-8 rounded-full flex items-center justify-center text-[#17402C] transition-all active:scale-90 hover:bg-white"
+                style={{
+                  background: 'rgba(255, 255, 255, 0.92)',
+                  border: '1px solid rgba(255, 255, 255, 0.60)',
+                }}
+                aria-label="Partager le sentier"
+              >
+                <Share2 size={14} />
+              </button>
+              <button
+                type="button"
+                onClick={onClose}
+                className="w-8 h-8 rounded-full flex items-center justify-center text-[#17402C] transition-all active:scale-90 hover:bg-white"
+                style={{
+                  background: 'rgba(255, 255, 255, 0.92)',
+                  border: '1px solid rgba(255, 255, 255, 0.60)',
+                }}
+                aria-label="Fermer la fiche détaillée"
+              >
+                <X size={16} />
+              </button>
+            </div>
           </div>
 
-          {/* Trail name over image */}
-          <div className="absolute bottom-4 left-4 right-12">
-            <h2 className="text-white font-bold text-lg leading-tight drop-shadow-lg line-clamp-3">
-              {trail.name}
-            </h2>
-            {trail.terrain_type && (
-              <p className="text-white/75 text-xs mt-0.5">{trail.terrain_type}{trail.ref ? ` · ${trail.ref}` : ''}</p>
-            )}
+          {/* Title on Hero */}
+          <div className="absolute bottom-3 left-4 right-4">
+            <div
+              className="rounded-[12px] px-2.5 py-1.5"
+              style={{
+                background: 'rgba(255, 255, 255, 0.92)',
+                border: '1px solid rgba(255, 255, 255, 0.60)',
+              }}
+            >
+              <p className="text-[10px] font-semibold uppercase tracking-wider text-[#365233] flex items-center gap-1 mb-0.5">
+                <MapPin size={11} className="text-[#17402C]" />
+                <span>{trail.network || trail.terrain_type || 'Massif Alpin'}</span>
+              </p>
+              <h2 className="text-lg sm:text-xl font-display font-bold leading-tight line-clamp-2 text-[#17402C]">
+                {trail.name}
+              </h2>
+            </div>
           </div>
         </div>
 
-        {/* Body — scrollable */}
-        <div className="flex-1 overflow-y-auto">
-          {/* Quick stats chips */}
-          <div className="flex gap-2 p-4">
-            <InfoChip
-              icon={
-                <svg width="16" height="16" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
-                  <polyline points="23 6 13.5 15.5 8.5 10.5 1 18" />
-                </svg>
-              }
+        {/* Scrollable Body */}
+        <div className="flex-1 min-h-0 overflow-y-auto p-4 sm:p-5 flex flex-col gap-4 no-scrollbar">
+          {/* Key Stats Row */}
+          <div className="grid grid-cols-3 gap-2">
+            <StatPill
+              icon={<TrendingUp size={16} />}
               label="Distance"
               value={formatDistance(trail.distance_km)}
             />
-            <InfoChip
-              icon={
-                <svg width="16" height="16" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
-                  <circle cx="12" cy="12" r="10" /><polyline points="12 6 12 12 16 14" />
-                </svg>
+            <StatPill
+              icon={<Mountain size={16} />}
+              label="Dénivelé +"
+              value={
+                trail.elevation_gain !== null && trail.elevation_gain !== undefined
+                  ? `+${Math.round(trail.elevation_gain)} m`
+                  : '—'
               }
-              label="Durée"
+            />
+            <StatPill
+              icon={<Clock size={16} />}
+              label="Durée estimée"
               value={formatDuration(trail.duration_hours)}
             />
-            <InfoChip
-              icon={
-                <svg width="16" height="16" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
-                  <polyline points="17 3 21 3 21 7" /><polyline points="10 14 21 3" />
-                  <polyline points="21 16 21 21 16 21" /><polyline points="3 21 3 3" />
-                </svg>
-              }
-              label="Dénivelé"
-              value={trail.elevation_gain !== null && trail.elevation_gain !== undefined ? `+${trail.elevation_gain} m` : '—'}
-            />
           </div>
 
-          {/* Separator */}
-          <div className="h-px bg-[#E8E4D8] mx-4" />
-
-          {/* Tags */}
-          <div className="px-4 py-3 flex flex-wrap gap-2">
-            {trail.season && (
-              <span className="px-2.5 py-1 bg-[#F5F2EA] text-[#3A4A3D] text-xs rounded-full border border-[#E4E0D4]">
-                📅 {trail.season}
-              </span>
-            )}
-            {trail.family_friendly && (
-              <span className="px-2.5 py-1 bg-[#EDF7F0] text-[#2D6A4F] text-xs rounded-full border border-[#B7E4C7]">
-                👨‍👩‍👧 Famille
-              </span>
-            )}
-            {trail.network && (
-              <span className="px-2.5 py-1 bg-[#F5F2EA] text-[#3A4A3D] text-xs rounded-full border border-[#E4E0D4] font-mono uppercase">
-                {trail.network}
-              </span>
-            )}
+          {/* Scores Breakdown */}
+          <div className="glass-sub-card p-3.5 flex flex-col gap-2.5" style={{ boxShadow: SUB_CARD_INSET }}>
+            <h3 className="text-[10px] font-semibold uppercase tracking-wider text-[#5A7064]">
+              Indicateurs d'expérience
+            </h3>
+            {SCORE_LABELS.map(({ key, label, icon }) => {
+              const val = typeof trail[key] === 'number' ? (trail[key] as number) : 75;
+              return (
+                <div key={key} className="space-y-1">
+                  <div className="flex items-center justify-between text-xs font-semibold text-[#365233]">
+                    <span className="flex items-center gap-1.5">
+                      <span>{icon}</span>
+                      <span className="text-[10px] font-semibold uppercase tracking-wider">{label}</span>
+                    </span>
+                    <span className="font-mono text-[#17402C]">{Math.round(val)}/100</span>
+                  </div>
+                  <ScoreBar value={val} />
+                </div>
+              );
+            })}
           </div>
 
-          {/* AI Description */}
-          {(description || loadingAI) && (
-            <>
-              <div className="h-px bg-[#E8E4D8] mx-4" />
-              <div className="px-4 py-4">
-                <div className="flex items-center gap-2 mb-2">
-                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#2D5A27" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                    <path d="M21 12a9 9 0 1 1-9-9c2.52 0 4.93 1 6.74 2.74L21 8" /><path d="M21 3v5h-5" />
-                  </svg>
-                  <h3 className="text-xs font-bold text-[#1C2620] uppercase tracking-widest">Description (IA)</h3>
-                </div>
-                {loadingAI ? (
-                  <div className="animate-pulse space-y-2">
-                    <div className="h-3 bg-[#E8E4D8] rounded w-full"></div>
-                    <div className="h-3 bg-[#E8E4D8] rounded w-full"></div>
-                    <div className="h-3 bg-[#E8E4D8] rounded w-5/6"></div>
-                    <div className="h-3 bg-[#E8E4D8] rounded w-4/6 mt-4"></div>
-                    <div className="h-3 bg-[#E8E4D8] rounded w-full"></div>
-                    <p className="text-[10px] text-[#7A8A7D] mt-2 font-mono">Génération par Gemini en cours...</p>
-                  </div>
-                ) : (
-                  <div className="text-sm text-[#5A6A5D] leading-relaxed">
-                    {description?.split('\n').map((line, i) => (
-                      <span key={i} className="block mb-2">
-                        {line.split('**').map((part, j) => 
-                          j % 2 === 1 ? <strong key={j} className="text-[#1C2620]">{part}</strong> : part
-                        )}
-                      </span>
-                    ))}
-                  </div>
-                )}
-              </div>
-            </>
-          )}
+          {/* AI Description / Insights */}
+          <div className="glass-sub-card p-3.5 flex flex-col gap-2" style={{ boxShadow: SUB_CARD_INSET }}>
+            <div className="flex items-center gap-1.5 text-[10px] font-semibold uppercase tracking-wider text-[#5A7064]">
+              <Sparkles size={13} className="text-[#17402C]" />
+              <span>Guide & Points d'intérêt</span>
+            </div>
+            <p className="text-xs sm:text-sm text-[#365233] leading-relaxed font-normal">
+              {description ||
+                `Cet itinéraire de ${formatDistance(trail.distance_km)} offre une immersion complète au cœur de panoramas remarquables. Idéal pour les randonneurs en quête d'air pur et de sentiers balisés.`}
+            </p>
+          </div>
 
-          {/* Scores */}
-          {SCORE_LABELS.some((s) => trail[s.key] !== null && trail[s.key] !== undefined) && (
-            <>
-              <div className="h-px bg-[#E8E4D8] mx-4" />
-              <div className="px-4 py-4">
-                <h3 className="text-xs font-bold text-[#1C2620] uppercase tracking-widest mb-3">Scores</h3>
-                <div className="space-y-3">
-                  {SCORE_LABELS.map((s) => {
-                    const val = trail[s.key] as number | null | undefined;
-                    if (val === null || val === undefined) return null;
-                    const pct = Math.round(val);
-                    return (
-                      <div key={s.key}>
-                        <div className="flex items-center justify-between mb-1">
-                          <span className="text-xs text-[#5A6A5D]">
-                            {s.icon} {s.label}
-                          </span>
-                          <span className="text-xs font-bold text-[#1C2620]">{pct}/100</span>
-                        </div>
-                        <ScoreBar value={pct} color={pct >= 70 ? '#22c55e' : pct >= 40 ? '#f97316' : '#ef4444'} />
-                      </div>
-                    );
-                  })}
-                </div>
+          {/* Offline Storage Card */}
+          <div className="glass-sub-card p-3 flex items-center justify-between gap-3" style={{ boxShadow: SUB_CARD_INSET }}>
+            <div className="flex items-center gap-2.5 min-w-0">
+              <div className="w-8 h-8 rounded-full bg-[#17402C]/10 flex items-center justify-center text-[#17402C] shrink-0">
+                {isOfflineAvailable ? <Check size={16} /> : <Download size={16} />}
               </div>
-            </>
-          )}
+              <div className="min-w-0">
+                <p className="font-display font-bold text-[12px] text-[#17402C] truncate">
+                  {isOfflineAvailable ? 'Disponible hors-ligne' : 'Mode hors-ligne'}
+                </p>
+                <p className="text-[11px] text-[#5A7064] truncate">
+                  {isOfflineAvailable
+                    ? 'Tracé GPS & carte préchargés'
+                    : 'Télécharger pour naviguer sans réseau'}
+                </p>
+              </div>
+            </div>
 
-          {/* Bottom padding */}
-          <div className="h-6" />
+            <button
+              type="button"
+              onClick={handleOfflineToggle}
+              className={`glass-capsule-btn shrink-0 ${
+                isOfflineAvailable ? 'glass-btn-danger' : 'primary'
+              }`}
+            >
+              {isOfflineAvailable ? 'Supprimer' : 'Télécharger'}
+            </button>
+          </div>
         </div>
 
-        {/* Footer CTA */}
-        <div className="flex-shrink-0 p-4 border-t border-[#E8E4D8] bg-white space-y-3">
-          {/* Bouton hors-ligne */}
-          <div>
-            {offline.status === 'downloading' ? (
-              <div className="space-y-1.5">
-                <div className="flex items-center justify-between text-xs text-[#5A6A5D]">
-                  <span>📥 Téléchargement… {offline.downloaded}/{offline.total} tuiles</span>
-                  <span>{offline.progress}%</span>
-                </div>
-                <div className="w-full h-2 bg-[#E8E4D8] rounded-full overflow-hidden">
-                  <div
-                    className="h-full bg-[#2D5A27] rounded-full transition-all duration-200"
-                    style={{ width: `${offline.progress}%` }}
-                  />
-                </div>
-              </div>
-            ) : offline.status === 'too_large' || offline.status === 'no_geom' || offline.status === 'error' ? (
-              <div className="text-xs text-red-500 bg-red-50 rounded-xl p-3 border border-red-200">
-                ⚠️ {offline.error}
-                <button onClick={offline.reset} className="ml-2 underline text-red-600">Réessayer</button>
-              </div>
-            ) : (
-              <button
-                id={`offline-btn-${trail.id}`}
-                onClick={handleOfflineToggle}
-                disabled={offline.status === 'checking'}
-                className={`w-full py-2.5 rounded-xl text-sm font-semibold transition-all flex items-center justify-center gap-2 border ${
-                  isOfflineAvailable
-                    ? 'bg-green-50 border-green-200 text-green-700 hover:bg-red-50 hover:border-red-200 hover:text-red-600'
-                    : 'bg-[#F5F2EA] border-[#E4E0D4] text-[#3A4A3D] hover:bg-[#EAE6D8]'
-                }`}
-              >
-                {isOfflineAvailable ? (
-                  <><span>✅</span> Disponible hors-ligne · Supprimer</>
-                ) : (
-                  <><span>📥</span> Télécharger pour hors-ligne</>
-                )}
-              </button>
-            )}
-          </div>
-
+        {/* Sticky Action Footer */}
+        <div
+          className="p-3 sm:p-4 flex flex-col sm:flex-row gap-2 shrink-0"
+          style={{
+            background: 'linear-gradient(180deg, rgba(255, 255, 255, 0.55) 0%, rgba(255, 255, 255, 0.30) 100%)',
+            backdropFilter: 'blur(20px) saturate(180%)',
+            WebkitBackdropFilter: 'blur(20px) saturate(180%)',
+            borderTop: '1px solid rgba(255, 255, 255, 0.50)',
+            boxShadow: 'inset 0 1px 0 rgba(255, 255, 255, 0.9)',
+          }}
+        >
           <button
+            type="button"
             onClick={() => {
               router.push(`/preparer-randonnee?routeId=${trail.id}`);
             }}
-            className="w-full relative overflow-hidden group py-3.5 px-4 bg-gradient-to-r from-[#17402C] via-[#1E5238] to-[#17402C] text-white text-sm font-bold rounded-2xl shadow-[0_6px_20px_rgba(23,64,44,0.35)] border border-white/20 hover:brightness-110 active:scale-[0.98] transition-all flex items-center justify-center gap-2"
+            className="glass-capsule-btn primary flex-1"
           >
-            <div className="absolute inset-0 -translate-x-full group-hover:translate-x-full transition-transform duration-1000 bg-gradient-to-r from-transparent via-white/20 to-transparent pointer-events-none" />
-            <span className="text-base">🎒</span>
-            <span className="tracking-wide">Préparer ma randonnée</span>
-            <svg className="w-4 h-4 ml-1 transform group-hover:translate-x-1 transition-transform" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2.5">
-              <path strokeLinecap="round" strokeLinejoin="round" d="M13.5 4.5L21 12m0 0l-7.5 7.5M21 12H3" />
-            </svg>
+            <Backpack size={16} />
+            <span>🎒 Préparer le matériel & Kit</span>
           </button>
 
           <button
-            onClick={onClose}
-            className="w-full py-2.5 bg-[#F5F2EA] text-[#1C2620] text-sm font-semibold rounded-xl hover:bg-[#EAE6D8] active:scale-[0.98] transition-all"
+            type="button"
+            onClick={() => {
+              router.push(`/randonnee-active?routeId=${trail.id}`);
+            }}
+            className="glass-capsule-btn secondary flex-1"
           >
-            Retour à la carte
+            <Compass size={16} />
+            <span>📍 Guidage GPS</span>
           </button>
         </div>
-      </div>
-
-      <style>{`
-        @keyframes fadeIn {
-          from { opacity: 0; }
-          to { opacity: 1; }
-        }
-        @keyframes slideInRight {
-          from { transform: translateX(100%); }
-          to { transform: translateX(0); }
-        }
-        .animate-fadeIn { animation: fadeIn 0.2s ease; }
-        .animate-slideInRight { animation: slideInRight 0.3s cubic-bezier(0.32, 0.72, 0, 1); }
-      `}</style>
-    </>
+      </motion.div>
+    </motion.div>
   );
 }

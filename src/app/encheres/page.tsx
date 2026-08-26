@@ -32,11 +32,11 @@ export default function EncheresPage() {
       <div className="block md:hidden">
         <MobilePageShell>
           <div style={{ textAlign: 'center', padding: '32px 16px' }}>
-            <div style={{ width: '48px', height: '48px', background: 'rgba(28,38,32,0.06)', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 20px' }}>
-              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="rgba(28,38,32,0.5)" strokeWidth="2"><path d="M6 4h12l2 4-2 4h2l-2 4h-2l-4 4-4-4H6l-2-4h2L4 8l2-4z" /></svg>
+            <div style={{ width: '48px', height: '48px', background: 'rgba(23,64,44,0.06)', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 20px' }}>
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="rgba(23,64,44,0.5)" strokeWidth="2"><path d="M6 4h12l2 4-2 4h2l-2 4h-2l-4 4-4-4H6l-2-4h2L4 8l2-4z" /></svg>
             </div>
-            <h1 style={{ fontSize: '20px', fontWeight: 800, color: '#1C2620', marginBottom: '12px', fontFamily: 'var(--font-display)' }}>Les enchères ne sont plus disponibles</h1>
-            <p style={{ fontSize: '13px', color: 'rgba(28,38,32,0.6)', marginBottom: '24px', lineHeight: '1.6' }}>Nous avons remplacé le système d&apos;enchères par un système d&apos;offres plus simple et plus rapide sur la marketplace occasion.</p>
+            <h1 style={{ fontSize: '20px', fontWeight: 800, color: '#17402C', marginBottom: '12px', fontFamily: 'var(--font-display)' }}>Les enchères ne sont plus disponibles</h1>
+            <p style={{ fontSize: '13px', color: 'rgba(23,64,44,0.6)', marginBottom: '24px', lineHeight: '1.6' }}>Nous avons remplacé le système d&apos;enchères par un système d&apos;offres plus simple et plus rapide sur la marketplace occasion.</p>
             <Link href="/occasion" style={{ display: 'inline-flex', alignItems: 'center', gap: '8px', background: '#17402C', color: 'white', padding: '12px 24px', borderRadius: '12px', fontSize: '14px', fontWeight: 600, textDecoration: 'none' }}>
               Voir la marketplace occasion
             </Link>

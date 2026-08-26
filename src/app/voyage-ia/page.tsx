@@ -16,7 +16,7 @@ export default function VoyageIAPage() {
     <>
       {/* DESKTOP */}
       <div className="hidden md:block">
-        <div className="min-h-screen bg-[#1C2620] text-white">
+        <div className="min-h-screen bg-[#17402C] text-white">
           <Header />
           <section className="pt-24 pb-10 px-4">
             <div className="max-w-4xl mx-auto text-center">
@@ -32,15 +32,15 @@ export default function VoyageIAPage() {
       <div className="block md:hidden">
         <MobilePageShell>
           <div style={{ padding: '16px' }}>
-            <h1 style={{ fontSize: '20px', fontWeight: 800, color: '#1C2620', marginBottom: '8px' }}>Créateur de Voyage IA</h1>
-            <p style={{ fontSize: '13px', color: 'rgba(28,38,32,0.6)', marginBottom: '16px' }}>Transformez votre envie en aventure complète.</p>
+            <h1 style={{ fontSize: '20px', fontWeight: 800, color: '#17402C', marginBottom: '8px' }}>Créateur de Voyage IA</h1>
+            <p style={{ fontSize: '13px', color: 'rgba(23,64,44,0.6)', marginBottom: '16px' }}>Transformez votre envie en aventure complète.</p>
             {phase === 'intro' && (
               <div>
-                <input type="text" value={destination} onChange={(e) => setDestination(e.target.value)} placeholder="Ex: Je veux faire le GR20…" style={{ width: '100%', padding: '12px 16px', borderRadius: '12px', border: '1px solid rgba(11,31,23,0.06)', fontSize: '14px', marginBottom: '12px' }} />
+                <input type="text" value={destination} onChange={(e) => setDestination(e.target.value)} placeholder="Ex: Je veux faire le GR20…" style={{ width: '100%', padding: '12px 16px', borderRadius: '12px', border: '1px solid rgba(23,64,44,0.06)', fontSize: '14px', marginBottom: '12px' }} />
                 <button onClick={() => { if (destination.trim().length > 2) setPhase('interview'); }} disabled={destination.trim().length < 3} style={{ width: '100%', padding: '14px', background: '#17402C', color: 'white', border: 'none', borderRadius: '12px', fontSize: '14px', fontWeight: 600, cursor: 'pointer', opacity: destination.trim().length < 3 ? 0.6 : 1 }}>Commencer</button>
               </div>
             )}
-            {phase === 'interview' && <p style={{ color: 'rgba(28,38,32,0.5)' }}>Formulaire à venir.</p>}
+            {phase === 'interview' && <p style={{ color: 'rgba(23,64,44,0.5)' }}>Formulaire à venir.</p>}
           </div>
         </MobilePageShell>
         

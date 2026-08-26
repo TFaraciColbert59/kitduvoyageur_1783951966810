@@ -1,37 +1,40 @@
 'use client';
 
 import React from 'react';
+import CompteBackground from '@/components/compte/CompteBackground';
 
 interface MobilePageShellProps {
   children: React.ReactNode;
   /**
-   * Couleur de fond de la page mobile. Par défaut : le token global
-   * `--background` (#F5F3EE), identique au rendu desktop.
+   * Couleur de fond de la page mobile.
    */
   background?: string;
+  /**
+   * Activer le mode fond immersif : la canopée dorée CompteBackground est posée en fixe derrière.
+   */
+  videoBackground?: boolean;
 }
 
 /**
- * MobilePageShell — wrapper for mobile page content.
- * TopBar and BottomTabBar are rendered globally in layout.tsx.
- * This component only provides the correct padding/spacing.
- * (Pas de bascule mode sombre : les fonds mobiles restent clairs.)
+ * MobilePageShell — wrapper pour les pages mobiles avec fond canopée immersif unifié.
  */
 export default function MobilePageShell({
   children,
-  background = 'var(--background)',
+  background = 'transparent',
+  videoBackground = true,
 }: MobilePageShellProps) {
   return (
     <div
       style={{
-        background,
-        paddingBottom: 'calc(76px + env(safe-area-inset-bottom))',
+        background: videoBackground ? 'transparent' : background,
+        paddingBottom: 'calc(80px + env(safe-area-inset-bottom))',
         minHeight: '100dvh',
-        // NOTE: pas de overflowY ici — il casserait position: sticky (tabs Compte).
+        position: 'relative',
         overflowX: 'hidden',
       }}
     >
-      {children}
+      {videoBackground && <CompteBackground />}
+      <div style={{ position: 'relative', zIndex: 1 }}>{children}</div>
     </div>
   );
 }

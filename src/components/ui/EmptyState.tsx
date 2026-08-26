@@ -25,7 +25,7 @@ export function EmptyState({
   const actionBtn = (
     <button
       onClick={onAction}
-      className="inline-flex items-center gap-2 px-5 py-2.5 bg-[#1C2620] text-white text-sm font-semibold rounded-xl hover:bg-[#2D3F35] active:scale-[0.97] transition-all duration-150 shadow-sm"
+      className="inline-flex items-center gap-2 px-5 py-2.5 bg-[#17402C] text-white text-sm font-semibold rounded-xl hover:bg-[#2D3F35] active:scale-[0.97] transition-all duration-150 "
     >
       {actionLabel}
       <svg width="14" height="14" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
@@ -48,7 +48,7 @@ export function EmptyState({
           </svg>
         </div>
       )}
-      <h3 className="text-base font-bold text-[#1C2620] mb-1.5">{title}</h3>
+      <h3 className="text-base font-bold text-[#17402C] mb-1.5">{title}</h3>
       {description && (
         <p className="text-sm text-[#7A8A7D] max-w-xs mb-6 leading-relaxed">{description}</p>
       )}
@@ -82,12 +82,12 @@ export function ErrorState({
           <line x1="12" y1="16" x2="12.01" y2="16" />
         </svg>
       </div>
-      <h3 className="text-base font-bold text-[#1C2620] mb-1.5">{title}</h3>
+      <h3 className="text-base font-bold text-[#17402C] mb-1.5">{title}</h3>
       <p className="text-sm text-[#7A8A7D] max-w-xs mb-6 leading-relaxed">{message}</p>
       {onRetry && (
         <button
           onClick={onRetry}
-          className="inline-flex items-center gap-2 px-5 py-2.5 bg-[#1C2620] text-white text-sm font-semibold rounded-xl hover:bg-[#2D3F35] active:scale-[0.97] transition-all duration-150 shadow-sm"
+          className="inline-flex items-center gap-2 px-5 py-2.5 bg-[#17402C] text-white text-sm font-semibold rounded-xl hover:bg-[#2D3F35] active:scale-[0.97] transition-all duration-150 "
         >
           <svg width="14" height="14" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
             <polyline points="23 4 23 10 17 10" />

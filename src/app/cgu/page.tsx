@@ -120,8 +120,8 @@ function CGUSections() {
 
 function MobileCGUSections() {
   const sectionStyle: React.CSSProperties = { marginBottom: '24px' };
-  const h2Style: React.CSSProperties = { fontSize: '14px', fontWeight: 600, color: '#1C2620', marginBottom: '8px', paddingBottom: '6px', borderBottom: '1px solid rgba(11,31,23,0.06)' };
-  const pStyle: React.CSSProperties = { fontSize: '13px', color: 'rgba(28,38,32,0.8)', lineHeight: '1.6' };
+  const h2Style: React.CSSProperties = { fontSize: '14px', fontWeight: 600, color: '#17402C', marginBottom: '8px', paddingBottom: '6px', borderBottom: '1px solid rgba(23,64,44,0.06)' };
+  const pStyle: React.CSSProperties = { fontSize: '13px', color: 'rgba(23,64,44,0.8)', lineHeight: '1.6' };
   const linkStyle: React.CSSProperties = { color: '#17402C', textDecoration: 'underline' };
 
   return (
@@ -129,10 +129,10 @@ function MobileCGUSections() {
       <p style={{ fontSize: '11px', fontFamily: 'var(--font-mono)', color: '#17402C', letterSpacing: '0.14em', textTransform: 'uppercase', marginBottom: '12px' }}>
         Conditions d&apos;utilisation
       </p>
-      <h1 style={{ fontSize: '24px', fontWeight: 800, color: '#1C2620', marginBottom: '8px', fontFamily: 'var(--font-display)' }}>
+      <h1 style={{ fontSize: '24px', fontWeight: 800, color: '#17402C', marginBottom: '8px', fontFamily: 'var(--font-display)' }}>
         Conditions Générales d&apos;Utilisation
       </h1>
-      <p style={{ fontSize: '12px', color: 'rgba(28,38,32,0.5)', marginBottom: '24px' }}>
+      <p style={{ fontSize: '12px', color: 'rgba(23,64,44,0.5)', marginBottom: '24px' }}>
         En vigueur au 1er juillet 2026
       </p>
 
@@ -171,11 +171,11 @@ function MobileCGUSections() {
         <p style={pStyle}>Les CGU sont soumises au droit français.</p>
       </section>
 
-      <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px', paddingTop: '16px', borderTop: '1px solid rgba(11,31,23,0.06)', marginTop: '24px' }}>
+      <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px', paddingTop: '16px', borderTop: '1px solid rgba(23,64,44,0.06)', marginTop: '24px' }}>
         <Link href="/cgv" style={linkStyle}>CGV</Link>
-        <span style={{ color: 'rgba(28,38,32,0.2)', fontSize: '12px' }}>·</span>
+        <span style={{ color: 'rgba(23,64,44,0.2)', fontSize: '12px' }}>·</span>
         <Link href="/politique-confidentialite" style={linkStyle}>Confidentialité</Link>
-        <span style={{ color: 'rgba(28,38,32,0.2)', fontSize: '12px' }}>·</span>
+        <span style={{ color: 'rgba(23,64,44,0.2)', fontSize: '12px' }}>·</span>
         <Link href="/mentions-legales" style={linkStyle}>Mentions légales</Link>
       </div>
     </div>

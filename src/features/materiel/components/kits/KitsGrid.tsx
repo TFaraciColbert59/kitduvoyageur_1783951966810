@@ -98,7 +98,7 @@ export function KitsGrid({ kits, onSelect }: Props) {
       {/* Barre de progression */}
       <div className="h-1.5 w-full rounded-full bg-white/20 overflow-hidden">
         <div
-          className="h-full bg-gradient-to-r from-[#2D6B4A] to-[#A3C4A3] transition-all duration-300"
+          className="h-full bg-gradient-to-r from-[#365233] to-[#A6C1A0] transition-all duration-300"
           style={{ width: `${completionPct}%` }}
         />
       </div>

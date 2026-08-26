@@ -1,4 +1,4 @@
-'use client';
+﻿'use client';
 
 import React from 'react';
 import { useHapticFeedback } from '@/hooks/useHapticFeedback';
@@ -46,8 +46,8 @@ export default function ProfileTabs({
             }}
             className={`flex-1 min-w-[90px] sm:min-w-[120px] py-2.5 px-3 rounded-xl text-xs font-bold transition-all flex items-center justify-center gap-1.5 active:scale-95 whitespace-nowrap ${
               isActive
-                ? 'bg-[#17402C] text-white shadow-xs'
-                : 'text-[#5C6B63] hover:text-[#0B1F17] hover:bg-[#F4F1EB]'
+                ? 'bg-[#17402C] text-white '
+                : 'text-[#5A7064] hover:text-[#17402C] hover:bg-[#F4F1EB]'
             }`}
           >
             <span>{tab.icon}</span>
@@ -55,7 +55,7 @@ export default function ProfileTabs({
             {count != null && count > 0 && (
               <span
                 className={`text-[10px] font-mono px-1.5 py-0.2 rounded-full ${
-                  isActive ? 'bg-white/20 text-white' : 'bg-[#F4F1EB] text-[#5C6B63]'
+                  isActive ? 'bg-white/20 text-white' : 'bg-[#F4F1EB] text-[#5A7064]'
                 }`}
               >
                 {count}

@@ -18,8 +18,13 @@ export function SearchProvider({ children }: { children: React.ReactNode }) {
   const openSearch = useCallback(() => setIsSearchOpen(true), []);
   const closeSearch = useCallback(() => setIsSearchOpen(false), []);
 
+  const value = React.useMemo(
+    () => ({ isSearchOpen, openSearch, closeSearch, searchAnchorRef }),
+    [isSearchOpen, openSearch, closeSearch]
+  );
+
   return (
-    <SearchContext.Provider value={{ isSearchOpen, openSearch, closeSearch, searchAnchorRef }}>
+    <SearchContext.Provider value={value}>
       {children}
     </SearchContext.Provider>
   );

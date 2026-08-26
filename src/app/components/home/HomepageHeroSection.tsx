@@ -75,8 +75,8 @@ export default function HomepageHeroSection() {
                   <span
                     className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full"
                     style={{
-                      background: 'rgba(45,90,61,0.25)',
-                      border: '1px solid rgba(45,90,61,0.45)',
+                      background: 'rgba(23,64,44,0.25)',
+                      border: '1px solid rgba(23,64,44,0.45)',
                     }}
                   >
                     <span
@@ -160,7 +160,7 @@ export default function HomepageHeroSection() {
                       whileHover={{ scale: 1.02 }}
                       whileTap={{ scale: 0.98 }}
                       className="absolute right-1.5 top-1/2 -translate-y-1/2 px-5 py-2.5 text-sm font-semibold text-white rounded-lg min-h-[40px] transition-colors"
-                      style={{ background: '#2D5A3D' }}
+                      style={{ background: '#17402C' }}
                     >
                       Configurer mon kit
                     </motion.button>
@@ -200,7 +200,7 @@ export default function HomepageHeroSection() {
                 whileHover={{ y: -5, transition: { duration: 0.3 } }}
               >
                 <div
-                  className="rounded-2xl overflow-hidden shadow-2xl relative"
+                  className="rounded-2xl overflow-hidden  relative"
                   style={{
                     background: 'rgba(245,243,238,0.92)',
                     backdropFilter: 'blur(24px)',
@@ -263,7 +263,7 @@ export default function HomepageHeroSection() {
                       <div>
                         <span
                           className="text-2xl font-bold"
-                          style={{ fontFamily: 'var(--font-mono)', color: '#2D5A3D', fontWeight: 700 }}
+                          style={{ fontFamily: 'var(--font-mono)', color: '#17402C', fontWeight: 700 }}
                         >
                           248 €
                         </span>
@@ -272,7 +272,7 @@ export default function HomepageHeroSection() {
                       <Link
                         href="/ai-configurator"
                         className="px-5 py-2.5 text-sm font-semibold text-white rounded-xl transition-all hover:opacity-90 hover:-translate-y-0.5 shadow-green"
-                        style={{ background: '#2D5A3D', boxShadow: '0 8px 24px rgba(45,90,61,0.28)' }}
+                        style={{ background: '#17402C', boxShadow: '0 8px 24px rgba(23,64,44,0.28)' }}
                       >
                         Configurer mon sac
                       </Link>

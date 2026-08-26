@@ -79,7 +79,7 @@ function NewReportModal({ onClose, onSave }: { onClose: () => void; onSave: (f: 
 
   return (
     <div className="fixed inset-0 z-50 bg-black/70 backdrop-blur-sm flex items-center justify-center p-4" onClick={onClose}>
-      <div className="bg-card border border-border rounded-2xl w-full max-w-lg overflow-hidden shadow-2xl" onClick={(e) => e.stopPropagation()}>
+      <div className="bg-card border border-border rounded-2xl w-full max-w-lg overflow-hidden " onClick={(e) => e.stopPropagation()}>
         <div className="flex items-center justify-between p-5 border-b border-border">
           <div>
             <h2 className="font-display font-700 text-foreground text-lg">Nouveau rapport d&apos;expédition</h2>
@@ -189,7 +189,7 @@ function ReportDetailModal({ report, onClose }: { report: PastReport; onClose: (
   const budgetDelta = (report.budget_real || 0) - (report.budget_estimated || 0);
   return (
     <div className="fixed inset-0 z-50 bg-black/70 backdrop-blur-sm flex items-center justify-center p-4" onClick={onClose}>
-      <div className="bg-card border border-border rounded-2xl w-full max-w-lg overflow-hidden shadow-2xl max-h-[90vh] overflow-y-auto" onClick={(e) => e.stopPropagation()}>
+      <div className="bg-card border border-border rounded-2xl w-full max-w-lg overflow-hidden  max-h-[90vh] overflow-y-auto" onClick={(e) => e.stopPropagation()}>
         <div className="relative h-48">
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img src={report.image} alt={report.alt} className="w-full h-full object-cover" />
@@ -448,7 +448,7 @@ export default function RapportExpeditionPage() {
               </div>
               <button
                 onClick={() => setShowNewReportModal(true)}
-                className="flex items-center gap-2 px-5 py-3 bg-cyan-500 hover:bg-cyan-400 text-white rounded-xl font-medium transition-all shadow-lg shadow-cyan-500/20 whitespace-nowrap flex-shrink-0"
+                className="flex items-center gap-2 px-5 py-3 bg-cyan-500 hover:bg-cyan-400 text-white rounded-xl font-medium transition-all  shadow-cyan-500/20 whitespace-nowrap flex-shrink-0"
               >
                 <Icon name="PlusIcon" size={18} variant="outline" />
                 Nouveau rapport
@@ -486,7 +486,7 @@ export default function RapportExpeditionPage() {
                 <button
                   key={tab.id}
                   onClick={() => setActiveTab(tab.id)}
-                  className={`px-5 py-2 rounded-lg text-sm font-medium transition-all ${activeTab === tab.id ? 'bg-cyan-500 text-white shadow-sm' : 'text-white/50 hover:text-white'}`}
+                  className={`px-5 py-2 rounded-lg text-sm font-medium transition-all ${activeTab === tab.id ? 'bg-cyan-500 text-white ' : 'text-white/50 hover:text-white'}`}
                 >
                   {tab.label}
                 </button>
@@ -711,11 +711,11 @@ export default function RapportExpeditionPage() {
       <div className="block md:hidden">
         <MobilePageShell>
           {/* Hero */}
-          <div style={{ padding: '16px', borderBottom: '1px solid rgba(11,31,23,0.06)' }}>
+          <div style={{ padding: '16px', borderBottom: '1px solid rgba(23,64,44,0.06)' }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: '6px', padding: '4px 10px', background: 'rgba(23,64,44,0.08)', borderRadius: '999px', width: 'fit-content', marginBottom: '10px' }}>
               <span style={{ fontSize: '10px', color: '#17402C', fontFamily: 'ui-monospace, monospace', letterSpacing: '0.05em' }}>PHASE 5 &mdash; RAPPORT POST-EXP&Eacute;DITION</span>
             </div>
-            <h1 style={{ fontSize: '22px', fontWeight: 700, color: '#0B1F17', margin: '0 0 4px 0', lineHeight: 1.2 }}>
+            <h1 style={{ fontSize: '22px', fontWeight: 700, color: '#17402C', margin: '0 0 4px 0', lineHeight: 1.2 }}>
               Bilan automatique de chaque aventure
             </h1>
             <p style={{ fontSize: '13px', color: '#6B7A72', margin: '0 0 16px 0', lineHeight: 1.4 }}>
@@ -745,23 +745,23 @@ export default function RapportExpeditionPage() {
 
           {/* Stats */}
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px', padding: '12px 16px' }}>
-            <div style={{ padding: '12px', background: '#FBFAF6', borderRadius: '10px', border: '1px solid rgba(11,31,23,0.06)' }}>
+            <div style={{ padding: '12px', background: '#FBFAF6', borderRadius: '10px', border: '1px solid rgba(23,64,44,0.06)' }}>
               <p style={{ fontSize: '10px', color: '#6B7A72', margin: '0 0 2px 0' }}>Exp&eacute;ditions</p>
               <p style={{ fontSize: '20px', fontWeight: 700, color: '#17402C', margin: 0, fontFamily: 'ui-monospace, monospace' }}>{reports.length}</p>
             </div>
-            <div style={{ padding: '12px', background: '#FBFAF6', borderRadius: '10px', border: '1px solid rgba(11,31,23,0.06)' }}>
+            <div style={{ padding: '12px', background: '#FBFAF6', borderRadius: '10px', border: '1px solid rgba(23,64,44,0.06)' }}>
               <p style={{ fontSize: '10px', color: '#6B7A72', margin: '0 0 2px 0' }}>Score moyen</p>
-              <p style={{ fontSize: '20px', fontWeight: 700, color: '#0B1F17', margin: 0, fontFamily: 'ui-monospace, monospace' }}>{reports.length > 0 ? `${avgScore}/100` : '\u2014'}</p>
+              <p style={{ fontSize: '20px', fontWeight: 700, color: '#17402C', margin: 0, fontFamily: 'ui-monospace, monospace' }}>{reports.length > 0 ? `${avgScore}/100` : '\u2014'}</p>
             </div>
-            <div style={{ padding: '12px', background: '#FBFAF6', borderRadius: '10px', border: '1px solid rgba(11,31,23,0.06)' }}>
+            <div style={{ padding: '12px', background: '#FBFAF6', borderRadius: '10px', border: '1px solid rgba(23,64,44,0.06)' }}>
               <p style={{ fontSize: '10px', color: '#6B7A72', margin: '0 0 2px 0' }}>Budget total</p>
               <p style={{ fontSize: '20px', fontWeight: 700, color: totalBudgetDelta > 0 ? '#DC2626' : '#059669', margin: 0, fontFamily: 'ui-monospace, monospace' }}>
                 {totalBudgetDelta !== 0 ? `${totalBudgetDelta > 0 ? '+' : ''}${totalBudgetDelta}\u20ac` : '\u2014'}
               </p>
             </div>
-            <div style={{ padding: '12px', background: '#FBFAF6', borderRadius: '10px', border: '1px solid rgba(11,31,23,0.06)' }}>
+            <div style={{ padding: '12px', background: '#FBFAF6', borderRadius: '10px', border: '1px solid rgba(23,64,44,0.06)' }}>
               <p style={{ fontSize: '10px', color: '#6B7A72', margin: '0 0 2px 0' }}>&Eacute;quipements</p>
-              <p style={{ fontSize: '20px', fontWeight: 700, color: '#0B1F17', margin: 0, fontFamily: 'ui-monospace, monospace' }}>
+              <p style={{ fontSize: '20px', fontWeight: 700, color: '#17402C', margin: 0, fontFamily: 'ui-monospace, monospace' }}>
                 {userGear.length > 0 ? `${(totalWeight / 1000).toFixed(1)} kg` : '\u2014'}
               </p>
             </div>
@@ -814,7 +814,7 @@ export default function RapportExpeditionPage() {
               )}
 
               <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '12px' }}>
-                <p style={{ fontSize: '15px', fontWeight: 600, color: '#0B1F17', margin: 0 }}>
+                <p style={{ fontSize: '15px', fontWeight: 600, color: '#17402C', margin: 0 }}>
                   Mes exp&eacute;ditions ({reports.length})
                 </p>
                 <button
@@ -850,7 +850,7 @@ export default function RapportExpeditionPage() {
 
               {!loadingReports && user && reports.length === 0 && (
                 <div style={{ textAlign: 'center', padding: '32px 16px' }}>
-                  <p style={{ fontSize: '16px', fontWeight: 600, color: '#0B1F17', margin: '0 0 4px 0' }}>Aucune exp&eacute;dition enregistr&eacute;e</p>
+                  <p style={{ fontSize: '16px', fontWeight: 600, color: '#17402C', margin: '0 0 4px 0' }}>Aucune exp&eacute;dition enregistr&eacute;e</p>
                   <p style={{ fontSize: '12px', color: '#6B7A72', margin: '0 0 16px 0' }}>Cr&eacute;ez votre premier rapport.</p>
                   <button
                     onClick={() => setShowNewReportModal(true)}
@@ -879,7 +879,7 @@ export default function RapportExpeditionPage() {
                       style={{
                         background: '#FBFAF6',
                         borderRadius: '12px',
-                        border: '1px solid rgba(11,31,23,0.06)',
+                        border: '1px solid rgba(23,64,44,0.06)',
                         overflow: 'hidden',
                         cursor: 'pointer',
                       }}
@@ -920,32 +920,32 @@ export default function RapportExpeditionPage() {
           {/* ── IA TAB (Mobile) ── */}
           {activeTab === 'ia' && (
             <div style={{ padding: '16px' }}>
-              <div style={{ background: '#FBFAF6', borderRadius: '12px', border: '1px solid rgba(11,31,23,0.06)', overflow: 'hidden' }}>
+              <div style={{ background: '#FBFAF6', borderRadius: '12px', border: '1px solid rgba(23,64,44,0.06)', overflow: 'hidden' }}>
                 {/* Header */}
-                <div style={{ padding: '12px', borderBottom: '1px solid rgba(11,31,23,0.06)', display: 'flex', alignItems: 'center', gap: '10px' }}>
+                <div style={{ padding: '12px', borderBottom: '1px solid rgba(23,64,44,0.06)', display: 'flex', alignItems: 'center', gap: '10px' }}>
                   <div style={{ width: '28px', height: '28px', borderRadius: '8px', background: '#17402C', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#fff', fontSize: '13px' }}>
                     &#10024;
                   </div>
                   <div style={{ flex: 1 }}>
-                    <p style={{ fontSize: '13px', fontWeight: 600, color: '#0B1F17', margin: 0 }}>Analyse IA</p>
+                    <p style={{ fontSize: '13px', fontWeight: 600, color: '#17402C', margin: 0 }}>Analyse IA</p>
                     <p style={{ fontSize: '10px', color: '#6B7A72', margin: '1px 0 0 0' }}>Gemini &middot; Analyse personnalis&eacute;e</p>
                   </div>
                   <span style={{ width: '6px', height: '6px', borderRadius: '50%', background: '#059669', flexShrink: 0 }} />
                 </div>
 
                 {/* Profile context */}
-                <div style={{ padding: '12px', borderBottom: '1px solid rgba(11,31,23,0.06)' }}>
+                <div style={{ padding: '12px', borderBottom: '1px solid rgba(23,64,44,0.06)' }}>
                   <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '8px' }}>
                     <div style={{ padding: '8px', background: '#F4F1EA', borderRadius: '8px', textAlign: 'center' }}>
                       <p style={{ fontSize: '16px', fontWeight: 700, color: '#17402C', margin: '0 0 2px 0', fontFamily: 'ui-monospace, monospace' }}>{reports.length}</p>
                       <p style={{ fontSize: '9px', color: '#6B7A72', margin: 0 }}>Exp&eacute;ditions</p>
                     </div>
                     <div style={{ padding: '8px', background: '#F4F1EA', borderRadius: '8px', textAlign: 'center' }}>
-                      <p style={{ fontSize: '16px', fontWeight: 700, color: '#0B1F17', margin: '0 0 2px 0', fontFamily: 'ui-monospace, monospace' }}>{avgScore > 0 ? `${avgScore}/100` : '\u2014'}</p>
+                      <p style={{ fontSize: '16px', fontWeight: 700, color: '#17402C', margin: '0 0 2px 0', fontFamily: 'ui-monospace, monospace' }}>{avgScore > 0 ? `${avgScore}/100` : '\u2014'}</p>
                       <p style={{ fontSize: '9px', color: '#6B7A72', margin: 0 }}>Score</p>
                     </div>
                     <div style={{ padding: '8px', background: '#F4F1EA', borderRadius: '8px', textAlign: 'center' }}>
-                      <p style={{ fontSize: '16px', fontWeight: 700, color: '#0B1F17', margin: '0 0 2px 0', fontFamily: 'ui-monospace, monospace' }}>{userGear.length}</p>
+                      <p style={{ fontSize: '16px', fontWeight: 700, color: '#17402C', margin: '0 0 2px 0', fontFamily: 'ui-monospace, monospace' }}>{userGear.length}</p>
                       <p style={{ fontSize: '9px', color: '#6B7A72', margin: 0 }}>&Eacute;quipements</p>
                     </div>
                   </div>
@@ -958,7 +958,7 @@ export default function RapportExpeditionPage() {
 
                 {/* Chat messages */}
                 {chatMessages.length > 0 && (
-                  <div style={{ padding: '12px', maxHeight: '240px', overflowY: 'auto', borderBottom: '1px solid rgba(11,31,23,0.06)', display: 'flex', flexDirection: 'column', gap: '10px' }}>
+                  <div style={{ padding: '12px', maxHeight: '240px', overflowY: 'auto', borderBottom: '1px solid rgba(23,64,44,0.06)', display: 'flex', flexDirection: 'column', gap: '10px' }}>
                     {chatMessages.map((msg, i) => (
                       <div key={i} style={{ display: 'flex', gap: '8px', flexDirection: msg.role === 'user' ? 'row-reverse' : 'row' }}>
                         <div style={{
@@ -982,7 +982,7 @@ export default function RapportExpeditionPage() {
                           fontSize: '12px',
                           lineHeight: 1.4,
                           background: msg.role === 'user' ? '#17402C' : '#F4F1EA',
-                          color: msg.role === 'user' ? '#fff' : '#0B1F17',
+                          color: msg.role === 'user' ? '#fff' : '#17402C',
                         }}>
                           {msg.content}
                         </div>
@@ -1014,10 +1014,10 @@ export default function RapportExpeditionPage() {
                         flex: 1,
                         padding: '10px 12px',
                         background: '#F4F1EA',
-                        border: '1px solid rgba(11,31,23,0.06)',
+                        border: '1px solid rgba(23,64,44,0.06)',
                         borderRadius: '10px',
                         fontSize: '12px',
-                        color: '#0B1F17',
+                        color: '#17402C',
                         outline: 'none',
                       }}
                     />
@@ -1046,7 +1046,7 @@ export default function RapportExpeditionPage() {
                         style={{
                           padding: '4px 10px',
                           background: '#F4F1EA',
-                          border: '1px solid rgba(11,31,23,0.06)',
+                          border: '1px solid rgba(23,64,44,0.06)',
                           borderRadius: '999px',
                           fontSize: '10px',
                           color: '#6B7A72',

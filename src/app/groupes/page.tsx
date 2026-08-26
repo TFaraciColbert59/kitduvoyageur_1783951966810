@@ -9,9 +9,13 @@ import Icon from '@/components/ui/AppIcon';
 import LkvIcon from '@/components/ui/LkvIcon';
 import MobilePageShell from '@/components/mobile-nav/MobilePageShell';
 import MobileGroupesHub from '@/components/groupes/MobileGroupesHub';
+import CompteBackground from '@/components/compte/CompteBackground';
+import CommunityHubNav from '@/components/social/CommunityHubNav';
+import { BackgroundVideo } from '@/components/materiel/BackgroundVideo';
 import { createClient } from '@/lib/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/contexts/ToastContext';
+
 interface TravelGroup {
   id: string;
   name: string;
@@ -41,8 +45,8 @@ const THEME_EMOJI: Record<string, string> = {
 
 type MainTab = 'mes-groupes' | 'decouvrir';
 
-const inputCls = "w-full bg-white border border-[#C8C3B0] rounded-xl px-3 py-2.5 text-sm text-[#1C2620] focus:outline-none focus:ring-2 focus:ring-[#17402C]/30 focus:border-[#17402C]/40 transition-colors";
-const labelCls = "block text-[10px] font-mono text-[#5C6B5E] uppercase tracking-[0.15em] mb-1.5";
+const inputCls = "glass-input w-full text-sm text-[#17402C] focus:outline-none";
+const labelCls = "block text-[10px] font-mono text-[#5C6B5E] uppercase tracking-[0.15em] mb-1.5 font-bold";
 
 function GroupesPageInner() {
   const { user } = useAuth();
@@ -161,7 +165,6 @@ function GroupesPageInner() {
     load();
   }, [loadMyGroups, loadPublicGroups, loadPendingInvites]);
 
-  // Auto-join via invite link: /groupes?code=XXXX
   useEffect(() => {
     const code = searchParams?.get('code');
     if (!code) return;
@@ -177,7 +180,6 @@ function GroupesPageInner() {
     return () => clearTimeout(t);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user, searchParams]);
-
 
   async function handleEditGroup(e: React.FormEvent) {
     e.preventDefault();
@@ -278,214 +280,117 @@ function GroupesPageInner() {
     const isOwner = user?.id === group.owner_id;
     const myRole = group.my_role;
     return (
-      <div className="bg-[#EDEAE0] border border-[#C8C3B0] rounded-2xl overflow-hidden hover:shadow-md hover:border-[#17402C]/30 transition-all group">
+      <div className="glass overflow-hidden flex flex-col justify-between transition-all duration-300">
         {/* Header */}
-        <div className="bg-[#1C2620] p-4 relative">
+        <div className="p-4 relative bg-gradient-to-r from-[#17402C]/90 to-[#17402C]/70 text-white">
           <div className="flex items-start justify-between gap-3">
             <div className="flex items-center gap-3">
-              <div className="w-12 h-12 rounded-2xl bg-white/10 flex items-center justify-center text-2xl flex-shrink-0">
+              <div className="w-12 h-12 rounded-2xl glass-sub-card flex items-center justify-center text-2xl flex-shrink-0">
                 {THEME_EMOJI[group.theme] || '🎒'}
               </div>
               <div>
-                <h3 className="font-display font-700 text-white text-base leading-tight">{group.name}</h3>
-                <p className="text-white/50 text-xs flex items-center gap-1 mt-0.5">
-                  <Icon name="MapPinIcon" size={10} /> {group.destination}
+                <h3 className="font-display font-bold text-white text-base leading-tight">{group.name}</h3>
+                <p className="text-white/70 text-xs flex items-center gap-1 mt-0.5">
+                  <Icon name="MapPinIcon" size={10} className="relative z-10" /> {group.destination}
                 </p>
               </div>
             </div>
             <div className="text-right flex-shrink-0">
-              <div className="font-mono font-700 text-[#17402C] text-lg">{group.optimization_score}</div>
-              <div className="text-[10px] text-white/40">score</div>
+              <div className="font-mono font-bold text-white text-lg">{group.optimization_score}</div>
+              <div className="text-[10px] text-white/60 uppercase font-mono">score</div>
             </div>
           </div>
           <div className="flex items-center gap-2 mt-3 flex-wrap">
-            <span className="text-[10px] px-2 py-0.5 rounded-full bg-white/10 text-white/70">{group.theme}</span>
-            <span className={`text-[10px] px-2 py-0.5 rounded-full font-600 ${group.visibility === 'public' ? 'bg-emerald-500/20 text-emerald-400' : 'bg-amber-500/20 text-amber-400'}`}>
+            <span className="glass-pill">{group.theme}</span>
+            <span className={`text-[10px] px-2.5 py-0.5 rounded-full font-semibold ${group.visibility === 'public' ? 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/30' : 'bg-amber-500/20 text-amber-300 border border-amber-500/30'}`}>
               {group.visibility === 'public' ? '🌍 Public' : group.visibility === 'private' ? '🔒 Privé' : '🔗 Invitation'}
             </span>
-            <span className="text-[10px] text-white/40">Niv. {group.group_level}</span>
+            <span className="text-[10px] font-mono text-white/60">Niv. {group.group_level}</span>
           </div>
         </div>
 
         {/* Body */}
-        <div className="p-4">
-          {group.description && <p className="text-xs text-[#5C6B5E] mb-3 line-clamp-2">{group.description}</p>}
-          <div className="grid grid-cols-3 gap-2 mb-3">
-            <div className="text-center p-2 bg-white/60 rounded-xl border border-[#C8C3B0]/50">
-              <p className="font-mono font-700 text-[#1C2620] text-sm">{group.member_count || 0}</p>
-              <p className="text-[10px] text-[#5C6B5E]">membres</p>
-            </div>
-            <div className="text-center p-2 bg-white/60 rounded-xl border border-[#C8C3B0]/50">
-              <p className="font-mono font-700 text-[#1C2620] text-sm">{group.budget_target > 0 ? `${group.budget_target}€` : '—'}</p>
-              <p className="text-[10px] text-[#5C6B5E]">budget</p>
-            </div>
-            <div className="text-center p-2 bg-white/60 rounded-xl border border-[#C8C3B0]/50">
-              <p className="font-mono font-700 text-[#1C2620] text-sm">{group.max_members}</p>
-              <p className="text-[10px] text-[#5C6B5E]">max</p>
-            </div>
-          </div>
-          {group.departure_date && (
-            <p className="text-[10px] text-[#5C6B5E] flex items-center gap-1 mb-3">
-              <Icon name="CalendarIcon" size={10} />
-              {new Date(group.departure_date).toLocaleDateString('fr-FR', { day: 'numeric', month: 'long', year: 'numeric' })}
-              {group.return_date && ` → ${new Date(group.return_date).toLocaleDateString('fr-FR', { day: 'numeric', month: 'short', year: 'numeric' })}`}
-            </p>
-          )}
-          {group.owner && (
-            <div className="flex items-center gap-2 mb-3 pb-3 border-b border-[#C8C3B0]/50">
-              <div className="w-5 h-5 rounded-full bg-[#17402C]/20 flex items-center justify-center text-[10px] font-700 text-[#17402C]">
-                {group.owner.full_name?.[0] || '?'}
+        <div className="p-4 flex-1 flex flex-col justify-between space-y-3">
+          <div>
+            {group.description && <p className="text-xs text-[#5C6B5E] mb-3 line-clamp-2 leading-relaxed">{group.description}</p>}
+            <div className="grid grid-cols-3 gap-2 mb-3">
+              <div className="text-center p-2 glass-sub-card rounded-xl">
+                <p className="font-mono font-bold text-[#17402C] text-sm">{group.member_count || 0}</p>
+                <p className="text-[10px] text-[#5C6B5E]">membres</p>
               </div>
-              <span className="text-[10px] text-[#5C6B5E]">Organisé par <span className="font-600 text-[#1C2620]">{group.owner.full_name}</span></span>
+              <div className="text-center p-2 glass-sub-card rounded-xl">
+                <p className="font-mono font-bold text-[#17402C] text-sm">{group.budget_target > 0 ? `${group.budget_target}€` : '—'}</p>
+                <p className="text-[10px] text-[#5C6B5E]">budget</p>
+              </div>
+              <div className="text-center p-2 glass-sub-card rounded-xl">
+                <p className="font-mono font-bold text-[#17402C] text-sm">{group.max_members}</p>
+                <p className="text-[10px] text-[#5C6B5E]">max</p>
+              </div>
             </div>
-          )}
+            {group.departure_date && (
+              <p className="text-[10px] text-[#5C6B5E] flex items-center gap-1 mb-3 font-mono">
+                <Icon name="CalendarIcon" size={10} className="relative z-10" />
+                {new Date(group.departure_date).toLocaleDateString('fr-FR', { day: 'numeric', month: 'long', year: 'numeric' })}
+                {group.return_date && ` → ${new Date(group.return_date).toLocaleDateString('fr-FR', { day: 'numeric', month: 'short', year: 'numeric' })}`}
+              </p>
+            )}
+            {group.owner && (
+              <div className="flex items-center gap-2 mb-3 pb-3 border-b border-[#17402C]/10">
+                <div className="w-5 h-5 rounded-full bg-[#17402C]/15 flex items-center justify-center text-[10px] font-bold text-[#17402C]">
+                  {group.owner.full_name?.[0] || '?'}
+                </div>
+                <span className="text-[10px] text-[#5C6B5E]">Organisé par <span className="font-semibold text-[#17402C]">{group.owner.full_name}</span></span>
+              </div>
+            )}
+          </div>
 
           {/* Actions */}
-          <div className="flex gap-2">
+          <div className="flex items-center gap-2 pt-2">
             {showActions ? (
               <>
-                <Link href={`/groupes/${group.id}`} className="flex-1 flex items-center justify-center gap-1.5 py-2 bg-[#17402C] hover:bg-[#17402C]/90 text-white rounded-xl text-xs font-700 transition-colors">
-                  <Icon name="ArrowRightIcon" size={12} /> Ouvrir
+                <Link href={`/groupes/${group.id}`} className="flex-1 glass-capsule-btn primary py-2 text-xs font-bold flex items-center justify-center gap-1.5">
+                  <Icon name="ArrowRightIcon" size={12} className="relative z-10" />
+                  <span className="relative z-10">Ouvrir</span>
                 </Link>
                 {myRole && (
-                  <span className={`px-2.5 py-2 rounded-xl text-[10px] font-600 ${myRole === 'organizer' ? 'bg-amber-100 text-amber-700' : myRole === 'co_organizer' ? 'bg-blue-100 text-blue-700' : 'bg-[#E7E3D6] text-[#5C6B5E]'}`}>
+                  <span className={`px-2.5 py-2 rounded-xl text-[10px] font-semibold ${myRole === 'organizer' ? 'bg-amber-100/60 text-amber-800' : myRole === 'co_organizer' ? 'bg-blue-100/60 text-blue-800' : 'glass-sub-card text-[#5C6B5E]'}`}>
                     {myRole === 'organizer' ? '👑' : myRole === 'co_organizer' ? '🛡️' : '👤'}
                   </span>
                 )}
                 {(isOwner || myRole === 'organizer') && (
-                  <button onClick={() => openEditModal(group)} className="p-2 border border-[#C8C3B0] text-[#5C6B5E] rounded-xl hover:border-[#17402C]/40 hover:text-[#17402C] transition-colors">
-                    <Icon name="PencilIcon" size={12} />
+                  <button onClick={() => openEditModal(group)} className="glass-capsule-btn p-2" title="Modifier">
+                    <Icon name="PencilIcon" size={12} className="relative z-10" />
                   </button>
                 )}
                 {myRole && myRole !== 'organizer' && (
-                  <button onClick={() => handleLeaveGroup(group.id)} className="p-2 border border-[#C8C3B0] text-[#5C6B5E] rounded-xl hover:border-red-300 hover:text-red-500 transition-colors">
-                    <Icon name="ArrowRightOnRectangleIcon" size={12} />
+                  <button onClick={() => handleLeaveGroup(group.id)} className="glass-capsule-btn p-2 text-red-600 hover:text-red-700" title="Quitter">
+                    <Icon name="ArrowRightOnRectangleIcon" size={12} className="relative z-10" />
                   </button>
                 )}
                 {isOwner && (
-                  <button onClick={() => handleDeleteGroup(group.id)} className="p-2 border border-[#C8C3B0] text-[#5C6B5E] rounded-xl hover:border-red-300 hover:text-red-500 transition-colors">
-                    <Icon name="TrashIcon" size={12} />
+                  <button onClick={() => handleDeleteGroup(group.id)} className="glass-capsule-btn p-2 text-red-600 hover:text-red-700" title="Supprimer">
+                    <Icon name="TrashIcon" size={12} className="relative z-10" />
                   </button>
                 )}
               </>
             ) : alreadyMember ? (
-              <Link href={`/groupes/${group.id}`} className="flex-1 flex items-center justify-center gap-1.5 py-2 bg-[#1C2620] hover:bg-[#1C2620]/80 text-white rounded-xl text-xs font-700 transition-colors">
-                <Icon name="ArrowRightIcon" size={12} /> Déjà membre — Ouvrir
+              <Link href={`/groupes/${group.id}`} className="flex-1 glass-capsule-btn primary py-2 text-xs font-bold flex items-center justify-center gap-1.5">
+                <Icon name="ArrowRightIcon" size={12} className="relative z-10" />
+                <span className="relative z-10">Déjà membre — Ouvrir</span>
               </Link>
             ) : (
               <>
                 <button
                   onClick={() => handleJoinGroup(group.id)}
                   disabled={joining === group.id || (group.member_count || 0) >= group.max_members}
-                  className="flex-1 py-2 bg-[#17402C] hover:bg-[#17402C]/90 text-white rounded-xl text-xs font-700 transition-colors disabled:opacity-50"
+                  className="flex-1 glass-capsule-btn primary py-2 text-xs font-bold flex items-center justify-center gap-1.5 disabled:opacity-50"
                 >
-                  {joining === group.id ? 'Rejoindre...' : (group.member_count || 0) >= group.max_members ? 'Complet' : 'Rejoindre'}
+                  <span className="relative z-10">
+                    {joining === group.id ? 'Rejoindre...' : (group.member_count || 0) >= group.max_members ? 'Complet' : 'Rejoindre'}
+                  </span>
                 </button>
-                <Link href={`/groupes/${group.id}`} className="p-2 border border-[#C8C3B0] text-[#5C6B5E] rounded-xl hover:border-[#1C2620]/30 hover:text-[#1C2620] transition-colors">
-                  <Icon name="EyeIcon" size={12} />
-                </Link>
-              </>
-            )}
-          </div>
-        </div>
-      </div>
-    );
-  };
-
-  /** Mobile group card component */
-  const MobileGroupCard = ({ group, showActions = false }: { group: TravelGroup; showActions?: boolean }) => {
-    const alreadyMember = isAlreadyMember(group.id);
-    const isOwner = user?.id === group.owner_id;
-    const myRole = group.my_role;
-    return (
-      <div style={{ background: '#fff', borderRadius: '16px', overflow: 'hidden', border: '1px solid rgba(11,31,23,0.06)' }}>
-        {/* Header */}
-        <div style={{ background: '#0B1F17', padding: '14px' }}>
-          <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: '12px' }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-              <div style={{ width: '40px', height: '40px', borderRadius: '12px', background: 'rgba(255,255,255,0.1)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '20px', flexShrink: 0 }}>
-                {THEME_EMOJI[group.theme] || '🎒'}
-              </div>
-              <div>
-                <div style={{ fontWeight: 700, color: '#fff', fontSize: '14px', lineHeight: 1.3 }}>{group.name}</div>
-                <div style={{ color: 'rgba(255,255,255,0.5)', fontSize: '11px', display: 'flex', alignItems: 'center', gap: '4px', marginTop: '2px' }}>
-                  <LkvIcon name="map-pin" size={10} color="rgba(255,255,255,0.5)" /> {group.destination}
-                </div>
-              </div>
-            </div>
-            <div style={{ textAlign: 'right', flexShrink: 0 }}>
-              <div style={{ fontWeight: 700, color: '#fff', fontSize: '16px' }}>{group.optimization_score}</div>
-              <div style={{ fontSize: '9px', color: 'rgba(255,255,255,0.4)' }}>score</div>
-            </div>
-          </div>
-          <div style={{ display: 'flex', gap: '6px', marginTop: '8px', flexWrap: 'wrap' }}>
-            <span style={{ fontSize: '10px', padding: '2px 8px', borderRadius: '999px', background: 'rgba(255,255,255,0.1)', color: 'rgba(255,255,255,0.7)' }}>{group.theme}</span>
-            <span style={{ fontSize: '10px', padding: '2px 8px', borderRadius: '999px', fontWeight: 600, background: group.visibility === 'public' ? 'rgba(52,211,153,0.2)' : 'rgba(251,191,36,0.2)', color: group.visibility === 'public' ? '#34d399' : '#fbbf24' }}>
-              {group.visibility === 'public' ? '🌍 Public' : group.visibility === 'private' ? '🔒 Privé' : '🔗 Invitation'}
-            </span>
-            <span style={{ fontSize: '10px', color: 'rgba(255,255,255,0.4)' }}>Niv. {group.group_level}</span>
-          </div>
-        </div>
-
-        {/* Body */}
-        <div style={{ padding: '12px' }}>
-          {group.description && <p style={{ fontSize: '12px', color: '#6B7A72', marginBottom: '10px', lineHeight: 1.4 }}>{group.description}</p>}
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '6px', marginBottom: '10px' }}>
-            {[
-              { label: 'membres', value: group.member_count || 0 },
-              { label: 'budget', value: group.budget_target > 0 ? `${group.budget_target}€` : '—' },
-              { label: 'max', value: group.max_members },
-            ].map(stat => (
-              <div key={stat.label} style={{ textAlign: 'center', padding: '8px', background: '#F4F1EA', borderRadius: '10px' }}>
-                <div style={{ fontWeight: 700, color: '#0B1F17', fontSize: '14px' }}>{stat.value}</div>
-                <div style={{ fontSize: '9px', color: '#6B7A72' }}>{stat.label}</div>
-              </div>
-            ))}
-          </div>
-
-          {group.departure_date && (
-            <p style={{ fontSize: '10px', color: '#6B7A72', marginBottom: '8px', display: 'flex', alignItems: 'center', gap: '4px' }}>
-              <LkvIcon name="star" size={10} color="#6B7A72" />
-              {new Date(group.departure_date).toLocaleDateString('fr-FR', { day: 'numeric', month: 'long', year: 'numeric' })}
-              {group.return_date && ` → ${new Date(group.return_date).toLocaleDateString('fr-FR', { day: 'numeric', month: 'short', year: 'numeric' })}`}
-            </p>
-          )}
-
-          {group.owner && (
-            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '10px', paddingBottom: '10px', borderBottom: '1px solid rgba(11,31,23,0.06)' }}>
-              <div style={{ width: '20px', height: '20px', borderRadius: '50%', background: 'rgba(23,64,44,0.15)', color: '#17402C', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '10px', fontWeight: 700 }}>
-                {group.owner.full_name?.[0] || '?'}
-              </div>
-              <span style={{ fontSize: '10px', color: '#6B7A72' }}>
-                Organisé par <span style={{ fontWeight: 600, color: '#0B1F17' }}>{group.owner.full_name}</span>
-              </span>
-            </div>
-          )}
-
-          {/* Actions */}
-          <div style={{ display: 'flex', gap: '8px' }}>
-            {showActions ? (
-              <>
-                <Link href={`/groupes/${group.id}`} style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px', padding: '10px', background: '#17402C', color: '#fff', borderRadius: '10px', fontSize: '12px', fontWeight: 600, textDecoration: 'none' }}>
-                  Ouvrir <LkvIcon name="arrow-right" size={12} color="#fff" />
-                </Link>
-                {isOwner && (
-                  <button onClick={() => handleDeleteGroup(group.id)} style={{ padding: '10px', border: '1px solid rgba(11,31,23,0.08)', borderRadius: '10px', background: '#fff', color: '#6B7A72', cursor: 'pointer' }}>
-                    <LkvIcon name="close" size={14} />
-                  </button>
-                )}
-              </>
-            ) : alreadyMember ? (
-              <Link href={`/groupes/${group.id}`} style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px', padding: '10px', background: '#0B1F17', color: '#fff', borderRadius: '10px', fontSize: '12px', fontWeight: 600, textDecoration: 'none' }}>
-                Déjà membre — Ouvrir
-              </Link>
-            ) : (
-              <>
-                <button onClick={() => handleJoinGroup(group.id)} disabled={joining === group.id || (group.member_count || 0) >= group.max_members} style={{ flex: 1, padding: '10px', background: '#17402C', color: '#fff', borderRadius: '10px', fontSize: '12px', fontWeight: 600, border: 'none', cursor: 'pointer', opacity: (joining === group.id || (group.member_count || 0) >= group.max_members) ? 0.5 : 1 }}>
-                  {joining === group.id ? 'Rejoindre...' : (group.member_count || 0) >= group.max_members ? 'Complet' : 'Rejoindre'}
-                </button>
-                <Link href={`/groupes/${group.id}`} style={{ padding: '10px', border: '1px solid rgba(11,31,23,0.08)', borderRadius: '10px', background: '#fff', color: '#6B7A72', display: 'flex', alignItems: 'center', textDecoration: 'none' }}>
-                  <LkvIcon name="search" size={14} />
+                <Link href={`/groupes/${group.id}`} className="glass-capsule-btn p-2">
+                  <Icon name="EyeIcon" size={12} className="relative z-10" />
                 </Link>
               </>
             )}
@@ -497,255 +402,291 @@ function GroupesPageInner() {
 
   return (
     <>
-      {/* ── DESKTOP ── */}
+      {/* ── DESKTOP (Non-scrollable outer page 100dvh + CompteBackground + Nav 15/85 à gauche) ── */}
       <div className="hidden md:block">
-        <div className="min-h-screen bg-[#F5F2E8]">
+        <div className="h-[100dvh] max-h-[100dvh] overflow-hidden bg-transparent font-sans text-[#17402C] relative flex flex-col">
+          <CompteBackground />
           <Header />
 
-      {/* Hero */}
-      <section className="bg-[#1C2620] pt-16">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-          <p className="text-[10px] font-mono text-[#17402C] tracking-[0.2em] uppercase mb-2">Groupes de voyage</p>
-          <div className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-4 mb-6">
-            <div>
-              <h1 className="font-display font-800 text-2xl md:text-3xl text-white tracking-tight">Voyager ensemble</h1>
-              <p className="text-white/50 text-sm mt-1">Créez ou rejoignez des groupes de voyage collaboratifs</p>
-            </div>
-            <div className="flex items-center gap-2 flex-wrap">
-              <input
-                value={joinCode}
-                onChange={e => setJoinCode(e.target.value.toUpperCase())}
-                placeholder="Code d'invitation"
-                className="bg-white/10 border border-white/20 rounded-xl px-3 py-2 text-sm text-white placeholder-white/40 focus:outline-none focus:border-[#17402C]/60 w-36"
-                onKeyDown={e => e.key === 'Enter' && handleJoinByCode()}
+          {/* MAIN FULLSCREEN GRID (15% Left Nav / 85% Content Area) */}
+          <main className="flex-1 min-h-0 overflow-hidden w-full max-w-[1440px] mx-auto px-4 sm:px-6 lg:px-8 pt-24 pb-4 flex gap-6">
+
+            {/* NAV GAUCHE (15% / ~220px) */}
+            <aside className="w-[220px] shrink-0 h-full overflow-y-auto custom-scrollbar flex flex-col gap-4">
+              <div className="px-2 py-1">
+                <span className="glass-pill px-3 py-1 text-[10px] font-bold tracking-widest uppercase block text-center">
+                  🌲 Groupes LKDV
+                </span>
+              </div>
+              <CommunityHubNav
+                layoutVariant="vertical"
+                activeTab="groupes"
               />
-              <button onClick={() => handleJoinByCode()} disabled={joiningByCode} className="bg-white/10 hover:bg-white/20 border border-white/20 text-white text-sm px-3 py-2 rounded-xl transition-colors">
-                {joiningByCode ? '...' : 'Rejoindre'}
-              </button>
-              <Link href="/nouveau-groupe" className="flex items-center gap-2 bg-[#17402C] hover:bg-[#17402C]/90 text-white text-sm px-4 py-2 rounded-xl transition-colors font-600">
-                <Icon name="PlusIcon" size={14} /> Créer un groupe
-              </Link>
-            </div>
-          </div>
+            </aside>
 
-          {/* Quick links */}
-          <div className="flex items-center gap-3 mb-6 flex-wrap">
-            <Link href="/communaute" className="flex items-center gap-2 px-3 py-1.5 bg-white/10 hover:bg-white/20 text-white/70 hover:text-white rounded-xl text-xs font-600 transition-colors">
-              <Icon name="UsersIcon" size={12} /> Communauté
-            </Link>
-            <Link href="/carnets" className="flex items-center gap-2 px-3 py-1.5 bg-white/10 hover:bg-white/20 text-white/70 hover:text-white rounded-xl text-xs font-600 transition-colors">
-              <Icon name="BookOpenIcon" size={12} /> Carnets
-            </Link>
-            {user && (
-              <Link href={`/profil/${user.id}`} className="flex items-center gap-2 px-3 py-1.5 bg-white/10 hover:bg-white/20 text-white/70 hover:text-white rounded-xl text-xs font-600 transition-colors">
-                <Icon name="UserCircleIcon" size={12} /> Mon profil
-              </Link>
-            )}
-          </div>
+            {/* ZONE CONTENU DROITE (85% / flex-1) - SEULE ZONE SCROLLABLE */}
+            <div className="flex-1 min-w-0 h-full overflow-y-auto custom-scrollbar pr-2 space-y-6">
 
-          {/* Tabs */}
-          <div className="flex items-center gap-0.5">
-            {[
-              { id: 'mes-groupes', label: `Mes groupes${myGroups.length > 0 ? ` (${myGroups.length})` : ''}`, icon: 'UserGroupIcon' },
-              { id: 'decouvrir', label: 'Découvrir', icon: 'MagnifyingGlassIcon' },
-            ].map(tab => (
-              <button
-                key={tab.id}
-                onClick={() => setActiveTab(tab.id as MainTab)}
-                className={`flex items-center gap-2 px-5 py-2.5 rounded-t-xl text-sm font-600 transition-all whitespace-nowrap ${activeTab === tab.id ? 'bg-[#F5F2E8] text-[#1C2620]' : 'text-white/50 hover:text-white hover:bg-white/10'}`}
-              >
-                <Icon name={tab.icon} size={14} />
-                {tab.label}
-              </button>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* Content */}
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        {loading ? (
-          <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
-            {[1, 2, 3].map(i => <div key={i} className="bg-[#EDEAE0] border border-[#C8C3B0] rounded-2xl h-64 animate-pulse" />)}
-          </div>
-        ) : error ? (
-          <div className="text-center py-16">
-            <p className="text-5xl mb-4">⚠️</p>
-            <h2 className="font-display font-700 text-xl text-[#1C2620] mb-2">Erreur de chargement</h2>
-            <p className="text-sm text-[#5C6B5E] mb-6">{error}</p>
-            <button
-              onClick={() => { setError(null); setLoading(true); loadAll().finally(() => setLoading(false)); }}
-              className="inline-flex items-center gap-2 px-6 py-3 bg-[#17402C] text-white rounded-xl font-700 hover:bg-[#17402C]/90 transition-colors cursor-pointer"
-            >
-              Réessayer
-            </button>
-          </div>
-        ) : activeTab === 'mes-groupes' ? (
-          <div>
-            {user && pendingInvites.length > 0 && (
-              <div className="mb-6 p-5 bg-[#17402C]/5 border border-[#17402C]/20 rounded-2xl">
-                <div className="flex items-center gap-2 mb-3">
-                  <Icon name="EnvelopeOpenIcon" size={16} className="text-[#17402C]" />
-                  <h3 className="font-display font-700 text-[#1C2620]">{pendingInvites.length} invitation{pendingInvites.length > 1 ? 's' : ''} à rejoindre</h3>
+              {/* Hero Header Card */}
+              <div className="glass p-6 sm:p-8 relative overflow-hidden">
+                <p className="text-[10px] font-mono text-[#5C6B5E] tracking-[0.2em] uppercase mb-2 font-bold">Groupes de voyage</p>
+                <div className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-4 mb-6">
+                  <div>
+                    <h1 className="font-display font-bold text-3xl md:text-4xl text-[#17402C] tracking-tight">Voyager ensemble</h1>
+                    <p className="text-[#5C6B5E] text-sm mt-1">Créez ou rejoignez des groupes de voyage collaboratifs</p>
+                  </div>
+                  <div className="flex items-center gap-2 flex-wrap">
+                    <input
+                      value={joinCode}
+                      onChange={e => setJoinCode(e.target.value.toUpperCase())}
+                      placeholder="Code d'invitation"
+                      className="glass-input w-36 py-2 px-3 text-xs uppercase"
+                      onKeyDown={e => e.key === 'Enter' && handleJoinByCode()}
+                    />
+                    <button onClick={() => handleJoinByCode()} disabled={joiningByCode} className="glass-capsule-btn py-2 px-4 text-xs font-bold">
+                      <span className="relative z-10">{joiningByCode ? '...' : 'Rejoindre'}</span>
+                    </button>
+                    <Link href="/nouveau-groupe" className="glass-capsule-btn primary py-2 px-4 text-xs font-bold flex items-center gap-1.5">
+                      <Icon name="PlusIcon" size={14} className="relative z-10" />
+                      <span className="relative z-10">Créer un groupe</span>
+                    </Link>
+                  </div>
                 </div>
-                <div className="space-y-2">
-                  {pendingInvites.map(inv => (
-                    <div key={inv.id} className="flex flex-col sm:flex-row sm:items-center gap-3 p-3 bg-white rounded-xl border border-[#C8C3B0]">
-                      <div className="flex-1 min-w-0">
-                        <p className="text-sm font-600 text-[#1C2620]">{inv.name}</p>
-                        <p className="text-xs text-[#5C6B5E]">Vous avez été invité à rejoindre ce groupe.</p>
+
+                {/* Quick links */}
+                <div className="flex items-center gap-3 mb-6 flex-wrap">
+                  <Link href="/communaute" className="glass-capsule-btn py-1.5 px-3 text-xs font-semibold flex items-center gap-1.5">
+                    <Icon name="UsersIcon" size={12} className="relative z-10" />
+                    <span className="relative z-10">Fil d'actualité</span>
+                  </Link>
+                  <Link href="/carnets" className="glass-capsule-btn py-1.5 px-3 text-xs font-semibold flex items-center gap-1.5">
+                    <Icon name="BookOpenIcon" size={12} className="relative z-10" />
+                    <span className="relative z-10">Carnets</span>
+                  </Link>
+                  <Link href="/clubs" className="glass-capsule-btn py-1.5 px-3 text-xs font-semibold flex items-center gap-1.5">
+                    <Icon name="UserGroupIcon" size={12} className="relative z-10" />
+                    <span className="relative z-10">Clubs</span>
+                  </Link>
+                  <Link href="/evenements" className="glass-capsule-btn py-1.5 px-3 text-xs font-semibold flex items-center gap-1.5">
+                    <Icon name="CalendarIcon" size={12} className="relative z-10" />
+                    <span className="relative z-10">Sorties</span>
+                  </Link>
+                  {user && (
+                    <Link href={`/profil/${user.id}`} className="glass-capsule-btn py-1.5 px-3 text-xs font-semibold flex items-center gap-1.5">
+                      <Icon name="UserCircleIcon" size={12} className="relative z-10" />
+                      <span className="relative z-10">Mon profil</span>
+                    </Link>
+                  )}
+                </div>
+
+                {/* Tabs Bar */}
+                <div className="glass-capsule-bar w-full">
+                  {[
+                    { id: 'mes-groupes', label: `Mes groupes${myGroups.length > 0 ? ` (${myGroups.length})` : ''}`, icon: 'UserGroupIcon' },
+                    { id: 'decouvrir', label: 'Découvrir', icon: 'MagnifyingGlassIcon' },
+                  ].map(tab => (
+                    <button
+                      key={tab.id}
+                      onClick={() => setActiveTab(tab.id as MainTab)}
+                      className={`glass-capsule-segment ${activeTab === tab.id ? 'active' : ''}`}
+                    >
+                      <div className="flex items-center gap-2">
+                        <Icon name={tab.icon} size={14} className="relative z-10" />
+                        <span className="relative z-10">{tab.label}</span>
                       </div>
-                      <div className="flex gap-2 shrink-0">
-                        <button
-                          onClick={() => handleInvite(inv.group_id, true)}
-                          disabled={inviteBusy === inv.group_id}
-                          className="px-4 py-2 bg-[#17402C] text-white rounded-xl text-xs font-700 enabled:hover:bg-[#17402C]/90 disabled:opacity-50 transition-colors"
-                        >
-                          {inviteBusy === inv.group_id ? '...' : 'Accepter'}
-                        </button>
-                        <button
-                          onClick={() => handleInvite(inv.group_id, false)}
-                          disabled={inviteBusy === inv.group_id}
-                          className="px-4 py-2 border border-[#C8C3B0] text-[#5C6B5E] rounded-xl text-xs font-600 enabled:hover:text-red-500 enabled:hover:border-red-300 disabled:opacity-50 transition-colors"
-                        >
-                          Refuser
-                        </button>
-                      </div>
-                    </div>
+                    </button>
                   ))}
                 </div>
               </div>
-            )}
-            {!user ? (
-              <div className="text-center py-16">
-                <p className="text-5xl mb-4">🗺️</p>
-                <h2 className="font-display font-700 text-xl text-[#1C2620] mb-2">Connectez-vous pour voir vos groupes</h2>
-                <p className="text-sm text-[#5C6B5E] mb-6">Créez ou rejoignez des groupes de voyage collaboratifs</p>
-                <Link href="/connexion" className="inline-flex items-center gap-2 px-6 py-3 bg-[#17402C] text-white rounded-xl font-700 hover:bg-[#17402C]/90 transition-colors">
-                  <Icon name="ArrowRightOnRectangleIcon" size={14} /> Se connecter
-                </Link>
-              </div>
-            ) : myGroups.length === 0 ? (
-              <div className="text-center py-16">
-                <p className="text-5xl mb-4">🗺️</p>
-                <h2 className="font-display font-700 text-xl text-[#1C2620] mb-2">Vous n&apos;avez pas encore de groupe</h2>
-                <p className="text-sm text-[#5C6B5E] mb-6">Créez votre premier groupe ou rejoignez-en un avec un code d&apos;invitation</p>
-                <div className="flex gap-3 justify-center flex-wrap">
-                  <Link href="/nouveau-groupe" className="inline-flex items-center gap-2 px-6 py-3 bg-[#17402C] text-white rounded-xl font-700 hover:bg-[#17402C]/90 transition-colors">
-                    <Icon name="PlusIcon" size={14} /> Créer un groupe
-                  </Link>
-                  <button onClick={() => setActiveTab('decouvrir')} className="inline-flex items-center gap-2 px-6 py-3 border border-[#C8C3B0] text-[#5C6B5E] rounded-xl font-600 hover:text-[#1C2620] transition-colors">
-                    <Icon name="MagnifyingGlassIcon" size={14} /> Découvrir des groupes
-                  </button>
-                </div>
-              </div>
-            ) : (
-              <div>
-                <div className="flex items-center justify-between mb-6">
-                  <p className="text-sm text-[#5C6B5E]">{myGroups.length} groupe{myGroups.length > 1 ? 's' : ''}</p>
-                  <Link href="/nouveau-groupe" className="flex items-center gap-2 bg-[#17402C] hover:bg-[#17402C]/90 text-white text-sm px-4 py-2 rounded-xl transition-colors font-600">
-                    <Icon name="PlusIcon" size={14} /> Nouveau groupe
-                  </Link>
-                </div>
-                <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
-                  {myGroups.map(group => <GroupCard key={group.id} group={group} showActions />)}
-                </div>
-              </div>
-            )}
-          </div>
-        ) : (
-          <div>
-            {/* Filters */}
-            <div className="flex flex-col sm:flex-row gap-3 mb-6">
-              <div className="relative flex-1">
-                <Icon name="MagnifyingGlassIcon" size={16} className="absolute left-4 top-1/2 -translate-y-1/2 text-[#5C6B5E]" />
-                <input
-                  className="w-full bg-[#EDEAE0] border border-[#C8C3B0] rounded-xl pl-10 pr-4 py-2.5 text-sm text-[#1C2620] focus:outline-none focus:ring-2 focus:ring-[#17402C]/30"
-                  placeholder="Rechercher par nom ou destination..."
-                  value={search}
-                  onChange={e => setSearch(e.target.value)}
-                />
-              </div>
-              <div className="flex gap-2 overflow-x-auto pb-1">
-                {['Tous', ...THEMES].map(theme => (
-                  <button
-                    key={theme}
-                    onClick={() => setSelectedTheme(theme)}
-                    className={`px-3 py-2 rounded-xl text-xs font-600 border whitespace-nowrap transition-all ${selectedTheme === theme ? 'bg-[#1C2620] text-white border-[#1C2620]' : 'border-[#C8C3B0] text-[#5C6B5E] hover:border-[#1C2620]/30'}`}
-                  >
-                    {theme !== 'Tous' ? `${THEME_EMOJI[theme]} ` : ''}{theme}
-                  </button>
-                ))}
-              </div>
-            </div>
 
-            {filteredPublic.length === 0 ? (
-              <div className="text-center py-16 text-[#5C6B5E]">
-                <p className="text-4xl mb-3">🔍</p>
-                <p className="font-display font-700 text-[#1C2620] text-lg mb-1">Aucun groupe trouvé</p>
-                <p className="text-sm">{search ? `Aucun résultat pour "${search}"` : 'Aucun groupe public disponible'}</p>
-              </div>
-            ) : (
-              <div>
-                <p className="text-sm text-[#5C6B5E] mb-4">{filteredPublic.length} groupe{filteredPublic.length > 1 ? 's' : ''} public{filteredPublic.length > 1 ? 's' : ''}</p>
+              {/* Main Content Stream */}
+              {loading ? (
                 <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
-                  {filteredPublic.map(group => <GroupCard key={group.id} group={group} />)}
+                  {[1, 2, 3].map(i => <div key={i} className="glass rounded-2xl h-64 animate-pulse" />)}
                 </div>
+              ) : error ? (
+                <div className="glass text-center py-16 p-8">
+                  <p className="text-5xl mb-4">⚠️</p>
+                  <h2 className="font-display font-bold text-xl text-[#17402C] mb-2">Erreur de chargement</h2>
+                  <p className="text-sm text-[#5C6B5E] mb-6">{error}</p>
+                  <button
+                    onClick={() => { setError(null); setLoading(true); loadAll().finally(() => setLoading(false)); }}
+                    className="glass-capsule-btn primary px-6 py-3 text-xs font-bold"
+                  >
+                    <span className="relative z-10">Réessayer</span>
+                  </button>
+                </div>
+              ) : activeTab === 'mes-groupes' ? (
+                <div>
+                  {user && pendingInvites.length > 0 && (
+                    <div className="mb-6 p-5 glass rounded-2xl">
+                      <div className="flex items-center gap-2 mb-3">
+                        <Icon name="EnvelopeOpenIcon" size={16} className="text-[#17402C] relative z-10" />
+                        <h3 className="font-display font-bold text-[#17402C]">{pendingInvites.length} invitation{pendingInvites.length > 1 ? 's' : ''} à rejoindre</h3>
+                      </div>
+                      <div className="space-y-2">
+                        {pendingInvites.map(inv => (
+                          <div key={inv.id} className="flex flex-col sm:flex-row sm:items-center gap-3 p-3 glass-sub-card rounded-xl">
+                            <div className="flex-1 min-w-0">
+                              <p className="text-sm font-semibold text-[#17402C]">{inv.name}</p>
+                              <p className="text-xs text-[#5C6B5E]">Vous avez été invité à rejoindre ce groupe.</p>
+                            </div>
+                            <div className="flex gap-2 shrink-0">
+                              <button
+                                onClick={() => handleInvite(inv.group_id, true)}
+                                disabled={inviteBusy === inv.group_id}
+                                className="glass-capsule-btn primary px-4 py-2 text-xs font-bold disabled:opacity-50"
+                              >
+                                <span className="relative z-10">{inviteBusy === inv.group_id ? '...' : 'Accepter'}</span>
+                              </button>
+                              <button
+                                onClick={() => handleInvite(inv.group_id, false)}
+                                disabled={inviteBusy === inv.group_id}
+                                className="glass-capsule-btn px-4 py-2 text-xs font-semibold text-red-600 disabled:opacity-50"
+                              >
+                                <span className="relative z-10">Refuser</span>
+                              </button>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                  {!user ? (
+                    <div className="glass text-center py-16 p-8">
+                      <p className="text-5xl mb-4">🗺️</p>
+                      <h2 className="font-display font-bold text-xl text-[#17402C] mb-2">Connectez-vous pour voir vos groupes</h2>
+                      <p className="text-sm text-[#5C6B5E] mb-6">Créez ou rejoignez des groupes de voyage collaboratifs</p>
+                      <Link href="/connexion" className="glass-capsule-btn primary px-6 py-3 text-xs font-bold inline-flex items-center gap-2">
+                        <Icon name="ArrowRightOnRectangleIcon" size={14} className="relative z-10" />
+                        <span className="relative z-10">Se connecter</span>
+                      </Link>
+                    </div>
+                  ) : myGroups.length === 0 ? (
+                    <div className="glass text-center py-16 p-8">
+                      <p className="text-5xl mb-4">🗺️</p>
+                      <h2 className="font-display font-bold text-xl text-[#17402C] mb-2">Vous n&apos;avez pas encore de groupe</h2>
+                      <p className="text-sm text-[#5C6B5E] mb-6">Créez votre premier groupe ou rejoignez-en un avec un code d&apos;invitation</p>
+                      <div className="flex gap-3 justify-center flex-wrap">
+                        <Link href="/nouveau-groupe" className="glass-capsule-btn primary px-6 py-3 text-xs font-bold inline-flex items-center gap-2">
+                          <Icon name="PlusIcon" size={14} className="relative z-10" />
+                          <span className="relative z-10">Créer un groupe</span>
+                        </Link>
+                        <button onClick={() => setActiveTab('decouvrir')} className="glass-capsule-btn px-6 py-3 text-xs font-semibold inline-flex items-center gap-2">
+                          <Icon name="MagnifyingGlassIcon" size={14} className="relative z-10" />
+                          <span className="relative z-10">Découvrir des groupes</span>
+                        </button>
+                      </div>
+                    </div>
+                  ) : (
+                    <div>
+                      <div className="flex items-center justify-between mb-4">
+                        <p className="text-sm text-[#5C6B5E] font-medium">{myGroups.length} groupe{myGroups.length > 1 ? 's' : ''}</p>
+                        <Link href="/nouveau-groupe" className="glass-capsule-btn primary px-4 py-2 text-xs font-bold inline-flex items-center gap-1.5">
+                          <Icon name="PlusIcon" size={14} className="relative z-10" />
+                          <span className="relative z-10">Nouveau groupe</span>
+                        </Link>
+                      </div>
+                      <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
+                        {myGroups.map(group => <GroupCard key={group.id} group={group} showActions />)}
+                      </div>
+                    </div>
+                  )}
+                </div>
+              ) : (
+                <div>
+                  {/* Filters */}
+                  <div className="flex flex-col sm:flex-row gap-3 mb-6">
+                    <div className="relative flex-1">
+                      <Icon name="MagnifyingGlassIcon" size={16} className="absolute left-4 top-1/2 -translate-y-1/2 text-[#5C6B5E] relative z-10" />
+                      <input
+                        className="glass-input w-full pl-10 pr-4 py-2.5 text-sm text-[#17402C] focus:outline-none"
+                        placeholder="Rechercher par nom ou destination..."
+                        value={search}
+                        onChange={e => setSearch(e.target.value)}
+                      />
+                    </div>
+                    <div className="flex gap-2 overflow-x-auto pb-1">
+                      {['Tous', ...THEMES].map(theme => (
+                        <button
+                          key={theme}
+                          onClick={() => setSelectedTheme(theme)}
+                          className={`glass-pill cursor-pointer whitespace-nowrap ${selectedTheme === theme ? 'bg-[#17402C] text-white' : ''}`}
+                        >
+                          {theme !== 'Tous' ? `${THEME_EMOJI[theme]} ` : ''}{theme}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+
+                  {filteredPublic.length === 0 ? (
+                    <div className="glass text-center py-16 p-8 text-[#5C6B5E]">
+                      <p className="text-4xl mb-3">🔍</p>
+                      <p className="font-display font-bold text-[#17402C] text-lg mb-1">Aucun groupe trouvé</p>
+                      <p className="text-sm">{search ? `Aucun résultat pour "${search}"` : 'Aucun groupe public disponible'}</p>
+                    </div>
+                  ) : (
+                    <div>
+                      <p className="text-sm text-[#5C6B5E] mb-4 font-medium">{filteredPublic.length} groupe{filteredPublic.length > 1 ? 's' : ''} public{filteredPublic.length > 1 ? 's' : ''}</p>
+                      <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
+                        {filteredPublic.map(group => <GroupCard key={group.id} group={group} />)}
+                      </div>
+                    </div>
+                  )}
+                </div>
+              )}
+            </div>
+          </main>
+        </div>
+
+        {/* Edit Group Modal */}
+        {showEditModal && (
+          <div className="fixed inset-0 z-50 bg-black/50 backdrop-blur-md flex items-center justify-center p-4">
+            <div className="glass w-full max-w-lg p-6 max-h-[90vh] overflow-y-auto">
+              <div className="flex items-center justify-between mb-5">
+                <h3 className="font-display font-bold text-lg text-[#17402C]">Modifier le groupe</h3>
+                <button onClick={() => { setShowEditModal(false); setEditingGroup(null); }} className="glass-capsule-btn p-2">
+                  <Icon name="XMarkIcon" size={18} className="relative z-10" />
+                </button>
               </div>
-            )}
+              {editingGroup?.invite_code && (
+                <div className="mb-4 p-3 glass-sub-card rounded-xl flex items-center gap-3">
+                  <Icon name="LinkIcon" size={14} className="text-[#17402C] flex-shrink-0 relative z-10" />
+                  <div>
+                    <p className="text-[10px] font-mono text-[#5C6B5E] uppercase tracking-wider font-bold">Code d&apos;invitation</p>
+                    <p className="font-mono font-bold text-[#17402C] text-sm tracking-widest">{editingGroup.invite_code}</p>
+                  </div>
+                </div>
+              )}
+              <form onSubmit={handleEditGroup} className="space-y-4">
+                <div><label className={labelCls}>Nom du groupe *</label><input required value={createForm.name} onChange={e => setCreateForm({ ...createForm, name: e.target.value })} className={inputCls} placeholder="Trek Himalaya 2026" /></div>
+                <div><label className={labelCls}>Destination *</label><input required value={createForm.destination} onChange={e => setCreateForm({ ...createForm, destination: e.target.value })} className={inputCls} placeholder="Nepal - Everest Base Camp" /></div>
+                <div><label className={labelCls}>Description</label><textarea value={createForm.description} onChange={e => setCreateForm({ ...createForm, description: e.target.value })} rows={2} className={`${inputCls} resize-none`} placeholder="Décrivez votre aventure..." /></div>
+                <div className="grid grid-cols-2 gap-3">
+                  <div><label className={labelCls}>Thème</label><select value={createForm.theme} onChange={e => setCreateForm({ ...createForm, theme: e.target.value })} className={inputCls}>{THEMES.map(t => <option key={t}>{t}</option>)}</select></div>
+                  <div><label className={labelCls}>Visibilité</label><select value={createForm.visibility} onChange={e => setCreateForm({ ...createForm, visibility: e.target.value })} className={inputCls}><option value="public">🌍 Public</option><option value="private">🔒 Privé</option><option value="invite_only">🔗 Sur invitation</option></select></div>
+                </div>
+                <div className="grid grid-cols-2 gap-3">
+                  <div><label className={labelCls}>Départ</label><input type="date" value={createForm.departure_date} onChange={e => setCreateForm({ ...createForm, departure_date: e.target.value })} className={inputCls} /></div>
+                  <div><label className={labelCls}>Retour</label><input type="date" value={createForm.return_date} onChange={e => setCreateForm({ ...createForm, return_date: e.target.value })} className={inputCls} /></div>
+                </div>
+                <div className="grid grid-cols-2 gap-3">
+                  <div><label className={labelCls}>Budget (€)</label><input type="number" value={createForm.budget_target} onChange={e => setCreateForm({ ...createForm, budget_target: e.target.value })} className={inputCls} placeholder="2500" /></div>
+                  <div><label className={labelCls}>Max membres</label><input type="number" min={2} max={50} value={createForm.max_members} onChange={e => setCreateForm({ ...createForm, max_members: e.target.value })} className={inputCls} /></div>
+                </div>
+                <button type="submit" disabled={creating} className="w-full glass-capsule-btn primary py-3 text-xs font-bold disabled:opacity-50">
+                  <span className="relative z-10">{creating ? 'Enregistrement...' : 'Enregistrer'}</span>
+                </button>
+              </form>
+            </div>
           </div>
         )}
       </div>
 
-
-      {/* Edit Group Modal */}
-      {showEditModal && (
-        <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4">
-          <div className="bg-[#EDEAE0] border border-[#C8C3B0] rounded-2xl w-full max-w-lg p-6 shadow-2xl max-h-[90vh] overflow-y-auto">
-            <div className="flex items-center justify-between mb-5">
-              <h3 className="font-display font-700 text-lg text-[#1C2620]">Modifier le groupe</h3>
-              <button onClick={() => { setShowEditModal(false); setEditingGroup(null); }} className="p-2 rounded-xl hover:bg-[#C8C3B0]/40 transition-colors"><Icon name="XMarkIcon" size={18} /></button>
-            </div>
-            {editingGroup?.invite_code && (
-              <div className="mb-4 p-3 bg-[#17402C]/5 border border-[#17402C]/20 rounded-xl flex items-center gap-3">
-                <Icon name="LinkIcon" size={14} className="text-[#17402C] flex-shrink-0" />
-                <div>
-                  <p className="text-[10px] font-mono text-[#5C6B5E] uppercase tracking-wider">Code d&apos;invitation</p>
-                  <p className="font-mono font-700 text-[#17402C] text-sm tracking-widest">{editingGroup.invite_code}</p>
-                </div>
-              </div>
-            )}
-            <form onSubmit={handleEditGroup} className="space-y-4">
-              <div><label className={labelCls}>Nom du groupe *</label><input required value={createForm.name} onChange={e => setCreateForm({ ...createForm, name: e.target.value })} className={inputCls} placeholder="Trek Himalaya 2026" /></div>
-              <div><label className={labelCls}>Destination *</label><input required value={createForm.destination} onChange={e => setCreateForm({ ...createForm, destination: e.target.value })} className={inputCls} placeholder="Nepal - Everest Base Camp" /></div>
-              <div><label className={labelCls}>Description</label><textarea value={createForm.description} onChange={e => setCreateForm({ ...createForm, description: e.target.value })} rows={2} className={`${inputCls} resize-none`} placeholder="Décrivez votre aventure..." /></div>
-              <div className="grid grid-cols-2 gap-3">
-                <div><label className={labelCls}>Thème</label><select value={createForm.theme} onChange={e => setCreateForm({ ...createForm, theme: e.target.value })} className={inputCls}>{THEMES.map(t => <option key={t}>{t}</option>)}</select></div>
-                <div><label className={labelCls}>Visibilité</label><select value={createForm.visibility} onChange={e => setCreateForm({ ...createForm, visibility: e.target.value })} className={inputCls}><option value="public">🌍 Public</option><option value="private">🔒 Privé</option><option value="invite_only">🔗 Sur invitation</option></select></div>
-              </div>
-              <div className="grid grid-cols-2 gap-3">
-                <div><label className={labelCls}>Départ</label><input type="date" value={createForm.departure_date} onChange={e => setCreateForm({ ...createForm, departure_date: e.target.value })} className={inputCls} /></div>
-                <div><label className={labelCls}>Retour</label><input type="date" value={createForm.return_date} onChange={e => setCreateForm({ ...createForm, return_date: e.target.value })} className={inputCls} /></div>
-              </div>
-              <div className="grid grid-cols-2 gap-3">
-                <div><label className={labelCls}>Budget (€)</label><input type="number" value={createForm.budget_target} onChange={e => setCreateForm({ ...createForm, budget_target: e.target.value })} className={inputCls} placeholder="2500" /></div>
-                <div><label className={labelCls}>Max membres</label><input type="number" min={2} max={50} value={createForm.max_members} onChange={e => setCreateForm({ ...createForm, max_members: e.target.value })} className={inputCls} /></div>
-              </div>
-              <button type="submit" disabled={creating} className="w-full py-3 bg-[#17402C] hover:bg-[#17402C]/90 text-white rounded-xl font-700 transition-colors disabled:opacity-50">
-                {creating ? 'Enregistrement...' : 'Enregistrer'}
-              </button>
-            </form>
-          </div>
-        </div>
-      )}
-
-      <Footer />
-        </div>
-      </div>
-
       {/* ── MOBILE ── */}
-      <div className="block md:hidden">
-        <MobilePageShell background="#F5F2E8">
+      <div className="block md:hidden min-h-screen relative font-sans text-[#17402C]">
+        <CompteBackground />
+        <MobilePageShell videoBackground={false} background="transparent">
           <MobileGroupesHub
             myGroups={myGroups}
             publicGroups={publicGroups}
@@ -764,8 +705,11 @@ function GroupesPageInner() {
               const code = window.prompt('Entrez le code d’invitation du groupe :');
               if (code) {
                 setJoinCode(code);
-                handleJoinByCode();
+                handleJoinByCode(code);
               }
+            }}
+            onRefresh={async () => {
+              await Promise.all([loadMyGroups(), loadPublicGroups()]);
             }}
           />
         </MobilePageShell>
@@ -776,7 +720,7 @@ function GroupesPageInner() {
 
 export default function GroupesPage() {
   return (
-    <Suspense fallback={<div className="min-h-screen bg-[#F5F2E8] flex items-center justify-center"><div className="w-8 h-8 border-2 border-[#17402C] border-t-transparent rounded-full animate-spin" /></div>}>
+    <Suspense fallback={<div className="min-h-screen bg-stone-50 flex items-center justify-center"><div className="w-8 h-8 border-2 border-[#17402C] border-t-transparent rounded-full animate-spin" /></div>}>
       <GroupesPageInner />
     </Suspense>
   );

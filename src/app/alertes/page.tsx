@@ -327,9 +327,9 @@ export default function AlertesPage() {
 
   const renderMobileTabs = () => (
     <div style={{ display: 'flex', gap: '8px', marginBottom: '16px' }}>
-      <button onClick={() => setActiveTab('notifications')} style={{ padding: '8px 12px', borderRadius: '8px', background: activeTab === 'notifications' ? '#17402C' : '#F4F1EA', color: activeTab === 'notifications' ? 'white' : 'rgba(28,38,32,0.6)', border: 'none', fontSize: '11px', fontWeight: 'bold', cursor: 'pointer' }}>Alertes</button>
-      <button onClick={() => setActiveTab('weather')} style={{ padding: '8px 12px', borderRadius: '8px', background: activeTab === 'weather' ? '#17402C' : '#F4F1EA', color: activeTab === 'weather' ? 'white' : 'rgba(28,38,32,0.6)', border: 'none', fontSize: '11px', fontWeight: 'bold', cursor: 'pointer' }}>Météo / SOS</button>
-      <button onClick={() => setActiveTab('settings')} style={{ padding: '8px 12px', borderRadius: '8px', background: activeTab === 'settings' ? '#17402C' : '#F4F1EA', color: activeTab === 'settings' ? 'white' : 'rgba(28,38,32,0.6)', border: 'none', fontSize: '11px', fontWeight: 'bold', cursor: 'pointer' }}>Réglages</button>
+      <button onClick={() => setActiveTab('notifications')} style={{ padding: '8px 12px', borderRadius: '8px', background: activeTab === 'notifications' ? '#17402C' : '#F4F1EA', color: activeTab === 'notifications' ? 'white' : 'rgba(23,64,44,0.6)', border: 'none', fontSize: '11px', fontWeight: 'bold', cursor: 'pointer' }}>Alertes</button>
+      <button onClick={() => setActiveTab('weather')} style={{ padding: '8px 12px', borderRadius: '8px', background: activeTab === 'weather' ? '#17402C' : '#F4F1EA', color: activeTab === 'weather' ? 'white' : 'rgba(23,64,44,0.6)', border: 'none', fontSize: '11px', fontWeight: 'bold', cursor: 'pointer' }}>Météo / SOS</button>
+      <button onClick={() => setActiveTab('settings')} style={{ padding: '8px 12px', borderRadius: '8px', background: activeTab === 'settings' ? '#17402C' : '#F4F1EA', color: activeTab === 'settings' ? 'white' : 'rgba(23,64,44,0.6)', border: 'none', fontSize: '11px', fontWeight: 'bold', cursor: 'pointer' }}>Réglages</button>
     </div>
   );
 
@@ -411,7 +411,7 @@ export default function AlertesPage() {
                               </div>
                               <div className="flex-1">
                                 <div className="flex items-center justify-between">
-                                  <h4 className="font-bold text-xs text-[#0B1F17]">{n.title}</h4>
+                                  <h4 className="font-bold text-xs text-[#17402C]">{n.title}</h4>
                                   <p className="text-[9px] text-stone-400">{new Date(n.created_at).toLocaleDateString('fr-FR', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' })}</p>
                                 </div>
                                 <p className="text-xs text-stone-600 mt-0.5">{n.message}</p>
@@ -426,7 +426,7 @@ export default function AlertesPage() {
                   {activeTab === 'weather' && (
                     <div className="bg-white border border-stone-200 rounded-2xl p-6 space-y-6">
                       <div>
-                        <h3 className="font-display font-700 text-base text-[#0B1F17] mb-1">Météo Montagne</h3>
+                        <h3 className="font-display font-700 text-base text-[#17402C] mb-1">Météo Montagne</h3>
                         <p className="text-xs text-stone-500">Aucun bulletin météo critique ou alerte avalanche n'est actif pour vos massifs.</p>
                       </div>
                       <hr className="border-stone-100" />
@@ -451,7 +451,7 @@ export default function AlertesPage() {
                       {/* Web Push configuration */}
                       {pushSupported && (
                         <div className="bg-white border border-stone-200 rounded-2xl p-6">
-                          <h3 className="font-display font-700 text-base text-[#0B1F17] mb-1">Web Push Navigateur</h3>
+                          <h3 className="font-display font-700 text-base text-[#17402C] mb-1">Web Push Navigateur</h3>
                           <p className="text-xs text-stone-500 mb-4">Abonnez cet appareil pour recevoir des notifications en temps réel même lorsque l'application est fermée.</p>
                           <button
                             onClick={handlePushToggle}
@@ -469,14 +469,14 @@ export default function AlertesPage() {
 
                       {/* Config table */}
                       <div className="bg-white border border-stone-200 rounded-2xl p-6">
-                        <h3 className="font-display font-700 text-base text-[#0B1F17] mb-1">Canaux de Notifications</h3>
+                        <h3 className="font-display font-700 text-base text-[#17402C] mb-1">Canaux de Notifications</h3>
                         <p className="text-xs text-stone-500 mb-6">Sélectionnez le support de votre choix pour chaque type d'alerte.</p>
                         
                         <div className="divide-y divide-stone-100">
                           {prefs.map((p) => (
                             <div key={p.type} className="py-4 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
                               <div>
-                                <h4 className="font-bold text-xs text-[#0B1F17]">{p.label}</h4>
+                                <h4 className="font-bold text-xs text-[#17402C]">{p.label}</h4>
                                 <p className="text-[11px] text-stone-500">{p.description}</p>
                               </div>
                               <div className="flex gap-4 items-center">
@@ -529,7 +529,7 @@ export default function AlertesPage() {
       <div className="block md:hidden">
         <MobilePageShell>
           <div style={{ padding: '16px' }}>
-            <h1 style={{ fontSize: '20px', fontWeight: 800, color: '#1C2620', marginBottom: '12px' }}>Alertes & Sécurité</h1>
+            <h1 style={{ fontSize: '20px', fontWeight: 800, color: '#17402C', marginBottom: '12px' }}>Alertes & Sécurité</h1>
             {renderMobileTabs()}
 
             {loading && (
@@ -545,12 +545,12 @@ export default function AlertesPage() {
             {error && (
               <div style={{ textAlign: 'center', padding: '40px 0' }}>
                 <p style={{ fontSize: '32px', marginBottom: '12px' }}>⚠️</p>
-                <p style={{ fontSize: '13px', color: 'rgba(28,38,32,0.5)', marginBottom: '16px' }}>{error}</p>
+                <p style={{ fontSize: '13px', color: 'rgba(23,64,44,0.5)', marginBottom: '16px' }}>{error}</p>
                 <button onClick={() => loadNotifications()} style={{ padding: '10px 20px', background: '#17402C', color: '#fff', borderRadius: '10px', fontSize: '12px', fontWeight: 600, border: 'none', cursor: 'pointer' }}>Réessayer</button>
               </div>
             )}
             {!loading && !error && !user && (
-              <p style={{ color: 'rgba(28,38,32,0.5)', textAlign: 'center', padding: '40px 0' }}>Connectez-vous pour voir vos alertes.</p>
+              <p style={{ color: 'rgba(23,64,44,0.5)', textAlign: 'center', padding: '40px 0' }}>Connectez-vous pour voir vos alertes.</p>
             )}
 
             {!loading && !error && user && (
@@ -567,7 +567,7 @@ export default function AlertesPage() {
                     {notifications.length === 0 ? (
                       <div style={{ textAlign: 'center', padding: '40px 0' }}>
                         <p style={{ fontSize: '28px', marginBottom: '8px' }}>✅</p>
-                        <p style={{ fontSize: '12px', color: 'rgba(28,38,32,0.5)' }}>Aucune notification</p>
+                        <p style={{ fontSize: '12px', color: 'rgba(23,64,44,0.5)' }}>Aucune notification</p>
                       </div>
                     ) : (
                       <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
@@ -578,16 +578,16 @@ export default function AlertesPage() {
                             style={{ 
                               background: !n.read ? 'rgba(163,196,163,0.12)' : '#FBFAF6', 
                               borderRadius: '12px', 
-                              border: !n.read ? '1px solid rgba(163,196,163,0.4)' : '1px solid rgba(11,31,23,0.06)', 
+                              border: !n.read ? '1px solid rgba(163,196,163,0.4)' : '1px solid rgba(23,64,44,0.06)', 
                               padding: '12px',
                               cursor: 'pointer'
                             }}
                           >
                             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '4px' }}>
-                              <p style={{ fontSize: '12px', fontWeight: 'bold', color: '#1C2620', margin: 0 }}>{n.title}</p>
-                              <span style={{ fontSize: '9px', color: 'rgba(28,38,32,0.4)' }}>{new Date(n.created_at).toLocaleDateString('fr-FR')}</span>
+                              <p style={{ fontSize: '12px', fontWeight: 'bold', color: '#17402C', margin: 0 }}>{n.title}</p>
+                              <span style={{ fontSize: '9px', color: 'rgba(23,64,44,0.4)' }}>{new Date(n.created_at).toLocaleDateString('fr-FR')}</span>
                             </div>
-                            <p style={{ fontSize: '12px', color: 'rgba(28,38,32,0.7)', margin: 0 }}>{n.message}</p>
+                            <p style={{ fontSize: '12px', color: 'rgba(23,64,44,0.7)', margin: 0 }}>{n.message}</p>
                           </div>
                         ))}
                       </div>
@@ -597,9 +597,9 @@ export default function AlertesPage() {
 
                 {activeTab === 'weather' && (
                   <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
-                    <div style={{ background: '#FBFAF6', borderRadius: '12px', padding: '16px', border: '1px solid rgba(11,31,23,0.06)' }}>
-                      <h4 style={{ margin: '0 0 6px 0', fontSize: '14px', color: '#1C2620' }}>Alerte Secours (SOS)</h4>
-                      <p style={{ fontSize: '12px', color: 'rgba(28,38,32,0.6)', lineHeight: 1.5, marginBottom: '12px' }}>
+                    <div style={{ background: '#FBFAF6', borderRadius: '12px', padding: '16px', border: '1px solid rgba(23,64,44,0.06)' }}>
+                      <h4 style={{ margin: '0 0 6px 0', fontSize: '14px', color: '#17402C' }}>Alerte Secours (SOS)</h4>
+                      <p style={{ fontSize: '12px', color: 'rgba(23,64,44,0.6)', lineHeight: 1.5, marginBottom: '12px' }}>
                         Le système SOS transmettra immédiatement votre position et un message de secours à tous les membres de votre groupe en ignorant leurs préférences.
                       </p>
                       <button 
@@ -616,34 +616,34 @@ export default function AlertesPage() {
                 {activeTab === 'settings' && (
                   <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
                     {pushSupported && (
-                      <div style={{ background: '#FBFAF6', borderRadius: '12px', padding: '16px', border: '1px solid rgba(11,31,23,0.06)' }}>
-                        <h4 style={{ margin: '0 0 6px 0', fontSize: '14px', color: '#1C2620' }}>Push Notifications</h4>
-                        <p style={{ fontSize: '12px', color: 'rgba(28,38,32,0.6)', lineHeight: 1.5, marginBottom: '12px' }}>Abonnez cet appareil pour ne rater aucune activité importante.</p>
+                      <div style={{ background: '#FBFAF6', borderRadius: '12px', padding: '16px', border: '1px solid rgba(23,64,44,0.06)' }}>
+                        <h4 style={{ margin: '0 0 6px 0', fontSize: '14px', color: '#17402C' }}>Push Notifications</h4>
+                        <p style={{ fontSize: '12px', color: 'rgba(23,64,44,0.6)', lineHeight: 1.5, marginBottom: '12px' }}>Abonnez cet appareil pour ne rater aucune activité importante.</p>
                         <button
                           onClick={handlePushToggle}
                           disabled={registeringPush}
-                          style={{ padding: '8px 16px', background: pushSubscribed ? '#E8E4D8' : '#17402C', color: pushSubscribed ? '#1C2620' : '#fff', border: 'none', borderRadius: '8px', fontSize: '11px', fontWeight: 'bold', cursor: 'pointer' }}
+                          style={{ padding: '8px 16px', background: pushSubscribed ? '#E8E4D8' : '#17402C', color: pushSubscribed ? '#17402C' : '#fff', border: 'none', borderRadius: '8px', fontSize: '11px', fontWeight: 'bold', cursor: 'pointer' }}
                         >
                           {registeringPush ? 'Chargement...' : pushSubscribed ? 'Désactiver sur cet appareil' : 'Activer sur cet appareil'}
                         </button>
                       </div>
                     )}
 
-                    <div style={{ background: '#FBFAF6', borderRadius: '12px', padding: '16px', border: '1px solid rgba(11,31,23,0.06)' }}>
-                      <h4 style={{ margin: '0 0 12px 0', fontSize: '14px', color: '#1C2620' }}>Canaux</h4>
+                    <div style={{ background: '#FBFAF6', borderRadius: '12px', padding: '16px', border: '1px solid rgba(23,64,44,0.06)' }}>
+                      <h4 style={{ margin: '0 0 12px 0', fontSize: '14px', color: '#17402C' }}>Canaux</h4>
                       <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
                         {prefs.map(p => (
-                          <div key={p.type} style={{ borderBottom: '1px solid rgba(11,31,23,0.04)', paddingBottom: '12px' }}>
-                            <p style={{ fontSize: '12px', fontWeight: 'bold', margin: '0 0 2px 0', color: '#1C2620' }}>{p.label}</p>
-                            <p style={{ fontSize: '10px', color: 'rgba(28,38,32,0.5)', margin: '0 0 8px 0' }}>{p.description}</p>
+                          <div key={p.type} style={{ borderBottom: '1px solid rgba(23,64,44,0.04)', paddingBottom: '12px' }}>
+                            <p style={{ fontSize: '12px', fontWeight: 'bold', margin: '0 0 2px 0', color: '#17402C' }}>{p.label}</p>
+                            <p style={{ fontSize: '10px', color: 'rgba(23,64,44,0.5)', margin: '0 0 8px 0' }}>{p.description}</p>
                             <div style={{ display: 'flex', gap: '12px' }}>
-                              <label style={{ display: 'flex', alignItems: 'center', gap: '4px', fontSize: '11px', color: '#1C2620' }}>
+                              <label style={{ display: 'flex', alignItems: 'center', gap: '4px', fontSize: '11px', color: '#17402C' }}>
                                 <input type="checkbox" checked={p.in_app_enabled} onChange={(e) => handleTogglePref(p.type, 'in_app', e.target.checked)} /> In-App
                               </label>
-                              <label style={{ display: 'flex', alignItems: 'center', gap: '4px', fontSize: '11px', color: '#1C2620', opacity: ['post_liked', 'carnet_liked', 'new_follower', 'points_earned'].includes(p.type) ? 0.6 : 1 }}>
+                              <label style={{ display: 'flex', alignItems: 'center', gap: '4px', fontSize: '11px', color: '#17402C', opacity: ['post_liked', 'carnet_liked', 'new_follower', 'points_earned'].includes(p.type) ? 0.6 : 1 }}>
                                 <input type="checkbox" checked={p.email_enabled} disabled={['post_liked', 'carnet_liked', 'new_follower', 'points_earned'].includes(p.type)} onChange={(e) => handleTogglePref(p.type, 'email', e.target.checked)} /> Email
                               </label>
-                              <label style={{ display: 'flex', alignItems: 'center', gap: '4px', fontSize: '11px', color: '#1C2620' }}>
+                              <label style={{ display: 'flex', alignItems: 'center', gap: '4px', fontSize: '11px', color: '#17402C' }}>
                                 <input type="checkbox" checked={p.push_enabled} onChange={(e) => handleTogglePref(p.type, 'push', e.target.checked)} /> Push
                               </label>
                             </div>

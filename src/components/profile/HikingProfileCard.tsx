@@ -83,7 +83,7 @@ export default function HikingProfileCard() {
       <div
         style={{
           background: '#EDEAE0',
-          border: '1px solid rgba(28,38,32,0.06)',
+          border: '1px solid rgba(23,64,44,0.06)',
           borderRadius: '18px',
           padding: '16px',
           marginBottom: '8px',
@@ -109,26 +109,18 @@ export default function HikingProfileCard() {
   ].filter(Boolean).join(', ') + '.';
 
   return (
-    <div
-      style={{
-        background: 'linear-gradient(135deg, #EDF7F0, #F5F2EA)',
-        border: '1px solid rgba(45,106,79,0.2)',
-        borderRadius: '18px',
-        padding: '16px',
-        marginBottom: '8px',
-      }}
-    >
-      <p style={{ fontSize: '11px', fontWeight: 700, color: '#2D6A4F', fontFamily: 'var(--font-mono)', letterSpacing: '0.12em', textTransform: 'uppercase', marginBottom: '10px' }}>
+    <div className="glass rounded-3xl p-4.5 border border-white/80 bg-white/85 backdrop-blur-xl shadow-xs mb-3">
+      <p className="text-[11px] font-mono uppercase tracking-wider font-bold text-[#17402C] mb-2">
         🥾 Ton profil randonneur
       </p>
 
       {/* Phrase naturelle */}
-      <p style={{ fontSize: '14px', color: '#1C2620', lineHeight: 1.5, marginBottom: '12px' }}>
+      <p className="text-sm font-serif italic leading-relaxed text-[#17402C] mb-3">
         {phrase}
       </p>
 
       {/* Stats compactes */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '8px' }}>
+      <div className="grid grid-cols-3 gap-2">
         {[
           { icon: '📏', value: `${Math.round(Number(stats.total_distance_km))} km`, label: 'Total' },
           { icon: '⏱', value: formatPace(Number(stats.avg_pace_min_per_km)), label: 'Allure moy.' },
@@ -136,17 +128,11 @@ export default function HikingProfileCard() {
         ].map((s) => (
           <div
             key={s.label}
-            style={{
-              background: 'rgba(255,255,255,0.7)',
-              borderRadius: '12px',
-              padding: '10px 8px',
-              textAlign: 'center',
-              border: '1px solid rgba(45,106,79,0.1)',
-            }}
+            className="p-2.5 rounded-2xl text-center bg-white/80 border border-white shadow-2xs"
           >
-            <div style={{ fontSize: '16px', marginBottom: '2px' }}>{s.icon}</div>
-            <div style={{ fontSize: '12px', fontWeight: 700, color: '#1C2620' }}>{s.value}</div>
-            <div style={{ fontSize: '10px', color: '#9AAD9E', marginTop: '1px' }}>{s.label}</div>
+            <div className="text-base mb-0.5">{s.icon}</div>
+            <div className="text-xs font-bold text-[#17402C]">{s.value}</div>
+            <div className="text-[10px] text-[#5A7064] mt-0.5 font-medium">{s.label}</div>
           </div>
         ))}
       </div>

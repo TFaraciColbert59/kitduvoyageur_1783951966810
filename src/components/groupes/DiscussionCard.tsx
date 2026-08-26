@@ -1,10 +1,12 @@
 import React, { useState, useRef, useEffect } from 'react';
+import Link from 'next/link';
 import { createClient } from '@/lib/supabase/client';
 import Icon from '@/components/ui/AppIcon';
 
 interface Message {
   id: string;
   author: string;
+  author_id?: string;
   tag?: string;
   time: string;
   content: string;
@@ -98,7 +100,6 @@ export default function DiscussionCard({ discussions, groupId, onRefresh, user }
     const file = e.target.files?.[0];
     if (!file || !groupId || !user) return;
 
-    // Validate file size (max 10MB)
     if (file.size > 10 * 1024 * 1024) {
       alert('Le fichier est trop volumineux (max 10 Mo)');
       return;
@@ -118,7 +119,6 @@ export default function DiscussionCard({ discussions, groupId, onRefresh, user }
         });
 
       if (error) {
-        // If bucket doesn't exist, send message with filename reference
         console.warn('Storage upload failed, sending as text reference:', error);
         const msg = newMessage.trim() || `📎 ${file.name}`;
         const { error: fallbackErr } = await supabase.from('group_messages').insert({
@@ -132,7 +132,6 @@ export default function DiscussionCard({ discussions, groupId, onRefresh, user }
         setNewMessage('');
         if (onRefresh) onRefresh();
       } else {
-        // Get public URL
         const { data: urlData } = supabase.storage
           .from('group-media')
           .getPublicUrl(data.path);
@@ -145,7 +144,6 @@ export default function DiscussionCard({ discussions, groupId, onRefresh, user }
     }
 
     setUploading(false);
-    // Reset the file input
     if (fileInputRef.current) fileInputRef.current.value = '';
   };
 
@@ -194,68 +192,76 @@ export default function DiscussionCard({ discussions, groupId, onRefresh, user }
   const totalMessages = discussions.length;
 
   return (
-    <div className="bg-white rounded-[0.75rem] p-6 border border-[#1C2620]/10 shadow-sm flex flex-col h-[600px] active:scale-[0.98] active:opacity-95 transition-all duration-150 cursor-pointer">
+    <div className="glass p-6 flex flex-col h-[600px] transition-all duration-300">
       <div className="flex justify-between items-start mb-2 flex-shrink-0">
-        <h2 className="font-display text-xl text-[#1C2620]">Discussion <span className="font-serif italic font-bold">du voyage</span></h2>
+        <h2 className="font-display font-bold text-xl text-[#17402C]">Discussion <span className="font-serif italic font-normal text-[#17402C]">du voyage</span></h2>
         <div className="flex items-center gap-2">
-          <span className="font-mono text-[10px] uppercase tracking-widest text-[#1C2620]/60 bg-[#1C2620]/5 px-2 py-0.5 rounded-full">{totalMessages} messages</span>
+          <span className="glass-pill">{totalMessages} messages</span>
         </div>
       </div>
       
       <div className="flex justify-end mb-4 flex-shrink-0">
         <button
           onClick={() => { messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' }); composerInputRef.current?.focus(); }}
-          className="text-xs font-medium text-[#17402C] hover:underline font-sans"
+          className="glass-capsule-btn py-1 px-3 text-xs font-semibold"
         >
-          Voir tout
+          <span className="relative z-10">Voir tout</span>
         </button>
       </div>
       
-      <div className="flex-1 overflow-y-auto space-y-6 pr-2 mb-4 custom-scrollbar">
+      <div className="flex-1 overflow-y-auto space-y-4 pr-2 mb-4">
         {discussions.length === 0 && (
-          <p className="text-center text-sm text-[#1C2620]/50 py-4">Soyez le premier à lancer la discussion.</p>
+          <p className="text-center text-sm text-[#5C6B5E] py-4">Soyez le premier à lancer la discussion.</p>
         )}
         {discussions.map(msg => (
-          <div key={msg.id} className="flex gap-4">
-            <div className="w-10 h-10 rounded-full bg-[#E7E3D6] flex items-center justify-center text-[#1C2620] font-bold text-sm flex-shrink-0">
+          <div key={msg.id} className="flex gap-3">
+            <Link
+              href={msg.author_id ? `/profil/${msg.author_id}` : '/communaute'}
+              className="w-10 h-10 rounded-full bg-[#17402C]/10 hover:bg-[#17402C]/20 transition-colors flex items-center justify-center text-[#17402C] font-bold text-sm flex-shrink-0 cursor-pointer"
+            >
               {msg.author.charAt(0)}
-            </div>
+            </Link>
             <div className="flex-1">
               <div className="flex items-center gap-2 mb-1">
-                <span className="font-semibold text-sm text-[#1C2620]">{msg.author}</span>
+                <Link
+                  href={msg.author_id ? `/profil/${msg.author_id}` : '/communaute'}
+                  className="font-bold text-sm text-[#17402C] hover:underline cursor-pointer"
+                >
+                  {msg.author}
+                </Link>
                 {msg.tag && (
-                  <span className="text-[9px] font-mono uppercase tracking-widest bg-[#17402C]/10 text-[#17402C] px-1.5 py-0.5 rounded-sm">{msg.tag}</span>
+                  <span className="glass-pill text-[9px]">{msg.tag}</span>
                 )}
                 <button
                   onClick={() => { setReplyingTo(replyingTo?.id === msg.id ? null : msg); setNewMessage(''); composerInputRef.current?.focus(); }}
-                  className="text-[10px] font-medium text-[#17402C] hover:underline ml-1"
+                  className="text-[10px] font-bold text-[#17402C] hover:underline ml-1"
                 >
                   Répondre
                 </button>
-                <span className="text-xs text-[#1C2620]/40 ml-auto">{msg.time}</span>
+                <span className="text-xs text-[#5C6B5E] font-mono ml-auto">{msg.time}</span>
               </div>
               
               {msg.reply_to && (
-                <p className="text-[10px] text-[#1C2620]/40 italic mb-1">
+                <p className="text-[10px] text-[#5C6B5E] italic mb-1">
                   ↩ en réponse à {discussions.find((d) => d.id === msg.reply_to)?.author || 'un message'}
                 </p>
               )}
               
-              <div className="bg-[#E7E3D6]/30 border border-[#1C2620]/5 rounded-2xl rounded-tl-none p-4 mb-2">
-                <p className="text-sm text-[#1C2620] font-sans leading-relaxed whitespace-pre-wrap">
+              <div className="glass-sub-card p-4 rounded-2xl rounded-tl-none mb-2">
+                <p className="text-sm text-[#17402C] font-sans leading-relaxed whitespace-pre-wrap">
                   {msg.content.split(/(#\w+)/g).map((part, i) => 
-                    part.startsWith('#') ? <span key={i} className="text-[#3A6EA5] font-medium">{part}</span> : part
+                    part.startsWith('#') ? <span key={i} className="text-[#3A63B2] font-semibold">{part}</span> : part
                   )}
                 </p>
                 
                 {msg.attachment && (
-                  <div className="mt-3 p-3 bg-white rounded-xl border border-[#1C2620]/5 flex items-center gap-3">
-                    <div className="w-10 h-10 rounded-lg bg-[#E7E3D6]/50 flex items-center justify-center text-[#1C2620]/40">
-                      <Icon name="MapIcon" size={20} />
+                  <div className="mt-3 p-3 glass-sub-card rounded-xl flex items-center gap-3">
+                    <div className="w-10 h-10 rounded-lg bg-[#17402C]/10 flex items-center justify-center text-[#17402C]">
+                      <Icon name="MapIcon" size={20} className="relative z-10" />
                     </div>
                     <div>
-                      <p className="text-xs font-semibold text-[#1C2620]">{msg.attachment}</p>
-                      <p className="text-[10px] text-[#1C2620]/50 font-mono">Pièce jointe</p>
+                      <p className="text-xs font-bold text-[#17402C]">{msg.attachment}</p>
+                      <p className="text-[10px] text-[#5C6B5E] font-mono">Pièce jointe</p>
                     </div>
                     <button
                       onClick={() => {
@@ -267,10 +273,10 @@ export default function DiscussionCard({ discussions, groupId, onRefresh, user }
                         a.rel = 'noopener noreferrer';
                         a.click();
                       }}
-                      className="ml-auto w-8 h-8 rounded-full bg-[#1C2620]/5 flex items-center justify-center text-[#1C2620] hover:bg-[#1C2620]/10"
+                      className="glass-capsule-btn ml-auto p-2"
                       title="Ouvrir la pièce jointe"
                     >
-                      <Icon name="ArrowDownTrayIcon" size={14} />
+                      <Icon name="ArrowDownTrayIcon" size={14} className="relative z-10" />
                     </button>
                   </div>
                 )}
@@ -279,11 +285,12 @@ export default function DiscussionCard({ discussions, groupId, onRefresh, user }
                     href={`https://www.google.com/maps?q=${typeof msg.location === 'string' ? msg.location : `${(msg.location as any).lat},${(msg.location as any).lng}`}`}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="mt-3 inline-flex items-center gap-2 px-3 py-2 bg-[#17402C]/10 text-[#17402C] rounded-xl text-xs font-semibold hover:bg-[#17402C]/20 transition-colors"
+                    className="mt-3 inline-flex items-center gap-2 glass-capsule-btn py-1.5 px-3 text-xs font-semibold"
                   >
-                    <Icon name="MapPinIcon" size={14} />
-                    {typeof msg.location === 'string' ? msg.location : `📍 ${(msg.location as any).lat?.toFixed(5)}, ${(msg.location as any).lng?.toFixed(5)}`}
-                    <span className="text-[10px] font-medium opacity-70">Ouvrir</span>
+                    <Icon name="MapPinIcon" size={14} className="relative z-10" />
+                    <span className="relative z-10">
+                      {typeof msg.location === 'string' ? msg.location : `📍 ${(msg.location as any).lat?.toFixed(5)}, ${(msg.location as any).lng?.toFixed(5)}`}
+                    </span>
                   </a>
                 )}
               </div>
@@ -318,14 +325,14 @@ export default function DiscussionCard({ discussions, groupId, onRefresh, user }
 
       <div className="relative flex-shrink-0">
         {replyingTo && (
-          <div className="flex items-center gap-2 mb-2 px-3 py-2 bg-[#17402C]/5 border border-[#17402C]/20 rounded-xl text-xs text-[#1C2620]">
-            <span className="font-semibold">↩ Répondre à {replyingTo.author}</span>
-            <span className="text-[#1C2620]/50 truncate flex-1">« {replyingTo.content.slice(0, 60)}{replyingTo.content.length > 60 ? '…' : ''} »</span>
-            <button onClick={() => setReplyingTo(null)} className="text-[#1C2620]/40 hover:text-red-500 font-bold px-1">✕</button>
+          <div className="flex items-center gap-2 mb-2 px-3 py-2 glass-sub-card rounded-xl text-xs text-[#17402C]">
+            <span className="font-bold">↩ Répondre à {replyingTo.author}</span>
+            <span className="text-[#5C6B5E] truncate flex-1">« {replyingTo.content.slice(0, 60)}{replyingTo.content.length > 60 ? '…' : ''} »</span>
+            <button onClick={() => setReplyingTo(null)} className="text-[#5C6B5E] hover:text-red-600 font-bold px-1">✕</button>
           </div>
         )}
         <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-          <div className="w-8 h-8 rounded-full bg-[#33463C] flex items-center justify-center text-white text-xs font-bold">
+          <div className="w-8 h-8 rounded-full bg-[#17402C] flex items-center justify-center text-white text-xs font-bold">
             {user?.user_metadata?.first_name ? user.user_metadata.first_name.charAt(0) : (user?.user_metadata?.full_name ? user.user_metadata.full_name.charAt(0) : 'V')}
           </div>
         </div>
@@ -337,47 +344,39 @@ export default function DiscussionCard({ discussions, groupId, onRefresh, user }
           onKeyDown={handleKeyDown}
           disabled={loading || uploading || locating}
           placeholder={uploading ? "Upload en cours..." : locating ? "Localisation..." : "Ajouter un message pour le groupe..."} 
-          className="w-full bg-[#E7E3D6]/30 border border-[#1C2620]/10 rounded-full py-3.5 pl-14 pr-[152px] text-sm text-[#1C2620] placeholder-[#1C2620]/40 focus:outline-none focus:ring-2 focus:ring-[#33463C]/20"
+          className="glass-input w-full pl-14 pr-[152px] text-sm text-[#17402C] min-h-[48px]"
         />
         <div className="absolute inset-y-0 right-0 pr-2 flex items-center gap-1">
           <button 
             onClick={() => gpxInputRef.current?.click()}
             disabled={uploading || loading}
-            className="w-8 h-8 rounded-full flex items-center justify-center text-[#17402C] hover:bg-[#17402C]/10 transition-colors font-bold text-xs"
+            className="glass-capsule-btn p-2 text-xs font-bold"
             title="Partager une trace GPX"
           >
-            🗺️
+            <span className="relative z-10">🗺️</span>
           </button>
           <button 
             onClick={() => fileInputRef.current?.click()}
             disabled={uploading || loading}
-            className={`w-8 h-8 rounded-full flex items-center justify-center transition-colors ${
-              uploading 
-                ? 'text-[#17402C] animate-pulse bg-[#17402C]/10' 
-                : 'text-[#1C2620]/40 hover:text-[#1C2620] hover:bg-[#1C2620]/5'
-            }`}
+            className="glass-capsule-btn p-2"
             title="Envoyer une photo ou vidéo"
           >
-            <Icon name="PhotoIcon" size={16} />
+            <Icon name="PhotoIcon" size={16} className="relative z-10" />
           </button>
           <button 
             onClick={handleShareLocation}
             disabled={locating || loading}
-            className={`w-8 h-8 rounded-full flex items-center justify-center transition-colors ${
-              locating 
-                ? 'text-[#17402C] animate-pulse bg-[#17402C]/10' 
-                : 'text-[#1C2620]/40 hover:text-[#1C2620] hover:bg-[#1C2620]/5'
-            }`}
+            className="glass-capsule-btn p-2"
             title="Partager ma position"
           >
-            <Icon name="MapPinIcon" size={16} />
+            <Icon name="MapPinIcon" size={16} className="relative z-10" />
           </button>
           <button 
             onClick={() => handleSendMessage()}
             disabled={!newMessage.trim() || loading}
-            className="w-8 h-8 rounded-full bg-[#1C2620] text-white flex items-center justify-center hover:bg-[#1C2620]/80 transition-colors disabled:opacity-50"
+            className="glass-capsule-btn primary p-2 disabled:opacity-50"
           >
-            <Icon name="PaperAirplaneIcon" size={14} />
+            <Icon name="PaperAirplaneIcon" size={14} className="relative z-10" />
           </button>
         </div>
       </div>

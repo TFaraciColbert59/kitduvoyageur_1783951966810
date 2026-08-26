@@ -13,13 +13,13 @@ export const metadata = {
 
 function MobileCGVContent() {
   const s: React.CSSProperties = { marginBottom: '24px' };
-  const h2: React.CSSProperties = { fontSize: '14px', fontWeight: 600, color: '#1C2620', marginBottom: '8px', paddingBottom: '6px', borderBottom: '1px solid rgba(11,31,23,0.06)' };
-  const p: React.CSSProperties = { fontSize: '13px', color: 'rgba(28,38,32,0.8)', lineHeight: '1.6' };
+  const h2: React.CSSProperties = { fontSize: '14px', fontWeight: 600, color: '#17402C', marginBottom: '8px', paddingBottom: '6px', borderBottom: '1px solid rgba(23,64,44,0.06)' };
+  const p: React.CSSProperties = { fontSize: '13px', color: 'rgba(23,64,44,0.8)', lineHeight: '1.6' };
   return (
     <div style={{ padding: '16px' }}>
       <p style={{ fontSize: '11px', fontFamily: 'var(--font-mono)', color: '#17402C', letterSpacing: '0.14em', textTransform: 'uppercase', marginBottom: '12px' }}>Conditions de vente</p>
-      <h1 style={{ fontSize: '24px', fontWeight: 800, color: '#1C2620', marginBottom: '8px', fontFamily: 'var(--font-display)' }}>Conditions Générales de Vente</h1>
-      <p style={{ fontSize: '12px', color: 'rgba(28,38,32,0.5)', marginBottom: '24px' }}>Conformément aux articles L221-1 et suivants du Code de la consommation</p>
+      <h1 style={{ fontSize: '24px', fontWeight: 800, color: '#17402C', marginBottom: '8px', fontFamily: 'var(--font-display)' }}>Conditions Générales de Vente</h1>
+      <p style={{ fontSize: '12px', color: 'rgba(23,64,44,0.5)', marginBottom: '24px' }}>Conformément aux articles L221-1 et suivants du Code de la consommation</p>
 
       <section style={s}><h2 style={h2}>1. Objet</h2><p style={p}>Les présentes CGV s&apos;appliquent à toutes les ventes de produits conclues sur le site entre Le Kit du Voyageur (SAS) et tout consommateur.</p></section>
       <section style={s}><h2 style={h2}>2. Produits</h2><p style={p}>Les produits sont décrits avec la plus grande exactitude possible. Les offres sont valables dans la limite des stocks disponibles.</p></section>
@@ -31,13 +31,13 @@ function MobileCGVContent() {
       <section style={s}><h2 style={h2}>8. Garanties</h2><p style={p}>Garantie légale de conformité (2 ans) et garantie contre les vices cachés (2 ans). Contact : <a href="mailto:sav@lekitduvoyageur.fr" style={{ color: '#17402C', textDecoration: 'underline' }}>sav@lekitduvoyageur.fr</a>.</p></section>
       <section style={s}><h2 style={h2}>9. Droit applicable</h2><p style={p}>Les CGV sont soumises au droit français.</p></section>
 
-      <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px', paddingTop: '16px', borderTop: '1px solid rgba(11,31,23,0.06)' }}>
+      <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px', paddingTop: '16px', borderTop: '1px solid rgba(23,64,44,0.06)' }}>
         <Link href="/cgu" style={{ color: '#17402C', textDecoration: 'underline', fontSize: '12px' }}>CGU</Link>
-        <span style={{ color: 'rgba(28,38,32,0.2)', fontSize: '12px' }}>·</span>
+        <span style={{ color: 'rgba(23,64,44,0.2)', fontSize: '12px' }}>·</span>
         <Link href="/politique-confidentialite" style={{ color: '#17402C', textDecoration: 'underline', fontSize: '12px' }}>Confidentialité</Link>
-        <span style={{ color: 'rgba(28,38,32,0.2)', fontSize: '12px' }}>·</span>
+        <span style={{ color: 'rgba(23,64,44,0.2)', fontSize: '12px' }}>·</span>
         <Link href="/mentions-legales" style={{ color: '#17402C', textDecoration: 'underline', fontSize: '12px' }}>Mentions légales</Link>
-        <span style={{ color: 'rgba(28,38,32,0.2)', fontSize: '12px' }}>·</span>
+        <span style={{ color: 'rgba(23,64,44,0.2)', fontSize: '12px' }}>·</span>
         <Link href="/cookies" style={{ color: '#17402C', textDecoration: 'underline', fontSize: '12px' }}>Cookies</Link>
       </div>
     </div>

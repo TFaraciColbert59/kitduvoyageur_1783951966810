@@ -1,4 +1,4 @@
-'use client';
+﻿'use client';
 
 import React from 'react';
 import Link from 'next/link';
@@ -21,17 +21,17 @@ export default function TabCarnets({ carnets, loading }: TabCarnetsProps) {
       {/* Header action */}
       <div className="flex items-center justify-between">
         <div>
-          <h3 className="font-bold text-sm text-[#0B1F17] flex items-center gap-1.5">
+          <h3 className="font-bold text-sm text-[#17402C] flex items-center gap-1.5">
             <span>📖</span> Mes Carnets de Voyage
           </h3>
-          <p className="text-xs text-[#5C6B63]">
+          <p className="text-xs text-[#5A7064]">
             {carnets?.length ?? 0} carnet{(carnets?.length ?? 0) > 1 ? 's' : ''} créé{(carnets?.length ?? 0) > 1 ? 's' : ''}
           </p>
         </div>
 
         <Link
           href="/carnets/nouveau"
-          className="px-4 py-2 rounded-xl bg-[#17402C] hover:bg-[#0B1F17] text-white text-xs font-bold shadow-xs active:scale-95 transition-transform flex items-center gap-1.5"
+          className="px-4 py-2 rounded-xl bg-[#17402C] hover:bg-[#17402C] text-white text-xs font-bold  active:scale-95 transition-transform flex items-center gap-1.5"
         >
           <span>+ Nouveau carnet</span>
         </Link>
@@ -40,13 +40,13 @@ export default function TabCarnets({ carnets, loading }: TabCarnetsProps) {
       {!carnets || carnets.length === 0 ? (
         <div className="bg-white rounded-3xl p-10 text-center border border-dashed border-black/10">
           <p className="text-4xl mb-3">📖</p>
-          <h4 className="font-bold text-sm text-[#0B1F17]">Aucun carnet rédigé</h4>
-          <p className="text-xs text-[#5C6B63] max-w-sm mx-auto mt-1 mb-5">
+          <h4 className="font-bold text-sm text-[#17402C]">Aucun carnet rédigé</h4>
+          <p className="text-xs text-[#5A7064] max-w-sm mx-auto mt-1 mb-5">
             Racontez vos traversées, partagez vos conseils d'itinéraires et inspirez la communauté de randonneurs.
           </p>
           <Link
             href="/carnets/nouveau"
-            className="inline-flex items-center gap-2 px-5 py-2.5 rounded-full bg-[#17402C] text-white text-xs font-bold shadow-xs"
+            className="inline-flex items-center gap-2 px-5 py-2.5 rounded-full bg-[#17402C] text-white text-xs font-bold "
           >
             <span>+ Rédiger mon premier carnet</span>
           </Link>
@@ -57,7 +57,7 @@ export default function TabCarnets({ carnets, loading }: TabCarnetsProps) {
             <Link
               key={c.id}
               href={`/carnets/${c.id}`}
-              className="group bg-white rounded-3xl overflow-hidden border border-black/[0.06] hover:border-[#17402C]/30 shadow-2xs hover:shadow-md transition-all flex flex-col justify-between"
+              className="group bg-white rounded-3xl overflow-hidden border border-black/[0.06] hover:border-[#17402C]/30 shadow-2xs hover: transition-all flex flex-col justify-between"
             >
               <div className="relative aspect-[16/9] bg-[#F4F1EB] overflow-hidden">
                 <AppImage
@@ -79,11 +79,11 @@ export default function TabCarnets({ carnets, loading }: TabCarnetsProps) {
               </div>
 
               <div className="p-4 flex flex-col flex-1 justify-between gap-3">
-                <h4 className="font-bold text-sm text-[#0B1F17] group-hover:text-[#17402C] transition-colors line-clamp-2">
+                <h4 className="font-bold text-sm text-[#17402C] group-hover:text-[#17402C] transition-colors line-clamp-2">
                   {c.title}
                 </h4>
 
-                <div className="flex items-center gap-3 pt-2 border-t border-black/[0.04] text-[11px] font-mono text-[#5C6B63]">
+                <div className="flex items-center gap-3 pt-2 border-t border-black/[0.04] text-[11px] font-mono text-[#5A7064]">
                   <span>👁️ {c.views || 0}</span>
                   <span>·</span>
                   <span>❤️ {c.likes || 0}</span>

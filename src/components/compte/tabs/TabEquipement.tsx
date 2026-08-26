@@ -1,4 +1,4 @@
-'use client';
+﻿'use client';
 
 import React, { useState } from 'react';
 import Link from 'next/link';
@@ -28,10 +28,10 @@ export default function TabEquipement() {
             🎒
           </div>
           <div>
-            <h3 className="font-bold text-base text-[#0B1F17]">
+            <h3 className="font-bold text-base text-[#17402C]">
               Mon Équipement & Matériel
             </h3>
-            <p className="text-xs font-mono text-[#5C6B63]">
+            <p className="text-xs font-mono text-[#5A7064]">
               {equipment.length} article{equipment.length > 1 ? 's' : ''} possédé{equipment.length > 1 ? 's' : ''} · Poids total :{' '}
               <span className="font-bold text-[#17402C]">{formattedWeight}</span>
             </p>
@@ -41,13 +41,13 @@ export default function TabEquipement() {
         <div className="flex items-center gap-2">
           <Link
             href="/compte"
-            className="px-4 py-2.5 rounded-xl bg-[#F4F1EB] hover:bg-[#EBE7DF] text-[#0B1F17] text-xs font-bold transition-colors"
+            className="px-4 py-2.5 rounded-xl bg-[#F4F1EB] hover:bg-[#EBE7DF] text-[#17402C] text-xs font-bold transition-colors"
           >
             Mon Compte
           </Link>
           <Link
             href="/boutique"
-            className="px-4 py-2.5 rounded-xl bg-[#17402C] text-white text-xs font-bold shadow-xs active:scale-95 transition-transform"
+            className="px-4 py-2.5 rounded-xl bg-[#17402C] text-white text-xs font-bold  active:scale-95 transition-transform"
           >
             + Compléter
           </Link>
@@ -58,13 +58,13 @@ export default function TabEquipement() {
       {equipment.length === 0 ? (
         <div className="bg-white rounded-3xl p-10 text-center border border-dashed border-black/10">
           <p className="text-4xl mb-3">🎒</p>
-          <h4 className="font-bold text-sm text-[#0B1F17]">Votre sac est vide</h4>
-          <p className="text-xs text-[#5C6B63] max-w-sm mx-auto mt-1 mb-5">
+          <h4 className="font-bold text-sm text-[#17402C]">Votre sac est vide</h4>
+          <p className="text-xs text-[#5A7064] max-w-sm mx-auto mt-1 mb-5">
             Ajoutez votre matériel de randonnée depuis le catalogue ou enregistrez vos propres équipements.
           </p>
           <Link
             href="/boutique"
-            className="inline-flex items-center gap-2 px-5 py-2.5 rounded-full bg-[#17402C] text-white text-xs font-bold shadow-xs"
+            className="inline-flex items-center gap-2 px-5 py-2.5 rounded-full bg-[#17402C] text-white text-xs font-bold "
           >
             Explorer la boutique & équipement
           </Link>

@@ -93,7 +93,7 @@ export default function ElevationProfileChart({
       {/* Header & Badges */}
       <div className="flex items-center justify-between">
         <div>
-          <h4 className="text-xs font-bold text-[#1C2620] uppercase tracking-wider flex items-center gap-1.5 font-mono">
+          <h4 className="text-xs font-bold text-[#17402C] uppercase tracking-wider flex items-center gap-1.5 font-mono">
             <span>📈 Profil d'Altitudes</span>
           </h4>
           <p className="text-[10px] font-mono text-[#5C6B5E]">
@@ -114,7 +114,7 @@ export default function ElevationProfileChart({
       <div className="relative pt-6">
         {/* Hover Readout Tooltip */}
         {hoverPoint ? (
-          <div className="absolute top-0 left-1/2 -translate-x-1/2 bg-[#1C2620] text-white text-[10px] font-mono px-2.5 py-1 rounded-full shadow-lg border border-white/20 z-10 transition-all">
+          <div className="absolute top-0 left-1/2 -translate-x-1/2 bg-[#17402C] text-white text-[10px] font-mono px-2.5 py-1 rounded-full  border border-white/20 z-10 transition-all">
             📍 {hoverPoint.distanceKm.toFixed(1)} km · ⛰️ {hoverPoint.elevationM} m
           </div>
         ) : (
@@ -137,9 +137,9 @@ export default function ElevationProfileChart({
           </defs>
 
           {/* Horizontal grid lines */}
-          <line x1={padding.left} y1={padding.top} x2={svgWidth - padding.right} y2={padding.top} stroke="#1C2620" strokeOpacity="0.1" strokeDasharray="3,3" />
-          <line x1={padding.left} y1={padding.top + graphH / 2} x2={svgWidth - padding.right} y2={padding.top + graphH / 2} stroke="#1C2620" strokeOpacity="0.1" strokeDasharray="3,3" />
-          <line x1={padding.left} y1={padding.top + graphH} x2={svgWidth - padding.right} y2={padding.top + graphH} stroke="#1C2620" strokeOpacity="0.2" />
+          <line x1={padding.left} y1={padding.top} x2={svgWidth - padding.right} y2={padding.top} stroke="#17402C" strokeOpacity="0.1" strokeDasharray="3,3" />
+          <line x1={padding.left} y1={padding.top + graphH / 2} x2={svgWidth - padding.right} y2={padding.top + graphH / 2} stroke="#17402C" strokeOpacity="0.1" strokeDasharray="3,3" />
+          <line x1={padding.left} y1={padding.top + graphH} x2={svgWidth - padding.right} y2={padding.top + graphH} stroke="#17402C" strokeOpacity="0.2" />
 
           {/* Area fill */}
           <path d={areaD} fill="url(#elevGradient)" />

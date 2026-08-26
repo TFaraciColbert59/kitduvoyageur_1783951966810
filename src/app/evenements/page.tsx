@@ -40,26 +40,26 @@ interface Event {
 }
 
 const typeConfig: Record<string, { color: string; label: string }> = {
-  rando: { color: 'bg-emerald-100 text-emerald-700', label: 'Randonnée' },
-  bushcraft: { color: 'bg-stone-100 text-stone-700', label: 'Bushcraft' },
-  vanlife: { color: 'bg-amber-100 text-amber-700', label: 'Vanlife' },
-  alpinisme: { color: 'bg-slate-100 text-slate-700', label: 'Alpinisme' },
-  photo: { color: 'bg-purple-100 text-purple-700', label: 'Photo' },
+  rando: { color: 'glass-pill', label: 'Randonnée' },
+  bushcraft: { color: 'glass-pill', label: 'Bushcraft' },
+  vanlife: { color: 'glass-pill pill-warn', label: 'Vanlife' },
+  alpinisme: { color: 'glass-pill pill-info', label: 'Alpinisme' },
+  photo: { color: 'glass-pill pill-info', label: 'Photo' },
 };
 
 const mobileTypeColors: Record<string, string> = {
-  rando: '#065f46',
-  bushcraft: '#44403c',
-  vanlife: '#92400e',
-  alpinisme: '#334155',
-  photo: '#6d28d9',
+  rando: '#365233',
+  bushcraft: '#5A7064',
+  vanlife: '#8C6418',
+  alpinisme: '#4B6B7C',
+  photo: '#4B6B7C',
 };
 
 function TrustRing({ score, size = 36 }: { score: number; size?: number }) {
   const r = (size - 5) / 2;
   const circ = 2 * Math.PI * r;
   const offset = circ - (score / 100) * circ;
-  const color = score >= 90 ? '#10b981' : score >= 75 ? '#3b82f6' : score >= 60 ? '#f59e0b' : '#ef4444';
+  const color = score >= 90 ? '#5B7F55' : score >= 75 ? '#4B6B7C' : score >= 60 ? '#C89A3B' : '#A8443A';
   return (
     <div className="relative flex items-center justify-center flex-shrink-0" style={{ width: size, height: size }}>
       <svg width={size} height={size} className="-rotate-90">
@@ -87,7 +87,7 @@ function EventDetailModal({
 
   if (!event) return null;
 
-  const cfg = typeConfig[event.type] ?? { color: 'bg-gray-100 text-gray-700', label: event.type };
+  const cfg = typeConfig[event.type] ?? { color: 'glass-pill', label: event.type };
   const kittyPct = event.kitty_goal > 0 ? Math.round((event.shared_kitty / event.kitty_goal) * 100) : 0;
   const spotsLeft = event.max_participants - event.current_participants;
 
@@ -104,7 +104,7 @@ function EventDetailModal({
 
   return (
     <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4 overflow-y-auto">
-      <div className="bg-card border border-border rounded-2xl w-full max-w-2xl my-4 overflow-hidden">
+      <div className="glass rounded-2xl w-full max-w-2xl my-4 overflow-hidden">
         {/* Cover */}
         <div className="relative h-56 overflow-hidden">
           {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -115,7 +115,7 @@ function EventDetailModal({
           </button>
           <div className="absolute top-4 left-4 flex gap-2">
             <span className={`text-[10px] font-700 px-2.5 py-1 rounded-full ${cfg.color}`}>{event.emoji} {cfg.label}</span>
-            {event.status === 'full' && <span className="text-[10px] font-700 px-2.5 py-1 rounded-full bg-red-100 text-red-700">Complet</span>}
+            {event.status === 'full' && <span className="glass-pill pill-danger">Complet</span>}
           </div>
           <div className="absolute bottom-4 left-5 right-5">
             <h2 className="font-display font-800 text-white text-xl leading-tight mb-1">{event.title}</h2>
@@ -144,8 +144,8 @@ function EventDetailModal({
           <div className="p-6 space-y-5">
             {/* Organizer */}
             {event.organizer && (
-              <div className="flex items-center gap-4 p-4 bg-background rounded-xl border border-border">
-                <div className="w-12 h-12 rounded-xl bg-secondary/20 text-secondary flex items-center justify-center text-lg font-700 flex-shrink-0">
+              <div className="flex items-center gap-4 p-4 glass-sub-card rounded-xl">
+                <div className="w-12 h-12 rounded-xl bg-sage-700 text-white flex items-center justify-center text-lg font-700 flex-shrink-0">
                   {event.organizer.full_name?.slice(0, 2).toUpperCase() ?? 'OR'}
                 </div>
                 <div className="flex-1">
@@ -162,12 +162,12 @@ function EventDetailModal({
 
             {/* Date & location */}
             <div className="grid grid-cols-2 gap-3">
-              <div className="p-4 bg-background rounded-xl border border-border">
+              <div className="p-4 glass-sub-card rounded-xl">
                 <p className="text-[10px] text-muted-foreground uppercase tracking-wide font-600 mb-1.5">📅 Date</p>
                 <p className="font-700 text-foreground text-sm">{event.event_date ? formatDate(event.event_date) : '—'}</p>
                 <p className="text-xs text-muted-foreground mt-0.5">{event.duration}</p>
               </div>
-              <div className="p-4 bg-background rounded-xl border border-border">
+              <div className="p-4 glass-sub-card rounded-xl">
                 <p className="text-[10px] text-muted-foreground uppercase tracking-wide font-600 mb-1.5">📍 Lieu</p>
                 <p className="font-700 text-foreground text-sm">{event.location}</p>
                 <p className="text-xs text-muted-foreground mt-0.5">{event.country}</p>
@@ -175,16 +175,16 @@ function EventDetailModal({
             </div>
 
             {/* Spots */}
-            <div className="p-4 bg-background rounded-xl border border-border">
+            <div className="p-4 glass-sub-card rounded-xl">
               <div className="flex items-center justify-between mb-2">
                 <p className="text-[10px] text-muted-foreground uppercase tracking-wide font-600">Places disponibles</p>
-                <span className={`text-xs font-700 ${spotsLeft <= 2 ? 'text-red-500' : 'text-emerald-600'}`}>
+                <span className={`text-xs font-700 ${spotsLeft <= 2 ? 'text-[#A8443A]' : 'text-[#5B7F55]'}`}>
                   {event.status === 'full' ? 'Complet' : `${spotsLeft} place${spotsLeft > 1 ? 's' : ''} restante${spotsLeft > 1 ? 's' : ''}`}
                 </span>
               </div>
-              <div className="h-2 bg-border rounded-full overflow-hidden">
+              <div className="glass-progress h-2">
                 <div
-                  className={`h-full rounded-full transition-all ${event.current_participants / event.max_participants >= 0.9 ? 'bg-red-500' : 'bg-emerald-500'}`}
+                  className={`glass-progress-fill h-full ${event.current_participants / event.max_participants >= 0.9 ? 'critical' : 'success'}`}
                   style={{ width: `${(event.current_participants / event.max_participants) * 100}%` }}
                 />
               </div>
@@ -203,10 +203,10 @@ function EventDetailModal({
             <div>
               <button
                 onClick={() => setShowKitty((v) => !v)}
-                className="w-full flex items-center justify-between p-4 bg-background rounded-xl border border-border hover:border-primary/30 transition-colors"
+                className="w-full flex items-center justify-between p-4 glass-sub-card rounded-xl hover:border-[#5B7F55]/40 transition-colors"
               >
                 <div className="flex items-center gap-2">
-                  <Icon name="BanknotesIcon" size={16} className="text-primary" />
+                  <Icon name="BanknotesIcon" size={16} className="text-[#5B7F55]" />
                   <span className="font-600 text-foreground">Cagnotte groupe</span>
                 </div>
                 <div className="flex items-center gap-2">
@@ -215,23 +215,23 @@ function EventDetailModal({
                 </div>
               </button>
               <div className="mt-2 px-1">
-                <div className="weight-gauge">
-                  <div className="weight-gauge-fill" style={{ width: `${kittyPct}%` }} />
+                <div className="glass-progress">
+                  <div className="glass-progress-fill" style={{ width: `${kittyPct}%` }} />
                 </div>
                 <p className="text-[10px] text-muted-foreground mt-1">{kittyPct}% collecté</p>
               </div>
               {showKitty && event.expenses && event.expenses.length > 0 && (
-                <div className="mt-3 space-y-2 p-4 bg-background rounded-xl border border-border">
+                <div className="mt-3 space-y-2 p-4 glass-sub-card rounded-xl">
                   <p className="text-[10px] text-muted-foreground uppercase tracking-wide font-600 mb-2">Détail des dépenses</p>
                   {event.expenses.map((exp) => (
                     <div key={exp.id} className="flex items-center justify-between text-sm">
                       <div className="flex items-center gap-2">
-                        <span className={`w-2 h-2 rounded-full flex-shrink-0 ${exp.paid ? 'bg-emerald-500' : 'bg-amber-500'}`} />
+                        <span className={`w-2 h-2 rounded-full flex-shrink-0 ${exp.paid ? 'bg-[#5B7F55]' : 'bg-[#C89A3B]'}`} />
                         <span className="text-foreground">{exp.label}</span>
                       </div>
                       <div className="flex items-center gap-2">
                         <span className="font-mono font-700 text-foreground">{exp.amount}€</span>
-                        <span className={`text-[10px] px-2 py-0.5 rounded-full ${exp.paid ? 'bg-emerald-50 text-emerald-700' : 'bg-amber-50 text-amber-700'}`}>
+                        <span className={`glass-pill ${exp.paid ? '' : 'pill-warn'}`}>
                           {exp.paid ? 'Payé' : 'En attente'}
                         </span>
                       </div>
@@ -245,10 +245,9 @@ function EventDetailModal({
             <button
               onClick={handleToggle}
               disabled={registering || (event.status === 'full' && !event.is_registered)}
-              className={`w-full py-3 rounded-xl text-sm font-700 transition-all ${
-                event.status === 'full' && !event.is_registered ?'bg-muted text-muted-foreground cursor-not-allowed'
-                  : event.is_registered
-                  ? 'bg-secondary/10 text-secondary border border-secondary/30' :'btn-primary justify-center'
+              className={`w-full glass-capsule-btn ${
+                event.status === 'full' && !event.is_registered ? 'secondary opacity-50 cursor-not-allowed'
+                  : event.is_registered ? 'secondary' : 'primary'
               }`}
             >
               {registering ? '...' : event.status === 'full' && !event.is_registered ? "Complet — Liste d'attente" : event.is_registered ? "✓ Inscrit — Se désinscrire" : "S'inscrire à la sortie"}
@@ -263,7 +262,7 @@ function EventDetailModal({
 function EventCard({ event, onToggleRegister, onViewDetail }: { event: Event; onToggleRegister: (eventId: string, isRegistered: boolean) => void; onViewDetail: (event: Event) => void }) {
   const [showKitty, setShowKitty] = useState(false);
   const [registering, setRegistering] = useState(false);
-  const cfg = typeConfig[event.type] ?? { color: 'bg-gray-100 text-gray-700', label: event.type };
+  const cfg = typeConfig[event.type] ?? { color: 'glass-pill', label: event.type };
   const kittyPct = event.kitty_goal > 0 ? Math.round((event.shared_kitty / event.kitty_goal) * 100) : 0;
   const spotsLeft = event.max_participants - event.current_participants;
 
@@ -280,7 +279,7 @@ function EventCard({ event, onToggleRegister, onViewDetail }: { event: Event; on
   };
 
   return (
-    <div className="topo-card overflow-hidden">
+    <div className="glass overflow-hidden">
       <button onClick={() => onViewDetail(event)} className="w-full relative aspect-[16/7] overflow-hidden block">
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img src={event.cover_image || '/assets/images/no_image.png'} alt={event.cover_alt} className="w-full h-full object-cover hover:scale-105 transition-transform duration-300" />
@@ -290,7 +289,7 @@ function EventCard({ event, onToggleRegister, onViewDetail }: { event: Event; on
             {event.emoji} {cfg.label}
           </span>
           {event.status === 'full' && (
-            <span className="text-[10px] font-700 px-2 py-0.5 rounded-full bg-red-100 text-red-700">Complet</span>
+            <span className="glass-pill pill-danger">Complet</span>
           )}
         </div>
         <div className="absolute bottom-3 left-4 right-4">
@@ -307,8 +306,8 @@ function EventCard({ event, onToggleRegister, onViewDetail }: { event: Event; on
 
       <div className="p-5">
         {event.organizer && (
-          <div className="flex items-center gap-3 mb-4 p-3 bg-background rounded-xl border border-border">
-            <div className="w-9 h-9 rounded-xl bg-secondary text-white flex items-center justify-center text-sm font-700 flex-shrink-0">
+          <div className="flex items-center gap-3 mb-4 p-3 glass-sub-card rounded-xl">
+            <div className="w-9 h-9 rounded-xl bg-sage-700 text-white flex items-center justify-center text-sm font-700 flex-shrink-0">
               {event.organizer.full_name?.slice(0, 2).toUpperCase() ?? 'OR'}
             </div>
             <div className="flex-1 min-w-0">
@@ -325,15 +324,15 @@ function EventCard({ event, onToggleRegister, onViewDetail }: { event: Event; on
         <p className="text-sm text-muted-foreground mb-4 leading-relaxed line-clamp-2">{event.description}</p>
 
         <div className="grid grid-cols-2 gap-3 mb-4">
-          <div className="bg-background rounded-xl p-3 border border-border">
+          <div className="glass-sub-card rounded-xl p-3">
             <p className="text-[10px] text-muted-foreground uppercase tracking-wide font-600 mb-1">Date</p>
             <p className="font-display font-700 text-foreground text-sm">{formatDate(event.event_date)}</p>
             <p className="text-xs text-muted-foreground">{event.duration}</p>
           </div>
-          <div className="bg-background rounded-xl p-3 border border-border">
+          <div className="glass-sub-card rounded-xl p-3">
             <p className="text-[10px] text-muted-foreground uppercase tracking-wide font-600 mb-1">Places</p>
             <p className="font-display font-700 text-foreground text-sm">{event.current_participants}/{event.max_participants}</p>
-            <p className={`text-xs ${spotsLeft <= 2 ? 'text-red-500' : 'text-muted-foreground'}`}>
+            <p className={`text-xs ${spotsLeft <= 2 ? 'text-[#A8443A]' : 'text-muted-foreground'}`}>
               {event.status === 'full' ? 'Complet' : `${spotsLeft} place${spotsLeft > 1 ? 's' : ''} restante${spotsLeft > 1 ? 's' : ''}`}
             </p>
           </div>
@@ -343,10 +342,10 @@ function EventCard({ event, onToggleRegister, onViewDetail }: { event: Event; on
         <div className="mb-4">
           <button
             onClick={() => setShowKitty((v) => !v)}
-            className="w-full flex items-center justify-between p-3 bg-background rounded-xl border border-border hover:border-primary/30 transition-colors"
+            className="w-full flex items-center justify-between p-3 glass-sub-card rounded-xl hover:border-[#5B7F55]/40 transition-colors"
           >
             <div className="flex items-center gap-2">
-              <Icon name="BanknotesIcon" size={14} className="text-primary" />
+              <Icon name="BanknotesIcon" size={14} className="text-[#5B7F55]" />
               <span className="text-sm font-600 text-foreground">Cagnotte groupe</span>
             </div>
             <div className="flex items-center gap-2">
@@ -355,22 +354,22 @@ function EventCard({ event, onToggleRegister, onViewDetail }: { event: Event; on
             </div>
           </button>
           <div className="mt-2 px-1">
-            <div className="weight-gauge">
-              <div className="weight-gauge-fill" style={{ width: `${kittyPct}%` }} />
+            <div className="glass-progress">
+              <div className="glass-progress-fill" style={{ width: `${kittyPct}%` }} />
             </div>
             <p className="text-[10px] text-muted-foreground mt-1">{kittyPct}% collecté</p>
           </div>
           {showKitty && event.expenses && (
-            <div className="mt-3 space-y-2 p-3 bg-background rounded-xl border border-border">
+            <div className="mt-3 space-y-2 p-3 glass-sub-card rounded-xl">
               {event.expenses.map((exp) => (
                 <div key={exp.id} className="flex items-center justify-between text-xs">
                   <div className="flex items-center gap-2">
-                    <span className={`w-1.5 h-1.5 rounded-full flex-shrink-0 ${exp.paid ? 'bg-emerald-500' : 'bg-amber-500'}`} />
+                    <span className={`w-1.5 h-1.5 rounded-full flex-shrink-0 ${exp.paid ? 'bg-[#5B7F55]' : 'bg-[#C89A3B]'}`} />
                     <span className="text-foreground">{exp.label}</span>
                   </div>
                   <div className="flex items-center gap-2">
                     <span className="font-mono font-700 text-foreground">{exp.amount}€</span>
-                    <span className={`text-[10px] px-1.5 py-0.5 rounded-full ${exp.paid ? 'bg-emerald-50 text-emerald-700' : 'bg-amber-50 text-amber-700'}`}>
+                    <span className={`glass-pill ${exp.paid ? '' : 'pill-warn'}`}>
                       {exp.paid ? 'Payé' : 'En attente'}
                     </span>
                   </div>
@@ -383,7 +382,7 @@ function EventCard({ event, onToggleRegister, onViewDetail }: { event: Event; on
         <div className="flex gap-2">
           <button
             onClick={() => onViewDetail(event)}
-            className="flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-600 border border-border text-muted-foreground hover:text-foreground hover:border-foreground/30 transition-all"
+            className="flex items-center gap-2 px-4 py-2.5 glass-capsule-btn secondary text-sm"
           >
             <Icon name="EyeIcon" size={14} />
             Détails
@@ -391,10 +390,9 @@ function EventCard({ event, onToggleRegister, onViewDetail }: { event: Event; on
           <button
             onClick={handleToggle}
             disabled={registering || (event.status === 'full' && !event.is_registered)}
-            className={`flex-1 py-2.5 rounded-xl text-sm font-700 transition-all ${
-              event.status === 'full' && !event.is_registered ? 'bg-muted text-muted-foreground cursor-not-allowed'
-                : event.is_registered
-                ? 'bg-secondary/10 text-secondary border border-secondary/30' :'btn-primary justify-center'
+            className={`flex-1 glass-capsule-btn text-sm ${
+              event.status === 'full' && !event.is_registered ? 'secondary opacity-50 cursor-not-allowed'
+                : event.is_registered ? 'secondary' : 'primary'
             }`}
           >
             {registering ? '...' : event.status === 'full' && !event.is_registered ? "Complet" : event.is_registered ? "✓ Inscrit" : "S'inscrire"}
@@ -408,7 +406,7 @@ function EventCard({ event, onToggleRegister, onViewDetail }: { event: Event; on
 function MobileEventCard({ event, onToggleRegister, onViewDetail }: { event: Event; onToggleRegister: (eventId: string, isRegistered: boolean) => void; onViewDetail: (event: Event) => void }) {
   const [registering, setRegistering] = useState(false);
   const spotsLeft = event.max_participants - event.current_participants;
-  const typeBg = mobileTypeColors[event.type] || '#6b7280';
+  const typeBg = mobileTypeColors[event.type] || '#5A7064';
 
   const formatDate = (d: string) => {
     const [_y, m, day] = d.split('-');
@@ -423,7 +421,7 @@ function MobileEventCard({ event, onToggleRegister, onViewDetail }: { event: Eve
   };
 
   return (
-    <div style={{ background: '#F4F1EA', border: '1px solid rgba(11,31,23,0.06)', borderRadius: '12px', overflow: 'hidden', marginBottom: '12px' }}>
+    <div style={{ background: '#FBFAF6', border: '1px solid rgba(23,64,44,0.10)', borderRadius: '12px', overflow: 'hidden', marginBottom: '12px' }}>
       <button onClick={() => onViewDetail(event)} style={{ width: '100%', position: 'relative', height: '160px', overflow: 'hidden', display: 'block', border: 'none', padding: 0, cursor: 'pointer' }}>
         <img src={event.cover_image || '/assets/images/no_image.png'} alt={event.cover_alt} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
         <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(to top, rgba(0,0,0,0.7), transparent)' }} />
@@ -432,7 +430,7 @@ function MobileEventCard({ event, onToggleRegister, onViewDetail }: { event: Eve
             {event.emoji} {typeConfig[event.type]?.label || event.type}
           </span>
           {event.status === 'full' && (
-            <span style={{ fontSize: '10px', fontWeight: 700, padding: '2px 8px', borderRadius: '6px', background: '#ef4444', color: '#fff' }}>Complet</span>
+            <span style={{ fontSize: '10px', fontWeight: 700, padding: '2px 8px', borderRadius: '6px', background: '#A8443A', color: '#fff' }}>Complet</span>
           )}
         </div>
         <div style={{ position: 'absolute', bottom: '12px', left: '12px', right: '12px', textAlign: 'left' }}>
@@ -442,26 +440,26 @@ function MobileEventCard({ event, onToggleRegister, onViewDetail }: { event: Eve
       </button>
       <div style={{ padding: '12px' }}>
         <div style={{ display: 'flex', gap: '8px', marginBottom: '10px' }}>
-          <div style={{ flex: 1, padding: '8px', background: '#FBFAF6', borderRadius: '8px', border: '1px solid rgba(11,31,23,0.06)' }}>
-            <p style={{ fontSize: '9px', color: '#6B7A72', textTransform: 'uppercase', letterSpacing: '0.05em', fontWeight: 600, margin: '0 0 2px 0' }}>Date</p>
-            <p style={{ fontSize: '13px', fontWeight: 700, color: '#1C2620', margin: 0 }}>{formatDate(event.event_date)}</p>
+          <div style={{ flex: 1, padding: '8px', background: '#FAF8F5', borderRadius: '8px', border: '1px solid rgba(23,64,44,0.10)' }}>
+            <p style={{ fontSize: '9px', color: '#5A7064', textTransform: 'uppercase', letterSpacing: '0.05em', fontWeight: 600, margin: '0 0 2px 0' }}>Date</p>
+            <p style={{ fontSize: '13px', fontWeight: 700, color: '#17402C', margin: 0 }}>{formatDate(event.event_date)}</p>
           </div>
-          <div style={{ flex: 1, padding: '8px', background: '#FBFAF6', borderRadius: '8px', border: '1px solid rgba(11,31,23,0.06)' }}>
-            <p style={{ fontSize: '9px', color: '#6B7A72', textTransform: 'uppercase', letterSpacing: '0.05em', fontWeight: 600, margin: '0 0 2px 0' }}>Places</p>
-            <p style={{ fontSize: '13px', fontWeight: 700, color: '#1C2620', margin: 0 }}>{event.current_participants}/{event.max_participants}</p>
+          <div style={{ flex: 1, padding: '8px', background: '#FAF8F5', borderRadius: '8px', border: '1px solid rgba(23,64,44,0.10)' }}>
+            <p style={{ fontSize: '9px', color: '#5A7064', textTransform: 'uppercase', letterSpacing: '0.05em', fontWeight: 600, margin: '0 0 2px 0' }}>Places</p>
+            <p style={{ fontSize: '13px', fontWeight: 700, color: '#17402C', margin: 0 }}>{event.current_participants}/{event.max_participants}</p>
           </div>
         </div>
         <div style={{ display: 'flex', gap: '8px' }}>
           <button onClick={() => onViewDetail(event)}
-            style={{ flex: 1, padding: '10px', borderRadius: '8px', fontSize: '12px', fontWeight: 600, border: '1px solid rgba(11,31,23,0.06)', background: '#FBFAF6', color: '#6B7A72', cursor: 'pointer' }}>
+            style={{ flex: 1, padding: '10px', borderRadius: '8px', fontSize: '12px', fontWeight: 600, border: '1px solid rgba(23,64,44,0.10)', background: '#FAF8F5', color: '#5A7064', cursor: 'pointer' }}>
             Details
           </button>
           <button onClick={handleToggle}
             disabled={registering || (event.status === 'full' && !event.is_registered)}
             style={{
               flex: 1, padding: '10px', borderRadius: '8px', fontSize: '12px', fontWeight: 700, border: 'none', cursor: registering ? 'default' : 'pointer',
-              background: event.status === 'full' && !event.is_registered ? '#E8E4D8' : event.is_registered ? '#EDF3ED' : '#17402C',
-              color: event.status === 'full' && !event.is_registered ? '#6B7A72' : event.is_registered ? '#17402C' : '#fff',
+              background: event.status === 'full' && !event.is_registered ? '#E8E4D8' : event.is_registered ? '#E1EBDE' : '#17402C',
+              color: event.status === 'full' && !event.is_registered ? '#5A7064' : event.is_registered ? '#17402C' : '#fff',
             }}>
             {registering ? '...' : event.status === 'full' && !event.is_registered ? "Complet" : event.is_registered ? "✓ Inscrit" : "S'inscrire"}
           </button>
@@ -569,20 +567,20 @@ export default function EvenementsPage() {
         </div>
         <div className="max-w-7xl mx-auto relative">
           <div className="flex items-center gap-2 mb-4">
-            <span className="tag-badge bg-secondary/30 text-emerald-300 border border-emerald-500/30 text-[10px]">COMMUNAUTÉ</span>
+            <span className="bg-white/10 border border-white/20 text-white/90 backdrop-blur-md px-3 py-1 rounded-full text-[10px] font-700 tracking-widest uppercase">COMMUNAUTÉ</span>
             <span className="text-white/50 text-xs font-mono">ÉVÉNEMENTS & SORTIES</span>
           </div>
           <div className="flex flex-col lg:flex-row lg:items-end lg:justify-between gap-6">
             <div>
               <h1 className="text-section-title text-white mb-3">
                 Sorties organisées<br />
-                <span className="text-primary">par des membres vérifiés</span>
+                <span className="text-[#A6C1A0]">par des membres vérifiés</span>
               </h1>
               <p className="text-white/60 text-base max-w-xl">
                 Chaque organisateur affiche son Trust Score avant votre inscription. Cagnotte de groupe intégrée, location de matériel partagée.
               </p>
             </div>
-            <button onClick={() => setShowCreateModal(true)} className="btn-primary flex-shrink-0 self-start lg:self-auto">
+            <button onClick={() => setShowCreateModal(true)} className="glass-capsule-btn primary flex-shrink-0 self-start lg:self-auto">
               <Icon name="PlusIcon" size={16} />
               Organiser une sortie
             </button>
@@ -603,7 +601,7 @@ export default function EvenementsPage() {
               <button
                 key={f.id}
                 onClick={() => setFilter(f.id)}
-                className={`category-pill flex-shrink-0 ${filter === f.id ? 'active' : ''}`}
+                className={`glass-pill flex-shrink-0 cursor-pointer ${filter === f.id ? '!bg-[#17402C] !text-white !border-[#17402C]' : ''}`}
               >
                 {f.label}
               </button>
@@ -613,7 +611,7 @@ export default function EvenementsPage() {
       </section>
 
       <div className="max-w-7xl mx-auto px-4 py-10">
-        {error && <div className="mb-6 p-4 bg-red-50 border border-red-200 rounded-xl text-red-700 text-sm">{error}</div>}
+        {error && <div className="mb-6 p-4 bg-[#A8443A]/10 border border-[#A8443A]/30 rounded-xl text-[#A8443A] text-sm">{error}</div>}
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
           <div className="lg:col-span-2">
@@ -623,7 +621,7 @@ export default function EvenementsPage() {
             </div>
             {loading ? (
               <div className="space-y-6">
-                {[1, 2].map((i) => <div key={i} className="topo-card h-96 animate-pulse bg-muted" />)}
+                {[1, 2].map((i) => <div key={i} className="glass h-96 animate-pulse bg-muted" />)}
               </div>
             ) : filtered.length === 0 ? (
               <div className="text-center py-16 text-muted-foreground">
@@ -639,9 +637,9 @@ export default function EvenementsPage() {
           </div>
 
           <aside className="space-y-6">
-            <div className="topo-card p-5">
+            <div className="glass p-5">
               <h3 className="font-display font-700 text-foreground text-base mb-3 flex items-center gap-2">
-                <Icon name="ShieldCheckIcon" size={16} className="text-primary" />
+                <Icon name="ShieldCheckIcon" size={16} className="text-[#5B7F55]" />
                 Trust Score & sécurité
               </h3>
               <p className="text-xs text-muted-foreground mb-3 leading-relaxed">
@@ -649,9 +647,9 @@ export default function EvenementsPage() {
               </p>
               <div className="space-y-2">
                 {[
-                  { score: '90+', label: 'Ambassadeur — Organisateur confirmé', color: 'text-emerald-600' },
-                  { score: '75–89', label: 'Expert — Plusieurs sorties réussies', color: 'text-blue-600' },
-                  { score: '60–74', label: 'Confirmé — Premières sorties', color: 'text-amber-600' },
+                  { score: '90+', label: 'Ambassadeur — Organisateur confirmé', color: 'text-[#5B7F55]' },
+                  { score: '75–89', label: 'Expert — Plusieurs sorties réussies', color: 'text-[#4B6B7C]' },
+                  { score: '60–74', label: 'Confirmé — Premières sorties', color: 'text-[#8C6418]' },
                 ].map((s) => (
                   <div key={s.score} className="flex items-center gap-2 text-xs">
                     <span className={`font-mono font-700 ${s.color} w-12`}>{s.score}</span>
@@ -660,9 +658,9 @@ export default function EvenementsPage() {
                 ))}
               </div>
             </div>
-            <div className="topo-card p-5">
+            <div className="glass p-5">
               <h3 className="font-display font-700 text-foreground text-base mb-3 flex items-center gap-2">
-                <Icon name="BanknotesIcon" size={16} className="text-primary" />
+                <Icon name="BanknotesIcon" size={16} className="text-[#5B7F55]" />
                 Cagnotte intégrée
               </h3>
               <p className="text-xs text-muted-foreground leading-relaxed">
@@ -678,10 +676,10 @@ export default function EvenementsPage() {
   const mobileContent = (
     <div style={{ padding: '16px' }}>
       {/* Hero */}
-      <div style={{ background: '#0B1F17', color: '#fff', borderRadius: '12px', padding: '20px', marginBottom: '16px', position: 'relative', overflow: 'hidden' }}>
-        <div style={{ position: 'absolute', top: '-40px', right: '-40px', width: '160px', height: '160px', borderRadius: '50%', background: 'rgba(45,107,74,0.15)', pointerEvents: 'none' }} />
+      <div style={{ background: '#17402C', color: '#fff', borderRadius: '12px', padding: '20px', marginBottom: '16px', position: 'relative', overflow: 'hidden' }}>
+        <div style={{ position: 'absolute', top: '-40px', right: '-40px', width: '160px', height: '160px', borderRadius: '50%', background: 'rgba(23,64,44,0.30)', pointerEvents: 'none' }} />
         <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '8px' }}>
-          <span style={{ fontSize: '9px', fontWeight: 700, padding: '3px 8px', borderRadius: '6px', background: 'rgba(163,196,163,0.2)', color: '#A3C4A3', border: '1px solid rgba(163,196,163,0.3)' }}>COMMUNAUTE</span>
+          <span style={{ fontSize: '9px', fontWeight: 700, padding: '3px 8px', borderRadius: '6px', background: 'rgba(166,193,160,0.2)', color: '#A6C1A0', border: '1px solid rgba(166,193,160,0.3)' }}>COMMUNAUTE</span>
           <span style={{ fontSize: '9px', color: 'rgba(255,255,255,0.5)', fontFamily: 'ui-monospace, monospace' }}>EVENEMENTS</span>
         </div>
         <h1 style={{ fontFamily: 'var(--font-display)', fontWeight: 800, fontSize: '20px', color: '#fff', margin: '0 0 4px 0' }}>
@@ -691,7 +689,7 @@ export default function EvenementsPage() {
           Par des membres verifies avec Trust Score et cagnotte integree.
         </p>
         <button onClick={() => setShowCreateModal(true)}
-          style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', padding: '10px 16px', background: '#17402C', color: '#fff', borderRadius: '8px', fontSize: '12px', fontWeight: 700, border: 'none', cursor: 'pointer' }}>
+          style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', padding: '10px 16px', background: '#365233', color: '#fff', borderRadius: '8px', fontSize: '12px', fontWeight: 700, border: 'none', cursor: 'pointer' }}>
           + Organiser une sortie
         </button>
       </div>
@@ -708,8 +706,8 @@ export default function EvenementsPage() {
           <button key={f.id} onClick={() => setFilter(f.id)}
             style={{
               flexShrink: 0, padding: '8px 14px', borderRadius: '20px', fontSize: '12px', fontWeight: 700, border: 'none', cursor: 'pointer',
-              background: filter === f.id ? '#17402C' : '#F4F1EA',
-              color: filter === f.id ? '#fff' : '#6B7A72',
+              background: filter === f.id ? '#17402C' : '#FAF8F5',
+              color: filter === f.id ? '#fff' : '#5A7064',
             }}>
             {f.label}
           </button>
@@ -718,13 +716,13 @@ export default function EvenementsPage() {
 
       {/* Error */}
       {error && (
-        <div style={{ padding: '12px', background: '#fef2f2', border: '1px solid #fecaca', borderRadius: '10px', color: '#991b1b', fontSize: '13px', marginBottom: '12px' }}>{error}</div>
+        <div style={{ padding: '12px', background: 'rgba(168,68,58,0.10)', border: '1px solid rgba(168,68,58,0.30)', borderRadius: '10px', color: '#8A241B', fontSize: '13px', marginBottom: '12px' }}>{error}</div>
       )}
 
       {/* Events list */}
       {loading ? (
         <div style={{ display: 'flex', justifyContent: 'center', padding: '40px 0' }}>
-          <div style={{ width: '28px', height: '28px', borderRadius: '50%', border: '2px solid rgba(11,31,23,0.12)', borderTopColor: '#17402C', animation: 'lkdv-spin 0.8s linear infinite' }} />
+          <div style={{ width: '28px', height: '28px', borderRadius: '50%', border: '2px solid rgba(23,64,44,0.12)', borderTopColor: '#17402C', animation: 'lkdv-spin 0.8s linear infinite' }} />
           <style jsx>{`
             @keyframes lkdv-spin {
               to { transform: rotate(360deg); }
@@ -732,16 +730,16 @@ export default function EvenementsPage() {
           `}</style>
         </div>
       ) : filtered.length === 0 ? (
-        <div style={{ textAlign: 'center', padding: '40px 0', color: '#6B7A72' }}>
+        <div style={{ textAlign: 'center', padding: '40px 0', color: '#5A7064' }}>
           <p style={{ fontSize: '36px', marginBottom: '8px' }}>📅</p>
-          <p style={{ fontWeight: 700, fontSize: '16px', color: '#1C2620', marginBottom: '4px' }}>Aucun evenement</p>
+          <p style={{ fontWeight: 700, fontSize: '16px', color: '#17402C', marginBottom: '4px' }}>Aucun evenement</p>
           <p style={{ fontSize: '13px' }}>Soyez le premier a organiser une sortie !</p>
         </div>
       ) : (
         <div>
           <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '12px' }}>
-            <h2 style={{ fontFamily: 'var(--font-display)', fontWeight: 700, fontSize: '16px', color: '#1C2620', margin: 0 }}>Prochaines sorties</h2>
-            <span style={{ fontSize: '13px', color: '#6B7A72' }}>{filtered.length} evenements</span>
+            <h2 style={{ fontFamily: 'var(--font-display)', fontWeight: 700, fontSize: '16px', color: '#17402C', margin: 0 }}>Prochaines sorties</h2>
+            <span style={{ fontSize: '13px', color: '#5A7064' }}>{filtered.length} evenements</span>
           </div>
           {filtered.map((e) => <MobileEventCard key={e.id} event={e} onToggleRegister={handleToggleRegister} onViewDetail={(event) => setDetailEvent(event)} />)}
         </div>
@@ -753,9 +751,11 @@ export default function EvenementsPage() {
     <>
       {/* ── DESKTOP ── */}
       <div className="hidden md:block">
-        <main className="min-h-screen bg-background">
+        <main className="h-dvh overflow-hidden bg-background flex flex-col">
           <Header />
-          {desktopContent}
+          <div className="flex-1 min-h-0 overflow-y-auto">
+            {desktopContent}
+          </div>
           <Footer />
         </main>
       </div>
@@ -771,7 +771,7 @@ export default function EvenementsPage() {
       {/* Shared: Create event modal */}
       {showCreateModal && (
         <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4 overflow-y-auto">
-          <div className="bg-card border border-border rounded-2xl p-6 max-w-lg w-full my-4">
+          <div className="glass rounded-2xl p-6 max-w-lg w-full my-4">
             <div className="flex items-center justify-between mb-5">
               <h2 className="font-display font-700 text-foreground text-lg">Organiser une sortie</h2>
               <button onClick={() => setShowCreateModal(false)} className="p-2 rounded-lg hover:bg-muted transition-colors">
@@ -784,12 +784,12 @@ export default function EvenementsPage() {
               <div className="space-y-4">
                 <div>
                   <label className="text-xs font-600 text-muted-foreground uppercase tracking-wide block mb-1.5">Titre</label>
-                  <input className="w-full bg-background border border-border rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-primary/30" placeholder="Ex: Traversée GR20" value={createForm.title} onChange={(e) => setCreateForm((f) => ({ ...f, title: e.target.value }))} />
+                  <input className="glass-input w-full" placeholder="Ex: Traversée GR20" value={createForm.title} onChange={(e) => setCreateForm((f) => ({ ...f, title: e.target.value }))} />
                 </div>
                 <div className="grid grid-cols-2 gap-3">
                   <div>
                     <label className="text-xs font-600 text-muted-foreground uppercase tracking-wide block mb-1.5">Type</label>
-                    <select className="w-full bg-background border border-border rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-primary/30" value={createForm.type} onChange={(e) => setCreateForm((f) => ({ ...f, type: e.target.value }))}>
+                    <select className="glass-input w-full" value={createForm.type} onChange={(e) => setCreateForm((f) => ({ ...f, type: e.target.value }))}>
                       <option value="rando">🥾 Randonnée</option>
                       <option value="bushcraft">🪓 Bushcraft</option>
                       <option value="vanlife">🚐 Vanlife</option>
@@ -799,34 +799,34 @@ export default function EvenementsPage() {
                   </div>
                   <div>
                     <label className="text-xs font-600 text-muted-foreground uppercase tracking-wide block mb-1.5">Date</label>
-                    <input type="date" className="w-full bg-background border border-border rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-primary/30" value={createForm.event_date} onChange={(e) => setCreateForm((f) => ({ ...f, event_date: e.target.value }))} />
+                    <input type="date" className="glass-input w-full" value={createForm.event_date} onChange={(e) => setCreateForm((f) => ({ ...f, event_date: e.target.value }))} />
                   </div>
                 </div>
                 <div className="grid grid-cols-2 gap-3">
                   <div>
                     <label className="text-xs font-600 text-muted-foreground uppercase tracking-wide block mb-1.5">Durée</label>
-                    <input className="w-full bg-background border border-border rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-primary/30" placeholder="Ex: 3 jours" value={createForm.duration} onChange={(e) => setCreateForm((f) => ({ ...f, duration: e.target.value }))} />
+                    <input className="glass-input w-full" placeholder="Ex: 3 jours" value={createForm.duration} onChange={(e) => setCreateForm((f) => ({ ...f, duration: e.target.value }))} />
                   </div>
                   <div>
                     <label className="text-xs font-600 text-muted-foreground uppercase tracking-wide block mb-1.5">Participants max</label>
-                    <input type="number" min={2} max={50} className="w-full bg-background border border-border rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-primary/30" value={createForm.max_participants} onChange={(e) => setCreateForm((f) => ({ ...f, max_participants: parseInt(e.target.value) || 10 }))} />
+                    <input type="number" min={2} max={50} className="glass-input w-full" value={createForm.max_participants} onChange={(e) => setCreateForm((f) => ({ ...f, max_participants: parseInt(e.target.value) || 10 }))} />
                   </div>
                 </div>
                 <div>
                   <label className="text-xs font-600 text-muted-foreground uppercase tracking-wide block mb-1.5">Lieu</label>
-                  <input className="w-full bg-background border border-border rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-primary/30" placeholder="Ex: Pyrénées, Cauterets" value={createForm.location} onChange={(e) => setCreateForm((f) => ({ ...f, location: e.target.value }))} />
+                  <input className="glass-input w-full" placeholder="Ex: Pyrénées, Cauterets" value={createForm.location} onChange={(e) => setCreateForm((f) => ({ ...f, location: e.target.value }))} />
                 </div>
                 <div>
                   <label className="text-xs font-600 text-muted-foreground uppercase tracking-wide block mb-1.5">Description</label>
-                  <textarea rows={3} className="w-full bg-background border border-border rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-primary/30 resize-none" placeholder="Décrivez la sortie..." value={createForm.description} onChange={(e) => setCreateForm((f) => ({ ...f, description: e.target.value }))} />
+                  <textarea rows={3} className="glass-input w-full resize-none" placeholder="Décrivez la sortie..." value={createForm.description} onChange={(e) => setCreateForm((f) => ({ ...f, description: e.target.value }))} />
                 </div>
                 <div>
                   <label className="text-xs font-600 text-muted-foreground uppercase tracking-wide block mb-1.5">Objectif cagnotte (€)</label>
-                  <input type="number" min={0} className="w-full bg-background border border-border rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-primary/30" placeholder="0" value={createForm.kitty_goal} onChange={(e) => setCreateForm((f) => ({ ...f, kitty_goal: parseFloat(e.target.value) || 0 }))} />
+                  <input type="number" min={0} className="glass-input w-full" placeholder="0" value={createForm.kitty_goal} onChange={(e) => setCreateForm((f) => ({ ...f, kitty_goal: parseFloat(e.target.value) || 0 }))} />
                 </div>
                 <div className="flex gap-3 pt-2">
-                  <button onClick={() => setShowCreateModal(false)} className="flex-1 btn-secondary py-2.5 text-sm justify-center">Annuler</button>
-                  <button onClick={handleCreateEvent} disabled={creating || !createForm.title.trim() || !createForm.event_date} className="flex-1 btn-primary py-2.5 text-sm justify-center disabled:opacity-50">
+                  <button onClick={() => setShowCreateModal(false)} className="flex-1 glass-capsule-btn secondary text-sm">Annuler</button>
+                  <button onClick={handleCreateEvent} disabled={creating || !createForm.title.trim() || !createForm.event_date} className="flex-1 glass-capsule-btn primary text-sm disabled:opacity-50">
                     {creating ? 'Création...' : 'Créer la sortie'}
                   </button>
                 </div>

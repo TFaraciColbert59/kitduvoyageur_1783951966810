@@ -7,10 +7,10 @@
 
   /* forest — primary green */
   --lkv-forest-950: #06120C;
-  --lkv-forest-900: #0B1F17;
+  --lkv-forest-900: #17402C;
   --lkv-forest-800: #17402C;
   --lkv-forest-700: #205238;
-  --lkv-forest-600: #2D6B4A;
+  --lkv-forest-600: #365233;
 
   /* sage — soft green accent */
   --lkv-sage-500: #A8C8A0;
@@ -24,7 +24,7 @@
   --lkv-stone-200: #DDD6C6;
 
   /* ink — text */
-  --lkv-ink-900: #0B1F17;
+  --lkv-ink-900: #17402C;
   --lkv-ink-800: #142A21;
   --lkv-ink-700: #384A42;
   --lkv-ink-500: #6B7A72;
@@ -40,10 +40,10 @@
   --lkv-ease-out: cubic-bezier(0.2, 0.8, 0.2, 1);
 
   /* shadow */
-  --lkv-shadow-xs: 0 1px 2px rgba(11,31,23,0.05), 0 1px 3px rgba(11,31,23,0.04);
-  --lkv-shadow-sm: 0 2px 6px rgba(11,31,23,0.06), 0 4px 12px rgba(11,31,23,0.05);
-  --lkv-shadow-md: 0 6px 16px rgba(11,31,23,0.08), 0 12px 32px rgba(11,31,23,0.06);
-  --lkv-shadow-lg: 0 12px 24px rgba(11,31,23,0.10), 0 24px 56px rgba(11,31,23,0.10);
+  --lkv-: 0 1px 2px rgba(23,64,44,0.05), 0 1px 3px rgba(23,64,44,0.04);
+  --lkv-: 0 2px 6px rgba(23,64,44,0.06), 0 4px 12px rgba(23,64,44,0.05);
+  --lkv-: 0 6px 16px rgba(23,64,44,0.08), 0 12px 32px rgba(23,64,44,0.06);
+  --lkv-: 0 12px 24px rgba(23,64,44,0.10), 0 24px 56px rgba(23,64,44,0.10);
 }
 
 
@@ -63,7 +63,7 @@
   border-radius: 999px;
   font-size: 11px; font-weight: 500;
   color: var(--lkv-ink-900);
-  border: 1px solid rgba(11,31,23,0.05);
+  border: 1px solid rgba(23,64,44,0.05);
 }
 .lkv-chip .dot { width: 6px; height: 6px; border-radius: 50%; background: var(--lkv-sage-500); }
 

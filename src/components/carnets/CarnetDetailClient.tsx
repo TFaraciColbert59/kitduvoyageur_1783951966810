@@ -59,7 +59,7 @@ export default function CarnetDetailClient({ carnetId }: Props) {
     return (
       <MobilePageShell>
         <div className="min-h-screen bg-[#F8F5EE] flex items-center justify-center">
-          <div className="w-10 h-10 border-4 border-[#2D5A3D]/20 border-t-[#2D5A3D] rounded-full animate-spin" />
+          <div className="w-10 h-10 border-4 border-[#17402C]/20 border-t-[#17402C] rounded-full animate-spin" />
         </div>
       </MobilePageShell>
     );
@@ -70,13 +70,13 @@ export default function CarnetDetailClient({ carnetId }: Props) {
       <MobilePageShell>
         <div className="min-h-screen bg-[#F8F5EE] flex flex-col items-center justify-center p-8 text-center">
           <span className="text-5xl mb-4">📓</span>
-          <h1 className="text-lg font-bold text-[#1C2620] mb-2">Carnet introuvable</h1>
+          <h1 className="text-lg font-bold text-[#17402C] mb-2">Carnet introuvable</h1>
           <p className="text-sm text-[#7A8A7D] mb-6">
             {error || 'Ce carnet n\'existe pas ou n\'est plus accessible.'}
           </p>
           <Link
             href="/carnets"
-            className="px-5 py-2.5 bg-[#1C2620] text-white text-sm font-semibold rounded-xl"
+            className="px-5 py-2.5 bg-[#17402C] text-white text-sm font-semibold rounded-xl"
           >
             Mes carnets
           </Link>
@@ -90,7 +90,7 @@ export default function CarnetDetailClient({ carnetId }: Props) {
       <div className="min-h-screen bg-[#F8F5EE]">
         {/* Hero */}
         <div
-          className="relative h-52 bg-[#1C2620] flex flex-col justify-end p-5"
+          className="relative h-52 bg-[#17402C] flex flex-col justify-end p-5"
           style={carnet.cover_image
             ? { backgroundImage: `url(${carnet.cover_image})`, backgroundSize: 'cover', backgroundPosition: 'center' }
             : {}}
@@ -129,7 +129,7 @@ export default function CarnetDetailClient({ carnetId }: Props) {
 
           {/* Timeline */}
           <div className="mb-5">
-            <h2 className="text-base font-bold text-[#1C2620] mb-4">
+            <h2 className="text-base font-bold text-[#17402C] mb-4">
               📅 Timeline
             </h2>
             <HikeTimeline carnetId={carnetId} moments={moments} />
@@ -139,7 +139,7 @@ export default function CarnetDetailClient({ carnetId }: Props) {
           <div className="mt-6 pt-5 border-t border-[#E8E4D8]">
             <Link
               href={`/randonnee-active`}
-              className="w-full block py-3.5 bg-[#1C2620] text-white text-sm font-semibold rounded-xl text-center hover:bg-[#2D3F35] transition-colors"
+              className="w-full block py-3.5 bg-[#17402C] text-white text-sm font-semibold rounded-xl text-center hover:bg-[#2D3F35] transition-colors"
             >
               🥾 Démarrer une randonnée
             </Link>

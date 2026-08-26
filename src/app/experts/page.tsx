@@ -32,9 +32,9 @@ export default function ExpertsPage() {
       <div className="block md:hidden">
         <MobilePageShell>
           <div style={{ padding: '16px' }}>
-            <h1 style={{ fontSize: '20px', fontWeight: 800, color: '#1C2620', marginBottom: '8px' }}>Experts</h1>
-            <p style={{ fontSize: '13px', color: 'rgba(28,38,32,0.6)', marginBottom: '16px' }}>Consultez des guides certifiés.</p>
-            <p style={{ textAlign: 'center', color: 'rgba(28,38,32,0.5)', padding: '20px' }}>Contenu à venir.</p>
+            <h1 style={{ fontSize: '20px', fontWeight: 800, color: '#17402C', marginBottom: '8px' }}>Experts</h1>
+            <p style={{ fontSize: '13px', color: 'rgba(23,64,44,0.6)', marginBottom: '16px' }}>Consultez des guides certifiés.</p>
+            <p style={{ textAlign: 'center', color: 'rgba(23,64,44,0.5)', padding: '20px' }}>Contenu à venir.</p>
           </div>
         </MobilePageShell>
         

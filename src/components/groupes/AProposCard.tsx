@@ -1,4 +1,6 @@
-import React from 'react';
+'use client';
+
+import React, { useState } from 'react';
 import Icon from '@/components/ui/AppIcon';
 
 interface AProposCardProps {
@@ -6,47 +8,75 @@ interface AProposCardProps {
 }
 
 export default function AProposCard({ data }: AProposCardProps) {
+  const [showSafety, setShowSafety] = useState(false);
+
   return (
-    <div className="bg-white rounded-[0.75rem] p-6 border border-[#1C2620]/10 shadow-sm active:scale-[0.98] active:opacity-95 transition-all duration-150 cursor-pointer">
-      <h2 className="font-display text-xl text-[#1C2620] mb-2">À propos <span className="font-serif italic font-bold">du voyage</span></h2>
-      <p className="text-sm text-[#1C2620]/80 font-sans mb-6">
-        Les paramètres essentiels du groupe.
-      </p>
+    <div className="glass p-3.5 text-[#17402C] space-y-2.5 transition-all duration-300">
+      <div className="flex items-center justify-between">
+        <h2 className="font-display font-bold text-xs text-[#17402C]">
+          Infos &amp; Sécurité
+        </h2>
+        <span className="glass-pill text-[9px] py-0.2 px-1.5 font-mono font-bold">
+          {data.meta.privacy}
+        </span>
+      </div>
       
-      <div className="space-y-4">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <Icon name="MapPinIcon" size={16} className="text-[#1C2620]/50" />
-            <span className="text-sm text-[#1C2620] font-sans">Massif</span>
-          </div>
-          <span className="text-sm font-semibold text-[#1C2620]">{data.meta.massif}</span>
+      {/* Paramètres principaux */}
+      <div className="grid grid-cols-2 gap-1.5 text-[10px]">
+        <div className="glass-sub-card p-2 rounded-lg">
+          <span className="font-mono uppercase text-[#5C6B5E] block text-[8.5px] font-bold">Massif</span>
+          <span className="font-bold text-[#17402C] truncate block">{data.meta.massif}</span>
         </div>
         
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <Icon name="ChartBarIcon" size={16} className="text-[#1C2620]/50" />
-            <span className="text-sm text-[#1C2620] font-sans">Difficulté</span>
-          </div>
-          <span className="text-sm font-semibold text-[#1C2620]">{data.meta.difficulty}</span>
+        <div className="glass-sub-card p-2 rounded-lg">
+          <span className="font-mono uppercase text-[#5C6B5E] block text-[8.5px] font-bold">Difficulté</span>
+          <span className="font-bold text-[#17402C] truncate block">{data.meta.difficulty}</span>
         </div>
         
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <Icon name="CurrencyEuroIcon" size={16} className="text-[#1C2620]/50" />
-            <span className="text-sm text-[#1C2620] font-sans">Budget prévu</span>
-          </div>
-          <span className="text-sm font-semibold text-[#1C2620]">{data.meta.budgetEstimate}</span>
+        <div className="glass-sub-card p-2 rounded-lg">
+          <span className="font-mono uppercase text-[#5C6B5E] block text-[8.5px] font-bold">Budget</span>
+          <span className="font-bold text-[#17402C] truncate block">{data.meta.budgetEstimate}</span>
         </div>
-        
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <Icon name="LockClosedIcon" size={16} className="text-[#1C2620]/50" />
-            <span className="text-sm text-[#1C2620] font-sans">Confidentialité</span>
-          </div>
-          <span className="text-[10px] font-mono uppercase tracking-widest bg-[#1C2620]/5 text-[#1C2620]/70 px-2 py-0.5 rounded-sm">
-            {data.meta.privacy}
-          </span>
+
+        <div className="glass-sub-card p-2 rounded-lg">
+          <span className="font-mono uppercase text-[#5C6B5E] block text-[8.5px] font-bold">Visibilité</span>
+          <span className="font-bold text-[#17402C] truncate block">{data.meta.privacy}</span>
         </div>
+      </div>
+
+      {/* Rappel de sécurité repliable */}
+      <div className="pt-1.5 border-t border-[#17402C]/10">
+        <button
+          onClick={() => setShowSafety(!showSafety)}
+          className="w-full glass-sub-card p-2 rounded-lg flex items-center justify-between text-[11px] font-semibold text-[#17402C] cursor-pointer hover:bg-white/40 transition-colors"
+        >
+          <div className="flex items-center gap-1.5">
+            <span className="text-xs">🛡️</span>
+            <span>Charte de sécurité</span>
+          </div>
+          <span className="text-[10px] text-[#5C6B5E]">{showSafety ? '▲' : '▼'}</span>
+        </button>
+
+        {showSafety && (
+          <div className="space-y-1.5 mt-1.5 text-[10px] text-[#5C6B5E] leading-relaxed">
+            <div className="glass-sub-card p-2 rounded-lg">
+              <strong className="text-[#17402C]">📍 Itinéraire :</strong> Transmettez vos étapes à un proche de confiance.
+            </div>
+
+            <div className="glass-sub-card p-2 rounded-lg">
+              <strong className="text-[#17402C]">☕ Contact :</strong> Échangez par visio ou lieu public avant le départ.
+            </div>
+
+            <div className="glass-sub-card p-2 rounded-lg">
+              <strong className="text-[#17402C]">💶 Frais :</strong> Utilisez le module Dépenses pour l'équilibrage.
+            </div>
+
+            <div className="pt-1 flex items-center justify-between text-[9px]">
+              <a href="/contact" className="font-semibold text-[#5C6B5E] hover:underline">Page contact</a>
+              <a href="mailto:contact@lekitduvoyageur.fr" className="font-bold text-[#17402C] hover:underline">Assistance →</a>
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );

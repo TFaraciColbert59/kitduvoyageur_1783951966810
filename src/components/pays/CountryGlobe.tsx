@@ -4,28 +4,27 @@ import React, { useEffect, useRef, useState, useCallback, useMemo } from 'react'
 import dynamic from 'next/dynamic';
 import { getCountryCoordinates } from '@/lib/countryCoordinates';
 import type { Country } from '@/lib/countries';
+import { DANGER_FILL, DANGER_CAP, DANGER_SIDE } from '@/lib/pays/danger';
 import type { GlobeMethods } from 'react-globe.gl';
 
 const Globe = dynamic(() => import('react-globe.gl'), { ssr: false }) as any;
 
-// ── Couleurs polygons par niveau de danger (semi-transparent pour voir le relief) ──
-const DANGER_COLORS: Record<string, string> = {
-  low: '#2D6A4F',
-  medium: '#D97706',
-  high: '#DC2626',
-};
+const INACTIVE_CAP = 'rgba(255,255,255,0.015)';
+const INACTIVE_SIDE = 'rgba(255,255,255,0.005)';
 
-const CAP_COLORS: Record<string, string> = {
-  low: 'rgba(45,106,79,0.55)',
-  medium: 'rgba(217,119,6,0.55)',
-  high: 'rgba(220,38,38,0.55)',
-};
-
-const SIDE_COLORS: Record<string, string> = {
-  low: 'rgba(45,106,79,0.2)',
-  medium: 'rgba(217,119,6,0.2)',
-  high: 'rgba(220,38,38,0.2)',
-};
+/**
+ * Résout le code ISO A2 d'un feature Natural Earth.
+ * Certains pays (France, Norvège…) ont ISO_A2='-99' dans le GeoJSON 110m
+ * (fusion métropole + dépendances) → fallback sur ISO_A2_EH / WB_A2 / ADM0_A3.
+ */
+function resolveIsoA2(props: any): string | null {
+  if (!props) return null;
+  const candidates = [props.ISO_A2, props.ISO_A2_EH, props.WB_A2, props.ADM0_A3];
+  for (const c of candidates) {
+    if (c && c !== '-99' && c !== '-3' && c !== '' && String(c).length === 2) return String(c);
+  }
+  return null;
+}
 
 function getFlagEmoji(code: string): string {
   const cps = code.toUpperCase().split('').map(c => 127397 + c.charCodeAt(0));
@@ -40,8 +39,15 @@ function dangerBadge(level: string): string {
 interface CountryGlobeProps {
   countries: Country[];
   onCountryClick: (code: string) => void;
+  /** Sélection (aperçu) — remplace la navigation directe quand fourni. */
+  onCountrySelect?: (country: Country) => void;
+  /** Focus caméra sur un code pays (ex. recherche mobile). */
   focusCode?: string;
+  /** Focus caméra sur un point (lat, lng) — ex. zoom continent. */
+  focusPoint?: [number, number] | null;
   fullscreen?: boolean;
+  /** Mode uniforme : tous les pays en couleurs neutres Sage/Stone, sans badge danger. */
+  uniform?: boolean;
 }
 
 const GEOJSON_URL = 'https://raw.githubusercontent.com/nvkelso/natural-earth-vector/master/geojson/ne_110m_admin_0_countries.geojson';
@@ -49,8 +55,11 @@ const GEOJSON_URL = 'https://raw.githubusercontent.com/nvkelso/natural-earth-vec
 export default function CountryGlobe({
   countries,
   onCountryClick,
+  onCountrySelect,
   focusCode,
+  focusPoint,
   fullscreen,
+  uniform,
 }: CountryGlobeProps) {
   const globeRef = useRef<GlobeMethods | undefined>(undefined);
   const containerRef = useRef<HTMLDivElement>(null);
@@ -61,6 +70,29 @@ export default function CountryGlobe({
   const [geoLoaded, setGeoLoaded] = useState(false);
   const [isGlobeReady, setIsGlobeReady] = useState(false);
   const ctrlRef = useRef<any>(null);
+
+  // Respecte prefers-reduced-motion : pas d'auto-rotation pour les utilisateurs sensibles
+  const prefersReducedMotion = useMemo(() => {
+    if (typeof window === 'undefined' || !window.matchMedia) return false;
+    return window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  }, []);
+
+  // ── Matériau « verre très léger » : sphère translucide très subtile ──
+  const glassMaterial = useMemo(() => {
+    if (typeof window === 'undefined') return undefined;
+    try {
+      const THREE = (require('three') as any).default || require('three');
+      return new THREE.MeshPhongMaterial({
+        color: 0xffffff,
+        transparent: true,
+        opacity: 0.06,
+        depthWrite: false,
+        side: THREE.FrontSide,
+      });
+    } catch {
+      return undefined;
+    }
+  }, []);
 
   // ── Load GeoJSON Natural Earth ──
   useEffect(() => {
@@ -90,8 +122,10 @@ export default function CountryGlobe({
     if (typeof globeRef.current.controls !== 'function') return;
     const ctrl = globeRef.current.controls();
     ctrlRef.current = ctrl;
-    ctrl.autoRotate = true;
-    ctrl.autoRotateSpeed = 0.4;
+    if (!prefersReducedMotion) {
+      ctrl.autoRotate = true;
+      ctrl.autoRotateSpeed = 0.4;
+    }
     try {
       const renderer = globeRef.current.renderer();
       if (renderer && typeof renderer.setPixelRatio === 'function') {
@@ -107,21 +141,28 @@ export default function CountryGlobe({
         globeRef.current.pointOfView({ lat: 20, lng: 10, altitude: isMobile ? 2.5 : 2.2 }, 0);
       }
     } catch (_e) { /* non-critical */ }
-  }, [isGlobeReady]);
+  }, [isGlobeReady, prefersReducedMotion]);
 
   // ── Focus caméra ──
   useEffect(() => {
-    if (!isGlobeReady || !focusCode || !globeRef.current) return;
+    if (!isGlobeReady || !globeRef.current) return;
+    if (focusPoint) {
+      const [lat, lng] = focusPoint;
+      if (typeof globeRef.current.pointOfView === 'function') globeRef.current.pointOfView({ lat, lng, altitude: 1.1 }, 1200);
+      return;
+    }
+    if (!focusCode) return;
     const coords = getCountryCoordinates(focusCode);
     if (coords && typeof globeRef.current.pointOfView === 'function') globeRef.current.pointOfView({ lat: coords.lat, lng: coords.lng, altitude: 1.5 }, 1000);
-  }, [isGlobeReady, focusCode]);
+  }, [isGlobeReady, focusCode, focusPoint]);
 
-  // ── Fusion GeoJSON × nos données ──
+  // ── Fusion GeoJSON × nos données (résolution ISO robuste) ──
   const polygonsData = useMemo(() => {
     const map = new Map(countries.map(c => [c.code.toUpperCase(), c]));
     return geoFeatures.map((f: any) => {
-      const isoA2 = f.properties?.ISO_A2;
-      return { ...f, countryData: isoA2 ? map.get(isoA2) : null };
+      const iso = resolveIsoA2(f?.properties);
+      const countryData = iso ? map.get(iso) : null;
+      return { ...f, countryData };
     });
   }, [geoFeatures, countries]);
 
@@ -140,9 +181,13 @@ export default function CountryGlobe({
   const handlePolygonClick = useCallback((p: any) => {
     if (p?.countryData?.code) {
       if (ctrlRef.current) ctrlRef.current.autoRotate = false;
-      onCountryClick(p.countryData.code);
+      if (onCountrySelect) {
+        onCountrySelect(p.countryData);
+      } else {
+        onCountryClick(p.countryData.code);
+      }
     }
-  }, [onCountryClick]);
+  }, [onCountryClick, onCountrySelect]);
 
   const handlePolygonHover = useCallback((hovered: any) => {
     const data = hovered?.countryData || null;
@@ -152,39 +197,41 @@ export default function CountryGlobe({
   }, []);
 
   const handleZoom = useCallback(() => {
-    if (ctrlRef.current) {
+    if (ctrlRef.current && !prefersReducedMotion) {
       ctrlRef.current.autoRotate = true;
       ctrlRef.current.autoRotateSpeed = 0.4;
     }
     document.body.style.cursor = hoveredRef.current ? 'pointer' : 'grab';
-  }, []);
+  }, [prefersReducedMotion]);
 
-  // ── Tooltip HTML riche ──
+  // ── Tooltip HTML riche — même design que la fiche pays (Liquid Glass) ──
   const polygonLabel = useCallback((d: any) => {
     if (!d?.countryData) return '';
     const c = d.countryData;
-    const dc = DANGER_COLORS[c.danger_level] || '#6B7A72';
+    const dc = DANGER_FILL[c.danger_level as Country['danger_level']] || '#A6C1A0';
+    const dangerBadgeHtml = uniform ? '' : `
+    <span style="padding:3px 11px;border-radius:999px;font-size:10px;font-weight:700;border:1px solid ${dc}66;color:#17402C;background:${dc}22;">
+      ${dangerBadge(c.danger_level)}
+    </span>`;
     return `
-<div style="background:rgba(11,31,23,0.92);backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px);border-radius:14px;padding:16px 18px;font-family:system-ui,sans-serif;font-size:13px;color:#FBFAF6;box-shadow:0 12px 40px rgba(0,0,0,0.5);border:1px solid rgba(255,255,255,0.08);min-width:200px;max-width:280px;">
-  <div style="display:flex;align-items:center;gap:12px;margin-bottom:10px;">
-    <span style="font-size:34px;line-height:1;flex-shrink:0;">${getFlagEmoji(c.code)}</span>
-    <div>
-      <div style="font-weight:700;font-size:17px;color:#fff;line-height:1.2;">${c.nom}</div>
-      <div style="color:rgba(255,255,255,0.45);font-size:11px;margin-top:2px;">${c.capital} · ${c.continent}</div>
+<div style="background:rgba(255,255,255,0.55);backdrop-filter:blur(20px) saturate(180%);-webkit-backdrop-filter:blur(20px) saturate(180%);border-radius:16px;padding:14px 16px;font-family:var(--font-sans, system-ui),sans-serif;font-size:12px;color:#17402C;box-shadow:0 20px 44px -12px rgba(23,64,44,0.28), inset 0 1.5px 1px 0 rgba(255,255,255,0.85);border:1px solid rgba(255,255,255,0.5);min-width:210px;max-width:270px;line-height:1.35;">
+  <div style="display:flex;align-items:center;gap:11px;margin-bottom:10px;">
+    <span style="font-size:32px;line-height:1;flex-shrink:0;">${getFlagEmoji(c.code)}</span>
+    <div style="min-width:0;">
+      <div style="font-family:var(--font-display, system-ui),sans-serif;font-weight:700;font-size:15px;color:#17402C;line-height:1.15;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${c.nom}</div>
+      <div style="color:#5A7064;font-size:11px;margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${c.capital} · ${c.continent}</div>
     </div>
   </div>
-  <div style="display:flex;gap:6px;margin-bottom:8px;flex-wrap:wrap;">
-    <span style="padding:3px 10px;border-radius:999px;font-size:10px;font-weight:500;background:rgba(255,255,255,0.08);color:rgba(255,255,255,0.65);">📅 ${c.meilleure_saison}</span>
-    <span style="padding:3px 10px;border-radius:999px;font-size:10px;font-weight:500;background:rgba(255,255,255,0.08);color:rgba(255,255,255,0.65);">💰 ${c.monnaie}</span>
+  <div style="display:flex;gap:6px;margin-bottom:9px;flex-wrap:wrap;">
+    <span style="padding:3px 10px;border-radius:999px;font-size:10px;font-weight:600;background:rgba(23,64,44,0.06);border:1px solid rgba(23,64,44,0.10);color:#365233;">📅 ${c.meilleure_saison}</span>
+    <span style="padding:3px 10px;border-radius:999px;font-size:10px;font-weight:600;background:rgba(23,64,44,0.06);border:1px solid rgba(23,64,44,0.10);color:#365233;">💰 ${c.monnaie}</span>
   </div>
-  <div style="display:flex;justify-content:space-between;align-items:center;">
-    <span style="padding:4px 12px;border-radius:999px;font-size:10px;font-weight:600;border:1px solid ${dc}44;color:#FBFAF6;background:${dc}22;">
-      ${dangerBadge(c.danger_level)}
-    </span>
-    <span style="font-size:10px;color:rgba(255,255,255,0.3);">Cliquer →</span>
+  <div style="display:flex;justify-content:space-between;align-items:center;border-top:1px solid rgba(23,64,44,0.08);padding-top:8px;">
+    ${dangerBadgeHtml}
+    <span style="font-size:10px;font-weight:700;color:#17402C;">Cliquer pour explorer →</span>
   </div>
 </div>`;
-  }, []);
+  }, [uniform]);
 
   return (
     <div
@@ -197,7 +244,7 @@ export default function CountryGlobe({
         position: 'relative',
         borderRadius: fullscreen ? 0 : '16px',
         overflow: 'hidden',
-        background: '#0B1F17',
+        background: 'transparent',
         cursor: 'grab',
         touchAction: 'none',
         WebkitTapHighlightColor: 'transparent',
@@ -207,24 +254,25 @@ export default function CountryGlobe({
           ref={globeRef}
           width={dimensions.width}
           height={dimensions.height}
-          globeImageUrl="https://unpkg.com/three-globe/example/img/earth-blue-marble.jpg"
+          globeImageUrl="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNkYPhfDwAChwGA60e6kgAAAABJRU5ErkJggg=="
           bumpImageUrl="https://unpkg.com/three-globe/example/img/earth-topology.png"
-          backgroundColor="#0B1F17"
+          globeMaterial={glassMaterial}
+          backgroundColor="rgba(0,0,0,0)"
           showAtmosphere
-          atmosphereColor="#A8C8A0"
-          atmosphereAltitude={0.25}
+          atmosphereColor="#A6C1A0"
+          atmosphereAltitude={0.22}
           showGraticules={false}
 
           // ── Polygones pays ──
           polygonsData={polygonsData}
           polygonCapColor={(d: any) =>
-            d.countryData ? (CAP_COLORS[d.countryData.danger_level] || 'rgba(107,122,114,0.25)') : 'rgba(255,255,255,0.015)'
+            d.countryData ? (uniform ? 'rgba(91,127,85,0.35)' : (DANGER_CAP[d.countryData.danger_level as Country['danger_level']] || 'rgba(91,127,85,0.35)')) : INACTIVE_CAP
           }
           polygonSideColor={(d: any) =>
-            d.countryData ? (SIDE_COLORS[d.countryData.danger_level] || 'rgba(107,122,114,0.1)') : 'rgba(255,255,255,0.005)'
+            d.countryData ? (uniform ? 'rgba(91,127,85,0.18)' : (DANGER_SIDE[d.countryData.danger_level as Country['danger_level']] || 'rgba(91,127,85,0.18)')) : INACTIVE_SIDE
           }
-          polygonAltitude={(d: any) => (d.countryData ? 0.008 : 0)}
-          polygonStrokeColor={() => 'rgba(255,255,255,0.05)'}
+          polygonAltitude={(d: any) => (d.countryData ? 0.012 : 0)}
+          polygonStrokeColor={() => 'rgba(255,255,255,0.28)'}
           polygonLabel={polygonLabel}
           onPolygonClick={handlePolygonClick}
           onPolygonHover={handlePolygonHover}
@@ -233,40 +281,40 @@ export default function CountryGlobe({
           pointsData={fallbackPoints}
           pointLat="lat"
           pointLng="lng"
-          pointColor={() => 'rgba(255,255,255,0.2)'}
-          pointRadius={() => 0.35}
+          pointColor={() => 'rgba(166,193,160,0.75)'}
+          pointRadius={() => 0.5}
           pointResolution={8}
           pointsMerge
-          pointAltitude={() => 0.01}
+          pointAltitude={() => 0.012}
 
           // ── Caméra ──
           onZoom={handleZoom}
-          onGlobeReady={() => setIsGlobeReady(true)}
+          onGlobeReady={() => setTimeout(() => setIsGlobeReady(true), 0)}
         />
 
-      {/* Label flottant au survol */}
-      {hoveredD && (
+      {/* Spinner pendant le chargement du GeoJSON (jamais d'écran vide) */}
+      {!geoLoaded && (
         <div
           style={{
             position: 'absolute',
-            bottom: 16,
-            left: '50%',
-            transform: 'translateX(-50%)',
-            background: 'rgba(11,31,23,0.85)',
-            backdropFilter: 'blur(14px)',
-            WebkitBackdropFilter: 'blur(14px)',
-            borderRadius: 12,
-            padding: '8px 20px',
-            color: '#FBFAF6',
-            fontSize: 13,
-            fontWeight: 600,
+            inset: 0,
+            display: 'flex',
+            flexDirection: 'column',
+            alignItems: 'center',
+            justifyContent: 'center',
+            gap: 12,
+            background: 'transparent',
+            zIndex: 5,
             pointerEvents: 'none',
-            whiteSpace: 'nowrap',
-            border: '1px solid rgba(255,255,255,0.08)',
-            zIndex: 10,
           }}
         >
-          {getFlagEmoji(hoveredD.code)} {hoveredD.nom} — {hoveredD.capital}
+          <div
+            className="w-8 h-8 rounded-full border-[3px] border-[#17402C] border-t-transparent animate-spin"
+            style={{ animationDuration: '0.8s' }}
+          />
+          <span style={{ fontSize: 11, fontFamily: 'var(--lkv-font-mono, monospace)', fontWeight: 700, color: '#17402C', letterSpacing: '0.06em' }}>
+            Chargement des pays…
+          </span>
         </div>
       )}
     </div>

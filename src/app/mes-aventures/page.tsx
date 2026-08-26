@@ -378,7 +378,7 @@ export default function MesAventuresPage() {
     <>
       {/* ── DESKTOP ── */}
       <div className="hidden md:block">
-        <div className="min-h-screen bg-[#1C2620]">
+        <div className="min-h-screen bg-[#17402C]">
           <Header />
           {desktopContent}
         </div>
@@ -386,7 +386,7 @@ export default function MesAventuresPage() {
 
       {/* ── MOBILE ── */}
       <div className="block md:hidden">
-        <MobilePageShell background="#1C2620">
+        <MobilePageShell background="#17402C">
           {mobileContent}
         </MobilePageShell>
         

@@ -1,4 +1,4 @@
-'use client';
+﻿'use client';
 
 import React from 'react';
 import { useRouter } from 'next/navigation';
@@ -59,11 +59,11 @@ export default function SettingsDrawer({
   return (
     <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4 bg-black/50 backdrop-blur-xs transition-opacity">
       <div
-        className="w-full max-w-lg bg-white rounded-t-3xl sm:rounded-3xl p-6 shadow-2xl border border-black/[0.06] max-h-[90vh] overflow-y-auto"
+        className="w-full max-w-lg bg-white rounded-t-3xl sm:rounded-3xl p-6  border border-black/[0.06] max-h-[90vh] overflow-y-auto"
         onClick={(e) => e.stopPropagation()}
       >
         <div className="flex items-center justify-between pb-4 border-b border-black/[0.06]">
-          <h3 className="text-base font-bold text-[#0B1F17] flex items-center gap-2">
+          <h3 className="text-base font-bold text-[#17402C] flex items-center gap-2">
             <span>⚙️</span> Paramètres & Préférences
           </h3>
           <button
@@ -71,7 +71,7 @@ export default function SettingsDrawer({
               triggerHaptic('light');
               onClose();
             }}
-            className="w-8 h-8 rounded-full bg-[#F4F1EB] flex items-center justify-center text-xs text-[#5C6B63] hover:text-[#0B1F17]"
+            className="w-8 h-8 rounded-full bg-[#F4F1EB] flex items-center justify-center text-xs text-[#5A7064] hover:text-[#17402C]"
           >
             ✕
           </button>
@@ -80,7 +80,7 @@ export default function SettingsDrawer({
         <div className="space-y-6 pt-4">
           {sections.map((sec, idx) => (
             <div key={idx} className="space-y-2">
-              <h4 className="text-[11px] font-mono font-bold uppercase tracking-wider text-[#5C6B63]">
+              <h4 className="text-[11px] font-mono font-bold uppercase tracking-wider text-[#5A7064]">
                 {sec.title}
               </h4>
               <div className="bg-[#FBFAF6] rounded-2xl border border-black/[0.04] divide-y divide-black/[0.04] overflow-hidden">
@@ -97,8 +97,8 @@ export default function SettingsDrawer({
                       item.action ? 'cursor-pointer hover:bg-[#F4F1EB] transition-colors' : ''
                     }`}
                   >
-                    <span className="font-semibold text-[#0B1F17]">{item.label}</span>
-                    <span className="font-mono text-[#5C6B63] flex items-center gap-1">
+                    <span className="font-semibold text-[#17402C]">{item.label}</span>
+                    <span className="font-mono text-[#5A7064] flex items-center gap-1">
                       {item.value}
                       {item.action && <span>→</span>}
                     </span>

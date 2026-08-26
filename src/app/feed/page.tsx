@@ -53,18 +53,18 @@ export default function FeedPage() {
       <div className="block md:hidden">
         <MobilePageShell>
           <div style={{ padding: '16px' }}>
-            <h1 style={{ fontSize: '20px', fontWeight: 800, color: '#1C2620', marginBottom: '8px' }}>Carnets d&apos;expédition</h1>
-            <p style={{ fontSize: '13px', color: 'rgba(28,38,32,0.6)', marginBottom: '16px' }}>Récits avec tracé GPS et matériel utilisé.</p>
+            <h1 style={{ fontSize: '20px', fontWeight: 800, color: '#17402C', marginBottom: '8px' }}>Carnets d&apos;expédition</h1>
+            <p style={{ fontSize: '13px', color: 'rgba(23,64,44,0.6)', marginBottom: '16px' }}>Récits avec tracé GPS et matériel utilisé.</p>
             <div style={{ display: 'flex', gap: '6px', marginBottom: '16px', overflowX: 'auto' }}>
               {[{ id: 'all', label: 'Tous' }, { id: 'verified', label: 'Vérifiés' }, { id: 'gps', label: 'GPS' }].map((f) => (
-                <button key={f.id} onClick={() => setFilter(f.id as typeof filter)} style={{ padding: '6px 14px', borderRadius: '20px', fontSize: '12px', border: 'none', cursor: 'pointer', background: filter === f.id ? '#17402C' : '#F4F1EA', color: filter === f.id ? 'white' : 'rgba(28,38,32,0.6)', whiteSpace: 'nowrap' }}>{f.label}</button>
+                <button key={f.id} onClick={() => setFilter(f.id as typeof filter)} style={{ padding: '6px 14px', borderRadius: '20px', fontSize: '12px', border: 'none', cursor: 'pointer', background: filter === f.id ? '#17402C' : '#F4F1EA', color: filter === f.id ? 'white' : 'rgba(23,64,44,0.6)', whiteSpace: 'nowrap' }}>{f.label}</button>
               ))}
             </div>
             {filtered.map((j) => (
-              <div key={j.id} style={{ background: '#FBFAF6', borderRadius: '12px', border: '1px solid rgba(11,31,23,0.06)', padding: '14px', marginBottom: '12px' }}>
-                <h2 style={{ fontSize: '14px', fontWeight: 700, color: '#1C2620', marginBottom: '4px' }}>{j.title}</h2>
-                <p style={{ fontSize: '11px', color: 'rgba(28,38,32,0.5)', marginBottom: '8px' }}>{j.author} · {j.country} · {j.duration}</p>
-                <p style={{ fontSize: '12px', color: 'rgba(28,38,32,0.6)', lineHeight: '1.5' }}>{j.excerpt}</p>
+              <div key={j.id} style={{ background: '#FBFAF6', borderRadius: '12px', border: '1px solid rgba(23,64,44,0.06)', padding: '14px', marginBottom: '12px' }}>
+                <h2 style={{ fontSize: '14px', fontWeight: 700, color: '#17402C', marginBottom: '4px' }}>{j.title}</h2>
+                <p style={{ fontSize: '11px', color: 'rgba(23,64,44,0.5)', marginBottom: '8px' }}>{j.author} · {j.country} · {j.duration}</p>
+                <p style={{ fontSize: '12px', color: 'rgba(23,64,44,0.6)', lineHeight: '1.5' }}>{j.excerpt}</p>
               </div>
             ))}
           </div>

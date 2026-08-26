@@ -31,7 +31,6 @@ export default function TachesCard({ tasks: initialTasks, groupId, onRefresh, us
   const [togglingId, setTogglingId] = useState<string | null>(null);
   const [selectingAll, setSelectingAll] = useState(false);
 
-  // Sync tasks state when initialTasks prop updates from parent
   useEffect(() => {
     setTasks(initialTasks);
   }, [initialTasks]);
@@ -49,7 +48,6 @@ export default function TachesCard({ tasks: initialTasks, groupId, onRefresh, us
     setTogglingId(id);
     const newStatus = currentCompleted ? 'todo' : 'done';
 
-    // Optimistic UI update
     setTasks(prev => prev.map(t => t.id === id ? {
       ...t,
       completed: !currentCompleted,
@@ -64,7 +62,6 @@ export default function TachesCard({ tasks: initialTasks, groupId, onRefresh, us
     if (error) {
       console.error('Task toggle error:', error);
       alert('Erreur lors de la modification de la tâche : ' + error.message);
-      // Revert optimistic update
       setTasks(prev => prev.map(t => t.id === id ? { ...t, completed: currentCompleted } : t));
     } else if (onRefresh) {
       onRefresh();
@@ -142,7 +139,6 @@ export default function TachesCard({ tasks: initialTasks, groupId, onRefresh, us
       console.error('Task insert error:', error);
       alert('Erreur lors de la sauvegarde de la tâche : ' + error.message);
     } else {
-      // Optimistic local add
       const assignedMember = members?.find(m => m.user_id === assignedTo);
       const assigneeName = assignedMember?.user_profiles?.full_name || (assignedTo ? 'Membre' : 'Non attribué');
       
@@ -169,7 +165,6 @@ export default function TachesCard({ tasks: initialTasks, groupId, onRefresh, us
   const handleDeleteTask = async (id: string) => {
     if (!confirm('Voulez-vous vraiment supprimer cette tâche ?')) return;
 
-    // Optimistic local remove
     setTasks(prev => prev.filter(t => t.id !== id));
 
     const { error } = await supabase
@@ -196,31 +191,31 @@ export default function TachesCard({ tasks: initialTasks, groupId, onRefresh, us
   });
 
   return (
-    <div className="bg-white rounded-[0.75rem] p-6 border border-[#1C2620]/10 shadow-sm active:scale-[0.98] active:opacity-95 transition-all duration-150 cursor-pointer">
+    <div className="glass p-6 transition-all duration-300">
       <div className="flex justify-between items-start mb-2">
-        <h2 className="font-display text-xl text-[#1C2620]">Tâches <span className="font-serif italic font-bold">à faire</span></h2>
+        <h2 className="font-display font-bold text-xl text-[#17402C]">Tâches <span className="font-serif italic font-normal text-[#17402C]">à faire</span></h2>
         <div className="flex items-center gap-2">
-          <span className="font-mono text-[10px] uppercase tracking-widest text-[#1C2620]/60 bg-[#1C2620]/5 px-2 py-0.5 rounded-full">{remainingCount} restantes</span>
-          <span className="font-mono text-[10px] uppercase tracking-widest text-[#1C2620]/60 bg-[#1C2620]/5 px-2 py-0.5 rounded-full">{completedCount} terminées</span>
+          <span className="glass-pill">{remainingCount} restantes</span>
+          <span className="glass-pill">{completedCount} terminées</span>
         </div>
       </div>
       
       <div className="flex justify-between items-center mb-6">
-        <p className="text-sm text-[#1C2620]/80 font-sans max-w-sm hidden sm:block">
+        <p className="text-sm text-[#5C6B5E] font-sans max-w-sm hidden sm:block">
           Chacun s'attribue une tâche. Les rappels partent 48h avant l'échéance.
         </p>
-        <div className="flex gap-2 w-full sm:w-auto justify-end">
+        <div className="flex gap-2 w-full sm:w-auto justify-end flex-wrap">
           <button
             onClick={handleSelectAll}
             disabled={selectingAll || tasks.length === 0}
-            className="px-3 py-1.5 rounded-full bg-[#1C2620]/5 text-[#1C2620] font-sans font-medium text-xs hover:bg-[#1C2620]/10 transition-colors disabled:opacity-50"
+            className="glass-capsule-btn py-1.5 px-3 text-xs font-semibold disabled:opacity-50"
           >
-            {selectingAll ? '...' : 'Tout →'}
+            <span className="relative z-10">{selectingAll ? '...' : 'Tout →'}</span>
           </button>
           <select 
             value={filter}
             onChange={(e) => setFilter(e.target.value as any)}
-            className="px-3 py-1.5 rounded-full bg-[#1C2620]/5 text-[#1C2620] font-sans font-medium text-xs hover:bg-[#1C2620]/10 transition-colors border-none outline-none cursor-pointer"
+            className="glass-input py-1.5 px-3 text-xs font-semibold cursor-pointer min-h-[36px]"
           >
             <option value="all">Filtrer (Tout)</option>
             <option value="todo">À faire</option>
@@ -228,28 +223,29 @@ export default function TachesCard({ tasks: initialTasks, groupId, onRefresh, us
           </select>
           <button 
             onClick={() => setIsAdding(!isAdding)}
-            className="px-3 py-1.5 rounded-full bg-[#33463C] text-white font-sans font-medium text-xs hover:bg-[#33463C]/90 transition-colors flex items-center gap-1"
+            className="glass-capsule-btn primary py-1.5 px-3 text-xs font-bold flex items-center gap-1"
           >
-            <Icon name={isAdding ? "XMarkIcon" : "PlusIcon"} size={12} /> {isAdding ? 'Annuler' : 'Ajouter une tâche'}
+            <Icon name={isAdding ? "XMarkIcon" : "PlusIcon"} size={12} className="relative z-10" />
+            <span className="relative z-10">{isAdding ? 'Annuler' : 'Ajouter une tâche'}</span>
           </button>
         </div>
       </div>
       
       {isAdding && (
-        <form onSubmit={handleAddTask} className="mb-6 flex flex-wrap gap-2 bg-[#E7E3D6]/20 p-4 rounded-2xl border border-[#1C2620]/10">
+        <form onSubmit={handleAddTask} className="mb-6 flex flex-wrap gap-2 glass-sub-card p-4 rounded-2xl">
           <input 
             type="text" 
             autoFocus
             value={newTaskTitle}
             onChange={e => setNewTaskTitle(e.target.value)}
             placeholder="Titre de la nouvelle tâche..." 
-            className="flex-1 min-w-[200px] bg-white border border-[#1C2620]/10 rounded-xl py-2 px-4 text-sm text-[#1C2620] placeholder-[#1C2620]/40 focus:outline-none focus:ring-2 focus:ring-[#33463C]/20"
+            className="glass-input flex-1 min-w-[200px] text-xs"
             disabled={loading}
           />
           <select 
             value={assignedTo}
             onChange={e => setAssignedTo(e.target.value)}
-            className="bg-white border border-[#1C2620]/10 rounded-xl py-2 px-4 text-sm text-[#1C2620] focus:outline-none focus:ring-2 focus:ring-[#33463C]/20 max-w-[170px]"
+            className="glass-input text-xs max-w-[170px]"
             disabled={loading}
           >
             <option value="">Attribuer à...</option>
@@ -262,55 +258,53 @@ export default function TachesCard({ tasks: initialTasks, groupId, onRefresh, us
           <button 
             type="submit"
             disabled={!newTaskTitle.trim() || loading}
-            className="px-5 py-2 bg-[#1C2620] hover:bg-[#33463C] text-white rounded-xl text-xs font-semibold disabled:opacity-50 transition-colors"
+            className="glass-capsule-btn primary py-2 px-4 text-xs font-bold disabled:opacity-50"
           >
-            {loading ? 'Enregistrement...' : 'Sauvegarder'}
+            <span className="relative z-10">{loading ? 'Enregistrement...' : 'Sauvegarder'}</span>
           </button>
         </form>
       )}
       
       <div className="space-y-3 mb-6">
         {filteredTasks.length === 0 && (
-          <p className="text-center text-sm text-[#1C2620]/50 py-4">Aucune tâche trouvée.</p>
+          <p className="text-center text-sm text-[#5C6B5E] py-4">Aucune tâche trouvée.</p>
         )}
         {filteredTasks.map((task) => (
-          <div key={task.id} className="flex gap-4 p-3 rounded-xl hover:bg-[#E7E3D6]/30 transition-colors group items-center">
+          <div key={task.id} className="glass-sub-card p-3 rounded-xl flex gap-4 items-center group">
             <button 
               type="button"
               onClick={() => toggleTask(task.id, task.completed)}
               disabled={togglingId === task.id}
-              className={`w-6 h-6 rounded-md flex items-center justify-center flex-shrink-0 transition-colors border disabled:opacity-50
-                ${task.completed ? 'bg-[#33463C] border-[#33463C] text-white' : 'bg-white border-[#1C2620]/30 text-transparent group-hover:border-[#33463C] group-hover:text-[#33463C]'}`}
+              className={`glass-check-circle ${task.completed ? 'checked' : ''} disabled:opacity-50`}
             >
               {togglingId === task.id ? (
                 <div className="w-3 h-3 border-2 border-white border-t-transparent rounded-full animate-spin" />
               ) : task.completed ? (
-                <Icon name="CheckIcon" size={14} />
+                <Icon name="CheckIcon" size={12} className="relative z-10" />
               ) : null}
             </button>
             <div className="flex-1 min-w-0">
               <div className="flex flex-wrap items-center gap-2">
-                <h3 className={`font-sans font-semibold text-sm ${task.completed ? 'text-[#1C2620]/50 line-through' : 'text-[#1C2620]'}`}>
+                <h3 className={`font-sans font-semibold text-sm ${task.completed ? 'text-[#5C6B5E] line-through' : 'text-[#17402C]'}`}>
                   {task.title}
                 </h3>
-                <span className="text-xs text-[#B5652D] font-medium">— {task.assignee}</span>
+                <span className="text-xs text-[#D97746] font-medium">— {task.assignee}</span>
                 <div className="flex gap-1 ml-auto items-center">
                   {task.tags.map(tag => (
-                    <span key={tag} className={`text-[9px] font-mono uppercase tracking-widest px-2 py-0.5 rounded-sm
-                      ${tag === 'Fait' ? 'bg-[#33463C]/10 text-[#33463C]' : 'bg-[#E7E3D6] text-[#1C2620]/70'}`}>
+                    <span key={tag} className={`glass-pill ${tag === 'Fait' ? '' : 'pill-info'}`}>
                       {tag}
                     </span>
                   ))}
                   <button
                     onClick={() => handleDeleteTask(task.id)}
-                    className="p-1 text-[#1C2620]/30 hover:text-red-500 transition-colors ml-2 opacity-0 group-hover:opacity-100"
+                    className="p-1 text-[#5C6B5E] hover:text-red-600 transition-colors ml-2 opacity-0 group-hover:opacity-100"
                     title="Supprimer la tâche"
                   >
-                    <Icon name="TrashIcon" size={14} />
+                    <Icon name="TrashIcon" size={14} className="relative z-10" />
                   </button>
                 </div>
               </div>
-              {task.details && <p className="text-xs text-[#1C2620]/50 font-sans mt-0.5">{task.details}</p>}
+              {task.details && <p className="text-xs text-[#5C6B5E] font-sans mt-0.5">{task.details}</p>}
             </div>
           </div>
         ))}

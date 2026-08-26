@@ -37,10 +37,10 @@ export default function MoreSheet({
         animate={{ y: 0 }}
         exit={{ y: '100%' }}
         transition={{ type: 'spring', damping: 25, stiffness: 200 }}
-        className="w-full max-w-md bg-[#FBFAF6] text-[#0B1F17] rounded-t-[34px] pt-3 pb-10 px-4 shadow-2xl max-h-[85vh] overflow-y-auto space-y-4"
+        className="w-full max-w-md bg-[#FBFAF6] text-[#17402C] rounded-t-[34px] pt-3 pb-10 px-4  max-h-[85vh] overflow-y-auto space-y-4"
       >
         {/* Grabber */}
-        <div className="w-10 h-1 bg-[#0B1F17]/14 rounded-full mx-auto" />
+        <div className="w-10 h-1 bg-[#17402C]/14 rounded-full mx-auto" />
 
         {/* Sheet Header */}
         <div className="flex items-center justify-between px-2">
@@ -54,7 +54,7 @@ export default function MoreSheet({
           </div>
           <button
             onClick={onClose}
-            className="w-8 h-8 rounded-full bg-[#E9E4D9] flex items-center justify-center text-[#6B7A72] hover:text-[#0B1F17]"
+            className="w-8 h-8 rounded-full bg-[#E9E4D9] flex items-center justify-center text-[#6B7A72] hover:text-[#17402C]"
           >
             ✕
           </button>
@@ -72,7 +72,7 @@ export default function MoreSheet({
           >
             <span className="text-2xl">🏔️</span>
             <div>
-              <div className="text-xs font-bold text-[#0B1F17]">Vue 3D Relief</div>
+              <div className="text-xs font-bold text-[#17402C]">Vue 3D Relief</div>
               <div className="text-[10px] font-mono text-[#6B7A72]">Digital Twin terrain</div>
             </div>
           </button>
@@ -87,7 +87,7 @@ export default function MoreSheet({
           >
             <span className="text-2xl">📥</span>
             <div>
-              <div className="text-xs font-bold text-[#0B1F17]">Fichiers GPX</div>
+              <div className="text-xs font-bold text-[#17402C]">Fichiers GPX</div>
               <div className="text-[10px] font-mono text-[#6B7A72]">Import & Export</div>
             </div>
           </button>
@@ -102,7 +102,7 @@ export default function MoreSheet({
           >
             <span className="text-2xl">🧭</span>
             <div>
-              <div className="text-xs font-bold text-[#0B1F17]">Boussole AR</div>
+              <div className="text-xs font-bold text-[#17402C]">Boussole AR</div>
               <div className="text-[10px] font-mono text-[#6B7A72]">Caméra directionnelle</div>
             </div>
           </button>
@@ -126,7 +126,7 @@ export default function MoreSheet({
           <button
             onClick={onToggleNightMode}
             className={`p-3.5 rounded-2xl flex items-center gap-3 text-left transition-colors active:scale-95 col-span-2 ${
-              isNightMode ? 'bg-[#06120C] text-white' : 'bg-[#F4F1EA] text-[#0B1F17]'
+              isNightMode ? 'bg-[#06120C] text-white' : 'bg-[#F4F1EA] text-[#17402C]'
             }`}
           >
             <span className="text-2xl">{isNightMode ? '🌙' : '☀️'}</span>
@@ -145,7 +145,7 @@ export default function MoreSheet({
             onClose();
             onStopHike();
           }}
-          className="w-full py-3.5 bg-red-900 hover:bg-red-950 text-white font-bold text-xs rounded-2xl shadow-lg flex items-center justify-center gap-2 mt-2"
+          className="w-full py-3.5 bg-red-900 hover:bg-red-950 text-white font-bold text-xs rounded-2xl  flex items-center justify-center gap-2 mt-2"
         >
           <span>⏹️</span>
           Terminer et sauvegarder la randonnée

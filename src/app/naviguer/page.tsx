@@ -26,7 +26,7 @@ function SOSModal({ onClose, position, emergencyContact, onSetContact }: {
   const lng = position?.coords.longitude.toFixed(5);
   return (
     <div role="dialog" aria-modal="true" aria-label="Alerte d'urgence SOS" className="fixed inset-0 z-[200] flex items-end justify-center" style={{ background: 'rgba(0,0,0,0.7)' }}>
-      <div className="w-full max-w-md rounded-t-3xl p-6" style={{ background: '#1C2620', color: '#E7E3D6', paddingBottom: 'calc(2.5rem + env(safe-area-inset-bottom))' }}>
+      <div className="w-full max-w-md rounded-t-3xl p-6" style={{ background: '#17402C', color: '#E7E3D6', paddingBottom: 'calc(2.5rem + env(safe-area-inset-bottom))' }}>
         {step === 'confirm' && (
           <>
             <div className="flex items-center gap-3 mb-4">
@@ -69,10 +69,10 @@ function StopHikeModal({ onConfirm, onCancel }: { onConfirm: () => void; onCance
   return (
     <div role="dialog" aria-modal="true" aria-label="Terminer la randonnée" style={{ position: 'fixed', inset: 0, zIndex: 200, display: 'flex', alignItems: 'flex-end', justifyContent: 'center', background: 'rgba(0,0,0,0.5)' }}>
       <div style={{ width: '100%', maxWidth: '500px', borderRadius: '24px 24px 0 0', padding: '24px', background: '#E7E3D6', paddingBottom: 'calc(1.5rem + env(safe-area-inset-bottom))' }}>
-        <h2 style={{ fontWeight: 700, color: '#1C2620', marginBottom: '8px' }}>Terminer la rando ?</h2>
+        <h2 style={{ fontWeight: 700, color: '#17402C', marginBottom: '8px' }}>Terminer la rando ?</h2>
         <p style={{ color: '#5C6B5E', fontSize: '14px', marginBottom: '24px' }}>Votre session sera sauvegardée dans votre historique.</p>
-        <button onClick={onConfirm} style={{ width: '100%', padding: '12px', borderRadius: '16px', background: '#1C2620', color: '#E7E3D6', border: 'none', fontWeight: 600, marginBottom: '10px', cursor: 'pointer' }}>Terminer la rando</button>
-        <button onClick={onCancel} style={{ width: '100%', padding: '12px', borderRadius: '16px', background: 'rgba(28,38,32,0.08)', color: '#1C2620', border: 'none', fontWeight: 500, cursor: 'pointer' }}>Continuer la rando</button>
+        <button onClick={onConfirm} style={{ width: '100%', padding: '12px', borderRadius: '16px', background: '#17402C', color: '#E7E3D6', border: 'none', fontWeight: 600, marginBottom: '10px', cursor: 'pointer' }}>Terminer la rando</button>
+        <button onClick={onCancel} style={{ width: '100%', padding: '12px', borderRadius: '16px', background: 'rgba(23,64,44,0.08)', color: '#17402C', border: 'none', fontWeight: 500, cursor: 'pointer' }}>Continuer la rando</button>
       </div>
     </div>
   );
@@ -132,16 +132,16 @@ export default function NaviguerPage() {
   return (
     <>
       {/* DESKTOP */}
-      <div className="hidden md:block" style={{ minHeight: '100vh', background: '#1C2620', padding: '100px' }}>
+      <div className="hidden md:block" style={{ minHeight: '100vh', background: '#17402C', padding: '100px' }}>
         <p style={{ textAlign: 'center', color: 'rgba(255,255,255,0.5)' }}>Vue disponible uniquement sur mobile</p>
       </div>
 
       {/* MOBILE */}
       <div className="block md:hidden">
         <MobilePageShell>
-          <main id="main-content" className="flex flex-col" style={{ minHeight: '100dvh', background: '#1C2620' }}>
+          <main id="main-content" className="flex flex-col" style={{ minHeight: '100dvh', background: '#17402C' }}>
             <div className="relative flex-1 flex flex-col" style={{ minHeight: '0' }}>
-              <div className="absolute inset-0" style={{ background: 'linear-gradient(160deg, #243028 0%, #1C2620 50%, #1a3020 100%)' }}>
+              <div className="absolute inset-0" style={{ background: 'linear-gradient(160deg, #243028 0%, #17402C 50%, #1a3020 100%)' }}>
                 <svg className="absolute inset-0 w-full h-full opacity-10" aria-hidden="true">
                   <defs><pattern id="topo-grid-n" width="40" height="40" patternUnits="userSpaceOnUse"><path d="M 40 0 L 0 0 0 40" fill="none" stroke="#5C8A3A" strokeWidth="0.5" /></pattern></defs>
                   <rect width="100%" height="100%" fill="url(#topo-grid-n)" />
@@ -155,14 +155,14 @@ export default function NaviguerPage() {
                   )}
                   {position && <p style={{ marginTop: '12px', fontSize: '11px', fontFamily: 'monospace', color: '#5C8A3A' }}>{position.coords.latitude.toFixed(4)}, {position.coords.longitude.toFixed(4)}</p>}
                 </div>
-                <div style={{ position: 'absolute', top: '12px', left: '12px', right: '12px', display: 'flex', alignItems: 'center', gap: '10px', padding: '10px 16px', borderRadius: '16px', background: 'rgba(28, 38, 32, 0.85)', backdropFilter: 'blur(8px)' }}>
+                <div style={{ position: 'absolute', top: '12px', left: '12px', right: '12px', display: 'flex', alignItems: 'center', gap: '10px', padding: '10px 16px', borderRadius: '16px', background: 'rgba(23,64,44, 0.85)', backdropFilter: 'blur(8px)' }}>
                   <span style={{ fontSize: '24px' }}>⛅</span>
                   <div style={{ flex: 1 }}><p style={{ fontSize: '13px', fontWeight: 600, color: '#E7E3D6' }}>18°C — Partiellement nuageux</p><p style={{ fontSize: '11px', color: '#9AAD9E' }}>Vent 12 km/h</p></div>
                 </div>
               </div>
 
               {isActive && (
-                <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, zIndex: 20, padding: '12px 16px', borderRadius: '16px 16px 0 0', background: 'rgba(28, 38, 32, 0.95)', backdropFilter: 'blur(12px)' }}>
+                <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, zIndex: 20, padding: '12px 16px', borderRadius: '16px 16px 0 0', background: 'rgba(23,64,44, 0.95)', backdropFilter: 'blur(12px)' }}>
                   <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '12px' }}>
                     <div style={{ display: 'flex', gap: '16px' }}>
                       <div style={{ textAlign: 'center' }}><span style={{ fontSize: '18px', fontFamily: 'var(--font-mono)', fontWeight: 700, color: '#E7E3D6' }}>{stats.distanceKm.toFixed(2)}</span><span style={{ fontSize: '9px', textTransform: 'uppercase', color: '#9AAD9E', display: 'block' }}>km</span></div>
@@ -176,7 +176,7 @@ export default function NaviguerPage() {
             </div>
 
             {!isActive && (
-              <div style={{ padding: '16px', background: '#1C2620', display: 'flex', flexDirection: 'column', gap: '10px' }}>
+              <div style={{ padding: '16px', background: '#17402C', display: 'flex', flexDirection: 'column', gap: '10px' }}>
                 <button onClick={handleStartHike} style={{ width: '100%', padding: '16px', borderRadius: '16px', background: '#17402C', color: 'white', border: 'none', fontSize: '18px', fontWeight: 700, cursor: 'pointer' }}>🥾 Démarrer une rando</button>
                 <Link href="/carte-interactive" style={{ width: '100%', padding: '12px', borderRadius: '16px', background: 'rgba(255,255,255,0.08)', color: '#E7E3D6', textAlign: 'center', textDecoration: 'none', fontSize: '13px' }}>Voir la carte complète</Link>
               </div>

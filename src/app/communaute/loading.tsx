@@ -15,7 +15,7 @@ export default function CommunityLoading() {
         {/* Community Feed posts */}
         <div className="space-y-3">
           {[1, 2, 3].map(i => (
-            <div key={i} className="bg-white/50 backdrop-blur-md rounded-[1.25rem] p-4 border border-white/60 space-y-3 shadow-sm">
+            <div key={i} className="bg-white/50 backdrop-blur-md rounded-[1.25rem] p-4 border border-white/60 space-y-3 ">
               <div className="flex items-center gap-3">
                 <Skeleton className="h-10 w-10 rounded-full flex-shrink-0" />
                 <div className="space-y-1.5 flex-1 min-w-0">

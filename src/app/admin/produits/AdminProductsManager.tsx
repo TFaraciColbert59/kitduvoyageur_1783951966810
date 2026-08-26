@@ -990,7 +990,7 @@ export default function AdminProductsManager() {
       {/* ─── Notification Toast ──────────────────────────────────────────────── */}
       {notification && (
         <div
-          className={`fixed top-5 right-5 z-50 flex items-center gap-3 px-4 py-3 rounded-xl shadow-2xl border backdrop-blur-xl animate-fade-in ${
+          className={`fixed top-5 right-5 z-50 flex items-center gap-3 px-4 py-3 rounded-xl  border backdrop-blur-xl animate-fade-in ${
             notification.type === 'success'
               ? 'bg-emerald-950/90 text-emerald-200 border-emerald-500/30'
               : notification.type === 'error'
@@ -1042,7 +1042,7 @@ export default function AdminProductsManager() {
               }}
               className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold transition-all whitespace-nowrap ${
                 activeTab === tab.id
-                  ? 'bg-[#17402C] text-white shadow-md'
+                  ? 'bg-[#17402C] text-white '
                   : 'text-white/60 hover:text-white hover:bg-white/5'
               }`}
             >
@@ -1064,7 +1064,7 @@ export default function AdminProductsManager() {
           </button>
           <button
             onClick={() => openProductEditor()}
-            className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl bg-[#2D6B4A] hover:bg-[#205238] text-white text-xs font-bold shadow-lg transition-all active:scale-95"
+            className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl bg-[#365233] hover:bg-[#205238] text-white text-xs font-bold  transition-all active:scale-95"
           >
             <Icon name="PlusIcon" size={16} />
             <span>Nouveau Produit</span>
@@ -1116,7 +1116,7 @@ export default function AdminProductsManager() {
                     value={search}
                     onChange={e => { setSearch(e.target.value); setPage(1); }}
                     placeholder="Rechercher produit, marque, SKU..."
-                    className="w-full pl-9 pr-4 py-2 bg-black/40 border border-white/10 rounded-xl text-sm text-white placeholder-white/30 focus:outline-none focus:border-[#2D6B4A]"
+                    className="w-full pl-9 pr-4 py-2 bg-black/40 border border-white/10 rounded-xl text-sm text-white placeholder-white/30 focus:outline-none focus:border-[#365233]"
                   />
                   {search && (
                     <button onClick={() => setSearch('')} className="absolute right-3 top-1/2 -translate-y-1/2 text-white/40 hover:text-white">
@@ -1129,7 +1129,7 @@ export default function AdminProductsManager() {
                 <select
                   value={filterCategory}
                   onChange={e => { setFilterCategory(e.target.value); setPage(1); }}
-                  className="bg-black/40 border border-white/10 rounded-xl px-3 py-2 text-xs text-white/80 focus:outline-none focus:border-[#2D6B4A]"
+                  className="bg-black/40 border border-white/10 rounded-xl px-3 py-2 text-xs text-white/80 focus:outline-none focus:border-[#365233]"
                 >
                   <option value="">Toutes les catégories</option>
                   {categories.map(c => (
@@ -1141,7 +1141,7 @@ export default function AdminProductsManager() {
                 <select
                   value={filterBrand}
                   onChange={e => { setFilterBrand(e.target.value); setPage(1); }}
-                  className="bg-black/40 border border-white/10 rounded-xl px-3 py-2 text-xs text-white/80 focus:outline-none focus:border-[#2D6B4A]"
+                  className="bg-black/40 border border-white/10 rounded-xl px-3 py-2 text-xs text-white/80 focus:outline-none focus:border-[#365233]"
                 >
                   <option value="">Toutes les marques</option>
                   {brands.map(b => (
@@ -1153,7 +1153,7 @@ export default function AdminProductsManager() {
                 <select
                   value={filterStatus}
                   onChange={e => { setFilterStatus(e.target.value as any); setPage(1); }}
-                  className="bg-black/40 border border-white/10 rounded-xl px-3 py-2 text-xs text-white/80 focus:outline-none focus:border-[#2D6B4A]"
+                  className="bg-black/40 border border-white/10 rounded-xl px-3 py-2 text-xs text-white/80 focus:outline-none focus:border-[#365233]"
                 >
                   <option value="active">Actifs uniquement</option>
                   <option value="inactive">Inactifs uniquement</option>
@@ -1164,7 +1164,7 @@ export default function AdminProductsManager() {
                 <select
                   value={filterStockStatus}
                   onChange={e => { setFilterStockStatus(e.target.value as any); setPage(1); }}
-                  className="bg-black/40 border border-white/10 rounded-xl px-3 py-2 text-xs text-white/80 focus:outline-none focus:border-[#2D6B4A]"
+                  className="bg-black/40 border border-white/10 rounded-xl px-3 py-2 text-xs text-white/80 focus:outline-none focus:border-[#365233]"
                 >
                   <option value="all">Tous les niveaux de stock</option>
                   <option value="in_stock">En stock suffisant</option>
@@ -1195,7 +1195,7 @@ export default function AdminProductsManager() {
             </div>
 
             {/* Products Table */}
-            <div className="bg-[#15231D] border border-white/10 rounded-2xl overflow-hidden shadow-xl">
+            <div className="bg-[#15231D] border border-white/10 rounded-2xl overflow-hidden ">
               <div className="overflow-x-auto">
                 <table className="w-full text-left border-collapse text-xs">
                   <thead>
@@ -1211,7 +1211,7 @@ export default function AdminProductsManager() {
                               setSelectedIds(new Set());
                             }
                           }}
-                          className="rounded border-white/30 bg-transparent text-[#2D6B4A] focus:ring-0"
+                          className="rounded border-white/30 bg-transparent text-[#365233] focus:ring-0"
                         />
                       </th>
                       <th className="p-3.5 w-14">Image</th>
@@ -1260,7 +1260,7 @@ export default function AdminProductsManager() {
                     {loading ? (
                       <tr>
                         <td colSpan={9} className="p-12 text-center text-white/40">
-                          <Icon name="ArrowPathIcon" size={24} className="animate-spin mx-auto mb-2 text-[#2D6B4A]" />
+                          <Icon name="ArrowPathIcon" size={24} className="animate-spin mx-auto mb-2 text-[#365233]" />
                           Chargement des produits en cours...
                         </td>
                       </tr>
@@ -1280,7 +1280,7 @@ export default function AdminProductsManager() {
                           <tr
                             key={prod.id}
                             className={`hover:bg-white/[0.03] transition-colors ${
-                              isSelected ? 'bg-[#2D6B4A]/10' : ''
+                              isSelected ? 'bg-[#365233]/10' : ''
                             }`}
                           >
                             {/* Checkbox */}
@@ -1296,7 +1296,7 @@ export default function AdminProductsManager() {
                                     return next;
                                   });
                                 }}
-                                className="rounded border-white/30 bg-transparent text-[#2D6B4A] focus:ring-0"
+                                className="rounded border-white/30 bg-transparent text-[#365233] focus:ring-0"
                               />
                             </td>
 
@@ -1481,7 +1481,7 @@ export default function AdminProductsManager() {
 
         {/* ─── TAB 2: 9-TAB PRODUCT EDITOR ───────────────────────────────────── */}
         {activeTab === 'editor' && editingProduct && (
-          <section className="bg-[#15231D] border border-white/10 rounded-[0.75rem] p-6 lg:p-8 space-y-6 shadow-2xl">
+          <section className="bg-[#15231D] border border-white/10 rounded-[0.75rem] p-6 lg:p-8 space-y-6 ">
             {/* Header / Save Bar */}
             <div className="flex flex-wrap items-center justify-between gap-4 pb-6 border-b border-white/10">
               <div>
@@ -1511,7 +1511,7 @@ export default function AdminProductsManager() {
                 <button
                   onClick={handleSaveProduct}
                   disabled={savingProduct}
-                  className="flex items-center gap-2 px-5 py-2 rounded-xl bg-[#2D6B4A] hover:bg-[#205238] text-white text-xs font-bold shadow-lg transition-all active:scale-95 disabled:opacity-50"
+                  className="flex items-center gap-2 px-5 py-2 rounded-xl bg-[#365233] hover:bg-[#205238] text-white text-xs font-bold  transition-all active:scale-95 disabled:opacity-50"
                 >
                   <Icon name="CheckIcon" size={16} className={savingProduct ? 'animate-spin' : ''} />
                   <span>{savingProduct ? 'Enregistrement...' : 'Enregistrer le Produit'}</span>
@@ -1537,7 +1537,7 @@ export default function AdminProductsManager() {
                   onClick={() => setEditorSubTab(tab.id as EditorSubTab)}
                   className={`flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-semibold whitespace-nowrap transition-all ${
                     editorSubTab === tab.id
-                      ? 'bg-[#2D6B4A] text-white shadow-md'
+                      ? 'bg-[#365233] text-white '
                       : 'text-white/60 hover:text-white hover:bg-white/5'
                   }`}
                 >
@@ -1571,7 +1571,7 @@ export default function AdminProductsManager() {
                           slug: isCreatingNew ? slugify(name) : prev?.slug,
                         }));
                       }}
-                      className="w-full bg-black/40 border border-white/15 rounded-xl px-4 py-2.5 text-sm text-white focus:outline-none focus:border-[#2D6B4A]"
+                      className="w-full bg-black/40 border border-white/15 rounded-xl px-4 py-2.5 text-sm text-white focus:outline-none focus:border-[#365233]"
                       placeholder="ex: Lampe Frontale Spot 400..."
                     />
                   </div>
@@ -1585,7 +1585,7 @@ export default function AdminProductsManager() {
                         type="text"
                         value={editingProduct.brand || ''}
                         onChange={e => setEditingProduct(p => ({ ...p, brand: e.target.value }))}
-                        className="w-full bg-black/40 border border-white/15 rounded-xl px-3 py-2 text-sm text-white focus:outline-none focus:border-[#2D6B4A]"
+                        className="w-full bg-black/40 border border-white/15 rounded-xl px-3 py-2 text-sm text-white focus:outline-none focus:border-[#365233]"
                         placeholder="ex: Black Diamond"
                       />
                     </div>
@@ -1597,7 +1597,7 @@ export default function AdminProductsManager() {
                         type="text"
                         value={editingProduct.model || ''}
                         onChange={e => setEditingProduct(p => ({ ...p, model: e.target.value }))}
-                        className="w-full bg-black/40 border border-white/15 rounded-xl px-3 py-2 text-sm text-white focus:outline-none focus:border-[#2D6B4A]"
+                        className="w-full bg-black/40 border border-white/15 rounded-xl px-3 py-2 text-sm text-white focus:outline-none focus:border-[#365233]"
                         placeholder="ex: Spot 400 USB"
                       />
                     </div>
@@ -1612,7 +1612,7 @@ export default function AdminProductsManager() {
                         type="text"
                         value={editingProduct.product_id || ''}
                         onChange={e => setEditingProduct(p => ({ ...p, product_id: e.target.value }))}
-                        className="w-full bg-black/40 border border-white/15 rounded-xl px-3 py-2 text-sm text-white font-mono focus:outline-none focus:border-[#2D6B4A]"
+                        className="w-full bg-black/40 border border-white/15 rounded-xl px-3 py-2 text-sm text-white font-mono focus:outline-none focus:border-[#365233]"
                         placeholder="ex: 1051281"
                       />
                     </div>
@@ -1624,7 +1624,7 @@ export default function AdminProductsManager() {
                         type="text"
                         value={editingProduct.ean || ''}
                         onChange={e => setEditingProduct(p => ({ ...p, ean: e.target.value }))}
-                        className="w-full bg-black/40 border border-white/15 rounded-xl px-3 py-2 text-sm text-white font-mono focus:outline-none focus:border-[#2D6B4A]"
+                        className="w-full bg-black/40 border border-white/15 rounded-xl px-3 py-2 text-sm text-white font-mono focus:outline-none focus:border-[#365233]"
                         placeholder="ex: 8432456789012"
                       />
                     </div>
@@ -1638,7 +1638,7 @@ export default function AdminProductsManager() {
                       rows={5}
                       value={editingProduct.description_why || ''}
                       onChange={e => setEditingProduct(p => ({ ...p, description_why: e.target.value }))}
-                      className="w-full bg-black/40 border border-white/15 rounded-xl p-3 text-sm text-white focus:outline-none focus:border-[#2D6B4A]"
+                      className="w-full bg-black/40 border border-white/15 rounded-xl p-3 text-sm text-white focus:outline-none focus:border-[#365233]"
                       placeholder="Expliquez pourquoi cet équipement est sélectionné pour l'aventure..."
                     />
                   </div>
@@ -1654,7 +1654,7 @@ export default function AdminProductsManager() {
                         type="number"
                         value={editingProduct.weight_g || 0}
                         onChange={e => setEditingProduct(p => ({ ...p, weight_g: Number(e.target.value), weight_grams: Number(e.target.value) }))}
-                        className="w-full bg-black/40 border border-white/15 rounded-xl px-3 py-2 text-sm text-white font-mono focus:outline-none focus:border-[#2D6B4A]"
+                        className="w-full bg-black/40 border border-white/15 rounded-xl px-3 py-2 text-sm text-white font-mono focus:outline-none focus:border-[#365233]"
                       />
                     </div>
                     <div>
@@ -1665,7 +1665,7 @@ export default function AdminProductsManager() {
                         type="text"
                         value={editingProduct.dimensions || ''}
                         onChange={e => setEditingProduct(p => ({ ...p, dimensions: e.target.value }))}
-                        className="w-full bg-black/40 border border-white/15 rounded-xl px-3 py-2 text-sm text-white focus:outline-none focus:border-[#2D6B4A]"
+                        className="w-full bg-black/40 border border-white/15 rounded-xl px-3 py-2 text-sm text-white focus:outline-none focus:border-[#365233]"
                         placeholder="ex: 20 x 15 x 8 cm"
                       />
                     </div>
@@ -1680,7 +1680,7 @@ export default function AdminProductsManager() {
                         type="text"
                         value={editingProduct.materials || ''}
                         onChange={e => setEditingProduct(p => ({ ...p, materials: e.target.value }))}
-                        className="w-full bg-black/40 border border-white/15 rounded-xl px-3 py-2 text-sm text-white focus:outline-none focus:border-[#2D6B4A]"
+                        className="w-full bg-black/40 border border-white/15 rounded-xl px-3 py-2 text-sm text-white focus:outline-none focus:border-[#365233]"
                         placeholder="ex: Aluminium anodisé, Cordura..."
                       />
                     </div>
@@ -1692,7 +1692,7 @@ export default function AdminProductsManager() {
                         type="text"
                         value={editingProduct.warranty || ''}
                         onChange={e => setEditingProduct(p => ({ ...p, warranty: e.target.value }))}
-                        className="w-full bg-black/40 border border-white/15 rounded-xl px-3 py-2 text-sm text-white focus:outline-none focus:border-[#2D6B4A]"
+                        className="w-full bg-black/40 border border-white/15 rounded-xl px-3 py-2 text-sm text-white focus:outline-none focus:border-[#365233]"
                         placeholder="ex: 2 ans fabricant"
                       />
                     </div>
@@ -1705,7 +1705,7 @@ export default function AdminProductsManager() {
                     <select
                       value={editingProduct.transaction_type || 'achat'}
                       onChange={e => setEditingProduct(p => ({ ...p, transaction_type: e.target.value }))}
-                      className="w-full bg-black/40 border border-white/15 rounded-xl px-3 py-2 text-sm text-white focus:outline-none focus:border-[#2D6B4A]"
+                      className="w-full bg-black/40 border border-white/15 rounded-xl px-3 py-2 text-sm text-white focus:outline-none focus:border-[#365233]"
                     >
                       {TRANSACTION_TYPES.map(t => (
                         <option key={t} value={t}>{t.toUpperCase()}</option>
@@ -1720,7 +1720,7 @@ export default function AdminProductsManager() {
                         type="checkbox"
                         checked={editingProduct.is_active ?? true}
                         onChange={e => setEditingProduct(p => ({ ...p, is_active: e.target.checked }))}
-                        className="rounded border-white/30 bg-transparent text-[#2D6B4A] focus:ring-0 w-4 h-4"
+                        className="rounded border-white/30 bg-transparent text-[#365233] focus:ring-0 w-4 h-4"
                       />
                       <span className="text-xs font-semibold text-white">Produit actif et visible en boutique</span>
                     </label>
@@ -1729,7 +1729,7 @@ export default function AdminProductsManager() {
                         type="checkbox"
                         checked={editingProduct.cabin_compatible ?? false}
                         onChange={e => setEditingProduct(p => ({ ...p, cabin_compatible: e.target.checked }))}
-                        className="rounded border-white/30 bg-transparent text-[#2D6B4A] focus:ring-0 w-4 h-4"
+                        className="rounded border-white/30 bg-transparent text-[#365233] focus:ring-0 w-4 h-4"
                       />
                       <span className="text-xs text-white/80">Format compatible bagage cabine avion</span>
                     </label>
@@ -1742,7 +1742,7 @@ export default function AdminProductsManager() {
             {editorSubTab === 'images' && (
               <div className="space-y-6 animate-fade-in">
                 {/* Upload Box */}
-                <div className="border-2 border-dashed border-white/20 rounded-2xl p-6 text-center hover:border-[#2D6B4A] transition-colors bg-black/20">
+                <div className="border-2 border-dashed border-white/20 rounded-2xl p-6 text-center hover:border-[#365233] transition-colors bg-black/20">
                   <input
                     type="file"
                     accept="image/*"
@@ -1755,7 +1755,7 @@ export default function AdminProductsManager() {
                     }}
                   />
                   <label htmlFor="product-image-upload" className="cursor-pointer flex flex-col items-center gap-2">
-                    <div className="w-12 h-12 rounded-full bg-[#2D6B4A]/20 text-[#8BAF7C] flex items-center justify-center">
+                    <div className="w-12 h-12 rounded-full bg-[#365233]/20 text-[#8BAF7C] flex items-center justify-center">
                       <Icon name="CloudArrowUpIcon" size={24} className={uploadingImage ? 'animate-spin' : ''} />
                     </div>
                     <span className="text-sm font-bold text-white">
@@ -1780,13 +1780,13 @@ export default function AdminProductsManager() {
                         <div
                           key={img.id}
                           className={`relative group rounded-2xl overflow-hidden border bg-black/40 aspect-square ${
-                            img.is_primary ? 'border-[#2D6B4A] ring-2 ring-[#2D6B4A]/50' : 'border-white/10'
+                            img.is_primary ? 'border-[#365233] ring-2 ring-[#365233]/50' : 'border-white/10'
                           }`}
                         >
                           <img src={img.url} alt={img.alt || 'Photo produit'} className="w-full h-full object-cover" />
 
                           {img.is_primary && (
-                            <span className="absolute top-2 left-2 px-2 py-0.5 rounded-md bg-[#2D6B4A] text-white text-[10px] font-bold shadow-md">
+                            <span className="absolute top-2 left-2 px-2 py-0.5 rounded-md bg-[#365233] text-white text-[10px] font-bold ">
                               Principale
                             </span>
                           )}
@@ -1828,7 +1828,7 @@ export default function AdminProductsManager() {
                       step="0.01"
                       value={editingProduct.price_eur || 0}
                       onChange={e => setEditingProduct(p => ({ ...p, price_eur: Number(e.target.value) }))}
-                      className="w-full bg-black/40 border border-white/15 rounded-xl px-4 py-2.5 text-lg font-mono font-bold text-white focus:outline-none focus:border-[#2D6B4A]"
+                      className="w-full bg-black/40 border border-white/15 rounded-xl px-4 py-2.5 text-lg font-mono font-bold text-white focus:outline-none focus:border-[#365233]"
                     />
                   </div>
 
@@ -1842,7 +1842,7 @@ export default function AdminProductsManager() {
                         step="0.01"
                         value={editingProduct.cost_price_eur || 0}
                         onChange={e => setEditingProduct(p => ({ ...p, cost_price_eur: Number(e.target.value) }))}
-                        className="w-full bg-black/40 border border-white/15 rounded-xl px-3 py-2 text-sm font-mono text-white focus:outline-none focus:border-[#2D6B4A]"
+                        className="w-full bg-black/40 border border-white/15 rounded-xl px-3 py-2 text-sm font-mono text-white focus:outline-none focus:border-[#365233]"
                       />
                     </div>
                     <div>
@@ -1853,7 +1853,7 @@ export default function AdminProductsManager() {
                         type="number"
                         value={editingProduct.vat_rate || 20}
                         onChange={e => setEditingProduct(p => ({ ...p, vat_rate: Number(e.target.value) }))}
-                        className="w-full bg-black/40 border border-white/15 rounded-xl px-3 py-2 text-sm font-mono text-white focus:outline-none focus:border-[#2D6B4A]"
+                        className="w-full bg-black/40 border border-white/15 rounded-xl px-3 py-2 text-sm font-mono text-white focus:outline-none focus:border-[#365233]"
                       />
                     </div>
                   </div>
@@ -1868,7 +1868,7 @@ export default function AdminProductsManager() {
                         step="0.01"
                         value={editingProduct.original_price || 0}
                         onChange={e => setEditingProduct(p => ({ ...p, original_price: Number(e.target.value) }))}
-                        className="w-full bg-black/40 border border-white/15 rounded-xl px-3 py-2 text-sm font-mono text-white focus:outline-none focus:border-[#2D6B4A]"
+                        className="w-full bg-black/40 border border-white/15 rounded-xl px-3 py-2 text-sm font-mono text-white focus:outline-none focus:border-[#365233]"
                       />
                     </div>
                     <div>
@@ -1880,7 +1880,7 @@ export default function AdminProductsManager() {
                         step="0.01"
                         value={editingProduct.savings || 0}
                         onChange={e => setEditingProduct(p => ({ ...p, savings: Number(e.target.value) }))}
-                        className="w-full bg-black/40 border border-white/15 rounded-xl px-3 py-2 text-sm font-mono text-white focus:outline-none focus:border-[#2D6B4A]"
+                        className="w-full bg-black/40 border border-white/15 rounded-xl px-3 py-2 text-sm font-mono text-white focus:outline-none focus:border-[#365233]"
                       />
                     </div>
                   </div>
@@ -1946,7 +1946,7 @@ export default function AdminProductsManager() {
                       type="number"
                       value={editingProduct.stock || 0}
                       onChange={e => setEditingProduct(p => ({ ...p, stock: Number(e.target.value) }))}
-                      className="w-full bg-black/40 border border-white/15 rounded-xl px-4 py-2.5 text-lg font-mono font-bold text-white focus:outline-none focus:border-[#2D6B4A]"
+                      className="w-full bg-black/40 border border-white/15 rounded-xl px-4 py-2.5 text-lg font-mono font-bold text-white focus:outline-none focus:border-[#365233]"
                     />
                   </div>
 
@@ -1958,7 +1958,7 @@ export default function AdminProductsManager() {
                       type="number"
                       value={editingProduct.min_stock || 2}
                       onChange={e => setEditingProduct(p => ({ ...p, min_stock: Number(e.target.value) }))}
-                      className="w-full bg-black/40 border border-white/15 rounded-xl px-3 py-2 text-sm font-mono text-white focus:outline-none focus:border-[#2D6B4A]"
+                      className="w-full bg-black/40 border border-white/15 rounded-xl px-3 py-2 text-sm font-mono text-white focus:outline-none focus:border-[#365233]"
                     />
                     <span className="text-[11px] text-white/40 mt-1 block">
                       Déclenche le badge d&apos;alerte &quot;Stock faible&quot; lorsque le stock passe en dessous de ce seuil.
@@ -2165,7 +2165,7 @@ export default function AdminProductsManager() {
                         const cat = e.target.value;
                         setEditingProduct(p => ({ ...p, category: cat, category_main: cat }));
                       }}
-                      className="w-full bg-black/40 border border-white/15 rounded-xl px-4 py-2.5 text-sm text-white focus:outline-none focus:border-[#2D6B4A]"
+                      className="w-full bg-black/40 border border-white/15 rounded-xl px-4 py-2.5 text-sm text-white focus:outline-none focus:border-[#365233]"
                     >
                       {categories.map(c => (
                         <option key={c} value={c}>{c}</option>
@@ -2181,7 +2181,7 @@ export default function AdminProductsManager() {
                       type="text"
                       value={editingProduct.category_sub || ''}
                       onChange={e => setEditingProduct(p => ({ ...p, category_sub: e.target.value }))}
-                      className="w-full bg-black/40 border border-white/15 rounded-xl px-4 py-2.5 text-sm text-white focus:outline-none focus:border-[#2D6B4A]"
+                      className="w-full bg-black/40 border border-white/15 rounded-xl px-4 py-2.5 text-sm text-white focus:outline-none focus:border-[#365233]"
                       placeholder="ex: Lampes frontales, Tentes 2 places..."
                     />
                   </div>
@@ -2193,7 +2193,7 @@ export default function AdminProductsManager() {
                     <select
                       value={editingProduct.essentiality || 'Recommandé'}
                       onChange={e => setEditingProduct(p => ({ ...p, essentiality: e.target.value }))}
-                      className="w-full bg-black/40 border border-white/15 rounded-xl px-4 py-2.5 text-sm text-white focus:outline-none focus:border-[#2D6B4A]"
+                      className="w-full bg-black/40 border border-white/15 rounded-xl px-4 py-2.5 text-sm text-white focus:outline-none focus:border-[#365233]"
                     >
                       {ESSENTIALITY_OPTIONS.map(opt => (
                         <option key={opt} value={opt}>{opt}</option>
@@ -2222,7 +2222,7 @@ export default function AdminProductsManager() {
                           showToast('Catégorie sélectionnée pour ce produit');
                         }
                       }}
-                      className="px-4 py-2 rounded-xl bg-[#2D6B4A] text-white text-xs font-bold hover:bg-[#205238]"
+                      className="px-4 py-2 rounded-xl bg-[#365233] text-white text-xs font-bold hover:bg-[#205238]"
                     >
                       Appliquer
                     </button>
@@ -2243,7 +2243,7 @@ export default function AdminProductsManager() {
                       type="text"
                       value={editingProduct.slug || ''}
                       onChange={e => setEditingProduct(p => ({ ...p, slug: slugify(e.target.value) }))}
-                      className="w-full bg-black/40 border border-white/15 rounded-xl px-4 py-2.5 text-sm font-mono text-white focus:outline-none focus:border-[#2D6B4A]"
+                      className="w-full bg-black/40 border border-white/15 rounded-xl px-4 py-2.5 text-sm font-mono text-white focus:outline-none focus:border-[#365233]"
                     />
                     <span className="text-[11px] font-mono text-white/40 mt-1 block">
                       URL: /produit/{editingProduct.slug || 'slug-produit'}
@@ -2258,7 +2258,7 @@ export default function AdminProductsManager() {
                       type="text"
                       value={editingProduct.meta_title || ''}
                       onChange={e => setEditingProduct(p => ({ ...p, meta_title: e.target.value }))}
-                      className="w-full bg-black/40 border border-white/15 rounded-xl px-4 py-2.5 text-sm text-white focus:outline-none focus:border-[#2D6B4A]"
+                      className="w-full bg-black/40 border border-white/15 rounded-xl px-4 py-2.5 text-sm text-white focus:outline-none focus:border-[#365233]"
                       placeholder="ex: Lampe Frontale Spot 400 | Le Kit du Voyageur"
                     />
                   </div>
@@ -2271,7 +2271,7 @@ export default function AdminProductsManager() {
                       rows={3}
                       value={editingProduct.meta_description || ''}
                       onChange={e => setEditingProduct(p => ({ ...p, meta_description: e.target.value }))}
-                      className="w-full bg-black/40 border border-white/15 rounded-xl p-3 text-sm text-white focus:outline-none focus:border-[#2D6B4A]"
+                      className="w-full bg-black/40 border border-white/15 rounded-xl p-3 text-sm text-white focus:outline-none focus:border-[#365233]"
                       placeholder="Description concise pour les moteurs de recherche Google..."
                     />
                     <span className="text-[10px] font-mono text-white/40 block text-right">
@@ -2281,7 +2281,7 @@ export default function AdminProductsManager() {
                 </div>
 
                 {/* Google SERP Live Preview */}
-                <div className="bg-white p-5 rounded-2xl text-slate-800 shadow-xl space-y-2">
+                <div className="bg-white p-5 rounded-2xl text-slate-800  space-y-2">
                   <span className="text-[10px] font-mono text-slate-400 uppercase tracking-wider block">
                     Aperçu dans les résultats Google (SERP)
                   </span>
@@ -2310,7 +2310,7 @@ export default function AdminProductsManager() {
                       type="text"
                       value={editingProduct.supplier || 'BigBuy'}
                       onChange={e => setEditingProduct(p => ({ ...p, supplier: e.target.value }))}
-                      className="w-full bg-black/40 border border-white/15 rounded-xl px-4 py-2.5 text-sm text-white focus:outline-none focus:border-[#2D6B4A]"
+                      className="w-full bg-black/40 border border-white/15 rounded-xl px-4 py-2.5 text-sm text-white focus:outline-none focus:border-[#365233]"
                     />
                   </div>
 
@@ -2320,7 +2320,7 @@ export default function AdminProductsManager() {
                         type="checkbox"
                         checked={editingProduct.available_europe ?? true}
                         onChange={e => setEditingProduct(p => ({ ...p, available_europe: e.target.checked }))}
-                        className="rounded text-[#2D6B4A]"
+                        className="rounded text-[#365233]"
                       />
                       <span className="text-xs text-white">Livraison Europe</span>
                     </label>
@@ -2329,7 +2329,7 @@ export default function AdminProductsManager() {
                         type="checkbox"
                         checked={editingProduct.available_usa ?? false}
                         onChange={e => setEditingProduct(p => ({ ...p, available_usa: e.target.checked }))}
-                        className="rounded text-[#2D6B4A]"
+                        className="rounded text-[#365233]"
                       />
                       <span className="text-xs text-white">Livraison USA</span>
                     </label>
@@ -2490,7 +2490,7 @@ export default function AdminProductsManager() {
             {/* Export Card */}
             <div className="bg-[#15231D] border border-white/10 rounded-2xl p-6 space-y-4">
               <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-xl bg-[#2D6B4A]/20 text-[#8BAF7C] flex items-center justify-center">
+                <div className="w-10 h-10 rounded-xl bg-[#365233]/20 text-[#8BAF7C] flex items-center justify-center">
                   <Icon name="ArrowDownTrayIcon" size={20} />
                 </div>
                 <div>
@@ -2501,7 +2501,7 @@ export default function AdminProductsManager() {
               <div className="pt-2 flex flex-col gap-2.5">
                 <button
                   onClick={() => handleExportCSV(false)}
-                  className="w-full py-2.5 rounded-xl bg-[#2D6B4A] hover:bg-[#205238] text-white text-xs font-bold transition-all shadow-md flex items-center justify-center gap-2"
+                  className="w-full py-2.5 rounded-xl bg-[#365233] hover:bg-[#205238] text-white text-xs font-bold transition-all  flex items-center justify-center gap-2"
                 >
                   <Icon name="DocumentArrowDownIcon" size={16} />
                   <span>Exporter tous les produits ({products.length})</span>
@@ -2580,7 +2580,7 @@ export default function AdminProductsManager() {
       {/* ─── MODAL: Quick Stock Adjustment ──────────────────────────────────── */}
       {quickStockItem && (
         <div className="fixed inset-0 z-50 bg-black/70 backdrop-blur-sm flex items-center justify-center p-4">
-          <div className="bg-[#15231D] border border-white/15 rounded-[0.75rem] p-6 max-w-md w-full space-y-4 shadow-2xl animate-scale-in">
+          <div className="bg-[#15231D] border border-white/15 rounded-[0.75rem] p-6 max-w-md w-full space-y-4  animate-scale-in">
             <div className="flex items-center justify-between">
               <h3 className="font-bold text-white text-base">Ajustement de Stock Rapide</h3>
               <button onClick={() => setQuickStockItem(null)} className="text-white/40 hover:text-white">
@@ -2637,7 +2637,7 @@ export default function AdminProductsManager() {
               </button>
               <button
                 onClick={handleApplyStockAdjustment}
-                className="flex-1 py-2.5 rounded-xl bg-[#2D6B4A] hover:bg-[#205238] text-xs font-bold text-white shadow-md"
+                className="flex-1 py-2.5 rounded-xl bg-[#365233] hover:bg-[#205238] text-xs font-bold text-white "
               >
                 Enregistrer
               </button>
@@ -2649,7 +2649,7 @@ export default function AdminProductsManager() {
       {/* ─── MODAL: Bulk Actions ─────────────────────────────────────────────── */}
       {isBulkModalOpen && (
         <div className="fixed inset-0 z-50 bg-black/70 backdrop-blur-sm flex items-center justify-center p-4">
-          <div className="bg-[#15231D] border border-white/15 rounded-[0.75rem] p-6 max-w-md w-full space-y-4 shadow-2xl animate-scale-in">
+          <div className="bg-[#15231D] border border-white/15 rounded-[0.75rem] p-6 max-w-md w-full space-y-4  animate-scale-in">
             <div className="flex items-center justify-between">
               <h3 className="font-bold text-white text-base">Actions Groupées ({selectedIds.size} sélectionnés)</h3>
               <button onClick={() => setIsBulkModalOpen(false)} className="text-white/40 hover:text-white">
@@ -2738,7 +2738,7 @@ export default function AdminProductsManager() {
               <button
                 onClick={handleExecuteBulkAction}
                 disabled={!bulkActionType}
-                className="flex-1 py-2.5 rounded-xl bg-[#2D6B4A] hover:bg-[#205238] text-xs font-bold text-white disabled:opacity-40 shadow-md"
+                className="flex-1 py-2.5 rounded-xl bg-[#365233] hover:bg-[#205238] text-xs font-bold text-white disabled:opacity-40 "
               >
                 Appliquer aux {selectedIds.size} produits
               </button>
@@ -2750,7 +2750,7 @@ export default function AdminProductsManager() {
       {/* ─── MODAL: Confirmation Dialog ─────────────────────────────────────── */}
       {confirmModal.isOpen && (
         <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4">
-          <div className="bg-[#15231D] border border-white/15 rounded-[0.75rem] p-6 max-w-md w-full space-y-4 shadow-2xl animate-scale-in">
+          <div className="bg-[#15231D] border border-white/15 rounded-[0.75rem] p-6 max-w-md w-full space-y-4  animate-scale-in">
             <h3 className={`font-bold text-base ${confirmModal.danger ? 'text-red-400' : 'text-white'}`}>
               {confirmModal.title}
             </h3>
@@ -2767,8 +2767,8 @@ export default function AdminProductsManager() {
                   confirmModal.onConfirm();
                   setConfirmModal(prev => ({ ...prev, isOpen: false }));
                 }}
-                className={`flex-1 py-2.5 rounded-xl text-xs font-bold text-white shadow-md ${
-                  confirmModal.danger ? 'bg-red-600 hover:bg-red-700' : 'bg-[#2D6B4A] hover:bg-[#205238]'
+                className={`flex-1 py-2.5 rounded-xl text-xs font-bold text-white  ${
+                  confirmModal.danger ? 'bg-red-600 hover:bg-red-700' : 'bg-[#365233] hover:bg-[#205238]'
                 }`}
               >
                 Confirmer

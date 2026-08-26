@@ -33,17 +33,17 @@ export default function LkvChip({ label, dot, variant = 'light', active = false,
         background: active
           ? '#17402C'
           : isLight
-          ? 'rgba(255,255,255,0.9)'
-          : 'rgba(11,31,23,0.5)',
+          ? 'rgba(255,255,255,0.92)'
+          : 'rgba(23,64,44,0.5)',
         backdropFilter: 'blur(8px)',
         borderRadius: '999px',
         fontSize: '11px',
         fontWeight: active ? 600 : 500,
-        color: active ? '#fff' : isLight ? '#0B1F17' : '#fff',
+        color: active ? '#fff' : isLight ? '#17402C' : '#fff',
         border: active
           ? '1px solid #17402C'
           : isLight
-          ? '1px solid rgba(11,31,23,0.08)'
+          ? '1px solid rgba(23,64,44,0.08)'
           : '1px solid rgba(255,255,255,0.2)',
         cursor: isInteractive ? 'pointer' : 'default',
         transform: isInteractive && isPressed ? 'scale(0.95)' : 'scale(1)',
@@ -58,7 +58,7 @@ export default function LkvChip({ label, dot, variant = 'light', active = false,
             width: '6px',
             height: '6px',
             borderRadius: '50%',
-            background: active ? '#A3C4A3' : '#2D6B4A',
+            background: active ? '#A6C1A0' : '#5B7F55',
           }}
         />
       )}

@@ -18,14 +18,14 @@ function handleDownloadGPX(title: string) {
 
 export default function RandonneesSouvenirCard({ randonnees }: RandonneesSouvenirCardProps) {
   return (
-    <div className="bg-white rounded-[0.75rem] p-6 md:p-8 border border-[#1C2620]/10 shadow-sm active:scale-[0.98] active:opacity-95 transition-all duration-150 cursor-pointer">
+    <div className="bg-white rounded-[0.75rem] p-6 md:p-8 border border-[#17402C]/10  active:scale-[0.98] active:opacity-95 transition-all duration-150 cursor-pointer">
       <div className="flex items-start justify-between mb-2">
-        <h3 className="font-display text-lg text-[#1C2620]">
+        <h3 className="font-display text-lg text-[#17402C]">
           Randonnées <em className="font-serif italic">parcourues</em>
         </h3>
         <a href="#" className="text-xs font-medium text-[#17402C] hover:underline whitespace-nowrap">Tout →</a>
       </div>
-      <p className="text-sm text-[#1C2620]/60 mb-6 font-sans">Trois traces enregistrées, trois exportables au format GPX pour la fois prochaine.</p>
+      <p className="text-sm text-[#17402C]/60 mb-6 font-sans">Trois traces enregistrées, trois exportables au format GPX pour la fois prochaine.</p>
       <div className="space-y-3">
         {randonnees.map(r => (
           <div key={r.id} className="flex items-center gap-3 group/rando hover:bg-[#E7E3D6]/30 -mx-3 px-3 py-3 rounded-xl transition-colors">
@@ -33,8 +33,8 @@ export default function RandonneesSouvenirCard({ randonnees }: RandonneesSouveni
               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#33463C" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
             </div>
             <div className="flex-1 min-w-0">
-              <p className="text-sm font-semibold text-[#1C2620] truncate">{r.title}</p>
-              <p className="font-mono text-[10px] text-[#1C2620]/50">{r.stats}</p>
+              <p className="text-sm font-semibold text-[#17402C] truncate">{r.title}</p>
+              <p className="font-mono text-[10px] text-[#17402C]/50">{r.stats}</p>
             </div>
             <button
               onClick={() => handleDownloadGPX(r.title)}

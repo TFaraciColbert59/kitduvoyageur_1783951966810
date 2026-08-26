@@ -37,7 +37,7 @@ export function DepartRoutePicker({ routes }: DepartRoutePickerProps) {
         value={value}
         onChange={handleChange}
         aria-label="Choisir la randonnée à préparer"
-        className="w-full h-11 rounded-xl bg-white/85 backdrop-blur-sm border border-white/80 text-sm font-semibold text-[#17402C] px-3 shadow-sm outline-none cursor-pointer focus:border-sage-500 focus:ring-2 focus:ring-sage-500/25 transition-all"
+        className="w-full h-11 rounded-xl bg-white/85 backdrop-blur-sm border border-white/80 text-sm font-semibold text-[#17402C] px-3  outline-none cursor-pointer focus:border-sage-500 focus:ring-2 focus:ring-sage-500/25 transition-all"
       >
         <option value="" disabled>
           Choisir ma randonnée…

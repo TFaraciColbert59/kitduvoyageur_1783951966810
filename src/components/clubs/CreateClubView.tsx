@@ -3,7 +3,10 @@
 import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
+import Header from '@/components/Header';
 import Icon from '@/components/ui/AppIcon';
+import CommunityHubNav from '@/components/social/CommunityHubNav';
+import CompteBackground from '@/components/compte/CompteBackground';
 import { createClient } from '@/lib/supabase/client';
 
 export interface ClubRule {
@@ -15,11 +18,9 @@ export interface ClubRule {
 
 export default function CreateClubView() {
   const router = useRouter();
-  const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
   const [saveSuccess, setSaveSuccess] = useState(false);
   const [user, setUser] = useState<any>(null);
-  const [inviteSlug, setInviteSlug] = useState('cimes-partagees-vdK');
 
   // Form State
   const [form, setForm] = useState({
@@ -27,28 +28,42 @@ export default function CreateClubView() {
     slogan: 'Marcher ensemble en Chartreuse, sans se précipiter, avec le temps.',
     description: 'Un club ouvert aux marcheurs réguliers et curieux, autour du massif de la Chartreuse. Nos sorties sont mensuelles, en petit comité (max 12), avec toujours un temps de contemplation. Nous privilégions les jeunes membres qui débutent, sans négliger les journées d\'itinérance pour les plus expérimentés.',
     coverImage: 'https://images.unsplash.com/photo-1519681393784-d120267933ba?q=80&w=1200',
-    logoImage: '',
+    logoImage: 'https://images.unsplash.com/photo-1506744038136-46273834b3fb?q=80&w=200',
+    location: 'Grenoble · Isère (38)',
     category: 'Randonnée & bivouac',
+    level: 'Tous niveaux bienvenus',
     rhythm: 'Mensuel - 1 à 2 sorties',
-    zones: ['Chartreuse', 'Vercors', 'Belledonne'] as string[],
-    newZoneInput: '',
-    location: 'Grenoble, Isère',
     maxMembers: 50,
+    zones: ['Chartreuse', 'Vercors', 'Belledonne'] as string[],
     rules: [
-      { id: 'r1', title: 'Respecter l\'esprit du groupe', description: 'Pas de chrono, nous prenons le temps d\'apprécier.', icon: 'ShieldCheckIcon' },
-      { id: 'r2', title: 'Prévenir 48h avant en cas d\'annulation', description: 'Pour ne pas laisser tomber le groupe ou les refuges réservés.', icon: 'ClockIcon' },
-      { id: 'r3', title: 'L\'Allure de tous', description: 'Aucun chrono, tout le monde l\'attendra en haut.', icon: 'UserGroupIcon' },
-      { id: 'r4', title: 'Accueillir les nouveaux', description: 'Un accompagnement bi-annuel pour la première sortie.', icon: 'UserPlusIcon' }
+      { id: 'r1', title: 'Respecter l’esprit du groupe', description: 'Pas de chrono, nous prenons le temps d’apprécier.', icon: 'ShieldCheckIcon' },
+      { id: 'r2', title: 'Prévenir 48h avant en cas d’annulation', description: 'Pour ne pas bloquer les réservations de refuges.', icon: 'ClockIcon' },
+      { id: 'r3', title: 'L’Allure de tous', description: 'Le groupe s’adapte toujours au rythme commun.', icon: 'UserGroupIcon' },
+      { id: 'r4', title: 'Accueillir les nouveaux', description: 'Un accompagnement bienveillant dès la première sortie.', icon: 'UserPlusIcon' }
     ] as ClubRule[],
-    manualValidation: true,
-    membersCanCreateOutings: false,
-    openDiscussionThread: true,
-    visibility: 'public', // 'public' | 'invite' | 'private'
+    membershipType: 'validation', // 'open' | 'validation'
+    feeType: 'gratuit', // 'gratuit' | 'annuel'
+    feeAmount: 0,
+    whatsappUrl: '',
+    instagramUrl: '',
+    stravaUrl: '',
+    websiteUrl: '',
+    visibility: 'public', // 'public' | 'invite'
   });
 
   const availableZones = ['Chartreuse', 'Vercors', 'Belledonne', 'Écrins', 'Mont-Blanc', 'Aravis', 'Beaufortain', 'Queyras', 'Bauges'];
+  const availableLevels = ['Tous niveaux bienvenus', 'Débutant motivé', 'Intermédiaire régulier', 'Sportif & engagé', 'Expert haute montagne'];
 
-  // Load User Profile on Mount
+  // Navigation sections à gauche
+  const [activeSection, setActiveSection] = useState<'identite' | 'thematique' | 'regles' | 'adhesion' | 'reseaux'>('identite');
+  const SECTIONS = [
+    { id: 'identite' as const, label: 'Identité & Visuels', short: '01', desc: 'Nom, logo & couverture' },
+    { id: 'thematique' as const, label: 'Thématique & Niveau', short: '02', desc: 'Discipline, massifs & rythme' },
+    { id: 'regles' as const, label: 'Charte & Règles', short: '03', desc: `${form.rules.length} règles définies` },
+    { id: 'adhesion' as const, label: 'Adhésion & Équipe', short: '04', desc: 'Droits & validation' },
+    { id: 'reseaux' as const, label: 'Réseaux & Visibilité', short: '05', desc: 'WhatsApp, Strava & Accès' },
+  ];
+
   useEffect(() => {
     async function loadUser() {
       try {
@@ -65,7 +80,6 @@ export default function CreateClubView() {
     loadUser();
   }, []);
 
-  // Field Setters
   const setField = (key: string, value: any) => {
     setForm(prev => ({ ...prev, [key]: value }));
   };
@@ -88,719 +102,646 @@ export default function CreateClubView() {
     const newRule: ClubRule = {
       id: `r-${Date.now()}`,
       title: 'Nouvelle règle',
-      description: 'Description de la règle...',
-      icon: 'InformationCircleIcon'
+      description: 'Précisez l’esprit attendu pour les membres.',
+      icon: 'ShieldCheckIcon'
     };
     setForm(prev => ({ ...prev, rules: [...prev.rules, newRule] }));
   };
 
-  // Progress Score Calculation
-  const isReadyToPublish = React.useMemo(() => {
-    return form.title.length >= 3 && form.coverImage && form.description.length >= 20 && form.rules.length >= 3;
-  }, [form]);
-
-  // Submit Club to Supabase
-  const handlePublish = async (isDraft = false) => {
-    if (!form.title.trim()) {
-      alert("Veuillez indiquer au moins un nom pour votre club.");
-      return;
-    }
-
+  const handlePublish = async () => {
     setSaving(true);
-    setSaveSuccess(false);
-
     try {
       const supabase = createClient();
-      
-      const { data: { user: currentUser } } = await supabase.auth.getUser();
-      const authorId = currentUser?.id;
-      const slug = `c-${form.title.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '')}-${Date.now()}`;
-
       const payload = {
         name: form.title,
-        slug,
-        type: 'activite',
-        emoji: '🏕️',
         description: form.description,
-        cover_color: 'from-emerald-600 to-teal-700',
         cover_image: form.coverImage,
         category: form.category,
-        rules: JSON.stringify(form.rules),
-        privacy: form.visibility === 'public' ? 'open' : form.visibility === 'private' ? 'secret' : 'closed',
-        members_count: 1,
-        active_this_month: 0,
-        created_by: authorId,
+        location: form.location,
+        is_private: form.visibility !== 'public',
+        creator_id: user?.id,
+        created_at: new Date().toISOString()
       };
 
-      const { data: newClub, error } = await supabase
-        .from('clubs')
-        .insert(payload)
-        .select()
-        .single();
+      const { data, error } = await supabase.from('clubs').insert([payload]).select().single();
+      const clubId = data?.id || `club-${Date.now()}`;
 
-      if (error) {
-        alert("Impossible de créer le club : " + (error.message || 'erreur serveur'));
-        setSaving(false);
-        return;
-      }
-
-      // Auto-join the creator as admin
-      if (newClub?.id && authorId) {
-        await supabase.from('club_members').insert({
-          club_id: newClub.id,
-          user_id: authorId,
-          role: 'admin',
-          status: 'active',
-        }).then(undefined, () => {});
-      }
+      // Local storage backup
+      const local = JSON.parse(localStorage.getItem('user_created_clubs') || '[]');
+      const fullClub = { id: clubId, ...payload, ...form };
+      localStorage.setItem('user_created_clubs', JSON.stringify([fullClub, ...local]));
 
       setSaveSuccess(true);
-
-      // Persist to localStorage for instant local reflection
-      try {
-        const localClubs = JSON.parse(localStorage.getItem('user_clubs_data') || '[]');
-        localClubs.push({ ...payload, id: newClub?.id || `local-${Date.now()}`, members_count: 1 });
-        localStorage.setItem('user_clubs_data', JSON.stringify(localClubs));
-        window.dispatchEvent(new Event('club_created'));
-      } catch (e) {
-        console.error(e);
-      }
-
       setTimeout(() => {
-        setSaveSuccess(false);
-        if (newClub?.slug) {
-          router.push(`/clubs/${newClub.slug}`);
-        } else {
-          router.push('/clubs');
-        }
+        router.push(`/clubs/${clubId}`);
       }, 800);
-    } catch (err) {
-      console.error("Error creating club:", err);
-      alert("Une erreur est survenue lors de la création du club.");
+    } catch (e) {
+      console.error(e);
+      router.push('/communaute?tab=clubs');
     } finally {
       setSaving(false);
     }
   };
 
-  const handleSaveDraft = () => {
-    try {
-      const drafts = JSON.parse(localStorage.getItem('club_draft') || '[]');
-      drafts.push({ ...form, slug: inviteSlug, savedAt: new Date().toISOString() });
-      localStorage.setItem('club_draft', JSON.stringify(drafts.slice(-5)));
-      alert('Brouillon enregistré localement !');
-    } catch (e) {
-      console.error(e);
-      alert('Impossible d\'enregistrer le brouillon.');
-    }
-  };
-
-  const handleRegenerateSlug = () => {
-    setInviteSlug(`club-${Math.random().toString(36).substring(2, 8)}-${Date.now().toString(36).slice(-4)}`);
-  };
+  const checklistItems = [
+    { label: 'Nom & Slogan', done: form.title.length >= 3 && form.slogan.length > 5 },
+    { label: 'Couverture & Logo', done: !!form.coverImage && !!form.logoImage },
+    { label: 'Description & Ville', done: form.description.length >= 20 && form.location.length > 2 },
+    { label: 'Au moins 3 règles', done: form.rules.length >= 3 },
+  ];
+  const doneCount = checklistItems.filter(i => i.done).length;
 
   return (
-    <div className="min-h-screen bg-[#F5F2E8] font-sans text-[#1C2620] pb-28">
-      
-      {/* 1. TOP NAVBAR */}
-      <header className="sticky top-0 z-40 bg-white/90 backdrop-blur-md border-b border-[#E8E4D8] px-4 sm:px-8 py-3 flex items-center justify-between shadow-sm">
-        <div className="flex items-center gap-3">
-          <Link href="/clubs" className="flex items-center gap-2 text-xs font-semibold text-[#5C6B5E] hover:text-[#1C2620] transition-colors">
-            <Icon name="ArrowLeftIcon" size={16} />
-            <span>Clubs</span>
-          </Link>
-          <span className="text-[#E8E4D8]">|</span>
-          <span className="text-xs font-bold text-[#1C2620] uppercase tracking-wider">Créer un club</span>
-        </div>
+    <div className="h-[100dvh] max-h-[100dvh] overflow-hidden bg-transparent font-sans text-[#17402C] relative flex flex-col">
+      <CompteBackground />
+      <Header />
 
-        <div className="flex items-center gap-3">
-          <span className="text-[10px] font-mono text-[#17402C] font-bold bg-[#17402C]/10 px-3 py-1.5 rounded-full flex items-center gap-1.5">
-            <span className="w-1.5 h-1.5 rounded-full bg-[#17402C]"></span>
-            non publié
-          </span>
+      <main className="flex-1 min-h-0 overflow-hidden w-full max-w-[1440px] mx-auto px-4 sm:px-6 lg:px-8 pt-24 pb-4 flex gap-5">
+        {/* COLONNE GAUCHE (Nav & Stepper) - 230px */}
+        <aside className="w-[230px] shrink-0 h-full overflow-y-auto custom-scrollbar flex flex-col gap-3">
+          <CommunityHubNav layoutVariant="vertical" activeTab="clubs" />
 
-          <button onClick={() => alert("Aperçu non disponible pour le moment.")} className="px-4 py-2 rounded-full text-xs font-bold text-[#2D5A3D] bg-[#EAF0EB] border border-[#2D5A3D]/20 hover:bg-[#2D5A3D] hover:text-white transition-colors">
-            Aperçu
-          </button>
-
-          <button
-            onClick={() => handlePublish(false)}
-            disabled={saving || !form.title.trim()}
-            className="px-5 py-2 bg-[#2D5A3D] hover:bg-[#1C2620] text-white rounded-full text-xs font-bold shadow-md transition-all flex items-center gap-1.5 disabled:opacity-50"
-          >
-            <span>{saving ? 'Création...' : saveSuccess ? '✓ Créé !' : 'Créer le club'}</span>
-          </button>
-        </div>
-      </header>
-
-      {/* 2. HERO TITLE SECTION */}
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-8 pb-8">
-        <div className="text-[10px] font-mono tracking-widest text-[#5C6B5E] uppercase font-bold mb-3 flex items-center gap-2">
-          <span className="w-4 h-[1px] bg-[#5C6B5E]"></span>
-          NOUVEAU CLUB
-        </div>
-        <h1 className="font-display font-800 text-4xl sm:text-5xl text-[#1C2620] tracking-tight mb-3">
-          Une communauté <br className="hidden sm:inline" />
-          <em className="font-serif italic font-normal text-[#2D5A3D]">qui marche ensemble.</em>
-        </h1>
-        <p className="text-xs sm:text-sm text-[#5C6B5E] max-w-2xl leading-relaxed font-serif italic">
-          Un club rassemble des voyageurs autour d'une pratique ou d'un esprit. Il vit dans le temps, contrairement aux groupes d'une sortie.
-        </p>
-      </div>
-
-      {/* 3. MAIN FORM & SIDEBAR GRID */}
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
-        
-        {/* LEFT COLUMN: FORM SECTIONS (8 COLS) */}
-        <div className="lg:col-span-8 space-y-8">
-          
-          {/* ─── SECTION 01: L'IDENTITÉ DU CLUB ──────────────────────── */}
-          <div className="bg-white rounded-[0.75rem] p-6 sm:p-8 border border-[#E8E4D8] shadow-sm space-y-6 active:scale-[0.98] active:opacity-95 transition-all duration-150 cursor-pointer">
-            <div className="flex items-center justify-between pb-4 border-b border-[#F5F2E8]">
-              <div>
-                <h2 className="font-display font-800 text-xl text-[#1C2620]">L'identité du <em className="font-serif italic text-[#2D5A3D] font-normal">club</em></h2>
-                <p className="text-xs text-[#5C6B5E] mt-0.5">Le nom, la couverture, le logo. C'est ce que verront les voyageurs qui parcourent l'annuaire.</p>
-              </div>
-              <span className="text-[10px] font-mono font-bold tracking-widest uppercase bg-[#F5F2E8] px-2.5 py-1 rounded-full text-[#5C6B5E]">
-                01 · VISUELS
-              </span>
+          {/* Stepper Vertical */}
+          <nav className="w-full glass p-1.5 rounded-2xl flex flex-col gap-1">
+            <div className="px-2 py-0.5 flex items-center justify-between border-b border-[#17402C]/10 mb-0.5">
+              <span className="text-[9px] font-mono font-bold uppercase tracking-widest text-[#5C6B5E]">Création Club</span>
+              <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
             </div>
-
-            {/* Cover Image Live Showcase Card */}
-            <div className="relative rounded-2xl overflow-hidden min-h-[200px] sm:min-h-[250px] bg-[#1C2620] text-white flex flex-col justify-end group shadow-md border border-[#E8E4D8]">
-              <img src={form.coverImage} alt="Couverture" className="absolute inset-0 w-full h-full object-cover group-hover:scale-105 transition-transform duration-700 opacity-90" />
-              <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/40 to-black/10" />
-              
-              <div className="absolute top-4 left-4">
-                <span className="bg-white/90 px-3 py-1 rounded-full text-[9px] font-mono uppercase tracking-widest text-[#1C2620] shadow-sm font-bold flex items-center gap-1.5">
-                  <Icon name="EyeIcon" size={10} /> APERÇU SUR VOTRE CLUB
-                </span>
-              </div>
-
-              <div className="absolute top-4 right-4 flex gap-2">
-                <label className="px-3 py-1.5 bg-[#1C2620]/60 hover:bg-[#1C2620]/80 text-white text-[10px] font-bold rounded-full backdrop-blur-md cursor-pointer transition-colors flex items-center gap-1.5 border border-white/20">
-                  <Icon name="CameraIcon" size={12} /> Couverture
-                  <input type="file" accept="image/*" className="hidden" onChange={(e) => {
-                    if (e.target.files?.[0]) setField('coverImage', URL.createObjectURL(e.target.files[0]));
-                  }} />
-                </label>
-              </div>
-
-              <div className="relative z-10 p-5 sm:p-6 flex items-end justify-between w-full">
-                <div className="flex items-center gap-4">
-                  <div className="relative w-14 h-14 rounded-2xl bg-white shadow-md flex items-center justify-center shrink-0 border border-white overflow-hidden group cursor-pointer">
-                    {form.logoImage ? (
-                      <img src={form.logoImage} className="w-full h-full object-cover" />
-                    ) : (
-                      <Icon name="PhotoIcon" size={24} className="text-[#C8C3B0]" />
-                    )}
-                    <div className="absolute inset-0 bg-black/40 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
-                      <Icon name="CameraIcon" size={16} className="text-white" />
-                    </div>
-                    <input type="file" accept="image/*" className="absolute inset-0 opacity-0 cursor-pointer" onChange={(e) => {
-                      if (e.target.files?.[0]) setField('logoImage', URL.createObjectURL(e.target.files[0]));
-                    }} />
+            {SECTIONS.map((sec) => {
+              const isActive = activeSection === sec.id;
+              return (
+                <button
+                  key={sec.id}
+                  onClick={() => setActiveSection(sec.id)}
+                  className={`flex items-center gap-2.5 px-3 py-2 rounded-xl text-xs font-semibold select-none transition-all cursor-pointer ${
+                    isActive
+                      ? 'bg-gradient-to-r from-white/95 to-white/75 text-[#17402C] font-bold border border-white/80'
+                      : 'text-[#5C6B5E] hover:bg-white/40 hover:text-[#17402C]'
+                  }`}
+                >
+                  <span className={`font-mono text-[10px] font-bold px-1.5 py-0.5 rounded ${isActive ? 'bg-[#17402C] text-white' : 'bg-black/5 text-[#5C6B5E]'}`}>
+                    {sec.short}
+                  </span>
+                  <div className="flex-1 text-left min-w-0">
+                    <div className="truncate font-bold">{sec.label}</div>
+                    <div className="text-[9px] text-[#5C6B5E]/80 truncate">{sec.desc}</div>
                   </div>
-                  <div>
-                    <h3 className="font-display font-800 text-2xl sm:text-3xl text-white tracking-tight leading-tight">
-                      {form.title.split(' ')[0]} <em className="font-serif italic text-white/80">{form.title.split(' ').slice(1).join(' ')}</em>
-                    </h3>
-                    <p className="text-[10px] text-white/90 font-mono mt-0.5">
-                      {form.location.split(',')[0]} • {form.category.split(' ')[0]}
-                    </p>
-                  </div>
-                </div>
+                </button>
+              );
+            })}
+          </nav>
+        </aside>
 
-                <div className="flex items-center gap-4 text-center">
-                  <div>
-                    <div className="font-display font-800 text-xl">0</div>
-                    <div className="text-[9px] font-mono tracking-widest uppercase text-white/70">MEMBRES</div>
-                  </div>
-                  <div className="w-[1px] h-6 bg-white/20"></div>
-                  <div>
-                    <div className="font-display font-800 text-xl">1</div>
-                    <div className="text-[9px] font-mono tracking-widest uppercase text-white/70">ADMIN</div>
-                  </div>
-                  <div className="w-[1px] h-6 bg-white/20"></div>
-                  <div>
-                    <div className="font-display font-800 text-xl">--</div>
-                    <div className="text-[9px] font-mono tracking-widest uppercase text-white/70">SORTIES</div>
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            {/* Inputs */}
-            <div className="space-y-4 pt-2">
-              <div>
-                <label className="text-[10px] font-mono tracking-widest uppercase text-[#5C6B5E] block mb-1">Nom du club *</label>
-                <input
-                  type="text"
-                  value={form.title}
-                  onChange={e => setField('title', e.target.value)}
-                  className="w-full bg-[#F5F2E8] border border-transparent rounded-2xl px-4 py-3 text-sm text-[#1C2620] font-bold focus:border-[#2D5A3D] focus:ring-1 focus:ring-[#2D5A3D] transition-colors"
-                />
-              </div>
-
-              <div>
-                <div className="flex items-center justify-between mb-1">
-                  <label className="text-[10px] font-mono tracking-widest uppercase text-[#5C6B5E] block">Slogan / mantra en 1 phrase (recommandé)</label>
-                  <span className="text-[10px] font-mono text-[#5C6B5E]">{form.slogan.length} / 60</span>
-                </div>
-                <input
-                  type="text"
-                  maxLength={60}
-                  value={form.slogan}
-                  onChange={e => setField('slogan', e.target.value)}
-                  className="w-full bg-[#F5F2E8] border border-transparent rounded-2xl px-4 py-3 text-xs text-[#1C2620] font-serif italic focus:border-[#2D5A3D] focus:ring-1 focus:ring-[#2D5A3D] transition-colors"
-                />
-              </div>
-
-              <div>
-                <div className="flex items-center justify-between mb-1">
-                  <label className="text-[10px] font-mono tracking-widest uppercase text-[#5C6B5E] block">Description longue</label>
-                  <span className="text-[10px] font-mono text-[#5C6B5E]">{form.description.length} / 600</span>
-                </div>
-                <textarea
-                  rows={4}
-                  maxLength={600}
-                  value={form.description}
-                  onChange={e => setField('description', e.target.value)}
-                  className="w-full bg-[#F5F2E8] border border-transparent rounded-2xl p-4 text-xs text-[#1C2620] leading-relaxed resize-none focus:border-[#2D5A3D] focus:ring-1 focus:ring-[#2D5A3D] transition-colors"
-                />
-              </div>
-            </div>
+        {/* COLONNE CENTRALE (Formulaire dynamique) */}
+        <div className="flex-1 min-w-0 h-full overflow-y-auto custom-scrollbar pr-2 space-y-4">
+          {/* Breadcrumbs */}
+          <div className="flex items-center gap-2 text-xs font-medium text-[#5C6B5E]">
+            <Link href="/communaute" className="hover:text-[#17402C] transition-colors">Communauté</Link>
+            <Icon name="ChevronRightIcon" size={12} className="text-[#5C6B5E]" />
+            <Link href="/communaute?tab=clubs" className="hover:text-[#17402C] transition-colors">Clubs</Link>
+            <Icon name="ChevronRightIcon" size={12} className="text-[#5C6B5E]" />
+            <span className="text-[#17402C] font-semibold">Créer un club</span>
           </div>
 
-
-          {/* ─── SECTION 02: THÉMATIQUE & TERRAIN ─────────────────────── */}
-          <div className="bg-white rounded-[0.75rem] p-6 sm:p-8 border border-[#E8E4D8] shadow-sm space-y-6 active:scale-[0.98] active:opacity-95 transition-all duration-150 cursor-pointer">
-            <div className="flex items-center justify-between pb-4 border-b border-[#F5F2E8]">
-              <div>
-                <h2 className="font-display font-800 text-xl text-[#1C2620]">Thématique <em className="font-serif italic text-[#2D5A3D] font-normal">& terrain</em></h2>
-                <p className="text-xs text-[#5C6B5E] mt-0.5">Ce qui rassemble les voyageurs autour d'une pratique ou d'une région, et vos rythmes.</p>
-              </div>
-              <span className="text-[10px] font-mono font-bold tracking-widest uppercase bg-[#F5F2E8] px-2.5 py-1 rounded-full text-[#5C6B5E]">
-                02 · CADRE
-              </span>
-            </div>
-
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <div>
-                <label className="text-[10px] font-mono tracking-widest uppercase text-[#5C6B5E] block mb-1">Catégorie principale *</label>
-                <div className="relative">
-                  <input
-                    list="categories-list"
-                    value={form.category}
-                    onChange={e => setField('category', e.target.value)}
-                    placeholder="Saisissez ou choisissez une catégorie..."
-                    className="w-full bg-[#F5F2E8] border border-transparent rounded-2xl px-4 py-3.5 text-xs text-[#1C2620] font-bold focus:border-[#2D5A3D] focus:ring-1 focus:ring-[#2D5A3D]"
-                  />
-                  <datalist id="categories-list">
-                    <option value="Randonnée & bivouac" />
-                    <option value="Alpinisme & glace" />
-                    <option value="Vélo & cyclotourisme" />
-                    <option value="Trail & running" />
-                  </datalist>
+          {/* ÉTAPE 1: IDENTITÉ */}
+          {activeSection === 'identite' && (
+            <div className="glass rounded-2xl p-6 space-y-5">
+              <div className="flex items-center justify-between pb-3 border-b border-[#17402C]/10">
+                <div>
+                  <h2 className="font-display font-bold text-lg text-[#17402C]">Identité, Visuels &amp; Ville</h2>
+                  <p className="text-xs text-[#5C6B5E]">Définissez le nom, l’emblème, la couverture et le camp de base du club.</p>
                 </div>
+                <span className="glass-pill text-[9px] font-mono font-bold">01 · IDENTITÉ</span>
               </div>
-              <div>
-                <label className="text-[10px] font-mono tracking-widest uppercase text-[#5C6B5E] block mb-1">Rythme des sorties</label>
-                <div className="relative">
-                  <select
-                    value={form.rhythm}
-                    onChange={e => setField('rhythm', e.target.value)}
-                    className="w-full bg-[#F5F2E8] border border-transparent rounded-2xl px-4 py-3.5 text-xs text-[#1C2620] font-bold appearance-none cursor-pointer focus:border-[#2D5A3D] focus:ring-1 focus:ring-[#2D5A3D]"
-                  >
-                    <option value="Mensuel - 1 à 2 sorties">Mensuel - 1 à 2 sorties</option>
-                    <option value="Hebdomadaire - 1 sortie par semaine">Hebdomadaire - 1 sortie par semaine</option>
-                    <option value="Annuel - Quelques grandes expés">Annuel - Quelques grandes expés</option>
-                  </select>
-                  <Icon name="ChevronDownIcon" size={14} className="absolute right-4 top-1/2 -translate-y-1/2 text-[#5C6B5E] pointer-events-none" />
+
+              <div className="space-y-4">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  <div>
+                    <label className="block text-xs font-bold text-[#17402C] mb-1">Nom du club *</label>
+                    <input
+                      type="text"
+                      value={form.title}
+                      onChange={(e) => setField('title', e.target.value)}
+                      placeholder="Ex : Les Cimes Sauvages"
+                      className="w-full bg-white/90 border border-[#17402C]/15 rounded-xl px-3.5 py-2.5 text-xs text-[#17402C] focus:outline-none focus:ring-2 focus:ring-[#17402C]/20"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-xs font-bold text-[#17402C] mb-1">Ville / Camp de base *</label>
+                    <input
+                      type="text"
+                      value={form.location}
+                      onChange={(e) => setField('location', e.target.value)}
+                      placeholder="Ex : Grenoble · Isère"
+                      className="w-full bg-white/90 border border-[#17402C]/15 rounded-xl px-3.5 py-2.5 text-xs text-[#17402C]"
+                    />
+                  </div>
                 </div>
-              </div>
-            </div>
 
-            <div>
-              <label className="text-[10px] font-mono tracking-widest uppercase text-[#5C6B5E] block mb-2">Zones géographiques couvertes *</label>
-              <div className="flex flex-wrap gap-2">
-                {availableZones.map(zone => {
-                  const isSelected = form.zones.includes(zone);
-                  return (
-                    <button
-                      key={zone}
-                      type="button"
-                      onClick={() => toggleZone(zone)}
-                      className={`px-3 py-1.5 rounded-full text-xs font-semibold transition-all flex items-center gap-1.5 ${
-                        isSelected 
-                          ? 'bg-[#EAF0EB] text-[#2D5A3D] border border-[#2D5A3D]/30' 
-                          : 'bg-white text-[#5C6B5E] border border-[#E8E4D8] hover:bg-[#F5F2E8]'
-                      }`}
-                    >
-                      {isSelected && <Icon name="CheckIcon" size={10} className="text-[#2D5A3D]" />}
-                      {zone}
-                    </button>
-                  );
-                })}
-              </div>
-            </div>
-
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-2">
-              <div>
-                <label className="text-[10px] font-mono tracking-widest uppercase text-[#5C6B5E] block mb-1">Ville d'ancrage</label>
-                <div className="relative">
-                  <Icon name="MapPinIcon" size={14} className="absolute left-4 top-1/2 -translate-y-1/2 text-[#5C6B5E]" />
+                <div>
+                  <label className="block text-xs font-bold text-[#17402C] mb-1">Slogan ou promesse en une phrase</label>
                   <input
                     type="text"
-                    value={form.location}
-                    onChange={e => setField('location', e.target.value)}
-                    className="w-full bg-[#F5F2E8] border border-transparent rounded-2xl pl-10 pr-4 py-3 text-xs text-[#1C2620] font-semibold focus:border-[#2D5A3D] focus:ring-1 focus:ring-[#2D5A3D]"
+                    value={form.slogan}
+                    onChange={(e) => setField('slogan', e.target.value)}
+                    placeholder="Ex : Marcher ensemble en Chartreuse, sans se précipiter."
+                    className="w-full bg-white/90 border border-[#17402C]/15 rounded-xl px-3.5 py-2.5 text-xs text-[#17402C]"
                   />
                 </div>
-              </div>
-              <div>
-                <label className="text-[10px] font-mono tracking-widest uppercase text-[#5C6B5E] block mb-1">Nombre max de membres</label>
-                <div className="relative flex items-center bg-[#F5F2E8] rounded-2xl overflow-hidden focus-within:ring-1 focus-within:ring-[#2D5A3D]">
-                  <input
-                    type="number"
-                    value={form.maxMembers}
-                    onChange={e => setField('maxMembers', parseInt(e.target.value) || 0)}
-                    className="w-full bg-transparent border-none px-4 py-3 text-xs text-[#1C2620] font-semibold focus:ring-0"
+
+                <div>
+                  <label className="block text-xs font-bold text-[#17402C] mb-1">Description détaillée &amp; Esprit du club</label>
+                  <textarea
+                    rows={4}
+                    value={form.description}
+                    onChange={(e) => setField('description', e.target.value)}
+                    placeholder="Décrivez les objectifs, le profil des membres, la philosophie des sorties..."
+                    className="w-full bg-white/90 border border-[#17402C]/15 rounded-xl p-3 text-xs text-[#17402C] focus:outline-none focus:ring-2 focus:ring-[#17402C]/20"
                   />
-                  <span className="text-[10px] text-[#5C6B5E] pr-4 whitespace-nowrap font-mono tracking-tight">Membres (Laissez vide pour infini)</span>
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  <div>
+                    <label className="block text-xs font-bold text-[#17402C] mb-1">Photo de couverture (URL)</label>
+                    <input
+                      type="text"
+                      value={form.coverImage}
+                      onChange={(e) => setField('coverImage', e.target.value)}
+                      placeholder="https://images.unsplash.com/..."
+                      className="w-full bg-white/90 border border-[#17402C]/15 rounded-xl px-3 py-2 text-xs text-[#17402C]"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-xs font-bold text-[#17402C] mb-1">Logo / Avatar du club (URL)</label>
+                    <input
+                      type="text"
+                      value={form.logoImage}
+                      onChange={(e) => setField('logoImage', e.target.value)}
+                      placeholder="https://..."
+                      className="w-full bg-white/90 border border-[#17402C]/15 rounded-xl px-3 py-2 text-xs text-[#17402C]"
+                    />
+                  </div>
                 </div>
               </div>
-            </div>
-          </div>
 
-
-          {/* ─── SECTION 03: LES RÈGLES DU CLUB ───────────────────────── */}
-          <div className="bg-white rounded-[0.75rem] p-6 sm:p-8 border border-[#E8E4D8] shadow-sm space-y-6 active:scale-[0.98] active:opacity-95 transition-all duration-150 cursor-pointer">
-            <div className="flex items-center justify-between pb-4 border-b border-[#F5F2E8]">
-              <div>
-                <h2 className="font-display font-800 text-xl text-[#1C2620]">Les règles <em className="font-serif italic text-[#2D5A3D] font-normal">du club</em></h2>
-                <p className="text-xs text-[#5C6B5E] mt-0.5">Chaque membre s'y engage à l'inscription. 3 à 5 règles suffisent — visuelles, proactives, sans être infantilisantes.</p>
+              <div className="flex justify-end pt-2">
+                <button
+                  type="button"
+                  onClick={() => setActiveSection('thematique')}
+                  className="glass-capsule-btn primary py-2 px-5 text-xs font-bold flex items-center gap-1"
+                >
+                  <span>Suivant : Thématique &amp; Niveau →</span>
+                </button>
               </div>
-              <span className="text-[10px] font-mono font-bold tracking-widest uppercase bg-[#F5F2E8] px-2.5 py-1 rounded-full text-[#5C6B5E]">
-                03 · CHARTE · CODE DE CONDUITE
-              </span>
             </div>
+          )}
 
-            <div className="space-y-3">
-              {form.rules.map((rule) => (
-                <div key={rule.id} className="p-4 bg-white rounded-2xl border border-[#E8E4D8] flex gap-4 relative group items-center">
-                    <button type="button" onClick={() => {
-                        const newIcon = prompt("Nouvel icone SVG ou Emoji :", rule.icon);
-                        if (newIcon) {
-                          setForm(prev => ({ ...prev, rules: prev.rules.map(r => r.id === rule.id ? { ...r, icon: newIcon } : r) }));
-                        }
-                      }} className="w-10 h-10 bg-[#F5F2E8] rounded-full flex items-center justify-center shrink-0 cursor-pointer hover:bg-[#E8E4D8] transition-colors">
-                      {rule.icon.length > 2 && !rule.icon.startsWith('<') ? <Icon name={rule.icon} size={18} className="text-[#1C2620]" /> : (rule.icon.startsWith('<') ? <span dangerouslySetInnerHTML={{__html: rule.icon}} /> : <span className="text-lg">{rule.icon}</span>)}
-                    </button>
+          {/* ÉTAPE 2: THÉMATIQUE */}
+          {activeSection === 'thematique' && (
+            <div className="glass rounded-2xl p-6 space-y-5">
+              <div className="flex items-center justify-between pb-3 border-b border-[#17402C]/10">
+                <div>
+                  <h2 className="font-display font-bold text-lg text-[#17402C]">Pratique, Niveau &amp; Massifs</h2>
+                  <p className="text-xs text-[#5C6B5E]">Précisez le cadre sportif, le rythme et les terrains explorés.</p>
+                </div>
+                <span className="glass-pill text-[9px] font-mono font-bold">02 · CADRE</span>
+              </div>
+
+              <div className="space-y-4">
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                  <div>
+                    <label className="block text-xs font-bold text-[#17402C] mb-1">Discipline principale</label>
+                    <select
+                      value={form.category}
+                      onChange={(e) => setField('category', e.target.value)}
+                      className="w-full bg-white/90 border border-[#17402C]/15 rounded-xl px-3 py-2 text-xs text-[#17402C]"
+                    >
+                      <option>Randonnée &amp; bivouac</option>
+                      <option>Alpinisme &amp; haute montagne</option>
+                      <option>Trail &amp; course nature</option>
+                      <option>Bikepacking &amp; gravel</option>
+                      <option>Ski de rando &amp; hivernale</option>
+                    </select>
+                  </div>
+
+                  <div>
+                    <label className="block text-xs font-bold text-[#17402C] mb-1">Niveau requis</label>
+                    <select
+                      value={form.level}
+                      onChange={(e) => setField('level', e.target.value)}
+                      className="w-full bg-white/90 border border-[#17402C]/15 rounded-xl px-3 py-2 text-xs text-[#17402C]"
+                    >
+                      {availableLevels.map(lvl => (
+                        <option key={lvl} value={lvl}>{lvl}</option>
+                      ))}
+                    </select>
+                  </div>
+
+                  <div>
+                    <label className="block text-xs font-bold text-[#17402C] mb-1">Rythme des sorties</label>
+                    <input
+                      type="text"
+                      value={form.rhythm}
+                      onChange={(e) => setField('rhythm', e.target.value)}
+                      placeholder="Ex : 1 à 2 sorties/mois"
+                      className="w-full bg-white/90 border border-[#17402C]/15 rounded-xl px-3 py-2 text-xs text-[#17402C]"
+                    />
+                  </div>
+                </div>
+
+                <div>
+                  <label className="block text-xs font-bold text-[#17402C] mb-2">Massifs de prédilection</label>
+                  <div className="flex flex-wrap gap-2">
+                    {availableZones.map((z) => {
+                      const isSelected = form.zones.includes(z);
+                      return (
+                        <button
+                          key={z}
+                          type="button"
+                          onClick={() => toggleZone(z)}
+                          className={`px-3 py-1.5 rounded-full text-xs font-semibold transition-all ${
+                            isSelected
+                              ? 'bg-[#17402C] text-white shadow-xs'
+                              : 'bg-white/80 text-[#5C6B5E] border border-[#17402C]/10 hover:border-[#17402C]/30'
+                          }`}
+                        >
+                          {isSelected ? '✓ ' : '+ '} {z}
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+
+                <div className="pt-2">
+                  <label className="block text-xs font-bold text-[#17402C] mb-1">Capacité maximale du club</label>
+                  <div className="flex items-center gap-3">
+                    <input
+                      type="range"
+                      min={10}
+                      max={200}
+                      step={10}
+                      value={form.maxMembers}
+                      onChange={(e) => setField('maxMembers', parseInt(e.target.value))}
+                      className="flex-1 accent-[#17402C]"
+                    />
+                    <span className="font-mono text-xs font-bold text-[#17402C] w-24 text-right">
+                      {form.maxMembers} membres
+                    </span>
+                  </div>
+                </div>
+              </div>
+
+              <div className="flex justify-between pt-2">
+                <button
+                  type="button"
+                  onClick={() => setActiveSection('identite')}
+                  className="glass-capsule-btn py-2 px-4 text-xs font-bold"
+                >
+                  ← Précédent
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setActiveSection('regles')}
+                  className="glass-capsule-btn primary py-2 px-5 text-xs font-bold"
+                >
+                  Suivant : Charte &amp; Règles →
+                </button>
+              </div>
+            </div>
+          )}
+
+          {/* ÉTAPE 3: RÈGLES */}
+          {activeSection === 'regles' && (
+            <div className="glass rounded-2xl p-6 space-y-5">
+              <div className="flex items-center justify-between pb-3 border-b border-[#17402C]/10">
+                <div>
+                  <h2 className="font-display font-bold text-lg text-[#17402C]">Charte &amp; Règles du club</h2>
+                  <p className="text-xs text-[#5C6B5E]">Chaque membre s’y engage à l’adhésion pour garantir l'esprit d'équipe.</p>
+                </div>
+                <span className="glass-pill text-[9px] font-mono font-bold">03 · CHARTE</span>
+              </div>
+
+              <div className="space-y-3">
+                {form.rules.map((rule) => (
+                  <div key={rule.id} className="p-3.5 glass-sub-card rounded-xl flex items-center gap-3 bg-white/90">
+                    <span className="text-xl">🛡️</span>
                     <div className="min-w-0 flex-1">
                       <input
                         type="text"
                         value={rule.title}
-                        onChange={e => setForm(prev => ({ ...prev, rules: prev.rules.map(r => r.id === rule.id ? { ...r, title: e.target.value } : r) }))}
-                        className="bg-transparent border-none text-sm font-bold text-[#1C2620] focus:ring-0 p-0 w-full mb-0.5"
+                        onChange={(e) => setForm(prev => ({
+                          ...prev,
+                          rules: prev.rules.map(r => r.id === rule.id ? { ...r, title: e.target.value } : r)
+                        }))}
+                        className="bg-transparent border-none text-xs font-bold text-[#17402C] focus:ring-0 p-0 w-full"
                       />
                       <input
                         type="text"
                         value={rule.description}
-                        onChange={e => setForm(prev => ({ ...prev, rules: prev.rules.map(r => r.id === rule.id ? { ...r, description: e.target.value } : r) }))}
-                        className="bg-transparent border-none text-xs text-[#5C6B5E] focus:ring-0 p-0 w-full"
+                        onChange={(e) => setForm(prev => ({
+                          ...prev,
+                          rules: prev.rules.map(r => r.id === rule.id ? { ...r, description: e.target.value } : r)
+                        }))}
+                        className="bg-transparent border-none text-[11px] text-[#5C6B5E] focus:ring-0 p-0 w-full"
                       />
-                    </div>
-                  <button type="button" onClick={() => removeRule(rule.id)} className="p-2 text-[#C8C3B0] hover:text-red-500 transition-colors opacity-0 group-hover:opacity-100">
-                    <Icon name="XMarkIcon" size={16} />
-                  </button>
-                </div>
-              ))}
-
-              <button
-                type="button"
-                onClick={addRule}
-                className="w-full py-3 rounded-2xl border border-dashed border-[#E8E4D8] hover:border-[#2D5A3D] text-xs font-semibold text-[#5C6B5E] hover:text-[#1C2620] transition-colors flex items-center justify-center gap-1.5"
-              >
-                <Icon name="PlusIcon" size={14} /> Ajouter une règle
-              </button>
-            </div>
-          </div>
-
-
-          {/* ─── SECTION 04: ADMINS & PERMISSIONS ────────────────────── */}
-          <div className="bg-white rounded-[0.75rem] p-6 sm:p-8 border border-[#E8E4D8] shadow-sm space-y-6 active:scale-[0.98] active:opacity-95 transition-all duration-150 cursor-pointer">
-            <div className="flex items-center justify-between pb-4 border-b border-[#F5F2E8]">
-              <div>
-                <h2 className="font-display font-800 text-xl text-[#1C2620]">Admins <em className="font-serif italic text-[#2D5A3D] font-normal">& permissions</em></h2>
-                <p className="text-xs text-[#5C6B5E] mt-0.5">Les admins organisent les sorties, valident les nouveaux membres et modèrent les échanges.</p>
-              </div>
-              <span className="text-[10px] font-mono font-bold tracking-widest uppercase bg-[#F5F2E8] px-2.5 py-1 rounded-full text-[#5C6B5E]">
-                04 · ÉQUIPE & DROITS
-              </span>
-            </div>
-
-            <div className="space-y-3">
-              {/* Admin list mock */}
-              <div className="flex items-center justify-between bg-white border border-[#E8E4D8] p-3 rounded-2xl">
-                <div className="flex items-center gap-3">
-                  <img src={user?.profile?.avatar_url || "https://images.unsplash.com/photo-1534528741775-53994a69daeb?q=80&w=200"} className="w-10 h-10 rounded-full object-cover" alt="Admin" />
-                  <div>
-                    <div className="flex items-center gap-2">
-                      <span className="text-xs font-bold text-[#1C2620]">{user?.profile?.full_name || 'Marceline Chevrier'}</span>
-                      <span className="bg-[#2D5A3D] text-white text-[9px] font-mono font-bold px-1.5 py-0.5 rounded uppercase tracking-wider">VOUS</span>
-                    </div>
-                    <p className="text-[10px] text-[#5C6B5E] font-mono">PROPRIÉTAIRE · Fondatrice</p>
-                  </div>
-                </div>
-                <div className="px-3 py-1.5 bg-[#F5F2E8] rounded-lg text-xs font-semibold text-[#1C2620] flex items-center gap-1.5 cursor-pointer">
-                          <select className="bg-transparent text-[10px] font-bold text-[#1C2620] border-none pr-6 cursor-pointer focus:ring-0">
-                            <option>Fondatrice</option>
-                            <option>Co-admin</option>
-                            <option>Modératrice</option>
-                          </select>
-                </div>
-              </div>
-
-              <div className="flex items-center justify-between bg-white border border-[#E8E4D8] p-3 rounded-2xl">
-                <div className="flex items-center gap-3">
-                  <img src="https://images.unsplash.com/photo-1544005313-94ddf0286df2?q=80&w=200" className="w-10 h-10 rounded-full object-cover" alt="Co-admin" />
-                  <div>
-                    <span className="text-xs font-bold text-[#1C2620]">Laila Berrani</span>
-                    <p className="text-[10px] text-[#5C6B5E] font-mono">ADMINISTRATRICE · Membre depuis : 2 ans</p>
-                  </div>
-                </div>
-                <div className="px-3 py-1.5 bg-[#F5F2E8] rounded-lg text-xs font-semibold text-[#1C2620] flex items-center gap-1.5 cursor-pointer">
-                  Co-admin <Icon name="ChevronDownIcon" size={12} />
-                </div>
-              </div>
-
-              <div className="relative">
-                      <div className="flex gap-2">
-                        <input type="text" placeholder="Ajouter un membre par son nom..." className="flex-1 bg-[#F5F2E8] border-none rounded-xl text-xs px-4 py-3 focus:ring-0" />
-                        <button type="button" onClick={() => alert('Invitation envoyée !')} className="bg-[#1C2620] text-white rounded-xl px-4 text-xs font-bold hover:bg-[#2D5A3D] transition-colors">Inviter</button>
-                      </div>
-              </div>
-            </div>
-
-            <div className="space-y-4 pt-4 border-t border-[#F5F2E8]">
-              {[
-                { key: 'manualValidation', title: 'Validation manuelle des nouveaux membres', desc: 'Un admin valide chaque demande d\'adhésion.' },
-                { key: 'membersCanCreateOutings', title: 'Les membres peuvent créer des sorties', desc: 'Sans cette option, seuls les admins organisent des sorties.' },
-                { key: 'openDiscussionThread', title: 'Fil de discussion ouvert', desc: 'Les membres peuvent publier des messages libres dans le club.' }
-              ].map(item => {
-                const val = (form as any)[item.key];
-                return (
-                  <div key={item.key} className="flex items-center justify-between gap-4">
-                    <div>
-                      <h4 className="font-bold text-xs text-[#1C2620]">{item.title}</h4>
-                      <p className="text-[10px] text-[#5C6B5E] mt-0.5">{item.desc}</p>
                     </div>
                     <button
                       type="button"
-                      onClick={() => setField(item.key, !val)}
-                      className={`w-10 h-5 rounded-full transition-colors relative p-0.5 shrink-0 ${
-                        val ? 'bg-[#2D5A3D]' : 'bg-[#E8E4D8]'
-                      }`}
+                      onClick={() => removeRule(rule.id)}
+                      className="text-[#5C6B5E] hover:text-red-600 p-1"
                     >
-                      <div className={`w-4 h-4 rounded-full bg-white transition-transform shadow-sm ${
-                        val ? 'translate-x-5' : 'translate-x-0'
-                      }`} />
+                      <Icon name="XMarkIcon" size={14} />
                     </button>
                   </div>
-                );
-              })}
-            </div>
-          </div>
+                ))}
 
-
-          {/* ─── SECTION 05: VISIBILITÉ & ADHÉSION ────────────────────── */}
-          <div className="bg-white rounded-[0.75rem] p-6 sm:p-8 border border-[#E8E4D8] shadow-sm space-y-6 active:scale-[0.98] active:opacity-95 transition-all duration-150 cursor-pointer">
-            <div className="flex items-center justify-between pb-4 border-b border-[#F5F2E8]">
-              <div>
-                <h2 className="font-display font-800 text-xl text-[#1C2620]">Visibilité <em className="font-serif italic text-[#2D5A3D] font-normal">& adhésion</em></h2>
-                <p className="text-xs text-[#5C6B5E] mt-0.5">Choisissez si votre club est ouvert à tous, sur invitation, ou entièrement caché de l'annuaire public.</p>
-              </div>
-              <span className="text-[10px] font-mono font-bold tracking-widest uppercase bg-[#F5F2E8] px-2.5 py-1 rounded-full text-[#5C6B5E]">
-                05 · DROIT D'ACCÈS
-              </span>
-            </div>
-
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-              {[
-                { id: 'public', title: 'Public', desc: 'Visible dans l\'annuaire, ouvert aux demandes', icon: 'GlobeAltIcon' },
-                { id: 'invite', title: 'Sur invitation', desc: 'Visible mais uniquement rejoignable via un lien', icon: 'EnvelopeOpenIcon' },
-                { id: 'private', title: 'Privé', desc: 'Invisible de l\'annuaire, uniquement par lien secret', icon: 'LockClosedIcon' }
-              ].map(item => {
-                const isActive = form.visibility === item.id;
-                return (
-                  <button
-                    key={item.id}
-                    type="button"
-                    onClick={() => setField('visibility', item.id)}
-                    className={`p-4 rounded-2xl border text-left transition-all flex items-start gap-3 ${
-                      isActive 
-                        ? 'bg-[#EAF0EB] border-[#2D5A3D] shadow-sm ring-1 ring-[#2D5A3D]' 
-                        : 'bg-[#F5F2E8] border-transparent hover:border-[#E8E4D8]'
-                    }`}
-                  >
-                    <Icon name={item.icon} size={16} className={`mt-0.5 ${isActive ? 'text-[#2D5A3D]' : 'text-[#5C6B5E]'}`} />
-                    <div>
-                      <div className="font-bold text-xs text-[#1C2620]">{item.title}</div>
-                      <div className="text-[10px] text-[#5C6B5E] mt-1 leading-snug">{item.desc}</div>
-                    </div>
-                  </button>
-                );
-              })}
-            </div>
-
-            <div className="pt-2">
-              <label className="text-[10px] font-mono tracking-widest uppercase text-[#5C6B5E] block mb-2">Lien d'invitation</label>
-              <div className="flex items-center gap-2 bg-[#F5F2E8] p-1.5 rounded-2xl border border-[#E8E4D8]">
-                <span className="text-[10px] font-mono text-[#5C6B5E] pl-3 uppercase tracking-wider">LIEN SÉCURISÉ :</span>
-                <input
-                  type="text"
-                  readOnly
-                  value={inviteSlug}
-                  className="bg-transparent border-none text-xs font-bold text-[#1C2620] focus:ring-0 p-1 flex-1 font-mono"
-                />
-                <button 
-                  type="button" 
-                  onClick={() => {
-                    navigator.clipboard.writeText(inviteSlug);
-                    alert("Lien copié dans le presse-papier !");
-                  }}
-                  className="px-4 py-2 bg-[#1C2620] text-white text-[10px] font-bold rounded-xl hover:bg-[#2D5A3D] transition-colors"
+                <button
+                  type="button"
+                  onClick={addRule}
+                  className="w-full py-2.5 rounded-xl border border-dashed border-[#17402C]/20 hover:border-[#17402C] text-xs font-bold text-[#17402C] flex items-center justify-center gap-1.5 transition-colors"
                 >
-                  Copier
+                  <Icon name="PlusIcon" size={14} /> Ajouter une règle à la charte
                 </button>
               </div>
-              <div className="flex justify-between items-center mt-2 px-2">
-                <span className="text-[10px] text-[#5C6B5E]">À partager en privé</span>
-                <button type="button" onClick={handleRegenerateSlug} className="text-[10px] text-[#2D5A3D] font-bold underline">
-                  Régénérer le lien
+
+              <div className="flex justify-between pt-2">
+                <button
+                  type="button"
+                  onClick={() => setActiveSection('thematique')}
+                  className="glass-capsule-btn py-2 px-4 text-xs font-bold"
+                >
+                  ← Précédent
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setActiveSection('adhesion')}
+                  className="glass-capsule-btn primary py-2 px-5 text-xs font-bold"
+                >
+                  Suivant : Adhésion &amp; Équipe →
                 </button>
               </div>
             </div>
-          </div>
+          )}
 
+          {/* ÉTAPE 4: ADHÉSION & ÉQUIPE */}
+          {activeSection === 'adhesion' && (
+            <div className="glass rounded-2xl p-6 space-y-5">
+              <div className="flex items-center justify-between pb-3 border-b border-[#17402C]/10">
+                <div>
+                  <h2 className="font-display font-bold text-lg text-[#17402C]">Adhésion &amp; Cotisation</h2>
+                  <p className="text-xs text-[#5C6B5E]">Paramétrez l’accès des membres et la gestion des sorties.</p>
+                </div>
+                <span className="glass-pill text-[9px] font-mono font-bold">04 · ADHÉSION</span>
+              </div>
+
+              <div className="space-y-4">
+                <div>
+                  <label className="block text-xs font-bold text-[#17402C] mb-2">Modalité d'inscription</label>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    {[
+                      { id: 'validation', label: '🛡️ Sur validation', desc: 'Le fondateur ou les modérateurs valident chaque demande.' },
+                      { id: 'open', label: '⚡ Inscription libre', desc: 'Tout membre de la communauté peut rejoindre directement.' },
+                    ].map((m) => (
+                      <label
+                        key={m.id}
+                        className={`p-3.5 rounded-xl cursor-pointer flex items-start gap-2.5 transition-all ${
+                          form.membershipType === m.id
+                            ? 'bg-white border-2 border-[#17402C] shadow-xs'
+                            : 'bg-white/60 border border-[#17402C]/10'
+                        }`}
+                      >
+                        <input
+                          type="radio"
+                          name="membership_type"
+                          value={m.id}
+                          checked={form.membershipType === m.id}
+                          onChange={() => setField('membershipType', m.id)}
+                          className="mt-0.5 text-[#17402C]"
+                        />
+                        <div>
+                          <span className="text-xs font-bold text-[#17402C] block">{m.label}</span>
+                          <span className="text-[10.5px] text-[#5C6B5E] block">{m.desc}</span>
+                        </div>
+                      </label>
+                    ))}
+                  </div>
+                </div>
+
+                <div className="pt-2">
+                  <label className="block text-xs font-bold text-[#17402C] mb-2">Cotisation</label>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    <label className={`p-3 rounded-xl cursor-pointer flex items-center gap-2 ${form.feeType === 'gratuit' ? 'bg-white border-2 border-[#17402C]' : 'bg-white/60 border border-[#17402C]/10'}`}>
+                      <input
+                        type="radio"
+                        name="fee_type"
+                        checked={form.feeType === 'gratuit'}
+                        onChange={() => setField('feeType', 'gratuit')}
+                        className="text-[#17402C]"
+                      />
+                      <span className="text-xs font-bold text-[#17402C]">🎁 Gratuit (100% bénévole)</span>
+                    </label>
+
+                    <label className={`p-3 rounded-xl cursor-pointer flex items-center gap-2 ${form.feeType === 'annuel' ? 'bg-white border-2 border-[#17402C]' : 'bg-white/60 border border-[#17402C]/10'}`}>
+                      <input
+                        type="radio"
+                        name="fee_type"
+                        checked={form.feeType === 'annuel'}
+                        onChange={() => setField('feeType', 'annuel')}
+                        className="text-[#17402C]"
+                      />
+                      <span className="text-xs font-bold text-[#17402C]">💶 Adhésion annuelle club</span>
+                    </label>
+                  </div>
+                </div>
+              </div>
+
+              <div className="flex justify-between pt-2">
+                <button
+                  type="button"
+                  onClick={() => setActiveSection('regles')}
+                  className="glass-capsule-btn py-2 px-4 text-xs font-bold"
+                >
+                  ← Précédent
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setActiveSection('reseaux')}
+                  className="glass-capsule-btn primary py-2 px-5 text-xs font-bold"
+                >
+                  Suivant : Réseaux &amp; Visibilité →
+                </button>
+              </div>
+            </div>
+          )}
+
+          {/* ÉTAPE 5: RÉSEAUX & VISIBILITÉ */}
+          {activeSection === 'reseaux' && (
+            <div className="glass rounded-2xl p-6 space-y-5">
+              <div className="flex items-center justify-between pb-3 border-b border-[#17402C]/10">
+                <div>
+                  <h2 className="font-display font-bold text-lg text-[#17402C]">Réseaux &amp; Visibilité du Club</h2>
+                  <p className="text-xs text-[#5C6B5E]">Liez vos canaux externes (WhatsApp, Strava, Instagram) et publiez le club.</p>
+                </div>
+                <span className="glass-pill text-[9px] font-mono font-bold">05 · RÉSEAUX</span>
+              </div>
+
+              <div className="space-y-4">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  <div>
+                    <label className="block text-xs font-bold text-[#17402C] mb-1">Lien Groupe WhatsApp / Discord</label>
+                    <input
+                      type="text"
+                      value={form.whatsappUrl}
+                      onChange={(e) => setField('whatsappUrl', e.target.value)}
+                      placeholder="https://chat.whatsapp.com/..."
+                      className="w-full bg-white/90 border border-[#17402C]/15 rounded-xl px-3 py-2 text-xs text-[#17402C]"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-xs font-bold text-[#17402C] mb-1">Compte Instagram / Strava</label>
+                    <input
+                      type="text"
+                      value={form.instagramUrl}
+                      onChange={(e) => setField('instagramUrl', e.target.value)}
+                      placeholder="https://instagram.com/..."
+                      className="w-full bg-white/90 border border-[#17402C]/15 rounded-xl px-3 py-2 text-xs text-[#17402C]"
+                    />
+                  </div>
+                </div>
+
+                <div className="pt-2">
+                  <label className="block text-xs font-bold text-[#17402C] mb-2">Visibilité du club</label>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    {[
+                      { id: 'public', label: '🌍 Public LKDV', desc: 'Visible dans l’annuaire communautaire et sur la carte.' },
+                      { id: 'invite', label: '🔗 Privé / Sur invitation', desc: 'Accessible uniquement via lien de parrainage.' },
+                    ].map((vis) => (
+                      <label
+                        key={vis.id}
+                        className={`p-3.5 rounded-xl cursor-pointer flex items-start gap-2.5 transition-all ${
+                          form.visibility === vis.id
+                            ? 'bg-white border-2 border-[#17402C] shadow-xs'
+                            : 'bg-white/60 border border-[#17402C]/10'
+                        }`}
+                      >
+                        <input
+                          type="radio"
+                          name="club_visibility"
+                          value={vis.id}
+                          checked={form.visibility === vis.id}
+                          onChange={() => setField('visibility', vis.id)}
+                          className="mt-0.5 text-[#17402C]"
+                        />
+                        <div>
+                          <span className="text-xs font-bold text-[#17402C] block">{vis.label}</span>
+                          <span className="text-[10.5px] text-[#5C6B5E] block">{vis.desc}</span>
+                        </div>
+                      </label>
+                    ))}
+                  </div>
+                </div>
+              </div>
+
+              <div className="flex justify-between pt-2">
+                <button
+                  type="button"
+                  onClick={() => setActiveSection('adhesion')}
+                  className="glass-capsule-btn py-2 px-4 text-xs font-bold"
+                >
+                  ← Précédent
+                </button>
+                <button
+                  type="button"
+                  onClick={handlePublish}
+                  disabled={saving || !form.title.trim()}
+                  className="glass-capsule-btn primary py-2.5 px-6 text-xs font-bold flex items-center gap-1.5"
+                >
+                  <Icon name="CheckIcon" size={14} className="relative z-10" />
+                  <span className="relative z-10">{saving ? 'Création...' : saveSuccess ? '✓ Créé !' : 'Fonder le club'}</span>
+                </button>
+              </div>
+            </div>
+          )}
         </div>
 
+        {/* COLONNE DROITE (Live Preview & Validation Checklist) - 300px */}
+        <aside className="w-[300px] shrink-0 h-full overflow-y-auto custom-scrollbar flex flex-col gap-4 pb-8">
+          {/* Live Preview Mini Card */}
+          <div className="glass p-3.5 space-y-3 rounded-2xl">
+            <div className="flex items-center justify-between">
+              <h3 className="font-display font-bold text-xs text-[#17402C]">Aperçu en direct</h3>
+              <span className="glass-pill text-[9px] font-mono font-bold">Live</span>
+            </div>
 
-        {/* RIGHT COLUMN: SIDEBAR WIDGETS (4 COLS) */}
-        <div className="lg:col-span-4 space-y-6 sticky top-20">
-          
-          {/* WIDGET 1: Info Box */}
-          <div className="bg-white rounded-[0.75rem] p-6 border border-[#E8E4D8] shadow-sm space-y-3 active:scale-[0.98] active:opacity-95 transition-all duration-150 cursor-pointer">
-            <h3 className="font-display font-800 text-sm text-[#1C2620]">Créer un club</h3>
-            <p className="text-xs text-[#5C6B5E] leading-relaxed">
-              Un club rassemble des voyageurs autour d'une pratique ou d'un esprit, dans la durée. Après sa création, vous pourrez inviter les premiers membres et planifier une première sortie.
-            </p>
+            <div className="rounded-xl overflow-hidden bg-white border border-[#17402C]/10 shadow-xs flex flex-col">
+              <div className="h-28 relative bg-[#17402C]">
+                {form.coverImage && (
+                  <img src={form.coverImage} alt="Cover" className="w-full h-full object-cover" />
+                )}
+                <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent" />
+                <span className="absolute bottom-2 left-2 px-2 py-0.5 bg-black/40 backdrop-blur-md rounded-full text-[9px] font-mono text-white font-bold">
+                  {form.category}
+                </span>
+              </div>
+              <div className="p-3 space-y-1.5">
+                <div className="flex items-center justify-between">
+                  <h4 className="font-display font-bold text-sm text-[#17402C] leading-snug">
+                    {form.title || 'Nom du club'}
+                  </h4>
+                </div>
+                <span className="text-[10px] font-mono font-semibold text-[#17402C] block">
+                  📍 {form.location}
+                </span>
+                <p className="text-[10px] text-[#5C6B5E] line-clamp-2">
+                  {form.slogan || form.description}
+                </p>
+                <div className="flex items-center justify-between pt-1 border-t border-[#17402C]/10 text-[9px] font-mono text-[#5C6B5E]">
+                  <span>{form.level}</span>
+                  <span>{form.rules.length} règles</span>
+                </div>
+              </div>
+            </div>
           </div>
 
-          {/* WIDGET 2: Checklist */}
-          <div className="bg-white rounded-[0.75rem] p-6 border border-[#E8E4D8] shadow-sm space-y-4 active:scale-[0.98] active:opacity-95 transition-all duration-150 cursor-pointer">
-            <h3 className="font-display font-800 text-sm text-[#1C2620]">À vérifier <em className="font-serif italic text-[#2D5A3D] font-normal">avant publication</em></h3>
-            <p className="text-xs text-[#5C6B5E] leading-relaxed">
-              6 éléments essentiels avant de rendre le club public. Les clubs sans description ou sans règles sont refusés par la modération.
-            </p>
+          {/* Checklist avant publication */}
+          <div className="glass p-3.5 space-y-2.5 rounded-2xl text-[#17402C]">
+            <div className="flex items-center justify-between">
+              <h3 className="font-display font-bold text-xs text-[#17402C]">Checklist Club</h3>
+              <span className="font-mono text-[9px] font-bold text-[#17402C]">{doneCount}/4</span>
+            </div>
 
-            <div className="space-y-3 pt-2">
-              {[
-                { label: 'Nom du club', done: form.title.length >= 3 },
-                { label: 'Couverture majeure', done: !!form.coverImage },
-                { label: 'Description longue', done: form.description.length >= 20 },
-                { label: 'Au moins 3 règles', done: form.rules.length >= 3 },
-              ].map(item => (
-                <div key={item.label} className="flex items-center justify-between text-xs">
-                  <span className="flex items-center gap-2 text-[#1C2620] font-medium">
-                    <span className={`w-4 h-4 rounded-full flex items-center justify-center ${item.done ? 'bg-[#2D5A3D] text-white' : 'bg-[#E8E4D8] text-transparent'}`}>
-                      {item.done && <Icon name="CheckIcon" size={10} />}
+            <div className="space-y-1.5 text-xs">
+              {checklistItems.map((item) => (
+                <div key={item.label} className="flex items-center justify-between text-[11px]">
+                  <span className="flex items-center gap-1.5 text-[#17402C]">
+                    <span className={`w-3.5 h-3.5 rounded-full flex items-center justify-center text-[9px] ${
+                      item.done ? 'bg-[#17402C] text-white' : 'bg-black/10 text-transparent'
+                    }`}>
+                      {item.done && '✓'}
                     </span>
                     {item.label}
                   </span>
-                  <span className="text-[10px] font-mono text-[#5C6B5E]">FAIT</span>
+                  <span className="font-mono text-[9px] text-[#5C6B5E]">
+                    {item.done ? 'OK' : 'À faire'}
+                  </span>
                 </div>
               ))}
-              <div className="flex items-center justify-between text-xs">
-                  <span className="flex items-center gap-2 text-[#C8C3B0] font-medium">
-                    <span className="w-4 h-4 rounded-full border border-[#E8E4D8] flex items-center justify-center bg-[#F5F2E8]">
-                    </span>
-                    Inviter un premier membre
-                  </span>
-                  <span className="text-[9px] font-mono text-[#17402C] uppercase font-bold bg-[#17402C]/10 px-1.5 py-0.5 rounded">RECOMMANDÉ</span>
-              </div>
-              <div className="flex items-center justify-between text-xs">
-                  <span className="flex items-center gap-2 text-[#C8C3B0] font-medium">
-                    <span className="w-4 h-4 rounded-full border border-[#E8E4D8] flex items-center justify-center bg-[#F5F2E8]">
-                    </span>
-                    Créer une première sortie
-                  </span>
-                  <span className="text-[9px] font-mono text-[#5C6B5E] uppercase tracking-wider">APRÈS CRÉATION</span>
-              </div>
             </div>
 
-            <div className="pt-4 border-t border-[#F5F2E8]">
-              <div className="flex items-center justify-between mb-1.5">
-                <span className="text-[10px] font-mono font-bold text-[#2D5A3D]">4 sur 6</span>
-                <span className="text-[10px] font-mono text-[#5C6B5E]">Prêt à publier</span>
-              </div>
-              <div className="w-full bg-[#F5F2E8] h-1.5 rounded-full overflow-hidden">
-                <div className="bg-[#2D5A3D] h-full transition-all duration-500 rounded-full" style={{ width: `66%` }} />
-              </div>
+            <div className="pt-2 border-t border-[#17402C]/10">
+              <button
+                type="button"
+                onClick={handlePublish}
+                disabled={saving || !form.title.trim()}
+                className="w-full glass-capsule-btn primary py-2 text-xs font-bold flex items-center justify-center gap-1.5"
+              >
+                <Icon name="PlusIcon" size={13} className="relative z-10" />
+                <span className="relative z-10">{saving ? 'Création...' : 'Fonder le club'}</span>
+              </button>
             </div>
           </div>
-
-
-          {/* WIDGET 3: Promo / Tip Box */}
-          <div className="bg-[#1C2620] rounded-[0.75rem] p-6 text-white space-y-3 relative overflow-hidden shadow-lg border border-[#2D5A3D]">
-            <div className="absolute top-0 right-0 w-32 h-32 bg-[#2D5A3D]/20 rounded-full blur-2xl -translate-y-1/2 translate-x-1/3"></div>
-            <div className="text-[10px] font-mono tracking-widest text-[#2D5A3D] uppercase font-bold relative z-10">AVIS DE VOYAGEUR</div>
-            <h4 className="font-display font-800 text-sm relative z-10">Un club vit dans la durée.</h4>
-            <p className="text-xs text-white/70 leading-relaxed relative z-10">
-              Pour une sortie ponctuelle avec 5 amis, mieux vaut créer un groupe. Ce club est fait pour des mois d'aventures partagées.
-            </p>
-            <button type="button" onClick={() => router.push('/nouveau-groupe')} className="text-[10px] text-white font-bold underline decoration-white/30 hover:decoration-white transition-all pt-2 relative z-10">
-              Créer un groupe/sortie →
-            </button>
-          </div>
-
-        </div>
-
-      </div>
-
-      {/* 4. FLOATING BOTTOM BAR */}
-      <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-50 bg-white/95 backdrop-blur-md text-[#1C2620] px-6 py-3.5 rounded-full shadow-2xl flex items-center gap-6 border border-[#E8E4D8] max-w-2xl w-11/12 justify-between">
-        <div className="text-xs text-[#5C6B5E] hidden sm:flex items-center gap-2">
-          <span className="w-2 h-2 rounded-full bg-[#2D5A3D]"></span>
-          <strong>Prêt à publier :</strong> Les infos essentielles sont remplies
-        </div>
-
-        <div className="flex items-center gap-3 w-full sm:w-auto justify-end">
-          <button
-            type="button"
-            onClick={handleSaveDraft}
-            className="px-4 py-2 text-xs font-semibold text-[#5C6B5E] hover:text-[#1C2620] transition-colors"
-          >
-            Enregistrer en brouillon
-          </button>
-          <button 
-            type="button" 
-            onClick={() => alert("Aperçu non disponible pour le moment.")}
-            className="px-6 py-2 rounded-xl text-[#5C6B5E] text-sm font-bold hover:bg-[#F5F2E8] transition-colors"
-          >
-            Aperçu public
-          </button>
-          
-          <button
-            onClick={() => handlePublish(false)}
-            disabled={saving || !form.title.trim()}
-            className="px-6 py-2.5 bg-[#1C2620] hover:bg-[#2D5A3D] text-white rounded-full text-xs font-bold shadow-lg transition-all disabled:opacity-50"
-          >
-            {saving ? 'Création...' : saveSuccess ? '✓ Créé !' : 'Créer le club'}
-          </button>
-        </div>
-      </div>
-
+        </aside>
+      </main>
     </div>
   );
 }

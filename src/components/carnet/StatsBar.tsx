@@ -16,19 +16,21 @@ export default function StatsBar({ stats }: StatsBarProps) {
   if (visibleStats.length === 0) return null;
 
   return (
-    <div className="bg-[#E7E3D6] border-b border-[#1C2620]/10">
-      <div className="max-w-7xl mx-auto px-4 sm:px-8 lg:px-12 py-8">
-        <div className="flex flex-wrap items-center justify-around gap-6 md:gap-4">
-          {visibleStats.map((stat, i) => (
-            <div key={i} className="text-center min-w-[100px]">
-              <p className="font-mono text-2xl md:text-3xl font-bold text-[#1C2620] tracking-tight">{stat.value}</p>
-              <p className="font-mono text-[9px] uppercase tracking-[0.2em] text-[#1C2620]/50 mt-1">{stat.label}</p>
-              {stat.sublabel && (
-                <p className="text-[10px] italic text-[#1C2620]/40 mt-0.5">{stat.sublabel}</p>
-              )}
-            </div>
-          ))}
-        </div>
+    <div className="glass bg-white/90 backdrop-blur-xl rounded-2xl p-4 sm:p-5 border border-white shadow-sm">
+      <div className="flex flex-wrap items-center justify-around gap-4 md:gap-2 divide-y md:divide-y-0 md:divide-x divide-[#17402C]/10">
+        {visibleStats.map((stat, i) => (
+          <div key={i} className="text-center flex-1 min-w-[100px] pt-2 md:pt-0">
+            <p className="font-mono text-2xl sm:text-3xl font-bold text-[#17402C] tracking-tight">
+              {stat.value}
+            </p>
+            <p className="font-mono text-[9.5px] uppercase tracking-[0.18em] text-[#5C6B5E] font-bold mt-1">
+              {stat.label}
+            </p>
+            {stat.sublabel && (
+              <p className="text-[10px] text-[#5C6B5E]/80 mt-0.5">{stat.sublabel}</p>
+            )}
+          </div>
+        ))}
       </div>
     </div>
   );

@@ -594,7 +594,7 @@ export function KitBuilder({
               onClick={() => setSelectedCategory(cat)}
               className={`px-2 py-0.5 rounded-full text-[9px] font-bold transition-all shrink-0 focus-visible:ring-2 focus-visible:ring-[#17402C] focus-visible:ring-offset-1 ${
                 isActive
-                  ? 'bg-[#17402C] text-white shadow-xs'
+                  ? 'bg-[#17402C] text-white '
                   : 'bg-white/[0.08] text-[#365233] hover:bg-white/20 border border-white/20'
               }`}
             >

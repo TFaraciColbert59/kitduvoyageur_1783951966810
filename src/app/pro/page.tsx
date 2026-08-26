@@ -52,18 +52,18 @@ export default function B2BPage() {
       <div className="block md:hidden">
         <MobilePageShell>
           <div style={{ padding: '16px' }}>
-            <h1 style={{ fontSize: '20px', fontWeight: 800, color: '#1C2620', marginBottom: '16px' }}>Espace Pro B2B</h1>
-            <p style={{ fontSize: '13px', color: 'rgba(28,38,32,0.6)', marginBottom: '20px' }}>Tarifs préférentiels pour les professionnels.</p>
+            <h1 style={{ fontSize: '20px', fontWeight: 800, color: '#17402C', marginBottom: '16px' }}>Espace Pro B2B</h1>
+            <p style={{ fontSize: '13px', color: 'rgba(23,64,44,0.6)', marginBottom: '20px' }}>Tarifs préférentiels pour les professionnels.</p>
             <div style={{ display: 'flex', gap: '8px', marginBottom: '20px' }}>
-              <button onClick={() => setActiveTab('plans')} style={{ padding: '8px 16px', borderRadius: '8px', background: activeTab === 'plans' ? '#17402C' : '#F4F1EA', color: activeTab === 'plans' ? 'white' : 'rgba(28,38,32,0.6)', border: 'none', fontSize: '12px', fontWeight: 600, cursor: 'pointer' }}>Offres</button>
-              <button onClick={() => setActiveTab('catalogue')} style={{ padding: '8px 16px', borderRadius: '8px', background: activeTab === 'catalogue' ? '#17402C' : '#F4F1EA', color: activeTab === 'catalogue' ? 'white' : 'rgba(28,38,32,0.6)', border: 'none', fontSize: '12px', fontWeight: 600, cursor: 'pointer' }}>Catalogue</button>
+              <button onClick={() => setActiveTab('plans')} style={{ padding: '8px 16px', borderRadius: '8px', background: activeTab === 'plans' ? '#17402C' : '#F4F1EA', color: activeTab === 'plans' ? 'white' : 'rgba(23,64,44,0.6)', border: 'none', fontSize: '12px', fontWeight: 600, cursor: 'pointer' }}>Offres</button>
+              <button onClick={() => setActiveTab('catalogue')} style={{ padding: '8px 16px', borderRadius: '8px', background: activeTab === 'catalogue' ? '#17402C' : '#F4F1EA', color: activeTab === 'catalogue' ? 'white' : 'rgba(23,64,44,0.6)', border: 'none', fontSize: '12px', fontWeight: 600, cursor: 'pointer' }}>Catalogue</button>
             </div>
             {activeTab === 'plans' && PRO_PLANS.map((plan) => (
-              <div key={plan.id} style={{ background: '#FBFAF6', borderRadius: '12px', border: '1px solid rgba(11,31,23,0.06)', padding: '16px', marginBottom: '12px' }}>
-                <h3 style={{ fontSize: '16px', fontWeight: 700, color: '#1C2620', marginBottom: '4px' }}>{plan.name}</h3>
-                <p style={{ fontSize: '13px', color: 'rgba(28,38,32,0.5)', marginBottom: '8px' }}>{plan.description}</p>
+              <div key={plan.id} style={{ background: '#FBFAF6', borderRadius: '12px', border: '1px solid rgba(23,64,44,0.06)', padding: '16px', marginBottom: '12px' }}>
+                <h3 style={{ fontSize: '16px', fontWeight: 700, color: '#17402C', marginBottom: '4px' }}>{plan.name}</h3>
+                <p style={{ fontSize: '13px', color: 'rgba(23,64,44,0.5)', marginBottom: '8px' }}>{plan.description}</p>
                 <p style={{ fontSize: '28px', fontWeight: 800, color: '#17402C', marginBottom: '12px' }}>{plan.price}€<span style={{ fontSize: '13px', fontWeight: 400 }}>/{plan.period}</span></p>
-                <ul style={{ marginBottom: '12px' }}>{plan.features.map((f) => <li key={f} style={{ fontSize: '13px', color: 'rgba(28,38,32,0.7)', padding: '3px 0' }}>✓ {f}</li>)}</ul>
+                <ul style={{ marginBottom: '12px' }}>{plan.features.map((f) => <li key={f} style={{ fontSize: '13px', color: 'rgba(23,64,44,0.7)', padding: '3px 0' }}>✓ {f}</li>)}</ul>
                 <button onClick={() => setShowContactModal(true)} style={{ width: '100%', padding: '10px', borderRadius: '10px', background: '#17402C', color: 'white', border: 'none', fontSize: '13px', fontWeight: 600, cursor: 'pointer' }}>Choisir cette offre</button>
               </div>
             ))}

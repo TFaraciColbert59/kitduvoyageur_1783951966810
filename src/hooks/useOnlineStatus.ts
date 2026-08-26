@@ -1,27 +1,33 @@
-import { useState, useEffect } from 'react';
+﻿"use client";
+
+import { useState, useEffect } from "react";
+import { getNetworkState, onNetworkChange } from "@/lib/native/network";
 
 export function useOnlineStatus() {
   const [isOnline, setIsOnline] = useState(
-    typeof navigator !== 'undefined' ? navigator.onLine : true
+    typeof navigator !== "undefined" ? navigator.onLine : true
   );
   const [lastOnline, setLastOnline] = useState<Date | null>(null);
 
   useEffect(() => {
-    const handleOnline = () => {
-      setIsOnline(true);
-      setLastOnline(new Date());
-    };
+    let cleanup: (() => void) | undefined;
 
-    const handleOffline = () => {
-      setIsOnline(false);
-    };
+    getNetworkState().then((state) => {
+      setIsOnline(state.connected);
+      if (state.connected) setLastOnline(new Date());
+    });
 
-    window.addEventListener('online', handleOnline);
-    window.addEventListener('offline', handleOffline);
+    onNetworkChange((state) => {
+      setIsOnline(state.connected);
+      if (state.connected) {
+        setLastOnline(new Date());
+      }
+    }).then((unsub) => {
+      cleanup = unsub;
+    });
 
     return () => {
-      window.removeEventListener('online', handleOnline);
-      window.removeEventListener('offline', handleOffline);
+      cleanup?.();
     };
   }, []);
 

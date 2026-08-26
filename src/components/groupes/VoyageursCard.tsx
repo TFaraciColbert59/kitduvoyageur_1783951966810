@@ -190,9 +190,7 @@ export default function VoyageursCard({ travelers, groupId, onRefresh, user, mem
       
       toast(`Vous avez rejoint "${targetGroup.name}" !`, 'success');
       setJoinCode('');
-      // If we joined the CURRENT group, refresh
       if (targetGroup.id === groupId && onRefresh) onRefresh();
-      // Or maybe redirect if different
     } catch (err: any) {
       toast(err.message || 'Erreur', 'error');
     }
@@ -200,171 +198,121 @@ export default function VoyageursCard({ travelers, groupId, onRefresh, user, mem
   };
 
   return (
-    <div className="bg-white rounded-[0.75rem] p-6 border border-[#1C2620]/10 shadow-sm active:scale-[0.98] active:opacity-95 transition-all duration-150 cursor-pointer">
-      <div className="flex justify-between items-start mb-2">
-        <h2 className="font-display text-xl text-[#1C2620]">Voyageurs <span className="font-serif italic font-bold">du groupe</span></h2>
+    <div className="glass p-3.5 transition-all duration-300 space-y-2.5">
+      <div className="flex justify-between items-center">
+        <h2 className="font-display font-bold text-xs text-[#17402C]">
+          Voyageurs ({travelers.length})
+        </h2>
         {isOrganizer && (
           <button 
             onClick={openManage}
-            className="text-xs font-medium text-[#17402C] hover:underline font-sans"
+            className="glass-capsule-btn py-0.5 px-2 text-[10px] font-bold"
           >
-            Gérer →
+            <span className="relative z-10">Gérer →</span>
           </button>
         )}
       </div>
       
-      <p className="text-sm text-[#1C2620]/80 font-sans mb-6">
-        {travelers.length} personnes, statut de préparation en un coup d'œil
-      </p>
-      
-      <div className="space-y-4 mb-6">
-        {travelers.map(t => (
-          <div key={t.id} className="flex items-center gap-3">
-            <Link href={t.user_id ? `/profil/${t.user_id}` : '#'} className="relative">
-              <div className="w-10 h-10 rounded-full bg-[#E7E3D6] flex items-center justify-center text-[#1C2620] font-bold text-sm">
+      <div className="space-y-1.5">
+        {travelers.slice(0, 3).map(t => (
+          <div key={t.id} className="flex items-center gap-2 glass-sub-card p-2 rounded-xl">
+            <Link href={t.user_id ? `/profil/${t.user_id}` : '#'} className="relative shrink-0">
+              <div className="w-6 h-6 rounded-full bg-[#17402C]/10 flex items-center justify-center text-[#17402C] font-bold text-[10px]">
                 {t.name.charAt(0)}
               </div>
-              {t.progress < 100 && t.progress > 0 && (
-                <svg className="absolute -inset-1 w-12 h-12 -rotate-90">
-                  <circle cx="24" cy="24" r="22" stroke="currentColor" strokeWidth="2" fill="none" className="text-[#1C2620]/10" />
-                  <circle cx="24" cy="24" r="22" stroke="currentColor" strokeWidth="2" fill="none" strokeDasharray="138" strokeDashoffset={138 - (138 * t.progress) / 100} className="text-[#17402C]" />
-                </svg>
-              )}
             </Link>
             
             <div className="flex-1 min-w-0">
-              {t.user_id ? (
-                <Link href={`/profil/${t.user_id}`} className="font-sans font-semibold text-sm text-[#1C2620] truncate block hover:text-[#17402C] hover:underline">
-                  {t.name}
-                </Link>
-              ) : (
-                <h3 className="font-sans font-semibold text-sm text-[#1C2620] truncate">{t.name}</h3>
-              )}
-              <p className="text-xs text-[#1C2620]/50 font-sans truncate">{t.role}</p>
+              <span className="font-sans font-bold text-xs text-[#17402C] truncate block leading-tight">
+                {t.name}
+              </span>
             </div>
             
             {t.status ? (
-              <span className={`text-[9px] font-mono uppercase tracking-widest px-2 py-0.5 rounded-sm whitespace-nowrap
-                ${t.status === 'Prêt' ? 'bg-[#33463C]/10 text-[#33463C]' : 'bg-[#1C2620]/5 text-[#1C2620]/50'}`}>
+              <span className="glass-pill text-[9px] py-0.2 px-1.5 shrink-0">
                 {t.status}
               </span>
             ) : (
-              <span className="text-[10px] font-mono font-bold text-[#17402C] whitespace-nowrap">
+              <span className="text-[9px] font-mono font-bold text-[#17402C] shrink-0">
                 {t.progress}%
               </span>
             )}
           </div>
         ))}
-      </div>
-      
-      <div className="flex flex-col gap-2">
-        {group?.invite_code && (
-          <div className="flex items-center gap-2 p-2 bg-[#E7E3D6]/20 rounded-xl border border-[#1C2620]/5 mb-2 text-center text-xs text-[#1C2620]/60">
-            <span>Code groupe :</span>
-            <strong className="font-mono text-[#1C2620] text-sm tracking-widest">{group.invite_code}</strong>
-          </div>
-        )}
-        
-        {!members?.find(m => m.user_id === user?.id) && (
-          <div className="flex gap-2">
-            <input
-              value={joinCode}
-              onChange={e => setJoinCode(e.target.value.toUpperCase())}
-              placeholder="Code d'invitation"
-              className="flex-1 bg-white border border-[#1C2620]/10 rounded-xl px-3 py-2 text-xs text-[#1C2620] focus:outline-none focus:border-[#17402C]/60"
-              onKeyDown={e => e.key === 'Enter' && handleJoinByCode()}
-            />
-            <button 
-              onClick={handleJoinByCode} 
-              disabled={joining} 
-              className="bg-[#1C2620] text-white text-xs px-3 py-2 rounded-xl transition-colors font-semibold"
-            >
-              {joining ? '...' : 'Rejoindre'}
-            </button>
-          </div>
-        )}
-
-        {isOrganizer && (
-          <button 
-            onClick={openManage}
-            className="w-full py-3 bg-[#E7E3D6]/30 border border-[#1C2620]/10 rounded-xl flex items-center justify-center gap-2 text-sm font-semibold text-[#1C2620] hover:bg-[#E7E3D6]/50 transition-colors"
-          >
-            <Icon name="UserPlusIcon" size={16} />
-            + Inviter un ami
-          </button>
-        )}
-
-        {!isOrganizer && members?.some((m: any) => m.user_id === user?.id) && (
-          <button
-            onClick={handleLeaveGroup}
-            disabled={loadingId !== null}
-            className="w-full py-2.5 bg-red-500/10 border border-red-500/20 text-red-700 hover:bg-red-500/20 rounded-xl text-xs font-semibold transition-colors mt-1"
-          >
-            Quitter le groupe (sans pénalité)
+        {travelers.length > 3 && (
+          <button onClick={openManage} className="text-[10px] text-[#5C6B5E] font-medium text-center w-full block hover:underline pt-0.5">
+            + {travelers.length - 3} autre{travelers.length - 3 > 1 ? 's' : ''} voyageur{travelers.length - 3 > 1 ? 's' : ''}
           </button>
         )}
       </div>
+
+      {group?.invite_code && (
+        <div className="flex items-center justify-between p-2 glass-sub-card rounded-xl text-[10px] text-[#5C6B5E] border-t border-[#17402C]/10">
+          <span>Code invitation :</span>
+          <strong className="font-mono text-[#17402C] font-bold tracking-widest">{group.invite_code}</strong>
+        </div>
+      )}
 
       {/* Modal de gestion (Admin Only) */}
       {showManageModal && isOrganizer && (
-        <div className="fixed inset-0 bg-black/60 z-[100] flex items-center justify-center p-4">
-          <div className="bg-white rounded-[0.75rem] p-8 max-w-md w-full shadow-2xl relative active:scale-[0.98] active:opacity-95 transition-all duration-150 cursor-pointer">
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-md z-[100] flex items-center justify-center p-4">
+          <div className="glass rounded-2xl p-6 max-w-md w-full relative">
             <button 
               onClick={() => setShowManageModal(false)}
-              className="absolute top-6 right-6 text-[#1C2620]/50 hover:text-[#1C2620]"
+              className="glass-capsule-btn p-2 absolute top-6 right-6"
             >
-              <Icon name="XMarkIcon" size={24} />
+              <Icon name="XMarkIcon" size={18} className="relative z-10" />
             </button>
-            <h2 className="font-display text-2xl text-[#1C2620] mb-4">Gérer les <span className="font-serif italic font-bold">membres</span></h2>
+            <h2 className="font-display font-bold text-xl text-[#17402C] mb-4">Gérer les <span className="font-serif italic font-normal text-[#17402C]">membres</span></h2>
             
-            <div className="mb-6 p-4 bg-[#E7E3D6]/30 rounded-xl border border-[#1C2620]/10">
-              <p className="text-xs font-semibold text-[#1C2620] mb-2">Code d'invitation secret :</p>
+            <div className="mb-4 p-3 glass-sub-card rounded-xl">
+              <p className="text-xs font-bold text-[#17402C] mb-2">Code d'invitation secret :</p>
               <div className="flex gap-2">
-                <input type="text" readOnly value={group?.invite_code || ''} className="flex-1 bg-white border border-[#1C2620]/10 font-mono tracking-widest font-bold rounded-lg py-2 px-3 text-sm text-[#1C2620] text-center" />
+                <input type="text" readOnly value={group?.invite_code || ''} className="glass-input flex-1 font-mono tracking-widest font-bold text-xs text-[#17402C] text-center min-h-[36px]" />
                 <button 
                   onClick={() => {
                     navigator.clipboard.writeText(group?.invite_code || '');
                     toast('Code copié !', 'success');
                   }}
-                  className="px-4 bg-[#33463C] text-white rounded-lg text-xs font-semibold"
+                  className="glass-capsule-btn primary px-4 text-xs font-bold"
                 >
-                  Copier
+                  <span className="relative z-10">Copier</span>
                 </button>
               </div>
             </div>
 
-            <div className="space-y-3 mb-6 max-h-60 overflow-y-auto pr-2 custom-scrollbar">
+            <div className="space-y-2 mb-4 max-h-52 overflow-y-auto pr-1">
               {members?.map(m => {
                 const name = m.user_profiles ? (m.user_profiles.full_name || m.user_profiles.first_name || 'Membre') : 'Utilisateur';
                 const isMe = m.user_id === user?.id;
                 
                 return (
-                <div key={m.id} className="flex items-center justify-between p-3 border border-[#1C2620]/5 rounded-xl">
+                <div key={m.id} className="flex items-center justify-between p-2.5 glass-sub-card rounded-xl">
                   <div>
                     {m.user_id ? (
-                      <Link href={`/profil/${m.user_id}`} className="text-sm font-semibold text-[#1C2620] hover:text-[#17402C] hover:underline">
+                      <Link href={`/profil/${m.user_id}`} className="text-xs font-bold text-[#17402C] hover:underline">
                         {name} {isMe && '(Vous)'}
                       </Link>
                     ) : (
-                      <p className="text-sm font-semibold text-[#1C2620]">{name} {isMe && '(Vous)'}</p>
+                      <p className="text-xs font-bold text-[#17402C]">{name} {isMe && '(Vous)'}</p>
                     )}
-                    <p className="text-xs text-[#1C2620]/50">{m.role === 'organizer' ? 'Organisateur' : 'Membre'}</p>
+                    <p className="text-[10px] text-[#5C6B5E]">{m.role === 'organizer' ? 'Organisateur' : 'Membre'}</p>
                   </div>
                   {!isMe && (
-                    <div className="flex gap-2">
+                    <div className="flex gap-1.5">
                       <button 
                         onClick={() => handleChangeRole(m.id, m.role)}
                         disabled={loadingId === m.id}
-                        className="text-xs text-[#1C2620]/50 hover:text-[#1C2620] font-medium hover:underline disabled:opacity-50"
+                        className="glass-capsule-btn py-1 px-2 text-[10px] font-semibold disabled:opacity-50"
                       >
-                        {m.role === 'organizer' ? 'Rétrograder' : 'Promouvoir'}
+                        <span className="relative z-10">{m.role === 'organizer' ? 'Rétrograder' : 'Promouvoir'}</span>
                       </button>
                       <button 
                         onClick={() => handleRemoveMember(m.id)}
                         disabled={loadingId === m.id}
-                        className="text-xs text-red-600 font-medium hover:underline disabled:opacity-50"
+                        className="glass-capsule-btn py-1 px-2 text-[10px] font-semibold text-red-600 disabled:opacity-50"
                       >
-                        {loadingId === m.id ? '...' : 'Retirer'}
+                        <span className="relative z-10">{loadingId === m.id ? '...' : 'Retirer'}</span>
                       </button>
                     </div>
                   )}
@@ -372,38 +320,38 @@ export default function VoyageursCard({ travelers, groupId, onRefresh, user, mem
               )})}
             </div>
 
-            {/* Inviter un membre (organisateur) */}
+            {/* Inviter un membre */}
             {isOrganizer && (
-              <div className="mb-6">
-                <p className="text-xs font-semibold text-[#1C2620] mb-2">Inviter un membre</p>
+              <div className="mb-4">
+                <p className="text-xs font-bold text-[#17402C] mb-2">Inviter un membre</p>
                 <div className="relative">
                   <input
                     type="text"
                     value={memberQuery}
                     onChange={e => searchMembers(e.target.value)}
-                    placeholder="Rechercher par nom d'utilisateur..."
-                    className="w-full bg-[#F5F2E8] border border-[#1C2620]/10 rounded-xl px-3 py-2 text-xs focus:outline-none focus:ring-2 focus:ring-[#33463C]/20"
+                    placeholder="Rechercher par nom..."
+                    className="glass-input w-full text-xs min-h-[36px]"
                   />
                   {memberSearchBusy && (
-                    <div className="absolute right-3 top-1/2 -translate-y-1/2 w-3 h-3 border-2 border-[#33463C] border-t-transparent rounded-full animate-spin" />
+                    <div className="absolute right-3 top-1/2 -translate-y-1/2 w-3 h-3 border-2 border-[#17402C] border-t-transparent rounded-full animate-spin" />
                   )}
                 </div>
                 {memberResults.length > 0 && (
-                  <div className="mt-2 space-y-1 max-h-40 overflow-y-auto">
+                  <div className="mt-2 space-y-1 max-h-36 overflow-y-auto">
                     {memberResults.map(p => (
-                      <div key={p.id} className="flex items-center justify-between bg-white border border-[#1C2620]/10 rounded-xl px-3 py-2">
+                      <div key={p.id} className="flex items-center justify-between glass-sub-card p-2 rounded-xl">
                         <div className="flex items-center gap-2 min-w-0">
-                          <div className="w-7 h-7 rounded-full bg-[#33463C]/10 flex items-center justify-center text-[10px] font-bold text-[#33463C] shrink-0">
+                          <div className="w-6 h-6 rounded-full bg-[#17402C]/10 flex items-center justify-center text-[10px] font-bold text-[#17402C] shrink-0">
                             {p.full_name?.charAt(0) || '?'}
                           </div>
-                          <span className="text-xs font-semibold text-[#1C2620] truncate">{p.full_name}</span>
+                          <span className="text-xs font-semibold text-[#17402C] truncate">{p.full_name}</span>
                         </div>
                         <button
                           onClick={() => addMember(p)}
                           disabled={addingId === p.id}
-                          className="px-3 py-1 bg-[#33463C] hover:bg-[#33463C]/90 text-white rounded-full text-[10px] font-bold disabled:opacity-50 shrink-0"
+                          className="glass-capsule-btn primary py-1 px-2.5 text-[10px] font-bold disabled:opacity-50 shrink-0"
                         >
-                          {addingId === p.id ? '...' : '+ Inviter'}
+                          <span className="relative z-10">{addingId === p.id ? '...' : '+ Inviter'}</span>
                         </button>
                       </div>
                     ))}
@@ -412,49 +360,11 @@ export default function VoyageursCard({ travelers, groupId, onRefresh, user, mem
               </div>
             )}
 
-            {/* Invitations en attente (organisateur) */}
-            {isOrganizer && pendingMembers.length > 0 && (
-              <div className="mb-6">
-                <p className="text-xs font-semibold text-[#1C2620] mb-2">
-                  Invitations en attente ({pendingMembers.length})
-                </p>
-                <div className="space-y-2 max-h-60 overflow-y-auto pr-1 custom-scrollbar">
-                  {pendingMembers.map(pm => {
-                    const name = pm.profile?.full_name || pm.profile?.first_name || 'Invité';
-                    return (
-                      <div key={pm.id} className="flex items-center justify-between p-3 border border-amber-200 bg-amber-50/50 rounded-xl">
-                        <div>
-                          <p className="text-sm font-semibold text-[#1C2620]">{name}</p>
-                          <p className="text-xs text-[#1C2620]/50">En attente d'acceptation</p>
-                        </div>
-                        <div className="flex gap-2">
-                          <button
-                            onClick={() => acceptPending(pm.id, pm.user_id)}
-                            disabled={loadingId === pm.id}
-                            className="text-xs text-[#33463C] font-semibold hover:underline disabled:opacity-50"
-                          >
-                            {loadingId === pm.id ? '...' : 'Accepter'}
-                          </button>
-                          <button
-                            onClick={() => removePending(pm.id)}
-                            disabled={loadingId === pm.id}
-                            className="text-xs text-red-600 font-semibold hover:underline disabled:opacity-50"
-                          >
-                            Refuser
-                          </button>
-                        </div>
-                      </div>
-                    );
-                  })}
-                </div>
-              </div>
-            )}
-
             <button 
               onClick={() => setShowManageModal(false)}
-              className="w-full py-3 bg-[#1C2620] text-white rounded-xl text-sm font-semibold"
+              className="w-full glass-capsule-btn primary py-2.5 text-xs font-bold"
             >
-              Terminé
+              <span className="relative z-10">Terminé</span>
             </button>
           </div>
         </div>

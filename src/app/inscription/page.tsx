@@ -80,28 +80,28 @@ export default function InscriptionPage() {
   const mobileContent = (
     <div style={{ padding: '16px' }}>
       {success ? (
-        <div style={{ textAlign: 'center', padding: '24px 16px', background: '#FBFAF6', borderRadius: '12px', border: '1px solid rgba(11,31,23,0.06)' }}>
+        <div style={{ textAlign: 'center', padding: '24px 16px', background: '#FBFAF6', borderRadius: '12px', border: '1px solid rgba(23,64,44,0.06)' }}>
           <p style={{ fontSize: '32px', marginBottom: '12px', color: '#10b981' }}>✓</p>
-          <h2 style={{ fontSize: '20px', fontWeight: 800, color: '#1C2620', marginBottom: '8px' }}>Compte créé !</h2>
-          <p style={{ fontSize: '13px', color: 'rgba(28,38,32,0.6)', marginBottom: '16px' }}>Un email de confirmation a été envoyé à <strong>{form.email}</strong>.</p>
+          <h2 style={{ fontSize: '20px', fontWeight: 800, color: '#17402C', marginBottom: '8px' }}>Compte créé !</h2>
+          <p style={{ fontSize: '13px', color: 'rgba(23,64,44,0.6)', marginBottom: '16px' }}>Un email de confirmation a été envoyé à <strong>{form.email}</strong>.</p>
           <Link href="/connexion" style={{ display: 'inline-flex', alignItems: 'center', gap: '8px', background: '#17402C', color: 'white', padding: '10px 24px', borderRadius: '12px', fontSize: '14px', fontWeight: 600, textDecoration: 'none' }}>Se connecter</Link>
         </div>
       ) : (
         <div>
           <p style={{ fontSize: '11px', fontFamily: 'var(--font-mono)', color: '#17402C', letterSpacing: '0.14em', textTransform: 'uppercase', marginBottom: '8px', textAlign: 'center' }}>Rejoindre la communauté</p>
-          <h1 style={{ fontSize: '24px', fontWeight: 800, color: '#1C2620', textAlign: 'center', marginBottom: '4px' }}>Créer un compte</h1>
-          <p style={{ fontSize: '13px', color: 'rgba(28,38,32,0.5)', textAlign: 'center', marginBottom: '24px' }}>Configurez vos kits, sauvegardez vos aventures</p>
+          <h1 style={{ fontSize: '24px', fontWeight: 800, color: '#17402C', textAlign: 'center', marginBottom: '4px' }}>Créer un compte</h1>
+          <p style={{ fontSize: '13px', color: 'rgba(23,64,44,0.5)', textAlign: 'center', marginBottom: '24px' }}>Configurez vos kits, sauvegardez vos aventures</p>
           {error && <div style={{ background: '#FEE2E2', border: '1px solid #FECACA', borderRadius: '10px', padding: '10px 14px', marginBottom: '16px', fontSize: '13px', color: '#DC2626' }}>{error}</div>}
-          <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '12px', background: '#FBFAF6', padding: '20px', borderRadius: '12px', border: '1px solid rgba(11,31,23,0.06)' }}>
-            <input type="text" required autoComplete="name" value={form.fullName} onChange={(e) => setForm({ ...form, fullName: e.target.value })} placeholder="Nom complet *" style={{ padding: '10px 12px', borderRadius: '10px', border: '1px solid rgba(11,31,23,0.06)', background: '#FBFAF6', fontSize: '14px', color: '#1C2620' }} />
-            <input type="email" required autoComplete="email" value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} placeholder="Email *" style={{ padding: '10px 12px', borderRadius: '10px', border: '1px solid rgba(11,31,23,0.06)', background: '#FBFAF6', fontSize: '14px', color: '#1C2620' }} />
-            <input type="password" required autoComplete="new-password" value={form.password} onChange={(e) => setForm({ ...form, password: e.target.value })} placeholder="Mot de passe *" style={{ padding: '10px 12px', borderRadius: '10px', border: '1px solid rgba(11,31,23,0.06)', background: '#FBFAF6', fontSize: '14px', color: '#1C2620' }} />
-            <input type="password" required autoComplete="new-password" value={form.confirm} onChange={(e) => setForm({ ...form, confirm: e.target.value })} placeholder="Confirmer le mot de passe *" style={{ padding: '10px 12px', borderRadius: '10px', border: '1px solid rgba(11,31,23,0.06)', background: '#FBFAF6', fontSize: '14px', color: '#1C2620' }} />
+          <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '12px', background: '#FBFAF6', padding: '20px', borderRadius: '12px', border: '1px solid rgba(23,64,44,0.06)' }}>
+            <input type="text" required autoComplete="name" value={form.fullName} onChange={(e) => setForm({ ...form, fullName: e.target.value })} placeholder="Nom complet *" style={{ padding: '10px 12px', borderRadius: '10px', border: '1px solid rgba(23,64,44,0.06)', background: '#FBFAF6', fontSize: '14px', color: '#17402C' }} />
+            <input type="email" required autoComplete="email" value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} placeholder="Email *" style={{ padding: '10px 12px', borderRadius: '10px', border: '1px solid rgba(23,64,44,0.06)', background: '#FBFAF6', fontSize: '14px', color: '#17402C' }} />
+            <input type="password" required autoComplete="new-password" value={form.password} onChange={(e) => setForm({ ...form, password: e.target.value })} placeholder="Mot de passe *" style={{ padding: '10px 12px', borderRadius: '10px', border: '1px solid rgba(23,64,44,0.06)', background: '#FBFAF6', fontSize: '14px', color: '#17402C' }} />
+            <input type="password" required autoComplete="new-password" value={form.confirm} onChange={(e) => setForm({ ...form, confirm: e.target.value })} placeholder="Confirmer le mot de passe *" style={{ padding: '10px 12px', borderRadius: '10px', border: '1px solid rgba(23,64,44,0.06)', background: '#FBFAF6', fontSize: '14px', color: '#17402C' }} />
             <button type="submit" disabled={loading} style={{ background: '#17402C', color: 'white', border: 'none', padding: '12px', borderRadius: '12px', fontSize: '14px', fontWeight: 600, cursor: loading ? 'not-allowed' : 'pointer', opacity: loading ? 0.6 : 1, marginTop: '4px' }}>
               {loading ? 'Création en cours…' : 'Créer mon compte'}
             </button>
           </form>
-          <p style={{ textAlign: 'center', fontSize: '12px', color: 'rgba(28,38,32,0.5)', marginTop: '16px' }}>Déjà un compte ? <Link href="/connexion" style={{ color: '#17402C' }}>Se connecter</Link></p>
+          <p style={{ textAlign: 'center', fontSize: '12px', color: 'rgba(23,64,44,0.5)', marginTop: '16px' }}>Déjà un compte ? <Link href="/connexion" style={{ color: '#17402C' }}>Se connecter</Link></p>
         </div>
       )}
     </div>

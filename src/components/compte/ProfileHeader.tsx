@@ -1,4 +1,4 @@
-'use client';
+﻿'use client';
 
 import React from 'react';
 import AppImage from '@/components/ui/AppImage';
@@ -36,7 +36,7 @@ export default function ProfileHeader({
         <div className="flex items-start gap-4 sm:gap-5 min-w-0">
           {/* Avatar Container */}
           <div className="relative shrink-0">
-            <div className="w-20 h-20 sm:w-24 sm:h-24 rounded-2xl overflow-hidden border-2 border-white shadow-md bg-[#F4F1EB]">
+            <div className="w-20 h-20 sm:w-24 sm:h-24 rounded-2xl overflow-hidden border-2 border-white  bg-[#F4F1EB]">
               <AppImage
                 src={profile?.avatar_url || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=400&q=80'}
                 alt={fullName}
@@ -57,7 +57,7 @@ export default function ProfileHeader({
           {/* Text Details */}
           <div className="min-w-0 flex-1">
             <div className="flex items-center gap-2 flex-wrap">
-              <h1 className="text-xl sm:text-2xl font-bold tracking-tight text-[#0B1F17] truncate leading-tight">
+              <h1 className="text-xl sm:text-2xl font-bold tracking-tight text-[#17402C] truncate leading-tight">
                 {fullName}
               </h1>
               {profile?.level && (
@@ -67,17 +67,17 @@ export default function ProfileHeader({
               )}
             </div>
 
-            <p className="text-xs font-mono text-[#5C6B63] mt-0.5 truncate">
+            <p className="text-xs font-mono text-[#5A7064] mt-0.5 truncate">
               {username}
             </p>
 
             {profile?.bio && (
-              <p className="text-xs sm:text-sm text-[#2C3A33] mt-2 line-clamp-2 leading-relaxed">
+              <p className="text-xs sm:text-sm text-[#365233] mt-2 line-clamp-2 leading-relaxed">
                 {profile.bio}
               </p>
             )}
 
-            <div className="flex items-center gap-3 mt-2.5 text-xs text-[#5C6B63] flex-wrap">
+            <div className="flex items-center gap-3 mt-2.5 text-xs text-[#5A7064] flex-wrap">
               {profile?.location && (
                 <span className="flex items-center gap-1">
                   <span>📍</span>
@@ -101,7 +101,7 @@ export default function ProfileHeader({
               triggerHaptic('light');
               onEdit();
             }}
-            className="flex-1 sm:flex-initial px-4 py-2.5 rounded-xl bg-[#F4F1EB] hover:bg-[#EBE7DF] text-[#0B1F17] font-semibold text-xs transition-colors flex items-center justify-center gap-1.5 active:scale-95"
+            className="flex-1 sm:flex-initial px-4 py-2.5 rounded-xl bg-[#F4F1EB] hover:bg-[#EBE7DF] text-[#17402C] font-semibold text-xs transition-colors flex items-center justify-center gap-1.5 active:scale-95"
           >
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
               <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7" />
@@ -115,7 +115,7 @@ export default function ProfileHeader({
               triggerHaptic('light');
               onShare();
             }}
-            className="p-2.5 rounded-xl bg-[#F4F1EB] hover:bg-[#EBE7DF] text-[#0B1F17] transition-colors flex items-center justify-center active:scale-95"
+            className="p-2.5 rounded-xl bg-[#F4F1EB] hover:bg-[#EBE7DF] text-[#17402C] transition-colors flex items-center justify-center active:scale-95"
             title="Partager mon profil"
             aria-label="Partager"
           >
@@ -133,7 +133,7 @@ export default function ProfileHeader({
               triggerHaptic('light');
               onSettings();
             }}
-            className="p-2.5 rounded-xl bg-[#F4F1EB] hover:bg-[#EBE7DF] text-[#0B1F17] transition-colors flex items-center justify-center active:scale-95"
+            className="p-2.5 rounded-xl bg-[#F4F1EB] hover:bg-[#EBE7DF] text-[#17402C] transition-colors flex items-center justify-center active:scale-95"
             title="Paramètres"
             aria-label="Paramètres"
           >

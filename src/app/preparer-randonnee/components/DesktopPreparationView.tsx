@@ -102,7 +102,7 @@ export const DesktopPreparationView: React.FC<DesktopPreparationViewProps> = ({
 
 
   return (
-    <div className="fixed inset-0 z-50 h-screen w-screen overflow-hidden font-sans text-[#1C2620] bg-[#1C2620]">
+    <div className="fixed inset-0 z-50 h-screen w-screen overflow-hidden font-sans text-[#17402C] bg-[#17402C]">
       
       {/* FULL SCREEN BACKGROUND MAP */}
       <div className="absolute inset-0 w-full h-full">
@@ -117,7 +117,7 @@ export const DesktopPreparationView: React.FC<DesktopPreparationViewProps> = ({
       {/* LEFT COLUMN OVERLAY: 80% Transparent Header & Weather Capsule (Layer 10) */}
       <div className="absolute top-0 left-0 bottom-0 w-[52%] z-10 flex flex-col justify-between p-6 pointer-events-none">
         {/* Top Header Overlay (Compact Glass Capsule) */}
-        <div className="pointer-events-auto w-fit max-w-md bg-black/20 backdrop-blur-md p-3.5 px-4 rounded-2xl border border-white/25 shadow-2xl">
+        <div className="pointer-events-auto w-fit max-w-md bg-black/20 backdrop-blur-md p-3.5 px-4 rounded-2xl border border-white/25 ">
           <div className="flex items-center gap-2.5 mb-1.5">
             <button 
               onClick={() => {
@@ -127,7 +127,7 @@ export const DesktopPreparationView: React.FC<DesktopPreparationViewProps> = ({
                   router.push('/explorer');
                 }
               }}
-              className="inline-flex items-center gap-1 text-white/95 hover:text-white bg-white/15 hover:bg-white/30 backdrop-blur-xl px-2.5 py-0.5 rounded-full transition-all text-[11px] font-semibold tracking-wide border border-white/30 shadow-sm"
+              className="inline-flex items-center gap-1 text-white/95 hover:text-white bg-white/15 hover:bg-white/30 backdrop-blur-xl px-2.5 py-0.5 rounded-full transition-all text-[11px] font-semibold tracking-wide border border-white/30 "
             >
               <Icon name="back" className="w-3 h-3" /> Explorer
             </button>
@@ -141,16 +141,16 @@ export const DesktopPreparationView: React.FC<DesktopPreparationViewProps> = ({
           </h1>
           
           <div className="flex items-center gap-1.5 flex-wrap">
-             <span className="flex items-center gap-1 text-white bg-black/45 backdrop-blur-xl px-2.5 py-1 rounded-full text-[11px] font-mono font-black border border-white/25 shadow-sm">
+             <span className="flex items-center gap-1 text-white bg-black/45 backdrop-blur-xl px-2.5 py-1 rounded-full text-[11px] font-mono font-black border border-white/25 ">
                <Icon name="route" className="w-3 h-3 text-[#A7D3A6]" /> {Number(route.distance_km || route.distanceKm || 0).toFixed(1)} km
              </span>
-             <span className="flex items-center gap-1 text-white bg-black/45 backdrop-blur-xl px-2.5 py-1 rounded-full text-[11px] font-mono font-black border border-white/25 shadow-sm">
+             <span className="flex items-center gap-1 text-white bg-black/45 backdrop-blur-xl px-2.5 py-1 rounded-full text-[11px] font-mono font-black border border-white/25 ">
                <Icon name="clock" className="w-3 h-3 text-[#A7D3A6]" /> {route.duration_hours || route.durationHours ? `${route.duration_hours || route.durationHours}h` : 'N/A'}
              </span>
-             <span className="flex items-center gap-1 text-white bg-black/45 backdrop-blur-xl px-2.5 py-1 rounded-full text-xs font-mono font-black border border-white/25 shadow-sm">
+             <span className="flex items-center gap-1 text-white bg-black/45 backdrop-blur-xl px-2.5 py-1 rounded-full text-xs font-mono font-black border border-white/25 ">
                <Icon name="mountain" className="w-3 h-3 text-[#A7D3A6]" /> D+{Math.round(route.elevation_gain || route.elevationGainM || 0)}m
              </span>
-             <span className="flex items-center gap-1 text-[#1C2620] bg-[#A7D3A6]/90 backdrop-blur-md px-2.5 py-1 rounded-full text-[11px] font-mono font-black shadow-sm border border-white/40">
+             <span className="flex items-center gap-1 text-[#17402C] bg-[#A7D3A6]/90 backdrop-blur-md px-2.5 py-1 rounded-full text-[11px] font-mono font-black  border border-white/40">
                <Icon name="spark" className="w-3 h-3 opacity-80" /> {diffLabel}
              </span>
           </div>
@@ -158,7 +158,7 @@ export const DesktopPreparationView: React.FC<DesktopPreparationViewProps> = ({
           <div className="mt-3 pt-2 border-t border-white/20">
              <button
                onClick={() => setShowDateModal(true)}
-               className="w-full bg-white hover:bg-[#FBFAF6] text-[#0B1F17] py-2 px-3 rounded-xl font-bold text-xs shadow-md flex items-center justify-center gap-2 transition-all cursor-pointer border border-black/10 active:scale-98"
+               className="w-full bg-white hover:bg-[#FBFAF6] text-[#17402C] py-2 px-3 rounded-xl font-bold text-xs  flex items-center justify-center gap-2 transition-all cursor-pointer border border-black/10 active:scale-98"
              >
                <span>📦 Continuer à préparer cette randonnée</span>
              </button>
@@ -169,30 +169,30 @@ export const DesktopPreparationView: React.FC<DesktopPreparationViewProps> = ({
         <div className="pointer-events-auto mb-2">
           <div className="inline-flex bg-white/20 backdrop-blur-md p-3.5 px-4 rounded-2xl shadow-[0_10px_35px_rgba(0,0,0,0.15)] border border-white/35 gap-4 items-center">
             <div className="flex items-center gap-2.5 border-r border-white/30 pr-4">
-               <div className="w-9 h-9 bg-white/30 backdrop-blur-md rounded-xl flex items-center justify-center text-[#1C2620] border border-white/50 shadow-sm">
+               <div className="w-9 h-9 bg-white/30 backdrop-blur-md rounded-xl flex items-center justify-center text-[#17402C] border border-white/50 ">
                  <Icon name="temp" className="w-4 h-4 text-[#17402C]" />
                </div>
                <div>
-                 <p className="text-[9px] uppercase tracking-widest font-mono text-[#1C2620] font-black drop-shadow-sm">Météo</p>
-                 <p className="text-sm font-display font-black leading-tight text-[#1C2620] drop-shadow-sm">{weatherData ? weatherData.tempC : '--'}°C</p>
+                 <p className="text-[9px] uppercase tracking-widest font-mono text-[#17402C] font-black drop-">Météo</p>
+                 <p className="text-sm font-display font-black leading-tight text-[#17402C] drop-">{weatherData ? weatherData.tempC : '--'}°C</p>
                </div>
             </div>
             <div className="flex items-center gap-2.5 border-r border-white/30 pr-4">
-               <div className="w-9 h-9 bg-blue-500/20 backdrop-blur-md rounded-xl flex items-center justify-center text-[#1e40af] border border-blue-500/30 shadow-sm">
+               <div className="w-9 h-9 bg-blue-500/20 backdrop-blur-md rounded-xl flex items-center justify-center text-[#1e40af] border border-blue-500/30 ">
                  <Icon name="cloud-rain" className="w-4 h-4" />
                </div>
                <div>
-                 <p className="text-[9px] uppercase tracking-widest font-mono text-[#1C2620] font-black drop-shadow-sm">Pluie</p>
-                 <p className="text-sm font-display font-black leading-tight text-[#1C2620] drop-shadow-sm">{weatherData ? Math.round(weatherData.precipitationProbability * 100) : '--'}%</p>
+                 <p className="text-[9px] uppercase tracking-widest font-mono text-[#17402C] font-black drop-">Pluie</p>
+                 <p className="text-sm font-display font-black leading-tight text-[#17402C] drop-">{weatherData ? Math.round(weatherData.precipitationProbability * 100) : '--'}%</p>
                </div>
             </div>
             <div className="flex items-center gap-2.5">
-               <div className="w-9 h-9 bg-white/30 backdrop-blur-md rounded-xl flex items-center justify-center text-[#1C2620] border border-white/50 shadow-sm">
+               <div className="w-9 h-9 bg-white/30 backdrop-blur-md rounded-xl flex items-center justify-center text-[#17402C] border border-white/50 ">
                  <Icon name="wind" className="w-4 h-4" />
                </div>
                <div>
-                 <p className="text-[9px] uppercase tracking-widest font-mono text-[#1C2620] font-black drop-shadow-sm">Vent</p>
-                 <p className="text-sm font-display font-black leading-tight text-[#1C2620] drop-shadow-sm">{weatherData?.windKmH ? Math.round(weatherData.windKmH) : '--'} km/h</p>
+                 <p className="text-[9px] uppercase tracking-widest font-mono text-[#17402C] font-black drop-">Vent</p>
+                 <p className="text-sm font-display font-black leading-tight text-[#17402C] drop-">{weatherData?.windKmH ? Math.round(weatherData.windKmH) : '--'} km/h</p>
                </div>
             </div>
           </div>
@@ -203,7 +203,7 @@ export const DesktopPreparationView: React.FC<DesktopPreparationViewProps> = ({
       <div className="absolute top-0 right-0 bottom-0 w-[48%] max-w-[580px] min-w-[380px] z-20 bg-white/20 backdrop-blur-md border-l border-white/35 flex flex-col overflow-hidden shadow-[-20px_0_60px_rgba(0,0,0,0.15)]">
         
         {/* Header / Score (80% Transparent Top Card) */}
-        <div className="p-6 border-b border-white/30 bg-white/20 backdrop-blur-md flex-shrink-0 shadow-sm">
+        <div className="p-6 border-b border-white/30 bg-white/20 backdrop-blur-md flex-shrink-0 ">
           <div className="flex items-center gap-5">
              <div className="relative w-20 h-20 flex items-center justify-center shrink-0">
                 <svg className="w-full h-full transform -rotate-90" viewBox="0 0 100 100">
@@ -218,16 +218,16 @@ export const DesktopPreparationView: React.FC<DesktopPreparationViewProps> = ({
                   />
                 </svg>
                 <div className="absolute flex flex-col items-center">
-                  <span className="text-xl font-black text-[#1C2620] drop-shadow-sm">{report.score}</span>
-                  <span className="text-[9px] font-mono text-[#1C2620] font-black">%</span>
+                  <span className="text-xl font-black text-[#17402C] drop-">{report.score}</span>
+                  <span className="text-[9px] font-mono text-[#17402C] font-black">%</span>
                 </div>
              </div>
              <div className="min-w-0">
-               <h2 className="text-[10px] font-mono tracking-widest text-[#1C2620] uppercase mb-0.5 font-black drop-shadow-sm">Ton Sac</h2>
-               <h3 className="text-xl font-display font-black text-[#1C2620] leading-tight mb-1 truncate drop-shadow-sm">
+               <h2 className="text-[10px] font-mono tracking-widest text-[#17402C] uppercase mb-0.5 font-black drop-">Ton Sac</h2>
+               <h3 className="text-xl font-display font-black text-[#17402C] leading-tight mb-1 truncate drop-">
                  {report.score >= 95 ? 'Tu es prêt à partir.' : report.score >= 85 ? 'Presque prêt.' : report.score >= 70 ? 'Encore quelques items.' : 'Il te manque l\'essentiel.'}
                </h3>
-               <p className="text-xs font-mono font-black text-[#1C2620] drop-shadow-sm">
+               <p className="text-xs font-mono font-black text-[#17402C] drop-">
                  {dispoItems.length} équipement{dispoItems.length > 1 ? 's' : ''} validé{dispoItems.length > 1 ? 's' : ''} sur {missingItems.length + matchedItems.length}
                </p>
              </div>
@@ -239,8 +239,8 @@ export const DesktopPreparationView: React.FC<DesktopPreparationViewProps> = ({
           
           {/* Section: Équipement à préparer (fusion manquant + possédé, trié) */}
           <section>
-            <h4 className="flex items-center gap-2 text-xs font-mono font-black tracking-widest text-[#1C2620] uppercase mb-3 drop-shadow-sm">
-              Équipement à préparer <span className="bg-white/20 text-[#1C2620] px-2 py-0.5 rounded-full border border-white/30 font-black">{equipmentList.length}</span>
+            <h4 className="flex items-center gap-2 text-xs font-mono font-black tracking-widest text-[#17402C] uppercase mb-3 drop-">
+              Équipement à préparer <span className="bg-white/20 text-[#17402C] px-2 py-0.5 rounded-full border border-white/30 font-black">{equipmentList.length}</span>
             </h4>
             <EquipmentUnifiedList
               items={equipmentList}
@@ -261,11 +261,11 @@ export const DesktopPreparationView: React.FC<DesktopPreparationViewProps> = ({
               </h4>
               <div className="grid gap-2.5">
                 {report.warnings.map((warn, idx) => (
-                  <div key={idx} className="bg-amber-500/15 backdrop-blur-md p-3.5 rounded-xl border border-amber-500/30 flex items-start gap-3 shadow-sm">
+                  <div key={idx} className="bg-amber-500/15 backdrop-blur-md p-3.5 rounded-xl border border-amber-500/30 flex items-start gap-3 ">
                      <div className="w-7 h-7 rounded-full bg-amber-500/25 text-amber-950 flex items-center justify-center shrink-0 mt-0.5 border border-amber-500/35">
                        <Icon name="info" className="w-4 h-4" />
                      </div>
-                     <p className="text-xs font-black text-[#1C2620] leading-relaxed pt-0.5 drop-shadow-sm">{warn}</p>
+                     <p className="text-xs font-black text-[#17402C] leading-relaxed pt-0.5 drop-">{warn}</p>
                   </div>
                 ))}
               </div>
@@ -277,22 +277,22 @@ export const DesktopPreparationView: React.FC<DesktopPreparationViewProps> = ({
         {/* Sticky Footer: 80% Transparent Safety & Action Dock */}
         <div className="bg-white/20 backdrop-blur-xl border-t border-white/35 p-5 shadow-[0_-10px_40px_rgba(0,0,0,0.1)] z-30 flex-shrink-0">
            <div className="flex items-center justify-between mb-4">
-              <div className="flex items-center gap-4 text-[#1C2620]">
+              <div className="flex items-center gap-4 text-[#17402C]">
                  <div className="flex items-center gap-1.5">
                    <div className={`w-2.5 h-2.5 rounded-full ${gearOk ? 'bg-emerald-500 shadow-[0_0_10px_#22c55e]' : 'bg-yellow-500 shadow-[0_0_10px_#eab308]'}`} />
-                   <span className="text-[10px] font-black uppercase tracking-wider drop-shadow-sm">Équipement</span>
+                   <span className="text-[10px] font-black uppercase tracking-wider drop-">Équipement</span>
                  </div>
                  <div className="flex items-center gap-1.5">
                    <div className={`w-2.5 h-2.5 rounded-full ${wState.ok && !wState.warn ? 'bg-emerald-500 shadow-[0_0_10px_#22c55e]' : wState.warn ? 'bg-yellow-500 shadow-[0_0_10px_#eab308]' : 'bg-red-500 shadow-[0_0_10px_#ef4444]'}`} />
-                   <span className="text-[10px] font-black uppercase tracking-wider drop-shadow-sm">Météo</span>
+                   <span className="text-[10px] font-black uppercase tracking-wider drop-">Météo</span>
                  </div>
                  <div className="flex items-center gap-1.5">
                    <div className={`w-2.5 h-2.5 rounded-full ${gState.ok ? 'bg-emerald-500 shadow-[0_0_10px_#22c55e]' : 'bg-yellow-500 shadow-[0_0_10px_#eab308]'}`} />
-                   <span className="text-[10px] font-black uppercase tracking-wider drop-shadow-sm">GPS</span>
+                   <span className="text-[10px] font-black uppercase tracking-wider drop-">GPS</span>
                  </div>
                  <div className="flex items-center gap-1.5">
                    <div className={`w-2.5 h-2.5 rounded-full ${oState.ok ? 'bg-emerald-500 shadow-[0_0_10px_#22c55e]' : 'bg-[#9CA89E]'}`} />
-                   <span className="text-[10px] font-black uppercase tracking-wider drop-shadow-sm">Carte {oState.ok ? 'OK' : 'N/A'}</span>
+                   <span className="text-[10px] font-black uppercase tracking-wider drop-">Carte {oState.ok ? 'OK' : 'N/A'}</span>
                  </div>
               </div>
            </div>
@@ -300,13 +300,13 @@ export const DesktopPreparationView: React.FC<DesktopPreparationViewProps> = ({
             <div className="flex gap-2.5">
               <button
                 onClick={() => setShowDateModal(true)}
-                className="flex-1 bg-white/90 hover:bg-white text-[#1C2620] py-3.5 rounded-xl font-bold text-xs shadow-md flex items-center justify-center gap-2 transition-all cursor-pointer border border-black/10"
+                className="flex-1 bg-[#FBFAF6] hover:bg-white text-[#17402C] py-3.5 rounded-xl font-bold text-xs  flex items-center justify-center gap-2 transition-all cursor-pointer border border-black/10"
               >
                 <span>📦 Continuer à préparer cette randonnée</span>
               </button>
               <button
                 onClick={handleStart}
-                className="flex-1 bg-[#1C2620] hover:bg-[#2D4034] text-white py-3.5 rounded-xl font-black tracking-wider uppercase text-xs shadow-2xl shadow-[#1C2620]/40 flex items-center justify-center gap-2 transition-all hover:scale-[1.005] active:scale-[0.995] cursor-pointer border border-white/20"
+                className="flex-1 bg-[#17402C] hover:bg-[#2D4034] text-white py-3.5 rounded-xl font-black tracking-wider uppercase text-xs  shadow-[#17402C]/40 flex items-center justify-center gap-2 transition-all hover:scale-[1.005] active:scale-[0.995] cursor-pointer border border-white/20"
               >
                 <Icon name="gps" className="w-4 h-4" />
                 Démarrer
@@ -317,16 +317,16 @@ export const DesktopPreparationView: React.FC<DesktopPreparationViewProps> = ({
         {/* Modal Date de Départ */}
         {showDateModal && (
           <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm pointer-events-auto">
-            <div className="bg-white rounded-3xl p-6 max-w-sm w-full shadow-2xl border border-black/[0.08] space-y-4">
+            <div className="bg-white rounded-3xl p-6 max-w-sm w-full  border border-black/[0.08] space-y-4">
               <div>
-                <h3 className="text-base font-bold text-[#0B1F17]">Date de votre départ</h3>
+                <h3 className="text-base font-bold text-[#17402C]">Date de votre départ</h3>
                 <p className="text-xs text-[#6B7A72] mt-0.5">
                   Planifiez cette randonnée dans votre espace Mon Matériel.
                 </p>
               </div>
 
               <div>
-                <label className="block text-xs font-semibold text-[#0B1F17] mb-1.5">
+                <label className="block text-xs font-semibold text-[#17402C] mb-1.5">
                   Quand partez-vous ?
                 </label>
                 <input
@@ -334,7 +334,7 @@ export const DesktopPreparationView: React.FC<DesktopPreparationViewProps> = ({
                   value={targetDate}
                   min={new Date().toISOString().split('T')[0]}
                   onChange={(e) => setTargetDate(e.target.value)}
-                  className="w-full bg-[#FBFAF6] border border-black/10 rounded-xl px-3.5 py-2.5 text-xs text-[#0B1F17] outline-none font-mono focus:border-[#17402C]"
+                  className="w-full bg-[#FBFAF6] border border-black/10 rounded-xl px-3.5 py-2.5 text-xs text-[#17402C] outline-none font-mono focus:border-[#17402C]"
                 />
               </div>
 
@@ -363,7 +363,7 @@ export const DesktopPreparationView: React.FC<DesktopPreparationViewProps> = ({
                     setShowDateModal(false);
                     router.push('/compte');
                   }}
-                  className="flex-1 py-2.5 rounded-xl text-xs font-bold bg-[#17402C] text-white hover:bg-[#0B1F17] shadow-sm"
+                  className="flex-1 py-2.5 rounded-xl text-xs font-bold bg-[#17402C] text-white hover:bg-[#17402C] "
                 >
                   Enregistrer & Préparer →
                 </button>
@@ -373,7 +373,7 @@ export const DesktopPreparationView: React.FC<DesktopPreparationViewProps> = ({
         )}
 
         {/* Toast Notification */}
-        <div className={`absolute top-6 right-6 z-50 bg-[#1C2620]/90 backdrop-blur-2xl border border-white/30 text-white px-4 py-2.5 rounded-xl shadow-2xl flex items-center gap-2.5 transition-all duration-300 transform ${toastMsg ? 'translate-y-0 opacity-100' : '-translate-y-4 opacity-0 pointer-events-none'}`}>
+        <div className={`absolute top-6 right-6 z-50 bg-[#17402C]/90 backdrop-blur-2xl border border-white/30 text-white px-4 py-2.5 rounded-xl  flex items-center gap-2.5 transition-all duration-300 transform ${toastMsg ? 'translate-y-0 opacity-100' : '-translate-y-4 opacity-0 pointer-events-none'}`}>
           <div className="w-5 h-5 rounded-full bg-emerald-500/20 flex items-center justify-center border border-emerald-500/40">
              <Icon name="check" className="w-3 h-3 text-emerald-400" />
           </div>

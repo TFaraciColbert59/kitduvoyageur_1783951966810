@@ -145,7 +145,7 @@ export default function FidelitePage() {
         )}
         {!error && (
         <>
-        <section className={s('', 'bg-dark-bg text-white py-12 px-4 relative overflow-hidden')} style={s({ background: '#0B1F17', color: '#fff', padding: '20px', borderRadius: '12px', marginBottom: '16px' }, {})}>
+        <section className={s('', 'bg-dark-bg text-white py-12 px-4 relative overflow-hidden')} style={s({ background: '#17402C', color: '#fff', padding: '20px', borderRadius: '12px', marginBottom: '16px' }, {})}>
           <div className={s('', 'absolute inset-0 opacity-5')}>
             {!isMobile && Array.from({ length: 20 }).map((_, i) => (
               <div key={i} className="absolute text-4xl" style={{ left: `${i * 17 % 100}%`, top: `${i * 23 % 100}%`, transform: 'rotate(15deg)' }}>⭐</div>
@@ -232,7 +232,7 @@ export default function FidelitePage() {
                       const isCurrent = level.name === currentLevel.name;
                       return (
                         <div key={level.name} className={s('flex flex-col items-center gap-1 w-16', 'flex flex-col items-center gap-2 w-24')}>
-                          <div className={s(`w-8 h-8 rounded-full flex items-center justify-center text-sm border-2 transition-all ${isCurrent ? 'border-primary bg-primary/10 shadow-lg shadow-primary/20 scale-110' : isUnlocked ? 'border-emerald-400 bg-emerald-50' : 'border-border bg-card opacity-40'}`, `w-12 h-12 rounded-full flex items-center justify-center text-xl border-2 transition-all ${isCurrent ? 'border-primary bg-primary/10 shadow-lg shadow-primary/20 scale-110' : isUnlocked ? 'border-emerald-400 bg-emerald-50' : 'border-border bg-card opacity-40'}`)}>
+                          <div className={s(`w-8 h-8 rounded-full flex items-center justify-center text-sm border-2 transition-all ${isCurrent ? 'border-primary bg-primary/10  shadow-primary/20 scale-110' : isUnlocked ? 'border-emerald-400 bg-emerald-50' : 'border-border bg-card opacity-40'}`, `w-12 h-12 rounded-full flex items-center justify-center text-xl border-2 transition-all ${isCurrent ? 'border-primary bg-primary/10  shadow-primary/20 scale-110' : isUnlocked ? 'border-emerald-400 bg-emerald-50' : 'border-border bg-card opacity-40'}`)}>
                             {level.badge}
                           </div>
                           <div className="text-center">
@@ -336,7 +336,7 @@ export default function FidelitePage() {
                     const isRedeemed = redeemedIds.includes(reward.id);
                     const isRedeeming = redeemingId === reward.id;
                     return (
-                      <div key={reward.id} className={s(`bg-card rounded-xl border overflow-hidden transition-all ${isRedeemed ? 'border-emerald-300 opacity-70' : canAfford ? 'border-border hover:border-primary/40' : 'border-border opacity-60'}`, `bg-card rounded-xl border overflow-hidden transition-all ${isRedeemed ? 'border-emerald-300 opacity-70' : canAfford ? 'border-border hover:border-primary/40 hover:shadow-md' : 'border-border opacity-60'}`)}>
+                      <div key={reward.id} className={s(`bg-card rounded-xl border overflow-hidden transition-all ${isRedeemed ? 'border-emerald-300 opacity-70' : canAfford ? 'border-border hover:border-primary/40' : 'border-border opacity-60'}`, `bg-card rounded-xl border overflow-hidden transition-all ${isRedeemed ? 'border-emerald-300 opacity-70' : canAfford ? 'border-border hover:border-primary/40 hover:' : 'border-border opacity-60'}`)}>
                         <div className={s('relative h-28 overflow-hidden', 'relative h-36 overflow-hidden')}>
                           <img src={reward.image} alt={reward.alt} className="w-full h-full object-cover" />
                           <div className={s('absolute top-1.5 right-1.5 bg-amber-500 text-white text-[10px] font-bold px-1.5 py-0.5 rounded-lg font-mono', 'absolute top-2 right-2 bg-amber-500 text-white text-xs font-bold px-2 py-1 rounded-lg font-mono')}>

@@ -105,24 +105,24 @@ export default function CarbonePage() {
       <div className="block md:hidden">
         <MobilePageShell>
           <div style={{ padding: '16px' }}>
-            <h1 style={{ fontSize: '20px', fontWeight: 800, color: '#1C2620', marginBottom: '12px', fontFamily: 'var(--font-display)' }}>Bilan carbone</h1>
-            <p style={{ fontSize: '13px', color: 'rgba(28,38,32,0.6)', marginBottom: '16px' }}>Calculez l&apos;impact CO₂ de votre voyage.</p>
-            <div style={{ background: '#FBFAF6', borderRadius: '12px', border: '1px solid rgba(11,31,23,0.06)', padding: '16px', marginBottom: '16px' }}>
-              <h2 style={{ fontSize: '14px', fontWeight: 700, color: '#1C2620', marginBottom: '12px' }}>Paramètres du voyage</h2>
+            <h1 style={{ fontSize: '20px', fontWeight: 800, color: '#17402C', marginBottom: '12px', fontFamily: 'var(--font-display)' }}>Bilan carbone</h1>
+            <p style={{ fontSize: '13px', color: 'rgba(23,64,44,0.6)', marginBottom: '16px' }}>Calculez l&apos;impact CO₂ de votre voyage.</p>
+            <div style={{ background: '#FBFAF6', borderRadius: '12px', border: '1px solid rgba(23,64,44,0.06)', padding: '16px', marginBottom: '16px' }}>
+              <h2 style={{ fontSize: '14px', fontWeight: 700, color: '#17402C', marginBottom: '12px' }}>Paramètres du voyage</h2>
               <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
                 <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px' }}>
-                  <input type="text" value={trip.origin} onChange={e => setTrip({ ...trip, origin: e.target.value })} placeholder="Départ" style={{ padding: '8px 12px', borderRadius: '8px', border: '1px solid rgba(11,31,23,0.06)', fontSize: '13px' }} />
-                  <input type="text" value={trip.destination} onChange={e => setTrip({ ...trip, destination: e.target.value })} placeholder="Destination" style={{ padding: '8px 12px', borderRadius: '8px', border: '1px solid rgba(11,31,23,0.06)', fontSize: '13px' }} />
+                  <input type="text" value={trip.origin} onChange={e => setTrip({ ...trip, origin: e.target.value })} placeholder="Départ" style={{ padding: '8px 12px', borderRadius: '8px', border: '1px solid rgba(23,64,44,0.06)', fontSize: '13px' }} />
+                  <input type="text" value={trip.destination} onChange={e => setTrip({ ...trip, destination: e.target.value })} placeholder="Destination" style={{ padding: '8px 12px', borderRadius: '8px', border: '1px solid rgba(23,64,44,0.06)', fontSize: '13px' }} />
                 </div>
-                <select value={trip.transport} onChange={e => setTrip({ ...trip, transport: e.target.value })} style={{ padding: '8px 12px', borderRadius: '8px', border: '1px solid rgba(11,31,23,0.06)', fontSize: '13px' }}>
+                <select value={trip.transport} onChange={e => setTrip({ ...trip, transport: e.target.value })} style={{ padding: '8px 12px', borderRadius: '8px', border: '1px solid rgba(23,64,44,0.06)', fontSize: '13px' }}>
                   <option value="avion-long">Avion long-courrier</option><option value="avion-court">Avion court-courrier</option><option value="train">Train</option><option value="voiture">Voiture</option><option value="bus">Bus</option>
                 </select>
               </div>
             </div>
-            <div style={{ background: '#FBFAF6', borderRadius: '12px', border: '1px solid rgba(11,31,23,0.06)', padding: '16px', textAlign: 'center' }}>
-              <p style={{ fontSize: '11px', color: 'rgba(28,38,32,0.5)', marginBottom: '4px' }}>Bilan carbone estimé</p>
+            <div style={{ background: '#FBFAF6', borderRadius: '12px', border: '1px solid rgba(23,64,44,0.06)', padding: '16px', textAlign: 'center' }}>
+              <p style={{ fontSize: '11px', color: 'rgba(23,64,44,0.5)', marginBottom: '4px' }}>Bilan carbone estimé</p>
               <p style={{ fontSize: '32px', fontWeight: 700, color: '#17402C', fontFamily: 'monospace' }}>{emissions.total}</p>
-              <p style={{ fontSize: '12px', color: 'rgba(28,38,32,0.5)' }}>tonnes CO₂e / personne</p>
+              <p style={{ fontSize: '12px', color: 'rgba(23,64,44,0.5)' }}>tonnes CO₂e / personne</p>
             </div>
             {selectedProject && <button onClick={() => setOffsetDone(true)} style={{ width: '100%', marginTop: '16px', padding: '14px', background: '#17402C', color: 'white', border: 'none', borderRadius: '12px', fontSize: '14px', fontWeight: 600, cursor: 'pointer' }}>{offsetDone ? 'Compensé !' : `Compenser — ${offsetCost}€`}</button>}
           </div>

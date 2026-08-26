@@ -74,12 +74,12 @@ export const radius = {
 } as const;
 
 export const forest = {
-  950: '#06120C', 900: '#0B1F17', 800: '#17402C',
-  700: '#205238', 600: '#2D6B4A',
+  950: '#06120C', 900: '#17402C', 800: '#17402C',
+  700: '#205238', 600: '#365233',
 } as const;
 
 export const sage = {
-  500: '#A8C8A0', 300: '#C6DCBE', 200: '#DDE9D6', 100: '#EAF1E5',
+  500: '#5B7F55', 300: '#A6C1A0', 200: '#DDE9D6', 100: '#EAF1E5',
 } as const;
 
 export const stone = {
@@ -87,16 +87,16 @@ export const stone = {
 } as const;
 
 export const ink = {
-  900: '#0B1F17', 700: '#384A42', 500: '#6B7A72',
+  900: '#17402C', 700: '#365233', 500: '#5A7064',
   400: '#8B978F', 300: '#AEB7B1',
 } as const;
 
 export const paper = '#FBFAF6';
 
 export const shadows = {
-  xs: '0 1px 2px rgba(11,31,23,0.05), 0 1px 3px rgba(11,31,23,0.04)',
-  sm: '0 2px 6px rgba(11,31,23,0.06), 0 4px 12px rgba(11,31,23,0.05)',
-  md: '0 6px 16px rgba(11,31,23,0.08), 0 12px 32px rgba(11,31,23,0.06)',
+  xs: '0 1px 2px rgba(23,64,44,0.05), 0 1px 3px rgba(23,64,44,0.04)',
+  sm: '0 2px 6px rgba(23,64,44,0.06), 0 4px 12px rgba(23,64,44,0.05)',
+  md: '0 6px 16px rgba(23,64,44,0.08), 0 12px 32px rgba(23,64,44,0.06)',
   lg: '0 12px 24px rgba(11,31,23,0.10), 0 24px 56px rgba(11,31,23,0.10)',
 } as const;
 

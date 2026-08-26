@@ -36,7 +36,7 @@ function LoggedOutProfile() {
       <div
         className="relative overflow-hidden"
         style={{
-          background: 'linear-gradient(160deg, #1C2620 0%, #243028 100%)',
+          background: 'linear-gradient(160deg, #17402C 0%, #365233 100%)',
           padding: '40px 24px 32px',
         }}
       >
@@ -50,7 +50,7 @@ function LoggedOutProfile() {
             width: '200px',
             height: '200px',
             borderRadius: '50%',
-            background: 'radial-gradient(circle, rgba(228,80,28,0.2) 0%, transparent 70%)',
+            background: 'radial-gradient(circle, rgba(91,127,85,0.25) 0%, transparent 70%)',
             filter: 'blur(30px)',
           }}
         />
@@ -62,14 +62,14 @@ function LoggedOutProfile() {
               width: '80px',
               height: '80px',
               borderRadius: '50%',
-              background: 'rgba(228,80,28,0.15)',
-              border: '2px solid rgba(228,80,28,0.3)',
+              background: 'rgba(91,127,85,0.2)',
+              border: '2px solid rgba(255,255,255,0.3)',
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
             }}
           >
-            <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="#17402C" strokeWidth="1.5" strokeLinecap="round" aria-hidden="true">
+            <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="#FAF8F5" strokeWidth="1.5" strokeLinecap="round" aria-hidden="true">
               <circle cx="12" cy="8" r="4" />
               <path d="M4 20c0-4 3.6-7 8-7s8 3 8 7" />
             </svg>
@@ -95,12 +95,12 @@ function LoggedOutProfile() {
               href="/connexion"
               className="flex-1 flex items-center justify-center font-semibold haptic-press"
               style={{
-                background: '#17402C',
+                background: '#5B7F55',
                 color: 'white',
                 borderRadius: '16px',
                 padding: '14px',
                 fontSize: '15px',
-                boxShadow: '0 8px 24px rgba(228,80,28,0.35)',
+                boxShadow: '0 8px 24px rgba(23,64,44,0.35)',
               }}
             >
               Se connecter
@@ -137,7 +137,7 @@ function LoggedOutProfile() {
             className="flex items-center gap-4"
             style={{
               background: '#EDEAE0',
-              border: '1px solid rgba(28,38,32,0.06)',
+              border: '1px solid rgba(23,64,44,0.06)',
               borderRadius: '18px',
               padding: '16px',
               animationDelay: `${i * 60}ms`,
@@ -151,7 +151,7 @@ function LoggedOutProfile() {
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
-                background: 'rgba(28,38,32,0.05)',
+                background: 'rgba(23,64,44,0.05)',
                 borderRadius: '14px',
                 flexShrink: 0,
               }}
@@ -161,7 +161,7 @@ function LoggedOutProfile() {
             </span>
             <div>
               <p
-                className="font-display font-semibold text-[#1C2620]"
+                className="font-display font-semibold text-[#17402C]"
                 style={{ fontSize: '15px', letterSpacing: '-0.01em' }}
               >
                 {b.title}
@@ -247,7 +247,7 @@ function LoggedInProfile() {
       <div
         className="relative overflow-hidden"
         style={{
-          background: 'linear-gradient(160deg, #1C2620 0%, #243028 100%)',
+          background: 'linear-gradient(160deg, #17402C 0%, #365233 100%)',
           padding: '32px 24px 24px',
         }}
       >
@@ -260,7 +260,7 @@ function LoggedInProfile() {
             width: '160px',
             height: '160px',
             borderRadius: '50%',
-            background: 'radial-gradient(circle, rgba(228,80,28,0.2) 0%, transparent 70%)',
+            background: 'radial-gradient(circle, rgba(91,127,85,0.25) 0%, transparent 70%)',
             filter: 'blur(24px)',
           }}
         />
@@ -272,12 +272,12 @@ function LoggedInProfile() {
               width: '64px',
               height: '64px',
               borderRadius: '50%',
-              background: 'linear-gradient(135deg, #17402C, #B5652D)',
+              background: 'linear-gradient(135deg, #17402C, #5B7F55)',
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
               flexShrink: 0,
-              boxShadow: '0 4px 16px rgba(228,80,28,0.4)',
+              boxShadow: '0 4px 16px rgba(23,64,44,0.4)',
             }}
           >
             <span
@@ -304,13 +304,13 @@ function LoggedInProfile() {
             <div
               className="inline-flex items-center gap-1 mt-2"
               style={{
-                background: 'rgba(228,80,28,0.15)',
-                border: '1px solid rgba(228,80,28,0.25)',
+                background: 'rgba(91,127,85,0.2)',
+                border: '1px solid rgba(255,255,255,0.25)',
                 borderRadius: '999px',
                 padding: '3px 10px',
               }}
             >
-              <span style={{ fontSize: '10px', color: '#17402C', fontWeight: 600, fontFamily: 'var(--font-mono)' }}>
+              <span style={{ fontSize: '10px', color: '#FAF8F5', fontWeight: 600, fontFamily: 'var(--font-mono)' }}>
                 NIVEAU 1 · EXPLORATEUR
               </span>
             </div>
@@ -380,7 +380,7 @@ function LoggedInProfile() {
             className="flex items-center gap-4 haptic-press"
             style={{
               background: '#EDEAE0',
-              border: '1px solid rgba(28,38,32,0.06)',
+              border: '1px solid rgba(23,64,44,0.06)',
               borderRadius: '18px',
               padding: '14px 16px',
               animationDelay: `${i * 40}ms`,
@@ -391,7 +391,7 @@ function LoggedInProfile() {
                 width: '40px',
                 height: '40px',
                 borderRadius: '12px',
-                background: 'rgba(28,38,32,0.06)',
+                background: 'rgba(23,64,44,0.06)',
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
@@ -403,7 +403,7 @@ function LoggedInProfile() {
             </div>
             <div className="flex-1 min-w-0">
               <p
-                className="font-semibold text-[#1C2620] truncate"
+                className="font-semibold text-[#17402C] truncate"
                 style={{ fontSize: '15px' }}
               >
                 {item.label}
@@ -420,8 +420,8 @@ function LoggedInProfile() {
             {item.badge ? (
               <span
                 style={{
-                  background: 'rgba(228,80,28,0.1)',
-                  color: '#17402C',
+                  background: 'rgba(91,127,85,0.15)',
+                  color: '#365233',
                   borderRadius: '999px',
                   padding: '3px 10px',
                   fontSize: '11px',
@@ -432,7 +432,7 @@ function LoggedInProfile() {
                 {item.badge}
               </span>
             ) : (
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="rgba(28,38,32,0.3)" strokeWidth="2" strokeLinecap="round" aria-hidden="true">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="rgba(23,64,44,0.3)" strokeWidth="2" strokeLinecap="round" aria-hidden="true">
                 <path d="M9 18l6-6-6-6" />
               </svg>
             )}
@@ -446,11 +446,11 @@ function LoggedInProfile() {
           onClick={() => signOut()}
           className="w-full flex items-center justify-center gap-2 haptic-press"
           style={{
-            background: 'rgba(228,80,28,0.06)',
-            border: '1px solid rgba(228,80,28,0.15)',
+            background: 'rgba(168,68,58,0.08)',
+            border: '1px solid rgba(168,68,58,0.2)',
             borderRadius: '18px',
             padding: '14px',
-            color: '#17402C',
+            color: '#A8443A',
             fontSize: '15px',
             fontWeight: 600,
             fontFamily: 'var(--font-sans)',

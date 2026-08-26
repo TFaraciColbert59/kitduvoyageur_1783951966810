@@ -67,7 +67,7 @@ export default function HorsLignePage() {
     <MobilePageShell background="#F8F5EE">
       <div className="min-h-screen bg-[#F8F5EE]">
         {/* Header */}
-        <div className="bg-[#1C2620] text-white px-4 pt-8 pb-6">
+        <div className="bg-[#17402C] text-white px-4 pt-8 pb-6">
           <div className="flex items-center gap-3 mb-1">
             <Link
               href="/explorer"
@@ -92,7 +92,7 @@ export default function HorsLignePage() {
               <span className="text-xl">💾</span>
             </div>
             <div>
-              <p className="text-sm font-semibold text-[#1C2620]">
+              <p className="text-sm font-semibold text-[#17402C]">
                 {routes.length} randonnée{routes.length > 1 ? 's' : ''} stockée{routes.length > 1 ? 's' : ''}
               </p>
               <p className="text-xs text-[#7A8A7D]">
@@ -117,7 +117,7 @@ export default function HorsLignePage() {
               <div className="w-16 h-16 rounded-full bg-[#E8E4D8] flex items-center justify-center mb-4">
                 <span className="text-3xl">📵</span>
               </div>
-              <h2 className="text-base font-semibold text-[#1C2620] mb-1">
+              <h2 className="text-base font-semibold text-[#17402C] mb-1">
                 Aucune randonnée hors-ligne
               </h2>
               <p className="text-sm text-[#7A8A7D] max-w-60">
@@ -125,7 +125,7 @@ export default function HorsLignePage() {
               </p>
               <Link
                 href="/explorer"
-                className="mt-6 px-5 py-2.5 bg-[#1C2620] text-white text-sm font-semibold rounded-xl hover:bg-[#2D3F35] transition-colors"
+                className="mt-6 px-5 py-2.5 bg-[#17402C] text-white text-sm font-semibold rounded-xl hover:bg-[#2D3F35] transition-colors"
               >
                 Explorer les randonnées
               </Link>
@@ -139,7 +139,7 @@ export default function HorsLignePage() {
                 <div className="p-4">
                   <div className="flex items-start justify-between gap-2">
                     <div className="flex-1 min-w-0">
-                      <h3 className="text-sm font-semibold text-[#1C2620] leading-tight line-clamp-2">
+                      <h3 className="text-sm font-semibold text-[#17402C] leading-tight line-clamp-2">
                         {route.name}
                       </h3>
                       <div className="flex flex-wrap gap-x-3 gap-y-1 mt-1.5">

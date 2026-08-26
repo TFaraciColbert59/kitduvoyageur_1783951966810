@@ -113,7 +113,7 @@ export default function QuickStartQuiz() {
                 </div>
                 <button
                   onClick={() => setIsOpen(true)}
-                  className="flex-shrink-0 inline-flex items-center gap-2 px-6 py-3.5 rounded-xl font-semibold text-sm text-white transition-all duration-200 hover:-translate-y-px focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#17402C] focus-visible:ring-offset-2 focus-visible:ring-offset-[#1C2620] min-h-[44px]"
+                  className="flex-shrink-0 inline-flex items-center gap-2 px-6 py-3.5 rounded-xl font-semibold text-sm text-white transition-all duration-200 hover:-translate-y-px focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#17402C] focus-visible:ring-offset-2 focus-visible:ring-offset-[#17402C] min-h-[44px]"
                   style={{ background: '#17402C' }}
                 >
                   ✨ Démarrer le quiz
@@ -164,7 +164,7 @@ export default function QuickStartQuiz() {
                     <button
                       key={opt.value}
                       onClick={() => handleAnswer(opt.value)}
-                      className="flex flex-col items-center gap-2 p-4 rounded-xl transition-all duration-150 hover:-translate-y-0.5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#17402C] focus-visible:ring-offset-2 focus-visible:ring-offset-[#1C2620] min-h-[80px]"
+                      className="flex flex-col items-center gap-2 p-4 rounded-xl transition-all duration-150 hover:-translate-y-0.5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#17402C] focus-visible:ring-offset-2 focus-visible:ring-offset-[#17402C] min-h-[80px]"
                       style={{
                         background: 'rgba(255,255,255,0.05)',
                         border: '1px solid rgba(255,255,255,0.08)',
@@ -191,7 +191,7 @@ export default function QuickStartQuiz() {
           >
             <button
               onClick={() => setIsOpen(true)}
-              className="flex items-center gap-2 px-4 py-3 rounded-full font-semibold text-sm text-white shadow-lg transition-all duration-200 active:scale-95 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#17402C] focus-visible:ring-offset-2 min-h-[44px]"
+              className="flex items-center gap-2 px-4 py-3 rounded-full font-semibold text-sm text-white  transition-all duration-200 active:scale-95 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#17402C] focus-visible:ring-offset-2 min-h-[44px]"
               style={{
                 background: '#17402C',
                 boxShadow: '0 4px 20px rgba(228,80,28,0.4)',

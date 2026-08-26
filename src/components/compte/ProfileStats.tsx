@@ -1,4 +1,4 @@
-'use client';
+﻿'use client';
 
 import React from 'react';
 import { useHapticFeedback } from '@/hooks/useHapticFeedback';
@@ -61,16 +61,16 @@ export default function ProfileStats({
         >
           <div className="flex items-center justify-between">
             <span className="text-base sm:text-lg">{item.icon}</span>
-            <span className="text-[10px] font-mono text-[#5C6B63] group-hover:text-[#17402C] transition-colors">
+            <span className="text-[10px] font-mono text-[#5A7064] group-hover:text-[#17402C] transition-colors">
               {item.sub}
             </span>
           </div>
 
           <div className="mt-1">
-            <p className="text-lg sm:text-xl font-bold font-mono text-[#0B1F17] group-hover:text-[#17402C] transition-colors">
+            <p className="text-lg sm:text-xl font-bold font-mono text-[#17402C] group-hover:text-[#17402C] transition-colors">
               {item.value}
             </p>
-            <p className="text-xs font-semibold text-[#5C6B63]">
+            <p className="text-xs font-semibold text-[#5A7064]">
               {item.label}
             </p>
           </div>

@@ -14,7 +14,7 @@ export function KitHistoryTimeline({ history }: { history: KitHistoryEntry[] }) 
       <ol className="relative border-l border-white/30 pl-4 flex flex-col gap-2.5">
         {history.map((h) => (
           <li key={h.id} className="relative">
-            <span className="absolute -left-[21px] top-1.5 h-2 w-2 rounded-full bg-[#17402C] shadow-xs" aria-hidden="true" />
+            <span className="absolute -left-[21px] top-1.5 h-2 w-2 rounded-full bg-[#17402C] " aria-hidden="true" />
             <div className="glass-sub-card p-2.5 rounded-xl flex items-center justify-between">
               <span className="text-xs font-semibold text-[#17402C]">{historyLabel(h.action)}</span>
               <Badge tone={historyTone(h.action)}>{new Date(h.created_at).toLocaleDateString('fr-FR')}</Badge>

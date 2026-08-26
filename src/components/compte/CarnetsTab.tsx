@@ -232,10 +232,10 @@ export default function CarnetsTab({ profile }: CarnetsTabProps) {
   // Render helpers
   // ─────────────────────────────────────────
   const StatPill = ({ label, value, sub }: { label: string; value: string | number; sub?: string }) => (
-    <div className="bg-white border border-[#E8E4D8] rounded-2xl p-5 flex flex-col gap-1">
-      <p className="text-[10px] font-mono uppercase tracking-[0.15em] text-[#9CA89E]">{label}</p>
-      <p className="font-display font-800 text-3xl text-[#1C2620] leading-none">{value}</p>
-      {sub && <p className="text-[11px] text-[#9CA89E] mt-0.5">{sub}</p>}
+    <div className="glass rounded-[1.25rem] p-5 flex flex-col gap-1">
+      <p className="text-[10px] font-mono uppercase tracking-widest text-[#5A7064]">{label}</p>
+      <p className="glass-metric text-3xl sm:text-4xl text-[#17402C] leading-none">{value}</p>
+      {sub && <p className="text-[11px] text-[#5A7064] font-medium mt-0.5">{sub}</p>}
     </div>
   );
 
@@ -244,158 +244,129 @@ export default function CarnetsTab({ profile }: CarnetsTabProps) {
     return (
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
         <div className="lg:col-span-8 space-y-6">
-          {[1, 2, 3].map(i => (
-            <div key={i} className="bg-white rounded-2xl border border-[#E8E4D8] h-40 animate-pulse" />
+          {[1, 2, 3].map((i) => (
+            <div key={i} className="glass rounded-2xl h-40 animate-pulse" />
           ))}
         </div>
-        <div className="lg:col-span-4 space-y-4">
-          {[1, 2].map(i => (
-            <div key={i} className="bg-white rounded-2xl border border-[#E8E4D8] h-48 animate-pulse" />
-          ))}
+        <div className="lg:col-span-4 space-y-6">
+          <div className="glass rounded-2xl h-48 animate-pulse" />
+          <div className="glass rounded-2xl h-48 animate-pulse" />
         </div>
       </div>
     );
   }
 
-  // ─────────────────────────────────────────
   return (
-    <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
-
-      {/* ════════════════ MAIN COLUMN ════════════════ */}
-      <div className="lg:col-span-8 space-y-8">
-
-        {/* ── Header ── */}
+    <div className="space-y-8 pb-16 font-sans">
+      {/* ── Section Header ── */}
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-end gap-4 border-b border-[#17402C]/5 pb-5">
         <div>
-          <div className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-4 mb-1">
+          <h2 className="font-display font-bold text-3xl sm:text-4xl text-[#17402C] tracking-tight">
+            Carnets <span className="font-serif italic font-normal text-[#365233]">de route</span>
+          </h2>
+          <p className="text-xs text-[#5A7064] mt-1 font-mono">
+            {published.length} récits publiés · {fmtNum(totalViews)} lectures · {totalLikes} mentions j'aime
+          </p>
+        </div>
+
+        <div className="flex items-center gap-3">
+          <Link
+            href="/carnets/brouillons"
+            className="glass-capsule-btn text-xs font-bold"
+          >
+            <Icon name="DocumentTextIcon" size={14} />
+            <span>Brouillons ({drafts.length})</span>
+          </Link>
+          <Link
+            href="/carnets/nouveau"
+            className="glass-capsule-btn primary text-xs font-bold"
+          >
+            <Icon name="PlusIcon" size={14} />
+            <span>+ Rédiger un carnet</span>
+          </Link>
+        </div>
+      </div>
+
+      {/* ── KPI Row ── */}
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+        <StatPill label="Récits publiés" value={published.length} sub={`Sur ${published.length + drafts.length} carnets`} />
+        <StatPill label="Lectures cumulées" value={fmtNum(totalViews)} sub="Par la communauté" />
+        <StatPill label="Mentions j'aime" value={fmtNum(totalLikes)} sub={`${totalComments} commentaires`} />
+        <StatPill label="Brouillons actifs" value={drafts.length} sub={drafts.length ? 'En cours de rédaction' : 'Tous publiés !'} />
+      </div>
+
+      {/* ── Main Layout Stack ── */}
+      <div className="space-y-6">
+        {/* ── Publications Grille ── */}
+        <div className="glass rounded-[1.5rem] p-5 sm:p-6 space-y-5 border border-white/50 shadow-sm">
+          <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
             <div>
-              <h2 className="font-display font-800 text-3xl text-[#1C2620] leading-tight">
-                Vos <em className="font-serif font-normal not-italic text-[#5C6B5E]">carnets</em>
-              </h2>
-              <p className="text-sm text-[#5C6B5E] mt-1">
-                {published.length} récits publiés, {drafts.length} en cours
-                {totalViews > 0 && ` — ${fmtNum(totalViews)} lectures ce trimestre`}
-                {fideles.length > 0 && (
-                  <> — <Link href="#" className="text-[#17402C] underline-offset-2 hover:underline">la communauté vous suit.</Link></>
-                )}
-              </p>
+              <h3 className="font-display font-bold text-lg sm:text-xl text-[#17402C]">
+                Récits <span className="font-serif italic font-normal text-[#5B7F55]">publiés</span>
+              </h3>
+              <p className="text-xs text-[#5A7064] mt-0.5">Visibles par les membres de la communauté</p>
             </div>
-            <div className="flex items-center gap-2 flex-shrink-0">
-              <button
-                className="flex items-center gap-2 px-4 py-2.5 border border-[#C8C3B0] text-[#5C6B5E] hover:text-[#1C2620] hover:border-[#1C2620]/40 rounded-full text-xs font-700 transition-all"
-                onClick={() => {
-                  const ids = [...published, ...drafts].map(c => c.id).join(',');
-                  window.alert('Export PDF bientôt disponible (IDs : ' + ids.slice(0, 40) + '...)');
-                }}
-              >
-                <Icon name="ArrowDownTrayIcon" size={14} />
-                Exporter en PDF
-              </button>
+
+            {/* Sort pills */}
+            <div className="glass-capsule-bar">
+              <div className="flex items-center gap-1 p-0.5">
+                {(['recent', 'vues', 'aimes'] as SortMode[]).map((mode) => (
+                  <button
+                    key={mode}
+                    onClick={() => setSortMode(mode)}
+                    className={`glass-capsule-segment !px-3 !py-1 text-xs ${sortMode === mode ? 'active' : ''}`}
+                  >
+                    {mode === 'recent' ? 'Récents' : mode === 'vues' ? 'Plus lus' : 'Plus aimés'}
+                  </button>
+                ))}
+              </div>
+            </div>
+          </div>
+
+          {sortedPublished.length === 0 ? (
+            <div className="text-center py-10 space-y-3">
+              <div className="w-12 h-12 rounded-full bg-white/40 flex items-center justify-center mx-auto text-xl">
+                📖
+              </div>
+              <p className="text-sm font-bold text-[#17402C]">Aucun carnet publié</p>
+              <p className="text-xs text-[#5A7064]">Partagez votre première aventure avec la communauté.</p>
               <Link
                 href="/carnets/nouveau"
-                className="flex items-center gap-2 px-4 py-2.5 bg-[#1C2620] hover:bg-[#2A3830] text-white rounded-full text-xs font-700 transition-all shadow-md hover:shadow-lg"
+                className="glass-capsule-btn primary inline-flex text-xs font-bold mt-2"
               >
-                <Icon name="PlusIcon" size={14} />
-                + Nouveau carnet
-              </Link>
-            </div>
-          </div>
-        </div>
-
-        {/* ── Stats Row ── */}
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-          <StatPill label="Carnets publiés" value={published.length} sub={`+ ${drafts.length} brouillons en cours`} />
-          <StatPill label="Lectures totales" value={fmtNum(totalViews)} sub="↑ 42% vs trimestre précédent" />
-          <StatPill
-            label="Likes reçus"
-            value={totalLikes > 0 ? fmtNum(totalLikes) : '—'}
-            sub={totalLikes > 0 ? `Moyenne ${published.length > 0 ? Math.round(totalLikes / published.length) : 0} likes par carnet` : undefined}
-          />
-          <StatPill
-            label="Commentaires"
-            value={totalComments > 0 ? fmtNum(totalComments) : '—'}
-            sub={totalComments > 0 ? `Vous avez répondu à 92%` : undefined}
-          />
-        </div>
-
-        {/* ── Carnets publiés ── */}
-        <div>
-          <div className="flex items-center justify-between mb-4">
-            <div>
-              <h3 className="font-display font-700 text-xl text-[#1C2620]">
-                Carnets <em className="font-serif font-normal not-italic">publiés</em>
-              </h3>
-              {published.length > 0 && (
-                <p className="text-xs text-[#9CA89E] mt-0.5">
-                  Vos derniers récits publiés. Cliquez pour ouvrir en mode lecture.
-                </p>
-              )}
-            </div>
-            <div className="flex items-center gap-1 bg-[#EDEAE0] rounded-full p-1">
-              {([['recent', 'Récents'], ['vues', 'Plus lus'], ['aimes', 'Plus aimés']] as [SortMode, string][]).map(([mode, label]) => (
-                <button
-                  key={mode}
-                  onClick={() => setSortMode(mode)}
-                  className={`px-3 py-1.5 rounded-full text-xs font-600 transition-all whitespace-nowrap ${
-                    sortMode === mode
-                      ? 'bg-white text-[#1C2620] shadow-sm'
-                      : 'text-[#9CA89E] hover:text-[#5C6B5E]'
-                  }`}
-                >
-                  {label}
-                </button>
-              ))}
-            </div>
-          </div>
-
-          {published.length === 0 ? (
-            <div className="bg-white border border-dashed border-[#C8C3B0] rounded-2xl p-12 text-center">
-              <p className="text-4xl mb-3">📖</p>
-              <h4 className="font-display font-700 text-[#1C2620] text-lg mb-2">Aucun carnet publié</h4>
-              <p className="text-sm text-[#9CA89E] mb-4">Commencez à écrire votre premier récit de voyage</p>
-              <Link href="/carnets/nouveau" className="inline-flex items-center gap-2 px-5 py-2.5 bg-[#1C2620] text-white rounded-full text-xs font-700 hover:bg-[#2A3830] transition-colors">
-                <Icon name="PlusIcon" size={14} /> Créer mon premier carnet
+                Commencer à écrire
               </Link>
             </div>
           ) : (
-            <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-5">
-              {sortedPublished.map((carnet, idx) => (
-                <CarnetPublishedCard
-                  key={carnet.id}
-                  carnet={carnet}
-                  fallbackCover={FALLBACK_COVERS[idx % FALLBACK_COVERS.length]}
-                />
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+              {sortedPublished.map((carnet, i) => (
+                <CarnetCard key={carnet.id} carnet={carnet} isNew={i === 0} />
               ))}
-            </div>
-          )}
-
-          {published.length > 6 && (
-            <div className="text-center mt-6">
-              <button className="text-xs text-[#5C6B5E] hover:text-[#1C2620] font-600 transition-colors border border-[#C8C3B0] hover:border-[#1C2620]/30 px-6 py-2.5 rounded-full">
-                Voir les {published.length - 6} carnets plus anciens
-              </button>
             </div>
           )}
         </div>
 
-        {/* ── Brouillons en cours ── */}
+        {/* ── Brouillons Section ── */}
         {drafts.length > 0 && (
-          <div>
-            <div className="flex items-center justify-between mb-1">
-              <h3 className="font-display font-700 text-xl text-[#1C2620]">
-                Brouillons <em className="font-serif font-normal not-italic">en cours</em>
-              </h3>
-              <span className="text-xs text-[#9CA89E] font-mono">{drafts.length} en rédaction</span>
+          <div className="glass rounded-[1.5rem] p-5 sm:p-6 space-y-4 border border-white/50 shadow-sm">
+            <div className="flex justify-between items-center">
+              <div>
+                <h3 className="font-display font-bold text-lg sm:text-xl text-[#17402C]">
+                  Brouillons <span className="font-serif italic font-normal text-[#5B7F55]">en cours</span>
+                </h3>
+                <p className="text-xs text-[#5A7064] mt-0.5">Privés — vous seul pouvez les voir</p>
+              </div>
+              <span className="glass-pill pill-warn text-xs font-mono font-bold">
+                {drafts.length} en cours
+              </span>
             </div>
-            <p className="text-xs text-[#9CA89E] mb-4">
-              Reprenez là où vous en étiez. Les brouillons sont sauvegardés{' '}
-              <button className="underline underline-offset-2 hover:text-[#5C6B5E] transition-colors">automatiquement</button>.
-            </p>
-            <div className="bg-white border border-[#E8E4D8] rounded-2xl overflow-hidden divide-y divide-[#E8E4D8]">
-              {drafts.map((draft, idx) => (
+
+            <div className="space-y-2.5">
+              {drafts.map((d, i) => (
                 <DraftRow
-                  key={draft.id}
-                  draft={draft}
-                  idx={idx}
+                  key={d.id}
+                  draft={d}
+                  idx={i}
                   onDelete={handleDeleteDraft}
                   onPublish={handlePublish}
                 />
@@ -404,103 +375,78 @@ export default function CarnetsTab({ profile }: CarnetsTabProps) {
           </div>
         )}
 
-      </div>
-
-      {/* ════════════════ SIDEBAR ════════════════ */}
-      <div className="lg:col-span-4 space-y-5">
-
-        {/* ── Lecteurs fidèles ── */}
-        <div className="bg-white border border-[#E8E4D8] rounded-2xl p-5">
-          <h4 className="font-display font-700 text-[#1C2620] text-base mb-0.5">
-            Lecteurs <em className="font-serif font-normal not-italic">fidèles</em>
-          </h4>
-          <p className="text-[11px] text-[#9CA89E] mb-4">
-            Les {fideles.length > 0 ? fideles.length : 5} personnes qui vous lisent le plus.
-          </p>
-
-          {fideles.length === 0 ? (
-            <div className="text-center py-6">
-              <p className="text-3xl mb-2">👥</p>
-              <p className="text-xs text-[#9CA89E]">Publiez votre premier carnet pour obtenir des lecteurs</p>
+        {/* ── Insights Row: Rythme + Lecteurs fidèles ── */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
+          {/* ── Rythme de publication ── */}
+          <div className="glass rounded-[1.5rem] p-5 space-y-3.5 border border-white/50 shadow-sm">
+            <div>
+              <h3 className="font-display font-bold text-base text-[#17402C]">
+                Rythme <span className="font-serif italic font-normal text-[#5B7F55]">de publication</span>
+              </h3>
+              <p className="text-[11px] text-[#5A7064]">Activité sur 12 mois</p>
             </div>
-          ) : (
-            <div className="space-y-3">
-              {fideles.map((f) => (
-                <div key={f.id} className="flex items-center gap-3 group">
-                  <div className="w-8 h-8 rounded-full bg-[#EDEAE0] overflow-hidden flex-shrink-0">
-                    {f.avatar_url ? (
-                      <Image src={f.avatar_url} alt={f.full_name} width={32} height={32} className="object-cover w-full h-full" />
-                    ) : (
-                      <div className="w-full h-full flex items-center justify-center text-[11px] font-700 text-[#5C6B5E]">
-                        {f.full_name[0]}
-                      </div>
+
+            <div className="flex items-end justify-between gap-1.5 h-20 pt-2">
+              {rythme.map((m) => {
+                const maxCount = Math.max(...rythme.map((x) => x.count), 1);
+                const h = m.count === 0 ? 4 : Math.max(12, Math.round((m.count / maxCount) * 48));
+                return (
+                  <div key={m.month} className="flex-1 flex flex-col items-center gap-1 group relative">
+                    <div
+                      className={`w-full rounded-t-sm transition-all ${
+                        m.current
+                          ? 'bg-[#17402C]'
+                          : m.count > 0
+                          ? 'bg-[#5B7F55]'
+                          : 'bg-[#17402C]/10'
+                      }`}
+                      style={{ height: `${h}px` }}
+                    />
+                    <span className={`text-[8px] font-mono ${m.current ? 'font-bold text-[#17402C]' : 'text-[#5A7064]'}`}>
+                      {m.short}
+                    </span>
+                    {m.count > 0 && (
+                      <span className="absolute -top-4 text-[9px] font-mono font-bold text-[#17402C] opacity-0 group-hover:opacity-100 transition-opacity">
+                        {m.count}
+                      </span>
                     )}
                   </div>
-                  <div className="flex-1 min-w-0">
-                    <p className="text-sm font-600 text-[#1C2620] truncate group-hover:text-[#17402C] transition-colors">{f.full_name}</p>
-                    {f.location && <p className="text-[10px] text-[#9CA89E] truncate">{f.location} · abonné</p>}
-                  </div>
-                  <div className="text-right flex-shrink-0">
-                    <p className="font-mono font-700 text-sm text-[#1C2620]">{f.carnets_read ?? '—'}</p>
-                    <p className="text-[9px] text-[#9CA89E] uppercase tracking-wider">CARNETS LUS</p>
-                  </div>
-                </div>
-              ))}
+                );
+              })}
             </div>
-          )}
-        </div>
+          </div>
 
-        {/* ── Rythme annuel ── */}
-        <div className="bg-white border border-[#E8E4D8] rounded-2xl p-5">
-          <h4 className="font-display font-700 text-[#1C2620] text-base mb-0.5">
-            Rythme <em className="font-serif font-normal not-italic">{new Date().getFullYear()}</em>
-          </h4>
-          <p className="text-[11px] text-[#9CA89E] mb-4">
-            Vous publiez plus d'une fois par mois.
-          </p>
-          <div className="grid grid-cols-11 gap-1 mb-3">
-            {rythme.map((m) => (
-              <div key={m.month} className="flex flex-col items-center gap-1">
-                <div
-                  className={`w-full aspect-square rounded-md transition-colors ${
-                    m.current
-                      ? 'bg-[#1C2620] ring-2 ring-[#17402C]/40'
-                      : m.count >= 2 ? 'bg-[#1C2620]'
-                      : m.count === 1 ? 'bg-[#5C6B5E]/50'
-                      : 'bg-[#EDEAE0]'
-                  }`}
-                  title={`${m.short} : ${m.count} carnet${m.count > 1 ? 's' : ''}`}
-                />
-                <span className="text-[8px] text-[#9CA89E] font-mono">{m.short[0]}</span>
+          {/* ── Lecteurs fidèles ── */}
+          <div className="glass rounded-[1.5rem] p-5 space-y-3.5 border border-white/50 shadow-sm">
+            <div>
+              <h3 className="font-display font-bold text-base text-[#17402C]">
+                Lecteurs <span className="font-serif italic font-normal text-[#5B7F55]">fidèles</span>
+              </h3>
+              <p className="text-[11px] text-[#5A7064]">Membres les plus engagés</p>
+            </div>
+
+            {fideles.length === 0 ? (
+              <p className="text-xs text-[#5A7064] text-center py-4">Pas encore d'abonnés enregistrés.</p>
+            ) : (
+              <div className="space-y-2">
+                {fideles.slice(0, 3).map((f) => (
+                  <div key={f.id} className="glass-sub-card flex items-center justify-between p-2 rounded-xl border border-white/40">
+                    <div className="flex items-center gap-2.5 min-w-0">
+                      <div className="w-7 h-7 rounded-full bg-[#17402C] text-white flex items-center justify-center text-xs font-bold shrink-0">
+                        {f.full_name.charAt(0)}
+                      </div>
+                      <div className="min-w-0">
+                        <p className="text-xs font-bold text-[#17402C] truncate">{f.full_name}</p>
+                        <p className="text-[9.5px] text-[#5A7064] truncate">{f.location || 'Alpes françaises'}</p>
+                      </div>
+                    </div>
+                    <span className="glass-pill text-[8.5px] font-mono font-bold">Fidèle</span>
+                  </div>
+                ))}
               </div>
-            ))}
-          </div>
-          <div className="flex items-center justify-between text-[10px] text-[#9CA89E]">
-            <span>Moyenne mensuelle</span>
-            <span className="font-700 text-[#1C2620]">
-              {published.length > 0 ? (published.length / 12).toFixed(1) : 0} carnet/mois
-            </span>
+            )}
           </div>
         </div>
-
-        {/* ── Suggestion d'écriture ── */}
-        <div className="bg-[#FFF9F0] border border-[#17402C]/20 rounded-2xl p-5">
-          <p className="text-[10px] font-mono text-[#17402C] uppercase tracking-[0.15em] mb-2">Suggestion · Écriture</p>
-          <h4 className="font-display font-700 text-[#1C2620] text-base leading-snug mb-2">
-            Un carnet sur vos {profile.stats.clubs} clubs ?
-          </h4>
-          <p className="text-xs text-[#5C6B5E] leading-relaxed mb-4">
-            Nombre de vos abonnés vous suivent aussi dans les clubs. Un récit &quot;communauté&quot; pourrait toucher un nouveau public.
-          </p>
-          <Link
-            href="/carnets/nouveau"
-            className="flex items-center gap-2 text-xs font-700 text-[#1C2620] hover:text-[#17402C] transition-colors"
-          >
-            <Icon name="PlusIcon" size={13} />
-            Commencer ce carnet
-          </Link>
-        </div>
-
       </div>
     </div>
   );
@@ -509,17 +455,14 @@ export default function CarnetsTab({ profile }: CarnetsTabProps) {
 // ─────────────────────────────────────────────
 // Sub-components
 // ─────────────────────────────────────────────
-
-function CarnetPublishedCard({ carnet, fallbackCover }: { carnet: CarnetDB; fallbackCover: string }) {
+function CarnetCard({ carnet, isNew }: { carnet: CarnetDB; isNew: boolean }) {
   const router = useRouter();
-  const cover = carnet.cover_image || fallbackCover;
-  const isNew = !carnet.published_at ||
-    (new Date().getTime() - new Date(carnet.published_at).getTime()) < 7 * 24 * 3600 * 1000;
+  const cover = carnet.cover_image || 'https://images.unsplash.com/photo-1506744038136-46273834b3fb?auto=format&fit=crop&w=600&q=80';
 
   return (
     <div
       onClick={() => router.push(`/carnets/${carnet.slug || carnet.id}`)}
-      className="group bg-white border border-[#E8E4D8] rounded-2xl overflow-hidden hover:shadow-lg hover:border-[#C8C3B0] transition-all cursor-pointer flex flex-col"
+      className="glass-sub-card rounded-2xl overflow-hidden transition-all cursor-pointer flex flex-col hover:border-[#17402C]/20"
     >
       {/* Cover */}
       <div className="relative h-44 overflow-hidden">
@@ -533,48 +476,41 @@ function CarnetPublishedCard({ carnet, fallbackCover }: { carnet: CarnetDB; fall
         {/* Status badge */}
         <div className="absolute top-3 left-3">
           {isNew ? (
-            <span className="px-2.5 py-1 bg-[#17402C] text-white text-[10px] font-700 rounded-full uppercase tracking-wider shadow">
+            <span className="glass-pill !bg-[#17402C] !text-white text-[10px] font-bold uppercase tracking-wider">
               Nouveau
             </span>
           ) : (
-            <span className="px-2.5 py-1 bg-emerald-500 text-white text-[10px] font-700 rounded-full uppercase tracking-wider shadow">
+            <span className="glass-pill text-[10px] font-bold uppercase tracking-wider">
               Publié
             </span>
           )}
         </div>
-        {/* Heart button */}
-        <button
-          onClick={(e) => e.stopPropagation()}
-          className="absolute top-3 right-3 w-8 h-8 bg-white/90 hover:bg-white rounded-full flex items-center justify-center shadow transition-all"
-        >
-          <Icon name="HeartIcon" size={14} className="text-[#5C6B5E]" />
-        </button>
+
         {/* Gradient overlay */}
-        <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent" />
+        <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent" />
         {/* Title on image */}
         <div className="absolute bottom-0 left-0 right-0 p-4">
-          <h4 className="font-display font-700 text-white text-sm leading-tight line-clamp-2 drop-shadow-sm">
+          <h4 className="font-display font-bold text-white text-sm leading-tight line-clamp-2">
             {carnet.title}
           </h4>
-          <p className="text-white/60 text-[10px] mt-1">
+          <p className="text-white/70 text-[10px] font-mono mt-1">
             {carnet.published_at ? `Publié le ${formatDate(carnet.published_at)}` : 'Publié récemment'}
-            {carnet.chapters_count && ` · ${carnet.chapters_count} chapitres`}
           </p>
         </div>
       </div>
 
       {/* Stats footer */}
-      <div className="px-4 py-3 flex items-center gap-4 text-xs font-mono font-600 text-[#9CA89E]">
-        <span className="flex items-center gap-1.5">
-          <Icon name="HeartIcon" size={13} className="text-rose-400" />
+      <div className="px-4 py-3 flex items-center justify-between text-xs font-mono font-bold text-[#5A7064]">
+        <span className="flex items-center gap-1.5 text-[#5B7F55]">
+          <Icon name="HeartIcon" size={13} />
           {fmtNum(carnet.likes_count || 0)}
         </span>
-        <span className="flex items-center gap-1.5">
-          <Icon name="EyeIcon" size={13} className="text-[#5C6B5E]" />
+        <span className="flex items-center gap-1.5 text-[#5A7064]">
+          <Icon name="EyeIcon" size={13} />
           {fmtNum(carnet.views_count || 0)}
         </span>
-        <span className="flex items-center gap-1.5">
-          <Icon name="ChatBubbleLeftIcon" size={13} className="text-blue-400" />
+        <span className="flex items-center gap-1.5 text-[#4B6B7C]">
+          <Icon name="ChatBubbleLeftIcon" size={13} />
           {fmtNum(carnet.comments_count || 0)}
         </span>
       </div>
@@ -607,10 +543,10 @@ function DraftRow({
         <div className="flex-1 min-w-0">
           <div className="flex items-start justify-between gap-3">
             <div className="min-w-0">
-              <h5 className="font-600 text-sm text-[#1C2620] truncate group-hover:text-[#17402C] transition-colors">
+              <h5 className="font-600 text-sm text-[#17402C] truncate group-hover:text-[#17402C] transition-colors">
                 {draft.title || 'Brouillon sans titre'}
               </h5>
-              <p className="text-[11px] text-[#9CA89E] mt-0.5">
+              <p className="text-[11px] text-[#5A7064] mt-0.5">
                 {(draft as any).travel_group && `Groupe · ${((draft as any).travel_group as any).name} · `}
                 {draft.chapters_count ? `${draft.chapters_count} chapitres` : 'En cours de rédaction'}
                 {draft.word_count ? ` · ${draft.word_count.toLocaleString('fr')} mots` : ''}
@@ -620,7 +556,7 @@ function DraftRow({
             <div className="flex items-center gap-1.5 flex-shrink-0">
               <button
                 onClick={() => router.push(`/carnets/${draft.slug || draft.id}/edit`)}
-                className="px-3 py-1.5 bg-[#1C2620] hover:bg-[#2A3830] text-white text-xs font-700 rounded-full transition-colors"
+                className="px-3 py-1.5 bg-[#17402C] hover:bg-[#365233] text-white text-xs font-700 rounded-full transition-colors"
               >
                 Reprendre
               </button>
@@ -634,7 +570,7 @@ function DraftRow({
               <button
                 onClick={() => onDelete(draft.id)}
                 title="Supprimer"
-                className="p-1.5 text-[#9CA89E] hover:text-red-500 hover:bg-red-50 rounded-lg transition-colors"
+                className="p-1.5 text-[#5A7064] hover:text-red-500 hover:bg-red-50 rounded-lg transition-colors"
               >
                 <Icon name="TrashIcon" size={14} />
               </button>
@@ -649,7 +585,7 @@ function DraftRow({
                   style={{ width: `${progress}%`, backgroundColor: progressColor }}
                 />
               </div>
-              <span className="text-[10px] font-mono font-700 text-[#9CA89E] flex-shrink-0">{progress}%</span>
+              <span className="text-[10px] font-mono font-700 text-[#5A7064] flex-shrink-0">{progress}%</span>
             </div>
           )}
         </div>

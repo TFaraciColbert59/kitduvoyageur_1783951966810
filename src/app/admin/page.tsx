@@ -131,7 +131,7 @@ function ConfirmModal({ title, message, onConfirm, onCancel }: {
 }) {
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm">
-      <div className="bg-[#1E2B25] border border-white/10 rounded-2xl p-6 max-w-sm w-full mx-4 shadow-2xl">
+      <div className="bg-[#1E2B25] border border-white/10 rounded-2xl p-6 max-w-sm w-full mx-4 ">
         <div className="flex items-center gap-3 mb-4">
           <div className="w-9 h-9 rounded-xl bg-red-500/15 flex items-center justify-center">
             <Icon name="ExclamationTriangleIcon" size={18} variant="outline" className="text-red-400" />
@@ -1165,7 +1165,7 @@ function RewardsSection() {
                   <button
                     onClick={handleFinalizePeriod}
                     disabled={finalizing || !finalizeRevenue}
-                    className="w-full py-2 bg-[#17402C] hover:bg-[#2D6B4A] disabled:opacity-50 text-white rounded-xl text-xs font-bold transition-all flex items-center justify-center gap-1.5"
+                    className="w-full py-2 bg-[#17402C] hover:bg-[#365233] disabled:opacity-50 text-white rounded-xl text-xs font-bold transition-all flex items-center justify-center gap-1.5"
                   >
                     {finalizing ? 'Finalisation...' : 'Clôturer la Période & Distribuer'}
                   </button>
@@ -1468,7 +1468,7 @@ export default function AdminPage() {
 
           {/* Fixed Sidebar */}
           <aside
-            className={`fixed top-0 left-0 h-full bg-[#1C2620] border-r border-white/8 flex flex-col z-50 transition-all duration-300
+            className={`fixed top-0 left-0 h-full bg-[#17402C] border-r border-white/8 flex flex-col z-50 transition-all duration-300
               ${mobileSidebarOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'}
               ${sidebarCollapsed ? 'lg:w-14' : 'lg:w-56'} w-64`}
           >
@@ -1602,12 +1602,12 @@ export default function AdminPage() {
             position: 'sticky',
             top: 0,
             zIndex: 30,
-            backgroundColor: '#0B1F17',
+            backgroundColor: '#17402C',
             padding: '12px 16px',
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'space-between',
-            borderBottom: '1px solid rgba(11,31,23,0.06)',
+            borderBottom: '1px solid rgba(23,64,44,0.06)',
           }}>
             <h1 style={{
               fontFamily: 'Georgia, serif',
@@ -1642,8 +1642,8 @@ export default function AdminPage() {
             overflowX: 'auto',
             whiteSpace: 'nowrap',
             padding: '12px 16px',
-            backgroundColor: '#0B1F17',
-            borderBottom: '1px solid rgba(11,31,23,0.06)',
+            backgroundColor: '#17402C',
+            borderBottom: '1px solid rgba(23,64,44,0.06)',
             display: 'flex',
             gap: '8px',
             WebkitOverflowScrolling: 'touch',

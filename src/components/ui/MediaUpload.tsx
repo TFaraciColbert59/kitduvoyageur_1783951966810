@@ -126,7 +126,7 @@ export default function MediaUpload({
                 <line x1="12" y1="3" x2="12" y2="15" />
               </svg>
             </div>
-            <p className="text-sm font-600 text-[#1C2620] mb-1">{label}</p>
+            <p className="text-sm font-600 text-[#17402C] mb-1">{label}</p>
             <p className="text-xs text-[#5C6B5E]">Glisser-déposer ou cliquer · Max {maxSizeMB} Mo</p>
           </>
         )}

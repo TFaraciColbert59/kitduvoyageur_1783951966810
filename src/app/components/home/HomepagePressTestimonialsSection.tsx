@@ -100,7 +100,7 @@ export default function HomepagePressTestimonialsSection() {
               {/* Stars */}
               <div className="flex gap-1 mb-4" aria-label={`Note: ${t.rating}/5`}>
                 {Array.from({ length: t.rating }).map((_, i) => (
-                  <Icon key={i} name="StarIcon" size={13} variant="solid" className="text-[#2D5A3D]" />
+                  <Icon key={i} name="StarIcon" size={13} variant="solid" className="text-[#17402C]" />
                 ))}
               </div>
 
@@ -110,8 +110,8 @@ export default function HomepagePressTestimonialsSection() {
                 style={{
                   fontFamily: 'var(--font-mono)',
                   background: '#EBF2EC',
-                  color: '#2D5A3D',
-                  border: '1px solid rgba(45,90,61,0.2)',
+                  color: '#17402C',
+                  border: '1px solid rgba(23,64,44,0.2)',
                   letterSpacing: '0.04em',
                 }}
               >
@@ -126,12 +126,12 @@ export default function HomepagePressTestimonialsSection() {
               {/* Weight saved */}
               <div
                 className="flex items-center gap-2 mb-4 p-3 rounded-lg"
-                style={{ background: '#EBF2EC', border: '1px solid rgba(45,90,61,0.15)' }}
+                style={{ background: '#EBF2EC', border: '1px solid rgba(23,64,44,0.15)' }}
               >
-                <Icon name="ScaleIcon" size={13} variant="outline" className="text-[#2D5A3D] flex-shrink-0" />
+                <Icon name="ScaleIcon" size={13} variant="outline" className="text-[#17402C] flex-shrink-0" />
                 <span
                   className="text-xs font-bold"
-                  style={{ color: '#2D5A3D', fontFamily: 'var(--font-mono)' }}
+                  style={{ color: '#17402C', fontFamily: 'var(--font-mono)' }}
                 >
                   {t.weightSaved} économisés
                 </span>
@@ -151,7 +151,7 @@ export default function HomepagePressTestimonialsSection() {
                 <div>
                   <p className="font-semibold text-[#1A1F1C] text-sm">{t.name}</p>
                   <div className="flex items-center gap-1 mt-0.5">
-                    <Icon name="CheckBadgeIcon" size={10} variant="solid" className="text-[#2D5A3D]" />
+                    <Icon name="CheckBadgeIcon" size={10} variant="solid" className="text-[#17402C]" />
                     <span className="text-[10px] text-[#6B7568]" style={{ fontFamily: 'var(--font-mono)' }}>Achat vérifié</span>
                   </div>
                 </div>
@@ -185,7 +185,7 @@ export default function HomepagePressTestimonialsSection() {
           <div className="flex items-center justify-center gap-3 mt-8 pt-6 border-t border-[#DDD9CC]">
             <div className="flex gap-0.5">
               {Array.from({ length: 5 }).map((_, i) => (
-                <Icon key={i} name="StarIcon" size={14} variant="solid" className="text-[#2D5A3D]" />
+                <Icon key={i} name="StarIcon" size={14} variant="solid" className="text-[#17402C]" />
               ))}
             </div>
             <span className="font-bold text-[#1A1F1C] text-sm" style={{ fontFamily: 'var(--font-mono)' }}>4.8 / 5</span>

@@ -684,7 +684,7 @@ export default function LocationPage() {
               <div style={{ width: '36px', height: '36px', borderRadius: '10px', background: '#17402C', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#fff', fontSize: '16px' }}>📅</div>
               <div>
                 <p style={{ fontSize: '9px', fontFamily: 'ui-monospace, monospace', letterSpacing: '0.15em', textTransform: 'uppercase', color: '#7A8A7D', margin: '0 0 2px' }}>Location</p>
-                <h1 style={{ fontSize: '20px', fontWeight: '700', color: '#1C2620', margin: 0 }}>Location de Matériel</h1>
+                <h1 style={{ fontSize: '20px', fontWeight: '700', color: '#17402C', margin: 0 }}>Location de Matériel</h1>
               </div>
             </div>
 
@@ -703,7 +703,7 @@ export default function LocationPage() {
                     border: '1px solid #E4E0D4',
                     fontSize: '13px',
                     background: '#fff',
-                    color: '#1C2620',
+                    color: '#17402C',
                     outline: 'none',
                     boxSizing: 'border-box',
                   }}
@@ -718,7 +718,7 @@ export default function LocationPage() {
                   border: '1px solid #E4E0D4',
                   fontSize: '12px',
                   background: '#fff',
-                  color: '#1C2620',
+                  color: '#17402C',
                   fontWeight: '600',
                   outline: 'none',
                 }}
@@ -735,11 +735,11 @@ export default function LocationPage() {
                 <span style={{ fontSize: '18px', fontWeight: '700', display: 'block' }}>{listings.length}</span>
                 <span style={{ fontSize: '9px', opacity: 0.7, fontFamily: 'ui-monospace, monospace' }}>Articles</span>
               </div>
-              <div style={{ background: '#1C2620', borderRadius: '12px', padding: '12px 8px', textAlign: 'center', color: '#fff' }}>
+              <div style={{ background: '#17402C', borderRadius: '12px', padding: '12px 8px', textAlign: 'center', color: '#fff' }}>
                 <span style={{ fontSize: '18px', fontWeight: '700', display: 'block', color: '#FCD34D' }}>{listings.filter(l => l.available).length}</span>
                 <span style={{ fontSize: '9px', opacity: 0.7, fontFamily: 'ui-monospace, monospace' }}>Disponibles</span>
               </div>
-              <div style={{ background: '#1C2620', borderRadius: '12px', padding: '12px 8px', textAlign: 'center', color: '#fff' }}>
+              <div style={{ background: '#17402C', borderRadius: '12px', padding: '12px 8px', textAlign: 'center', color: '#fff' }}>
                 <span style={{ fontSize: '18px', fontWeight: '700', display: 'block', color: '#6EE7B7' }}>
                   {listings.length > 0 ? Math.round(listings.reduce((s, l) => s + l.pricePerDay, 0) / listings.length) : 0}€
                 </span>
@@ -800,7 +800,7 @@ export default function LocationPage() {
                       </div>
                       <div style={{ flex: 1, padding: '10px 10px 10px 0', display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
                         <div>
-                          <h3 style={{ fontSize: '13px', fontWeight: '700', color: '#1C2620', margin: '0 0 4px', lineHeight: 1.3 }}>{listing.title}</h3>
+                          <h3 style={{ fontSize: '13px', fontWeight: '700', color: '#17402C', margin: '0 0 4px', lineHeight: 1.3 }}>{listing.title}</h3>
                           <div style={{ display: 'flex', gap: '4px', flexWrap: 'wrap', marginBottom: '4px' }}>
                             <span className={cond.color} style={{ padding: '1px 6px', borderRadius: '4px', fontSize: '9px', fontWeight: '600', border: '1px solid' }}>
                               {cond.label}
@@ -811,10 +811,10 @@ export default function LocationPage() {
                           </div>
                         </div>
                         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                          <span style={{ fontSize: '16px', fontWeight: '800', color: '#1C2620' }}>{listing.pricePerDay}€<span style={{ fontSize: '10px', fontWeight: '400', color: '#7A8A7D' }}>/j</span></span>
+                          <span style={{ fontSize: '16px', fontWeight: '800', color: '#17402C' }}>{listing.pricePerDay}€<span style={{ fontSize: '10px', fontWeight: '400', color: '#7A8A7D' }}>/j</span></span>
                           <div style={{ display: 'flex', alignItems: 'center', gap: '2px' }}>
                             <svg width="10" height="10" fill="#F59E0B" viewBox="0 0 24 24"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
-                            <span style={{ fontSize: '11px', fontWeight: '600', color: '#1C2620' }}>{listing.rating}</span>
+                            <span style={{ fontSize: '11px', fontWeight: '600', color: '#17402C' }}>{listing.rating}</span>
                           </div>
                         </div>
                       </div>

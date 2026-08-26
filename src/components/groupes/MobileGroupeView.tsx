@@ -1,5 +1,6 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
+import { motion, AnimatePresence } from 'framer-motion';
 import Icon from '@/components/ui/AppIcon';
 import TachesCard from './TachesCard';
 import EquipementCard from './EquipementCard';
@@ -10,6 +11,7 @@ import VoyageursCard from './VoyageursCard';
 import ParcoursCard from './ParcoursCard';
 import ProgressionCard from './ProgressionCard';
 import { useHapticFeedback } from '@/hooks/useHapticFeedback';
+import { useToast } from '@/contexts/ToastContext';
 
 interface MobileGroupeViewProps {
   data: any;
@@ -21,43 +23,51 @@ interface MobileGroupeViewProps {
 
 export default function MobileGroupeView({ data, groupId, user, members, onRefresh }: MobileGroupeViewProps) {
   const { triggerHaptic } = useHapticFeedback();
+  const { toast } = useToast();
   const [activeSection, setActiveSection] = useState<'overview' | 'parcours' | 'tasks' | 'equipment' | 'expenses' | 'decisions' | 'discussion' | 'members'>('overview');
 
-  const sections = [
-    { id: 'overview', label: 'Cockpit', icon: 'HomeIcon' },
-    { id: 'parcours', label: 'Parcours', icon: 'MapIcon' },
-    { id: 'tasks', label: `Tâches (${data.tasks?.filter((t: any) => !t.completed).length || 0})`, icon: 'ClipboardDocumentListIcon' },
-    { id: 'equipment', label: `Kit (${data.equipment?.length || 0})`, icon: 'BackpackIcon' },
-    { id: 'expenses', label: 'Budget', icon: 'CurrencyEuroIcon' },
-    { id: 'decisions', label: 'Sondages', icon: 'HandRaisedIcon' },
-    { id: 'discussion', label: 'Chat', icon: 'ChatBubbleLeftRightIcon' },
-    { id: 'members', label: `Membres (${data.travelers?.length || 0})`, icon: 'UserGroupIcon' },
-  ] as const;
+  useEffect(() => {
+    const handler = (e: any) => {
+      if (e.detail) {
+        setActiveSection(e.detail);
+      }
+    };
+    window.addEventListener('groupe-cockpit-tab-change', handler);
+    return () => window.removeEventListener('groupe-cockpit-tab-change', handler);
+  }, []);
+
+  const handleCopyCode = () => {
+    triggerHaptic('light');
+    if (data.inviteCode && typeof navigator !== 'undefined') {
+      navigator.clipboard.writeText(data.inviteCode);
+      toast(`Code ${data.inviteCode} copié dans le presse-papier !`, 'success');
+    }
+  };
 
   const coverUrl = data.cover_url || data.meta?.coverUrl || 'https://images.unsplash.com/photo-1464822759023-fed622ff2c3b?w=1200&q=80';
 
   return (
-    <div className="md:hidden min-h-screen bg-[#FBFAF6] pb-24 text-[#1C2620]">
-      {/* ── IMMERSIVE COVER HERO (SCREEN 4 REFERENCE) ── */}
-      <div className="relative w-full h-72 sm:h-80 overflow-hidden bg-[#17402C]">
+    <div className="md:hidden min-h-screen bg-transparent pb-36 text-[#17402C]">
+      {/* IMMERSIVE COVER HERO */}
+      <div className="relative w-full h-64 sm:h-72 overflow-hidden bg-[#17402C]">
         <img
           src={coverUrl}
           alt={data.meta?.titlePrefix}
           className="w-full h-full object-cover opacity-60"
         />
-        <div className="absolute inset-0 bg-gradient-to-t from-[#0B1F17] via-[#17402C]/60 to-transparent" />
+        <div className="absolute inset-0 bg-gradient-to-t from-[#17402C] via-[#17402C]/60 to-transparent" />
 
         {/* Top Floating Controls */}
         <div className="absolute top-4 left-4 right-4 flex items-center justify-between z-10">
           <Link
             href="/groupes"
-            className="w-10 h-10 rounded-full bg-white/20 backdrop-blur-md text-white border border-white/25 flex items-center justify-center text-lg active:scale-95 transition-all shadow-md"
+            className="w-9 h-9 rounded-full bg-white/20 backdrop-blur-md border border-white/30 text-white flex items-center justify-center font-bold text-lg active:scale-95 transition-transform"
             aria-label="Retour"
           >
             ‹
           </Link>
           <div className="flex items-center gap-2">
-            <span className="px-3 py-1 bg-black/40 backdrop-blur-md rounded-full text-[10px] font-mono uppercase tracking-wider text-[#A8C4A2] border border-white/10">
+            <span className="glass-pill text-white border-white/20 font-mono text-[10px] bg-white/10 backdrop-blur-md">
               {data.meta?.theme || 'Trek'} · {data.meta?.durationDays || 3}J
             </span>
           </div>
@@ -65,18 +75,18 @@ export default function MobileGroupeView({ data, groupId, user, members, onRefre
 
         {/* Hero Title & Destination */}
         <div className="absolute bottom-4 left-4 right-4 z-10">
-          <span className="text-[10px] font-mono uppercase tracking-widest text-[#A8C4A2] block mb-1">
+          <span className="text-[10px] font-mono uppercase tracking-widest text-emerald-300 block mb-1 font-bold">
             📍 {data.meta?.destination || 'Massif & Aventure'} · DÉPART DANS {data.meta?.daysLeft || 0}J
           </span>
           <h1 className="font-display font-extrabold text-2xl sm:text-3xl text-white leading-tight">
-            {data.meta?.titlePrefix} <em className="font-serif italic font-normal text-[#A8C4A2]">{data.meta?.titleSuffix}</em>
+            {data.meta?.titlePrefix} <em className="font-serif italic font-normal text-emerald-300">{data.meta?.titleSuffix}</em>
           </h1>
         </div>
       </div>
 
-      {/* ── GROUP STATS & TRAVELERS ROW ── */}
+      {/* GROUP STATS & TRAVELERS ROW (Liquid Glass) */}
       <div className="px-4 -mt-3 relative z-20">
-        <div className="bg-white rounded-[24px] p-4 border border-[#1C2620]/8 shadow-[0_4px_20px_rgba(11,31,23,0.06)] flex flex-col gap-3">
+        <div className="glass bg-white/90 backdrop-blur-xl p-4 rounded-3xl border border-white shadow-xs flex flex-col gap-3">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
               {/* Stacked Travelers */}
@@ -84,7 +94,7 @@ export default function MobileGroupeView({ data, groupId, user, members, onRefre
                 {data.travelers?.slice(0, 4).map((t: any, i: number) => (
                   <div
                     key={t.id || i}
-                    className="w-8 h-8 rounded-full border-2 border-white bg-gradient-to-br from-[#17402C] to-[#2D6B4A] text-white flex items-center justify-center font-serif italic text-xs shadow-sm"
+                    className="w-8 h-8 rounded-full border-2 border-white bg-[#17402C] text-white flex items-center justify-center font-serif italic text-xs font-bold shadow-2xs"
                     style={{ zIndex: 10 - i }}
                     title={t.name}
                   >
@@ -92,17 +102,17 @@ export default function MobileGroupeView({ data, groupId, user, members, onRefre
                   </div>
                 ))}
                 {data.travelers?.length > 4 && (
-                  <div className="w-8 h-8 rounded-full border-2 border-white bg-[#A8C4A2] text-[#17402C] flex items-center justify-center font-mono font-bold text-[10px] shadow-sm">
+                  <div className="w-8 h-8 rounded-full border-2 border-white bg-[#5C6B5E] text-white flex items-center justify-center font-mono font-bold text-[10px]">
                     +{data.travelers.length - 4}
                   </div>
                 )}
               </div>
 
               <div>
-                <h4 className="font-bold text-xs text-[#1C2620]">
+                <h4 className="font-bold text-xs text-[#17402C]">
                   {data.travelers?.length || 1} co-voyageurs
                 </h4>
-                <span className="text-[10px] font-mono text-[#5C6B5E]">
+                <span className="text-[10px] font-mono text-[#5C6B5E] font-medium">
                   Cockpit collaboratif
                 </span>
               </div>
@@ -111,31 +121,25 @@ export default function MobileGroupeView({ data, groupId, user, members, onRefre
             {/* Quick action: invite */}
             {data.inviteCode && (
               <button
-                onClick={() => {
-                  triggerHaptic('light');
-                  if (typeof navigator !== 'undefined') {
-                    navigator.clipboard.writeText(data.inviteCode);
-                    alert(`Code copié : ${data.inviteCode}`);
-                  }
-                }}
-                className="px-3 py-1.5 bg-[#F5F2E8] hover:bg-[#EAE6DF] text-[#17402C] rounded-xl text-[11px] font-mono font-bold border border-[#17402C]/10 flex items-center gap-1.5 transition-colors"
+                type="button"
+                onClick={handleCopyCode}
+                className="glass-capsule-btn py-1.5 px-3 text-[11px] font-mono font-bold"
               >
-                <span>🔑</span>
-                <span>{data.inviteCode}</span>
+                <span className="relative z-10">🔑 {data.inviteCode}</span>
               </button>
             )}
           </div>
 
           {/* Progression gauge */}
           {data.meta?.progression !== undefined && (
-            <div className="pt-2 border-t border-[#1C2620]/6">
-              <div className="flex items-center justify-between text-[11px] font-mono mb-1">
+            <div className="pt-2 border-t border-[#17402C]/10">
+              <div className="flex items-center justify-between text-[10.5px] font-mono mb-1.5 font-bold">
                 <span className="text-[#5C6B5E]">Préparation du sac & étapes</span>
-                <span className="font-bold text-[#17402C]">{data.meta.progression}%</span>
+                <span className="text-[#17402C]">{data.meta.progression}%</span>
               </div>
-              <div className="w-full h-2 bg-[#F0EDE1] rounded-full overflow-hidden">
+              <div className="w-full h-2 rounded-full bg-[#17402C]/10 overflow-hidden">
                 <div
-                  className="h-full bg-[#17402C] rounded-full transition-all duration-500"
+                  className="h-full bg-gradient-to-r from-emerald-500 to-[#17402C] rounded-full transition-all duration-500"
                   style={{ width: `${data.meta.progression}%` }}
                 />
               </div>
@@ -144,107 +148,94 @@ export default function MobileGroupeView({ data, groupId, user, members, onRefre
         </div>
       </div>
 
-      {/* ── HORIZONTAL SCROLLABLE TABS ── */}
-      <div className="px-4 pt-4">
-        <div className="overflow-x-auto scrollbar-none flex gap-1.5 pb-1">
-          {sections.map((s) => {
-            const isSelected = activeSection === s.id;
-            return (
-              <button
-                key={s.id}
-                onClick={() => {
-                  triggerHaptic('selection');
-                  setActiveSection(s.id);
-                }}
-                className={`px-3.5 py-2 rounded-full text-xs font-semibold whitespace-nowrap transition-all ${
-                  isSelected
-                    ? 'bg-[#17402C] text-white shadow-sm'
-                    : 'bg-white text-[#5C6B5E] border border-[#1C2620]/8 hover:bg-[#F5F2E8]'
-                }`}
-              >
-                {s.label}
-              </button>
-            );
-          })}
-        </div>
-      </div>
+      {/* SECTION CONTENT WITH ANIMATED TRANSITIONS */}
+      <div className="p-4 pt-4">
+        <AnimatePresence mode="wait">
+          <motion.div
+            key={activeSection}
+            initial={{ opacity: 0, y: 8 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -8 }}
+            transition={{ duration: 0.18, ease: 'easeOut' }}
+            className="space-y-4"
+          >
+            {/* OVERVIEW */}
+            {activeSection === 'overview' && (
+              <div className="space-y-4">
+                {/* Quick Metrics Grid */}
+                <div className="grid grid-cols-3 gap-2.5">
+                  <div className="glass bg-white/80 p-3 rounded-2xl text-center border border-white">
+                    <p className="font-mono text-[9px] uppercase tracking-widest text-[#5C6B5E] mb-1 font-bold">Tâches</p>
+                    <p className="font-mono font-bold text-xl text-[#17402C]">
+                      {data.tasks?.filter((t: any) => !t.completed).length || 0}
+                    </p>
+                    <p className="text-[9px] text-[#5C6B5E] font-mono">à faire</p>
+                  </div>
 
-      {/* ── SECTION CONTENT ── */}
-      <div className="p-4 space-y-4">
-        {/* OVERVIEW */}
-        {activeSection === 'overview' && (
-          <div className="space-y-4">
-            {/* Quick Metrics Grid */}
-            <div className="grid grid-cols-3 gap-2.5">
-              <div className="bg-white rounded-2xl p-3.5 border border-[#1C2620]/8 shadow-sm text-center">
-                <p className="font-mono text-[9px] uppercase tracking-widest text-[#5C6B5E] mb-1">Tâches</p>
-                <p className="font-mono font-bold text-xl text-[#1C2620]">
-                  {data.tasks?.filter((t: any) => !t.completed).length || 0}
-                </p>
-                <p className="text-[9px] text-[#5C6B5E]/70 font-mono">à faire</p>
+                  <div className="glass bg-white/80 p-3 rounded-2xl text-center border border-white">
+                    <p className="font-mono text-[9px] uppercase tracking-widest text-[#5C6B5E] mb-1 font-bold">Budget</p>
+                    <p className="font-mono font-bold text-xl text-[#17402C]">
+                      {data.expenses?.perPerson || data.expenses?.total || 0} €
+                    </p>
+                    <p className="text-[9px] text-[#5C6B5E] font-mono">par pers.</p>
+                  </div>
+
+                  <div className="glass bg-white/80 p-3 rounded-2xl text-center border border-white">
+                    <p className="font-mono text-[9px] uppercase tracking-widest text-[#5C6B5E] mb-1 font-bold">Matériel</p>
+                    <p className="font-mono font-bold text-xl text-[#17402C]">
+                      {data.equipment?.length || 0}
+                    </p>
+                    <p className="text-[9px] text-[#5C6B5E] font-mono">équipements</p>
+                  </div>
+                </div>
+
+                {/* Parcours preview */}
+                {groupId && <ParcoursCard groupId={groupId} trail={data.trail} meta={data.meta} />}
+
+                {/* Tasks and equipment summaries */}
+                <TachesCard tasks={data.tasks} groupId={groupId} onRefresh={onRefresh} user={user} members={members} />
+                <EquipementCard equipment={data.equipment} groupId={groupId} onRefresh={onRefresh} user={user} members={members} />
               </div>
+            )}
 
-              <div className="bg-white rounded-2xl p-3.5 border border-[#1C2620]/8 shadow-sm text-center">
-                <p className="font-mono text-[9px] uppercase tracking-widest text-[#5C6B5E] mb-1">Budget</p>
-                <p className="font-mono font-bold text-xl text-[#17402C]">
-                  {data.expenses?.perPerson || data.expenses?.total || 0} €
-                </p>
-                <p className="text-[9px] text-[#5C6B5E]/70 font-mono">par pers.</p>
-              </div>
+            {/* PARCOURS */}
+            {activeSection === 'parcours' && groupId && (
+              <ParcoursCard groupId={groupId} trail={data.trail} meta={data.meta} />
+            )}
 
-              <div className="bg-white rounded-2xl p-3.5 border border-[#1C2620]/8 shadow-sm text-center">
-                <p className="font-mono text-[9px] uppercase tracking-widest text-[#5C6B5E] mb-1">Matériel</p>
-                <p className="font-mono font-bold text-xl text-[#1C2620]">
-                  {data.equipment?.length || 0}
-                </p>
-                <p className="text-[9px] text-[#5C6B5E]/70 font-mono">équipements</p>
-              </div>
-            </div>
+            {/* TÂCHES */}
+            {activeSection === 'tasks' && (
+              <TachesCard tasks={data.tasks} groupId={groupId} onRefresh={onRefresh} user={user} members={members} />
+            )}
 
-            {/* Parcours preview */}
-            {groupId && <ParcoursCard groupId={groupId} trail={data.trail} meta={data.meta} />}
+            {/* ÉQUIPEMENT */}
+            {activeSection === 'equipment' && (
+              <EquipementCard equipment={data.equipment} groupId={groupId} onRefresh={onRefresh} user={user} members={members} />
+            )}
 
-            {/* Tasks and equipment summaries */}
-            <TachesCard tasks={data.tasks} groupId={groupId} onRefresh={onRefresh} user={user} members={members} />
-            <EquipementCard equipment={data.equipment} groupId={groupId} onRefresh={onRefresh} user={user} members={members} />
-          </div>
-        )}
+            {/* DÉPENSES / BUDGET */}
+            {activeSection === 'expenses' && (
+              <DepensesCard expenses={data.expenses} groupId={groupId} onRefresh={onRefresh} user={user} members={members} />
+            )}
 
-        {/* PARCOURS */}
-        {activeSection === 'parcours' && groupId && (
-          <ParcoursCard groupId={groupId} trail={data.trail} meta={data.meta} />
-        )}
+            {/* DÉCISIONS / VOTES */}
+            {activeSection === 'decisions' && (
+              <DecisionsCard decisions={data.decisions} groupId={groupId} onRefresh={onRefresh} user={user} />
+            )}
 
-        {/* TÂCHES */}
-        {activeSection === 'tasks' && (
-          <TachesCard tasks={data.tasks} groupId={groupId} onRefresh={onRefresh} user={user} members={members} />
-        )}
+            {/* DISCUSSION / CHAT */}
+            {activeSection === 'discussion' && (
+              <DiscussionCard discussions={data.discussions} groupId={groupId} onRefresh={onRefresh} user={user} />
+            )}
 
-        {/* ÉQUIPEMENT */}
-        {activeSection === 'equipment' && (
-          <EquipementCard equipment={data.equipment} groupId={groupId} onRefresh={onRefresh} user={user} members={members} />
-        )}
-
-        {/* DÉPENSES / BUDGET */}
-        {activeSection === 'expenses' && (
-          <DepensesCard expenses={data.expenses} groupId={groupId} onRefresh={onRefresh} user={user} members={members} />
-        )}
-
-        {/* DÉCISIONS / VOTES */}
-        {activeSection === 'decisions' && (
-          <DecisionsCard decisions={data.decisions} groupId={groupId} onRefresh={onRefresh} user={user} />
-        )}
-
-        {/* DISCUSSION / CHAT */}
-        {activeSection === 'discussion' && (
-          <DiscussionCard discussions={data.discussions} groupId={groupId} onRefresh={onRefresh} user={user} />
-        )}
-
-        {/* MEMBRES */}
-        {activeSection === 'members' && (
-          <VoyageursCard travelers={data.travelers} groupId={groupId} onRefresh={onRefresh} user={user} members={members} />
-        )}
+            {/* MEMBRES */}
+            {activeSection === 'members' && (
+              <VoyageursCard travelers={data.travelers} groupId={groupId} onRefresh={onRefresh} user={user} members={members} />
+            )}
+          </motion.div>
+        </AnimatePresence>
       </div>
     </div>
   );
 }
+

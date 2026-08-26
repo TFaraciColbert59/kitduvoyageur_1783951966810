@@ -186,7 +186,7 @@ export default function AbonnementsPage() {
               <div
                 key={plan.id}
                 onClick={() => setSelectedPlan(plan.id)}
-                className={`relative rounded-2xl border-2 p-6 cursor-pointer transition-all duration-300 ${plan.color} ${isSelected ? 'bg-white/5 shadow-xl' : 'bg-card hover:bg-white/3'}`}>
+                className={`relative rounded-2xl border-2 p-6 cursor-pointer transition-all duration-300 ${plan.color} ${isSelected ? 'bg-white/5 ' : 'bg-card hover:bg-white/3'}`}>
 
                 {plan.badge &&
                 <div className={`absolute -top-3 left-1/2 -translate-x-1/2 px-3 py-1 rounded-full text-xs font-bold ${plan.id === 'expedition' ? 'bg-amber-400 text-black' : 'bg-primary text-white'}`}>

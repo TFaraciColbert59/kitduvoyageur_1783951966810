@@ -8,7 +8,7 @@ export default function QuickGrid() {
   return (
     <div style={{ padding: '20px 16px 8px' }}>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '12px' }}>
-        <h2 style={{ fontSize: '20px', letterSpacing: '-0.015em', margin: 0, color: '#0B1F17' }}>
+        <h2 style={{ fontSize: '20px', letterSpacing: '-0.015em', margin: 0, color: '#17402C' }}>
           Par où <em style={{ fontFamily: 'Georgia, serif', fontStyle: 'italic', color: '#17402C' }}>commencer.</em>
         </h2>
         <Link href="/explorer" style={{ fontSize: '12px', color: '#17402C', fontWeight: 500, textDecoration: 'none' }}>
@@ -18,7 +18,7 @@ export default function QuickGrid() {
       <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px' }}>
         {/* Card 1: green gradient - "Configurer mon kit" */}
         <Link href="/ai-configurator" style={{ textDecoration: 'none' }}>
-          <div style={{ aspectRatio: '1/1', borderRadius: '20px', padding: '14px', display: 'flex', flexDirection: 'column', justifyContent: 'space-between', background: 'linear-gradient(160deg, #2D6B4A 0%, #17402C 60%, #0B1F17 100%)', color: '#fff' }}>
+          <div style={{ aspectRatio: '1/1', borderRadius: '20px', padding: '14px', display: 'flex', flexDirection: 'column', justifyContent: 'space-between', background: 'linear-gradient(160deg, #365233 0%, #17402C 60%, #17402C 100%)', color: '#fff' }}>
             <LkvIcon name="bag" size={22} color="#A8C8A0" />
             <div>
               <div style={{ fontSize: '15px', fontWeight: 500, lineHeight: 1.2 }}>Configurer<br/>mon kit</div>
@@ -28,7 +28,7 @@ export default function QuickGrid() {
         </Link>
         {/* Card 2: stone - "Carte des refuges" */}
         <Link href="/carte-interactive" style={{ textDecoration: 'none' }}>
-          <div style={{ aspectRatio: '1/1', borderRadius: '20px', padding: '14px', display: 'flex', flexDirection: 'column', justifyContent: 'space-between', background: '#F4F1EA', color: '#0B1F17' }}>
+          <div style={{ aspectRatio: '1/1', borderRadius: '20px', padding: '14px', display: 'flex', flexDirection: 'column', justifyContent: 'space-between', background: '#F4F1EA', color: '#17402C' }}>
             <LkvIcon name="map-pin" size={22} color="#17402C" />
             <div>
               <div style={{ fontSize: '15px', fontWeight: 500, lineHeight: 1.2 }}>Carte des<br/>refuges</div>
@@ -38,7 +38,7 @@ export default function QuickGrid() {
         </Link>
         {/* Card 3: sage - "Tests terrain" */}
         <Link href="/guides" style={{ textDecoration: 'none' }}>
-          <div style={{ aspectRatio: '1/1', borderRadius: '20px', padding: '14px', display: 'flex', flexDirection: 'column', justifyContent: 'space-between', background: '#EAF1E5', color: '#0B1F17' }}>
+          <div style={{ aspectRatio: '1/1', borderRadius: '20px', padding: '14px', display: 'flex', flexDirection: 'column', justifyContent: 'space-between', background: '#EAF1E5', color: '#17402C' }}>
             <LkvIcon name="doc" size={22} color="#17402C" />
             <div>
               <div style={{ fontSize: '15px', fontWeight: 500, lineHeight: 1.2 }}>Tests<br/>terrain</div>
@@ -48,7 +48,7 @@ export default function QuickGrid() {
         </Link>
         {/* Card 4: forest-900 dark - "Boutique" */}
         <Link href="/boutique" style={{ textDecoration: 'none' }}>
-          <div style={{ aspectRatio: '1/1', borderRadius: '20px', padding: '14px', display: 'flex', flexDirection: 'column', justifyContent: 'space-between', background: '#0B1F17', color: '#fff' }}>
+          <div style={{ aspectRatio: '1/1', borderRadius: '20px', padding: '14px', display: 'flex', flexDirection: 'column', justifyContent: 'space-between', background: '#17402C', color: '#fff' }}>
             <LkvIcon name="star" size={22} color="#C6DCBE" />
             <div>
               <div style={{ fontSize: '15px', fontWeight: 500, lineHeight: 1.2 }}>Boutique<br/>essentielle</div>

@@ -1,6 +1,6 @@
-'use client';
+"use client";
 
-import React, { createContext, useContext, useState, useCallback, useEffect } from 'react';
+import React, { createContext, useContext, useState, useCallback, useEffect, useMemo } from 'react';
 
 interface WishlistItem {
   id: string;
@@ -51,18 +51,32 @@ export function WishlistProvider({ children }: { children: React.ReactNode }) {
     }
   };
 
-  const isWishlisted = useCallback((id: string) => items.some((i) => i.id === id), [items]);
+  // Set indexé O(1) ultra-rapide pour vérification instantanée des cœurs
+  const idSet = useMemo(() => new Set(items.map((i) => i.id)), [items]);
+
+  const isWishlisted = useCallback((id: string) => idSet.has(id), [idSet]);
 
   const toggle = useCallback(
     (item: WishlistItem) => {
-      const exists = items.some((i) => i.id === item.id);
-      save(exists ? items.filter((i) => i.id !== item.id) : [...items, item]);
+      setItems((prev) => {
+        const exists = prev.some((i) => i.id === item.id);
+        const next = exists ? prev.filter((i) => i.id !== item.id) : [...prev, item];
+        try {
+          localStorage.setItem(WISHLIST_KEY, JSON.stringify(next));
+        } catch {}
+        return next;
+      });
     },
-    [items]
+    []
+  );
+
+  const value = useMemo(
+    () => ({ items, isWishlisted, toggle, count: items.length }),
+    [items, isWishlisted, toggle]
   );
 
   return (
-    <WishlistContext.Provider value={{ items, isWishlisted, toggle, count: items.length }}>
+    <WishlistContext.Provider value={value}>
       {children}
     </WishlistContext.Provider>
   );

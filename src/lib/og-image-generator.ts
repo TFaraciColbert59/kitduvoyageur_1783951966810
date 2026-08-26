@@ -3,7 +3,7 @@
  * The static OG image is pre-generated at /assets/images/og-image.png
  * 1200x630px with design tokens:
  * - Background: #E7E3D6 (papier carte)
- * - Headline: "Le Kit du Voyageur" in Space Grotesk bold #1C2620 (encre pin)
+ * - Headline: "Le Kit du Voyageur" in Space Grotesk bold #17402C (encre pin)
  * - Accent bar: thin #17402C (orange balise)
  */
 

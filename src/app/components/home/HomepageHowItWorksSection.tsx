@@ -30,7 +30,7 @@ const JOURNEY_STEPS = [
     img: 'https://img.rocket.new/generatedImages/rocket_gen_img_13d6ec110-1783680160804.png',
     alt: 'Interface configurateur IA avec kit personnalisé',
     href: '/ai-configurator',
-    bg: '#2D5A3D',
+    bg: '#17402C',
     dark: true,
     highlight: true,
   },

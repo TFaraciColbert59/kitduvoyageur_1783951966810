@@ -18,7 +18,7 @@ export default function HomeHeroSection({ onMenuOpen: _onMenuOpen }: HomeHeroSec
       {/* Background gradient — forest-900 base */}
       <div style={{
         position: 'absolute', inset: 0,
-        background: 'linear-gradient(180deg, #1a2f24 0%, #0B1F17 100%)',
+        background: 'linear-gradient(180deg, #1a2f24 0%, #17402C 100%)',
       }} />
       {/* Radial overlays for depth */}
       <div style={{
@@ -28,7 +28,7 @@ export default function HomeHeroSection({ onMenuOpen: _onMenuOpen }: HomeHeroSec
       {/* Mountains SVG at bottom */}
       <div style={{
         position: 'absolute', bottom: 0, left: 0, right: 0, height: '240px',
-        backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 1200 240'%3E%3Cpath d='M0 240V160l80-60 120 100 160-120 200 140 120-80 180 120 140-100 200 160v80z' fill='rgba(11,31,23,0.4)'/%3E%3Cpath d='M0 240V180l100-40 150 80 180-100 220 120 140-60 160 80 100-40 150 60v100z' fill='rgba(45,107,74,0.3)'/%3E%3C/svg%3E")`,
+        backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 1200 240'%3E%3Cpath d='M0 240V160l80-60 120 100 160-120 200 140 120-80 180 120 140-100 200 160v80z' fill='rgba(23,64,44,0.4)'/%3E%3Cpath d='M0 240V180l100-40 150 80 180-100 220 120 140-60 160 80 100-40 150 60v100z' fill='rgba(45,107,74,0.3)'/%3E%3C/svg%3E")`,
         backgroundSize: 'cover', backgroundPosition: 'center bottom',
       }} />
 
@@ -57,7 +57,7 @@ export default function HomeHeroSection({ onMenuOpen: _onMenuOpen }: HomeHeroSec
           </p>
           <div style={{ display: 'flex', gap: '8px', marginTop: '20px' }}>
             <Link href="/boutique">
-              <LkvButton variant="light" size="md" icon={<LkvIcon name="arrow-right" size={16} color="#0B1F17" />}>
+              <LkvButton variant="light" size="md" icon={<LkvIcon name="arrow-right" size={16} color="#17402C" />}>
                 Composer mon sac
               </LkvButton>
             </Link>

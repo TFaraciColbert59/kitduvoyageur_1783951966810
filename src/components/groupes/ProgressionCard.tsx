@@ -17,19 +17,19 @@ export default function ProgressionCard({ progression }: ProgressionCardProps) {
   ];
 
   return (
-    <div className="bg-[#33463C] rounded-[0.75rem] p-6 text-[#E7E3D6] shadow-sm relative overflow-hidden">
+    <div className="glass p-6 text-[#17402C] relative overflow-hidden">
       <div className="flex justify-between items-start mb-2">
-        <h2 className="font-display text-xl text-white">Progression <span className="font-serif italic text-[#E7E3D6] font-bold">du voyage</span></h2>
-        <span className="font-display font-bold text-2xl text-white">{progression}%</span>
+        <h2 className="font-display font-bold text-xl text-[#17402C]">Progression <span className="font-serif italic font-normal text-[#17402C]">du voyage</span></h2>
+        <span className="font-display font-bold text-2xl text-[#17402C] font-mono">{progression}%</span>
       </div>
       
-      <p className="text-sm text-white/70 mb-6 font-sans">
+      <p className="text-sm text-[#5C6B5E] mb-6 font-sans">
         Étape en cours : équipement partagé — il reste 3 tâches à valider avant réservation des refuges.
       </p>
       
-      <div className="relative h-2 bg-black/20 rounded-full mb-8 overflow-hidden">
+      <div className="glass-progress mb-8">
         <motion.div 
-          className="absolute top-0 left-0 h-full bg-[#17402C] rounded-full"
+          className="glass-progress-fill"
           initial={{ width: 0 }}
           animate={{ width: `${progression}%` }}
           transition={{ duration: 1, ease: "easeOut" }}
@@ -37,17 +37,16 @@ export default function ProgressionCard({ progression }: ProgressionCardProps) {
       </div>
       
       <div className="flex justify-between relative">
-        {/* Ligne de connexion */}
-        <div className="absolute top-3 left-0 right-0 h-[1px] bg-white/10 -z-10" />
+        <div className="absolute top-3 left-0 right-0 h-[1px] bg-[#17402C]/10 -z-10" />
         
         {steps.map((step) => (
           <div key={step.id} className="flex flex-col items-center gap-2">
             <div className={`w-6 h-6 rounded-full flex items-center justify-center text-[10px] font-bold z-10 transition-colors
-              ${step.completed ? 'bg-[#17402C] text-white' : step.active ? 'bg-white text-[#1C2620] ring-4 ring-white/20' : 'bg-[#1C2620] text-white/50 border border-white/20'}`}
+              ${step.completed ? 'bg-[#17402C] text-white' : step.active ? 'bg-white text-[#17402C] ring-4 ring-[#17402C]/20 border border-[#17402C]' : 'glass-sub-card text-[#5C6B5E]'}`}
             >
-              {step.completed ? <Icon name="CheckIcon" size={12} /> : step.id}
+              {step.completed ? <Icon name="CheckIcon" size={12} className="relative z-10" /> : step.id}
             </div>
-            <span className={`text-[10px] font-mono uppercase tracking-widest text-center hidden sm:block ${step.active ? 'text-white' : 'text-white/40'}`}>
+            <span className={`text-[10px] font-mono uppercase tracking-widest text-center hidden sm:block font-bold ${step.active ? 'text-[#17402C]' : 'text-[#5C6B5E]/50'}`}>
               {step.label}
             </span>
           </div>

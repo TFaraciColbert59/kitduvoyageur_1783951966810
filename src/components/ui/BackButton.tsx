@@ -32,9 +32,9 @@ export default function BackButton({
   };
 
   const variantClasses = {
-    light: 'bg-white border border-[#E4E0D4] text-[#1C2620] hover:bg-[#F5F2EA] shadow-sm',
-    dark: 'bg-[#1C2620]/80 border border-white/10 text-white hover:bg-[#1C2620] backdrop-blur-sm',
-    ghost: 'bg-transparent border border-[#E4E0D4]/60 text-[#5A6A5D] hover:bg-[#F5F2EA] hover:text-[#1C2620]',
+    light: 'bg-white border border-[#E4E0D4] text-[#17402C] hover:bg-[#F5F2EA] ',
+    dark: 'bg-[#17402C]/80 border border-white/10 text-white hover:bg-[#17402C] backdrop-blur-sm',
+    ghost: 'bg-transparent border border-[#E4E0D4]/60 text-[#5A6A5D] hover:bg-[#F5F2EA] hover:text-[#17402C]',
   };
 
   return (

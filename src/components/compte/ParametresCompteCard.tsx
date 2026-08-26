@@ -286,8 +286,7 @@ export default function ParametresCompteCard({ profile, onSave }: ParametresComp
   ];
 
   return (
-    <div className="space-y-8 font-sans">
-      
+    <div className="space-y-8 font-sans text-[#17402C]">
       {/* Hidden File Input for Real Photo Upload */}
       <input
         type="file"
@@ -298,31 +297,27 @@ export default function ParametresCompteCard({ profile, onSave }: ParametresComp
       />
 
       {/* 1. Header Block */}
-      <div className="bg-white rounded-[0.75rem] p-6 sm:p-8 border border-[#E8E4D8] shadow-sm flex flex-col md:flex-row md:items-center justify-between gap-6 active:scale-[0.98] active:opacity-95 transition-all duration-150 cursor-pointer">
+      <div className="glass rounded-[1.25rem] p-6 sm:p-8 flex flex-col md:flex-row md:items-center justify-between gap-6">
         <div>
-          <h2 className="text-2xl sm:text-3xl font-extrabold text-[#132219] font-display tracking-tight">
-            Réglages <span className="italic font-serif font-normal text-[#2D5A3D]">du compte.</span>
+          <h2 className="text-2xl sm:text-3xl font-bold text-[#17402C] font-display tracking-tight">
+            Réglages <span className="font-serif italic font-normal text-[#365233]">du compte.</span>
           </h2>
-          <p className="text-xs sm:text-sm text-[#132219]/60 mt-1 max-w-2xl leading-relaxed">
-            Gérez vos informations personnelles, vos préférences de notification, votre sécurité et vos caractéristiques d'aventure. Vos changements sont enregistrés.
+          <p className="text-xs sm:text-sm text-[#5A7064] mt-1 max-w-2xl leading-relaxed">
+            Gérez vos informations personnelles, vos préférences de notification, votre sécurité et vos caractéristiques d'aventure.
           </p>
         </div>
 
-        <div className="flex items-center gap-3 flex-shrink-0">
+        <div className="flex items-center gap-3 shrink-0">
           {isDirty && (
-            <span className="text-[11px] font-bold text-amber-800 bg-amber-100 px-3 py-1.5 rounded-full border border-amber-200 animate-pulse">
-              Modifications non enregistrées ({dirtyCount})
+            <span className="glass-pill pill-warn animate-pulse text-[11px] font-bold">
+              Modifications ({dirtyCount})
             </span>
           )}
           <button
             onClick={handleExportData}
-            className="px-4 py-2.5 bg-[#F5F2EA] hover:bg-[#E8E4D8] text-[#132219] font-semibold text-xs rounded-2xl transition-colors border border-[#E8E4D8] flex items-center gap-2"
+            className="glass-capsule-btn text-xs font-bold"
           >
-            <svg width="14" height="14" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
-              <path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4" />
-              <polyline points="7 10 12 15 17 10" />
-              <line x1="12" y1="15" x2="12" y2="3" />
-            </svg>
+            <Icon name="ArrowDownTrayIcon" size={14} />
             <span>Exporter mes données</span>
           </button>
         </div>
@@ -330,48 +325,46 @@ export default function ParametresCompteCard({ profile, onSave }: ParametresComp
 
       {/* 2. Main Layout (Left Navigation + Right Cards Grid) */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
-        
         {/* Left Navigation Sidebar */}
-        <aside className="lg:col-span-4 bg-white rounded-[0.75rem] p-4 border border-[#E8E4D8] shadow-sm space-y-2 lg:sticky lg:top-24 active:scale-[0.98] active:opacity-95 transition-all duration-150 cursor-pointer">
-          
+        <aside className="lg:col-span-4 glass rounded-[1.25rem] p-4 space-y-3 lg:sticky lg:top-24">
           {/* User mini badge top */}
-          <div className="p-3 mb-2 rounded-2xl bg-[#FAF8F5] border border-[#E8E4D8] flex items-center gap-3">
-            <div className="relative w-10 h-10 rounded-full overflow-hidden border border-[#132219]/20 flex-shrink-0">
+          <div className="p-3 rounded-2xl glass-sub-card flex items-center gap-3">
+            <div className="relative w-10 h-10 rounded-full overflow-hidden border border-[#17402C]/20 shrink-0">
               <Image src={avatarUrl} alt={firstName} fill className="object-cover" />
             </div>
             <div className="min-w-0">
-              <span className="font-extrabold text-[#132219] text-xs block truncate">
+              <span className="font-bold text-[#17402C] text-xs block truncate">
                 {firstName} {lastName}
               </span>
-              <span className="text-[11px] text-[#132219]/60 truncate block">{username}</span>
+              <span className="text-[11px] text-[#5A7064] font-mono truncate block">{username}</span>
             </div>
           </div>
 
-          <nav className="space-y-1">
+          <nav className="space-y-1.5">
             {navItems.map((item) => {
               const isActive = activeSection === item.id;
               return (
                 <button
                   key={item.id}
                   onClick={() => setActiveSection(item.id as typeof activeSection)}
-                  className={`w-full p-3.5 rounded-2xl font-bold text-xs transition-all flex items-center justify-between ${
+                  className={`w-full p-3 rounded-xl font-bold text-xs transition-all flex items-center justify-between ${
                     isActive
-                      ? 'bg-[#132219] text-white shadow-sm'
+                      ? 'bg-[#17402C] text-white shadow-md'
                       : item.danger
-                      ? 'text-rose-700 hover:bg-rose-50'
-                      : 'text-[#132219]/70 hover:bg-[#FAF8F5] hover:text-[#132219]'
+                      ? 'text-[#A8443A] hover:bg-[#A8443A]/10'
+                      : 'text-[#17402C] hover:bg-white/60'
                   }`}
                 >
                   <div className="flex items-center gap-3">
-                    <span className="opacity-80">
+                    <span className={isActive ? 'text-[#A6C1A0]' : 'text-[#5A7064]'}>
                       <Icon name={item.icon as any} size={16} />
                     </span>
                     <span>{item.label}</span>
                   </div>
                   {item.badge && (
                     <span
-                      className={`text-[10px] font-extrabold px-2 py-0.5 rounded-full ${
-                        isActive ? 'bg-[#82C39B] text-[#132219]' : 'bg-amber-100 text-amber-800'
+                      className={`text-[10px] font-mono font-bold px-2 py-0.5 rounded-full ${
+                        isActive ? 'bg-white/20 text-white' : 'glass-pill pill-warn'
                       }`}
                     >
                       {item.badge}
@@ -382,10 +375,10 @@ export default function ParametresCompteCard({ profile, onSave }: ParametresComp
             })}
           </nav>
 
-          <div className="pt-4 border-t border-[#E8E4D8] text-center">
+          <div className="pt-3 border-t border-[#17402C]/5 text-center">
             <button
               onClick={handleExportData}
-              className="text-xs font-semibold text-[#2D5A3D] hover:underline"
+              className="text-xs font-mono font-bold text-[#5B7F55] hover:underline"
             >
               Export des données (.JSON)
             </button>
@@ -394,27 +387,26 @@ export default function ParametresCompteCard({ profile, onSave }: ParametresComp
 
         {/* Right Content Area */}
         <div className="lg:col-span-8 space-y-8">
-          
           {/* SECTION 1: PROFIL & IDENTITÉ */}
           {(activeSection === 'profil' || activeSection === 'danger') && (
-            <div className="bg-white rounded-[0.75rem] p-6 lg:p-8 border border-[#E8E4D8] shadow-sm space-y-6 active:scale-[0.98] active:opacity-95 transition-all duration-150 cursor-pointer">
-              <div className="flex items-center justify-between border-b border-[#E8E4D8] pb-4">
+            <div className="glass rounded-[1.25rem] p-6 lg:p-8 space-y-6">
+              <div className="flex items-center justify-between border-b border-[#17402C]/5 pb-4">
                 <div>
-                  <h3 className="text-xl font-extrabold text-[#132219] font-display">
-                    Profil <span className="italic font-serif font-normal text-[#2D5A3D]">& identité</span>
+                  <h3 className="text-xl font-bold text-[#17402C] font-display">
+                    Profil <span className="font-serif italic font-normal text-[#365233]">&amp; identité</span>
                   </h3>
-                  <p className="text-xs text-[#132219]/60 mt-0.5">
+                  <p className="text-xs text-[#5A7064] mt-0.5">
                     Informations visibles sur votre profil et dans le réseau des voyageurs.
                   </p>
                 </div>
-                <span className="text-xs font-semibold text-[#132219]/60 bg-[#FAF8F5] px-3 py-1 rounded-full border border-[#E8E4D8]">
+                <span className="glass-pill text-[10px] font-mono">
                   Mis à jour le 5 oct. 2026
                 </span>
               </div>
 
               {/* Photo Upload Block */}
-              <div className="flex items-center gap-5 p-4 rounded-2xl bg-[#FAF8F5] border border-[#E8E4D8]">
-                <div className="relative w-16 h-16 rounded-full overflow-hidden border-2 border-[#132219]/20 flex-shrink-0">
+              <div className="flex items-center gap-5 p-4 rounded-2xl glass-sub-card">
+                <div className="relative w-16 h-16 rounded-full overflow-hidden border-2 border-[#17402C]/20 shrink-0">
                   <Image src={avatarUrl} alt={firstName} fill className="object-cover" />
                 </div>
                 <div className="space-y-1.5">
@@ -422,7 +414,7 @@ export default function ParametresCompteCard({ profile, onSave }: ParametresComp
                     <button
                       type="button"
                       onClick={handlePhotoUploadClick}
-                      className="px-4 py-2 bg-[#132219] text-white font-extrabold text-xs rounded-full hover:bg-[#23382B] transition-colors"
+                      className="glass-capsule-btn primary text-xs font-bold"
                     >
                       Changer la photo
                     </button>
@@ -432,19 +424,19 @@ export default function ParametresCompteCard({ profile, onSave }: ParametresComp
                         setAvatarUrl('https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=400&q=80');
                         markDirty();
                       }}
-                      className="text-xs font-semibold text-rose-700 hover:underline"
+                      className="text-xs font-semibold text-[#A8443A] hover:underline"
                     >
                       Réinitialiser
                     </button>
                   </div>
-                  <p className="text-[11px] text-[#132219]/60">JPG, PNG, WEBP ou GIF. Taille max 5 Mo.</p>
+                  <p className="text-[11px] text-[#5A7064] font-mono">JPG, PNG, WEBP ou GIF. Taille max 5 Mo.</p>
                 </div>
               </div>
 
               {/* Form Fields */}
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-xs sm:text-sm">
                 <div>
-                  <label className="block font-semibold text-[#132219] mb-1.5">Prénom *</label>
+                  <label className="block font-mono text-[10px] uppercase tracking-widest text-[#5A7064] font-bold mb-1.5">Prénom *</label>
                   <input
                     type="text"
                     value={firstName}
@@ -452,12 +444,12 @@ export default function ParametresCompteCard({ profile, onSave }: ParametresComp
                       setFirstName(e.target.value);
                       markDirty();
                     }}
-                    className="w-full bg-[#FAF8F5] border border-[#E8E4D8] rounded-xl px-4 py-2.5 text-[#132219] font-medium focus:outline-none focus:ring-2 focus:ring-[#132219]"
+                    className="glass-input w-full"
                   />
                 </div>
 
                 <div>
-                  <label className="block font-semibold text-[#132219] mb-1.5">Nom *</label>
+                  <label className="block font-mono text-[10px] uppercase tracking-widest text-[#5A7064] font-bold mb-1.5">Nom *</label>
                   <input
                     type="text"
                     value={lastName}
@@ -465,14 +457,14 @@ export default function ParametresCompteCard({ profile, onSave }: ParametresComp
                       setLastName(e.target.value);
                       markDirty();
                     }}
-                    className="w-full bg-[#FAF8F5] border border-[#E8E4D8] rounded-xl px-4 py-2.5 text-[#132219] font-medium focus:outline-none focus:ring-2 focus:ring-[#132219]"
+                    className="glass-input w-full"
                   />
                 </div>
 
                 <div>
-                  <label className="block font-semibold text-[#132219] mb-1.5">Nom d'utilisateur public *</label>
+                  <label className="block font-mono text-[10px] uppercase tracking-widest text-[#5A7064] font-bold mb-1.5">Nom d'utilisateur public *</label>
                   <div className="relative">
-                    <span className="absolute left-3.5 top-2.5 text-[#132219]/40 font-bold">@</span>
+                    <span className="absolute left-3.5 top-2.5 text-[#5A7064] font-bold font-mono">@</span>
                     <input
                       type="text"
                       value={username.replace('@', '')}
@@ -480,20 +472,20 @@ export default function ParametresCompteCard({ profile, onSave }: ParametresComp
                         setUsername(`@${e.target.value}`);
                         markDirty();
                       }}
-                      className="w-full bg-[#FAF8F5] border border-[#E8E4D8] rounded-xl pl-8 pr-4 py-2.5 text-[#132219] font-medium focus:outline-none focus:ring-2 focus:ring-[#132219]"
+                      className="glass-input w-full pl-8"
                     />
                   </div>
                 </div>
 
                 <div>
-                  <label className="block font-semibold text-[#132219] mb-1.5">Pronoms</label>
+                  <label className="block font-mono text-[10px] uppercase tracking-widest text-[#5A7064] font-bold mb-1.5">Pronoms</label>
                   <select
                     value={pronouns}
                     onChange={(e) => {
                       setPronouns(e.target.value);
                       markDirty();
                     }}
-                    className="w-full bg-[#FAF8F5] border border-[#E8E4D8] rounded-xl px-4 py-2.5 text-[#132219] font-medium focus:outline-none focus:ring-2 focus:ring-[#132219]"
+                    className="glass-input w-full"
                   >
                     <option value="Elle / her">Elle / her</option>
                     <option value="Il / him">Il / him</option>
@@ -503,7 +495,7 @@ export default function ParametresCompteCard({ profile, onSave }: ParametresComp
                 </div>
 
                 <div className="sm:col-span-2">
-                  <label className="block font-semibold text-[#132219] mb-1.5">Bio / Présentation</label>
+                  <label className="block font-mono text-[10px] uppercase tracking-widest text-[#5A7064] font-bold mb-1.5">Bio / Présentation</label>
                   <textarea
                     value={bio}
                     onChange={(e) => {
@@ -511,12 +503,12 @@ export default function ParametresCompteCard({ profile, onSave }: ParametresComp
                       markDirty();
                     }}
                     rows={3}
-                    className="w-full bg-[#FAF8F5] border border-[#E8E4D8] rounded-xl p-4 text-[#132219] font-medium focus:outline-none focus:ring-2 focus:ring-[#132219] resize-none"
+                    className="glass-input w-full resize-none font-serif italic"
                   />
                 </div>
 
                 <div>
-                  <label className="block font-semibold text-[#132219] mb-1.5">Ville / Localisation</label>
+                  <label className="block font-mono text-[10px] uppercase tracking-widest text-[#5A7064] font-bold mb-1.5">Ville / Localisation</label>
                   <input
                     type="text"
                     value={location}
@@ -524,19 +516,19 @@ export default function ParametresCompteCard({ profile, onSave }: ParametresComp
                       setLocation(e.target.value);
                       markDirty();
                     }}
-                    className="w-full bg-[#FAF8F5] border border-[#E8E4D8] rounded-xl px-4 py-2.5 text-[#132219] font-medium focus:outline-none focus:ring-2 focus:ring-[#132219]"
+                    className="glass-input w-full"
                   />
                 </div>
 
                 <div>
-                  <label className="block font-semibold text-[#132219] mb-1.5">Pratiques principales</label>
+                  <label className="block font-mono text-[10px] uppercase tracking-widest text-[#5A7064] font-bold mb-1.5">Pratiques principales</label>
                   <select
                     value={primaryActivity}
                     onChange={(e) => {
                       setPrimaryActivity(e.target.value);
                       markDirty();
                     }}
-                    className="w-full bg-[#FAF8F5] border border-[#E8E4D8] rounded-xl px-4 py-2.5 text-[#132219] font-medium focus:outline-none focus:ring-2 focus:ring-[#132219]"
+                    className="glass-input w-full"
                   >
                     <option value="Randonnée & Bivouac (GR, alpages)">Randonnée & Bivouac (GR, alpages)</option>
                     <option value="Alpinisme & Hivernal">Alpinisme & Hivernal</option>
@@ -550,17 +542,17 @@ export default function ParametresCompteCard({ profile, onSave }: ParametresComp
 
           {/* SECTION 2: NOTIFICATIONS & RAPPELS */}
           {(activeSection === 'notifications' || activeSection === 'danger') && (
-            <div className="bg-white rounded-[0.75rem] p-6 lg:p-8 border border-[#E8E4D8] shadow-sm space-y-6 active:scale-[0.98] active:opacity-95 transition-all duration-150 cursor-pointer">
-              <div className="flex items-center justify-between border-b border-[#E8E4D8] pb-4">
+            <div className="glass rounded-[1.25rem] p-6 lg:p-8 space-y-6">
+              <div className="flex items-center justify-between border-b border-[#17402C]/5 pb-4">
                 <div>
-                  <h3 className="text-xl font-extrabold text-[#132219] font-display">
-                    Notifications <span className="italic font-serif font-normal text-[#2D5A3D]">& rappels</span>
+                  <h3 className="text-xl font-bold text-[#17402C] font-display">
+                    Notifications <span className="font-serif italic font-normal text-[#365233]">&amp; rappels</span>
                   </h3>
-                  <p className="text-xs text-[#132219]/60 mt-0.5">
-                    Choisissez où et quand être notifié (Application, Email, SMS). Vos préférences sont synchronisées.
+                  <p className="text-xs text-[#5A7064] mt-0.5">
+                    Choisissez où et quand être notifié (Application, Email, SMS).
                   </p>
                 </div>
-                <span className="text-xs font-bold text-[#2D5A3D] bg-[#E8F3EC] px-3 py-1 rounded-full">
+                <span className="glass-pill text-[10px] font-mono">
                   10 types configurés
                 </span>
               </div>
@@ -614,18 +606,18 @@ export default function ParametresCompteCard({ profile, onSave }: ParametresComp
                   return (
                     <div
                       key={item.key}
-                      className="p-4 rounded-2xl bg-[#FAF8F5] border border-[#E8E4D8] flex items-center justify-between gap-4 transition-all hover:border-[#132219]/20"
+                      className="p-4 rounded-2xl glass-sub-card flex items-center justify-between gap-4 transition-all"
                     >
                       <div className="space-y-0.5 min-w-0">
                         <div className="flex items-center gap-2">
-                          <span className="font-extrabold text-[#132219] text-xs sm:text-sm truncate">
+                          <span className="font-bold text-[#17402C] text-xs sm:text-sm truncate">
                             {item.label}
                           </span>
-                          <span className="text-[9px] font-extrabold bg-[#132219]/10 text-[#132219] px-2 py-0.5 rounded-full">
+                          <span className="text-[9px] font-mono font-bold bg-[#17402C]/10 text-[#17402C] px-2 py-0.5 rounded-full">
                             {item.badge}
                           </span>
                         </div>
-                        <p className="text-xs text-[#132219]/60 truncate">{item.desc}</p>
+                        <p className="text-xs text-[#5A7064] truncate">{item.desc}</p>
                       </div>
 
                       {/* Switch */}
@@ -634,8 +626,8 @@ export default function ParametresCompteCard({ profile, onSave }: ParametresComp
                           setNotifs((prev) => ({ ...prev, [item.key]: !isChecked }));
                           markDirty();
                         }}
-                        className={`relative inline-flex h-6 w-11 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out ${
-                          isChecked ? 'bg-[#132219]' : 'bg-[#E8E4D8]'
+                        className={`relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out ${
+                          isChecked ? 'bg-[#17402C]' : 'bg-[#17402C]/15'
                         }`}
                         role="switch"
                         aria-checked={isChecked}
@@ -655,17 +647,17 @@ export default function ParametresCompteCard({ profile, onSave }: ParametresComp
 
           {/* SECTION 3: CONFIDENTIALITÉ & VISIBILITÉ */}
           {(activeSection === 'confidentialite' || activeSection === 'danger') && (
-            <div className="bg-white rounded-[0.75rem] p-6 lg:p-8 border border-[#E8E4D8] shadow-sm space-y-6 active:scale-[0.98] active:opacity-95 transition-all duration-150 cursor-pointer">
-              <div className="flex items-center justify-between border-b border-[#E8E4D8] pb-4">
+            <div className="glass rounded-[1.25rem] p-6 lg:p-8 space-y-6">
+              <div className="flex items-center justify-between border-b border-[#17402C]/5 pb-4">
                 <div>
-                  <h3 className="text-xl font-extrabold text-[#132219] font-display">
-                    Confidentialité <span className="italic font-serif font-normal text-[#2D5A3D]">& visibilité</span>
+                  <h3 className="text-xl font-bold text-[#17402C] font-display">
+                    Confidentialité <span className="font-serif italic font-normal text-[#365233]">&amp; visibilité</span>
                   </h3>
-                  <p className="text-xs text-[#132219]/60 mt-0.5">
+                  <p className="text-xs text-[#5A7064] mt-0.5">
                     Contrôlez la visibilité de votre profil, de vos sorties et de votre matériel.
                   </p>
                 </div>
-                <span className="text-xs font-semibold text-[#132219]/70 bg-[#FAF8F5] px-3 py-1 rounded-full border border-[#E8E4D8]">
+                <span className="glass-pill text-[10px] font-mono">
                   3 modes d'accès
                 </span>
               </div>
@@ -673,7 +665,7 @@ export default function ParametresCompteCard({ profile, onSave }: ParametresComp
               {/* Radio options */}
               <div className="space-y-4 text-xs sm:text-sm">
                 <div>
-                  <label className="block font-semibold text-[#132219] mb-2">Visibilité du profil</label>
+                  <label className="block font-mono text-[10px] uppercase tracking-widest text-[#5A7064] font-bold mb-2">Visibilité du profil</label>
                   <div className="grid grid-cols-3 gap-2">
                     {(['public', 'membres', 'prive'] as const).map((mode) => (
                       <button
@@ -685,8 +677,8 @@ export default function ParametresCompteCard({ profile, onSave }: ParametresComp
                         }}
                         className={`p-3 rounded-2xl border text-center font-bold capitalize transition-all ${
                           profileVisibility === mode
-                            ? 'bg-[#132219] text-white border-[#132219] shadow-sm'
-                            : 'bg-[#FAF8F5] text-[#132219]/70 border-[#E8E4D8] hover:bg-white'
+                            ? 'bg-[#17402C] text-white border-[#17402C] shadow-md'
+                            : 'glass-sub-card text-[#5A7064] hover:text-[#17402C]'
                         }`}
                       >
                         {mode === 'public' ? '🌐 Public' : mode === 'membres' ? '👥 Membres' : '🔒 Privé'}
@@ -696,7 +688,7 @@ export default function ParametresCompteCard({ profile, onSave }: ParametresComp
                 </div>
 
                 <div>
-                  <label className="block font-semibold text-[#132219] mb-2">Visibilité de vos sorties & rando</label>
+                  <label className="block font-mono text-[10px] uppercase tracking-widest text-[#5A7064] font-bold mb-2">Visibilité de vos sorties &amp; rando</label>
                   <div className="grid grid-cols-3 gap-2">
                     {(['public', 'membres', 'prive'] as const).map((mode) => (
                       <button
@@ -708,8 +700,8 @@ export default function ParametresCompteCard({ profile, onSave }: ParametresComp
                         }}
                         className={`p-3 rounded-2xl border text-center font-bold capitalize transition-all ${
                           tripsVisibility === mode
-                            ? 'bg-[#132219] text-white border-[#132219] shadow-sm'
-                            : 'bg-[#FAF8F5] text-[#132219]/70 border-[#E8E4D8] hover:bg-white'
+                            ? 'bg-[#17402C] text-white border-[#17402C] shadow-md'
+                            : 'glass-sub-card text-[#5A7064] hover:text-[#17402C]'
                         }`}
                       >
                         {mode === 'public' ? '🌐 Public' : mode === 'membres' ? '👥 Membres' : '🔒 Privé'}
@@ -719,7 +711,7 @@ export default function ParametresCompteCard({ profile, onSave }: ParametresComp
                 </div>
 
                 <div>
-                  <label className="block font-semibold text-[#132219] mb-2">Visibilité de votre inventaire</label>
+                  <label className="block font-mono text-[10px] uppercase tracking-widest text-[#5A7064] font-bold mb-2">Visibilité de votre inventaire</label>
                   <div className="grid grid-cols-3 gap-2">
                     {(['public', 'membres', 'prive'] as const).map((mode) => (
                       <button
@@ -731,8 +723,8 @@ export default function ParametresCompteCard({ profile, onSave }: ParametresComp
                         }}
                         className={`p-3 rounded-2xl border text-center font-bold capitalize transition-all ${
                           gearVisibility === mode
-                            ? 'bg-[#132219] text-white border-[#132219] shadow-sm'
-                            : 'bg-[#FAF8F5] text-[#132219]/70 border-[#E8E4D8] hover:bg-white'
+                            ? 'bg-[#17402C] text-white border-[#17402C] shadow-md'
+                            : 'glass-sub-card text-[#5A7064] hover:text-[#17402C]'
                         }`}
                       >
                         {mode === 'public' ? '🌐 Public' : mode === 'membres' ? '👥 Membres' : '🔒 Privé'}
@@ -744,20 +736,20 @@ export default function ParametresCompteCard({ profile, onSave }: ParametresComp
 
               {/* Switches */}
               <div className="pt-2 space-y-3">
-                <div className="p-4 rounded-2xl bg-[#FAF8F5] border border-[#E8E4D8] flex items-center justify-between gap-4">
+                <div className="p-4 rounded-2xl glass-sub-card flex items-center justify-between gap-4">
                   <div>
-                    <span className="font-extrabold text-[#132219] text-xs sm:text-sm block">
+                    <span className="font-bold text-[#17402C] text-xs sm:text-sm block">
                       Autoriser l'indexation par les moteurs de recherche
                     </span>
-                    <p className="text-xs text-[#132219]/60">Permet à Google de référencer votre profil public.</p>
+                    <p className="text-xs text-[#5A7064]">Permet à Google de référencer votre profil public.</p>
                   </div>
                   <button
                     onClick={() => {
                       setSearchIndexing(!searchIndexing);
                       markDirty();
                     }}
-                    className={`relative inline-flex h-6 w-11 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors ${
-                      searchIndexing ? 'bg-[#132219]' : 'bg-[#E8E4D8]'
+                    className={`relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors ${
+                      searchIndexing ? 'bg-[#17402C]' : 'bg-[#17402C]/15'
                     }`}
                   >
                     <span
@@ -768,20 +760,20 @@ export default function ParametresCompteCard({ profile, onSave }: ParametresComp
                   </button>
                 </div>
 
-                <div className="p-4 rounded-2xl bg-[#FAF8F5] border border-[#E8E4D8] flex items-center justify-between gap-4">
+                <div className="p-4 rounded-2xl glass-sub-card flex items-center justify-between gap-4">
                   <div>
-                    <span className="font-extrabold text-[#132219] text-xs sm:text-sm block">
+                    <span className="font-bold text-[#17402C] text-xs sm:text-sm block">
                       Partage de votre position géographique approximative
                     </span>
-                    <p className="text-xs text-[#132219]/60">Montre uniquement votre département/ville sur la carte.</p>
+                    <p className="text-xs text-[#5A7064]">Montre uniquement votre département/ville sur la carte.</p>
                   </div>
                   <button
                     onClick={() => {
                       setShareLocation(!shareLocation);
                       markDirty();
                     }}
-                    className={`relative inline-flex h-6 w-11 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors ${
-                      shareLocation ? 'bg-[#132219]' : 'bg-[#E8E4D8]'
+                    className={`relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors ${
+                      shareLocation ? 'bg-[#17402C]' : 'bg-[#17402C]/15'
                     }`}
                   >
                     <span
@@ -797,24 +789,24 @@ export default function ParametresCompteCard({ profile, onSave }: ParametresComp
 
           {/* SECTION 4: LANGUE & RÉGION */}
           {(activeSection === 'langue' || activeSection === 'danger') && (
-            <div className="bg-white rounded-[0.75rem] p-6 lg:p-8 border border-[#E8E4D8] shadow-sm space-y-6 active:scale-[0.98] active:opacity-95 transition-all duration-150 cursor-pointer">
-              <div className="flex items-center justify-between border-b border-[#E8E4D8] pb-4">
+            <div className="glass rounded-[1.25rem] p-6 lg:p-8 space-y-6">
+              <div className="flex items-center justify-between border-b border-[#17402C]/5 pb-4">
                 <div>
-                  <h3 className="text-xl font-extrabold text-[#132219] font-display">
-                    Langue <span className="italic font-serif font-normal text-[#2D5A3D]">& région</span>
+                  <h3 className="text-xl font-bold text-[#17402C] font-display">
+                    Langue <span className="font-serif italic font-normal text-[#365233]">&amp; région</span>
                   </h3>
-                  <p className="text-xs text-[#132219]/60 mt-0.5">
+                  <p className="text-xs text-[#5A7064] mt-0.5">
                     Paramétrez la langue d'affichage, les unités et la devise.
                   </p>
                 </div>
-                <span className="text-xs font-bold text-[#132219]/70 bg-[#FAF8F5] px-3 py-1 rounded-full border border-[#E8E4D8]">
+                <span className="glass-pill text-[10px] font-mono">
                   6 langues disponibles
                 </span>
               </div>
 
               {/* Languages Grid */}
               <div>
-                <label className="block font-semibold text-[#132219] text-xs sm:text-sm mb-3">Langue de l'interface</label>
+                <label className="block font-mono text-[10px] uppercase tracking-widest text-[#5A7064] font-bold mb-3">Langue de l'interface</label>
                 <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
                   {[
                     { code: 'FR', name: 'Français', sub: 'France, Suisse' },
@@ -833,12 +825,12 @@ export default function ParametresCompteCard({ profile, onSave }: ParametresComp
                       }}
                       className={`p-3.5 rounded-2xl border text-left transition-all ${
                         language === lang.code
-                          ? 'bg-[#E8F3EC] border-[#132219] text-[#132219] ring-2 ring-[#132219]/20 font-bold'
-                          : 'bg-[#FAF8F5] border-[#E8E4D8] text-[#132219]/70 hover:bg-white'
+                          ? 'bg-[#17402C] border-[#17402C] text-white shadow-md'
+                          : 'glass-sub-card text-[#5A7064] hover:text-[#17402C]'
                       }`}
                     >
-                      <span className="font-extrabold text-sm block">{lang.code} • {lang.name}</span>
-                      <span className="text-[11px] opacity-60 block mt-0.5">{lang.sub}</span>
+                      <span className="font-bold text-sm block">{lang.code} • {lang.name}</span>
+                      <span className={`text-[11px] block mt-0.5 ${language === lang.code ? 'text-[#A6C1A0]' : 'text-[#5A7064]'}`}>{lang.sub}</span>
                     </button>
                   ))}
                 </div>
@@ -847,14 +839,14 @@ export default function ParametresCompteCard({ profile, onSave }: ParametresComp
               {/* Units & Currency */}
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-xs sm:text-sm pt-2">
                 <div>
-                  <label className="block font-semibold text-[#132219] mb-1.5">Système de mesure</label>
+                  <label className="block font-mono text-[10px] uppercase tracking-widest text-[#5A7064] font-bold mb-1.5">Système de mesure</label>
                   <select
                     value={unitSystem}
                     onChange={(e) => {
                       setUnitSystem(e.target.value);
                       markDirty();
                     }}
-                    className="w-full bg-[#FAF8F5] border border-[#E8E4D8] rounded-xl px-4 py-2.5 text-[#132219] font-medium"
+                    className="glass-input w-full"
                   >
                     <option value="metric">Métrique (m, km, kg, g)</option>
                     <option value="imperial">Impérial (ft, mi, lbs, oz)</option>
@@ -862,14 +854,14 @@ export default function ParametresCompteCard({ profile, onSave }: ParametresComp
                 </div>
 
                 <div>
-                  <label className="block font-semibold text-[#132219] mb-1.5">Devise</label>
+                  <label className="block font-mono text-[10px] uppercase tracking-widest text-[#5A7064] font-bold mb-1.5">Devise</label>
                   <select
                     value={currency}
                     onChange={(e) => {
                       setCurrency(e.target.value);
                       markDirty();
                     }}
-                    className="w-full bg-[#FAF8F5] border border-[#E8E4D8] rounded-xl px-4 py-2.5 text-[#132219] font-medium"
+                    className="glass-input w-full"
                   >
                     <option value="EUR">Euro (€ EUR)</option>
                     <option value="USD">US Dollar ($ USD)</option>
@@ -879,14 +871,14 @@ export default function ParametresCompteCard({ profile, onSave }: ParametresComp
                 </div>
 
                 <div>
-                  <label className="block font-semibold text-[#132219] mb-1.5">Fuseau horaire</label>
+                  <label className="block font-mono text-[10px] uppercase tracking-widest text-[#5A7064] font-bold mb-1.5">Fuseau horaire</label>
                   <select
                     value={timezone}
                     onChange={(e) => {
                       setTimezone(e.target.value);
                       markDirty();
                     }}
-                    className="w-full bg-[#FAF8F5] border border-[#E8E4D8] rounded-xl px-4 py-2.5 text-[#132219] font-medium"
+                    className="glass-input w-full"
                   >
                     <option value="Europe/Paris">Europe/Paris (UTC+1)</option>
                     <option value="Europe/London">Europe/London (UTC+0)</option>
@@ -895,14 +887,14 @@ export default function ParametresCompteCard({ profile, onSave }: ParametresComp
                 </div>
 
                 <div>
-                  <label className="block font-semibold text-[#132219] mb-1.5">Premier jour de la semaine</label>
+                  <label className="block font-mono text-[10px] uppercase tracking-widest text-[#5A7064] font-bold mb-1.5">Premier jour de la semaine</label>
                   <select
                     value={firstDayOfWeek}
                     onChange={(e) => {
                       setFirstDayOfWeek(e.target.value);
                       markDirty();
                     }}
-                    className="w-full bg-[#FAF8F5] border border-[#E8E4D8] rounded-xl px-4 py-2.5 text-[#132219] font-medium"
+                    className="glass-input w-full"
                   >
                     <option value="monday">Lundi</option>
                     <option value="sunday">Dimanche</option>
@@ -914,17 +906,17 @@ export default function ParametresCompteCard({ profile, onSave }: ParametresComp
 
           {/* SECTION 5: SÉCURITÉ & SESSIONS */}
           {(activeSection === 'securite' || activeSection === 'danger') && (
-            <div className="bg-white rounded-[0.75rem] p-6 lg:p-8 border border-[#E8E4D8] shadow-sm space-y-6 active:scale-[0.98] active:opacity-95 transition-all duration-150 cursor-pointer">
-              <div className="flex items-center justify-between border-b border-[#E8E4D8] pb-4">
+            <div className="glass rounded-[1.25rem] p-6 lg:p-8 space-y-6">
+              <div className="flex items-center justify-between border-b border-[#17402C]/5 pb-4">
                 <div>
-                  <h3 className="text-xl font-extrabold text-[#132219] font-display">
-                    Sécurité <span className="italic font-serif font-normal text-[#2D5A3D]">& sessions</span>
+                  <h3 className="text-xl font-bold text-[#17402C] font-display">
+                    Sécurité <span className="font-serif italic font-normal text-[#365233]">&amp; sessions</span>
                   </h3>
-                  <p className="text-xs text-[#132219]/60 mt-0.5">
+                  <p className="text-xs text-[#5A7064] mt-0.5">
                     Protégez votre compte, modifiez votre mot de passe et gérez vos connexions actives.
                   </p>
                 </div>
-                <span className="text-xs font-bold text-emerald-800 bg-emerald-100 px-3 py-1 rounded-full">
+                <span className="glass-pill pill-info text-[10px] font-mono">
                   Double facteur recommandé
                 </span>
               </div>
@@ -932,7 +924,7 @@ export default function ParametresCompteCard({ profile, onSave }: ParametresComp
               {/* Email & Password Form */}
               <form onSubmit={handleChangePassword} className="space-y-4 text-xs sm:text-sm">
                 <div>
-                  <label className="block font-semibold text-[#132219] mb-1.5">Adresse e-mail du compte</label>
+                  <label className="block font-mono text-[10px] uppercase tracking-widest text-[#5A7064] font-bold mb-1.5">Adresse e-mail du compte</label>
                   <input
                     type="email"
                     value={email}
@@ -940,42 +932,42 @@ export default function ParametresCompteCard({ profile, onSave }: ParametresComp
                       setEmail(e.target.value);
                       markDirty();
                     }}
-                    className="w-full bg-[#FAF8F5] border border-[#E8E4D8] rounded-xl px-4 py-2.5 text-[#132219] font-medium"
+                    className="glass-input w-full"
                   />
                 </div>
 
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div>
-                    <label className="block font-semibold text-[#132219] mb-1.5">Nouveau mot de passe</label>
+                    <label className="block font-mono text-[10px] uppercase tracking-widest text-[#5A7064] font-bold mb-1.5">Nouveau mot de passe</label>
                     <input
                       type="password"
                       value={newPassword}
                       onChange={(e) => setNewPassword(e.target.value)}
                       placeholder="••••••••••••"
-                      className="w-full bg-[#FAF8F5] border border-[#E8E4D8] rounded-xl px-4 py-2.5 text-[#132219]"
+                      className="glass-input w-full"
                     />
                   </div>
 
                   <div>
-                    <label className="block font-semibold text-[#132219] mb-1.5">Confirmer le mot de passe</label>
+                    <label className="block font-mono text-[10px] uppercase tracking-widest text-[#5A7064] font-bold mb-1.5">Confirmer le mot de passe</label>
                     <input
                       type="password"
                       value={confirmPassword}
                       onChange={(e) => setConfirmPassword(e.target.value)}
                       placeholder="••••••••••••"
-                      className="w-full bg-[#FAF8F5] border border-[#E8E4D8] rounded-xl px-4 py-2.5 text-[#132219]"
+                      className="glass-input w-full"
                     />
                   </div>
                 </div>
 
                 {passwordError && (
-                  <p className="text-xs font-bold text-rose-700 bg-rose-50 p-2.5 rounded-xl border border-rose-200">
+                  <p className="text-xs font-bold text-[#A8443A] bg-[#A8443A]/10 p-3 rounded-xl border border-[#A8443A]/20">
                     ⚠️ {passwordError}
                   </p>
                 )}
 
                 {passwordSuccess && (
-                  <p className="text-xs font-bold text-emerald-800 bg-emerald-50 p-2.5 rounded-xl border border-emerald-200">
+                  <p className="text-xs font-bold text-[#5B7F55] bg-[#5B7F55]/10 p-3 rounded-xl border border-[#5B7F55]/20">
                     ✓ {passwordSuccess}
                   </p>
                 )}
@@ -983,7 +975,7 @@ export default function ParametresCompteCard({ profile, onSave }: ParametresComp
                 <div className="flex justify-end pt-1">
                   <button
                     type="submit"
-                    className="px-5 py-2.5 bg-[#132219] text-white font-extrabold text-xs rounded-xl hover:bg-[#23382B] transition-colors"
+                    className="glass-capsule-btn primary text-xs font-bold"
                   >
                     Changer le mot de passe
                   </button>
@@ -992,25 +984,25 @@ export default function ParametresCompteCard({ profile, onSave }: ParametresComp
 
               {/* 2FA & Passkey Switches */}
               <div className="space-y-3 pt-2">
-                <div className="p-4 rounded-2xl bg-[#FAF8F5] border border-[#E8E4D8] flex items-center justify-between gap-4">
+                <div className="p-4 rounded-2xl glass-sub-card flex items-center justify-between gap-4">
                   <div>
                     <div className="flex items-center gap-2">
-                      <span className="font-extrabold text-[#132219] text-xs sm:text-sm">
+                      <span className="font-bold text-[#17402C] text-xs sm:text-sm">
                         Authentification à deux facteurs (2FA)
                       </span>
-                      <span className="text-[10px] font-extrabold bg-emerald-100 text-emerald-800 px-2 py-0.5 rounded-full">
+                      <span className="glass-pill pill-info text-[9px]">
                         RECOMMANDÉ
                       </span>
                     </div>
-                    <p className="text-xs text-[#132219]/60">Ajoute une couche de sécurité supplémentaire lors de la connexion.</p>
+                    <p className="text-xs text-[#5A7064]">Ajoute une couche de sécurité supplémentaire lors de la connexion.</p>
                   </div>
                   <button
                     onClick={() => {
                       setTwoFactorAuth(!twoFactorAuth);
                       markDirty();
                     }}
-                    className={`relative inline-flex h-6 w-11 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors ${
-                      twoFactorAuth ? 'bg-[#132219]' : 'bg-[#E8E4D8]'
+                    className={`relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors ${
+                      twoFactorAuth ? 'bg-[#17402C]' : 'bg-[#17402C]/15'
                     }`}
                   >
                     <span
@@ -1021,20 +1013,20 @@ export default function ParametresCompteCard({ profile, onSave }: ParametresComp
                   </button>
                 </div>
 
-                <div className="p-4 rounded-2xl bg-[#FAF8F5] border border-[#E8E4D8] flex items-center justify-between gap-4">
+                <div className="p-4 rounded-2xl glass-sub-card flex items-center justify-between gap-4">
                   <div>
-                    <span className="font-extrabold text-[#132219] text-xs sm:text-sm block">
+                    <span className="font-bold text-[#17402C] text-xs sm:text-sm block">
                       Clés de sécurité / Passkeys (WebAuthn)
                     </span>
-                    <p className="text-xs text-[#132219]/60">Se connecter avec TouchID, FaceID ou votre clé USB YubiKey.</p>
+                    <p className="text-xs text-[#5A7064]">Se connecter avec TouchID, FaceID ou votre clé USB YubiKey.</p>
                   </div>
                   <button
                     onClick={() => {
                       setPasskeysEnabled(!passkeysEnabled);
                       markDirty();
                     }}
-                    className={`relative inline-flex h-6 w-11 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors ${
-                      passkeysEnabled ? 'bg-[#132219]' : 'bg-[#E8E4D8]'
+                    className={`relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors ${
+                      passkeysEnabled ? 'bg-[#17402C]' : 'bg-[#17402C]/15'
                     }`}
                   >
                     <span
@@ -1047,13 +1039,13 @@ export default function ParametresCompteCard({ profile, onSave }: ParametresComp
               </div>
 
               {/* Active Sessions List */}
-              <div className="pt-4 border-t border-[#E8E4D8] space-y-3">
+              <div className="pt-4 border-t border-[#17402C]/5 space-y-3">
                 <div className="flex items-center justify-between">
-                  <h4 className="font-extrabold text-[#132219] text-xs sm:text-sm">Sessions actives</h4>
+                  <h4 className="font-bold text-[#17402C] text-xs sm:text-sm">Sessions actives</h4>
                   {activeSessions.length > 1 && (
                     <button
                       onClick={handleDisconnectAllOthers}
-                      className="text-xs font-semibold text-rose-700 hover:underline"
+                      className="text-xs font-semibold text-[#A8443A] hover:underline"
                     >
                       Se déconnecter de tous les autres appareils
                     </button>
@@ -1064,22 +1056,22 @@ export default function ParametresCompteCard({ profile, onSave }: ParametresComp
                   {activeSessions.map((sess) => (
                     <div
                       key={sess.id}
-                      className="p-3.5 rounded-2xl bg-[#FAF8F5] border border-[#E8E4D8] flex items-center justify-between gap-3 text-xs"
+                      className="p-3.5 rounded-2xl glass-sub-card flex items-center justify-between gap-3 text-xs"
                     >
                       <div className="flex items-center gap-3">
-                        <div className="w-8 h-8 rounded-full bg-[#132219]/10 flex items-center justify-center text-[#132219]">
+                        <div className="w-8 h-8 rounded-full bg-[#17402C]/10 flex items-center justify-center text-[#17402C]">
                           💻
                         </div>
                         <div>
                           <div className="flex items-center gap-2">
-                            <span className="font-extrabold text-[#132219]">{sess.device}</span>
+                            <span className="font-bold text-[#17402C]">{sess.device}</span>
                             {sess.isCurrent && (
-                              <span className="text-[9px] font-extrabold bg-emerald-100 text-emerald-800 px-2 py-0.5 rounded-full">
+                              <span className="glass-pill text-[9px]">
                                 CET APPAREIL
                               </span>
                             )}
                           </div>
-                          <p className="text-[#132219]/60 text-[11px]">
+                          <p className="text-[#5A7064] text-[11px] font-mono">
                             {sess.location} • {sess.lastActive}
                           </p>
                         </div>
@@ -1088,7 +1080,7 @@ export default function ParametresCompteCard({ profile, onSave }: ParametresComp
                       {!sess.isCurrent && (
                         <button
                           onClick={() => handleDisconnectSession(sess.id)}
-                          className="px-3 py-1.5 text-xs font-bold text-rose-700 bg-rose-50 hover:bg-rose-100 rounded-xl transition-colors"
+                          className="px-3 py-1.5 text-xs font-bold text-[#A8443A] bg-[#A8443A]/10 hover:bg-[#A8443A]/20 rounded-xl transition-colors"
                         >
                           Déconnecter
                         </button>
@@ -1101,59 +1093,57 @@ export default function ParametresCompteCard({ profile, onSave }: ParametresComp
           )}
 
           {/* SECTION 6: ZONE DE DANGER */}
-          <div className="bg-[#FFF5F5] rounded-[0.75rem] p-6 lg:p-8 border border-rose-200 shadow-sm space-y-6">
+          <div className="glass rounded-[1.25rem] p-6 lg:p-8 space-y-6 !border-[#A8443A]/30">
             <div>
-              <h3 className="text-xl font-extrabold text-rose-900 font-display">
-                Zone <span className="italic font-serif font-normal text-rose-700">de danger</span>
+              <h3 className="text-xl font-bold text-[#A8443A] font-display">
+                Zone <span className="font-serif italic font-normal">de danger</span>
               </h3>
-              <p className="text-xs text-rose-700/80 mt-0.5">
+              <p className="text-xs text-[#5A7064] mt-0.5">
                 Actions irréversibles ou impactant l'accès à votre compte.
               </p>
             </div>
 
             <div className="space-y-4 pt-2">
-              <div className="p-4 rounded-2xl bg-white border border-rose-200 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+              <div className="p-4 rounded-2xl glass-sub-card flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                 <div>
-                  <h4 className="font-extrabold text-rose-900 text-xs sm:text-sm">Mettre le compte en pause</h4>
-                  <p className="text-xs text-rose-700/70 mt-0.5">
+                  <h4 className="font-bold text-[#17402C] text-xs sm:text-sm">Mettre le compte en pause</h4>
+                  <p className="text-xs text-[#5A7064] mt-0.5">
                     Désactive temporairement votre profil sans tout supprimer. Vos données restent conservées.
                   </p>
                 </div>
                 <button
                   onClick={() => setPauseModalOpen(true)}
-                  className="px-4 py-2.5 bg-rose-100 hover:bg-rose-200 text-rose-900 font-extrabold text-xs rounded-2xl transition-colors whitespace-nowrap"
+                  className="glass-capsule-btn text-xs font-bold whitespace-nowrap"
                 >
                   Mettre en pause
                 </button>
               </div>
 
-              <div className="p-4 rounded-2xl bg-white border border-rose-300 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+              <div className="p-4 rounded-2xl glass-sub-card flex flex-col sm:flex-row sm:items-center justify-between gap-4 !border-[#A8443A]/30">
                 <div>
-                  <h4 className="font-extrabold text-rose-900 text-xs sm:text-sm">Supprimer définitivement le compte</h4>
-                  <p className="text-xs text-rose-700/70 mt-0.5">
+                  <h4 className="font-bold text-[#A8443A] text-xs sm:text-sm">Supprimer définitivement le compte</h4>
+                  <p className="text-xs text-[#5A7064] mt-0.5">
                     Action définitive : effacement immédiat et irréversible de tous vos kits, aventures et données.
                   </p>
                 </div>
                 <button
                   onClick={() => setDeleteModalOpen(true)}
-                  className="px-4 py-2.5 bg-rose-700 hover:bg-rose-800 text-white font-extrabold text-xs rounded-2xl transition-colors whitespace-nowrap shadow-sm"
+                  className="glass-capsule-btn danger text-xs font-bold whitespace-nowrap"
                 >
                   Supprimer le compte
                 </button>
               </div>
             </div>
           </div>
-
         </div>
-
       </div>
 
       {/* 3. Sticky Bottom Save Bar */}
       {isDirty && (
-        <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-[250] bg-[#132219] text-white px-6 py-4 rounded-full shadow-2xl border border-white/20 flex items-center gap-6 animate-slide-up max-w-xl w-[92%] justify-between">
+        <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-[250] bg-[#17402C] text-white px-6 py-4 rounded-full border border-white/20 flex items-center gap-6 animate-slide-up max-w-xl w-[92%] justify-between shadow-2xl">
           <div className="flex items-center gap-3">
-            <span className="w-3 h-3 rounded-full bg-amber-400 animate-ping" />
-            <span className="text-xs font-extrabold">
+            <span className="w-3 h-3 rounded-full bg-[#C89A3B] animate-ping" />
+            <span className="text-xs font-bold font-mono">
               {dirtyCount} modification(s) non enregistrée(s)
             </span>
           </div>
@@ -1171,7 +1161,7 @@ export default function ParametresCompteCard({ profile, onSave }: ParametresComp
             <button
               onClick={handleSaveAll}
               disabled={saving}
-              className="px-5 py-2.5 bg-white text-[#132219] hover:bg-[#F5F2EA] font-extrabold text-xs rounded-full transition-colors flex items-center gap-2 shadow-md"
+              className="glass-capsule-btn primary text-xs font-bold !bg-white !text-[#17402C]"
             >
               {saving ? 'Enregistrement…' : 'Enregistrer tout'}
             </button>
@@ -1181,16 +1171,16 @@ export default function ParametresCompteCard({ profile, onSave }: ParametresComp
 
       {/* 4. Pause Account Modal */}
       {pauseModalOpen && (
-        <div className="fixed inset-0 z-[300] bg-black/70 backdrop-blur-md flex items-center justify-center p-4">
-          <div className="bg-white rounded-[0.75rem] p-6 max-w-md w-full space-y-4 active:scale-[0.98] active:opacity-95 transition-all duration-150 cursor-pointer">
-            <h3 className="font-extrabold text-[#132219] text-xl font-display">Mettre le compte en pause ?</h3>
-            <p className="text-xs text-[#132219]/70 leading-relaxed">
-              Votre profil sera masqué et vous ne recevrez plus de notifications. Vous pourrez le réactiver à tout moment en vous re-connectant.
+        <div className="glass-modal-overlay">
+          <div className="glass-modal max-w-md w-full p-7 space-y-4">
+            <h3 className="font-bold text-[#17402C] text-xl font-display">Mettre le compte en pause ?</h3>
+            <p className="text-xs text-[#5A7064] leading-relaxed">
+              Votre profil sera masqué et vous ne recevrez plus de notifications. Vous pourrez le réactiver à tout moment en vous reconnectant.
             </p>
             <div className="flex justify-end gap-3 pt-2">
               <button
                 onClick={() => setPauseModalOpen(false)}
-                className="px-4 py-2 text-xs font-bold text-[#132219]/70 hover:underline"
+                className="glass-capsule-btn text-xs font-bold"
               >
                 Annuler
               </button>
@@ -1199,7 +1189,7 @@ export default function ParametresCompteCard({ profile, onSave }: ParametresComp
                   setPauseModalOpen(false);
                   if (onSave) onSave('Compte mis en pause.');
                 }}
-                className="px-5 py-2.5 bg-[#132219] text-white text-xs font-extrabold rounded-full"
+                className="glass-capsule-btn primary text-xs font-bold"
               >
                 Confirmer la pause
               </button>
@@ -1210,18 +1200,18 @@ export default function ParametresCompteCard({ profile, onSave }: ParametresComp
 
       {/* 5. Delete Account Modal */}
       {deleteModalOpen && (
-        <div className="fixed inset-0 z-[300] bg-black/70 backdrop-blur-md flex items-center justify-center p-4">
-          <div className="bg-white rounded-[0.75rem] p-6 max-w-md w-full space-y-4 active:scale-[0.98] active:opacity-95 transition-all duration-150 cursor-pointer">
-            <h3 className="font-extrabold text-rose-900 text-xl font-display">Suppression définitive</h3>
-            <p className="text-xs text-[#132219]/80 leading-relaxed">
-              Cette action est <strong>irréversible</strong>. Pour me confirmer la suppression, tapez <strong>SUPPRIMER</strong> ci-dessous :
+        <div className="glass-modal-overlay">
+          <div className="glass-modal max-w-md w-full p-7 space-y-4">
+            <h3 className="font-bold text-[#A8443A] text-xl font-display">Suppression définitive</h3>
+            <p className="text-xs text-[#5A7064] leading-relaxed">
+              Cette action est <strong className="text-[#A8443A]">irréversible</strong>. Pour confirmer la suppression, tapez <strong>SUPPRIMER</strong> ci-dessous :
             </p>
             <input
               type="text"
               value={deleteConfirmationText}
               onChange={(e) => setDeleteConfirmationText(e.target.value)}
               placeholder="SUPPRIMER"
-              className="w-full bg-[#FAF8F5] border border-[#E8E4D8] rounded-xl px-4 py-2.5 text-xs text-[#132219] font-mono font-bold"
+              className="glass-input w-full font-mono font-bold text-xs uppercase"
             />
             <div className="flex justify-end gap-3 pt-2">
               <button
@@ -1229,7 +1219,7 @@ export default function ParametresCompteCard({ profile, onSave }: ParametresComp
                   setDeleteModalOpen(false);
                   setDeleteConfirmationText('');
                 }}
-                className="px-4 py-2 text-xs font-bold text-[#132219]/70 hover:underline"
+                className="glass-capsule-btn text-xs font-bold"
               >
                 Annuler
               </button>
@@ -1239,7 +1229,7 @@ export default function ParametresCompteCard({ profile, onSave }: ParametresComp
                   setDeleteModalOpen(false);
                   if (onSave) onSave('Compte supprimé.');
                 }}
-                className="px-5 py-2.5 bg-rose-700 text-white text-xs font-extrabold rounded-full disabled:opacity-40"
+                className="glass-capsule-btn danger text-xs font-bold disabled:opacity-40"
               >
                 Supprimer définitivement
               </button>
@@ -1247,15 +1237,6 @@ export default function ParametresCompteCard({ profile, onSave }: ParametresComp
           </div>
         </div>
       )}
-
-      {/* Footer slogan */}
-      <div className="bg-[#132219] text-white py-12 px-6 rounded-[0.75rem] text-center space-y-2 mt-12">
-        <h3 className="text-xl sm:text-2xl font-extrabold font-display">
-          Vos réglages, <span className="italic font-serif font-normal text-[#82C39B]">votre silence.</span>
-        </h3>
-        <p className="text-xs text-white/50">© 2026 Le Kit du Voyageur — Paramètres de compte sécurisés</p>
-      </div>
-
     </div>
   );
 }

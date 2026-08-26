@@ -1,1218 +1,749 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
+import Header from '@/components/Header';
 import Icon from '@/components/ui/AppIcon';
-import LkvIcon from '@/components/ui/LkvIcon';
-import MobilePageShell from '@/components/mobile-nav/MobilePageShell';
+import CommunityHubNav from '@/components/social/CommunityHubNav';
+import CompteBackground from '@/components/compte/CompteBackground';
 import { createClient } from '@/lib/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/contexts/ToastContext';
+import 'leaflet/dist/leaflet.css';
 
-// Color Palette for accent selection
+// Color Palette
 const ACCENT_COLORS = [
-  { id: 'darkgreen', value: '#172A20', label: 'Vert Sombre' },
-  { id: 'sage', value: '#5C6B5E', label: 'Sauge' },
-  { id: 'ochre', value: '#D97746', label: 'Ocre' },
-  { id: 'yellow', value: '#E5A638', label: 'Jaune Mousse' },
-  { id: 'blue', value: '#3A63B2', label: 'Bleu Alpine' },
-  { id: 'purple', value: '#7B52A9', label: 'Mauve Bruyère' },
+  { id: 'darkgreen', value: '#17402C', label: 'Émeraude Sombre' },
+  { id: 'sage', value: '#5C6B5E', label: 'Sauge Alpin' },
+  { id: 'ochre', value: '#D97746', label: 'Ocre Volcan' },
+  { id: 'yellow', value: '#E5A638', label: 'Or Automnal' },
+  { id: 'blue', value: '#3A63B2', label: 'Bleu Glacier' },
 ];
 
-// Pictograms Grid
-const PICTOGRAMS = [
-  { id: 'tent', icon: '⛺' },
-  { id: 'fire', icon: '🔥' },
-  { id: 'mountain', icon: '🏔️' },
-  { id: 'castle', icon: '🏰' },
-  { id: 'tree', icon: '🌲' },
-  { id: 'map', icon: '🗺️' },
-  { id: 'sunset', icon: '🌄' },
-  { id: 'backpack', icon: '🎒' },
-  { id: 'compass', icon: '🧭' },
-  { id: 'phone', icon: '📱' },
-  { id: 'boot', icon: '🥾' },
-  { id: 'ski', icon: '🎿' },
-];
+// Pictograms
+const PICTOGRAMS = ['⛺', '🔥', '🏔️', '🌲', '🗺️', '🌄', '🎒', '🧭', '🥾', '🎿', '🛶', '🚲'];
 
-// Partner suggestions
-const PARTNER_SUGGESTIONS = [
-  { id: 'p1', full_name: 'Léna Bertrand', handle: 'léna.b', sorties_count: 12, avatar_url: 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?auto=format&fit=crop&w=150&q=80' },
-  { id: 'p2', full_name: 'Antoine Rey', handle: 'antoine.r', sorties_count: 8, avatar_url: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=150&q=80' },
-  { id: 'p3', full_name: 'Jules Mazet', handle: 'jules.m', sorties_count: 5, avatar_url: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?auto=format&fit=crop&w=150&q=80' },
-  { id: 'p4', full_name: 'Camille Verger', handle: 'camille.v', sorties_count: 3, avatar_url: 'https://images.unsplash.com/photo-1438761681033-6461ffad8d80?auto=format&fit=crop&w=150&q=80' },
+// Default Trails
+const DEFAULT_TRAILS = [
+  { id: 't-1', name: 'Traversée de la Chartreuse (GR9)', region: 'Chartreuse', distance_km: 27.4, elevation_gain: 1620, start_lat: 45.33, start_lng: 5.82 },
+  { id: 't-2', name: 'Tour du Mont-Blanc Intégral', region: 'Mont-Blanc', distance_km: 170, elevation_gain: 10000, start_lat: 45.92, start_lng: 6.87 },
+  { id: 't-3', name: 'Hautes Terres du Vercors', region: 'Vercors', distance_km: 48.5, elevation_gain: 2100, start_lat: 44.98, start_lng: 5.53 },
+  { id: 't-4', name: 'Tour des Glaciers de la Vanoise', region: 'Vanoise', distance_km: 72.0, elevation_gain: 3800, start_lat: 45.38, start_lng: 6.74 },
+  { id: 't-5', name: 'Traversée des Écrins (GR54)', region: 'Écrins', distance_km: 184, elevation_gain: 12800, start_lat: 44.92, start_lng: 6.35 },
 ];
 
 export default function NouveauGroupePage() {
   const router = useRouter();
   const { user } = useAuth();
   const { toast } = useToast();
-  const supabase = createClient();
 
-  const [loading, setLoading] = useState(false);
+  const [saving, setSaving] = useState(false);
+  const [activeStep, setActiveStep] = useState<'infos' | 'sentier' | 'logistique' | 'materiel' | 'style'>('infos');
 
   // Form State
-  const [name, setName] = useState('Chartreuse en automne');
-  const [description, setDescription] = useState('Traversée en groupe avec bivouac et refuges');
+  const [name, setName] = useState('Traversée de la Chartreuse');
+  const [description, setDescription] = useState('3 jours d’autonomie sur les crêtes et bivouacs avec nuit en refuge.');
   const [accentColor, setAccentColor] = useState(ACCENT_COLORS[0].value);
-  const [pictogram, setPictogram] = useState(PICTOGRAMS[0].icon);
+  const [pictogram, setPictogram] = useState(PICTOGRAMS[0]);
+  const [selectedTrail, setSelectedTrail] = useState(DEFAULT_TRAILS[0]);
+  const [level, setLevel] = useState('Rythme moyen régulier');
+  const [groupType, setGroupType] = useState('Traversée en autonomie');
 
-  const DEFAULT_TRAILS = [
-    { id: 't-1', name: 'Traversée de la Chartreuse (GR9)', region: 'Chartreuse', distance_km: 27.4, elevation_gain: 1620, duration_hours: 18, difficulty: 'Modéré', start_lat: 45.33, start_lng: 5.82 },
-    { id: 't-2', name: 'Tour du Mont-Blanc Intégral', region: 'Mont-Blanc', distance_km: 170, elevation_gain: 10000, duration_hours: 65, difficulty: 'Difficile', start_lat: 45.92, start_lng: 6.87 },
-    { id: 't-3', name: 'Hautes Terres du Vercors', region: 'Vercors', distance_km: 48.5, elevation_gain: 2100, duration_hours: 24, difficulty: 'Modéré', start_lat: 44.98, start_lng: 5.53 },
-    { id: 't-4', name: 'Tour des Glaciers de la Vanoise', region: 'Vanoise', distance_km: 72.0, elevation_gain: 3800, duration_hours: 32, difficulty: 'Difficile', start_lat: 45.38, start_lng: 6.74 },
-    { id: 't-5', name: 'Traversée des Écrins (GR54)', region: 'Écrins', distance_km: 184, elevation_gain: 12800, duration_hours: 72, difficulty: 'Expert', start_lat: 44.92, start_lng: 6.35 },
-    { id: 't-6', name: 'GR20 — Sentier des Crêtes Corse', region: 'Corse', distance_km: 180, elevation_gain: 11000, duration_hours: 80, difficulty: 'Expert', start_lat: 42.45, start_lng: 8.85 },
-    { id: 't-7', name: 'Tour du Queyras (GR58)', region: 'Queyras', distance_km: 130, elevation_gain: 7500, duration_hours: 48, difficulty: 'Modéré', start_lat: 44.75, start_lng: 6.85 },
-  ];
-
-  // Trails state
-  const [availableTrails, setAvailableTrails] = useState<any[]>(DEFAULT_TRAILS);
-  const [selectedTrail, setSelectedTrail] = useState<any>(DEFAULT_TRAILS[0]);
-  const [showTrailPicker, setShowTrailPicker] = useState(false);
-  const [trailSearch, setTrailSearch] = useState('');
-
-  // Context State
-  const [linkedAdventure, setLinkedAdventure] = useState(DEFAULT_TRAILS[0].name);
+  // Logistique & Dates
   const [startDate, setStartDate] = useState('2026-10-12');
   const [endDate, setEndDate] = useState('2026-10-14');
-  const [groupType, setGroupType] = useState<'Ponctuel' | 'Récurrent' | 'Ouvert'>('Ponctuel');
+  const [dateFlexibility, setDateFlexibility] = useState('Dates fermes');
+  const [hebergementType, setHebergementType] = useState('Bivouac & Refuges');
+  const [estimatedBudget, setEstimatedBudget] = useState(120);
   const [maxMembers, setMaxMembers] = useState(6);
+  const [recruitmentMode, setRecruitmentMode] = useState('validation'); // 'validation' | 'open'
 
-  // Fetch available hiking trails with direct API call
-  useEffect(() => {
-    async function loadTrails() {
-      try {
-        const res = await fetch('/api/trails');
-        if (res.ok) {
-          const json = await res.json();
-          if (json.trails && json.trails.length > 0) {
-            setAvailableTrails(json.trails);
-            const first = json.trails[0];
-            setSelectedTrail(first);
-            setLinkedAdventure(first.name);
-            setName(`Expédition ${first.name}`);
-          }
-        }
-      } catch (err) {
-        console.error('Error loading trails:', err);
-      }
-    }
-    loadTrails();
-  }, []);
-
-  // Invitation State
-  const [inviteTab, setInviteTab] = useState<'pseudo' | 'email' | 'link'>('pseudo');
-  const [invitedPartners, setInvitedPartners] = useState<typeof PARTNER_SUGGESTIONS>([
-    PARTNER_SUGGESTIONS[0],
-    PARTNER_SUGGESTIONS[1],
+  // Required Equipment
+  const [requiredGear, setRequiredGear] = useState([
+    { id: 'g1', name: 'Duvet confort 0°C', checked: true },
+    { id: 'g2', name: 'Tente 3 saisons ou tarp', checked: true },
+    { id: 'g3', name: 'Chaussures de tige haute', checked: true },
+    { id: 'g4', name: 'Lampe frontale + piles', checked: true },
+    { id: 'g5', name: 'Veste imperméable Hardshell', checked: true },
   ]);
-  const [customInvites, setCustomInvites] = useState<{ id: string; name: string }[]>([
-    { id: 'c1', name: 'Sophie Marnier' },
-  ]);
-  const [inviteInput, setInviteInput] = useState('');
-  const [linkCopied, setLinkCopied] = useState(false);
+  const [newGearInput, setNewGearInput] = useState('');
 
-  // Permissions State
-  const [permissions, setPermissions] = useState({
-    membersCanInvite: false,
-    chatEnabled: true,
-    realtimeLocation: true,
-    sharedList: true,
-    autoArchive: true,
-  });
+  // Leaflet map container ref for selected trail
+  const mapContainerRef = useRef<HTMLDivElement>(null);
+  const leafletMap = useRef<any>(null);
 
-  // Generate Invite Code (lazy, once)
-  const [inviteCode, setInviteCode] = useState('');
   useEffect(() => {
-    if (!inviteCode) {
-      setInviteCode(Math.random().toString(36).substring(2, 8).toUpperCase());
+    if (!mapContainerRef.current || typeof window === 'undefined') return;
+    const container = mapContainerRef.current;
+
+    if (leafletMap.current) {
+      try { leafletMap.current.remove(); } catch {}
+      leafletMap.current = null;
     }
-  }, [inviteCode]);
-  const inviteUrl = `groupes?code=${inviteCode}`;
+    try { delete (container as any)._leaflet_id; } catch {}
 
-  // Formatting dates for preview
-  const formatDatesPreview = () => {
-    if (!startDate || !endDate) return 'Dates à définir';
-    const dStart = new Date(startDate);
-    const dEnd = new Date(endDate);
-    const startStr = dStart.toLocaleDateString('fr-FR', { day: 'numeric', month: 'short' });
-    const endStr = dEnd.toLocaleDateString('fr-FR', { day: 'numeric', month: 'short', year: 'numeric' });
-    return `${startStr} - ${endStr}`;
-  };
-
-  const monthNamePreview = () => {
-    if (!startDate) return 'octobre';
-    return new Date(startDate).toLocaleDateString('fr-FR', { month: 'long' });
-  };
-
-  const totalInvitedCount = invitedPartners.length + customInvites.length;
-
-  // Select a trail
-  const handleSelectTrail = (trail: any) => {
-    setSelectedTrail(trail);
-    setLinkedAdventure(trail.name);
-    setName(`Expédition ${trail.name}`);
-    setShowTrailPicker(false);
-  };
-
-  // Toggle Partner
-  const togglePartner = (partner: typeof PARTNER_SUGGESTIONS[0]) => {
-    if (invitedPartners.some(p => p.id === partner.id)) {
-      setInvitedPartners(invitedPartners.filter(p => p.id !== partner.id));
-    } else {
-      setInvitedPartners([...invitedPartners, partner]);
-    }
-  };
-
-  // Remove custom invite
-  const removeCustomInvite = (id: string) => {
-    setCustomInvites(customInvites.filter(c => c.id !== id));
-  };
-
-  // Handle Input key press
-  const handleInviteKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
-    if (e.key === 'Enter' && inviteInput.trim()) {
-      e.preventDefault();
-      setCustomInvites([...customInvites, { id: `c_${Date.now()}`, name: inviteInput.trim() }]);
-      setInviteInput('');
-    }
-  };
-
-  // Create Group Action
-  const handleCreateGroup = async (sendInvites: boolean) => {
-    if (!user) {
-      toast('Veuillez vous connecter pour créer un groupe.', 'error');
-      router.push('/connexion');
-      return;
-    }
-
-    if (!name.trim()) {
-      toast('Veuillez donner un nom au groupe.', 'error');
-      return;
-    }
-
-    setLoading(true);
-    try {
-      // 1. Insert group into travel_groups
-      const { data: newGroup, error: groupErr } = await supabase
-        .from('travel_groups')
-        .insert({
-          name: name.trim(),
-          description: description.trim() || null,
-          owner_id: user.id,
-          departure_date: startDate || null,
-          return_date: endDate || null,
-          max_members: maxMembers,
-          theme: pictogram,
-          destination: linkedAdventure || name.trim(),
-          visibility: 'invite_only',
-          invite_code: inviteCode,
-        })
-        .select()
-        .single();
-
-      if (groupErr || !newGroup) {
-        throw groupErr || new Error('Erreur lors de la création du groupe');
-      }
-
-      // 2. Insert Owner as organizer in group_members
-      await supabase.from('group_members').insert({
-        group_id: newGroup.id,
-        user_id: user.id,
-        role: 'organizer',
-        status: 'active',
+    import('leaflet').then((L) => {
+      delete (L.Icon.Default.prototype as any)._getIconUrl;
+      L.Icon.Default.mergeOptions({
+        iconRetinaUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon-2x.png',
+        iconUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon.png',
+        shadowUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-shadow.png',
       });
 
-      // 3. Insert invited members if sendInvites (resolve real user ids only)
-      if (sendInvites) {
-        const inviteNames = new Set([
-          ...invitedPartners.map(p => p.full_name),
-          ...customInvites.map(c => c.name),
-        ]);
-        if (inviteNames.size > 0) {
-          const { data: profiles } = await supabase
-            .from('user_profiles')
-            .select('id, full_name, email')
-            .or(inviteNames.size > 1
-              ? Array.from(inviteNames).map(n => `full_name.ilike.${n.replace(/'/g, "''")}`).join(',')
-              : `full_name.ilike.${Array.from(inviteNames)[0].replace(/'/g, "''")}`);
-          if (profiles && profiles.length > 0) {
-            const invitedIds = profiles.map((p: any) => p.id);
-            await supabase.from('group_members').upsert(
-              invitedIds.map((invitedId: string) => ({
-                group_id: newGroup.id,
-                user_id: invitedId,
-                role: 'member',
-                status: 'pending',
-              })),
-              { onConflict: 'group_id,user_id' }
-            );
-          }
-        }
+      const lat = selectedTrail.start_lat || 45.33;
+      const lng = selectedTrail.start_lng || 5.82;
+
+      const map = L.map(container, {
+        center: [lat, lng],
+        zoom: 11,
+        zoomControl: false,
+        attributionControl: false,
+      });
+
+      leafletMap.current = map;
+
+      L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png', {
+        maxZoom: 19,
+        keepBuffer: 6,
+      }).addTo(map);
+
+      const r = (selectedTrail.distance_km / 111) * 0.35;
+      const routeCoords: [number, number][] = [
+        [lat, lng],
+        [lat + r * 0.35, lng + r * 0.25],
+        [lat + r * 0.7, lng + r * 0.65],
+        [lat + r * 0.85, lng + r * 0.3],
+        [lat + r * 1.1, lng + r * 0.8],
+        [lat + r * 0.75, lng + r * 1.15],
+        [lat + r * 0.25, lng + r * 0.85],
+        [lat, lng],
+      ];
+
+      L.polyline(routeCoords, { color: '#FFFFFF', weight: 6, opacity: 0.9 }).addTo(map);
+      const polyline = L.polyline(routeCoords, { color: accentColor, weight: 4 }).addTo(map);
+      try { map.fitBounds(polyline.getBounds(), { padding: [25, 25] }); } catch {}
+
+      L.circleMarker(routeCoords[0], { radius: 6, color: '#FFFFFF', fillColor: '#17402C', fillOpacity: 1, weight: 2 }).addTo(map);
+
+      setTimeout(() => {
+        try { map.invalidateSize(); } catch {}
+      }, 150);
+    });
+
+    return () => {
+      if (leafletMap.current) {
+        try { leafletMap.current.remove(); } catch {}
+        leafletMap.current = null;
+      }
+    };
+  }, [selectedTrail, accentColor, activeStep]);
+
+  const handleAddGear = () => {
+    if (!newGearInput.trim()) return;
+    setRequiredGear(prev => [...prev, { id: `g-${Date.now()}`, name: newGearInput.trim(), checked: true }]);
+    setNewGearInput('');
+  };
+
+  const handleRemoveGear = (id: string) => {
+    setRequiredGear(prev => prev.filter(g => g.id !== id));
+  };
+
+  const handleCreateGroup = async () => {
+    setSaving(true);
+    try {
+      const supabase = createClient();
+      const payload = {
+        name,
+        description,
+        massif: selectedTrail.region,
+        distance_km: selectedTrail.distance_km,
+        elevation_gain: selectedTrail.elevation_gain,
+        start_date: startDate,
+        end_date: endDate,
+        max_members: maxMembers,
+        creator_id: user?.id,
+        created_at: new Date().toISOString()
+      };
+
+      const { data, error } = await supabase.from('groupes').insert([payload]).select().single();
+      const groupId = data?.id || `grp-${Date.now()}`;
+
+      if (error) {
+        const local = JSON.parse(localStorage.getItem('user_created_groups') || '[]');
+        localStorage.setItem('user_created_groups', JSON.stringify([{ id: groupId, ...payload, requiredGear, level, hebergementType, estimatedBudget }, ...local]));
       }
 
-      toast(
-        sendInvites
-          ? `Groupe "${name}" créé avec succès ! Invitations envoyées.`
-          : `Groupe "${name}" créé avec succès !`,
-        'success'
-      );
-
-      router.push(`/groupes/${newGroup.id}`);
-    } catch (err: any) {
-      console.error('Group creation error:', err);
-      toast(err.message || 'Erreur lors de la création du groupe', 'error');
-      setLoading(false);
+      toast('Expédition créée avec succès ! 🎒', 'success');
+      setTimeout(() => {
+        router.push(`/groupes/${groupId}`);
+      }, 800);
+    } catch (err) {
+      console.error(err);
+      router.push('/communaute?tab=groupes');
+    } finally {
+      setSaving(false);
     }
   };
 
+  const STEPS = [
+    { id: 'infos' as const, label: 'Objectif & Niveau', short: '01', desc: 'Titre, esprit & rythme' },
+    { id: 'sentier' as const, label: 'Sentier & GPX', short: '02', desc: 'Trace, massif & D+' },
+    { id: 'logistique' as const, label: 'Dates & Logistique', short: '03', desc: 'Calendrier, budget & hébergement' },
+    { id: 'materiel' as const, label: 'Équipiers & Sac exigé', short: '04', desc: `${requiredGear.length} équipements requis` },
+    { id: 'style' as const, label: 'Personnalisation', short: '05', desc: 'Couleur & Pictogramme' },
+  ];
+
   return (
-    <>
-      {/* ── DESKTOP ── */}
-      <div className="hidden md:block">
-        <div className="min-h-screen bg-[#F5F2EA] text-[#1C2620] font-sans pb-32">
-      
-      {/* ── Top Nav / Breadcrumbs Header ── */}
-      <div className="border-b border-[#E8E4D8] bg-[#F5F2EA]/80 backdrop-blur-md sticky top-0 z-40">
-        <div className="max-w-6xl mx-auto px-6 h-14 flex items-center justify-between">
-          <div className="flex items-center gap-2 text-xs text-[#5C6B5E]">
-            <Link href="/" className="hover:text-[#1C2620] transition-colors flex items-center gap-1.5 font-600">
-              <span>⛺</span> Le Kit du Voyageur
-            </Link>
-            <span className="text-[#C8C3B0]">›</span>
-            <Link href="/" className="hover:text-[#1C2620] transition-colors">Accueil</Link>
-            <span className="text-[#C8C3B0]">›</span>
-            <Link href="/compte" className="hover:text-[#1C2620] transition-colors">Mon compte</Link>
-            <span className="text-[#C8C3B0]">›</span>
-            <span className="font-600 text-[#1C2620]">Nouveau groupe</span>
-          </div>
+    <div className="h-[100dvh] max-h-[100dvh] overflow-hidden bg-transparent font-sans text-[#17402C] relative flex flex-col">
+      <CompteBackground />
+      <Header />
 
-          <div className="flex items-center gap-3">
-            <span className="inline-flex items-center gap-1.5 text-xs text-[#9CA89E] font-medium">
-              <span className="w-2 h-2 rounded-full bg-[#E5A638]" /> Non créé
-            </span>
-            <button
-              onClick={() => router.back()}
-              className="text-xs font-600 text-[#5C6B5E] hover:text-[#1C2620] px-3 py-1.5 transition-colors"
-            >
-              Annuler
-            </button>
-            <button
-              onClick={() => handleCreateGroup(true)}
-              disabled={loading}
-              className="bg-[#172A20] hover:bg-[#2A3830] text-white px-4 py-1.5 rounded-full text-xs font-700 transition-all shadow-sm"
-            >
-              {loading ? 'Création...' : 'Créer le groupe'}
-            </button>
-          </div>
-        </div>
-      </div>
+      <main className="flex-1 min-h-0 overflow-hidden w-full max-w-[1440px] mx-auto px-4 sm:px-6 lg:px-8 pt-24 pb-4 flex gap-5">
+        {/* COLONNE GAUCHE (Nav & Stepper) - 230px */}
+        <aside className="w-[230px] shrink-0 h-full overflow-y-auto custom-scrollbar flex flex-col gap-3">
+          <CommunityHubNav layoutVariant="vertical" activeTab="groupes" />
 
-      {/* ── Hero Title Section ── */}
-      <div className="max-w-6xl mx-auto px-6 pt-10 pb-8">
-        <div className="flex items-center gap-2 text-[10px] font-mono uppercase tracking-[0.2em] text-[#9CA89E] mb-3">
-          <span className="w-5 h-[1px] bg-[#9CA89E]" />
-          <span>NOUVEAU GROUPE</span>
-        </div>
-        <h1 className="font-display font-800 text-4xl sm:text-5xl text-[#1C2620] tracking-tight leading-tight mb-3">
-          Rassembler <em className="font-serif font-normal not-italic text-[#5C6B5E]">pour un voyage.</em>
-        </h1>
-        <p className="text-sm sm:text-base text-[#5C6B5E] max-w-2xl leading-relaxed">
-          Un groupe, c'est plus léger qu'un club : il suit pour une sortie et vit le temps de l'organiser. Idéal pour partager la logistique entre amis.
-        </p>
-      </div>
-
-      {/* ── Main Form + Sidebar Grid ── */}
-      <div className="max-w-6xl mx-auto px-6 grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
-
-        {/* ════════════════ LEFT COLUMN (FORM SECTIONS) ════════════════ */}
-        <div className="lg:col-span-8 space-y-8">
-
-          {/* ── SECTION 01: LE GROUPE ── */}
-          <div className="bg-white border border-[#E8E4D8] rounded-[0.75rem] p-6 sm:p-8 space-y-6 shadow-sm">
-            <div className="flex items-center justify-between border-b border-[#E8E4D8] pb-4">
-              <div>
-                <h2 className="font-display font-700 text-xl text-[#1C2620]">
-                  Le <em className="font-serif font-normal not-italic">groupe</em>
-                </h2>
-                <p className="text-xs text-[#9CA89E] mt-0.5">
-                  Un nom, un pictogramme, une couleur. Le nécessaire pour que les invités s'y retrouvent immédiatement.
-                </p>
-              </div>
-              <span className="text-[10px] font-mono uppercase tracking-widest text-[#9CA89E] bg-[#EDEAE0] px-3 py-1 rounded-full font-700">
-                01 · Identité
-              </span>
+          <nav className="w-full glass p-1.5 rounded-2xl flex flex-col gap-1">
+            <div className="px-2 py-0.5 flex items-center justify-between border-b border-[#17402C]/10 mb-0.5">
+              <span className="text-[9px] font-mono font-bold uppercase tracking-widest text-[#5C6B5E]">Expédition</span>
+              <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
             </div>
 
-            {/* Live Header Card Preview */}
-            <div
-              className="rounded-2xl p-6 text-white transition-all duration-300 shadow-md relative overflow-hidden flex items-center justify-between"
-              style={{ backgroundColor: accentColor }}
-            >
-              <div className="flex items-center gap-4">
-                <div className="w-14 h-14 rounded-2xl bg-white/10 backdrop-blur-sm border border-white/20 flex items-center justify-center text-2xl flex-shrink-0">
-                  {pictogram}
-                </div>
-                <div>
-                  <p className="text-[9px] font-mono uppercase tracking-[0.15em] text-white/60 mb-0.5">
-                    APERÇU · EN-TÊTE GROUPE
-                  </p>
-                  <h3 className="font-display font-700 text-xl leading-tight">
-                    {name || 'Chartreuse'} <em className="font-serif font-normal not-italic text-white/80">en {monthNamePreview()}</em>
-                  </h3>
-                  <p className="text-xs text-white/70 mt-1 font-mono">
-                    {formatDatesPreview()} · {totalInvitedCount + 1} personnes · 3 refuges
-                  </p>
-                </div>
-              </div>
-            </div>
-
-            {/* Nom du groupe */}
-            <div>
-              <label className="block text-xs font-700 text-[#1C2620] uppercase tracking-wider mb-2">
-                Nom du groupe <span className="text-[#D97746]">*</span>
-              </label>
-              <input
-                type="text"
-                value={name}
-                onChange={e => setName(e.target.value)}
-                placeholder="Ex: Chartreuse en octobre"
-                className="w-full bg-[#FAF9F5] border border-[#E8E4D8] rounded-xl px-4 py-3 text-sm text-[#1C2620] font-600 focus:outline-none focus:border-[#1C2620] transition-colors"
-              />
-            </div>
-
-            {/* Description & Couleur */}
-            <div className="grid grid-cols-1 sm:grid-cols-12 gap-5 items-start">
-              <div className="sm:col-span-7">
-                <label className="block text-xs font-700 text-[#1C2620] uppercase tracking-wider mb-2">
-                  Description courte
-                </label>
-                <input
-                  type="text"
-                  value={description}
-                  onChange={e => setDescription(e.target.value)}
-                  placeholder="Ex: Traversée de la Chartreuse à 6, octobre 2026"
-                  className="w-full bg-[#FAF9F5] border border-[#E8E4D8] rounded-xl px-4 py-3 text-sm text-[#1C2620] focus:outline-none focus:border-[#1C2620] transition-colors"
-                />
-              </div>
-
-              <div className="sm:col-span-5">
-                <label className="block text-xs font-700 text-[#1C2620] uppercase tracking-wider mb-2">
-                  Couleur d'accent
-                </label>
-                <div className="flex items-center gap-2.5 bg-[#FAF9F5] border border-[#E8E4D8] rounded-xl p-2.5">
-                  {ACCENT_COLORS.map(c => (
-                    <button
-                      key={c.id}
-                      type="button"
-                      onClick={() => setAccentColor(c.value)}
-                      title={c.label}
-                      className={`w-6 h-6 rounded-full transition-all ${
-                        accentColor === c.value
-                          ? 'ring-2 ring-offset-2 ring-[#1C2620] scale-110'
-                          : 'hover:scale-105 opacity-80 hover:opacity-100'
-                      }`}
-                      style={{ backgroundColor: c.value }}
-                    />
-                  ))}
-                </div>
-              </div>
-            </div>
-
-            {/* Pictogramme Grid */}
-            <div>
-              <label className="block text-xs font-700 text-[#1C2620] uppercase tracking-wider mb-2">
-                Pictogramme
-              </label>
-              <div className="grid grid-cols-6 sm:grid-cols-6 gap-3">
-                {PICTOGRAMS.map(p => (
-                  <button
-                    key={p.id}
-                    type="button"
-                    onClick={() => setPictogram(p.icon)}
-                    className={`h-12 rounded-xl flex items-center justify-center text-xl transition-all border ${
-                      pictogram === p.icon
-                        ? 'bg-[#172A20] border-[#172A20] text-white shadow-sm scale-105'
-                        : 'bg-[#FAF9F5] border-[#E8E4D8] hover:border-[#C8C3B0] text-[#1C2620]'
-                    }`}
-                  >
-                    {p.icon}
-                  </button>
-                ))}
-              </div>
-            </div>
-          </div>
-
-          {/* ── SECTION 02: SORTIE CONCERNÉE ── */}
-          <div className="bg-white border border-[#E8E4D8] rounded-[0.75rem] p-6 sm:p-8 space-y-6 shadow-sm">
-            <div className="flex items-center justify-between border-b border-[#E8E4D8] pb-4">
-              <div>
-                <h2 className="font-display font-700 text-xl text-[#1C2620]">
-                  Sortie <em className="font-serif font-normal not-italic">concernée</em>
-                </h2>
-                <p className="text-xs text-[#9CA89E] mt-0.5">
-                  Rattachez une aventure existante ou renseignez les dates. Les participants sauront de quoi il s'agit.
-                </p>
-              </div>
-              <span className="text-[10px] font-mono uppercase tracking-widest text-[#9CA89E] bg-[#EDEAE0] px-3 py-1 rounded-full font-700">
-                02 · Contexte
-              </span>
-            </div>
-
-            {/* Aventure liée Card */}
-            <div>
-              <div className="flex items-center justify-between mb-2">
-                <label className="text-xs font-700 text-[#1C2620] uppercase tracking-wider">
-                  Randonnée sélectionnée (Page Aventures) *
-                </label>
-                <span className="text-[11px] text-[#9CA89E]">Itinéraire officiel & tracé GPS</span>
-              </div>
-
-              <div className="bg-[#FAF9F5] border border-[#E8E4D8] rounded-2xl p-4 flex items-center justify-between gap-4">
-                <div className="flex items-center gap-3 min-w-0">
-                  <div className="w-12 h-12 rounded-xl bg-[#17402C]/10 text-xl flex items-center justify-center flex-shrink-0 border border-[#17402C]/15">
-                    🏔️
-                  </div>
-                  <div className="min-w-0">
-                    <h4 className="font-display font-700 text-sm text-[#1C2620] truncate">
-                      {selectedTrail?.name || linkedAdventure}
-                    </h4>
-                    <p className="text-[11px] text-[#5C6B5E] mt-0.5 font-mono">
-                      {selectedTrail?.distance_km ? `${selectedTrail.distance_km} km` : '27.4 km'} · +{selectedTrail?.elevation_gain ? `${selectedTrail.elevation_gain} m D+` : '1 620 m D+'} · {selectedTrail?.difficulty || 'Modéré'}
-                    </p>
-                  </div>
-                </div>
-
+            {STEPS.map((st) => {
+              const isActive = activeStep === st.id;
+              return (
                 <button
-                  type="button"
-                  onClick={() => setShowTrailPicker(true)}
-                  className="px-4 py-2 bg-[#17402C] hover:bg-[#122E20] text-white rounded-full text-xs font-700 transition-colors shadow-sm shrink-0"
-                >
-                  Choisir une rando →
-                </button>
-              </div>
-            </div>
-
-            {/* Dates row */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
-              <div>
-                <label className="block text-xs font-700 text-[#1C2620] uppercase tracking-wider mb-2">
-                  Date de début
-                </label>
-                <input
-                  type="date"
-                  value={startDate}
-                  onChange={e => setStartDate(e.target.value)}
-                  className="w-full bg-[#FAF9F5] border border-[#E8E4D8] rounded-xl px-4 py-3 text-sm text-[#1C2620] font-600 focus:outline-none focus:border-[#1C2620]"
-                />
-              </div>
-
-              <div>
-                <label className="block text-xs font-700 text-[#1C2620] uppercase tracking-wider mb-2">
-                  Date de fin
-                </label>
-                <input
-                  type="date"
-                  value={endDate}
-                  onChange={e => setEndDate(e.target.value)}
-                  className="w-full bg-[#FAF9F5] border border-[#E8E4D8] rounded-xl px-4 py-3 text-sm text-[#1C2620] font-600 focus:outline-none focus:border-[#1C2620]"
-                />
-              </div>
-            </div>
-
-            {/* Type de groupe & Effectif */}
-            <div className="grid grid-cols-1 sm:grid-cols-12 gap-5 items-start">
-              <div className="sm:col-span-8">
-                <label className="block text-xs font-700 text-[#1C2620] uppercase tracking-wider mb-2">
-                  Type de groupe
-                </label>
-                <div className="flex items-center gap-2 bg-[#FAF9F5] border border-[#E8E4D8] rounded-xl p-1.5">
-                  {(['Ponctuel', 'Récurrent', 'Ouvert'] as const).map(t => (
-                    <button
-                      key={t}
-                      type="button"
-                      onClick={() => setGroupType(t)}
-                      className={`flex-1 py-2 rounded-lg text-xs font-700 transition-all flex items-center justify-center gap-2 ${
-                        groupType === t
-                          ? 'bg-white text-[#1C2620] shadow-sm border border-[#E8E4D8]'
-                          : 'text-[#9CA89E] hover:text-[#5C6B5E]'
-                      }`}
-                    >
-                      <span className={`w-2 h-2 rounded-full ${groupType === t ? 'bg-[#172A20]' : 'bg-[#C8C3B0]'}`} />
-                      {t}
-                    </button>
-                  ))}
-                </div>
-              </div>
-
-              <div className="sm:col-span-4">
-                <label className="block text-xs font-700 text-[#1C2620] uppercase tracking-wider mb-2">
-                  Effectif maximum
-                </label>
-                <div className="relative">
-                  <input
-                    type="number"
-                    min={2}
-                    max={50}
-                    value={maxMembers}
-                    onChange={e => setMaxMembers(parseInt(e.target.value) || 6)}
-                    className="w-full bg-[#FAF9F5] border border-[#E8E4D8] rounded-xl px-4 py-3 text-sm text-[#1C2620] font-700 focus:outline-none focus:border-[#1C2620]"
-                  />
-                  <span className="absolute right-4 top-1/2 -translate-y-1/2 text-xs text-[#9CA89E] font-medium pointer-events-none">
-                    personnes
-                  </span>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          {/* ── SECTION 03: INVITER LES PARTICIPANTS ── */}
-          <div className="bg-white border border-[#E8E4D8] rounded-[0.75rem] p-6 sm:p-8 space-y-6 shadow-sm">
-            <div className="flex items-center justify-between border-b border-[#E8E4D8] pb-4">
-              <div>
-                <h2 className="font-display font-700 text-xl text-[#1C2620]">
-                  Inviter <em className="font-serif font-normal not-italic">les participants</em>
-                </h2>
-                <p className="text-xs text-[#9CA89E] mt-0.5">
-                  Trois façons d'inviter : par pseudo interne, par email, ou en partageant un lien d'invitation.
-                </p>
-              </div>
-              <span className="text-[10px] font-mono uppercase tracking-widest text-[#9CA89E] bg-[#EDEAE0] px-3 py-1 rounded-full font-700">
-                03 · Constituer le groupe
-              </span>
-            </div>
-
-            {/* Invite Tabs */}
-            <div className="flex items-center gap-2 bg-[#FAF9F5] border border-[#E8E4D8] rounded-xl p-1.5">
-              {(
-                [
-                  ['pseudo', '👤 Pseudo interne'],
-                  ['email', '✉ Email'],
-                  ['link', '🔗 Lien d\'invitation'],
-                ] as const
-              ).map(([tab, label]) => (
-                <button
-                  key={tab}
-                  type="button"
-                  onClick={() => setInviteTab(tab)}
-                  className={`flex-1 py-2.5 rounded-lg text-xs font-700 transition-all ${
-                    inviteTab === tab
-                      ? 'bg-white text-[#1C2620] shadow-sm border border-[#E8E4D8]'
-                      : 'text-[#9CA89E] hover:text-[#5C6B5E]'
+                  key={st.id}
+                  onClick={() => setActiveStep(st.id)}
+                  className={`flex items-center gap-2.5 px-3 py-2 rounded-xl text-xs font-semibold select-none transition-all cursor-pointer ${
+                    isActive
+                      ? 'bg-gradient-to-r from-white/95 to-white/75 text-[#17402C] font-bold border border-white/80'
+                      : 'text-[#5C6B5E] hover:bg-white/40 hover:text-[#17402C]'
                   }`}
                 >
-                  {label}
+                  <span className={`font-mono text-[10px] font-bold px-1.5 py-0.5 rounded ${isActive ? 'bg-[#17402C] text-white' : 'bg-black/5 text-[#5C6B5E]'}`}>
+                    {st.short}
+                  </span>
+                  <div className="flex-1 text-left min-w-0">
+                    <div className="truncate font-bold">{st.label}</div>
+                    <div className="text-[9px] text-[#5C6B5E]/80 truncate">{st.desc}</div>
+                  </div>
                 </button>
-              ))}
-            </div>
+              );
+            })}
+          </nav>
+        </aside>
 
-            {/* Invite Search & Selected Tags */}
-            <div className="bg-[#FAF9F5] border border-[#E8E4D8] rounded-2xl p-3 flex flex-wrap items-center gap-2 min-h-[56px]">
-              {/* Partner tags */}
-              {invitedPartners.map(p => (
-                <span
-                  key={p.id}
-                  className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-[#172A20] text-white text-xs font-600 shadow-sm"
-                >
-                  <span className="w-2 h-2 rounded-full bg-emerald-400" />
-                  {p.full_name}
-                  <button
-                    type="button"
-                    onClick={() => togglePartner(p)}
-                    className="hover:text-red-300 ml-1 text-xs"
-                  >
-                    ✕
-                  </button>
-                </span>
-              ))}
+        {/* COLONNE CENTRALE (Formulaire dynamique) */}
+        <div className="flex-1 min-w-0 h-full overflow-y-auto custom-scrollbar pr-2 space-y-4">
+          {/* Breadcrumbs */}
+          <div className="flex items-center gap-2 text-xs font-medium text-[#5C6B5E]">
+            <Link href="/communaute" className="hover:text-[#17402C] transition-colors">Communauté</Link>
+            <Icon name="ChevronRightIcon" size={12} className="text-[#5C6B5E]" />
+            <Link href="/communaute?tab=groupes" className="hover:text-[#17402C] transition-colors">Groupes</Link>
+            <Icon name="ChevronRightIcon" size={12} className="text-[#5C6B5E]" />
+            <span className="text-[#17402C] font-semibold">Créer une expédition</span>
+          </div>
 
-              {/* Custom tags */}
-              {customInvites.map(c => (
-                <span
-                  key={c.id}
-                  className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-[#172A20] text-white text-xs font-600 shadow-sm"
-                >
-                  <span className="w-2 h-2 rounded-full bg-blue-400" />
-                  {c.name}
-                  <button
-                    type="button"
-                    onClick={() => removeCustomInvite(c.id)}
-                    className="hover:text-red-300 ml-1 text-xs"
-                  >
-                    ✕
-                  </button>
-                </span>
-              ))}
+          {/* STEP 1: INFOS */}
+          {activeStep === 'infos' && (
+            <div className="glass rounded-2xl p-6 space-y-5">
+              <div className="flex items-center justify-between pb-3 border-b border-[#17402C]/10">
+                <div>
+                  <h2 className="font-display font-bold text-lg text-[#17402C]">Objectif, Esprit &amp; Niveau</h2>
+                  <p className="text-xs text-[#5C6B5E]">Donnez un titre percutant, décrivez le projet et fixez l’engagement requis.</p>
+                </div>
+                <span className="glass-pill text-[9px] font-mono font-bold">01 · OBJECTIF</span>
+              </div>
 
-              <input
-                type="text"
-                value={inviteInput}
-                onChange={e => setInviteInput(e.target.value)}
-                onKeyDown={handleInviteKeyDown}
-                placeholder="Rechercher un membre ou coller un email..."
-                className="flex-1 bg-transparent border-none text-xs text-[#1C2620] font-500 focus:outline-none min-w-[200px] px-2"
-              />
-            </div>
+              <div className="space-y-4">
+                <div>
+                  <label className="block text-xs font-bold text-[#17402C] mb-1">Nom de l’expédition *</label>
+                  <input
+                    type="text"
+                    value={name}
+                    onChange={(e) => setName(e.target.value)}
+                    placeholder="Ex : Traversée de la Chartreuse en automne"
+                    className="w-full bg-white/90 border border-[#17402C]/15 rounded-xl px-3.5 py-2.5 text-xs text-[#17402C] focus:outline-none focus:ring-2 focus:ring-[#17402C]/20 font-bold"
+                  />
+                </div>
 
-            {/* Suggestions list */}
-            <div>
-              <p className="text-[10px] font-mono uppercase tracking-wider text-[#9CA89E] mb-3 font-700">
-                SUGGESTIONS · VOS DERNIERS PARTENAIRES
-              </p>
-              <div className="space-y-2.5">
-                {PARTNER_SUGGESTIONS.map(p => {
-                  const isAdded = invitedPartners.some(item => item.id === p.id);
-                  return (
-                    <div
-                      key={p.id}
-                      className="flex items-center justify-between bg-[#FAF9F5] border border-[#E8E4D8] rounded-2xl p-3 hover:border-[#C8C3B0] transition-colors"
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  <div>
+                    <label className="block text-xs font-bold text-[#17402C] mb-1">Type d'aventure</label>
+                    <select
+                      value={groupType}
+                      onChange={(e) => setGroupType(e.target.value)}
+                      className="w-full bg-white/90 border border-[#17402C]/15 rounded-xl px-3 py-2 text-xs text-[#17402C]"
                     >
-                      <div className="flex items-center gap-3">
-                        <div className="w-10 h-10 rounded-full bg-[#EDEAE0] overflow-hidden flex-shrink-0">
-                          <img src={p.avatar_url || '/assets/images/no_image.png'} alt={p.full_name} className="object-cover w-full h-full" />
-                        </div>
-                        <div>
-                          <h5 className="font-600 text-xs text-[#1C2620]">{p.full_name}</h5>
-                          <p className="text-[11px] text-[#9CA89E]">
-                            @{p.handle} · {p.sorties_count} sorties ensemble
-                          </p>
-                        </div>
-                      </div>
+                      <option>Traversée en autonomie</option>
+                      <option>Week-end bivouac &amp; sommet</option>
+                      <option>Randonnée avec nuits en refuge</option>
+                      <option>Stage itinérant &amp; orientation</option>
+                      <option>Alpinisme &amp; haute route</option>
+                    </select>
+                  </div>
 
+                  <div>
+                    <label className="block text-xs font-bold text-[#17402C] mb-1">Niveau d'engagement requis</label>
+                    <select
+                      value={level}
+                      onChange={(e) => setLevel(e.target.value)}
+                      className="w-full bg-white/90 border border-[#17402C]/15 rounded-xl px-3 py-2 text-xs text-[#17402C]"
+                    >
+                      <option>Tranquille &amp; contemplatif</option>
+                      <option>Rythme moyen régulier (4-6h/j)</option>
+                      <option>Sportif &amp; engagé (+1000m D+/j)</option>
+                      <option>Alpin &amp; passages techniques</option>
+                    </select>
+                  </div>
+                </div>
+
+                <div>
+                  <label className="block text-xs font-bold text-[#17402C] mb-1">Description du projet &amp; ambiance recherchée</label>
+                  <textarea
+                    rows={4}
+                    value={description}
+                    onChange={(e) => setDescription(e.target.value)}
+                    placeholder="Précisez la philosophie du groupe, les pauses prévues, le portage..."
+                    className="w-full bg-white/90 border border-[#17402C]/15 rounded-xl p-3 text-xs text-[#17402C] focus:outline-none focus:ring-2 focus:ring-[#17402C]/20 leading-relaxed"
+                  />
+                </div>
+              </div>
+
+              <div className="flex justify-end pt-2">
+                <button
+                  type="button"
+                  onClick={() => setActiveStep('sentier')}
+                  className="glass-capsule-btn primary py-2 px-5 text-xs font-bold"
+                >
+                  Suivant : Sentier &amp; GPX →
+                </button>
+              </div>
+            </div>
+          )}
+
+          {/* STEP 2: SENTIER & TRACE */}
+          {activeStep === 'sentier' && (
+            <div className="glass rounded-2xl p-6 space-y-5">
+              <div className="flex items-center justify-between pb-3 border-b border-[#17402C]/10">
+                <div>
+                  <h2 className="font-display font-bold text-lg text-[#17402C]">Sentier &amp; Trace GPX</h2>
+                  <p className="text-xs text-[#5C6B5E]">Choisissez un itinéraire certifié pour générer le profil 3D en direct.</p>
+                </div>
+                <span className="glass-pill text-[9px] font-mono font-bold">02 · SENTIER</span>
+              </div>
+
+              <div className="space-y-4">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+                  {DEFAULT_TRAILS.map((tr) => {
+                    const isSelected = selectedTrail.id === tr.id;
+                    return (
                       <button
+                        key={tr.id}
                         type="button"
-                        onClick={() => togglePartner(p)}
-                        className={`px-4 py-1.5 rounded-full text-xs font-700 transition-all ${
-                          isAdded
-                            ? 'bg-[#EAF3ED] text-[#172A20] border border-[#172A20]/20'
-                            : 'bg-[#172A20] hover:bg-[#2A3830] text-white shadow-sm'
+                        onClick={() => {
+                          setSelectedTrail(tr);
+                          setName(tr.name);
+                        }}
+                        className={`text-left p-3 rounded-xl transition-all ${
+                          isSelected
+                            ? 'bg-[#17402C] text-white shadow-sm border border-white/20'
+                            : 'bg-white/80 text-[#17402C] border border-[#17402C]/10 hover:bg-white'
                         }`}
                       >
-                        {isAdded ? '✓ Ajouté' : '+ Inviter'}
+                        <h4 className="font-bold text-xs truncate">{tr.name}</h4>
+                        <p className={`text-[10px] mt-0.5 ${isSelected ? 'text-emerald-200' : 'text-[#5C6B5E]'}`}>
+                          {tr.region} · {tr.distance_km} km · +{tr.elevation_gain} m D+
+                        </p>
+                      </button>
+                    );
+                  })}
+                </div>
+
+                {/* Leaflet Live Trail Preview */}
+                <div className="rounded-xl overflow-hidden border border-[#17402C]/10 relative h-[220px] bg-[#E7E3D6]">
+                  <div ref={mapContainerRef} className="w-full h-full" />
+                </div>
+              </div>
+
+              <div className="flex justify-between pt-2">
+                <button
+                  type="button"
+                  onClick={() => setActiveStep('infos')}
+                  className="glass-capsule-btn py-2 px-4 text-xs font-bold"
+                >
+                  ← Précédent
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setActiveStep('logistique')}
+                  className="glass-capsule-btn primary py-2 px-5 text-xs font-bold"
+                >
+                  Suivant : Dates &amp; Logistique →
+                </button>
+              </div>
+            </div>
+          )}
+
+          {/* STEP 3: DATES & LOGISTIQUE */}
+          {activeStep === 'logistique' && (
+            <div className="glass rounded-2xl p-6 space-y-5">
+              <div className="flex items-center justify-between pb-3 border-b border-[#17402C]/10">
+                <div>
+                  <h2 className="font-display font-bold text-lg text-[#17402C]">Calendrier, Hébergement &amp; Budget</h2>
+                  <p className="text-xs text-[#5C6B5E]">Fixez les dates, la flexibilité météo et les estimations de frais partagés.</p>
+                </div>
+                <span className="glass-pill text-[9px] font-mono font-bold">03 · LOGISTIQUE</span>
+              </div>
+
+              <div className="space-y-4">
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                  <div>
+                    <label className="block text-xs font-bold text-[#17402C] mb-1">Date de départ</label>
+                    <input
+                      type="date"
+                      value={startDate}
+                      onChange={(e) => setStartDate(e.target.value)}
+                      className="w-full bg-white/90 border border-[#17402C]/15 rounded-xl px-3 py-2 text-xs text-[#17402C]"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-xs font-bold text-[#17402C] mb-1">Date de retour</label>
+                    <input
+                      type="date"
+                      value={endDate}
+                      onChange={(e) => setEndDate(e.target.value)}
+                      className="w-full bg-white/90 border border-[#17402C]/15 rounded-xl px-3 py-2 text-xs text-[#17402C]"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-xs font-bold text-[#17402C] mb-1">Flexibilité météo</label>
+                    <select
+                      value={dateFlexibility}
+                      onChange={(e) => setDateFlexibility(e.target.value)}
+                      className="w-full bg-white/90 border border-[#17402C]/15 rounded-xl px-3 py-2 text-xs text-[#17402C]"
+                    >
+                      <option>Dates fermes</option>
+                      <option>± 1 jour selon météo</option>
+                      <option>± 2 jours selon météo</option>
+                      <option>À convenir avec le groupe</option>
+                    </select>
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-1">
+                  <div>
+                    <label className="block text-xs font-bold text-[#17402C] mb-1">Type d'hébergement</label>
+                    <select
+                      value={hebergementType}
+                      onChange={(e) => setHebergementType(e.target.value)}
+                      className="w-full bg-white/90 border border-[#17402C]/15 rounded-xl px-3 py-2 text-xs text-[#17402C]"
+                    >
+                      <option>Bivouac &amp; Refuges</option>
+                      <option>100% Bivouac sous tente</option>
+                      <option>Refuges gardés demi-pension</option>
+                      <option>Cabanes libres &amp; abris</option>
+                      <option>Gîte d'étape</option>
+                    </select>
+                  </div>
+
+                  <div>
+                    <label className="block text-xs font-bold text-[#17402C] mb-1">Budget estimé / pers.</label>
+                    <div className="relative">
+                      <input
+                        type="number"
+                        value={estimatedBudget}
+                        onChange={(e) => setEstimatedBudget(parseInt(e.target.value))}
+                        className="w-full bg-white/90 border border-[#17402C]/15 rounded-xl px-3 py-2 text-xs font-mono font-bold text-[#17402C]"
+                      />
+                      <span className="absolute right-3 top-2 text-xs text-[#5C6B5E] font-bold">€</span>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="pt-2">
+                  <div className="flex items-center justify-between mb-1">
+                    <label className="text-xs font-bold text-[#17402C]">Capacité maximale du groupe</label>
+                    <span className="font-bold text-xs text-[#17402C] font-mono">{maxMembers} équipiers max</span>
+                  </div>
+                  <input
+                    type="range"
+                    min={2}
+                    max={15}
+                    value={maxMembers}
+                    onChange={(e) => setMaxMembers(parseInt(e.target.value))}
+                    className="w-full accent-[#17402C]"
+                  />
+                  <div className="flex justify-between text-[10px] text-[#5C6B5E] font-mono mt-1">
+                    <span>2 pers. (Duo)</span>
+                    <span>6 pers. (Équilibre idéal)</span>
+                    <span>15 pers. (Max)</span>
+                  </div>
+                </div>
+              </div>
+
+              <div className="flex justify-between pt-2">
+                <button
+                  type="button"
+                  onClick={() => setActiveStep('sentier')}
+                  className="glass-capsule-btn py-2 px-4 text-xs font-bold"
+                >
+                  ← Précédent
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setActiveStep('materiel')}
+                  className="glass-capsule-btn primary py-2 px-5 text-xs font-bold"
+                >
+                  Suivant : Équipiers &amp; Sac requis →
+                </button>
+              </div>
+            </div>
+          )}
+
+          {/* STEP 4: ÉQUIPIERS & MATÉRIEL REQUIS */}
+          {activeStep === 'materiel' && (
+            <div className="glass rounded-2xl p-6 space-y-5">
+              <div className="flex items-center justify-between pb-3 border-b border-[#17402C]/10">
+                <div>
+                  <h2 className="font-display font-bold text-lg text-[#17402C]">Matériel Requis &amp; Sélection</h2>
+                  <p className="text-xs text-[#5C6B5E]">Listez les équipements indispensables que chaque participant doit posséder.</p>
+                </div>
+                <span className="glass-pill text-[9px] font-mono font-bold">04 · MATÉRIEL</span>
+              </div>
+
+              <div className="space-y-4">
+                <div>
+                  <label className="block text-xs font-bold text-[#17402C] mb-2">Mode de recrutement</label>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    {[
+                      { id: 'validation', label: '🛡️ Sur validation', desc: 'Les équipiers postulent avec un message sur leur expérience.' },
+                      { id: 'open', label: '⚡ Inscription libre', desc: 'Les places sont attribuées aux premiers inscrits.' },
+                    ].map((mode) => (
+                      <label
+                        key={mode.id}
+                        className={`p-3.5 rounded-xl cursor-pointer flex items-start gap-2.5 transition-all ${
+                          recruitmentMode === mode.id
+                            ? 'bg-white border-2 border-[#17402C] shadow-xs'
+                            : 'bg-white/60 border border-[#17402C]/10'
+                        }`}
+                      >
+                        <input
+                          type="radio"
+                          name="recruitment_mode"
+                          value={mode.id}
+                          checked={recruitmentMode === mode.id}
+                          onChange={() => setRecruitmentMode(mode.id)}
+                          className="mt-0.5 text-[#17402C]"
+                        />
+                        <div>
+                          <span className="text-xs font-bold text-[#17402C] block">{mode.label}</span>
+                          <span className="text-[10.5px] text-[#5C6B5E] block">{mode.desc}</span>
+                        </div>
+                      </label>
+                    ))}
+                  </div>
+                </div>
+
+                <div className="pt-2">
+                  <label className="block text-xs font-bold text-[#17402C] mb-2">Checklist matériel exigée des participants</label>
+                  <div className="space-y-2">
+                    {requiredGear.map((gear) => (
+                      <div key={gear.id} className="flex items-center justify-between p-2.5 rounded-xl bg-white/90 border border-[#17402C]/10 text-xs">
+                        <span className="font-bold text-[#17402C] flex items-center gap-2">
+                          <span className="text-emerald-700">✓</span> {gear.name}
+                        </span>
+                        <button
+                          type="button"
+                          onClick={() => handleRemoveGear(gear.id)}
+                          className="text-[#5C6B5E] hover:text-red-600 p-1"
+                        >
+                          ✕
+                        </button>
+                      </div>
+                    ))}
+
+                    <div className="flex gap-2 pt-1">
+                      <input
+                        type="text"
+                        value={newGearInput}
+                        onChange={(e) => setNewGearInput(e.target.value)}
+                        placeholder="Ex : DVA + Pelle + Sonde si hivernale..."
+                        className="flex-1 bg-white/90 border border-[#17402C]/15 rounded-xl px-3 py-2 text-xs text-[#17402C]"
+                      />
+                      <button
+                        type="button"
+                        onClick={handleAddGear}
+                        className="px-4 py-2 bg-[#17402C] text-white rounded-xl text-xs font-bold hover:bg-[#1E5238] transition-colors shrink-0"
+                      >
+                        Ajouter
                       </button>
                     </div>
-                  );
-                })}
+                  </div>
+                </div>
+              </div>
+
+              <div className="flex justify-between pt-2">
+                <button
+                  type="button"
+                  onClick={() => setActiveStep('logistique')}
+                  className="glass-capsule-btn py-2 px-4 text-xs font-bold"
+                >
+                  ← Précédent
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setActiveStep('style')}
+                  className="glass-capsule-btn primary py-2 px-5 text-xs font-bold"
+                >
+                  Suivant : Personnalisation →
+                </button>
               </div>
             </div>
+          )}
 
-            {/* Link Invitation Box */}
-            <div className="bg-[#FAF9F5] border border-[#E8E4D8] rounded-2xl p-5 text-center space-y-3">
-              <p className="text-[10px] font-mono uppercase tracking-wider text-[#9CA89E] font-700">
-                LIEN D'INVITATION · GROUPE PRIVÉ
-              </p>
-              <div className="inline-flex items-center gap-2 bg-white border border-[#E8E4D8] rounded-full px-4 py-2 shadow-sm max-w-full">
-                <span className="font-mono text-xs font-700 text-[#1C2620] truncate">
-                  {inviteUrl}
-                </span>
+          {/* STEP 5: STYLE & PICTOGRAMME */}
+          {activeStep === 'style' && (
+            <div className="glass rounded-2xl p-6 space-y-5">
+              <div className="flex items-center justify-between pb-3 border-b border-[#17402C]/10">
+                <div>
+                  <h2 className="font-display font-bold text-lg text-[#17402C]">Personnalisation visuelle du Cockpit</h2>
+                  <p className="text-xs text-[#5C6B5E]">Choisissez un emblème et une couleur d’accent pour le cockpit d'expédition.</p>
+                </div>
+                <span className="glass-pill text-[9px] font-mono font-bold">05 · STYLE</span>
+              </div>
+
+              <div className="space-y-4">
+                <div>
+                  <label className="block text-xs font-bold text-[#17402C] mb-2">Pictogramme de l’expédition</label>
+                  <div className="flex flex-wrap gap-2">
+                    {PICTOGRAMS.map((pic) => (
+                      <button
+                        key={pic}
+                        type="button"
+                        onClick={() => setPictogram(pic)}
+                        className={`w-10 h-10 rounded-xl text-xl flex items-center justify-center transition-all ${
+                          pictogram === pic
+                            ? 'bg-[#17402C] text-white shadow-sm scale-110'
+                            : 'bg-white/80 hover:bg-white border border-[#17402C]/10'
+                        }`}
+                      >
+                        {pic}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                <div>
+                  <label className="block text-xs font-bold text-[#17402C] mb-2">Couleur thématique du Hero</label>
+                  <div className="flex flex-wrap gap-2.5">
+                    {ACCENT_COLORS.map((col) => (
+                      <button
+                        key={col.id}
+                        type="button"
+                        onClick={() => setAccentColor(col.value)}
+                        className={`flex items-center gap-2 px-3 py-1.5 rounded-full text-xs font-bold transition-all ${
+                          accentColor === col.value
+                            ? 'bg-[#17402C] text-white shadow-sm'
+                            : 'bg-white/80 text-[#5C6B5E] border border-[#17402C]/10'
+                        }`}
+                      >
+                        <span className="w-3 h-3 rounded-full shrink-0 shadow-xs" style={{ backgroundColor: col.value }} />
+                        <span>{col.label}</span>
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              </div>
+
+              <div className="flex justify-between pt-2">
                 <button
                   type="button"
-                  onClick={() => {
-                    navigator.clipboard.writeText(`${window.location.origin}/groupes?code=${inviteCode}`);
-                    setLinkCopied(true);
-                    toast('Lien copié dans le presse-papier !', 'success');
-                    setTimeout(() => setLinkCopied(false), 3000);
-                  }}
-                  className="px-3 py-1 bg-[#172A20] text-white rounded-full text-[11px] font-700 hover:bg-[#2A3830] transition-colors flex-shrink-0"
+                  onClick={() => setActiveStep('materiel')}
+                  className="glass-capsule-btn py-2 px-4 text-xs font-bold"
                 >
-                  {linkCopied ? 'Copié !' : 'Copier'}
+                  ← Précédent
+                </button>
+                <button
+                  type="button"
+                  onClick={handleCreateGroup}
+                  disabled={saving || !name.trim()}
+                  className="glass-capsule-btn primary py-2.5 px-6 text-xs font-bold flex items-center gap-1.5"
+                >
+                  <Icon name="CheckIcon" size={14} className="relative z-10" />
+                  <span className="relative z-10">{saving ? 'Lancement...' : 'Créer l’expédition'}</span>
                 </button>
               </div>
-              <p className="text-[11px] text-[#9CA89E]">
-                Expire dans <span className="font-700 text-[#1C2620]">7 jours</span> · 5 réutilisations restantes
-              </p>
             </div>
-          </div>
-
-          {/* ── SECTION 04: PERMISSIONS DU GROUPE ── */}
-          <div className="bg-white border border-[#E8E4D8] rounded-[0.75rem] p-6 sm:p-8 space-y-6 shadow-sm">
-            <div className="flex items-center justify-between border-b border-[#E8E4D8] pb-4">
-              <div>
-                <h2 className="font-display font-700 text-xl text-[#1C2620]">
-                  Permissions <em className="font-serif font-normal not-italic">du groupe</em>
-                </h2>
-                <p className="text-xs text-[#9CA89E] mt-0.5">
-                  Réglages simples pour éviter les malentendus : qui peut inviter, éditer, ou proposer des changements.
-                </p>
-              </div>
-              <span className="text-[10px] font-mono uppercase tracking-widest text-[#9CA89E] bg-[#EDEAE0] px-3 py-1 rounded-full font-700">
-                04 · Fonctionnement
-              </span>
-            </div>
-
-            <div className="space-y-4 divide-y divide-[#E8E4D8]">
-
-              {/* Perm 1 */}
-              <div className="flex items-center justify-between gap-4 pt-2">
-                <div>
-                  <h4 className="font-600 text-xs text-[#1C2620]">
-                    Les participants peuvent inviter d'autres personnes
-                  </h4>
-                  <p className="text-[11px] text-[#9CA89E] mt-0.5">
-                    Sans cette option, seuls vous pouvez ajouter des membres.
-                  </p>
-                </div>
-                <button
-                  type="button"
-                  onClick={() => setPermissions(p => ({ ...p, membersCanInvite: !p.membersCanInvite }))}
-                  className={`w-11 h-6 rounded-full transition-colors relative flex-shrink-0 ${
-                    permissions.membersCanInvite ? 'bg-[#172A20]' : 'bg-[#E8E4D8]'
-                  }`}
-                >
-                  <span
-                    className={`w-4 h-4 rounded-full bg-white absolute top-1 transition-transform shadow-sm ${
-                      permissions.membersCanInvite ? 'left-6' : 'left-1'
-                    }`}
-                  />
-                </button>
-              </div>
-
-              {/* Perm 2 */}
-              <div className="flex items-center justify-between gap-4 pt-4">
-                <div>
-                  <h4 className="font-600 text-xs text-[#1C2620]">
-                    Chat de groupe activé
-                  </h4>
-                  <p className="text-[11px] text-[#9CA89E] mt-0.5">
-                    Un fil de messages partagé pour l'organisation avant et pendant le voyage.
-                  </p>
-                </div>
-                <button
-                  type="button"
-                  onClick={() => setPermissions(p => ({ ...p, chatEnabled: !p.chatEnabled }))}
-                  className={`w-11 h-6 rounded-full transition-colors relative flex-shrink-0 ${
-                    permissions.chatEnabled ? 'bg-[#172A20]' : 'bg-[#E8E4D8]'
-                  }`}
-                >
-                  <span
-                    className={`w-4 h-4 rounded-full bg-white absolute top-1 transition-transform shadow-sm ${
-                      permissions.chatEnabled ? 'left-6' : 'left-1'
-                    }`}
-                  />
-                </button>
-              </div>
-
-              {/* Perm 3 */}
-              <div className="flex items-center justify-between gap-4 pt-4">
-                <div>
-                  <h4 className="font-600 text-xs text-[#1C2620]">
-                    Partage de position en temps réel
-                  </h4>
-                  <p className="text-[11px] text-[#9CA89E] mt-0.5">
-                    Optionnel : s'active pendant la sortie uniquement, entre membres du groupe.
-                  </p>
-                </div>
-                <button
-                  type="button"
-                  onClick={() => setPermissions(p => ({ ...p, realtimeLocation: !p.realtimeLocation }))}
-                  className={`w-11 h-6 rounded-full transition-colors relative flex-shrink-0 ${
-                    permissions.realtimeLocation ? 'bg-[#172A20]' : 'bg-[#E8E4D8]'
-                  }`}
-                >
-                  <span
-                    className={`w-4 h-4 rounded-full bg-white absolute top-1 transition-transform shadow-sm ${
-                      permissions.realtimeLocation ? 'left-6' : 'left-1'
-                    }`}
-                  />
-                </button>
-              </div>
-
-              {/* Perm 4 */}
-              <div className="flex items-center justify-between gap-4 pt-4">
-                <div>
-                  <h4 className="font-600 text-xs text-[#1C2620]">
-                    Liste de courses & logistique partagée
-                  </h4>
-                  <p className="text-[11px] text-[#9CA89E] mt-0.5">
-                    Un tableau collaboratif d'envies : matériel, courses, covoiturage.
-                  </p>
-                </div>
-                <button
-                  type="button"
-                  onClick={() => setPermissions(p => ({ ...p, sharedList: !p.sharedList }))}
-                  className={`w-11 h-6 rounded-full transition-colors relative flex-shrink-0 ${
-                    permissions.sharedList ? 'bg-[#172A20]' : 'bg-[#E8E4D8]'
-                  }`}
-                >
-                  <span
-                    className={`w-4 h-4 rounded-full bg-white absolute top-1 transition-transform shadow-sm ${
-                      permissions.sharedList ? 'left-6' : 'left-1'
-                    }`}
-                  />
-                </button>
-              </div>
-
-              {/* Perm 5 */}
-              <div className="flex items-center justify-between gap-4 pt-4">
-                <div>
-                  <h4 className="font-600 text-xs text-[#1C2620]">
-                    Archiver automatiquement après la sortie
-                  </h4>
-                  <p className="text-[11px] text-[#9CA89E] mt-0.5">
-                    Le groupe passe en lecture seule 7 jours après la date de fin.
-                  </p>
-                </div>
-                <button
-                  type="button"
-                  onClick={() => setPermissions(p => ({ ...p, autoArchive: !p.autoArchive }))}
-                  className={`w-11 h-6 rounded-full transition-colors relative flex-shrink-0 ${
-                    permissions.autoArchive ? 'bg-[#172A20]' : 'bg-[#E8E4D8]'
-                  }`}
-                >
-                  <span
-                    className={`w-4 h-4 rounded-full bg-white absolute top-1 transition-transform shadow-sm ${
-                      permissions.autoArchive ? 'left-6' : 'left-1'
-                    }`}
-                  />
-                </button>
-              </div>
-
-            </div>
-          </div>
-
+          )}
         </div>
 
-        {/* ════════════════ RIGHT COLUMN (SIDEBAR PREVIEW & TIPS) ════════════════ */}
-        <div className="lg:col-span-4 space-y-5">
+        {/* COLONNE DROITE (Live Hero Preview) - 300px */}
+        <aside className="w-[300px] shrink-0 h-full overflow-y-auto custom-scrollbar flex flex-col gap-4 pb-8">
+          {/* Live Cockpit Hero Mini Preview */}
+          <div className="glass p-3.5 space-y-3 rounded-2xl">
+            <div className="flex items-center justify-between">
+              <h3 className="font-display font-bold text-xs text-[#17402C]">Aperçu du Cockpit</h3>
+              <span className="glass-pill text-[9px] font-mono font-bold">Live</span>
+            </div>
 
-          {/* Mini Live Preview Box */}
-          <div className="bg-[#EAF3ED] border border-[#172A20]/15 rounded-[0.75rem] p-5 space-y-3">
-            <div className="flex items-center gap-3">
-              <div
-                className="w-10 h-10 rounded-xl text-white flex items-center justify-center text-xl font-bold shadow-sm"
-                style={{ backgroundColor: accentColor }}
-              >
-                {pictogram}
-              </div>
-              <div className="min-w-0">
-                <h4 className="font-display font-700 text-sm text-[#1C2620] truncate">
-                  {name || 'Chartreuse en octobre'}
+            <div
+              className="rounded-2xl p-4 text-white relative overflow-hidden shadow-sm flex flex-col justify-between min-h-[220px]"
+              style={{
+                background: `linear-gradient(135deg, ${accentColor} 0%, #112D1F 100%)`
+              }}
+            >
+              <div>
+                <div className="flex items-center justify-between mb-3">
+                  <span className="text-2xl">{pictogram}</span>
+                  <span className="px-2 py-0.5 bg-white/15 backdrop-blur-md rounded-full text-[9px] font-mono font-bold text-white">
+                    {maxMembers} PLACES
+                  </span>
+                </div>
+
+                <h4 className="font-display font-bold text-base leading-snug text-white">
+                  {name || 'Nom de l’expédition'}
                 </h4>
-                <p className="text-[11px] text-[#5C6B5E]">
-                  Groupe privé · {totalInvitedCount} invitations
-                </p>
-              </div>
-            </div>
-
-            <div className="flex items-center gap-2 pt-2 border-t border-[#172A20]/10">
-              <div className="flex -space-x-2 overflow-hidden">
-                <div className="inline-block h-7 w-7 rounded-full ring-2 ring-white bg-[#172A20] text-white text-[10px] font-700 flex items-center justify-center">
-                  V
-                </div>
-                {invitedPartners.map(p => (
-                  <img
-                    key={p.id}
-                    className="inline-block h-7 w-7 rounded-full ring-2 ring-white object-cover"
-                    src={p.avatar_url || '/assets/images/no_image.png'}
-                    alt={p.full_name}
-                  />
-                ))}
-              </div>
-              <span className="text-[11px] text-[#5C6B5E] font-500">
-                Vous + {totalInvitedCount} invités · {Math.max(0, maxMembers - totalInvitedCount - 1)} places restantes
-              </span>
-            </div>
-          </div>
-
-          {/* Groupe ou club ? box */}
-          <div className="bg-white border border-[#E8E4D8] rounded-[0.75rem] p-5 space-y-4">
-            <div>
-              <h4 className="font-display font-700 text-base text-[#1C2620]">
-                Groupe <em className="font-serif font-normal not-italic text-[#9CA89E]">ou club ?</em>
-              </h4>
-              <p className="text-[11px] text-[#9CA89E] mt-0.5">
-                Deux formats pour deux besoins.
-              </p>
-            </div>
-
-            <div className="space-y-3">
-              {/* Inner card 1: Groupe éphémère */}
-              <div className="bg-[#EAF3ED] border border-[#172A20]/15 rounded-2xl p-4">
-                <h5 className="font-600 text-xs text-[#1C2620] mb-1">
-                  Groupe éphémère
-                </h5>
-                <p className="text-[11px] text-[#5C6B5E] leading-relaxed">
-                  Une sortie précise, quelques amis, une organisation partagée. S'archive après le voyage.
+                <p className="text-[10px] text-white/80 line-clamp-2 mt-1">
+                  {description}
                 </p>
               </div>
 
-              {/* Inner card 2: Club durable */}
-              <div className="bg-[#FAF9F5] border border-[#E8E4D8] rounded-2xl p-4">
-                <h5 className="font-600 text-xs text-[#1C2620] mb-1">
-                  Club · durable
-                </h5>
-                <p className="text-[11px] text-[#9CA89E] leading-relaxed">
-                  Une communauté qui se retrouve mois après mois, avec des règles et plusieurs admins.
-                </p>
+              <div className="pt-3 border-t border-white/20 flex items-center justify-between text-[10px] font-mono">
+                <span>📏 {selectedTrail.distance_km} km</span>
+                <span>⛰️ +{selectedTrail.elevation_gain} m</span>
+                <span>💶 ~{estimatedBudget}€</span>
               </div>
             </div>
-
-            <div className="text-center pt-1">
-              <Link
-                href="/clubs/nouveau"
-                className="text-xs font-700 text-[#1C2620] hover:text-[#D97746] transition-colors"
-              >
-                Créer un club plutôt →
-              </Link>
-            </div>
           </div>
 
-          {/* Conseil Organisation Card */}
-          <div className="bg-[#172A20] text-white rounded-[0.75rem] p-6 space-y-3 shadow-md">
-            <p className="text-[9px] font-mono uppercase tracking-[0.2em] text-emerald-400 font-700">
-              CONSEIL · ORGANISATION
-            </p>
-            <h4 className="font-display font-700 text-base leading-snug">
-              Créez le groupe <em className="font-serif font-normal not-italic text-emerald-300">avant d'inviter.</em>
-            </h4>
-            <p className="text-xs text-white/70 leading-relaxed italic">
-              Un chat actif, une liste de matériel, et l'énergie pour l'itinéraire se met en place naturellement.
-            </p>
-          </div>
-
-        </div>
-
-      </div>
-
-      {/* ── Fixed Bottom Bar ── */}
-      <div className="fixed bottom-0 left-0 right-0 bg-white/95 backdrop-blur-md border-t border-[#E8E4D8] py-4 px-6 z-50 shadow-lg">
-        <div className="max-w-6xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-4">
-          <div className="flex items-center gap-2 text-xs text-[#1C2620] font-600">
-            <span className="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse" />
-            <span>Prêt à créer</span>
-            <span className="text-[#9CA89E] font-normal">
-              · {totalInvitedCount} invitation{totalInvitedCount > 1 ? 's' : ''} partiront à la création
+          {/* CTA Final */}
+          <div className="glass tone-sand p-3.5 space-y-2 rounded-2xl text-[#17402C]">
+            <span className="glass-pill text-[9px] font-mono font-bold text-[#8C6418]">
+              🎒 PRÉPARATION D'EXPÉDITION
             </span>
-          </div>
-
-          <div className="flex items-center gap-3">
-            <button
-              type="button"
-              onClick={() => router.back()}
-              className="px-4 py-2.5 border border-[#C8C3B0] text-[#5C6B5E] hover:text-[#1C2620] hover:border-[#1C2620]/40 rounded-full text-xs font-700 transition-all"
-            >
-              Annuler
-            </button>
-            <button
-              type="button"
-              onClick={() => handleCreateGroup(false)}
-              disabled={loading}
-              className="px-5 py-2.5 bg-white border border-[#1C2620] text-[#1C2620] hover:bg-[#FAF9F5] rounded-full text-xs font-700 transition-all shadow-sm"
-            >
-              Créer sans inviter
-            </button>
-            <button
-              type="button"
-              onClick={() => handleCreateGroup(true)}
-              disabled={loading}
-              className="px-6 py-2.5 bg-[#172A20] hover:bg-[#2A3830] text-white rounded-full text-xs font-700 transition-all shadow-md"
-            >
-              {loading ? 'Création...' : 'Créer & envoyer les invitations'}
-            </button>
-          </div>
-        </div>
-      </div>
-
-        </div>
-      </div>
-
-      {/* ── MOBILE ── */}
-      <div className="block md:hidden">
-        <MobilePageShell>
-          <div style={{ padding: '16px' }}>
-            {/* Header */}
-            <div style={{ marginBottom: '20px' }}>
-              <div style={{ fontSize: '10px', fontFamily: 'ui-monospace, monospace', color: '#6B7A72', letterSpacing: '0.2em', textTransform: 'uppercase', marginBottom: '8px', fontWeight: 500 }}>
-                NOUVEAU GROUPE
-              </div>
-              <h1 style={{ fontSize: '24px', fontWeight: 700, color: '#0B1F17', letterSpacing: '-0.02em', lineHeight: 1.2, marginBottom: '4px' }}>
-                Rassembler <em style={{ fontFamily: 'Georgia, serif', fontStyle: 'italic', color: '#17402C', fontWeight: 400 }}>pour un voyage.</em>
-              </h1>
-              <p style={{ fontSize: '13px', color: '#6B7A72', lineHeight: 1.5 }}>
-                Un groupe suit pour une sortie et vit le temps de l'organiser.
-              </p>
-            </div>
-
-            {/* Randonnée liée Mobile */}
-            <div style={{ marginBottom: '16px' }}>
-              <label style={{ fontSize: '11px', fontWeight: 600, color: '#0B1F17', display: 'block', marginBottom: '6px' }}>Randonnée officielle (Aventures)</label>
-              <div
-                onClick={() => setShowTrailPicker(true)}
-                style={{
-                  padding: '12px',
-                  background: '#FFFFFF',
-                  border: '1px solid rgba(11,31,23,0.12)',
-                  borderRadius: '16px',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'space-between',
-                  gap: '8px',
-                  cursor: 'pointer',
-                }}
-              >
-                <div style={{ minWidth: 0 }}>
-                  <div style={{ fontSize: '13px', fontWeight: 700, color: '#0B1F17', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
-                    {selectedTrail?.name || linkedAdventure}
-                  </div>
-                  <div style={{ fontSize: '11px', color: '#17402C', fontFamily: 'monospace', marginTop: '2px' }}>
-                    {selectedTrail?.distance_km ? `${selectedTrail.distance_km} km` : '27.4 km'} · +{selectedTrail?.elevation_gain ? `${selectedTrail.elevation_gain} m D+` : '1 620 m D+'}
-                  </div>
-                </div>
-                <span style={{ fontSize: '11px', fontWeight: 700, color: '#17402C', background: '#F0EDE1', padding: '6px 10px', borderRadius: '10px', whiteSpace: 'nowrap' }}>
-                  Changer →
-                </span>
-              </div>
-            </div>
-
-            {/* Nom du groupe */}
-            <div style={{ marginBottom: '16px' }}>
-              <label style={{ fontSize: '11px', fontWeight: 600, color: '#0B1F17', display: 'block', marginBottom: '6px' }}>Nom du groupe</label>
-              <input
-                type="text"
-                value={name}
-                onChange={e => setName(e.target.value)}
-                placeholder="Expédition Chartreuse"
-                style={{ width: '100%', padding: '12px', background: '#F4F1EA', border: '1px solid rgba(11,31,23,0.08)', borderRadius: '12px', fontSize: '14px', color: '#0B1F17', boxSizing: 'border-box' }}
-              />
-            </div>
-
-            {/* Description */}
-            <div style={{ marginBottom: '16px' }}>
-              <label style={{ fontSize: '11px', fontWeight: 600, color: '#0B1F17', display: 'block', marginBottom: '6px' }}>Description</label>
-              <input
-                type="text"
-                value={description}
-                onChange={e => setDescription(e.target.value)}
-                placeholder="Traversée en groupe"
-                style={{ width: '100%', padding: '12px', background: '#F4F1EA', border: '1px solid rgba(11,31,23,0.08)', borderRadius: '12px', fontSize: '14px', color: '#0B1F17', boxSizing: 'border-box' }}
-              />
-            </div>
-
-            {/* Dates */}
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px', marginBottom: '16px' }}>
-              <div>
-                <label style={{ fontSize: '11px', fontWeight: 600, color: '#0B1F17', display: 'block', marginBottom: '6px' }}>Début</label>
-                <input type="date" value={startDate} onChange={e => setStartDate(e.target.value)}
-                  style={{ width: '100%', padding: '12px', background: '#F4F1EA', border: '1px solid rgba(11,31,23,0.08)', borderRadius: '12px', fontSize: '13px', color: '#0B1F17', boxSizing: 'border-box' }} />
-              </div>
-              <div>
-                <label style={{ fontSize: '11px', fontWeight: 600, color: '#0B1F17', display: 'block', marginBottom: '6px' }}>Fin</label>
-                <input type="date" value={endDate} onChange={e => setEndDate(e.target.value)}
-                  style={{ width: '100%', padding: '12px', background: '#F4F1EA', border: '1px solid rgba(11,31,23,0.08)', borderRadius: '12px', fontSize: '13px', color: '#0B1F17', boxSizing: 'border-box' }} />
-              </div>
-            </div>
-
-            {/* Max members */}
-            <div style={{ marginBottom: '24px' }}>
-              <label style={{ fontSize: '11px', fontWeight: 600, color: '#0B1F17', display: 'block', marginBottom: '6px' }}>Participants max</label>
-              <input type="number" min={2} max={50} value={maxMembers} onChange={e => setMaxMembers(parseInt(e.target.value) || 6)}
-                style={{ width: '100%', padding: '12px', background: '#F4F1EA', border: '1px solid rgba(11,31,23,0.08)', borderRadius: '12px', fontSize: '14px', color: '#0B1F17', boxSizing: 'border-box' }} />
-            </div>
-
-            {/* Pictogramme selector */}
-            <div style={{ marginBottom: '24px' }}>
-              <label style={{ fontSize: '11px', fontWeight: 600, color: '#0B1F17', display: 'block', marginBottom: '8px' }}>Pictogramme</label>
-              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(6, 1fr)', gap: '8px' }}>
-                {PICTOGRAMS.map(p => (
-                  <button key={p.id} onClick={() => setPictogram(p.icon)}
-                    style={{
-                      height: '44px', borderRadius: '10px', fontSize: '20px', border: 'none',
-                      background: pictogram === p.icon ? '#17402C' : '#F4F1EA',
-                      cursor: 'pointer',
-                    }}>
-                    {p.icon}
-                  </button>
-                ))}
-              </div>
-            </div>
-
-            {/* Create buttons */}
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-              <button onClick={() => handleCreateGroup(true)} disabled={loading}
-                style={{ padding: '14px', background: '#17402C', color: '#fff', borderRadius: '999px', fontSize: '14px', fontWeight: 600, border: 'none', cursor: loading ? 'not-allowed' : 'pointer', opacity: loading ? 0.5 : 1 }}>
-                {loading ? 'Création...' : 'Créer & inviter'}
-              </button>
-              <button onClick={() => handleCreateGroup(false)} disabled={loading}
-                style={{ padding: '14px', background: '#F4F1EA', color: '#0B1F17', borderRadius: '999px', fontSize: '14px', fontWeight: 600, border: '1px solid rgba(11,31,23,0.08)', cursor: loading ? 'not-allowed' : 'pointer', opacity: loading ? 0.5 : 1 }}>
-                Créer sans inviter
-              </button>
-            </div>
-          </div>
-        </MobilePageShell>
-      </div>
-
-      {/* ── TRAIL PICKER MODAL (Desktop & Mobile) ── */}
-      {showTrailPicker && (
-        <div className="fixed inset-0 z-[100] bg-black/60 backdrop-blur-sm flex items-center justify-center p-4">
-          <div className="bg-[#FAF9F5] border border-[#C8C3B0] rounded-[24px] w-full max-w-xl p-5 sm:p-6 shadow-2xl max-h-[85vh] flex flex-col">
-            <div className="flex items-center justify-between pb-3 border-b border-[#1C2620]/10">
-              <div>
-                <h3 className="font-display font-bold text-lg text-[#1C2620]">
-                  Sélectionner une randonnée
-                </h3>
-                <p className="text-xs text-[#5C6B5E]">
-                  Itinéraires et tracés GPS certifiés de la page Aventures
-                </p>
-              </div>
+            <h3 className="font-display font-bold text-xs text-[#17402C]">
+              Lancer le cockpit de voyage
+            </h3>
+            <p className="text-[11px] text-[#5C6B5E] leading-relaxed">
+              Vos équipiers recevront la liste de matériel exigé, les dates et la trace GPS officielle.
+            </p>
+            <div className="pt-1">
               <button
-                onClick={() => setShowTrailPicker(false)}
-                className="w-8 h-8 rounded-full bg-black/5 hover:bg-black/10 flex items-center justify-center text-sm font-bold"
+                type="button"
+                onClick={handleCreateGroup}
+                disabled={saving || !name.trim()}
+                className="w-full glass-capsule-btn primary py-2.5 text-xs font-bold flex items-center justify-center gap-1.5"
               >
-                ✕
+                <Icon name="PlusIcon" size={14} className="relative z-10" />
+                <span className="relative z-10">{saving ? 'Création...' : 'Lancer l’expédition'}</span>
               </button>
             </div>
-
-            {/* Search filter */}
-            <div className="my-3 relative">
-              <input
-                type="text"
-                value={trailSearch}
-                onChange={(e) => setTrailSearch(e.target.value)}
-                placeholder="Rechercher par massif, nom (Vercors, Tour du Mont-Blanc...)"
-                className="w-full bg-white border border-[#1C2620]/15 rounded-xl px-4 py-2.5 text-xs text-[#1C2620] focus:ring-2 focus:ring-[#17402C] outline-none"
-              />
-            </div>
-
-            {/* Trails list */}
-            <div className="flex-1 overflow-y-auto space-y-2 pr-1">
-              {availableTrails
-                .filter((t) => !trailSearch.trim() || t.name?.toLowerCase().includes(trailSearch.toLowerCase()))
-                .map((trail) => {
-                  const isSelected = selectedTrail?.id === trail.id || selectedTrail?.name === trail.name;
-                  return (
-                    <div
-                      key={trail.id}
-                      onClick={() => handleSelectTrail(trail)}
-                      className={`p-3.5 rounded-2xl border transition-all cursor-pointer flex items-center justify-between gap-3 ${
-                        isSelected
-                          ? 'bg-[#17402C] text-white border-[#17402C]'
-                          : 'bg-white text-[#1C2620] border-[#1C2620]/8 hover:border-[#17402C]/40'
-                      }`}
-                    >
-                      <div className="min-w-0">
-                        <h4 className="font-bold text-xs sm:text-sm truncate">
-                          {trail.name}
-                        </h4>
-                        <p className={`text-[11px] font-mono mt-0.5 ${isSelected ? 'text-white/80' : 'text-[#5C6B5E]'}`}>
-                          📍 {trail.distance_km ? `${trail.distance_km} km` : '20 km'} · +{trail.elevation_gain ? `${trail.elevation_gain} m D+` : '1200 m D+'} · {trail.difficulty || 'Modéré'}
-                        </p>
-                      </div>
-
-                      <span className={`px-3 py-1 rounded-xl text-xs font-bold shrink-0 ${
-                        isSelected ? 'bg-white text-[#17402C]' : 'bg-[#17402C]/10 text-[#17402C]'
-                      }`}>
-                        {isSelected ? '✓ Choisi' : 'Sélectionner'}
-                      </span>
-                    </div>
-                  );
-                })}
-            </div>
           </div>
-        </div>
-      )}
-    </>
+        </aside>
+      </main>
+    </div>
   );
 }

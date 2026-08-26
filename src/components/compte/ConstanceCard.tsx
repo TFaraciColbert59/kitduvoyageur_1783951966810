@@ -8,7 +8,7 @@ interface ConstanceCardProps {
 }
 
 export default function ConstanceCard({ constance }: ConstanceCardProps) {
-  const [activeDayIndex, setActiveDayIndex] = useState<number | null>(6); // Default to Sunday (index 6)
+  const [activeDayIndex, setActiveDayIndex] = useState<number | null>(6);
 
   const days = [
     { name: 'L', count: 1, label: 'Lundi' },
@@ -17,33 +17,23 @@ export default function ConstanceCard({ constance }: ConstanceCardProps) {
     { name: 'J', count: 0, label: 'Jeudi' },
     { name: 'V', count: 1, label: 'Vendredi' },
     { name: 'S', count: 3, label: 'Samedi' },
-    { name: 'D', count: 2, label: 'Dimanche (Aujourd\'hui)' },
+    { name: 'D', count: 2, label: "Dimanche (Aujourd'hui)" },
   ];
 
   return (
-    <div className="bg-white rounded-[0.75rem] p-4 sm:p-5 border border-[#1C2620]/10 shadow-sm space-y-3 font-sans my-3 active:scale-[0.98] active:opacity-95 transition-all duration-150 cursor-pointer">
-      
-      {/* Header Compact */}
+    <div className="glass p-3.5 space-y-2.5 rounded-2xl border border-white/70 shadow-xs text-[#17402C] font-sans">
+      {/* Header */}
       <div className="flex items-center justify-between">
-        <div>
-          <h3 className="font-display font-800 text-base text-[#1C2620] flex items-center gap-1.5">
-            <span>Constance</span>
-            <span className="font-serif italic font-normal text-[#2D5A3D] text-sm">&amp; jalons</span>
-          </h3>
-          <p className="text-[10px] text-[#1C2620]/60">
-            6 semaines d'affilée avec sorties
-          </p>
+        <div className="flex items-center gap-1.5">
+          <h3 className="font-display font-bold text-xs text-[#17402C]">Constance &amp; Rythme</h3>
         </div>
-
-        {/* Streak Badge */}
-        <div className="inline-flex items-center gap-1 px-2.5 py-1 bg-amber-100 text-amber-900 border border-amber-300/80 rounded-full text-xs font-mono font-extrabold shadow-sm">
-          <span>🔥</span>
-          <span>6 sem.</span>
-        </div>
+        <span className="glass-pill pill-warn text-[9px] font-mono font-bold">
+          🔥 6 sem.
+        </span>
       </div>
 
-      {/* 7 Days Interactive Row */}
-      <div className="grid grid-cols-7 gap-1.5 pt-1">
+      {/* 7 Days in compact row */}
+      <div className="grid grid-cols-7 gap-1 pt-0.5">
         {days.map((d, idx) => {
           const isSelected = activeDayIndex === idx;
           const hasActivity = d.count > 0;
@@ -52,21 +42,21 @@ export default function ConstanceCard({ constance }: ConstanceCardProps) {
             <button
               key={d.name + idx}
               onClick={() => setActiveDayIndex(idx)}
-              className={`flex flex-col items-center justify-between py-1.5 px-1 rounded-xl border transition-all cursor-pointer ${
+              className={`flex flex-col items-center justify-between py-1.5 px-0.5 rounded-lg border transition-all cursor-pointer ${
                 isSelected
-                  ? 'bg-[#1C2620] text-white border-[#1C2620] shadow-sm'
+                  ? 'bg-[#17402C] text-white border-[#17402C] shadow-2xs'
                   : hasActivity
-                  ? 'bg-emerald-100/70 border-emerald-300 text-emerald-950 hover:bg-emerald-200'
-                  : 'bg-[#F5F3ED]/50 border-[#1C2620]/5 text-[#1C2620]/40 hover:bg-[#F5F3ED]'
+                  ? 'bg-white/80 border-white text-[#17402C] hover:border-[#5B7F55]/40'
+                  : 'bg-white/30 border-[#17402C]/5 text-[#5A7064] hover:bg-white/60'
               }`}
               title={`${d.label} : ${d.count} sortie(s)`}
             >
-              <span className="text-[11px] font-bold">{d.name}</span>
+              <span className="text-[9.5px] font-mono font-bold">{d.name}</span>
               <div className="mt-1 flex items-center justify-center">
                 {hasActivity ? (
-                  <span className={`w-1.5 h-1.5 rounded-full ${isSelected ? 'bg-emerald-400' : 'bg-emerald-700'}`} />
+                  <span className={`w-1.5 h-1.5 rounded-full ${isSelected ? 'bg-[#A6C1A0]' : 'bg-[#5B7F55]'}`} />
                 ) : (
-                  <span className="w-1 h-1 rounded-full bg-[#1C2620]/15" />
+                  <span className="w-1 h-1 rounded-full bg-[#17402C]/15" />
                 )}
               </div>
             </button>
@@ -74,23 +64,15 @@ export default function ConstanceCard({ constance }: ConstanceCardProps) {
         })}
       </div>
 
-      {/* Selected Day Info tooltip/footer */}
-      {activeDayIndex !== null && (
-        <div className="bg-[#F5F3ED] rounded-lg px-2.5 py-1.5 text-[11px] font-medium text-[#1C2620] flex justify-between items-center animate-fade-in">
-          <span>{days[activeDayIndex].label}</span>
-          <span className="font-mono font-bold text-emerald-800">
-            {days[activeDayIndex].count > 0 ? `${days[activeDayIndex].count} sortie(s)` : 'Repos'}
-          </span>
-        </div>
-      )}
-
-      {/* Footer Status */}
-      <div className="pt-1 border-t border-[#1C2620]/5 flex items-center justify-between text-[11px] font-mono">
-        <span className="text-[#1C2620]/60">Semaine : <strong>3 sorties</strong></span>
-        <span className="text-emerald-700 font-bold">Objectif atteint ✓</span>
+      {/* Info footer */}
+      <div className="flex items-center justify-between text-[9.5px] font-mono pt-1 border-t border-[#17402C]/5">
+        <span className="text-[#5A7064]">
+          {activeDayIndex !== null && days[activeDayIndex].count > 0
+            ? `${days[activeDayIndex].label}: ${days[activeDayIndex].count} sortie(s)`
+            : '3 sorties cette semaine'}
+        </span>
+        <span className="text-[#5B7F55] font-bold">Objectif atteint ✓</span>
       </div>
-
     </div>
   );
 }
-

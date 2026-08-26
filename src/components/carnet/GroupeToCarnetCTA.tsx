@@ -9,7 +9,7 @@ const steps = [
 
 export default function GroupeToCarnetCTA() {
   return (
-    <section className="bg-gradient-to-br from-[#1C2620] via-[#1C2620] to-[#33463C] text-[#E7E3D6] py-20 md:py-28">
+    <section className="bg-gradient-to-br from-[#17402C] via-[#17402C] to-[#33463C] text-[#E7E3D6] py-20 md:py-28">
       <div className="max-w-7xl mx-auto px-4 sm:px-8 lg:px-12">
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 lg:gap-20 items-center">
           {/* Left */}
@@ -30,7 +30,7 @@ export default function GroupeToCarnetCTA() {
             <div className="flex flex-wrap gap-3">
               <Link
                 href="/groupes"
-                className="inline-flex items-center gap-2 bg-[#E7E3D6] text-[#1C2620] px-6 py-3 rounded-full text-sm font-semibold hover:bg-white transition-colors"
+                className="inline-flex items-center gap-2 bg-[#E7E3D6] text-[#17402C] px-6 py-3 rounded-full text-sm font-semibold hover:bg-white transition-colors"
               >
                 Voir mes groupes →
               </Link>

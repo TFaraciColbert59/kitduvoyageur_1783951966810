@@ -170,7 +170,7 @@ export function KitProductSuggestions({ products = [] }: { products?: ProductSug
               }}
               className={`px-3 py-1 rounded-full text-xs font-bold transition-all shrink-0 ${
                 isActive
-                  ? 'bg-[#17402C] text-white shadow-xs'
+                  ? 'bg-[#17402C] text-white '
                   : 'bg-white/[0.08] text-[#365233] hover:bg-white/20 border border-white/20'
               }`}
             >
@@ -206,7 +206,7 @@ export function KitProductSuggestions({ products = [] }: { products?: ProductSug
                   )}
                 </div>
 
-                <p className="font-semibold text-xs text-[#17402C] line-clamp-2 leading-tight group-hover:text-[#2D6B4A] transition-colors">
+                <p className="font-semibold text-xs text-[#17402C] line-clamp-2 leading-tight group-hover:text-[#365233] transition-colors">
                   {prod.name}
                 </p>
               </Link>
@@ -222,7 +222,7 @@ export function KitProductSuggestions({ products = [] }: { products?: ProductSug
                   onClick={(e) => handleAddToCart(prod, e)}
                   className={`w-full h-7 rounded-full text-[10px] font-bold flex items-center justify-center gap-1 transition-all ${
                     isAdded
-                      ? 'bg-[#2D6B4A] text-white'
+                      ? 'bg-[#365233] text-white'
                       : 'glass-capsule-btn primary'
                   }`}
                 >

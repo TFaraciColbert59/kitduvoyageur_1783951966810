@@ -23,7 +23,7 @@ const TILES: BentoTile[] = [
     href: '/ai-configurator',
     emoji: '🎒',
     accent: '#17402C',
-    bg: 'linear-gradient(135deg, #1C2620 0%, #2a3d30 100%)',
+    bg: 'linear-gradient(135deg, #17402C 0%, #2a3d30 100%)',
     span: 'large',
     badge: 'IA · 2 min',
   },
@@ -338,7 +338,7 @@ export default function BentoGrid() {
                 style={{
                   width: activeIdx === i ? 20 : 6,
                   height: 6,
-                  background: activeIdx === i ? '#17402C' : 'rgba(28,38,32,0.25)',
+                  background: activeIdx === i ? '#17402C' : 'rgba(23,64,44,0.25)',
                 }}
               />
             ))}

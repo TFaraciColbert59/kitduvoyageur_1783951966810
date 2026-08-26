@@ -300,7 +300,7 @@ export default function OutilsPage() {
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
                 {tools.map((tool) => (
                   <Link key={tool.slug} href={`/outils/${tool.slug}`} className="group block">
-                    <article className="h-full border border-border rounded-2xl bg-card hover:border-info/50 transition-all duration-300 hover:shadow-lg hover:shadow-info/10 p-6 flex flex-col">
+                    <article className="h-full border border-border rounded-2xl bg-card hover:border-info/50 transition-all duration-300 hover: hover:shadow-info/10 p-6 flex flex-col">
                       <div className="flex items-start justify-between mb-4">
                         <div className="text-4xl" role="img" aria-label={tool.nom}>{tool.icon}</div>
                         <div className="flex flex-col items-end gap-1.5">
@@ -334,7 +334,7 @@ export default function OutilsPage() {
           </section>
 
           {/* CTA */}
-          <TopoSeparator inverted color="#1C2620" />
+          <TopoSeparator inverted color="#17402C" />
           <section className="py-16 bg-dark-bg">
             <div className="max-w-3xl mx-auto px-4 text-center">
               <p className="font-mono text-xs text-info tracking-widest uppercase mb-3" style={{ fontFamily: 'var(--font-mono)' }}>CONFIGURATEUR IA</p>
@@ -363,7 +363,7 @@ export default function OutilsPage() {
               <p style={{ fontSize: '10px', fontFamily: 'ui-monospace, monospace', color: '#6B7A72', letterSpacing: '0.14em', textTransform: 'uppercase', marginBottom: '8px' }}>
                 BOÎTE À OUTILS — {tools.length} OUTILS
               </p>
-              <h1 style={{ fontSize: '28px', fontWeight: 800, color: '#1C2620', lineHeight: '1.1', marginBottom: '8px' }}>
+              <h1 style={{ fontSize: '28px', fontWeight: 800, color: '#17402C', lineHeight: '1.1', marginBottom: '8px' }}>
                 Outils terrain
               </h1>
               <p style={{ fontSize: '14px', color: '#6B7A72', lineHeight: '1.5' }}>
@@ -385,19 +385,19 @@ export default function OutilsPage() {
                     gap: '14px',
                     padding: '14px',
                     background: '#F4F1EA',
-                    border: '1px solid rgba(11,31,23,0.06)',
+                    border: '1px solid rgba(23,64,44,0.06)',
                     borderRadius: '16px',
                   }}>
                     <span style={{ fontSize: '28px', flexShrink: 0 }} role="img" aria-label={tool.nom}>{tool.icon}</span>
                     <div style={{ flex: 1, minWidth: 0 }}>
                       <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '4px', flexWrap: 'wrap' }}>
-                        <span style={{ fontSize: '15px', fontWeight: 700, color: '#1C2620' }}>{tool.nom}</span>
+                        <span style={{ fontSize: '15px', fontWeight: 700, color: '#17402C' }}>{tool.nom}</span>
                         <span style={{
                           fontSize: '9px',
                           fontFamily: 'ui-monospace, monospace',
                           padding: '1px 6px',
                           borderRadius: '4px',
-                          border: '1px solid rgba(11,31,23,0.06)',
+                          border: '1px solid rgba(23,64,44,0.06)',
                           color: '#6B7A72',
                           background: '#FBFAF6',
                         }}>

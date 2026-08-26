@@ -3,7 +3,7 @@ import { Skeleton, SkeletonText } from '@/components/ui/Skeleton';
 
 export default function ProductLoading() {
   return (
-    <div className="min-h-screen bg-[#F0EBE1] pb-24 lg:pb-12 pt-24 lg:pt-32">
+    <div className="min-h-dvh bg-[#FAF8F5] pb-24 lg:pb-12 pt-24 lg:pt-32">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex flex-col lg:flex-row gap-12">
           {/* Image skeleton */}

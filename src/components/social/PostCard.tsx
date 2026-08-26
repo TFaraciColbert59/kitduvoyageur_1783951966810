@@ -273,14 +273,14 @@ export default function PostCard({
   return (
     <article
       id={`post-${post.id}`}
-      className={`bg-white rounded-[24px] p-4 sm:p-5 border border-[#1C2620]/8 shadow-[0_2px_12px_rgba(11,31,23,0.03)] hover:shadow-md transition-shadow duration-200 flex flex-col gap-3.5 ${className}`}
+      className={`glass rounded-[24px] p-4 sm:p-5 transition-shadow duration-200 flex flex-col gap-3.5 ${className}`}
     >
       {/* Header : Author info, Origin/Time & context menu */}
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-3 min-w-0">
           <a
             href={post.author_id ? `/profil/${post.author_id}` : '#'}
-            className="w-10 h-10 rounded-full bg-[#EDF3ED] text-[#17402C] border border-[#A8C4A2] flex items-center justify-center font-serif italic text-lg overflow-hidden shrink-0 hover:opacity-90 transition-opacity shadow-sm"
+            className="w-10 h-10 rounded-full bg-[#EDF3ED] text-[#17402C] border border-[#A6C1A0] flex items-center justify-center font-serif italic text-lg overflow-hidden shrink-0 hover:opacity-90 transition-opacity"
           >
             {post.author_avatar ? (
               <img
@@ -297,7 +297,7 @@ export default function PostCard({
             <div className="flex items-center gap-2">
               <a
                 href={post.author_id ? `/profil/${post.author_id}` : '#'}
-                className="font-medium text-sm text-[#1C2620] hover:text-[#17402C] tracking-tight truncate"
+                className="font-medium text-sm text-[#17402C] hover:text-[#17402C] tracking-tight truncate"
               >
                 {post.author_name}
               </a>
@@ -320,7 +320,7 @@ export default function PostCard({
             triggerHaptic('light');
             setIsMoreOpen(true);
           }}
-          className="w-8 h-8 rounded-full flex items-center justify-center text-[#5C6B5E]/60 hover:text-[#1C2620] hover:bg-[#F5F2E8] transition-colors"
+          className="w-9 h-9 rounded-full glass-capsule-btn flex items-center justify-center text-[#17402C] hover:text-[#17402C] p-0 shrink-0 cursor-pointer transition-all duration-200 hover:scale-110 hover:border-white hover:bg-white/90"
           aria-label="Options"
         >
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" width="18" height="18" strokeLinecap="round">
@@ -332,7 +332,7 @@ export default function PostCard({
       </div>
 
       {/* Body content */}
-      <div className="text-sm text-[#1C2620] leading-relaxed break-words font-sans">
+      <div className="text-sm text-[#17402C] leading-relaxed break-words font-sans">
         <p className="whitespace-pre-line">
           {displayContent}
         </p>
@@ -363,7 +363,7 @@ export default function PostCard({
 
       {/* Media attachment with top-right date mono badge & bottom-left geo badge ONLY if media_url exists */}
       {post.media_url && (
-        <div className="relative w-full rounded-2xl overflow-hidden bg-black/5 max-h-80 flex items-center justify-center border border-[#1C2620]/5 group">
+        <div className="relative w-full rounded-2xl overflow-hidden bg-black/5 max-h-80 flex items-center justify-center border border-[#17402C]/5 group">
           {post.media_type === 'video' ? (
             <video
               src={post.media_url}
@@ -382,7 +382,7 @@ export default function PostCard({
 
           {/* Geo Location Capsule Overlay */}
           {post.location && (
-            <div className="absolute bottom-2.5 left-2.5 px-3 py-1.5 bg-white/90 backdrop-blur-md rounded-full flex items-center gap-1.5 text-[10px] font-bold text-[#1C2620] tracking-wider uppercase shadow-sm border border-white/40">
+            <div className="absolute bottom-2.5 left-2.5 px-3 py-1.5 glass-pill rounded-full flex items-center gap-1.5 text-[10px] font-bold text-[#17402C] tracking-wider uppercase border border-white/40">
               <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#17402C" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
                 <circle cx="12" cy="10" r="3" />
                 <path d="M12 2a8 8 0 0 1 8 8c0 6-8 12-8 12S4 16 4 10a8 8 0 0 1 8-8z" />

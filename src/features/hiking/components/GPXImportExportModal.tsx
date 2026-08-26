@@ -64,10 +64,10 @@ export default function GPXImportExportModal({
         animate={{ y: 0 }}
         exit={{ y: '100%' }}
         transition={{ type: 'spring', damping: 25, stiffness: 200 }}
-        className="w-full max-w-md bg-[#FBFAF6] text-[#0B1F17] rounded-t-[34px] pt-3 pb-10 px-4 shadow-2xl space-y-4"
+        className="w-full max-w-md bg-[#FBFAF6] text-[#17402C] rounded-t-[34px] pt-3 pb-10 px-4  space-y-4"
       >
         {/* Grabber */}
-        <div className="w-10 h-1 bg-[#0B1F17]/14 rounded-full mx-auto" />
+        <div className="w-10 h-1 bg-[#17402C]/14 rounded-full mx-auto" />
 
         {/* Sheet Header */}
         <div className="flex items-center justify-between px-2">
@@ -81,7 +81,7 @@ export default function GPXImportExportModal({
           </div>
           <button
             onClick={onClose}
-            className="w-8 h-8 rounded-full bg-[#E9E4D9] flex items-center justify-center text-[#6B7A72] hover:text-[#0B1F17]"
+            className="w-8 h-8 rounded-full bg-[#E9E4D9] flex items-center justify-center text-[#6B7A72] hover:text-[#17402C]"
           >
             ✕
           </button>
@@ -96,11 +96,11 @@ export default function GPXImportExportModal({
         {/* Upload GPX Button Box */}
         <div className="p-5 border-2 border-dashed border-[#17402C]/30 bg-[#F4F1EA] rounded-[0.75rem] text-center space-y-2">
           <span className="text-3xl block">📥</span>
-          <div className="text-xs font-bold text-[#0B1F17]">Importer un fichier GPX</div>
+          <div className="text-xs font-bold text-[#17402C]">Importer un fichier GPX</div>
           <p className="text-[10px] font-mono text-[#6B7A72]">
             Compatible Visorando, AllTrails, Komoot & Garmin
           </p>
-          <label className="inline-block mt-2 px-4 py-2 bg-[#17402C] text-white text-xs font-bold rounded-full cursor-pointer shadow-md active:scale-95 transition-transform">
+          <label className="inline-block mt-2 px-4 py-2 bg-[#17402C] text-white text-xs font-bold rounded-full cursor-pointer  active:scale-95 transition-transform">
             Choisir un fichier .gpx
             <input type="file" accept=".gpx" onChange={handleFileUpload} className="hidden" />
           </label>
@@ -110,7 +110,7 @@ export default function GPXImportExportModal({
         {positions.length > 0 && (
           <button
             onClick={handleExportGPX}
-            className="w-full py-3.5 bg-[#EAF1E5] border border-[#A8C8A0] text-[#17402C] font-bold text-xs rounded-2xl flex items-center justify-center gap-2 shadow-sm active:scale-95 transition-transform"
+            className="w-full py-3.5 bg-[#EAF1E5] border border-[#A8C8A0] text-[#17402C] font-bold text-xs rounded-2xl flex items-center justify-center gap-2  active:scale-95 transition-transform"
           >
             <span>📤</span>
             Exporter la trace actuelle ({positions.length} points GPS)

@@ -159,7 +159,7 @@ export default function BoussoleAugmenteePage() {
   if (permissionState === 'checking' && !userPos) {
     return (
       <MobilePageShell>
-        <div className="min-h-screen bg-[#0D1A12] flex flex-col items-center justify-center px-6 text-center">
+        <div className="min-h-screen bg-[#000] flex flex-col items-center justify-center px-6 text-center">
           <div className="w-16 h-16 rounded-full bg-white/10 flex items-center justify-center mb-6 text-3xl">
             🧭
           </div>
@@ -170,7 +170,7 @@ export default function BoussoleAugmenteePage() {
           <button
             id="request-access-btn"
             onClick={requestAccess}
-            className="px-6 py-3 bg-white text-[#0D1A12] font-semibold rounded-full text-sm hover:bg-white/90 transition-colors"
+            className="glass-capsule-btn"
           >
             🎥 Activer la caméra
           </button>
@@ -185,13 +185,13 @@ export default function BoussoleAugmenteePage() {
   if (permissionState === 'denied') {
     return (
       <MobilePageShell>
-        <div className="min-h-screen bg-[#0D1A12] flex flex-col items-center justify-center px-6 text-center">
+        <div className="min-h-screen bg-[#000] flex flex-col items-center justify-center px-6 text-center">
           <span className="text-4xl mb-4">📵</span>
           <h2 className="text-lg font-bold text-white mb-2">Accès refusé</h2>
           <p className="text-white/60 text-sm max-w-56">
             Autorise la caméra et la localisation dans les réglages de ton navigateur.
           </p>
-          <button onClick={requestAccess} className="mt-6 px-5 py-2.5 bg-white/10 text-white rounded-full text-sm">
+          <button onClick={requestAccess} className="glass-capsule-btn secondary mt-6">
             Réessayer
           </button>
         </div>
@@ -226,7 +226,7 @@ export default function BoussoleAugmenteePage() {
         <div
           style={{
             position: 'absolute', bottom: 0, left: 0, right: 0, height: '40%',
-            background: 'linear-gradient(to top, rgba(13,26,18,0.85) 0%, transparent 100%)',
+            background: 'linear-gradient(to top, rgba(23,64,44,0.85) 0%, transparent 100%)',
             pointerEvents: 'none',
           }}
         />
@@ -242,19 +242,26 @@ export default function BoussoleAugmenteePage() {
           <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
             <Link
               href="/explorer"
+              aria-label="Retour à la carte"
+              className="w-9 h-9 shrink-0 flex items-center justify-center text-[#17402C] transition-transform active:scale-90"
               style={{
-                width: 36, height: 36, borderRadius: '50%',
-                background: 'rgba(255,255,255,0.15)',
-                display: 'flex', alignItems: 'center', justifyContent: 'center',
-                color: 'white',
-                backdropFilter: 'blur(8px)',
+                background: 'rgba(255,255,255,0.92)',
+                border: '1px solid rgba(255,255,255,0.60)',
+                borderRadius: 9999,
               }}
             >
               ←
             </Link>
-            <div>
-              <p style={{ color: 'white', fontWeight: 700, fontSize: 16, lineHeight: 1 }}>Boussole Augmentée</p>
-              <p style={{ color: 'rgba(255,255,255,0.55)', fontSize: 11, marginTop: 2 }}>
+            <div
+              style={{
+                background: 'rgba(255,255,255,0.92)',
+                border: '1px solid rgba(255,255,255,0.60)',
+                borderRadius: 12,
+                padding: '6px 10px',
+              }}
+            >
+              <p style={{ color: '#17402C', fontWeight: 700, fontSize: 15, lineHeight: 1.2 }}>Boussole Augmentée</p>
+              <p style={{ color: '#5A7064', fontSize: 11, marginTop: 2 }}>
                 {pois.length} point{pois.length !== 1 ? 's' : ''} · {Math.round(heading)}° N
               </p>
             </div>
@@ -298,24 +305,22 @@ export default function BoussoleAugmenteePage() {
               {/* Icône */}
               <div
                 style={{
-                  background: 'rgba(13,26,18,0.85)',
-                  backdropFilter: 'blur(12px)',
-                  border: '1px solid rgba(255,255,255,0.25)',
-                  borderRadius: 12,
+                  background: 'rgba(255,255,255,0.92)',
+                  border: '1px solid rgba(255,255,255,0.60)',
+                  borderRadius: 9,
                   padding: '6px 10px',
                   display: 'flex',
                   flexDirection: 'column',
                   alignItems: 'center',
                   gap: 2,
                   minWidth: 60,
-                  boxShadow: '0 4px 16px rgba(0,0,0,0.4)',
                 }}
               >
                 <span style={{ fontSize: 18 }}>{CATEGORY_ICONS[poi.category] || '📍'}</span>
-                <span style={{ color: 'white', fontSize: 10, fontWeight: 700, textAlign: 'center', lineHeight: 1.2, maxWidth: 80 }}>
+                <span style={{ color: '#17402C', fontSize: 10, fontWeight: 700, textAlign: 'center', lineHeight: 1.2, maxWidth: 80 }}>
                   {poi.name.length > 14 ? poi.name.slice(0, 13) + '…' : poi.name}
                 </span>
-                <span style={{ color: 'rgba(255,255,255,0.55)', fontSize: 9 }}>
+                <span style={{ color: '#5A7064', fontSize: 9 }}>
                   {formatDistance(poi.distance_m)}
                 </span>
               </div>
@@ -340,25 +345,25 @@ export default function BoussoleAugmenteePage() {
               position: 'absolute',
               bottom: 100,
               left: 16, right: 16,
-              background: 'rgba(13,26,18,0.92)',
-              backdropFilter: 'blur(24px)',
-              border: '1px solid rgba(255,255,255,0.1)',
-              borderRadius: 20,
+              background: 'rgba(255,255,255,0.92)',
+              border: '1px solid rgba(255,255,255,0.60)',
+              borderRadius: 12,
               padding: '16px 16px 20px',
             }}
           >
             <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 8 }}>
               <span style={{ fontSize: 28 }}>{CATEGORY_ICONS[selectedPoi.category] || '📍'}</span>
               <div>
-                <p style={{ color: 'white', fontWeight: 700, fontSize: 15 }}>{selectedPoi.name}</p>
-                <p style={{ color: 'rgba(255,255,255,0.5)', fontSize: 11 }}>
+                <p style={{ color: '#17402C', fontWeight: 700, fontSize: 15 }}>{selectedPoi.name}</p>
+                <p style={{ color: '#5A7064', fontSize: 11 }}>
                   {categoryLabel(selectedPoi.category)} · {formatDistance(selectedPoi.distance_m)}
                   {selectedPoi.elevation_m && ` · ${selectedPoi.elevation_m} m`}
                 </p>
               </div>
               <button
                 onClick={() => setSelectedPoi(null)}
-                style={{ marginLeft: 'auto', color: 'rgba(255,255,255,0.5)', fontSize: 20 }}
+                aria-label="Fermer les détails"
+                style={{ marginLeft: 'auto', color: '#5A7064', fontSize: 20 }}
               >
                 ✕
               </button>
@@ -374,13 +379,13 @@ export default function BoussoleAugmenteePage() {
                 <div
                   key={s.label}
                   style={{
-                    background: 'rgba(255,255,255,0.06)',
+                    background: 'rgba(91,127,85,0.10)',
                     borderRadius: 12,
                     padding: '10px 12px',
                   }}
                 >
-                  <p style={{ color: 'rgba(255,255,255,0.4)', fontSize: 10, marginBottom: 2 }}>{s.icon} {s.label}</p>
-                  <p style={{ color: 'white', fontSize: 13, fontWeight: 600 }}>{s.value}</p>
+                  <p style={{ color: '#5A7064', fontSize: 10, marginBottom: 2 }}>{s.icon} {s.label}</p>
+                  <p style={{ color: '#17402C', fontSize: 13, fontWeight: 600 }}>{s.value}</p>
                 </div>
               ))}
             </div>
@@ -405,10 +410,9 @@ export default function BoussoleAugmenteePage() {
                   onClick={() => setSelectedPoi(poi)}
                   style={{
                     flexShrink: 0,
-                    background: 'rgba(13,26,18,0.85)',
-                    backdropFilter: 'blur(12px)',
-                    border: '1px solid rgba(255,255,255,0.12)',
-                    borderRadius: 14,
+                    background: 'rgba(255,255,255,0.92)',
+                    border: '1px solid rgba(255,255,255,0.60)',
+                    borderRadius: 9,
                     padding: '8px 12px',
                     display: 'flex',
                     alignItems: 'center',
@@ -417,10 +421,10 @@ export default function BoussoleAugmenteePage() {
                 >
                   <span style={{ fontSize: 14 }}>{CATEGORY_ICONS[poi.category] || '📍'}</span>
                   <div style={{ textAlign: 'left' }}>
-                    <p style={{ color: 'white', fontSize: 11, fontWeight: 600, whiteSpace: 'nowrap' }}>
+                    <p style={{ color: '#17402C', fontSize: 11, fontWeight: 600, whiteSpace: 'nowrap' }}>
                       {poi.name.length > 16 ? poi.name.slice(0, 15) + '…' : poi.name}
                     </p>
-                    <p style={{ color: 'rgba(255,255,255,0.5)', fontSize: 9 }}>
+                    <p style={{ color: '#5A7064', fontSize: 9 }}>
                       {formatDistance(poi.distance_m)}
                     </p>
                   </div>
@@ -438,13 +442,13 @@ export default function BoussoleAugmenteePage() {
               top: '42%',
               left: '50%',
               transform: 'translate(-50%, -50%)',
-              background: 'rgba(13,26,18,0.8)',
-              backdropFilter: 'blur(12px)',
-              borderRadius: 12,
+              background: 'rgba(255,255,255,0.92)',
+              border: '1px solid rgba(255,255,255,0.60)',
+              borderRadius: 9,
               padding: '8px 16px',
             }}
           >
-            <p style={{ color: 'rgba(255,255,255,0.6)', fontSize: 12 }}>
+            <p style={{ color: '#365233', fontSize: 12 }}>
               Tourne-toi pour voir les points d&apos;intérêt
             </p>
           </div>

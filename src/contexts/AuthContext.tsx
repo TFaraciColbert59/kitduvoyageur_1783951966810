@@ -1,6 +1,6 @@
-'use client';
+"use client";
 
-import { createContext, useContext, useEffect, useState, ReactNode } from 'react';
+import { createContext, useContext, useEffect, useState, ReactNode, useMemo, useCallback } from 'react';
 import { createClient } from '@/lib/supabase/client';
 import type { User, Session } from '@supabase/supabase-js';
 
@@ -48,9 +48,9 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [session, setSession] = useState<Session | null>(null);
   const [profile, setProfile] = useState<UserProfile | null>(null);
   const [loading, setLoading] = useState(true);
-  const supabase = createClient();
+  const supabase = useMemo(() => createClient(), []);
 
-  const ensureProfile = async (authUser: User) => {
+  const ensureProfile = useCallback(async (authUser: User) => {
     try {
       const { data: existing } = await supabase
         .from('user_profiles')
@@ -91,7 +91,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     } catch {
       // Silently fail
     }
-  };
+  }, [supabase]);
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => {
@@ -120,10 +120,9 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     });
 
     return () => subscription.unsubscribe();
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [supabase, ensureProfile]);
 
-  const signUp = async (email: string, password: string, metadata: { fullName?: string; avatarUrl?: string } = {}) => {
+  const signUp = useCallback(async (email: string, password: string, metadata: { fullName?: string; avatarUrl?: string } = {}) => {
     const { data, error } = await supabase.auth.signUp({
       email,
       password,
@@ -137,54 +136,69 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     });
     if (error) throw error;
     return data;
-  };
+  }, [supabase]);
 
-  const signIn = async (email: string, password: string) => {
+  const signIn = useCallback(async (email: string, password: string) => {
     const { data, error } = await supabase.auth.signInWithPassword({ email, password });
     if (error) throw error;
     return data;
-  };
+  }, [supabase]);
 
-  const signOut = async () => {
+  const signOut = useCallback(async () => {
     const { error } = await supabase.auth.signOut();
     if (error) throw error;
     setProfile(null);
-  };
+  }, [supabase]);
 
-  const getCurrentUser = async () => {
+  const getCurrentUser = useCallback(async () => {
     const { data: { user }, error } = await supabase.auth.getUser();
     if (error) throw error;
     return user;
-  };
+  }, [supabase]);
 
-  const isEmailVerified = () => user?.email_confirmed_at != null;
+  const isEmailVerified = useCallback(() => user?.email_confirmed_at != null, [user]);
 
-  const getUserProfile = async (): Promise<UserProfile | null> => {
+  const getUserProfile = useCallback(async (): Promise<UserProfile | null> => {
     if (!user) return null;
     const { data, error } = await supabase.from('user_profiles').select('id,email,full_name,avatar_url,trust_score,loyalty_points,loyalty_level,bio,location,xp,level').eq('id', user.id).single();
     if (error) return null;
     setProfile(data as UserProfile);
     return data as UserProfile;
-  };
+  }, [supabase, user]);
 
-  const refreshProfile = async () => {
+  const refreshProfile = useCallback(async () => {
     if (!user) return;
     await getUserProfile();
-  };
+  }, [user, getUserProfile]);
 
-  const value: AuthContextValue = {
-    user,
-    session,
-    profile,
-    loading,
-    signUp,
-    signIn,
-    signOut,
-    getCurrentUser,
-    isEmailVerified,
-    getUserProfile,
-    refreshProfile,
-  };
+  const value = useMemo<AuthContextValue>(
+    () => ({
+      user,
+      session,
+      profile,
+      loading,
+      signUp,
+      signIn,
+      signOut,
+      getCurrentUser,
+      isEmailVerified,
+      getUserProfile,
+      refreshProfile,
+    }),
+    [
+      user,
+      session,
+      profile,
+      loading,
+      signUp,
+      signIn,
+      signOut,
+      getCurrentUser,
+      isEmailVerified,
+      getUserProfile,
+      refreshProfile,
+    ]
+  );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 };

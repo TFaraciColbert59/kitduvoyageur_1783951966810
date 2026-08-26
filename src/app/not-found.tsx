@@ -37,7 +37,7 @@ export default function NotFound() {
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(webPageSchema) }} suppressHydrationWarning />
       {/* DESKTOP */}
       <div className="hidden md:block">
-        <div className="min-h-screen flex flex-col items-center justify-center bg-[#1C2620] p-4">
+        <div className="min-h-screen flex flex-col items-center justify-center bg-[#17402C] p-4">
           <div className="text-center max-w-lg">
             <div className="flex justify-center mb-6">
               <h1 className="text-[10rem] font-bold leading-none" style={{ fontFamily: 'var(--font-display)', color: '#17402C', opacity: 0.2 }}>404</h1>

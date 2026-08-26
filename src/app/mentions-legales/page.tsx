@@ -13,14 +13,14 @@ export const metadata = {
 
 function MobileMLContent() {
   const s: React.CSSProperties = { marginBottom: '24px' };
-  const h2: React.CSSProperties = { fontSize: '14px', fontWeight: 600, color: '#1C2620', marginBottom: '8px', paddingBottom: '6px', borderBottom: '1px solid rgba(11,31,23,0.06)' };
-  const p: React.CSSProperties = { fontSize: '13px', color: 'rgba(28,38,32,0.8)', lineHeight: '1.6' };
+  const h2: React.CSSProperties = { fontSize: '14px', fontWeight: 600, color: '#17402C', marginBottom: '8px', paddingBottom: '6px', borderBottom: '1px solid rgba(23,64,44,0.06)' };
+  const p: React.CSSProperties = { fontSize: '13px', color: 'rgba(23,64,44,0.8)', lineHeight: '1.6' };
   const link: React.CSSProperties = { color: '#17402C', textDecoration: 'underline', fontSize: '13px' };
   return (
     <div style={{ padding: '16px' }}>
       <p style={{ fontSize: '11px', fontFamily: 'var(--font-mono)', color: '#17402C', letterSpacing: '0.14em', textTransform: 'uppercase', marginBottom: '12px' }}>Informations légales</p>
-      <h1 style={{ fontSize: '24px', fontWeight: 800, color: '#1C2620', marginBottom: '8px', fontFamily: 'var(--font-display)' }}>Mentions légales</h1>
-      <p style={{ fontSize: '12px', color: 'rgba(28,38,32,0.5)', marginBottom: '24px' }}>Conformément à la loi LCEN n° 2004-575 du 21 juin 2004</p>
+      <h1 style={{ fontSize: '24px', fontWeight: 800, color: '#17402C', marginBottom: '8px', fontFamily: 'var(--font-display)' }}>Mentions légales</h1>
+      <p style={{ fontSize: '12px', color: 'rgba(23,64,44,0.5)', marginBottom: '24px' }}>Conformément à la loi LCEN n° 2004-575 du 21 juin 2004</p>
 
       <section style={s}><h2 style={h2}>1. Éditeur du site</h2>
         <p style={p}><strong>Le Kit du Voyageur</strong> (SAS) — Capital : 10 000€ — Siège : 1 Rue de la Paix, 75001 Paris — SIRET : 123 456 789 00010 — RCS Paris B 123 456 789 — Email : <a href="mailto:contact@lekitduvoyageur.fr" style={link}>contact@lekitduvoyageur.fr</a></p>
@@ -32,13 +32,13 @@ function MobileMLContent() {
       <section style={s}><h2 style={h2}>6. Données personnelles</h2><p style={p}>Voir notre <Link href="/politique-confidentialite" style={link}>Politique de confidentialité</Link>. DPO : <a href="mailto:dpo@lekitduvoyageur.fr" style={link}>dpo@lekitduvoyageur.fr</a></p></section>
       <section style={s}><h2 style={h2}>7. Droit applicable</h2><p style={p}>Soumis au droit français.</p></section>
 
-      <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px', paddingTop: '16px', borderTop: '1px solid rgba(11,31,23,0.06)' }}>
+      <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px', paddingTop: '16px', borderTop: '1px solid rgba(23,64,44,0.06)' }}>
         <Link href="/politique-confidentialite" style={link}>Confidentialité</Link>
-        <span style={{ color: 'rgba(28,38,32,0.2)', fontSize: '12px' }}>·</span>
+        <span style={{ color: 'rgba(23,64,44,0.2)', fontSize: '12px' }}>·</span>
         <Link href="/cgu" style={link}>CGU</Link>
-        <span style={{ color: 'rgba(28,38,32,0.2)', fontSize: '12px' }}>·</span>
+        <span style={{ color: 'rgba(23,64,44,0.2)', fontSize: '12px' }}>·</span>
         <Link href="/cgv" style={link}>CGV</Link>
-        <span style={{ color: 'rgba(28,38,32,0.2)', fontSize: '12px' }}>·</span>
+        <span style={{ color: 'rgba(23,64,44,0.2)', fontSize: '12px' }}>·</span>
         <Link href="/cookies" style={link}>Cookies</Link>
       </div>
     </div>

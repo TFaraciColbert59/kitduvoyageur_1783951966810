@@ -87,63 +87,52 @@ export default function SocialActions({
   };
 
   return (
-    <div className={`flex items-center justify-between w-full pt-2 text-[#5C6B5E] ${className}`}>
+    <div className={`flex items-center justify-between w-full pt-2 text-[#17402C] ${className}`}>
       {/* Left actions: Like, Comment, Share */}
-      <div className="flex items-center gap-4 sm:gap-6">
-        {/* Like - Modern Heart */}
+      <div className="flex items-center gap-2">
+        {/* Like - Red Rosé Liquid Glass Heart */}
         <motion.button
           type="button"
-          whileTap={{ scale: 0.8 }}
+          whileHover={{ scale: 1.12 }}
+          whileTap={{ scale: 0.9 }}
           onClick={handleLike}
-          className={`flex items-center gap-1.5 py-1 px-1.5 -ml-1.5 rounded-full transition-colors ${
-            liked ? 'text-rose-500 font-semibold' : 'text-[#5C6B5E] hover:text-[#1C2620]'
-          }`}
+          className={`w-9 h-9 rounded-full ${
+            liked ? 'glass-capsule-btn-like' : 'glass-capsule-btn text-[#17402C] hover:border-rose-300'
+          } flex items-center justify-center p-0 cursor-pointer transition-all duration-200 shrink-0`}
           aria-label={liked ? 'Je n’aime plus' : 'J’aime'}
         >
-          <svg
-            width="20"
-            height="20"
-            viewBox="0 0 24 24"
-            fill={liked ? '#F43F5E' : 'none'}
-            stroke={liked ? '#F43F5E' : 'currentColor'}
-            strokeWidth="1.8"
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            className={`transition-transform duration-200 ${liked ? 'scale-115' : ''}`}
-          >
-            <path d="M19.5 12.572l-7.5 7.428l-7.5 -7.428a5 5 0 1 1 7.5 -6.566a5 5 0 1 1 7.5 6.572" />
-          </svg>
-          <span className="text-xs font-mono">{likesCount > 0 ? likesCount : ''}</span>
+          <Icon
+            name={liked ? "HeartIconSolid" : "HeartIcon"}
+            size={18}
+            color={liked ? "#E11D48" : "#17402C"}
+            className="relative z-10"
+          />
         </motion.button>
 
         {/* Comment */}
         {showComments && (
           <motion.button
             type="button"
-            whileTap={{ scale: 0.85 }}
+            whileHover={{ scale: 1.12 }}
+            whileTap={{ scale: 0.9 }}
             onClick={handleComments}
-            className="flex items-center gap-1.5 py-1 px-1.5 rounded-full text-[#5C6B5E] hover:text-[#1C2620] transition-colors"
+            className="w-9 h-9 rounded-full glass-capsule-btn flex items-center justify-center text-[#17402C] p-0 cursor-pointer transition-all duration-200 shrink-0"
             aria-label="Commenter"
           >
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-              <path d="M3 20l1.3 -3.9a9 8 0 1 1 3.4 2.9l-4.7 1" />
-            </svg>
-            {commentsCount > 0 && <span className="text-xs font-mono">{commentsCount}</span>}
+            <Icon name="ChatBubbleLeftIcon" size={18} color="#17402C" className="relative z-10" />
           </motion.button>
         )}
 
         {/* Share / Reply in groups */}
         <motion.button
           type="button"
-          whileTap={{ scale: 0.85 }}
+          whileHover={{ scale: 1.12 }}
+          whileTap={{ scale: 0.9 }}
           onClick={handleShare}
-          className="flex items-center py-1 px-1.5 rounded-full text-[#5C6B5E] hover:text-[#1C2620] transition-colors"
+          className="w-9 h-9 rounded-full glass-capsule-btn flex items-center justify-center text-[#17402C] p-0 cursor-pointer transition-all duration-200 shrink-0"
           aria-label="Transférer dans un groupe ou partager"
         >
-          <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-            <line x1="22" y1="2" x2="11" y2="13" />
-            <polygon points="22 2 15 22 11 13 2 9 22 2" />
-          </svg>
+          <Icon name="PaperAirplaneIcon" size={18} color="#17402C" className="relative z-10" />
         </motion.button>
       </div>
 
@@ -152,26 +141,20 @@ export default function SocialActions({
         {showSave && (
           <motion.button
             type="button"
-            whileTap={{ scale: 0.85 }}
+            whileHover={{ scale: 1.12 }}
+            whileTap={{ scale: 0.9 }}
             onClick={handleSave}
-            className={`py-1 px-1.5 rounded-full transition-colors ${
-              saved ? 'text-[#17402C]' : 'text-[#5C6B5E] hover:text-[#1C2620]'
+            className={`w-9 h-9 rounded-full glass-capsule-btn flex items-center justify-center p-0 cursor-pointer transition-all duration-200 shrink-0 ${
+              saved ? 'active' : ''
             }`}
             aria-label={saved ? 'Retirer des enregistrés' : 'Enregistrer'}
           >
-            <svg
-              width="20"
-              height="20"
-              viewBox="0 0 24 24"
-              fill={saved ? '#17402C' : 'none'}
-              stroke={saved ? '#17402C' : 'currentColor'}
-              strokeWidth="1.8"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              className={`transition-transform duration-200 ${saved ? 'scale-110' : ''}`}
-            >
-              <path d="M19 21l-7 -5l-7 5v-14a2 2 0 0 1 2 -2h10a2 2 0 0 1 2 2z" />
-            </svg>
+            <Icon
+              name={saved ? "BookmarkSolidIcon" : "BookmarkIcon"}
+              size={18}
+              color="#17402C"
+              className="relative z-10"
+            />
           </motion.button>
         )}
       </div>

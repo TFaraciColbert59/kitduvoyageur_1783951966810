@@ -109,25 +109,25 @@ function translateWithdrawalStatus(status: string) {
 function getStatusBadgeStyle(status: string) {
   switch (status) {
     case 'paid':
-      return 'bg-emerald-50 text-emerald-700 border-emerald-200';
+      return 'glass-pill';
     case 'rejected':
-      return 'bg-rose-50 text-rose-700 border-rose-200';
+      return 'glass-pill pill-danger';
     case 'approved':
     case 'processing':
-      return 'bg-blue-50 text-blue-700 border-blue-200';
+      return 'glass-pill pill-info';
     case 'pending':
     case 'under_review':
     default:
-      return 'bg-amber-50 text-amber-700 border-amber-200';
+      return 'glass-pill pill-warn';
   }
 }
 
 function getRarityColor(rarity: string) {
   switch (rarity?.toLowerCase()) {
-    case 'légendaire': return 'text-purple-600';
-    case 'épique': return 'text-blue-600';
-    case 'rare': return 'text-[#17402C]';
-    default: return 'text-[#9CA89E]';
+    case 'légendaire': return 'text-[#C89A3B]';
+    case 'épique': return 'text-[#4B6B7C]';
+    case 'rare': return 'text-[#5B7F55]';
+    default: return 'text-[#5A7064]';
   }
 }
 
@@ -445,82 +445,81 @@ export default function FideliteTab({ profile: initialProfile }: FideliteTabProp
     return badgesProgress;
   }, [badgesProgress, badgeFilter]);
 
-  // ─────────────────────────────────────────────
-  // Badge Modal
-  // ─────────────────────────────────────────────
   const renderBadgeModal = () => {
     if (!showAllBadgesModal) return null;
 
     let modalBadges = badgesProgress;
-    if (modalFilter === 'unlocked') modalBadges = badgesProgress.filter(b => b.is_unlocked);
-    if (modalFilter === 'in_progress') modalBadges = badgesProgress.filter(b => !b.is_unlocked && b.percentage > 0);
-    if (modalFilter === 'locked') modalBadges = badgesProgress.filter(b => !b.is_unlocked && b.percentage === 0);
+    if (modalFilter === 'unlocked') modalBadges = badgesProgress.filter((b) => b.is_unlocked);
+    if (modalFilter === 'in_progress') modalBadges = badgesProgress.filter((b) => !b.is_unlocked && b.percentage > 0);
+    if (modalFilter === 'locked') modalBadges = badgesProgress.filter((b) => !b.is_unlocked && b.percentage === 0);
 
     return (
-      <div className="fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-6 bg-[#1C2620]/50 backdrop-blur-sm animate-fade-in">
-        <div className="bg-[#F5F3ED] rounded-[1rem] w-full max-w-4xl max-h-[90vh] flex flex-col shadow-2xl relative overflow-hidden border border-[#E8E4D8]">
-          <div className="p-6 border-b border-[#E8E4D8] flex items-center justify-between bg-white relative z-10">
+      <div className="glass-modal-overlay">
+        <div className="glass-modal max-w-4xl w-full max-h-[90vh] flex flex-col p-7 space-y-6">
+          <div className="flex items-center justify-between border-b border-[#17402C]/5 pb-4">
             <div>
-              <h3 className="font-display font-800 text-2xl text-[#1C2620]">
-                Tous les <em className="font-serif font-normal not-italic text-[#5C6B5E]">badges</em>
+              <h3 className="font-display font-bold text-2xl text-[#17402C]">
+                Tous les <span className="font-serif italic font-normal text-[#365233]">badges</span>
               </h3>
-              <p className="text-xs text-[#9CA89E] mt-1">{unlockedBadges.length} / {totalBadges} débloqués</p>
+              <p className="text-xs text-[#5A7064] font-mono mt-0.5">{unlockedBadges.length} / {totalBadges} débloqués</p>
             </div>
-            <button onClick={() => setShowAllBadgesModal(false)} className="p-2 text-[#9CA89E] hover:text-[#1C2620] transition-colors rounded-full hover:bg-black/5">
+            <button onClick={() => setShowAllBadgesModal(false)} className="p-2 text-[#5A7064] hover:text-[#17402C] transition-colors rounded-full hover:bg-black/5">
               <Icon name="XMarkIcon" size={24} />
             </button>
           </div>
 
-          <div className="px-6 py-4 bg-[#FAFAF7] border-b border-[#E8E4D8] flex gap-2 overflow-x-auto hide-scrollbar">
-            <button onClick={() => setModalFilter('all')} className={`px-4 py-2 rounded-full text-xs font-700 whitespace-nowrap transition-colors ${modalFilter === 'all' ? 'bg-[#1C2620] text-white' : 'bg-white border border-[#E8E4D8] text-[#5C6B5E] hover:border-[#C8C3B0]'}`}>Tous les badges</button>
-            <button onClick={() => setModalFilter('unlocked')} className={`px-4 py-2 rounded-full text-xs font-700 whitespace-nowrap transition-colors ${modalFilter === 'unlocked' ? 'bg-emerald-600 text-white' : 'bg-white border border-[#E8E4D8] text-[#5C6B5E] hover:border-[#C8C3B0]'}`}>Débloqués ✅</button>
-            <button onClick={() => setModalFilter('in_progress')} className={`px-4 py-2 rounded-full text-xs font-700 whitespace-nowrap transition-colors ${modalFilter === 'in_progress' ? 'bg-amber-500 text-white' : 'bg-white border border-[#E8E4D8] text-[#5C6B5E] hover:border-[#C8C3B0]'}`}>En cours 🔄</button>
-            <button onClick={() => setModalFilter('locked')} className={`px-4 py-2 rounded-full text-xs font-700 whitespace-nowrap transition-colors ${modalFilter === 'locked' ? 'bg-[#9CA89E] text-white' : 'bg-white border border-[#E8E4D8] text-[#5C6B5E] hover:border-[#C8C3B0]'}`}>Verrouillés 🔒</button>
+          <div className="glass-capsule-bar">
+            <div className="flex items-center gap-1 p-0.5 overflow-x-auto hide-scrollbar">
+              <button onClick={() => setModalFilter('all')} className={`glass-capsule-segment !px-3 !py-1 text-xs whitespace-nowrap ${modalFilter === 'all' ? 'active' : ''}`}>Tous les badges</button>
+              <button onClick={() => setModalFilter('unlocked')} className={`glass-capsule-segment !px-3 !py-1 text-xs whitespace-nowrap ${modalFilter === 'unlocked' ? 'active' : ''}`}>Débloqués ✅</button>
+              <button onClick={() => setModalFilter('in_progress')} className={`glass-capsule-segment !px-3 !py-1 text-xs whitespace-nowrap ${modalFilter === 'in_progress' ? 'active' : ''}`}>En cours 🔄</button>
+              <button onClick={() => setModalFilter('locked')} className={`glass-capsule-segment !px-3 !py-1 text-xs whitespace-nowrap ${modalFilter === 'locked' ? 'active' : ''}`}>Verrouillés 🔒</button>
+            </div>
           </div>
 
-          <div className="flex-1 overflow-y-auto p-6 bg-[#F5F3ED]">
+          <div className="flex-1 overflow-y-auto pr-1">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              {modalBadges.map(badge => (
-                <div key={badge.id} className="bg-white rounded-2xl p-5 border border-[#E8E4D8] flex gap-4 items-start shadow-sm">
-                  <div className={`w-14 h-14 rounded-2xl flex items-center justify-center flex-shrink-0 text-2xl ${badge.is_unlocked ? 'bg-[#F9F7EF] border border-[#E8E4D8]' : 'bg-[#FAFAF7] opacity-50 grayscale'}`}>
+              {modalBadges.map((badge) => (
+                <div key={badge.id} className="glass-sub-card rounded-2xl p-5 flex gap-4 items-start">
+                  <div className={`w-14 h-14 rounded-2xl flex items-center justify-center shrink-0 text-2xl ${badge.is_unlocked ? 'bg-white/60 border border-[#17402C]/10' : 'bg-black/5 opacity-50 grayscale'}`}>
                     {badge.is_unlocked ? '🏆' : '🔒'}
                   </div>
                   <div className="flex-1 min-w-0">
                     <div className="flex justify-between items-start mb-1">
-                      <h4 className="font-700 text-[#1C2620] text-sm truncate">{badge.name}</h4>
-                      <span className={`text-[10px] font-mono tracking-wide px-2 py-0.5 rounded-full bg-[#FAFAF7] border border-[#E8E4D8] ${getRarityColor(badge.rarity)}`}>{badge.rarity}</span>
+                      <h4 className="font-bold text-[#17402C] text-sm truncate">{badge.name}</h4>
+                      <span className={`text-[10px] font-mono tracking-wide px-2 py-0.5 rounded-full bg-white/60 border border-[#17402C]/10 ${getRarityColor(badge.rarity)}`}>{badge.rarity}</span>
                     </div>
-                    <p className="text-xs text-[#9CA89E] mb-3 line-clamp-2">{badge.description}</p>
-                    
+                    <p className="text-xs text-[#5A7064] mb-3 line-clamp-2">{badge.description}</p>
+
                     <div className="space-y-1">
-                      <div className="flex justify-between text-[10px] font-semibold text-[#5C6B5E]">
+                      <div className="flex justify-between text-[10px] font-mono font-bold text-[#5A7064]">
                         <span>Progression : {badge.current_value} / {badge.requirement_value}</span>
                         <span>{badge.percentage} %</span>
                       </div>
-                      <div className="w-full h-1.5 bg-[#EDEAE0] rounded-full overflow-hidden">
-                        <div 
-                          className={`h-full rounded-full transition-all duration-500 ${badge.is_unlocked ? 'bg-emerald-500' : badge.percentage > 0 ? 'bg-amber-400' : 'bg-[#C8C3B0]'}`}
+                      <div className="w-full h-1.5 bg-[#17402C]/10 rounded-full overflow-hidden">
+                        <div
+                          className={`h-full rounded-full transition-all duration-500 ${badge.is_unlocked ? 'bg-[#17402C]' : badge.percentage > 0 ? 'bg-[#C89A3B]' : 'bg-[#5A7064]/30'}`}
                           style={{ width: `${badge.percentage}%` }}
                         />
                       </div>
                     </div>
 
-                    <div className="mt-3 pt-2.5 border-t border-[#E8E4D8] flex justify-between items-center text-[10px] font-bold">
+                    <div className="mt-3 pt-2.5 border-t border-[#17402C]/5 flex justify-between items-center text-[10px] font-bold">
                       {badge.is_unlocked ? (
-                        <span className="text-emerald-600">✅ Débloqué</span>
+                        <span className="text-[#5B7F55]">✅ Débloqué</span>
                       ) : badge.percentage > 0 ? (
-                        <span className="text-amber-600">🔄 En progression</span>
+                        <span className="text-[#C89A3B]">🔄 En progression</span>
                       ) : (
-                        <span className="text-[#9CA89E]">🔒 Verrouillé</span>
+                        <span className="text-[#5A7064]">🔒 Verrouillé</span>
                       )}
-                      <span className="text-[#1C2620]">+{badge.points_reward} pts</span>
+                      <span className="text-[#17402C] font-mono">+{badge.points_reward} pts</span>
                     </div>
                   </div>
                 </div>
               ))}
-              
+
               {modalBadges.length === 0 && (
-                <div className="col-span-1 md:col-span-2 py-12 text-center text-sm text-[#9CA89E]">
+                <div className="col-span-1 md:col-span-2 py-12 text-center text-sm text-[#5A7064]">
                   Aucun badge ne correspond à ce filtre.
                 </div>
               )}
@@ -534,163 +533,165 @@ export default function FideliteTab({ profile: initialProfile }: FideliteTabProp
   if (loading && !account) {
     return (
       <div className="animate-pulse space-y-6">
-        <div className="h-44 bg-white border border-[#E8E4D8] rounded-[1rem]" />
+        <div className="h-44 glass rounded-[1.25rem]" />
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-          <div className="h-28 bg-white border border-[#E8E4D8] rounded-2xl" />
-          <div className="h-28 bg-white border border-[#E8E4D8] rounded-2xl" />
-          <div className="h-28 bg-white border border-[#E8E4D8] rounded-2xl" />
-          <div className="h-28 bg-white border border-[#E8E4D8] rounded-2xl" />
+          <div className="h-28 glass rounded-2xl" />
+          <div className="h-28 glass rounded-2xl" />
+          <div className="h-28 glass rounded-2xl" />
+          <div className="h-28 glass rounded-2xl" />
         </div>
-        <div className="h-96 bg-white border border-[#E8E4D8] rounded-[1rem]" />
+        <div className="h-96 glass rounded-[1.25rem]" />
       </div>
     );
   }
 
   return (
     <>
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start relative pb-20 font-sans">
-
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start relative pb-20 font-sans text-[#17402C]">
         {/* ════════════════ MAIN COLUMN ════════════════ */}
         <div className="lg:col-span-8 space-y-8">
-          
           {/* ── Header ── */}
-          <div className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-4">
+          <div className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-4 border-b border-[#17402C]/5 pb-5">
             <div>
               <div className="flex items-center gap-2 mb-1.5">
-                <span className="px-2.5 py-0.5 text-[10px] font-mono font-bold tracking-wider uppercase bg-[#17402C]/10 text-[#17402C] border border-[#17402C]/20 rounded-full">
+                <span className="glass-pill !bg-[#17402C] !text-white text-[10px] font-mono uppercase tracking-wider">
                   Partage de Valeur LKDV
                 </span>
               </div>
-              <h2 className="font-display font-900 text-3xl text-[#1C2620] tracking-tight">
-                Gains <em className="font-serif font-normal not-italic text-[#5C6B5E]">& Récompenses</em>
+              <h2 className="font-display font-bold text-3xl sm:text-4xl text-[#17402C] tracking-tight">
+                Gains <span className="font-serif italic font-normal text-[#365233]">&amp; Récompenses</span>
               </h2>
-              <p className="text-xs text-[#6B7A72] mt-1 max-w-xl">
+              <p className="text-xs text-[#5A7064] mt-1 max-w-xl">
                 Gagnez des points grâce à vos carnets, likes et participations, et convertissez vos points en argent réel par virement bancaire ou PayPal.
               </p>
             </div>
-            <div className="flex items-center gap-2 flex-shrink-0">
-              <button 
+            <div className="flex items-center gap-2 shrink-0">
+              <button
                 onClick={() => {
                   const withdrawSection = document.getElementById('retrait-section');
                   withdrawSection?.scrollIntoView({ behavior: 'smooth' });
                 }}
-                className="flex items-center gap-2 px-5 py-2.5 bg-[#1C2620] hover:bg-[#2A3830] text-white rounded-full text-xs font-bold transition-all shadow-md"
+                className="glass-capsule-btn primary text-xs font-bold"
               >
                 <Icon name="CurrencyEuroIcon" size={15} />
-                Demander un virement
+                <span>Demander un virement</span>
               </button>
             </div>
           </div>
 
           {/* ── 4 Stats Grid ── */}
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-            <div className="bg-[#FBFAF6] border border-[#E8E4D8] rounded-2xl p-4 shadow-sm">
-              <p className="text-[10px] font-mono tracking-wider text-[#6B7A72] uppercase">Points actifs</p>
-              <p className="text-2xl font-display font-900 text-[#1C2620] mt-1">
-                {currentPoints} <span className="text-xs font-normal font-mono text-[#9CA89E]">PTS</span>
+            <div className="glass rounded-[1.25rem] p-4 flex flex-col justify-between">
+              <p className="text-[10px] font-mono tracking-widest text-[#5A7064] uppercase font-bold">Points actifs</p>
+              <p className="glass-metric text-2xl sm:text-3xl text-[#17402C] mt-1">
+                {currentPoints} <span className="text-xs font-normal font-mono text-[#5A7064]">PTS</span>
               </p>
-              <p className="text-[10px] text-[#5C6B5E] mt-0.5">Niveau {currentLevel.num} · {currentLevel.name}</p>
+              <p className="text-[10px] text-[#5A7064] mt-0.5 font-mono">Niveau {currentLevel.num} · {currentLevel.name}</p>
             </div>
 
-            <div className="bg-[#FBFAF6] border border-[#E8E4D8] rounded-2xl p-4 shadow-sm">
-              <p className="text-[10px] font-mono tracking-wider text-[#6B7A72] uppercase">Indice Confiance</p>
+            <div className="glass rounded-[1.25rem] p-4 flex flex-col justify-between">
+              <p className="text-[10px] font-mono tracking-widest text-[#5A7064] uppercase font-bold">Indice Confiance</p>
               <p className="text-sm font-bold text-[#17402C] mt-2 truncate">
                 {getTrustLabel(trustScore)}
               </p>
-              <p className="text-[10px] text-[#6B7A72] mt-0.5">Score : {trustScore}/100</p>
+              <p className="text-[10px] text-[#5A7064] mt-0.5 font-mono">Score : {trustScore}/100</p>
             </div>
 
-            <div className="bg-[#FBFAF6] border border-emerald-300/60 rounded-2xl p-4 shadow-sm relative overflow-hidden">
-              <div className="absolute right-2 top-2 text-emerald-900/10 text-3xl font-bold">€</div>
-              <p className="text-[10px] font-mono tracking-wider text-[#17402C] uppercase font-bold">Solde Disponible</p>
-              <p className="text-2xl font-display font-900 text-[#17402C] mt-1">
+            <div className="glass rounded-[1.25rem] p-4 flex flex-col justify-between relative overflow-hidden">
+              <div className="absolute right-2 top-2 text-[#17402C]/10 text-3xl font-bold font-mono">€</div>
+              <p className="text-[10px] font-mono tracking-widest text-[#17402C] uppercase font-bold">Solde Disponible</p>
+              <p className="glass-metric text-2xl sm:text-3xl text-[#17402C] mt-1">
                 {availableCash.toFixed(2)} €
               </p>
-              <p className="text-[10px] text-emerald-700 mt-0.5">Prêt au virement</p>
+              <p className="text-[10px] text-[#5B7F55] mt-0.5 font-mono font-bold">Prêt au virement</p>
             </div>
 
-            <div className="bg-[#FBFAF6] border border-[#E8E4D8] rounded-2xl p-4 shadow-sm">
-              <p className="text-[10px] font-mono tracking-wider text-[#6B7A72] uppercase">En cours de virement</p>
-              <p className="text-2xl font-display font-900 text-[#1C2620]/70 mt-1">
+            <div className="glass rounded-[1.25rem] p-4 flex flex-col justify-between">
+              <p className="text-[10px] font-mono tracking-widest text-[#5A7064] uppercase font-bold">En cours de virement</p>
+              <p className="glass-metric text-2xl sm:text-3xl text-[#17402C]/70 mt-1">
                 {pendingCash.toFixed(2)} €
               </p>
-              <p className="text-[10px] text-[#9CA89E] mt-0.5">Traitement sous 5j</p>
+              <p className="text-[10px] text-[#5A7064] mt-0.5 font-mono">Traitement sous 5j</p>
             </div>
           </div>
 
           {/* ── Hero Card (Progression Niveau) ── */}
-          <div className="bg-[#2A3B32] rounded-[24px] p-6 sm:p-8 text-white relative overflow-hidden flex flex-col sm:flex-row items-center gap-8 shadow-lg">
-            <div className="absolute top-0 right-0 w-96 h-96 bg-[#3B5245] rounded-full blur-[80px] -translate-y-1/2 translate-x-1/3 pointer-events-none opacity-50" />
-            
+          <div className="bg-[#17402C] rounded-[1.5rem] p-6 sm:p-8 text-white relative overflow-hidden flex flex-col sm:flex-row items-center gap-8 border border-white/10 shadow-[0_16px_40px_-20px_rgba(23,64,44,0.35)]">
+            <div className="absolute top-0 right-0 w-96 h-96 bg-[#5B7F55]/20 rounded-full blur-[80px] -translate-y-1/2 translate-x-1/3 pointer-events-none" />
+
             {/* Left: Circle Gauge */}
-            <div className="relative w-36 h-36 flex-shrink-0">
+            <div className="relative w-36 h-36 shrink-0">
               <svg viewBox="0 0 100 100" className="w-full h-full -rotate-90">
-                <circle cx="50" cy="50" r="45" fill="transparent" stroke="#3B5245" strokeWidth="4" />
-                <circle 
-                  cx="50" cy="50" r="45" fill="transparent" stroke="#A7D3A6" strokeWidth="4" 
-                  strokeDasharray={`${progressPercent * 2.827} 282.7`} 
-                  strokeLinecap="round" 
+                <circle cx="50" cy="50" r="45" fill="transparent" stroke="rgba(255,255,255,0.15)" strokeWidth="4" />
+                <circle
+                  cx="50"
+                  cy="50"
+                  r="45"
+                  fill="transparent"
+                  stroke="#A6C1A0"
+                  strokeWidth="4"
+                  strokeDasharray={`${progressPercent * 2.827} 282.7`}
+                  strokeLinecap="round"
                   className="transition-all duration-1000 ease-out"
                 />
               </svg>
               <div className="absolute inset-0 flex flex-col items-center justify-center">
-                <span className="text-[9px] font-mono tracking-widest text-[#A7D3A6] mb-0.5">NIVEAU</span>
-                <span className="font-display font-900 text-3xl leading-none mb-0.5">{currentLevel.num}</span>
-                <span className="font-display font-700 text-base text-white">{currentPoints}</span>
-                <span className="text-[8px] text-[#A7D3A6]/70">/ {currentLevel.max} pts</span>
+                <span className="text-[9px] font-mono tracking-widest text-[#A6C1A0] mb-0.5">NIVEAU</span>
+                <span className="font-mono font-bold text-3xl leading-none mb-0.5">{currentLevel.num}</span>
+                <span className="font-mono font-bold text-base text-white">{currentPoints}</span>
+                <span className="text-[8px] text-[#A6C1A0]/70 font-mono">/ {currentLevel.max} pts</span>
               </div>
             </div>
 
             {/* Middle: Text */}
             <div className="flex-1 relative z-10 text-center sm:text-left">
-              <p className="text-[10px] font-mono tracking-widest text-[#A7D3A6] uppercase mb-1">
+              <p className="text-[10px] font-mono tracking-widest text-[#A6C1A0] uppercase mb-1 font-bold">
                 Statut Voyageur — {currentLevel.name}
               </p>
-              <h3 className="font-display font-700 text-2xl text-white mb-2">
-                {progressPercent} % vers <em className="font-serif font-normal not-italic text-[#A7D3A6]">{nextLevel?.name || 'Palier Maximum'}</em>.
+              <h3 className="font-display font-bold text-2xl text-white mb-2">
+                {progressPercent} % vers <span className="font-serif italic font-normal text-[#A6C1A0]">{nextLevel?.name || 'Palier Maximum'}</span>
               </h3>
-              <p className="text-xs text-white/75 leading-relaxed max-w-md mx-auto sm:mx-0">
-                {pointsToNext > 0 
+              <p className="text-xs text-white/80 leading-relaxed max-w-md mx-auto sm:mx-0 font-serif italic">
+                {pointsToNext > 0
                   ? `Encore ${pointsToNext} points à cumuler pour atteindre le niveau ${nextLevel?.num} et multiplier vos avantages de rémunération.`
-                  : `Félicitations, vous avez atteint le rang ultime des Ambassadeurs !`
-                }
+                  : `Félicitations, vous avez atteint le rang ultime des Ambassadeurs !`}
               </p>
             </div>
 
             {/* Right: Badges Stat */}
-            <div className="flex-shrink-0 relative z-10 bg-[#3B5245]/60 backdrop-blur-md rounded-2xl p-4 text-center border border-white/10 min-w-[120px]">
+            <div className="shrink-0 relative z-10 bg-white/10 backdrop-blur-md rounded-2xl p-4 text-center border border-white/15 min-w-[120px]">
               <p className="text-[9px] font-mono tracking-widest uppercase text-white/70 mb-1">Badges Débloqués</p>
-              <p className="font-display font-900 text-2xl text-white">{unlockedBadges.length} <span className="text-xs font-normal text-white/50">/ {totalBadges}</span></p>
+              <p className="font-mono font-bold text-2xl text-white">{unlockedBadges.length} <span className="text-xs font-normal text-white/50">/ {totalBadges}</span></p>
             </div>
           </div>
 
           {/* ── CASH-OUT WITHDRAWAL SECTION ── */}
-          <div id="retrait-section" className="bg-[#FBFAF6] border border-[#E8E4D8] rounded-[1rem] p-6 sm:p-8 shadow-sm space-y-6">
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between border-b border-[#E8E4D8] pb-4 gap-2">
+          <div id="retrait-section" className="glass rounded-[1.25rem] p-6 sm:p-8 space-y-6">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between border-b border-[#17402C]/5 pb-4 gap-2">
               <div>
-                <h3 className="font-display font-900 text-[#1C2620] text-lg flex items-center gap-2">
+                <h3 className="font-display font-bold text-[#17402C] text-lg flex items-center gap-2">
                   <Icon name="CurrencyEuroIcon" size={20} className="text-[#17402C]" />
                   Demande de virement de vos gains
                 </h3>
-                <p className="text-xs text-[#6B7A72] mt-0.5">
+                <p className="text-xs text-[#5A7064] mt-0.5">
                   Convertissez vos points en cash et recevez votre argent directement sur votre compte bancaire ou PayPal.
                 </p>
               </div>
               <div className="text-right">
-                <span className="text-[10px] font-mono text-[#9CA89E] uppercase block">Disponible</span>
-                <span className="font-display font-900 text-xl text-[#17402C]">{availableCash.toFixed(2)} €</span>
+                <span className="text-[10px] font-mono text-[#5A7064] uppercase block">Disponible</span>
+                <span className="font-mono font-bold text-xl text-[#17402C]">{availableCash.toFixed(2)} €</span>
               </div>
             </div>
 
             {withdrawError && (
-              <div className="p-4 bg-rose-50 border border-rose-200 text-rose-800 rounded-xl text-xs flex gap-2 items-center">
+              <div className="p-4 bg-[#A8443A]/10 border border-[#A8443A]/20 text-[#A8443A] rounded-xl text-xs flex gap-2 items-center">
                 <span className="text-base">⚠️</span>
                 <span>{withdrawError}</span>
               </div>
             )}
 
             {withdrawSuccess && (
-              <div className="p-4 bg-emerald-50 border border-emerald-200 text-emerald-800 rounded-xl text-xs flex gap-2 items-center">
+              <div className="p-4 bg-[#5B7F55]/10 border border-[#5B7F55]/20 text-[#17402C] rounded-xl text-xs flex gap-2 items-center">
                 <span className="text-base">✅</span>
                 <span>{withdrawSuccess}</span>
               </div>
@@ -698,10 +699,10 @@ export default function FideliteTab({ profile: initialProfile }: FideliteTabProp
 
             <form onSubmit={handleWithdrawSubmit} className="space-y-5">
               <div>
-                <label htmlFor="amount" className="block text-xs font-bold text-[#1C2620] mb-1.5 uppercase tracking-wider">
+                <label htmlFor="amount" className="block text-xs font-mono font-bold text-[#17402C] mb-1.5 uppercase tracking-wider">
                   Montant à retirer (€)
                 </label>
-                <div className="relative rounded-xl shadow-sm max-w-md">
+                <div className="relative rounded-xl max-w-md">
                   <input
                     type="number"
                     step="0.01"
@@ -709,62 +710,58 @@ export default function FideliteTab({ profile: initialProfile }: FideliteTabProp
                     id="amount"
                     value={withdrawAmount}
                     onChange={(e) => setWithdrawAmount(e.target.value)}
-                    className="block w-full rounded-xl border border-[#E8E4D8] pl-4 pr-14 py-3 text-sm text-[#1C2620] focus:outline-none focus:ring-2 focus:ring-[#17402C] focus:border-[#17402C] bg-white"
+                    className="glass-input w-full pr-14"
                     placeholder={`Min. ${minThreshold.toFixed(2)}`}
                     required
                   />
-                  <div className="absolute inset-y-0 right-0 pr-4 flex items-center pointer-events-none text-xs text-[#6B7A72] font-mono font-bold">
+                  <div className="absolute inset-y-0 right-0 pr-4 flex items-center pointer-events-none text-xs text-[#5A7064] font-mono font-bold">
                     EUR (€)
                   </div>
                 </div>
-                <p className="text-[10px] text-[#6B7A72] mt-1.5">
-                  Seuil minimum de retrait : <strong>{minThreshold.toFixed(2)} €</strong> · Vos points sont débités instantanément lors de la validation.
+                <p className="text-[10px] text-[#5A7064] mt-1.5 font-mono">
+                  Seuil minimum de retrait : <strong>{minThreshold.toFixed(2)} €</strong> · Vos points sont débités instantanément.
                 </p>
               </div>
 
               <div>
-                <label className="block text-xs font-bold text-[#1C2620] mb-1.5 uppercase tracking-wider">
+                <label className="block text-xs font-mono font-bold text-[#17402C] mb-1.5 uppercase tracking-wider">
                   Mode de versement
                 </label>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 max-w-md">
                   <button
                     type="button"
                     onClick={() => setPaymentProvider('bank_transfer')}
-                    className={`flex items-center gap-3 p-3.5 border rounded-xl transition-all text-left ${
-                      paymentProvider === 'bank_transfer'
-                        ? 'border-[#17402C] bg-[#17402C]/10 text-[#17402C] font-bold shadow-sm'
-                        : 'border-[#E8E4D8] bg-white text-[#6B7A72] hover:bg-[#FAFAF7]'
+                    className={`glass-sub-card flex items-center gap-3 p-3.5 rounded-xl transition-all text-left ${
+                      paymentProvider === 'bank_transfer' ? '!border-[#17402C] !bg-white/80' : ''
                     }`}
                   >
                     <span className="text-xl">🏦</span>
                     <div>
-                      <p className="text-xs font-bold">Virement Bancaire (SEPA)</p>
-                      <p className="text-[10px] text-[#6B7A72] font-normal">RIB / IBAN européen</p>
+                      <p className="text-xs font-bold text-[#17402C]">Virement Bancaire (SEPA)</p>
+                      <p className="text-[10px] text-[#5A7064]">RIB / IBAN européen</p>
                     </div>
                   </button>
 
                   <button
                     type="button"
                     onClick={() => setPaymentProvider('paypal')}
-                    className={`flex items-center gap-3 p-3.5 border rounded-xl transition-all text-left ${
-                      paymentProvider === 'paypal'
-                        ? 'border-[#17402C] bg-[#17402C]/10 text-[#17402C] font-bold shadow-sm'
-                        : 'border-[#E8E4D8] bg-white text-[#6B7A72] hover:bg-[#FAFAF7]'
+                    className={`glass-sub-card flex items-center gap-3 p-3.5 rounded-xl transition-all text-left ${
+                      paymentProvider === 'paypal' ? '!border-[#17402C] !bg-white/80' : ''
                     }`}
                   >
                     <span className="text-xl">💳</span>
                     <div>
-                      <p className="text-xs font-bold">PayPal</p>
-                      <p className="text-[10px] text-[#6B7A72] font-normal">Virement direct par email</p>
+                      <p className="text-xs font-bold text-[#17402C]">PayPal</p>
+                      <p className="text-[10px] text-[#5A7064]">Virement direct par email</p>
                     </div>
                   </button>
                 </div>
               </div>
 
               {paymentProvider === 'bank_transfer' && (
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 bg-white p-5 rounded-2xl border border-[#E8E4D8]">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 glass-sub-card p-5 rounded-2xl">
                   <div>
-                    <label htmlFor="iban" className="block text-[11px] text-[#1C2620] mb-1 font-bold">
+                    <label htmlFor="iban" className="block text-[11px] text-[#17402C] mb-1 font-bold font-mono">
                       IBAN
                     </label>
                     <input
@@ -773,12 +770,12 @@ export default function FideliteTab({ profile: initialProfile }: FideliteTabProp
                       value={iban}
                       onChange={(e) => setIban(e.target.value)}
                       placeholder="FR76 3000 6000 0123 4567 8901 234"
-                      className="block w-full rounded-lg border border-[#E8E4D8] text-xs px-3 py-2.5 text-[#1C2620] focus:outline-none focus:ring-2 focus:ring-[#17402C] bg-[#FAFAF7]"
+                      className="glass-input w-full font-mono text-xs"
                       required
                     />
                   </div>
                   <div>
-                    <label htmlFor="bic" className="block text-[11px] text-[#1C2620] mb-1 font-bold">
+                    <label htmlFor="bic" className="block text-[11px] text-[#17402C] mb-1 font-bold font-mono">
                       BIC / SWIFT
                     </label>
                     <input
@@ -787,7 +784,7 @@ export default function FideliteTab({ profile: initialProfile }: FideliteTabProp
                       value={bic}
                       onChange={(e) => setBic(e.target.value)}
                       placeholder="BNPAFRPPXXX"
-                      className="block w-full rounded-lg border border-[#E8E4D8] text-xs px-3 py-2.5 text-[#1C2620] focus:outline-none focus:ring-2 focus:ring-[#17402C] bg-[#FAFAF7]"
+                      className="glass-input w-full font-mono text-xs"
                       required
                     />
                   </div>
@@ -795,8 +792,8 @@ export default function FideliteTab({ profile: initialProfile }: FideliteTabProp
               )}
 
               {paymentProvider === 'paypal' && (
-                <div className="bg-white p-5 rounded-2xl border border-[#E8E4D8]">
-                  <label htmlFor="paypalEmail" className="block text-[11px] text-[#1C2620] mb-1 font-bold">
+                <div className="glass-sub-card p-5 rounded-2xl">
+                  <label htmlFor="paypalEmail" className="block text-[11px] text-[#17402C] mb-1 font-bold font-mono">
                     Adresse email du compte PayPal
                   </label>
                   <input
@@ -805,7 +802,7 @@ export default function FideliteTab({ profile: initialProfile }: FideliteTabProp
                     value={paypalEmail}
                     onChange={(e) => setPaypalEmail(e.target.value)}
                     placeholder="votre-email@domaine.com"
-                    className="block w-full max-w-md rounded-lg border border-[#E8E4D8] text-xs px-3 py-2.5 text-[#1C2620] focus:outline-none focus:ring-2 focus:ring-[#17402C] bg-[#FAFAF7]"
+                    className="glass-input w-full max-w-md font-mono text-xs"
                     required
                   />
                 </div>
@@ -814,17 +811,17 @@ export default function FideliteTab({ profile: initialProfile }: FideliteTabProp
               <button
                 type="submit"
                 disabled={submittingWithdraw || availableCash < minThreshold}
-                className="px-8 py-3.5 bg-[#1C2620] text-white rounded-full text-xs font-extrabold hover:bg-[#2A3830] transition-colors disabled:opacity-40 disabled:cursor-not-allowed flex items-center justify-center gap-2 shadow-md"
+                className="glass-capsule-btn primary text-xs font-bold disabled:opacity-40 disabled:cursor-not-allowed"
               >
                 {submittingWithdraw ? (
                   <>
                     <div className="w-3.5 h-3.5 border-2 border-white border-t-transparent rounded-full animate-spin" />
-                    Enregistrement de la demande...
+                    <span>Enregistrement...</span>
                   </>
                 ) : (
                   <>
                     <Icon name="ArrowRightIcon" size={14} />
-                    Confirmer la demande de virement
+                    <span>Confirmer la demande de virement</span>
                   </>
                 )}
               </button>
@@ -833,45 +830,44 @@ export default function FideliteTab({ profile: initialProfile }: FideliteTabProp
 
           {/* ── DEMANDES DE VIREMENTS & HISTORIQUE DES POINTS ── */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            
             {/* Withdrawals Table */}
-            <div className="bg-[#FBFAF6] border border-[#E8E4D8] rounded-[1rem] p-6 shadow-sm space-y-4">
-              <div className="flex items-center justify-between">
-                <h3 className="font-display font-800 text-[#1C2620] text-sm flex items-center gap-1.5">
+            <div className="glass rounded-[1.25rem] p-6 space-y-4">
+              <div className="flex items-center justify-between border-b border-[#17402C]/5 pb-3">
+                <h3 className="font-display font-bold text-[#17402C] text-sm flex items-center gap-1.5">
                   <Icon name="CurrencyEuroIcon" size={16} className="text-[#17402C]" />
                   Demandes de virements
                 </h3>
-                <span className="text-[10px] font-mono text-[#9CA89E] uppercase">{withdrawals.length} demandes</span>
+                <span className="text-[10px] font-mono text-[#5A7064]">{withdrawals.length} demandes</span>
               </div>
 
-              <div className="overflow-hidden border border-[#E8E4D8] rounded-2xl bg-white max-h-80 overflow-y-auto">
+              <div className="overflow-hidden rounded-xl max-h-80 overflow-y-auto">
                 {withdrawals.length === 0 ? (
-                  <div className="p-6 text-center text-xs text-[#9CA89E]">
-                    Aucune demande de virement pour le moment.
+                  <div className="p-6 text-center text-xs text-[#5A7064] glass-sub-card rounded-xl">
+                    Aucune demande de virement.
                   </div>
                 ) : (
                   <table className="w-full text-left text-[11px] border-collapse">
                     <thead>
-                      <tr className="bg-[#FAFAF7] border-b border-[#E8E4D8] text-[#6B7A72] uppercase font-mono text-[9px] tracking-wider">
-                        <th className="p-3">Montant</th>
-                        <th className="p-3">Méthode</th>
-                        <th className="p-3 text-center">Statut</th>
-                        <th className="p-3 text-right">Date</th>
+                      <tr className="border-b border-[#17402C]/5 text-[#5A7064] uppercase font-mono text-[9px] tracking-wider">
+                        <th className="p-2.5">Montant</th>
+                        <th className="p-2.5">Méthode</th>
+                        <th className="p-2.5 text-center">Statut</th>
+                        <th className="p-2.5 text-right">Date</th>
                       </tr>
                     </thead>
-                    <tbody className="divide-y divide-[#E8E4D8]">
+                    <tbody className="divide-y divide-[#17402C]/5">
                       {withdrawals.map((w) => (
-                        <tr key={w.id} className="hover:bg-[#FAFAF7]/60">
-                          <td className="p-3 font-bold text-[#1C2620]">{w.amount.toFixed(2)} €</td>
-                          <td className="p-3 text-[#6B7A72] font-mono text-[10px]">
+                        <tr key={w.id} className="hover:bg-white/40 transition-colors">
+                          <td className="p-2.5 font-bold font-mono text-[#17402C]">{w.amount.toFixed(2)} €</td>
+                          <td className="p-2.5 text-[#5A7064] font-mono text-[10px]">
                             {w.payment_provider === 'bank_transfer' ? 'Banque' : 'PayPal'}
                           </td>
-                          <td className="p-3 text-center">
-                            <span className={`px-2 py-0.5 rounded-full text-[9px] font-bold border ${getStatusBadgeStyle(w.status)}`}>
+                          <td className="p-2.5 text-center">
+                            <span className={getStatusBadgeStyle(w.status)}>
                               {translateWithdrawalStatus(w.status)}
                             </span>
                           </td>
-                          <td className="p-3 text-right text-[#9CA89E] font-mono text-[10px]">
+                          <td className="p-2.5 text-right text-[#5A7064] font-mono text-[10px]">
                             {formatDateShort(w.requested_at)}
                           </td>
                         </tr>
@@ -883,37 +879,37 @@ export default function FideliteTab({ profile: initialProfile }: FideliteTabProp
             </div>
 
             {/* Points Transactions Ledger */}
-            <div className="bg-[#FBFAF6] border border-[#E8E4D8] rounded-[1rem] p-6 shadow-sm space-y-4">
-              <div className="flex items-center justify-between">
-                <h3 className="font-display font-800 text-[#1C2620] text-sm flex items-center gap-1.5">
+            <div className="glass rounded-[1.25rem] p-6 space-y-4">
+              <div className="flex items-center justify-between border-b border-[#17402C]/5 pb-3">
+                <h3 className="font-display font-bold text-[#17402C] text-sm flex items-center gap-1.5">
                   <Icon name="ClipboardDocumentListIcon" size={16} className="text-[#17402C]" />
-                  Historique des gains de points
+                  Historique des gains
                 </h3>
-                <span className="text-[10px] font-mono text-[#9CA89E] uppercase">{transactions.length} entrées</span>
+                <span className="text-[10px] font-mono text-[#5A7064]">{transactions.length} entrées</span>
               </div>
 
-              <div className="overflow-hidden border border-[#E8E4D8] rounded-2xl bg-white max-h-80 overflow-y-auto">
+              <div className="overflow-hidden rounded-xl max-h-80 overflow-y-auto">
                 {transactions.length === 0 ? (
-                  <div className="p-6 text-center text-xs text-[#9CA89E]">
-                    Aucune transaction de points enregistrée.
+                  <div className="p-6 text-center text-xs text-[#5A7064] glass-sub-card rounded-xl">
+                    Aucune transaction de points.
                   </div>
                 ) : (
                   <table className="w-full text-left text-[11px] border-collapse">
                     <thead>
-                      <tr className="bg-[#FAFAF7] border-b border-[#E8E4D8] text-[#6B7A72] uppercase font-mono text-[9px] tracking-wider">
-                        <th className="p-3">Type</th>
-                        <th className="p-3 text-right">Points</th>
-                        <th className="p-3 text-right">Date</th>
+                      <tr className="border-b border-[#17402C]/5 text-[#5A7064] uppercase font-mono text-[9px] tracking-wider">
+                        <th className="p-2.5">Type</th>
+                        <th className="p-2.5 text-right">Points</th>
+                        <th className="p-2.5 text-right">Date</th>
                       </tr>
                     </thead>
-                    <tbody className="divide-y divide-[#E8E4D8]">
+                    <tbody className="divide-y divide-[#17402C]/5">
                       {transactions.map((tx) => (
-                        <tr key={tx.id} className="hover:bg-[#FAFAF7]/60">
-                          <td className="p-3 text-[#1C2620] font-semibold">{translateTxType(tx.transaction_type)}</td>
-                          <td className={`p-3 text-right font-mono font-bold ${tx.points >= 0 ? 'text-emerald-700' : 'text-rose-700'}`}>
+                        <tr key={tx.id} className="hover:bg-white/40 transition-colors">
+                          <td className="p-2.5 text-[#17402C] font-semibold">{translateTxType(tx.transaction_type)}</td>
+                          <td className={`p-2.5 text-right font-mono font-bold ${tx.points >= 0 ? 'text-[#5B7F55]' : 'text-[#A8443A]'}`}>
                             {tx.points >= 0 ? `+${tx.points}` : tx.points} PTS
                           </td>
-                          <td className="p-3 text-right text-[#9CA89E] font-mono text-[10px]">
+                          <td className="p-2.5 text-right text-[#5A7064] font-mono text-[10px]">
                             {formatDateShort(tx.created_at)}
                           </td>
                         </tr>
@@ -923,96 +919,112 @@ export default function FideliteTab({ profile: initialProfile }: FideliteTabProp
                 )}
               </div>
             </div>
-
           </div>
 
           {/* ── Vos Badges de Voyageur ── */}
-          <div className="bg-[#FBFAF6] border border-[#E8E4D8] rounded-[1rem] p-6 sm:p-8 shadow-sm space-y-6">
-            <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4">
+          <div className="glass rounded-[1.25rem] p-6 sm:p-8 space-y-6">
+            <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4 border-b border-[#17402C]/5 pb-4">
               <div>
-                <h3 className="font-display font-800 text-xl text-[#1C2620]">
-                  Vos <em className="font-serif font-normal not-italic text-[#5C6B5E]">badges & exploits</em>
+                <h3 className="font-display font-bold text-xl text-[#17402C]">
+                  Vos <span className="font-serif italic font-normal text-[#365233]">badges &amp; exploits</span>
                 </h3>
-                <p className="text-xs text-[#6B7A72] mt-0.5">
+                <p className="text-xs text-[#5A7064] mt-0.5">
                   {unlockedBadges.length} badges gagnés sur {totalBadges}. Chaque étape débloque des points d'activité.
                 </p>
               </div>
-              <div className="flex items-center bg-[#EDEAE0] p-1 rounded-full text-xs font-semibold flex-shrink-0">
-                <button onClick={() => setBadgeFilter('all')} className={`px-3.5 py-1 rounded-full transition-all ${badgeFilter === 'all' ? 'bg-white shadow-sm text-[#1C2620]' : 'text-[#6B7A72] hover:text-[#1C2620]'}`}>Tous ({totalBadges})</button>
-                <button onClick={() => setBadgeFilter('earned')} className={`px-3.5 py-1 rounded-full transition-all ${badgeFilter === 'earned' ? 'bg-white shadow-sm text-[#1C2620]' : 'text-[#6B7A72] hover:text-[#1C2620]'}`}>Gagnés ({unlockedBadges.length})</button>
-                <button onClick={() => setBadgeFilter('locked')} className={`px-3.5 py-1 rounded-full transition-all ${badgeFilter === 'locked' ? 'bg-white shadow-sm text-[#1C2620]' : 'text-[#6B7A72] hover:text-[#1C2620]'}`}>À débloquer</button>
+              <div className="glass-capsule-bar shrink-0">
+                <div className="flex items-center gap-1 p-0.5">
+                  <button onClick={() => setBadgeFilter('all')} className={`glass-capsule-segment !px-3 !py-1 text-xs ${badgeFilter === 'all' ? 'active' : ''}`}>Tous ({totalBadges})</button>
+                  <button onClick={() => setBadgeFilter('earned')} className={`glass-capsule-segment !px-3 !py-1 text-xs ${badgeFilter === 'earned' ? 'active' : ''}`}>Gagnés ({unlockedBadges.length})</button>
+                  <button onClick={() => setBadgeFilter('locked')} className={`glass-capsule-segment !px-3 !py-1 text-xs ${badgeFilter === 'locked' ? 'active' : ''}`}>À débloquer</button>
+                </div>
               </div>
             </div>
 
             <div className="grid grid-cols-2 sm:grid-cols-4 md:grid-cols-6 gap-3">
               {filteredBadges.slice(0, 12).map((badge) => (
-                <div 
+                <div
                   key={badge.id}
-                  className={`flex flex-col items-center justify-center p-3.5 rounded-2xl border transition-all ${
-                    badge.is_unlocked 
-                      ? 'bg-white border-[#E8E4D8] shadow-sm hover:border-[#C8C3B0]' 
-                      : 'bg-[#FAFAF7] border-dashed border-[#E8E4D8] opacity-60 grayscale'
+                  className={`glass-sub-card flex flex-col items-center justify-center p-3.5 rounded-2xl transition-all ${
+                    badge.is_unlocked
+                      ? ''
+                      : 'opacity-50 grayscale'
                   }`}
                 >
                   <span className="text-2xl mb-1.5">{badge.is_unlocked ? '🏆' : '🔒'}</span>
-                  <span className="text-[11px] font-bold text-[#1C2620] text-center leading-tight mb-1 truncate w-full">{badge.name}</span>
+                  <span className="text-[11px] font-bold text-[#17402C] text-center leading-tight mb-1 truncate w-full">{badge.name}</span>
                   <span className={`text-[9px] font-mono tracking-wide ${getRarityColor(badge.rarity)}`}>
                     +{badge.points_reward} pts
                   </span>
                 </div>
               ))}
             </div>
-            
+
             <div className="text-center pt-2">
-              <button 
+              <button
                 onClick={() => setShowAllBadgesModal(true)}
-                className="px-6 py-2 border border-[#C8C3B0] text-[#5C6B5E] hover:text-[#1C2620] hover:border-[#1C2620] rounded-full text-xs font-bold transition-all"
+                className="glass-capsule-btn text-xs font-bold"
               >
                 Voir tous les {totalBadges} badges en détail
               </button>
             </div>
           </div>
-
         </div>
 
         {/* ════════════════ SIDEBAR ════════════════ */}
         <div className="lg:col-span-4 space-y-6">
-
           {/* ── Échelle des niveaux ── */}
-          <div className="bg-white border border-[#E8E4D8] rounded-[1rem] p-6 shadow-sm">
-            <h4 className="font-display font-800 text-[#1C2620] text-base mb-1">
-              Échelle <em className="font-serif font-normal not-italic text-[#5C6B5E]">des niveaux</em>
-            </h4>
-            <p className="text-[11px] text-[#6B7A72] mb-5 leading-relaxed">
-              Le chemin depuis Curieux jusqu&apos;à Ambassadeur.
-            </p>
+          <div className="glass rounded-[1.25rem] p-6 space-y-4">
+            <div>
+              <h4 className="font-display font-bold text-[#17402C] text-base">
+                Échelle <span className="font-serif italic font-normal text-[#365233]">des niveaux</span>
+              </h4>
+              <p className="text-[11px] text-[#5A7064]">
+                Le chemin depuis Curieux jusqu&apos;à Ambassadeur.
+              </p>
+            </div>
 
-            <div className="space-y-3">
+            <div className="space-y-2.5">
               {levels.map((lvl) => {
                 const isCurrent = lvl.num === currentLevel.num;
                 const isPassed = currentPoints >= lvl.max;
-                
+
                 return (
-                  <div key={lvl.num} className={`flex items-start gap-3.5 p-3 rounded-2xl transition-colors ${isCurrent ? 'bg-[#2A3B32] text-white shadow-md' : isPassed ? 'opacity-65 bg-[#FAFAF7]' : 'bg-white border border-[#E8E4D8]'}`}>
-                    <div className={`w-7 h-7 rounded-full flex items-center justify-center font-display font-800 text-xs flex-shrink-0 ${
-                      isCurrent ? 'bg-[#3B5245] text-[#A7D3A6]' : isPassed ? 'bg-[#EDEAE0] text-[#5C6B5E]' : 'bg-white border border-[#E8E4D8] text-[#9CA89E]'
-                    }`}>
+                  <div
+                    key={lvl.num}
+                    className={`flex items-start gap-3.5 p-3 rounded-2xl transition-all ${
+                      isCurrent
+                        ? 'bg-[#17402C] text-white shadow-md'
+                        : isPassed
+                        ? 'glass-sub-card opacity-70'
+                        : 'glass-sub-card'
+                    }`}
+                  >
+                    <div
+                      className={`w-7 h-7 rounded-full flex items-center justify-center font-mono font-bold text-xs shrink-0 ${
+                        isCurrent
+                          ? 'bg-white/20 text-[#A6C1A0]'
+                          : isPassed
+                          ? 'bg-[#17402C]/10 text-[#17402C]'
+                          : 'bg-white text-[#5A7064]'
+                      }`}
+                    >
                       {lvl.num}
                     </div>
                     <div className="flex-1 min-w-0">
                       <div className="flex justify-between items-center">
-                        <p className={`font-bold text-xs ${isCurrent ? 'text-white' : 'text-[#1C2620]'}`}>{lvl.name}</p>
-                        <span className={`text-[10px] font-mono ${isCurrent ? 'text-[#A7D3A6]' : 'text-[#9CA89E]'}`}>
+                        <p className={`font-bold text-xs ${isCurrent ? 'text-white' : 'text-[#17402C]'}`}>{lvl.name}</p>
+                        <span className={`text-[10px] font-mono ${isCurrent ? 'text-[#A6C1A0]' : 'text-[#5A7064]'}`}>
                           {lvl.min === 4000 ? '4 000+ pts' : `${lvl.min} - ${lvl.max} pts`}
                         </span>
                       </div>
                       {isCurrent && pointsToNext > 0 && (
-                        <p className="text-[11px] text-[#A7D3A6] mt-1 italic leading-tight">
+                        <p className="text-[11px] text-[#A6C1A0] mt-1 font-serif italic leading-tight">
                           Encore {pointsToNext} pts → niveau {nextLevel?.num}
                         </p>
                       )}
                       {isPassed && (
-                        <p className="text-[10px] text-emerald-600 font-semibold mt-0.5 flex items-center gap-1">
+                        <p className="text-[10px] text-[#5B7F55] font-bold mt-0.5 flex items-center gap-1">
                           <Icon name="CheckIcon" size={11} />
                           Niveau atteint
                         </p>
@@ -1025,20 +1037,20 @@ export default function FideliteTab({ profile: initialProfile }: FideliteTabProp
           </div>
 
           {/* ── Guide & Règles de rémunération ── */}
-          <div className="bg-white border border-[#E8E4D8] rounded-[1rem] p-6 shadow-sm space-y-4">
-            <h4 className="font-display font-800 text-[#1C2620] text-base flex items-center gap-1.5">
+          <div className="glass rounded-[1.25rem] p-6 space-y-4">
+            <h4 className="font-display font-bold text-[#17402C] text-base flex items-center gap-1.5">
               <Icon name="BookOpenIcon" size={18} className="text-[#17402C]" />
               Règles et Fonctionnement
             </h4>
-            <div className="text-[11px] text-[#6B7A72] space-y-3 leading-relaxed">
+            <div className="text-[11px] text-[#5A7064] space-y-3 leading-relaxed">
               <p>
-                <strong className="text-[#1C2620]">1. Économie Solvable :</strong> La valeur du point est adossée aux revenus réels générés par la plateforme. Plus la communauté grandit, plus le pool de récompenses distribué augmente.
+                <strong className="text-[#17402C]">1. Économie Solvable :</strong> La valeur du point est adossée aux revenus réels générés par la plateforme. Plus la communauté grandit, plus le pool de récompenses distribué augmente.
               </p>
               <p>
-                <strong className="text-[#1C2620]">2. Qualité du Contenu :</strong> Les carnets détaillés, photos et commentaires utiles reçoivent des multiplicateurs de points. Les messages génériques (&quot;super&quot;, &quot;cool&quot;) sont filtrés.
+                <strong className="text-[#17402C]">2. Qualité du Contenu :</strong> Les carnets détaillés, photos et commentaires utiles reçoivent des multiplicateurs de points. Les messages génériques (&quot;super&quot;, &quot;cool&quot;) sont filtrés.
               </p>
               <p>
-                <strong className="text-[#1C2620]">3. Délais de Virement :</strong> Les virements sont vérifiés et émis par notre équipe sous 5 jours ouvrés par virement SEPA ou PayPal.
+                <strong className="text-[#17402C]">3. Délais de Virement :</strong> Les virements sont vérifiés et émis par notre équipe sous 5 jours ouvrés par virement SEPA ou PayPal.
               </p>
             </div>
           </div>
@@ -1051,7 +1063,7 @@ export default function FideliteTab({ profile: initialProfile }: FideliteTabProp
 
       {/* Global Toast */}
       {toast && (
-        <div className="fixed bottom-10 left-1/2 -translate-x-1/2 z-[300] bg-[#1C2620] text-white px-6 py-3 rounded-full text-xs font-extrabold shadow-2xl animate-fade-in-up flex items-center gap-2 border border-white/20">
+        <div className="fixed bottom-10 left-1/2 -translate-x-1/2 z-[300] bg-[#17402C] text-white px-6 py-3 rounded-full text-xs font-extrabold  animate-fade-in-up flex items-center gap-2 border border-white/20">
           <Icon name="CheckIcon" size={14} />
           <span>{toast}</span>
         </div>

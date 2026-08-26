@@ -23,7 +23,31 @@ const nextConfig = {
     qualities: [75, 80, 85, 90, 95],
   },
 
-  transpilePackages: ['react-globe.gl', 'three', 'lucide-react'],
+  transpilePackages: ['react-globe.gl', 'three'],
+
+  experimental: {
+    optimizePackageImports: [
+      '@heroicons/react/24/outline',
+      '@heroicons/react/24/solid',
+      '@heroicons/react',
+      '@tanstack/react-query',
+      '@tanstack/react-virtual',
+      'dexie',
+      'clsx',
+      'tailwind-merge',
+    ],
+  },
+
+  compiler: {
+    removeConsole:
+      process.env.NODE_ENV === 'production'
+        ? { exclude: ['error', 'warn'] }
+        : false,
+  },
+
+  webpack: (config) => {
+    return config;
+  },
 
   async redirects() {
     return [

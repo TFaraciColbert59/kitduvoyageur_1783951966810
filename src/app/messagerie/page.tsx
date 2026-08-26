@@ -64,7 +64,7 @@ function NewConversationModal({ onClose, onStart }: { onClose: () => void; onSta
   };
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
-      <div className="bg-card rounded-2xl border border-border w-full max-w-sm shadow-2xl p-6">
+      <div className="bg-card rounded-2xl border border-border w-full max-w-sm  p-6">
         <div className="flex items-center justify-between mb-5">
           <h2 className="text-lg font-display font-700">Nouveau message</h2>
           <button onClick={onClose} className="p-2 hover:bg-muted rounded-lg transition-colors"><Icon name="XMarkIcon" size={20} variant="outline" /></button>
@@ -552,7 +552,7 @@ export default function MessageriePage() {
               <>
                 <div style={{ padding: '16px 16px 8px' }}>
                   <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '12px' }}>
-                    <h1 style={{ fontSize: '22px', fontWeight: 700, color: '#0B1F17' }}>Messagerie</h1>
+                    <h1 style={{ fontSize: '22px', fontWeight: 700, color: '#17402C' }}>Messagerie</h1>
                     <button
                       onClick={() => setShowNewConvModal(true)}
                       style={{ width: '36px', height: '36px', borderRadius: '10px', background: '#17402C', color: '#fff', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '18px' }}
@@ -567,7 +567,7 @@ export default function MessageriePage() {
                       placeholder="Rechercher..."
                       value={searchQuery}
                       onChange={(e) => setSearchQuery(e.target.value)}
-                      style={{ width: '100%', padding: '10px 12px 10px 32px', borderRadius: '10px', border: '1px solid rgba(11,31,23,0.06)', background: '#FBFAF6', fontSize: '13px', color: '#0B1F17', outline: 'none', boxSizing: 'border-box' }}
+                      style={{ width: '100%', padding: '10px 12px 10px 32px', borderRadius: '10px', border: '1px solid rgba(23,64,44,0.06)', background: '#FBFAF6', fontSize: '13px', color: '#17402C', outline: 'none', boxSizing: 'border-box' }}
                     />
                     <span style={{ position: 'absolute', left: '10px', top: '50%', transform: 'translateY(-50%)', color: '#6B7A72', fontSize: '12px' }}>🔍</span>
                   </div>
@@ -604,14 +604,14 @@ export default function MessageriePage() {
                       <button
                         key={c.id}
                         onClick={() => setActiveConv(c.id)}
-                        style={{ width: '100%', display: 'flex', alignItems: 'center', gap: '12px', padding: '12px 16px', border: 'none', borderBottom: '1px solid rgba(11,31,23,0.04)', background: activeConv === c.id ? 'rgba(23,64,44,0.04)' : 'transparent', cursor: 'pointer', textAlign: 'left', fontFamily: 'inherit' }}
+                        style={{ width: '100%', display: 'flex', alignItems: 'center', gap: '12px', padding: '12px 16px', border: 'none', borderBottom: '1px solid rgba(23,64,44,0.04)', background: activeConv === c.id ? 'rgba(23,64,44,0.04)' : 'transparent', cursor: 'pointer', textAlign: 'left', fontFamily: 'inherit' }}
                       >
-                        <div style={{ width: '40px', height: '40px', borderRadius: '50%', background: 'linear-gradient(135deg, rgba(23,64,44,0.2), rgba(45,107,74,0.2))', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '13px', fontWeight: 700, color: '#0B1F17', flexShrink: 0 }}>
+                        <div style={{ width: '40px', height: '40px', borderRadius: '50%', background: 'linear-gradient(135deg, rgba(23,64,44,0.2), rgba(45,107,74,0.2))', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '13px', fontWeight: 700, color: '#17402C', flexShrink: 0 }}>
                           {c.avatar.length <= 2 ? c.avatar : c.avatar.slice(0, 2)}
                         </div>
                         <div style={{ flex: 1, minWidth: 0 }}>
                           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '2px' }}>
-                            <span style={{ fontSize: '13px', fontWeight: 600, color: '#0B1F17', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{c.name}</span>
+                            <span style={{ fontSize: '13px', fontWeight: 600, color: '#17402C', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{c.name}</span>
                             <span style={{ fontSize: '10px', color: '#6B7A72', flexShrink: 0, marginLeft: '8px' }}>{c.lastTime}</span>
                           </div>
                           <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
@@ -633,7 +633,7 @@ export default function MessageriePage() {
               /* Chat View */
               <div style={{ display: 'flex', flexDirection: 'column', height: '100%', minHeight: 'calc(100dvh - 52px - env(safe-area-inset-top) - 62px - env(safe-area-inset-bottom) - 24px)' }}>
                 {/* Chat header */}
-                <div style={{ display: 'flex', alignItems: 'center', gap: '10px', padding: '12px 16px', borderBottom: '1px solid rgba(11,31,23,0.06)', background: '#FBFAF6' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '10px', padding: '12px 16px', borderBottom: '1px solid rgba(23,64,44,0.06)', background: '#FBFAF6' }}>
                   <button onClick={() => setActiveConv(null)} style={{ padding: '6px', borderRadius: '8px', border: 'none', background: 'transparent', cursor: 'pointer', color: '#6B7A72', fontSize: '20px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                     ←
                   </button>
@@ -641,7 +641,7 @@ export default function MessageriePage() {
                     {conv.avatar.length <= 2 ? conv.avatar : conv.avatar.slice(0, 2)}
                   </div>
                   <div style={{ flex: 1 }}>
-                    <div style={{ fontSize: '13px', fontWeight: 600, color: '#0B1F17' }}>{conv.name}</div>
+                    <div style={{ fontSize: '13px', fontWeight: 600, color: '#17402C' }}>{conv.name}</div>
                     <div style={{ fontSize: '11px', color: '#6B7A72' }}>
                       {conv.members ? `${conv.members.toLocaleString()} membres` : (conv.type === '1to1' ? 'Message privé' : conv.type === 'group' ? 'Groupe' : conv.type === 'club' ? 'Club' : 'Événement')}
                     </div>
@@ -660,12 +660,12 @@ export default function MessageriePage() {
                   ) : (
                     conv.messages.map((msg) => (
                       <div key={msg.id} style={{ display: 'flex', gap: '10px', flexDirection: msg.isMe ? 'row-reverse' : 'row' }}>
-                        <div style={{ width: '28px', height: '28px', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '10px', fontWeight: 700, flexShrink: 0, background: msg.isMe ? '#17402C' : '#F4F1EA', color: msg.isMe ? '#fff' : '#0B1F17' }}>
+                        <div style={{ width: '28px', height: '28px', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '10px', fontWeight: 700, flexShrink: 0, background: msg.isMe ? '#17402C' : '#F4F1EA', color: msg.isMe ? '#fff' : '#17402C' }}>
                           {msg.senderAvatar}
                         </div>
                         <div style={{ maxWidth: '75%', display: 'flex', flexDirection: 'column', gap: '4px', alignItems: msg.isMe ? 'flex-end' : 'flex-start' }}>
                           {!msg.isMe && <p style={{ fontSize: '10px', color: '#6B7A72', fontWeight: 500, margin: 0 }}>{msg.sender}</p>}
-                          <div style={{ padding: '10px 14px', borderRadius: msg.isMe ? '16px 16px 4px 16px' : '16px 16px 16px 4px', fontSize: '13px', background: msg.isMe ? '#17402C' : '#F4F1EA', color: msg.isMe ? '#fff' : '#0B1F17', border: msg.isMe ? 'none' : '1px solid rgba(11,31,23,0.06)' }}>
+                          <div style={{ padding: '10px 14px', borderRadius: msg.isMe ? '16px 16px 4px 16px' : '16px 16px 16px 4px', fontSize: '13px', background: msg.isMe ? '#17402C' : '#F4F1EA', color: msg.isMe ? '#fff' : '#17402C', border: msg.isMe ? 'none' : '1px solid rgba(23,64,44,0.06)' }}>
                             {msg.content}
                           </div>
                           <p style={{ fontSize: '10px', color: '#6B7A72', margin: 0 }}>{msg.timestamp}</p>
@@ -677,7 +677,7 @@ export default function MessageriePage() {
                 </div>
 
                 {/* Input */}
-                <div style={{ padding: '12px 16px', borderTop: '1px solid rgba(11,31,23,0.06)', background: '#FBFAF6' }}>
+                <div style={{ padding: '12px 16px', borderTop: '1px solid rgba(23,64,44,0.06)', background: '#FBFAF6' }}>
                   <div style={{ display: 'flex', gap: '10px', alignItems: 'flex-end' }}>
                     <textarea
                       value={message}
@@ -690,7 +690,7 @@ export default function MessageriePage() {
                       }}
                       placeholder="Écrivez un message..."
                       rows={1}
-                      style={{ flex: 1, padding: '10px 14px', borderRadius: '12px', border: '1px solid rgba(11,31,23,0.06)', background: '#F4F1EA', fontSize: '13px', color: '#0B1F17', outline: 'none', resize: 'none', fontFamily: 'inherit', minHeight: '40px', maxHeight: '100px', boxSizing: 'border-box' }}
+                      style={{ flex: 1, padding: '10px 14px', borderRadius: '12px', border: '1px solid rgba(23,64,44,0.06)', background: '#F4F1EA', fontSize: '13px', color: '#17402C', outline: 'none', resize: 'none', fontFamily: 'inherit', minHeight: '40px', maxHeight: '100px', boxSizing: 'border-box' }}
                     />
                     <button
                       onClick={handleSend}

@@ -27,7 +27,7 @@ export default function EditorialCard({ kind, title, subtitle, href }: Editorial
       {/* Gradient overlay */}
       <div style={{
         position: 'absolute', inset: 0,
-        background: 'linear-gradient(180deg, transparent 30%, rgba(11,31,23,0.85) 100%)',
+        background: 'linear-gradient(180deg, transparent 30%, rgba(23,64,44,0.85) 100%)',
       }} />
       <div style={{ position: 'relative', zIndex: 2, height: '100%', display: 'flex', flexDirection: 'column', justifyContent: 'flex-end', padding: '16px' }}>
         <div style={{ fontSize: '10px', letterSpacing: '0.12em', textTransform: 'uppercase', color: '#A8C8A0', fontWeight: 500, marginBottom: '4px' }}>

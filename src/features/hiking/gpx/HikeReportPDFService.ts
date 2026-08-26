@@ -29,9 +29,9 @@ export class HikeReportPDFService {
       body { margin: 0; padding: 20px; background: #fff; color: #06120C; font-family: 'Helvetica Neue', Arial, sans-serif; }
       .no-print { display: none !important; }
     }
-    body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; max-width: 800px; margin: 40px auto; padding: 24px; background: #FBFAF6; color: #0B1F17; }
-    .header { border-bottom: 2px solid #17402C; padding-bottom: 16px; margin-bottom: 24px; display: flex; justify-[#0B1F17]; justify-content: space-between; align-items: flex-end; }
-    .title { font-size: 28px; font-weight: 600; margin: 0; color: #0B1F17; }
+    body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; max-width: 800px; margin: 40px auto; padding: 24px; background: #FBFAF6; color: #17402C; }
+    .header { border-bottom: 2px solid #17402C; padding-bottom: 16px; margin-bottom: 24px; display: flex; justify-content: space-between; align-items: flex-end; }
+    .title { font-size: 28px; font-weight: 600; margin: 0; color: #17402C; }
     .subtitle { font-size: 14px; color: #6B7A72; margin-top: 4px; font-family: monospace; }
     .grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; margin-bottom: 24px; }
     .card { background: #F4F1EA; padding: 16px; border-radius: 12px; text-align: center; }

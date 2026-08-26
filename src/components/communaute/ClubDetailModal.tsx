@@ -102,19 +102,19 @@ export default function ClubDetailModal({
 
   return (
     <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-md flex items-center justify-center p-4 overflow-y-auto">
-      <motion.div initial={{ scale: 0.95, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: 0.95, opacity: 0 }} className="bg-[#F5F2E8] border border-[#E8E4D8] shadow-2xl rounded-[0.75rem] w-full max-w-3xl my-4 overflow-hidden flex flex-col max-h-[85vh]">
+      <motion.div initial={{ scale: 0.95, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: 0.95, opacity: 0 }} className="glass rounded-3xl w-full max-w-3xl my-4 overflow-hidden flex flex-col max-h-[85vh]">
         {/* Header */}
-        <div className="bg-[#1C2620] text-white p-6 sm:p-8 relative overflow-hidden shrink-0">
+        <div className="bg-[#17402C] text-white p-6 sm:p-8 relative overflow-hidden shrink-0">
           <div className="absolute top-0 right-0 w-48 h-48 bg-[#17402C] rounded-full blur-[80px] opacity-30 pointer-events-none" />
           <div className="relative z-10 flex items-start justify-between">
             <div className="flex items-center gap-4">
-              <div className="w-14 h-14 bg-white/10 backdrop-blur-md rounded-2xl flex items-center justify-center text-3xl shadow-inner border border-white/20">
+              <div className="w-14 h-14 bg-white/10 backdrop-blur-md rounded-2xl flex items-center justify-center text-3xl  border border-white/20">
                 {club.emoji || '🏔️'}
               </div>
               <div>
                 <div className="flex items-center gap-2">
                   <h2 className="font-display font-800 text-2xl text-white">{club.name}</h2>
-                  {club.is_verified && <span className="bg-[#2D5A3D] text-white text-[9px] font-mono px-2 py-0.5 rounded-full">✓ VÉRIFIÉ</span>}
+                  {club.is_verified && <span className="bg-[#17402C] text-white text-[9px] font-mono px-2 py-0.5 rounded-full">✓ VÉRIFIÉ</span>}
                 </div>
                 <p className="text-xs text-white/70 mt-1">
                   {club.members_count || 0} membres · {club.category || 'Général'} · {club.privacy === 'open' ? '🌍 Ouvert' : '🔒 Sur demande'}
@@ -139,7 +139,7 @@ export default function ClubDetailModal({
             { id: 'events', label: '📅 Agenda', count: events.length },
             ...(isAdmin ? [{ id: 'moderation', label: `🛡️ Modération (${pendingRequests.length})`, count: pendingRequests.length }] : [])
           ].map(t => (
-            <button key={t.id} onClick={() => setActiveTab(t.id as any)} className={`px-4 py-2 rounded-full text-xs font-bold transition-all whitespace-nowrap ${activeTab === t.id ? 'bg-[#1C2620] text-white shadow-sm' : 'text-[#5C6B5E] hover:bg-[#F5F2E8]'}`}>
+            <button key={t.id} onClick={() => setActiveTab(t.id as any)} className={`px-4 py-2 rounded-full text-xs font-bold transition-all whitespace-nowrap ${activeTab === t.id ? 'bg-[#17402C] text-white ' : 'text-[#5C6B5E] hover:bg-[#F5F2E8]'}`}>
               {t.label}
             </button>
           ))}
@@ -148,15 +148,15 @@ export default function ClubDetailModal({
         {/* Content Body */}
         <div className="flex-1 overflow-y-auto p-6 space-y-4 custom-scrollbar">
           {loading ? (
-            <div className="flex justify-center py-12"><div className="w-6 h-6 border-2 border-[#2D5A3D] border-t-transparent rounded-full animate-spin"></div></div>
+            <div className="flex justify-center py-12"><div className="w-6 h-6 border-2 border-[#17402C] border-t-transparent rounded-full animate-spin"></div></div>
           ) : activeTab === 'topics' ? (
             <div className="space-y-4">
               {club.is_member && (
                 <div className="bg-white p-4 rounded-2xl border border-[#E8E4D8] space-y-3">
-                  <h4 className="font-bold text-xs text-[#1C2620] uppercase tracking-wider">Lancer un sujet</h4>
-                  <input type="text" placeholder="Titre du sujet..." className="w-full bg-[#F5F2E8] border-none rounded-xl px-3 py-2 text-xs focus:ring-1 focus:ring-[#2D5A3D]" value={newTopic.title} onChange={e => setNewTopic({ ...newTopic, title: e.target.value })} />
-                  <textarea rows={2} placeholder="Description..." className="w-full bg-[#F5F2E8] border-none rounded-xl px-3 py-2 text-xs focus:ring-1 focus:ring-[#2D5A3D] resize-none" value={newTopic.content} onChange={e => setNewTopic({ ...newTopic, content: e.target.value })} />
-                  <button onClick={handlePostTopic} disabled={postingTopic || !newTopic.title.trim()} className="px-4 py-2 bg-[#2D5A3D] text-white rounded-full text-xs font-bold disabled:opacity-50">
+                  <h4 className="font-bold text-xs text-[#17402C] uppercase tracking-wider">Lancer un sujet</h4>
+                  <input type="text" placeholder="Titre du sujet..." className="w-full bg-[#F5F2E8] border-none rounded-xl px-3 py-2 text-xs focus:ring-1 focus:ring-[#17402C]" value={newTopic.title} onChange={e => setNewTopic({ ...newTopic, title: e.target.value })} />
+                  <textarea rows={2} placeholder="Description..." className="w-full bg-[#F5F2E8] border-none rounded-xl px-3 py-2 text-xs focus:ring-1 focus:ring-[#17402C] resize-none" value={newTopic.content} onChange={e => setNewTopic({ ...newTopic, content: e.target.value })} />
+                  <button onClick={handlePostTopic} disabled={postingTopic || !newTopic.title.trim()} className="px-4 py-2 bg-[#17402C] text-white rounded-full text-xs font-bold disabled:opacity-50">
                     {postingTopic ? 'Publication...' : 'Publier'}
                   </button>
                 </div>
@@ -170,8 +170,8 @@ export default function ClubDetailModal({
                 topics.map(t => (
                   <div key={t.id} className="bg-white p-4 rounded-2xl border border-[#E8E4D8] space-y-2">
                     <div className="flex items-center justify-between">
-                      <h4 className="font-bold text-sm text-[#1C2620]">{t.title}</h4>
-                      {t.is_pinned && <span className="bg-[#2D5A3D]/10 text-[#2D5A3D] text-[9px] font-mono px-2 py-0.5 rounded-full font-bold">📌 ÉPINGLÉ</span>}
+                      <h4 className="font-bold text-sm text-[#17402C]">{t.title}</h4>
+                      {t.is_pinned && <span className="bg-[#17402C]/10 text-[#17402C] text-[9px] font-mono px-2 py-0.5 rounded-full font-bold">📌 ÉPINGLÉ</span>}
                     </div>
                     {t.content && <p className="text-xs text-[#4A574C] leading-relaxed">{t.content}</p>}
                     <div className="flex items-center justify-between text-[10px] text-[#5C6B5E] pt-2 border-t border-[#F5F2E8]">
@@ -188,8 +188,8 @@ export default function ClubDetailModal({
                 <div key={m.id} className="bg-white p-3 rounded-2xl border border-[#E8E4D8] flex items-center gap-3">
                   <img src={m.user?.avatar_url || 'https://i.pravatar.cc/150'} className="w-9 h-9 rounded-full object-cover border border-[#E8E4D8]" />
                   <div className="flex-1 min-w-0">
-                    <p className="font-bold text-xs text-[#1C2620] truncate">{m.user?.full_name || 'Membre'}</p>
-                    <span className="text-[9px] font-mono text-[#2D5A3D] bg-[#EAF0EB] px-2 py-0.5 rounded-full uppercase">
+                    <p className="font-bold text-xs text-[#17402C] truncate">{m.user?.full_name || 'Membre'}</p>
+                    <span className="text-[9px] font-mono text-[#17402C] bg-[#EAF0EB] px-2 py-0.5 rounded-full uppercase">
                       {m.role === 'admin' ? '👑 Admin' : m.role === 'moderator' ? '🛡️ Modo' : 'Membre'}
                     </span>
                   </div>
@@ -206,11 +206,11 @@ export default function ClubDetailModal({
                 challenges.map(ch => (
                   <div key={ch.id} className="bg-white p-4 rounded-2xl border border-[#E8E4D8] flex items-center justify-between gap-4">
                     <div>
-                      <h4 className="font-bold text-sm text-[#1C2620] mb-1">{ch.title}</h4>
+                      <h4 className="font-bold text-sm text-[#17402C] mb-1">{ch.title}</h4>
                       <p className="text-xs text-[#4A574C] mb-2">{ch.description}</p>
                       <span className="bg-[#17402C]/10 text-[#17402C] text-[10px] font-bold px-2.5 py-1 rounded-full">+{ch.xp} XP</span>
                     </div>
-                    <button className="px-4 py-2 bg-[#1C2620] text-white rounded-full text-xs font-bold hover:bg-[#2D5A3D] transition-colors">Relever</button>
+                    <button className="px-4 py-2 bg-[#17402C] text-white rounded-full text-xs font-bold hover:bg-[#17402C] transition-colors">Relever</button>
                   </div>
                 ))
               )}
@@ -219,13 +219,13 @@ export default function ClubDetailModal({
             <div className="space-y-4">
               {isAdmin && (
                 <div className="bg-white p-4 rounded-2xl border border-[#E8E4D8] space-y-3">
-                  <h4 className="font-bold text-xs text-[#1C2620] uppercase tracking-wider">Planifier une sortie</h4>
-                  <input type="text" placeholder="Titre de la sortie..." className="w-full bg-[#F5F2E8] border-none rounded-xl px-3 py-2 text-xs focus:ring-1 focus:ring-[#2D5A3D]" value={newEvent.title} onChange={e => setNewEvent({ ...newEvent, title: e.target.value })} />
+                  <h4 className="font-bold text-xs text-[#17402C] uppercase tracking-wider">Planifier une sortie</h4>
+                  <input type="text" placeholder="Titre de la sortie..." className="w-full bg-[#F5F2E8] border-none rounded-xl px-3 py-2 text-xs focus:ring-1 focus:ring-[#17402C]" value={newEvent.title} onChange={e => setNewEvent({ ...newEvent, title: e.target.value })} />
                   <div className="grid grid-cols-2 gap-2">
                     <input type="datetime-local" className="bg-[#F5F2E8] border-none rounded-xl px-3 py-2 text-xs" value={newEvent.event_date} onChange={e => setNewEvent({ ...newEvent, event_date: e.target.value })} />
                     <input type="text" placeholder="Lieu..." className="bg-[#F5F2E8] border-none rounded-xl px-3 py-2 text-xs" value={newEvent.location} onChange={e => setNewEvent({ ...newEvent, location: e.target.value })} />
                   </div>
-                  <button onClick={handlePostEvent} disabled={postingEvent || !newEvent.title.trim()} className="px-4 py-2 bg-[#2D5A3D] text-white rounded-full text-xs font-bold disabled:opacity-50">
+                  <button onClick={handlePostEvent} disabled={postingEvent || !newEvent.title.trim()} className="px-4 py-2 bg-[#17402C] text-white rounded-full text-xs font-bold disabled:opacity-50">
                     {postingEvent ? 'Création...' : "Créer l'événement"}
                   </button>
                 </div>
@@ -238,10 +238,10 @@ export default function ClubDetailModal({
                 events.map(ev => (
                   <div key={ev.id} className="bg-white p-4 rounded-2xl border border-[#E8E4D8] flex items-center justify-between gap-4">
                     <div>
-                      <h4 className="font-bold text-sm text-[#1C2620]">{ev.title}</h4>
+                      <h4 className="font-bold text-sm text-[#17402C]">{ev.title}</h4>
                       <p className="text-xs text-[#5C6B5E] mt-0.5">📍 {ev.location || 'En ligne'} · {ev.event_date ? new Date(ev.event_date).toLocaleDateString('fr-FR') : 'Date à venir'}</p>
                     </div>
-                    <button className="px-4 py-2 bg-[#2D5A3D] text-white rounded-full text-xs font-bold">Participer</button>
+                    <button className="w-9 h-9 rounded-full glass-capsule-btn flex items-center justify-center text-[#17402C] p-0 shrink-0" aria-label="Participer"><Icon name="ArrowRightIcon" size={14} /></button>
                   </div>
                 ))
               )}
@@ -257,10 +257,10 @@ export default function ClubDetailModal({
                   <div key={r.id} className="bg-white p-4 rounded-2xl border border-[#E8E4D8] flex items-center justify-between">
                     <div className="flex items-center gap-3">
                       <img src={r.user?.avatar_url || 'https://i.pravatar.cc/150'} className="w-8 h-8 rounded-full object-cover" />
-                      <span className="font-bold text-xs text-[#1C2620]">{r.user?.full_name || 'Utilisateur'}</span>
+                      <span className="font-bold text-xs text-[#17402C]">{r.user?.full_name || 'Utilisateur'}</span>
                     </div>
                     <div className="flex items-center gap-2">
-                      <button onClick={() => handleApproveRequest(r.id, r.user_id, true)} className="px-3 py-1.5 bg-[#2D5A3D] text-white rounded-full text-xs font-bold">Accepter</button>
+                      <button onClick={() => handleApproveRequest(r.id, r.user_id, true)} className="px-3 py-1.5 bg-[#17402C] text-white rounded-full text-xs font-bold">Accepter</button>
                       <button onClick={() => handleApproveRequest(r.id, r.user_id, false)} className="px-3 py-1.5 bg-[#F5F2E8] text-[#5C6B5E] rounded-full text-xs font-bold">Refuser</button>
                     </div>
                   </div>
@@ -271,7 +271,7 @@ export default function ClubDetailModal({
         </div>
 
         {toast && (
-          <div className="bg-[#1C2620] text-white text-xs font-bold px-4 py-2 text-center">
+          <div className="bg-[#17402C] text-white text-xs font-bold px-4 py-2 text-center">
             {toast}
           </div>
         )}

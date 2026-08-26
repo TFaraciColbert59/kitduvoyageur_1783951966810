@@ -11,17 +11,16 @@ export const metadata: Metadata = {
 
 export default function MaterielLayout({ children }: { children: React.ReactNode }) {
   return (
-    <div data-lkv-material-theme="light" className="min-h-screen relative">
+    <div data-lkv-material-theme="light" className="min-h-screen relative font-sans text-[#17402C]">
+      {/* Fond vidéo immersif b_fait_bouger_uniqueme.mp4 */}
       <BackgroundVideo />
-      <div
-        className="pointer-events-none fixed inset-x-0 top-0 z-0 h-[60vh]"
-        style={{ background: 'radial-gradient(80% 60% at 50% 0%, rgba(226,235,222,0.22), transparent 70%)' }}
-        aria-hidden="true"
-      />
+
+      {/* Interface UI & Cartes par-dessus le fond vidéo */}
       <div className="relative z-10">
         <Header />
-        <div className="pt-1 md:pt-20">{children}</div>
+        <div className="pt-2 md:pt-20">{children}</div>
       </div>
+
       <GlassCommand />
     </div>
   );

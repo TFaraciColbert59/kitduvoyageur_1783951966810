@@ -1037,7 +1037,7 @@ export default function OutilSlugPage() {
           <MobilePageShell>
             <div style={{ padding: '16px', textAlign: 'center', paddingTop: '80px' }}>
               <p style={{ fontSize: '40px', marginBottom: '16px' }}>🔧</p>
-              <h1 style={{ fontSize: '20px', fontWeight: 700, color: '#1C2620', marginBottom: '12px' }}>Outil introuvable</h1>
+              <h1 style={{ fontSize: '20px', fontWeight: 700, color: '#17402C', marginBottom: '12px' }}>Outil introuvable</h1>
               <Link href="/outils" style={{ display: 'inline-block', padding: '12px 24px', background: '#17402C', color: 'white', borderRadius: '999px', fontSize: '14px', fontWeight: 700, textDecoration: 'none' }}>← Retour aux outils</Link>
             </div>
           </MobilePageShell>
@@ -1116,12 +1116,12 @@ export default function OutilSlugPage() {
               <nav style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '12px', color: '#6B7A72', marginBottom: '12px' }}>
                 <Link href="/outils" style={{ color: '#6B7A72', textDecoration: 'none' }}>Outils</Link>
                 <span>/</span>
-                <span style={{ color: '#1C2620' }}>{tool.nom}</span>
+                <span style={{ color: '#17402C' }}>{tool.nom}</span>
               </nav>
               <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
                 <span style={{ fontSize: '36px' }} role="img" aria-label={tool.nom}>{tool.icon}</span>
                 <div>
-                  <h1 style={{ fontSize: '22px', fontWeight: 800, color: '#1C2620', lineHeight: '1.2', marginBottom: '4px' }}>{tool.nom}</h1>
+                  <h1 style={{ fontSize: '22px', fontWeight: 800, color: '#17402C', lineHeight: '1.2', marginBottom: '4px' }}>{tool.nom}</h1>
                   <p style={{ fontSize: '13px', color: '#6B7A72', lineHeight: '1.4' }}>{tool.description}</p>
                 </div>
               </div>
@@ -1131,7 +1131,7 @@ export default function OutilSlugPage() {
             <ToolComponent />
 
             {/* Other tools */}
-            <div style={{ marginTop: '32px', paddingTop: '20px', borderTop: '1px solid rgba(11,31,23,0.06)' }}>
+            <div style={{ marginTop: '32px', paddingTop: '20px', borderTop: '1px solid rgba(23,64,44,0.06)' }}>
               <p style={{ fontSize: '10px', fontFamily: 'ui-monospace, monospace', color: '#6B7A72', textTransform: 'uppercase', letterSpacing: '0.1em', marginBottom: '12px' }}>AUTRES OUTILS</p>
               <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px' }}>
                 {Object.entries(toolRegistry)
@@ -1146,7 +1146,7 @@ export default function OutilSlugPage() {
                         gap: '6px',
                         padding: '8px 14px',
                         background: '#F4F1EA',
-                        border: '1px solid rgba(11,31,23,0.06)',
+                        border: '1px solid rgba(23,64,44,0.06)',
                         borderRadius: '10px',
                         fontSize: '13px',
                         color: '#6B7A72',

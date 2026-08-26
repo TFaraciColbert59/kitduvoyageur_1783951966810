@@ -88,12 +88,12 @@ export default function DesktopDockBar({
       <div className="flex items-center gap-2 px-1">
         <button
           onClick={onToggleHike}
-          className={`h-[58px] px-5 rounded-2xl flex items-center gap-2.5 font-mono text-[11px] font-semibold tracking-widest uppercase shadow-lg transition-all duration-200 active:scale-95 ${
+          className={`h-[58px] px-5 rounded-2xl flex items-center gap-2.5 font-mono text-[11px] font-semibold tracking-widest uppercase  transition-all duration-200 active:scale-95 ${
             isPaused
               ? 'bg-gradient-to-r from-[#A8C8A0] to-[#88B080] text-[#06120C] shadow-emerald-950/40 hover:brightness-110'
               : isActive
               ? 'bg-gradient-to-r from-[#E8B87A] to-[#D4A05E] text-[#2A1804] shadow-amber-950/40 hover:brightness-110'
-              : 'bg-gradient-to-r from-[#17402C] to-[#2D6B4A] text-white border border-emerald-500/30 shadow-emerald-950/60 hover:brightness-110'
+              : 'bg-gradient-to-r from-[#17402C] to-[#365233] text-white border border-emerald-500/30 shadow-emerald-950/60 hover:brightness-110'
           }`}
         >
           <svg className="w-5 h-5 fill-current" viewBox="0 0 24 24">
@@ -110,9 +110,9 @@ export default function DesktopDockBar({
 
         <button
           onClick={onStopHike}
-          className="h-[58px] px-4 rounded-2xl bg-gradient-to-r from-[#B85838] to-[#963F22] text-white border border-rose-400/20 shadow-lg shadow-rose-950/50 hover:brightness-110 active:scale-95 transition-all duration-200 flex items-center gap-2 font-mono text-[11px] font-semibold tracking-widest uppercase"
+          className="h-[58px] px-4 rounded-2xl bg-gradient-to-r from-[#B85838] to-[#963F22] text-white border border-rose-400/20  shadow-rose-950/50 hover:brightness-110 active:scale-95 transition-all duration-200 flex items-center gap-2 font-mono text-[11px] font-semibold tracking-widest uppercase"
         >
-          <span className="w-3 h-3 rounded-sm bg-white shadow-sm" />
+          <span className="w-3 h-3 rounded-sm bg-white " />
           <span>TERMINER</span>
         </button>
       </div>

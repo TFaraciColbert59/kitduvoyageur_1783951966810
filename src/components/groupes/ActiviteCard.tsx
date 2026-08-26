@@ -14,13 +14,15 @@ interface ActiviteCardProps {
 
 export default function ActiviteCard({ activities }: ActiviteCardProps) {
   return (
-    <div className="bg-white rounded-[0.75rem] p-6 border border-[#1C2620]/10 shadow-sm active:scale-[0.98] active:opacity-95 transition-all duration-150 cursor-pointer">
+    <div className="glass p-6 transition-all duration-300">
       <div className="flex justify-between items-start mb-2">
-        <h2 className="font-display text-xl text-[#1C2620]">Activité <span className="font-serif italic font-bold">récente</span></h2>
-        <Link href="/activite" className="text-xs font-medium text-[#17402C] hover:underline font-sans">Tout →</Link>
+        <h2 className="font-display font-bold text-xl text-[#17402C]">Activité <span className="font-serif italic font-normal text-[#17402C]">récente</span></h2>
+        <Link href="/activite" className="glass-capsule-btn py-1 px-3 text-xs font-semibold">
+          <span className="relative z-10">Tout →</span>
+        </Link>
       </div>
       
-      <p className="text-sm text-[#1C2620]/80 font-sans mb-6">
+      <p className="text-sm text-[#5C6B5E] font-sans mb-6">
         Ce qui s'est passé dans le groupe cette semaine
       </p>
       
@@ -29,23 +31,22 @@ export default function ActiviteCard({ activities }: ActiviteCardProps) {
           <div key={activity.id} className="flex gap-3 relative">
             {/* Ligne verticale timeline */}
             {idx !== activities.length - 1 && (
-              <div className="absolute left-3.5 top-8 bottom-[-16px] w-[1px] bg-[#1C2620]/10" />
+              <div className="absolute left-3.5 top-8 bottom-[-16px] w-[1px] bg-[#17402C]/10" />
             )}
             
-            <div className="w-7 h-7 rounded-full bg-[#E7E3D6]/50 border border-[#1C2620]/10 flex items-center justify-center text-[#1C2620]/50 flex-shrink-0 z-10">
-              <Icon name="BoltIcon" size={12} />
+            <div className="w-7 h-7 rounded-full glass-sub-card flex items-center justify-center text-[#17402C] flex-shrink-0 z-10">
+              <Icon name="BoltIcon" size={12} className="relative z-10" />
             </div>
             
             <div className="flex-1 pt-1 pb-1">
-              <p className="text-xs text-[#1C2620] font-sans leading-relaxed">
-                {/* Simple markdown parsing for bold text */}
+              <p className="text-xs text-[#17402C] font-sans leading-relaxed">
                 {activity.content.split(/(\*\*.*?\*\*)/g).map((part, i) => 
                   part.startsWith('**') && part.endsWith('**') 
-                    ? <span key={i} className="font-semibold">{part.slice(2, -2)}</span> 
+                    ? <span key={i} className="font-bold text-[#17402C]">{part.slice(2, -2)}</span> 
                     : part
                 )}
               </p>
-              <p className="text-[10px] text-[#1C2620]/40 font-mono mt-1">{activity.time}</p>
+              <p className="text-[10px] text-[#5C6B5E] font-mono mt-1">{activity.time}</p>
             </div>
           </div>
         ))}

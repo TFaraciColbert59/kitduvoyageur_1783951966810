@@ -1,4 +1,4 @@
-'use client';
+﻿'use client';
 
 import React, { useState } from 'react';
 import { createClient } from '@/lib/supabase/client';
@@ -67,17 +67,17 @@ export default function EditProfileDrawer({
   return (
     <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4 bg-black/50 backdrop-blur-xs transition-opacity">
       <div
-        className="w-full max-w-lg bg-white rounded-t-3xl sm:rounded-3xl p-6 shadow-2xl border border-black/[0.06] max-h-[90vh] overflow-y-auto"
+        className="w-full max-w-lg bg-white rounded-t-3xl sm:rounded-3xl p-6  border border-black/[0.06] max-h-[90vh] overflow-y-auto"
         onClick={(e) => e.stopPropagation()}
       >
         <div className="flex items-center justify-between pb-4 border-b border-black/[0.06]">
-          <h3 className="text-base font-bold text-[#0B1F17]">Modifier mon profil</h3>
+          <h3 className="text-base font-bold text-[#17402C]">Modifier mon profil</h3>
           <button
             onClick={() => {
               triggerHaptic('light');
               onClose();
             }}
-            className="w-8 h-8 rounded-full bg-[#F4F1EB] flex items-center justify-center text-xs text-[#5C6B63] hover:text-[#0B1F17]"
+            className="w-8 h-8 rounded-full bg-[#F4F1EB] flex items-center justify-center text-xs text-[#5A7064] hover:text-[#17402C]"
           >
             ✕
           </button>
@@ -86,7 +86,7 @@ export default function EditProfileDrawer({
         <form onSubmit={handleSubmit} className="space-y-4 pt-4">
           <div className="grid grid-cols-2 gap-3">
             <div>
-              <label className="block text-xs font-semibold text-[#5C6B63] mb-1">
+              <label className="block text-xs font-semibold text-[#5A7064] mb-1">
                 Prénom
               </label>
               <input
@@ -94,24 +94,24 @@ export default function EditProfileDrawer({
                 value={firstName}
                 onChange={(e) => setFirstName(e.target.value)}
                 required
-                className="w-full bg-[#FBFAF6] border border-black/[0.08] rounded-xl px-3 py-2 text-xs text-[#0B1F17] outline-none focus:border-[#17402C]"
+                className="w-full bg-[#FBFAF6] border border-black/[0.08] rounded-xl px-3 py-2 text-xs text-[#17402C] outline-none focus:border-[#17402C]"
               />
             </div>
             <div>
-              <label className="block text-xs font-semibold text-[#5C6B63] mb-1">
+              <label className="block text-xs font-semibold text-[#5A7064] mb-1">
                 Nom
               </label>
               <input
                 type="text"
                 value={lastName}
                 onChange={(e) => setLastName(e.target.value)}
-                className="w-full bg-[#FBFAF6] border border-black/[0.08] rounded-xl px-3 py-2 text-xs text-[#0B1F17] outline-none focus:border-[#17402C]"
+                className="w-full bg-[#FBFAF6] border border-black/[0.08] rounded-xl px-3 py-2 text-xs text-[#17402C] outline-none focus:border-[#17402C]"
               />
             </div>
           </div>
 
           <div>
-            <label className="block text-xs font-semibold text-[#5C6B63] mb-1">
+            <label className="block text-xs font-semibold text-[#5A7064] mb-1">
               Localisation
             </label>
             <input
@@ -119,12 +119,12 @@ export default function EditProfileDrawer({
               value={location}
               onChange={(e) => setLocation(e.target.value)}
               placeholder="Ex: Chamonix, Annecy, Grenoble..."
-              className="w-full bg-[#FBFAF6] border border-black/[0.08] rounded-xl px-3 py-2 text-xs text-[#0B1F17] outline-none focus:border-[#17402C]"
+              className="w-full bg-[#FBFAF6] border border-black/[0.08] rounded-xl px-3 py-2 text-xs text-[#17402C] outline-none focus:border-[#17402C]"
             />
           </div>
 
           <div>
-            <label className="block text-xs font-semibold text-[#5C6B63] mb-1">
+            <label className="block text-xs font-semibold text-[#5A7064] mb-1">
               Bio / Présentation
             </label>
             <textarea
@@ -132,7 +132,7 @@ export default function EditProfileDrawer({
               onChange={(e) => setBio(e.target.value)}
               rows={3}
               placeholder="Partagez votre pratique de la randonnée, vos massifs préférés..."
-              className="w-full bg-[#FBFAF6] border border-black/[0.08] rounded-xl px-3 py-2 text-xs text-[#0B1F17] outline-none focus:border-[#17402C] resize-none"
+              className="w-full bg-[#FBFAF6] border border-black/[0.08] rounded-xl px-3 py-2 text-xs text-[#17402C] outline-none focus:border-[#17402C] resize-none"
             />
           </div>
 
@@ -140,14 +140,14 @@ export default function EditProfileDrawer({
             <button
               type="button"
               onClick={onClose}
-              className="flex-1 py-3 rounded-xl bg-[#F4F1EB] hover:bg-[#EBE7DF] text-[#0B1F17] text-xs font-semibold"
+              className="flex-1 py-3 rounded-xl bg-[#F4F1EB] hover:bg-[#EBE7DF] text-[#17402C] text-xs font-semibold"
             >
               Annuler
             </button>
             <button
               type="submit"
               disabled={saving}
-              className="flex-1 py-3 rounded-xl bg-[#17402C] text-white text-xs font-bold shadow-xs active:scale-95 transition-transform"
+              className="flex-1 py-3 rounded-xl bg-[#17402C] text-white text-xs font-bold  active:scale-95 transition-transform"
             >
               {saving ? 'Enregistrement...' : 'Enregistrer'}
             </button>

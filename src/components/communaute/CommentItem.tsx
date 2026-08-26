@@ -2,6 +2,7 @@
 
 import React, { useState } from 'react';
 import Link from 'next/link';
+import Icon from '@/components/ui/AppIcon';
 import { createClient } from '@/lib/supabase/client';
 
 export interface CommentData {
@@ -58,7 +59,7 @@ export default function CommentItem({
 
   const profileId = comment.author_id || comment.author?.id;
   const authorBlock = (
-    <div className="w-7 h-7 rounded-full mt-1 object-cover border border-[#E8E4D8] shrink-0 overflow-hidden bg-[#E7E3D6] flex items-center justify-center text-[10px] font-bold text-[#1C2620]">
+    <div className="w-7 h-7 rounded-full mt-1 object-cover border border-[#E8E4D8] shrink-0 overflow-hidden bg-[#E7E3D6] flex items-center justify-center text-[10px] font-bold text-[#17402C]">
       {comment.author?.avatar_url ? (
         <img src={comment.author.avatar_url} alt={comment.author?.full_name || 'Utilisateur'} className="w-full h-full object-cover" />
       ) : comment.author?.full_name?.charAt(0) || 'V'}
@@ -180,57 +181,54 @@ export default function CommentItem({
     <div className="flex gap-3 text-sm group/comment relative">
       {avatarArea}
 
-      <div className="flex-1 bg-[#F5F2E8] rounded-2xl rounded-tl-none p-3 relative">
+      <div className="flex-1 glass-sub-card rounded-2xl rounded-tl-none p-3 relative">
         {/* Comment Header */}
         <div className="flex items-center justify-between gap-2 mb-1">
           {profileId ? (
-            <Link href={`/profil/${profileId}`} className="font-bold text-xs text-[#1C2620] hover:text-[#2D5A3D] transition-colors">
+            <Link href={`/profil/${profileId}`} className="font-bold text-xs text-[#17402C] hover:text-[#17402C] transition-colors">
               {comment.author?.full_name || 'Voyageur'}
             </Link>
           ) : (
-            <div className="font-bold text-xs text-[#1C2620]">
+            <div className="font-bold text-xs text-[#17402C]">
               {comment.author?.full_name || 'Voyageur'}
             </div>
           )}
 
-          {onReply && (
-            <button
-              onClick={() => setIsReplying(!isReplying)}
-              className="text-[10px] font-semibold text-[#5C6B5E] hover:text-[#2D5A3D] flex items-center gap-0.5 ml-2"
-              title={`Répondre à ${comment.author?.full_name || 'cette personne'}`}
-            >
-              💬 <span>Répondre</span>
-            </button>
-          )}
-          {/* Action buttons (Edit / Delete / Report) */}
-          <div className="flex items-center gap-2 opacity-80 group-hover/comment:opacity-100 transition-opacity">
+          {/* Action buttons */}
+          <div className="flex items-center gap-1.5 opacity-80 group-hover/comment:opacity-100 transition-opacity ml-auto">
+            {onReply && (
+              <button
+                onClick={() => setIsReplying(!isReplying)}
+                className="w-7 h-7 rounded-full glass-capsule-btn flex items-center justify-center text-[#17402C] p-0"
+                aria-label={`Répondre à ${comment.author?.full_name || 'cette personne'}`}
+              >
+                <Icon name="ChatBubbleLeftIcon" size={12} />
+              </button>
+            )}
             {isOwnComment ? (
               <>
                 <button
                   onClick={() => setIsEditing(!isEditing)}
-                  className="text-[10px] font-semibold text-[#5C6B5E] hover:text-[#2D5A3D] flex items-center gap-0.5"
-                  title="Modifier votre commentaire"
+                  className="w-7 h-7 rounded-full glass-capsule-btn flex items-center justify-center text-[#17402C] p-0"
+                  aria-label="Modifier"
                 >
-                  ✏️ <span>Modifier</span>
+                  <Icon name="PencilIcon" size={12} />
                 </button>
-
                 <button
                   onClick={handleDeleteComment}
-                  className="text-[10px] font-semibold text-red-500 hover:text-red-700 flex items-center gap-0.5"
-                  title="Supprimer votre commentaire"
+                  className="w-7 h-7 rounded-full glass-capsule-btn flex items-center justify-center text-red-600 p-0"
+                  aria-label="Supprimer"
                 >
-                  🗑️ <span>Supprimer</span>
+                  <Icon name="TrashIcon" size={12} />
                 </button>
               </>
             ) : (
               <button
                 onClick={() => setIsReporting(!isReporting)}
-                className={`text-[10px] font-semibold flex items-center gap-0.5 ${
-                  isReported ? 'text-amber-600' : 'text-[#7A8A7D] hover:text-red-600'
-                }`}
-                title="Signaler ce commentaire"
+                className="w-7 h-7 rounded-full glass-capsule-btn flex items-center justify-center text-[#17402C] p-0"
+                aria-label="Signaler"
               >
-                🚩 <span>{isReported ? 'Signalé' : 'Signaler'}</span>
+                <Icon name="FlagIcon" size={12} />
               </button>
             )}
           </div>
@@ -243,7 +241,7 @@ export default function CommentItem({
               rows={2}
               value={editText}
               onChange={(e) => setEditText(e.target.value)}
-              className="w-full p-2 bg-white border border-[#E4E0D4] rounded-xl text-xs text-[#1C2620] focus:outline-none focus:border-[#2D5A27]"
+              className="w-full p-2 bg-white border border-[#E4E0D4] rounded-xl text-xs text-[#17402C] focus:outline-none focus:border-[#17402C]"
             />
             <div className="flex items-center gap-2 justify-end">
               <button
@@ -255,7 +253,7 @@ export default function CommentItem({
               <button
                 onClick={handleSaveEdit}
                 disabled={isSaving || !editText.trim()}
-                className="px-3 py-1 bg-[#2D5A3D] text-white rounded-full text-[10px] font-bold hover:bg-[#1C2620] transition-colors"
+                className="px-3 py-1 bg-[#17402C] text-white rounded-full text-[10px] font-bold hover:bg-[#17402C] transition-colors"
               >
                 {isSaving ? 'Enregistrement...' : 'Enregistrer'}
               </button>
@@ -268,8 +266,8 @@ export default function CommentItem({
 
         {/* Report Inline Popover Form */}
         {isReporting && (
-          <div className="mt-3 p-3 bg-white rounded-xl border border-amber-200 shadow-md text-xs space-y-2">
-            <p className="font-bold text-[#1C2620]">Motif du signalement :</p>
+          <div className="mt-3 p-3 bg-white rounded-xl border border-amber-200  text-xs space-y-2">
+            <p className="font-bold text-[#17402C]">Motif du signalement :</p>
             <select
               value={reportReason}
               onChange={(e) => setReportReason(e.target.value)}
@@ -307,7 +305,7 @@ export default function CommentItem({
         {/* Reply to this person */}
         {isReplying && onReply && (
           <div className="mt-3">
-            <p className="text-[10px] font-bold text-[#2D5A3D] mb-1.5">
+            <p className="text-[10px] font-bold text-[#17402C] mb-1.5">
               Répondre à {replyTargetName || comment.author?.full_name || 'cette personne'}
             </p>
             <div className="flex gap-2">
@@ -317,13 +315,13 @@ export default function CommentItem({
                 onChange={e => setReplyText(e.target.value)}
                 onKeyDown={e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); handleSendReply(); } }}
                 placeholder={`Écrire une réponse à ${comment.author?.full_name || '…'}`}
-                className="flex-1 bg-white border border-[#E4E0D4] rounded-xl px-3 py-2 text-xs text-[#1C2620] focus:outline-none focus:border-[#2D5A3D]"
+                className="flex-1 bg-white border border-[#E4E0D4] rounded-xl px-3 py-2 text-xs text-[#17402C] focus:outline-none focus:border-[#17402C]"
                 disabled={sendingReply}
               />
               <button
                 onClick={handleSendReply}
                 disabled={sendingReply || !replyText.trim()}
-                className="px-3 py-2 bg-[#2D5A3D] text-white rounded-xl text-[10px] font-bold hover:bg-[#1C2620] disabled:opacity-50"
+                className="px-3 py-2 bg-[#17402C] text-white rounded-xl text-[10px] font-bold hover:bg-[#17402C] disabled:opacity-50"
               >
                 {sendingReply ? '…' : 'Envoyer'}
               </button>

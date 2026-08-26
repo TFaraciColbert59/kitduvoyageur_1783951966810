@@ -132,7 +132,7 @@ export default function PremiumBottomSheet({
                 width: '36px',
                 height: '4px',
                 borderRadius: '2px',
-                background: 'rgba(28,38,32,0.18)',
+                background: 'rgba(23,64,44,0.18)',
               }}
             />
           </div>
@@ -142,7 +142,7 @@ export default function PremiumBottomSheet({
         {title && (
           <div className="flex items-center justify-between px-5 pb-3 flex-shrink-0">
             <h2
-              className="font-display font-bold text-[#1C2620]"
+              className="font-display font-bold text-[#17402C]"
               style={{ fontSize: '18px', letterSpacing: '-0.02em' }}
             >
               {title}
@@ -151,9 +151,9 @@ export default function PremiumBottomSheet({
               onClick={onClose}
               aria-label="Fermer"
               className="flex items-center justify-center w-8 h-8 rounded-full haptic-press"
-              style={{ background: 'rgba(28,38,32,0.08)' }}
+              style={{ background: 'rgba(23,64,44,0.08)' }}
             >
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#1C2620" strokeWidth="2.5" strokeLinecap="round" aria-hidden="true">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#17402C" strokeWidth="2.5" strokeLinecap="round" aria-hidden="true">
                 <path d="M18 6L6 18M6 6l12 12" />
               </svg>
             </button>

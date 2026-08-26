@@ -179,7 +179,7 @@ export default function HomepageAIDemoSection({ stats }: Props) {
                 }}
               >
                 <p
-                  className="text-xl font-bold text-[#2D5A3D]"
+                  className="text-xl font-bold text-[#17402C]"
                   style={{ fontFamily: 'var(--font-mono)', fontWeight: 700 }}
                 >
                   {routeCount}

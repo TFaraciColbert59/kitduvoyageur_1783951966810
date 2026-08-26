@@ -1,4 +1,4 @@
-'use client';
+﻿'use client';
 
 import React from 'react';
 
@@ -28,24 +28,20 @@ export default function TabsCompte({ activeTab, onTabChange, counts }: TabsCompt
   ];
 
   return (
-    <div className="w-full my-6 font-sans">
-      <div className="bg-[#F5F3ED] border border-[#E8E4D8] rounded-full p-1.5 shadow-sm overflow-x-auto no-scrollbar">
-        <div className="flex items-center gap-1.5 min-w-max">
+    <div className="w-full my-5 font-sans">
+      <div className="glass-capsule-bar overflow-x-auto no-scrollbar">
+        <div className="flex items-center gap-1 min-w-max p-1">
           {tabs.map((t) => {
             const isActive = activeTab === t.id;
             return (
               <button
                 key={t.id}
                 onClick={() => onTabChange(t.id)}
-                className={`px-4 sm:px-5 py-2 sm:py-2.5 rounded-full text-xs font-extrabold transition-all flex items-center gap-2 whitespace-nowrap ${
-                  isActive
-                    ? 'bg-[#132219] text-white shadow-md hover:bg-[#2D5A3D]'
-                    : 'text-[#132219]/70 hover:text-[#132219] hover:bg-white/60'
-                }`}
+                className={`glass-capsule-segment whitespace-nowrap ${isActive ? 'active' : ''}`}
               >
                 <span>{t.label}</span>
                 {t.hasDot && (
-                  <span className={`w-2 h-2 rounded-full animate-pulse ${isActive ? 'bg-[#D4A359]' : 'bg-emerald-500'}`} />
+                  <span className={`w-2 h-2 rounded-full ${isActive ? 'bg-[#C89A3B]' : 'bg-[#5B7F55]'}`} />
                 )}
               </button>
             );

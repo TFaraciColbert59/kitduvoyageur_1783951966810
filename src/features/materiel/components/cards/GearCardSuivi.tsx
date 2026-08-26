@@ -76,7 +76,7 @@ export function GearCardSuivi({ alertes, dispo, forget, className }: Props) {
               <ProgressBar value={alertes.reliabilityScore} label="Fiabilité" tone={alertes.criticalCount > 0 ? 'danger' : 'sage'} />
             </div>
 
-            <Link href="/materiel/alertes" className="flex items-center justify-between text-[10.5px] font-bold text-[#17402C] hover:text-[#2D6B4A] pt-1 border-t border-white/10">
+            <Link href="/materiel/alertes" className="flex items-center justify-between text-[10.5px] font-bold text-[#17402C] hover:text-[#365233] pt-1 border-t border-white/10">
               <span>Voir diagnostic</span>
               <ArrowRight size={12} />
             </Link>
@@ -100,7 +100,7 @@ export function GearCardSuivi({ alertes, dispo, forget, className }: Props) {
               <ProgressBar value={availablePct} label="Disponibilité" tone={dispo.unavailableCount > 0 ? 'warn' : 'sage'} />
             </div>
 
-            <Link href="/materiel/disponibilite" className="flex items-center justify-between text-[10.5px] font-bold text-[#17402C] hover:text-[#2D6B4A] pt-1 border-t border-white/10">
+            <Link href="/materiel/disponibilite" className="flex items-center justify-between text-[10.5px] font-bold text-[#17402C] hover:text-[#365233] pt-1 border-t border-white/10">
               <span>Gérer les prêts</span>
               <ArrowRight size={12} />
             </Link>
@@ -124,7 +124,7 @@ export function GearCardSuivi({ alertes, dispo, forget, className }: Props) {
               <ProgressBar value={forgetPct} label="Complétude checklist" tone={forgetPct === 100 ? 'sage' : 'warn'} />
             </div>
 
-            <Link href="/materiel/forget" className="flex items-center justify-between text-[10.5px] font-bold text-[#17402C] hover:text-[#2D6B4A] pt-1 border-t border-white/10">
+            <Link href="/materiel/forget" className="flex items-center justify-between text-[10.5px] font-bold text-[#17402C] hover:text-[#365233] pt-1 border-t border-white/10">
               <span>Ouvrir checklist</span>
               <ArrowRight size={12} />
             </Link>

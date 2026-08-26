@@ -75,10 +75,10 @@ export default function InstallPrompt() {
     <div
       role="banner"
       aria-label="Installer l'application"
-      className="md:hidden fixed left-3 right-3 z-40 rounded-2xl shadow-lg flex items-center gap-3 px-4 py-3"
+      className="md:hidden fixed left-3 right-3 z-40 rounded-2xl  flex items-center gap-3 px-4 py-3"
       style={{
         bottom: 'calc(86px + env(safe-area-inset-bottom))',
-        background: '#1C2620',
+        background: '#17402C',
         color: '#E7E3D6',
       }}
     >

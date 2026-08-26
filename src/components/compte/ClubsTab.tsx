@@ -7,6 +7,8 @@ import { useRouter } from 'next/navigation';
 import Icon from '@/components/ui/AppIcon';
 import { createClient } from '@/lib/supabase/client';
 
+type FilterMode = 'tous' | 'admin' | 'membre';
+
 interface ClubItem {
   id: string;
   name: string;
@@ -222,388 +224,267 @@ export default function ClubsTab({ profile }: { profile?: any }) {
   });
 
   return (
-    <div className="space-y-8 animate-fadeIn text-[#1C2620]">
+    <div className="space-y-8 pb-16 font-sans text-[#17402C]">
       {/* Toast Notification */}
       {toast && (
-        <div className="fixed bottom-6 right-6 z-50 bg-[#1C2620] text-white px-5 py-3 rounded-xl shadow-2xl flex items-center gap-3 text-sm font-semibold border border-emerald-500/30">
-          <span className="w-2 h-2 rounded-full bg-emerald-400 animate-ping" />
+        <div className="fixed bottom-6 right-6 z-50 bg-[#17402C] text-white px-5 py-3 rounded-full flex items-center gap-3 text-sm font-semibold border border-white/20 shadow-lg animate-fade-in">
+          <span className="w-2 h-2 rounded-full bg-[#A6C1A0] animate-ping" />
           {toast}
         </div>
       )}
 
       {/* Header Info Bar */}
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 bg-white/70 backdrop-blur-md p-6 rounded-2xl border border-[#C8C3B0]/60 shadow-sm">
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-[#17402C]/5 pb-5">
         <div>
-          <h1 className="text-3xl font-display font-extrabold tracking-tight text-[#1C2620]">
-            Vos <span className="italic font-serif font-normal">clubs</span>
-          </h1>
-          <p className="text-sm text-[#5C6B5E] mt-1 font-medium">
-            <span className="font-bold text-[#1C2620]">{clubs.length} communautés actives</span> · vous êtes admin d&apos;une · <span className="font-semibold text-[#1C2620]">615 membres cumulés</span> · 12 sorties partagées ce mois.
+          <h2 className="text-3xl sm:text-4xl font-display font-bold tracking-tight text-[#17402C]">
+            Vos <span className="font-serif italic font-normal text-[#365233]">clubs &amp; communautés</span>
+          </h2>
+          <p className="text-xs text-[#5A7064] mt-1 font-mono">
+            {clubs.length} communautés actives · 1 rôle admin · 615 membres connectés · 12 sorties ce mois
           </p>
         </div>
         <div className="flex items-center gap-3">
           <Link
-            href="/nouveau-groupe"
-            className="flex items-center gap-2 px-4 py-2.5 rounded-full border border-[#1C2620]/30 hover:border-[#1C2620] text-[#1C2620] text-xs font-bold transition-all hover:bg-[#1C2620]/5 shadow-sm"
+            href="/groupes"
+            className="glass-capsule-btn text-xs font-bold"
           >
             <Icon name="PlusIcon" size={14} />
-            Nouveau groupe
+            <span>Nouveau groupe</span>
           </Link>
           <Link
             href="/clubs/nouveau"
-            className="flex items-center gap-2 px-4 py-2.5 rounded-full bg-[#1C2620] hover:bg-[#2A3830] text-white text-xs font-bold transition-all shadow-md hover:shadow-lg"
+            className="glass-capsule-btn primary text-xs font-bold"
           >
             <Icon name="UserGroupIcon" size={14} />
-            Créer un club
+            <span>+ Créer un club</span>
           </Link>
         </div>
       </div>
 
       {/* Top 4 Stats Cards */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        {/* Card 1: Clubs rejoints */}
-        <div className="bg-white p-5 rounded-2xl border border-[#C8C3B0]/50 shadow-sm hover:shadow-md transition-shadow">
-          <p className="text-[10px] font-bold uppercase tracking-wider text-[#5C6B5E] mb-1">CLUBS REJOINTS</p>
+        <div className="glass rounded-[1.25rem] p-5 flex flex-col justify-between">
+          <p className="text-[10px] font-mono font-bold uppercase tracking-widest text-[#5A7064] mb-1">CLUBS REJOINTS</p>
           <div className="flex items-baseline gap-2">
-            <span className="text-3xl font-display font-black text-[#1C2620]">{clubs.length}</span>
+            <span className="glass-metric text-3xl sm:text-4xl text-[#17402C]">{clubs.length}</span>
           </div>
-          <p className="text-xs text-[#5C6B5E] mt-2 font-medium">Depuis 2023 · <span className="text-[#1C2620] font-semibold">1 admin</span></p>
+          <p className="text-xs text-[#5A7064] mt-2 font-mono">Depuis 2023 · <span className="text-[#17402C] font-semibold">1 admin</span></p>
         </div>
 
-        {/* Card 2: Sorties partagées */}
-        <div className="bg-white p-5 rounded-2xl border border-[#C8C3B0]/50 shadow-sm hover:shadow-md transition-shadow">
-          <p className="text-[10px] font-bold uppercase tracking-wider text-[#5C6B5E] mb-1">SORTIES PARTAGÉES</p>
+        <div className="glass rounded-[1.25rem] p-5 flex flex-col justify-between">
+          <p className="text-[10px] font-mono font-bold uppercase tracking-widest text-[#5A7064] mb-1">SORTIES PARTAGÉES</p>
           <div className="flex items-baseline gap-2">
-            <span className="text-3xl font-display font-black text-[#1C2620]">28</span>
+            <span className="glass-metric text-3xl sm:text-4xl text-[#17402C]">28</span>
           </div>
-          <p className="text-xs text-emerald-700 mt-2 font-semibold flex items-center gap-1">
-            <span>↑ 12</span> <span className="text-[#5C6B5E] font-normal">cette année</span>
+          <p className="text-xs text-[#5B7F55] mt-2 font-semibold flex items-center gap-1 font-mono">
+            <span>↑ 12 sorties</span> <span className="text-[#5A7064] font-normal">cette année</span>
           </p>
         </div>
 
-        {/* Card 3: Membres connectés */}
-        <div className="bg-white p-5 rounded-2xl border border-[#C8C3B0]/50 shadow-sm hover:shadow-md transition-shadow">
-          <p className="text-[10px] font-bold uppercase tracking-wider text-[#5C6B5E] mb-1">MEMBRES CONNECTÉS</p>
+        <div className="glass rounded-[1.25rem] p-5 flex flex-col justify-between">
+          <p className="text-[10px] font-mono font-bold uppercase tracking-widest text-[#5A7064] mb-1">MEMBRES CONNECTÉS</p>
           <div className="flex items-baseline gap-2">
-            <span className="text-3xl font-display font-black text-[#1C2620]">615</span>
+            <span className="glass-metric text-3xl sm:text-4xl text-[#17402C]">615</span>
           </div>
-          <p className="text-xs text-[#5C6B5E] mt-2 font-medium">Réseau cumulé des {clubs.length} clubs</p>
+          <p className="text-xs text-[#5A7064] mt-2 font-mono">Réseau des {clubs.length} clubs</p>
         </div>
 
-        {/* Card 4: Nouveautés */}
-        <div className="bg-white p-5 rounded-2xl border border-[#C8C3B0]/50 shadow-sm hover:shadow-md transition-shadow">
-          <p className="text-[10px] font-bold uppercase tracking-wider text-[#5C6B5E] mb-1">NOUVEAUTÉS</p>
-          <div className="flex items-baseline gap-2">
-            <span className="text-3xl font-display font-black text-[#1C2620]">7</span>
-            <span className="text-base font-serif italic text-[#1C2620]">alertes</span>
+        <div className="glass rounded-[1.25rem] p-5 flex flex-col justify-between">
+          <p className="text-[10px] font-mono font-bold uppercase tracking-widest text-[#5A7064] mb-1">NOUVEAUTÉS</p>
+          <div className="flex items-baseline gap-1.5">
+            <span className="glass-metric text-3xl sm:text-4xl text-[#17402C]">7</span>
+            <span className="text-sm font-serif italic text-[#365233]">alertes</span>
           </div>
-          <p className="text-xs text-[#5C6B5E] mt-2 font-medium">
-            <span className="text-[#17402C] font-bold">3 non lus</span> · {invitations.length} invitations en attente
+          <p className="text-xs text-[#5A7064] mt-2 font-mono">
+            <span className="text-[#17402C] font-bold">3 non lus</span> · {invitations.length} invitations
           </p>
         </div>
       </div>
 
-      {/* Main Grid: Left Column (8 cols) + Right Sidebar (4 cols) */}
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
-        
-        {/* LEFT COLUMN */}
-        <div className="lg:col-span-8 space-y-8">
-          
-          {/* Featured Club Banner ("Club à la une") */}
-          {featuredClub && (
-            <div className="relative rounded-[0.75rem] overflow-hidden shadow-xl border border-[#C8C3B0]/60 bg-[#1C2620] text-white">
-              {/* Cover Image Background */}
-              <div className="absolute inset-0 z-0">
-                <Image
-                  src={featuredClub.coverUrl || 'https://images.unsplash.com/photo-1544735716-392fe2489ffa?auto=format&fit=crop&w=1000&q=80'}
-                  alt={featuredClub.name}
-                  fill
-                  className="object-cover opacity-35 mix-blend-luminosity hover:scale-105 transition-transform duration-700"
-                />
-                <div className="absolute inset-0 bg-gradient-to-r from-[#1C2620] via-[#1C2620]/90 to-transparent" />
-              </div>
-
-              {/* Content Container */}
-              <div className="relative z-10 p-6 sm:p-8 flex flex-col justify-between min-h-[260px]">
-                {/* Top Row: Admin Badge & Featured Tag */}
-                <div className="flex items-center justify-between gap-4">
-                  <div className="flex items-center gap-2">
-                    <span className="bg-[#17402C] text-white text-[10px] font-extrabold uppercase tracking-wider px-3 py-1 rounded-full shadow-md">
-                      VOUS ÊTES ADMIN
-                    </span>
-                    <span className="text-white/60 text-[10px] font-bold uppercase tracking-widest">
-                      CLUB À LA UNE
-                    </span>
-                  </div>
-                </div>
-
-                {/* Middle Row: Title & Subtitle */}
-                <div className="my-4">
-                  <h2 className="text-2xl sm:text-3xl font-display font-black text-white tracking-tight">
-                    {featuredClub.name.replace(/Grenoble$/, '')}
-                    <span className="italic font-serif font-normal text-emerald-300"> Grenoble</span>
-                  </h2>
-                  <p className="text-white/80 text-xs sm:text-sm mt-1 font-medium max-w-xl italic">
-                    &ldquo;{featuredClub.tagline || 'Trois massifs, une porte : Chartreuse, Vercors, Belledonne.'}&rdquo;
-                  </p>
-                </div>
-
-                {/* Bottom Row: Stats & Action buttons */}
-                <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-6 pt-4 border-t border-white/15">
-                  {/* Stats Mini Grid */}
-                  <div className="grid grid-cols-4 gap-4 text-center sm:text-left">
-                    <div>
-                      <span className="text-xl font-black text-white font-display block">248</span>
-                      <span className="text-[9px] font-bold uppercase tracking-wider text-white/60">MEMBRES</span>
-                    </div>
-                    <div>
-                      <span className="text-xl font-black text-white font-display block">3 <span className="text-xs font-normal text-white/70">sort.</span></span>
-                      <span className="text-[9px] font-bold uppercase tracking-wider text-white/60">CE MOIS</span>
-                    </div>
-                    <div>
-                      <span className="text-xl font-black text-white font-display block">18h</span>
-                      <span className="text-[9px] font-bold uppercase tracking-wider text-white/60">PROCHAINE</span>
-                    </div>
-                    <div>
-                      <span className="text-xl font-black text-amber-400 font-display block">3 <span className="text-xs font-normal text-white/70">alertes</span></span>
-                      <span className="text-[9px] font-bold uppercase tracking-wider text-white/60">NON LUES</span>
-                    </div>
-                  </div>
-
-                  {/* Next Event Info & Actions */}
-                  <div className="flex items-center gap-3 self-end">
-                    {featuredClub.nextEvent && (
-                      <div className="hidden xl:flex items-center gap-2 bg-white/10 backdrop-blur-md px-3 py-1.5 rounded-lg border border-white/20 text-xs text-white">
-                        <span className="bg-emerald-400/20 text-emerald-300 text-[10px] font-bold px-2 py-0.5 rounded">Prochaine sortie</span>
-                        <span className="font-medium text-white/90">{featuredClub.nextEvent}</span>
-                      </div>
-                    )}
-                    <Link
-                      href={`/clubs/${featuredClub.slug}/admin`}
-                      className="px-4 py-2 rounded-full bg-white/20 hover:bg-white/30 backdrop-blur-md text-white text-xs font-bold transition-all border border-white/30"
-                    >
-                      Gérer
-                    </Link>
-                    <Link
-                      href={`/clubs/${featuredClub.slug}`}
-                      className="px-5 py-2 rounded-full bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold transition-all shadow-lg"
-                    >
-                      Ouvrir le club
-                    </Link>
-                  </div>
-                </div>
-              </div>
+      {/* Main Content Stack */}
+      <div className="space-y-6">
+        {/* Featured Club Banner ("Club à la une") */}
+        {featuredClub && (
+          <div className="relative rounded-[1.5rem] overflow-hidden border border-white/10 bg-[#17402C] text-white shadow-[0_16px_40px_-20px_rgba(23,64,44,0.35)]">
+            {/* Cover Image Background */}
+            <div className="absolute inset-0 z-0">
+              <Image
+                src={featuredClub.coverUrl || 'https://images.unsplash.com/photo-1544735716-392fe2489ffa?auto=format&fit=crop&w=1000&q=80'}
+                alt={featuredClub.name}
+                fill
+                className="object-cover opacity-30 mix-blend-luminosity"
+              />
+              <div className="absolute inset-0 bg-gradient-to-r from-[#17402C] via-[#17402C]/90 to-transparent" />
             </div>
-          )}
 
-          {/* Mes clubs Section */}
-          <div className="bg-white p-6 sm:p-7 rounded-[0.75rem] border border-[#C8C3B0]/60 shadow-sm space-y-6">
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-[#C8C3B0]/40 pb-5">
-              <div>
-                <h2 className="text-2xl font-display font-extrabold text-[#1C2620]">
-                  Mes <span className="italic font-serif font-normal">clubs</span>
+            {/* Content Container */}
+            <div className="relative z-10 p-6 sm:p-7 flex flex-col justify-between min-h-[240px]">
+              {/* Top Row: Admin Badge & Featured Tag */}
+              <div className="flex items-center justify-between gap-4">
+                <div className="flex items-center gap-2">
+                  <span className="bg-white/15 backdrop-blur-md text-white text-[10px] font-mono font-bold uppercase tracking-wider px-3 py-1 rounded-full border border-white/20">
+                    VOUS ÊTES ADMIN
+                  </span>
+                  <span className="text-white/60 text-[10px] font-mono uppercase tracking-widest">
+                    CLUB À LA UNE
+                  </span>
+                </div>
+              </div>
+
+              {/* Middle Row: Title & Subtitle */}
+              <div className="my-3">
+                <h2 className="text-2xl sm:text-3xl font-display font-bold text-white tracking-tight">
+                  {featuredClub.name.replace(/Grenoble$/, '')}
+                  <span className="font-serif italic font-normal text-[#A6C1A0]"> Grenoble</span>
                 </h2>
-                <p className="text-xs text-[#5C6B5E] mt-1 font-medium">
-                  Ouvrez un club pour voir son fil, ses sorties et ses membres.
+                <p className="text-white/80 text-xs sm:text-sm mt-1 max-w-xl font-serif italic">
+                  &ldquo;{featuredClub.tagline || 'Trois massifs, une porte : Chartreuse, Vercors, Belledonne.'}&rdquo;
                 </p>
               </div>
 
-              {/* Filter Tabs */}
-              <div className="flex items-center bg-[#EDEAE0] p-1 rounded-full border border-[#C8C3B0]/50 self-start">
-                {(['tous', 'admin', 'membre'] as const).map(tab => (
+              {/* Bottom Row: Stats & Action buttons */}
+              <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4 pt-3 border-t border-white/15">
+                {/* Stats Mini Grid */}
+                <div className="grid grid-cols-4 gap-4 text-center sm:text-left">
+                  <div>
+                    <span className="text-lg font-mono font-bold text-white block">248</span>
+                    <span className="text-[10px] font-mono text-white/60 uppercase">Membres</span>
+                  </div>
+                  <div>
+                    <span className="text-lg font-mono font-bold text-white block">3</span>
+                    <span className="text-[10px] font-mono text-white/60 uppercase">Sorties ce mois</span>
+                  </div>
+                  <div>
+                    <span className="text-lg font-mono font-bold text-white block">68</span>
+                    <span className="text-[10px] font-mono text-white/60 uppercase">Topos</span>
+                  </div>
+                  <div>
+                    <span className="text-lg font-mono font-bold text-white block">4.9★</span>
+                    <span className="text-[10px] font-mono text-white/60 uppercase">Note</span>
+                  </div>
+                </div>
+
+                <div className="flex items-center gap-2">
+                  <Link
+                    href={`/clubs/${featuredClub.slug}`}
+                    className="glass-capsule-btn primary !py-1.5 !px-4 text-xs font-bold"
+                  >
+                    Espace Admin →
+                  </Link>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Vos Communautés (Full List with Filter Tabs) */}
+        <div className="glass rounded-[1.5rem] p-5 sm:p-6 space-y-5 border border-white/50 shadow-sm">
+          <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
+            <div>
+              <h3 className="font-display font-bold text-lg sm:text-xl text-[#17402C]">
+                Vos <span className="font-serif italic font-normal text-[#5B7F55]">communautés</span>
+              </h3>
+              <p className="text-xs text-[#5A7064] mt-0.5">Clubs dont vous êtes membre ou responsable</p>
+            </div>
+
+            {/* Segmented Filter */}
+            <div className="glass-capsule-bar">
+              <div className="flex items-center gap-1 p-0.5">
+                {(['tous', 'admin', 'membre'] as FilterMode[]).map((mode) => (
                   <button
-                    key={tab}
-                    onClick={() => setFilterMode(tab)}
-                    className={`px-4 py-1.5 rounded-full text-xs font-bold capitalize transition-all ${
-                      filterMode === tab
-                        ? 'bg-white text-[#1C2620] shadow-sm'
-                        : 'text-[#5C6B5E] hover:text-[#1C2620]'
+                    key={mode}
+                    onClick={() => setFilterMode(mode)}
+                    className={`glass-capsule-segment !px-3 !py-1 text-xs capitalize ${
+                      filterMode === mode ? 'active' : ''
                     }`}
                   >
-                    {tab === 'tous' ? 'Tous' : tab === 'admin' ? 'Admin' : 'Membre'}
+                    {mode === 'tous' ? 'Tous' : mode === 'admin' ? 'Admin' : 'Membre'}
                   </button>
                 ))}
               </div>
             </div>
-
-            {/* Clubs List */}
-            <div className="space-y-4">
-              {filteredClubs.map(club => (
-                <div
-                  key={club.id}
-                  className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 p-4 sm:p-5 rounded-2xl border border-[#C8C3B0]/40 hover:border-[#1C2620]/30 hover:bg-[#F9F8F5] transition-all group"
-                >
-                  <div className="flex items-start gap-4">
-                    {/* Club Avatar / Icon */}
-                    <div className="w-12 h-12 rounded-2xl bg-[#1C2620] text-white flex items-center justify-center font-display font-black text-lg flex-shrink-0 shadow-md group-hover:scale-105 transition-transform">
-                      {club.name.slice(0, 2).toUpperCase()}
-                    </div>
-
-                    <div className="space-y-1">
-                      <div className="flex items-center gap-2 flex-wrap">
-                        <h3 className="text-base font-display font-bold text-[#1C2620] group-hover:text-emerald-800 transition-colors">
-                          {club.name}
-                        </h3>
-                        {club.role === 'admin' ? (
-                          <span className="bg-amber-100 text-amber-800 text-[10px] font-extrabold px-2.5 py-0.5 rounded-full border border-amber-300">
-                            Admin
-                          </span>
-                        ) : (
-                          <span className="bg-emerald-100 text-emerald-800 text-[10px] font-extrabold px-2.5 py-0.5 rounded-full border border-emerald-200">
-                            Membre
-                          </span>
-                        )}
-                      </div>
-
-                      <p className="text-xs text-[#5C6B5E] font-medium">
-                        <span className="font-semibold text-[#1C2620]">{club.membersCount} membres</span> · {club.nextEvent || `${club.eventsThisMonth} sorties ce mois`} · Rejoint en {club.joinedDate}
-                      </p>
-
-                      {/* Tags */}
-                      <div className="flex flex-wrap gap-1.5 pt-1">
-                        {club.tags.map(t => (
-                          <span key={t} className="text-[10px] bg-[#EDEAE0] text-[#5C6B5E] font-semibold px-2.5 py-0.5 rounded-md">
-                            {t}
-                          </span>
-                        ))}
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* Actions Right */}
-                  <div className="flex items-center gap-3 self-end sm:self-center">
-                    {club.unreadCount && (
-                      <span className="bg-emerald-600 text-white text-[10px] font-extrabold px-2.5 py-1 rounded-full shadow-sm animate-pulse">
-                        {club.unreadCount} NOUVEAUX
-                      </span>
-                    )}
-                    <Link
-                      href={`/clubs/${club.slug}`}
-                      className="inline-flex items-center gap-1.5 px-4 py-2 rounded-full border border-[#C8C3B0] hover:border-[#1C2620] text-[#1C2620] text-xs font-bold transition-all hover:bg-white shadow-sm"
-                    >
-                      Ouvrir <Icon name="ArrowRightIcon" size={13} />
-                    </Link>
-                  </div>
-                </div>
-              ))}
-            </div>
           </div>
 
-          {/* Activité récente Section */}
-          <div className="bg-white p-6 sm:p-7 rounded-[0.75rem] border border-[#C8C3B0]/60 shadow-sm space-y-6">
-            <div className="flex items-center justify-between border-b border-[#C8C3B0]/40 pb-4">
-              <div>
-                <h2 className="text-xl font-display font-extrabold text-[#1C2620]">
-                  Activité récente
-                </h2>
-                <p className="text-xs text-[#5C6B5E] mt-0.5 font-medium">
-                  Ce qui se passe dans vos clubs cette semaine.
-                </p>
-              </div>
-              <Link href="/activite" className="text-xs font-bold text-[#5C6B5E] hover:text-[#1C2620] flex items-center gap-1">
-                Voir tout <Icon name="ArrowRightIcon" size={13} />
-              </Link>
-            </div>
-
-            {/* Timeline */}
-            <div className="space-y-5">
-              {activities.map(act => (
-                <div key={act.id} className="flex items-start gap-4 text-xs">
-                  {/* Icon Container */}
-                  <div className="w-8 h-8 rounded-full bg-[#EDEAE0] text-[#1C2620] flex items-center justify-center flex-shrink-0 mt-0.5 border border-[#C8C3B0]/40">
-                    {act.type === 'event' && <Icon name="CalendarDaysIcon" size={15} className="text-emerald-700" />}
-                    {act.type === 'join' && <Icon name="UserPlusIcon" size={15} className="text-blue-700" />}
-                    {act.type === 'comment' && <Icon name="ChatBubbleLeftIcon" size={15} className="text-amber-700" />}
-                    {act.type === 'workshop' && <Icon name="SparklesIcon" size={15} className="text-purple-700" />}
-                    {act.type === 'race' && <Icon name="CheckCircleIcon" size={15} className="text-emerald-700" />}
-                    {act.type === 'carnet' && <Icon name="BookOpenIcon" size={15} className="text-emerald-800" />}
+          {/* Clubs Grid */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            {filteredClubs.map((club) => (
+              <div
+                key={club.id}
+                onClick={() => router.push(`/clubs/${club.slug}`)}
+                className="glass-sub-card p-4 rounded-2xl border border-white/40 hover:bg-white/80 transition-all cursor-pointer flex flex-col justify-between group"
+              >
+                <div className="flex items-start gap-3.5">
+                  <div className="w-12 h-12 rounded-xl overflow-hidden relative shrink-0 border border-white bg-[#17402C]">
+                    <Image src={club.coverUrl || '/assets/images/no_image.png'} alt={club.name} fill className="object-cover group-hover:scale-105 transition-transform" />
                   </div>
-
-                  {/* Body Content */}
-                  <div className="flex-1 space-y-1.5 pt-0.5">
-                    <p className="text-[#1C2620] leading-relaxed font-medium">
-                      <span className="font-bold">{act.clubName}</span> – {act.content}{' '}
-                      {act.detail && <span className="italic font-semibold">{act.detail}</span>}
+                  <div className="min-w-0 flex-1">
+                    <div className="flex items-center gap-2">
+                      <h4 className="font-bold text-sm text-[#17402C] truncate group-hover:text-[#5B7F55] transition-colors">
+                        {club.name}
+                      </h4>
+                      {club.role === 'admin' && (
+                        <span className="glass-pill !bg-[#17402C] !text-white text-[8.5px] font-mono font-bold uppercase">
+                          ADMIN
+                        </span>
+                      )}
+                    </div>
+                    <p className="text-[11px] text-[#5A7064] mt-0.5 font-mono">
+                      {club.membersCount} membres · {club.eventsThisMonth} sorties prévues
                     </p>
-
-                    {/* RSVP Buttons if Event */}
-                    {act.hasRSVP && (
-                      <div className="flex items-center gap-2 pt-1">
-                        <button
-                          onClick={() => handleRSVP(act.id, 'yes')}
-                          className={`px-3 py-1 rounded-full text-[11px] font-bold transition-all ${
-                            act.userRsvp === 'yes'
-                              ? 'bg-emerald-700 text-white shadow-sm'
-                              : 'bg-[#1C2620] text-white hover:bg-[#2A3830]'
-                          }`}
-                        >
-                          {act.userRsvp === 'yes' ? '✓ Inscrit' : 'Je participe'}
-                        </button>
-                        <button
-                          onClick={() => handleRSVP(act.id, 'later')}
-                          className={`px-3 py-1 rounded-full text-[11px] font-bold border transition-all ${
-                            act.userRsvp === 'later'
-                              ? 'bg-amber-100 text-amber-800 border-amber-300'
-                              : 'border-[#C8C3B0] text-[#5C6B5E] hover:text-[#1C2620]'
-                          }`}
-                        >
-                          Plus tard
-                        </button>
-                      </div>
-                    )}
+                    <div className="flex flex-wrap gap-1 mt-2">
+                      {club.tags?.map((t, idx) => (
+                        <span key={idx} className="glass-pill text-[8.5px] font-mono font-bold">
+                          {t}
+                        </span>
+                      ))}
+                    </div>
                   </div>
-
-                  {/* Time ago */}
-                  <span className="text-[10px] text-[#5C6B5E] font-semibold flex-shrink-0">
-                    {act.timeAgo}
-                  </span>
                 </div>
-              ))}
-            </div>
+              </div>
+            ))}
           </div>
         </div>
 
-        {/* RIGHT SIDEBAR (4 cols) */}
-        <div className="lg:col-span-4 space-y-8">
-          
-          {/* Invitations en attente Card */}
-          <div className="bg-[#FAF8F5] p-6 rounded-[0.75rem] border border-[#C8C3B0]/60 shadow-sm space-y-5">
+        {/* Side-by-side: Invitations + À découvrir */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
+          {/* Invitations en attente */}
+          <div className="glass rounded-[1.5rem] p-5 space-y-3.5 border border-white/50 shadow-sm">
             <div>
-              <h2 className="text-lg font-display font-extrabold text-[#1C2620]">
-                Invitations <span className="italic font-serif font-normal">en attente</span>
-              </h2>
-              <p className="text-xs text-[#5C6B5E] mt-0.5 font-medium">
-                {invitations.length} clubs vous invitent à rejoindre leur communauté.
+              <h3 className="text-base font-display font-bold text-[#17402C]">
+                Invitations <span className="font-serif italic font-normal text-[#5B7F55]">en attente</span>
+              </h3>
+              <p className="text-[11px] text-[#5A7064]">
+                {invitations.length} clubs vous invitent à rejoindre.
               </p>
             </div>
 
             {invitations.length === 0 ? (
-              <div className="p-4 text-center text-xs text-[#5C6B5E] font-medium bg-white rounded-2xl border border-dashed border-[#C8C3B0]">
-                Aucune invitation en attente pour le moment.
+              <div className="p-4 text-center text-xs text-[#5A7064] glass-sub-card rounded-xl">
+                Aucune invitation en attente.
               </div>
             ) : (
-              <div className="space-y-4">
-                {invitations.map(inv => (
-                  <div key={inv.id} className="bg-white p-4 rounded-2xl border border-[#C8C3B0]/50 shadow-sm space-y-3">
+              <div className="space-y-2.5">
+                {invitations.map((inv) => (
+                  <div key={inv.id} className="glass-sub-card p-3 rounded-xl space-y-2 border border-white/40">
                     <div>
-                      <h3 className="font-display font-bold text-sm text-[#1C2620]">
+                      <h4 className="font-display font-bold text-xs text-[#17402C]">
                         {inv.clubName}
-                      </h3>
-                      <p className="text-[11px] text-[#5C6B5E] font-medium mt-0.5">
-                        {inv.category} · {inv.membersCount} membres. Invité par <span className="font-semibold text-[#1C2620]">{inv.invitedBy}</span>
+                      </h4>
+                      <p className="text-[10px] text-[#5A7064] font-mono mt-0.5">
+                        {inv.category} · {inv.membersCount} membres. Par <span className="font-bold text-[#17402C]">{inv.invitedBy}</span>
                       </p>
                     </div>
 
                     <div className="flex items-center gap-2 pt-1">
                       <button
                         onClick={() => handleAcceptInvite(inv.id, inv.clubName)}
-                        className="flex-1 py-1.5 rounded-full bg-[#1C2620] hover:bg-[#2A3830] text-white text-xs font-bold transition-all shadow-sm"
+                        className="glass-capsule-btn primary flex-1 !py-1 text-[11px] font-bold"
                       >
                         Accepter
                       </button>
                       <button
                         onClick={() => handleDeclineInvite(inv.id)}
-                        className="flex-1 py-1.5 rounded-full border border-[#C8C3B0] text-[#5C6B5E] hover:text-[#1C2620] text-xs font-bold transition-all hover:bg-[#EDEAE0]"
+                        className="glass-capsule-btn flex-1 !py-1 text-[11px] font-bold"
                       >
                         Décliner
                       </button>
@@ -614,29 +495,29 @@ export default function ClubsTab({ profile }: { profile?: any }) {
             )}
           </div>
 
-          {/* À découvrir Card */}
-          <div className="bg-white p-6 rounded-[0.75rem] border border-[#C8C3B0]/60 shadow-sm space-y-5">
+          {/* À découvrir */}
+          <div className="glass rounded-[1.5rem] p-5 space-y-3.5 border border-white/50 shadow-sm">
             <div>
-              <h2 className="text-lg font-display font-extrabold text-[#1C2620]">
+              <h3 className="text-base font-display font-bold text-[#17402C]">
                 À découvrir
-              </h2>
-              <p className="text-xs text-[#5C6B5E] mt-0.5 font-medium">
-                Clubs recommandés selon vos massifs et vos disciplines
+              </h3>
+              <p className="text-[11px] text-[#5A7064]">
+                Clubs recommandés selon vos massifs
               </p>
             </div>
 
-            <div className="space-y-3">
-              {discoveryClubs.map(disc => (
-                <div key={disc.id} className="flex items-center justify-between gap-3 p-2.5 rounded-2xl hover:bg-[#F9F8F5] transition-colors border border-transparent hover:border-[#C8C3B0]/30">
-                  <div className="flex items-center gap-3 min-w-0">
-                    <div className="w-10 h-10 rounded-xl overflow-hidden relative flex-shrink-0 bg-[#EDEAE0]">
+            <div className="space-y-2">
+              {discoveryClubs.map((disc) => (
+                <div key={disc.id} className="glass-sub-card flex items-center justify-between gap-3 p-2 rounded-xl border border-white/40">
+                  <div className="flex items-center gap-2.5 min-w-0">
+                    <div className="w-8 h-8 rounded-lg overflow-hidden relative shrink-0 bg-[#17402C]">
                       <Image src={disc.imageUrl || '/assets/images/no_image.png'} alt={disc.name} fill className="object-cover" />
                     </div>
                     <div className="min-w-0">
-                      <h3 className="font-display font-bold text-xs text-[#1C2620] truncate">
+                      <h4 className="font-bold text-xs text-[#17402C] truncate">
                         {disc.name}
-                      </h3>
-                      <p className="text-[10px] text-[#5C6B5E] font-medium truncate">
+                      </h4>
+                      <p className="text-[9.5px] text-[#5A7064] font-mono truncate">
                         {disc.membersCount} membres · {disc.category}
                       </p>
                     </div>
@@ -645,13 +526,11 @@ export default function ClubsTab({ profile }: { profile?: any }) {
                   <button
                     onClick={() => handleJoinDiscovery(disc.id, disc.name)}
                     disabled={disc.isJoined}
-                    className={`px-3 py-1.5 rounded-full text-[11px] font-bold transition-all flex-shrink-0 ${
-                      disc.isJoined
-                        ? 'bg-emerald-100 text-emerald-800'
-                        : 'bg-[#1C2620] hover:bg-[#2A3830] text-white shadow-sm'
+                    className={`glass-capsule-btn !py-1 !px-2.5 text-[10px] font-bold shrink-0 ${
+                      disc.isJoined ? '!bg-[#5B7F55]/20 !text-[#5B7F55]' : 'primary'
                     }`}
                   >
-                    {disc.isJoined ? 'Demande envoyée' : 'Rejoindre'}
+                    {disc.isJoined ? 'Envoyé' : 'Rejoindre'}
                   </button>
                 </div>
               ))}
@@ -659,32 +538,12 @@ export default function ClubsTab({ profile }: { profile?: any }) {
 
             <Link
               href="/clubs"
-              className="block text-center text-xs font-bold text-[#5C6B5E] hover:text-[#1C2620] pt-2 border-t border-[#C8C3B0]/30 transition-colors"
+              className="block text-center text-[11px] font-bold text-[#5B7F55] hover:text-[#17402C] pt-2 border-t border-[#17402C]/5 transition-colors"
             >
-              Voir l&apos;annuaire complet (218 clubs) →
+              Voir l&apos;annuaire complet →
             </Link>
           </div>
-
-          {/* Dark Green Promo Card: "Créer votre propre club" */}
-          <div className="bg-[#1C2620] p-7 rounded-[0.75rem] text-white shadow-xl space-y-4 border border-[#2A3830] relative overflow-hidden">
-            <div className="absolute top-0 right-0 w-32 h-32 bg-emerald-500/10 rounded-full blur-2xl pointer-events-none" />
-            <h3 className="text-lg font-display font-extrabold text-white leading-tight">
-              Créer votre <span className="italic font-serif font-normal text-emerald-300">propre club</span>
-            </h3>
-            <p className="text-xs text-white/80 leading-relaxed font-medium">
-              Rassembler des voyageurs autour d&apos;un massif que vous connaissez, à votre rythme.
-            </p>
-            <Link
-              href="/clubs/nouveau"
-              className="inline-flex items-center gap-2 px-5 py-2.5 rounded-full bg-white hover:bg-emerald-50 text-[#1C2620] text-xs font-bold transition-all shadow-md mt-2"
-            >
-              <Icon name="PlusIcon" size={14} />
-              Créer un club
-            </Link>
-          </div>
-
         </div>
-
       </div>
     </div>
   );

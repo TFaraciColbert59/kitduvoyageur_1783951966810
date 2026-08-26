@@ -13,7 +13,7 @@ const TRUST_ITEMS = [
     icon: '🧭',
     label: 'Accès anticipé',
     sub: 'Rejoignez les premiers voyageurs',
-    color: '#2D5A3D',
+    color: '#17402C',
   },
   {
     icon: '🥾',
@@ -61,8 +61,8 @@ export default function HomepageSocialProofSection({ stats }: Props) {
           <div
             className="inline-flex items-center gap-2 px-4 py-2 rounded-full"
             style={{
-              background: 'rgba(45,90,61,0.15)',
-              border: '1px solid rgba(45,90,61,0.25)',
+              background: 'rgba(23,64,44,0.15)',
+              border: '1px solid rgba(23,64,44,0.25)',
             }}
           >
             <span className="w-2 h-2 rounded-full bg-[#4A7C5B]" aria-hidden="true" />

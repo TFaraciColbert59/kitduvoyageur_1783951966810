@@ -16,7 +16,7 @@ export default function CustomCursor() {
     // Detect if device supports touch/coarse pointer
     if (typeof window !== 'undefined') {
       const touchQuery = window.matchMedia('(hover: none) and (pointer: coarse)');
-      if (touchQuery.matches || 'ontouchstart' in window) {
+      if (touchQuery.matches || 'ontouchstart' in window || navigator.maxTouchPoints > 0) {
         setIsTouchDevice(true);
         return;
       }
@@ -108,11 +108,11 @@ export default function CustomCursor() {
 
       {/* Inner Precision Center Dot */}
       <div
-        className={`fixed top-0 left-0 rounded-full bg-[#1C2620] transition-transform duration-100 ease-out shadow-sm ${
+        className={`fixed top-0 left-0 rounded-full bg-[#17402C] transition-transform duration-100 ease-out  ${
           isHovered
             ? 'w-2.5 h-2.5 bg-[#2D6A4F] scale-125'
             : isClicked
-            ? 'w-1.5 h-1.5 bg-[#1C2620] scale-75'
+            ? 'w-1.5 h-1.5 bg-[#17402C] scale-75'
             : 'w-2 h-2'
         }`}
         style={{

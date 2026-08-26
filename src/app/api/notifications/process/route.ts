@@ -122,7 +122,7 @@ export async function POST(req: NextRequest) {
                   <div style="text-align: center; margin-bottom: 24px;">
                     <span style="font-size: 20px; font-weight: 800; color: #17402C; letter-spacing: -0.5px;">Le Kit du Voyageur</span>
                   </div>
-                  <h3 style="color: #0b1f17; font-size: 16px; font-weight: 700; margin-top: 0; margin-bottom: 12px;">${notif.title}</h3>
+                  <h3 style="color: #17402C; font-size: 16px; font-weight: 700; margin-top: 0; margin-bottom: 12px;">${notif.title}</h3>
                   <p style="color: #4a4a4a; font-size: 14px; line-height: 1.6; margin-bottom: 24px;">${notif.message}</p>
                   ${notif.link ? `
                     <div style="text-align: center; margin: 24px 0;">

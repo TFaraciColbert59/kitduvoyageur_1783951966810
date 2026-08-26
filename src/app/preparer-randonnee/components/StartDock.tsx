@@ -26,14 +26,14 @@ export const StartDock: React.FC<StartDockProps> = ({
 
   return (
     <div
-      className="fixed left-3 right-3 z-[70] bg-white/95 backdrop-blur-2xl border border-white/80 rounded-2xl p-2.5 shadow-2xl flex flex-col gap-2 pointer-events-auto"
+      className="fixed left-3 right-3 z-[70] bg-white/95 backdrop-blur-2xl border border-white/80 rounded-2xl p-2.5  flex flex-col gap-2 pointer-events-auto"
       style={{ bottom: 'calc(env(safe-area-inset-bottom) + 62px + 8px)' }}
     >
       {/* Top Status line */}
       <div className="flex items-center justify-between gap-2 px-1">
         <div className="flex items-center gap-2 min-w-0">
           <span className={`w-2.5 h-2.5 rounded-full shrink-0 ${dotColor}`} />
-          <span className="text-xs font-bold text-[#1C2620] truncate font-display">
+          <span className="text-xs font-bold text-[#17402C] truncate font-display">
             {anyEssentialMissing ? 'Essentiels manquants' : missingCount > 0 ? `${missingCount} à compléter` : 'Prêt à partir'}
           </span>
         </div>
@@ -47,14 +47,14 @@ export const StartDock: React.FC<StartDockProps> = ({
         {onContinuePreparation && (
           <button
             onClick={onContinuePreparation}
-            className="flex-1 h-10 px-3 rounded-xl bg-white hover:bg-[#FBFAF6] text-[#1C2620] text-xs font-bold shadow-xs border border-black/10 flex items-center justify-center gap-1.5 transition-all active:scale-95 shrink-0"
+            className="flex-1 h-10 px-3 rounded-xl bg-white hover:bg-[#FBFAF6] text-[#17402C] text-xs font-bold  border border-black/10 flex items-center justify-center gap-1.5 transition-all active:scale-95 shrink-0"
           >
             <span>📦 Continuer à préparer</span>
           </button>
         )}
         <button
           onClick={onStart}
-          className="flex-1 h-10 px-4 rounded-xl bg-[#17402C] hover:bg-[#0B1F17] text-white text-xs font-bold shadow-md flex items-center justify-center gap-1.5 transition-all cursor-pointer active:scale-95 shrink-0"
+          className="flex-1 h-10 px-4 rounded-xl bg-[#17402C] hover:bg-[#17402C] text-white text-xs font-bold  flex items-center justify-center gap-1.5 transition-all cursor-pointer active:scale-95 shrink-0"
         >
           <span>Démarrer</span>
           <svg width="12" height="12" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">

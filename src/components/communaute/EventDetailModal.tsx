@@ -86,19 +86,20 @@ export default function EventDetailModal({
           initial={{ opacity: 0, scale: 0.95, y: 20 }}
           animate={{ opacity: 1, scale: 1, y: 0 }}
           exit={{ opacity: 0, scale: 0.95, y: 20 }}
-          className="relative z-10 w-full max-w-xl bg-white rounded-3xl p-6 sm:p-8 shadow-2xl border border-[#1C2620]/10 max-h-[90vh] overflow-y-auto"
+          className="relative z-10 w-full max-w-xl glass rounded-3xl p-6 sm:p-8 max-h-[90vh] overflow-y-auto"
         >
           {/* Close Button */}
           <button
             onClick={onClose}
-            className="absolute top-5 right-5 w-9 h-9 rounded-full bg-[#F5F2E8] flex items-center justify-center text-[#5C6B5E] hover:text-[#1C2620] hover:bg-[#E8E4D8] transition-colors"
+            className="absolute top-5 right-5 w-9 h-9 rounded-full glass-capsule-btn flex items-center justify-center text-[#17402C] p-0"
+            aria-label="Fermer"
           >
             <Icon name="XMarkIcon" size={18} />
           </button>
 
           {/* Toast */}
           {toast && (
-            <div className="mb-4 p-3 bg-[#17402C] text-white text-xs font-semibold rounded-xl text-center shadow-lg">
+            <div className="mb-4 p-3 bg-[#17402C] text-white text-xs font-semibold rounded-xl text-center ">
               {toast}
             </div>
           )}
@@ -119,56 +120,56 @@ export default function EventDetailModal({
             )}
           </div>
 
-          <h2 className="font-display text-2xl sm:text-3xl font-extrabold text-[#1C2620] mb-2 leading-tight">
+          <h2 className="font-display text-2xl sm:text-3xl font-extrabold text-[#17402C] mb-2 leading-tight">
             {current.title}
           </h2>
 
           {current.club_name && (
             <p className="text-xs text-[#5C6B5E] mb-6 flex items-center gap-1.5">
               Organisée par le club{' '}
-              <strong className="text-[#1C2620]">{current.club_name}</strong>
+              <strong className="text-[#17402C]">{current.club_name}</strong>
             </p>
           )}
 
           {/* Information Cards Grid */}
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-6">
             {/* Date */}
-            <div className="p-4 bg-[#F5F2E8]/60 border border-[#1C2620]/5 rounded-2xl flex items-start gap-3">
-              <div className="w-9 h-9 rounded-xl bg-white flex items-center justify-center text-[#17402C] shadow-sm shrink-0">
+            <div className="p-4 bg-[#F5F2E8]/60 border border-[#17402C]/5 rounded-2xl flex items-start gap-3">
+              <div className="w-9 h-9 rounded-xl bg-white flex items-center justify-center text-[#17402C]  shrink-0">
                 <Icon name="CalendarIcon" size={18} />
               </div>
               <div className="min-w-0">
                 <p className="text-[10px] font-mono uppercase tracking-wider text-[#5C6B5E]">Date & Heure</p>
-                <p className="text-xs font-bold text-[#1C2620] capitalize leading-snug mt-0.5">
+                <p className="text-xs font-bold text-[#17402C] capitalize leading-snug mt-0.5">
                   {dateFormatted}
                 </p>
               </div>
             </div>
 
             {/* Location */}
-            <div className="p-4 bg-[#F5F2E8]/60 border border-[#1C2620]/5 rounded-2xl flex items-start gap-3">
-              <div className="w-9 h-9 rounded-xl bg-white flex items-center justify-center text-[#17402C] shadow-sm shrink-0">
+            <div className="p-4 bg-[#F5F2E8]/60 border border-[#17402C]/5 rounded-2xl flex items-start gap-3">
+              <div className="w-9 h-9 rounded-xl bg-white flex items-center justify-center text-[#17402C]  shrink-0">
                 <Icon name="MapPinIcon" size={18} />
               </div>
               <div className="min-w-0">
                 <p className="text-[10px] font-mono uppercase tracking-wider text-[#5C6B5E]">Lieu de rassemblement</p>
-                <p className="text-xs font-bold text-[#1C2620] truncate leading-snug mt-0.5">
+                <p className="text-xs font-bold text-[#17402C] truncate leading-snug mt-0.5">
                   {current.location || 'Coordonnées partagées aux inscrits'}
                 </p>
               </div>
             </div>
 
             {/* Participants */}
-            <div className="p-4 bg-[#F5F2E8]/60 border border-[#1C2620]/5 rounded-2xl flex items-start gap-3">
-              <div className="w-9 h-9 rounded-xl bg-white flex items-center justify-center text-[#17402C] shadow-sm shrink-0">
+            <div className="p-4 bg-[#F5F2E8]/60 border border-[#17402C]/5 rounded-2xl flex items-start gap-3">
+              <div className="w-9 h-9 rounded-xl bg-white flex items-center justify-center text-[#17402C]  shrink-0">
                 <Icon name="UserGroupIcon" size={18} />
               </div>
               <div className="min-w-0">
                 <p className="text-[10px] font-mono uppercase tracking-wider text-[#5C6B5E]">Places</p>
-                <p className="text-xs font-bold text-[#1C2620] leading-snug mt-0.5">
+                <p className="text-xs font-bold text-[#17402C] leading-snug mt-0.5">
                   {current.participants_count || 0} / {current.max_participants || 'Illimité'} inscrits
                   {spotsLeft !== null && (
-                    <span className="text-[10px] text-[#2D5A3D] ml-1.5 font-normal">
+                    <span className="text-[10px] text-[#17402C] ml-1.5 font-normal">
                       ({spotsLeft} restantes)
                     </span>
                   )}
@@ -177,13 +178,13 @@ export default function EventDetailModal({
             </div>
 
             {/* Organizer */}
-            <div className="p-4 bg-[#F5F2E8]/60 border border-[#1C2620]/5 rounded-2xl flex items-start gap-3">
-              <div className="w-9 h-9 rounded-xl bg-white flex items-center justify-center text-[#17402C] shadow-sm shrink-0 font-bold text-xs">
+            <div className="p-4 bg-[#F5F2E8]/60 border border-[#17402C]/5 rounded-2xl flex items-start gap-3">
+              <div className="w-9 h-9 rounded-xl bg-white flex items-center justify-center text-[#17402C]  shrink-0 font-bold text-xs">
                 {current.organizer_name?.charAt(0) || '👤'}
               </div>
               <div className="min-w-0">
                 <p className="text-[10px] font-mono uppercase tracking-wider text-[#5C6B5E]">Organisateur</p>
-                <p className="text-xs font-bold text-[#1C2620] truncate leading-snug mt-0.5">
+                <p className="text-xs font-bold text-[#17402C] truncate leading-snug mt-0.5">
                   {current.organizer_name || 'Guide / Responsable Club'}
                 </p>
               </div>
@@ -192,17 +193,17 @@ export default function EventDetailModal({
 
           {/* Description */}
           <div className="mb-6">
-            <h4 className="text-xs font-bold uppercase font-mono tracking-wider text-[#1C2620] mb-2">
+            <h4 className="text-xs font-bold uppercase font-mono tracking-wider text-[#17402C] mb-2">
               À propos de la sortie
             </h4>
-            <p className="text-xs sm:text-sm text-[#1C2620]/80 leading-relaxed bg-[#FBFAF6] p-4 rounded-2xl border border-[#1C2620]/5">
+            <p className="text-xs sm:text-sm text-[#17402C]/80 leading-relaxed bg-[#FBFAF6] p-4 rounded-2xl border border-[#17402C]/5">
               {current.description || "Rejoignez d'autres passionnés pour cette sortie outdoor. Préparez votre sac et votre équipement selon la météo."}
             </p>
           </div>
 
           {/* Other events list if browse mode */}
           {allEvents && allEvents.length > 1 && (
-            <div className="mb-6 border-t border-[#1C2620]/10 pt-4">
+            <div className="mb-6 border-t border-[#17402C]/10 pt-4">
               <button
                 onClick={() => setViewAll(!viewAll)}
                 className="text-xs font-bold text-[#17402C] hover:underline flex items-center justify-between w-full"
@@ -223,13 +224,13 @@ export default function EventDetailModal({
                         className={`p-2.5 rounded-xl border flex items-center justify-between cursor-pointer transition-all ${
                           isSelected
                             ? 'bg-[#17402C]/10 border-[#17402C]/40 font-bold text-[#17402C]'
-                            : 'bg-white border-[#1C2620]/10 hover:bg-[#F5F2E8]'
+                            : 'bg-white border-[#17402C]/10 hover:bg-[#F5F2E8]'
                         }`}
                       >
                         <div className="flex items-center gap-2.5 truncate">
                           <span className="text-sm">{ev.club_emoji || '🏔️'}</span>
                           <div className="truncate">
-                            <p className="text-xs text-[#1C2620] truncate font-semibold">{ev.title}</p>
+                            <p className="text-xs text-[#17402C] truncate font-semibold">{ev.title}</p>
                             <p className="text-[10px] text-[#5C6B5E]">
                               {d.toLocaleDateString('fr-FR', { day: 'numeric', month: 'short' })} · {ev.location || 'Lieu TBD'}
                             </p>
@@ -247,27 +248,23 @@ export default function EventDetailModal({
           )}
 
           {/* Action Buttons */}
-          <div className="flex items-center gap-3 pt-2">
+          <div className="flex items-center justify-end gap-3 pt-2">
             {current.club_id && (
               <Link
                 href={`/clubs/${current.club_id}`}
-                className="flex-1 py-3 px-4 bg-[#F5F2E8] hover:bg-[#E8E4D8] text-[#1C2620] rounded-xl text-xs font-bold text-center transition-colors"
+                className="w-10 h-10 rounded-full glass-capsule-btn flex items-center justify-center text-[#17402C] p-0 shrink-0"
+                aria-label="Explorer le club"
               >
-                Explorer le club →
+                <Icon name="ArrowRightIcon" size={16} />
               </Link>
             )}
             <button
               onClick={handleJoin}
               disabled={joining || joined || isPast}
-              className={`flex-1 py-3 px-4 rounded-xl text-xs font-bold transition-all shadow-md flex items-center justify-center gap-2 ${
-                joined
-                  ? 'bg-emerald-600 text-white'
-                  : isPast
-                  ? 'bg-gray-200 text-gray-500 cursor-not-allowed'
-                  : 'bg-[#17402C] hover:bg-[#122e20] text-white'
-              }`}
+              className="glass-capsule-btn px-5 py-2.5 text-xs font-bold flex items-center justify-center gap-2 disabled:opacity-50"
             >
-              {joined ? '✓ Inscrit' : joining ? 'Inscription...' : isPast ? 'Sortie passée' : 'Rejoindre la sortie'}
+              <span>{joined ? '✓ Inscrit' : joining ? 'Inscription...' : isPast ? 'Passée' : 'Rejoindre'}</span>
+              <Icon name="ArrowRightIcon" size={14} />
             </button>
           </div>
         </motion.div>

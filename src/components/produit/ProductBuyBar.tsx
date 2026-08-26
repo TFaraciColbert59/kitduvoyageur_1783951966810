@@ -38,8 +38,7 @@ export default function ProductBuyBar({
         backdropFilter: 'blur(24px) saturate(1.5)',
         WebkitBackdropFilter: 'blur(24px) saturate(1.5)',
         borderRadius: '22px',
-        border: '1px solid rgba(11,31,23,0.06)',
-        boxShadow: '0 12px 30px rgba(11,31,23,0.12)',
+        border: '1px solid rgba(23,64,44,0.08)',
         display: 'flex',
         alignItems: 'center',
         gap: '8px',
@@ -54,7 +53,7 @@ export default function ProductBuyBar({
           alignItems: 'center',
           gap: '4px',
           padding: '6px',
-          background: '#F4F1EA',
+          background: '#F1EDE6',
           borderRadius: '999px',
         }}
       >
@@ -76,7 +75,7 @@ export default function ProductBuyBar({
             alignItems: 'center',
             justifyContent: 'center',
             fontSize: '14px',
-            color: '#0B1F17',
+            color: '#17402C',
           }}
         >
           −
@@ -87,8 +86,8 @@ export default function ProductBuyBar({
             textAlign: 'center',
             fontSize: '13px',
             fontWeight: 700,
-            fontFamily: 'ui-monospace, monospace',
-            color: '#0B1F17',
+            fontFamily: 'var(--font-mono)',
+            color: '#17402C',
           }}
         >
           {qty}
@@ -111,7 +110,7 @@ export default function ProductBuyBar({
             alignItems: 'center',
             justifyContent: 'center',
             fontSize: '14px',
-            color: '#0B1F17',
+            color: '#17402C',
           }}
         >
           +
@@ -126,10 +125,9 @@ export default function ProductBuyBar({
         onMouseUp={() => setIsPressed(false)}
         onTouchStart={() => setIsPressed(true)}
         onTouchEnd={() => setIsPressed(false)}
+        className={`glass-capsule-btn primary ${added ? '!bg-[#5B7F55] !text-white' : ''}`}
         style={{
           flex: 1,
-          background: added ? '#2D6B4A' : '#17402C',
-          color: '#fff',
           padding: '13px 18px',
           borderRadius: '999px',
           display: 'flex',
@@ -146,7 +144,7 @@ export default function ProductBuyBar({
         }}
       >
         <span>{added ? 'Ajouté ✓' : 'Ajouter au panier'}</span>
-        <span style={{ fontFamily: 'ui-monospace, monospace', opacity: 0.9 }}>
+        <span style={{ fontFamily: 'var(--font-mono)', opacity: 0.9 }}>
           {(price * qty).toFixed(0)} €
         </span>
       </button>

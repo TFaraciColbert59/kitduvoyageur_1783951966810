@@ -182,7 +182,7 @@ export default function GlobalSearchModal({ isOpen, onClose }: GlobalSearchModal
       <div className="absolute inset-0" onClick={onClose} />
 
       {/* Search Container Card */}
-      <div className="relative z-10 w-full max-w-2xl bg-[#1C2620] text-white rounded-[0.75rem] shadow-2xl border border-white/10 overflow-hidden flex flex-col max-h-[85vh] animate-slide-up">
+      <div className="relative z-10 w-full max-w-2xl bg-[#17402C] text-white rounded-[0.75rem]  border border-white/10 overflow-hidden flex flex-col max-h-[85vh] animate-slide-up">
         
         {/* Search Header Input */}
         <form onSubmit={handleFormSubmit} className="p-4 sm:p-5 border-b border-white/10 flex items-center gap-3">
@@ -227,7 +227,7 @@ export default function GlobalSearchModal({ isOpen, onClose }: GlobalSearchModal
                 onClick={() => setActiveFilter(tab.id as any)}
                 className={`px-3 py-1 rounded-full text-xs font-bold transition-all whitespace-nowrap ${
                   activeFilter === tab.id
-                    ? 'bg-emerald-500 text-emerald-950 shadow-md'
+                    ? 'bg-emerald-500 text-emerald-950 '
                     : 'bg-white/5 text-white/60 hover:bg-white/10 hover:text-white'
                 }`}
               >
@@ -339,7 +339,7 @@ export default function GlobalSearchModal({ isOpen, onClose }: GlobalSearchModal
                 </div>
                 <button
                   onClick={() => handleSelectResult('/ai-configurator')}
-                  className="px-4 py-2 bg-emerald-400 text-emerald-950 font-extrabold rounded-xl text-xs whitespace-nowrap hover:bg-emerald-300 transition-colors shadow-lg"
+                  className="px-4 py-2 bg-emerald-400 text-emerald-950 font-extrabold rounded-xl text-xs whitespace-nowrap hover:bg-emerald-300 transition-colors "
                 >
                   Lancer l'IA
                 </button>

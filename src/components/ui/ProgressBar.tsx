@@ -4,9 +4,9 @@ export function ProgressBar({
   value, tone = 'sage', label,
 }: { value: number; tone?: ProgressTone; label: string }) {
   const fillCls = {
-    sage: 'bg-gradient-to-r from-emerald-700 via-sage-500 to-emerald-400 shadow-[0_0_8px_rgba(91,127,85,0.4)]',
-    warn: 'bg-gradient-to-r from-amber-600 to-amber-400 shadow-[0_0_8px_rgba(200,154,59,0.4)]',
-    danger: 'bg-gradient-to-r from-rose-700 to-rose-400 shadow-[0_0_8px_rgba(168,68,58,0.4)]',
+    sage: 'bg-gradient-to-r from-sage-700 via-sage-500 to-sage-300 shadow-[0_0_8px_rgba(91,127,85,0.4)]',
+    warn: 'bg-gradient-to-r from-warn to-warn/70 shadow-[0_0_8px_rgba(200,154,59,0.4)]',
+    danger: 'bg-gradient-to-r from-danger to-danger/70 shadow-[0_0_8px_rgba(168,68,58,0.4)]',
   }[tone];
   return (
     <div

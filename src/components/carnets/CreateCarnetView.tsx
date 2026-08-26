@@ -3,72 +3,134 @@
 import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
+import Header from '@/components/Header';
 import Icon from '@/components/ui/AppIcon';
+import CommunityHubNav from '@/components/social/CommunityHubNav';
+import CompteBackground from '@/components/compte/CompteBackground';
 import { createClient } from '@/lib/supabase/client';
-import MobilePageShell from '@/components/mobile-nav/MobilePageShell';
+import { CarnetKitItem, CarnetMoment } from '@/types/carnet';
 
 export interface ChapterItem {
   id: string;
   num: string;
   title: string;
-  wordCount: number;
-  photoCount: number;
-  status: 'Rédigé' | 'En cours' | 'À écrire';
-  content?: string;
+  lieu_depart?: string;
+  lieu_arrivee?: string;
+  distance_km?: number;
+  denivele_m?: number;
+  meteo?: string;
+  hebergement_nom?: string;
+  hebergement_type?: string;
+  content: string;
 }
 
-export default function CreateCarnetView({ onCloseModal }: { onCloseModal?: () => void }) {
+export default function CreateCarnetView({ onCloseModal }: { onCloseModal?: () => void } = {}) {
   const router = useRouter();
-  const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
   const [saveSuccess, setSaveSuccess] = useState(false);
   const [user, setUser] = useState<any>(null);
-  const [previewModalOpen, setPreviewModalOpen] = useState(false);
 
-  // Chapter editing modal state
-  const [editingChapterId, setEditingChapterId] = useState<string | null>(null);
-  const [editChapterTitle, setEditChapterTitle] = useState('');
-  const [editChapterStatus, setEditChapterStatus] = useState<'Rédigé' | 'En cours' | 'À écrire'>('Rédigé');
-  const [editChapterWords, setEditChapterWords] = useState(500);
-  const [editChapterPhotos, setEditChapterPhotos] = useState(2);
-  const [editChapterContent, setEditChapterContent] = useState('');
+  // Stepper state
+  const [activeStep, setActiveStep] = useState<'general' | 'etapes' | 'moments' | 'sac' | 'tags'>('general');
 
   // Form State
   const [form, setForm] = useState({
+    // 1. Général
     title: 'Trois jours sur les crêtes',
-    subtitle: 'Chartreuse · octobre 2026 · 27 km à deux',
-    chapeau: '« On était deux, un thermos à moitié rempli, et l\'idée qu\'on se trompait pas exactement de ce qu\'on cherchait. La brume s\'est levée après — c\'est là que le voyage a commencé, vraiment. »',
+    subtitle: 'Chartreuse · 27 km à deux',
+    destination: 'Massif de la Chartreuse',
+    chapeau: '« On était deux, un thermos à moitié rempli, et la brume s’est levée au col de la Charmette. »',
     coverImage: 'https://images.unsplash.com/photo-1519681393784-d120267933ba?q=80&w=1200',
-    linkedAdventureId: 'av-1',
-    readingStyle: 'journal', // 'journal' | 'paper' | 'recit'
+    startDate: '2026-10-12',
+    endDate: '2026-10-14',
+    voyageurs: 2,
+    difficulty: 'Modéré',
+    weather: 'Ensoleillé & brumes matinales',
+    avgTemp: '12',
+    routeRating: 9,
+    distance_km: 27.4,
+    elevation_m: 1620,
+
+    // 2. Étapes / Chapitres
     chapters: [
-      { id: 'ch-1', num: 'I', title: 'La montée au silence', wordCount: 640, photoCount: 3, status: 'Rédigé', content: 'Le soleil perçait à peine la brume matinale au col de la Chamette...' },
-      { id: 'ch-2', num: 'II', title: 'Le refuge et ce qu\'on y a trouvé', wordCount: 1240, photoCount: 5, status: 'Rédigé', content: 'Une cabane en bois brut sous les arêtes, le poêle crépitait encore...' },
-      { id: 'ch-3', num: 'III', title: 'Le col à 2100m sous le vent', wordCount: 420, photoCount: 1, status: 'En cours', content: 'Le vent balayait les crêtes rocailleuses...' },
-      { id: 'ch-4', num: 'IV', title: 'Des crêtes jusqu\'en bas', wordCount: 0, photoCount: 0, status: 'À écrire', content: '' }
+      {
+        id: 'ch-1',
+        num: 'I',
+        title: 'Saint-Pierre → Charmant Som',
+        lieu_depart: 'Saint-Pierre-de-Chartreuse',
+        lieu_arrivee: 'Charmant Som',
+        distance_km: 10.4,
+        denivele_m: 620,
+        meteo: 'Ciel bas · 12°C',
+        hebergement_nom: 'Refuge du Charmant Som',
+        hebergement_type: 'Refuge gardé',
+        content: 'On a rangé la voiture derrière l’église à 9h40. Léna marchait devant sur les 5 premiers kilomètres. À midi, casse-croûte contre un mur de pierre sèche.'
+      },
+      {
+        id: 'ch-2',
+        num: 'II',
+        title: 'La traversée du Balcon Est',
+        lieu_depart: 'Charmant Som',
+        lieu_arrivee: 'Cabane du Grand Vaneau',
+        distance_km: 12.8,
+        denivele_m: 720,
+        meteo: 'Brouillard · 6°C',
+        hebergement_nom: 'Cabane du Grand Vaneau',
+        hebergement_type: 'Cabane non gardée',
+        content: 'Départ à 7h20, thé chaud dans les thermos. Le passage du col Vert au petit matin restera gravé. Rien ne bougeait sauf le brouillard qui remontait la vallée.'
+      },
+      {
+        id: 'ch-3',
+        num: 'III',
+        title: 'Descente sur la Charmette',
+        lieu_depart: 'Grand Vaneau',
+        lieu_arrivee: 'Col de la Charmette',
+        distance_km: 4.2,
+        denivele_m: 280,
+        meteo: 'Ensoleillé · 14°C',
+        hebergement_nom: 'Retour vallée',
+        hebergement_type: 'Fin de boucle',
+        content: 'Réveil tôt, ciel parfaitement dégagé. On a longé la crête pendant deux heures presque sans vent avant la descente technique vers la voiture.'
+      }
     ] as ChapterItem[],
-    selectedThemes: ['Bivouac', 'Chartreuse', 'Solo', 'Refuge gardé', 'Automne'],
-    customTags: ['Crêtes', 'Alpes', 'Automne 2026'],
-    newTagInput: '',
-    publishTiming: 'now', // 'brouillon' | 'now' | 'planifie'
-    visibility: 'public', // 'public' | 'subscribers' | 'private'
-    allowComments: true,
-    recommendToReaders: true,
-    allowPdfDownload: false
+
+    // 3. Moments forts & Citations
+    moments: [
+      {
+        id: 'm-1',
+        label: 'JOUR 1 · 18H30',
+        citation: '« Marie a servi la soupe sans dire un mot. On l’a bue debout, appuyés contre la porte du refuge. »',
+        author: 'Marceline',
+        location: 'Charmant Som',
+        imageUrl: 'https://images.unsplash.com/photo-1506744038136-46273834b3fb?q=80&w=800'
+      },
+      {
+        id: 'm-2',
+        label: 'JOUR 2 · 07H50',
+        citation: '« Le brouillard remontait la vallée par vagues. Antoine s’est arrêté : « c’est pour ça qu’on marche ». »',
+        author: 'Antoine',
+        location: 'Col Vert',
+        imageUrl: 'https://images.unsplash.com/photo-1464822759023-fed622ff2c3b?q=80&w=800'
+      }
+    ] as CarnetMoment[],
+
+    // 4. Sac & Matériel
+    kitIntro: 'Sac 45L configuré pour l’autonomie en Chartreuse — chargement léger de 4.8 kg.',
+    kitItems: [
+      { id: 'k1', name: 'Duvet plumes 800 cuin', detail: 'Confort -5°C', weight: '920 g', color: '#3A6EA5' },
+      { id: 'k2', name: 'Veste 3 couches Hardshell', detail: 'Portée sous la pluie', weight: '400 g', color: '#33463C' },
+      { id: 'k3', name: 'Réchaud gaz ultra-léger', detail: 'Avec popote titane 800ml', weight: '260 g', color: '#B5652D' },
+      { id: 'k4', name: 'Gourde inox filtrante 1L', detail: 'Remplie à la source', weight: '188 g', color: '#17402C' },
+    ] as CarnetKitItem[],
+
+    // 5. Thématiques & Visibilité
+    selectedThemes: ['Bivouac', 'Chartreuse', 'Automne', 'Refuge gardé'],
+    customTags: ['Crêtes', 'Alpes'],
+    visibility: 'public', // 'public' | 'private'
   });
 
-  const availableThemes = [
-    'Bivouac', 'Chartreuse', 'Solo', 'Refuge gardé', 'Automne', 
-    'Été', 'Hiver', 'Traversée', 'Sommet', 'Nuit étoilée', 'Faune', 'Rencontre'
-  ];
+  const availableThemes = ['Bivouac', 'Chartreuse', 'Solo', 'Refuge gardé', 'Automne', 'Été', 'Alpinisme', 'Traversée', 'Van Life', 'Haute Montagne'];
 
-  const linkedAdventuresList = [
-    { id: 'av-1', title: 'Traversée de la Chartreuse', date: '12-14 oct. 2026', details: '27.4 km • 3 refuges', gpx: true },
-    { id: 'av-2', title: 'Arêtes du Charmant Som', date: '28 sept. 2026', details: '14.2 km • 1 jour', gpx: false },
-    { id: 'av-3', title: 'Bivouac au lac Achard', date: '15 sept. 2026', details: '18.6 km • 2 jours', gpx: true }
-  ];
-
-  // Load User Profile on Mount
   useEffect(() => {
     async function loadUser() {
       try {
@@ -84,7 +146,6 @@ export default function CreateCarnetView({ onCloseModal }: { onCloseModal?: () =
     loadUser();
   }, []);
 
-  // Field Setters
   const setField = (key: string, value: any) => {
     setForm(prev => ({ ...prev, [key]: value }));
   };
@@ -99,1183 +160,859 @@ export default function CreateCarnetView({ onCloseModal }: { onCloseModal?: () =
     });
   };
 
-  const addCustomTag = () => {
-    if (!form.newTagInput.trim()) return;
-    const tag = form.newTagInput.trim();
-    if (!form.customTags.includes(tag)) {
-      setForm(prev => ({ ...prev, customTags: [...prev.customTags, tag], newTagInput: '' }));
-    }
-  };
-
-  const removeCustomTag = (tag: string) => {
-    setForm(prev => ({ ...prev, customTags: prev.customTags.filter(t => t !== tag) }));
-  };
-
   // Chapter Handlers
   const addChapter = () => {
-    const nextNumIndex = form.chapters.length;
-    const romanNums = ['I', 'II', 'III', 'IV', 'V', 'VI', 'VII', 'VIII'];
+    const nextNum = form.chapters.length + 1;
+    const roman = ['I', 'II', 'III', 'IV', 'V', 'VI', 'VII', 'VIII'][nextNum - 1] || `${nextNum}`;
     const newCh: ChapterItem = {
       id: `ch-${Date.now()}`,
-      num: romanNums[nextNumIndex] || `${nextNumIndex + 1}`,
-      title: `Chapitre ${nextNumIndex + 1}`,
-      wordCount: 0,
-      photoCount: 0,
-      status: 'À écrire',
+      num: roman,
+      title: `Étape ${nextNum}`,
+      lieu_depart: '',
+      lieu_arrivee: '',
+      distance_km: 10,
+      denivele_m: 500,
+      meteo: 'Ensoleillé · 15°C',
+      hebergement_nom: '',
+      hebergement_type: 'Bivouac',
       content: ''
     };
     setForm(prev => ({ ...prev, chapters: [...prev.chapters, newCh] }));
   };
 
   const removeChapter = (id: string) => {
-    const romanNums = ['I', 'II', 'III', 'IV', 'V', 'VI', 'VII', 'VIII'];
-    setForm(prev => {
-      const filtered = prev.chapters.filter(ch => ch.id !== id);
-      const reindexed = filtered.map((ch, idx) => ({ ...ch, num: romanNums[idx] || `${idx + 1}` }));
-      return { ...prev, chapters: reindexed };
-    });
+    if (form.chapters.length <= 1) return;
+    setForm(prev => ({ ...prev, chapters: prev.chapters.filter(c => c.id !== id) }));
   };
 
-  const startEditChapter = (ch: ChapterItem) => {
-    setEditingChapterId(ch.id);
-    setEditChapterTitle(ch.title);
-    setEditChapterStatus(ch.status);
-    setEditChapterWords(ch.wordCount);
-    setEditChapterPhotos(ch.photoCount);
-    setEditChapterContent(ch.content || '');
+  // Moment Handlers
+  const addMoment = () => {
+    const newMoment: CarnetMoment = {
+      id: `m-${Date.now()}`,
+      label: `JOUR ${form.moments.length + 1} · 14H00`,
+      citation: '« Un instant suspendu face aux crêtes... »',
+      author: user?.user_metadata?.full_name?.split(' ')[0] || 'Voyageur',
+      location: form.destination || 'Massif',
+      imageUrl: 'https://images.unsplash.com/photo-1464822759023-fed622ff2c3b?q=80&w=800'
+    };
+    setForm(prev => ({ ...prev, moments: [...prev.moments, newMoment] }));
   };
 
-  const saveChapterChanges = () => {
-    if (!editingChapterId) return;
-    setForm(prev => ({
-      ...prev,
-      chapters: prev.chapters.map(ch => ch.id === editingChapterId ? {
-        ...ch,
-        title: editChapterTitle,
-        status: editChapterStatus,
-        wordCount: editChapterWords,
-        photoCount: editChapterPhotos,
-        content: editChapterContent
-      } : ch)
-    }));
-    setEditingChapterId(null);
+  const removeMoment = (id: string) => {
+    setForm(prev => ({ ...prev, moments: prev.moments.filter(m => m.id !== id) }));
   };
 
-  // Total Words
-  const totalWords = React.useMemo(() => {
-    return form.chapters.reduce((acc, ch) => acc + ch.wordCount, 0);
-  }, [form.chapters]);
+  // Kit Items Handlers
+  const addKitItem = () => {
+    const newItem: CarnetKitItem = {
+      id: `k-${Date.now()}`,
+      name: 'Nouvel équipement',
+      detail: 'Détail technique',
+      weight: '300 g',
+      color: '#17402C'
+    };
+    setForm(prev => ({ ...prev, kitItems: [...prev.kitItems, newItem] }));
+  };
 
-  // Progress Score Calculation
-  const completionScore = React.useMemo(() => {
-    let score = 0;
-    if (form.title) score += 20;
-    if (form.coverImage) score += 15;
-    if (form.linkedAdventureId) score += 15;
-    if (form.chapters.length >= 2) score += 20;
-    if (form.selectedThemes.length >= 2) score += 15;
-    if (form.chapeau) score += 15;
-    return Math.min(100, score);
-  }, [form]);
+  const removeKitItem = (id: string) => {
+    setForm(prev => ({ ...prev, kitItems: prev.kitItems.filter(k => k.id !== id) }));
+  };
 
-  // Submit Carnet to Supabase
-  const handlePublish = async (isDraft = false) => {
-    if (!form.title.trim()) {
-      alert("Veuillez indiquer au moins un titre pour votre carnet.");
-      return;
-    }
-
+  const handlePublish = async () => {
     setSaving(true);
-    setSaveSuccess(false);
-
     try {
       const supabase = createClient();
-      const { data: { user: currentUser } } = await supabase.auth.getUser();
-      const authorId = currentUser?.id;
-
       const payload = {
         title: form.title,
-        destination: form.subtitle || 'Alpes',
+        destination: form.destination,
         description: form.chapeau,
         cover_image: form.coverImage,
-        cover_image_alt: form.title,
-        tags: [...form.selectedThemes],
-        visibility: form.visibility === 'private' ? 'private' : form.visibility === 'subscribers' ? 'friends' : 'public',
-        is_collaborative: false,
-        author_id: authorId || null,
-        likes_count: 0,
-        comments_count: 0,
-        favorites_count: 0,
-        views_count: 0,
-        verified: false,
+        distance_km: form.distance_km,
+        elevation_m: form.elevation_m,
+        tags: [...form.selectedThemes, ...form.customTags],
+        author_id: user?.id,
+        created_at: new Date().toISOString()
       };
 
-      const { data: newCarnet, error } = await supabase
-        .from('carnets')
-        .insert(payload)
-        .select('id')
-        .single();
+      const { data, error } = await supabase.from('carnets').insert([payload]).select().single();
+      const carnetId = data?.id || `carnet-${Date.now()}`;
 
-      if (error) {
-        alert("Impossible de publier le carnet : " + (error.message || 'erreur serveur'));
-        setSaving(false);
-        return;
-      }
-
-      // Trigger reward
-      try {
-        await fetch('/api/rewards/claim', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            action_type: 'carnet',
-            target_id: newCarnet.id,
-            target_type: 'carnet',
-            metadata: { title: form.title, description: form.chapeau }
-          })
-        });
-      } catch (rewardsErr) {
-        console.warn('Rewards claim error:', rewardsErr);
-      }
+      // Local storage backup
+      const local = JSON.parse(localStorage.getItem('user_carnets_data') || '[]');
+      const fullCarnet = {
+        id: carnetId,
+        ...payload,
+        jours: form.chapters.map((c, i) => ({
+          id: c.id,
+          dayNumber: i + 1,
+          label: `JOUR ${i + 1}`,
+          title: c.title,
+          titleItalic: c.lieu_arrivee || '',
+          recit: c.content,
+          stats: [
+            { icon: '📏', label: `${c.distance_km || 10} km` },
+            { icon: '⛰', label: `${c.denivele_m || 500} m D+` },
+            { icon: '☀️', label: c.meteo || '' }
+          ]
+        })),
+        moments: form.moments,
+        kit: {
+          intro: form.kitIntro,
+          totalWeight: '4.8 kg',
+          items: form.kitItems
+        }
+      };
+      localStorage.setItem('user_carnets_data', JSON.stringify([fullCarnet, ...local]));
 
       setSaveSuccess(true);
-
-      // Persist to localStorage for instant local reflection in community feed & user profile
-      try {
-        const existing = JSON.parse(localStorage.getItem('user_carnets_data') || '[]');
-        const localRecord = newCarnet ? { ...payload, id: newCarnet.id } : { ...payload, id: `local-${Date.now()}` };
-        localStorage.setItem('user_carnets_data', JSON.stringify([localRecord, ...existing]));
-        window.dispatchEvent(new Event('carnet_created'));
-      } catch (e) {
-        console.error(e);
-      }
-
       setTimeout(() => {
-        setSaveSuccess(false);
-        if (onCloseModal) {
-          onCloseModal();
-        } else if (newCarnet?.id) {
-          router.push(`/carnets/${newCarnet.id}`);
-        } else {
-          router.push('/carnets');
-        }
+        router.push(`/carnets/${carnetId}`);
       }, 800);
-    } catch (err) {
-      console.error("Error creating carnet:", err);
-      alert("Une erreur est survenue lors de la création du carnet.");
+    } catch (e) {
+      console.error(e);
+      router.push('/carnets');
     } finally {
       setSaving(false);
     }
   };
 
-  const selectedAdventure = linkedAdventuresList.find(a => a.id === form.linkedAdventureId);
+  const STEPS = [
+    { id: 'general' as const, label: 'Général & Métriques', short: '01', desc: 'Titre, dates & stats' },
+    { id: 'etapes' as const, label: 'Étapes & Récit', short: '02', desc: `${form.chapters.length} étapes rédigées` },
+    { id: 'moments' as const, label: 'Moments & Photos', short: '03', desc: `${form.moments.length} anecdotes` },
+    { id: 'sac' as const, label: 'Dans le sac', short: '04', desc: `${form.kitItems.length} indispensables` },
+    { id: 'tags' as const, label: 'Thèmes & Publication', short: '05', desc: 'Mots-clés & Visibilité' },
+  ];
 
   return (
-    <>
-      {/* ── DESKTOP ── */}
-      <div className="hidden md:block">
-        <div className="min-h-screen bg-[#F5F2E8] font-sans text-[#1C2620] pb-28">
-      
-      {/* 1. TOP STICKY NAVBAR */}
-      <header className="sticky top-0 z-40 bg-white/90 backdrop-blur-md border-b border-[#E8E4D8] px-4 sm:px-8 py-3 flex items-center justify-between shadow-sm">
-        <div className="flex items-center gap-3">
-          <Link href="/communaute" className="flex items-center gap-2 text-xs font-semibold text-[#5C6B5E] hover:text-[#1C2620] transition-colors">
-            <Icon name="ArrowLeftIcon" size={16} />
-            <span>Communauté</span>
-          </Link>
-          <span className="text-[#E8E4D8]">|</span>
-          <span className="text-xs font-bold text-[#1C2620] uppercase tracking-wider">Nouveau carnet</span>
-        </div>
+    <div className="h-[100dvh] max-h-[100dvh] overflow-hidden bg-transparent font-sans text-[#17402C] relative flex flex-col">
+      <CompteBackground />
+      <Header />
 
-        <div className="flex items-center gap-3">
-          <button
-            onClick={() => setPreviewModalOpen(true)}
-            className="px-4 py-2 rounded-full text-xs font-bold text-[#2D5A3D] bg-[#EAF0EB] border border-[#2D5A3D]/20 hover:bg-[#2D5A3D] hover:text-white transition-colors flex items-center gap-1.5"
-          >
-            <Icon name="EyeIcon" size={14} />
-            <span>Aperçu lecteur</span>
-          </button>
+      <main className="flex-1 min-h-0 overflow-hidden w-full max-w-[1440px] mx-auto px-4 sm:px-6 lg:px-8 pt-24 pb-4 flex gap-5">
+        {/* COLONNE GAUCHE (Nav & Stepper) - 230px */}
+        <aside className="w-[230px] shrink-0 h-full overflow-y-auto custom-scrollbar flex flex-col gap-3">
+          <CommunityHubNav layoutVariant="vertical" activeTab="carnets" />
 
-          <button
-            onClick={() => handlePublish(true)}
-            disabled={saving}
-            className="px-4 py-2 rounded-full text-xs font-semibold text-[#5C6B5E] border border-[#E8E4D8] hover:bg-[#F5F2E8] hover:text-[#1C2620] transition-colors"
-          >
-            Sauvegarder
-          </button>
-
-          <button
-            onClick={() => handlePublish(false)}
-            disabled={saving || !form.title.trim()}
-            className="px-5 py-2 bg-[#2D5A3D] hover:bg-[#1C2620] text-white rounded-full text-xs font-bold shadow-md transition-all flex items-center gap-1.5 disabled:opacity-50"
-          >
-            <span>{saving ? 'Publication...' : saveSuccess ? '✓ Publié !' : 'Publier'}</span>
-          </button>
-        </div>
-      </header>
-
-      {/* 2. HERO TITLE SECTION */}
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-8 pb-6">
-        <div className="text-[10px] font-mono tracking-widest text-[#5C6B5E] uppercase font-bold mb-2">
-          — NOUVEAU CARNET DE VOYAGE
-        </div>
-        <h1 className="font-display font-800 text-3xl sm:text-5xl text-[#1C2620] tracking-tight mb-3">
-          Un récit, <br className="hidden sm:inline" />
-          <em className="font-serif italic font-normal text-[#2D5A3D]">pas un rapport.</em>
-        </h1>
-        <p className="text-xs sm:text-sm text-[#5C6B5E] max-w-2xl leading-relaxed">
-          Un carnet, c'est du temps rendu visible : les images, les silences qui restent, et ce que la trace n'a pas su enregistrer.
-        </p>
-      </div>
-
-      {/* 3. MAIN FORM & SIDEBAR GRID */}
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
-        
-        {/* LEFT COLUMN: FORM SECTIONS (8 COLS) */}
-        <div className="lg:col-span-8 space-y-8">
-          
-          {/* ─── SECTION 01: COUVERTURE & TITRE ──────────────────────── */}
-          <div className="bg-white rounded-[0.75rem] p-6 sm:p-8 border border-[#E8E4D8] shadow-sm space-y-6 active:scale-[0.98] active:opacity-95 transition-all duration-150 cursor-pointer">
-            <div className="flex items-center justify-between pb-4 border-b border-[#F5F2E8]">
-              <div>
-                <h2 className="font-display font-800 text-xl text-[#1C2620]">Couverture & titre</h2>
-                <p className="text-xs text-[#5C6B5E] mt-0.5">Une image forte, un titre en un mot ou en trois. C'est ce que la communauté verra sur le fil de la maison.</p>
-              </div>
-              <span className="text-[10px] font-mono font-bold tracking-widest uppercase bg-[#F5F2E8] px-2.5 py-1 rounded-full text-[#5C6B5E]">
-                01 · VISUEL & CARTE
-              </span>
+          <nav className="w-full glass p-1.5 rounded-2xl flex flex-col gap-1">
+            <div className="px-2 py-0.5 flex items-center justify-between border-b border-[#17402C]/10 mb-0.5">
+              <span className="text-[9px] font-mono font-bold uppercase tracking-widest text-[#5C6B5E]">Création Carnet</span>
+              <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
             </div>
 
-            {/* Cover Image Live Showcase Card */}
-            <div className="relative rounded-2xl overflow-hidden min-h-[220px] sm:min-h-[280px] bg-[#1C2620] text-white p-6 flex flex-col justify-end group shadow-lg">
-              <img src={form.coverImage} alt="Couverture" className="absolute inset-0 w-full h-full object-cover group-hover:scale-105 transition-transform duration-700 opacity-90" />
-              <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/30 to-black/10" />
-              
-              <div className="absolute top-4 left-4">
-                <span className="bg-white/20 backdrop-blur-md px-3 py-1 rounded-full text-[10px] font-mono uppercase tracking-widest text-white border border-white/20 font-bold">
-                  APERÇU · COUVERTURE
-                </span>
-              </div>
-
-              <div className="absolute top-4 right-4 flex gap-2">
-                <label className="px-3 py-1.5 bg-white/90 hover:bg-white text-[#1C2620] text-xs font-bold rounded-full shadow-md cursor-pointer transition-colors flex items-center gap-1">
-                  <Icon name="CameraIcon" size={14} /> Changer
-                  <input type="file" accept="image/*" className="hidden" onChange={(e) => {
-                    if (e.target.files?.[0]) {
-                      setField('coverImage', URL.createObjectURL(e.target.files[0]));
-                    }
-                  }} />
-                </label>
-                <button 
-                  onClick={() => setField('coverImage', 'https://images.unsplash.com/photo-1464822759023-fed622ff2c3b?q=80&w=1200')}
-                  className="px-3 py-1.5 bg-black/60 hover:bg-black/80 text-white text-xs font-semibold rounded-full backdrop-blur-md transition-colors"
+            {STEPS.map((st) => {
+              const isActive = activeStep === st.id;
+              return (
+                <button
+                  key={st.id}
+                  onClick={() => setActiveStep(st.id)}
+                  className={`flex items-center gap-2.5 px-3 py-2 rounded-xl text-xs font-semibold select-none transition-all cursor-pointer ${
+                    isActive
+                      ? 'bg-gradient-to-r from-white/95 to-white/75 text-[#17402C] font-bold border border-white/80'
+                      : 'text-[#5C6B5E] hover:bg-white/40 hover:text-[#17402C]'
+                  }`}
                 >
-                  Masquer
-                </button>
-              </div>
-
-              <div className="relative z-10 space-y-1 max-w-xl">
-                <h3 className="font-display font-800 text-2xl sm:text-4xl text-white tracking-tight">
-                  {form.title || 'Titre de votre carnet'}
-                </h3>
-                <p className="text-xs sm:text-sm text-white/80 font-mono">
-                  {form.subtitle || 'Lieu • Saison • Format'}
-                </p>
-              </div>
-            </div>
-
-            {/* Inputs */}
-            <div className="space-y-4 pt-2">
-              <div>
-                <label className="text-[10px] font-mono tracking-widest uppercase text-[#5C6B5E] block mb-1">Titre du carnet *</label>
-                <input
-                  type="text"
-                  value={form.title}
-                  onChange={e => setField('title', e.target.value)}
-                  placeholder="Ex: Trois jours sur les crêtes"
-                  className="w-full bg-[#F5F2E8] border-none rounded-2xl px-4 py-3 text-sm text-[#1C2620] font-bold focus:ring-1 focus:ring-[#2D5A3D]"
-                />
-              </div>
-
-              <div>
-                <label className="text-[10px] font-mono tracking-widest uppercase text-[#5C6B5E] block mb-1">Sous-titre (Contexte / Lieu)</label>
-                <input
-                  type="text"
-                  value={form.subtitle}
-                  onChange={e => setField('subtitle', e.target.value)}
-                  placeholder="Ex: Chartreuse · octobre 2026 · 27 km à deux"
-                  className="w-full bg-[#F5F2E8] border-none rounded-2xl px-4 py-3 text-xs text-[#1C2620] font-semibold focus:ring-1 focus:ring-[#2D5A3D]"
-                />
-              </div>
-
-              <div>
-                <div className="flex items-center justify-between mb-1">
-                  <label className="text-[10px] font-mono tracking-widest uppercase text-[#5C6B5E] block">Chapeau (Introduction courte)</label>
-                  <span className="text-[10px] font-mono text-[#5C6B5E]">{form.chapeau.length} / 300</span>
-                </div>
-                <textarea
-                  rows={3}
-                  maxLength={300}
-                  value={form.chapeau}
-                  onChange={e => setField('chapeau', e.target.value)}
-                  placeholder="Deux ou trois phrases qui donnent le ton de la lecture..."
-                  className="w-full bg-[#F5F2E8] border-none rounded-2xl p-4 text-xs text-[#1C2620] font-serif italic leading-relaxed resize-none focus:ring-1 focus:ring-[#2D5A3D]"
-                />
-              </div>
-            </div>
-          </div>
-
-
-          {/* ─── SECTION 02: AVENTURE ASSOCIÉE ─────────────────────── */}
-          <div className="bg-white rounded-[0.75rem] p-6 sm:p-8 border border-[#E8E4D8] shadow-sm space-y-6 active:scale-[0.98] active:opacity-95 transition-all duration-150 cursor-pointer">
-            <div className="flex items-center justify-between pb-4 border-b border-[#F5F2E8]">
-              <div>
-                <h2 className="font-display font-800 text-xl text-[#1C2620]">Aventure associée</h2>
-                <p className="text-xs text-[#5C6B5E] mt-0.5">Le carnet peut être rattaché à une aventure enregistrée : les traces GPX, les dates et les participants s'afficheront sous votre récit.</p>
-              </div>
-              <span className="text-[10px] font-mono font-bold tracking-widest uppercase bg-[#F5F2E8] px-2.5 py-1 rounded-full text-[#5C6B5E]">
-                02 · SOURCING
-              </span>
-            </div>
-
-            <div className="space-y-3">
-              {linkedAdventuresList.map(adv => {
-                const isSelected = form.linkedAdventureId === adv.id;
-                return (
-                  <div
-                    key={adv.id}
-                    onClick={() => setField('linkedAdventureId', isSelected ? null : adv.id)}
-                    className={`p-4 rounded-2xl border transition-all cursor-pointer flex items-center justify-between gap-4 ${
-                      isSelected 
-                        ? 'bg-[#EAF0EB] border-[#2D5A3D] shadow-sm' 
-                        : 'bg-[#F5F2E8] border-transparent hover:border-[#E8E4D8]'
-                    }`}
-                  >
-                    <div className="flex items-center gap-3">
-                      <div className="w-10 h-10 rounded-xl bg-[#2D5A3D] text-white flex items-center justify-center font-bold text-sm shrink-0">
-                        🏔️
-                      </div>
-                      <div>
-                        <h4 className="font-bold text-xs text-[#1C2620]">{adv.title}</h4>
-                        <p className="text-[10px] text-[#5C6B5E] font-mono mt-0.5">{adv.date} • {adv.details}</p>
-                      </div>
-                    </div>
-
-                    <button
-                      type="button"
-                      className={`px-3.5 py-1.5 rounded-full text-xs font-bold transition-all ${
-                        isSelected 
-                          ? 'bg-[#2D5A3D] text-white' 
-                          : 'bg-white text-[#5C6B5E] border border-[#E8E4D8]'
-                      }`}
-                    >
-                      {isSelected ? '✓ Associée' : 'Associer'}
-                    </button>
-                  </div>
-                );
-              })}
-
-              <button
-                type="button"
-                onClick={() => setField('linkedAdventureId', null)}
-                className="w-full py-3 rounded-2xl border border-dashed border-[#E8E4D8] hover:border-[#2D5A3D] text-xs font-semibold text-[#5C6B5E] hover:text-[#1C2620] transition-colors text-center"
-              >
-                + Créer un carnet sans aventure liée
-              </button>
-            </div>
-          </div>
-
-
-          {/* ─── SECTION 03: STYLE DE LECTURE ───────────────────────── */}
-          <div className="bg-white rounded-[0.75rem] p-6 sm:p-8 border border-[#E8E4D8] shadow-sm space-y-6 active:scale-[0.98] active:opacity-95 transition-all duration-150 cursor-pointer">
-            <div className="flex items-center justify-between pb-4 border-b border-[#F5F2E8]">
-              <div>
-                <h2 className="font-display font-800 text-xl text-[#1C2620]">Style de lecture</h2>
-                <p className="text-xs text-[#5C6B5E] mt-0.5">Lisez la typographie de votre texte "Chapeau" pour un carnet d'origine. "Paper Page" pour un récit plus documentaire.</p>
-              </div>
-              <span className="text-[10px] font-mono font-bold tracking-widest uppercase bg-[#F5F2E8] px-2.5 py-1 rounded-full text-[#5C6B5E]">
-                03 · PRÉFÉRENCE
-              </span>
-            </div>
-
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-              {[
-                { id: 'journal', name: 'Journal', font: 'Sans + Serif italique', preview: 'Aa Aa' },
-                { id: 'paper', name: 'Paper Page', font: 'Texte documentaire', preview: 'Aa' },
-                { id: 'recit', name: 'Récit', font: 'Typographique', preview: 'Aa' }
-              ].map(style => {
-                const isActive = form.readingStyle === style.id;
-                return (
-                  <button
-                    key={style.id}
-                    type="button"
-                    onClick={() => setField('readingStyle', style.id)}
-                    className={`p-5 rounded-2xl border transition-all text-center flex flex-col justify-between min-h-[120px] ${
-                      isActive 
-                        ? 'bg-[#EAF0EB] border-[#2D5A3D] shadow-md ring-1 ring-[#2D5A3D]' 
-                        : 'bg-[#F5F2E8] border-transparent hover:bg-[#E8E4D8]'
-                    }`}
-                  >
-                    <div className={`text-2xl font-bold mb-2 ${style.id === 'journal' ? 'font-serif italic' : style.id === 'paper' ? 'font-mono' : 'font-display'}`}>
-                      {style.preview}
-                    </div>
-                    <div>
-                      <div className="font-bold text-xs text-[#1C2620]">{style.name}</div>
-                      <div className="text-[10px] text-[#5C6B5E] font-mono mt-0.5">{style.font}</div>
-                    </div>
-                  </button>
-                );
-              })}
-            </div>
-          </div>
-
-
-          {/* ─── SECTION 04: L'ÉTAPE PAR ÉTAPE (CHAPITRES) ──────────── */}
-          <div className="bg-white rounded-[0.75rem] p-6 sm:p-8 border border-[#E8E4D8] shadow-sm space-y-6 active:scale-[0.98] active:opacity-95 transition-all duration-150 cursor-pointer">
-            <div className="flex items-center justify-between pb-4 border-b border-[#F5F2E8]">
-              <div>
-                <h2 className="font-display font-800 text-xl text-[#1C2620]">L'Étape par Étape</h2>
-                <p className="text-xs text-[#5C6B5E] mt-0.5">Découpez votre récit en 3 à 5 chapitres. Chacun aura sa propre image et pourra être publié séparément.</p>
-              </div>
-              <span className="text-[10px] font-mono font-bold tracking-widest uppercase bg-[#F5F2E8] px-2.5 py-1 rounded-full text-[#5C6B5E]">
-                04 · STRUCTURE
-              </span>
-            </div>
-
-            <div className="space-y-3">
-              {form.chapters.map((ch) => (
-                <div key={ch.id} className="bg-[#F5F2E8] p-4 rounded-2xl flex items-center justify-between gap-4 border border-[#E8E4D8] hover:border-[#2D5A3D] transition-all">
-                  <div className="flex items-center gap-4 min-w-0 flex-1">
-                    <span className="font-serif font-bold text-lg text-[#2D5A3D] w-6 text-center shrink-0">{ch.num}</span>
-                    <div className="min-w-0 flex-1">
-                      <input
-                        type="text"
-                        value={ch.title}
-                        onChange={e => {
-                          const val = e.target.value;
-                          setForm(prev => ({
-                            ...prev,
-                            chapters: prev.chapters.map(c => c.id === ch.id ? { ...c, title: val } : c)
-                          }));
-                        }}
-                        className="bg-transparent border-none text-xs font-bold text-[#1C2620] focus:ring-0 p-0 w-full"
-                      />
-                      <p className="text-[10px] text-[#5C6B5E] font-mono mt-0.5">
-                        {ch.wordCount} mots • {ch.photoCount} photos • <span className={`font-bold ${ch.status === 'Rédigé' ? 'text-[#2D5A3D]' : ch.status === 'En cours' ? 'text-amber-600' : 'text-gray-400'}`}>{ch.status}</span>
-                      </p>
-                    </div>
-                  </div>
-
-                  <div className="flex items-center gap-2 shrink-0">
-                    <button 
-                      type="button" 
-                      onClick={() => startEditChapter(ch)}
-                      className="px-3 py-1 bg-white hover:bg-[#2D5A3D] text-[#1C2620] hover:text-white rounded-full text-xs font-bold transition-all border border-[#E8E4D8]"
-                    >
-                      ✏️ Éditer
-                    </button>
-                    <button type="button" onClick={() => removeChapter(ch.id)} className="p-1.5 text-[#5C6B5E] hover:text-red-500 transition-colors">
-                      <Icon name="TrashIcon" size={14} />
-                    </button>
-                  </div>
-                </div>
-              ))}
-
-              <button
-                type="button"
-                onClick={addChapter}
-                className="w-full py-3 rounded-2xl bg-[#EAF0EB] text-[#2D5A3D] text-xs font-bold hover:bg-[#2D5A3D] hover:text-white transition-colors text-center shadow-sm"
-              >
-                + Ajouter un chapitre
-              </button>
-            </div>
-          </div>
-
-
-          {/* ─── SECTION 05: MOTS-CLÉS & CLASSEMENT ──────────────────── */}
-          <div className="bg-white rounded-[0.75rem] p-6 sm:p-8 border border-[#E8E4D8] shadow-sm space-y-6 active:scale-[0.98] active:opacity-95 transition-all duration-150 cursor-pointer">
-            <div className="flex items-center justify-between pb-4 border-b border-[#F5F2E8]">
-              <div>
-                <h2 className="font-display font-800 text-xl text-[#1C2620]">Mots-clés & classement</h2>
-                <p className="text-xs text-[#5C6B5E] mt-0.5">Les tags permettent de facilement retrouver vos carnets dans le journal de la communauté.</p>
-              </div>
-              <span className="text-[10px] font-mono font-bold tracking-widest uppercase bg-[#F5F2E8] px-2.5 py-1 rounded-full text-[#5C6B5E]">
-                05 · RÉFÉRENCEMENT
-              </span>
-            </div>
-
-            <div>
-              <label className="text-[10px] font-mono tracking-widest uppercase text-[#5C6B5E] block mb-2">Thématiques</label>
-              <div className="flex flex-wrap gap-2">
-                {availableThemes.map(theme => {
-                  const isSelected = form.selectedThemes.includes(theme);
-                  return (
-                    <button
-                      key={theme}
-                      type="button"
-                      onClick={() => toggleTheme(theme)}
-                      className={`px-3 py-1.5 rounded-full text-xs font-semibold transition-all ${
-                        isSelected 
-                          ? 'bg-[#2D5A3D] text-white shadow-sm' 
-                          : 'bg-[#F5F2E8] text-[#5C6B5E] hover:bg-[#E8E4D8] hover:text-[#1C2620]'
-                      }`}
-                    >
-                      {isSelected ? `✓ ${theme}` : theme}
-                    </button>
-                  );
-                })}
-              </div>
-            </div>
-
-            <div>
-              <label className="text-[10px] font-mono tracking-widest uppercase text-[#5C6B5E] block mb-2">Tags libres</label>
-              <div className="flex flex-wrap items-center gap-2 bg-[#F5F2E8] p-3 rounded-2xl border border-[#E8E4D8]">
-                {form.customTags.map(tag => (
-                  <span key={tag} className="bg-[#2D5A3D] text-white px-3 py-1 rounded-full text-xs font-bold flex items-center gap-1.5">
-                    <span>{tag}</span>
-                    <button type="button" onClick={() => removeCustomTag(tag)} className="hover:text-red-300">✕</button>
+                  <span className={`font-mono text-[10px] font-bold px-1.5 py-0.5 rounded ${isActive ? 'bg-[#17402C] text-white' : 'bg-black/5 text-[#5C6B5E]'}`}>
+                    {st.short}
                   </span>
-                ))}
+                  <div className="flex-1 text-left min-w-0">
+                    <div className="truncate font-bold">{st.label}</div>
+                    <div className="text-[9px] text-[#5C6B5E]/80 truncate">{st.desc}</div>
+                  </div>
+                </button>
+              );
+            })}
+          </nav>
+        </aside>
 
-                <div className="flex items-center gap-2 flex-1 min-w-[140px]">
+        {/* COLONNE CENTRALE (Formulaire dynamique par étape) */}
+        <div className="flex-1 min-w-0 h-full overflow-y-auto custom-scrollbar pr-2 space-y-4">
+          {/* Breadcrumbs */}
+          <div className="flex items-center gap-2 text-xs font-medium text-[#5C6B5E]">
+            <Link href="/communaute" className="hover:text-[#17402C] transition-colors">Communauté</Link>
+            <Icon name="ChevronRightIcon" size={12} className="text-[#5C6B5E]" />
+            <Link href="/carnets" className="hover:text-[#17402C] transition-colors">Carnets</Link>
+            <Icon name="ChevronRightIcon" size={12} className="text-[#5C6B5E]" />
+            <span className="text-[#17402C] font-semibold">Publier un carnet de voyage</span>
+          </div>
+
+          {/* ÉTAPE 1: GÉNÉRAL & MÉTRIQUES */}
+          {activeStep === 'general' && (
+            <div className="glass rounded-2xl p-6 space-y-5">
+              <div className="flex items-center justify-between pb-3 border-b border-[#17402C]/10">
+                <div>
+                  <h2 className="font-display font-bold text-lg text-[#17402C]">Informations Générales &amp; Métriques</h2>
+                  <p className="text-xs text-[#5C6B5E]">Posez les bases de votre expédition : destination, dates, météo et statistiques.</p>
+                </div>
+                <span className="glass-pill text-[9px] font-mono font-bold">01 · INFOS</span>
+              </div>
+
+              <div className="space-y-4">
+                <div>
+                  <label className="block text-xs font-bold text-[#17402C] mb-1">Titre du carnet *</label>
                   <input
                     type="text"
-                    value={form.newTagInput}
-                    onChange={e => setField('newTagInput', e.target.value)}
-                    onKeyDown={e => e.key === 'Enter' && (e.preventDefault(), addCustomTag())}
-                    placeholder="Ajouter un tag..."
-                    className="bg-transparent border-none text-xs text-[#1C2620] focus:ring-0 p-1 w-full"
+                    value={form.title}
+                    onChange={(e) => setField('title', e.target.value)}
+                    placeholder="Ex : Traversée des crêtes en Chartreuse"
+                    className="w-full bg-white/90 border border-[#17402C]/15 rounded-xl px-3.5 py-2.5 text-sm font-bold text-[#17402C] focus:outline-none focus:ring-2 focus:ring-[#17402C]/20"
                   />
-                  <button type="button" onClick={addCustomTag} className="px-2.5 py-1 bg-[#1C2620] text-white text-[10px] font-bold rounded-full">
-                    + Add
-                  </button>
                 </div>
-              </div>
-            </div>
-          </div>
 
-
-          {/* ─── SECTION 06: DIFFUSION & AUDIENCE ───────────────────── */}
-          <div className="bg-white rounded-[0.75rem] p-6 sm:p-8 border border-[#E8E4D8] shadow-sm space-y-6 active:scale-[0.98] active:opacity-95 transition-all duration-150 cursor-pointer">
-            <div className="flex items-center justify-between pb-4 border-b border-[#F5F2E8]">
-              <div>
-                <h2 className="font-display font-800 text-xl text-[#1C2620]">Diffusion & audience</h2>
-                <p className="text-xs text-[#5C6B5E] mt-0.5">Vous pouvez publier maintenant, planifier une date ou garder ce carnet en brouillon.</p>
-              </div>
-              <span className="text-[10px] font-mono font-bold tracking-widest uppercase bg-[#F5F2E8] px-2.5 py-1 rounded-full text-[#5C6B5E]">
-                06 · PUBLICATION
-              </span>
-            </div>
-
-            {/* Timing selection */}
-            <div>
-              <label className="text-[10px] font-mono tracking-widest uppercase text-[#5C6B5E] block mb-2">Quand publier ?</label>
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-                {[
-                  { id: 'brouillon', label: '⭕ Enregistrer en brouillon' },
-                  { id: 'now', label: '✓ Publier maintenant' },
-                  { id: 'planifie', label: '📅 Planifier' }
-                ].map(t => (
-                  <button
-                    key={t.id}
-                    type="button"
-                    onClick={() => setField('publishTiming', t.id)}
-                    className={`py-3 px-4 rounded-2xl text-xs font-bold border transition-all text-center ${
-                      form.publishTiming === t.id 
-                        ? 'bg-[#2D5A3D] text-white border-[#2D5A3D] shadow-sm' 
-                        : 'bg-[#F5F2E8] text-[#5C6B5E] border-transparent hover:bg-[#E8E4D8]'
-                    }`}
-                  >
-                    {t.label}
-                  </button>
-                ))}
-              </div>
-            </div>
-
-            {/* Visibility choice cards */}
-            <div>
-              <label className="text-[10px] font-mono tracking-widest uppercase text-[#5C6B5E] block mb-2">Accès au carnet</label>
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-                {[
-                  { id: 'public', title: '🌐 Journal public', desc: 'Visible par toute la communauté' },
-                  { id: 'subscribers', title: '🔒 Abonnés uniquement', desc: 'Seuls vos abonnés peuvent lire' },
-                  { id: 'private', title: '🔒 Privé (Moi seul)', desc: 'Contenu et journal personnel' }
-                ].map(item => {
-                  const isActive = form.visibility === item.id;
-                  return (
-                    <button
-                      key={item.id}
-                      type="button"
-                      onClick={() => setField('visibility', item.id)}
-                      className={`p-4 rounded-2xl border text-left transition-all ${
-                        isActive 
-                          ? 'bg-[#EAF0EB] border-[#2D5A3D] shadow-sm ring-1 ring-[#2D5A3D]' 
-                          : 'bg-[#F5F2E8] border-transparent hover:bg-[#E8E4D8]'
-                      }`}
-                    >
-                      <div className="font-bold text-xs text-[#1C2620]">{item.title}</div>
-                      <div className="text-[10px] text-[#5C6B5E] mt-0.5">{item.desc}</div>
-                    </button>
-                  );
-                })}
-              </div>
-            </div>
-
-            {/* Toggles */}
-            <div className="space-y-3 pt-2">
-              {[
-                { key: 'allowComments', title: 'Autoriser les commentaires', desc: 'Les lecteurs peuvent laisser des messages sous chaque chapitre.' },
-                { key: 'recommendToReaders', title: 'Recommander aux nouveaux lecteurs', desc: 'Ce carnet peut apparaître dans la section "À ne pas manquer".' },
-                { key: 'allowPdfDownload', title: 'Autoriser le téléchargement PDF', desc: 'Les lecteurs peuvent enregistrer le carnet complet.' }
-              ].map(item => {
-                const val = (form as any)[item.key];
-                return (
-                  <div key={item.key} className="flex items-center justify-between gap-4 py-2 border-b border-[#F5F2E8] last:border-none">
-                    <div>
-                      <h4 className="font-bold text-xs text-[#1C2620]">{item.title}</h4>
-                      <p className="text-[11px] text-[#5C6B5E] mt-0.5">{item.desc}</p>
-                    </div>
-                    <button
-                      type="button"
-                      onClick={() => setField(item.key, !val)}
-                      className={`w-12 h-6 rounded-full transition-colors relative p-1 shrink-0 ${
-                        val ? 'bg-[#2D5A3D]' : 'bg-[#E8E4D8]'
-                      }`}
-                    >
-                      <div className={`w-4 h-4 rounded-full bg-white transition-transform shadow-sm ${
-                        val ? 'translate-x-6' : 'translate-x-0'
-                      }`} />
-                    </button>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  <div>
+                    <label className="block text-xs font-bold text-[#17402C] mb-1">Massif / Destination *</label>
+                    <input
+                      type="text"
+                      value={form.destination}
+                      onChange={(e) => setField('destination', e.target.value)}
+                      placeholder="Ex : Chartreuse · Alpes"
+                      className="w-full bg-white/90 border border-[#17402C]/15 rounded-xl px-3.5 py-2 text-xs text-[#17402C]"
+                    />
                   </div>
-                );
-              })}
-            </div>
-          </div>
-
-        </div>
-
-
-        {/* RIGHT COLUMN: SIDEBAR WIDGETS (4 COLS) */}
-        <div className="lg:col-span-4 space-y-6 sticky top-20">
-          
-          {/* WIDGET 1: CARNET EN BROUILLON (Live Preview) */}
-          <div className="bg-[#1C2620] rounded-[0.75rem] p-6 text-white shadow-xl relative overflow-hidden space-y-4">
-            <div className="text-[9px] font-mono tracking-widest text-[#17402C] uppercase font-bold">CARNET EN BROUILLON</div>
-
-            <div className="relative rounded-2xl overflow-hidden aspect-[16/9]">
-              <img src={form.coverImage} alt="Cover preview" className="w-full h-full object-cover" />
-            </div>
-
-            <div>
-              <h3 className="font-display font-800 text-lg leading-tight">{form.title || 'Titre du carnet'}</h3>
-              <p className="text-[11px] text-white/70 font-mono mt-1">{form.subtitle}</p>
-            </div>
-
-            <div className="flex items-center justify-between text-xs text-white/80 pt-2 border-t border-white/10 font-mono">
-              <span>📖 {form.chapters.length} chapitres</span>
-              <span>💬 0 com.</span>
-            </div>
-
-            <button
-              onClick={() => setPreviewModalOpen(true)}
-              className="w-full py-2.5 rounded-full bg-white/10 hover:bg-white/20 text-white text-xs font-bold transition-all text-center border border-white/10"
-            >
-              👁️ Ouvrir l'aperçu complet
-            </button>
-          </div>
-
-
-          {/* WIDGET 2: RÉDACTION X% */}
-          <div className="bg-white rounded-[0.75rem] p-6 border border-[#E8E4D8] shadow-sm space-y-4 active:scale-[0.98] active:opacity-95 transition-all duration-150 cursor-pointer">
-            <div className="flex items-center justify-between">
-              <h3 className="font-display font-800 text-sm text-[#1C2620]">Rédaction {completionScore}%</h3>
-              <span className="text-xs font-mono font-bold text-[#2D5A3D]">{completionScore}/100</span>
-            </div>
-
-            <div className="w-full bg-[#F5F2E8] h-2.5 rounded-full overflow-hidden">
-              <div className="bg-[#2D5A3D] h-full transition-all duration-500 rounded-full" style={{ width: `${completionScore}%` }} />
-            </div>
-
-            <div className="space-y-2 pt-2">
-              {[
-                { label: 'Couverture + Titre', done: !!form.title && !!form.coverImage },
-                { label: 'Titres d\'étapes', done: form.chapters.length >= 2 },
-                { label: 'Aventure liée', done: !!form.linkedAdventureId },
-                { label: 'Terminer chapitre II', done: true },
-                { label: 'Rédiger chapitre IV', done: false },
-                { label: 'Ajouter 3 photos par chapitre', done: false }
-              ].map(item => (
-                <div key={item.label} className="flex items-center justify-between text-xs">
-                  <span className={item.done ? 'text-[#1C2620] font-medium' : 'text-[#5C6B5E]'}>
-                    {item.done ? '✓ ' : '⭕ '}{item.label}
-                  </span>
-                  <span className="text-[10px] font-mono text-[#5C6B5E]">{item.done ? 'Fait' : 'À faire'}</span>
+                  <div>
+                    <label className="block text-xs font-bold text-[#17402C] mb-1">Photo de couverture (URL)</label>
+                    <input
+                      type="text"
+                      value={form.coverImage}
+                      onChange={(e) => setField('coverImage', e.target.value)}
+                      placeholder="https://images.unsplash.com/..."
+                      className="w-full bg-white/90 border border-[#17402C]/15 rounded-xl px-3.5 py-2 text-xs text-[#17402C]"
+                    />
+                  </div>
                 </div>
-              ))}
-            </div>
-          </div>
 
-
-          {/* WIDGET 3: ASTUCES RÉDACTION */}
-          <div className="bg-[#EAF0EB] rounded-[0.75rem] p-6 text-[#1C2620] space-y-2 border border-[#2D5A3D]/20">
-            <div className="text-[10px] font-mono tracking-widest text-[#2D5A3D] uppercase font-bold">CONSEIL RÉDACTION</div>
-            <h4 className="font-display font-800 text-sm">Une image tous les 300 mots.</h4>
-            <p className="text-xs text-[#4A574C] leading-relaxed">
-              Les carnets qui gardent l'attention alternent texte serré et respiration visuelle. Evitez les galeries en fin de carnet.
-            </p>
-          </div>
-
-        </div>
-
-      </div>
-
-      {/* 4. FLOATING BOTTOM BAR */}
-      <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-50 bg-[#1C2620]/95 backdrop-blur-md text-white px-6 py-3.5 rounded-full shadow-2xl flex items-center gap-6 border border-[#2D5A3D] max-w-xl w-11/12 justify-between">
-        <div className="text-xs text-white/80 hidden sm:flex items-center gap-2 font-mono">
-          <span>⚡</span>
-          <span>Brouillon • {totalWords} mots • Sauvegardé</span>
-        </div>
-
-        <div className="flex items-center gap-3 w-full sm:w-auto justify-end">
-          <button 
-            onClick={() => setPreviewModalOpen(true)} 
-            className="px-4 py-2 text-xs font-semibold text-white/90 hover:text-white transition-colors bg-white/10 hover:bg-white/20 rounded-full"
-          >
-            Aperçu lecteur
-          </button>
-          
-          <button
-            onClick={() => handlePublish(false)}
-            disabled={saving || !form.title.trim()}
-            className="px-6 py-2.5 bg-[#2D5A3D] hover:bg-[#17402C] text-white rounded-full text-xs font-bold shadow-lg transition-all disabled:opacity-50"
-          >
-            {saving ? 'Publication...' : saveSuccess ? '✓ Publié !' : 'Publier le carnet'}
-          </button>
-        </div>
-      </div>
-
-    </div>
-      </div>
-
-      {/* ── MOBILE ── */}
-      <div className="block md:hidden">
-        <MobilePageShell background="#F5F2E8">
-          {/* Sticky header */}
-          <div style={{ position: 'sticky', top: 0, zIndex: 40, background: 'rgba(251,250,246,0.92)', backdropFilter: 'blur(16px) saturate(1.5)', WebkitBackdropFilter: 'blur(16px) saturate(1.5)', borderBottom: '1px solid rgba(11,31,23,0.06)', padding: '10px 16px', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-              <Link href="/communaute" style={{ display: 'flex', alignItems: 'center', gap: '4px', fontSize: '13px', fontWeight: 500, color: '#0B1F17', textDecoration: 'none' }}>
-                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#0B1F17" strokeWidth="1.5"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>
-              </Link>
-              <span style={{ fontSize: '17px', fontWeight: 600, color: '#0B1F17', letterSpacing: '-0.01em' }}>Nouveau carnet</span>
-            </div>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-              <div style={{ background: '#EDF3ED', borderRadius: '999px', padding: '2px 10px', fontSize: '10px', fontFamily: 'ui-monospace, monospace', fontWeight: 600, color: '#17402C' }}>
-                {completionScore}%
-              </div>
-            </div>
-          </div>
-
-          <div style={{ padding: '16px' }}>
-            {/* Cover image */}
-            <div style={{ position: 'relative', borderRadius: '16px', overflow: 'hidden', minHeight: '200px', background: '#0B1F17', marginBottom: '16px' }}>
-              <img src={form.coverImage} alt="Couverture" style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover', opacity: 0.9 }} />
-              <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(to top, rgba(11,31,23,0.8), rgba(11,31,23,0.2))' }} />
-              <div style={{ position: 'absolute', bottom: '12px', left: '12px', right: '12px', display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end' }}>
-                <div style={{ color: '#fff', fontSize: '20px', fontWeight: 700, letterSpacing: '-0.02em', textShadow: '0 1px 4px rgba(0,0,0,0.3)' }}>
-                  {form.title || 'Titre du carnet'}
+                <div>
+                  <label className="block text-xs font-bold text-[#17402C] mb-1">Chapeau d’accroche / Citation de départ</label>
+                  <textarea
+                    rows={2}
+                    value={form.chapeau}
+                    onChange={(e) => setField('chapeau', e.target.value)}
+                    placeholder="Une phrase pour résumer l’ambiance et l’esprit..."
+                    className="w-full bg-white/90 border border-[#17402C]/15 rounded-xl p-3 text-xs text-[#17402C] font-serif italic"
+                  />
                 </div>
-                <label style={{ background: 'rgba(255,255,255,0.9)', color: '#0B1F17', border: 'none', borderRadius: '999px', padding: '6px 12px', fontSize: '11px', fontWeight: 600, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '4px', fontFamily: 'inherit' }}>
-                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>
-                  Changer
-                  <input type="file" accept="image/*" style={{ display: 'none' }} onChange={(e) => {
-                    if (e.target.files?.[0]) {
-                      setField('coverImage', URL.createObjectURL(e.target.files[0]));
-                    }
-                  }} />
-                </label>
+
+                <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 pt-2">
+                  <div>
+                    <label className="block text-xs font-bold text-[#17402C] mb-1">Distance totale</label>
+                    <div className="relative">
+                      <input
+                        type="number"
+                        step="0.1"
+                        value={form.distance_km}
+                        onChange={(e) => setField('distance_km', parseFloat(e.target.value))}
+                        className="w-full bg-white/90 border border-[#17402C]/15 rounded-xl px-3 py-2 text-xs text-[#17402C] font-mono font-bold"
+                      />
+                      <span className="absolute right-3 top-2 text-[10px] text-[#5C6B5E] font-mono">km</span>
+                    </div>
+                  </div>
+
+                  <div>
+                    <label className="block text-xs font-bold text-[#17402C] mb-1">Dénivelé +</label>
+                    <div className="relative">
+                      <input
+                        type="number"
+                        value={form.elevation_m}
+                        onChange={(e) => setField('elevation_m', parseInt(e.target.value))}
+                        className="w-full bg-white/90 border border-[#17402C]/15 rounded-xl px-3 py-2 text-xs text-[#17402C] font-mono font-bold"
+                      />
+                      <span className="absolute right-3 top-2 text-[10px] text-[#5C6B5E] font-mono">m</span>
+                    </div>
+                  </div>
+
+                  <div>
+                    <label className="block text-xs font-bold text-[#17402C] mb-1">Voyageurs</label>
+                    <input
+                      type="number"
+                      min={1}
+                      value={form.voyageurs}
+                      onChange={(e) => setField('voyageurs', parseInt(e.target.value))}
+                      className="w-full bg-white/90 border border-[#17402C]/15 rounded-xl px-3 py-2 text-xs text-[#17402C] font-mono font-bold"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-xs font-bold text-[#17402C] mb-1">Note globale</label>
+                    <div className="relative">
+                      <input
+                        type="number"
+                        min={1}
+                        max={10}
+                        value={form.routeRating}
+                        onChange={(e) => setField('routeRating', parseInt(e.target.value))}
+                        className="w-full bg-white/90 border border-[#17402C]/15 rounded-xl px-3 py-2 text-xs text-[#17402C] font-mono font-bold"
+                      />
+                      <span className="absolute right-3 top-2 text-[10px] text-amber-600 font-bold">/10</span>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  <div>
+                    <label className="block text-xs font-bold text-[#17402C] mb-1">Période du voyage</label>
+                    <div className="flex gap-2">
+                      <input
+                        type="date"
+                        value={form.startDate}
+                        onChange={(e) => setField('startDate', e.target.value)}
+                        className="w-full bg-white/90 border border-[#17402C]/15 rounded-xl px-2.5 py-1.5 text-xs text-[#17402C]"
+                      />
+                      <input
+                        type="date"
+                        value={form.endDate}
+                        onChange={(e) => setField('endDate', e.target.value)}
+                        className="w-full bg-white/90 border border-[#17402C]/15 rounded-xl px-2.5 py-1.5 text-xs text-[#17402C]"
+                      />
+                    </div>
+                  </div>
+
+                  <div>
+                    <label className="block text-xs font-bold text-[#17402C] mb-1">Météo &amp; Température</label>
+                    <input
+                      type="text"
+                      value={form.weather}
+                      onChange={(e) => setField('weather', e.target.value)}
+                      placeholder="Ex : Grand soleil en journée, 4°C la nuit"
+                      className="w-full bg-white/90 border border-[#17402C]/15 rounded-xl px-3 py-1.5 text-xs text-[#17402C]"
+                    />
+                  </div>
+                </div>
+              </div>
+
+              <div className="flex justify-end pt-2">
+                <button
+                  type="button"
+                  onClick={() => setActiveStep('etapes')}
+                  className="glass-capsule-btn primary py-2 px-5 text-xs font-bold flex items-center gap-1"
+                >
+                  <span>Suivant : Étapes &amp; Récit →</span>
+                </button>
               </div>
             </div>
+          )}
 
-            {/* Title input */}
-            <div style={{ marginBottom: '12px' }}>
-              <label style={{ fontSize: '10px', textTransform: 'uppercase', letterSpacing: '0.14em', color: '#6B7A72', display: 'block', marginBottom: '4px', fontFamily: 'ui-monospace, monospace', fontWeight: 600 }}>
-                Titre *
-              </label>
-              <input
-                type="text"
-                value={form.title}
-                onChange={e => setField('title', e.target.value)}
-                placeholder="Ex: Trois jours sur les crêtes"
-                style={{ width: '100%', background: '#FBFAF6', border: '1px solid rgba(11,31,23,0.06)', borderRadius: '12px', padding: '10px 14px', fontSize: '15px', fontWeight: 600, color: '#0B1F17', outline: 'none', fontFamily: 'inherit' }}
-              />
-            </div>
-
-            {/* Subtitle input */}
-            <div style={{ marginBottom: '12px' }}>
-              <label style={{ fontSize: '10px', textTransform: 'uppercase', letterSpacing: '0.14em', color: '#6B7A72', display: 'block', marginBottom: '4px', fontFamily: 'ui-monospace, monospace', fontWeight: 600 }}>
-                Sous-titre
-              </label>
-              <input
-                type="text"
-                value={form.subtitle}
-                onChange={e => setField('subtitle', e.target.value)}
-                placeholder="Chartreuse · octobre 2026 · 27 km à deux"
-                style={{ width: '100%', background: '#FBFAF6', border: '1px solid rgba(11,31,23,0.06)', borderRadius: '12px', padding: '10px 14px', fontSize: '13px', fontWeight: 500, color: '#0B1F17', outline: 'none', fontFamily: 'inherit' }}
-              />
-            </div>
-
-            {/* Chapeau textarea */}
-            <div style={{ marginBottom: '16px' }}>
-              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '4px' }}>
-                <label style={{ fontSize: '10px', textTransform: 'uppercase', letterSpacing: '0.14em', color: '#6B7A72', fontFamily: 'ui-monospace, monospace', fontWeight: 600 }}>
-                  Chapeau
-                </label>
-                <span style={{ fontSize: '10px', fontFamily: 'ui-monospace, monospace', color: '#6B7A72' }}>{form.chapeau.length} / 300</span>
+          {/* ÉTAPE 2: ÉTAPES & RÉCIT */}
+          {activeStep === 'etapes' && (
+            <div className="glass rounded-2xl p-6 space-y-5">
+              <div className="flex items-center justify-between pb-3 border-b border-[#17402C]/10">
+                <div>
+                  <h2 className="font-display font-bold text-lg text-[#17402C]">Étapes &amp; Récit de marche</h2>
+                  <p className="text-xs text-[#5C6B5E]">Détaillez le déroulé jour par jour avec les anecdotes, le bivouac et les refuges.</p>
+                </div>
+                <span className="glass-pill text-[9px] font-mono font-bold">02 · ÉTAPES</span>
               </div>
-              <textarea
-                rows={3}
-                maxLength={300}
-                value={form.chapeau}
-                onChange={e => setField('chapeau', e.target.value)}
-                placeholder="Deux ou trois phrases qui donnent le ton de la lecture..."
-                style={{ width: '100%', background: '#FBFAF6', border: '1px solid rgba(11,31,23,0.06)', borderRadius: '12px', padding: '10px 14px', fontSize: '13px', fontFamily: 'Georgia, serif', fontStyle: 'italic', color: '#0B1F17', outline: 'none', lineHeight: '1.6', resize: 'none' }}
-              />
-            </div>
 
-            {/* Chapter list */}
-            <div style={{ marginBottom: '16px' }}>
-              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '8px' }}>
-                <label style={{ fontSize: '10px', textTransform: 'uppercase', letterSpacing: '0.14em', color: '#6B7A72', fontFamily: 'ui-monospace, monospace', fontWeight: 600 }}>
-                  Chapitres ({form.chapters.length})
-                </label>
+              <div className="space-y-5">
+                {form.chapters.map((ch, idx) => (
+                  <div key={ch.id} className="p-4 glass-sub-card rounded-2xl space-y-3 relative border border-white/60 bg-white/90">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-2">
+                        <span className="w-6 h-6 rounded-full bg-[#17402C] text-white flex items-center justify-center text-xs font-mono font-bold">
+                          {ch.num}
+                        </span>
+                        <input
+                          type="text"
+                          value={ch.title}
+                          onChange={(e) => {
+                            const updated = [...form.chapters];
+                            updated[idx].title = e.target.value;
+                            setField('chapters', updated);
+                          }}
+                          placeholder={`Titre du Jour ${idx + 1}`}
+                          className="bg-transparent border-none text-sm font-bold text-[#17402C] focus:ring-0 p-0"
+                        />
+                      </div>
+
+                      {form.chapters.length > 1 && (
+                        <button
+                          type="button"
+                          onClick={() => removeChapter(ch.id)}
+                          className="text-[#5C6B5E] hover:text-red-600 text-xs font-semibold"
+                        >
+                          Supprimer l'étape
+                        </button>
+                      )}
+                    </div>
+
+                    <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 text-xs">
+                      <div>
+                        <label className="text-[10px] text-[#5C6B5E] block font-bold">Départ</label>
+                        <input
+                          type="text"
+                          value={ch.lieu_depart || ''}
+                          onChange={(e) => {
+                            const updated = [...form.chapters];
+                            updated[idx].lieu_depart = e.target.value;
+                            setField('chapters', updated);
+                          }}
+                          placeholder="Lieu de départ"
+                          className="w-full bg-white border border-[#17402C]/10 rounded-lg p-1.5 text-xs text-[#17402C]"
+                        />
+                      </div>
+                      <div>
+                        <label className="text-[10px] text-[#5C6B5E] block font-bold">Arrivée</label>
+                        <input
+                          type="text"
+                          value={ch.lieu_arrivee || ''}
+                          onChange={(e) => {
+                            const updated = [...form.chapters];
+                            updated[idx].lieu_arrivee = e.target.value;
+                            setField('chapters', updated);
+                          }}
+                          placeholder="Lieu d'arrivée"
+                          className="w-full bg-white border border-[#17402C]/10 rounded-lg p-1.5 text-xs text-[#17402C]"
+                        />
+                      </div>
+                      <div>
+                        <label className="text-[10px] text-[#5C6B5E] block font-bold">Distance &amp; D+</label>
+                        <div className="flex gap-1">
+                          <input
+                            type="number"
+                            value={ch.distance_km || 10}
+                            onChange={(e) => {
+                              const updated = [...form.chapters];
+                              updated[idx].distance_km = parseFloat(e.target.value);
+                              setField('chapters', updated);
+                            }}
+                            className="w-1/2 bg-white border border-[#17402C]/10 rounded-lg p-1.5 text-xs font-mono"
+                          />
+                          <input
+                            type="number"
+                            value={ch.denivele_m || 500}
+                            onChange={(e) => {
+                              const updated = [...form.chapters];
+                              updated[idx].denivele_m = parseInt(e.target.value);
+                              setField('chapters', updated);
+                            }}
+                            className="w-1/2 bg-white border border-[#17402C]/10 rounded-lg p-1.5 text-xs font-mono"
+                          />
+                        </div>
+                      </div>
+                      <div>
+                        <label className="text-[10px] text-[#5C6B5E] block font-bold">Hébergement</label>
+                        <input
+                          type="text"
+                          value={ch.hebergement_nom || ''}
+                          onChange={(e) => {
+                            const updated = [...form.chapters];
+                            updated[idx].hebergement_nom = e.target.value;
+                            setField('chapters', updated);
+                          }}
+                          placeholder="Nom du refuge/bivouac"
+                          className="w-full bg-white border border-[#17402C]/10 rounded-lg p-1.5 text-xs text-[#17402C]"
+                        />
+                      </div>
+                    </div>
+
+                    <div>
+                      <textarea
+                        rows={3}
+                        value={ch.content}
+                        onChange={(e) => {
+                          const updated = [...form.chapters];
+                          updated[idx].content = e.target.value;
+                          setField('chapters', updated);
+                        }}
+                        placeholder="Récit de l’étape : sensations, rencontres, météo..."
+                        className="w-full bg-white border border-[#17402C]/10 rounded-xl p-3 text-xs text-[#17402C] leading-relaxed"
+                      />
+                    </div>
+                  </div>
+                ))}
+
                 <button
                   type="button"
                   onClick={addChapter}
-                  style={{ background: 'none', border: 'none', fontSize: '11px', fontWeight: 600, color: '#17402C', cursor: 'pointer', padding: '2px 6px', fontFamily: 'inherit' }}
+                  className="w-full py-2.5 rounded-xl border border-dashed border-[#17402C]/20 hover:border-[#17402C] text-xs font-bold text-[#17402C] flex items-center justify-center gap-1.5 transition-colors"
                 >
-                  + Ajouter
+                  <Icon name="PlusIcon" size={14} /> Ajouter une journée de marche
                 </button>
               </div>
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-                {form.chapters.map(ch => (
-                  <div key={ch.id} style={{ display: 'flex', alignItems: 'center', gap: '10px', padding: '10px 12px', background: '#FBFAF6', borderRadius: '12px', border: '1px solid rgba(11,31,23,0.06)' }}>
-                    <span style={{ fontFamily: 'Georgia, serif', fontWeight: 700, fontSize: '14px', color: '#17402C', width: '20px', textAlign: 'center', flexShrink: 0 }}>{ch.num}</span>
-                    <div style={{ flex: 1, minWidth: 0 }}>
-                      <div style={{ fontSize: '13px', fontWeight: 600, color: '#0B1F17', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{ch.title}</div>
-                      <div style={{ fontSize: '10px', fontFamily: 'ui-monospace, monospace', color: '#6B7A72', marginTop: '2px', display: 'flex', alignItems: 'center', gap: '8px' }}>
-                        <span>{ch.wordCount} mots</span>
-                        <span>·</span>
-                        <span style={{
-                          fontWeight: 600,
-                          color: ch.status === 'Rédigé' ? '#2D6B4A' : ch.status === 'En cours' ? '#B8860B' : '#A3A8A3'
-                        }}>{ch.status}</span>
+
+              <div className="flex justify-between pt-2">
+                <button
+                  type="button"
+                  onClick={() => setActiveStep('general')}
+                  className="glass-capsule-btn py-2 px-4 text-xs font-bold"
+                >
+                  ← Précédent
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setActiveStep('moments')}
+                  className="glass-capsule-btn primary py-2 px-5 text-xs font-bold"
+                >
+                  Suivant : Moments &amp; Photos →
+                </button>
+              </div>
+            </div>
+          )}
+
+          {/* ÉTAPE 3: MOMENTS & PHOTOS */}
+          {activeStep === 'moments' && (
+            <div className="glass rounded-2xl p-6 space-y-5">
+              <div className="flex items-center justify-between pb-3 border-b border-[#17402C]/10">
+                <div>
+                  <h2 className="font-display font-bold text-lg text-[#17402C]">Moments &amp; Photos Phares</h2>
+                  <p className="text-xs text-[#5C6B5E]">Archivage des citations, des panoramas et des anecdotes marquantes.</p>
+                </div>
+                <span className="glass-pill text-[9px] font-mono font-bold">03 · SOUVENIRS</span>
+              </div>
+
+              <div className="space-y-4">
+                {form.moments.map((m, idx) => (
+                  <div key={m.id} className="p-4 glass-sub-card rounded-2xl space-y-3 bg-white/90 border border-white/60">
+                    <div className="flex items-center justify-between">
+                      <span className="text-xs font-mono font-bold text-[#17402C]">Moment #{idx + 1}</span>
+                      <button
+                        type="button"
+                        onClick={() => removeMoment(m.id)}
+                        className="text-[#5C6B5E] hover:text-red-600 text-xs font-semibold"
+                      >
+                        Retirer
+                      </button>
+                    </div>
+
+                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 text-xs">
+                      <div>
+                        <label className="text-[10px] text-[#5C6B5E] block font-bold">Horodatage / Label</label>
+                        <input
+                          type="text"
+                          value={m.label}
+                          onChange={(e) => {
+                            const updated = [...form.moments];
+                            updated[idx].label = e.target.value;
+                            setField('moments', updated);
+                          }}
+                          placeholder="Ex : JOUR 1 · 18H30"
+                          className="w-full bg-white border border-[#17402C]/10 rounded-lg p-1.5 text-xs"
+                        />
+                      </div>
+                      <div>
+                        <label className="text-[10px] text-[#5C6B5E] block font-bold">Lieu précis</label>
+                        <input
+                          type="text"
+                          value={m.location}
+                          onChange={(e) => {
+                            const updated = [...form.moments];
+                            updated[idx].location = e.target.value;
+                            setField('moments', updated);
+                          }}
+                          placeholder="Ex : Charmant Som"
+                          className="w-full bg-white border border-[#17402C]/10 rounded-lg p-1.5 text-xs"
+                        />
+                      </div>
+                      <div>
+                        <label className="text-[10px] text-[#5C6B5E] block font-bold">Auteur</label>
+                        <input
+                          type="text"
+                          value={m.author}
+                          onChange={(e) => {
+                            const updated = [...form.moments];
+                            updated[idx].author = e.target.value;
+                            setField('moments', updated);
+                          }}
+                          placeholder="Ex : Marceline"
+                          className="w-full bg-white border border-[#17402C]/10 rounded-lg p-1.5 text-xs"
+                        />
                       </div>
                     </div>
-                    <button
-                      type="button"
-                      onClick={() => startEditChapter(ch)}
-                      style={{ background: '#F4F1EA', border: 'none', borderRadius: '999px', padding: '4px 10px', fontSize: '10px', fontWeight: 600, color: '#0B1F17', cursor: 'pointer', flexShrink: 0, fontFamily: 'inherit' }}
-                    >
-                      Éditer
-                    </button>
+
+                    <div>
+                      <label className="text-[10px] text-[#5C6B5E] block font-bold mb-0.5">Citation / Anecdote</label>
+                      <input
+                        type="text"
+                        value={m.citation}
+                        onChange={(e) => {
+                          const updated = [...form.moments];
+                          updated[idx].citation = e.target.value;
+                          setField('moments', updated);
+                        }}
+                        placeholder="« Phrase mémorable prononcée ou pensée... »"
+                        className="w-full bg-white border border-[#17402C]/10 rounded-lg p-2 text-xs font-serif italic"
+                      />
+                    </div>
                   </div>
                 ))}
-              </div>
-            </div>
 
-            {/* Theme tags */}
-            <div style={{ marginBottom: '20px' }}>
-              <label style={{ fontSize: '10px', textTransform: 'uppercase', letterSpacing: '0.14em', color: '#6B7A72', display: 'block', marginBottom: '8px', fontFamily: 'ui-monospace, monospace', fontWeight: 600 }}>
-                Thématiques
-              </label>
-              <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px' }}>
-                {availableThemes.map(theme => {
-                  const isSelected = form.selectedThemes.includes(theme);
-                  return (
-                    <button
-                      key={theme}
-                      type="button"
-                      onClick={() => toggleTheme(theme)}
-                      style={{
-                        padding: '6px 12px',
-                        borderRadius: '999px',
-                        fontSize: '11px',
-                        fontWeight: 600,
-                        border: 'none',
-                        cursor: 'pointer',
-                        fontFamily: 'inherit',
-                        background: isSelected ? '#17402C' : '#F4F1EA',
-                        color: isSelected ? '#fff' : '#6B7A72'
-                      }}
-                    >
-                      {isSelected ? `✓ ${theme}` : theme}
-                    </button>
-                  );
-                })}
-              </div>
-            </div>
-
-            {/* Preview + Publish buttons */}
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', marginBottom: '4px' }}>
-              <button
-                onClick={() => setPreviewModalOpen(true)}
-                style={{ width: '100%', padding: '12px', borderRadius: '999px', border: '1px solid rgba(11,31,23,0.06)', background: '#F4F1EA', color: '#0B1F17', fontSize: '13px', fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit', textAlign: 'center' }}
-              >
-                Aperçu lecteur
-              </button>
-              <button
-                onClick={() => handlePublish(false)}
-                disabled={saving || !form.title.trim()}
-                style={{ width: '100%', padding: '12px', borderRadius: '999px', border: 'none', background: '#17402C', color: '#fff', fontSize: '13px', fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit', textAlign: 'center', opacity: saving || !form.title.trim() ? 0.5 : 1 }}
-              >
-                {saving ? 'Publication...' : saveSuccess ? 'Publier' : 'Publier le carnet'}
-              </button>
-            </div>
-          </div>
-
-          {/* Footer spacer */}
-          <div style={{ height: 'calc(62px + 12px + 12px + env(safe-area-inset-bottom))' }} />
-        </MobilePageShell>
-      </div>
-
-      {/* ── SHARED MODALS ── */}
-
-      {/* 5. CHAPTER EDIT MODAL */}
-      {editingChapterId && (
-        <div className="fixed inset-0 z-[350] bg-black/60 backdrop-blur-md flex items-center justify-center p-4">
-          <div className="bg-white rounded-[0.75rem] border border-[#E8E4D8] p-6 sm:p-8 w-full max-w-lg shadow-2xl space-y-4 animate-scale-in active:scale-[0.98] active:opacity-95 transition-all duration-150 cursor-pointer">
-            <div className="flex items-center justify-between pb-3 border-b border-[#F5F2E8]">
-              <h3 className="font-display font-800 text-lg text-[#1C2620]">Modifier le chapitre</h3>
-              <button onClick={() => setEditingChapterId(null)} className="text-gray-400 hover:text-gray-600">✕</button>
-            </div>
-
-            <div className="space-y-4">
-              <div>
-                <label className="text-[10px] font-mono tracking-widest uppercase text-[#5C6B5E] block mb-1">Titre du chapitre *</label>
-                <input
-                  type="text"
-                  value={editChapterTitle}
-                  onChange={e => setEditChapterTitle(e.target.value)}
-                  className="w-full bg-[#F5F2E8] border-none rounded-2xl px-4 py-3 text-xs font-bold text-[#1C2620]"
-                />
-              </div>
-
-              <div>
-                <label className="text-[10px] font-mono tracking-widest uppercase text-[#5C6B5E] block mb-1">Statut</label>
-                <select
-                  value={editChapterStatus}
-                  onChange={e => setEditChapterStatus(e.target.value as any)}
-                  className="w-full bg-[#F5F2E8] border-none rounded-2xl px-4 py-3 text-xs font-bold text-[#1C2620]"
+                <button
+                  type="button"
+                  onClick={addMoment}
+                  className="w-full py-2.5 rounded-xl border border-dashed border-[#17402C]/20 hover:border-[#17402C] text-xs font-bold text-[#17402C] flex items-center justify-center gap-1.5 transition-colors"
                 >
-                  <option value="Rédigé">✓ Rédigé</option>
-                  <option value="En cours">⏳ En cours</option>
-                  <option value="À écrire">📝 À écrire</option>
-                </select>
+                  <Icon name="PlusIcon" size={14} /> Ajouter un souvenir / photo
+                </button>
               </div>
 
-              <div className="grid grid-cols-2 gap-3">
-                <div>
-                  <label className="text-[10px] font-mono tracking-widest uppercase text-[#5C6B5E] block mb-1">Nombre de mots</label>
-                  <input
-                    type="number"
-                    value={editChapterWords}
-                    onChange={e => setEditChapterWords(Number(e.target.value))}
-                    className="w-full bg-[#F5F2E8] border-none rounded-2xl px-4 py-3 text-xs font-semibold text-[#1C2620]"
-                  />
-                </div>
-                <div>
-                  <label className="text-[10px] font-mono tracking-widest uppercase text-[#5C6B5E] block mb-1">Nombre de photos</label>
-                  <input
-                    type="number"
-                    value={editChapterPhotos}
-                    onChange={e => setEditChapterPhotos(Number(e.target.value))}
-                    className="w-full bg-[#F5F2E8] border-none rounded-2xl px-4 py-3 text-xs font-semibold text-[#1C2620]"
-                  />
-                </div>
-              </div>
-
-              <div>
-                <label className="text-[10px] font-mono tracking-widest uppercase text-[#5C6B5E] block mb-1">Contenu / Récit du chapitre</label>
-                <textarea
-                  rows={4}
-                  value={editChapterContent}
-                  onChange={e => setEditChapterContent(e.target.value)}
-                  placeholder="Écrivez le récit de cette étape..."
-                  className="w-full bg-[#F5F2E8] border-none rounded-2xl p-4 text-xs text-[#1C2620] leading-relaxed resize-none"
-                />
+              <div className="flex justify-between pt-2">
+                <button
+                  type="button"
+                  onClick={() => setActiveStep('etapes')}
+                  className="glass-capsule-btn py-2 px-4 text-xs font-bold"
+                >
+                  ← Précédent
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setActiveStep('sac')}
+                  className="glass-capsule-btn primary py-2 px-5 text-xs font-bold"
+                >
+                  Suivant : Dans le sac →
+                </button>
               </div>
             </div>
+          )}
 
-            <div className="flex items-center gap-3 pt-3 border-t border-[#F5F2E8]">
-              <button onClick={() => setEditingChapterId(null)} className="px-4 py-2 text-xs font-semibold text-[#5C6B5E]">Annuler</button>
-              <button onClick={saveChapterChanges} className="flex-1 py-2.5 bg-[#2D5A3D] hover:bg-[#1C2620] text-white rounded-full text-xs font-bold shadow-md">
-                Enregistrer le chapitre
-              </button>
+          {/* ÉTAPE 4: DANS LE SAC */}
+          {activeStep === 'sac' && (
+            <div className="glass rounded-2xl p-6 space-y-5">
+              <div className="flex items-center justify-between pb-3 border-b border-[#17402C]/10">
+                <div>
+                  <h2 className="font-display font-bold text-lg text-[#17402C]">Ce que vous aviez dans le sac</h2>
+                  <p className="text-xs text-[#5C6B5E]">Partagez le matériel testé pour aider la communauté à préparer leur sac.</p>
+                </div>
+                <span className="glass-pill text-[9px] font-mono font-bold">04 · MATÉRIEL</span>
+              </div>
+
+              <div className="space-y-4">
+                <div>
+                  <label className="block text-xs font-bold text-[#17402C] mb-1">Commentaire global sur le portage</label>
+                  <input
+                    type="text"
+                    value={form.kitIntro}
+                    onChange={(e) => setField('kitIntro', e.target.value)}
+                    placeholder="Ex : Sac 45L configuré pour 3 jours d'autonomie complète."
+                    className="w-full bg-white/90 border border-[#17402C]/15 rounded-xl px-3.5 py-2 text-xs text-[#17402C]"
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  {form.kitItems.map((item, idx) => (
+                    <div key={item.id} className="flex items-center gap-2 p-2.5 glass-sub-card rounded-xl bg-white/90">
+                      <div className="w-3 h-3 rounded-full shrink-0" style={{ backgroundColor: item.color || '#17402C' }} />
+                      <input
+                        type="text"
+                        value={item.name}
+                        onChange={(e) => {
+                          const updated = [...form.kitItems];
+                          updated[idx].name = e.target.value;
+                          setField('kitItems', updated);
+                        }}
+                        placeholder="Nom de l'équipement"
+                        className="flex-1 bg-transparent border-none text-xs font-bold text-[#17402C] p-0 focus:ring-0"
+                      />
+                      <input
+                        type="text"
+                        value={item.detail}
+                        onChange={(e) => {
+                          const updated = [...form.kitItems];
+                          updated[idx].detail = e.target.value;
+                          setField('kitItems', updated);
+                        }}
+                        placeholder="Détail / Marque"
+                        className="w-1/3 bg-transparent border-none text-[11px] text-[#5C6B5E] p-0 focus:ring-0"
+                      />
+                      <input
+                        type="text"
+                        value={item.weight}
+                        onChange={(e) => {
+                          const updated = [...form.kitItems];
+                          updated[idx].weight = e.target.value;
+                          setField('kitItems', updated);
+                        }}
+                        placeholder="Poids"
+                        className="w-16 bg-white border border-[#17402C]/10 rounded px-1.5 py-0.5 text-[10.5px] font-mono text-center font-bold text-[#17402C]"
+                      />
+                      <button
+                        type="button"
+                        onClick={() => removeKitItem(item.id)}
+                        className="text-[#5C6B5E] hover:text-red-600 p-1"
+                      >
+                        ✕
+                      </button>
+                    </div>
+                  ))}
+
+                  <button
+                    type="button"
+                    onClick={addKitItem}
+                    className="w-full py-2 rounded-xl border border-dashed border-[#17402C]/20 hover:border-[#17402C] text-xs font-bold text-[#17402C] flex items-center justify-center gap-1.5 transition-colors"
+                  >
+                    <Icon name="PlusIcon" size={14} /> Ajouter un équipement
+                  </button>
+                </div>
+              </div>
+
+              <div className="flex justify-between pt-2">
+                <button
+                  type="button"
+                  onClick={() => setActiveStep('moments')}
+                  className="glass-capsule-btn py-2 px-4 text-xs font-bold"
+                >
+                  ← Précédent
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setActiveStep('tags')}
+                  className="glass-capsule-btn primary py-2 px-5 text-xs font-bold"
+                >
+                  Suivant : Thématiques →
+                </button>
+              </div>
             </div>
-          </div>
+          )}
+
+          {/* ÉTAPE 5: THÈMES & PUBLICATION */}
+          {activeStep === 'tags' && (
+            <div className="glass rounded-2xl p-6 space-y-5">
+              <div className="flex items-center justify-between pb-3 border-b border-[#17402C]/10">
+                <div>
+                  <h2 className="font-display font-bold text-lg text-[#17402C]">Thématiques &amp; Visibilité</h2>
+                  <p className="text-xs text-[#5C6B5E]">Choisissez les étiquettes de référencement et les droits d'accès.</p>
+                </div>
+                <span className="glass-pill text-[9px] font-mono font-bold">05 · PUBLICATION</span>
+              </div>
+
+              <div className="space-y-4">
+                <div>
+                  <label className="block text-xs font-bold text-[#17402C] mb-2">Thématiques de l’expédition</label>
+                  <div className="flex flex-wrap gap-2">
+                    {availableThemes.map((th) => {
+                      const isSelected = form.selectedThemes.includes(th);
+                      return (
+                        <button
+                          key={th}
+                          type="button"
+                          onClick={() => toggleTheme(th)}
+                          className={`px-3 py-1.5 rounded-full text-xs font-semibold transition-all ${
+                            isSelected
+                              ? 'bg-[#17402C] text-white shadow-xs'
+                              : 'bg-white/80 text-[#5C6B5E] border border-[#17402C]/10 hover:border-[#17402C]/30'
+                          }`}
+                        >
+                          {isSelected ? '✓ ' : '+ '} {th}
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+
+                <div className="pt-2">
+                  <label className="block text-xs font-bold text-[#17402C] mb-2">Visibilité du carnet</label>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    {[
+                      { id: 'public', label: '🌍 Public', desc: 'Visible par toute la communauté LKDV et indexé dans le hub.' },
+                      { id: 'private', label: '🔒 Privé', desc: 'Accessible uniquement par vous et vos proches via lien secret.' },
+                    ].map((vis) => (
+                      <label
+                        key={vis.id}
+                        className={`p-3.5 rounded-xl cursor-pointer flex items-start gap-2.5 transition-all ${
+                          form.visibility === vis.id
+                            ? 'bg-white border-2 border-[#17402C] shadow-xs'
+                            : 'bg-white/60 border border-[#17402C]/10'
+                        }`}
+                      >
+                        <input
+                          type="radio"
+                          name="carnet_visibility"
+                          value={vis.id}
+                          checked={form.visibility === vis.id}
+                          onChange={() => setField('visibility', vis.id)}
+                          className="mt-0.5 text-[#17402C]"
+                        />
+                        <div>
+                          <span className="text-xs font-bold text-[#17402C] block">{vis.label}</span>
+                          <span className="text-[10.5px] text-[#5C6B5E] leading-tight block">{vis.desc}</span>
+                        </div>
+                      </label>
+                    ))}
+                  </div>
+                </div>
+              </div>
+
+              <div className="flex justify-between pt-2">
+                <button
+                  type="button"
+                  onClick={() => setActiveStep('sac')}
+                  className="glass-capsule-btn py-2 px-4 text-xs font-bold"
+                >
+                  ← Précédent
+                </button>
+                <button
+                  type="button"
+                  onClick={handlePublish}
+                  disabled={saving || !form.title.trim()}
+                  className="glass-capsule-btn primary py-2.5 px-6 text-xs font-bold flex items-center gap-1.5"
+                >
+                  <Icon name="CheckIcon" size={14} className="relative z-10" />
+                  <span className="relative z-10">{saving ? 'Publication...' : saveSuccess ? '✓ Publié !' : 'Publier le carnet'}</span>
+                </button>
+              </div>
+            </div>
+          )}
         </div>
-      )}
 
-      {/* 6. FULLSCREEN READER PREVIEW MODAL */}
-      {previewModalOpen && (
-        <div className="fixed inset-0 z-[300] bg-[#F5F2E8] overflow-y-auto animate-fade-in font-sans">
-
-          {/* Preview Header Bar */}
-          <header className="sticky top-0 z-50 bg-[#1C2620] text-white px-6 py-3 flex items-center justify-between shadow-md">
-            <div className="flex items-center gap-3">
-              <span className="bg-[#17402C] text-white text-[10px] font-mono font-bold px-2.5 py-1 rounded-full uppercase tracking-wider">
-                👁️ Mode Aperçu Lecteur
-              </span>
-              <span className="text-xs text-white/60 font-mono hidden sm:inline">
-                Style : {form.readingStyle.toUpperCase()}
-              </span>
+        {/* COLONNE DROITE (Live Carnet Preview & Actions) - 300px */}
+        <aside className="w-[300px] shrink-0 h-full overflow-y-auto custom-scrollbar flex flex-col gap-4 pb-8">
+          {/* Live Preview Card */}
+          <div className="glass p-3.5 space-y-3 rounded-2xl">
+            <div className="flex items-center justify-between">
+              <h3 className="font-display font-bold text-xs text-[#17402C]">Aperçu du carnet</h3>
+              <span className="glass-pill text-[9px] font-mono font-bold">Live</span>
             </div>
 
-            <div className="flex items-center gap-3">
-              <button
-                onClick={() => setPreviewModalOpen(false)}
-                className="px-4 py-2 bg-white/10 hover:bg-white/20 text-white rounded-full text-xs font-bold transition-all flex items-center gap-1.5"
-              >
-                <span>Fermer l'aperçu</span>
-                <span>✕</span>
-              </button>
-
-              <button
-                onClick={() => {
-                  setPreviewModalOpen(false);
-                  handlePublish(false);
-                }}
-                className="px-5 py-2 bg-[#2D5A3D] hover:bg-[#17402C] text-white rounded-full text-xs font-bold transition-all shadow-md"
-              >
-                Publier le carnet
-              </button>
-            </div>
-          </header>
-
-          {/* Reader Content Body */}
-          <div className={`max-w-4xl mx-auto px-4 sm:px-6 py-10 space-y-10 ${
-            form.readingStyle === 'journal' ? 'font-serif' : form.readingStyle === 'paper' ? 'font-mono' : 'font-sans'
-          }`}>
-
-            {/* Cover Banner */}
-            <div className="relative rounded-[0.75rem] overflow-hidden min-h-[350px] sm:min-h-[450px] shadow-2xl bg-[#1C2620] text-white p-8 sm:p-12 flex flex-col justify-end">
-              <img src={form.coverImage} alt={form.title} className="absolute inset-0 w-full h-full object-cover" />
-              <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-black/40 to-transparent" />
-
-              <div className="relative z-10 space-y-3">
-                <div className="inline-flex items-center gap-2 px-3 py-1 bg-white/20 backdrop-blur-md rounded-full text-xs font-mono font-bold text-white border border-white/20">
-                  <span>📖 Carnet de voyage</span>
-                </div>
-
-                <h1 className="font-display font-800 text-3xl sm:text-5xl lg:text-6xl text-white tracking-tight leading-tight">
-                  {form.title}
-                </h1>
-
-                <p className="text-sm sm:text-lg text-white/80 font-mono">
-                  {form.subtitle}
-                </p>
-
-                {/* Author row */}
-                <div className="flex items-center gap-3 pt-4 border-t border-white/20">
-                  <div className="w-10 h-10 rounded-full bg-white/30 border-2 border-white overflow-hidden">
-                    <img src={user?.user_metadata?.avatar_url || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?q=80&w=400'} alt="Auteur" className="w-full h-full object-cover" />
-                  </div>
-                  <div>
-                    <div className="text-xs font-bold text-white">Par Marceline Chevrier</div>
-                    <div className="text-[10px] text-white/60 font-mono">Publié en octobre 2026 · {totalWords} mots</div>
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            {/* Chapeau Quote Box */}
-            {form.chapeau && (
-              <div className="bg-white p-8 rounded-[0.75rem] border border-[#E8E4D8] shadow-sm">
-                <p className="italic text-base sm:text-lg text-[#1C2620] leading-relaxed">
-                  {form.chapeau}
-                </p>
-              </div>
-            )}
-
-            {/* Linked Adventure Badge */}
-            {selectedAdventure && (
-              <div className="bg-[#EAF0EB] p-6 rounded-[0.75rem] border border-[#2D5A3D]/20 flex items-center justify-between gap-4">
-                <div className="flex items-center gap-4">
-                  <div className="w-12 h-12 rounded-2xl bg-[#2D5A3D] text-white flex items-center justify-center text-xl shadow-md">
-                    🏔️
-                  </div>
-                  <div>
-                    <div className="text-[10px] font-mono tracking-widest text-[#2D5A3D] font-bold uppercase">AVENTURE ASSOCIÉE</div>
-                    <h3 className="font-bold text-sm text-[#1C2620]">{selectedAdventure.title}</h3>
-                    <p className="text-xs text-[#5C6B5E] font-mono mt-0.5">{selectedAdventure.date} • {selectedAdventure.details}</p>
-                  </div>
-                </div>
-
-                <span className="px-4 py-2 bg-white text-[#2D5A3D] rounded-full text-xs font-bold shadow-sm border border-[#E8E4D8]">
-                  Tracé GPX disponible
+            <div className="rounded-xl overflow-hidden bg-white border border-[#17402C]/10 shadow-xs flex flex-col">
+              <div className="h-28 relative bg-[#17402C]">
+                {form.coverImage && (
+                  <img src={form.coverImage} alt="Cover" className="w-full h-full object-cover" />
+                )}
+                <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent" />
+                <span className="absolute bottom-2 left-2 px-2 py-0.5 bg-black/40 backdrop-blur-md rounded-full text-[9px] font-mono text-white font-bold">
+                  {form.destination}
                 </span>
               </div>
-            )}
-
-            {/* Chapters List Reader view */}
-            <div className="space-y-8">
-              <h2 className="font-display font-800 text-2xl text-[#1C2620] pb-2 border-b border-[#E8E4D8]">
-                Chapitres du récit ({form.chapters.length})
-              </h2>
-
-              {form.chapters.map(ch => (
-                <div key={ch.id} className="bg-white p-8 rounded-[0.75rem] border border-[#E8E4D8] shadow-sm space-y-4">
-                  <div className="flex items-center gap-3">
-                    <span className="w-8 h-8 rounded-full bg-[#2D5A3D] text-white flex items-center justify-center font-bold text-sm">
-                      {ch.num}
-                    </span>
-                    <h3 className="font-display font-800 text-xl text-[#1C2620]">{ch.title}</h3>
-                  </div>
-
-                  <p className="text-xs sm:text-sm text-[#5C6B5E] leading-relaxed">
-                    {ch.content || "Le soleil perçait à peine la brume matinale au col. Le vent soufflait régulièrement, balayant les crêtes rocailleuses. Chaque pas sur ce sentier escarpé nous rapprochait du refuge, isolé loin de la foule..."}
-                  </p>
-
-                  <div className="flex items-center gap-4 text-xs text-[#5C6B5E] font-mono pt-2 border-t border-[#F5F2E8]">
-                    <span>📝 {ch.wordCount} mots</span>
-                    <span>📷 {ch.photoCount} photos</span>
-                    <span className="text-[#2D5A3D] font-bold">✓ {ch.status}</span>
-                  </div>
+              <div className="p-3 space-y-1.5">
+                <h4 className="font-display font-bold text-sm text-[#17402C] leading-snug">
+                  {form.title || 'Titre du carnet'}
+                </h4>
+                <p className="text-[10px] text-[#5C6B5E] font-serif italic line-clamp-2">
+                  {form.chapeau}
+                </p>
+                <div className="flex items-center justify-between pt-2 border-t border-[#17402C]/10 text-[10px] font-mono text-[#5C6B5E]">
+                  <span>📏 {form.distance_km} km</span>
+                  <span>⛰️ +{form.elevation_m} m</span>
+                  <span>★ {form.routeRating}/10</span>
                 </div>
-              ))}
-            </div>
-
-            {/* Tags & Themes */}
-            <div className="bg-white p-6 rounded-[0.75rem] border border-[#E8E4D8] shadow-sm space-y-3">
-              <h4 className="text-xs font-mono uppercase tracking-widest text-[#5C6B5E] font-bold">Mots-clés & Thématiques</h4>
-              <div className="flex flex-wrap gap-2">
-                {form.selectedThemes.map(t => (
-                  <span key={t} className="bg-[#2D5A3D] text-white px-3 py-1 rounded-full text-xs font-bold">
-                    #{t}
-                  </span>
-                ))}
-                {form.customTags.map(t => (
-                  <span key={t} className="bg-[#EAF0EB] text-[#2D5A3D] px-3 py-1 rounded-full text-xs font-bold">
-                    #{t}
-                  </span>
-                ))}
               </div>
             </div>
+          </div>
 
-            {/* Close Bar */}
-            <div className="text-center pt-6">
+          {/* CTA Publication */}
+          <div className="glass tone-sand p-3.5 space-y-2 rounded-2xl text-[#17402C]">
+            <span className="glass-pill text-[9px] font-mono font-bold text-[#8C6418]">
+              🌟 CERTIFICATION LKDV
+            </span>
+            <h3 className="font-display font-bold text-xs text-[#17402C]">
+              Prêt à inspirer la communauté ?
+            </h3>
+            <p className="text-[11px] text-[#5C6B5E] leading-relaxed">
+              Vos étapes, photos et conseils de sac seront instantanément archivés et partageables.
+            </p>
+            <div className="pt-1">
               <button
-                onClick={() => setPreviewModalOpen(false)}
-                className="px-8 py-3 bg-[#1C2620] text-white rounded-full text-xs font-bold hover:bg-[#2D5A3D] transition-colors shadow-lg"
+                type="button"
+                onClick={handlePublish}
+                disabled={saving || !form.title.trim()}
+                className="w-full glass-capsule-btn primary py-2.5 text-xs font-bold flex items-center justify-center gap-1.5"
               >
-                ← Revenir à l'édition du carnet
+                <Icon name="CheckIcon" size={14} className="relative z-10" />
+                <span className="relative z-10">{saving ? 'Publication...' : saveSuccess ? '✓ Publié !' : 'Publier le carnet'}</span>
               </button>
             </div>
-
           </div>
-        </div>
-      )}
-
-    </>
+        </aside>
+      </main>
+    </div>
   );
 }

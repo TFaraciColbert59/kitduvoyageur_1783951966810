@@ -312,7 +312,7 @@ export default function HikingCockpitPage() {
   const showCompletionScreen = isCompleted || hikingStore.state === 'COMPLETED';
 
   return (
-    <div className="w-full h-[100dvh] relative overflow-hidden bg-[#EAE6DF] text-[#0B1F17] select-none font-sans">
+    <div className="w-full h-[100dvh] relative overflow-hidden bg-[#EAE6DF] text-[#17402C] select-none font-sans">
       <div className="relative w-full h-full overflow-hidden bg-[#FBFAF6]">
           {showCompletionScreen ? (
             <CompletionView
@@ -434,12 +434,12 @@ export default function HikingCockpitPage() {
               {/* Confirmation Dialog Modal pour l'Arrêt */}
               {showStopModal && (
                 <div className="fixed inset-0 z-[500] bg-black/60 backdrop-blur-md flex items-center justify-center p-4 animate-in fade-in duration-200">
-                  <div className="bg-[#FBFAF6] border border-[#0B1F17]/12 rounded-[0.75rem] p-6 max-w-sm w-full shadow-2xl text-center space-y-4">
+                  <div className="bg-[#FBFAF6] border border-[#17402C]/12 rounded-[0.75rem] p-6 max-w-sm w-full  text-center space-y-4">
                     <div className="w-12 h-12 rounded-2xl bg-[#B85838]/10 text-[#B85838] flex items-center justify-center mx-auto text-xl font-bold">
                       🏁
                     </div>
                     <div>
-                      <h3 className="text-lg font-bold text-[#0B1F17]">Terminer la randonnée ?</h3>
+                      <h3 className="text-lg font-bold text-[#17402C]">Terminer la randonnée ?</h3>
                       <p className="text-xs text-[#6B7A72] mt-1.5 leading-relaxed">
                         Votre session sera finalisée et votre carnet d'expédition sera automatiquement généré à partir des données réelles.
                       </p>
@@ -447,13 +447,13 @@ export default function HikingCockpitPage() {
                     <div className="flex gap-2.5 pt-2">
                       <button
                         onClick={() => setShowStopModal(false)}
-                        className="flex-1 py-3 px-4 rounded-xl border border-[#E8E4D8] text-xs font-semibold text-[#0B1F17] hover:bg-[#F5F2EA] transition-colors"
+                        className="flex-1 py-3 px-4 rounded-xl border border-[#E8E4D8] text-xs font-semibold text-[#17402C] hover:bg-[#F5F2EA] transition-colors"
                       >
                         Annuler
                       </button>
                       <button
                         onClick={handleConfirmStop}
-                        className="flex-1 py-3 px-4 rounded-xl bg-[#B85838] text-white text-xs font-bold shadow-md hover:bg-[#963F22] active:scale-[0.98] transition-all"
+                        className="flex-1 py-3 px-4 rounded-xl bg-[#B85838] text-white text-xs font-bold  hover:bg-[#963F22] active:scale-[0.98] transition-all"
                       >
                         Oui, terminer
                       </button>
@@ -531,12 +531,12 @@ export default function HikingCockpitPage() {
               {/* Geolocation Permission Request Modal */}
               {routeIdParam && !hikingStore.isActive && geoPermissionState === 'prompt' && (
                 <div className="fixed inset-0 z-[9999] bg-black/75 backdrop-blur-md flex items-center justify-center p-4 animate-fadeIn">
-                  <div className="bg-white rounded-[0.75rem] max-w-md w-full p-6 shadow-2xl border border-[#E4E0D4] text-center space-y-4">
-                    <div className="w-16 h-16 rounded-full bg-[#EBF2EA] text-[#2D5A27] flex items-center justify-center mx-auto text-2xl shadow-inner">
+                  <div className="bg-white rounded-[0.75rem] max-w-md w-full p-6  border border-[#E4E0D4] text-center space-y-4">
+                    <div className="w-16 h-16 rounded-full bg-[#EBF2EA] text-[#2D5A27] flex items-center justify-center mx-auto text-2xl ">
                       📍
                     </div>
                     <div>
-                      <h3 className="text-lg font-bold text-[#1C2620]">
+                      <h3 className="text-lg font-bold text-[#17402C]">
                         Géolocalisation requise
                       </h3>
                       <p className="text-xs text-[#5A6A5D] mt-2 leading-relaxed">
@@ -545,7 +545,7 @@ export default function HikingCockpitPage() {
                     </div>
                     <button
                       onClick={handleStartHikeWithPermission}
-                      className="w-full py-3.5 bg-[#2D5A27] text-white text-sm font-bold rounded-2xl shadow-lg hover:bg-[#1E3E1B] active:scale-[0.98] transition-all flex items-center justify-center gap-2"
+                      className="w-full py-3.5 bg-[#17402C] text-white text-sm font-bold rounded-2xl  hover:bg-[#365233] active:scale-[0.98] transition-all flex items-center justify-center gap-2"
                     >
                       <span>🚀</span>
                       <span>Autoriser la position & Démarrer</span>
@@ -557,12 +557,12 @@ export default function HikingCockpitPage() {
               {/* Geolocation Permission Denied Modal */}
               {routeIdParam && !hikingStore.isActive && geoPermissionState === 'denied' && (
                 <div className="fixed inset-0 z-[9999] bg-black/75 backdrop-blur-md flex items-center justify-center p-4 animate-fadeIn">
-                  <div className="bg-white rounded-[0.75rem] max-w-md w-full p-6 shadow-2xl border border-red-200 text-center space-y-4">
+                  <div className="bg-white rounded-[0.75rem] max-w-md w-full p-6  border border-red-200 text-center space-y-4">
                     <div className="w-16 h-16 rounded-full bg-red-50 text-red-600 flex items-center justify-center mx-auto text-2xl">
                       ⚠️
                     </div>
                     <div>
-                      <h3 className="text-lg font-bold text-[#1C2620]">
+                      <h3 className="text-lg font-bold text-[#17402C]">
                         Accès à la position refusé
                       </h3>
                       <p className="text-xs text-[#5A6A5D] mt-2 leading-relaxed">
@@ -572,7 +572,7 @@ export default function HikingCockpitPage() {
                     <div className="space-y-2">
                       <button
                         onClick={handleStartHikeWithPermission}
-                        className="w-full py-3 bg-[#2D5A27] text-white text-sm font-bold rounded-2xl shadow-md hover:bg-[#1E3E1B] active:scale-[0.98] transition-all"
+                        className="w-full py-3 bg-[#2D5A27] text-white text-sm font-bold rounded-2xl  hover:bg-[#1E3E1B] active:scale-[0.98] transition-all"
                       >
                         Réessayer
                       </button>

@@ -132,8 +132,8 @@ export default function Hero() {
             {/* Suggestions dropdown */}
             {focused && (
               <div
-                className="mt-2 rounded-xl overflow-hidden shadow-2xl"
-                style={{ background: 'rgba(28,38,32,0.97)', border: '1px solid rgba(255,255,255,0.1)' }}
+                className="mt-2 rounded-xl overflow-hidden "
+                style={{ background: 'rgba(23,64,44,0.97)', border: '1px solid rgba(255,255,255,0.1)' }}
                 role="listbox"
                 aria-label="Suggestions de recherche"
               >

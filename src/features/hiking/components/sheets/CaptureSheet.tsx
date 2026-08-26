@@ -78,10 +78,10 @@ export default function CaptureSheet({ isOpen, onClose, onCaptureAction, userLoc
         animate={{ y: 0 }}
         exit={{ y: '100%' }}
         transition={{ type: 'spring', damping: 25, stiffness: 200 }}
-        className="w-full max-w-md bg-[#FBFAF6] text-[#0B1F17] rounded-t-[34px] pt-3 pb-10 px-4 shadow-2xl max-h-[85vh] overflow-y-auto space-y-5"
+        className="w-full max-w-md bg-[#FBFAF6] text-[#17402C] rounded-t-[34px] pt-3 pb-10 px-4  max-h-[85vh] overflow-y-auto space-y-5"
       >
         {/* Grabber */}
-        <div className="w-10 h-1 bg-[#0B1F17]/14 rounded-full mx-auto" />
+        <div className="w-10 h-1 bg-[#17402C]/14 rounded-full mx-auto" />
 
         {/* Sheet Header */}
         <div className="flex items-center justify-between px-2">
@@ -95,7 +95,7 @@ export default function CaptureSheet({ isOpen, onClose, onCaptureAction, userLoc
           </div>
           <button
             onClick={onClose}
-            className="w-8 h-8 rounded-full bg-[#E9E4D9] flex items-center justify-center text-[#6B7A72] hover:text-[#0B1F17]"
+            className="w-8 h-8 rounded-full bg-[#E9E4D9] flex items-center justify-center text-[#6B7A72] hover:text-[#17402C]"
           >
             ✕
           </button>
@@ -105,7 +105,7 @@ export default function CaptureSheet({ isOpen, onClose, onCaptureAction, userLoc
         <div className="grid grid-cols-4 gap-2">
           <button
             onClick={() => photoInputRef.current?.click()}
-            className="aspect-square rounded-2xl flex flex-col items-center justify-center gap-1.5 p-1 transition-transform active:scale-95 shadow-sm bg-[#17402C] text-white"
+            className="aspect-square rounded-2xl flex flex-col items-center justify-center gap-1.5 p-1 transition-transform active:scale-95  bg-[#17402C] text-white"
           >
             <span className="text-xl leading-none">📸</span>
             <span className="text-[9px] font-mono font-semibold tracking-wider uppercase text-center leading-none">
@@ -115,7 +115,7 @@ export default function CaptureSheet({ isOpen, onClose, onCaptureAction, userLoc
 
           <button
             onClick={() => videoInputRef.current?.click()}
-            className="aspect-square rounded-2xl flex flex-col items-center justify-center gap-1.5 p-1 transition-transform active:scale-95 shadow-sm bg-[#F4F1EA] text-[#0B1F17]"
+            className="aspect-square rounded-2xl flex flex-col items-center justify-center gap-1.5 p-1 transition-transform active:scale-95  bg-[#F4F1EA] text-[#17402C]"
           >
             <span className="text-xl leading-none">🎥</span>
             <span className="text-[9px] font-mono font-semibold tracking-wider uppercase text-center leading-none">
@@ -125,8 +125,8 @@ export default function CaptureSheet({ isOpen, onClose, onCaptureAction, userLoc
 
           <button
             onClick={() => setNoteMode('NOTE')}
-            className={`aspect-square rounded-2xl flex flex-col items-center justify-center gap-1.5 p-1 transition-transform active:scale-95 shadow-sm ${
-              noteMode === 'NOTE' ? 'bg-[#17402C] text-white' : 'bg-[#F4F1EA] text-[#0B1F17]'
+            className={`aspect-square rounded-2xl flex flex-col items-center justify-center gap-1.5 p-1 transition-transform active:scale-95  ${
+              noteMode === 'NOTE' ? 'bg-[#17402C] text-white' : 'bg-[#F4F1EA] text-[#17402C]'
             }`}
           >
             <span className="text-xl leading-none">📝</span>
@@ -137,7 +137,7 @@ export default function CaptureSheet({ isOpen, onClose, onCaptureAction, userLoc
 
           <button
             onClick={() => setNoteMode('MOMENT')}
-            className={`aspect-square rounded-2xl flex flex-col items-center justify-center gap-1.5 p-1 transition-transform active:scale-95 shadow-sm ${
+            className={`aspect-square rounded-2xl flex flex-col items-center justify-center gap-1.5 p-1 transition-transform active:scale-95  ${
               noteMode === 'MOMENT' ? 'bg-[#17402C] text-white' : 'bg-gradient-to-br from-[#E8B87A] to-[#C89755] text-[#4A2E0E]'
             }`}
           >
@@ -160,7 +160,7 @@ export default function CaptureSheet({ isOpen, onClose, onCaptureAction, userLoc
               value={noteText}
               onChange={(e) => setNoteText(e.target.value)}
               placeholder={noteMode === 'NOTE' ? 'Saisissez votre note de terrain…' : 'Description du moment marquant…'}
-              className="w-full p-2.5 bg-white rounded-xl text-xs text-[#0B1F17] border border-[#E8E4D8] focus:outline-none focus:border-[#17402C]"
+              className="w-full p-2.5 bg-white rounded-xl text-xs text-[#17402C] border border-[#E8E4D8] focus:outline-none focus:border-[#17402C]"
             />
             <button
               onClick={() => {
@@ -180,7 +180,7 @@ export default function CaptureSheet({ isOpen, onClose, onCaptureAction, userLoc
             📌
           </div>
           <div className="flex-1 min-w-0">
-            <div className="text-xs font-medium text-[#0B1F17]">
+            <div className="text-xs font-medium text-[#17402C]">
               Horodatage & GPS <em className="font-serif italic text-[#17402C]">en direct</em>
             </div>
             <div className="text-[10px] font-mono text-[#205238] tracking-wider mt-0.5 truncate">
@@ -195,7 +195,7 @@ export default function CaptureSheet({ isOpen, onClose, onCaptureAction, userLoc
             Captures enregistrées ({captures.length})
           </h3>
           {captures.length === 0 ? (
-            <div className="p-4 bg-[#FBFAF6] border border-[#0B1F17]/06 rounded-2xl text-center">
+            <div className="p-4 bg-[#FBFAF6] border border-[#17402C]/06 rounded-2xl text-center">
               <p className="text-xs text-[#6B7A72]">
                 Aucune capture enregistrée pour le moment.
               </p>
@@ -206,7 +206,7 @@ export default function CaptureSheet({ isOpen, onClose, onCaptureAction, userLoc
                 <div key={cap.id} className="p-3 bg-white border border-[#E8E4D8] rounded-xl flex items-center justify-between text-xs">
                   <div className="flex items-center gap-2 truncate">
                     <span>{cap.type === 'PHOTO' ? '📸' : cap.type === 'VIDEO' ? '🎥' : cap.type === 'NOTE' ? '📝' : '✨'}</span>
-                    <span className="font-medium text-[#0B1F17] truncate">{cap.text || cap.type}</span>
+                    <span className="font-medium text-[#17402C] truncate">{cap.text || cap.type}</span>
                   </div>
                   <span className="text-[10px] font-mono text-[#6B7A72] flex-shrink-0 ml-2">{cap.timestamp}</span>
                 </div>

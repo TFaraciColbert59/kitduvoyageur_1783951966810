@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import React, { useEffect, useState, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
@@ -6,6 +6,9 @@ import Link from 'next/link';
 import { createClient } from '@/lib/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import ReportBlockModal, { ReportTarget } from '@/components/ui/ReportBlockModal';
+import { GlassCard } from '@/components/ui/GlassCard';
+import { Badge } from '@/components/ui/Badge';
+import { GlassSheet } from '@/components/ui/GlassSheet';
 
 interface Props {
   countryIso: string;
@@ -74,7 +77,8 @@ export default function BouteilleALaMer({ countryIso, countryName }: Props) {
       `)
       .eq('visibility', 'public')
       .ilike('country_iso', iso)
-      .order('created_at', { ascending: false });
+      .order('created_at', { ascending: false })
+      .limit(2);
       
     if (!error && groupsData) {
       // Check user blocks if logged in
@@ -428,35 +432,36 @@ export default function BouteilleALaMer({ countryIso, countryName }: Props) {
   if (loading) {
     return (
       <div className="py-6 flex justify-center">
-        <div className="w-7 h-7 border-3 border-[#1C2620]/20 border-t-[#1C2620] rounded-full animate-spin"></div>
+        <div className="w-7 h-7 border-3 border-[#5B7F55]/20 border-t-[#5B7F55] rounded-full animate-spin"></div>
       </div>
     );
   }
 
   return (
-    <div className="mt-6 bg-[#0B1F17] rounded-[28px] p-6 md:p-8 text-white relative overflow-hidden">
+    <>
+      <GlassCard tone="sage" className="mt-6 p-6 md:p-8 relative">
       {/* Background Decorative */}
-      <div className="absolute top-0 right-0 w-[300px] h-[300px] bg-[#1B4332] rounded-full mix-blend-screen filter blur-[80px] opacity-40 -translate-y-1/2 translate-x-1/2 pointer-events-none"></div>
-      <div className="absolute bottom-0 left-0 w-[200px] h-[200px] bg-[#C89A5A] rounded-full mix-blend-screen filter blur-[80px] opacity-20 translate-y-1/2 -translate-x-1/2 pointer-events-none"></div>
+      <div className="absolute top-0 right-0 w-[300px] h-[300px] bg-[#A6C1A0] rounded-full mix-blend-screen filter blur-[80px] opacity-40 -translate-y-1/2 translate-x-1/2 pointer-events-none"></div>
+      <div className="absolute bottom-0 left-0 w-[200px] h-[200px] bg-[#C89A3B] rounded-full mix-blend-screen filter blur-[80px] opacity-20 translate-y-1/2 -translate-x-1/2 pointer-events-none"></div>
       
       <div className="relative z-10">
         <div className="max-w-2xl">
           <div className="flex items-center gap-2 mb-3">
-            <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 bg-white/10 border border-white/15 rounded-full text-[11px] font-bold uppercase tracking-wider text-[#A8C4A2]">
-              <span className="w-1.5 h-1.5 rounded-full bg-[#C89A5A] animate-pulse"></span>
+            <span className="glass-pill text-[11px] font-bold uppercase tracking-wider">
+              <span className="w-1.5 h-1.5 rounded-full bg-[#C89A3B] animate-pulse"></span>
               Bouteille à la mer
             </span>
           </div>
-          <h2 className="text-2xl md:text-3xl font-bold font-display leading-snug mb-2">
-            Partez en {countryName} <em className="font-serif italic text-[#A8C4A2] font-normal">avec d'autres voyageurs</em>.
+          <h2 className="text-2xl md:text-3xl font-display font-bold text-[#17402C] leading-snug mb-2">
+            Partez en {countryName} <em className="font-serif italic text-[#486944] font-normal">avec d'autres voyageurs</em>.
           </h2>
-          <p className="text-white/70 text-sm mb-4 max-w-xl leading-relaxed">
+          <p className="text-[#365233] text-sm mb-4 max-w-xl leading-relaxed">
             Rejoignez une expédition ouverte (sur validation du créateur) ou lancez un appel pour trouver des coéquipiers et partager les frais.
           </p>
           
           {isSuspended && (
-            <div className="mb-4 p-3 bg-red-500/20 border border-red-500/40 rounded-xl text-xs text-red-200">
-              ⚠️ Votre compte est temporairement limité sur la fonctionnalité Bouteille à la mer suite à un signalement. Pour contester ou obtenir de l'aide, contactez notre équipe sur <a href="mailto:contact@lekitduvoyageur.fr" className="underline font-bold text-white">contact@lekitduvoyageur.fr</a>.
+            <div className="mb-4 p-3 bg-[rgba(168,68,58,0.08)] border border-[rgba(168,68,58,0.30)] rounded-xl text-xs text-[#8A241B]">
+              ⚠️ Votre compte est temporairement limité sur la fonctionnalité Bouteille à la mer suite à un signalement. Pour contester ou obtenir de l'aide, contactez notre équipe sur <a href="mailto:contact@lekitduvoyageur.fr" className="underline font-bold text-[#17402C]">contact@lekitduvoyageur.fr</a>.
             </div>
           )}
 
@@ -471,8 +476,8 @@ export default function BouteilleALaMer({ countryIso, countryName }: Props) {
                 }}
                 className={`px-5 py-2.5 rounded-full font-bold text-xs transition-all flex items-center gap-2 ${
                   !user || (canCreate && !isSuspended)
-                    ? 'bg-white text-[#0B1F17] hover:bg-[#EAE6DF] hover:scale-105 shadow-sm' 
-                    : 'bg-white/10 text-white/50 cursor-not-allowed border border-white/10'
+                    ? 'glass-capsule-btn' 
+                    : 'glass-capsule-btn opacity-40 cursor-not-allowed'
                 }`}
                 title={user && !canCreate ? `Trust score requis : ${CREATION_THRESHOLD}` : ''}
               >
@@ -481,8 +486,8 @@ export default function BouteilleALaMer({ countryIso, countryName }: Props) {
               </button>
               
               {user && !canCreate && !isSuspended && (
-                <span className="text-xs text-[#A8C4A2]">
-                  Trust score requis : {CREATION_THRESHOLD} (Vous avez {userTrustScore}). <Link href="/compte" className="underline hover:text-white transition-colors">Comment l'augmenter ?</Link>
+                <span className="text-xs text-[#5B7F55]">
+                  Trust score requis : {CREATION_THRESHOLD} (Vous avez {userTrustScore}). <Link href="/compte" className="underline hover:text-[#17402C] transition-colors">Comment l'augmenter ?</Link>
                 </span>
               )}
             </div>
@@ -491,78 +496,78 @@ export default function BouteilleALaMer({ countryIso, countryName }: Props) {
 
         {/* Create Form */}
         {showCreateForm && (
-          <form onSubmit={handleCreateGroup} className="mt-6 bg-white/5 border border-white/10 rounded-[20px] p-5 md:p-6 backdrop-blur-md max-w-xl animate-fade-in">
+          <form onSubmit={handleCreateGroup} className="mt-6 glass-sub-card p-5 md:p-6 max-w-xl animate-fade-in">
             <div className="flex justify-between items-center mb-4">
-              <h3 className="font-bold text-base">Lancer bouteille à la mer</h3>
-              <button type="button" onClick={() => setShowCreateForm(false)} className="w-7 h-7 flex items-center justify-center rounded-full bg-white/10 hover:bg-white/20 text-white text-xs">✕</button>
+              <h3 className="font-display font-bold text-base text-[#17402C]">Lancer bouteille à la mer</h3>
+              <button type="button" onClick={() => setShowCreateForm(false)} className="w-7 h-7 flex items-center justify-center rounded-full glass-pill text-[#17402C] text-xs hover:bg-white/20">✕</button>
             </div>
             
             <div className="space-y-3.5">
               <div>
-                <label className="block text-[11px] uppercase tracking-wider text-white/60 mb-1">Nom de l'expédition</label>
-                <input required type="text" value={formData.name} onChange={e => setFormData({...formData, name: e.target.value})} className="w-full bg-black/25 border border-white/15 rounded-lg px-3.5 py-2 text-sm text-white focus:outline-none focus:border-[#A8C4A2]" />
+                <label className="block text-[10px] uppercase tracking-wider text-[#5A7064] mb-1">Nom de l'expédition</label>
+                <input required type="text" value={formData.name} onChange={e => setFormData({...formData, name: e.target.value})} className="glass-input w-full text-sm" />
               </div>
               
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className="block text-[11px] uppercase tracking-wider text-white/60 mb-1">Départ prévu</label>
-                  <input type="date" value={formData.departure_date} onChange={e => setFormData({...formData, departure_date: e.target.value})} className="w-full bg-black/25 border border-white/15 rounded-lg px-3.5 py-2 text-sm text-white focus:outline-none focus:border-[#A8C4A2]" />
+                  <label className="block text-[10px] uppercase tracking-wider text-[#5A7064] mb-1">Départ prévu</label>
+                  <input type="date" value={formData.departure_date} onChange={e => setFormData({...formData, departure_date: e.target.value})} className="glass-input w-full text-sm" />
                 </div>
                 <div>
-                  <label className="block text-[11px] uppercase tracking-wider text-white/60 mb-1">Retour prévu</label>
-                  <input type="date" value={formData.return_date} onChange={e => setFormData({...formData, return_date: e.target.value})} className="w-full bg-black/25 border border-white/15 rounded-lg px-3.5 py-2 text-sm text-white focus:outline-none focus:border-[#A8C4A2]" />
+                  <label className="block text-[10px] uppercase tracking-wider text-[#5A7064] mb-1">Retour prévu</label>
+                  <input type="date" value={formData.return_date} onChange={e => setFormData({...formData, return_date: e.target.value})} className="glass-input w-full text-sm" />
                 </div>
               </div>
               
               <div>
-                <label className="block text-[11px] uppercase tracking-wider text-white/60 mb-1">Message de la bouteille</label>
-                <textarea required rows={2} value={formData.description} onChange={e => setFormData({...formData, description: e.target.value})} placeholder="Quel type de compagnons cherchez-vous ?" className="w-full bg-black/25 border border-white/15 rounded-lg px-3.5 py-2 text-sm text-white focus:outline-none focus:border-[#A8C4A2] resize-none"></textarea>
+                <label className="block text-[10px] uppercase tracking-wider text-[#5A7064] mb-1">Message de la bouteille</label>
+                <textarea required rows={2} value={formData.description} onChange={e => setFormData({...formData, description: e.target.value})} placeholder="Quel type de compagnons cherchez-vous ?" className="glass-input w-full text-sm resize-none"></textarea>
               </div>
               
               <div className="grid grid-cols-3 gap-3">
                 <div>
-                  <label className="block text-[11px] uppercase tracking-wider text-white/60 mb-1">Places max</label>
-                  <input type="number" min={2} max={12} required value={formData.max_members} onChange={e => setFormData({...formData, max_members: parseInt(e.target.value)})} className="w-full bg-black/25 border border-white/15 rounded-lg px-3.5 py-2 text-sm text-white focus:outline-none focus:border-[#A8C4A2]" />
+                  <label className="block text-[10px] uppercase tracking-wider text-[#5A7064] mb-1">Places max</label>
+                  <input type="number" min={2} max={12} required value={formData.max_members} onChange={e => setFormData({...formData, max_members: parseInt(e.target.value)})} className="glass-input w-full text-sm" />
                 </div>
                 <div>
-                  <label className="block text-[11px] uppercase tracking-wider text-white/60 mb-1">Trust Score (Min {ABSOLUTE_MIN_TRUST})</label>
-                  <input type="number" min={ABSOLUTE_MIN_TRUST} max={100} required value={formData.min_trust_score} onChange={e => setFormData({...formData, min_trust_score: parseInt(e.target.value)})} className="w-full bg-black/25 border border-white/15 rounded-lg px-3.5 py-2 text-sm text-white focus:outline-none focus:border-[#A8C4A2]" />
+                  <label className="block text-[10px] uppercase tracking-wider text-[#5A7064] mb-1">Trust Score (Min {ABSOLUTE_MIN_TRUST})</label>
+                  <input type="number" min={ABSOLUTE_MIN_TRUST} max={100} required value={formData.min_trust_score} onChange={e => setFormData({...formData, min_trust_score: parseInt(e.target.value)})} className="glass-input w-full text-sm" />
                 </div>
                 <div>
-                  <label className="block text-[11px] uppercase tracking-wider text-white/60 mb-1">Mixité</label>
+                  <label className="block text-[10px] uppercase tracking-wider text-[#5A7064] mb-1">Mixité</label>
                   <select
                     value={formData.mixite}
                     onChange={e => setFormData({ ...formData, mixite: e.target.value })}
-                    className="w-full bg-black/25 border border-white/15 rounded-lg px-2.5 py-2 text-xs text-white focus:outline-none focus:border-[#A8C4A2]"
+                    className="glass-input w-full text-xs"
                   >
-                    <option value="all" className="bg-[#14231C]">Tous (Mixte)</option>
-                    <option value="women_only" className="bg-[#14231C]">Entre femmes 👭</option>
-                    <option value="men_only" className="bg-[#14231C]">Entre hommes 👬</option>
+                    <option value="all" className="bg-[#FBFAF6]">Tous (Mixte)</option>
+                    <option value="women_only" className="bg-[#FBFAF6]">Entre femmes 👭</option>
+                    <option value="men_only" className="bg-[#FBFAF6]">Entre hommes 👬</option>
                   </select>
                 </div>
               </div>
 
               {/* 18+ Safety confirmation */}
-              <div className="pt-2 border-t border-white/10 space-y-2">
-                <label className="flex items-start gap-2 text-xs text-white/80 cursor-pointer">
+              <div className="pt-2 border-t border-[#E4DED3] space-y-2">
+                <label className="flex items-start gap-2 text-xs text-[#365233] cursor-pointer">
                   <input
                     type="checkbox"
                     required
                     checked={formData.isAdult}
                     onChange={e => setFormData({ ...formData, isAdult: e.target.checked })}
-                    className="mt-0.5 rounded text-[#1B4332]"
+                    className="mt-0.5 rounded text-[#5B7F55] accent-[#5B7F55]"
                   />
                   <span>
-                    Je certifie sur l'honneur avoir <strong>18 ans ou plus</strong> et m'engage à respecter la charte de sécurité de la communauté.
+                    Je certifie sur l'honneur avoir <strong className="text-[#17402C]">18 ans ou plus</strong> et m'engage à respecter la charte de sécurité de la communauté.
                   </span>
                 </label>
-                <p className="text-[10px] text-white/45 italic leading-tight">
+                <p className="text-[10px] text-[#5A7064] italic leading-tight">
                   Le Kit du Voyageur facilite la mise en relation. L'organisation, les réservations et le déroulement du séjour restent sous la responsabilité exclusive des co-voyageurs.
                 </p>
               </div>
               
               <div className="pt-2">
-                <button type="submit" disabled={creating} className="w-full py-2.5 bg-[#C89A5A] hover:bg-[#E4C695] text-[#0F2A20] rounded-lg font-bold text-xs transition-colors disabled:opacity-50">
+                <button type="submit" disabled={creating} className="glass-capsule-btn w-full font-bold text-xs disabled:opacity-50">
                   {creating ? 'Lancement...' : 'Jeter à la mer'}
                 </button>
               </div>
@@ -572,12 +577,12 @@ export default function BouteilleALaMer({ countryIso, countryName }: Props) {
 
         {/* Existing Bottles List */}
         {!showCreateForm && groups.length > 0 && (
-          <div className="mt-6 pt-6 border-t border-white/10">
-            <h3 className="text-base font-bold mb-4 flex items-center gap-2 text-white">
-              <span className="w-6 h-6 rounded-full bg-white/10 flex items-center justify-center text-xs">🌊</span>
+          <div className="mt-6 pt-6 border-t border-[#E4DED3]">
+            <h3 className="text-base font-bold mb-4 flex items-center gap-2 text-[#17402C]">
+              <span className="w-6 h-6 rounded-full glass-pill flex items-center justify-center text-xs">🌊</span>
               Les bouteilles retrouvées dans la mer ({groups.length})
             </h3>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-3.5">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-3.5 bouteille-list">
               {groups.map((group) => {
                 const isOwner = user && user.id === group.owner_id;
                 const userStatus = group.userMembershipStatus;
@@ -585,20 +590,20 @@ export default function BouteilleALaMer({ countryIso, countryName }: Props) {
                 const canJoinSpots = group.spotsLeft > 0;
                 
                 return (
-                  <div key={group.id} className="bg-white/5 border border-white/10 rounded-[18px] p-4 hover:bg-white/10 transition-colors flex flex-col sm:flex-row gap-4 items-start sm:items-center justify-between">
+                  <div key={group.id} className="glass-sub-card p-4 flex flex-col sm:flex-row gap-4 items-start sm:items-center justify-between">
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center justify-between gap-2 mb-2">
                         <div className="flex items-center gap-2 min-w-0">
-                          <img src={group.owner?.avatar_url || 'https://i.pravatar.cc/150'} className="w-7 h-7 rounded-full border border-white/20 object-cover shrink-0" />
+                          <img src={group.owner?.avatar_url || 'https://i.pravatar.cc/150'} className="w-7 h-7 rounded-full border border-white/30 object-cover shrink-0" />
                           <div className="min-w-0">
-                            <div className="font-bold text-xs text-white truncate">
+                            <div className="font-bold text-xs text-[#17402C] truncate">
                               {group.owner?.full_name || 'Voyageur'}
-                              {isOwner && <span className="ml-1.5 text-[10px] px-1.5 py-0.2 bg-[#1B4332] text-[#A8C4A2] rounded font-mono">Créateur</span>}
+                              {isOwner && <span className="ml-1.5"><Badge tone="sage">Créateur</Badge></span>}
                             </div>
-                            <div className="text-[10px] text-white/50 font-mono flex items-center gap-1.5">
-                              <span>Trust: <strong className={group.owner?.trust_score >= 80 ? 'text-[#A8C4A2]' : 'text-white'}>{group.owner?.trust_score || 0}/100</strong></span>
-                              {group.mixite === 'women_only' && <span className="text-[#E4C695] font-sans">· 👭 Femmes</span>}
-                              {group.mixite === 'men_only' && <span className="text-[#A8C4A2] font-sans">· 👬 Hommes</span>}
+                            <div className="text-[10px] text-[#5A7064] font-mono flex items-center gap-1.5">
+                              <span>Trust: <strong className={group.owner?.trust_score >= 80 ? 'text-[#486944]' : 'text-[#17402C]'}>{group.owner?.trust_score || 0}/100</strong></span>
+                              {group.mixite === 'women_only' && <span className="text-[#8C6418] font-sans">· 👭 Femmes</span>}
+                              {group.mixite === 'men_only' && <span className="text-[#5B7F55] font-sans">· 👬 Hommes</span>}
                             </div>
                           </div>
                         </div>
@@ -607,7 +612,7 @@ export default function BouteilleALaMer({ countryIso, countryName }: Props) {
                         {!isOwner && user && (
                           <button
                             onClick={() => setReportTarget({ userId: group.owner_id, userName: group.owner?.full_name || 'Créateur', groupId: group.id, groupName: group.name })}
-                            className="text-white/40 hover:text-red-400 p-1 text-xs"
+                            className="text-[#5A7064] hover:text-[#A8443A] p-1 text-xs"
                             title="Signaler ou bloquer"
                           >
                             🚩
@@ -615,80 +620,80 @@ export default function BouteilleALaMer({ countryIso, countryName }: Props) {
                         )}
                       </div>
                       
-                      <h4 className="font-bold text-sm text-white mb-1 truncate">{group.name}</h4>
-                      <p className="text-xs text-white/70 line-clamp-1 mb-2">
+                      <h4 className="font-bold text-sm text-[#17402C] mb-1 truncate">{group.name}</h4>
+                      <p className="text-xs text-[#365233] line-clamp-1 mb-2">
                         {group.description || "Aucun message, mais une aventure en vue."}
                       </p>
                       
-                      <div className="flex flex-wrap items-center gap-1.5 text-[10px] font-mono text-white/60">
+                      <div className="flex flex-wrap items-center gap-1.5 text-[10px] font-mono text-[#5A7064]">
                         {group.departure_date && (
-                          <span className="bg-black/30 px-2 py-0.5 rounded">Départ : {new Date(group.departure_date).toLocaleDateString()}</span>
+                          <span className="glass-pill px-2 py-0.5">Départ : {new Date(group.departure_date).toLocaleDateString()}</span>
                         )}
-                        <span className="bg-black/30 px-2 py-0.5 rounded text-[#C89A5A] font-bold">
+                        <span className="glass-pill px-2 py-0.5 text-[#8C6418] font-bold">
                           {group.spotsLeft} place{group.spotsLeft > 1 ? 's' : ''} restante{group.spotsLeft > 1 ? 's' : ''}
                         </span>
                         {group.totalExpenses > 0 && (
-                          <span className="bg-black/30 px-2 py-0.5 rounded text-[#A8C4A2]">
+                          <span className="glass-pill px-2 py-0.5 text-[#486944]">
                             💰 {Math.round(group.totalExpenses)} € engagés
                           </span>
                         )}
                       </div>
 
-                      <div className="text-[9px] text-white/35 mt-1.5 font-sans">
+                      <div className="text-[9px] text-[#5A7064] mt-1.5 font-sans">
                         * Le trust score reflète l'historique sans signalement, pas une garantie d'adéquation humaine.
                       </div>
                     </div>
                     
-                    <div className="sm:w-[140px] flex flex-col items-center sm:items-end justify-center w-full pt-3 sm:pt-0 border-t sm:border-t-0 sm:border-l border-white/10 sm:pl-3 shrink-0">
+                    <div className="sm:w-[140px] flex flex-col items-center sm:items-end justify-center w-full pt-3 sm:pt-0 border-t sm:border-t-0 sm:border-l border-[#E4DED3] sm:pl-3 shrink-0">
                       {isOwner ? (
                         <div className="w-full flex flex-col gap-1.5">
                           <button
                             onClick={() => loadApplicantsForGroup(group)}
-                            className="w-full py-2 px-2.5 rounded-full text-xs font-bold bg-[#A8C4A2] text-[#0B1F17] hover:bg-white transition-colors relative"
+                            className="glass-capsule-btn w-full px-2.5 text-xs font-bold relative"
                           >
                             Gérer ({group.pendingCount || 0})
                             {group.pendingCount > 0 && (
-                              <span className="absolute -top-1 -right-1 w-4 h-4 bg-red-500 text-white rounded-full text-[9px] flex items-center justify-center animate-pulse">
-                                {group.pendingCount}
+                              <span className="absolute -top-1.5 -right-1.5 animate-pulse">
+                                <Badge tone="danger">{group.pendingCount}</Badge>
                               </span>
                             )}
                           </button>
                           <button
                             onClick={() => router.push(`/groupes/${group.id}`)}
-                            className="w-full py-1.5 text-[11px] text-white/70 hover:text-white text-center"
+                            className="w-full py-1.5 text-[11px] text-[#5A7064] hover:text-[#17402C] text-center"
                           >
                             Ouvrir le cockpit →
                           </button>
                         </div>
                       ) : userStatus === 'active' ? (
                         <div className="w-full text-center">
-                          <span className="inline-flex items-center gap-1 px-2.5 py-1 bg-[#1B4332] text-[#A8C4A2] rounded-full text-[11px] font-bold mb-1.5">
+                          <span className="glass-pill px-2.5 py-1 text-[11px] font-bold mb-1.5">
                             ✓ Confirmé
                           </span>
                           <button
                             onClick={() => router.push(`/groupes/${group.id}`)}
-                            className="w-full py-1.5 bg-white text-[#0B1F17] hover:bg-[#EAE6DF] rounded-full text-xs font-bold transition-colors"
+                            className="glass-capsule-btn w-full text-xs font-bold"
                           >
                             Accéder au groupe
                           </button>
                         </div>
                       ) : userStatus === 'pending' ? (
                         <div className="w-full text-center space-y-1.5">
-                          <div className="text-[10px] text-[#A8C4A2] font-mono flex items-center justify-center gap-1">
-                            <span className="w-1.5 h-1.5 rounded-full bg-[#C89A5A] animate-pulse"></span>
+                          <div className="text-[10px] text-[#486944] font-mono flex items-center justify-center gap-1">
+                            <span className="w-1.5 h-1.5 rounded-full bg-[#C89A3B] animate-pulse"></span>
                             En attente créateur
                           </div>
                           <button
                             onClick={() => handleCancelRequest(group)}
                             disabled={cancelLoadingId === group.id}
-                            className="w-full py-1.5 bg-white/10 hover:bg-red-500/20 text-white/80 hover:text-red-300 rounded-full text-[11px] font-semibold transition-colors"
+                            className="glass-capsule-btn secondary w-full text-[11px] font-semibold"
                           >
                             {cancelLoadingId === group.id ? 'Annulation...' : 'Annuler'}
                           </button>
                         </div>
                       ) : (
                         <div className="w-full">
-                          <div className="text-[10px] font-mono font-bold text-[#A8C4A2] mb-1.5 text-center sm:text-right">
+                          <div className="text-[10px] font-mono font-bold text-[#486944] mb-1.5 text-center sm:text-right">
                             Requis {group.min_trust_score}+
                           </div>
                           
@@ -706,17 +711,17 @@ export default function BouteilleALaMer({ countryIso, countryName }: Props) {
                             disabled={joinLoadingId === group.id || !canJoinSpots || isSuspended}
                             className={`w-full py-2 px-3 rounded-full text-xs font-bold transition-colors ${
                               !canJoinSpots || isSuspended
-                                ? 'bg-white/5 text-white/30 cursor-not-allowed'
+                                ? 'glass-capsule-btn opacity-40 cursor-not-allowed'
                                 : !user || canJoinScore 
-                                  ? 'bg-white text-[#0B1F17] hover:bg-[#EAE6DF]' 
-                                  : 'bg-white/10 border border-white/20 text-white/50 hover:bg-white/20'
+                                  ? 'glass-capsule-btn' 
+                                  : 'glass-capsule-btn secondary opacity-60'
                             }`}
                           >
                             {!canJoinSpots ? 'Complet' : 'Demander'}
                           </button>
                           
                           {user && !canJoinScore && canJoinSpots && (
-                            <div className="text-[9px] text-center text-[#E4C695] mt-1 opacity-80 leading-tight">
+                            <div className="text-[9px] text-center text-[#8C6418] mt-1 opacity-80 leading-tight">
                               Score insuffisant ({userTrustScore})
                             </div>
                           )}
@@ -733,163 +738,148 @@ export default function BouteilleALaMer({ countryIso, countryName }: Props) {
 
       {/* ── MODAL: Demande de rejoindre (avec clauses financières et 18+) ── */}
       {joinModalGroup && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-fade-in">
-          <div className="bg-[#14231C] border border-white/15 rounded-[24px] max-w-md w-full p-6 text-white shadow-2xl">
-            <div className="flex justify-between items-start mb-4">
-              <div>
-                <h3 className="font-bold text-lg text-white">Rejoindre l'expédition</h3>
-                <p className="text-xs text-[#A8C4A2]">{joinModalGroup.name}</p>
-              </div>
-              <button onClick={() => setJoinModalGroup(null)} className="w-7 h-7 flex items-center justify-center rounded-full bg-white/10 text-white text-xs">✕</button>
+        <GlassSheet open onOpenChange={(v) => { if (!v) setJoinModalGroup(null); }} title="Rejoindre l'expédition">
+          <div className="space-y-3 text-xs text-[#365233] leading-relaxed mb-5">
+            <p className="text-xs text-[#486944] font-semibold">{joinModalGroup.name}</p>
+            <div className="glass-sub-card p-3 space-y-1">
+              <p><strong className="text-[#17402C]">Modèle à validation :</strong> Votre demande sera transmise au créateur du groupe qui examinera votre profil avant acceptation.</p>
+              <p className="text-[#5A7064]">Trust Score requis : {joinModalGroup.min_trust_score}/100 (Vous avez {userTrustScore}/100).</p>
+              {joinModalGroup.totalExpenses > 0 && (
+                <p className="text-[#8C6418] font-semibold pt-1">
+                  💳 Dépenses déjà enregistrées sur le groupe : {Math.round(joinModalGroup.totalExpenses)} €
+                </p>
+              )}
             </div>
 
-            <div className="space-y-3 text-xs text-white/80 leading-relaxed mb-5">
-              <div className="p-3 bg-white/5 border border-white/10 rounded-xl space-y-1">
-                <p><strong>Modèle à validation :</strong> Votre demande sera transmise au créateur du groupe qui examinera votre profil avant acceptation.</p>
-                <p className="text-white/60">Trust Score requis : {joinModalGroup.min_trust_score}/100 (Vous avez {userTrustScore}/100).</p>
-                {joinModalGroup.totalExpenses > 0 && (
-                  <p className="text-[#E4C695] font-semibold pt-1">
-                    💳 Dépenses déjà enregistrées sur le groupe : {Math.round(joinModalGroup.totalExpenses)} €
-                  </p>
-                )}
-              </div>
+            {/* Clause financière claire */}
+            <label className="flex items-start gap-2.5 p-3 glass-sub-card cursor-pointer">
+              <input
+                type="checkbox"
+                checked={joinAcknowledgeExpenses}
+                onChange={e => setJoinAcknowledgeExpenses(e.target.checked)}
+                className="mt-0.5 rounded text-[#5B7F55] accent-[#5B7F55]"
+              />
+              <span className="text-[#17402C] text-[11px] leading-snug">
+                Je comprends que les dépenses déjà engagées ne sont <strong>pas automatiquement remboursées par la plateforme</strong> (LKDV fournit un outil de suivi de répartition, sans compte séquestre).
+              </span>
+            </label>
 
-              {/* Clause financière claire */}
-              <label className="flex items-start gap-2.5 p-3 rounded-xl border border-white/15 bg-black/20 cursor-pointer">
-                <input
-                  type="checkbox"
-                  checked={joinAcknowledgeExpenses}
-                  onChange={e => setJoinAcknowledgeExpenses(e.target.checked)}
-                  className="mt-0.5 rounded text-[#1B4332]"
-                />
-                <span className="text-white text-[11px] leading-snug">
-                  Je comprends que les dépenses déjà engagées ne sont <strong>pas automatiquement remboursées par la plateforme</strong> (LKDV fournit un outil de suivi de répartition, sans compte séquestre).
-                </span>
-              </label>
+            {/* Confirmation majorité */}
+            <label className="flex items-start gap-2.5 p-3 glass-sub-card cursor-pointer">
+              <input
+                type="checkbox"
+                checked={joinIsAdult}
+                onChange={e => setJoinIsAdult(e.target.checked)}
+                className="mt-0.5 rounded text-[#5B7F55] accent-[#5B7F55]"
+              />
+              <span className="text-[#17402C] text-[11px] leading-snug">
+                Je certifie sur l'honneur avoir <strong>18 ans ou plus</strong> et m'engage à voyager dans le respect des autres membres.
+              </span>
+            </label>
 
-              {/* Confirmation majorité */}
-              <label className="flex items-start gap-2.5 p-3 rounded-xl border border-white/15 bg-black/20 cursor-pointer">
-                <input
-                  type="checkbox"
-                  checked={joinIsAdult}
-                  onChange={e => setJoinIsAdult(e.target.checked)}
-                  className="mt-0.5 rounded text-[#1B4332]"
-                />
-                <span className="text-white text-[11px] leading-snug">
-                  Je certifie sur l'honneur avoir <strong>18 ans ou plus</strong> et m'engage à voyager dans le respect des autres membres.
-                </span>
-              </label>
-
-              <p className="text-[10px] text-white/40 italic text-center">
-                L'app facilite la mise en relation, l'organisation du séjour reste sous la responsabilité des membres.
-              </p>
-            </div>
-
-            <div className="flex gap-3">
-              <button
-                type="button"
-                onClick={() => setJoinModalGroup(null)}
-                className="flex-1 py-2.5 bg-white/10 hover:bg-white/15 text-white rounded-xl text-xs font-semibold"
-              >
-                Annuler
-              </button>
-              <button
-                type="button"
-                onClick={handleConfirmJoin}
-                disabled={!joinIsAdult || !joinAcknowledgeExpenses || joinLoadingId === joinModalGroup.id}
-                className="flex-1 py-2.5 bg-[#A8C4A2] hover:bg-white text-[#0B1F17] rounded-xl text-xs font-bold transition-colors disabled:opacity-40"
-              >
-                {joinLoadingId === joinModalGroup.id ? 'Envoi...' : 'Envoyer la demande'}
-              </button>
-            </div>
+            <p className="text-[10px] text-[#5A7064] italic text-center">
+              L'app facilite la mise en relation, l'organisation du séjour reste sous la responsabilité des membres.
+            </p>
           </div>
-        </div>
+
+          <div className="flex gap-3">
+            <button
+              type="button"
+              onClick={() => setJoinModalGroup(null)}
+              className="flex-1 glass-capsule-btn secondary text-xs font-semibold"
+            >
+              Annuler
+            </button>
+            <button
+              type="button"
+              onClick={handleConfirmJoin}
+              disabled={!joinIsAdult || !joinAcknowledgeExpenses || joinLoadingId === joinModalGroup.id}
+              className="flex-1 glass-capsule-btn text-xs font-bold disabled:opacity-40"
+            >
+              {joinLoadingId === joinModalGroup.id ? 'Envoi...' : 'Envoyer la demande'}
+            </button>
+          </div>
+        </GlassSheet>
       )}
 
       {/* ── MODAL: Gestion des candidatures par le créateur ── */}
       {selectedGroupForManagement && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-fade-in">
-          <div className="bg-[#14231C] border border-white/15 rounded-[24px] max-w-xl w-full p-6 text-white shadow-2xl max-h-[90vh] flex flex-col">
-            <div className="flex justify-between items-start pb-4 border-b border-white/10 mb-4 shrink-0">
-              <div>
-                <h3 className="font-bold text-lg text-white">Demandes en attente</h3>
-                <p className="text-xs text-white/50">{selectedGroupForManagement.name} · {selectedGroupForManagement.spotsLeft} place(s) restante(s)</p>
+        <GlassSheet open onOpenChange={(v) => { if (!v) setSelectedGroupForManagement(null); }} title="Demandes en attente">
+          <p className="text-xs text-[#5A7064] mb-4">{selectedGroupForManagement.name} · {selectedGroupForManagement.spotsLeft} place(s) restante(s)</p>
+
+          <div className="space-y-3.5 pr-1">
+            {loadingApplicants ? (
+              <div className="py-8 flex justify-center">
+                <div className="w-6 h-6 border-2 border-[#5B7F55]/20 border-t-[#5B7F55] rounded-full animate-spin"></div>
               </div>
-              <button onClick={() => setSelectedGroupForManagement(null)} className="w-7 h-7 flex items-center justify-center rounded-full bg-white/10 text-white text-xs">✕</button>
-            </div>
+            ) : pendingApplicants.length === 0 ? (
+              <div className="py-8 text-center text-[#5A7064] text-xs">
+                Aucune demande en attente pour le moment sur cette expédition.
+              </div>
+            ) : (
+              pendingApplicants.map((applicant) => {
+                const p = applicant.profile;
+                const isProcessing = processingApplicantId === applicant.id;
 
-            <div className="flex-1 overflow-y-auto pr-1 space-y-3.5">
-              {loadingApplicants ? (
-                <div className="py-8 flex justify-center">
-                  <div className="w-6 h-6 border-2 border-white/20 border-t-white rounded-full animate-spin"></div>
-                </div>
-              ) : pendingApplicants.length === 0 ? (
-                <div className="py-8 text-center text-white/50 text-xs">
-                  Aucune demande en attente pour le moment sur cette expédition.
-                </div>
-              ) : (
-                pendingApplicants.map((applicant) => {
-                  const p = applicant.profile;
-                  const isProcessing = processingApplicantId === applicant.id;
-
-                  return (
-                    <div key={applicant.id} className="bg-white/5 border border-white/10 rounded-2xl p-4 flex flex-col sm:flex-row gap-4 items-start sm:items-center justify-between">
-                      <div className="flex items-start gap-3 min-w-0">
-                        <img src={p?.avatar_url || 'https://i.pravatar.cc/150'} className="w-10 h-10 rounded-full border border-white/20 object-cover shrink-0 mt-0.5" />
-                        <div className="min-w-0">
-                          <div className="font-bold text-sm text-white truncate">{p?.full_name || 'Voyageur'}</div>
-                          
-                          <div className="flex flex-wrap items-center gap-2 mt-1 text-[11px] font-mono">
-                            <span className="px-2 py-0.5 rounded bg-white/10 text-[#A8C4A2] font-bold">
-                              Trust: {p?.trust_score || 50}/100
-                            </span>
-                            <span className="text-white/60">
-                              {getAccountAgeLabel(p?.created_at)}
-                            </span>
-                          </div>
-
-                          {p?.bio && (
-                            <p className="text-xs text-white/70 line-clamp-2 mt-1.5 italic">
-                              "{p.bio}"
-                            </p>
-                          )}
-                        </div>
-                      </div>
-
-                      <div className="flex sm:flex-col items-center sm:items-end gap-2 w-full sm:w-auto pt-3 sm:pt-0 border-t sm:border-t-0 border-white/10 shrink-0">
-                        <div className="flex gap-2 w-full sm:w-auto">
-                          <button
-                            onClick={() => handleAcceptApplicant(applicant)}
-                            disabled={isProcessing || selectedGroupForManagement.spotsLeft <= 0}
-                            className="flex-1 sm:flex-initial px-3.5 py-1.5 bg-[#A8C4A2] hover:bg-white text-[#0B1F17] rounded-full text-xs font-bold transition-colors disabled:opacity-40"
-                          >
-                            Accepter
-                          </button>
-                          <button
-                            onClick={() => handleRejectApplicant(applicant)}
-                            disabled={isProcessing}
-                            className="flex-1 sm:flex-initial px-3.5 py-1.5 bg-white/10 hover:bg-red-500/20 text-white/80 hover:text-red-300 rounded-full text-xs font-semibold transition-colors"
-                          >
-                            Refuser
-                          </button>
+                return (
+                  <div key={applicant.id} className="glass-sub-card p-4 flex flex-col sm:flex-row gap-4 items-start sm:items-center justify-between">
+                    <div className="flex items-start gap-3 min-w-0">
+                      <img src={p?.avatar_url || 'https://i.pravatar.cc/150'} className="w-10 h-10 rounded-full border border-white/30 object-cover shrink-0 mt-0.5" />
+                      <div className="min-w-0">
+                        <div className="font-bold text-sm text-[#17402C] truncate">{p?.full_name || 'Voyageur'}</div>
+                        
+                        <div className="flex flex-wrap items-center gap-2 mt-1 text-[11px] font-mono text-[#5A7064]">
+                          <span className="glass-pill px-2 py-0.5 font-bold">
+                            Trust: {p?.trust_score || 50}/100
+                          </span>
+                          <span>
+                            {getAccountAgeLabel(p?.created_at)}
+                          </span>
                         </div>
 
-                        {/* Security action */}
-                        <button
-                          onClick={() => setReportTarget({ userId: applicant.user_id, userName: p?.full_name || 'Demandeur', groupId: selectedGroupForManagement.id, groupName: selectedGroupForManagement.name })}
-                          className="text-[10px] text-white/40 hover:text-red-400 underline transition-colors"
-                        >
-                          Signaler / Bloquer
-                        </button>
+                        {p?.bio && (
+                          <p className="text-xs text-[#365233] line-clamp-2 mt-1.5 italic">
+                            "{p.bio}"
+                          </p>
+                        )}
                       </div>
                     </div>
-                  );
-                })
-              )}
-            </div>
+
+                    <div className="flex sm:flex-col items-center sm:items-end gap-2 w-full sm:w-auto pt-3 sm:pt-0 border-t sm:border-t-0 border-[#E4DED3] shrink-0">
+                      <div className="flex gap-2 w-full sm:w-auto">
+                        <button
+                          onClick={() => handleAcceptApplicant(applicant)}
+                          disabled={isProcessing || selectedGroupForManagement.spotsLeft <= 0}
+                          className="flex-1 sm:flex-initial px-3.5 py-1.5 glass-capsule-btn text-xs font-bold disabled:opacity-40"
+                        >
+                          Accepter
+                        </button>
+                        <button
+                          onClick={() => handleRejectApplicant(applicant)}
+                          disabled={isProcessing}
+                          className="flex-1 sm:flex-initial px-3.5 py-1.5 glass-capsule-btn secondary text-xs font-semibold"
+                        >
+                          Refuser
+                        </button>
+                      </div>
+
+                      {/* Security action */}
+                      <button
+                        onClick={() => setReportTarget({ userId: applicant.user_id, userName: p?.full_name || 'Demandeur', groupId: selectedGroupForManagement.id, groupName: selectedGroupForManagement.name })}
+                        className="text-[10px] text-[#5A7064] hover:text-[#A8443A] underline transition-colors"
+                      >
+                        Signaler / Bloquer
+                      </button>
+                    </div>
+                  </div>
+                );
+              })
+            )}
           </div>
-        </div>
+        </GlassSheet>
       )}
+
+      </GlassCard>
 
       {/* ── MODAL: Signalement & Blocage ── */}
       <ReportBlockModal
@@ -900,6 +890,7 @@ export default function BouteilleALaMer({ countryIso, countryName }: Props) {
           fetchGroups();
         }}
       />
-    </div>
+    </>
   );
 }
+

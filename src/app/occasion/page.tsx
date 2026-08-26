@@ -41,10 +41,10 @@ interface OccasionItem {
 }
 
 const conditionConfig = {
-  comme_neuf: { label: 'Comme neuf', color: 'text-emerald-700 bg-emerald-50 border-emerald-200', badge: 'bg-emerald-500' },
-  tres_bon: { label: 'Très bon état', color: 'text-blue-700 bg-blue-50 border-blue-200', badge: 'bg-blue-500' },
-  bon: { label: 'Bon état', color: 'text-amber-700 bg-amber-50 border-amber-200', badge: 'bg-amber-500' },
-  acceptable: { label: 'Acceptable', color: 'text-gray-600 bg-gray-50 border-gray-200', badge: 'bg-gray-400' },
+  comme_neuf: { label: 'Comme neuf', pill: 'glass-pill' },
+  tres_bon: { label: 'Très bon état', pill: 'glass-pill pill-info' },
+  bon: { label: 'Bon état', pill: 'glass-pill pill-warn' },
+  acceptable: { label: 'Acceptable', pill: 'glass-pill pill-danger' },
 };
 
 const STATIC_LISTINGS: OccasionItem[] = [
@@ -148,43 +148,43 @@ function MakeOfferModal({ item, onClose }: { item: OccasionItem; onClose: () => 
 
   return (
     <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4" onClick={onClose}>
-      <div className="bg-card border border-border rounded-2xl p-6 max-w-sm w-full" onClick={(e) => e.stopPropagation()}>
+      <div className="bg-[rgba(255,255,255,0.92)] border border-[rgba(255,255,255,0.60)] rounded-2xl p-6 max-w-sm w-full" onClick={(e) => e.stopPropagation()}>
         {!sent ? (
           <>
             <div className="flex items-center justify-between mb-5">
-              <h3 className="font-display font-700 text-foreground text-lg">Faire une offre</h3>
-              <button onClick={onClose} className="p-1.5 rounded-lg hover:bg-muted transition-colors"><Icon name="XMarkIcon" size={18} /></button>
+              <h3 className="font-display font-bold text-foreground text-lg text-[#17402C]">Faire une offre</h3>
+              <button onClick={onClose} className="p-1.5 rounded-lg hover:bg-white/40 transition-colors"><Icon name="XMarkIcon" size={18} /></button>
             </div>
-            <div className="bg-muted rounded-xl p-3 mb-4">
-              <p className="text-xs text-muted-foreground mb-0.5">Article</p>
-              <p className="text-sm font-600 text-foreground">{item.title}</p>
-              <p className="text-sm text-primary font-700">{item.price} € (prix affiché)</p>
+            <div className="glass-sub-card rounded-xl p-3 mb-4">
+              <p className="text-xs text-[#5A7064] mb-0.5">Article</p>
+              <p className="text-sm font-semibold text-[#17402C]">{item.title}</p>
+              <p className="text-sm text-[#5B7F55] font-bold">{item.price} € (prix affiché)</p>
             </div>
             <div className="mb-4">
-              <label className="block text-xs font-medium text-muted-foreground mb-1">Votre offre (€)</label>
+              <label className="block text-xs font-medium text-[#5A7064] mb-1">Votre offre (€)</label>
               <input
                 type="number" min={1} value={amount} onChange={(e) => setAmount(e.target.value)}
-                className="input-field w-full text-lg font-700"
+                className="glass-input w-full text-lg font-bold"
               />
-              <p className="text-xs text-muted-foreground mt-1">
+              <p className="text-xs text-[#5A7064] mt-1">
                 Le vendeur pourra accepter ou refuser votre offre en 1 tap.
               </p>
             </div>
             <div className="flex gap-3">
-              <button onClick={onClose} className="btn-secondary flex-1 justify-center py-3">Annuler</button>
-              <button onClick={handleSubmit} disabled={saving || !amount} className="btn-primary flex-1 justify-center py-3 disabled:opacity-50">
+              <button onClick={onClose} className="glass-capsule-btn secondary flex-1 justify-center py-3">Annuler</button>
+              <button onClick={handleSubmit} disabled={saving || !amount} className="glass-capsule-btn primary flex-1 justify-center py-3 disabled:opacity-50">
                 {saving ? 'Envoi…' : 'Envoyer l\'offre'}
               </button>
             </div>
           </>
         ) : (
           <div className="text-center py-6">
-            <div className="w-16 h-16 rounded-full bg-emerald-100 flex items-center justify-center mx-auto mb-4">
-              <Icon name="CheckIcon" size={28} className="text-emerald-600" />
+            <div className="w-16 h-16 rounded-full bg-[#E1EBDE] flex items-center justify-center mx-auto mb-4">
+              <Icon name="CheckIcon" size={28} className="text-[#5B7F55]" />
             </div>
-            <h3 className="font-display font-700 text-foreground text-lg mb-2">Offre envoyée !</h3>
-            <p className="text-sm text-muted-foreground mb-6">Le vendeur vous répondra rapidement.</p>
-            <button onClick={onClose} className="btn-primary justify-center px-8 py-3">Fermer</button>
+            <h3 className="font-display font-bold text-lg text-[#17402C] mb-2">Offre envoyée !</h3>
+            <p className="text-sm text-[#5A7064] mb-6">Le vendeur vous répondra rapidement.</p>
+            <button onClick={onClose} className="glass-capsule-btn primary justify-center px-8 py-3">Fermer</button>
           </div>
         )}
       </div>
@@ -199,38 +199,38 @@ function ContactModal({ item, onClose }: { item: OccasionItem; onClose: () => vo
   const [sent, setSent] = useState(false);
   return (
     <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4" onClick={onClose}>
-      <div className="bg-card border border-border rounded-2xl p-6 max-w-md w-full" onClick={(e) => e.stopPropagation()}>
+      <div className="bg-[rgba(255,255,255,0.92)] border border-[rgba(255,255,255,0.60)] rounded-2xl p-6 max-w-md w-full" onClick={(e) => e.stopPropagation()}>
         {!sent ? (
           <>
             <div className="flex items-center justify-between mb-5">
               <div>
-                <h3 className="font-display font-700 text-foreground text-lg">Contacter le vendeur</h3>
-                <p className="text-sm text-muted-foreground">{item.seller}</p>
+                <h3 className="font-display font-bold text-lg text-[#17402C]">Contacter le vendeur</h3>
+                <p className="text-sm text-[#5A7064]">{item.seller}</p>
               </div>
-              <button onClick={onClose} className="p-1.5 rounded-lg hover:bg-muted transition-colors"><Icon name="XMarkIcon" size={18} /></button>
+              <button onClick={onClose} className="p-1.5 rounded-lg hover:bg-white/40 transition-colors"><Icon name="XMarkIcon" size={18} /></button>
             </div>
-            <div className="bg-background rounded-xl border border-border p-3 mb-4">
-              <p className="text-xs font-600 text-muted-foreground mb-1">Annonce</p>
-              <p className="text-sm font-600 text-foreground">{item.title}</p>
-              <p className="text-sm text-primary font-700">{item.price}€</p>
+            <div className="glass-sub-card rounded-xl border-white/40 p-3 mb-4">
+              <p className="text-xs font-semibold text-[#5A7064] mb-1">Annonce</p>
+              <p className="text-sm font-semibold text-[#17402C]">{item.title}</p>
+              <p className="text-sm text-[#5B7F55] font-bold">{item.price}€</p>
             </div>
-            <label className="text-xs font-600 text-muted-foreground uppercase tracking-wider block mb-1.5">Votre message</label>
-            <textarea className="input-field resize-none w-full" rows={4} value={message} onChange={(e) => setMessage(e.target.value)} />
+            <label className="text-xs font-semibold text-[#5A7064] uppercase tracking-wider block mb-1.5">Votre message</label>
+            <textarea className="glass-input resize-none w-full" rows={4} value={message} onChange={(e) => setMessage(e.target.value)} />
             <div className="flex gap-3 mt-4">
-              <button onClick={onClose} className="btn-secondary flex-1 justify-center py-3">Annuler</button>
-              <button onClick={() => setSent(true)} className="btn-primary flex-1 justify-center py-3">
+              <button onClick={onClose} className="glass-capsule-btn secondary flex-1 justify-center py-3">Annuler</button>
+              <button onClick={() => setSent(true)} className="glass-capsule-btn primary flex-1 justify-center py-3">
                 <Icon name="PaperAirplaneIcon" size={16} />Envoyer
               </button>
             </div>
           </>
         ) : (
           <div className="text-center py-6">
-            <div className="w-16 h-16 rounded-full bg-emerald-100 flex items-center justify-center mx-auto mb-4">
-              <Icon name="CheckIcon" size={28} className="text-emerald-600" />
+            <div className="w-16 h-16 rounded-full bg-[#E1EBDE] flex items-center justify-center mx-auto mb-4">
+              <Icon name="CheckIcon" size={28} className="text-[#5B7F55]" />
             </div>
-            <h3 className="font-display font-700 text-foreground text-lg mb-2">Message envoyé !</h3>
-            <p className="text-sm text-muted-foreground mb-6">{item.seller.split(' ')[0]} vous répondra par email.</p>
-            <button onClick={onClose} className="btn-primary justify-center px-8 py-3">Fermer</button>
+            <h3 className="font-display font-bold text-lg text-[#17402C] mb-2">Message envoyé !</h3>
+            <p className="text-sm text-[#5A7064] mb-6">{item.seller.split(' ')[0]} vous répondra par email.</p>
+            <button onClick={onClose} className="glass-capsule-btn primary justify-center px-8 py-3">Fermer</button>
           </div>
         )}
       </div>
@@ -303,10 +303,10 @@ function ItemDetailModal({ item, onClose }: { item: OccasionItem; onClose: () =>
   return (
     <>
       <div className="fixed inset-0 z-40 bg-black/70 backdrop-blur-sm flex items-center justify-center p-4" onClick={onClose}>
-        <div className="bg-card border border-border rounded-2xl w-full max-w-2xl max-h-[90vh] overflow-y-auto" onClick={(e) => e.stopPropagation()}>
-          <div className="flex items-center justify-between p-5 border-b border-border sticky top-0 bg-card z-10">
-            <h2 className="font-display font-700 text-foreground text-base line-clamp-1">{item.title}</h2>
-            <button onClick={onClose} className="p-1.5 rounded-lg hover:bg-muted transition-colors flex-shrink-0"><Icon name="XMarkIcon" size={18} /></button>
+        <div className="bg-[rgba(255,255,255,0.92)] border border-[rgba(255,255,255,0.60)] rounded-2xl w-full max-w-2xl max-h-[90vh] overflow-y-auto" onClick={(e) => e.stopPropagation()}>
+          <div className="flex items-center justify-between p-5 border-b border-white/40 sticky top-0 bg-[rgba(255,255,255,0.85)] backdrop-blur-xl z-10">
+            <h2 className="font-display font-bold text-base text-[#17402C] line-clamp-1">{item.title}</h2>
+            <button onClick={onClose} className="p-1.5 rounded-lg hover:bg-white/40 transition-colors flex-shrink-0"><Icon name="XMarkIcon" size={18} /></button>
           </div>
 
           <div className="p-5 space-y-5">
@@ -314,11 +314,11 @@ function ItemDetailModal({ item, onClose }: { item: OccasionItem; onClose: () =>
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img src={item.image} alt={item.alt} className="w-full h-full object-cover" />
               <div className="absolute top-3 left-3 flex gap-2">
-                <span className={`text-xs font-600 px-2 py-1 rounded-full border ${cond.color}`}>{cond.label}</span>
+                <span className={cond.pill}>{cond.label}</span>
               </div>
               {discount > 0 && (
-                <div className="absolute top-3 right-3 bg-primary rounded-lg px-2 py-1">
-                  <span className="text-white text-xs font-700">-{discount}%</span>
+                <div className="absolute top-3 right-3 glass-pill pill-warn">
+                  <span className="text-xs font-bold">-{discount}%</span>
                 </div>
               )}
             </div>
@@ -326,13 +326,13 @@ function ItemDetailModal({ item, onClose }: { item: OccasionItem; onClose: () =>
             {/* Trust badges */}
             <div className="flex flex-wrap gap-2">
               {isVerifiedPurchase && (
-                <span className="flex items-center gap-1.5 text-xs px-3 py-1.5 rounded-full bg-blue-50 border border-blue-200 text-blue-700 font-medium">
+                <span className="glass-pill pill-info flex items-center gap-1.5">
                   <Icon name="ShieldCheckIcon" size={12} variant="outline" />
                   Acheté sur Le Kit du Voyageur
                 </span>
               )}
               {item.sellerTrustScore >= 90 && (
-                <span className="flex items-center gap-1.5 text-xs px-3 py-1.5 rounded-full bg-emerald-50 border border-emerald-200 text-emerald-700 font-medium">
+                <span className="glass-pill flex items-center gap-1.5">
                   <Icon name="StarIcon" size={12} variant="outline" />
                   Vendeur de confiance
                 </span>
@@ -342,19 +342,19 @@ function ItemDetailModal({ item, onClose }: { item: OccasionItem; onClose: () =>
             <div className="flex items-center justify-between">
               <div>
                 <div className="flex items-baseline gap-2">
-                  <span className="font-display font-800 text-3xl text-foreground">{item.price}€</span>
-                  {item.originalPrice > 0 && <span className="text-muted-foreground line-through text-sm">{item.originalPrice}€</span>}
+                  <span className="font-mono font-bold text-3xl text-[#17402C]">{item.price}€</span>
+                  {item.originalPrice > 0 && <span className="text-[#5A7064] line-through text-sm">{item.originalPrice}€</span>}
                 </div>
-                {item.negotiable && <p className="text-xs text-green-500 mt-0.5">Prix négociable — offres acceptées</p>}
+                {item.negotiable && <p className="text-xs text-[#5B7F55] mt-0.5">Prix négociable — offres acceptées</p>}
               </div>
               <div className="flex gap-2">
                 {item.negotiable && (
-                  <button onClick={() => setShowOffer(true)} className="btn-secondary flex items-center gap-2">
+                  <button onClick={() => setShowOffer(true)} className="glass-capsule-btn secondary flex items-center gap-2">
                     <Icon name="ChatBubbleLeftRightIcon" size={16} variant="outline" />
                     Faire une offre
                   </button>
                 )}
-                <button onClick={() => setShowContact(true)} className="btn-primary flex items-center gap-2">
+                <button onClick={() => setShowContact(true)} className="glass-capsule-btn primary flex items-center gap-2">
                   <Icon name="ChatBubbleLeftIcon" size={16} variant="outline" />
                   Contacter
                 </button>
@@ -364,14 +364,14 @@ function ItemDetailModal({ item, onClose }: { item: OccasionItem; onClose: () =>
             {item.tags.length > 0 && (
               <div className="flex flex-wrap gap-2">
                 {item.tags.map((tag) => (
-                  <span key={tag} className="px-2.5 py-1 bg-muted rounded-full text-xs text-muted-foreground border border-border">{tag}</span>
+                  <span key={tag} className="glass-pill">{tag}</span>
                 ))}
               </div>
             )}
 
             <div>
-              <h3 className="font-semibold text-foreground mb-2 text-sm">Description</h3>
-              <p className="text-sm text-muted-foreground leading-relaxed">{item.description}</p>
+              <h3 className="font-semibold text-[#17402C] mb-2 text-sm">Description</h3>
+              <p className="text-sm text-[#5A7064] leading-relaxed">{item.description}</p>
             </div>
 
             <div className="grid grid-cols-2 gap-3">
@@ -383,51 +383,51 @@ function ItemDetailModal({ item, onClose }: { item: OccasionItem; onClose: () =>
                 { label: 'Livraison', value: item.shippingAvailable ? `Disponible${item.shippingCost ? ` (${item.shippingCost}€)` : ''}` : 'Remise en main propre' },
                 { label: 'Localisation', value: item.location },
               ].filter((d) => d.value).map((detail) => (
-                <div key={detail.label} className="bg-background rounded-xl p-3 border border-border">
-                  <p className="text-[10px] text-muted-foreground mb-0.5">{detail.label}</p>
-                  <p className="text-sm font-medium text-foreground">{detail.value}</p>
+                <div key={detail.label} className="glass-sub-card rounded-xl p-3">
+                  <p className="text-[10px] text-[#5A7064] mb-0.5">{detail.label}</p>
+                  <p className="text-sm font-medium text-[#17402C]">{detail.value}</p>
                 </div>
               ))}
             </div>
 
-            <div className="bg-background rounded-xl p-4 border border-border">
-              <h3 className="font-semibold text-foreground mb-3 text-sm">Vendeur</h3>
+            <div className="glass-sub-card rounded-xl p-4">
+              <h3 className="font-semibold text-[#17402C] mb-3 text-sm">Vendeur</h3>
               <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-full bg-primary/20 text-primary flex items-center justify-center font-700 text-sm flex-shrink-0">
+                <div className="w-10 h-10 rounded-full bg-sage-500/20 text-[#5B7F55] flex items-center justify-center font-bold text-sm flex-shrink-0">
                   {item.sellerAvatar}
                 </div>
                 <div className="flex-1">
-                  <p className="font-medium text-foreground text-sm">{item.seller}</p>
-                  <p className="text-xs text-muted-foreground">{item.sellerSales} ventes · {item.location}</p>
+                  <p className="font-medium text-[#17402C] text-sm">{item.seller}</p>
+                  <p className="text-xs text-[#5A7064]">{item.sellerSales} ventes · {item.location}</p>
                 </div>
                 <div className="text-right">
-                  <p className="font-bold text-foreground text-sm">{item.sellerTrustScore}%</p>
-                  <p className="text-[10px] text-muted-foreground">Fiabilité</p>
+                  <p className="font-bold text-[#17402C] text-sm">{item.sellerTrustScore}%</p>
+                  <p className="text-[10px] text-[#5A7064]">Fiabilité</p>
                 </div>
               </div>
             </div>
 
             {/* F6/F7: Confirm receipt button (shown to logged-in buyers) */}
             {user && user.id !== item.sellerId && (
-              <div className="border border-emerald-200 bg-emerald-50 dark:bg-emerald-900/20 dark:border-emerald-800 rounded-xl p-4">
+              <div className="glass-sub-card rounded-xl p-4 border-[rgba(91,127,85,0.35)] bg-[rgba(91,127,85,0.12)]">
                 {receiptConfirmed ? (
                   <div className="flex items-center gap-3">
-                    <Icon name="CheckCircleIcon" size={20} variant="outline" className="text-emerald-600 flex-shrink-0" />
+                    <Icon name="CheckCircleIcon" size={20} variant="outline" className="text-[#5B7F55] flex-shrink-0" />
                     <div>
-                      <p className="font-semibold text-emerald-700 dark:text-emerald-400 text-sm">Réception confirmée !</p>
-                      <p className="text-xs text-emerald-600/80 dark:text-emerald-500">L&apos;article a été ajouté à votre inventaire. Le vendeur sera payé dans 48h.</p>
+                      <p className="font-semibold text-[#365233] text-sm">Réception confirmée !</p>
+                      <p className="text-xs text-[#365233]/80">L&apos;article a été ajouté à votre inventaire. Le vendeur sera payé dans 48h.</p>
                     </div>
                   </div>
                 ) : (
                   <div>
-                    <p className="font-semibold text-emerald-700 dark:text-emerald-400 text-sm mb-1">Avez-vous reçu cet article ?</p>
-                    <p className="text-xs text-emerald-600/80 dark:text-emerald-500 mb-3">
+                    <p className="font-semibold text-[#365233] text-sm mb-1">Avez-vous reçu cet article ?</p>
+                    <p className="text-xs text-[#365233]/80 mb-3">
                       En confirmant la réception, l&apos;article sera ajouté à votre inventaire et le vendeur sera payé dans 48h.
                     </p>
                     <button
                       onClick={handleConfirmReceipt}
                       disabled={confirmingReceipt}
-                      className="w-full bg-emerald-600 hover:bg-emerald-700 disabled:opacity-50 text-white py-2.5 rounded-xl text-sm font-semibold flex items-center justify-center gap-2 transition-all"
+                      className="glass-capsule-btn primary w-full justify-center py-2.5 text-sm disabled:opacity-50"
                     >
                       {confirmingReceipt ? (
                         <><div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" /> Confirmation…</>
@@ -621,7 +621,7 @@ export default function OccasionPage() {
                       {/* eslint-disable-next-line @next/next/no-img-element */}
                       <img src={item.image} alt={item.alt} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" />
                       <div className="absolute top-2 left-2 flex gap-1.5 flex-wrap">
-                        <span className={`text-xs font-600 px-2 py-0.5 rounded-full border ${cond.color}`}>{cond.label}</span>
+                        <span className={cond.pill}>{cond.label}</span>
                         {isVerifiedPurchase && (
                           <span className="text-xs px-2 py-0.5 rounded-full bg-blue-500 text-white font-medium flex items-center gap-1">
                             <Icon name="ShieldCheckIcon" size={10} variant="outline" />

@@ -71,14 +71,18 @@ const FAQ_DATA: FAQCategory[] = [
 function FAQAccordion({ items }: { items: FAQItem[] }) {
   const [open, setOpen] = useState<number | null>(null);
   return (
-    <div className="space-y-2">
+    <div className="flex flex-col gap-2.5">
       {items.map((item, i) => (
-        <div key={i} className="border border-border rounded-xl overflow-hidden">
-          <button onClick={() => setOpen(open === i ? null : i)} className="w-full flex items-center justify-between gap-4 px-5 py-4 text-left hover:bg-foreground/3 transition-colors">
-            <span className="font-medium text-foreground text-sm">{item.q}</span>
-            <Icon name="ChevronDownIcon" size={16} variant="outline" className={`flex-shrink-0 text-foreground/40 transition-transform duration-200 ${open === i ? 'rotate-180' : ''}`} />
+        <div key={i} className="glass-sub-card overflow-hidden">
+          <button onClick={() => setOpen(open === i ? null : i)} className="w-full flex items-center justify-between gap-4 px-5 py-4 text-left" style={{ background: 'transparent', border: 'none', cursor: 'pointer' }}>
+            <span className="font-medium text-[#17402C] text-sm">{item.q}</span>
+            <Icon name="ChevronDownIcon" size={16} variant="outline" className={`flex-shrink-0 text-[#5A7064] transition-transform duration-200 ${open === i ? 'rotate-180' : ''}`} />
           </button>
-          {open === i && <div className="px-5 pb-4 text-sm text-foreground/70 leading-relaxed border-t border-border bg-foreground/2">{item.a}</div>}
+          {open === i && (
+            <div className="px-5 pb-4 text-sm text-[#365233] leading-relaxed border-t border-white/40" style={{ background: 'rgba(255,255,255,0.06)', paddingTop: 12 }}>
+              {item.a}
+            </div>
+          )}
         </div>
       ))}
     </div>
@@ -88,16 +92,16 @@ function FAQAccordion({ items }: { items: FAQItem[] }) {
 function FAQAccordionMobile({ items }: { items: FAQItem[] }) {
   const [open, setOpen] = useState<number | null>(null);
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+    <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
       {items.map((item, i) => (
-        <div key={i} style={{ borderRadius: '12px', overflow: 'hidden', border: '1px solid rgba(11,31,23,0.06)' }}>
-          <button onClick={() => setOpen(open === i ? null : i)} style={{ width: '100%', display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '12px', padding: '14px 16px', textAlign: 'left', background: 'none', border: 'none', cursor: 'pointer' }}>
-            <span style={{ fontSize: '13px', fontWeight: 500, color: '#1C2620', flex: 1 }}>{item.q}</span>
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="rgba(28,38,32,0.4)" strokeWidth="2" style={{ flexShrink: 0, transform: open === i ? 'rotate(180deg)' : 'none', transition: 'transform 0.2s' }}>
+        <div key={i} className="glass-sub-card overflow-hidden">
+          <button onClick={() => setOpen(open === i ? null : i)} style={{ width: '100%', display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '12px', padding: '14px 16px', textAlign: 'left', background: 'transparent', border: 'none', cursor: 'pointer' }}>
+            <span style={{ fontSize: '13px', fontWeight: 500, color: '#17402C', flex: 1 }}>{item.q}</span>
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#5A7064" strokeWidth="2" style={{ flexShrink: 0, transform: open === i ? 'rotate(180deg)' : 'none', transition: 'transform 0.2s' }}>
               <polyline points="6 9 12 15 18 9" />
             </svg>
           </button>
-          {open === i && <div style={{ padding: '0 16px 12px 16px', fontSize: '13px', color: 'rgba(28,38,32,0.7)', lineHeight: '1.6', borderTop: '1px solid rgba(11,31,23,0.06)', paddingTop: '12px' }}>{item.a}</div>}
+          {open === i && <div style={{ padding: '0 16px 12px 16px', fontSize: '13px', color: '#365233', lineHeight: '1.6', borderTop: '1px solid rgba(255,255,255,0.40)', paddingTop: '12px' }}>{item.a}</div>}
         </div>
       ))}
     </div>
@@ -108,44 +112,78 @@ function FAQPageContent() {
   const [activeCategory, setActiveCategory] = useState(0);
 
   return (
-    <div className="min-h-screen bg-background text-foreground">
+    <div data-lkv-material-theme="light" className="h-dvh overflow-hidden bg-[#FAF8F5]">
       <Header />
-      <main className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 pt-28 pb-16">
-        <p className="text-xs font-mono text-primary tracking-widest uppercase mb-3" style={{ fontFamily: 'var(--font-mono)' }}>Centre d&apos;aide</p>
-        <h1 className="font-display text-3xl md:text-4xl text-foreground mb-3" style={{ fontFamily: 'var(--font-display)', fontWeight: 800 }}>Questions fréquentes</h1>
-        <p className="text-foreground/60 mb-10 max-w-xl">Trouvez rapidement une réponse à votre question. Si vous ne trouvez pas ce que vous cherchez, <Link href="/contact" className="text-primary hover:underline">contactez-nous</Link>.</p>
-        <div className="flex flex-wrap gap-2 mb-8">
-          {FAQ_DATA.map((cat, i) => (
-            <button key={i} onClick={() => setActiveCategory(i)} className={`flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-medium transition-all ${activeCategory === i ? 'bg-primary text-white' : 'bg-card border border-border text-foreground/60 hover:border-primary/40 hover:text-foreground'}`}>
-              <Icon name={cat.icon} size={14} variant="outline" />{cat.title}
-            </button>
-          ))}
-        </div>
-        <FAQAccordion items={FAQ_DATA[activeCategory].items} />
-        <div className="mt-12 p-6 bg-card border border-border rounded-2xl flex flex-col sm:flex-row items-center gap-4">
-          <div className="w-12 h-12 rounded-xl bg-primary/10 flex items-center justify-center flex-shrink-0"><Icon name="ChatBubbleLeftRightIcon" size={22} className="text-primary" variant="outline" /></div>
-          <div className="flex-1 text-center sm:text-left"><p className="font-semibold text-foreground">Vous n&apos;avez pas trouvé votre réponse ?</p><p className="text-sm text-foreground/60">Notre équipe répond sous 48 heures ouvrées.</p></div>
-          <Link href="/contact" className="flex-shrink-0 flex items-center gap-2 bg-primary hover:bg-primary/90 text-white px-5 py-2.5 rounded-xl font-semibold text-sm transition-all"><Icon name="EnvelopeIcon" size={14} variant="outline" />Nous contacter</Link>
+      <main className="h-full overflow-hidden pt-20">
+        <div className="w-full max-w-4xl mx-auto px-6 pb-6 h-full flex flex-col gap-5">
+          <div className="flex-shrink-0">
+            <p className="glass-eyebrow mb-2">Centre d&apos;aide</p>
+            <h1 className="font-display text-3xl md:text-4xl font-bold tracking-tight text-[#17402C] mb-2">Questions fréquentes</h1>
+            <p className="text-[#365233] text-sm max-w-xl leading-relaxed">
+              Trouvez rapidement une réponse à votre question. Si vous ne trouvez pas ce que vous cherchez,{' '}
+              <Link href="/contact" className="text-[#5B7F55] font-medium underline">contactez-nous</Link>.
+            </p>
+          </div>
+
+          {/* Pills catégories */}
+          <div className="flex-shrink-0 flex flex-wrap gap-2">
+            {FAQ_DATA.map((cat, i) => (
+              <button
+                key={i}
+                onClick={() => setActiveCategory(i)}
+                className="glass-pill cursor-pointer px-3.5 py-1.5"
+                style={activeCategory === i ? { background: '#5B7F55', color: '#FFFFFF', borderColor: '#5B7F55' } : undefined}
+                aria-pressed={activeCategory === i}
+              >
+                <Icon name={cat.icon} size={14} variant="outline" />
+                {cat.title}
+              </button>
+            ))}
+          </div>
+
+          {/* Accordéons — scroll interne uniquement */}
+          <div className="flex-1 min-h-0 overflow-y-auto pr-1 pb-2">
+            <FAQAccordion items={FAQ_DATA[activeCategory].items} />
+          </div>
+
+          {/* Card d'aide complémentaire */}
+          <div className="glass flex-shrink-0 flex flex-col sm:flex-row items-center gap-4 p-5">
+            <div className="w-12 h-12 rounded-xl bg-white/10 border border-white/40 flex items-center justify-center flex-shrink-0">
+              <Icon name="ChatBubbleLeftRightIcon" size={22} className="text-[#5B7F55]" variant="outline" />
+            </div>
+            <div className="flex-1 text-center sm:text-left">
+              <p className="font-semibold text-[#17402C]">Vous n&apos;avez pas trouvé votre réponse ?</p>
+              <p className="text-sm text-[#5A7064]">Notre équipe répond sous 48 heures ouvrées.</p>
+            </div>
+            <Link href="/contact" className="glass-capsule-btn">
+              <Icon name="EnvelopeIcon" size={14} variant="outline" />
+              Nous contacter
+            </Link>
+          </div>
         </div>
       </main>
-      <Footer />
     </div>
   );
 }
 
 function MobileFAQContent() {
   const [activeCategory, setActiveCategory] = useState(0);
-  const linkStyle: React.CSSProperties = { color: '#17402C', textDecoration: 'underline' };
 
   return (
     <div style={{ padding: '16px' }}>
       <p style={{ fontSize: '11px', fontFamily: 'var(--font-mono)', color: '#17402C', letterSpacing: '0.14em', textTransform: 'uppercase', marginBottom: '12px' }}>Centre d&apos;aide</p>
-      <h1 style={{ fontSize: '24px', fontWeight: 800, color: '#1C2620', marginBottom: '8px', fontFamily: 'var(--font-display)' }}>Questions fréquentes</h1>
-      <p style={{ fontSize: '13px', color: 'rgba(28,38,32,0.6)', marginBottom: '20px' }}>Trouvez rapidement une réponse à votre question.</p>
+      <h1 style={{ fontSize: '24px', fontWeight: 800, color: '#17402C', marginBottom: '8px', fontFamily: 'var(--font-display)' }}>Questions fréquentes</h1>
+      <p style={{ fontSize: '13px', color: '#5A7064', marginBottom: '20px' }}>Trouvez rapidement une réponse à votre question.</p>
 
-      <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap', marginBottom: '20px' }}>
+      <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap', marginBottom: '20px' }}>
         {FAQ_DATA.map((cat, i) => (
-          <button key={i} onClick={() => setActiveCategory(i)} style={{ padding: '8px 14px', borderRadius: '10px', fontSize: '12px', fontWeight: 500, cursor: 'pointer', background: activeCategory === i ? '#17402C' : '#F4F1EA', color: activeCategory === i ? 'white' : 'rgba(28,38,32,0.6)', border: activeCategory === i ? 'none' : '1px solid rgba(11,31,23,0.06)' }}>
+          <button
+            key={i}
+            onClick={() => setActiveCategory(i)}
+            className="glass-pill cursor-pointer px-3.5 py-1.5"
+            style={activeCategory === i ? { background: '#5B7F55', color: '#FFFFFF', borderColor: '#5B7F55' } : undefined}
+            aria-pressed={activeCategory === i}
+          >
             {cat.title}
           </button>
         ))}
@@ -153,10 +191,10 @@ function MobileFAQContent() {
 
       <FAQAccordionMobile items={FAQ_DATA[activeCategory].items} />
 
-      <div style={{ marginTop: '24px', padding: '16px', background: '#F4F1EA', borderRadius: '12px', border: '1px solid rgba(11,31,23,0.06)' }}>
-        <p style={{ fontSize: '14px', fontWeight: 600, color: '#1C2620', marginBottom: '4px' }}>Vous n&apos;avez pas trouvé votre réponse ?</p>
-        <p style={{ fontSize: '13px', color: 'rgba(28,38,32,0.6)', marginBottom: '12px' }}>Notre équipe répond sous 48 heures.</p>
-        <Link href="/contact" style={{ display: 'inline-flex', alignItems: 'center', gap: '8px', background: '#17402C', color: 'white', padding: '10px 20px', borderRadius: '12px', fontSize: '13px', fontWeight: 600, textDecoration: 'none' }}>
+      <div className="glass-sub-card" style={{ marginTop: '24px', padding: '16px' }}>
+        <p style={{ fontSize: '14px', fontWeight: 600, color: '#17402C', marginBottom: '4px' }}>Vous n&apos;avez pas trouvé votre réponse ?</p>
+        <p style={{ fontSize: '13px', color: '#5A7064', marginBottom: '12px' }}>Notre équipe répond sous 48 heures.</p>
+        <Link href="/contact" className="glass-capsule-btn" style={{ textDecoration: 'none' }}>
           Nous contacter
         </Link>
       </div>
@@ -187,7 +225,6 @@ export default function FAQPage() {
         <MobilePageShell>
           <MobileFAQContent />
         </MobilePageShell>
-        
       </div>
     </>
   );

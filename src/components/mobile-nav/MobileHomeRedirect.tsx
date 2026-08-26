@@ -38,7 +38,7 @@ export default function MobileHomeRedirect() {
             width: '34px',
             height: '34px',
             borderRadius: '999px',
-            border: '2px solid rgba(11,31,23,0.12)',
+            border: '2px solid rgba(23,64,44,0.12)',
             borderTopColor: '#17402C',
             animation: 'lkdv-spin 0.8s linear infinite',
           }}

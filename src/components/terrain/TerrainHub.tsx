@@ -10,7 +10,7 @@ const QUICK_CARDS = [
     label: 'Mon Kit',
     href: '/mon-kit',
     icon: 'bag' as const,
-    color: '#2D6B4A',
+    color: '#365233',
   },
   {
     label: 'Recherche',
@@ -22,13 +22,13 @@ const QUICK_CARDS = [
     label: 'Carte',
     href: '/carte-interactive',
     icon: 'map-pin' as const,
-    color: '#A3C4A3',
+    color: '#A6C1A0',
   },
   {
     label: 'Guides',
     href: '/guides',
     icon: 'bookmark' as const,
-    color: '#6B7A72',
+    color: '#5A7064',
   },
 ];
 
@@ -38,7 +38,7 @@ export default function TerrainHub() {
   return (
     <div
       style={{
-        minHeight: '100vh',
+        minHeight: '100dvh',
         background: '#FBFAF6',
         paddingTop: '80px',
         paddingBottom: 'calc(62px + 24px + env(safe-area-inset-bottom))',
@@ -48,7 +48,7 @@ export default function TerrainHub() {
       <header
         style={{
           padding: '0 20px 24px',
-          borderBottom: '1px solid rgba(11,31,23,0.06)',
+          borderBottom: '1px solid rgba(23,64,44,0.08)',
         }}
       >
         <div
@@ -63,26 +63,19 @@ export default function TerrainHub() {
             style={{
               fontSize: '28px',
               fontWeight: 700,
-              color: '#0B1F17',
+              letterSpacing: '-0.02em',
+              color: '#17402C',
               fontFamily: 'var(--font-display)',
             }}
           >
             Mode Terrain
           </h1>
           <div
+            className={`glass-pill uppercase ${isOnline ? '' : 'pill-info'}`}
             style={{
               display: 'flex',
               alignItems: 'center',
               gap: '6px',
-              padding: '6px 12px',
-              borderRadius: '999px',
-              background: isOnline
-                ? 'rgba(45,107,74,0.1)'
-                : 'rgba(107,122,114,0.12)',
-              fontSize: '11px',
-              fontWeight: 600,
-              color: isOnline ? '#2D6B4A' : '#6B7A72',
-              textTransform: 'uppercase',
               letterSpacing: '0.04em',
             }}
           >
@@ -91,7 +84,7 @@ export default function TerrainHub() {
                 width: '6px',
                 height: '6px',
                 borderRadius: '50%',
-                background: isOnline ? '#2D6B4A' : '#6B7A72',
+                background: isOnline ? '#5B7F55' : '#4B6B7C',
               }}
             />
             {isOnline ? 'GPS actif' : 'Hors ligne'}
@@ -100,7 +93,7 @@ export default function TerrainHub() {
         <p
           style={{
             fontSize: '14px',
-            color: '#6B7A72',
+            color: '#5A7064',
             lineHeight: 1.5,
           }}
         >
@@ -114,7 +107,7 @@ export default function TerrainHub() {
           href="/naviguer"
           style={{
             display: 'block',
-            background: 'linear-gradient(135deg, #17402C 0%, #2D6B4A 100%)',
+            background: 'linear-gradient(135deg, #17402C 0%, #365233 100%)',
             borderRadius: '20px',
             padding: '32px 24px',
             position: 'relative',
@@ -133,7 +126,7 @@ export default function TerrainHub() {
               height: '120px',
               borderRadius: '50%',
               background:
-                'radial-gradient(circle, rgba(163,196,163,0.3) 0%, transparent 70%)',
+                'radial-gradient(circle, rgba(166,193,160,0.35) 0%, transparent 70%)',
             }}
             aria-hidden="true"
           />
@@ -165,6 +158,7 @@ export default function TerrainHub() {
                   style={{
                     fontSize: '20px',
                     fontWeight: 700,
+                    letterSpacing: '-0.02em',
                     color: '#fff',
                     fontFamily: 'var(--font-display)',
                   }}
@@ -215,7 +209,8 @@ export default function TerrainHub() {
           style={{
             fontSize: '16px',
             fontWeight: 600,
-            color: '#0B1F17',
+            letterSpacing: '-0.01em',
+            color: '#17402C',
             marginBottom: '14px',
             fontFamily: 'var(--font-display)',
           }}
@@ -233,15 +228,13 @@ export default function TerrainHub() {
             <Link
               key={card.href}
               href={card.href}
+              className="glass-sub-card"
               style={{
                 display: 'flex',
                 flexDirection: 'column',
                 alignItems: 'center',
                 justifyContent: 'center',
                 padding: '24px 16px',
-                background: '#FBFAF6',
-                border: '1px solid rgba(11,31,23,0.06)',
-                borderRadius: '16px',
                 textDecoration: 'none',
                 transition: 'all 0.2s ease',
               }}
@@ -264,7 +257,7 @@ export default function TerrainHub() {
                 style={{
                   fontSize: '14px',
                   fontWeight: 600,
-                  color: '#0B1F17',
+                  color: '#17402C',
                   textAlign: 'center',
                 }}
               >
@@ -277,12 +270,10 @@ export default function TerrainHub() {
 
       {/* Bottom CTA */}
       <div
+        className="glass-sub-card"
         style={{
           padding: '20px',
           margin: '0 20px',
-          background: '#EDF3ED',
-          borderRadius: '16px',
-          border: '1px solid rgba(11,31,23,0.06)',
         }}
       >
         <div
@@ -297,7 +288,7 @@ export default function TerrainHub() {
               style={{
                 fontSize: '15px',
                 fontWeight: 600,
-                color: '#0B1F17',
+                color: '#17402C',
                 marginBottom: '4px',
               }}
             >
@@ -306,7 +297,7 @@ export default function TerrainHub() {
             <div
               style={{
                 fontSize: '12px',
-                color: '#6B7A72',
+                color: '#5A7064',
               }}
             >
               À venir — Restez en mode terrain entre les pages
@@ -317,7 +308,7 @@ export default function TerrainHub() {
               width: '48px',
               height: '28px',
               borderRadius: '14px',
-              background: 'rgba(11,31,23,0.1)',
+              background: 'rgba(23,64,44,0.12)',
               position: 'relative',
               cursor: 'not-allowed',
               opacity: 0.5,
@@ -332,7 +323,7 @@ export default function TerrainHub() {
                 position: 'absolute',
                 top: '3px',
                 left: '3px',
-                boxShadow: '0 2px 4px rgba(11,31,23,0.15)',
+                boxShadow: '0 2px 4px rgba(23,64,44,0.15)',
               }}
             />
           </div>

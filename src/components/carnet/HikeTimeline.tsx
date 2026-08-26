@@ -128,7 +128,7 @@ function NarrativePanel({ session, carnetId }: { session: HikeSession; carnetId:
         id={`generate-narrative-${session.id}`}
         onClick={generate}
         disabled={generating}
-        className="w-full mt-3 py-2.5 bg-[#1C2620] text-white text-xs font-semibold rounded-xl hover:bg-[#2D3F35] transition-colors flex items-center justify-center gap-2"
+        className="w-full mt-3 py-2.5 bg-[#17402C] text-white text-xs font-semibold rounded-xl hover:bg-[#2D3F35] transition-colors flex items-center justify-center gap-2"
       >
         {generating ? (
           <><span className="animate-spin">⏳</span> Génération en cours…</>
@@ -155,7 +155,7 @@ function NarrativePanel({ session, carnetId }: { session: HikeSession; carnetId:
             onClick={() => setTab(t.key)}
             className={`flex-1 py-1.5 text-xs font-semibold rounded-lg transition-all ${
               tab === t.key
-                ? 'bg-[#1C2620] text-white'
+                ? 'bg-[#17402C] text-white'
                 : 'bg-[#F5F2EA] text-[#5A6A5D] hover:bg-[#EAE6D8]'
             }`}
           >
@@ -246,7 +246,7 @@ export default function HikeTimeline({ carnetId, moments }: Props) {
           return (
             <div key={session.id} className="relative">
               {/* Dot */}
-              <div className="absolute -left-9 top-1 w-4 h-4 rounded-full bg-[#2D6A4F] border-2 border-white shadow-sm" />
+              <div className="absolute -left-9 top-1 w-4 h-4 rounded-full bg-[#2D6A4F] border-2 border-white " />
 
               <div className="bg-white rounded-2xl border border-[#E8E4D8] overflow-hidden">
                 {/* Header session */}
@@ -259,7 +259,7 @@ export default function HikeTimeline({ carnetId, moments }: Props) {
                       <p className="text-xs font-bold text-[#2D6A4F] uppercase tracking-widest mb-0.5">
                         🥾 Randonnée
                       </p>
-                      <p className="text-sm font-semibold text-[#1C2620]">
+                      <p className="text-sm font-semibold text-[#17402C]">
                         {formatDate(session.started_at)}
                       </p>
                       <div className="flex flex-wrap gap-x-3 gap-y-0.5 mt-1">
@@ -290,7 +290,7 @@ export default function HikeTimeline({ carnetId, moments }: Props) {
                           <div key={m.id} className="flex items-start gap-2.5">
                             <MomentIcon source={m.source} />
                             <div className="flex-1 min-w-0">
-                              <p className="text-xs font-semibold text-[#1C2620] leading-tight">
+                              <p className="text-xs font-semibold text-[#17402C] leading-tight">
                                 {m.citation}
                               </p>
                               {m.heure && (
@@ -317,7 +317,7 @@ export default function HikeTimeline({ carnetId, moments }: Props) {
           .map((m) => (
             <div key={m.id} className="relative">
               {/* Dot */}
-              <div className="absolute -left-9 top-1 w-4 h-4 rounded-full bg-white border-2 border-[#C8C0A8] shadow-sm" />
+              <div className="absolute -left-9 top-1 w-4 h-4 rounded-full bg-white border-2 border-[#C8C0A8] " />
 
               <div className="bg-white rounded-2xl border border-[#E8E4D8] p-4">
                 <div className="flex items-start gap-2.5">
@@ -331,7 +331,7 @@ export default function HikeTimeline({ carnetId, moments }: Props) {
                       />
                     )}
                     {m.citation && (
-                      <p className="text-sm text-[#1C2620] leading-relaxed">{m.citation}</p>
+                      <p className="text-sm text-[#17402C] leading-relaxed">{m.citation}</p>
                     )}
                     <div className="flex gap-3 mt-1">
                       {m.heure && (

@@ -1,7 +1,7 @@
 'use client';
 
 import React from 'react';
-import { UserProfile } from '@/lib/mock/compte-marceline';
+import Link from 'next/link';
 
 interface AbonnementCardProps {
   subscription: any;
@@ -9,47 +9,30 @@ interface AbonnementCardProps {
 
 export default function AbonnementCard({ subscription }: AbonnementCardProps) {
   return (
-    <div className="bg-white rounded-[0.75rem] p-6 border border-[#1C2620]/5 shadow-sm space-y-4 font-sans my-6 active:scale-[0.98] active:opacity-95 transition-all duration-150 cursor-pointer">
-      
+    <div className="glass p-3.5 space-y-2.5 rounded-2xl border border-white/70 shadow-xs text-[#17402C] font-sans">
       {/* Header */}
-      <div>
-        <h3 className="font-display font-800 text-xl text-[#1C2620]">
-          Abonnement <span className="font-serif italic font-normal text-emerald-800">Guide</span>
-        </h3>
-        <p className="text-xs text-[#1C2620]/60 mt-0.5">
-          Renouvelé automatiquement le {subscription.renewal_date}.
-        </p>
+      <div className="flex items-center justify-between">
+        <h3 className="font-display font-bold text-xs text-[#17402C]">Abonnement</h3>
+        <span className="glass-pill text-[9px] font-mono font-bold text-[#5B7F55]">
+          {subscription?.status === 'Actif' || !subscription ? 'ACTIF' : subscription.status}
+        </span>
       </div>
 
-      {/* Featured Green Block */}
-      <div className="bg-emerald-50/80 border border-emerald-200/80 rounded-2xl p-4 space-y-3 shadow-inner">
-        <div className="flex items-center justify-between">
-          <span className="font-extrabold text-sm text-emerald-950">{subscription.type}</span>
-          <span className="px-2.5 py-0.5 bg-emerald-700 text-white rounded-full text-[10px] font-black uppercase">
-            {subscription.status}
-          </span>
+      {/* Content */}
+      <div className="flex items-center justify-between p-2 rounded-xl bg-white/70 border border-white/60">
+        <div>
+          <div className="text-xs font-bold text-[#17402C]">{subscription?.plan_name || 'Guide Alpin'}</div>
+          <div className="text-[9.5px] text-[#5A7064]">
+            {subscription?.renewal_date ? `Renouvellement : ${subscription.renewal_date}` : 'Accès illimité topos & GPX'}
+          </div>
         </div>
-        
-        <p className="text-xs text-emerald-900/80 font-medium">
-          {subscription.details}
-        </p>
-
-        <div className="pt-2 flex items-baseline justify-between border-t border-emerald-200/60">
-          <span className="text-[11px] font-mono text-emerald-900/60 uppercase">Tarif annuel</span>
-          <span className="font-mono font-900 text-xl text-emerald-950">{subscription.price}</span>
-        </div>
-      </div>
-
-      {/* Action Buttons */}
-      <div className="flex items-center justify-between pt-1">
-        <button className="px-4 py-2 border border-[#1C2620]/20 hover:bg-[#1C2620] hover:text-white rounded-full text-xs font-extrabold text-[#1C2620] transition-colors">
+        <Link
+          href="/tarifs"
+          className="glass-capsule-btn text-[10px] font-bold !py-1 !px-2.5"
+        >
           Gérer
-        </button>
-        <button className="text-xs font-bold text-[#1C2620]/60 hover:text-[#1C2620] transition-colors underline underline-offset-4">
-          Facturation
-        </button>
+        </Link>
       </div>
-
     </div>
   );
 }

@@ -126,7 +126,7 @@ function ReportHeader({ report }: { report: KitReport }) {
   const daysUntil = getDaysUntilDeparture(sessionParams.startDate);
 
   return (
-    <div className="bg-[#1C2620] rounded-2xl p-6 sm:p-8 relative overflow-hidden">
+    <div className="bg-[#17402C] rounded-2xl p-6 sm:p-8 relative overflow-hidden">
       <div className="absolute inset-0 opacity-5 pointer-events-none" aria-hidden="true">
         <svg width="100%" height="100%">
           <defs>
@@ -192,16 +192,16 @@ function WeightSection({ report }: { report: KitReport }) {
   return (
     <div className="bg-[#EDEAE0] border border-[#C8C3B0] rounded-2xl p-6">
       <div className="flex items-center gap-3 mb-5">
-        <div className="w-8 h-8 rounded-lg bg-[#1C2620] flex items-center justify-center">
+        <div className="w-8 h-8 rounded-lg bg-[#17402C] flex items-center justify-center">
           <Icon name="ScaleIcon" size={16} variant="outline" className="text-white" />
         </div>
-        <h2 className="font-display font-700 text-[#1C2620] text-lg">Gabarit de poids</h2>
+        <h2 className="font-display font-700 text-[#17402C] text-lg">Gabarit de poids</h2>
       </div>
 
       <div className="flex items-center gap-6 mb-6">
         <div>
           <p className="text-[10px] font-mono text-[#5C6B5E] uppercase tracking-widest mb-1">POIDS TOTAL</p>
-          <p className="font-mono font-700 text-3xl text-[#1C2620]">{totalKg.toFixed(2)} kg</p>
+          <p className="font-mono font-700 text-3xl text-[#17402C]">{totalKg.toFixed(2)} kg</p>
           {bodyRatio && (
             <p className="text-xs text-[#5C6B5E] mt-1">
               {bodyRatio}% du poids corporel ({sessionParams.bodyWeightKg} kg)
@@ -226,7 +226,7 @@ function WeightSection({ report }: { report: KitReport }) {
             return (
               <div key={cat}>
                 <div className="flex items-center justify-between mb-1">
-                  <span className="text-sm text-[#1C2620] flex items-center gap-1.5">
+                  <span className="text-sm text-[#17402C] flex items-center gap-1.5">
                     <span>{CATEGORY_ICONS[cat] ?? '📦'}</span>
                     {cat}
                   </span>
@@ -253,16 +253,16 @@ function BudgetSection({ report }: { report: KitReport }) {
   return (
     <div className="bg-[#EDEAE0] border border-[#C8C3B0] rounded-2xl p-6">
       <div className="flex items-center gap-3 mb-5">
-        <div className="w-8 h-8 rounded-lg bg-[#1C2620] flex items-center justify-center">
+        <div className="w-8 h-8 rounded-lg bg-[#17402C] flex items-center justify-center">
           <Icon name="BanknotesIcon" size={16} variant="outline" className="text-white" />
         </div>
-        <h2 className="font-display font-700 text-[#1C2620] text-lg">Détail budgétaire</h2>
+        <h2 className="font-display font-700 text-[#17402C] text-lg">Détail budgétaire</h2>
       </div>
 
       <div className="flex items-center gap-6 mb-5">
         <div>
           <p className="text-[10px] font-mono text-[#5C6B5E] uppercase tracking-widest mb-1">TOTAL</p>
-          <p className="font-mono font-700 text-3xl text-[#1C2620]">{totalPriceEur.toFixed(2)} €</p>
+          <p className="font-mono font-700 text-3xl text-[#17402C]">{totalPriceEur.toFixed(2)} €</p>
           <p className="text-xs text-[#5C6B5E] mt-1">
             Prix cumulé des articles achetés séparément — aucune remise fictive
           </p>
@@ -283,13 +283,13 @@ function BudgetSection({ report }: { report: KitReport }) {
             <div className="flex items-center gap-2 min-w-0">
               <span className="text-sm">{CATEGORY_ICONS[item.category] ?? '📦'}</span>
               <div className="min-w-0">
-                <p className="text-sm text-[#1C2620] truncate">{item.name}</p>
+                <p className="text-sm text-[#17402C] truncate">{item.name}</p>
                 <p className="text-xs text-[#5C6B5E]">{item.brand} · {item.category}</p>
               </div>
             </div>
             <div className="flex items-center gap-4 flex-shrink-0 ml-3">
               <span className="font-mono text-xs text-[#5C6B5E]">{formatWeight(item.weight_g)}</span>
-              <span className="font-mono font-600 text-sm text-[#1C2620]">{Number(item.price_eur).toFixed(2)} €</span>
+              <span className="font-mono font-600 text-sm text-[#17402C]">{Number(item.price_eur).toFixed(2)} €</span>
             </div>
           </div>
         ))}
@@ -317,10 +317,10 @@ function ProductsSection({
     <div className="bg-[#EDEAE0] border border-[#C8C3B0] rounded-2xl p-6">
       <div className="flex items-center justify-between mb-5">
         <div className="flex items-center gap-3">
-          <div className="w-8 h-8 rounded-lg bg-[#1C2620] flex items-center justify-center">
+          <div className="w-8 h-8 rounded-lg bg-[#17402C] flex items-center justify-center">
             <Icon name="ListBulletIcon" size={16} variant="outline" className="text-white" />
           </div>
-          <h2 className="font-display font-700 text-[#1C2620] text-lg">
+          <h2 className="font-display font-700 text-[#17402C] text-lg">
             Articles sélectionnés
           </h2>
         </div>
@@ -333,7 +333,7 @@ function ProductsSection({
           const isExpanded = expandedAlt === item.id;
 
           return (
-            <div key={item.id} className="bg-white/60 border border-[#C8C3B0]/60 rounded-xl overflow-hidden">
+            <div key={item.id} className="bg-[#FBFAF6] border border-[#C8C3B0]/60 rounded-xl overflow-hidden">
               <div className="p-4">
                 <div className="flex items-start gap-3">
                   <div className="w-10 h-10 rounded-lg bg-[#E7E3D6] flex items-center justify-center flex-shrink-0 text-lg">
@@ -344,7 +344,7 @@ function ProductsSection({
                       <div>
                         <Link
                           href={`/produit/${item.slug || item.id}`}
-                          className="font-600 text-sm text-[#1C2620] hover:text-[#17402C] transition-colors"
+                          className="font-600 text-sm text-[#17402C] hover:text-[#17402C] transition-colors"
                         >
                           {item.name}
                         </Link>
@@ -389,7 +389,7 @@ function ProductsSection({
                       {alt.eco && (
                         <div className="bg-emerald-50 border border-emerald-200 rounded-xl p-3">
                           <p className="text-[9px] font-mono text-emerald-600 uppercase tracking-widest mb-1">Option économique</p>
-                          <p className="text-sm font-600 text-[#1C2620]">{alt.eco.name}</p>
+                          <p className="text-sm font-600 text-[#17402C]">{alt.eco.name}</p>
                           <p className="text-xs text-[#5C6B5E]">{alt.eco.brand}</p>
                           <p className="font-mono font-700 text-emerald-700 text-sm mt-1">{alt.eco.price_eur} €</p>
                           <p className="text-xs text-[#5C6B5E] mt-1 leading-relaxed">{alt.eco.reason}</p>
@@ -398,7 +398,7 @@ function ProductsSection({
                       {alt.premium && (
                         <div className="bg-amber-50 border border-amber-200 rounded-xl p-3">
                           <p className="text-[9px] font-mono text-amber-600 uppercase tracking-widest mb-1">Option premium</p>
-                          <p className="text-sm font-600 text-[#1C2620]">{alt.premium.name}</p>
+                          <p className="text-sm font-600 text-[#17402C]">{alt.premium.name}</p>
                           <p className="text-xs text-[#5C6B5E]">{alt.premium.brand}</p>
                           <p className="font-mono font-700 text-amber-700 text-sm mt-1">{alt.premium.price_eur} €</p>
                           <p className="text-xs text-[#5C6B5E] mt-1 leading-relaxed">{alt.premium.reason}</p>
@@ -428,20 +428,20 @@ function ConsumablesSection({ consumables }: { consumables: Consumable[] }) {
   return (
     <div className="bg-[#EDEAE0] border border-[#C8C3B0] rounded-2xl p-6">
       <div className="flex items-center gap-3 mb-5">
-        <div className="w-8 h-8 rounded-lg bg-[#1C2620] flex items-center justify-center">
+        <div className="w-8 h-8 rounded-lg bg-[#17402C] flex items-center justify-center">
           <Icon name="BeakerIcon" size={16} variant="outline" className="text-white" />
         </div>
         <div>
-          <h2 className="font-display font-700 text-[#1C2620] text-lg">Consommables recommandés</h2>
+          <h2 className="font-display font-700 text-[#17402C] text-lg">Consommables recommandés</h2>
           <p className="text-xs text-[#5C6B5E]">Séparés du matériel durable — à prévoir avant le départ</p>
         </div>
       </div>
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
         {consumables.map((c, i) => (
-          <div key={i} className="flex items-start gap-3 bg-white/60 border border-[#C8C3B0]/60 rounded-xl p-3">
+          <div key={i} className="flex items-start gap-3 bg-[#FBFAF6] border border-[#C8C3B0]/60 rounded-xl p-3">
             <span className="text-lg flex-shrink-0">{CATEGORY_ICONS[c.category] ?? '🧴'}</span>
             <div>
-              <p className="text-sm font-600 text-[#1C2620]">{c.name}</p>
+              <p className="text-sm font-600 text-[#17402C]">{c.name}</p>
               <p className="text-xs text-[#5C6B5E] mt-0.5">{c.reason}</p>
               {c.estimated_price_eur > 0 && (
                 <p className="font-mono text-xs text-[#17402C] mt-1">~{c.estimated_price_eur} €</p>
@@ -460,20 +460,20 @@ function BringYourselfSection({ items }: { items: BringYourself[] }) {
   return (
     <div className="bg-[#EDEAE0] border border-[#C8C3B0] rounded-2xl p-6">
       <div className="flex items-center gap-3 mb-5">
-        <div className="w-8 h-8 rounded-lg bg-[#1C2620] flex items-center justify-center">
+        <div className="w-8 h-8 rounded-lg bg-[#17402C] flex items-center justify-center">
           <Icon name="UserIcon" size={16} variant="outline" className="text-white" />
         </div>
         <div>
-          <h2 className="font-display font-700 text-[#1C2620] text-lg">À apporter soi-même</h2>
+          <h2 className="font-display font-700 text-[#17402C] text-lg">À apporter soi-même</h2>
           <p className="text-xs text-[#5C6B5E]">Articles à taille ou personnels — jamais inclus dans le stock proposé</p>
         </div>
       </div>
       <div className="space-y-3">
         {items.map((b, i) => (
-          <div key={i} className="flex items-start gap-3 bg-white/60 border border-[#C8C3B0]/60 rounded-xl p-4">
+          <div key={i} className="flex items-start gap-3 bg-[#FBFAF6] border border-[#C8C3B0]/60 rounded-xl p-4">
             <Icon name="CheckCircleIcon" size={18} variant="outline" className="text-[#5C6B5E] flex-shrink-0 mt-0.5" />
             <div>
-              <p className="text-sm font-600 text-[#1C2620]">{b.item}</p>
+              <p className="text-sm font-600 text-[#17402C]">{b.item}</p>
               <p className="text-xs text-[#5C6B5E] mt-0.5 leading-relaxed">{b.guide}</p>
               {b.affiliate_hint && (
                 <p className="text-xs text-[#17402C] mt-1">{b.affiliate_hint}</p>
@@ -495,10 +495,10 @@ function DestinationSection({ ctx, country }: { ctx: DestinationContext; country
     <div className="bg-[#EDEAE0] border border-[#C8C3B0] rounded-2xl p-6">
       <div className="flex items-center justify-between mb-5">
         <div className="flex items-center gap-3">
-          <div className="w-8 h-8 rounded-lg bg-[#1C2620] flex items-center justify-center">
+          <div className="w-8 h-8 rounded-lg bg-[#17402C] flex items-center justify-center">
             <Icon name="GlobeAltIcon" size={16} variant="outline" className="text-white" />
           </div>
-          <h2 className="font-display font-700 text-[#1C2620] text-lg">Contexte destination</h2>
+          <h2 className="font-display font-700 text-[#17402C] text-lg">Contexte destination</h2>
         </div>
         <Link
           href={`/pays/${countryCode}`}
@@ -510,18 +510,18 @@ function DestinationSection({ ctx, country }: { ctx: DestinationContext; country
       </div>
 
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-        <div className="bg-white/60 border border-[#C8C3B0]/60 rounded-xl p-4">
+        <div className="bg-[#FBFAF6] border border-[#C8C3B0]/60 rounded-xl p-4">
           <p className="text-[10px] font-mono text-[#5C6B5E] uppercase tracking-widest mb-2">Météo prévue</p>
-          <p className="text-sm text-[#1C2620] leading-relaxed">{ctx.weather_summary}</p>
+          <p className="text-sm text-[#17402C] leading-relaxed">{ctx.weather_summary}</p>
         </div>
-        <div className="bg-white/60 border border-[#C8C3B0]/60 rounded-xl p-4">
+        <div className="bg-[#FBFAF6] border border-[#C8C3B0]/60 rounded-xl p-4">
           <div className="flex items-center gap-2 mb-2">
             <p className="text-[10px] font-mono text-[#5C6B5E] uppercase tracking-widest">Niveau de sécurité</p>
             <span className={`text-[10px] font-medium px-2 py-0.5 rounded-full border ${secColor}`}>
               {ctx.security_level}
             </span>
           </div>
-          <p className="text-sm text-[#1C2620] leading-relaxed">{ctx.security_notes}</p>
+          <p className="text-sm text-[#17402C] leading-relaxed">{ctx.security_notes}</p>
         </div>
       </div>
     </div>
@@ -533,11 +533,11 @@ function CarbonSection({ carbonKg }: { carbonKg: number }) {
   return (
     <div className="bg-[#EDEAE0] border border-[#C8C3B0] rounded-2xl p-6">
       <div className="flex items-center gap-3 mb-4">
-        <div className="w-8 h-8 rounded-lg bg-[#1C2620] flex items-center justify-center">
+        <div className="w-8 h-8 rounded-lg bg-[#17402C] flex items-center justify-center">
           <Icon name="CloudIcon" size={16} variant="outline" className="text-white" />
         </div>
         <div>
-          <h2 className="font-display font-700 text-[#1C2620] text-lg">Empreinte carbone estimée</h2>
+          <h2 className="font-display font-700 text-[#17402C] text-lg">Empreinte carbone estimée</h2>
           <p className="text-xs text-[#5C6B5E]">Estimation — données indicatives, non certifiées</p>
         </div>
       </div>
@@ -603,17 +603,17 @@ function ActionsBar({
         <div className="flex items-center gap-4 flex-1">
           <div>
             <p className="text-[10px] font-mono text-[#5C6B5E] uppercase tracking-widest">Total actif</p>
-            <p className="font-mono font-700 text-[#1C2620] text-lg">{totalEur.toFixed(2)} €</p>
+            <p className="font-mono font-700 text-[#17402C] text-lg">{totalEur.toFixed(2)} €</p>
           </div>
           <div>
             <p className="text-[10px] font-mono text-[#5C6B5E] uppercase tracking-widest">Articles</p>
-            <p className="font-mono font-700 text-[#1C2620] text-lg">{activeItems.length}</p>
+            <p className="font-mono font-700 text-[#17402C] text-lg">{activeItems.length}</p>
           </div>
         </div>
         <div className="flex items-center gap-2 flex-wrap justify-end">
           <button
             onClick={onExport}
-            className="flex items-center gap-1.5 px-3 py-2 rounded-xl border border-[#C8C3B0] text-sm text-[#5C6B5E] hover:text-[#1C2620] hover:bg-[#E7E3D6] transition-all"
+            className="flex items-center gap-1.5 px-3 py-2 rounded-xl border border-[#C8C3B0] text-sm text-[#5C6B5E] hover:text-[#17402C] hover:bg-[#E7E3D6] transition-all"
           >
             <Icon name="ArrowDownTrayIcon" size={14} variant="outline" />
             Exporter
@@ -622,7 +622,7 @@ function ActionsBar({
             <button
               onClick={onSave}
               disabled={saving}
-              className="flex items-center gap-1.5 px-3 py-2 rounded-xl border border-[#C8C3B0] text-sm text-[#5C6B5E] hover:text-[#1C2620] hover:bg-[#E7E3D6] transition-all disabled:opacity-50"
+              className="flex items-center gap-1.5 px-3 py-2 rounded-xl border border-[#C8C3B0] text-sm text-[#5C6B5E] hover:text-[#17402C] hover:bg-[#E7E3D6] transition-all disabled:opacity-50"
             >
               <Icon name="BookmarkIcon" size={14} variant="outline" />
               {saving ? 'Sauvegarde...' : 'Sauvegarder'}
@@ -720,7 +720,7 @@ function ConfiguratorForm({ onGenerate }: { onGenerate: (params: SessionParams, 
     <div className="max-w-2xl mx-auto">
       {step === 1 && (
         <div className="bg-[#EDEAE0] border border-[#C8C3B0] rounded-2xl p-6 space-y-5">
-          <h2 className="font-display font-700 text-[#1C2620] text-xl">Paramètres du voyage</h2>
+          <h2 className="font-display font-700 text-[#17402C] text-xl">Paramètres du voyage</h2>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div className="sm:col-span-2">
@@ -730,7 +730,7 @@ function ConfiguratorForm({ onGenerate }: { onGenerate: (params: SessionParams, 
                 value={params.destination}
                 onChange={e => set('destination', e.target.value)}
                 placeholder="Ex: Islande, GR20, Patagonie…"
-                className="w-full bg-[#E7E3D6] border border-[#C8C3B0] rounded-xl px-3 py-2.5 text-sm text-[#1C2620] focus:outline-none focus:border-[#17402C]"
+                className="w-full bg-[#E7E3D6] border border-[#C8C3B0] rounded-xl px-3 py-2.5 text-sm text-[#17402C] focus:outline-none focus:border-[#17402C]"
               />
             </div>
             <div className="sm:col-span-2">
@@ -740,16 +740,16 @@ function ConfiguratorForm({ onGenerate }: { onGenerate: (params: SessionParams, 
                 value={params.country}
                 onChange={e => set('country', e.target.value)}
                 placeholder="Ex: France, Népal…"
-                className="w-full bg-[#E7E3D6] border border-[#C8C3B0] rounded-xl px-3 py-2.5 text-sm text-[#1C2620] focus:outline-none focus:border-[#17402C]"
+                className="w-full bg-[#E7E3D6] border border-[#C8C3B0] rounded-xl px-3 py-2.5 text-sm text-[#17402C] focus:outline-none focus:border-[#17402C]"
               />
             </div>
             <div>
               <label className="block text-xs font-600 text-[#5C6B5E] uppercase tracking-wider mb-1.5">Date de départ</label>
-              <input type="date" value={params.startDate} onChange={e => set('startDate', e.target.value)} className="w-full bg-[#E7E3D6] border border-[#C8C3B0] rounded-xl px-3 py-2.5 text-sm text-[#1C2620] focus:outline-none focus:border-[#17402C]" />
+              <input type="date" value={params.startDate} onChange={e => set('startDate', e.target.value)} className="w-full bg-[#E7E3D6] border border-[#C8C3B0] rounded-xl px-3 py-2.5 text-sm text-[#17402C] focus:outline-none focus:border-[#17402C]" />
             </div>
             <div>
               <label className="block text-xs font-600 text-[#5C6B5E] uppercase tracking-wider mb-1.5">Date de retour</label>
-              <input type="date" value={params.endDate} onChange={e => set('endDate', e.target.value)} className="w-full bg-[#E7E3D6] border border-[#C8C3B0] rounded-xl px-3 py-2.5 text-sm text-[#1C2620] focus:outline-none focus:border-[#17402C]" />
+              <input type="date" value={params.endDate} onChange={e => set('endDate', e.target.value)} className="w-full bg-[#E7E3D6] border border-[#C8C3B0] rounded-xl px-3 py-2.5 text-sm text-[#17402C] focus:outline-none focus:border-[#17402C]" />
             </div>
           </div>
 
@@ -759,7 +759,7 @@ function ConfiguratorForm({ onGenerate }: { onGenerate: (params: SessionParams, 
               {SEASONS.map(s => (
                 <button key={s.id} onClick={() => set('season', s.id)} className={`flex flex-col items-center gap-1 p-3 rounded-xl border-2 transition-all ${params.season === s.id ? 'border-[#17402C] bg-[#17402C]/5' : 'border-[#C8C3B0] hover:border-[#5C6B5E]'}`}>
                   <span className="text-xl">{s.icon}</span>
-                  <span className="text-xs font-600 text-[#1C2620]">{s.label}</span>
+                  <span className="text-xs font-600 text-[#17402C]">{s.label}</span>
                 </button>
               ))}
             </div>
@@ -786,15 +786,15 @@ function ConfiguratorForm({ onGenerate }: { onGenerate: (params: SessionParams, 
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
             <div>
               <label className="block text-xs font-600 text-[#5C6B5E] uppercase tracking-wider mb-1.5">Budget max (€)</label>
-              <input type="number" min={0} value={params.budgetEur} onChange={e => set('budgetEur', Number(e.target.value))} className="w-full bg-[#E7E3D6] border border-[#C8C3B0] rounded-xl px-3 py-2.5 text-sm text-[#1C2620] focus:outline-none focus:border-[#17402C]" />
+              <input type="number" min={0} value={params.budgetEur} onChange={e => set('budgetEur', Number(e.target.value))} className="w-full bg-[#E7E3D6] border border-[#C8C3B0] rounded-xl px-3 py-2.5 text-sm text-[#17402C] focus:outline-none focus:border-[#17402C]" />
             </div>
             <div>
               <label className="block text-xs font-600 text-[#5C6B5E] uppercase tracking-wider mb-1.5">Poids max (kg)</label>
-              <input type="number" min={1} value={params.maxWeightG / 1000} onChange={e => set('maxWeightG', Number(e.target.value) * 1000)} className="w-full bg-[#E7E3D6] border border-[#C8C3B0] rounded-xl px-3 py-2.5 text-sm text-[#1C2620] focus:outline-none focus:border-[#17402C]" />
+              <input type="number" min={1} value={params.maxWeightG / 1000} onChange={e => set('maxWeightG', Number(e.target.value) * 1000)} className="w-full bg-[#E7E3D6] border border-[#C8C3B0] rounded-xl px-3 py-2.5 text-sm text-[#17402C] focus:outline-none focus:border-[#17402C]" />
             </div>
             <div>
               <label className="block text-xs font-600 text-[#5C6B5E] uppercase tracking-wider mb-1.5">Poids corporel (kg)</label>
-              <input type="number" min={0} value={params.bodyWeightKg ?? ''} onChange={e => set('bodyWeightKg', e.target.value ? Number(e.target.value) : undefined)} placeholder="Optionnel" className="w-full bg-[#E7E3D6] border border-[#C8C3B0] rounded-xl px-3 py-2.5 text-sm text-[#1C2620] focus:outline-none focus:border-[#17402C]" />
+              <input type="number" min={0} value={params.bodyWeightKg ?? ''} onChange={e => set('bodyWeightKg', e.target.value ? Number(e.target.value) : undefined)} placeholder="Optionnel" className="w-full bg-[#E7E3D6] border border-[#C8C3B0] rounded-xl px-3 py-2.5 text-sm text-[#17402C] focus:outline-none focus:border-[#17402C]" />
             </div>
           </div>
 
@@ -811,8 +811,8 @@ function ConfiguratorForm({ onGenerate }: { onGenerate: (params: SessionParams, 
       {step === 2 && (
         <div className="bg-[#EDEAE0] border border-[#C8C3B0] rounded-2xl p-6 space-y-4">
           <div className="flex items-center justify-between">
-            <h2 className="font-display font-700 text-[#1C2620] text-xl">Articles du catalogue</h2>
-            <button onClick={() => setStep(1)} className="text-xs text-[#5C6B5E] hover:text-[#1C2620]">← Retour</button>
+            <h2 className="font-display font-700 text-[#17402C] text-xl">Articles du catalogue</h2>
+            <button onClick={() => setStep(1)} className="text-xs text-[#5C6B5E] hover:text-[#17402C]">← Retour</button>
           </div>
           <p className="text-xs text-[#5C6B5E]">Sélectionnez les articles à inclure dans votre rapport. Seuls les articles en stock sont affichés.</p>
 
@@ -836,7 +836,7 @@ function ConfiguratorForm({ onGenerate }: { onGenerate: (params: SessionParams, 
                     {selected.has(p.id) && <Icon name="CheckIcon" size={10} variant="outline" className="text-white" />}
                   </div>
                   <div className="flex-1 min-w-0">
-                    <p className="text-sm font-600 text-[#1C2620] truncate">{p.name}</p>
+                    <p className="text-sm font-600 text-[#17402C] truncate">{p.name}</p>
                     <p className="text-xs text-[#5C6B5E]">{p.brand} · {p.category}</p>
                   </div>
                   <div className="flex items-center gap-3 flex-shrink-0">
@@ -989,7 +989,7 @@ export default function KitReportPage() {
           <Header />
       <div className="pt-16 lg:pt-18">
         {/* Hero */}
-        <div className="bg-[#1C2620] py-10 sm:py-14 relative overflow-hidden">
+        <div className="bg-[#17402C] py-10 sm:py-14 relative overflow-hidden">
           <div className="absolute inset-0 opacity-5 pointer-events-none" aria-hidden="true">
             <svg width="100%" height="100%">
               <defs>
@@ -1021,7 +1021,7 @@ export default function KitReportPage() {
             <div className="flex flex-col items-center justify-center py-20 gap-6">
               <div className="w-12 h-12 border-4 border-[#C8C3B0] border-t-[#17402C] rounded-full animate-spin" />
               <div className="text-center">
-                <p className="font-display font-700 text-[#1C2620] text-lg">Génération du rapport IA…</p>
+                <p className="font-display font-700 text-[#17402C] text-lg">Génération du rapport IA…</p>
                 <p className="text-sm text-[#5C6B5E] mt-1">Analyse du profil, justifications, alternatives…</p>
               </div>
             </div>
@@ -1096,7 +1096,7 @@ export default function KitReportPage() {
               <div className="flex justify-center pt-2">
                 <button
                   onClick={() => { setReport(null); setRemovedIds(new Set()); setSaved(false); setPurchased(false); }}
-                  className="flex items-center gap-2 px-4 py-2.5 rounded-xl border border-[#C8C3B0] text-sm text-[#5C6B5E] hover:text-[#1C2620] hover:bg-[#E7E3D6] transition-all"
+                  className="flex items-center gap-2 px-4 py-2.5 rounded-xl border border-[#C8C3B0] text-sm text-[#5C6B5E] hover:text-[#17402C] hover:bg-[#E7E3D6] transition-all"
                 >
                   <Icon name="ArrowPathIcon" size={14} variant="outline" />
                   Nouveau rapport
@@ -1134,7 +1134,7 @@ export default function KitReportPage() {
               <p style={{ fontSize: '10px', fontFamily: 'ui-monospace, monospace', color: '#17402C', letterSpacing: '0.14em', textTransform: 'uppercase', margin: '0 0 4px 0' }}>
                 RAPPORT KIT IA
               </p>
-              <h1 style={{ fontSize: '22px', fontWeight: 700, color: '#0B1F17', margin: '0 0 4px 0' }}>
+              <h1 style={{ fontSize: '22px', fontWeight: 700, color: '#17402C', margin: '0 0 4px 0' }}>
                 Rapport de kit personnalis&eacute;
               </h1>
               <p style={{ fontSize: '13px', color: '#6B7A72', margin: '0', lineHeight: 1.4 }}>
@@ -1146,9 +1146,9 @@ export default function KitReportPage() {
           {/* Generating loader */}
           {generating && (
             <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '48px 16px', gap: '16px' }}>
-              <div style={{ width: '32px', height: '32px', border: '3px solid rgba(11,31,23,0.06)', borderTopColor: '#17402C', borderRadius: '50%', animation: 'spin 0.8s linear infinite' }} />
+              <div style={{ width: '32px', height: '32px', border: '3px solid rgba(23,64,44,0.06)', borderTopColor: '#17402C', borderRadius: '50%', animation: 'spin 0.8s linear infinite' }} />
               <div style={{ textAlign: 'center' }}>
-                <p style={{ fontSize: '16px', fontWeight: 600, color: '#0B1F17', margin: '0 0 4px 0' }}>G&eacute;n&eacute;ration du rapport IA&hellip;</p>
+                <p style={{ fontSize: '16px', fontWeight: 600, color: '#17402C', margin: '0 0 4px 0' }}>G&eacute;n&eacute;ration du rapport IA&hellip;</p>
                 <p style={{ fontSize: '12px', color: '#6B7A72', margin: 0 }}>Analyse du profil, justifications, alternatives&hellip;</p>
               </div>
             </div>
@@ -1166,7 +1166,7 @@ export default function KitReportPage() {
           {report && !generating && (
             <>
               {/* Report Header */}
-              <div style={{ margin: '16px', padding: '20px', background: '#0B1F17', borderRadius: '12px', position: 'relative', overflow: 'hidden' }}>
+              <div style={{ margin: '16px', padding: '20px', background: '#17402C', borderRadius: '12px', position: 'relative', overflow: 'hidden' }}>
                 <div style={{ position: 'relative', zIndex: 1 }}>
                   <p style={{ fontSize: '9px', fontFamily: 'ui-monospace, monospace', color: '#A3C4A3', letterSpacing: '0.14em', textTransform: 'uppercase', margin: '0 0 6px 0' }}>
                     RAPPORT KIT PERSONNALIS&Eacute;
@@ -1204,15 +1204,15 @@ export default function KitReportPage() {
               </div>
 
               {/* Weight Summary */}
-              <div style={{ margin: '0 16px 16px', padding: '16px', background: '#F4F1EA', borderRadius: '12px', border: '1px solid rgba(11,31,23,0.06)' }}>
+              <div style={{ margin: '0 16px 16px', padding: '16px', background: '#F4F1EA', borderRadius: '12px', border: '1px solid rgba(23,64,44,0.06)' }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '12px' }}>
                   <div style={{ width: '28px', height: '28px', borderRadius: '8px', background: '#17402C', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '13px', color: '#fff' }}>
                     &#9878;
                   </div>
-                  <p style={{ fontSize: '15px', fontWeight: 600, color: '#0B1F17', margin: 0 }}>Gabarit de poids</p>
+                  <p style={{ fontSize: '15px', fontWeight: 600, color: '#17402C', margin: 0 }}>Gabarit de poids</p>
                 </div>
                 <p style={{ fontSize: '10px', fontFamily: 'ui-monospace, monospace', color: '#6B7A72', letterSpacing: '0.1em', textTransform: 'uppercase', margin: '0 0 4px 0' }}>POIDS TOTAL</p>
-                <p style={{ fontSize: '28px', fontFamily: 'ui-monospace, monospace', fontWeight: 700, color: '#0B1F17', margin: '0 0 12px 0' }}>
+                <p style={{ fontSize: '28px', fontFamily: 'ui-monospace, monospace', fontWeight: 700, color: '#17402C', margin: '0 0 12px 0' }}>
                   {(report.totalWeightG / 1000).toFixed(2)} <span style={{ fontSize: '14px', fontWeight: 400, color: '#6B7A72' }}>kg</span>
                 </p>
 
@@ -1226,7 +1226,7 @@ export default function KitReportPage() {
                       return (
                         <div key={cat}>
                           <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '2px' }}>
-                            <span style={{ fontSize: '12px', color: '#0B1F17', display: 'flex', alignItems: 'center', gap: '4px' }}>
+                            <span style={{ fontSize: '12px', color: '#17402C', display: 'flex', alignItems: 'center', gap: '4px' }}>
                               <span>{CATEGORY_ICONS[cat] ?? '📦'}</span>
                               {cat}
                             </span>
@@ -1234,7 +1234,7 @@ export default function KitReportPage() {
                               {formatWeight(g)} &middot; {pct.toFixed(0)}%
                             </span>
                           </div>
-                          <div style={{ background: 'rgba(11,31,23,0.06)', borderRadius: '999px', height: '5px', overflow: 'hidden' }}>
+                          <div style={{ background: 'rgba(23,64,44,0.06)', borderRadius: '999px', height: '5px', overflow: 'hidden' }}>
                             <div style={{ width: `${pct}%`, background: '#17402C', height: '100%', borderRadius: '999px', transition: 'width 0.6s ease' }} />
                           </div>
                         </div>
@@ -1253,26 +1253,26 @@ export default function KitReportPage() {
               </div>
 
               {/* Budget Summary */}
-              <div style={{ margin: '0 16px 16px', padding: '16px', background: '#F4F1EA', borderRadius: '12px', border: '1px solid rgba(11,31,23,0.06)' }}>
+              <div style={{ margin: '0 16px 16px', padding: '16px', background: '#F4F1EA', borderRadius: '12px', border: '1px solid rgba(23,64,44,0.06)' }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '12px' }}>
                   <div style={{ width: '28px', height: '28px', borderRadius: '8px', background: '#17402C', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '13px', color: '#fff' }}>
                     &#36;
                   </div>
-                  <p style={{ fontSize: '15px', fontWeight: 600, color: '#0B1F17', margin: 0 }}>D&eacute;tail budg&eacute;taire</p>
+                  <p style={{ fontSize: '15px', fontWeight: 600, color: '#17402C', margin: 0 }}>D&eacute;tail budg&eacute;taire</p>
                 </div>
                 <p style={{ fontSize: '10px', fontFamily: 'ui-monospace, monospace', color: '#6B7A72', letterSpacing: '0.1em', textTransform: 'uppercase', margin: '0 0 4px 0' }}>TOTAL</p>
-                <p style={{ fontSize: '24px', fontFamily: 'ui-monospace, monospace', fontWeight: 700, color: '#0B1F17', margin: '0 0 8px 0' }}>
+                <p style={{ fontSize: '24px', fontFamily: 'ui-monospace, monospace', fontWeight: 700, color: '#17402C', margin: '0 0 8px 0' }}>
                   {report.totalPriceEur.toFixed(2)} <span style={{ fontSize: '13px', fontWeight: 400, color: '#6B7A72' }}>&euro;</span>
                 </p>
 
                 {/* Items list */}
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
                   {report.selectedItems.filter(i => !removedIds.has(i.id)).slice(0, 8).map(item => (
-                    <div key={item.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '6px 0', borderBottom: '1px solid rgba(11,31,23,0.04)' }}>
+                    <div key={item.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '6px 0', borderBottom: '1px solid rgba(23,64,44,0.04)' }}>
                       <div style={{ display: 'flex', alignItems: 'center', gap: '8px', minWidth: 0, flex: 1 }}>
                         <span style={{ fontSize: '14px', flexShrink: 0 }}>{CATEGORY_ICONS[item.category] ?? '📦'}</span>
                         <div style={{ minWidth: 0 }}>
-                          <p style={{ fontSize: '12px', fontWeight: 500, color: '#0B1F17', margin: 0, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                          <p style={{ fontSize: '12px', fontWeight: 500, color: '#17402C', margin: 0, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
                             {item.name}
                           </p>
                           <p style={{ fontSize: '10px', color: '#6B7A72', margin: '1px 0 0 0' }}>{item.brand}</p>
@@ -1305,14 +1305,14 @@ export default function KitReportPage() {
 
               {/* Consumables */}
               {report.consumables?.length > 0 && (
-                <div style={{ margin: '0 16px 16px', padding: '16px', background: '#F4F1EA', borderRadius: '12px', border: '1px solid rgba(11,31,23,0.06)' }}>
-                  <p style={{ fontSize: '13px', fontWeight: 600, color: '#0B1F17', margin: '0 0 10px 0' }}>Consommables recommand&eacute;s</p>
+                <div style={{ margin: '0 16px 16px', padding: '16px', background: '#F4F1EA', borderRadius: '12px', border: '1px solid rgba(23,64,44,0.06)' }}>
+                  <p style={{ fontSize: '13px', fontWeight: 600, color: '#17402C', margin: '0 0 10px 0' }}>Consommables recommand&eacute;s</p>
                   <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
                     {report.consumables.slice(0, 4).map((c, i) => (
                       <div key={i} style={{ display: 'flex', gap: '10px', alignItems: 'flex-start', padding: '10px', background: '#FBFAF6', borderRadius: '10px' }}>
                         <span style={{ fontSize: '16px', flexShrink: 0 }}>{CATEGORY_ICONS[c.category] ?? '🧴'}</span>
                         <div style={{ flex: 1 }}>
-                          <p style={{ fontSize: '12px', fontWeight: 600, color: '#0B1F17', margin: 0 }}>{c.name}</p>
+                          <p style={{ fontSize: '12px', fontWeight: 600, color: '#17402C', margin: 0 }}>{c.name}</p>
                           <p style={{ fontSize: '11px', color: '#6B7A72', margin: '2px 0 0 0' }}>{c.reason}</p>
                           {c.estimated_price_eur > 0 && (
                             <p style={{ fontSize: '11px', fontFamily: 'ui-monospace, monospace', color: '#17402C', margin: '4px 0 0 0' }}>~{c.estimated_price_eur} &euro;</p>
@@ -1331,14 +1331,14 @@ export default function KitReportPage() {
 
               {/* Bring Yourself */}
               {report.bring_yourself?.length > 0 && (
-                <div style={{ margin: '0 16px 16px', padding: '16px', background: '#F4F1EA', borderRadius: '12px', border: '1px solid rgba(11,31,23,0.06)' }}>
-                  <p style={{ fontSize: '13px', fontWeight: 600, color: '#0B1F17', margin: '0 0 10px 0' }}>&Agrave; apporter soi-m&ecirc;me</p>
+                <div style={{ margin: '0 16px 16px', padding: '16px', background: '#F4F1EA', borderRadius: '12px', border: '1px solid rgba(23,64,44,0.06)' }}>
+                  <p style={{ fontSize: '13px', fontWeight: 600, color: '#17402C', margin: '0 0 10px 0' }}>&Agrave; apporter soi-m&ecirc;me</p>
                   <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
                     {report.bring_yourself.slice(0, 4).map((b, i) => (
                       <div key={i} style={{ display: 'flex', gap: '10px', alignItems: 'flex-start', padding: '10px', background: '#FBFAF6', borderRadius: '10px' }}>
                         <span style={{ fontSize: '14px', color: '#17402C', flexShrink: 0, marginTop: '1px' }}>&#10003;</span>
                         <div>
-                          <p style={{ fontSize: '12px', fontWeight: 600, color: '#0B1F17', margin: 0 }}>{b.item}</p>
+                          <p style={{ fontSize: '12px', fontWeight: 600, color: '#17402C', margin: 0 }}>{b.item}</p>
                           <p style={{ fontSize: '11px', color: '#6B7A72', margin: '2px 0 0 0', lineHeight: 1.4 }}>{b.guide}</p>
                         </div>
                       </div>
@@ -1354,12 +1354,12 @@ export default function KitReportPage() {
 
               {/* Destination Context */}
               {report.destinationContext && (
-                <div style={{ margin: '0 16px 16px', padding: '16px', background: '#F4F1EA', borderRadius: '12px', border: '1px solid rgba(11,31,23,0.06)' }}>
-                  <p style={{ fontSize: '13px', fontWeight: 600, color: '#0B1F17', margin: '0 0 10px 0' }}>Contexte destination</p>
+                <div style={{ margin: '0 16px 16px', padding: '16px', background: '#F4F1EA', borderRadius: '12px', border: '1px solid rgba(23,64,44,0.06)' }}>
+                  <p style={{ fontSize: '13px', fontWeight: 600, color: '#17402C', margin: '0 0 10px 0' }}>Contexte destination</p>
                   <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
                     <div style={{ padding: '10px', background: '#FBFAF6', borderRadius: '10px' }}>
                       <p style={{ fontSize: '9px', fontFamily: 'ui-monospace, monospace', color: '#6B7A72', letterSpacing: '0.1em', textTransform: 'uppercase', margin: '0 0 4px 0' }}>M&Eacute;T&Eacute;O PR&Eacute;VUE</p>
-                      <p style={{ fontSize: '12px', color: '#0B1F17', margin: 0, lineHeight: 1.4 }}>{report.destinationContext.weather_summary}</p>
+                      <p style={{ fontSize: '12px', color: '#17402C', margin: 0, lineHeight: 1.4 }}>{report.destinationContext.weather_summary}</p>
                     </div>
                     <div style={{ padding: '10px', background: '#FBFAF6', borderRadius: '10px' }}>
                       <p style={{ fontSize: '9px', fontFamily: 'ui-monospace, monospace', color: '#6B7A72', letterSpacing: '0.1em', textTransform: 'uppercase', margin: '0 0 4px 0' }}>
@@ -1367,7 +1367,7 @@ export default function KitReportPage() {
                           {report.destinationContext.security_level}
                         </span>
                       </p>
-                      <p style={{ fontSize: '12px', color: '#0B1F17', margin: 0, lineHeight: 1.4 }}>{report.destinationContext.security_notes}</p>
+                      <p style={{ fontSize: '12px', color: '#17402C', margin: 0, lineHeight: 1.4 }}>{report.destinationContext.security_notes}</p>
                     </div>
                   </div>
                 </div>
@@ -1375,8 +1375,8 @@ export default function KitReportPage() {
 
               {/* Carbon Estimate */}
               {report.carbonKgEstimate != null && report.carbonKgEstimate > 0 && (
-                <div style={{ margin: '0 16px 16px', padding: '16px', background: '#F4F1EA', borderRadius: '12px', border: '1px solid rgba(11,31,23,0.06)' }}>
-                  <p style={{ fontSize: '13px', fontWeight: 600, color: '#0B1F17', margin: '0 0 8px 0' }}>Empreinte carbone</p>
+                <div style={{ margin: '0 16px 16px', padding: '16px', background: '#F4F1EA', borderRadius: '12px', border: '1px solid rgba(23,64,44,0.06)' }}>
+                  <p style={{ fontSize: '13px', fontWeight: 600, color: '#17402C', margin: '0 0 8px 0' }}>Empreinte carbone</p>
                   <p style={{ fontSize: '22px', fontFamily: 'ui-monospace, monospace', fontWeight: 700, color: '#059669', margin: 0 }}>
                     {report.carbonKgEstimate.toFixed(1)} <span style={{ fontSize: '12px', fontWeight: 400, color: '#6B7A72' }}>kg CO&#8322;</span>
                   </p>
@@ -1427,11 +1427,11 @@ export default function KitReportPage() {
                       flex: 1,
                       padding: '12px',
                       background: '#F4F1EA',
-                      color: '#0B1F17',
+                      color: '#17402C',
                       borderRadius: '12px',
                       fontSize: '13px',
                       fontWeight: 500,
-                      border: '1px solid rgba(11,31,23,0.06)',
+                      border: '1px solid rgba(23,64,44,0.06)',
                       cursor: 'pointer',
                     }}
                   >
@@ -1443,11 +1443,11 @@ export default function KitReportPage() {
                       flex: 1,
                       padding: '12px',
                       background: '#F4F1EA',
-                      color: '#0B1F17',
+                      color: '#17402C',
                       borderRadius: '12px',
                       fontSize: '13px',
                       fontWeight: 500,
-                      border: '1px solid rgba(11,31,23,0.06)',
+                      border: '1px solid rgba(23,64,44,0.06)',
                       cursor: 'pointer',
                     }}
                   >
@@ -1464,8 +1464,8 @@ export default function KitReportPage() {
           {/* Form (no report) */}
           {!report && !generating && (
             <div style={{ padding: '0 16px' }}>
-              <div style={{ padding: '20px', background: '#F4F1EA', borderRadius: '12px', border: '1px solid rgba(11,31,23,0.06)' }}>
-                <h2 style={{ fontSize: '18px', fontWeight: 700, color: '#0B1F17', margin: '0 0 16px 0' }}>Param&egrave;tres du voyage</h2>
+              <div style={{ padding: '20px', background: '#F4F1EA', borderRadius: '12px', border: '1px solid rgba(23,64,44,0.06)' }}>
+                <h2 style={{ fontSize: '18px', fontWeight: 700, color: '#17402C', margin: '0 0 16px 0' }}>Param&egrave;tres du voyage</h2>
                 <p style={{ fontSize: '12px', color: '#6B7A72', margin: '0 0 16px 0', fontFamily: 'Georgia, serif', fontStyle: 'italic' }}>
                   Utilisez la version desktop pour configurer votre kit.
                 </p>

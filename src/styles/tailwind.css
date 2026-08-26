@@ -5,13 +5,13 @@
 :root {
   --background: #F5F3EE;
   --foreground: #1A1F1C;
-  --primary: #2D5A3D;
+  --primary: #17402C;
   --primary-foreground: #FFFFFF;
-  --primary-hover: #235030;
+  --primary-hover: #365233;
   --primary-subtle: #EBF2EC;
   --secondary: #243028;
   --secondary-foreground: #F5F3EE;
-  --accent: #4A7C5B;
+  --accent: #5B7F55;
   --accent-foreground: #FFFFFF;
   --muted: #E0DDD0;
   --muted-foreground: #6B7568;
@@ -22,7 +22,7 @@
   --border: #DDD9CC;
   --border-subtle: #E8E5DC;
   --input: #E0DDD0;
-  --ring: #2D5A3D;
+  --ring: #17402C;
   --radius: 0.5rem;
   --font-sans: 'DM Sans', sans-serif;
   --font-display: 'Manrope', sans-serif;
@@ -34,8 +34,8 @@
 
   /* Mon Matériel — liquid glass : palette verte LKDV (Forest / Stone) */
   --mm-forest: #17402C;
-  --mm-forest-soft: #2D6B4A;
-  --mm-ink: #A3C4A3;
+  --mm-forest-soft: #365233;
+  --mm-ink: #A6C1A0;
   --mm-paper: #FBFAF6;
 
   /* PWA safe-area insets */
@@ -45,12 +45,12 @@
   --safe-right: env(safe-area-inset-right);
 
   /* ── Premium Design Tokens ── */
-  --shadow-xs: 0 1px 2px rgba(26,31,28,0.05);
-  --shadow-sm: 0 2px 8px rgba(26,31,28,0.06), 0 1px 2px rgba(26,31,28,0.04);
-  --shadow-md: 0 4px 16px rgba(26,31,28,0.08), 0 2px 4px rgba(26,31,28,0.05);
-  --shadow-lg: 0 8px 32px rgba(26,31,28,0.12), 0 4px 8px rgba(26,31,28,0.06);
-  --shadow-xl: 0 16px 48px rgba(26,31,28,0.14), 0 8px 16px rgba(26,31,28,0.08);
-  --shadow-2xl: 0 32px 80px rgba(26,31,28,0.18), 0 16px 32px rgba(26,31,28,0.10);
+  --: 0 1px 2px rgba(26,31,28,0.05);
+  --: 0 2px 8px rgba(26,31,28,0.06), 0 1px 2px rgba(26,31,28,0.04);
+  --: 0 4px 16px rgba(26,31,28,0.08), 0 2px 4px rgba(26,31,28,0.05);
+  --: 0 8px 32px rgba(26,31,28,0.12), 0 4px 8px rgba(26,31,28,0.06);
+  --: 0 16px 48px rgba(26,31,28,0.14), 0 8px 16px rgba(26,31,28,0.08);
+  --: 0 32px 80px rgba(26,31,28,0.18), 0 16px 32px rgba(26,31,28,0.10);
 
   /* Spring easing */
   --spring-bounce: cubic-bezier(0.34, 1.56, 0.64, 1);
@@ -83,7 +83,7 @@
   --forest-900: #131A16;
   --forest-800: #1A1F1C;
   --forest-700: #243028;
-  --forest-600: #2D5A3D;
+  --forest-600: #365233;
   --forest-500: #3D7A52;
   --forest-400: #4A7C5B;
   --forest-300: #6B9B7A;
@@ -109,9 +109,9 @@
   --sky-400: #5A8A9A;
 
   /* Status */
-  --success: #2D5A3D;
-  --warning: #8C6A1A;
-  --danger: #9B2C2C;
+  --success: #17402C;
+  --warning: #C89A3B;
+  --danger: #A8443A;
 
   /* ————— LE KIT DU VOYAGEUR — DESIGN TOKENS ————— */
   --lkv-font-sans: "Inter", -apple-system, BlinkMacSystemFont, "Helvetica Neue", sans-serif;
@@ -119,13 +119,13 @@
   --lkv-font-mono: "JetBrains Mono", ui-monospace, "SF Mono", Menlo, monospace;
 
   --lkv-forest-950: #06120C;
-  --lkv-forest-900: #0B1F17;
+  --lkv-forest-900: #17402C;
   --lkv-forest-800: #17402C;
   --lkv-forest-700: #205238;
-  --lkv-forest-600: #2D6B4A;
+  --lkv-forest-600: #365233;
 
-  --lkv-sage-500: #A8C8A0;
-  --lkv-sage-300: #C6DCBE;
+  --lkv-sage-500: #5B7F55;
+  --lkv-sage-300: #A6C1A0;
   --lkv-sage-200: #DDE9D6;
   --lkv-sage-100: #EAF1E5;
 
@@ -133,7 +133,7 @@
   --lkv-stone-100: #E9E4D9;
   --lkv-stone-200: #DDD6C6;
 
-  --lkv-ink-900: #0B1F17;
+  --lkv-ink-900: #17402C;
   --lkv-ink-700: #384A42;
   --lkv-ink-500: #6B7A72;
   --lkv-ink-400: #8B978F;
@@ -167,12 +167,12 @@
   --danger: #C53030;
 
   /* Shadow colors for dark mode */
-  --shadow-xs: 0 1px 2px rgba(0,0,0,0.3);
-  --shadow-sm: 0 2px 8px rgba(0,0,0,0.3), 0 1px 2px rgba(0,0,0,0.2);
-  --shadow-md: 0 4px 16px rgba(0,0,0,0.35), 0 2px 4px rgba(0,0,0,0.25);
-  --shadow-lg: 0 8px 32px rgba(0,0,0,0.4), 0 4px 8px rgba(0,0,0,0.3);
-  --shadow-xl: 0 16px 48px rgba(0,0,0,0.45), 0 8px 16px rgba(0,0,0,0.35);
-  --shadow-2xl: 0 32px 80px rgba(0,0,0,0.5), 0 16px 32px rgba(0,0,0,0.4);
+  --: 0 1px 2px rgba(0,0,0,0.3);
+  --: 0 2px 8px rgba(0,0,0,0.3), 0 1px 2px rgba(0,0,0,0.2);
+  --: 0 4px 16px rgba(0,0,0,0.35), 0 2px 4px rgba(0,0,0,0.25);
+  --: 0 8px 32px rgba(0,0,0,0.4), 0 4px 8px rgba(0,0,0,0.3);
+  --: 0 16px 48px rgba(0,0,0,0.45), 0 8px 16px rgba(0,0,0,0.35);
+  --: 0 32px 80px rgba(0,0,0,0.5), 0 16px 32px rgba(0,0,0,0.4);
 }
 
 .dark .premium-card:hover {
@@ -371,18 +371,18 @@
     background: var(--card);
     border: 1px solid var(--border);
     border-radius: var(--radius-md);
-    box-shadow: var(--shadow-sm);
+    box-shadow: var(--);
     transition: transform 200ms var(--spring-smooth), box-shadow 200ms var(--spring-smooth);
   }
 
   .premium-card:hover {
     transform: translateY(-3px);
-    box-shadow: var(--shadow-md);
+    box-shadow: var(--);
   }
 
   .premium-card:active {
     transform: scale(0.98);
-    box-shadow: var(--shadow-xs);
+    box-shadow: var(--);
   }
 
   /* Badges */
@@ -616,25 +616,25 @@
 
 /* Mobile bottom bar padding — géré par MobilePageShell */
 
-/* ── Custom Scrollbars — Forest Theme ── */
-::-webkit-scrollbar {
-  width: 5px;
-  height: 5px;
-}
-::-webkit-scrollbar-track {
-  background: transparent;
-}
-::-webkit-scrollbar-thumb {
-  background: var(--forest-600);
-  border-radius: 999px;
-  transition: background 0.2s ease;
-}
-::-webkit-scrollbar-thumb:hover {
-  background: var(--forest-500);
-}
+/* ── Remove all scrollbars across PC & Mobile ── */
 * {
-  scrollbar-width: thin;
-  scrollbar-color: var(--forest-600) transparent;
+  -ms-overflow-style: none !important;
+  scrollbar-width: none !important;
+}
+
+*::-webkit-scrollbar,
+html::-webkit-scrollbar,
+body::-webkit-scrollbar,
+::-webkit-scrollbar {
+  display: none !important;
+  width: 0 !important;
+  height: 0 !important;
+  background: transparent !important;
+}
+
+html, body {
+  -ms-overflow-style: none !important;
+  scrollbar-width: none !important;
 }
 
 /* ── Custom Cursor — Pointer moderne ── */
@@ -651,14 +651,14 @@ a, button, select, input, textarea, [role="button"], [tabindex]:not([tabindex="-
   --lkv-stone-100: #EAE7DD;
   --lkv-stone-200: #DAD5C4;
 
-  --lkv-ink-900: #0B1F17;
+  --lkv-ink-900: #17402C;
   --lkv-ink-700: #2A3A31;
   --lkv-ink-500: #6B7770;
   --lkv-ink-400: #9AA39C;
   --lkv-ink-300: #C4CAC5;
 
   --lkv-forest-950: #05130C;
-  --lkv-forest-900: #0B1F17;
+  --lkv-forest-900: #17402C;
   --lkv-forest-800: #17402C;
   --lkv-forest-700: #1F5C3E;
 
@@ -677,10 +677,10 @@ a, button, select, input, textarea, [role="button"], [tabindex]:not([tabindex="-
   --lkv-border: rgba(11,31,23,0.06);
   --lkv-border-strong: rgba(11,31,23,0.12);
 
-  --lkv-shadow-xs: 0 1px 2px rgba(11,31,23,0.04), 0 0 0 1px rgba(11,31,23,0.03);
-  --lkv-shadow-sm: 0 2px 8px rgba(11,31,23,0.05), 0 0 0 1px rgba(11,31,23,0.03);
-  --lkv-shadow-md: 0 10px 24px rgba(11,31,23,0.08);
-  --lkv-shadow-lg: 0 24px 48px rgba(11,31,23,0.12);
+  --lkv-: 0 1px 2px rgba(11,31,23,0.04), 0 0 0 1px rgba(11,31,23,0.03);
+  --lkv-: 0 2px 8px rgba(11,31,23,0.05), 0 0 0 1px rgba(11,31,23,0.03);
+  --lkv-: 0 10px 24px rgba(11,31,23,0.08);
+  --lkv-: 0 24px 48px rgba(11,31,23,0.12);
 
   --lkv-dur: 220ms;
   --lkv-ease: cubic-bezier(0.4, 0, 0.2, 1);
@@ -690,19 +690,6 @@ a, button, select, input, textarea, [role="button"], [tabindex]:not([tabindex="-
 .font-serif-lkv {
   font-family: var(--font-serif), 'Instrument Serif', Georgia, serif;
 }
-
-.lkv-btn { display: inline-flex; align-items: center; gap: 8px; padding: 10px 18px; border-radius: 999px; font-size: 13px; font-weight: 500; transition: all var(--lkv-dur) var(--lkv-ease); cursor: pointer; white-space: nowrap; }
-.lkv-btn-primary { background: var(--lkv-forest-800); color: #fff; }
-.lkv-btn-primary:hover { background: var(--lkv-forest-900); transform: translateY(-1px); box-shadow: 0 8px 20px rgba(23,64,44,0.25); }
-.lkv-btn-ghost { background: transparent; color: var(--lkv-ink-700); border: 1px solid var(--lkv-border-strong); }
-.lkv-btn-ghost:hover { border-color: var(--lkv-forest-800); color: var(--lkv-forest-800); }
-.lkv-btn-sm { padding: 6px 12px; font-size: 12px; }
-.lkv-btn-lg { padding: 14px 24px; font-size: 14px; }
-
-.lkv-chip { display: inline-flex; align-items: center; gap: 6px; padding: 3px 10px; background: var(--lkv-sage-100); color: var(--lkv-forest-800); border-radius: 999px; font-size: 11px; font-weight: 500; letter-spacing: 0.02em; }
-.lkv-eyebrow { font-size: 11px; letter-spacing: 0.14em; text-transform: uppercase; color: var(--lkv-ink-500); font-weight: 500; }
-
-.kbd { display: inline-flex; align-items: center; justify-content: center; min-width: 20px; height: 20px; padding: 0 6px; background: #fff; border: 1px solid var(--lkv-border-strong); border-bottom-width: 2px; border-radius: 6px; font-family: var(--font-mono), monospace; font-size: 11px; color: var(--lkv-ink-700); }
 
 /* Animation pulse */
 @keyframes pulse-lkv {
@@ -725,4 +712,42 @@ a, button, select, input, textarea, [role="button"], [tabindex]:not([tabindex="-
     box-shadow: 0 0 1px rgba(212, 249, 115, 0.2);
   }
 }
+
+/* ============================================================
+   LKDV 120 FPS MOBILE HARDWARE ACCELERATION & TOUCH OPTIMIZATION
+   ============================================================ */
+
+/* 1. Suppression du délai de tap 300ms sur mobile */
+a, button, input, select, textarea, [role="button"] {
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+  -webkit-touch-callout: none;
+}
+
+/* 2. Momentum scrolling fluide iOS/Android */
+html, body {
+  -webkit-overflow-scrolling: touch;
+  overscroll-behavior-y: none;
+}
+
+/* 3. Accélération matérielle GPU pour conteneurs animés */
+.gpu-layer {
+  transform: translateZ(0);
+  -webkit-transform: translateZ(0);
+  backface-visibility: hidden;
+  -webkit-backface-visibility: hidden;
+  perspective: 1000px;
+}
+
+/* 4. Optimisation de rendu hors-champ pour les longues listes */
+.content-auto {
+  content-visibility: auto;
+  contain-intrinsic-size: 0 110px;
+}
+
+/* 5. Safe Area Insets iOS Dynamic Island & Android Navigation Bar */
+.safe-p-top { padding-top: max(16px, env(safe-area-inset-top)); }
+.safe-p-bottom { padding-bottom: max(16px, env(safe-area-inset-bottom)); }
+.safe-m-bottom { margin-bottom: env(safe-area-inset-bottom); }
+
 

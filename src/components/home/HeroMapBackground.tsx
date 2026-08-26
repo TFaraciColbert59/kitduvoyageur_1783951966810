@@ -52,7 +52,7 @@ export default function HeroMapBackground() {
       <div
         className="absolute inset-0"
         style={{
-          background: 'linear-gradient(160deg, #0d1a14 0%, #1C2620 40%, #0f1e18 100%)',
+          background: 'linear-gradient(160deg, #0d1a14 0%, #17402C 40%, #0f1e18 100%)',
         }}
       />
 
@@ -133,7 +133,7 @@ export default function HeroMapBackground() {
       {/* Bottom gradient fade to content */}
       <div
         className="absolute bottom-0 left-0 right-0 h-48 pointer-events-none"
-        style={{ background: 'linear-gradient(to bottom, transparent, rgba(28,38,32,0.95))' }}
+        style={{ background: 'linear-gradient(to bottom, transparent, rgba(23,64,44,0.95))' }}
       />
 
       <style>{`

@@ -7,6 +7,8 @@ import { useAuth } from '@/contexts/AuthContext';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
 import LkvIcon from '@/components/ui/LkvIcon';
+import CommunityHubNav from '@/components/social/CommunityHubNav';
+import CompteBackground from '@/components/compte/CompteBackground';
 import { getGroupeComplet } from '@/lib/queries/groupe';
 import nextDynamic from 'next/dynamic';
 
@@ -25,7 +27,7 @@ import CarnetCTACard from '@/components/groupes/CarnetCTACard';
 import SafetyReminderCard from '@/components/groupes/SafetyReminderCard';
 import MobilePageShell from '@/components/mobile-nav/MobilePageShell';
 
-// Dynamically imported — only load when tab is active
+// Dynamically imported — load on demand
 const DepensesCard = nextDynamic(() => import('@/components/groupes/DepensesCard'), { ssr: false });
 const DecisionsCard = nextDynamic(() => import('@/components/groupes/DecisionsCard'), { ssr: false });
 const DiscussionCard = nextDynamic(() => import('@/components/groupes/DiscussionCard'), { ssr: false });
@@ -43,9 +45,6 @@ export default function GroupesPage() {
   const loadedRef = useRef(false);
 
   const loadData = async (rawGroupId: string) => {
-    // N'affiche le plein écran de chargement que pour le tout premier chargement.
-    // Les rafraîchissements silencieux (toggle, ajout, suppression…) ne font pas
-    // s'effondrer la page (évite le « scroll remonté en haut » à chaque action).
     const isFirstLoad = !loadedRef.current;
     if (isFirstLoad) setLoading(true);
     try {
@@ -71,22 +70,35 @@ export default function GroupesPage() {
   };
 
   if (loading) {
-    return <div className="min-h-screen bg-[#E7E3D6] flex items-center justify-center font-display text-2xl text-[#1C2620]">Chargement du cockpit...</div>;
+    return (
+      <div className="min-h-screen bg-transparent flex items-center justify-center p-4">
+        <CompteBackground />
+        <div className="glass p-8 text-center max-w-md w-full relative z-10">
+          <div className="w-8 h-8 border-2 border-[#17402C] border-t-transparent rounded-full animate-spin mx-auto mb-4" />
+          <div className="font-display font-bold text-xl text-[#17402C]">Chargement du cockpit...</div>
+        </div>
+      </div>
+    );
   }
 
   if (!formattedData) {
     return (
-      <div className="min-h-screen bg-[#E7E3D6] flex flex-col items-center justify-center">
-        <h2 className="font-display text-2xl text-[#1C2620] mb-4">Groupe introuvable</h2>
-        <p className="text-sm text-[#1C2620]/60 mb-6">Ce groupe n'existe pas ou vous n'y avez pas accès.</p>
-        <div className="flex gap-3">
-          <button
-            onClick={refreshData}
-            className="px-5 py-2.5 bg-[#17402C] text-[#E7E3D6] rounded-full text-sm font-bold hover:bg-[#0F2B1D] transition-colors"
-          >
-            Réessayer
-          </button>
-          <Link href="/groupes" className="px-5 py-2.5 bg-[#33463C] text-[#E7E3D6] rounded-full text-sm font-bold">Retour aux groupes</Link>
+      <div className="min-h-screen bg-transparent flex flex-col items-center justify-center p-4">
+        <CompteBackground />
+        <div className="glass p-8 text-center max-w-md w-full relative z-10">
+          <h2 className="font-display font-bold text-2xl text-[#17402C] mb-2">Groupe introuvable</h2>
+          <p className="text-sm text-[#5C6B5E] mb-6">Ce groupe n'existe pas ou vous n'y avez pas accès.</p>
+          <div className="flex gap-3 justify-center">
+            <button
+              onClick={refreshData}
+              className="glass-capsule-btn primary px-5 py-2.5 text-xs font-bold"
+            >
+              <span className="relative z-10">Réessayer</span>
+            </button>
+            <Link href="/groupes" className="glass-capsule-btn px-5 py-2.5 text-xs font-semibold">
+              <span className="relative z-10">Retour aux groupes</span>
+            </Link>
+          </div>
         </div>
       </div>
     );
@@ -99,41 +111,62 @@ export default function GroupesPage() {
   );
 
   return (
-    <div className="min-h-screen bg-[#E7E3D6] font-sans">
+    <div className="min-h-screen bg-transparent font-sans">
+      {/* ── MOBILE ── */}
       <div className="block md:hidden">
-        <MobilePageShell>
+        <MobilePageShell background="#FAF8F5">
           <MobileGroupeView data={formattedData} groupId={groupId} user={user} members={members} onRefresh={refreshData} />
         </MobilePageShell>
       </div>
 
+      {/* ── DESKTOP (3-Column Fullscreen 100dvh + CompteBackground) ── */}
       <div className="hidden md:block">
-        <Header />
+        <div className="h-[100dvh] max-h-[100dvh] overflow-hidden bg-transparent font-sans text-[#17402C] relative flex flex-col">
+          <CompteBackground />
+          <Header />
 
-        <main className="max-w-[1400px] mx-auto px-6 pt-24 pb-16">
-          <div className="flex items-center gap-2 text-xs font-medium text-[#1C2620]/50 mb-6">
-            <Link href="/communaute" className="hover:text-[#1C2620]">Communauté</Link>
-            <LkvIcon name="chevron-right" size={12} />
-            <Link href="/groupes" className="hover:text-[#1C2620]">Mes groupes</Link>
-            <LkvIcon name="chevron-right" size={12} />
-            <span className="text-[#1C2620]">{formattedData.meta.titlePrefix} {formattedData.meta.titleSuffix}</span>
-          </div>
+          {/* MAIN FULLSCREEN 3-COLUMN GRID */}
+          <main className="flex-1 min-h-0 overflow-hidden w-full max-w-[1440px] mx-auto px-4 sm:px-6 lg:px-8 pt-24 pb-4 flex gap-5">
 
-          <HeroVoyage data={formattedData} groupId={groupId} inviteCode={formattedData.inviteCode} onOpenChat={() => setActiveTab('discussion')} />
-          
-          <TabsGroupe activeTab={activeTab} setActiveTab={setActiveTab} data={formattedData} />
+            {/* COLONNE GAUCHE (Nav & Vertical Cockpit Side Tabs) - 230px */}
+            <aside className="w-[230px] shrink-0 h-full overflow-y-auto custom-scrollbar flex flex-col gap-3">
+              <CommunityHubNav
+                layoutVariant="vertical"
+                activeTab="groupes"
+              />
 
-          <div className="grid grid-cols-12 gap-6 mt-8">
-            <div className="col-span-12 lg:col-span-8 space-y-6">
-              <ProgressionCard progression={formattedData.meta.progression} />
-              
+              {/* VERTICAL SIDE TABS FOR COCKPIT SECTIONS */}
+              <TabsGroupe
+                layoutVariant="vertical"
+                activeTab={activeTab}
+                setActiveTab={setActiveTab}
+                data={formattedData}
+              />
+            </aside>
+
+            {/* COLONNE CENTRALE (FLUX DE CONTENU SCROLLABLE UNIQUE) */}
+            <div className="flex-1 min-w-0 h-full overflow-y-auto custom-scrollbar pr-2 space-y-5">
+              {/* Breadcrumbs */}
+              <div className="flex items-center gap-2 text-xs font-medium text-[#5C6B5E]">
+                <Link href="/communaute" className="hover:text-[#17402C] transition-colors">Communauté</Link>
+                <LkvIcon name="chevron-right" size={12} />
+                <Link href="/groupes" className="hover:text-[#17402C] transition-colors">Mes groupes</Link>
+                <LkvIcon name="chevron-right" size={12} />
+                <span className="text-[#17402C] font-semibold">{formattedData.meta.titlePrefix} {formattedData.meta.titleSuffix}</span>
+              </div>
+
+              {/* OVERVIEW TAB ONLY: Hero & Progression Card */}
               {activeTab === 'overview' && (
                 <>
+                  <HeroVoyage data={formattedData} groupId={groupId} inviteCode={formattedData.inviteCode} onOpenChat={() => setActiveTab('discussion')} />
+                  <ProgressionCard progression={formattedData.meta.progression} />
                   <ParcoursCard groupId={groupId} trail={formattedData.trail} meta={formattedData.meta} />
                   <TachesCard tasks={formattedData.tasks} groupId={groupId} onRefresh={refreshData} user={user} members={members} />
                   <EquipementCard equipment={formattedData.equipment} groupId={groupId} onRefresh={refreshData} user={user} members={members} />
                 </>
               )}
 
+              {/* INDIVIDUAL SPECIFIC TABS: Only display section card (Hero & Progression hidden) */}
               {activeTab === 'tasks' && <TachesCard tasks={formattedData.tasks} groupId={groupId} onRefresh={refreshData} user={user} members={members} />}
               {activeTab === 'equipment' && <EquipementCard equipment={formattedData.equipment} groupId={groupId} onRefresh={refreshData} user={user} members={members} />}
               {activeTab === 'expenses' && <DepensesCard expenses={formattedData.expenses} groupId={groupId} onRefresh={refreshData} user={user} members={members} />}
@@ -142,17 +175,14 @@ export default function GroupesPage() {
               {activeTab === 'members' && <VoyageursCard travelers={formattedData.travelers} groupId={groupId} onRefresh={refreshData} user={user} members={members} group={formattedData} isOrganizer={isCurrentUserOrganizer} />}
             </div>
 
-            <div className="col-span-12 lg:col-span-4 space-y-6">
-              <SafetyReminderCard />
+            {/* COLONNE DROITE (WIDGETS SIDEBAR) - 300px */}
+            <aside className="w-[300px] shrink-0 h-full overflow-y-auto custom-scrollbar flex flex-col gap-4">
               <CountdownCard data={formattedData} />
               <VoyageursCard travelers={formattedData.travelers} groupId={groupId} onRefresh={refreshData} user={user} members={members} group={formattedData} isOrganizer={isCurrentUserOrganizer} />
-              <ActiviteCard activities={formattedData.activities} />
               <AProposCard data={formattedData} />
-              <CarnetCTACard />
-            </div>
-          </div>
-        </main>
-        <Footer />
+            </aside>
+          </main>
+        </div>
       </div>
     </div>
   );

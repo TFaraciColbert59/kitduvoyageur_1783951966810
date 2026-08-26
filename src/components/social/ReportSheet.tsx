@@ -74,7 +74,7 @@ export default function ReportSheet({
           animate={{ y: 0 }}
           exit={{ y: '100%' }}
           transition={{ type: 'spring', damping: 28, stiffness: 350 }}
-          className="relative z-10 w-full max-w-lg bg-white rounded-t-3xl p-5 pb-8 shadow-2xl border-t border-[#1C2620]/10 flex flex-col gap-3 max-h-[85vh] overflow-y-auto"
+          className="relative z-10 w-full max-w-lg glass rounded-t-3xl p-5 pb-8 flex flex-col gap-3 max-h-[85vh] overflow-y-auto"
         >
           {/* Drag handle */}
           <div className="w-10 h-1 bg-gray-300 rounded-full mx-auto mb-2" />
@@ -84,7 +84,7 @@ export default function ReportSheet({
               <div className="w-12 h-12 rounded-full bg-emerald-100 text-emerald-800 flex items-center justify-center">
                 <Icon name="CheckCircleIcon" size={28} />
               </div>
-              <h4 className="font-bold text-[#1C2620] text-base">Signalement envoyé</h4>
+              <h4 className="font-bold text-[#17402C] text-base">Signalement envoyé</h4>
               <p className="text-xs text-[#5C6B5E] max-w-xs">
                 Merci de nous aider à préserver la sécurité et la bienveillance de la communauté.
               </p>
@@ -92,7 +92,7 @@ export default function ReportSheet({
           ) : (
             <>
               <div className="flex items-center justify-between pb-2 border-b border-gray-100">
-                <h3 className="font-display font-bold text-lg text-[#1C2620]">
+                <h3 className="font-display font-bold text-lg text-[#17402C]">
                   Signaler ce contenu
                 </h3>
                 <button
@@ -123,7 +123,7 @@ export default function ReportSheet({
                       className={`flex items-center justify-between p-3.5 rounded-2xl border text-xs font-semibold transition-all text-left ${
                         isSelected
                           ? 'border-[#17402C] bg-[#17402C]/5 text-[#17402C]'
-                          : 'border-[#1C2620]/10 bg-[#F5F2E8]/40 text-[#1C2620] hover:bg-[#F5F2E8]'
+                          : 'border-[#17402C]/10 bg-[#F5F2E8]/40 text-[#17402C] hover:bg-[#F5F2E8]'
                       }`}
                     >
                       <span>{reason.label}</span>
@@ -142,7 +142,7 @@ export default function ReportSheet({
                   value={details}
                   onChange={(e) => setDetails(e.target.value)}
                   placeholder="Précisions supplémentaires (facultatif)..."
-                  className="w-full h-20 bg-[#F5F2E8] border-none rounded-2xl p-3 text-xs text-[#1C2620] focus:ring-2 focus:ring-[#17402C] resize-none"
+                  className="w-full h-20 bg-[#F5F2E8] border-none rounded-2xl p-3 text-xs text-[#17402C] focus:ring-2 focus:ring-[#17402C] resize-none"
                 />
               )}
 
@@ -150,7 +150,7 @@ export default function ReportSheet({
                 <button
                   type="button"
                   onClick={onClose}
-                  className="flex-1 py-3 bg-[#F5F2E8] hover:bg-[#E8E4D8] text-[#1C2620] rounded-2xl text-xs font-bold transition-colors"
+                  className="flex-1 py-3 bg-[#F5F2E8] hover:bg-[#E8E4D8] text-[#17402C] rounded-2xl text-xs font-bold transition-colors"
                 >
                   Annuler
                 </button>
@@ -158,7 +158,7 @@ export default function ReportSheet({
                   type="button"
                   disabled={!selectedReason || submitting}
                   onClick={handleSubmit}
-                  className="flex-1 py-3 bg-[#17402C] hover:bg-[#122e20] text-white rounded-2xl text-xs font-bold transition-colors disabled:opacity-50 shadow-md flex items-center justify-center gap-2"
+                  className="flex-1 py-3 bg-[#17402C] hover:bg-[#122e20] text-white rounded-2xl text-xs font-bold transition-colors disabled:opacity-50  flex items-center justify-center gap-2"
                 >
                   {submitting ? 'Envoi...' : 'Envoyer le signalement'}
                 </button>

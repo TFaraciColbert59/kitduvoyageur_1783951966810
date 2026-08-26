@@ -9,17 +9,14 @@ export default function PageTransition({ children }: { children: React.ReactNode
   const prefersReducedMotion = useReducedMotion();
 
   return (
-    <AnimatePresence mode="popLayout" initial={false}>
-      <motion.div
-        key={pathname}
-        initial={prefersReducedMotion ? false : { opacity: 0, y: 4 }}
-        animate={{ opacity: 1, y: 0 }}
-        exit={prefersReducedMotion ? undefined : { opacity: 0, y: -2 }}
-        transition={{ duration: 0.15, ease: [0.16, 1, 0.3, 1] }}
-        className="w-full"
-      >
-        {children}
-      </motion.div>
-    </AnimatePresence>
+    <motion.div
+      key={pathname}
+      initial={prefersReducedMotion ? false : { opacity: 0.92 }}
+      animate={{ opacity: 1 }}
+      transition={{ duration: 0.08, ease: [0.16, 1, 0.3, 1] }}
+      className="w-full h-full min-h-screen"
+    >
+      {children}
+    </motion.div>
   );
 }

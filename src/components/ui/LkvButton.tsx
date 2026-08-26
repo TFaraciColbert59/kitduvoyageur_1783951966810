@@ -9,9 +9,9 @@ interface LkvButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
 
 const STYLES = {
   primary: { background: '#17402C', color: '#fff' },
-  light: { background: '#fff', color: '#0B1F17' },
+  light: { background: '#fff', color: '#17402C' },
   'ghost-light': { background: 'transparent', color: '#fff', border: '1px solid rgba(255,255,255,0.3)' },
-  ghost: { background: 'transparent', color: '#0B1F17' },
+  ghost: { background: 'transparent', color: '#17402C' },
 };
 
 const SIZES = {
@@ -57,8 +57,8 @@ export default function LkvButton({
     ...STYLES[variant],
     ...SIZES[size],
     ...(disabled ? { opacity: 0.5 } : {}),
-    ...(isHovered && !disabled && variant === 'primary' ? { background: '#0F2D1F' } : {}),
-    ...(isFocused ? { outline: '2px solid #82C39B', outlineOffset: '2px' } : {}),
+    ...(isHovered && !disabled && variant === 'primary' ? { background: '#365233' } : {}),
+    ...(isFocused ? { outline: '2px solid #5B7F55', outlineOffset: '2px' } : {}),
     ...style,
   };
 

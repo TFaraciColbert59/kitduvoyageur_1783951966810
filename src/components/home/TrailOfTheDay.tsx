@@ -186,7 +186,7 @@ export default function TrailOfTheDay({ trail }: TrailOfTheDayProps) {
               <div className="flex flex-wrap gap-3">
                 <Link
                   href={`/explorer?trail=${trail.id}`}
-                  className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl font-semibold text-sm text-white transition-all duration-200 hover:-translate-y-px focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#17402C] focus-visible:ring-offset-2 focus-visible:ring-offset-[#1C2620] min-h-[44px]"
+                  className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl font-semibold text-sm text-white transition-all duration-200 hover:-translate-y-px focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#17402C] focus-visible:ring-offset-2 focus-visible:ring-offset-[#17402C] min-h-[44px]"
                   style={{ background: '#17402C' }}
                 >
                   Voir sur la carte
@@ -196,7 +196,7 @@ export default function TrailOfTheDay({ trail }: TrailOfTheDayProps) {
                 </Link>
                 <Link
                   href="/ai-configurator"
-                  className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl font-semibold text-sm transition-all duration-200 hover:-translate-y-px focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#17402C] focus-visible:ring-offset-2 focus-visible:ring-offset-[#1C2620] min-h-[44px]"
+                  className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl font-semibold text-sm transition-all duration-200 hover:-translate-y-px focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#17402C] focus-visible:ring-offset-2 focus-visible:ring-offset-[#17402C] min-h-[44px]"
                   style={{
                     background: 'rgba(255,255,255,0.06)',
                     color: 'rgba(231,227,214,0.8)',

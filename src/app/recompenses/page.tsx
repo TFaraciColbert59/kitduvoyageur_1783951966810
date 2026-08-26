@@ -281,9 +281,9 @@ export default function RecompensesPage() {
       return (
         <div className="flex flex-col items-center justify-center py-20 text-center px-6">
           <p className="text-5xl mb-4">🔐</p>
-          <h2 className="font-display font-800 text-xl text-[#0B1F17] mb-2">Authentification requise</h2>
+          <h2 className="font-display font-800 text-xl text-[#17402C] mb-2">Authentification requise</h2>
           <p className="text-xs text-[#6B7A72] mb-6 max-w-sm">Vous devez vous connecter à votre compte Le Kit du Voyageur pour voir et gérer vos récompenses.</p>
-          <Link href="/connexion?mode=connexion" className="px-6 py-2.5 bg-[#17402C] text-white rounded-full text-xs font-bold hover:bg-[#2D6B4A] transition-colors">
+          <Link href="/connexion?mode=connexion" className="px-6 py-2.5 bg-[#17402C] text-white rounded-full text-xs font-bold hover:bg-[#365233] transition-colors">
             Se connecter
           </Link>
         </div>
@@ -308,7 +308,7 @@ export default function RecompensesPage() {
               Récompenses communautaires
             </span>
           </div>
-          <h1 className="font-display font-900 text-2xl sm:text-3xl text-[#0B1F17] tracking-tight">
+          <h1 className="font-display font-900 text-2xl sm:text-3xl text-[#17402C] tracking-tight">
             Partage de Valeur LKDV
           </h1>
           <p className="text-xs text-[#6B7A72] max-w-2xl">
@@ -332,15 +332,15 @@ export default function RecompensesPage() {
 
         {/* Dashboard Grid Stats */}
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-          <div className="bg-[#FBFAF6] border border-stone-200/60 rounded-2xl p-4 shadow-sm">
+          <div className="bg-[#FBFAF6] border border-stone-200/60 rounded-2xl p-4 ">
             <p className="text-[10px] font-mono tracking-wider text-[#6B7A72] uppercase">Mes points actifs</p>
-            <p className="text-xl font-display font-900 text-[#0B1F17] mt-1">
+            <p className="text-xl font-display font-900 text-[#17402C] mt-1">
               {account?.eligible_points || 0} pts
             </p>
             <p className="text-[9px] text-[#6B7A72] mt-0.5">Pour la période en cours</p>
           </div>
 
-          <div className="bg-[#FBFAF6] border border-stone-200/60 rounded-2xl p-4 shadow-sm">
+          <div className="bg-[#FBFAF6] border border-stone-200/60 rounded-2xl p-4 ">
             <p className="text-[10px] font-mono tracking-wider text-[#6B7A72] uppercase">Ma contribution</p>
             <p className="text-sm font-bold text-[#17402C] mt-2 truncate">
               {getContributionRating()}
@@ -348,7 +348,7 @@ export default function RecompensesPage() {
             <p className="text-[9px] text-[#6B7A72] mt-0.5">Score confiance : {profile?.trust_score || 50}/100</p>
           </div>
 
-          <div className="bg-[#FBFAF6] border border-[#A3C4A3]/30 rounded-2xl p-4 shadow-sm relative overflow-hidden">
+          <div className="bg-[#FBFAF6] border border-[#A3C4A3]/30 rounded-2xl p-4  relative overflow-hidden">
             <div className="absolute right-3 top-3 text-[#17402C]/10 text-2xl font-bold">€</div>
             <p className="text-[10px] font-mono tracking-wider text-[#6B7A72] uppercase">Disponibles</p>
             <p className="text-xl font-display font-900 text-[#17402C] mt-1">
@@ -357,9 +357,9 @@ export default function RecompensesPage() {
             <p className="text-[9px] text-[#6B7A72] mt-0.5">Prêts au retrait</p>
           </div>
 
-          <div className="bg-[#FBFAF6] border border-stone-200/60 rounded-2xl p-4 shadow-sm">
+          <div className="bg-[#FBFAF6] border border-stone-200/60 rounded-2xl p-4 ">
             <p className="text-[10px] font-mono tracking-wider text-[#6B7A72] uppercase">En cours / en attente</p>
-            <p className="text-xl font-display font-900 text-[#0B1F17]/70 mt-1">
+            <p className="text-xl font-display font-900 text-[#17402C]/70 mt-1">
               {account?.pending_cash ? account.pending_cash.toFixed(2) : '0.00'} €
             </p>
             <p className="text-[9px] text-[#6B7A72] mt-0.5">Virement en traitement</p>
@@ -369,9 +369,9 @@ export default function RecompensesPage() {
         {/* Withdrawal Section & Guide */}
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
           {/* Cash-out Form */}
-          <div className="lg:col-span-7 bg-[#FBFAF6] border border-stone-200/60 rounded-[0.75rem] p-6 shadow-sm space-y-6">
+          <div className="lg:col-span-7 bg-[#FBFAF6] border border-stone-200/60 rounded-[0.75rem] p-6  space-y-6">
             <div className="flex items-center justify-between border-b border-stone-200/60 pb-3">
-              <h3 className="font-display font-800 text-[#0B1F17] text-sm tracking-tight flex items-center gap-1.5">
+              <h3 className="font-display font-800 text-[#17402C] text-sm tracking-tight flex items-center gap-1.5">
                 <Icon name="CurrencyEuroIcon" size={18} className="text-[#17402C]" />
                 Demande de retrait de fonds
               </h3>
@@ -382,8 +382,8 @@ export default function RecompensesPage() {
 
             <form onSubmit={handleWithdrawSubmit} className="space-y-4">
               <div>
-                <label htmlFor="amount" className="block text-[11px] font-bold text-[#0B1F17] mb-1.5 uppercase tracking-wider">Montant (EUR)</label>
-                <div className="relative rounded-xl shadow-sm">
+                <label htmlFor="amount" className="block text-[11px] font-bold text-[#17402C] mb-1.5 uppercase tracking-wider">Montant (EUR)</label>
+                <div className="relative rounded-xl ">
                   <input
                     type="number"
                     step="0.01"
@@ -391,7 +391,7 @@ export default function RecompensesPage() {
                     id="amount"
                     value={withdrawAmount}
                     onChange={(e) => setWithdrawAmount(e.target.value)}
-                    className="block w-full rounded-xl border border-stone-200/80 pl-4 pr-12 py-2.5 text-xs text-[#0B1F17] focus:outline-none focus:ring-1 focus:ring-[#17402C] focus:border-[#17402C] bg-[#FBFAF6]"
+                    className="block w-full rounded-xl border border-stone-200/80 pl-4 pr-12 py-2.5 text-xs text-[#17402C] focus:outline-none focus:ring-1 focus:ring-[#17402C] focus:border-[#17402C] bg-[#FBFAF6]"
                     placeholder="20.00"
                     required
                   />
@@ -405,7 +405,7 @@ export default function RecompensesPage() {
               </div>
 
               <div>
-                <label className="block text-[11px] font-bold text-[#0B1F17] mb-1.5 uppercase tracking-wider">Méthode de virement</label>
+                <label className="block text-[11px] font-bold text-[#17402C] mb-1.5 uppercase tracking-wider">Méthode de virement</label>
                 <div className="grid grid-cols-2 gap-3">
                   <button
                     type="button"
@@ -444,7 +444,7 @@ export default function RecompensesPage() {
                       value={iban}
                       onChange={(e) => setIban(e.target.value)}
                       placeholder="FR76 3000 6000 0123 4567 8901 234"
-                      className="block w-full rounded-lg border border-stone-200 text-[11px] px-3 py-2 text-[#0B1F17] focus:outline-none focus:ring-1 focus:ring-[#17402C] bg-stone-50/50"
+                      className="block w-full rounded-lg border border-stone-200 text-[11px] px-3 py-2 text-[#17402C] focus:outline-none focus:ring-1 focus:ring-[#17402C] bg-stone-50/50"
                       required
                     />
                   </div>
@@ -456,7 +456,7 @@ export default function RecompensesPage() {
                       value={bic}
                       onChange={(e) => setBic(e.target.value)}
                       placeholder="BCDEFR2X"
-                      className="block w-full rounded-lg border border-stone-200 text-[11px] px-3 py-2 text-[#0B1F17] focus:outline-none focus:ring-1 focus:ring-[#17402C] bg-stone-50/50"
+                      className="block w-full rounded-lg border border-stone-200 text-[11px] px-3 py-2 text-[#17402C] focus:outline-none focus:ring-1 focus:ring-[#17402C] bg-stone-50/50"
                       required
                     />
                   </div>
@@ -472,7 +472,7 @@ export default function RecompensesPage() {
                     value={paypalEmail}
                     onChange={(e) => setPaypalEmail(e.target.value)}
                     placeholder="nom@exemple.com"
-                    className="block w-full rounded-lg border border-stone-200 text-[11px] px-3 py-2 text-[#0B1F17] focus:outline-none focus:ring-1 focus:ring-[#17402C] bg-stone-50/50"
+                    className="block w-full rounded-lg border border-stone-200 text-[11px] px-3 py-2 text-[#17402C] focus:outline-none focus:ring-1 focus:ring-[#17402C] bg-stone-50/50"
                     required
                   />
                 </div>
@@ -481,7 +481,7 @@ export default function RecompensesPage() {
               <button
                 type="submit"
                 disabled={submitting || (account?.available_cash || 0) < minThreshold}
-                className="w-full py-3 bg-[#17402C] text-white rounded-full text-xs font-bold hover:bg-[#2D6B4A] transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-1.5"
+                className="w-full py-3 bg-[#17402C] text-white rounded-full text-xs font-bold hover:bg-[#365233] transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-1.5"
               >
                 {submitting ? (
                   <>
@@ -496,8 +496,8 @@ export default function RecompensesPage() {
           </div>
 
           {/* Guide Section */}
-          <div className="lg:col-span-5 bg-white border border-stone-200/40 rounded-[0.75rem] p-6 shadow-sm space-y-4">
-            <h3 className="font-display font-800 text-[#0B1F17] text-sm tracking-tight flex items-center gap-1.5">
+          <div className="lg:col-span-5 bg-white border border-stone-200/40 rounded-[0.75rem] p-6  space-y-4">
+            <h3 className="font-display font-800 text-[#17402C] text-sm tracking-tight flex items-center gap-1.5">
               <Icon name="BookOpenIcon" size={18} className="text-[#17402C]" />
               Règles et Fonctionnement
             </h3>
@@ -521,8 +521,8 @@ export default function RecompensesPage() {
         {/* Ledger & Withdrawals lists */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6 pt-4">
           {/* Ledger of points transactions */}
-          <div className="bg-[#FBFAF6] border border-stone-200/60 rounded-[0.75rem] p-6 shadow-sm space-y-4">
-            <h3 className="font-display font-800 text-[#0B1F17] text-sm tracking-tight flex items-center gap-1.5">
+          <div className="bg-[#FBFAF6] border border-stone-200/60 rounded-[0.75rem] p-6  space-y-4">
+            <h3 className="font-display font-800 text-[#17402C] text-sm tracking-tight flex items-center gap-1.5">
               <Icon name="ClipboardDocumentListIcon" size={18} className="text-[#17402C]" />
               Historique de points (Ledger)
             </h3>
@@ -541,7 +541,7 @@ export default function RecompensesPage() {
                   <tbody className="divide-y divide-stone-100">
                     {transactions.map((tx) => (
                       <tr key={tx.id} className="hover:bg-stone-50/50">
-                        <td className="p-3 text-[#0B1F17] font-semibold">{translateTxType(tx.transaction_type)}</td>
+                        <td className="p-3 text-[#17402C] font-semibold">{translateTxType(tx.transaction_type)}</td>
                         <td className={`p-3 text-right font-bold ${tx.points >= 0 ? 'text-emerald-700' : 'text-rose-700'}`}>
                           {tx.points >= 0 ? `+${tx.points}` : tx.points}
                         </td>
@@ -557,8 +557,8 @@ export default function RecompensesPage() {
           </div>
 
           {/* History of Cash-out withdrawals */}
-          <div className="bg-[#FBFAF6] border border-stone-200/60 rounded-[0.75rem] p-6 shadow-sm space-y-4">
-            <h3 className="font-display font-800 text-[#0B1F17] text-sm tracking-tight flex items-center gap-1.5">
+          <div className="bg-[#FBFAF6] border border-stone-200/60 rounded-[0.75rem] p-6  space-y-4">
+            <h3 className="font-display font-800 text-[#17402C] text-sm tracking-tight flex items-center gap-1.5">
               <Icon name="WrenchScrewdriverIcon" size={18} className="text-[#17402C]" />
               Demandes de virements
             </h3>
@@ -578,7 +578,7 @@ export default function RecompensesPage() {
                   <tbody className="divide-y divide-stone-100">
                     {withdrawals.map((w) => (
                       <tr key={w.id} className="hover:bg-stone-50/50">
-                        <td className="p-3 text-[#0B1F17] font-semibold">{w.amount.toFixed(2)} €</td>
+                        <td className="p-3 text-[#17402C] font-semibold">{w.amount.toFixed(2)} €</td>
                         <td className="p-3 text-[#6B7A72] font-mono">
                           {w.payment_provider === 'bank_transfer' ? 'Banque' : 'Paypal'}
                         </td>
@@ -603,7 +603,7 @@ export default function RecompensesPage() {
   };
 
   return (
-    <div className="min-h-screen bg-[#F5F3ED] text-[#0B1F17] selection:bg-[#17402C]/20 font-sans">
+    <div className="min-h-screen bg-[#F5F3ED] text-[#17402C] selection:bg-[#17402C]/20 font-sans">
       {/* Mobile Shell */}
       <div className="block md:hidden">
         <MobilePageShell background="#F5F3EE">

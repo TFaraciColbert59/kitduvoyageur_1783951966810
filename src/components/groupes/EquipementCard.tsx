@@ -246,62 +246,58 @@ export default function EquipementCard({ equipment, groupId, onRefresh, user, me
   };
 
   return (
-    <div className="bg-white rounded-[24px] p-4 sm:p-6 border border-[#1C2620]/8 shadow-[0_2px_12px_rgba(11,31,23,0.04)] transition-all">
+    <div className="glass p-4 sm:p-6 transition-all duration-300">
       <div className="flex flex-col gap-2 mb-4">
         <div className="flex items-center justify-between">
           <div>
-            <span className="text-[10px] font-mono uppercase tracking-widest text-[#5C6B5E]">Kit collaboratif</span>
-            <h2 className="font-display text-lg sm:text-xl text-[#1C2620] font-bold">
+            <span className="text-[10px] font-mono uppercase tracking-widest text-[#5C6B5E] font-bold">Kit collaboratif</span>
+            <h2 className="font-display text-lg sm:text-xl text-[#17402C] font-bold">
               Équipement <em className="font-serif italic font-normal text-[#17402C]">partagé</em>
             </h2>
           </div>
 
           <div className="flex items-center gap-1.5">
-            <span className="px-2.5 py-1 bg-[#F5F2E8] text-[#17402C] text-[10px] font-mono font-bold rounded-full border border-[#17402C]/10">
-              {items.length} items
-            </span>
-            <span className="px-2.5 py-1 bg-[#FAF9F5] text-[#D97746] text-[10px] font-mono font-bold rounded-full border border-[#D97746]/20">
-              {unassignedCount} libres
-            </span>
+            <span className="glass-pill">{items.length} items</span>
+            <span className="glass-pill pill-warn">{unassignedCount} libres</span>
           </div>
         </div>
 
         {groupId && (
           <Link
             href={`/ai-configurator?groupId=${groupId}`}
-            className="w-full mt-1 p-2.5 rounded-2xl bg-gradient-to-r from-[#17402C] to-[#2D6B4A] text-white text-xs font-bold flex items-center justify-between shadow-sm active:scale-[0.98] transition-transform"
+            className="w-full mt-1 p-3 rounded-2xl glass-sub-card text-[#17402C] text-xs font-bold flex items-center justify-between transition-transform"
           >
             <span className="flex items-center gap-2">
               <span>🎒</span>
               <span>Optimiser le sac avec l'IA</span>
             </span>
-            <span className="text-[#A8C4A2] text-xs">Configurer →</span>
+            <span className="text-[#17402C] text-xs">Configurer →</span>
           </Link>
         )}
       </div>
 
       <div className="flex items-center gap-2 mb-3">
-        <div className="flex-1 relative flex items-center bg-[#FAF9F5] border border-[#1C2620]/10 rounded-2xl px-3 py-2">
-          <Icon name="MagnifyingGlassIcon" size={14} className="text-[#5C6B5E] mr-2 shrink-0" />
+        <div className="flex-1 relative flex items-center">
+          <Icon name="MagnifyingGlassIcon" size={14} className="absolute left-3 text-[#5C6B5E] shrink-0 relative z-10" />
           <input
             type="text"
             value={search}
             onChange={e => setSearch(e.target.value)}
             placeholder="Chercher un objet, un porteur..."
-            className="w-full bg-transparent border-none text-xs text-[#1C2620] focus:outline-none placeholder-[#5C6B5E]/60"
+            className="glass-input w-full pl-9 pr-8 text-xs min-h-[36px]"
           />
           {search && (
-            <button onClick={() => setSearch('')} className="text-xs text-[#5C6B5E] px-1">✕</button>
+            <button onClick={() => setSearch('')} className="absolute right-2 text-xs text-[#5C6B5E] px-1">✕</button>
           )}
         </div>
 
         <button
           onClick={openImport}
-          className="px-3 py-2 bg-[#F5F2E8] hover:bg-[#EAE6DF] text-[#17402C] rounded-2xl text-xs font-bold flex items-center gap-1 shrink-0 border border-[#17402C]/10 active:scale-95 transition-all"
+          className="glass-capsule-btn py-2 px-3 text-xs font-bold flex items-center gap-1 shrink-0"
           title="Importer depuis mon kit"
         >
-          <Icon name="ArrowDownTrayIcon" size={12} />
-          <span className="hidden sm:inline">Mon kit</span>
+          <Icon name="ArrowDownTrayIcon" size={12} className="relative z-10" />
+          <span className="hidden sm:inline relative z-10">Mon kit</span>
         </button>
 
         <button
@@ -309,10 +305,10 @@ export default function EquipementCard({ equipment, groupId, onRefresh, user, me
             triggerHaptic('light');
             setIsAdding(!isAdding);
           }}
-          className="px-3.5 py-2 bg-[#17402C] text-white rounded-2xl text-xs font-bold flex items-center gap-1 shrink-0 shadow-sm hover:bg-[#122E20] active:scale-95 transition-all"
+          className="glass-capsule-btn primary py-2 px-3 text-xs font-bold flex items-center gap-1 shrink-0"
         >
-          <span>{isAdding ? '✕' : '+'}</span>
-          <span>{isAdding ? 'Fermer' : 'Ajouter'}</span>
+          <span className="relative z-10">{isAdding ? '✕' : '+'}</span>
+          <span className="relative z-10">{isAdding ? 'Fermer' : 'Ajouter'}</span>
         </button>
       </div>
 
@@ -326,11 +322,7 @@ export default function EquipementCard({ equipment, groupId, onRefresh, user, me
                 triggerHaptic('light');
                 setSelectedCategory(cat);
               }}
-              className={`px-3 py-1 rounded-full text-[11px] font-medium whitespace-nowrap transition-all flex items-center gap-1 ${
-                isSelected
-                  ? 'bg-[#17402C] text-white font-bold shadow-sm'
-                  : 'bg-[#FAF9F5] text-[#5C6B5E] border border-[#1C2620]/8 hover:bg-[#F5F2E8]'
-              }`}
+              className={`glass-pill cursor-pointer whitespace-nowrap ${isSelected ? 'bg-[#17402C] text-white' : ''}`}
             >
               <span>{CATEGORY_EMOJI[cat] || '🎒'}</span>
               <span>{cat}</span>
@@ -340,21 +332,21 @@ export default function EquipementCard({ equipment, groupId, onRefresh, user, me
       </div>
 
       {error && (
-        <div className="mb-3 p-2.5 bg-red-50 border border-red-200 rounded-xl text-xs text-red-700 flex items-center gap-2">
-          <Icon name="ExclamationTriangleIcon" size={14} /> {error}
+        <div className="mb-3 p-2.5 glass-sub-card rounded-xl text-xs text-red-700 flex items-center gap-2">
+          <Icon name="ExclamationTriangleIcon" size={14} className="relative z-10" /> {error}
         </div>
       )}
       {notice && (
-        <div className="mb-3 p-2.5 bg-emerald-50 border border-emerald-200 rounded-xl text-xs text-emerald-700">
+        <div className="mb-3 p-2.5 glass-sub-card rounded-xl text-xs text-emerald-800 font-semibold">
           {notice}
         </div>
       )}
 
       {isAdding && (
-        <form onSubmit={handleAddItem} className="mb-4 bg-[#F5F2E8] p-4 rounded-2xl border border-[#17402C]/15 space-y-3">
+        <form onSubmit={handleAddItem} className="mb-4 glass-sub-card p-4 rounded-2xl space-y-3">
           <div className="flex items-center justify-between">
             <h4 className="text-xs font-bold text-[#17402C]">Ajouter un équipement commun</h4>
-            <span className="text-[10px] font-mono text-[#5C6B5E]">Kit partagé</span>
+            <span className="text-[10px] font-mono text-[#5C6B5E] font-bold">Kit partagé</span>
           </div>
 
           <div className="space-y-2">
@@ -364,7 +356,7 @@ export default function EquipementCard({ equipment, groupId, onRefresh, user, me
               value={newItemName}
               onChange={e => setNewItemName(e.target.value)}
               placeholder="Ex: Tente MSR Hubba Hubba 2P..."
-              className="w-full bg-white border border-[#1C2620]/10 rounded-xl py-2 px-3 text-xs text-[#1C2620] focus:ring-2 focus:ring-[#17402C] outline-none"
+              className="glass-input w-full text-xs"
             />
 
             <div className="grid grid-cols-3 gap-2">
@@ -373,7 +365,7 @@ export default function EquipementCard({ equipment, groupId, onRefresh, user, me
                 value={newItemWeight}
                 onChange={e => setNewItemWeight(e.target.value)}
                 placeholder="Poids (g)"
-                className="bg-white border border-[#1C2620]/10 rounded-xl py-2 px-3 text-xs text-[#1C2620] outline-none"
+                className="glass-input text-xs min-h-[36px]"
               />
               <input
                 type="number"
@@ -381,12 +373,12 @@ export default function EquipementCard({ equipment, groupId, onRefresh, user, me
                 value={newQuantity}
                 onChange={e => setNewQuantity(Math.max(1, parseInt(e.target.value) || 1))}
                 placeholder="Qté"
-                className="bg-white border border-[#1C2620]/10 rounded-xl py-2 px-3 text-xs text-[#1C2620] outline-none"
+                className="glass-input text-xs min-h-[36px]"
               />
               <select
                 value={newCategory}
                 onChange={e => setNewCategory(e.target.value)}
-                className="bg-white border border-[#1C2620]/10 rounded-xl py-2 px-2 text-xs text-[#1C2620] outline-none"
+                className="glass-input text-xs min-h-[36px]"
               >
                 {categories.filter(c => c !== 'Tout').map(c => (
                   <option key={c} value={c}>{c}</option>
@@ -397,7 +389,7 @@ export default function EquipementCard({ equipment, groupId, onRefresh, user, me
             <select
               value={assignedTo}
               onChange={e => setAssignedTo(e.target.value)}
-              className="w-full bg-white border border-[#1C2620]/10 rounded-xl py-2 px-3 text-xs text-[#1C2620] outline-none"
+              className="glass-input w-full text-xs"
             >
               <option value="">👤 Qui porte cet objet ? (Non attribué)</option>
               {members?.map(m => (
@@ -412,23 +404,23 @@ export default function EquipementCard({ equipment, groupId, onRefresh, user, me
             <button
               type="button"
               onClick={() => setIsAdding(false)}
-              className="px-3 py-1.5 bg-transparent text-xs text-[#5C6B5E] font-medium"
+              className="glass-capsule-btn text-xs font-semibold py-1.5 px-3"
             >
-              Annuler
+              <span className="relative z-10">Annuler</span>
             </button>
             <button
               type="submit"
               disabled={!newItemName.trim() || loading}
-              className="px-4 py-1.5 bg-[#17402C] text-white rounded-xl text-xs font-bold disabled:opacity-50"
+              className="glass-capsule-btn primary text-xs font-bold py-1.5 px-4 disabled:opacity-50"
             >
-              {loading ? 'Ajout...' : 'Sauvegarder'}
+              <span className="relative z-10">{loading ? 'Ajout...' : 'Sauvegarder'}</span>
             </button>
           </div>
         </form>
       )}
 
       {editingId && (
-        <div className="mb-4 bg-[#EAF0EB] p-4 rounded-2xl border border-[#2D5A3D]/20 space-y-3">
+        <div className="mb-4 glass-sub-card p-4 rounded-2xl space-y-3">
           <div className="flex items-center justify-between">
             <h4 className="text-xs font-bold text-[#17402C]">Modifier l'équipement</h4>
             <button onClick={() => setEditingId(null)} className="text-xs text-[#5C6B5E]">✕</button>
@@ -438,7 +430,7 @@ export default function EquipementCard({ equipment, groupId, onRefresh, user, me
             type="text"
             value={editForm.name}
             onChange={e => setEditForm(f => ({ ...f, name: e.target.value }))}
-            className="w-full bg-white border border-[#1C2620]/10 rounded-xl py-2 px-3 text-xs text-[#1C2620]"
+            className="glass-input w-full text-xs"
           />
 
           <div className="grid grid-cols-3 gap-2">
@@ -447,7 +439,7 @@ export default function EquipementCard({ equipment, groupId, onRefresh, user, me
               value={editForm.weightGrams}
               onChange={e => setEditForm(f => ({ ...f, weightGrams: e.target.value }))}
               placeholder="Poids (g)"
-              className="bg-white border border-[#1C2620]/10 rounded-xl py-2 px-3 text-xs"
+              className="glass-input text-xs min-h-[36px]"
             />
             <input
               type="number"
@@ -455,12 +447,12 @@ export default function EquipementCard({ equipment, groupId, onRefresh, user, me
               value={editForm.quantity}
               onChange={e => setEditForm(f => ({ ...f, quantity: Math.max(1, parseInt(e.target.value) || 1) }))}
               placeholder="Qté"
-              className="bg-white border border-[#1C2620]/10 rounded-xl py-2 px-3 text-xs"
+              className="glass-input text-xs min-h-[36px]"
             />
             <select
               value={editForm.assigned_to}
               onChange={e => setEditForm(f => ({ ...f, assigned_to: e.target.value }))}
-              className="bg-white border border-[#1C2620]/10 rounded-xl py-2 px-2 text-xs"
+              className="glass-input text-xs min-h-[36px]"
             >
               <option value="">Non attribué</option>
               {members?.map(m => (
@@ -470,9 +462,11 @@ export default function EquipementCard({ equipment, groupId, onRefresh, user, me
           </div>
 
           <div className="flex justify-end gap-2">
-            <button onClick={() => setEditingId(null)} className="px-3 py-1.5 text-xs text-[#5C6B5E]">Annuler</button>
-            <button onClick={() => handleUpdateItem(editingId)} className="px-4 py-1.5 bg-[#17402C] text-white rounded-xl text-xs font-bold">
-              Enregistrer
+            <button onClick={() => setEditingId(null)} className="glass-capsule-btn py-1.5 px-3 text-xs font-semibold">
+              <span className="relative z-10">Annuler</span>
+            </button>
+            <button onClick={() => handleUpdateItem(editingId)} className="glass-capsule-btn primary py-1.5 px-4 text-xs font-bold">
+              <span className="relative z-10">Enregistrer</span>
             </button>
           </div>
         </div>
@@ -480,9 +474,9 @@ export default function EquipementCard({ equipment, groupId, onRefresh, user, me
 
       <div className="space-y-2.5">
         {filteredItems.length === 0 ? (
-          <div className="py-8 text-center bg-[#FAF9F5] rounded-2xl border border-[#1C2620]/6 p-4">
+          <div className="py-8 text-center glass-sub-card rounded-2xl p-4">
             <span className="text-3xl block mb-1">🎒</span>
-            <p className="text-xs font-bold text-[#1C2620]">
+            <p className="text-xs font-bold text-[#17402C]">
               {search ? 'Aucun objet trouvé' : 'Aucun équipement dans cette catégorie'}
             </p>
             <p className="text-[11px] text-[#5C6B5E] mt-0.5">
@@ -491,9 +485,9 @@ export default function EquipementCard({ equipment, groupId, onRefresh, user, me
             {!search && (
               <button
                 onClick={() => setIsAdding(true)}
-                className="mt-3 px-4 py-1.5 bg-[#17402C] text-white rounded-xl text-xs font-bold shadow-sm"
+                className="mt-3 glass-capsule-btn primary py-1.5 px-4 text-xs font-bold"
               >
-                + Ajouter un objet
+                <span className="relative z-10">+ Ajouter un objet</span>
               </button>
             )}
           </div>
@@ -505,20 +499,20 @@ export default function EquipementCard({ equipment, groupId, onRefresh, user, me
             return (
               <div
                 key={item.id}
-                className="bg-[#FAF9F5] rounded-2xl p-3 border border-[#1C2620]/6 flex items-center justify-between gap-3 hover:bg-white hover:border-[#17402C]/20 transition-all shadow-[0_1px_4px_rgba(11,31,23,0.02)]"
+                className="glass-sub-card rounded-2xl p-3 flex items-center justify-between gap-3 transition-all"
               >
                 <div className="flex items-center gap-2.5 min-w-0 flex-1">
-                  <div className="w-9 h-9 rounded-xl bg-white border border-[#1C2620]/10 flex items-center justify-center text-base shrink-0 shadow-sm">
+                  <div className="w-9 h-9 rounded-xl glass-sub-card flex items-center justify-center text-base shrink-0">
                     {CATEGORY_EMOJI[item.category || 'Divers'] || '🎒'}
                   </div>
 
                   <div className="min-w-0 flex-1">
                     <div className="flex items-center gap-1.5">
-                      <h4 className="font-bold text-xs text-[#1C2620] truncate">
+                      <h4 className="font-bold text-xs text-[#17402C] truncate">
                         {item.item}
                       </h4>
                       {item.quantity && item.quantity > 1 && (
-                        <span className="px-1.5 py-0.2 bg-[#17402C]/10 text-[#17402C] text-[10px] font-mono font-bold rounded-md">
+                        <span className="glass-pill text-[10px]">
                           ×{item.quantity}
                         </span>
                       )}
@@ -533,7 +527,7 @@ export default function EquipementCard({ equipment, groupId, onRefresh, user, me
                         onClick={() => handleAssignToMe(item)}
                         disabled={busyId === item.id}
                         className={`truncate underline decoration-dotted ${
-                          isMyAssignment ? 'text-emerald-700 font-bold' : isAssigned ? 'text-[#1C2620]' : 'text-[#D97746] font-semibold'
+                          isMyAssignment ? 'text-emerald-700 font-bold' : isAssigned ? 'text-[#17402C]' : 'text-[#D97746] font-semibold'
                         }`}
                         title="Cliquer pour changer l'attribution"
                       >
@@ -546,18 +540,18 @@ export default function EquipementCard({ equipment, groupId, onRefresh, user, me
                 <div className="flex items-center gap-1 shrink-0">
                   <button
                     onClick={() => startEdit(item)}
-                    className="p-1.5 text-[#5C6B5E] hover:text-[#1C2620] rounded-lg hover:bg-white transition-colors"
+                    className="glass-capsule-btn p-1.5"
                     title="Modifier"
                   >
-                    <Icon name="PencilSquareIcon" size={14} />
+                    <Icon name="PencilSquareIcon" size={14} className="relative z-10" />
                   </button>
                   <button
                     onClick={() => handleDeleteItem(item.id)}
                     disabled={busyId === item.id}
-                    className="p-1.5 text-red-400 hover:text-red-600 rounded-lg hover:bg-white transition-colors"
+                    className="glass-capsule-btn p-1.5 text-red-600"
                     title="Supprimer"
                   >
-                    <Icon name="TrashIcon" size={14} />
+                    <Icon name="TrashIcon" size={14} className="relative z-10" />
                   </button>
                 </div>
               </div>
@@ -566,20 +560,22 @@ export default function EquipementCard({ equipment, groupId, onRefresh, user, me
         )}
       </div>
 
-      <div className="mt-4 pt-3 border-t border-[#1C2620]/8 flex items-center justify-between">
-        <span className="text-[11px] font-mono text-[#5C6B5E]">Poids total du matériel partagé</span>
+      <div className="mt-4 pt-3 border-t border-[#17402C]/10 flex items-center justify-between">
+        <span className="text-[11px] font-mono text-[#5C6B5E] font-bold">Poids total du matériel partagé</span>
         <span className="font-mono font-bold text-sm text-[#17402C]">{totalKg} kg</span>
       </div>
 
       {isImporting && (
-        <div className="fixed inset-0 z-[100] bg-black/60 backdrop-blur-sm flex items-center justify-center p-4">
-          <div className="bg-[#FAF9F5] border border-[#C8C3B0] rounded-[24px] w-full max-w-lg p-5 shadow-2xl max-h-[85vh] flex flex-col">
-            <div className="flex items-center justify-between pb-3 border-b border-[#1C2620]/10">
+        <div className="fixed inset-0 z-[100] bg-black/50 backdrop-blur-md flex items-center justify-center p-4">
+          <div className="glass w-full max-w-lg p-5 max-h-[85vh] flex flex-col">
+            <div className="flex items-center justify-between pb-3 border-b border-[#17402C]/10">
               <div>
-                <h3 className="font-display font-bold text-base text-[#1C2620]">Importer depuis mon kit</h3>
+                <h3 className="font-display font-bold text-base text-[#17402C]">Importer depuis mon kit</h3>
                 <p className="text-[11px] text-[#5C6B5E]">Sélectionnez les objets à partager avec l'équipe</p>
               </div>
-              <button onClick={() => setIsImporting(false)} className="text-sm font-bold text-[#5C6B5E]">✕</button>
+              <button onClick={() => setIsImporting(false)} className="glass-capsule-btn p-2 text-xs font-bold">
+                <span className="relative z-10">✕</span>
+              </button>
             </div>
 
             <div className="my-2.5">
@@ -588,7 +584,7 @@ export default function EquipementCard({ equipment, groupId, onRefresh, user, me
                 value={personalSearch}
                 onChange={e => setPersonalSearch(e.target.value)}
                 placeholder="Filtrer mes équipements..."
-                className="w-full bg-white border border-[#1C2620]/10 rounded-xl px-3 py-2 text-xs outline-none"
+                className="glass-input w-full text-xs"
               />
             </div>
 
@@ -602,7 +598,7 @@ export default function EquipementCard({ equipment, groupId, onRefresh, user, me
                       key={gear.id}
                       onClick={() => setSelectedGear(s => ({ ...s, [gear.id]: !s[gear.id] }))}
                       className={`p-2.5 rounded-xl border transition-all cursor-pointer flex items-center justify-between gap-2 ${
-                        isChecked ? 'bg-[#17402C] text-white border-[#17402C]' : 'bg-white text-[#1C2620] border-[#1C2620]/8'
+                        isChecked ? 'bg-[#17402C] text-white border-[#17402C]' : 'glass-sub-card text-[#17402C]'
                       }`}
                     >
                       <div>
@@ -612,7 +608,7 @@ export default function EquipementCard({ equipment, groupId, onRefresh, user, me
                         </p>
                       </div>
                       <span className={`w-5 h-5 rounded-md flex items-center justify-center text-xs font-bold ${
-                        isChecked ? 'bg-white text-[#17402C]' : 'border border-[#1C2620]/20'
+                        isChecked ? 'bg-white text-[#17402C]' : 'border border-[#17402C]/20'
                       }`}>
                         {isChecked ? '✓' : ''}
                       </span>
@@ -621,14 +617,16 @@ export default function EquipementCard({ equipment, groupId, onRefresh, user, me
                 })}
             </div>
 
-            <div className="pt-3 border-t border-[#1C2620]/10 flex justify-end gap-2">
-              <button onClick={() => setIsImporting(false)} className="px-3 py-1.5 text-xs text-[#5C6B5E]">Annuler</button>
+            <div className="pt-3 border-t border-[#17402C]/10 flex justify-end gap-2">
+              <button onClick={() => setIsImporting(false)} className="glass-capsule-btn py-1.5 px-3 text-xs font-semibold">
+                <span className="relative z-10">Annuler</span>
+              </button>
               <button
                 onClick={executeImport}
                 disabled={importingNow}
-                className="px-4 py-1.5 bg-[#17402C] text-white rounded-xl text-xs font-bold shadow-sm"
+                className="glass-capsule-btn primary py-1.5 px-4 text-xs font-bold"
               >
-                {importingNow ? 'Importation...' : 'Importer la sélection'}
+                <span className="relative z-10">{importingNow ? 'Importation...' : 'Importer la sélection'}</span>
               </button>
             </div>
           </div>

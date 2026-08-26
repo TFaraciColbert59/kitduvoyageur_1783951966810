@@ -38,7 +38,7 @@ export default function DesktopLeftPanel({
   return (
     <div className="hidden md:flex absolute top-[96px] left-5 w-[320px] max-h-[calc(100%-180px)] flex-col gap-3.5 z-30 select-none overflow-y-auto custom-scrollbar">
       {/* 1. Progression Panel */}
-      <div className="bg-[#FBFAF6]/92 backdrop-blur-2xl border border-[#0B1F17]/07 rounded-2xl shadow-[0_12px_32px_rgba(11,31,23,0.10),0_2px_8px_rgba(11,31,23,0.04)] overflow-hidden p-4">
+      <div className="bg-[#FBFAF6]/92 backdrop-blur-2xl border border-[#17402C]/07 rounded-2xl shadow-[0_12px_32px_rgba(23,64,44,0.10),0_2px_8px_rgba(23,64,44,0.04)] overflow-hidden p-4">
         <div className="flex justify-between items-baseline mb-2">
           <span className="text-[11px] uppercase tracking-widest text-[#6B7A72] font-semibold">
             Progression
@@ -49,7 +49,7 @@ export default function DesktopLeftPanel({
         </div>
 
         <div className="flex justify-between items-baseline mb-2">
-          <div className="text-2xl font-medium tracking-tight text-[#0B1F17]">
+          <div className="text-2xl font-medium tracking-tight text-[#17402C]">
             {distanceKm.toFixed(1)}
             <em className="font-serif italic font-normal text-sm text-[#17402C] ml-0.5">
               / {totalDistanceKm.toFixed(1)} km
@@ -61,7 +61,7 @@ export default function DesktopLeftPanel({
         </div>
 
         {/* Progress Bar with End Glow Dot */}
-        <div className="h-1 bg-[#0B1F17]/08 rounded-full overflow-hidden relative">
+        <div className="h-1 bg-[#17402C]/08 rounded-full overflow-hidden relative">
           <div
             className="h-full bg-[#17402C] rounded-full relative transition-all duration-500"
             style={{ width: `${pct}%` }}
@@ -77,7 +77,7 @@ export default function DesktopLeftPanel({
       </div>
 
       {/* 2. Waypoints List Panel */}
-      <div className="bg-[#FBFAF6]/92 backdrop-blur-2xl border border-[#0B1F17]/07 rounded-2xl shadow-[0_12px_32px_rgba(11,31,23,0.10),0_2px_8px_rgba(11,31,23,0.04)] overflow-hidden p-4 space-y-3">
+      <div className="bg-[#FBFAF6]/92 backdrop-blur-2xl border border-[#17402C]/07 rounded-2xl shadow-[0_12px_32px_rgba(23,64,44,0.10),0_2px_8px_rgba(23,64,44,0.04)] overflow-hidden p-4 space-y-3">
         <div className="flex justify-between items-baseline">
           <span className="text-[11px] uppercase tracking-widest text-[#6B7A72] font-semibold">
             Itinéraire · {waypoints.length} étapes
@@ -87,7 +87,7 @@ export default function DesktopLeftPanel({
         {/* Waypoints Timeline */}
         <div className="relative pl-1 space-y-2">
           {/* Connecting Vertical Line */}
-          <div className="absolute left-[19px] top-3 bottom-5 w-[2px] bg-gradient-to-b from-[#17402C] via-[#17402C] to-[#0B1F17]/15" />
+          <div className="absolute left-[19px] top-3 bottom-5 w-[2px] bg-gradient-to-b from-[#17402C] via-[#17402C] to-[#17402C]/15" />
 
           {waypoints.map((wp) => (
             <div
@@ -103,7 +103,7 @@ export default function DesktopLeftPanel({
                     ? 'bg-[#17402C] border-[#17402C] text-[#C6DCBE]'
                     : wp.status === 'current'
                     ? 'bg-[#A8C8A0] border-[#17402C] text-[#06120C] shadow-[0_0_0_4px_rgba(168,200,160,0.35)]'
-                    : 'bg-[#FBFAF6] border-[#0B1F17]/20 text-[#8B978F]'
+                    : 'bg-[#FBFAF6] border-[#17402C]/20 text-[#8B978F]'
                 }`}
               >
                 {wp.status === 'done' ? (
@@ -128,7 +128,7 @@ export default function DesktopLeftPanel({
               <div className="flex-1 min-w-0 pt-0.5">
                 <div
                   className={`text-xs font-medium leading-tight ${
-                    wp.status === 'future' ? 'text-[#6B7A72]' : 'text-[#0B1F17]'
+                    wp.status === 'future' ? 'text-[#6B7A72]' : 'text-[#17402C]'
                   }`}
                 >
                   {wp.name}{' '}

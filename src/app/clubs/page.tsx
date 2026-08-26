@@ -4,9 +4,9 @@ import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import Header from '@/components/Header';
-import Footer from '@/components/Footer';
 import MobilePageShell from '@/components/mobile-nav/MobilePageShell';
 import MobileClubsHub from '@/components/clubs/MobileClubsHub';
+import CompteBackground from '@/components/compte/CompteBackground';
 import Icon from '@/components/ui/AppIcon';
 import { createClient } from '@/lib/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
@@ -102,13 +102,24 @@ const EMPTY_CLUB_FORM: ClubForm = {
   privacy: 'open',
 };
 
+// Dégradés officiels (tokens sage / warn / info / stone) — remplace les classes Tailwind legacy
+const COVER_GRADIENTS: Record<string, string> = {
+  'from-emerald-600 to-teal-700': 'from-[#365233] to-[#17402C]',
+  'from-blue-600 to-indigo-700': 'from-[#4B6B7C] to-[#2A5A6E]',
+  'from-amber-600 to-orange-700': 'from-[#C89A3B] to-[#8C6418]',
+  'from-stone-600 to-stone-800': 'from-[#7A7365] to-[#5B554A]',
+  'from-cyan-600 to-blue-700': 'from-[#3E6B7A] to-[#4B6B7C]',
+  'from-slate-600 to-gray-800': 'from-[#5A574E] to-[#3F3B34]',
+};
+const normalizeCover = (c: string) => COVER_GRADIENTS[c] ?? c;
+
 const _COVER_COLORS: { label: string; value: string }[] = [
-  { label: 'Vert', value: 'from-emerald-600 to-teal-700' },
-  { label: 'Bleu', value: 'from-blue-600 to-indigo-700' },
-  { label: 'Orange', value: 'from-amber-600 to-orange-700' },
-  { label: 'Gris', value: 'from-stone-600 to-stone-800' },
-  { label: 'Cyan', value: 'from-cyan-600 to-blue-700' },
-  { label: 'Ardoise', value: 'from-slate-600 to-gray-800' },
+  { label: 'Sauge', value: 'from-[#365233] to-[#17402C]' },
+  { label: 'Info', value: 'from-[#4B6B7C] to-[#2A5A6E]' },
+  { label: 'Warn', value: 'from-[#C89A3B] to-[#8C6418]' },
+  { label: 'Pierre', value: 'from-[#7A7365] to-[#5B554A]' },
+  { label: 'Océan', value: 'from-[#3E6B7A] to-[#4B6B7C]' },
+  { label: 'Ardoise', value: 'from-[#5A574E] to-[#3F3B34]' },
 ];
 
 // ─── Club Create/Edit Modal ───────────────────────────────────────────────────
@@ -133,17 +144,17 @@ function ClubFormModal({
 
   return (
     <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-md flex items-center justify-center p-4 sm:p-6 overflow-y-auto transition-opacity duration-300">
-      <div className="bg-card/95 backdrop-blur-xl border border-white/10 shadow-2xl rounded-[0.75rem] w-full max-w-xl my-4 overflow-hidden flex flex-col transform transition-transform duration-300 scale-100">
+      <div className="glass rounded-2xl w-full max-w-xl my-4 overflow-hidden flex flex-col transform transition-transform duration-300 scale-100">
         
         {/* Header */}
         <div className="flex items-center justify-between p-6 sm:px-8 pt-8 pb-4 relative z-10">
           <div>
-            <h2 className="font-display font-800 text-foreground text-2xl tracking-tight">
+            <h2 className="font-display font-800 text-[#17402C] text-2xl tracking-tight">
               {initial ? 'Modifier le club' : 'Créer un club'}
             </h2>
-            <p className="text-muted-foreground text-sm mt-1">Configurez l&apos;espace de votre communauté.</p>
+            <p className="text-[#365233] text-sm mt-1">Configurez l&apos;espace de votre communauté.</p>
           </div>
-          <button onClick={onClose} className="p-3 bg-muted/50 rounded-full hover:bg-muted text-foreground transition-colors self-start">
+          <button onClick={onClose} className="p-3 bg-white/40 rounded-full hover:bg-[#FBFAF6] text-[#17402C] transition-colors self-start">
             <Icon name="XMarkIcon" size={20} />
           </button>
         </div>
@@ -152,17 +163,17 @@ function ClubFormModal({
         <div className="p-6 sm:px-8 space-y-6 max-h-[60vh] overflow-y-auto custom-scrollbar relative z-10">
           <div className="flex gap-4">
             <div className="w-24">
-              <label className="text-[11px] font-700 text-muted-foreground uppercase tracking-widest block mb-2">Emoji</label>
+              <label className="text-[11px] font-700 text-[#5A7064] uppercase tracking-widest block mb-2">Emoji</label>
               <input 
-                className="w-full bg-muted/30 border border-white/10 rounded-2xl px-3 py-4 text-center text-3xl focus:outline-none focus:ring-2 focus:ring-primary/50 transition-all hover:bg-muted/50" 
+                className="glass-input w-full text-center text-3xl" 
                 value={form.emoji} 
                 onChange={(e) => set('emoji', e.target.value)} 
               />
             </div>
             <div className="flex-1">
-              <label className="text-[11px] font-700 text-muted-foreground uppercase tracking-widest block mb-2">Nom du club <span className="text-primary">*</span></label>
+              <label className="text-[11px] font-700 text-[#5A7064] uppercase tracking-widest block mb-2">Nom du club <span className="text-[#5B7F55]">*</span></label>
               <input 
-                className="w-full bg-muted/30 border border-white/10 rounded-2xl px-5 py-4 text-base text-foreground placeholder-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/50 transition-all hover:bg-muted/50" 
+                className="glass-input w-full text-base" 
                 placeholder="Ex: Club Sahara" 
                 value={form.name} 
                 onChange={(e) => set('name', e.target.value)} 
@@ -172,14 +183,14 @@ function ClubFormModal({
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
             <div>
-              <label className="text-[11px] font-700 text-muted-foreground uppercase tracking-widest block mb-2">Type</label>
-              <div className="flex bg-muted/30 p-1.5 rounded-2xl border border-white/10">
+              <label className="text-[11px] font-700 text-[#5A7064] uppercase tracking-widest block mb-2">Type</label>
+              <div className="glass-capsule-bar w-full p-1.5">
                 {[{ v: 'activite', l: '🎯 Activité' }, { v: 'pays', l: '🌍 Pays' }].map((opt) => (
                   <button 
                     key={opt.v} 
                     type="button" 
                     onClick={() => set('type', opt.v)} 
-                    className={`flex-1 py-2.5 px-3 rounded-xl text-sm font-600 transition-all ${form.type === opt.v ? 'bg-background shadow-md text-foreground' : 'text-muted-foreground hover:text-foreground'}`}
+                    className={`glass-capsule-segment flex-1 ${form.type === opt.v ? 'active' : ''}`}
                   >
                     {opt.l}
                   </button>
@@ -187,9 +198,9 @@ function ClubFormModal({
               </div>
             </div>
             <div>
-              <label className="text-[11px] font-700 text-muted-foreground uppercase tracking-widest block mb-2">Catégorie</label>
+              <label className="text-[11px] font-700 text-[#5A7064] uppercase tracking-widest block mb-2">Catégorie</label>
               <input 
-                className="w-full bg-muted/30 border border-white/10 rounded-2xl px-5 py-3.5 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-primary/50 transition-all hover:bg-muted/50" 
+                className="glass-input w-full text-sm" 
                 placeholder="Ex: Randonnée, Islande..." 
                 value={form.category} 
                 onChange={(e) => set('category', e.target.value)} 
@@ -198,10 +209,10 @@ function ClubFormModal({
           </div>
 
           <div>
-            <label className="text-[11px] font-700 text-muted-foreground uppercase tracking-widest block mb-2">Description</label>
+            <label className="text-[11px] font-700 text-[#5A7064] uppercase tracking-widest block mb-2">Description</label>
             <textarea 
               rows={3} 
-              className="w-full bg-muted/30 border border-white/10 rounded-2xl px-5 py-4 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-primary/50 transition-all hover:bg-muted/50 resize-none" 
+              className="glass-input w-full text-sm resize-none" 
               placeholder="Décrivez l'objectif et l'ambiance du club..." 
               value={form.description} 
               onChange={(e) => set('description', e.target.value)} 
@@ -209,10 +220,10 @@ function ClubFormModal({
           </div>
 
           <div>
-            <label className="text-[11px] font-700 text-muted-foreground uppercase tracking-widest block mb-2">Règles du club</label>
+            <label className="text-[11px] font-700 text-[#5A7064] uppercase tracking-widest block mb-2">Règles du club</label>
             <textarea 
               rows={2} 
-              className="w-full bg-muted/30 border border-white/10 rounded-2xl px-5 py-4 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-primary/50 transition-all hover:bg-muted/50 resize-none" 
+              className="glass-input w-full text-sm resize-none" 
               placeholder="Règles de bonne conduite (optionnel)..." 
               value={form.rules} 
               onChange={(e) => set('rules', e.target.value)} 
@@ -220,7 +231,7 @@ function ClubFormModal({
           </div>
 
           <div>
-            <label className="text-[11px] font-700 text-muted-foreground uppercase tracking-widest block mb-3">Confidentialité</label>
+            <label className="text-[11px] font-700 text-[#5A7064] uppercase tracking-widest block mb-3">Confidentialité</label>
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
               {[
                 { v: 'open', l: '🌍 Ouvert', d: 'Tout le monde' },
@@ -231,10 +242,10 @@ function ClubFormModal({
                   key={opt.v} 
                   type="button" 
                   onClick={() => set('privacy', opt.v)} 
-                  className={`p-4 rounded-2xl border-2 text-left transition-all flex flex-col items-start ${form.privacy === opt.v ? 'border-primary bg-primary/10 shadow-[0_0_15px_rgba(var(--primary),0.2)]' : 'border-white/5 bg-muted/20 hover:border-white/20 hover:bg-muted/40'}`}
+                  className={`p-4 rounded-2xl border text-left transition-all flex flex-col items-start glass-sub-card ${form.privacy === opt.v ? '!border-[#5B7F55]' : ''}`}
                 >
-                  <p className="text-sm font-700 text-foreground mb-1">{opt.l}</p>
-                  <p className="text-[11px] text-muted-foreground">{opt.d}</p>
+                  <p className="text-sm font-700 text-[#17402C] mb-1">{opt.l}</p>
+                  <p className="text-[11px] text-[#5A7064]">{opt.d}</p>
                 </button>
               ))}
             </div>
@@ -242,14 +253,14 @@ function ClubFormModal({
         </div>
 
         {/* Footer */}
-        <div className="flex items-center gap-3 p-6 sm:px-8 border-t border-white/10 bg-background/50 relative z-10">
-          <button onClick={onClose} className="px-6 py-3.5 rounded-2xl text-sm font-700 text-foreground hover:bg-muted transition-colors">
+        <div className="flex items-center gap-3 p-6 sm:px-8 border-t border-border bg-white/40 relative z-10">
+          <button onClick={onClose} className="px-6 py-3 glass-capsule-btn secondary text-sm">
             Annuler
           </button>
           <button 
             onClick={() => onSave(form)} 
             disabled={saving || !form.name.trim()} 
-            className="flex-1 py-3.5 rounded-2xl bg-primary text-white text-sm font-700 hover:bg-primary/90 transition-all disabled:opacity-50 disabled:cursor-not-allowed shadow-lg shadow-primary/25 hover:shadow-primary/40 hover:-translate-y-0.5 active:translate-y-0"
+            className="flex-1 glass-capsule-btn primary text-sm disabled:opacity-50 disabled:cursor-not-allowed"
           >
             {saving ? 'Enregistrement...' : initial ? 'Mettre à jour le club' : 'Créer le club'}
           </button>
@@ -427,13 +438,13 @@ function ClubDetailModal({
 
   return (
     <div className="fixed inset-0 z-50 bg-black/70 backdrop-blur-md flex items-center justify-center p-4 transition-opacity duration-300">
-      <div className="bg-card border border-white/5 shadow-2xl rounded-[0.75rem] w-full max-w-4xl max-h-[90vh] flex flex-col overflow-hidden">
+      <div className="glass rounded-2xl w-full max-w-4xl max-h-[90vh] flex flex-col overflow-hidden">
         {/* Header - Immersive */}
-        <div className={`bg-gradient-to-br ${club.cover_color} p-8 relative overflow-hidden shrink-0`}>
+        <div className={`bg-gradient-to-br ${normalizeCover(club.cover_color)} p-8 relative overflow-hidden shrink-0`}>
           <div className="absolute top-0 right-0 w-64 h-64 bg-white/10 blur-[80px] rounded-full pointer-events-none" />
           <div className="relative z-10 flex items-start justify-between">
             <div className="flex items-start gap-5">
-              <div className="w-16 h-16 bg-white/20 backdrop-blur-md rounded-2xl flex items-center justify-center text-4xl shadow-xl border border-white/20">
+              <div className="w-16 h-16 bg-white/20 backdrop-blur-md rounded-2xl flex items-center justify-center text-4xl border border-white/20">
                 {club.emoji}
               </div>
               <div className="mt-1">
@@ -461,30 +472,28 @@ function ClubDetailModal({
           )}
         </div>
 
-        {/* Tabs - Modern Pills */}
-        <div className="px-6 py-4 border-b border-border bg-background/50 flex overflow-x-auto scrollbar-hide gap-2 shrink-0">
-          {tabs.map((tab) => (
-            <button
-              key={tab.id}
-              onClick={() => setActiveTab(tab.id as typeof activeTab)}
-              className={`flex items-center gap-2 px-4 py-2.5 rounded-full text-sm font-600 transition-all whitespace-nowrap ${
-                activeTab === tab.id 
-                  ? 'bg-foreground text-background shadow-md' 
-                  : 'bg-muted/50 text-muted-foreground hover:bg-muted hover:text-foreground'
-              }`}
-            >
-              <Icon name={tab.icon} size={15} />
-              {tab.label}
-            </button>
-          ))}
+        {/* Tabs - Liquid Glass Capsule Bar */}
+        <div className="px-6 py-4 border-b border-border bg-white/40 shrink-0">
+          <div className="glass-capsule-bar">
+            {tabs.map((tab) => (
+              <button
+                key={tab.id}
+                onClick={() => setActiveTab(tab.id as typeof activeTab)}
+                className={`glass-capsule-segment ${activeTab === tab.id ? 'active' : ''}`}
+              >
+                <Icon name={tab.icon} size={15} className="relative z-10" />
+                <span className="relative z-10">{tab.label}</span>
+              </button>
+            ))}
+          </div>
         </div>
 
         {/* Content */}
-        <div className="flex-1 overflow-y-auto p-6 sm:p-8 custom-scrollbar bg-background">
+        <div className="flex-1 overflow-y-auto p-6 sm:p-8 custom-scrollbar bg-white/40">
           {loading ? (
             <div className="flex flex-col items-center justify-center py-20 opacity-50">
-              <div className="w-8 h-8 border-4 border-primary border-t-transparent rounded-full animate-spin mb-4" />
-              <p className="text-sm text-muted-foreground font-500">Chargement des données du club...</p>
+              <div className="w-8 h-8 border-4 border-[#5B7F55] border-t-transparent rounded-full animate-spin mb-4" />
+              <p className="text-sm text-[#5A7064] font-500">Chargement des données du club...</p>
             </div>
           ) : (
             <div className="max-w-3xl mx-auto">
@@ -492,22 +501,22 @@ function ClubDetailModal({
               {activeTab === 'topics' && (
                 <div className="space-y-6">
                   {club.is_member && (
-                    <div className="bg-card border border-border shadow-sm rounded-2xl p-5 space-y-4">
+                    <div className="glass p-5 space-y-4">
                       <div className="flex items-center gap-3 mb-2">
-                        <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center text-primary">
+                        <div className="w-8 h-8 rounded-full bg-[#5B7F55]/10 flex items-center justify-center text-[#5B7F55]">
                           <Icon name="PencilIcon" size={14} />
                         </div>
-                        <h3 className="font-700 text-foreground text-base">Lancer une discussion</h3>
+                        <h3 className="font-700 text-[#17402C] text-base">Lancer une discussion</h3>
                       </div>
                       <input 
-                        className="w-full bg-muted/30 border border-white/5 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-primary/50 transition-all" 
+                        className="glass-input w-full text-sm" 
                         placeholder="De quoi voulez-vous parler ?" 
                         value={newTopic.title} 
                         onChange={(e) => setNewTopic((f) => ({ ...f, title: e.target.value }))} 
                       />
                       <textarea 
                         rows={3} 
-                        className="w-full bg-muted/30 border border-white/5 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-primary/50 transition-all resize-none" 
+                        className="glass-input w-full text-sm resize-none" 
                         placeholder="Détaillez votre sujet (optionnel)..." 
                         value={newTopic.content} 
                         onChange={(e) => setNewTopic((f) => ({ ...f, content: e.target.value }))} 
@@ -516,7 +525,7 @@ function ClubDetailModal({
                         <button 
                           onClick={handlePostTopic} 
                           disabled={postingTopic || !newTopic.title.trim()} 
-                          className="px-6 py-2.5 bg-primary text-white rounded-xl text-sm font-700 disabled:opacity-50 hover:bg-primary/90 hover:shadow-lg hover:-translate-y-0.5 transition-all"
+                          className="px-6 py-2.5 glass-capsule-btn primary text-sm disabled:opacity-50"
                         >
                           {postingTopic ? 'Publication...' : 'Publier'}
                         </button>
@@ -524,41 +533,41 @@ function ClubDetailModal({
                     </div>
                   )}
                   {topics.length === 0 ? (
-                    <div className="text-center py-16 border border-dashed border-border rounded-[0.75rem]">
+                    <div className="text-center py-16 border border-dashed border-[#17402C]/15 rounded-2xl bg-white/40">
                       <div className="text-5xl mb-4 opacity-50">💬</div>
-                      <p className="text-foreground font-700 text-lg mb-1">Aucune discussion</p>
-                      <p className="text-muted-foreground text-sm">Soyez le premier à lancer un sujet !</p>
+                      <p className="text-[#17402C] font-700 text-lg mb-1">Aucune discussion</p>
+                      <p className="text-[#5A7064] text-sm">Soyez le premier à lancer un sujet !</p>
                     </div>
                   ) : (
                     topics.map((topic) => (
-                      <div key={topic.id} className={`group bg-card border border-border rounded-2xl p-5 transition-all hover:shadow-lg ${topic.is_pinned ? 'border-primary/40 bg-primary/5' : 'hover:border-foreground/20'}`}>
+                      <div key={topic.id} className={`group glass p-5 transition-all hover:interactive ${topic.is_pinned ? '!border-[#5B7F55]/40' : ''}`}>
                         <div className="flex items-start justify-between gap-4">
                           <div className="flex-1 min-w-0">
                             <div className="flex items-center gap-2 flex-wrap mb-2">
-                              {topic.is_pinned && <span className="text-[10px] bg-primary/20 text-primary px-2.5 py-1 rounded-full font-800 tracking-wider">📌 ÉPINGLÉ</span>}
-                              {topic.is_announcement && <span className="text-[10px] bg-amber-500/20 text-amber-500 px-2.5 py-1 rounded-full font-800 tracking-wider">📢 ANNONCE</span>}
-                              <h4 className="font-700 text-foreground text-base group-hover:text-primary transition-colors">{topic.title}</h4>
+                              {topic.is_pinned && <span className="glass-pill">📌 ÉPINGLÉ</span>}
+                              {topic.is_announcement && <span className="glass-pill pill-warn">📢 ANNONCE</span>}
+                              <h4 className="font-700 text-[#17402C] text-base group-hover:text-[#5B7F55] transition-colors">{topic.title}</h4>
                             </div>
-                            {topic.content && <p className="text-sm text-muted-foreground mb-4 line-clamp-2 leading-relaxed">{topic.content}</p>}
-                            <div className="flex items-center gap-4 text-xs font-500 text-muted-foreground">
-                              <span className="flex items-center gap-1.5 bg-muted px-2 py-1 rounded-md">
+                            {topic.content && <p className="text-sm text-[#5A7064] mb-4 line-clamp-2 leading-relaxed">{topic.content}</p>}
+                            <div className="flex items-center gap-4 text-xs font-500 text-[#5A7064]">
+                              <span className="flex items-center gap-1.5 bg-white/40 px-2 py-1 rounded-md">
                                 <Icon name="UserIcon" size={12} /> {topic.author?.full_name ?? 'Anonyme'}
                               </span>
                               <span className="flex items-center gap-1.5">
-                                <Icon name="HeartIcon" size={14} className="text-red-400/70" /> {topic.likes_count}
+                                <Icon name="HeartIcon" size={14} className="text-[#A8443A]/70" /> {topic.likes_count}
                               </span>
                               <span className="flex items-center gap-1.5">
-                                <Icon name="ChatBubbleLeftIcon" size={14} className="text-blue-400/70" /> {topic.replies_count}
+                                <Icon name="ChatBubbleLeftIcon" size={14} className="text-[#4B6B7C]/70" /> {topic.replies_count}
                               </span>
                             </div>
                           </div>
                           {isAdmin && (
-                            <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity flex-shrink-0 bg-muted/50 rounded-xl p-1">
-                              <button onClick={() => handlePinTopic(topic)} title={topic.is_pinned ? 'Désépingler' : 'Épingler'} className="p-2 rounded-lg hover:bg-background transition-colors">
-                                <Icon name="BookmarkIcon" size={15} className={topic.is_pinned ? 'text-primary' : 'text-muted-foreground'} />
+                            <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity flex-shrink-0 bg-white/50 rounded-xl p-1">
+                              <button onClick={() => handlePinTopic(topic)} title={topic.is_pinned ? 'Désépingler' : 'Épingler'} className="p-2 rounded-lg hover:bg-white transition-colors">
+                                <Icon name="BookmarkIcon" size={15} className={topic.is_pinned ? 'text-[#5B7F55]' : 'text-[#5A7064]'} />
                               </button>
-                              <button onClick={() => handleDeleteTopic(topic.id)} title="Supprimer" className="p-2 rounded-lg hover:bg-red-500/20 transition-colors">
-                                <Icon name="TrashIcon" size={15} className="text-red-500" />
+                              <button onClick={() => handleDeleteTopic(topic.id)} title="Supprimer" className="p-2 rounded-lg hover:bg-[#A8443A]/20 transition-colors">
+                                <Icon name="TrashIcon" size={15} className="text-[#A8443A]" />
                               </button>
                             </div>
                           )}
@@ -573,32 +582,32 @@ function ClubDetailModal({
               {activeTab === 'members' && (
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   {members.map((m) => (
-                    <div key={m.id} className="flex flex-col gap-3 p-4 bg-card border border-border rounded-2xl hover:border-foreground/20 transition-colors">
+                    <div key={m.id} className="flex flex-col gap-3 p-4 glass hover:interactive">
                       <div className="flex items-start justify-between">
                         <div className="flex items-center gap-3">
-                          <div className="w-12 h-12 rounded-full bg-gradient-to-br from-primary/20 to-primary/5 flex items-center justify-center font-800 text-primary text-lg shadow-inner">
+                          <div className="w-12 h-12 rounded-full bg-gradient-to-br from-[#5B7F55]/20 to-[#5B7F55]/5 flex items-center justify-center font-800 text-[#5B7F55] text-lg">
                             {m.user?.full_name?.[0] ?? '?'}
                           </div>
                           <div>
-                            <p className="font-700 text-foreground text-sm truncate">{m.user?.full_name ?? 'Anonyme'}</p>
-                            <span className={`inline-flex items-center mt-1 text-[10px] px-2.5 py-0.5 rounded-full font-800 tracking-wider ${m.role === 'admin' ? 'bg-amber-500/20 text-amber-500' : m.role === 'moderator' ? 'bg-blue-500/20 text-blue-500' : 'bg-muted text-muted-foreground'}`}>
+                            <p className="font-700 text-[#17402C] text-sm truncate">{m.user?.full_name ?? 'Anonyme'}</p>
+                            <span className={`glass-pill mt-1 ${m.role === 'admin' ? 'pill-warn' : m.role === 'moderator' ? 'pill-info' : ''}`}>
                               {m.role === 'admin' ? '👑 ADMIN' : m.role === 'moderator' ? '🛡️ MODO' : '👤 MEMBRE'}
                             </span>
                           </div>
                         </div>
                         {isAdmin && m.user_id !== currentUserId && (
-                          <button onClick={() => handleBanMember(m)} className="p-2 rounded-full hover:bg-red-500/20 text-muted-foreground hover:text-red-500 transition-colors" title="Bannir">
+                          <button onClick={() => handleBanMember(m)} className="p-2 rounded-full hover:bg-[#A8443A]/20 text-[#5A7064] hover:text-[#A8443A] transition-colors" title="Bannir">
                             <Icon name="NoSymbolIcon" size={15} />
                           </button>
                         )}
                       </div>
                       <div className="flex items-center justify-between mt-2 pt-3 border-t border-border">
-                        <p className="text-[11px] text-muted-foreground font-600">Trust Score: {m.user?.trust_score ?? 0}</p>
+                        <p className="text-[11px] text-[#5A7064] font-600">Trust Score: {m.user?.trust_score ?? 0}</p>
                         {isAdmin && m.user_id !== currentUserId && (
                           <select
                             value={m.role}
                             onChange={(e) => handlePromoteMember(m, e.target.value as 'admin' | 'moderator' | 'member')}
-                            className="text-[11px] font-600 bg-muted/50 border border-white/5 rounded-lg px-2 py-1.5 focus:outline-none focus:ring-1 focus:ring-primary cursor-pointer"
+                            className="text-[11px] font-600 glass-input !min-h-0 py-1.5 px-2"
                           >
                             <option value="member">Membre</option>
                             <option value="moderator">Modérateur</option>
@@ -615,29 +624,29 @@ function ClubDetailModal({
               {activeTab === 'challenges' && (
                 <div className="space-y-4">
                   {challenges.length === 0 ? (
-                    <div className="text-center py-16 border border-dashed border-border rounded-[0.75rem]">
+                    <div className="text-center py-16 border border-dashed border-[#17402C]/15 rounded-2xl bg-white/40">
                       <div className="text-5xl mb-4 opacity-50">🏆</div>
-                      <p className="text-foreground font-700 text-lg mb-1">Aucun défi en cours</p>
+                      <p className="text-[#17402C] font-700 text-lg mb-1">Aucun défi en cours</p>
                     </div>
                   ) : (
                     challenges.map((ch) => (
-                      <div key={ch.id} className="bg-card border border-border rounded-2xl p-6 hover:shadow-lg transition-all relative overflow-hidden group">
-                        <div className="absolute -right-10 -top-10 w-40 h-40 bg-amber-500/10 rounded-full blur-3xl group-hover:bg-amber-500/20 transition-colors" />
+                      <div key={ch.id} className="glass p-6 transition-all relative overflow-hidden group hover:interactive">
+                        <div className="absolute -right-10 -top-10 w-40 h-40 bg-[#C89A3B]/10 rounded-full blur-3xl group-hover:bg-[#C89A3B]/20 transition-colors" />
                         <div className="relative z-10 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-6">
                           <div>
                             <div className="flex items-center gap-3 mb-2">
-                              <span className="p-2 bg-amber-500/20 text-amber-500 rounded-xl"><Icon name="TrophyIcon" size={16} /></span>
-                              <h4 className="font-800 text-foreground text-lg">{ch.title}</h4>
+                              <span className="p-2 bg-[#C89A3B]/20 text-[#8C6418] rounded-xl"><Icon name="TrophyIcon" size={16} /></span>
+                              <h4 className="font-800 text-[#17402C] text-lg">{ch.title}</h4>
                             </div>
-                            <p className="text-sm text-muted-foreground mb-4 max-w-xl">{ch.description}</p>
+                            <p className="text-sm text-[#5A7064] mb-4 max-w-xl">{ch.description}</p>
                             <div className="flex items-center gap-4 text-xs font-600">
-                              <span className="bg-amber-500/10 text-amber-500 px-3 py-1.5 rounded-lg">+{ch.xp} XP à gagner</span>
-                              {ch.deadline && <span className="text-muted-foreground flex items-center gap-1.5"><Icon name="ClockIcon" size={14} /> Fin le {new Date(ch.deadline).toLocaleDateString('fr-FR')}</span>}
+                              <span className="glass-pill pill-warn">+{ch.xp} XP à gagner</span>
+                              {ch.deadline && <span className="text-[#5A7064] flex items-center gap-1.5"><Icon name="ClockIcon" size={14} /> Fin le {new Date(ch.deadline).toLocaleDateString('fr-FR')}</span>}
                             </div>
                           </div>
                           <button
                             onClick={() => handleJoinChallenge(ch.id)}
-                            className={`w-full sm:w-auto px-6 py-3 rounded-xl text-sm font-700 transition-all ${joinedChallenges[ch.id] ? 'bg-amber-500/15 text-amber-500 border border-amber-500/30' : 'bg-foreground text-background hover:bg-primary hover:text-white hover:-translate-y-1 hover:shadow-xl'}`}
+                            className={`w-full sm:w-auto px-6 py-3 glass-capsule-btn text-sm ${joinedChallenges[ch.id] ? 'secondary' : 'primary'}`}
                           >
                             {joinedChallenges[ch.id] ? '✓ Vous participez' : 'Participer'}
                           </button>
@@ -652,35 +661,35 @@ function ClubDetailModal({
               {activeTab === 'events' && (
                 <div className="space-y-6">
                   {isAdmin && (
-                    <div className="bg-card border border-border shadow-sm rounded-2xl p-6 space-y-4">
+                    <div className="glass p-6 space-y-4">
                       <div className="flex items-center gap-3 mb-4">
-                        <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center text-primary">
+                        <div className="w-8 h-8 rounded-full bg-[#5B7F55]/10 flex items-center justify-center text-[#5B7F55]">
                           <Icon name="CalendarIcon" size={14} />
                         </div>
-                        <h3 className="font-700 text-foreground text-base">Planifier un événement</h3>
+                        <h3 className="font-700 text-[#17402C] text-base">Planifier un événement</h3>
                       </div>
                       
                       <div className="space-y-4">
                         <div>
-                          <label className="text-[11px] font-700 text-muted-foreground uppercase tracking-widest block mb-2">Titre</label>
-                          <input className="w-full bg-muted/30 border border-white/5 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-primary/50 transition-all" placeholder="Titre de l'événement..." value={newEvent.title} onChange={(e) => setNewEvent((f) => ({ ...f, title: e.target.value }))} />
+                          <label className="text-[11px] font-700 text-[#5A7064] uppercase tracking-widest block mb-2">Titre</label>
+                          <input className="glass-input w-full text-sm" placeholder="Titre de l'événement..." value={newEvent.title} onChange={(e) => setNewEvent((f) => ({ ...f, title: e.target.value }))} />
                         </div>
                         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                           <div>
-                            <label className="text-[11px] font-700 text-muted-foreground uppercase tracking-widest block mb-2">Date et Heure</label>
-                            <input type="datetime-local" className="w-full bg-muted/30 border border-white/5 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-primary/50 transition-all text-foreground" value={newEvent.event_date} onChange={(e) => setNewEvent((f) => ({ ...f, event_date: e.target.value }))} />
+                            <label className="text-[11px] font-700 text-[#5A7064] uppercase tracking-widest block mb-2">Date et Heure</label>
+                            <input type="datetime-local" className="glass-input w-full text-sm text-[#17402C]" value={newEvent.event_date} onChange={(e) => setNewEvent((f) => ({ ...f, event_date: e.target.value }))} />
                           </div>
                           <div>
-                            <label className="text-[11px] font-700 text-muted-foreground uppercase tracking-widest block mb-2">Lieu / Lien</label>
-                            <input className="w-full bg-muted/30 border border-white/5 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-primary/50 transition-all" placeholder="Chamonix ou Lien Zoom..." value={newEvent.location} onChange={(e) => setNewEvent((f) => ({ ...f, location: e.target.value }))} />
+                            <label className="text-[11px] font-700 text-[#5A7064] uppercase tracking-widest block mb-2">Lieu / Lien</label>
+                            <input className="glass-input w-full text-sm" placeholder="Chamonix ou Lien Zoom..." value={newEvent.location} onChange={(e) => setNewEvent((f) => ({ ...f, location: e.target.value }))} />
                           </div>
                         </div>
                         <div>
-                          <label className="text-[11px] font-700 text-muted-foreground uppercase tracking-widest block mb-2">Description</label>
-                          <textarea rows={2} className="w-full bg-muted/30 border border-white/5 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-primary/50 transition-all resize-none" placeholder="Détails de l'événement..." value={newEvent.description} onChange={(e) => setNewEvent((f) => ({ ...f, description: e.target.value }))} />
+                          <label className="text-[11px] font-700 text-[#5A7064] uppercase tracking-widest block mb-2">Description</label>
+                          <textarea rows={2} className="glass-input w-full text-sm resize-none" placeholder="Détails de l'événement..." value={newEvent.description} onChange={(e) => setNewEvent((f) => ({ ...f, description: e.target.value }))} />
                         </div>
                         <div className="flex justify-end pt-2">
-                          <button onClick={handlePostEvent} disabled={postingEvent || !newEvent.title.trim()} className="px-6 py-2.5 bg-primary text-white rounded-xl text-sm font-700 disabled:opacity-50 hover:bg-primary/90 hover:shadow-lg hover:-translate-y-0.5 transition-all">
+                          <button onClick={handlePostEvent} disabled={postingEvent || !newEvent.title.trim()} className="px-6 py-2.5 glass-capsule-btn primary text-sm disabled:opacity-50">
                             {postingEvent ? 'Création...' : 'Créer l\'événement'}
                           </button>
                         </div>
@@ -688,29 +697,29 @@ function ClubDetailModal({
                     </div>
                   )}
                   {events.length === 0 ? (
-                    <div className="text-center py-16 border border-dashed border-border rounded-[0.75rem]">
+                    <div className="text-center py-16 border border-dashed border-[#17402C]/15 rounded-2xl bg-white/40">
                       <div className="text-5xl mb-4 opacity-50">📅</div>
-                      <p className="text-foreground font-700 text-lg mb-1">Aucun événement planifié</p>
+                      <p className="text-[#17402C] font-700 text-lg mb-1">Aucun événement planifié</p>
                     </div>
                   ) : (
                     events.map((ev) => (
-                      <div key={ev.id} className="bg-card border border-border rounded-2xl p-5 hover:border-foreground/20 transition-colors flex flex-col sm:flex-row gap-6">
-                        <div className="bg-muted/50 rounded-xl p-4 flex flex-col items-center justify-center min-w-[100px] border border-white/5">
+                      <div key={ev.id} className="glass p-5 transition-colors flex flex-col sm:flex-row gap-6">
+                        <div className="glass-sub-card rounded-xl p-4 flex flex-col items-center justify-center min-w-[100px]">
                           {ev.event_date ? (
                             <>
-                              <span className="text-sm font-800 text-primary uppercase">{new Date(ev.event_date).toLocaleDateString('fr-FR', { month: 'short' })}</span>
-                              <span className="text-3xl font-900 text-foreground">{new Date(ev.event_date).getDate()}</span>
+                              <span className="text-sm font-800 text-[#5B7F55] uppercase">{new Date(ev.event_date).toLocaleDateString('fr-FR', { month: 'short' })}</span>
+                              <span className="text-3xl font-900 text-[#17402C]">{new Date(ev.event_date).getDate()}</span>
                             </>
                           ) : (
-                            <span className="text-sm font-700 text-muted-foreground">À DÉFINIR</span>
+                            <span className="text-sm font-700 text-[#5A7064]">À DÉFINIR</span>
                           )}
                         </div>
                         <div className="flex-1 flex flex-col justify-center">
-                          <h4 className="font-800 text-foreground text-lg mb-1">{ev.title}</h4>
-                          {ev.description && <p className="text-sm text-muted-foreground mb-4 line-clamp-2">{ev.description}</p>}
-                          <div className="flex items-center gap-4 text-xs font-600 text-muted-foreground flex-wrap mt-auto">
-                            {ev.location && <span className="flex items-center gap-1.5 bg-muted px-2.5 py-1 rounded-md"><Icon name="MapPinIcon" size={14} />{ev.location}</span>}
-                            <span className="flex items-center gap-1.5 bg-muted px-2.5 py-1 rounded-md">
+                          <h4 className="font-800 text-[#17402C] text-lg mb-1">{ev.title}</h4>
+                          {ev.description && <p className="text-sm text-[#5A7064] mb-4 line-clamp-2">{ev.description}</p>}
+                          <div className="flex items-center gap-4 text-xs font-600 text-[#5A7064] flex-wrap mt-auto">
+                            {ev.location && <span className="flex items-center gap-1.5 bg-white/40 px-2.5 py-1 rounded-md"><Icon name="MapPinIcon" size={14} />{ev.location}</span>}
+                            <span className="flex items-center gap-1.5 bg-white/40 px-2.5 py-1 rounded-md">
                               <Icon name="UsersIcon" size={14} />{ev.participants_count} / {ev.max_participants} inscrits
                             </span>
                           </div>
@@ -718,7 +727,7 @@ function ClubDetailModal({
                         <div className="flex items-center sm:border-l sm:border-border sm:pl-6">
                           <button
                             onClick={() => handleToggleEventRegistration(ev.id)}
-                            className={`w-full sm:w-auto px-6 py-3 rounded-xl text-sm font-700 transition-all ${registeredEvents[ev.id] ? 'bg-primary/15 text-primary border border-primary/30' : 'bg-primary/10 text-primary border border-primary/20 hover:bg-primary hover:text-white'}`}
+                            className={`w-full sm:w-auto px-6 py-3 glass-capsule-btn text-sm ${registeredEvents[ev.id] ? 'secondary' : 'primary'}`}
                           >
                             {registeredEvents[ev.id] ? '✓ Inscrit' : 'S&apos;inscrire'}
                           </button>
@@ -733,31 +742,31 @@ function ClubDetailModal({
               {activeTab === 'moderation' && isAdmin && (
                 <div className="space-y-6">
                   <div>
-                    <h3 className="font-700 text-foreground text-lg mb-4 flex items-center gap-2">
-                      <Icon name="ShieldCheckIcon" size={20} className="text-amber-500" />
+                    <h3 className="font-700 text-[#17402C] text-lg mb-4 flex items-center gap-2">
+                      <Icon name="ShieldCheckIcon" size={20} className="text-[#8C6418]" />
                       Demandes d&apos;adhésion en attente
-                      <span className="bg-amber-500/20 text-amber-500 text-xs px-2.5 py-0.5 rounded-full">{pendingRequests.length}</span>
+                      <span className="glass-pill pill-warn">{pendingRequests.length}</span>
                     </h3>
                     {pendingRequests.length === 0 ? (
-                      <div className="text-center py-12 border border-dashed border-border rounded-2xl">
-                        <p className="text-muted-foreground text-sm font-500">Aucune demande en attente pour le moment.</p>
+                      <div className="text-center py-12 border border-dashed border-[#17402C]/15 rounded-2xl bg-white/40">
+                        <p className="text-[#5A7064] text-sm font-500">Aucune demande en attente pour le moment.</p>
                       </div>
                     ) : (
                       <div className="space-y-3">
                         {pendingRequests.map((req) => (
-                          <div key={req.id} className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 p-4 bg-card border border-border rounded-2xl hover:border-foreground/20 transition-colors">
+                          <div key={req.id} className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 p-4 glass hover:interactive">
                             <div className="flex items-center gap-4">
-                              <div className="w-12 h-12 rounded-full bg-gradient-to-br from-muted to-background flex items-center justify-center font-800 text-foreground text-lg shadow-inner border border-border">
+                              <div className="w-12 h-12 rounded-full bg-gradient-to-br from-white/50 to-white/20 flex items-center justify-center font-800 text-[#17402C] text-lg border border-border">
                                 {(req as unknown as { user?: { full_name: string } }).user?.full_name?.[0] ?? '?'}
                               </div>
                               <div>
-                                <p className="font-700 text-foreground text-base">{(req as unknown as { user?: { full_name: string } }).user?.full_name ?? 'Anonyme'}</p>
-                                <p className="text-xs text-muted-foreground font-600 mt-0.5">Trust Score: {(req as unknown as { user?: { trust_score: number } }).user?.trust_score ?? 0}</p>
+                                <p className="font-700 text-[#17402C] text-base">{(req as unknown as { user?: { full_name: string } }).user?.full_name ?? 'Anonyme'}</p>
+                                <p className="text-xs text-[#5A7064] font-600 mt-0.5">Trust Score: {(req as unknown as { user?: { trust_score: number } }).user?.trust_score ?? 0}</p>
                               </div>
                             </div>
                             <div className="flex gap-2 w-full sm:w-auto">
-                              <button onClick={() => handleApproveRequest(req.id, req.user_id, true)} className="flex-1 sm:flex-none px-4 py-2 bg-emerald-500/10 text-emerald-500 hover:bg-emerald-500 hover:text-white rounded-xl text-sm font-700 transition-all border border-emerald-500/20 hover:border-emerald-500 shadow-sm">Accepter</button>
-                              <button onClick={() => handleApproveRequest(req.id, req.user_id, false)} className="flex-1 sm:flex-none px-4 py-2 bg-red-500/10 text-red-500 hover:bg-red-500 hover:text-white rounded-xl text-sm font-700 transition-all border border-red-500/20 hover:border-red-500 shadow-sm">Refuser</button>
+                              <button onClick={() => handleApproveRequest(req.id, req.user_id, true)} className="flex-1 sm:flex-none px-4 py-2 glass-capsule-btn primary text-sm">Accepter</button>
+                              <button onClick={() => handleApproveRequest(req.id, req.user_id, false)} className="flex-1 sm:flex-none px-4 py-2 glass-capsule-btn secondary text-sm text-[#A8443A]">Refuser</button>
                             </div>
                           </div>
                         ))}
@@ -772,7 +781,7 @@ function ClubDetailModal({
 
         {/* Modal Toast Overlay */}
         {toast && (
-          <div className="absolute bottom-6 left-1/2 -translate-x-1/2 z-[100] bg-foreground text-background px-6 py-3 rounded-full text-sm font-700 shadow-2xl animate-fade-in-up">
+          <div className="absolute bottom-6 left-1/2 -translate-x-1/2 z-[100] bg-[#17402C] text-[#FAF8F5] px-6 py-3 rounded-full text-sm font-700  animate-fade-in-up">
             {toast}
           </div>
         )}
@@ -810,15 +819,15 @@ function ClubCard({
   return (
     <Link 
       href={`/clubs/${club.slug}`}
-      className="group relative flex flex-col bg-card rounded-[0.75rem] border border-border hover:border-white/20 hover:shadow-2xl hover:-translate-y-1.5 transition-all duration-300 overflow-hidden cursor-pointer h-full block"
+      className="group relative flex flex-col glass rounded-[1.25rem] hover:interactive transition-all duration-300 overflow-hidden cursor-pointer h-full block"
     >
       {/* Decorative Blur Background */}
-      <div className={`absolute -top-32 -right-32 w-64 h-64 bg-gradient-to-br ${club.cover_color} rounded-full blur-[80px] opacity-20 group-hover:opacity-40 transition-opacity duration-500 pointer-events-none`} />
+      <div className={`absolute -top-32 -right-32 w-64 h-64 bg-gradient-to-br ${normalizeCover(club.cover_color)} rounded-full blur-[80px] opacity-20 group-hover:opacity-40 transition-opacity duration-500 pointer-events-none`} />
 
       <div className="p-6 relative z-10 flex flex-col h-full">
         {/* Card Header */}
         <div className="flex items-start justify-between mb-5">
-          <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-background to-muted flex items-center justify-center text-3xl shadow-sm border border-border group-hover:scale-110 group-hover:rotate-3 transition-transform duration-300">
+          <div className="w-16 h-16 rounded-2xl glass-sub-card flex items-center justify-center text-3xl group-hover:scale-110 group-hover:rotate-3 transition-transform duration-300">
             {club.emoji}
           </div>
           
@@ -827,14 +836,14 @@ function ClubCard({
               <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
                 <button 
                   onClick={(e) => { e.stopPropagation(); onEdit(club); }} 
-                  className="p-2 bg-muted/50 hover:bg-foreground hover:text-background rounded-full transition-colors text-muted-foreground"
+                  className="p-2 bg-white/40 hover:bg-[#17402C] hover:text-[#FAF8F5] rounded-full transition-colors text-[#5A7064]"
                   title="Modifier"
                 >
                   <Icon name="PencilIcon" size={14} />
                 </button>
                 <button 
                   onClick={(e) => { e.stopPropagation(); onDelete(club); }} 
-                  className="p-2 bg-red-500/10 hover:bg-red-500 text-red-500 hover:text-white rounded-full transition-colors"
+                  className="p-2 bg-[#A8443A]/10 hover:bg-[#A8443A] text-[#A8443A] hover:text-white rounded-full transition-colors"
                   title="Supprimer"
                 >
                   <Icon name="TrashIcon" size={14} />
@@ -842,7 +851,7 @@ function ClubCard({
               </div>
             )}
             {club.is_member && (
-              <span className="bg-primary/20 text-primary border border-primary/30 p-2 rounded-full" title="Vous êtes membre">
+              <span className="bg-[#5B7F55]/20 text-[#5B7F55] border border-[#5B7F55]/30 p-2 rounded-full" title="Vous êtes membre">
                 <Icon name="CheckIcon" size={14} />
               </span>
             )}
@@ -852,35 +861,35 @@ function ClubCard({
         {/* Content */}
         <div className="mb-4">
           <div className="flex items-center gap-2 mb-1.5">
-            <span className="text-[10px] font-800 tracking-widest uppercase text-muted-foreground">
+            <span className="text-[10px] font-800 tracking-widest uppercase text-[#5A7064]">
               {club.type === 'activite' ? 'Activité' : 'Destination'}
             </span>
             {club.privacy !== 'open' && (
-              <span className="text-[10px] bg-muted px-2 py-0.5 rounded-md font-700 text-muted-foreground flex items-center gap-1">
+              <span className="glass-pill">
                 <Icon name={club.privacy === 'closed' ? 'LockClosedIcon' : 'EyeSlashIcon'} size={10} />
                 {club.privacy === 'closed' ? 'Fermé' : 'Secret'}
               </span>
             )}
           </div>
-          <h3 className="font-display font-800 text-foreground text-xl leading-tight flex items-center gap-2 group-hover:text-primary transition-colors">
+          <h3 className="font-display font-800 text-[#17402C] text-xl leading-tight flex items-center gap-2 group-hover:text-[#5B7F55] transition-colors">
             {club.name}
-            {club.is_verified && <Icon name="CheckBadgeIcon" size={18} className="text-blue-500" />}
+            {club.is_verified && <Icon name="CheckBadgeIcon" size={18} className="text-[#4B6B7C]" />}
           </h3>
         </div>
 
-        <p className="text-sm text-muted-foreground leading-relaxed line-clamp-3 mb-6 flex-1">
+        <p className="text-sm text-[#5A7064] leading-relaxed line-clamp-3 mb-6 flex-1">
           {club.description}
         </p>
 
         {/* Footer Stats & Action */}
         <div className="mt-auto pt-5 border-t border-border flex items-center justify-between">
           <div className="flex flex-col gap-1">
-            <span className="text-xs font-700 text-foreground flex items-center gap-1.5">
-              <Icon name="UsersIcon" size={14} className="text-muted-foreground" />
+            <span className="text-xs font-700 text-[#17402C] flex items-center gap-1.5">
+              <Icon name="UsersIcon" size={14} className="text-[#5A7064]" />
               {club.members_count.toLocaleString()} membres
             </span>
-            <span className="text-[11px] font-600 text-muted-foreground flex items-center gap-1.5">
-              <Icon name="BoltIcon" size={12} className="text-amber-500/70" />
+            <span className="text-[11px] font-600 text-[#5A7064] flex items-center gap-1.5">
+              <Icon name="BoltIcon" size={12} className="text-[#C89A3B]/70" />
               {club.active_this_month} actifs ce mois
             </span>
           </div>
@@ -888,10 +897,10 @@ function ClubCard({
           <button
             onClick={handleToggle}
             disabled={joining}
-            className={`px-4 py-2.5 rounded-xl text-xs font-800 transition-all ${
+            className={`px-4 py-2.5 glass-capsule-btn text-xs font-800 ${
               club.is_member 
-                ? 'bg-muted text-muted-foreground hover:bg-red-500/10 hover:text-red-500' 
-                : 'bg-primary text-white hover:bg-primary/90 hover:shadow-lg hover:shadow-primary/20 hover:-translate-y-0.5'
+                ? 'secondary text-[#A8443A]' 
+                : 'primary'
             }`}
           >
             {joining ? '...' : club.is_member ? 'Quitter' : 'Rejoindre'}
@@ -1013,8 +1022,8 @@ export default function ClubsPage() {
     setSaving(true);
     try {
       const colorMap: Record<string, string> = {
-        'activite': 'from-emerald-600 to-teal-700',
-        'pays': 'from-blue-600 to-indigo-700',
+        'activite': 'from-[#365233] to-[#17402C]',
+        'pays': 'from-[#4B6B7C] to-[#2A5A6E]',
       };
       const payload = {
         name: form.name,
@@ -1024,7 +1033,7 @@ export default function ClubsPage() {
         category: form.category,
         rules: form.rules,
         privacy: form.privacy,
-        cover_color: colorMap[form.type] ?? 'from-emerald-600 to-teal-700',
+        cover_color: colorMap[form.type] ?? 'from-[#365233] to-[#17402C]',
         created_by: user.id,
       };
 
@@ -1082,27 +1091,27 @@ export default function ClubsPage() {
     <>
       {/* ── DESKTOP ── */}
       <div className="hidden md:block">
-        <main className="min-h-screen bg-background selection:bg-primary/20">
+        <main className="h-dvh overflow-hidden bg-[#FAF8F5] flex flex-col">
           <Header />
-
+          <div className="flex-1 min-h-0 overflow-y-auto">
           {/* Immersive Hero Section */}
           <section className="relative pt-32 pb-20 lg:pt-40 lg:pb-32 overflow-hidden border-b border-white/5">
-            <div className="absolute inset-0 bg-background pointer-events-none" />
-            <div className="absolute top-0 right-0 w-[500px] h-[500px] bg-primary/20 rounded-full blur-[120px] opacity-60 mix-blend-screen pointer-events-none animate-pulse-slow" />
-            <div className="absolute -bottom-40 -left-40 w-[600px] h-[600px] bg-blue-500/10 rounded-full blur-[120px] opacity-50 mix-blend-screen pointer-events-none" />
+            <div className="absolute inset-0 bg-[#FAF8F5] pointer-events-none" />
+            <div className="absolute top-0 right-0 w-[500px] h-[500px] bg-[#5B7F55]/20 rounded-full blur-[120px] opacity-60 mix-blend-screen pointer-events-none animate-pulse-slow" />
+            <div className="absolute -bottom-40 -left-40 w-[600px] h-[600px] bg-[#4B6B7C]/10 rounded-full blur-[120px] opacity-50 mix-blend-screen pointer-events-none" />
 
             <div className="max-w-7xl mx-auto px-6 relative z-10">
               <div className="flex flex-col lg:flex-row lg:items-end justify-between gap-10">
                 <div className="max-w-3xl">
                   <div className="inline-flex items-center gap-2 mb-6 px-3 py-1.5 rounded-full bg-white/5 border border-white/10 backdrop-blur-md">
-                    <span className="w-2 h-2 rounded-full bg-primary animate-pulse" />
-                    <span className="text-xs font-700 tracking-widest uppercase text-foreground/80">Espaces Communautaires</span>
+                    <span className="w-2 h-2 rounded-full bg-[#5B7F55] animate-pulse" />
+                    <span className="text-xs font-700 tracking-widest uppercase text-[#17402C]/80">Espaces Communautaires</span>
                   </div>
-                  <h1 className="font-display font-900 text-5xl lg:text-7xl text-foreground tracking-tight leading-[1.1] mb-6">
-                    Rejoignez le <span className="text-transparent bg-clip-text bg-gradient-to-r from-primary to-orange-400">Club.</span><br />
+                  <h1 className="font-display font-900 text-5xl lg:text-7xl text-[#17402C] tracking-tight leading-[1.1] mb-6">
+                    Rejoignez le <span className="text-transparent bg-clip-text bg-gradient-to-r from-[#5B7F55] to-[#A6C1A0]">Club.</span><br />
                     Vivez l&apos;aventure.
                   </h1>
-                  <p className="text-lg lg:text-xl text-muted-foreground font-500 leading-relaxed max-w-2xl">
+                  <p className="text-lg lg:text-xl text-[#5A7064] font-500 leading-relaxed max-w-2xl">
                     Trouvez vos compagnons de route, échangez sur votre matériel favori et participez aux défis thématiques de la communauté Le Kit du Voyageur.
                   </p>
                 </div>
@@ -1110,11 +1119,10 @@ export default function ClubsPage() {
                 <div className="flex-shrink-0">
                   <Link
                     href="/clubs/nouveau"
-                    className="group relative inline-flex items-center justify-center gap-3 px-8 py-4 bg-foreground text-background rounded-full font-800 text-sm overflow-hidden transition-all hover:scale-105 hover:shadow-2xl hover:shadow-foreground/20"
+                    className="glass-capsule-btn primary px-8 py-4 text-sm"
                   >
-                    <span className="absolute inset-0 w-full h-full bg-gradient-to-r from-primary to-orange-500 opacity-0 group-hover:opacity-100 transition-opacity duration-300 ease-out" />
                     <Icon name="PlusIcon" size={18} className="relative z-10 transition-transform group-hover:rotate-90 duration-300" />
-                    <span className="relative z-10 group-hover:text-white transition-colors duration-300">Fonder un Club</span>
+                    <span className="relative z-10">Fonder un Club</span>
                   </Link>
                 </div>
               </div>
@@ -1127,7 +1135,7 @@ export default function ClubsPage() {
 
               {/* Floating Navigation Tabs */}
               <div className="flex justify-center mb-12">
-                <div className="inline-flex items-center p-1.5 bg-card/80 backdrop-blur-xl border border-white/10 rounded-full shadow-2xl">
+                <div className="glass-capsule-bar p-1.5">
                   {[
                     { id: 'activite', label: 'Par Activité', icon: 'BoltIcon', count: activityClubs.length },
                     { id: 'pays', label: 'Par Destination', icon: 'GlobeAltIcon', count: countryClubs.length },
@@ -1136,19 +1144,12 @@ export default function ClubsPage() {
                     <button
                       key={tab.id}
                       onClick={() => setActiveTab(tab.id as typeof activeTab)}
-                      className={`relative flex items-center gap-2 px-6 py-3 rounded-full text-sm font-700 transition-all duration-300 ${
-                        activeTab === tab.id
-                          ? 'text-background shadow-md'
-                          : 'text-muted-foreground hover:text-foreground hover:bg-white/5'
-                      }`}
+                      className={`glass-capsule-segment flex items-center gap-2 ${activeTab === tab.id ? 'active' : ''}`}
                     >
-                      {activeTab === tab.id && (
-                        <span className="absolute inset-0 bg-foreground rounded-full -z-10" />
-                      )}
-                      <Icon name={tab.icon} size={16} className={activeTab === tab.id ? 'text-background' : 'text-muted-foreground'} />
-                      {tab.label}
+                      <Icon name={tab.icon} size={16} className="relative z-10" />
+                      <span className="relative z-10">{tab.label}</span>
                       {tab.count > 0 && (
-                        <span className={`ml-1 text-[10px] px-2 py-0.5 rounded-full ${activeTab === tab.id ? 'bg-background/20' : 'bg-muted'} font-800`}>
+                        <span className="ml-1 glass-pill text-[10px] px-2 py-0.5 font-800 relative z-10">
                           {tab.count}
                         </span>
                       )}
@@ -1158,7 +1159,7 @@ export default function ClubsPage() {
               </div>
 
               {error && (
-                <div className="mb-10 p-5 bg-red-500/10 border border-red-500/20 rounded-2xl flex items-center gap-3 text-red-500">
+                <div className="mb-10 p-5 bg-[#A8443A]/10 border border-[#A8443A]/25 rounded-2xl flex items-center gap-3 text-[#A8443A]">
                   <Icon name="ExclamationTriangleIcon" size={20} />
                   <p className="font-600 text-sm">{error}</p>
                 </div>
@@ -1168,23 +1169,23 @@ export default function ClubsPage() {
               {loading ? (
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
                   {[1, 2, 3, 4, 5, 6].map((i) => (
-                    <div key={i} className="h-80 rounded-[0.75rem] bg-card border border-white/5 animate-pulse flex flex-col p-6">
-                      <div className="w-16 h-16 rounded-2xl bg-muted/50 mb-6" />
-                      <div className="w-1/3 h-4 bg-muted/50 rounded-full mb-3" />
-                      <div className="w-2/3 h-6 bg-muted/50 rounded-full mb-6" />
-                      <div className="w-full h-16 bg-muted/50 rounded-xl mt-auto" />
+                    <div key={i} className="h-80 rounded-[1.25rem] glass animate-pulse flex flex-col p-6">
+                      <div className="w-16 h-16 rounded-2xl bg-white/40 mb-6" />
+                      <div className="w-1/3 h-4 bg-white/40 rounded-full mb-3" />
+                      <div className="w-2/3 h-6 bg-white/40 rounded-full mb-6" />
+                      <div className="w-full h-16 bg-white/40 rounded-xl mt-auto" />
                     </div>
                   ))}
                 </div>
               ) : displayedClubs.length === 0 ? (
-                <div className="flex flex-col items-center justify-center py-20 px-4 text-center bg-card/30 border border-dashed border-border rounded-[3rem]">
-                  <div className="w-24 h-24 bg-muted/50 rounded-full flex items-center justify-center text-4xl mb-6 shadow-inner">
+                <div className="flex flex-col items-center justify-center py-20 px-4 text-center glass rounded-[3rem] border-dashed">
+                  <div className="w-24 h-24 bg-white/50 rounded-full flex items-center justify-center text-4xl mb-6">
                     {activeTab === 'mes-clubs' ? '🏕️' : '✨'}
                   </div>
-                  <h3 className="font-display font-800 text-2xl text-foreground mb-3">
+                  <h3 className="font-display font-800 text-2xl text-[#17402C] mb-3">
                     {activeTab === 'mes-clubs' ? "Vous n'avez rejoint aucun club" : 'Espace encore vierge'}
                   </h3>
-                  <p className="text-muted-foreground text-base max-w-md mb-8">
+                  <p className="text-[#5A7064] text-base max-w-md mb-8">
                     {activeTab === 'mes-clubs'
                       ? 'Explorez les clubs existants et trouvez votre prochaine équipe de choc pour vos aventures.'
                       : "Il n'y a pas encore de club dans cette catégorie. Soyez le pionnier et créez le vôtre !"}
@@ -1192,16 +1193,16 @@ export default function ClubsPage() {
 
                   {activeTab === 'mes-clubs' ? (
                     user ? (
-                      <button onClick={() => setActiveTab('activite')} className="px-8 py-3.5 bg-foreground text-background rounded-full font-800 hover:scale-105 transition-transform shadow-lg">
+                      <button onClick={() => setActiveTab('activite')} className="px-8 py-3.5 glass-capsule-btn primary text-sm">
                         Explorer les clubs
                       </button>
                     ) : (
-                      <Link href="/connexion" className="px-8 py-3.5 bg-primary text-white rounded-full font-800 hover:scale-105 transition-transform shadow-lg shadow-primary/20">
+                      <Link href="/connexion" className="px-8 py-3.5 glass-capsule-btn primary text-sm">
                         Se connecter pour rejoindre
                       </Link>
                     )
                   ) : (
-                    <Link href="/clubs/nouveau" className="inline-flex px-8 py-3.5 bg-primary text-white rounded-full font-800 hover:scale-105 transition-transform shadow-lg shadow-primary/20 items-center gap-2">
+                    <Link href="/clubs/nouveau" className="glass-capsule-btn primary px-8 py-3.5 text-sm items-center gap-2">
                       <Icon name="PlusIcon" size={16} /> Fonder le premier club
                     </Link>
                   )}
@@ -1224,13 +1225,14 @@ export default function ClubsPage() {
             </div>
           </section>
 
-          <Footer />
+          </div>
         </main>
       </div>
 
       {/* ── MOBILE VIEW ── */}
-      <div className="block md:hidden">
-        <MobilePageShell background="#FBFAF6">
+      <div className="block md:hidden min-h-screen relative font-sans text-[#17402C]">
+        <CompteBackground />
+        <MobilePageShell videoBackground={false} background="transparent">
           <MobileClubsHub
             clubs={clubs}
             myClubs={clubs.filter(c => c.is_member)}
@@ -1248,6 +1250,7 @@ export default function ClubsPage() {
               setEditClub(null);
               setShowCreateModal(true);
             }}
+            onRefresh={loadClubs}
           />
         </MobilePageShell>
       </div>
@@ -1271,24 +1274,24 @@ export default function ClubsPage() {
       {/* Delete confirm Modal */}
       {deleteClub && (
         <div className="fixed inset-0 z-[100] bg-black/60 backdrop-blur-md flex items-center justify-center p-4">
-          <div className="bg-card border border-border shadow-2xl rounded-[0.75rem] p-8 max-w-sm w-full text-center transform transition-all scale-100">
-            <div className="w-20 h-20 rounded-full bg-red-500/10 flex items-center justify-center mx-auto mb-5">
-              <Icon name="ExclamationTriangleIcon" size={32} className="text-red-500" />
+          <div className="glass rounded-2xl p-8 max-w-sm w-full text-center transform transition-all scale-100">
+            <div className="w-20 h-20 rounded-full bg-[#A8443A]/10 flex items-center justify-center mx-auto mb-5">
+              <Icon name="ExclamationTriangleIcon" size={32} className="text-[#A8443A]" />
             </div>
-            <h3 className="font-display font-800 text-foreground text-xl mb-2">Supprimer le club ?</h3>
-            <p className="text-sm text-muted-foreground mb-8">Cette action est irréversible. Toutes les données, membres et discussions de &quot;{deleteClub.name}&quot; seront perdus à jamais.</p>
+            <h3 className="font-display font-800 text-[#17402C] text-xl mb-2">Supprimer le club ?</h3>
+            <p className="text-sm text-[#5A7064] mb-8">Cette action est irréversible. Toutes les données, membres et discussions de &quot;{deleteClub.name}&quot; seront perdus à jamais.</p>
 
             <div className="flex flex-col gap-3">
               <button
                 onClick={handleDeleteClub}
                 disabled={deleting}
-                className="w-full py-3.5 rounded-xl bg-red-500 text-white text-sm font-800 hover:bg-red-600 transition-colors disabled:opacity-50 shadow-lg shadow-red-500/20"
+                className="w-full py-3.5 glass-capsule-btn glass-btn-danger text-sm disabled:opacity-50"
               >
                 {deleting ? 'Destruction en cours...' : 'Oui, supprimer définitivement'}
               </button>
               <button
                 onClick={() => setDeleteClub(null)}
-                className="w-full py-3.5 rounded-xl border border-transparent text-sm font-700 text-foreground hover:bg-muted transition-colors"
+                className="w-full py-3.5 glass-capsule-btn secondary text-sm"
               >
                 Annuler
               </button>
@@ -1299,8 +1302,8 @@ export default function ClubsPage() {
 
       {/* Global Toast */}
       {toast && (
-        <div className="fixed bottom-10 left-1/2 -translate-x-1/2 z-[110] bg-foreground text-background px-8 py-4 rounded-full text-sm font-700 shadow-2xl shadow-black/50 animate-fade-in-up flex items-center gap-3">
-          <Icon name="CheckCircleIcon" size={18} className="text-background/70" />
+        <div className="fixed bottom-10 left-1/2 -translate-x-1/2 z-[110] bg-[#17402C] text-[#FAF8F5] px-8 py-4 rounded-full text-sm font-700  animate-fade-in-up flex items-center gap-3">
+          <Icon name="CheckCircleIcon" size={18} className="text-[#FAF8F5]/70" />
           {toast}
         </div>
       )}

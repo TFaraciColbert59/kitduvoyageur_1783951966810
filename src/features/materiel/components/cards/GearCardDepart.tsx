@@ -38,29 +38,32 @@ export function GearCardDepart({ data, className }: { data: DepartData; classNam
         }
       }}
     >
-      <div className="p-5 flex flex-col justify-between h-full gap-4">
+      <div className="p-3 sm:p-5 flex flex-col justify-between h-full gap-2 sm:gap-4">
         {/* Top Header */}
-        <div className="flex items-start justify-between gap-3 pr-10 md:pr-12">
-          <div className="space-y-1">
+        <div className="flex items-start justify-between gap-2 pr-8 md:pr-12">
+          <div className="space-y-0.5">
             <Eyebrow>Prochain départ</Eyebrow>
-            <h2 id="depart-title" className="text-[28px] sm:text-[32px] leading-tight font-display font-bold tracking-tight text-[#17402C]">
+            <h2 id="depart-title" className="text-[18px] sm:text-[32px] leading-tight font-display font-bold tracking-tight text-[#17402C]">
               {data.destination}
             </h2>
           </div>
           <Badge tone={data.status === 'ok' ? 'sage' : data.status === 'warning' ? 'warn' : 'danger'}>
-            {data.status === 'ok' ? 'Prêt' : data.status === 'warning' ? 'À finaliser' : 'Incomplet'}
+            <span className="text-[9.5px] sm:text-xs">
+              {data.status === 'ok' ? 'Prêt' : data.status === 'warning' ? 'À finaliser' : 'Incomplet'}
+            </span>
           </Badge>
         </div>
 
         {/* Live Countdown in Frosted Capsule */}
-        <div className="glass-sub-card p-3.5 flex items-center justify-between gap-4">
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-full bg-white/[0.08] shadow-[inset_0_1px_1px_rgba(255,255,255,0.5)] border border-white/30 flex items-center justify-center text-[#17402C]">
-              <Clock size={18} />
+        <div className="glass-sub-card p-2 sm:p-3.5 flex items-center justify-between gap-2 sm:gap-4">
+          <div className="flex items-center gap-2 sm:gap-3">
+            <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-full bg-white/40 shadow-2xs border border-white/60 flex items-center justify-center text-[#17402C] shrink-0">
+              <Clock size={15} className="sm:hidden" />
+              <Clock size={18} className="hidden sm:block" />
             </div>
             <div>
-              <span className="text-[11px] font-semibold uppercase tracking-wider text-[#5A7064]">Compte à rebours</span>
-              <div className="text-[24px] sm:text-[28px] font-mono font-bold leading-tight text-[#17402C]">
+              <span className="text-[9.5px] sm:text-[11px] font-semibold uppercase tracking-wider text-[#5A7064]">Départ dans</span>
+              <div className="text-[17px] sm:text-[28px] font-mono font-bold leading-tight text-[#17402C]">
                 <CountdownLive target={data.startsAt} />
               </div>
             </div>
@@ -77,10 +80,10 @@ export function GearCardDepart({ data, className }: { data: DepartData; classNam
         </div>
 
         {/* Progress & Quick Metrics */}
-        <div className="space-y-2">
-          <div className="flex items-center justify-between text-xs font-semibold text-[#365233]">
+        <div className="space-y-1 sm:space-y-2">
+          <div className="flex items-center justify-between text-[11px] sm:text-xs font-semibold text-[#365233]">
             <span>Progression du pack</span>
-            <span className="font-mono text-[#17402C]">{data.readinessPct}% préparé</span>
+            <span className="font-mono text-[#17402C]">{data.readinessPct}%</span>
           </div>
           <ProgressBar
             value={data.readinessPct}
@@ -90,27 +93,27 @@ export function GearCardDepart({ data, className }: { data: DepartData; classNam
         </div>
 
         {/* Action Button */}
-        <div className="flex items-center justify-between pt-1">
-          <span className="text-xs text-[#5A7064]">
-            {data.itemsCount ? `${data.itemsCount} article(s) assigné(s)` : 'Cockpit de préparation prêt'}
+        <div className="flex items-center justify-between pt-0.5 sm:pt-1">
+          <span className="text-[10px] sm:text-xs text-[#5A7064] truncate max-w-[130px] sm:max-w-none">
+            {data.itemsCount ? `${data.itemsCount} article(s)` : 'Cockpit prêt'}
           </span>
           {data.id !== 'none' ? (
             <Link
               href={`/materiel/depart/${data.id}`}
               onClick={(e) => e.stopPropagation()}
-              className="glass-capsule-btn primary"
+              className="glass-capsule-btn primary !h-7 sm:!h-9 !text-[11px] sm:!text-xs !px-3 sm:!px-4"
             >
-              <span>Ouvrir le cockpit</span>
-              <ArrowRight size={15} />
+              <span>Cockpit</span>
+              <ArrowRight size={13} />
             </Link>
           ) : (
             <Link
               href="/materiel/depart/none"
               onClick={(e) => e.stopPropagation()}
-              className="glass-capsule-btn primary"
+              className="glass-capsule-btn primary !h-7 sm:!h-9 !text-[11px] sm:!text-xs !px-3 sm:!px-4"
             >
               <span>Préparer</span>
-              <ArrowRight size={15} />
+              <ArrowRight size={13} />
             </Link>
           )}
         </div>

@@ -47,7 +47,7 @@ return (
       style={{ paddingBottom: 'max(0px, env(safe-area-inset-bottom))' }}
     >
       <div
-        className="pointer-events-none max-w-[min(42rem,calc(100vw-24px))] mx-auto bg-[#1C2620] border border-white/10 rounded-2xl shadow-2xl overflow-hidden transition-all duration-300"
+        className="pointer-events-none max-w-[min(42rem,calc(100vw-24px))] mx-auto bg-[#17402C] border border-white/10 rounded-2xl  overflow-hidden transition-all duration-300"
         style={{
           margin: '0 auto',
           marginBottom: 'calc(68px + env(safe-area-inset-bottom))',
@@ -132,11 +132,11 @@ return (
                 </div>
                 <button
                   onClick={() => setAnalytics(!analytics)}
-                  className={`w-9 h-5 rounded-full flex items-center transition-all flex-shrink-0 focus:outline-none focus:ring-2 focus:ring-[#17402C] focus:ring-offset-1 focus:ring-offset-[#1C2620] ${analytics ? 'bg-[#17402C] justify-end pr-0.5' : 'bg-white/15 justify-start pl-0.5'}`}
+                  className={`w-9 h-5 rounded-full flex items-center transition-all flex-shrink-0 focus:outline-none focus:ring-2 focus:ring-[#17402C] focus:ring-offset-1 focus:ring-offset-[#17402C] ${analytics ? 'bg-[#17402C] justify-end pr-0.5' : 'bg-white/15 justify-start pl-0.5'}`}
                   aria-pressed={analytics}
                   aria-label="Activer les cookies analytiques"
                 >
-                  <div className="w-4 h-4 bg-white rounded-full shadow-sm" />
+                  <div className="w-4 h-4 bg-white rounded-full " />
                 </button>
               </div>
 
@@ -147,11 +147,11 @@ return (
                 </div>
                 <button
                   onClick={() => setMarketing(!marketing)}
-                  className={`w-9 h-5 rounded-full flex items-center transition-all flex-shrink-0 focus:outline-none focus:ring-2 focus:ring-[#17402C] focus:ring-offset-1 focus:ring-offset-[#1C2620] ${marketing ? 'bg-[#17402C] justify-end pr-0.5' : 'bg-white/15 justify-start pl-0.5'}`}
+                  className={`w-9 h-5 rounded-full flex items-center transition-all flex-shrink-0 focus:outline-none focus:ring-2 focus:ring-[#17402C] focus:ring-offset-1 focus:ring-offset-[#17402C] ${marketing ? 'bg-[#17402C] justify-end pr-0.5' : 'bg-white/15 justify-start pl-0.5'}`}
                   aria-pressed={marketing}
                   aria-label="Activer les cookies marketing"
                 >
-                  <div className="w-4 h-4 bg-white rounded-full shadow-sm" />
+                  <div className="w-4 h-4 bg-white rounded-full " />
                 </button>
               </div>
             </div>
@@ -159,13 +159,13 @@ return (
             <div className="flex gap-2">
               <button
                 onClick={saveCustom}
-                className="flex-1 bg-[#17402C] hover:bg-[#cc3d10] text-white px-3 py-2 rounded-xl text-xs font-semibold transition-all focus:outline-none focus:ring-2 focus:ring-[#17402C] focus:ring-offset-2 focus:ring-offset-[#1C2620] min-h-[44px]"
+                className="flex-1 bg-[#17402C] hover:bg-[#cc3d10] text-white px-3 py-2 rounded-xl text-xs font-semibold transition-all focus:outline-none focus:ring-2 focus:ring-[#17402C] focus:ring-offset-2 focus:ring-offset-[#17402C] min-h-[44px]"
               >
                 Enregistrer
               </button>
               <button
                 onClick={rejectAll}
-                className="border border-white/15 hover:border-white/30 text-white/50 hover:text-white/80 px-3 py-2 rounded-xl text-xs transition-all focus:outline-none focus:ring-2 focus:ring-white/30 focus:ring-offset-2 focus:ring-offset-[#1C2620] min-h-[44px]"
+                className="border border-white/15 hover:border-white/30 text-white/50 hover:text-white/80 px-3 py-2 rounded-xl text-xs transition-all focus:outline-none focus:ring-2 focus:ring-white/30 focus:ring-offset-2 focus:ring-offset-[#17402C] min-h-[44px]"
               >
                 Tout refuser
               </button>

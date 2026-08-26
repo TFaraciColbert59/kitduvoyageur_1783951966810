@@ -13,15 +13,15 @@ export interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElemen
 
 const VARIANT_STYLES: Record<ButtonVariant, React.CSSProperties> = {
   primary: { background: '#17402C', color: '#fff', border: 'none' },
-  secondary: { background: '#FAF8F5', color: '#0B1F17', border: '1px solid #E8E4D8' },
-  danger: { background: '#E53E3E', color: '#fff', border: 'none' },
-  ghost: { background: 'transparent', color: '#0B1F17', border: 'none' },
+  secondary: { background: '#FAF8F5', color: '#17402C', border: '1px solid #E8E4D8' },
+  danger: { background: '#A8443A', color: '#fff', border: 'none' },
+  ghost: { background: 'transparent', color: '#17402C', border: 'none' },
 };
 
 const HOVER_STYLES: Partial<Record<ButtonVariant, React.CSSProperties>> = {
-  primary: { background: '#0F2D1F' },
+  primary: { background: '#365233' },
   secondary: { background: '#F0ECE1' },
-  danger: { background: '#C53030' },
+  danger: { background: '#8A241B' },
   ghost: { background: '#FAF8F5' },
 };
 
@@ -67,7 +67,7 @@ export const Button: React.FC<ButtonProps> = ({
     ...VARIANT_STYLES[variant],
     ...SIZE_STYLES[size],
     ...(isHovered && !isDisabled ? HOVER_STYLES[variant] || {} : {}),
-    ...(isFocused ? { outline: '2px solid #82C39B', outlineOffset: '2px' } : {}),
+    ...(isFocused ? { outline: '2px solid #5B7F55', outlineOffset: '2px' } : {}),
     ...style,
   };
 

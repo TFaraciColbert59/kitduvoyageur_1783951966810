@@ -43,7 +43,6 @@ export default function DecisionsCard({ decisions: initialDecisions, groupId, on
     setDecisions(initialDecisions);
   }, [initialDecisions]);
 
-  // Load the current user's votes so their choice stays selected after reload
   React.useEffect(() => {
     if (!user || decisions.length === 0) return;
     const pollIds = decisions.map(d => d.id);
@@ -71,13 +70,12 @@ export default function DecisionsCard({ decisions: initialDecisions, groupId, on
       alert('Connectez-vous pour voter.');
       return;
     }
-    if (savingVoteId) return; // évite les doubles clics rapides
+    if (savingVoteId) return;
 
     const isCurrentlySelected = decisions.find(d => d.id === pollId)?.options.find(o => o.index === optionIndex)?.selected;
 
     setSavingVoteId(pollId);
 
-    // Optimistic UI update — choix unique : désélectionne les autres options
     setDecisions(prev => prev.map(decision => {
       if (decision.id !== pollId) return decision;
 
@@ -95,7 +93,6 @@ export default function DecisionsCard({ decisions: initialDecisions, groupId, on
         };
       });
 
-      // Single choice: force one selected option
       const corrected = newOpts.map(o => ({ ...o, selected: o.index === optionIndex }));
 
       const total = corrected.reduce((acc, o) => acc + o.votes, 0);
@@ -106,7 +103,6 @@ export default function DecisionsCard({ decisions: initialDecisions, groupId, on
       return { ...decision, options: corrected };
     }));
 
-    // Insert/update the vote (upsert on conflict → unique par utilisateur)
     const { error } = await supabase.from('group_poll_votes').upsert(
       { poll_id: pollId, user_id: user.id, option_index: optionIndex },
       { onConflict: 'poll_id,user_id' }
@@ -164,11 +160,11 @@ export default function DecisionsCard({ decisions: initialDecisions, groupId, on
   };
 
   return (
-    <div className="bg-white rounded-[0.75rem] p-6 border border-[#1C2620]/10 shadow-sm active:scale-[0.98] active:opacity-95 transition-all duration-150 cursor-pointer">
+    <div className="glass p-6 transition-all duration-300">
       <div className="flex justify-between items-start mb-2">
-        <h2 className="font-display text-xl text-[#1C2620]">Décisions <span className="font-serif italic font-bold">en cours</span></h2>
+        <h2 className="font-display font-bold text-xl text-[#17402C]">Décisions <span className="font-serif italic font-normal text-[#17402C]">en cours</span></h2>
         <div className="flex items-center gap-2">
-          <span className="font-mono text-[10px] uppercase tracking-widest text-[#1C2620]/60 bg-[#1C2620]/5 px-2 py-0.5 rounded-full">{decisions.length} actifs</span>
+          <span className="glass-pill">{decisions.length} actifs</span>
         </div>
       </div>
       
@@ -176,29 +172,30 @@ export default function DecisionsCard({ decisions: initialDecisions, groupId, on
         <span />
         <button 
           onClick={() => setIsAdding(!isAdding)}
-          className="px-3 py-1.5 rounded-full bg-[#33463C] text-white font-sans font-medium text-xs hover:bg-[#33463C]/90 transition-colors flex items-center gap-1"
+          className="glass-capsule-btn primary py-1.5 px-3 text-xs font-bold flex items-center gap-1"
         >
-          <Icon name={isAdding ? "XMarkIcon" : "PlusIcon"} size={12} /> {isAdding ? 'Annuler' : 'Lancer un vote'}
+          <Icon name={isAdding ? "XMarkIcon" : "PlusIcon"} size={12} className="relative z-10" />
+          <span className="relative z-10">{isAdding ? 'Annuler' : 'Lancer un vote'}</span>
         </button>
       </div>
 
       {isAdding && (
-        <form onSubmit={handleCreatePoll} className="mb-8 bg-[#E7E3D6]/20 p-5 rounded-2xl border border-[#1C2620]/10">
+        <form onSubmit={handleCreatePoll} className="mb-8 glass-sub-card p-5 rounded-2xl">
           <div className="mb-4">
-            <label className="block text-xs font-semibold text-[#1C2620] mb-2">La question à trancher :</label>
+            <label className="block text-xs font-bold text-[#17402C] mb-2">La question à trancher :</label>
             <input 
               type="text" 
               autoFocus
               value={newQuestion}
               onChange={e => setNewQuestion(e.target.value)}
               placeholder="Ex: Quel itinéraire prendre ?" 
-              className="w-full bg-white border border-[#1C2620]/10 rounded-xl py-2 px-4 text-sm text-[#1C2620] placeholder-[#1C2620]/40 focus:outline-none focus:ring-2 focus:ring-[#33463C]/20"
+              className="glass-input w-full text-xs"
               disabled={loading}
             />
           </div>
           
           <div className="space-y-3 mb-4">
-            <label className="block text-xs font-semibold text-[#1C2620]">Les options (minimum 2) :</label>
+            <label className="block text-xs font-bold text-[#17402C]">Les options (minimum 2) :</label>
             {newOptions.map((opt, i) => (
               <div key={i} className="flex gap-2">
                 <input 
@@ -206,7 +203,7 @@ export default function DecisionsCard({ decisions: initialDecisions, groupId, on
                   value={opt}
                   onChange={e => handleOptionChange(i, e.target.value)}
                   placeholder={`Option ${i + 1}`} 
-                  className="flex-1 bg-white border border-[#1C2620]/10 rounded-xl py-2 px-4 text-sm text-[#1C2620] placeholder-[#1C2620]/40 focus:outline-none focus:ring-2 focus:ring-[#33463C]/20"
+                  className="glass-input flex-1 text-xs"
                   disabled={loading}
                 />
               </div>
@@ -217,17 +214,17 @@ export default function DecisionsCard({ decisions: initialDecisions, groupId, on
             <button 
               type="button" 
               onClick={handleAddOption}
-              className="text-xs font-semibold text-[#1C2620]/60 hover:text-[#1C2620]"
+              className="glass-capsule-btn py-1.5 px-3 text-xs font-semibold"
               disabled={loading}
             >
-              + Ajouter une option
+              <span className="relative z-10">+ Ajouter une option</span>
             </button>
             <button 
               type="submit"
               disabled={!newQuestion.trim() || newOptions.filter(o => o.trim() !== '').length < 2 || loading}
-              className="px-4 py-2 bg-[#1C2620] text-white rounded-xl text-xs font-semibold disabled:opacity-50"
+              className="glass-capsule-btn primary py-2 px-4 text-xs font-bold disabled:opacity-50"
             >
-              Créer le sondage
+              <span className="relative z-10">Créer le sondage</span>
             </button>
           </div>
         </form>
@@ -235,21 +232,21 @@ export default function DecisionsCard({ decisions: initialDecisions, groupId, on
 
       <div className="space-y-6">
         {decisions.length === 0 && !isAdding && (
-          <p className="text-center text-sm text-[#1C2620]/50 py-4">Aucun sondage en cours.</p>
+          <p className="text-center text-sm text-[#5C6B5E] py-4">Aucun sondage en cours.</p>
         )}
         
         {decisions.map(decision => {
           const totalVotes = decision.options.reduce((acc, opt) => acc + (opt.votes || 0), 0);
           
           return (
-          <div key={decision.id} className="bg-[#E7E3D6]/20 border border-[#1C2620]/10 rounded-2xl p-5">
+          <div key={decision.id} className="glass-sub-card rounded-2xl p-5">
             <div className="flex items-center gap-2 mb-3">
-              <span className="font-semibold text-sm text-[#1C2620]">{decision.author}</span>
-              <span className="text-[9px] font-mono uppercase tracking-widest bg-[#33463C]/10 text-[#33463C] px-1.5 py-0.5 rounded-sm">{decision.tag}</span>
-              <span className="text-xs text-[#1C2620]/50 ml-auto">{decision.meta}</span>
+              <span className="font-bold text-sm text-[#17402C]">{decision.author}</span>
+              <span className="glass-pill text-[9px]">{decision.tag}</span>
+              <span className="text-xs text-[#5C6B5E] ml-auto font-mono">{decision.meta}</span>
             </div>
             
-            <p className="text-sm text-[#1C2620] mb-5 font-sans leading-relaxed">
+            <p className="text-sm text-[#17402C] mb-5 font-sans leading-relaxed">
               {decision.question}
             </p>
             
@@ -263,12 +260,11 @@ export default function DecisionsCard({ decisions: initialDecisions, groupId, on
                   key={option.index}
                   onClick={() => handleVote(decision.id, option.index)}
                   disabled={savingVoteId === decision.id}
-                  className={`group w-full relative overflow-hidden rounded-xl border text-left transition-colors disabled:opacity-70 disabled:cursor-wait
-                    ${option.selected ? 'border-[#33463C] bg-white' : 'border-[#1C2620]/10 bg-white hover:border-[#33463C]/30'}`}
+                  className={`group w-full relative overflow-hidden rounded-xl border text-left transition-colors disabled:opacity-70 cursor-pointer
+                    ${option.selected ? 'border-[#17402C] bg-white' : 'glass-sub-card'}`}
                 >
-                  <div className="absolute inset-0 bg-[#33463C]/5" />
                   <motion.div 
-                    className={`absolute inset-y-0 left-0 ${option.selected ? 'bg-[#33463C]/10' : 'bg-[#E7E3D6]/50'}`}
+                    className={`absolute inset-y-0 left-0 ${option.selected ? 'bg-[#17402C]/20' : 'bg-[#17402C]/10'}`}
                     initial={{ width: 0 }}
                     animate={{ width: `${pct}%` }}
                     transition={{ duration: 0.5 }}
@@ -276,15 +272,14 @@ export default function DecisionsCard({ decisions: initialDecisions, groupId, on
                   
                   <div className="relative p-3 flex items-center justify-between z-10">
                     <div className="flex items-center gap-3">
-                      <div className={`w-5 h-5 rounded-full border flex items-center justify-center transition-colors
-                        ${option.selected ? 'border-[#33463C] bg-[#33463C] text-white' : 'border-[#1C2620]/20 bg-white text-transparent group-hover:border-[#33463C]'}`}>
-                        {option.selected && <Icon name="CheckIcon" size={12} />}
+                      <div className={`glass-check-circle ${option.selected ? 'checked' : ''}`}>
+                        {option.selected && <Icon name="CheckIcon" size={12} className="relative z-10" />}
                       </div>
                       <div>
-                        <p className={`text-sm font-semibold ${option.selected ? 'text-[#1C2620]' : 'text-[#1C2620]/70'}`}>{option.label}</p>
+                        <p className={`text-sm font-semibold ${option.selected ? 'text-[#17402C]' : 'text-[#5C6B5E]'}`}>{option.label}</p>
                       </div>
                     </div>
-                    <span className={`font-mono font-bold text-sm ${option.selected ? 'text-[#33463C]' : 'text-[#1C2620]/50'}`}>
+                    <span className={`font-mono font-bold text-sm ${option.selected ? 'text-[#17402C]' : 'text-[#5C6B5E]'}`}>
                       {pct}%
                     </span>
                   </div>
@@ -292,7 +287,7 @@ export default function DecisionsCard({ decisions: initialDecisions, groupId, on
               )})}
             </div>
             
-            <div className="flex justify-between items-center text-[10px] font-mono uppercase tracking-widest text-[#1C2620]/50 pt-3 border-t border-[#1C2620]/10">
+            <div className="flex justify-between items-center text-[10px] font-mono uppercase tracking-widest text-[#5C6B5E] pt-3 border-t border-[#17402C]/10 font-bold">
               <span>{totalVotes} votes exprimés</span>
             </div>
           </div>

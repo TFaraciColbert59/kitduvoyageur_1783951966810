@@ -60,7 +60,7 @@ export default function MoreMenuSheet({
           animate={{ y: 0 }}
           exit={{ y: '100%' }}
           transition={{ type: 'spring', damping: 28, stiffness: 350 }}
-          className="relative z-10 w-full max-w-lg bg-white rounded-t-3xl p-5 pb-8 shadow-2xl border-t border-[#1C2620]/10 flex flex-col gap-2"
+          className="relative z-10 w-full max-w-lg glass rounded-t-3xl p-5 pb-8 flex flex-col gap-2"
         >
           {/* Drag handle */}
           <div className="w-10 h-1 bg-gray-300 rounded-full mx-auto mb-3" />
@@ -77,7 +77,7 @@ export default function MoreMenuSheet({
               <button
                 type="button"
                 onClick={() => handleAction(onShare)}
-                className="flex items-center gap-3 w-full px-4 py-3.5 text-xs font-bold text-[#1C2620] hover:bg-black/5 active:bg-black/10 transition-colors text-left"
+                className="flex items-center gap-3 w-full px-4 py-3.5 text-xs font-bold text-[#17402C] hover:bg-black/5 active:bg-black/10 transition-colors text-left"
               >
                 <Icon name="PaperAirplaneIcon" size={18} className="text-[#17402C]" />
                 <span>Partager le contenu</span>
@@ -89,7 +89,7 @@ export default function MoreMenuSheet({
               <button
                 type="button"
                 onClick={() => handleAction(onCopyLink)}
-                className="flex items-center gap-3 w-full px-4 py-3.5 text-xs font-bold text-[#1C2620] hover:bg-black/5 active:bg-black/10 transition-colors text-left"
+                className="flex items-center gap-3 w-full px-4 py-3.5 text-xs font-bold text-[#17402C] hover:bg-black/5 active:bg-black/10 transition-colors text-left"
               >
                 <Icon name="LinkIcon" size={18} className="text-[#17402C]" />
                 <span>Copier le lien</span>
@@ -101,7 +101,7 @@ export default function MoreMenuSheet({
               <button
                 type="button"
                 onClick={() => handleAction(onEdit)}
-                className="flex items-center gap-3 w-full px-4 py-3.5 text-xs font-bold text-[#1C2620] hover:bg-black/5 active:bg-black/10 transition-colors text-left"
+                className="flex items-center gap-3 w-full px-4 py-3.5 text-xs font-bold text-[#17402C] hover:bg-black/5 active:bg-black/10 transition-colors text-left"
               >
                 <Icon name="PencilIcon" size={18} className="text-[#17402C]" />
                 <span>Modifier</span>
@@ -148,7 +148,7 @@ export default function MoreMenuSheet({
           <button
             type="button"
             onClick={onClose}
-            className="w-full py-3 mt-1 bg-white border border-[#1C2620]/10 rounded-2xl text-xs font-bold text-[#1C2620] hover:bg-gray-50 active:scale-[0.99] transition-all text-center"
+            className="w-full py-3 mt-1 bg-white border border-[#17402C]/10 rounded-2xl text-xs font-bold text-[#17402C] hover:bg-gray-50 active:scale-[0.99] transition-all text-center"
           >
             Annuler
           </button>

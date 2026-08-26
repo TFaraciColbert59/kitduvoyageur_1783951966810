@@ -3,7 +3,7 @@ import { Skeleton, SkeletonCard } from '@/components/ui/Skeleton';
 
 export default function ClubsLoading() {
   return (
-    <div className="min-h-screen bg-[#F0EBE1] pb-24 lg:pb-12 pt-24 lg:pt-32">
+    <div className="min-h-screen bg-background pb-24 lg:pb-12 pt-24 lg:pt-32">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-12">
         <div className="text-center space-y-4">
           <Skeleton className="h-12 w-64 mx-auto" />

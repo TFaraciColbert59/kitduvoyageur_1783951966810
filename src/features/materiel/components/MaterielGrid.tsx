@@ -13,17 +13,17 @@ import { GearCardAlertes } from './cards/GearCardAlertes';
 import { GearCardDispo } from './cards/GearCardDispo';
 
 // Emplacements — formation 2 - 1 - 2 sur mobile et 8/4 + 4/4/4 sur PC (desktop)
-// Slot 0 (forget) : Mobile Ligne 1 Gauche (6 cols) | PC Ligne 1 Droite (4 cols : [grid-column:9/13] [grid-row:1/2])
-// Slot 1 (dispo)  : Mobile Ligne 1 Droite (6 cols) | PC Ligne 2 Droite (4 cols : [grid-column:9/13] [grid-row:2/3])
-// Slot 2 (depart) : Mobile Ligne 2 Pleine (12 cols)| PC Ligne 1 Gauche (8 cols : [grid-column:1/9] [grid-row:1/2])
-// Slot 3 (kits)   : Mobile Ligne 3 Gauche (6 cols) | PC Ligne 2 Gauche (4 cols : [grid-column:1/5] [grid-row:2/3])
-// Slot 4 (alertes): Mobile Ligne 3 Droite (6 cols) | PC Ligne 2 Milieu (4 cols : [grid-column:5/9] [grid-row:2/3])
+// Slot 0 (forget) : Mobile Ligne 1 Gauche (6 cols) | PC Ligne 1 Droite (4 cols)
+// Slot 1 (dispo)  : Mobile Ligne 1 Droite (6 cols) | PC Ligne 2 Droite (4 cols)
+// Slot 2 (depart) : Mobile Ligne 2 Pleine (12 cols)| PC Ligne 1 Gauche (8 cols)
+// Slot 3 (kits)   : Mobile Ligne 3 Gauche (6 cols) | PC Ligne 2 Gauche (4 cols)
+// Slot 4 (alertes): Mobile Ligne 3 Droite (6 cols) | PC Ligne 2 Milieu (4 cols)
 const SLOT_CLASS = [
-  'col-span-6 md:[grid-column:9/13] md:[grid-row:1/2] h-auto md:h-full',
-  'col-span-6 md:[grid-column:9/13] md:[grid-row:2/3] h-auto md:h-full',
-  'col-span-12 md:[grid-column:1/9] md:[grid-row:1/2] min-h-0 h-auto md:h-full',
-  'col-span-6 md:[grid-column:1/5] md:[grid-row:2/3] h-auto md:h-full',
-  'col-span-6 md:[grid-column:5/9] md:[grid-row:2/3] h-auto md:h-full',
+  'col-span-6 md:[grid-column:9/13] md:[grid-row:1/2] h-full min-h-0',
+  'col-span-6 md:[grid-column:9/13] md:[grid-row:2/3] h-full min-h-0',
+  'col-span-12 md:[grid-column:1/9] md:[grid-row:1/2] h-full min-h-0',
+  'col-span-6 md:[grid-column:1/5] md:[grid-row:2/3] h-full min-h-0',
+  'col-span-6 md:[grid-column:5/9] md:[grid-row:2/3] h-full min-h-0',
 ];
 
 const LABEL: Record<string, string> = {
@@ -50,12 +50,6 @@ const widgetVariants: Variants = {
   },
 };
 
-/**
- * MaterielGrid —
- * - Mobile : formation 2 - 1 - 2 (À ne pas oublier / Dispo — Départ — Kits / Alertes)
- * - PC Desktop : formation 8/4 + 4/4/4 équilibrée et centrée
- * - Déplaçable en 2D avec re-packing dynamique via poignées :::
- */
 export function MaterielGrid({ data }: { data: MaterielSummary }) {
   const { order, setOrder } = useMaterielOrder();
   const refs = useRef<Record<string, HTMLDivElement | null>>({});
@@ -107,7 +101,7 @@ export function MaterielGrid({ data }: { data: MaterielSummary }) {
 
   return (
     <motion.div
-      className="grid grid-cols-12 gap-2.5 sm:gap-3 items-stretch w-full max-w-[var(--page-max-w)] mx-auto md:[grid-template-rows:repeat(2,minmax(0,1fr))] pb-24 md:pb-0"
+      className="grid grid-cols-12 gap-1.5 sm:gap-3 items-stretch w-full max-w-[var(--page-max-w)] mx-auto grid-rows-[minmax(0,1fr)_minmax(0,1.2fr)_minmax(0,1fr)] md:[grid-template-rows:repeat(2,minmax(0,1fr))] pb-0 h-full max-h-full overflow-hidden"
       variants={containerVariants}
       initial="hidden"
       animate="visible"
@@ -166,20 +160,19 @@ function DraggableCard({
         onDrop(info.point);
       }}
       variants={widgetVariants}
-      className={`relative w-full h-auto md:h-full ${slotClass}`}
+      className={`relative w-full h-full min-h-0 ${slotClass}`}
       style={{
         ...(dragging ? { willChange: 'transform', zIndex: 30 } : {}),
       }}
     >
-      {/* Bouton de déplacement circulaire GripVertical (::: ) */}
+      {/* Bouton de déplacement circulaire Desktop uniquement (masqué sur mobile pour éviter toute collision) */}
       <button
         type="button"
         onPointerDown={(e) => controls.start(e)}
-        className="!absolute top-2 right-2 z-20 h-7 w-7 md:h-8 md:w-8 !rounded-full glass interactive flex items-center justify-center text-[#17402C] cursor-grab touch-none border border-white/40 shadow-xs focus-visible:ring-2 focus-visible:ring-[#17402C]"
+        className="hidden md:flex !absolute top-2 right-2 z-20 h-8 w-8 !rounded-full glass interactive items-center justify-center text-[#17402C] cursor-grab touch-none border border-white/40 focus-visible:ring-2 focus-visible:ring-[#17402C]"
         aria-label={`Déplacer la carte ${LABEL[id] ?? id}`}
       >
-        <GripVertical size={13} className="md:hidden" aria-hidden="true" />
-        <GripVertical size={16} className="hidden md:block" aria-hidden="true" />
+        <GripVertical size={16} aria-hidden="true" />
       </button>
       <div className="h-full min-h-0 overflow-hidden [&>article]:h-full [&>article]:min-h-0 [&>article]:flex [&>article]:flex-col">
         {children}

@@ -134,7 +134,7 @@ export default function ReportBlockModal({ target, onClose, onSuccess }: Props) 
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-fade-in">
-      <div className="bg-[#14231C] border border-white/15 rounded-[24px] max-w-lg w-full p-6 text-white shadow-2xl relative overflow-hidden">
+      <div className="bg-[#14231C] border border-white/15 rounded-[24px] max-w-lg w-full p-6 text-white  relative overflow-hidden">
         {/* Header */}
         <div className="flex items-center justify-between pb-4 border-b border-white/10 mb-5">
           <div className="flex items-center gap-2">
@@ -149,10 +149,10 @@ export default function ReportBlockModal({ target, onClose, onSuccess }: Props) 
 
         {submitted ? (
           <div className="py-6 text-center">
-            <div className="w-12 h-12 rounded-full bg-[#1B4332] text-[#A8C4A2] flex items-center justify-center text-xl mx-auto mb-3">✓</div>
+            <div className="w-12 h-12 rounded-full bg-[#17402C] text-[#A6C1A0] flex items-center justify-center text-xl mx-auto mb-3">✓</div>
             <h4 className="font-bold text-lg mb-2">Action confirmée</h4>
             <p className="text-sm text-white/70 mb-6 max-w-sm mx-auto">{actionDoneMsg}</p>
-            <button onClick={onClose} className="px-6 py-2.5 bg-white text-[#0B1F17] rounded-full font-bold text-xs hover:bg-[#EAE6DF] transition-colors">
+            <button onClick={onClose} className="px-6 py-2.5 bg-white text-[#17402C] rounded-full font-bold text-xs hover:bg-[#EAE6DF] transition-colors">
               Fermer
             </button>
           </div>
@@ -190,7 +190,7 @@ export default function ReportBlockModal({ target, onClose, onSuccess }: Props) 
                         key={cat.id}
                         className={`flex items-center justify-between p-2.5 rounded-xl border text-xs cursor-pointer transition-colors ${
                           selectedCategory === cat.id
-                            ? 'bg-[#1B4332] border-[#A8C4A2] text-white'
+                            ? 'bg-[#17402C] border-[#A6C1A0] text-white'
                             : 'bg-black/20 border-white/10 text-white/70 hover:border-white/20'
                         }`}
                       >
@@ -201,7 +201,7 @@ export default function ReportBlockModal({ target, onClose, onSuccess }: Props) 
                             value={cat.id}
                             checked={selectedCategory === cat.id}
                             onChange={() => setSelectedCategory(cat.id)}
-                            className="text-[#1B4332]"
+                            className="text-[#17402C]"
                           />
                           <span>{cat.label}</span>
                         </div>
@@ -222,7 +222,7 @@ export default function ReportBlockModal({ target, onClose, onSuccess }: Props) 
                     value={reason}
                     onChange={e => setReason(e.target.value)}
                     placeholder="Expliquez ce qui s'est passé de manière factuelle..."
-                    className="w-full bg-black/25 border border-white/15 rounded-xl p-3 text-xs text-white placeholder-white/40 focus:outline-none focus:border-[#A8C4A2] resize-none"
+                    className="w-full bg-black/25 border border-white/15 rounded-xl p-3 text-xs text-white placeholder-white/40 focus:outline-none focus:border-[#A6C1A0] resize-none"
                   ></textarea>
                 </div>
 

@@ -67,15 +67,15 @@ export default function DesktopMapOverlay({
 
       {/* 1. Primary Priority: Imminent Turn Instruction Card */}
       {activeGuideTurn && (
-        <div className="absolute top-16 left-3 right-3 md:left-1/2 md:-translate-x-1/2 md:w-[420px] bg-[#FBFAF6]/95 backdrop-blur-2xl border border-[#0B1F17]/12 rounded-[0.75rem] p-4 shadow-[0_16px_40px_rgba(11,31,23,0.15)] flex items-center gap-3.5 z-30 select-none">
-          <div className="w-11 h-11 rounded-2xl bg-[#17402C] text-[#C6DCBE] flex items-center justify-center text-xl font-bold flex-shrink-0 shadow-md">
+        <div className="absolute top-16 left-3 right-3 md:left-1/2 md:-translate-x-1/2 md:w-[420px] bg-[#FBFAF6]/95 backdrop-blur-2xl border border-[#17402C]/12 rounded-[0.75rem] p-4 shadow-[0_16px_40px_rgba(23,64,44,0.15)] flex items-center gap-3.5 z-30 select-none">
+          <div className="w-11 h-11 rounded-2xl bg-[#17402C] text-[#C6DCBE] flex items-center justify-center text-xl font-bold flex-shrink-0 ">
             {activeGuideTurn.turn.turnType.includes('droite') ? '↱' : activeGuideTurn.turn.turnType.includes('gauche') ? '↰' : '↑'}
           </div>
           <div className="flex-1 min-w-0">
             <div className="font-mono text-[10px] tracking-widest uppercase font-semibold text-[#17402C] leading-none">
               Prochain virage · Dans {Math.round(activeGuideTurn.distanceRemainingM)} m
             </div>
-            <div className="text-base font-bold tracking-tight text-[#0B1F17] mt-1 truncate">
+            <div className="text-base font-bold tracking-tight text-[#17402C] mt-1 truncate">
               {activeGuideTurn.turn.instructionText}
             </div>
           </div>
@@ -84,8 +84,8 @@ export default function DesktopMapOverlay({
 
       {/* 2. Secondary Priority: Imminent POI Card (If turn is not imminent) */}
       {!activeGuideTurn && activeGuidePoi && activeGuidePoi.distanceRemainingM < 300 && (
-        <div className="absolute top-16 left-3 right-3 md:left-1/2 md:-translate-x-1/2 md:w-[420px] bg-[#FBFAF6]/95 backdrop-blur-2xl border border-[#0B1F17]/12 rounded-[0.75rem] p-4 shadow-[0_16px_40px_rgba(11,31,23,0.15)] flex items-center gap-3.5 z-30 select-none">
-          <div className="w-11 h-11 rounded-2xl bg-[#A8C8A0] text-[#06120C] flex items-center justify-center flex-shrink-0 shadow-md relative">
+        <div className="absolute top-16 left-3 right-3 md:left-1/2 md:-translate-x-1/2 md:w-[420px] bg-[#FBFAF6]/95 backdrop-blur-2xl border border-[#17402C]/12 rounded-[0.75rem] p-4 shadow-[0_16px_40px_rgba(23,64,44,0.15)] flex items-center gap-3.5 z-30 select-none">
+          <div className="w-11 h-11 rounded-2xl bg-[#A8C8A0] text-[#06120C] flex items-center justify-center flex-shrink-0  relative">
             <svg className="w-5 h-5 fill-none stroke-current stroke-[2.2]" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" d="M12 21s-6-5.333-6-10a6 6 0 0112 0c0 4.667-6 10-6 10z" />
               <circle cx="12" cy="11" r="2" fill="currentColor" />
@@ -96,7 +96,7 @@ export default function DesktopMapOverlay({
             <div className="font-mono text-[10px] tracking-widest uppercase font-semibold text-[#17402C] leading-none">
               Prochain point · Dans {Math.round(activeGuidePoi.distanceRemainingM)} m
             </div>
-            <div className="text-base font-bold tracking-tight text-[#0B1F17] mt-1 truncate">
+            <div className="text-base font-bold tracking-tight text-[#17402C] mt-1 truncate">
               {activeGuidePoi.name}
             </div>
           </div>

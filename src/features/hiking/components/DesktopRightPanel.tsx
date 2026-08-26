@@ -88,7 +88,7 @@ export default function DesktopRightPanel({
   return (
     <div className="hidden md:flex absolute top-[96px] right-5 w-[340px] max-h-[calc(100%-180px)] flex-col gap-3.5 z-30 select-none overflow-y-auto custom-scrollbar">
       {/* 1. Live Stats Panel */}
-      <div className="bg-[#FBFAF6]/92 backdrop-blur-2xl border border-[#0B1F17]/07 rounded-2xl shadow-[0_12px_32px_rgba(11,31,23,0.10),0_2px_8px_rgba(11,31,23,0.04)] overflow-hidden p-4 space-y-3">
+      <div className="bg-[#FBFAF6]/92 backdrop-blur-2xl border border-[#17402C]/07 rounded-2xl shadow-[0_12px_32px_rgba(23,64,44,0.10),0_2px_8px_rgba(23,64,44,0.04)] overflow-hidden p-4 space-y-3">
         <div className="flex justify-between items-baseline">
           <span className="text-[11px] uppercase tracking-widest text-[#6B7A72] font-semibold">
             Stats en direct
@@ -116,11 +116,11 @@ export default function DesktopRightPanel({
           </div>
 
           {/* Cell 2: Durée */}
-          <div className="p-3 bg-[#0B1F17]/04 border border-[#0B1F17]/05 rounded-2xl">
+          <div className="p-3 bg-[#17402C]/04 border border-[#17402C]/05 rounded-2xl">
             <div className="font-mono text-[9px] uppercase tracking-widest text-[#6B7A72] leading-none">
               Durée
             </div>
-            <div className="text-xl font-medium tracking-tight text-[#0B1F17] mt-1.5 leading-none">
+            <div className="text-xl font-medium tracking-tight text-[#17402C] mt-1.5 leading-none">
               {formatDuration(durationSeconds)}
             </div>
             <div className="font-mono text-[9px] text-[#6B7A72] tracking-wide mt-1.5">
@@ -129,11 +129,11 @@ export default function DesktopRightPanel({
           </div>
 
           {/* Cell 3: Vitesse actuelle */}
-          <div className="p-3 bg-[#0B1F17]/04 border border-[#0B1F17]/05 rounded-2xl">
+          <div className="p-3 bg-[#17402C]/04 border border-[#17402C]/05 rounded-2xl">
             <div className="font-mono text-[9px] uppercase tracking-widest text-[#6B7A72] leading-none">
               Vitesse actuelle
             </div>
-            <div className="text-xl font-medium tracking-tight text-[#0B1F17] mt-1.5 leading-none">
+            <div className="text-xl font-medium tracking-tight text-[#17402C] mt-1.5 leading-none">
               {currentSpeedKmH.toFixed(1)}
               <em className="font-serif italic font-normal text-xs text-[#17402C] ml-0.5">km/h</em>
             </div>
@@ -143,11 +143,11 @@ export default function DesktopRightPanel({
           </div>
 
           {/* Cell 4: D+ */}
-          <div className="p-3 bg-[#0B1F17]/04 border border-[#0B1F17]/05 rounded-2xl">
+          <div className="p-3 bg-[#17402C]/04 border border-[#17402C]/05 rounded-2xl">
             <div className="font-mono text-[9px] uppercase tracking-widest text-[#6B7A72] leading-none">
               D+ · dénivelé
             </div>
-            <div className="text-xl font-medium tracking-tight text-[#0B1F17] mt-1.5 leading-none">
+            <div className="text-xl font-medium tracking-tight text-[#17402C] mt-1.5 leading-none">
               +{elevationGainM != null ? Math.round(elevationGainM) : '—'}
               <em className="font-serif italic font-normal text-xs text-[#17402C] ml-0.5">m</em>
             </div>
@@ -157,11 +157,11 @@ export default function DesktopRightPanel({
           </div>
 
           {/* Cell 5: D- */}
-          <div className="p-3 bg-[#0B1F17]/04 border border-[#0B1F17]/05 rounded-2xl">
+          <div className="p-3 bg-[#17402C]/04 border border-[#17402C]/05 rounded-2xl">
             <div className="font-mono text-[9px] uppercase tracking-widest text-[#6B7A72] leading-none">
               D− · dénivelé
             </div>
-            <div className="text-xl font-medium tracking-tight text-[#0B1F17] mt-1.5 leading-none">
+            <div className="text-xl font-medium tracking-tight text-[#17402C] mt-1.5 leading-none">
               −{elevationLossM != null ? Math.round(elevationLossM) : '—'}
               <em className="font-serif italic font-normal text-xs text-[#17402C] ml-0.5">m</em>
             </div>
@@ -173,7 +173,7 @@ export default function DesktopRightPanel({
       </div>
 
       {/* 2. Copilot Panel */}
-      <div className="bg-[#FBFAF6]/92 backdrop-blur-2xl border border-[#0B1F17]/07 rounded-2xl shadow-[0_12px_32px_rgba(11,31,23,0.10),0_2px_8px_rgba(11,31,23,0.04)] overflow-hidden p-4 space-y-3">
+      <div className="bg-[#FBFAF6]/92 backdrop-blur-2xl border border-[#17402C]/07 rounded-2xl shadow-[0_12px_32px_rgba(23,64,44,0.10),0_2px_8px_rgba(23,64,44,0.04)] overflow-hidden p-4 space-y-3">
         <div className="flex justify-between items-baseline">
           <span className="text-[11px] uppercase tracking-widest text-[#6B7A72] font-semibold">
             Copilote <em className="font-serif italic text-[#17402C] font-normal">LKDV IA</em>
@@ -187,7 +187,7 @@ export default function DesktopRightPanel({
         <div className="flex items-center gap-3 py-1">
           <div className="w-11 h-11 rounded-full bg-gradient-to-br from-[#17402C] via-[#A8C8A0] to-[#EAF1E5] shadow-[0_0_24px_rgba(168,200,160,0.5)] animate-pulse flex-shrink-0" />
           <div className="flex-1 min-w-0">
-            <div className="text-sm font-medium text-[#0B1F17]">
+            <div className="text-sm font-medium text-[#17402C]">
               Prêt à <em className="font-serif italic text-[#17402C] font-normal">répondre</em>
             </div>
             <div className="font-mono text-[9px] text-[#6B7A72] tracking-wider mt-0.5 truncate">
@@ -204,7 +204,7 @@ export default function DesktopRightPanel({
               className={`p-2.5 rounded-xl text-xs leading-relaxed ${
                 msg.sender === 'user'
                   ? 'bg-[#17402C] text-white ml-auto max-w-[85%]'
-                  : 'bg-[#0B1F17]/04 text-[#0B1F17]'
+                  : 'bg-[#17402C]/04 text-[#17402C]'
               }`}
             >
               {msg.text}
@@ -212,7 +212,7 @@ export default function DesktopRightPanel({
               {msg.sender === 'ai' && idx === 0 && (
                 <div className="flex flex-wrap gap-1.5 mt-2">
                   {remainingDistanceKm != null && remainingDistanceKm > 0 && (
-                    <span className="px-2 py-0.5 bg-[#FBFAF6] border border-[#0B1F17]/06 rounded-full font-mono text-[9px] text-[#17402C] inline-flex items-center gap-1">
+                    <span className="px-2 py-0.5 bg-[#FBFAF6] border border-[#17402C]/06 rounded-full font-mono text-[9px] text-[#17402C] inline-flex items-center gap-1">
                       <svg className="w-2.5 h-2.5 fill-none stroke-current stroke-[2]" viewBox="0 0 24 24">
                         <path d="M4 21l16-8L4 5v6l10 2-10 2z" />
                       </svg>
@@ -220,7 +220,7 @@ export default function DesktopRightPanel({
                     </span>
                   )}
                   {elevationGainM != null && elevationGainM > 0 && (
-                    <span className="px-2 py-0.5 bg-[#FBFAF6] border border-[#0B1F17]/06 rounded-full font-mono text-[9px] text-[#17402C] inline-flex items-center gap-1">
+                    <span className="px-2 py-0.5 bg-[#FBFAF6] border border-[#17402C]/06 rounded-full font-mono text-[9px] text-[#17402C] inline-flex items-center gap-1">
                       <svg className="w-2.5 h-2.5 fill-none stroke-current stroke-[2]" viewBox="0 0 24 24">
                         <path d="M4 20l6-12 4 6 4-2 2 8" />
                       </svg>
@@ -228,7 +228,7 @@ export default function DesktopRightPanel({
                     </span>
                   )}
                   {weatherCondition && (
-                    <span className="px-2 py-0.5 bg-[#FBFAF6] border border-[#0B1F17]/06 rounded-full font-mono text-[9px] text-[#17402C] inline-flex items-center gap-1">
+                    <span className="px-2 py-0.5 bg-[#FBFAF6] border border-[#17402C]/06 rounded-full font-mono text-[9px] text-[#17402C] inline-flex items-center gap-1">
                       <svg className="w-2.5 h-2.5 fill-none stroke-current stroke-[2]" viewBox="0 0 24 24">
                         <circle cx="12" cy="12" r="9" />
                         <path d="M12 7v5l3 2" />
@@ -252,7 +252,7 @@ export default function DesktopRightPanel({
             <button
               key={q}
               onClick={() => handleSendQuestion(q)}
-              className="px-2.5 py-1 bg-[#FBFAF6] border border-[#0B1F17]/08 rounded-full text-[11px] text-[#384A42] hover:bg-[#EAF1E5] transition-colors inline-flex items-center gap-1 active:scale-95"
+              className="px-2.5 py-1 bg-[#FBFAF6] border border-[#17402C]/08 rounded-full text-[11px] text-[#384A42] hover:bg-[#EAF1E5] transition-colors inline-flex items-center gap-1 active:scale-95"
             >
               <span>{q}</span>
             </button>
@@ -272,7 +272,7 @@ export default function DesktopRightPanel({
             value={inputText}
             onChange={(e) => setInputText(e.target.value)}
             placeholder="Posez votre question…"
-            className="flex-1 bg-transparent text-xs text-[#0B1F17] placeholder-[#6B7A72] focus:outline-none"
+            className="flex-1 bg-transparent text-xs text-[#17402C] placeholder-[#6B7A72] focus:outline-none"
           />
           <button
             type="submit"

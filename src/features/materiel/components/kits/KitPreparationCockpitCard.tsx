@@ -48,7 +48,7 @@ function SvgDonut({ pct }: { pct: number }) {
           cy={size / 2}
           r={radius}
           fill="none"
-          stroke={pct >= 100 ? '#2D6B4A' : '#5B7F55'}
+          stroke={pct >= 100 ? '#365233' : '#5B7F55'}
           strokeWidth={strokeWidth}
           strokeDasharray={circumference}
           strokeDashoffset={circumference}
@@ -97,7 +97,7 @@ export function KitPreparationCockpitCard({ kit }: Props) {
           >
             {readyCount} prêt(s)
           </motion.span>
-          <span className={`text-[9px] truncate leading-tight ${isComplete ? 'text-[#2D6B4A] font-semibold' : 'text-[#5A7064]'}`}>
+          <span className={`text-[9px] truncate leading-tight ${isComplete ? 'text-[#365233] font-semibold' : 'text-[#5A7064]'}`}>
             {pendingCount > 0 ? `${pendingCount} en commande` : 'Kit complet ✓'}
           </span>
         </div>

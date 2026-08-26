@@ -138,7 +138,7 @@ export function TemplateStore({ kits = [] }: { kits: PublicKit[] }) {
                 aria-label={`Importer le kit ${k.name}`}
                 className={`h-6 w-6 !rounded-full flex items-center justify-center transition-all shrink-0 focus-visible:ring-2 focus-visible:ring-[#17402C] ${
                   isJustImported
-                    ? 'bg-[#2D6B4A]/20 text-[#2D6B4A]'
+                    ? 'bg-[#365233]/20 text-[#365233]'
                     : isImporting
                     ? 'bg-white/10 text-[#5A7064]'
                     : 'glass interactive text-[#17402C] hover:bg-[#17402C] hover:text-white border border-white/40 shadow-[inset_0_1px_1px_rgba(255,255,255,0.6)]'

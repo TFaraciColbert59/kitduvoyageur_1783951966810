@@ -1,61 +1,72 @@
 'use client';
 
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import Link from 'next/link';
-import { motion } from 'framer-motion';
+import { motion, AnimatePresence } from 'framer-motion';
 import Icon from '@/components/ui/AppIcon';
-import MoreMenuSheet from '@/components/social/MoreMenuSheet';
+import MobileClubCard, { ClubCardItem } from '@/components/clubs/MobileClubCard';
 import { useHapticFeedback } from '@/hooks/useHapticFeedback';
-
-export interface ClubItem {
-  id: string;
-  slug?: string;
-  name: string;
-  type?: string;
-  emoji?: string;
-  description: string;
-  cover_image?: string;
-  category?: string;
-  members_count: number;
-  active_this_month?: number;
-  is_verified?: boolean;
-  is_member?: boolean;
-}
+import { usePullToRefresh } from '@/hooks/usePullToRefresh';
 
 interface MobileClubsHubProps {
-  clubs: ClubItem[];
-  myClubs: ClubItem[];
+  clubs: ClubCardItem[];
+  myClubs: ClubCardItem[];
   loading: boolean;
   user: any;
   onJoinClub: (clubId: string) => Promise<void>;
   onOpenCreateModal: () => void;
+  onRefresh?: () => Promise<void> | void;
 }
 
+const CATEGORIES = ['Tous', 'Trek & Rando', 'Bivouac', 'Alpinisme', 'Vanlife', 'Cyclotourisme', 'Photographie', 'Survie', 'Pays & Régions'];
+
 export default function MobileClubsHub({
-  clubs,
-  myClubs,
-  loading,
+  clubs = [],
+  myClubs = [],
+  loading = false,
   user,
   onJoinClub,
   onOpenCreateModal,
+  onRefresh,
 }: MobileClubsHubProps) {
   const { triggerHaptic } = useHapticFeedback();
   const [tab, setTab] = useState<'decouvrir' | 'mes-clubs'>('decouvrir');
   const [search, setSearch] = useState('');
-  const [selectedClub, setSelectedClub] = useState<ClubItem | null>(null);
+  const [selectedCategory, setSelectedCategory] = useState('Tous');
   const [joiningId, setJoiningId] = useState<string | null>(null);
+
+  useEffect(() => {
+    const handler = (e: any) => {
+      if (e.detail) {
+        setTab(e.detail);
+      }
+    };
+    window.addEventListener('clubs-tab-change', handler);
+    return () => window.removeEventListener('clubs-tab-change', handler);
+  }, []);
+
+  const { isRefreshing, pullProgress } = usePullToRefresh(async () => {
+    if (onRefresh) {
+      triggerHaptic('medium');
+      await onRefresh();
+    }
+  });
 
   const activeClubs = tab === 'mes-clubs' ? myClubs : clubs;
 
   const filteredClubs = useMemo(() => {
-    return activeClubs.filter(c => {
-      return (
+    return activeClubs.filter((c) => {
+      const matchSearch =
         !search.trim() ||
         c.name.toLowerCase().includes(search.toLowerCase()) ||
-        c.description?.toLowerCase().includes(search.toLowerCase())
-      );
+        c.description?.toLowerCase().includes(search.toLowerCase());
+      const matchCategory =
+        selectedCategory === 'Tous' ||
+        c.category?.toLowerCase() === selectedCategory.toLowerCase() ||
+        (selectedCategory === 'Pays & Régions' && c.type === 'pays');
+      return matchSearch && matchCategory;
     });
-  }, [activeClubs, search]);
+  }, [activeClubs, search, selectedCategory]);
 
   const handleJoin = async (clubId: string) => {
     triggerHaptic('selection');
@@ -68,219 +79,141 @@ export default function MobileClubsHub({
   };
 
   return (
-    <div className="w-full min-h-screen bg-[#FBFAF6] pb-28">
-      {/* Instagram-grade Hero Glass Header */}
-      <div className="relative px-5 pt-6 pb-6 bg-gradient-to-b from-[#17402C] via-[#1E5238] to-[#122E20] text-white rounded-b-[36px] shadow-[0_12px_40px_rgba(23,64,44,0.25)] border-b border-white/10 overflow-hidden">
-        {/* Subtle background glow */}
-        <div className="absolute top-0 right-0 w-48 h-48 bg-[#A8C4A2]/15 rounded-full blur-3xl pointer-events-none" />
-
-        <div className="flex items-center justify-between gap-3 mb-3 relative z-10">
-          <span className="px-3.5 py-1 bg-white/15 backdrop-blur-xl rounded-full text-[10px] font-bold tracking-widest uppercase text-[#A8C4A2] border border-white/20 shadow-sm">
-            🏕️ Clubs & Collectifs
-          </span>
-          <span className="text-[11px] font-mono font-medium text-white/80 bg-black/20 px-2.5 py-0.5 rounded-full backdrop-blur-md">
-            {clubs.length} clubs
-          </span>
+    <div className="w-full min-h-screen bg-transparent pb-36 relative font-sans text-[#17402C]">
+      {/* Pull to refresh visual indicator */}
+      {(pullProgress > 0 || isRefreshing) && (
+        <div
+          className="w-full flex items-center justify-center py-2 transition-all overflow-hidden"
+          style={{ height: isRefreshing ? '44px' : `${Math.min(pullProgress * 44, 44)}px` }}
+        >
+          <div className="flex items-center gap-2 px-3 py-1 rounded-full glass-pill text-xs font-medium text-[#17402C] shadow-2xs">
+            <div
+              className={`w-3.5 h-3.5 rounded-full border-2 border-[#17402C] border-t-transparent ${
+                isRefreshing ? 'animate-spin' : ''
+              }`}
+            />
+            <span className="text-[11px] font-mono">
+              {isRefreshing ? 'Actualisation...' : 'Tirer pour rafraîchir'}
+            </span>
+          </div>
         </div>
+      )}
 
-        <h1 className="font-display font-bold text-2xl sm:text-3xl leading-tight tracking-tight relative z-10 text-white drop-shadow-sm">
-          Partager l'aventure,<br />
-          <em className="font-serif italic font-normal text-[#A8C4A2]">en communauté active.</em>
-        </h1>
+      {/* Top Search & Actions Bar */}
+      <div className="px-3.5 pt-3 pb-1 space-y-2.5">
+        <div className="flex items-center gap-2">
+          {/* Search Bar Capsule */}
+          <div className="relative flex-1 flex items-center">
+            <Icon name="MagnifyingGlassIcon" size={14} className="absolute left-3.5 text-[#5A7064] z-10" />
+            <input
+              type="text"
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              placeholder="Rechercher un club, massif, pratique..."
+              className="glass w-full pl-9 pr-8 py-2 rounded-full text-xs text-[#17402C] placeholder-[#5A7064] border border-white/80 bg-white/80 focus:outline-none focus:ring-1 focus:ring-[#17402C] shadow-2xs"
+            />
+            {search && (
+              <button
+                type="button"
+                onClick={() => setSearch('')}
+                className="absolute right-3 text-[#5A7064] text-xs font-bold"
+              >
+                ✕
+              </button>
+            )}
+          </div>
 
-        {/* Create Club Action Button */}
-        <div className="mt-5 relative z-10">
           <button
+            type="button"
             onClick={() => {
               triggerHaptic('selection');
               onOpenCreateModal();
             }}
-            className="w-full relative overflow-hidden group py-3 px-4 bg-white/20 hover:bg-white/30 active:scale-[0.98] backdrop-blur-xl text-white rounded-2xl text-xs font-bold shadow-[0_4px_20px_rgba(0,0,0,0.15)] border border-white/40 flex items-center justify-center gap-2 transition-all"
+            className="glass-capsule-btn primary !py-1.5 !px-3 !text-xs !font-bold flex items-center gap-1 shrink-0"
           >
-            <div className="absolute inset-0 -translate-x-full group-hover:translate-x-full transition-transform duration-1000 bg-gradient-to-r from-transparent via-white/20 to-transparent pointer-events-none" />
-            <span className="text-base font-bold">＋</span>
-            <span className="tracking-wide">Créer mon propre club</span>
+            <span>➕</span>
+            <span>Créer</span>
           </button>
+        </div>
+
+        {/* Category filter chips in Liquid Glass */}
+        <div className="flex items-center gap-1.5 overflow-x-auto no-scrollbar pb-0.5">
+          {CATEGORIES.map((cat) => {
+            const isSelected = selectedCategory === cat;
+            return (
+              <button
+                key={cat}
+                type="button"
+                onClick={() => {
+                  triggerHaptic('light');
+                  setSelectedCategory(cat);
+                }}
+                className={`px-3 py-1.5 rounded-full text-xs font-bold whitespace-nowrap transition-all border ${
+                  isSelected
+                    ? 'bg-[#17402C] text-white border-[#17402C] shadow-sm'
+                    : 'bg-white/80 hover:bg-white text-[#17402C] border-white/70 shadow-2xs'
+                }`}
+              >
+                <span>{cat}</span>
+              </button>
+            );
+          })}
         </div>
       </div>
 
-      {/* Segment Switch (Découvrir / Mes Clubs) */}
-      <div className="px-4 pt-4 pb-2">
-        <div className="flex bg-[#EAE6DF]/70 p-1.5 rounded-2xl border border-[#1C2620]/5 backdrop-blur-md">
-          <button
-            onClick={() => {
-              triggerHaptic('selection');
-              setTab('decouvrir');
-            }}
-            className={`flex-1 py-2.5 rounded-xl text-xs font-bold transition-all ${
-              tab === 'decouvrir'
-                ? 'bg-white text-[#17402C] shadow-[0_2px_8px_rgba(23,64,44,0.1)]'
-                : 'text-[#5C6B5E] hover:text-[#1C2620]'
-            }`}
-          >
-            Découvrir ({clubs.length})
-          </button>
-          <button
-            onClick={() => {
-              triggerHaptic('selection');
-              setTab('mes-clubs');
-            }}
-            className={`flex-1 py-2.5 rounded-xl text-xs font-bold transition-all ${
-              tab === 'mes-clubs'
-                ? 'bg-white text-[#17402C] shadow-[0_2px_8px_rgba(23,64,44,0.1)]'
-                : 'text-[#5C6B5E] hover:text-[#1C2620]'
-            }`}
-          >
-            Mes clubs ({myClubs.length})
-          </button>
-        </div>
-
-        {/* Search Input Bar */}
-        <div className="relative mt-3">
-          <input
-            type="text"
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            placeholder="Rechercher par massif, région, sport..."
-            className="w-full bg-white border border-[#1C2620]/10 rounded-2xl pl-10 pr-4 py-2.5 text-xs text-[#1C2620] placeholder-[#5C6B5E]/60 focus:ring-2 focus:ring-[#17402C] focus:outline-none shadow-sm font-medium"
-          />
-          <div className="absolute left-3.5 top-1/2 -translate-y-1/2 text-[#5C6B5E]">
-            <Icon name="MagnifyingGlassIcon" size={16} />
-          </div>
-        </div>
-      </div>
-
-      {/* Clubs Cards Grid */}
-      <div className="px-4 space-y-3.5 mt-2">
+      {/* Clubs List */}
+      <div className="px-3.5 space-y-3 pt-1">
         {loading ? (
-          <div className="space-y-3.5">
-            {[1, 2, 3].map(i => (
-              <div key={i} className="bg-white rounded-3xl p-4 border border-[#1C2620]/5 animate-pulse space-y-3 shadow-sm">
+          <div className="space-y-3">
+            {[1, 2, 3].map((i) => (
+              <div key={i} className="glass p-4 rounded-3xl animate-pulse space-y-3 bg-white/70">
                 <div className="flex items-center gap-3">
-                  <div className="w-14 h-14 rounded-2xl bg-gray-200" />
+                  <div className="w-12 h-12 rounded-2xl bg-[#17402C]/10" />
                   <div className="space-y-1.5 flex-1">
-                    <div className="w-36 h-4 bg-gray-200 rounded" />
-                    <div className="w-24 h-3 bg-gray-100 rounded" />
+                    <div className="w-32 h-3.5 bg-[#17402C]/10 rounded" />
+                    <div className="w-20 h-2.5 bg-[#17402C]/5 rounded" />
                   </div>
                 </div>
-                <div className="w-full h-9 bg-gray-100 rounded-xl" />
+                <div className="w-full h-10 bg-[#17402C]/5 rounded-xl" />
               </div>
             ))}
           </div>
         ) : filteredClubs.length === 0 ? (
-          <div className="py-16 text-center bg-white rounded-3xl p-6 border border-[#1C2620]/8 shadow-sm">
-            <span className="text-4xl block mb-2">🏕️</span>
-            <h3 className="font-bold text-[#1C2620] text-sm">
-              {tab === 'mes-clubs' ? 'Vous n’avez pas encore rejoint de club' : 'Aucun club trouvé'}
+          <div className="py-12 text-center glass bg-white/80 p-6 rounded-3xl space-y-3 border border-white">
+            <span className="text-3xl block">🏕️</span>
+            <h3 className="font-display font-bold text-[#17402C] text-sm">
+              {tab === 'mes-clubs' ? 'Vous n’avez rejoint aucun club' : 'Aucun club trouvé'}
             </h3>
-            <p className="text-xs text-[#5C6B5E] mt-1.5 max-w-xs mx-auto leading-relaxed">
-              Participez à des sorties en groupe, partagez des topos et échangez avec les passionnés.
+            <p className="text-xs text-[#5C6B5E] max-w-xs mx-auto leading-relaxed">
+              {tab === 'mes-clubs'
+                ? 'Explorez les clubs disponibles et rejoignez votre premier collectif d’aventuriers.'
+                : 'Essayez un autre mot-clé ou créez votre propre club.'}
             </p>
-            <button
-              onClick={onOpenCreateModal}
-              className="mt-4 px-5 py-2.5 bg-[#17402C] text-white rounded-xl text-xs font-bold shadow-md active:scale-95 transition-transform"
-            >
-              + Fonder mon club
-            </button>
+            <div className="pt-2">
+              <button
+                type="button"
+                onClick={onOpenCreateModal}
+                className="glass-capsule-btn primary !min-h-[38px] !py-2 !px-5 !text-xs !font-bold"
+              >
+                <span>+ Créer un club</span>
+              </button>
+            </div>
           </div>
         ) : (
-          filteredClubs.map(club => {
-            const isMember = tab === 'mes-clubs' || club.is_member;
-
+          filteredClubs.map((club) => {
+            const isMember = tab === 'mes-clubs' || myClubs.some((mc) => mc.id === club.id);
             return (
-              <article
+              <MobileClubCard
                 key={club.id}
-                className="bg-white rounded-[26px] p-4 border border-[#1C2620]/8 shadow-[0_2px_12px_rgba(11,31,23,0.04)] hover:shadow-md transition-all flex flex-col gap-3 relative overflow-hidden"
-              >
-                {/* Header info */}
-                <div className="flex items-start justify-between gap-3">
-                  <div className="flex items-center gap-3.5 min-w-0">
-                    {/* Club Story/Emoji Icon */}
-                    <div className="w-13 h-13 min-w-[52px] h-[52px] rounded-2xl bg-gradient-to-br from-[#17402C]/10 to-[#A8C4A2]/20 border border-[#17402C]/15 flex items-center justify-center text-2xl shrink-0 shadow-inner">
-                      {club.emoji || '🏔️'}
-                    </div>
-
-                    <div className="min-w-0">
-                      <div className="flex items-center gap-1.5">
-                        <h3 className="font-display font-bold text-sm sm:text-base text-[#1C2620] truncate">
-                          {club.name}
-                        </h3>
-                        {club.is_verified && (
-                          <span className="text-xs text-emerald-600 font-bold" title="Club vérifié">✓</span>
-                        )}
-                      </div>
-                      <p className="text-xs text-[#5C6B5E] font-mono mt-0.5 font-medium flex items-center gap-1">
-                        <span>👥 {club.members_count || 1} membres</span>
-                        {club.active_this_month ? <span className="text-emerald-700 font-bold">· 🔥 {club.active_this_month} actifs</span> : null}
-                      </p>
-                    </div>
-                  </div>
-
-                  <button
-                    onClick={() => setSelectedClub(club)}
-                    className="w-8 h-8 rounded-full flex items-center justify-center text-[#5C6B5E] hover:bg-[#F5F2E8] transition-colors shrink-0"
-                    aria-label="Options du club"
-                  >
-                    <Icon name="EllipsisHorizontalIcon" size={18} />
-                  </button>
-                </div>
-
-                {club.description && (
-                  <p className="text-xs text-[#1C2620]/85 line-clamp-2 leading-relaxed font-normal">
-                    {club.description}
-                  </p>
-                )}
-
-                {/* Footer action button */}
-                <div className="flex items-center justify-between pt-2.5 border-t border-[#1C2620]/5">
-                  <span className="text-[11px] font-mono text-[#5C6B5E] font-medium bg-[#F5F2E8] px-2.5 py-0.5 rounded-md">
-                    {club.category || 'Outdoor & Randonnée'}
-                  </span>
-
-                  {isMember ? (
-                    <Link
-                      href={`/clubs/${club.id}`}
-                      className="py-2 px-4 bg-gradient-to-r from-[#17402C] to-[#1E5238] text-white rounded-xl text-xs font-bold shadow-[0_2px_8px_rgba(23,64,44,0.25)] hover:brightness-110 active:scale-95 transition-all flex items-center gap-1.5"
-                    >
-                      <span>Espace Club</span>
-                      <span className="text-xs">➔</span>
-                    </Link>
-                  ) : (
-                    <button
-                      onClick={() => handleJoin(club.id)}
-                      disabled={joiningId === club.id}
-                      className="py-2 px-4 bg-[#F5F2E8] hover:bg-[#17402C] hover:text-white text-[#17402C] rounded-xl text-xs font-bold border border-[#17402C]/10 active:scale-95 transition-all disabled:opacity-50"
-                    >
-                      {joiningId === club.id ? 'Adhésion...' : 'Rejoindre +'}
-                    </button>
-                  )}
-                </div>
-              </article>
+                club={club}
+                isMember={isMember}
+                onJoin={handleJoin}
+                joining={joiningId === club.id}
+              />
             );
           })
         )}
       </div>
-
-      {/* Menu sheet */}
-      <MoreMenuSheet
-        isOpen={!!selectedClub}
-        onClose={() => setSelectedClub(null)}
-        title={selectedClub?.name}
-        onCopyLink={() => {
-          if (typeof window !== 'undefined' && selectedClub) {
-            navigator.clipboard.writeText(`${window.location.origin}/clubs/${selectedClub.id}`);
-          }
-        }}
-        onShare={() => {
-          if (typeof navigator !== 'undefined' && navigator.share && selectedClub) {
-            navigator.share({
-              title: selectedClub.name,
-              text: selectedClub.description,
-              url: `${window.location.origin}/clubs/${selectedClub.id}`,
-            });
-          }
-        }}
-      />
     </div>
   );
 }

@@ -11,7 +11,9 @@ import MesCarnetsCard from '@/components/compte/MesCarnetsCard';
 import MesClubsCard from '@/components/compte/MesClubsCard';
 import BadgesCard from '@/components/compte/BadgesCard';
 import ConstanceCard from '@/components/compte/ConstanceCard';
+import CompteBackground from '@/components/compte/CompteBackground';
 import MobilePageShell from '@/components/mobile-nav/MobilePageShell';
+import PublicMobileProfileView from '@/components/profile/PublicMobileProfileView';
 import {
   fetchFullProfile,
   fetchUserCarnets,
@@ -86,7 +88,7 @@ export default function PublicProfilePage() {
     return (
       <div className="min-h-screen bg-[#F5F3ED] flex items-center justify-center">
         <div className="flex flex-col items-center gap-3">
-          <div className="w-8 h-8 border-2 border-[#1C2620] border-t-transparent rounded-full animate-spin" />
+          <div className="w-8 h-8 border-2 border-[#17402C] border-t-transparent rounded-full animate-spin" />
           <p className="text-sm text-[#5C6B5E] font-medium">Chargement du profil voyageur...</p>
         </div>
       </div>
@@ -96,13 +98,13 @@ export default function PublicProfilePage() {
   if (notFound || !profile) {
     return (
       <div className="min-h-screen bg-[#F5F3ED] flex items-center justify-center p-6">
-        <div className="text-center max-w-md bg-white p-8 rounded-3xl border border-[#1C2620]/10 shadow-xl">
+        <div className="text-center max-w-md bg-white p-8 rounded-3xl border border-[#17402C]/10 ">
           <p className="text-5xl mb-4">🧭</p>
-          <h2 className="font-display font-800 text-2xl text-[#1C2620] mb-2">Profil introuvable</h2>
+          <h2 className="font-display font-800 text-2xl text-[#17402C] mb-2">Profil introuvable</h2>
           <p className="text-sm text-[#5C6B5E] mb-6">Ce voyageur n&apos;existe pas ou son profil est indisponible.</p>
           <Link
             href="/communaute"
-            className="inline-flex items-center gap-2 px-6 py-3 bg-[#1C2620] text-white rounded-full text-xs font-bold hover:bg-[#2A3830] transition-colors"
+            className="inline-flex items-center gap-2 px-6 py-3 bg-[#17402C] text-white rounded-full text-xs font-bold hover:bg-[#2A3830] transition-colors"
           >
             Explorer la communauté
           </Link>
@@ -115,7 +117,8 @@ export default function PublicProfilePage() {
     <>
       {/* DESKTOP */}
       <div className="hidden md:block">
-        <div className="min-h-screen bg-[#F5F3ED] text-[#1C2620] selection:bg-emerald-900/20 font-sans">
+        <div className="min-h-screen bg-transparent text-[#17402C] selection:bg-emerald-900/20 font-sans relative">
+          <CompteBackground />
           <Header />
           
           <main className="pt-24 pb-16">
@@ -123,12 +126,12 @@ export default function PublicProfilePage() {
               
               {/* Top Navigation & Status */}
               <div className="flex items-center justify-between mb-6">
-                <div className="flex items-center gap-2 text-xs font-semibold text-[#1C2620]/60">
-                  <Link href="/" className="hover:text-[#1C2620] transition-colors">Accueil</Link>
+                <div className="flex items-center gap-2 text-xs font-semibold text-[#17402C]/60">
+                  <Link href="/" className="hover:text-[#17402C] transition-colors">Accueil</Link>
                   <span>›</span>
-                  <Link href="/communaute" className="hover:text-[#1C2620] transition-colors">Communauté</Link>
+                  <Link href="/communaute" className="hover:text-[#17402C] transition-colors">Communauté</Link>
                   <span>›</span>
-                  <span className="text-[#1C2620] font-bold">Profil de {profile.first_name}</span>
+                  <span className="text-[#17402C] font-bold">Profil de {profile.first_name}</span>
                 </div>
                 
                 <div className="flex items-center gap-3">
@@ -188,7 +191,7 @@ export default function PublicProfilePage() {
 
           {/* Toast */}
           {toast && (
-            <div className="fixed bottom-8 left-1/2 -translate-x-1/2 z-[110] bg-[#1C2620] text-white px-6 py-3 rounded-full text-xs font-bold shadow-2xl flex items-center gap-2 border border-[#2D5A3D]">
+            <div className="fixed bottom-8 left-1/2 -translate-x-1/2 z-[110] bg-[#17402C] text-white px-6 py-3 rounded-full text-xs font-bold  flex items-center gap-2 border border-[#17402C]">
               <span>✨</span>
               <span>{toast}</span>
             </div>
@@ -198,34 +201,23 @@ export default function PublicProfilePage() {
 
       {/* MOBILE */}
       <div className="block md:hidden">
-        <MobilePageShell background="#F5F3ED">
-          <div className="p-4 space-y-4 pb-20">
-            <div className="flex items-center gap-2 text-xs font-semibold text-[#1C2620]/60 mb-2">
-              <Link href="/" className="hover:text-[#1C2620]">Accueil</Link>
-              <span>›</span>
-              <Link href="/communaute" className="hover:text-[#1C2620]">Communauté</Link>
-              <span>›</span>
-              <span className="text-[#1C2620] font-bold truncate">Profil de {profile.first_name}</span>
-            </div>
-
-            <HeroProfil 
-              profile={profile as any} 
-              onShareProfile={() => {
-                if (typeof window !== 'undefined' && navigator.clipboard) {
-                  navigator.clipboard.writeText(window.location.href);
-                  showToast('Lien du profil copié !');
-                }
-              }} 
-            />
-            
-            <StatsBandeau profile={profile as any} />
-            <MesCarnetsCard carnets={carnets as any} />
-            <MesClubsCard clubs={clubs as any} />
-            <BadgesCard badges={badges as any} trustScore={profile.trust_score ?? 50} />
-          </div>
+        <MobilePageShell background="transparent">
+          <PublicMobileProfileView
+            profile={profile as any}
+            carnets={carnets as any}
+            clubs={clubs as any}
+            badges={badges as any}
+            activite={activite as any}
+            onShare={() => {
+              if (typeof window !== 'undefined' && navigator.clipboard) {
+                navigator.clipboard.writeText(window.location.href);
+                showToast('Lien du profil copié dans le presse-papiers !');
+              }
+            }}
+          />
 
           {toast && (
-            <div className="fixed bottom-20 left-1/2 -translate-x-1/2 z-[110] bg-[#1C2620] text-white px-5 py-2.5 rounded-full text-xs font-bold shadow-2xl flex items-center gap-2 border border-[#2D5A3D]">
+            <div className="fixed bottom-24 left-1/2 -translate-x-1/2 z-[110] bg-[#17402C] text-white px-5 py-2.5 rounded-full text-xs font-bold flex items-center gap-2 border border-white/20 shadow-xl">
               <span>✨</span>
               <span>{toast}</span>
             </div>

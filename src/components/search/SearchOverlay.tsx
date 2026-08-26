@@ -73,7 +73,7 @@ export default function SearchOverlay() {
             style={{
               position: 'fixed',
               inset: 0,
-              background: 'rgba(11,31,23,0.5)',
+              background: 'rgba(23,64,44,0.5)',
               zIndex: 60,
             }}
             onClick={closeSearch}
@@ -100,7 +100,7 @@ export default function SearchOverlay() {
               paddingBottom: '16px',
               borderBottomLeftRadius: '20px',
               borderBottomRightRadius: '20px',
-              boxShadow: '0 8px 32px rgba(11,31,23,0.12)',
+              boxShadow: '0 8px 32px rgba(23,64,44,0.12)',
             }}
             role="dialog"
             aria-modal="true"
@@ -117,7 +117,7 @@ export default function SearchOverlay() {
                   borderRadius: '14px',
                   padding: '0 16px',
                   height: '50px',
-                  border: '1px solid rgba(11,31,23,0.08)',
+                  border: '1px solid rgba(23,64,44,0.08)',
                 }}
               >
                 <LkvIcon name="search" size={20} color="#6B7A72" />
@@ -135,7 +135,7 @@ export default function SearchOverlay() {
                     outline: 'none',
                     background: 'transparent',
                     fontSize: '16px',
-                    color: '#0B1F17',
+                    color: '#17402C',
                     fontFamily: 'var(--font-sans)',
                   }}
                 />

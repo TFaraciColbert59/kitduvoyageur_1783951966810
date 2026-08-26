@@ -165,7 +165,7 @@ export default function HomepageDestinationsSection() {
         <div className="mt-8 flex justify-center md:justify-start">
           <Link
             href="/pays"
-            className="inline-flex items-center gap-2 text-sm font-medium text-[#2D5A3D] hover:text-[#1A1F1C] transition-colors"
+            className="inline-flex items-center gap-2 text-sm font-medium text-[#17402C] hover:text-[#365233] transition-colors"
           >
             Explorer toutes les destinations
             <Icon name="ArrowRightIcon" size={14} variant="outline" />

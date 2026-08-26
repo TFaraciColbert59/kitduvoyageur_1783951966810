@@ -91,7 +91,7 @@ export default function CookiesPage() {
                   aria-pressed={analytics}
                   aria-label="Activer ou désactiver les cookies analytiques"
                 >
-                  <div className="w-4 h-4 bg-white rounded-full shadow-sm" />
+                  <div className="w-4 h-4 bg-white rounded-full " />
                 </button>
               </div>
 
@@ -106,7 +106,7 @@ export default function CookiesPage() {
                   aria-pressed={marketing}
                   aria-label="Activer ou désactiver les cookies marketing"
                 >
-                  <div className="w-4 h-4 bg-white rounded-full shadow-sm" />
+                  <div className="w-4 h-4 bg-white rounded-full " />
                 </button>
               </div>
             </div>
@@ -150,31 +150,31 @@ export default function CookiesPage() {
   const mobileContent = (
     <div style={{ padding: '16px' }}>
       <p style={{ fontSize: '11px', fontFamily: 'var(--font-mono)', color: '#17402C', letterSpacing: '0.14em', textTransform: 'uppercase', marginBottom: '12px' }}>Cookies & Traceurs</p>
-      <h1 style={{ fontSize: '24px', fontWeight: 800, color: '#1C2620', marginBottom: '8px', fontFamily: 'var(--font-display)' }}>Politique de gestion des cookies</h1>
-      <p style={{ fontSize: '12px', color: 'rgba(28,38,32,0.5)', marginBottom: '24px' }}>Conformément aux recommandations de la CNIL</p>
+      <h1 style={{ fontSize: '24px', fontWeight: 800, color: '#17402C', marginBottom: '8px', fontFamily: 'var(--font-display)' }}>Politique de gestion des cookies</h1>
+      <p style={{ fontSize: '12px', color: 'rgba(23,64,44,0.5)', marginBottom: '24px' }}>Conformément aux recommandations de la CNIL</p>
 
-      <div style={{ background: '#F4F1EA', borderRadius: '16px', border: '1px solid rgba(11,31,23,0.06)', padding: '16px', marginBottom: '24px' }}>
-        <p style={{ fontSize: '14px', fontWeight: 600, color: '#1C2620', marginBottom: '4px' }}>Gérer mes préférences</p>
-        <p style={{ fontSize: '12px', color: 'rgba(28,38,32,0.5)', marginBottom: '16px' }}>
+      <div style={{ background: '#F4F1EA', borderRadius: '16px', border: '1px solid rgba(23,64,44,0.06)', padding: '16px', marginBottom: '24px' }}>
+        <p style={{ fontSize: '14px', fontWeight: 600, color: '#17402C', marginBottom: '4px' }}>Gérer mes préférences</p>
+        <p style={{ fontSize: '12px', color: 'rgba(23,64,44,0.5)', marginBottom: '16px' }}>
           {hasConsent ? 'Vos préférences sont définies.' : 'Vous n\'avez pas encore défini vos préférences.'}
         </p>
 
         <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', marginBottom: '16px' }}>
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '10px', background: '#FBFAF6', borderRadius: '12px', border: '1px solid rgba(11,31,23,0.06)' }}>
-            <div><p style={{ fontSize: '13px', fontWeight: 500, color: '#1C2620' }}>🔒 Cookies nécessaires</p><p style={{ fontSize: '11px', color: 'rgba(28,38,32,0.5)' }}>Toujours actifs</p></div>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '10px', background: '#FBFAF6', borderRadius: '12px', border: '1px solid rgba(23,64,44,0.06)' }}>
+            <div><p style={{ fontSize: '13px', fontWeight: 500, color: '#17402C' }}>🔒 Cookies nécessaires</p><p style={{ fontSize: '11px', color: 'rgba(23,64,44,0.5)' }}>Toujours actifs</p></div>
             <div style={{ width: '36px', height: '18px', background: '#17402C', borderRadius: '36px', display: 'flex', alignItems: 'center', justifyContent: 'flex-end', paddingRight: '2px', opacity: 0.6 }}>
               <div style={{ width: '14px', height: '14px', background: 'white', borderRadius: '50%' }} />
             </div>
           </div>
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '10px', background: '#FBFAF6', borderRadius: '12px', border: '1px solid rgba(11,31,23,0.06)' }}>
-            <div><p style={{ fontSize: '13px', fontWeight: 500, color: '#1C2620' }}>📊 Cookies analytiques</p></div>
-            <button onClick={() => setAnalytics(!analytics)} style={{ width: '36px', height: '18px', borderRadius: '36px', display: 'flex', alignItems: 'center', transition: 'all 0.2s', background: analytics ? '#17402C' : 'rgba(11,31,23,0.15)', justifyContent: analytics ? 'flex-end' : 'flex-start', padding: analytics ? '0 2px 0 0' : '0 0 0 2px', border: 'none', cursor: 'pointer' }}>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '10px', background: '#FBFAF6', borderRadius: '12px', border: '1px solid rgba(23,64,44,0.06)' }}>
+            <div><p style={{ fontSize: '13px', fontWeight: 500, color: '#17402C' }}>📊 Cookies analytiques</p></div>
+            <button onClick={() => setAnalytics(!analytics)} style={{ width: '36px', height: '18px', borderRadius: '36px', display: 'flex', alignItems: 'center', transition: 'all 0.2s', background: analytics ? '#17402C' : 'rgba(23,64,44,0.15)', justifyContent: analytics ? 'flex-end' : 'flex-start', padding: analytics ? '0 2px 0 0' : '0 0 0 2px', border: 'none', cursor: 'pointer' }}>
               <div style={{ width: '14px', height: '14px', background: 'white', borderRadius: '50%', boxShadow: '0 1px 2px rgba(0,0,0,0.1)' }} />
             </button>
           </div>
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '10px', background: '#FBFAF6', borderRadius: '12px', border: '1px solid rgba(11,31,23,0.06)' }}>
-            <div><p style={{ fontSize: '13px', fontWeight: 500, color: '#1C2620' }}>🎯 Cookies marketing</p></div>
-            <button onClick={() => setMarketing(!marketing)} style={{ width: '36px', height: '18px', borderRadius: '36px', display: 'flex', alignItems: 'center', transition: 'all 0.2s', background: marketing ? '#17402C' : 'rgba(11,31,23,0.15)', justifyContent: marketing ? 'flex-end' : 'flex-start', padding: marketing ? '0 2px 0 0' : '0 0 0 2px', border: 'none', cursor: 'pointer' }}>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '10px', background: '#FBFAF6', borderRadius: '12px', border: '1px solid rgba(23,64,44,0.06)' }}>
+            <div><p style={{ fontSize: '13px', fontWeight: 500, color: '#17402C' }}>🎯 Cookies marketing</p></div>
+            <button onClick={() => setMarketing(!marketing)} style={{ width: '36px', height: '18px', borderRadius: '36px', display: 'flex', alignItems: 'center', transition: 'all 0.2s', background: marketing ? '#17402C' : 'rgba(23,64,44,0.15)', justifyContent: marketing ? 'flex-end' : 'flex-start', padding: marketing ? '0 2px 0 0' : '0 0 0 2px', border: 'none', cursor: 'pointer' }}>
               <div style={{ width: '14px', height: '14px', background: 'white', borderRadius: '50%', boxShadow: '0 1px 2px rgba(0,0,0,0.1)' }} />
             </button>
           </div>
@@ -182,22 +182,22 @@ export default function CookiesPage() {
 
         <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
           <button onClick={handleSave} style={{ background: '#17402C', color: 'white', border: 'none', padding: '10px 16px', borderRadius: '12px', fontSize: '13px', fontWeight: 600, cursor: 'pointer' }}>{saved ? '✓ Préférences enregistrées' : 'Enregistrer mes choix'}</button>
-          <button onClick={handleAcceptAll} style={{ background: 'rgba(11,31,23,0.06)', color: '#1C2620', border: 'none', padding: '10px 16px', borderRadius: '12px', fontSize: '13px', fontWeight: 500, cursor: 'pointer' }}>Tout accepter</button>
-          <button onClick={handleRejectAll} style={{ background: 'transparent', color: 'rgba(28,38,32,0.6)', border: '1px solid rgba(11,31,23,0.06)', padding: '10px 16px', borderRadius: '12px', fontSize: '13px', cursor: 'pointer' }}>Tout refuser</button>
+          <button onClick={handleAcceptAll} style={{ background: 'rgba(23,64,44,0.06)', color: '#17402C', border: 'none', padding: '10px 16px', borderRadius: '12px', fontSize: '13px', fontWeight: 500, cursor: 'pointer' }}>Tout accepter</button>
+          <button onClick={handleRejectAll} style={{ background: 'transparent', color: 'rgba(23,64,44,0.6)', border: '1px solid rgba(23,64,44,0.06)', padding: '10px 16px', borderRadius: '12px', fontSize: '13px', cursor: 'pointer' }}>Tout refuser</button>
         </div>
       </div>
 
       <section style={{ marginBottom: '24px' }}>
-        <h2 style={{ fontSize: '14px', fontWeight: 600, color: '#1C2620', marginBottom: '8px', paddingBottom: '6px', borderBottom: '1px solid rgba(11,31,23,0.06)' }}>1. Qu&apos;est-ce qu&apos;un cookie ?</h2>
-        <p style={{ fontSize: '13px', color: 'rgba(28,38,32,0.8)', lineHeight: '1.6' }}>Un cookie est un petit fichier texte déposé sur votre terminal lors de la visite d&apos;un site web.</p>
+        <h2 style={{ fontSize: '14px', fontWeight: 600, color: '#17402C', marginBottom: '8px', paddingBottom: '6px', borderBottom: '1px solid rgba(23,64,44,0.06)' }}>1. Qu&apos;est-ce qu&apos;un cookie ?</h2>
+        <p style={{ fontSize: '13px', color: 'rgba(23,64,44,0.8)', lineHeight: '1.6' }}>Un cookie est un petit fichier texte déposé sur votre terminal lors de la visite d&apos;un site web.</p>
       </section>
       <section style={{ marginBottom: '24px' }}>
-        <h2 style={{ fontSize: '14px', fontWeight: 600, color: '#1C2620', marginBottom: '8px', paddingBottom: '6px', borderBottom: '1px solid rgba(11,31,23,0.06)' }}>2. Cookies utilisés</h2>
-        <p style={{ fontSize: '13px', color: 'rgba(28,38,32,0.8)', lineHeight: '1.6' }}>Cookies nécessaires : session, préférences, Stripe. Cookies analytics (avec consentement) : Google Analytics, 13 mois max. Cookies marketing : aucun actif.</p>
+        <h2 style={{ fontSize: '14px', fontWeight: 600, color: '#17402C', marginBottom: '8px', paddingBottom: '6px', borderBottom: '1px solid rgba(23,64,44,0.06)' }}>2. Cookies utilisés</h2>
+        <p style={{ fontSize: '13px', color: 'rgba(23,64,44,0.8)', lineHeight: '1.6' }}>Cookies nécessaires : session, préférences, Stripe. Cookies analytics (avec consentement) : Google Analytics, 13 mois max. Cookies marketing : aucun actif.</p>
       </section>
       <section style={{ marginBottom: '24px' }}>
-        <h2 style={{ fontSize: '14px', fontWeight: 600, color: '#1C2620', marginBottom: '8px', paddingBottom: '6px', borderBottom: '1px solid rgba(11,31,23,0.06)' }}>3. Contact DPO</h2>
-        <p style={{ fontSize: '13px', color: 'rgba(28,38,32,0.8)', lineHeight: '1.6' }}><a href="mailto:dpo@lekitduvoyageur.fr" style={{ color: '#17402C', textDecoration: 'underline' }}>dpo@lekitduvoyageur.fr</a></p>
+        <h2 style={{ fontSize: '14px', fontWeight: 600, color: '#17402C', marginBottom: '8px', paddingBottom: '6px', borderBottom: '1px solid rgba(23,64,44,0.06)' }}>3. Contact DPO</h2>
+        <p style={{ fontSize: '13px', color: 'rgba(23,64,44,0.8)', lineHeight: '1.6' }}><a href="mailto:dpo@lekitduvoyageur.fr" style={{ color: '#17402C', textDecoration: 'underline' }}>dpo@lekitduvoyageur.fr</a></p>
       </section>
     </div>
   );

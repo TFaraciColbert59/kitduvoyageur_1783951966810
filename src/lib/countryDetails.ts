@@ -5,6 +5,7 @@ export interface CountryDetail {
   nom: string;
   slogan: string;
   subtitle: string;
+  hero_image_url?: string;
   region: string;
   saison_recommandee: string;
   latitude: string;
@@ -23,7 +24,6 @@ export interface CountryDetail {
   monnaie_nom: string;
   taux_change: string;
   presentation_titre: string;
-  presentation_lead: string;
   presentation_paragraphes: string[];
   citation_texte: string;
   citation_auteur: string;
@@ -116,7 +116,6 @@ export const COUNTRY_DETAILS: Record<string, Partial<CountryDetail>> = {
     monnaie_nom: 'couronne',
     taux_change: '1 € ≈ 148 ISK',
     presentation_titre: 'Une île où la terre respire, encore.',
-    presentation_lead: 'L’Islande tient dans un paradoxe : la plus jeune terre d’Europe, taillée par l’écartement des plaques tectoniques, et l’un des plus anciens parlements du monde. Un pays qui se raconte au présent — parce qu’il se refait chaque année.',
     presentation_paragraphes: [
       'Posée à la jonction des plaques nord-américaine et eurasienne, l’Islande est une géologie en mouvement — un archipel volcanique de 103 000 km² où trente systèmes actifs sculptent en direct des paysages qui ailleurs prendraient des millénaires. Les glaciers couvrent encore 11 % du territoire ; la vapeur des sources chaudes, elle, s’échappe partout.',
       'C’est un pays de contrastes exécutés à l’échelle : plages de sable noir léchées par l’Atlantique, champs de lave figés en champs verts par la mousse, lagons turquoise perdus entre les fjords. Ici, la Ring Road — 1 332 km d’asphalte parfait — enlace l’île comme une invitation à ne rien manquer.',
@@ -406,7 +405,6 @@ export const COUNTRY_DETAILS: Record<string, Partial<CountryDetail>> = {
     monnaie_nom: 'yen',
     taux_change: '1 € ≈ 163 JPY',
     presentation_titre: 'Entre forêts de cèdres et sentiers sacrés.',
-    presentation_lead: 'Archipel montagneux à 70 %, le Japon est une terre de marche et de recueillement où chaque vallée abrite un onsen séculaire.',
     presentation_paragraphes: [
       'Le Japon ne se résume pas à ses mégapoles futuristes. Hors des métropoles s’étend un royaume de sommets escarpés, de forêts primaires de cèdres et de pèlerinages historiques foulés depuis plus d’un millénaire.',
       'Le sentier Kumano Kodō, inscrit à l’UNESCO, et les Alpes de Nagano offrent des treks de classe mondiale, jalonnés de ryokans traditionnels où l’on dîne en yukata après un bain thermal bouillant.',
@@ -652,6 +650,7 @@ export const COUNTRY_DETAILS: Record<string, Partial<CountryDetail>> = {
     nom: 'France',
     slogan: 'massifs & terroirs',
     subtitle: 'Des crêtes acérées du Mont-Blanc aux calanques turquoise de Méditerranée. Un concentré mondial de sentiers mythiques, de gastronomie et de patrimoine.',
+    hero_image_url: 'https://images.unsplash.com/photo-1530122037265-a5f1f91d3b99?q=80&w=1200&auto=format&fit=crop',
     region: 'Europe de l’Ouest · Alpes & Terroirs',
     saison_recommandee: 'mai → octobre',
     latitude: '46°36′ N',
@@ -670,7 +669,6 @@ export const COUNTRY_DETAILS: Record<string, Partial<CountryDetail>> = {
     monnaie_nom: 'euro',
     taux_change: 'Devise locale',
     presentation_titre: 'La diversité des reliefs à portée de sentier.',
-    presentation_lead: 'Des 4 807 mètres du Mont-Blanc aux granits sauvages du GR20 corse, la France offre le plus grand réseau de sentiers balisés d’Europe.',
     presentation_paragraphes: [
       'Plus de 180 000 kilomètres de sentiers balisés (GR®, GRP®) sillonnent l’hexagone, reliant les sommets alpins aux falaises de Bretagne et aux causses du Massif Central.',
       'Chaque massif possède son identité forgée par le terroir, les bergers et les refuges gardés où l’on partage une fondue ou une potée après 8 heures de marche.',
@@ -941,7 +939,6 @@ export function getCompleteCountryDetail(countryCode: string): CountryDetail {
     monnaie_nom: custom.monnaie_nom || 'Devise',
     taux_change: custom.taux_change || `1 € ≈ 1.1 ${base.monnaie || 'EUR'}`,
     presentation_titre: custom.presentation_titre || `Une terre d'aventure et de grands espaces.`,
-    presentation_lead: custom.presentation_lead || `${base.nom} réunit des paysages emblématiques, une culture préservée et des itinéraires d'exception.`,
     presentation_paragraphes: custom.presentation_paragraphes || [
       `Situé en ${base.continent}, ${base.nom} offre une variété remarquable de reliefs et de biomes propices au trek et à l'exploration en autonomie.`,
       `Les parcs nationaux et régions sauvages abritent des itinéraires remarquables où la beauté naturelle se conjugue avec l'accueil des habitants locaux.`,
@@ -1182,3 +1179,4 @@ export function getCompleteCountryDetail(countryCode: string): CountryDetail {
     },
   };
 }
+
