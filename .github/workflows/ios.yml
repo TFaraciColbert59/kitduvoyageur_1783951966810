@@ -56,7 +56,7 @@ jobs:
         working-directory: ios/App
         run: |
           xcodebuild \
-            -workspace App.xcworkspace \
+            -workspace App/App.xcworkspace \
             -scheme App \
             -destination 'generic/platform=iOS' \
             -configuration Release \
