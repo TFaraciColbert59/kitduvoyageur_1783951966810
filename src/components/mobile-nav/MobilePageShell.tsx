@@ -65,6 +65,8 @@ export default function MobilePageShell({
         minHeight: '100dvh',
         position: 'relative',
         overflowX: 'clip',
+        overscrollBehavior: 'none',
+        overscrollBehaviorY: 'none',
         width: '100%',
         maxWidth: '100vw',
         boxSizing: 'border-box',

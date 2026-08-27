@@ -57,13 +57,11 @@ const instrumentSerif = Instrument_Serif({
 export const viewport: Viewport = {
   width: 'device-width',
   initialScale: 1,
+  maximumScale: 1,
+  userScalable: false,
   viewportFit: 'cover',
   interactiveWidget: 'resizes-visual',
-  colorScheme: 'light dark',
-  themeColor: [
-    { media: '(prefers-color-scheme: light)', color: '#ffffff' },
-    { media: '(prefers-color-scheme: dark)', color: '#000000' },
-  ],
+  themeColor: '#FBFAF6',
 };
 
 const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://lekitduvoyageur.fr';
@@ -94,6 +92,11 @@ export const metadata: Metadata = {
   icons: {
     icon: [{ url: '/favicon.ico', type: 'image/x-icon' }],
     apple: [{ url: '/assets/images/app_logo.png' }],
+  },
+  appleWebApp: {
+    capable: true,
+    statusBarStyle: 'black-translucent',
+    title: 'LKDV',
   },
   manifest: '/manifest.json',
   openGraph: {
@@ -239,19 +242,6 @@ export default function RootLayout({
                     >
                       Aller au contenu principal
                     </a>
-                    {/* Atmospheric iOS Status Bar Scrim (Protection du Dynamic Island et de l'heure) */}
-                    <div
-                      className="md:hidden fixed top-0 left-0 right-0 z-[9990] pointer-events-none"
-                      style={{
-                        height: 'calc(env(safe-area-inset-top, 0px) + 12px)',
-                        background: 'linear-gradient(180deg, rgba(20, 30, 24, 0.45) 0%, rgba(20, 30, 24, 0.15) 60%, transparent 100%)',
-                        backdropFilter: 'blur(8px)',
-                        WebkitBackdropFilter: 'blur(8px)',
-                        maskImage: 'linear-gradient(180deg, black 65%, transparent 100%)',
-                        WebkitMaskImage: 'linear-gradient(180deg, black 65%, transparent 100%)',
-                      }}
-                      aria-hidden="true"
-                    />
 
                     {/* Mobile navigation — hidden on desktop (md+) */}
                     <MobileNavWrapper />
