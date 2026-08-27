@@ -16,7 +16,7 @@ import MigrationEffect from '@/lib/storage/MigrationEffect';
 import { getOrganizationSchema, getWebsiteSchema } from '@/lib/seo-utils';
 import ReactQueryProvider from '@/components/ReactQueryProvider';
 import PageTransition from '@/components/ui/PageTransition';
-import CustomCursor from '@/components/ui/CustomCursor';
+import { ConditionalCursor } from '@/components/ui/CustomCursor';
 import PrefetchRoutes from '@/components/PrefetchRoutes';
 import NativeAppBootstrap from '@/components/NativeAppBootstrap';
 
@@ -260,7 +260,7 @@ export default function RootLayout({
                       <PageTransition>{children}</PageTransition>
                     </main>
                     <CookieConsentBanner />
-                    <CustomCursor />
+                    <ConditionalCursor />
                     {/* Migration Mon Matériel — exécutée UNE SEULE FOIS au montage */}
                     <MigrationEffect />
                   </ReactQueryProvider>

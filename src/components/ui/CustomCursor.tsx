@@ -2,25 +2,44 @@
 
 import React, { useEffect, useRef, useState } from 'react';
 
+export function useIsTouchDevice() {
+  const [isTouch, setIsTouch] = useState(true); // true par défaut = safe (pas de curseur tant qu'on sait pas)
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    setIsTouch(
+      'ontouchstart' in window ||
+      navigator.maxTouchPoints > 0 ||
+      window.matchMedia('(hover: none) and (pointer: coarse)').matches
+    );
+  }, []);
+  return isTouch;
+}
+
+export function ConditionalCursor() {
+  const isTouch = useIsTouchDevice();
+  if (isTouch) return null;
+  return <CustomCursor />;
+}
+
 export default function CustomCursor() {
   const [position, setPosition] = useState({ x: -100, y: -100 });
   const [ringPosition, setRingPosition] = useState({ x: -100, y: -100 });
   const [isHovered, setIsHovered] = useState(false);
   const [isClicked, setIsClicked] = useState(false);
   const [isVisible, setIsVisible] = useState(false);
-  const [isTouchDevice, setIsTouchDevice] = useState(false);
+  const [isTouchDevice, setIsTouchDevice] = useState(true);
 
   const isVisibleRef = useRef(false);
 
   useEffect(() => {
-    // Detect if device supports touch/coarse pointer
-    if (typeof window !== 'undefined') {
-      const touchQuery = window.matchMedia('(hover: none) and (pointer: coarse)');
-      if (touchQuery.matches || 'ontouchstart' in window || navigator.maxTouchPoints > 0) {
-        setIsTouchDevice(true);
-        return;
-      }
+    if (typeof window === 'undefined') return;
+    // Ne démarre JAMAIS le rAF sur device tactile
+    const isTouch = 'ontouchstart' in window || navigator.maxTouchPoints > 0 || window.matchMedia('(hover: none) and (pointer: coarse)').matches;
+    if (isTouch) {
+      setIsTouchDevice(true);
+      return;
     }
+    setIsTouchDevice(false);
 
     let animationFrameId: number;
     let targetX = -100;
