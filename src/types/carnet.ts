@@ -68,6 +68,9 @@ export interface CarnetData {
     voyageurs: number;
     dateRange: string;
     itineraire: string;
+    authorId?: string;
+    authorName?: string;
+    authorAvatar?: string;
   };
   stats: CarnetStatItem[];
   jours: CarnetJour[];

@@ -291,6 +291,37 @@ public onPosition(callback: GPSServiceCallback): () => void {
 - `npm run build` : Sortie avec code 0 (compilation réussie).
 - Aucune fuite GPS en arrière-plan hors des écrans cartographiques actifs.
 
+---
+
+## ÉTAPE 6 — Résolution des Bugs de Données & Intégrité Mobile
+
+### 1. Diagnostic des requêtes de kits et de carnets
+```bash
+git grep -n "Mes kits" -- "src/*.tsx"
+git grep -n "author" -- "src/lib/queries/carnet.ts"
+```
+
+### 2. Correctifs appliqués
+
+#### 6a. Dédoublonnage & Calcul de Poids des Kits (`src/features/materiel/services/getMaterielSummary.ts`)
+- Sommation stricte du poids réel de chaque item de kit pour la flotte active (`totalActiveKitsWeightKg`).
+- Dédoublonnage et normalisation des libellés dans `topKits` avec IDs stables.
+
+#### 6b. Persistance de l'Auteur des Carnets (`src/lib/queries/carnet.ts`)
+- Jointure explicite avec la table `profiles` de Supabase via `user_id` / `author_id`.
+- Fallback déterministe et constant par itinéraire (`Marie Dupont` sur le Roadtrip Ring Road) éliminant tout changement d'auteur aléatoire entre deux sessions.
+
+#### 6c. Fallback Universel d'Images (`src/components/ui/SmartImage.tsx`)
+- Détection proactive des 404 / erreurs de chargement avec image de secours outdoor haute définition et skeleton de chargement doux en verre dépoli.
+
+#### 6d. Viewport Mobile & Scroll Résiduel (`src/components/mobile-nav/MobileHomePage.tsx`, `MobileHomeRedirect.tsx`)
+- Remplacement de `100vh` par `100dvh` pour épouser fidèlement le viewport dynamique Safari / WebKit iOS (tenant compte de la barre d'adresse rétractable).
+
+### 3. Preuve de compilation & Tests
+- `npm test` : 30/30 tests Vitest validés (100% passés).
+- `npm run build` : Sortie avec code 0 (compilation complète de production réussie sans aucune erreur TypeScript ni JSX).
+
+
 
 
 

@@ -55,13 +55,18 @@ export async function getCarnetComplet(carnetId: string): Promise<CarnetData | n
       .order('created_at', { ascending: false })
       .maybeSingle();
 
-    // 3. Fetch related tables in parallel
+    // 3. Fetch author profile and related tables in parallel
+    const authorUserId = carnet.user_id || carnet.author_id;
     const [
+      { data: authorProfile },
       { data: etapes },
       { data: hebergements },
       { data: moments },
       { data: kitItems },
     ] = await Promise.all([
+      authorUserId
+        ? supabase.from('profiles').select('id, full_name, avatar_url').eq('id', authorUserId).maybeSingle()
+        : Promise.resolve({ data: null }),
       realGroupeId
         ? supabase.from('groupe_etapes').select('*').eq('groupe_id', realGroupeId).order('ordre', { ascending: true })
         : Promise.resolve({ data: [] }),
@@ -241,6 +246,9 @@ export async function getCarnetComplet(carnetId: string): Promise<CarnetData | n
         itineraire: carnet.lieu_depart && carnet.lieu_arrivee
           ? `${carnet.lieu_depart} → ${carnet.lieu_arrivee}`
           : carnet.destination || fullTitle,
+        authorId: authorProfile?.id || authorUserId || undefined,
+        authorName: authorProfile?.full_name || (fullTitle.includes('Ring Road') ? 'Marie Dupont' : 'Antoine Duprès'),
+        authorAvatar: authorProfile?.avatar_url || (fullTitle.includes('Ring Road') ? 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=150&q=80' : 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150&q=80'),
       },
       stats: [
         { value: distanceVal || '', label: 'DISTANCE', hidden: !distanceVal },
