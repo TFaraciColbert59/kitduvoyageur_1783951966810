@@ -82,7 +82,9 @@ function AnimatedCounter({
       return;
     }
     startRef.current = performance.now();
+    let running = true;
     const animate = (now: number) => {
+      if (!running || (typeof document !== 'undefined' && document.hidden)) return;
       const elapsed = now - startRef.current;
       const progress = Math.min(elapsed / duration, 1);
       const eased = 1 - Math.pow(1 - progress, 3);
@@ -92,7 +94,23 @@ function AnimatedCounter({
       }
     };
     rafRef.current = requestAnimationFrame(animate);
-    return () => cancelAnimationFrame(rafRef.current);
+
+    const handleVisibility = () => {
+      running = !document.hidden;
+      if (running) {
+        startRef.current = performance.now();
+        rafRef.current = requestAnimationFrame(animate);
+      } else {
+        cancelAnimationFrame(rafRef.current);
+      }
+    };
+    document.addEventListener('visibilitychange', handleVisibility);
+
+    return () => {
+      running = false;
+      cancelAnimationFrame(rafRef.current);
+      document.removeEventListener('visibilitychange', handleVisibility);
+    };
   }, [target, duration, shouldAnimate]);
 
   const display = target === 0 ? '—' : Math.floor(current).toLocaleString('fr-FR');

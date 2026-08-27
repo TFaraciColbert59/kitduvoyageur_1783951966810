@@ -141,3 +141,48 @@ import { ConditionalCursor } from '@/components/ui/CustomCursor';
 - `npm run build` : Sortie avec code 0 (compilation réussie).
 - 0 rAF et 0 listener `mousemove` actifs sur mobile/touch.
 
+---
+
+## ÉTAPE 3 — Fond Animé & Boucles : Coupure Hors Visibilité
+
+### 1. Diagnostic des boucles et timers infinis
+Recherche des timers et animations à intervalle régulier :
+```bash
+git grep -n -E "repeat:\s*Infinity|setInterval" -- "src/*.tsx" "src/*.ts"
+```
+
+### 2. Fichiers modifiés
+- `src/components/home/TrustCounters.tsx` (Lignes 79 à 110) : Ajout du listener `visibilitychange` et de l'interrupteur `running` pour stopper le rAF immédiatement quand l'onglet ou l'application est en arrière-plan.
+- `src/features/materiel/components/cards/CountdownLive.tsx` (Lignes 6 à 35) : Ajout de la mise en pause du timer `setInterval` dès que `document.hidden` est actif.
+
+### 3. Avant / Après
+
+**Dans `src/components/home/TrustCounters.tsx` :**
+*Avant :*
+```tsx
+const animate = (now: number) => {
+  // rAF tournait même si l'onglet était masqué ou en arrière-plan
+};
+```
+*Après :*
+```tsx
+const animate = (now: number) => {
+  if (!running || (typeof document !== 'undefined' && document.hidden)) return;
+  // ...
+};
+const handleVisibility = () => {
+  running = !document.hidden;
+  if (running) {
+    startRef.current = performance.now();
+    rafRef.current = requestAnimationFrame(animate);
+  } else {
+    cancelAnimationFrame(rafRef.current);
+  }
+};
+document.addEventListener('visibilitychange', handleVisibility);
+```
+
+### 4. Preuve de compilation
+- `npm run build` : Sortie avec code 0 (compilation validée sans erreur).
+
+
