@@ -372,6 +372,10 @@ export function useActiveHikeMode(): ActiveHikeModeState {
         clearInterval(timerRef.current);
         timerRef.current = null;
       }
+      if (watchIdRef.current !== null && typeof navigator !== 'undefined' && navigator.geolocation) {
+        navigator.geolocation.clearWatch(watchIdRef.current);
+        watchIdRef.current = null;
+      }
     };
   }, [isActive, isPaused, routeData]);
 

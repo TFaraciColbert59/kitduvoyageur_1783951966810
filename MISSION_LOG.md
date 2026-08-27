@@ -225,5 +225,72 @@ Résultat : 279 occurrences (avec des valeurs allant jusqu'à `blur(28px)`).
 - `npm run build` : Sortie avec code 0 (compilation réussie).
 - Réduction significative de la charge de calcul GPU lors des scrolls complexes sur iPhone 16 Pro / Safari WebKit.
 
+---
+
+## ÉTAPE 5 — Scoper la Géolocalisation & Économie Batterie
+
+### 1. Diagnostic de watchPosition et getCurrentPosition
+Recherche exhaustive :
+```bash
+git grep -n -E "watchPosition|getCurrentPosition" -- "src/*.tsx" "src/*.ts"
+```
+
+### 2. Fichiers modifiés
+- `src/features/hiking/services/GPSService.ts` (Lignes 100 à 118) : Coupure automatique du tracking hardware GPS (`stopTracking()`) dès que la liste des écouteurs `onPosition` et `onError` devient vide.
+- `src/hooks/useActiveHikeMode.ts` (Lignes 370 à 376) : Ajout systématique de `clearWatch(watchIdRef.current)` dans le retour de nettoyage du `useEffect` pour éviter toute fuite de tracking GPS lors du démontage ou changement de route.
+
+### 3. Avant / Après
+
+**Dans `src/hooks/useActiveHikeMode.ts` :**
+*Avant :*
+```tsx
+return () => {
+  if (timerRef.current) {
+    clearInterval(timerRef.current);
+    timerRef.current = null;
+  }
+  // watchIdRef.current n'était pas libéré lors du démontage !
+};
+```
+*Après :*
+```tsx
+return () => {
+  if (timerRef.current) {
+    clearInterval(timerRef.current);
+    timerRef.current = null;
+  }
+  if (watchIdRef.current !== null && typeof navigator !== 'undefined' && navigator.geolocation) {
+    navigator.geolocation.clearWatch(watchIdRef.current);
+    watchIdRef.current = null;
+  }
+};
+```
+
+**Dans `src/features/hiking/services/GPSService.ts` :**
+*Avant :*
+```tsx
+public onPosition(callback: GPSServiceCallback): () => void {
+  this.onPositionCallbacks.add(callback);
+  return () => this.onPositionCallbacks.delete(callback);
+}
+```
+*Après :*
+```tsx
+public onPosition(callback: GPSServiceCallback): () => void {
+  this.onPositionCallbacks.add(callback);
+  return () => {
+    this.onPositionCallbacks.delete(callback);
+    if (this.onPositionCallbacks.size === 0) {
+      this.stopTracking();
+    }
+  };
+}
+```
+
+### 4. Preuve de compilation
+- `npm run build` : Sortie avec code 0 (compilation réussie).
+- Aucune fuite GPS en arrière-plan hors des écrans cartographiques actifs.
+
+
 
 
