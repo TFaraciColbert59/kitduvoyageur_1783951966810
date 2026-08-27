@@ -63,7 +63,7 @@ export default function ExplorerMobileHikeCarousel({
   return (
     <div
       className="block md:hidden fixed left-0 right-0 z-[800] pointer-events-none"
-      style={{ bottom: 'calc(env(safe-area-inset-bottom, 0px) + 72px)' }}
+      style={{ bottom: 'calc(env(safe-area-inset-bottom, 0px) + 84px)' }}
     >
       {/* ── TOP FLOATING PILL (Mode Switch & Counter) ── */}
       <div className="flex items-center justify-between px-3.5 mb-1.5 pointer-events-auto">
@@ -98,6 +98,7 @@ export default function ExplorerMobileHikeCarousel({
           className="flex gap-2.5 overflow-x-auto snap-x snap-mandatory px-3.5 pb-1 pointer-events-auto no-scrollbar"
           style={{
             WebkitOverflowScrolling: 'touch',
+            overscrollBehaviorX: 'contain',
             scrollPaddingLeft: '14px',
             scrollPaddingRight: '14px',
           }}
@@ -169,7 +170,7 @@ export default function ExplorerMobileHikeCarousel({
                   </div>
 
                   {/* Action Buttons */}
-                  <div className="flex items-center gap-1.5 pt-1 border-t border-[#17402C]/5">
+                  <div className="flex items-center gap-1.5 pt-1.5 border-t border-[#17402C]/06">
                     <button
                       type="button"
                       onClick={(e) => {
@@ -177,9 +178,9 @@ export default function ExplorerMobileHikeCarousel({
                         triggerHaptic('light');
                         router.push(`/preparer-randonnee?routeId=${trail.id}`);
                       }}
-                      className="flex-1 h-7 rounded-xl bg-[#17402C] text-white text-[10.5px] font-bold flex items-center justify-center gap-1 hover:brightness-110 active:scale-95 transition-all cursor-pointer shadow-2xs"
+                      className="flex-1 h-8.5 rounded-xl bg-[#17402C] text-white text-[11px] font-bold flex items-center justify-center gap-1.5 hover:brightness-110 active:scale-[0.97] transition-transform cursor-pointer shadow-xs"
                     >
-                      <Backpack size={11} />
+                      <Backpack size={12} />
                       <span>Préparer</span>
                     </button>
 
@@ -190,7 +191,7 @@ export default function ExplorerMobileHikeCarousel({
                         triggerHaptic('light');
                         onOpenDetail(trail);
                       }}
-                      className="h-7 px-3 rounded-xl bg-white hover:bg-[#FAF8F5] text-[#17402C] text-[10.5px] font-bold border border-white/80 active:scale-95 transition-all cursor-pointer shadow-2xs"
+                      className="h-8.5 px-3.5 rounded-xl bg-white/90 hover:bg-white text-[#17402C] text-[11px] font-bold border border-white/80 active:scale-[0.97] transition-transform cursor-pointer shadow-xs"
                     >
                       Fiche
                     </button>

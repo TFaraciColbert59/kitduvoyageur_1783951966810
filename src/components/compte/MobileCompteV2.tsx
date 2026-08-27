@@ -452,11 +452,11 @@ export default function MobileCompteV2() {
   }
 
   return (
-    <div className="min-h-screen pb-36 font-sans selection:bg-[#17402C]/10 bg-transparent">
+    <div className="min-h-screen pb-[calc(140px+env(safe-area-inset-bottom,0px))] font-sans selection:bg-[#17402C]/10 bg-transparent">
       {/* ══════════════════════════════════════════════════════════════════════
           1. HEADER COMPACT & STATUT (Frosted Liquid Glass)
          ══════════════════════════════════════════════════════════════════════ */}
-      <header className="sticky top-0 z-30 px-4 pt-[max(10px,env(safe-area-inset-top))] pb-2.5 flex items-center justify-between backdrop-blur-xl border-b border-white/70 bg-white/80 shadow-2xs">
+      <header className="sticky top-0 z-30 px-4 pt-[calc(max(env(safe-area-inset-top,0px),12px)+8px)] pb-2.5 flex items-center justify-between backdrop-blur-xl border-b border-white/70 bg-white/85 shadow-2xs">
         {/* User Handle avec dropdown indicator */}
         <button
           onClick={() => {

@@ -65,7 +65,7 @@ function tilesForBbox(
  * OpenTopoMap ne gère pas les sous-domaines pour ce pattern simplifié.
  */
 function tileUrl({ z, x, y }: TileCoord): string {
-  return `https://a.basemaps.cartocdn.com/rastertiles/voyager/${z}/${x}/${y}@1x.png`;
+  return `https://a.tile.openstreetmap.fr/osmfr/${z}/${x}/${y}.png`;
 }
 
 // ── Bbox depuis un GeoJSON LineString ────────────────────────────────────────

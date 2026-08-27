@@ -71,7 +71,7 @@ export default function MobileCommunityHub({
   });
 
   return (
-    <div className="w-full min-h-screen bg-transparent pb-40 px-3.5 pt-3 space-y-3.5 font-sans text-[#17402C]">
+    <div className="w-full min-h-screen bg-transparent pb-[calc(140px+env(safe-area-inset-bottom,0px))] px-3.5 pt-[calc(max(env(safe-area-inset-top,0px),12px)+8px)] space-y-3.5 font-sans text-[#17402C]">
       {/* Pull to refresh visual feedback indicator */}
       {(pullProgress > 0 || isRefreshing) && (
         <div

@@ -155,7 +155,7 @@ export default function MobileCarnetDetailView({
   };
 
   return (
-    <div className="md:hidden min-h-screen bg-transparent pb-36 text-[#17402C]">
+    <div className="md:hidden min-h-screen bg-transparent pb-[calc(140px+env(safe-area-inset-bottom,0px))] text-[#17402C]">
       {/* IMMERSIVE COVER HERO */}
       <div className="relative w-full h-64 sm:h-72 overflow-hidden bg-[#17402C]">
         <img
@@ -166,18 +166,24 @@ export default function MobileCarnetDetailView({
         <div className="absolute inset-0 bg-gradient-to-t from-[#17402C] via-[#17402C]/60 to-black/30" />
 
         {/* Top Controls */}
-        <div className="absolute top-4 left-4 right-4 flex items-center justify-between z-10">
+        <div
+          className="absolute left-4 right-4 flex items-center justify-between z-10"
+          style={{ top: 'calc(max(env(safe-area-inset-top, 0px), 14px) + 8px)' }}
+        >
           <Link
             href="/carnets"
             onClick={() => triggerHaptic('light')}
-            className="glass-circle-btn !w-9 !h-9 !text-[#17402C] !bg-white/90 !border-white shadow-md flex items-center justify-center font-bold"
+            className="glass-circle-btn !w-10 !h-10 !text-[#17402C] !bg-white/95 !border-white shadow-md flex items-center justify-center font-bold text-lg active:scale-95 transition-transform"
             aria-label="Retour aux carnets"
           >
             ‹
           </Link>
 
-          <div className="flex items-center gap-1.5 max-w-[70%]">
-            <span className="glass-pill text-white border-white/20 font-mono text-[10px] bg-black/40 backdrop-blur-md truncate px-3 py-1">
+          <div className="flex items-center gap-1.5 max-w-[78%]">
+            <span
+              className="glass-pill text-[#17402C] font-semibold border-white/90 font-mono text-[10.5px] bg-white/90 backdrop-blur-xl shadow-xs truncate px-3 py-1.5"
+              title={data.meta?.itineraire}
+            >
               📍 {data.meta?.itineraire || 'Expédition outdoor'}
             </span>
           </div>
@@ -208,11 +214,11 @@ export default function MobileCarnetDetailView({
               className="flex items-center gap-2.5 min-w-0 group/author cursor-pointer"
             >
               <div className="w-10 h-10 rounded-full bg-[#17402C] text-white flex items-center justify-center font-serif italic text-sm font-bold shadow-xs overflow-hidden shrink-0 group-hover/author:scale-105 transition-transform">
-                {metaAny.authorAvatar ? (
-                  <img src={metaAny.authorAvatar} alt="" className="w-full h-full object-cover" />
-                ) : (
-                  metaAny.authorName?.charAt(0) || '👤'
-                )}
+                <img
+                  src={metaAny.authorAvatar || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150&q=80'}
+                  alt=""
+                  className="w-full h-full object-cover"
+                />
               </div>
               <div className="min-w-0">
                 <h4 className="font-bold text-xs text-[#17402C] truncate group-hover/author:underline">

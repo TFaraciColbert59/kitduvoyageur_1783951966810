@@ -13,7 +13,7 @@ export default function MobileCommunityHeader({ onSearchClick }: MobileCommunity
   const { triggerHaptic } = useHapticFeedback();
 
   return (
-    <header className="sticky top-0 z-40 w-full glass border-b border-white/60 px-4 py-2.5 flex items-center justify-between font-sans text-[#17402C]">
+    <header className="sticky top-0 z-40 w-full glass border-b border-white/60 px-3.5 pt-[max(6px,env(safe-area-inset-top,0px))] pb-2 flex items-center justify-between font-sans text-[#17402C]">
       {/* Brand Title */}
       <div className="flex items-center gap-2">
         <div className="w-7 h-7 rounded-xl flex items-center justify-center bg-[#17402C]/10 border border-white/60 shadow-2xs text-[#17402C] text-sm">

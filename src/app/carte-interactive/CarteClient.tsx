@@ -16,11 +16,14 @@ const InteractiveMap = dynamic(() => import('@/components/map/InteractiveMap'), 
 
 export default function CarteClient() {
   return (
-    <div className="h-dvh w-screen overflow-hidden bg-[#FAF8F5] flex flex-col">
+    <div
+      className="h-dvh w-full max-w-full overflow-hidden bg-[#FAF8F5] flex flex-col select-none"
+      style={{ touchAction: 'none', overscrollBehavior: 'none' }}
+    >
       <div className="hidden md:block">
         <Header />
       </div>
-      <main className="flex-1 md:pt-16 flex flex-col relative w-full h-full min-h-0">
+      <main className="flex-1 md:pt-16 flex flex-col relative w-full h-full min-h-0" style={{ touchAction: 'none', overscrollBehavior: 'none' }}>
         <InteractiveMap />
       </main>
     </div>

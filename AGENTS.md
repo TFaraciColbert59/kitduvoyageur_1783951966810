@@ -4,12 +4,29 @@ Ce repository contient des configurations, des règles, des skills et des agents
 
 ## Skills Disponibles
 
+- **`apple-ui-designer`** (`.agents/skills/apple-ui-designer/SKILL.md`):
+  Redesign mobile app UI to feel unmistakably Apple-like, iOS-forward, and native with SF Pro typography, translucency, native system components, safe-area awareness, and Human Interface Guidelines rigor.
 - **`interaction-design`** (`.agents/skills/interaction-design/SKILL.md`):
   Design and implement microinteractions, motion design, transitions, and user feedback patterns. Use when adding polish to UI interactions, implementing loading states, or creating delightful user experiences.
+- **`superpowers`** (Suite de 14 skills dans `.agents/skills/` & `.claude/skills/`) :
+  - `brainstorming` : Exploration interactive des idées et conception avant écriture de code
+  - `subagent-driven-development` : Exécution modulaire avec sous-agents spécialisés et revues indépendantes
+  - `executing-plans` : Exécution disciplinée de plans avec validation incrémentale
+  - `writing-plans` : Rédaction de plans d'implémentation rigoureux et testables
+  - `systematic-debugging` : Diagnostic méthodique et traçabilité des bugs
+  - `test-driven-development` : TDD strict Red/Green/Refactor
+  - `verification-before-completion` : Contrôles de validation et tests d'assurance qualité avant clôture
+  - `requesting-code-review` & `receiving-code-review` : Revue de code critique et gestion des retours
+  - `dispatching-parallel-agents` : Parallélisation efficace des tâches indépendantes
+  - `using-git-worktrees` : Gestion sécurisée des worktrees Git pour isoler les branches
+  - `finishing-a-development-branch` : Finalisation propre, fusion et publication des branches
+  - `writing-skills` : Création et affinage de nouveaux skills
+  - `using-superpowers` : Guidage d'amorçage et priorisation des processus de développement
 
 ## Règle Permanente UX & Interaction Design
 
-> **Règle Permanente :** Le skill Aura Interaction Design doit être utilisé pour toute décision relative aux interactions et à l'expérience utilisateur lorsqu'il est pertinent.
+> **Règle Permanente :** Les skills `apple-ui-designer` et Aura `interaction-design` doivent être appliqués pour toute décision relative aux layouts mobiles, hiérarchies visuelles, microinteractions et transitions natives iOS/Apple.
+> **Règle Superpowers :** Pour toute tâche de développement majeure, appliquer le workflow de Superpowers (Brainstorming -> Plan d'implémentation -> Subagent-driven / TDD -> Vérification).
 
 ---
 

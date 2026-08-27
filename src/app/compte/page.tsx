@@ -157,7 +157,7 @@ export default function ComptePage() {
 
       {/* Mobile-only app-like view */}
       <div className="block md:hidden min-h-screen">
-        <MobilePageShell background="transparent">
+        <MobilePageShell safeTop={false} background="transparent">
           <MobileCompteV2 />
         </MobilePageShell>
       </div>

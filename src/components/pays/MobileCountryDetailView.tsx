@@ -59,7 +59,7 @@ export default function MobileCountryDetailView({
     'https://images.unsplash.com/photo-1464822759023-fed622ff2c3b?w=1200&q=80';
 
   return (
-    <div className="md:hidden min-h-screen bg-transparent pb-40 text-[#17402C] font-sans">
+    <div className="md:hidden min-h-screen bg-transparent pb-[calc(140px+env(safe-area-inset-bottom,0px))] text-[#17402C] font-sans">
       
       {/* ── 1. FLOATING TOP CONTROLS (Dégagé & Spacieux) ── */}
       <div className="px-4 pt-4 flex items-center justify-between gap-2 z-20 relative">
@@ -236,12 +236,12 @@ export default function MobileCountryDetailView({
                       </button>
                     </div>
 
-                    <div className="flex gap-2.5 overflow-x-auto no-scrollbar pb-1">
+                    <div className="-mx-4 px-4 flex gap-2.5 overflow-x-auto no-scrollbar pb-1 snap-x snap-mandatory scroll-smooth">
                       {country.destinations.slice(0, 4).map((d, i) => (
                         <div
                           key={i}
                           onClick={() => handleSectionSwitch('destinations')}
-                          className="w-52 shrink-0 glass rounded-2xl overflow-hidden border border-white/80 shadow-2xs bg-white/85 cursor-pointer group"
+                          className="w-52 shrink-0 glass rounded-2xl overflow-hidden border border-white/80 shadow-2xs bg-white/85 cursor-pointer group snap-start"
                         >
                           <div className="h-26 relative overflow-hidden bg-[#17402C]">
                             <img

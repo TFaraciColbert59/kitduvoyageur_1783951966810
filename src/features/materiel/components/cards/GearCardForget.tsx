@@ -25,18 +25,18 @@ export function GearCardForget({ data, className }: { data: ForgetData; classNam
     <GlassCard as="article" interactive ariaLabelledBy="forget-title" className={className}>
       <div className="p-2.5 sm:p-5 flex flex-col justify-between h-full gap-1.5 sm:gap-4">
         {/* Header with Title & Large Metric */}
-        <div className="flex items-start justify-between pr-7 md:pr-10">
-          <div className="space-y-0.5">
+        <div className="flex items-start justify-between pr-7 md:pr-10 gap-1.5">
+          <div className="space-y-0.5 min-w-0 flex-1">
             <Eyebrow>Checklist</Eyebrow>
-            <h2 id="forget-title" className="text-[13px] sm:text-[20px] font-display font-bold text-[#17402C] leading-tight truncate">
+            <h2 id="forget-title" className="text-[12px] sm:text-[18px] font-display font-bold text-[#17402C] leading-tight truncate">
               À ne pas oublier
             </h2>
           </div>
-          <div className="text-right shrink-0">
-            <span className={`text-[18px] sm:text-[36px] font-mono font-bold leading-none ${data.forgetRemaining === 0 ? 'text-[#17402C]' : 'text-[#A8443A]'}`}>
+          <div className="text-right shrink-0 pl-1">
+            <span className={`text-[17px] sm:text-[32px] font-mono font-bold leading-none ${data.forgetRemaining === 0 ? 'text-[#17402C]' : 'text-[#A8443A]'}`}>
               {data.forgetRemaining}
             </span>
-            <span className="block text-[8px] sm:text-[10.5px] font-semibold uppercase tracking-wider text-[#5A7064]">
+            <span className="block text-[8px] sm:text-[10px] font-semibold uppercase tracking-wider text-[#5A7064] whitespace-nowrap">
               {data.forgetRemaining === 0 ? 'Prêt' : 'restant(s)'}
             </span>
           </div>

@@ -45,8 +45,8 @@ export function GearCardDispo({ data, className }: { data: DispoData; className?
 
         {/* Progress Bar */}
         <div className="space-y-0.5 sm:space-y-1">
-          <div className="flex items-center justify-between text-[10px] sm:text-xs font-semibold text-[#365233]">
-            <span>Disponible</span>
+          <div className="flex items-center justify-between text-[9.5px] sm:text-xs font-semibold text-[#365233]">
+            <span>Dispo</span>
             <span className="font-mono text-[#17402C]">{availablePct}%</span>
           </div>
           <ProgressBar value={availablePct} label="Équipement disponible" tone={tone} />

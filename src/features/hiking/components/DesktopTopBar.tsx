@@ -33,7 +33,10 @@ export default function DesktopTopBar({
   onOpenWeather,
 }: DesktopTopBarProps) {
   return (
-    <div className="absolute top-3 left-3 right-3 md:top-5 md:left-5 md:right-5 h-12 md:h-14 flex items-center gap-2 md:gap-4 z-40 select-none">
+    <div
+      className="absolute left-3 right-3 md:left-5 md:right-5 h-11 md:h-14 flex items-center gap-2 md:gap-4 z-40 select-none"
+      style={{ top: 'calc(max(env(safe-area-inset-top, 0px), 14px) + 8px)' }}
+    >
       {/* Brand Logo (Desktop / Tablet) */}
       <div className="hidden sm:flex items-center gap-2.5 px-3.5 md:px-4.5 py-2.5 bg-[#FBFAF6]/92 backdrop-blur-2xl border border-[#17402C]/07 rounded-full shadow-[0_12px_32px_rgba(23,64,44,0.10),0_2px_8px_rgba(23,64,44,0.04)] text-[#17402C] text-sm font-medium tracking-tight h-10 md:h-11">
         <div className="w-5 md:w-6.5 h-5 md:h-6.5 rounded-full bg-gradient-to-br from-[#17402C] to-[#06120C] text-[#C6DCBE] flex items-center justify-center">

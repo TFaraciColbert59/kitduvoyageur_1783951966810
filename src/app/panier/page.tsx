@@ -1,4 +1,4 @@
-﻿'use client';
+'use client';
 
 import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
@@ -377,10 +377,10 @@ export default function PanierPage() {
                       </Link>
                     </div>
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '4px', padding: '4px', background: '#FAF8F5', borderRadius: '999px' }}>
-                        <button onClick={() => handleQuantity(item.id, Math.max(1, item.quantity - 1))} style={{ width: '24px', height: '24px', borderRadius: '999px', background: '#FBFAF6', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '12px', color: '#17402C', fontFamily: 'inherit' }}>−</button>
-                        <span style={{ minWidth: '18px', textAlign: 'center', fontSize: '13px', fontWeight: 500, fontFamily: 'ui-monospace, monospace', color: '#17402C' }}>{item.quantity}</span>
-                        <button onClick={() => handleQuantity(item.id, item.quantity + 1)} style={{ width: '24px', height: '24px', borderRadius: '999px', background: '#FBFAF6', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '12px', color: '#17402C', fontFamily: 'inherit' }}>+</button>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '6px', padding: '3px 6px', background: '#FAF8F5', borderRadius: '999px', border: '1px solid rgba(23,64,44,0.06)' }}>
+                        <button onClick={() => handleQuantity(item.id, Math.max(1, item.quantity - 1))} aria-label="Diminuer la quantité" style={{ width: '32px', height: '32px', borderRadius: '999px', background: '#FBFAF6', border: '1px solid rgba(23,64,44,0.08)', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '15px', fontWeight: 600, color: '#17402C', fontFamily: 'inherit' }}>−</button>
+                        <span style={{ minWidth: '22px', textAlign: 'center', fontSize: '14px', fontWeight: 600, fontFamily: 'ui-monospace, monospace', color: '#17402C' }}>{item.quantity}</span>
+                        <button onClick={() => handleQuantity(item.id, item.quantity + 1)} aria-label="Augmenter la quantité" style={{ width: '32px', height: '32px', borderRadius: '999px', background: '#FBFAF6', border: '1px solid rgba(23,64,44,0.08)', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '15px', fontWeight: 600, color: '#17402C', fontFamily: 'inherit' }}>+</button>
                       </div>
                       <div style={{ textAlign: 'right' }}>
                         <div style={{ fontSize: '15px', fontWeight: 700, fontFamily: 'ui-monospace, monospace', color: '#17402C' }}>{(item.priceEur * item.quantity).toFixed(0)} €</div>

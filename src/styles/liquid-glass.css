@@ -84,12 +84,12 @@
   --glass-sheen: radial-gradient(130% 85% at 24% 0%, rgba(255, 255, 255, 0.45) 0%, rgba(255, 255, 255, 0.15) 100%);
   --glass-depth-inset: inset 0 1.5px 1px 0 rgba(255, 255, 255, 0.95), inset 0 -1px 2px 0 rgba(11, 31, 23, 0.03);
 
-  /* ---- Elevation (5 niveaux, ink-based, jamais rgba(0,0,0)) ---- */
-  --elevation-1: none;
-  --elevation-2: none;
-  --elevation-3: none;
-  --elevation-4: none;
-  --elevation-5: none;
+  /* ---- Elevation (5 niveaux Apple iOS, ink-based) ---- */
+  --elevation-1: 0 1px 3px rgba(20, 25, 22, 0.04), 0 1px 2px rgba(20, 25, 22, 0.02);
+  --elevation-2: 0 4px 12px rgba(20, 25, 22, 0.06), 0 1px 3px rgba(20, 25, 22, 0.03);
+  --elevation-3: 0 8px 24px rgba(20, 25, 22, 0.08), 0 2px 6px rgba(20, 25, 22, 0.04);
+  --elevation-4: 0 16px 36px rgba(20, 25, 22, 0.10), 0 4px 12px rgba(20, 25, 22, 0.05);
+  --elevation-5: 0 24px 56px rgba(20, 25, 22, 0.14), 0 8px 20px rgba(20, 25, 22, 0.06);
 
   /* ---- Radius (iOS 26 aligned) ---- */
   --r-xs: 6px;

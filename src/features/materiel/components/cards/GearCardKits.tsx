@@ -15,8 +15,9 @@ interface KitsData {
 }
 
 export function GearCardKits({ data, className }: { data: KitsData; className?: string }) {
+  const cleanName = (n: string | null) => (n ? n.replace(/\s*\(copie\)/gi, '').trim() : 'Trek Jura 2 jours');
   const kits = data.topKits && data.topKits.length > 0 ? data.topKits : [
-    { id: '1', name: data.assignedKitName || 'Trek Jura 2 jours', weightKg: 12.4, completionPct: data.avgCompletionPct || 100 },
+    { id: '1', name: cleanName(data.assignedKitName), weightKg: 12.4, completionPct: data.avgCompletionPct || 100 },
     { id: '2', name: 'Bivouac Été Express', weightKg: 7.8, completionPct: 85 },
   ];
 

@@ -206,7 +206,7 @@ export default function BoussoleAugmenteePage() {
   });
 
   return (
-    <MobilePageShell>
+    <MobilePageShell safeTop={false} hasBottomNav={false}>
       <div style={{ width: '100%', height: '100dvh', position: 'relative', background: '#000', overflow: 'hidden' }}>
 
         {/* Flux caméra */}
@@ -235,8 +235,12 @@ export default function BoussoleAugmenteePage() {
         <div
           style={{
             position: 'absolute', top: 0, left: 0, right: 0,
-            padding: '48px 16px 16px',
+            paddingTop: 'calc(env(safe-area-inset-top, 0px) + 16px)',
+            paddingLeft: '16px',
+            paddingRight: '16px',
+            paddingBottom: '16px',
             background: 'linear-gradient(to bottom, rgba(0,0,0,0.6) 0%, transparent 100%)',
+            zIndex: 10,
           }}
         >
           <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>

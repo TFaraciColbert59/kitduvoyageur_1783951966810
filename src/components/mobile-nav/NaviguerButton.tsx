@@ -22,11 +22,11 @@ export default function NaviguerButton({ isActive }: NaviguerButtonProps) {
           width: '52px',
           height: '52px',
           background: isActive
-            ? 'linear-gradient(135deg, #17402C 0%, #cc3d10 100%)'
-            : 'linear-gradient(135deg, #17402C 0%, #d44518 100%)',
+            ? 'linear-gradient(135deg, #17402C 0%, #365233 100%)'
+            : 'linear-gradient(135deg, #17402C 0%, #5B7F55 100%)',
           boxShadow: isActive
-            ? '0 4px 16px rgba(228, 80, 28, 0.55), 0 2px 4px rgba(0,0,0,0.15)'
-            : '0 4px 12px rgba(228, 80, 28, 0.4), 0 2px 4px rgba(0,0,0,0.12)',
+            ? '0 4px 16px rgba(23, 64, 44, 0.45), 0 2px 4px rgba(0,0,0,0.15)'
+            : '0 4px 12px rgba(23, 64, 44, 0.3), 0 2px 4px rgba(0,0,0,0.12)',
           transform: isActive ? 'scale(1.05)' : 'scale(1)',
         }}
       >

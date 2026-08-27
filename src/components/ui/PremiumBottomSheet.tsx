@@ -14,9 +14,9 @@ interface PremiumBottomSheetProps {
 }
 
 const SNAP_HEIGHTS = {
-  peek: '30vh',
-  half: '55vh',
-  full: '92vh',
+  peek: '30dvh',
+  half: '55dvh',
+  full: '92dvh',
 };
 
 export default function PremiumBottomSheet({
@@ -114,7 +114,7 @@ export default function PremiumBottomSheet({
           WebkitBackdropFilter: 'blur(32px) saturate(200%)',
           borderRadius: '28px 28px 0 0',
           boxShadow: '0 -4px 40px rgba(14,21,18,0.18), 0 -1px 0 rgba(255,255,255,0.5)',
-          paddingBottom: 'env(safe-area-inset-bottom)',
+          paddingBottom: 'max(16px, env(safe-area-inset-bottom, 16px))',
           animation: 'slideUp 400ms cubic-bezier(0.16,1,0.3,1) both',
         }}
         onTouchStart={handleTouchStart}
@@ -150,10 +150,10 @@ export default function PremiumBottomSheet({
             <button
               onClick={onClose}
               aria-label="Fermer"
-              className="flex items-center justify-center w-8 h-8 rounded-full haptic-press"
+              className="flex items-center justify-center w-11 h-11 rounded-full haptic-press cursor-pointer"
               style={{ background: 'rgba(23,64,44,0.08)' }}
             >
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#17402C" strokeWidth="2.5" strokeLinecap="round" aria-hidden="true">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#17402C" strokeWidth="2.5" strokeLinecap="round" aria-hidden="true">
                 <path d="M18 6L6 18M6 6l12 12" />
               </svg>
             </button>

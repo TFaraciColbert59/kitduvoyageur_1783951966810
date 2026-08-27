@@ -71,10 +71,11 @@ export default function CarnetMap({
 
       mapInstance.current = map;
 
-      // Topo Voyager CartoDB tiles
-      L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png', {
+      // OpenStreetMap France tiles (Zero watermark, high resolution)
+      L.tileLayer('https://{s}.tile.openstreetmap.fr/osmfr/{z}/{x}/{y}.png', {
         maxZoom: 19,
         maxNativeZoom: 18,
+        subdomains: ['a', 'b', 'c'],
         keepBuffer: 8,
       }).addTo(map);
 

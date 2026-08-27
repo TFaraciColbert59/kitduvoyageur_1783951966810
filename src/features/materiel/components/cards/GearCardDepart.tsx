@@ -48,8 +48,17 @@ export function GearCardDepart({ data, className }: { data: DepartData; classNam
             </h2>
           </div>
           <Badge tone={data.status === 'ok' ? 'sage' : data.status === 'warning' ? 'warn' : 'danger'}>
-            <span className="text-[9.5px] sm:text-xs">
-              {data.status === 'ok' ? 'Prêt' : data.status === 'warning' ? 'À finaliser' : 'Incomplet'}
+            <span className="text-[9.5px] sm:text-xs font-bold flex items-center gap-1">
+              {data.status === 'ok' ? (
+                '✓ Prêt'
+              ) : data.status === 'warning' ? (
+                '⚠️ À finaliser'
+              ) : (
+                <span className="text-red-700 font-extrabold flex items-center gap-0.5">
+                  <span className="inline-block w-1.5 h-1.5 rounded-full bg-red-600 animate-ping mr-0.5" />
+                  Incomplet (0%)
+                </span>
+              )}
             </span>
           </Badge>
         </div>

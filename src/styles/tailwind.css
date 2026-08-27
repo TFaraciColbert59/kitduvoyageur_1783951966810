@@ -24,9 +24,9 @@
   --input: #E0DDD0;
   --ring: #17402C;
   --radius: 0.5rem;
-  --font-sans: 'DM Sans', sans-serif;
-  --font-display: 'Manrope', sans-serif;
-  --font-mono: 'IBM Plex Mono', monospace;
+  --font-sans: -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'SF Pro Display', 'DM Sans', system-ui, sans-serif;
+  --font-display: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Manrope', system-ui, sans-serif;
+  --font-mono: ui-monospace, 'SF Mono', 'IBM Plex Mono', Menlo, monospace;
   --info: #3E6B7A;
   --info-foreground: #FFFFFF;
   --dark-bg: #1A1F1C;
@@ -45,12 +45,12 @@
   --safe-right: env(safe-area-inset-right);
 
   /* ── Premium Design Tokens ── */
-  --: 0 1px 2px rgba(26,31,28,0.05);
-  --: 0 2px 8px rgba(26,31,28,0.06), 0 1px 2px rgba(26,31,28,0.04);
-  --: 0 4px 16px rgba(26,31,28,0.08), 0 2px 4px rgba(26,31,28,0.05);
-  --: 0 8px 32px rgba(26,31,28,0.12), 0 4px 8px rgba(26,31,28,0.06);
-  --: 0 16px 48px rgba(26,31,28,0.14), 0 8px 16px rgba(26,31,28,0.08);
-  --: 0 32px 80px rgba(26,31,28,0.18), 0 16px 32px rgba(26,31,28,0.10);
+  --shadow-xs: 0 1px 2px rgba(26,31,28,0.05);
+  --shadow-sm: 0 2px 8px rgba(26,31,28,0.06), 0 1px 2px rgba(26,31,28,0.04);
+  --shadow-md: 0 4px 16px rgba(26,31,28,0.08), 0 2px 4px rgba(26,31,28,0.05);
+  --shadow-lg: 0 8px 32px rgba(26,31,28,0.12), 0 4px 8px rgba(26,31,28,0.06);
+  --shadow-xl: 0 16px 48px rgba(26,31,28,0.14), 0 8px 16px rgba(26,31,28,0.08);
+  --shadow-2xl: 0 32px 80px rgba(26,31,28,0.18), 0 16px 32px rgba(26,31,28,0.10);
 
   /* Spring easing */
   --spring-bounce: cubic-bezier(0.34, 1.56, 0.64, 1);
@@ -167,12 +167,12 @@
   --danger: #C53030;
 
   /* Shadow colors for dark mode */
-  --: 0 1px 2px rgba(0,0,0,0.3);
-  --: 0 2px 8px rgba(0,0,0,0.3), 0 1px 2px rgba(0,0,0,0.2);
-  --: 0 4px 16px rgba(0,0,0,0.35), 0 2px 4px rgba(0,0,0,0.25);
-  --: 0 8px 32px rgba(0,0,0,0.4), 0 4px 8px rgba(0,0,0,0.3);
-  --: 0 16px 48px rgba(0,0,0,0.45), 0 8px 16px rgba(0,0,0,0.35);
-  --: 0 32px 80px rgba(0,0,0,0.5), 0 16px 32px rgba(0,0,0,0.4);
+  --shadow-xs: 0 1px 2px rgba(0,0,0,0.3);
+  --shadow-sm: 0 2px 8px rgba(0,0,0,0.3), 0 1px 2px rgba(0,0,0,0.2);
+  --shadow-md: 0 4px 16px rgba(0,0,0,0.35), 0 2px 4px rgba(0,0,0,0.25);
+  --shadow-lg: 0 8px 32px rgba(0,0,0,0.4), 0 4px 8px rgba(0,0,0,0.3);
+  --shadow-xl: 0 16px 48px rgba(0,0,0,0.45), 0 8px 16px rgba(0,0,0,0.35);
+  --shadow-2xl: 0 32px 80px rgba(0,0,0,0.5), 0 16px 32px rgba(0,0,0,0.4);
 }
 
 .dark .premium-card:hover {
@@ -193,6 +193,7 @@
   html {
     scroll-behavior: smooth;
     -webkit-text-size-adjust: 100%;
+    height: 100%;
   }
 
   body {
@@ -202,9 +203,32 @@
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
     -webkit-text-size-adjust: 100%;
-    min-height: 100vh;
+    min-height: 100dvh;
+    min-height: -webkit-fill-available;
     overflow-x: clip;
     max-width: 100%;
+  }
+
+  /* ── Empêcher l'auto-zoom intrusif d'iOS Safari sur les inputs ── */
+  @media screen and (max-width: 768px) {
+    input:not([type="checkbox"]):not([type="radio"]):not([type="range"]):not([type="color"]):not([type="button"]):not([type="submit"]):not([type="reset"]),
+    select,
+    textarea {
+      font-size: 16px !important;
+    }
+  }
+
+  /* ── Gestuelle tactile fluide pour les cartes Leaflet sur iOS / Android ── */
+  .leaflet-container {
+    touch-action: none !important;
+    -webkit-user-select: none;
+    user-select: none;
+    -webkit-touch-callout: none;
+    overscroll-behavior: none !important;
+    font-family: inherit;
+  }
+  .leaflet-pane {
+    touch-action: none !important;
   }
 
   h1, h2, h3, h4, h5, h6, p {
@@ -746,8 +770,19 @@ html, body {
 }
 
 /* 5. Safe Area Insets iOS Dynamic Island & Android Navigation Bar */
-.safe-p-top { padding-top: max(16px, env(safe-area-inset-top)); }
-.safe-p-bottom { padding-bottom: max(16px, env(safe-area-inset-bottom)); }
-.safe-m-bottom { margin-bottom: env(safe-area-inset-bottom); }
+.safe-p-top { padding-top: max(16px, env(safe-area-inset-top, 0px)); }
+.safe-p-bottom { padding-bottom: max(16px, env(safe-area-inset-bottom, 0px)); }
+.safe-p-left { padding-left: max(16px, env(safe-area-inset-left, 0px)); }
+.safe-p-right { padding-right: max(16px, env(safe-area-inset-right, 0px)); }
+.safe-p-x {
+  padding-left: max(16px, env(safe-area-inset-left, 0px));
+  padding-right: max(16px, env(safe-area-inset-right, 0px));
+}
+.safe-m-bottom { margin-bottom: env(safe-area-inset-bottom, 0px); }
+.safe-m-top { margin-top: env(safe-area-inset-top, 0px); }
+.pt-safe { padding-top: max(12px, env(safe-area-inset-top, 0px)); }
+.pb-safe { padding-bottom: max(12px, env(safe-area-inset-bottom, 0px)); }
+.top-safe { top: max(12px, env(safe-area-inset-top, 0px)); }
+.bottom-safe { bottom: max(12px, env(safe-area-inset-bottom, 0px)); }
 
 

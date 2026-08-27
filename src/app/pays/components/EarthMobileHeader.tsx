@@ -53,9 +53,12 @@ export default function EarthMobileHeader({ countries, onSelect }: EarthMobileHe
   }, []);
 
   return (
-    <header className="absolute top-3.5 left-3.5 right-3.5 z-[900] pointer-events-none">
+    <header
+      className="absolute left-3.5 right-3.5 z-[900] pointer-events-none"
+      style={{ top: 'calc(env(safe-area-inset-top, 0px) + 6px)' }}
+    >
       <div
-        className="glass bg-white/90 backdrop-blur-xl border border-white/90 w-full rounded-full px-2.5 py-1.5 flex items-center gap-2 pointer-events-auto shadow-sm"
+        className="glass bg-white/90 backdrop-blur-xl border border-white/90 w-full rounded-full px-2.5 py-1 flex items-center gap-2 pointer-events-auto shadow-sm"
         style={{ borderRadius: 9999 }}
       >
         {/* Retour */}

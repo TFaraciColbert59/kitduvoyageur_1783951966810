@@ -4,6 +4,8 @@ import { loadRouteDetail } from '@/features/hiking/services/RouteService';
 import PreparationClient from './PreparationClient';
 import { redirect } from 'next/navigation';
 
+import MobilePageShell from '@/components/mobile-nav/MobilePageShell';
+
 export default async function PreparerRandonneePage({
   searchParams,
 }: {
@@ -32,8 +34,10 @@ export default async function PreparerRandonneePage({
   }
 
   return (
-    <div className="h-screen w-screen overflow-y-auto md:overflow-hidden bg-[#F5F2EA]">
-      <PreparationClient route={route} userId={user?.id} />
-    </div>
+    <MobilePageShell safeTop={false} hasBottomNav={false} videoBackground={false} background="#F5F2EA">
+      <div className="min-h-[100dvh] w-full max-w-full overflow-y-auto md:overflow-hidden bg-[#F5F2EA]">
+        <PreparationClient route={route} userId={user?.id} />
+      </div>
+    </MobilePageShell>
   );
 }

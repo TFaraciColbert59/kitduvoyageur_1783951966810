@@ -115,8 +115,11 @@ export const MobilePreparationView: React.FC<MobilePreparationViewProps> = ({
           compact
         />
 
-        {/* Floating Glass Header Bar — boutons réduits, déplacés en hauteur */}
-        <div className="absolute top-3 left-3 right-3 z-[400] flex items-center justify-between pointer-events-none">
+        {/* Floating Glass Header Bar — boutons réduits, déplacés en hauteur avec safe-area */}
+        <div
+          className="absolute left-3 right-3 z-[400] flex items-center justify-between pointer-events-none"
+          style={{ top: 'calc(env(safe-area-inset-top, 0px) + 6px)' }}
+        >
           <button
             onClick={() => {
               if (typeof window !== 'undefined' && window.history.length > 1) {

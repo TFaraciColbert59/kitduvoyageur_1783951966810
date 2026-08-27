@@ -1,4 +1,4 @@
-﻿'use client';
+'use client';
 
 import React, { useEffect, useState, useMemo, useRef, useCallback } from 'react';
 import 'leaflet/dist/leaflet.css';
@@ -178,7 +178,7 @@ export default function InteractiveMap() {
         ? 'https://server.arcgisonline.com/ArcGIS/rest/services/World_Topo_Map/MapServer/tile/{z}/{y}/{x}'
         : mode === 'satellite'
         ? 'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}'
-        : 'https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png';
+        : 'https://{s}.tile.openstreetmap.fr/osmfr/{z}/{x}/{y}.png';
       
       const newLayer = L.tileLayer(url, {
         attribution: '&copy; OpenStreetMap / CARTO / Esri',
@@ -218,11 +218,20 @@ export default function InteractiveMap() {
         center: [50.4, 2.8],
         zoom: 9,
         zoomControl: false,
-      });
+        dragging: true,
+        touchZoom: true,
+        scrollWheelZoom: true,
+        doubleClickZoom: true,
+        boxZoom: true,
+        keyboard: true,
+        tap: false,
+        preferCanvas: true,
+        bounceAtZoomLimits: false,
+      } as any);
 
-      const initialLayer = L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png', {
-        attribution: '&copy; OpenStreetMap contributors &copy; CARTO',
-        subdomains: 'abcd',
+      const initialLayer = L.tileLayer('https://{s}.tile.openstreetmap.fr/osmfr/{z}/{x}/{y}.png', {
+        attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors | <a href="https://www.openstreetmap.fr">OSM France</a>',
+        subdomains: ['a', 'b', 'c'],
         maxZoom: 19,
         maxNativeZoom: 18,
         keepBuffer: 6,
@@ -231,6 +240,11 @@ export default function InteractiveMap() {
       tileLayerRef.current = initialLayer;
       mapRef.current = map;
       setMapReady(true);
+
+      // Invalidation pour redimensionnement dynamique
+      setTimeout(() => {
+        try { map.invalidateSize(); } catch {}
+      }, 150);
     });
 
     return () => {
@@ -652,8 +666,8 @@ export default function InteractiveMap() {
       )}
 
       {/* ── MAP CONTAINER ── */}
-      <div className="flex-1 h-full relative min-h-[240px]">
-        <div ref={containerRef} className="w-full h-full z-0" />
+      <div className="flex-1 h-full relative min-h-[240px]" style={{ touchAction: 'none', overscrollBehavior: 'none' }}>
+        <div ref={containerRef} className="w-full h-full z-0" style={{ width: '100%', height: '100%', touchAction: 'none', overscrollBehavior: 'none' }} />
 
         {/* Floating Zoom Controls */}
         <div className="absolute left-2 bottom-2 z-[400] flex flex-col gap-2">

@@ -299,22 +299,25 @@ export default function ExplorerClient({ initialTrails }: ExplorerClientProps) {
         </div>
       </header>
 
-      {/* ── 1B. HEADER MOBILE (< 768px, ULTRA-COMPACT SANS OVERFLOW) ── */}
-      <header className="block md:hidden fixed top-2.5 left-2.5 right-2.5 z-[1000] pointer-events-none">
+      {/* ── 1B. HEADER MOBILE (< 768px, APPLE MAPS FLOATING CAPSULE) ── */}
+      <header
+        className="block md:hidden fixed left-3 right-3 z-[1000] pointer-events-none"
+        style={{ top: 'calc(max(env(safe-area-inset-top, 0px), 12px) + 8px)' }}
+      >
         <div
-          className="w-full rounded-full px-3 py-1.5 flex items-center justify-between gap-2 pointer-events-auto "
+          className="w-full rounded-full px-3 py-1.5 min-h-[44px] flex items-center justify-between gap-2 pointer-events-auto"
           style={{
-            background: 'linear-gradient(180deg, rgba(255, 255, 255, 0.40) 0%, rgba(255, 255, 255, 0.18) 100%)',
-            backdropFilter: 'blur(16px) saturate(180%)',
-            WebkitBackdropFilter: 'blur(16px) saturate(180%)',
-            border: '1px solid rgba(255, 255, 255, 0.50)',
-            boxShadow: '0 8px 24px -4px rgba(0, 0, 0, 0.08), inset 0 1px 1.5px rgba(255, 255, 255, 0.9)',
+            background: 'linear-gradient(180deg, rgba(255, 255, 255, 0.88) 0%, rgba(255, 255, 255, 0.65) 100%)',
+            backdropFilter: 'blur(25px) saturate(180%)',
+            WebkitBackdropFilter: 'blur(25px) saturate(180%)',
+            border: '1px solid rgba(255, 255, 255, 0.85)',
+            boxShadow: '0 8px 24px -4px rgba(23, 64, 44, 0.10), inset 0 1px 1.5px rgba(255, 255, 255, 0.95)',
           }}
         >
           {/* Logo compact */}
-          <Link href="/" className="flex items-center gap-1.5 shrink-0">
-            <div className="w-6 h-6 rounded-lg flex items-center justify-center bg-[#17402C] text-white ">
-              <svg width="12" height="12" fill="currentColor" viewBox="0 0 24 24">
+          <Link href="/" className="flex items-center gap-1.5 shrink-0" aria-label="Accueil LKDV">
+            <div className="w-7 h-7 rounded-xl flex items-center justify-center bg-[#17402C] text-white shadow-2xs">
+              <svg width="14" height="14" fill="currentColor" viewBox="0 0 24 24">
                 <path d="M3 17l4-8 4 4 3-6 4 10H3z" />
               </svg>
             </div>
@@ -323,19 +326,20 @@ export default function ExplorerClient({ initialTrails }: ExplorerClientProps) {
 
           {/* Recherche mobile intégrée */}
           <div className="relative flex-1 min-w-0">
-            <Search size={11} className="absolute left-2.5 top-1/2 -translate-y-1/2 text-[#5A7064]" />
+            <Search size={13} className="absolute left-2.5 top-1/2 -translate-y-1/2 text-[#5A7064]" />
             <input
               type="text"
-              placeholder="Rechercher…"
+              placeholder="Rechercher un sentier…"
               value={searchQuery}
               onChange={(e) => handleSearchChange(e.target.value)}
-              className="w-full h-7 pl-7 pr-5 rounded-full text-[11px] font-semibold text-[#17402C] placeholder:text-[#5A7064]/70 bg-white/70 border border-white/60 outline-none focus-visible:ring-1 focus-visible:ring-[#17402C]/40"
+              className="w-full h-8 pl-8 pr-6 rounded-full text-xs font-semibold text-[#17402C] placeholder:text-[#5A7064]/70 bg-white/80 border border-white/70 outline-none focus-visible:ring-1 focus-visible:ring-[#17402C]/40"
             />
             {searchQuery && (
               <button
                 type="button"
                 onClick={() => handleSearchChange('')}
-                className="absolute right-1.5 top-1/2 -translate-y-1/2 text-[#5A7064]"
+                className="absolute right-2 top-1/2 -translate-y-1/2 w-4 h-4 rounded-full bg-[#17402C]/10 flex items-center justify-center text-[#17402C]"
+                aria-label="Effacer"
               >
                 <X size={10} />
               </button>
@@ -346,14 +350,14 @@ export default function ExplorerClient({ initialTrails }: ExplorerClientProps) {
           <button
             type="button"
             onClick={() => setFiltersOpen((v) => !v)}
-            className={`h-7 w-7 rounded-full flex items-center justify-center shrink-0 border transition-all ${
+            className={`relative h-8 w-8 rounded-full flex items-center justify-center shrink-0 border transition-all active:scale-95 cursor-pointer ${
               filtersOpen || hasFilters
-                ? 'bg-[#17402C] text-white border-transparent '
-                : 'bg-white/70 text-[#17402C] border-white/60'
+                ? 'bg-[#17402C] text-white border-transparent shadow-xs'
+                : 'bg-white/80 text-[#17402C] border-white/70 shadow-2xs'
             }`}
             aria-label="Filtres"
           >
-            <SlidersHorizontal size={11} />
+            <SlidersHorizontal size={13} />
             {activeFilterCount > 0 && (
               <span className="absolute -top-0.5 -right-0.5 w-3.5 h-3.5 rounded-full bg-[#17402C] text-white text-[8px] font-black flex items-center justify-center border border-white">
                 {activeFilterCount}

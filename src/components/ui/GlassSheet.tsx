@@ -24,20 +24,20 @@ export function GlassSheet({
                 initial={{ y: '100%' }} animate={{ y: 0 }} exit={{ y: '100%' }}
                 transition={{ duration: 0.32, ease: [0.32, 0.72, 0, 1] }}
               >
-                <header className="sticky top-0 z-10 flex items-center gap-3 px-4 h-14 glass border-b border-glass-border">
+                <header className="sticky top-0 z-10 flex items-center gap-3 px-4 pt-[env(safe-area-inset-top,0px)] h-[calc(56px+env(safe-area-inset-top,0px))] glass border-b border-glass-border">
                   <Dialog.Close asChild>
                     <button
                       aria-label="Retour"
-                      className="glass interactive h-9 w-9 flex items-center justify-center rounded-full"
+                      className="glass interactive h-11 w-11 flex items-center justify-center rounded-full cursor-pointer"
                     >
                       <ArrowLeft size={18} className="text-[color:var(--label)]" aria-hidden="true" />
                     </button>
                   </Dialog.Close>
-                  <Dialog.Title className="font-display font-semibold text-[20px] text-[color:var(--label)]">
+                  <Dialog.Title className="font-display font-semibold text-[18px] sm:text-[20px] text-[color:var(--label)]">
                     {title}
                   </Dialog.Title>
                 </header>
-                <div className="px-4 pb-24 pt-4 max-w-[var(--page-max-w)] mx-auto">{children}</div>
+                <div className="px-4 pb-[calc(96px+env(safe-area-inset-bottom,0px))] pt-4 max-w-[var(--page-max-w)] mx-auto">{children}</div>
               </motion.div>
             </Dialog.Content>
           </Dialog.Portal>

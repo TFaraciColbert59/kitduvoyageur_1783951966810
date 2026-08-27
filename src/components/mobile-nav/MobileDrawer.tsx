@@ -112,6 +112,7 @@ const panelStyle: React.CSSProperties = {
   display: 'flex',
   flexDirection: 'column',
   overflow: 'hidden',
+  paddingLeft: 'env(safe-area-inset-left, 0px)',
 };
 
 const scrollableContentStyle: React.CSSProperties = {
@@ -251,7 +252,7 @@ export default function MobileDrawer({ isOpen, onClose, onSearchOpen }: MobileDr
                   onClick={onClose}
                   style={{
                     position: 'absolute',
-                    top: '12px',
+                    top: 'calc(env(safe-area-inset-top, 0px) + 12px)',
                     right: '12px',
                     width: '44px',
                     height: '44px',

@@ -31,7 +31,10 @@ export default function DesktopDockBar({
   onStopHike,
 }: DesktopDockBarProps) {
   return (
-    <div className="absolute bottom-3 md:bottom-7 left-1/2 -translate-x-1/2 max-w-[95vw] h-[68px] md:h-[82px] px-2.5 md:px-4 bg-[#06120C]/90 backdrop-blur-3xl border border-white/12 rounded-full shadow-[0_24px_70px_rgba(6,18,12,0.55),0_4px_16px_rgba(0,0,0,0.3)] flex items-center gap-1.5 md:gap-3 z-40 select-none transition-all duration-300 overflow-x-auto no-scrollbar">
+    <div
+      className="absolute left-1/2 -translate-x-1/2 max-w-[95vw] h-[68px] md:h-[82px] px-2.5 md:px-4 bg-[#06120C]/90 backdrop-blur-3xl border border-white/12 rounded-full shadow-[0_24px_70px_rgba(6,18,12,0.55),0_4px_16px_rgba(0,0,0,0.3)] flex items-center gap-1.5 md:gap-3 z-40 select-none transition-all duration-300 overflow-x-auto no-scrollbar"
+      style={{ bottom: 'calc(env(safe-area-inset-bottom, 0px) + 12px)' }}
+    >
       
       {/* 1. Live Timer & Recording Status Indicator */}
       <div className="flex items-center gap-3 pl-2 pr-4 border-r border-white/10">

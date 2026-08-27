@@ -58,6 +58,9 @@ public/assets/images/products/
 
 # Tooling
 .kilo/
+*.zip
+ios-temp/
+ipa-inspect/
 MOBILE_OPTIMIZATION_PROGRESS.md
 **/ms-playwright/
 ms-playwright/

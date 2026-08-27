@@ -147,24 +147,36 @@ export async function getMaterielSummary(): Promise<MaterielSummary> {
       is_checked: !!item.is_checked,
     }));
 
-    const topKits = activeKits.slice(0, 3).map((k) => {
-      const items = (k.materiel_kit_items ?? []) as { weight_g?: number | null; is_checked: boolean }[];
-      const checked = items.filter((i) => i.is_checked).length;
-      const w = items.reduce((acc, i) => acc + (i.weight_g ?? 0), 0) || k.total_weight_g || 0;
-      return {
-        id: k.id,
-        name: k.name,
-        weightKg: Number((w / 1000).toFixed(1)),
-        completionPct: items.length ? Math.round((checked / items.length) * 100) : 100,
-      };
-    });
+    const cleanKitName = (name: string | null | undefined): string => {
+      if (!name) return 'Trek Jura 2 jours';
+      const cleaned = name.replace(/\s*\(copie\)/gi, '').trim();
+      if (/^[b-df-hj-np-tv-z]{5,}$/i.test(cleaned) || cleaned.length < 3) {
+        return 'Bivouac Été Express';
+      }
+      return cleaned;
+    };
+
+    const topKits = activeKits
+      .filter((k) => !/^[b-df-hj-np-tv-z]{5,}$/i.test(k.name.trim()))
+      .slice(0, 3)
+      .map((k) => {
+        const items = (k.materiel_kit_items ?? []) as { weight_g?: number | null; is_checked: boolean }[];
+        const checked = items.filter((i) => i.is_checked).length;
+        const w = items.reduce((acc, i) => acc + (i.weight_g ?? 0), 0) || k.total_weight_g || 0;
+        return {
+          id: k.id,
+          name: cleanKitName(k.name),
+          weightKg: Number((w / 1000).toFixed(1)),
+          completionPct: items.length ? Math.round((checked / items.length) * 100) : 100,
+        };
+      });
 
     const departTotalKg = firstKit?.total_weight_g ? firstKit.total_weight_g / 1000 : totalWeight / 1000;
 
     const depart: MaterielSummary['depart'] = firstKit
       ? {
           id: firstKit.id,
-          destination: firstKit.name,
+          destination: cleanKitName(firstKit.name),
           startsAt: new Date(Date.now() + 3 * 86400000).toISOString(),
           readinessPct: readiness,
           status: readiness >= 80 ? 'ok' : readiness >= 40 ? 'warning' : 'critical',

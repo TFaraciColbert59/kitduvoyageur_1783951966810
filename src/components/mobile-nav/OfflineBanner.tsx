@@ -38,10 +38,12 @@ export default function OfflineBanner() {
           className="flex md:hidden"
           style={{
             position: 'fixed',
-            top: 'calc(env(safe-area-inset-top) + 60px)',
-            left: '12px',
-            right: '12px',
-            zIndex: 55,
+            top: 'calc(env(safe-area-inset-top, 0px) + 8px)',
+            left: 'max(12px, env(safe-area-inset-left, 0px))',
+            right: 'max(12px, env(safe-area-inset-right, 0px))',
+            maxWidth: '460px',
+            margin: '0 auto',
+            zIndex: 100,
             alignItems: 'center',
             gap: '10px',
             padding: '10px 14px',

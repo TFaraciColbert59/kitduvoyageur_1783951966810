@@ -48,9 +48,10 @@ export default function ParcoursCard({ groupId, trail, meta }: ParcoursCardProps
         attributionControl: false,
       });
 
-      L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png', {
-        maxZoom: 19,
-        maxNativeZoom: 18,
+      L.tileLayer('https://{s}.tile.openstreetmap.fr/osmfr/{z}/{x}/{y}.png', {
+        attribution: '&copy; OpenStreetMap contributors | OSM France',
+        subdomains: ['a', 'b', 'c'],
+        maxZoom: 18,
         keepBuffer: 6,
       }).addTo(map);
 

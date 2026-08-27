@@ -201,7 +201,7 @@ export default function PublicProfilePage() {
 
       {/* MOBILE */}
       <div className="block md:hidden">
-        <MobilePageShell background="transparent">
+        <MobilePageShell safeTop={false} background="transparent">
           <PublicMobileProfileView
             profile={profile as any}
             carnets={carnets as any}

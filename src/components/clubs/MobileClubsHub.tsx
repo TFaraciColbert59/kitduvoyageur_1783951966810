@@ -79,7 +79,7 @@ export default function MobileClubsHub({
   };
 
   return (
-    <div className="w-full min-h-screen bg-transparent pb-36 relative font-sans text-[#17402C]">
+    <div className="w-full min-h-full bg-transparent pb-6 relative font-sans text-[#17402C]">
       {/* Pull to refresh visual indicator */}
       {(pullProgress > 0 || isRefreshing) && (
         <div

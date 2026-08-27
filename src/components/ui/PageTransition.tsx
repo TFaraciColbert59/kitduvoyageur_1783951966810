@@ -14,7 +14,7 @@ export default function PageTransition({ children }: { children: React.ReactNode
       initial={prefersReducedMotion ? false : { opacity: 0.92 }}
       animate={{ opacity: 1 }}
       transition={{ duration: 0.08, ease: [0.16, 1, 0.3, 1] }}
-      className="w-full h-full min-h-screen"
+      className="w-full h-full min-h-full"
     >
       {children}
     </motion.div>

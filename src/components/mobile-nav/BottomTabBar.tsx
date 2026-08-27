@@ -169,7 +169,7 @@ const TabLink = memo(function TabLink({ tab, isActive, onPress, badge }: { tab: 
         position: 'relative',
         userSelect: 'none',
         WebkitTapHighlightColor: 'transparent',
-        width: 48,
+        width: 44,
         height: 44,
       }}
     >
@@ -183,6 +183,8 @@ const TabLink = memo(function TabLink({ tab, isActive, onPress, badge }: { tab: 
             bottom: 2,
             left: 2,
             right: 2,
+            width: 40,
+            height: 40,
             borderRadius: 9999,
           }}
           transition={{ type: 'spring', stiffness: 450, damping: 32 }}
@@ -215,7 +217,6 @@ function HamburgerMenu({ menuOpen, setMenuOpen, openSearch, isCommunity }: { men
         style={{
           width: '44px',
           height: '44px',
-          marginLeft: '4px',
           borderRadius: '999px',
           background: 'rgba(255, 255, 255, 0.25)',
           backdropFilter: 'blur(16px)',
@@ -719,9 +720,9 @@ function BottomTabBar() {
 
   if (!mounted) {
     return (
-      <nav role="navigation" aria-label="Chargement de la navigation" className="md:hidden flex items-center justify-center" style={{ position: 'fixed', left: 0, right: 0, bottom: 0, zIndex: 50, pointerEvents: 'none', paddingBottom: 'calc(env(safe-area-inset-bottom, 0px) + 8px)' }}>
+      <nav role="navigation" aria-label="Chargement de la navigation" className="md:hidden flex items-center justify-center" style={{ position: 'fixed', left: 0, right: 0, bottom: 0, zIndex: 9999, pointerEvents: 'none', paddingBottom: 'calc(env(safe-area-inset-bottom, 0px) + 8px)' }}>
         <div style={{
-          height: 58,
+          height: 52,
           background: 'linear-gradient(180deg, rgba(255,255,255,0.72) 0%, rgba(255,255,255,0.38) 100%)',
           backdropFilter: 'blur(28px) saturate(200%)',
           WebkitBackdropFilter: 'blur(28px) saturate(200%)',
@@ -755,12 +756,12 @@ function BottomTabBar() {
         bottom: 0,
         zIndex: 9999,
         pointerEvents: 'none',
-        paddingBottom: 'calc(env(safe-area-inset-bottom, 0px) + 12px)',
+        paddingBottom: 'calc(env(safe-area-inset-bottom, 0px) + 8px)',
       }}
     >
       <div
         style={{
-          width: 'calc(100vw - 24px)',
+          width: 'calc(100vw - 20px)',
           maxWidth: '460px',
           display: 'flex',
           flexDirection: 'column',
@@ -768,24 +769,24 @@ function BottomTabBar() {
           pointerEvents: 'auto',
         }}
       >
-        {/* Upper extension tray coming out from behind the bottom bar */}
+        {/* Upper extension tray coming out from behind the bottom bar — élargi pour visibilité optimale */}
         <AnimatePresence>
           {hasUpperExtension && (
             <motion.div
-              initial={{ y: 16, opacity: 0 }}
+              initial={{ y: 14, opacity: 0 }}
               animate={{ y: 0, opacity: 1 }}
-              exit={{ y: 16, opacity: 0 }}
+              exit={{ y: 14, opacity: 0 }}
               transition={{ type: 'spring', stiffness: 450, damping: 28 }}
               style={{
-                width: 'calc(100% - 14px)',
-                height: 46,
-                marginBottom: -12,
-                paddingBottom: 12,
+                width: 'calc(100% - 4px)',
+                height: 42,
+                marginBottom: -10,
+                paddingBottom: 10,
                 background: 'linear-gradient(180deg, rgba(255,255,255,0.88) 0%, rgba(246,244,239,0.68) 100%)',
                 backdropFilter: 'blur(30px) saturate(200%)',
                 WebkitBackdropFilter: 'blur(30px) saturate(200%)',
-                borderTopLeftRadius: 32,
-                borderTopRightRadius: 32,
+                borderTopLeftRadius: 28,
+                borderTopRightRadius: 28,
                 border: '1px solid rgba(255, 255, 255, 0.85)',
                 borderBottom: 'none',
                 boxShadow: 'inset 0 1.5px 2px rgba(255,255,255,0.98), 0 -2px 14px rgba(23, 64, 44, 0.06)',
@@ -795,8 +796,8 @@ function BottomTabBar() {
                 overflowX: 'auto',
                 scrollbarWidth: 'none',
                 msOverflowStyle: 'none',
-                paddingLeft: 6,
-                paddingRight: 6,
+                paddingLeft: 8,
+                paddingRight: 8,
                 gap: 2,
                 zIndex: 1,
               }}
@@ -811,7 +812,7 @@ function BottomTabBar() {
                     style={{
                       flex: isWideUpperTray ? '0 0 auto' : 1,
                       position: 'relative',
-                      height: 30,
+                      height: 28,
                       display: 'flex',
                       alignItems: 'center',
                       justifyContent: 'center',
@@ -833,8 +834,8 @@ function BottomTabBar() {
                           position: 'absolute',
                           top: 2,
                           bottom: 2,
-                          left: 3,
-                          right: 3,
+                          left: 2,
+                          right: 2,
                           borderRadius: 999,
                           background: 'linear-gradient(180deg, rgba(255,255,255,0.92) 0%, rgba(242,248,243,0.80) 100%)',
                           backdropFilter: 'blur(16px)',
@@ -864,24 +865,24 @@ function BottomTabBar() {
           )}
         </AnimatePresence>
 
-        {/* Lower main bottom bar */}
+        {/* Lower main bottom bar — hauteur ultra-compacte 52px pour laisser l'écran respirer */}
         <div
           style={{
             position: 'relative',
             zIndex: 2,
             width: '100%',
-            height: 62,
-            background: 'linear-gradient(180deg, rgba(255,255,255,0.76) 0%, rgba(255,255,255,0.42) 100%)',
+            height: 52,
+            background: 'linear-gradient(180deg, rgba(255,255,255,0.78) 0%, rgba(255,255,255,0.48) 100%)',
             backdropFilter: 'blur(30px) saturate(200%)',
             WebkitBackdropFilter: 'blur(30px) saturate(200%)',
             borderRadius: 999,
             border: '1px solid rgba(255, 255, 255, 0.85)',
-            boxShadow: 'inset 0 1px 1.5px rgba(255,255,255,0.95), inset 0 -1px 1px rgba(255,255,255,0.25), 0 12px 32px rgba(23, 64, 44, 0.14)',
+            boxShadow: 'inset 0 1px 1.5px rgba(255,255,255,0.95), inset 0 -1px 1px rgba(255,255,255,0.25), 0 10px 28px rgba(23, 64, 44, 0.12)',
             display: 'flex',
             alignItems: 'center',
-            justifyContent: 'center',
-            padding: '0 16px',
-            gap: '8px',
+            justifyContent: 'space-around',
+            padding: '0 clamp(4px, 1.5vw, 8px)',
+            gap: 'clamp(2px, 1.2vw, 6px)',
           }}
         >
           {DEFAULT_TABS.map((tab) => (

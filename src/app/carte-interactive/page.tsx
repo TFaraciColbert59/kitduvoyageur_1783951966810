@@ -39,10 +39,9 @@ export default function CarteInteractivePage() {
 
       {/* MOBILE */}
       <div className="block md:hidden">
-        <MobilePageShell>
+        <MobilePageShell safeTop={false} hasBottomNav={false}>
           <CarteClient />
         </MobilePageShell>
-
       </div>
     </>
   );

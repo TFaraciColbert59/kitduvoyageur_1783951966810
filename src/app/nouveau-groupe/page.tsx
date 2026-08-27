@@ -103,9 +103,10 @@ export default function NouveauGroupePage() {
 
       leafletMap.current = map;
 
-      L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png', {
-        maxZoom: 19,
-        keepBuffer: 6,
+      L.tileLayer('https://{s}.tile.openstreetmap.fr/osmfr/{z}/{x}/{y}.png', {
+        attribution: '&copy; OpenStreetMap contributors | OSM France',
+        subdomains: ['a', 'b', 'c'],
+        maxZoom: 18,
       }).addTo(map);
 
       const r = (selectedTrail.distance_km / 111) * 0.35;

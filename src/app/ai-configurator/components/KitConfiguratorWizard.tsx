@@ -738,7 +738,10 @@ export default function KitConfiguratorWizard({ isMobile = false }: KitConfigura
 
       {/* ── MOBILE STICKY BOTTOM ACTION BAR (Liquid Glass) ── */}
       {report && (
-        <div className="lg:hidden fixed bottom-0 left-0 right-0 z-50 glass border-t border-white/70 p-3.5 px-4 flex items-center justify-between shadow-lg">
+        <div
+          className="lg:hidden fixed left-2.5 right-2.5 z-[90] glass border border-white/80 p-3 px-4 flex items-center justify-between shadow-xl rounded-2xl"
+          style={{ bottom: 'calc(env(safe-area-inset-bottom, 0px) + 84px)' }}
+        >
           <div>
             <p className="text-[9.5px] font-mono text-[#5B7F55] uppercase tracking-wider font-bold">
               {report.totalWeightKg} KG · {report.ownedItems.length + report.missingItems.length} PIÈCES
@@ -750,7 +753,7 @@ export default function KitConfiguratorWizard({ isMobile = false }: KitConfigura
 
           <button
             onClick={handleNext}
-            className="glass-capsule-btn primary text-xs font-bold !py-2 !px-4 shadow-sm"
+            className="glass-capsule-btn primary text-xs font-bold !py-2.5 !px-5 shadow-sm"
           >
             {nextStepLabel}
           </button>
