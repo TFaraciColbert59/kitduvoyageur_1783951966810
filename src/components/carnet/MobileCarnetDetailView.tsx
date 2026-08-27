@@ -215,17 +215,17 @@ export default function MobileCarnetDetailView({
             >
               <div className="w-10 h-10 rounded-full bg-[#17402C] text-white flex items-center justify-center font-serif italic text-sm font-bold shadow-xs overflow-hidden shrink-0 group-hover/author:scale-105 transition-transform">
                 <img
-                  src={metaAny.authorAvatar || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150&q=80'}
+                  src={metaAny.authorAvatar || (data.meta?.titleLine1?.includes('Ring Road') ? 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=150&q=80' : 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150&q=80')}
                   alt=""
                   className="w-full h-full object-cover"
                 />
               </div>
               <div className="min-w-0">
                 <h4 className="font-bold text-xs text-[#17402C] truncate group-hover/author:underline">
-                  {metaAny.authorName || 'Aventurier vérifié'}
+                  {metaAny.authorName || (data.meta?.titleLine1?.includes('Ring Road') ? 'Marie Dupont' : 'Antoine Duprès')}
                 </h4>
                 <p className="text-[9.5px] font-mono text-[#5C6B5E] truncate">
-                  {metaAny.authorTitle || 'Guide & Explorateur'}
+                  {metaAny.authorTitle || 'Guide & Explorateur LKDV'}
                 </p>
               </div>
             </Link>

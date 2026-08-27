@@ -10,6 +10,7 @@ import { CountryDetail } from '@/lib/countryDetails';
 import BouteilleALaMer from '@/components/pays/BouteilleALaMer';
 import PaysClubsList from '@/components/pays/PaysClubsList';
 import PaysCarnetsList from '@/components/pays/PaysCarnetsList';
+import SmartImage from '@/components/ui/SmartImage';
 
 export type MobilePaysSection =
   | 'presentation'
@@ -56,13 +57,18 @@ export default function MobileCountryDetailView({
 
   const heroImage =
     country.destinations?.[0]?.image_url ||
-    'https://images.unsplash.com/photo-1464822759023-fed622ff2c3b?w=1200&q=80';
+    'https://images.unsplash.com/photo-1503614472-8c93d56e92ce?q=80&w=1200';
 
   return (
-    <div className="md:hidden min-h-screen bg-transparent pb-[calc(140px+env(safe-area-inset-bottom,0px))] text-[#17402C] font-sans">
+    <div
+      className="md:hidden min-h-screen bg-transparent pb-[calc(175px+env(safe-area-inset-bottom,0px))] text-[#17402C] font-sans [overscroll-behavior-y:none]"
+    >
       
       {/* ── 1. FLOATING TOP CONTROLS (Dégagé & Spacieux) ── */}
-      <div className="px-4 pt-4 flex items-center justify-between gap-2 z-20 relative">
+      <div
+        className="px-4 flex items-center justify-between gap-2 z-20 relative"
+        style={{ paddingTop: 'calc(max(env(safe-area-inset-top, 0px), 12px) + 8px)' }}
+      >
         <Link
           href="/pays"
           onClick={() => triggerHaptic('light')}
@@ -94,12 +100,12 @@ export default function MobileCountryDetailView({
       {/* ── 2. PANORAMIC HERO CARD (Cristal Liquid Glass) ── */}
       <div className="px-4 pt-3">
         <div className="relative w-full h-56 rounded-[24px] overflow-hidden glass border border-white/80 shadow-md">
-          <img
+          <SmartImage
             src={heroImage}
             alt={country.nom}
             className="w-full h-full object-cover"
           />
-          <div className="absolute inset-0 bg-gradient-to-t from-[#17402C]/90 via-[#17402C]/35 to-transparent" />
+          <div className="absolute inset-0 bg-gradient-to-t from-[#17402C]/90 via-[#17402C]/35 to-transparent pointer-events-none" />
 
           {/* Slogan & Destination Details */}
           <div className="absolute bottom-3.5 left-4 right-4 z-10 text-white">
@@ -130,8 +136,8 @@ export default function MobileCountryDetailView({
         <div className="glass p-2.5 rounded-[22px] border border-white/80 shadow-xs bg-white/80">
           <div className="grid grid-cols-4 gap-1.5 text-center">
             <div className="glass-sub-card p-2 rounded-xl border border-white/90 bg-white/90 shadow-2xs">
-              <span className="block font-mono font-bold text-xs text-[#17402C] truncate">
-                {country.superficie_court}
+              <span className="block font-mono font-bold text-[11px] sm:text-xs text-[#17402C] truncate" title={country.superficie_detail}>
+                {country.superficie_court.endsWith('M') || country.superficie_court.endsWith('k') ? `${country.superficie_court} km²` : `${country.superficie_court}k km²`}
               </span>
               <span className="text-[8px] text-[#5A7064] uppercase font-mono font-bold">
                 Superficie

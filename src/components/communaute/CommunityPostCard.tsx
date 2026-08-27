@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { motion, AnimatePresence } from 'framer-motion';
 import Icon from '@/components/ui/AppIcon';
 import GlassIconButton from '@/components/ui/GlassIconButton';
+import SmartImage from '@/components/ui/SmartImage';
 import { createClient } from '@/lib/supabase/client';
 
 export interface PostAuthor {
@@ -354,8 +355,12 @@ export default function CommunityPostCard({
 
       {/* Attached Media */}
       {post.image_url && (
-        <div className="rounded-xl overflow-hidden max-h-96 bg-[#17402C]">
-          <img src={post.image_url} alt="Post media" className="w-full h-full object-cover" />
+        <div className="rounded-2xl overflow-hidden aspect-[16/10] bg-[#FAF8F5] border border-white/80 shadow-2xs">
+          <SmartImage
+            src={post.image_url}
+            alt="Photo de l'expédition"
+            className="w-full h-full object-cover"
+          />
         </div>
       )}
 

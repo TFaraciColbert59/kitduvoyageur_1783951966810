@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import Icon from '@/components/ui/AppIcon';
 import GlassIconButton from '@/components/ui/GlassIconButton';
+import SmartImage from '@/components/ui/SmartImage';
 
 export interface CarnetItem {
   id: string;
@@ -130,15 +131,15 @@ export default function CarnetHubCard({
     >
       {/* Cover Image Container */}
       <div className="w-full aspect-[16/10] relative overflow-hidden bg-[#17402C]">
-        <img
+        <SmartImage
           src={coverUrl}
           alt={carnet.title}
           className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
         />
-        <div className="absolute inset-0 bg-gradient-to-t from-black/75 via-black/20 to-transparent" />
+        <div className="absolute inset-0 bg-gradient-to-t from-black/75 via-black/20 to-transparent pointer-events-none" />
 
         {/* Top Badges */}
-        <div className="absolute top-3 left-3 flex items-center gap-1.5 flex-wrap">
+        <div className="absolute top-3 left-3 flex items-center gap-1.5 flex-wrap pointer-events-none">
           <span className="glass-pill px-2.5 py-1 text-[9.5px] font-mono font-bold text-white bg-black/40 backdrop-blur-md border-white/20 flex items-center gap-1">
             📍 {destinationStr}
           </span>
@@ -160,13 +161,15 @@ export default function CarnetHubCard({
         </div>
 
         {/* Metrics overlay on bottom of image */}
-        <div className="absolute bottom-2.5 left-3 right-3 flex items-center justify-between text-white text-[10.5px] font-mono">
+        <div className="absolute bottom-2.5 left-3 right-3 flex items-center justify-between text-white text-[10.5px] font-mono pointer-events-none">
           <div className="flex items-center gap-2">
             {carnet.distance_km && <span>📏 {carnet.distance_km} km</span>}
             {carnet.elevation_m && <span>⛰️ +{carnet.elevation_m} m</span>}
           </div>
-          {carnet.route_rating && (
+          {Number(carnet.route_rating) > 0 ? (
             <span className="font-bold text-amber-300">★ {carnet.route_rating}/10</span>
+          ) : (
+            <span className="font-bold text-white/90 bg-white/20 backdrop-blur-md px-2 py-0.5 rounded-full text-[9px]">Nouveau</span>
           )}
         </div>
       </div>

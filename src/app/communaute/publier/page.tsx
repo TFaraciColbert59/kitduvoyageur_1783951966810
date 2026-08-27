@@ -48,7 +48,7 @@ function PublierPostContent() {
   const [isDetectingLocation, setIsDetectingLocation] = useState(false);
 
   // Tags & Mentions
-  const [tags, setTags] = useState<string[]>(['chartreuse', 'première neige', 'automne']);
+  const [tags, setTags] = useState<string[]>(['chartreuse', 'premiere-neige', 'automne']);
   const [tagInput, setTagInput] = useState('');
   const [mentions, setMentions] = useState<string[]>(['antoinec']);
   const [mentionInput, setMentionInput] = useState('');

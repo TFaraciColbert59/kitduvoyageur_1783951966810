@@ -164,7 +164,7 @@ export default function ExplorerMap({
         center: [46.5, 2.5],
         zoom: 6,
         zoomControl: false,
-        attributionControl: true,
+        attributionControl: false,
         dragging: true,
         touchZoom: true,
         scrollWheelZoom: true,
@@ -175,6 +175,8 @@ export default function ExplorerMap({
         // GPU canvas — plus rapide sur mobile bas de gamme, évite les repaints SVG
         preferCanvas: true,
       });
+
+      L.control.attribution({ prefix: false }).addAttribution('© OSM France').addTo(map);
 
       const handleUserMove = () => {
         userDraggingRef.current = true;

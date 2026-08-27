@@ -147,25 +147,32 @@ export async function getMaterielSummary(): Promise<MaterielSummary> {
       is_checked: !!item.is_checked,
     }));
 
-    const cleanKitName = (name: string | null | undefined): string => {
-      if (!name) return 'Trek Jura 2 jours';
-      const cleaned = name.replace(/\s*\(copie\)/gi, '').trim();
+    const defaultKitNames = ['Trek Jura 2 jours', 'Bivouac Express Vercors', 'Pack Alpinisme Écrins', 'Sortie Bushcraft 24h'];
+    const seenNames = new Set<string>();
+
+    const cleanKitName = (name: string | null | undefined, index: number = 0): string => {
+      if (!name) return defaultKitNames[index % defaultKitNames.length];
+      let cleaned = name.replace(/\s*\(copie\)/gi, '').trim();
       if (/^[b-df-hj-np-tv-z]{5,}$/i.test(cleaned) || cleaned.length < 3) {
-        return 'Bivouac Été Express';
+        cleaned = defaultKitNames[index % defaultKitNames.length];
       }
+      if (seenNames.has(cleaned)) {
+        cleaned = `${cleaned} (Option ${index + 1})`;
+      }
+      seenNames.add(cleaned);
       return cleaned;
     };
 
     const topKits = activeKits
       .filter((k) => !/^[b-df-hj-np-tv-z]{5,}$/i.test(k.name.trim()))
       .slice(0, 3)
-      .map((k) => {
+      .map((k, idx) => {
         const items = (k.materiel_kit_items ?? []) as { weight_g?: number | null; is_checked: boolean }[];
         const checked = items.filter((i) => i.is_checked).length;
         const w = items.reduce((acc, i) => acc + (i.weight_g ?? 0), 0) || k.total_weight_g || 0;
         return {
           id: k.id,
-          name: cleanKitName(k.name),
+          name: cleanKitName(k.name, idx),
           weightKg: Number((w / 1000).toFixed(1)),
           completionPct: items.length ? Math.round((checked / items.length) * 100) : 100,
         };

@@ -103,12 +103,22 @@ export class GPSService {
 
   public onPosition(callback: GPSServiceCallback): () => void {
     this.onPositionCallbacks.add(callback);
-    return () => this.onPositionCallbacks.delete(callback);
+    return () => {
+      this.onPositionCallbacks.delete(callback);
+      if (this.onPositionCallbacks.size === 0) {
+        this.stopTracking();
+      }
+    };
   }
 
   public onError(callback: GPSServiceErrorCallback): () => void {
     this.onErrorCallbacks.add(callback);
-    return () => this.onErrorCallbacks.delete(callback);
+    return () => {
+      this.onErrorCallbacks.delete(callback);
+      if (this.onPositionCallbacks.size === 0 && this.onErrorCallbacks.size === 0) {
+        this.stopTracking();
+      }
+    };
   }
 
   public injectPosition(pos: GPSPosition): void {

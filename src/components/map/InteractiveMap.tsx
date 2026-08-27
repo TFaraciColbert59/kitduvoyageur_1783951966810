@@ -218,6 +218,7 @@ export default function InteractiveMap() {
         center: [50.4, 2.8],
         zoom: 9,
         zoomControl: false,
+        attributionControl: false,
         dragging: true,
         touchZoom: true,
         scrollWheelZoom: true,
@@ -228,6 +229,8 @@ export default function InteractiveMap() {
         preferCanvas: true,
         bounceAtZoomLimits: false,
       } as any);
+
+      L.control.attribution({ prefix: false }).addAttribution('© OSM France').addTo(map);
 
       const initialLayer = L.tileLayer('https://{s}.tile.openstreetmap.fr/osmfr/{z}/{x}/{y}.png', {
         attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors | <a href="https://www.openstreetmap.fr">OSM France</a>',

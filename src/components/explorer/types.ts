@@ -165,11 +165,18 @@ export function getDifficultyLabel(difficulty: string | null | undefined): strin
 }
 
 export function formatDuration(hours: number | null | undefined): string {
-  if (!hours) return '—';
+  if (!hours || hours <= 0) return '—';
   if (hours < 1) return `${Math.round(hours * 60)} min`;
+  if (hours >= 24) {
+    const d = Math.floor(hours / 24);
+    const remH = Math.round(hours % 24);
+    return remH > 0 ? `${d}j ${remH}h` : `${d}j`;
+  }
   const h = Math.floor(hours);
   const m = Math.round((hours - h) * 60);
-  return m > 0 ? `${h}h${String(m).padStart(2, '0')}` : `${h}h`;
+  if (m === 0) return `${h}h`;
+  if (h >= 10) return `${Math.round(hours)}h`;
+  return `${h}h${String(m).padStart(2, '0')}`;
 }
 
 export function formatDistance(km: number | null | undefined): string {
