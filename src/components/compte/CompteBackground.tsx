@@ -9,23 +9,45 @@ import React from 'react';
 export function CompteBackground() {
   return (
     <div
-      className="fixed top-0 left-0 -z-10 overflow-hidden pointer-events-none"
-      style={{ width: '100%', height: '100dvh' }}
+      className="fixed inset-0 -z-10 overflow-hidden pointer-events-none select-none"
+      style={{
+        width: '100vw',
+        height: '100dvh',
+        background: 'linear-gradient(180deg, #17402C 0%, #203B2C 40%, #2E4738 75%, #142E20 100%)',
+      }}
       aria-hidden="true"
     >
+      {/* Fallback image poster */}
+      <img
+        src="/assets/images/forest-1.jpg"
+        alt=""
+        className="absolute inset-0 w-full h-full object-cover opacity-60 mix-blend-overlay"
+        loading="eager"
+      />
+
+      {/* Cinematic Video Layer */}
       <video
-        className="w-full h-full object-cover"
+        className="absolute inset-0 w-full h-full object-cover opacity-85"
         src="/mobile-cinematic-bg.mp4"
+        poster="/assets/images/forest-1.jpg"
         autoPlay
         muted
         loop
         playsInline
-        preload="auto"
+        preload="metadata"
         suppressHydrationWarning
         style={{
           objectFit: 'cover',
           width: '100vw',
           height: '100dvh',
+        }}
+      />
+
+      {/* Atmospheric Vignette & Depth Overlay */}
+      <div
+        className="absolute inset-0 pointer-events-none"
+        style={{
+          background: 'radial-gradient(circle at 50% 30%, transparent 0%, rgba(11, 31, 23, 0.45) 100%)',
         }}
       />
     </div>

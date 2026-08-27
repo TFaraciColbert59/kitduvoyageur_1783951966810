@@ -83,10 +83,10 @@ export default function CountryPage({ params }: { params: Promise<{ code: string
       <CompteBackground />
 
       {/* ══════════════════════════════════════════════════════════════════════
-          1. VERSION MOBILE (block md:hidden)
+          1. VERSION MOBILE (< 768px)
          ══════════════════════════════════════════════════════════════════════ */}
       <div className="block md:hidden min-h-screen">
-        <MobilePageShell videoBackground={false} background="transparent">
+        <MobilePageShell videoBackground={true}>
           <MobileCountryDetailView country={country} flagEmoji={flagEmoji} />
         </MobilePageShell>
       </div>

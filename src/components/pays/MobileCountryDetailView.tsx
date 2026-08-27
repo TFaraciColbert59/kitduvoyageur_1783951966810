@@ -65,10 +65,7 @@ export default function MobileCountryDetailView({
     >
       
       {/* ── 1. FLOATING TOP CONTROLS (Dégagé & Spacieux) ── */}
-      <div
-        className="px-4 flex items-center justify-between gap-2 z-20 relative"
-        style={{ paddingTop: 'calc(max(env(safe-area-inset-top, 0px), 12px) + 8px)' }}
-      >
+      <div className="px-4 pt-2 flex items-center justify-between gap-2 z-20 relative">
         <Link
           href="/pays"
           onClick={() => triggerHaptic('light')}

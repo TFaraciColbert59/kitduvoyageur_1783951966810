@@ -58,19 +58,7 @@ export default function EarthPage() {
     return () => window.removeEventListener('resize', checkMobile);
   }, []);
 
-  // Verrouille le scroll (html/body) — page 100% plein écran, aucun scroll.
-  useEffect(() => {
-    const html = document.documentElement;
-    const body = document.body;
-    const prevHtml = html.style.overflow;
-    const prevBody = body.style.overflow;
-    html.style.overflow = 'hidden';
-    body.style.overflow = 'hidden';
-    return () => {
-      html.style.overflow = prevHtml;
-      body.style.overflow = prevBody;
-    };
-  }, []);
+
 
   const [selectedContinent, setSelectedContinent] = useState<string>("all");
   const [focusCode, setFocusCode] = useState<string | undefined>(undefined);

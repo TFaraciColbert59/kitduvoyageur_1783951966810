@@ -94,54 +94,60 @@ function CommunautePageContent() {
     const supabase = createClient();
 
     try {
-      // 1. Posts from DB
-      const { data: postsData } = await supabase
-        .from('community_posts')
-        .select(`*, author:user_profiles!community_posts_author_id_fkey(full_name, avatar_url, loyalty_level)`)
-        .order('created_at', { ascending: false })
-        .limit(20);
-      if (postsData && postsData.length > 0) {
-        setPosts(postsData);
-      }
-
-      // 2. Carnets
       let localCarnets: any[] = [];
-      try {
-        localCarnets = JSON.parse(localStorage.getItem('user_carnets_data') || '[]');
-      } catch {}
-      const { data: carnetsData } = await supabase
-        .from('carnets')
-        .select(`*, author:user_profiles!author_id(full_name, avatar_url)`)
-        .order('created_at', { ascending: false })
-        .limit(20);
-      const allCarnets = [...localCarnets, ...(carnetsData || [])];
-      if (allCarnets.length > 0) {
-        setCarnets(Array.from(new Map(allCarnets.map((c) => [c.id || c.title, c])).values()));
-      }
-
-      // 3. Clubs
       let localClubs: any[] = [];
-      try {
-        localClubs = JSON.parse(localStorage.getItem('user_created_clubs') || '[]');
-      } catch {}
-      const { data: clubsData } = await supabase.from('clubs').select('*').order('members_count', { ascending: false });
-      const allClubs = [...localClubs, ...(clubsData || [])];
-      if (allClubs.length > 0) {
-        setClubs(Array.from(new Map(allClubs.map((c) => [c.id || c.name || c.title, c])).values()));
-      }
-
-      // 4. Groups
       let localGroups: any[] = [];
       try {
+        localCarnets = JSON.parse(localStorage.getItem('user_carnets_data') || '[]');
+        localClubs = JSON.parse(localStorage.getItem('user_created_clubs') || '[]');
         localGroups = JSON.parse(localStorage.getItem('user_created_groups') || '[]');
       } catch {}
-      const { data: groupsData } = await supabase.from('groupes').select('*').limit(20);
-      const allGroups = [...localGroups, ...(groupsData || [])];
-      if (allGroups.length > 0) {
-        setGroups(Array.from(new Map(allGroups.map((g) => [g.id || g.name, g])).values()));
+
+      // Parallel fetch for instant loading
+      const [postsRes, carnetsRes, clubsRes, groupsRes] = await Promise.allSettled([
+        supabase
+          .from('community_posts')
+          .select(`*, author:user_profiles!community_posts_author_id_fkey(full_name, avatar_url, loyalty_level)`)
+          .order('created_at', { ascending: false })
+          .limit(20),
+        supabase
+          .from('carnets')
+          .select(`*, author:user_profiles!author_id(full_name, avatar_url)`)
+          .order('created_at', { ascending: false })
+          .limit(20),
+        supabase.from('clubs').select('*').order('members_count', { ascending: false }),
+        supabase.from('groupes').select('*').limit(20),
+      ]);
+
+      if (postsRes.status === 'fulfilled' && postsRes.value.data && postsRes.value.data.length > 0) {
+        setPosts(postsRes.value.data);
+      }
+
+      if (carnetsRes.status === 'fulfilled') {
+        const carnetsData = carnetsRes.value.data || [];
+        const allCarnets = [...localCarnets, ...carnetsData];
+        if (allCarnets.length > 0) {
+          setCarnets(Array.from(new Map(allCarnets.map((c) => [c.id || c.title, c])).values()));
+        }
+      }
+
+      if (clubsRes.status === 'fulfilled') {
+        const clubsData = clubsRes.value.data || [];
+        const allClubs = [...localClubs, ...clubsData];
+        if (allClubs.length > 0) {
+          setClubs(Array.from(new Map(allClubs.map((c) => [c.id || c.name || c.title, c])).values()));
+        }
+      }
+
+      if (groupsRes.status === 'fulfilled') {
+        const groupsData = groupsRes.value.data || [];
+        const allGroups = [...localGroups, ...groupsData];
+        if (allGroups.length > 0) {
+          setGroups(Array.from(new Map(allGroups.map((g) => [g.id || g.name, g])).values()));
+        }
       }
     } catch (err) {
-      console.error(err);
+      console.error('[CommunautePage] Error loading data:', err);
     }
   }, []);
 
@@ -192,7 +198,7 @@ function CommunautePageContent() {
           1. VERSION MOBILE (block md:hidden)
          ══════════════════════════════════════════════════════════════════════ */}
       <div className="block md:hidden min-h-screen">
-        <MobilePageShell videoBackground={false} background="transparent">
+        <MobilePageShell videoBackground={true}>
           <MobileCommunityHub
             posts={posts}
             carnets={filteredCarnets}

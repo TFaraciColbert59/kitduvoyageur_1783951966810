@@ -19,7 +19,14 @@ export async function GET(request: Request) {
       includeShort: true,
     });
 
-    return NextResponse.json({ trails });
+    return NextResponse.json(
+      { trails },
+      {
+        headers: {
+          'Cache-Control': 'public, s-maxage=120, stale-while-revalidate=600',
+        },
+      }
+    );
   } catch (err: any) {
     console.error('API /api/trails error:', err);
     return NextResponse.json({ error: err.message, trails: [] }, { status: 500 });
