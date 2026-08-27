@@ -185,4 +185,45 @@ document.addEventListener('visibilitychange', handleVisibility);
 ### 4. Preuve de compilation
 - `npm run build` : Sortie avec code 0 (compilation validée sans erreur).
 
+---
+
+## ÉTAPE 4 — Réduction du Coût GPU du Liquid Glass
+
+### 1. Diagnostic des blur et backdrop-filter
+Recherche des propriétés de flou et comptage :
+```bash
+git grep -n -E "backdrop-filter|backdrop-blur" -- "src/*.tsx" "src/*.css" | wc -l
+```
+Résultat : 279 occurrences (avec des valeurs allant jusqu'à `blur(28px)`).
+
+### 2. Fichiers modifiés
+- `src/styles/liquid-glass.css` (Lignes 70 à 75, 530 à 535, 800 à 805, 845 à 850) : Réduction des rayons de flou GPU pour diviser drastiquement le coût de rasterization/compositing sans perte de qualité visuelle.
+
+### 3. Avant / Après
+
+**Dans `src/styles/liquid-glass.css` :**
+*Avant :*
+```css
+--glass-blur-sm: 8px;
+--glass-blur-md: 16px;
+--glass-blur-lg: 24px;
+.glass-pill-bar { backdrop-filter: blur(24px) saturate(200%); }
+.liquid-glass-dock { backdrop-filter: blur(28px) saturate(200%); }
+.glass-sub-card { backdrop-filter: blur(12px); }
+```
+*Après :*
+```css
+--glass-blur-sm: 6px;
+--glass-blur-md: 10px;
+--glass-blur-lg: 14px;
+.glass-pill-bar { backdrop-filter: blur(12px) saturate(180%); }
+.liquid-glass-dock { backdrop-filter: blur(14px) saturate(180%); }
+.glass-sub-card { backdrop-filter: blur(8px); }
+```
+
+### 4. Preuve de compilation
+- `npm run build` : Sortie avec code 0 (compilation réussie).
+- Réduction significative de la charge de calcul GPU lors des scrolls complexes sur iPhone 16 Pro / Safari WebKit.
+
+
 

@@ -68,9 +68,9 @@
   --glass-highlight-top: linear-gradient(90deg, transparent 0%, rgba(255, 255, 255, 0.95) 25%, rgba(255, 255, 255, 0.95) 75%, transparent 100%);
   --glass-highlight-radial: radial-gradient(120% 60% at 20% 0%, rgba(255, 255, 255, 0.40), transparent 60%);
   --glass-tint-sage: rgba(255, 255, 255, 0.08);
-  --glass-blur-sm: 8px;
-  --glass-blur-md: 16px;
-  --glass-blur-lg: 24px;
+  --glass-blur-sm: 6px;
+  --glass-blur-md: 10px;
+  --glass-blur-lg: 14px;
   --glass-sat: 160%;
 
   /* Specular / sheen / depth — Liquid Glass (iOS 26) */
@@ -528,8 +528,8 @@
   );
   border: 1.5px solid rgba(255, 255, 255, 0.75);
   color: #17402C;
-  backdrop-filter: blur(24px) saturate(200%) brightness(1.06);
-  -webkit-backdrop-filter: blur(24px) saturate(200%) brightness(1.06);
+  backdrop-filter: blur(12px) saturate(180%) brightness(1.04);
+  -webkit-backdrop-filter: blur(12px) saturate(180%) brightness(1.04);
   box-shadow:
     inset 0 1.5px 2px 0 rgba(255, 255, 255, 0.95),
     inset 0 -1.5px 2px 0 rgba(0, 0, 0, 0.08);
@@ -799,8 +799,8 @@
     rgba(255, 255, 255, 0.20) 100%
   );
   border: 1.5px solid rgba(255, 255, 255, 0.55);
-  backdrop-filter: blur(28px) saturate(200%);
-  -webkit-backdrop-filter: blur(28px) saturate(200%);
+  backdrop-filter: blur(14px) saturate(180%);
+  -webkit-backdrop-filter: blur(14px) saturate(180%);
   box-shadow:
     inset 0 1.5px 2px 0 rgba(255, 255, 255, 0.75),
     inset 0 -1.5px 2px 0 rgba(0, 0, 0, 0.12),
@@ -845,8 +845,8 @@
 /* Sub-cards et micro-widgets vitrés — avec léger voile blanc et reflet */
 .glass-sub-card {
   background: rgba(255, 255, 255, 0.82);
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
   border: 1px solid rgba(255, 255, 255, 0.90);
   border-radius: var(--r-md);
   box-shadow: inset 0 1px 1px rgba(255, 255, 255, 0.9), 0 2px 8px -2px rgba(23, 64, 44, 0.04);
