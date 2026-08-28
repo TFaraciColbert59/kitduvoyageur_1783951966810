@@ -9,8 +9,8 @@ import React from 'react';
 export function BackgroundVideo() {
   return (
     <div
-      className="fixed top-0 left-0 -z-10 overflow-hidden pointer-events-none"
-      style={{ width: '100%', height: '100dvh' }}
+      className="fixed top-0 left-0 overflow-hidden pointer-events-none"
+      style={{ width: '100%', height: '100dvh', zIndex: 0 }}
       aria-hidden="true"
     >
       <video

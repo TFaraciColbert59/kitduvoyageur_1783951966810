@@ -114,7 +114,7 @@ export default function GroupesPage() {
     <div className="min-h-screen bg-transparent font-sans">
       {/* ── MOBILE ── */}
       <div className="block md:hidden">
-        <MobilePageShell background="#FAF8F5">
+        <MobilePageShell videoBackground={true}>
           <MobileGroupeView data={formattedData} groupId={groupId} user={user} members={members} onRefresh={refreshData} />
         </MobilePageShell>
       </div>

@@ -317,7 +317,7 @@ className={`w-full flex items-center justify-between gap-2 px-3 py-2 rounded-2xl
       </div>
 
       {/* ── MOBILE (plein écran) ── */}
-      <div className="block md:hidden h-full">
+      <div className="block md:hidden h-dvh w-full overflow-hidden relative">
         <div className="m-earth h-full">
           <div className="m-earth-body h-full relative">
             {/* Fond vidéo */}

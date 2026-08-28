@@ -9,8 +9,9 @@ import React from 'react';
 export function CompteBackground() {
   return (
     <div
-      className="fixed inset-0 -z-10 overflow-hidden pointer-events-none select-none"
+      className="fixed inset-0 overflow-hidden pointer-events-none select-none"
       style={{
+        zIndex: 0,
         width: '100vw',
         height: '100dvh',
         background: 'linear-gradient(180deg, #17402C 0%, #203B2C 40%, #2E4738 75%, #142E20 100%)',

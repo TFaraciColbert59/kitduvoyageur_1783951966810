@@ -1231,8 +1231,7 @@ export default function ClubsPage() {
 
       {/* ── MOBILE VIEW ── */}
       <div className="block md:hidden min-h-screen relative font-sans text-[#17402C]">
-        <CompteBackground />
-        <MobilePageShell videoBackground={false} background="transparent">
+        <MobilePageShell videoBackground={true} background="transparent">
           <MobileClubsHub
             clubs={clubs}
             myClubs={clubs.filter(c => c.is_member)}

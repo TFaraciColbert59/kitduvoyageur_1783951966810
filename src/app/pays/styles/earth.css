@@ -130,19 +130,21 @@
 
 /* Mobile */
 .m-earth {
-  display: flex; flex-direction: column;
+  display: flex;
+  flex-direction: column;
   width: 100%;
   max-width: 100vw;
-  overflow-x: hidden;
+  height: 100dvh;
+  position: relative;
+  overflow: hidden;
 }
 .m-earth-body {
   flex: 1;
-  background:
-    linear-gradient(180deg, rgba(251, 250, 246, 0.70) 0%, rgba(251, 250, 246, 0.40) 50%, rgba(251, 250, 246, 0.68) 100%),
-    var(--lkv-paper, #FBFAF6);
+  background: transparent;
   color: #17402C;
   position: relative;
   width: 100%;
+  height: 100%;
 }
 
 /* Aucun voile flouté — direct et net */

@@ -1117,8 +1117,7 @@ export default function CarnetsPage() {
 
       {/* MOBILE VIEW */}
       <div className="block md:hidden min-h-screen relative font-sans text-[#17402C]">
-        <CompteBackground />
-        <MobilePageShell videoBackground={false} background="transparent">
+        <MobilePageShell videoBackground={true} background="transparent">
           <MobileCarnetsHub
             carnets={carnets}
             myCarnets={user ? carnets.filter(c => c.author_id === user.id) : []}
