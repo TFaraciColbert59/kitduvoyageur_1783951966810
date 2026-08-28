@@ -63,7 +63,7 @@ export default function ExplorerMobileHikeCarousel({
   return (
     <div
       className="block md:hidden fixed left-0 right-0 z-[800] pointer-events-none"
-      style={{ bottom: 'calc(env(safe-area-inset-bottom, 0px) + 84px)' }}
+      style={{ bottom: 'calc(env(safe-area-inset-bottom, 0px) + 76px)' }}
     >
       {/* ── TOP FLOATING PILL (Mode Switch & Counter) ── */}
       <div className="flex items-center justify-between px-3.5 mb-1.5 pointer-events-auto">
@@ -95,7 +95,7 @@ export default function ExplorerMobileHikeCarousel({
       {viewMode === 'carousel' && (
         <div
           ref={carouselScrollRef}
-          className="flex gap-2.5 overflow-x-auto snap-x snap-mandatory px-3.5 pb-1 pointer-events-auto no-scrollbar"
+          className="flex gap-3 overflow-x-auto snap-x snap-mandatory px-3.5 pb-1 pointer-events-auto no-scrollbar"
           style={{
             WebkitOverflowScrolling: 'touch',
             overscrollBehaviorX: 'contain',
@@ -114,7 +114,7 @@ export default function ExplorerMobileHikeCarousel({
                   triggerHaptic('selection');
                   onSelectTrail(trail);
                 }}
-                className={`snap-center shrink-0 w-[275px] rounded-[22px] overflow-hidden glass border transition-all duration-200 cursor-pointer ${
+                className={`snap-start shrink-0 w-[calc(100vw-68px)] max-w-[290px] rounded-[22px] overflow-hidden glass border transition-all duration-200 cursor-pointer ${
                   isSelected
                     ? '!bg-white/95 !border-[#17402C] shadow-lg ring-2 ring-[#17402C]/15 scale-[1.01]'
                     : '!bg-white/85 hover:!bg-white/90 border-white/70 shadow-md'

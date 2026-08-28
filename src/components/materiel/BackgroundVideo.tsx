@@ -26,6 +26,8 @@ export function BackgroundVideo() {
           objectFit: 'cover',
           width: '100vw',
           height: '100dvh',
+          transform: 'scale(1.08)',
+          transformOrigin: 'center center',
         }}
       />
     </div>

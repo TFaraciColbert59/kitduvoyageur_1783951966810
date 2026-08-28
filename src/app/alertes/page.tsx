@@ -326,10 +326,78 @@ export default function AlertesPage() {
   );
 
   const renderMobileTabs = () => (
-    <div style={{ display: 'flex', gap: '8px', marginBottom: '16px' }}>
-      <button onClick={() => setActiveTab('notifications')} style={{ padding: '8px 12px', borderRadius: '8px', background: activeTab === 'notifications' ? '#17402C' : '#F4F1EA', color: activeTab === 'notifications' ? 'white' : 'rgba(23,64,44,0.6)', border: 'none', fontSize: '11px', fontWeight: 'bold', cursor: 'pointer' }}>Alertes</button>
-      <button onClick={() => setActiveTab('weather')} style={{ padding: '8px 12px', borderRadius: '8px', background: activeTab === 'weather' ? '#17402C' : '#F4F1EA', color: activeTab === 'weather' ? 'white' : 'rgba(23,64,44,0.6)', border: 'none', fontSize: '11px', fontWeight: 'bold', cursor: 'pointer' }}>Météo / SOS</button>
-      <button onClick={() => setActiveTab('settings')} style={{ padding: '8px 12px', borderRadius: '8px', background: activeTab === 'settings' ? '#17402C' : '#F4F1EA', color: activeTab === 'settings' ? 'white' : 'rgba(23,64,44,0.6)', border: 'none', fontSize: '11px', fontWeight: 'bold', cursor: 'pointer' }}>Réglages</button>
+    <div
+      style={{
+        display: 'flex',
+        alignItems: 'center',
+        background: 'rgba(255, 255, 255, 0.75)',
+        backdropFilter: 'blur(16px)',
+        WebkitBackdropFilter: 'blur(16px)',
+        border: '1px solid rgba(255, 255, 255, 0.85)',
+        boxShadow: 'inset 0 1px 1px rgba(255,255,255,0.9), 0 2px 8px rgba(23, 64, 44, 0.05)',
+        borderRadius: '999px',
+        padding: '3px',
+        marginBottom: '20px',
+        gap: '2px',
+      }}
+    >
+      <button
+        type="button"
+        onClick={() => setActiveTab('notifications')}
+        style={{
+          flex: 1,
+          padding: '8px 12px',
+          borderRadius: '999px',
+          background: activeTab === 'notifications' ? '#17402C' : 'transparent',
+          color: activeTab === 'notifications' ? '#ffffff' : '#5A7064',
+          border: 'none',
+          fontSize: '12px',
+          fontWeight: activeTab === 'notifications' ? 700 : 500,
+          cursor: 'pointer',
+          transition: 'all 0.2s ease',
+          boxShadow: activeTab === 'notifications' ? '0 2px 6px rgba(23, 64, 44, 0.2)' : 'none',
+        }}
+      >
+        Alertes
+      </button>
+      <button
+        type="button"
+        onClick={() => setActiveTab('weather')}
+        style={{
+          flex: 1,
+          padding: '8px 12px',
+          borderRadius: '999px',
+          background: activeTab === 'weather' ? '#17402C' : 'transparent',
+          color: activeTab === 'weather' ? '#ffffff' : '#5A7064',
+          border: 'none',
+          fontSize: '12px',
+          fontWeight: activeTab === 'weather' ? 700 : 500,
+          cursor: 'pointer',
+          transition: 'all 0.2s ease',
+          boxShadow: activeTab === 'weather' ? '0 2px 6px rgba(23, 64, 44, 0.2)' : 'none',
+        }}
+      >
+        Météo / SOS
+      </button>
+      <button
+        type="button"
+        onClick={() => setActiveTab('settings')}
+        style={{
+          flex: 1,
+          padding: '8px 12px',
+          borderRadius: '999px',
+          background: activeTab === 'settings' ? '#17402C' : 'transparent',
+          color: activeTab === 'settings' ? '#ffffff' : '#5A7064',
+          border: 'none',
+          fontSize: '12px',
+          fontWeight: activeTab === 'settings' ? 700 : 500,
+          cursor: 'pointer',
+          transition: 'all 0.2s ease',
+          boxShadow: activeTab === 'settings' ? '0 2px 6px rgba(23, 64, 44, 0.2)' : 'none',
+        }}
+      >
+        Réglages
+      </button>
     </div>
   );
 

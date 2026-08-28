@@ -45,13 +45,16 @@ export default function MobilePageShell({
     pathname?.startsWith('/pays') ||
     pathname?.startsWith('/carnets') ||
     pathname?.startsWith('/groupes') ||
-    pathname?.startsWith('/clubs');
+    pathname?.startsWith('/clubs') ||
+    pathname?.startsWith('/entraide') ||
+    pathname?.startsWith('/evenements') ||
+    pathname?.startsWith('/alertes');
 
   const bottomPadding = !hasBottomNav
     ? 'calc(24px + env(safe-area-inset-bottom, 0px))'
     : hasUpperExtension
-    ? 'calc(138px + env(safe-area-inset-bottom, 0px))'
-    : 'calc(102px + env(safe-area-inset-bottom, 0px))';
+    ? 'calc(144px + env(safe-area-inset-bottom, 0px))'
+    : 'calc(108px + env(safe-area-inset-bottom, 0px))';
 
   return (
     <div

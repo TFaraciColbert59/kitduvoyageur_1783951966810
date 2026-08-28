@@ -74,8 +74,11 @@ export function GearCardKits({ data, className }: { data: KitsData; className?: 
         </div>
 
         {/* Footer */}
-        <div className="flex items-center justify-between pt-0.5">
-          <span className="text-[9.5px] sm:text-xs text-[#5A7064] truncate font-medium">
+        <div className="flex items-center justify-between gap-1.5 pt-0.5 min-w-0">
+          <span
+            className="text-[9.5px] sm:text-xs text-[#5A7064] truncate font-medium flex-1 min-w-0"
+            title={data.totalWeightKg > 0 ? `Poids total du parc (${data.count} kits) : ${data.totalWeightKg} kg` : `${data.count} kits configurés`}
+          >
             {data.totalWeightKg > 0 ? `Total parc (${data.count}) : ${data.totalWeightKg} kg` : `${data.count} kits prêts`}
           </span>
           <Link href="/materiel/kits" className="glass-capsule-btn secondary text-[9.5px] sm:text-xs !h-6 sm:!h-7 !px-2 sm:!px-2.5 shrink-0">

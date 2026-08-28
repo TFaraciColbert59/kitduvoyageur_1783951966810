@@ -127,6 +127,29 @@ export default function EarthMobileHeader({ countries, onSelect }: EarthMobileHe
           </AnimatePresence>
         </div>
       </div>
+
+      {/* Légende du Globe : code couleur sécurité */}
+      <div className="flex justify-center mt-2 pointer-events-auto">
+        <div
+          className="glass-pill flex items-center gap-2 px-3 py-1 bg-white/80 backdrop-blur-md border border-white/90 text-[10.5px] font-bold text-[#17402C] shadow-2xs"
+          style={{ borderRadius: 999 }}
+        >
+          <span className="flex items-center gap-1">
+            <span className="w-1.5 h-1.5 rounded-full bg-[#5B7F55]" />
+            Sûr
+          </span>
+          <span className="text-black/20">·</span>
+          <span className="flex items-center gap-1">
+            <span className="w-1.5 h-1.5 rounded-full bg-[#C89A3B]" />
+            Vigilance
+          </span>
+          <span className="text-black/20">·</span>
+          <span className="flex items-center gap-1">
+            <span className="w-1.5 h-1.5 rounded-full bg-[#A8443A]" />
+            Risqué
+          </span>
+        </div>
+      </div>
     </header>
   );
 }

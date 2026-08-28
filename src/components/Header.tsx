@@ -8,7 +8,7 @@ import Icon from '@/components/ui/AppIcon';
 import { useAuth } from '@/contexts/AuthContext';
 import GlobalSearchModal from '@/components/ui/GlobalSearchModal';
 import { createClient } from '@/lib/supabase/client';
-import { getCart } from '@/lib/cart';
+import { useCartCount } from '@/hooks/useCartCount';
 
 const NAV_LINKS = [
   { label: 'Aventures', href: '/explorer' },
@@ -24,22 +24,7 @@ export default function Header() {
   const [searchOpen, setSearchOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
   const [unreadCount, setUnreadCount] = useState(0);
-  const [cartCount, setCartCount] = useState(0);
-
-  useEffect(() => {
-    const updateCartCount = () => {
-      const items = getCart();
-      const total = Array.isArray(items) ? items.reduce((s, i) => s + (i.quantity || 1), 0) : 0;
-      setCartCount(total);
-    };
-    updateCartCount();
-    window.addEventListener('cart-updated', updateCartCount);
-    window.addEventListener('storage', updateCartCount);
-    return () => {
-      window.removeEventListener('cart-updated', updateCartCount);
-      window.removeEventListener('storage', updateCartCount);
-    };
-  }, []);
+  const cartCount = useCartCount();
 
   useEffect(() => {
     if (!user) {

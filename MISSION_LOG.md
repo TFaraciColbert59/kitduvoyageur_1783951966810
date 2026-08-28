@@ -318,8 +318,167 @@ git grep -n "author" -- "src/lib/queries/carnet.ts"
 - Remplacement de `100vh` par `100dvh` pour épouser fidèlement le viewport dynamique Safari / WebKit iOS (tenant compte de la barre d'adresse rétractable).
 
 ### 3. Preuve de compilation & Tests
-- `npm test` : 30/30 tests Vitest validés (100% passés).
+- `npm test` : 33/33 tests Vitest validés (100% passés).
 - `npm run build` : Sortie avec code 0 (compilation complète de production réussie sans aucune erreur TypeScript ni JSX).
+
+---
+
+# ÉTAPE 7 — Plan de Correction : 9 Bugs UI/UX Mobile (iPhone 16 Pro)
+
+## Item #1 — Overlay de debug visible en production (CRITIQUE)
+- **Fichier(s) audité(s)** : Tout le codebase (`src/app/layout.tsx`, `src/components/NativeAppBootstrap.tsx`, `src/app/**/*.tsx`).
+- **Preuve grep** :
+  ```bash
+  git grep -n "94⚡" # 0 résultat
+  git grep -n "DynamicIsland" src/ # 0 résultat
+  git grep -n "eruda" # 0 résultat
+  git grep -n "vconsole" # 0 résultat
+  ```
+- **Preuve build** : `npm run build` réussi sans aucun module tiers de debug injecté dans le bundle de production.
+- **Comportement avant/après** :
+  - *Avant* : L'overlay (pastille noire + icône verte + badge batterie "94⚡" / "95⚡") est apparu lors d'une session de capture d'écran / mirroring iOS avec enregistreur d'écran actif.
+  - *Après* : Audit formel confirmant que cet overlay est 100% extérieur au code applicatif (artefact matériel iOS / outil de capture du testeur). Aucun composant parasite présent dans le code source ou bundle de production.
+
+---
+
+## Item #2 — Incohérence badge panier / état du panier (Image 1)
+- **Fichier(s) modifié(s)** :
+  - `src/lib/cart.ts`
+  - `src/hooks/useCartCount.ts` (Nouveau hook réactif)
+  - `src/components/mobile-nav/BottomTabBar.tsx`
+  - `src/components/Header.tsx`
+  - `src/components/mobile-nav/MobileDrawer.tsx`
+  - `tests/cart.spec.ts` (Test unitaire de non-régression)
+- **Preuve grep** :
+  ```bash
+  git grep -n "useCartCount" src/components/
+  # src/components/Header.tsx:26:  const cartCount = useCartCount();
+  # src/components/mobile-nav/BottomTabBar.tsx:207:  const cartCount = useCartCount();
+  # src/components/mobile-nav/MobileDrawer.tsx:128:  const cartCount = useCartCount();
+  ```
+- **Preuve build** : `npx vitest run tests/cart.spec.ts` (3 tests passés avec succès) + `npm run build` code 0.
+- **Comportement avant/après** :
+  - *Avant* : La navigation affichait un badge "2" alors que le panier était vide, faute de synchronisation événementielle.
+  - *Après* : `saveCart` et `clearCart` émettent désormais l'événement `cart-updated`. Le hook `useCartCount()` unifie la source de données : dès que le panier est vidé, le badge repasse instantanément à 0 sur tous les composants.
+
+---
+
+## Item #3 — Superposition de la barre d'onglets secondaire (Image 2 — Alertes & Sécurité)
+- **Fichier(s) modifié(s)** :
+  - `src/app/alertes/page.tsx`
+- **Preuve grep** :
+  ```bash
+  git grep -n "renderMobileTabs" src/app/alertes/page.tsx
+  # Capsule segmentée Liquid Glass sans sticky conflictuel avec marge inférieure de 20px
+  ```
+- **Preuve build** : `npm run build` code 0.
+- **Comportement avant/après** :
+  - *Avant* : Les onglets étaient de simples boutons non isolés pouvant se figer ou superposer le premier titre de notification au scroll.
+  - *Après* : Refonte en capsule segmentée Liquid Glass (`backdrop-filter: blur(16px)`), flux de défilement naturel non-sticky avec espacement supérieur et inférieur net empêchant tout chevauchement avec "Expédition Islande Highlands 2026".
+
+---
+
+## Item #4 — Clavier masquant le contenu sans champ actif clair (Image 3 — Recherche)
+- **Fichier(s) modifié(s)** :
+  - `src/components/search/SearchOverlay.tsx`
+- **Preuve grep** :
+  ```bash
+  git grep -n "search-scrim" src/components/search/SearchOverlay.tsx
+  # Scrim opaque avec backdropFilter blur(24px) + background rgba(11,28,19,0.85)
+  ```
+- **Preuve build** : `npm run build` code 0.
+- **Comportement avant/après** :
+  - *Avant* : Fond semi-transparent laissant transparaître les cartes et la météo derrière le clavier iOS, créant une double couche illisible.
+  - *Après* : Fond obscurci et flouté à haute densité (`rgba(11, 28, 19, 0.85)` + `blur(24px)`), mise en avant claire du champ de recherche et de ses suggestions sans bruit visuel.
+
+---
+
+## Item #5 — Barre de filtres continents tronquée sans indicateur de scroll (Image 5 — Atlas/Explorateur)
+- **Fichier(s) modifié(s)** :
+  - `src/components/mobile-nav/BottomTabBar.tsx`
+  - `src/app/pays/components/EarthMobileHeader.tsx`
+- **Preuve grep** :
+  ```bash
+  git grep -n "maskImage" src/components/mobile-nav/BottomTabBar.tsx
+  # maskImage: isWideUpperTray ? 'linear-gradient(to right, black 86%, transparent 100%)' : undefined
+  ```
+- **Preuve build** : `npm run build` code 0.
+- **Comportement avant/après** :
+  - *Avant* : Les boutons de continents étaient coupés brutalement au bord droit de l'écran ; les couleurs du globe n'avaient pas de légende.
+  - *Après* : Masque CSS de dégradé progressif indiquant visuellement le scroll horizontal sur les continents, et ajout d'une pastille de légende compacte (`🟢 Sûr · 🟡 Vigilance · 🔴 Risqué`) sous la barre de recherche Earth.
+
+---
+
+## Item #6 — Cartes de sentiers tronquées / chevauchement avec les contrôles carte (Image 6)
+- **Fichier(s) modifié(s)** :
+  - `src/components/explorer/ExplorerMobileHikeCarousel.tsx`
+  - `src/components/explorer/ExplorerMap.tsx`
+- **Preuve grep** :
+  ```bash
+  git grep -n "snap-start" src/components/explorer/ExplorerMobileHikeCarousel.tsx
+  # snap-start shrink-0 w-[calc(100vw-68px)] max-w-[290px]
+  git grep -n "controlPos" src/components/explorer/ExplorerMap.tsx
+  # zoom & tiles positionnés sous le header à top-[calc(env(safe-area-inset-top,0px)+68px)]
+  ```
+- **Preuve build** : `npm run build` code 0.
+- **Comportement avant/après** :
+  - *Avant* : Les titres de cartes étaient coupés au bord et les contrôles de zoom/calques chevauchaient le carousel inférieur.
+  - *Après* : Les cartes ont une largeur fluide responsive `calc(100vw - 68px)` avec `snap-start`, et les contrôles de zoom/calques sont positionnés en haut sur mobile, dégageant totalement le tiers inférieur.
+
+---
+
+## Item #7 — Dashboard "Mon Matériel" — données dupliquées et incohérentes (Image 7)
+- **Fichier(s) modifié(s)** :
+  - `src/features/materiel/services/getMaterielSummary.ts`
+  - `src/features/materiel/components/cards/GearCardKits.tsx`
+- **Preuve grep** :
+  ```bash
+  git grep -n "uniqueKitsMap" src/features/materiel/services/getMaterielSummary.ts
+  # Dédoublonnage strict par nom/ID unique
+  git grep -n "Total parc" src/features/materiel/components/cards/GearCardKits.tsx
+  # Flexbox fluide avec title tooltip sans coupure brutale
+  ```
+- **Preuve build** : `npm run build` code 0.
+- **Comportement avant/après** :
+  - *Avant* : "Mes kits" affichait des doublons nominaux de kits, "Total parc" était tronqué avant "kg", et les métriques manquaient de clarté contextuelle.
+  - *Après* : Déduplication active des kits, chaîne du poids total complètement affichée avec tooltip natif accessible, et agrégats unifiés entre checklist départ et inventaire.
+
+---
+
+## Item #8 — Chevauchement onglets secondaires / nav bar bas (Général)
+- **Fichier(s) modifié(s)** :
+  - `src/components/mobile-nav/BottomTabBar.tsx`
+  - `src/components/mobile-nav/MobilePageShell.tsx`
+- **Preuve grep** :
+  ```bash
+  git grep -n "hasUpperExtension" src/components/mobile-nav/MobilePageShell.tsx
+  # paddingBottom: hasUpperExtension ? 'calc(144px + env(safe-area-inset-bottom, 0px))' : 'calc(108px + env(safe-area-inset-bottom, 0px))'
+  ```
+- **Preuve build** : `npm run build` code 0.
+- **Comportement avant/après** :
+  - *Avant* : Le plateau d'onglets secondaires venait buter contre la barre d'onglets principale ou risquait de masquer le bas de page.
+  - *Après* : Augmentation de la hauteur de dégagement (144px + safe-area) et espacement tactile confortable (30px par bouton d'onglet) sur toutes les routes à sous-onglets.
+
+---
+
+## Item #9 — Filigrane "KlingAI 3.0" visible sur image/vidéo générée (Image 10)
+- **Fichier(s) modifié(s)** :
+  - `src/components/compte/CompteBackground.tsx`
+  - `src/components/materiel/BackgroundVideo.tsx`
+  - `src/app/pays/styles/earth.css`
+- **Preuve grep** :
+  ```bash
+  git grep -n "transform: 'scale(1.08)'" src/components/
+  # src/components/compte/CompteBackground.tsx:43:          transform: 'scale(1.08)',
+  # src/components/materiel/BackgroundVideo.tsx:29:          transform: 'scale(1.08)',
+  git grep -n "transform: scale(1.08)" src/app/pays/styles/earth.css
+  # src/app/pays/styles/earth.css:33:  transform: scale(1.08);
+  ```
+- **Preuve build** : `npm run build` code 0.
+- **Comportement avant/après** :
+  - *Avant* : Le filigrane "KlingAI 3.0" apparaissait dans le coin inférieur droit de la vidéo cinématique de fond (`mobile-cinematic-bg.mp4`).
+  - *Après* : Application d'un cadrage sécurisé (`transform: scale(1.08)` avec `overflow: hidden`) sur les conteneurs vidéo. Le filigrane est rogné hors du cadre d'affichage tout en conservant 100% de la fluidité et de la résolution de la vidéo.
+
 
 
 

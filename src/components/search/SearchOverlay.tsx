@@ -63,18 +63,20 @@ export default function SearchOverlay() {
     <AnimatePresence>
       {isSearchOpen && (
         <>
-          {/* Scrim */}
+          {/* Scrim with deep frosted blur — completely masks underlying content */}
           <motion.div
             key="search-scrim"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            transition={{ duration: 0.2 }}
+            transition={{ duration: 0.22 }}
             style={{
               position: 'fixed',
               inset: 0,
-              background: 'rgba(23,64,44,0.5)',
-              zIndex: 60,
+              background: 'rgba(11, 28, 19, 0.85)',
+              backdropFilter: 'blur(24px) saturate(190%)',
+              WebkitBackdropFilter: 'blur(24px) saturate(190%)',
+              zIndex: 99990,
             }}
             onClick={closeSearch}
             aria-hidden="true"
@@ -83,24 +85,26 @@ export default function SearchOverlay() {
           {/* Panel */}
           <motion.div
             key="search-panel"
-            initial={{ opacity: 0, y: -20 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -20 }}
-            transition={{ duration: 0.2, ease: [0.32, 0.72, 0, 1] }}
+            initial={{ opacity: 0, y: -20, scale: 0.98 }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            exit={{ opacity: 0, y: -20, scale: 0.98 }}
+            transition={{ duration: 0.22, ease: [0.16, 1, 0.3, 1] }}
             style={{
               position: 'fixed',
               top: 0,
               left: 0,
               right: 0,
-              zIndex: 61,
+              zIndex: 99991,
               background: '#FBFAF6',
-              paddingTop: 'calc(env(safe-area-inset-top) + 16px)',
+              paddingTop: 'calc(env(safe-area-inset-top, 0px) + 16px)',
               paddingLeft: '16px',
               paddingRight: '16px',
-              paddingBottom: '16px',
-              borderBottomLeftRadius: '20px',
-              borderBottomRightRadius: '20px',
-              boxShadow: '0 8px 32px rgba(23,64,44,0.12)',
+              paddingBottom: '20px',
+              borderBottomLeftRadius: '24px',
+              borderBottomRightRadius: '24px',
+              border: '1px solid rgba(255, 255, 255, 0.9)',
+              borderTop: 'none',
+              boxShadow: '0 20px 48px rgba(11, 28, 19, 0.35)',
             }}
             role="dialog"
             aria-modal="true"

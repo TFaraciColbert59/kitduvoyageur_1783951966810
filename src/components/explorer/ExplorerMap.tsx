@@ -84,17 +84,12 @@ export default function ExplorerMap({
   // Uniformité : le même jeu de boutons compact que « Préparer la randonnée », partout.
   const effectiveCompact = true;
 
-  // Position sûre (safeControls) : mobile → haut sous le header (jamais sous la
-  // bottom bar / le sheet) ; desktop → colonne droite (jamais derrière la liste).
-  const controlPos = safeControls
-    ? isAutoCompact
-      ? { zoom: 'left-3 top-[64px]', tiles: 'right-3 top-[64px]' }
-      : { zoom: 'right-3 bottom-[88px]', tiles: 'right-3 bottom-3' }
-    : effectiveCompact
-      ? { zoom: 'left-3 bottom-3', tiles: 'right-3 bottom-3' }
-      : controlsPosition === 'left'
-        ? { zoom: 'left-4 top-[180px]', tiles: 'left-4 bottom-[85px]' }
-        : { zoom: 'right-3 top-3', tiles: 'right-3 bottom-14' };
+  // Position sûre des contrôles de carte :
+  // Sur mobile : toujours en haut sous le header flottant (jamais sous le carousel ni la bottom bar)
+  // Sur desktop : colonne droite haute dégagée
+  const controlPos = isAutoCompact
+    ? { zoom: 'left-3 top-[calc(env(safe-area-inset-top,0px)+68px)]', tiles: 'right-3 top-[calc(env(safe-area-inset-top,0px)+68px)]' }
+    : { zoom: 'right-4 top-[84px]', tiles: 'right-4 top-[152px]' };
   const userTrackPolylineRef = useRef<import('leaflet').Polyline | null>(null);
   const userDraggingRef = useRef(false);
 

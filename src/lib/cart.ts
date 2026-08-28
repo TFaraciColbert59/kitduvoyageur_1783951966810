@@ -29,7 +29,12 @@ export function getCart(): CartItem[] {
 
 export function saveCart(items: CartItem[]): void {
   if (typeof window === 'undefined') return;
-  localStorage.setItem(CART_KEY, JSON.stringify(items));
+  try {
+    localStorage.setItem(CART_KEY, JSON.stringify(items));
+    window.dispatchEvent(new CustomEvent('cart-updated'));
+  } catch (e) {
+    console.error('Failed to save cart to localStorage', e);
+  }
 }
 
 export function addToCart(item: Omit<CartItem, 'quantity'>, quantity: number = 1): CartItem[] {
@@ -60,7 +65,12 @@ export function updateQuantity(id: string, quantity: number): CartItem[] {
 
 export function clearCart(): void {
   if (typeof window === 'undefined') return;
-  localStorage.removeItem(CART_KEY);
+  try {
+    localStorage.removeItem(CART_KEY);
+    window.dispatchEvent(new CustomEvent('cart-updated'));
+  } catch (e) {
+    console.error('Failed to clear cart from localStorage', e);
+  }
 }
 
 /**

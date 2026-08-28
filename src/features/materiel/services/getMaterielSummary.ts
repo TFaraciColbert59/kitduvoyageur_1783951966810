@@ -156,14 +156,20 @@ export async function getMaterielSummary(): Promise<MaterielSummary> {
       if (/^[b-df-hj-np-tv-z]{5,}$/i.test(cleaned) || cleaned.length < 3) {
         cleaned = defaultKitNames[index % defaultKitNames.length];
       }
-      if (seenNames.has(cleaned)) {
-        cleaned = `${cleaned} (Option ${index + 1})`;
-      }
-      seenNames.add(cleaned);
       return cleaned;
     };
 
-    const topKits = activeKits
+    // Deduplicate active kits by unique name or distinct ID
+    const uniqueKitsMap = new Map<string, typeof activeKits[0]>();
+    for (const k of activeKits) {
+      const clean = cleanKitName(k.name);
+      if (!uniqueKitsMap.has(clean)) {
+        uniqueKitsMap.set(clean, k);
+      }
+    }
+    const distinctActiveKits = Array.from(uniqueKitsMap.values());
+
+    const topKits = (distinctActiveKits.length > 0 ? distinctActiveKits : activeKits)
       .filter((k) => !/^[b-df-hj-np-tv-z]{5,}$/i.test(k.name.trim()))
       .slice(0, 3)
       .map((k, idx) => {

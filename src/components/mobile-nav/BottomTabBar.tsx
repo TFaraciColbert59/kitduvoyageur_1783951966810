@@ -6,8 +6,8 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { useHapticFeedback } from '@/hooks/useHapticFeedback';
 import { useSearchContext } from '@/contexts/SearchContext';
 import { useUnreadBadge } from '@/hooks/useUnreadBadge';
+import { useCartCount } from '@/hooks/useCartCount';
 import LkvIcon from '@/components/ui/LkvIcon';
-import { getCart } from '@/lib/cart';
 
 interface Tab {
   href: string;
@@ -204,6 +204,7 @@ const TabLink = memo(function TabLink({ tab, isActive, onPress, badge }: { tab: 
 
 function HamburgerMenu({ menuOpen, setMenuOpen, openSearch, isCommunity }: { menuOpen: boolean; setMenuOpen: React.Dispatch<React.SetStateAction<boolean>>; openSearch?: () => void; isCommunity?: boolean }) {
   const { triggerHaptic } = useHapticFeedback();
+  const cartCount = useCartCount();
   return (
     <div style={{ position: 'relative' }}>
       <motion.button
@@ -375,29 +376,22 @@ function HamburgerMenu({ menuOpen, setMenuOpen, openSearch, isCommunity }: { men
               >
                 <LkvIcon name="bag" size={16} color="#17402C" />
                 Panier
-                {(() => {
-                  const cart = getCart();
-                  const count = Array.isArray(cart) ? cart.reduce((sum: number, item: { quantity?: number }) => sum + (item.quantity || 0), 0) : 0;
-                  if (count > 0) {
-                    return (
-                      <span style={{
-                        position: 'absolute',
-                        top: '8px',
-                        right: '8px',
-                        background: '#5B7F55',
-                        color: '#fff',
-                        fontSize: '9px',
-                        fontWeight: 700,
-                        padding: '1px 5px',
-                        borderRadius: '999px',
-                        fontFamily: 'monospace',
-                      }}>
-                        {count}
-                      </span>
-                    );
-                  }
-                  return null;
-                })()}
+                {cartCount > 0 && (
+                  <span style={{
+                    position: 'absolute',
+                    top: '8px',
+                    right: '8px',
+                    background: '#5B7F55',
+                    color: '#fff',
+                    fontSize: '9px',
+                    fontWeight: 700,
+                    padding: '1px 5px',
+                    borderRadius: '999px',
+                    fontFamily: 'monospace',
+                  }}>
+                    {cartCount > 9 ? '9+' : cartCount}
+                  </span>
+                )}
               </Link>
             </motion.div>
           </>
@@ -779,10 +773,11 @@ function BottomTabBar() {
               transition={{ type: 'spring', stiffness: 450, damping: 28 }}
               style={{
                 width: 'calc(100% - 4px)',
-                height: 42,
-                marginBottom: -10,
+                height: 44,
+                marginBottom: -8,
+                paddingTop: 4,
                 paddingBottom: 10,
-                background: 'linear-gradient(180deg, rgba(255,255,255,0.88) 0%, rgba(246,244,239,0.68) 100%)',
+                background: 'linear-gradient(180deg, rgba(255,255,255,0.92) 0%, rgba(246,244,239,0.78) 100%)',
                 backdropFilter: 'blur(30px) saturate(200%)',
                 WebkitBackdropFilter: 'blur(30px) saturate(200%)',
                 borderTopLeftRadius: 28,
@@ -794,12 +789,15 @@ function BottomTabBar() {
                 alignItems: 'center',
                 justifyContent: isWideUpperTray ? 'flex-start' : 'space-between',
                 overflowX: 'auto',
+                WebkitOverflowScrolling: 'touch',
                 scrollbarWidth: 'none',
                 msOverflowStyle: 'none',
-                paddingLeft: 8,
-                paddingRight: 8,
-                gap: 2,
+                paddingLeft: 10,
+                paddingRight: 14,
+                gap: 3,
                 zIndex: 1,
+                maskImage: isWideUpperTray ? 'linear-gradient(to right, black 86%, transparent 100%)' : undefined,
+                WebkitMaskImage: isWideUpperTray ? 'linear-gradient(to right, black 86%, transparent 100%)' : undefined,
               }}
             >
               {getUpperTabs().map((subTab) => {
@@ -812,18 +810,18 @@ function BottomTabBar() {
                     style={{
                       flex: isWideUpperTray ? '0 0 auto' : 1,
                       position: 'relative',
-                      height: 28,
+                      height: 30,
                       display: 'flex',
                       alignItems: 'center',
                       justifyContent: 'center',
                       background: 'transparent',
                       border: 'none',
                       cursor: 'pointer',
-                      fontSize: '11.5px',
+                      fontSize: '12px',
                       fontWeight: isSelected ? 700 : 500,
                       color: isSelected ? '#17402C' : '#5C6B5E',
                       fontFamily: 'inherit',
-                      padding: isWideUpperTray ? '0 10px' : '0 4px',
+                      padding: isWideUpperTray ? '0 12px' : '0 4px',
                       whiteSpace: 'nowrap',
                     }}
                   >

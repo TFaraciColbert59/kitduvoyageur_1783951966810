@@ -6,6 +6,7 @@ import { usePathname } from 'next/navigation';
 import { motion, AnimatePresence } from 'framer-motion';
 import LkvIcon from '@/components/ui/LkvIcon';
 import { useAuth } from '@/contexts/AuthContext';
+import { useCartCount } from '@/hooks/useCartCount';
 
 interface MobileDrawerProps {
   isOpen: boolean;
@@ -124,6 +125,7 @@ const scrollableContentStyle: React.CSSProperties = {
 export default function MobileDrawer({ isOpen, onClose, onSearchOpen }: MobileDrawerProps) {
   const pathname = usePathname();
   const { user, profile } = useAuth();
+  const cartCount = useCartCount();
   
   const [hoveredItem, setHoveredItem] = useState<string | null>(null);
   const panelRef = useRef<HTMLDivElement>(null);
@@ -417,6 +419,20 @@ export default function MobileDrawer({ isOpen, onClose, onSearchOpen }: MobileDr
                             color={isActive ? '#17402C' : '#17402C'}
                           />
                           <span style={{ flex: 1 }}>{item.label}</span>
+                          {item.href === '/panier' && cartCount > 0 && (
+                            <span style={{
+                              background: '#5B7F55',
+                              color: '#fff',
+                              fontSize: '10px',
+                              fontWeight: 700,
+                              padding: '1px 6px',
+                              borderRadius: '999px',
+                              fontFamily: 'monospace',
+                              marginRight: '4px',
+                            }}>
+                              {cartCount > 9 ? '9+' : cartCount}
+                            </span>
+                          )}
                           <LkvIcon
                             name="chevron-right"
                             size={16}
