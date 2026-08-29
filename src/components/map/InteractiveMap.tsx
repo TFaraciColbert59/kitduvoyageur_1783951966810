@@ -21,6 +21,8 @@ interface MapTrail {
   geojson: any | null;
 }
 
+const DEFAULT_CENTER: [number, number] = [45.9237, 6.8694]; // Chamonix-Mont-Blanc (Haut-lieu de la randonnée)
+
 function getDifficultyColor(diff: string | null | undefined): string {
   if (!diff) return '#5B7F55';
   const d = diff.toLowerCase();
@@ -47,6 +49,18 @@ function toGeoJSONFeature(geo: any) {
   return parsed;
 }
 
+// Distance Haversine en km
+function computeDistanceKm(lat1: number, lon1: number, lat2: number, lon2: number): number {
+  const R = 6371;
+  const dLat = ((lat2 - lat1) * Math.PI) / 180;
+  const dLon = ((lon2 - lon1) * Math.PI) / 180;
+  const a =
+    Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+    Math.cos((lat1 * Math.PI) / 180) * Math.cos((lat2 * Math.PI) / 180) * Math.sin(dLon / 2) * Math.sin(dLon / 2);
+  const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+  return R * c;
+}
+
 const DISTANCE_RANGES = [
   { id: 'default', label: 'Toutes (≥ 2 km)', min: 2, max: null },
   { id: '2-5', label: '2 – 5 km', min: 2, max: 5 },
@@ -69,17 +83,22 @@ export default function InteractiveMap() {
   const containerRef = useRef<HTMLDivElement>(null);
   const mapRef = useRef<LeafletMap | null>(null);
   const layerGroupRef = useRef<LayerGroup | null>(null);
+  const userMarkerRef = useRef<any>(null);
 
-  // In-memory client-side spatial cache
-  const poisCacheRef = useRef<Map<string, UnifiedPOI>>(new Map());
-  const trailsCacheRef = useRef<Map<string, MapTrail>>(new Map());
-  const lastFetchedViewportRef = useRef<{ minLat: number; maxLat: number; minLng: number; maxLng: number; zoom: number } | null>(null);
-  const debounceTimerRef = useRef<NodeJS.Timeout | null>(null);
-
+  // States for data
   const [trails, setTrails] = useState<MapTrail[]>([]);
   const [pois, setPois] = useState<UnifiedPOI[]>([]);
   const [loading, setLoading] = useState(true);
   const [, setPoisLoading] = useState(true);
+  const [userLocation, setUserLocation] = useState<[number, number] | null>(null);
+  const [locationLabel, setLocationLabel] = useState<string>('Localisation en cours…');
+
+  // "Rechercher dans cette zone" manual trigger state
+  const [hasMovedFromLoadedArea, setHasMovedFromLoadedArea] = useState(false);
+  const [isSearchingZone, setIsSearchingZone] = useState(false);
+  const currentLoadedCenterRef = useRef<[number, number] | null>(null);
+
+  // Selected Trail & POI (Strictly 1 trace at a time)
   const [selectedTrailId, setSelectedTrailId] = useState<string | null>(null);
   const [selectedTrailGeojson, setSelectedTrailGeojson] = useState<any | null>(null);
   const [selectedPoiId, setSelectedPoiId] = useState<string | null>(null);
@@ -89,7 +108,7 @@ export default function InteractiveMap() {
   const [selectedDistanceRange, setSelectedDistanceRange] = useState<string>('default');
   const [selectedDifficulty, setSelectedDifficulty] = useState<string>('all');
   
-  // Layer visibility toggles
+  // Strict Category Filter Checkboxes (unchecked categories will NEVER appear on map)
   const [showTrails, setShowTrails] = useState(true);
   const [showRefuges, setShowRefuges] = useState(true);
   const [showSummits, setShowSummits] = useState(true);
@@ -100,49 +119,28 @@ export default function InteractiveMap() {
   const [mapReady, setMapReady] = useState(false);
   const [showMobileFilters, setShowMobileFilters] = useState(false);
 
-  // 1. Debounced Viewport & Bounding Box Spatial Loader with Zoom LOD
-  const fetchViewportData = useCallback(async (map: LeafletMap, force = false) => {
-    if (!map) return;
+  // 1. Core 10km Radius Data Fetcher (Zero lag, strictly loads only ~10km radius around given center)
+  const load10kmRadiusData = useCallback(async (lat: number, lng: number) => {
     setLoading(true);
     setPoisLoading(true);
+    setIsSearchingZone(true);
+    setHasMovedFromLoadedArea(false);
+    currentLoadedCenterRef.current = [lat, lng];
 
-    const bounds = map.getBounds();
-    const zoom = map.getZoom();
+    const deltaLat = 0.09; // ~10km
+    const deltaLng = 0.13 / Math.cos((lat * Math.PI) / 180);
 
-    const latSpan = bounds.getNorth() - bounds.getSouth();
-    const lngSpan = bounds.getEast() - bounds.getWest();
-    const bufferLat = latSpan * 0.25;
-    const bufferLng = lngSpan * 0.25;
-
-    const minLat = bounds.getSouth() - bufferLat;
-    const maxLat = bounds.getNorth() + bufferLat;
-    const minLng = bounds.getWest() - bufferLng;
-    const maxLng = bounds.getEast() + bufferLng;
-
-    // Check if the current bounds are within the previously fetched bounding box
-    const last = lastFetchedViewportRef.current;
-    if (!force && last && Math.abs(last.zoom - zoom) <= 1) {
-      if (minLat >= last.minLat && maxLat <= last.maxLat && minLng >= last.minLng && maxLng <= last.maxLng) {
-        // Viewport is completely inside buffered cache, skip network!
-        setLoading(false);
-        setPoisLoading(false);
-        return;
-      }
-    }
-
-    lastFetchedViewportRef.current = { minLat, maxLat, minLng, maxLng, zoom };
-
-    // Calculate LOD limit per query
-    const poiLimit = zoom <= 7 ? 35 : zoom <= 11 ? 75 : 150;
-    const trailLimit = zoom <= 7 ? 25 : zoom <= 11 ? 60 : 120;
+    const minLat = lat - deltaLat;
+    const maxLat = lat + deltaLat;
+    const minLng = lng - deltaLng;
+    const maxLng = lng + deltaLng;
 
     const poiParams = new URLSearchParams({
       min_lat: minLat.toFixed(4),
       max_lat: maxLat.toFixed(4),
       min_lng: minLng.toFixed(4),
       max_lng: maxLng.toFixed(4),
-      zoom: zoom.toString(),
-      limit: poiLimit.toString(),
+      limit: '80',
     });
 
     const trailParams = new URLSearchParams({
@@ -150,7 +148,7 @@ export default function InteractiveMap() {
       max_lat: maxLat.toFixed(4),
       min_lng: minLng.toFixed(4),
       max_lng: maxLng.toFixed(4),
-      limit: trailLimit.toString(),
+      limit: '60',
     });
 
     const range = DISTANCE_RANGES.find(r => r.id === selectedDistanceRange) || DISTANCE_RANGES[0];
@@ -166,41 +164,26 @@ export default function InteractiveMap() {
         fetch(`/api/hikes?${trailParams.toString()}`),
       ]);
 
-      if (poisRes.ok) {
-        const newPois: UnifiedPOI[] = await poisRes.json();
-        newPois.forEach(p => poisCacheRef.current.set(p.id, p));
-      }
+      const newPois = poisRes.ok ? await poisRes.json() : [];
+      const newTrails = trailsRes.ok ? await trailsRes.json() : [];
 
-      if (trailsRes.ok) {
-        const newTrails: MapTrail[] = await trailsRes.json();
-        newTrails.forEach(t => trailsCacheRef.current.set(t.id, t));
-      }
-
-      // Filter visible items from memory cache within viewport for rendering
-      const visiblePois = Array.from(poisCacheRef.current.values()).filter(p =>
-        p.lat >= minLat && p.lat <= maxLat && p.lng >= minLng && p.lng <= maxLng
-      ).slice(0, poiLimit);
-
-      const visibleTrails = Array.from(trailsCacheRef.current.values()).filter(t =>
-        t.lat !== null && t.lng !== null && t.lat >= minLat && t.lat <= maxLat && t.lng >= minLng && t.lng <= maxLng
-      ).slice(0, trailLimit);
-
-      setPois(visiblePois);
-      setTrails(visibleTrails);
+      setPois(newPois || []);
+      setTrails(newTrails || []);
     } catch (e) {
-      console.warn('[InteractiveMap] Viewport fetch error:', e);
+      console.warn('[InteractiveMap] 10km radius fetch error:', e);
     } finally {
       setLoading(false);
       setPoisLoading(false);
+      setIsSearchingZone(false);
     }
   }, [selectedDistanceRange, selectedDifficulty, searchQuery]);
 
-  // Trigger re-fetch when filter options change
-  useEffect(() => {
-    if (mapRef.current && mapReady) {
-      fetchViewportData(mapRef.current, true);
-    }
-  }, [fetchViewportData, mapReady]);
+  // Handle "Rechercher dans cette zone" button click
+  const handleSearchThisArea = () => {
+    if (!mapRef.current) return;
+    const center = mapRef.current.getCenter();
+    load10kmRadiusData(center.lat, center.lng);
+  };
 
   // 2. Fetch Real GeoJSON GPS Track ONLY when a trail is selected (one at a time)
   useEffect(() => {
@@ -246,7 +229,7 @@ export default function InteractiveMap() {
         attribution: '&copy; OpenStreetMap / CARTO / Esri',
         maxZoom: 19,
         maxNativeZoom: 18,
-        keepBuffer: 6,
+        keepBuffer: 4,
       }).addTo(mapRef.current!);
       tileLayerRef.current = newLayer;
     });
@@ -264,7 +247,7 @@ export default function InteractiveMap() {
     }
   };
 
-  // 3. Initialize Leaflet Map with Debounced Viewport Listeners
+  // 3. Initialize Leaflet Map with Geolocation & 10km initial radius
   useEffect(() => {
     if (!containerRef.current || mapRef.current || typeof window === 'undefined') return;
 
@@ -277,19 +260,13 @@ export default function InteractiveMap() {
       });
 
       const map = L.map(containerRef.current!, {
-        center: [46.5, 2.8],
-        zoom: 6,
+        center: DEFAULT_CENTER,
+        zoom: 12,
         zoomControl: false,
         attributionControl: false,
-        dragging: true,
-        touchZoom: true,
-        scrollWheelZoom: true,
-        doubleClickZoom: true,
-        boxZoom: true,
-        keyboard: true,
-        tap: false,
         preferCanvas: true,
-        bounceAtZoomLimits: false,
+        fadeAnimation: false,
+        markerZoomAnimation: true,
       } as any);
 
       L.control.attribution({ prefix: false }).addAttribution('© OSM France').addTo(map);
@@ -299,43 +276,91 @@ export default function InteractiveMap() {
         subdomains: ['a', 'b', 'c'],
         maxZoom: 19,
         maxNativeZoom: 18,
-        keepBuffer: 6,
+        keepBuffer: 4,
       }).addTo(map);
 
       tileLayerRef.current = initialLayer;
       mapRef.current = map;
       setMapReady(true);
 
-      // Debounced moveend and zoomend listeners (300ms)
+      // Load default location (Chamonix) IMMEDIATELY for instant zero-wait startup
+      setLocationLabel('Chamonix-Mont-Blanc (Rayon 10 km)');
+      currentLoadedCenterRef.current = DEFAULT_CENTER;
+      load10kmRadiusData(DEFAULT_CENTER[0], DEFAULT_CENTER[1]);
+
+      // Asynchronous Geolocation upgrade if user allows GPS
+      if (typeof window !== 'undefined' && 'geolocation' in navigator) {
+        navigator.geolocation.getCurrentPosition(
+          (pos: GeolocationPosition) => {
+            const userLat = pos.coords.latitude;
+            const userLng = pos.coords.longitude;
+            setUserLocation([userLat, userLng]);
+            setLocationLabel('Position actuelle (Rayon 10 km)');
+
+            const userIcon = L.divIcon({
+              html: `
+                <div style="position:relative;width:22px;height:22px;display:flex;align-items:center;justify-content:center;">
+                  <div style="position:absolute;inset:0;border-radius:50%;background:#3B82F6;opacity:0.3;animation:ping 1.5s cubic-bezier(0,0,0.2,1) infinite;"></div>
+                  <div style="width:14px;height:14px;border-radius:50%;background:#2563EB;border:2.5px solid #FFFFFF;box-shadow:0 2px 6px rgba(0,0,0,0.3);"></div>
+                </div>
+              `,
+              className: '',
+              iconSize: [22, 22],
+              iconAnchor: [11, 11],
+            });
+
+            if (userMarkerRef.current) {
+              map.removeLayer(userMarkerRef.current);
+            }
+            userMarkerRef.current = L.marker([userLat, userLng], { icon: userIcon, zIndexOffset: 5000 }).addTo(map);
+
+            map.setView([userLat, userLng], 12);
+            load10kmRadiusData(userLat, userLng);
+          },
+          () => {
+            // Geolocation denied or unavailable -> keep default Chamonix
+          },
+          {
+            timeout: 3000,
+            maximumAge: 60000,
+            enableHighAccuracy: true,
+          }
+        );
+      }
+
+      // Check if user panned away from loaded center (> 1.0 km) -> show "Rechercher dans cette zone"
       const handleMoveEnd = () => {
-        if (debounceTimerRef.current) clearTimeout(debounceTimerRef.current);
-        debounceTimerRef.current = setTimeout(() => {
-          fetchViewportData(map);
-        }, 300);
+        if (!currentLoadedCenterRef.current) return;
+        const currentCenter = map.getCenter();
+        const dist = computeDistanceKm(
+          currentLoadedCenterRef.current[0],
+          currentLoadedCenterRef.current[1],
+          currentCenter.lat,
+          currentCenter.lng
+        );
+        if (dist > 1.0) {
+          setHasMovedFromLoadedArea(true);
+        }
       };
 
       map.on('moveend', handleMoveEnd);
-      map.on('zoomend', handleMoveEnd);
+      map.on('zoomend', () => setHasMovedFromLoadedArea(true));
 
       setTimeout(() => {
-        try {
-          map.invalidateSize();
-          fetchViewportData(map, true);
-        } catch {}
+        try { map.invalidateSize(); } catch {}
       }, 200);
     });
 
     return () => {
-      if (debounceTimerRef.current) clearTimeout(debounceTimerRef.current);
       if (mapRef.current) {
         try { mapRef.current.remove(); } catch {}
         mapRef.current = null;
         setMapReady(false);
       }
     };
-  }, [fetchViewportData]);
+  }, [load10kmRadiusData]);
 
-  // Filtered POIs based on toggles
+  // Strict Filtered POIs based on checkboxes (If unchecked -> completely absent from map)
   const filteredPois = useMemo(() => {
     return pois.filter(p => {
       if (p.category === 'refuge' && !showRefuges) return false;
@@ -347,12 +372,17 @@ export default function InteractiveMap() {
     });
   }, [pois, showRefuges, showSummits, showWaterPoints, showViewpoints, showCampings]);
 
-  // 4. Render Layers on Map with Adaptive LOD Clustering
+  // Strict Filtered Trails
+  const filteredTrails = useMemo(() => {
+    if (!showTrails) return [];
+    return trails;
+  }, [trails, showTrails]);
+
+  // 4. Render Layers on Map (Ultra Lightweight, No Lag, Instant 60fps)
   useEffect(() => {
     if (!mapRef.current || !mapReady) return;
 
     const map = mapRef.current;
-    const currentZoom = map.getZoom();
 
     Promise.all([
       import('leaflet'),
@@ -365,48 +395,20 @@ export default function InteractiveMap() {
         layerGroupRef.current = null;
       }
 
-      // Dynamic cluster radius based on zoom (LOD clustering)
-      const clusterRadius = currentZoom <= 7 ? 55 : currentZoom <= 11 ? 40 : 25;
-
       // Trail cluster group
       // @ts-expect-error markerClusterGroup plugin extension
       const trailClusterGroup = L.markerClusterGroup({
         showCoverageOnHover: false,
-        maxClusterRadius: clusterRadius,
+        maxClusterRadius: 40,
         spiderfyOnMaxZoom: true,
+        chunkedLoading: true,
+        removeOutsideVisibleBounds: true,
+        animateAddingMarkers: false,
         iconCreateFunction: function (cluster: any) {
           const count = cluster.getChildCount();
           const html = `
             <div style="
               background: #17402C;
-              color: white;
-              font-weight: 700;
-              font-size: 11px;
-              width: 32px;
-              height: 32px;
-              border-radius: 50%;
-              display: flex;
-              align-items: center;
-              justify-content: center;
-              box-shadow: 0 2px 6px rgba(23,64,44,0.25);
-              border: 2px solid white;
-            ">${count}</div>
-          `;
-          return L.divIcon({ html, className: '', iconSize: [32, 32], iconAnchor: [16, 16] });
-        }
-      });
-
-      // POI cluster group (distinct style and separate clustering)
-      // @ts-expect-error markerClusterGroup plugin extension
-      const poiClusterGroup = L.markerClusterGroup({
-        showCoverageOnHover: false,
-        maxClusterRadius: Math.max(25, clusterRadius - 10),
-        spiderfyOnMaxZoom: true,
-        iconCreateFunction: function (cluster: any) {
-          const count = cluster.getChildCount();
-          const html = `
-            <div style="
-              background: #2D6B4A;
               color: white;
               font-weight: 700;
               font-size: 11px;
@@ -416,19 +418,50 @@ export default function InteractiveMap() {
               display: flex;
               align-items: center;
               justify-content: center;
-              box-shadow: 0 2px 8px rgba(45,107,74,0.35);
-              border: 2px solid #E4DED3;
-            ">📍${count}</div>
+              box-shadow: 0 2px 6px rgba(23,64,44,0.25);
+              border: 2px solid white;
+            ">${count}</div>
           `;
           return L.divIcon({ html, className: '', iconSize: [30, 30], iconAnchor: [15, 15] });
         }
       });
 
+      // POI cluster group
+      // @ts-expect-error markerClusterGroup plugin extension
+      const poiClusterGroup = L.markerClusterGroup({
+        showCoverageOnHover: false,
+        maxClusterRadius: 35,
+        spiderfyOnMaxZoom: true,
+        chunkedLoading: true,
+        removeOutsideVisibleBounds: true,
+        animateAddingMarkers: false,
+        iconCreateFunction: function (cluster: any) {
+          const count = cluster.getChildCount();
+          const html = `
+            <div style="
+              background: #2D6B4A;
+              color: white;
+              font-weight: 700;
+              font-size: 11px;
+              width: 28px;
+              height: 28px;
+              border-radius: 50%;
+              display: flex;
+              align-items: center;
+              justify-content: center;
+              box-shadow: 0 2px 6px rgba(45,107,74,0.3);
+              border: 2px solid #E4DED3;
+            ">📍${count}</div>
+          `;
+          return L.divIcon({ html, className: '', iconSize: [28, 28], iconAnchor: [14, 14] });
+        }
+      });
+
       const linesGroup = L.layerGroup();
 
-      // A. Render Quality Trail Markers / Pins
+      // A. Render Quality Trail Markers / Pins (Only if showTrails is checked)
       if (showTrails) {
-        trails.forEach(trail => {
+        filteredTrails.forEach(trail => {
           const isSelected = trail.id === selectedTrailId;
 
           if (trail.lat && trail.lng && !isNaN(trail.lat) && !isNaN(trail.lng)) {
@@ -489,7 +522,7 @@ export default function InteractiveMap() {
             const geoLayer = L.geoJSON(cleanGeo, {
               style: {
                 color: '#17402C',
-                weight: 5,
+                weight: 5.5,
                 opacity: 1.0,
                 lineCap: 'round',
                 lineJoin: 'round',
@@ -510,7 +543,7 @@ export default function InteractiveMap() {
         }
       }
 
-      // C. Render POIs with rich category styling
+      // C. Render POIs strictly respecting checked categories
       filteredPois.forEach(poi => {
         const isSelected = poi.id === selectedPoiId;
         
@@ -550,24 +583,24 @@ export default function InteractiveMap() {
           html: `
             <div style="
               background-color: ${bgColor};
-              width: ${isSelected ? '36px' : '30px'};
-              height: ${isSelected ? '36px' : '30px'};
+              width: ${isSelected ? '34px' : '28px'};
+              height: ${isSelected ? '34px' : '28px'};
               border-radius: 50%;
               display: flex;
               align-items: center;
               justify-content: center;
               border: 2px solid white;
-              box-shadow: 0 3px 8px rgba(0,0,0,0.35);
-              font-size: ${isSelected ? '16px' : '14px'};
+              box-shadow: 0 2px 6px rgba(0,0,0,0.3);
+              font-size: ${isSelected ? '15px' : '13px'};
               cursor: pointer;
               transform: ${isSelected ? 'scale(1.15)' : 'scale(1)'};
               transition: transform 0.15s ease;
             ">${emoji}</div>
           `,
           className: '',
-          iconSize: [32, 32],
-          iconAnchor: [16, 16],
-          popupAnchor: [0, -16]
+          iconSize: [28, 28],
+          iconAnchor: [14, 14],
+          popupAnchor: [0, -14]
         });
 
         const marker = L.marker([poi.lat, poi.lng], { icon: poiIcon, zIndexOffset: isSelected ? 3000 : 2000 });
@@ -599,50 +632,55 @@ export default function InteractiveMap() {
         poiClusterGroup.addLayer(marker);
       });
 
-      trailClusterGroup.addTo(map);
+      if (showTrails) trailClusterGroup.addTo(map);
       poiClusterGroup.addTo(map);
       linesGroup.addTo(map);
       
       const parentGroup = L.layerGroup([trailClusterGroup, poiClusterGroup, linesGroup]);
       layerGroupRef.current = parentGroup;
     });
-  }, [mapReady, trails, filteredPois, selectedTrailId, selectedTrailGeojson, selectedPoiId, showTrails]);
+  }, [mapReady, filteredTrails, filteredPois, selectedTrailId, selectedTrailGeojson, selectedPoiId, showTrails]);
 
-  // Reset bounds to show France overview
-  const handleResetBounds = useCallback(() => {
+  // Recenter to user position or default
+  const handleRecenter = useCallback(() => {
     if (!mapRef.current) return;
-    mapRef.current.flyTo([46.5, 2.8], 6, { duration: 1.2 });
-  }, []);
+    const target = userLocation || DEFAULT_CENTER;
+    mapRef.current.flyTo(target, 13, { duration: 1.0 });
+    load10kmRadiusData(target[0], target[1]);
+  }, [userLocation, load10kmRadiusData]);
 
   const handleSelectTrail = useCallback((trail: MapTrail) => {
     setSelectedTrailId(trail.id);
     setSelectedPoiId(null);
     if (mapRef.current && trail.lat && trail.lng) {
-      mapRef.current.flyTo([trail.lat, trail.lng], 13, { duration: 1.2 });
+      mapRef.current.flyTo([trail.lat, trail.lng], 13, { duration: 1.0 });
     }
   }, []);
 
   const selectedTrail = useMemo(() => {
-    return trails.find(t => t.id === selectedTrailId) || null;
-  }, [trails, selectedTrailId]);
+    return filteredTrails.find(t => t.id === selectedTrailId) || null;
+  }, [filteredTrails, selectedTrailId]);
 
   const selectedPoi = useMemo(() => {
-    return pois.find(p => p.id === selectedPoiId) || null;
-  }, [pois, selectedPoiId]);
+    return filteredPois.find(p => p.id === selectedPoiId) || null;
+  }, [filteredPois, selectedPoiId]);
 
   return (
     <div className="relative w-full h-full flex overflow-hidden font-sans bg-[#FAF8F5]">
       
       {/* ── SIDEBAR PANEL (scroll interne) ── */}
-      <div className={`${showMobileFilters ? 'fixed inset-0 z-50 sm:relative sm:inset-auto flex flex-col' : 'hidden'} sm:flex sm:w-[400px] sm:shrink-0 bg-white border-r border-[#E4DED3] overflow-hidden`}>
+      <div className={`${showMobileFilters ? 'fixed inset-0 z-50 sm:relative sm:inset-auto flex flex-col' : 'hidden'} sm:flex sm:w-[380px] sm:shrink-0 bg-white border-r border-[#E4DED3] overflow-hidden`}>
         <div className="overflow-y-auto min-h-0 flex-1">
         
-          {/* Header & Filters */}
+          {/* Header & Location Banner */}
           <div className="p-4 border-b border-[#E4DED3] bg-[#FAF8F5] space-y-3">
             <div className="flex items-center justify-between">
               <div>
-                <h2 className="font-display font-bold tracking-tight text-lg text-[#17402C]">Carte des Randonnées</h2>
-                <p className="text-[11px] text-[#365233] font-medium">Filtre qualité AllTrails (≥ 2 km)</p>
+                <h2 className="font-display font-bold tracking-tight text-lg text-[#17402C]">Carte Aventure</h2>
+                <p className="text-[11px] text-[#365233] font-semibold flex items-center gap-1">
+                  <span>📍</span>
+                  <span>{locationLabel}</span>
+                </p>
               </div>
               <div className="flex items-center gap-2">
                 <button
@@ -652,22 +690,28 @@ export default function InteractiveMap() {
                   ✕ Fermer
                 </button>
                 <button
-                  onClick={handleResetBounds}
+                  onClick={handleRecenter}
                   className="glass-capsule-btn secondary h-7 px-3 text-[11px] font-bold"
+                  title="Recentrer sur ma position (10 km)"
                 >
-                  Zoom global
+                  🎯 Ma zone
                 </button>
               </div>
             </div>
 
             {/* Distance Filter Chips */}
             <div className="space-y-1">
-              <p className="text-[10px] font-mono text-[#5A7064] uppercase font-bold tracking-wider">Distance du parcours :</p>
+              <p className="text-[10px] font-mono text-[#5A7064] uppercase font-bold tracking-wider">Distance :</p>
               <div className="glass-capsule-bar w-full overflow-x-auto flex-nowrap">
                 {DISTANCE_RANGES.map(r => (
                   <button
                     key={r.id}
-                    onClick={() => setSelectedDistanceRange(r.id)}
+                    onClick={() => {
+                      setSelectedDistanceRange(r.id);
+                      if (currentLoadedCenterRef.current) {
+                        load10kmRadiusData(currentLoadedCenterRef.current[0], currentLoadedCenterRef.current[1]);
+                      }
+                    }}
                     className={`glass-capsule-segment shrink-0 px-3 ${selectedDistanceRange === r.id ? 'active' : ''}`}
                   >
                     {r.label}
@@ -676,26 +720,10 @@ export default function InteractiveMap() {
               </div>
             </div>
 
-            {/* Difficulty Filter Chips */}
-            <div className="space-y-1">
-              <p className="text-[10px] font-mono text-[#5A7064] uppercase font-bold tracking-wider">Difficulté :</p>
-              <div className="glass-capsule-bar w-full overflow-x-auto flex-nowrap">
-                {DIFFICULTIES.map(d => (
-                  <button
-                    key={d.id}
-                    onClick={() => setSelectedDifficulty(d.id)}
-                    className={`glass-capsule-segment shrink-0 px-3 ${selectedDifficulty === d.id ? 'active' : ''}`}
-                  >
-                    {d.label}
-                  </button>
-                ))}
-              </div>
-            </div>
-
-            {/* Layer Visibility Checkboxes */}
-            <div className="bg-[#FAF8F5] p-2.5 rounded-2xl border border-[#E4DED3] text-xs space-y-2">
+            {/* Strict POI & Layer Category Checkboxes */}
+            <div className="bg-white p-3 rounded-2xl border border-[#E4DED3] text-xs space-y-2 shadow-xs">
               <div className="flex items-center justify-between">
-                <span className="text-[10px] font-mono font-bold text-[#5A7064] uppercase tracking-wider">Couches & POIs :</span>
+                <span className="text-[10px] font-mono font-bold text-[#5A7064] uppercase tracking-wider">Filtres affichés :</span>
                 <span className="text-[10px] font-mono text-emerald-800 font-bold bg-emerald-100/80 px-1.5 py-0.5 rounded">
                   {filteredPois.length} POI{filteredPois.length > 1 ? 's' : ''} actif{filteredPois.length > 1 ? 's' : ''}
                 </span>
@@ -767,9 +795,14 @@ export default function InteractiveMap() {
             <div className="relative">
               <input
                 type="text"
-                placeholder="Chercher une randonnée..."
+                placeholder="Chercher dans cette zone..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter' && currentLoadedCenterRef.current) {
+                    load10kmRadiusData(currentLoadedCenterRef.current[0], currentLoadedCenterRef.current[1]);
+                  }
+                }}
                 className="glass-input w-full pl-9 pr-8 py-2 text-xs text-[#17402C]"
               />
               <span className="absolute left-3 top-1/2 -translate-y-1/2 text-xs text-[#5A7064]">🔍</span>
@@ -781,18 +814,20 @@ export default function InteractiveMap() {
 
           {/* Trail Count Banner */}
           <div className="px-4 py-2 bg-[#F1EDE6] border-b border-[#E4DED3] flex items-center justify-between text-xs text-[#365233]">
-            <span className="font-bold">{trails.length} randonnée{trails.length !== 1 ? 's' : ''} dans la zone</span>
-            <span className="text-[10px] font-mono text-[#5A7064]">Viewport LOD</span>
+            <span className="font-bold">{filteredTrails.length} randonnée{filteredTrails.length !== 1 ? 's' : ''} (Rayon 10 km)</span>
+            <span className="text-[10px] font-mono text-[#5A7064]">Fluide 60 fps</span>
           </div>
 
           {/* Trail List */}
           <div className="divide-y divide-[#E4DED3]">
             {loading ? (
-              <div className="p-8 text-center text-xs text-[#5A7064]">Chargement de la zone...</div>
-            ) : trails.length === 0 ? (
-              <div className="p-8 text-center text-xs text-[#5A7064]">Aucune randonnée dans cette zone. Déplacez ou dézoomez la carte.</div>
+              <div className="p-8 text-center text-xs text-[#5A7064]">Chargement de votre zone (10 km)...</div>
+            ) : filteredTrails.length === 0 ? (
+              <div className="p-8 text-center text-xs text-[#5A7064]">
+                Aucune randonnée dans ce rayon de 10 km. Déplacez la carte et cliquez sur <strong>« Rechercher dans cette zone »</strong>.
+              </div>
             ) : (
-              trails.map(t => {
+              filteredTrails.map(t => {
                 const isSelected = t.id === selectedTrailId;
                 const diffColor = getDifficultyColor(t.difficulty);
                 return (
@@ -829,6 +864,20 @@ export default function InteractiveMap() {
       <div className="flex-1 h-full relative min-h-[240px]" style={{ touchAction: 'none', overscrollBehavior: 'none' }}>
         <div ref={containerRef} className="w-full h-full z-0" style={{ width: '100%', height: '100%', touchAction: 'none', overscrollBehavior: 'none' }} />
 
+        {/* ── FLOATING BUTTON : "RECHERCHER DANS CETTE ZONE" (TRIGGERED ONLY ON DEMAND) ── */}
+        {hasMovedFromLoadedArea && (
+          <div className="absolute top-[calc(env(safe-area-inset-top,0px)+14px)] left-1/2 -translate-x-1/2 z-[500] pointer-events-auto">
+            <button
+              onClick={handleSearchThisArea}
+              disabled={isSearchingZone}
+              className="h-10 px-4.5 rounded-full bg-[#17402C] text-white font-bold text-xs shadow-lg border border-white/40 flex items-center gap-2 hover:brightness-110 active:scale-95 transition-all cursor-pointer"
+            >
+              <span className={isSearchingZone ? 'animate-spin' : ''}>🔄</span>
+              <span>{isSearchingZone ? 'Chargement en cours…' : 'Rechercher dans cette zone'}</span>
+            </button>
+          </div>
+        )}
+
         {/* ── ERGONOMIC FLOATING CONTROLS (APPLE HIG RIGOR) ── */}
 
         {/* 1. Mobile Filter Toggle Button (Top Left) */}
@@ -846,7 +895,7 @@ export default function InteractiveMap() {
           </button>
         )}
 
-        {/* 2. Floating Zoom Controls (+ / −) (Top Right) */}
+        {/* 2. Floating Zoom Controls (+ / −) & Recenter (Top Right) */}
         <div className="absolute top-[calc(env(safe-area-inset-top,0px)+14px)] right-3 z-[400] flex flex-col gap-1.5">
           <button
             onClick={handleZoomIn}
@@ -864,10 +913,18 @@ export default function InteractiveMap() {
           >
             −
           </button>
+          <button
+            onClick={handleRecenter}
+            title="Ma position (10 km)"
+            aria-label="Ma position"
+            className="w-9 h-9 rounded-full bg-white/95 backdrop-blur-md border border-white/80 text-[#17402C] font-bold text-sm shadow-md flex items-center justify-center hover:bg-white active:scale-95 transition-all cursor-pointer"
+          >
+            🎯
+          </button>
         </div>
 
         {/* 3. Floating Tile Switcher (Top Right, positioned neatly below Zoom) */}
-        <div className="absolute top-[calc(env(safe-area-inset-top,0px)+100px)] right-3 z-[400] flex flex-col gap-1.5 bg-white/95 backdrop-blur-md border border-white/80 rounded-2xl p-1 shadow-md">
+        <div className="absolute top-[calc(env(safe-area-inset-top,0px)+140px)] right-3 z-[400] flex flex-col gap-1.5 bg-white/95 backdrop-blur-md border border-white/80 rounded-2xl p-1 shadow-md">
           <button
             onClick={() => handleTileChange('osm')}
             className={`w-7 h-7 rounded-xl flex items-center justify-center transition-all cursor-pointer ${tileMode === 'osm' ? 'bg-[#17402C] text-white shadow-xs' : 'text-[#365233] hover:bg-[#17402C]/10'}`}
