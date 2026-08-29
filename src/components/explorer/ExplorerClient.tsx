@@ -94,27 +94,56 @@ export default function ExplorerClient({ initialTrails }: ExplorerClientProps) {
   const [sheetExpanded, setSheetExpanded] = useState(false);
   const listScrollRef = useRef<HTMLDivElement>(null);
 
-  // Data - Trails
+  const [viewportBbox, setViewportBbox] = useState<{ minLat: number; maxLat: number; minLng: number; maxLng: number; zoom: number } | null>(null);
+
+  const handleViewportChange = useCallback((bbox: { minLat: number; maxLat: number; minLng: number; maxLng: number; zoom: number }) => {
+    setViewportBbox(bbox);
+  }, []);
+
+  // Data - Trails (with Viewport LOD)
   const { data: trailsData } = useQuery<MapTrail[]>({
-    queryKey: ['hikes'],
+    queryKey: ['hikes', viewportBbox?.minLat?.toFixed(3), viewportBbox?.maxLat?.toFixed(3), viewportBbox?.minLng?.toFixed(3), viewportBbox?.maxLng?.toFixed(3), viewportBbox?.zoom],
     queryFn: async () => {
-      const res = await fetch('/api/hikes');
+      const params = new URLSearchParams();
+      if (viewportBbox) {
+        params.set('min_lat', viewportBbox.minLat.toFixed(4));
+        params.set('max_lat', viewportBbox.maxLat.toFixed(4));
+        params.set('min_lng', viewportBbox.minLng.toFixed(4));
+        params.set('max_lng', viewportBbox.maxLng.toFixed(4));
+        const limit = viewportBbox.zoom <= 7 ? 35 : viewportBbox.zoom <= 11 ? 75 : 120;
+        params.set('limit', limit.toString());
+      } else {
+        params.set('limit', '60');
+      }
+      const res = await fetch(`/api/hikes?${params.toString()}`);
       if (!res.ok) throw new Error('Failed to fetch trails');
       return (await res.json()) as MapTrail[];
     },
     initialData: initialTrails && initialTrails.length > 0 ? initialTrails : undefined,
-    staleTime: 300_000,
+    staleTime: 60_000,
   });
 
-  // Data - Unified POIs
+  // Data - Unified POIs (with Viewport LOD)
   const { data: poisData } = useQuery<UnifiedPOI[]>({
-    queryKey: ['pois'],
+    queryKey: ['pois', viewportBbox?.minLat?.toFixed(3), viewportBbox?.maxLat?.toFixed(3), viewportBbox?.minLng?.toFixed(3), viewportBbox?.maxLng?.toFixed(3), viewportBbox?.zoom],
     queryFn: async () => {
-      const res = await fetch('/api/pois');
+      const params = new URLSearchParams();
+      if (viewportBbox) {
+        params.set('min_lat', viewportBbox.minLat.toFixed(4));
+        params.set('max_lat', viewportBbox.maxLat.toFixed(4));
+        params.set('min_lng', viewportBbox.minLng.toFixed(4));
+        params.set('max_lng', viewportBbox.maxLng.toFixed(4));
+        params.set('zoom', viewportBbox.zoom.toString());
+        const limit = viewportBbox.zoom <= 7 ? 40 : viewportBbox.zoom <= 11 ? 80 : 150;
+        params.set('limit', limit.toString());
+      } else {
+        params.set('limit', '50');
+      }
+      const res = await fetch(`/api/pois?${params.toString()}`);
       if (!res.ok) return [];
       return (await res.json()) as UnifiedPOI[];
     },
-    staleTime: 300_000,
+    staleTime: 60_000,
   });
 
   // Fetch real GeoJSON GPS track when a hike is selected
@@ -401,6 +430,7 @@ export default function ExplorerClient({ initialTrails }: ExplorerClientProps) {
           onTrailClick={handleTrailClick}
           userLocation={userLocation}
           onLocationUpdate={handleLocationUpdate}
+          onViewportChange={handleViewportChange}
           safeControls
         />
       </div>

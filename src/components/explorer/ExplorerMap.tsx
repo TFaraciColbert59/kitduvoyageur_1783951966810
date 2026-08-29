@@ -23,6 +23,7 @@ interface ExplorerMapProps {
   onAutoFollowChange?: (enabled: boolean) => void;
   onMapReady?: () => void;
   onLocationUpdate?: (loc: [number, number]) => void;
+  onViewportChange?: (bbox: { minLat: number; maxLat: number; minLng: number; maxLng: number; zoom: number }) => void;
   controlsPosition?: 'left' | 'right';
   /** Mode compact : contrôles réduits, plaqués aux bords, sans chevauchement (mobile). */
   compact?: boolean;
@@ -68,6 +69,7 @@ export default function ExplorerMap({
   onAutoFollowChange,
   onMapReady,
   onLocationUpdate,
+  onViewportChange,
   controlsPosition = 'left',
   compact = false,
   disableGeolocate = false,
@@ -211,10 +213,39 @@ export default function ExplorerMap({
       setMapReady(true);
       onMapReady?.();
 
-      // Ensure immediate sizing
+      let debounceTimer: NodeJS.Timeout | null = null;
+      const notifyViewport = () => {
+        if (!onViewportChange) return;
+        const bounds = map.getBounds();
+        const zoom = map.getZoom();
+        const latSpan = bounds.getNorth() - bounds.getSouth();
+        const lngSpan = bounds.getEast() - bounds.getWest();
+        const bufferLat = latSpan * 0.25;
+        const bufferLng = lngSpan * 0.25;
+        onViewportChange({
+          minLat: bounds.getSouth() - bufferLat,
+          maxLat: bounds.getNorth() + bufferLat,
+          minLng: bounds.getWest() - bufferLng,
+          maxLng: bounds.getEast() + bufferLng,
+          zoom,
+        });
+      };
+
+      const handleMoveEnd = () => {
+        if (debounceTimer) clearTimeout(debounceTimer);
+        debounceTimer = setTimeout(notifyViewport, 300);
+      };
+
+      map.on('moveend', handleMoveEnd);
+      map.on('zoomend', handleMoveEnd);
+
+      // Ensure immediate sizing and initial viewport notification
       setTimeout(() => {
-        try { map.invalidateSize(); } catch { /* ignore */ }
-      }, 100);
+        try {
+          map.invalidateSize();
+          notifyViewport();
+        } catch { /* ignore */ }
+      }, 150);
       setTimeout(() => {
         try { map.invalidateSize(); } catch { /* ignore */ }
       }, 400);
@@ -232,7 +263,7 @@ export default function ExplorerMap({
       setMapReady(false);
     };
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [onViewportChange]);
 
   // ResizeObserver for dynamic layout size changes
   useEffect(() => {

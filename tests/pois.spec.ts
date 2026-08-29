@@ -26,4 +26,30 @@ describe('getPois query service', () => {
       expect(r.category).toBe('refuge');
     });
   });
+
+  it('should filter POIs within a specific bounding box', async () => {
+    const alpsBbox = {
+      minLat: 44.5,
+      maxLat: 46.5,
+      minLng: 5.5,
+      maxLng: 7.5,
+      limit: 30,
+    };
+    const pois = await getPois(alpsBbox);
+    expect(Array.isArray(pois)).toBe(true);
+    pois.forEach((p) => {
+      expect(p.lat).toBeGreaterThanOrEqual(alpsBbox.minLat - 0.1);
+      expect(p.lat).toBeLessThanOrEqual(alpsBbox.maxLat + 0.1);
+      expect(p.lng).toBeGreaterThanOrEqual(alpsBbox.minLng - 0.1);
+      expect(p.lng).toBeLessThanOrEqual(alpsBbox.maxLng + 0.1);
+    });
+  });
+
+  it('should adapt LOD limit based on zoom level', async () => {
+    const lowZoomPois = await getPois({ zoom: 5 });
+    expect(lowZoomPois.length).toBeLessThanOrEqual(40);
+
+    const highZoomPois = await getPois({ zoom: 14 });
+    expect(highZoomPois.length).toBeLessThanOrEqual(150);
+  });
 });

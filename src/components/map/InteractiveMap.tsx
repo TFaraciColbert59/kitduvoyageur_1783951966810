@@ -53,7 +53,12 @@ export default function InteractiveMap() {
   const containerRef = useRef<HTMLDivElement>(null);
   const mapRef = useRef<LeafletMap | null>(null);
   const layerGroupRef = useRef<LayerGroup | null>(null);
-  const selectedTrackLayerRef = useRef<any>(null);
+
+  // In-memory client-side spatial cache
+  const poisCacheRef = useRef<Map<string, UnifiedPOI>>(new Map());
+  const trailsCacheRef = useRef<Map<string, MapTrail>>(new Map());
+  const lastFetchedViewportRef = useRef<{ minLat: number; maxLat: number; minLng: number; maxLng: number; zoom: number } | null>(null);
+  const debounceTimerRef = useRef<NodeJS.Timeout | null>(null);
 
   const [trails, setTrails] = useState<MapTrail[]>([]);
   const [pois, setPois] = useState<UnifiedPOI[]>([]);
@@ -79,53 +84,109 @@ export default function InteractiveMap() {
   const [mapReady, setMapReady] = useState(false);
   const [showMobileFilters, setShowMobileFilters] = useState(false);
 
-  // 1. Fetch Trails with Server-side Filtering from /api/hikes
-  const fetchTrails = useCallback(async () => {
+  // 1. Debounced Viewport & Bounding Box Spatial Loader with Zoom LOD
+  const fetchViewportData = useCallback(async (map: LeafletMap, force = false) => {
+    if (!map) return;
     setLoading(true);
+    setPoisLoading(true);
+
+    const bounds = map.getBounds();
+    const zoom = map.getZoom();
+
+    const latSpan = bounds.getNorth() - bounds.getSouth();
+    const lngSpan = bounds.getEast() - bounds.getWest();
+    const bufferLat = latSpan * 0.25;
+    const bufferLng = lngSpan * 0.25;
+
+    const minLat = bounds.getSouth() - bufferLat;
+    const maxLat = bounds.getNorth() + bufferLat;
+    const minLng = bounds.getWest() - bufferLng;
+    const maxLng = bounds.getEast() + bufferLng;
+
+    // Check if the current bounds are within the previously fetched bounding box
+    const last = lastFetchedViewportRef.current;
+    if (!force && last && Math.abs(last.zoom - zoom) <= 1) {
+      if (minLat >= last.minLat && maxLat <= last.maxLat && minLng >= last.minLng && maxLng <= last.maxLng) {
+        // Viewport is completely inside buffered cache, skip network!
+        setLoading(false);
+        setPoisLoading(false);
+        return;
+      }
+    }
+
+    lastFetchedViewportRef.current = { minLat, maxLat, minLng, maxLng, zoom };
+
+    // Calculate LOD limit per query
+    const poiLimit = zoom <= 7 ? 35 : zoom <= 11 ? 75 : 150;
+    const trailLimit = zoom <= 7 ? 25 : zoom <= 11 ? 60 : 120;
+
+    const poiParams = new URLSearchParams({
+      min_lat: minLat.toFixed(4),
+      max_lat: maxLat.toFixed(4),
+      min_lng: minLng.toFixed(4),
+      max_lng: maxLng.toFixed(4),
+      zoom: zoom.toString(),
+      limit: poiLimit.toString(),
+    });
+
+    const trailParams = new URLSearchParams({
+      min_lat: minLat.toFixed(4),
+      max_lat: maxLat.toFixed(4),
+      min_lng: minLng.toFixed(4),
+      max_lng: maxLng.toFixed(4),
+      limit: trailLimit.toString(),
+    });
+
+    const range = DISTANCE_RANGES.find(r => r.id === selectedDistanceRange) || DISTANCE_RANGES[0];
+    if (range.min !== undefined && range.min !== null) trailParams.set('min_dist', range.min.toString());
+    if (range.max !== undefined && range.max !== null) trailParams.set('max_dist', range.max.toString());
+    if (range.includeShort) trailParams.set('include_short', 'true');
+    if (selectedDifficulty !== 'all') trailParams.set('difficulty', selectedDifficulty);
+    if (searchQuery.trim()) trailParams.set('search', searchQuery.trim());
+
     try {
-      const range = DISTANCE_RANGES.find(r => r.id === selectedDistanceRange) || DISTANCE_RANGES[0];
-      const params = new URLSearchParams();
+      const [poisRes, trailsRes] = await Promise.all([
+        fetch(`/api/pois?${poiParams.toString()}`),
+        fetch(`/api/hikes?${trailParams.toString()}`),
+      ]);
 
-      if (range.min !== undefined && range.min !== null) params.set('min_dist', range.min.toString());
-      if (range.max !== undefined && range.max !== null) params.set('max_dist', range.max.toString());
-      if (range.includeShort) params.set('include_short', 'true');
-      if (selectedDifficulty !== 'all') params.set('difficulty', selectedDifficulty);
-      if (searchQuery.trim()) params.set('search', searchQuery.trim());
+      if (poisRes.ok) {
+        const newPois: UnifiedPOI[] = await poisRes.json();
+        newPois.forEach(p => poisCacheRef.current.set(p.id, p));
+      }
 
-      const res = await fetch(`/api/hikes?${params.toString()}`);
-      const trailsData = res.ok ? await res.json() : [];
-      setTrails(trailsData || []);
-    } catch (err) {
-      console.error('Error fetching filtered trails:', err);
+      if (trailsRes.ok) {
+        const newTrails: MapTrail[] = await trailsRes.json();
+        newTrails.forEach(t => trailsCacheRef.current.set(t.id, t));
+      }
+
+      // Filter visible items from memory cache within viewport for rendering
+      const visiblePois = Array.from(poisCacheRef.current.values()).filter(p =>
+        p.lat >= minLat && p.lat <= maxLat && p.lng >= minLng && p.lng <= maxLng
+      ).slice(0, poiLimit);
+
+      const visibleTrails = Array.from(trailsCacheRef.current.values()).filter(t =>
+        t.lat !== null && t.lng !== null && t.lat >= minLat && t.lat <= maxLat && t.lng >= minLng && t.lng <= maxLng
+      ).slice(0, trailLimit);
+
+      setPois(visiblePois);
+      setTrails(visibleTrails);
+    } catch (e) {
+      console.warn('[InteractiveMap] Viewport fetch error:', e);
     } finally {
       setLoading(false);
+      setPoisLoading(false);
     }
   }, [selectedDistanceRange, selectedDifficulty, searchQuery]);
 
+  // Trigger re-fetch when filter options change
   useEffect(() => {
-    fetchTrails();
-  }, [fetchTrails]);
-
-  // 2. Fetch Unified POIs from /api/pois
-  useEffect(() => {
-    async function loadPOIs() {
-      setPoisLoading(true);
-      try {
-        const res = await fetch('/api/pois');
-        if (!res.ok) throw new Error(`Failed to fetch POIs: ${res.status}`);
-        const data: UnifiedPOI[] = await res.json();
-        const validPois = (data || []).filter(p => !isNaN(p.lat) && !isNaN(p.lng));
-        setPois(validPois);
-      } catch (err) {
-        console.error('Error loading POIs from /api/pois:', err);
-      } finally {
-        setPoisLoading(false);
-      }
+    if (mapRef.current && mapReady) {
+      fetchViewportData(mapRef.current, true);
     }
-    loadPOIs();
-  }, []);
+  }, [fetchViewportData, mapReady]);
 
-  // 3. Fetch Real GeoJSON GPS Track ONLY when a trail is selected (one at a time)
+  // 2. Fetch Real GeoJSON GPS Track ONLY when a trail is selected (one at a time)
   useEffect(() => {
     if (!selectedTrailId) {
       setSelectedTrailGeojson(null);
@@ -187,7 +248,7 @@ export default function InteractiveMap() {
     }
   };
 
-  // 4. Initialize Leaflet Map
+  // 3. Initialize Leaflet Map with Debounced Viewport Listeners
   useEffect(() => {
     if (!containerRef.current || mapRef.current || typeof window === 'undefined') return;
 
@@ -229,19 +290,34 @@ export default function InteractiveMap() {
       mapRef.current = map;
       setMapReady(true);
 
+      // Debounced moveend and zoomend listeners (300ms)
+      const handleMoveEnd = () => {
+        if (debounceTimerRef.current) clearTimeout(debounceTimerRef.current);
+        debounceTimerRef.current = setTimeout(() => {
+          fetchViewportData(map);
+        }, 300);
+      };
+
+      map.on('moveend', handleMoveEnd);
+      map.on('zoomend', handleMoveEnd);
+
       setTimeout(() => {
-        try { map.invalidateSize(); } catch {}
-      }, 150);
+        try {
+          map.invalidateSize();
+          fetchViewportData(map, true);
+        } catch {}
+      }, 200);
     });
 
     return () => {
+      if (debounceTimerRef.current) clearTimeout(debounceTimerRef.current);
       if (mapRef.current) {
         try { mapRef.current.remove(); } catch {}
         mapRef.current = null;
         setMapReady(false);
       }
     };
-  }, []);
+  }, [fetchViewportData]);
 
   // Filtered POIs based on toggles
   const filteredPois = useMemo(() => {
@@ -255,11 +331,12 @@ export default function InteractiveMap() {
     });
   }, [pois, showRefuges, showSummits, showWaterPoints, showViewpoints, showCampings]);
 
-  // 5. Render Layers on Map
+  // 4. Render Layers on Map with Adaptive LOD Clustering
   useEffect(() => {
     if (!mapRef.current || !mapReady) return;
 
     const map = mapRef.current;
+    const currentZoom = map.getZoom();
 
     Promise.all([
       import('leaflet'),
@@ -272,11 +349,14 @@ export default function InteractiveMap() {
         layerGroupRef.current = null;
       }
 
+      // Dynamic cluster radius based on zoom (LOD clustering)
+      const clusterRadius = currentZoom <= 7 ? 55 : currentZoom <= 11 ? 40 : 25;
+
       // Trail cluster group
       // @ts-expect-error markerClusterGroup plugin extension
       const trailClusterGroup = L.markerClusterGroup({
         showCoverageOnHover: false,
-        maxClusterRadius: 45,
+        maxClusterRadius: clusterRadius,
         spiderfyOnMaxZoom: true,
         iconCreateFunction: function (cluster: any) {
           const count = cluster.getChildCount();
@@ -304,7 +384,7 @@ export default function InteractiveMap() {
       // @ts-expect-error markerClusterGroup plugin extension
       const poiClusterGroup = L.markerClusterGroup({
         showCoverageOnHover: false,
-        maxClusterRadius: 35,
+        maxClusterRadius: Math.max(25, clusterRadius - 10),
         spiderfyOnMaxZoom: true,
         iconCreateFunction: function (cluster: any) {
           const count = cluster.getChildCount();
@@ -329,7 +409,6 @@ export default function InteractiveMap() {
       });
 
       const linesGroup = L.layerGroup();
-      const allCoords: [number, number][] = [];
 
       // A. Render Quality Trail Markers / Pins
       if (showTrails) {
@@ -337,8 +416,6 @@ export default function InteractiveMap() {
           const isSelected = trail.id === selectedTrailId;
 
           if (trail.lat && trail.lng && !isNaN(trail.lat) && !isNaN(trail.lng)) {
-            allCoords.push([trail.lat, trail.lng]);
-
             const label = trail.distance_km ? `${Number(trail.distance_km).toFixed(1)}km`.replace('.', ',').replace(',0', '') : trail.name.substring(0, 10);
             const iconHtml = `
               <div style="
@@ -416,7 +493,6 @@ export default function InteractiveMap() {
 
       // C. Render POIs with rich category styling
       filteredPois.forEach(poi => {
-        allCoords.push([poi.lat, poi.lng]);
         const isSelected = poi.id === selectedPoiId;
         
         let emoji = '👁️';
@@ -510,33 +586,14 @@ export default function InteractiveMap() {
       
       const parentGroup = L.layerGroup([trailClusterGroup, poiClusterGroup, linesGroup]);
       layerGroupRef.current = parentGroup;
-
-      // Fit bounds on initial load (focus on France hexagon)
-      if (allCoords.length > 0 && !selectedTrailId && !selectedPoiId) {
-        try {
-          const franceCoords = allCoords.filter(([lat, lng]) => lat >= 41.5 && lat <= 51.2 && lng >= -5.0 && lng <= 9.6);
-          const targetCoords = franceCoords.length > 0 ? franceCoords : allCoords;
-          const bounds = L.latLngBounds(targetCoords);
-          map.fitBounds(bounds, { padding: [30, 30], maxZoom: 10 });
-        } catch (e) {}
-      }
     });
   }, [mapReady, trails, filteredPois, selectedTrailId, selectedTrailGeojson, selectedPoiId, showTrails]);
 
-  // Reset bounds to show all features (France hexagon)
+  // Reset bounds to show France overview
   const handleResetBounds = useCallback(() => {
     if (!mapRef.current) return;
-    import('leaflet').then((L) => {
-      const coords: [number, number][] = [];
-      trails.forEach(t => { if (t.lat && t.lng) coords.push([t.lat, t.lng]); });
-      filteredPois.forEach(p => coords.push([p.lat, p.lng]));
-      const franceCoords = coords.filter(([lat, lng]) => lat >= 41.5 && lat <= 51.2 && lng >= -5.0 && lng <= 9.6);
-      const targetCoords = franceCoords.length > 0 ? franceCoords : coords;
-      if (targetCoords.length > 0) {
-        mapRef.current!.fitBounds(L.latLngBounds(targetCoords), { padding: [30, 30] });
-      }
-    });
-  }, [trails, filteredPois]);
+    mapRef.current.flyTo([46.5, 2.8], 6, { duration: 1.2 });
+  }, []);
 
   const handleSelectTrail = useCallback((trail: MapTrail) => {
     setSelectedTrailId(trail.id);
@@ -705,16 +762,16 @@ export default function InteractiveMap() {
 
           {/* Trail Count Banner */}
           <div className="px-4 py-2 bg-[#F1EDE6] border-b border-[#E4DED3] flex items-center justify-between text-xs text-[#365233]">
-            <span className="font-bold">{trails.length} randonnée{trails.length !== 1 ? 's' : ''} de qualité affichée{trails.length !== 1 ? 's' : ''}</span>
-            <span className="text-[10px] font-mono text-[#5A7064]">Backend SQL Filtered</span>
+            <span className="font-bold">{trails.length} randonnée{trails.length !== 1 ? 's' : ''} dans la zone</span>
+            <span className="text-[10px] font-mono text-[#5A7064]">Viewport LOD</span>
           </div>
 
           {/* Trail List */}
           <div className="divide-y divide-[#E4DED3]">
             {loading ? (
-              <div className="p-8 text-center text-xs text-[#5A7064]">Filtrage et chargement des randonnées...</div>
+              <div className="p-8 text-center text-xs text-[#5A7064]">Chargement de la zone...</div>
             ) : trails.length === 0 ? (
-              <div className="p-8 text-center text-xs text-[#5A7064]">Aucune randonnée ne correspond à ces critères.</div>
+              <div className="p-8 text-center text-xs text-[#5A7064]">Aucune randonnée dans cette zone. Déplacez ou dézoomez la carte.</div>
             ) : (
               trails.map(t => {
                 const isSelected = t.id === selectedTrailId;
@@ -739,7 +796,6 @@ export default function InteractiveMap() {
                       <span>📏 {t.distance_km ? `${Number(t.distance_km).toFixed(1)} km` : 'N/A'}</span>
                       {t.duration_hours && <span>⏱️ {t.duration_hours}h</span>}
                       {t.elevation_gain && <span>📈 +{t.elevation_gain}m</span>}
-                      <span className="text-sage-600 font-bold">🗺️ Tracé GPS réel</span>
                     </div>
                   </div>
                 );

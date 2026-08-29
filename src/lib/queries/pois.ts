@@ -31,6 +31,7 @@ export interface GetPoisOptions {
   maxLat?: number | null;
   minLng?: number | null;
   maxLng?: number | null;
+  zoom?: number | null;
   limit?: number | null;
 }
 
@@ -57,12 +58,29 @@ function normalizeCategory(cat: string | null | undefined): UnifiedPOI['category
 }
 
 /**
- * Récupère l'ensemble des POI consolidés avec toutes leurs informations riches
+ * Récupère les POI situés UNIQUEMENT dans le viewport demandé (Bounding Box PostGIS)
+ * avec filtrage SQL direct, pagination intelligente et adaptation au niveau de zoom (LOD).
  */
 export async function getPois(options: GetPoisOptions = {}): Promise<UnifiedPOI[]> {
-  const { category = null, minLat = null, maxLat = null, minLng = null, maxLng = null, limit = 2500 } = options;
+  const {
+    category = null,
+    minLat = null,
+    maxLat = null,
+    minLng = null,
+    maxLng = null,
+    zoom = null,
+    limit = null,
+  } = options;
 
-  const cacheKey = JSON.stringify({ category, minLat, maxLat, minLng, maxLng, limit });
+  // Calcul du budget limite d'éléments selon le niveau de zoom (LOD)
+  let maxItems = limit ?? 100;
+  if (limit === null && zoom !== null) {
+    if (zoom <= 7) maxItems = 40;
+    else if (zoom <= 11) maxItems = 80;
+    else maxItems = 150;
+  }
+
+  const cacheKey = JSON.stringify({ category, minLat, maxLat, minLng, maxLng, zoom, maxItems });
   const cached = cache.get(cacheKey);
   const now = Date.now();
 
@@ -72,22 +90,67 @@ export async function getPois(options: GetPoisOptions = {}): Promise<UnifiedPOI[
 
   const supabase = await createClient();
 
-  const [
-    outdoorRes,
-    refugesRes,
-    summitsRes,
-    waterRes,
-  ] = await Promise.all([
-    supabase.from('outdoor_points').select('id, name, category, lat, lng, altitude, description, region, country, metadata'),
-    supabase.from('map_refuges').select('id, name, description, lat, lng, altitude_m, capacity, is_staffed, open_months, phone, website, price_per_night, region, country, tags'),
-    supabase.from('map_summits').select('id, name, description, lat, lng, altitude_m, prominence_m, difficulty, massif, region, country, tags'),
-    supabase.from('map_water_points').select('id, name, description, lat, lng, altitude_m, water_type, is_potable, is_seasonal, flow_rate, region, country'),
+  // 1. Requêtes SQL ciblées avec index spatial Bounding Box
+  let outdoorQuery = supabase.from('outdoor_points').select('id, name, category, lat, lng, altitude, description, region, country, metadata');
+  let refugesQuery = supabase.from('map_refuges').select('id, name, description, lat, lng, altitude_m, capacity, is_staffed, open_months, phone, website, price_per_night, region, country, tags');
+  let summitsQuery = supabase.from('map_summits').select('id, name, description, lat, lng, altitude_m, prominence_m, difficulty, massif, region, country, tags');
+  let waterQuery = supabase.from('map_water_points').select('id, name, description, lat, lng, altitude_m, water_type, is_potable, is_seasonal, flow_rate, region, country');
+
+  if (minLat !== null && !isNaN(minLat)) {
+    outdoorQuery = outdoorQuery.gte('lat', minLat);
+    refugesQuery = refugesQuery.gte('lat', minLat);
+    summitsQuery = summitsQuery.gte('lat', minLat);
+    waterQuery = waterQuery.gte('lat', minLat);
+  }
+  if (maxLat !== null && !isNaN(maxLat)) {
+    outdoorQuery = outdoorQuery.lte('lat', maxLat);
+    refugesQuery = refugesQuery.lte('lat', maxLat);
+    summitsQuery = summitsQuery.lte('lat', maxLat);
+    waterQuery = waterQuery.lte('lat', maxLat);
+  }
+  if (minLng !== null && !isNaN(minLng)) {
+    outdoorQuery = outdoorQuery.gte('lng', minLng);
+    refugesQuery = refugesQuery.gte('lng', minLng);
+    summitsQuery = summitsQuery.gte('lng', minLng);
+    waterQuery = waterQuery.gte('lng', minLng);
+  }
+  if (maxLng !== null && !isNaN(maxLng)) {
+    outdoorQuery = outdoorQuery.lte('lng', maxLng);
+    refugesQuery = refugesQuery.lte('lng', maxLng);
+    summitsQuery = summitsQuery.lte('lng', maxLng);
+    waterQuery = waterQuery.lte('lng', maxLng);
+  }
+
+  // Application des limites par table
+  outdoorQuery = outdoorQuery.limit(Math.max(20, Math.floor(maxItems * 0.4)));
+  refugesQuery = refugesQuery.limit(Math.max(15, Math.floor(maxItems * 0.25)));
+  summitsQuery = summitsQuery.limit(Math.max(15, Math.floor(maxItems * 0.25)));
+  waterQuery = waterQuery.limit(Math.max(15, Math.floor(maxItems * 0.25)));
+
+  // Bounding box pour l'appel RPC PostGIS trail_pois
+  const hasBbox = minLat !== null && maxLat !== null && minLng !== null && maxLng !== null;
+  const trailPoisPromise = hasBbox
+    ? supabase.rpc('get_trail_pois_bbox', {
+        min_lng: minLng,
+        min_lat: minLat,
+        max_lng: maxLng,
+        max_lat: maxLat,
+        p_limit: Math.max(30, Math.floor(maxItems * 0.5)),
+      })
+    : supabase.from('trail_pois').select('id, name, category, description, tags, geom').not('geom', 'is', null).limit(40);
+
+  const [outdoorRes, refugesRes, summitsRes, waterRes, trailPoisRes] = await Promise.all([
+    outdoorQuery,
+    refugesQuery,
+    summitsQuery,
+    waterQuery,
+    trailPoisPromise,
   ]);
 
   const allPois: UnifiedPOI[] = [];
   const seenCoordinates = new Set<string>();
 
-  // 1. outdoor_points (Haute qualité)
+  // 1. outdoor_points
   if (outdoorRes.data) {
     for (const p of outdoorRes.data) {
       if (p.lat == null || p.lng == null) continue;
@@ -124,7 +187,7 @@ export async function getPois(options: GetPoisOptions = {}): Promise<UnifiedPOI[
     }
   }
 
-  // 2. map_refuges (Détails complets de refuges)
+  // 2. map_refuges
   if (refugesRes.data) {
     for (const r of refugesRes.data) {
       if (r.lat == null || r.lng == null) continue;
@@ -165,7 +228,7 @@ export async function getPois(options: GetPoisOptions = {}): Promise<UnifiedPOI[
     }
   }
 
-  // 3. map_summits (Détails de sommets)
+  // 3. map_summits
   if (summitsRes.data) {
     for (const s of summitsRes.data) {
       if (s.lat == null || s.lng == null) continue;
@@ -200,7 +263,7 @@ export async function getPois(options: GetPoisOptions = {}): Promise<UnifiedPOI[
     }
   }
 
-  // 4. map_water_points (Détails points d'eau)
+  // 4. map_water_points
   if (waterRes.data) {
     for (const w of waterRes.data) {
       if (w.lat == null || w.lng == null) continue;
@@ -236,35 +299,18 @@ export async function getPois(options: GetPoisOptions = {}): Promise<UnifiedPOI[
     }
   }
 
-  // 5. trail_pois (PostGIS points)
-  const { data: trailPoisData } = await supabase
-    .from('trail_pois')
-    .select('id, name, category, description, tags, geom')
-    .not('geom', 'is', null)
-    .limit(1500);
+  // 5. trail_pois (PostGIS points via get_trail_pois_bbox ou fallback)
+  if (trailPoisRes.data) {
+    for (const tp of trailPoisRes.data) {
+      let lat = tp.lat != null ? Number(tp.lat) : null;
+      let lng = tp.lng != null ? Number(tp.lng) : null;
 
-  if (trailPoisData) {
-    for (const tp of trailPoisData) {
-      let lat: number | null = null;
-      let lng: number | null = null;
-
-      if (tp.geom && typeof tp.geom === 'object' && 'coordinates' in (tp.geom as any)) {
+      // Extract geometry coords if raw PostgREST object
+      if ((lat == null || lng == null) && tp.geom && typeof tp.geom === 'object' && 'coordinates' in (tp.geom as any)) {
         const coords = (tp.geom as any).coordinates;
         if (Array.isArray(coords) && coords.length >= 2) {
           lng = Number(coords[0]);
           lat = Number(coords[1]);
-        }
-      }
-
-      if ((lat == null || lng == null) && typeof tp.geom === 'string') {
-        try {
-          const parsed = JSON.parse(tp.geom);
-          if (parsed?.coordinates) {
-            lng = Number(parsed.coordinates[0]);
-            lat = Number(parsed.coordinates[1]);
-          }
-        } catch {
-          // not json
         }
       }
 
@@ -300,21 +346,22 @@ export async function getPois(options: GetPoisOptions = {}): Promise<UnifiedPOI[
     }
   }
 
-  // Filter by options
+  // Filtrage par catégorie
   let filtered = allPois;
-
   if (category && category !== 'all') {
     const norm = normalizeCategory(category);
     filtered = filtered.filter((p) => p.category === norm);
   }
 
-  if (minLat != null) filtered = filtered.filter((p) => p.lat >= minLat);
-  if (maxLat != null) filtered = filtered.filter((p) => p.lat <= maxLat);
-  if (minLng != null) filtered = filtered.filter((p) => p.lng >= minLng);
-  if (maxLng != null) filtered = filtered.filter((p) => p.lng <= maxLng);
-
-  if (limit != null && filtered.length > limit) {
-    filtered = filtered.slice(0, limit);
+  // Limitation stricte au budget max
+  if (filtered.length > maxItems) {
+    // Trier par priorité : vérifiés / avec altitude d'abord
+    filtered.sort((a, b) => {
+      if (a.is_verified && !b.is_verified) return -1;
+      if (!a.is_verified && b.is_verified) return 1;
+      return (b.altitude_m || 0) - (a.altitude_m || 0);
+    });
+    filtered = filtered.slice(0, maxItems);
   }
 
   cache.set(cacheKey, { data: filtered, timestamp: now });

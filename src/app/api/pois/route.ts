@@ -16,6 +16,7 @@ export async function GET(request: NextRequest) {
   const maxLat = searchParams.has('max_lat') ? Number(searchParams.get('max_lat')) : null;
   const minLng = searchParams.has('min_lng') ? Number(searchParams.get('min_lng')) : null;
   const maxLng = searchParams.has('max_lng') ? Number(searchParams.get('max_lng')) : null;
+  const zoom = searchParams.has('zoom') ? Number(searchParams.get('zoom')) : null;
   const limit = searchParams.has('limit') ? Number(searchParams.get('limit')) : null;
 
   try {
@@ -25,6 +26,7 @@ export async function GET(request: NextRequest) {
       maxLat,
       minLng,
       maxLng,
+      zoom,
       limit,
     });
 
