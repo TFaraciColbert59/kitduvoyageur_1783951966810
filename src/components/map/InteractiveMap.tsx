@@ -125,20 +125,7 @@ export default function InteractiveMap() {
     loadPOIs();
   }, []);
 
-  // 3. Fetch All Real Hiking GPS Vector Tracks (/api/hikes/geojson)
-  const [routesGeojson, setRoutesGeojson] = useState<any | null>(null);
-  useEffect(() => {
-    fetch('/api/hikes/geojson')
-      .then(res => res.json())
-      .then(data => {
-        if (data && data.features) {
-          setRoutesGeojson(data);
-        }
-      })
-      .catch(err => console.warn('Failed to load global routes geojson:', err));
-  }, []);
-
-  // 4. Fetch Real GeoJSON GPS Track when a trail is selected
+  // 3. Fetch Real GeoJSON GPS Track ONLY when a trail is selected (one at a time)
   useEffect(() => {
     if (!selectedTrailId) {
       setSelectedTrailGeojson(null);
@@ -344,37 +331,7 @@ export default function InteractiveMap() {
       const linesGroup = L.layerGroup();
       const allCoords: [number, number][] = [];
 
-      // A. Render All Real Hiking GPS Vector Tracks Across the Map
-      if (showTrails && routesGeojson && routesGeojson.features) {
-        try {
-          const allRoutesLayer = L.geoJSON(routesGeojson, {
-            style: (feature: any) => {
-              const isSelected = selectedTrailId && String(feature?.properties?.id) === String(selectedTrailId);
-              return {
-                color: isSelected ? '#17402C' : '#2D6B4A',
-                weight: isSelected ? 6 : 3.5,
-                opacity: isSelected ? 1.0 : 0.70,
-                lineCap: 'round',
-                lineJoin: 'round',
-              };
-            },
-            onEachFeature: (feature: any, layer: any) => {
-              const routeName = feature.properties?.name || 'Sentier de randonnée';
-              layer.bindTooltip(`🌲 ${routeName}`, { sticky: true, className: 'leaflet-custom-tooltip' });
-              layer.on('click', () => {
-                const routeId = String(feature.properties?.id);
-                setSelectedTrailId(routeId);
-                setSelectedPoiId(null);
-              });
-            }
-          });
-          linesGroup.addLayer(allRoutesLayer);
-        } catch (e) {
-          console.warn('Error rendering routes GeoJSON layer:', e);
-        }
-      }
-
-      // B. Render Quality Trail Markers
+      // A. Render Quality Trail Markers / Pins
       if (showTrails) {
         trails.forEach(trail => {
           const isSelected = trail.id === selectedTrailId;
@@ -418,33 +375,34 @@ export default function InteractiveMap() {
         });
       }
 
-      // C. Render Real Selected Hike GPS Polyline Track (Full resolution & Glow)
+      // B. Render SINGLE Selected Hike GPS Polyline Track (Only 1 at a time when selected)
       if (selectedTrailGeojson && selectedTrailId) {
         try {
-          const geoLayer = L.geoJSON(selectedTrailGeojson, {
-            style: {
-              color: '#17402C',
-              weight: 6,
-              opacity: 0.95,
-              lineCap: 'round',
-              lineJoin: 'round',
-            }
-          });
-          linesGroup.addLayer(geoLayer);
-
-          // Add a glow underlay for extra readability
+          // Glow underlay
           const glowLayer = L.geoJSON(selectedTrailGeojson, {
             style: {
               color: '#5B7F55',
               weight: 10,
-              opacity: 0.4,
+              opacity: 0.35,
               lineCap: 'round',
               lineJoin: 'round',
             }
           });
           linesGroup.addLayer(glowLayer);
 
-          // Fit bounds to the exact GPS track line
+          // Sharp Forest Green Route Line
+          const geoLayer = L.geoJSON(selectedTrailGeojson, {
+            style: {
+              color: '#17402C',
+              weight: 5,
+              opacity: 1.0,
+              lineCap: 'round',
+              lineJoin: 'round',
+            }
+          });
+          linesGroup.addLayer(geoLayer);
+
+          // Fit bounds to the exact selected GPS track line
           try {
             const b = geoLayer.getBounds();
             if (b && b.isValid()) {
@@ -563,7 +521,7 @@ export default function InteractiveMap() {
         } catch (e) {}
       }
     });
-  }, [mapReady, trails, routesGeojson, filteredPois, selectedTrailId, selectedTrailGeojson, selectedPoiId, showTrails]);
+  }, [mapReady, trails, filteredPois, selectedTrailId, selectedTrailGeojson, selectedPoiId, showTrails]);
 
   // Reset bounds to show all features (France hexagon)
   const handleResetBounds = useCallback(() => {
