@@ -24,11 +24,13 @@ interface MapTrail {
 interface MapPOI {
   id: string;
   name: string;
-  type: 'refuge' | 'summit' | 'water';
+  type: 'refuge' | 'summit' | 'water' | 'viewpoint' | 'waterfall' | 'col' | 'camping';
   lat: number;
   lng: number;
   details: string;
   altitude?: number | null;
+  source?: string;
+  is_verified?: boolean;
 }
 
 function getDifficultyColor(diff: string | null | undefined): string {
@@ -60,7 +62,6 @@ const DIFFICULTIES = [
 ];
 
 export default function InteractiveMap() {
-  const supabase = useMemo(() => createClient(), []);
   const containerRef = useRef<HTMLDivElement>(null);
   const mapRef = useRef<LeafletMap | null>(null);
   const layerGroupRef = useRef<LayerGroup | null>(null);
@@ -68,6 +69,7 @@ export default function InteractiveMap() {
   const [trails, setTrails] = useState<MapTrail[]>([]);
   const [pois, setPois] = useState<MapPOI[]>([]);
   const [loading, setLoading] = useState(true);
+  const [poisLoading, setPoisLoading] = useState(true);
   const [selectedTrailId, setSelectedTrailId] = useState<string | null>(null);
   const [selectedPoiId, setSelectedPoiId] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
@@ -81,6 +83,8 @@ export default function InteractiveMap() {
   const [showRefuges, setShowRefuges] = useState(true);
   const [showSummits, setShowSummits] = useState(true);
   const [showWaterPoints, setShowWaterPoints] = useState(true);
+  const [showViewpoints, setShowViewpoints] = useState(true);
+  const [showCampings, setShowCampings] = useState(true);
 
   const [mapReady, setMapReady] = useState(false);
   const [showMobileFilters, setShowMobileFilters] = useState(false);
@@ -112,57 +116,36 @@ export default function InteractiveMap() {
     fetchTrails();
   }, [fetchTrails]);
 
-  // 2. Fetch POIs once
+  // 2. Fetch Unified POIs from /api/pois
   useEffect(() => {
     async function loadPOIs() {
+      setPoisLoading(true);
       try {
-        const [
-          { data: refuges },
-          { data: summits },
-          { data: waterPoints }
-        ] = await Promise.all([
-          supabase.from('map_refuges').select('*'),
-          supabase.from('map_summits').select('*'),
-          supabase.from('map_water_points').select('*')
-        ]);
+        const res = await fetch('/api/pois');
+        if (!res.ok) throw new Error(`Failed to fetch POIs: ${res.status}`);
+        const data = await res.json();
 
-        const formattedPois: MapPOI[] = [
-          ...(refuges || []).map((r: any) => ({
-            id: `refuge-${r.id}`,
-            name: r.name,
-            type: 'refuge' as const,
-            lat: Number(r.lat),
-            lng: Number(r.lng),
-            altitude: r.altitude_m,
-            details: `🏡 Refuge · ${r.capacity ? `${r.capacity} lits` : 'Ouvert'} · ${r.price_per_night ? `${r.price_per_night}€/nuit` : ''}`
-          })),
-          ...(summits || []).map((s: any) => ({
-            id: `summit-${s.id}`,
-            name: s.name,
-            type: 'summit' as const,
-            lat: Number(s.lat),
-            lng: Number(s.lng),
-            altitude: s.altitude_m,
-            details: `⛰️ Sommet · ${s.altitude_m ? `${s.altitude_m}m` : ''} · ${s.massif || ''}`
-          })),
-          ...(waterPoints || []).map((w: any) => ({
-            id: `water-${w.id}`,
-            name: w.name,
-            type: 'water' as const,
-            lat: Number(w.lat),
-            lng: Number(w.lng),
-            altitude: w.altitude_m,
-            details: `💧 Point d'eau · ${w.is_potable ? 'Eau potable ✅' : 'Non potable ⚠️'}`
-          }))
-        ].filter(p => !isNaN(p.lat) && !isNaN(p.lng));
+        const formattedPois: MapPOI[] = (data || []).map((p: any) => ({
+          id: p.id,
+          name: p.name || 'Point d\'intérêt',
+          type: p.category || 'viewpoint',
+          lat: Number(p.lat),
+          lng: Number(p.lng),
+          altitude: p.altitude_m,
+          details: p.details || (p.altitude_m ? `${p.altitude_m}m d'altitude` : ''),
+          source: p.source,
+          is_verified: p.is_verified,
+        })).filter((p: any) => !isNaN(p.lat) && !isNaN(p.lng));
 
         setPois(formattedPois);
       } catch (err) {
-        console.error('Error loading POIs:', err);
+        console.error('Error loading POIs from /api/pois:', err);
+      } finally {
+        setPoisLoading(false);
       }
     }
     loadPOIs();
-  }, [supabase]);
+  }, []);
 
   const [tileMode, setTileMode] = useState<'osm' | 'topo' | 'satellite'>('osm');
   const tileLayerRef = useRef<any>(null);
@@ -263,11 +246,13 @@ export default function InteractiveMap() {
   const filteredPois = useMemo(() => {
     return pois.filter(p => {
       if (p.type === 'refuge' && !showRefuges) return false;
-      if (p.type === 'summit' && !showSummits) return false;
-      if (p.type === 'water' && !showWaterPoints) return false;
+      if ((p.type === 'summit' || p.type === 'col') && !showSummits) return false;
+      if ((p.type === 'water' || p.type === 'waterfall') && !showWaterPoints) return false;
+      if (p.type === 'viewpoint' && !showViewpoints) return false;
+      if (p.type === 'camping' && !showCampings) return false;
       return true;
     });
-  }, [pois, showRefuges, showSummits, showWaterPoints]);
+  }, [pois, showRefuges, showSummits, showWaterPoints, showViewpoints, showCampings]);
 
   // 4. Render Layers on Map
   useEffect(() => {
@@ -286,8 +271,9 @@ export default function InteractiveMap() {
         layerGroupRef.current = null;
       }
 
+      // Trail cluster group
       // @ts-expect-error markerClusterGroup plugin extension
-      const clusterGroup = L.markerClusterGroup({
+      const trailClusterGroup = L.markerClusterGroup({
         showCoverageOnHover: false,
         maxClusterRadius: 45,
         spiderfyOnMaxZoom: true,
@@ -305,11 +291,39 @@ export default function InteractiveMap() {
               display: flex;
               align-items: center;
               justify-content: center;
-              box-shadow: 0 2px 6px rgba(23,64,44,0.15);
+              box-shadow: 0 2px 6px rgba(23,64,44,0.25);
               border: 2px solid white;
             ">${count}</div>
           `;
           return L.divIcon({ html, className: '', iconSize: [32, 32], iconAnchor: [16, 16] });
+        }
+      });
+
+      // POI cluster group (distinct style and separate clustering)
+      // @ts-expect-error markerClusterGroup plugin extension
+      const poiClusterGroup = L.markerClusterGroup({
+        showCoverageOnHover: false,
+        maxClusterRadius: 35,
+        spiderfyOnMaxZoom: true,
+        iconCreateFunction: function (cluster: any) {
+          const count = cluster.getChildCount();
+          const html = `
+            <div style="
+              background: #2D6B4A;
+              color: white;
+              font-weight: 700;
+              font-size: 11px;
+              width: 30px;
+              height: 30px;
+              border-radius: 50%;
+              display: flex;
+              align-items: center;
+              justify-content: center;
+              box-shadow: 0 2px 8px rgba(45,107,74,0.35);
+              border: 2px solid #E4DED3;
+            ">📍${count}</div>
+          `;
+          return L.divIcon({ html, className: '', iconSize: [30, 30], iconAnchor: [15, 15] });
         }
       });
 
@@ -400,31 +414,64 @@ export default function InteractiveMap() {
               setSelectedTrailId(trail.id);
               setSelectedPoiId(null);
             });
-            clusterGroup.addLayer(marker);
+            trailClusterGroup.addLayer(marker);
           }
         });
       }
 
-      // B. Render POIs
+      // B. Render POIs with specific category styling
       filteredPois.forEach(poi => {
         allCoords.push([poi.lat, poi.lng]);
-        const emoji = poi.type === 'refuge' ? '🏡' : poi.type === 'summit' ? '⛰️' : '💧';
-        const bgColor = poi.type === 'refuge' ? '#17402C' : poi.type === 'summit' ? '#365233' : '#4B6B7C';
+        const isSelected = poi.id === selectedPoiId;
+        
+        let emoji = '👁️';
+        let bgColor = '#7C3AED';
+        
+        switch (poi.type) {
+          case 'refuge':
+            emoji = '🏡';
+            bgColor = '#17402C';
+            break;
+          case 'summit':
+          case 'col':
+            emoji = '⛰️';
+            bgColor = '#2D6B4A';
+            break;
+          case 'water':
+            emoji = '💧';
+            bgColor = '#0284C7';
+            break;
+          case 'waterfall':
+            emoji = '🌊';
+            bgColor = '#0EA5E9';
+            break;
+          case 'camping':
+            emoji = '⛺';
+            bgColor = '#16A34A';
+            break;
+          case 'viewpoint':
+          default:
+            emoji = '👁️';
+            bgColor = '#7C3AED';
+            break;
+        }
 
         const poiIcon = L.divIcon({
           html: `
             <div style="
               background-color: ${bgColor};
-              width: 32px;
-              height: 32px;
+              width: ${isSelected ? '36px' : '30px'};
+              height: ${isSelected ? '36px' : '30px'};
               border-radius: 50%;
               display: flex;
               align-items: center;
               justify-content: center;
-              border: 2.5px solid white;
-              box-shadow: 0 3px 8px rgba(23,64,44,0.35);
-              font-size: 15px;
+              border: 2px solid white;
+              box-shadow: 0 3px 8px rgba(0,0,0,0.35);
+              font-size: ${isSelected ? '16px' : '14px'};
               cursor: pointer;
+              transform: ${isSelected ? 'scale(1.15)' : 'scale(1)'};
+              transition: transform 0.15s ease;
             ">${emoji}</div>
           `,
           className: '',
@@ -433,45 +480,51 @@ export default function InteractiveMap() {
           popupAnchor: [0, -16]
         });
 
-        const marker = L.marker([poi.lat, poi.lng], { icon: poiIcon, zIndexOffset: 2000 });
+        const marker = L.marker([poi.lat, poi.lng], { icon: poiIcon, zIndexOffset: isSelected ? 3000 : 2000 });
         marker.bindPopup(`
-          <div style="padding: 6px; font-family: system-ui;">
-            <strong style="font-size: 14px; color: #17402C; display: block; margin-bottom: 2px;">${emoji} ${poi.name}</strong>
-            <p style="font-size: 12px; color: #365233; margin: 0;">${poi.details}</p>
+          <div style="padding: 6px; font-family: system-ui; min-width: 160px;">
+            <strong style="font-size: 13px; color: #17402C; display: block; margin-bottom: 2px;">${emoji} ${poi.name}</strong>
+            ${poi.altitude ? `<span style="font-size: 11px; font-weight: 600; color: #5B7F55; display: block; margin-bottom: 2px;">📈 ${poi.altitude}m</span>` : ''}
+            <p style="font-size: 11px; color: #365233; margin: 0;">${poi.details || 'Point d\'intérêt'}</p>
           </div>
         `);
         marker.on('click', () => {
           setSelectedPoiId(poi.id);
           setSelectedTrailId(null);
         });
-        clusterGroup.addLayer(marker);
+        poiClusterGroup.addLayer(marker);
       });
 
-      clusterGroup.addTo(map);
+      trailClusterGroup.addTo(map);
+      poiClusterGroup.addTo(map);
       linesGroup.addTo(map);
       
-      const parentGroup = L.layerGroup([clusterGroup, linesGroup]);
+      const parentGroup = L.layerGroup([trailClusterGroup, poiClusterGroup, linesGroup]);
       layerGroupRef.current = parentGroup;
 
-      // Fit bounds when trails load
+      // Fit bounds when features load on initial load (focus on France outdoor region)
       if (allCoords.length > 0 && !selectedTrailId && !selectedPoiId) {
         try {
-          const bounds = L.latLngBounds(allCoords);
-          map.fitBounds(bounds, { padding: [50, 50], maxZoom: 11 });
+          const franceCoords = allCoords.filter(([lat, lng]) => lat >= 41.5 && lat <= 51.2 && lng >= -5.0 && lng <= 9.6);
+          const targetCoords = franceCoords.length > 0 ? franceCoords : allCoords;
+          const bounds = L.latLngBounds(targetCoords);
+          map.fitBounds(bounds, { padding: [30, 30], maxZoom: 10 });
         } catch (e) {}
       }
     });
   }, [mapReady, trails, filteredPois, selectedTrailId, selectedPoiId, showTrails]);
 
-  // Reset bounds to show all features
+  // Reset bounds to show all features (France hexagon)
   const handleResetBounds = useCallback(() => {
     if (!mapRef.current) return;
     import('leaflet').then((L) => {
       const coords: [number, number][] = [];
       trails.forEach(t => { if (t.lat && t.lng) coords.push([t.lat, t.lng]); });
       filteredPois.forEach(p => coords.push([p.lat, p.lng]));
-      if (coords.length > 0) {
-        mapRef.current!.fitBounds(L.latLngBounds(coords), { padding: [50, 50] });
+      const franceCoords = coords.filter(([lat, lng]) => lat >= 41.5 && lat <= 51.2 && lng >= -5.0 && lng <= 9.6);
+      const targetCoords = franceCoords.length > 0 ? franceCoords : coords;
+      if (targetCoords.length > 0) {
+        mapRef.current!.fitBounds(L.latLngBounds(targetCoords), { padding: [30, 30] });
       }
     });
   }, [trails, filteredPois]);
@@ -487,6 +540,10 @@ export default function InteractiveMap() {
   const selectedTrail = useMemo(() => {
     return trails.find(t => t.id === selectedTrailId) || null;
   }, [trails, selectedTrailId]);
+
+  const selectedPoi = useMemo(() => {
+    return pois.find(p => p.id === selectedPoiId) || null;
+  }, [pois, selectedPoiId]);
 
   return (
     <div className="relative w-full h-full flex overflow-hidden font-sans bg-[#FAF8F5]">
@@ -551,7 +608,13 @@ export default function InteractiveMap() {
             </div>
 
             {/* Layer Visibility Checkboxes */}
-            <div className="bg-[#FAF8F5] p-2.5 rounded-2xl border border-[#E4DED3] text-xs">
+            <div className="bg-[#FAF8F5] p-2.5 rounded-2xl border border-[#E4DED3] text-xs space-y-2">
+              <div className="flex items-center justify-between">
+                <span className="text-[10px] font-mono font-bold text-[#5A7064] uppercase tracking-wider">Couches & POIs :</span>
+                <span className="text-[10px] font-mono text-emerald-800 font-bold bg-emerald-100/80 px-1.5 py-0.5 rounded">
+                  {filteredPois.length} POI{filteredPois.length > 1 ? 's' : ''} actif{filteredPois.length > 1 ? 's' : ''}
+                </span>
+              </div>
               <div className="grid grid-cols-2 gap-2">
                 <label className="flex items-center gap-2 cursor-pointer select-none">
                   <input 
@@ -591,6 +654,26 @@ export default function InteractiveMap() {
                     className="rounded text-sage-600 focus:ring-0" 
                   />
                   <span className="font-semibold text-[#17402C]">💧 Points d'eau</span>
+                </label>
+
+                <label className="flex items-center gap-2 cursor-pointer select-none">
+                  <input 
+                    type="checkbox" 
+                    checked={showViewpoints} 
+                    onChange={e => setShowViewpoints(e.target.checked)} 
+                    className="rounded text-sage-600 focus:ring-0" 
+                  />
+                  <span className="font-semibold text-[#17402C]">👁️ Panoramas</span>
+                </label>
+
+                <label className="flex items-center gap-2 cursor-pointer select-none">
+                  <input 
+                    type="checkbox" 
+                    checked={showCampings} 
+                    onChange={e => setShowCampings(e.target.checked)} 
+                    className="rounded text-sage-600 focus:ring-0" 
+                  />
+                  <span className="font-semibold text-[#17402C]">⛺ Bivouacs</span>
                 </label>
               </div>
             </div>
@@ -723,16 +806,16 @@ export default function InteractiveMap() {
           </button>
         </div>
 
-        {/* Selected Trail Overlay Card (card blanche DS sur décor, sans ombre) */}
+        {/* Selected Trail Overlay Card */}
         {selectedTrail && (
           <div
             className="absolute left-1/2 -translate-x-1/2 z-[500] w-full max-w-sm px-4"
             style={{ bottom: 'calc(var(--bottom-tab-base-height, 68px) + 12px)' }}
           >
-            <div className="bg-[rgba(255,255,255,0.92)] border border-[rgba(255,255,255,0.60)] rounded-[12px] p-5 relative">
+            <div className="bg-[rgba(255,255,255,0.92)] border border-[rgba(255,255,255,0.60)] rounded-[12px] p-5 relative shadow-lg backdrop-blur-md">
               <button 
                 onClick={() => setSelectedTrailId(null)}
-                className="absolute top-4 right-4 text-[#17402C]/60 hover:text-[#17402C] text-xs bg-[#17402C]/10 w-6 h-6 rounded-full flex items-center justify-center"
+                className="absolute top-4 right-4 text-[#17402C]/60 hover:text-[#17402C] text-xs bg-[#17402C]/10 w-6 h-6 rounded-full flex items-center justify-center transition-colors"
               >
                 ✕
               </button>
@@ -766,6 +849,45 @@ export default function InteractiveMap() {
               ) : (
                 <div className="text-xs text-[#365233]">Point de départ affiché sur la carte</div>
               )}
+            </div>
+          </div>
+        )}
+
+        {/* Selected POI Overlay Card */}
+        {selectedPoi && (
+          <div
+            className="absolute left-1/2 -translate-x-1/2 z-[500] w-full max-w-sm px-4"
+            style={{ bottom: 'calc(var(--bottom-tab-base-height, 68px) + 12px)' }}
+          >
+            <div className="bg-[rgba(255,255,255,0.95)] border border-[#E4DED3] rounded-[14px] p-5 relative shadow-xl backdrop-blur-md">
+              <button 
+                onClick={() => setSelectedPoiId(null)}
+                className="absolute top-4 right-4 text-[#17402C]/60 hover:text-[#17402C] text-xs bg-[#17402C]/10 w-6 h-6 rounded-full flex items-center justify-center transition-colors"
+              >
+                ✕
+              </button>
+              
+              <div className="flex items-center gap-2 mb-1">
+                <span className="text-[10px] font-mono tracking-wider font-bold text-[#17402C] uppercase bg-[#17402C]/10 px-2 py-0.5 rounded-md">
+                  {selectedPoi.type === 'refuge' ? '🏡 Refuge' : selectedPoi.type === 'summit' ? '⛰️ Sommet' : selectedPoi.type === 'water' ? '💧 Point d\'eau' : selectedPoi.type === 'viewpoint' ? '👁️ Panorama' : selectedPoi.type === 'camping' ? '⛺ Bivouac / Camping' : selectedPoi.type === 'waterfall' ? '🌊 Cascade' : '⛰️ Col'}
+                </span>
+                {selectedPoi.is_verified && (
+                  <span className="text-[9px] font-mono font-bold text-emerald-700 bg-emerald-100 px-1.5 py-0.5 rounded">Vérifié ✓</span>
+                )}
+              </div>
+
+              <h3 className="font-display font-bold text-lg leading-tight mt-1.5 mb-2 pr-6 text-[#17402C]">{selectedPoi.name}</h3>
+              
+              {selectedPoi.details && (
+                <p className="text-xs text-[#365233] leading-relaxed mb-3">
+                  {selectedPoi.details}
+                </p>
+              )}
+
+              <div className="flex items-center justify-between text-[11px] font-mono text-[#5A7064] pt-2 border-t border-[#E4DED3]">
+                <span>📍 {selectedPoi.lat.toFixed(4)}, {selectedPoi.lng.toFixed(4)}</span>
+                {selectedPoi.altitude ? <span className="font-bold text-[#17402C]">📈 {selectedPoi.altitude}m</span> : null}
+              </div>
             </div>
           </div>
         )}

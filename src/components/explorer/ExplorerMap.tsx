@@ -6,10 +6,14 @@ import type { MapTrail } from './types';
 import { toValidLatLng } from './types';
 import TrailLayer from './TrailLayer';
 
+import type { UnifiedPOI } from '@/lib/queries/pois';
+
 interface ExplorerMapProps {
   trails: MapTrail[];
+  pois?: UnifiedPOI[];
   selectedTrailId: string | null;
   onTrailClick: (trail: MapTrail) => void;
+  onPoiClick?: (poi: UnifiedPOI) => void;
   userLocation?: [number, number] | null;
   userPositions?: Array<{ latitude: number; longitude: number }>;
   userAccuracy?: number | null;
@@ -51,8 +55,10 @@ type LocationState = 'idle' | 'locating' | 'located' | 'denied' | 'unavailable';
 
 export default function ExplorerMap({
   trails,
+  pois,
   selectedTrailId,
   onTrailClick,
+  onPoiClick,
   userLocation,
   userPositions,
   userAccuracy = null,
@@ -501,8 +507,8 @@ export default function ExplorerMap({
     <div className="relative w-full h-full bg-[#EAE6DF] overflow-hidden select-none" style={{ width: '100%', height: '100%', touchAction: 'none' }}>
       <div ref={containerRef} className="w-full h-full z-0" style={{ width: '100%', height: '100%', touchAction: 'none' }} />
 
-      {mapReady && mapInstance && trails.length > 0 && (
-        <TrailLayer map={mapInstance} trails={trails} selectedTrailId={selectedTrailId} onTrailClick={onTrailClick} />
+      {mapReady && mapInstance && (trails.length > 0 || (pois && pois.length > 0)) && (
+        <TrailLayer map={mapInstance} trails={trails} pois={pois} selectedTrailId={selectedTrailId} onTrailClick={onTrailClick} onPoiClick={onPoiClick} />
       )}
 
       {/* Floating Zoom Controls (+ / −) — Liquid Glass haute lisibilité */}

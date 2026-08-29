@@ -596,6 +596,107 @@ git grep -n "SmartImage" src/components/compte/MobileCompteV2.tsx
 - **Tests Playwright Mobile (375x667 & 390x844)** : `scripts/e2e/mobile_layout.spec.ts` validé.
 - **Calage Bottom Bar** : Calée directement au bord inférieur de l'écran (`paddingBottom: env(safe-area-inset-bottom, 0px)` sans décalage flottant excessif) pour maximiser l'espace utile et coller au bord bas natif.
 
+---
+
+# MISSION — Affichage des POI sur la carte aventure (LKDV)
+
+## 1. Cause Racine Identifiée (avec extrait de code exact)
+
+### Fichier incriminé :
+`src/components/map/InteractiveMap.tsx` (lignes 116–165 et 263–270 / 408–448 dans la version originale).
+
+### Diagnostic précis des 4 causes racines :
+1. **Tables interrogées incomplètes et isolées (lignes 124–126)** :
+   ```tsx
+   // ANCIEN CODE (InteractiveMap.tsx:124-126)
+   const [
+     { data: refuges },
+     { data: summits },
+     { data: waterPoints }
+   ] = await Promise.all([
+     supabase.from('map_refuges').select('*'),
+     supabase.from('map_summits').select('*'),
+     supabase.from('map_water_points').select('*')
+   ]);
+   ```
+   *Problème* : Seules 3 petites tables legacy (`map_refuges`: 16 lignes, `map_summits`: 21 lignes, `map_water_points`: 16 lignes — total 53 points) étaient interrogées, toutes situées dans les Alpes et les Pyrénées. Les tables principales `outdoor_points` (50 points qualifiés) et `trail_pois` (1811 points répartis sur toute la France) n'étaient **JAMAIS** requêtées par la carte.
+   *Conséquence* : Lorsque la carte s'initialisait sur son centre par défaut (Hauts-de-France `[50.4, 2.8]`), il y avait **0 POI dans le viewport**.
+
+2. **Fusion destructrice des POI dans le ClusterGroup des Sentiers (lignes 403 & 447)** :
+   ```tsx
+   // ANCIEN CODE (InteractiveMap.tsx:447)
+   // Les POI étaient injectés dans le même clusterGroup que les 287 sentiers
+   clusterGroup.addLayer(marker);
+   ```
+   *Problème* : Les POI étaient engloutis dans les badges sombres de clusters de sentiers (`3`, `64`, `61`, `56`, `50`), rendant les icônes de POI invisibles tant que l'utilisateur ne dézoomait/zoomait pas au niveau unitaire.
+
+3. **Absence de normalisation de catégories et absence d'icônes pour la majorité des POIs** :
+   Les catégories `viewpoint` (241 points), `waterfall` (4 points), `camping` (20 points), `col` (4 points), `peak` (389 points) n'étaient pas gérées et étaient exclues par `filteredPois`.
+
+4. **Absence de route API unifiée `/api/pois` avec cache mémoire** :
+   Contrairement à `/api/hikes`, aucun endpoint optimisé ne servait la donnée consolidée.
+
+---
+
+## 2. Vérification Projet Fantôme (grep)
+
+Commande exécutée :
+```bash
+git grep -n "lwrmuggefbmboikjgudc"
+```
+**Résultat :** Aucune occurrence dans le code exécutable, composants de cartes ou configuration d'environnement (uniquement mentionné dans de vieilles notes de documentation comme projet à ignorer).
+La connexion active utilise exclusivement le projet Supabase de production `icxyvwzfjbflcbqukpfz`.
+
+---
+
+## 3. Architecture du Correctif Appliqué
+
+1. **Service de Requête & Cache Unifié (`src/lib/queries/pois.ts`)** :
+   - Agrégation multi-sources : `outdoor_points` (50), `map_refuges` (16), `map_summits` (21), `map_water_points` (16), et `trail_pois` (1811 avec extraction géométrique `ST_Y(geom)` / `ST_X(geom)`).
+   - Déduplication spatiale par coordonnées.
+   - Normalisation catégorielle : `refuge` (🏡), `summit` (⛰️), `water` (💧), `viewpoint` (👁️), `waterfall` (🌊), `col` (⛰️), `camping` (⛺).
+   - Cache in-memory 60s pour un temps de réponse instantané (< 5ms).
+
+2. **Route API Dédiée (`src/app/api/pois/route.ts`)** :
+   - Endpoint standardisé `GET /api/pois` supportant le filtrage par `category`, `bbox` (`min_lat`, `max_lat`, `min_lng`, `max_lng`) et `limit`.
+
+3. **Séparation des Couches & Rendu Cartographique (`src/components/map/InteractiveMap.tsx`)** :
+   - `trailClusterGroup` : Badges numériques verts foncés `#17402C` pour les tracés de randonnée.
+   - `poiClusterGroup` : Badges distincts émeraude `#2D6B4A` (`📍count`) avec z-index prioritaire pour les points d'intérêt.
+   - Marqueurs individuels colorés avec emojis nets et lisibles (Refuge 🏡 `#17402C`, Sommet ⛰️ `#2D6B4A`, Eau 💧 `#0284C7`, Panorama 👁️ `#7C3AED`, Bivouac ⛺ `#16A34A`).
+   - Popups d'information riches (nom, altitude, détails de potabilité / capacité).
+   - Carte de superposition (overlay card) détaillée lors de la sélection d'un POI.
+   - Filtres de visibilité enrichis : 🗺️ Sentiers, 🏡 Refuges, ⛰️ Sommets, 💧 Points d'eau, 👁️ Panoramas, ⛺ Bivouacs.
+
+4. **Intégration sur la Carte Explorer (`src/components/explorer/ExplorerMap.tsx` & `TrailLayer.tsx`)** :
+   - Propagation transparente de `pois` et `onPoiClick` dans `TrailLayer.tsx` avec double clustering indépendant.
+
+---
+
+## 4. Calibrage du Zoom & Bounding Box
+
+- **Cadrage initial** : Le calcul de `fitBounds` a été calibré sur les coordonnées de l'Hexagone français (`lat: 41.5 à 51.2`, `lng: -5.0 à 9.6`, `padding: [30, 30]`, `maxZoom: 10`).
+- **Pourquoi ce choix ?** Cela évite de dézoomer à l'échelle planétaire à cause des POIs lointains (ex: Népal/Kilimandjaro), et cadre instantanément la France entière à zoom 6–7. Les clusters de sentiers et les clusters de POIs sont visibles simultanément dès l'ouverture sur tous les massifs (Alpes, Pyrénées, Massif Central, Vosges, Jura, Nord).
+
+---
+
+## 5. Preuves de Validation & Non-Régression
+
+### Tests Automatisés :
+- `tests/pois.spec.ts` (Nouveau) : validation du schéma, de la présence des coordonnées numériques non-nulles, et du filtrage par catégorie -> **PASS**.
+- Suite Vitest complète : **11/11 fichiers passés (37/37 tests)**.
+- TypeScript : `npx tsc --noEmit` -> **0 erreur**.
+
+### Non-Régression de la Couche `hiking_routes` :
+- `GET /api/hikes` retourne toujours les 287 randonnées de qualité filtrées.
+- Les badges de clusters de sentiers (`3`, `64`, `61`, `56`, `50`...) sont parfaitement préservés et cohabitent sans interférence avec les marqueurs POIs.
+
+### Preuves Visuelles :
+- `carte_interactive_pois.png` : Vue globale montrant les 1063 POIs actifs avec double couche active.
+- `carte_interactive_mobile_pois.png` : Rendu mobile iPhone avec barres d'outils et clusters POIs nets.
+- `explorer_map_pois.png` : Carte de découverte affichant les sentiers et les épingles POIs (🏡, ⛰️, 💧, 👁️).
+
+
 
 
 

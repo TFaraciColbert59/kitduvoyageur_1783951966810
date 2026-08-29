@@ -66,6 +66,8 @@ const DURATION_FILTERS = [
 
 const CATEGORIES = ['Tout', 'Refuge', 'Itinéraire', 'Bivouac', 'Escalade', 'Multi-jours', 'Famille'];
 
+import type { UnifiedPOI } from '@/lib/queries/pois';
+
 // ── Props ─────────────────────────────────────────────────────────────────────
 
 interface ExplorerClientProps {
@@ -92,7 +94,7 @@ export default function ExplorerClient({ initialTrails }: ExplorerClientProps) {
   const [sheetExpanded, setSheetExpanded] = useState(false);
   const listScrollRef = useRef<HTMLDivElement>(null);
 
-  // Data
+  // Data - Trails
   const { data: trailsData } = useQuery<MapTrail[]>({
     queryKey: ['hikes'],
     queryFn: async () => {
@@ -101,6 +103,17 @@ export default function ExplorerClient({ initialTrails }: ExplorerClientProps) {
       return (await res.json()) as MapTrail[];
     },
     initialData: initialTrails && initialTrails.length > 0 ? initialTrails : undefined,
+    staleTime: 300_000,
+  });
+
+  // Data - Unified POIs
+  const { data: poisData } = useQuery<UnifiedPOI[]>({
+    queryKey: ['pois'],
+    queryFn: async () => {
+      const res = await fetch('/api/pois');
+      if (!res.ok) return [];
+      return (await res.json()) as UnifiedPOI[];
+    },
     staleTime: 300_000,
   });
 
@@ -402,6 +415,7 @@ export default function ExplorerClient({ initialTrails }: ExplorerClientProps) {
       <div className="absolute inset-0 w-full h-full z-0 pointer-events-auto" style={{ width: '100%', height: '100%' }}>
         <ExplorerMap
           trails={filteredTrails}
+          pois={poisData}
           selectedTrailId={selectedTrailId}
           onTrailClick={handleTrailClick}
           userLocation={userLocation}
