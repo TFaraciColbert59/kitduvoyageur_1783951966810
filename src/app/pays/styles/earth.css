@@ -202,3 +202,19 @@
   font-family: var(--lkv-font-mono);
   font-size: 10px; opacity: 0.6;
 }
+
+/* ThreeGlobe Scene Tooltip Styling */
+.scene-tooltip {
+  pointer-events: none !important;
+  z-index: 50 !important;
+  font-family: var(--font-sans, system-ui), sans-serif !important;
+  transition: opacity 0.15s ease !important;
+}
+
+@media (max-width: 768px) {
+  .scene-tooltip {
+    display: none !important;
+    visibility: hidden !important;
+    opacity: 0 !important;
+  }
+}

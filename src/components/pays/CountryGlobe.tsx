@@ -204,34 +204,18 @@ export default function CountryGlobe({
     document.body.style.cursor = hoveredRef.current ? 'pointer' : 'grab';
   }, [prefersReducedMotion]);
 
-  // ── Tooltip HTML riche — même design que la fiche pays (Liquid Glass) ──
+  // ── Tooltip HTML compact — badge élégant sans masquer la vue ni dupliquer la fiche ──
   const polygonLabel = useCallback((d: any) => {
+    if (typeof window !== 'undefined' && window.innerWidth < 768) return '';
     if (!d?.countryData) return '';
     const c = d.countryData;
-    const dc = DANGER_FILL[c.danger_level as Country['danger_level']] || '#A6C1A0';
-    const dangerBadgeHtml = uniform ? '' : `
-    <span style="padding:3px 11px;border-radius:999px;font-size:10px;font-weight:700;border:1px solid ${dc}66;color:#17402C;background:${dc}22;">
-      ${dangerBadge(c.danger_level)}
-    </span>`;
     return `
-<div style="background:rgba(255,255,255,0.55);backdrop-filter:blur(20px) saturate(180%);-webkit-backdrop-filter:blur(20px) saturate(180%);border-radius:16px;padding:14px 16px;font-family:var(--font-sans, system-ui),sans-serif;font-size:12px;color:#17402C;box-shadow:0 20px 44px -12px rgba(23,64,44,0.28), inset 0 1.5px 1px 0 rgba(255,255,255,0.85);border:1px solid rgba(255,255,255,0.5);min-width:210px;max-width:270px;line-height:1.35;">
-  <div style="display:flex;align-items:center;gap:11px;margin-bottom:10px;">
-    <span style="font-size:32px;line-height:1;flex-shrink:0;">${getFlagEmoji(c.code)}</span>
-    <div style="min-width:0;">
-      <div style="font-family:var(--font-display, system-ui),sans-serif;font-weight:700;font-size:15px;color:#17402C;line-height:1.15;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${c.nom}</div>
-      <div style="color:#5A7064;font-size:11px;margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${c.capital} · ${c.continent}</div>
-    </div>
-  </div>
-  <div style="display:flex;gap:6px;margin-bottom:9px;flex-wrap:wrap;">
-    <span style="padding:3px 10px;border-radius:999px;font-size:10px;font-weight:600;background:rgba(23,64,44,0.06);border:1px solid rgba(23,64,44,0.10);color:#365233;">📅 ${c.meilleure_saison}</span>
-    <span style="padding:3px 10px;border-radius:999px;font-size:10px;font-weight:600;background:rgba(23,64,44,0.06);border:1px solid rgba(23,64,44,0.10);color:#365233;">💰 ${c.monnaie}</span>
-  </div>
-  <div style="display:flex;justify-content:space-between;align-items:center;border-top:1px solid rgba(23,64,44,0.08);padding-top:8px;">
-    ${dangerBadgeHtml}
-    <span style="font-size:10px;font-weight:700;color:#17402C;">Cliquer pour explorer →</span>
-  </div>
+<div style="background:rgba(255,255,255,0.92);backdrop-filter:blur(20px) saturate(180%);-webkit-backdrop-filter:blur(20px) saturate(180%);border-radius:999px;padding:6px 14px;font-family:var(--font-sans, system-ui),sans-serif;font-size:12px;font-weight:700;color:#17402C;box-shadow:0 8px 24px -4px rgba(23,64,44,0.22), inset 0 1px 1px rgba(255,255,255,0.95);border:1px solid rgba(255,255,255,0.90);display:flex;align-items:center;gap:7px;white-space:nowrap;pointer-events:none;">
+  <span style="font-size:15px;line-height:1;">${getFlagEmoji(c.code)}</span>
+  <span>${c.nom}</span>
+  <span style="font-size:10.5px;font-family:var(--font-mono, monospace);color:#5A7064;font-weight:600;padding-left:2px;">· ${c.continent}</span>
 </div>`;
-  }, [uniform]);
+  }, []);
 
   return (
     <div

@@ -71,9 +71,9 @@ export default function EarthCountrySheet({ country, onClose }: EarthCountryShee
                 handleClose();
               }
             }}
-            className="fixed left-3 right-3 z-[990] md:hidden rounded-[28px] overflow-hidden glass bg-white/95 backdrop-blur-2xl border border-white shadow-2xl max-h-[calc(100dvh-env(safe-area-inset-top,0px)-96px)] overflow-y-auto"
+            className="fixed left-3 right-3 z-[990] md:hidden rounded-[28px] overflow-hidden glass bg-white/95 backdrop-blur-2xl border border-white shadow-2xl max-h-[calc(100dvh-env(safe-area-inset-top,0px)-80px)] overflow-y-auto"
             style={{
-              bottom: 'calc(env(safe-area-inset-bottom, 0px) + 76px)',
+              bottom: 'calc(var(--bottom-tab-base-height, 52px) + 8px)',
             }}
           >
             {/* Drag handle */}
