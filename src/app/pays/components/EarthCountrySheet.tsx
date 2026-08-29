@@ -42,46 +42,38 @@ export default function EarthCountrySheet({ country, onClose }: EarthCountryShee
   return (
     <AnimatePresence>
       {country && (
-        <>
-          {/* Overlay */}
+        <div className="fixed inset-0 z-[990] md:hidden pointer-events-none flex flex-col justify-end">
+          {/* Backdrop Overlay */}
           <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             transition={{ duration: 0.15 }}
-            className="fixed inset-0 z-[980] bg-[#17402C]/25 backdrop-blur-[3px] md:hidden"
+            className="fixed inset-0 bg-[#17402C]/25 backdrop-blur-[3px] pointer-events-auto"
             onClick={handleClose}
             aria-hidden="true"
           />
 
-          {/* Bottom Sheet */}
+          {/* Bottom Sheet Card */}
           <motion.div
             role="dialog"
             aria-modal="true"
             aria-label={`Fiche ${country.nom}`}
-            initial={{ y: '100%' }}
-            animate={{ y: 0 }}
-            exit={{ y: '100%' }}
-            transition={{ type: 'spring', stiffness: 360, damping: 34 }}
-            drag="y"
-            dragConstraints={{ top: 0 }}
-            dragElastic={{ top: 0.05, bottom: 0.8 }}
-            onDragEnd={(_, info) => {
-              if (info.offset.y > 100 || info.velocity.y > 500) {
-                handleClose();
-              }
-            }}
-            className="fixed left-3 right-3 z-[990] md:hidden rounded-[28px] overflow-hidden glass bg-white/95 backdrop-blur-2xl border border-white shadow-2xl max-h-[calc(100dvh-env(safe-area-inset-top,0px)-80px)] overflow-y-auto"
+            initial={{ y: '100%', opacity: 0 }}
+            animate={{ y: 0, opacity: 1 }}
+            exit={{ y: '100%', opacity: 0 }}
+            transition={{ type: 'spring', stiffness: 400, damping: 32 }}
+            className="relative z-10 mx-3 rounded-[26px] overflow-hidden glass bg-white/95 backdrop-blur-2xl border border-white shadow-2xl pointer-events-auto max-h-[calc(100dvh-180px)] flex flex-col"
             style={{
-              bottom: 'calc(var(--bottom-tab-base-height, 52px) + 8px)',
+              marginBottom: 'calc(var(--bottom-tab-extended-height, 92px) + 8px)',
             }}
           >
             {/* Drag handle */}
-            <div className="flex justify-center pt-2.5 pb-1 cursor-grab active:cursor-grabbing" onClick={handleClose}>
+            <div className="flex justify-center pt-2.5 pb-1 cursor-pointer" onClick={handleClose}>
               <div className="w-9 h-1.5 rounded-full bg-[#17402C]/20" />
             </div>
 
-            <div className="px-4 pb-4 flex flex-col gap-3">
+            <div className="px-4 pb-4 overflow-y-auto flex flex-col gap-3">
               {/* Header */}
               <div className="flex items-center gap-3">
                 <span className="text-4xl leading-none flex-shrink-0 drop-shadow-xs">{flagEmoji(country.code)}</span>
@@ -98,7 +90,7 @@ export default function EarthCountrySheet({ country, onClose }: EarthCountryShee
                   type="button"
                   onClick={handleClose}
                   aria-label="Fermer la fiche"
-                  className="w-8 h-8 rounded-full bg-[#17402C]/08 hover:bg-[#17402C]/15 flex items-center justify-center text-[#17402C] shrink-0 transition-transform active:scale-90"
+                  className="w-8 h-8 rounded-full bg-[#17402C]/08 hover:bg-[#17402C]/15 flex items-center justify-center text-[#17402C] shrink-0 transition-transform active:scale-90 cursor-pointer"
                 >
                   <X size={15} />
                 </button>
@@ -118,7 +110,7 @@ export default function EarthCountrySheet({ country, onClose }: EarthCountryShee
 
               {/* Meta rows */}
               <div className="grid grid-cols-2 gap-2">
-                <div className="p-3 rounded-2xl bg-white/80 border border-white/90 shadow-2xs flex items-center gap-2.5">
+                <div className="p-2.5 rounded-2xl bg-white/80 border border-white/90 shadow-2xs flex items-center gap-2.5">
                   <Calendar size={14} className="text-[#17402C] flex-shrink-0" />
                   <div className="min-w-0">
                     <p className="text-[9.5px] uppercase tracking-wider text-[#5A7064] font-bold">Saison idéale</p>
@@ -126,7 +118,7 @@ export default function EarthCountrySheet({ country, onClose }: EarthCountryShee
                   </div>
                 </div>
 
-                <div className="p-3 rounded-2xl bg-white/80 border border-white/90 shadow-2xs flex items-center gap-2.5">
+                <div className="p-2.5 rounded-2xl bg-white/80 border border-white/90 shadow-2xs flex items-center gap-2.5">
                   <Coins size={14} className="text-[#17402C] flex-shrink-0" />
                   <div className="min-w-0">
                     <p className="text-[9.5px] uppercase tracking-wider text-[#5A7064] font-bold">Monnaie</p>
@@ -155,7 +147,7 @@ export default function EarthCountrySheet({ country, onClose }: EarthCountryShee
                 <button
                   type="button"
                   onClick={handleExplore}
-                  className="flex-1 glass-capsule-btn primary justify-center !min-h-[44px] !font-bold !gap-1.5 shadow-md active:scale-[0.98] transition-transform"
+                  className="flex-1 glass-capsule-btn primary justify-center !min-h-[44px] !font-bold !gap-1.5 shadow-md active:scale-[0.98] transition-transform cursor-pointer"
                 >
                   <span>Explorer le guide</span>
                   <ChevronRight size={15} />
@@ -164,7 +156,7 @@ export default function EarthCountrySheet({ country, onClose }: EarthCountryShee
                 <button
                   type="button"
                   onClick={handleOpenKitConfigurator}
-                  className="glass-capsule-btn !min-h-[44px] !px-4 !font-bold !gap-1.5 shadow-xs active:scale-[0.98] transition-transform"
+                  className="glass-capsule-btn !min-h-[44px] !px-4 !font-bold !gap-1.5 shadow-xs active:scale-[0.98] transition-transform cursor-pointer"
                   title="Générer un kit pour ce pays"
                 >
                   <Sparkles size={14} className="text-[#5B7F55]" />
@@ -173,7 +165,7 @@ export default function EarthCountrySheet({ country, onClose }: EarthCountryShee
               </div>
             </div>
           </motion.div>
-        </>
+        </div>
       )}
     </AnimatePresence>
   );
