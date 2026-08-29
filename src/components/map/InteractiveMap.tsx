@@ -5,7 +5,7 @@ import 'leaflet/dist/leaflet.css';
 import 'leaflet.markercluster/dist/MarkerCluster.css';
 import 'leaflet.markercluster/dist/MarkerCluster.Default.css';
 import type { Map as LeafletMap, LayerGroup } from 'leaflet';
-import { createClient } from '@/lib/supabase/client';
+import type { UnifiedPOI } from '@/lib/queries/pois';
 
 interface MapTrail {
   id: string;
@@ -19,18 +19,6 @@ interface MapTrail {
   terrain_type: string | null;
   family_friendly: boolean;
   geojson: any | null;
-}
-
-interface MapPOI {
-  id: string;
-  name: string;
-  type: 'refuge' | 'summit' | 'water' | 'viewpoint' | 'waterfall' | 'col' | 'camping';
-  lat: number;
-  lng: number;
-  details: string;
-  altitude?: number | null;
-  source?: string;
-  is_verified?: boolean;
 }
 
 function getDifficultyColor(diff: string | null | undefined): string {
@@ -65,12 +53,14 @@ export default function InteractiveMap() {
   const containerRef = useRef<HTMLDivElement>(null);
   const mapRef = useRef<LeafletMap | null>(null);
   const layerGroupRef = useRef<LayerGroup | null>(null);
+  const selectedTrackLayerRef = useRef<any>(null);
 
   const [trails, setTrails] = useState<MapTrail[]>([]);
-  const [pois, setPois] = useState<MapPOI[]>([]);
+  const [pois, setPois] = useState<UnifiedPOI[]>([]);
   const [loading, setLoading] = useState(true);
-  const [poisLoading, setPoisLoading] = useState(true);
+  const [, setPoisLoading] = useState(true);
   const [selectedTrailId, setSelectedTrailId] = useState<string | null>(null);
+  const [selectedTrailGeojson, setSelectedTrailGeojson] = useState<any | null>(null);
   const [selectedPoiId, setSelectedPoiId] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
   
@@ -123,21 +113,9 @@ export default function InteractiveMap() {
       try {
         const res = await fetch('/api/pois');
         if (!res.ok) throw new Error(`Failed to fetch POIs: ${res.status}`);
-        const data = await res.json();
-
-        const formattedPois: MapPOI[] = (data || []).map((p: any) => ({
-          id: p.id,
-          name: p.name || 'Point d\'intérêt',
-          type: p.category || 'viewpoint',
-          lat: Number(p.lat),
-          lng: Number(p.lng),
-          altitude: p.altitude_m,
-          details: p.details || (p.altitude_m ? `${p.altitude_m}m d'altitude` : ''),
-          source: p.source,
-          is_verified: p.is_verified,
-        })).filter((p: any) => !isNaN(p.lat) && !isNaN(p.lng));
-
-        setPois(formattedPois);
+        const data: UnifiedPOI[] = await res.json();
+        const validPois = (data || []).filter(p => !isNaN(p.lat) && !isNaN(p.lng));
+        setPois(validPois);
       } catch (err) {
         console.error('Error loading POIs from /api/pois:', err);
       } finally {
@@ -146,6 +124,30 @@ export default function InteractiveMap() {
     }
     loadPOIs();
   }, []);
+
+  // 3. Fetch Real GeoJSON GPS Track when a trail is selected
+  useEffect(() => {
+    if (!selectedTrailId) {
+      setSelectedTrailGeojson(null);
+      return;
+    }
+
+    let isMounted = true;
+    fetch(`/api/hikes/${selectedTrailId}`)
+      .then(res => res.json())
+      .then(data => {
+        if (isMounted && data.geojson) {
+          setSelectedTrailGeojson(data.geojson);
+        }
+      })
+      .catch(err => {
+        console.warn('Failed to load real GeoJSON track for hike:', selectedTrailId, err);
+      });
+
+    return () => {
+      isMounted = false;
+    };
+  }, [selectedTrailId]);
 
   const [tileMode, setTileMode] = useState<'osm' | 'topo' | 'satellite'>('osm');
   const tileLayerRef = useRef<any>(null);
@@ -185,7 +187,7 @@ export default function InteractiveMap() {
     }
   };
 
-  // 3. Initialize Leaflet Map
+  // 4. Initialize Leaflet Map
   useEffect(() => {
     if (!containerRef.current || mapRef.current || typeof window === 'undefined') return;
 
@@ -198,8 +200,8 @@ export default function InteractiveMap() {
       });
 
       const map = L.map(containerRef.current!, {
-        center: [50.4, 2.8],
-        zoom: 9,
+        center: [46.5, 2.8],
+        zoom: 6,
         zoomControl: false,
         attributionControl: false,
         dragging: true,
@@ -227,7 +229,6 @@ export default function InteractiveMap() {
       mapRef.current = map;
       setMapReady(true);
 
-      // Invalidation pour redimensionnement dynamique
       setTimeout(() => {
         try { map.invalidateSize(); } catch {}
       }, 150);
@@ -245,16 +246,16 @@ export default function InteractiveMap() {
   // Filtered POIs based on toggles
   const filteredPois = useMemo(() => {
     return pois.filter(p => {
-      if (p.type === 'refuge' && !showRefuges) return false;
-      if ((p.type === 'summit' || p.type === 'col') && !showSummits) return false;
-      if ((p.type === 'water' || p.type === 'waterfall') && !showWaterPoints) return false;
-      if (p.type === 'viewpoint' && !showViewpoints) return false;
-      if (p.type === 'camping' && !showCampings) return false;
+      if (p.category === 'refuge' && !showRefuges) return false;
+      if ((p.category === 'summit' || p.category === 'col') && !showSummits) return false;
+      if ((p.category === 'water' || p.category === 'waterfall') && !showWaterPoints) return false;
+      if (p.category === 'viewpoint' && !showViewpoints) return false;
+      if (p.category === 'camping' && !showCampings) return false;
       return true;
     });
   }, [pois, showRefuges, showSummits, showWaterPoints, showViewpoints, showCampings]);
 
-  // 4. Render Layers on Map
+  // 5. Render Layers on Map
   useEffect(() => {
     if (!mapRef.current || !mapReady) return;
 
@@ -334,51 +335,6 @@ export default function InteractiveMap() {
       if (showTrails) {
         trails.forEach(trail => {
           const isSelected = trail.id === selectedTrailId;
-          const diffColor = getDifficultyColor(trail.difficulty);
-          
-          let trailColor = '#5B7F55';
-          switch ((trail.difficulty || '').toLowerCase()) {
-            case 'facile': trailColor = '#5B7F55'; break;
-            case 'modérée':
-            case 'moderate': trailColor = '#C89A3B'; break;
-            case 'difficile':
-            case 'difficult': trailColor = '#A8443A'; break;
-            case 'expert':
-            case 'très difficile': trailColor = '#365233'; break;
-          }
-
-          if (trail.geojson && isSelected) {
-            try {
-              const geoLayer = L.geoJSON(trail.geojson, {
-                style: {
-                  color: '#17402C',
-                  weight: 6,
-                  opacity: 1.0,
-                  lineCap: 'round',
-                  lineJoin: 'round',
-                }
-              });
-
-              geoLayer.bindPopup(`
-                <div style="padding: 4px; font-family: system-ui;">
-                  <h4 style="font-weight: 700; font-size: 14px; margin-bottom: 4px; color: #17402C;">${trail.name}</h4>
-                  <p style="font-size: 12px; color: #365233; margin: 0;">
-                    📏 <strong>${trail.distance_km ? `${Number(trail.distance_km).toFixed(1)} km` : 'N/A'}</strong> 
-                    ${trail.duration_hours ? `· ⏱️ ${trail.duration_hours}h` : ''} 
-                    ${trail.difficulty ? `· <span style="color:${trailColor};font-weight:bold;">${trail.difficulty}</span>` : ''}
-                  </p>
-                </div>
-              `);
-
-              geoLayer.on('click', () => {
-                setSelectedTrailId(trail.id);
-                setSelectedPoiId(null);
-              });
-              linesGroup.addLayer(geoLayer);
-            } catch (e) {
-              console.warn('Invalid GeoJSON for trail:', trail.id);
-            }
-          }
 
           if (trail.lat && trail.lng && !isNaN(trail.lat) && !isNaN(trail.lng)) {
             allCoords.push([trail.lat, trail.lng]);
@@ -392,7 +348,7 @@ export default function InteractiveMap() {
                 font-size: 11px;
                 padding: 4px 10px;
                 border-radius: 999px;
-                box-shadow: 0 2px 6px rgba(23,64,44,0.08);
+                box-shadow: 0 2px 6px rgba(23,64,44,0.12);
                 white-space: nowrap;
                 border: 1px solid ${isSelected ? '#17402C' : '#E4DED3'};
                 cursor: pointer;
@@ -419,7 +375,45 @@ export default function InteractiveMap() {
         });
       }
 
-      // B. Render POIs with specific category styling
+      // B. Render Real Selected Hike GPS Polyline Track
+      if (selectedTrailGeojson && selectedTrailId) {
+        try {
+          const geoLayer = L.geoJSON(selectedTrailGeojson, {
+            style: {
+              color: '#17402C',
+              weight: 5,
+              opacity: 0.95,
+              lineCap: 'round',
+              lineJoin: 'round',
+            }
+          });
+          linesGroup.addLayer(geoLayer);
+
+          // Add a glow underlay for extra readability
+          const glowLayer = L.geoJSON(selectedTrailGeojson, {
+            style: {
+              color: '#5B7F55',
+              weight: 8,
+              opacity: 0.35,
+              lineCap: 'round',
+              lineJoin: 'round',
+            }
+          });
+          linesGroup.addLayer(glowLayer);
+
+          // Fit bounds to the exact GPS track line
+          try {
+            const b = geoLayer.getBounds();
+            if (b && b.isValid()) {
+              map.fitBounds(b, { padding: [60, 60], maxZoom: 15 });
+            }
+          } catch {}
+        } catch (e) {
+          console.warn('Invalid GeoJSON for trail:', selectedTrailId, e);
+        }
+      }
+
+      // C. Render POIs with rich category styling
       filteredPois.forEach(poi => {
         allCoords.push([poi.lat, poi.lng]);
         const isSelected = poi.id === selectedPoiId;
@@ -427,7 +421,7 @@ export default function InteractiveMap() {
         let emoji = '👁️';
         let bgColor = '#7C3AED';
         
-        switch (poi.type) {
+        switch (poi.category) {
           case 'refuge':
             emoji = '🏡';
             bgColor = '#17402C';
@@ -481,13 +475,27 @@ export default function InteractiveMap() {
         });
 
         const marker = L.marker([poi.lat, poi.lng], { icon: poiIcon, zIndexOffset: isSelected ? 3000 : 2000 });
+        
+        // Rich Popup info
+        const categoryLabel = poi.category === 'refuge' ? 'Refuge' : poi.category === 'summit' ? 'Sommet' : poi.category === 'water' ? 'Point d\'eau' : poi.category === 'viewpoint' ? 'Panorama' : poi.category === 'camping' ? 'Bivouac' : 'Point d\'intérêt';
+        const altitudeStr = poi.altitude_m ? `<div style="font-size: 11px; font-weight: bold; color: #17402C; margin-top: 2px;">📈 Altitude : ${poi.altitude_m} m</div>` : '';
+        const regionStr = poi.region ? `<div style="font-size: 10px; color: #5A7064;">📍 ${poi.region}${poi.country ? `, ${poi.country}` : ''}</div>` : '';
+        const descStr = poi.details ? `<div style="font-size: 11px; color: #365233; margin-top: 3px;">${poi.details}</div>` : '';
+        const potableBadge = poi.category === 'water' && poi.is_potable !== null && poi.is_potable !== undefined
+          ? `<div style="font-size: 10px; font-weight: bold; color: ${poi.is_potable ? '#15803D' : '#B45309'}; margin-top: 2px;">${poi.is_potable ? '✅ Eau potable' : '⚠️ Non traitée / Filtrer'}</div>`
+          : '';
+
         marker.bindPopup(`
-          <div style="padding: 6px; font-family: system-ui; min-width: 160px;">
-            <strong style="font-size: 13px; color: #17402C; display: block; margin-bottom: 2px;">${emoji} ${poi.name}</strong>
-            ${poi.altitude ? `<span style="font-size: 11px; font-weight: 600; color: #5B7F55; display: block; margin-bottom: 2px;">📈 ${poi.altitude}m</span>` : ''}
-            <p style="font-size: 11px; color: #365233; margin: 0;">${poi.details || 'Point d\'intérêt'}</p>
+          <div style="padding: 6px 8px; font-family: system-ui; min-width: 170px; max-width: 240px;">
+            <div style="font-size: 10px; font-weight: 700; color: #5B7F55; text-transform: uppercase;">${emoji} ${categoryLabel}</div>
+            <strong style="font-size: 13px; color: #17402C; display: block; margin: 1px 0 2px 0;">${poi.name}</strong>
+            ${regionStr}
+            ${altitudeStr}
+            ${potableBadge}
+            ${descStr}
           </div>
         `);
+
         marker.on('click', () => {
           setSelectedPoiId(poi.id);
           setSelectedTrailId(null);
@@ -502,7 +510,7 @@ export default function InteractiveMap() {
       const parentGroup = L.layerGroup([trailClusterGroup, poiClusterGroup, linesGroup]);
       layerGroupRef.current = parentGroup;
 
-      // Fit bounds when features load on initial load (focus on France outdoor region)
+      // Fit bounds on initial load (focus on France hexagon)
       if (allCoords.length > 0 && !selectedTrailId && !selectedPoiId) {
         try {
           const franceCoords = allCoords.filter(([lat, lng]) => lat >= 41.5 && lat <= 51.2 && lng >= -5.0 && lng <= 9.6);
@@ -512,7 +520,7 @@ export default function InteractiveMap() {
         } catch (e) {}
       }
     });
-  }, [mapReady, trails, filteredPois, selectedTrailId, selectedPoiId, showTrails]);
+  }, [mapReady, trails, filteredPois, selectedTrailId, selectedTrailGeojson, selectedPoiId, showTrails]);
 
   // Reset bounds to show all features (France hexagon)
   const handleResetBounds = useCallback(() => {
@@ -730,163 +738,252 @@ export default function InteractiveMap() {
                       <span>📏 {t.distance_km ? `${Number(t.distance_km).toFixed(1)} km` : 'N/A'}</span>
                       {t.duration_hours && <span>⏱️ {t.duration_hours}h</span>}
                       {t.elevation_gain && <span>📈 +{t.elevation_gain}m</span>}
-                      {t.geojson && <span className="text-sage-600 font-bold">🗺️ Tracé GPS</span>}
+                      <span className="text-sage-600 font-bold">🗺️ Tracé GPS réel</span>
                     </div>
                   </div>
                 );
               })
             )}
           </div>
+
         </div>
       </div>
-
-      {/* Mobile filter toggle FAB */}
-      {!showMobileFilters && (
-        <button
-          onClick={() => setShowMobileFilters(true)}
-          className="glass-capsule-btn primary sm:hidden fixed top-20 left-3 z-30 w-10 h-10 p-0 rounded-full justify-center text-sm"
-          aria-label="Toggle filters"
-        >
-          🔍
-        </button>
-      )}
 
       {/* ── MAP CONTAINER ── */}
       <div className="flex-1 h-full relative min-h-[240px]" style={{ touchAction: 'none', overscrollBehavior: 'none' }}>
         <div ref={containerRef} className="w-full h-full z-0" style={{ width: '100%', height: '100%', touchAction: 'none', overscrollBehavior: 'none' }} />
 
-        {/* Floating Zoom Controls */}
-        <div className="absolute left-2 bottom-2 z-[400] flex flex-col gap-2">
-          <div className="glass flex flex-col rounded-xl overflow-hidden text-[#17402C]">
-            <button
-              onClick={handleZoomIn}
-              title="Zoom avant"
-              className="w-8 h-8 flex items-center justify-center font-bold text-base hover:bg-sage-300/40 hover:text-[#17402C] transition-all border-b border-[#17402C]/10 cursor-pointer active:scale-95"
-            >
-              +
-            </button>
-            <button
-              onClick={handleZoomOut}
-              title="Zoom arrière"
-              className="w-8 h-8 flex items-center justify-center font-bold text-base hover:bg-sage-300/40 hover:text-[#17402C] transition-all cursor-pointer active:scale-95"
-            >
-              −
-            </button>
-          </div>
+        {/* ── ERGONOMIC FLOATING CONTROLS (APPLE HIG RIGOR) ── */}
+
+        {/* 1. Mobile Filter Toggle Button (Top Left) */}
+        {!showMobileFilters && (
+          <button
+            onClick={() => setShowMobileFilters(true)}
+            className="sm:hidden absolute top-[calc(env(safe-area-inset-top,0px)+14px)] left-3 z-[400] h-9 px-3.5 rounded-full bg-white/95 backdrop-blur-md border border-white/80 text-[#17402C] font-bold text-xs shadow-md flex items-center gap-1.5 active:scale-95 transition-all cursor-pointer"
+            aria-label="Ouvrir les filtres"
+          >
+            <span>🔍</span>
+            <span>Filtres</span>
+            <span className="bg-[#17402C]/10 text-[#17402C] text-[10px] px-1.5 py-0.5 rounded-full font-mono font-bold">
+              {filteredPois.length}
+            </span>
+          </button>
+        )}
+
+        {/* 2. Floating Zoom Controls (+ / −) (Top Right) */}
+        <div className="absolute top-[calc(env(safe-area-inset-top,0px)+14px)] right-3 z-[400] flex flex-col gap-1.5">
+          <button
+            onClick={handleZoomIn}
+            title="Zoom avant"
+            aria-label="Zoom avant"
+            className="w-9 h-9 rounded-full bg-white/95 backdrop-blur-md border border-white/80 text-[#17402C] font-bold text-base shadow-md flex items-center justify-center hover:bg-white active:scale-95 transition-all cursor-pointer"
+          >
+            +
+          </button>
+          <button
+            onClick={handleZoomOut}
+            title="Zoom arrière"
+            aria-label="Zoom arrière"
+            className="w-9 h-9 rounded-full bg-white/95 backdrop-blur-md border border-white/80 text-[#17402C] font-bold text-base shadow-md flex items-center justify-center hover:bg-white active:scale-95 transition-all cursor-pointer"
+          >
+            −
+          </button>
         </div>
 
-        {/* Floating Tile Switcher */}
-        <div className="glass absolute right-2 bottom-2 z-[400] flex items-center rounded-xl px-1 py-1 gap-1 shrink-0 flex-nowrap whitespace-nowrap">
+        {/* 3. Floating Tile Switcher (Top Right, positioned neatly below Zoom) */}
+        <div className="absolute top-[calc(env(safe-area-inset-top,0px)+100px)] right-3 z-[400] flex flex-col gap-1.5 bg-white/95 backdrop-blur-md border border-white/80 rounded-2xl p-1 shadow-md">
           <button
             onClick={() => handleTileChange('osm')}
-            className={`flex items-center rounded-xl transition-all cursor-pointer shrink-0 w-8 h-8 justify-center ${tileMode === 'osm' ? 'bg-[#17402C] text-white' : 'text-[#365233] hover:bg-sage-300/30 hover:text-[#17402C]'}`}
-            title="Carte"
+            className={`w-7 h-7 rounded-xl flex items-center justify-center transition-all cursor-pointer ${tileMode === 'osm' ? 'bg-[#17402C] text-white shadow-xs' : 'text-[#365233] hover:bg-[#17402C]/10'}`}
+            title="Carte Standard (OSM)"
           >
-            <svg width="12" height="12" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
+            <svg width="13" height="13" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
               <path d="M3 6l6-3 6 3 6-3v12l-6 3-6-3-6 3V6z"></path><path d="M9 3v12"></path><path d="M15 6v12"></path>
             </svg>
           </button>
           <button
             onClick={() => handleTileChange('topo')}
-            className={`flex items-center rounded-xl transition-all cursor-pointer shrink-0 w-8 h-8 justify-center ${tileMode === 'topo' ? 'bg-[#17402C] text-white' : 'text-[#365233] hover:bg-sage-300/30 hover:text-[#17402C]'}`}
-            title="Relief"
+            className={`w-7 h-7 rounded-xl flex items-center justify-center transition-all cursor-pointer ${tileMode === 'topo' ? 'bg-[#17402C] text-white shadow-xs' : 'text-[#365233] hover:bg-[#17402C]/10'}`}
+            title="Relief / Topographique"
           >
-            <svg width="12" height="12" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
+            <svg width="13" height="13" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
               <path d="M8 3l4 8 5-5 5 15H2L8 3z"></path>
             </svg>
           </button>
           <button
             onClick={() => handleTileChange('satellite')}
-            className={`flex items-center rounded-xl transition-all cursor-pointer shrink-0 w-8 h-8 justify-center ${tileMode === 'satellite' ? 'bg-[#17402C] text-white' : 'text-[#365233] hover:bg-sage-300/30 hover:text-[#17402C]'}`}
-            title="Satellite"
+            className={`w-7 h-7 rounded-xl flex items-center justify-center transition-all cursor-pointer ${tileMode === 'satellite' ? 'bg-[#17402C] text-white shadow-xs' : 'text-[#365233] hover:bg-[#17402C]/10'}`}
+            title="Vue Satellite"
           >
-            <svg width="12" height="12" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
+            <svg width="13" height="13" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
               <circle cx="12" cy="12" r="10"></circle><path d="M12 2a14.5 14.5 0 0 0 0 20 14.5 14.5 0 0 0 0-20"></path><path d="M2 12h20"></path>
             </svg>
           </button>
         </div>
 
-        {/* Selected Trail Overlay Card */}
+        {/* Selected Trail Overlay Card (Real GPS Track Loaded) */}
         {selectedTrail && (
           <div
-            className="absolute left-1/2 -translate-x-1/2 z-[500] w-full max-w-sm px-4"
+            className="absolute left-1/2 -translate-x-1/2 z-[500] w-full max-w-sm px-4 pointer-events-auto"
             style={{ bottom: 'calc(var(--bottom-tab-base-height, 68px) + 12px)' }}
           >
-            <div className="bg-[rgba(255,255,255,0.92)] border border-[rgba(255,255,255,0.60)] rounded-[12px] p-5 relative shadow-lg backdrop-blur-md">
+            <div className="bg-[rgba(255,255,255,0.96)] border border-[#E4DED3] rounded-[16px] p-4.5 relative shadow-xl backdrop-blur-md">
               <button 
                 onClick={() => setSelectedTrailId(null)}
                 className="absolute top-4 right-4 text-[#17402C]/60 hover:text-[#17402C] text-xs bg-[#17402C]/10 w-6 h-6 rounded-full flex items-center justify-center transition-colors"
-              >
-                ✕
-              </button>
-              
-              <span className="text-[9px] font-mono tracking-widest text-[#365233] uppercase">Randonnée Sélectionnée</span>
-              <h3 className="font-display font-bold text-lg leading-tight mt-1 mb-2 pr-6 text-[#17402C]">{selectedTrail.name}</h3>
-              
-              <div className="flex items-center gap-4 text-xs font-mono text-[#17402C] mb-4 bg-[#17402C]/5 p-3 rounded-[9px]">
-                <div>
-                  <p className="text-[9px] text-[#5A7064] uppercase">Distance</p>
-                  <p className="font-bold">{selectedTrail.distance_km ? `${Number(selectedTrail.distance_km).toFixed(1)} km` : 'N/A'}</p>
-                </div>
-                {selectedTrail.duration_hours && (
-                  <div>
-                    <p className="text-[9px] text-[#5A7064] uppercase">Durée</p>
-                    <p className="font-bold">{selectedTrail.duration_hours}h</p>
-                  </div>
-                )}
-                {selectedTrail.elevation_gain && (
-                  <div>
-                    <p className="text-[9px] text-[#5A7064] uppercase">Dénivelé</p>
-                    <p className="font-bold">+{selectedTrail.elevation_gain}m</p>
-                  </div>
-                )}
-              </div>
-
-              {selectedTrail.geojson ? (
-                <div className="flex items-center gap-2 text-xs text-sage-600 font-semibold">
-                  <span>✅ Tracé GPS de qualité affiché sur la carte</span>
-                </div>
-              ) : (
-                <div className="text-xs text-[#365233]">Point de départ affiché sur la carte</div>
-              )}
-            </div>
-          </div>
-        )}
-
-        {/* Selected POI Overlay Card */}
-        {selectedPoi && (
-          <div
-            className="absolute left-1/2 -translate-x-1/2 z-[500] w-full max-w-sm px-4"
-            style={{ bottom: 'calc(var(--bottom-tab-base-height, 68px) + 12px)' }}
-          >
-            <div className="bg-[rgba(255,255,255,0.95)] border border-[#E4DED3] rounded-[14px] p-5 relative shadow-xl backdrop-blur-md">
-              <button 
-                onClick={() => setSelectedPoiId(null)}
-                className="absolute top-4 right-4 text-[#17402C]/60 hover:text-[#17402C] text-xs bg-[#17402C]/10 w-6 h-6 rounded-full flex items-center justify-center transition-colors"
+                aria-label="Fermer"
               >
                 ✕
               </button>
               
               <div className="flex items-center gap-2 mb-1">
+                <span className="text-[9px] font-mono tracking-widest text-[#365233] uppercase font-bold bg-sage-100/60 px-2 py-0.5 rounded">Randonnée Sélectionnée</span>
+                {selectedTrailGeojson && (
+                  <span className="text-[9px] font-mono font-bold text-emerald-700 bg-emerald-100 px-1.5 py-0.5 rounded">Tracé GPS Réel ✓</span>
+                )}
+              </div>
+
+              <h3 className="font-display font-bold text-base leading-tight mt-1 mb-2 pr-6 text-[#17402C]">{selectedTrail.name}</h3>
+              
+              <div className="flex items-center gap-3 text-xs font-mono text-[#17402C] mb-3 bg-[#17402C]/5 p-2.5 rounded-[10px]">
+                <div>
+                  <p className="text-[8px] text-[#5A7064] uppercase font-bold">Distance</p>
+                  <p className="font-bold">{selectedTrail.distance_km ? `${Number(selectedTrail.distance_km).toFixed(1)} km` : 'N/A'}</p>
+                </div>
+                {selectedTrail.duration_hours && (
+                  <div>
+                    <p className="text-[8px] text-[#5A7064] uppercase font-bold">Durée</p>
+                    <p className="font-bold">{selectedTrail.duration_hours}h</p>
+                  </div>
+                )}
+                {selectedTrail.elevation_gain && (
+                  <div>
+                    <p className="text-[8px] text-[#5A7064] uppercase font-bold">Dénivelé</p>
+                    <p className="font-bold">+{selectedTrail.elevation_gain}m</p>
+                  </div>
+                )}
+              </div>
+
+              <div className="flex items-center justify-between gap-2 pt-1 border-t border-[#E4DED3]">
+                <a
+                  href={`https://www.google.com/maps/dir/?api=1&destination=${selectedTrail.lat},${selectedTrail.lng}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex-1 h-8 rounded-xl bg-gradient-to-b from-[#17402C] to-[#2D6B4A] text-white text-xs font-bold flex items-center justify-center gap-1.5 shadow-sm hover:brightness-110 active:scale-98 transition-all"
+                >
+                  <span>🧭</span>
+                  <span>Point de départ</span>
+                </a>
+                <a
+                  href={`/preparer-randonnee?routeId=${selectedTrail.id}`}
+                  className="h-8 px-3 rounded-xl bg-[#FAF8F5] hover:bg-white text-[#17402C] text-xs font-bold border border-[#E4DED3] flex items-center justify-center transition-colors"
+                >
+                  Préparer
+                </a>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Selected POI Overlay Card (Rich Information & Actionable Details) */}
+        {selectedPoi && (
+          <div
+            className="absolute left-1/2 -translate-x-1/2 z-[500] w-full max-w-sm px-4 pointer-events-auto"
+            style={{ bottom: 'calc(var(--bottom-tab-base-height, 68px) + 12px)' }}
+          >
+            <div className="bg-[rgba(255,255,255,0.96)] border border-[#E4DED3] rounded-[16px] p-4.5 relative shadow-xl backdrop-blur-md">
+              <button 
+                onClick={() => setSelectedPoiId(null)}
+                className="absolute top-4 right-4 text-[#17402C]/60 hover:text-[#17402C] text-xs bg-[#17402C]/10 w-6 h-6 rounded-full flex items-center justify-center transition-colors"
+                aria-label="Fermer"
+              >
+                ✕
+              </button>
+              
+              <div className="flex items-center gap-2 mb-1 flex-wrap">
                 <span className="text-[10px] font-mono tracking-wider font-bold text-[#17402C] uppercase bg-[#17402C]/10 px-2 py-0.5 rounded-md">
-                  {selectedPoi.type === 'refuge' ? '🏡 Refuge' : selectedPoi.type === 'summit' ? '⛰️ Sommet' : selectedPoi.type === 'water' ? '💧 Point d\'eau' : selectedPoi.type === 'viewpoint' ? '👁️ Panorama' : selectedPoi.type === 'camping' ? '⛺ Bivouac / Camping' : selectedPoi.type === 'waterfall' ? '🌊 Cascade' : '⛰️ Col'}
+                  {selectedPoi.category === 'refuge' ? '🏡 Refuge' : selectedPoi.category === 'summit' ? '⛰️ Sommet' : selectedPoi.category === 'water' ? '💧 Point d\'eau' : selectedPoi.category === 'viewpoint' ? '👁️ Panorama' : selectedPoi.category === 'camping' ? '⛺ Bivouac / Camping' : selectedPoi.category === 'waterfall' ? '🌊 Cascade' : '⛰️ Col'}
                 </span>
                 {selectedPoi.is_verified && (
                   <span className="text-[9px] font-mono font-bold text-emerald-700 bg-emerald-100 px-1.5 py-0.5 rounded">Vérifié ✓</span>
                 )}
+                {selectedPoi.altitude_m && (
+                  <span className="text-[10px] font-mono font-bold text-[#17402C] bg-sage-200/50 px-1.5 py-0.5 rounded">
+                    📈 {selectedPoi.altitude_m} m
+                  </span>
+                )}
               </div>
 
-              <h3 className="font-display font-bold text-lg leading-tight mt-1.5 mb-2 pr-6 text-[#17402C]">{selectedPoi.name}</h3>
+              <h3 className="font-display font-bold text-base leading-tight mt-1 mb-1 pr-6 text-[#17402C]">{selectedPoi.name}</h3>
+
+              {/* Geographical Massif / Region context */}
+              {(selectedPoi.massif || selectedPoi.region) && (
+                <p className="text-[11px] font-medium text-[#5A7064] mb-2">
+                  📍 {[selectedPoi.massif, selectedPoi.region, selectedPoi.country].filter(Boolean).join(' · ')}
+                </p>
+              )}
               
+              {/* Detailed Description */}
               {selectedPoi.details && (
-                <p className="text-xs text-[#365233] leading-relaxed mb-3">
+                <p className="text-xs text-[#365233] leading-relaxed mb-3 bg-[#FAF8F5] p-2 rounded-lg border border-[#E4DED3]/60">
                   {selectedPoi.details}
                 </p>
               )}
 
-              <div className="flex items-center justify-between text-[11px] font-mono text-[#5A7064] pt-2 border-t border-[#E4DED3]">
-                <span>📍 {selectedPoi.lat.toFixed(4)}, {selectedPoi.lng.toFixed(4)}</span>
-                {selectedPoi.altitude ? <span className="font-bold text-[#17402C]">📈 {selectedPoi.altitude}m</span> : null}
+              {/* Category-specific specs */}
+              {selectedPoi.category === 'refuge' && (
+                <div className="grid grid-cols-2 gap-2 text-[11px] font-mono text-[#17402C] mb-3 bg-[#17402C]/5 p-2 rounded-lg">
+                  <div>
+                    <span className="text-[#5A7064] block text-[9px] uppercase">Capacité</span>
+                    <span className="font-bold">{selectedPoi.capacity ? `${selectedPoi.capacity} couchages` : 'Ouvert'}</span>
+                  </div>
+                  <div>
+                    <span className="text-[#5A7064] block text-[9px] uppercase">Gardiennage</span>
+                    <span className="font-bold">{selectedPoi.is_staffed ? 'Gardé' : 'Libre / Non gardé'}</span>
+                  </div>
+                </div>
+              )}
+
+              {selectedPoi.category === 'water' && selectedPoi.is_potable !== null && selectedPoi.is_potable !== undefined && (
+                <div className={`p-2 rounded-lg mb-3 text-xs font-semibold flex items-center gap-2 ${selectedPoi.is_potable ? 'bg-emerald-50 text-emerald-800 border border-emerald-200' : 'bg-amber-50 text-amber-800 border border-amber-200'}`}>
+                  <span>{selectedPoi.is_potable ? '✅' : '⚠️'}</span>
+                  <span>{selectedPoi.is_potable ? 'Eau potable contrôlée et potable' : 'Eau naturelle non traitée — filtration recommandée'}</span>
+                </div>
+              )}
+
+              {/* Action Buttons */}
+              <div className="flex items-center gap-2 pt-2 border-t border-[#E4DED3]">
+                <a
+                  href={`https://www.google.com/maps/dir/?api=1&destination=${selectedPoi.lat},${selectedPoi.lng}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex-1 h-8 rounded-xl bg-gradient-to-b from-[#17402C] to-[#2D6B4A] text-white text-xs font-bold flex items-center justify-center gap-1.5 shadow-sm hover:brightness-110 active:scale-98 transition-all"
+                >
+                  <span>🧭</span>
+                  <span>Itinéraire GPS</span>
+                </a>
+                
+                {selectedPoi.phone && (
+                  <a
+                    href={`tel:${selectedPoi.phone}`}
+                    className="h-8 px-3 rounded-xl bg-[#FAF8F5] hover:bg-white text-[#17402C] text-xs font-bold border border-[#E4DED3] flex items-center justify-center gap-1 transition-colors"
+                    title="Appeler"
+                  >
+                    <span>📞</span>
+                  </a>
+                )}
+
+                {selectedPoi.website && (
+                  <a
+                    href={selectedPoi.website.startsWith('http') ? selectedPoi.website : `https://${selectedPoi.website}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="h-8 px-3 rounded-xl bg-[#FAF8F5] hover:bg-white text-[#17402C] text-xs font-bold border border-[#E4DED3] flex items-center justify-center gap-1 transition-colors"
+                    title="Site web officiel"
+                  >
+                    <span>🌐</span>
+                  </a>
+                )}
               </div>
             </div>
           </div>

@@ -117,6 +117,23 @@ export default function ExplorerClient({ initialTrails }: ExplorerClientProps) {
     staleTime: 300_000,
   });
 
+  // Fetch real GeoJSON GPS track when a hike is selected
+  useEffect(() => {
+    if (!selectedTrailId) return;
+    let isMounted = true;
+    fetch(`/api/hikes/${selectedTrailId}`)
+      .then((res) => res.json())
+      .then((data) => {
+        if (isMounted && data.geojson) {
+          setSelectedTrail((prev) => (prev && String(prev.id) === String(data.id) ? { ...prev, geojson: data.geojson } : prev));
+        }
+      })
+      .catch((err) => console.warn('Failed to load hike GeoJSON:', err));
+    return () => {
+      isMounted = false;
+    };
+  }, [selectedTrailId]);
+
   const trails = trailsData ?? initialTrails ?? [];
 
   const filteredTrails = useMemo(() => {
@@ -217,27 +234,28 @@ export default function ExplorerClient({ initialTrails }: ExplorerClientProps) {
   // ── RENDER ────────────────────────────────────────────────────────────────────
 
   return (
-    <div className="fixed inset-0 overflow-hidden bg-[#EAE6DF] select-none">
+    <div className="relative w-full h-[100dvh] overflow-hidden bg-[#FAF8F5] select-none" style={{ minHeight: '100dvh', height: '100dvh', width: '100%' }}>
 
       {/* ── 1A. HEADER DESKTOP (GRAND ÉCRAN >= 768px) ── */}
-      <header className="hidden md:block fixed top-3 sm:top-4 left-1/2 -translate-x-1/2 z-[1000] w-full max-w-[1040px] px-3 sm:px-4 pointer-events-none transition-all duration-300">
+      <header className="hidden md:flex fixed top-3 left-4 right-4 z-[1000] pointer-events-none items-center justify-between gap-3">
         <div
-          className="w-full rounded-full px-4 sm:px-5 py-2 transition-all duration-300 flex items-center justify-between pointer-events-auto cursor-default"
+          className="pointer-events-auto flex items-center justify-between gap-3 px-4 py-2 rounded-full w-full"
           style={{
-            background: 'linear-gradient(180deg, rgba(255, 255, 255, 0.28) 0%, rgba(255, 255, 255, 0.10) 100%)',
-            backdropFilter: 'blur(16px) saturate(170%)',
-            WebkitBackdropFilter: 'blur(16px) saturate(170%)',
-            border: '1px solid rgba(255, 255, 255, 0.45)',
-            boxShadow: '0 16px 36px -8px rgba(0, 0, 0, 0.08), inset 0 1px 1.5px rgba(255, 255, 255, 0.9), inset 0 -1px 1px rgba(255, 255, 255, 0.2)',
+            background: 'linear-gradient(180deg, rgba(255, 255, 255, 0.45) 0%, rgba(255, 255, 255, 0.18) 100%)',
+            backdropFilter: 'blur(20px) saturate(180%)',
+            WebkitBackdropFilter: 'blur(20px) saturate(180%)',
+            border: '1px solid rgba(255, 255, 255, 0.55)',
+            boxShadow: '0 8px 32px -4px rgba(23, 64, 44, 0.08), inset 0 1px 1.5px rgba(255, 255, 255, 0.85)',
           }}
         >
           {/* Logo Liquid Glass */}
           <Link
             href="/"
-            className="flex items-center gap-2.5 group focus-visible:outline-none hover:opacity-90 active:opacity-75 transition-opacity cursor-pointer py-1 shrink-0"
+            className="flex items-center gap-2 group shrink-0"
+            aria-label="Accueil LKDV"
           >
-            <div className="w-7 h-7 rounded-xl flex items-center justify-center bg-gradient-to-b from-[#17402C]/20 to-[#17402C]/08 border border-white/40 shadow-[inset_0_1px_1px_rgba(255,255,255,0.7)] text-[#17402C]">
-              <svg width="14" height="14" fill="currentColor" viewBox="0 0 24 24">
+            <div className="w-8 h-8 rounded-full flex items-center justify-center shadow-xs transition-transform group-hover:scale-105 bg-[#17402C] text-white">
+              <svg width="15" height="15" fill="currentColor" viewBox="0 0 24 24">
                 <path d="M3 17l4-8 4 4 3-6 4 10H3z" />
               </svg>
             </div>
@@ -247,19 +265,23 @@ export default function ExplorerClient({ initialTrails }: ExplorerClientProps) {
           </Link>
 
           {/* Navigation Principale Desktop */}
-          <nav className="flex items-center gap-1 p-1 rounded-full bg-white/[0.12] border border-white/30 shadow-[inset_0_1px_1px_rgba(255,255,255,0.3)]">
+          <nav className="flex items-center gap-1">
             {NAV_LINKS.map((link) => {
               const isActive = link.href === '/explorer';
               return (
                 <Link
-                  key={link.label}
+                  key={link.href}
                   href={link.href}
-                  className="relative px-3.5 py-1.5 rounded-full text-xs font-bold tracking-wide uppercase transition-colors duration-200 cursor-pointer select-none"
+                  className={`relative px-3.5 py-1.5 rounded-full text-xs font-semibold transition-all select-none ${
+                    isActive
+                      ? 'text-[#17402C]'
+                      : 'text-[#365233]/70 hover:text-[#17402C] hover:bg-white/30'
+                  }`}
                 >
                   {isActive && (
-                    <motion.span
-                      layoutId="header-active-pill-desktop"
-                      className="absolute inset-0 rounded-full bg-[#17402C]/12 border border-[#17402C]/20 shadow-[inset_0_1px_1.5px_rgba(255,255,255,0.8),0_2px_8px_rgba(23,64,44,0.06)]"
+                    <motion.div
+                      layoutId="explorerNavActive"
+                      className="absolute inset-0 rounded-full bg-white/60 border border-white/80 shadow-2xs -z-0"
                       transition={{ type: 'spring', stiffness: 450, damping: 32 }}
                     />
                   )}
@@ -285,34 +307,11 @@ export default function ExplorerClient({ initialTrails }: ExplorerClientProps) {
               <span>🥾</span>
               <span>Lancer rando</span>
             </Link>
-
-            <Link
-              href="/panier"
-              className="w-8 h-8 rounded-full bg-white/[0.12] hover:bg-white/25 border border-white/30 shadow-[inset_0_1px_1px_rgba(255,255,255,0.4)] text-[#17402C] active:opacity-70 transition-colors flex items-center justify-center relative cursor-pointer"
-              aria-label="Panier"
-            >
-              <ShoppingBag size={15} />
-            </Link>
-
-            <Link
-              href="/alertes"
-              className="w-8 h-8 rounded-full bg-white/[0.12] hover:bg-white/25 border border-white/30 shadow-[inset_0_1px_1px_rgba(255,255,255,0.4)] text-[#17402C] active:opacity-70 transition-colors flex items-center justify-center cursor-pointer relative"
-              aria-label="Notifications"
-            >
-              <Bell size={15} />
-            </Link>
-
-            <Link
-              href="/compte"
-              className="bg-gradient-to-b from-[#17402C] to-[#365233] text-white text-[11px] font-bold px-3.5 py-1.5 rounded-full hover:brightness-110 active:opacity-85 transition-all whitespace-nowrap flex items-center justify-center cursor-pointer shadow-[inset_0_1px_1px_rgba(255,255,255,0.4),0_2px_8px_rgba(23,64,44,0.18)] border border-white/20"
-            >
-              Mon compte
-            </Link>
           </div>
         </div>
       </header>
 
-      {/* ── 1B. HEADER MOBILE (< 768px, APPLE MAPS FLOATING CAPSULE) ── */}
+      {/* ── 1B. HEADER MOBILE (< 768px) ── */}
       <header
         className="block md:hidden fixed left-3 right-3 z-[1000] pointer-events-none"
         style={{ top: 'calc(max(env(safe-area-inset-top, 0px), 12px) + 8px)' }}
@@ -327,7 +326,6 @@ export default function ExplorerClient({ initialTrails }: ExplorerClientProps) {
             boxShadow: '0 8px 24px -4px rgba(23, 64, 44, 0.10), inset 0 1px 1.5px rgba(255, 255, 255, 0.95)',
           }}
         >
-          {/* Logo compact */}
           <Link href="/" className="flex items-center gap-1.5 shrink-0" aria-label="Accueil LKDV">
             <div className="w-7 h-7 rounded-xl flex items-center justify-center bg-[#17402C] text-white shadow-2xs">
               <svg width="14" height="14" fill="currentColor" viewBox="0 0 24 24">
@@ -337,7 +335,6 @@ export default function ExplorerClient({ initialTrails }: ExplorerClientProps) {
             <span className="font-bold text-[#17402C] text-xs font-display">LKDV</span>
           </Link>
 
-          {/* Recherche mobile intégrée */}
           <div className="relative flex-1 min-w-0">
             <Search size={13} className="absolute left-2.5 top-1/2 -translate-y-1/2 text-[#5A7064]" />
             <input
@@ -347,48 +344,32 @@ export default function ExplorerClient({ initialTrails }: ExplorerClientProps) {
               onChange={(e) => handleSearchChange(e.target.value)}
               className="w-full h-8 pl-8 pr-6 rounded-full text-xs font-semibold text-[#17402C] placeholder:text-[#5A7064]/70 bg-white/80 border border-white/70 outline-none focus-visible:ring-1 focus-visible:ring-[#17402C]/40"
             />
-            {searchQuery && (
-              <button
-                type="button"
-                onClick={() => handleSearchChange('')}
-                className="absolute right-2 top-1/2 -translate-y-1/2 w-4 h-4 rounded-full bg-[#17402C]/10 flex items-center justify-center text-[#17402C]"
-                aria-label="Effacer"
-              >
-                <X size={10} />
-              </button>
-            )}
           </div>
 
-          {/* Filtres Icon */}
           <button
             type="button"
             onClick={() => setFiltersOpen((v) => !v)}
-            className={`relative h-8 w-8 rounded-full flex items-center justify-center shrink-0 border transition-all active:scale-95 cursor-pointer ${
+            className={`w-8 h-8 rounded-full flex items-center justify-center transition-all ${
               filtersOpen || hasFilters
-                ? 'bg-[#17402C] text-white border-transparent shadow-xs'
-                : 'bg-white/80 text-[#17402C] border-white/70 shadow-2xs'
+                ? 'bg-[#17402C] text-white'
+                : 'bg-black/5 text-[#17402C] hover:bg-black/10'
             }`}
             aria-label="Filtres"
           >
             <SlidersHorizontal size={13} />
-            {activeFilterCount > 0 && (
-              <span className="absolute -top-0.5 -right-0.5 w-3.5 h-3.5 rounded-full bg-[#17402C] text-white text-[8px] font-black flex items-center justify-center border border-white">
-                {activeFilterCount}
-              </span>
-            )}
           </button>
         </div>
 
-        {/* Panneau de filtres mobile déroulant */}
         <AnimatePresence>
           {filtersOpen && (
             <motion.div
-              initial={{ opacity: 0, y: -6, scaleY: 0.95 }}
-              animate={{ opacity: 1, y: 0, scaleY: 1 }}
-              exit={{ opacity: 0, y: -6, scaleY: 0.95 }}
-              className="pointer-events-auto mt-1.5 p-3 rounded-[18px]  max-h-[52vh] overflow-y-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+              initial={{ opacity: 0, y: -10, scale: 0.98 }}
+              animate={{ opacity: 1, y: 0, scale: 1 }}
+              exit={{ opacity: 0, y: -10, scale: 0.98 }}
+              transition={{ duration: 0.18 }}
+              className="mt-2 p-3 rounded-2xl pointer-events-auto shadow-xl"
               style={{
-                background: 'linear-gradient(180deg, rgba(255, 255, 255, 0.96) 0%, rgba(255, 255, 255, 0.90) 100%)',
+                background: 'linear-gradient(180deg, rgba(255, 255, 255, 0.94) 0%, rgba(251, 250, 246, 0.92) 100%)',
                 backdropFilter: 'blur(20px)',
                 WebkitBackdropFilter: 'blur(20px)',
                 border: '1px solid rgba(255, 255, 255, 0.70)',

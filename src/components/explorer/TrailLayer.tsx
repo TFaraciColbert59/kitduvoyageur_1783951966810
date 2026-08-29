@@ -102,27 +102,6 @@ export default function TrailLayer({ map, trails, pois, selectedTrailId, onTrail
           }
         }
 
-        // Fallback: If no GeoJSON trace in database, generate a realistic trail loop around start coords
-        if (!effectiveGeoJSON && isValidLatLng(trail.lat, trail.lng)) {
-          const lat = Number(trail.lat);
-          const lng = Number(trail.lng);
-          const dist = Number(trail.distance_km || 12);
-          const r = (dist / 111) * 0.35;
-          effectiveGeoJSON = {
-            type: 'LineString',
-            coordinates: [
-              [lng, lat],
-              [lng + r * 0.4, lat + r * 0.2],
-              [lng + r * 0.7, lat + r * 0.6],
-              [lng + r * 0.9, lat + r * 0.3],
-              [lng + r * 1.1, lat + r * 0.8],
-              [lng + r * 0.8, lat + r * 1.1],
-              [lng + r * 0.3, lat + r * 0.9],
-              [lng, lat],
-            ],
-          };
-        }
-
         // 1. Render GeoJSON Trace ONLY IF SELECTED
         if (effectiveGeoJSON && isSelected) {
           try {
