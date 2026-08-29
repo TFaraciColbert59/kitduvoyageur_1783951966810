@@ -789,7 +789,7 @@ export default function ClubDetailPage() {
 
       {/* ── MOBILE ── */}
       <div className="block md:hidden">
-        <MobilePageShell>
+        <MobilePageShell safeTop={false} videoBackground={false} background="#FAF8F5">
           <MobileClubDetailView
             club={club}
             topics={topics}

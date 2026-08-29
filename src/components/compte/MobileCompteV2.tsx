@@ -7,6 +7,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { useAuth } from '@/contexts/AuthContext';
 import { createClient } from '@/lib/supabase/client';
 import { useHapticFeedback } from '@/hooks/useHapticFeedback';
+import SmartImage from '@/components/ui/SmartImage';
 
 /* ─── Tokens Design System LKDV (palette officielle Liquid Glass v2.0) ─── */
 const C = {
@@ -452,11 +453,11 @@ export default function MobileCompteV2() {
   }
 
   return (
-    <div className="min-h-screen pb-[calc(140px+env(safe-area-inset-bottom,0px))] font-sans selection:bg-[#17402C]/10 bg-transparent">
+    <div className="min-h-full font-sans selection:bg-[#17402C]/10 bg-transparent">
       {/* ══════════════════════════════════════════════════════════════════════
           1. HEADER COMPACT & STATUT (Frosted Liquid Glass)
          ══════════════════════════════════════════════════════════════════════ */}
-      <header className="sticky top-0 z-30 px-4 pt-[calc(max(env(safe-area-inset-top,0px),12px)+8px)] pb-2.5 flex items-center justify-between backdrop-blur-xl border-b border-white/70 bg-white/85 shadow-2xs">
+      <header className="sticky top-0 z-30 px-4 pt-[calc(max(env(safe-area-inset-top,0px),10px)+6px)] pb-2.5 flex items-center justify-between backdrop-blur-xl border-b border-white/70 bg-white/85 shadow-2xs">
         {/* User Handle avec dropdown indicator */}
         <button
           onClick={() => {
@@ -704,17 +705,20 @@ export default function MobileCompteV2() {
                 style={{ width: 62 }}
               >
                 <div
-                  className="w-[54px] h-[54px] rounded-full p-[2px] relative flex items-center justify-center shadow-2xs"
+                  className="w-[54px] h-[54px] rounded-full p-[2px] relative flex items-center justify-center shadow-2xs overflow-hidden"
                   style={{
                     background: `linear-gradient(145deg, ${C.sage300}, ${C.forest800})`,
                   }}
                 >
-                  <div
-                    className="w-full h-full rounded-full bg-cover bg-center border border-white"
-                    style={{
-                      backgroundImage: h.cover ? `url(${h.cover})` : `linear-gradient(135deg, ${C.forest800}, ${C.forest900})`,
-                    }}
-                  />
+                  <div className="w-full h-full rounded-full overflow-hidden border border-white relative">
+                    <SmartImage
+                      src={h.cover}
+                      alt={h.label}
+                      fill
+                      className="w-full h-full object-cover"
+                      fallbackSrc="https://images.unsplash.com/photo-1506744038136-46273834b3fb?w=300&q=80"
+                    />
+                  </div>
                 </div>
                 <span className="text-[10px] font-bold truncate w-full text-center" style={{ color: C.ink900 }}>
                   {h.label}
@@ -1011,14 +1015,18 @@ export default function MobileCompteV2() {
                     key={`${c.kind}-${c.id}`}
                     href={c.kind === 'carnet' ? `/carnets/${c.id}` : c.kind === 'groupe' ? `/groupes/${c.id}` : `/clubs/${c.slug || c.id}`}
                     onClick={() => triggerHaptic('light')}
-                    className="aspect-square relative bg-cover bg-center overflow-hidden rounded-2xl border border-white/70 shadow-2xs block active:scale-95 transition-all cursor-pointer"
-                    style={{
-                      backgroundImage: c.cover ? `url(${c.cover})` : `linear-gradient(135deg, ${C.forest800}, ${C.forest900})`,
-                      backgroundColor: C.stone,
-                    }}
+                    className="aspect-square relative overflow-hidden rounded-2xl border border-white/70 shadow-2xs block active:scale-95 transition-all cursor-pointer bg-[#17402C]/10"
                   >
+                    <SmartImage
+                      src={c.cover}
+                      alt={c.title}
+                      fill
+                      className="w-full h-full object-cover"
+                      fallbackSrc="https://images.unsplash.com/photo-1464822759023-fed622ff2c3b?w=400&q=80"
+                    />
+
                     {/* Badge de Type en haut à droite */}
-                    <div className="absolute top-2 right-2 w-5 h-5 rounded-md bg-black/40 backdrop-blur-md flex items-center justify-center text-white text-[10px]">
+                    <div className="absolute top-2 right-2 w-5 h-5 rounded-md bg-black/40 backdrop-blur-md flex items-center justify-center text-white text-[10px] z-10">
                       {c.kind === 'carnet' ? (
                         <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                           <rect x="4" y="5" width="16" height="14" rx="2" />
@@ -1033,7 +1041,7 @@ export default function MobileCompteV2() {
 
                     {/* Likes ou Nombre de membres en bas à gauche */}
                     {c.likes > 0 && (
-                      <div className="absolute bottom-1.5 left-1.5 flex items-center gap-1 text-[10px] font-bold text-white drop-shadow-sm">
+                      <div className="absolute bottom-1.5 left-1.5 flex items-center gap-1 text-[10px] font-bold text-white drop-shadow-sm z-10">
                         <svg width="10" height="10" viewBox="0 0 24 24" fill="currentColor">
                           <path d="M12 21s-8-5-8-11a5 5 0 0 1 9-3 5 5 0 0 1 9 3c0 6-8 11-8 11h-2z" />
                         </svg>
@@ -1056,12 +1064,15 @@ export default function MobileCompteV2() {
                     onClick={() => triggerHaptic('light')}
                     className="glass flex gap-3.5 p-3 rounded-2xl border border-white/80 bg-white/85 backdrop-blur-xl active:scale-[0.98] transition-all shadow-xs cursor-pointer"
                   >
-                    <div
-                      className="w-22 h-22 rounded-xl shrink-0 bg-cover bg-center border border-white/60 shadow-2xs"
-                      style={{
-                        backgroundImage: c.cover ? `url(${c.cover})` : `linear-gradient(135deg, ${C.forest800}, ${C.forest900})`,
-                      }}
-                    />
+                    <div className="w-22 h-22 rounded-xl shrink-0 overflow-hidden border border-white/60 shadow-2xs relative bg-[#17402C]/10">
+                      <SmartImage
+                        src={c.cover}
+                        alt={c.title}
+                        fill
+                        className="w-full h-full object-cover"
+                        fallbackSrc="https://images.unsplash.com/photo-1464822759023-fed622ff2c3b?w=400&q=80"
+                      />
+                    </div>
                     <div className="flex-1 flex flex-col justify-between py-0.5">
                       <div>
                         <span className="text-[10px] font-mono uppercase tracking-wider font-bold" style={{ color: C.forest800 }}>

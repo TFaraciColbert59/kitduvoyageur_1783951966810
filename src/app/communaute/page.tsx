@@ -198,7 +198,7 @@ function CommunautePageContent() {
           1. VERSION MOBILE (block md:hidden)
          ══════════════════════════════════════════════════════════════════════ */}
       <div className="block md:hidden min-h-screen">
-        <MobilePageShell videoBackground={true}>
+        <MobilePageShell videoBackground={true} safeTop={false}>
           <MobileCommunityHub
             posts={posts}
             carnets={filteredCarnets}

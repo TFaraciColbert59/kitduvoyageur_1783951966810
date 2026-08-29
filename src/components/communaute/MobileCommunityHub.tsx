@@ -6,6 +6,7 @@ import Icon from '@/components/ui/AppIcon';
 import CommunityPostCard, { CommunityPostItem } from '@/components/communaute/CommunityPostCard';
 import CarnetHubCard from '@/components/carnets/CarnetHubCard';
 import CommunityStoriesBar from '@/components/communaute/CommunityStoriesBar';
+import MobileCommunityHeader from '@/components/communaute/MobileCommunityHeader';
 import { useHapticFeedback } from '@/hooks/useHapticFeedback';
 import { usePullToRefresh } from '@/hooks/usePullToRefresh';
 
@@ -71,24 +72,28 @@ export default function MobileCommunityHub({
   });
 
   return (
-    <div className="w-full min-h-screen bg-transparent pb-[calc(140px+env(safe-area-inset-bottom,0px))] px-3.5 pt-1.5 space-y-3.5 font-sans text-[#17402C]">
-      {/* Pull to refresh visual feedback indicator */}
-      {(pullProgress > 0 || isRefreshing) && (
-        <div
-          className="w-full flex items-center justify-center py-2 transition-all overflow-hidden"
-          style={{ height: isRefreshing ? '44px' : `${Math.min(pullProgress * 44, 44)}px` }}
-        >
-          <div className="flex items-center gap-2 px-3 py-1 rounded-full glass-pill text-xs font-medium text-[#17402C] shadow-2xs">
-            <div className={`w-3.5 h-3.5 rounded-full border-2 border-[#17402C] border-t-transparent ${isRefreshing ? 'animate-spin' : ''}`} />
-            <span className="text-[11px] font-mono">{isRefreshing ? 'Actualisation...' : 'Tirer pour rafraîchir'}</span>
-          </div>
-        </div>
-      )}
+    <div className="w-full min-h-full bg-transparent font-sans text-[#17402C]">
+      {/* 0. STICKY TOPBAR HEADER */}
+      <MobileCommunityHeader />
 
-      {/* 1. LIVE EXPLORER STORIES BAR */}
-      <div className="glass rounded-[1.25rem] p-2.5 border border-white/50 shadow-2xs">
-        <CommunityStoriesBar currentUser={user} />
-      </div>
+      <div className="px-3.5 pt-2 space-y-3.5">
+        {/* Pull to refresh visual feedback indicator */}
+        {(pullProgress > 0 || isRefreshing) && (
+          <div
+            className="w-full flex items-center justify-center py-2 transition-all overflow-hidden"
+            style={{ height: isRefreshing ? '44px' : `${Math.min(pullProgress * 44, 44)}px` }}
+          >
+            <div className="flex items-center gap-2 px-3 py-1 rounded-full glass-pill text-xs font-medium text-[#17402C] shadow-2xs">
+              <div className={`w-3.5 h-3.5 rounded-full border-2 border-[#17402C] border-t-transparent ${isRefreshing ? 'animate-spin' : ''}`} />
+              <span className="text-[11px] font-mono">{isRefreshing ? 'Actualisation...' : 'Tirer pour rafraîchir'}</span>
+            </div>
+          </div>
+        )}
+
+        {/* 1. LIVE EXPLORER STORIES BAR */}
+        <div className="glass rounded-[1.25rem] p-2.5 border border-white/50 shadow-2xs">
+          <CommunityStoriesBar currentUser={user} />
+        </div>
 
       {/* 3. ACTIVE TAB CONTENT STREAM */}
       <div className="space-y-3.5 pt-1">
@@ -290,6 +295,7 @@ export default function MobileCommunityHub({
             </div>
           </div>
         )}
+      </div>
       </div>
     </div>
   );

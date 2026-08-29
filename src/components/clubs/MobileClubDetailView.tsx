@@ -73,7 +73,7 @@ export default function MobileClubDetailView({
   const coverUrl = club.cover_image || 'https://images.unsplash.com/photo-1506744038136-46273834b3fb?w=1200&q=80';
 
   return (
-    <div className="md:hidden min-h-screen bg-transparent pb-36 text-[#17402C]">
+    <div className="md:hidden min-h-full bg-transparent text-[#17402C]">
       {/* IMMERSIVE HERO COVER */}
       <div className="relative w-full h-64 sm:h-72 overflow-hidden bg-[#17402C]">
         <img
@@ -83,8 +83,11 @@ export default function MobileClubDetailView({
         />
         <div className="absolute inset-0 bg-gradient-to-t from-[#17402C] via-[#17402C]/60 to-transparent" />
 
-        {/* Top Controls */}
-        <div className="absolute top-4 left-4 right-4 flex items-center justify-between z-10">
+        {/* Top Controls with safe-area top */}
+        <div
+          className="absolute left-4 right-4 flex items-center justify-between z-10"
+          style={{ top: 'calc(max(env(safe-area-inset-top, 0px), 12px) + 6px)' }}
+        >
           <Link
             href="/clubs"
             onClick={() => triggerHaptic('light')}

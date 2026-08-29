@@ -63,7 +63,7 @@ export default function ExplorerMobileHikeCarousel({
   return (
     <div
       className="block md:hidden fixed left-0 right-0 z-[800] pointer-events-none"
-      style={{ bottom: 'calc(env(safe-area-inset-bottom, 0px) + 76px)' }}
+      style={{ bottom: 'calc(var(--bottom-tab-base-height, 68px) + 8px)' }}
     >
       {/* ── TOP FLOATING PILL (Mode Switch & Counter) ── */}
       <div className="flex items-center justify-between px-3.5 mb-1.5 pointer-events-auto">
@@ -100,7 +100,7 @@ export default function ExplorerMobileHikeCarousel({
             WebkitOverflowScrolling: 'touch',
             overscrollBehaviorX: 'contain',
             scrollPaddingLeft: '14px',
-            scrollPaddingRight: '14px',
+            scrollPaddingRight: '28px',
           }}
         >
           {trails.slice(0, 40).map((trail) => {
@@ -200,6 +200,8 @@ export default function ExplorerMobileHikeCarousel({
               </div>
             );
           })}
+          {/* Trailing safe spacer so last card is never clipped */}
+          <div className="shrink-0 w-4 h-1 pointer-events-none" aria-hidden="true" />
         </div>
       )}
 

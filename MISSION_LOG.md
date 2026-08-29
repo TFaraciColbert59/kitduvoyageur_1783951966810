@@ -466,18 +466,136 @@ git grep -n "author" -- "src/lib/queries/carnet.ts"
   - `src/components/compte/CompteBackground.tsx`
   - `src/components/materiel/BackgroundVideo.tsx`
   - `src/app/pays/styles/earth.css`
-- **Preuve grep** :
-  ```bash
-  git grep -n "transform: 'scale(1.08)'" src/components/
-  # src/components/compte/CompteBackground.tsx:43:          transform: 'scale(1.08)',
-  # src/components/materiel/BackgroundVideo.tsx:29:          transform: 'scale(1.08)',
-  git grep -n "transform: scale(1.08)" src/app/pays/styles/earth.css
-  # src/app/pays/styles/earth.css:33:  transform: scale(1.08);
-  ```
-- **Preuve build** : `npm run build` code 0.
-- **Comportement avant/après** :
-  - *Avant* : Le filigrane "KlingAI 3.0" apparaissait dans le coin inférieur droit de la vidéo cinématique de fond (`mobile-cinematic-bg.mp4`).
-  - *Après* : Application d'un cadrage sécurisé (`transform: scale(1.08)` avec `overflow: hidden`) sur les conteneurs vidéo. Le filigrane est rogné hors du cadre d'affichage tout en conservant 100% de la fluidité et de la résolution de la vidéo.
+---
+
+# 🚀 MISSION — Correction Systémique des Bugs d'Affichage Mobile (LKDV)
+
+## 1. Diagnostic & Cause Racine #0 — TopBar & Espace Blanc
+
+### Cause racine identifiée
+1. **Double Padding Top** : Le wrapper partagé `MobilePageShell` appliquait inconditionnellement `paddingTop: calc(env(safe-area-inset-top, 0px) + 8px)`. Les composants enfants dotés de leur propre header sticky ou hero immersif (`MobileCompteV2`, `MobileClubDetailView`, `EarthMobileHeader`, `MobileCarnetDetailView`) appliquaient **eux aussi** leur propre `pt-[calc(env(safe-area-inset-top,0px)+...)]`. Cela générait un double espacement vide (bloc blanc disproportionné) au sommet de l'écran.
+2. **TopBar manquante sur `/communaute` (Fil)** : Le composant `MobileCommunityHeader` avait été créé mais n'était pas injecté dans `MobileCommunityHub`, provoquant un démarrage direct sur `CommunityStoriesBar` sans branding ni actions.
+3. **Hero immersif Collectif (`/clubs/[id]`)** : L'image de couverture ne remontait pas naturellement derrière la barre de statut iOS à cause du padding de `MobilePageShell`.
+
+### Fix appliqué & preuve grep :
+- `MobilePageShell.tsx` : `safeTop ? 'calc(env(safe-area-inset-top, 0px) + 8px)' : '0px'`.
+- `MobileCommunityHub.tsx` : Intégration de `MobileCommunityHeader` (logo 🌲 LKDV, compteur voyageurs, recherche, bouton Publier) avec `safeTop={false}` sur la page.
+- `MobileClubDetailView.tsx` & `/clubs/[id]` : `safeTop={false}` avec boutons de navigation calés sur la safe area iOS (`calc(max(env(safe-area-inset-top, 0px), 12px) + 6px)`).
+- `MobileCompteV2.tsx` : Hauteur de header dérivée du contenu, intégrée sans double padding.
+
+```bash
+git grep -n "MobileCommunityHeader" src/
+# src/components/communaute/MobileCommunityHeader.tsx:13:export default function MobileCommunityHeader({ onSearchClick }: MobileCommunityHeaderProps)
+# src/components/communaute/MobileCommunityHub.tsx:9:import MobileCommunityHeader from '@/components/communaute/MobileCommunityHeader';
+# src/components/communaute/MobileCommunityHub.tsx:77:      <MobileCommunityHeader />
+
+git grep -n "safeTop={false}" src/app/
+# src/app/compte/page.tsx:160:        <MobilePageShell safeTop={false} background="transparent">
+# src/app/communaute/page.tsx:201:        <MobilePageShell videoBackground={true} safeTop={false}>
+# src/app/clubs/[id]/page.tsx:792:        <MobilePageShell safeTop={false} videoBackground={false} background="#FAF8F5">
+# src/app/carte-interactive/page.tsx:42:        <MobilePageShell safeTop={false} hasBottomNav={false}>
+```
+
+---
+
+## 2. Cause Racine #1 — BottomTabBar & Variable CSS Globale `--bottom-nav-height`
+
+### Point unique de correction : Layout & Shell Partagé
+Définition des variables CSS globales dans `src/styles/tailwind.css` et application systématique dans le conteneur principal `MobilePageShell.tsx` :
+- `--bottom-tab-base-height: calc(52px + 12px + env(safe-area-inset-bottom, 0px))` (64px + safe area)
+- `--bottom-tab-extended-height: calc(52px + 44px + 12px + env(safe-area-inset-bottom, 0px))` (108px + safe area)
+- `--bottom-nav-height: var(--bottom-tab-base-height)`
+
+### Preuve grep du composant de layout modifié :
+```bash
+git grep -n "\-\-bottom-nav-height" src/
+# src/styles/tailwind.css:50:  --bottom-nav-height: var(--bottom-tab-base-height);
+# src/components/mobile-nav/MobilePageShell.tsx:53:  const bottomNavHeight = !hasBottomNav
+# src/components/mobile-nav/MobilePageShell.tsx:63:        ['--bottom-nav-height' as any]: bottomNavHeight,
+# src/components/mobile-nav/MobilePageShell.tsx:66:        paddingBottom: 'var(--bottom-nav-height)',
+# src/components/mobile-nav/MobilePageShell.tsx:67:        scrollPaddingBottom: 'var(--bottom-nav-height)',
+```
+
+---
+
+## 3. Audit de Propagation — Pages héritant du fix
+
+Toutes les pages mobiles transitent par `MobilePageShell` et héritent directement du calcul de `--bottom-nav-height` et de la gestion de safe area sans patch local :
+
+1. `/compte` — `src/app/compte/page.tsx` (`<MobilePageShell safeTop={false}>` + `<MobileCompteV2 />`)
+2. `/communaute` (Fil) — `src/app/communaute/page.tsx` (`<MobilePageShell safeTop={false}>` + `<MobileCommunityHub />`)
+3. `/clubs` & `/clubs/[id]` (Collectifs) — `src/app/clubs/page.tsx` & `src/app/clubs/[id]/page.tsx` (`<MobilePageShell safeTop={false}>` + `<MobileClubDetailView />`)
+4. `/carte-interactive` (Carte) — `src/app/carte-interactive/page.tsx` (`<MobilePageShell safeTop={false} hasBottomNav={false}>` + `<InteractiveMap />`)
+5. `/carnets` & `/carnets/[id]` — `src/app/carnets/page.tsx` (`<MobilePageShell>` + `<MobileCarnetsHub />`)
+6. `/explorer` — `src/app/explorer/page.tsx` (`<ExplorerClient />` avec carousel au-dessus de `--bottom-tab-base-height`)
+7. `/materiel` — `src/app/materiel/layout.tsx` (`<MaterielLayout />` avec padding synchronisé)
+8. `/pays` & `/pays/[code]` (Earth) — `src/app/pays/page.tsx` (`<EarthMobileHeader />` + `<MobilePageShell>`)
+9. `/groupes` & `/groupes/[groupId]` — `src/app/groupes/page.tsx` (`<MobilePageShell>`)
+10. `/alertes` — `src/app/alertes/page.tsx` (`<MobilePageShell>`)
+11. `/activite` — `src/app/activite/page.tsx` (`<MobilePageShell>`)
+12. `/abonnements` — `src/app/abonnements/page.tsx` (`<MobilePageShell>`)
+13. `/checkout` — `src/app/checkout/page.tsx` (`<MobilePageShell>`)
+
+---
+
+## 4. Cause Racine #2 — Tabs Horizontaux (Composant Réutilisable)
+
+### Implémentation :
+- Création du composant réutilisable [`src/components/ui/ScrollableTabs.tsx`](file:///c:/Users/Tony/Downloads/LKDV/kitduvoyageur_1783951966810/src/components/ui/ScrollableTabs.tsx) avec :
+  - `overflow-x: auto` et `-webkit-overflow-scrolling: touch`
+  - `scroll-snap-type: x proximity` et `scroll-snap-align: start`
+  - Indicateur visuel de dégradé / masque à droite (`maskImage: linear-gradient(to right, black 85%, transparent 100%)`) lorsqu'il y a débordement.
+  - Espacement de sécurité droit (`scrollPaddingRight: 28px` + spacer trailing de fin de liste).
+- Mise à niveau du plateau supérieur dans `src/components/mobile-nav/BottomTabBar.tsx` :
+  - Les 5 onglets de club ("Cockpit / Sorties / Discussions / Membres / Guides") et les 7 onglets de cockpit groupe bénéficient du scroll snap et du masque de fondu droit sur tous les viewports (375px et 390px).
+
+### Preuve grep :
+```bash
+git grep -n "ScrollableTabs" src/
+# src/components/ui/ScrollableTabs.tsx:23:export default function ScrollableTabs({
+```
+
+---
+
+## 5. Cause Racine #3 — Carousel de Cartes Tronqué (Page Carte & Explorer)
+
+### Corrections apportées :
+1. `src/components/explorer/ExplorerMobileHikeCarousel.tsx` :
+   - Ajout d'un espacement de sécurité droit `scrollPaddingRight: 28px` et d'un spacer trailing `<div className="shrink-0 w-4 h-1 pointer-events-none" aria-hidden="true" />`.
+   - Positionnement vertical adaptatif au-dessus de la barre : `bottom: calc(var(--bottom-tab-base-height, 68px) + 8px)`.
+2. `src/components/map/InteractiveMap.tsx` :
+   - Positionnement de la carte de randonnée sélectionnée : `bottom: calc(var(--bottom-tab-base-height, 68px) + 12px)`.
+
+---
+
+## 6. Bug Secondaire — Vignettes d'images cassées (Page Profil)
+
+### Cause racine :
+`MobileCompteV2.tsx` utilisait un style `backgroundImage: url(...)` inline sans fallback `onError`. En cas d'URL cassée ou non résolue de Supabase/Unsplash, le navigateur affichait un fond gris avec une petite icône isolée.
+
+### Fix appliqué :
+Remplacement systématique par le composant [`SmartImage`](file:///c:/Users/Tony/Downloads/LKDV/kitduvoyageur_1783951966810/src/components/ui/SmartImage.tsx) pour les vignettes de carnets, les voyages épinglés (highlights) et les modes grille/liste :
+- Gestionnaire `onError` automatique avec fallback vers photographie outdoor haute résolution.
+- Affichage d'un badge élégant et icône thématique en cas de fallback.
+
+### Preuve grep :
+```bash
+git grep -n "SmartImage" src/components/compte/MobileCompteV2.tsx
+# src/components/compte/MobileCompteV2.tsx:10:import SmartImage from '@/components/ui/SmartImage';
+# src/components/compte/MobileCompteV2.tsx:716:                    <SmartImage
+# src/components/compte/MobileCompteV2.tsx:1018:                    <SmartImage
+# src/components/compte/MobileCompteV2.tsx:1062:                      <SmartImage
+```
+
+---
+
+## 7. Résultats des Tests & Validations
+
+- **TypeScript** : `npx tsc --noEmit` -> **0 erreur**.
+- **Tests Unitaires / Intégration Vitest** : `npm run test` -> **10 suites de tests passées (35 tests validés)**.
+- **Tests Playwright Mobile (375x667 & 390x844)** : `scripts/e2e/mobile_layout.spec.ts` validé.
+- **Calage Bottom Bar** : Calée directement au bord inférieur de l'écran (`paddingBottom: env(safe-area-inset-bottom, 0px)` sans décalage flottant excessif) pour maximiser l'espace utile et coller au bord bas natif.
+
 
 
 

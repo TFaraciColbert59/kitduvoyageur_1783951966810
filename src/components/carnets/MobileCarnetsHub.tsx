@@ -143,8 +143,16 @@ export default function MobileCarnetsHub({
           </button>
         </div>
 
-        {/* Destination filter chips */}
-        <div className="flex items-center gap-1.5 overflow-x-auto no-scrollbar pb-0.5">
+        {/* Destination filter chips with smooth scrolling */}
+        <div
+          className="flex items-center gap-1.5 overflow-x-auto no-scrollbar pb-0.5 snap-x snap-mandatory"
+          style={{
+            WebkitOverflowScrolling: 'touch',
+            scrollSnapType: 'x proximity',
+            scrollPaddingLeft: '6px',
+            scrollPaddingRight: '20px',
+          }}
+        >
           {DESTINATIONS.map((dest) => {
             const isSelected = selectedDestination === dest;
             return (
@@ -155,16 +163,17 @@ export default function MobileCarnetsHub({
                   triggerHaptic('light');
                   setSelectedDestination(dest);
                 }}
-                className={`px-3 py-1.5 rounded-full text-xs font-bold whitespace-nowrap transition-all border ${
+                className={`snap-start shrink-0 px-3 py-1.5 rounded-full text-xs font-bold whitespace-nowrap transition-all border ${
                   isSelected
                     ? 'bg-[#17402C] text-white border-[#17402C] shadow-sm'
-                    : 'bg-white/80 hover:bg-white text-[#17402C] border-white/70 shadow-2xs'
+                    : 'bg-white/80 text-[#17402C]/70 border-white/80 hover:bg-white'
                 }`}
               >
-                <span>{dest}</span>
+                {dest}
               </button>
             );
           })}
+          <div className="shrink-0 w-3 h-1 pointer-events-none" aria-hidden="true" />
         </div>
       </div>
 

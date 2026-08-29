@@ -50,19 +50,21 @@ export default function MobilePageShell({
     pathname?.startsWith('/evenements') ||
     pathname?.startsWith('/alertes');
 
-  const bottomPadding = !hasBottomNav
-    ? 'calc(24px + env(safe-area-inset-bottom, 0px))'
+  const bottomNavHeight = !hasBottomNav
+    ? 'calc(12px + env(safe-area-inset-bottom, 0px))'
     : hasUpperExtension
-    ? 'calc(144px + env(safe-area-inset-bottom, 0px))'
-    : 'calc(108px + env(safe-area-inset-bottom, 0px))';
+    ? 'var(--bottom-tab-extended-height, calc(92px + env(safe-area-inset-bottom, 0px)))'
+    : 'var(--bottom-tab-base-height, calc(52px + env(safe-area-inset-bottom, 0px)))';
 
   return (
     <div
-      className={className}
+      className={`mobile-page-shell ${className}`}
       style={{
+        ['--bottom-nav-height' as any]: bottomNavHeight,
         background: videoBackground ? 'transparent' : background,
         paddingTop: safeTop ? 'calc(env(safe-area-inset-top, 0px) + 8px)' : '0px',
-        paddingBottom: bottomPadding,
+        paddingBottom: 'var(--bottom-nav-height)',
+        scrollPaddingBottom: 'var(--bottom-nav-height)',
         paddingLeft: 'env(safe-area-inset-left, 0px)',
         paddingRight: 'env(safe-area-inset-right, 0px)',
         minHeight: '100dvh',

@@ -714,7 +714,7 @@ function BottomTabBar() {
 
   if (!mounted) {
     return (
-      <nav role="navigation" aria-label="Chargement de la navigation" className="md:hidden flex items-center justify-center" style={{ position: 'fixed', left: 0, right: 0, bottom: 0, zIndex: 9999, pointerEvents: 'none', paddingBottom: 'calc(env(safe-area-inset-bottom, 0px) + 8px)' }}>
+      <nav role="navigation" aria-label="Chargement de la navigation" className="md:hidden flex items-center justify-center" style={{ position: 'fixed', left: 0, right: 0, bottom: 0, zIndex: 9999, pointerEvents: 'none', paddingBottom: 'env(safe-area-inset-bottom, 0px)' }}>
         <div style={{
           height: 52,
           background: 'linear-gradient(180deg, rgba(255,255,255,0.72) 0%, rgba(255,255,255,0.38) 100%)',
@@ -728,7 +728,7 @@ function BottomTabBar() {
           justifyContent: 'center',
           padding: '0 12px',
           gap: '8px',
-          maxWidth: 'calc(100vw - 24px)',
+          maxWidth: 'calc(100vw - 8px)',
         }}>
           {[...Array(6)].map((_, i) => (
             <div key={i} className="animate-pulse" style={{ width: 44, height: 44, borderRadius: 999, background: 'rgba(23, 64, 44, 0.08)' }} />
@@ -750,17 +750,18 @@ function BottomTabBar() {
         bottom: 0,
         zIndex: 9999,
         pointerEvents: 'none',
-        paddingBottom: 'calc(env(safe-area-inset-bottom, 0px) + 8px)',
+        paddingBottom: 'env(safe-area-inset-bottom, 0px)',
       }}
     >
       <div
         style={{
-          width: 'calc(100vw - 20px)',
-          maxWidth: '460px',
+          width: 'calc(100vw - 8px)',
+          maxWidth: '480px',
           display: 'flex',
           flexDirection: 'column',
           alignItems: 'center',
           pointerEvents: 'auto',
+          paddingBottom: '2px',
         }}
       >
         {/* Upper extension tray coming out from behind the bottom bar — élargi pour visibilité optimale */}
@@ -792,12 +793,14 @@ function BottomTabBar() {
                 WebkitOverflowScrolling: 'touch',
                 scrollbarWidth: 'none',
                 msOverflowStyle: 'none',
+                scrollSnapType: 'x proximity',
                 paddingLeft: 10,
-                paddingRight: 14,
-                gap: 3,
+                paddingRight: isWideUpperTray ? 28 : 14,
+                scrollPaddingRight: '20px',
+                gap: 4,
                 zIndex: 1,
-                maskImage: isWideUpperTray ? 'linear-gradient(to right, black 86%, transparent 100%)' : undefined,
-                WebkitMaskImage: isWideUpperTray ? 'linear-gradient(to right, black 86%, transparent 100%)' : undefined,
+                maskImage: isWideUpperTray ? 'linear-gradient(to right, black 82%, transparent 100%)' : undefined,
+                WebkitMaskImage: isWideUpperTray ? 'linear-gradient(to right, black 82%, transparent 100%)' : undefined,
               }}
             >
               {getUpperTabs().map((subTab) => {
@@ -823,6 +826,7 @@ function BottomTabBar() {
                       fontFamily: 'inherit',
                       padding: isWideUpperTray ? '0 12px' : '0 4px',
                       whiteSpace: 'nowrap',
+                      scrollSnapAlign: 'start',
                     }}
                   >
                     {isSelected && (
