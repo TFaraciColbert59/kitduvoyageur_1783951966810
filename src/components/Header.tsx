@@ -81,10 +81,10 @@ export default function Header() {
   return (
     <>
       <div className="hidden md:block">
-        <header className="fixed top-3 sm:top-4 left-1/2 -translate-x-1/2 z-[1000] w-full max-w-[880px] px-3 pointer-events-none transition-all duration-300">
+        <header className="fixed top-3 left-1/2 -translate-x-1/2 z-[1000] w-full max-w-[620px] px-3 pointer-events-none transition-all duration-300">
           <div
-            className={`w-full rounded-full px-3.5 sm:px-4 transition-all duration-300 flex items-center justify-between pointer-events-auto cursor-default ${
-              scrolled ? 'py-1 shadow-md' : 'py-1.5 shadow-sm'
+            className={`w-full rounded-full px-3.5 py-1 transition-all duration-300 flex items-center justify-between pointer-events-auto cursor-default ${
+              scrolled ? 'shadow-md bg-white/90' : 'shadow-xs'
             }`}
             style={{
               background: 'linear-gradient(180deg, rgba(255, 255, 255, 0.28) 0%, rgba(255, 255, 255, 0.10) 100%)',

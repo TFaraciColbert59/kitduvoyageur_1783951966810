@@ -94,7 +94,41 @@ export default function ExplorerClient({ initialTrails }: ExplorerClientProps) {
   const [sheetExpanded, setSheetExpanded] = useState(false);
   const listScrollRef = useRef<HTMLDivElement>(null);
 
-  const [viewportBbox, setViewportBbox] = useState<{ minLat: number; maxLat: number; minLng: number; maxLng: number; zoom: number } | null>(null);
+  // Initial 10km radius default bbox (Chamonix: 45.9237, 6.8694)
+  const [viewportBbox, setViewportBbox] = useState<{ minLat: number; maxLat: number; minLng: number; maxLng: number; zoom: number } | null>({
+    minLat: 45.9237 - 0.09,
+    maxLat: 45.9237 + 0.09,
+    minLng: 6.8694 - 0.13,
+    maxLng: 6.8694 + 0.13,
+    zoom: 12,
+  });
+
+  // Try GPS Geolocation on mount to center around user position (10km)
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    if ('geolocation' in navigator) {
+      navigator.geolocation.getCurrentPosition(
+        (pos) => {
+          const lat = pos.coords.latitude;
+          const lng = pos.coords.longitude;
+          setUserLocation([lat, lng]);
+          const deltaLat = 0.09;
+          const deltaLng = 0.13 / Math.cos((lat * Math.PI) / 180);
+          setViewportBbox({
+            minLat: lat - deltaLat,
+            maxLat: lat + deltaLat,
+            minLng: lng - deltaLng,
+            maxLng: lng + deltaLng,
+            zoom: 12,
+          });
+        },
+        () => {
+          // Keep default Chamonix
+        },
+        { timeout: 3000, maximumAge: 60000, enableHighAccuracy: true }
+      );
+    }
+  }, []);
 
   const handleViewportChange = useCallback((bbox: { minLat: number; maxLat: number; minLng: number; maxLng: number; zoom: number }) => {
     setViewportBbox(bbox);
@@ -266,9 +300,9 @@ export default function ExplorerClient({ initialTrails }: ExplorerClientProps) {
     <div className="relative w-full h-[100dvh] overflow-hidden bg-[#FAF8F5] select-none" style={{ minHeight: '100dvh', height: '100dvh', width: '100%' }}>
 
       {/* ── 1A. HEADER DESKTOP (GRAND ÉCRAN >= 768px) ── */}
-      <header className="hidden md:flex fixed top-3 left-4 right-4 z-[1000] pointer-events-none items-center justify-between gap-3">
+      <header className="hidden md:block fixed top-3 left-1/2 -translate-x-1/2 z-[1000] w-full max-w-[640px] px-3 pointer-events-none">
         <div
-          className="pointer-events-auto flex items-center justify-between gap-3 px-4 py-2 rounded-full w-full"
+          className="pointer-events-auto flex items-center justify-between gap-3 px-3.5 py-1 rounded-full w-full"
           style={{
             background: 'linear-gradient(180deg, rgba(255, 255, 255, 0.45) 0%, rgba(255, 255, 255, 0.18) 100%)',
             backdropFilter: 'blur(20px) saturate(180%)',
@@ -283,12 +317,12 @@ export default function ExplorerClient({ initialTrails }: ExplorerClientProps) {
             className="flex items-center gap-2 group shrink-0"
             aria-label="Accueil LKDV"
           >
-            <div className="w-8 h-8 rounded-full flex items-center justify-center shadow-xs transition-transform group-hover:scale-105 bg-[#17402C] text-white">
-              <svg width="15" height="15" fill="currentColor" viewBox="0 0 24 24">
+            <div className="w-7 h-7 rounded-full flex items-center justify-center shadow-xs transition-transform group-hover:scale-105 bg-[#17402C] text-white">
+              <svg width="13" height="13" fill="currentColor" viewBox="0 0 24 24">
                 <path d="M3 17l4-8 4 4 3-6 4 10H3z" />
               </svg>
             </div>
-            <span className="font-bold text-[#17402C] text-sm tracking-tight font-display">
+            <span className="font-bold text-[#17402C] text-xs tracking-tight font-display">
               Le Kit du Voyageur
             </span>
           </Link>
