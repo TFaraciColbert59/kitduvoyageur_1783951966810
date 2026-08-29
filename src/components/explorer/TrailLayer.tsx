@@ -89,6 +89,41 @@ export default function TrailLayer({ map, trails, pois, selectedTrailId, onTrail
       // Regular group for geoJSON lines & start point markers so they don't get clustered
       const linesGroup = L.layerGroup();
 
+      // Render All Real Hiking GPS Vector Tracks Across the Map
+      try {
+        const res = await fetch('/api/hikes/geojson');
+        if (res.ok) {
+          const routesData = await res.json();
+          if (routesData && routesData.features && isMounted) {
+            const allRoutesLayer = L.geoJSON(routesData, {
+              style: (feature: any) => {
+                const isSelected = selectedTrailId && String(feature?.properties?.id) === String(selectedTrailId);
+                return {
+                  color: isSelected ? '#17402C' : '#2D6B4A',
+                  weight: isSelected ? 6 : 3,
+                  opacity: isSelected ? 1.0 : 0.65,
+                  lineCap: 'round',
+                  lineJoin: 'round',
+                };
+              },
+              onEachFeature: (feature: any, layer: any) => {
+                const routeName = feature.properties?.name || 'Sentier de randonnée';
+                layer.bindTooltip(`🌲 ${routeName}`, { sticky: true });
+                layer.on('click', () => {
+                  const matchedTrail = trails.find((t) => String(t.id) === String(feature.properties?.id));
+                  if (matchedTrail) {
+                    onTrailClick?.(matchedTrail);
+                  }
+                });
+              },
+            });
+            linesGroup.addLayer(allRoutesLayer);
+          }
+        }
+      } catch (e) {
+        console.warn('Failed to load global routes geojson in TrailLayer:', e);
+      }
+
       trails.forEach((trail) => {
         const isSelected = trails.length === 1 || (selectedTrailId != null && String(trail.id) === String(selectedTrailId));
 
