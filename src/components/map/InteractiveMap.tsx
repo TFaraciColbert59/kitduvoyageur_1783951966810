@@ -31,6 +31,22 @@ function getDifficultyColor(diff: string | null | undefined): string {
   return '#5B7F55';
 }
 
+function toGeoJSONFeature(geo: any) {
+  if (!geo) return null;
+  const parsed = typeof geo === 'string' ? JSON.parse(geo) : geo;
+  if (parsed.type === 'FeatureCollection' || parsed.type === 'Feature') {
+    return parsed;
+  }
+  if (parsed.type === 'MultiLineString' || parsed.type === 'LineString' || parsed.type === 'Polygon') {
+    return {
+      type: 'Feature',
+      properties: {},
+      geometry: parsed,
+    };
+  }
+  return parsed;
+}
+
 const DISTANCE_RANGES = [
   { id: 'default', label: 'Toutes (≥ 2 km)', min: 2, max: null },
   { id: '2-5', label: '2 – 5 km', min: 2, max: 5 },
@@ -455,37 +471,40 @@ export default function InteractiveMap() {
       // B. Render SINGLE Selected Hike GPS Polyline Track (Only 1 at a time when selected)
       if (selectedTrailGeojson && selectedTrailId) {
         try {
-          // Glow underlay
-          const glowLayer = L.geoJSON(selectedTrailGeojson, {
-            style: {
-              color: '#5B7F55',
-              weight: 10,
-              opacity: 0.35,
-              lineCap: 'round',
-              lineJoin: 'round',
-            }
-          });
-          linesGroup.addLayer(glowLayer);
+          const cleanGeo = toGeoJSONFeature(selectedTrailGeojson);
+          if (cleanGeo) {
+            // Glow underlay
+            const glowLayer = L.geoJSON(cleanGeo, {
+              style: {
+                color: '#5B7F55',
+                weight: 10,
+                opacity: 0.4,
+                lineCap: 'round',
+                lineJoin: 'round',
+              }
+            });
+            linesGroup.addLayer(glowLayer);
 
-          // Sharp Forest Green Route Line
-          const geoLayer = L.geoJSON(selectedTrailGeojson, {
-            style: {
-              color: '#17402C',
-              weight: 5,
-              opacity: 1.0,
-              lineCap: 'round',
-              lineJoin: 'round',
-            }
-          });
-          linesGroup.addLayer(geoLayer);
+            // Sharp Forest Green Route Line
+            const geoLayer = L.geoJSON(cleanGeo, {
+              style: {
+                color: '#17402C',
+                weight: 5,
+                opacity: 1.0,
+                lineCap: 'round',
+                lineJoin: 'round',
+              }
+            });
+            linesGroup.addLayer(geoLayer);
 
-          // Fit bounds to the exact selected GPS track line
-          try {
-            const b = geoLayer.getBounds();
-            if (b && b.isValid()) {
-              map.fitBounds(b, { padding: [60, 60], maxZoom: 15 });
-            }
-          } catch {}
+            // Fit bounds to the exact selected GPS track line
+            try {
+              const b = geoLayer.getBounds();
+              if (b && b.isValid()) {
+                map.fitBounds(b, { padding: [60, 60], maxZoom: 15 });
+              }
+            } catch {}
+          }
         } catch (e) {
           console.warn('Invalid GeoJSON for trail:', selectedTrailId, e);
         }

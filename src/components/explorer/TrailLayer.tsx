@@ -89,30 +89,38 @@ export default function TrailLayer({ map, trails, pois, selectedTrailId, onTrail
       // Regular group for geoJSON lines & start point markers so they don't get clustered
       const linesGroup = L.layerGroup();
 
-      trails.forEach((trail) => {
-        const isSelected = trails.length === 1 || (selectedTrailId != null && String(trail.id) === String(selectedTrailId));
-
-        let effectiveGeoJSON: any = null;
-        if (trail.geojson) {
+      // On-demand fetch of selected trail GeoJSON if missing
+      let selectedGeo = null;
+      if (selectedTrailId) {
+        const found = trails.find((t) => String(t.id) === String(selectedTrailId));
+        if (found && found.geojson) {
+          selectedGeo = found.geojson;
+        } else {
           try {
-            const parsedGeo = typeof trail.geojson === 'string' ? JSON.parse(trail.geojson) : trail.geojson;
-            effectiveGeoJSON = sanitizeGeoJSON(parsedGeo);
-          } catch {
-            effectiveGeoJSON = null;
+            const res = await fetch(`/api/hikes/${selectedTrailId}`);
+            if (res.ok) {
+              const data = await res.json();
+              if (data && data.geojson) selectedGeo = data.geojson;
+            }
+          } catch (e) {
+            console.warn('[TrailLayer] Failed to fetch selected hike GeoJSON:', e);
           }
         }
+      }
 
-        // 1. Render GeoJSON Trace ONLY IF SELECTED
-        if (effectiveGeoJSON && isSelected) {
-          try {
-            const cleanGeo = effectiveGeoJSON;
+      // Render single selected GPS trace
+      if (selectedGeo && isMounted) {
+        try {
+          const parsed = typeof selectedGeo === 'string' ? JSON.parse(selectedGeo) : selectedGeo;
+          const cleanGeo = sanitizeGeoJSON(parsed) || (parsed.type ? parsed : { type: 'Feature', geometry: parsed, properties: {} });
 
-            // Outer casing for high contrast
+          if (cleanGeo) {
+            // Glow / casing
             const casingLayer = L.geoJSON(cleanGeo as any, {
               style: {
-                color: '#FBFAF6',
-                weight: 9,
-                opacity: 0.9,
+                color: '#5B7F55',
+                weight: 10,
+                opacity: 0.35,
                 lineCap: 'round',
                 lineJoin: 'round',
               },
@@ -150,7 +158,7 @@ export default function TrailLayer({ map, trails, pois, selectedTrailId, onTrail
                 linesGroup.addLayer(remainingLayer);
               }
             } else {
-              // Full trail line if progress is 0
+              // Sharp Forest Green route track
               const geoJsonLayer = L.geoJSON(cleanGeo as any, {
                 style: {
                   color: '#17402C',
@@ -160,32 +168,28 @@ export default function TrailLayer({ map, trails, pois, selectedTrailId, onTrail
                   lineJoin: 'round',
                 },
               });
-              geoJsonLayer.on('click', (e: any) => {
-                L.DomEvent.stopPropagation(e);
-                onTrailClick?.(trail);
-              });
               linesGroup.addLayer(geoJsonLayer);
             }
 
-            // 2. Render MINIMALIST LIGHT GREEN DOT FOR START POINT ONLY (NO TEXT BADGE)
-            let startCoords: [number, number] | null = null;
-            const coords = cleanGeo.type === 'FeatureCollection'
-              ? cleanGeo.features[0]?.geometry?.coordinates
-              : cleanGeo.type === 'Feature'
-              ? cleanGeo.geometry?.coordinates
-              : cleanGeo.coordinates;
-
-            if (Array.isArray(coords) && coords.length > 0) {
-              const firstPt = Array.isArray(coords[0][0]) ? coords[0][0] : coords[0];
-              if (Array.isArray(firstPt) && firstPt.length >= 2) {
-                startCoords = [Number(firstPt[1]), Number(firstPt[0])];
+            // Fit map bounds to selected trace
+            try {
+              const boundsLayer = L.geoJSON(cleanGeo as any);
+              const b = boundsLayer.getBounds();
+              if (b && b.isValid()) {
+                map.fitBounds(b, { padding: [60, 60], maxZoom: 15 });
               }
-            }
-            if (!startCoords && isValidLatLng(trail.lat, trail.lng)) {
-              startCoords = [Number(trail.lat), Number(trail.lng)];
-            }
+            } catch {}
+          }
+        } catch (e) {
+          console.warn('[TrailLayer] Error rendering selected GeoJSON:', e);
+        }
+      }
 
-            if (startCoords && isValidLatLng(startCoords[0], startCoords[1])) {
+      trails.forEach((trail) => {
+        const isSelected = trails.length === 1 || (selectedTrailId != null && String(trail.id) === String(selectedTrailId));
+
+        if (isSelected && isValidLatLng(trail.lat, trail.lng)) {
+          const startCoords: [number, number] = [Number(trail.lat), Number(trail.lng)];
               const startHtml = `
                 <div style="
                   position: relative;
@@ -220,10 +224,6 @@ export default function TrailLayer({ map, trails, pois, selectedTrailId, onTrail
                 onTrailClick?.(trail);
               });
               linesGroup.addLayer(startMarker);
-            }
-          } catch (e) {
-            console.warn('Failed to parse GeoJSON for trail:', trail.name, e);
-          }
         }
 
         // 3. Render KM Marker (Clean white pill style) added to Cluster
