@@ -18,6 +18,7 @@ import { useRouter } from 'next/navigation';
 import type { MapTrail } from './types';
 import {
   getDifficultyColor,
+  getDifficultyLabel,
   formatDistance,
   formatDuration,
   getTrailImage,
@@ -118,13 +119,13 @@ export default function ExplorerMobileHikeCarousel({
                 className="snap-start shrink-0 w-[calc(100vw-68px)] max-w-[290px] rounded-[22px] overflow-hidden transition-all duration-200 cursor-pointer"
                 style={{
                   background: isSelected
-                    ? 'linear-gradient(180deg, rgba(255, 255, 255, 0.75) 0%, rgba(251, 250, 246, 0.45) 100%)'
-                    : 'linear-gradient(180deg, rgba(255, 255, 255, 0.55) 0%, rgba(251, 250, 246, 0.30) 100%)',
+                    ? 'linear-gradient(180deg, rgba(255, 255, 255, 0.85) 0%, rgba(251, 250, 246, 0.55) 100%)'
+                    : 'linear-gradient(180deg, rgba(255, 255, 255, 0.65) 0%, rgba(251, 250, 246, 0.38) 100%)',
                   backdropFilter: 'blur(20px) saturate(180%)',
                   WebkitBackdropFilter: 'blur(20px) saturate(180%)',
-                  border: isSelected ? '1.5px solid rgba(23, 64, 44, 0.5)' : '1px solid rgba(255, 255, 255, 0.65)',
+                  border: isSelected ? '1.5px solid rgba(255, 255, 255, 0.95)' : '1px solid rgba(255, 255, 255, 0.70)',
                   boxShadow: isSelected
-                    ? '0 12px 36px -6px rgba(23, 64, 44, 0.20), inset 0 1px 1.5px rgba(255, 255, 255, 0.95)'
+                    ? '0 12px 36px -6px rgba(23, 64, 44, 0.20), inset 0 1.5px 2px rgba(255, 255, 255, 0.95)'
                     : '0 8px 24px -4px rgba(23, 64, 44, 0.10), inset 0 1px 1px rgba(255, 255, 255, 0.85)',
                 }}
               >
@@ -144,21 +145,21 @@ export default function ExplorerMobileHikeCarousel({
                       className="absolute bottom-1.5 left-2 px-2 py-0.5 rounded-full text-[9px] font-bold text-white shadow-2xs backdrop-blur-md"
                       style={{ backgroundColor: getDifficultyColor(trail.difficulty) }}
                     >
-                      {trail.difficulty}
+                      {getDifficultyLabel(trail.difficulty)}
                     </span>
                   )}
                 </div>
 
-                {/* Card Body */}
+                {/* Body */}
                 <div className="p-2.5 flex flex-col gap-1.5">
-                  <h4 className="font-display font-bold text-xs text-[#17402C] truncate">
+                  <h4 className="font-display font-bold text-xs text-[#17402C] line-clamp-1 leading-snug">
                     {trail.name}
                   </h4>
 
-                  {/* Key Metrics */}
+                  {/* Metrics Row */}
                   <div className="flex items-center gap-2 text-[10px] font-mono text-[#365233]">
-                    <span className="flex items-center gap-0.5 font-bold text-[#17402C]">
-                      <Navigation size={9} />
+                    <span className="flex items-center gap-0.5 font-semibold">
+                      <Navigation size={9} className="text-[#17402C]" />
                       {formatDistance(trail.distance_km)}
                     </span>
                     <span className="text-[#5A7064]/40">·</span>
@@ -178,7 +179,7 @@ export default function ExplorerMobileHikeCarousel({
                   </div>
 
                   {/* Action Buttons */}
-                  <div className="flex items-center gap-1.5 pt-1.5 border-t border-[#17402C]/06">
+                  <div className="flex items-center gap-2 pt-1.5 border-t border-[#17402C]/08">
                     <button
                       type="button"
                       onClick={(e) => {
@@ -186,7 +187,7 @@ export default function ExplorerMobileHikeCarousel({
                         triggerHaptic('light');
                         router.push(`/materiel/depart/none?route=${trail.id}`);
                       }}
-                      className="glass-capsule-btn primary flex-1 !min-h-[32px] text-xs font-bold shadow-xs active:scale-[0.97] transition-all cursor-pointer"
+                      className="glass-capsule-btn flex-1 !min-h-[36px] text-xs font-bold shadow-xs active:scale-[0.97] transition-all cursor-pointer"
                     >
                       <span>Préparer</span>
                     </button>
@@ -198,11 +199,11 @@ export default function ExplorerMobileHikeCarousel({
                         triggerHaptic('light');
                         onOpenDetail(trail);
                       }}
-                      className="glass-circle-btn w-8.5 h-8.5 shrink-0 active:scale-[0.97] transition-all cursor-pointer"
+                      className="glass-circle-btn !w-9 !h-9 shrink-0 flex items-center justify-center active:scale-[0.97] transition-all cursor-pointer shadow-xs"
                       title="Voir la fiche complète"
                       aria-label="Voir la fiche complète"
                     >
-                      <FileText size={14} />
+                      <FileText size={15} strokeWidth={2.2} />
                     </button>
                   </div>
                 </div>
