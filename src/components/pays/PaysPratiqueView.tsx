@@ -27,7 +27,7 @@ export default function PaysPratiqueView({ country }: PaysPratiqueViewProps) {
           Infos pratiques &amp; <span className="font-serif italic font-normal text-[#5B7F55]">formalités</span>
         </h2>
         <p className="text-xs text-[#5A7064] mt-1 font-mono">
-          Tout ce qu'il faut préparer avant le départ : visa, santé, budget et repères officiels.
+          Repères officiels et données vérifiées pour préparer votre voyage.
         </p>
       </div>
 
@@ -115,37 +115,47 @@ export default function PaysPratiqueView({ country }: PaysPratiqueViewProps) {
       </div>
 
       {/* 4 Cards Grid */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
-        {sections.map((sec, idx) => (
-          <div
-            key={idx}
-            className="glass rounded-[1.5rem] p-5 space-y-3.5 border border-white/50 shadow-xs"
-          >
-            <div className="flex items-center gap-2 pb-2 border-b border-[#17402C]/5">
-              <div className="w-7 h-7 rounded-lg bg-[#5B7F55]/15 text-[#5B7F55] flex items-center justify-center">
-                <Icon name={sec.icon as any} size={15} />
-              </div>
-              <h3 className="font-display font-bold text-base text-[#17402C]">
-                {sec.title}
-              </h3>
-            </div>
-
-            <div className="space-y-2">
-              {sec.data?.map((r, i) => (
-                <div
-                  key={i}
-                  className="flex items-center justify-between gap-3 text-xs p-2 rounded-xl bg-white/60 border border-white/40"
-                >
-                  <span className="text-[#5A7064] font-medium">{r.cle}</span>
-                  <span className={`font-bold text-[#17402C] ${r.isMono ? 'font-mono text-[11px]' : ''}`}>
-                    {r.val}
-                  </span>
+      {sections.filter(sec => sec.data && sec.data.length > 0).length > 0 ? (
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
+          {sections
+            .filter(sec => sec.data && sec.data.length > 0)
+            .map((sec, idx) => (
+              <div
+                key={idx}
+                className="glass rounded-[1.5rem] p-5 space-y-3.5 border border-white/50 shadow-xs"
+              >
+                <div className="flex items-center gap-2 pb-2 border-b border-[#17402C]/5">
+                  <div className="w-7 h-7 rounded-lg bg-[#5B7F55]/15 text-[#5B7F55] flex items-center justify-center">
+                    <Icon name={sec.icon as any} size={15} />
+                  </div>
+                  <h3 className="font-display font-bold text-base text-[#17402C]">
+                    {sec.title}
+                  </h3>
                 </div>
-              ))}
-            </div>
-          </div>
-        ))}
-      </div>
+
+                <div className="space-y-2">
+                  {sec.data?.map((r, i) => (
+                    <div
+                      key={i}
+                      className="flex items-center justify-between gap-3 text-xs p-2 rounded-xl bg-white/60 border border-white/40"
+                    >
+                      <span className="text-[#5A7064] font-medium">{r.cle}</span>
+                      <span className={`font-bold text-[#17402C] ${r.isMono ? 'font-mono text-[11px]' : ''}`}>
+                        {r.val}
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            ))}
+        </div>
+      ) : (
+        <div className="glass rounded-[1.5rem] p-6 border border-white/50 text-center space-y-3">
+          <span className="text-3xl block">🔒</span>
+          <p className="text-sm font-bold text-[#17402C]">Données logistiques bientôt disponibles</p>
+          <p className="text-xs text-[#5A7064] max-w-sm mx-auto">Visa, vaccins, budget et transport — ces informations seront intégrées depuis des sources officielles vérifiées.</p>
+        </div>
+      )}
 
       {/* Safety Details Card */}
       {country.securite && (

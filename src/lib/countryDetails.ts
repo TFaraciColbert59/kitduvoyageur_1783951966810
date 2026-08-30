@@ -1404,29 +1404,15 @@ export function getCompleteCountryDetail(
       },
     ],
     pratique: custom.pratique || {
-      formalites: [
-        { cle: 'Passeport / CNI', val: 'Requis' },
-        { cle: 'Régime de visa', val: 'Consulter diplomatie' },
-        { cle: 'Validité requise', val: '6 mois après retour' },
-        { cle: 'Séjour touristique', val: 'Consulter formalités', isMono: true },
-      ],
+      formalites: [], // Aucune donnée en base — carte masquée
       transport: [
-        { cle: 'Vols internationaux', val: `Vers ${capital}` },
         { cle: 'Fuseau horaire', val: timezone, isMono: true },
-        { cle: 'Déplacements', val: 'Lignes régulières & location' },
-        { cle: 'Réseau routier', val: 'Axes principaux praticables' },
       ],
       budget: [
         { cle: 'Monnaie officielle', val: currencyInfo.complet, isMono: true },
         { cle: 'Code devise', val: currencyInfo.code, isMono: true },
-        { cle: 'Moyens de paiement', val: 'Espèces & carte bancaire' },
-        { cle: 'Budget repère', val: 'Consulter configurateur', isMono: true },
       ],
-      sante: [
-        { cle: 'Assurance voyage', val: 'Recommandée (rapatriement)' },
-        { cle: 'Vaccins recommandés', val: 'DTP & vaccins universels' },
-        { cle: 'Numéro d’urgence', val: '112 / Urgences locales', isMono: true },
-      ],
+      sante: [], // Aucune donnée en base — carte masquée
     },
     meteo: custom.meteo || {
       ville: capital,
