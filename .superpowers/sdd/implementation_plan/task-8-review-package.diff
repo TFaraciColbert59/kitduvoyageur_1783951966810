@@ -1,0 +1,89 @@
+﻿diff --git a/.github/workflows/visual-regression.yml b/.github/workflows/visual-regression.yml
+new file mode 100644
+index 0000000..1eda48b
+--- /dev/null
++++ b/.github/workflows/visual-regression.yml
+@@ -0,0 +1,63 @@
++name: Visual Regression — Shell Mobile
++
++on:
++  pull_request:
++    branches: [main]
++  push:
++    branches: [main]
++
++jobs:
++  visual-tests:
++    runs-on: ubuntu-latest
++    timeout-minutes: 25
++    steps:
++      - uses: actions/checkout@v4
++
++      - name: Setup Node 20
++        uses: actions/setup-node@v4
++        with:
++          node-version: '20'
++          cache: 'npm'
++
++      - name: Install dependencies
++        run: npm ci
++
++      - name: Install Playwright browsers
++        run: npx playwright install --with-deps chromium
++
++      - name: Build app
++        run: npm run build
++        env:
++          NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
++          NEXT_PUBLIC_SUPABASE_ANON_KEY: ${{ secrets.NEXT_PUBLIC_SUPABASE_ANON_KEY }}
++          # Désactiver les routes nécessitant une auth pour le build CI
++          NEXT_PUBLIC_CI: 'true'
++
++      - name: Start app
++        run: npm run start &
++        env:
++          PORT: 4028
++
++      - name: Wait for app to be ready
++        run: npx wait-on http://localhost:4028 --timeout 60000
++
++      - name: Run visual regression tests
++        run: npm run test:visual
++        env:
++          PW_BASE_URL: http://localhost:4028
++
++      - name: Upload Playwright report on failure
++        if: failure()
++        uses: actions/upload-artifact@v4
++        with:
++          name: playwright-visual-report
++          path: playwright-report/
++          retention-days: 7
++
++      - name: Upload diff screenshots on failure
++        if: failure()
++        uses: actions/upload-artifact@v4
++        with:
++          name: playwright-visual-diffs
++          path: test-results/
++          retention-days: 7
+diff --git a/package.json b/package.json
+index bed6498..2979f71 100644
+--- a/package.json
++++ b/package.json
+@@ -130,13 +130,14 @@
+     "eslint-config-next": "^15.2.4",
+     "eslint-config-prettier": "^10.1.1",
+     "eslint-plugin-prettier": "^5.2.6",
+     "postcss": "^8.4.8",
+     "prettier": "^3.5.3",
+     "tailwindcss": "3.4.6",
+     "tailwindcss-animate": "^1.0.7",
+     "ts-node": "^10.9.2",
+     "tsx": "^4.7.1",
+     "typescript": "^5",
+-    "vitest": "^4.1.11"
++    "vitest": "^4.1.11",
++    "wait-on": "^9.1.0"
+   }
+ }

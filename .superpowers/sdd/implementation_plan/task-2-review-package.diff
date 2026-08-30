@@ -1,0 +1,140 @@
+﻿diff --git a/src/app/clubs/[id]/page.tsx b/src/app/clubs/[id]/page.tsx
+index 4b2c1f0..f026743 100644
+--- a/src/app/clubs/[id]/page.tsx
++++ b/src/app/clubs/[id]/page.tsx
+@@ -782,20 +782,22 @@ export default function ClubDetailPage() {
+               />
+               <ClubAboutCard club={club} />
+               <ClubProCard />
+             </aside>
+           </main>
+         </div>
+       </div>
+ 
+       {/* ── MOBILE ── */}
+       <div className="block md:hidden">
++        {/* safeTop=false: MobileClubDetailView embarque son propre header sticky (MobileClubDetailView.tsx:89)
++            qui calcule top-[calc(max(env(safe-area-inset-top,0px),12px)+6px)] */}
+         <MobilePageShell safeTop={false} videoBackground={false} background="#FAF8F5">
+           <MobileClubDetailView
+             club={club}
+             topics={topics}
+             members={members}
+             events={events}
+             user={user}
+             isMember={isMember}
+             onJoinToggle={handleToggleMember}
+             joining={joining}
+diff --git a/src/app/communaute/page.tsx b/src/app/communaute/page.tsx
+index 1ebf8d6..3b4c78f 100644
+--- a/src/app/communaute/page.tsx
++++ b/src/app/communaute/page.tsx
+@@ -191,20 +191,22 @@ function CommunautePageContent() {
+ 
+   return (
+     <div className="min-h-screen md:h-dvh md:overflow-hidden text-[#17402C] selection:bg-[#17402C]/10 font-sans relative">
+       {/* Background immersif végétal / canopée */}
+       <CompteBackground />
+ 
+       {/* ══════════════════════════════════════════════════════════════════════
+           1. VERSION MOBILE (block md:hidden)
+          ══════════════════════════════════════════════════════════════════════ */}
+       <div className="block md:hidden min-h-screen">
++        {/* safeTop=false: MobileCommunityHeader embarque son propre header sticky (MobileCommunityHeader.tsx:24)
++            qui calcule pt-[calc(max(env(safe-area-inset-top,0px),10px)+6px)] */}
+         <MobilePageShell videoBackground={true} safeTop={false}>
+           <MobileCommunityHub
+             posts={posts}
+             carnets={filteredCarnets}
+             clubs={filteredClubs}
+             groups={groups}
+             events={events}
+             activeTab={activeTab as any}
+             onTabChange={(tab) => handleTabSelect(tab as any)}
+             loading={false}
+diff --git a/src/app/compte/page.tsx b/src/app/compte/page.tsx
+index 9ba5c83..e76d3ea 100644
+--- a/src/app/compte/page.tsx
++++ b/src/app/compte/page.tsx
+@@ -150,20 +150,22 @@ export default function ComptePage() {
+     }
+   };
+ 
+   return (
+     <div className="min-h-screen md:h-dvh md:overflow-hidden text-[#17402C] selection:bg-[#17402C]/10 font-sans relative">
+       {/* Background immersif végétal */}
+       <CompteBackground />
+ 
+       {/* Mobile-only app-like view */}
+       <div className="block md:hidden min-h-screen">
++        {/* safeTop=false: MobileCompteV2 embarque son propre header sticky (MobileCompteV2.tsx:460)
++            qui calcule pt-[calc(max(env(safe-area-inset-top,0px),10px)+6px)] */}
+         <MobilePageShell safeTop={false} background="transparent">
+           <MobileCompteV2 />
+         </MobilePageShell>
+       </div>
+ 
+       {/* Desktop view (md and above) — 3-column Fullscreen Cockpit */}
+       {dashboard && (
+         <div className="hidden md:flex flex-col h-full overflow-hidden">
+           <Header />
+ 
+diff --git a/src/app/profil/[id]/page.tsx b/src/app/profil/[id]/page.tsx
+index 3b7e7e3..108d8f5 100644
+--- a/src/app/profil/[id]/page.tsx
++++ b/src/app/profil/[id]/page.tsx
+@@ -194,20 +194,22 @@ export default function PublicProfilePage() {
+             <div className="fixed bottom-8 left-1/2 -translate-x-1/2 z-[110] bg-[#17402C] text-white px-6 py-3 rounded-full text-xs font-bold  flex items-center gap-2 border border-[#17402C]">
+               <span>✨</span>
+               <span>{toast}</span>
+             </div>
+           )}
+         </div>
+       </div>
+ 
+       {/* MOBILE */}
+       <div className="block md:hidden">
++        {/* safeTop=false: PublicMobileProfileView embarque son propre header sticky (PublicMobileProfileView.tsx:67)
++            qui calcule pt-[max(10px,env(safe-area-inset-top))] */}
+         <MobilePageShell safeTop={false} background="transparent">
+           <PublicMobileProfileView
+             profile={profile as any}
+             carnets={carnets as any}
+             clubs={clubs as any}
+             badges={badges as any}
+             activite={activite as any}
+             onShare={() => {
+               if (typeof window !== 'undefined' && navigator.clipboard) {
+                 navigator.clipboard.writeText(window.location.href);
+diff --git a/src/components/mobile-nav/MobilePageShell.tsx b/src/components/mobile-nav/MobilePageShell.tsx
+index ef91dda..c63a3de 100644
+--- a/src/components/mobile-nav/MobilePageShell.tsx
++++ b/src/components/mobile-nav/MobilePageShell.tsx
+@@ -8,22 +8,25 @@ interface MobilePageShellProps {
+   children: React.ReactNode;
+   /**
+    * Couleur de fond de la page mobile.
+    */
+   background?: string;
+   /**
+    * Activer le mode fond immersif : la canopée dorée CompteBackground est posée en fixe derrière.
+    */
+   videoBackground?: boolean;
+   /**
+-   * Appliquer la safe area top pour éviter le chevauchement avec Dynamic Island / Notch / Status Bar.
+-   * Désactiver uniquement si la page embarque son propre header sticky avec safe area.
++   * Appliquer le padding-top safe-area (Dynamic Island / Notch / Status Bar).
++   * ⚠ Mettre à `false` UNIQUEMENT si la page embarque son propre header sticky
++   * qui gère déjà `env(safe-area-inset-top)` — et toujours ajouter un commentaire
++   * JSX juste avant l'usage expliquant quel composant le gère et à quelle ligne.
++   * Ne jamais mettre `false` sans raison documentée.
+    */
+   safeTop?: boolean;
+   /**
+    * Activer ou ajuster le padding inférieur pour la barre de navigation.
+    */
+   hasBottomNav?: boolean;
+   className?: string;
+ }
+ 
+ /**

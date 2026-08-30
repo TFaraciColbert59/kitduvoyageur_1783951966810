@@ -1,0 +1,54 @@
+﻿diff --git a/src/app/ambassadeurs/page.tsx b/src/app/ambassadeurs/page.tsx
+index f678106..d0d19a2 100644
+--- a/src/app/ambassadeurs/page.tsx
++++ b/src/app/ambassadeurs/page.tsx
+@@ -1,19 +1,19 @@
+ 'use client';
+ 
+ import React, { useState, useEffect, useCallback, useMemo } from 'react';
+ import Header from '@/components/Header';
+ import Footer from '@/components/Footer';
+ import Icon from '@/components/ui/AppIcon';
+ import { createClient } from '@/lib/supabase/client';
+ import { useAuth } from '@/contexts/AuthContext';
+-import MobilePageShell from '@/components/mobile-nav/MobilePageShell';
++import { AppShell } from '@/components/shell';
+ 
+ export default function AmbassadeursPage() {
+   const [activeTab, setActiveTab] = useState<'programme' | 'dashboard' | 'codes'>('programme');
+   const [applyOpen, setApplyOpen] = useState(false);
+   const { user } = useAuth();
+ 
+   return (
+     <>
+       {/* DESKTOP */}
+       <div className="hidden md:block">
+@@ -26,26 +26,26 @@ export default function AmbassadeursPage() {
+               <p className="text-white/60 text-lg max-w-xl mb-8">Rejoignez nos ambassadeurs qui monétisent leur audience.</p>
+               <div className="flex flex-wrap gap-4"><button onClick={() => setApplyOpen(true)} className="btn-primary"><Icon name="UserPlusIcon" size={16} variant="outline" />Devenir ambassadeur</button></div>
+             </div>
+           </section>
+           <Footer />
+         </div>
+       </div>
+ 
+       {/* MOBILE */}
+       <div className="block md:hidden">
+-        <MobilePageShell>
++        <AppShell>
+           <div style={{ padding: '16px' }}>
+             <h1 style={{ fontSize: '20px', fontWeight: 800, color: '#17402C', marginBottom: '8px', fontFamily: 'var(--font-display)' }}>Ambassadeurs</h1>
+             <p style={{ fontSize: '13px', color: 'rgba(23,64,44,0.6)', marginBottom: '16px' }}>Partagez votre passion, gagnez des commissions.</p>
+             <div style={{ display: 'flex', gap: '8px', marginBottom: '16px' }}>
+               <button onClick={() => setActiveTab('programme')} style={{ padding: '8px 14px', borderRadius: '8px', background: activeTab === 'programme' ? '#17402C' : '#F4F1EA', color: activeTab === 'programme' ? 'white' : 'rgba(23,64,44,0.6)', border: 'none', fontSize: '12px', cursor: 'pointer' }}>Programme</button>
+               <button onClick={() => setActiveTab('dashboard')} style={{ padding: '8px 14px', borderRadius: '8px', background: activeTab === 'dashboard' ? '#17402C' : '#F4F1EA', color: activeTab === 'dashboard' ? 'white' : 'rgba(23,64,44,0.6)', border: 'none', fontSize: '12px', cursor: 'pointer' }}>Dashboard</button>
+             </div>
+             <button onClick={() => setApplyOpen(true)} style={{ width: '100%', padding: '14px', background: '#17402C', color: 'white', border: 'none', borderRadius: '12px', fontSize: '14px', fontWeight: 600, cursor: 'pointer', marginTop: '12px' }}>Devenir ambassadeur</button>
+           </div>
+-        </MobilePageShell>
++        </AppShell>
+         
+       </div>
+     </>
+   );
+ }

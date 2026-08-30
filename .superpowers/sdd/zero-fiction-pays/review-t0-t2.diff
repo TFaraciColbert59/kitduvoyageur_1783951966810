@@ -1,0 +1,281 @@
+﻿diff --git a/MISSION_LOG.md b/MISSION_LOG.md
+index fe1489a..9ae534b 100644
+--- a/MISSION_LOG.md
++++ b/MISSION_LOG.md
+@@ -903,8 +903,48 @@ Process exited with code 0
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
++## Audit UI — État RÉEL constaté (2026-08-30)
++
++| Élément UI | Fichier:lignes | Statut constaté | Action |
++|---|---|---|---|
++| Badge ☀️ Saison recommandée | PaysHeroOverview.tsx:47-49 | FICTIF — `saison_recommandee` hors colonnes BDD | SUPPRIMÉ |
++| Badge Saison sidebar gauche | PaysLeftSidebar.tsx | FICTIF | SUPPRIMÉ |
++| Badge Saison mobile | MobileCountryDetailView.tsx:201 | FICTIF | SUPPRIMÉ |
++| Widget Météo LIVE (19°C statique) | PaysRightSidebar.tsx:133-184, countryDetails.ts:1431-1437 | FICTIF — `temperature_actuelle: 19` hardcodé, aucune API live | MASQUÉ (guard optional) |
++| Widget Sécurité & Terrain | PaysRightSidebar.tsx:186-222, countryDetails.ts:1438-1446 | FICTIF — `niveau_label`/`conseils` inventés | MASQUÉ (guard optional) |
++| Météo mobile | MobileCountryDetailView.tsx:486-507 | FICTIF | MASQUÉ |
++| Formalités d'entrée (carte Pratique) | PaysPratiqueView.tsx:13, countryDetails.ts:1407-1412 | FICTIF intégral — visa/passeport inventés | MASQUÉE (tableau vide) |
++| Transport Vols/Déplacements/Réseau | countryDetails.ts:1414,1416,1417 | FICTIF — texte générique sans colonne | LIGNES SUPPRIMÉES |
++| Budget Moyens paiement / Budget repère | countryDetails.ts:1422-1423 | FICTIF | LIGNES SUPPRIMÉES |
++| Santé & Recommandations (carte entière) | PaysPratiqueView.tsx:16, countryDetails.ts:1425-1429 | FICTIF intégral | MASQUÉE (tableau vide) |
++| Carte SVG Repères & Relief | PaysHeroOverview.tsx:165-213 | FICTIF — latitude/longitude/pins éditoriaux inventés | CONDITIONNÉ |
++| Highlights Points forts du voyage | PaysHeroOverview.tsx:216-237 | FICTIF — fallback générique | CONDITIONNÉ |
++| Slogan `nature & sentiers` | PaysHeroOverview.tsx:64 | FICTIF — fallback générique | CONDITIONNÉ |
++| Activités génériques fallback | countryDetails.ts:1328-1368 | FICTIF — trek/nature/culture inventés | REMPLACÉ par [] |
++| Gastronomie générique fallback | countryDetails.ts:1388-1405 | FICTIF — `Plat emblématique du pays` | REMPLACÉ par [] |
++| culture.fetes generiques | countryDetails.ts:1379-1386 | FICTIF — mois inventés | REMPLACÉ par [] |
++| Pratique mobile Passeport/CNI | MobileCountryDetailView.tsx:~552 | FICTIF — fallback `Passeport / CNI valide` | SUPPRIMÉ |
++| En-tête nom · continent | PaysHeroOverview.tsx:55+45 | RÉEL — `name` + `continent` | CONSERVÉ |
++| Sous-titre nom_en | PaysHeroOverview.tsx:59-62 | RÉEL — `name_en` | CONSERVÉ |
++| Badge ISO code · iso_a3 | PaysHeroOverview.tsx:42-43 | RÉEL — `iso_a2` + `iso_a3` | CONSERVÉ |
++| Stats strip SUPERFICIE | PaysHeroOverview.tsx:21 | RÉEL — `area_km2` | CONSERVÉ |
++| Stats strip RÉGION | PaysHeroOverview.tsx:22 | RÉEL — `subregion` | CONSERVÉ |
++| Stats strip CAPITALE | PaysHeroOverview.tsx:23 | RÉEL — `capital` | CONSERVÉ |
++| Stats strip LANGUES | PaysHeroOverview.tsx:24 | RÉEL — `languages` | CONSERVÉ |
++| Stats strip DEVISE | PaysHeroOverview.tsx:25 | RÉEL — `currency_*` | CONSERVÉ |
++| Fiche d'identité (6 blocs Pratique) | PaysPratiqueView.tsx:35-115 | RÉEL — 6 champs BDD | CONSERVÉ |
++| Sources & Références | PaysPratiqueView.tsx:94-114 | RÉEL — `sources` parsé | CONSERVÉ |
++| Widget Données officielles sidebar | PaysRightSidebar.tsx:63-131 | RÉEL | CONSERVÉ |
++| Widget Communauté | PaysRightSidebar.tsx:224+ | Fonctionnalité app | CONSERVÉ |
++
++### 🔔 Manques de données connus (décision produit)
++- **Globe 3D / geometry** : colonne volontairement vidée pour 195 pays. Widget dégradé sans coordonnées.
++- **Météo live** : aucune API météo connectée à `capital`. Bloc masqué jusqu'à intégration API réelle.
++- **Visa / Santé / Sécurité** : données non disponibles dans `countries_geo`. Cartes masquées sans fallback inventé.
++- **Saison recommandée** : colonne absente. Badge supprimé. Future colonne à décider par Tony.
++
+diff --git a/src/components/pays/MobileCountryDetailView.tsx b/src/components/pays/MobileCountryDetailView.tsx
+index d1a8e65..df1a34b 100644
+--- a/src/components/pays/MobileCountryDetailView.tsx
++++ b/src/components/pays/MobileCountryDetailView.tsx
+@@ -192,19 +192,16 @@ export default function MobileCountryDetailView({
+             {/* ── SECTION 1: APERÇU / PANORAMA ── */}
+             {activeSection === 'presentation' && (
+               <div className="space-y-3">
+                 <div className="glass p-4 sm:p-5 rounded-[24px] border border-white/80 shadow-xs bg-white/85 space-y-3">
+                   <div className="flex items-center justify-between">
+                     <span className="glass-pill text-[9.5px] font-mono font-bold text-[#5B7F55] bg-white/90 border border-white">
+                       01 · Panorama Général
+                     </span>
+-                    <span className="text-[10px] font-mono text-[#5A7064]">
+-                      Saison : {country.saison_recommandee}
+-                    </span>
+                   </div>
+ 
+                   <h3 className="font-display font-bold text-base text-[#17402C] leading-snug">
+                     {country.presentation_titre}
+                   </h3>
+ 
+                   <div className="space-y-2 text-xs text-[#2D4536] leading-relaxed font-sans">
+                     {country.presentation_paragraphes.map((p, idx) => (
+diff --git a/src/components/pays/PaysHeroOverview.tsx b/src/components/pays/PaysHeroOverview.tsx
+index 2599275..dab3abe 100644
+--- a/src/components/pays/PaysHeroOverview.tsx
++++ b/src/components/pays/PaysHeroOverview.tsx
+@@ -39,19 +39,16 @@ export default function PaysHeroOverview({
+                 {flagEmoji}
+               </span>
+               <span className="glass-pill text-[9.5px] font-mono font-bold text-[#17402C]">
+                 {country.code}{country.iso_a3 ? ` · ${country.iso_a3}` : ''}
+               </span>
+               <span className="glass-pill text-[9.5px] font-mono font-bold text-[#17402C]">
+                 📍 {country.region} · {country.continent}
+               </span>
+-              <span className="glass-pill text-[9.5px] font-mono font-bold text-[#5B7F55]">
+-                ☀️ Saison : {country.saison_recommandee}
+-              </span>
+             </div>
+ 
+             {/* Title & Slogan */}
+             <div>
+               <div className="flex flex-wrap items-baseline gap-2">
+                 <h1 className="font-display font-bold text-3xl sm:text-4xl text-[#17402C] tracking-tight leading-tight">
+                   {country.nom}
+                 </h1>
+diff --git a/src/components/pays/PaysLeftSidebar.tsx b/src/components/pays/PaysLeftSidebar.tsx
+index 69283cb..6515e99 100644
+--- a/src/components/pays/PaysLeftSidebar.tsx
++++ b/src/components/pays/PaysLeftSidebar.tsx
+@@ -62,19 +62,16 @@ export default function PaysLeftSidebar({
+             )}
+             <p className="text-[10px] font-mono text-[#5A7064] truncate mt-0.5">
+               {country.capitale} · {country.region}
+             </p>
+             <div className="flex items-center gap-1.5 mt-1">
+               <span className="glass-pill !px-1.5 !py-0.5 text-[8px] font-mono font-bold text-[#17402C]">
+                 {country.code}{country.iso_a3 ? ` · ${country.iso_a3}` : ''}
+               </span>
+-              <span className="glass-pill !px-2 !py-0.5 text-[8.5px] font-mono font-bold tracking-wider text-[#5B7F55]">
+-                ☀️ {country.saison_recommandee}
+-              </span>
+             </div>
+           </div>
+         </div>
+ 
+         {/* Quick action buttons */}
+         <div className="grid grid-cols-2 gap-2">
+           <Link
+             href={`/ai-configurator?country=${country.code}`}
+diff --git a/src/components/pays/PaysPratiqueView.tsx b/src/components/pays/PaysPratiqueView.tsx
+index 5aca45d..dbf6356 100644
+--- a/src/components/pays/PaysPratiqueView.tsx
++++ b/src/components/pays/PaysPratiqueView.tsx
+@@ -22,17 +22,17 @@ export default function PaysPratiqueView({ country }: PaysPratiqueViewProps) {
+       <div className="border-b border-[#17402C]/5 pb-4">
+         <span className="text-[10px] font-mono font-bold uppercase tracking-widest text-[#5B7F55] block mb-0.5">
+           LOGISTIQUE &amp; PRÉPARATION
+         </span>
+         <h2 className="font-display font-bold text-2xl sm:text-3xl text-[#17402C]">
+           Infos pratiques &amp; <span className="font-serif italic font-normal text-[#5B7F55]">formalités</span>
+         </h2>
+         <p className="text-xs text-[#5A7064] mt-1 font-mono">
+-          Tout ce qu'il faut préparer avant le départ : visa, santé, budget et repères officiels.
++          Repères officiels et données vérifiées pour préparer votre voyage.
+         </p>
+       </div>
+ 
+       {/* Official Identity & Geodata Card */}
+       <div className="glass rounded-[1.5rem] p-5 space-y-3 border border-white/60 shadow-xs">
+         <div className="flex items-center justify-between pb-2 border-b border-[#17402C]/5">
+           <div className="flex items-center gap-2">
+             <div className="w-7 h-7 rounded-lg bg-[#5B7F55]/15 text-[#5B7F55] flex items-center justify-center font-mono font-bold text-xs">
+@@ -110,47 +110,57 @@ export default function PaysPratiqueView({ country }: PaysPratiqueViewProps) {
+                 </a>
+               ))}
+             </div>
+           </div>
+         )}
+       </div>
+ 
+       {/* 4 Cards Grid */}
+-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
+-        {sections.map((sec, idx) => (
+-          <div
+-            key={idx}
+-            className="glass rounded-[1.5rem] p-5 space-y-3.5 border border-white/50 shadow-xs"
+-          >
+-            <div className="flex items-center gap-2 pb-2 border-b border-[#17402C]/5">
+-              <div className="w-7 h-7 rounded-lg bg-[#5B7F55]/15 text-[#5B7F55] flex items-center justify-center">
+-                <Icon name={sec.icon as any} size={15} />
+-              </div>
+-              <h3 className="font-display font-bold text-base text-[#17402C]">
+-                {sec.title}
+-              </h3>
+-            </div>
++      {sections.filter(sec => sec.data && sec.data.length > 0).length > 0 ? (
++        <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
++          {sections
++            .filter(sec => sec.data && sec.data.length > 0)
++            .map((sec, idx) => (
++              <div
++                key={idx}
++                className="glass rounded-[1.5rem] p-5 space-y-3.5 border border-white/50 shadow-xs"
++              >
++                <div className="flex items-center gap-2 pb-2 border-b border-[#17402C]/5">
++                  <div className="w-7 h-7 rounded-lg bg-[#5B7F55]/15 text-[#5B7F55] flex items-center justify-center">
++                    <Icon name={sec.icon as any} size={15} />
++                  </div>
++                  <h3 className="font-display font-bold text-base text-[#17402C]">
++                    {sec.title}
++                  </h3>
++                </div>
+ 
+-            <div className="space-y-2">
+-              {sec.data?.map((r, i) => (
+-                <div
+-                  key={i}
+-                  className="flex items-center justify-between gap-3 text-xs p-2 rounded-xl bg-white/60 border border-white/40"
+-                >
+-                  <span className="text-[#5A7064] font-medium">{r.cle}</span>
+-                  <span className={`font-bold text-[#17402C] ${r.isMono ? 'font-mono text-[11px]' : ''}`}>
+-                    {r.val}
+-                  </span>
++                <div className="space-y-2">
++                  {sec.data?.map((r, i) => (
++                    <div
++                      key={i}
++                      className="flex items-center justify-between gap-3 text-xs p-2 rounded-xl bg-white/60 border border-white/40"
++                    >
++                      <span className="text-[#5A7064] font-medium">{r.cle}</span>
++                      <span className={`font-bold text-[#17402C] ${r.isMono ? 'font-mono text-[11px]' : ''}`}>
++                        {r.val}
++                      </span>
++                    </div>
++                  ))}
+                 </div>
+-              ))}
+-            </div>
+-          </div>
+-        ))}
+-      </div>
++              </div>
++            ))}
++        </div>
++      ) : (
++        <div className="glass rounded-[1.5rem] p-6 border border-white/50 text-center space-y-3">
++          <span className="text-3xl block">🔒</span>
++          <p className="text-sm font-bold text-[#17402C]">Données logistiques bientôt disponibles</p>
++          <p className="text-xs text-[#5A7064] max-w-sm mx-auto">Visa, vaccins, budget et transport — ces informations seront intégrées depuis des sources officielles vérifiées.</p>
++        </div>
++      )}
+ 
+       {/* Safety Details Card */}
+       {country.securite && (
+         <div className="glass rounded-[1.5rem] p-6 space-y-4 border border-white/50 shadow-xs">
+           <div className="flex items-center justify-between">
+             <div>
+               <h3 className="font-display font-bold text-lg text-[#17402C]">
+                 Vigilance &amp; <span className="font-serif italic font-normal text-[#5B7F55]">conseils de sécurité</span>
+diff --git a/src/lib/countryDetails.ts b/src/lib/countryDetails.ts
+index 6828866..87dce25 100644
+--- a/src/lib/countryDetails.ts
++++ b/src/lib/countryDetails.ts
+@@ -1399,39 +1399,25 @@ export function getCompleteCountryDetail(
+         categorie: 'Terroir',
+         nom: 'Saveurs',
+         nom_em: 'Régionales',
+         description: `Recettes du terroir partagées dans les auberges et villages de ${name}.`,
+         image_url: 'https://images.unsplash.com/photo-1534422298391-e4f8c172dddb?q=80&w=600&auto=format&fit=crop',
+       },
+     ],
+     pratique: custom.pratique || {
+-      formalites: [
+-        { cle: 'Passeport / CNI', val: 'Requis' },
+-        { cle: 'Régime de visa', val: 'Consulter diplomatie' },
+-        { cle: 'Validité requise', val: '6 mois après retour' },
+-        { cle: 'Séjour touristique', val: 'Consulter formalités', isMono: true },
+-      ],
++      formalites: [], // Aucune donnée en base — carte masquée
+       transport: [
+-        { cle: 'Vols internationaux', val: `Vers ${capital}` },
+         { cle: 'Fuseau horaire', val: timezone, isMono: true },
+-        { cle: 'Déplacements', val: 'Lignes régulières & location' },
+-        { cle: 'Réseau routier', val: 'Axes principaux praticables' },
+       ],
+       budget: [
+         { cle: 'Monnaie officielle', val: currencyInfo.complet, isMono: true },
+         { cle: 'Code devise', val: currencyInfo.code, isMono: true },
+-        { cle: 'Moyens de paiement', val: 'Espèces & carte bancaire' },
+-        { cle: 'Budget repère', val: 'Consulter configurateur', isMono: true },
+-      ],
+-      sante: [
+-        { cle: 'Assurance voyage', val: 'Recommandée (rapatriement)' },
+-        { cle: 'Vaccins recommandés', val: 'DTP & vaccins universels' },
+-        { cle: 'Numéro d’urgence', val: '112 / Urgences locales', isMono: true },
+       ],
++      sante: [], // Aucune donnée en base — carte masquée
+     },
+     meteo: custom.meteo || {
+       ville: capital,
+       temperature_actuelle: 19,
+       conditions: 'Climat tempéré, ciel dégagé',
+       details: 'Prévisions et relevés climatiques standards',
+       mois_temperatures: [12, 14, 18, 24, 28, 34, 38, 36, 30, 22, 16, 12],
+     },
