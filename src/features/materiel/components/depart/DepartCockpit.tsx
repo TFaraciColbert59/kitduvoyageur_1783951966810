@@ -26,6 +26,7 @@ import { KitSwitcher } from './KitSwitcher';
 import ScrollableTabs, { type TabOption } from '@/components/ui/ScrollableTabs';
 import { Skeleton } from '@/components/ui/Skeleton';
 import { generateSmartPrompts } from '@/features/materiel/services/generateSmartPrompts';
+import { flushOfflineQueue } from '@/features/materiel/offline/departOfflineQueue';
 import { cn } from '@/lib/utils';
 import type { DepartDetail } from '@/features/materiel/services/getDepartDetail';
 import type { WeatherForecast } from '@/features/materiel/services/getWeather';
@@ -100,8 +101,24 @@ export function DepartCockpit({ depart, weather, kits }: DepartCockpitProps) {
   useEffect(() => {
     if (typeof window === 'undefined') return;
 
+    // Cache local du départ pour consultation hors-ligne immédiate (§Phase 6)
+    try {
+      localStorage.setItem(`lkdv_depart_cache_${depart.id}`, JSON.stringify({
+        depart,
+        weather,
+        cachedAt: Date.now(),
+      }));
+    } catch {}
+
     setIsOnline(navigator.onLine);
-    const handleOnline = () => setIsOnline(true);
+    if (navigator.onLine) {
+      flushOfflineQueue().catch(() => {});
+    }
+
+    const handleOnline = () => {
+      setIsOnline(true);
+      flushOfflineQueue().catch(() => {});
+    };
     const handleOffline = () => setIsOnline(false);
 
     window.addEventListener('online', handleOnline);
@@ -128,7 +145,7 @@ export function DepartCockpit({ depart, weather, kits }: DepartCockpitProps) {
       window.removeEventListener('offline', handleOffline);
       window.removeEventListener('open-departure-sheet', handleOpenSheet);
     };
-  }, []);
+  }, [depart, weather]);
 
   const handleSelectTab = (tabId: string) => {
     setActiveSection(tabId as DepartSectionId);
@@ -138,15 +155,30 @@ export function DepartCockpit({ depart, weather, kits }: DepartCockpitProps) {
     { id: 'all', label: 'Vue complète', icon: <LayoutGrid size={13} /> },
     { id: 'overview', label: 'Statut & Départ', icon: <Compass size={13} /> },
     { id: 'alerts', label: 'Alertes', icon: <AlertTriangle size={13} />, badge: smartAlerts.length || undefined },
-    { id: 'checklist', label: 'Checklist & Vivres', icon: <CheckSquare size={13} />, badge: `${checkedCount}/${itemsCount}` },
+    { id: 'checklist', label: 'Sac & Vivres', icon: <CheckSquare size={13} />, badge: `${checkedCount}/${itemsCount}` },
     { id: 'weight', label: 'Poids', icon: <Scale size={13} /> },
-    { id: 'terrain', label: 'Météo & Sécurité', icon: <MapPin size={13} /> },
+    { id: 'terrain', label: 'Terrain & Carte', icon: <MapPin size={13} /> },
   ];
 
   const showAll = activeSection === 'all';
 
   const renderMainContent = () => (
     <div className="flex flex-col gap-3.5 max-w-4xl mx-auto w-full">
+      {/* ════ BANNIÈRE HORS-LIGNE TRANSPARENTE (§Phase 6) ════ */}
+      {!isOnline && (
+        <div className="p-3 rounded-2xl bg-amber-500/15 border border-amber-500/30 text-[#17402C] text-xs font-semibold flex items-center justify-between gap-2 shadow-2xs">
+          <div className="flex items-center gap-2 min-w-0">
+            <WifiOff size={15} className="text-amber-700 shrink-0" />
+            <span className="truncate">
+              Mode hors-ligne actif — Fiche de départ et données en cache. Les modifications seront synchronisées dès le retour du réseau.
+            </span>
+          </div>
+          <span className="text-[10px] font-mono font-bold px-2 py-0.5 rounded-lg bg-amber-600/20 text-amber-900 shrink-0">
+            Hors-ligne
+          </span>
+        </div>
+      )}
+
       {/* ════ NIVEAU 1 : STATUT PERMANENT & EN-TÊTE TACTIQUE ════ */}
       {(showAll || activeSection === 'overview') && (
         <section id="section-depart-overview" aria-label="Niveau 1 : Statut du départ">

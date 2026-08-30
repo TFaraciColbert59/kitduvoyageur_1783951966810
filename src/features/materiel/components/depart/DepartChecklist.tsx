@@ -25,6 +25,7 @@ import { toggleKitItem } from '@/features/materiel/actions/toggleKitItem';
 import { addDepartItem } from '@/features/materiel/actions/addDepartItem';
 import { updateItemQuantity } from '@/features/materiel/actions/updateItemQuantity';
 import { deleteDepartItem } from '@/features/materiel/actions/deleteDepartItem';
+import { queueOfflineAction } from '@/features/materiel/offline/departOfflineQueue';
 import type { ChecklistItem, Participant } from '@/features/materiel/types/trekHub';
 
 interface CategoryGroup {
@@ -221,22 +222,28 @@ export function DepartChecklist({
 
       if (!isRealKit || !item.id || item.id.startsWith('consumable-')) return;
 
+      if (typeof window !== 'undefined' && !navigator.onLine) {
+        queueOfflineAction({
+          type: 'toggle',
+          payload: { itemId: item.id, currentChecked: !nextChecked },
+        });
+        return;
+      }
+
       startTransition(async () => {
         try {
           const res = await toggleKitItem(item.id!, nextChecked);
           if (!res.success) {
-            setErrorItemId(itemKey);
-            setFailedItem(item);
-            setLocalItems((prev) =>
-              prev.map((i) => (i.id === item.id ? { ...i, is_checked: !nextChecked } : i))
-            );
+            queueOfflineAction({
+              type: 'toggle',
+              payload: { itemId: item.id, currentChecked: !nextChecked },
+            });
           }
         } catch {
-          setErrorItemId(itemKey);
-          setFailedItem(item);
-          setLocalItems((prev) =>
-            prev.map((i) => (i.id === item.id ? { ...i, is_checked: !nextChecked } : i))
-          );
+          queueOfflineAction({
+            type: 'toggle',
+            payload: { itemId: item.id, currentChecked: !nextChecked },
+          });
         }
       });
     },
@@ -253,14 +260,42 @@ export function DepartChecklist({
     );
 
     if (isRealKit && item.id && !item.id.startsWith('consumable-')) {
-      await updateItemQuantity(item.id, nextQty, kitId);
+      if (typeof window !== 'undefined' && !navigator.onLine) {
+        queueOfflineAction({
+          type: 'quantity',
+          payload: { itemId: item.id, quantity: nextQty, kitId },
+        });
+      } else {
+        try {
+          await updateItemQuantity(item.id, nextQty, kitId);
+        } catch {
+          queueOfflineAction({
+            type: 'quantity',
+            payload: { itemId: item.id, quantity: nextQty, kitId },
+          });
+        }
+      }
     }
   };
 
   const handleDelete = async (item: ChecklistItem) => {
     setLocalItems((prev) => prev.filter((i) => (i.id ?? i.name) !== (item.id ?? item.name)));
     if (isRealKit && item.id && !item.id.startsWith('consumable-')) {
-      await deleteDepartItem(item.id, kitId);
+      if (typeof window !== 'undefined' && !navigator.onLine) {
+        queueOfflineAction({
+          type: 'delete',
+          payload: { itemId: item.id, kitId },
+        });
+      } else {
+        try {
+          await deleteDepartItem(item.id, kitId);
+        } catch {
+          queueOfflineAction({
+            type: 'delete',
+            payload: { itemId: item.id, kitId },
+          });
+        }
+      }
     }
   };
 
@@ -283,14 +318,30 @@ export function DepartChecklist({
     setNewItemName('');
 
     if (isRealKit && kitId) {
-      await addDepartItem({
+      const payload = {
         kitId,
         name: newItem.name,
         category: newItem.category ?? 'Autre',
         weightG: newItem.weight_g,
         isVital: newItemVital,
         addToInventory: newItemAddToInv,
-      });
+      };
+
+      if (typeof window !== 'undefined' && !navigator.onLine) {
+        queueOfflineAction({
+          type: 'add',
+          payload,
+        });
+      } else {
+        try {
+          await addDepartItem(payload);
+        } catch {
+          queueOfflineAction({
+            type: 'add',
+            payload,
+          });
+        }
+      }
     }
   };
 
