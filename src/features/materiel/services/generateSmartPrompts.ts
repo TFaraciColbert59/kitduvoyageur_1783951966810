@@ -16,7 +16,7 @@ export interface ActionableAlert extends SmartPromptAlert {
 
 /**
  * Moteur d'analyse en temps réel pour générer les alertes tactiques (§4B).
- * Zéro alerte décorative : si 0 problème, retourne un tableau vide.
+ * Zéro fiction : alerte uniquement sur les réels manques d'équipement, météo ou sécurité.
  */
 export function generateSmartPrompts({
   items = [],
@@ -79,7 +79,7 @@ export function generateSmartPrompts({
     }
   }
 
-  // 2. Analyse du Matériel Vital non coché
+  // 2. Analyse du Matériel Vital non coché (Sévérité Critique)
   const uncheckedVital = items.filter(
     (i) =>
       !i.is_checked &&
@@ -99,12 +99,35 @@ export function generateSmartPrompts({
       message: `${names}${more} pas encore prêt(s) dans votre sac.`,
       targetSection: 'checklist',
       targetItemId: firstVital.id,
-      actionLabel: `Voir les ${uncheckedVital.length} items`,
+      actionLabel: `Voir les ${uncheckedVital.length} vitaux`,
       actionType: 'scroll_checklist',
     });
   }
 
-  // 3. Analyse du Contact d'Urgence ICE
+  // 3. Analyse des Autres Articles Restants (Sévérité Info)
+  const uncheckedOther = items.filter(
+    (i) => !i.is_checked && !uncheckedVital.some((v) => (v.id && v.id === i.id) || v.name === i.name)
+  );
+
+  if (uncheckedOther.length > 0 && uncheckedVital.length === 0) {
+    const firstOther = uncheckedOther[0];
+    const names = uncheckedOther.slice(0, 2).map((i) => i.name).join(', ');
+    const more = uncheckedOther.length > 2 ? ` (+${uncheckedOther.length - 2})` : '';
+
+    alerts.push({
+      id: 'alert-checklist-remaining',
+      category: 'checklist',
+      severity: 'info',
+      title: `${uncheckedOther.length} article(s) à finaliser dans le sac`,
+      message: `${names}${more} encore non coché(s).`,
+      targetSection: 'checklist',
+      targetItemId: firstOther.id,
+      actionLabel: 'Vérifier le sac',
+      actionType: 'scroll_checklist',
+    });
+  }
+
+  // 4. Analyse du Contact d'Urgence ICE
   if (!emergencyContact || emergencyContact.trim() === '' || emergencyContact.includes('00 00')) {
     alerts.push({
       id: 'alert-emergency-contact',
@@ -118,7 +141,7 @@ export function generateSmartPrompts({
     });
   }
 
-  // 4. Hydratation & Ravitaillement Eau
+  // 5. Hydratation & Ravitaillement Eau
   if (trailDistanceKm && trailDistanceKm > 20) {
     alerts.push({
       id: 'alert-water-trail',
@@ -126,7 +149,7 @@ export function generateSmartPrompts({
       severity: 'info',
       title: `Ravitaillement Eau (${trailDistanceKm.toFixed(0)} km)`,
       message: 'Parcours long : prévoyez 2.5L à 3L minimum et localisez les points d’eau.',
-      targetSection: 'consumables',
+      targetSection: 'checklist',
       actionLabel: 'Marquer comme prévu',
       actionType: 'mark_planned',
     });

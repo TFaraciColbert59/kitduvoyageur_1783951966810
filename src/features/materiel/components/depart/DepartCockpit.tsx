@@ -1,4 +1,4 @@
-﻿'use client';
+'use client';
 import React, { useState, useEffect } from 'react';
 import dynamic from 'next/dynamic';
 import { motion, AnimatePresence, useReducedMotion } from 'framer-motion';
@@ -157,7 +157,7 @@ export function DepartCockpit({ depart, weather, kits }: DepartCockpitProps) {
       )}
 
       {/* ════ NIVEAU 2 : CE QUI EMPÊCHE DE PARTIR ════ */}
-      {(showAll || activeSection === 'alerts') && smartAlerts.length > 0 && (
+      {((showAll && smartAlerts.length > 0) || activeSection === 'alerts') && (
         <section id="section-depart-alerts" aria-label="Niveau 2 : À régler avant le départ">
           <DepartAlerts input={alertInput} />
         </section>
