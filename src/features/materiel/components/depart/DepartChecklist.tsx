@@ -416,14 +416,14 @@ export function DepartChecklist({
   return (
     <GlassCard tone="neutral" as="article" ariaLabelledBy="depart-checklist-heading" className="relative">
       <div className="p-4 sm:p-5 space-y-3.5">
-        {/* ════ HEADER CHECKLIST SUR UNE SEULE LIGNE ÉLÉGANTE ════ */}
+        {/* ════ HEADER CHECKLIST SUR UNE SEULE LIGNE ÉLÉGANTE SANS TRONCATURE ════ */}
         <div className="flex items-center justify-between gap-2 pb-2 border-b border-black/5 dark:border-white/10">
-          <div className="flex items-center gap-2 min-w-0">
-            <Package size={15} className="text-[#2D6B4A] shrink-0" aria-hidden="true" />
-            <h2 id="depart-checklist-heading" className="text-xs sm:text-[13px] font-bold text-[#17402C] truncate whitespace-nowrap">
+          <div className="flex items-center gap-1.5 shrink-0">
+            <Package size={14} className="text-[#2D6B4A] shrink-0" aria-hidden="true" />
+            <h2 id="depart-checklist-heading" className="text-[12px] sm:text-[13px] font-bold text-[#17402C] whitespace-nowrap">
               Préparation active du sac
             </h2>
-            <span className="text-[10px] font-mono font-bold px-2 py-0.5 rounded-full bg-[#17402C]/10 text-[#17402C] shrink-0">
+            <span className="text-[9.5px] font-mono font-bold px-1.5 py-0.2 rounded-full bg-[#17402C]/10 text-[#17402C] shrink-0">
               {done}/{total}
             </span>
           </div>
