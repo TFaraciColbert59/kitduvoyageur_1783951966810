@@ -65,10 +65,10 @@ export default function PaysRightSidebar({
 
   return (
     <aside className="w-full shrink-0 h-full overflow-y-auto custom-scrollbar flex flex-col gap-3 pb-6 font-sans">
-      {/* 1. GLOBE 3D CONTAINER & REPÈRES (Zéro titre) */}
-      <div className="glass p-3 space-y-2 rounded-2xl border border-white/70 shadow-xs text-[#17402C]">
+      {/* 1. GLOBE 3D AMÉLIORÉ & REPÈRES (Zéro titre, affichage plein & centré) */}
+      <div className="glass p-3 space-y-2.5 rounded-2xl border border-white/70 shadow-xs text-[#17402C]">
         {/* Globe Container */}
-        <div className="w-full h-36 rounded-xl overflow-hidden relative bg-[#17402C]/5 border border-white/60 shadow-2xs">
+        <div className="w-full h-44 sm:h-48 rounded-xl overflow-hidden relative bg-[#17402C]/5 border border-white/60 shadow-2xs flex items-center justify-center">
           <CountryGlobe
             countries={ALL_COUNTRIES}
             onCountryClick={onCountryGlobeClick || (() => {})}
@@ -78,39 +78,37 @@ export default function PaysRightSidebar({
           />
         </div>
 
-        <div className="grid grid-cols-2 gap-1.5 text-[9.5px] font-mono">
-          <div className="p-2 rounded-xl bg-white/75 border border-white/60 shadow-2xs space-y-0.5">
-            <span className="text-[#5A7064] block text-[8px] font-semibold uppercase">Région</span>
-            <span className="font-bold text-[#17402C] truncate block">{country.region || country.continent}</span>
+        {/* Repères Région & Fuseau sans coupure */}
+        <div className="grid grid-cols-2 gap-2 text-[10px] font-mono">
+          <div className="p-2.5 rounded-xl bg-white/80 border border-white/60 shadow-2xs space-y-0.5 min-w-0">
+            <span className="text-[#5A7064] block text-[8.5px] font-semibold uppercase tracking-wider">Région</span>
+            <span className="font-bold text-[#17402C] text-[11px] block leading-tight break-words">{country.region || country.continent}</span>
           </div>
-          <div className="p-2 rounded-xl bg-white/75 border border-white/60 shadow-2xs space-y-0.5">
-            <span className="text-[#5A7064] block text-[8px] font-semibold uppercase">Fuseau</span>
-            <span className="font-bold text-[#17402C] truncate block">{country.fuseau}</span>
+          <div className="p-2.5 rounded-xl bg-white/80 border border-white/60 shadow-2xs space-y-0.5 min-w-0">
+            <span className="text-[#5A7064] block text-[8.5px] font-semibold uppercase tracking-wider">Fuseau</span>
+            <span className="font-bold text-[#17402C] text-[11px] block leading-tight break-words">{country.fuseau}</span>
           </div>
         </div>
       </div>
 
-      {/* 2. ÉLÉMENTS DE TERRAIN (Zéro titre) */}
-      <div className="glass p-3 rounded-2xl border border-white/70 shadow-xs text-[#17402C]">
-        <div className="space-y-1.5">
-          {quickMetrics.map((m, idx) => (
-            <div
-              key={idx}
-              className="p-2 rounded-xl bg-white/75 border border-white/50 shadow-2xs space-y-0.5"
-            >
-              <div className="flex items-center gap-1.5 text-[#5A7064] text-[9.5px] font-semibold uppercase tracking-wider">
-                <span className="text-xs">{m.icon}</span>
-                <span>{m.label}</span>
-              </div>
-              <div className="font-bold text-[#17402C] text-xs leading-snug break-words">
-                {m.val}
-              </div>
-            </div>
-          ))}
-        </div>
+      {/* 2. ÉLÉMENTS DE TERRAIN (Zéro icône, zéro sous-titre uppercase) */}
+      <div className="glass p-3 space-y-1.5 rounded-2xl border border-white/70 shadow-xs text-[#17402C]">
+        {quickMetrics.map((m, idx) => (
+          <div
+            key={idx}
+            className="p-2.5 rounded-xl bg-white/80 border border-white/60 shadow-2xs flex items-center justify-between gap-3 text-xs"
+          >
+            <span className="text-[#5A7064] text-[11px] font-semibold shrink-0">
+              {m.label}
+            </span>
+            <span className="font-bold text-[#17402C] text-[11.5px] text-right break-words leading-tight">
+              {m.val}
+            </span>
+          </div>
+        ))}
       </div>
 
-      {/* 3. SOURCES DOCUMENTAIRES OFFICIELLES (Zéro titre) */}
+      {/* 3. SOURCES DOCUMENTAIRES OFFICIELLES */}
       {country.sources_list && country.sources_list.length > 0 && (
         <div className="glass p-3 rounded-2xl border border-white/70 shadow-xs text-[#17402C]">
           <div className="flex flex-wrap gap-1.5">
@@ -129,24 +127,6 @@ export default function PaysRightSidebar({
           </div>
         </div>
       )}
-
-      {/* 4. COMMUNAUTÉ & CARNETS (Zéro titre) */}
-      <div className="glass p-3 rounded-2xl border border-white/70 shadow-xs text-[#17402C]">
-        <div className="p-2.5 rounded-xl bg-white/70 border border-white/60 space-y-1.5 shadow-2xs">
-          <p className="text-xs font-bold text-[#17402C]">
-            Échanger avec les voyageurs
-          </p>
-          <p className="text-[10px] text-[#5A7064] leading-relaxed">
-            Consultez les carnets récents et les retours d'expérience sur {country.nom}.
-          </p>
-          <Link
-            href={`/groupes?country=${country.code}`}
-            className="w-full glass-capsule-btn primary !py-1.5 text-[10.5px] font-bold flex items-center justify-center gap-1 mt-1"
-          >
-            <span>Voir les groupes actifs</span>
-          </Link>
-        </div>
-      </div>
     </aside>
   );
 }

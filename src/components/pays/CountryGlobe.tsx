@@ -153,7 +153,7 @@ export default function CountryGlobe({
     }
     if (!focusCode) return;
     const coords = getCountryCoordinates(focusCode);
-    if (coords && typeof globeRef.current.pointOfView === 'function') globeRef.current.pointOfView({ lat: coords.lat, lng: coords.lng, altitude: 1.5 }, 1000);
+    if (coords && typeof globeRef.current.pointOfView === 'function') globeRef.current.pointOfView({ lat: coords.lat, lng: coords.lng, altitude: 1.95 }, 1000);
   }, [isGlobeReady, focusCode, focusPoint]);
 
   // ── Fusion GeoJSON × nos données (résolution ISO robuste) ──
