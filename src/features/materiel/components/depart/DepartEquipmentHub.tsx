@@ -754,9 +754,9 @@ export function DepartEquipmentHub({
           </div>
         </div>
 
-        {/* ── COLONNE CHECKLIST DU SAC (Span 4) ── */}
-        <div className={cn('space-y-3 w-full min-w-[340px] xl:min-w-[380px]', mobileTab === 'catalog' ? 'hidden md:block lg:col-span-5 xl:col-span-5 2xl:col-span-4' : 'lg:col-span-5 xl:col-span-5 2xl:col-span-4')}>
-          <div className="sticky top-1 space-y-2 max-h-[calc(100vh-130px)] overflow-y-auto no-scrollbar pr-0.5">
+        {/* ── COLONNE CHECKLIST DU SAC (Span 4 / Card Fixe & Scroll Interne) ── */}
+        <div className={cn('w-full min-w-[340px] xl:min-w-[380px] h-[calc(100vh-100px)] max-h-[calc(100vh-100px)] sticky top-1 flex flex-col min-h-0', mobileTab === 'catalog' ? 'hidden md:flex lg:col-span-5 xl:col-span-5 2xl:col-span-4' : 'lg:col-span-5 xl:col-span-5 2xl:col-span-4 flex flex-col')}>
+          <div className="h-full max-h-full min-h-0 flex flex-col">
             <div className="flex items-center justify-between px-1.5">
               <span className="text-xs font-bold uppercase tracking-wider text-[#5A7064] flex items-center gap-1.5">
                 <CheckSquare size={14} className="text-[#2D6B4A]" />

@@ -414,10 +414,10 @@ export function DepartChecklist({
   const remaining = total - done;
 
   return (
-    <GlassCard tone="neutral" as="article" ariaLabelledBy="depart-checklist-heading" className="relative">
-      <div className="p-4 sm:p-5 space-y-3.5">
-        {/* ════ HEADER CHECKLIST SUR UNE SEULE LIGNE ÉLÉGANTE SANS TRONCATURE ════ */}
-        <div className="flex items-center justify-between gap-2 pb-2 border-b border-black/5 dark:border-white/10">
+    <GlassCard tone="neutral" as="article" ariaLabelledBy="depart-checklist-heading" className="relative h-full max-h-full flex flex-col justify-between overflow-hidden select-none">
+      <div className="p-3.5 flex flex-col h-full max-h-full min-h-0 justify-between gap-2">
+        {/* ════ HEADER CHECKLIST FIXE IMMOBILE SUR UNE SEULE LIGNE ════ */}
+        <div className="shrink-0 flex items-center justify-between gap-2 pb-2 border-b border-black/5 dark:border-white/10">
           <div className="flex items-center gap-1.5 shrink-0">
             <Package size={14} className="text-[#2D6B4A] shrink-0" aria-hidden="true" />
             <h2 id="depart-checklist-heading" className="text-[12px] sm:text-[13px] font-bold text-[#17402C] whitespace-nowrap">
@@ -501,8 +501,8 @@ export function DepartChecklist({
           </div>
         )}
 
-        {/* ════ GROUPES PAR CATÉGORIE ════ */}
-        <div className="space-y-1.5" role="list" aria-label="Catégories du matériel">
+        {/* ════ GROUPES PAR CATÉGORIE (SEUL CET INTÉRIEUR EST SCROLLABLE) ════ */}
+        <div className="flex-1 min-h-0 overflow-y-auto no-scrollbar space-y-1.5 pr-0.5" role="list" aria-label="Catégories du matériel">
           {groups.map((group) => {
             const isOpen = openCats.has(group.name);
             const allDone = group.done === group.items.length;
