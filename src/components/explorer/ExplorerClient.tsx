@@ -515,7 +515,7 @@ export default function ExplorerClient({ initialTrails }: ExplorerClientProps) {
         />
       </div>
 
-      {/* ── 2B. BOUTON FLOTTANT DYNAMIQUE : « RECHERCHER DANS CETTE ZONE » (STYLE LIQUID GLASS, SANS TEXTE) ── */}
+      {/* ── 2B. BOUTON FLOTTANT DYNAMIQUE : « RECHERCHER DANS CETTE ZONE » (STYLE GLASS-CIRCLE-BTN) ── */}
       <AnimatePresence>
         {showSearchHereButton && (
           <motion.div
@@ -525,29 +525,18 @@ export default function ExplorerClient({ initialTrails }: ExplorerClientProps) {
             transition={{ type: 'spring', stiffness: 500, damping: 30 }}
             className="fixed top-[72px] sm:top-[76px] left-1/2 -translate-x-1/2 z-[850] pointer-events-auto"
           >
-            <div
-              className="p-1 rounded-2xl flex items-center justify-center"
-              style={{
-                background: 'linear-gradient(180deg, rgba(255, 255, 255, 0.55) 0%, rgba(255, 255, 255, 0.28) 100%)',
-                backdropFilter: 'blur(20px) saturate(180%)',
-                WebkitBackdropFilter: 'blur(20px) saturate(180%)',
-                border: '1px solid rgba(255, 255, 255, 0.70)',
-                boxShadow: '0 8px 32px -4px rgba(23, 64, 44, 0.14), inset 0 1px 1.5px rgba(255, 255, 255, 0.95)',
-              }}
+            <button
+              type="button"
+              onClick={handleSearchHere}
+              className="glass-circle-btn w-9 h-9 shadow-md"
+              title="Rechercher les randonnées dans cette zone"
+              aria-label="Rechercher les randonnées dans cette zone"
             >
-              <button
-                type="button"
-                onClick={handleSearchHere}
-                className="h-8 w-8 rounded-xl bg-[#5B7F55]/15 text-[#5B7F55] hover:bg-[#17402C] hover:text-white flex items-center justify-center transition-all cursor-pointer active:scale-95 group"
-                title="Rechercher les randonnées dans cette zone"
-                aria-label="Rechercher les randonnées dans cette zone"
-              >
-                <RotateCcw
-                  size={15}
-                  className={`transition-transform duration-500 ${trailsFetching ? 'animate-spin' : 'group-hover:-rotate-90'}`}
-                />
-              </button>
-            </div>
+              <RotateCcw
+                size={15}
+                className={`transition-transform duration-500 ${trailsFetching ? 'animate-spin' : 'hover:-rotate-90'}`}
+              />
+            </button>
           </motion.div>
         )}
       </AnimatePresence>
@@ -566,14 +555,15 @@ export default function ExplorerClient({ initialTrails }: ExplorerClientProps) {
               onClick={() => setFiltersOpen(true)}
               className="pointer-events-auto p-2.5 rounded-l-2xl glass cursor-pointer transition-all active:scale-95 group relative flex items-center justify-center"
               style={{
-                background: 'linear-gradient(180deg, rgba(255, 255, 255, 0.50) 0%, rgba(255, 255, 255, 0.25) 100%)',
+                background: 'linear-gradient(180deg, rgba(255, 255, 255, 0.70) 0%, rgba(251, 250, 246, 0.40) 100%)',
                 backdropFilter: 'blur(20px) saturate(180%)',
                 WebkitBackdropFilter: 'blur(20px) saturate(180%)',
-                border: '1px solid rgba(255, 255, 255, 0.70)',
-                boxShadow: '-4px 8px 24px -4px rgba(23, 64, 44, 0.14), inset 0 1px 1.5px rgba(255, 255, 255, 0.95)',
+                border: '1px solid rgba(255, 255, 255, 0.80)',
+                borderRight: 'none',
+                boxShadow: '0 8px 32px -4px rgba(23, 64, 44, 0.12), inset 0 1px 1.5px rgba(255, 255, 255, 0.95)',
               }}
-              title="Filtres d'exploration"
-              aria-label="Filtres d'exploration"
+              title="Ouvrir les filtres"
+              aria-label="Ouvrir les filtres"
             >
               <div className="w-8 h-8 rounded-xl bg-[#5B7F55]/15 text-[#5B7F55] group-hover:bg-[#17402C] group-hover:text-white flex items-center justify-center transition-colors">
                 <SlidersHorizontal size={16} />
@@ -803,18 +793,18 @@ export default function ExplorerClient({ initialTrails }: ExplorerClientProps) {
                   )}
                 </div>
 
-                <div className="flex gap-2 pt-1 border-t border-white/30">
+                <div className="flex items-center gap-2 pt-1 border-t border-white/30">
                   <button
                     type="button"
                     onClick={() => router.push(`/preparer-randonnee?routeId=${selectedTrail.id}`)}
-                    className="flex-1 h-8 rounded-xl bg-gradient-to-b from-[#17402C] to-[#365233] text-white text-xs font-bold flex items-center justify-center border border-white/20 shadow-[inset_0_1px_1px_rgba(255,255,255,0.4),0_2px_8px_rgba(23,64,44,0.18)] hover:brightness-110 active:opacity-85 transition-all cursor-pointer"
+                    className="glass-capsule-btn primary flex-1 !min-h-[32px] text-xs font-bold shadow-xs active:scale-[0.97] transition-all cursor-pointer"
                   >
                     <span>Préparer</span>
                   </button>
                   <button
                     type="button"
                     onClick={() => setDetailPanelOpen(true)}
-                    className="h-8 px-3 rounded-xl bg-[#FBFAF6] hover:bg-white text-[#17402C] border border-white/60 flex items-center justify-center transition-colors cursor-pointer active:scale-95 shadow-2xs"
+                    className="glass-circle-btn w-8.5 h-8.5 shrink-0 active:scale-[0.97] transition-all cursor-pointer"
                     title="Voir la fiche complète"
                     aria-label="Voir la fiche complète"
                   >

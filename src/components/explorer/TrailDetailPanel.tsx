@@ -158,14 +158,8 @@ export default function TrailDetailPanel({ trail, onClose }: Props) {
           {/* Top Actions — Refined Apple Glass Pills */}
           <div className="absolute top-3.5 left-3.5 right-3.5 flex items-center justify-between z-10">
             <span
-              className="rounded-full px-3 py-1 text-[11px] font-bold shadow-xs"
-              style={{
-                background: 'rgba(255, 255, 255, 0.50)',
-                backdropFilter: 'blur(16px)',
-                WebkitBackdropFilter: 'blur(16px)',
-                border: '1px solid rgba(255, 255, 255, 0.65)',
-                color: diffColor,
-              }}
+              className="glass-capsule-btn text-[11px] font-bold !py-1 !px-3"
+              style={{ color: diffColor }}
             >
               {diffLabel}
             </span>
@@ -174,13 +168,7 @@ export default function TrailDetailPanel({ trail, onClose }: Props) {
               <button
                 type="button"
                 onClick={handleShare}
-                className="w-9 h-9 rounded-full flex items-center justify-center text-[#17402C] transition-all active:scale-90 hover:bg-white/80 cursor-pointer shadow-xs"
-                style={{
-                  background: 'rgba(255, 255, 255, 0.45)',
-                  backdropFilter: 'blur(16px)',
-                  WebkitBackdropFilter: 'blur(16px)',
-                  border: '1px solid rgba(255, 255, 255, 0.65)',
-                }}
+                className="glass-circle-btn w-9 h-9"
                 aria-label="Partager le sentier"
                 title="Partager"
               >
@@ -189,13 +177,7 @@ export default function TrailDetailPanel({ trail, onClose }: Props) {
               <button
                 type="button"
                 onClick={onClose}
-                className="w-9 h-9 rounded-full flex items-center justify-center text-[#17402C] transition-all active:scale-90 hover:bg-white/80 cursor-pointer shadow-xs"
-                style={{
-                  background: 'rgba(255, 255, 255, 0.45)',
-                  backdropFilter: 'blur(16px)',
-                  WebkitBackdropFilter: 'blur(16px)',
-                  border: '1px solid rgba(255, 255, 255, 0.65)',
-                }}
+                className="glass-circle-btn w-9 h-9"
                 aria-label="Fermer la fiche détaillée"
                 title="Fermer"
               >
@@ -333,11 +315,11 @@ export default function TrailDetailPanel({ trail, onClose }: Props) {
             <button
               type="button"
               onClick={handleOfflineToggle}
-              className={`h-8 px-3.5 rounded-xl text-xs font-bold transition-all cursor-pointer active:scale-95 shrink-0 ${
+              className={
                 isOfflineAvailable
-                  ? 'bg-rose-50/80 text-rose-700 border border-rose-200/80 hover:bg-rose-100'
-                  : 'bg-white/60 hover:bg-white/90 text-[#17402C] border border-white/70 shadow-2xs backdrop-blur-md'
-              }`}
+                  ? 'h-8 px-3.5 rounded-full text-xs font-bold bg-rose-50/90 text-rose-700 border border-rose-200 cursor-pointer active:scale-95 shrink-0 transition-all'
+                  : 'glass-capsule-btn text-xs font-bold !py-1.5 !px-3.5 shrink-0'
+              }
             >
               {isOfflineAvailable ? 'Supprimer' : 'Télécharger'}
             </button>
@@ -360,7 +342,7 @@ export default function TrailDetailPanel({ trail, onClose }: Props) {
             onClick={() => {
               router.push(`/preparer-randonnee?routeId=${trail.id}`);
             }}
-            className="flex-1 h-12 rounded-2xl bg-white/75 hover:bg-white text-[#17402C] font-bold text-xs sm:text-sm flex items-center justify-center border border-white/80 backdrop-blur-xl shadow-xs active:scale-[0.98] transition-all cursor-pointer"
+            className="flex-1 h-12 glass-capsule-btn text-xs sm:text-sm font-bold shadow-xs active:scale-[0.98] transition-all cursor-pointer"
           >
             <span>Préparer le matériel</span>
           </button>
@@ -370,7 +352,7 @@ export default function TrailDetailPanel({ trail, onClose }: Props) {
             onClick={() => {
               router.push(`/randonnee-active?routeId=${trail.id}`);
             }}
-            className="flex-1 h-12 rounded-2xl bg-[#17402C] hover:bg-[#0B1F17] text-white font-bold text-xs sm:text-sm flex items-center justify-center shadow-[0_4px_16px_rgba(23,64,44,0.28),inset_0_1px_1px_rgba(255,255,255,0.4)] active:scale-[0.98] transition-all cursor-pointer"
+            className="flex-1 h-12 glass-capsule-btn primary text-xs sm:text-sm font-bold shadow-md active:scale-[0.98] transition-all cursor-pointer"
           >
             <span>Commencer tout de suite</span>
           </button>

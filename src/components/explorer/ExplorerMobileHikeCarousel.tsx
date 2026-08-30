@@ -68,15 +68,7 @@ export default function ExplorerMobileHikeCarousel({
     >
       {/* ── TOP FLOATING PILL (Mode Switch & Counter) ── */}
       <div className="flex items-center justify-between px-3.5 mb-1.5 pointer-events-auto">
-        <div
-          className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full shadow-xs text-xs font-bold text-[#17402C]"
-          style={{
-            background: 'linear-gradient(180deg, rgba(255, 255, 255, 0.55) 0%, rgba(251, 250, 246, 0.35) 100%)',
-            backdropFilter: 'blur(16px) saturate(180%)',
-            WebkitBackdropFilter: 'blur(16px) saturate(180%)',
-            border: '1px solid rgba(255, 255, 255, 0.70)',
-          }}
-        >
+        <div className="glass-capsule-btn text-xs font-bold !py-1 !px-3">
           <MapPin size={12} className="text-[#17402C]" />
           <span>{count} randonnées</span>
         </div>
@@ -84,13 +76,7 @@ export default function ExplorerMobileHikeCarousel({
         <button
           type="button"
           onClick={toggleViewMode}
-          className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full shadow-xs text-xs font-bold text-[#17402C] active:scale-95 transition-all cursor-pointer"
-          style={{
-            background: 'linear-gradient(180deg, rgba(255, 255, 255, 0.55) 0%, rgba(251, 250, 246, 0.35) 100%)',
-            backdropFilter: 'blur(16px) saturate(180%)',
-            WebkitBackdropFilter: 'blur(16px) saturate(180%)',
-            border: '1px solid rgba(255, 255, 255, 0.70)',
-          }}
+          className="glass-capsule-btn text-xs font-bold !py-1 !px-3 active:scale-95 transition-all cursor-pointer"
         >
           {viewMode === 'carousel' ? (
             <>
@@ -200,7 +186,7 @@ export default function ExplorerMobileHikeCarousel({
                         triggerHaptic('light');
                         router.push(`/preparer-randonnee?routeId=${trail.id}`);
                       }}
-                      className="flex-1 h-8.5 rounded-xl bg-[#17402C] text-white text-xs font-bold flex items-center justify-center hover:brightness-110 active:scale-[0.97] transition-transform cursor-pointer shadow-xs"
+                      className="glass-capsule-btn primary flex-1 !min-h-[32px] text-xs font-bold shadow-xs active:scale-[0.97] transition-all cursor-pointer"
                     >
                       <span>Préparer</span>
                     </button>
@@ -212,7 +198,7 @@ export default function ExplorerMobileHikeCarousel({
                         triggerHaptic('light');
                         onOpenDetail(trail);
                       }}
-                      className="h-8.5 w-9 rounded-xl bg-white/90 hover:bg-white text-[#17402C] border border-white/80 active:scale-[0.97] transition-transform cursor-pointer shadow-xs flex items-center justify-center"
+                      className="glass-circle-btn w-8.5 h-8.5 shrink-0 active:scale-[0.97] transition-all cursor-pointer"
                       title="Voir la fiche complète"
                       aria-label="Voir la fiche complète"
                     >

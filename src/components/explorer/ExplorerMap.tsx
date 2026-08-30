@@ -528,39 +528,31 @@ export default function ExplorerMap({
       {/* Floating Controls Cluster: En haut à droite sur mobile, en bas à droite sur desktop */}
       <div className="absolute z-[400] pointer-events-auto right-3.5 top-[calc(env(safe-area-inset-top,0px)+74px)] md:top-auto md:right-4 md:bottom-6 flex flex-col items-end gap-2">
         {/* Floating Zoom & GPS Controls (+ / − / GPS) */}
-        <div
-          className="flex flex-col gap-1 p-1 rounded-2xl"
-          style={{
-            background: 'linear-gradient(180deg, rgba(255, 255, 255, 0.50) 0%, rgba(255, 255, 255, 0.25) 100%)',
-            backdropFilter: 'blur(20px) saturate(180%)',
-            WebkitBackdropFilter: 'blur(20px) saturate(180%)',
-            border: '1px solid rgba(255, 255, 255, 0.70)',
-            boxShadow: '0 8px 32px -4px rgba(23, 64, 44, 0.12), inset 0 1px 1.5px rgba(255, 255, 255, 0.95)',
-          }}
-        >
+        <div className="flex flex-col gap-1.5 items-center">
           <button
+            type="button"
             onClick={handleZoomIn}
             title="Zoom avant"
             aria-label="Zoom avant"
-            className="h-8 w-8 rounded-xl flex items-center justify-center text-[#17402C] font-bold text-base hover:bg-white/80 transition-all cursor-pointer active:scale-95"
+            className="glass-circle-btn w-8.5 h-8.5 font-bold text-sm"
           >
             +
           </button>
-          <div className="w-4 h-[1px] bg-[#17402C]/10 self-center" />
           <button
+            type="button"
             onClick={handleZoomOut}
             title="Zoom arrière"
             aria-label="Zoom arrière"
-            className="h-8 w-8 rounded-xl flex items-center justify-center text-[#17402C] font-bold text-base hover:bg-white/80 transition-all cursor-pointer active:scale-95"
+            className="glass-circle-btn w-8.5 h-8.5 font-bold text-sm"
           >
             −
           </button>
-          <div className="w-4 h-[1px] bg-[#17402C]/10 self-center" />
           <button
+            type="button"
             onClick={handleRecenter}
             title="Recentrer sur ma position"
             aria-label="Recentrer sur ma position"
-            className="h-8 w-8 rounded-xl flex items-center justify-center text-[#17402C] hover:bg-white/80 transition-all cursor-pointer active:scale-95"
+            className="glass-circle-btn w-8.5 h-8.5"
           >
             <svg width="14" height="14" fill="none" stroke="currentColor" strokeWidth="2.2" viewBox="0 0 24 24">
               <circle cx="12" cy="12" r="3" />
@@ -571,23 +563,24 @@ export default function ExplorerMap({
 
         {/* Tile switcher (Carte / Relief / Satellite) — Liquid Glass (Icônes seules) */}
         <div
-          className="flex items-center gap-1 p-1 rounded-2xl"
+          className="flex items-center gap-1 p-1 rounded-full"
           style={{
-            background: 'linear-gradient(180deg, rgba(255, 255, 255, 0.50) 0%, rgba(255, 255, 255, 0.25) 100%)',
+            background: 'linear-gradient(180deg, rgba(255, 255, 255, 0.65) 0%, rgba(251, 250, 246, 0.40) 100%)',
             backdropFilter: 'blur(20px) saturate(180%)',
             WebkitBackdropFilter: 'blur(20px) saturate(180%)',
-            border: '1px solid rgba(255, 255, 255, 0.70)',
+            border: '1px solid rgba(255, 255, 255, 0.75)',
             boxShadow: '0 8px 32px -4px rgba(23, 64, 44, 0.12), inset 0 1px 1.5px rgba(255, 255, 255, 0.95)',
           }}
         >
           <button
+            type="button"
             onClick={() => handleTileChange('osm')}
             title="Carte standard (Plan)"
             aria-label="Carte standard (Plan)"
-            className={`h-8 w-8 rounded-xl flex items-center justify-center transition-all cursor-pointer active:scale-95 ${
+            className={`w-8 h-8 rounded-full flex items-center justify-center transition-all cursor-pointer active:scale-95 ${
               tileMode === 'osm'
                 ? 'bg-[#17402C] text-white shadow-xs'
-                : 'text-[#17402C] hover:bg-white/60'
+                : 'text-[#17402C] hover:bg-white/70'
             }`}
           >
             <svg width="14" height="14" fill="none" stroke="currentColor" strokeWidth="2.2" viewBox="0 0 24 24">
@@ -597,13 +590,14 @@ export default function ExplorerMap({
             </svg>
           </button>
           <button
+            type="button"
             onClick={() => handleTileChange('topo')}
             title="Relief / Topographie"
             aria-label="Relief / Topographie"
-            className={`h-8 w-8 rounded-xl flex items-center justify-center transition-all cursor-pointer active:scale-95 ${
+            className={`w-8 h-8 rounded-full flex items-center justify-center transition-all cursor-pointer active:scale-95 ${
               tileMode === 'topo'
                 ? 'bg-[#17402C] text-white shadow-xs'
-                : 'text-[#17402C] hover:bg-white/60'
+                : 'text-[#17402C] hover:bg-white/70'
             }`}
           >
             <svg width="14" height="14" fill="none" stroke="currentColor" strokeWidth="2.2" viewBox="0 0 24 24">
@@ -611,19 +605,20 @@ export default function ExplorerMap({
             </svg>
           </button>
           <button
+            type="button"
             onClick={() => handleTileChange('satellite')}
             title="Vue Satellite"
             aria-label="Vue Satellite"
-            className={`h-8 w-8 rounded-xl flex items-center justify-center transition-all cursor-pointer active:scale-95 ${
+            className={`w-8 h-8 rounded-full flex items-center justify-center transition-all cursor-pointer active:scale-95 ${
               tileMode === 'satellite'
                 ? 'bg-[#17402C] text-white shadow-xs'
-                : 'text-[#17402C] hover:bg-white/60'
+                : 'text-[#17402C] hover:bg-white/70'
             }`}
           >
             <svg width="14" height="14" fill="none" stroke="currentColor" strokeWidth="2.2" viewBox="0 0 24 24">
               <circle cx="12" cy="12" r="10"></circle>
-              <path d="M12 2a14.5 14.5 0 0 0 0 20 14.5 14.5 0 0 0 0-20"></path>
-              <path d="M2 12h20"></path>
+              <line x1="2" y1="12" x2="22" y2="12"></line>
+              <path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"></path>
             </svg>
           </button>
         </div>
