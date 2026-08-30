@@ -157,6 +157,8 @@ export default function ComptePage() {
 
       {/* Mobile-only app-like view */}
       <div className="block md:hidden min-h-screen">
+        {/* safeTop=false: MobileCompteV2 embarque son propre header sticky (MobileCompteV2.tsx:460)
+            qui calcule pt-[calc(max(env(safe-area-inset-top,0px),10px)+6px)] */}
         <MobilePageShell safeTop={false} background="transparent">
           <MobileCompteV2 />
         </MobilePageShell>

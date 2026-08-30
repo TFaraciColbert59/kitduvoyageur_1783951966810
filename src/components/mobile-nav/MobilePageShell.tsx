@@ -15,8 +15,11 @@ interface MobilePageShellProps {
    */
   videoBackground?: boolean;
   /**
-   * Appliquer la safe area top pour éviter le chevauchement avec Dynamic Island / Notch / Status Bar.
-   * Désactiver uniquement si la page embarque son propre header sticky avec safe area.
+   * Appliquer le padding-top safe-area (Dynamic Island / Notch / Status Bar).
+   * ⚠ Mettre à `false` UNIQUEMENT si la page embarque son propre header sticky
+   * qui gère déjà `env(safe-area-inset-top)` — et toujours ajouter un commentaire
+   * JSX juste avant l'usage expliquant quel composant le gère et à quelle ligne.
+   * Ne jamais mettre `false` sans raison documentée.
    */
   safeTop?: boolean;
   /**

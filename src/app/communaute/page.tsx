@@ -198,6 +198,8 @@ function CommunautePageContent() {
           1. VERSION MOBILE (block md:hidden)
          ══════════════════════════════════════════════════════════════════════ */}
       <div className="block md:hidden min-h-screen">
+        {/* safeTop=false: MobileCommunityHeader embarque son propre header sticky (MobileCommunityHeader.tsx:24)
+            qui calcule pt-[calc(max(env(safe-area-inset-top,0px),10px)+6px)] */}
         <MobilePageShell videoBackground={true} safeTop={false}>
           <MobileCommunityHub
             posts={posts}

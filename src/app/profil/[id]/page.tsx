@@ -201,6 +201,8 @@ export default function PublicProfilePage() {
 
       {/* MOBILE */}
       <div className="block md:hidden">
+        {/* safeTop=false: PublicMobileProfileView embarque son propre header sticky (PublicMobileProfileView.tsx:67)
+            qui calcule pt-[max(10px,env(safe-area-inset-top))] */}
         <MobilePageShell safeTop={false} background="transparent">
           <PublicMobileProfileView
             profile={profile as any}

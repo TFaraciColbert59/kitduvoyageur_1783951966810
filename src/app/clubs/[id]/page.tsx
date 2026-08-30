@@ -789,6 +789,8 @@ export default function ClubDetailPage() {
 
       {/* ── MOBILE ── */}
       <div className="block md:hidden">
+        {/* safeTop=false: MobileClubDetailView embarque son propre header sticky (MobileClubDetailView.tsx:89)
+            qui calcule top-[calc(max(env(safe-area-inset-top,0px),12px)+6px)] */}
         <MobilePageShell safeTop={false} videoBackground={false} background="#FAF8F5">
           <MobileClubDetailView
             club={club}
