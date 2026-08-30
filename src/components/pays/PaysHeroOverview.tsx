@@ -57,13 +57,17 @@ export default function PaysHeroOverview({
                     {country.nom_en}
                   </span>
                 )}
+                {country.slogan && country.slogan !== 'nature & sentiers' && (
                 <span className="font-serif italic font-normal text-[#8C6418] text-xl sm:text-2xl">
                   — {country.slogan}
                 </span>
+                )}
               </div>
+              {country.subtitle_is_custom && (
               <p className="font-serif italic text-[#5A7064] text-base sm:text-lg mt-2 leading-relaxed">
                 {country.subtitle}
               </p>
+              )}
             </div>
 
             {/* Actions */}
@@ -129,7 +133,11 @@ export default function PaysHeroOverview({
       {/* 3. PRÉSENTATION & CITATION */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
         {/* Left text presentation (7 cols) */}
-        <div className="lg:col-span-7 glass rounded-[1.5rem] p-6 space-y-4 border border-white/50 shadow-sm">
+        <div className={`${
+          country.points_interet_carte && country.points_interet_carte.length > 0
+            ? 'lg:col-span-7'
+            : 'lg:col-span-12'
+        } glass rounded-[1.5rem] p-6 space-y-4 border border-white/50 shadow-sm`}>
           <div>
             <span className="text-[10px] font-mono font-bold uppercase tracking-widest text-[#5B7F55] block mb-1">
               Édition LKDV
@@ -160,7 +168,8 @@ export default function PaysHeroOverview({
         </div>
 
         {/* Right Map Vector Repères (5 cols) */}
-        <div className="lg:col-span-5 glass rounded-[1.5rem] p-6 space-y-4 border border-white/50 shadow-sm">
+        {country.points_interet_carte && country.points_interet_carte.length > 0 && (
+        <div className={`lg:col-span-5 glass rounded-[1.5rem] p-6 space-y-4 border border-white/50 shadow-sm`}>
           <div>
             <span className="text-[10px] font-mono font-bold uppercase tracking-widest text-[#5B7F55] block mb-1">
               Géographie
@@ -208,16 +217,18 @@ export default function PaysHeroOverview({
             <span>Échelle : {country.carte_echelle}</span>
           </div>
         </div>
+        )}
       </div>
 
       {/* 4. HIGHLIGHTS / POINTS FORTS */}
+      {country.highlights && country.highlights.length > 0 && (
       <div className="space-y-3">
         <h3 className="font-display font-bold text-lg text-[#17402C]">
           Points forts <span className="font-serif italic font-normal text-[#5B7F55]">du voyage</span>
         </h3>
 
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-          {country.highlights?.map((h, i) => (
+          {country.highlights.map((h, i) => (
             <div key={i} className="glass rounded-[1.25rem] p-4 space-y-2 border border-white/50 shadow-xs hover:border-[#5B7F55]/30 transition-colors">
               <div className="w-8 h-8 rounded-xl bg-[#5B7F55]/15 text-[#5B7F55] flex items-center justify-center">
                 <Icon name="SparklesIcon" size={16} />
@@ -232,6 +243,7 @@ export default function PaysHeroOverview({
           ))}
         </div>
       </div>
+      )}
     </div>
   );
 }
