@@ -299,7 +299,8 @@ export default function ExplorerMap({
         if (validPos && mapRef.current) {
           setLocationState('located');
           onLocationUpdate?.(validPos);
-          if (mapRef.current && (mapRef.current as any)._loaded) {
+          // Only fly on startup if the user hasn't already started panning or dragging
+          if (!isUserPanned && !userDraggingRef.current && mapRef.current && (mapRef.current as any)._loaded) {
             try {
               mapRef.current.flyTo(validPos, 14, { duration: 1.2 });
             } catch (err) {
@@ -310,17 +311,10 @@ export default function ExplorerMap({
       },
       () => {
         setLocationState('denied');
-        if (mapRef.current && (mapRef.current as any)._loaded) {
-          try {
-            mapRef.current.flyTo([45.9237, 6.8694], 14, { duration: 1.0 });
-          } catch (err) {
-            console.warn('[ExplorerMap] flyTo fallback error:', err);
-          }
-        }
       },
       { enableHighAccuracy: true, timeout: 8000 }
     );
-  }, [mapReady, onLocationUpdate, disableGeolocate]);
+  }, [mapReady, onLocationUpdate, disableGeolocate, isUserPanned]);
 
   // Switch tile layer
   useEffect(() => {
@@ -421,18 +415,16 @@ export default function ExplorerMap({
     });
   }, [userPositions, mapReady]);
 
-  // Real-time GPS auto-following & camera centering (Google Maps Turn-by-Turn style)
+  // Live GPS Turn-by-Turn auto-following (only when actively tracking route positions)
   useEffect(() => {
-    if (!mapRef.current || !mapReady || isUserPanned || userDraggingRef.current) return;
+    if (!mapRef.current || !mapReady || isUserPanned || userDraggingRef.current || !userPositions || userPositions.length < 2) return;
 
-    let targetLoc: [number, number] | null = userLocation ? toValidLatLng(userLocation[0], userLocation[1]) : null;
-    if (!targetLoc && userPositions && userPositions.length > 0) {
-      for (let i = userPositions.length - 1; i >= 0; i--) {
-        const pt = toValidLatLng(userPositions[i]?.latitude, userPositions[i]?.longitude);
-        if (pt) {
-          targetLoc = pt;
-          break;
-        }
+    let targetLoc: [number, number] | null = null;
+    for (let i = userPositions.length - 1; i >= 0; i--) {
+      const pt = toValidLatLng(userPositions[i]?.latitude, userPositions[i]?.longitude);
+      if (pt) {
+        targetLoc = pt;
+        break;
       }
     }
     if (!targetLoc) return;
@@ -448,7 +440,7 @@ export default function ExplorerMap({
     } catch (e) {
       console.warn('[ExplorerMap] panTo autoFollow error:', e);
     }
-  }, [userLocation, userPositions, mapReady, isUserPanned]);
+  }, [userPositions, mapReady, isUserPanned]);
 
   // Automatic map rotation based on orientation / movement heading
   useEffect(() => {

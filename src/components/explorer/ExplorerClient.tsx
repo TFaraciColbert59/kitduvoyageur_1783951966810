@@ -107,35 +107,7 @@ export default function ExplorerClient({ initialTrails }: ExplorerClientProps) {
 
   const [liveViewportBbox, setLiveViewportBbox] = useState<{ minLat: number; maxLat: number; minLng: number; maxLng: number; zoom: number } | null>(null);
   const [showSearchHereButton, setShowSearchHereButton] = useState(false);
-
-  // Try GPS Geolocation on mount to center around user position (2km radius)
-  useEffect(() => {
-    if (typeof window === 'undefined') return;
-    if ('geolocation' in navigator) {
-      navigator.geolocation.getCurrentPosition(
-        (pos) => {
-          const lat = pos.coords.latitude;
-          const lng = pos.coords.longitude;
-          setUserLocation([lat, lng]);
-          const deltaLat = 0.015;
-          const deltaLng = 0.022 / Math.cos((lat * Math.PI) / 180);
-          const initialBbox = {
-            minLat: lat - deltaLat,
-            maxLat: lat + deltaLat,
-            minLng: lng - deltaLng,
-            maxLng: lng + deltaLng,
-            zoom: 14,
-          };
-          setQueriedBbox(initialBbox);
-          setShowSearchHereButton(false);
-        },
-        () => {
-          // Keep default Chamonix 2km
-        },
-        { timeout: 4000, maximumAge: 60000, enableHighAccuracy: true }
-      );
-    }
-  }, []);
+  const initialGeoAppliedRef = useRef(false);
 
   const handleViewportChange = useCallback((bbox: { minLat: number; maxLat: number; minLng: number; maxLng: number; zoom: number }) => {
     setLiveViewportBbox(bbox);
@@ -285,17 +257,20 @@ export default function ExplorerClient({ initialTrails }: ExplorerClientProps) {
 
   const handleLocationUpdate = useCallback((loc: [number, number]) => {
     setUserLocation(loc);
-    const [lat, lng] = loc;
-    const deltaLat = 0.018;
-    const deltaLng = 0.026 / Math.cos((lat * Math.PI) / 180);
-    setQueriedBbox({
-      minLat: lat - deltaLat,
-      maxLat: lat + deltaLat,
-      minLng: lng - deltaLng,
-      maxLng: lng + deltaLng,
-      zoom: 14,
-    });
-    setShowSearchHereButton(false);
+    if (!initialGeoAppliedRef.current) {
+      initialGeoAppliedRef.current = true;
+      const [lat, lng] = loc;
+      const deltaLat = 0.018;
+      const deltaLng = 0.026 / Math.cos((lat * Math.PI) / 180);
+      setQueriedBbox({
+        minLat: lat - deltaLat,
+        maxLat: lat + deltaLat,
+        minLng: lng - deltaLng,
+        maxLng: lng + deltaLng,
+        zoom: 14,
+      });
+      setShowSearchHereButton(false);
+    }
   }, []);
 
   // Verrouille le scroll de la page (html/body) pendant la vue plein écran :
