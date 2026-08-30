@@ -362,9 +362,9 @@ export function DepartCockpit({
       </div>
 
       {/* ════ 2. VERSION DESKTOP COCKPIT FULLSCREEN STRICT (hidden md:flex) ════ */}
-      <div className="hidden md:flex h-full overflow-hidden max-w-[1680px] w-full mx-auto px-4 sm:px-6 lg:px-8 gap-6 items-start">
+      <div className="hidden md:flex h-full overflow-hidden max-w-[1680px] w-full mx-auto px-4 sm:px-6 lg:px-8 gap-6">
         {/* Colonne 1 : Sidebar Gauche (Navigation & Switcher) - STRICTEMENT NON SCROLLABLE HORS PAGE */}
-        <div className="w-[280px] shrink-0 h-full overflow-hidden flex flex-col justify-between">
+        <div className="w-[280px] shrink-0 h-full max-h-full min-h-0 overflow-hidden flex flex-col">
           <DepartLeftSidebar
             depart={depart}
             activeSection={activeSection}
