@@ -538,8 +538,8 @@ export default function ExplorerMap({
     <div className="relative w-full h-full bg-[#EAE6DF] overflow-hidden select-none" style={{ width: '100%', height: '100%', touchAction: 'none' }}>
       <div ref={containerRef} className="w-full h-full z-0" style={{ width: '100%', height: '100%', touchAction: 'none' }} />
 
-      {mapReady && mapInstance && trails.length > 0 && (
-        <TrailLayer map={mapInstance} trails={trails} pois={undefined} selectedTrailId={selectedTrailId} onTrailClick={onTrailClick} onPoiClick={onPoiClick} />
+      {mapReady && mapInstance && (trails.length > 0 || (pois && pois.length > 0)) && (
+        <TrailLayer map={mapInstance} trails={trails} pois={pois} selectedTrailId={selectedTrailId} onTrailClick={onTrailClick} onPoiClick={onPoiClick} />
       )}
 
       {/* Floating Controls Cluster: En bas à droite avec le Zoom juste au-dessus du changement de carte */}

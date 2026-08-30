@@ -87,6 +87,7 @@ export default function ExplorerClient({ initialTrails }: ExplorerClientProps) {
   const [activeDifficulties, setActiveDifficulties] = useState<string[]>([]);
   const [activeDuration, setActiveDuration] = useState<string | null>(null);
   const [familyOnly, setFamilyOnly] = useState(false);
+  const [activePoiCategories, setActivePoiCategories] = useState<string[]>([]);
   const [userLocation, setUserLocation] = useState<[number, number] | null>(null);
   const [filtersOpen, setFiltersOpen] = useState(false);
   const [activeCategory, setActiveCategory] = useState<string>('Tout');
@@ -271,6 +272,17 @@ export default function ExplorerClient({ initialTrails }: ExplorerClientProps) {
     setActiveDifficulties((prev) => prev.includes(d) ? prev.filter((x) => x !== d) : [...prev, d]);
   }, []);
 
+  const togglePoiCategory = useCallback((poiCat: string) => {
+    setActivePoiCategories((prev) =>
+      prev.includes(poiCat) ? prev.filter((x) => x !== poiCat) : [...prev, poiCat]
+    );
+  }, []);
+
+  const visiblePois = useMemo(() => {
+    if (!poisData || activePoiCategories.length === 0) return undefined;
+    return poisData.filter((poi) => activePoiCategories.includes(poi.category));
+  }, [poisData, activePoiCategories]);
+
   const handleSearchChange = useCallback((q: string) => {
     setSearchQuery(q);
     setDisplayLimit(30);
@@ -281,18 +293,24 @@ export default function ExplorerClient({ initialTrails }: ExplorerClientProps) {
     setActiveDuration(null);
     setFamilyOnly(false);
     setActiveCategory('Tout');
+    setActivePoiCategories([]);
     setSearchQuery('');
   }, []);
 
   const hasFilters =
-    activeDifficulties.length > 0 || !!activeDuration || familyOnly ||
-    activeCategory !== 'Tout' || searchQuery !== '';
+    activeDifficulties.length > 0 ||
+    !!activeDuration ||
+    familyOnly ||
+    activeCategory !== 'Tout' ||
+    activePoiCategories.length > 0 ||
+    searchQuery !== '';
 
   const activeFilterCount =
     activeDifficulties.length +
     (activeDuration ? 1 : 0) +
     (familyOnly ? 1 : 0) +
-    (activeCategory !== 'Tout' ? 1 : 0);
+    (activeCategory !== 'Tout' ? 1 : 0) +
+    activePoiCategories.length;
 
   // ── RENDER ────────────────────────────────────────────────────────────────────
 
@@ -443,11 +461,13 @@ export default function ExplorerClient({ initialTrails }: ExplorerClientProps) {
                 activeDuration={activeDuration}
                 activeCategory={activeCategory}
                 familyOnly={familyOnly}
+                activePoiCategories={activePoiCategories}
                 hasFilters={hasFilters}
                 onToggleDifficulty={toggleDifficulty}
                 onSelectDuration={(label) => setActiveDuration(label)}
                 onSelectCategory={setActiveCategory}
                 onToggleFamily={() => setFamilyOnly((v) => !v)}
+                onTogglePoiCategory={togglePoiCategory}
                 onReset={resetFilters}
               />
             </motion.div>
@@ -459,7 +479,7 @@ export default function ExplorerClient({ initialTrails }: ExplorerClientProps) {
       <div className="absolute inset-0 w-full h-full z-0 pointer-events-auto" style={{ width: '100%', height: '100%' }}>
         <ExplorerMap
           trails={filteredTrails}
-          pois={undefined}
+          pois={visiblePois}
           selectedTrailId={selectedTrailId}
           onTrailClick={handleTrailClick}
           userLocation={userLocation}
@@ -544,11 +564,13 @@ export default function ExplorerClient({ initialTrails }: ExplorerClientProps) {
                   activeDuration={activeDuration}
                   activeCategory={activeCategory}
                   familyOnly={familyOnly}
+                  activePoiCategories={activePoiCategories}
                   hasFilters={hasFilters}
                   onToggleDifficulty={toggleDifficulty}
                   onSelectDuration={(label) => setActiveDuration(label)}
                   onSelectCategory={setActiveCategory}
                   onToggleFamily={() => setFamilyOnly((v) => !v)}
+                  onTogglePoiCategory={togglePoiCategory}
                   onReset={resetFilters}
                 />
               </div>
