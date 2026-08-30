@@ -50,6 +50,8 @@
     "type-check": "tsc --noEmit",
     "test": "vitest run",
     "test:e2e": "playwright test",
+    "test:visual": "playwright test --config=playwright.visual.config.ts",
+    "test:visual:update": "playwright test --config=playwright.visual.config.ts --update-snapshots",
     "seed:demo": "node scripts/seed/seed_massive_demo.mjs",
     "supabase:status": "supabase status",
     "mobile:sync": "npx cap sync",
