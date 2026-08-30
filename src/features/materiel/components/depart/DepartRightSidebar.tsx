@@ -1,4 +1,4 @@
-﻿'use client';
+'use client';
 import React from 'react';
 import dynamic from 'next/dynamic';
 import { DepartWeightBreakdown } from './DepartWeightBreakdown';
@@ -35,6 +35,12 @@ export function DepartRightSidebar({ depart, weather }: DepartRightSidebarProps)
       <DepartWeightBreakdown
         breakdown={depart.weightBreakdown}
         totalWeightG={depart.baseWeightG}
+        baseWeightG={depart.baseWeightG}
+        wornWeightG={depart.wornWeightG}
+        consumablesWeightG={depart.consumablesWeightG}
+        items={depart.assignedKit.items}
+        participants={depart.participants}
+        comparableTripName={depart.comparableTrip?.name}
       />
 
       {/* 2. Météo du secteur */}

@@ -1,4 +1,4 @@
-﻿import { describe, it, expect } from 'vitest';
+import { describe, it, expect } from 'vitest';
 import {
   calcBaseWeight,
   calcWornWeight,
@@ -50,6 +50,17 @@ describe('departCalculations — Domain Tests (Phase 0)', () => {
       expect(calcConsumablesWeight(items)).toBe(300);
       // Total Pack Weight = Base (2000) + Consumables (300) = 2300g
       expect(calcTotalPackWeight(2000, 300)).toBe(2300);
+    });
+
+    it('calcule correctement la charge totale et catégorise le poids (Phase 4)', () => {
+      // Test ultralight < 5000g
+      expect(calcTotalPackWeight(4200, 600)).toBe(4800);
+      // Test 3 saisons 5000-8000g
+      expect(calcTotalPackWeight(5800, 1200)).toBe(7000);
+      // Test confort 8000-12000g
+      expect(calcTotalPackWeight(8500, 2000)).toBe(10500);
+      // Test charge lourde > 12000g
+      expect(calcTotalPackWeight(11500, 2500)).toBe(14000);
     });
 
     it('gère les listes vides et poids nuls sans erreur', () => {

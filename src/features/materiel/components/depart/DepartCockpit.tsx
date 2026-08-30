@@ -192,6 +192,12 @@ export function DepartCockpit({ depart, weather, kits }: DepartCockpitProps) {
           <DepartWeightBreakdown
             breakdown={depart.weightBreakdown}
             totalWeightG={depart.baseWeightG}
+            baseWeightG={depart.baseWeightG}
+            wornWeightG={depart.wornWeightG}
+            consumablesWeightG={depart.consumablesWeightG}
+            items={depart.assignedKit.items}
+            participants={depart.participants}
+            comparableTripName={depart.comparableTrip?.name}
           />
         </section>
       )}
