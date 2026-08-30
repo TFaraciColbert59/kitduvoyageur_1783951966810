@@ -696,6 +696,211 @@ La connexion active utilise exclusivement le projet Supabase de production `icxy
 - `carte_interactive_mobile_pois.png` : Rendu mobile iPhone avec barres d'outils et clusters POIs nets.
 - `explorer_map_pois.png` : Carte de découverte affichant les sentiers et les épingles POIs (🏡, ⛰️, 💧, 👁️).
 
+---
+
+# MISSION — Intégration de `countries_geo` dans les pages pays de LKDV
+
+## ÉTAPE 1 — Découverte & État Initial (avant tout changement de code)
+
+### 1. Recherche `countries_geo` et `countries_content`
+**Commande :**
+```bash
+grep -rn "countries_geo\|countries_content" --include="*.ts" --include="*.tsx"
+```
+**Résultats :**
+- `src/lib/geodata.ts` : Fonctions helpers existantes (`fetchCountries`, `fetchCountryByIso`) interrogeant `countries_geo`.
+- `scripts/geo/import_geonames.ts` : Script d'importation vers `countries_geo`.
+- `supabase/migrations/*` : Définition des schémas et seeds de `countries_geo`.
+- `countries_content` : 0 occurrence dans le code source TypeScript (table vide, hors scope).
+
+### 2. État des composants et pages pays existants
+- **`src/app/pays/page.tsx`** : Page Globe 3D Earth. Chargeait 190 pays statiques depuis `src/lib/countries.ts` (`ALL_COUNTRIES`), avec un fallback desktop hardcodé sur `code === 'FR'`.
+- **`src/app/pays/[code]/page.tsx`** : Page détail pays (Client Component) utilisant `getCompleteCountryDetail(code)` depuis `src/lib/countryDetails.ts`.
+- **`src/lib/countryDetails.ts`** : Fichier contenant des fiches éditoriales pour 3 pays (IS, JP, FR) et un générateur `getCompleteCountryDetail` produisant des valeurs par défaut pour les autres pays à partir du tableau statique `ALL_COUNTRIES`.
+- **`src/lib/countries.ts`** : Tableau statique de 190 pays avec des données mockées/hardcodées.
+- **`src/components/pays/*`** : Composants (`PaysHeroOverview`, `MobileCountryDetailView`, `PaysPratiqueView`, `PaysLeftSidebar`, `PaysRightSidebar`) affichant des données statiques dont certaines colonnes vidées (ex. population).
+
+### 3. Schéma et vérification de la table Supabase `countries_geo`
+- **Projet Supabase** : `icxyvwzfjbflcbqukpfz`
+- **Nombre total de lignes** : Exactement 195 pays (`SELECT count(*) FROM public.countries_geo` -> 195).
+- **Colonnes garanties non-nulles** :
+  - `iso_a2` (clé unique, code 2 lettres majuscule ex: 'AD', 'AF', 'ZA')
+  - `iso_a3` (code 3 lettres ex: 'AND', 'AFG', 'ZAF')
+  - `name` (nom français officiel ex: 'Andorre', 'Afghanistan', 'Afrique du Sud')
+  - `name_en` (nom anglais officiel ex: 'Andorra', 'Afghanistan', 'South Africa')
+  - `continent` (ex: 'Europe', 'Asie', 'Afrique', 'Amérique', 'Océanie', 'Europe/Asie')
+  - `capital` (ex: 'Andorre-la-Vieille', 'Kaboul', 'Pretoria')
+  - `currency` (ex: 'Euro (EUR)', 'Afghani (AFN)', 'Rand sud-africain (ZAR)')
+  - `currency_name` (ex: 'Euro', 'Afghani', 'Rand sud-africain')
+  - `currency_code` (ex: 'EUR', 'AFN', 'ZAR')
+  - `languages` (text[], ex: `{"Dari","Pachto"}`, `{"11 langues officielles dont anglais, afrikaans..."}`)
+  - `area_km2` (float8, ex: 468, 652860, 1219912)
+  - `timezone` (text, ex: 'UTC+1', 'UTC+4:30', 'UTC+2')
+  - `subregion` (text, ex: 'Europe du Sud (Pyrénées)', 'Asie du Sud', 'Afrique australe')
+  - `sources` (text, URLs séparées par ` ; ` — non affiché dans l'UI finale)
+- **Colonnes volontairement vidées / NULL** :
+  - `population`, `geoname_id`, `iso_numeric`, `fips_code`, `tld`, `phone_code`, `postal_code_format`, `postal_code_regex`, `name_ascii`, `name_short`, `geometry`, `neighbours` (`{}`), `is_sovereign` (`true`), `geometry_source` (`manual`).
+  - **Règle stricte** : Ne pas afficher ces champs dans l'UI (aucun `undefined`, `NaN` ou valeur résiduelle).
+
+### 4. Recensement de l'usage de la France (`FR`), Biélorussie (`BY`), Tchéquie (`CZ`)
+*Note critique : ces 3 pays sont absents du jeu de données source des 195 pays de `countries_geo`.*
+- `src/lib/countries.ts` : Contient `{ code: 'FR', nom: 'France' }`, `{ code: 'BY', nom: 'Biélorussie' }`, `{ code: 'CZ', nom: 'Tchéquie' }`.
+- `src/lib/countryDetails.ts` : Contient une fiche détaillée pour `FR`.
+- `src/app/pays/page.tsx` : `displayedCountry = selectedCountry ?? (ALL_COUNTRIES.find((c) => c.code === "FR") ?? null)`.
+- `src/components/compte/ParametresCompteCard.tsx` : Choix de langue `'FR'`.
+- `src/app/api/checkout/route.ts` : `allowed_countries: ['FR', 'BE', 'CH', 'LU', 'MC']`.
+*Remontée : Aucun code existant n'a été arbitrairement supprimé sans précaution ; pour les routes `/pays/[code]`, les 195 pays réels sont servis dynamiquement et statiquement sans casser si un code inexistant est demandé (404 contrôlée).*
+
+---
+
+## 🛠️ Phase 2 — Implémentation
+
+### Fichiers modifiés & créés :
+1. **`src/lib/supabase/types.ts`** :
+   - Ajout des colonnes `timezone: string | null`, `subregion: string | null`, `sources: string | null` dans l'interface `CountryGeo`.
+2. **`src/lib/geodata.ts`** :
+   - `fetchCountries()` : Requête `public.countries_geo` avec tri alphabétique `order('name', { ascending: true })`.
+   - `fetchCountryByIso(isoA2: string)` : Requête insensible à la casse avec `.toUpperCase()` et `.maybeSingle()`.
+   - `fetchAllCountrySlugs()` : Extrait les 195 codes ISO en minuscules pour `generateStaticParams()`.
+3. **`src/lib/countryDetails.ts`** :
+   - Extension de `CountryDetail` : `subregion`, `timezone`, `languages`, `area_km2`, `sources`, etc.
+   - `getCompleteCountryDetail(countryCode, geoCountry)` : Génération dynamique des métriques, textes et repères sans données de population factices (`population` NULL respecté).
+   - Formatters sécurisés `formatArea`, `formatLanguages`, `formatCurrency` pour gérer sans crash les cas spécifiques (ex: Afrique du Sud avec 11 langues).
+4. **`src/app/pays/[code]/page.tsx` & `src/app/pays/[code]/CountryDetailClient.tsx`** :
+   - Server Component avec `generateStaticParams()` générant exactement les **195 pages pays statiques** (`/pays/ad`, `/pays/ae`, `/pays/af`... +192).
+   - `generateMetadata()` alimenté par `fetchCountryByIso(code)`.
+   - Client Component découpé pour l'interactivité (onglets, sidebar, microinteractions) avec données réelles transmises.
+5. **`src/components/pays/PaysHeroOverview.tsx`** :
+   - Remplacement de la carte `POPULATION` par `RÉGION` et `CAPITALE / FUSEAU`.
+   - Affichage propre de la superficie en km² sans `NaN` ni `undefined`.
+6. **`src/components/pays/MobileCountryDetailView.tsx`** :
+   - Bandeau 4 métriques mobile mis à jour sans suffixe erroné.
+7. **`src/components/pays/PaysRightSidebar.tsx`** :
+   - Affichage de la sous-région et du fuseau horaire réel.
+8. **`src/app/pays/page.tsx` & `src/app/pays/EarthPageClient.tsx`** :
+   - Globe 3D et vue Atlas alimentés directement par les 195 pays issus de `countries_geo` via `fetchCountries()`.
+   - Suppression du fallback rigide vers 'FR'.
+9. **`src/lib/countries.ts`** :
+   - Enrichissement du modèle `Country` et fonction utilitaire `countryGeoToCountry(geo: CountryGeo): Country`.
+10. **`tests/countries_geo.spec.ts`** :
+    - Suite de 5 tests unitaires et d'intégration validant le chargement des 195 pays, le parsing des slugs, les types non-nulls et les cas limites.
+
+---
+
+## 🎯 Phase 3 — Preuves et Vérification
+
+### 1. Preuve Grep : Appel direct à `countries_geo` sans mock résiduel
+```bash
+grep -n "fetchCountryByIso" src/app/pays/[code]/page.tsx
+```
+**Résultat :**
+```text
+3:import { fetchCountryByIso, fetchAllCountrySlugs } from '@/lib/geodata';
+27:  const geoCountry = await fetchCountryByIso(code);
+56:  const geoCountry = await fetchCountryByIso(code);
+```
+
+```bash
+grep -n "fetchCountries" src/app/pays/page.tsx
+```
+**Résultat :**
+```text
+2:import { fetchCountries } from '@/lib/geodata';
+25:    const geoCountries = await fetchCountries();
+```
+
+---
+
+### 2. Preuve Vitest : 100% des tests passants (44 tests sur 12 suites)
+```bash
+npm test
+```
+**Sortie brute :**
+```text
+ RUN  v4.1.11 C:/Users/Tony/Downloads/LKDV/kitduvoyageur_1783951966810
+
+ ✓ tests/mobile-layout.spec.ts (2 tests) 3ms
+ ✓ tests/materiel/history.spec.ts (3 tests) 3ms
+ ✓ tests/materiel/scanner.spec.ts (3 tests) 3ms
+ ✓ tests/materiel/optimizer.spec.ts (3 tests) 3ms
+ ✓ tests/cart.spec.ts (3 tests) 4ms
+ ✓ tests/materiel/comparator.spec.ts (3 tests) 4ms
+ ✓ tests/materiel/order.spec.ts (3 tests) 4ms
+ ✓ tests/materiel/conflicts.spec.ts (3 tests) 21ms
+ ✓ tests/schemas/participant.spec.ts (4 tests) 4ms
+ ✓ tests/schemas/materiel.spec.ts (8 tests) 9ms
+ ✓ tests/countries_geo.spec.ts (5 tests) 313ms
+ ✓ tests/pois.spec.ts (4 tests) 385ms
+
+ Test Files  12 passed (12)
+      Tests  44 passed (44)
+   Duration  893ms
+```
+
+---
+
+### 3. Preuve Next.js Production Build : 195 pages statiques générées
+```bash
+npm run build
+```
+**Extrait de la sortie brute de compilation :**
+```text
+   ▲ Next.js 15.5.18
+   - Environments: .env.local, .env
+   - Experiments (use with caution):
+     · optimizePackageImports
+
+   Creating an optimized production build ...
+ ✓ Compiled successfully in 13.2s
+   Skipping linting
+   Checking validity of types ...
+   Collecting page data ...
+ ✓ Generating static pages (324/324)
+   Finalizing page optimization ...
+   Collecting build traces ...
+
+Route (app)                                             Size  First Load JS
+...
+├ ○ /pays                                            6.79 kB         324 kB
+├ ● /pays/[code]                                       23 kB         359 kB
+├   ├ /pays/ad
+├   ├ /pays/ae
+├   ├ /pays/af
+├   └ [+192 more paths]
+...
++ First Load JS shared by all                         103 kB
+
+○  (Static)   prerendered as static content
+●  (SSG)      prerendered as static HTML (uses generateStaticParams)
+ƒ  (Dynamic)  server-rendered on demand
+
+Process exited with code 0
+```
+**Validation du compte :** `3 chemins affichés + 192 autres chemins = exactement 195 routes pays statiques SSG générées sans erreur`.
+
+---
+
+### 4. Vérification d'intégrité UI & affichage complet des champs du CSV
+- **Champs CSV intégrés & affichés sur chaque page pays** :
+  1. `nom_fr` : Titre principal de la page et des fiches
+  2. `nom_en` : Nom officiel anglais affiché sous forme de badge / métadonnée
+  3. `code_iso2` : Code 2 lettres ISO-3166-1 affiché dans les tags et badges
+  4. `code_iso3` : Code 3 lettres ISO-3166-1 affiché dans les repères officiels
+  5. `continent` : Nom du continent d'appartenance
+  6. `region` : Sous-région géographique précise
+  7. `capitale` : Capitale(s) officielle(s), administrative(s), constitutionnelle(s)
+  8. `langues_officielles` : Langues officielles et d'usage
+  9. `superficie_km2` : Superficie territoriale formatée en km² avec séparateurs
+  10. `fuseau_horaire` : Décalage horaire standard et fuseaux multiples
+  11. `monnaie` : Nom et code officiel de la devise
+- **Colonnes NULL / vides respectées** :
+  - `population` : Aucun champ vide affiché, aucun `NaN` ou `undefined`.
+  - `sources` : Conservé pour référence sans pollution de l'UI utilisateur.
+  - `geometry` / `geometry_source` : Non requis, rendu par le globe interactif 3D.
+
+
+
+
 
 
 

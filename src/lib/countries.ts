@@ -1,21 +1,54 @@
+import type { CountryGeo } from './supabase/types';
+
 /**
  * Centralized country data table with ISO 3166-1 alpha-2 codes
- * - 190 countries total
- * - published: true for flagship destinations with rich content
- * - published: false for others (noindex until content verified)
- * - Programmatic redirect mapping: full name → 2-letter code
  */
 
 export interface Country {
   code: string; // ISO 3166-1 alpha-2 (2-letter)
+  iso_a3?: string;
   nom: string; // Full name in French
+  nom_en?: string;
   continent: string;
+  subregion?: string;
   capital: string;
   meilleure_saison: string;
   danger_level: 'low' | 'medium' | 'high';
   tags: string[];
   monnaie: string;
+  monnaie_code?: string;
+  monnaie_nom?: string;
+  area_km2?: number;
+  timezone?: string;
+  languages?: string[];
   published: boolean; // SEO indexing flag
+}
+
+export function countryGeoToCountry(geo: CountryGeo): Country {
+  const code = geo.iso_a2.toUpperCase();
+  const cCode = geo.currency_code || (geo.currency ? geo.currency.match(/\(([A-Z]{3})\)/)?.[1] ?? '' : '');
+  const cName = geo.currency_name || (geo.currency ? geo.currency.replace(/\s*\([A-Z]{3}\)/, '').trim() : 'Devise');
+  const currencyDisplay = geo.currency || (cCode ? `${cName} (${cCode})` : cName);
+
+  return {
+    code,
+    iso_a3: geo.iso_a3 || undefined,
+    nom: geo.name,
+    nom_en: geo.name_en || undefined,
+    continent: geo.continent || 'Monde',
+    subregion: geo.subregion || undefined,
+    capital: geo.capital || 'Capitale',
+    meilleure_saison: 'Mai–Oct',
+    danger_level: 'low',
+    tags: geo.languages && geo.languages.length > 0 ? [geo.languages[0]] : ['Aventure'],
+    monnaie: currencyDisplay,
+    monnaie_code: cCode,
+    monnaie_nom: cName,
+    area_km2: geo.area_km2 || undefined,
+    timezone: geo.timezone || undefined,
+    languages: geo.languages || [],
+    published: true,
+  };
 }
 
 export const ALL_COUNTRIES: Country[] = [

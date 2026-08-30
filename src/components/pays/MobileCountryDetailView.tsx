@@ -106,18 +106,25 @@ export default function MobileCountryDetailView({
 
           {/* Slogan & Destination Details */}
           <div className="absolute bottom-3.5 left-4 right-4 z-10 text-white">
-            <div className="flex items-center gap-2 mb-1">
+            <div className="flex flex-wrap items-center gap-1.5 mb-1">
               <span className="text-[9.5px] font-mono uppercase tracking-widest text-emerald-300 font-bold bg-black/40 px-2.5 py-0.5 rounded-full backdrop-blur-xs">
-                🌍 GUIDE TERRAIN
+                🌍 {country.code}{country.iso_a3 ? ` · ${country.iso_a3}` : ''}
               </span>
-              <span className="text-white/90 font-mono text-[9.5px]">
-                · {country.saison_recommandee}
+              <span className="text-white/90 font-mono text-[9.5px] bg-black/30 px-2 py-0.5 rounded-full backdrop-blur-xs">
+                {country.region}
               </span>
             </div>
 
-            <h1 className="font-display font-extrabold text-2xl text-white leading-tight">
-              {country.nom}
-            </h1>
+            <div className="flex flex-wrap items-baseline gap-1.5">
+              <h1 className="font-display font-extrabold text-2xl text-white leading-tight">
+                {country.nom}
+              </h1>
+              {country.nom_en && country.nom_en.toLowerCase() !== country.nom.toLowerCase() && (
+                <span className="text-xs font-mono font-medium text-emerald-200">
+                  ({country.nom_en})
+                </span>
+              )}
+            </div>
 
             {country.slogan && (
               <p className="font-serif italic text-emerald-100 text-xs mt-0.5 line-clamp-1">
@@ -134,7 +141,7 @@ export default function MobileCountryDetailView({
           <div className="grid grid-cols-4 gap-1.5 text-center">
             <div className="glass-sub-card p-2 rounded-xl border border-white/90 bg-white/90 shadow-2xs">
               <span className="block font-mono font-bold text-[11px] sm:text-xs text-[#17402C] truncate" title={country.superficie_detail}>
-                {country.superficie_court.endsWith('M') || country.superficie_court.endsWith('k') ? `${country.superficie_court} km²` : `${country.superficie_court}k km²`}
+                {country.superficie_court === '—' ? '—' : (country.superficie_court.includes('km') ? country.superficie_court : `${country.superficie_court} km²`)}
               </span>
               <span className="text-[8px] text-[#5A7064] uppercase font-mono font-bold">
                 Superficie
@@ -142,7 +149,7 @@ export default function MobileCountryDetailView({
             </div>
 
             <div className="glass-sub-card p-2 rounded-xl border border-white/90 bg-white/90 shadow-2xs">
-              <span className="block font-mono font-bold text-xs text-[#17402C] truncate">
+              <span className="block font-mono font-bold text-xs text-[#17402C] truncate" title={country.capitale}>
                 {country.capitale}
               </span>
               <span className="text-[8px] text-[#5A7064] uppercase font-mono font-bold">
@@ -151,8 +158,8 @@ export default function MobileCountryDetailView({
             </div>
 
             <div className="glass-sub-card p-2 rounded-xl border border-white/90 bg-white/90 shadow-2xs">
-              <span className="block font-mono font-bold text-xs text-[#5B7F55] truncate">
-                {country.monnaie_code}
+              <span className="block font-mono font-bold text-xs text-[#5B7F55] truncate" title={country.monnaie || country.monnaie_nom}>
+                {country.monnaie_code || country.monnaie}
               </span>
               <span className="text-[8px] text-[#5A7064] uppercase font-mono font-bold">
                 Monnaie
@@ -160,11 +167,11 @@ export default function MobileCountryDetailView({
             </div>
 
             <div className="glass-sub-card p-2 rounded-xl border border-white/90 bg-white/90 shadow-2xs">
-              <span className="block font-mono font-bold text-xs text-amber-800 truncate">
-                {country.meteo?.temperature_actuelle || 18}°C
+              <span className="block font-mono font-bold text-xs text-amber-800 truncate" title={country.fuseau}>
+                {country.fuseau}
               </span>
               <span className="text-[8px] text-[#5A7064] uppercase font-mono font-bold">
-                Météo live
+                Fuseau
               </span>
             </div>
           </div>
@@ -220,6 +227,74 @@ export default function MobileCountryDetailView({
                     >
                       <span>⚡ Activités ({country.activites.length})</span>
                     </button>
+                  </div>
+                </div>
+
+                {/* ── FICHE D'IDENTITÉ OFFICIELLE (11 Données Clés CSV) ── */}
+                <div className="glass p-4 rounded-[22px] border border-white/80 shadow-xs bg-white/85 space-y-2.5">
+                  <div className="flex items-center justify-between pb-1.5 border-b border-[#17402C]/5">
+                    <span className="text-[10px] font-mono font-bold uppercase tracking-wider text-[#5B7F55] flex items-center gap-1.5">
+                      <span>📋</span> Fiche d'identité officielle
+                    </span>
+                    <span className="glass-pill !px-1.5 !py-0.5 text-[8.5px] font-mono font-bold text-[#17402C]">
+                      ISO {country.code} {country.iso_a3 ? `· ${country.iso_a3}` : ''}
+                    </span>
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-1.5 text-[11px]">
+                    <div className="p-2 rounded-xl bg-white/70 border border-white/60">
+                      <span className="text-[8.5px] font-semibold text-[#5A7064] uppercase block">Continent</span>
+                      <span className="font-bold text-[#17402C] truncate block">{country.continent}</span>
+                    </div>
+
+                    <div className="p-2 rounded-xl bg-white/70 border border-white/60">
+                      <span className="text-[8.5px] font-semibold text-[#5A7064] uppercase block">Région</span>
+                      <span className="font-bold text-[#17402C] truncate block">{country.region}</span>
+                    </div>
+
+                    <div className="p-2 rounded-xl bg-white/70 border border-white/60">
+                      <span className="text-[8.5px] font-semibold text-[#5A7064] uppercase block">Capitale</span>
+                      <span className="font-bold text-[#17402C] truncate block" title={country.capitale}>{country.capitale}</span>
+                    </div>
+
+                    <div className="p-2 rounded-xl bg-white/70 border border-white/60">
+                      <span className="text-[8.5px] font-semibold text-[#5A7064] uppercase block">Langues</span>
+                      <span className="font-bold text-[#17402C] truncate block" title={country.langue}>{country.langue}</span>
+                    </div>
+
+                    <div className="p-2 rounded-xl bg-white/70 border border-white/60">
+                      <span className="text-[8.5px] font-semibold text-[#5A7064] uppercase block">Superficie</span>
+                      <span className="font-mono font-bold text-[#17402C] truncate block">{country.superficie_detail}</span>
+                    </div>
+
+                    <div className="p-2 rounded-xl bg-white/70 border border-white/60">
+                      <span className="text-[8.5px] font-semibold text-[#5A7064] uppercase block">Fuseau horaire</span>
+                      <span className="font-mono font-bold text-[#17402C] truncate block">{country.fuseau}</span>
+                    </div>
+
+                    <div className="col-span-2 p-2 rounded-xl bg-white/70 border border-white/60">
+                      <span className="text-[8.5px] font-semibold text-[#5A7064] uppercase block">Monnaie</span>
+                      <span className="font-bold text-[#17402C] truncate block">{country.monnaie || country.monnaie_nom}</span>
+                    </div>
+
+                    {country.sources_list && country.sources_list.length > 0 && (
+                      <div className="col-span-2 p-2 rounded-xl bg-white/70 border border-white/60 space-y-1">
+                        <span className="text-[8.5px] font-semibold text-[#5A7064] uppercase block">Sources &amp; Références documentaires</span>
+                        <div className="flex flex-wrap gap-1 pt-0.5">
+                          {country.sources_list.map((src, i) => (
+                            <a
+                              key={i}
+                              href={src.url}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="glass-pill !px-2 !py-0.5 text-[8.5px] font-mono text-[#17402C] hover:text-[#5B7F55]"
+                            >
+                              {src.label} ↗
+                            </a>
+                          ))}
+                        </div>
+                      </div>
+                    )}
                   </div>
                 </div>
 

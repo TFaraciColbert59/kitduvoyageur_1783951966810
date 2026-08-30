@@ -1,4 +1,4 @@
-﻿// src/lib/geodata.ts — Helpers pour le référentiel géographique GeoNames
+// src/lib/geodata.ts — Helpers pour le référentiel géographique GeoNames
 // (tables countries_geo / admin_regions_geo / places_geo / place_names_geo)
 
 import type { SupabaseClient } from "@supabase/supabase-js";
@@ -16,9 +16,12 @@ import type {
  */
 export const supabase: SupabaseClient = createClient();
 
-/** Retourne tous les pays du référentiel (lecture publique). */
+/** Retourne tous les pays du référentiel (lecture publique) triés par nom. */
 export async function fetchCountries(): Promise<CountryGeo[]> {
-  const { data, error } = await supabase.from("countries_geo").select("*");
+  const { data, error } = await supabase
+    .from("countries_geo")
+    .select("*")
+    .order("name", { ascending: true });
   if (error) throw error;
   return (data ?? []) as CountryGeo[];
 }
@@ -28,10 +31,22 @@ export async function fetchCountryByIso(isoA2: string): Promise<CountryGeo | nul
   const { data, error } = await supabase
     .from("countries_geo")
     .select("*")
-    .eq("iso_a2", isoA2)
+    .eq("iso_a2", isoA2.toUpperCase())
     .maybeSingle();
   if (error) throw error;
   return (data as CountryGeo | null) ?? null;
+}
+
+/** Retourne tous les slugs (codes ISO-A2 en minuscules) pour le routing statique. */
+export async function fetchAllCountrySlugs(): Promise<string[]> {
+  const { data, error } = await supabase
+    .from("countries_geo")
+    .select("iso_a2")
+    .order("iso_a2", { ascending: true });
+  if (error) throw error;
+  return (data ?? [])
+    .map((c) => c.iso_a2?.toLowerCase())
+    .filter((slug): slug is string => Boolean(slug));
 }
 
 /** Retourne les régions admin (niveau 1) d'un pays via son code ISO‑A2. */

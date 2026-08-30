@@ -1,28 +1,37 @@
 import { Country, ALL_COUNTRIES } from './countries';
+import type { CountryGeo } from './supabase/types';
 
 export interface CountryDetail {
   code: string;
+  iso_a3?: string;
   nom: string;
+  nom_en?: string;
   slogan: string;
   subtitle: string;
   hero_image_url?: string;
   region: string;
+  subregion?: string;
   saison_recommandee: string;
   latitude: string;
   longitude: string;
   fuseau: string;
+  timezone?: string;
   continent: string;
   superficie_court: string;
   superficie_detail: string;
-  population_court: string;
-  population_detail: string;
+  population_court?: string;
+  population_detail?: string;
   capitale: string;
-  capitale_pop: string;
+  capitale_pop?: string;
   langue: string;
   langue_sub: string;
+  languages?: string[];
   monnaie_code: string;
   monnaie_nom: string;
+  monnaie?: string;
   taux_change: string;
+  sources?: string;
+  sources_list?: { url: string; label: string }[];
   presentation_titre: string;
   presentation_paragraphes: string[];
   citation_texte: string;
@@ -1118,128 +1127,202 @@ export const COUNTRY_DETAILS: Record<string, Partial<CountryDetail>> = {
   },
 };
 
-// ─── GÉNÉRATEUR AUTOMATIQUE COMPLET POUR N'IMPORTE QUEL PAYS DE LA BDD ─────
+// ─── HELPERS DE FORMATAGE GÉOGRAPHIQUE ───────────────────────────────────────
 
-export function getCompleteCountryDetail(countryCode: string): CountryDetail {
-  const codeUpper = countryCode.toUpperCase();
+function formatArea(area: number | null | undefined): { court: string; detail: string } {
+  if (area == null || isNaN(area) || area <= 0) return { court: '—', detail: 'Non renseigné' };
+  const formatted = new Intl.NumberFormat('fr-FR').format(Math.round(area));
+  return {
+    court: formatted,
+    detail: `${formatted} km²`,
+  };
+}
+
+function formatLanguages(languages: string[] | null | undefined): { primary: string; sub: string } {
+  if (!languages || languages.length === 0) {
+    return { primary: 'Non renseigné', sub: '' };
+  }
+  if (languages.length === 1) {
+    return { primary: languages[0], sub: 'Langue officielle' };
+  }
+  return {
+    primary: languages.join(', '),
+    sub: `${languages.length} langues officielles`,
+  };
+}
+
+function formatCurrency(code: string | null | undefined, name: string | null | undefined, rawCurrency: string | null | undefined) {
+  const cCode = code || (rawCurrency ? rawCurrency.match(/\(([A-Z]{3})\)/)?.[1] ?? '' : '');
+  const cName = name || (rawCurrency ? rawCurrency.replace(/\s*\([A-Z]{3}\)/, '').trim() : 'Devise');
+  const complet = rawCurrency || (cCode ? `${cName} (${cCode})` : cName);
+  return {
+    code: cCode || '—',
+    nom: cName || 'Devise',
+    complet: complet || '—',
+  };
+}
+
+function parseSources(sourcesStr?: string | null): { url: string; label: string }[] {
+  if (!sourcesStr) return [];
+  return sourcesStr
+    .split(';')
+    .map((s) => s.trim())
+    .filter((s) => s.startsWith('http://') || s.startsWith('https://'))
+    .map((url) => {
+      try {
+        const u = new URL(url);
+        let domain = u.hostname.replace(/^www\./, '');
+        if (domain.includes('wikipedia.org')) domain = 'Wikipédia';
+        else if (domain.includes('diplomatie.gouv.fr')) domain = 'France Diplomatie';
+        else if (domain.includes('universalis.fr')) domain = 'Encyclopædia Universalis';
+        else if (domain.includes('worldometers.info')) domain = 'Worldometers';
+        else if (domain.includes('terdav.com')) domain = 'Terres d’Aventure';
+        else if (domain.includes('europa.eu')) domain = 'Union Européenne';
+        else if (domain.includes('agence-adocc.com')) domain = 'Agence ADOCC';
+        return { url, label: domain };
+      } catch {
+        return { url, label: 'Lien documentaire' };
+      }
+    });
+}
+
+// ─── GÉNÉRATEUR COMPLET BASÉ SUR LES DONNÉES RÉELLES COUNTRIES_GEO ───────────
+
+export function getCompleteCountryDetail(
+  countryCode: string,
+  geoCountry?: CountryGeo | null
+): CountryDetail {
+  const codeUpper = (geoCountry?.iso_a2 || countryCode).toUpperCase();
   const base = ALL_COUNTRIES.find((c) => c.code.toUpperCase() === codeUpper) || {
     code: codeUpper,
-    nom: codeUpper,
-    continent: 'Monde',
-    capital: 'Capitale',
+    nom: geoCountry?.name || codeUpper,
+    continent: geoCountry?.continent || 'Monde',
+    capital: geoCountry?.capital || 'Capitale',
     meilleure_saison: 'Mai–Oct',
     danger_level: 'low' as const,
     tags: ['Aventure', 'Nature', 'Découverte'],
-    monnaie: 'EUR',
+    monnaie: geoCountry?.currency_code || 'EUR',
     published: true,
   };
 
   const custom = COUNTRY_DETAILS[codeUpper] || {};
 
+  const name = geoCountry?.name || custom.nom || base.nom;
+  const capital = geoCountry?.capital || custom.capitale || base.capital || 'Capitale';
+  const continent = geoCountry?.continent || custom.continent || base.continent || 'Monde';
+  const subregion = geoCountry?.subregion || custom.region || `${continent} · Terres d'aventure`;
+  const timezone = geoCountry?.timezone || custom.fuseau || 'UTC';
+  const languagesList = geoCountry?.languages && geoCountry.languages.length > 0 ? geoCountry.languages : (custom.langue ? [custom.langue] : []);
+  const areaInfo = geoCountry?.area_km2 ? formatArea(geoCountry.area_km2) : { court: custom.superficie_court || '—', detail: custom.superficie_detail || '—' };
+  const currencyInfo = formatCurrency(
+    geoCountry?.currency_code || custom.monnaie_code,
+    geoCountry?.currency_name || custom.monnaie_nom,
+    geoCountry?.currency || base.monnaie
+  );
+  const sourcesRaw = geoCountry?.sources || custom.sources || undefined;
+  const sourcesList = parseSources(sourcesRaw);
+
   return {
-    code: base.code,
-    nom: custom.nom || base.nom,
+    code: codeUpper,
+    iso_a3: geoCountry?.iso_a3 || undefined,
+    nom: name,
+    nom_en: geoCountry?.name_en || custom.nom_en || undefined,
     slogan: custom.slogan || 'nature & sentiers',
-    subtitle: custom.subtitle || `Explorez ${base.nom}, une destination exceptionnelle au cœur du continent ${base.continent}. Sommets, culture locale et paysages grandioses.`,
-    region: custom.region || `${base.continent} · Terres sauvages`,
+    subtitle: custom.subtitle || `Explorez ${name}, une destination remarquable située en ${continent} (${subregion}). Sommets, culture locale et paysages grandioses.`,
+    region: subregion,
+    subregion: geoCountry?.subregion || undefined,
     saison_recommandee: custom.saison_recommandee || base.meilleure_saison || 'mai → octobre',
-    latitude: custom.latitude || '45°00′ N',
-    longitude: custom.longitude || '10°00′ E',
-    fuseau: custom.fuseau || 'UTC +01:00',
-    continent: custom.continent || base.continent,
-    superficie_court: custom.superficie_court || '180',
-    superficie_detail: custom.superficie_detail || '180 000 km²',
-    population_court: custom.population_court || '12M',
-    population_detail: custom.population_detail || '≈ 65 hab/km²',
-    capitale: custom.capitale || base.capital || 'Capitale',
-    capitale_pop: custom.capitale_pop || '≈ 1.2M hab',
-    langue: custom.langue || 'Langue locale',
-    langue_sub: custom.langue_sub || 'Anglais répandu',
-    monnaie_code: custom.monnaie_code || base.monnaie || 'EUR',
-    monnaie_nom: custom.monnaie_nom || 'Devise',
-    taux_change: custom.taux_change || `1 € ≈ 1.1 ${base.monnaie || 'EUR'}`,
+    latitude: custom.latitude || '—',
+    longitude: custom.longitude || '—',
+    fuseau: timezone,
+    timezone: geoCountry?.timezone || undefined,
+    continent: continent,
+    superficie_court: areaInfo.court,
+    superficie_detail: areaInfo.detail,
+    capitale: capital,
+    capitale_pop: custom.capitale_pop,
+    langue: formatLanguages(languagesList).primary,
+    langue_sub: formatLanguages(languagesList).sub || custom.langue_sub || '',
+    languages: languagesList,
+    monnaie_code: currencyInfo.code,
+    monnaie_nom: currencyInfo.nom,
+    monnaie: currencyInfo.complet,
+    taux_change: custom.taux_change || (currencyInfo.code === 'EUR' ? 'Devise locale (Euro)' : `${currencyInfo.nom} (${currencyInfo.code})`),
+    sources: sourcesRaw,
+    sources_list: sourcesList,
     presentation_titre: custom.presentation_titre || `Une terre d'aventure et de grands espaces.`,
     presentation_paragraphes: custom.presentation_paragraphes || [
-      `Situé en ${base.continent}, ${base.nom} offre une variété remarquable de reliefs et de biomes propices au trek et à l'exploration en autonomie.`,
-      `Les parcs nationaux et régions sauvages abritent des itinéraires remarquables où la beauté naturelle se conjugue avec l'accueil des habitants locaux.`,
-      `Que ce soit pour les trekkings de plusieurs jours ou les excursions culturelles, ${base.nom} est une étape incontournable pour les voyageurs du Kit.`,
+      `Situé en ${continent} (${subregion}), ${name} s'étend sur une superficie de ${areaInfo.detail} avec pour capitale ${capital}.`,
+      `La région offre une diversité remarquable de reliefs propices aux traversées pédestres, à l'immersion dans la nature et à la découverte du patrimoine local.`,
+      `Que ce soit pour les itinéraires de plusieurs jours ou les excursions culturelles, ${name} est une étape de choix pour les voyageurs autonomes.`,
     ],
     citation_texte: custom.citation_texte || `« Le monde est un livre et ceux qui ne voyagent pas n'en lisent qu'une page. »`,
-    citation_auteur: custom.citation_auteur || `Grand voyageur · Carnets du Monde`,
+    citation_auteur: custom.citation_auteur || `Carnets d'exploration · LKDV`,
     points_interet_carte: custom.points_interet_carte || [
-      { nom: base.capital || 'Capitale', isCapital: true, top: '50%', left: '50%' },
-      { nom: 'Parc National', top: '35%', left: '35%' },
-      { nom: 'Hauts Plateaux', top: '65%', left: '65%' },
-      { nom: 'Côte Sauvage', top: '75%', left: '25%' },
+      { nom: capital, isCapital: true, top: '50%', left: '50%' },
+      { nom: 'Parc Naturel', top: '35%', left: '35%' },
+      { nom: 'Massif & Cimes', top: '65%', left: '65%' },
+      { nom: 'Points d’eau', top: '75%', left: '25%' },
     ],
     carte_echelle: custom.carte_echelle || '1 : 4 000 000',
-    carte_repere: custom.carte_repere || 'Carte topographique',
+    carte_repere: custom.carte_repere || `Carte générale · ${subregion}`,
     highlights: custom.highlights || [
       {
         icon: 'calendar',
         titre: 'Meilleure',
         sous_titre: 'saison',
-        description: `Période optimale : ${base.meilleure_saison || 'Printemps & Été'} pour des conditions climatiques idéales.`,
+        description: `Période recommandée : ${custom.saison_recommandee || base.meilleure_saison || 'Mai à Octobre'} pour explorer ${name} dans les meilleures conditions.`,
       },
       {
         icon: 'plane',
         titre: 'Accès',
-        sous_titre: 'voyage',
-        description: `Vols réguliers et liaisons internationales vers ${base.capital}. Location de véhicule adaptée sur place.`,
+        sous_titre: '& capitale',
+        description: `Vols et liaisons internationales desservant ${capital}. Fuseau horaire : ${timezone}.`,
       },
       {
         icon: 'compass',
-        titre: 'Nature',
-        sous_titre: '& treks',
-        description: `Réseau de sentiers balisés, parcs protégés et guides certifiés partenaires du Kit du Voyageur.`,
+        titre: 'Territoire',
+        sous_titre: '& relief',
+        description: `Superficie de ${areaInfo.detail} au sein de la région ${subregion}. Monnaie officielle : ${currencyInfo.complet}.`,
       },
     ],
     destinations: custom.destinations || [
       {
         isBig: true,
         image_url: 'https://images.unsplash.com/photo-1506744038136-46273834b3fb?q=80&w=1200&auto=format&fit=crop',
-        categorie: 'Site emblématique',
-        titre: 'Parc National',
-        titre_em: 'Central',
-        meta_1: 'Altitude',
-        meta_2: 'Trek majeur',
-        meta_3: 'Saison optimale',
+        categorie: `Capitale · ${subregion}`,
+        titre: capital,
+        titre_em: '',
+        meta_1: 'Point d’entrée',
+        meta_2: timezone,
+        meta_3: 'Histoire & Culture',
+      },
+      {
+        image_url: 'https://images.unsplash.com/photo-1464822759023-fed622ff2c3b?q=80&w=800&auto=format&fit=crop',
+        categorie: 'Grands Espaces',
+        titre: `Parcs & Cimes de ${name}`,
+        titre_em: '',
+        meta_1: 'Nature',
+        meta_2: 'Saison optimale',
+        meta_3: 'Randonnée',
       },
       {
         image_url: 'https://images.unsplash.com/photo-1469854523086-cc02fe5d8800?q=80&w=800&auto=format&fit=crop',
-        categorie: 'Capitale & Histoire',
-        titre: base.capital || 'Capitale',
+        categorie: 'Sentiers & Pistes',
+        titre: 'Routes & Traverses',
         titre_em: '',
-        meta_1: 'Point d’entrée',
-        meta_2: 'Toute l’année',
-        meta_3: 'Culture',
-      },
-      {
-        image_url: 'https://images.unsplash.com/photo-1470071459604-3b5ec3a7fe05?q=80&w=800&auto=format&fit=crop',
-        categorie: 'Vallées sauvages',
-        titre: 'Les Hautes',
-        titre_em: 'Terres',
-        meta_1: 'Panorama',
+        meta_1: 'Aventure',
         meta_2: 'Autonomie',
-        meta_3: 'Bivouac',
+        meta_3: 'Trek',
       },
       {
         image_url: 'https://images.unsplash.com/photo-1507525428034-b723cf961d3e?q=80&w=800&auto=format&fit=crop',
-        categorie: 'Littoral & Fjords',
-        titre: 'Baie des',
-        titre_em: 'Falaises',
-        meta_1: 'Côtes',
-        meta_2: 'Faune marine',
-        meta_3: 'Kayak',
-      },
-      {
-        image_url: 'https://images.unsplash.com/photo-1447752875215-b2761acb3c5d?q=80&w=800&auto=format&fit=crop',
-        categorie: 'Forêts séculaires',
-        titre: 'Réserve',
-        titre_em: 'Naturelle',
-        meta_1: 'Biodiversité',
-        meta_2: 'Sentiers',
-        meta_3: 'Observation',
+        categorie: 'Villages & Haltes',
+        titre: 'Haltes Traditionnelles',
+        titre_em: '',
+        meta_1: 'Patrimoine',
+        meta_2: 'Terroir',
+        meta_3: 'Rencontres',
       },
     ],
     activites: custom.activites || [
@@ -1247,154 +1330,118 @@ export function getCompleteCountryDetail(countryCode: string): CountryDetail {
         categorie: 'rand',
         difficulte: 'Modérée',
         difficulte_type: 'med',
-        saison: base.meilleure_saison || 'Mai → Oct',
+        saison: custom.saison_recommandee || base.meilleure_saison || 'Mai → Oct',
         image_url: 'https://images.unsplash.com/photo-1469854523086-cc02fe5d8800?q=80&w=800&auto=format&fit=crop',
-        tag: 'Randonnée — Signature',
-        titre: 'Grande Traversée des',
-        titre_em: 'Crêtes',
-        description: 'Itinéraire balisé traversant les panoramas les plus spectaculaires de la région.',
-        duree: '4 jours',
-        prix: '€380',
+        tag: 'Trek — Découverte',
+        titre: `Traversée sauvage en ${name}`,
+        titre_em: '',
+        description: `Itinéraire en autonomie à travers les reliefs et espaces préservés de ${name}.`,
+        duree: '3-5 jours',
+        prix: 'Gratuit',
       },
       {
         categorie: 'nature',
         difficulte: 'Facile',
         difficulte_type: 'easy',
-        saison: "Toute l'année",
-        image_url: 'https://images.unsplash.com/photo-1470071459604-3b5ec3a7fe05?q=80&w=800&auto=format&fit=crop',
-        tag: 'Nature — Observation',
-        titre: 'Safari photo &',
-        titre_em: 'faune locale',
-        description: 'Excursion guidée avec un naturaliste pour observer la faune sauvage.',
+        saison: 'Toute l’année',
+        image_url: 'https://images.unsplash.com/photo-1448375240586-882707db888b?q=80&w=800&auto=format&fit=crop',
+        tag: 'Observation — Faune',
+        titre: `Exploration des réserves`,
+        titre_em: '',
+        description: `Immersion dans les écosystèmes et réserves naturelles locales de la région ${subregion}.`,
         duree: '1 jour',
-        prix: '€95',
-      },
-      {
-        categorie: 'aqua',
-        difficulte: 'Facile',
-        difficulte_type: 'easy',
-        saison: 'Juin → Sep',
-        image_url: 'https://images.unsplash.com/photo-1507525428034-b723cf961d3e?q=80&w=800&auto=format&fit=crop',
-        tag: 'Eau — Baignade',
-        titre: 'Lacs d’altitude &',
-        titre_em: 'sources',
-        description: 'Baignade et exploration des criques et rivières sauvages préservées.',
-        duree: '4 h',
-        prix: '€55',
+        prix: 'Accès libre',
       },
       {
         categorie: 'cult',
         difficulte: 'Facile',
         difficulte_type: 'easy',
-        saison: "Toute l'année",
+        saison: 'Toute l’année',
         image_url: 'https://images.unsplash.com/photo-1517411032315-54ef2cb783bb?q=80&w=800&auto=format&fit=crop',
         tag: 'Culture — Patrimoine',
-        titre: 'Histoire &',
-        titre_em: 'villages d’antan',
-        description: 'Visite guidée des cités historiques, des marchés locaux et de l’artisanat.',
-        duree: '3 h',
-        prix: '€40',
+        titre: `Découverte de ${capital}`,
+        titre_em: '',
+        description: `Visite des quartiers historiques, marchés traditionnels et musées de la capitale.`,
+        duree: '1 jour',
+        prix: 'Variable',
       },
     ],
     culture: custom.culture || {
-      citation: `Découvrir ${base.nom}, c'est s'immerger dans une culture vibrante forgée par des siècles d'histoire et de respect du vivant.`,
-      citation_em: 'culture',
-      citation_auteur: 'Anthologie du Voyage · Le Kit',
+      citation: `En ${name}, les traditions locales et le respect de la nature se transmettent de génération en génération.`,
+      citation_em: 'Tradition',
+      citation_auteur: `Mémoire & Culture · ${name}`,
       faits: [
-        { cle: 'Langue', valeur: 'Langue officielle', valeur_em: '', description: 'Un héritage linguistique riche avec des dialectes régionaux préservés.' },
-        { cle: 'Tradition', valeur: 'Hospitalité', valeur_em: 'chaleureuse', description: 'Une tradition d’accueil et d’échange avec les randonneurs et voyageurs.' },
-        { cle: 'Patrimoine', valeur: 'Sites classés', valeur_em: '', description: 'Monuments, réserves naturelles et villages typiques remarquables.' },
-        { cle: 'Nature', valeur: 'Espaces', valeur_em: 'protégés', description: 'Une politique active de préservation des parcs et de la biodiversité.' },
+        { cle: 'Langues', valeur: formatLanguages(languagesList).primary, valeur_em: '', description: `Langues d'usage et officielles parlées sur le territoire.` },
+        { cle: 'Monnaie', valeur: currencyInfo.complet, valeur_em: '', description: `Unité monétaire utilisée pour l'ensemble des échanges locaux.` },
+        { cle: 'Fuseau', valeur: timezone, valeur_em: '', description: `Décalage horaire standard applicable dans le pays.` },
+        { cle: 'Région', valeur: subregion, valeur_em: '', description: `Position géographique et découpage régional.` },
       ],
       fetes: [
         { mois: 'Jan' },
-        { mois: 'Fév' },
         { mois: 'Mar' },
-        { mois: 'Avr', nom: 'Printemps' },
-        { mois: 'Mai' },
-        { mois: 'Jui', nom: 'Fête Nat.', isWarm: true },
-        { mois: 'Jul', nom: 'Festivals' },
-        { mois: 'Aoû' },
-        { mois: 'Sep', nom: 'Vendanges' },
-        { mois: 'Oct' },
+        { mois: 'Mai', nom: 'Printemps', isWarm: true },
+        { mois: 'Jul', nom: 'Fête locale' },
+        { mois: 'Sep' },
         { mois: 'Nov' },
-        { mois: 'Déc', nom: 'Fêtes d’hiver' },
       ],
     },
     gastronomie: custom.gastronomie || [
       {
         numero: 1,
-        categorie: 'Plat traditionnel',
-        nom: 'Spécialité du',
-        nom_em: 'Terroir',
-        description: 'Recette emblématique mijotée avec les produits frais des fermes locales.',
+        categorie: 'Tradition',
+        nom: 'Plat emblématique',
+        nom_em: 'du pays',
+        description: `Spécialité culinaire traditionnelle mijotée à base d'ingrédients locaux de saison.`,
         image_url: 'https://images.unsplash.com/photo-1547592180-85f173990554?q=80&w=600&auto=format&fit=crop',
       },
       {
         numero: 2,
-        categorie: 'Marché',
-        nom: 'Saveurs des',
-        nom_em: 'Halles',
-        description: 'Assortiment de fromages, charcuteries et pains artisanaux de saison.',
+        categorie: 'Terroir',
+        nom: 'Saveurs',
+        nom_em: 'Régionales',
+        description: `Recettes du terroir partagées dans les auberges et villages de ${name}.`,
         image_url: 'https://images.unsplash.com/photo-1534422298391-e4f8c172dddb?q=80&w=600&auto=format&fit=crop',
-      },
-      {
-        numero: 3,
-        categorie: 'Douceur',
-        nom: 'Pâtisserie',
-        nom_em: 'Traditionnelle',
-        description: 'Dessert réconfortant préparé selon les recettes familiales séculaires.',
-        image_url: 'https://images.unsplash.com/photo-1488477181946-6428a0291777?q=80&w=600&auto=format&fit=crop',
-      },
-      {
-        numero: 4,
-        categorie: 'Boisson',
-        nom: 'Breuvage du',
-        nom_em: 'Village',
-        description: 'Infusion de plantes sauvages des montagnes ou cru viticole réputé.',
-        image_url: 'https://images.unsplash.com/photo-1619740455993-9e612b1af08a?q=80&w=600&auto=format&fit=crop',
       },
     ],
     pratique: custom.pratique || {
       formalites: [
         { cle: 'Passeport / CNI', val: 'Requis' },
         { cle: 'Régime de visa', val: 'Consulter diplomatie' },
-        { cle: 'Validité', val: '6 mois après retour' },
-        { cle: 'Séjour touristique', val: '90 jours max', isMono: true },
+        { cle: 'Validité requise', val: '6 mois après retour' },
+        { cle: 'Séjour touristique', val: 'Consulter formalités', isMono: true },
       ],
       transport: [
-        { cle: 'Vols internationaux', val: `Vers ${base.capital}` },
-        { cle: 'Location véhicule', val: 'Recommandée pour l’autonomie' },
-        { cle: 'Réseau bus / train', val: 'Lignes régulières' },
-        { cle: 'État des routes', val: 'Bon réseau principal' },
+        { cle: 'Vols internationaux', val: `Vers ${capital}` },
+        { cle: 'Fuseau horaire', val: timezone, isMono: true },
+        { cle: 'Déplacements', val: 'Lignes régulières & location' },
+        { cle: 'Réseau routier', val: 'Axes principaux praticables' },
       ],
       budget: [
-        { cle: 'Café / Boisson', val: '≈ 2,50 – 4 €', isMono: true },
-        { cle: 'Repas traditionnel', val: '15 – 30 €', isMono: true },
-        { cle: 'Hôtel / Gîte nuit', val: '60 – 140 €', isMono: true },
-        { cle: 'Budget / jour / pers.', val: '≈ 85 – 130 €', isMono: true },
+        { cle: 'Monnaie officielle', val: currencyInfo.complet, isMono: true },
+        { cle: 'Code devise', val: currencyInfo.code, isMono: true },
+        { cle: 'Moyens de paiement', val: 'Espèces & carte bancaire' },
+        { cle: 'Budget repère', val: 'Consulter configurateur', isMono: true },
       ],
       sante: [
         { cle: 'Assurance voyage', val: 'Recommandée (rapatriement)' },
-        { cle: 'Vaccins à jour', val: 'DTP classique' },
-        { cle: 'Eau du robinet', val: 'Potable en agglomération' },
-        { cle: 'Urgences', val: '112', isMono: true },
+        { cle: 'Vaccins recommandés', val: 'DTP & vaccins universels' },
+        { cle: 'Numéro d’urgence', val: '112 / Urgences locales', isMono: true },
       ],
     },
     meteo: custom.meteo || {
-      ville: base.capital || 'Capitale',
+      ville: capital,
       temperature_actuelle: 19,
       conditions: 'Climat tempéré, ciel dégagé',
-      details: 'précipitations 15 % · UV 4',
+      details: 'Prévisions et relevés climatiques standards',
       mois_temperatures: [12, 14, 18, 24, 28, 34, 38, 36, 30, 22, 16, 12],
     },
     securite: custom.securite || {
-      niveau_label: base.danger_level === 'high' ? 'Risqué' : base.danger_level === 'medium' ? 'Vigilance' : 'Très sûr',
+      niveau_label: base.danger_level === 'high' ? 'Vigilance renforcée' : base.danger_level === 'medium' ? 'Vigilance normale' : 'Très sûr',
       niveau_score: base.danger_level === 'high' ? 2 : base.danger_level === 'medium' ? 3 : 5,
       conseils: [
-        { titre: 'Précautions d’usage.', description: 'Conserver une copie de ses papiers d’identité et se renseigner sur les numéros d’urgence locaux.' },
-        { titre: 'Randonnée en autonomie.', description: 'Prévoir de l’eau en quantité suffisante, une carte IGN/GPX hors-ligne et une trousse de premiers secours.' },
-        { titre: 'Assurance rapatriement.', description: 'Vérifier la prise en charge des activités de pleine nature et de recherche en montagne.' },
+        { titre: 'Précautions d’usage.', description: 'Conserver une copie numérique de ses pièces d’identité et noter les coordonnées consulaires.' },
+        { titre: 'Randonnée & Autonomie.', description: 'Emporter eau, carte topographique/GPX hors-ligne et trousse de premiers soins adaptée.' },
+        { titre: 'Assurance voyage.', description: 'Vérifier la prise en charge des activités outdoor et de recherche/secours en milieu isolé.' },
       ],
     },
   };

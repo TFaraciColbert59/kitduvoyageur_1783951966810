@@ -50,13 +50,83 @@ export default function PaysRightSidebar({
 
         <div className="grid grid-cols-2 gap-1.5 text-[9.5px] font-mono pt-0.5">
           <div className="p-1.5 rounded-lg bg-white/70 border border-white/60">
-            <span className="text-[#5A7064] block text-[8px] uppercase">Coordonnées</span>
-            <span className="font-bold text-[#17402C] truncate block">{country.latitude} · {country.longitude}</span>
+            <span className="text-[#5A7064] block text-[8px] uppercase">Région</span>
+            <span className="font-bold text-[#17402C] truncate block">{country.region || country.continent}</span>
           </div>
           <div className="p-1.5 rounded-lg bg-white/70 border border-white/60">
             <span className="text-[#5A7064] block text-[8px] uppercase">Fuseau</span>
             <span className="font-bold text-[#17402C] truncate block">{country.fuseau}</span>
           </div>
+        </div>
+      </div>
+
+      {/* WIDGET 2: FICHE D'IDENTITÉ PAYS (DONNÉES OFFICIELLES) */}
+      <div className="glass p-3.5 space-y-2 rounded-2xl border border-white/70 shadow-xs text-[#17402C]">
+        <div className="flex items-center justify-between pb-1 border-b border-[#17402C]/5">
+          <div className="flex items-center gap-1.5">
+            <span className="text-xs">📋</span>
+            <h3 className="font-display font-bold text-xs text-[#17402C]">Données officielles</h3>
+          </div>
+          <span className="glass-pill text-[8.5px] font-mono font-bold text-[#5B7F55]">
+            ISO {country.code}
+          </span>
+        </div>
+
+        <div className="space-y-1.5 text-[10.5px]">
+          {country.nom_en && (
+            <div className="flex items-center justify-between gap-2 p-1.5 rounded-lg bg-white/60 border border-white/40">
+              <span className="text-[#5A7064] text-[9.5px] font-medium">Nom anglais</span>
+              <span className="font-mono font-bold text-[#17402C] truncate">{country.nom_en}</span>
+            </div>
+          )}
+
+          <div className="flex items-center justify-between gap-2 p-1.5 rounded-lg bg-white/60 border border-white/40">
+            <span className="text-[#5A7064] text-[9.5px] font-medium">Capitale</span>
+            <span className="font-bold text-[#17402C] text-right truncate max-w-[170px]" title={country.capitale}>
+              {country.capitale}
+            </span>
+          </div>
+
+          <div className="flex items-center justify-between gap-2 p-1.5 rounded-lg bg-white/60 border border-white/40">
+            <span className="text-[#5A7064] text-[9.5px] font-medium">Langues</span>
+            <span className="font-bold text-[#17402C] text-right truncate max-w-[170px]" title={country.langue}>
+              {country.langue}
+            </span>
+          </div>
+
+          <div className="flex items-center justify-between gap-2 p-1.5 rounded-lg bg-white/60 border border-white/40">
+            <span className="text-[#5A7064] text-[9.5px] font-medium">Superficie</span>
+            <span className="font-mono font-bold text-[#17402C]">{country.superficie_detail}</span>
+          </div>
+
+          <div className="flex items-center justify-between gap-2 p-1.5 rounded-lg bg-white/60 border border-white/40">
+            <span className="text-[#5A7064] text-[9.5px] font-medium">Devise</span>
+            <span className="font-bold text-[#17402C] text-right truncate max-w-[170px]">{country.monnaie || country.monnaie_nom}</span>
+          </div>
+
+          <div className="flex items-center justify-between gap-2 p-1.5 rounded-lg bg-white/60 border border-white/40">
+            <span className="text-[#5A7064] text-[9.5px] font-medium">Fuseau</span>
+            <span className="font-mono font-bold text-[#17402C]">{country.fuseau}</span>
+          </div>
+
+          {country.sources_list && country.sources_list.length > 0 && (
+            <div className="pt-1.5 border-t border-[#17402C]/5 space-y-1">
+              <span className="text-[#5A7064] text-[9px] font-semibold uppercase block">Sources documentaires</span>
+              <div className="flex flex-wrap gap-1">
+                {country.sources_list.map((src, i) => (
+                  <a
+                    key={i}
+                    href={src.url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="glass-pill !px-2 !py-0.5 text-[8.5px] font-mono text-[#17402C] hover:text-[#5B7F55] transition-colors"
+                  >
+                    {src.label} ↗
+                  </a>
+                ))}
+              </div>
+            </div>
+          )}
         </div>
       </div>
 

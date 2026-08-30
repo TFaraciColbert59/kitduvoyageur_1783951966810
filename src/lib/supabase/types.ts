@@ -260,6 +260,9 @@ export interface CountryGeo {
   name_short: string | null;
   geometry_source: GeoCountryGeometrySource;
   is_sovereign: boolean;
+  timezone: string | null;
+  subregion: string | null;
+  sources: string | null;
   created_at: string;
   updated_at: string;
 }

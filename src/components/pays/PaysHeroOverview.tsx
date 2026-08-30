@@ -19,10 +19,10 @@ export default function PaysHeroOverview({
 }: PaysHeroOverviewProps) {
   const stats = [
     { label: 'SUPERFICIE', val: country.superficie_court, unit: 'km²', sub: country.superficie_detail },
-    { label: 'POPULATION', val: country.population_court, sub: country.population_detail },
-    { label: 'CAPITALE', val: country.capitale, sub: country.capitale_pop },
-    { label: 'LANGUE', val: country.langue, sub: country.langue_sub },
-    { label: 'MONNAIE', val: country.monnaie_code, unit: country.monnaie_nom, sub: country.taux_change },
+    { label: 'RÉGION', val: country.region || country.continent, sub: country.continent },
+    { label: 'CAPITALE', val: country.capitale, sub: country.fuseau ? `Fuseau : ${country.fuseau}` : undefined },
+    { label: 'LANGUES', val: country.langue, sub: country.langue_sub || undefined },
+    { label: 'DEVISE', val: country.monnaie_code, unit: country.monnaie_nom, sub: country.taux_change },
   ];
 
   const heroImg = country.hero_image_url || country.destinations?.[0]?.image_url;
@@ -39,6 +39,9 @@ export default function PaysHeroOverview({
                 {flagEmoji}
               </span>
               <span className="glass-pill text-[9.5px] font-mono font-bold text-[#17402C]">
+                {country.code}{country.iso_a3 ? ` · ${country.iso_a3}` : ''}
+              </span>
+              <span className="glass-pill text-[9.5px] font-mono font-bold text-[#17402C]">
                 📍 {country.region} · {country.continent}
               </span>
               <span className="glass-pill text-[9.5px] font-mono font-bold text-[#5B7F55]">
@@ -48,12 +51,19 @@ export default function PaysHeroOverview({
 
             {/* Title & Slogan */}
             <div>
-              <h1 className="font-display font-bold text-3xl sm:text-4xl text-[#17402C] tracking-tight leading-tight">
-                {country.nom}{' '}
-                <span className="font-serif italic font-normal text-[#8C6418] block sm:inline">
+              <div className="flex flex-wrap items-baseline gap-2">
+                <h1 className="font-display font-bold text-3xl sm:text-4xl text-[#17402C] tracking-tight leading-tight">
+                  {country.nom}
+                </h1>
+                {country.nom_en && country.nom_en.toLowerCase() !== country.nom.toLowerCase() && (
+                  <span className="font-mono text-xs text-[#5A7064] font-medium bg-white/70 px-2 py-0.5 rounded-md border border-white/60">
+                    {country.nom_en}
+                  </span>
+                )}
+                <span className="font-serif italic font-normal text-[#8C6418] text-xl sm:text-2xl">
                   — {country.slogan}
                 </span>
-              </h1>
+              </div>
               <p className="font-serif italic text-[#5A7064] text-base sm:text-lg mt-2 leading-relaxed">
                 {country.subtitle}
               </p>

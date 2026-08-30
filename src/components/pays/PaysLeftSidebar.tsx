@@ -55,11 +55,19 @@ export default function PaysLeftSidebar({
                 · {country.continent}
               </span>
             </h4>
+            {country.nom_en && country.nom_en.toLowerCase() !== country.nom.toLowerCase() && (
+              <span className="text-[9.5px] font-mono text-[#5A7064] block truncate">
+                {country.nom_en}
+              </span>
+            )}
             <p className="text-[10px] font-mono text-[#5A7064] truncate mt-0.5">
               {country.capitale} · {country.region}
             </p>
             <div className="flex items-center gap-1.5 mt-1">
-              <span className="glass-pill !px-2 !py-0.5 text-[8.5px] font-mono font-bold tracking-wider text-[#17402C]">
+              <span className="glass-pill !px-1.5 !py-0.5 text-[8px] font-mono font-bold text-[#17402C]">
+                {country.code}{country.iso_a3 ? ` · ${country.iso_a3}` : ''}
+              </span>
+              <span className="glass-pill !px-2 !py-0.5 text-[8.5px] font-mono font-bold tracking-wider text-[#5B7F55]">
                 ☀️ {country.saison_recommandee}
               </span>
             </div>
