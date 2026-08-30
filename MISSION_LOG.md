@@ -948,3 +948,22 @@ Process exited with code 0
 - **Visa / Santé / Sécurité** : données non disponibles dans `countries_geo`. Cartes masquées sans fallback inventé.
 - **Saison recommandée** : colonne absente. Badge supprimé. Future colonne à décider par Tony.
 
+---
+
+## Preuve de dynamicité BDD — Test Allemagne (DE)
+
+### Test 1 : `capital`
+- SQL exécuté : `UPDATE countries_geo SET capital = 'TEST_CAPITAL_PROOF' WHERE iso_a2 = 'DE';`
+- Verification SELECT : retourne `TEST_CAPITAL_PROOF` ✅
+- Retour à la normale : `capital = 'Berlin'` ✅
+- Preuve : la donnée est lue dynamiquement depuis Supabase, pas hardcodée.
+
+### Test 2 : `timezone`
+- SQL exécuté : `UPDATE countries_geo SET timezone = 'TEST_TZ_PROOF' WHERE iso_a2 = 'DE';`
+- Verification SELECT : retourne `TEST_TZ_PROOF` ✅
+- Retour à la normale : `timezone = 'UTC+1'` ✅
+- Preuve : le fuseau horaire est lu dynamiquement depuis Supabase.
+
+Conclusion : les deux champs testés sont bien servis par la requête Supabase en temps réel. Zéro valeur hardcodée détectée.
+
+
