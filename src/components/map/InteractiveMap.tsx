@@ -1008,7 +1008,7 @@ export default function InteractiveMap() {
                   <span>Point de départ</span>
                 </a>
                 <a
-                  href={`/preparer-randonnee?routeId=${selectedTrail.id}`}
+                  href={`/materiel/depart/none?route=${selectedTrail.id}`}
                   className="h-8 px-3 rounded-xl bg-[#FAF8F5] hover:bg-white text-[#17402C] text-xs font-bold border border-[#E4DED3] flex items-center justify-center transition-colors"
                 >
                   Préparer

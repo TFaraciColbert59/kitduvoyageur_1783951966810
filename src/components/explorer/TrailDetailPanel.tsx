@@ -340,7 +340,7 @@ export default function TrailDetailPanel({ trail, onClose }: Props) {
           <button
             type="button"
             onClick={() => {
-              router.push(`/preparer-randonnee?routeId=${trail.id}`);
+              router.push(`/materiel/depart/none?route=${trail.id}`);
             }}
             className="flex-1 h-12 glass-capsule-btn text-xs sm:text-sm font-bold shadow-xs active:scale-[0.98] transition-all cursor-pointer"
           >

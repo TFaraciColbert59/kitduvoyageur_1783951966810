@@ -21,7 +21,7 @@ export function LazyExplorerMap({ trail }: { trail: MapTrail | null }) {
   const router = useRouter();
   const handleTrailClick = (t: MapTrail) => {
     if (Number.isFinite(Number(t.id))) {
-      router.push(`/preparer-randonnee?routeId=${t.id}`);
+      router.push(`/materiel/depart/none?route=${t.id}`);
     }
   };
 

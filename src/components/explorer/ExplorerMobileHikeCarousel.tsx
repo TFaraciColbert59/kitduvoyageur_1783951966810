@@ -184,7 +184,7 @@ export default function ExplorerMobileHikeCarousel({
                       onClick={(e) => {
                         e.stopPropagation();
                         triggerHaptic('light');
-                        router.push(`/preparer-randonnee?routeId=${trail.id}`);
+                        router.push(`/materiel/depart/none?route=${trail.id}`);
                       }}
                       className="glass-capsule-btn primary flex-1 !min-h-[32px] text-xs font-bold shadow-xs active:scale-[0.97] transition-all cursor-pointer"
                     >

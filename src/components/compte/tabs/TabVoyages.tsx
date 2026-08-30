@@ -1,4 +1,4 @@
-﻿'use client';
+'use client';
 
 import React from 'react';
 import Link from 'next/link';
@@ -66,7 +66,7 @@ export default function TabVoyages({ prochainVoyage, clubs, loading }: TabVoyage
             </p>
           </div>
           <Link
-            href="/preparer-randonnee"
+            href="/explorer"
             className="px-5 py-2.5 rounded-xl bg-[#17402C] hover:bg-[#17402C] text-white text-xs font-bold  active:scale-95 transition-transform shrink-0 text-center"
           >
             + Planifier un voyage

@@ -357,7 +357,7 @@ export default function MesAventuresPage() {
 
                 {/* Action button */}
                 <Link
-                  href={`/preparer-randonnee?routeId=${saved.trail_id}`}
+                  href={`/materiel/depart/none?route=${saved.trail_id}`}
                   className="w-full relative overflow-hidden group flex items-center justify-center gap-2 py-2.5 px-3 rounded-xl bg-gradient-to-r from-[#17402C] via-[#1E5238] to-[#17402C] text-white text-xs font-bold tracking-wide shadow-[0_4px_12px_rgba(23,64,44,0.3)] border border-white/15 active:scale-[0.98] transition-all no-underline"
                 >
                   <span className="text-sm">🎒</span>

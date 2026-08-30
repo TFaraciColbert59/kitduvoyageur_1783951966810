@@ -1,4 +1,4 @@
-﻿'use client';
+'use client';
 
 import React from 'react';
 import Link from 'next/link';
@@ -77,7 +77,7 @@ export default function TabActivite({ activities, badges, loading }: TabActivite
               Vos prochaines sorties, carnets partagés et interactions apparaîtront ici.
             </p>
             <Link
-              href="/preparer-randonnee"
+              href="/explorer"
               className="inline-flex items-center gap-1.5 mt-4 px-4 py-2 rounded-full bg-[#17402C] text-white text-xs font-bold  active:scale-95 transition-transform"
             >
               <span>+ Préparer une aventure</span>

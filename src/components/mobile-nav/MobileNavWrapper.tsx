@@ -21,7 +21,7 @@ export default function MobileNavWrapper() {
   // Hide general top site navigation on map-heavy views to allow full-screen map focus
   const isMapHeavyRoute = 
     pathname?.startsWith('/randonnee-active') || 
-    pathname?.startsWith('/preparer-randonnee') || 
+    pathname?.startsWith('/materiel/depart') || 
     pathname?.startsWith('/carte-interactive');
 
   if (isMapHeavyRoute) {
