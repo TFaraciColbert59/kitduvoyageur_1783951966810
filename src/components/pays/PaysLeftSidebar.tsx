@@ -113,9 +113,6 @@ export default function PaysLeftSidebar({
 
         {/* Navigation Tabs (No icons, No sublabels) */}
         <nav className="space-y-1 pt-1">
-          <p className="text-[9.5px] font-mono font-bold uppercase tracking-widest text-[#5A7064] px-2 mb-1.5">
-            Sommaire des catégories
-          </p>
           {sections.map((s) => {
             const isActive = activeSection === s.id;
             return (
@@ -145,35 +142,10 @@ export default function PaysLeftSidebar({
             );
           })}
         </nav>
-
-        {/* Repères Essentiels par Catégorie */}
-        <div className="pt-2.5 border-t border-[#17402C]/10 space-y-1.5">
-          <p className="text-[9.5px] font-mono font-bold uppercase tracking-widest text-[#5B7F55] px-1">
-            Repères BDD pays
-          </p>
-          <div className="grid grid-cols-2 gap-1.5 text-[9.5px]">
-            <div className="p-2 rounded-xl bg-white/70 border border-white/60 shadow-2xs space-y-0.5">
-              <span className="text-[#5A7064] block text-[8px] font-semibold uppercase">Superficie</span>
-              <span className="font-mono font-bold text-[#17402C] truncate block">{country.superficie_court} km²</span>
-            </div>
-            <div className="p-2 rounded-xl bg-white/70 border border-white/60 shadow-2xs space-y-0.5">
-              <span className="text-[#5A7064] block text-[8px] font-semibold uppercase">Capitale</span>
-              <span className="font-bold text-[#17402C] truncate block" title={country.capitale}>{country.capitale}</span>
-            </div>
-            <div className="p-2 rounded-xl bg-white/70 border border-white/60 shadow-2xs space-y-0.5">
-              <span className="text-[#5A7064] block text-[8px] font-semibold uppercase">Devise</span>
-              <span className="font-bold text-[#17402C] truncate block">{country.monnaie_code}</span>
-            </div>
-            <div className="p-2 rounded-xl bg-white/70 border border-white/60 shadow-2xs space-y-0.5">
-              <span className="text-[#5A7064] block text-[8px] font-semibold uppercase">Fuseau</span>
-              <span className="font-mono font-bold text-[#17402C] truncate block">{country.fuseau}</span>
-            </div>
-          </div>
-        </div>
       </div>
 
       {/* Bottom link: retour Earth */}
-      <div className="pt-2 border-t border-[#17402C]/5 flex items-center justify-between">
+      <div className="pt-3 border-t border-[#17402C]/10 flex items-center justify-between">
         <Link
           href="/pays"
           className="flex items-center gap-1.5 text-[11px] font-bold text-[#5B7F55] hover:text-[#17402C] transition-colors"
