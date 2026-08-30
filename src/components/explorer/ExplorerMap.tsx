@@ -483,10 +483,17 @@ export default function ExplorerMap({
     }
   }, []);
 
+  const prevSelectedIdRef = useRef<string | null>(null);
   useEffect(() => {
-    if (!selectedTrailId || !mapReady) return;
-    const trail = trails.find((t) => String(t.id) === String(selectedTrailId));
-    if (trail) fitToTrail(trail);
+    if (!selectedTrailId || !mapReady) {
+      prevSelectedIdRef.current = selectedTrailId;
+      return;
+    }
+    if (prevSelectedIdRef.current !== selectedTrailId) {
+      prevSelectedIdRef.current = selectedTrailId;
+      const trail = trails.find((t) => String(t.id) === String(selectedTrailId));
+      if (trail) fitToTrail(trail);
+    }
   }, [selectedTrailId, trails, mapReady, fitToTrail]);
 
   const handleManualLocate = () => {

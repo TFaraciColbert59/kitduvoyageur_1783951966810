@@ -9,6 +9,7 @@ import {
   Search,
   X,
   SlidersHorizontal,
+  RotateCcw,
   Compass,
   Backpack,
   Clock,
@@ -533,33 +534,39 @@ export default function ExplorerClient({ initialTrails }: ExplorerClientProps) {
         />
       </div>
 
-      {/* ── 2B. BOUTON FLOTTANT DYNAMIQUE : « RECHERCHER DANS CETTE ZONE » ── */}
+      {/* ── 2B. BOUTON FLOTTANT DYNAMIQUE : « RECHERCHER DANS CETTE ZONE » (STYLE LIQUID GLASS, SANS TEXTE) ── */}
       <AnimatePresence>
         {showSearchHereButton && (
           <motion.div
-            initial={{ opacity: 0, y: -16, scale: 0.95 }}
+            initial={{ opacity: 0, y: -16, scale: 0.9 }}
             animate={{ opacity: 1, y: 0, scale: 1 }}
-            exit={{ opacity: 0, y: -16, scale: 0.95 }}
-            transition={{ type: 'spring', stiffness: 450, damping: 30 }}
+            exit={{ opacity: 0, y: -16, scale: 0.9 }}
+            transition={{ type: 'spring', stiffness: 500, damping: 30 }}
             className="fixed top-[72px] sm:top-[76px] left-1/2 -translate-x-1/2 z-[850] pointer-events-auto"
           >
-            <button
-              type="button"
-              onClick={handleSearchHere}
-              className="flex items-center gap-2 px-4 py-2 rounded-full font-sans font-bold text-xs text-[#17402C] hover:text-[#0B1F17] transition-all cursor-pointer shadow-lg active:scale-95 group"
+            <div
+              className="p-1 rounded-2xl flex items-center justify-center"
               style={{
-                background: 'linear-gradient(180deg, rgba(255, 255, 255, 0.95) 0%, rgba(255, 255, 255, 0.85) 100%)',
+                background: 'linear-gradient(180deg, rgba(255, 255, 255, 0.55) 0%, rgba(255, 255, 255, 0.28) 100%)',
                 backdropFilter: 'blur(20px) saturate(180%)',
                 WebkitBackdropFilter: 'blur(20px) saturate(180%)',
-                border: '1px solid rgba(255, 255, 255, 0.85)',
-                boxShadow: '0 8px 32px -4px rgba(23, 64, 44, 0.18), inset 0 1px 1.5px rgba(255, 255, 255, 0.95)',
+                border: '1px solid rgba(255, 255, 255, 0.70)',
+                boxShadow: '0 8px 32px -4px rgba(23, 64, 44, 0.14), inset 0 1px 1.5px rgba(255, 255, 255, 0.95)',
               }}
             >
-              <span className={`text-sm transition-transform duration-500 ${trailsFetching ? 'animate-spin' : 'group-hover:rotate-180'}`}>
-                🔄
-              </span>
-              <span>Rechercher dans cette zone</span>
-            </button>
+              <button
+                type="button"
+                onClick={handleSearchHere}
+                className="h-8 w-8 rounded-xl bg-[#5B7F55]/15 text-[#5B7F55] hover:bg-[#17402C] hover:text-white flex items-center justify-center transition-all cursor-pointer active:scale-95 group"
+                title="Rechercher les randonnées dans cette zone"
+                aria-label="Rechercher les randonnées dans cette zone"
+              >
+                <RotateCcw
+                  size={15}
+                  className={`transition-transform duration-500 ${trailsFetching ? 'animate-spin' : 'group-hover:-rotate-90'}`}
+                />
+              </button>
+            </div>
           </motion.div>
         )}
       </AnimatePresence>
