@@ -531,8 +531,8 @@ export default function ExplorerMap({
         <TrailLayer map={mapInstance} trails={trails} pois={pois} selectedTrailId={selectedTrailId} onTrailClick={onTrailClick} onPoiClick={onPoiClick} />
       )}
 
-      {/* 1. Sélecteur de Calques (Top Right sous la barre de recherche) */}
-      <div className="absolute z-[400] pointer-events-auto right-3.5 top-[calc(env(safe-area-inset-top,0px)+60px)] md:top-auto md:right-4 md:bottom-6">
+      {/* 1. Sélecteur de Calques (Top Right sur mobile & desktop) */}
+      <div className="absolute z-[400] pointer-events-auto right-3.5 top-[calc(env(safe-area-inset-top,0px)+14px)] md:top-auto md:right-4 md:bottom-6">
         <div
           className="flex items-center gap-1 p-1 rounded-full shadow-lg"
           style={{
