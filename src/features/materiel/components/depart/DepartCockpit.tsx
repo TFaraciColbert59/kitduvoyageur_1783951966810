@@ -175,6 +175,8 @@ export function DepartCockpit({ depart, weather, kits }: DepartCockpitProps) {
           <DepartChecklist
             items={depart.assignedKit.items}
             consumables={depart.consumables}
+            participants={depart.participants}
+            kitId={depart.id}
             isRealKit={isRealKit}
           />
         </section>

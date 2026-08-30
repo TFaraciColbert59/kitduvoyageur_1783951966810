@@ -2,6 +2,9 @@ import { describe, it, expect } from 'vitest';
 import { getDepartDetail } from '@/features/materiel/services/getDepartDetail';
 import { toggleKitItem } from '@/features/materiel/actions/toggleKitItem';
 import { updateDepartStatus } from '@/features/materiel/actions/updateDepartStatus';
+import { addDepartItem } from '@/features/materiel/actions/addDepartItem';
+import { updateItemQuantity } from '@/features/materiel/actions/updateItemQuantity';
+import { deleteDepartItem } from '@/features/materiel/actions/deleteDepartItem';
 import { buildDepartNotificationPlan } from '@/features/materiel/services/departNotifications';
 import { generateSmartPrompts } from '@/features/materiel/services/generateSmartPrompts';
 import {
@@ -73,6 +76,32 @@ describe('Depart Cockpit - Complete V2 Test Suite', () => {
       const res = await updateDepartStatus('', 'active');
       expect(res.success).toBe(false);
       expect(res.error).toBeDefined();
+    });
+
+    it('rejette les ajouts d équipements avec des données incomplètes ou invalides (Phase 3)', async () => {
+      const res1 = await addDepartItem({ kitId: '', name: '', category: 'Bivouac', weightG: 100 });
+      expect(res1.success).toBe(false);
+      expect(res1.error).toBeDefined();
+
+      const res2 = await addDepartItem({ kitId: 'kit-123', name: '', category: 'Bivouac', weightG: 100 });
+      expect(res2.success).toBe(false);
+      expect(res2.error).toBe('Informations incomplètes');
+    });
+
+    it('rejette les modifications de quantités avec des valeurs hors limites (Phase 3)', async () => {
+      const res1 = await updateItemQuantity('item-1', 0);
+      expect(res1.success).toBe(false);
+      expect(res1.error).toBe('Paramètres invalides');
+
+      const res2 = await updateItemQuantity('item-1', 100);
+      expect(res2.success).toBe(false);
+      expect(res2.error).toBe('Paramètres invalides');
+    });
+
+    it('rejette les suppressions avec des identifiants invalides (Phase 3)', async () => {
+      const res = await deleteDepartItem('');
+      expect(res.success).toBe(false);
+      expect(res.error).toBe('ID invalide');
     });
   });
 

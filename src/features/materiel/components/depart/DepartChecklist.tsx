@@ -1,5 +1,6 @@
 'use client';
-import { useOptimistic, useTransition, useState, useCallback, useEffect, useMemo } from 'react';
+import React, { useOptimistic, useTransition, useState, useCallback, useEffect, useMemo } from 'react';
+import Link from 'next/link';
 import {
   Check,
   ChevronDown,
@@ -9,12 +10,22 @@ import {
   Droplets,
   RotateCcw,
   Sparkles,
+  Search,
+  Plus,
+  Volume2,
+  VolumeX,
+  ShoppingBag,
+  Trash2,
+  X,
 } from 'lucide-react';
 import { motion, AnimatePresence, useReducedMotion } from 'framer-motion';
 import { GlassCard } from '@/components/ui/GlassCard';
 import { cn } from '@/lib/utils';
 import { toggleKitItem } from '@/features/materiel/actions/toggleKitItem';
-import type { ChecklistItem } from '@/features/materiel/types/trekHub';
+import { addDepartItem } from '@/features/materiel/actions/addDepartItem';
+import { updateItemQuantity } from '@/features/materiel/actions/updateItemQuantity';
+import { deleteDepartItem } from '@/features/materiel/actions/deleteDepartItem';
+import type { ChecklistItem, Participant } from '@/features/materiel/types/trekHub';
 
 interface CategoryGroup {
   name: string;
@@ -22,7 +33,19 @@ interface CategoryGroup {
   done: number;
 }
 
-/** Groupe les items par catégorie et trie : catégories incomplètes d abord. */
+const CATEGORIES = [
+  'Bivouac',
+  'Couchage',
+  'Vivres & Eau',
+  'Vêtements',
+  'Cuisine',
+  'Sécurité',
+  'Hydratation',
+  'Électronique',
+  'Hygiène',
+  'Autre',
+];
+
 function groupByCategory(items: ChecklistItem[]): CategoryGroup[] {
   const map = new Map<string, ChecklistItem[]>();
   for (const item of items) {
@@ -37,7 +60,6 @@ function groupByCategory(items: ChecklistItem[]): CategoryGroup[] {
       done: catItems.filter((i) => i.is_checked).length,
     }))
     .sort((a, b) => {
-      // Catégories incomplètes en premier, puis par nom
       const aComplete = a.done === a.items.length;
       const bComplete = b.done === b.items.length;
       if (aComplete !== bComplete) return aComplete ? 1 : -1;
@@ -48,13 +70,32 @@ function groupByCategory(items: ChecklistItem[]): CategoryGroup[] {
 interface DepartChecklistProps {
   items: ChecklistItem[];
   consumables?: Record<string, number> | null;
+  participants?: Participant[];
+  kitId?: string;
   isRealKit: boolean;
 }
 
-export function DepartChecklist({ items, consumables, isRealKit }: DepartChecklistProps) {
+export function DepartChecklist({
+  items,
+  consumables,
+  participants = [],
+  kitId,
+  isRealKit,
+}: DepartChecklistProps) {
   const shouldReduceMotion = useReducedMotion();
+  const [searchQuery, setSearchQuery] = useState('');
+  const [filterMode, setFilterMode] = useState<'all' | 'remaining'>('all');
+  const [isAddModalOpen, setIsAddModalOpen] = useState(false);
+  const [isSpeaking, setIsSpeaking] = useState(false);
 
-  // Intégration auto des consommables dans la checklist sous "Vivres & Eau" (§3.2)
+  // Formulaire d'ajout
+  const [newItemName, setNewItemName] = useState('');
+  const [newItemCategory, setNewItemCategory] = useState('Bivouac');
+  const [newItemWeight, setNewItemWeight] = useState(150);
+  const [newItemVital, setNewItemVital] = useState(false);
+  const [newItemAddToInv, setNewItemAddToInv] = useState(false);
+
+  // Intégration auto des consommables dans la checklist sous Vivres & Eau
   const initialItems = useMemo(() => {
     const base = [...items];
     const hasConsumableItems = base.some((i) => i.category === 'Vivres & Eau' || i.is_consumable);
@@ -120,97 +161,192 @@ export function DepartChecklist({ items, consumables, isRealKit }: DepartCheckli
   );
 
   const [isPending, startTransition] = useTransition();
+  const [openCats, setOpenCats] = useState<Set<string>>(() => {
+    const incomplete = new Set<string>();
+    const grps = groupByCategory(initialItems);
+    for (const g of grps) {
+      if (g.done < g.items.length) {
+        incomplete.add(g.name);
+      }
+    }
+    return incomplete.size > 0 ? incomplete : new Set(grps.map((g) => g.name));
+  });
+
+  const [highlightedItemId, setHighlightedItemId] = useState<string | null>(null);
   const [errorItemId, setErrorItemId] = useState<string | null>(null);
   const [failedItem, setFailedItem] = useState<ChecklistItem | null>(null);
-  const [highlightedItemId, setHighlightedItemId] = useState<string | null>(null);
 
-  const groups = groupByCategory(optimisticItems);
+  // Filtrage recherche & mode restants
+  const filteredItems = useMemo(() => {
+    return optimisticItems.filter((i) => {
+      if (filterMode === 'remaining' && i.is_checked) return false;
+      if (searchQuery.trim() === '') return true;
+      const q = searchQuery.toLowerCase();
+      return (
+        i.name.toLowerCase().includes(q) ||
+        (i.category && i.category.toLowerCase().includes(q))
+      );
+    });
+  }, [optimisticItems, filterMode, searchQuery]);
 
-  // Par défaut, ouvrir uniquement les catégories incomplètes (§3.1)
-  const [openCats, setOpenCats] = useState<Set<string>>(
-    () => new Set(groups.filter((g) => g.done < g.items.length).map((g) => g.name))
-  );
+  const groups = useMemo(() => groupByCategory(filteredItems), [filteredItems]);
 
-  const toggleCat = (name: string) =>
+  const toggleCat = (cat: string) => {
     setOpenCats((prev) => {
       const next = new Set(prev);
-      if (next.has(name)) next.delete(name);
-      else next.add(name);
+      if (next.has(cat)) next.delete(cat);
+      else next.add(cat);
       return next;
     });
+  };
 
   const handleToggle = useCallback(
     (item: ChecklistItem) => {
-      // Haptique légère mobile
-      if (typeof window !== 'undefined' && 'vibrate' in navigator) {
-        try {
-          navigator.vibrate(8);
-        } catch {}
-      }
-
-      // Si item virtuel (consommable généré ou showcase), toggle local sans Server Action
-      if (!isRealKit || !item.id || item.id.startsWith('consumable-')) {
-        setLocalItems((prev) =>
-          prev.map((i) =>
-            (i.id ?? i.name) === (item.id ?? item.name)
-              ? { ...i, is_checked: !i.is_checked }
-              : i
-          )
-        );
-        return;
-      }
-
+      const nextChecked = !item.is_checked;
       const itemKey = item.id ?? item.name;
+
+      if (typeof navigator !== 'undefined' && 'vibrate' in navigator) {
+        try { navigator.vibrate(8); } catch {}
+      }
+
       setErrorItemId(null);
       setFailedItem(null);
+      addOptimistic({ id: itemKey, checked: nextChecked });
+
+      setLocalItems((prev) =>
+        prev.map((i) =>
+          (i.id ?? i.name) === itemKey ? { ...i, is_checked: nextChecked } : i
+        )
+      );
+
+      if (!isRealKit || !item.id || item.id.startsWith('consumable-')) return;
 
       startTransition(async () => {
-        addOptimistic({ id: itemKey, checked: !item.is_checked });
-        const result = await toggleKitItem(item.id!, item.is_checked);
-        if (!result.success) {
-          addOptimistic({ id: itemKey, checked: item.is_checked });
+        try {
+          const res = await toggleKitItem(item.id!, nextChecked);
+          if (!res.success) {
+            setErrorItemId(itemKey);
+            setFailedItem(item);
+            setLocalItems((prev) =>
+              prev.map((i) => (i.id === item.id ? { ...i, is_checked: !nextChecked } : i))
+            );
+          }
+        } catch {
           setErrorItemId(itemKey);
           setFailedItem(item);
-          setTimeout(() => setErrorItemId(null), 5000);
-        } else {
           setLocalItems((prev) =>
-            prev.map((i) =>
-              i.id === item.id ? { ...i, is_checked: result.newChecked ?? !item.is_checked } : i
-            )
+            prev.map((i) => (i.id === item.id ? { ...i, is_checked: !nextChecked } : i))
           );
         }
       });
     },
-    [isRealKit, addOptimistic]
+    [addOptimistic, isRealKit]
   );
 
-  // Écoute des événements déclenchés depuis les alertes interactives (§2.4)
+  const handleQuantityChange = async (item: ChecklistItem, delta: number) => {
+    const currentQty = item.quantity ?? 1;
+    const nextQty = Math.max(1, Math.min(99, currentQty + delta));
+    if (nextQty === currentQty) return;
+
+    setLocalItems((prev) =>
+      prev.map((i) => ((i.id ?? i.name) === (item.id ?? item.name) ? { ...i, quantity: nextQty } : i))
+    );
+
+    if (isRealKit && item.id && !item.id.startsWith('consumable-')) {
+      await updateItemQuantity(item.id, nextQty, kitId);
+    }
+  };
+
+  const handleDelete = async (item: ChecklistItem) => {
+    setLocalItems((prev) => prev.filter((i) => (i.id ?? i.name) !== (item.id ?? item.name)));
+    if (isRealKit && item.id && !item.id.startsWith('consumable-')) {
+      await deleteDepartItem(item.id, kitId);
+    }
+  };
+
+  const handleAddItem = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!newItemName.trim()) return;
+
+    const newItem: ChecklistItem = {
+      id: `temp-${Date.now()}`,
+      name: newItemName.trim(),
+      category: newItemCategory,
+      weight_g: Number(newItemWeight) || 100,
+      quantity: 1,
+      is_checked: false,
+      is_vital: newItemVital,
+    };
+
+    setLocalItems((prev) => [...prev, newItem]);
+    setIsAddModalOpen(false);
+    setNewItemName('');
+
+    if (isRealKit && kitId) {
+      await addDepartItem({
+        kitId,
+        name: newItem.name,
+        category: newItem.category ?? 'Autre',
+        weightG: newItem.weight_g,
+        isVital: newItemVital,
+        addToInventory: newItemAddToInv,
+      });
+    }
+  };
+
+  // Text-to-Speech : lecture à voix haute des articles restants
+  const handleToggleSpeak = () => {
+    if (typeof window === 'undefined' || !('speechSynthesis' in window)) return;
+
+    if (isSpeaking) {
+      window.speechSynthesis.cancel();
+      setIsSpeaking(false);
+      return;
+    }
+
+    const remaining = localItems.filter((i) => !i.is_checked);
+    if (remaining.length === 0) {
+      const u = new SpeechSynthesisUtterance('Bravo ! Tous vos équipements sont prêts dans votre sac.');
+      u.lang = 'fr-FR';
+      window.speechSynthesis.speak(u);
+      return;
+    }
+
+    const text = `Articles restants à mettre dans votre sac : ${remaining.map((i) => i.name).join(', ')}.`;
+    const utterance = new SpeechSynthesisUtterance(text);
+    utterance.lang = 'fr-FR';
+    utterance.rate = 0.95;
+    utterance.onend = () => setIsSpeaking(false);
+    utterance.onerror = () => setIsSpeaking(false);
+
+    setIsSpeaking(true);
+    window.speechSynthesis.speak(utterance);
+  };
+
+  // Écoute des événements d ancrage
   useEffect(() => {
     const handleHighlight = (e: any) => {
       const targetId = e?.detail?.id;
       if (!targetId) return;
-
-      const targetItem = optimisticItems.find((i) => (i.id ?? i.name) === targetId);
-      if (targetItem?.category) {
-        setOpenCats((prev) => new Set(prev).add(targetItem.category!));
-      }
-
       setHighlightedItemId(targetId);
+      for (const group of groups) {
+        if (group.items.some((i) => (i.id ?? i.name) === targetId)) {
+          setOpenCats((prev) => new Set(prev).add(group.name));
+          break;
+        }
+      }
       setTimeout(() => {
-        const itemEl = document.getElementById(`checklist-item-${targetId}`);
-        itemEl?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        const el = document.getElementById(`checklist-item-${targetId}`);
+        el?.scrollIntoView({ behavior: 'smooth', block: 'center' });
       }, 100);
-
-      setTimeout(() => setHighlightedItemId(null), 2500);
+      setTimeout(() => setHighlightedItemId(null), 3000);
     };
 
     const handleToggleFromAlert = (e: any) => {
       const targetId = e?.detail?.id;
       if (!targetId) return;
-      const targetItem = optimisticItems.find((i) => (i.id ?? i.name) === targetId);
-      if (targetItem) {
-        handleToggle(targetItem);
-      }
+      const it = localItems.find((i) => (i.id ?? i.name) === targetId);
+      if (it) handleToggle(it);
     };
 
     window.addEventListener('highlight-checklist-item', handleHighlight);
@@ -220,54 +356,100 @@ export function DepartChecklist({ items, consumables, isRealKit }: DepartCheckli
       window.removeEventListener('highlight-checklist-item', handleHighlight);
       window.removeEventListener('toggle-item-from-alert', handleToggleFromAlert);
     };
-  }, [optimisticItems, handleToggle]);
+  }, [groups, localItems, handleToggle]);
 
-  const totalItems = optimisticItems.length;
-  const totalDone = optimisticItems.filter((i) => i.is_checked).length;
-  const remainingItems = optimisticItems.filter((i) => !i.is_checked);
-
-  // Résumé textuel « encore X : tente, trousse... » (§3.1)
-  const remainingSummary = remainingItems.length > 0
-    ? `encore ${remainingItems.length} : ${remainingItems.slice(0, 3).map((i) => i.name).join(', ')}${remainingItems.length > 3 ? '...' : ''}`
-    : 'Tout est prêt dans votre sac !';
-
-  if (totalItems === 0) {
-    return (
-      <GlassCard tone="neutral">
-        <div className="p-5 flex flex-col items-center gap-3 text-center">
-          <Package size={28} className="text-[#5A7064]" aria-hidden="true" />
-          <div>
-            <p className="text-sm font-semibold text-[#17402C]">Kit vide</p>
-            <p className="text-xs text-[#5A7064] mt-0.5">Ajoutez des articles dans votre kit de départ.</p>
-          </div>
-        </div>
-      </GlassCard>
-    );
-  }
+  const total = localItems.length;
+  const done = localItems.filter((i) => i.is_checked).length;
+  const remaining = total - done;
 
   return (
-    <GlassCard tone="neutral" as="article" ariaLabelledBy="checklist-heading">
-      <div className="p-4 sm:p-5 space-y-2.5">
-        {/* ════ EN-TÊTE STICKY DU PACK (§3.1) ════ */}
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-1.5 pb-2 border-b border-black/5 dark:border-white/10">
-          <div>
-            <h2 id="checklist-heading" className="text-xs sm:text-[13px] font-bold text-[#17402C] flex items-center gap-2">
-              <Package size={15} className="text-[#2D6B4A]" aria-hidden="true" />
-              <span>Checklist de préparation du sac</span>
+    <GlassCard tone="neutral" as="article" ariaLabelledBy="depart-checklist-heading" className="relative">
+      <div className="p-4 sm:p-5 space-y-3.5">
+        {/* ════ HEADER CHECKLIST & ACTIONS RAPIDES ════ */}
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5">
+          <div className="flex items-center gap-2">
+            <Package size={16} className="text-[#2D6B4A]" aria-hidden="true" />
+            <h2 id="depart-checklist-heading" className="text-sm sm:text-base font-bold text-[#17402C]">
+              Préparation active du sac
             </h2>
-            <p className="text-[11px] text-[#5A7064] mt-0.5 truncate max-w-lg">
-              {totalDone}/{totalItems} articles prêts · <span className="font-semibold text-[#17402C]">{remainingSummary}</span>
-            </p>
-          </div>
-
-          <div className="flex items-center gap-2 shrink-0 self-end sm:self-auto">
-            <span
-              className="text-xs font-mono font-bold px-2 py-0.5 rounded-full bg-[#17402C]/10 text-[#17402C] tabular-nums"
-              aria-label={`${totalDone} sur ${totalItems} cochés`}
-            >
-              {Math.round((totalDone / totalItems) * 100)}%
+            <span className="text-xs font-mono font-bold px-2 py-0.5 rounded-full bg-[#17402C]/10 text-[#17402C]">
+              {done}/{total}
             </span>
           </div>
+
+          {/* Barre d outils : Recherche, Filtre, Audio, Ajout */}
+          <div className="flex items-center gap-1.5 flex-wrap">
+            {/* Bascule Reste à faire / Tous */}
+            <div className="flex items-center bg-black/5 dark:bg-white/10 rounded-xl p-0.5 text-[11px] font-semibold">
+              <button
+                type="button"
+                onClick={() => setFilterMode('all')}
+                className={cn(
+                  'px-2.5 py-1 rounded-lg transition-colors cursor-pointer',
+                  filterMode === 'all' ? 'bg-[#17402C] text-white shadow-2xs' : 'text-[#5A7064] hover:text-[#17402C]'
+                )}
+              >
+                Tous ({total})
+              </button>
+              <button
+                type="button"
+                onClick={() => setFilterMode('remaining')}
+                className={cn(
+                  'px-2.5 py-1 rounded-lg transition-colors cursor-pointer',
+                  filterMode === 'remaining' ? 'bg-[#17402C] text-white shadow-2xs' : 'text-[#5A7064] hover:text-[#17402C]'
+                )}
+              >
+                Restants ({remaining})
+              </button>
+            </div>
+
+            {/* Lecture Audio Text-to-Speech */}
+            <button
+              type="button"
+              onClick={handleToggleSpeak}
+              className={cn(
+                'p-2 rounded-xl transition-all cursor-pointer shadow-2xs',
+                isSpeaking
+                  ? 'bg-[#2D6B4A] text-white animate-pulse'
+                  : 'bg-white/50 dark:bg-white/10 text-[#17402C] hover:bg-white/80'
+              )}
+              title={isSpeaking ? 'Arrêter la lecture' : 'Lire les articles restants à voix haute'}
+              aria-label={isSpeaking ? 'Arrêter la lecture audio' : 'Lire la checklist à voix haute'}
+            >
+              {isSpeaking ? <VolumeX size={13} /> : <Volume2 size={13} />}
+            </button>
+
+            {/* Bouton Ajouter un équipement */}
+            <button
+              type="button"
+              onClick={() => setIsAddModalOpen(true)}
+              className="glass-capsule-btn primary text-xs !py-1.5 !px-3 inline-flex items-center gap-1 font-bold shadow-2xs cursor-pointer"
+            >
+              <Plus size={13} />
+              <span>Ajouter</span>
+            </button>
+          </div>
+        </div>
+
+        {/* ════ CHAMP DE RECHERCHE RAPIDE ════ */}
+        <div className="relative">
+          <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-[#5A7064]" />
+          <input
+            type="text"
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            placeholder="Rechercher un équipement, une tente, un vêtement..."
+            className="w-full pl-8 pr-8 py-2 rounded-xl text-xs bg-white/50 dark:bg-white/10 border border-white/60 focus:outline-none focus:ring-2 focus:ring-[#17402C]/30 text-[#17402C] placeholder-[#5A7064]/70"
+          />
+          {searchQuery && (
+            <button
+              type="button"
+              onClick={() => setSearchQuery('')}
+              className="absolute right-2.5 top-1/2 -translate-y-1/2 text-[#5A7064] hover:text-[#17402C] p-0.5 cursor-pointer"
+            >
+              <X size={12} />
+            </button>
+          )}
         </div>
 
         {/* Toast de retry en cas d erreur réseau */}
@@ -296,7 +478,14 @@ export function DepartChecklist({ items, consumables, isRealKit }: DepartCheckli
             const isFoodWater = group.name === 'Vivres & Eau' || group.name === 'Hydratation' || group.name === 'Nutrition';
 
             return (
-              <div key={group.name} role="listitem" className={cn('rounded-2xl transition-opacity', allDone && !isOpen ? 'opacity-80 hover:opacity-100' : 'opacity-100')}>
+              <div
+                key={group.name}
+                role="listitem"
+                className={cn(
+                  'rounded-2xl transition-opacity',
+                  allDone && !isOpen ? 'opacity-80 hover:opacity-100' : 'opacity-100'
+                )}
+              >
                 {/* Header catégorie — bouton accordéon */}
                 <button
                   type="button"
@@ -359,31 +548,35 @@ export function DepartChecklist({ items, consumables, isRealKit }: DepartCheckli
                       className="overflow-hidden"
                       aria-label={`${group.name} — ${group.done} sur ${group.items.length}`}
                     >
-                      <div className="pt-1 pb-1 pl-1 sm:pl-2 space-y-0.5">
+                      <div className="pt-1 pb-1 pl-1 sm:pl-2 space-y-1">
                         {group.items.map((item) => {
                           const itemKey = item.id ?? item.name;
                           const hasError = errorItemId === itemKey;
                           const isHighlighted = highlightedItemId === itemKey;
+                          const qty = item.quantity ?? 1;
 
                           return (
-                            <li key={itemKey} id={`checklist-item-${itemKey}`}>
+                            <li
+                              key={itemKey}
+                              id={`checklist-item-${itemKey}`}
+                              className={cn(
+                                'flex items-center justify-between gap-2 px-2.5 py-2 rounded-xl transition-all',
+                                'min-h-[44px]',
+                                isHighlighted && 'ring-2 ring-[#8A241B] bg-[#8A241B]/15',
+                                item.is_checked
+                                  ? 'bg-black/2 hover:bg-black/4 opacity-75 hover:opacity-100'
+                                  : 'bg-white/40 hover:bg-white/60 shadow-2xs'
+                              )}
+                            >
+                              {/* Bouton cocher toggle principal */}
                               <button
+                                type="button"
                                 onClick={() => handleToggle(item)}
                                 disabled={isPending}
-                                className={cn(
-                                  'w-full flex items-center gap-3 px-2.5 py-2.5 rounded-xl text-left transition-all cursor-pointer',
-                                  'focus-visible:outline-2 focus-visible:outline-[#17402C]',
-                                  'min-h-[44px]',
-                                  isHighlighted && 'ring-2 ring-[#8A241B] bg-[#8A241B]/15',
-                                  item.is_checked
-                                    ? 'hover:bg-white/10 opacity-70 hover:opacity-100'
-                                    : 'hover:bg-white/20',
-                                  isPending && 'opacity-70 cursor-wait'
-                                )}
+                                className="flex items-center gap-3 min-w-0 flex-1 text-left cursor-pointer focus-visible:outline-none"
                                 aria-pressed={item.is_checked}
                                 aria-label={`${item.is_checked ? 'Décocher' : 'Cocher'} : ${item.name}`}
                               >
-                                {/* Checkbox custom ≥44px touch-target safe */}
                                 <span
                                   className={cn(
                                     'shrink-0 w-5 h-5 rounded-md border-2 flex items-center justify-center transition-all duration-150',
@@ -391,7 +584,7 @@ export function DepartChecklist({ items, consumables, isRealKit }: DepartCheckli
                                       ? 'border-red-400 bg-red-50'
                                       : item.is_checked
                                       ? 'bg-[#17402C] border-[#17402C]'
-                                      : 'border-[#5A7064]/50 bg-white/30'
+                                      : 'border-[#5A7064]/50 bg-white/40'
                                   )}
                                   aria-hidden="true"
                                 >
@@ -404,12 +597,10 @@ export function DepartChecklist({ items, consumables, isRealKit }: DepartCheckli
                                       <Check size={11} className="text-white" strokeWidth={2.5} />
                                     </motion.span>
                                   )}
-                                  {hasError && (
-                                    <AlertCircle size={11} className="text-red-400" />
-                                  )}
+                                  {hasError && <AlertCircle size={11} className="text-red-400" />}
                                 </span>
 
-                                <div className="flex-1 min-w-0">
+                                <div className="min-w-0 flex-1">
                                   <div className="flex items-center gap-1.5 flex-wrap">
                                     <span
                                       className={cn(
@@ -440,22 +631,71 @@ export function DepartChecklist({ items, consumables, isRealKit }: DepartCheckli
                                     )}
                                   </div>
                                 </div>
+                              </button>
 
+                              {/* Poids, Contrôle Quantité (+/-), Bouton Boutique LKDV */}
+                              <div className="flex items-center gap-2 shrink-0">
+                                {/* Contrôle Quantité (+ / -) */}
+                                {!item.is_consumable && (
+                                  <div className="flex items-center bg-black/5 rounded-lg text-xs font-mono">
+                                    <button
+                                      type="button"
+                                      onClick={() => handleQuantityChange(item, -1)}
+                                      disabled={qty <= 1}
+                                      className="px-1.5 py-0.5 text-[#5A7064] hover:text-[#17402C] disabled:opacity-30 cursor-pointer"
+                                      title="Diminuer la quantité"
+                                    >
+                                      -
+                                    </button>
+                                    <span className="px-1 font-bold text-[11px] text-[#17402C]">{qty}</span>
+                                    <button
+                                      type="button"
+                                      onClick={() => handleQuantityChange(item, 1)}
+                                      className="px-1.5 py-0.5 text-[#5A7064] hover:text-[#17402C] cursor-pointer"
+                                      title="Augmenter la quantité"
+                                    >
+                                      +
+                                    </button>
+                                  </div>
+                                )}
+
+                                {/* Poids affiché */}
                                 {item.weight_g > 0 && (
                                   <span
                                     className={cn(
-                                      'shrink-0 text-[11px] font-mono tabular-nums',
-                                      item.is_checked
-                                        ? 'text-[#5A7064]/50'
-                                        : 'text-[#5A7064]'
+                                      'text-[11px] font-mono tabular-nums min-w-[42px] text-right',
+                                      item.is_checked ? 'text-[#5A7064]/60' : 'text-[#5A7064]'
                                     )}
                                   >
-                                    {item.weight_g < 1000
-                                      ? `${item.weight_g} g`
-                                      : `${(item.weight_g / 1000).toFixed(1)} kg`}
+                                    {item.weight_g * qty < 1000
+                                      ? `${item.weight_g * qty} g`
+                                      : `${((item.weight_g * qty) / 1000).toFixed(1)} kg`}
                                   </span>
                                 )}
-                              </button>
+
+                                {/* Lien boutique si article manquant */}
+                                {!item.is_checked && (
+                                  <Link
+                                    href={`/materiel/boutique?q=${encodeURIComponent(item.name)}`}
+                                    className="p-1 rounded-lg text-[#5A7064] hover:text-[#17402C] hover:bg-black/5"
+                                    title="Voir dans la boutique LKDV"
+                                  >
+                                    <ShoppingBag size={12} />
+                                  </Link>
+                                )}
+
+                                {/* Suppression */}
+                                {!item.is_consumable && (
+                                  <button
+                                    type="button"
+                                    onClick={() => handleDelete(item)}
+                                    className="p-1 rounded-lg text-[#5A7064]/50 hover:text-red-600 hover:bg-red-50 cursor-pointer"
+                                    title="Supprimer de ce départ"
+                                  >
+                                    <Trash2 size={12} />
+                                  </button>
+                                )}
+                              </div>
                             </li>
                           );
                         })}
@@ -468,6 +708,121 @@ export function DepartChecklist({ items, consumables, isRealKit }: DepartCheckli
           })}
         </div>
       </div>
+
+      {/* ════ MODAL AJOUT D UN ÉQUIPEMENT OUBLIÉ ════ */}
+      <AnimatePresence>
+        {isAddModalOpen && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40 backdrop-blur-xs">
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.95 }}
+              className="glass p-5 rounded-3xl max-w-md w-full border border-white/80 shadow-2xl space-y-4 bg-white/95 text-[#17402C]"
+            >
+              <div className="flex items-center justify-between">
+                <h3 className="font-display font-bold text-base text-[#17402C]">
+                  Ajouter un équipement
+                </h3>
+                <button
+                  type="button"
+                  onClick={() => setIsAddModalOpen(false)}
+                  className="p-1.5 rounded-xl hover:bg-black/5 text-[#5A7064] cursor-pointer"
+                >
+                  <X size={15} />
+                </button>
+              </div>
+
+              <form onSubmit={handleAddItem} className="space-y-3">
+                <div>
+                  <label className="text-[11px] font-bold uppercase tracking-wider text-[#5A7064] block mb-1">
+                    Nom de l équipement
+                  </label>
+                  <input
+                    type="text"
+                    required
+                    value={newItemName}
+                    onChange={(e) => setNewItemName(e.target.value)}
+                    placeholder="Ex: Couteau pliant, Lampe frontale..."
+                    className="w-full px-3 py-2 rounded-xl text-xs bg-black/5 border border-black/10 focus:outline-none focus:ring-2 focus:ring-[#17402C]/40 text-[#17402C]"
+                    autoFocus
+                  />
+                </div>
+
+                <div className="grid grid-cols-2 gap-2.5">
+                  <div>
+                    <label className="text-[11px] font-bold uppercase tracking-wider text-[#5A7064] block mb-1">
+                      Catégorie
+                    </label>
+                    <select
+                      value={newItemCategory}
+                      onChange={(e) => setNewItemCategory(e.target.value)}
+                      className="w-full px-2.5 py-2 rounded-xl text-xs bg-black/5 border border-black/10 text-[#17402C]"
+                    >
+                      {CATEGORIES.map((c) => (
+                        <option key={c} value={c}>
+                          {c}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+
+                  <div>
+                    <label className="text-[11px] font-bold uppercase tracking-wider text-[#5A7064] block mb-1">
+                      Poids (g)
+                    </label>
+                    <input
+                      type="number"
+                      min={1}
+                      max={20000}
+                      value={newItemWeight}
+                      onChange={(e) => setNewItemWeight(Number(e.target.value))}
+                      className="w-full px-3 py-2 rounded-xl text-xs bg-black/5 border border-black/10 text-[#17402C]"
+                    />
+                  </div>
+                </div>
+
+                <div className="space-y-2 pt-1">
+                  <label className="flex items-center gap-2 text-xs font-medium text-[#17402C] cursor-pointer">
+                    <input
+                      type="checkbox"
+                      checked={newItemVital}
+                      onChange={(e) => setNewItemVital(e.target.checked)}
+                      className="rounded accent-[#17402C]"
+                    />
+                    <span>Classer comme équipement vital</span>
+                  </label>
+
+                  <label className="flex items-center gap-2 text-xs font-medium text-[#17402C] cursor-pointer">
+                    <input
+                      type="checkbox"
+                      checked={newItemAddToInv}
+                      onChange={(e) => setNewItemAddToInv(e.target.checked)}
+                      className="rounded accent-[#17402C]"
+                    />
+                    <span>Ajouter aussi à mon inventaire général</span>
+                  </label>
+                </div>
+
+                <div className="pt-2 flex items-center justify-end gap-2">
+                  <button
+                    type="button"
+                    onClick={() => setIsAddModalOpen(false)}
+                    className="px-3.5 py-2 rounded-xl text-xs font-semibold hover:bg-black/5 text-[#5A7064] cursor-pointer"
+                  >
+                    Annuler
+                  </button>
+                  <button
+                    type="submit"
+                    className="px-4 py-2 rounded-xl text-xs font-bold bg-[#17402C] text-white hover:bg-[#17402C]/90 shadow-2xs cursor-pointer"
+                  >
+                    Valider l ajout
+                  </button>
+                </div>
+              </form>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
     </GlassCard>
   );
 }
