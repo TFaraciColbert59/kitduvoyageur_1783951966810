@@ -1,28 +1,53 @@
-﻿import { Capacitor } from "@capacitor/core";
-
-/**
- * Détection de plateforme Capacitor vs Web
+﻿/**
+ * Detection de plateforme Capacitor vs Web — SSR Safe
  */
 export function isNative(): boolean {
-  return typeof window !== "undefined" && Capacitor.isNativePlatform();
+  if (typeof window === "undefined") return false;
+  try {
+    // eslint-disable-next-line @typescript-eslint/no-require-imports
+    const { Capacitor } = require("@capacitor/core");
+    return Boolean(Capacitor?.isNativePlatform?.());
+  } catch {
+    return false;
+  }
 }
 
 export function isIOS(): boolean {
-  return typeof window !== "undefined" && Capacitor.getPlatform() === "ios";
+  if (typeof window === "undefined") return false;
+  try {
+    // eslint-disable-next-line @typescript-eslint/no-require-imports
+    const { Capacitor } = require("@capacitor/core");
+    return Capacitor?.getPlatform?.() === "ios";
+  } catch {
+    return false;
+  }
 }
 
 export function isAndroid(): boolean {
-  return typeof window !== "undefined" && Capacitor.getPlatform() === "android";
+  if (typeof window === "undefined") return false;
+  try {
+    // eslint-disable-next-line @typescript-eslint/no-require-imports
+    const { Capacitor } = require("@capacitor/core");
+    return Capacitor?.getPlatform?.() === "android";
+  } catch {
+    return false;
+  }
 }
 
 export function isWeb(): boolean {
-  return typeof window === "undefined" || !Capacitor.isNativePlatform();
+  return !isNative();
 }
 
 export function getPlatformName(): "ios" | "android" | "web" {
   if (typeof window === "undefined") return "web";
-  const p = Capacitor.getPlatform();
-  if (p === "ios") return "ios";
-  if (p === "android") return "android";
-  return "web";
+  try {
+    // eslint-disable-next-line @typescript-eslint/no-require-imports
+    const { Capacitor } = require("@capacitor/core");
+    const p = Capacitor?.getPlatform?.();
+    if (p === "ios") return "ios";
+    if (p === "android") return "android";
+    return "web";
+  } catch {
+    return "web";
+  }
 }

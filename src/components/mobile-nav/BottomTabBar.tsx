@@ -38,7 +38,7 @@ const DEFAULT_TABS: Tab[] = [
     label: 'Matériel',
     iconName: 'box',
     ariaLabel: 'Mon matériel, kits et prochain départ',
-    matchPaths: ['/materiel', '/materiel/'],
+    matchPaths: ['/materiel', '/materiel/', '/preparation'],
   },
   {
     href: '/communaute',
@@ -426,6 +426,12 @@ function BottomTabBar() {
   const isCarnetDetail = Boolean(pathname && pathname.startsWith('/carnets/') && pathname !== '/carnets' && pathname !== '/carnets/nouveau');
   const isPaysHub = pathname === '/pays';
   const isPaysDetail = Boolean(pathname && pathname.startsWith('/pays/') && pathname !== '/pays');
+  const isMaterielPreparation = Boolean(
+    pathname && (pathname.startsWith('/materiel/preparation') || pathname.startsWith('/preparation'))
+  );
+  const isMaterielDepart = Boolean(pathname && pathname.startsWith('/materiel/depart'));
+  const isMaterielHub = pathname === '/materiel';
+  const isMaterielSection = isMaterielDepart || isMaterielPreparation || isMaterielHub;
   const isCommunityPage = Boolean(
     pathname && (
       pathname.startsWith('/communaute') ||
@@ -434,7 +440,7 @@ function BottomTabBar() {
     )
   );
 
-  const hasUpperExtension = isGroupesHub || isGroupeCockpit || isClubsHub || isClubDetail || isCarnetsHub || isCarnetDetail || isPaysHub || isPaysDetail || isCommunityPage;
+  const hasUpperExtension = isGroupesHub || isGroupeCockpit || isClubsHub || isClubDetail || isCarnetsHub || isCarnetDetail || isPaysHub || isPaysDetail || isCommunityPage || isMaterielSection;
 
   const [activeGroupesTab, setActiveGroupesTab] = useState<'mes-groupes' | 'decouvrir'>('mes-groupes');
   const [activeCockpitTab, setActiveCockpitTab] = useState<string>('overview');
@@ -445,6 +451,9 @@ function BottomTabBar() {
   const [activePaysContinent, setActivePaysContinent] = useState<string>('all');
   const [activePaysDetailTab, setActivePaysDetailTab] = useState<string>('presentation');
   const [activeCommunityTab, setActiveCommunityTab] = useState<string>('fil');
+  const [activeDepartTab, setActiveDepartTab] = useState<string>('all');
+  const [activeMaterielTab, setActiveMaterielTab] = useState<string>('cockpit');
+  const [activeKitsTab, setActiveKitsTab] = useState<string>('all');
 
   useEffect(() => {
     if (!pathname) return;
@@ -481,6 +490,8 @@ function BottomTabBar() {
         const t = params.get('tab') || 'fil';
         setActiveCommunityTab(t);
       }
+    } else if (pathname.startsWith('/materiel/depart')) {
+      setActiveDepartTab('all');
     }
 
     if (typeof window !== 'undefined') {
@@ -511,6 +522,12 @@ function BottomTabBar() {
       const paysDetailHandler = (e: any) => {
         if (e.detail) setActivePaysDetailTab(e.detail);
       };
+      const departHandler = (e: any) => {
+        if (e.detail) setActiveDepartTab(e.detail);
+      };
+      const kitsHandler = (e: any) => {
+        if (e.detail) setActiveKitsTab(e.detail);
+      };
 
       window.addEventListener('community-tab-change', commHandler);
       window.addEventListener('groupes-tab-change', grpHandler);
@@ -521,6 +538,8 @@ function BottomTabBar() {
       window.addEventListener('carnet-detail-tab-change', carnetDetailHandler);
       window.addEventListener('pays-continent-change', paysContinentHandler);
       window.addEventListener('pays-detail-tab-change', paysDetailHandler);
+      window.addEventListener('depart-section-change', departHandler);
+      window.addEventListener('kits-section-change', kitsHandler);
 
       return () => {
         window.removeEventListener('community-tab-change', commHandler);
@@ -532,6 +551,8 @@ function BottomTabBar() {
         window.removeEventListener('carnet-detail-tab-change', carnetDetailHandler);
         window.removeEventListener('pays-continent-change', paysContinentHandler);
         window.removeEventListener('pays-detail-tab-change', paysDetailHandler);
+        window.removeEventListener('depart-section-change', departHandler);
+        window.removeEventListener('kits-section-change', kitsHandler);
       };
     }
   }, [pathname]);
@@ -539,7 +560,13 @@ function BottomTabBar() {
   const handleUpperTabSelect = (tabKey: string) => {
     triggerHaptic('selection');
 
-    if (isGroupesHub) {
+    if (isMaterielSection) {
+      if (tabKey === 'hub' || tabKey === 'depart') {
+        router.push('/materiel/depart');
+      } else if (tabKey === 'preparation') {
+        router.push('/materiel/preparation');
+      }
+    } else if (isGroupesHub) {
       setActiveGroupesTab(tabKey as 'mes-groupes' | 'decouvrir');
       if (typeof window !== 'undefined') {
         window.dispatchEvent(new CustomEvent('groupes-tab-change', { detail: tabKey }));
@@ -601,6 +628,12 @@ function BottomTabBar() {
   };
 
   const getUpperTabs = () => {
+    if (isMaterielSection) {
+      return [
+        { id: 'hub', label: '1. Le Hub' },
+        { id: 'preparation', label: '2. Préparation' },
+      ];
+    }
     if (isGroupesHub) {
       return [
         { id: 'mes-groupes', label: 'Mes expéditions' },
@@ -678,7 +711,9 @@ function BottomTabBar() {
     ];
   };
 
-  const currentUpperId = isGroupesHub
+  const currentUpperId = isMaterielSection
+    ? (isMaterielPreparation ? 'preparation' : 'hub')
+    : isGroupesHub
     ? activeGroupesTab
     : isGroupeCockpit
     ? activeCockpitTab
@@ -696,7 +731,7 @@ function BottomTabBar() {
     ? activePaysDetailTab
     : activeCommunityTab;
 
-  const isWideUpperTray = isGroupeCockpit || isClubDetail || isCarnetDetail || isPaysHub || isPaysDetail;
+  const isWideUpperTray = isGroupeCockpit || isClubDetail || isCarnetDetail || isPaysHub || isPaysDetail || isMaterielSection;
 
   const badges = useUnreadBadge();
   const badgeFor = (href: string): number => {

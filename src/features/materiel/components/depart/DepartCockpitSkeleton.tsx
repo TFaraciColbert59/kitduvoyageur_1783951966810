@@ -1,41 +1,54 @@
-/** DepartCockpitSkeleton — grille 3-1-2 skeleton animate-pulse.
- *  Reproduit exactement le layout du DepartCockpit pour zéro CLS. */
-export function DepartCockpitSkeleton() {
-  const base = 'rounded-[var(--r-lg)] bg-white/20 backdrop-blur-sm animate-pulse';
-  return (
-    <div
-      aria-busy="true"
-      aria-label="Chargement du cockpit départ…"
-      className="h-full w-full grid grid-cols-12 gap-2 items-stretch [grid-template-rows:auto_minmax(0,1fr)_auto] md:[grid-template-rows:repeat(3,minmax(0,1fr))]"
-    >
-      {/* Ligne 1 — 3 cartes carrées */}
-      <div className={`${base} [grid-column:1/5] [grid-row:1/2] aspect-square md:aspect-auto md:h-full`} />
-      <div className={`${base} [grid-column:5/9] [grid-row:1/2] aspect-square md:aspect-auto md:h-full`} />
-      <div className={`${base} [grid-column:9/13] [grid-row:1/2] aspect-square md:aspect-auto md:h-full`} />
+﻿import { Skeleton } from '@/components/ui/Skeleton';
 
-      {/* Ligne 2 — carte centrale pleine largeur */}
-      <div className={`${base} [grid-column:1/13] [grid-row:2/3] min-h-0 h-full`}>
-        {/* Réticule carte simulé */}
-        <div className="h-full w-full rounded-[var(--r-lg)] bg-[#1a3a28]/10 flex items-center justify-center">
-          <svg
-            aria-hidden="true"
-            className="text-white/10 animate-pulse"
-            width="40"
-            height="40"
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            strokeWidth="1.5"
-          >
-            <circle cx="12" cy="12" r="10" />
-            <path d="M12 2v4M12 18v4M2 12h4M18 12h4" />
-          </svg>
+/** DepartCockpitSkeleton — skeleton reactif mobile/desktop pendant le chargement SSR. */
+export function DepartCockpitSkeleton() {
+  return (
+    <div className="flex flex-col gap-3 w-full max-w-3xl mx-auto px-3 sm:px-4 pb-3">
+      {/* Header skeleton */}
+      <div className="glass rounded-[28px] p-4 sm:p-5 space-y-3">
+        <div className="flex items-start justify-between">
+          <div className="space-y-1.5">
+            <Skeleton className="h-3 w-24" />
+            <Skeleton className="h-8 w-52 sm:w-72" />
+          </div>
+          <Skeleton className="h-6 w-20 rounded-full" />
+        </div>
+        <div className="glass-sub-card p-3 flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <Skeleton className="h-10 w-10 rounded-full" />
+            <div className="space-y-1">
+              <Skeleton className="h-3 w-16" />
+              <Skeleton className="h-6 w-28" />
+            </div>
+          </div>
+          <Skeleton className="h-5 w-16 hidden sm:block" />
         </div>
       </div>
 
-      {/* Ligne 3 — 2 cartes carrées */}
-      <div className={`${base} [grid-column:1/7] [grid-row:3/4] aspect-square md:aspect-auto md:h-full`} />
-      <div className={`${base} [grid-column:7/13] [grid-row:3/4] aspect-square md:aspect-auto md:h-full`} />
+      {/* Preparation skeleton */}
+      <div className="glass rounded-[28px] p-4 sm:p-5 space-y-3">
+        <div className="flex items-center justify-between">
+          <Skeleton className="h-4 w-32" />
+          <Skeleton className="h-4 w-10" />
+        </div>
+        <Skeleton className="h-2 w-full rounded-full" />
+        <div className="flex gap-3">
+          <Skeleton className="h-12 flex-1 rounded-2xl" />
+          <Skeleton className="h-12 flex-1 rounded-2xl" />
+          <Skeleton className="h-9 w-28 rounded-full" />
+        </div>
+      </div>
+
+      {/* Checklist skeleton (desktop only) */}
+      <div className="hidden md:block glass rounded-[28px] p-5 space-y-2">
+        {[...Array(4)].map((_, i) => (
+          <div key={i} className="flex items-center gap-3">
+            <Skeleton className="h-5 w-5 rounded-md" />
+            <Skeleton className={`h-4 ${i % 3 === 0 ? 'w-48' : i % 3 === 1 ? 'w-64' : 'w-56'}`} />
+            <Skeleton className="h-4 w-12 ml-auto" />
+          </div>
+        ))}
+      </div>
     </div>
   );
 }

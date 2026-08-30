@@ -24,6 +24,18 @@ const nextConfig = {
   },
 
   transpilePackages: ['react-globe.gl', 'three'],
+  serverExternalPackages: [
+    '@capacitor/core',
+    '@capacitor/haptics',
+    '@capacitor/app',
+    '@capacitor/camera',
+    '@capacitor/geolocation',
+    '@capacitor/keyboard',
+    '@capacitor/network',
+    '@capacitor/preferences',
+    '@capacitor/splash-screen',
+    '@capacitor/status-bar',
+  ],
 
   experimental: {
     optimizePackageImports: [

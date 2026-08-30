@@ -1,4 +1,4 @@
-﻿import { Camera, CameraResultType, CameraSource, ImageOptions } from "@capacitor/camera";
+﻿import type { ImageOptions } from "@capacitor/camera";
 import { isNative } from "./platform";
 
 export interface PhotoResult {
@@ -11,16 +11,16 @@ export interface PhotoResult {
  * Capture photo ou selection galerie (Natif ou Web input fallback)
  */
 export async function captureOrPickPhoto(options?: Partial<ImageOptions>): Promise<PhotoResult | null> {
-  const defaultOpts: ImageOptions = {
-    quality: 85,
-    allowEditing: false,
-    resultType: CameraResultType.DataUrl,
-    source: CameraSource.Prompt, // Affiche le choix Camera ou Galerie
-    ...options,
-  };
-
   if (isNative()) {
     try {
+      const { Camera, CameraResultType, CameraSource } = await import("@capacitor/camera");
+      const defaultOpts: ImageOptions = {
+        quality: 85,
+        allowEditing: false,
+        resultType: CameraResultType.DataUrl,
+        source: CameraSource.Prompt,
+        ...options,
+      };
       const image = await Camera.getPhoto(defaultOpts);
       return {
         dataUrl: image.dataUrl,

@@ -1,4 +1,4 @@
-﻿import { Geolocation, Position, PositionOptions } from "@capacitor/geolocation";
+﻿import type { PositionOptions } from "@capacitor/geolocation";
 import { isNative } from "./platform";
 
 export interface GeoCoordinates {
@@ -24,27 +24,31 @@ export async function getCurrentGeoPosition(options?: PositionOptions): Promise<
   };
 
   if (isNative()) {
-    // Demander la permission si necessaire
     try {
-      const status = await Geolocation.checkPermissions();
-      if (status.location !== "granted") {
-        await Geolocation.requestPermissions();
+      const { Geolocation } = await import("@capacitor/geolocation");
+      try {
+        const status = await Geolocation.checkPermissions();
+        if (status.location !== "granted") {
+          await Geolocation.requestPermissions();
+        }
+      } catch {
+        // Continuer
       }
-    } catch {
-      // Continuer tentative
-    }
 
-    const pos = await Geolocation.getCurrentPosition(defaultOpts);
-    return {
-      latitude: pos.coords.latitude,
-      longitude: pos.coords.longitude,
-      accuracy: pos.coords.accuracy,
-      altitude: pos.coords.altitude ?? null,
-      altitudeAccuracy: pos.coords.altitudeAccuracy ?? null,
-      heading: pos.coords.heading ?? null,
-      speed: pos.coords.speed ?? null,
-      timestamp: pos.timestamp,
-    };
+      const pos = await Geolocation.getCurrentPosition(defaultOpts);
+      return {
+        latitude: pos.coords.latitude,
+        longitude: pos.coords.longitude,
+        accuracy: pos.coords.accuracy,
+        altitude: pos.coords.altitude ?? null,
+        altitudeAccuracy: pos.coords.altitudeAccuracy ?? null,
+        heading: pos.coords.heading ?? null,
+        speed: pos.coords.speed ?? null,
+        timestamp: pos.timestamp,
+      };
+    } catch {
+      // Fallback vers web si echec
+    }
   }
 
   // Web fallback
@@ -88,24 +92,29 @@ export async function watchGeoPosition(
   };
 
   if (isNative()) {
-    return await Geolocation.watchPosition(defaultOpts, (position, err) => {
-      if (err) {
-        callback(null, new Error(err.message));
-        return;
-      }
-      if (position) {
-        callback({
-          latitude: position.coords.latitude,
-          longitude: position.coords.longitude,
-          accuracy: position.coords.accuracy,
-          altitude: position.coords.altitude ?? null,
-          altitudeAccuracy: position.coords.altitudeAccuracy ?? null,
-          heading: position.coords.heading ?? null,
-          speed: position.coords.speed ?? null,
-          timestamp: position.timestamp,
-        });
-      }
-    });
+    try {
+      const { Geolocation } = await import("@capacitor/geolocation");
+      return await Geolocation.watchPosition(defaultOpts, (position, err) => {
+        if (err) {
+          callback(null, new Error(err.message));
+          return;
+        }
+        if (position) {
+          callback({
+            latitude: position.coords.latitude,
+            longitude: position.coords.longitude,
+            accuracy: position.coords.accuracy,
+            altitude: position.coords.altitude ?? null,
+            altitudeAccuracy: position.coords.altitudeAccuracy ?? null,
+            heading: position.coords.heading ?? null,
+            speed: position.coords.speed ?? null,
+            timestamp: position.timestamp,
+          });
+        }
+      });
+    } catch {
+      // Fallback
+    }
   }
 
   // Web fallback
@@ -147,6 +156,11 @@ export async function clearGeoWatch(watchId: string): Promise<void> {
   }
 
   if (isNative()) {
-    await Geolocation.clearWatch({ id: watchId });
+    try {
+      const { Geolocation } = await import("@capacitor/geolocation");
+      await Geolocation.clearWatch({ id: watchId });
+    } catch {
+      // Ignore
+    }
   }
 }

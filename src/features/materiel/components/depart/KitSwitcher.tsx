@@ -1,59 +1,83 @@
-'use client';
-import { useState } from 'react';
+﻿'use client';
 import { useRouter } from 'next/navigation';
-import { Search } from 'lucide-react';
-import { GlassDrawer } from '@/components/ui/GlassDrawer';
+import { ChevronDown } from 'lucide-react';
+import { useState } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
+import { cn } from '@/lib/utils';
 
-/** Loupe de recherche / changement de kit du cockpit Prochain départ. */
-export function KitSwitcher({ kits, currentId }: { kits: { id: string; name: string }[]; currentId: string }) {
-  const [open, setOpen] = useState(false);
-  const [q, setQ] = useState('');
+interface KitSwitcherProps {
+  kits: { id: string; name: string }[];
+  currentId: string;
+}
+
+export function KitSwitcher({ kits, currentId }: KitSwitcherProps) {
   const router = useRouter();
-  const filtered = kits.filter((k) => k.name.toLowerCase().includes(q.toLowerCase()));
+  const [open, setOpen] = useState(false);
+
+  if (kits.length <= 1) return null;
+
+  const current = kits.find((k) => k.id === currentId) ?? kits[0];
+
+  const handleSelect = (id: string) => {
+    setOpen(false);
+    if (id !== currentId) {
+      router.push(`/materiel/depart/${id}`);
+    }
+  };
 
   return (
-    <>
+    <div className="relative" aria-label="Changer de kit">
       <button
-        type="button"
-        onClick={() => setOpen(true)}
-        aria-label="Changer de kit"
-        className="glass interactive h-8 w-8 rounded-full flex items-center justify-center text-[#17402C] shrink-0"
+        onClick={() => setOpen((v) => !v)}
+        className="glass-sub-card flex items-center gap-2 px-3 py-2 rounded-full text-[11px] sm:text-xs font-semibold text-[#17402C] hover:bg-white/30 transition-colors focus-visible:outline-2 focus-visible:outline-[#17402C]"
+        aria-expanded={open}
+        aria-haspopup="listbox"
       >
-        <Search size={15} className="text-[#17402C]" aria-hidden="true" />
+        <span className="max-w-[140px] truncate">{current.name}</span>
+        <motion.span animate={{ rotate: open ? 180 : 0 }} transition={{ duration: 0.18 }}>
+          <ChevronDown size={12} aria-hidden="true" />
+        </motion.span>
       </button>
-      <GlassDrawer open={open} onOpenChange={setOpen} title="Changer de kit">
-        <input
-          value={q}
-          onChange={(e) => setQ(e.target.value)}
-          placeholder="Rechercher un kit…"
-          aria-label="Rechercher un kit"
-          className="glass-input w-full mb-3 text-[#17402C]"
-          autoFocus
+
+      <AnimatePresence>
+        {open && (
+          <motion.ul
+            role="listbox"
+            aria-label="Sélectionner un kit"
+            initial={{ opacity: 0, y: -4, scale: 0.97 }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            exit={{ opacity: 0, y: -4, scale: 0.97 }}
+            transition={{ duration: 0.15 }}
+            className="absolute left-0 top-full mt-1 z-50 glass rounded-2xl shadow-lg min-w-[200px] overflow-hidden"
+          >
+            {kits.map((kit) => (
+              <li key={kit.id}>
+                <button
+                  role="option"
+                  aria-selected={kit.id === currentId}
+                  onClick={() => handleSelect(kit.id)}
+                  className={cn(
+                    'w-full text-left px-4 py-2.5 text-xs font-medium transition-colors',
+                    kit.id === currentId
+                      ? 'text-[#17402C] font-semibold bg-white/20'
+                      : 'text-[#5A7064] hover:bg-white/15 hover:text-[#17402C]'
+                  )}
+                >
+                  {kit.name}
+                </button>
+              </li>
+            ))}
+          </motion.ul>
+        )}
+      </AnimatePresence>
+
+      {open && (
+        <div
+          className="fixed inset-0 z-40"
+          onClick={() => setOpen(false)}
+          aria-hidden="true"
         />
-        <ul className="flex flex-col gap-2">
-          {filtered.map((k) => (
-            <li key={k.id}>
-              <button
-                type="button"
-                onClick={() => {
-                  setOpen(false);
-                  setQ('');
-                  if (k.id !== currentId) router.push(`/materiel/depart/${k.id}`);
-                }}
-                className={`w-full text-left backdrop-blur-md border rounded-[var(--r-md)] px-3 py-2.5 text-sm font-medium ${
-                  k.id === currentId
-                    ? 'bg-sage-500/15 border-sage-500/40 text-[#17402C] font-bold'
-                    : 'bg-white/30 border-white/40 text-[#17402C]'
-                }`}
-              >
-                {k.name}
-                {k.id === currentId && <span className="ml-2 text-[10px] opacity-70">en cours</span>}
-              </button>
-            </li>
-          ))}
-          {filtered.length === 0 && <li className="text-sm text-[color:var(--label-secondary)]">Aucun kit trouvé.</li>}
-        </ul>
-      </GlassDrawer>
-    </>
+      )}
+    </div>
   );
 }

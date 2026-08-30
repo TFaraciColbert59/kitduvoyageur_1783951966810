@@ -1,5 +1,4 @@
-﻿import { Keyboard } from "@capacitor/keyboard";
-import { isNative } from "./platform";
+﻿import { isNative } from "./platform";
 
 /**
  * Gestion du clavier virtuel mobile
@@ -7,6 +6,7 @@ import { isNative } from "./platform";
 export async function hideNativeKeyboard(): Promise<void> {
   if (!isNative()) return;
   try {
+    const { Keyboard } = await import("@capacitor/keyboard");
     await Keyboard.hide();
   } catch {}
 }
@@ -17,11 +17,16 @@ export async function onKeyboardStateChange(
 ): Promise<() => void> {
   if (!isNative()) return () => {};
 
-  const showHandle = onShow ? await Keyboard.addListener("keyboardWillShow", onShow) : null;
-  const hideHandle = onHide ? await Keyboard.addListener("keyboardWillHide", onHide) : null;
+  try {
+    const { Keyboard } = await import("@capacitor/keyboard");
+    const showHandle = onShow ? await Keyboard.addListener("keyboardWillShow", onShow) : null;
+    const hideHandle = onHide ? await Keyboard.addListener("keyboardWillHide", onHide) : null;
 
-  return () => {
-    showHandle?.remove();
-    hideHandle?.remove();
-  };
+    return () => {
+      showHandle?.remove();
+      hideHandle?.remove();
+    };
+  } catch {
+    return () => {};
+  }
 }

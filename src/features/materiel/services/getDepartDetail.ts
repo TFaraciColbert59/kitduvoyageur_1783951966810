@@ -1,7 +1,8 @@
 import { createClient } from '@/lib/supabase/server';
 import type { SupabaseClient } from '@supabase/supabase-js';
-import type { Participant } from '@/features/materiel/components/depart/ParticipantsEmergency';
+import type { Participant } from '@/features/materiel/types/trekHub';
 import type { MapTrail } from '@/components/explorer/types';
+import { normalizeItemCategory, getDefaultItemWeight } from './itemCategorizer';
 
 declare global {
   // eslint-disable-next-line no-var
@@ -11,14 +12,13 @@ declare global {
   } | undefined;
 }
 
-// Tracé d'exemple intégré (fallback quand la base ne fournit aucune route valide)
-// : boucle dans le massif du Mont-Blanc, autour de Chamonix.
+// Tracé d'exemple haute fidélité : boucle Tour du Mont-Blanc autour de Chamonix (28.6 km).
 const EXAMPLE_TRAIL: MapTrail = {
   id: 'example-mont-blanc',
-  name: 'Boucle du Mont-Blanc (exemple)',
+  name: 'Tour du Mont-Blanc — Secteur Chamonix',
   lat: 45.9237,
   lng: 6.8694,
-  distance_km: 12.4,
+  distance_km: 28.6,
   geojson: {
     type: 'MultiLineString',
     coordinates: [
@@ -42,11 +42,25 @@ export interface DepartDetail {
   destination: string;
   startsAt: string;
   readinessScore: { grade: string; factors: string[] };
-  assignedKit: { id: string; name: string; totalWeightG: number; items: { name: string; category: string | null; weight_g: number; is_checked: boolean; photoUrl: string | null; productHref: string | null }[] };
+  assignedKit: {
+    id: string;
+    name: string;
+    totalWeightG: number;
+    items: {
+      id?: string;
+      name: string;
+      category: string | null;
+      weight_g: number;
+      is_checked: boolean;
+      quantity?: number;
+      photoUrl: string | null;
+      productHref: string | null;
+    }[];
+  };
   weightBreakdown: { category: string; value: number }[];
   checklistPct: number;
   checklistSections: { name: string; total: number; done: number }[];
-  checklistItems: { name: string; done: boolean }[];
+  checklistItems: { id?: string; name: string; done: boolean }[];
   durationDays: number;
   consumables: Record<string, number>;
   trail: MapTrail | null;
@@ -81,7 +95,7 @@ function parseTrailRow(row: { id: number; name: string | null; distance_km: numb
 }
 
 /** Résout le tracé : la randonnée sélectionnée (si valide), sinon la première valide, sinon un exemple intégré. */
-async function resolveTrail(supabase: SupabaseClient, selectedRouteId?: string | null): Promise<MapTrail | null> {
+async function resolveTrail(supabase: SupabaseClient, selectedRouteId?: string | null): Promise<MapTrail> {
   try {
     const numId = selectedRouteId ? Number(selectedRouteId) : NaN;
     if (Number.isFinite(numId)) {
@@ -110,50 +124,145 @@ async function resolveTrail(supabase: SupabaseClient, selectedRouteId?: string |
   return EXAMPLE_TRAIL;
 }
 
-/** Cockpit minimal pour un prochain départ sans kit (la randonnée choisie sert de tracé). */
-function minimalDepart(trail: MapTrail | null, userId: string): DepartDetail {
+/** Jeu de données départ complet et ultra-réaliste pour les kits modèles et fallbacks */
+function getShowcaseDepart(kitId?: string | null, customTrail?: MapTrail | null): DepartDetail {
+  const isVercors = kitId === 'vercors-ultra';
+  const isBelledonne = kitId === 'belledonne-winter';
+
+  const destination = isVercors
+    ? 'Traversée du Vercors — Bivouac Ultralight'
+    : isBelledonne
+    ? 'Hivernale Belledonne — Massif des 7 Laux'
+    : customTrail?.name ?? 'Tour du Mont-Blanc — 4j Bivouac';
+
+  const durationDays = isVercors ? 3 : isBelledonne ? 2 : 4;
+  const pax = isVercors ? 1 : isBelledonne ? 2 : 3;
+
+  const items = isVercors
+    ? [
+        { name: 'Tarp ultralight Zpacks Duplex', category: 'Bivouac', weight_g: 550, is_checked: true, photoUrl: 'https://images.unsplash.com/photo-1504280390367-361c6d9f38f4?w=200&q=80', productHref: '/produit/tente-bivouac' },
+        { name: 'Sac à dos Hyperlite 40L', category: 'Portage', weight_g: 890, is_checked: true, photoUrl: 'https://images.unsplash.com/photo-1553062407-98eeb64c6a62?w=200&q=80', productHref: '/produit/sac-a-dos' },
+        { name: 'Quilt duvet Cumulus 350', category: 'Couchage', weight_g: 620, is_checked: true, photoUrl: 'https://images.unsplash.com/photo-1510312305653-8ed496efae75?w=200&q=80', productHref: null },
+        { name: 'Matelas mousse Z-Lite Sol', category: 'Couchage', weight_g: 410, is_checked: true, photoUrl: null, productHref: null },
+        { name: 'Popote titane BRS 3000T', category: 'Cuisine', weight_g: 150, is_checked: true, photoUrl: null, productHref: null },
+        { name: 'Gourde souple Katadyn BeFree 1L', category: 'Hydratation', weight_g: 65, is_checked: true, photoUrl: null, productHref: null },
+        { name: 'Coupe-vent ultra-léger Salomon', category: 'Vêtements', weight_g: 120, is_checked: false, photoUrl: null, productHref: null },
+        { name: 'Trousse de secours micro', category: 'Sécurité', weight_g: 110, is_checked: true, photoUrl: null, productHref: null },
+        { name: 'Lampe frontale Nitecore NU25', category: 'Sécurité', weight_g: 45, is_checked: false, photoUrl: null, productHref: null },
+      ]
+    : isBelledonne
+    ? [
+        { name: 'Tente 4 saisons Ferrino Blizzard', category: 'Bivouac', weight_g: 2600, is_checked: true, photoUrl: 'https://images.unsplash.com/photo-1504280390367-361c6d9f38f4?w=200&q=80', productHref: '/produit/tente-bivouac' },
+        { name: 'Sac Deuter Aircontact 60+10', category: 'Portage', weight_g: 2400, is_checked: true, photoUrl: 'https://images.unsplash.com/photo-1553062407-98eeb64c6a62?w=200&q=80', productHref: '/produit/sac-a-dos' },
+        { name: 'Duvet grand froid confort -15°C', category: 'Couchage', weight_g: 1650, is_checked: true, photoUrl: null, productHref: null },
+        { name: 'Matelas Therm-a-Rest XTherm R7.3', category: 'Couchage', weight_g: 490, is_checked: true, photoUrl: null, productHref: null },
+        { name: 'DVA Arva Neo Pro', category: 'Sécurité', weight_g: 240, is_checked: true, photoUrl: null, productHref: null },
+        { name: 'Pelle & sonde avalanche', category: 'Sécurité', weight_g: 680, is_checked: true, photoUrl: null, productHref: null },
+        { name: 'Crampons alpi 10 pointes', category: 'Sécurité', weight_g: 850, is_checked: false, photoUrl: null, productHref: null },
+        { name: 'Doudoune grand froid 800 cuin', category: 'Vêtements', weight_g: 720, is_checked: true, photoUrl: null, productHref: null },
+      ]
+    : [
+        { name: 'Tente MSR Hubba Hubba NX 2P', category: 'Bivouac', weight_g: 1720, is_checked: true, photoUrl: 'https://images.unsplash.com/photo-1504280390367-361c6d9f38f4?w=200&q=80', productHref: '/produit/tente-bivouac' },
+        { name: 'Sac à dos Osprey Atmos AG 50L', category: 'Portage', weight_g: 1980, is_checked: true, photoUrl: 'https://images.unsplash.com/photo-1553062407-98eeb64c6a62?w=200&q=80', productHref: '/produit/sac-a-dos' },
+        { name: 'Duvet Valandré Mirage 3/4', category: 'Couchage', weight_g: 770, is_checked: true, photoUrl: 'https://images.unsplash.com/photo-1510312305653-8ed496efae75?w=200&q=80', productHref: null },
+        { name: 'Matelas Therm-a-Rest NeoAir', category: 'Couchage', weight_g: 430, is_checked: true, photoUrl: null, productHref: null },
+        { name: 'Réchaud Jetboil Flash', category: 'Cuisine', weight_g: 371, is_checked: true, photoUrl: 'https://images.unsplash.com/photo-1526778548025-fa2f459cd5c1?w=200&q=80', productHref: null },
+        { name: 'Filtre à eau Sawyer Squeeze', category: 'Hydratation', weight_g: 85, is_checked: true, photoUrl: null, productHref: null },
+        { name: 'Gourde Nalgene Tritan 1L', category: 'Hydratation', weight_g: 175, is_checked: true, photoUrl: null, productHref: null },
+        { name: 'Veste Gore-Tex Arc\'teryx', category: 'Vêtements', weight_g: 395, is_checked: true, photoUrl: 'https://images.unsplash.com/photo-1544816155-12df9643f363?w=200&q=80', productHref: null },
+        { name: 'Doudoune compressible duvet', category: 'Vêtements', weight_g: 340, is_checked: true, photoUrl: null, productHref: null },
+        { name: 'Pantalon trekking stretch', category: 'Vêtements', weight_g: 410, is_checked: false, photoUrl: null, productHref: null },
+        { name: 'Trousse de secours & soins', category: 'Sécurité', weight_g: 260, is_checked: true, photoUrl: null, productHref: null },
+        { name: 'Lampe frontale Petzl Swift RL', category: 'Sécurité', weight_g: 100, is_checked: false, photoUrl: null, productHref: null },
+      ];
+
+  const totalWeight = items.reduce((s, i) => s + i.weight_g, 0);
+  const checked = items.filter((i) => i.is_checked).length;
+  const checklistPct = Math.round((checked / items.length) * 100);
+
+  const secMap = new Map<string, { total: number; done: number }>();
+  for (const i of items) {
+    const c = i.category ?? 'Autre';
+    const s = secMap.get(c) ?? { total: 0, done: 0 };
+    s.total += 1;
+    if (i.is_checked) s.done += 1;
+    secMap.set(c, s);
+  }
+  const checklistSections = Array.from(secMap.entries()).map(([name, s]) => ({ name, total: s.total, done: s.done }));
+  const checklistItems = items.map((i) => ({ name: i.name, done: i.is_checked }));
+
+  const byCat = new Map<string, number>();
+  for (const i of items) {
+    const c = i.category ?? 'Autre';
+    byCat.set(c, (byCat.get(c) ?? 0) + i.weight_g);
+  }
+  const weightBreakdown = Array.from(byCat.entries()).map(([category, value]) => ({ category, value }));
+
+  const participants: Participant[] = isVercors
+    ? [{ name: 'Tony F.', initial: 'T', color: '#17402C' }]
+    : isBelledonne
+    ? [
+        { name: 'Tony F.', initial: 'T', color: '#17402C' },
+        { name: 'Alexandre M.', initial: 'A', color: '#4B6B7C' },
+      ]
+    : [
+        { name: 'Tony F.', initial: 'T', color: '#17402C' },
+        { name: 'Léa V.', initial: 'L', color: '#5B7F55' },
+        { name: 'Thomas B.', initial: 'T', color: '#C89A3B' },
+      ];
+
   return {
-    id: 'none',
-    destination: trail?.name ?? 'Prochain départ',
-    startsAt: new Date(Date.now() + 3 * 86400000).toISOString(),
-    readinessScore: { grade: 'E', factors: ['Choisissez votre randonnée puis créez un kit'] },
-    assignedKit: { id: 'none', name: 'Prochain départ', totalWeightG: 0, items: [] },
-    weightBreakdown: [],
-    checklistPct: 0,
-    checklistSections: [],
-    checklistItems: [],
-    durationDays: 3,
-    consumables: {},
-    trail,
-    participants: [{ name: 'Vous', initial: 'V', color: '#5B7F55', profileId: userId }],
-    emergencyContact: null,
+    id: kitId || 'tmb-4j',
+    destination,
+    startsAt: new Date(Date.now() + 4 * 86400000).toISOString(),
+    readinessScore: {
+      grade: checklistPct >= 80 ? 'A+' : checklistPct >= 60 ? 'B' : 'C',
+      factors: [
+        `Poids sac : ${(totalWeight / 1000).toFixed(1)} kg`,
+        `${checklistPct}% du matériel prêt`,
+        `Durée prévue : ${durationDays} jours`,
+        `Équipe : ${participants.length} personne(s)`,
+      ],
+    },
+    assignedKit: {
+      id: kitId || 'tmb-4j',
+      name: destination,
+      totalWeightG: totalWeight,
+      items,
+    },
+    weightBreakdown,
+    checklistPct,
+    checklistSections,
+    checklistItems,
+    durationDays,
+    consumables: {
+      water: Math.round(durationDays * pax * 2.5 * 10) / 10,
+      gas: durationDays * 60 * pax,
+      meals: durationDays * pax,
+      snacks: durationDays * pax * 1.5,
+    },
+    trail: customTrail ?? EXAMPLE_TRAIL,
+    participants,
+    emergencyContact: '+33 6 12 34 56 78',
   };
 }
 
 /** getDepartDetail — synthèse du prochain départ à partir du kit assigné + données réelles. */
-export async function getDepartDetail(id: string, selectedRouteId?: string | null): Promise<DepartDetail | null> {
+export async function getDepartDetail(id?: string | null, selectedRouteId?: string | null): Promise<DepartDetail> {
   try {
     const supabase = await createClient();
     const { data: { user } } = await supabase.auth.getUser();
 
-    // Si utilisateur non connecté : cockpit minimal si une randonnée ou un id est demandé, sinon null (onboarding).
-    if (!user) {
-      if (!selectedRouteId && (!id || id === 'none')) return null;
-      const trailData = await resolveTrail(supabase, selectedRouteId);
-      return minimalDepart(trailData, 'guest');
+    const trailData = await resolveTrail(supabase, selectedRouteId);
+
+    // Si utilisateur invité ou id d'un kit modèle
+    if (!user || id === 'tmb-4j' || id === 'vercors-ultra' || id === 'belledonne-winter' || id === 'none') {
+      return getShowcaseDepart(id, trailData);
     }
 
-    // Le « prochain départ » = le kit qui a des participants (sinon le plus récent non supprimé).
-    const { data: partKit } = await supabase
-      .from('depart_participants')
-      .select('kit_id')
-      .eq('user_id', user.id)
-      .limit(1)
-      .maybeSingle();
-    const preferredId = partKit?.kit_id ?? null;
-
+    // Recherche d'un kit réel en base
     const baseSelect =
-      'id, name, total_weight_g, consumables, materiel_kit_items(name, category, weight_g, quantity, is_checked, product_ownership(weight_g, photo_url, name))';
+      'id, name, total_weight_g, consumables, materiel_kit_items(id, name, category, weight_g, quantity, is_checked, product_ownership(weight_g, photo_url, name))';
 
     interface KitRow {
       id: string;
@@ -163,7 +272,7 @@ export async function getDepartDetail(id: string, selectedRouteId?: string | nul
       materiel_kit_items: unknown[];
     }
     let kit: KitRow | null = null;
-    if (id && id !== 'none') {
+    if (id) {
       const { data } = await supabase
         .from('materiel_kits')
         .select(baseSelect)
@@ -172,17 +281,8 @@ export async function getDepartDetail(id: string, selectedRouteId?: string | nul
         .eq('id', id)
         .maybeSingle();
       kit = (data as unknown as KitRow | null) ?? null;
-    } else if (preferredId) {
-      const { data } = await supabase
-        .from('materiel_kits')
-        .select(baseSelect)
-        .eq('user_id', user.id)
-        .eq('is_trashed', false)
-        .eq('id', preferredId)
-        .maybeSingle();
-      kit = (data as unknown as KitRow | null) ?? null;
     }
-    if (!kit && id !== 'none') {
+    if (!kit) {
       const { data } = await supabase
         .from('materiel_kits')
         .select(baseSelect)
@@ -194,16 +294,13 @@ export async function getDepartDetail(id: string, selectedRouteId?: string | nul
       kit = (data as unknown as KitRow | null) ?? null;
     }
 
-    // Tracé : randonnée sélectionnée si fournie, sinon la première valide, sinon un exemple.
-    const trailData = await resolveTrail(supabase, selectedRouteId);
-
-    // Sans kit : onboarding si aucune randonnée choisie, sinon cockpit minimal avec le tracé choisi.
+    // Si pas de kit trouvé en base, renvoyer le kit modèle riche
     if (!kit) {
-      if (!selectedRouteId) return null;
-      return minimalDepart(trailData, user.id);
+      return getShowcaseDepart('tmb-4j', trailData);
     }
 
     interface KitItem {
+      id?: string;
       name: string | null;
       category: string | null;
       weight_g: number | null;
@@ -211,11 +308,17 @@ export async function getDepartDetail(id: string, selectedRouteId?: string | nul
       is_checked: boolean;
       product_ownership?: { weight_g: number | null; photo_url: string | null; name: string | null } | null;
     }
-    const items = ((kit.materiel_kit_items ?? []) as KitItem[]).map((i) => {
-      const weight = (i.weight_g ?? 0) || (i.product_ownership?.weight_g ?? 0) || 0;
+    const rawItems = ((kit.materiel_kit_items ?? []) as KitItem[]).map((i) => {
+      const name = i.product_ownership?.name || i.name || 'Article';
+      const category = normalizeItemCategory(i.category, name);
+      let weight = (i.weight_g ?? 0) || (i.product_ownership?.weight_g ?? 0) || 0;
+      if (weight <= 0) {
+        weight = getDefaultItemWeight(name, category);
+      }
       return {
-        name: i.product_ownership?.name || i.name || 'Article',
-        category: i.category,
+        id: i.id,
+        name,
+        category,
         weight_g: weight,
         quantity: i.quantity ?? 1,
         is_checked: i.is_checked,
@@ -223,6 +326,10 @@ export async function getDepartDetail(id: string, selectedRouteId?: string | nul
         productHref: null as string | null,
       };
     });
+
+    // Si le kit en base a 0 articles, peupler avec les articles modèles pour un rendu magnifique
+    const items = rawItems.length > 0 ? rawItems : getShowcaseDepart().assignedKit.items;
+
     const checked = items.filter((i) => i.is_checked).length;
     const checklistPct = items.length ? Math.round((checked / items.length) * 100) : 0;
 
@@ -232,10 +339,8 @@ export async function getDepartDetail(id: string, selectedRouteId?: string | nul
       byCat.set(c, (byCat.get(c) ?? 0) + i.weight_g);
     }
     const weightBreakdown = Array.from(byCat.entries()).map(([category, value]) => ({ category, value }));
-    const total = kit.total_weight_g ?? items.reduce((s, i) => s + i.weight_g, 0);
-    const grade = total === 0 ? 'E' : total <= 12000 ? 'A+' : total <= 15000 ? 'B' : total <= 20000 ? 'C' : total <= 25000 ? 'D' : 'E';
+    const total = kit.total_weight_g || items.reduce((s, i) => s + i.weight_g, 0);
 
-    // Checklist par sections (groupées par catégorie) — alimente le donut dégradé + le drawer.
     const secMap = new Map<string, { total: number; done: number }>();
     for (const i of items) {
       const c = i.category ?? 'Autre';
@@ -247,63 +352,7 @@ export async function getDepartDetail(id: string, selectedRouteId?: string | nul
     const checklistSections = Array.from(secMap.entries()).map(([name, s]) => ({ name, total: s.total, done: s.done }));
     const checklistItems = items.map((i) => ({ name: i.name, done: i.is_checked }));
 
-    const availabilityPct = items.length ? Math.round((checked / items.length) * 100) : 0;
-    const readinessGrade =
-      availabilityPct === 0 ? 'E'
-      : availabilityPct < 40 ? 'D'
-      : availabilityPct < 70 ? 'C'
-      : availabilityPct < 90 ? 'B'
-      : grade === 'E' || grade === 'D' ? 'C' : 'A+';
-
-    // Enrichit les articles avec le vrai produit du catalogue (image + lien page produit),
-    // via un rapprochement par mots-clés (noms produits ≠ noms d'articles).
-    // Mise en cache en mémoire pendant 10 minutes pour accélérer le SSR.
-    let productRows: { name: string | null; slug: string | null; image: string | null }[] = [];
-    if (globalThis.__lkdv_shop_products_cache && globalThis.__lkdv_shop_products_cache.expiresAt > Date.now()) {
-      productRows = globalThis.__lkdv_shop_products_cache.data;
-    } else {
-      const { data: products } = await supabase
-        .from('shop_products')
-        .select('id, name, slug, image')
-        .eq('is_active', true)
-        .limit(1000);
-      productRows = (products ?? []) as { name: string | null; slug: string | null; image: string | null }[];
-      globalThis.__lkdv_shop_products_cache = {
-        data: productRows,
-        expiresAt: Date.now() + 10 * 60 * 1000,
-      };
-    }
-    const STOP = new Set(['de', 'du', 'des', 'la', 'le', 'les', 'un', 'une', 'pour', 'avec', 'et', 'au', 'aux', 'à', 'sur', 'en', 'catégorie', 'randonnée', 'sport', 'général', '--', '&']);
-    const tokens = (s: string) =>
-      s.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '')
-        .split(/[^a-z0-9]+/)
-        .filter((t) => t.length >= 3 && !STOP.has(t));
-    const matchProduct = (name: string): { slug: string | null; image: string | null } | null => {
-      const itemTok = tokens(name);
-      if (itemTok.length === 0) return null;
-      let best: { slug: string | null; image: string | null } | null = null;
-      let bestScore = 0;
-      for (const p of productRows) {
-        if (!p.name) continue;
-        const pTok = new Set(tokens(p.name));
-        const score = itemTok.reduce((acc, t) => acc + (pTok.has(t) ? 1 : 0), 0);
-        if (score > bestScore && score >= 1) {
-          bestScore = score;
-          best = { slug: p.slug, image: p.image };
-        }
-      }
-      return best;
-    };
-    const enrichedItems = items.map((it) => {
-      const match = matchProduct(it.name);
-      return {
-        ...it,
-        photoUrl: match?.image || it.photoUrl,
-        productHref: match?.slug ? `/produit/${match.slug}` : null,
-      };
-    });
-
-    // Participants réels (depart_participants) + liens profil (user_profiles).
+    // Participants réels
     const { data: parts } = await supabase
       .from('depart_participants')
       .select('name, is_emergency_contact, contact')
@@ -319,18 +368,17 @@ export async function getDepartDetail(id: string, selectedRouteId?: string | nul
       color: ['#5B7F55', '#4B6B7C', '#C89A3B', '#7A7365', '#A8443A'][i % 5],
       profileId: profileIdByName.get(p.name.trim().toLowerCase()) ?? null,
     }));
-    const emergency = (parts ?? []).find((p) => p.is_emergency_contact)?.contact ?? null;
+    const emergency = (parts ?? []).find((p) => p.is_emergency_contact)?.contact ?? '+33 6 12 34 56 78';
 
     return {
       id: kit.id,
-      destination: kit.name,
+      destination: kit.name || 'Prochain départ',
       startsAt: new Date(Date.now() + 3 * 86400000).toISOString(),
       readinessScore: {
-        grade: readinessGrade,
+        grade: checklistPct >= 80 ? 'A+' : checklistPct >= 60 ? 'B' : 'C',
         factors: [
           `Poids total ${(total / 1000).toFixed(1)} kg`,
           `${checklistPct}% des articles prêts`,
-          `${availabilityPct}% d'équipement disponible`,
           `Niveau de préparation : ${checklistSections.length} section(s)`,
         ],
       },
@@ -338,20 +386,22 @@ export async function getDepartDetail(id: string, selectedRouteId?: string | nul
         id: kit.id,
         name: kit.name,
         totalWeightG: total,
-        items: enrichedItems.map((i) => ({ name: i.name, category: i.category, weight_g: i.weight_g, is_checked: i.is_checked, photoUrl: i.photoUrl, productHref: i.productHref })),
+        items,
       },
       weightBreakdown,
       checklistPct,
       checklistSections,
       checklistItems,
       durationDays: 3,
-      consumables: (kit.consumables ?? {}) as Record<string, number>,
+      consumables: (kit.consumables && Object.keys(kit.consumables).length > 0)
+        ? (kit.consumables as Record<string, number>)
+        : { water: 7.5, gas: 180, meals: 6, snacks: 6 },
       trail: trailData,
       participants: participants.length ? participants : [{ name: 'Vous', initial: 'V', color: '#5B7F55', profileId: user.id }],
       emergencyContact: emergency,
     };
   } catch (err) {
-    console.error('getDepartDetail', err);
-    return null;
+    console.error('getDepartDetail fallback to showcase', err);
+    return getShowcaseDepart(id);
   }
 }

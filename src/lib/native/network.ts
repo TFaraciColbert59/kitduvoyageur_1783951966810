@@ -1,4 +1,4 @@
-﻿import { Network, ConnectionStatus } from "@capacitor/network";
+﻿import type { ConnectionStatus } from "@capacitor/network";
 import { isNative } from "./platform";
 
 export interface NetworkState {
@@ -7,11 +7,12 @@ export interface NetworkState {
 }
 
 /**
- * Recupere l'etat du reseau
+ * Recupere l etat du reseau
  */
 export async function getNetworkState(): Promise<NetworkState> {
   if (isNative()) {
     try {
+      const { Network } = await import("@capacitor/network");
       const status = await Network.getStatus();
       return {
         connected: status.connected,
@@ -33,19 +34,24 @@ export async function getNetworkState(): Promise<NetworkState> {
 }
 
 /**
- * Ecouteur de changement d'etat reseau (offline / online)
+ * Ecouteur de changement d etat reseau (offline / online)
  */
 export async function onNetworkChange(
   callback: (status: NetworkState) => void
 ): Promise<() => void> {
   if (isNative()) {
-    const handle = await Network.addListener("networkStatusChange", (status: ConnectionStatus) => {
-      callback({
-        connected: status.connected,
-        connectionType: status.connectionType,
+    try {
+      const { Network } = await import("@capacitor/network");
+      const handle = await Network.addListener("networkStatusChange", (status: ConnectionStatus) => {
+        callback({
+          connected: status.connected,
+          connectionType: status.connectionType,
+        });
       });
-    });
-    return () => handle.remove();
+      return () => handle.remove();
+    } catch {
+      // Fallback web
+    }
   }
 
   if (typeof window !== "undefined") {

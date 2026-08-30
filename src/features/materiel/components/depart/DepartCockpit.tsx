@@ -1,187 +1,245 @@
-'use client';
-import { motion, useDragControls } from 'framer-motion';
-import { GripVertical } from 'lucide-react';
-import { useRef, useState, useCallback } from 'react';
+﻿'use client';
+import { useState, useEffect } from 'react';
+import dynamic from 'next/dynamic';
+import { motion, AnimatePresence } from 'framer-motion';
+import {
+  Compass,
+  ListChecks,
+  AlertTriangle,
+  CheckSquare,
+  Scale,
+  Droplets,
+  MapPin,
+  LayoutGrid,
+} from 'lucide-react';
+import { DepartHeader } from './DepartHeader';
+import { DepartPreparation } from './DepartPreparation';
+import { DepartAlerts } from './DepartAlerts';
+import { DepartChecklist } from './DepartChecklist';
+import { DepartWeightBreakdown } from './DepartWeightBreakdown';
+import { DepartConsumables } from './DepartConsumables';
+import { DepartWeather } from './DepartWeather';
+import { DepartParticipants } from './DepartParticipants';
+import { KitSwitcher } from './KitSwitcher';
+import ScrollableTabs, { type TabOption } from '@/components/ui/ScrollableTabs';
+import { Skeleton } from '@/components/ui/Skeleton';
 import type { DepartDetail } from '@/features/materiel/services/getDepartDetail';
 import type { WeatherForecast } from '@/features/materiel/services/getWeather';
-import type { KitListItem } from '@/features/materiel/services/getKits';
-import { useDepartOrder } from '@/features/materiel/store/useDepartOrder';
-import { LazyExplorerMap } from './LazyExplorerMap';
-import { WeatherTimeline48h } from './WeatherTimeline48h';
-import { AssignedKitCard } from './AssignedKitCard';
-import { ChecklistDonut } from './ChecklistDonut';
-import { ConsumablesTiles } from './ConsumablesTiles';
-import { ParticipantsEmergency } from './ParticipantsEmergency';
-import { KitSwitcher } from './KitSwitcher';
-import Link from 'next/link';
 
-// Emplacements — formation 3 / 1 / 2 obligatoire : cartes carrées haut et bas (mobile),
-// la carte du milieu prend toute la place restante. Desktop : rangées égales.
-const SLOT_CLASS = [
-  '[grid-column:1/5] [grid-row:1/2] aspect-square md:aspect-auto md:h-full',
-  '[grid-column:5/9] [grid-row:1/2] aspect-square md:aspect-auto md:h-full',
-  '[grid-column:9/13] [grid-row:1/2] aspect-square md:aspect-auto md:h-full',
-  '[grid-column:1/13] [grid-row:2/3] min-h-0 h-full',
-  '[grid-column:1/7] [grid-row:3/4] aspect-square md:aspect-auto md:h-full',
-  '[grid-column:7/13] [grid-row:3/4] aspect-square md:aspect-auto md:h-full',
-];
+// IDs de kits showcase : pas de mutation serveur sur ces IDs fictifs
+const SHOWCASE_IDS = new Set(['tmb-4j', 'vercors-ultra', 'belledonne-winter', 'none']);
 
-const LABEL: Record<string, string> = {
-  map: 'Carte',
-  weather: 'Météo 5 jours',
-  kit: 'Kit assigné',
-  checklist: 'Checklist',
-  consumables: 'Consommables',
-  participants: 'Participants',
-};
+// Chargement lazy de Leaflet — evite l inclusion dans le bundle initial
+const DepartMap = dynamic(
+  () => import('./DepartMap').then((m) => ({ default: m.DepartMap })),
+  {
+    ssr: false,
+    loading: () => (
+      <div className="glass rounded-[28px] overflow-hidden">
+        <div className="px-4 py-2.5 border-b border-white/20">
+          <Skeleton className="h-4 w-40" />
+        </div>
+        <Skeleton className="h-[228px] rounded-none" />
+      </div>
+    ),
+  }
+);
 
-/** DepartCockpit — grille 3/1/2 : cartes déplaçables 2D via la poignée, grille re-paquée sans trou.
- *  Reçoit maintenant `kits` pour le KitSwitcher intégré (streamé avec les données). */
-export function DepartCockpit({
-  depart,
-  weather,
-  kits = [],
-}: {
+export type DepartSectionId =
+  | 'all'
+  | 'overview'
+  | 'progression'
+  | 'alerts'
+  | 'checklist'
+  | 'weight'
+  | 'consumables'
+  | 'terrain';
+
+interface DepartCockpitProps {
   depart: DepartDetail;
   weather: WeatherForecast | null;
-  kits?: { id: string; name: string }[];
-}) {
-  const { order, setOrder } = useDepartOrder();
-  const refs = useRef<Record<string, HTMLDivElement | null>>({});
-
-  const handleDrop = (id: string, point: { x: number; y: number }) => {
-    const rects = Object.entries(refs.current)
-      .filter(([k, el]) => !!el && k !== id)
-      .map(([k, el]) => {
-        const r = el!.getBoundingClientRect();
-        return { id: k, cx: r.x + r.width / 2, cy: r.y + r.height / 2 };
-      });
-    if (rects.length === 0) return;
-    const target = rects.reduce<{ id: string; cx: number; cy: number; d: number }>(
-      (best, r) => {
-        const d = (r.cx - point.x) ** 2 + (r.cy - point.y) ** 2;
-        return d < best.d ? { d, id: r.id, cx: r.cx, cy: r.cy } : best;
-      },
-      { d: Infinity, id: '', cx: 0, cy: 0 }
-    );
-    const cur = [...order];
-    const from = cur.indexOf(id);
-    const to = cur.indexOf(target.id);
-    if (from === -1 || to === -1) return;
-    const dx = point.x - target.cx;
-    const dy = point.y - target.cy;
-    const insertAt = Math.abs(dx) > Math.abs(dy) ? (dx < 0 ? to : to + 1) : dy < 0 ? to : to + 1;
-    const [item] = cur.splice(from, 1);
-    cur.splice(insertAt, 0, item);
-    setOrder(cur);
-  };
-
-  return (
-    <div className="h-full w-full flex flex-col gap-1.5">
-      {/* Sous-header streamé : KitSwitcher + retour, visible une fois les données chargées */}
-      {kits.length > 0 && (
-        <div className="shrink-0 flex items-center justify-between gap-1.5 px-0">
-          <p className="min-w-0 font-display font-semibold text-[13px] leading-tight tracking-tight text-[#17402C] truncate">
-            <span className="text-[#365233]">{depart.destination}</span>
-          </p>
-          <div className="flex items-center gap-1.5 shrink-0">
-            <KitSwitcher kits={kits} currentId={depart.id} />
-            <Link
-              href="/materiel"
-              className="glass interactive h-7 px-2.5 rounded-full flex items-center text-xs font-semibold text-[#17402C] shrink-0"
-            >
-              ← Retour
-            </Link>
-          </div>
-        </div>
-      )}
-
-      <div className="flex-1 min-h-0 grid grid-cols-12 gap-2 items-stretch [grid-template-rows:auto_minmax(0,1fr)_auto] md:[grid-template-rows:repeat(3,minmax(0,1fr))]">
-        {order.map((id, index) => {
-          let widget: React.ReactNode = null;
-          switch (id) {
-            case 'map': widget = <LazyExplorerMap trail={depart.trail} />; break;
-            case 'weather': widget = <WeatherTimeline48h forecast={weather} />; break;
-            case 'kit': widget = <AssignedKitCard kit={depart.assignedKit} />; break;
-            case 'checklist': widget = <ChecklistDonut pct={depart.checklistPct} sections={depart.checklistSections} items={depart.checklistItems} title={depart.destination} />; break;
-            case 'consumables': widget = <ConsumablesTiles kitId={depart.id} initial={depart.consumables} durationDays={depart.durationDays} participants={depart.participants.length} />; break;
-            case 'participants': widget = <ParticipantsEmergency participants={depart.participants} emergencyContact={depart.emergencyContact} kitId={depart.id} />; break;
-            default: widget = null;
-          }
-          if (widget === null) return null;
-          return (
-            <DraggableCard
-              key={id}
-              id={id}
-              refCb={(el) => { refs.current[id] = el; }}
-              slotClass={SLOT_CLASS[index % SLOT_CLASS.length]}
-              onDrop={(p) => handleDrop(id, p)}
-              isMap={id === 'map'}
-            >
-              {widget}
-            </DraggableCard>
-          );
-        })}
-      </div>
-    </div>
-  );
+  kits: { id: string; name: string }[];
 }
 
-function DraggableCard({
-  id,
-  children,
-  refCb,
-  slotClass,
-  onDrop,
-  isMap = false,
-}: {
-  id: string;
-  children: React.ReactNode;
-  refCb: (el: HTMLDivElement | null) => void;
-  slotClass: string;
-  onDrop: (p: { x: number; y: number }) => void;
-  isMap?: boolean;
-}) {
-  const controls = useDragControls();
-  const [dragging, setDragging] = useState(false);
+export function DepartCockpit({ depart, weather, kits }: DepartCockpitProps) {
+  const [activeSection, setActiveSection] = useState<DepartSectionId>('all');
+
+  const checkedCount = depart.assignedKit.items.filter((i) => i.is_checked).length;
+  const itemsCount = depart.assignedKit.items.length;
+
+  // Kit reel = mutations Server Action activees ; showcase = toggle local uniquement
+  const isRealKit = !SHOWCASE_IDS.has(depart.id);
+
+  const alertInput = {
+    items: depart.assignedKit.items.map((i) => ({
+      id: i.id,
+      name: i.name,
+      category: i.category,
+      weight_g: i.weight_g,
+      is_checked: i.is_checked,
+      quantity: i.quantity,
+      photoUrl: i.photoUrl,
+      productHref: i.productHref,
+    })),
+    weather,
+    participants: depart.participants,
+    emergencyContact: depart.emergencyContact,
+    trailDistanceKm: depart.trail?.distance_km ?? null,
+  };
+
+  // Synchronisation avec BottomTabBar si nécessaire
+  useEffect(() => {
+    const handleSectionChange = (e: any) => {
+      if (e.detail && typeof e.detail === 'string') {
+        setActiveSection(e.detail as DepartSectionId);
+      }
+    };
+    window.addEventListener('depart-section-change', handleSectionChange);
+    return () => window.removeEventListener('depart-section-change', handleSectionChange);
+  }, []);
+
+  const handleSelectTab = (tabId: string) => {
+    setActiveSection(tabId as DepartSectionId);
+    if (typeof window !== 'undefined') {
+      window.dispatchEvent(new CustomEvent('depart-section-change', { detail: tabId }));
+    }
+  };
+
+  // Les 7 sections fonctionnelles
+  const SECTIONS_TABS: TabOption[] = [
+    { id: 'all', label: 'Vue complète', icon: <LayoutGrid size={13} /> },
+    { id: 'overview', label: '1. Départ', icon: <Compass size={13} /> },
+    { id: 'progression', label: '2. Progression', icon: <ListChecks size={13} /> },
+    { id: 'alerts', label: '3. Alertes', icon: <AlertTriangle size={13} /> },
+    { id: 'checklist', label: '4. Checklist', icon: <CheckSquare size={13} /> },
+    { id: 'weight', label: '5. Poids', icon: <Scale size={13} /> },
+    { id: 'consumables', label: '6. Consommables', icon: <Droplets size={13} /> },
+    { id: 'terrain', label: '7. Terrain & Météo', icon: <MapPin size={13} /> },
+  ];
+
+  const showAll = activeSection === 'all';
 
   return (
-    <motion.div
-      ref={refCb}
-      layout="position"
-      drag
-      dragListener={false}
-      dragControls={controls}
-      dragMomentum={false}
-      dragSnapToOrigin
-      dragElastic={0.08}
-      onDragStart={() => setDragging(true)}
-      onDragEnd={(_e, info) => {
-        setDragging(false);
-        onDrop(info.point);
-      }}
-      className={`relative w-full aspect-square md:aspect-auto md:w-auto md:h-full ${slotClass}`}
-      style={{
-        touchAction: isMap ? 'pan-x pan-y pinch-zoom' : 'auto',
-        ...(dragging ? { willChange: 'transform', zIndex: 30 } : {}),
-      }}
-    >
-      <button
-        type="button"
-        onPointerDown={(e) => controls.start(e)}
-        className="!absolute top-1.5 right-1.5 md:top-2 md:right-2 z-20 h-6 w-6 md:h-8 md:w-8 !rounded-full glass interactive flex items-center justify-center text-[#17402C] cursor-grab touch-none"
-        aria-label={`Déplacer le widget ${LABEL[id] ?? id}`}
-      >
-        <GripVertical size={12} className="md:hidden" aria-hidden="true" />
-        <GripVertical size={16} className="hidden md:block" aria-hidden="true" />
-      </button>
-      {/* La carte Leaflet reçoit les événements touch natifs */}
-      <div
-        className="h-full [&>article]:h-full [&>article]:flex [&>article]:flex-col"
-        style={isMap ? { touchAction: 'pan-x pan-y pinch-zoom' } : undefined}
-      >
-        {children}
+    <div className="flex flex-col gap-3 w-full max-w-3xl mx-auto px-3 sm:px-4 pb-8">
+      {/* Barre d'action supérieure : Switcher de kit + Switcher des 7 sections */}
+      <div className="space-y-2 sticky top-0 z-30 pt-1 pb-1 backdrop-blur-md bg-white/20 rounded-2xl">
+        <div className="flex items-center justify-between gap-2 px-1">
+          <span className="text-[11px] font-semibold uppercase tracking-wider text-[#5A7064]">
+            Cockpit de départ
+          </span>
+          {kits.length > 1 && <KitSwitcher kits={kits} currentId={depart.id} />}
+        </div>
+
+        {/* Sélecteur des 7 sections */}
+        <ScrollableTabs
+          tabs={SECTIONS_TABS}
+          activeTab={activeSection}
+          onSelectTab={handleSelectTab}
+          size="sm"
+          className="px-0.5"
+        />
       </div>
-    </motion.div>
+
+      <AnimatePresence mode="wait">
+        <motion.div
+          key={activeSection}
+          initial={{ opacity: 0, y: 4 }}
+          animate={{ opacity: 1, y: 0 }}
+          exit={{ opacity: 0, y: -4 }}
+          transition={{ duration: 0.18, ease: 'easeOut' }}
+          className="flex flex-col gap-3"
+        >
+          {/* ========================================================
+              SECTION 1 : En-tête, Destination & Compte à rebours
+             ======================================================== */}
+          {(showAll || activeSection === 'overview') && (
+            <section id="section-depart-overview" aria-label="Section 1 : Vue d'ensemble du départ">
+              <DepartHeader depart={depart} />
+            </section>
+          )}
+
+          {/* ========================================================
+              SECTION 2 : Progression du Pack & Métriques
+             ======================================================== */}
+          {(showAll || activeSection === 'progression') && (
+            <section id="section-depart-progression" aria-label="Section 2 : Progression du pack">
+              <DepartPreparation
+                checklistPct={depart.checklistPct}
+                totalWeightG={depart.assignedKit.totalWeightG}
+                itemsCount={itemsCount}
+                checkedCount={checkedCount}
+                kitId={depart.id}
+              />
+            </section>
+          )}
+
+          {/* ========================================================
+              SECTION 3 : Alertes & Recommandations Intelligentes
+             ======================================================== */}
+          {(showAll || activeSection === 'alerts') && (
+            <section id="section-depart-alerts" aria-label="Section 3 : Alertes de départ">
+              <DepartAlerts input={alertInput} />
+            </section>
+          )}
+
+          {/* ========================================================
+              SECTION 4 : Checklist Interactive du Matériel
+             ======================================================== */}
+          {(showAll || activeSection === 'checklist') && (
+            <section id="section-depart-checklist" aria-label="Section 4 : Checklist du kit">
+              <DepartChecklist items={depart.assignedKit.items} isRealKit={isRealKit} />
+            </section>
+          )}
+
+          {/* ========================================================
+              SECTION 5 : Analyse & Répartition du Poids
+             ======================================================== */}
+          {(showAll || activeSection === 'weight') && (
+            <section id="section-depart-weight" aria-label="Section 5 : Répartition du poids">
+              <DepartWeightBreakdown
+                breakdown={depart.weightBreakdown}
+                totalWeightG={depart.assignedKit.totalWeightG}
+              />
+            </section>
+          )}
+
+          {/* ========================================================
+              SECTION 6 : Consommables & Autonomie
+             ======================================================== */}
+          {(showAll || activeSection === 'consumables') && (
+            <section id="section-depart-consumables" aria-label="Section 6 : Consommables estimés">
+              <DepartConsumables
+                consumables={depart.consumables}
+                durationDays={depart.durationDays}
+                participantsCount={depart.participants.length || 1}
+              />
+            </section>
+          )}
+
+          {/* ========================================================
+              SECTION 7 : Terrain, Météo & Équipe de Sécurité
+             ======================================================== */}
+          {(showAll || activeSection === 'terrain') && (
+            <section
+              id="section-depart-terrain"
+              aria-label="Section 7 : Terrain, météo et sécurité"
+              className="space-y-3"
+            >
+              {/* Météo locale */}
+              <DepartWeather weather={weather} />
+
+              {/* Équipe & Contact d'urgence */}
+              <DepartParticipants
+                participants={depart.participants}
+                emergencyContact={depart.emergencyContact}
+              />
+
+              {/* Carte Leaflet & Tracé */}
+              {depart.trail && <DepartMap trail={depart.trail} height="240px" />}
+            </section>
+          )}
+        </motion.div>
+      </AnimatePresence>
+    </div>
   );
 }

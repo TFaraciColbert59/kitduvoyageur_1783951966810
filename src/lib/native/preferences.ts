@@ -1,13 +1,15 @@
-﻿import { Preferences } from "@capacitor/preferences";
-import { isNative } from "./platform";
+﻿import { isNative } from "./platform";
 
 /**
  * Stockage cle-valeur natif securise
  */
 export async function setNativePreference(key: string, value: string): Promise<void> {
   if (isNative()) {
-    await Preferences.set({ key, value });
-    return;
+    try {
+      const { Preferences } = await import("@capacitor/preferences");
+      await Preferences.set({ key, value });
+      return;
+    } catch {}
   }
   if (typeof window !== "undefined") {
     try {
@@ -19,6 +21,7 @@ export async function setNativePreference(key: string, value: string): Promise<v
 export async function getNativePreference(key: string, defaultValue: string | null = null): Promise<string | null> {
   if (isNative()) {
     try {
+      const { Preferences } = await import("@capacitor/preferences");
       const res = await Preferences.get({ key });
       return res.value ?? defaultValue;
     } catch {
@@ -37,8 +40,11 @@ export async function getNativePreference(key: string, defaultValue: string | nu
 
 export async function removeNativePreference(key: string): Promise<void> {
   if (isNative()) {
-    await Preferences.remove({ key });
-    return;
+    try {
+      const { Preferences } = await import("@capacitor/preferences");
+      await Preferences.remove({ key });
+      return;
+    } catch {}
   }
   if (typeof window !== "undefined") {
     try {

@@ -1,14 +1,16 @@
-﻿import { Haptics, ImpactStyle, NotificationType } from "@capacitor/haptics";
-import { isNative } from "./platform";
+﻿import { isNative } from "./platform";
 
 export type HapticStyle = "light" | "medium" | "heavy" | "selection" | "success" | "warning" | "error";
 
 /**
- * Retour haptique natif iOS/Android avec fallback Web Vibration API
+ * Retour haptique natif iOS/Android avec fallback Web Vibration API — SSR Safe
  */
 export async function triggerNativeHaptic(style: HapticStyle = "light"): Promise<void> {
+  if (typeof window === "undefined") return;
+
   try {
     if (isNative()) {
+      const { Haptics, ImpactStyle, NotificationType } = await import("@capacitor/haptics");
       switch (style) {
         case "light":
           await Haptics.impact({ style: ImpactStyle.Light });
@@ -36,7 +38,7 @@ export async function triggerNativeHaptic(style: HapticStyle = "light"): Promise
     }
 
     // Fallback Web Vibration API
-    if (typeof window !== "undefined" && "vibrate" in navigator) {
+    if ("vibrate" in navigator) {
       switch (style) {
         case "light":
         case "selection":
