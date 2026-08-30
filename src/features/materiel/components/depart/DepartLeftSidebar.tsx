@@ -7,14 +7,13 @@ import {
   Scale,
   MapPin,
   LayoutGrid,
-  Edit3,
-  Printer,
   ChevronRight,
   Zap,
   Wifi,
   WifiOff,
   Boxes,
   Layers,
+  Printer,
 } from 'lucide-react';
 import { KitSwitcher } from './KitSwitcher';
 import { Badge } from '@/components/ui/Badge';
@@ -73,16 +72,14 @@ export function DepartLeftSidebar({
       badgeColor:
         depart.readinessScore.status === 'ok'
           ? 'bg-[#17402C] text-white'
-          : depart.readinessScore.status === 'warning'
-          ? 'bg-[#8C6418] text-white'
-          : 'bg-[#8A241B] text-white',
+          : 'bg-[#8C6418] text-white',
     },
     {
       id: 'alerts',
       label: '2. Alertes & Fiabilité',
       icon: AlertTriangle,
       badge: alertsCount > 0 ? alertsCount : undefined,
-      badgeColor: 'bg-[#8A241B] text-white',
+      badgeColor: 'bg-[#8C6418] text-white',
     },
     {
       id: 'weight',
@@ -107,7 +104,7 @@ export function DepartLeftSidebar({
   ];
 
   return (
-    <aside className="h-full flex flex-col justify-between glass rounded-[1.5rem] p-3 text-[#17402C] font-sans overflow-hidden border border-white/60 shadow-sm backdrop-blur-md">
+    <aside className="h-full flex flex-col justify-between glass rounded-[1.5rem] p-3 text-[#17402C] font-sans overflow-hidden border border-white/80 shadow-sm backdrop-blur-md">
       {/* Haut : Identité du trek & Navigation */}
       <div className="space-y-2 overflow-y-auto no-scrollbar pr-0.5">
         {/* En-tête miniature du départ */}
@@ -116,9 +113,9 @@ export function DepartLeftSidebar({
             <span className="text-[9px] font-semibold uppercase tracking-wider text-[#5A7064]">
               Départ Actif
             </span>
-            <Badge tone={depart.readinessScore.status === 'ok' ? 'sage' : depart.readinessScore.status === 'warning' ? 'warn' : 'danger'}>
+            <Badge tone={depart.readinessScore.status === 'ok' ? 'sage' : 'warn'}>
               <span className="text-[9px] font-bold">
-                {depart.readinessScore.status === 'ok' ? '✓ Prêt' : depart.readinessScore.status === 'warning' ? '⚠️ En cours' : 'Critique'}
+                {depart.readinessScore.status === 'ok' ? '✓ Prêt' : 'En préparation'}
               </span>
             </Badge>
           </div>
@@ -144,7 +141,7 @@ export function DepartLeftSidebar({
                     ? 'bg-[#2D6B4A] text-white shadow-xs'
                     : 'bg-white/40 text-[#17402C] hover:bg-white/60'
                 )}
-                title="Mode Éco Batterie Ultra-Save (§19)"
+                title="Mode Éco Batterie Ultra-Save"
                 aria-pressed={isUltraSave}
               >
                 <Zap size={8} />
