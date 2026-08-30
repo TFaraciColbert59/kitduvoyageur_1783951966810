@@ -459,7 +459,7 @@ export default function ExplorerClient({ initialTrails }: ExplorerClientProps) {
       <div className="absolute inset-0 w-full h-full z-0 pointer-events-auto" style={{ width: '100%', height: '100%' }}>
         <ExplorerMap
           trails={filteredTrails}
-          pois={poisData}
+          pois={undefined}
           selectedTrailId={selectedTrailId}
           onTrailClick={handleTrailClick}
           userLocation={userLocation}
@@ -469,9 +469,97 @@ export default function ExplorerClient({ initialTrails }: ExplorerClientProps) {
         />
       </div>
 
-      {/* ── 3. DESKTOP : LISTE DES SENTIERS FLOTTANTE (PLEINE HAUTEUR) ── */}
+      {/* ── 3. FILTRES SUR LE CÔTÉ DROIT : CENTRÉS VERTICALEMENT & COLLÉS AU REBORD DROIT ── */}
+      <div className="fixed right-0 top-1/2 -translate-y-1/2 z-[900] pointer-events-none flex items-center justify-end">
+        <AnimatePresence mode="wait">
+          {!filtersOpen ? (
+            /* Onglet rétractable collé au bord droit */
+            <motion.button
+              key="filter-dock-closed"
+              initial={{ opacity: 0, x: 20 }}
+              animate={{ opacity: 1, x: 0 }}
+              exit={{ opacity: 0, x: 20 }}
+              type="button"
+              onClick={() => setFiltersOpen(true)}
+              className="pointer-events-auto flex flex-col items-center gap-2 py-3.5 px-2.5 rounded-l-2xl glass bg-white/90 hover:bg-white text-[#17402C] border-y border-l border-white/80 shadow-lg backdrop-blur-md cursor-pointer transition-all active:scale-95 group"
+              style={{
+                boxShadow: '-4px 8px 24px -4px rgba(23, 64, 44, 0.12), inset 0 1px 1.5px rgba(255, 255, 255, 0.95)',
+              }}
+              title="Ouvrir les filtres"
+              aria-label="Filtres de recherche"
+            >
+              <div className="w-7 h-7 rounded-xl bg-[#5B7F55]/15 text-[#5B7F55] group-hover:bg-[#17402C] group-hover:text-white flex items-center justify-center transition-colors">
+                <SlidersHorizontal size={14} />
+              </div>
+              <span className="[writing-mode:vertical-lr] rotate-180 uppercase tracking-widest text-[9.5px] font-mono font-bold text-[#17402C]">
+                Filtres
+              </span>
+              {activeFilterCount > 0 && (
+                <span className="w-4 h-4 rounded-full bg-[#17402C] text-white text-[9px] font-mono font-bold flex items-center justify-center shadow-xs">
+                  {activeFilterCount}
+                </span>
+              )}
+            </motion.button>
+          ) : (
+            /* Panneau de filtres complet déployé sur le côté droit */
+            <motion.div
+              key="filter-dock-open"
+              initial={{ opacity: 0, x: 100 }}
+              animate={{ opacity: 1, x: 0 }}
+              exit={{ opacity: 0, x: 100 }}
+              transition={{ type: 'spring', stiffness: 400, damping: 35 }}
+              className="pointer-events-auto w-[310px] sm:w-[330px] p-4 rounded-l-3xl glass bg-white/95 border-y border-l border-white/80 shadow-2xl backdrop-blur-xl space-y-3"
+              style={{
+                boxShadow: '-8px 16px 36px -6px rgba(23, 64, 44, 0.16), inset 0 1px 1.5px rgba(255, 255, 255, 0.95)',
+              }}
+            >
+              <div className="flex items-center justify-between pb-2 border-b border-[#17402C]/10">
+                <div className="flex items-center gap-2">
+                  <div className="w-6 h-6 rounded-lg bg-[#5B7F55]/15 text-[#5B7F55] flex items-center justify-center">
+                    <SlidersHorizontal size={13} />
+                  </div>
+                  <div>
+                    <h3 className="font-display font-bold text-xs sm:text-sm text-[#17402C]">
+                      Filtres d'exploration
+                    </h3>
+                    <p className="text-[9px] text-[#5A7064] font-mono">
+                      {filteredTrails.length} itinéraire{filteredTrails.length > 1 ? 's' : ''} disponible{filteredTrails.length > 1 ? 's' : ''}
+                    </p>
+                  </div>
+                </div>
+
+                <button
+                  type="button"
+                  onClick={() => setFiltersOpen(false)}
+                  className="w-6 h-6 rounded-full bg-black/5 hover:bg-black/10 flex items-center justify-center text-[#17402C] transition-colors cursor-pointer"
+                  title="Fermer"
+                >
+                  <X size={12} />
+                </button>
+              </div>
+
+              <div className="max-h-[60vh] overflow-y-auto no-scrollbar pr-0.5">
+                <ExplorerFilterPanel
+                  activeDifficulties={activeDifficulties}
+                  activeDuration={activeDuration}
+                  activeCategory={activeCategory}
+                  familyOnly={familyOnly}
+                  hasFilters={hasFilters}
+                  onToggleDifficulty={toggleDifficulty}
+                  onSelectDuration={(label) => setActiveDuration(label)}
+                  onSelectCategory={setActiveCategory}
+                  onToggleFamily={() => setFamilyOnly((v) => !v)}
+                  onReset={resetFilters}
+                />
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
+      </div>
+
+      {/* ── 4. DESKTOP : LISTE DES SENTIERS FLOTTANTE (PLEINE HAUTEUR) ── */}
       <div className="hidden md:flex absolute left-4 top-[84px] bottom-4 z-[900] w-[350px] max-w-[calc(100vw-32px)] pointer-events-none flex-col gap-2">
-        {/* Barre de recherche compacte & Filtres Liquid Glass */}
+        {/* Barre de recherche compacte Liquid Glass */}
         <div
           className="pointer-events-auto flex items-center justify-between gap-1.5 p-1.5 rounded-full shrink-0"
           style={{
@@ -501,58 +589,7 @@ export default function ExplorerClient({ initialTrails }: ExplorerClientProps) {
               </button>
             )}
           </div>
-
-          <button
-            type="button"
-            onClick={() => setFiltersOpen((v) => !v)}
-            className={`relative h-7 w-7 !rounded-full flex items-center justify-center transition-all cursor-pointer ${
-              filtersOpen || hasFilters
-                ? 'bg-[#17402C] text-white '
-                : 'bg-[#FBFAF6] hover:bg-white text-[#17402C] border border-white/60'
-            }`}
-            title="Filtres"
-            aria-label="Filtres"
-          >
-            <SlidersHorizontal size={12} />
-            {activeFilterCount > 0 && (
-              <span className="absolute -top-1 -right-1 w-3.5 h-3.5 rounded-full bg-[#17402C] text-white text-[8px] font-black flex items-center justify-center border border-white">
-                {activeFilterCount}
-              </span>
-            )}
-          </button>
         </div>
-
-        {/* Panneau de filtres desktop (popover Liquid Glass) */}
-        <AnimatePresence>
-          {filtersOpen && (
-            <motion.div
-              initial={{ opacity: 0, y: -6, scaleY: 0.95 }}
-              animate={{ opacity: 1, y: 0, scaleY: 1 }}
-              exit={{ opacity: 0, y: -6, scaleY: 0.95 }}
-              transition={{ duration: 0.18 }}
-              className="pointer-events-auto shrink-0 p-3 rounded-[20px]  max-h-[46vh] overflow-y-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
-              style={{
-                background: 'linear-gradient(180deg, rgba(255, 255, 255, 0.95) 0%, rgba(255, 255, 255, 0.88) 100%)',
-                backdropFilter: 'blur(20px)',
-                WebkitBackdropFilter: 'blur(20px)',
-                border: '1px solid rgba(255, 255, 255, 0.70)',
-              }}
-            >
-              <ExplorerFilterPanel
-                activeDifficulties={activeDifficulties}
-                activeDuration={activeDuration}
-                activeCategory={activeCategory}
-                familyOnly={familyOnly}
-                hasFilters={hasFilters}
-                onToggleDifficulty={toggleDifficulty}
-                onSelectDuration={(label) => setActiveDuration(label)}
-                onSelectCategory={setActiveCategory}
-                onToggleFamily={() => setFamilyOnly((v) => !v)}
-                onReset={resetFilters}
-              />
-            </motion.div>
-          )}
-        </AnimatePresence>
 
         {/* Colonne scrollable complète des sentiers */}
         <div

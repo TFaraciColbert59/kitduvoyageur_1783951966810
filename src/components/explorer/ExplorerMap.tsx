@@ -538,78 +538,92 @@ export default function ExplorerMap({
     <div className="relative w-full h-full bg-[#EAE6DF] overflow-hidden select-none" style={{ width: '100%', height: '100%', touchAction: 'none' }}>
       <div ref={containerRef} className="w-full h-full z-0" style={{ width: '100%', height: '100%', touchAction: 'none' }} />
 
-      {mapReady && mapInstance && (trails.length > 0 || (pois && pois.length > 0)) && (
-        <TrailLayer map={mapInstance} trails={trails} pois={pois} selectedTrailId={selectedTrailId} onTrailClick={onTrailClick} onPoiClick={onPoiClick} />
+      {mapReady && mapInstance && trails.length > 0 && (
+        <TrailLayer map={mapInstance} trails={trails} pois={undefined} selectedTrailId={selectedTrailId} onTrailClick={onTrailClick} onPoiClick={onPoiClick} />
       )}
 
-      {/* Floating Zoom Controls (+ / −) — Liquid Glass haute lisibilité */}
-      <div className={`absolute z-[400] pointer-events-auto flex flex-col gap-1.5 ${controlPos.zoom}`}>
-        <button
-          onClick={handleZoomIn}
-          title="Zoom avant"
-          aria-label="Zoom avant"
-          className="glass bg-white/85 hover:bg-white interactive h-8 w-8 !rounded-full flex items-center justify-center text-[#17402C] font-bold text-base border border-white/60  cursor-pointer active:scale-95 transition-all"
+      {/* Floating Controls Cluster: En bas à droite avec le Zoom juste au-dessus du changement de carte */}
+      <div className="absolute z-[400] pointer-events-auto right-3.5 sm:right-4 bottom-5 sm:bottom-6 flex flex-col items-center gap-2">
+        {/* Floating Zoom Controls (+ / −) — Juste au dessus */}
+        <div
+          className="flex flex-col gap-1 p-1 rounded-2xl glass border border-white/70 shadow-md backdrop-blur-md bg-white/85"
+          style={{
+            boxShadow: '0 8px 24px -4px rgba(23, 64, 44, 0.12), inset 0 1px 1.5px rgba(255, 255, 255, 0.90)',
+          }}
         >
-          +
-        </button>
-        <button
-          onClick={handleZoomOut}
-          title="Zoom arrière"
-          aria-label="Zoom arrière"
-          className="glass bg-white/85 hover:bg-white interactive h-8 w-8 !rounded-full flex items-center justify-center text-[#17402C] font-bold text-base border border-white/60  cursor-pointer active:scale-95 transition-all"
-        >
-          −
-        </button>
-      </div>
+          <button
+            onClick={handleZoomIn}
+            title="Zoom avant"
+            aria-label="Zoom avant"
+            className="h-8 w-8 !rounded-xl flex items-center justify-center text-[#17402C] font-bold text-base hover:bg-white transition-all cursor-pointer active:scale-95"
+          >
+            +
+          </button>
+          <div className="w-4 h-[1px] bg-[#17402C]/10 self-center" />
+          <button
+            onClick={handleZoomOut}
+            title="Zoom arrière"
+            aria-label="Zoom arrière"
+            className="h-8 w-8 !rounded-xl flex items-center justify-center text-[#17402C] font-bold text-base hover:bg-white transition-all cursor-pointer active:scale-95"
+          >
+            −
+          </button>
+        </div>
 
-      {/* Tile switcher (Carte / Relief / Satellite) — Liquid Glass haute lisibilité avec état actif bien visible */}
-      <div className={`absolute z-[400] pointer-events-auto flex items-center gap-1.5 ${controlPos.tiles}`}>
-        <button
-          onClick={() => handleTileChange('osm')}
-          title="Carte standard"
-          aria-label="Carte standard"
-          className={`interactive h-8 w-8 !rounded-full flex items-center justify-center transition-all cursor-pointer  ${
-            tileMode === 'osm'
-              ? 'bg-[#17402C] text-white ring-2 ring-white '
-              : 'glass bg-white/85 hover:bg-white text-[#17402C] border border-white/60'
-          }`}
+        {/* Tile switcher (Carte / Relief / Satellite) — En bas à droite */}
+        <div
+          className="flex flex-col sm:flex-row items-center gap-1 p-1 rounded-2xl glass border border-white/70 shadow-md backdrop-blur-md bg-white/85"
+          style={{
+            boxShadow: '0 8px 24px -4px rgba(23, 64, 44, 0.12), inset 0 1px 1.5px rgba(255, 255, 255, 0.90)',
+          }}
         >
-          <svg width="13" height="13" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
-            <path d="M3 6l6-3 6 3 6-3v12l-6 3-6-3-6 3V6z"></path>
-            <path d="M9 3v12"></path>
-            <path d="M15 6v12"></path>
-          </svg>
-        </button>
-        <button
-          onClick={() => handleTileChange('topo')}
-          title="Relief / Topo"
-          aria-label="Relief / Topo"
-          className={`interactive h-8 w-8 !rounded-full flex items-center justify-center transition-all cursor-pointer  ${
-            tileMode === 'topo'
-              ? 'bg-[#17402C] text-white ring-2 ring-white '
-              : 'glass bg-white/85 hover:bg-white text-[#17402C] border border-white/60'
-          }`}
-        >
-          <svg width="13" height="13" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
-            <path d="M8 3l4 8 5-5 5 15H2L8 3z"></path>
-          </svg>
-        </button>
-        <button
-          onClick={() => handleTileChange('satellite')}
-          title="Satellite"
-          aria-label="Satellite"
-          className={`interactive h-8 w-8 !rounded-full flex items-center justify-center transition-all cursor-pointer  ${
-            tileMode === 'satellite'
-              ? 'bg-[#17402C] text-white ring-2 ring-white '
-              : 'glass bg-white/85 hover:bg-white text-[#17402C] border border-white/60'
-          }`}
-        >
-          <svg width="13" height="13" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
-            <circle cx="12" cy="12" r="10"></circle>
-            <path d="M12 2a14.5 14.5 0 0 0 0 20 14.5 14.5 0 0 0 0-20"></path>
-            <path d="M2 12h20"></path>
-          </svg>
-        </button>
+          <button
+            onClick={() => handleTileChange('osm')}
+            title="Carte standard (OSM)"
+            aria-label="Carte standard"
+            className={`h-8 w-8 !rounded-xl flex items-center justify-center transition-all cursor-pointer active:scale-95 ${
+              tileMode === 'osm'
+                ? 'bg-[#17402C] text-white shadow-xs'
+                : 'text-[#17402C] hover:bg-white'
+            }`}
+          >
+            <svg width="13" height="13" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
+              <path d="M3 6l6-3 6 3 6-3v12l-6 3-6-3-6 3V6z"></path>
+              <path d="M9 3v12"></path>
+              <path d="M15 6v12"></path>
+            </svg>
+          </button>
+          <button
+            onClick={() => handleTileChange('topo')}
+            title="Relief / Topo"
+            aria-label="Relief / Topo"
+            className={`h-8 w-8 !rounded-xl flex items-center justify-center transition-all cursor-pointer active:scale-95 ${
+              tileMode === 'topo'
+                ? 'bg-[#17402C] text-white shadow-xs'
+                : 'text-[#17402C] hover:bg-white'
+            }`}
+          >
+            <svg width="13" height="13" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
+              <path d="M8 3l4 8 5-5 5 15H2L8 3z"></path>
+            </svg>
+          </button>
+          <button
+            onClick={() => handleTileChange('satellite')}
+            title="Vue Satellite"
+            aria-label="Vue Satellite"
+            className={`h-8 w-8 !rounded-xl flex items-center justify-center transition-all cursor-pointer active:scale-95 ${
+              tileMode === 'satellite'
+                ? 'bg-[#17402C] text-white shadow-xs'
+                : 'text-[#17402C] hover:bg-white'
+            }`}
+          >
+            <svg width="13" height="13" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
+              <circle cx="12" cy="12" r="10"></circle>
+              <path d="M12 2a14.5 14.5 0 0 0 0 20 14.5 14.5 0 0 0 0-20"></path>
+              <path d="M2 12h20"></path>
+            </svg>
+          </button>
+        </div>
       </div>
     </div>
   );

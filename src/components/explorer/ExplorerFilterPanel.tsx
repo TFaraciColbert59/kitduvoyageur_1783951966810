@@ -39,25 +39,25 @@ export default function ExplorerFilterPanel({
   onReset,
 }: ExplorerFilterPanelProps) {
   const sectionLabel =
-    'text-[9px] font-mono font-bold uppercase tracking-widest text-[#5A7064] px-1';
+    'text-[9.5px] font-mono font-bold uppercase tracking-widest text-[#5A7064] px-1';
 
   return (
-    <div className="flex flex-col gap-2.5">
+    <div className="flex flex-col gap-3 font-sans">
       {hasFilters && (
         <button
           type="button"
           onClick={onReset}
-          className="self-start inline-flex items-center gap-1 h-6 px-2.5 rounded-full bg-[#17402C] text-white text-[9.5px] font-bold  active:scale-95 transition-all"
+          className="self-start inline-flex items-center gap-1.5 h-6 px-3 rounded-full bg-[#17402C] text-white text-[10px] font-bold shadow-xs active:scale-95 transition-all cursor-pointer"
         >
-          <RotateCcw size={9} />
-          Réinitialiser
+          <RotateCcw size={10} />
+          <span>Réinitialiser les filtres</span>
         </button>
       )}
 
       {/* Difficulté */}
-      <div className="flex flex-col gap-1">
+      <div className="flex flex-col gap-1.5">
         <span className={sectionLabel}>Difficulté</span>
-        <div className="flex items-center gap-1 flex-wrap">
+        <div className="flex items-center gap-1.5 flex-wrap">
           {DIFFICULTY_FILTERS.map((d) => {
             const active = activeDifficulties.includes(d);
             return (
@@ -65,10 +65,10 @@ export default function ExplorerFilterPanel({
                 key={d}
                 type="button"
                 onClick={() => onToggleDifficulty(d)}
-                className={`h-6 px-2.5 rounded-full text-[10px] font-bold transition-all border ${
+                className={`h-7 px-3 rounded-full text-[10.5px] font-bold transition-all border cursor-pointer ${
                   active
-                    ? 'text-white border-transparent '
-                    : 'bg-white text-[#365233] border-stone-200'
+                    ? 'text-white border-transparent shadow-xs scale-105'
+                    : 'glass bg-white/80 hover:bg-white text-[#17402C] border-white/70 shadow-2xs hover:shadow-xs'
                 }`}
                 style={active ? { backgroundColor: getDifficultyColor(d) } : {}}
               >
@@ -80,9 +80,9 @@ export default function ExplorerFilterPanel({
       </div>
 
       {/* Durée */}
-      <div className="flex flex-col gap-1">
-        <span className={sectionLabel}>Durée</span>
-        <div className="flex items-center gap-1 flex-wrap">
+      <div className="flex flex-col gap-1.5">
+        <span className={sectionLabel}>Durée estimée</span>
+        <div className="flex items-center gap-1.5 flex-wrap">
           {DURATION_FILTERS.map((f) => {
             const active = activeDuration === f.label;
             return (
@@ -90,10 +90,10 @@ export default function ExplorerFilterPanel({
                 key={f.label}
                 type="button"
                 onClick={() => onSelectDuration(active ? null : f.label)}
-                className={`h-6 px-2.5 rounded-full text-[10px] font-bold transition-all border ${
+                className={`h-7 px-3 rounded-full text-[10.5px] font-bold transition-all border cursor-pointer ${
                   active
-                    ? 'bg-[#17402C] text-white border-transparent '
-                    : 'bg-white text-[#365233] border-stone-200'
+                    ? 'bg-[#17402C] text-white border-[#17402C] shadow-xs'
+                    : 'glass bg-white/80 hover:bg-white text-[#17402C] border-white/70 shadow-2xs hover:shadow-xs'
                 }`}
               >
                 {f.label}
@@ -104,9 +104,9 @@ export default function ExplorerFilterPanel({
       </div>
 
       {/* Catégorie */}
-      <div className="flex flex-col gap-1">
-        <span className={sectionLabel}>Type</span>
-        <div className="flex items-center gap-1 flex-wrap">
+      <div className="flex flex-col gap-1.5">
+        <span className={sectionLabel}>Type de parcours</span>
+        <div className="flex items-center gap-1.5 flex-wrap">
           {CATEGORIES.map((c) => {
             const active = activeCategory === c;
             return (
@@ -114,10 +114,10 @@ export default function ExplorerFilterPanel({
                 key={c}
                 type="button"
                 onClick={() => onSelectCategory(c)}
-                className={`h-6 px-2.5 rounded-full text-[10px] font-bold transition-all border ${
+                className={`h-7 px-3 rounded-full text-[10.5px] font-bold transition-all border cursor-pointer ${
                   active
-                    ? 'bg-[#17402C] text-white border-transparent '
-                    : 'bg-white text-[#365233] border-stone-200'
+                    ? 'bg-[#17402C] text-white border-[#17402C] shadow-xs'
+                    : 'glass bg-white/80 hover:bg-white text-[#17402C] border-white/70 shadow-2xs hover:shadow-xs'
                 }`}
               >
                 {c}
@@ -128,19 +128,19 @@ export default function ExplorerFilterPanel({
       </div>
 
       {/* Famille */}
-      <div className="flex flex-col gap-1">
+      <div className="flex flex-col gap-1.5 pt-1 border-t border-[#17402C]/10">
         <span className={sectionLabel}>Public</span>
         <button
           type="button"
           onClick={onToggleFamily}
-          className={`self-start inline-flex items-center gap-1.5 h-6 px-2.5 rounded-full text-[10px] font-bold transition-all border ${
+          className={`self-start inline-flex items-center gap-1.5 h-7 px-3 rounded-full text-[10.5px] font-bold transition-all border cursor-pointer ${
             familyOnly
-              ? 'bg-[#17402C] text-white border-transparent '
-              : 'bg-white text-[#365233] border-stone-200'
+              ? 'bg-[#5B7F55] text-white border-transparent shadow-xs'
+              : 'glass bg-white/80 hover:bg-white text-[#17402C] border-white/70 shadow-2xs hover:shadow-xs'
           }`}
         >
-          <Users size={10} />
-          Adapté aux familles
+          <Users size={11} />
+          <span>Adapté aux familles</span>
         </button>
       </div>
     </div>
