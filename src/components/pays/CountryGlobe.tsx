@@ -50,7 +50,7 @@ interface CountryGlobeProps {
   uniform?: boolean;
 }
 
-const GEOJSON_URL = 'https://raw.githubusercontent.com/nvkelso/natural-earth-vector/master/geojson/ne_110m_admin_0_countries.geojson';
+const GEOJSON_LOCAL = '/data/countries-110m.geojson';
 
 export default function CountryGlobe({
   countries,
@@ -68,6 +68,7 @@ export default function CountryGlobe({
   const hoveredRef = useRef<Country | null>(null);
   const [geoFeatures, setGeoFeatures] = useState<any[]>([]);
   const [geoLoaded, setGeoLoaded] = useState(false);
+  const [geoError, setGeoError] = useState(false);
   const [isGlobeReady, setIsGlobeReady] = useState(false);
   const ctrlRef = useRef<any>(null);
 
@@ -94,12 +95,26 @@ export default function CountryGlobe({
     }
   }, []);
 
-  // ── Load GeoJSON Natural Earth ──
+  // ── Load GeoJSON — source locale Next.js, timeout 4 s, état d'erreur explicite ──
   useEffect(() => {
-    fetch(GEOJSON_URL)
-      .then(r => r.json())
-      .then(data => { setGeoFeatures(data.features || []); setGeoLoaded(true); })
-      .catch(() => setGeoLoaded(true));
+    const controller = new AbortController();
+    const timer = setTimeout(() => controller.abort(), 4_000);
+    fetch(GEOJSON_LOCAL, { signal: controller.signal })
+      .then(r => {
+        if (!r.ok) throw new Error(`HTTP ${r.status}`);
+        return r.json();
+      })
+      .then(data => {
+        setGeoFeatures(data.features || []);
+        setGeoLoaded(true);
+      })
+      .catch(err => {
+        if (err.name !== 'AbortError') console.error('[CountryGlobe] GeoJSON load failed:', err);
+        setGeoError(true);
+        setGeoLoaded(true); // sortir du spinner même en cas d'erreur
+      })
+      .finally(() => clearTimeout(timer));
+    return () => { controller.abort(); clearTimeout(timer); };
   }, []);
 
   // ── ResizeObserver ──
@@ -276,7 +291,7 @@ export default function CountryGlobe({
           onGlobeReady={() => setTimeout(() => setIsGlobeReady(true), 0)}
         />
 
-      {/* Spinner pendant le chargement du GeoJSON (jamais d'écran vide) */}
+      {/* Spinner pendant le chargement du GeoJSON */}
       {!geoLoaded && (
         <div
           style={{
@@ -299,6 +314,26 @@ export default function CountryGlobe({
           <span style={{ fontSize: 11, fontFamily: 'var(--lkv-font-mono, monospace)', fontWeight: 700, color: '#17402C', letterSpacing: '0.06em' }}>
             Chargement des pays…
           </span>
+        </div>
+      )}
+
+      {/* État d'erreur explicite (jamais un spinner infini) */}
+      {geoLoaded && geoError && geoFeatures.length === 0 && (
+        <div
+          style={{
+            position: 'absolute',
+            inset: 0,
+            display: 'flex',
+            flexDirection: 'column',
+            alignItems: 'center',
+            justifyContent: 'center',
+            gap: 8,
+            zIndex: 5,
+            pointerEvents: 'none',
+          }}
+        >
+          <span style={{ fontSize: 13, color: '#A8443A', fontWeight: 700 }}>⚠ Impossible de charger la carte</span>
+          <span style={{ fontSize: 11, color: '#5A7064' }}>Vérifiez votre connexion et rechargez la page.</span>
         </div>
       )}
     </div>

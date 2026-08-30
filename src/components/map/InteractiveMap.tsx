@@ -888,18 +888,11 @@ export default function InteractiveMap() {
           </button>
         )}
 
-        {/* 2. Floating Tile Switcher (EN BAS À GAUCHE — 32px Liquid Glass) */}
-        <div className="absolute bottom-[calc(var(--bottom-tab-base-height,68px)+16px)] left-3.5 md:bottom-6 md:left-4 z-[400] flex items-center gap-1 p-1 rounded-full shadow-md border border-white/80"
-          style={{
-            background: 'linear-gradient(180deg, rgba(245, 243, 237, 0.94) 0%, rgba(235, 231, 220, 0.88) 100%)',
-            backdropFilter: 'blur(16px) saturate(180%)',
-            WebkitBackdropFilter: 'blur(16px) saturate(180%)',
-            boxShadow: '0 4px 16px -2px rgba(23, 64, 44, 0.10), inset 0 1px 1.5px rgba(255, 255, 255, 0.95)',
-          }}
-        >
+        {/* 2. Floating Tile Switcher (EN BAS À GAUCHE — Canonique Liquid Glass) */}
+        <div className="absolute bottom-[calc(var(--bottom-tab-base-height,68px)+16px)] left-3.5 md:bottom-6 md:left-4 z-[400] glass flex items-center gap-1.5 p-1 rounded-full shadow-md border border-white/80">
           <button
             onClick={() => handleTileChange('osm')}
-            className={`glass-circle-btn !w-8 !h-8 ${tileMode === 'osm' ? 'primary !text-white shadow-xs' : 'text-[#17402C] hover:bg-white/60'}`}
+            className={`glass-circle-btn !w-8 !h-8 ${tileMode === 'osm' ? 'primary' : ''}`}
             title="Carte Standard (OSM)"
           >
             <svg width="14" height="14" fill="none" stroke="currentColor" strokeWidth="2.2" viewBox="0 0 24 24">
@@ -908,7 +901,7 @@ export default function InteractiveMap() {
           </button>
           <button
             onClick={() => handleTileChange('topo')}
-            className={`glass-circle-btn !w-8 !h-8 ${tileMode === 'topo' ? 'primary !text-white shadow-xs' : 'text-[#17402C] hover:bg-white/60'}`}
+            className={`glass-circle-btn !w-8 !h-8 ${tileMode === 'topo' ? 'primary' : ''}`}
             title="Relief / Topographique"
           >
             <svg width="14" height="14" fill="none" stroke="currentColor" strokeWidth="2.2" viewBox="0 0 24 24">
@@ -917,7 +910,7 @@ export default function InteractiveMap() {
           </button>
           <button
             onClick={() => handleTileChange('satellite')}
-            className={`glass-circle-btn !w-8 !h-8 ${tileMode === 'satellite' ? 'primary !text-white shadow-xs' : 'text-[#17402C] hover:bg-white/60'}`}
+            className={`glass-circle-btn !w-8 !h-8 ${tileMode === 'satellite' ? 'primary' : ''}`}
             title="Vue Satellite"
           >
             <svg width="14" height="14" fill="none" stroke="currentColor" strokeWidth="2.2" viewBox="0 0 24 24">
@@ -926,20 +919,13 @@ export default function InteractiveMap() {
           </button>
         </div>
 
-        {/* 3. Floating Zoom Controls (+ / −) & Recenter (EN BAS À DROITE — 32px Liquid Glass) */}
-        <div className="absolute bottom-[calc(var(--bottom-tab-base-height,68px)+16px)] right-3.5 md:bottom-6 md:right-4 z-[400] flex flex-col gap-1 p-1 rounded-full shadow-md border border-white/80"
-          style={{
-            background: 'linear-gradient(180deg, rgba(245, 243, 237, 0.94) 0%, rgba(235, 231, 220, 0.88) 100%)',
-            backdropFilter: 'blur(16px) saturate(180%)',
-            WebkitBackdropFilter: 'blur(16px) saturate(180%)',
-            boxShadow: '0 4px 16px -2px rgba(23, 64, 44, 0.10), inset 0 1px 1.5px rgba(255, 255, 255, 0.95)',
-          }}
-        >
+        {/* 3. Floating Zoom Controls (+ / −) & Recenter (EN BAS À DROITE — Canonique Liquid Glass) */}
+        <div className="absolute bottom-[calc(var(--bottom-tab-base-height,68px)+16px)] right-3.5 md:bottom-6 md:right-4 z-[400] glass flex flex-col gap-1 items-center p-1 rounded-full shadow-md border border-white/80">
           <button
             onClick={handleRecenter}
             title="Ma position (10 km)"
             aria-label="Ma position"
-            className="glass-circle-btn !w-8 !h-8 text-[#17402C] cursor-pointer active:scale-95"
+            className="glass-circle-btn !w-8 !h-8"
           >
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#17402C" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round">
               <circle cx="12" cy="12" r="7" />
@@ -954,7 +940,7 @@ export default function InteractiveMap() {
             onClick={handleZoomIn}
             title="Zoom avant"
             aria-label="Zoom avant"
-            className="glass-circle-btn !w-8 !h-8 font-bold text-sm text-[#17402C] cursor-pointer active:scale-95"
+            className="glass-circle-btn !w-8 !h-8 font-bold text-sm"
           >
             +
           </button>
@@ -963,7 +949,7 @@ export default function InteractiveMap() {
             onClick={handleZoomOut}
             title="Zoom arrière"
             aria-label="Zoom arrière"
-            className="glass-circle-btn !w-8 !h-8 font-bold text-sm text-[#17402C] cursor-pointer active:scale-95"
+            className="glass-circle-btn !w-8 !h-8 font-bold text-sm"
           >
             −
           </button>
