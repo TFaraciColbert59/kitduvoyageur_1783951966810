@@ -264,7 +264,7 @@ export function DepartCockpit({ depart, weather, kits }: DepartCockpitProps) {
       />
 
       {/* ════ 1. VERSION MOBILE (< 768px) ════ */}
-      <div className="block md:hidden w-full max-w-3xl mx-auto px-3 sm:px-4 pb-12 space-y-3">
+      <div className="block md:hidden w-full max-w-3xl mx-auto px-3 sm:px-4 pb-[calc(4rem+env(safe-area-inset-bottom))] space-y-3 overscroll-contain">
         <div className="space-y-2 sticky top-0 z-30 pt-1 pb-1 backdrop-blur-md bg-white/30 rounded-2xl border border-white/40">
           <div className="flex items-center justify-between gap-2 px-2">
             <div className="flex items-center gap-1.5">
