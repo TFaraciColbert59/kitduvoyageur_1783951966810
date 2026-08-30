@@ -20,6 +20,7 @@ import { DepartWeightBreakdown } from './DepartWeightBreakdown';
 import { DepartWeather } from './DepartWeather';
 import { DepartParticipants } from './DepartParticipants';
 import { DepartLeftSidebar } from './DepartLeftSidebar';
+import { DepartRightSidebar } from './DepartRightSidebar';
 import { DepartureSheetModal } from './DepartureSheetModal';
 import { KitSwitcher } from './KitSwitcher';
 import ScrollableTabs, { type TabOption } from '@/components/ui/ScrollableTabs';
@@ -178,7 +179,11 @@ export function DepartCockpit({ depart, weather, kits }: DepartCockpitProps) {
 
       {/* 3.B — Poids & Répartition */}
       {(showAll || activeSection === 'weight') && (
-        <section id="section-depart-weight" aria-label="Analyse du poids">
+        <section
+          id="section-depart-weight"
+          aria-label="Analyse du poids"
+          className={cn(showAll && 'xl:hidden')}
+        >
           <DepartWeightBreakdown
             breakdown={depart.weightBreakdown}
             totalWeightG={depart.baseWeightG}
@@ -188,7 +193,11 @@ export function DepartCockpit({ depart, weather, kits }: DepartCockpitProps) {
 
       {/* 3.C — Météo, Équipe & Carte */}
       {(showAll || activeSection === 'terrain') && (
-        <section id="section-depart-terrain" aria-label="Terrain, météo et sécurité" className="space-y-3.5">
+        <section
+          id="section-depart-terrain"
+          aria-label="Terrain, météo et sécurité"
+          className={cn('space-y-3.5', showAll && 'xl:hidden')}
+        >
           <DepartWeather weather={weather} />
           <DepartParticipants
             participants={depart.participants}
@@ -230,7 +239,7 @@ export function DepartCockpit({ depart, weather, kits }: DepartCockpitProps) {
                 type="button"
                 onClick={() => setIsUltraSave((v) => !v)}
                 className={cn(
-                  'px-2 py-0.5 rounded-lg text-[10px] font-bold flex items-center gap-1 transition-all',
+                  'px-2 py-0.5 rounded-lg text-[10px] font-bold flex items-center gap-1 transition-all cursor-pointer',
                   isUltraSave
                     ? 'bg-[#2D6B4A] text-white shadow-xs'
                     : 'bg-white/40 text-[#17402C] hover:bg-white/60'
@@ -273,9 +282,10 @@ export function DepartCockpit({ depart, weather, kits }: DepartCockpitProps) {
         </AnimatePresence>
       </div>
 
-      {/* ════ 2. VERSION DESKTOP COCKPIT 2 COLONNES (hidden md:flex) ════ */}
-      <div className="hidden md:flex h-full overflow-hidden max-w-[1440px] w-full mx-auto px-4 lg:px-6 py-2 gap-5 items-start">
-        <div className="w-[260px] shrink-0 h-full overflow-hidden">
+      {/* ════ 2. VERSION DESKTOP COCKPIT 3 COLONNES (hidden md:flex) ════ */}
+      <div className="hidden md:flex h-full overflow-hidden max-w-[1600px] w-full mx-auto px-3 lg:px-5 py-2 gap-4 lg:gap-5 items-start">
+        {/* Colonne 1 : Sidebar Gauche (Navigation & Switcher) */}
+        <div className="w-[240px] xl:w-[250px] shrink-0 h-full overflow-hidden">
           <DepartLeftSidebar
             depart={depart}
             activeSection={activeSection}
@@ -289,6 +299,7 @@ export function DepartCockpit({ depart, weather, kits }: DepartCockpitProps) {
           />
         </div>
 
+        {/* Colonne 2 : Flux Central (Header, Alertes, Checklist) */}
         <main className="flex-1 h-full overflow-y-auto custom-scrollbar space-y-4 px-1 pb-8">
           <AnimatePresence mode="wait">
             <motion.div
@@ -302,6 +313,11 @@ export function DepartCockpit({ depart, weather, kits }: DepartCockpitProps) {
             </motion.div>
           </AnimatePresence>
         </main>
+
+        {/* Colonne 3 : Sidebar Droite (Poids, Météo, ICE, Carte) */}
+        <div className="hidden xl:block w-[310px] 2xl:w-[340px] shrink-0 h-full overflow-y-auto custom-scrollbar pb-8">
+          <DepartRightSidebar depart={depart} weather={weather} />
+        </div>
       </div>
     </div>
   );
