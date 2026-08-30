@@ -26,6 +26,7 @@ import {
   Layers,
   Truck,
   Eye,
+  ShoppingBasket,
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { GlassCard } from '@/components/ui/GlassCard';
@@ -35,11 +36,12 @@ import { deleteInventoryItem } from '@/features/materiel/actions/deleteInventory
 import { updateLoanStatus } from '@/features/materiel/actions/updateLoanStatus';
 import { createLoan } from '@/features/materiel/actions/createLoan';
 import { addDepartItem } from '@/features/materiel/actions/addDepartItem';
+import { DepartChecklist } from './DepartChecklist';
 import { cn } from '@/lib/utils';
 import type { InventoryItem } from '@/features/materiel/services/getInventory';
 import type { LoanItem } from '@/features/materiel/services/getLoans';
 import type { ProductSuggestion } from '@/features/materiel/services/getProductSuggestions';
-import type { ChecklistItem } from '@/features/materiel/types/trekHub';
+import type { ChecklistItem, Participant } from '@/features/materiel/types/trekHub';
 
 export interface UnifiedEquipmentItem {
   id: string;
@@ -67,6 +69,8 @@ interface DepartEquipmentHubProps {
   loans: LoanItem[];
   products: ProductSuggestion[];
   kitItems: ChecklistItem[];
+  consumables?: Record<string, number>;
+  participants?: Participant[];
   kitId: string;
   isRealKit?: boolean;
 }
@@ -99,20 +103,25 @@ export function DepartEquipmentHub({
   loans: initialLoans,
   products,
   kitItems,
+  consumables = {},
+  participants = [],
   kitId,
   isRealKit = false,
 }: DepartEquipmentHubProps) {
   const [statusFilter, setStatusFilter] = useState<'all' | 'in_bag' | 'in_inventory' | 'lent' | 'to_acquire' | 'replace'>('all');
   const [selectedCat, setSelectedCat] = useState('Toutes');
   const [searchQuery, setSearchQuery] = useState('');
+  const [mobileTab, setMobileTab] = useState<'catalog' | 'bag'>('catalog');
 
   const [inventoryList, setInventoryList] = useState<InventoryItem[]>(initialInventory);
   const [loanList, setLoanList] = useState<LoanItem[]>(initialLoans);
 
+  // Modales
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [isLoanModalOpen, setIsLoanModalOpen] = useState(false);
   const [selectedItemForLoan, setSelectedItemForLoan] = useState<UnifiedEquipmentItem | null>(null);
 
+  // Formulaires
   const [newName, setNewName] = useState('');
   const [newBrand, setNewBrand] = useState('');
   const [newCategory, setNewCategory] = useState('Bivouac');
@@ -123,10 +132,12 @@ export function DepartEquipmentHub({
   const [borrowerContact, setBorrowerContact] = useState('');
   const [dueDate, setDueDate] = useState('');
 
+  // ════ CONSOLIDATION UNIFIÉE SANS DOUBLON ════
   const unifiedItems: UnifiedEquipmentItem[] = useMemo(() => {
     const map = new Map<string, UnifiedEquipmentItem>();
     const normalize = (s: string) => s.toLowerCase().trim().replace(/[^a-z0-9]/g, '');
 
+    // 1. Inventaire possédé
     for (const inv of inventoryList) {
       const normName = normalize(inv.name);
       const activeLoan = loanList.find(
@@ -167,6 +178,7 @@ export function DepartEquipmentHub({
       map.set(normName, item);
     }
 
+    // 2. Items requis dans le kit
     for (const ki of kitItems) {
       const normName = normalize(ki.name);
       if (!map.has(normName)) {
@@ -197,6 +209,7 @@ export function DepartEquipmentHub({
       }
     }
 
+    // 3. Produits Boutique LKDV
     for (const p of products) {
       const normName = normalize(p.name);
       if (!map.has(normName)) {
@@ -398,351 +411,395 @@ export function DepartEquipmentHub({
   };
 
   return (
-    <GlassCard tone="neutral" as="article" ariaLabelledBy="equipment-hub-heading" className="relative">
-      <div className="p-4 sm:p-6 space-y-4">
-        {/* Header */}
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-black/5 dark:border-white/10 pb-3.5">
-          <div className="flex items-center gap-2.5">
-            <div className="w-8 h-8 rounded-xl bg-[#2D6B4A]/10 flex items-center justify-center text-[#2D6B4A]">
-              <Boxes size={18} aria-hidden="true" />
-            </div>
-            <div>
-              <h2 id="equipment-hub-heading" className="text-base sm:text-lg font-bold text-[#17402C]">
-                Mon Parc Matériel & Équipements
-              </h2>
-              <p className="text-[11px] text-[#5A7064]">
-                Vue unique consolidée : sac actif, inventaire, prêts en cours, livraisons et boutique.
-              </p>
-            </div>
-          </div>
-
-          <button
-            type="button"
-            onClick={() => setIsAddModalOpen(true)}
-            className="glass-capsule-btn primary text-xs !py-1.5 !px-3 inline-flex items-center gap-1 font-bold shrink-0 shadow-2xs cursor-pointer self-end sm:self-auto"
-          >
-            <Plus size={13} />
-            <span>Ajouter équipement</span>
-          </button>
-        </div>
-
-        {/* Multi-Status Pills */}
-        <div className="flex items-center gap-1.5 overflow-x-auto no-scrollbar pb-1">
-          <button
-            type="button"
-            onClick={() => setStatusFilter('all')}
-            className={cn(
-              'px-3 py-1.5 rounded-xl text-xs font-semibold whitespace-nowrap transition-all cursor-pointer flex items-center gap-1.5',
-              statusFilter === 'all'
-                ? 'bg-[#17402C] text-white shadow-xs'
-                : 'bg-black/5 dark:bg-white/10 text-[#5A7064] hover:text-[#17402C]'
-            )}
-          >
-            <Layers size={13} />
-            <span>Tous ({stats.totalCount})</span>
-          </button>
-
-          <button
-            type="button"
-            onClick={() => setStatusFilter('in_bag')}
-            className={cn(
-              'px-3 py-1.5 rounded-xl text-xs font-semibold whitespace-nowrap transition-all cursor-pointer flex items-center gap-1.5',
-              statusFilter === 'in_bag'
-                ? 'bg-[#17402C] text-white shadow-xs'
-                : 'bg-black/5 dark:bg-white/10 text-[#5A7064] hover:text-[#17402C]'
-            )}
-          >
-            <CheckSquare size={13} />
-            <span>Dans le sac ({stats.inBagCount})</span>
-          </button>
-
-          <button
-            type="button"
-            onClick={() => setStatusFilter('in_inventory')}
-            className={cn(
-              'px-3 py-1.5 rounded-xl text-xs font-semibold whitespace-nowrap transition-all cursor-pointer flex items-center gap-1.5',
-              statusFilter === 'in_inventory'
-                ? 'bg-[#17402C] text-white shadow-xs'
-                : 'bg-black/5 dark:bg-white/10 text-[#5A7064] hover:text-[#17402C]'
-            )}
-          >
-            <Boxes size={13} />
-            <span>Mon Inventaire ({stats.inInventoryCount})</span>
-          </button>
-
-          <button
-            type="button"
-            onClick={() => setStatusFilter('lent')}
-            className={cn(
-              'px-3 py-1.5 rounded-xl text-xs font-semibold whitespace-nowrap transition-all cursor-pointer flex items-center gap-1.5',
-              statusFilter === 'lent'
-                ? 'bg-[#17402C] text-white shadow-xs'
-                : 'bg-black/5 dark:bg-white/10 text-[#5A7064] hover:text-[#17402C]'
-            )}
-          >
-            <Handshake size={13} />
-            <span>En prêt ({stats.lentCount})</span>
-          </button>
-
-          <button
-            type="button"
-            onClick={() => setStatusFilter('to_acquire')}
-            className={cn(
-              'px-3 py-1.5 rounded-xl text-xs font-semibold whitespace-nowrap transition-all cursor-pointer flex items-center gap-1.5',
-              statusFilter === 'to_acquire'
-                ? 'bg-[#17402C] text-white shadow-xs'
-                : 'bg-black/5 dark:bg-white/10 text-[#5A7064] hover:text-[#17402C]'
-            )}
-          >
-            <ShoppingBag size={13} />
-            <span>À acquérir / Boutique ({stats.toAcquireCount})</span>
-          </button>
-
-          {stats.replaceCount > 0 && (
-            <button
-              type="button"
-              onClick={() => setStatusFilter('replace')}
-              className={cn(
-                'px-3 py-1.5 rounded-xl text-xs font-semibold whitespace-nowrap transition-all cursor-pointer flex items-center gap-1.5',
-                statusFilter === 'replace'
-                  ? 'bg-red-700 text-white shadow-xs'
-                  : 'bg-red-50 text-red-800 border border-red-200 hover:bg-red-100'
-              )}
-            >
-              <AlertTriangle size={13} />
-              <span>À remplacer ({stats.replaceCount})</span>
-            </button>
+    <div className="w-full space-y-4">
+      {/* Bascule Mobile Catalogue vs Sac */}
+      <div className="flex md:hidden items-center justify-center p-1 bg-black/5 dark:bg-white/10 rounded-2xl gap-1">
+        <button
+          type="button"
+          onClick={() => setMobileTab('catalog')}
+          className={cn(
+            'flex-1 py-1.5 rounded-xl text-xs font-bold transition-all text-center flex items-center justify-center gap-1.5',
+            mobileTab === 'catalog' ? 'bg-[#17402C] text-white shadow-xs' : 'text-[#5A7064]'
           )}
-        </div>
+        >
+          <Boxes size={13} />
+          <span>Parc Matériel ({filteredItems.length})</span>
+        </button>
+        <button
+          type="button"
+          onClick={() => setMobileTab('bag')}
+          className={cn(
+            'flex-1 py-1.5 rounded-xl text-xs font-bold transition-all text-center flex items-center justify-center gap-1.5',
+            mobileTab === 'bag' ? 'bg-[#17402C] text-white shadow-xs' : 'text-[#5A7064]'
+          )}
+        >
+          <CheckSquare size={13} />
+          <span>Sac Actif ({kitItems.filter((i) => i.is_checked).length}/{kitItems.length})</span>
+        </button>
+      </div>
 
-        {/* Search & Categories */}
-        <div className="flex flex-col sm:flex-row gap-2 items-center justify-between">
-          <div className="relative w-full sm:w-72">
-            <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-[#5A7064]" />
-            <input
-              type="text"
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              placeholder="Rechercher par nom, marque..."
-              className="w-full pl-8 pr-8 py-2 rounded-xl text-xs bg-white/50 dark:bg-white/10 border border-white/60 focus:outline-none focus:ring-2 focus:ring-[#17402C]/30 text-[#17402C]"
-            />
-            {searchQuery && (
+      {/* Disposition Desktop 2 Colonnes (Hub 3-Cards à gauche + Checklist à droite) */}
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 lg:gap-5 items-start">
+        {/* COLONNE GAUCHE / CENTRE : CATALOGUE 3-CARDS (Span 8 ou 12) */}
+        <div className={cn('space-y-4 min-w-0', mobileTab === 'bag' ? 'hidden md:block lg:col-span-8' : 'lg:col-span-8')}>
+          <GlassCard tone="neutral" as="article" ariaLabelledBy="equipment-hub-heading" className="p-4 sm:p-5 space-y-4">
+            {/* Header */}
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-black/5 dark:border-white/10 pb-3">
+              <div className="flex items-center gap-2.5">
+                <div className="w-8 h-8 rounded-xl bg-[#2D6B4A]/10 flex items-center justify-center text-[#2D6B4A]">
+                  <Boxes size={18} aria-hidden="true" />
+                </div>
+                <div>
+                  <h2 id="equipment-hub-heading" className="text-sm sm:text-base font-bold text-[#17402C]">
+                    Mon Parc Matériel & Équipements
+                  </h2>
+                  <p className="text-[10.5px] text-[#5A7064]">
+                    Affichage unifié avec multi-statuts en direct.
+                  </p>
+                </div>
+              </div>
+
               <button
                 type="button"
-                onClick={() => setSearchQuery('')}
-                className="absolute right-2.5 top-1/2 -translate-y-1/2 text-[#5A7064] p-0.5 cursor-pointer"
+                onClick={() => setIsAddModalOpen(true)}
+                className="glass-capsule-btn primary text-xs !py-1.5 !px-3 inline-flex items-center gap-1 font-bold shrink-0 shadow-2xs cursor-pointer self-end sm:self-auto"
               >
-                <X size={12} />
+                <Plus size={13} />
+                <span>Ajouter</span>
               </button>
-            )}
-          </div>
+            </div>
 
-          <div className="flex gap-1 overflow-x-auto no-scrollbar max-w-full pb-1">
-            {CATEGORIES.map((cat) => (
+            {/* Filtres de multi-statuts */}
+            <div className="flex items-center gap-1.5 overflow-x-auto no-scrollbar pb-1">
               <button
-                key={cat}
                 type="button"
-                onClick={() => setSelectedCat(cat)}
+                onClick={() => setStatusFilter('all')}
                 className={cn(
-                  'px-2.5 py-1 rounded-xl text-[11px] font-semibold whitespace-nowrap transition-colors cursor-pointer',
-                  selectedCat === cat
-                    ? 'bg-[#17402C] text-white shadow-2xs'
-                    : 'bg-white/40 text-[#5A7064] hover:text-[#17402C]'
+                  'px-2.5 py-1 rounded-xl text-[11px] font-semibold whitespace-nowrap transition-all cursor-pointer flex items-center gap-1',
+                  statusFilter === 'all'
+                    ? 'bg-[#17402C] text-white shadow-xs'
+                    : 'bg-black/5 dark:bg-white/10 text-[#5A7064] hover:text-[#17402C]'
                 )}
               >
-                {cat}
+                <Layers size={11} />
+                <span>Tous ({stats.totalCount})</span>
               </button>
-            ))}
-          </div>
+
+              <button
+                type="button"
+                onClick={() => setStatusFilter('in_bag')}
+                className={cn(
+                  'px-2.5 py-1 rounded-xl text-[11px] font-semibold whitespace-nowrap transition-all cursor-pointer flex items-center gap-1',
+                  statusFilter === 'in_bag'
+                    ? 'bg-[#17402C] text-white shadow-xs'
+                    : 'bg-black/5 dark:bg-white/10 text-[#5A7064] hover:text-[#17402C]'
+                )}
+              >
+                <CheckSquare size={11} />
+                <span>Au sac ({stats.inBagCount})</span>
+              </button>
+
+              <button
+                type="button"
+                onClick={() => setStatusFilter('in_inventory')}
+                className={cn(
+                  'px-2.5 py-1 rounded-xl text-[11px] font-semibold whitespace-nowrap transition-all cursor-pointer flex items-center gap-1',
+                  statusFilter === 'in_inventory'
+                    ? 'bg-[#17402C] text-white shadow-xs'
+                    : 'bg-black/5 dark:bg-white/10 text-[#5A7064] hover:text-[#17402C]'
+                )}
+              >
+                <Boxes size={11} />
+                <span>Inventaire ({stats.inInventoryCount})</span>
+              </button>
+
+              <button
+                type="button"
+                onClick={() => setStatusFilter('lent')}
+                className={cn(
+                  'px-2.5 py-1 rounded-xl text-[11px] font-semibold whitespace-nowrap transition-all cursor-pointer flex items-center gap-1',
+                  statusFilter === 'lent'
+                    ? 'bg-[#17402C] text-white shadow-xs'
+                    : 'bg-black/5 dark:bg-white/10 text-[#5A7064] hover:text-[#17402C]'
+                )}
+              >
+                <Handshake size={11} />
+                <span>Prêt ({stats.lentCount})</span>
+              </button>
+
+              <button
+                type="button"
+                onClick={() => setStatusFilter('to_acquire')}
+                className={cn(
+                  'px-2.5 py-1 rounded-xl text-[11px] font-semibold whitespace-nowrap transition-all cursor-pointer flex items-center gap-1',
+                  statusFilter === 'to_acquire'
+                    ? 'bg-[#17402C] text-white shadow-xs'
+                    : 'bg-black/5 dark:bg-white/10 text-[#5A7064] hover:text-[#17402C]'
+                )}
+              >
+                <ShoppingBag size={11} />
+                <span>Boutique ({stats.toAcquireCount})</span>
+              </button>
+            </div>
+
+            {/* Barre de recherche et catégories */}
+            <div className="flex flex-col sm:flex-row gap-2 items-center justify-between">
+              <div className="relative w-full sm:w-64">
+                <Search size={13} className="absolute left-3 top-1/2 -translate-y-1/2 text-[#5A7064]" />
+                <input
+                  type="text"
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  placeholder="Rechercher équipement..."
+                  className="w-full pl-8 pr-7 py-1.5 rounded-xl text-xs bg-white/50 dark:bg-white/10 border border-white/60 focus:outline-none focus:ring-2 focus:ring-[#17402C]/30 text-[#17402C]"
+                />
+                {searchQuery && (
+                  <button
+                    type="button"
+                    onClick={() => setSearchQuery('')}
+                    className="absolute right-2 top-1/2 -translate-y-1/2 text-[#5A7064] p-0.5 cursor-pointer"
+                  >
+                    <X size={11} />
+                  </button>
+                )}
+              </div>
+
+              <div className="flex gap-1 overflow-x-auto no-scrollbar max-w-full pb-0.5">
+                {CATEGORIES.map((cat) => (
+                  <button
+                    key={cat}
+                    type="button"
+                    onClick={() => setSelectedCat(cat)}
+                    className={cn(
+                      'px-2 py-0.5 rounded-xl text-[10.5px] font-semibold whitespace-nowrap transition-colors cursor-pointer',
+                      selectedCat === cat
+                        ? 'bg-[#17402C] text-white shadow-2xs'
+                        : 'bg-white/40 text-[#5A7064] hover:text-[#17402C]'
+                    )}
+                  >
+                    {cat}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {/* ════ GRILLE DES CARTES PAR 3 (grid-cols-1 sm:grid-cols-2 xl:grid-cols-3) ════ */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-3 max-h-[600px] overflow-y-auto pr-0.5">
+              {filteredItems.length === 0 ? (
+                <div className="col-span-full p-8 text-center bg-white/30 rounded-2xl border border-dashed border-black/10 text-xs text-[#5A7064]">
+                  Aucun équipement correspondant à ces critères.
+                </div>
+              ) : (
+                filteredItems.map((item) => {
+                  const cond = item.condition ? CONDITION_LABELS[item.condition] : null;
+
+                  return (
+                    <div
+                      key={item.id}
+                      className={cn(
+                        'p-3 rounded-2xl border transition-all flex flex-col justify-between space-y-2.5 shadow-2xs hover:shadow-md backdrop-blur-xs',
+                        item.isLent
+                          ? 'bg-amber-50/70 border-amber-200/90 text-amber-950'
+                          : item.inBag
+                          ? 'bg-emerald-50/50 border-emerald-200/80 text-[#17402C]'
+                          : 'bg-white/80 dark:bg-white/10 border-white/80 text-[#17402C]'
+                      )}
+                    >
+                      {/* Image & Badges hauts */}
+                      <div className="space-y-2">
+                        <div className="relative w-full h-32 rounded-xl overflow-hidden bg-black/5 flex items-center justify-center">
+                          {item.image ? (
+                            <Image
+                              src={item.image}
+                              alt={item.name}
+                              fill
+                              className="object-cover"
+                              sizes="(max-width: 640px) 100vw, 33vw"
+                            />
+                          ) : (
+                            <div className="w-12 h-12 rounded-2xl bg-black/5 flex items-center justify-center font-bold text-lg text-[#2D6B4A]">
+                              {item.name.charAt(0).toUpperCase()}
+                            </div>
+                          )}
+
+                          <span className="absolute top-2 left-2 text-[9px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-lg bg-black/60 text-white backdrop-blur-xs">
+                            {item.category}
+                          </span>
+                        </div>
+
+                        {/* Titre & Marque */}
+                        <div>
+                          <div className="flex items-center justify-between gap-1">
+                            <h3 className="text-xs font-bold text-[#17402C] line-clamp-1 leading-snug">
+                              {item.name}
+                            </h3>
+                            {item.brand && (
+                              <span className="text-[10px] text-[#5A7064] font-medium shrink-0">
+                                {item.brand}
+                              </span>
+                            )}
+                          </div>
+
+                          {/* Multi-Statuts Badges */}
+                          <div className="flex items-center gap-1 flex-wrap mt-1">
+                            {item.inBag && (
+                              <span className="text-[8.5px] font-bold px-1.5 py-0.2 rounded-md bg-[#17402C] text-white flex items-center gap-0.5">
+                                <CheckSquare size={9} />
+                                <span>Dans le sac</span>
+                              </span>
+                            )}
+
+                            {item.inInventory && (
+                              <span className="text-[8.5px] font-bold px-1.5 py-0.2 rounded-md bg-emerald-100 text-emerald-900 border border-emerald-200 flex items-center gap-0.5">
+                                <Boxes size={9} />
+                                <span>Inventaire</span>
+                              </span>
+                            )}
+
+                            {item.isLent && (
+                              <span
+                                className={cn(
+                                  'text-[8.5px] font-bold px-1.5 py-0.2 rounded-md flex items-center gap-0.5',
+                                  item.lentDetails?.isOverdue
+                                    ? 'bg-red-200 text-red-900'
+                                    : 'bg-amber-200 text-amber-900'
+                                )}
+                              >
+                                <Handshake size={9} />
+                                <span>Prêté ({item.lentDetails?.borrower})</span>
+                              </span>
+                            )}
+
+                            {item.toAcquire && !item.inInventory && (
+                              <span className="text-[8.5px] font-bold px-1.5 py-0.2 rounded-md bg-blue-100 text-blue-900 border border-blue-200 flex items-center gap-0.5">
+                                <ShoppingBag size={9} />
+                                <span>Boutique</span>
+                              </span>
+                            )}
+
+                            {cond && (
+                              <span className={cn('text-[8.5px] font-bold px-1.5 py-0.2 rounded-md', cond.tone)}>
+                                {cond.label}
+                              </span>
+                            )}
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* Métriques Poids / Prix & Boutons d'Action */}
+                      <div className="space-y-2 pt-2 border-t border-black/5">
+                        <div className="flex items-center justify-between text-xs">
+                          <span className="text-[11px] font-mono text-[#5A7064] flex items-center gap-0.5">
+                            <Scale size={11} />
+                            <span>{formatWeight(item.weightG)}</span>
+                          </span>
+
+                          {item.priceEur !== null && (
+                            <span className="font-mono font-bold text-[#17402C] text-xs">
+                              {item.priceEur.toFixed(2)} €
+                            </span>
+                          )}
+                        </div>
+
+                        {/* Actions contextuelles */}
+                        <div className="grid grid-cols-2 gap-1.5">
+                          {item.isLent && item.loanId ? (
+                            <button
+                              type="button"
+                              onClick={() => handleReturnLoan(item.loanId!, item.inventoryId)}
+                              className="col-span-2 py-1.5 rounded-xl text-[11px] font-bold bg-[#17402C] text-white hover:bg-[#17402C]/90 shadow-2xs flex items-center justify-center gap-1 cursor-pointer"
+                            >
+                              <Check size={11} />
+                              <span>Marquer Rendu</span>
+                            </button>
+                          ) : item.inBag ? (
+                            <div className="col-span-2 py-1 rounded-xl text-[10.5px] font-bold bg-emerald-100/90 text-emerald-900 flex items-center justify-center gap-1">
+                              <Check size={11} />
+                              <span>Dans le sac ✓</span>
+                            </div>
+                          ) : (
+                            <button
+                              type="button"
+                              onClick={() => handleQuickAddToBag(item)}
+                              className="py-1.5 rounded-xl text-[10.5px] font-bold bg-[#17402C] text-white hover:bg-[#17402C]/90 shadow-2xs flex items-center justify-center gap-1 cursor-pointer"
+                              title="Ajouter au sac actif"
+                            >
+                              <Plus size={11} />
+                              <span>Au sac</span>
+                            </button>
+                          )}
+
+                          {item.inInventory && !item.isLent && !item.inBag && (
+                            <button
+                              type="button"
+                              onClick={() => {
+                                setSelectedItemForLoan(item);
+                                setIsLoanModalOpen(true);
+                              }}
+                              className="py-1.5 rounded-xl text-[10.5px] font-semibold bg-white/80 hover:bg-white text-[#2D6B4A] border border-black/10 flex items-center justify-center gap-1 cursor-pointer"
+                            >
+                              <Handshake size={11} />
+                              <span>Prêter</span>
+                            </button>
+                          )}
+
+                          {!item.inInventory && item.toAcquire && (
+                            <button
+                              type="button"
+                              onClick={() => handleMarkAsOwned(item)}
+                              className="py-1.5 rounded-xl text-[10.5px] font-semibold bg-emerald-100 hover:bg-emerald-200 text-emerald-900 flex items-center justify-center gap-1 cursor-pointer"
+                              title="J'ai déjà cet équipement"
+                            >
+                              <Check size={11} />
+                              <span>Possédé</span>
+                            </button>
+                          )}
+
+                          {item.slug && (
+                            <Link
+                              href={`/produit/${item.slug}`}
+                              className="py-1.5 rounded-xl bg-white/80 hover:bg-white text-[#17402C] border border-black/10 text-[10.5px] font-semibold flex items-center justify-center gap-1"
+                              title="Voir en boutique"
+                            >
+                              <ExternalLink size={11} />
+                              <span>Boutique</span>
+                            </Link>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })
+              )}
+            </div>
+          </GlassCard>
         </div>
 
-        {/* Unified Equipment Cards */}
-        <div className="space-y-2 max-h-[520px] overflow-y-auto pr-0.5">
-          {filteredItems.length === 0 ? (
-            <div className="p-8 text-center bg-white/30 rounded-2xl border border-dashed border-black/10 text-xs text-[#5A7064]">
-              Aucun équipement trouvé avec ces critères de filtre.
+        {/* COLONNE DROITE : CHECKLIST DU SAC INTÉGRÉE (Span 4) */}
+        <div className={cn('space-y-4', mobileTab === 'catalog' ? 'hidden md:block lg:col-span-4' : 'lg:col-span-4')}>
+          <div className="sticky top-4 space-y-2">
+            <div className="flex items-center justify-between px-1">
+              <span className="text-[11px] font-bold uppercase tracking-wider text-[#5A7064] flex items-center gap-1.5">
+                <CheckSquare size={13} className="text-[#2D6B4A]" />
+                <span>Checklist du Sac en direct</span>
+              </span>
+              <span className="text-[10.5px] font-mono font-bold px-2 py-0.5 rounded-full bg-[#17402C]/10 text-[#17402C]">
+                {kitItems.filter((i) => i.is_checked).length}/{kitItems.length}
+              </span>
             </div>
-          ) : (
-            filteredItems.map((item) => {
-              const cond = item.condition ? CONDITION_LABELS[item.condition] : null;
 
-              return (
-                <div
-                  key={item.id}
-                  className={cn(
-                    'p-3 rounded-2xl border transition-all flex flex-col sm:flex-row sm:items-center justify-between gap-3',
-                    item.isLent
-                      ? 'bg-amber-50/60 border-amber-200/80 text-amber-950'
-                      : item.inBag
-                      ? 'bg-emerald-50/40 border-emerald-200/70 text-[#17402C]'
-                      : 'bg-white/70 dark:bg-white/10 border-white/80 text-[#17402C]'
-                  )}
-                >
-                  <div className="flex items-start gap-3 min-w-0">
-                    <div className="w-10 h-10 rounded-xl bg-black/5 dark:bg-white/10 flex items-center justify-center font-bold text-sm shrink-0 text-[#2D6B4A] overflow-hidden relative">
-                      {item.image ? (
-                        <Image src={item.image} alt={item.name} fill className="object-cover" />
-                      ) : (
-                        item.name.charAt(0).toUpperCase()
-                      )}
-                    </div>
-
-                    <div className="space-y-1 min-w-0">
-                      <div className="flex items-center gap-2 flex-wrap">
-                        <span className="text-xs font-bold truncate">{item.name}</span>
-                        {item.brand && (
-                          <span className="text-[11px] text-[#5A7064] font-medium truncate">
-                            ({item.brand})
-                          </span>
-                        )}
-                      </div>
-
-                      {/* Badges de statuts simultanés */}
-                      <div className="flex items-center gap-1.5 flex-wrap">
-                        {item.inBag && (
-                          <span className="text-[9.5px] font-bold px-2 py-0.2 rounded-md bg-[#17402C] text-white flex items-center gap-0.5">
-                            <CheckSquare size={10} />
-                            <span>Dans le sac</span>
-                          </span>
-                        )}
-
-                        {item.inInventory && (
-                          <span className="text-[9.5px] font-bold px-2 py-0.2 rounded-md bg-emerald-100 text-emerald-900 border border-emerald-200 flex items-center gap-0.5">
-                            <Boxes size={10} />
-                            <span>Mon Inventaire</span>
-                          </span>
-                        )}
-
-                        {item.isLent && (
-                          <span
-                            className={cn(
-                              'text-[9.5px] font-bold px-2 py-0.2 rounded-md flex items-center gap-0.5',
-                              item.lentDetails?.isOverdue
-                                ? 'bg-red-200 text-red-900'
-                                : 'bg-amber-200 text-amber-900'
-                            )}
-                          >
-                            <Handshake size={10} />
-                            <span>
-                              Prêté à {item.lentDetails?.borrower}
-                              {item.lentDetails?.dueDate && ` (retour ${new Date(item.lentDetails.dueDate).toLocaleDateString('fr-FR')})`}
-                            </span>
-                          </span>
-                        )}
-
-                        {item.toAcquire && !item.inInventory && (
-                          <span className="text-[9.5px] font-bold px-2 py-0.2 rounded-md bg-blue-100 text-blue-900 border border-blue-200 flex items-center gap-0.5">
-                            <ShoppingBag size={10} />
-                            <span>À acquérir / Boutique</span>
-                          </span>
-                        )}
-
-                        {cond && (
-                          <span className={cn('text-[9.5px] font-bold px-2 py-0.2 rounded-md', cond.tone)}>
-                            {cond.label}
-                          </span>
-                        )}
-                      </div>
-
-                      <div className="flex items-center gap-2 text-[11px] text-[#5A7064] pt-0.5">
-                        <span>{item.category}</span>
-                        {item.weightG > 0 && (
-                          <>
-                            <span>·</span>
-                            <span className="font-mono">{formatWeight(item.weightG)}</span>
-                          </>
-                        )}
-                        {item.priceEur !== null && (
-                          <>
-                            <span>·</span>
-                            <span className="font-mono">{item.priceEur.toFixed(2)} €</span>
-                          </>
-                        )}
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* Actions contextuelles */}
-                  <div className="flex items-center gap-2 self-end sm:self-center shrink-0">
-                    {item.isLent && item.loanId && (
-                      <button
-                        type="button"
-                        onClick={() => handleReturnLoan(item.loanId!, item.inventoryId)}
-                        className="px-2.5 py-1.5 rounded-xl text-xs font-bold bg-[#17402C] text-white hover:bg-[#17402C]/90 shadow-2xs flex items-center gap-1 cursor-pointer"
-                      >
-                        <Check size={12} />
-                        <span>Rendu</span>
-                      </button>
-                    )}
-
-                    {item.inInventory && !item.isLent && (
-                      <button
-                        type="button"
-                        onClick={() => {
-                          setSelectedItemForLoan(item);
-                          setIsLoanModalOpen(true);
-                        }}
-                        className="px-2.5 py-1.5 rounded-xl text-xs font-semibold bg-white/80 hover:bg-white text-[#2D6B4A] border border-black/10 flex items-center gap-1 cursor-pointer"
-                        title="Prêter à un contact"
-                      >
-                        <Handshake size={12} />
-                        <span>Prêter</span>
-                      </button>
-                    )}
-
-                    {!item.inBag && (
-                      <button
-                        type="button"
-                        onClick={() => handleQuickAddToBag(item)}
-                        className="px-2.5 py-1.5 rounded-xl text-xs font-bold bg-white/80 hover:bg-white text-[#17402C] border border-black/10 flex items-center gap-1 cursor-pointer"
-                        title="Ajouter dans le sac de départ"
-                      >
-                        <Plus size={12} />
-                        <span>Au sac</span>
-                      </button>
-                    )}
-
-                    {!item.inInventory && item.toAcquire && (
-                      <button
-                        type="button"
-                        onClick={() => handleMarkAsOwned(item)}
-                        className="px-2 py-1.5 rounded-xl text-[11px] font-semibold bg-emerald-100 hover:bg-emerald-200 text-emerald-900 flex items-center gap-1 cursor-pointer"
-                        title="J'ai déjà cet équipement chez moi"
-                      >
-                        <Check size={11} />
-                        <span>Possédé</span>
-                      </button>
-                    )}
-
-                    {item.slug && (
-                      <Link
-                        href={`/produit/${item.slug}`}
-                        className="p-1.5 rounded-xl bg-white/80 hover:bg-white text-[#17402C] border border-black/10 flex items-center justify-center"
-                        title="Voir fiche boutique"
-                      >
-                        <ExternalLink size={12} />
-                      </Link>
-                    )}
-
-                    {item.inInventory && item.inventoryId && (
-                      <button
-                        type="button"
-                        onClick={() => handleDeleteItem(item.inventoryId!)}
-                        className="p-1.5 rounded-xl text-[#5A7064]/50 hover:text-red-600 hover:bg-red-50 cursor-pointer"
-                        title="Supprimer de mon inventaire"
-                      >
-                        <Trash2 size={13} />
-                      </button>
-                    )}
-                  </div>
-                </div>
-              );
-            })
-          )}
+            <DepartChecklist
+              items={kitItems}
+              consumables={consumables}
+              participants={participants}
+              kitId={kitId}
+              isRealKit={isRealKit}
+            />
+          </div>
         </div>
       </div>
 
-      {/* Modal Ajout Objet */}
+      {/* Modale Ajout Objet */}
       <AnimatePresence>
         {isAddModalOpen && (
           <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40 backdrop-blur-xs">
@@ -880,7 +937,7 @@ export function DepartEquipmentHub({
         )}
       </AnimatePresence>
 
-      {/* Modal Nouveau Prêt */}
+      {/* Modale Prêt */}
       <AnimatePresence>
         {isLoanModalOpen && selectedItemForLoan && (
           <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40 backdrop-blur-xs">
@@ -956,6 +1013,6 @@ export function DepartEquipmentHub({
           </div>
         )}
       </AnimatePresence>
-    </GlassCard>
+    </div>
   );
 }

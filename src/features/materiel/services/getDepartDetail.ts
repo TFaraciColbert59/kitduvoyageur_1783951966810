@@ -288,7 +288,56 @@ function getShowcaseDepart(kitId?: string | null, customTrail?: MapTrail | null)
     checklistItems,
     durationDays: isVercors ? 3 : isBelledonne ? 2 : 4,
     consumables: consumablesMap,
-    trail: customTrail ?? null,
+    trail:
+      customTrail ?? {
+        id: isVercors ? 'vercors-hike' : isBelledonne ? 'belledonne-hike' : 'tmb-hike',
+        name: isVercors
+          ? 'Grande Traversée des Hauts-Plateaux du Vercors'
+          : isBelledonne
+          ? 'Traversée des 7 Laux et Belledonne'
+          : 'Tour du Mont-Blanc — Chamonix Courmayeur',
+        lat: isVercors ? 44.93 : isBelledonne ? 45.24 : 45.92,
+        lng: isVercors ? 5.53 : isBelledonne ? 6.01 : 6.87,
+        distance_km: isVercors ? 48.5 : isBelledonne ? 32.0 : 74.2,
+        geojson: {
+          type: 'LineString',
+          coordinates: isVercors
+            ? [
+                [5.532, 44.931],
+                [5.538, 44.945],
+                [5.542, 44.962],
+                [5.551, 44.981],
+                [5.563, 45.002],
+                [5.572, 45.021],
+                [5.568, 45.039],
+                [5.559, 45.058],
+                [5.548, 45.072],
+                [5.535, 45.089],
+              ]
+            : isBelledonne
+            ? [
+                [6.012, 45.241],
+                [6.021, 45.253],
+                [6.035, 45.268],
+                [6.042, 45.281],
+                [6.058, 45.295],
+                [6.064, 45.312],
+                [6.052, 45.328],
+                [6.039, 45.341],
+              ]
+            : [
+                [6.871, 45.923],
+                [6.885, 45.912],
+                [6.901, 45.895],
+                [6.918, 45.879],
+                [6.932, 45.862],
+                [6.945, 45.845],
+                [6.958, 45.831],
+                [6.972, 45.815],
+                [6.985, 45.798],
+              ],
+        },
+      },
     participants: isVercors
       ? [{ name: 'Vous', initial: 'V', color: '#17402C' }]
       : [

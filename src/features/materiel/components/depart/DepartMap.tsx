@@ -1,4 +1,4 @@
-﻿'use client';
+'use client';
 import React, { useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
 import 'leaflet/dist/leaflet.css';
@@ -188,6 +188,28 @@ export function DepartMap({ trail, height = '240px', className }: DepartMapProps
 
       mapRef.current = map;
       setLoaded(true);
+
+      // Auto-refresh layout when container becomes visible or resizes
+      const ro = new ResizeObserver(() => {
+        if (mapRef.current) {
+          mapRef.current.invalidateSize();
+          if (polyRef.current) {
+            try {
+              mapRef.current.fitBounds(polyRef.current.getBounds(), { padding: [24, 24] });
+            } catch {}
+          }
+        }
+      });
+
+      if (containerRef.current) {
+        ro.observe(containerRef.current);
+      }
+
+      setTimeout(() => {
+        if (mapRef.current) {
+          mapRef.current.invalidateSize();
+        }
+      }, 200);
     }
 
     initMap();

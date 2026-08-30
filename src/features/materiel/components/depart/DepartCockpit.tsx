@@ -6,7 +6,6 @@ import { motion, AnimatePresence, useReducedMotion } from 'framer-motion';
 import {
   Compass,
   AlertTriangle,
-  CheckSquare,
   Scale,
   MapPin,
   LayoutGrid,
@@ -18,7 +17,6 @@ import {
 } from 'lucide-react';
 import { DepartHeader } from './DepartHeader';
 import { DepartAlerts } from './DepartAlerts';
-import { DepartChecklist } from './DepartChecklist';
 import { DepartWeightBreakdown } from './DepartWeightBreakdown';
 import { DepartWeather } from './DepartWeather';
 import { DepartParticipants } from './DepartParticipants';
@@ -49,7 +47,7 @@ const DepartMap = dynamic(
         <div className="px-4 py-2.5 border-b border-white/20">
           <Skeleton className="h-4 w-40" />
         </div>
-        <Skeleton className="h-[228px] rounded-none" />
+        <Skeleton className="h-[360px] rounded-none" />
       </div>
     ),
   }
@@ -59,7 +57,6 @@ export type DepartSectionId =
   | 'all'
   | 'overview'
   | 'alerts'
-  | 'checklist'
   | 'weight'
   | 'terrain'
   | 'equipment_hub';
@@ -89,8 +86,6 @@ export function DepartCockpit({
 
   const shouldReduceMotion = useReducedMotion();
 
-  const checkedCount = depart.assignedKit.items.filter((i) => i.is_checked).length;
-  const itemsCount = depart.assignedKit.items.length;
   const isRealKit = !SHOWCASE_IDS.has(depart.id);
 
   const alertInput = {
@@ -178,16 +173,15 @@ export function DepartCockpit({
     { id: 'all', label: 'Vue complète', icon: <LayoutGrid size={13} /> },
     { id: 'overview', label: 'Statut & Départ', icon: <Compass size={13} /> },
     { id: 'alerts', label: 'Alertes', icon: <AlertTriangle size={13} />, badge: smartAlerts.length || undefined },
-    { id: 'checklist', label: 'Sac & Vivres', icon: <CheckSquare size={13} />, badge: `${checkedCount}/${itemsCount}` },
     { id: 'weight', label: 'Poids', icon: <Scale size={13} /> },
     { id: 'terrain', label: 'Terrain & Carte', icon: <MapPin size={13} /> },
-    { id: 'equipment_hub', label: 'Parc Matériel', icon: <Boxes size={13} /> },
+    { id: 'equipment_hub', label: 'Parc Matériel & Sac', icon: <Boxes size={13} /> },
   ];
 
   const showAll = activeSection === 'all';
 
   const renderMainContent = () => (
-    <div className="flex flex-col gap-3.5 max-w-4xl mx-auto w-full">
+    <div className="flex flex-col gap-3.5 max-w-5xl mx-auto w-full">
       {/* ════ BANNIÈRE HORS-LIGNE TRANSPARENTE ════ */}
       {!isOnline && (
         <div className="p-3 rounded-2xl bg-amber-500/15 border border-amber-500/30 text-[#17402C] text-xs font-semibold flex items-center justify-between gap-2 shadow-2xs">
@@ -223,22 +217,7 @@ export function DepartCockpit({
         </section>
       )}
 
-      {/* ════ NIVEAU 3 : LE TRAVAIL & LE DÉTAIL PROGRESSIF ════ */}
-
-      {/* 3.A — Checklist active du sac */}
-      {(showAll || activeSection === 'checklist') && (
-        <section id="section-depart-checklist" aria-label="Checklist du matériel et vivres">
-          <DepartChecklist
-            items={depart.assignedKit.items}
-            consumables={depart.consumables}
-            participants={depart.participants}
-            kitId={depart.id}
-            isRealKit={isRealKit}
-          />
-        </section>
-      )}
-
-      {/* 3.B — Poids & Répartition */}
+      {/* ════ NIVEAU 3 : ANALYSE DU POIDS ════ */}
       {(showAll || activeSection === 'weight') && (
         <section
           id="section-depart-weight"
@@ -258,30 +237,36 @@ export function DepartCockpit({
         </section>
       )}
 
-      {/* 3.C — Météo, Équipe & Carte */}
+      {/* ════ NIVEAU 4 : TERRAIN, CARTE INTERACTIVE & MÉTÉO ════ */}
       {(showAll || activeSection === 'terrain') && (
         <section
           id="section-depart-terrain"
-          aria-label="Terrain, météo et sécurité"
+          aria-label="Terrain, carte interactive et météo"
           className={cn('space-y-3.5', showAll && 'xl:hidden')}
         >
+          {depart.trail && (
+            <div className="w-full">
+              <DepartMap trail={depart.trail} height="360px" />
+            </div>
+          )}
           <DepartWeather weather={weather} updatedAt={depart.updatedAt} />
           <DepartParticipants
             participants={depart.participants}
             emergencyContact={depart.emergencyContact}
           />
-          {depart.trail && <DepartMap trail={depart.trail} height="260px" />}
         </section>
       )}
 
-      {/* 3.D — Section Unifiée 6 : Mon Parc Matériel & Équipements (Multi-statuts sans doublon) */}
+      {/* ════ NIVEAU 5 : PARC MATÉRIEL & CHECKLIST DU SAC EN SIDEBAR DROITE ════ */}
       {(showAll || activeSection === 'equipment_hub') && (
-        <section id="section-depart-equipment-hub" aria-label="Mon Parc Matériel & Équipements">
+        <section id="section-depart-equipment-hub" aria-label="Parc Matériel & Équipements">
           <DepartEquipmentHub
             inventory={inventory}
             loans={loans}
             products={products}
             kitItems={depart.assignedKit.items}
+            consumables={depart.consumables}
+            participants={depart.participants}
             kitId={depart.id}
             isRealKit={isRealKit}
           />
@@ -378,7 +363,7 @@ export function DepartCockpit({
 
       {/* ════ 2. VERSION DESKTOP COCKPIT 3 COLONNES (hidden md:flex) ════ */}
       <div className="hidden md:flex h-full overflow-hidden max-w-[1600px] w-full mx-auto px-3 lg:px-5 py-2 gap-4 lg:gap-5 items-start">
-        {/* Colonne 1 : Sidebar Gauche (Navigation 6 sections & Switcher) */}
+        {/* Colonne 1 : Sidebar Gauche (Navigation & Switcher) */}
         <div className="w-[240px] xl:w-[250px] shrink-0 h-full overflow-hidden">
           <DepartLeftSidebar
             depart={depart}

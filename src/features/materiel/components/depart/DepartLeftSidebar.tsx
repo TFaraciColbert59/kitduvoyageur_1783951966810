@@ -4,7 +4,6 @@ import Link from 'next/link';
 import {
   Compass,
   AlertTriangle,
-  CheckSquare,
   Scale,
   MapPin,
   LayoutGrid,
@@ -51,8 +50,6 @@ export function DepartLeftSidebar({
   batteryLevel = null,
   isOnline = true,
 }: DepartLeftSidebarProps) {
-  const checkedCount = depart.assignedKit.items.filter((i) => i.is_checked).length;
-  const itemsCount = depart.assignedKit.items.length;
   const totalWeightStr = formatWeight(depart.totalPackWeightG);
   const cleanDestination = cleanText(depart.destination);
 
@@ -88,29 +85,22 @@ export function DepartLeftSidebar({
       badgeColor: 'bg-[#8A241B] text-white',
     },
     {
-      id: 'checklist',
-      label: '3. Sac & Vivres',
-      icon: CheckSquare,
-      badge: `${checkedCount}/${itemsCount}`,
-      badgeColor: 'bg-[#17402C]/15 text-[#17402C]',
-    },
-    {
       id: 'weight',
-      label: '4. Analyse du Poids',
+      label: '3. Analyse du Poids',
       icon: Scale,
       badge: totalWeightStr !== '--' ? totalWeightStr : undefined,
       badgeColor: 'bg-[#17402C]/15 text-[#17402C]',
     },
     {
       id: 'terrain',
-      label: '5. Terrain & Météo',
+      label: '4. Terrain & Météo',
       icon: MapPin,
       badge: depart.trail?.distance_km ? `${Math.round(depart.trail.distance_km)}km` : undefined,
       badgeColor: 'bg-[#17402C]/15 text-[#17402C]',
     },
     {
       id: 'equipment_hub',
-      label: '6. Parc Matériel & Équipements',
+      label: '5. Parc Matériel & Sac',
       icon: Boxes,
       badgeColor: 'bg-[#17402C]/15 text-[#17402C]',
     },
@@ -176,8 +166,8 @@ export function DepartLeftSidebar({
           )}
         </div>
 
-        {/* Navigation verticale des 6 sections du cockpit unifié */}
-        <nav className="space-y-0.5" aria-label="Sections du cockpit unifié">
+        {/* Navigation verticale des 5 sections principales */}
+        <nav className="space-y-0.5" aria-label="Sections du cockpit">
           {sections.map((sec) => {
             const IconComp = sec.icon;
             const isSelected = activeSection === sec.id;
