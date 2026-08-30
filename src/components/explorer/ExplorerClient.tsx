@@ -385,20 +385,19 @@ export default function ExplorerClient({ initialTrails }: ExplorerClientProps) {
             boxShadow: '0 8px 32px -4px rgba(23, 64, 44, 0.08), inset 0 1px 1.5px rgba(255, 255, 255, 0.85)',
           }}
         >
-          {/* Logo Liquid Glass */}
+          {/* Logo Liquid Glass (Icon Only — Sans texte) */}
           <Link
             href="/"
-            className="flex items-center gap-2 group shrink-0"
+            className="flex items-center group shrink-0"
             aria-label="Accueil LKDV"
           >
-            <div className="w-7 h-7 rounded-full flex items-center justify-center shadow-xs transition-transform group-hover:scale-105 bg-[#17402C] text-white">
-              <svg width="13" height="13" fill="currentColor" viewBox="0 0 24 24">
-                <path d="M3 17l4-8 4 4 3-6 4 10H3z" />
-              </svg>
+            <div className="w-8 h-8 rounded-full overflow-hidden border border-white/80 shadow-xs transition-transform group-hover:scale-105 bg-[#17402C]/10">
+              <img
+                src="/assets/images/app_logo.png"
+                alt="LKDV"
+                className="w-full h-full object-cover"
+              />
             </div>
-            <span className="font-bold text-[#17402C] text-xs tracking-tight font-display">
-              Le Kit du Voyageur
-            </span>
           </Link>
 
           {/* Navigation Principale Desktop */}
@@ -463,13 +462,14 @@ export default function ExplorerClient({ initialTrails }: ExplorerClientProps) {
             boxShadow: '0 8px 32px -4px rgba(23, 64, 44, 0.12), inset 0 1.5px 1.5px rgba(255, 255, 255, 0.95)',
           }}
         >
-          <Link href="/" className="flex items-center gap-1.5 shrink-0" aria-label="Accueil LKDV">
-            <div className="w-7 h-7 rounded-xl flex items-center justify-center bg-[#17402C] text-white shadow-2xs">
-              <svg width="14" height="14" fill="currentColor" viewBox="0 0 24 24">
-                <path d="M3 17l4-8 4 4 3-6 4 10H3z" />
-              </svg>
+          <Link href="/" className="flex items-center shrink-0" aria-label="Accueil LKDV">
+            <div className="w-7.5 h-7.5 rounded-full overflow-hidden border border-white/80 shadow-2xs bg-[#17402C]/10 flex items-center justify-center">
+              <img
+                src="/assets/images/app_logo.png"
+                alt="LKDV"
+                className="w-full h-full object-cover"
+              />
             </div>
-            <span className="font-bold text-[#17402C] text-xs font-display">LKDV</span>
           </Link>
 
           <div className="relative flex-1 min-w-0">

@@ -33,10 +33,10 @@ const AppLogo = memo(function AppLogo({
       {src ? (
         <AppImage
           src={src}
-          alt="Logo" 
+          alt="Logo LKDV" 
           width={size}
           height={size}
-          className="flex-shrink-0"
+          className="flex-shrink-0 rounded-full overflow-hidden object-cover border border-white/60 shadow-xs"
           priority={true}
           unoptimized={src.endsWith('.svg')}
         />

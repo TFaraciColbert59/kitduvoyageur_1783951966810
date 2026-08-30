@@ -79,14 +79,15 @@ export default function Footer() {
       {/* MAIN FOOTER CAPSULE (Identical style to Header) */}
       <div className="w-full rounded-full px-5 py-3 flex flex-col md:flex-row items-center justify-between gap-4 transition-all" style={glassCapsule}>
 
-        {/* Left: Brand */}
-        <Link href="/" className="flex items-center gap-2 group focus-visible:outline-none shrink-0">
-          <div className="w-7 h-7 bg-gradient-to-b from-[#17402C] to-[#365233] rounded-lg flex items-center justify-center shadow-[inset_0_1px_1px_rgba(255,255,255,0.4)]">
-            <svg width="14" height="14" fill="white" viewBox="0 0 24 24">
-              <path d="M3 17l4-8 4 4 3-6 4 10H3z" />
-            </svg>
+        {/* Left: Brand Logo (Sans texte) */}
+        <Link href="/" className="flex items-center group focus-visible:outline-none shrink-0" aria-label="Accueil LKDV">
+          <div className="w-8 h-8 rounded-full overflow-hidden border border-white/80 shadow-xs group-hover:scale-105 transition-transform bg-[#17402C]/10">
+            <img
+              src="/assets/images/app_logo.png"
+              alt="LKDV"
+              className="w-full h-full object-cover"
+            />
           </div>
-          <span className="font-bold text-[#17402C] text-sm group-hover:opacity-80 transition-opacity">Le Kit du Voyageur</span>
         </Link>
 
         {/* Center: Navigation Links */}

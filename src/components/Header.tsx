@@ -94,19 +94,19 @@ export default function Header() {
               boxShadow: 'inset 0 1px 1.5px rgba(255, 255, 255, 0.85), 0 8px 24px -6px rgba(23, 64, 44, 0.10)',
             }}
           >
-            {/* Left: Logo Liquid Glass */}
+            {/* Left: Logo Liquid Glass (Icon Only — Sans texte) */}
             <Link
               href="/"
-              className="flex items-center gap-2 group focus-visible:outline-none opacity-100 hover:opacity-85 active:opacity-75 transition-opacity cursor-pointer touch-manipulation py-0.5 shrink-0"
+              className="flex items-center group focus-visible:outline-none opacity-100 hover:opacity-90 active:scale-95 transition-all cursor-pointer touch-manipulation py-0.5 shrink-0"
+              aria-label="Accueil LKDV"
             >
-              <div className="w-6 h-6 rounded-lg flex items-center justify-center bg-gradient-to-b from-[#17402C]/20 to-[#17402C]/08 border border-white/40 shadow-[inset_0_1px_1px_rgba(255,255,255,0.7)] text-[#17402C]">
-                <svg width="12" height="12" fill="currentColor" viewBox="0 0 24 24">
-                  <path d="M3 17l4-8 4 4 3-6 4 10H3z" />
-                </svg>
+              <div className="w-8 h-8 rounded-full overflow-hidden border border-white/80 shadow-xs flex items-center justify-center bg-[#17402C]/10 group-hover:scale-105 transition-transform">
+                <img
+                  src="/assets/images/app_logo.png"
+                  alt="LKDV"
+                  className="w-full h-full object-cover"
+                />
               </div>
-              <span className="font-bold text-[#17402C] text-xs sm:text-sm tracking-tight font-display whitespace-nowrap">
-                Le Kit du Voyageur
-              </span>
             </Link>
 
             {/* Center: Navigation Links with Animated Sliding Pill */}
