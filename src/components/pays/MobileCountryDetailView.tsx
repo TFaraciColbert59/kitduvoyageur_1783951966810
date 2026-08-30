@@ -197,9 +197,6 @@ export default function MobileCountryDetailView({
                     <span className="glass-pill text-[9.5px] font-mono font-bold text-[#5B7F55] bg-white/90 border border-white">
                       01 · Panorama Général
                     </span>
-                    <span className="text-[10px] font-mono text-[#5A7064]">
-                      Saison : {country.saison_recommandee}
-                    </span>
                   </div>
 
                   <h3 className="font-display font-bold text-base text-[#17402C] leading-snug">

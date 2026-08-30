@@ -44,9 +44,6 @@ export default function PaysHeroOverview({
               <span className="glass-pill text-[9.5px] font-mono font-bold text-[#17402C]">
                 📍 {country.region} · {country.continent}
               </span>
-              <span className="glass-pill text-[9.5px] font-mono font-bold text-[#5B7F55]">
-                ☀️ Saison : {country.saison_recommandee}
-              </span>
             </div>
 
             {/* Title & Slogan */}

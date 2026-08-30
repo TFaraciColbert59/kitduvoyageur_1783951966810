@@ -67,9 +67,6 @@ export default function PaysLeftSidebar({
               <span className="glass-pill !px-1.5 !py-0.5 text-[8px] font-mono font-bold text-[#17402C]">
                 {country.code}{country.iso_a3 ? ` · ${country.iso_a3}` : ''}
               </span>
-              <span className="glass-pill !px-2 !py-0.5 text-[8.5px] font-mono font-bold tracking-wider text-[#5B7F55]">
-                ☀️ {country.saison_recommandee}
-              </span>
             </div>
           </div>
         </div>
