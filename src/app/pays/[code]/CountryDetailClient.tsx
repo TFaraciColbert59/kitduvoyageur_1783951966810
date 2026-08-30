@@ -98,11 +98,11 @@ export default function CountryDetailClient({ country }: CountryDetailClientProp
         <Header />
 
         {/* Main 3-Column Cockpit Container */}
-        <div className="flex-1 overflow-hidden pt-24 sm:pt-[96px] pb-5 px-4 sm:px-6 lg:px-8 max-w-[1680px] w-full mx-auto">
-          <div className="flex items-start gap-6 h-full">
+        <div className="flex-1 overflow-hidden pt-14 sm:pt-[62px] pb-4 px-4 sm:px-6 lg:px-8 max-w-[1680px] w-full mx-auto">
+          <div className="flex items-start gap-5 h-full">
 
-            {/* LEFT COLUMN: NAVIGATION TABS SIDEBAR (280px) */}
-            <div className="w-[280px] shrink-0 h-full overflow-hidden">
+            {/* LEFT COLUMN: NAVIGATION TABS SIDEBAR (270px) */}
+            <div className="w-[270px] shrink-0 h-full overflow-hidden">
               <PaysLeftSidebar
                 country={country}
                 activeSection={activeSection}
@@ -113,12 +113,12 @@ export default function CountryDetailClient({ country }: CountryDetailClientProp
             </div>
 
             {/* CENTER COLUMN: MAIN TAB CONTENT */}
-            <main className="flex-1 h-full overflow-y-auto no-scrollbar space-y-6 px-1">
+            <main className="flex-1 h-full overflow-y-auto no-scrollbar space-y-4 px-1 pb-6">
               {renderSectionContent()}
             </main>
 
-            {/* RIGHT COLUMN: SIDEBAR WIDGETS (310px) */}
-            <div className="w-[310px] shrink-0 h-full overflow-hidden">
+            {/* RIGHT COLUMN: SIDEBAR WIDGETS (320px) */}
+            <div className="w-[320px] shrink-0 h-full overflow-hidden">
               <PaysRightSidebar
                 country={country}
                 flagEmoji={flagEmoji}

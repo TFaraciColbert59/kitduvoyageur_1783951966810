@@ -31,51 +31,37 @@ export default function PaysLeftSidebar({
   flagEmoji,
   onPrint,
 }: PaysLeftSidebarProps) {
-  const sections = [
+  const sections: { id: PaysSection; label: string; count?: number }[] = [
     {
-      id: 'presentation' as PaysSection,
+      id: 'presentation',
       label: 'Présentation',
-      sublabel: `${country.continent} · ${country.region}`,
-      icon: 'HomeIcon',
     },
     {
-      id: 'destinations' as PaysSection,
+      id: 'destinations',
       label: 'Destinations',
-      sublabel: country.destinations?.length ? `${country.destinations.length} sites majeurs` : `Capitale : ${country.capitale}`,
-      icon: 'MapPinIcon',
       count: country.destinations?.length || undefined,
     },
     {
-      id: 'activites' as PaysSection,
+      id: 'activites',
       label: 'Activités & Treks',
-      sublabel: country.activites?.length ? `${country.activites.length} parcours phares` : 'Parcs & Aventure',
-      icon: 'SparklesIcon',
       count: country.activites?.length || undefined,
     },
     {
-      id: 'culture' as PaysSection,
+      id: 'culture',
       label: 'Culture & Société',
-      sublabel: country.langue ? (country.langue.length > 25 ? `${country.langue.slice(0, 25)}…` : country.langue) : 'Traditions & Us',
-      icon: 'BookOpenIcon',
     },
     {
-      id: 'gastronomie' as PaysSection,
+      id: 'gastronomie',
       label: 'Gastronomie',
-      sublabel: country.gastronomie?.length ? `${country.gastronomie.length} spécialités` : 'Terroir & Cuisine',
-      icon: 'HeartIcon',
       count: country.gastronomie?.length || undefined,
     },
     {
-      id: 'pratique' as PaysSection,
+      id: 'pratique',
       label: 'Pratique & Données',
-      sublabel: `${country.monnaie_code} · ${country.fuseau}`,
-      icon: 'ShieldCheckIcon',
     },
     {
-      id: 'communaute' as PaysSection,
+      id: 'communaute',
       label: 'Communauté',
-      sublabel: 'Échanges & Carnets',
-      icon: 'UserGroupIcon',
     },
   ];
 
@@ -108,27 +94,25 @@ export default function PaysLeftSidebar({
           </div>
         </div>
 
-        {/* Quick action buttons */}
+        {/* Quick action buttons (no icons) */}
         <div className="grid grid-cols-2 gap-2">
           <Link
             href={`/ai-configurator?country=${country.code}`}
-            className="glass-capsule-btn primary text-[10.5px] font-bold !py-1.5 !px-2 flex items-center justify-center gap-1.5 shadow-none"
+            className="glass-capsule-btn primary text-[11px] font-bold !py-2 !px-2 flex items-center justify-center shadow-none text-center"
           >
-            <Icon name="SparklesIcon" size={13} />
             <span>Créer mon kit</span>
           </Link>
 
           <button
             onClick={onPrint || (() => window.print())}
-            className="glass-capsule-btn text-[10.5px] font-bold !py-1.5 !px-2 flex items-center justify-center gap-1.5 shadow-none cursor-pointer"
+            className="glass-capsule-btn text-[11px] font-bold !py-2 !px-2 flex items-center justify-center shadow-none cursor-pointer text-center"
           >
-            <Icon name="DocumentTextIcon" size={13} />
             <span>Guide PDF</span>
           </button>
         </div>
 
-        {/* Navigation Tabs with Associated Category Data */}
-        <nav className="space-y-1 pt-1.5">
+        {/* Navigation Tabs (No icons, No sublabels) */}
+        <nav className="space-y-1 pt-1">
           <p className="text-[9.5px] font-mono font-bold uppercase tracking-widest text-[#5A7064] px-2 mb-1.5">
             Sommaire des catégories
           </p>
@@ -138,31 +122,17 @@ export default function PaysLeftSidebar({
               <button
                 key={s.id}
                 onClick={() => onSectionChange(s.id)}
-                className={`w-full px-3 py-2 rounded-xl text-left transition-all flex items-center justify-between group cursor-pointer border ${
+                className={`w-full px-3.5 py-2.5 rounded-xl text-left transition-all flex items-center justify-between group cursor-pointer border ${
                   isActive
-                    ? 'bg-[#17402C] text-white border-[#17402C] shadow-sm'
-                    : 'bg-white/80 hover:bg-white text-[#17402C] border-white/80 shadow-2xs hover:shadow-xs'
+                    ? 'bg-[#17402C] text-white border-[#17402C] shadow-sm font-bold'
+                    : 'bg-white/80 hover:bg-white text-[#17402C] border-white/80 shadow-2xs hover:shadow-xs font-semibold'
                 }`}
               >
-                <div className="flex items-center gap-2.5 min-w-0 flex-1">
-                  <span
-                    className={`shrink-0 transition-colors ${
-                      isActive ? 'text-[#A6C1A0]' : 'text-[#5B7F55] group-hover:text-[#17402C]'
-                    }`}
-                  >
-                    <Icon name={s.icon as any} size={15} />
-                  </span>
-                  <div className="min-w-0 flex-1">
-                    <span className="truncate block font-bold text-xs leading-tight">{s.label}</span>
-                    <span className={`truncate block text-[9.5px] font-mono mt-0.5 ${isActive ? 'text-white/80' : 'text-[#5A7064]'}`}>
-                      {s.sublabel}
-                    </span>
-                  </div>
-                </div>
+                <span className="truncate block text-xs leading-tight">{s.label}</span>
 
                 {s.count !== undefined && s.count > 0 && (
                   <span
-                    className={`px-1.5 py-0.5 rounded-full text-[9px] font-mono font-bold shrink-0 ml-1.5 ${
+                    className={`px-2 py-0.5 rounded-full text-[9.5px] font-mono font-bold shrink-0 ml-2 ${
                       isActive
                         ? 'bg-white/20 text-white'
                         : 'bg-[#17402C]/5 text-[#5B7F55] group-hover:bg-[#17402C]/10'

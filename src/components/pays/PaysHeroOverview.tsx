@@ -29,11 +29,11 @@ export default function PaysHeroOverview({
   const heroImg = country.hero_image_url || country.destinations?.[0]?.image_url;
 
   return (
-    <div className="space-y-6 font-sans text-[#17402C]">
+    <div className="space-y-4 font-sans text-[#17402C]">
       {/* 1. HERO PAYS UNIFIÉ — PURE LIQUID GLASS */}
-      <div className="glass rounded-[1.5rem] p-6 sm:p-8 border border-white/60 shadow-sm overflow-hidden">
-        <div className="flex flex-col lg:flex-row items-center justify-between gap-6">
-          <div className="flex-1 max-w-2xl space-y-3">
+      <div className="glass rounded-[1.5rem] p-5 sm:p-6 border border-white/60 shadow-sm overflow-hidden">
+        <div className="flex flex-col lg:flex-row items-center justify-between gap-5">
+          <div className="flex-1 max-w-2xl space-y-2.5">
             {/* Meta Tags Row */}
             <div className="flex flex-wrap items-center gap-2">
               <CountryFlag code={country.code} name={country.nom} size="md" className="rounded-md shadow-xs" />

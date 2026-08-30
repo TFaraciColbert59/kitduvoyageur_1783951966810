@@ -118,19 +118,19 @@ export default function PaysRightSidebar({
           </span>
         </div>
 
-        <div className="space-y-1.5">
+        <div className="space-y-2">
           {quickMetrics.map((m, idx) => (
             <div
               key={idx}
-              className="p-2 rounded-xl bg-white/70 border border-white/50 shadow-2xs flex items-center justify-between gap-2 text-xs"
+              className="p-2.5 rounded-xl bg-white/75 border border-white/50 shadow-2xs space-y-0.5"
             >
-              <div className="flex items-center gap-1.5 min-w-0">
-                <span className="text-xs shrink-0">{m.icon}</span>
-                <span className="text-[#5A7064] text-[10.5px] font-medium truncate">{m.label}</span>
+              <div className="flex items-center gap-1.5 text-[#5A7064] text-[9.5px] font-semibold uppercase tracking-wider">
+                <span className="text-xs">{m.icon}</span>
+                <span>{m.label}</span>
               </div>
-              <span className="font-bold text-[#17402C] text-[11px] text-right truncate max-w-[130px]" title={m.val}>
+              <div className="font-bold text-[#17402C] text-xs leading-snug break-words">
                 {m.val}
-              </span>
+              </div>
             </div>
           ))}
         </div>

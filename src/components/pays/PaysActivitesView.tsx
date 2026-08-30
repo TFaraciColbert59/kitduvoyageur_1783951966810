@@ -26,9 +26,9 @@ export default function PaysActivitesView({ country }: PaysActivitesViewProps) {
   ];
 
   return (
-    <div className="space-y-6 font-sans text-[#17402C]">
+    <div className="space-y-4 font-sans text-[#17402C]">
       {/* Header */}
-      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-end gap-3 border-b border-[#17402C]/5 pb-4">
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-end gap-2 border-b border-[#17402C]/10 pb-3">
         <div>
           <span className="text-[10px] font-mono font-bold uppercase tracking-widest text-[#5B7F55] block mb-0.5">
             EXPÉRIENCES &amp; OUTDOOR
@@ -36,7 +36,7 @@ export default function PaysActivitesView({ country }: PaysActivitesViewProps) {
           <h2 className="font-display font-bold text-2xl sm:text-3xl text-[#17402C]">
             Activités <span className="font-serif italic font-normal text-[#5B7F55]">de terrain</span>
           </h2>
-          <p className="text-xs text-[#5A7064] mt-1 font-mono">
+          <p className="text-xs text-[#5A7064] mt-0.5 font-mono">
             Classées par saison, difficulté et durée · Équipements recommandés dans le kit
           </p>
         </div>
