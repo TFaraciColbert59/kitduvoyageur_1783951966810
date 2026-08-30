@@ -888,46 +888,60 @@ export default function InteractiveMap() {
           </button>
         )}
 
-        {/* 2. Floating Tile Switcher (EN BAS À GAUCHE) */}
-        <div className="absolute bottom-[calc(var(--bottom-tab-base-height,68px)+140px)] left-3.5 md:bottom-6 md:left-4 z-[400] flex items-center gap-1.5 glass p-1.5 rounded-full shadow-xl border border-white/80">
+        {/* 2. Floating Tile Switcher (EN BAS À GAUCHE — 32px Liquid Glass) */}
+        <div className="absolute bottom-[calc(var(--bottom-tab-base-height,68px)+16px)] left-3.5 md:bottom-6 md:left-4 z-[400] flex items-center gap-1 p-1 rounded-full shadow-md border border-white/80"
+          style={{
+            background: 'linear-gradient(180deg, rgba(245, 243, 237, 0.94) 0%, rgba(235, 231, 220, 0.88) 100%)',
+            backdropFilter: 'blur(16px) saturate(180%)',
+            WebkitBackdropFilter: 'blur(16px) saturate(180%)',
+            boxShadow: '0 4px 16px -2px rgba(23, 64, 44, 0.10), inset 0 1px 1.5px rgba(255, 255, 255, 0.95)',
+          }}
+        >
           <button
             onClick={() => handleTileChange('osm')}
-            className={`glass-circle-btn !w-11 !h-11 ${tileMode === 'osm' ? 'primary !bg-[#17402C] !text-white shadow-xs' : 'text-[#17402C]'}`}
+            className={`glass-circle-btn !w-8 !h-8 ${tileMode === 'osm' ? 'primary !text-white shadow-xs' : 'text-[#17402C] hover:bg-white/60'}`}
             title="Carte Standard (OSM)"
           >
-            <svg width="20" height="20" fill="none" stroke="currentColor" strokeWidth="2.2" viewBox="0 0 24 24">
+            <svg width="14" height="14" fill="none" stroke="currentColor" strokeWidth="2.2" viewBox="0 0 24 24">
               <path d="M3 6l6-3 6 3 6-3v12l-6 3-6-3-6 3V6z"></path><path d="M9 3v12"></path><path d="M15 6v12"></path>
             </svg>
           </button>
           <button
             onClick={() => handleTileChange('topo')}
-            className={`glass-circle-btn !w-11 !h-11 ${tileMode === 'topo' ? 'primary !bg-[#17402C] !text-white shadow-xs' : 'text-[#17402C]'}`}
+            className={`glass-circle-btn !w-8 !h-8 ${tileMode === 'topo' ? 'primary !text-white shadow-xs' : 'text-[#17402C] hover:bg-white/60'}`}
             title="Relief / Topographique"
           >
-            <svg width="20" height="20" fill="none" stroke="currentColor" strokeWidth="2.2" viewBox="0 0 24 24">
+            <svg width="14" height="14" fill="none" stroke="currentColor" strokeWidth="2.2" viewBox="0 0 24 24">
               <path d="M8 3l4 8 5-5 5 15H2L8 3z"></path>
             </svg>
           </button>
           <button
             onClick={() => handleTileChange('satellite')}
-            className={`glass-circle-btn !w-11 !h-11 ${tileMode === 'satellite' ? 'primary !bg-[#17402C] !text-white shadow-xs' : 'text-[#17402C]'}`}
+            className={`glass-circle-btn !w-8 !h-8 ${tileMode === 'satellite' ? 'primary !text-white shadow-xs' : 'text-[#17402C] hover:bg-white/60'}`}
             title="Vue Satellite"
           >
-            <svg width="20" height="20" fill="none" stroke="currentColor" strokeWidth="2.2" viewBox="0 0 24 24">
+            <svg width="14" height="14" fill="none" stroke="currentColor" strokeWidth="2.2" viewBox="0 0 24 24">
               <circle cx="12" cy="12" r="10"></circle><path d="M12 2a14.5 14.5 0 0 0 0 20 14.5 14.5 0 0 0 0-20"></path><path d="M2 12h20"></path>
             </svg>
           </button>
         </div>
 
-        {/* 3. Floating Zoom Controls (+ / −) & Recenter (EN BAS À DROITE) */}
-        <div className="absolute bottom-[calc(var(--bottom-tab-base-height,68px)+140px)] right-3.5 md:bottom-6 md:right-4 z-[400] flex flex-col gap-1.5 glass p-1.5 rounded-full shadow-xl border border-white/80">
+        {/* 3. Floating Zoom Controls (+ / −) & Recenter (EN BAS À DROITE — 32px Liquid Glass) */}
+        <div className="absolute bottom-[calc(var(--bottom-tab-base-height,68px)+16px)] right-3.5 md:bottom-6 md:right-4 z-[400] flex flex-col gap-1 p-1 rounded-full shadow-md border border-white/80"
+          style={{
+            background: 'linear-gradient(180deg, rgba(245, 243, 237, 0.94) 0%, rgba(235, 231, 220, 0.88) 100%)',
+            backdropFilter: 'blur(16px) saturate(180%)',
+            WebkitBackdropFilter: 'blur(16px) saturate(180%)',
+            boxShadow: '0 4px 16px -2px rgba(23, 64, 44, 0.10), inset 0 1px 1.5px rgba(255, 255, 255, 0.95)',
+          }}
+        >
           <button
             onClick={handleRecenter}
             title="Ma position (10 km)"
             aria-label="Ma position"
-            className="glass-circle-btn !w-11 !h-11 shadow-md flex items-center justify-center cursor-pointer active:scale-95"
+            className="glass-circle-btn !w-8 !h-8 text-[#17402C] cursor-pointer active:scale-95"
           >
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#17402C" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#17402C" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round">
               <circle cx="12" cy="12" r="7" />
               <line x1="12" y1="1" x2="12" y2="4" />
               <line x1="12" y1="20" x2="12" y2="23" />
@@ -935,21 +949,21 @@ export default function InteractiveMap() {
               <line x1="20" y1="12" x2="23" y2="12" />
             </svg>
           </button>
-          <div className="w-6 h-[1px] bg-[#17402C]/15" />
+          <div className="w-4 h-[1px] bg-[#17402C]/10 my-0.5" />
           <button
             onClick={handleZoomIn}
             title="Zoom avant"
             aria-label="Zoom avant"
-            className="glass-circle-btn !w-11 !h-11 font-bold text-lg shadow-md flex items-center justify-center cursor-pointer active:scale-95"
+            className="glass-circle-btn !w-8 !h-8 font-bold text-sm text-[#17402C] cursor-pointer active:scale-95"
           >
             +
           </button>
-          <div className="w-6 h-[1px] bg-[#17402C]/15" />
+          <div className="w-4 h-[1px] bg-[#17402C]/10 my-0.5" />
           <button
             onClick={handleZoomOut}
             title="Zoom arrière"
             aria-label="Zoom arrière"
-            className="glass-circle-btn !w-11 !h-11 font-bold text-lg shadow-md flex items-center justify-center cursor-pointer active:scale-95"
+            className="glass-circle-btn !w-8 !h-8 font-bold text-sm text-[#17402C] cursor-pointer active:scale-95"
           >
             −
           </button>

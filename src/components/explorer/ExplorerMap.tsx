@@ -531,16 +531,16 @@ export default function ExplorerMap({
         <TrailLayer map={mapInstance} trails={trails} pois={pois} selectedTrailId={selectedTrailId} onTrailClick={onTrailClick} onPoiClick={onPoiClick} />
       )}
 
-      {/* 1. Sélecteur de Calques (EN BAS À GAUCHE — Agrandis avec style Liquid Glass Image 2) */}
-      <div className="absolute z-[400] pointer-events-auto left-3.5 bottom-[calc(var(--bottom-tab-base-height,68px)+140px)] md:bottom-6 md:left-4">
+      {/* 1. Sélecteur de Calques (EN BAS À GAUCHE — 32px Liquid Glass comme Page Matériel) */}
+      <div className="absolute z-[400] pointer-events-auto left-3.5 bottom-[calc(var(--bottom-tab-base-height,68px)+16px)] md:bottom-6 md:left-4">
         <div
-          className="flex items-center gap-1.5 p-1.5 rounded-full shadow-xl"
+          className="flex items-center gap-1 p-1 rounded-full shadow-md"
           style={{
-            background: 'linear-gradient(180deg, rgba(240, 237, 228, 0.94) 0%, rgba(225, 221, 208, 0.84) 100%)',
+            background: 'linear-gradient(180deg, rgba(245, 243, 237, 0.94) 0%, rgba(235, 231, 220, 0.88) 100%)',
             backdropFilter: 'blur(16px) saturate(180%)',
             WebkitBackdropFilter: 'blur(16px) saturate(180%)',
-            border: '1.5px solid rgba(255, 255, 255, 0.88)',
-            boxShadow: '0 8px 32px -4px rgba(23, 64, 44, 0.14), inset 0 1.5px 2px rgba(255, 255, 255, 0.95)',
+            border: '1px solid rgba(255, 255, 255, 0.90)',
+            boxShadow: '0 4px 16px -2px rgba(23, 64, 44, 0.10), inset 0 1px 1.5px rgba(255, 255, 255, 0.95)',
           }}
         >
           <button
@@ -548,13 +548,13 @@ export default function ExplorerMap({
             onClick={() => handleTileChange('osm')}
             title="Carte standard (Plan)"
             aria-label="Carte standard (Plan)"
-            className={`glass-circle-btn !w-11 !h-11 !text-[#17402C] shadow-md flex items-center justify-center cursor-pointer transition-all active:scale-95 ${
+            className={`glass-circle-btn !w-8 !h-8 transition-all cursor-pointer active:scale-95 ${
               tileMode === 'osm'
-                ? 'primary !text-white !bg-[#17402C] shadow-xs'
-                : 'hover:bg-white/80'
+                ? 'primary !text-white shadow-xs'
+                : 'text-[#17402C] hover:bg-white/60'
             }`}
           >
-            <svg width="20" height="20" fill="none" stroke="currentColor" strokeWidth="2.2" viewBox="0 0 24 24">
+            <svg width="14" height="14" fill="none" stroke="currentColor" strokeWidth="2.2" viewBox="0 0 24 24">
               <path d="M3 6l6-3 6 3 6-3v12l-6 3-6-3-6 3V6z"></path>
               <path d="M9 3v12"></path>
               <path d="M15 6v12"></path>
@@ -565,13 +565,13 @@ export default function ExplorerMap({
             onClick={() => handleTileChange('topo')}
             title="Relief / Topographie"
             aria-label="Relief / Topographie"
-            className={`glass-circle-btn !w-11 !h-11 !text-[#17402C] shadow-md flex items-center justify-center transition-all cursor-pointer active:scale-95 ${
+            className={`glass-circle-btn !w-8 !h-8 transition-all cursor-pointer active:scale-95 ${
               tileMode === 'topo'
-                ? 'primary !text-white !bg-[#17402C] shadow-xs'
-                : 'hover:bg-white/80'
+                ? 'primary !text-white shadow-xs'
+                : 'text-[#17402C] hover:bg-white/60'
             }`}
           >
-            <svg width="20" height="20" fill="none" stroke="currentColor" strokeWidth="2.2" viewBox="0 0 24 24">
+            <svg width="14" height="14" fill="none" stroke="currentColor" strokeWidth="2.2" viewBox="0 0 24 24">
               <path d="M8 3l4 8 5-5 5 15H2L8 3z"></path>
             </svg>
           </button>
@@ -580,13 +580,13 @@ export default function ExplorerMap({
             onClick={() => handleTileChange('satellite')}
             title="Vue Satellite"
             aria-label="Vue Satellite"
-            className={`glass-circle-btn !w-11 !h-11 !text-[#17402C] shadow-md flex items-center justify-center transition-all cursor-pointer active:scale-95 ${
+            className={`glass-circle-btn !w-8 !h-8 transition-all cursor-pointer active:scale-95 ${
               tileMode === 'satellite'
-                ? 'primary !text-white !bg-[#17402C] shadow-xs'
-                : 'hover:bg-white/80'
+                ? 'primary !text-white shadow-xs'
+                : 'text-[#17402C] hover:bg-white/60'
             }`}
           >
-            <svg width="20" height="20" fill="none" stroke="currentColor" strokeWidth="2.2" viewBox="0 0 24 24">
+            <svg width="14" height="14" fill="none" stroke="currentColor" strokeWidth="2.2" viewBox="0 0 24 24">
               <circle cx="12" cy="12" r="10"></circle>
               <line x1="2" y1="12" x2="22" y2="12"></line>
               <path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"></path>
@@ -595,16 +595,16 @@ export default function ExplorerMap({
         </div>
       </div>
 
-      {/* 2. Dock de Navigation GPS & Zoom (+ / −) — (EN BAS À DROITE) */}
-      <div className="absolute z-[400] pointer-events-auto right-3.5 bottom-[calc(var(--bottom-tab-base-height,68px)+140px)] md:bottom-6 md:right-4">
+      {/* 2. Dock de Navigation GPS & Zoom (+ / −) — (EN BAS À DROITE — 32px Liquid Glass) */}
+      <div className="absolute z-[400] pointer-events-auto right-3.5 bottom-[calc(var(--bottom-tab-base-height,68px)+16px)] md:bottom-6 md:right-4">
         <div
-          className="flex flex-col gap-1.5 items-center p-1.5 rounded-full shadow-xl"
+          className="flex flex-col gap-1 items-center p-1 rounded-full shadow-md"
           style={{
-            background: 'linear-gradient(180deg, rgba(240, 237, 228, 0.94) 0%, rgba(225, 221, 208, 0.84) 100%)',
+            background: 'linear-gradient(180deg, rgba(245, 243, 237, 0.94) 0%, rgba(235, 231, 220, 0.88) 100%)',
             backdropFilter: 'blur(16px) saturate(180%)',
             WebkitBackdropFilter: 'blur(16px) saturate(180%)',
-            border: '1.5px solid rgba(255, 255, 255, 0.88)',
-            boxShadow: '0 8px 32px -4px rgba(23, 64, 44, 0.14), inset 0 1.5px 2px rgba(255, 255, 255, 0.95)',
+            border: '1px solid rgba(255, 255, 255, 0.90)',
+            boxShadow: '0 4px 16px -2px rgba(23, 64, 44, 0.10), inset 0 1px 1.5px rgba(255, 255, 255, 0.95)',
           }}
         >
           <button
@@ -612,30 +612,30 @@ export default function ExplorerMap({
             onClick={handleRecenter}
             title="Recentrer sur ma position"
             aria-label="Recentrer sur ma position"
-            className="glass-circle-btn !w-11 !h-11 text-[#17402C] shadow-md flex items-center justify-center cursor-pointer active:scale-95"
+            className="glass-circle-btn !w-8 !h-8 text-[#17402C] cursor-pointer active:scale-95"
           >
-            <svg width="20" height="20" fill="none" stroke="currentColor" strokeWidth="2.2" viewBox="0 0 24 24">
+            <svg width="14" height="14" fill="none" stroke="currentColor" strokeWidth="2.2" viewBox="0 0 24 24">
               <circle cx="12" cy="12" r="4" />
               <path d="M12 2v3m0 14v3M2 12h3m14 0h3" />
             </svg>
           </button>
-          <div className="w-6 h-[1px] bg-[#17402C]/15" />
+          <div className="w-4 h-[1px] bg-[#17402C]/10 my-0.5" />
           <button
             type="button"
             onClick={handleZoomIn}
             title="Zoom avant"
             aria-label="Zoom avant"
-            className="glass-circle-btn !w-11 !h-11 font-bold text-lg text-[#17402C] shadow-md flex items-center justify-center cursor-pointer active:scale-95"
+            className="glass-circle-btn !w-8 !h-8 font-bold text-sm text-[#17402C] cursor-pointer active:scale-95"
           >
             +
           </button>
-          <div className="w-6 h-[1px] bg-[#17402C]/15" />
+          <div className="w-4 h-[1px] bg-[#17402C]/10 my-0.5" />
           <button
             type="button"
             onClick={handleZoomOut}
             title="Zoom arrière"
             aria-label="Zoom arrière"
-            className="glass-circle-btn !w-11 !h-11 font-bold text-lg text-[#17402C] shadow-md flex items-center justify-center cursor-pointer active:scale-95"
+            className="glass-circle-btn !w-8 !h-8 font-bold text-sm text-[#17402C] cursor-pointer active:scale-95"
           >
             −
           </button>
