@@ -41,6 +41,10 @@ export interface DepartDetail {
   trail: MapTrail | null;
   participants: Participant[];
   emergencyContact: string | null;
+  coverImageUrl?: string | null;
+  activityType?: 'Bivouac' | 'Randonnée' | 'Alpinisme' | 'Fastpacking' | 'Trek' | null;
+  comparableTrip?: { name: string; timeAgo: string; similarity: string } | null;
+  updatedAt?: string | null;
 }
 
 function parseTrailRow(row: { id: number; name: string | null; distance_km: number | null; geom: string | { type?: string; coordinates?: unknown } | null }): MapTrail | null {
@@ -293,6 +297,16 @@ function getShowcaseDepart(kitId?: string | null, customTrail?: MapTrail | null)
           { name: 'Julien', initial: 'J', color: '#5A7064' },
         ],
     emergencyContact: '+33 6 12 34 56 78',
+    coverImageUrl: isVercors
+      ? 'https://images.unsplash.com/photo-1506744038136-46273834b3fb?w=1200&auto=format&fit=crop&q=80'
+      : isBelledonne
+      ? 'https://images.unsplash.com/photo-1464822759023-fed622ff2c3b?w=1200&auto=format&fit=crop&q=80'
+      : 'https://images.unsplash.com/photo-1486870591958-9b9d0d1dda99?w=1200&auto=format&fit=crop&q=80',
+    activityType: isVercors ? 'Fastpacking' : isBelledonne ? 'Alpinisme' : 'Bivouac',
+    comparableTrip: isVercors
+      ? { name: 'Trek Jura 2j', timeAgo: 'il y a 2 mois', similarity: 'Même dénivelé moyen' }
+      : { name: 'Tour des Écrins', timeAgo: 'l’an dernier', similarity: 'Conditions météo et terrain comparables' },
+    updatedAt: new Date(Date.now() - 1000 * 60 * 18).toISOString(),
   };
 }
 
@@ -317,7 +331,7 @@ export async function getDepartDetail(id?: string | null, selectedRouteId?: stri
 
     // Recherche du kit réel de l utilisateur en base
     const baseSelect =
-      'id, name, total_weight_g, consumables, trail_id, starts_at, ends_at, status, materiel_kit_items(id, name, category, weight_g, quantity, is_checked, is_worn, is_consumable, product_ownership(weight_g, photo_url, name))';
+      'id, name, total_weight_g, consumables, trail_id, starts_at, ends_at, status, cover_image_url, tags, updated_at, created_at, materiel_kit_items(id, name, category, weight_g, quantity, is_checked, is_worn, is_consumable, product_ownership(weight_g, photo_url, name))';
 
     interface KitRow {
       id: string;
@@ -328,6 +342,10 @@ export async function getDepartDetail(id?: string | null, selectedRouteId?: stri
       starts_at: string | null;
       ends_at: string | null;
       status: DepartStatus | null;
+      cover_image_url: string | null;
+      tags: string[] | null;
+      updated_at: string | null;
+      created_at: string | null;
       materiel_kit_items: unknown[];
     }
 
@@ -490,6 +508,13 @@ export async function getDepartDetail(id?: string | null, selectedRouteId?: stri
     const checklistSections = Array.from(secMap.entries()).map(([name, s]) => ({ name, total: s.total, done: s.done }));
     const checklistItems = items.map((i) => ({ name: i.name, done: i.is_checked }));
 
+    const tagsList = kit.tags ?? [];
+    const tagsStr = tagsList.join(' ').toLowerCase();
+    const hasBivouac = tagsStr.includes('bivouac') || items.some((i) => i.category === 'Bivouac');
+    const hasAlpi = tagsStr.includes('alpinisme') || tagsStr.includes('hiver') || items.some((i) => i.name.toLowerCase().includes('crampon') || i.name.toLowerCase().includes('piolet'));
+    const hasFast = tagsStr.includes('fastpacking') || tagsStr.includes('trail');
+    const activityType = hasAlpi ? 'Alpinisme' : hasFast ? 'Fastpacking' : hasBivouac ? 'Bivouac' : 'Randonnée';
+
     return {
       id: kit.id,
       destination: cleanDestination || 'Prochain départ',
@@ -516,6 +541,10 @@ export async function getDepartDetail(id?: string | null, selectedRouteId?: stri
       trail: trailData,
       participants: participants.length ? participants : [{ name: 'Vous', initial: 'V', color: '#17402C', profileId: user.id }],
       emergencyContact: emergency,
+      coverImageUrl: kit.cover_image_url ?? null,
+      activityType,
+      comparableTrip: null,
+      updatedAt: kit.updated_at ?? kit.created_at ?? new Date().toISOString(),
     };
   } catch (err) {
     console.error('getDepartDetail fallback to showcase', err);

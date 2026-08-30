@@ -151,6 +151,8 @@ export function DepartCockpit({ depart, weather, kits }: DepartCockpitProps) {
         <section id="section-depart-overview" aria-label="Niveau 1 : Statut du départ">
           <DepartHeader
             depart={depart}
+            weather={weather}
+            kits={kits}
             isRealKit={isRealKit}
             onOpenDepartureSheet={() => setIsSheetOpen(true)}
           />

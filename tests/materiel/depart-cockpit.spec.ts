@@ -1,4 +1,4 @@
-﻿import { describe, it, expect } from 'vitest';
+import { describe, it, expect } from 'vitest';
 import { getDepartDetail } from '@/features/materiel/services/getDepartDetail';
 import { toggleKitItem } from '@/features/materiel/actions/toggleKitItem';
 import { updateDepartStatus } from '@/features/materiel/actions/updateDepartStatus';
@@ -37,6 +37,18 @@ describe('Depart Cockpit - Complete V2 Test Suite', () => {
       expect(vercors.destination).toContain('Vercors');
       expect(vercors.durationDays).toBe(3);
       expect(vercors.participants.length).toBe(1);
+    });
+
+    it('fournit des métadonnées enrichies de Header (Phase 1) : couverture, activité et horodatage', async () => {
+      const tmb = await getDepartDetail('tmb-4j');
+      expect(tmb.activityType).toBe('Bivouac');
+      expect(tmb.updatedAt).toBeDefined();
+      expect(tmb.coverImageUrl).toBeDefined();
+
+      const vercors = await getDepartDetail('vercors-ultra');
+      expect(vercors.activityType).toBe('Fastpacking');
+      expect(vercors.comparableTrip).toBeDefined();
+      expect(vercors.comparableTrip?.name).toContain('Jura');
     });
 
     it('fournit un fallback sûr en cas d ID inconnu ou none sans tracé fictif forcé', async () => {
