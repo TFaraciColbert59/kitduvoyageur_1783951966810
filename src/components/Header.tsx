@@ -81,36 +81,36 @@ export default function Header() {
   return (
     <>
       <div className="hidden md:block">
-        <header className="fixed top-3 left-1/2 -translate-x-1/2 z-[1000] w-full max-w-[620px] px-3 pointer-events-none transition-all duration-300">
+        <header className="fixed top-3 left-1/2 -translate-x-1/2 z-[1000] w-full max-w-[880px] lg:max-w-[940px] px-3 pointer-events-none transition-all duration-300">
           <div
-            className={`w-full rounded-full px-3.5 py-1 transition-all duration-300 flex items-center justify-between pointer-events-auto cursor-default ${
+            className={`w-full rounded-full px-4 py-1.5 transition-all duration-300 flex items-center justify-between gap-3 pointer-events-auto cursor-default ${
               scrolled ? 'shadow-md bg-white/90' : 'shadow-xs'
             }`}
             style={{
-              background: 'linear-gradient(180deg, rgba(255, 255, 255, 0.28) 0%, rgba(255, 255, 255, 0.10) 100%)',
+              background: 'linear-gradient(180deg, rgba(255, 255, 255, 0.35) 0%, rgba(255, 255, 255, 0.15) 100%)',
               backdropFilter: 'blur(16px) saturate(170%)',
               WebkitBackdropFilter: 'blur(16px) saturate(170%)',
-              border: '1px solid rgba(255, 255, 255, 0.45)',
+              border: '1px solid rgba(255, 255, 255, 0.50)',
               boxShadow: 'inset 0 1px 1.5px rgba(255, 255, 255, 0.85), 0 8px 24px -6px rgba(23, 64, 44, 0.10)',
             }}
           >
             {/* Left: Logo Liquid Glass */}
             <Link
               href="/"
-              className="flex items-center gap-2 group focus-visible:outline-none opacity-100 hover:opacity-85 active:opacity-75 transition-opacity cursor-pointer touch-manipulation py-0.5"
+              className="flex items-center gap-2 group focus-visible:outline-none opacity-100 hover:opacity-85 active:opacity-75 transition-opacity cursor-pointer touch-manipulation py-0.5 shrink-0"
             >
               <div className="w-6 h-6 rounded-lg flex items-center justify-center bg-gradient-to-b from-[#17402C]/20 to-[#17402C]/08 border border-white/40 shadow-[inset_0_1px_1px_rgba(255,255,255,0.7)] text-[#17402C]">
                 <svg width="12" height="12" fill="currentColor" viewBox="0 0 24 24">
                   <path d="M3 17l4-8 4 4 3-6 4 10H3z" />
                 </svg>
               </div>
-              <span className="font-bold text-[#17402C] text-xs sm:text-sm tracking-tight font-display">
+              <span className="font-bold text-[#17402C] text-xs sm:text-sm tracking-tight font-display whitespace-nowrap">
                 Le Kit du Voyageur
               </span>
             </Link>
 
             {/* Center: Navigation Links with Animated Sliding Pill */}
-            <nav className="flex items-center gap-0.5 p-0.5 rounded-full bg-white/[0.08] border border-white/25 shadow-[inset_0_1px_1px_rgba(255,255,255,0.25)]">
+            <nav className="flex items-center gap-1 p-0.5 rounded-full bg-white/[0.08] border border-white/25 shadow-[inset_0_1px_1px_rgba(255,255,255,0.25)] shrink-0">
               {[
                 { label: 'Aventures', href: '/explorer' },
                 { label: 'Earth', href: '/pays' },
@@ -123,7 +123,7 @@ export default function Header() {
                   <Link
                     key={link.label}
                     href={link.href}
-                    className="relative px-3 py-1 rounded-full text-[10.5px] sm:text-[11px] font-bold tracking-wide uppercase transition-colors duration-200 cursor-pointer touch-manipulation whitespace-nowrap select-none"
+                    className="relative px-3.5 py-1 rounded-full text-[11px] font-bold tracking-wide uppercase transition-colors duration-200 cursor-pointer touch-manipulation whitespace-nowrap select-none"
                   >
                     {isActive && (
                       <motion.span
@@ -145,8 +145,8 @@ export default function Header() {
             </nav>
 
             {/* Right: Actions in Liquid Glass Style */}
-            <div className="flex items-center gap-1">
-              <div className="flex items-center gap-0.5 rounded-full bg-white/[0.08] border border-white/25 p-0.5 shadow-[inset_0_1px_1px_rgba(255,255,255,0.25)]">
+            <div className="flex items-center gap-1 shrink-0">
+              <div className="flex items-center gap-1 rounded-full bg-white/[0.08] border border-white/25 p-0.5 shadow-[inset_0_1px_1px_rgba(255,255,255,0.25)]">
                 {/* Panier */}
                 <Link
                   href="/panier"
