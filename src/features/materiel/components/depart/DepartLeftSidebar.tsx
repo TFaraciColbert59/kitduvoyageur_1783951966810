@@ -19,8 +19,6 @@ import {
   Layers,
   Sparkles,
   ShoppingBag,
-  Share2,
-  Bell,
   Handshake,
 } from 'lucide-react';
 import { KitSwitcher } from './KitSwitcher';
@@ -36,6 +34,9 @@ interface DepartLeftSidebarProps {
   onSectionChange: (section: DepartSectionId) => void;
   kits: { id: string; name: string }[];
   alertsCount: number;
+  inventoryCount?: number;
+  loansCount?: number;
+  productsCount?: number;
   isUltraSave?: boolean;
   onToggleUltraSave?: () => void;
   batteryLevel?: number | null;
@@ -52,6 +53,9 @@ export function DepartLeftSidebar({
   onSectionChange,
   kits,
   alertsCount,
+  inventoryCount = 0,
+  loansCount = 0,
+  productsCount = 0,
   isUltraSave = false,
   onToggleUltraSave,
   batteryLevel = null,
@@ -77,7 +81,7 @@ export function DepartLeftSidebar({
     },
     {
       id: 'overview',
-      label: '1. Statut & Départ',
+      label: '1. Statut & Fiche',
       icon: Compass,
       badge: `${depart.readinessScore.percentage}%`,
       badgeColor:
@@ -89,7 +93,7 @@ export function DepartLeftSidebar({
     },
     {
       id: 'alerts',
-      label: '2. Alertes',
+      label: '2. Alertes & Fiabilité',
       icon: AlertTriangle,
       badge: alertsCount > 0 ? alertsCount : undefined,
       badgeColor: 'bg-[#8A241B] text-white',
@@ -115,33 +119,47 @@ export function DepartLeftSidebar({
       badge: depart.trail?.distance_km ? `${Math.round(depart.trail.distance_km)}km` : undefined,
       badgeColor: 'bg-[#17402C]/15 text-[#17402C]',
     },
+    {
+      id: 'inventory_dispo',
+      label: '6. Inventaire & Prêts',
+      icon: Boxes,
+      badge: inventoryCount > 0 ? inventoryCount : undefined,
+      badgeColor: 'bg-[#17402C]/15 text-[#17402C]',
+    },
+    {
+      id: 'boutique',
+      label: '7. Boutique & Matériel',
+      icon: ShoppingBag,
+      badge: productsCount > 0 ? productsCount : undefined,
+      badgeColor: 'bg-[#17402C]/15 text-[#17402C]',
+    },
   ];
 
   return (
-    <aside className="h-full flex flex-col justify-between glass rounded-[1.5rem] p-3.5 text-[#17402C] font-sans overflow-hidden border border-white/60 shadow-sm backdrop-blur-md">
+    <aside className="h-full flex flex-col justify-between glass rounded-[1.5rem] p-3 text-[#17402C] font-sans overflow-hidden border border-white/60 shadow-sm backdrop-blur-md">
       {/* Haut : Identité du trek & Navigation */}
-      <div className="space-y-2.5 overflow-y-auto no-scrollbar pr-0.5">
+      <div className="space-y-2 overflow-y-auto no-scrollbar pr-0.5">
         {/* En-tête miniature du départ */}
-        <div className="p-3 rounded-2xl glass-sub-card space-y-2 border border-white/60 shadow-2xs">
+        <div className="p-2.5 rounded-2xl glass-sub-card space-y-1.5 border border-white/60 shadow-2xs">
           <div className="flex items-start justify-between gap-1.5">
-            <span className="text-[9.5px] font-semibold uppercase tracking-wider text-[#5A7064]">
-              Prochain départ
+            <span className="text-[9px] font-semibold uppercase tracking-wider text-[#5A7064]">
+              Départ Actif
             </span>
             <Badge tone={depart.readinessScore.status === 'ok' ? 'sage' : depart.readinessScore.status === 'warning' ? 'warn' : 'danger'}>
-              <span className="text-[9.5px] font-bold">
+              <span className="text-[9px] font-bold">
                 {depart.readinessScore.status === 'ok' ? '✓ Prêt' : depart.readinessScore.status === 'warning' ? '⚠️ En cours' : 'Critique'}
               </span>
             </Badge>
           </div>
 
-          <h3 className="font-display font-bold text-sm text-[#17402C] leading-tight line-clamp-2">
+          <h3 className="font-display font-bold text-xs text-[#17402C] leading-tight line-clamp-2">
             {cleanDestination}
           </h3>
 
           {/* Statut réseau & Ultra-Save toggle (§19) */}
-          <div className="pt-1.5 border-t border-white/30 flex items-center justify-between gap-1.5">
-            <span className={cn('flex items-center gap-1 text-[9px] font-mono font-bold px-1.5 py-0.5 rounded-full', isOnline ? 'bg-emerald-100/80 text-emerald-900' : 'bg-amber-100 text-amber-900')}>
-              {isOnline ? <Wifi size={9} /> : <WifiOff size={9} />}
+          <div className="pt-1 border-t border-white/30 flex items-center justify-between gap-1.5">
+            <span className={cn('flex items-center gap-1 text-[8.5px] font-mono font-bold px-1.5 py-0.2 rounded-full', isOnline ? 'bg-emerald-100/80 text-emerald-900' : 'bg-amber-100 text-amber-900')}>
+              {isOnline ? <Wifi size={8} /> : <WifiOff size={8} />}
               {isOnline ? 'En ligne' : 'Hors-ligne'}
             </span>
 
@@ -150,7 +168,7 @@ export function DepartLeftSidebar({
                 type="button"
                 onClick={onToggleUltraSave}
                 className={cn(
-                  'px-2 py-0.5 rounded-lg text-[9.5px] font-bold flex items-center gap-1 transition-all cursor-pointer',
+                  'px-1.5 py-0.2 rounded-lg text-[9px] font-bold flex items-center gap-1 transition-all cursor-pointer',
                   isUltraSave
                     ? 'bg-[#2D6B4A] text-white shadow-xs'
                     : 'bg-white/40 text-[#17402C] hover:bg-white/60'
@@ -158,10 +176,10 @@ export function DepartLeftSidebar({
                 title="Mode Éco Batterie Ultra-Save (§19)"
                 aria-pressed={isUltraSave}
               >
-                <Zap size={9} />
+                <Zap size={8} />
                 <span>{isUltraSave ? 'ECO' : 'ÉCO'}</span>
                 {batteryLevel !== null && (
-                  <span className="font-mono text-[8.5px] opacity-80">
+                  <span className="font-mono text-[8px] opacity-80">
                     {Math.round(batteryLevel * 100)}%
                   </span>
                 )}
@@ -177,8 +195,8 @@ export function DepartLeftSidebar({
           )}
         </div>
 
-        {/* Navigation verticale des 5 sections du cockpit */}
-        <nav className="space-y-0.5" aria-label="Sections du cockpit de départ">
+        {/* Navigation verticale des 8 sections du cockpit unifié */}
+        <nav className="space-y-0.5" aria-label="Sections du cockpit unifié">
           {sections.map((sec) => {
             const IconComp = sec.icon;
             const isSelected = activeSection === sec.id;
@@ -189,7 +207,7 @@ export function DepartLeftSidebar({
                 type="button"
                 onClick={() => onSectionChange(sec.id)}
                 className={cn(
-                  'w-full flex items-center justify-between gap-2 px-2.5 py-1.5 rounded-xl text-xs font-semibold transition-all cursor-pointer text-left',
+                  'w-full flex items-center justify-between gap-2 px-2.5 py-1.5 rounded-xl text-[11.5px] font-semibold transition-all cursor-pointer text-left',
                   isSelected
                     ? 'bg-[#17402C] text-white shadow-xs'
                     : 'text-[#17402C]/80 hover:text-[#17402C] hover:bg-white/40'
@@ -205,7 +223,7 @@ export function DepartLeftSidebar({
                   {sec.badge !== undefined && (
                     <span
                       className={cn(
-                        'text-[9.5px] font-mono px-1.5 py-0.2 rounded-full font-bold',
+                        'text-[9px] font-mono px-1.5 py-0.2 rounded-full font-bold',
                         sec.badgeColor
                           ? isSelected
                             ? 'bg-white/20 text-white'
@@ -224,93 +242,22 @@ export function DepartLeftSidebar({
             );
           })}
         </nav>
-
-        {/* ════ ÉCOSYSTÈME MATÉRIEL (Hub unifié) ════ */}
-        <div className="pt-2 border-t border-white/40 space-y-1">
-          <button
-            type="button"
-            onClick={() => setIsEcosystemOpen((v) => !v)}
-            className="w-full flex items-center justify-between text-[10.5px] font-bold uppercase tracking-wider text-[#5A7064] hover:text-[#17402C] px-1 py-0.5 cursor-pointer"
-          >
-            <span>Écosystème Matériel</span>
-            <ChevronDown size={12} className={cn('transition-transform', !isEcosystemOpen && '-rotate-90')} />
-          </button>
-
-          {isEcosystemOpen && (
-            <div className="space-y-0.5 pt-0.5">
-              <Link
-                href="/materiel/kits"
-                className="w-full flex items-center justify-between gap-2 px-2.5 py-1.5 rounded-xl text-xs font-semibold text-[#17402C]/80 hover:text-[#17402C] hover:bg-white/50 transition-colors"
-              >
-                <div className="flex items-center gap-2">
-                  <Layers size={13} className="text-[#2D6B4A]" />
-                  <span>Mes Kits</span>
-                </div>
-                <span className="text-[10px] font-mono text-[#5A7064]">{kits.length}</span>
-              </Link>
-
-              <Link
-                href="/materiel/inventaire"
-                className="w-full flex items-center justify-between gap-2 px-2.5 py-1.5 rounded-xl text-xs font-semibold text-[#17402C]/80 hover:text-[#17402C] hover:bg-white/50 transition-colors"
-              >
-                <div className="flex items-center gap-2">
-                  <Boxes size={13} className="text-[#2D6B4A]" />
-                  <span>Mon Inventaire</span>
-                </div>
-                <ChevronRight size={11} className="text-[#5A7064]" />
-              </Link>
-
-              <Link
-                href="/materiel/alertes"
-                className="w-full flex items-center justify-between gap-2 px-2.5 py-1.5 rounded-xl text-xs font-semibold text-[#17402C]/80 hover:text-[#17402C] hover:bg-white/50 transition-colors"
-              >
-                <div className="flex items-center gap-2">
-                  <Bell size={13} className="text-[#8A241B]" />
-                  <span>Alertes & Entretien</span>
-                </div>
-                <ChevronRight size={11} className="text-[#5A7064]" />
-              </Link>
-
-              <Link
-                href="/materiel/disponibilite"
-                className="w-full flex items-center justify-between gap-2 px-2.5 py-1.5 rounded-xl text-xs font-semibold text-[#17402C]/80 hover:text-[#17402C] hover:bg-white/50 transition-colors"
-              >
-                <div className="flex items-center gap-2">
-                  <Handshake size={13} className="text-[#8C6418]" />
-                  <span>Prêts & Disponibilité</span>
-                </div>
-                <ChevronRight size={11} className="text-[#5A7064]" />
-              </Link>
-
-              <Link
-                href="/materiel/boutique"
-                className="w-full flex items-center justify-between gap-2 px-2.5 py-1.5 rounded-xl text-xs font-semibold text-[#17402C]/80 hover:text-[#17402C] hover:bg-white/50 transition-colors"
-              >
-                <div className="flex items-center gap-2">
-                  <ShoppingBag size={13} className="text-[#17402C]" />
-                  <span>Boutique LKDV</span>
-                </div>
-                <ChevronRight size={11} className="text-[#5A7064]" />
-              </Link>
-            </div>
-          )}
-        </div>
       </div>
 
       {/* Bas : Actions rapides */}
       <div className="pt-2 border-t border-white/40 grid grid-cols-2 gap-1.5 shrink-0">
         <Link
           href="/materiel/kits"
-          className="glass-capsule-btn text-[10.5px] !py-1.5 !px-2 flex items-center justify-center gap-1 font-semibold truncate cursor-pointer"
-          title="Modifier le kit"
+          className="glass-capsule-btn text-[10px] !py-1.5 !px-2 flex items-center justify-center gap-1 font-semibold truncate cursor-pointer"
+          title="Gérer tous mes kits"
         >
-          <Edit3 size={11} />
-          <span>Gérer kit</span>
+          <Layers size={11} />
+          <span>Mes Kits</span>
         </Link>
         <button
           type="button"
           onClick={() => window.print()}
-          className="glass-capsule-btn text-[10.5px] !py-1.5 !px-2 flex items-center justify-center gap-1 font-semibold truncate cursor-pointer"
+          className="glass-capsule-btn text-[10px] !py-1.5 !px-2 flex items-center justify-center gap-1 font-semibold truncate cursor-pointer"
           title="Imprimer la checklist de départ"
         >
           <Printer size={11} />

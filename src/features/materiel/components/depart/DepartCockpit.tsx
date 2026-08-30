@@ -1,4 +1,4 @@
-'use client';
+﻿'use client';
 import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import dynamic from 'next/dynamic';
@@ -14,6 +14,8 @@ import {
   Wifi,
   WifiOff,
   Layers,
+  Boxes,
+  ShoppingBag,
 } from 'lucide-react';
 import { DepartHeader } from './DepartHeader';
 import { DepartAlerts } from './DepartAlerts';
@@ -23,6 +25,8 @@ import { DepartWeather } from './DepartWeather';
 import { DepartParticipants } from './DepartParticipants';
 import { DepartLeftSidebar } from './DepartLeftSidebar';
 import { DepartRightSidebar } from './DepartRightSidebar';
+import { DepartInventoryDispo } from './DepartInventoryDispo';
+import { DepartBoutique } from './DepartBoutique';
 import { DepartureSheetModal } from './DepartureSheetModal';
 import { KitSwitcher } from './KitSwitcher';
 import ScrollableTabs, { type TabOption } from '@/components/ui/ScrollableTabs';
@@ -32,6 +36,9 @@ import { flushOfflineQueue } from '@/features/materiel/offline/departOfflineQueu
 import { cn } from '@/lib/utils';
 import type { DepartDetail } from '@/features/materiel/services/getDepartDetail';
 import type { WeatherForecast } from '@/features/materiel/services/getWeather';
+import type { InventoryItem } from '@/features/materiel/services/getInventory';
+import type { LoanItem } from '@/features/materiel/services/getLoans';
+import type { ProductSuggestion } from '@/features/materiel/services/getProductSuggestions';
 
 const SHOWCASE_IDS = new Set(['tmb-4j', 'vercors-ultra', 'belledonne-winter', 'none']);
 
@@ -56,15 +63,27 @@ export type DepartSectionId =
   | 'alerts'
   | 'checklist'
   | 'weight'
-  | 'terrain';
+  | 'terrain'
+  | 'inventory_dispo'
+  | 'boutique';
 
 interface DepartCockpitProps {
   depart: DepartDetail;
   weather: WeatherForecast | null;
   kits: { id: string; name: string }[];
+  inventory?: InventoryItem[];
+  loans?: LoanItem[];
+  products?: ProductSuggestion[];
 }
 
-export function DepartCockpit({ depart, weather, kits }: DepartCockpitProps) {
+export function DepartCockpit({
+  depart,
+  weather,
+  kits,
+  inventory = [],
+  loans = [],
+  products = [],
+}: DepartCockpitProps) {
   const [activeSection, setActiveSection] = useState<DepartSectionId>('all');
   const [isUltraSave, setIsUltraSave] = useState(false);
   const [batteryLevel, setBatteryLevel] = useState<number | null>(null);
@@ -105,11 +124,14 @@ export function DepartCockpit({ depart, weather, kits }: DepartCockpitProps) {
 
     // Cache local du départ pour consultation hors-ligne immédiate (§Phase 6)
     try {
-      localStorage.setItem(`lkdv_depart_cache_${depart.id}`, JSON.stringify({
-        depart,
-        weather,
-        cachedAt: Date.now(),
-      }));
+      localStorage.setItem(
+        `lkdv_depart_cache_${depart.id}`,
+        JSON.stringify({
+          depart,
+          weather,
+          cachedAt: Date.now(),
+        })
+      );
     } catch {}
 
     setIsOnline(navigator.onLine);
@@ -130,16 +152,19 @@ export function DepartCockpit({ depart, weather, kits }: DepartCockpitProps) {
     window.addEventListener('open-departure-sheet', handleOpenSheet);
 
     if ('getBattery' in navigator) {
-      (navigator as any).getBattery().then((battery: any) => {
-        setBatteryLevel(battery.level);
-        if (battery.level <= 0.2) {
-          setIsUltraSave(true);
-        }
-        battery.addEventListener('levelchange', () => {
+      (navigator as any)
+        .getBattery()
+        .then((battery: any) => {
           setBatteryLevel(battery.level);
-          if (battery.level <= 0.2) setIsUltraSave(true);
-        });
-      }).catch(() => {});
+          if (battery.level <= 0.2) {
+            setIsUltraSave(true);
+          }
+          battery.addEventListener('levelchange', () => {
+            setBatteryLevel(battery.level);
+            if (battery.level <= 0.2) setIsUltraSave(true);
+          });
+        })
+        .catch(() => {});
     }
 
     return () => {
@@ -160,6 +185,8 @@ export function DepartCockpit({ depart, weather, kits }: DepartCockpitProps) {
     { id: 'checklist', label: 'Sac & Vivres', icon: <CheckSquare size={13} />, badge: `${checkedCount}/${itemsCount}` },
     { id: 'weight', label: 'Poids', icon: <Scale size={13} /> },
     { id: 'terrain', label: 'Terrain & Carte', icon: <MapPin size={13} /> },
+    { id: 'inventory_dispo', label: 'Inventaire & Prêts', icon: <Boxes size={13} />, badge: inventory.length || undefined },
+    { id: 'boutique', label: 'Boutique LKDV', icon: <ShoppingBag size={13} /> },
   ];
 
   const showAll = activeSection === 'all';
@@ -251,6 +278,27 @@ export function DepartCockpit({ depart, weather, kits }: DepartCockpitProps) {
           {depart.trail && <DepartMap trail={depart.trail} height="260px" />}
         </section>
       )}
+
+      {/* 3.D — Inventaire & Prêts / Disponibilité */}
+      {(showAll || activeSection === 'inventory_dispo') && (
+        <section id="section-depart-inventory-dispo" aria-label="Mon Inventaire & Disponibilité des Prêts">
+          <DepartInventoryDispo
+            inventory={inventory}
+            loans={loans}
+            kitItems={depart.assignedKit.items}
+          />
+        </section>
+      )}
+
+      {/* 3.E — Boutique & Recommandations LKDV */}
+      {(showAll || activeSection === 'boutique') && (
+        <section id="section-depart-boutique" aria-label="Boutique LKDV & Équipements Recommandés">
+          <DepartBoutique
+            products={products}
+            kitItems={depart.assignedKit.items}
+          />
+        </section>
+      )}
     </div>
   );
 
@@ -273,7 +321,12 @@ export function DepartCockpit({ depart, weather, kits }: DepartCockpitProps) {
               <span className="text-[10.5px] font-semibold uppercase tracking-wider text-[#5A7064]">
                 Cockpit
               </span>
-              <span className={cn('flex items-center gap-1 text-[9.5px] font-mono px-1.5 py-0.2 rounded-full font-bold', isOnline ? 'bg-emerald-100 text-emerald-800' : 'bg-amber-100 text-amber-800')}>
+              <span
+                className={cn(
+                  'flex items-center gap-1 text-[9.5px] font-mono px-1.5 py-0.2 rounded-full font-bold',
+                  isOnline ? 'bg-emerald-100 text-emerald-800' : 'bg-amber-100 text-amber-800'
+                )}
+              >
                 {isOnline ? <Wifi size={9} /> : <WifiOff size={9} />}
                 {isOnline ? 'EN LIGNE' : 'HORS-LIGNE'}
               </span>
@@ -345,6 +398,9 @@ export function DepartCockpit({ depart, weather, kits }: DepartCockpitProps) {
             onSectionChange={setActiveSection}
             kits={kits}
             alertsCount={smartAlerts.length}
+            inventoryCount={inventory.length}
+            loansCount={loans.length}
+            productsCount={products.length}
             isUltraSave={isUltraSave}
             onToggleUltraSave={() => setIsUltraSave((v) => !v)}
             batteryLevel={batteryLevel}
@@ -352,23 +408,23 @@ export function DepartCockpit({ depart, weather, kits }: DepartCockpitProps) {
           />
         </div>
 
-        {/* Colonne 2 : Flux Central (Header, Alertes, Checklist) */}
-        <main className="flex-1 h-full overflow-y-auto custom-scrollbar space-y-4 px-1 pb-8">
+        {/* Colonne 2 : Flux Central Dynamique (Sections 1 à 7) */}
+        <div className="flex-1 min-w-0 h-full overflow-y-auto no-scrollbar pr-1 pb-10">
           <AnimatePresence mode="wait">
             <motion.div
               key={activeSection}
-              initial={shouldReduceMotion ? false : { opacity: 0, y: 4 }}
+              initial={shouldReduceMotion ? false : { opacity: 0, y: 6 }}
               animate={{ opacity: 1, y: 0 }}
-              exit={shouldReduceMotion ? { opacity: 0 } : { opacity: 0, y: -4 }}
-              transition={{ duration: shouldReduceMotion ? 0 : 0.16, ease: 'easeOut' }}
+              exit={shouldReduceMotion ? { opacity: 0 } : { opacity: 0, y: -6 }}
+              transition={{ duration: shouldReduceMotion ? 0 : 0.18, ease: 'easeOut' }}
             >
               {renderMainContent()}
             </motion.div>
           </AnimatePresence>
-        </main>
+        </div>
 
-        {/* Colonne 3 : Sidebar Droite (Poids, Météo, ICE, Carte) */}
-        <div className="hidden xl:block w-[310px] 2xl:w-[340px] shrink-0 h-full overflow-y-auto custom-scrollbar pb-8">
+        {/* Colonne 3 : Sidebar Droite (Poids, Météo, Équipe, Carte) */}
+        <div className={cn('w-[300px] xl:w-[320px] shrink-0 h-full overflow-y-auto no-scrollbar pb-10', !showAll && 'hidden')}>
           <DepartRightSidebar depart={depart} weather={weather} />
         </div>
       </div>
