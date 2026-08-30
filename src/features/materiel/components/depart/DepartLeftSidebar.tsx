@@ -2,26 +2,17 @@
 import React from 'react';
 import Link from 'next/link';
 import {
-  Compass,
-  AlertTriangle,
-  Scale,
-  MapPin,
-  LayoutGrid,
   Zap,
   Wifi,
   WifiOff,
-  Boxes,
   Layers,
   Printer,
   ChevronRight,
-  Pencil,
-  Briefcase,
   Share2,
 } from 'lucide-react';
 import { KitSwitcher } from './KitSwitcher';
 import { Badge } from '@/components/ui/Badge';
 import { cn } from '@/lib/utils';
-import { formatWeight } from '@/features/materiel/domain/departCalculations';
 import type { DepartSectionId } from './DepartCockpit';
 import type { DepartDetail } from '@/features/materiel/services/getDepartDetail';
 
@@ -30,7 +21,7 @@ interface DepartLeftSidebarProps {
   activeSection: DepartSectionId;
   onSectionChange: (section: DepartSectionId) => void;
   kits: { id: string; name: string }[];
-  alertsCount: number;
+  alertsCount?: number;
   isUltraSave?: boolean;
   onToggleUltraSave?: () => void;
   batteryLevel?: number | null;
@@ -46,55 +37,40 @@ export function DepartLeftSidebar({
   activeSection,
   onSectionChange,
   kits,
-  alertsCount,
   isUltraSave = false,
   onToggleUltraSave,
   batteryLevel = null,
   isOnline = true,
 }: DepartLeftSidebarProps) {
-  const totalWeightStr = formatWeight(depart.totalPackWeightG);
   const cleanDestination = cleanText(depart.destination);
 
   const sections: {
     id: DepartSectionId;
     label: string;
-    icon: React.ComponentType<{ size?: number; className?: string }>;
-    count?: string | number;
-    badge?: string;
   }[] = [
     {
       id: 'all',
       label: "Vue d'ensemble",
-      icon: LayoutGrid,
     },
     {
       id: 'overview',
-      label: '1. Statut & Fiche',
-      icon: Compass,
-      badge: `${depart.readinessScore.percentage}%`,
+      label: 'Statut & Fiche',
     },
     {
       id: 'alerts',
-      label: '2. Alertes & Fiabilité',
-      icon: AlertTriangle,
-      count: alertsCount > 0 ? alertsCount : undefined,
+      label: 'Alertes & Fiabilité',
     },
     {
       id: 'weight',
-      label: '3. Analyse du Poids',
-      icon: Scale,
-      badge: totalWeightStr !== '--' ? totalWeightStr : undefined,
+      label: 'Analyse du Poids',
     },
     {
       id: 'terrain',
-      label: '4. Terrain & Météo',
-      icon: MapPin,
-      badge: depart.trail?.distance_km ? `${Math.round(depart.trail.distance_km)}km` : undefined,
+      label: 'Terrain & Météo',
     },
     {
       id: 'equipment_hub',
-      label: '5. Parc Matériel & Sac',
-      icon: Boxes,
+      label: 'Parc Matériel & Sac',
     },
   ];
 
@@ -158,7 +134,7 @@ export function DepartLeftSidebar({
           )}
         </div>
 
-        {/* Quick actions buttons (Style Compte) */}
+        {/* Quick actions buttons */}
         <div className="grid grid-cols-2 gap-2">
           <Link
             href="/materiel/kits"
@@ -178,14 +154,13 @@ export function DepartLeftSidebar({
           </button>
         </div>
 
-        {/* Navigation Tabs (Style Compte 100% exact) */}
+        {/* Navigation Tabs (Pur, épuré, sans icônes ni numéros ni badges) */}
         <nav className="space-y-1 pt-1.5" aria-label="Navigation du départ">
           <p className="text-[10px] font-mono font-bold uppercase tracking-widest text-[#5A7064] px-2 mb-1.5">
             Navigation
           </p>
 
           {sections.map((t) => {
-            const IconComp = t.icon;
             const isActive = activeSection === t.id;
 
             return (
@@ -193,46 +168,21 @@ export function DepartLeftSidebar({
                 key={t.id}
                 type="button"
                 onClick={() => onSectionChange(t.id)}
-                className={`w-full px-3 py-2.5 rounded-xl font-bold text-xs transition-all flex items-center justify-between group cursor-pointer border ${
+                className={`w-full px-3.5 py-2.5 rounded-xl font-bold text-xs transition-all flex items-center justify-between group cursor-pointer border ${
                   isActive
                     ? 'bg-[#17402C] text-white border-[#17402C] shadow-sm'
                     : 'bg-white/80 hover:bg-white text-[#17402C] border-white/80 shadow-2xs'
                 }`}
               >
-                <div className="flex items-center gap-2.5 min-w-0">
-                  <span className={`shrink-0 transition-colors ${isActive ? 'text-[#A6C1A0]' : 'text-[#5A7064] group-hover:text-[#17402C]'}`}>
-                    <IconComp size={16} />
-                  </span>
-                  <span className="truncate text-left">{t.label}</span>
-                </div>
-
-                <div className="flex items-center gap-1.5 shrink-0 ml-2">
-                  {t.count !== undefined && (
-                    <span
-                      className={`text-[10px] font-mono font-bold px-2 py-0.5 rounded-full ${
-                        isActive ? 'bg-white/20 text-white' : 'glass-pill'
-                      }`}
-                    >
-                      {t.count}
-                    </span>
-                  )}
-                  {t.badge && (
-                    <span
-                      className={`text-[10px] font-mono font-bold px-2 py-0.5 rounded-full ${
-                        isActive ? 'bg-[#5B7F55] text-white' : 'glass-pill'
-                      }`}
-                    >
-                      {t.badge}
-                    </span>
-                  )}
-                </div>
+                <span className="truncate text-left">{t.label}</span>
+                {isActive && <ChevronRight size={13} className="text-white/70 shrink-0" />}
               </button>
             );
           })}
         </nav>
       </div>
 
-      {/* Bottom footer (Style Compte 100% exact) */}
+      {/* Bottom footer */}
       <div className="pt-2 border-t border-[#17402C]/5 space-y-2 shrink-0">
         <button
           type="button"

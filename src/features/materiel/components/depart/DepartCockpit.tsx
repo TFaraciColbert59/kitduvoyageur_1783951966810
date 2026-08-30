@@ -170,12 +170,12 @@ export function DepartCockpit({
   };
 
   const SECTIONS_TABS: TabOption[] = [
-    { id: 'all', label: 'Vue complète', icon: <LayoutGrid size={13} /> },
-    { id: 'overview', label: 'Statut & Départ', icon: <Compass size={13} /> },
-    { id: 'alerts', label: 'Alertes', icon: <AlertTriangle size={13} />, badge: smartAlerts.length || undefined },
-    { id: 'weight', label: 'Poids', icon: <Scale size={13} /> },
-    { id: 'terrain', label: 'Terrain & Carte', icon: <MapPin size={13} /> },
-    { id: 'equipment_hub', label: 'Parc Matériel & Sac', icon: <Boxes size={13} /> },
+    { id: 'all', label: "Vue d'ensemble" },
+    { id: 'overview', label: 'Statut & Fiche' },
+    { id: 'alerts', label: 'Alertes & Fiabilité' },
+    { id: 'weight', label: 'Analyse du Poids' },
+    { id: 'terrain', label: 'Terrain & Météo' },
+    { id: 'equipment_hub', label: 'Parc Matériel & Sac' },
   ];
 
   const showAll = activeSection === 'all';
