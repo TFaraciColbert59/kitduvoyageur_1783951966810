@@ -296,18 +296,19 @@ export function DepartChecklist({ items, consumables, isRealKit }: DepartCheckli
             const isFoodWater = group.name === 'Vivres & Eau' || group.name === 'Hydratation' || group.name === 'Nutrition';
 
             return (
-              <div key={group.name} role="listitem" className={cn('rounded-2xl transition-opacity', allDone && !isOpen && 'opacity-65 hover:opacity-100')}>
+              <div key={group.name} role="listitem" className={cn('rounded-2xl transition-opacity', allDone && !isOpen ? 'opacity-80 hover:opacity-100' : 'opacity-100')}>
                 {/* Header catégorie — bouton accordéon */}
                 <button
+                  type="button"
                   onClick={() => toggleCat(group.name)}
                   className={cn(
                     'w-full flex items-center justify-between gap-2 px-3 py-2.5 rounded-2xl transition-colors text-left cursor-pointer',
                     'focus-visible:outline-2 focus-visible:outline-[#17402C]',
                     allDone
-                      ? 'bg-black/3 dark:bg-white/3 text-[#5A7064]'
+                      ? 'bg-black/4 dark:bg-white/5 text-[#17402C]/80 hover:bg-black/6'
                       : isFoodWater
-                      ? 'bg-emerald-50/60 dark:bg-emerald-950/20 text-[#17402C] font-semibold border border-emerald-200/50 shadow-2xs'
-                      : 'bg-white/40 dark:bg-white/10 text-[#17402C] font-semibold shadow-2xs'
+                      ? 'bg-emerald-50/70 dark:bg-emerald-950/25 text-[#17402C] font-semibold border border-emerald-200/60 shadow-2xs'
+                      : 'bg-white/50 dark:bg-white/10 text-[#17402C] font-semibold shadow-2xs'
                   )}
                   aria-expanded={isOpen}
                   aria-controls={`checklist-cat-${group.name}`}
@@ -414,8 +415,8 @@ export function DepartChecklist({ items, consumables, isRealKit }: DepartCheckli
                                       className={cn(
                                         'text-xs sm:text-[13px] font-medium leading-snug',
                                         item.is_checked
-                                          ? 'line-through text-[#5A7064]/70'
-                                          : 'text-[#17402C]'
+                                          ? 'line-through text-[#5A7064]/90 decoration-[#5A7064]/70'
+                                          : 'text-[#17402C] font-semibold'
                                       )}
                                     >
                                       {item.name}

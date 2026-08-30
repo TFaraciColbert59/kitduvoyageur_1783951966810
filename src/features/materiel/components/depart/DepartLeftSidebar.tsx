@@ -34,6 +34,10 @@ interface DepartLeftSidebarProps {
   isOnline?: boolean;
 }
 
+function cleanText(text: string): string {
+  return (text || '').replace(/\s*\((?:copie|copy)\)\s*/gi, '').trim();
+}
+
 export function DepartLeftSidebar({
   depart,
   activeSection,
@@ -48,6 +52,7 @@ export function DepartLeftSidebar({
   const checkedCount = depart.assignedKit.items.filter((i) => i.is_checked).length;
   const itemsCount = depart.assignedKit.items.length;
   const totalWeightStr = formatWeight(depart.totalPackWeightG);
+  const cleanDestination = cleanText(depart.destination);
 
   const sections: {
     id: DepartSectionId;
@@ -80,18 +85,21 @@ export function DepartLeftSidebar({
       label: '3. Checklist & Vivres',
       icon: CheckSquare,
       badge: `${checkedCount}/${itemsCount}`,
+      badgeColor: 'bg-[#17402C]/15 text-[#17402C]',
     },
     {
       id: 'weight',
       label: '4. Analyse du Poids',
       icon: Scale,
       badge: totalWeightStr !== '--' ? totalWeightStr : undefined,
+      badgeColor: 'bg-[#17402C]/15 text-[#17402C]',
     },
     {
       id: 'terrain',
       label: '5. Météo & Sécurité',
       icon: MapPin,
       badge: depart.trail?.distance_km ? `${Math.round(depart.trail.distance_km)}km` : undefined,
+      badgeColor: 'bg-[#17402C]/15 text-[#17402C]',
     },
   ];
 
@@ -113,7 +121,7 @@ export function DepartLeftSidebar({
           </div>
 
           <h3 className="font-display font-bold text-sm text-[#17402C] leading-tight line-clamp-2">
-            {depart.destination}
+            {cleanDestination}
           </h3>
 
           {/* Statut réseau & Ultra-Save toggle (§19) */}
@@ -128,7 +136,7 @@ export function DepartLeftSidebar({
                 type="button"
                 onClick={onToggleUltraSave}
                 className={cn(
-                  'px-2 py-0.5 rounded-lg text-[9.5px] font-bold flex items-center gap-1 transition-all',
+                  'px-2 py-0.5 rounded-lg text-[9.5px] font-bold flex items-center gap-1 transition-all cursor-pointer',
                   isUltraSave
                     ? 'bg-[#2D6B4A] text-white shadow-xs'
                     : 'bg-white/40 text-[#17402C] hover:bg-white/60'
@@ -208,7 +216,7 @@ export function DepartLeftSidebar({
       <div className="pt-2.5 border-t border-white/40 grid grid-cols-2 gap-1.5 shrink-0">
         <Link
           href="/materiel/kits"
-          className="glass-capsule-btn text-[10.5px] !py-1.5 !px-2 flex items-center justify-center gap-1 font-semibold truncate"
+          className="glass-capsule-btn text-[10.5px] !py-1.5 !px-2 flex items-center justify-center gap-1 font-semibold truncate cursor-pointer"
           title="Modifier le kit"
         >
           <Edit3 size={11} />
@@ -217,7 +225,7 @@ export function DepartLeftSidebar({
         <button
           type="button"
           onClick={() => window.print()}
-          className="glass-capsule-btn text-[10.5px] !py-1.5 !px-2 flex items-center justify-center gap-1 font-semibold truncate"
+          className="glass-capsule-btn text-[10.5px] !py-1.5 !px-2 flex items-center justify-center gap-1 font-semibold truncate cursor-pointer"
           title="Imprimer la checklist de départ"
         >
           <Printer size={11} />

@@ -1,4 +1,4 @@
-'use client';
+﻿'use client';
 import { useRouter } from 'next/navigation';
 import { ChevronDown } from 'lucide-react';
 import { useState } from 'react';
@@ -8,6 +8,10 @@ import { cn } from '@/lib/utils';
 interface KitSwitcherProps {
   kits: { id: string; name: string }[];
   currentId: string;
+}
+
+function cleanKitName(name: string): string {
+  return (name || '').replace(/\s*\((?:copie|copy)\)\s*/gi, '').trim() || 'Kit';
 }
 
 export function KitSwitcher({ kits, currentId }: KitSwitcherProps) {
@@ -29,14 +33,15 @@ export function KitSwitcher({ kits, currentId }: KitSwitcherProps) {
   return (
     <div className="relative" aria-label="Changer de kit">
       <button
+        type="button"
         onClick={() => setOpen((v) => !v)}
-        className="glass-sub-card flex items-center gap-2 px-3 py-2 rounded-full text-[11px] sm:text-xs font-semibold text-[#17402C] hover:bg-white/30 transition-colors focus-visible:outline-2 focus-visible:outline-[#17402C]"
+        className="w-full glass-sub-card flex items-center justify-between gap-2 px-3 py-1.5 rounded-xl text-[11px] font-semibold text-[#17402C] hover:bg-white/40 transition-colors focus-visible:outline-2 focus-visible:outline-[#17402C] cursor-pointer"
         aria-expanded={open}
         aria-haspopup="listbox"
       >
-        <span className="max-w-[140px] truncate">{current.name}</span>
+        <span className="truncate">{cleanKitName(current.name)}</span>
         <motion.span animate={{ rotate: open ? 180 : 0 }} transition={{ duration: 0.18 }}>
-          <ChevronDown size={12} aria-hidden="true" />
+          <ChevronDown size={12} aria-hidden="true" className="text-[#5A7064]" />
         </motion.span>
       </button>
 
@@ -49,22 +54,23 @@ export function KitSwitcher({ kits, currentId }: KitSwitcherProps) {
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{ opacity: 0, y: -4, scale: 0.97 }}
             transition={{ duration: 0.15 }}
-            className="absolute left-0 top-full mt-1 z-50 glass rounded-2xl shadow-lg min-w-[200px] overflow-hidden"
+            className="absolute left-0 top-full mt-1 z-50 glass rounded-2xl shadow-lg w-full min-w-[200px] overflow-hidden border border-white/60"
           >
             {kits.map((kit) => (
               <li key={kit.id}>
                 <button
+                  type="button"
                   role="option"
                   aria-selected={kit.id === currentId}
                   onClick={() => handleSelect(kit.id)}
                   className={cn(
-                    'w-full text-left px-4 py-2.5 text-xs font-medium transition-colors',
+                    'w-full text-left px-3.5 py-2 text-xs font-medium transition-colors cursor-pointer',
                     kit.id === currentId
-                      ? 'text-[#17402C] font-semibold bg-white/20'
-                      : 'text-[#5A7064] hover:bg-white/15 hover:text-[#17402C]'
+                      ? 'text-[#17402C] font-semibold bg-white/40'
+                      : 'text-[#5A7064] hover:bg-white/20 hover:text-[#17402C]'
                   )}
                 >
-                  {kit.name}
+                  {cleanKitName(kit.name)}
                 </button>
               </li>
             ))}

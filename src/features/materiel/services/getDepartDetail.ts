@@ -1,4 +1,4 @@
-﻿import { createClient } from '@/lib/supabase/server';
+import { createClient } from '@/lib/supabase/server';
 import type { SupabaseClient } from '@supabase/supabase-js';
 import type { Participant, ChecklistItem } from '@/features/materiel/types/trekHub';
 import type { MapTrail } from '@/components/explorer/types';
@@ -140,15 +140,62 @@ function getShowcaseDepart(kitId?: string | null, customTrail?: MapTrail | null)
     ? { water: 2.5, gas: 230, meals: 4, snacks: 8 }
     : { water: 7.5, gas: 180, meals: 6, snacks: 6 };
 
-  const baseWeightG = calcBaseWeight(defaultItems);
-  const wornWeightG = calcWornWeight(defaultItems);
-  const consumablesWeightG = calcConsumablesWeight(defaultItems, consumablesMap);
+  const consumableItems: ChecklistItem[] = [];
+  if (consumablesMap) {
+    if (consumablesMap.water > 0) {
+      consumableItems.push({
+        id: 'consumable-water',
+        name: `Eau potable (${consumablesMap.water} L)`,
+        category: 'Vivres & Eau',
+        weight_g: Math.round(consumablesMap.water * 1000),
+        is_checked: false,
+        is_consumable: true,
+        is_vital: true,
+      });
+    }
+    if (consumablesMap.gas > 0) {
+      consumableItems.push({
+        id: 'consumable-gas',
+        name: `Cartouche de gaz (${consumablesMap.gas} g)`,
+        category: 'Vivres & Eau',
+        weight_g: consumablesMap.gas,
+        is_checked: false,
+        is_consumable: true,
+      });
+    }
+    if (consumablesMap.meals > 0) {
+      consumableItems.push({
+        id: 'consumable-meals',
+        name: `Rations repas (${consumablesMap.meals} repas)`,
+        category: 'Vivres & Eau',
+        weight_g: consumablesMap.meals * 150,
+        is_checked: false,
+        is_consumable: true,
+      });
+    }
+    if (consumablesMap.snacks > 0) {
+      consumableItems.push({
+        id: 'consumable-snacks',
+        name: `En-cas & barres (${consumablesMap.snacks} rations)`,
+        category: 'Vivres & Eau',
+        weight_g: consumablesMap.snacks * 50,
+        is_checked: false,
+        is_consumable: true,
+      });
+    }
+  }
+
+  const allItems = [...defaultItems, ...consumableItems];
+
+  const baseWeightG = calcBaseWeight(allItems);
+  const wornWeightG = calcWornWeight(allItems);
+  const consumablesWeightG = calcConsumablesWeight(allItems, consumablesMap);
   const totalPackWeightG = calcTotalPackWeight(baseWeightG, consumablesWeightG);
-  const checklistPct = calcReadinessPct(defaultItems);
-  const readinessScore = calcWeightedReadinessScore(defaultItems, null, '+33 6 12 34 56 78');
+  const checklistPct = calcReadinessPct(allItems);
+  const readinessScore = calcWeightedReadinessScore(allItems, null, '+33 6 12 34 56 78');
 
   const byCat = new Map<string, number>();
-  for (const i of defaultItems) {
+  for (const i of allItems) {
     if (i.is_worn || i.is_consumable) continue;
     const c = i.category ?? 'Autre';
     byCat.set(c, (byCat.get(c) ?? 0) + i.weight_g);
@@ -156,7 +203,7 @@ function getShowcaseDepart(kitId?: string | null, customTrail?: MapTrail | null)
   const weightBreakdown = Array.from(byCat.entries()).map(([category, value]) => ({ category, value }));
 
   const secMap = new Map<string, { total: number; done: number }>();
-  for (const i of defaultItems) {
+  for (const i of allItems) {
     const c = i.category ?? 'Autre';
     const s = secMap.get(c) ?? { total: 0, done: 0 };
     s.total += 1;
@@ -164,7 +211,7 @@ function getShowcaseDepart(kitId?: string | null, customTrail?: MapTrail | null)
     secMap.set(c, s);
   }
   const checklistSections = Array.from(secMap.entries()).map(([name, s]) => ({ name, total: s.total, done: s.done }));
-  const checklistItems = defaultItems.map((i) => ({ name: i.name, done: i.is_checked }));
+  const checklistItems = allItems.map((i) => ({ name: i.name, done: i.is_checked }));
 
   return {
     id: kitId || 'tmb-4j',
@@ -181,7 +228,7 @@ function getShowcaseDepart(kitId?: string | null, customTrail?: MapTrail | null)
       id: kitId || 'tmb-4j',
       name: isVercors ? 'Kit Vercors Ultra' : isBelledonne ? 'Kit Belledonne Hiver' : 'Kit Tour du Mont-Blanc',
       totalWeightG: baseWeightG,
-      items: defaultItems,
+      items: allItems,
     },
     weightBreakdown,
     checklistPct,
@@ -296,11 +343,63 @@ export async function getDepartDetail(id?: string | null, selectedRouteId?: stri
       };
     });
 
-    const items = rawItems.length > 0 ? rawItems : getShowcaseDepart().assignedKit.items;
+    const rawItemsList = rawItems.length > 0 ? rawItems : getShowcaseDepart().assignedKit.items;
+
+    const consumablesMap = (kit.consumables && Object.keys(kit.consumables).length > 0)
+      ? (kit.consumables as Record<string, number>)
+      : { water: 7.5, gas: 180, meals: 6, snacks: 6 };
+
+    const consumableItems: ChecklistItem[] = [];
+    const hasConsumablesCategory = rawItemsList.some((i) => i.category === 'Vivres & Eau');
+    if (!hasConsumablesCategory && consumablesMap) {
+      if ((consumablesMap.water ?? 0) > 0) {
+        consumableItems.push({
+          id: 'consumable-water',
+          name: `Eau potable (${consumablesMap.water} L)`,
+          category: 'Vivres & Eau',
+          weight_g: Math.round((consumablesMap.water ?? 0) * 1000),
+          is_checked: false,
+          is_consumable: true,
+          is_vital: true,
+        });
+      }
+      if ((consumablesMap.gas ?? 0) > 0) {
+        consumableItems.push({
+          id: 'consumable-gas',
+          name: `Cartouche de gaz (${consumablesMap.gas} g)`,
+          category: 'Vivres & Eau',
+          weight_g: consumablesMap.gas,
+          is_checked: false,
+          is_consumable: true,
+        });
+      }
+      if ((consumablesMap.meals ?? 0) > 0) {
+        consumableItems.push({
+          id: 'consumable-meals',
+          name: `Rations repas (${consumablesMap.meals} repas)`,
+          category: 'Vivres & Eau',
+          weight_g: (consumablesMap.meals ?? 0) * 150,
+          is_checked: false,
+          is_consumable: true,
+        });
+      }
+      if ((consumablesMap.snacks ?? 0) > 0) {
+        consumableItems.push({
+          id: 'consumable-snacks',
+          name: `En-cas & barres (${consumablesMap.snacks} rations)`,
+          category: 'Vivres & Eau',
+          weight_g: (consumablesMap.snacks ?? 0) * 50,
+          is_checked: false,
+          is_consumable: true,
+        });
+      }
+    }
+
+    const items = [...rawItemsList, ...consumableItems];
 
     const baseWeightG = calcBaseWeight(items);
     const wornWeightG = calcWornWeight(items);
-    const consumablesWeightG = calcConsumablesWeight(items, kit.consumables);
+    const consumablesWeightG = calcConsumablesWeight(items, consumablesMap);
     const totalPackWeightG = calcTotalPackWeight(baseWeightG, consumablesWeightG);
     const checklistPct = calcReadinessPct(items);
 
@@ -363,9 +462,7 @@ export async function getDepartDetail(id?: string | null, selectedRouteId?: stri
       checklistSections,
       checklistItems,
       durationDays: 3,
-      consumables: (kit.consumables && Object.keys(kit.consumables).length > 0)
-        ? (kit.consumables as Record<string, number>)
-        : { water: 7.5, gas: 180, meals: 6, snacks: 6 },
+      consumables: consumablesMap,
       trail: trailData,
       participants: participants.length ? participants : [{ name: 'Vous', initial: 'V', color: '#17402C', profileId: user.id }],
       emergencyContact: emergency,
