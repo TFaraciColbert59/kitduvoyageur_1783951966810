@@ -1,59 +1,82 @@
 'use client';
 import React from 'react';
-import dynamic from 'next/dynamic';
-import { DepartWeightBreakdown } from './DepartWeightBreakdown';
-import { DepartWeather } from './DepartWeather';
-import { DepartParticipants } from './DepartParticipants';
-import { Skeleton } from '@/components/ui/Skeleton';
+import { DepartAlerts } from './DepartAlerts';
+import { GlassCard } from '@/components/ui/GlassCard';
+import { Badge } from '@/components/ui/Badge';
+import { CountdownLive } from '@/features/materiel/components/cards/CountdownLive';
+import { FileText, Calendar, Compass, ShieldCheck } from 'lucide-react';
 import type { DepartDetail } from '@/features/materiel/services/getDepartDetail';
 import type { WeatherForecast } from '@/features/materiel/services/getWeather';
-
-const DepartMap = dynamic(
-  () => import('./DepartMap').then((m) => ({ default: m.DepartMap })),
-  {
-    ssr: false,
-    loading: () => (
-      <div className="glass rounded-[24px] overflow-hidden">
-        <div className="px-4 py-2.5 border-b border-white/20">
-          <Skeleton className="h-4 w-40" />
-        </div>
-        <Skeleton className="h-[200px] rounded-none" />
-      </div>
-    ),
-  }
-);
+import type { SmartPromptsInput } from '@/features/materiel/services/generateSmartPrompts';
 
 interface DepartRightSidebarProps {
   depart: DepartDetail;
   weather: WeatherForecast | null;
+  alertInput: SmartPromptsInput;
+  onOpenDepartureSheet?: () => void;
 }
 
-export function DepartRightSidebar({ depart, weather }: DepartRightSidebarProps) {
+function cleanText(text: string): string {
+  return (text || '').replace(/\s*\((?:copie|copy)\)\s*/gi, '').trim();
+}
+
+export function DepartRightSidebar({
+  depart,
+  weather,
+  alertInput,
+  onOpenDepartureSheet,
+}: DepartRightSidebarProps) {
+  const cleanDestination = cleanText(depart.destination);
+
   return (
-    <aside className="w-full space-y-3.5" aria-label="Informations complémentaires du départ">
-      {/* 1. Analyse du Poids */}
-      <DepartWeightBreakdown
-        breakdown={depart.weightBreakdown}
-        totalWeightG={depart.baseWeightG}
-        baseWeightG={depart.baseWeightG}
-        wornWeightG={depart.wornWeightG}
-        consumablesWeightG={depart.consumablesWeightG}
-        items={depart.assignedKit.items}
-        participants={depart.participants}
-        comparableTripName={depart.comparableTrip?.name}
-      />
+    <aside className="w-full h-full max-h-full flex flex-col gap-3 overflow-y-auto no-scrollbar pb-2 select-none" aria-label="Statut du départ et alertes">
+      {/* ════ SECTION 1 : STATUT DU DÉPART & FICHE RÉCAPITULATIVE ════ */}
+      <GlassCard tone="neutral" className="p-3.5 space-y-3 rounded-2xl border border-white/40 shadow-xs shrink-0">
+        <div className="flex items-start justify-between gap-1.5">
+          <div className="flex items-center gap-1.5 text-[10px] font-mono font-bold uppercase tracking-wider text-[#5A7064]">
+            <Compass size={12} className="text-[#2D6B4A]" />
+            <span>Fiche & Statut</span>
+          </div>
+          <Badge tone={depart.readinessScore.status === 'ok' ? 'sage' : 'warn'}>
+            <span className="text-[9px] font-bold">
+              {depart.readinessScore.percentage}% Prêt
+            </span>
+          </Badge>
+        </div>
 
-      {/* 2. Météo du secteur */}
-      <DepartWeather weather={weather} updatedAt={depart.updatedAt} />
+        <div>
+          <h3 className="font-display font-bold text-sm text-[#17402C] leading-snug line-clamp-2">
+            {cleanDestination}
+          </h3>
+          <div className="flex items-center gap-1 text-[11px] text-[#5A7064] font-medium mt-0.5">
+            <Calendar size={11} />
+            <span>Départ prévu le {depart.startsAt ? new Date(depart.startsAt).toLocaleDateString('fr-FR', { day: 'numeric', month: 'short' }) : 'prochainement'}</span>
+          </div>
+        </div>
 
-      {/* 3. Équipe & Sécurité */}
-      <DepartParticipants
-        participants={depart.participants}
-        emergencyContact={depart.emergencyContact}
-      />
+        {/* Compte à rebours temps réel */}
+        <div className="p-2 rounded-xl bg-black/5 dark:bg-white/10 flex items-center justify-between gap-2">
+          <span className="text-[10px] font-mono font-semibold text-[#5A7064]">Compte à rebours :</span>
+          <CountdownLive target={depart.startsAt} />
+        </div>
 
-      {/* 4. Carte du tracé */}
-      <DepartMap trail={depart.trail} height="200px" />
+        {/* Bouton Fiche de départ */}
+        {onOpenDepartureSheet && (
+          <button
+            type="button"
+            onClick={onOpenDepartureSheet}
+            className="w-full py-2 rounded-xl text-xs font-bold bg-[#17402C] text-white hover:bg-[#17402C]/90 shadow-2xs flex items-center justify-center gap-1.5 cursor-pointer transition-all active:scale-98"
+          >
+            <FileText size={13} />
+            <span>Ouvrir la fiche de départ</span>
+          </button>
+        )}
+      </GlassCard>
+
+      {/* ════ SECTION 2 : ALERTES & FIABILITÉ (Ce qui empêche de partir) ════ */}
+      <div className="flex-1 min-h-0">
+        <DepartAlerts input={alertInput} />
+      </div>
     </aside>
   );
 }

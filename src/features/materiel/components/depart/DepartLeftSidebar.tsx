@@ -53,30 +53,18 @@ export function DepartLeftSidebar({
       label: "Vue d'ensemble",
     },
     {
-      id: 'overview',
-      label: 'Statut & Fiche',
-    },
-    {
-      id: 'alerts',
-      label: 'Alertes & Fiabilité',
-    },
-    {
       id: 'weight',
       label: 'Analyse du Poids',
     },
     {
-      id: 'terrain',
-      label: 'Terrain & Météo',
-    },
-    {
       id: 'equipment_hub',
-      label: 'Parc Matériel & Sac',
+      label: 'Parc Matériel & Terrain',
     },
   ];
 
   return (
     <aside className="h-full max-h-full w-full flex-1 flex flex-col justify-between glass rounded-[1.5rem] p-3 text-[#17402C] font-sans overflow-hidden border border-white/40 shadow-sm select-none">
-      {/* ── 1. ZONE HAUTE FIXE (Identité du trek & Actions) — TOTALEMENT IMMOBILE ── */}
+      {/* ── 1. ZONE HAUTE FIXE (Identité du trek & Actions) — IMMOBILE ── */}
       <div className="shrink-0 space-y-2">
         <div className="p-2.5 rounded-2xl glass-sub-card space-y-1.5 relative overflow-hidden border border-white/50">
           <div className="flex items-start justify-between gap-1.5">
@@ -154,7 +142,7 @@ export function DepartLeftSidebar({
         </div>
       </div>
 
-      {/* ── 2. ZONE CENTRALE : SEUL CET INTÉRIEUR DÉFILE (boutons de navigation) ── */}
+      {/* ── 2. ZONE CENTRALE : 3 ENTRÉES ÉPURÉES ── */}
       <nav className="flex-1 min-h-0 overflow-y-auto no-scrollbar py-1 space-y-1" aria-label="Navigation du départ">
         <p className="text-[9px] font-mono font-bold uppercase tracking-widest text-[#5A7064] px-1.5 mb-0.5">
           Navigation
@@ -168,7 +156,7 @@ export function DepartLeftSidebar({
               key={t.id}
               type="button"
               onClick={() => onSectionChange(t.id)}
-              className={`w-full px-2.5 py-1.5 rounded-xl font-bold text-xs transition-all flex items-center justify-between group cursor-pointer border ${
+              className={`w-full px-2.5 py-2 rounded-xl font-bold text-xs transition-all flex items-center justify-between group cursor-pointer border ${
                 isActive
                   ? 'bg-[#17402C] text-white border-[#17402C] shadow-sm'
                   : 'bg-white/80 hover:bg-white text-[#17402C] border-white/80 shadow-2xs'
@@ -181,7 +169,7 @@ export function DepartLeftSidebar({
         })}
       </nav>
 
-      {/* ── 3. ZONE BASSE FIXE (Partage & Footer) — TOTALEMENT IMMOBILE & TOUJOURS VISIBLE ── */}
+      {/* ── 3. ZONE BASSE FIXE (Partage & Footer) — TOUJOURS VISIBLE ── */}
       <div className="shrink-0 pt-1.5 border-t border-[#17402C]/5 space-y-1">
         <button
           type="button"
