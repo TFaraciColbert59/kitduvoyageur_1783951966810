@@ -1,4 +1,5 @@
 import { createClient } from '@/lib/supabase/server';
+import { resolveGearImage } from './gearImageResolver';
 
 export interface ProductSuggestion {
   id: string;
@@ -11,7 +12,7 @@ export interface ProductSuggestion {
 }
 
 /** getProductSuggestions — produits boutique pour cross-sell (W-K-10), table shop_products. */
-export async function getProductSuggestions(category?: string, limit = 4): Promise<ProductSuggestion[]> {
+export async function getProductSuggestions(category?: string, limit = 12): Promise<ProductSuggestion[]> {
   try {
     const supabase = await createClient();
     let q = supabase
@@ -28,7 +29,7 @@ export async function getProductSuggestions(category?: string, limit = 4): Promi
       id: p.id,
       name: p.name,
       slug: p.slug,
-      image: p.image || '/assets/images/no_image.png',
+      image: resolveGearImage(p.name, p.category, p.image),
       priceEur: Number(p.price_eur ?? 0),
       category: p.category,
       weightG: p.weight_g ?? 0,

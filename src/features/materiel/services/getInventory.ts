@@ -1,4 +1,5 @@
 import { createClient } from '@/lib/supabase/server';
+import { resolveGearImage } from './gearImageResolver';
 
 export interface InventoryItem {
   id: string;
@@ -30,7 +31,10 @@ export async function getInventory(): Promise<InventoryItem[]> {
       .order('created_at', { ascending: false });
     if (error) throw error;
 
-    return (data ?? []) as InventoryItem[];
+    return (data ?? []).map((i: any) => ({
+      ...i,
+      photo_url: resolveGearImage(i.name, i.category, i.photo_url),
+    })) as InventoryItem[];
   } catch (err) {
     console.error('getInventory', err);
     return [];

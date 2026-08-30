@@ -1,3 +1,4 @@
+import { resolveGearImage } from './gearImageResolver';
 import { createClient } from '@/lib/supabase/server';
 import type { SupabaseClient } from '@supabase/supabase-js';
 import type { Participant, ChecklistItem } from '@/features/materiel/types/trekHub';
@@ -237,7 +238,10 @@ function getShowcaseDepart(kitId?: string | null, customTrail?: MapTrail | null)
     }
   }
 
-  const allItems = [...defaultItems, ...consumableItems];
+  const allItems = [...defaultItems, ...consumableItems].map((item) => ({
+    ...item,
+    photoUrl: resolveGearImage(item.name, item.category, item.photoUrl),
+  }));
 
   const baseWeightG = calcBaseWeight(allItems);
   const wornWeightG = calcWornWeight(allItems);
@@ -458,7 +462,7 @@ export async function getDepartDetail(id?: string | null, selectedRouteId?: stri
         is_checked: i.is_checked,
         is_worn: i.is_worn ?? false,
         is_consumable: i.is_consumable ?? false,
-        photoUrl: i.product_ownership?.photo_url ?? null,
+        photoUrl: resolveGearImage(name, category, i.product_ownership?.photo_url),
         productHref: null as string | null,
       };
     });
