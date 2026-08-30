@@ -400,12 +400,58 @@ export function DepartChecklist({
       if (it) handleToggle(it);
     };
 
+    const handleBagItemAdded = (e: any) => {
+      const detail = e?.detail;
+      if (!detail?.name) return;
+      setLocalItems((prev) => {
+        const exists = prev.some((i) => i.name.toLowerCase() === detail.name.toLowerCase());
+        if (exists) {
+          return prev.map((i) =>
+            i.name.toLowerCase() === detail.name.toLowerCase() ? { ...i, is_checked: true } : i
+          );
+        }
+        return [
+          ...prev,
+          {
+            id: `added-${Date.now()}`,
+            name: detail.name,
+            category: detail.category || 'Autre',
+            weight_g: detail.weightG || 0,
+            is_checked: true,
+            is_consumable: false,
+            is_vital: false,
+            quantity: 1,
+          },
+        ];
+      });
+    };
+
+    const handleReplenish = (e: any) => {
+      const detail = e?.detail;
+      if (!detail?.name) return;
+      setLocalItems((prev) =>
+        prev.map((i) => {
+          if (
+            i.name.toLowerCase().includes(detail.name.toLowerCase()) ||
+            detail.name.toLowerCase().includes(i.name.toLowerCase())
+          ) {
+            return { ...i, is_checked: true };
+          }
+          return i;
+        })
+      );
+    };
+
     window.addEventListener('highlight-checklist-item', handleHighlight);
     window.addEventListener('toggle-item-from-alert', handleToggleFromAlert);
+    window.addEventListener('bag-item-added', handleBagItemAdded);
+    window.addEventListener('replenish-consumable', handleReplenish);
 
     return () => {
       window.removeEventListener('highlight-checklist-item', handleHighlight);
       window.removeEventListener('toggle-item-from-alert', handleToggleFromAlert);
+      window.removeEventListener('bag-item-added', handleBagItemAdded);
+      window.removeEventListener('replenish-consumable', handleReplenish);
     };
   }, [groups, localItems, handleToggle]);
 

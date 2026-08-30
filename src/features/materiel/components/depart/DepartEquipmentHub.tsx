@@ -362,7 +362,40 @@ export function DepartEquipmentHub({
     }
   };
 
+  const [localBagItems, setLocalBagItems] = useState<Set<string>>(new Set());
+
   const handleQuickAddToBag = async (item: UnifiedEquipmentItem) => {
+    setLocalBagItems((prev) => new Set([...prev, item.id]));
+
+    if (typeof window !== 'undefined') {
+      window.dispatchEvent(
+        new CustomEvent('bag-item-added', {
+          detail: { name: item.name, category: item.category, weightG: item.weightG },
+        })
+      );
+    }
+
+    await addDepartItem({
+      kitId,
+      name: item.name,
+      category: item.category,
+      weightG: item.weightG,
+      isVital: false,
+      addToInventory: !item.inInventory,
+    });
+  };
+
+  const handleReplenishConsumable = async (item: UnifiedEquipmentItem) => {
+    setLocalBagItems((prev) => new Set([...prev, item.id]));
+
+    if (typeof window !== 'undefined') {
+      window.dispatchEvent(
+        new CustomEvent('replenish-consumable', {
+          detail: { name: item.name },
+        })
+      );
+    }
+
     await addDepartItem({
       kitId,
       name: item.name,
@@ -595,158 +628,177 @@ export function DepartEquipmentHub({
               ) : (
                 filteredItems.map((item) => {
                   const cond = item.condition ? CONDITION_LABELS[item.condition] : null;
+                  const isItemInBag = item.inBag || localBagItems.has(item.id);
+                  const isConsumable =
+                    item.category === 'Vivres & Eau' ||
+                    item.category === 'Nutrition' ||
+                    item.category === 'Hydratation' ||
+                    item.name.toLowerCase().includes('eau') ||
+                    item.name.toLowerCase().includes('gaz') ||
+                    item.name.toLowerCase().includes('ration') ||
+                    item.name.toLowerCase().includes('en-cas') ||
+                    item.name.toLowerCase().includes('nourriture');
+
+                  const targetUrl = item.slug
+                    ? `/produit/${item.slug}`
+                    : item.inInventory
+                    ? `/materiel/inventaire?q=${encodeURIComponent(item.name)}`
+                    : `/materiel/boutique?q=${encodeURIComponent(item.name)}`;
 
                   return (
-                    <div
-                      key={item.id}
-                      className={cn(
-                        'group rounded-[20px] overflow-hidden border transition-all duration-200 flex flex-col justify-between shadow-2xs hover:shadow-md backdrop-blur-md',
-                        item.isLent
-                          ? 'bg-amber-50/70 border-amber-200/90 text-amber-950'
-                          : item.inBag
-                          ? 'bg-emerald-50/50 border-emerald-200/80 text-[#17402C]'
-                          : 'bg-white/85 dark:bg-white/10 border-white/80 text-[#17402C]'
-                      )}
-                    >
-                      {/* 1. Zone Image Cadrée Parfaitement 16:10 avec Bouton Flèche */}
-                      <div className="relative w-full aspect-[16/10] overflow-hidden bg-black/5 rounded-t-[20px]">
-                        <img
-                          src={item.image}
-                          alt={item.name}
-                          className="w-full h-full object-cover object-center group-hover:scale-105 transition-transform duration-500"
-                          loading="lazy"
-                        />
-                        <div className="absolute inset-0 bg-gradient-to-t from-black/50 via-transparent to-black/20 pointer-events-none" />
-
-                        {/* Badge Catégorie Flottant Haut-Gauche */}
-                        <span className="absolute top-2.5 left-2.5 text-[9px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-lg bg-black/60 text-white backdrop-blur-md shadow-xs">
-                          {item.category}
-                        </span>
-
-                        {/* Bouton Flèche Redirection Fiche Contextuelle Haut-Droite */}
-                        <Link
-                          href={
-                            item.slug
-                              ? `/produit/${item.slug}`
-                              : item.inInventory
-                              ? `/materiel/kits`
-                              : `/materiel/boutique?q=${encodeURIComponent(item.name)}`
-                          }
-                          className="absolute top-2.5 right-2.5 w-7 h-7 rounded-full bg-white/90 hover:bg-white text-[#17402C] backdrop-blur-md flex items-center justify-center shadow-xs transition-transform hover:scale-110 active:scale-95 z-10"
-                          title={`Consulter la fiche détaillée de ${item.name}`}
-                          aria-label={`Consulter la fiche détaillée de ${item.name}`}
+                        <div
+                          key={item.id}
+                          className={cn(
+                            'group rounded-[20px] overflow-hidden border transition-all duration-200 flex flex-col justify-between shadow-2xs hover:shadow-md backdrop-blur-md',
+                            item.isLent
+                              ? 'bg-amber-50/70 border-amber-200/90 text-amber-950'
+                              : isItemInBag
+                              ? 'bg-emerald-50/50 border-emerald-200/80 text-[#17402C]'
+                              : 'bg-white/85 dark:bg-white/10 border-white/80 text-[#17402C]'
+                          )}
                         >
-                          <ArrowUpRight size={13} strokeWidth={2.5} />
-                        </Link>
-                      </div>
+                          {/* 1. Zone Image Cadrée 16:10 CLIQUABLE vers la Fiche Produit (Sans bouton flèche) */}
+                          <Link
+                            href={targetUrl}
+                            className="relative w-full aspect-[16/10] overflow-hidden bg-black/5 rounded-t-[20px] block cursor-pointer group/img"
+                            title={`Voir la fiche détaillée de ${item.name}`}
+                          >
+                            <img
+                              src={item.image}
+                              alt={item.name}
+                              className="w-full h-full object-cover object-center group-hover/img:scale-105 transition-transform duration-500"
+                              loading="lazy"
+                            />
+                            <div className="absolute inset-0 bg-gradient-to-t from-black/50 via-transparent to-black/20 pointer-events-none" />
 
-                      {/* 2. Titre, Métriques & Badges */}
-                      <div className="p-3 space-y-2 flex-1 flex flex-col justify-between">
-                        <div className="space-y-1">
-                          <div className="flex items-start justify-between gap-1.5">
-                            <h3 className="text-xs sm:text-[13px] font-bold text-[#17402C] leading-snug line-clamp-1">
-                              {item.name}
-                            </h3>
-                            {item.brand && (
-                              <span className="text-[10px] text-[#5A7064] font-medium shrink-0">
-                                {item.brand}
-                              </span>
-                            )}
-                          </div>
-
-                          {/* Statuts & État */}
-                          <div className="flex items-center gap-1 flex-wrap">
-                            {item.inInventory && (
-                              <span className="text-[8.5px] font-bold px-1.5 py-0.2 rounded-md bg-emerald-100 text-emerald-900 border border-emerald-200">
-                                Inventaire
-                              </span>
-                            )}
-
-                            {item.toAcquire && !item.inInventory && (
-                              <span className="text-[8.5px] font-bold px-1.5 py-0.2 rounded-md bg-blue-100 text-blue-900 border border-blue-200">
-                                Boutique
-                              </span>
-                            )}
-
-                            {cond && (
-                              <span className={cn('text-[8.5px] font-medium px-1.5 py-0.2 rounded-md', cond.tone)}>
-                                {cond.label}
-                              </span>
-                            )}
-                          </div>
-                        </div>
-
-                        {/* 3. Ligne Poids / Prix & Action Contextuelle Unique */}
-                        <div className="pt-2 border-t border-black/5 space-y-2">
-                          <div className="flex items-center justify-between text-xs">
-                            <span className="text-[11px] font-mono text-[#5A7064] flex items-center gap-1">
-                              <Scale size={11} />
-                              <strong>{formatWeight(item.weightG)}</strong>
+                            {/* Badge Catégorie Flottant Haut-Gauche */}
+                            <span className="absolute top-2.5 left-2.5 text-[9px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-lg bg-black/60 text-white backdrop-blur-md shadow-xs">
+                              {item.category}
                             </span>
+                          </Link>
 
-                            {item.priceEur !== null && (
-                              <span className="font-mono font-bold text-[#17402C] text-xs">
-                                {item.priceEur.toFixed(2)} €
-                              </span>
-                            )}
-                          </div>
-
-                          {/* 4. Bouton d'Action Primaire Unique (Apple-style) */}
-                          <div>
-                            {item.isLent && item.loanId ? (
-                              <button
-                                type="button"
-                                onClick={() => handleReturnLoan(item.loanId!, item.inventoryId)}
-                                className="w-full py-1.5 rounded-xl text-xs font-bold bg-[#17402C] text-white hover:bg-[#17402C]/90 shadow-2xs flex items-center justify-center gap-1 cursor-pointer transition-all active:scale-98"
-                              >
-                                <Check size={12} />
-                                <span>Marquer Rendu</span>
-                              </button>
-                            ) : item.inBag ? (
-                              <div className="w-full py-1.5 rounded-xl text-xs font-bold bg-emerald-100 text-emerald-900 border border-emerald-200 flex items-center justify-center gap-1">
-                                <Check size={12} />
-                                <span>Dans le sac ✓</span>
+                          {/* 2. Titre Cliquable & Badges */}
+                          <div className="p-3 space-y-2 flex-1 flex flex-col justify-between">
+                            <div className="space-y-1">
+                              <div className="flex items-start justify-between gap-1.5">
+                                <Link
+                                  href={targetUrl}
+                                  className="text-xs sm:text-[13px] font-bold text-[#17402C] hover:text-[#2D6B4A] transition-colors leading-snug line-clamp-1 block cursor-pointer"
+                                  title={item.name}
+                                >
+                                  {item.name}
+                                </Link>
+                                {item.brand && (
+                                  <span className="text-[10px] text-[#5A7064] font-medium shrink-0">
+                                    {item.brand}
+                                  </span>
+                                )}
                               </div>
-                            ) : (
-                              <button
-                                type="button"
-                                onClick={() => handleQuickAddToBag(item)}
-                                className="w-full py-1.5 rounded-xl text-xs font-bold bg-[#17402C] text-white hover:bg-[#17402C]/90 shadow-2xs flex items-center justify-center gap-1 cursor-pointer transition-all active:scale-98"
-                                title="Ajouter cet équipement au sac actif"
-                              >
-                                <Plus size={13} />
-                                <span>Ajouter au sac</span>
-                              </button>
-                            )}
 
-                            {/* Actions secondaires discrètes (seulement si hors sac) */}
-                            {!item.inBag && item.inInventory && !item.isLent && (
-                              <button
-                                type="button"
-                                onClick={() => {
-                                  setSelectedItemForLoan(item);
-                                  setIsLoanModalOpen(true);
-                                }}
-                                className="w-full mt-1 py-1 rounded-lg text-[10.5px] font-semibold text-[#2D6B4A] hover:bg-black/5 flex items-center justify-center gap-1 cursor-pointer"
-                              >
-                                <Handshake size={11} />
-                                <span>Prêter à un proche</span>
-                              </button>
-                            )}
+                              {/* Statuts & État */}
+                              <div className="flex items-center gap-1 flex-wrap">
+                                {item.inInventory && (
+                                  <span className="text-[8.5px] font-bold px-1.5 py-0.2 rounded-md bg-emerald-100 text-emerald-900 border border-emerald-200">
+                                    Inventaire
+                                  </span>
+                                )}
 
-                            {!item.inBag && !item.inInventory && item.slug && (
-                              <Link
-                                href={`/produit/${item.slug}`}
-                                className="w-full mt-1 py-1 rounded-lg text-[10.5px] font-semibold text-[#17402C] hover:bg-black/5 flex items-center justify-center gap-1 text-center"
-                              >
-                                <ExternalLink size={11} />
-                                <span>Voir fiche boutique</span>
-                              </Link>
-                            )}
+                                {item.toAcquire && !item.inInventory && (
+                                  <span className="text-[8.5px] font-bold px-1.5 py-0.2 rounded-md bg-blue-100 text-blue-900 border border-blue-200">
+                                    Boutique
+                                  </span>
+                                )}
+
+                                {cond && (
+                                  <span className={cn('text-[8.5px] font-medium px-1.5 py-0.2 rounded-md', cond.tone)}>
+                                    {cond.label}
+                                  </span>
+                                )}
+                              </div>
+                            </div>
+
+                            {/* 3. Ligne Poids / Prix & Action Contextuelle Unique */}
+                            <div className="pt-2 border-t border-black/5 space-y-2">
+                              <div className="flex items-center justify-between text-xs">
+                                <span className="text-[11px] font-mono text-[#5A7064] flex items-center gap-1">
+                                  <Scale size={11} />
+                                  <strong>{formatWeight(item.weightG)}</strong>
+                                </span>
+
+                                {item.priceEur !== null && (
+                                  <span className="font-mono font-bold text-[#17402C] text-xs">
+                                    {item.priceEur.toFixed(2)} €
+                                  </span>
+                                )}
+                              </div>
+
+                              {/* 4. Bouton d'Action Primaire Unique Strictement Adapté */}
+                              <div>
+                                {item.isLent && item.loanId ? (
+                                  <button
+                                    type="button"
+                                    onClick={() => handleReturnLoan(item.loanId!, item.inventoryId)}
+                                    className="w-full py-1.5 rounded-xl text-xs font-bold bg-[#17402C] text-white hover:bg-[#17402C]/90 shadow-2xs flex items-center justify-center gap-1 cursor-pointer transition-all active:scale-98"
+                                  >
+                                    <Check size={12} />
+                                    <span>Marquer Rendu</span>
+                                  </button>
+                                ) : isConsumable ? (
+                                  <button
+                                    type="button"
+                                    onClick={() => handleReplenishConsumable(item)}
+                                    className="w-full py-1.5 rounded-xl text-xs font-bold bg-[#17402C] text-white hover:bg-[#17402C]/90 shadow-2xs flex items-center justify-center gap-1.5 cursor-pointer transition-all active:scale-98"
+                                    title="Réapprovisionner les vivres et consommables"
+                                  >
+                                    <RotateCcw size={12} />
+                                    <span>Réapprovisionner</span>
+                                  </button>
+                                ) : isItemInBag ? (
+                                  <div className="w-full py-1.5 rounded-xl text-xs font-bold bg-emerald-100 text-emerald-900 border border-emerald-200 flex items-center justify-center gap-1">
+                                    <Check size={12} />
+                                    <span>Dans le sac ✓</span>
+                                  </div>
+                                ) : !item.inInventory ? (
+                                  <button
+                                    type="button"
+                                    onClick={() => handleQuickAddToBag(item)}
+                                    className="w-full py-1.5 rounded-xl text-xs font-bold bg-[#17402C] text-white hover:bg-[#17402C]/90 shadow-2xs flex items-center justify-center gap-1 cursor-pointer transition-all active:scale-98"
+                                    title="Ajouter cet équipement au sac actif"
+                                  >
+                                    <Plus size={13} />
+                                    <span>Ajouter à l'équipement</span>
+                                  </button>
+                                ) : (
+                                  <>
+                                    <button
+                                      type="button"
+                                      onClick={() => handleQuickAddToBag(item)}
+                                      className="w-full py-1.5 rounded-xl text-xs font-bold bg-[#17402C] text-white hover:bg-[#17402C]/90 shadow-2xs flex items-center justify-center gap-1 cursor-pointer transition-all active:scale-98"
+                                      title="Ajouter cet équipement au sac actif"
+                                    >
+                                      <Plus size={13} />
+                                      <span>Ajouter au sac</span>
+                                    </button>
+
+                                    {!item.isLent && (
+                                      <button
+                                        type="button"
+                                        onClick={() => {
+                                          setSelectedItemForLoan(item);
+                                          setIsLoanModalOpen(true);
+                                        }}
+                                        className="w-full mt-1 py-1 rounded-lg text-[10.5px] font-semibold text-[#2D6B4A] hover:bg-black/5 flex items-center justify-center gap-1 cursor-pointer"
+                                      >
+                                        <Handshake size={11} />
+                                        <span>Prêter à un proche</span>
+                                      </button>
+                                    )}
+                                  </>
+                                )}
+                              </div>
+                            </div>
                           </div>
                         </div>
-                      </div>
-                    </div>
                   );
                 })
               )}
