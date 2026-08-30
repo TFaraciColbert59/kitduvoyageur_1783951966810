@@ -14,6 +14,8 @@ import {
   Check,
   Sparkles,
   Share2,
+  Navigation,
+  Play,
   Mountain,
 } from 'lucide-react';
 import type { MapTrail } from './types';
@@ -110,29 +112,33 @@ export default function TrailDetailPanel({ trail, onClose }: Props) {
   };
 
   return (
-    <motion.div
-      initial={{ opacity: 0 }}
-      animate={{ opacity: 1 }}
-      exit={{ opacity: 0 }}
-      className="fixed inset-0 z-[1000] flex justify-end bg-[#17402C]/25 backdrop-blur-sm"
-      onClick={onClose}
-    >
+    <div className="fixed inset-0 z-[1000] flex items-center justify-end p-2.5 sm:p-4 md:p-6 pointer-events-none">
+      {/* Dimmed backdrop */}
       <motion.div
-        initial={{ x: '100%' }}
-        animate={{ x: 0 }}
-        exit={{ x: '100%' }}
-        transition={{ type: 'spring', stiffness: 350, damping: 32 }}
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        exit={{ opacity: 0 }}
+        className="fixed inset-0 bg-[#0B1F17]/35 backdrop-blur-[2px] pointer-events-auto"
+        onClick={onClose}
+      />
+
+      {/* Floating Bento Card */}
+      <motion.div
+        initial={{ x: '110%', opacity: 0, scale: 0.96 }}
+        animate={{ x: 0, opacity: 1, scale: 1 }}
+        exit={{ x: '110%', opacity: 0, scale: 0.96 }}
+        transition={{ type: 'spring', stiffness: 360, damping: 32 }}
         onClick={(e) => e.stopPropagation()}
-        className="glass w-full max-w-lg h-full border-l-0 flex flex-col justify-between overflow-hidden pb-[calc(env(safe-area-inset-bottom,0px)+74px)] md:pb-0"
+        className="relative pointer-events-auto w-full max-w-[460px] sm:max-w-[480px] h-[calc(100vh-20px)] sm:h-[calc(100vh-32px)] md:h-[calc(100vh-48px)] flex flex-col justify-between overflow-hidden rounded-[26px] sm:rounded-[32px] border border-white/85 shadow-2xl"
         style={{
-          borderRadius: 0,
-          borderRight: 'none',
-          borderTop: 'none',
-          borderBottom: 'none',
+          background: 'linear-gradient(180deg, rgba(255, 255, 255, 0.96) 0%, rgba(251, 250, 246, 0.92) 100%)',
+          backdropFilter: 'blur(30px) saturate(190%)',
+          WebkitBackdropFilter: 'blur(30px) saturate(190%)',
+          boxShadow: '0 24px 64px -12px rgba(23, 64, 44, 0.28), 0 0 0 1px rgba(255, 255, 255, 0.7), inset 0 1.5px 2px rgba(255, 255, 255, 1)',
         }}
       >
         {/* Header Hero Image */}
-        <div className="relative w-full h-52 sm:h-60 shrink-0 bg-stone-900">
+        <div className="relative w-full h-48 sm:h-56 shrink-0 bg-stone-900 overflow-hidden">
           <img
             src={imgUrl}
             alt={trail.name}
@@ -143,7 +149,7 @@ export default function TrailDetailPanel({ trail, onClose }: Props) {
           {/* Top Actions */}
           <div className="absolute top-3 left-3 right-3 flex items-center justify-between z-10">
             <span
-              className="rounded-[9px] px-[7px] py-[2px] text-[10px] font-bold"
+              className="rounded-[10px] px-2.5 py-1 text-[11px] font-bold shadow-xs"
               style={{
                 background: 'rgba(255, 255, 255, 0.92)',
                 border: '1px solid rgba(255, 255, 255, 0.60)',
@@ -157,7 +163,7 @@ export default function TrailDetailPanel({ trail, onClose }: Props) {
               <button
                 type="button"
                 onClick={handleShare}
-                className="w-8 h-8 rounded-full flex items-center justify-center text-[#17402C] transition-all active:scale-90 hover:bg-white"
+                className="w-8.5 h-8.5 rounded-full flex items-center justify-center text-[#17402C] transition-all active:scale-90 hover:bg-white cursor-pointer shadow-xs"
                 style={{
                   background: 'rgba(255, 255, 255, 0.92)',
                   border: '1px solid rgba(255, 255, 255, 0.60)',
@@ -169,7 +175,7 @@ export default function TrailDetailPanel({ trail, onClose }: Props) {
               <button
                 type="button"
                 onClick={onClose}
-                className="w-8 h-8 rounded-full flex items-center justify-center text-[#17402C] transition-all active:scale-90 hover:bg-white"
+                className="w-8.5 h-8.5 rounded-full flex items-center justify-center text-[#17402C] transition-all active:scale-90 hover:bg-white cursor-pointer shadow-xs"
                 style={{
                   background: 'rgba(255, 255, 255, 0.92)',
                   border: '1px solid rgba(255, 255, 255, 0.60)',
@@ -182,9 +188,9 @@ export default function TrailDetailPanel({ trail, onClose }: Props) {
           </div>
 
           {/* Title on Hero */}
-          <div className="absolute bottom-3 left-4 right-4">
+          <div className="absolute bottom-3 left-3.5 right-3.5">
             <div
-              className="rounded-[12px] px-2.5 py-1.5"
+              className="rounded-[14px] px-3 py-2 shadow-xs"
               style={{
                 background: 'rgba(255, 255, 255, 0.92)',
                 border: '1px solid rgba(255, 255, 255, 0.60)',
@@ -202,7 +208,7 @@ export default function TrailDetailPanel({ trail, onClose }: Props) {
         </div>
 
         {/* Scrollable Body */}
-        <div className="flex-1 min-h-0 overflow-y-auto p-4 sm:p-5 flex flex-col gap-4 no-scrollbar">
+        <div className="flex-1 min-h-0 overflow-y-auto p-4 sm:p-5 flex flex-col gap-3.5 no-scrollbar">
           {/* Key Stats Row */}
           <div className="grid grid-cols-3 gap-2">
             <StatPill
@@ -281,8 +287,10 @@ export default function TrailDetailPanel({ trail, onClose }: Props) {
             <button
               type="button"
               onClick={handleOfflineToggle}
-              className={`glass-capsule-btn shrink-0 ${
-                isOfflineAvailable ? 'glass-btn-danger' : 'primary'
+              className={`h-8 px-3 rounded-xl text-xs font-bold transition-all cursor-pointer active:scale-95 shrink-0 ${
+                isOfflineAvailable
+                  ? 'bg-rose-50 text-rose-700 border border-rose-200 hover:bg-rose-100'
+                  : 'bg-white/80 hover:bg-white text-[#17402C] border border-white/80 shadow-2xs'
               }`}
             >
               {isOfflineAvailable ? 'Supprimer' : 'Télécharger'}
@@ -290,14 +298,13 @@ export default function TrailDetailPanel({ trail, onClose }: Props) {
           </div>
         </div>
 
-        {/* Sticky Action Footer */}
+        {/* Sticky Action Footer — Apple Liquid Glass */}
         <div
-          className="p-3 sm:p-4 flex flex-col sm:flex-row gap-2 shrink-0"
+          className="p-3.5 sm:p-4 flex flex-col sm:flex-row gap-2.5 shrink-0 border-t border-white/60"
           style={{
-            background: 'linear-gradient(180deg, rgba(255, 255, 255, 0.55) 0%, rgba(255, 255, 255, 0.30) 100%)',
+            background: 'linear-gradient(180deg, rgba(255, 255, 255, 0.75) 0%, rgba(251, 250, 246, 0.60) 100%)',
             backdropFilter: 'blur(20px) saturate(180%)',
             WebkitBackdropFilter: 'blur(20px) saturate(180%)',
-            borderTop: '1px solid rgba(255, 255, 255, 0.50)',
             boxShadow: 'inset 0 1px 0 rgba(255, 255, 255, 0.9)',
           }}
         >
@@ -306,10 +313,10 @@ export default function TrailDetailPanel({ trail, onClose }: Props) {
             onClick={() => {
               router.push(`/preparer-randonnee?routeId=${trail.id}`);
             }}
-            className="glass-capsule-btn primary flex-1"
+            className="flex-1 h-11 rounded-2xl bg-white/80 hover:bg-white text-[#17402C] font-bold text-xs sm:text-sm flex items-center justify-center gap-2 border border-white/80 shadow-xs active:scale-[0.98] transition-all cursor-pointer"
           >
             <Backpack size={16} />
-            <span>🎒 Préparer le matériel & Kit</span>
+            <span>Préparer le matériel</span>
           </button>
 
           <button
@@ -317,13 +324,13 @@ export default function TrailDetailPanel({ trail, onClose }: Props) {
             onClick={() => {
               router.push(`/randonnee-active?routeId=${trail.id}`);
             }}
-            className="glass-capsule-btn secondary flex-1"
+            className="flex-1 h-11 rounded-2xl bg-gradient-to-b from-[#17402C] to-[#2D5A27] text-white font-bold text-xs sm:text-sm flex items-center justify-center gap-2 shadow-[0_4px_16px_rgba(23,64,44,0.3),inset_0_1px_1px_rgba(255,255,255,0.4)] hover:brightness-110 active:scale-[0.98] transition-all cursor-pointer"
           >
-            <Compass size={16} />
-            <span>📍 Guidage GPS</span>
+            <Play size={15} className="fill-current" />
+            <span>Commencer tout de suite</span>
           </button>
         </div>
       </motion.div>
-    </motion.div>
+    </div>
   );
 }

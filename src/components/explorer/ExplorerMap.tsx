@@ -102,7 +102,7 @@ export default function ExplorerMap({
   const userDraggingRef = useRef(false);
 
   const [mapInstance, setMapInstance] = useState<LeafletMap | null>(null);
-  const [tileMode, setTileMode] = useState<TileMode>('osm');
+  const [tileMode, setTileMode] = useState<TileMode>('topo');
   const [mapReady, setMapReady] = useState(false);
   const [locationState, setLocationState] = useState<LocationState>('idle');
   const [isUserPanned, setIsUserPanned] = useState(false);
@@ -206,7 +206,7 @@ export default function ExplorerMap({
         userDraggingRef.current = false;
       });
 
-      const initialCfg = OSM_TILE;
+      const initialCfg = TOPO_TILE;
       const tile = L.tileLayer(initialCfg.url, {
         attribution: initialCfg.attribution,
         maxZoom: 18,
@@ -569,7 +569,7 @@ export default function ExplorerMap({
           </button>
         </div>
 
-        {/* Tile switcher (Carte / Relief / Satellite) — Liquid Glass */}
+        {/* Tile switcher (Carte / Relief / Satellite) — Liquid Glass (Icônes seules) */}
         <div
           className="flex items-center gap-1 p-1 rounded-2xl"
           style={{
@@ -582,52 +582,49 @@ export default function ExplorerMap({
         >
           <button
             onClick={() => handleTileChange('osm')}
-            title="Carte standard"
-            aria-label="Carte standard"
-            className={`h-8 px-2.5 rounded-xl flex items-center gap-1.5 text-xs font-bold transition-all cursor-pointer active:scale-95 ${
+            title="Carte standard (Plan)"
+            aria-label="Carte standard (Plan)"
+            className={`h-8 w-8 rounded-xl flex items-center justify-center transition-all cursor-pointer active:scale-95 ${
               tileMode === 'osm'
                 ? 'bg-[#17402C] text-white shadow-xs'
                 : 'text-[#17402C] hover:bg-white/60'
             }`}
           >
-            <svg width="13" height="13" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+            <svg width="14" height="14" fill="none" stroke="currentColor" strokeWidth="2.2" viewBox="0 0 24 24">
               <path d="M3 6l6-3 6 3 6-3v12l-6 3-6-3-6 3V6z"></path>
               <path d="M9 3v12"></path>
               <path d="M15 6v12"></path>
             </svg>
-            <span className="hidden sm:inline">Plan</span>
           </button>
           <button
             onClick={() => handleTileChange('topo')}
-            title="Relief / Topo"
-            aria-label="Relief / Topo"
-            className={`h-8 px-2.5 rounded-xl flex items-center gap-1.5 text-xs font-bold transition-all cursor-pointer active:scale-95 ${
+            title="Relief / Topographie"
+            aria-label="Relief / Topographie"
+            className={`h-8 w-8 rounded-xl flex items-center justify-center transition-all cursor-pointer active:scale-95 ${
               tileMode === 'topo'
                 ? 'bg-[#17402C] text-white shadow-xs'
                 : 'text-[#17402C] hover:bg-white/60'
             }`}
           >
-            <svg width="13" height="13" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+            <svg width="14" height="14" fill="none" stroke="currentColor" strokeWidth="2.2" viewBox="0 0 24 24">
               <path d="M8 3l4 8 5-5 5 15H2L8 3z"></path>
             </svg>
-            <span className="hidden sm:inline">Relief</span>
           </button>
           <button
             onClick={() => handleTileChange('satellite')}
             title="Vue Satellite"
             aria-label="Vue Satellite"
-            className={`h-8 px-2.5 rounded-xl flex items-center gap-1.5 text-xs font-bold transition-all cursor-pointer active:scale-95 ${
+            className={`h-8 w-8 rounded-xl flex items-center justify-center transition-all cursor-pointer active:scale-95 ${
               tileMode === 'satellite'
                 ? 'bg-[#17402C] text-white shadow-xs'
                 : 'text-[#17402C] hover:bg-white/60'
             }`}
           >
-            <svg width="13" height="13" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+            <svg width="14" height="14" fill="none" stroke="currentColor" strokeWidth="2.2" viewBox="0 0 24 24">
               <circle cx="12" cy="12" r="10"></circle>
               <path d="M12 2a14.5 14.5 0 0 0 0 20 14.5 14.5 0 0 0 0-20"></path>
               <path d="M2 12h20"></path>
             </svg>
-            <span className="hidden sm:inline">Satellite</span>
           </button>
         </div>
       </div>

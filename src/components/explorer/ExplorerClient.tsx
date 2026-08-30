@@ -11,6 +11,7 @@ import {
   SlidersHorizontal,
   RotateCcw,
   Compass,
+  FileText,
   Backpack,
   Clock,
   TrendingUp,
@@ -806,17 +807,18 @@ export default function ExplorerClient({ initialTrails }: ExplorerClientProps) {
                   <button
                     type="button"
                     onClick={() => router.push(`/preparer-randonnee?routeId=${selectedTrail.id}`)}
-                    className="flex-1 h-7.5 rounded-xl bg-gradient-to-b from-[#17402C] to-[#365233] text-white text-[11px] font-bold flex items-center justify-center gap-1 border border-white/20 shadow-[inset_0_1px_1px_rgba(255,255,255,0.4),0_2px_8px_rgba(23,64,44,0.18)] hover:brightness-110 active:opacity-85 transition-all"
+                    className="flex-1 h-8 rounded-xl bg-gradient-to-b from-[#17402C] to-[#365233] text-white text-xs font-bold flex items-center justify-center border border-white/20 shadow-[inset_0_1px_1px_rgba(255,255,255,0.4),0_2px_8px_rgba(23,64,44,0.18)] hover:brightness-110 active:opacity-85 transition-all cursor-pointer"
                   >
-                    <Backpack size={11} />
                     <span>Préparer</span>
                   </button>
                   <button
                     type="button"
                     onClick={() => setDetailPanelOpen(true)}
-                    className="h-7.5 px-3 rounded-xl bg-[#FBFAF6] hover:bg-white text-[#17402C] text-[11px] font-bold border border-white/60 transition-colors"
+                    className="h-8 px-3 rounded-xl bg-[#FBFAF6] hover:bg-white text-[#17402C] border border-white/60 flex items-center justify-center transition-colors cursor-pointer active:scale-95 shadow-2xs"
+                    title="Voir la fiche complète"
+                    aria-label="Voir la fiche complète"
                   >
-                    Fiche
+                    <FileText size={14} />
                   </button>
                 </div>
               </div>

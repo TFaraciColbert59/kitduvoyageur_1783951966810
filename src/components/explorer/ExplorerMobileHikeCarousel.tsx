@@ -10,6 +10,7 @@ import {
   Clock,
   TrendingUp,
   Backpack,
+  FileText,
   List,
   Layers,
 } from 'lucide-react';
@@ -178,9 +179,8 @@ export default function ExplorerMobileHikeCarousel({
                         triggerHaptic('light');
                         router.push(`/preparer-randonnee?routeId=${trail.id}`);
                       }}
-                      className="flex-1 h-8.5 rounded-xl bg-[#17402C] text-white text-[11px] font-bold flex items-center justify-center gap-1.5 hover:brightness-110 active:scale-[0.97] transition-transform cursor-pointer shadow-xs"
+                      className="flex-1 h-8.5 rounded-xl bg-[#17402C] text-white text-xs font-bold flex items-center justify-center hover:brightness-110 active:scale-[0.97] transition-transform cursor-pointer shadow-xs"
                     >
-                      <Backpack size={12} />
                       <span>Préparer</span>
                     </button>
 
@@ -191,9 +191,11 @@ export default function ExplorerMobileHikeCarousel({
                         triggerHaptic('light');
                         onOpenDetail(trail);
                       }}
-                      className="h-8.5 px-3.5 rounded-xl bg-white/90 hover:bg-white text-[#17402C] text-[11px] font-bold border border-white/80 active:scale-[0.97] transition-transform cursor-pointer shadow-xs"
+                      className="h-8.5 w-9 rounded-xl bg-white/90 hover:bg-white text-[#17402C] border border-white/80 active:scale-[0.97] transition-transform cursor-pointer shadow-xs flex items-center justify-center"
+                      title="Voir la fiche complète"
+                      aria-label="Voir la fiche complète"
                     >
-                      Fiche
+                      <FileText size={14} />
                     </button>
                   </div>
                 </div>
