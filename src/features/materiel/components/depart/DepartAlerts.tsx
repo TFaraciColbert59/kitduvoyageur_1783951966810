@@ -1,6 +1,18 @@
 ﻿'use client';
 import { useState, useEffect } from 'react';
-import { AlertTriangle, Info, Zap, X, ChevronDown, ArrowRight, Check, ShieldCheck } from 'lucide-react';
+import { useRouter } from 'next/navigation';
+import {
+  AlertTriangle,
+  Info,
+  Zap,
+  X,
+  ChevronDown,
+  ArrowRight,
+  ShieldCheck,
+  HelpCircle,
+  Clock,
+  ExternalLink,
+} from 'lucide-react';
 import { motion, AnimatePresence, useReducedMotion } from 'framer-motion';
 import { generateSmartPrompts, type ActionableAlert, type SmartPromptsInput } from '@/features/materiel/services/generateSmartPrompts';
 import { cn } from '@/lib/utils';
@@ -14,18 +26,21 @@ const severityIcon = (s: ActionableAlert['severity']) => {
   return <Info size={14} aria-hidden="true" />;
 };
 
-const severityClasses: Record<ActionableAlert['severity'], { container: string; btn: string }> = {
+const severityClasses: Record<ActionableAlert['severity'], { container: string; btn: string; whyBox: string }> = {
   critical: {
     container: 'bg-[rgba(168,68,58,0.10)] border-[rgba(168,68,58,0.25)] text-[#8A241B]',
     btn: 'bg-[#8A241B] text-white hover:bg-[#8A241B]/90',
+    whyBox: 'bg-[rgba(168,68,58,0.06)] border-[rgba(168,68,58,0.15)] text-[#8A241B]',
   },
   warning: {
     container: 'bg-[rgba(200,154,59,0.10)] border-[rgba(200,154,59,0.25)] text-[#8C6418]',
     btn: 'bg-[#8C6418] text-white hover:bg-[#8C6418]/90',
+    whyBox: 'bg-[rgba(200,154,59,0.06)] border-[rgba(200,154,59,0.15)] text-[#8C6418]',
   },
   info: {
     container: 'bg-[rgba(91,127,85,0.08)] border-[rgba(91,127,85,0.20)] text-[#17402C]',
     btn: 'bg-[#2D6B4A] text-white hover:bg-[#2D6B4A]/90',
+    whyBox: 'bg-[rgba(91,127,85,0.05)] border-[rgba(91,127,85,0.12)] text-[#17402C]',
   },
 };
 
@@ -34,29 +49,28 @@ interface DepartAlertsProps {
 }
 
 export function DepartAlerts({ input }: DepartAlertsProps) {
+  const router = useRouter();
   const shouldReduceMotion = useReducedMotion();
   const allAlerts = generateSmartPrompts(input);
   const [dismissed, setDismissed] = useState<Set<string>>(new Set());
   const [expanded, setExpanded] = useState(false);
+  const [openWhyId, setOpenWhyId] = useState<string | null>(null);
 
-  // Charger les alertes acquittées depuis le localStorage avec horodatage
+  // Charger les alertes snoozées / acquittées depuis le localStorage avec horodatage 24h
   useEffect(() => {
     try {
       const raw = localStorage.getItem(DISMISS_STORAGE_KEY);
       if (raw) {
         const parsed = JSON.parse(raw);
-        // Expiration après 24h
         const validDismissed = Object.entries(parsed)
           .filter(([_, timestamp]) => Date.now() - Number(timestamp) < 24 * 3600 * 1000)
           .map(([id]) => id);
         setDismissed(new Set(validDismissed));
       }
-    } catch {
-      // Ignorer erreurs de lecture locale
-    }
+    } catch {}
   }, []);
 
-  const handleDismiss = (id: string) => {
+  const handleSnooze = (id: string) => {
     setDismissed((prev) => {
       const updated = new Set(prev).add(id);
       try {
@@ -79,25 +93,23 @@ export function DepartAlerts({ input }: DepartAlertsProps) {
           new CustomEvent('highlight-checklist-item', { detail: { id: alert.targetItemId } })
         );
       }
-    } else if (alert.actionType === 'scroll_weather') {
-      const el = document.getElementById('section-depart-terrain');
-      el?.scrollIntoView({ behavior: 'smooth' });
-    } else if (alert.actionType === 'edit_emergency') {
+    } else if (alert.actionType === 'view_dispo') {
+      router.push('/materiel/dispo');
+    } else if (alert.actionType === 'scroll_weather' || alert.actionType === 'edit_emergency') {
       const el = document.getElementById('section-depart-terrain');
       el?.scrollIntoView({ behavior: 'smooth' });
     } else if (alert.actionType === 'mark_planned') {
-      handleDismiss(alert.id);
+      handleSnooze(alert.id);
     } else if (alert.actionType === 'check_item' && alert.targetItemId) {
       if (typeof window !== 'undefined') {
         window.dispatchEvent(
           new CustomEvent('toggle-item-from-alert', { detail: { id: alert.targetItemId } })
         );
       }
-      handleDismiss(alert.id);
+      handleSnooze(alert.id);
     }
   };
 
-  // Filtrer les alertes non acquittées
   const activeAlerts = allAlerts.filter((a) => !dismissed.has(a.id));
   const visibleAlerts = expanded ? activeAlerts : activeAlerts.slice(0, MAX_VISIBLE);
   const hiddenCount = activeAlerts.length - MAX_VISIBLE;
@@ -146,6 +158,7 @@ export function DepartAlerts({ input }: DepartAlertsProps) {
         <div className="space-y-2">
           {visibleAlerts.map((alert) => {
             const sc = severityClasses[alert.severity] || severityClasses.info;
+            const isWhyOpen = openWhyId === alert.id;
 
             return (
               <motion.div
@@ -155,53 +168,104 @@ export function DepartAlerts({ input }: DepartAlertsProps) {
                 exit={shouldReduceMotion ? { opacity: 0 } : { opacity: 0, scale: 0.98 }}
                 transition={{ duration: shouldReduceMotion ? 0 : 0.18 }}
                 className={cn(
-                  'glass p-3 sm:p-3.5 rounded-2xl border flex flex-col sm:flex-row sm:items-center justify-between gap-3 shadow-2xs',
+                  'glass p-3 sm:p-3.5 rounded-2xl border flex flex-col gap-2.5 shadow-2xs',
                   sc.container
                 )}
                 role="alert"
               >
-                {/* Icône + Contenu */}
-                <div className="flex items-start gap-2.5 min-w-0">
-                  <div className="w-7 h-7 rounded-xl bg-white/60 dark:bg-white/10 flex items-center justify-center shrink-0 mt-0.5">
-                    {severityIcon(alert.severity)}
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                  {/* Icône + Contenu */}
+                  <div className="flex items-start gap-2.5 min-w-0">
+                    <div className="w-7 h-7 rounded-xl bg-white/60 dark:bg-white/10 flex items-center justify-center shrink-0 mt-0.5">
+                      {severityIcon(alert.severity)}
+                    </div>
+                    <div className="min-w-0 space-y-0.5">
+                      <div className="flex items-center gap-1.5 flex-wrap">
+                        <h3 className="text-xs sm:text-[12.5px] font-bold leading-tight truncate">
+                          {alert.title}
+                        </h3>
+                        {alert.whyExplanation && (
+                          <button
+                            type="button"
+                            onClick={() => setOpenWhyId(isWhyOpen ? null : alert.id)}
+                            className="inline-flex items-center gap-0.5 text-[10px] font-semibold opacity-70 hover:opacity-100 cursor-pointer underline underline-offset-2"
+                            title="Pourquoi cette alerte ?"
+                          >
+                            <HelpCircle size={10} />
+                            <span>Pourquoi ?</span>
+                          </button>
+                        )}
+                      </div>
+                      <p className="text-[11px] opacity-90 leading-snug line-clamp-2 sm:line-clamp-1">
+                        {alert.message}
+                      </p>
+                    </div>
                   </div>
-                  <div className="min-w-0 space-y-0.5">
-                    <h3 className="text-xs sm:text-[12.5px] font-bold leading-tight truncate">
-                      {alert.title}
-                    </h3>
-                    <p className="text-[11px] opacity-90 leading-snug line-clamp-2 sm:line-clamp-1">
-                      {alert.message}
-                    </p>
-                  </div>
-                </div>
 
-                {/* Actions en 1 tap (§4C) */}
-                <div className="flex items-center gap-1.5 self-end sm:self-center shrink-0">
-                  {alert.actionLabel && (
+                  {/* Actions & Snooze */}
+                  <div className="flex items-center gap-1.5 self-end sm:self-center shrink-0">
+                    {alert.actionLabel && (
+                      <button
+                        type="button"
+                        onClick={() => handleAction(alert)}
+                        className={cn(
+                          'px-3 py-1.5 rounded-xl text-xs font-bold flex items-center gap-1 shadow-2xs transition-all cursor-pointer',
+                          sc.btn
+                        )}
+                      >
+                        <span>{alert.actionLabel}</span>
+                        {alert.actionType === 'view_dispo' ? (
+                          <ExternalLink size={11} />
+                        ) : (
+                          <ArrowRight size={11} />
+                        )}
+                      </button>
+                    )}
+
+                    {/* Snooze 24h */}
                     <button
                       type="button"
-                      onClick={() => handleAction(alert)}
+                      onClick={() => handleSnooze(alert.id)}
+                      className="p-1.5 rounded-xl hover:bg-black/5 dark:hover:bg-white/10 opacity-70 hover:opacity-100 transition-opacity flex items-center gap-1 text-[10px] font-medium cursor-pointer"
+                      title="Reporter cette alerte de 24h"
+                      aria-label={`Reporter l'alerte : ${alert.title}`}
+                    >
+                      <Clock size={12} />
+                      <span className="hidden sm:inline">24h</span>
+                    </button>
+
+                    {/* Dismiss */}
+                    <button
+                      type="button"
+                      onClick={() => handleSnooze(alert.id)}
+                      className="p-1.5 rounded-xl hover:bg-black/5 dark:hover:bg-white/10 opacity-70 hover:opacity-100 transition-opacity cursor-pointer"
+                      title="Masquer"
+                      aria-label="Masquer l'alerte"
+                    >
+                      <X size={13} />
+                    </button>
+                  </div>
+                </div>
+
+                {/* Explication transparente "Pourquoi cette alerte ?" (§Phase 2) */}
+                <AnimatePresence>
+                  {isWhyOpen && alert.whyExplanation && (
+                    <motion.div
+                      initial={{ opacity: 0, height: 0 }}
+                      animate={{ opacity: 1, height: 'auto' }}
+                      exit={{ opacity: 0, height: 0 }}
+                      transition={{ duration: 0.15 }}
                       className={cn(
-                        'px-3 py-1.5 rounded-xl text-xs font-bold flex items-center gap-1 shadow-2xs transition-all cursor-pointer',
-                        sc.btn
+                        'text-[11px] p-2.5 rounded-xl border leading-relaxed',
+                        sc.whyBox
                       )}
                     >
-                      <span>{alert.actionLabel}</span>
-                      <ArrowRight size={11} />
-                    </button>
+                      <p>
+                        <strong>Règle LKDV :</strong> {alert.whyExplanation}
+                      </p>
+                    </motion.div>
                   )}
-
-                  {/* Dismiss discret */}
-                  <button
-                    type="button"
-                    onClick={() => handleDismiss(alert.id)}
-                    className="p-1.5 rounded-xl hover:bg-black/5 dark:hover:bg-white/10 opacity-70 hover:opacity-100 transition-opacity cursor-pointer"
-                    title="Masquer cette alerte"
-                    aria-label={`Masquer l'alerte : ${alert.title}`}
-                  >
-                    <X size={13} />
-                  </button>
-                </div>
+                </AnimatePresence>
               </motion.div>
             );
           })}

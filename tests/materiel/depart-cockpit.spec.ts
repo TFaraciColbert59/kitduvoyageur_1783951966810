@@ -127,6 +127,68 @@ describe('Depart Cockpit - Complete V2 Test Suite', () => {
       expect(alerts.length).toBeGreaterThan(0);
       expect(alerts[0].severity).toBe('critical');
       expect(alerts[0].title).toContain('vital');
+      expect(alerts[0].whyExplanation).toBeDefined();
+    });
+
+    it('détecte le matériel prêté et fournit une action vers la disponibilité (Phase 2)', () => {
+      const items = [
+        { id: 'item-rechaud-1', name: 'Réchaud Optimus', category: 'Cuisine', weight_g: 180, is_checked: true },
+      ];
+      const loans = [
+        {
+          id: 'loan-1',
+          product_ownership_id: 'item-rechaud-1',
+          lender_id: 'user-1',
+          borrower_id: null,
+          borrower_contact: 'Lucas',
+          status: 'en_cours' as const,
+          loaned_at: '2026-08-10',
+          due_date: '2026-09-02',
+          returned_at: null,
+        },
+      ];
+
+      const alerts = generateSmartPrompts({
+        items,
+        participants: [{ name: 'Vous', initial: 'V', color: '#17402C' }],
+        emergencyContact: '+33612345678',
+        loans,
+      });
+
+      expect(alerts.some((a) => a.id.includes('alert-loan'))).toBe(true);
+      const loanAlert = alerts.find((a) => a.id.includes('alert-loan'));
+      expect(loanAlert?.severity).toBe('critical');
+      expect(loanAlert?.actionType).toBe('view_dispo');
+      expect(loanAlert?.whyExplanation).toContain('prêté');
+    });
+
+    it('intègre les alertes réelles d inventaire pour le matériel du kit (Phase 2)', () => {
+      const items = [
+        { id: 'item-filtre-1', name: 'Filtre Katadyn BeFree', category: 'Hydratation', weight_g: 65, is_checked: true },
+      ];
+      const inventoryAlerts = [
+        {
+          id: 'item-filtre-1',
+          type: 'expiration_cartouche',
+          severity: 'warning' as const,
+          message: 'Cartouche filtrante à remplacer (dépassée)',
+          is_resolved: false,
+          due_at: '2026-08-01',
+          created_at: '2026-08-01',
+        },
+      ];
+
+      const alerts = generateSmartPrompts({
+        items,
+        participants: [{ name: 'Vous', initial: 'V', color: '#17402C' }],
+        emergencyContact: '+33612345678',
+        inventoryAlerts,
+      });
+
+      expect(alerts.some((a) => a.id.includes('alert-inv'))).toBe(true);
+      const invAlert = alerts.find((a) => a.id.includes('alert-inv'));
+      expect(invAlert?.title).toContain('Inventaire');
+      expect(invAlert?.whyExplanation).toBeDefined();
     });
   });
 });

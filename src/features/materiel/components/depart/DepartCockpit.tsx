@@ -92,6 +92,7 @@ export function DepartCockpit({ depart, weather, kits }: DepartCockpitProps) {
     participants: depart.participants,
     emergencyContact: depart.emergencyContact,
     trailDistanceKm: depart.trail?.distance_km ?? null,
+    activityType: depart.activityType,
   };
 
   const smartAlerts = generateSmartPrompts(alertInput);

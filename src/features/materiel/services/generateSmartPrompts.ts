@@ -1,5 +1,7 @@
-﻿import type { SmartPromptAlert, ChecklistItem, Participant } from '../types/trekHub';
+import type { SmartPromptAlert, ChecklistItem, Participant } from '../types/trekHub';
 import type { WeatherForecast } from './getWeather';
+import type { AlertItem } from './getAlerts';
+import type { LoanItem } from './getLoans';
 
 export interface SmartPromptsInput {
   items: ChecklistItem[];
@@ -7,16 +9,21 @@ export interface SmartPromptsInput {
   participants: Participant[];
   emergencyContact?: string | null;
   trailDistanceKm?: number | null;
+  inventoryAlerts?: AlertItem[];
+  loans?: LoanItem[];
+  activityType?: string | null;
 }
 
 export interface ActionableAlert extends SmartPromptAlert {
   targetItemId?: string;
-  actionType?: 'check_item' | 'scroll_checklist' | 'scroll_weather' | 'edit_emergency' | 'mark_planned';
+  actionType?: 'check_item' | 'scroll_checklist' | 'scroll_weather' | 'edit_emergency' | 'mark_planned' | 'view_dispo' | 'view_admin';
+  whyExplanation?: string;
+  loanDetail?: { borrower?: string | null; dueDate?: string | null };
 }
 
 /**
- * Moteur d'analyse en temps réel pour générer les alertes tactiques (§4B).
- * Zéro fiction : alerte uniquement sur les réels manques d'équipement, météo ou sécurité.
+ * Moteur d'analyse en temps réel pour générer les alertes tactiques (Phase 2).
+ * Zéro fiction : alerte uniquement sur les réels manques d'équipement, disponibilité, météo ou sécurité.
  */
 export function generateSmartPrompts({
   items = [],
@@ -24,10 +31,64 @@ export function generateSmartPrompts({
   participants = [],
   emergencyContact,
   trailDistanceKm,
+  inventoryAlerts = [],
+  loans = [],
+  activityType,
 }: SmartPromptsInput): ActionableAlert[] {
   const alerts: ActionableAlert[] = [];
 
-  // 1. Analyse Météo Temps Réel
+  // 1. Matériel Actuellement Prêté / Indisponible (Phase 2 - Sévérité Critique)
+  for (const item of items) {
+    // Si l'item a un prêt actif
+    const activeLoan = loans.find(
+      (l) => (l.status === 'en_cours' || l.status === 'en_retard') &&
+        (item.id && l.product_ownership_id === item.id)
+    );
+
+    if (activeLoan) {
+      const borrower = activeLoan.borrower_contact || 'un contact';
+      const due = activeLoan.due_date ? ` (retour prévu le ${activeLoan.due_date})` : '';
+      alerts.push({
+        id: `alert-loan-${item.id || item.name}`,
+        category: 'equipment',
+        severity: 'critical',
+        title: `Matériel actuellement prêté : ${item.name}`,
+        message: `Cet équipement est prêté à ${borrower}${due}. Pensez à le récupérer avant le départ.`,
+        targetSection: 'checklist',
+        targetItemId: item.id,
+        actionLabel: 'Gérer la disponibilité',
+        actionType: 'view_dispo',
+        whyExplanation: `Cet article fait partie de votre pack pour ce départ mais est actuellement enregistré comme prêté dans votre gestionnaire de matériel.`,
+        loanDetail: { borrower: activeLoan.borrower_contact, dueDate: activeLoan.due_date },
+      });
+    }
+  }
+
+  // 2. Alertes Réelles d'Inventaire (Maintenance / Péremption / Rappel)
+  for (const invAlert of inventoryAlerts) {
+    if (invAlert.is_resolved) continue;
+    // Vérifier si l'alerte concerne un article présent dans ce kit
+    const matchedItem = items.find(
+      (i) => i.id === invAlert.id || (invAlert.message && invAlert.message.toLowerCase().includes(i.name.toLowerCase()))
+    );
+
+    if (matchedItem) {
+      alerts.push({
+        id: `alert-inv-${invAlert.id}`,
+        category: 'equipment',
+        severity: invAlert.severity || 'warning',
+        title: `Inventaire : ${matchedItem.name}`,
+        message: invAlert.message,
+        targetSection: 'checklist',
+        targetItemId: matchedItem.id,
+        actionLabel: 'Vérifier l’équipement',
+        actionType: 'scroll_checklist',
+        whyExplanation: `Une alerte active est enregistrée dans votre inventaire pour cet article spécifique (${invAlert.type || 'maintenance/sécurité'}).`,
+      });
+    }
+  }
+
+  // 3. Analyse Météo Temps Réel
   if (weather && weather.days && weather.days.length > 0) {
     const rainyDay = weather.days.find((d) => d.precipPct >= 40 || (d.weathercode >= 51 && d.weathercode <= 82));
     const stormyDay = weather.days.find((d) => d.weathercode >= 95);
@@ -38,11 +99,12 @@ export function generateSmartPrompts({
         id: 'alert-weather-storm',
         category: 'weather',
         severity: 'critical',
-        title: `Risque d'Orage (${stormyDay.day})`,
-        message: `Conditions instables prévues (${stormyDay.day}). Évitez les crêtes exposées et vérifiez l'abri.`,
+        title: `Risque d’Orage (${stormyDay.day})`,
+        message: `Conditions instables prévues (${stormyDay.day}). Évitez les crêtes exposées et vérifiez l’abri.`,
         targetSection: 'weather',
         actionLabel: 'Voir la météo',
         actionType: 'scroll_weather',
+        whyExplanation: `Le bulletin météo Open-Meteo pour votre lieu de départ prévoit un risque orageux élevé (code météo ${stormyDay.weathercode}).`,
       });
     } else if (rainyDay) {
       const rainGear = items.find((i) =>
@@ -61,6 +123,7 @@ export function generateSmartPrompts({
           targetItemId: rainGear?.id,
           actionLabel: rainGear ? `Cocher ${rainGear.name}` : 'Voir les vestes',
           actionType: rainGear ? 'check_item' : 'scroll_checklist',
+          whyExplanation: `Des précipitations sont prévues (${rainyDay.precipPct}%) et aucun vêtement de pluie n'est encore validé dans votre sac.`,
         });
       }
     }
@@ -75,11 +138,12 @@ export function generateSmartPrompts({
         targetSection: 'checklist',
         actionLabel: 'Vérifier le couchage',
         actionType: 'scroll_checklist',
+        whyExplanation: `La température minimale prévue est inférieure à 5°C, ce qui nécessite une isolation thermique adaptée (matelas R-value ≥ 3, duvet confort approprié).`,
       });
     }
   }
 
-  // 2. Analyse du Matériel Vital non coché (Sévérité Critique)
+  // 4. Analyse du Matériel Vital non coché (Sévérité Critique)
   const uncheckedVital = items.filter(
     (i) =>
       !i.is_checked &&
@@ -101,10 +165,11 @@ export function generateSmartPrompts({
       targetItemId: firstVital.id,
       actionLabel: `Voir les ${uncheckedVital.length} vitaux`,
       actionType: 'scroll_checklist',
+      whyExplanation: `Ces articles sont marqués comme essentiels à votre sécurité et autonomie (abri, couchage, hydratation ou secours).`,
     });
   }
 
-  // 3. Analyse des Autres Articles Restants (Sévérité Info)
+  // 5. Analyse des Autres Articles Restants (Sévérité Info)
   const uncheckedOther = items.filter(
     (i) => !i.is_checked && !uncheckedVital.some((v) => (v.id && v.id === i.id) || v.name === i.name)
   );
@@ -124,10 +189,11 @@ export function generateSmartPrompts({
       targetItemId: firstOther.id,
       actionLabel: 'Vérifier le sac',
       actionType: 'scroll_checklist',
+      whyExplanation: `Votre sac n'est pas encore complété à 100%. Consultez la checklist pour valider les derniers articles de confort ou rechange.`,
     });
   }
 
-  // 4. Analyse du Contact d'Urgence ICE
+  // 6. Analyse du Contact d'Urgence ICE
   if (!emergencyContact || emergencyContact.trim() === '' || emergencyContact.includes('00 00')) {
     alerts.push({
       id: 'alert-emergency-contact',
@@ -138,10 +204,11 @@ export function generateSmartPrompts({
       targetSection: 'participants',
       actionLabel: 'Renseigner contact ICE',
       actionType: 'edit_emergency',
+      whyExplanation: `En cas d'accident ou de besoin de secours, le contact ICE (In Case of Emergency) est indispensable pour les équipes médicales et de secours.`,
     });
   }
 
-  // 5. Hydratation & Ravitaillement Eau
+  // 7. Hydratation & Ravitaillement Eau
   if (trailDistanceKm && trailDistanceKm > 20) {
     alerts.push({
       id: 'alert-water-trail',
@@ -152,6 +219,7 @@ export function generateSmartPrompts({
       targetSection: 'checklist',
       actionLabel: 'Marquer comme prévu',
       actionType: 'mark_planned',
+      whyExplanation: `La distance de cet itinéraire dépasse 20 km. Une hydratation anticipée avec pastilles de purification ou filtre est recommandée.`,
     });
   }
 
