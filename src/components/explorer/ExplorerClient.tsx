@@ -108,16 +108,21 @@ export default function ExplorerClient({ initialTrails }: ExplorerClientProps) {
   const [liveViewportBbox, setLiveViewportBbox] = useState<{ minLat: number; maxLat: number; minLng: number; maxLng: number; zoom: number } | null>(null);
   const [showSearchHereButton, setShowSearchHereButton] = useState(false);
   const initialGeoAppliedRef = useRef(false);
+  const queriedBboxRef = useRef(queriedBbox);
+  queriedBboxRef.current = queriedBbox;
 
   const handleViewportChange = useCallback((bbox: { minLat: number; maxLat: number; minLng: number; maxLng: number; zoom: number }) => {
     setLiveViewportBbox(bbox);
-    const latDiff = Math.abs((bbox.minLat + bbox.maxLat) / 2 - (queriedBbox.minLat + queriedBbox.maxLat) / 2);
-    const lngDiff = Math.abs((bbox.minLng + bbox.maxLng) / 2 - (queriedBbox.minLng + queriedBbox.maxLng) / 2);
-    const zoomDiff = Math.abs(bbox.zoom - queriedBbox.zoom);
-    if (latDiff > 0.008 || lngDiff > 0.012 || zoomDiff >= 1) {
-      setShowSearchHereButton(true);
+    const qBbox = queriedBboxRef.current;
+    if (qBbox) {
+      const latDiff = Math.abs((bbox.minLat + bbox.maxLat) / 2 - (qBbox.minLat + qBbox.maxLat) / 2);
+      const lngDiff = Math.abs((bbox.minLng + bbox.maxLng) / 2 - (qBbox.minLng + qBbox.maxLng) / 2);
+      const zoomDiff = Math.abs(bbox.zoom - qBbox.zoom);
+      if (latDiff > 0.008 || lngDiff > 0.012 || zoomDiff >= 1) {
+        setShowSearchHereButton(true);
+      }
     }
-  }, [queriedBbox]);
+  }, []);
 
   const handleSearchHere = useCallback(() => {
     if (liveViewportBbox) {

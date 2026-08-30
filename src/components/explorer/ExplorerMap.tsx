@@ -144,7 +144,14 @@ export default function ExplorerMap({
     }
   };
 
-  // Initialize Leaflet map instance
+  const onViewportChangeRef = useRef(onViewportChange);
+  onViewportChangeRef.current = onViewportChange;
+  const onMapReadyRef = useRef(onMapReady);
+  onMapReadyRef.current = onMapReady;
+  const onLocationUpdateRef = useRef(onLocationUpdate);
+  onLocationUpdateRef.current = onLocationUpdate;
+
+  // Initialize Leaflet map instance — UNIQUE INITIALIZATION ON MOUNT
   useEffect(() => {
     if (!containerRef.current || mapRef.current || typeof window === 'undefined') return;
 
@@ -213,18 +220,18 @@ export default function ExplorerMap({
       mapRef.current = map;
       setMapInstance(map);
       setMapReady(true);
-      onMapReady?.();
+      onMapReadyRef.current?.();
 
       let debounceTimer: NodeJS.Timeout | null = null;
       const notifyViewport = () => {
-        if (!onViewportChange) return;
+        if (!mapRef.current) return;
         const bounds = map.getBounds();
         const zoom = map.getZoom();
         const latSpan = bounds.getNorth() - bounds.getSouth();
         const lngSpan = bounds.getEast() - bounds.getWest();
         const bufferLat = latSpan * 0.25;
         const bufferLng = lngSpan * 0.25;
-        onViewportChange({
+        onViewportChangeRef.current?.({
           minLat: bounds.getSouth() - bufferLat,
           maxLat: bounds.getNorth() + bufferLat,
           minLng: bounds.getWest() - bufferLng,
@@ -265,7 +272,7 @@ export default function ExplorerMap({
       setMapReady(false);
     };
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [onViewportChange]);
+  }, []);
 
   // ResizeObserver for dynamic layout size changes
   useEffect(() => {
