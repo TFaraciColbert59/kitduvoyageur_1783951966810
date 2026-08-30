@@ -77,7 +77,7 @@ export function DepartLeftSidebar({
   return (
     <aside className="h-full max-h-full flex flex-col justify-between glass rounded-[1.5rem] p-3.5 text-[#17402C] font-sans overflow-hidden border border-white/40 shadow-sm select-none">
       {/* ── 1. ZONE HAUTE FIXE (Identité du trek & Actions) ── */}
-      <div className="shrink-0 space-y-2.5">
+      <div className="shrink-0 space-y-2">
         <div className="p-3 rounded-2xl glass-sub-card space-y-1.5 relative overflow-hidden border border-white/50">
           <div className="flex items-start justify-between gap-1.5">
             <span className="text-[9.5px] font-mono font-bold uppercase tracking-wider text-[#5A7064]">
@@ -155,7 +155,7 @@ export function DepartLeftSidebar({
       </div>
 
       {/* ── 2. ZONE CENTRALE SCROLLABLE À L'INTÉRIEUR SEULEMENT ── */}
-      <nav className="flex-1 min-h-0 overflow-y-auto no-scrollbar py-2 space-y-1" aria-label="Navigation du départ">
+      <nav className="flex-1 min-h-0 overflow-y-auto no-scrollbar py-1.5 space-y-1" aria-label="Navigation du départ">
         <p className="text-[9.5px] font-mono font-bold uppercase tracking-widest text-[#5A7064] px-2 mb-1">
           Navigation
         </p>

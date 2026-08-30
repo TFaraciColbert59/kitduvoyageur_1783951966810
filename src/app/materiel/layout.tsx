@@ -13,7 +13,7 @@ export default function MaterielLayout({ children }: { children: React.ReactNode
   return (
     <div
       data-lkv-material-theme="light"
-      className="relative h-screen md:h-dvh overflow-hidden w-full max-w-full font-sans text-[#17402C] flex flex-col"
+      className="relative h-screen md:h-dvh max-h-screen md:max-h-dvh overflow-hidden w-full max-w-full font-sans text-[#17402C] flex flex-col"
     >
       {/* Fond vidéo immersif b_fait_bouger_uniqueme.mp4 */}
       <BackgroundVideo />
@@ -21,7 +21,7 @@ export default function MaterielLayout({ children }: { children: React.ReactNode
       {/* Interface UI Fullscreen sur desktop — Aucun débordement possible */}
       <div className="relative z-10 w-full h-full flex flex-col overflow-hidden">
         <Header />
-        <main className="flex-1 w-full h-full overflow-hidden pt-16 sm:pt-[72px] pb-1">
+        <main className="flex-1 min-h-0 w-full h-full overflow-hidden pt-16 sm:pt-[70px] pb-1">
           {children}
         </main>
       </div>
