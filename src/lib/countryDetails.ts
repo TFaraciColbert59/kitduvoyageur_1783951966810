@@ -1377,6 +1377,59 @@ export function getCompleteCountryDetail(
     contentCountry?.climat?.temp_moy_janv ? { cle: 'Températures moyennes', val: `${contentCountry.climat.temp_moy_janv} (Janv) / ${contentCountry.climat.temp_moy_juil || '—'} (Juil)` } : null,
   ].filter(Boolean) as { cle: string; val: string; isMono?: boolean }[];
 
+  // Destinations complètes depuis Parcs Nationaux / Treks / Sites majeurs
+  const DEFAULT_DEST_IMAGES = [
+    'https://images.unsplash.com/photo-1506744038136-46273834b3fb?q=80&w=1200',
+    'https://images.unsplash.com/photo-1469854523086-cc02fe5d8800?q=80&w=1200',
+    'https://images.unsplash.com/photo-1470071459604-3b5ec3a7fe05?q=80&w=1200',
+    'https://images.unsplash.com/photo-1507525428034-b723cf961d3e?q=80&w=1200',
+    'https://images.unsplash.com/photo-1519681393784-d120267933ba?q=80&w=1200',
+    'https://images.unsplash.com/photo-1476514525535-07fb3b4ae5f1?q=80&w=1200',
+  ];
+
+  let destinationsList = custom.destinations || [];
+  if (destinationsList.length === 0 && contentCountry?.outdoor?.parcs_nationaux) {
+    const rawParks = contentCountry.outdoor.parcs_nationaux
+      .split(/[,;]/)
+      .map((s) => s.trim())
+      .filter((s) => s.length > 1);
+    const rawTreks = (contentCountry.outdoor.treks_phares || '')
+      .split(/[,;]/)
+      .map((s) => s.trim())
+      .filter((s) => s.length > 1);
+
+    const items = [
+      ...rawParks.map((p) => ({ nom: p, cat: 'Parc National & Réserve' })),
+      ...rawTreks.map((t) => ({ nom: t, cat: 'Trek & Itinéraire' })),
+    ];
+
+    destinationsList = items.slice(0, 6).map((item, idx) => ({
+      isBig: idx === 0,
+      image_url: DEFAULT_DEST_IMAGES[idx % DEFAULT_DEST_IMAGES.length],
+      categorie: item.cat,
+      titre: item.nom,
+      titre_em: '',
+      meta_1: 'Site incontournable',
+      meta_2: `${continent} · ${name}`,
+      meta_3: contentCountry?.climat?.meilleure_periode_trek ? `Saison : ${contentCountry.climat.meilleure_periode_trek}` : 'Accessible',
+    }));
+  }
+
+  if (destinationsList.length === 0 && capital) {
+    destinationsList = [
+      {
+        isBig: true,
+        image_url: DEFAULT_DEST_IMAGES[0],
+        categorie: 'Capitale & Histoire',
+        titre: capital,
+        titre_em: '',
+        meta_1: 'Capitale officielle',
+        meta_2: `${continent} · ${subregion}`,
+        meta_3: `Fuseau : ${timezone}`,
+      },
+    ];
+  }
+
   return {
     code: codeUpper,
     iso_a3: geoCountry?.iso_a3 || undefined,
@@ -1419,7 +1472,7 @@ export function getCompleteCountryDetail(
     carte_echelle: custom.carte_echelle || '1 : 4 000 000',
     carte_repere: custom.carte_repere || `Carte générale · ${subregion}`,
     highlights: highlightsList,
-    destinations: custom.destinations || [],
+    destinations: destinationsList,
     activites: activitesList,
     culture: {
       citation: custom.culture?.citation || `En ${name}, les traditions et le patrimoine façonnent l'identité du territoire.`,

@@ -16,23 +16,8 @@ export default function PaysDestinationsView({
 }: PaysDestinationsViewProps) {
   return (
     <div className="space-y-4 font-sans text-[#17402C]">
-      {/* Header */}
-      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-end gap-2 border-b border-[#17402C]/10 pb-3">
-        <div>
-          <span className="text-[10px] font-mono font-bold uppercase tracking-widest text-[#5B7F55] block mb-0.5">
-            SÉLECTION ÉDITORIALE LKDV
-          </span>
-          <h2 className="font-display font-bold text-2xl sm:text-3xl text-[#17402C]">
-            Destinations <span className="font-serif italic font-normal text-[#5B7F55]">incontournables</span>
-          </h2>
-          <p className="text-xs text-[#5A7064] mt-0.5 font-mono">
-            {country.destinations?.length || 0} sites majeurs répertoriés · Cartes offline et topos associés
-          </p>
-        </div>
-      </div>
-
       {/* Bento Grid */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
         {country.destinations?.map((d, idx) => (
           <div
             key={idx}

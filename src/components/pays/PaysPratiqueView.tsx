@@ -59,28 +59,6 @@ export default function PaysPratiqueView({ country }: PaysPratiqueViewProps) {
 
   return (
     <div className="space-y-4 font-sans text-[#17402C]">
-      {/* Header */}
-      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-end gap-2 border-b border-[#17402C]/10 pb-3">
-        <div>
-          <span className="text-[10px] font-mono font-bold uppercase tracking-widest text-[#5B7F55] block mb-0.5">
-            LOGISTIQUE &amp; PRÉPARATION
-          </span>
-          <h2 className="font-display font-bold text-2xl sm:text-3xl text-[#17402C]">
-            Infos pratiques &amp; <span className="font-serif italic font-normal text-[#5B7F55]">formalités</span>
-          </h2>
-          <p className="text-xs text-[#5A7064] mt-0.5 font-mono">
-            Données officielles vérifiées et repères clés pour préparer votre départ.
-          </p>
-        </div>
-
-        <div className="flex items-center gap-2">
-          <CountryFlag code={country.code} name={country.nom} size="md" className="rounded-md" />
-          <span className="glass-pill text-xs font-mono font-bold text-[#17402C]">
-            {country.nom} · {country.code}
-          </span>
-        </div>
-      </div>
-
       {/* Official Identity & Geodata Bento Card */}
       <div className="glass rounded-[1.5rem] p-4 sm:p-5 space-y-3 border border-white/60 shadow-sm backdrop-blur-md">
         <div className="flex items-center justify-between pb-2.5 border-b border-[#17402C]/10">

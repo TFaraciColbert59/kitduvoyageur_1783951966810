@@ -11,20 +11,7 @@ interface PaysGastronomieViewProps {
 export default function PaysGastronomieView({ country }: PaysGastronomieViewProps) {
   return (
     <div className="space-y-4 font-sans text-[#17402C]">
-      {/* Header */}
-      <div className="border-b border-[#17402C]/10 pb-3">
-        <span className="text-[10px] font-mono font-bold uppercase tracking-widest text-[#5B7F55] block mb-0.5">
-          SAVEURS &amp; TERROIRS
-        </span>
-        <h2 className="font-display font-bold text-2xl sm:text-3xl text-[#17402C]">
-          Gastronomie &amp; <span className="font-serif italic font-normal text-[#5B7F55]">spécialités</span>
-        </h2>
-        <p className="text-xs text-[#5A7064] mt-0.5 font-mono">
-          Plats emblématiques, réconfort après la marche et savoir-faire culinaire à goûter absolument.
-        </p>
-      </div>
-
-      {/* Dishes Grid */}
+      {/* Bento Grid */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
         {country.gastronomie?.map((g, i) => (
           <div
