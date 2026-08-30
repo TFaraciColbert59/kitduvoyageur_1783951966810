@@ -1,7 +1,7 @@
-﻿'use client';
+'use client';
 import { useOptimistic, useTransition, useState, useCallback } from 'react';
 import { Check, ChevronDown, Package, AlertCircle } from 'lucide-react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion, AnimatePresence, useReducedMotion } from 'framer-motion';
 import { GlassCard } from '@/components/ui/GlassCard';
 import { cn } from '@/lib/utils';
 import { toggleKitItem } from '@/features/materiel/actions/toggleKitItem';
@@ -45,6 +45,7 @@ interface DepartChecklistProps {
 }
 
 export function DepartChecklist({ items, isRealKit }: DepartChecklistProps) {
+  const shouldReduceMotion = useReducedMotion();
   // Etat local des items (pour optimistic update)
   const [localItems, setLocalItems] = useState<KitItem[]>(items);
   const [optimisticItems, addOptimistic] = useOptimistic(

@@ -1,8 +1,8 @@
-﻿'use client';
+'use client';
 import { useRouter } from 'next/navigation';
 import { ChevronDown } from 'lucide-react';
 import { useState } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion, AnimatePresence, useReducedMotion } from 'framer-motion';
 import { cn } from '@/lib/utils';
 
 interface KitSwitcherProps {
@@ -13,6 +13,7 @@ interface KitSwitcherProps {
 export function KitSwitcher({ kits, currentId }: KitSwitcherProps) {
   const router = useRouter();
   const [open, setOpen] = useState(false);
+  const shouldReduceMotion = useReducedMotion();
 
   if (kits.length <= 1) return null;
 

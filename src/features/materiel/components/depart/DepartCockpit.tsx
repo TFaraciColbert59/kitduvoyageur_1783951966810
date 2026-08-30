@@ -1,7 +1,7 @@
 ﻿'use client';
 import React, { useState, useEffect } from 'react';
 import dynamic from 'next/dynamic';
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion, AnimatePresence, useReducedMotion } from 'framer-motion';
 import {
   Compass,
   ListChecks,
@@ -11,6 +11,9 @@ import {
   Droplets,
   MapPin,
   LayoutGrid,
+  Zap,
+  Wifi,
+  WifiOff,
 } from 'lucide-react';
 import { DepartHeader } from './DepartHeader';
 import { DepartPreparation } from './DepartPreparation';
@@ -26,6 +29,7 @@ import { KitSwitcher } from './KitSwitcher';
 import ScrollableTabs, { type TabOption } from '@/components/ui/ScrollableTabs';
 import { Skeleton } from '@/components/ui/Skeleton';
 import { generateSmartPrompts } from '@/features/materiel/services/generateSmartPrompts';
+import { cn } from '@/lib/utils';
 import type { DepartDetail } from '@/features/materiel/services/getDepartDetail';
 import type { WeatherForecast } from '@/features/materiel/services/getWeather';
 
@@ -66,6 +70,11 @@ interface DepartCockpitProps {
 
 export function DepartCockpit({ depart, weather, kits }: DepartCockpitProps) {
   const [activeSection, setActiveSection] = useState<DepartSectionId>('all');
+  const [isUltraSave, setIsUltraSave] = useState(false);
+  const [batteryLevel, setBatteryLevel] = useState<number | null>(null);
+  const [isOnline, setIsOnline] = useState(true);
+
+  const shouldReduceMotion = useReducedMotion();
 
   const checkedCount = depart.assignedKit.items.filter((i) => i.is_checked).length;
   const itemsCount = depart.assignedKit.items.length;
@@ -91,6 +100,37 @@ export function DepartCockpit({ depart, weather, kits }: DepartCockpitProps) {
   };
 
   const smartAlerts = generateSmartPrompts(alertInput);
+
+  // Synchronisation reseau et batterie pour mode Ultra-Save (§19)
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+
+    setIsOnline(navigator.onLine);
+    const handleOnline = () => setIsOnline(true);
+    const handleOffline = () => setIsOnline(false);
+
+    window.addEventListener('online', handleOnline);
+    window.addEventListener('offline', handleOffline);
+
+    // Detection batterie si supportee
+    if ('getBattery' in navigator) {
+      (navigator as any).getBattery().then((battery: any) => {
+        setBatteryLevel(battery.level);
+        if (battery.level <= 0.2) {
+          setIsUltraSave(true);
+        }
+        battery.addEventListener('levelchange', () => {
+          setBatteryLevel(battery.level);
+          if (battery.level <= 0.2) setIsUltraSave(true);
+        });
+      }).catch(() => {});
+    }
+
+    return () => {
+      window.removeEventListener('online', handleOnline);
+      window.removeEventListener('offline', handleOffline);
+    };
+  }, []);
 
   // Synchronisation avec BottomTabBar si nécessaire
   useEffect(() => {
@@ -201,18 +241,49 @@ export function DepartCockpit({ depart, weather, kits }: DepartCockpitProps) {
   );
 
   return (
-    <div className="w-full h-full">
+    <div className={cn('w-full h-full', isUltraSave && 'ultra-save-mode')}>
       {/* ══════════════════════════════════════════════════════════════════════
           1. VERSION MOBILE (< 768px)
          ══════════════════════════════════════════════════════════════════════ */}
       <div className="block md:hidden w-full max-w-3xl mx-auto px-3 sm:px-4 pb-12 space-y-3">
-        {/* Barre d'action supérieure mobile : Switcher de kit + Tabs */}
+        {/* Barre d'action supérieure mobile : Switcher de kit + Ultra-Save + Tabs */}
         <div className="space-y-2 sticky top-0 z-30 pt-1 pb-1 backdrop-blur-md bg-white/30 rounded-2xl border border-white/40">
           <div className="flex items-center justify-between gap-2 px-2">
-            <span className="text-[10.5px] font-semibold uppercase tracking-wider text-[#5A7064]">
-              Cockpit de départ
-            </span>
-            {kits.length > 1 && <KitSwitcher kits={kits} currentId={depart.id} />}
+            <div className="flex items-center gap-1.5">
+              <span className="text-[10.5px] font-semibold uppercase tracking-wider text-[#5A7064]">
+                Cockpit de départ
+              </span>
+              <span className={cn('flex items-center gap-1 text-[9.5px] font-mono px-1.5 py-0.2 rounded-full font-bold', isOnline ? 'bg-emerald-100 text-emerald-800' : 'bg-amber-100 text-amber-800')}>
+                {isOnline ? <Wifi size={9} /> : <WifiOff size={9} />}
+                {isOnline ? 'EN LIGNE' : 'HORS-LIGNE'}
+              </span>
+            </div>
+
+            <div className="flex items-center gap-1.5">
+              {/* Ultra-Save Button */}
+              <button
+                type="button"
+                onClick={() => setIsUltraSave((v) => !v)}
+                className={cn(
+                  'px-2 py-0.5 rounded-lg text-[10px] font-bold flex items-center gap-1 transition-all',
+                  isUltraSave
+                    ? 'bg-[#2D6B4A] text-white shadow-xs'
+                    : 'bg-white/40 text-[#17402C] hover:bg-white/60'
+                )}
+                title="Mode Éco Batterie Ultra-Save"
+                aria-pressed={isUltraSave}
+              >
+                <Zap size={10} />
+                <span>{isUltraSave ? 'ECO ACTIF' : 'ECO'}</span>
+                {batteryLevel !== null && (
+                  <span className="font-mono text-[9px] opacity-80">
+                    {Math.round(batteryLevel * 100)}%
+                  </span>
+                )}
+              </button>
+
+              {kits.length > 1 && <KitSwitcher kits={kits} currentId={depart.id} />}
+            </div>
           </div>
 
           <ScrollableTabs
@@ -227,10 +298,10 @@ export function DepartCockpit({ depart, weather, kits }: DepartCockpitProps) {
         <AnimatePresence mode="wait">
           <motion.div
             key={activeSection}
-            initial={{ opacity: 0, y: 4 }}
+            initial={shouldReduceMotion ? false : { opacity: 0, y: 4 }}
             animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -4 }}
-            transition={{ duration: 0.16, ease: 'easeOut' }}
+            exit={shouldReduceMotion ? { opacity: 0 } : { opacity: 0, y: -4 }}
+            transition={{ duration: shouldReduceMotion ? 0 : 0.16, ease: 'easeOut' }}
           >
             {renderMainSections()}
           </motion.div>
@@ -249,6 +320,10 @@ export function DepartCockpit({ depart, weather, kits }: DepartCockpitProps) {
             onSectionChange={setActiveSection}
             kits={kits}
             alertsCount={smartAlerts.length}
+            isUltraSave={isUltraSave}
+            onToggleUltraSave={() => setIsUltraSave((v) => !v)}
+            batteryLevel={batteryLevel}
+            isOnline={isOnline}
           />
         </div>
 
@@ -257,10 +332,10 @@ export function DepartCockpit({ depart, weather, kits }: DepartCockpitProps) {
           <AnimatePresence mode="wait">
             <motion.div
               key={activeSection}
-              initial={{ opacity: 0, y: 4 }}
+              initial={shouldReduceMotion ? false : { opacity: 0, y: 4 }}
               animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -4 }}
-              transition={{ duration: 0.16, ease: 'easeOut' }}
+              exit={shouldReduceMotion ? { opacity: 0 } : { opacity: 0, y: -4 }}
+              transition={{ duration: shouldReduceMotion ? 0 : 0.16, ease: 'easeOut' }}
             >
               {renderMainSections()}
             </motion.div>

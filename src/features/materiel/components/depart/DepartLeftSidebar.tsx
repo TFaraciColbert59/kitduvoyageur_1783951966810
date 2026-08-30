@@ -13,6 +13,9 @@ import {
   Edit3,
   Printer,
   ChevronRight,
+  Zap,
+  Wifi,
+  WifiOff,
 } from 'lucide-react';
 import { KitSwitcher } from './KitSwitcher';
 import { Badge } from '@/components/ui/Badge';
@@ -27,6 +30,10 @@ interface DepartLeftSidebarProps {
   onSectionChange: (section: DepartSectionId) => void;
   kits: { id: string; name: string }[];
   alertsCount: number;
+  isUltraSave?: boolean;
+  onToggleUltraSave?: () => void;
+  batteryLevel?: number | null;
+  isOnline?: boolean;
 }
 
 export function DepartLeftSidebar({
@@ -35,6 +42,10 @@ export function DepartLeftSidebar({
   onSectionChange,
   kits,
   alertsCount,
+  isUltraSave = false,
+  onToggleUltraSave,
+  batteryLevel = null,
+  isOnline = true,
 }: DepartLeftSidebarProps) {
   const checkedCount = depart.assignedKit.items.filter((i) => i.is_checked).length;
   const itemsCount = depart.assignedKit.items.length;
@@ -119,6 +130,37 @@ export function DepartLeftSidebar({
           <h3 className="font-display font-bold text-sm text-[#17402C] leading-tight line-clamp-2">
             {depart.destination}
           </h3>
+
+          {/* Statut réseau & Ultra-Save toggle (§19) */}
+          <div className="pt-1.5 border-t border-white/30 flex items-center justify-between gap-1.5">
+            <span className={cn('flex items-center gap-1 text-[9px] font-mono font-bold px-1.5 py-0.5 rounded-full', isOnline ? 'bg-emerald-100/80 text-emerald-900' : 'bg-amber-100 text-amber-900')}>
+              {isOnline ? <Wifi size={9} /> : <WifiOff size={9} />}
+              {isOnline ? 'En ligne' : 'Hors-ligne'}
+            </span>
+
+            {onToggleUltraSave && (
+              <button
+                type="button"
+                onClick={onToggleUltraSave}
+                className={cn(
+                  'px-2 py-0.5 rounded-lg text-[9.5px] font-bold flex items-center gap-1 transition-all',
+                  isUltraSave
+                    ? 'bg-[#2D6B4A] text-white shadow-xs'
+                    : 'bg-white/40 text-[#17402C] hover:bg-white/60'
+                )}
+                title="Mode Éco Batterie Ultra-Save (§19)"
+                aria-pressed={isUltraSave}
+              >
+                <Zap size={9} />
+                <span>{isUltraSave ? 'ECO' : 'ÉCO'}</span>
+                {batteryLevel !== null && (
+                  <span className="font-mono text-[8.5px] opacity-80">
+                    {Math.round(batteryLevel * 100)}%
+                  </span>
+                )}
+              </button>
+            )}
+          </div>
 
           {/* Kit Switcher */}
           {kits.length > 1 && (

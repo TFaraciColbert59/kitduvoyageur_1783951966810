@@ -1,8 +1,7 @@
 ﻿'use client';
 import { useState } from 'react';
 import { AlertTriangle, Info, Zap, X, ChevronDown } from 'lucide-react';
-import { motion, AnimatePresence } from 'framer-motion';
-import { GlassCard } from '@/components/ui/GlassCard';
+import { motion, AnimatePresence, useReducedMotion } from 'framer-motion';
 import { generateSmartPrompts } from '@/features/materiel/services/generateSmartPrompts';
 import type { SmartPromptsInput } from '@/features/materiel/services/generateSmartPrompts';
 import type { SmartPromptAlert } from '@/features/materiel/types/trekHub';
@@ -29,6 +28,7 @@ interface DepartAlertsProps {
 }
 
 export function DepartAlerts({ input }: DepartAlertsProps) {
+  const shouldReduceMotion = useReducedMotion();
   const allAlerts = generateSmartPrompts(input);
   const [dismissed, setDismissed] = useState<Set<string>>(new Set());
   const [expanded, setExpanded] = useState(false);
@@ -46,10 +46,10 @@ export function DepartAlerts({ input }: DepartAlertsProps) {
           {displayed.map((alert) => (
             <motion.div
               key={alert.id}
-              initial={{ opacity: 0, y: -6 }}
+              initial={shouldReduceMotion ? false : { opacity: 0, y: -6 }}
               animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, scale: 0.97 }}
-              transition={{ duration: 0.18, ease: 'easeOut' }}
+              exit={shouldReduceMotion ? { opacity: 0 } : { opacity: 0, scale: 0.97 }}
+              transition={{ duration: shouldReduceMotion ? 0 : 0.18, ease: 'easeOut' }}
             >
               <div
                 className={`relative flex items-start gap-3 rounded-2xl border px-3.5 py-3 ${severityClasses[alert.severity]}`}
@@ -80,7 +80,7 @@ export function DepartAlerts({ input }: DepartAlertsProps) {
             aria-expanded={expanded}
           >
             <motion.span
-              animate={{ rotate: expanded ? 180 : 0 }}
+              animate={shouldReduceMotion ? {} : { rotate: expanded ? 180 : 0 }}
               transition={{ duration: 0.2 }}
             >
               <ChevronDown size={13} aria-hidden="true" />

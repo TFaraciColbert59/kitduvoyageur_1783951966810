@@ -1036,3 +1036,46 @@ npm notice run next build
 ƒ  (Dynamic)  server-rendered on demand
 ```
 ✅ Exit code 0 — 195 routes pays SSG générées sans erreur.
+
+---
+
+# RECONSTRUCTION COCKPIT `/materiel/depart/...` — 30-31 Août 2026
+
+## 1. Contexte & Objectifs de la Mission
+Reconstruction intégrale de l'expérience du cockpit de départ `/materiel/depart/...` de 0.
+- **Règle absolue** : Isolation totale de la feature sans régression sur le reste du repo LKDV.
+- **Architecture cible** : Layout 3 colonnes Desktop (`LeftSidebar` onglets 260px, `Center` 7 sections, `RightSidebar` widgets 310px) et navigation mobile réactive avec `ScrollableTabs`.
+- **Règles ergonomiques** : Apple HIG, Liquid Glass, safe areas non-dupliquées, touch targets 44px, `prefers-reduced-motion` via `useReducedMotion()`.
+
+## 2. Cartographie des 7 Sections Fonctionnelles
+1. **Section 1 : Départ & En-tête** (`DepartHeader`, `KitSwitcher`) : Destination, statut, live countdown, grade.
+2. **Section 2 : Progression du Pack** (`DepartPreparation`) : % d'avancement, poids de base, ratio articles cochés, CTA kit.
+3. **Section 3 : Alertes & Vigilance** (`DepartAlerts`) : Smart prompts contextuels dismissibles avec sévérité.
+4. **Section 4 : Checklist du Matériel** (`DepartChecklist`) : Accordéon par catégorie, cochage optimiste (`useOptimistic`), Server Action sécurisé.
+5. **Section 5 : Analyse du Poids** (`DepartWeightBreakdown`) : Barre segmentée multi-catégories & tuiles de charges.
+6. **Section 6 : Consommables & Autonomie** (`DepartConsumables`) : 4 tuiles d'autonomie (eau, gaz, repas, snacks).
+7. **Section 7 : Terrain, Météo & Sécurité** (`DepartWeather`, `DepartParticipants`, `DepartMap`) : Météo 5j/24h, équipiers, appel ICE direct (`tel:`), Leaflet lazy avec tracé GPX.
+
+## 3. Sécurité & Modèle de Données
+- **Isolation RLS** : `getDepartDetail(id)` filtre systématiquement par `.eq('id', id).eq('user_id', user.id)`. Les identifiants arbitraires ne peuvent en aucun cas fuiter les données d'autres utilisateurs.
+- **Server Action sécurisé** : `toggleKitItem(itemId, currentChecked)` vérifie la session Supabase et la propriété du kit avant mutation.
+- **Domaine pur** : `departCalculations.ts` avec fonctions pures couvertes par tests (`calcBaseWeight`, `calcReadinessPct`, `deriveStatus`, `calcWeightBreakdown`, `formatWeight`).
+
+## 4. Mode Ultra-Save & Éco-Batterie (§19)
+- Détection automatique batterie faible (`<= 20%` via `navigator.getBattery()`).
+- Toggle manuel `⚡ ECO` / `⚡ ECO ACTIF` dans l'en-tête mobile et la sidebar gauche.
+- Indicateur de statut réseau `EN LIGNE` / `HORS-LIGNE` (`navigator.onLine`).
+- Désactivation des blurs lourds et allègement graphique en mode actif.
+
+## 5. Gestion des Erreurs & Offline
+- Error boundaries dédiées `src/app/materiel/depart/error.tsx` et `src/app/materiel/depart/[id]/error.tsx`.
+- Bouton de rechargement `reset()`, détection hors-ligne et rappel sécurité numéro d'urgence `112`.
+
+## 6. Fix Résolution Modules Natifs (@capacitor/*)
+- Isolation dynamique SSR de tous les modules `src/lib/native/*.ts` via `isNative()` et `import(...)` différés.
+- Ajout de `serverExternalPackages` dans `next.config.mjs`.
+
+## 7. Résultats des Vérifications
+- `npm run type-check` : 0 erreur TypeScript.
+- `npm test` : 105 tests passés (19 fichiers de test verts).
+- `npm run build` : Exit code 0, routes dynamiques générées sans avertissement.
