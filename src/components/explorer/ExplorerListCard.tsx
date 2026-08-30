@@ -26,12 +26,23 @@ export default function ExplorerListCard({ trail, isSelected, onClick }: Props) 
       whileHover={{ y: -2, scale: 1.01 }}
       whileTap={{ scale: 0.985 }}
       onClick={onClick}
-      className={`group relative flex shrink-0 h-[82px] w-full gap-2.5 p-2 cursor-pointer transition-all duration-200 select-none glass ${
+      className={`group relative flex shrink-0 h-[84px] w-full gap-2.5 p-2.5 cursor-pointer transition-all duration-200 select-none ${
         isSelected
-          ? 'ring-2 ring-[#17402C]/40 !border-white/80'
-          : '!border-white/40 hover:!border-white/70'
+          ? 'ring-2 ring-[#17402C]/40 shadow-lg scale-[1.01]'
+          : 'hover:scale-[1.01] shadow-xs hover:shadow-md'
       }`}
-      style={{ borderRadius: 20 }}
+      style={{
+        borderRadius: 22,
+        background: isSelected
+          ? 'linear-gradient(180deg, rgba(255, 255, 255, 0.75) 0%, rgba(251, 250, 246, 0.45) 100%)'
+          : 'linear-gradient(180deg, rgba(255, 255, 255, 0.55) 0%, rgba(251, 250, 246, 0.30) 100%)',
+        backdropFilter: 'blur(20px) saturate(180%)',
+        WebkitBackdropFilter: 'blur(20px) saturate(180%)',
+        border: isSelected ? '1.5px solid rgba(23, 64, 44, 0.5)' : '1px solid rgba(255, 255, 255, 0.70)',
+        boxShadow: isSelected
+          ? '0 12px 36px -6px rgba(23, 64, 44, 0.18), inset 0 1px 1.5px rgba(255, 255, 255, 0.95)'
+          : '0 4px 16px -2px rgba(23, 64, 44, 0.06), inset 0 1px 1px rgba(255, 255, 255, 0.85)',
+      }}
     >
       {/* Vignette Photo Liquid Glass */}
       <div className="relative w-16 h-16 rounded-[14px] overflow-hidden shrink-0 bg-[#F1EDE6] border border-white/60">
@@ -44,7 +55,7 @@ export default function ExplorerListCard({ trail, isSelected, onClick }: Props) 
         />
         <div className="absolute inset-0 bg-gradient-to-t from-black/55 via-transparent to-transparent" />
         <span
-          className="absolute bottom-1 left-1 px-1.5 py-0.2 rounded-full text-[8.5px] font-bold text-white backdrop-blur-md"
+          className="glass-capsule-btn text-[8.5px] font-bold !py-0 !px-1.5 absolute bottom-1 left-1 !text-white !border-transparent shadow-xs"
           style={{ backgroundColor: diffColor }}
         >
           {diffLabel}

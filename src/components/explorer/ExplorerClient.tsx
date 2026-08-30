@@ -639,11 +639,11 @@ export default function ExplorerClient({ initialTrails }: ExplorerClientProps) {
         <div
           className="pointer-events-auto flex items-center justify-between gap-1.5 p-1.5 rounded-full shrink-0"
           style={{
-            background: 'linear-gradient(180deg, rgba(255, 255, 255, 0.35) 0%, rgba(255, 255, 255, 0.12) 100%)',
-            backdropFilter: 'blur(16px) saturate(180%)',
-            WebkitBackdropFilter: 'blur(16px) saturate(180%)',
-            border: '1px solid rgba(255, 255, 255, 0.45)',
-            boxShadow: '0 8px 24px -4px rgba(0, 0, 0, 0.08), inset 0 1.5px 1px rgba(255, 255, 255, 0.8)',
+            background: 'linear-gradient(180deg, rgba(255, 255, 255, 0.70) 0%, rgba(251, 250, 246, 0.40) 100%)',
+            backdropFilter: 'blur(20px) saturate(180%)',
+            WebkitBackdropFilter: 'blur(20px) saturate(180%)',
+            border: '1px solid rgba(255, 255, 255, 0.75)',
+            boxShadow: '0 8px 32px -4px rgba(23, 64, 44, 0.12), inset 0 1px 1.5px rgba(255, 255, 255, 0.95)',
           }}
         >
           <div className="relative flex-1">
@@ -653,15 +653,15 @@ export default function ExplorerClient({ initialTrails }: ExplorerClientProps) {
               placeholder="Rechercher sentier, massif…"
               value={searchQuery}
               onChange={(e) => handleSearchChange(e.target.value)}
-              className="w-full h-7 pl-7 pr-6 rounded-full text-[11.5px] font-semibold text-[#17402C] placeholder:text-[#5A7064]/70 bg-[#FBFAF6] border border-white/60 outline-none focus-visible:ring-1 focus-visible:ring-[#17402C]/40 transition-all"
+              className="w-full h-8 pl-8 pr-6 rounded-full text-xs font-semibold text-[#17402C] placeholder:text-[#5A7064]/70 bg-white/60 hover:bg-white/80 focus:bg-white/95 border border-white/70 shadow-2xs outline-none focus-visible:ring-1 focus-visible:ring-[#17402C]/40 transition-all"
             />
             {searchQuery && (
               <button
                 type="button"
                 onClick={() => handleSearchChange('')}
-                className="absolute right-2 top-1/2 -translate-y-1/2 text-[#5A7064] hover:text-[#17402C]"
+                className="absolute right-2.5 top-1/2 -translate-y-1/2 text-[#5A7064] hover:text-[#17402C]"
               >
-                <X size={11} />
+                <X size={12} />
               </button>
             )}
           </div>
@@ -682,16 +682,18 @@ export default function ExplorerClient({ initialTrails }: ExplorerClientProps) {
             <div
               className="p-4 rounded-[20px] text-center flex flex-col items-center gap-2"
               style={{
-                background: 'linear-gradient(180deg, rgba(255, 255, 255, 0.40) 0%, rgba(255, 255, 255, 0.15) 100%)',
+                background: 'linear-gradient(180deg, rgba(255, 255, 255, 0.60) 0%, rgba(251, 250, 246, 0.35) 100%)',
                 backdropFilter: 'blur(16px)',
-                border: '1px solid rgba(255, 255, 255, 0.45)',
+                border: '1px solid rgba(255, 255, 255, 0.65)',
+                boxShadow: '0 8px 24px -4px rgba(23, 64, 44, 0.10)',
               }}
             >
               <Compass size={18} className="text-[#5A7064]" />
               <p className="text-[12px] font-bold text-[#17402C]">Aucun itinéraire trouvé</p>
               <button
+                type="button"
                 onClick={resetFilters}
-                className="h-6 px-3 rounded-full bg-[#17402C] text-white text-[10px] font-bold"
+                className="glass-capsule-btn primary !py-1 !px-3 text-[10px] font-bold shadow-xs active:scale-95 transition-all cursor-pointer"
               >
                 Effacer les filtres
               </button>
@@ -710,9 +712,9 @@ export default function ExplorerClient({ initialTrails }: ExplorerClientProps) {
                 <button
                   type="button"
                   onClick={() => setDisplayLimit((p) => Math.min(p + 40, filteredTrails.length))}
-                  className="w-full py-2 rounded-full border border-white/80 text-[11px] font-bold text-[#17402C] bg-[#FBFAF6] hover:bg-white flex items-center justify-center gap-1 transition-all shrink-0  cursor-pointer"
+                  className="glass-capsule-btn w-full !py-2.5 text-xs font-bold shadow-xs active:scale-[0.98] transition-all cursor-pointer flex items-center justify-center gap-1.5 shrink-0"
                 >
-                  <ChevronDown size={12} />
+                  <ChevronDown size={13} />
                   <span>Afficher +{Math.min(40, filteredTrails.length - displayLimit)} sentiers</span>
                 </button>
               )}
@@ -733,13 +735,13 @@ export default function ExplorerClient({ initialTrails }: ExplorerClientProps) {
             className="hidden md:block absolute z-[950] bottom-4 left-[375px] w-[320px] max-w-[calc(100vw-32px)] pointer-events-auto"
           >
             <div
-              className="rounded-[22px] overflow-hidden"
+              className="rounded-[24px] overflow-hidden shadow-2xl"
               style={{
-                background: 'linear-gradient(180deg, rgba(255, 255, 255, 0.45) 0%, rgba(255, 255, 255, 0.20) 100%)',
-                backdropFilter: 'blur(20px) saturate(180%)',
-                WebkitBackdropFilter: 'blur(20px) saturate(180%)',
-                border: '1px solid rgba(255, 255, 255, 0.50)',
-                boxShadow: '0 16px 40px -6px rgba(0, 0, 0, 0.12), inset 0 1.5px 1px rgba(255, 255, 255, 0.9)',
+                background: 'linear-gradient(180deg, rgba(255, 255, 255, 0.70) 0%, rgba(251, 250, 246, 0.40) 100%)',
+                backdropFilter: 'blur(24px) saturate(190%)',
+                WebkitBackdropFilter: 'blur(24px) saturate(190%)',
+                border: '1px solid rgba(255, 255, 255, 0.75)',
+                boxShadow: '0 20px 50px -12px rgba(23, 64, 44, 0.18), inset 0 1.5px 2px rgba(255, 255, 255, 0.95)',
               }}
             >
               {/* Photo hero */}
@@ -752,7 +754,7 @@ export default function ExplorerClient({ initialTrails }: ExplorerClientProps) {
                 <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent" />
                 {selectedTrail.difficulty && (
                   <span
-                    className="absolute bottom-2 left-2.5 px-2 py-0.5 rounded-full text-[9px] font-bold text-white  backdrop-blur-md"
+                    className="glass-capsule-btn text-[9px] font-bold !py-0.5 !px-2 absolute bottom-2 left-2.5 !text-white !border-transparent shadow-xs"
                     style={{ backgroundColor: getDifficultyColor(selectedTrail.difficulty) }}
                   >
                     {selectedTrail.difficulty}
@@ -761,7 +763,9 @@ export default function ExplorerClient({ initialTrails }: ExplorerClientProps) {
                 <button
                   type="button"
                   onClick={() => { setSelectedTrailId(null); setSelectedTrail(null); }}
-                  className="absolute top-2 right-2 w-6 h-6 rounded-full bg-white/70 hover:bg-white text-[#17402C] border border-white/60  backdrop-blur-md flex items-center justify-center transition-all active:scale-90"
+                  className="glass-circle-btn w-6.5 h-6.5 absolute top-2 right-2"
+                  title="Fermer"
+                  aria-label="Fermer"
                 >
                   <X size={12} />
                 </button>

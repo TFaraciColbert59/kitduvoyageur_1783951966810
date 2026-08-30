@@ -67,7 +67,7 @@ export default function ExplorerFilterPanel({
         <button
           type="button"
           onClick={onReset}
-          className="self-start inline-flex items-center gap-1.5 h-6 px-3 rounded-full bg-[#17402C] text-white text-[10px] font-bold shadow-xs active:scale-95 transition-all cursor-pointer"
+          className="self-start glass-capsule-btn primary !py-1 !px-3 text-[10px] font-bold shadow-xs active:scale-95 transition-all cursor-pointer flex items-center gap-1.5"
         >
           <RotateCcw size={10} />
           <span>Réinitialiser les filtres</span>
@@ -85,10 +85,8 @@ export default function ExplorerFilterPanel({
                 key={d}
                 type="button"
                 onClick={() => onToggleDifficulty(d)}
-                className={`h-7 px-3 rounded-full text-[10.5px] font-bold transition-all border cursor-pointer ${
-                  active
-                    ? 'text-white border-transparent shadow-xs scale-105'
-                    : 'glass bg-white/80 hover:bg-white text-[#17402C] border-white/70 shadow-2xs hover:shadow-xs'
+                className={`glass-capsule-btn !py-1 !px-3 text-[10.5px] font-bold transition-all cursor-pointer ${
+                  active ? '!text-white !border-transparent shadow-xs scale-105' : 'hover:scale-105'
                 }`}
                 style={active ? { backgroundColor: getDifficultyColor(d) } : {}}
               >
@@ -110,10 +108,8 @@ export default function ExplorerFilterPanel({
                 key={f.label}
                 type="button"
                 onClick={() => onSelectDuration(active ? null : f.label)}
-                className={`h-7 px-3 rounded-full text-[10.5px] font-bold transition-all border cursor-pointer ${
-                  active
-                    ? 'bg-[#17402C] text-white border-[#17402C] shadow-xs'
-                    : 'glass bg-white/80 hover:bg-white text-[#17402C] border-white/70 shadow-2xs hover:shadow-xs'
+                className={`glass-capsule-btn !py-1 !px-3 text-[10.5px] font-bold transition-all cursor-pointer ${
+                  active ? 'primary shadow-xs scale-105' : 'hover:scale-105'
                 }`}
               >
                 {f.label}
@@ -134,10 +130,8 @@ export default function ExplorerFilterPanel({
                 key={c}
                 type="button"
                 onClick={() => onSelectCategory(c)}
-                className={`h-7 px-3 rounded-full text-[10.5px] font-bold transition-all border cursor-pointer ${
-                  active
-                    ? 'bg-[#17402C] text-white border-[#17402C] shadow-xs'
-                    : 'glass bg-white/80 hover:bg-white text-[#17402C] border-white/70 shadow-2xs hover:shadow-xs'
+                className={`glass-capsule-btn !py-1 !px-3 text-[10.5px] font-bold transition-all cursor-pointer ${
+                  active ? 'primary shadow-xs scale-105' : 'hover:scale-105'
                 }`}
               >
                 {c}
@@ -153,10 +147,8 @@ export default function ExplorerFilterPanel({
         <button
           type="button"
           onClick={onToggleFamily}
-          className={`self-start inline-flex items-center h-7 px-3 rounded-full text-[10.5px] font-bold transition-all border cursor-pointer ${
-            familyOnly
-              ? 'bg-[#5B7F55] text-white border-transparent shadow-xs'
-              : 'glass bg-white/80 hover:bg-white text-[#17402C] border-white/70 shadow-2xs hover:shadow-xs'
+          className={`self-start glass-capsule-btn !py-1 !px-3 text-[10.5px] font-bold transition-all cursor-pointer ${
+            familyOnly ? 'primary shadow-xs scale-105' : 'hover:scale-105'
           }`}
         >
           <span>Adapté aux familles</span>
@@ -181,10 +173,8 @@ export default function ExplorerFilterPanel({
                 key={poi.id}
                 type="button"
                 onClick={() => onTogglePoiCategory?.(poi.id)}
-                className={`h-7 px-3 rounded-full text-[10.5px] font-bold transition-all border cursor-pointer ${
-                  active
-                    ? 'text-white border-transparent shadow-xs scale-105'
-                    : 'glass bg-white/80 hover:bg-white text-[#17402C] border-white/70 shadow-2xs hover:shadow-xs'
+                className={`glass-capsule-btn !py-1 !px-3 text-[10.5px] font-bold transition-all cursor-pointer ${
+                  active ? '!text-white !border-transparent shadow-xs scale-105' : 'hover:scale-105'
                 }`}
                 style={active ? { backgroundColor: poi.color } : {}}
               >
