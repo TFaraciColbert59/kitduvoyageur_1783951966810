@@ -563,7 +563,7 @@ export default function ExplorerMap({
 
         {/* Tile switcher (Carte / Relief / Satellite) — Liquid Glass (Icônes seules) */}
         <div
-          className="flex items-center gap-1 p-1 rounded-full"
+          className="flex items-center gap-1.5 p-1 rounded-full"
           style={{
             background: 'linear-gradient(180deg, rgba(255, 255, 255, 0.65) 0%, rgba(251, 250, 246, 0.40) 100%)',
             backdropFilter: 'blur(20px) saturate(180%)',
@@ -577,10 +577,10 @@ export default function ExplorerMap({
             onClick={() => handleTileChange('osm')}
             title="Carte standard (Plan)"
             aria-label="Carte standard (Plan)"
-            className={`w-8 h-8 rounded-full flex items-center justify-center transition-all cursor-pointer active:scale-95 ${
+            className={`w-8.5 h-8.5 rounded-full flex items-center justify-center transition-all cursor-pointer active:scale-95 ${
               tileMode === 'osm'
-                ? 'bg-[#17402C] text-white shadow-xs'
-                : 'text-[#17402C] hover:bg-white/70'
+                ? 'glass-circle-btn primary !text-white shadow-xs'
+                : 'glass-circle-btn'
             }`}
           >
             <svg width="14" height="14" fill="none" stroke="currentColor" strokeWidth="2.2" viewBox="0 0 24 24">
@@ -594,10 +594,10 @@ export default function ExplorerMap({
             onClick={() => handleTileChange('topo')}
             title="Relief / Topographie"
             aria-label="Relief / Topographie"
-            className={`w-8 h-8 rounded-full flex items-center justify-center transition-all cursor-pointer active:scale-95 ${
+            className={`w-8.5 h-8.5 rounded-full flex items-center justify-center transition-all cursor-pointer active:scale-95 ${
               tileMode === 'topo'
-                ? 'bg-[#17402C] text-white shadow-xs'
-                : 'text-[#17402C] hover:bg-white/70'
+                ? 'glass-circle-btn primary !text-white shadow-xs'
+                : 'glass-circle-btn'
             }`}
           >
             <svg width="14" height="14" fill="none" stroke="currentColor" strokeWidth="2.2" viewBox="0 0 24 24">
@@ -609,10 +609,10 @@ export default function ExplorerMap({
             onClick={() => handleTileChange('satellite')}
             title="Vue Satellite"
             aria-label="Vue Satellite"
-            className={`w-8 h-8 rounded-full flex items-center justify-center transition-all cursor-pointer active:scale-95 ${
+            className={`w-8.5 h-8.5 rounded-full flex items-center justify-center transition-all cursor-pointer active:scale-95 ${
               tileMode === 'satellite'
-                ? 'bg-[#17402C] text-white shadow-xs'
-                : 'text-[#17402C] hover:bg-white/70'
+                ? 'glass-circle-btn primary !text-white shadow-xs'
+                : 'glass-circle-btn'
             }`}
           >
             <svg width="14" height="14" fill="none" stroke="currentColor" strokeWidth="2.2" viewBox="0 0 24 24">

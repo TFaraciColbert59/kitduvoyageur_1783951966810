@@ -234,19 +234,22 @@ export default function TrailLayer({ map, trails, pois, selectedTrailId, onTrail
           if (label) {
             const html = `
               <div style="
-                background: ${isSelected ? '#17402C' : 'white'};
-                color: ${isSelected ? 'white' : '#17402C'};
+                background: ${isSelected ? 'linear-gradient(180deg, rgba(23,64,44,0.92) 0%, rgba(15,43,30,0.96) 100%)' : 'linear-gradient(180deg, rgba(255, 255, 255, 0.88) 0%, rgba(245, 241, 233, 0.75) 100%)'};
+                color: ${isSelected ? '#FAF8F5' : '#17402C'};
                 font-weight: 700;
                 font-size: 11px;
                 padding: 4px 10px;
-                border-radius: 999px;
-                box-shadow: 0 2px 6px rgba(0,0,0,0.08);
+                border-radius: 9999px;
+                backdrop-filter: blur(12px);
+                -webkit-backdrop-filter: blur(12px);
+                box-shadow: inset 0 1px 1.5px rgba(255, 255, 255, 0.9), 0 2px 8px rgba(23,64,44,0.12);
                 white-space: nowrap;
-                border: 1px solid ${isSelected ? '#17402C' : '#E8E4D8'};
+                border: 1.5px solid ${isSelected ? 'rgba(255, 255, 255, 0.45)' : 'rgba(255, 255, 255, 0.85)'};
                 cursor: pointer;
                 display: flex;
                 align-items: center;
                 justify-content: center;
+                transition: transform 0.15s ease;
               ">${label}</div>`;
             const icon = L.divIcon({ html, className: '', iconSize: [54, 24], iconAnchor: [27, 12] });
             const marker = L.marker([lat, lng], { icon, zIndexOffset: isSelected ? 1000 : 10 });
