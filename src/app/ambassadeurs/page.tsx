@@ -6,7 +6,7 @@ import Footer from '@/components/Footer';
 import Icon from '@/components/ui/AppIcon';
 import { createClient } from '@/lib/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
-import MobilePageShell from '@/components/mobile-nav/MobilePageShell';
+import { AppShell } from '@/components/shell';
 
 export default function AmbassadeursPage() {
   const [activeTab, setActiveTab] = useState<'programme' | 'dashboard' | 'codes'>('programme');
@@ -33,7 +33,7 @@ export default function AmbassadeursPage() {
 
       {/* MOBILE */}
       <div className="block md:hidden">
-        <MobilePageShell>
+        <AppShell>
           <div style={{ padding: '16px' }}>
             <h1 style={{ fontSize: '20px', fontWeight: 800, color: '#17402C', marginBottom: '8px', fontFamily: 'var(--font-display)' }}>Ambassadeurs</h1>
             <p style={{ fontSize: '13px', color: 'rgba(23,64,44,0.6)', marginBottom: '16px' }}>Partagez votre passion, gagnez des commissions.</p>
@@ -43,7 +43,7 @@ export default function AmbassadeursPage() {
             </div>
             <button onClick={() => setApplyOpen(true)} style={{ width: '100%', padding: '14px', background: '#17402C', color: 'white', border: 'none', borderRadius: '12px', fontSize: '14px', fontWeight: 600, cursor: 'pointer', marginTop: '12px' }}>Devenir ambassadeur</button>
           </div>
-        </MobilePageShell>
+        </AppShell>
         
       </div>
     </>
