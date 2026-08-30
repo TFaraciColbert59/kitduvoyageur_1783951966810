@@ -33,7 +33,7 @@ export default async function DepartIdPage({
     .map((k) => ({ id: k.id, name: k.name }));
 
   return (
-    <div className="w-full h-full flex flex-col overflow-y-auto">
+    <div className="w-full h-full min-h-0 flex flex-col overflow-y-auto md:overflow-hidden">
       <Suspense fallback={<DepartCockpitSkeleton />}>
         <DepartCockpit depart={depart} weather={weather} kits={kitList} />
       </Suspense>

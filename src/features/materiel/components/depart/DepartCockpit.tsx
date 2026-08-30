@@ -1,5 +1,5 @@
 ﻿'use client';
-import { useState, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import dynamic from 'next/dynamic';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
@@ -20,9 +20,12 @@ import { DepartWeightBreakdown } from './DepartWeightBreakdown';
 import { DepartConsumables } from './DepartConsumables';
 import { DepartWeather } from './DepartWeather';
 import { DepartParticipants } from './DepartParticipants';
+import { DepartLeftSidebar } from './DepartLeftSidebar';
+import { DepartRightSidebar } from './DepartRightSidebar';
 import { KitSwitcher } from './KitSwitcher';
 import ScrollableTabs, { type TabOption } from '@/components/ui/ScrollableTabs';
 import { Skeleton } from '@/components/ui/Skeleton';
+import { generateSmartPrompts } from '@/features/materiel/services/generateSmartPrompts';
 import type { DepartDetail } from '@/features/materiel/services/getDepartDetail';
 import type { WeatherForecast } from '@/features/materiel/services/getWeather';
 
@@ -87,6 +90,8 @@ export function DepartCockpit({ depart, weather, kits }: DepartCockpitProps) {
     trailDistanceKm: depart.trail?.distance_km ?? null,
   };
 
+  const smartAlerts = generateSmartPrompts(alertInput);
+
   // Synchronisation avec BottomTabBar si nécessaire
   useEffect(() => {
     const handleSectionChange = (e: any) => {
@@ -105,13 +110,13 @@ export function DepartCockpit({ depart, weather, kits }: DepartCockpitProps) {
     }
   };
 
-  // Les 7 sections fonctionnelles
+  // Les 7 onglets de navigation
   const SECTIONS_TABS: TabOption[] = [
     { id: 'all', label: 'Vue complète', icon: <LayoutGrid size={13} /> },
     { id: 'overview', label: '1. Départ', icon: <Compass size={13} /> },
     { id: 'progression', label: '2. Progression', icon: <ListChecks size={13} /> },
-    { id: 'alerts', label: '3. Alertes', icon: <AlertTriangle size={13} /> },
-    { id: 'checklist', label: '4. Checklist', icon: <CheckSquare size={13} /> },
+    { id: 'alerts', label: '3. Alertes', icon: <AlertTriangle size={13} />, badge: smartAlerts.length || undefined },
+    { id: 'checklist', label: '4. Checklist', icon: <CheckSquare size={13} />, badge: `${checkedCount}/${itemsCount}` },
     { id: 'weight', label: '5. Poids', icon: <Scale size={13} /> },
     { id: 'consumables', label: '6. Consommables', icon: <Droplets size={13} /> },
     { id: 'terrain', label: '7. Terrain & Météo', icon: <MapPin size={13} /> },
@@ -119,127 +124,154 @@ export function DepartCockpit({ depart, weather, kits }: DepartCockpitProps) {
 
   const showAll = activeSection === 'all';
 
+  // Rendu du contenu principal
+  const renderMainSections = () => (
+    <div className="flex flex-col gap-3">
+      {/* SECTION 1 : Départ & En-tête */}
+      {(showAll || activeSection === 'overview') && (
+        <section id="section-depart-overview" aria-label="Section 1 : Vue d'ensemble du départ">
+          <DepartHeader depart={depart} />
+        </section>
+      )}
+
+      {/* SECTION 2 : Progression du Pack & Métriques */}
+      {(showAll || activeSection === 'progression') && (
+        <section id="section-depart-progression" aria-label="Section 2 : Progression du pack">
+          <DepartPreparation
+            checklistPct={depart.checklistPct}
+            totalWeightG={depart.assignedKit.totalWeightG}
+            itemsCount={itemsCount}
+            checkedCount={checkedCount}
+            kitId={depart.id}
+          />
+        </section>
+      )}
+
+      {/* SECTION 3 : Alertes Intelligentes */}
+      {(showAll || activeSection === 'alerts') && (
+        <section id="section-depart-alerts" aria-label="Section 3 : Alertes de départ">
+          <DepartAlerts input={alertInput} />
+        </section>
+      )}
+
+      {/* SECTION 4 : Checklist du Matériel */}
+      {(showAll || activeSection === 'checklist') && (
+        <section id="section-depart-checklist" aria-label="Section 4 : Checklist du kit">
+          <DepartChecklist items={depart.assignedKit.items} isRealKit={isRealKit} />
+        </section>
+      )}
+
+      {/* SECTION 5 : Analyse du Poids */}
+      {(showAll || activeSection === 'weight') && (
+        <section id="section-depart-weight" aria-label="Section 5 : Répartition du poids">
+          <DepartWeightBreakdown
+            breakdown={depart.weightBreakdown}
+            totalWeightG={depart.assignedKit.totalWeightG}
+          />
+        </section>
+      )}
+
+      {/* SECTION 6 : Consommables */}
+      {(showAll || activeSection === 'consumables') && (
+        <section id="section-depart-consumables" aria-label="Section 6 : Consommables estimés">
+          <DepartConsumables
+            consumables={depart.consumables}
+            durationDays={depart.durationDays}
+            participantsCount={depart.participants.length || 1}
+          />
+        </section>
+      )}
+
+      {/* SECTION 7 : Terrain, Météo & Équipe */}
+      {(showAll || activeSection === 'terrain') && (
+        <section
+          id="section-depart-terrain"
+          aria-label="Section 7 : Terrain, météo et sécurité"
+          className="space-y-3"
+        >
+          <DepartWeather weather={weather} />
+          <DepartParticipants
+            participants={depart.participants}
+            emergencyContact={depart.emergencyContact}
+          />
+          {depart.trail && <DepartMap trail={depart.trail} height="240px" />}
+        </section>
+      )}
+    </div>
+  );
+
   return (
-    <div className="flex flex-col gap-3 w-full max-w-3xl mx-auto px-3 sm:px-4 pb-8">
-      {/* Barre d'action supérieure : Switcher de kit + Switcher des 7 sections */}
-      <div className="space-y-2 sticky top-0 z-30 pt-1 pb-1 backdrop-blur-md bg-white/20 rounded-2xl">
-        <div className="flex items-center justify-between gap-2 px-1">
-          <span className="text-[11px] font-semibold uppercase tracking-wider text-[#5A7064]">
-            Cockpit de départ
-          </span>
-          {kits.length > 1 && <KitSwitcher kits={kits} currentId={depart.id} />}
+    <div className="w-full h-full">
+      {/* ══════════════════════════════════════════════════════════════════════
+          1. VERSION MOBILE (< 768px)
+         ══════════════════════════════════════════════════════════════════════ */}
+      <div className="block md:hidden w-full max-w-3xl mx-auto px-3 sm:px-4 pb-12 space-y-3">
+        {/* Barre d'action supérieure mobile : Switcher de kit + Tabs */}
+        <div className="space-y-2 sticky top-0 z-30 pt-1 pb-1 backdrop-blur-md bg-white/30 rounded-2xl border border-white/40">
+          <div className="flex items-center justify-between gap-2 px-2">
+            <span className="text-[10.5px] font-semibold uppercase tracking-wider text-[#5A7064]">
+              Cockpit de départ
+            </span>
+            {kits.length > 1 && <KitSwitcher kits={kits} currentId={depart.id} />}
+          </div>
+
+          <ScrollableTabs
+            tabs={SECTIONS_TABS}
+            activeTab={activeSection}
+            onSelectTab={handleSelectTab}
+            size="sm"
+            className="px-0.5"
+          />
         </div>
 
-        {/* Sélecteur des 7 sections */}
-        <ScrollableTabs
-          tabs={SECTIONS_TABS}
-          activeTab={activeSection}
-          onSelectTab={handleSelectTab}
-          size="sm"
-          className="px-0.5"
-        />
+        <AnimatePresence mode="wait">
+          <motion.div
+            key={activeSection}
+            initial={{ opacity: 0, y: 4 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -4 }}
+            transition={{ duration: 0.16, ease: 'easeOut' }}
+          >
+            {renderMainSections()}
+          </motion.div>
+        </AnimatePresence>
       </div>
 
-      <AnimatePresence mode="wait">
-        <motion.div
-          key={activeSection}
-          initial={{ opacity: 0, y: 4 }}
-          animate={{ opacity: 1, y: 0 }}
-          exit={{ opacity: 0, y: -4 }}
-          transition={{ duration: 0.18, ease: 'easeOut' }}
-          className="flex flex-col gap-3"
-        >
-          {/* ========================================================
-              SECTION 1 : En-tête, Destination & Compte à rebours
-             ======================================================== */}
-          {(showAll || activeSection === 'overview') && (
-            <section id="section-depart-overview" aria-label="Section 1 : Vue d'ensemble du départ">
-              <DepartHeader depart={depart} />
-            </section>
-          )}
+      {/* ══════════════════════════════════════════════════════════════════════
+          2. VERSION DESKTOP COCKPIT 3 COLONNES FULLSCREEN (hidden md:flex)
+         ══════════════════════════════════════════════════════════════════════ */}
+      <div className="hidden md:flex h-full overflow-hidden max-w-[1680px] w-full mx-auto px-4 lg:px-6 py-2 gap-4 items-start">
+        {/* COLONNE GAUCHE : NAVIGATION ONGLETS & IDENTITÉ (260px) */}
+        <div className="w-[260px] shrink-0 h-full overflow-hidden">
+          <DepartLeftSidebar
+            depart={depart}
+            activeSection={activeSection}
+            onSectionChange={setActiveSection}
+            kits={kits}
+            alertsCount={smartAlerts.length}
+          />
+        </div>
 
-          {/* ========================================================
-              SECTION 2 : Progression du Pack & Métriques
-             ======================================================== */}
-          {(showAll || activeSection === 'progression') && (
-            <section id="section-depart-progression" aria-label="Section 2 : Progression du pack">
-              <DepartPreparation
-                checklistPct={depart.checklistPct}
-                totalWeightG={depart.assignedKit.totalWeightG}
-                itemsCount={itemsCount}
-                checkedCount={checkedCount}
-                kitId={depart.id}
-              />
-            </section>
-          )}
-
-          {/* ========================================================
-              SECTION 3 : Alertes & Recommandations Intelligentes
-             ======================================================== */}
-          {(showAll || activeSection === 'alerts') && (
-            <section id="section-depart-alerts" aria-label="Section 3 : Alertes de départ">
-              <DepartAlerts input={alertInput} />
-            </section>
-          )}
-
-          {/* ========================================================
-              SECTION 4 : Checklist Interactive du Matériel
-             ======================================================== */}
-          {(showAll || activeSection === 'checklist') && (
-            <section id="section-depart-checklist" aria-label="Section 4 : Checklist du kit">
-              <DepartChecklist items={depart.assignedKit.items} isRealKit={isRealKit} />
-            </section>
-          )}
-
-          {/* ========================================================
-              SECTION 5 : Analyse & Répartition du Poids
-             ======================================================== */}
-          {(showAll || activeSection === 'weight') && (
-            <section id="section-depart-weight" aria-label="Section 5 : Répartition du poids">
-              <DepartWeightBreakdown
-                breakdown={depart.weightBreakdown}
-                totalWeightG={depart.assignedKit.totalWeightG}
-              />
-            </section>
-          )}
-
-          {/* ========================================================
-              SECTION 6 : Consommables & Autonomie
-             ======================================================== */}
-          {(showAll || activeSection === 'consumables') && (
-            <section id="section-depart-consumables" aria-label="Section 6 : Consommables estimés">
-              <DepartConsumables
-                consumables={depart.consumables}
-                durationDays={depart.durationDays}
-                participantsCount={depart.participants.length || 1}
-              />
-            </section>
-          )}
-
-          {/* ========================================================
-              SECTION 7 : Terrain, Météo & Équipe de Sécurité
-             ======================================================== */}
-          {(showAll || activeSection === 'terrain') && (
-            <section
-              id="section-depart-terrain"
-              aria-label="Section 7 : Terrain, météo et sécurité"
-              className="space-y-3"
+        {/* COLONNE CENTRALE : CONTENU DE LA SECTION ACTIVE (flex-1) */}
+        <main className="flex-1 h-full overflow-y-auto no-scrollbar space-y-4 px-1 pb-8">
+          <AnimatePresence mode="wait">
+            <motion.div
+              key={activeSection}
+              initial={{ opacity: 0, y: 4 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -4 }}
+              transition={{ duration: 0.16, ease: 'easeOut' }}
             >
-              {/* Météo locale */}
-              <DepartWeather weather={weather} />
+              {renderMainSections()}
+            </motion.div>
+          </AnimatePresence>
+        </main>
 
-              {/* Équipe & Contact d'urgence */}
-              <DepartParticipants
-                participants={depart.participants}
-                emergencyContact={depart.emergencyContact}
-              />
-
-              {/* Carte Leaflet & Tracé */}
-              {depart.trail && <DepartMap trail={depart.trail} height="240px" />}
-            </section>
-          )}
-        </motion.div>
-      </AnimatePresence>
+        {/* COLONNE DROITE : WIDGETS TACTIQUES & MINI-MAP (310px) */}
+        <div className="w-[310px] shrink-0 h-full overflow-hidden">
+          <DepartRightSidebar depart={depart} />
+        </div>
+      </div>
     </div>
   );
 }
