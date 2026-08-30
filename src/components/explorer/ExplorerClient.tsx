@@ -528,12 +528,13 @@ export default function ExplorerClient({ initialTrails }: ExplorerClientProps) {
             <button
               type="button"
               onClick={handleSearchHere}
-              className="glass-circle-btn w-9 h-9 shadow-md"
+              className="glass-circle-btn w-10 h-10 shadow-md"
               title="Rechercher les randonnées dans cette zone"
               aria-label="Rechercher les randonnées dans cette zone"
             >
               <RotateCcw
-                size={15}
+                size={16}
+                strokeWidth={2.2}
                 className={`transition-transform duration-500 ${trailsFetching ? 'animate-spin' : 'hover:-rotate-90'}`}
               />
             </button>
@@ -553,21 +554,11 @@ export default function ExplorerClient({ initialTrails }: ExplorerClientProps) {
               exit={{ opacity: 0, x: 20 }}
               type="button"
               onClick={() => setFiltersOpen(true)}
-              className="pointer-events-auto p-2.5 rounded-l-2xl glass cursor-pointer transition-all active:scale-95 group relative flex items-center justify-center"
-              style={{
-                background: 'linear-gradient(180deg, rgba(255, 255, 255, 0.70) 0%, rgba(251, 250, 246, 0.40) 100%)',
-                backdropFilter: 'blur(20px) saturate(180%)',
-                WebkitBackdropFilter: 'blur(20px) saturate(180%)',
-                border: '1px solid rgba(255, 255, 255, 0.80)',
-                borderRight: 'none',
-                boxShadow: '0 8px 32px -4px rgba(23, 64, 44, 0.12), inset 0 1px 1.5px rgba(255, 255, 255, 0.95)',
-              }}
+              className="pointer-events-auto glass-circle-btn !rounded-r-none !rounded-l-2xl !w-11 !h-11 cursor-pointer transition-all active:scale-95 group relative flex items-center justify-center shadow-lg"
               title="Ouvrir les filtres"
               aria-label="Ouvrir les filtres"
             >
-              <div className="w-8 h-8 rounded-xl bg-[#5B7F55]/15 text-[#5B7F55] group-hover:bg-[#17402C] group-hover:text-white flex items-center justify-center transition-colors">
-                <SlidersHorizontal size={16} />
-              </div>
+              <SlidersHorizontal size={18} strokeWidth={2.2} className="text-[#17402C]" />
               {activeFilterCount > 0 && (
                 <span className="absolute top-1 left-1 w-4 h-4 rounded-full bg-[#17402C] text-white text-[9px] font-mono font-bold flex items-center justify-center shadow-xs">
                   {activeFilterCount}
@@ -797,22 +788,22 @@ export default function ExplorerClient({ initialTrails }: ExplorerClientProps) {
                   )}
                 </div>
 
-                <div className="flex items-center gap-2 pt-1 border-t border-white/30">
+                <div className="flex items-center gap-2 pt-1 border-t border-[#17402C]/08">
                   <button
                     type="button"
                     onClick={() => router.push(`/preparer-randonnee?routeId=${selectedTrail.id}`)}
-                    className="glass-capsule-btn primary flex-1 !min-h-[32px] text-xs font-bold shadow-xs active:scale-[0.97] transition-all cursor-pointer"
+                    className="glass-capsule-btn flex-1 !min-h-[36px] text-xs font-bold shadow-xs active:scale-[0.97] transition-all cursor-pointer"
                   >
                     <span>Préparer</span>
                   </button>
                   <button
                     type="button"
                     onClick={() => setDetailPanelOpen(true)}
-                    className="glass-circle-btn w-8.5 h-8.5 shrink-0 active:scale-[0.97] transition-all cursor-pointer"
+                    className="glass-circle-btn w-9 h-9 shrink-0 active:scale-[0.97] transition-all cursor-pointer shadow-xs"
                     title="Voir la fiche complète"
                     aria-label="Voir la fiche complète"
                   >
-                    <FileText size={14} />
+                    <FileText size={15} strokeWidth={2.2} />
                   </button>
                 </div>
               </div>

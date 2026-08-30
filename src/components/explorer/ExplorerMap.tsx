@@ -528,13 +528,13 @@ export default function ExplorerMap({
       {/* Floating Controls Cluster: En haut à droite sur mobile, en bas à droite sur desktop */}
       <div className="absolute z-[400] pointer-events-auto right-3.5 top-[calc(env(safe-area-inset-top,0px)+74px)] md:top-auto md:right-4 md:bottom-6 flex flex-col items-end gap-2">
         {/* Floating Zoom & GPS Controls (+ / − / GPS) */}
-        <div className="flex flex-col gap-1.5 items-center">
+        <div className="flex flex-col gap-2 items-center">
           <button
             type="button"
             onClick={handleZoomIn}
             title="Zoom avant"
             aria-label="Zoom avant"
-            className="glass-circle-btn w-8.5 h-8.5 font-bold text-sm"
+            className="glass-circle-btn w-9.5 h-9.5 md:w-10 md:h-10 font-bold text-base shadow-md"
           >
             +
           </button>
@@ -543,7 +543,7 @@ export default function ExplorerMap({
             onClick={handleZoomOut}
             title="Zoom arrière"
             aria-label="Zoom arrière"
-            className="glass-circle-btn w-8.5 h-8.5 font-bold text-sm"
+            className="glass-circle-btn w-9.5 h-9.5 md:w-10 md:h-10 font-bold text-base shadow-md"
           >
             −
           </button>
@@ -552,9 +552,9 @@ export default function ExplorerMap({
             onClick={handleRecenter}
             title="Recentrer sur ma position"
             aria-label="Recentrer sur ma position"
-            className="glass-circle-btn w-8.5 h-8.5"
+            className="glass-circle-btn w-9.5 h-9.5 md:w-10 md:h-10 shadow-md"
           >
-            <svg width="14" height="14" fill="none" stroke="currentColor" strokeWidth="2.2" viewBox="0 0 24 24">
+            <svg width="16" height="16" fill="none" stroke="currentColor" strokeWidth="2.2" viewBox="0 0 24 24">
               <circle cx="12" cy="12" r="3" />
               <path d="M12 2v3m0 14v3M2 12h3m14 0h3" />
             </svg>
@@ -563,13 +563,13 @@ export default function ExplorerMap({
 
         {/* Tile switcher (Carte / Relief / Satellite) — Liquid Glass (Icônes seules) */}
         <div
-          className="flex items-center gap-1.5 p-1 rounded-full"
+          className="flex items-center gap-1.5 p-1 rounded-full shadow-md"
           style={{
-            background: 'linear-gradient(180deg, rgba(255, 255, 255, 0.65) 0%, rgba(251, 250, 246, 0.40) 100%)',
-            backdropFilter: 'blur(20px) saturate(180%)',
-            WebkitBackdropFilter: 'blur(20px) saturate(180%)',
-            border: '1px solid rgba(255, 255, 255, 0.75)',
-            boxShadow: '0 8px 32px -4px rgba(23, 64, 44, 0.12), inset 0 1px 1.5px rgba(255, 255, 255, 0.95)',
+            background: 'linear-gradient(180deg, rgba(240, 237, 228, 0.94) 0%, rgba(225, 221, 208, 0.84) 100%)',
+            backdropFilter: 'blur(16px) saturate(180%)',
+            WebkitBackdropFilter: 'blur(16px) saturate(180%)',
+            border: '1.5px solid rgba(255, 255, 255, 0.88)',
+            boxShadow: '0 8px 32px -4px rgba(23, 64, 44, 0.12), inset 0 1.5px 2px rgba(255, 255, 255, 0.95)',
           }}
         >
           <button
@@ -577,13 +577,13 @@ export default function ExplorerMap({
             onClick={() => handleTileChange('osm')}
             title="Carte standard (Plan)"
             aria-label="Carte standard (Plan)"
-            className={`w-8.5 h-8.5 rounded-full flex items-center justify-center transition-all cursor-pointer active:scale-95 ${
+            className={`w-8.5 h-8.5 md:w-9 md:h-9 rounded-full flex items-center justify-center transition-all cursor-pointer active:scale-95 ${
               tileMode === 'osm'
                 ? 'glass-circle-btn primary !text-white shadow-xs'
-                : 'glass-circle-btn'
+                : 'hover:bg-white/60 text-[#17402C]'
             }`}
           >
-            <svg width="14" height="14" fill="none" stroke="currentColor" strokeWidth="2.2" viewBox="0 0 24 24">
+            <svg width="15" height="15" fill="none" stroke="currentColor" strokeWidth="2.2" viewBox="0 0 24 24">
               <path d="M3 6l6-3 6 3 6-3v12l-6 3-6-3-6 3V6z"></path>
               <path d="M9 3v12"></path>
               <path d="M15 6v12"></path>
@@ -594,13 +594,13 @@ export default function ExplorerMap({
             onClick={() => handleTileChange('topo')}
             title="Relief / Topographie"
             aria-label="Relief / Topographie"
-            className={`w-8.5 h-8.5 rounded-full flex items-center justify-center transition-all cursor-pointer active:scale-95 ${
+            className={`w-8.5 h-8.5 md:w-9 md:h-9 rounded-full flex items-center justify-center transition-all cursor-pointer active:scale-95 ${
               tileMode === 'topo'
                 ? 'glass-circle-btn primary !text-white shadow-xs'
-                : 'glass-circle-btn'
+                : 'hover:bg-white/60 text-[#17402C]'
             }`}
           >
-            <svg width="14" height="14" fill="none" stroke="currentColor" strokeWidth="2.2" viewBox="0 0 24 24">
+            <svg width="15" height="15" fill="none" stroke="currentColor" strokeWidth="2.2" viewBox="0 0 24 24">
               <path d="M8 3l4 8 5-5 5 15H2L8 3z"></path>
             </svg>
           </button>
@@ -609,13 +609,13 @@ export default function ExplorerMap({
             onClick={() => handleTileChange('satellite')}
             title="Vue Satellite"
             aria-label="Vue Satellite"
-            className={`w-8.5 h-8.5 rounded-full flex items-center justify-center transition-all cursor-pointer active:scale-95 ${
+            className={`w-8.5 h-8.5 md:w-9 md:h-9 rounded-full flex items-center justify-center transition-all cursor-pointer active:scale-95 ${
               tileMode === 'satellite'
                 ? 'glass-circle-btn primary !text-white shadow-xs'
-                : 'glass-circle-btn'
+                : 'hover:bg-white/60 text-[#17402C]'
             }`}
           >
-            <svg width="14" height="14" fill="none" stroke="currentColor" strokeWidth="2.2" viewBox="0 0 24 24">
+            <svg width="15" height="15" fill="none" stroke="currentColor" strokeWidth="2.2" viewBox="0 0 24 24">
               <circle cx="12" cy="12" r="10"></circle>
               <line x1="2" y1="12" x2="22" y2="12"></line>
               <path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"></path>
