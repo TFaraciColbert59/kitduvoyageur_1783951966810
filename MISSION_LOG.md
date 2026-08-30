@@ -698,6 +698,7 @@ La connexion active utilise exclusivement le projet Supabase de production `icxy
 
 ---
 
+
 # MISSION — Intégration de `countries_geo` dans les pages pays de LKDV
 
 ## ÉTAPE 1 — Découverte & État Initial (avant tout changement de code)
@@ -966,4 +967,72 @@ Process exited with code 0
 
 Conclusion : les deux champs testés sont bien servis par la requête Supabase en temps réel. Zéro valeur hardcodée détectée.
 
+## Bilan Final — Éléments fictifs retirés ou masqués (Tasks 0-8)
 
+| Bloc / Champ | Fichier(s) | Type de retrait |
+|---|---|---|
+| Badge ☀️ Saison recommandée | PaysHeroOverview.tsx, PaysLeftSidebar.tsx, MobileCountryDetailView.tsx | Supprimé |
+| Carte SVG "Repères & Relief" | PaysHeroOverview.tsx | Conditionné à `points_interet_carte.length > 0` |
+| "Points forts du voyage" (Highlights) | PaysHeroOverview.tsx | Conditionné à `highlights.length > 0` |
+| Slogan `nature & sentiers` générique | PaysHeroOverview.tsx | Conditionné à slogan custom |
+| Subtitle auto-généré | PaysHeroOverview.tsx | Conditionné à `subtitle_is_custom` |
+| Carte "Formalités d'entrée" | PaysPratiqueView.tsx + countryDetails.ts | Masquée (tableau vide) |
+| Transport lignes fictives (Vols, Réseau, Déplacements) | countryDetails.ts | Supprimées du fallback |
+| Budget lignes fictives (Moyens paiement, Budget repère) | countryDetails.ts | Supprimées du fallback |
+| Carte "Santé & Recommandations" | PaysPratiqueView.tsx + countryDetails.ts | Masquée (tableau vide) |
+| Widget "Météo en direct" LIVE (19°C statique) | PaysRightSidebar.tsx, MobileCountryDetailView.tsx | Guard `{country.meteo && ...}` |
+| Widget "Sécurité & Terrain" (niveaux inventés) | PaysRightSidebar.tsx | Guard `{country.securite && ...}` |
+| Activités génériques fallback | countryDetails.ts | Remplacées par `[]` |
+| Gastronomie générique fallback | countryDetails.ts | Remplacée par `[]` |
+| culture.fetes génériques | countryDetails.ts | Remplacées par `[]` |
+| Pratique mobile Passeport/CNI fallback | MobileCountryDetailView.tsx | Supprimé |
+
+### 📦 Ce qui reste affiché (100% données réelles depuis countries_geo)
+| Champ BDD | Colonne source | Emplacements |
+|---|---|---|
+| Nom français | `name` | Titre Hero, onglets, fiche id |
+| Nom anglais | `name_en` | Badge officiel, fiche id |
+| Codes ISO | `iso_a2` + `iso_a3` | Badges ISO, route URL |
+| Continent | `continent` | Localisation, filtres |
+| Sous-région | `subregion` | Stats strip REGION, fiche id |
+| Capitale | `capital` | Stats strip CAPITALE, fiche id |
+| Langues | `languages` | Stats strip LANGUES, fiche id |
+| Superficie | `area_km2` | Stats strip SUPERFICIE |
+| Fuseau horaire | `timezone` | Stats strip + carte Transport |
+| Devise | `currency` + `currency_name` + `currency_code` | Stats strip DEVISE + carte Budget |
+| Sources | `sources` | Liens cliquables références |
+
+### 🔔 Manques de données connus (décision produit Tony)
+- **Globe 3D / geometry** : colonne volontairement vidée pour les 195 pays. Widget dégradé proprement.
+- **Météo live** : aucune API météo connectée. Bloc masqué jusqu'à intégration API réelle.
+- **Visa / Santé / Sécurité** : aucune colonne en base. Cartes masquées, jamais remplies par du texte inventé.
+- **Saison recommandée** : aucune colonne. Badge supprimé. Future colonne à décider.
+- **Activités / Gastronomie / Culture** : contenus éditoriaux, pas en base. Sections masquées pour 189 pays sans données custom. Disponibles pour les 6 pays avec COUNTRY_DETAILS enrichis.
+
+## Build Production Final
+
+```text
+npm notice run kitduvoyageur@0.1.0 build
+npm notice run next build
+   ▲ Next.js 15.5.18
+   - Environments: .env.local, .env
+   - Experiments (use with caution):
+     · optimizePackageImports
+
+   Creating an optimized production build ...
+ ✓ Compiled successfully in 11.0s
+   Skipping linting
+   Checking validity of types ...
+
+├ ○ /pays                                            6.79 kB         324 kB
+├ ● /pays/[code]                                     24.3 kB         360 kB
+├   ├ /pays/ad
+├   ├ /pays/ae
+├   ├ /pays/af
+├   └ [+192 more paths]
+
+○  (Static)   prerendered as static content
+●  (SSG)      prerendered as static HTML (uses generateStaticParams)
+ƒ  (Dynamic)  server-rendered on demand
+```
+✅ Exit code 0 — 195 routes pays SSG générées sans erreur.

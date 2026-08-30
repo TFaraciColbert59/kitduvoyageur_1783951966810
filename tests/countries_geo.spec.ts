@@ -95,4 +95,63 @@ describe('countries_geo Supabase Integration (195 Pays)', () => {
     expect(detail.sources_list!.length).toBeGreaterThan(0);
     expect(detail.sources_list![0].url).toContain('http');
   });
+
+  it('should handle NULL currency_code gracefully (PS — Palestine)', async () => {
+    const ps = await fetchCountryByIso('PS');
+    expect(ps).not.toBeNull();
+    if (!ps) return;
+
+    const detail = getCompleteCountryDetail('PS', ps);
+    // Must not crash even if currency_code is null
+    expect(detail.monnaie_code).toBeDefined();
+    expect(String(detail.monnaie_code)).not.toBe('undefined');
+    expect(String(detail.monnaie_code)).not.toContain('NaN');
+    // Fictitious blocks must be absent
+    expect(detail.meteo).toBeUndefined();
+    expect(detail.securite).toBeUndefined();
+    expect(detail.activites).toHaveLength(0);
+    expect(detail.pratique.formalites).toHaveLength(0);
+    expect(detail.pratique.sante).toHaveLength(0);
+  });
+
+  it('should handle single-element long-text languages array (ZA)', async () => {
+    const za = await fetchCountryByIso('ZA');
+    expect(za).not.toBeNull();
+    if (!za) return;
+
+    const detail = getCompleteCountryDetail('ZA', za);
+    expect(detail.nom).toBe('Afrique du Sud');
+    // languages may be a single element that is a long phrase
+    expect(detail.langue).toBeTruthy();
+    expect(detail.langue.length).toBeGreaterThan(5);
+    // Fictitious blocks absent
+    expect(detail.meteo).toBeUndefined();
+    expect(detail.securite).toBeUndefined();
+    expect(detail.pratique.formalites).toHaveLength(0);
+    expect(detail.pratique.sante).toHaveLength(0);
+    expect(detail.activites).toHaveLength(0);
+  });
+
+  it('should display only real BDD data for DE with no fictitious fields', async () => {
+    const de = await fetchCountryByIso('DE');
+    expect(de).not.toBeNull();
+    if (!de) return;
+
+    const detail = getCompleteCountryDetail('DE', de);
+    expect(detail.nom).toBe('Allemagne');
+    expect(detail.capitale).toBe('Berlin');
+    expect(detail.fuseau).toBe('UTC+1');
+    expect(detail.continent).toBe('Europe');
+    expect(detail.monnaie_code).toBe('EUR');
+    // Fictitious blocks must be absent
+    expect(detail.meteo).toBeUndefined();
+    expect(detail.securite).toBeUndefined();
+    expect(detail.pratique.formalites).toHaveLength(0);
+    expect(detail.pratique.sante).toHaveLength(0);
+    expect(detail.pratique.transport).toHaveLength(1); // only timezone
+    expect(detail.pratique.transport[0].cle).toBe('Fuseau horaire');
+    expect(detail.pratique.budget).toHaveLength(2);   // monnaie + code
+    expect(detail.activites).toHaveLength(0);
+    expect(detail.gastronomie).toHaveLength(0);
+  });
 });
