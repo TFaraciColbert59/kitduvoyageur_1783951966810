@@ -2,10 +2,11 @@
 import { useEffect, useState } from 'react';
 
 /** CountdownLive — compte à rebours vers une date cible (client, réactualisé chaque seconde). */
-export function CountdownLive({ target }: { target: string }) {
+export function CountdownLive({ target }: { target: string | null | undefined }) {
   const [now, setNow] = useState(() => Date.now());
 
   useEffect(() => {
+    if (!target) return;
     let id: NodeJS.Timeout | null = null;
     const start = () => {
       if (!id && !document.hidden) {
@@ -31,15 +32,19 @@ export function CountdownLive({ target }: { target: string }) {
       stop();
       document.removeEventListener('visibilitychange', handleVisibility);
     };
-  }, []);
+  }, [target]);
 
-  const diff = Math.max(0, new Date(target).getTime() - now);
+  if (!target) return <span>Date à fixer</span>;
+  const targetTime = new Date(target).getTime();
+  if (isNaN(targetTime)) return <span>Date à fixer</span>;
+
+  const diff = Math.max(0, targetTime - now);
   const d = Math.floor(diff / 86400000);
   const h = Math.floor((diff % 86400000) / 3600000);
   const m = Math.floor((diff % 3600000) / 60000);
   const s = Math.floor((diff % 60000) / 1000);
 
-  if (diff === 0) return <span>—</span>;
+  if (diff === 0) return <span>Aujourd’hui</span>;
   return (
     <span className="tabular-nums">
       {d > 0 ? `${d} j ` : ''}

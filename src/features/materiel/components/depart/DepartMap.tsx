@@ -1,14 +1,26 @@
-﻿'use client';
+'use client';
 import React, { useEffect, useRef, useState } from 'react';
+import Link from 'next/link';
 import 'leaflet/dist/leaflet.css';
-import { MapPin, ZoomIn, ZoomOut, Navigation, Layers } from 'lucide-react';
+import {
+  MapPin,
+  ZoomIn,
+  ZoomOut,
+  Navigation,
+  Layers,
+  Maximize2,
+  Minimize2,
+  Download,
+  Check,
+  Compass,
+} from 'lucide-react';
 import { Skeleton } from '@/components/ui/Skeleton';
+import { formatDistanceKm } from '@/features/materiel/domain/departCalculations';
 import { cn } from '@/lib/utils';
 import type { MapTrail } from '@/components/explorer/types';
 
 interface DepartMapProps {
   trail: MapTrail | null;
-  /** Hauteur CSS du conteneur carte (ex: '220px', '280px'). Default: '228px'. */
   height?: string;
   className?: string;
 }
@@ -30,7 +42,6 @@ const TILES: Record<TileMode, { url: string; attribution: string }> = {
   },
 };
 
-/** Extrait les coordonnées [lat, lng][] depuis un GeoJSON LineString ou MultiLineString. */
 function extractCoords(geojson: any): [number, number][] {
   if (!geojson) return [];
   const g = geojson.geometry || geojson;
@@ -50,268 +61,268 @@ function extractCoords(geojson: any): [number, number][] {
   return [];
 }
 
-/**
- * DepartMap — carte Leaflet lazy avec tracé du randonnee.
- *
- * Regles tactiles iOS :
- * - `touch-action: pan-x pan-y` sur le conteneur racine → ne bloque PAS le scroll parent
- * - Le conteneur carte a `overflow-hidden` uniquement sur ses propres bords (rounded)
- * - `tap: false` dans les options Leaflet (evite le doublon Safari)
- * - `preferCanvas: true` pour la performance GPU sur mobile
- */
-export function DepartMap({ trail, height = '228px', className }: DepartMapProps) {
+export function DepartMap({ trail, height = '240px', className }: DepartMapProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const mapRef = useRef<any>(null);
-  const tileRef = useRef<any>(null);
   const polyRef = useRef<any>(null);
+  const tileLayerRef = useRef<any>(null);
+
   const [loaded, setLoaded] = useState(false);
   const [tileMode, setTileMode] = useState<TileMode>('topo');
   const [showTilePicker, setShowTilePicker] = useState(false);
+  const [isFullscreen, setIsFullscreen] = useState(false);
+  const [isOfflineSaved, setIsOfflineSaved] = useState(false);
 
-  // Init Leaflet une seule fois au montage
+  // État vide honnête si aucun tracé n'est lié (§4.3 & §0.4)
+  if (!trail) {
+    return (
+      <div className="glass rounded-[24px] p-5 text-center space-y-2.5 border border-white/60">
+        <div className="w-10 h-10 rounded-2xl bg-white/40 border border-white/60 flex items-center justify-center mx-auto text-[#17402C]">
+          <Compass size={20} />
+        </div>
+        <div>
+          <h3 className="text-xs sm:text-[13px] font-bold text-[#17402C]">Aucun tracé associé à ce départ</h3>
+          <p className="text-[11px] text-[#5A7064] mt-0.5">
+            Liez un itinéraire GPX pour activer le calcul de dénivelé et la carte interactive.
+          </p>
+        </div>
+        <Link
+          href="/preparer-randonnee"
+          className="glass-capsule-btn primary inline-flex items-center gap-1.5 text-xs py-1.5 px-3 font-semibold mt-1"
+        >
+          <MapPin size={12} />
+          <span>Associer une randonnée</span>
+        </Link>
+      </div>
+    );
+  }
+
+  // Initialisation dynamique de Leaflet
   useEffect(() => {
-    if (!containerRef.current || typeof window === 'undefined') return;
-    if (mapRef.current) return;
+    let cancelled = false;
+    let mapInstance: any = null;
 
-    let mounted = true;
-    const container = containerRef.current;
+    import('leaflet').then((L) => {
+      if (cancelled || !containerRef.current || mapRef.current) return;
 
-    // Evite les instances zombies si le composant est monte deux fois (StrictMode)
-    try { delete (container as any)._leaflet_id; } catch {}
-
-    import('leaflet').then((LMod) => {
-      if (!mounted || !containerRef.current || mapRef.current) return;
-      const L = (LMod as any).default || LMod;
-
-      // Icones statiques (evite le probleme de webpack)
-      delete (L.Icon.Default.prototype as any)._getIconUrl;
-      L.Icon.Default.mergeOptions({
-        iconRetinaUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon-2x.png',
-        iconUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon.png',
-        shadowUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-shadow.png',
-      });
-
-      const center: [number, number] =
-        trail?.lat != null && trail?.lng != null &&
-        isFinite(trail.lat) && isFinite(trail.lng)
-          ? [trail.lat, trail.lng]
-          : [45.9237, 6.8694]; // Chamonix fallback
-
-      const map = L.map(containerRef.current!, {
-        center,
-        zoom: 12,
+      const map = L.map(containerRef.current, {
         zoomControl: false,
         attributionControl: false,
-        dragging: true,
+        scrollWheelZoom: false,
         touchZoom: true,
-        scrollWheelZoom: false, // desactive pour eviter hijack du scroll page
-        doubleClickZoom: true,
-        boxZoom: false,
-        keyboard: false,
-        tap: false, // Safari: evite double-tap fantome
         preferCanvas: true,
-      });
+      } as any);
 
+      mapInstance = map;
       mapRef.current = map;
 
-      const tile = L.tileLayer(TILES.topo.url, { maxZoom: 18, maxNativeZoom: 18, keepBuffer: 4 });
-      tile.addTo(map);
-      tileRef.current = tile;
+      const tile = L.tileLayer(TILES[tileMode].url, {
+        maxZoom: 18,
+        minZoom: 4,
+      }).addTo(map);
+      tileLayerRef.current = tile;
 
-      // Tracé GPX
-      const coords = extractCoords(trail?.geojson);
-      if (coords.length >= 2) {
-        // Halo blanc
-        L.polyline(coords, { color: '#FFFFFF', weight: 8, opacity: 0.85, lineCap: 'round', lineJoin: 'round' }).addTo(map);
-        // Trait vert LKDV
-        const poly = L.polyline(coords, {
-          color: '#17402C', weight: 4.5, opacity: 1, lineCap: 'round', lineJoin: 'round',
+      const coords = extractCoords(trail.geojson);
+
+      if (coords.length > 1) {
+        const polyline = L.polyline(coords, {
+          color: '#17402C',
+          weight: 4,
+          opacity: 0.9,
+          lineCap: 'round',
+          lineJoin: 'round',
         }).addTo(map);
-        polyRef.current = poly;
 
-        // Marker depart
-        L.circleMarker(coords[0], {
-          radius: 7, color: '#FFFFFF', fillColor: '#17402C', fillOpacity: 1, weight: 2.5,
-        }).addTo(map).bindPopup(`<strong>Départ</strong><br/>${trail?.name ?? ''}`);
+        polyRef.current = polyline;
+        map.fitBounds(polyline.getBounds(), { padding: [24, 24] });
 
-        // Marker arrivee
-        L.circleMarker(coords[coords.length - 1], {
-          radius: 7, color: '#FFFFFF', fillColor: '#2D6B4A', fillOpacity: 1, weight: 2.5,
-        }).addTo(map).bindPopup('<strong>Arrivée</strong>');
+        const startPt = coords[0];
+        const endPt = coords[coords.length - 1];
 
-        try { map.fitBounds(poly.getBounds(), { padding: [28, 28] }); } catch {}
+        const startIcon = L.divIcon({
+          className: 'depart-map-marker-start',
+          html: `<div style="width:10px;height:10px;background:#2D6B4A;border:2px solid #fff;border-radius:50%;box-shadow:0 1px 3px rgba(0,0,0,0.3);"></div>`,
+          iconSize: [10, 10],
+          iconAnchor: [5, 5],
+        });
+        const endIcon = L.divIcon({
+          className: 'depart-map-marker-end',
+          html: `<div style="width:10px;height:10px;background:#8A241B;border:2px solid #fff;border-radius:50%;box-shadow:0 1px 3px rgba(0,0,0,0.3);"></div>`,
+          iconSize: [10, 10],
+          iconAnchor: [5, 5],
+        });
+
+        L.marker(startPt, { icon: startIcon }).addTo(map);
+        if (Math.abs(startPt[0] - endPt[0]) > 0.001 || Math.abs(startPt[1] - endPt[1]) > 0.001) {
+          L.marker(endPt, { icon: endIcon }).addTo(map);
+        }
+      } else if (trail.lat != null && trail.lng != null) {
+        map.setView([trail.lat, trail.lng], 13);
       }
 
-      // Attribution minimale
-      L.control.attribution({ prefix: false }).addAttribution(TILES.topo.attribution).addTo(map);
-
-      // Resize automatique
-      const observer = new ResizeObserver(() => {
-        try { map.invalidateSize(); } catch {}
-      });
-      observer.observe(container);
-
-      setTimeout(() => { try { map.invalidateSize(); } catch {} }, 120);
-      setTimeout(() => { try { map.invalidateSize(); } catch {} }, 500);
-
-      if (mounted) setLoaded(true);
-
-      // Cleanup
-      return () => {
-        mounted = false;
-        observer.disconnect();
-      };
+      setLoaded(true);
     });
 
     return () => {
-      mounted = false;
-      if (mapRef.current) {
-        try { mapRef.current.remove(); } catch {}
+      cancelled = true;
+      if (mapInstance) {
+        try { mapInstance.remove(); } catch {}
         mapRef.current = null;
+        polyRef.current = null;
       }
     };
-  // Uniquement au montage — ne pas re-init si trail change (trail est stable)
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [trail]);
 
   // Changement de fond de carte
   useEffect(() => {
-    if (!mapRef.current || !tileRef.current) return;
-    import('leaflet').then((LMod) => {
-      const L = (LMod as any).default || LMod;
-      const cfg = TILES[tileMode];
-      try {
-        mapRef.current.removeLayer(tileRef.current);
-      } catch {}
-      const newTile = L.tileLayer(cfg.url, { maxZoom: 18, maxNativeZoom: 18, keepBuffer: 4 });
+    if (!mapRef.current) return;
+    import('leaflet').then((L) => {
+      if (tileLayerRef.current) mapRef.current.removeLayer(tileLayerRef.current);
+      const newTile = L.tileLayer(TILES[tileMode].url, { maxZoom: 18, minZoom: 4 });
       newTile.addTo(mapRef.current);
-      tileRef.current = newTile;
+      tileLayerRef.current = newTile;
     });
   }, [tileMode]);
 
-  const zoomIn = () => { try { mapRef.current?.zoomIn(); } catch {} };
-  const zoomOut = () => { try { mapRef.current?.zoomOut(); } catch {} };
+  const zoomIn = () => mapRef.current?.zoomIn();
+  const zoomOut = () => mapRef.current?.zoomOut();
   const recenter = () => {
-    if (!mapRef.current || !polyRef.current) return;
-    try { mapRef.current.fitBounds(polyRef.current.getBounds(), { padding: [28, 28] }); } catch {}
+    if (mapRef.current && polyRef.current) {
+      mapRef.current.fitBounds(polyRef.current.getBounds(), { padding: [24, 24] });
+    }
   };
 
-  const distanceLabel = trail?.distance_km ? `${trail.distance_km} km` : null;
+  const handleSaveOffline = () => {
+    setIsOfflineSaved(true);
+    try {
+      localStorage.setItem(`lkdv_offline_trail_${trail.id}`, JSON.stringify(trail));
+    } catch {}
+  };
 
   return (
-    <div className={cn('glass rounded-[28px] overflow-hidden', className)}>
-      {/* Header */}
-      <div className="flex items-center justify-between px-4 py-2.5 border-b border-white/20">
+    <div
+      className={cn(
+        'glass rounded-[24px] overflow-hidden transition-all',
+        isFullscreen && 'fixed inset-4 z-50 shadow-2xl flex flex-col bg-white/95 backdrop-blur-xl',
+        className
+      )}
+      style={{ touchAction: 'pan-x pan-y' }}
+      role="region"
+      aria-label="Carte du tracé de départ"
+    >
+      {/* Header carte */}
+      <div className="px-4 py-2.5 border-b border-white/20 flex items-center justify-between gap-2 shrink-0">
         <div className="flex items-center gap-2 min-w-0">
-          <MapPin size={13} className="text-[#17402C] shrink-0" aria-hidden="true" />
-          <span className="text-xs font-semibold text-[#17402C] truncate">
-            {trail?.name ?? 'Tracé de la randonnée'}
-          </span>
+          <MapPin size={14} className="text-[#2D6B4A] shrink-0" />
+          <span className="text-xs font-semibold text-[#17402C] truncate">{trail.name}</span>
+          {trail.distance_km && (
+            <span className="text-[11px] font-mono text-[#5A7064] shrink-0">
+              {formatDistanceKm(trail.distance_km)}
+            </span>
+          )}
         </div>
-        {distanceLabel && (
-          <span className="text-[10px] font-mono font-bold text-[#5A7064] shrink-0 ml-2">
-            {distanceLabel}
-          </span>
-        )}
+
+        {/* Bouton Préparer hors-ligne (§4.4) */}
+        <div className="flex items-center gap-1.5 shrink-0">
+          <button
+            type="button"
+            onClick={handleSaveOffline}
+            className={cn(
+              'px-2.5 py-1 rounded-xl text-[10.5px] font-bold flex items-center gap-1 transition-all cursor-pointer',
+              isOfflineSaved
+                ? 'bg-emerald-100 text-emerald-900 border border-emerald-300'
+                : 'bg-white/40 text-[#17402C] hover:bg-white/70 border border-white/50'
+            )}
+            title="Télécharger le tracé et les données pour le mode hors-ligne"
+          >
+            {isOfflineSaved ? <Check size={11} /> : <Download size={11} />}
+            <span>{isOfflineSaved ? '✓ Hors-ligne (4 Mo)' : 'Préparer hors-ligne'}</span>
+          </button>
+
+          <button
+            type="button"
+            onClick={() => {
+              setIsFullscreen((v) => !v);
+              setTimeout(() => mapRef.current?.invalidateSize(), 150);
+            }}
+            className="p-1.5 rounded-xl bg-white/40 text-[#17402C] hover:bg-white/70"
+            aria-label={isFullscreen ? 'Réduire la carte' : 'Carte plein écran'}
+          >
+            {isFullscreen ? <Minimize2 size={13} /> : <Maximize2 size={13} />}
+          </button>
+        </div>
       </div>
 
-      {/* Conteneur carte — touch-action: pan-x pan-y permet le scroll de la page tout en gardant le pan/zoom Leaflet */}
+      {/* Conteneur Leaflet */}
       <div
-        className="relative w-full overflow-hidden bg-[#E8E4D6]"
-        style={{ height, touchAction: 'pan-x pan-y' }}
-        aria-label={`Carte du tracé : ${trail?.name ?? 'randonnée'}`}
-        role="img"
+        className="relative w-full flex-1"
+        style={{ height: isFullscreen ? 'calc(100% - 44px)' : height }}
       >
-        {/* Skeleton avant chargement */}
+        <div
+          ref={containerRef}
+          className="w-full h-full"
+          style={{ height: isFullscreen ? '100%' : height }}
+        />
+
         {!loaded && (
-          <div className="absolute inset-0 z-10 flex items-center justify-center bg-[#E8E4D6]">
-            <Skeleton className="absolute inset-0 rounded-none" />
-            <div className="relative z-20 flex flex-col items-center gap-2 text-[#5A7064]">
-              <MapPin size={20} aria-hidden="true" />
-              <span className="text-xs font-medium">Chargement de la carte…</span>
-            </div>
+          <div className="absolute inset-0 bg-white/60 backdrop-blur-xs flex items-center justify-center">
+            <Skeleton className="w-full h-full rounded-none" />
           </div>
         )}
 
-        {/* Container Leaflet */}
-        <div
-          ref={containerRef}
-          className="absolute inset-0"
-          style={{ width: '100%', height: '100%' }}
-        />
-
-        {/* Controles superposés */}
-        <div className="absolute right-2 top-2 z-[400] flex flex-col gap-1.5">
-          {/* Zoom */}
+        {/* Contrôles tactiles flottants */}
+        <div className="absolute right-2.5 top-2.5 z-[400] flex flex-col gap-1">
           <button
             onClick={zoomIn}
-            className="w-8 h-8 rounded-xl bg-white/80 backdrop-blur-sm border border-white/60 shadow-sm flex items-center justify-center text-[#17402C] hover:bg-white active:scale-95 transition-transform focus-visible:outline-2 focus-visible:outline-[#17402C]"
+            className="w-7 h-7 rounded-xl bg-white/80 backdrop-blur-sm border border-white/60 shadow-xs flex items-center justify-center text-[#17402C] hover:bg-white active:scale-95"
             aria-label="Zoom avant"
-            title="Zoom avant"
           >
-            <ZoomIn size={14} aria-hidden="true" />
+            <ZoomIn size={13} />
           </button>
           <button
             onClick={zoomOut}
-            className="w-8 h-8 rounded-xl bg-white/80 backdrop-blur-sm border border-white/60 shadow-sm flex items-center justify-center text-[#17402C] hover:bg-white active:scale-95 transition-transform focus-visible:outline-2 focus-visible:outline-[#17402C]"
+            className="w-7 h-7 rounded-xl bg-white/80 backdrop-blur-sm border border-white/60 shadow-xs flex items-center justify-center text-[#17402C] hover:bg-white active:scale-95"
             aria-label="Zoom arrière"
-            title="Zoom arrière"
           >
-            <ZoomOut size={14} aria-hidden="true" />
+            <ZoomOut size={13} />
           </button>
-
-          {/* Recentrer sur le tracé */}
           {loaded && polyRef.current && (
             <button
               onClick={recenter}
-              className="w-8 h-8 rounded-xl bg-white/80 backdrop-blur-sm border border-white/60 shadow-sm flex items-center justify-center text-[#17402C] hover:bg-white active:scale-95 transition-transform focus-visible:outline-2 focus-visible:outline-[#17402C]"
-              aria-label="Recentrer sur le tracé"
-              title="Recentrer"
+              className="w-7 h-7 rounded-xl bg-white/80 backdrop-blur-sm border border-white/60 shadow-xs flex items-center justify-center text-[#17402C] hover:bg-white active:scale-95"
+              aria-label="Recentrer"
             >
-              <Navigation size={13} aria-hidden="true" />
+              <Navigation size={12} />
             </button>
           )}
 
-          {/* Fond de carte */}
+          {/* Sélecteur de couches */}
           <div className="relative">
             <button
               onClick={() => setShowTilePicker((v) => !v)}
-              className="w-8 h-8 rounded-xl bg-white/80 backdrop-blur-sm border border-white/60 shadow-sm flex items-center justify-center text-[#17402C] hover:bg-white active:scale-95 transition-transform focus-visible:outline-2 focus-visible:outline-[#17402C]"
-              aria-label="Changer le fond de carte"
-              aria-expanded={showTilePicker}
-              aria-haspopup="listbox"
+              className="w-7 h-7 rounded-xl bg-white/80 backdrop-blur-sm border border-white/60 shadow-xs flex items-center justify-center text-[#17402C] hover:bg-white active:scale-95"
+              aria-label="Couches"
             >
-              <Layers size={13} aria-hidden="true" />
+              <Layers size={12} />
             </button>
             {showTilePicker && (
-              <div
-                role="listbox"
-                aria-label="Fond de carte"
-                className="absolute right-9 top-0 bg-white/90 backdrop-blur-md rounded-xl border border-white/60 shadow-lg overflow-hidden min-w-[96px]"
-              >
+              <div className="absolute right-8 top-0 bg-white/95 backdrop-blur-md rounded-xl border border-white/60 shadow-lg overflow-hidden min-w-[90px]">
                 {(['topo', 'osm', 'satellite'] as TileMode[]).map((mode) => (
                   <button
                     key={mode}
-                    role="option"
-                    aria-selected={tileMode === mode}
                     onClick={() => { setTileMode(mode); setShowTilePicker(false); }}
                     className={cn(
-                      'w-full px-3 py-2 text-left text-[10.5px] font-semibold capitalize transition-colors',
-                      tileMode === mode
-                        ? 'bg-[#17402C]/10 text-[#17402C]'
-                        : 'text-[#5A7064] hover:bg-[#17402C]/5 hover:text-[#17402C]'
+                      'w-full px-2.5 py-1.5 text-left text-[10px] font-semibold capitalize',
+                      tileMode === mode ? 'bg-[#17402C]/10 text-[#17402C]' : 'text-[#5A7064]'
                     )}
                   >
-                    {mode === 'topo' ? 'Topo' : mode === 'osm' ? 'OSM' : 'Satellite'}
+                    {mode}
                   </button>
                 ))}
               </div>
             )}
           </div>
         </div>
-
-        {/* Overlay "cliquer pour interagir" optionnel — masque après premier touch */}
-        {/* (supprime pour eviter de bloquer la map) */}
       </div>
     </div>
   );

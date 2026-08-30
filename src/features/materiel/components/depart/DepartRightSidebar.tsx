@@ -1,4 +1,4 @@
-﻿'use client';
+'use client';
 import React from 'react';
 import dynamic from 'next/dynamic';
 import { Calendar, Backpack, ShieldCheck, PhoneCall, CheckSquare, Clock, MapPin } from 'lucide-react';
@@ -25,13 +25,15 @@ interface DepartRightSidebarProps {
 }
 
 export function DepartRightSidebar({ depart }: DepartRightSidebarProps) {
-  const departsAt = new Date(depart.startsAt);
-  const dateLabel = departsAt.toLocaleDateString('fr-FR', {
-    weekday: 'short',
-    day: 'numeric',
-    month: 'short',
-    year: 'numeric',
-  });
+  const departsAt = depart.startsAt ? new Date(depart.startsAt) : null;
+  const dateLabel = departsAt
+    ? departsAt.toLocaleDateString('fr-FR', {
+        weekday: 'short',
+        day: 'numeric',
+        month: 'short',
+        year: 'numeric',
+      })
+    : 'Date à définir';
 
   const checkedCount = depart.assignedKit.items.filter((i) => i.is_checked).length;
   const itemsCount = depart.assignedKit.items.length;

@@ -9,7 +9,7 @@ export const dynamic = 'force-dynamic';
 
 /**
  * /materiel/depart/[id] — Shell SSR avec identifiant de kit explicite.
- * Securise : l ID est verifie en base avec le user_id de l utilisateur connecte.
+ * 0 appel dupliqué : fetch unique agrégé et sécurisé avec user_id.
  */
 export default async function DepartIdPage({
   params,
@@ -20,13 +20,14 @@ export default async function DepartIdPage({
 }) {
   const [{ id }, { route }] = await Promise.all([params, searchParams]);
 
-  const [depart, kits, weather] = await Promise.all([
+  const [depart, kits] = await Promise.all([
     getDepartDetail(id, route),
     getKits(),
-    getDepartDetail(id, route).then((d) =>
-      getWeather(d.trail?.lat, d.trail?.lng, d.trail?.name)
-    ),
   ]);
+
+  const weather = depart.trail?.lat && depart.trail?.lng
+    ? await getWeather(depart.trail.lat, depart.trail.lng, depart.trail.name)
+    : null;
 
   const kitList = kits
     .filter((k) => !k.is_trashed)

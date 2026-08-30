@@ -101,6 +101,9 @@ export interface ChecklistItem {
   category: string | null;
   weight_g: number;
   is_checked: boolean;
+  is_worn?: boolean;
+  is_consumable?: boolean;
+  is_vital?: boolean;
   quantity?: number;
   photoUrl?: string | null;
   productHref?: string | null;

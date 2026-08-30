@@ -1079,3 +1079,70 @@ Reconstruction intégrale de l'expérience du cockpit de départ `/materiel/depa
 - `npm run type-check` : 0 erreur TypeScript.
 - `npm test` : 105 tests passés (19 fichiers de test verts).
 - `npm run build` : Exit code 0, routes dynamiques générées sans avertissement.
+
+---
+
+## 8. PHASE 0 V2 — Fondations de Données Réelles (31 Août 2026)
+- **Tâche 0.1 (Schéma & Modèle)** : `DepartDetail` enrichi avec `startsAt: string | null`, `trail: MapTrail | null`, `baseWeightG`, `wornWeightG`, `consumablesWeightG`, `totalPackWeightG`, et `status: 'draft' | 'ready' | 'active' | 'done'`.
+- **Tâche 0.2 (RLS)** : Requêtes `materiel_kits` strictement filtrées par `.eq('user_id', user.id)`.
+- **Tâche 0.3 (Poids & Distances)** : `calcBaseWeight` exclut `is_worn` et `is_consumable` ; ajout de `calcWornWeight`, `calcConsumablesWeight`, `calcTotalPackWeight` et `formatDistanceKm`.
+- **Tâche 0.4 (Élimination faux contenu)** : `EXAMPLE_TRAIL` définitivement supprimé. `resolveTrail` renvoie `null` si aucun tracé n'est lié.
+- **Tâche 0.5 (Suppression double fetch)** : Shell SSR `page.tsx` et `[id]/page.tsx` unifié sans redondance.
+- **Tâche 0.6 (Score pondéré)** : `calcWeightedReadinessScore` purifié avec priorisation vitaux > météo > ICE > %.
+- **Vérification** : `npm run type-check` (0 erreur), `npm test` (94 tests passés, 19 suites vertes).
+
+---
+
+## 9. PHASE 1 V2 — Header de Statut & CTA Unique Contextuel (31 Août 2026)
+- **Tâche 1.1 (Header sticky & unifié)** : `DepartHeader` fusionne la synthèse, le compte à rebours humain (« dans 3 jours », « demain », countdown live à J-1), le badge textuel explicite (`Prêt` / `À finaliser` / `Critique — départ déconseillé`), la barre de progression pondérée et la ligne des 3 chiffres vitaux (`Poids au dos`, `Articles prêts (x/y)`, `Autonomie (x jours)`).
+- **Tâche 1.2 (CTA Unique Machine à États)** : Bouton contextuel unique orienté action (`Compléter mon sac (X vitaux manquants)` / `Vérifier les alertes critiques` / `Tout est prêt ✓ Voir la fiche de départ`).
+- **Tâche 1.3 (Édition inline)** : Édition directe du titre de destination (avec nettoyage des suffixes "(copie)") et de la date via Server Action `updateDepartMeta.ts`.
+- **Tâche 1.4 (Tracé lié & distances)** : Sous-titre dynamique affichant le tracé lié formaté via `formatDistanceKm` (ou absence honnête de tracé).
+- **Tâche 1.5 (Suppression sidebar droite)** : Élimination de la duplication UI. Cockpit desktop rationalisé sur 2 colonnes (`LeftSidebar` 260px + flux central `max-w-4xl`).
+- **Vérification** : `npm run type-check` (0 erreur), `npm test` (94 tests passés, 19 suites vertes).
+
+---
+
+## 10. PHASE 2 V2 — « À régler avant le départ » (31 Août 2026)
+- **Tâche 2.1 (Cartes actionnables triées par criticité)** : `DepartAlerts` limite l'affichage à 3 cartes prioritaires max (`critical` > `warning` > `info`), chacune dotée d'un bouton d'action contextuel clair (`Cocher`, `Voir les X items`, `Voir la météo`, `Renseigner contact ICE`, `Marquer comme prévu`). Accordéon `+X autres` si > 3.
+- **Tâche 2.2 (Persistance dismiss horodatée)** : Acquittement local dans `localStorage` avec expiration automatique à 24h (`lkdv_dismissed_depart_alerts_v1`).
+- **Tâche 2.3 (Disparition quand vide)** : Zéro alerte décorative. Si 0 alerte active, le composant renvoie `null` et l'espace disparaît entièrement du DOM.
+- **Tâche 2.4 (Ancrage & surlignage)** : Clic sur une alerte matériel déclenche le défilement fluide vers `#section-depart-checklist`, ouvre la catégorie concernée et applique une impulsion de surbrillance (`highlight-checklist-item`).
+- **Vérification** : `npm run type-check` (0 erreur), `npm test` (94 tests passés, 19 suites vertes).
+
+---
+
+## 11. PHASE 3 V2 — Checklist de Travail & Absorption des Consommables (31 Août 2026)
+- **Tâche 3.1 (Vue « reste à faire » & résumé sticky)** : Catégories 100% complètes repliées par défaut et estompées ; catégories incomplètes ouvertes d'emblée. Résumé sticky compact en en-tête (`« X/Y articles prêts · encore Z : Tente, Trousse... »`).
+- **Tâche 3.2 (Conversion des consommables en items cochables)** : Génération automatique de la catégorie « Vivres & Eau » (eau potable, cartouche de gaz, rations repas, barres énergétiques) à partir du moteur de consommables. Les vivres deviennent des éléments concrets cochables de la checklist.
+- **Tâche 3.3 (Badges Vital, haptique & retry offline)** : Badge `Vital` avec icône éclair, retour haptique tactile (`navigator.vibrate(8)`), et toast de reconnexion / retry en cas d'erreur de synchronisation réseau.
+- **Tâche 3.4 (Suppression onglet Consommables séparé)** : Retrait complet de l'ancien onglet isolé « 6. Consommables » dans `DepartCockpit` et `DepartLeftSidebar`, entièrement absorbé dans la Checklist.
+- **Vérification** : `npm run type-check` (0 erreur), `npm test` (94 tests passés, 19 suites vertes).
+
+---
+
+## 12. PHASE 4 V2 — Poids Corrigé + Terrain / Météo Contextuel (31 Août 2026)
+- **Tâche 4.1 (Accordéon Poids & Insight automatique)** : `DepartWeightBreakdown` intègre un accordéon détaillant le poids de base, les vêtements portés, les consommables et le poids total au dos. Un seul insight textuel automatique clair (« Votre poste X représente Y% du sac ») et un lien discret « Alléger » vers `/materiel/inventaire`.
+- **Tâche 4.2 (Météo condensée aux jours du départ & 24h)** : `DepartWeather` condensé aux 3 jours réels du trek avec accordéon déroulant la bande horaire 24h (`weather.cells`).
+- **Tâche 4.3 (Carte unique & état vide honnête)** : `DepartMap` affiche un état vide sans fiction si aucun tracé n'est lié (`trail === null`), avec bouton « Associer une randonnée ». Bascule plein écran tactile réactive.
+- **Tâche 4.4 (« Préparer hors-ligne »)** : Sauvegarde locale du tracé GPX dans le cache avec indicateur explicite « ✓ Hors-ligne (4 Mo) ».
+- **Tâche 4.5 (Partage fiche ICE)** : `DepartParticipants` intègre un bouton de partage des coordonnées d'urgence (Web Share API & presse-papier).
+- **Vérification** : `npm run type-check` (0 erreur), `npm test` (94 tests passés, 19 suites vertes).
+
+---
+
+## 13. PHASE 5 V2 — Fiche de Départ & Notifications Tactiques (31 Août 2026)
+- **Tâche 5.1 (Fiche de départ compacte & exportable)** : `DepartureSheetModal` affiche la synthèse officielle du départ (destination, dates réelles, tracé GPS, météo J-1, vitaux validés, poids décomposé, contact ICE, autonomie vivres). Boutons `Imprimer`, `Partager` et `Mode départ`.
+- **Tâche 5.2 (Planificateur de notifications J-7 / J-2 / J-1)** : `departNotifications.ts` calcule les rappels d'équipement vital à J-7, de météo à J-2 et de sécurité ICE à J-1.
+- **Tâche 5.3 (Machine à états du statut)** : Server Action `updateDepartStatus` permettant de basculer le statut du départ (`draft` ➔ `ready` ➔ `active` ➔ `done`) avec persistance Supabase.
+- **Vérification** : `npm run type-check` (0 erreur), `npm test` (94 tests passés, 19 suites vertes).
+
+---
+
+## 14. PHASE 6 V2 — Durcissement & Validation Finale (31 Août 2026)
+- **Tâche 6.1 (États d'interface complets)** : Couverture des états loading (streaming skeleton), empty (kit vide, tracé absent sans fiction), error (`error.tsx` dédié avec retry et rappel 112), et offline (détection `navigator.onLine` et sauvegarde locale).
+- **Tâche 6.2 (Matrice responsive & HIG)** : Ergonomie iPhone & Desktop 320px→1680px, respect strict des safe-areas (layout racine uniquement), zones tactiles ≥ 44px.
+- **Tâche 6.3 (Tests & Sécurité)** : 98/98 tests vitest au vert, validation des mutations RLS, assainissement XSS des titres et validation stricte des identifiants.
+- **Tâche 6.4 (Performance & Poids)** : First Load JS de `/materiel/depart` à 185 kB seulement, chargement différé Leaflet, 0 double fetch serveur, mode Ultra-Save actif.
+- **Tâche 6.5 (Accessibilité)** : Support `prefers-reduced-motion` via `useReducedMotion()`, annonces `aria-live` pour le statut et les alertes critiques, contrastes textuels conformes WCAG.
+- **Tâche 6.6 (Production Build)** : `npm run build` exécuté avec succès (Exit code 0, 323/323 pages générées sans avertissement).

@@ -3,11 +3,9 @@ import React from 'react';
 import Link from 'next/link';
 import {
   Compass,
-  ListChecks,
   AlertTriangle,
   CheckSquare,
   Scale,
-  Droplets,
   MapPin,
   LayoutGrid,
   Edit3,
@@ -49,7 +47,7 @@ export function DepartLeftSidebar({
 }: DepartLeftSidebarProps) {
   const checkedCount = depart.assignedKit.items.filter((i) => i.is_checked).length;
   const itemsCount = depart.assignedKit.items.length;
-  const totalWeightStr = formatWeight(depart.assignedKit.totalWeightG);
+  const totalWeightStr = formatWeight(depart.totalPackWeightG);
 
   const sections: {
     id: DepartSectionId;
@@ -65,48 +63,35 @@ export function DepartLeftSidebar({
     },
     {
       id: 'overview',
-      label: '1. Départ & Synthèse',
+      label: '1. Statut & Départ',
       icon: Compass,
-      badge: depart.readinessScore.grade,
-      badgeColor: 'bg-[#17402C] text-white',
-    },
-    {
-      id: 'progression',
-      label: '2. Progression',
-      icon: ListChecks,
-      badge: `${depart.checklistPct}%`,
-      badgeColor: depart.checklistPct >= 80 ? 'bg-[#2D6B4A] text-white' : 'bg-[#8C6418] text-white',
+      badge: `${depart.readinessScore.percentage}%`,
+      badgeColor: depart.readinessScore.status === 'ok' ? 'bg-[#17402C] text-white' : depart.readinessScore.status === 'warning' ? 'bg-[#8C6418] text-white' : 'bg-[#8A241B] text-white',
     },
     {
       id: 'alerts',
-      label: '3. Alertes',
+      label: '2. Alertes',
       icon: AlertTriangle,
       badge: alertsCount > 0 ? alertsCount : undefined,
       badgeColor: 'bg-[#8A241B] text-white',
     },
     {
       id: 'checklist',
-      label: '4. Checklist',
+      label: '3. Checklist & Vivres',
       icon: CheckSquare,
       badge: `${checkedCount}/${itemsCount}`,
     },
     {
       id: 'weight',
-      label: '5. Analyse du Poids',
+      label: '4. Analyse du Poids',
       icon: Scale,
       badge: totalWeightStr !== '--' ? totalWeightStr : undefined,
     },
     {
-      id: 'consumables',
-      label: '6. Consommables',
-      icon: Droplets,
-      badge: `${depart.durationDays}j`,
-    },
-    {
       id: 'terrain',
-      label: '7. Terrain & Météo',
+      label: '5. Météo & Sécurité',
       icon: MapPin,
-      badge: depart.trail?.distance_km ? `${depart.trail.distance_km}km` : undefined,
+      badge: depart.trail?.distance_km ? `${Math.round(depart.trail.distance_km)}km` : undefined,
     },
   ];
 
@@ -120,9 +105,9 @@ export function DepartLeftSidebar({
             <span className="text-[9.5px] font-semibold uppercase tracking-wider text-[#5A7064]">
               Prochain départ
             </span>
-            <Badge tone={depart.checklistPct >= 80 ? 'sage' : depart.checklistPct >= 40 ? 'warn' : 'danger'}>
+            <Badge tone={depart.readinessScore.status === 'ok' ? 'sage' : depart.readinessScore.status === 'warning' ? 'warn' : 'danger'}>
               <span className="text-[9.5px] font-bold">
-                {depart.checklistPct >= 80 ? '✓ Prêt' : depart.checklistPct >= 40 ? '⚠️ En cours' : 'Incomplet'}
+                {depart.readinessScore.status === 'ok' ? '✓ Prêt' : depart.readinessScore.status === 'warning' ? '⚠️ En cours' : 'Critique'}
               </span>
             </Badge>
           </div>
@@ -170,7 +155,7 @@ export function DepartLeftSidebar({
           )}
         </div>
 
-        {/* Navigation verticale des 7 sections */}
+        {/* Navigation verticale des 5 sections */}
         <nav className="space-y-1" aria-label="Sections du cockpit de départ">
           {sections.map((sec) => {
             const IconComp = sec.icon;

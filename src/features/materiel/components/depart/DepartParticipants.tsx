@@ -1,5 +1,6 @@
 ﻿'use client';
-import { Users, PhoneCall, ShieldCheck } from 'lucide-react';
+import { useState } from 'react';
+import { Users, PhoneCall, ShieldCheck, Share2, Check } from 'lucide-react';
 import { GlassCard } from '@/components/ui/GlassCard';
 import type { Participant } from '@/features/materiel/types/trekHub';
 
@@ -12,23 +13,59 @@ export function DepartParticipants({
   participants,
   emergencyContact,
 }: DepartParticipantsProps) {
+  const [copied, setCopied] = useState(false);
+
   if ((!participants || participants.length === 0) && !emergencyContact) return null;
 
+  const handleShare = async () => {
+    const text = `Fiche de départ LKDV\nÉquipe : ${participants.map((p) => p.name).join(', ')}\nContact d'urgence ICE : ${emergencyContact || 'Non renseigné'}\nLien : ${typeof window !== 'undefined' ? window.location.href : ''}`;
+
+    if (typeof navigator !== 'undefined' && navigator.share) {
+      try {
+        await navigator.share({
+          title: 'Fiche de départ & Sécurité LKDV',
+          text,
+          url: window.location.href,
+        });
+        return;
+      } catch {}
+    }
+
+    if (typeof navigator !== 'undefined' && navigator.clipboard) {
+      await navigator.clipboard.writeText(text);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2500);
+    }
+  };
+
   return (
-    <GlassCard tone="neutral" ariaLabelledBy="participants-heading">
+    <GlassCard tone="neutral" as="article" ariaLabelledBy="participants-heading">
       <div className="p-4 sm:p-5 space-y-3.5">
         {/* Header */}
         <div className="flex items-center justify-between">
           <h2
             id="participants-heading"
-            className="text-[13px] sm:text-sm font-semibold text-[#17402C] flex items-center gap-2"
+            className="text-xs sm:text-[13px] font-bold text-[#17402C] flex items-center gap-2"
           >
-            <Users size={15} className="text-[#5A7064]" aria-hidden="true" />
-            Équipe & Sécurité
+            <Users size={15} className="text-[#2D6B4A]" aria-hidden="true" />
+            <span>Équipe & Sécurité</span>
           </h2>
-          <span className="text-xs font-mono text-[#5A7064]">
-            {participants.length} randonneur{participants.length > 1 ? 's' : ''}
-          </span>
+
+          <div className="flex items-center gap-2">
+            <span className="text-[11px] font-mono text-[#5A7064]">
+              {participants.length} randonneur{participants.length > 1 ? 's' : ''}
+            </span>
+
+            <button
+              type="button"
+              onClick={handleShare}
+              className="text-[11px] font-bold text-[#2D6B4A] hover:underline flex items-center gap-1 cursor-pointer"
+              title="Partager les coordonnées d’urgence"
+            >
+              {copied ? <Check size={11} /> : <Share2 size={11} />}
+              <span>{copied ? 'Copié !' : 'Partager'}</span>
+            </button>
+          </div>
         </div>
 
         {/* Liste des participants */}
@@ -39,7 +76,7 @@ export function DepartParticipants({
               className="glass-sub-card px-3 py-1.5 flex items-center gap-2"
             >
               <div
-                className="w-6 h-6 rounded-full flex items-center justify-center text-white text-[11px] font-bold shadow-2xs shrink-0"
+                className="w-6 h-6 rounded-full flex items-center justify-center text-white text-[10.5px] font-bold shadow-2xs shrink-0"
                 style={{ backgroundColor: p.color || '#17402C' }}
                 aria-hidden="true"
               >
@@ -63,7 +100,7 @@ export function DepartParticipants({
                 <p className="text-[10px] font-semibold uppercase tracking-wider text-[#8A241B]">
                   Contact d’urgence (ICE)
                 </p>
-                <p className="text-xs sm:text-[13px] font-mono font-bold text-[#17402C] truncate">
+                <p className="text-xs font-mono font-bold text-[#17402C] truncate">
                   {emergencyContact}
                 </p>
               </div>
@@ -71,8 +108,8 @@ export function DepartParticipants({
 
             <a
               href={`tel:${emergencyContact.replace(/\s+/g, '')}`}
-              className="glass-capsule-btn primary !h-8 !px-3 !text-xs shrink-0 flex items-center gap-1.5"
-              aria-label={`Appeler le contact d'urgence : ${emergencyContact}`}
+              className="glass-capsule-btn danger px-3 py-1.5 text-xs font-semibold flex items-center gap-1.5 shrink-0"
+              aria-label={`Appeler le contact d'urgence au ${emergencyContact}`}
             >
               <PhoneCall size={12} aria-hidden="true" />
               <span>Appeler</span>

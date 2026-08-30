@@ -4,11 +4,9 @@ import dynamic from 'next/dynamic';
 import { motion, AnimatePresence, useReducedMotion } from 'framer-motion';
 import {
   Compass,
-  ListChecks,
   AlertTriangle,
   CheckSquare,
   Scale,
-  Droplets,
   MapPin,
   LayoutGrid,
   Zap,
@@ -16,15 +14,13 @@ import {
   WifiOff,
 } from 'lucide-react';
 import { DepartHeader } from './DepartHeader';
-import { DepartPreparation } from './DepartPreparation';
 import { DepartAlerts } from './DepartAlerts';
 import { DepartChecklist } from './DepartChecklist';
 import { DepartWeightBreakdown } from './DepartWeightBreakdown';
-import { DepartConsumables } from './DepartConsumables';
 import { DepartWeather } from './DepartWeather';
 import { DepartParticipants } from './DepartParticipants';
 import { DepartLeftSidebar } from './DepartLeftSidebar';
-import { DepartRightSidebar } from './DepartRightSidebar';
+import { DepartureSheetModal } from './DepartureSheetModal';
 import { KitSwitcher } from './KitSwitcher';
 import ScrollableTabs, { type TabOption } from '@/components/ui/ScrollableTabs';
 import { Skeleton } from '@/components/ui/Skeleton';
@@ -33,10 +29,8 @@ import { cn } from '@/lib/utils';
 import type { DepartDetail } from '@/features/materiel/services/getDepartDetail';
 import type { WeatherForecast } from '@/features/materiel/services/getWeather';
 
-// IDs de kits showcase : pas de mutation serveur sur ces IDs fictifs
 const SHOWCASE_IDS = new Set(['tmb-4j', 'vercors-ultra', 'belledonne-winter', 'none']);
 
-// Chargement lazy de Leaflet — evite l inclusion dans le bundle initial
 const DepartMap = dynamic(
   () => import('./DepartMap').then((m) => ({ default: m.DepartMap })),
   {
@@ -55,11 +49,9 @@ const DepartMap = dynamic(
 export type DepartSectionId =
   | 'all'
   | 'overview'
-  | 'progression'
   | 'alerts'
   | 'checklist'
   | 'weight'
-  | 'consumables'
   | 'terrain';
 
 interface DepartCockpitProps {
@@ -73,13 +65,12 @@ export function DepartCockpit({ depart, weather, kits }: DepartCockpitProps) {
   const [isUltraSave, setIsUltraSave] = useState(false);
   const [batteryLevel, setBatteryLevel] = useState<number | null>(null);
   const [isOnline, setIsOnline] = useState(true);
+  const [isSheetOpen, setIsSheetOpen] = useState(false);
 
   const shouldReduceMotion = useReducedMotion();
 
   const checkedCount = depart.assignedKit.items.filter((i) => i.is_checked).length;
   const itemsCount = depart.assignedKit.items.length;
-
-  // Kit reel = mutations Server Action activees ; showcase = toggle local uniquement
   const isRealKit = !SHOWCASE_IDS.has(depart.id);
 
   const alertInput = {
@@ -89,6 +80,9 @@ export function DepartCockpit({ depart, weather, kits }: DepartCockpitProps) {
       category: i.category,
       weight_g: i.weight_g,
       is_checked: i.is_checked,
+      is_worn: i.is_worn,
+      is_consumable: i.is_consumable,
+      is_vital: i.is_vital,
       quantity: i.quantity,
       photoUrl: i.photoUrl,
       productHref: i.productHref,
@@ -101,7 +95,6 @@ export function DepartCockpit({ depart, weather, kits }: DepartCockpitProps) {
 
   const smartAlerts = generateSmartPrompts(alertInput);
 
-  // Synchronisation reseau et batterie pour mode Ultra-Save (§19)
   useEffect(() => {
     if (typeof window === 'undefined') return;
 
@@ -112,7 +105,9 @@ export function DepartCockpit({ depart, weather, kits }: DepartCockpitProps) {
     window.addEventListener('online', handleOnline);
     window.addEventListener('offline', handleOffline);
 
-    // Detection batterie si supportee
+    const handleOpenSheet = () => setIsSheetOpen(true);
+    window.addEventListener('open-departure-sheet', handleOpenSheet);
+
     if ('getBattery' in navigator) {
       (navigator as any).getBattery().then((battery: any) => {
         setBatteryLevel(battery.level);
@@ -129,129 +124,100 @@ export function DepartCockpit({ depart, weather, kits }: DepartCockpitProps) {
     return () => {
       window.removeEventListener('online', handleOnline);
       window.removeEventListener('offline', handleOffline);
+      window.removeEventListener('open-departure-sheet', handleOpenSheet);
     };
-  }, []);
-
-  // Synchronisation avec BottomTabBar si nécessaire
-  useEffect(() => {
-    const handleSectionChange = (e: any) => {
-      if (e.detail && typeof e.detail === 'string') {
-        setActiveSection(e.detail as DepartSectionId);
-      }
-    };
-    window.addEventListener('depart-section-change', handleSectionChange);
-    return () => window.removeEventListener('depart-section-change', handleSectionChange);
   }, []);
 
   const handleSelectTab = (tabId: string) => {
     setActiveSection(tabId as DepartSectionId);
-    if (typeof window !== 'undefined') {
-      window.dispatchEvent(new CustomEvent('depart-section-change', { detail: tabId }));
-    }
   };
 
-  // Les 7 onglets de navigation
   const SECTIONS_TABS: TabOption[] = [
     { id: 'all', label: 'Vue complète', icon: <LayoutGrid size={13} /> },
-    { id: 'overview', label: '1. Départ', icon: <Compass size={13} /> },
-    { id: 'progression', label: '2. Progression', icon: <ListChecks size={13} /> },
-    { id: 'alerts', label: '3. Alertes', icon: <AlertTriangle size={13} />, badge: smartAlerts.length || undefined },
-    { id: 'checklist', label: '4. Checklist', icon: <CheckSquare size={13} />, badge: `${checkedCount}/${itemsCount}` },
-    { id: 'weight', label: '5. Poids', icon: <Scale size={13} /> },
-    { id: 'consumables', label: '6. Consommables', icon: <Droplets size={13} /> },
-    { id: 'terrain', label: '7. Terrain & Météo', icon: <MapPin size={13} /> },
+    { id: 'overview', label: 'Statut & Départ', icon: <Compass size={13} /> },
+    { id: 'alerts', label: 'Alertes', icon: <AlertTriangle size={13} />, badge: smartAlerts.length || undefined },
+    { id: 'checklist', label: 'Checklist & Vivres', icon: <CheckSquare size={13} />, badge: `${checkedCount}/${itemsCount}` },
+    { id: 'weight', label: 'Poids', icon: <Scale size={13} /> },
+    { id: 'terrain', label: 'Météo & Sécurité', icon: <MapPin size={13} /> },
   ];
 
   const showAll = activeSection === 'all';
 
-  // Rendu du contenu principal
-  const renderMainSections = () => (
-    <div className="flex flex-col gap-3">
-      {/* SECTION 1 : Départ & En-tête */}
+  const renderMainContent = () => (
+    <div className="flex flex-col gap-3.5 max-w-4xl mx-auto w-full">
+      {/* ════ NIVEAU 1 : STATUT PERMANENT & EN-TÊTE TACTIQUE ════ */}
       {(showAll || activeSection === 'overview') && (
-        <section id="section-depart-overview" aria-label="Section 1 : Vue d'ensemble du départ">
-          <DepartHeader depart={depart} />
-        </section>
-      )}
-
-      {/* SECTION 2 : Progression du Pack & Métriques */}
-      {(showAll || activeSection === 'progression') && (
-        <section id="section-depart-progression" aria-label="Section 2 : Progression du pack">
-          <DepartPreparation
-            checklistPct={depart.checklistPct}
-            totalWeightG={depart.assignedKit.totalWeightG}
-            itemsCount={itemsCount}
-            checkedCount={checkedCount}
-            kitId={depart.id}
+        <section id="section-depart-overview" aria-label="Niveau 1 : Statut du départ">
+          <DepartHeader
+            depart={depart}
+            isRealKit={isRealKit}
+            onOpenDepartureSheet={() => setIsSheetOpen(true)}
           />
         </section>
       )}
 
-      {/* SECTION 3 : Alertes Intelligentes */}
-      {(showAll || activeSection === 'alerts') && (
-        <section id="section-depart-alerts" aria-label="Section 3 : Alertes de départ">
+      {/* ════ NIVEAU 2 : CE QUI EMPÊCHE DE PARTIR ════ */}
+      {(showAll || activeSection === 'alerts') && smartAlerts.length > 0 && (
+        <section id="section-depart-alerts" aria-label="Niveau 2 : À régler avant le départ">
           <DepartAlerts input={alertInput} />
         </section>
       )}
 
-      {/* SECTION 4 : Checklist du Matériel */}
+      {/* ════ NIVEAU 3 : LE TRAVAIL & LE DÉTAIL PROGRESSIF ════ */}
+
+      {/* 3.A — Checklist de travail absorbant Vivres & Eau */}
       {(showAll || activeSection === 'checklist') && (
-        <section id="section-depart-checklist" aria-label="Section 4 : Checklist du kit">
-          <DepartChecklist items={depart.assignedKit.items} isRealKit={isRealKit} />
+        <section id="section-depart-checklist" aria-label="Checklist du matériel et vivres">
+          <DepartChecklist
+            items={depart.assignedKit.items}
+            consumables={depart.consumables}
+            isRealKit={isRealKit}
+          />
         </section>
       )}
 
-      {/* SECTION 5 : Analyse du Poids */}
+      {/* 3.B — Poids & Répartition */}
       {(showAll || activeSection === 'weight') && (
-        <section id="section-depart-weight" aria-label="Section 5 : Répartition du poids">
+        <section id="section-depart-weight" aria-label="Analyse du poids">
           <DepartWeightBreakdown
             breakdown={depart.weightBreakdown}
-            totalWeightG={depart.assignedKit.totalWeightG}
+            totalWeightG={depart.baseWeightG}
           />
         </section>
       )}
 
-      {/* SECTION 6 : Consommables */}
-      {(showAll || activeSection === 'consumables') && (
-        <section id="section-depart-consumables" aria-label="Section 6 : Consommables estimés">
-          <DepartConsumables
-            consumables={depart.consumables}
-            durationDays={depart.durationDays}
-            participantsCount={depart.participants.length || 1}
-          />
-        </section>
-      )}
-
-      {/* SECTION 7 : Terrain, Météo & Équipe */}
+      {/* 3.C — Météo, Équipe & Carte */}
       {(showAll || activeSection === 'terrain') && (
-        <section
-          id="section-depart-terrain"
-          aria-label="Section 7 : Terrain, météo et sécurité"
-          className="space-y-3"
-        >
+        <section id="section-depart-terrain" aria-label="Terrain, météo et sécurité" className="space-y-3.5">
           <DepartWeather weather={weather} />
           <DepartParticipants
             participants={depart.participants}
             emergencyContact={depart.emergencyContact}
           />
-          {depart.trail && <DepartMap trail={depart.trail} height="240px" />}
+          {depart.trail && <DepartMap trail={depart.trail} height="260px" />}
         </section>
       )}
     </div>
   );
 
   return (
-    <div className={cn('w-full h-full', isUltraSave && 'ultra-save-mode')}>
-      {/* ══════════════════════════════════════════════════════════════════════
-          1. VERSION MOBILE (< 768px)
-         ══════════════════════════════════════════════════════════════════════ */}
+    <div className={cn('w-full h-full min-h-0', isUltraSave && 'ultra-save-mode')}>
+      {/* Modal Fiche de Départ (§4F) */}
+      <DepartureSheetModal
+        depart={depart}
+        weather={weather}
+        isOpen={isSheetOpen}
+        onClose={() => setIsSheetOpen(false)}
+        isRealKit={isRealKit}
+      />
+
+      {/* ════ 1. VERSION MOBILE (< 768px) ════ */}
       <div className="block md:hidden w-full max-w-3xl mx-auto px-3 sm:px-4 pb-12 space-y-3">
-        {/* Barre d'action supérieure mobile : Switcher de kit + Ultra-Save + Tabs */}
         <div className="space-y-2 sticky top-0 z-30 pt-1 pb-1 backdrop-blur-md bg-white/30 rounded-2xl border border-white/40">
           <div className="flex items-center justify-between gap-2 px-2">
             <div className="flex items-center gap-1.5">
               <span className="text-[10.5px] font-semibold uppercase tracking-wider text-[#5A7064]">
-                Cockpit de départ
+                Cockpit
               </span>
               <span className={cn('flex items-center gap-1 text-[9.5px] font-mono px-1.5 py-0.2 rounded-full font-bold', isOnline ? 'bg-emerald-100 text-emerald-800' : 'bg-amber-100 text-amber-800')}>
                 {isOnline ? <Wifi size={9} /> : <WifiOff size={9} />}
@@ -260,7 +226,6 @@ export function DepartCockpit({ depart, weather, kits }: DepartCockpitProps) {
             </div>
 
             <div className="flex items-center gap-1.5">
-              {/* Ultra-Save Button */}
               <button
                 type="button"
                 onClick={() => setIsUltraSave((v) => !v)}
@@ -303,16 +268,13 @@ export function DepartCockpit({ depart, weather, kits }: DepartCockpitProps) {
             exit={shouldReduceMotion ? { opacity: 0 } : { opacity: 0, y: -4 }}
             transition={{ duration: shouldReduceMotion ? 0 : 0.16, ease: 'easeOut' }}
           >
-            {renderMainSections()}
+            {renderMainContent()}
           </motion.div>
         </AnimatePresence>
       </div>
 
-      {/* ══════════════════════════════════════════════════════════════════════
-          2. VERSION DESKTOP COCKPIT 3 COLONNES FULLSCREEN (hidden md:flex)
-         ══════════════════════════════════════════════════════════════════════ */}
-      <div className="hidden md:flex h-full overflow-hidden max-w-[1680px] w-full mx-auto px-4 lg:px-6 py-2 gap-4 items-start">
-        {/* COLONNE GAUCHE : NAVIGATION ONGLETS & IDENTITÉ (260px) */}
+      {/* ════ 2. VERSION DESKTOP COCKPIT 2 COLONNES (hidden md:flex) ════ */}
+      <div className="hidden md:flex h-full overflow-hidden max-w-[1440px] w-full mx-auto px-4 lg:px-6 py-2 gap-5 items-start">
         <div className="w-[260px] shrink-0 h-full overflow-hidden">
           <DepartLeftSidebar
             depart={depart}
@@ -327,8 +289,7 @@ export function DepartCockpit({ depart, weather, kits }: DepartCockpitProps) {
           />
         </div>
 
-        {/* COLONNE CENTRALE : CONTENU DE LA SECTION ACTIVE (flex-1) */}
-        <main className="flex-1 h-full overflow-y-auto no-scrollbar space-y-4 px-1 pb-8">
+        <main className="flex-1 h-full overflow-y-auto custom-scrollbar space-y-4 px-1 pb-8">
           <AnimatePresence mode="wait">
             <motion.div
               key={activeSection}
@@ -337,15 +298,10 @@ export function DepartCockpit({ depart, weather, kits }: DepartCockpitProps) {
               exit={shouldReduceMotion ? { opacity: 0 } : { opacity: 0, y: -4 }}
               transition={{ duration: shouldReduceMotion ? 0 : 0.16, ease: 'easeOut' }}
             >
-              {renderMainSections()}
+              {renderMainContent()}
             </motion.div>
           </AnimatePresence>
         </main>
-
-        {/* COLONNE DROITE : WIDGETS TACTIQUES & MINI-MAP (310px) */}
-        <div className="w-[310px] shrink-0 h-full overflow-hidden">
-          <DepartRightSidebar depart={depart} />
-        </div>
       </div>
     </div>
   );

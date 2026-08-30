@@ -8,8 +8,8 @@ import { DepartCockpitSkeleton } from '@/features/materiel/components/depart/Dep
 export const dynamic = 'force-dynamic';
 
 /**
- * /materiel/depart — Shell SSR ultra-rapide.
- * Charge toutes les donnees en parallele puis stream vers le client.
+ * /materiel/depart — Shell SSR optimisé.
+ * 0 appel dupliqué : fetch unique agrégé pour le départ et la météo.
  */
 export default async function DepartPage({
   searchParams,
@@ -18,13 +18,14 @@ export default async function DepartPage({
 }) {
   const { route } = await searchParams;
 
-  const [depart, kits, weather] = await Promise.all([
+  const [depart, kits] = await Promise.all([
     getDepartDetail(undefined, route),
     getKits(),
-    getDepartDetail(undefined, route).then((d) =>
-      getWeather(d.trail?.lat, d.trail?.lng, d.trail?.name)
-    ),
   ]);
+
+  const weather = depart.trail?.lat && depart.trail?.lng
+    ? await getWeather(depart.trail.lat, depart.trail.lng, depart.trail.name)
+    : null;
 
   const kitList = kits
     .filter((k) => !k.is_trashed)
