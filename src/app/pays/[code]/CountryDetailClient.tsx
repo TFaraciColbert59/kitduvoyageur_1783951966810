@@ -7,6 +7,7 @@ import MobilePageShell from '@/components/mobile-nav/MobilePageShell';
 import { CountryDetail } from '@/lib/countryDetails';
 import { CompteBackground } from '@/components/compte/CompteBackground';
 import PaysLeftSidebar, { PaysSection } from '@/components/pays/PaysLeftSidebar';
+import PaysRightSidebar from '@/components/pays/PaysRightSidebar';
 import PaysHeroOverview from '@/components/pays/PaysHeroOverview';
 import PaysDestinationsView from '@/components/pays/PaysDestinationsView';
 import PaysActivitesView from '@/components/pays/PaysActivitesView';
@@ -96,9 +97,9 @@ export default function CountryDetailClient({ country }: CountryDetailClientProp
         {/* Global Site Header */}
         <Header />
 
-        {/* Main 2-Column Cockpit Container */}
-        <div className="flex-1 overflow-hidden pt-14 sm:pt-[62px] pb-4 px-4 sm:px-6 lg:px-8 max-w-[1600px] w-full mx-auto">
-          <div className="flex items-start gap-6 h-full">
+        {/* Main 3-Column Cockpit Container */}
+        <div className="flex-1 overflow-hidden pt-14 sm:pt-[62px] pb-4 px-4 sm:px-6 lg:px-8 max-w-[1680px] w-full mx-auto">
+          <div className="flex items-start gap-5 h-full">
 
             {/* LEFT COLUMN: NAVIGATION TABS SIDEBAR (260px) */}
             <div className="w-[260px] shrink-0 h-full overflow-hidden">
@@ -115,6 +116,15 @@ export default function CountryDetailClient({ country }: CountryDetailClientProp
             <main className="flex-1 h-full overflow-y-auto no-scrollbar space-y-4 px-1 pb-6">
               {renderSectionContent()}
             </main>
+
+            {/* RIGHT COLUMN: SIDEBAR WIDGETS WITHOUT HEADERS (300px) */}
+            <div className="w-[300px] shrink-0 h-full overflow-hidden">
+              <PaysRightSidebar
+                country={country}
+                flagEmoji={flagEmoji}
+                onCountryGlobeClick={handleCountryGlobeClick}
+              />
+            </div>
 
           </div>
         </div>

@@ -64,22 +64,9 @@ export default function PaysRightSidebar({
   ];
 
   return (
-    <aside className="w-full shrink-0 h-full overflow-y-auto custom-scrollbar flex flex-col gap-3.5 pb-6 font-sans">
-      {/* WIDGET 1: GLOBE 3D INTERACTIF & POSITIONNEMENT */}
-      <div className="glass p-4 space-y-3 rounded-2xl border border-white/70 shadow-xs text-[#17402C]">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <span className="w-2 h-2 rounded-full bg-[#5B7F55] animate-pulse" />
-            <h3 className="font-display font-bold text-xs text-[#17402C]">Globe 3D &amp; Position</h3>
-          </div>
-          <div className="flex items-center gap-1.5">
-            <CountryFlag code={country.code} name={country.nom} size="xs" />
-            <span className="glass-pill text-[9px] font-mono font-bold text-[#17402C]">
-              {country.code.toUpperCase()}
-            </span>
-          </div>
-        </div>
-
+    <aside className="w-full shrink-0 h-full overflow-y-auto custom-scrollbar flex flex-col gap-3 pb-6 font-sans">
+      {/* 1. GLOBE 3D CONTAINER & REPÈRES (Zéro titre) */}
+      <div className="glass p-3 space-y-2 rounded-2xl border border-white/70 shadow-xs text-[#17402C]">
         {/* Globe Container */}
         <div className="w-full h-36 rounded-xl overflow-hidden relative bg-[#17402C]/5 border border-white/60 shadow-2xs">
           <CountryGlobe
@@ -91,7 +78,7 @@ export default function PaysRightSidebar({
           />
         </div>
 
-        <div className="grid grid-cols-2 gap-1.5 text-[9.5px] font-mono pt-0.5">
+        <div className="grid grid-cols-2 gap-1.5 text-[9.5px] font-mono">
           <div className="p-2 rounded-xl bg-white/75 border border-white/60 shadow-2xs space-y-0.5">
             <span className="text-[#5A7064] block text-[8px] font-semibold uppercase">Région</span>
             <span className="font-bold text-[#17402C] truncate block">{country.region || country.continent}</span>
@@ -103,26 +90,13 @@ export default function PaysRightSidebar({
         </div>
       </div>
 
-      {/* WIDGET 2: L'ESSENTIEL TERRAIN (AT A GLANCE COMPANION) */}
-      <div className="glass p-4 space-y-3 rounded-2xl border border-white/70 shadow-xs text-[#17402C]">
-        <div className="flex items-center justify-between pb-2 border-b border-[#17402C]/10">
-          <div className="flex items-center gap-2">
-            <span className="text-sm">⚡</span>
-            <div>
-              <h3 className="font-display font-bold text-xs text-[#17402C]">L'Essentiel Terrain</h3>
-              <p className="text-[9px] text-[#5A7064] font-mono">Repères rapides pour l'aventure</p>
-            </div>
-          </div>
-          <span className="glass-pill text-[8.5px] font-mono font-bold text-[#5B7F55]">
-            Check-list
-          </span>
-        </div>
-
-        <div className="space-y-2">
+      {/* 2. ÉLÉMENTS DE TERRAIN (Zéro titre) */}
+      <div className="glass p-3 rounded-2xl border border-white/70 shadow-xs text-[#17402C]">
+        <div className="space-y-1.5">
           {quickMetrics.map((m, idx) => (
             <div
               key={idx}
-              className="p-2.5 rounded-xl bg-white/75 border border-white/50 shadow-2xs space-y-0.5"
+              className="p-2 rounded-xl bg-white/75 border border-white/50 shadow-2xs space-y-0.5"
             >
               <div className="flex items-center gap-1.5 text-[#5A7064] text-[9.5px] font-semibold uppercase tracking-wider">
                 <span className="text-xs">{m.icon}</span>
@@ -136,16 +110,10 @@ export default function PaysRightSidebar({
         </div>
       </div>
 
-      {/* WIDGET 3: SOURCES DOCUMENTAIRES OFFICIELLES */}
+      {/* 3. SOURCES DOCUMENTAIRES OFFICIELLES (Zéro titre) */}
       {country.sources_list && country.sources_list.length > 0 && (
-        <div className="glass p-3.5 space-y-2 rounded-2xl border border-white/70 shadow-xs text-[#17402C]">
-          <div className="flex items-center justify-between pb-1 border-b border-[#17402C]/10">
-            <span className="text-[9.5px] font-mono font-bold text-[#5B7F55] uppercase tracking-wider block">
-              📚 Références officielles
-            </span>
-            <span className="text-[9px] font-mono text-[#5A7064]">Vérifié ✓</span>
-          </div>
-          <div className="flex flex-wrap gap-1.5 pt-1">
+        <div className="glass p-3 rounded-2xl border border-white/70 shadow-xs text-[#17402C]">
+          <div className="flex flex-wrap gap-1.5">
             {country.sources_list.map((src, i) => (
               <a
                 key={i}
@@ -162,21 +130,14 @@ export default function PaysRightSidebar({
         </div>
       )}
 
-      {/* WIDGET 4: COMMUNAUTÉ & CARNETS */}
-      <div className="glass p-3.5 space-y-2.5 rounded-2xl border border-white/70 shadow-xs text-[#17402C]">
-        <div className="flex items-center justify-between">
-          <h3 className="font-display font-bold text-xs text-[#17402C]">Communauté</h3>
-          <Link href={`/pays/${country.code}#communaute`} className="text-[9.5px] font-mono font-bold text-[#5B7F55] hover:text-[#17402C]">
-            Rejoindre →
-          </Link>
-        </div>
-
+      {/* 4. COMMUNAUTÉ & CARNETS (Zéro titre) */}
+      <div className="glass p-3 rounded-2xl border border-white/70 shadow-xs text-[#17402C]">
         <div className="p-2.5 rounded-xl bg-white/70 border border-white/60 space-y-1.5 shadow-2xs">
           <p className="text-xs font-bold text-[#17402C]">
-            Préparez votre voyage
+            Échanger avec les voyageurs
           </p>
           <p className="text-[10px] text-[#5A7064] leading-relaxed">
-            Consultez les carnets récents et échangez avec les voyageurs de retour de {country.nom}.
+            Consultez les carnets récents et les retours d'expérience sur {country.nom}.
           </p>
           <Link
             href={`/groupes?country=${country.code}`}
