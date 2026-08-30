@@ -347,7 +347,7 @@ export default function TrailDetailPanel({ trail, onClose }: Props) {
 
         {/* Sticky Action Footer — Apple Liquid Glass (Icon-Free Clean Typography) */}
         <div
-          className="p-3.5 sm:p-4 flex flex-col sm:flex-row gap-2.5 shrink-0"
+          className="p-3.5 sm:p-4 pb-[calc(env(safe-area-inset-bottom,0px)+14px)] sm:pb-4 flex flex-col sm:flex-row gap-2.5 shrink-0"
           style={{
             background: 'linear-gradient(180deg, rgba(255, 255, 255, 0.40) 0%, rgba(251, 250, 246, 0.20) 100%)',
             backdropFilter: 'blur(20px) saturate(180%)',

@@ -526,7 +526,7 @@ export default function ExplorerMap({
       )}
 
       {/* Floating Controls Cluster: En bas à droite avec le Zoom & GPS juste au-dessus du changement de carte */}
-      <div className="absolute z-[400] pointer-events-auto right-4 bottom-6 flex flex-col items-end gap-2.5">
+      <div className="absolute z-[400] pointer-events-auto right-3.5 bottom-[calc(var(--bottom-tab-base-height,68px)+168px)] md:right-4 md:bottom-6 flex flex-col items-end gap-2.5">
         {/* Floating Zoom & GPS Controls (+ / − / GPS) */}
         <div
           className="flex flex-col gap-1 p-1 rounded-2xl"

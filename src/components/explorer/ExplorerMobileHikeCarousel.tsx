@@ -68,7 +68,15 @@ export default function ExplorerMobileHikeCarousel({
     >
       {/* ── TOP FLOATING PILL (Mode Switch & Counter) ── */}
       <div className="flex items-center justify-between px-3.5 mb-1.5 pointer-events-auto">
-        <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-white/85 backdrop-blur-md border border-white/80 shadow-xs text-xs font-bold text-[#17402C]">
+        <div
+          className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full shadow-xs text-xs font-bold text-[#17402C]"
+          style={{
+            background: 'linear-gradient(180deg, rgba(255, 255, 255, 0.55) 0%, rgba(251, 250, 246, 0.35) 100%)',
+            backdropFilter: 'blur(16px) saturate(180%)',
+            WebkitBackdropFilter: 'blur(16px) saturate(180%)',
+            border: '1px solid rgba(255, 255, 255, 0.70)',
+          }}
+        >
           <MapPin size={12} className="text-[#17402C]" />
           <span>{count} randonnées</span>
         </div>
@@ -76,7 +84,13 @@ export default function ExplorerMobileHikeCarousel({
         <button
           type="button"
           onClick={toggleViewMode}
-          className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-white/85 hover:bg-white backdrop-blur-md border border-white/80 shadow-xs text-xs font-bold text-[#17402C] active:scale-95 transition-all cursor-pointer"
+          className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full shadow-xs text-xs font-bold text-[#17402C] active:scale-95 transition-all cursor-pointer"
+          style={{
+            background: 'linear-gradient(180deg, rgba(255, 255, 255, 0.55) 0%, rgba(251, 250, 246, 0.35) 100%)',
+            backdropFilter: 'blur(16px) saturate(180%)',
+            WebkitBackdropFilter: 'blur(16px) saturate(180%)',
+            border: '1px solid rgba(255, 255, 255, 0.70)',
+          }}
         >
           {viewMode === 'carousel' ? (
             <>
@@ -115,11 +129,18 @@ export default function ExplorerMobileHikeCarousel({
                   triggerHaptic('selection');
                   onSelectTrail(trail);
                 }}
-                className={`snap-start shrink-0 w-[calc(100vw-68px)] max-w-[290px] rounded-[22px] overflow-hidden glass border transition-all duration-200 cursor-pointer ${
-                  isSelected
-                    ? '!bg-white/95 !border-[#17402C] shadow-lg ring-2 ring-[#17402C]/15 scale-[1.01]'
-                    : '!bg-white/85 hover:!bg-white/90 border-white/70 shadow-md'
-                }`}
+                className="snap-start shrink-0 w-[calc(100vw-68px)] max-w-[290px] rounded-[22px] overflow-hidden transition-all duration-200 cursor-pointer"
+                style={{
+                  background: isSelected
+                    ? 'linear-gradient(180deg, rgba(255, 255, 255, 0.75) 0%, rgba(251, 250, 246, 0.45) 100%)'
+                    : 'linear-gradient(180deg, rgba(255, 255, 255, 0.55) 0%, rgba(251, 250, 246, 0.30) 100%)',
+                  backdropFilter: 'blur(20px) saturate(180%)',
+                  WebkitBackdropFilter: 'blur(20px) saturate(180%)',
+                  border: isSelected ? '1.5px solid rgba(23, 64, 44, 0.5)' : '1px solid rgba(255, 255, 255, 0.65)',
+                  boxShadow: isSelected
+                    ? '0 12px 36px -6px rgba(23, 64, 44, 0.20), inset 0 1px 1.5px rgba(255, 255, 255, 0.95)'
+                    : '0 8px 24px -4px rgba(23, 64, 44, 0.10), inset 0 1px 1px rgba(255, 255, 255, 0.85)',
+                }}
               >
                 {/* Photo Header */}
                 <div className="relative h-20 w-full overflow-hidden bg-stone-200">
@@ -213,7 +234,14 @@ export default function ExplorerMobileHikeCarousel({
           initial={{ opacity: 0, y: 16 }}
           animate={{ opacity: 1, y: 0 }}
           exit={{ opacity: 0, y: 16 }}
-          className="mx-3 rounded-[24px] p-2.5 glass !bg-white/95 border border-white shadow-xl pointer-events-auto max-h-[50vh] flex flex-col"
+          className="mx-3 rounded-[24px] p-3 pointer-events-auto max-h-[50vh] flex flex-col shadow-2xl"
+          style={{
+            background: 'linear-gradient(180deg, rgba(255, 255, 255, 0.70) 0%, rgba(251, 250, 246, 0.40) 100%)',
+            backdropFilter: 'blur(24px) saturate(180%)',
+            WebkitBackdropFilter: 'blur(24px) saturate(180%)',
+            border: '1px solid rgba(255, 255, 255, 0.75)',
+            boxShadow: '0 20px 50px -12px rgba(23, 64, 44, 0.2), inset 0 1.5px 2px rgba(255, 255, 255, 0.95)',
+          }}
         >
           <div className="flex items-center justify-between pb-2 mb-1 px-1 border-b border-[#17402C]/5">
             <span className="text-xs font-bold font-mono uppercase tracking-wider text-[#17402C]">
