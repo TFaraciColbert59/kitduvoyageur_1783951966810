@@ -13,21 +13,17 @@ export default function MaterielLayout({ children }: { children: React.ReactNode
   return (
     <div
       data-lkv-material-theme="light"
-      className="relative min-h-[100dvh] md:h-dvh md:overflow-hidden w-full max-w-full font-sans text-[#17402C] flex flex-col"
-      style={{
-        paddingTop: 'calc(env(safe-area-inset-top, 0px) + 4px)',
-        paddingBottom: 'max(8px, env(safe-area-inset-bottom, 0px))',
-        paddingLeft: 'max(8px, env(safe-area-inset-left, 0px))',
-        paddingRight: 'max(8px, env(safe-area-inset-right, 0px))',
-      }}
+      className="relative h-screen md:h-dvh overflow-hidden w-full max-w-full font-sans text-[#17402C] flex flex-col"
     >
-      {/* Fond vidéo immersif */}
+      {/* Fond vidéo immersif b_fait_bouger_uniqueme.mp4 */}
       <BackgroundVideo />
 
-      {/* Interface UI Fullscreen sur desktop */}
-      <div className="relative z-10 w-full flex-1 flex flex-col overflow-hidden md:pt-14">
+      {/* Interface UI Fullscreen sur desktop — Aucun débordement possible */}
+      <div className="relative z-10 w-full h-full flex flex-col overflow-hidden">
         <Header />
-        <main className="flex-1 w-full flex flex-col overflow-hidden">{children}</main>
+        <main className="flex-1 w-full h-full overflow-hidden pt-20 sm:pt-[84px] pb-2">
+          {children}
+        </main>
       </div>
 
       <GlassCommand />

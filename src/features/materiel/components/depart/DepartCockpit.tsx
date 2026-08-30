@@ -276,7 +276,7 @@ export function DepartCockpit({
   );
 
   return (
-    <div className={cn('w-full h-full min-h-0', isUltraSave && 'ultra-save-mode')}>
+    <div className={cn('w-full h-full min-h-0 overflow-hidden', isUltraSave && 'ultra-save-mode')}>
       {/* Modal Fiche de Départ */}
       <DepartureSheetModal
         depart={depart}
@@ -287,7 +287,7 @@ export function DepartCockpit({
       />
 
       {/* ════ 1. VERSION MOBILE (< 768px) ════ */}
-      <div className="block md:hidden w-full max-w-3xl mx-auto px-3 sm:px-4 pb-[calc(4rem+env(safe-area-inset-bottom))] space-y-3 overscroll-contain">
+      <div className="block md:hidden w-full h-full overflow-y-auto max-w-3xl mx-auto px-3 sm:px-4 pb-[calc(5rem+env(safe-area-inset-bottom))] space-y-3 overscroll-contain">
         <div className="space-y-2 sticky top-0 z-30 pt-1 pb-1 backdrop-blur-md bg-white/30 rounded-2xl border border-white/40">
           <div className="flex items-center justify-between gap-2 px-2">
             <div className="flex items-center gap-1.5">
@@ -361,9 +361,9 @@ export function DepartCockpit({
         </AnimatePresence>
       </div>
 
-      {/* ════ 2. VERSION DESKTOP COCKPIT 3 COLONNES (hidden md:flex) ════ */}
-      <div className="hidden md:flex h-full overflow-hidden max-w-[1680px] w-full mx-auto px-4 sm:px-6 lg:px-8 pt-1 pb-3 gap-6 items-start h-[calc(100dvh-4.5rem)]">
-        {/* Colonne 1 : Sidebar Gauche (Navigation & Switcher) */}
+      {/* ════ 2. VERSION DESKTOP COCKPIT FULLSCREEN STRICT (hidden md:flex) ════ */}
+      <div className="hidden md:flex h-full overflow-hidden max-w-[1680px] w-full mx-auto px-4 sm:px-6 lg:px-8 gap-6 items-start">
+        {/* Colonne 1 : Sidebar Gauche (Navigation & Switcher) - STRICTEMENT NON SCROLLABLE HORS PAGE */}
         <div className="w-[280px] shrink-0 h-full overflow-hidden flex flex-col justify-between">
           <DepartLeftSidebar
             depart={depart}
@@ -378,8 +378,8 @@ export function DepartCockpit({
           />
         </div>
 
-        {/* Colonne 2 : Flux Central Dynamique */}
-        <div className="flex-1 min-w-0 h-full overflow-y-auto no-scrollbar pr-1 pb-6">
+        {/* Colonne 2 : Flux Central Dynamique (LA SEULE ZONE SCROLLABLE DE TOUTE LA PAGE) */}
+        <div className="flex-1 min-w-0 h-full overflow-y-auto no-scrollbar pr-1 pb-4">
           <AnimatePresence mode="wait">
             <motion.div
               key={activeSection}
@@ -394,7 +394,7 @@ export function DepartCockpit({
         </div>
 
         {/* Colonne 3 : Sidebar Droite (Poids, Météo, Équipe, Carte) */}
-        <div className={cn('w-[300px] xl:w-[320px] shrink-0 h-full overflow-y-auto no-scrollbar pb-10', !showAll && 'hidden')}>
+        <div className={cn('w-[300px] xl:w-[320px] shrink-0 h-full overflow-y-auto no-scrollbar pb-4', !showAll && 'hidden')}>
           <DepartRightSidebar depart={depart} weather={weather} />
         </div>
       </div>
