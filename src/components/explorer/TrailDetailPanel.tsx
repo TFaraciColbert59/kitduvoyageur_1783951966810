@@ -121,13 +121,13 @@ export default function TrailDetailPanel({ trail, onClose }: Props) {
   };
 
   return (
-    <div className="fixed inset-0 z-[1000] flex items-center justify-end p-2.5 sm:p-4 md:p-6 pointer-events-none">
+    <div className="fixed inset-0 z-[10000] flex items-center justify-end p-2.5 sm:p-4 md:p-6 pointer-events-none">
       {/* Dimmed backdrop */}
       <motion.div
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         exit={{ opacity: 0 }}
-        className="fixed inset-0 bg-[#0B1F17]/25 backdrop-blur-[2px] pointer-events-auto"
+        className="fixed inset-0 bg-[#0B1F17]/35 backdrop-blur-[3px] pointer-events-auto"
         onClick={onClose}
       />
 
@@ -138,13 +138,12 @@ export default function TrailDetailPanel({ trail, onClose }: Props) {
         exit={{ x: '110%', opacity: 0, scale: 0.96 }}
         transition={{ type: 'spring', stiffness: 360, damping: 32 }}
         onClick={(e) => e.stopPropagation()}
-        className="relative pointer-events-auto w-full max-w-[460px] sm:max-w-[480px] h-[calc(100vh-20px)] sm:h-[calc(100vh-32px)] md:h-[calc(100vh-48px)] flex flex-col justify-between overflow-hidden rounded-[26px] sm:rounded-[32px]"
+        className="relative pointer-events-auto w-full max-w-[460px] sm:max-w-[480px] h-[calc(100vh-20px)] sm:h-[calc(100vh-32px)] md:h-[calc(100vh-48px)] flex flex-col justify-between overflow-hidden rounded-[26px] sm:rounded-[32px] border border-white/80 shadow-2xl"
         style={{
-          background: 'linear-gradient(180deg, rgba(255, 255, 255, 0.45) 0%, rgba(251, 250, 246, 0.22) 100%)',
-          backdropFilter: 'blur(24px) saturate(180%)',
-          WebkitBackdropFilter: 'blur(24px) saturate(180%)',
-          border: '1px solid rgba(255, 255, 255, 0.65)',
-          boxShadow: '0 24px 64px -12px rgba(23, 64, 44, 0.18), inset 0 1.5px 2px rgba(255, 255, 255, 0.9)',
+          background: 'linear-gradient(180deg, rgba(255, 255, 255, 0.70) 0%, rgba(251, 250, 246, 0.40) 100%)',
+          backdropFilter: 'blur(28px) saturate(190%)',
+          WebkitBackdropFilter: 'blur(28px) saturate(190%)',
+          boxShadow: '0 24px 64px -12px rgba(23, 64, 44, 0.25), 0 0 0 1px rgba(255, 255, 255, 0.6), inset 0 1.5px 2px rgba(255, 255, 255, 0.95)',
         }}
       >
         {/* Header Hero Image */}
@@ -347,13 +346,13 @@ export default function TrailDetailPanel({ trail, onClose }: Props) {
 
         {/* Sticky Action Footer — Apple Liquid Glass (Icon-Free Clean Typography) */}
         <div
-          className="p-3.5 sm:p-4 pb-[calc(env(safe-area-inset-bottom,0px)+14px)] sm:pb-4 flex flex-col sm:flex-row gap-2.5 shrink-0"
+          className="p-3.5 sm:p-4 pb-[calc(env(safe-area-inset-bottom,0px)+16px)] sm:pb-4 flex flex-col sm:flex-row gap-2.5 shrink-0"
           style={{
-            background: 'linear-gradient(180deg, rgba(255, 255, 255, 0.40) 0%, rgba(251, 250, 246, 0.20) 100%)',
-            backdropFilter: 'blur(20px) saturate(180%)',
-            WebkitBackdropFilter: 'blur(20px) saturate(180%)',
-            borderTop: '1px solid rgba(255, 255, 255, 0.50)',
-            boxShadow: 'inset 0 1px 0 rgba(255, 255, 255, 0.8)',
+            background: 'linear-gradient(180deg, rgba(255, 255, 255, 0.65) 0%, rgba(251, 250, 246, 0.40) 100%)',
+            backdropFilter: 'blur(24px) saturate(190%)',
+            WebkitBackdropFilter: 'blur(24px) saturate(190%)',
+            borderTop: '1px solid rgba(255, 255, 255, 0.70)',
+            boxShadow: 'inset 0 1px 0 rgba(255, 255, 255, 0.95)',
           }}
         >
           <button
@@ -361,7 +360,7 @@ export default function TrailDetailPanel({ trail, onClose }: Props) {
             onClick={() => {
               router.push(`/preparer-randonnee?routeId=${trail.id}`);
             }}
-            className="flex-1 h-11 rounded-2xl bg-white/55 hover:bg-white/85 text-[#17402C] font-bold text-xs sm:text-sm flex items-center justify-center border border-white/70 backdrop-blur-xl shadow-xs active:scale-[0.98] transition-all cursor-pointer"
+            className="flex-1 h-12 rounded-2xl bg-white/75 hover:bg-white text-[#17402C] font-bold text-xs sm:text-sm flex items-center justify-center border border-white/80 backdrop-blur-xl shadow-xs active:scale-[0.98] transition-all cursor-pointer"
           >
             <span>Préparer le matériel</span>
           </button>
@@ -371,7 +370,7 @@ export default function TrailDetailPanel({ trail, onClose }: Props) {
             onClick={() => {
               router.push(`/randonnee-active?routeId=${trail.id}`);
             }}
-            className="flex-1 h-11 rounded-2xl bg-[#17402C] hover:bg-[#0B1F17] text-white font-bold text-xs sm:text-sm flex items-center justify-center shadow-[0_4px_16px_rgba(23,64,44,0.25),inset_0_1px_1px_rgba(255,255,255,0.4)] active:scale-[0.98] transition-all cursor-pointer"
+            className="flex-1 h-12 rounded-2xl bg-[#17402C] hover:bg-[#0B1F17] text-white font-bold text-xs sm:text-sm flex items-center justify-center shadow-[0_4px_16px_rgba(23,64,44,0.28),inset_0_1px_1px_rgba(255,255,255,0.4)] active:scale-[0.98] transition-all cursor-pointer"
           >
             <span>Commencer tout de suite</span>
           </button>

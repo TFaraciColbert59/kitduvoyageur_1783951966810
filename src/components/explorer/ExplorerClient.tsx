@@ -424,13 +424,13 @@ export default function ExplorerClient({ initialTrails }: ExplorerClientProps) {
         style={{ top: 'calc(max(env(safe-area-inset-top, 0px), 12px) + 8px)' }}
       >
         <div
-          className="w-full rounded-full px-3 py-1.5 min-h-[44px] flex items-center justify-between gap-2 pointer-events-auto"
+          className="pointer-events-auto flex items-center justify-between gap-2 px-3 py-1.5 rounded-full"
           style={{
-            background: 'linear-gradient(180deg, rgba(255, 255, 255, 0.88) 0%, rgba(255, 255, 255, 0.65) 100%)',
-            backdropFilter: 'blur(25px) saturate(180%)',
-            WebkitBackdropFilter: 'blur(25px) saturate(180%)',
-            border: '1px solid rgba(255, 255, 255, 0.85)',
-            boxShadow: '0 8px 24px -4px rgba(23, 64, 44, 0.10), inset 0 1px 1.5px rgba(255, 255, 255, 0.95)',
+            background: 'linear-gradient(180deg, rgba(255, 255, 255, 0.70) 0%, rgba(251, 250, 246, 0.40) 100%)',
+            backdropFilter: 'blur(24px) saturate(190%)',
+            WebkitBackdropFilter: 'blur(24px) saturate(190%)',
+            border: '1px solid rgba(255, 255, 255, 0.80)',
+            boxShadow: '0 8px 32px -4px rgba(23, 64, 44, 0.12), inset 0 1.5px 1.5px rgba(255, 255, 255, 0.95)',
           }}
         >
           <Link href="/" className="flex items-center gap-1.5 shrink-0" aria-label="Accueil LKDV">
@@ -449,7 +449,7 @@ export default function ExplorerClient({ initialTrails }: ExplorerClientProps) {
               placeholder="Rechercher un sentier…"
               value={searchQuery}
               onChange={(e) => handleSearchChange(e.target.value)}
-              className="w-full h-8 pl-8 pr-6 rounded-full text-xs font-semibold text-[#17402C] placeholder:text-[#5A7064]/70 bg-white/80 border border-white/70 outline-none focus-visible:ring-1 focus-visible:ring-[#17402C]/40"
+              className="w-full h-8 pl-8 pr-6 rounded-full text-xs font-semibold text-[#17402C] placeholder:text-[#5A7064]/70 bg-white/60 hover:bg-white/80 focus:bg-white/95 border border-white/70 shadow-2xs outline-none focus-visible:ring-1 focus-visible:ring-[#17402C]/40 transition-all"
             />
           </div>
 

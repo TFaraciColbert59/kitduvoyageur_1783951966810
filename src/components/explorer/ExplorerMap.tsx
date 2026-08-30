@@ -525,8 +525,8 @@ export default function ExplorerMap({
         <TrailLayer map={mapInstance} trails={trails} pois={pois} selectedTrailId={selectedTrailId} onTrailClick={onTrailClick} onPoiClick={onPoiClick} />
       )}
 
-      {/* Floating Controls Cluster: En bas à droite avec le Zoom & GPS juste au-dessus du changement de carte */}
-      <div className="absolute z-[400] pointer-events-auto right-3.5 bottom-[calc(var(--bottom-tab-base-height,68px)+168px)] md:right-4 md:bottom-6 flex flex-col items-end gap-2.5">
+      {/* Floating Controls Cluster: En haut à droite sur mobile, en bas à droite sur desktop */}
+      <div className="absolute z-[400] pointer-events-auto right-3.5 top-[calc(env(safe-area-inset-top,0px)+74px)] md:top-auto md:right-4 md:bottom-6 flex flex-col items-end gap-2">
         {/* Floating Zoom & GPS Controls (+ / − / GPS) */}
         <div
           className="flex flex-col gap-1 p-1 rounded-2xl"
