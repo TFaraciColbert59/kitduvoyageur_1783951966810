@@ -8,7 +8,14 @@ export const revalidate = 60;
 export default async function ExplorerPage() {
   let initialTrails: MapTrail[] = [];
   try {
-    initialTrails = await getTrails();
+    // Initial 2km bounds around Chamonix [45.9237, 6.8694]
+    initialTrails = await getTrails({
+      minLat: 45.9237 - 0.018,
+      maxLat: 45.9237 + 0.018,
+      minLng: 6.8694 - 0.026,
+      maxLng: 6.8694 + 0.026,
+      limit: 50,
+    });
   } catch (error) {
     console.error('[ExplorerPage] Error fetching initial trails:', error);
   }

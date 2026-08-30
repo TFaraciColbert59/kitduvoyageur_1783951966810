@@ -172,7 +172,6 @@ export default function ExplorerClient({ initialTrails }: ExplorerClientProps) {
       if (!res.ok) throw new Error('Failed to fetch trails');
       return (await res.json()) as MapTrail[];
     },
-    initialData: initialTrails && initialTrails.length > 0 ? initialTrails : undefined,
     staleTime: 60_000,
   });
 
@@ -220,6 +219,22 @@ export default function ExplorerClient({ initialTrails }: ExplorerClientProps) {
 
   const filteredTrails = useMemo(() => {
     return trails.filter((t) => {
+      // Spatial restriction: only show hikes inside the active queried bounding box (e.g. 2km radius)
+      if (queriedBbox) {
+        const tLat = t.lat != null ? Number(t.lat) : (t as any).start_lat != null ? Number((t as any).start_lat) : null;
+        const tLng = t.lng != null ? Number(t.lng) : (t as any).start_lng != null ? Number((t as any).start_lng) : null;
+        if (tLat != null && tLng != null && !isNaN(tLat) && !isNaN(tLng)) {
+          if (
+            tLat < queriedBbox.minLat ||
+            tLat > queriedBbox.maxLat ||
+            tLng < queriedBbox.minLng ||
+            tLng > queriedBbox.maxLng
+          ) {
+            return false;
+          }
+        }
+      }
+
       const dist = t.distance_km != null ? Number(t.distance_km) : 0;
       if (dist < 2.0) return false;
       if (searchQuery) {
@@ -251,7 +266,7 @@ export default function ExplorerClient({ initialTrails }: ExplorerClientProps) {
       }
       return true;
     });
-  }, [trails, searchQuery, activeDifficulties, activeDuration, familyOnly, activeCategory]);
+  }, [trails, queriedBbox, searchQuery, activeDifficulties, activeDuration, familyOnly, activeCategory]);
 
   // Handlers
   const handleTrailClick = useCallback((trail: MapTrail) => {
@@ -269,6 +284,17 @@ export default function ExplorerClient({ initialTrails }: ExplorerClientProps) {
 
   const handleLocationUpdate = useCallback((loc: [number, number]) => {
     setUserLocation(loc);
+    const [lat, lng] = loc;
+    const deltaLat = 0.018;
+    const deltaLng = 0.026 / Math.cos((lat * Math.PI) / 180);
+    setQueriedBbox({
+      minLat: lat - deltaLat,
+      maxLat: lat + deltaLat,
+      minLng: lng - deltaLng,
+      maxLng: lng + deltaLng,
+      zoom: 14,
+    });
+    setShowSearchHereButton(false);
   }, []);
 
   // Verrouille le scroll de la page (html/body) pendant la vue plein écran :
