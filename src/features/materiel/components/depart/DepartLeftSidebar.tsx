@@ -75,9 +75,9 @@ export function DepartLeftSidebar({
   ];
 
   return (
-    <aside className="h-full flex flex-col justify-between glass rounded-[1.5rem] p-4 text-[#17402C] font-sans overflow-hidden border border-white/40 shadow-sm">
+    <aside className="h-full max-h-full flex flex-col justify-between glass rounded-[1.5rem] p-3.5 text-[#17402C] font-sans overflow-hidden border border-white/40 shadow-sm">
       {/* Top Departure Card & Navigation */}
-      <div className="space-y-3 overflow-y-auto no-scrollbar pr-0.5">
+      <div className="space-y-2.5 overflow-y-auto no-scrollbar pr-0.5 flex-1 min-h-0">
         {/* Top Departure Card (Identité du trek) */}
         <div className="p-3 rounded-2xl glass-sub-card space-y-2 relative overflow-hidden border border-white/50">
           <div className="flex items-start justify-between gap-1.5">

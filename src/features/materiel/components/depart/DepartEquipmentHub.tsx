@@ -586,7 +586,7 @@ export function DepartEquipmentHub({
             </div>
 
             {/* ════ GRILLE DES CARTES PAR 3 (iOS Apple Card Layout Épuré) ════ */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-2 2xl:grid-cols-3 gap-4 max-h-[680px] overflow-y-auto no-scrollbar pr-0.5">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-2 2xl:grid-cols-3 gap-4 pr-0.5">
               {filteredItems.length === 0 ? (
                 <div className="col-span-full py-12 px-4 text-center bg-white/40 rounded-3xl border border-dashed border-black/10 text-xs text-[#5A7064] space-y-2">
                   <Boxes size={24} className="mx-auto text-[#5A7064]/60" />

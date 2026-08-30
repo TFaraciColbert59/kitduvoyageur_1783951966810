@@ -21,7 +21,7 @@ export default function MaterielLayout({ children }: { children: React.ReactNode
       {/* Interface UI Fullscreen sur desktop — Aucun débordement possible */}
       <div className="relative z-10 w-full h-full flex flex-col overflow-hidden">
         <Header />
-        <main className="flex-1 w-full h-full overflow-hidden pt-20 sm:pt-[84px] pb-2">
+        <main className="flex-1 w-full h-full overflow-hidden pt-16 sm:pt-[72px] pb-1">
           {children}
         </main>
       </div>

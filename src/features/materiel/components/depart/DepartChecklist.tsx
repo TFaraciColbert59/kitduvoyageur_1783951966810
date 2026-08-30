@@ -416,27 +416,27 @@ export function DepartChecklist({
   return (
     <GlassCard tone="neutral" as="article" ariaLabelledBy="depart-checklist-heading" className="relative">
       <div className="p-4 sm:p-5 space-y-3.5">
-        {/* ════ HEADER CHECKLIST & ACTIONS RAPIDES ════ */}
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5">
-          <div className="flex items-center gap-2">
-            <Package size={16} className="text-[#2D6B4A]" aria-hidden="true" />
-            <h2 id="depart-checklist-heading" className="text-sm sm:text-base font-bold text-[#17402C]">
+        {/* ════ HEADER CHECKLIST SUR UNE SEULE LIGNE ÉLÉGANTE ════ */}
+        <div className="flex items-center justify-between gap-2 pb-2 border-b border-black/5 dark:border-white/10">
+          <div className="flex items-center gap-2 min-w-0">
+            <Package size={15} className="text-[#2D6B4A] shrink-0" aria-hidden="true" />
+            <h2 id="depart-checklist-heading" className="text-xs sm:text-[13px] font-bold text-[#17402C] truncate whitespace-nowrap">
               Préparation active du sac
             </h2>
-            <span className="text-xs font-mono font-bold px-2 py-0.5 rounded-full bg-[#17402C]/10 text-[#17402C]">
+            <span className="text-[10px] font-mono font-bold px-2 py-0.5 rounded-full bg-[#17402C]/10 text-[#17402C] shrink-0">
               {done}/{total}
             </span>
           </div>
 
-          {/* Barre d outils : Recherche, Filtre, Audio, Ajout */}
-          <div className="flex items-center gap-1.5 flex-wrap">
+          {/* Barre d actions droite : Filtres + Audio + Bouton Plus Icône Seule */}
+          <div className="flex items-center gap-1.5 shrink-0">
             {/* Bascule Reste à faire / Tous */}
-            <div className="flex items-center bg-black/5 dark:bg-white/10 rounded-xl p-0.5 text-[11px] font-semibold">
+            <div className="flex items-center bg-black/5 dark:bg-white/10 rounded-xl p-0.5 text-[10.5px] font-semibold">
               <button
                 type="button"
                 onClick={() => setFilterMode('all')}
                 className={cn(
-                  'px-2.5 py-1 rounded-lg transition-colors cursor-pointer',
+                  'px-2 py-0.5 rounded-lg transition-colors cursor-pointer',
                   filterMode === 'all' ? 'bg-[#17402C] text-white shadow-2xs' : 'text-[#5A7064] hover:text-[#17402C]'
                 )}
               >
@@ -446,7 +446,7 @@ export function DepartChecklist({
                 type="button"
                 onClick={() => setFilterMode('remaining')}
                 className={cn(
-                  'px-2.5 py-1 rounded-lg transition-colors cursor-pointer',
+                  'px-2 py-0.5 rounded-lg transition-colors cursor-pointer',
                   filterMode === 'remaining' ? 'bg-[#17402C] text-white shadow-2xs' : 'text-[#5A7064] hover:text-[#17402C]'
                 )}
               >
@@ -459,10 +459,10 @@ export function DepartChecklist({
               type="button"
               onClick={handleToggleSpeak}
               className={cn(
-                'p-2 rounded-xl transition-all cursor-pointer shadow-2xs',
+                'w-7 h-7 rounded-xl flex items-center justify-center transition-all cursor-pointer shadow-2xs shrink-0',
                 isSpeaking
                   ? 'bg-[#2D6B4A] text-white animate-pulse'
-                  : 'bg-white/50 dark:bg-white/10 text-[#17402C] hover:bg-white/80'
+                  : 'bg-white/60 dark:bg-white/10 text-[#17402C] hover:bg-white'
               )}
               title={isSpeaking ? 'Arrêter la lecture' : 'Lire les articles restants à voix haute'}
               aria-label={isSpeaking ? 'Arrêter la lecture audio' : 'Lire la checklist à voix haute'}
@@ -470,37 +470,17 @@ export function DepartChecklist({
               {isSpeaking ? <VolumeX size={13} /> : <Volume2 size={13} />}
             </button>
 
-            {/* Bouton Ajouter un équipement */}
+            {/* Bouton Ajouter un équipement (JUSTE L'ICÔNE PLUS) */}
             <button
               type="button"
               onClick={() => setIsAddModalOpen(true)}
-              className="glass-capsule-btn primary text-xs !py-1.5 !px-3 inline-flex items-center gap-1 font-bold shadow-2xs cursor-pointer"
+              className="w-7 h-7 rounded-xl bg-[#17402C] text-white hover:bg-[#17402C]/90 shadow-2xs flex items-center justify-center cursor-pointer shrink-0 transition-transform active:scale-95"
+              title="Ajouter un équipement au sac"
+              aria-label="Ajouter un équipement au sac"
             >
-              <Plus size={13} />
-              <span>Ajouter</span>
+              <Plus size={14} strokeWidth={2.5} />
             </button>
           </div>
-        </div>
-
-        {/* ════ CHAMP DE RECHERCHE RAPIDE ════ */}
-        <div className="relative">
-          <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-[#5A7064]" />
-          <input
-            type="text"
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            placeholder="Rechercher un équipement, une tente, un vêtement..."
-            className="w-full pl-8 pr-8 py-2 rounded-xl text-xs bg-white/50 dark:bg-white/10 border border-white/60 focus:outline-none focus:ring-2 focus:ring-[#17402C]/30 text-[#17402C] placeholder-[#5A7064]/70"
-          />
-          {searchQuery && (
-            <button
-              type="button"
-              onClick={() => setSearchQuery('')}
-              className="absolute right-2.5 top-1/2 -translate-y-1/2 text-[#5A7064] hover:text-[#17402C] p-0.5 cursor-pointer"
-            >
-              <X size={12} />
-            </button>
-          )}
         </div>
 
         {/* Toast de retry en cas d erreur réseau */}
@@ -630,7 +610,7 @@ export function DepartChecklist({
                               >
                                 <span
                                   className={cn(
-                                    'shrink-0 w-5 h-5 rounded-full border-2 flex items-center justify-center transition-all duration-150',
+                                    'shrink-0 w-4 h-4 rounded-full border-[1.5px] flex items-center justify-center transition-all duration-150',
                                     hasError
                                       ? 'border-red-400 bg-red-50'
                                       : item.is_checked
@@ -645,10 +625,10 @@ export function DepartChecklist({
                                       animate={{ scale: 1 }}
                                       transition={{ type: 'spring', stiffness: 500, damping: 20 }}
                                     >
-                                      <Check size={11} className="text-white" strokeWidth={2.5} />
+                                      <Check size={9} className="text-white" strokeWidth={3} />
                                     </motion.span>
                                   )}
-                                  {hasError && <AlertCircle size={11} className="text-red-400" />}
+                                  {hasError && <AlertCircle size={9} className="text-red-400" />}
                                 </span>
 
                                 <div className="min-w-0 flex-1">
