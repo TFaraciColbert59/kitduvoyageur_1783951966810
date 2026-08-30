@@ -4,6 +4,7 @@ import React from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
 import Icon from '@/components/ui/AppIcon';
+import CountryFlag from '@/components/ui/CountryFlag';
 import { CountryDetail } from '@/lib/countryDetails';
 
 interface PaysHeroOverviewProps {
@@ -35,9 +36,7 @@ export default function PaysHeroOverview({
           <div className="flex-1 max-w-2xl space-y-3">
             {/* Meta Tags Row */}
             <div className="flex flex-wrap items-center gap-2">
-              <span className="w-8 h-8 rounded-full bg-white/80 border border-white shadow-2xs flex items-center justify-center text-lg shrink-0">
-                {flagEmoji}
-              </span>
+              <CountryFlag code={country.code} name={country.nom} size="md" className="rounded-md shadow-xs" />
               <span className="glass-pill text-[9.5px] font-mono font-bold text-[#17402C]">
                 {country.code}{country.iso_a3 ? ` · ${country.iso_a3}` : ''}
               </span>

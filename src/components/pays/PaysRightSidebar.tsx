@@ -4,6 +4,7 @@ import React from 'react';
 import Link from 'next/link';
 import dynamic from 'next/dynamic';
 import Icon from '@/components/ui/AppIcon';
+import CountryFlag from '@/components/ui/CountryFlag';
 import { CountryDetail } from '@/lib/countryDetails';
 import { ALL_COUNTRIES } from '@/lib/countries';
 
@@ -23,22 +24,64 @@ export default function PaysRightSidebar({
   flagEmoji,
   onCountryGlobeClick,
 }: PaysRightSidebarProps) {
+  const content = country.country_content;
+
+  const quickMetrics = [
+    {
+      label: 'Saison optimale',
+      val: country.saison_recommandee || 'Toute l’année',
+      icon: '☀️',
+    },
+    {
+      label: 'Visa (Ressortissants FR)',
+      val: content?.pratique_voyage?.visa_requis_fr || 'Non requis (UE)',
+      icon: '🛂',
+    },
+    {
+      label: 'Hub aérien principal',
+      val: content?.transport?.aeroport_principal
+        ? `${content.transport.aeroport_principal}${content.transport.code_iata ? ` (${content.transport.code_iata})` : ''}`
+        : country.capitale,
+      icon: '✈️',
+    },
+    {
+      label: 'Prises & Voltage',
+      val: content?.connectivite?.type_prise_electrique
+        ? `${content.connectivite.type_prise_electrique}${content.connectivite.voltage ? ` · ${content.connectivite.voltage}` : ''}`
+        : 'Standard',
+      icon: '🔌',
+    },
+    {
+      label: 'Devise locale',
+      val: `${country.monnaie_nom || country.monnaie} (${country.monnaie_code})`,
+      icon: '💶',
+    },
+    {
+      label: 'Sens de conduite',
+      val: content?.transport?.sens_conduite || 'À droite',
+      icon: '🚗',
+    },
+  ];
+
   return (
     <aside className="w-full shrink-0 h-full overflow-y-auto custom-scrollbar flex flex-col gap-3.5 pb-6 font-sans">
-      {/* WIDGET 1: GLOBE 3D INTERACTIF & REPÈRES GPS */}
-      <div className="glass p-3.5 space-y-2.5 rounded-2xl border border-white/70 shadow-xs text-[#17402C]">
+      {/* WIDGET 1: GLOBE 3D INTERACTIF & POSITIONNEMENT */}
+      <div className="glass p-4 space-y-3 rounded-2xl border border-white/70 shadow-xs text-[#17402C]">
         <div className="flex items-center justify-between">
-          <div className="flex items-center gap-1.5">
+          <div className="flex items-center gap-2">
             <span className="w-2 h-2 rounded-full bg-[#5B7F55] animate-pulse" />
             <h3 className="font-display font-bold text-xs text-[#17402C]">Globe 3D &amp; Position</h3>
           </div>
-          <span className="glass-pill text-[9px] font-mono font-bold text-[#17402C]">
-            {flagEmoji} {country.code.toUpperCase()}
-          </span>
+          <div className="flex items-center gap-1.5">
+            <CountryFlag code={country.code} name={country.nom} size="xs" />
+            <span className="glass-pill text-[9px] font-mono font-bold text-[#17402C]">
+              {country.code.toUpperCase()}
+            </span>
+          </div>
         </div>
 
         {/* Globe Container */}
-        <div className="w-full h-36 rounded-xl overflow-hidden relative bg-[#17402C]/5 border border-white/60">
+        <div className="w-full h-36 rounded-xl overflow-hidden relative bg-[#17402C]/5 border border-white/60 shadow-2xs">
           <CountryGlobe
             countries={ALL_COUNTRIES}
             onCountryClick={onCountryGlobeClick || (() => {})}
@@ -49,239 +92,74 @@ export default function PaysRightSidebar({
         </div>
 
         <div className="grid grid-cols-2 gap-1.5 text-[9.5px] font-mono pt-0.5">
-          <div className="p-1.5 rounded-lg bg-white/70 border border-white/60">
-            <span className="text-[#5A7064] block text-[8px] uppercase">Région</span>
+          <div className="p-2 rounded-xl bg-white/75 border border-white/60 shadow-2xs space-y-0.5">
+            <span className="text-[#5A7064] block text-[8px] font-semibold uppercase">Région</span>
             <span className="font-bold text-[#17402C] truncate block">{country.region || country.continent}</span>
           </div>
-          <div className="p-1.5 rounded-lg bg-white/70 border border-white/60">
-            <span className="text-[#5A7064] block text-[8px] uppercase">Fuseau</span>
+          <div className="p-2 rounded-xl bg-white/75 border border-white/60 shadow-2xs space-y-0.5">
+            <span className="text-[#5A7064] block text-[8px] font-semibold uppercase">Fuseau</span>
             <span className="font-bold text-[#17402C] truncate block">{country.fuseau}</span>
           </div>
         </div>
       </div>
 
-      {/* WIDGET 2: FICHE D'IDENTITÉ PAYS (CATÉGORIES & DONNÉES ASSOCIÉES) */}
-      <div className="glass p-3.5 space-y-3 rounded-2xl border border-white/70 shadow-xs text-[#17402C]">
-        <div className="flex items-center justify-between pb-1.5 border-b border-[#17402C]/10">
-          <div className="flex items-center gap-1.5">
-            <span className="text-sm">📋</span>
+      {/* WIDGET 2: L'ESSENTIEL TERRAIN (AT A GLANCE COMPANION) */}
+      <div className="glass p-4 space-y-3 rounded-2xl border border-white/70 shadow-xs text-[#17402C]">
+        <div className="flex items-center justify-between pb-2 border-b border-[#17402C]/10">
+          <div className="flex items-center gap-2">
+            <span className="text-sm">⚡</span>
             <div>
-              <h3 className="font-display font-bold text-xs text-[#17402C]">Données officielles</h3>
-              <p className="text-[9px] text-[#5A7064] font-mono">100% issues de countries_geo</p>
+              <h3 className="font-display font-bold text-xs text-[#17402C]">L'Essentiel Terrain</h3>
+              <p className="text-[9px] text-[#5A7064] font-mono">Repères rapides pour l'aventure</p>
             </div>
           </div>
           <span className="glass-pill text-[8.5px] font-mono font-bold text-[#5B7F55]">
-            ISO {country.code}{country.iso_a3 ? ` · ${country.iso_a3}` : ''}
+            Check-list
           </span>
         </div>
 
-        <div className="space-y-2.5 text-[10.5px]">
-          {/* Catégorie 1: Géographie & Territoire */}
-          <div className="space-y-1">
-            <span className="text-[9px] font-mono font-bold text-[#5B7F55] uppercase tracking-wider block">
-              🌍 Géographie &amp; Territoire
-            </span>
-            <div className="grid grid-cols-1 gap-1">
-              <div className="flex items-center justify-between gap-2 p-1.5 rounded-lg bg-white/60 border border-white/40">
-                <span className="text-[#5A7064] text-[9.5px] font-medium">Continent</span>
-                <span className="font-bold text-[#17402C]">{country.continent}</span>
+        <div className="space-y-1.5">
+          {quickMetrics.map((m, idx) => (
+            <div
+              key={idx}
+              className="p-2 rounded-xl bg-white/70 border border-white/50 shadow-2xs flex items-center justify-between gap-2 text-xs"
+            >
+              <div className="flex items-center gap-1.5 min-w-0">
+                <span className="text-xs shrink-0">{m.icon}</span>
+                <span className="text-[#5A7064] text-[10.5px] font-medium truncate">{m.label}</span>
               </div>
-              <div className="flex items-center justify-between gap-2 p-1.5 rounded-lg bg-white/60 border border-white/40">
-                <span className="text-[#5A7064] text-[9.5px] font-medium">Sous-région</span>
-                <span className="font-bold text-[#17402C] text-right truncate max-w-[170px]">{country.region}</span>
-              </div>
-              <div className="flex items-center justify-between gap-2 p-1.5 rounded-lg bg-white/60 border border-white/40">
-                <span className="text-[#5A7064] text-[9.5px] font-medium">Superficie</span>
-                <span className="font-mono font-bold text-[#17402C]">{country.superficie_detail}</span>
-              </div>
-            </div>
-          </div>
-
-          {/* Catégorie 2: Politique & Capitale */}
-          <div className="space-y-1 pt-1 border-t border-[#17402C]/5">
-            <span className="text-[9px] font-mono font-bold text-[#5B7F55] uppercase tracking-wider block">
-              🏛️ Politique &amp; Repères
-            </span>
-            <div className="grid grid-cols-1 gap-1">
-              <div className="flex items-center justify-between gap-2 p-1.5 rounded-lg bg-white/60 border border-white/40">
-                <span className="text-[#5A7064] text-[9.5px] font-medium">Capitale</span>
-                <span className="font-bold text-[#17402C] text-right truncate max-w-[170px]" title={country.capitale}>
-                  {country.capitale}
-                </span>
-              </div>
-              {country.nom_en && country.nom_en.toLowerCase() !== country.nom.toLowerCase() && (
-                <div className="flex items-center justify-between gap-2 p-1.5 rounded-lg bg-white/60 border border-white/40">
-                  <span className="text-[#5A7064] text-[9.5px] font-medium">Nom international (EN)</span>
-                  <span className="font-mono font-bold text-[#17402C] truncate">{country.nom_en}</span>
-                </div>
-              )}
-              <div className="flex items-center justify-between gap-2 p-1.5 rounded-lg bg-white/60 border border-white/40">
-                <span className="text-[#5A7064] text-[9.5px] font-medium">Codes ISO</span>
-                <span className="font-mono font-bold text-[#17402C]">
-                  {country.code}{country.iso_a3 ? ` / ${country.iso_a3}` : ''}
-                </span>
-              </div>
-            </div>
-          </div>
-
-          {/* Catégorie 3: Langues & Culture */}
-          <div className="space-y-1 pt-1 border-t border-[#17402C]/5">
-            <span className="text-[9px] font-mono font-bold text-[#5B7F55] uppercase tracking-wider block">
-              🗣️ Langues officielles
-            </span>
-            <div className="p-1.5 rounded-lg bg-white/60 border border-white/40 space-y-0.5">
-              <span className="font-bold text-[#17402C] block text-[10px] leading-snug" title={country.langue}>
-                {country.langue}
+              <span className="font-bold text-[#17402C] text-[11px] text-right truncate max-w-[130px]" title={m.val}>
+                {m.val}
               </span>
-              {country.langue_sub && (
-                <span className="text-[8.5px] font-mono text-[#5A7064] block">
-                  {country.langue_sub}
-                </span>
-              )}
             </div>
-          </div>
-
-          {/* Catégorie 4: Économie & Temps */}
-          <div className="space-y-1 pt-1 border-t border-[#17402C]/5">
-            <span className="text-[9px] font-mono font-bold text-[#5B7F55] uppercase tracking-wider block">
-              💰 Économie &amp; Temporalité
-            </span>
-            <div className="grid grid-cols-1 gap-1">
-              <div className="flex items-center justify-between gap-2 p-1.5 rounded-lg bg-white/60 border border-white/40">
-                <span className="text-[#5A7064] text-[9.5px] font-medium">Devise</span>
-                <span className="font-bold text-[#17402C] text-right truncate max-w-[170px]">
-                  {country.monnaie || country.monnaie_nom}
-                </span>
-              </div>
-              <div className="flex items-center justify-between gap-2 p-1.5 rounded-lg bg-white/60 border border-white/40">
-                <span className="text-[#5A7064] text-[9.5px] font-medium">Code devise</span>
-                <span className="font-mono font-bold text-[#17402C]">{country.monnaie_code}</span>
-              </div>
-              <div className="flex items-center justify-between gap-2 p-1.5 rounded-lg bg-white/60 border border-white/40">
-                <span className="text-[#5A7064] text-[9.5px] font-medium">Fuseau horaire</span>
-                <span className="font-mono font-bold text-[#17402C]">{country.fuseau}</span>
-              </div>
-            </div>
-          </div>
-
-          {/* Catégorie 5: Sources documentaires */}
-          {country.sources_list && country.sources_list.length > 0 && (
-            <div className="pt-1.5 border-t border-[#17402C]/10 space-y-1">
-              <span className="text-[9px] font-mono font-bold text-[#5B7F55] uppercase tracking-wider block">
-                📚 Sources &amp; Références
-              </span>
-              <div className="flex flex-wrap gap-1">
-                {country.sources_list.map((src, i) => (
-                  <a
-                    key={i}
-                    href={src.url}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="glass-pill !px-2 !py-0.5 text-[8.5px] font-mono text-[#17402C] hover:text-[#5B7F55] hover:border-[#5B7F55]/40 transition-colors inline-flex items-center gap-1"
-                  >
-                    <span>{src.label}</span>
-                    <span className="text-[7.5px]">↗</span>
-                  </a>
-                ))}
-              </div>
-            </div>
-          )}
+          ))}
         </div>
       </div>
 
-      {/* WIDGET 2: MÉTÉO & CLIMAT EN DIRECT */}
-      {country.meteo && (
-      <div className="glass p-3.5 space-y-2.5 rounded-2xl border border-white/70 shadow-xs text-[#17402C]">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-1.5">
-            <h3 className="font-display font-bold text-xs text-[#17402C]">Météo en direct</h3>
-            <span className="text-[10px] text-[#5A7064]">· {country.meteo.ville}</span>
+      {/* WIDGET 3: SOURCES DOCUMENTAIRES OFFICIELLES */}
+      {country.sources_list && country.sources_list.length > 0 && (
+        <div className="glass p-3.5 space-y-2 rounded-2xl border border-white/70 shadow-xs text-[#17402C]">
+          <div className="flex items-center justify-between pb-1 border-b border-[#17402C]/10">
+            <span className="text-[9.5px] font-mono font-bold text-[#5B7F55] uppercase tracking-wider block">
+              📚 Références officielles
+            </span>
+            <span className="text-[9px] font-mono text-[#5A7064]">Vérifié ✓</span>
           </div>
-          <span className="glass-pill text-[9px] font-mono font-bold text-[#5B7F55]">
-            LIVE
-          </span>
-        </div>
-
-        {/* Temperature and conditions */}
-        <div className="flex items-center justify-between p-2 rounded-xl bg-white/70 border border-white/60">
-          <div>
-            <div className="font-mono font-bold text-2xl text-[#17402C] leading-none">
-              {country.meteo.temperature_actuelle}<span className="text-sm font-normal">°C</span>
-            </div>
-            <div className="text-[10px] text-[#5A7064] mt-1 font-medium truncate">
-              {country.meteo.conditions} — {country.meteo.details}
-            </div>
-          </div>
-          <div className="text-2xl">
-            ☀️
-          </div>
-        </div>
-
-        {/* 12 Months Mini Weather Chart */}
-        <div className="pt-1">
-          <div className="flex items-end justify-between gap-1 h-12">
-            {['J', 'F', 'M', 'A', 'M', 'J', 'J', 'A', 'S', 'O', 'N', 'D'].map((m, i) => {
-              const val = country.meteo?.mois_temperatures?.[i] || 20;
-              const isCurrent = i === new Date().getMonth();
-              const heightPct = Math.min(100, Math.max(20, (val / 35) * 100));
-
-              return (
-                <div key={m + i} className="flex-1 flex flex-col items-center gap-1">
-                  <div
-                    className={`w-full rounded-t-sm transition-all ${
-                      isCurrent ? 'bg-[#17402C]' : 'bg-[#5B7F55]/40'
-                    }`}
-                    style={{ height: `${heightPct}%` }}
-                  />
-                  <span className={`text-[8px] font-mono ${isCurrent ? 'font-bold text-[#17402C]' : 'text-[#5A7064]'}`}>
-                    {m}
-                  </span>
-                </div>
-              );
-            })}
-          </div>
-        </div>
-      </div>
-      )}
-
-      {/* WIDGET 3: SÉCURITÉ & VIGILANCE */}
-      {country.securite && (
-      <div className="glass p-3.5 space-y-2.5 rounded-2xl border border-white/70 shadow-xs text-[#17402C]">
-        <div className="flex items-center justify-between">
-          <h3 className="font-display font-bold text-xs text-[#17402C]">Sécurité &amp; Terrain</h3>
-          <span className="glass-pill text-[9px] font-mono font-bold text-[#17402C]">
-            🛡️ {country.securite.niveau_label}
-          </span>
-        </div>
-
-        {/* Score Bar */}
-        <div className="space-y-1">
-          <div className="flex items-center gap-1">
-            {[1, 2, 3, 4, 5].map((s) => (
-              <div
-                key={s}
-                className={`flex-1 h-1.5 rounded-full transition-all ${
-                  s <= (country.securite!.niveau_score)
-                    ? 'bg-[#5B7F55]'
-                    : 'bg-[#17402C]/10'
-                }`}
-              />
+          <div className="flex flex-wrap gap-1.5 pt-1">
+            {country.sources_list.map((src, i) => (
+              <a
+                key={i}
+                href={src.url}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="glass-pill !px-2.5 !py-1 text-[9px] font-mono font-bold text-[#17402C] hover:text-[#5B7F55] hover:border-[#5B7F55]/40 transition-colors inline-flex items-center gap-1 shadow-2xs"
+              >
+                <span>{src.label}</span>
+                <span className="text-[8px]">↗</span>
+              </a>
             ))}
           </div>
         </div>
-
-        {/* Essential Advice */}
-        {country.securite.conseils && country.securite.conseils.length > 0 && (
-          <div className="p-2 rounded-xl bg-white/70 border border-white/60 text-[10.5px]">
-            <p className="font-bold text-[#17402C] truncate">
-              {country.securite.conseils[0].titre}
-            </p>
-            <p className="text-[9.5px] text-[#5A7064] line-clamp-2 mt-0.5">
-              {country.securite.conseils[0].description}
-            </p>
-          </div>
-        )}
-      </div>
       )}
 
       {/* WIDGET 4: COMMUNAUTÉ & CARNETS */}
@@ -293,7 +171,7 @@ export default function PaysRightSidebar({
           </Link>
         </div>
 
-        <div className="p-2.5 rounded-xl bg-white/70 border border-white/60 space-y-1.5">
+        <div className="p-2.5 rounded-xl bg-white/70 border border-white/60 space-y-1.5 shadow-2xs">
           <p className="text-xs font-bold text-[#17402C]">
             Préparez votre voyage
           </p>
@@ -302,7 +180,7 @@ export default function PaysRightSidebar({
           </p>
           <Link
             href={`/groupes?country=${country.code}`}
-            className="w-full glass-capsule-btn primary !py-1 text-[10.5px] font-bold flex items-center justify-center gap-1 mt-1"
+            className="w-full glass-capsule-btn primary !py-1.5 text-[10.5px] font-bold flex items-center justify-center gap-1 mt-1"
           >
             <span>Voir les groupes actifs</span>
           </Link>

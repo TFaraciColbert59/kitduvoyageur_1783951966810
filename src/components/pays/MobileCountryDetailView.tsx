@@ -11,6 +11,7 @@ import BouteilleALaMer from '@/components/pays/BouteilleALaMer';
 import PaysClubsList from '@/components/pays/PaysClubsList';
 import PaysCarnetsList from '@/components/pays/PaysCarnetsList';
 import SmartImage from '@/components/ui/SmartImage';
+import CountryFlag from '@/components/ui/CountryFlag';
 
 export type MobilePaysSection =
   | 'presentation'
@@ -76,9 +77,10 @@ export default function MobileCountryDetailView({
         </Link>
 
         <div className="flex items-center gap-2">
-          <span className="glass-pill text-[10.5px] font-mono font-bold text-[#17402C] bg-white/90 border border-white/90 shadow-2xs">
-            {flagEmoji} {country.continent}
-          </span>
+          <div className="glass-pill !px-2.5 !py-1 text-[10.5px] font-mono font-bold text-[#17402C] bg-white/90 border border-white/90 shadow-2xs flex items-center gap-1.5">
+            <CountryFlag code={country.code} name={country.nom} size="xs" />
+            <span>{country.continent}</span>
+          </div>
 
           <button
             type="button"

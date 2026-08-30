@@ -1341,7 +1341,6 @@ export function getCompleteCountryDetail(
   ].filter(Boolean) as { cle: string; val: string; isMono?: boolean }[];
 
   const transportList = [
-    { cle: 'Fuseau horaire', val: timezone, isMono: true },
     contentCountry?.transport?.aeroport_principal ? { cle: 'Aéroport principal', val: `${contentCountry.transport.aeroport_principal}${contentCountry.transport.code_iata ? ` (${contentCountry.transport.code_iata})` : ''}` } : null,
     contentCountry?.transport?.compagnies_depuis_france ? { cle: 'Vols depuis France', val: contentCountry.transport.compagnies_depuis_france } : null,
     contentCountry?.transport?.transport_interieur ? { cle: 'Transports intérieurs', val: contentCountry.transport.transport_interieur } : null,
