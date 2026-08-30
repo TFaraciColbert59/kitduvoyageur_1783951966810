@@ -163,9 +163,11 @@ export default function ExplorerMap({
         shadowUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-shadow.png',
       });
 
+      const initialCenter: [number, number] = userLocation ? toValidLatLng(userLocation[0], userLocation[1]) || [45.9237, 6.8694] : [45.9237, 6.8694];
+
       const map = L.map(containerRef.current!, {
-        center: [46.5, 2.5],
-        zoom: 6,
+        center: initialCenter,
+        zoom: 14,
         zoomControl: false,
         attributionControl: false,
         dragging: true,
@@ -290,7 +292,6 @@ export default function ExplorerMap({
     }
 
     setLocationState('locating');
-
     navigator.geolocation.getCurrentPosition(
       (position) => {
         const { longitude, latitude } = position.coords;
@@ -300,7 +301,7 @@ export default function ExplorerMap({
           onLocationUpdate?.(validPos);
           if (mapRef.current && (mapRef.current as any)._loaded) {
             try {
-              mapRef.current.flyTo(validPos, 13, { duration: 1.5 });
+              mapRef.current.flyTo(validPos, 14, { duration: 1.2 });
             } catch (err) {
               console.warn('[ExplorerMap] flyTo position error:', err);
             }
@@ -311,7 +312,7 @@ export default function ExplorerMap({
         setLocationState('denied');
         if (mapRef.current && (mapRef.current as any)._loaded) {
           try {
-            mapRef.current.flyTo([46.6, 2.5], 5, { duration: 1.0 });
+            mapRef.current.flyTo([45.9237, 6.8694], 14, { duration: 1.0 });
           } catch (err) {
             console.warn('[ExplorerMap] flyTo fallback error:', err);
           }
@@ -488,42 +489,18 @@ export default function ExplorerMap({
     if (trail) fitToTrail(trail);
   }, [selectedTrailId, trails, mapReady, fitToTrail]);
 
-  // Auto-fit all trails on load
-  useEffect(() => {
-    if (!mapReady || !trails.length || !mapRef.current) return;
-    if (locationState === 'located' || locationState === 'locating') return;
-    import('leaflet').then((LModule) => {
-      const L = (LModule as any).default || LModule;
-      const coords: [number, number][] = [];
-      trails.forEach((t) => {
-        const pt = toValidLatLng(t?.lat, t?.lng);
-        if (pt) coords.push(pt);
-      });
-      if (!coords.length) return;
-      try {
-        const allBounds = L.latLngBounds(coords);
-        if (allBounds.isValid() && mapRef.current && (mapRef.current as any)._loaded) {
-          mapRef.current.fitBounds(allBounds, { padding: [40, 40], maxZoom: 10 });
-        }
-      } catch (e) {
-        console.warn('[ExplorerMap] fitBounds error:', e);
-      }
-    });
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [mapReady, trails.length, locationState]);
-
   const handleManualLocate = () => {
     if (!navigator.geolocation || !mapRef.current) return;
     setLocationState('locating');
     navigator.geolocation.getCurrentPosition(
       (position) => {
         const { longitude, latitude } = position.coords;
-        const validLoc = toValidLatLng(latitude, longitude);
-        if (validLoc && mapRef.current && (mapRef.current as any)._loaded) {
+        const validPos = toValidLatLng(latitude, longitude);
+        if (validPos && mapRef.current && (mapRef.current as any)._loaded) {
           setLocationState('located');
-          onLocationUpdate?.(validLoc);
+          onLocationUpdate?.(validPos);
           try {
-            mapRef.current.flyTo(validLoc, 15, { duration: 1.0 });
+            mapRef.current.flyTo(validPos, 14, { duration: 1.0 });
           } catch (err) {
             console.warn('[ExplorerMap] flyTo position error:', err);
           }
@@ -542,20 +519,24 @@ export default function ExplorerMap({
         <TrailLayer map={mapInstance} trails={trails} pois={pois} selectedTrailId={selectedTrailId} onTrailClick={onTrailClick} onPoiClick={onPoiClick} />
       )}
 
-      {/* Floating Controls Cluster: En bas à droite avec le Zoom juste au-dessus du changement de carte */}
-      <div className="absolute z-[400] pointer-events-auto right-3.5 sm:right-4 bottom-5 sm:bottom-6 flex flex-col items-center gap-2">
-        {/* Floating Zoom Controls (+ / −) — Juste au dessus */}
+      {/* Floating Controls Cluster: En bas à droite avec le Zoom & GPS juste au-dessus du changement de carte */}
+      <div className="absolute z-[400] pointer-events-auto right-4 bottom-6 flex flex-col items-end gap-2.5">
+        {/* Floating Zoom & GPS Controls (+ / − / GPS) */}
         <div
-          className="flex flex-col gap-1 p-1 rounded-2xl glass border border-white/70 shadow-md backdrop-blur-md bg-white/85"
+          className="flex flex-col gap-1 p-1 rounded-2xl"
           style={{
-            boxShadow: '0 8px 24px -4px rgba(23, 64, 44, 0.12), inset 0 1px 1.5px rgba(255, 255, 255, 0.90)',
+            background: 'linear-gradient(180deg, rgba(255, 255, 255, 0.50) 0%, rgba(255, 255, 255, 0.25) 100%)',
+            backdropFilter: 'blur(20px) saturate(180%)',
+            WebkitBackdropFilter: 'blur(20px) saturate(180%)',
+            border: '1px solid rgba(255, 255, 255, 0.70)',
+            boxShadow: '0 8px 32px -4px rgba(23, 64, 44, 0.12), inset 0 1px 1.5px rgba(255, 255, 255, 0.95)',
           }}
         >
           <button
             onClick={handleZoomIn}
             title="Zoom avant"
             aria-label="Zoom avant"
-            className="h-8 w-8 !rounded-xl flex items-center justify-center text-[#17402C] font-bold text-base hover:bg-white transition-all cursor-pointer active:scale-95"
+            className="h-8 w-8 rounded-xl flex items-center justify-center text-[#17402C] font-bold text-base hover:bg-white/80 transition-all cursor-pointer active:scale-95"
           >
             +
           </button>
@@ -564,64 +545,83 @@ export default function ExplorerMap({
             onClick={handleZoomOut}
             title="Zoom arrière"
             aria-label="Zoom arrière"
-            className="h-8 w-8 !rounded-xl flex items-center justify-center text-[#17402C] font-bold text-base hover:bg-white transition-all cursor-pointer active:scale-95"
+            className="h-8 w-8 rounded-xl flex items-center justify-center text-[#17402C] font-bold text-base hover:bg-white/80 transition-all cursor-pointer active:scale-95"
           >
             −
           </button>
+          <div className="w-4 h-[1px] bg-[#17402C]/10 self-center" />
+          <button
+            onClick={handleRecenter}
+            title="Recentrer sur ma position"
+            aria-label="Recentrer sur ma position"
+            className="h-8 w-8 rounded-xl flex items-center justify-center text-[#17402C] hover:bg-white/80 transition-all cursor-pointer active:scale-95"
+          >
+            <svg width="14" height="14" fill="none" stroke="currentColor" strokeWidth="2.2" viewBox="0 0 24 24">
+              <circle cx="12" cy="12" r="3" />
+              <path d="M12 2v3m0 14v3M2 12h3m14 0h3" />
+            </svg>
+          </button>
         </div>
 
-        {/* Tile switcher (Carte / Relief / Satellite) — En bas à droite */}
+        {/* Tile switcher (Carte / Relief / Satellite) — Liquid Glass */}
         <div
-          className="flex flex-col sm:flex-row items-center gap-1 p-1 rounded-2xl glass border border-white/70 shadow-md backdrop-blur-md bg-white/85"
+          className="flex items-center gap-1 p-1 rounded-2xl"
           style={{
-            boxShadow: '0 8px 24px -4px rgba(23, 64, 44, 0.12), inset 0 1px 1.5px rgba(255, 255, 255, 0.90)',
+            background: 'linear-gradient(180deg, rgba(255, 255, 255, 0.50) 0%, rgba(255, 255, 255, 0.25) 100%)',
+            backdropFilter: 'blur(20px) saturate(180%)',
+            WebkitBackdropFilter: 'blur(20px) saturate(180%)',
+            border: '1px solid rgba(255, 255, 255, 0.70)',
+            boxShadow: '0 8px 32px -4px rgba(23, 64, 44, 0.12), inset 0 1px 1.5px rgba(255, 255, 255, 0.95)',
           }}
         >
           <button
             onClick={() => handleTileChange('osm')}
-            title="Carte standard (OSM)"
+            title="Carte standard"
             aria-label="Carte standard"
-            className={`h-8 w-8 !rounded-xl flex items-center justify-center transition-all cursor-pointer active:scale-95 ${
+            className={`h-8 px-2.5 rounded-xl flex items-center gap-1.5 text-xs font-bold transition-all cursor-pointer active:scale-95 ${
               tileMode === 'osm'
                 ? 'bg-[#17402C] text-white shadow-xs'
-                : 'text-[#17402C] hover:bg-white'
+                : 'text-[#17402C] hover:bg-white/60'
             }`}
           >
-            <svg width="13" height="13" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
+            <svg width="13" height="13" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
               <path d="M3 6l6-3 6 3 6-3v12l-6 3-6-3-6 3V6z"></path>
               <path d="M9 3v12"></path>
               <path d="M15 6v12"></path>
             </svg>
+            <span className="hidden sm:inline">Plan</span>
           </button>
           <button
             onClick={() => handleTileChange('topo')}
             title="Relief / Topo"
             aria-label="Relief / Topo"
-            className={`h-8 w-8 !rounded-xl flex items-center justify-center transition-all cursor-pointer active:scale-95 ${
+            className={`h-8 px-2.5 rounded-xl flex items-center gap-1.5 text-xs font-bold transition-all cursor-pointer active:scale-95 ${
               tileMode === 'topo'
                 ? 'bg-[#17402C] text-white shadow-xs'
-                : 'text-[#17402C] hover:bg-white'
+                : 'text-[#17402C] hover:bg-white/60'
             }`}
           >
-            <svg width="13" height="13" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
+            <svg width="13" height="13" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
               <path d="M8 3l4 8 5-5 5 15H2L8 3z"></path>
             </svg>
+            <span className="hidden sm:inline">Relief</span>
           </button>
           <button
             onClick={() => handleTileChange('satellite')}
             title="Vue Satellite"
             aria-label="Vue Satellite"
-            className={`h-8 w-8 !rounded-xl flex items-center justify-center transition-all cursor-pointer active:scale-95 ${
+            className={`h-8 px-2.5 rounded-xl flex items-center gap-1.5 text-xs font-bold transition-all cursor-pointer active:scale-95 ${
               tileMode === 'satellite'
                 ? 'bg-[#17402C] text-white shadow-xs'
-                : 'text-[#17402C] hover:bg-white'
+                : 'text-[#17402C] hover:bg-white/60'
             }`}
           >
-            <svg width="13" height="13" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
+            <svg width="13" height="13" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
               <circle cx="12" cy="12" r="10"></circle>
               <path d="M12 2a14.5 14.5 0 0 0 0 20 14.5 14.5 0 0 0 0-20"></path>
               <path d="M2 12h20"></path>
             </svg>
+            <span className="hidden sm:inline">Satellite</span>
           </button>
         </div>
       </div>

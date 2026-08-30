@@ -95,16 +95,19 @@ export default function ExplorerClient({ initialTrails }: ExplorerClientProps) {
   const [sheetExpanded, setSheetExpanded] = useState(false);
   const listScrollRef = useRef<HTMLDivElement>(null);
 
-  // Initial 10km radius default bbox (Chamonix: 45.9237, 6.8694)
-  const [viewportBbox, setViewportBbox] = useState<{ minLat: number; maxLat: number; minLng: number; maxLng: number; zoom: number } | null>({
-    minLat: 45.9237 - 0.09,
-    maxLat: 45.9237 + 0.09,
-    minLng: 6.8694 - 0.13,
-    maxLng: 6.8694 + 0.13,
-    zoom: 12,
+  // Initial 2km radius default bbox (Chamonix: 45.9237, 6.8694) at zoom 14
+  const [queriedBbox, setQueriedBbox] = useState<{ minLat: number; maxLat: number; minLng: number; maxLng: number; zoom: number }>({
+    minLat: 45.9237 - 0.015,
+    maxLat: 45.9237 + 0.015,
+    minLng: 6.8694 - 0.022,
+    maxLng: 6.8694 + 0.022,
+    zoom: 14,
   });
 
-  // Try GPS Geolocation on mount to center around user position (10km)
+  const [liveViewportBbox, setLiveViewportBbox] = useState<{ minLat: number; maxLat: number; minLng: number; maxLng: number; zoom: number } | null>(null);
+  const [showSearchHereButton, setShowSearchHereButton] = useState(false);
+
+  // Try GPS Geolocation on mount to center around user position (2km radius)
   useEffect(() => {
     if (typeof window === 'undefined') return;
     if ('geolocation' in navigator) {
@@ -113,39 +116,54 @@ export default function ExplorerClient({ initialTrails }: ExplorerClientProps) {
           const lat = pos.coords.latitude;
           const lng = pos.coords.longitude;
           setUserLocation([lat, lng]);
-          const deltaLat = 0.09;
-          const deltaLng = 0.13 / Math.cos((lat * Math.PI) / 180);
-          setViewportBbox({
+          const deltaLat = 0.015;
+          const deltaLng = 0.022 / Math.cos((lat * Math.PI) / 180);
+          const initialBbox = {
             minLat: lat - deltaLat,
             maxLat: lat + deltaLat,
             minLng: lng - deltaLng,
             maxLng: lng + deltaLng,
-            zoom: 12,
-          });
+            zoom: 14,
+          };
+          setQueriedBbox(initialBbox);
+          setShowSearchHereButton(false);
         },
         () => {
-          // Keep default Chamonix
+          // Keep default Chamonix 2km
         },
-        { timeout: 3000, maximumAge: 60000, enableHighAccuracy: true }
+        { timeout: 4000, maximumAge: 60000, enableHighAccuracy: true }
       );
     }
   }, []);
 
   const handleViewportChange = useCallback((bbox: { minLat: number; maxLat: number; minLng: number; maxLng: number; zoom: number }) => {
-    setViewportBbox(bbox);
-  }, []);
+    setLiveViewportBbox(bbox);
+    const latDiff = Math.abs((bbox.minLat + bbox.maxLat) / 2 - (queriedBbox.minLat + queriedBbox.maxLat) / 2);
+    const lngDiff = Math.abs((bbox.minLng + bbox.maxLng) / 2 - (queriedBbox.minLng + queriedBbox.maxLng) / 2);
+    const zoomDiff = Math.abs(bbox.zoom - queriedBbox.zoom);
+    if (latDiff > 0.008 || lngDiff > 0.012 || zoomDiff >= 1) {
+      setShowSearchHereButton(true);
+    }
+  }, [queriedBbox]);
+
+  const handleSearchHere = useCallback(() => {
+    if (liveViewportBbox) {
+      setQueriedBbox(liveViewportBbox);
+      setShowSearchHereButton(false);
+    }
+  }, [liveViewportBbox]);
 
   // Data - Trails (with Viewport LOD)
-  const { data: trailsData } = useQuery<MapTrail[]>({
-    queryKey: ['hikes', viewportBbox?.minLat?.toFixed(3), viewportBbox?.maxLat?.toFixed(3), viewportBbox?.minLng?.toFixed(3), viewportBbox?.maxLng?.toFixed(3), viewportBbox?.zoom],
+  const { data: trailsData, isFetching: trailsFetching } = useQuery<MapTrail[]>({
+    queryKey: ['hikes', queriedBbox?.minLat?.toFixed(3), queriedBbox?.maxLat?.toFixed(3), queriedBbox?.minLng?.toFixed(3), queriedBbox?.maxLng?.toFixed(3), queriedBbox?.zoom],
     queryFn: async () => {
       const params = new URLSearchParams();
-      if (viewportBbox) {
-        params.set('min_lat', viewportBbox.minLat.toFixed(4));
-        params.set('max_lat', viewportBbox.maxLat.toFixed(4));
-        params.set('min_lng', viewportBbox.minLng.toFixed(4));
-        params.set('max_lng', viewportBbox.maxLng.toFixed(4));
-        const limit = viewportBbox.zoom <= 7 ? 35 : viewportBbox.zoom <= 11 ? 75 : 120;
+      if (queriedBbox) {
+        params.set('min_lat', queriedBbox.minLat.toFixed(4));
+        params.set('max_lat', queriedBbox.maxLat.toFixed(4));
+        params.set('min_lng', queriedBbox.minLng.toFixed(4));
+        params.set('max_lng', queriedBbox.maxLng.toFixed(4));
+        const limit = queriedBbox.zoom <= 7 ? 35 : queriedBbox.zoom <= 11 ? 75 : 120;
         params.set('limit', limit.toString());
       } else {
         params.set('limit', '60');
@@ -160,16 +178,16 @@ export default function ExplorerClient({ initialTrails }: ExplorerClientProps) {
 
   // Data - Unified POIs (with Viewport LOD)
   const { data: poisData } = useQuery<UnifiedPOI[]>({
-    queryKey: ['pois', viewportBbox?.minLat?.toFixed(3), viewportBbox?.maxLat?.toFixed(3), viewportBbox?.minLng?.toFixed(3), viewportBbox?.maxLng?.toFixed(3), viewportBbox?.zoom],
+    queryKey: ['pois', queriedBbox?.minLat?.toFixed(3), queriedBbox?.maxLat?.toFixed(3), queriedBbox?.minLng?.toFixed(3), queriedBbox?.maxLng?.toFixed(3), queriedBbox?.zoom],
     queryFn: async () => {
       const params = new URLSearchParams();
-      if (viewportBbox) {
-        params.set('min_lat', viewportBbox.minLat.toFixed(4));
-        params.set('max_lat', viewportBbox.maxLat.toFixed(4));
-        params.set('min_lng', viewportBbox.minLng.toFixed(4));
-        params.set('max_lng', viewportBbox.maxLng.toFixed(4));
-        params.set('zoom', viewportBbox.zoom.toString());
-        const limit = viewportBbox.zoom <= 7 ? 40 : viewportBbox.zoom <= 11 ? 80 : 150;
+      if (queriedBbox) {
+        params.set('min_lat', queriedBbox.minLat.toFixed(4));
+        params.set('max_lat', queriedBbox.maxLat.toFixed(4));
+        params.set('min_lng', queriedBbox.minLng.toFixed(4));
+        params.set('max_lng', queriedBbox.maxLng.toFixed(4));
+        params.set('zoom', queriedBbox.zoom.toString());
+        const limit = queriedBbox.zoom <= 7 ? 40 : queriedBbox.zoom <= 11 ? 80 : 150;
         params.set('limit', limit.toString());
       } else {
         params.set('limit', '50');
@@ -489,11 +507,42 @@ export default function ExplorerClient({ initialTrails }: ExplorerClientProps) {
         />
       </div>
 
-      {/* ── 3. FILTRES SUR LE CÔTÉ DROIT : CENTRÉS VERTICALEMENT & COLLÉS AU REBORD DROIT ── */}
+      {/* ── 2B. BOUTON FLOTTANT DYNAMIQUE : « RECHERCHER DANS CETTE ZONE » ── */}
+      <AnimatePresence>
+        {showSearchHereButton && (
+          <motion.div
+            initial={{ opacity: 0, y: -16, scale: 0.95 }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            exit={{ opacity: 0, y: -16, scale: 0.95 }}
+            transition={{ type: 'spring', stiffness: 450, damping: 30 }}
+            className="fixed top-[72px] sm:top-[76px] left-1/2 -translate-x-1/2 z-[850] pointer-events-auto"
+          >
+            <button
+              type="button"
+              onClick={handleSearchHere}
+              className="flex items-center gap-2 px-4 py-2 rounded-full font-sans font-bold text-xs text-[#17402C] hover:text-[#0B1F17] transition-all cursor-pointer shadow-lg active:scale-95 group"
+              style={{
+                background: 'linear-gradient(180deg, rgba(255, 255, 255, 0.95) 0%, rgba(255, 255, 255, 0.85) 100%)',
+                backdropFilter: 'blur(20px) saturate(180%)',
+                WebkitBackdropFilter: 'blur(20px) saturate(180%)',
+                border: '1px solid rgba(255, 255, 255, 0.85)',
+                boxShadow: '0 8px 32px -4px rgba(23, 64, 44, 0.18), inset 0 1px 1.5px rgba(255, 255, 255, 0.95)',
+              }}
+            >
+              <span className={`text-sm transition-transform duration-500 ${trailsFetching ? 'animate-spin' : 'group-hover:rotate-180'}`}>
+                🔄
+              </span>
+              <span>Rechercher dans cette zone</span>
+            </button>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* ── 3. FILTRES SUR LE CÔTÉ DROIT : CENTRÉS VERTICALEMENT & COLLÉS AU REBORD DROIT (ICÔNE SEULE) ── */}
       <div className="fixed right-0 top-1/2 -translate-y-1/2 z-[900] pointer-events-none flex items-center justify-end">
         <AnimatePresence mode="wait">
           {!filtersOpen ? (
-            /* Onglet rétractable collé au bord droit */
+            /* Onglet rétractable collé au bord droit (ICÔNE SEULE) */
             <motion.button
               key="filter-dock-closed"
               initial={{ opacity: 0, x: 20 }}
@@ -501,21 +550,22 @@ export default function ExplorerClient({ initialTrails }: ExplorerClientProps) {
               exit={{ opacity: 0, x: 20 }}
               type="button"
               onClick={() => setFiltersOpen(true)}
-              className="pointer-events-auto flex flex-col items-center gap-2 py-3.5 px-2.5 rounded-l-2xl glass bg-white/90 hover:bg-white text-[#17402C] border-y border-l border-white/80 shadow-lg backdrop-blur-md cursor-pointer transition-all active:scale-95 group"
+              className="pointer-events-auto p-2.5 rounded-l-2xl glass cursor-pointer transition-all active:scale-95 group relative flex items-center justify-center"
               style={{
-                boxShadow: '-4px 8px 24px -4px rgba(23, 64, 44, 0.12), inset 0 1px 1.5px rgba(255, 255, 255, 0.95)',
+                background: 'linear-gradient(180deg, rgba(255, 255, 255, 0.50) 0%, rgba(255, 255, 255, 0.25) 100%)',
+                backdropFilter: 'blur(20px) saturate(180%)',
+                WebkitBackdropFilter: 'blur(20px) saturate(180%)',
+                border: '1px solid rgba(255, 255, 255, 0.70)',
+                boxShadow: '-4px 8px 24px -4px rgba(23, 64, 44, 0.14), inset 0 1px 1.5px rgba(255, 255, 255, 0.95)',
               }}
-              title="Ouvrir les filtres"
-              aria-label="Filtres de recherche"
+              title="Filtres d'exploration"
+              aria-label="Filtres d'exploration"
             >
-              <div className="w-7 h-7 rounded-xl bg-[#5B7F55]/15 text-[#5B7F55] group-hover:bg-[#17402C] group-hover:text-white flex items-center justify-center transition-colors">
-                <SlidersHorizontal size={14} />
+              <div className="w-8 h-8 rounded-xl bg-[#5B7F55]/15 text-[#5B7F55] group-hover:bg-[#17402C] group-hover:text-white flex items-center justify-center transition-colors">
+                <SlidersHorizontal size={16} />
               </div>
-              <span className="[writing-mode:vertical-lr] rotate-180 uppercase tracking-widest text-[9.5px] font-mono font-bold text-[#17402C]">
-                Filtres
-              </span>
               {activeFilterCount > 0 && (
-                <span className="w-4 h-4 rounded-full bg-[#17402C] text-white text-[9px] font-mono font-bold flex items-center justify-center shadow-xs">
+                <span className="absolute top-1 left-1 w-4 h-4 rounded-full bg-[#17402C] text-white text-[9px] font-mono font-bold flex items-center justify-center shadow-xs">
                   {activeFilterCount}
                 </span>
               )}
