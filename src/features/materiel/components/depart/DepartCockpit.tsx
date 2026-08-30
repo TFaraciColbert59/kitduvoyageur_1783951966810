@@ -362,9 +362,9 @@ export function DepartCockpit({
       </div>
 
       {/* ════ 2. VERSION DESKTOP COCKPIT 3 COLONNES (hidden md:flex) ════ */}
-      <div className="hidden md:flex h-full overflow-hidden max-w-[1920px] w-full mx-auto px-3 lg:px-6 py-2 gap-5 items-start">
+      <div className="hidden md:flex h-full overflow-hidden max-w-[1680px] w-full mx-auto px-4 sm:px-6 lg:px-8 py-2 gap-6 items-start">
         {/* Colonne 1 : Sidebar Gauche (Navigation & Switcher) */}
-        <div className="w-[240px] xl:w-[250px] shrink-0 h-full overflow-hidden">
+        <div className="w-[280px] shrink-0 h-full overflow-hidden">
           <DepartLeftSidebar
             depart={depart}
             activeSection={activeSection}

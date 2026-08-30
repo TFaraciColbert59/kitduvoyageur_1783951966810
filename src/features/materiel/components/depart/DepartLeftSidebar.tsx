@@ -7,13 +7,16 @@ import {
   Scale,
   MapPin,
   LayoutGrid,
-  ChevronRight,
   Zap,
   Wifi,
   WifiOff,
   Boxes,
   Layers,
   Printer,
+  ChevronRight,
+  Pencil,
+  Briefcase,
+  Share2,
 } from 'lucide-react';
 import { KitSwitcher } from './KitSwitcher';
 import { Badge } from '@/components/ui/Badge';
@@ -56,12 +59,12 @@ export function DepartLeftSidebar({
     id: DepartSectionId;
     label: string;
     icon: React.ComponentType<{ size?: number; className?: string }>;
-    badge?: string | number;
-    badgeColor?: string;
+    count?: string | number;
+    badge?: string;
   }[] = [
     {
       id: 'all',
-      label: 'Vue complète',
+      label: "Vue d'ensemble",
       icon: LayoutGrid,
     },
     {
@@ -69,48 +72,40 @@ export function DepartLeftSidebar({
       label: '1. Statut & Fiche',
       icon: Compass,
       badge: `${depart.readinessScore.percentage}%`,
-      badgeColor:
-        depart.readinessScore.status === 'ok'
-          ? 'bg-[#17402C] text-white'
-          : 'bg-[#8C6418] text-white',
     },
     {
       id: 'alerts',
       label: '2. Alertes & Fiabilité',
       icon: AlertTriangle,
-      badge: alertsCount > 0 ? alertsCount : undefined,
-      badgeColor: 'bg-[#8C6418] text-white',
+      count: alertsCount > 0 ? alertsCount : undefined,
     },
     {
       id: 'weight',
       label: '3. Analyse du Poids',
       icon: Scale,
       badge: totalWeightStr !== '--' ? totalWeightStr : undefined,
-      badgeColor: 'bg-[#17402C]/15 text-[#17402C]',
     },
     {
       id: 'terrain',
       label: '4. Terrain & Météo',
       icon: MapPin,
       badge: depart.trail?.distance_km ? `${Math.round(depart.trail.distance_km)}km` : undefined,
-      badgeColor: 'bg-[#17402C]/15 text-[#17402C]',
     },
     {
       id: 'equipment_hub',
       label: '5. Parc Matériel & Sac',
       icon: Boxes,
-      badgeColor: 'bg-[#17402C]/15 text-[#17402C]',
     },
   ];
 
   return (
-    <aside className="h-full flex flex-col justify-between glass rounded-[1.5rem] p-3 text-[#17402C] font-sans overflow-hidden border border-white/80 shadow-sm backdrop-blur-md">
-      {/* Haut : Identité du trek & Navigation */}
-      <div className="space-y-2 overflow-y-auto no-scrollbar pr-0.5">
-        {/* En-tête miniature du départ */}
-        <div className="p-2.5 rounded-2xl glass-sub-card space-y-1.5 border border-white/60 shadow-2xs">
+    <aside className="h-full flex flex-col justify-between glass rounded-[1.5rem] p-4 text-[#17402C] font-sans overflow-hidden border border-white/40 shadow-sm">
+      {/* Top Departure Card & Navigation */}
+      <div className="space-y-3 overflow-y-auto no-scrollbar pr-0.5">
+        {/* Top Departure Card (Identité du trek) */}
+        <div className="p-3 rounded-2xl glass-sub-card space-y-2 relative overflow-hidden border border-white/50">
           <div className="flex items-start justify-between gap-1.5">
-            <span className="text-[9px] font-semibold uppercase tracking-wider text-[#5A7064]">
+            <span className="text-[10px] font-mono font-bold uppercase tracking-wider text-[#5A7064]">
               Départ Actif
             </span>
             <Badge tone={depart.readinessScore.status === 'ok' ? 'sage' : 'warn'}>
@@ -120,14 +115,14 @@ export function DepartLeftSidebar({
             </Badge>
           </div>
 
-          <h3 className="font-display font-bold text-xs text-[#17402C] leading-tight line-clamp-2">
+          <h4 className="font-display font-bold text-sm text-[#17402C] line-clamp-2 leading-tight">
             {cleanDestination}
-          </h3>
+          </h4>
 
           {/* Statut réseau & Ultra-Save toggle */}
-          <div className="pt-1 border-t border-white/30 flex items-center justify-between gap-1.5">
-            <span className={cn('flex items-center gap-1 text-[8.5px] font-mono font-bold px-1.5 py-0.2 rounded-full', isOnline ? 'bg-emerald-100/80 text-emerald-900' : 'bg-amber-100 text-amber-900')}>
-              {isOnline ? <Wifi size={8} /> : <WifiOff size={8} />}
+          <div className="pt-1.5 border-t border-white/30 flex items-center justify-between gap-1.5">
+            <span className={cn('flex items-center gap-1 text-[9px] font-mono font-bold px-2 py-0.5 rounded-full', isOnline ? 'bg-emerald-100/80 text-emerald-900' : 'bg-amber-100 text-amber-900')}>
+              {isOnline ? <Wifi size={9} /> : <WifiOff size={9} />}
               {isOnline ? 'En ligne' : 'Hors-ligne'}
             </span>
 
@@ -136,7 +131,7 @@ export function DepartLeftSidebar({
                 type="button"
                 onClick={onToggleUltraSave}
                 className={cn(
-                  'px-1.5 py-0.2 rounded-lg text-[9px] font-bold flex items-center gap-1 transition-all cursor-pointer',
+                  'px-2 py-0.5 rounded-lg text-[9.5px] font-bold flex items-center gap-1 transition-all cursor-pointer',
                   isUltraSave
                     ? 'bg-[#2D6B4A] text-white shadow-xs'
                     : 'bg-white/40 text-[#17402C] hover:bg-white/60'
@@ -144,10 +139,10 @@ export function DepartLeftSidebar({
                 title="Mode Éco Batterie Ultra-Save"
                 aria-pressed={isUltraSave}
               >
-                <Zap size={8} />
+                <Zap size={9} />
                 <span>{isUltraSave ? 'ECO' : 'ÉCO'}</span>
                 {batteryLevel !== null && (
-                  <span className="font-mono text-[8px] opacity-80">
+                  <span className="font-mono text-[8.5px] opacity-80">
                     {Math.round(batteryLevel * 100)}%
                   </span>
                 )}
@@ -163,48 +158,73 @@ export function DepartLeftSidebar({
           )}
         </div>
 
-        {/* Navigation verticale des 5 sections principales */}
-        <nav className="space-y-0.5" aria-label="Sections du cockpit">
-          {sections.map((sec) => {
-            const IconComp = sec.icon;
-            const isSelected = activeSection === sec.id;
+        {/* Quick actions buttons (Style Compte) */}
+        <div className="grid grid-cols-2 gap-2">
+          <Link
+            href="/materiel/kits"
+            className="glass-capsule-btn text-[11px] font-bold !py-1.5 !px-2.5 flex items-center justify-center gap-1.5 shadow-none cursor-pointer"
+          >
+            <Layers size={13} />
+            <span>Mes Kits</span>
+          </Link>
+
+          <button
+            type="button"
+            onClick={() => window.print()}
+            className="glass-capsule-btn primary text-[11px] font-bold !py-1.5 !px-2.5 flex items-center justify-center gap-1.5 shadow-none cursor-pointer"
+          >
+            <Printer size={13} />
+            <span>Imprimer</span>
+          </button>
+        </div>
+
+        {/* Navigation Tabs (Style Compte 100% exact) */}
+        <nav className="space-y-1 pt-1.5" aria-label="Navigation du départ">
+          <p className="text-[10px] font-mono font-bold uppercase tracking-widest text-[#5A7064] px-2 mb-1.5">
+            Navigation
+          </p>
+
+          {sections.map((t) => {
+            const IconComp = t.icon;
+            const isActive = activeSection === t.id;
 
             return (
               <button
-                key={sec.id}
+                key={t.id}
                 type="button"
-                onClick={() => onSectionChange(sec.id)}
-                className={cn(
-                  'w-full flex items-center justify-between gap-2 px-2.5 py-1.5 rounded-xl text-[11.5px] font-semibold transition-all cursor-pointer text-left',
-                  isSelected
-                    ? 'bg-[#17402C] text-white shadow-xs'
-                    : 'text-[#17402C]/80 hover:text-[#17402C] hover:bg-white/40'
-                )}
-                aria-current={isSelected ? 'page' : undefined}
+                onClick={() => onSectionChange(t.id)}
+                className={`w-full px-3 py-2.5 rounded-xl font-bold text-xs transition-all flex items-center justify-between group cursor-pointer border ${
+                  isActive
+                    ? 'bg-[#17402C] text-white border-[#17402C] shadow-sm'
+                    : 'bg-white/80 hover:bg-white text-[#17402C] border-white/80 shadow-2xs'
+                }`}
               >
-                <div className="flex items-center gap-2 min-w-0">
-                  <IconComp size={13} className={isSelected ? 'text-white' : 'text-[#5A7064]'} />
-                  <span className="truncate">{sec.label}</span>
+                <div className="flex items-center gap-2.5 min-w-0">
+                  <span className={`shrink-0 transition-colors ${isActive ? 'text-[#A6C1A0]' : 'text-[#5A7064] group-hover:text-[#17402C]'}`}>
+                    <IconComp size={16} />
+                  </span>
+                  <span className="truncate text-left">{t.label}</span>
                 </div>
 
-                <div className="flex items-center gap-1 shrink-0">
-                  {sec.badge !== undefined && (
+                <div className="flex items-center gap-1.5 shrink-0 ml-2">
+                  {t.count !== undefined && (
                     <span
-                      className={cn(
-                        'text-[9px] font-mono px-1.5 py-0.2 rounded-full font-bold',
-                        sec.badgeColor
-                          ? isSelected
-                            ? 'bg-white/20 text-white'
-                            : sec.badgeColor
-                          : isSelected
-                          ? 'bg-white/20 text-white'
-                          : 'bg-[#17402C]/10 text-[#17402C]'
-                      )}
+                      className={`text-[10px] font-mono font-bold px-2 py-0.5 rounded-full ${
+                        isActive ? 'bg-white/20 text-white' : 'glass-pill'
+                      }`}
                     >
-                      {sec.badge}
+                      {t.count}
                     </span>
                   )}
-                  {isSelected && <ChevronRight size={11} className="text-white/70" />}
+                  {t.badge && (
+                    <span
+                      className={`text-[10px] font-mono font-bold px-2 py-0.5 rounded-full ${
+                        isActive ? 'bg-[#5B7F55] text-white' : 'glass-pill'
+                      }`}
+                    >
+                      {t.badge}
+                    </span>
+                  )}
                 </div>
               </button>
             );
@@ -212,25 +232,32 @@ export function DepartLeftSidebar({
         </nav>
       </div>
 
-      {/* Bas : Actions rapides */}
-      <div className="pt-2 border-t border-white/40 grid grid-cols-2 gap-1.5 shrink-0">
-        <Link
-          href="/materiel/kits"
-          className="glass-capsule-btn text-[10px] !py-1.5 !px-2 flex items-center justify-center gap-1 font-semibold truncate cursor-pointer"
-          title="Gérer tous mes kits"
-        >
-          <Layers size={11} />
-          <span>Mes Kits</span>
-        </Link>
+      {/* Bottom footer (Style Compte 100% exact) */}
+      <div className="pt-2 border-t border-[#17402C]/5 space-y-2 shrink-0">
         <button
           type="button"
-          onClick={() => window.print()}
-          className="glass-capsule-btn text-[10px] !py-1.5 !px-2 flex items-center justify-center gap-1 font-semibold truncate cursor-pointer"
-          title="Imprimer la checklist de départ"
+          onClick={() => {
+            if (navigator.share) {
+              navigator.share({
+                title: cleanDestination,
+                text: `Fiche de départ : ${cleanDestination}`,
+                url: window.location.href,
+              }).catch(() => {});
+            } else {
+              navigator.clipboard?.writeText(window.location.href);
+            }
+          }}
+          className="w-full glass-sub-card text-xs font-semibold text-[#365233] p-2.5 rounded-xl flex items-center justify-center gap-2 hover:bg-white/80 transition-colors cursor-pointer border border-white/40"
         >
-          <Printer size={11} />
-          <span>Imprimer</span>
+          <Share2 size={14} />
+          <span>Partager ce départ</span>
         </button>
+
+        <div className="text-center">
+          <span className="text-[9px] font-mono text-[#5A7064] tracking-wider uppercase">
+            Le Kit du Voyageur · Cockpit v2.0
+          </span>
+        </div>
       </div>
     </aside>
   );
