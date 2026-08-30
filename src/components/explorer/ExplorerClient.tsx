@@ -391,11 +391,13 @@ export default function ExplorerClient({ initialTrails }: ExplorerClientProps) {
             className="flex items-center group shrink-0"
             aria-label="Accueil LKDV"
           >
-            <div className="w-8 h-8 rounded-full overflow-hidden border border-white/80 shadow-xs transition-transform group-hover:scale-105 bg-[#17402C]/10">
+            <div className="w-8 h-8 min-w-[32px] min-h-[32px] max-w-[32px] max-h-[32px] rounded-full overflow-hidden border border-white/80 shadow-xs transition-transform group-hover:scale-105 bg-[#17402C]/10 shrink-0">
               <img
                 src="/assets/images/app_logo.png"
                 alt="LKDV"
-                className="w-full h-full object-cover"
+                width={32}
+                height={32}
+                className="w-full h-full object-cover rounded-full"
               />
             </div>
           </Link>
@@ -463,11 +465,13 @@ export default function ExplorerClient({ initialTrails }: ExplorerClientProps) {
           }}
         >
           <Link href="/" className="flex items-center shrink-0" aria-label="Accueil LKDV">
-            <div className="w-7.5 h-7.5 rounded-full overflow-hidden border border-white/80 shadow-2xs bg-[#17402C]/10 flex items-center justify-center">
+            <div className="w-8 h-8 min-w-[32px] min-h-[32px] max-w-[32px] max-h-[32px] rounded-full overflow-hidden border border-white/80 shadow-2xs bg-[#17402C]/10 flex items-center justify-center shrink-0">
               <img
                 src="/assets/images/app_logo.png"
                 alt="LKDV"
-                className="w-full h-full object-cover"
+                width={32}
+                height={32}
+                className="w-full h-full object-cover rounded-full"
               />
             </div>
           </Link>

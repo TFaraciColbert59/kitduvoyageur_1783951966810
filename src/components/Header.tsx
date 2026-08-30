@@ -100,11 +100,13 @@ export default function Header() {
               className="flex items-center group focus-visible:outline-none opacity-100 hover:opacity-90 active:scale-95 transition-all cursor-pointer touch-manipulation py-0.5 shrink-0"
               aria-label="Accueil LKDV"
             >
-              <div className="w-8 h-8 rounded-full overflow-hidden border border-white/80 shadow-xs flex items-center justify-center bg-[#17402C]/10 group-hover:scale-105 transition-transform">
+              <div className="w-8 h-8 min-w-[32px] min-h-[32px] max-w-[32px] max-h-[32px] rounded-full overflow-hidden border border-white/80 shadow-xs flex items-center justify-center bg-[#17402C]/10 group-hover:scale-105 transition-transform shrink-0">
                 <img
                   src="/assets/images/app_logo.png"
                   alt="LKDV"
-                  className="w-full h-full object-cover"
+                  width={32}
+                  height={32}
+                  className="w-full h-full object-cover rounded-full"
                 />
               </div>
             </Link>
