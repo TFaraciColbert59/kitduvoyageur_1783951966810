@@ -503,9 +503,9 @@ export default function ExplorerClient({ initialTrails }: ExplorerClientProps) {
               exit={{ opacity: 0, x: 20 }}
               type="button"
               onClick={() => setFiltersOpen(true)}
-              className="pointer-events-auto !w-11 !h-12 !rounded-r-none !rounded-l-2xl cursor-pointer transition-all active:scale-95 group relative flex items-center justify-center shadow-xl border-y border-l border-white/90"
+              className="pointer-events-auto glass !rounded-r-none !rounded-l-2xl !w-12 !h-12 cursor-pointer transition-all active:scale-95 group relative flex items-center justify-center shadow-xl border-y border-l border-white/90"
               style={{
-                background: 'linear-gradient(180deg, rgba(255, 255, 255, 0.95) 0%, rgba(240, 237, 228, 0.88) 100%)',
+                background: 'linear-gradient(180deg, rgba(240, 237, 228, 0.96) 0%, rgba(225, 221, 208, 0.88) 100%)',
                 backdropFilter: 'blur(16px) saturate(180%)',
                 WebkitBackdropFilter: 'blur(16px) saturate(180%)',
                 boxShadow: '-4px 8px 24px -2px rgba(23, 64, 44, 0.15), inset 0 1.5px 2px rgba(255, 255, 255, 0.95)',
