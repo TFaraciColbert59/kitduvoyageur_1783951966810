@@ -1,5 +1,5 @@
 import { Country, ALL_COUNTRIES } from './countries';
-import type { CountryGeo } from './supabase/types';
+import type { CountryGeo, CountryContent } from './supabase/types';
 
 export interface CountryDetail {
   code: string;
@@ -33,6 +33,7 @@ export interface CountryDetail {
   taux_change: string;
   sources?: string;
   sources_list?: { url: string; label: string }[];
+  country_content?: CountryContent | null;
   presentation_titre: string;
   presentation_paragraphes: string[];
   citation_texte: string;
@@ -84,7 +85,9 @@ export interface CountryDetail {
     formalites: { cle: string; val: string; isMono?: boolean }[];
     transport: { cle: string; val: string; isMono?: boolean }[];
     budget: { cle: string; val: string; isMono?: boolean }[];
-    sante: { cle: string; val: string; isMono?: boolean }[];
+    sante?: { cle: string; val: string; isMono?: boolean }[];
+    electricite_reseau?: { cle: string; val: string; isMono?: boolean }[];
+    climat?: { cle: string; val: string; isMono?: boolean }[];
   };
   meteo?: {
     ville: string;
@@ -1187,11 +1190,12 @@ function parseSources(sourcesStr?: string | null): { url: string; label: string 
     });
 }
 
-// ─── GÉNÉRATEUR COMPLET BASÉ SUR LES DONNÉES RÉELLES COUNTRIES_GEO ───────────
+// ─── GÉNÉRATEUR COMPLET BASÉ SUR LES DONNÉES RÉELLES COUNTRIES_GEO & COUNTRIES_CONTENT ───────────
 
 export function getCompleteCountryDetail(
   countryCode: string,
-  geoCountry?: CountryGeo | null
+  geoCountry?: CountryGeo | null,
+  contentCountry?: CountryContent | null
 ): CountryDetail {
   const codeUpper = (geoCountry?.iso_a2 || countryCode).toUpperCase();
   const base = ALL_COUNTRIES.find((c) => c.code.toUpperCase() === codeUpper) || {
@@ -1222,17 +1226,169 @@ export function getCompleteCountryDetail(
   const sourcesRaw = geoCountry?.sources || custom.sources || undefined;
   const sourcesList = parseSources(sourcesRaw);
 
+  // Plats gastronomiques réels depuis la feuille Guide Culturel
+  const rawPlats = contentCountry?.editorial?.plats_emblematiques;
+  const dishes = rawPlats ? rawPlats.split(/[,;]/).map(d => d.trim()).filter(Boolean) : [];
+  const gastronomieList = custom.gastronomie?.length
+    ? custom.gastronomie
+    : dishes.slice(0, 6).map((plat, idx) => ({
+        numero: idx + 1,
+        categorie: 'Spécialité culinaire',
+        nom: plat,
+        nom_em: 'Terroir & Recette',
+        description: `Plat traditionnel emblématique incontournable à déguster lors de votre séjour en ${name}.`,
+        image_url: 'https://images.unsplash.com/photo-1504674900247-0877df9cc836?q=80&w=600&auto=format&fit=crop',
+      }));
+
+  // Activités & Outdoor réels depuis la feuille Parcs Nationaux Et Treks
+  const activitesList: CountryDetail['activites'] = custom.activites?.length
+    ? custom.activites
+    : ([
+        contentCountry?.outdoor?.treks_phares
+          ? {
+              categorie: 'rand' as const,
+              difficulte: 'Modérée' as const,
+              difficulte_type: 'med' as const,
+              saison: contentCountry.climat?.meilleure_periode_trek || 'Saison optimale',
+              image_url: 'https://images.unsplash.com/photo-1469854523086-cc02fe5d8800?q=80&w=800&auto=format&fit=crop',
+              tag: 'Treks & Sentiers',
+              titre: 'Itinéraires & Treks Phares',
+              titre_em: name,
+              description: contentCountry.outdoor.treks_phares,
+              duree: 'Variable',
+              prix: 'Accès libre',
+            }
+          : null,
+        contentCountry?.outdoor?.parcs_nationaux
+          ? {
+              categorie: 'nature' as const,
+              difficulte: 'Facile' as const,
+              difficulte_type: 'easy' as const,
+              saison: 'Toute l’année',
+              image_url: 'https://images.unsplash.com/photo-1448375240586-882707db888b?q=80&w=800&auto=format&fit=crop',
+              tag: 'Parcs Nationaux',
+              titre: 'Parcs & Réserves Naturelles',
+              titre_em: 'Espaces protégés',
+              description: contentCountry.outdoor.parcs_nationaux,
+              duree: '1 à plusieurs jours',
+              prix: 'Parc national',
+            }
+          : null,
+        contentCountry?.outdoor?.activites_phares
+          ? {
+              categorie: 'cult' as const,
+              difficulte: 'Facile' as const,
+              difficulte_type: 'easy' as const,
+              saison: 'Toute l’année',
+              image_url: 'https://images.unsplash.com/photo-1517411032315-54ef2cb783bb?q=80&w=800&auto=format&fit=crop',
+              tag: 'Activités Outdoor',
+              titre: 'Expériences & Aventure',
+              titre_em: 'Incontournables',
+              description: contentCountry.outdoor.activites_phares,
+              duree: 'Journée',
+              prix: 'Variable',
+            }
+          : null,
+      ].filter(Boolean) as CountryDetail['activites']);
+
+  // Highlights réels depuis les feuilles Climat / Transport / Outdoor
+  const highlightsList = custom.highlights?.length
+    ? custom.highlights
+    : ([
+        contentCountry?.climat?.meilleure_periode_trek
+          ? {
+              icon: 'calendar',
+              titre: 'Meilleure',
+              sous_titre: 'saison',
+              description: `Période optimale : ${contentCountry.climat.meilleure_periode_trek}. ${contentCountry.climat.climat_general ? `Climat : ${contentCountry.climat.climat_general}.` : ''}`,
+            }
+          : null,
+        contentCountry?.transport?.aeroport_principal
+          ? {
+              icon: 'plane',
+              titre: 'Accès',
+              sous_titre: '& vols',
+              description: `Aéroport principal : ${contentCountry.transport.aeroport_principal}${contentCountry.transport.code_iata ? ` (${contentCountry.transport.code_iata})` : ''}. ${contentCountry.transport.compagnies_depuis_france ? `Compagnies : ${contentCountry.transport.compagnies_depuis_france}.` : ''}`,
+            }
+          : null,
+        contentCountry?.outdoor?.treks_phares
+          ? {
+              icon: 'compass',
+              titre: 'Treks',
+              sous_titre: '& nature',
+              description: `Sentiers phares : ${contentCountry.outdoor.treks_phares}.`,
+            }
+          : null,
+      ].filter(Boolean) as CountryDetail['highlights']);
+
+  // Faits culturels réels depuis la feuille Guide Culturel
+  const cultureFaits = [
+    { cle: 'Langues officielles', valeur: formatLanguages(languagesList).primary, valeur_em: '', description: `Langues d'usage et officielles parlées sur le territoire.` },
+    contentCountry?.culture?.religion_principale ? { cle: 'Religions & Croyances', valeur: contentCountry.culture.religion_principale, valeur_em: '', description: `Pratiques et religions principales.` } : null,
+    contentCountry?.culture?.dress_code ? { cle: 'Dress code & Tenues', valeur: contentCountry.culture.dress_code, valeur_em: '', description: `Usages vestimentaires recommandés.` } : null,
+    contentCountry?.culture?.coutumes_etiquette ? { cle: 'Coutumes & Étiquette', valeur: contentCountry.culture.coutumes_etiquette, valeur_em: '', description: `Règles de politesse et us locaux.` } : null,
+    contentCountry?.culture?.phrases_utiles ? { cle: 'Phrases utiles', valeur: contentCountry.culture.phrases_utiles, valeur_em: '', description: `Expressions courantes pour échanger.` } : null,
+    contentCountry?.culture?.jours_feries_majeurs ? { cle: 'Jours fériés & Fêtes', valeur: contentCountry.culture.jours_feries_majeurs, valeur_em: '', description: `Fêtes nationales et célébrations majeures.` } : null,
+  ].filter(Boolean) as { cle: string; valeur: string; valeur_em: string; description: string }[];
+
+  // Blocs pratiques complets depuis Conseils / Transport / Budget / Prises
+  const formalitesList = [
+    contentCountry?.pratique_voyage?.visa_requis_fr ? { cle: 'Visa requis (FR)', val: contentCountry.pratique_voyage.visa_requis_fr } : null,
+    contentCountry?.pratique_voyage?.type_visa ? { cle: 'Type de visa', val: contentCountry.pratique_voyage.type_visa } : null,
+    contentCountry?.pratique_voyage?.cout_visa ? { cle: 'Coût du visa', val: contentCountry.pratique_voyage.cout_visa } : null,
+    contentCountry?.pratique_voyage?.permis_international_requis ? { cle: 'Permis international', val: contentCountry.pratique_voyage.permis_international_requis } : null,
+    contentCountry?.pratique_voyage?.assurance_recommandee ? { cle: 'Assurance voyage', val: contentCountry.pratique_voyage.assurance_recommandee } : null,
+  ].filter(Boolean) as { cle: string; val: string; isMono?: boolean }[];
+
+  const transportList = [
+    { cle: 'Fuseau horaire', val: timezone, isMono: true },
+    contentCountry?.transport?.aeroport_principal ? { cle: 'Aéroport principal', val: `${contentCountry.transport.aeroport_principal}${contentCountry.transport.code_iata ? ` (${contentCountry.transport.code_iata})` : ''}` } : null,
+    contentCountry?.transport?.compagnies_depuis_france ? { cle: 'Vols depuis France', val: contentCountry.transport.compagnies_depuis_france } : null,
+    contentCountry?.transport?.transport_interieur ? { cle: 'Transports intérieurs', val: contentCountry.transport.transport_interieur } : null,
+    contentCountry?.transport?.location_vehicule_conditions ? { cle: 'Location de véhicule', val: contentCountry.transport.location_vehicule_conditions } : null,
+    contentCountry?.transport?.sens_conduite ? { cle: 'Sens de conduite', val: contentCountry.transport.sens_conduite } : null,
+  ].filter(Boolean) as { cle: string; val: string; isMono?: boolean }[];
+
+  const budgetList = [
+    { cle: 'Monnaie officielle', val: currencyInfo.complet, isMono: true },
+    { cle: 'Code devise', val: currencyInfo.code, isMono: true },
+    contentCountry?.budget?.moyens_paiement ? { cle: 'Moyens de paiement', val: contentCountry.budget.moyens_paiement } : null,
+    contentCountry?.budget?.budget_jour_petit ? { cle: 'Budget éco / jour', val: contentCountry.budget.budget_jour_petit } : null,
+    contentCountry?.budget?.budget_jour_moyen ? { cle: 'Budget moyen / jour', val: contentCountry.budget.budget_jour_moyen } : null,
+    contentCountry?.budget?.budget_jour_gros ? { cle: 'Budget confort / jour', val: contentCountry.budget.budget_jour_gros } : null,
+    contentCountry?.budget?.prix_repas_moyen ? { cle: 'Prix repas moyen', val: contentCountry.budget.prix_repas_moyen } : null,
+    contentCountry?.budget?.prix_hebergement_moyen ? { cle: 'Prix nuitée moyen', val: contentCountry.budget.prix_hebergement_moyen } : null,
+    contentCountry?.budget?.usage_pourboire ? { cle: 'Usage pourboire', val: contentCountry.budget.usage_pourboire } : null,
+    contentCountry?.budget?.marchandage_usage ? { cle: 'Marchandage', val: contentCountry.budget.marchandage_usage } : null,
+  ].filter(Boolean) as { cle: string; val: string; isMono?: boolean }[];
+
+  const electriciteList = [
+    contentCountry?.connectivite?.type_prise_electrique ? { cle: 'Prises électriques', val: contentCountry.connectivite.type_prise_electrique } : null,
+    contentCountry?.connectivite?.voltage ? { cle: 'Voltage & Fréquence', val: contentCountry.connectivite.voltage } : null,
+    contentCountry?.connectivite?.esim_disponible ? { cle: 'eSIM disponible', val: contentCountry.connectivite.esim_disponible } : null,
+    contentCountry?.connectivite?.couverture_reseau ? { cle: 'Couverture réseau', val: contentCountry.connectivite.couverture_reseau } : null,
+  ].filter(Boolean) as { cle: string; val: string; isMono?: boolean }[];
+
+  const climatList = [
+    contentCountry?.climat?.climat_general ? { cle: 'Climat général', val: contentCountry.climat.climat_general } : null,
+    contentCountry?.climat?.meilleure_periode_trek ? { cle: 'Meilleure période trek', val: contentCountry.climat.meilleure_periode_trek } : null,
+    contentCountry?.climat?.meilleure_periode_plage ? { cle: 'Meilleure période plage', val: contentCountry.climat.meilleure_periode_plage } : null,
+    contentCountry?.climat?.saison_pluies ? { cle: 'Saison des pluies', val: contentCountry.climat.saison_pluies } : null,
+    contentCountry?.climat?.risques_meteo ? { cle: 'Risques météo', val: contentCountry.climat.risques_meteo } : null,
+    contentCountry?.climat?.temp_moy_janv ? { cle: 'Températures moyennes', val: `${contentCountry.climat.temp_moy_janv} (Janv) / ${contentCountry.climat.temp_moy_juil || '—'} (Juil)` } : null,
+  ].filter(Boolean) as { cle: string; val: string; isMono?: boolean }[];
+
   return {
     code: codeUpper,
     iso_a3: geoCountry?.iso_a3 || undefined,
     nom: name,
     nom_en: geoCountry?.name_en || custom.nom_en || undefined,
-    slogan: custom.slogan || 'nature & sentiers',
-    subtitle: custom.subtitle || `Explorez ${name}, une destination remarquable située en ${continent} (${subregion}). Sommets, culture locale et paysages grandioses.`,
-    subtitle_is_custom: !!custom.subtitle,
+    slogan: custom.slogan || (contentCountry?.climat?.climat_general ? `climat ${contentCountry.climat.climat_general.split(',')[0].toLowerCase()}` : 'terre d\'aventure'),
+    subtitle: custom.subtitle || `Explorez ${name}, destination située en ${continent} (${subregion}). Capitale : ${capital}, fuseau : ${timezone}. Préparez votre voyage avec les données officielles vérifiées.`,
+    subtitle_is_custom: !!custom.subtitle || !!contentCountry,
     region: subregion,
     subregion: geoCountry?.subregion || undefined,
-    saison_recommandee: custom.saison_recommandee || base.meilleure_saison || 'mai → octobre',
+    saison_recommandee: contentCountry?.climat?.meilleure_periode_trek || custom.saison_recommandee || base.meilleure_saison || 'mai → octobre',
     latitude: custom.latitude || '—',
     longitude: custom.longitude || '—',
     fuseau: timezone,
@@ -1251,105 +1407,36 @@ export function getCompleteCountryDetail(
     taux_change: custom.taux_change || (currencyInfo.code === 'EUR' ? 'Devise locale (Euro)' : `${currencyInfo.nom} (${currencyInfo.code})`),
     sources: sourcesRaw,
     sources_list: sourcesList,
-    presentation_titre: custom.presentation_titre || `Une terre d'aventure et de grands espaces.`,
+    country_content: contentCountry || null,
+    presentation_titre: custom.presentation_titre || `Voyager en ${name} — Fiche officielle & repères clés`,
     presentation_paragraphes: custom.presentation_paragraphes || [
       `Situé en ${continent} (${subregion}), ${name} s'étend sur une superficie de ${areaInfo.detail} avec pour capitale ${capital}.`,
-      `La région offre une diversité remarquable de reliefs propices aux traversées pédestres, à l'immersion dans la nature et à la découverte du patrimoine local.`,
-      `Que ce soit pour les itinéraires de plusieurs jours ou les excursions culturelles, ${name} est une étape de choix pour les voyageurs autonomes.`,
+      contentCountry?.climat?.climat_general ? `Climat & Saisons : ${contentCountry.climat.climat_general}. La période recommandée pour le trek et l'aventure s'étend sur ${contentCountry.climat.meilleure_periode_trek || 'la saison optimale'}.` : `La région offre des paysages propices à la découverte et à l'exploration en autonomie.`,
+      contentCountry?.transport?.aeroport_principal ? `Accès & Transport : Le principal point d'entrée aérien est ${contentCountry.transport.aeroport_principal}${contentCountry.transport.code_iata ? ` (${contentCountry.transport.code_iata})` : ''}. Sur place, ${contentCountry.transport.transport_interieur || 'les transports locaux permettent de rayonner'}.` : `Consultez les informations pratiques et logistiques pour organiser votre itinéraire.`,
     ],
-    citation_texte: custom.citation_texte || `« Le monde est un livre et ceux qui ne voyagent pas n'en lisent qu'une page. »`,
-    citation_auteur: custom.citation_auteur || `Carnets d'exploration · LKDV`,
-    points_interet_carte: custom.points_interet_carte || [
-      { nom: capital, isCapital: true, top: '50%', left: '50%' },
-      { nom: 'Parc Naturel', top: '35%', left: '35%' },
-      { nom: 'Massif & Cimes', top: '65%', left: '65%' },
-      { nom: 'Points d’eau', top: '75%', left: '25%' },
-    ],
+    citation_texte: custom.citation_texte || `« Le voyage est un retour vers l'essentiel. »`,
+    citation_auteur: custom.citation_auteur || `Carnets d'exploration · ${name}`,
+    points_interet_carte: custom.points_interet_carte || [],
     carte_echelle: custom.carte_echelle || '1 : 4 000 000',
     carte_repere: custom.carte_repere || `Carte générale · ${subregion}`,
-    highlights: custom.highlights || [
-      {
-        icon: 'calendar',
-        titre: 'Meilleure',
-        sous_titre: 'saison',
-        description: `Période recommandée : ${custom.saison_recommandee || base.meilleure_saison || 'Mai à Octobre'} pour explorer ${name} dans les meilleures conditions.`,
-      },
-      {
-        icon: 'plane',
-        titre: 'Accès',
-        sous_titre: '& capitale',
-        description: `Vols et liaisons internationales desservant ${capital}. Fuseau horaire : ${timezone}.`,
-      },
-      {
-        icon: 'compass',
-        titre: 'Territoire',
-        sous_titre: '& relief',
-        description: `Superficie de ${areaInfo.detail} au sein de la région ${subregion}. Monnaie officielle : ${currencyInfo.complet}.`,
-      },
-    ],
-    destinations: custom.destinations || [
-      {
-        isBig: true,
-        image_url: 'https://images.unsplash.com/photo-1506744038136-46273834b3fb?q=80&w=1200&auto=format&fit=crop',
-        categorie: `Capitale · ${subregion}`,
-        titre: capital,
-        titre_em: '',
-        meta_1: 'Point d’entrée',
-        meta_2: timezone,
-        meta_3: 'Histoire & Culture',
-      },
-      {
-        image_url: 'https://images.unsplash.com/photo-1464822759023-fed622ff2c3b?q=80&w=800&auto=format&fit=crop',
-        categorie: 'Grands Espaces',
-        titre: `Parcs & Cimes de ${name}`,
-        titre_em: '',
-        meta_1: 'Nature',
-        meta_2: 'Saison optimale',
-        meta_3: 'Randonnée',
-      },
-      {
-        image_url: 'https://images.unsplash.com/photo-1469854523086-cc02fe5d8800?q=80&w=800&auto=format&fit=crop',
-        categorie: 'Sentiers & Pistes',
-        titre: 'Routes & Traverses',
-        titre_em: '',
-        meta_1: 'Aventure',
-        meta_2: 'Autonomie',
-        meta_3: 'Trek',
-      },
-      {
-        image_url: 'https://images.unsplash.com/photo-1507525428034-b723cf961d3e?q=80&w=800&auto=format&fit=crop',
-        categorie: 'Villages & Haltes',
-        titre: 'Haltes Traditionnelles',
-        titre_em: '',
-        meta_1: 'Patrimoine',
-        meta_2: 'Terroir',
-        meta_3: 'Rencontres',
-      },
-    ],
-    activites: custom.activites || [],
-    culture: custom.culture || {
-      citation: `En ${name}, les traditions locales et le respect de la nature se transmettent de génération en génération.`,
-      citation_em: 'Tradition',
-      citation_auteur: `Mémoire & Culture · ${name}`,
-      faits: [
-        { cle: 'Langues', valeur: formatLanguages(languagesList).primary, valeur_em: '', description: `Langues d'usage et officielles parlées sur le territoire.` },
-        { cle: 'Monnaie', valeur: currencyInfo.complet, valeur_em: '', description: `Unité monétaire utilisée pour l'ensemble des échanges locaux.` },
-        { cle: 'Fuseau', valeur: timezone, valeur_em: '', description: `Décalage horaire standard applicable dans le pays.` },
-        { cle: 'Région', valeur: subregion, valeur_em: '', description: `Position géographique et découpage régional.` },
-      ],
+    highlights: highlightsList,
+    destinations: custom.destinations || [],
+    activites: activitesList,
+    culture: {
+      citation: custom.culture?.citation || `En ${name}, les traditions et le patrimoine façonnent l'identité du territoire.`,
+      citation_em: custom.culture?.citation_em || 'Patrimoine',
+      citation_auteur: custom.culture?.citation_auteur || `Guide culturel · ${name}`,
+      faits: cultureFaits,
       fetes: (custom.culture as any)?.fetes || [],
     },
-    gastronomie: custom.gastronomie || [],
+    gastronomie: gastronomieList,
     pratique: custom.pratique || {
-      formalites: [], // Aucune donnée en base — carte masquée
-      transport: [
-        { cle: 'Fuseau horaire', val: timezone, isMono: true },
-      ],
-      budget: [
-        { cle: 'Monnaie officielle', val: currencyInfo.complet, isMono: true },
-        { cle: 'Code devise', val: currencyInfo.code, isMono: true },
-      ],
-      sante: [], // Aucune donnée en base — carte masquée
+      formalites: formalitesList,
+      transport: transportList,
+      budget: budgetList,
+      sante: contentCountry?.pratique_voyage?.assurance_recommandee ? [{ cle: 'Assurance recommandée', val: contentCountry.pratique_voyage.assurance_recommandee }] : [],
+      electricite_reseau: electriciteList,
+      climat: climatList,
     },
     meteo: custom.meteo || undefined,
     securite: custom.securite || undefined,

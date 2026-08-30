@@ -1,6 +1,6 @@
 import { Metadata } from 'next';
 import { notFound } from 'next/navigation';
-import { fetchCountryByIso, fetchAllCountrySlugs } from '@/lib/geodata';
+import { fetchCountryByIso, fetchCountryContentByIso, fetchAllCountrySlugs } from '@/lib/geodata';
 import { getCompleteCountryDetail } from '@/lib/countryDetails';
 import CountryDetailClient from './CountryDetailClient';
 
@@ -53,13 +53,16 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 
 export default async function CountryPage({ params }: Props) {
   const { code } = await params;
-  const geoCountry = await fetchCountryByIso(code);
+  const [geoCountry, contentCountry] = await Promise.all([
+    fetchCountryByIso(code),
+    fetchCountryContentByIso(code),
+  ]);
 
   if (!geoCountry) {
     notFound();
   }
 
-  const country = getCompleteCountryDetail(code, geoCountry);
+  const country = getCompleteCountryDetail(code, geoCountry, contentCountry);
 
   const schemaOrg = {
     '@context': 'https://schema.org',

@@ -267,6 +267,99 @@ export interface CountryGeo {
   updated_at: string;
 }
 
+export interface PratiqueVoyageContent {
+  visa_requis_fr?: string | null;
+  type_visa?: string | null;
+  cout_visa?: string | null;
+  assurance_recommandee?: string | null;
+  permis_international_requis?: string | null;
+  sources?: string | null;
+}
+
+export interface TransportContent {
+  aeroport_principal?: string | null;
+  code_iata?: string | null;
+  compagnies_depuis_france?: string | null;
+  transport_interieur?: string | null;
+  location_vehicule_conditions?: string | null;
+  sens_conduite?: string | null;
+  sources?: string | null;
+}
+
+export interface ClimatContent {
+  climat_general?: string | null;
+  meilleure_periode_trek?: string | null;
+  meilleure_periode_plage?: string | null;
+  saison_pluies?: string | null;
+  risques_meteo?: string | null;
+  temp_moy_janv?: string | null;
+  temp_moy_juil?: string | null;
+  sources?: string | null;
+}
+
+export interface OutdoorContent {
+  parcs_nationaux?: string | null;
+  treks_phares?: string | null;
+  activites_phares?: string | null;
+  faune_flore_remarquable?: string | null;
+  equipement_specifique_recommande?: string | null;
+  sources?: string | null;
+}
+
+export interface ConnectiviteContent {
+  type_prise_electrique?: string | null;
+  voltage?: string | null;
+  esim_disponible?: string | null;
+  couverture_reseau?: string | null;
+  sources?: string | null;
+}
+
+export interface CultureContent {
+  coutumes_etiquette?: string | null;
+  phrases_utiles?: string | null;
+  dress_code?: string | null;
+  religion_principale?: string | null;
+  jours_feries_majeurs?: string | null;
+  sources?: string | null;
+}
+
+export interface EditorialContent {
+  plats_emblematiques?: string | null;
+  sources?: string | null;
+}
+
+export interface BudgetContent {
+  moyens_paiement?: string | null;
+  budget_jour_petit?: string | null;
+  budget_jour_moyen?: string | null;
+  budget_jour_gros?: string | null;
+  prix_repas_moyen?: string | null;
+  prix_hebergement_moyen?: string | null;
+  usage_pourboire?: string | null;
+  marchandage_usage?: string | null;
+  sources?: string | null;
+}
+
+export interface CountryContent {
+  id?: string;
+  country_iso_a2: string;
+  slug: string;
+  status: 'draft' | 'published' | 'archived';
+  pratique_voyage: PratiqueVoyageContent;
+  climat: ClimatContent;
+  budget: BudgetContent;
+  sante_securite?: { assurance_recommandee?: string | null; risques_meteo?: string | null; sources?: string | null };
+  transport: TransportContent;
+  culture: CultureContent;
+  outdoor: OutdoorContent;
+  connectivite: ConnectiviteContent;
+  editorial: EditorialContent;
+  data_source: string;
+  staleness_days?: number;
+  created_at?: string;
+  updated_at?: string;
+}
+
 export interface AdminRegionGeo {
   id: string;
   country_id: string | null;

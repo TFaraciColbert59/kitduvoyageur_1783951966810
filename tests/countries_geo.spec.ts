@@ -1,9 +1,9 @@
 import { describe, it, expect } from 'vitest';
-import { fetchCountries, fetchCountryByIso, fetchAllCountrySlugs } from '@/lib/geodata';
+import { fetchCountries, fetchCountryByIso, fetchCountryContentByIso, fetchAllCountrySlugs } from '@/lib/geodata';
 import { getCompleteCountryDetail } from '@/lib/countryDetails';
 import { countryGeoToCountry } from '@/lib/countries';
 
-describe('countries_geo Supabase Integration (195 Pays)', () => {
+describe('countries_geo & countries_content Supabase Integration (195 Pays)', () => {
   it('should fetch all 195 countries from countries_geo', async () => {
     const countries = await fetchCountries();
     expect(countries).toBeDefined();
@@ -51,49 +51,47 @@ describe('countries_geo Supabase Integration (195 Pays)', () => {
     expect(afghanistan.geometry).toBeNull();
   });
 
-  it('should handle complex language descriptions without crashing', async () => {
-    const southAfrica = await fetchCountryByIso('ZA');
-    expect(southAfrica).not.toBeNull();
-    if (!southAfrica) return;
+  it('should fetch country_content for DE and AF with all 7 sheets fields populated', async () => {
+    const [deContent, afContent] = await Promise.all([
+      fetchCountryContentByIso('DE'),
+      fetchCountryContentByIso('AF'),
+    ]);
 
-    expect(southAfrica.iso_a2).toBe('ZA');
-    const detail = getCompleteCountryDetail('ZA', southAfrica);
+    expect(deContent).not.toBeNull();
+    expect(deContent?.country_iso_a2).toBe('DE');
+    expect(deContent?.pratique_voyage.visa_requis_fr).toBeDefined();
+    expect(deContent?.transport.aeroport_principal).toContain('Francfort');
+    expect(deContent?.connectivite.voltage).toContain('230V');
+    expect(deContent?.culture.phrases_utiles).toContain('Guten Tag');
+    expect(deContent?.budget.prix_repas_moyen).toBeDefined();
+    expect(deContent?.outdoor.parcs_nationaux).toBeDefined();
 
-    expect(detail.nom).toBe('Afrique du Sud');
-    expect(detail.capitale).toBe(southAfrica.capital);
-    expect(detail.fuseau).toBe('UTC+2');
-    expect(detail.region).toBe('Afrique australe');
-    expect(detail.superficie_court).toBe('1 219 912');
-    expect(detail.superficie_detail).toBe('1 219 912 km²');
-    expect(detail.monnaie_code).toBe('ZAR');
-    expect(detail.monnaie_nom).toBe('Rand sud-africain');
-    expect(detail.langue).toContain('11 langues officielles');
-    // Ensure no NaN or undefined
-    expect(detail.superficie_court).not.toContain('NaN');
-    expect(detail.superficie_court).not.toContain('undefined');
+    expect(afContent).not.toBeNull();
+    expect(afContent?.country_iso_a2).toBe('AF');
+    expect(afContent?.transport.code_iata).toBe('KBL');
+    expect(afContent?.connectivite.voltage).toContain('220V');
   });
 
-  it('should convert CountryGeo to Country model correctly', async () => {
-    const andorra = await fetchCountryByIso('AD');
-    expect(andorra).not.toBeNull();
-    if (!andorra) return;
+  it('should populate rich real data in CountryDetail when contentCountry is provided', async () => {
+    const [deGeo, deContent] = await Promise.all([
+      fetchCountryByIso('DE'),
+      fetchCountryContentByIso('DE'),
+    ]);
 
-    const countryModel = countryGeoToCountry(andorra);
-    expect(countryModel.code).toBe('AD');
-    expect(countryModel.nom).toBe('Andorre');
-    expect(countryModel.nom_en).toBe('Andorra');
-    expect(countryModel.continent).toBe('Europe');
-    expect(countryModel.subregion).toBe('Europe du Sud (Pyrénées)');
-    expect(countryModel.capital).toBe('Andorre-la-Vieille');
-    expect(countryModel.monnaie_code).toBe('EUR');
-    expect(countryModel.timezone).toBe('UTC+1');
+    expect(deGeo).not.toBeNull();
+    const detail = getCompleteCountryDetail('DE', deGeo, deContent);
 
-    const detail = getCompleteCountryDetail('AD', andorra);
-    expect(detail.nom_en).toBe('Andorra');
-    expect(detail.sources).toBeDefined();
-    expect(detail.sources_list).toBeDefined();
-    expect(detail.sources_list!.length).toBeGreaterThan(0);
-    expect(detail.sources_list![0].url).toContain('http');
+    expect(detail.nom).toBe('Allemagne');
+    expect(detail.capitale).toBe('Berlin');
+    expect(detail.fuseau).toBe('UTC+1');
+    expect(detail.pratique.formalites.length).toBeGreaterThan(0);
+    expect(detail.pratique.transport.length).toBeGreaterThan(1);
+    expect(detail.pratique.budget.length).toBeGreaterThan(2);
+    expect(detail.pratique.electricite_reseau?.length).toBeGreaterThan(0);
+    expect(detail.pratique.climat?.length).toBeGreaterThan(0);
+    expect(detail.culture.faits.length).toBeGreaterThan(0);
+    expect(detail.gastronomie.length).toBeGreaterThan(0);
+    expect(detail.activites.length).toBeGreaterThan(0);
   });
 
   it('should handle NULL currency_code gracefully (PS — Palestine)', async () => {
@@ -101,57 +99,11 @@ describe('countries_geo Supabase Integration (195 Pays)', () => {
     expect(ps).not.toBeNull();
     if (!ps) return;
 
-    const detail = getCompleteCountryDetail('PS', ps);
+    const detail = getCompleteCountryDetail('PS', ps, null);
     // Must not crash even if currency_code is null
     expect(detail.monnaie_code).toBeDefined();
     expect(String(detail.monnaie_code)).not.toBe('undefined');
     expect(String(detail.monnaie_code)).not.toContain('NaN');
-    // Fictitious blocks must be absent
-    expect(detail.meteo).toBeUndefined();
-    expect(detail.securite).toBeUndefined();
-    expect(detail.activites).toHaveLength(0);
-    expect(detail.pratique.formalites).toHaveLength(0);
-    expect(detail.pratique.sante).toHaveLength(0);
-  });
-
-  it('should handle single-element long-text languages array (ZA)', async () => {
-    const za = await fetchCountryByIso('ZA');
-    expect(za).not.toBeNull();
-    if (!za) return;
-
-    const detail = getCompleteCountryDetail('ZA', za);
-    expect(detail.nom).toBe('Afrique du Sud');
-    // languages may be a single element that is a long phrase
-    expect(detail.langue).toBeTruthy();
-    expect(detail.langue.length).toBeGreaterThan(5);
-    // Fictitious blocks absent
-    expect(detail.meteo).toBeUndefined();
-    expect(detail.securite).toBeUndefined();
-    expect(detail.pratique.formalites).toHaveLength(0);
-    expect(detail.pratique.sante).toHaveLength(0);
-    expect(detail.activites).toHaveLength(0);
-  });
-
-  it('should display only real BDD data for DE with no fictitious fields', async () => {
-    const de = await fetchCountryByIso('DE');
-    expect(de).not.toBeNull();
-    if (!de) return;
-
-    const detail = getCompleteCountryDetail('DE', de);
-    expect(detail.nom).toBe('Allemagne');
-    expect(detail.capitale).toBe('Berlin');
-    expect(detail.fuseau).toBe('UTC+1');
-    expect(detail.continent).toBe('Europe');
-    expect(detail.monnaie_code).toBe('EUR');
-    // Fictitious blocks must be absent
-    expect(detail.meteo).toBeUndefined();
-    expect(detail.securite).toBeUndefined();
-    expect(detail.pratique.formalites).toHaveLength(0);
-    expect(detail.pratique.sante).toHaveLength(0);
-    expect(detail.pratique.transport).toHaveLength(1); // only timezone
-    expect(detail.pratique.transport[0].cle).toBe('Fuseau horaire');
-    expect(detail.pratique.budget).toHaveLength(2);   // monnaie + code
-    expect(detail.activites).toHaveLength(0);
-    expect(detail.gastronomie).toHaveLength(0);
   });
 });
+

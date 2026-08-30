@@ -6,6 +6,7 @@ import { createClient } from "./supabase/client";
 import type {
   AdminRegionGeo,
   CountryGeo,
+  CountryContent,
   PlaceGeo,
   PlaceNameGeo,
 } from "./supabase/types";
@@ -35,6 +36,25 @@ export async function fetchCountryByIso(isoA2: string): Promise<CountryGeo | nul
     .maybeSingle();
   if (error) throw error;
   return (data as CountryGeo | null) ?? null;
+}
+
+/** Retourne le contenu enrichi (7 feuilles) d'un pays par son code ISO-A2. */
+export async function fetchCountryContentByIso(isoA2: string): Promise<CountryContent | null> {
+  try {
+    const { data, error } = await supabase
+      .from("countries_content")
+      .select("*")
+      .eq("country_iso_a2", isoA2.toUpperCase())
+      .maybeSingle();
+    if (error) {
+      console.warn(`[geodata] fetchCountryContentByIso(${isoA2}):`, error.message);
+      return null;
+    }
+    return (data as CountryContent | null) ?? null;
+  } catch (err) {
+    console.warn(`[geodata] fetchCountryContentByIso(${isoA2}) exception:`, err);
+    return null;
+  }
 }
 
 /** Retourne tous les slugs (codes ISO-A2 en minuscules) pour le routing statique. */

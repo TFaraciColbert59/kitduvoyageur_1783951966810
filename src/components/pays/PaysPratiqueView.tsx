@@ -10,10 +10,12 @@ interface PaysPratiqueViewProps {
 
 export default function PaysPratiqueView({ country }: PaysPratiqueViewProps) {
   const sections = [
-    { title: 'Formalités d\'entrée', icon: 'DocumentTextIcon', data: country.pratique?.formalites },
-    { title: 'Transport & Déplacements', icon: 'TruckIcon', data: country.pratique?.transport },
-    { title: 'Budget & Monnaie', icon: 'CurrencyEuroIcon', data: country.pratique?.budget },
-    { title: 'Santé & Recommandations', icon: 'HeartIcon', data: country.pratique?.sante },
+    { title: 'Formalités d\'entrée & Visa', icon: 'DocumentTextIcon', data: country.pratique?.formalites },
+    { title: 'Vols & Transports', icon: 'TruckIcon', data: country.pratique?.transport },
+    { title: 'Budget & Moyens de paiement', icon: 'CurrencyEuroIcon', data: country.pratique?.budget },
+    { title: 'Électricité & Connectivité eSIM', icon: 'BoltIcon', data: country.pratique?.electricite_reseau },
+    { title: 'Climat & Saisons de voyage', icon: 'SunIcon', data: country.pratique?.climat },
+    { title: 'Santé & Assurance', icon: 'HeartIcon', data: country.pratique?.sante },
   ];
 
   return (

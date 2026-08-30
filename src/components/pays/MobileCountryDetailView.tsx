@@ -545,26 +545,39 @@ export default function MobileCountryDetailView({
                 </div>
                 )}
 
-                {/* Formalités & Urgences */}
-                <div className="grid grid-cols-2 gap-2.5">
-                  {country.pratique.formalites.length > 0 && (
-                  <div className="glass p-3.5 rounded-[20px] border border-white/80 shadow-xs bg-white/85 space-y-1">
-                    <span className="text-xs block font-bold text-[#17402C]">🛂 Formalités</span>
-                    <p className="text-[10.5px] text-[#5A7064] font-mono">
-                      {country.pratique.formalites[0]?.val}
-                    </p>
+                {/* Practical Sections List */}
+                {[
+                  { title: '🛂 Formalités & Visa', data: country.pratique.formalites },
+                  { title: '✈️ Vols & Transports', data: country.pratique.transport },
+                  { title: '💶 Budget & Devises', data: country.pratique.budget },
+                  { title: '🔌 Électricité & eSIM', data: country.pratique.electricite_reseau },
+                  { title: '☀️ Climat & Saisons', data: country.pratique.climat },
+                ].filter(sec => sec.data && sec.data.length > 0).map((sec, sIdx) => (
+                  <div key={sIdx} className="glass p-3.5 rounded-[22px] border border-white/80 shadow-xs bg-white/85 space-y-2">
+                    <h4 className="font-display font-bold text-xs text-[#17402C]">
+                      {sec.title}
+                    </h4>
+                    <div className="space-y-1">
+                      {sec.data?.map((item, i) => (
+                        <div key={i} className="flex items-center justify-between text-[11px] p-1.5 rounded-lg bg-white/60">
+                          <span className="text-[#5A7064]">{item.cle}</span>
+                          <span className="font-bold text-[#17402C] text-right truncate max-w-[170px]">{item.val}</span>
+                        </div>
+                      ))}
+                    </div>
                   </div>
-                  )}
-                  <a
-                    href="tel:112"
-                    className="glass p-3.5 rounded-[20px] border border-white/80 shadow-xs bg-white/85 space-y-1 block active:scale-95 transition-all"
-                  >
-                    <span className="text-xs block font-bold text-[#17402C]">🚨 Urgences</span>
-                    <p className="text-xs font-mono font-bold text-rose-700">
-                      112 (Appel direct) →
-                    </p>
-                  </a>
-                </div>
+                ))}
+
+                {/* Urgences */}
+                <a
+                  href="tel:112"
+                  className="glass p-3.5 rounded-[20px] border border-white/80 shadow-xs bg-white/85 space-y-1 block active:scale-95 transition-all"
+                >
+                  <span className="text-xs block font-bold text-[#17402C]">🚨 Numéro d'urgence international</span>
+                  <p className="text-xs font-mono font-bold text-rose-700">
+                    112 (Appel gratuit) →
+                  </p>
+                </a>
               </div>
             )}
 

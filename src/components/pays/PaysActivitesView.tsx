@@ -128,6 +128,69 @@ export default function PaysActivitesView({ country }: PaysActivitesViewProps) {
           </div>
         ))}
       </div>
+
+      {/* 2. Parcs Nationaux & Écosystèmes (Données officielles feuille Parcs) */}
+      {country.country_content?.outdoor && (
+        <div className="glass rounded-[1.5rem] p-6 space-y-4 border border-white/60 shadow-xs">
+          <div className="flex items-center justify-between pb-2 border-b border-[#17402C]/10">
+            <div className="flex items-center gap-2">
+              <span className="text-base">🌲</span>
+              <h3 className="font-display font-bold text-lg text-[#17402C]">
+                Parcs Nationaux, Faune &amp; <span className="font-serif italic font-normal text-[#5B7F55]">Équipement Recommandé</span>
+              </h3>
+            </div>
+            <span className="glass-pill text-[9.5px] font-mono font-bold text-[#5B7F55]">
+              Données Terrain
+            </span>
+          </div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-xs">
+            {country.country_content.outdoor.parcs_nationaux && (
+              <div className="p-4 rounded-xl bg-white/70 border border-white/50 space-y-1.5">
+                <span className="text-[10px] font-mono font-bold text-[#5B7F55] uppercase tracking-wider block">
+                  🏞️ Parcs Nationaux Majeurs
+                </span>
+                <p className="text-xs text-[#17402C] leading-relaxed font-medium">
+                  {country.country_content.outdoor.parcs_nationaux}
+                </p>
+              </div>
+            )}
+
+            {country.country_content.outdoor.treks_phares && (
+              <div className="p-4 rounded-xl bg-white/70 border border-white/50 space-y-1.5">
+                <span className="text-[10px] font-mono font-bold text-[#5B7F55] uppercase tracking-wider block">
+                  🥾 Treks &amp; Sentiers Phares
+                </span>
+                <p className="text-xs text-[#17402C] leading-relaxed font-medium">
+                  {country.country_content.outdoor.treks_phares}
+                </p>
+              </div>
+            )}
+
+            {country.country_content.outdoor.faune_flore_remarquable && (
+              <div className="p-4 rounded-xl bg-white/70 border border-white/50 space-y-1.5">
+                <span className="text-[10px] font-mono font-bold text-[#5B7F55] uppercase tracking-wider block">
+                  🦅 Faune &amp; Flore Remarquable
+                </span>
+                <p className="text-xs text-[#17402C] leading-relaxed font-medium">
+                  {country.country_content.outdoor.faune_flore_remarquable}
+                </p>
+              </div>
+            )}
+
+            {country.country_content.outdoor.equipement_specifique_recommande && (
+              <div className="p-4 rounded-xl bg-white/70 border border-white/50 space-y-1.5">
+                <span className="text-[10px] font-mono font-bold text-[#5B7F55] uppercase tracking-wider block">
+                  🎒 Équipement Spécifique Recommandé
+                </span>
+                <p className="text-xs text-[#17402C] leading-relaxed font-medium">
+                  {country.country_content.outdoor.equipement_specifique_recommande}
+                </p>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
     </div>
   );
 }
