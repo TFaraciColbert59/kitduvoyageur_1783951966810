@@ -282,13 +282,8 @@ export default function InteractiveMap() {
       tileLayerRef.current = initialLayer;
       mapRef.current = map;
       setMapReady(true);
-
-      // Load default location (Chamonix) IMMEDIATELY for instant zero-wait startup
-      setLocationLabel('Chamonix-Mont-Blanc (Rayon 10 km)');
-      currentLoadedCenterRef.current = DEFAULT_CENTER;
-      load10kmRadiusData(DEFAULT_CENTER[0], DEFAULT_CENTER[1]);
-
-      // Asynchronous Geolocation upgrade if user allows GPS
+      // 1. Initialisation de la carte Leaflet
+      // Si géolocalisation disponible, on charge directement la position de l'utilisateur
       if (typeof window !== 'undefined' && 'geolocation' in navigator) {
         navigator.geolocation.getCurrentPosition(
           (pos: GeolocationPosition) => {
@@ -298,34 +293,32 @@ export default function InteractiveMap() {
             setLocationLabel('Position actuelle (Rayon 10 km)');
 
             const userIcon = L.divIcon({
-              html: `
-                <div style="position:relative;width:22px;height:22px;display:flex;align-items:center;justify-content:center;">
-                  <div style="position:absolute;inset:0;border-radius:50%;background:#3B82F6;opacity:0.3;animation:ping 1.5s cubic-bezier(0,0,0.2,1) infinite;"></div>
-                  <div style="width:14px;height:14px;border-radius:50%;background:#2563EB;border:2.5px solid #FFFFFF;box-shadow:0 2px 6px rgba(0,0,0,0.3);"></div>
-                </div>
-              `,
+              html: `<div style="width:16px;height:16px;background:#17402C;border:3px solid #8BAF7C;border-radius:50%;box-shadow:0 0 0 4px rgba(23,64,44,0.3)"></div>`,
               className: '',
-              iconSize: [22, 22],
-              iconAnchor: [11, 11],
+              iconSize: [16, 16],
+              iconAnchor: [8, 8],
             });
-
             if (userMarkerRef.current) {
-              map.removeLayer(userMarkerRef.current);
+              try { map.removeLayer(userMarkerRef.current); } catch {}
             }
-            userMarkerRef.current = L.marker([userLat, userLng], { icon: userIcon, zIndexOffset: 5000 }).addTo(map);
+            userMarkerRef.current = L.marker([userLat, userLng], { icon: userIcon }).addTo(map);
 
-            map.setView([userLat, userLng], 12);
+            map.setView([userLat, userLng], 13);
+            currentLoadedCenterRef.current = [userLat, userLng];
             load10kmRadiusData(userLat, userLng);
           },
           () => {
-            // Geolocation denied or unavailable -> keep default Chamonix
+            // Fallback si géolocalisation refusée ou indisponible : Chamonix
+            setLocationLabel('Chamonix-Mont-Blanc (Rayon 10 km)');
+            currentLoadedCenterRef.current = DEFAULT_CENTER;
+            load10kmRadiusData(DEFAULT_CENTER[0], DEFAULT_CENTER[1]);
           },
-          {
-            timeout: 3000,
-            maximumAge: 60000,
-            enableHighAccuracy: true,
-          }
+          { enableHighAccuracy: true, timeout: 6000 }
         );
+      } else {
+        setLocationLabel('Chamonix-Mont-Blanc (Rayon 10 km)');
+        currentLoadedCenterRef.current = DEFAULT_CENTER;
+        load10kmRadiusData(DEFAULT_CENTER[0], DEFAULT_CENTER[1]);
       }
 
       // Check if user panned away from loaded center (> 1.0 km) -> show "Rechercher dans cette zone"
@@ -870,7 +863,7 @@ export default function InteractiveMap() {
             <button
               onClick={handleSearchThisArea}
               disabled={isSearchingZone}
-              className="h-10 px-4.5 rounded-full bg-[#17402C] text-white font-bold text-xs shadow-lg border border-white/40 flex items-center gap-2 hover:brightness-110 active:scale-95 transition-all cursor-pointer"
+              className="glass-capsule-btn primary !min-h-[38px] !px-4 !py-2 text-xs font-bold shadow-lg flex items-center gap-2 active:scale-95 transition-all cursor-pointer"
             >
               <span className={isSearchingZone ? 'animate-spin' : ''}>🔄</span>
               <span>{isSearchingZone ? 'Chargement en cours…' : 'Rechercher dans cette zone'}</span>
@@ -884,7 +877,7 @@ export default function InteractiveMap() {
         {!showMobileFilters && (
           <button
             onClick={() => setShowMobileFilters(true)}
-            className="sm:hidden absolute top-[calc(env(safe-area-inset-top,0px)+14px)] left-3 z-[400] h-9 px-3.5 rounded-full bg-white/95 backdrop-blur-md border border-white/80 text-[#17402C] font-bold text-xs shadow-md flex items-center gap-1.5 active:scale-95 transition-all cursor-pointer"
+            className="sm:hidden absolute top-[calc(env(safe-area-inset-top,0px)+14px)] left-3 z-[400] glass-capsule-btn !min-h-[36px] !px-3.5 !py-1 text-[#17402C] font-bold text-xs shadow-md flex items-center gap-1.5 active:scale-95 transition-all cursor-pointer"
             aria-label="Ouvrir les filtres"
           >
             <span>🔍</span>
@@ -901,7 +894,7 @@ export default function InteractiveMap() {
             onClick={handleZoomIn}
             title="Zoom avant"
             aria-label="Zoom avant"
-            className="w-9 h-9 rounded-full bg-white/95 backdrop-blur-md border border-white/80 text-[#17402C] font-bold text-base shadow-md flex items-center justify-center hover:bg-white active:scale-95 transition-all cursor-pointer"
+            className="glass-circle-btn !w-9.5 !h-9.5 font-bold text-base shadow-md flex items-center justify-center cursor-pointer active:scale-95"
           >
             +
           </button>
@@ -909,7 +902,7 @@ export default function InteractiveMap() {
             onClick={handleZoomOut}
             title="Zoom arrière"
             aria-label="Zoom arrière"
-            className="w-9 h-9 rounded-full bg-white/95 backdrop-blur-md border border-white/80 text-[#17402C] font-bold text-base shadow-md flex items-center justify-center hover:bg-white active:scale-95 transition-all cursor-pointer"
+            className="glass-circle-btn !w-9.5 !h-9.5 font-bold text-base shadow-md flex items-center justify-center cursor-pointer active:scale-95"
           >
             −
           </button>
@@ -917,38 +910,44 @@ export default function InteractiveMap() {
             onClick={handleRecenter}
             title="Ma position (10 km)"
             aria-label="Ma position"
-            className="w-9 h-9 rounded-full bg-white/95 backdrop-blur-md border border-white/80 text-[#17402C] font-bold text-sm shadow-md flex items-center justify-center hover:bg-white active:scale-95 transition-all cursor-pointer"
+            className="glass-circle-btn !w-9.5 !h-9.5 shadow-md flex items-center justify-center cursor-pointer active:scale-95"
           >
-            🎯
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#17402C" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round">
+              <circle cx="12" cy="12" r="7" />
+              <line x1="12" y1="1" x2="12" y2="4" />
+              <line x1="12" y1="20" x2="12" y2="23" />
+              <line x1="1" y1="12" x2="4" y2="12" />
+              <line x1="20" y1="12" x2="23" y2="12" />
+            </svg>
           </button>
         </div>
 
         {/* 3. Floating Tile Switcher (Top Right, positioned neatly below Zoom) */}
-        <div className="absolute top-[calc(env(safe-area-inset-top,0px)+140px)] right-3 z-[400] flex flex-col gap-1.5 bg-white/95 backdrop-blur-md border border-white/80 rounded-2xl p-1 shadow-md">
+        <div className="absolute top-[calc(env(safe-area-inset-top,0px)+140px)] right-3 z-[400] flex flex-col gap-1.5 glass p-1 rounded-2xl shadow-md border border-white/80">
           <button
             onClick={() => handleTileChange('osm')}
-            className={`w-7 h-7 rounded-xl flex items-center justify-center transition-all cursor-pointer ${tileMode === 'osm' ? 'bg-[#17402C] text-white shadow-xs' : 'text-[#365233] hover:bg-[#17402C]/10'}`}
+            className={`glass-circle-btn !w-8 !h-8 ${tileMode === 'osm' ? 'primary' : ''}`}
             title="Carte Standard (OSM)"
           >
-            <svg width="13" height="13" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
+            <svg width="13" height="13" fill="none" stroke="currentColor" strokeWidth="2.2" viewBox="0 0 24 24">
               <path d="M3 6l6-3 6 3 6-3v12l-6 3-6-3-6 3V6z"></path><path d="M9 3v12"></path><path d="M15 6v12"></path>
             </svg>
           </button>
           <button
             onClick={() => handleTileChange('topo')}
-            className={`w-7 h-7 rounded-xl flex items-center justify-center transition-all cursor-pointer ${tileMode === 'topo' ? 'bg-[#17402C] text-white shadow-xs' : 'text-[#365233] hover:bg-[#17402C]/10'}`}
+            className={`glass-circle-btn !w-8 !h-8 ${tileMode === 'topo' ? 'primary' : ''}`}
             title="Relief / Topographique"
           >
-            <svg width="13" height="13" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
+            <svg width="13" height="13" fill="none" stroke="currentColor" strokeWidth="2.2" viewBox="0 0 24 24">
               <path d="M8 3l4 8 5-5 5 15H2L8 3z"></path>
             </svg>
           </button>
           <button
             onClick={() => handleTileChange('satellite')}
-            className={`w-7 h-7 rounded-xl flex items-center justify-center transition-all cursor-pointer ${tileMode === 'satellite' ? 'bg-[#17402C] text-white shadow-xs' : 'text-[#365233] hover:bg-[#17402C]/10'}`}
+            className={`glass-circle-btn !w-8 !h-8 ${tileMode === 'satellite' ? 'primary' : ''}`}
             title="Vue Satellite"
           >
-            <svg width="13" height="13" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
+            <svg width="13" height="13" fill="none" stroke="currentColor" strokeWidth="2.2" viewBox="0 0 24 24">
               <circle cx="12" cy="12" r="10"></circle><path d="M12 2a14.5 14.5 0 0 0 0 20 14.5 14.5 0 0 0 0-20"></path><path d="M2 12h20"></path>
             </svg>
           </button>
@@ -960,25 +959,25 @@ export default function InteractiveMap() {
             className="absolute left-1/2 -translate-x-1/2 z-[500] w-full max-w-sm px-4 pointer-events-auto"
             style={{ bottom: 'calc(var(--bottom-tab-base-height, 68px) + 12px)' }}
           >
-            <div className="bg-[rgba(255,255,255,0.96)] border border-[#E4DED3] rounded-[16px] p-4.5 relative shadow-xl backdrop-blur-md">
+            <div className="glass rounded-[24px] p-4.5 relative shadow-2xl border border-white/80 backdrop-blur-xl">
               <button 
                 onClick={() => setSelectedTrailId(null)}
-                className="absolute top-4 right-4 text-[#17402C]/60 hover:text-[#17402C] text-xs bg-[#17402C]/10 w-6 h-6 rounded-full flex items-center justify-center transition-colors"
+                className="absolute top-4 right-4 glass-circle-btn !w-6.5 !h-6.5 text-[11px]"
                 aria-label="Fermer"
               >
                 ✕
               </button>
               
               <div className="flex items-center gap-2 mb-1">
-                <span className="text-[9px] font-mono tracking-widest text-[#365233] uppercase font-bold bg-sage-100/60 px-2 py-0.5 rounded">Randonnée Sélectionnée</span>
+                <span className="glass-pill text-[9px] font-mono tracking-widest text-[#17402C] uppercase font-bold">Randonnée Sélectionnée</span>
                 {selectedTrailGeojson && (
-                  <span className="text-[9px] font-mono font-bold text-emerald-700 bg-emerald-100 px-1.5 py-0.5 rounded">Tracé GPS Réel ✓</span>
+                  <span className="text-[9px] font-mono font-bold text-emerald-800 bg-emerald-100/80 px-2 py-0.5 rounded-full border border-emerald-200">Tracé GPS Réel ✓</span>
                 )}
               </div>
 
               <h3 className="font-display font-bold text-base leading-tight mt-1 mb-2 pr-6 text-[#17402C]">{selectedTrail.name}</h3>
               
-              <div className="flex items-center gap-3 text-xs font-mono text-[#17402C] mb-3 bg-[#17402C]/5 p-2.5 rounded-[10px]">
+              <div className="flex items-center gap-3 text-xs font-mono text-[#17402C] mb-3 p-2.5 rounded-xl bg-white/70 border border-white/60">
                 <div>
                   <p className="text-[8px] text-[#5A7064] uppercase font-bold">Distance</p>
                   <p className="font-bold">{selectedTrail.distance_km ? `${Number(selectedTrail.distance_km).toFixed(1)} km` : 'N/A'}</p>
@@ -997,19 +996,19 @@ export default function InteractiveMap() {
                 )}
               </div>
 
-              <div className="flex items-center justify-between gap-2 pt-1 border-t border-[#E4DED3]">
+              <div className="flex items-center justify-between gap-2 pt-1 border-t border-[#17402C]/10">
                 <a
                   href={`https://www.google.com/maps/dir/?api=1&destination=${selectedTrail.lat},${selectedTrail.lng}`}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="flex-1 h-8 rounded-xl bg-gradient-to-b from-[#17402C] to-[#2D6B4A] text-white text-xs font-bold flex items-center justify-center gap-1.5 shadow-sm hover:brightness-110 active:scale-98 transition-all"
+                  className="glass-capsule-btn primary flex-1 !min-h-[36px] text-xs font-bold flex items-center justify-center gap-1.5 shadow-sm active:scale-95 transition-all no-underline"
                 >
                   <span>🧭</span>
                   <span>Point de départ</span>
                 </a>
                 <a
                   href={`/materiel/depart/none?route=${selectedTrail.id}`}
-                  className="h-8 px-3 rounded-xl bg-[#FAF8F5] hover:bg-white text-[#17402C] text-xs font-bold border border-[#E4DED3] flex items-center justify-center transition-colors"
+                  className="glass-capsule-btn flex-1 !min-h-[36px] text-xs font-bold flex items-center justify-center transition-all active:scale-95 no-underline"
                 >
                   Préparer
                 </a>
@@ -1024,24 +1023,24 @@ export default function InteractiveMap() {
             className="absolute left-1/2 -translate-x-1/2 z-[500] w-full max-w-sm px-4 pointer-events-auto"
             style={{ bottom: 'calc(var(--bottom-tab-base-height, 68px) + 12px)' }}
           >
-            <div className="bg-[rgba(255,255,255,0.96)] border border-[#E4DED3] rounded-[16px] p-4.5 relative shadow-xl backdrop-blur-md">
+            <div className="glass rounded-[24px] p-4.5 relative shadow-2xl border border-white/80 backdrop-blur-xl">
               <button 
                 onClick={() => setSelectedPoiId(null)}
-                className="absolute top-4 right-4 text-[#17402C]/60 hover:text-[#17402C] text-xs bg-[#17402C]/10 w-6 h-6 rounded-full flex items-center justify-center transition-colors"
+                className="absolute top-4 right-4 glass-circle-btn !w-6.5 !h-6.5 text-[11px]"
                 aria-label="Fermer"
               >
                 ✕
               </button>
               
               <div className="flex items-center gap-2 mb-1 flex-wrap">
-                <span className="text-[10px] font-mono tracking-wider font-bold text-[#17402C] uppercase bg-[#17402C]/10 px-2 py-0.5 rounded-md">
+                <span className="glass-pill text-[10px] font-mono tracking-wider font-bold text-[#17402C] uppercase">
                   {selectedPoi.category === 'refuge' ? '🏡 Refuge' : selectedPoi.category === 'summit' ? '⛰️ Sommet' : selectedPoi.category === 'water' ? '💧 Point d\'eau' : selectedPoi.category === 'viewpoint' ? '👁️ Panorama' : selectedPoi.category === 'camping' ? '⛺ Bivouac / Camping' : selectedPoi.category === 'waterfall' ? '🌊 Cascade' : '⛰️ Col'}
                 </span>
                 {selectedPoi.is_verified && (
-                  <span className="text-[9px] font-mono font-bold text-emerald-700 bg-emerald-100 px-1.5 py-0.5 rounded">Vérifié ✓</span>
+                  <span className="text-[9px] font-mono font-bold text-emerald-800 bg-emerald-100/80 px-2 py-0.5 rounded-full border border-emerald-200">Vérifié ✓</span>
                 )}
                 {selectedPoi.altitude_m && (
-                  <span className="text-[10px] font-mono font-bold text-[#17402C] bg-sage-200/50 px-1.5 py-0.5 rounded">
+                  <span className="glass-pill text-[10px] font-mono font-bold text-[#17402C]">
                     📈 {selectedPoi.altitude_m} m
                   </span>
                 )}
@@ -1058,14 +1057,14 @@ export default function InteractiveMap() {
               
               {/* Detailed Description */}
               {selectedPoi.details && (
-                <p className="text-xs text-[#365233] leading-relaxed mb-3 bg-[#FAF8F5] p-2 rounded-lg border border-[#E4DED3]/60">
+                <p className="text-xs text-[#2D4536] leading-relaxed mb-3 p-2 rounded-xl bg-white/70 border border-white/60">
                   {selectedPoi.details}
                 </p>
               )}
 
               {/* Category-specific specs */}
               {selectedPoi.category === 'refuge' && (
-                <div className="grid grid-cols-2 gap-2 text-[11px] font-mono text-[#17402C] mb-3 bg-[#17402C]/5 p-2 rounded-lg">
+                <div className="grid grid-cols-2 gap-2 text-[11px] font-mono text-[#17402C] mb-3 p-2 rounded-xl bg-white/70 border border-white/60">
                   <div>
                     <span className="text-[#5A7064] block text-[9px] uppercase">Capacité</span>
                     <span className="font-bold">{selectedPoi.capacity ? `${selectedPoi.capacity} couchages` : 'Ouvert'}</span>
@@ -1077,20 +1076,13 @@ export default function InteractiveMap() {
                 </div>
               )}
 
-              {selectedPoi.category === 'water' && selectedPoi.is_potable !== null && selectedPoi.is_potable !== undefined && (
-                <div className={`p-2 rounded-lg mb-3 text-xs font-semibold flex items-center gap-2 ${selectedPoi.is_potable ? 'bg-emerald-50 text-emerald-800 border border-emerald-200' : 'bg-amber-50 text-amber-800 border border-amber-200'}`}>
-                  <span>{selectedPoi.is_potable ? '✅' : '⚠️'}</span>
-                  <span>{selectedPoi.is_potable ? 'Eau potable contrôlée et potable' : 'Eau naturelle non traitée — filtration recommandée'}</span>
-                </div>
-              )}
-
               {/* Action Buttons */}
-              <div className="flex items-center gap-2 pt-2 border-t border-[#E4DED3]">
+              <div className="flex items-center gap-2 pt-2 border-t border-[#17402C]/10">
                 <a
                   href={`https://www.google.com/maps/dir/?api=1&destination=${selectedPoi.lat},${selectedPoi.lng}`}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="flex-1 h-8 rounded-xl bg-gradient-to-b from-[#17402C] to-[#2D6B4A] text-white text-xs font-bold flex items-center justify-center gap-1.5 shadow-sm hover:brightness-110 active:scale-98 transition-all"
+                  className="glass-capsule-btn primary flex-1 !min-h-[36px] text-xs font-bold flex items-center justify-center gap-1.5 shadow-sm active:scale-95 transition-all no-underline"
                 >
                   <span>🧭</span>
                   <span>Itinéraire GPS</span>
@@ -1099,7 +1091,7 @@ export default function InteractiveMap() {
                 {selectedPoi.phone && (
                   <a
                     href={`tel:${selectedPoi.phone}`}
-                    className="h-8 px-3 rounded-xl bg-[#FAF8F5] hover:bg-white text-[#17402C] text-xs font-bold border border-[#E4DED3] flex items-center justify-center gap-1 transition-colors"
+                    className="glass-circle-btn !w-9 !h-9 flex items-center justify-center"
                     title="Appeler"
                   >
                     <span>📞</span>
@@ -1111,7 +1103,7 @@ export default function InteractiveMap() {
                     href={selectedPoi.website.startsWith('http') ? selectedPoi.website : `https://${selectedPoi.website}`}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="h-8 px-3 rounded-xl bg-[#FAF8F5] hover:bg-white text-[#17402C] text-xs font-bold border border-[#E4DED3] flex items-center justify-center gap-1 transition-colors"
+                    className="glass-circle-btn !w-9 !h-9 flex items-center justify-center"
                     title="Site web officiel"
                   >
                     <span>🌐</span>

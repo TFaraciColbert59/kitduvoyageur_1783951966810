@@ -391,8 +391,14 @@ export default function ExplorerMap({
       const marker = L.marker(validLoc, { icon });
       marker.addTo(mapRef.current!);
       userMarkerRef.current = marker;
+
+      if (!isUserPanned && !userDraggingRef.current && mapRef.current && (mapRef.current as any)._loaded && !disableGeolocate) {
+        try {
+          mapRef.current.flyTo(validLoc, 14, { duration: 1.0 });
+        } catch { /* ignore */ }
+      }
     });
-  }, [userLocation, userAccuracy, headingDeg, mapReady]);
+  }, [userLocation, userAccuracy, headingDeg, mapReady, isUserPanned, disableGeolocate]);
 
   // Live GPS Track Polyline (from userPositions)
   useEffect(() => {

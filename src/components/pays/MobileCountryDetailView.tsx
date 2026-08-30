@@ -65,19 +65,19 @@ export default function MobileCountryDetailView({
       className="md:hidden min-h-screen bg-transparent pb-[calc(175px+env(safe-area-inset-bottom,0px))] text-[#17402C] font-sans [overscroll-behavior-y:none]"
     >
       
-      {/* ── 1. FLOATING TOP CONTROLS (Dégagé & Spacieux) ── */}
+      {/* ── 1. FLOATING TOP CONTROLS (Apple HIG Rigor) ── */}
       <div className="px-4 pt-2 flex items-center justify-between gap-2 z-20 relative">
         <Link
           href="/pays"
           onClick={() => triggerHaptic('light')}
-          className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full bg-white/90 hover:bg-white text-xs font-bold text-[#17402C] border border-white/90 shadow-sm transition-all active:scale-95 cursor-pointer"
+          className="glass-capsule-btn !min-h-[32px] !py-1 !px-3.5 !text-xs !font-bold flex items-center gap-1.5 shadow-xs active:scale-95 transition-all cursor-pointer"
         >
-          <span className="text-sm font-bold">‹</span>
+          <span className="text-sm leading-none font-bold">←</span>
           <span>Atlas</span>
         </Link>
 
         <div className="flex items-center gap-2">
-          <div className="glass-pill !px-2.5 !py-1 text-[10.5px] font-mono font-bold text-[#17402C] bg-white/90 border border-white/90 shadow-2xs flex items-center gap-1.5">
+          <div className="glass-pill !px-3 !py-1 text-[11px] font-mono font-bold text-[#17402C] flex items-center gap-1.5 shadow-2xs">
             <CountryFlag code={country.code} name={country.nom} size="xs" />
             <span>{country.continent}</span>
           </div>
@@ -88,7 +88,7 @@ export default function MobileCountryDetailView({
               triggerHaptic('selection');
               router.push(`/ai-configurator?country=${country.code}`);
             }}
-            className="glass-capsule-btn primary !min-h-[32px] !py-1 !px-3.5 !text-xs !font-bold !gap-1.5 shadow-sm"
+            className="glass-capsule-btn primary !min-h-[32px] !py-1 !px-3.5 !text-xs !font-bold !gap-1.5 shadow-sm active:scale-95 transition-all cursor-pointer"
           >
             <span>✨</span>
             <span>Kit IA</span>
@@ -425,13 +425,11 @@ export default function MobileCountryDetailView({
                           triggerHaptic('light');
                           setActiveCat(cat.id as any);
                         }}
-                        className={`px-3 py-1.5 rounded-full text-xs font-bold whitespace-nowrap transition-all border ${
-                          isSelected
-                            ? 'bg-[#17402C] text-white border-[#17402C] shadow-sm'
-                            : 'bg-white/90 text-[#17402C] border-white/90 shadow-2xs hover:bg-white'
+                        className={`glass-capsule-btn !min-h-[30px] !py-1 !px-3.5 !text-xs !font-bold whitespace-nowrap active:scale-95 transition-all cursor-pointer ${
+                          isSelected ? 'primary shadow-sm' : 'shadow-2xs'
                         }`}
                       >
-                        {cat.label}
+                        <span>{cat.label}</span>
                       </button>
                     );
                   })}

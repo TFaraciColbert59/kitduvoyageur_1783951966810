@@ -112,6 +112,36 @@ export default function ExplorerClient({ initialTrails }: ExplorerClientProps) {
   const queriedBboxRef = useRef(queriedBbox);
   queriedBboxRef.current = queriedBbox;
 
+  // Géolocalisation immédiate au montage pour centrer sur la position de l'utilisateur par défaut
+  useEffect(() => {
+    if (typeof window !== 'undefined' && 'geolocation' in navigator && !initialGeoAppliedRef.current) {
+      navigator.geolocation.getCurrentPosition(
+        (pos) => {
+          const lat = pos.coords.latitude;
+          const lng = pos.coords.longitude;
+          setUserLocation([lat, lng]);
+          if (!initialGeoAppliedRef.current) {
+            initialGeoAppliedRef.current = true;
+            const deltaLat = 0.018;
+            const deltaLng = 0.026 / Math.cos((lat * Math.PI) / 180);
+            setQueriedBbox({
+              minLat: lat - deltaLat,
+              maxLat: lat + deltaLat,
+              minLng: lng - deltaLng,
+              maxLng: lng + deltaLng,
+              zoom: 14,
+            });
+            setShowSearchHereButton(false);
+          }
+        },
+        () => {
+          // Si refusé, conservation de la vue initiale par défaut
+        },
+        { enableHighAccuracy: true, timeout: 6000 }
+      );
+    }
+  }, []);
+
   const handleViewportChange = useCallback((bbox: { minLat: number; maxLat: number; minLng: number; maxLng: number; zoom: number }) => {
     setLiveViewportBbox(bbox);
     const qBbox = queriedBboxRef.current;
