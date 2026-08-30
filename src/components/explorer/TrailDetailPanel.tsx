@@ -40,7 +40,7 @@ const SCORE_LABELS: { key: keyof MapTrail; label: string; icon: string }[] = [
   { key: 'panorama_score', label: 'Points de vue', icon: '🔭' },
 ];
 
-const SUB_CARD_INSET = 'inset 0 1px 1px rgba(255, 255, 255, 0.4)';
+const SUB_CARD_INSET = 'inset 0 1px 1px rgba(255, 255, 255, 0.6)';
 
 function ScoreBar({ value }: { value: number }) {
   return (
@@ -63,7 +63,16 @@ function StatPill({
   value: string;
 }) {
   return (
-    <div className="glass-sub-card p-2.5 flex flex-col items-center justify-center text-center gap-0.5" style={{ boxShadow: SUB_CARD_INSET }}>
+    <div
+      className="p-2.5 rounded-[18px] flex flex-col items-center justify-center text-center gap-0.5"
+      style={{
+        background: 'rgba(255, 255, 255, 0.45)',
+        backdropFilter: 'blur(12px)',
+        WebkitBackdropFilter: 'blur(12px)',
+        border: '1px solid rgba(255, 255, 255, 0.55)',
+        boxShadow: SUB_CARD_INSET,
+      }}
+    >
       <div className="text-[#17402C]">{icon}</div>
       <span className="text-[10px] uppercase tracking-wider text-[#5A7064] font-semibold">{label}</span>
       <span className="text-xs sm:text-sm font-mono font-bold text-[#17402C]">{value}</span>
@@ -118,23 +127,24 @@ export default function TrailDetailPanel({ trail, onClose }: Props) {
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         exit={{ opacity: 0 }}
-        className="fixed inset-0 bg-[#0B1F17]/35 backdrop-blur-[2px] pointer-events-auto"
+        className="fixed inset-0 bg-[#0B1F17]/25 backdrop-blur-[2px] pointer-events-auto"
         onClick={onClose}
       />
 
-      {/* Floating Bento Card */}
+      {/* Floating Bento Card — True Translucent Liquid Glass */}
       <motion.div
         initial={{ x: '110%', opacity: 0, scale: 0.96 }}
         animate={{ x: 0, opacity: 1, scale: 1 }}
         exit={{ x: '110%', opacity: 0, scale: 0.96 }}
         transition={{ type: 'spring', stiffness: 360, damping: 32 }}
         onClick={(e) => e.stopPropagation()}
-        className="relative pointer-events-auto w-full max-w-[460px] sm:max-w-[480px] h-[calc(100vh-20px)] sm:h-[calc(100vh-32px)] md:h-[calc(100vh-48px)] flex flex-col justify-between overflow-hidden rounded-[26px] sm:rounded-[32px] border border-white/85 shadow-2xl"
+        className="relative pointer-events-auto w-full max-w-[460px] sm:max-w-[480px] h-[calc(100vh-20px)] sm:h-[calc(100vh-32px)] md:h-[calc(100vh-48px)] flex flex-col justify-between overflow-hidden rounded-[26px] sm:rounded-[32px]"
         style={{
-          background: 'linear-gradient(180deg, rgba(255, 255, 255, 0.96) 0%, rgba(251, 250, 246, 0.92) 100%)',
-          backdropFilter: 'blur(30px) saturate(190%)',
-          WebkitBackdropFilter: 'blur(30px) saturate(190%)',
-          boxShadow: '0 24px 64px -12px rgba(23, 64, 44, 0.28), 0 0 0 1px rgba(255, 255, 255, 0.7), inset 0 1.5px 2px rgba(255, 255, 255, 1)',
+          background: 'linear-gradient(180deg, rgba(255, 255, 255, 0.45) 0%, rgba(251, 250, 246, 0.22) 100%)',
+          backdropFilter: 'blur(24px) saturate(180%)',
+          WebkitBackdropFilter: 'blur(24px) saturate(180%)',
+          border: '1px solid rgba(255, 255, 255, 0.65)',
+          boxShadow: '0 24px 64px -12px rgba(23, 64, 44, 0.18), inset 0 1.5px 2px rgba(255, 255, 255, 0.9)',
         }}
       >
         {/* Header Hero Image */}
@@ -144,43 +154,51 @@ export default function TrailDetailPanel({ trail, onClose }: Props) {
             alt={trail.name}
             className="w-full h-full object-cover"
           />
-          <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/30 to-transparent" />
+          <div className="absolute inset-0 bg-gradient-to-t from-black/75 via-black/25 to-transparent" />
 
-          {/* Top Actions */}
-          <div className="absolute top-3 left-3 right-3 flex items-center justify-between z-10">
+          {/* Top Actions — Refined Apple Glass Pills */}
+          <div className="absolute top-3.5 left-3.5 right-3.5 flex items-center justify-between z-10">
             <span
-              className="rounded-[10px] px-2.5 py-1 text-[11px] font-bold shadow-xs"
+              className="rounded-full px-3 py-1 text-[11px] font-bold shadow-xs"
               style={{
-                background: 'rgba(255, 255, 255, 0.92)',
-                border: '1px solid rgba(255, 255, 255, 0.60)',
+                background: 'rgba(255, 255, 255, 0.50)',
+                backdropFilter: 'blur(16px)',
+                WebkitBackdropFilter: 'blur(16px)',
+                border: '1px solid rgba(255, 255, 255, 0.65)',
                 color: diffColor,
               }}
             >
               {diffLabel}
             </span>
 
-            <div className="flex items-center gap-1.5">
+            <div className="flex items-center gap-2">
               <button
                 type="button"
                 onClick={handleShare}
-                className="w-8.5 h-8.5 rounded-full flex items-center justify-center text-[#17402C] transition-all active:scale-90 hover:bg-white cursor-pointer shadow-xs"
+                className="w-9 h-9 rounded-full flex items-center justify-center text-[#17402C] transition-all active:scale-90 hover:bg-white/80 cursor-pointer shadow-xs"
                 style={{
-                  background: 'rgba(255, 255, 255, 0.92)',
-                  border: '1px solid rgba(255, 255, 255, 0.60)',
+                  background: 'rgba(255, 255, 255, 0.45)',
+                  backdropFilter: 'blur(16px)',
+                  WebkitBackdropFilter: 'blur(16px)',
+                  border: '1px solid rgba(255, 255, 255, 0.65)',
                 }}
                 aria-label="Partager le sentier"
+                title="Partager"
               >
-                <Share2 size={14} />
+                <Share2 size={15} />
               </button>
               <button
                 type="button"
                 onClick={onClose}
-                className="w-8.5 h-8.5 rounded-full flex items-center justify-center text-[#17402C] transition-all active:scale-90 hover:bg-white cursor-pointer shadow-xs"
+                className="w-9 h-9 rounded-full flex items-center justify-center text-[#17402C] transition-all active:scale-90 hover:bg-white/80 cursor-pointer shadow-xs"
                 style={{
-                  background: 'rgba(255, 255, 255, 0.92)',
-                  border: '1px solid rgba(255, 255, 255, 0.60)',
+                  background: 'rgba(255, 255, 255, 0.45)',
+                  backdropFilter: 'blur(16px)',
+                  WebkitBackdropFilter: 'blur(16px)',
+                  border: '1px solid rgba(255, 255, 255, 0.65)',
                 }}
                 aria-label="Fermer la fiche détaillée"
+                title="Fermer"
               >
                 <X size={16} />
               </button>
@@ -190,10 +208,12 @@ export default function TrailDetailPanel({ trail, onClose }: Props) {
           {/* Title on Hero */}
           <div className="absolute bottom-3 left-3.5 right-3.5">
             <div
-              className="rounded-[14px] px-3 py-2 shadow-xs"
+              className="rounded-[16px] px-3.5 py-2.5 shadow-xs"
               style={{
-                background: 'rgba(255, 255, 255, 0.92)',
-                border: '1px solid rgba(255, 255, 255, 0.60)',
+                background: 'rgba(255, 255, 255, 0.65)',
+                backdropFilter: 'blur(16px)',
+                WebkitBackdropFilter: 'blur(16px)',
+                border: '1px solid rgba(255, 255, 255, 0.70)',
               }}
             >
               <p className="text-[10px] font-semibold uppercase tracking-wider text-[#365233] flex items-center gap-1 mb-0.5">
@@ -233,7 +253,16 @@ export default function TrailDetailPanel({ trail, onClose }: Props) {
           </div>
 
           {/* Scores Breakdown */}
-          <div className="glass-sub-card p-3.5 flex flex-col gap-2.5" style={{ boxShadow: SUB_CARD_INSET }}>
+          <div
+            className="p-3.5 rounded-[20px] flex flex-col gap-2.5"
+            style={{
+              background: 'rgba(255, 255, 255, 0.40)',
+              backdropFilter: 'blur(12px)',
+              WebkitBackdropFilter: 'blur(12px)',
+              border: '1px solid rgba(255, 255, 255, 0.50)',
+              boxShadow: SUB_CARD_INSET,
+            }}
+          >
             <h3 className="text-[10px] font-semibold uppercase tracking-wider text-[#5A7064]">
               Indicateurs d'expérience
             </h3>
@@ -255,7 +284,16 @@ export default function TrailDetailPanel({ trail, onClose }: Props) {
           </div>
 
           {/* AI Description / Insights */}
-          <div className="glass-sub-card p-3.5 flex flex-col gap-2" style={{ boxShadow: SUB_CARD_INSET }}>
+          <div
+            className="p-3.5 rounded-[20px] flex flex-col gap-2"
+            style={{
+              background: 'rgba(255, 255, 255, 0.40)',
+              backdropFilter: 'blur(12px)',
+              WebkitBackdropFilter: 'blur(12px)',
+              border: '1px solid rgba(255, 255, 255, 0.50)',
+              boxShadow: SUB_CARD_INSET,
+            }}
+          >
             <div className="flex items-center gap-1.5 text-[10px] font-semibold uppercase tracking-wider text-[#5A7064]">
               <Sparkles size={13} className="text-[#17402C]" />
               <span>Guide & Points d'intérêt</span>
@@ -267,7 +305,16 @@ export default function TrailDetailPanel({ trail, onClose }: Props) {
           </div>
 
           {/* Offline Storage Card */}
-          <div className="glass-sub-card p-3 flex items-center justify-between gap-3" style={{ boxShadow: SUB_CARD_INSET }}>
+          <div
+            className="p-3 rounded-[20px] flex items-center justify-between gap-3"
+            style={{
+              background: 'rgba(255, 255, 255, 0.40)',
+              backdropFilter: 'blur(12px)',
+              WebkitBackdropFilter: 'blur(12px)',
+              border: '1px solid rgba(255, 255, 255, 0.50)',
+              boxShadow: SUB_CARD_INSET,
+            }}
+          >
             <div className="flex items-center gap-2.5 min-w-0">
               <div className="w-8 h-8 rounded-full bg-[#17402C]/10 flex items-center justify-center text-[#17402C] shrink-0">
                 {isOfflineAvailable ? <Check size={16} /> : <Download size={16} />}
@@ -287,10 +334,10 @@ export default function TrailDetailPanel({ trail, onClose }: Props) {
             <button
               type="button"
               onClick={handleOfflineToggle}
-              className={`h-8 px-3 rounded-xl text-xs font-bold transition-all cursor-pointer active:scale-95 shrink-0 ${
+              className={`h-8 px-3.5 rounded-xl text-xs font-bold transition-all cursor-pointer active:scale-95 shrink-0 ${
                 isOfflineAvailable
-                  ? 'bg-rose-50 text-rose-700 border border-rose-200 hover:bg-rose-100'
-                  : 'bg-white/80 hover:bg-white text-[#17402C] border border-white/80 shadow-2xs'
+                  ? 'bg-rose-50/80 text-rose-700 border border-rose-200/80 hover:bg-rose-100'
+                  : 'bg-white/60 hover:bg-white/90 text-[#17402C] border border-white/70 shadow-2xs backdrop-blur-md'
               }`}
             >
               {isOfflineAvailable ? 'Supprimer' : 'Télécharger'}
@@ -298,14 +345,15 @@ export default function TrailDetailPanel({ trail, onClose }: Props) {
           </div>
         </div>
 
-        {/* Sticky Action Footer — Apple Liquid Glass */}
+        {/* Sticky Action Footer — Apple Liquid Glass (Icon-Free Clean Typography) */}
         <div
-          className="p-3.5 sm:p-4 flex flex-col sm:flex-row gap-2.5 shrink-0 border-t border-white/60"
+          className="p-3.5 sm:p-4 flex flex-col sm:flex-row gap-2.5 shrink-0"
           style={{
-            background: 'linear-gradient(180deg, rgba(255, 255, 255, 0.75) 0%, rgba(251, 250, 246, 0.60) 100%)',
+            background: 'linear-gradient(180deg, rgba(255, 255, 255, 0.40) 0%, rgba(251, 250, 246, 0.20) 100%)',
             backdropFilter: 'blur(20px) saturate(180%)',
             WebkitBackdropFilter: 'blur(20px) saturate(180%)',
-            boxShadow: 'inset 0 1px 0 rgba(255, 255, 255, 0.9)',
+            borderTop: '1px solid rgba(255, 255, 255, 0.50)',
+            boxShadow: 'inset 0 1px 0 rgba(255, 255, 255, 0.8)',
           }}
         >
           <button
@@ -313,9 +361,8 @@ export default function TrailDetailPanel({ trail, onClose }: Props) {
             onClick={() => {
               router.push(`/preparer-randonnee?routeId=${trail.id}`);
             }}
-            className="flex-1 h-11 rounded-2xl bg-white/80 hover:bg-white text-[#17402C] font-bold text-xs sm:text-sm flex items-center justify-center gap-2 border border-white/80 shadow-xs active:scale-[0.98] transition-all cursor-pointer"
+            className="flex-1 h-11 rounded-2xl bg-white/55 hover:bg-white/85 text-[#17402C] font-bold text-xs sm:text-sm flex items-center justify-center border border-white/70 backdrop-blur-xl shadow-xs active:scale-[0.98] transition-all cursor-pointer"
           >
-            <Backpack size={16} />
             <span>Préparer le matériel</span>
           </button>
 
@@ -324,9 +371,8 @@ export default function TrailDetailPanel({ trail, onClose }: Props) {
             onClick={() => {
               router.push(`/randonnee-active?routeId=${trail.id}`);
             }}
-            className="flex-1 h-11 rounded-2xl bg-gradient-to-b from-[#17402C] to-[#2D5A27] text-white font-bold text-xs sm:text-sm flex items-center justify-center gap-2 shadow-[0_4px_16px_rgba(23,64,44,0.3),inset_0_1px_1px_rgba(255,255,255,0.4)] hover:brightness-110 active:scale-[0.98] transition-all cursor-pointer"
+            className="flex-1 h-11 rounded-2xl bg-[#17402C] hover:bg-[#0B1F17] text-white font-bold text-xs sm:text-sm flex items-center justify-center shadow-[0_4px_16px_rgba(23,64,44,0.25),inset_0_1px_1px_rgba(255,255,255,0.4)] active:scale-[0.98] transition-all cursor-pointer"
           >
-            <Play size={15} className="fill-current" />
             <span>Commencer tout de suite</span>
           </button>
         </div>
