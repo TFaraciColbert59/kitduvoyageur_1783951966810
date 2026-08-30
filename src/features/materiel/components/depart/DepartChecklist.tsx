@@ -611,7 +611,7 @@ export function DepartChecklist({
                               key={itemKey}
                               id={`checklist-item-${itemKey}`}
                               className={cn(
-                                'flex items-center justify-between gap-2 px-2.5 py-2 rounded-xl transition-all',
+                                'flex items-center justify-between gap-2.5 px-3 py-2.5 rounded-xl transition-all',
                                 'min-h-[44px]',
                                 isHighlighted && 'ring-2 ring-[#8A241B] bg-[#8A241B]/15',
                                 item.is_checked
@@ -630,7 +630,7 @@ export function DepartChecklist({
                               >
                                 <span
                                   className={cn(
-                                    'shrink-0 w-5 h-5 rounded-md border-2 flex items-center justify-center transition-all duration-150',
+                                    'shrink-0 w-5 h-5 rounded-full border-2 flex items-center justify-center transition-all duration-150',
                                     hasError
                                       ? 'border-red-400 bg-red-50'
                                       : item.is_checked

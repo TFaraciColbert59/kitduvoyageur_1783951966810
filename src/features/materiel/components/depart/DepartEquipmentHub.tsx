@@ -437,9 +437,9 @@ export function DepartEquipmentHub({
       </div>
 
       {/* ════ DISPOSITION D'ÉLITE 2 COLONNES (Grille à gauche + Checklist à droite) ════ */}
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-5 items-start">
+      <div className="grid grid-cols-1 lg:grid-cols-12 xl:grid-cols-12 gap-5 items-start w-full">
         {/* ── COLONNE CATALOGUE 3-CARDS (Span 8) ── */}
-        <div className={cn('space-y-4 min-w-0', mobileTab === 'bag' ? 'hidden md:block lg:col-span-8' : 'lg:col-span-8')}>
+        <div className={cn('space-y-4 min-w-0 w-full', mobileTab === 'bag' ? 'hidden md:block lg:col-span-7 xl:col-span-7 2xl:col-span-8' : 'lg:col-span-7 xl:col-span-7 2xl:col-span-8')}>
           <div className="glass rounded-[28px] p-5 sm:p-6 space-y-4 border border-white/80 dark:border-white/10 shadow-sm backdrop-blur-md">
             {/* Top Header Apple */}
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-black/5 dark:border-white/10 pb-3.5">
@@ -586,7 +586,7 @@ export function DepartEquipmentHub({
             </div>
 
             {/* ════ GRILLE DES CARTES PAR 3 (iOS Apple Card Layout Épuré) ════ */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-3.5 max-h-[660px] overflow-y-auto no-scrollbar pr-0.5">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-2 2xl:grid-cols-3 gap-4 max-h-[680px] overflow-y-auto no-scrollbar pr-0.5">
               {filteredItems.length === 0 ? (
                 <div className="col-span-full py-12 px-4 text-center bg-white/40 rounded-3xl border border-dashed border-black/10 text-xs text-[#5A7064] space-y-2">
                   <Boxes size={24} className="mx-auto text-[#5A7064]/60" />
@@ -747,7 +747,7 @@ export function DepartEquipmentHub({
         </div>
 
         {/* ── COLONNE CHECKLIST DU SAC (Span 4) ── */}
-        <div className={cn('space-y-3', mobileTab === 'catalog' ? 'hidden md:block lg:col-span-4' : 'lg:col-span-4')}>
+        <div className={cn('space-y-3 w-full min-w-[340px] xl:min-w-[380px]', mobileTab === 'catalog' ? 'hidden md:block lg:col-span-5 xl:col-span-5 2xl:col-span-4' : 'lg:col-span-5 xl:col-span-5 2xl:col-span-4')}>
           <div className="sticky top-3 space-y-2">
             <div className="flex items-center justify-between px-1.5">
               <span className="text-xs font-bold uppercase tracking-wider text-[#5A7064] flex items-center gap-1.5">

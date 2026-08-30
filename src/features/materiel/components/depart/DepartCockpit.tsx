@@ -181,7 +181,7 @@ export function DepartCockpit({
   const showAll = activeSection === 'all';
 
   const renderMainContent = () => (
-    <div className="flex flex-col gap-3.5 max-w-5xl mx-auto w-full">
+    <div className="flex flex-col gap-4 w-full">
       {/* ════ BANNIÈRE HORS-LIGNE TRANSPARENTE ════ */}
       {!isOnline && (
         <div className="p-3 rounded-2xl bg-amber-500/15 border border-amber-500/30 text-[#17402C] text-xs font-semibold flex items-center justify-between gap-2 shadow-2xs">
@@ -362,7 +362,7 @@ export function DepartCockpit({
       </div>
 
       {/* ════ 2. VERSION DESKTOP COCKPIT 3 COLONNES (hidden md:flex) ════ */}
-      <div className="hidden md:flex h-full overflow-hidden max-w-[1600px] w-full mx-auto px-3 lg:px-5 py-2 gap-4 lg:gap-5 items-start">
+      <div className="hidden md:flex h-full overflow-hidden max-w-[1920px] w-full mx-auto px-3 lg:px-6 py-2 gap-5 items-start">
         {/* Colonne 1 : Sidebar Gauche (Navigation & Switcher) */}
         <div className="w-[240px] xl:w-[250px] shrink-0 h-full overflow-hidden">
           <DepartLeftSidebar
