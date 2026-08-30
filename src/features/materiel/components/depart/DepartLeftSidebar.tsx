@@ -1,5 +1,5 @@
 ﻿'use client';
-import React from 'react';
+import React, { useState } from 'react';
 import Link from 'next/link';
 import {
   Compass,
@@ -11,9 +11,17 @@ import {
   Edit3,
   Printer,
   ChevronRight,
+  ChevronDown,
   Zap,
   Wifi,
   WifiOff,
+  Boxes,
+  Layers,
+  Sparkles,
+  ShoppingBag,
+  Share2,
+  Bell,
+  Handshake,
 } from 'lucide-react';
 import { KitSwitcher } from './KitSwitcher';
 import { Badge } from '@/components/ui/Badge';
@@ -49,6 +57,7 @@ export function DepartLeftSidebar({
   batteryLevel = null,
   isOnline = true,
 }: DepartLeftSidebarProps) {
+  const [isEcosystemOpen, setIsEcosystemOpen] = useState(true);
   const checkedCount = depart.assignedKit.items.filter((i) => i.is_checked).length;
   const itemsCount = depart.assignedKit.items.length;
   const totalWeightStr = formatWeight(depart.totalPackWeightG);
@@ -71,7 +80,12 @@ export function DepartLeftSidebar({
       label: '1. Statut & Départ',
       icon: Compass,
       badge: `${depart.readinessScore.percentage}%`,
-      badgeColor: depart.readinessScore.status === 'ok' ? 'bg-[#17402C] text-white' : depart.readinessScore.status === 'warning' ? 'bg-[#8C6418] text-white' : 'bg-[#8A241B] text-white',
+      badgeColor:
+        depart.readinessScore.status === 'ok'
+          ? 'bg-[#17402C] text-white'
+          : depart.readinessScore.status === 'warning'
+          ? 'bg-[#8C6418] text-white'
+          : 'bg-[#8A241B] text-white',
     },
     {
       id: 'alerts',
@@ -82,7 +96,7 @@ export function DepartLeftSidebar({
     },
     {
       id: 'checklist',
-      label: '3. Checklist & Vivres',
+      label: '3. Sac & Vivres',
       icon: CheckSquare,
       badge: `${checkedCount}/${itemsCount}`,
       badgeColor: 'bg-[#17402C]/15 text-[#17402C]',
@@ -96,7 +110,7 @@ export function DepartLeftSidebar({
     },
     {
       id: 'terrain',
-      label: '5. Météo & Sécurité',
+      label: '5. Terrain & Météo',
       icon: MapPin,
       badge: depart.trail?.distance_km ? `${Math.round(depart.trail.distance_km)}km` : undefined,
       badgeColor: 'bg-[#17402C]/15 text-[#17402C]',
@@ -106,7 +120,7 @@ export function DepartLeftSidebar({
   return (
     <aside className="h-full flex flex-col justify-between glass rounded-[1.5rem] p-3.5 text-[#17402C] font-sans overflow-hidden border border-white/60 shadow-sm backdrop-blur-md">
       {/* Haut : Identité du trek & Navigation */}
-      <div className="space-y-3 overflow-y-auto no-scrollbar pr-0.5">
+      <div className="space-y-2.5 overflow-y-auto no-scrollbar pr-0.5">
         {/* En-tête miniature du départ */}
         <div className="p-3 rounded-2xl glass-sub-card space-y-2 border border-white/60 shadow-2xs">
           <div className="flex items-start justify-between gap-1.5">
@@ -163,8 +177,8 @@ export function DepartLeftSidebar({
           )}
         </div>
 
-        {/* Navigation verticale des 5 sections */}
-        <nav className="space-y-1" aria-label="Sections du cockpit de départ">
+        {/* Navigation verticale des 5 sections du cockpit */}
+        <nav className="space-y-0.5" aria-label="Sections du cockpit de départ">
           {sections.map((sec) => {
             const IconComp = sec.icon;
             const isSelected = activeSection === sec.id;
@@ -175,7 +189,7 @@ export function DepartLeftSidebar({
                 type="button"
                 onClick={() => onSectionChange(sec.id)}
                 className={cn(
-                  'w-full flex items-center justify-between gap-2 px-3 py-2 rounded-xl text-xs font-semibold transition-all cursor-pointer text-left',
+                  'w-full flex items-center justify-between gap-2 px-2.5 py-1.5 rounded-xl text-xs font-semibold transition-all cursor-pointer text-left',
                   isSelected
                     ? 'bg-[#17402C] text-white shadow-xs'
                     : 'text-[#17402C]/80 hover:text-[#17402C] hover:bg-white/40'
@@ -183,7 +197,7 @@ export function DepartLeftSidebar({
                 aria-current={isSelected ? 'page' : undefined}
               >
                 <div className="flex items-center gap-2 min-w-0">
-                  <IconComp size={14} className={isSelected ? 'text-white' : 'text-[#5A7064]'} />
+                  <IconComp size={13} className={isSelected ? 'text-white' : 'text-[#5A7064]'} />
                   <span className="truncate">{sec.label}</span>
                 </div>
 
@@ -204,16 +218,87 @@ export function DepartLeftSidebar({
                       {sec.badge}
                     </span>
                   )}
-                  {isSelected && <ChevronRight size={12} className="text-white/70" />}
+                  {isSelected && <ChevronRight size={11} className="text-white/70" />}
                 </div>
               </button>
             );
           })}
         </nav>
+
+        {/* ════ ÉCOSYSTÈME MATÉRIEL (Hub unifié) ════ */}
+        <div className="pt-2 border-t border-white/40 space-y-1">
+          <button
+            type="button"
+            onClick={() => setIsEcosystemOpen((v) => !v)}
+            className="w-full flex items-center justify-between text-[10.5px] font-bold uppercase tracking-wider text-[#5A7064] hover:text-[#17402C] px-1 py-0.5 cursor-pointer"
+          >
+            <span>Écosystème Matériel</span>
+            <ChevronDown size={12} className={cn('transition-transform', !isEcosystemOpen && '-rotate-90')} />
+          </button>
+
+          {isEcosystemOpen && (
+            <div className="space-y-0.5 pt-0.5">
+              <Link
+                href="/materiel/kits"
+                className="w-full flex items-center justify-between gap-2 px-2.5 py-1.5 rounded-xl text-xs font-semibold text-[#17402C]/80 hover:text-[#17402C] hover:bg-white/50 transition-colors"
+              >
+                <div className="flex items-center gap-2">
+                  <Layers size={13} className="text-[#2D6B4A]" />
+                  <span>Mes Kits</span>
+                </div>
+                <span className="text-[10px] font-mono text-[#5A7064]">{kits.length}</span>
+              </Link>
+
+              <Link
+                href="/materiel/inventaire"
+                className="w-full flex items-center justify-between gap-2 px-2.5 py-1.5 rounded-xl text-xs font-semibold text-[#17402C]/80 hover:text-[#17402C] hover:bg-white/50 transition-colors"
+              >
+                <div className="flex items-center gap-2">
+                  <Boxes size={13} className="text-[#2D6B4A]" />
+                  <span>Mon Inventaire</span>
+                </div>
+                <ChevronRight size={11} className="text-[#5A7064]" />
+              </Link>
+
+              <Link
+                href="/materiel/alertes"
+                className="w-full flex items-center justify-between gap-2 px-2.5 py-1.5 rounded-xl text-xs font-semibold text-[#17402C]/80 hover:text-[#17402C] hover:bg-white/50 transition-colors"
+              >
+                <div className="flex items-center gap-2">
+                  <Bell size={13} className="text-[#8A241B]" />
+                  <span>Alertes & Entretien</span>
+                </div>
+                <ChevronRight size={11} className="text-[#5A7064]" />
+              </Link>
+
+              <Link
+                href="/materiel/disponibilite"
+                className="w-full flex items-center justify-between gap-2 px-2.5 py-1.5 rounded-xl text-xs font-semibold text-[#17402C]/80 hover:text-[#17402C] hover:bg-white/50 transition-colors"
+              >
+                <div className="flex items-center gap-2">
+                  <Handshake size={13} className="text-[#8C6418]" />
+                  <span>Prêts & Disponibilité</span>
+                </div>
+                <ChevronRight size={11} className="text-[#5A7064]" />
+              </Link>
+
+              <Link
+                href="/materiel/boutique"
+                className="w-full flex items-center justify-between gap-2 px-2.5 py-1.5 rounded-xl text-xs font-semibold text-[#17402C]/80 hover:text-[#17402C] hover:bg-white/50 transition-colors"
+              >
+                <div className="flex items-center gap-2">
+                  <ShoppingBag size={13} className="text-[#17402C]" />
+                  <span>Boutique LKDV</span>
+                </div>
+                <ChevronRight size={11} className="text-[#5A7064]" />
+              </Link>
+            </div>
+          )}
+        </div>
       </div>
 
       {/* Bas : Actions rapides */}
-      <div className="pt-2.5 border-t border-white/40 grid grid-cols-2 gap-1.5 shrink-0">
+      <div className="pt-2 border-t border-white/40 grid grid-cols-2 gap-1.5 shrink-0">
         <Link
           href="/materiel/kits"
           className="glass-capsule-btn text-[10.5px] !py-1.5 !px-2 flex items-center justify-center gap-1 font-semibold truncate cursor-pointer"

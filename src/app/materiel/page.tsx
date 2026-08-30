@@ -1,24 +1,42 @@
-import { MaterielGrid } from '@/features/materiel/components/MaterielGrid';
-import { getMaterielSummary } from '@/features/materiel/services/getMaterielSummary';
-import { DemoLoginButton } from '@/features/materiel/components/DemoLoginButton';
+﻿import { Suspense } from 'react';
+import { getDepartDetail } from '@/features/materiel/services/getDepartDetail';
+import { getKits } from '@/features/materiel/services/getKits';
+import { getWeather } from '@/features/materiel/services/getWeather';
+import { DepartCockpit } from '@/features/materiel/components/depart/DepartCockpit';
+import { DepartCockpitSkeleton } from '@/features/materiel/components/depart/DepartCockpitSkeleton';
 
 export const dynamic = 'force-dynamic';
 
-export default async function MaterielPage() {
-  const data = await getMaterielSummary();
-  const isEmpty = data.kits.count === 0 && data.inventaire.count === 0;
+/**
+ * /materiel — Page Centrale de Matériel (Cockpit de Préparation au Départ).
+ * Fusionne la vision globale et la préparation active du trek.
+ */
+export default async function MaterielPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ kit?: string; route?: string }>;
+}) {
+  const { kit, route } = await searchParams;
+
+  const [depart, kits] = await Promise.all([
+    getDepartDetail(kit, route),
+    getKits(),
+  ]);
+
+  const weather = depart.trail?.lat && depart.trail?.lng
+    ? await getWeather(depart.trail.lat, depart.trail.lng, depart.trail.name)
+    : null;
+
+  const kitList = kits
+    .filter((k) => !k.is_trashed)
+    .map((k) => ({ id: k.id, name: k.name }));
 
   return (
-    <div className="w-full h-full flex-1 min-h-0 overflow-hidden flex flex-col justify-center items-center px-1 sm:px-4 py-0 md:py-6">
-      <div className="w-full max-w-[var(--page-max-w)] mx-auto flex flex-col justify-center h-full min-h-0 flex-1">
-        <h1 className="sr-only">Mon Matériel</h1>
-        {isEmpty && (
-          <div className="flex justify-center mb-2 shrink-0">
-            <DemoLoginButton />
-          </div>
-        )}
-        <MaterielGrid data={data} />
-      </div>
+    <div className="w-full h-full min-h-0 flex flex-col overflow-y-auto md:overflow-hidden">
+      <h1 className="sr-only">Cockpit Matériel & Préparation au Départ</h1>
+      <Suspense fallback={<DepartCockpitSkeleton />}>
+        <DepartCockpit depart={depart} weather={weather} kits={kitList} />
+      </Suspense>
     </div>
   );
 }

@@ -1,5 +1,6 @@
 'use client';
 import React, { useState, useEffect } from 'react';
+import Link from 'next/link';
 import dynamic from 'next/dynamic';
 import { motion, AnimatePresence, useReducedMotion } from 'framer-motion';
 import {
@@ -12,6 +13,7 @@ import {
   Zap,
   Wifi,
   WifiOff,
+  Layers,
 } from 'lucide-react';
 import { DepartHeader } from './DepartHeader';
 import { DepartAlerts } from './DepartAlerts';
@@ -300,6 +302,14 @@ export function DepartCockpit({ depart, weather, kits }: DepartCockpitProps) {
               </button>
 
               {kits.length > 1 && <KitSwitcher kits={kits} currentId={depart.id} />}
+              <Link
+                href="/materiel/kits"
+                className="p-1 rounded-lg bg-white/40 hover:bg-white/70 text-[#17402C] transition-colors"
+                title="Gérer tous mes kits"
+                aria-label="Gérer tous mes kits"
+              >
+                <Layers size={12} />
+              </Link>
             </div>
           </div>
 
