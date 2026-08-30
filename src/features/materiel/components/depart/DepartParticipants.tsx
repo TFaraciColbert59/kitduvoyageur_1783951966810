@@ -1,6 +1,6 @@
 ﻿'use client';
 import { useState } from 'react';
-import { Users, PhoneCall, ShieldCheck, Share2, Check } from 'lucide-react';
+import { Users, PhoneCall, ShieldCheck, Share2, Check, AlertOctagon, Radio } from 'lucide-react';
 import { GlassCard } from '@/components/ui/GlassCard';
 import type { Participant } from '@/features/materiel/types/trekHub';
 
@@ -116,6 +116,36 @@ export function DepartParticipants({
             </a>
           </div>
         )}
+
+        {/* ════ NUMÉROS D'URGENCE & SECOURS MONTAGNE (§Phase 5) ════ */}
+        <div className="p-2.5 rounded-xl bg-black/5 dark:bg-white/5 space-y-1.5">
+          <span className="text-[10px] font-bold uppercase tracking-wider text-[#5A7064] block">
+            Secours en Montagne & Territoire
+          </span>
+          <div className="grid grid-cols-2 gap-2 text-xs">
+            <a
+              href="tel:112"
+              className="p-2 rounded-xl bg-white/70 dark:bg-white/10 border border-white/60 flex items-center justify-between hover:bg-white text-[#17402C] font-semibold cursor-pointer"
+            >
+              <div className="flex items-center gap-1.5">
+                <AlertOctagon size={13} className="text-[#8A241B]" />
+                <span>112 (Europe)</span>
+              </div>
+              <PhoneCall size={11} className="text-[#5A7064]" />
+            </a>
+
+            <a
+              href="tel:15"
+              className="p-2 rounded-xl bg-white/70 dark:bg-white/10 border border-white/60 flex items-center justify-between hover:bg-white text-[#17402C] font-semibold cursor-pointer"
+            >
+              <div className="flex items-center gap-1.5">
+                <Radio size={13} className="text-[#2D6B4A]" />
+                <span>15 (SAMU / Urgence)</span>
+              </div>
+              <PhoneCall size={11} className="text-[#5A7064]" />
+            </a>
+          </div>
+        </div>
       </div>
     </GlassCard>
   );

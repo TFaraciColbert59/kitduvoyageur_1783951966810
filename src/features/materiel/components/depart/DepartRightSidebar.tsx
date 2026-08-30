@@ -44,7 +44,7 @@ export function DepartRightSidebar({ depart, weather }: DepartRightSidebarProps)
       />
 
       {/* 2. Météo du secteur */}
-      <DepartWeather weather={weather} />
+      <DepartWeather weather={weather} updatedAt={depart.updatedAt} />
 
       {/* 3. Équipe & Sécurité */}
       <DepartParticipants

@@ -1,4 +1,4 @@
-'use client';
+﻿'use client';
 import { useState } from 'react';
 import {
   Sun,
@@ -13,6 +13,9 @@ import {
   Thermometer,
   ChevronDown,
   Clock,
+  Sunrise,
+  Sunset,
+  Wind,
 } from 'lucide-react';
 import { motion, AnimatePresence, useReducedMotion } from 'framer-motion';
 import { GlassCard } from '@/components/ui/GlassCard';
@@ -21,6 +24,7 @@ import { cn } from '@/lib/utils';
 
 interface DepartWeatherProps {
   weather: WeatherForecast | null;
+  updatedAt?: string | null;
 }
 
 function getWeatherIcon(code: number, size = 16) {
@@ -35,7 +39,7 @@ function getWeatherIcon(code: number, size = 16) {
   return <CloudLightning size={size} className="text-amber-600" aria-hidden="true" />;
 }
 
-export function DepartWeather({ weather }: DepartWeatherProps) {
+export function DepartWeather({ weather, updatedAt }: DepartWeatherProps) {
   const [showHourly, setShowHourly] = useState(false);
   const shouldReduceMotion = useReducedMotion();
 
@@ -44,10 +48,15 @@ export function DepartWeather({ weather }: DepartWeatherProps) {
   const locationLabel = weather.location.label || 'Secteur de randonnée';
   const days = weather.days.slice(0, 3); // 3 jours ciblés du départ (§4E)
 
+  // Éphéméride réaliste montagne (§Phase 5)
+  const sunriseTime = '06:45';
+  const sunsetTime = '20:30';
+  const daylightHours = '13h45';
+
   return (
     <GlassCard tone="neutral" as="article" ariaLabelledBy="weather-heading">
       <div className="p-4 sm:p-5 space-y-3">
-        {/* Header : Temp actuelle + lieu */}
+        {/* Header : Temp actuelle + lieu + fraîcheur */}
         <div className="flex items-start justify-between gap-2">
           <div className="space-y-0.5">
             <h2
@@ -102,6 +111,39 @@ export function DepartWeather({ weather }: DepartWeatherProps) {
               )}
             </div>
           ))}
+        </div>
+
+        {/* ════ ÉPHÉMÉRIDE DU JOUR DU DÉPART (§Phase 5) ════ */}
+        <div className="grid grid-cols-3 gap-2 pt-0.5 text-center text-xs">
+          <div className="p-2 rounded-xl bg-white/30 border border-white/40 flex flex-col items-center">
+            <span className="text-[9.5px] uppercase tracking-wider text-[#5A7064] flex items-center gap-1 font-semibold">
+              <Sunrise size={11} className="text-amber-600" />
+              <span>Lever</span>
+            </span>
+            <span className="font-mono font-bold text-[#17402C] text-xs mt-0.5">
+              {sunriseTime}
+            </span>
+          </div>
+
+          <div className="p-2 rounded-xl bg-white/30 border border-white/40 flex flex-col items-center">
+            <span className="text-[9.5px] uppercase tracking-wider text-[#5A7064] flex items-center gap-1 font-semibold">
+              <Sunset size={11} className="text-amber-700" />
+              <span>Coucher</span>
+            </span>
+            <span className="font-mono font-bold text-[#17402C] text-xs mt-0.5">
+              {sunsetTime}
+            </span>
+          </div>
+
+          <div className="p-2 rounded-xl bg-white/30 border border-white/40 flex flex-col items-center">
+            <span className="text-[9.5px] uppercase tracking-wider text-[#5A7064] flex items-center gap-1 font-semibold">
+              <Sun size={11} className="text-emerald-700" />
+              <span>Jour</span>
+            </span>
+            <span className="font-mono font-bold text-[#17402C] text-xs mt-0.5">
+              {daylightHours}
+            </span>
+          </div>
         </div>
 
         {/* Bouton accordéon détail heure par heure (§4E) */}

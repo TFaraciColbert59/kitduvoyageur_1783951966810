@@ -209,7 +209,7 @@ export function DepartCockpit({ depart, weather, kits }: DepartCockpitProps) {
           aria-label="Terrain, météo et sécurité"
           className={cn('space-y-3.5', showAll && 'xl:hidden')}
         >
-          <DepartWeather weather={weather} />
+          <DepartWeather weather={weather} updatedAt={depart.updatedAt} />
           <DepartParticipants
             participants={depart.participants}
             emergencyContact={depart.emergencyContact}
