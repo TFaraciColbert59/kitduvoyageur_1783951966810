@@ -131,11 +131,12 @@ export default function PaysRightSidebar({
       </div>
 
       {/* WIDGET 2: MÉTÉO & CLIMAT EN DIRECT */}
+      {country.meteo && (
       <div className="glass p-3.5 space-y-2.5 rounded-2xl border border-white/70 shadow-xs text-[#17402C]">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-1.5">
             <h3 className="font-display font-bold text-xs text-[#17402C]">Météo en direct</h3>
-            <span className="text-[10px] text-[#5A7064]">· {country.meteo?.ville}</span>
+            <span className="text-[10px] text-[#5A7064]">· {country.meteo.ville}</span>
           </div>
           <span className="glass-pill text-[9px] font-mono font-bold text-[#5B7F55]">
             LIVE
@@ -146,10 +147,10 @@ export default function PaysRightSidebar({
         <div className="flex items-center justify-between p-2 rounded-xl bg-white/70 border border-white/60">
           <div>
             <div className="font-mono font-bold text-2xl text-[#17402C] leading-none">
-              {country.meteo?.temperature_actuelle}<span className="text-sm font-normal">°C</span>
+              {country.meteo.temperature_actuelle}<span className="text-sm font-normal">°C</span>
             </div>
             <div className="text-[10px] text-[#5A7064] mt-1 font-medium truncate">
-              {country.meteo?.conditions} — {country.meteo?.details}
+              {country.meteo.conditions} — {country.meteo.details}
             </div>
           </div>
           <div className="text-2xl">
@@ -182,13 +183,15 @@ export default function PaysRightSidebar({
           </div>
         </div>
       </div>
+      )}
 
       {/* WIDGET 3: SÉCURITÉ & VIGILANCE */}
+      {country.securite && (
       <div className="glass p-3.5 space-y-2.5 rounded-2xl border border-white/70 shadow-xs text-[#17402C]">
         <div className="flex items-center justify-between">
           <h3 className="font-display font-bold text-xs text-[#17402C]">Sécurité &amp; Terrain</h3>
           <span className="glass-pill text-[9px] font-mono font-bold text-[#17402C]">
-            🛡️ {country.securite?.niveau_label || 'Vigilance normale'}
+            🛡️ {country.securite.niveau_label}
           </span>
         </div>
 
@@ -199,7 +202,7 @@ export default function PaysRightSidebar({
               <div
                 key={s}
                 className={`flex-1 h-1.5 rounded-full transition-all ${
-                  s <= (country.securite?.niveau_score || 2)
+                  s <= (country.securite!.niveau_score)
                     ? 'bg-[#5B7F55]'
                     : 'bg-[#17402C]/10'
                 }`}
@@ -209,7 +212,7 @@ export default function PaysRightSidebar({
         </div>
 
         {/* Essential Advice */}
-        {country.securite?.conseils && country.securite.conseils.length > 0 && (
+        {country.securite.conseils && country.securite.conseils.length > 0 && (
           <div className="p-2 rounded-xl bg-white/70 border border-white/60 text-[10.5px]">
             <p className="font-bold text-[#17402C] truncate">
               {country.securite.conseils[0].titre}
@@ -220,6 +223,7 @@ export default function PaysRightSidebar({
           </div>
         )}
       </div>
+      )}
 
       {/* WIDGET 4: COMMUNAUTÉ & CARNETS */}
       <div className="glass p-3.5 space-y-2.5 rounded-2xl border border-white/70 shadow-xs text-[#17402C]">

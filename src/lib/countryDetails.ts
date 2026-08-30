@@ -8,6 +8,7 @@ export interface CountryDetail {
   nom_en?: string;
   slogan: string;
   subtitle: string;
+  subtitle_is_custom?: boolean;
   hero_image_url?: string;
   region: string;
   subregion?: string;
@@ -85,14 +86,14 @@ export interface CountryDetail {
     budget: { cle: string; val: string; isMono?: boolean }[];
     sante: { cle: string; val: string; isMono?: boolean }[];
   };
-  meteo: {
+  meteo?: {
     ville: string;
     temperature_actuelle: number;
     conditions: string;
     details: string;
     mois_temperatures: number[]; // 12 numbers for heights or temps
   };
-  securite: {
+  securite?: {
     niveau_label: string;
     niveau_score: number; // 1 to 5
     conseils: { titre: string; description: string }[];
@@ -1204,8 +1205,7 @@ export function getCompleteCountryDetail(
     monnaie: geoCountry?.currency_code || 'EUR',
     published: true,
   };
-
-  const custom = COUNTRY_DETAILS[codeUpper] || {};
+  const custom: Partial<CountryDetail> = COUNTRY_DETAILS[codeUpper] || {};
 
   const name = geoCountry?.name || custom.nom || base.nom;
   const capital = geoCountry?.capital || custom.capitale || base.capital || 'Capitale';
@@ -1229,6 +1229,7 @@ export function getCompleteCountryDetail(
     nom_en: geoCountry?.name_en || custom.nom_en || undefined,
     slogan: custom.slogan || 'nature & sentiers',
     subtitle: custom.subtitle || `Explorez ${name}, une destination remarquable située en ${continent} (${subregion}). Sommets, culture locale et paysages grandioses.`,
+    subtitle_is_custom: !!custom.subtitle,
     region: subregion,
     subregion: geoCountry?.subregion || undefined,
     saison_recommandee: custom.saison_recommandee || base.meilleure_saison || 'mai → octobre',
@@ -1325,47 +1326,7 @@ export function getCompleteCountryDetail(
         meta_3: 'Rencontres',
       },
     ],
-    activites: custom.activites || [
-      {
-        categorie: 'rand',
-        difficulte: 'Modérée',
-        difficulte_type: 'med',
-        saison: custom.saison_recommandee || base.meilleure_saison || 'Mai → Oct',
-        image_url: 'https://images.unsplash.com/photo-1469854523086-cc02fe5d8800?q=80&w=800&auto=format&fit=crop',
-        tag: 'Trek — Découverte',
-        titre: `Traversée sauvage en ${name}`,
-        titre_em: '',
-        description: `Itinéraire en autonomie à travers les reliefs et espaces préservés de ${name}.`,
-        duree: '3-5 jours',
-        prix: 'Gratuit',
-      },
-      {
-        categorie: 'nature',
-        difficulte: 'Facile',
-        difficulte_type: 'easy',
-        saison: 'Toute l’année',
-        image_url: 'https://images.unsplash.com/photo-1448375240586-882707db888b?q=80&w=800&auto=format&fit=crop',
-        tag: 'Observation — Faune',
-        titre: `Exploration des réserves`,
-        titre_em: '',
-        description: `Immersion dans les écosystèmes et réserves naturelles locales de la région ${subregion}.`,
-        duree: '1 jour',
-        prix: 'Accès libre',
-      },
-      {
-        categorie: 'cult',
-        difficulte: 'Facile',
-        difficulte_type: 'easy',
-        saison: 'Toute l’année',
-        image_url: 'https://images.unsplash.com/photo-1517411032315-54ef2cb783bb?q=80&w=800&auto=format&fit=crop',
-        tag: 'Culture — Patrimoine',
-        titre: `Découverte de ${capital}`,
-        titre_em: '',
-        description: `Visite des quartiers historiques, marchés traditionnels et musées de la capitale.`,
-        duree: '1 jour',
-        prix: 'Variable',
-      },
-    ],
+    activites: custom.activites || [],
     culture: custom.culture || {
       citation: `En ${name}, les traditions locales et le respect de la nature se transmettent de génération en génération.`,
       citation_em: 'Tradition',
@@ -1376,33 +1337,9 @@ export function getCompleteCountryDetail(
         { cle: 'Fuseau', valeur: timezone, valeur_em: '', description: `Décalage horaire standard applicable dans le pays.` },
         { cle: 'Région', valeur: subregion, valeur_em: '', description: `Position géographique et découpage régional.` },
       ],
-      fetes: [
-        { mois: 'Jan' },
-        { mois: 'Mar' },
-        { mois: 'Mai', nom: 'Printemps', isWarm: true },
-        { mois: 'Jul', nom: 'Fête locale' },
-        { mois: 'Sep' },
-        { mois: 'Nov' },
-      ],
+      fetes: (custom.culture as any)?.fetes || [],
     },
-    gastronomie: custom.gastronomie || [
-      {
-        numero: 1,
-        categorie: 'Tradition',
-        nom: 'Plat emblématique',
-        nom_em: 'du pays',
-        description: `Spécialité culinaire traditionnelle mijotée à base d'ingrédients locaux de saison.`,
-        image_url: 'https://images.unsplash.com/photo-1547592180-85f173990554?q=80&w=600&auto=format&fit=crop',
-      },
-      {
-        numero: 2,
-        categorie: 'Terroir',
-        nom: 'Saveurs',
-        nom_em: 'Régionales',
-        description: `Recettes du terroir partagées dans les auberges et villages de ${name}.`,
-        image_url: 'https://images.unsplash.com/photo-1534422298391-e4f8c172dddb?q=80&w=600&auto=format&fit=crop',
-      },
-    ],
+    gastronomie: custom.gastronomie || [],
     pratique: custom.pratique || {
       formalites: [], // Aucune donnée en base — carte masquée
       transport: [
@@ -1414,22 +1351,8 @@ export function getCompleteCountryDetail(
       ],
       sante: [], // Aucune donnée en base — carte masquée
     },
-    meteo: custom.meteo || {
-      ville: capital,
-      temperature_actuelle: 19,
-      conditions: 'Climat tempéré, ciel dégagé',
-      details: 'Prévisions et relevés climatiques standards',
-      mois_temperatures: [12, 14, 18, 24, 28, 34, 38, 36, 30, 22, 16, 12],
-    },
-    securite: custom.securite || {
-      niveau_label: base.danger_level === 'high' ? 'Vigilance renforcée' : base.danger_level === 'medium' ? 'Vigilance normale' : 'Très sûr',
-      niveau_score: base.danger_level === 'high' ? 2 : base.danger_level === 'medium' ? 3 : 5,
-      conseils: [
-        { titre: 'Précautions d’usage.', description: 'Conserver une copie numérique de ses pièces d’identité et noter les coordonnées consulaires.' },
-        { titre: 'Randonnée & Autonomie.', description: 'Emporter eau, carte topographique/GPX hors-ligne et trousse de premiers soins adaptée.' },
-        { titre: 'Assurance voyage.', description: 'Vérifier la prise en charge des activités outdoor et de recherche/secours en milieu isolé.' },
-      ],
-    },
+    meteo: custom.meteo || undefined,
+    securite: custom.securite || undefined,
   };
 }
 
