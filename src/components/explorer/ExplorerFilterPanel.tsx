@@ -1,7 +1,7 @@
 'use client';
 
 import React from 'react';
-import { RotateCcw, Users } from 'lucide-react';
+import { RotateCcw, Search } from 'lucide-react';
 import { getDifficultyColor } from './types';
 
 export interface PoiFilterItem {
@@ -21,6 +21,8 @@ export const POI_FILTERS: PoiFilterItem[] = [
 ];
 
 interface ExplorerFilterPanelProps {
+  searchQuery?: string;
+  onSearchChange?: (q: string) => void;
   activeDifficulties: string[];
   activeDuration: string | null;
   activeCategory: string;
@@ -45,6 +47,8 @@ const DURATION_FILTERS = [
 const CATEGORIES = ['Tout', 'Refuge', 'Itinéraire', 'Bivouac', 'Escalade', 'Multi-jours', 'Famille'];
 
 export default function ExplorerFilterPanel({
+  searchQuery,
+  onSearchChange,
   activeDifficulties,
   activeDuration,
   activeCategory,
@@ -63,6 +67,30 @@ export default function ExplorerFilterPanel({
 
   return (
     <div className="flex flex-col gap-3 font-sans">
+      {/* Recherche intégrée */}
+      <div className="flex flex-col gap-1.5">
+        <span className={sectionLabel}>Recherche directe</span>
+        <div className="relative w-full">
+          <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-[#5A7064]" />
+          <input
+            type="text"
+            placeholder="Rechercher par nom, lieu…"
+            value={searchQuery || ''}
+            onChange={(e) => onSearchChange?.(e.target.value)}
+            className="w-full h-9 pl-9 pr-8 rounded-full text-xs font-semibold text-[#17402C] placeholder:text-[#5A7064]/70 bg-white/70 hover:bg-white/90 focus:bg-white border border-white/80 shadow-2xs outline-none focus-visible:ring-1.5 focus-visible:ring-[#17402C]/30 transition-all"
+          />
+          {searchQuery && (
+            <button
+              type="button"
+              onClick={() => onSearchChange?.('')}
+              className="absolute right-2.5 top-1/2 -translate-y-1/2 w-4 h-4 rounded-full bg-black/10 hover:bg-black/20 flex items-center justify-center text-[#17402C] text-[10px] cursor-pointer"
+            >
+              ✕
+            </button>
+          )}
+        </div>
+      </div>
+
       {hasFilters && (
         <button
           type="button"

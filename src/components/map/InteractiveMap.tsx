@@ -877,24 +877,24 @@ export default function InteractiveMap() {
         {!showMobileFilters && (
           <button
             onClick={() => setShowMobileFilters(true)}
-            className="sm:hidden absolute top-[calc(env(safe-area-inset-top,0px)+14px)] left-3 z-[400] glass-capsule-btn !min-h-[36px] !px-3.5 !py-1 text-[#17402C] font-bold text-xs shadow-md flex items-center gap-1.5 active:scale-95 transition-all cursor-pointer"
+            className="sm:hidden absolute top-[calc(env(safe-area-inset-top,0px)+14px)] left-3 z-[400] glass-capsule-btn !min-h-[42px] !px-4 !py-1.5 text-[#17402C] font-bold text-sm shadow-lg flex items-center gap-2 active:scale-95 transition-all cursor-pointer"
             aria-label="Ouvrir les filtres"
           >
             <span>🔍</span>
             <span>Filtres</span>
-            <span className="bg-[#17402C]/10 text-[#17402C] text-[10px] px-1.5 py-0.5 rounded-full font-mono font-bold">
+            <span className="bg-[#17402C]/10 text-[#17402C] text-[11px] px-2 py-0.5 rounded-full font-mono font-bold">
               {filteredPois.length}
             </span>
           </button>
         )}
 
         {/* 2. Floating Zoom Controls (+ / −) & Recenter (Top Right) */}
-        <div className="absolute top-[calc(env(safe-area-inset-top,0px)+14px)] right-3 z-[400] flex flex-col gap-1.5">
+        <div className="absolute top-[calc(env(safe-area-inset-top,0px)+14px)] right-3 z-[400] flex flex-col gap-2">
           <button
             onClick={handleZoomIn}
             title="Zoom avant"
             aria-label="Zoom avant"
-            className="glass-circle-btn !w-9.5 !h-9.5 font-bold text-base shadow-md flex items-center justify-center cursor-pointer active:scale-95"
+            className="glass-circle-btn !w-11 !h-11 font-bold text-lg shadow-lg flex items-center justify-center cursor-pointer active:scale-95"
           >
             +
           </button>
@@ -902,7 +902,7 @@ export default function InteractiveMap() {
             onClick={handleZoomOut}
             title="Zoom arrière"
             aria-label="Zoom arrière"
-            className="glass-circle-btn !w-9.5 !h-9.5 font-bold text-base shadow-md flex items-center justify-center cursor-pointer active:scale-95"
+            className="glass-circle-btn !w-11 !h-11 font-bold text-lg shadow-lg flex items-center justify-center cursor-pointer active:scale-95"
           >
             −
           </button>
@@ -910,9 +910,9 @@ export default function InteractiveMap() {
             onClick={handleRecenter}
             title="Ma position (10 km)"
             aria-label="Ma position"
-            className="glass-circle-btn !w-9.5 !h-9.5 shadow-md flex items-center justify-center cursor-pointer active:scale-95"
+            className="glass-circle-btn !w-11 !h-11 shadow-lg flex items-center justify-center cursor-pointer active:scale-95"
           >
-            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#17402C" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#17402C" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round">
               <circle cx="12" cy="12" r="7" />
               <line x1="12" y1="1" x2="12" y2="4" />
               <line x1="12" y1="20" x2="12" y2="23" />
@@ -923,31 +923,31 @@ export default function InteractiveMap() {
         </div>
 
         {/* 3. Floating Tile Switcher (Top Right, positioned neatly below Zoom) */}
-        <div className="absolute top-[calc(env(safe-area-inset-top,0px)+140px)] right-3 z-[400] flex flex-col gap-1.5 glass p-1 rounded-2xl shadow-md border border-white/80">
+        <div className="absolute top-[calc(env(safe-area-inset-top,0px)+160px)] right-3 z-[400] flex flex-col gap-1.5 glass p-1 rounded-2xl shadow-lg border border-white/80">
           <button
             onClick={() => handleTileChange('osm')}
-            className={`glass-circle-btn !w-8 !h-8 ${tileMode === 'osm' ? 'primary' : ''}`}
+            className={`glass-circle-btn !w-10 !h-10 ${tileMode === 'osm' ? 'primary' : ''}`}
             title="Carte Standard (OSM)"
           >
-            <svg width="13" height="13" fill="none" stroke="currentColor" strokeWidth="2.2" viewBox="0 0 24 24">
+            <svg width="18" height="18" fill="none" stroke="currentColor" strokeWidth="2.2" viewBox="0 0 24 24">
               <path d="M3 6l6-3 6 3 6-3v12l-6 3-6-3-6 3V6z"></path><path d="M9 3v12"></path><path d="M15 6v12"></path>
             </svg>
           </button>
           <button
             onClick={() => handleTileChange('topo')}
-            className={`glass-circle-btn !w-8 !h-8 ${tileMode === 'topo' ? 'primary' : ''}`}
+            className={`glass-circle-btn !w-10 !h-10 ${tileMode === 'topo' ? 'primary' : ''}`}
             title="Relief / Topographique"
           >
-            <svg width="13" height="13" fill="none" stroke="currentColor" strokeWidth="2.2" viewBox="0 0 24 24">
+            <svg width="18" height="18" fill="none" stroke="currentColor" strokeWidth="2.2" viewBox="0 0 24 24">
               <path d="M8 3l4 8 5-5 5 15H2L8 3z"></path>
             </svg>
           </button>
           <button
             onClick={() => handleTileChange('satellite')}
-            className={`glass-circle-btn !w-8 !h-8 ${tileMode === 'satellite' ? 'primary' : ''}`}
+            className={`glass-circle-btn !w-10 !h-10 ${tileMode === 'satellite' ? 'primary' : ''}`}
             title="Vue Satellite"
           >
-            <svg width="13" height="13" fill="none" stroke="currentColor" strokeWidth="2.2" viewBox="0 0 24 24">
+            <svg width="18" height="18" fill="none" stroke="currentColor" strokeWidth="2.2" viewBox="0 0 24 24">
               <circle cx="12" cy="12" r="10"></circle><path d="M12 2a14.5 14.5 0 0 0 0 20 14.5 14.5 0 0 0 0-20"></path><path d="M2 12h20"></path>
             </svg>
           </button>
