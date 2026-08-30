@@ -449,6 +449,69 @@ export default function ExplorerClient({ initialTrails }: ExplorerClientProps) {
         </div>
       </header>
 
+      {/* ── 1B. MOBILE : CAPSULE DE RECHERCHE & FILTRES FLOTTANTE (STYLE APPLE MAPS) ── */}
+      <div
+        className="block md:hidden fixed left-3 right-3 z-[900] pointer-events-none"
+        style={{ top: 'calc(env(safe-area-inset-top, 0px) + 10px)' }}
+      >
+        <motion.div
+          initial={{ opacity: 0, y: -12 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="pointer-events-auto flex items-center justify-between gap-2.5 px-3 py-1.5 rounded-full shadow-xl"
+          style={{
+            background: 'linear-gradient(180deg, rgba(255, 255, 255, 0.90) 0%, rgba(246, 244, 239, 0.80) 100%)',
+            backdropFilter: 'blur(28px) saturate(190%)',
+            WebkitBackdropFilter: 'blur(28px) saturate(190%)',
+            border: '1.5px solid rgba(255, 255, 255, 0.95)',
+            boxShadow: '0 8px 32px -4px rgba(23, 64, 44, 0.14), inset 0 1.5px 2px rgba(255, 255, 255, 0.98)',
+          }}
+        >
+          {/* Logo LKDV */}
+          <Link href="/" className="flex items-center shrink-0" aria-label="Accueil LKDV">
+            <div className="w-8 h-8 min-w-[32px] min-h-[32px] max-w-[32px] max-h-[32px] rounded-full overflow-hidden border border-white/80 shadow-2xs bg-[#17402C]/10 flex items-center justify-center shrink-0">
+              <img
+                src="/assets/images/app_logo.png"
+                alt="LKDV"
+                width={32}
+                height={32}
+                className="w-full h-full object-cover rounded-full"
+              />
+            </div>
+          </Link>
+
+          {/* Trigger de Recherche Interactive */}
+          <button
+            type="button"
+            onClick={() => setFiltersOpen(true)}
+            className="flex-1 min-w-0 flex items-center gap-2 text-left cursor-pointer py-1"
+            aria-label="Rechercher et filtrer les sentiers"
+          >
+            <Search size={14} className="text-[#5A7064] shrink-0" />
+            <span className="text-xs font-semibold text-[#17402C] truncate">
+              {searchQuery.trim() ? searchQuery : 'Rechercher un sentier, lieu…'}
+            </span>
+          </button>
+
+          {/* Bouton Filtres avec Compteur */}
+          <button
+            type="button"
+            onClick={() => setFiltersOpen(true)}
+            className={`glass-circle-btn !w-9 !h-9 shrink-0 relative flex items-center justify-center cursor-pointer transition-all active:scale-95 shadow-xs ${
+              activeFilterCount > 0 || searchQuery.trim().length > 0 ? 'primary !text-white' : 'text-[#17402C]'
+            }`}
+            title="Filtres"
+            aria-label="Filtres"
+          >
+            <SlidersHorizontal size={15} strokeWidth={2.2} />
+            {(activeFilterCount > 0 || searchQuery.trim().length > 0) && (
+              <span className="absolute -top-1 -right-1 w-4 h-4 rounded-full bg-[#E11D48] text-white text-[9px] font-mono font-bold flex items-center justify-center shadow-xs border border-white">
+                {activeFilterCount + (searchQuery.trim().length > 0 ? 1 : 0)}
+              </span>
+            )}
+          </button>
+        </motion.div>
+      </div>
+
       {/* ── 2. CARTE UNIQUE PLEIN ÉCRAN (100% FLUIDE) ── */}
       <div className="absolute inset-0 w-full h-full z-0 pointer-events-auto" style={{ width: '100%', height: '100%' }}>
         <ExplorerMap
@@ -471,72 +534,71 @@ export default function ExplorerClient({ initialTrails }: ExplorerClientProps) {
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{ opacity: 0, y: -16, scale: 0.9 }}
             transition={{ type: 'spring', stiffness: 500, damping: 30 }}
-            className="fixed top-[calc(env(safe-area-inset-top,0px)+16px)] sm:top-[76px] left-1/2 -translate-x-1/2 z-[850] pointer-events-auto"
+            className="fixed top-[calc(env(safe-area-inset-top,0px)+64px)] sm:top-[76px] left-1/2 -translate-x-1/2 z-[850] pointer-events-auto"
           >
             <button
               type="button"
               onClick={handleSearchHere}
-              className="glass-circle-btn !w-12 !h-12 shadow-lg"
+              className="glass-capsule-btn primary !py-1.5 !px-4 text-xs font-bold shadow-lg flex items-center gap-1.5 cursor-pointer active:scale-95"
               title="Rechercher les randonnées dans cette zone"
               aria-label="Rechercher les randonnées dans cette zone"
             >
               <RotateCcw
-                size={20}
+                size={14}
                 strokeWidth={2.2}
                 className={`transition-transform duration-500 ${trailsFetching ? 'animate-spin' : 'hover:-rotate-90'}`}
               />
+              <span>Rechercher dans cette zone</span>
             </button>
           </motion.div>
         )}
       </AnimatePresence>
 
-      {/* ── 3. FILTRES SUR LE CÔTÉ DROIT : CENTRÉS VERTICALEMENT & COLLÉS AU REBORD DROIT (ICÔNE SEULE) ── */}
-      <div className="fixed right-0 top-1/2 -translate-y-1/2 z-[900] pointer-events-none flex items-center justify-end">
-        <AnimatePresence mode="wait">
-          {!filtersOpen ? (
-            /* Onglet rétractable collé au bord droit (ICÔNE SEULE ÉLARGI) */
-            <motion.button
-              key="filter-dock-closed"
-              initial={{ opacity: 0, x: 20 }}
-              animate={{ opacity: 1, x: 0 }}
-              exit={{ opacity: 0, x: 20 }}
-              type="button"
-              onClick={() => setFiltersOpen(true)}
-              className="pointer-events-auto glass-circle-btn !rounded-r-none !rounded-l-2xl !w-13 !h-13 sm:!w-14 sm:!h-14 cursor-pointer transition-all active:scale-95 group relative flex items-center justify-center shadow-xl"
-              title="Ouvrir la recherche et les filtres"
-              aria-label="Ouvrir la recherche et les filtres"
-            >
-              <SlidersHorizontal size={22} strokeWidth={2.2} className="text-[#17402C]" />
-              {(activeFilterCount > 0 || searchQuery.trim().length > 0) && (
-                <span className="absolute top-1 left-1 w-4 h-4 rounded-full bg-[#17402C] text-white text-[9px] font-mono font-bold flex items-center justify-center shadow-xs">
-                  {activeFilterCount + (searchQuery.trim().length > 0 ? 1 : 0)}
-                </span>
-              )}
-            </motion.button>
-          ) : (
-            /* Panneau de filtres complet déployé sur le côté droit */
+      {/* ── 3. MODAL / BOTTOM-SHEET FILTRES & RECHERCHE (MOBILE & DESKTOP DOCK) ── */}
+      <AnimatePresence>
+        {filtersOpen && (
+          <div className="fixed inset-0 z-[10000] flex items-end md:items-center md:justify-end md:p-6 pointer-events-none">
+            {/* Backdrop assombri */}
             <motion.div
-              key="filter-dock-open"
-              initial={{ opacity: 0, x: 100 }}
-              animate={{ opacity: 1, x: 0 }}
-              exit={{ opacity: 0, x: 100 }}
-              transition={{ type: 'spring', stiffness: 400, damping: 35 }}
-              className="pointer-events-auto w-[320px] sm:w-[350px] p-4 rounded-l-3xl glass bg-white/95 border-y border-l border-white/80 shadow-2xl backdrop-blur-xl space-y-3"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              onClick={() => setFiltersOpen(false)}
+              className="fixed inset-0 bg-[#0B1F17]/40 backdrop-blur-[4px] pointer-events-auto"
+            />
+
+            {/* Modal Sheet Container (Bottom Sheet sur Mobile, Dock Bento sur Desktop) */}
+            <motion.div
+              initial={{ y: '100%', opacity: 0 }}
+              animate={{ y: 0, opacity: 1 }}
+              exit={{ y: '100%', opacity: 0 }}
+              transition={{ type: 'spring', stiffness: 380, damping: 32 }}
+              onClick={(e) => e.stopPropagation()}
+              className="pointer-events-auto relative w-full md:w-[380px] max-h-[82vh] md:max-h-[88vh] rounded-t-[32px] md:rounded-[32px] flex flex-col overflow-hidden shadow-2xl border border-white/80"
               style={{
-                boxShadow: '-8px 16px 36px -6px rgba(23, 64, 44, 0.16), inset 0 1px 1.5px rgba(255, 255, 255, 0.95)',
+                background: 'linear-gradient(180deg, rgba(255, 255, 255, 0.95) 0%, rgba(251, 250, 246, 0.92) 100%)',
+                backdropFilter: 'blur(32px) saturate(190%)',
+                WebkitBackdropFilter: 'blur(32px) saturate(190%)',
+                boxShadow: '0 24px 64px -12px rgba(23, 64, 44, 0.28), inset 0 1.5px 2px rgba(255, 255, 255, 0.98)',
               }}
             >
-              <div className="flex items-center justify-between pb-2 border-b border-[#17402C]/10">
-                <div className="flex items-center gap-2">
-                  <div className="w-7 h-7 rounded-xl bg-[#5B7F55]/15 text-[#5B7F55] flex items-center justify-center">
-                    <SlidersHorizontal size={15} strokeWidth={2.2} />
+              {/* iOS Drag Handle indicator (Mobile) */}
+              <div className="md:hidden pt-3 pb-1 flex justify-center">
+                <div className="w-10 h-1.5 rounded-full bg-[#17402C]/20" />
+              </div>
+
+              {/* Header */}
+              <div className="px-5 py-3.5 flex items-center justify-between border-b border-[#17402C]/10 shrink-0">
+                <div className="flex items-center gap-2.5">
+                  <div className="w-8 h-8 rounded-xl bg-[#5B7F55]/15 text-[#5B7F55] flex items-center justify-center">
+                    <SlidersHorizontal size={16} strokeWidth={2.2} />
                   </div>
                   <div>
-                    <h3 className="font-display font-bold text-xs sm:text-sm text-[#17402C]">
+                    <h3 className="font-display font-bold text-sm sm:text-base text-[#17402C]">
                       Recherche & Filtres
                     </h3>
-                    <p className="text-[9px] text-[#5A7064] font-mono">
-                      {filteredTrails.length} itinéraire{filteredTrails.length > 1 ? 's' : ''} disponible{filteredTrails.length > 1 ? 's' : ''}
+                    <p className="text-[10px] text-[#5A7064] font-mono">
+                      {filteredTrails.length} itinéraire{filteredTrails.length > 1 ? 's' : ''} trouvé{filteredTrails.length > 1 ? 's' : ''}
                     </p>
                   </div>
                 </div>
@@ -544,14 +606,15 @@ export default function ExplorerClient({ initialTrails }: ExplorerClientProps) {
                 <button
                   type="button"
                   onClick={() => setFiltersOpen(false)}
-                  className="w-7 h-7 rounded-full bg-black/5 hover:bg-black/10 flex items-center justify-center text-[#17402C] transition-colors cursor-pointer"
+                  className="glass-circle-btn !w-8 !h-8 text-[#17402C] cursor-pointer"
                   title="Fermer"
                 >
-                  <X size={14} />
+                  <X size={14} strokeWidth={2.2} />
                 </button>
               </div>
 
-              <div className="max-h-[65vh] overflow-y-auto no-scrollbar pr-0.5">
+              {/* Content Scrollable */}
+              <div className="px-5 py-4 overflow-y-auto no-scrollbar space-y-4">
                 <ExplorerFilterPanel
                   searchQuery={searchQuery}
                   onSearchChange={handleSearchChange}
@@ -572,10 +635,21 @@ export default function ExplorerClient({ initialTrails }: ExplorerClientProps) {
                   }}
                 />
               </div>
+
+              {/* Sticky Action Footer */}
+              <div className="p-4 pb-[calc(env(safe-area-inset-bottom,0px)+12px)] md:pb-4 border-t border-[#17402C]/10 bg-white/60 backdrop-blur-md shrink-0 flex gap-2">
+                <button
+                  type="button"
+                  onClick={() => setFiltersOpen(false)}
+                  className="glass-capsule-btn primary flex-1 !min-h-[44px] text-xs sm:text-sm font-bold shadow-md active:scale-[0.98] transition-all cursor-pointer"
+                >
+                  <span>Afficher {filteredTrails.length} sentier{filteredTrails.length > 1 ? 's' : ''}</span>
+                </button>
+              </div>
             </motion.div>
-          )}
-        </AnimatePresence>
-      </div>
+          </div>
+        )}
+      </AnimatePresence>
 
       {/* ── 4. DESKTOP : LISTE DES SENTIERS FLOTTANTE (PLEINE HAUTEUR) ── */}
       <div className="hidden md:flex absolute left-4 top-[84px] bottom-4 z-[900] w-[350px] max-w-[calc(100vw-32px)] pointer-events-none flex-col gap-2">
