@@ -15,7 +15,7 @@ import {
   ExternalLink,
   CheckSquare,
   Layers,
-  ArrowRight,
+  ArrowRight, ArrowUpRight,
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { formatWeight } from '@/features/materiel/domain/departCalculations';
@@ -608,28 +608,36 @@ export function DepartEquipmentHub({
                           : 'bg-white/85 dark:bg-white/10 border-white/80 text-[#17402C]'
                       )}
                     >
-                      {/* 1. Zone Image Épurée (Ratio 16:10) */}
-                      <div className="relative w-full h-34 overflow-hidden bg-black/5">
+                      {/* 1. Zone Image Cadrée Parfaitement 16:10 avec Bouton Flèche */}
+                      <div className="relative w-full aspect-[16/10] overflow-hidden bg-black/5 rounded-t-[20px]">
                         <img
                           src={item.image}
                           alt={item.name}
-                          className="w-full h-full object-cover group-hover:scale-104 transition-transform duration-500"
+                          className="w-full h-full object-cover object-center group-hover:scale-105 transition-transform duration-500"
                           loading="lazy"
                         />
-                        <div className="absolute inset-0 bg-gradient-to-t from-black/40 via-transparent to-transparent pointer-events-none" />
+                        <div className="absolute inset-0 bg-gradient-to-t from-black/50 via-transparent to-black/20 pointer-events-none" />
 
-                        {/* Badge Catégorie Flottant */}
+                        {/* Badge Catégorie Flottant Haut-Gauche */}
                         <span className="absolute top-2.5 left-2.5 text-[9px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-lg bg-black/60 text-white backdrop-blur-md shadow-xs">
                           {item.category}
                         </span>
 
-                        {/* Badge Prêt si concerné */}
-                        {item.isLent && (
-                          <span className="absolute top-2.5 right-2.5 text-[9px] font-bold px-2 py-0.5 rounded-lg bg-amber-500 text-white shadow-xs flex items-center gap-1">
-                            <Handshake size={10} />
-                            <span>Prêté ({item.lentDetails?.borrower})</span>
-                          </span>
-                        )}
+                        {/* Bouton Flèche Redirection Fiche Contextuelle Haut-Droite */}
+                        <Link
+                          href={
+                            item.slug
+                              ? `/produit/${item.slug}`
+                              : item.inInventory
+                              ? `/materiel/kits`
+                              : `/materiel/boutique?q=${encodeURIComponent(item.name)}`
+                          }
+                          className="absolute top-2.5 right-2.5 w-7 h-7 rounded-full bg-white/90 hover:bg-white text-[#17402C] backdrop-blur-md flex items-center justify-center shadow-xs transition-transform hover:scale-110 active:scale-95 z-10"
+                          title={`Consulter la fiche détaillée de ${item.name}`}
+                          aria-label={`Consulter la fiche détaillée de ${item.name}`}
+                        >
+                          <ArrowUpRight size={13} strokeWidth={2.5} />
+                        </Link>
                       </div>
 
                       {/* 2. Titre, Métriques & Badges */}
