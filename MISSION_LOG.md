@@ -908,3 +908,43 @@ Process exited with code 0
 
 
 
+## Audit UI — État RÉEL constaté (2026-08-30)
+
+| Élément UI | Fichier:lignes | Statut constaté | Action |
+|---|---|---|---|
+| Badge ☀️ Saison recommandée | PaysHeroOverview.tsx:47-49 | FICTIF — `saison_recommandee` hors colonnes BDD | SUPPRIMÉ |
+| Badge Saison sidebar gauche | PaysLeftSidebar.tsx | FICTIF | SUPPRIMÉ |
+| Badge Saison mobile | MobileCountryDetailView.tsx:201 | FICTIF | SUPPRIMÉ |
+| Widget Météo LIVE (19°C statique) | PaysRightSidebar.tsx:133-184, countryDetails.ts:1431-1437 | FICTIF — `temperature_actuelle: 19` hardcodé, aucune API live | MASQUÉ (guard optional) |
+| Widget Sécurité & Terrain | PaysRightSidebar.tsx:186-222, countryDetails.ts:1438-1446 | FICTIF — `niveau_label`/`conseils` inventés | MASQUÉ (guard optional) |
+| Météo mobile | MobileCountryDetailView.tsx:486-507 | FICTIF | MASQUÉ |
+| Formalités d'entrée (carte Pratique) | PaysPratiqueView.tsx:13, countryDetails.ts:1407-1412 | FICTIF intégral — visa/passeport inventés | MASQUÉE (tableau vide) |
+| Transport Vols/Déplacements/Réseau | countryDetails.ts:1414,1416,1417 | FICTIF — texte générique sans colonne | LIGNES SUPPRIMÉES |
+| Budget Moyens paiement / Budget repère | countryDetails.ts:1422-1423 | FICTIF | LIGNES SUPPRIMÉES |
+| Santé & Recommandations (carte entière) | PaysPratiqueView.tsx:16, countryDetails.ts:1425-1429 | FICTIF intégral | MASQUÉE (tableau vide) |
+| Carte SVG Repères & Relief | PaysHeroOverview.tsx:165-213 | FICTIF — latitude/longitude/pins éditoriaux inventés | CONDITIONNÉ |
+| Highlights Points forts du voyage | PaysHeroOverview.tsx:216-237 | FICTIF — fallback générique | CONDITIONNÉ |
+| Slogan `nature & sentiers` | PaysHeroOverview.tsx:64 | FICTIF — fallback générique | CONDITIONNÉ |
+| Activités génériques fallback | countryDetails.ts:1328-1368 | FICTIF — trek/nature/culture inventés | REMPLACÉ par [] |
+| Gastronomie générique fallback | countryDetails.ts:1388-1405 | FICTIF — `Plat emblématique du pays` | REMPLACÉ par [] |
+| culture.fetes generiques | countryDetails.ts:1379-1386 | FICTIF — mois inventés | REMPLACÉ par [] |
+| Pratique mobile Passeport/CNI | MobileCountryDetailView.tsx:~552 | FICTIF — fallback `Passeport / CNI valide` | SUPPRIMÉ |
+| En-tête nom · continent | PaysHeroOverview.tsx:55+45 | RÉEL — `name` + `continent` | CONSERVÉ |
+| Sous-titre nom_en | PaysHeroOverview.tsx:59-62 | RÉEL — `name_en` | CONSERVÉ |
+| Badge ISO code · iso_a3 | PaysHeroOverview.tsx:42-43 | RÉEL — `iso_a2` + `iso_a3` | CONSERVÉ |
+| Stats strip SUPERFICIE | PaysHeroOverview.tsx:21 | RÉEL — `area_km2` | CONSERVÉ |
+| Stats strip RÉGION | PaysHeroOverview.tsx:22 | RÉEL — `subregion` | CONSERVÉ |
+| Stats strip CAPITALE | PaysHeroOverview.tsx:23 | RÉEL — `capital` | CONSERVÉ |
+| Stats strip LANGUES | PaysHeroOverview.tsx:24 | RÉEL — `languages` | CONSERVÉ |
+| Stats strip DEVISE | PaysHeroOverview.tsx:25 | RÉEL — `currency_*` | CONSERVÉ |
+| Fiche d'identité (6 blocs Pratique) | PaysPratiqueView.tsx:35-115 | RÉEL — 6 champs BDD | CONSERVÉ |
+| Sources & Références | PaysPratiqueView.tsx:94-114 | RÉEL — `sources` parsé | CONSERVÉ |
+| Widget Données officielles sidebar | PaysRightSidebar.tsx:63-131 | RÉEL | CONSERVÉ |
+| Widget Communauté | PaysRightSidebar.tsx:224+ | Fonctionnalité app | CONSERVÉ |
+
+### 🔔 Manques de données connus (décision produit)
+- **Globe 3D / geometry** : colonne volontairement vidée pour 195 pays. Widget dégradé sans coordonnées.
+- **Météo live** : aucune API météo connectée à `capital`. Bloc masqué jusqu'à intégration API réelle.
+- **Visa / Santé / Sécurité** : données non disponibles dans `countries_geo`. Cartes masquées sans fallback inventé.
+- **Saison recommandée** : colonne absente. Badge supprimé. Future colonne à décider par Tony.
+
