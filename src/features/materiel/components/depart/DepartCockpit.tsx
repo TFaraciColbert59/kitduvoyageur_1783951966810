@@ -1,4 +1,4 @@
-﻿'use client';
+'use client';
 import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import dynamic from 'next/dynamic';
@@ -15,7 +15,6 @@ import {
   WifiOff,
   Layers,
   Boxes,
-  ShoppingBag,
 } from 'lucide-react';
 import { DepartHeader } from './DepartHeader';
 import { DepartAlerts } from './DepartAlerts';
@@ -25,8 +24,7 @@ import { DepartWeather } from './DepartWeather';
 import { DepartParticipants } from './DepartParticipants';
 import { DepartLeftSidebar } from './DepartLeftSidebar';
 import { DepartRightSidebar } from './DepartRightSidebar';
-import { DepartInventoryDispo } from './DepartInventoryDispo';
-import { DepartBoutique } from './DepartBoutique';
+import { DepartEquipmentHub } from './DepartEquipmentHub';
 import { DepartureSheetModal } from './DepartureSheetModal';
 import { KitSwitcher } from './KitSwitcher';
 import ScrollableTabs, { type TabOption } from '@/components/ui/ScrollableTabs';
@@ -64,8 +62,7 @@ export type DepartSectionId =
   | 'checklist'
   | 'weight'
   | 'terrain'
-  | 'inventory_dispo'
-  | 'boutique';
+  | 'equipment_hub';
 
 interface DepartCockpitProps {
   depart: DepartDetail;
@@ -122,7 +119,6 @@ export function DepartCockpit({
   useEffect(() => {
     if (typeof window === 'undefined') return;
 
-    // Cache local du départ pour consultation hors-ligne immédiate (§Phase 6)
     try {
       localStorage.setItem(
         `lkdv_depart_cache_${depart.id}`,
@@ -185,21 +181,20 @@ export function DepartCockpit({
     { id: 'checklist', label: 'Sac & Vivres', icon: <CheckSquare size={13} />, badge: `${checkedCount}/${itemsCount}` },
     { id: 'weight', label: 'Poids', icon: <Scale size={13} /> },
     { id: 'terrain', label: 'Terrain & Carte', icon: <MapPin size={13} /> },
-    { id: 'inventory_dispo', label: 'Inventaire & Prêts', icon: <Boxes size={13} />, badge: inventory.length || undefined },
-    { id: 'boutique', label: 'Boutique LKDV', icon: <ShoppingBag size={13} /> },
+    { id: 'equipment_hub', label: 'Parc Matériel', icon: <Boxes size={13} /> },
   ];
 
   const showAll = activeSection === 'all';
 
   const renderMainContent = () => (
     <div className="flex flex-col gap-3.5 max-w-4xl mx-auto w-full">
-      {/* ════ BANNIÈRE HORS-LIGNE TRANSPARENTE (§Phase 6) ════ */}
+      {/* ════ BANNIÈRE HORS-LIGNE TRANSPARENTE ════ */}
       {!isOnline && (
         <div className="p-3 rounded-2xl bg-amber-500/15 border border-amber-500/30 text-[#17402C] text-xs font-semibold flex items-center justify-between gap-2 shadow-2xs">
           <div className="flex items-center gap-2 min-w-0">
             <WifiOff size={15} className="text-amber-700 shrink-0" />
             <span className="truncate">
-              Mode hors-ligne actif — Fiche de départ et données en cache. Les modifications seront synchronisées dès le retour du réseau.
+              Mode hors-ligne actif — Fiche de départ et données en cache. Synchronisation automatique dès reconnexion.
             </span>
           </div>
           <span className="text-[10px] font-mono font-bold px-2 py-0.5 rounded-lg bg-amber-600/20 text-amber-900 shrink-0">
@@ -230,7 +225,7 @@ export function DepartCockpit({
 
       {/* ════ NIVEAU 3 : LE TRAVAIL & LE DÉTAIL PROGRESSIF ════ */}
 
-      {/* 3.A — Checklist de travail absorbant Vivres & Eau */}
+      {/* 3.A — Checklist active du sac */}
       {(showAll || activeSection === 'checklist') && (
         <section id="section-depart-checklist" aria-label="Checklist du matériel et vivres">
           <DepartChecklist
@@ -279,23 +274,16 @@ export function DepartCockpit({
         </section>
       )}
 
-      {/* 3.D — Inventaire & Prêts / Disponibilité */}
-      {(showAll || activeSection === 'inventory_dispo') && (
-        <section id="section-depart-inventory-dispo" aria-label="Mon Inventaire & Disponibilité des Prêts">
-          <DepartInventoryDispo
+      {/* 3.D — Section Unifiée 6 : Mon Parc Matériel & Équipements (Multi-statuts sans doublon) */}
+      {(showAll || activeSection === 'equipment_hub') && (
+        <section id="section-depart-equipment-hub" aria-label="Mon Parc Matériel & Équipements">
+          <DepartEquipmentHub
             inventory={inventory}
             loans={loans}
-            kitItems={depart.assignedKit.items}
-          />
-        </section>
-      )}
-
-      {/* 3.E — Boutique & Recommandations LKDV */}
-      {(showAll || activeSection === 'boutique') && (
-        <section id="section-depart-boutique" aria-label="Boutique LKDV & Équipements Recommandés">
-          <DepartBoutique
             products={products}
             kitItems={depart.assignedKit.items}
+            kitId={depart.id}
+            isRealKit={isRealKit}
           />
         </section>
       )}
@@ -304,7 +292,7 @@ export function DepartCockpit({
 
   return (
     <div className={cn('w-full h-full min-h-0', isUltraSave && 'ultra-save-mode')}>
-      {/* Modal Fiche de Départ (§4F) */}
+      {/* Modal Fiche de Départ */}
       <DepartureSheetModal
         depart={depart}
         weather={weather}
@@ -390,7 +378,7 @@ export function DepartCockpit({
 
       {/* ════ 2. VERSION DESKTOP COCKPIT 3 COLONNES (hidden md:flex) ════ */}
       <div className="hidden md:flex h-full overflow-hidden max-w-[1600px] w-full mx-auto px-3 lg:px-5 py-2 gap-4 lg:gap-5 items-start">
-        {/* Colonne 1 : Sidebar Gauche (Navigation & Switcher) */}
+        {/* Colonne 1 : Sidebar Gauche (Navigation 6 sections & Switcher) */}
         <div className="w-[240px] xl:w-[250px] shrink-0 h-full overflow-hidden">
           <DepartLeftSidebar
             depart={depart}
@@ -398,9 +386,6 @@ export function DepartCockpit({
             onSectionChange={setActiveSection}
             kits={kits}
             alertsCount={smartAlerts.length}
-            inventoryCount={inventory.length}
-            loansCount={loans.length}
-            productsCount={products.length}
             isUltraSave={isUltraSave}
             onToggleUltraSave={() => setIsUltraSave((v) => !v)}
             batteryLevel={batteryLevel}
@@ -408,7 +393,7 @@ export function DepartCockpit({
           />
         </div>
 
-        {/* Colonne 2 : Flux Central Dynamique (Sections 1 à 7) */}
+        {/* Colonne 2 : Flux Central Dynamique */}
         <div className="flex-1 min-w-0 h-full overflow-y-auto no-scrollbar pr-1 pb-10">
           <AnimatePresence mode="wait">
             <motion.div

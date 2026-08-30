@@ -1,5 +1,5 @@
-﻿'use client';
-import React, { useState } from 'react';
+'use client';
+import React from 'react';
 import Link from 'next/link';
 import {
   Compass,
@@ -11,15 +11,11 @@ import {
   Edit3,
   Printer,
   ChevronRight,
-  ChevronDown,
   Zap,
   Wifi,
   WifiOff,
   Boxes,
   Layers,
-  Sparkles,
-  ShoppingBag,
-  Handshake,
 } from 'lucide-react';
 import { KitSwitcher } from './KitSwitcher';
 import { Badge } from '@/components/ui/Badge';
@@ -34,9 +30,6 @@ interface DepartLeftSidebarProps {
   onSectionChange: (section: DepartSectionId) => void;
   kits: { id: string; name: string }[];
   alertsCount: number;
-  inventoryCount?: number;
-  loansCount?: number;
-  productsCount?: number;
   isUltraSave?: boolean;
   onToggleUltraSave?: () => void;
   batteryLevel?: number | null;
@@ -53,15 +46,11 @@ export function DepartLeftSidebar({
   onSectionChange,
   kits,
   alertsCount,
-  inventoryCount = 0,
-  loansCount = 0,
-  productsCount = 0,
   isUltraSave = false,
   onToggleUltraSave,
   batteryLevel = null,
   isOnline = true,
 }: DepartLeftSidebarProps) {
-  const [isEcosystemOpen, setIsEcosystemOpen] = useState(true);
   const checkedCount = depart.assignedKit.items.filter((i) => i.is_checked).length;
   const itemsCount = depart.assignedKit.items.length;
   const totalWeightStr = formatWeight(depart.totalPackWeightG);
@@ -120,17 +109,9 @@ export function DepartLeftSidebar({
       badgeColor: 'bg-[#17402C]/15 text-[#17402C]',
     },
     {
-      id: 'inventory_dispo',
-      label: '6. Inventaire & Prêts',
+      id: 'equipment_hub',
+      label: '6. Parc Matériel & Équipements',
       icon: Boxes,
-      badge: inventoryCount > 0 ? inventoryCount : undefined,
-      badgeColor: 'bg-[#17402C]/15 text-[#17402C]',
-    },
-    {
-      id: 'boutique',
-      label: '7. Boutique & Matériel',
-      icon: ShoppingBag,
-      badge: productsCount > 0 ? productsCount : undefined,
       badgeColor: 'bg-[#17402C]/15 text-[#17402C]',
     },
   ];
@@ -156,7 +137,7 @@ export function DepartLeftSidebar({
             {cleanDestination}
           </h3>
 
-          {/* Statut réseau & Ultra-Save toggle (§19) */}
+          {/* Statut réseau & Ultra-Save toggle */}
           <div className="pt-1 border-t border-white/30 flex items-center justify-between gap-1.5">
             <span className={cn('flex items-center gap-1 text-[8.5px] font-mono font-bold px-1.5 py-0.2 rounded-full', isOnline ? 'bg-emerald-100/80 text-emerald-900' : 'bg-amber-100 text-amber-900')}>
               {isOnline ? <Wifi size={8} /> : <WifiOff size={8} />}
@@ -195,7 +176,7 @@ export function DepartLeftSidebar({
           )}
         </div>
 
-        {/* Navigation verticale des 8 sections du cockpit unifié */}
+        {/* Navigation verticale des 6 sections du cockpit unifié */}
         <nav className="space-y-0.5" aria-label="Sections du cockpit unifié">
           {sections.map((sec) => {
             const IconComp = sec.icon;
