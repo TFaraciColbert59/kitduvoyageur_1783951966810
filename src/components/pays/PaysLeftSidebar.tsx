@@ -30,13 +30,51 @@ export default function PaysLeftSidebar({
   onPrint,
 }: PaysLeftSidebarProps) {
   const sections = [
-    { id: 'presentation' as PaysSection, label: 'Présentation', icon: 'HomeIcon' },
-    { id: 'destinations' as PaysSection, label: 'Destinations', icon: 'MapPinIcon', count: country.destinations?.length },
-    { id: 'activites' as PaysSection, label: 'Activités', icon: 'SparklesIcon', count: country.activites?.length },
-    { id: 'culture' as PaysSection, label: 'Culture & Fêtes', icon: 'BookOpenIcon' },
-    { id: 'gastronomie' as PaysSection, label: 'Gastronomie', icon: 'HeartIcon', count: country.gastronomie?.length },
-    { id: 'pratique' as PaysSection, label: 'Pratique & Météo', icon: 'ShieldCheckIcon' },
-    { id: 'communaute' as PaysSection, label: 'Communauté', icon: 'UserGroupIcon' },
+    {
+      id: 'presentation' as PaysSection,
+      label: 'Présentation',
+      sublabel: `${country.continent} · ${country.region}`,
+      icon: 'HomeIcon',
+    },
+    {
+      id: 'destinations' as PaysSection,
+      label: 'Destinations',
+      sublabel: country.destinations?.length ? `${country.destinations.length} sites majeurs` : `Capitale : ${country.capitale}`,
+      icon: 'MapPinIcon',
+      count: country.destinations?.length,
+    },
+    {
+      id: 'activites' as PaysSection,
+      label: 'Activités & Treks',
+      sublabel: country.activites?.length ? `${country.activites.length} parcours` : 'Aventure & Nature',
+      icon: 'SparklesIcon',
+      count: country.activites?.length,
+    },
+    {
+      id: 'culture' as PaysSection,
+      label: 'Culture & Société',
+      sublabel: country.langue,
+      icon: 'BookOpenIcon',
+    },
+    {
+      id: 'gastronomie' as PaysSection,
+      label: 'Gastronomie',
+      sublabel: country.gastronomie?.length ? `${country.gastronomie.length} spécialités` : 'Terroir & Cuisine',
+      icon: 'HeartIcon',
+      count: country.gastronomie?.length,
+    },
+    {
+      id: 'pratique' as PaysSection,
+      label: 'Pratique & Données',
+      sublabel: `${country.monnaie_code} · ${country.fuseau}`,
+      icon: 'ShieldCheckIcon',
+    },
+    {
+      id: 'communaute' as PaysSection,
+      label: 'Communauté',
+      sublabel: 'Échanges & Carnets',
+      icon: 'UserGroupIcon',
+    },
   ];
 
   return (
@@ -90,10 +128,10 @@ export default function PaysLeftSidebar({
           </button>
         </div>
 
-        {/* Navigation Tabs */}
+        {/* Navigation Tabs with Associated Category Data */}
         <nav className="space-y-1 pt-1.5">
           <p className="text-[10px] font-mono font-bold uppercase tracking-widest text-[#5A7064] px-2 mb-1.5">
-            Sommaire
+            Sommaire des catégories
           </p>
           {sections.map((s) => {
             const isActive = activeSection === s.id;
@@ -101,13 +139,13 @@ export default function PaysLeftSidebar({
               <button
                 key={s.id}
                 onClick={() => onSectionChange(s.id)}
-                className={`w-full px-3 py-2.5 rounded-xl font-bold text-xs transition-all flex items-center justify-between group cursor-pointer border ${
+                className={`w-full px-3 py-2 rounded-xl text-left transition-all flex items-center justify-between group cursor-pointer border ${
                   isActive
                     ? 'bg-[#17402C] text-white border-[#17402C] shadow-sm'
                     : 'bg-white/80 hover:bg-white text-[#17402C] border-white/80 shadow-2xs'
                 }`}
               >
-                <div className="flex items-center gap-2.5 min-w-0">
+                <div className="flex items-center gap-2.5 min-w-0 flex-1">
                   <span
                     className={`shrink-0 transition-colors ${
                       isActive ? 'text-[#A6C1A0]' : 'text-[#5A7064] group-hover:text-[#17402C]'
@@ -115,12 +153,17 @@ export default function PaysLeftSidebar({
                   >
                     <Icon name={s.icon as any} size={15} />
                   </span>
-                  <span className="truncate text-left">{s.label}</span>
+                  <div className="min-w-0 flex-1">
+                    <span className="truncate block font-bold text-xs leading-tight">{s.label}</span>
+                    <span className={`truncate block text-[9.5px] font-mono mt-0.5 ${isActive ? 'text-white/80' : 'text-[#5A7064]'}`}>
+                      {s.sublabel}
+                    </span>
+                  </div>
                 </div>
 
                 {s.count !== undefined && (
                   <span
-                    className={`px-1.5 py-0.5 rounded-full text-[9px] font-mono font-bold ${
+                    className={`px-1.5 py-0.5 rounded-full text-[9px] font-mono font-bold shrink-0 ml-1.5 ${
                       isActive
                         ? 'bg-white/20 text-white'
                         : 'bg-[#17402C]/5 text-[#5A7064] group-hover:bg-white'
@@ -133,6 +176,31 @@ export default function PaysLeftSidebar({
             );
           })}
         </nav>
+
+        {/* Repères Essentiels par Catégorie */}
+        <div className="pt-2 border-t border-[#17402C]/10 space-y-1.5">
+          <p className="text-[10px] font-mono font-bold uppercase tracking-widest text-[#5B7F55] px-1">
+            Repères BDD pays
+          </p>
+          <div className="grid grid-cols-2 gap-1 text-[9.5px]">
+            <div className="p-1.5 rounded-lg bg-white/60 border border-white/40">
+              <span className="text-[#5A7064] block text-[8px] uppercase">Superficie</span>
+              <span className="font-mono font-bold text-[#17402C] truncate block">{country.superficie_court} km²</span>
+            </div>
+            <div className="p-1.5 rounded-lg bg-white/60 border border-white/40">
+              <span className="text-[#5A7064] block text-[8px] uppercase">Capitale</span>
+              <span className="font-bold text-[#17402C] truncate block">{country.capitale}</span>
+            </div>
+            <div className="p-1.5 rounded-lg bg-white/60 border border-white/40">
+              <span className="text-[#5A7064] block text-[8px] uppercase">Devise</span>
+              <span className="font-bold text-[#17402C] truncate block">{country.monnaie_code}</span>
+            </div>
+            <div className="p-1.5 rounded-lg bg-white/60 border border-white/40">
+              <span className="text-[#5A7064] block text-[8px] uppercase">Fuseau</span>
+              <span className="font-mono font-bold text-[#17402C] truncate block">{country.fuseau}</span>
+            </div>
+          </div>
+        </div>
       </div>
 
       {/* Bottom link: retour Earth */}
