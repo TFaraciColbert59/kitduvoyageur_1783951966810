@@ -888,29 +888,44 @@ export default function InteractiveMap() {
           </button>
         )}
 
-        {/* 2. Floating Zoom Controls (+ / −) & Recenter (Top Right) */}
-        <div className="absolute top-[calc(env(safe-area-inset-top,0px)+14px)] right-3 z-[400] flex flex-col gap-2">
+        {/* 2. Floating Tile Switcher (EN BAS À GAUCHE) */}
+        <div className="absolute bottom-[calc(var(--bottom-tab-base-height,68px)+140px)] left-3.5 md:bottom-6 md:left-4 z-[400] flex items-center gap-1.5 glass p-1.5 rounded-full shadow-xl border border-white/80">
           <button
-            onClick={handleZoomIn}
-            title="Zoom avant"
-            aria-label="Zoom avant"
-            className="glass-circle-btn !w-11 !h-11 font-bold text-lg shadow-lg flex items-center justify-center cursor-pointer active:scale-95"
+            onClick={() => handleTileChange('osm')}
+            className={`glass-circle-btn !w-11 !h-11 ${tileMode === 'osm' ? 'primary !bg-[#17402C] !text-white shadow-xs' : 'text-[#17402C]'}`}
+            title="Carte Standard (OSM)"
           >
-            +
+            <svg width="20" height="20" fill="none" stroke="currentColor" strokeWidth="2.2" viewBox="0 0 24 24">
+              <path d="M3 6l6-3 6 3 6-3v12l-6 3-6-3-6 3V6z"></path><path d="M9 3v12"></path><path d="M15 6v12"></path>
+            </svg>
           </button>
           <button
-            onClick={handleZoomOut}
-            title="Zoom arrière"
-            aria-label="Zoom arrière"
-            className="glass-circle-btn !w-11 !h-11 font-bold text-lg shadow-lg flex items-center justify-center cursor-pointer active:scale-95"
+            onClick={() => handleTileChange('topo')}
+            className={`glass-circle-btn !w-11 !h-11 ${tileMode === 'topo' ? 'primary !bg-[#17402C] !text-white shadow-xs' : 'text-[#17402C]'}`}
+            title="Relief / Topographique"
           >
-            −
+            <svg width="20" height="20" fill="none" stroke="currentColor" strokeWidth="2.2" viewBox="0 0 24 24">
+              <path d="M8 3l4 8 5-5 5 15H2L8 3z"></path>
+            </svg>
           </button>
+          <button
+            onClick={() => handleTileChange('satellite')}
+            className={`glass-circle-btn !w-11 !h-11 ${tileMode === 'satellite' ? 'primary !bg-[#17402C] !text-white shadow-xs' : 'text-[#17402C]'}`}
+            title="Vue Satellite"
+          >
+            <svg width="20" height="20" fill="none" stroke="currentColor" strokeWidth="2.2" viewBox="0 0 24 24">
+              <circle cx="12" cy="12" r="10"></circle><path d="M12 2a14.5 14.5 0 0 0 0 20 14.5 14.5 0 0 0 0-20"></path><path d="M2 12h20"></path>
+            </svg>
+          </button>
+        </div>
+
+        {/* 3. Floating Zoom Controls (+ / −) & Recenter (EN BAS À DROITE) */}
+        <div className="absolute bottom-[calc(var(--bottom-tab-base-height,68px)+140px)] right-3.5 md:bottom-6 md:right-4 z-[400] flex flex-col gap-1.5 glass p-1.5 rounded-full shadow-xl border border-white/80">
           <button
             onClick={handleRecenter}
             title="Ma position (10 km)"
             aria-label="Ma position"
-            className="glass-circle-btn !w-11 !h-11 shadow-lg flex items-center justify-center cursor-pointer active:scale-95"
+            className="glass-circle-btn !w-11 !h-11 shadow-md flex items-center justify-center cursor-pointer active:scale-95"
           >
             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#17402C" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round">
               <circle cx="12" cy="12" r="7" />
@@ -920,36 +935,23 @@ export default function InteractiveMap() {
               <line x1="20" y1="12" x2="23" y2="12" />
             </svg>
           </button>
-        </div>
-
-        {/* 3. Floating Tile Switcher (Top Right, positioned neatly below Zoom) */}
-        <div className="absolute top-[calc(env(safe-area-inset-top,0px)+160px)] right-3 z-[400] flex flex-col gap-1.5 glass p-1 rounded-2xl shadow-lg border border-white/80">
+          <div className="w-6 h-[1px] bg-[#17402C]/15" />
           <button
-            onClick={() => handleTileChange('osm')}
-            className={`glass-circle-btn !w-10 !h-10 ${tileMode === 'osm' ? 'primary' : ''}`}
-            title="Carte Standard (OSM)"
+            onClick={handleZoomIn}
+            title="Zoom avant"
+            aria-label="Zoom avant"
+            className="glass-circle-btn !w-11 !h-11 font-bold text-lg shadow-md flex items-center justify-center cursor-pointer active:scale-95"
           >
-            <svg width="18" height="18" fill="none" stroke="currentColor" strokeWidth="2.2" viewBox="0 0 24 24">
-              <path d="M3 6l6-3 6 3 6-3v12l-6 3-6-3-6 3V6z"></path><path d="M9 3v12"></path><path d="M15 6v12"></path>
-            </svg>
+            +
           </button>
+          <div className="w-6 h-[1px] bg-[#17402C]/15" />
           <button
-            onClick={() => handleTileChange('topo')}
-            className={`glass-circle-btn !w-10 !h-10 ${tileMode === 'topo' ? 'primary' : ''}`}
-            title="Relief / Topographique"
+            onClick={handleZoomOut}
+            title="Zoom arrière"
+            aria-label="Zoom arrière"
+            className="glass-circle-btn !w-11 !h-11 font-bold text-lg shadow-md flex items-center justify-center cursor-pointer active:scale-95"
           >
-            <svg width="18" height="18" fill="none" stroke="currentColor" strokeWidth="2.2" viewBox="0 0 24 24">
-              <path d="M8 3l4 8 5-5 5 15H2L8 3z"></path>
-            </svg>
-          </button>
-          <button
-            onClick={() => handleTileChange('satellite')}
-            className={`glass-circle-btn !w-10 !h-10 ${tileMode === 'satellite' ? 'primary' : ''}`}
-            title="Vue Satellite"
-          >
-            <svg width="18" height="18" fill="none" stroke="currentColor" strokeWidth="2.2" viewBox="0 0 24 24">
-              <circle cx="12" cy="12" r="10"></circle><path d="M12 2a14.5 14.5 0 0 0 0 20 14.5 14.5 0 0 0 0-20"></path><path d="M2 12h20"></path>
-            </svg>
+            −
           </button>
         </div>
 
