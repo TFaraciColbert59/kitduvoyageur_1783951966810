@@ -1,3 +1,4 @@
+'use client';
 import { useScroll, useTransform } from 'framer-motion';
 
 export function useParallax(speed = 0.5) {

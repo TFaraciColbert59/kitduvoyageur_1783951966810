@@ -55,6 +55,8 @@ const nextConfig = {
       'dexie',
       'clsx',
       'tailwind-merge',
+      'framer-motion',
+      'lucide-react',
     ],
   },
 
