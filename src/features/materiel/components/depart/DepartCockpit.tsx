@@ -13,7 +13,6 @@ import {
   CheckCircle2,
   ShieldCheck,
   CloudSun,
-  Scale,
 } from 'lucide-react';
 import { DepartWeather } from './DepartWeather';
 import { DepartParticipants } from './DepartParticipants';
@@ -175,9 +174,6 @@ export function DepartCockpit({
   const totalItemsCount = depart?.assignedKit?.items?.length || 0;
   const checkedItemsCount = depart?.assignedKit?.items?.filter((i) => i.is_checked)?.length || 0;
 
-  // 4 équipements phares pour la vitrine synthèse du sac
-  const showcaseItems = (depart?.assignedKit?.items || []).slice(0, 4);
-
   const renderMainContent = () => (
     <div className="flex flex-col gap-4 w-full">
       {/* ════ BANNIÈRE HORS-LIGNE TRANSPARENTE ════ */}
@@ -205,7 +201,7 @@ export function DepartCockpit({
             </div>
           )}
 
-          {/* 1.2 Bandeau Météo Synthétique en coup d'œil */}
+          {/* 1.2 Bandeau Météo Synthétique avec Pastilles Blanc Éclatant (Images 1 & 2) */}
           {weather && weather.days.length > 0 && (
             <div className="glass rounded-[24px] p-3.5 sm:p-4 border border-white/80 dark:border-white/10 shadow-xs flex items-center justify-between gap-3 overflow-x-auto no-scrollbar">
               <div className="flex items-center gap-2.5 shrink-0">
@@ -222,11 +218,14 @@ export function DepartCockpit({
                 </div>
               </div>
 
-              {/* 4 prochains jours */}
+              {/* 4 prochains jours avec pastilles blanc éclatant */}
               <div className="flex items-center gap-2 shrink-0">
                 {weather.days.slice(0, 4).map((d) => (
-                  <div key={d.date} className="px-2.5 py-1 rounded-xl bg-black/5 dark:bg-white/10 text-center min-w-[55px]">
-                    <span className="text-[9.5px] font-mono font-bold text-[#5A7064] block uppercase">{d.day}</span>
+                  <div
+                    key={d.date}
+                    className="px-3 py-1.5 rounded-full bg-white dark:bg-stone-900 border border-white/90 dark:border-white/20 text-center min-w-[58px] shadow-xs"
+                  >
+                    <span className="text-[9px] font-mono font-bold text-[#5A7064] block uppercase">{d.day}</span>
                     <span className="text-xs font-bold text-[#17402C]">{d.tempMaxC}°</span>
                   </div>
                 ))}
@@ -248,7 +247,7 @@ export function DepartCockpit({
             />
           </div>
 
-          {/* 1.4 Vitrine Visuelle des Équipements Indispensables (Défilement Horizontal Fluide) */}
+          {/* 1.4 Vitrine Visuelle des Équipements Indispensables (Défilement Horizontal Fluide - Image 3) */}
           <div className="glass rounded-[28px] p-4 sm:p-5 space-y-3.5 border border-white/80 dark:border-white/10 shadow-sm backdrop-blur-md">
             <div className="flex items-center justify-between gap-3 border-b border-black/5 pb-3">
               <div className="flex items-center gap-2.5">
@@ -265,25 +264,25 @@ export function DepartCockpit({
                 </div>
               </div>
 
-              {/* Bouton Capsule Liquid Glass Primaire */}
+              {/* Bouton Capsule Liquid Glass (Image 5) */}
               <button
                 type="button"
                 onClick={() => setActiveSection('equipment_hub')}
-                className="glass-capsule-btn primary !py-1.5 !px-3.5 text-xs font-bold flex items-center gap-1.5 cursor-pointer shrink-0"
+                className="glass-capsule-btn primary !py-1.5 !px-3.5 text-xs font-bold flex items-center gap-1.5 cursor-pointer shrink-0 shadow-2xs"
               >
                 <span>Gérer le Parc Matériel</span>
                 <ArrowRight size={13} />
               </button>
             </div>
 
-            {/* Vitrine Défilante Horizontalement à 100% */}
+            {/* Vitrine Défilante Horizontalement à 100% sans coupure */}
             <div className="flex gap-3 overflow-x-auto no-scrollbar py-1 px-0.5 scroll-smooth">
               {(depart?.assignedKit?.items || []).map((it) => {
                 const img = resolveGearImage(it.name, it.category || 'Autre', it.photoUrl);
                 return (
                   <div
                     key={it.id || it.name}
-                    className="w-[190px] sm:w-[210px] shrink-0 rounded-2xl overflow-hidden bg-white/85 dark:bg-white/15 border border-white/90 shadow-2xs p-2.5 space-y-2 flex flex-col justify-between backdrop-blur-md transition-transform hover:scale-[1.02]"
+                    className="w-[195px] sm:w-[215px] shrink-0 rounded-2xl overflow-hidden bg-white/90 dark:bg-stone-900 border border-white/90 shadow-xs p-2.5 space-y-2 flex flex-col justify-between backdrop-blur-md transition-transform hover:scale-[1.02]"
                   >
                     <div className="relative w-full aspect-[16/10] rounded-xl overflow-hidden bg-black/5">
                       <img
@@ -316,7 +315,7 @@ export function DepartCockpit({
             </div>
           </div>
 
-          {/* 1.5 Équipe & Sécurité Montagne (Accès rapide aux secours) */}
+          {/* 1.5 Équipe & Sécurité Montagne (Boutons Liquid Glass) */}
           <div className="glass rounded-[24px] p-4 border border-white/80 dark:border-white/10 shadow-xs space-y-2.5">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2">

@@ -1,4 +1,4 @@
-﻿'use client';
+'use client';
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import {
@@ -202,15 +202,15 @@ export function DepartAlerts({ input }: DepartAlertsProps) {
                     </div>
                   </div>
 
-                  {/* Actions & Snooze */}
+                  {/* Actions & Snooze en Liquid Glass */}
                   <div className="flex items-center gap-1.5 self-end sm:self-center shrink-0">
                     {alert.actionLabel && (
                       <button
                         type="button"
                         onClick={() => handleAction(alert)}
                         className={cn(
-                          'px-3 py-1.5 rounded-xl text-xs font-bold flex items-center gap-1 shadow-2xs transition-all cursor-pointer',
-                          sc.btn
+                          'glass-capsule-btn !py-1.5 !px-3 text-[11px] font-bold flex items-center gap-1 cursor-pointer shadow-2xs',
+                          alert.severity === 'critical' ? 'primary !bg-[#8A241B] !text-white' : 'primary'
                         )}
                       >
                         <span>{alert.actionLabel}</span>
@@ -222,27 +222,26 @@ export function DepartAlerts({ input }: DepartAlertsProps) {
                       </button>
                     )}
 
-                    {/* Snooze 24h */}
+                    {/* Snooze 24h Liquid Glass */}
                     <button
                       type="button"
                       onClick={() => handleSnooze(alert.id)}
-                      className="p-1.5 rounded-xl hover:bg-black/5 dark:hover:bg-white/10 opacity-70 hover:opacity-100 transition-opacity flex items-center gap-1 text-[10px] font-medium cursor-pointer"
+                      className="glass-circle-btn !w-7 !h-7 text-[10px] font-bold cursor-pointer text-[#17402C]"
                       title="Reporter cette alerte de 24h"
                       aria-label={`Reporter l'alerte : ${alert.title}`}
                     >
-                      <Clock size={12} />
-                      <span className="hidden sm:inline">24h</span>
+                      <Clock size={11} />
                     </button>
 
-                    {/* Dismiss */}
+                    {/* Dismiss Liquid Glass (Image 4) */}
                     <button
                       type="button"
                       onClick={() => handleSnooze(alert.id)}
-                      className="p-1.5 rounded-xl hover:bg-black/5 dark:hover:bg-white/10 opacity-70 hover:opacity-100 transition-opacity cursor-pointer"
+                      className="glass-circle-btn !w-7 !h-7 cursor-pointer text-[#17402C]"
                       title="Masquer"
                       aria-label="Masquer l'alerte"
                     >
-                      <X size={13} />
+                      <X size={12} />
                     </button>
                   </div>
                 </div>
