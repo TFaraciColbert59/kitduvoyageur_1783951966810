@@ -13,6 +13,7 @@ export interface Maximize2IconHandle {
 }
 
 interface Maximize2IconProps extends HTMLAttributes<HTMLDivElement> {
+  strokeWidth?: number;
   size?: number;
 }
 

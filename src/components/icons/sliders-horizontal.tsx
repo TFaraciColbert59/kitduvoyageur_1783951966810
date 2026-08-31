@@ -13,6 +13,7 @@ export interface SlidersHorizontalIconHandle {
 }
 
 interface SlidersHorizontalIconProps extends HTMLAttributes<HTMLDivElement> {
+  strokeWidth?: number;
   size?: number;
 }
 

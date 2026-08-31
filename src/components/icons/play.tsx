@@ -13,6 +13,7 @@ export interface PlayIconHandle {
 }
 
 interface PlayIconProps extends HTMLAttributes<HTMLDivElement> {
+  strokeWidth?: number;
   size?: number;
 }
 

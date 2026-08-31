@@ -4,12 +4,12 @@ import type { HTMLAttributes } from 'react';
 import { forwardRef } from 'react';
 import { cn } from '@/lib/utils';
 
-export interface FilterIconProps extends HTMLAttributes<HTMLDivElement> {
+export interface PrinterIconProps extends HTMLAttributes<HTMLDivElement> {
   strokeWidth?: number;
   size?: number;
 }
 
-export const FilterIcon = forwardRef<HTMLDivElement, FilterIconProps>(
+export const PrinterIcon = forwardRef<HTMLDivElement, PrinterIconProps>(
   ({ className, size = 20, ...props }, ref) => {
     const controls = useAnimation();
     return (
@@ -23,15 +23,17 @@ export const FilterIcon = forwardRef<HTMLDivElement, FilterIconProps>(
         {...props}
       >
         <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-          <motion.polygon
-            points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"
+          <polyline points="6 9 6 2 18 2 18 9" />
+          <path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2" />
+          <motion.rect
+            x="6" y="14" width="12" height="8"
             animate={controls}
-            variants={{ normal: { rotate: 0 }, animate: { rotate: [0, -12, 10, -6, 0] } }}
-            transition={{ duration: 0.4 }}
+            variants={{ normal: { y: 0 }, animate: { y: [0, 3, 0] } }}
+            transition={{ duration: 0.35 }}
           />
         </svg>
       </div>
     );
   }
 );
-FilterIcon.displayName = 'FilterIcon';
+PrinterIcon.displayName = 'PrinterIcon';

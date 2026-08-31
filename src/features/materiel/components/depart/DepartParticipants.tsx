@@ -1,6 +1,7 @@
 'use client';
 import { useState } from 'react';
-import { Users, ShieldCheck, Share2, Check, AlertOctagon, Radio, PhoneCall } from 'lucide-react';
+import { Users, ShieldCheck, Check, AlertOctagon, Radio, PhoneCall } from 'lucide-react';
+import { Share2Icon as Share2 } from '@/components/icons/share-2';
 import { PhoneCallIcon as PhoneCallAnimated } from '@/components/icons/phone-call';
 import { GlassCard } from '@/components/ui/GlassCard';
 import type { Participant } from '@/features/materiel/types/trekHub';

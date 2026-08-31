@@ -4,12 +4,12 @@ import type { HTMLAttributes } from 'react';
 import { forwardRef } from 'react';
 import { cn } from '@/lib/utils';
 
-export interface FilterIconProps extends HTMLAttributes<HTMLDivElement> {
+export interface VolumeXIconProps extends HTMLAttributes<HTMLDivElement> {
   strokeWidth?: number;
   size?: number;
 }
 
-export const FilterIcon = forwardRef<HTMLDivElement, FilterIconProps>(
+export const VolumeXIcon = forwardRef<HTMLDivElement, VolumeXIconProps>(
   ({ className, size = 20, ...props }, ref) => {
     const controls = useAnimation();
     return (
@@ -23,15 +23,22 @@ export const FilterIcon = forwardRef<HTMLDivElement, FilterIconProps>(
         {...props}
       >
         <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-          <motion.polygon
-            points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"
+          <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5" />
+          <motion.line
+            x1="23" y1="9" x2="17" y2="15"
             animate={controls}
-            variants={{ normal: { rotate: 0 }, animate: { rotate: [0, -12, 10, -6, 0] } }}
-            transition={{ duration: 0.4 }}
+            variants={{ normal: { scale: 1 }, animate: { scale: [1, 1.2, 1] } }}
+            transition={{ duration: 0.25 }}
+          />
+          <motion.line
+            x1="17" y1="9" x2="23" y2="15"
+            animate={controls}
+            variants={{ normal: { scale: 1 }, animate: { scale: [1, 1.2, 1] } }}
+            transition={{ duration: 0.25 }}
           />
         </svg>
       </div>
     );
   }
 );
-FilterIcon.displayName = 'FilterIcon';
+VolumeXIcon.displayName = 'VolumeXIcon';

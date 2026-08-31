@@ -2,7 +2,7 @@
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import * as Dialog from '@radix-ui/react-dialog';
-import { Search } from 'lucide-react';
+import { SearchIcon as Search } from '@/components/icons/search';
 import { z } from 'zod';
 import { create } from 'zustand';
 

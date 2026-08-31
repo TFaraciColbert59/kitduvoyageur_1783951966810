@@ -13,6 +13,7 @@ export interface ShieldCheckIconHandle {
 }
 
 interface ShieldCheckIconProps extends HTMLAttributes<HTMLDivElement> {
+  strokeWidth?: number;
   size?: number;
 }
 

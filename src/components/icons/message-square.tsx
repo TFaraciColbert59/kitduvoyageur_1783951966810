@@ -13,6 +13,7 @@ export interface MessageSquareIconHandle {
 }
 
 interface MessageSquareIconProps extends HTMLAttributes<HTMLDivElement> {
+  strokeWidth?: number;
   size?: number;
 }
 

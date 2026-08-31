@@ -12,6 +12,7 @@ export interface PlusIconHandle {
 }
 
 interface PlusIconProps extends HTMLAttributes<HTMLDivElement> {
+  strokeWidth?: number;
   size?: number;
 }
 

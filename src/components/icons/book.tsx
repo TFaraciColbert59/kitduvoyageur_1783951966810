@@ -11,6 +11,7 @@ export interface BookIconHandle {
 }
 
 interface BookIconProps extends HTMLAttributes<HTMLDivElement> {
+  strokeWidth?: number;
   size?: number;
 }
 

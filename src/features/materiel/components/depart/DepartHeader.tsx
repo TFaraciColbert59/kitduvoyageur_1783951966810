@@ -3,29 +3,11 @@ import React, { useState, useTransition } from 'react';
 import { useRouter } from 'next/navigation';
 import Image from 'next/image';
 import { motion, AnimatePresence } from 'framer-motion';
-import {
-  Calendar,
-  Backpack,
-  CheckCircle2,
-  AlertTriangle,
-  Zap,
-  ArrowRight,
-  Edit2,
-  Check,
-  X,
-  MapPin,
-  Users,
-  Sun,
-  CloudSun,
-  Cloud,
-  CloudRain,
-  CloudSnow,
-  CloudLightning,
-  CloudFog,
-  Sparkles,
-  Clock,
-  Compass,
-} from 'lucide-react';
+import { Backpack, CheckCircle2, AlertTriangle, Zap, ArrowRight, Check, MapPin, Users, Sun, CloudSun, Cloud, CloudRain, CloudSnow, CloudLightning, CloudFog, Sparkles, Compass } from 'lucide-react';
+import { CalendarIcon as Calendar } from '@/components/icons/calendar';
+import { Edit2Icon as Edit2 } from '@/components/icons/edit-2';
+import { XIcon as X } from '@/components/icons/x';
+import { ClockIcon as Clock } from '@/components/icons/clock';
 import { GlassCard } from '@/components/ui/GlassCard';
 import { Badge } from '@/components/ui/Badge';
 import { CountdownLive } from '@/features/materiel/components/cards/CountdownLive';

@@ -1,7 +1,7 @@
 'use client';
 import * as Dialog from '@radix-ui/react-dialog';
 import { motion } from 'framer-motion';
-import { X } from 'lucide-react';
+import { XIcon as X } from '@/components/icons/x';
 
 export function GlassDrawer({
   open, onOpenChange, title, width = 520, children,

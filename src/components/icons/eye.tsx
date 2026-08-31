@@ -12,6 +12,7 @@ export interface EyeIconHandle {
 }
 
 interface EyeIconProps extends HTMLAttributes<HTMLDivElement> {
+  strokeWidth?: number;
   size?: number;
 }
 

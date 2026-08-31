@@ -4,12 +4,12 @@ import type { HTMLAttributes } from 'react';
 import { forwardRef } from 'react';
 import { cn } from '@/lib/utils';
 
-export interface FilterIconProps extends HTMLAttributes<HTMLDivElement> {
+export interface CheckSquareIconProps extends HTMLAttributes<HTMLDivElement> {
   strokeWidth?: number;
   size?: number;
 }
 
-export const FilterIcon = forwardRef<HTMLDivElement, FilterIconProps>(
+export const CheckSquareIcon = forwardRef<HTMLDivElement, CheckSquareIconProps>(
   ({ className, size = 20, ...props }, ref) => {
     const controls = useAnimation();
     return (
@@ -23,15 +23,16 @@ export const FilterIcon = forwardRef<HTMLDivElement, FilterIconProps>(
         {...props}
       >
         <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-          <motion.polygon
-            points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"
+          <polyline points="9 11 12 14 22 4" />
+          <motion.path
+            d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"
             animate={controls}
-            variants={{ normal: { rotate: 0 }, animate: { rotate: [0, -12, 10, -6, 0] } }}
-            transition={{ duration: 0.4 }}
+            variants={{ normal: { scale: 1 }, animate: { scale: [1, 1.08, 0.96, 1] } }}
+            transition={{ duration: 0.3 }}
           />
         </svg>
       </div>
     );
   }
 );
-FilterIcon.displayName = 'FilterIcon';
+CheckSquareIcon.displayName = 'CheckSquareIcon';

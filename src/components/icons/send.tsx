@@ -11,6 +11,7 @@ export interface SendIconHandle {
 }
 
 interface SendIconProps extends HTMLAttributes<HTMLDivElement> {
+  strokeWidth?: number;
   size?: number;
 }
 

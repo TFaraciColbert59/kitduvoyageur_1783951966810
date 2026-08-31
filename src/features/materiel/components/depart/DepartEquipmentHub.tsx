@@ -2,22 +2,9 @@
 import React, { useState, useMemo } from 'react';
 import dynamic from 'next/dynamic';
 import Link from 'next/link';
-import {
-  Boxes,
-  Handshake,
-  ShoppingBag,
-  Plus,
-  Trash2,
-  Check,
-  Scale,
-  X,
-  ExternalLink,
-  CheckSquare,
-  Layers,
-  ArrowRight,
-  ArrowUpRight,
-  List,
-} from 'lucide-react';
+import { Boxes, Handshake, ShoppingBag, Plus, Trash2, Check, Scale, X, Layers, ArrowRight, ArrowUpRight, List } from 'lucide-react';
+import { ExternalLinkIcon as ExternalLink } from '@/components/icons/external-link';
+import { CheckSquareIcon as CheckSquare } from '@/components/icons/check-square';
 import { SearchIcon as SearchAnimated } from '@/components/icons/search';
 import { LayoutGridIcon as LayoutGridAnimated } from '@/components/icons/layout-grid';
 import { XIcon as XAnimated } from '@/components/icons/x';

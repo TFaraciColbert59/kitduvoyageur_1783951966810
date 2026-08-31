@@ -13,6 +13,7 @@ export interface SunIconHandle {
 }
 
 interface SunIconProps extends HTMLAttributes<HTMLDivElement> {
+  strokeWidth?: number;
   size?: number;
 }
 

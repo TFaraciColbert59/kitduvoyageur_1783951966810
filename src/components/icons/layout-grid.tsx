@@ -13,6 +13,7 @@ export interface LayoutGridIconHandle {
 }
 
 interface LayoutGridIconProps extends HTMLAttributes<HTMLDivElement> {
+  strokeWidth?: number;
   size?: number;
 }
 

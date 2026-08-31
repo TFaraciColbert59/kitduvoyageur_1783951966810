@@ -13,6 +13,7 @@ export interface ArrowLeftIconHandle {
 }
 
 interface ArrowLeftIconProps extends HTMLAttributes<HTMLDivElement> {
+  strokeWidth?: number;
   size?: number;
 }
 

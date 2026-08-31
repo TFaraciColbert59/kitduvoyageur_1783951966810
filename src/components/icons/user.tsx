@@ -13,6 +13,7 @@ export interface UserIconHandle {
 }
 
 interface UserIconProps extends HTMLAttributes<HTMLDivElement> {
+  strokeWidth?: number;
   size?: number;
 }
 

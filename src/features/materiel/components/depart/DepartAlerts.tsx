@@ -2,15 +2,9 @@
 import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { motion, AnimatePresence, useReducedMotion } from 'framer-motion';
-import {
-  AlertTriangle,
-  AlertCircle,
-  Clock,
-  ExternalLink,
-  ShieldCheck,
-  ChevronDown,
-  HelpCircle,
-} from 'lucide-react';
+import { AlertTriangle, AlertCircle, Clock, ShieldCheck, HelpCircle } from 'lucide-react';
+import { ExternalLinkIcon as ExternalLink } from '@/components/icons/external-link';
+import { ChevronDownIcon as ChevronDown } from '@/components/icons/chevron-down';
 import { ArrowRightIcon as ArrowRightAnimated } from '@/components/icons/arrow-right';
 import { XIcon as XAnimated } from '@/components/icons/x';
 import { cn } from '@/lib/utils';

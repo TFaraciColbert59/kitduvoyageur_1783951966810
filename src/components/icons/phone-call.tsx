@@ -11,6 +11,7 @@ export interface PhoneCallIconHandle {
 }
 
 interface PhoneCallIconProps extends HTMLAttributes<HTMLDivElement> {
+  strokeWidth?: number;
   size?: number;
 }
 

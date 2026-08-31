@@ -13,6 +13,7 @@ export interface BoxIconHandle {
 }
 
 interface BoxIconProps extends HTMLAttributes<HTMLDivElement> {
+  strokeWidth?: number;
   size?: number;
 }
 

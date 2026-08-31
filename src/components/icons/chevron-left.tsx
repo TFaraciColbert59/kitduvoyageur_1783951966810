@@ -13,6 +13,7 @@ export interface ChevronLeftIconHandle {
 }
 
 interface ChevronLeftIconProps extends HTMLAttributes<HTMLDivElement> {
+  strokeWidth?: number;
   size?: number;
 }
 

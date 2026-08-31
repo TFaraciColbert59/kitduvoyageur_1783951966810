@@ -1,10 +1,8 @@
 'use client';
 import React, { useState } from 'react';
 import { motion, AnimatePresence, useReducedMotion } from 'framer-motion';
-import {
-  Scale,
-  ChevronDown,
-} from 'lucide-react';
+import { Scale } from 'lucide-react';
+import { ChevronDownIcon as ChevronDown } from '@/components/icons/chevron-down';
 import { formatWeight } from '@/features/materiel/domain/departCalculations';
 import { cn } from '@/lib/utils';
 

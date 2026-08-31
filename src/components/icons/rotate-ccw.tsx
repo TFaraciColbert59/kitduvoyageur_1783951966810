@@ -12,6 +12,7 @@ export interface RotateCCWIconHandle {
 }
 
 interface RotateCCWIconProps extends HTMLAttributes<HTMLDivElement> {
+  strokeWidth?: number;
   size?: number;
 }
 

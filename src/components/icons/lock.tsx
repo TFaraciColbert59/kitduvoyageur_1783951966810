@@ -5,6 +5,7 @@ import { forwardRef } from 'react';
 import { cn } from '@/lib/utils';
 
 export interface LockIconProps extends HTMLAttributes<HTMLDivElement> {
+  strokeWidth?: number;
   size?: number;
 }
 

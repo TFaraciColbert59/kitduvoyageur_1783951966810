@@ -13,6 +13,7 @@ export interface BellIconHandle {
 }
 
 interface BellIconProps extends HTMLAttributes<HTMLDivElement> {
+  strokeWidth?: number;
   size?: number;
 }
 

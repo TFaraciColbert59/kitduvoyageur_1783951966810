@@ -1,6 +1,6 @@
 ﻿'use client';
 import { useRouter } from 'next/navigation';
-import { ChevronDown } from 'lucide-react';
+import { ChevronDownIcon as ChevronDown } from '@/components/icons/chevron-down';
 import { useState } from 'react';
 import { motion, AnimatePresence, useReducedMotion } from 'framer-motion';
 import { cn } from '@/lib/utils';

@@ -3,20 +3,11 @@
 import React, { useEffect, useState, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import { motion } from 'framer-motion';
-import {
-  MapPin,
-  Clock,
-  TrendingUp,
-  Backpack,
-  Compass,
-  Download,
-  Check,
-  Sparkles,
-  Share2,
-  Navigation,
-  Play,
-  Mountain,
-} from 'lucide-react';
+import { MapPin, TrendingUp, Backpack, Compass, Check, Sparkles, Navigation, Mountain } from 'lucide-react';
+import { Share2Icon as Share2 } from '@/components/icons/share-2';
+import { DownloadIcon as Download } from '@/components/icons/download';
+import { PlayIcon as Play } from '@/components/icons/play';
+import { ClockIcon as Clock } from '@/components/icons/clock';
 import { XIcon as XAnimated } from '@/components/icons/x';
 import type { MapTrail } from './types';
 import { useOfflineDownload } from '@/hooks/useOfflineDownload';

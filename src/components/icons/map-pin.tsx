@@ -13,6 +13,7 @@ export interface MapPinIconHandle {
 }
 
 interface MapPinIconProps extends HTMLAttributes<HTMLDivElement> {
+  strokeWidth?: number;
   size?: number;
 }
 

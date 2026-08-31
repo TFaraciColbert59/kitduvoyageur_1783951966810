@@ -12,6 +12,7 @@ export interface SearchIconHandle {
 }
 
 interface SearchIconProps extends HTMLAttributes<HTMLDivElement> {
+  strokeWidth?: number;
   size?: number;
 }
 

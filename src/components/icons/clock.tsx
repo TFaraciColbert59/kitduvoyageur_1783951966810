@@ -13,6 +13,7 @@ export interface ClockIconHandle {
 }
 
 interface ClockIconProps extends HTMLAttributes<HTMLDivElement> {
+  strokeWidth?: number;
   size?: number;
 }
 

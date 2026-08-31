@@ -4,12 +4,12 @@ import type { HTMLAttributes } from 'react';
 import { forwardRef } from 'react';
 import { cn } from '@/lib/utils';
 
-export interface FilterIconProps extends HTMLAttributes<HTMLDivElement> {
+export interface Edit2IconProps extends HTMLAttributes<HTMLDivElement> {
   strokeWidth?: number;
   size?: number;
 }
 
-export const FilterIcon = forwardRef<HTMLDivElement, FilterIconProps>(
+export const Edit2Icon = forwardRef<HTMLDivElement, Edit2IconProps>(
   ({ className, size = 20, ...props }, ref) => {
     const controls = useAnimation();
     return (
@@ -23,15 +23,15 @@ export const FilterIcon = forwardRef<HTMLDivElement, FilterIconProps>(
         {...props}
       >
         <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-          <motion.polygon
-            points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"
+          <motion.path
+            d="M17 3a2.828 2.828 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5L17 3z"
             animate={controls}
-            variants={{ normal: { rotate: 0 }, animate: { rotate: [0, -12, 10, -6, 0] } }}
-            transition={{ duration: 0.4 }}
+            variants={{ normal: { rotate: 0 }, animate: { rotate: [0, -10, 8, -4, 0] } }}
+            transition={{ duration: 0.35 }}
           />
         </svg>
       </div>
     );
   }
 );
-FilterIcon.displayName = 'FilterIcon';
+Edit2Icon.displayName = 'Edit2Icon';

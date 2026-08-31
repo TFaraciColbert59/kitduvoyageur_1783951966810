@@ -13,6 +13,7 @@ export interface DownloadIconHandle {
 }
 
 interface DownloadIconProps extends HTMLAttributes<HTMLDivElement> {
+  strokeWidth?: number;
   size?: number;
 }
 

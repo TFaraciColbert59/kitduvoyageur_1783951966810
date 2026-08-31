@@ -13,6 +13,7 @@ export interface BookmarkIconHandle {
 }
 
 interface BookmarkIconProps extends HTMLAttributes<HTMLDivElement> {
+  strokeWidth?: number;
   size?: number;
 }
 

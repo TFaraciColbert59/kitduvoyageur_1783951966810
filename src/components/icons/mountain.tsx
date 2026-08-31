@@ -11,6 +11,7 @@ export interface MountainIconHandle {
 }
 
 interface MountainIconProps extends HTMLAttributes<HTMLDivElement> {
+  strokeWidth?: number;
   size?: number;
 }
 

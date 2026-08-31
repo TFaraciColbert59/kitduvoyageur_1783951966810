@@ -1,7 +1,8 @@
 'use client';
 import React from 'react';
 import { motion, useReducedMotion } from 'framer-motion';
-import { Volume2, Plus } from 'lucide-react';
+import { Plus } from 'lucide-react';
+import { Volume2Icon as Volume2 } from '@/components/icons/volume-2';
 import { cn } from '@/lib/utils';
 
 export interface MobileFloatingIslandProps {

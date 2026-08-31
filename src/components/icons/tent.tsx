@@ -11,6 +11,7 @@ export interface TentIconHandle {
 }
 
 interface TentIconProps extends HTMLAttributes<HTMLDivElement> {
+  strokeWidth?: number;
   size?: number;
 }
 

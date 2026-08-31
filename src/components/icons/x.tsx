@@ -13,6 +13,7 @@ export interface XIconHandle {
 }
 
 interface XIconProps extends HTMLAttributes<HTMLDivElement> {
+  strokeWidth?: number;
   size?: number;
 }
 

@@ -13,6 +13,7 @@ export interface MoonIconHandle {
 }
 
 interface MoonIconProps extends HTMLAttributes<HTMLDivElement> {
+  strokeWidth?: number;
   size?: number;
 }
 

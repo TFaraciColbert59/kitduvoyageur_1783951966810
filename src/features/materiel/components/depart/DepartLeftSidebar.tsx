@@ -1,14 +1,9 @@
 'use client';
 import React from 'react';
 import Link from 'next/link';
-import {
-  Zap,
-  Wifi,
-  WifiOff,
-  Layers,
-  Printer,
-  Share2,
-} from 'lucide-react';
+import { Zap, Wifi, WifiOff, Layers } from 'lucide-react';
+import { PrinterIcon as Printer } from '@/components/icons/printer';
+import { Share2Icon as Share2 } from '@/components/icons/share-2';
 import { ChevronRightIcon as ChevronRightAnimated } from '@/components/icons/chevron-right';
 import { KitSwitcher } from './KitSwitcher';
 import { Badge } from '@/components/ui/Badge';

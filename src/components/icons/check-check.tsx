@@ -13,6 +13,7 @@ export interface CheckCheckIconHandle {
 }
 
 interface CheckCheckIconProps extends HTMLAttributes<HTMLDivElement> {
+  strokeWidth?: number;
   size?: number;
 }
 

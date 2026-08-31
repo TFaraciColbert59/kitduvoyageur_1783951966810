@@ -4,12 +4,12 @@ import type { HTMLAttributes } from 'react';
 import { forwardRef } from 'react';
 import { cn } from '@/lib/utils';
 
-export interface FilterIconProps extends HTMLAttributes<HTMLDivElement> {
+export interface Volume2IconProps extends HTMLAttributes<HTMLDivElement> {
   strokeWidth?: number;
   size?: number;
 }
 
-export const FilterIcon = forwardRef<HTMLDivElement, FilterIconProps>(
+export const Volume2Icon = forwardRef<HTMLDivElement, Volume2IconProps>(
   ({ className, size = 20, ...props }, ref) => {
     const controls = useAnimation();
     return (
@@ -23,10 +23,11 @@ export const FilterIcon = forwardRef<HTMLDivElement, FilterIconProps>(
         {...props}
       >
         <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-          <motion.polygon
-            points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"
+          <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5" />
+          <motion.path
+            d="M19.07 4.93a10 10 0 0 1 0 14.14M15.54 8.46a5 5 0 0 1 0 7.07"
             animate={controls}
-            variants={{ normal: { rotate: 0 }, animate: { rotate: [0, -12, 10, -6, 0] } }}
+            variants={{ normal: { opacity: 1, scale: 1 }, animate: { opacity: [0.4, 1, 0.4, 1], scale: [0.9, 1.1, 1] } }}
             transition={{ duration: 0.4 }}
           />
         </svg>
@@ -34,4 +35,4 @@ export const FilterIcon = forwardRef<HTMLDivElement, FilterIconProps>(
     );
   }
 );
-FilterIcon.displayName = 'FilterIcon';
+Volume2Icon.displayName = 'Volume2Icon';

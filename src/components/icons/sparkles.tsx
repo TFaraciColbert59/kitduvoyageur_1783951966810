@@ -13,6 +13,7 @@ export interface SparklesIconHandle {
 }
 
 interface SparklesIconProps extends HTMLAttributes<HTMLDivElement> {
+  strokeWidth?: number;
   size?: number;
 }
 

@@ -8,13 +8,8 @@ import { GlassCard } from '@/components/ui/GlassCard';
 import { Badge } from '@/components/ui/Badge';
 import { useToast } from '@/contexts/ToastContext';
 import { addToCart } from '@/lib/cart';
-import {
-  Plus,
-  Check,
-  Trash2,
-  Sparkles,
-  ChevronDown,
-} from 'lucide-react';
+import { Plus, Check, Trash2, Sparkles } from 'lucide-react';
+import { ChevronDownIcon as ChevronDown } from '@/components/icons/chevron-down';
 import type { InventoryItem } from '@/features/materiel/services/getInventory';
 import type { ProductSuggestion } from '@/features/materiel/services/getProductSuggestions';
 import type { KitListItem } from '@/features/materiel/services/getKits';

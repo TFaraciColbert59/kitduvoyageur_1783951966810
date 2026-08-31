@@ -12,6 +12,7 @@ export interface SettingsIconHandle {
 }
 
 interface SettingsIconProps extends HTMLAttributes<HTMLDivElement> {
+  strokeWidth?: number;
   size?: number;
 }
 

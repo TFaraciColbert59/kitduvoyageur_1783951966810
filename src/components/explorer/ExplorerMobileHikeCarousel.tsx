@@ -2,18 +2,10 @@
 
 import React, { useEffect, useRef, useState, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import {
-  MapPin,
-  ChevronDown,
-  ChevronUp,
-  Navigation,
-  Clock,
-  TrendingUp,
-  Backpack,
-  FileText,
-  List,
-  Layers,
-} from 'lucide-react';
+import { MapPin, Navigation, TrendingUp, Backpack, FileText, List, Layers } from 'lucide-react';
+import { ClockIcon as Clock } from '@/components/icons/clock';
+import { ChevronDownIcon as ChevronDown } from '@/components/icons/chevron-down';
+import { ChevronUpIcon as ChevronUp } from '@/components/icons/chevron-up';
 import { useRouter } from 'next/navigation';
 import type { MapTrail } from './types';
 import {

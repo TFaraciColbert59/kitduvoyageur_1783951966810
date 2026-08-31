@@ -13,6 +13,7 @@ export interface EyeOffIconHandle {
 }
 
 interface EyeOffIconProps extends HTMLAttributes<HTMLDivElement> {
+  strokeWidth?: number;
   size?: number;
 }
 

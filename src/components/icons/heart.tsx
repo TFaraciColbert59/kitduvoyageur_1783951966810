@@ -12,6 +12,7 @@ export interface HeartIconHandle {
 }
 
 interface HeartIconProps extends HTMLAttributes<HTMLDivElement> {
+  strokeWidth?: number;
   size?: number;
 }
 

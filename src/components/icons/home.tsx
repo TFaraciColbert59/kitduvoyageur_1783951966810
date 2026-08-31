@@ -13,6 +13,7 @@ export interface HomeIconHandle {
 }
 
 interface HomeIconProps extends HTMLAttributes<HTMLDivElement> {
+  strokeWidth?: number;
   size?: number;
 }
 
