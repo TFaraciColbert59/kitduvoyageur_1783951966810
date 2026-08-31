@@ -2,7 +2,8 @@
 
 import React, { useCallback, useRef } from 'react';
 import { motion } from 'framer-motion';
-import { MapPin, ChevronDown, ChevronUp } from 'lucide-react';
+import { MapPin } from 'lucide-react';
+import { ChevronDownAnimated, ChevronUpAnimated } from '@/components/icons';
 import type { MapTrail } from './types';
 import ExplorerListCard from './ExplorerListCard';
 import { useHapticFeedback } from '@/hooks/useHapticFeedback';
@@ -103,7 +104,7 @@ export default function ExplorerMobileSheet({
             aria-label={expanded ? 'Replier la liste' : 'Déplier la liste'}
             className="w-7 h-7 rounded-full bg-white/70 hover:bg-white border border-white/60 text-[#17402C] flex items-center justify-center transition-all active:scale-90 "
           >
-            {expanded ? <ChevronDown size={12} /> : <ChevronUp size={12} />}
+            {expanded ? <ChevronDownAnimated size={12} /> : <ChevronUpAnimated size={12} />}
           </button>
         </div>
       </div>

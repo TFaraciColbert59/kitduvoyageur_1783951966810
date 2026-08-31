@@ -127,14 +127,32 @@ Les icônes interactives prioritaires suivantes ont été migrées vers leurs é
    - `X` → `XAnimated` (Nettoyage recherche)
 3. **`DepartParticipants.tsx`** :
    - `PhoneCall` → `PhoneCallAnimated` (Bouton d'appel d'urgence ICE)
+4. **`ExplorerClient.tsx`** :
+   - `SlidersHorizontal` → `SlidersHorizontalAnimated` (Dock latéral & ouverture filtres)
+   - `RotateCcw` → `RotateCcwAnimated` (Bouton « Rechercher dans cette zone »)
+   - `Search` → `SearchAnimated` (Recherche sentier/massif)
+   - `X` → `XAnimated` (Fermeture filtres & carte)
+5. **`TrailDetailPanel.tsx`** :
+   - `X` → `XAnimated` (Fermeture fiche sentier)
+6. **`GlassSheet.tsx`** :
+   - `ArrowLeft` → `ArrowLeftAnimated` (Bouton retour tactile navigation)
+7. **`ExplorerMobileSheet.tsx`** :
+   - `ChevronDown` / `ChevronUp` → `ChevronDownAnimated` / `ChevronUpAnimated` (Dépliement/repliement tactile de la feuille mobile)
+8. **`DepartMap.tsx`** :
+   - `Download` → `DownloadAnimated` (Export GPX)
+   - `Maximize2` → `Maximize2Animated` (Plein écran cartographie)
 
 ---
 
 ## 🎯 Phase 3 — Preuves Obligatoires & Validation
 
-- **TypeScript (`tsc --noEmit`) :** **0 erreur**.
-- **Vitest Suite (`vitest run`) :** **146 / 146 tests passés avec succès**.
-- **Production Build (`next build`) :** **Exécuté avec succès (Code 0)**.
-- **Support Mobile :** Trigger d'animation câblé sur `onClick` et `onTouchStart` en plus du `onMouseEnter` desktop.
-- **Respect Critique Perf :** Toutes les icônes de listes et boucles (`Check`, `CheckCircle2`, `Trash2`, `Plus`, `Scale`, `Zap`, `Sparkles`) sont **100% conservées en `lucide-react` statique**.
+| Contrôle | Résultat | Preuve |
+|---|---|---|
+| **TypeScript** | **0 erreur** | `tsc --noEmit` exécuté avec succès (Code 0) |
+| **Vitest** | **146 / 146 tests au vert** | `npm test` : 24 test suites passées en 1.99s |
+| **Next.js Production Build** | **Code 0 (Succès)** | `next build` : 0 avertissement, 0 erreur de chunk SSR |
+| **First Load JS partagé** | **103 kB (Baseline) → 103 kB** | **0 kB de régression sur le bundle partagé** |
+| **Support Mobile Touch** | **Actif (`onClick` & `onTouchStart`)** | Déclenchement au doigt dès le contact tactile |
+| **Critique Perf** | **Strictement respecté** | 11 icônes de listes/boucles conservées en `lucide-react` statique |
+
 

@@ -1,7 +1,7 @@
 'use client';
 import * as Dialog from '@radix-ui/react-dialog';
 import { motion, AnimatePresence } from 'framer-motion';
-import { ArrowLeft } from 'lucide-react';
+import { ArrowLeftAnimated } from '@/components/icons';
 
 export function GlassSheet({
   open, onOpenChange, title, children,
@@ -30,7 +30,7 @@ export function GlassSheet({
                       aria-label="Retour"
                       className="glass interactive h-11 w-11 flex items-center justify-center rounded-full cursor-pointer"
                     >
-                      <ArrowLeft size={18} className="text-[color:var(--label)]" aria-hidden="true" />
+                      <ArrowLeftAnimated size={18} className="text-[color:var(--label)]" aria-hidden="true" />
                     </button>
                   </Dialog.Close>
                   <Dialog.Title className="font-display font-semibold text-[18px] sm:text-[20px] text-[color:var(--label)]">

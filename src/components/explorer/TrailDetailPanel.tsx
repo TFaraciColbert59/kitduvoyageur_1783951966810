@@ -4,7 +4,6 @@ import React, { useEffect, useState, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import { motion } from 'framer-motion';
 import {
-  X,
   MapPin,
   Clock,
   TrendingUp,
@@ -18,6 +17,7 @@ import {
   Play,
   Mountain,
 } from 'lucide-react';
+import { XAnimated } from '@/components/icons';
 import type { MapTrail } from './types';
 import { useOfflineDownload } from '@/hooks/useOfflineDownload';
 import { listOfflineRoutes } from '@/lib/offlineStorage';
@@ -181,7 +181,7 @@ export default function TrailDetailPanel({ trail, onClose }: Props) {
                 aria-label="Fermer la fiche détaillée"
                 title="Fermer"
               >
-                <X size={16} />
+                <XAnimated size={16} />
               </button>
             </div>
           </div>

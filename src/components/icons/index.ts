@@ -15,3 +15,5 @@ export { ChevronLeftIcon as ChevronLeftAnimated, ChevronLeftIcon } from './chevr
 export { ChevronRightIcon as ChevronRightAnimated, ChevronRightIcon } from './chevron-right';
 export { ChevronDownIcon as ChevronDownAnimated, ChevronDownIcon } from './chevron-down';
 export { ChevronUpIcon as ChevronUpAnimated, ChevronUpIcon } from './chevron-up';
+export { SlidersHorizontalIcon as SlidersHorizontalAnimated, SlidersHorizontalIcon } from './sliders-horizontal';
+export { Maximize2Icon as Maximize2Animated, Maximize2Icon } from './maximize-2';

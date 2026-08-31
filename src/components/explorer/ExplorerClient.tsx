@@ -6,10 +6,6 @@ import { useRouter } from 'next/navigation';
 import { useQuery } from '@tanstack/react-query';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
-  Search,
-  X,
-  SlidersHorizontal,
-  RotateCcw,
   Compass,
   FileText,
   Backpack,
@@ -20,6 +16,12 @@ import {
   Bell,
   ShoppingBag,
 } from 'lucide-react';
+import {
+  SlidersHorizontalAnimated,
+  XAnimated,
+  RotateCcwAnimated,
+  SearchAnimated,
+} from '@/components/icons';
 import Link from 'next/link';
 import type { MapTrail } from '@/components/explorer/types';
 import {
@@ -480,10 +482,9 @@ export default function ExplorerClient({ initialTrails }: ExplorerClientProps) {
               title="Rechercher les randonnées dans cette zone"
               aria-label="Rechercher les randonnées dans cette zone"
             >
-              <RotateCcw
+              <RotateCcwAnimated
                 size={14}
-                strokeWidth={2.2}
-                className={`transition-transform duration-500 ${trailsFetching ? 'animate-spin' : 'hover:-rotate-90'}`}
+                className={`transition-transform duration-500 ${trailsFetching ? 'animate-spin' : ''}`}
               />
               <span>Rechercher dans cette zone</span>
             </button>
@@ -513,7 +514,7 @@ export default function ExplorerClient({ initialTrails }: ExplorerClientProps) {
               title="Ouvrir la recherche et les filtres"
               aria-label="Ouvrir la recherche et les filtres"
             >
-              <SlidersHorizontal size={20} strokeWidth={2.2} className="text-[#17402C]" />
+              <SlidersHorizontalAnimated size={20} className="text-[#17402C]" />
               {(activeFilterCount > 0 || searchQuery.trim().length > 0) && (
                 <span className="absolute top-1 left-1 w-4 h-4 rounded-full bg-[#17402C] text-white text-[9px] font-mono font-bold flex items-center justify-center shadow-xs">
                   {activeFilterCount + (searchQuery.trim().length > 0 ? 1 : 0)}
@@ -536,7 +537,7 @@ export default function ExplorerClient({ initialTrails }: ExplorerClientProps) {
               <div className="flex items-center justify-between pb-2 border-b border-[#17402C]/10">
                 <div className="flex items-center gap-2">
                   <div className="w-7 h-7 rounded-xl bg-[#5B7F55]/15 text-[#5B7F55] flex items-center justify-center">
-                    <SlidersHorizontal size={15} strokeWidth={2.2} />
+                    <SlidersHorizontalAnimated size={15} />
                   </div>
                   <div>
                     <h3 className="font-display font-bold text-xs sm:text-sm text-[#17402C]">
@@ -554,7 +555,7 @@ export default function ExplorerClient({ initialTrails }: ExplorerClientProps) {
                   className="w-7 h-7 rounded-full bg-black/5 hover:bg-black/10 flex items-center justify-center text-[#17402C] transition-colors cursor-pointer"
                   title="Fermer"
                 >
-                  <X size={14} />
+                  <XAnimated size={14} />
                 </button>
               </div>
 
@@ -598,7 +599,7 @@ export default function ExplorerClient({ initialTrails }: ExplorerClientProps) {
           }}
         >
           <div className="relative flex-1">
-            <Search size={12} className="absolute left-2.5 top-1/2 -translate-y-1/2 text-[#5A7064]" />
+            <SearchAnimated size={12} className="absolute left-2.5 top-1/2 -translate-y-1/2 text-[#5A7064]" />
             <input
               type="text"
               placeholder="Rechercher sentier, massif…"
@@ -612,7 +613,7 @@ export default function ExplorerClient({ initialTrails }: ExplorerClientProps) {
                 onClick={() => handleSearchChange('')}
                 className="absolute right-2.5 top-1/2 -translate-y-1/2 text-[#5A7064] hover:text-[#17402C]"
               >
-                <X size={12} />
+                <XAnimated size={12} />
               </button>
             )}
           </div>
@@ -718,7 +719,7 @@ export default function ExplorerClient({ initialTrails }: ExplorerClientProps) {
                   title="Fermer"
                   aria-label="Fermer"
                 >
-                  <X size={12} />
+                  <XAnimated size={12} />
                 </button>
               </div>
 

@@ -6,12 +6,11 @@ import {
   MapPin,
   Navigation,
   Layers,
-  Maximize2,
   Minimize2,
-  Download,
   Check,
   Compass,
 } from 'lucide-react';
+import { DownloadAnimated, Maximize2Animated } from '@/components/icons';
 import { Skeleton } from '@/components/ui/Skeleton';
 import { formatDistanceKm } from '@/features/materiel/domain/departCalculations';
 import { cn } from '@/lib/utils';
@@ -273,7 +272,7 @@ export function DepartMap({ trail, height = '240px', className }: DepartMapProps
             title="Exporter le tracé"
             aria-label="Exporter le tracé"
           >
-            {isOfflineSaved ? <Check size={12} className="text-emerald-600" /> : <Download size={12} />}
+            {isOfflineSaved ? <Check size={12} className="text-emerald-600" /> : <DownloadAnimated size={12} />}
           </button>
           <button
             type="button"
@@ -282,7 +281,7 @@ export function DepartMap({ trail, height = '240px', className }: DepartMapProps
             title={isFullscreen ? 'Réduire' : 'Plein écran'}
             aria-label={isFullscreen ? 'Quitter le mode plein écran' : 'Afficher la carte en plein écran'}
           >
-            {isFullscreen ? <Minimize2 size={12} /> : <Maximize2 size={12} />}
+            {isFullscreen ? <Minimize2 size={12} /> : <Maximize2Animated size={12} />}
           </button>
         </div>
       </div>
