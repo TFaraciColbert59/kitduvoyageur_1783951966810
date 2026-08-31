@@ -164,7 +164,7 @@ describe('Mobile Cockpit Integration & OLED Ultra-Save Mode', () => {
     updatedAt: '2026-08-31T08:00:00Z',
   };
 
-  it('renders MobileWeightHeader with live weights and readiness ring in mobile view', () => {
+  it('renders compact mobile header with % Prêt badge and central weight breakdown', () => {
     const html = renderToStaticMarkup(
       React.createElement(DepartCockpit, {
         depart: mockDepart,
@@ -176,14 +176,13 @@ describe('Mobile Cockpit Integration & OLED Ultra-Save Mode', () => {
     // Mobile block presence
     expect(html).toContain('md:hidden');
 
-    // MobileWeightHeader elements
-    expect(html).toContain('🎒');
+    // Compact header presence
+    expect(html).toContain('67% Prêt');
+
+    // Central DepartWeightBreakdown elements (authoritative location for weights)
     expect(html).toContain('4.8 kg');
-    expect(html).toContain('🥾');
     expect(html).toContain('1.2 kg');
-    expect(html).toContain('💧');
     expect(html).toContain('2.5 kg');
-    expect(html).toContain('67%');
   });
 
   it('renders MobileFloatingIsland fixed at the bottom with live counts, speech and quick add', () => {
@@ -231,8 +230,8 @@ describe('Mobile Cockpit Integration & OLED Ultra-Save Mode', () => {
     );
 
     // Eco toggle button present in header
-    expect(html).toContain('Mode Éco Batterie Ultra-Save');
-    expect(html).toContain('ECO');
+    expect(html).toContain('Mode Éco Batterie');
+    expect(html).toContain('ÉCO');
   });
 
   it('integrates MobileChecklistItem with 48px hit-box and swipe-to-pack in DepartChecklist on mobile', () => {

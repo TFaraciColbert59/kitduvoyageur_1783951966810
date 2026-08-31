@@ -440,7 +440,7 @@ function BottomTabBar() {
     )
   );
 
-  const hasUpperExtension = isGroupesHub || isGroupeCockpit || isClubsHub || isClubDetail || isCarnetsHub || isCarnetDetail || isPaysHub || isPaysDetail || isCommunityPage || isMaterielSection;
+  const hasUpperExtension = isGroupesHub || isGroupeCockpit || isClubsHub || isClubDetail || isCarnetsHub || isCarnetDetail || isPaysHub || isPaysDetail || isCommunityPage;
 
   const [activeGroupesTab, setActiveGroupesTab] = useState<'mes-groupes' | 'decouvrir'>('mes-groupes');
   const [activeCockpitTab, setActiveCockpitTab] = useState<string>('overview');

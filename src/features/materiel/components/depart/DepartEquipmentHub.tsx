@@ -849,7 +849,7 @@ export function DepartEquipmentHub({
                                 ) : isItemInBag ? (
                                   <div className="w-full py-1.5 rounded-xl text-xs font-bold bg-emerald-100 text-emerald-900 border border-emerald-200 flex items-center justify-center gap-1">
                                     <Check size={12} />
-                                    <span>Dans le sac ✓</span>
+                                    <span>Dans le sac</span>
                                   </div>
                                 ) : !item.inInventory ? (
                                   <button

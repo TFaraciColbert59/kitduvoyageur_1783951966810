@@ -155,15 +155,20 @@ export function generateSmartPrompts({
     const names = uncheckedVital.slice(0, 2).map((i) => i.name).join(', ');
     const more = uncheckedVital.length > 2 ? ` (+${uncheckedVital.length - 2})` : '';
 
+    const count = uncheckedVital.length;
+    const title = count === 1 ? '1 équipement vital manquant' : `${count} équipements vitaux manquants`;
+    const message = count === 1 ? `${names} pas encore prêt dans votre sac.` : `${names}${more} pas encore prêts dans votre sac.`;
+    const actionLabel = count === 1 ? 'Voir l’article vital' : `Voir les ${count} vitaux`;
+
     alerts.push({
       id: 'alert-vital-gear',
       category: 'checklist',
       severity: 'critical',
-      title: `${uncheckedVital.length} équipement(s) vital(aux) manquant(s)`,
-      message: `${names}${more} pas encore prêt(s) dans votre sac.`,
+      title,
+      message,
       targetSection: 'checklist',
       targetItemId: firstVital.id,
-      actionLabel: `Voir les ${uncheckedVital.length} vitaux`,
+      actionLabel,
       actionType: 'scroll_checklist',
       whyExplanation: `Ces articles sont marqués comme essentiels à votre sécurité et autonomie (abri, couchage, hydratation ou secours).`,
     });
@@ -178,13 +183,16 @@ export function generateSmartPrompts({
     const firstOther = uncheckedOther[0];
     const names = uncheckedOther.slice(0, 2).map((i) => i.name).join(', ');
     const more = uncheckedOther.length > 2 ? ` (+${uncheckedOther.length - 2})` : '';
+    const count = uncheckedOther.length;
+    const title = count === 1 ? '1 article à finaliser dans le sac' : `${count} articles à finaliser dans le sac`;
+    const message = count === 1 ? `${names} non encore coché.` : `${names}${more} encore non cochés.`;
 
     alerts.push({
       id: 'alert-checklist-remaining',
       category: 'checklist',
       severity: 'info',
-      title: `${uncheckedOther.length} article(s) à finaliser dans le sac`,
-      message: `${names}${more} encore non coché(s).`,
+      title,
+      message,
       targetSection: 'checklist',
       targetItemId: firstOther.id,
       actionLabel: 'Vérifier le sac',

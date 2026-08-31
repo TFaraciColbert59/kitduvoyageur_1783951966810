@@ -349,40 +349,6 @@ export function DepartCockpit({
               })}
             </div>
           </div>
-
-          {/* 1.5 Équipe & Sécurité Montagne (Boutons Liquid Glass) */}
-          <div className="glass rounded-[24px] p-4 border border-white/80 dark:border-white/10 shadow-xs space-y-2.5">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-2">
-                <ShieldCheck size={16} className="text-[#2D6B4A]" />
-                <span className="text-xs font-bold text-[#17402C]">Équipe & Secours Montagne</span>
-              </div>
-              <div className="flex items-center gap-1.5">
-                {(depart?.participants || []).map((p) => (
-                  <span key={p.name} className="w-6 h-6 rounded-full bg-[#17402C] text-white text-[10px] font-bold flex items-center justify-center shadow-2xs" title={p.name}>
-                    {p.name.charAt(0)}
-                  </span>
-                ))}
-              </div>
-            </div>
-
-            <div className="grid grid-cols-2 gap-2 pt-1 border-t border-black/5">
-              <a
-                href="tel:112"
-                className="glass-capsule-btn !py-2 !px-3.5 text-xs font-bold flex items-center justify-between cursor-pointer"
-              >
-                <span>112 (Europe / Montagne)</span>
-                <span className="text-[10px] font-mono text-[#5A7064]">Appel 📞</span>
-              </a>
-              <a
-                href="tel:15"
-                className="glass-capsule-btn !py-2 !px-3.5 text-xs font-bold flex items-center justify-between cursor-pointer"
-              >
-                <span>15 (SAMU Urgences)</span>
-                <span className="text-[10px] font-mono text-[#5A7064]">Appel 📞</span>
-              </a>
-            </div>
-          </div>
         </div>
       )}
 
@@ -449,99 +415,70 @@ export function DepartCockpit({
       >
         <div
           className={cn(
-            'space-y-2 sticky top-0 z-30 pt-1 pb-1 backdrop-blur-md rounded-2xl border transition-colors',
+            'space-y-2 sticky top-0 z-30 pt-2 pb-2 px-2.5 backdrop-blur-md rounded-2xl border transition-colors shadow-xs',
             isUltraSave
               ? 'bg-black/95 border-white/20 text-white'
-              : 'bg-white/30 border-white/40'
+              : 'bg-white/80 border-white/80'
           )}
         >
-          <div className="flex items-center justify-between gap-2 px-2">
-            <div className="flex items-center gap-1.5">
-              <span
-                className={cn(
-                  'text-[10.5px] font-semibold uppercase tracking-wider',
-                  isUltraSave ? 'text-stone-300' : 'text-[#5A7064]'
-                )}
-              >
-                Cockpit
-              </span>
-              <span
-                className={cn(
-                  'flex items-center gap-1 text-[9.5px] font-mono px-1.5 py-0.2 rounded-full font-bold',
-                  isOnline
-                    ? isUltraSave
-                      ? 'bg-emerald-950 text-emerald-300 border border-emerald-800'
-                      : 'bg-emerald-100 text-emerald-800'
-                    : isUltraSave
-                    ? 'bg-amber-950 text-amber-300 border border-amber-800'
-                    : 'bg-amber-100 text-amber-800'
-                )}
-              >
-                {isOnline ? <Wifi size={9} /> : <WifiOff size={9} />}
-                {isOnline ? 'EN LIGNE' : 'HORS-LIGNE'}
-              </span>
+          {/* Ligne 1 : Sélecteur de Trek + % Prêt + Statuts Éco / En Ligne */}
+          <div className="flex items-center justify-between gap-2">
+            <div className="flex items-center gap-1.5 min-w-0">
+              {kits && kits.length > 1 ? (
+                <KitSwitcher kits={kits} currentId={depart?.id} />
+              ) : (
+                <span className="text-xs font-bold text-[#17402C] dark:text-white truncate">
+                  {depart?.destination || 'Mon Expédition'}
+                </span>
+              )}
             </div>
 
-            <div className="flex items-center gap-1.5">
+            <div className="flex items-center gap-1.5 shrink-0">
+              {/* Badge % Prêt avec label explicite */}
+              <button
+                type="button"
+                onClick={() => setIsSheetOpen(true)}
+                className="px-2 py-0.5 rounded-full bg-emerald-100 dark:bg-emerald-950 text-emerald-800 dark:text-emerald-300 border border-emerald-300 dark:border-emerald-800 text-[10px] font-bold flex items-center gap-1 cursor-pointer active:scale-95 transition-transform"
+                title="Ouvrir la fiche de départ"
+              >
+                <CheckCircle2 size={11} className="text-emerald-700 dark:text-emerald-400" />
+                <span>{totalItemsCount > 0 ? Math.round((checkedItemsCount / totalItemsCount) * 100) : 100}% Prêt</span>
+              </button>
+
+              {/* Bouton Mode Éco */}
               <button
                 type="button"
                 onClick={() => setIsUltraSave((v) => !v)}
                 className={cn(
-                  'px-2 py-0.5 rounded-lg text-[10px] font-bold flex items-center gap-1 transition-all cursor-pointer',
+                  'px-1.5 py-0.5 rounded-lg text-[9.5px] font-bold flex items-center gap-1 transition-all cursor-pointer',
                   isUltraSave
                     ? 'bg-emerald-600 text-white shadow-xs'
-                    : 'bg-white/40 text-[#17402C] hover:bg-white/60'
+                    : 'bg-black/5 dark:bg-white/10 text-[#17402C] dark:text-white'
                 )}
-                title="Mode Éco Batterie Ultra-Save"
-                aria-pressed={isUltraSave}
+                title="Mode Éco Batterie"
               >
-                <Zap size={10} />
-                <span>{isUltraSave ? 'ECO ACTIF' : 'ECO'}</span>
-                {batteryLevel !== null && (
-                  <span className="font-mono text-[9px] opacity-80">
-                    {Math.round(batteryLevel * 100)}%
-                  </span>
-                )}
+                <Zap size={9} />
+                <span>ÉCO</span>
               </button>
 
-              {kits && kits.length > 1 && <KitSwitcher kits={kits} currentId={depart?.id} />}
-              <Link
-                href="/materiel/kits"
+              {/* Statut En ligne / Hors ligne discret */}
+              <span
                 className={cn(
-                  'p-1 rounded-lg transition-colors',
-                  isUltraSave
-                    ? 'bg-white/10 hover:bg-white/20 text-white'
-                    : 'bg-white/40 hover:bg-white/70 text-[#17402C]'
+                  'w-2 h-2 rounded-full shrink-0',
+                  isOnline ? 'bg-emerald-500' : 'bg-amber-500'
                 )}
-                title="Gérer tous mes kits"
-                aria-label="Gérer tous mes kits"
-              >
-                <Layers size={12} />
-              </Link>
+                title={isOnline ? 'En ligne' : 'Hors-ligne (Cache local)'}
+              />
             </div>
           </div>
 
-          {/* ════ EN-TÊTE POIDS APPLE HEALTH SUR MOBILE ════ */}
-          <div className="px-1">
-            <MobileWeightHeader
-              readinessPercentage={
-                totalItemsCount > 0
-                  ? Math.round((checkedItemsCount / totalItemsCount) * 100)
-                  : 100
-              }
-              baseWeightG={depart?.baseWeightG || 0}
-              wornWeightG={depart?.wornWeightG || 0}
-              consumablesWeightG={depart?.consumablesWeightG || 0}
-              onOpenDetails={() => setIsSheetOpen(true)}
-            />
-          </div>
-
+          {/* Ligne 2 : Onglets Segmentés Fins */}
           <ScrollableTabs
             tabs={SECTIONS_TABS}
             activeTab={activeSection}
             onSelectTab={handleSelectTab}
             size="sm"
-            className="px-0.5"
+            className="px-0"
           />
         </div>
 
