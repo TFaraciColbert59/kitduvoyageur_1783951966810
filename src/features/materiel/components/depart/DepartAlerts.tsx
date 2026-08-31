@@ -1,82 +1,72 @@
 'use client';
-import { useState, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
+import { motion, AnimatePresence, useReducedMotion } from 'framer-motion';
 import {
   AlertTriangle,
+  AlertCircle,
   Info,
-  Zap,
-  X,
-  ChevronDown,
-  ArrowRight,
-  ShieldCheck,
-  HelpCircle,
   Clock,
+  X,
+  ArrowRight,
   ExternalLink,
+  ShieldCheck,
+  ChevronDown,
+  HelpCircle,
 } from 'lucide-react';
-import { motion, AnimatePresence, useReducedMotion } from 'framer-motion';
-import { generateSmartPrompts, type ActionableAlert, type SmartPromptsInput } from '@/features/materiel/services/generateSmartPrompts';
 import { cn } from '@/lib/utils';
+import type { ActionableAlert, SmartPromptsInput } from '@/features/materiel/services/generateSmartPrompts';
+import { generateSmartPrompts } from '@/features/materiel/services/generateSmartPrompts';
 
+const DISMISS_STORAGE_KEY = 'lkdv_dismissed_depart_alerts_v2';
+const SNOOZE_HOURS = 24;
 const MAX_VISIBLE = 3;
-const DISMISS_STORAGE_KEY = 'lkdv_dismissed_depart_alerts_v1';
 
-const severityIcon = (s: ActionableAlert['severity']) => {
-  if (s === 'critical') return <Zap size={14} aria-hidden="true" />;
-  if (s === 'warning') return <AlertTriangle size={14} aria-hidden="true" />;
-  return <Info size={14} aria-hidden="true" />;
-};
-
-const severityClasses: Record<ActionableAlert['severity'], { container: string; btn: string; whyBox: string }> = {
-  critical: {
-    container: 'bg-[rgba(168,68,58,0.10)] border-[rgba(168,68,58,0.25)] text-[#8A241B]',
-    btn: 'bg-[#8A241B] text-white hover:bg-[#8A241B]/90',
-    whyBox: 'bg-[rgba(168,68,58,0.06)] border-[rgba(168,68,58,0.15)] text-[#8A241B]',
-  },
-  warning: {
-    container: 'bg-[rgba(200,154,59,0.10)] border-[rgba(200,154,59,0.25)] text-[#8C6418]',
-    btn: 'bg-[#8C6418] text-white hover:bg-[#8C6418]/90',
-    whyBox: 'bg-[rgba(200,154,59,0.06)] border-[rgba(200,154,59,0.15)] text-[#8C6418]',
-  },
-  info: {
-    container: 'bg-[rgba(91,127,85,0.08)] border-[rgba(91,127,85,0.20)] text-[#17402C]',
-    btn: 'bg-[#2D6B4A] text-white hover:bg-[#2D6B4A]/90',
-    whyBox: 'bg-[rgba(91,127,85,0.05)] border-[rgba(91,127,85,0.12)] text-[#17402C]',
-  },
-};
-
-interface DepartAlertsProps {
-  input: SmartPromptsInput;
+interface DismissEntry {
+  dismissedAt: number;
+  snoozeUntil: number;
 }
 
-export function DepartAlerts({ input }: DepartAlertsProps) {
+export function DepartAlerts({ input }: { input: SmartPromptsInput }) {
   const router = useRouter();
   const shouldReduceMotion = useReducedMotion();
-  const allAlerts = generateSmartPrompts(input);
-  const [dismissed, setDismissed] = useState<Set<string>>(new Set());
+
+  const [dismissed, setDismissed] = useState<Map<string, DismissEntry>>(new Map());
   const [expanded, setExpanded] = useState(false);
   const [openWhyId, setOpenWhyId] = useState<string | null>(null);
 
-  // Charger les alertes snoozées / acquittées depuis le localStorage avec horodatage 24h
+  const allAlerts = generateSmartPrompts(input);
+
   useEffect(() => {
     try {
       const raw = localStorage.getItem(DISMISS_STORAGE_KEY);
       if (raw) {
-        const parsed = JSON.parse(raw);
-        const validDismissed = Object.entries(parsed)
-          .filter(([_, timestamp]) => Date.now() - Number(timestamp) < 24 * 3600 * 1000)
-          .map(([id]) => id);
-        setDismissed(new Set(validDismissed));
+        const parsed: Record<string, DismissEntry> = JSON.parse(raw);
+        const now = Date.now();
+        const valid = new Map<string, DismissEntry>();
+        for (const [id, entry] of Object.entries(parsed)) {
+          if (entry.snoozeUntil > now) {
+            valid.set(id, entry);
+          }
+        }
+        setDismissed(valid);
       }
     } catch {}
   }, []);
 
-  const handleSnooze = (id: string) => {
+  const handleSnooze = (alertId: string) => {
     setDismissed((prev) => {
-      const updated = new Set(prev).add(id);
+      const updated = new Map(prev);
+      const now = Date.now();
+      updated.set(alertId, {
+        dismissedAt: now,
+        snoozeUntil: now + SNOOZE_HOURS * 3600 * 1000,
+      });
+
       try {
-        const payload: Record<string, number> = {};
-        updated.forEach((alertId) => {
-          payload[alertId] = Date.now();
+        const payload: Record<string, DismissEntry> = {};
+        updated.forEach((v, k) => {
+          payload[k] = v;
         });
         localStorage.setItem(DISMISS_STORAGE_KEY, JSON.stringify(payload));
       } catch {}
@@ -116,7 +106,7 @@ export function DepartAlerts({ input }: DepartAlertsProps) {
 
   if (visibleAlerts.length === 0) {
     return (
-      <div className="glass rounded-[24px] p-4 sm:p-5 text-center space-y-2 border border-emerald-300/50 bg-emerald-50/40 dark:bg-emerald-950/20">
+      <div className="glass rounded-[28px] p-5 text-center space-y-2 border border-emerald-300/50 bg-emerald-50/40 dark:bg-emerald-950/20 backdrop-blur-md">
         <div className="w-9 h-9 rounded-2xl bg-emerald-100 dark:bg-emerald-900/40 text-[#2D6B4A] dark:text-emerald-400 flex items-center justify-center mx-auto shadow-2xs">
           <ShieldCheck size={18} />
         </div>
@@ -125,7 +115,7 @@ export function DepartAlerts({ input }: DepartAlertsProps) {
             Aucun point bloquant détecté
           </h3>
           <p className="text-[11px] text-[#5A7064] mt-0.5 max-w-md mx-auto">
-            Vos équipements vitaux, vivres et paramètres de sécurité sont prêts. Aucune alerte critique pour le départ.
+            Vos équipements vitaux, vivres et paramètres de sécurité sont prêts.
           </p>
         </div>
       </div>
@@ -133,11 +123,12 @@ export function DepartAlerts({ input }: DepartAlertsProps) {
   }
 
   return (
-    <div className="space-y-2.5" role="region" aria-label="Alertes avant départ">
-      <div className="flex items-center justify-between px-1">
-        <div className="flex items-center gap-2">
-          <span className="text-[11px] font-bold uppercase tracking-wider text-[#8A241B] flex items-center gap-1.5">
-            <AlertTriangle size={13} className="text-[#8A241B]" />
+    <div className="space-y-3" role="region" aria-label="Alertes avant départ">
+      {/* En-tête de section avec badge de compteur */}
+      <div className="flex items-center justify-between px-1.5">
+        <div className="flex items-center gap-1.5">
+          <span className="w-2 h-2 rounded-full bg-[#8A241B] animate-pulse" />
+          <span className="text-[10.5px] font-mono font-bold uppercase tracking-wider text-[#8A241B]">
             À régler avant le départ ({activeAlerts.length})
           </span>
         </div>
@@ -146,18 +137,18 @@ export function DepartAlerts({ input }: DepartAlertsProps) {
           <button
             type="button"
             onClick={() => setExpanded(true)}
-            className="text-[11px] font-semibold text-[#5A7064] hover:text-[#17402C] flex items-center gap-1 cursor-pointer"
+            className="text-[10.5px] font-semibold text-[#5A7064] hover:text-[#17402C] flex items-center gap-0.5 cursor-pointer"
           >
             <span>+{hiddenCount} autre{hiddenCount > 1 ? 's' : ''}</span>
-            <ChevronDown size={12} />
+            <ChevronDown size={11} />
           </button>
         )}
       </div>
 
       <AnimatePresence>
-        <div className="space-y-2">
+        <div className="space-y-2.5">
           {visibleAlerts.map((alert) => {
-            const sc = severityClasses[alert.severity] || severityClasses.info;
+            const isCritical = alert.severity === 'critical';
             const isWhyOpen = openWhyId === alert.id;
 
             return (
@@ -168,85 +159,95 @@ export function DepartAlerts({ input }: DepartAlertsProps) {
                 exit={shouldReduceMotion ? { opacity: 0 } : { opacity: 0, scale: 0.98 }}
                 transition={{ duration: shouldReduceMotion ? 0 : 0.18 }}
                 className={cn(
-                  'glass p-3 sm:p-3.5 rounded-2xl border flex flex-col gap-2.5 shadow-2xs',
-                  sc.container
+                  'rounded-[24px] p-3.5 space-y-2.5 border shadow-xs backdrop-blur-md transition-all',
+                  isCritical
+                    ? 'bg-rose-50/90 dark:bg-rose-950/20 border-rose-200/80 text-[#8A241B]'
+                    : 'bg-white/85 dark:bg-stone-900/80 border-white/90 dark:border-white/20 text-[#17402C]'
                 )}
                 role="alert"
               >
-                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-                  {/* Icône + Contenu */}
-                  <div className="flex items-start gap-2.5 min-w-0">
-                    <div className="w-7 h-7 rounded-xl bg-white/60 dark:bg-white/10 flex items-center justify-center shrink-0 mt-0.5">
-                      {severityIcon(alert.severity)}
+                {/* ── ÉTAGE 1 : ICÔNE + TITRE + BOUTONS SNOOZE / DISMISS ── */}
+                <div className="flex items-start justify-between gap-2">
+                  <div className="flex items-center gap-2 min-w-0">
+                    <div
+                      className={cn(
+                        'w-7 h-7 rounded-xl flex items-center justify-center shrink-0 shadow-2xs',
+                        isCritical ? 'bg-rose-200/80 text-[#8A241B]' : 'bg-[#2D6B4A]/10 text-[#2D6B4A]'
+                      )}
+                    >
+                      {isCritical ? <AlertTriangle size={14} /> : <AlertCircle size={14} />}
                     </div>
-                    <div className="min-w-0 space-y-0.5">
-                      <div className="flex items-center gap-1.5 flex-wrap">
-                        <h3 className="text-xs sm:text-[12.5px] font-bold leading-tight truncate">
-                          {alert.title}
-                        </h3>
-                        {alert.whyExplanation && (
-                          <button
-                            type="button"
-                            onClick={() => setOpenWhyId(isWhyOpen ? null : alert.id)}
-                            className="inline-flex items-center gap-0.5 text-[10px] font-semibold opacity-70 hover:opacity-100 cursor-pointer underline underline-offset-2"
-                            title="Pourquoi cette alerte ?"
-                          >
-                            <HelpCircle size={10} />
-                            <span>Pourquoi ?</span>
-                          </button>
-                        )}
-                      </div>
-                      <p className="text-[11px] opacity-90 leading-snug line-clamp-2 sm:line-clamp-1">
-                        {alert.message}
-                      </p>
-                    </div>
+
+                    <h4 className="text-xs font-bold leading-snug truncate">
+                      {alert.title}
+                    </h4>
                   </div>
 
-                  {/* Actions & Snooze en Liquid Glass */}
-                  <div className="flex items-center gap-1.5 self-end sm:self-center shrink-0">
-                    {alert.actionLabel && (
-                      <button
-                        type="button"
-                        onClick={() => handleAction(alert)}
-                        className={cn(
-                          'glass-capsule-btn !py-1.5 !px-3 text-[11px] font-bold flex items-center gap-1 cursor-pointer shadow-2xs',
-                          alert.severity === 'critical' ? 'primary !bg-[#8A241B] !text-white' : 'primary'
-                        )}
-                      >
-                        <span>{alert.actionLabel}</span>
-                        {alert.actionType === 'view_dispo' ? (
-                          <ExternalLink size={11} />
-                        ) : (
-                          <ArrowRight size={11} />
-                        )}
-                      </button>
-                    )}
-
-                    {/* Snooze 24h Liquid Glass */}
+                  {/* Boutons d'action rapide Liquid Glass (Image 4) */}
+                  <div className="flex items-center gap-1 shrink-0">
                     <button
                       type="button"
                       onClick={() => handleSnooze(alert.id)}
-                      className="glass-circle-btn !w-7 !h-7 text-[10px] font-bold cursor-pointer text-[#17402C]"
-                      title="Reporter cette alerte de 24h"
+                      className="glass-circle-btn !w-6 !h-6 text-[9.5px] font-bold cursor-pointer text-[#17402C]"
+                      title="Reporter de 24h"
                       aria-label={`Reporter l'alerte : ${alert.title}`}
                     >
-                      <Clock size={11} />
+                      <Clock size={10} />
                     </button>
 
-                    {/* Dismiss Liquid Glass (Image 4) */}
                     <button
                       type="button"
                       onClick={() => handleSnooze(alert.id)}
-                      className="glass-circle-btn !w-7 !h-7 cursor-pointer text-[#17402C]"
+                      className="glass-circle-btn !w-6 !h-6 cursor-pointer text-[#17402C]"
                       title="Masquer"
                       aria-label="Masquer l'alerte"
                     >
-                      <X size={12} />
+                      <X size={11} />
                     </button>
                   </div>
                 </div>
 
-                {/* Explication transparente "Pourquoi cette alerte ?" (§Phase 2) */}
+                {/* ── ÉTAGE 2 : MESSAGE EXPLICATIF SANS CHEVAUCHEMENT ── */}
+                <p className="text-[11px] text-[#5A7064] dark:text-stone-300 leading-relaxed line-clamp-2">
+                  {alert.message}
+                </p>
+
+                {/* ── ÉTAGE 3 : PIED D'ACTION (Lien Pourquoi + Bouton Capsule Liquid Glass) ── */}
+                <div className="pt-1.5 border-t border-black/5 dark:border-white/10 flex items-center justify-between gap-2">
+                  {alert.whyExplanation ? (
+                    <button
+                      type="button"
+                      onClick={() => setOpenWhyId(isWhyOpen ? null : alert.id)}
+                      className="inline-flex items-center gap-1 text-[10px] font-semibold text-[#5A7064] hover:text-[#17402C] cursor-pointer underline underline-offset-2"
+                      title="Pourquoi cette alerte ?"
+                    >
+                      <HelpCircle size={11} />
+                      <span>Pourquoi ?</span>
+                    </button>
+                  ) : (
+                    <div />
+                  )}
+
+                  {alert.actionLabel && (
+                    <button
+                      type="button"
+                      onClick={() => handleAction(alert)}
+                      className={cn(
+                        'glass-capsule-btn !py-1 !px-3 text-[10.5px] font-bold flex items-center gap-1 cursor-pointer shadow-2xs transition-all active:scale-95',
+                        isCritical ? 'primary !bg-[#8A241B] !text-white' : 'primary'
+                      )}
+                    >
+                      <span>{alert.actionLabel}</span>
+                      {alert.actionType === 'view_dispo' ? (
+                        <ExternalLink size={10} />
+                      ) : (
+                        <ArrowRight size={10} />
+                      )}
+                    </button>
+                  )}
+                </div>
+
+                {/* Volet "Pourquoi cette alerte ?" */}
                 <AnimatePresence>
                   {isWhyOpen && alert.whyExplanation && (
                     <motion.div
@@ -254,10 +255,7 @@ export function DepartAlerts({ input }: DepartAlertsProps) {
                       animate={{ opacity: 1, height: 'auto' }}
                       exit={{ opacity: 0, height: 0 }}
                       transition={{ duration: 0.15 }}
-                      className={cn(
-                        'text-[11px] p-2.5 rounded-xl border leading-relaxed',
-                        sc.whyBox
-                      )}
+                      className="text-[10.5px] p-2.5 rounded-xl bg-white/90 dark:bg-stone-900 border border-black/5 text-[#17402C] leading-relaxed shadow-2xs"
                     >
                       <p>
                         <strong>Règle LKDV :</strong> {alert.whyExplanation}
