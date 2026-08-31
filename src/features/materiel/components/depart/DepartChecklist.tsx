@@ -26,6 +26,7 @@ import { addDepartItem } from '@/features/materiel/actions/addDepartItem';
 import { updateItemQuantity } from '@/features/materiel/actions/updateItemQuantity';
 import { deleteDepartItem } from '@/features/materiel/actions/deleteDepartItem';
 import { queueOfflineAction } from '@/features/materiel/offline/departOfflineQueue';
+import { MobileChecklistItem } from '@/features/materiel/components/mobile/MobileChecklistItem';
 import type { ChecklistItem, Participant } from '@/features/materiel/types/trekHub';
 
 interface CategoryGroup {
@@ -444,16 +445,31 @@ export function DepartChecklist({
       );
     };
 
+    const handleFilterMode = (e: any) => {
+      const mode = e?.detail?.mode;
+      if (mode === 'all' || mode === 'remaining') {
+        setFilterMode(mode);
+      }
+    };
+
+    const handleOpenAdd = () => {
+      setIsAddModalOpen(true);
+    };
+
     window.addEventListener('highlight-checklist-item', handleHighlight);
     window.addEventListener('toggle-item-from-alert', handleToggleFromAlert);
     window.addEventListener('bag-item-added', handleBagItemAdded);
     window.addEventListener('replenish-consumable', handleReplenish);
+    window.addEventListener('set-checklist-filter-mode', handleFilterMode);
+    window.addEventListener('open-add-item-modal', handleOpenAdd);
 
     return () => {
       window.removeEventListener('highlight-checklist-item', handleHighlight);
       window.removeEventListener('toggle-item-from-alert', handleToggleFromAlert);
       window.removeEventListener('bag-item-added', handleBagItemAdded);
       window.removeEventListener('replenish-consumable', handleReplenish);
+      window.removeEventListener('set-checklist-filter-mode', handleFilterMode);
+      window.removeEventListener('open-add-item-modal', handleOpenAdd);
     };
   }, [groups, localItems, handleToggle]);
 
@@ -644,142 +660,157 @@ export function DepartChecklist({
                             <li
                               key={itemKey}
                               id={`checklist-item-${itemKey}`}
-                              className={cn(
-                                'flex items-center justify-between gap-2.5 px-3 py-2.5 rounded-xl transition-all',
-                                'min-h-[44px]',
-                                isHighlighted && 'ring-2 ring-[#8A241B] bg-[#8A241B]/15',
-                                item.is_checked
-                                  ? 'bg-black/2 hover:bg-black/4 opacity-75 hover:opacity-100'
-                                  : 'bg-white/40 hover:bg-white/60 shadow-2xs'
-                              )}
+                              className="list-none"
                             >
-                              {/* Bouton cocher toggle principal */}
-                              <button
-                                type="button"
-                                onClick={() => handleToggle(item)}
-                                disabled={isPending}
-                                className="flex items-center gap-3 min-w-0 flex-1 text-left cursor-pointer focus-visible:outline-none"
-                                aria-pressed={item.is_checked}
-                                aria-label={`${item.is_checked ? 'Décocher' : 'Cocher'} : ${item.name}`}
-                              >
-                                <span
-                                  className={cn(
-                                    'shrink-0 w-4 h-4 rounded-full border-[1.5px] flex items-center justify-center transition-all duration-150',
-                                    hasError
-                                      ? 'border-red-400 bg-red-50'
-                                      : item.is_checked
-                                      ? 'bg-[#17402C] border-[#17402C]'
-                                      : 'border-[#5A7064]/50 bg-white/40'
-                                  )}
-                                  aria-hidden="true"
-                                >
-                                  {item.is_checked && (
-                                    <motion.span
-                                      initial={shouldReduceMotion ? false : { scale: 0 }}
-                                      animate={{ scale: 1 }}
-                                      transition={{ type: 'spring', stiffness: 500, damping: 20 }}
-                                    >
-                                      <Check size={9} className="text-white" strokeWidth={3} />
-                                    </motion.span>
-                                  )}
-                                  {hasError && <AlertCircle size={9} className="text-red-400" />}
-                                </span>
+                              {/* 📱 Mobile: Apple Reminders Style avec Swipe-to-Pack, Hitbox 48px et Coche 32px */}
+                              <div className="block md:hidden">
+                                <MobileChecklistItem
+                                  item={item}
+                                  onToggle={handleToggle}
+                                  onDelete={item.is_consumable ? undefined : handleDelete}
+                                  isHighlighted={isHighlighted}
+                                />
+                              </div>
 
-                                <div className="min-w-0 flex-1">
-                                  <div className="flex items-center gap-1.5 flex-wrap">
-                                    <span
-                                      className={cn(
-                                        'text-xs sm:text-[13px] font-medium leading-snug',
-                                        item.is_checked
-                                          ? 'line-through text-[#5A7064]/90 decoration-[#5A7064]/70'
-                                          : 'text-[#17402C] font-semibold'
-                                      )}
-                                    >
-                                      {item.name}
-                                    </span>
-                                    {item.is_vital && (
-                                      <span className="text-[9px] font-bold px-1.5 py-0.2 rounded-full bg-[#8A241B]/15 text-[#8A241B] flex items-center gap-0.5">
-                                        <Zap size={8} />
-                                        Vital
-                                      </span>
-                                    )}
-                                    {item.is_worn && (
-                                      <span className="text-[9px] font-medium px-1.5 py-0.2 rounded-full bg-black/5 text-[#5A7064]">
-                                        Porté
-                                      </span>
-                                    )}
-                                    {item.is_consumable && (
-                                      <span className="text-[9px] font-medium px-1.5 py-0.2 rounded-full bg-emerald-100/80 text-emerald-900 flex items-center gap-0.5">
-                                        <Sparkles size={8} />
-                                        Consommable
-                                      </span>
-                                    )}
-                                  </div>
-                                </div>
-                              </button>
-
-                              {/* Poids, Contrôle Quantité (+/-), Bouton Boutique LKDV */}
-                              <div className="flex items-center gap-2 shrink-0">
-                                {/* Contrôle Quantité (+ / -) */}
-                                {!item.is_consumable && (
-                                  <div className="flex items-center bg-black/5 rounded-lg text-xs font-mono">
-                                    <button
-                                      type="button"
-                                      onClick={() => handleQuantityChange(item, -1)}
-                                      disabled={qty <= 1}
-                                      className="px-1.5 py-0.5 text-[#5A7064] hover:text-[#17402C] disabled:opacity-30 cursor-pointer"
-                                      title="Diminuer la quantité"
-                                    >
-                                      -
-                                    </button>
-                                    <span className="px-1 font-bold text-[11px] text-[#17402C]">{qty}</span>
-                                    <button
-                                      type="button"
-                                      onClick={() => handleQuantityChange(item, 1)}
-                                      className="px-1.5 py-0.5 text-[#5A7064] hover:text-[#17402C] cursor-pointer"
-                                      title="Augmenter la quantité"
-                                    >
-                                      +
-                                    </button>
-                                  </div>
+                              {/* 💻 Desktop: Compact Sidebar Row */}
+                              <div
+                                className={cn(
+                                  'hidden md:flex items-center justify-between gap-2.5 px-3 py-2.5 rounded-xl transition-all',
+                                  'min-h-[44px]',
+                                  isHighlighted && 'ring-2 ring-[#8A241B] bg-[#8A241B]/15',
+                                  item.is_checked
+                                    ? 'bg-black/2 hover:bg-black/4 opacity-75 hover:opacity-100'
+                                    : 'bg-white/40 hover:bg-white/60 shadow-2xs'
                                 )}
-
-                                {/* Poids affiché */}
-                                {item.weight_g > 0 && (
+                              >
+                                {/* Bouton cocher toggle principal */}
+                                <button
+                                  type="button"
+                                  onClick={() => handleToggle(item)}
+                                  disabled={isPending}
+                                  className="flex items-center gap-3 min-w-0 flex-1 text-left cursor-pointer focus-visible:outline-none"
+                                  aria-pressed={item.is_checked}
+                                  aria-label={`${item.is_checked ? 'Décocher' : 'Cocher'} : ${item.name}`}
+                                >
                                   <span
                                     className={cn(
-                                      'text-[11px] font-mono tabular-nums min-w-[42px] text-right',
-                                      item.is_checked ? 'text-[#5A7064]/60' : 'text-[#5A7064]'
+                                      'shrink-0 w-4 h-4 rounded-full border-[1.5px] flex items-center justify-center transition-all duration-150',
+                                      hasError
+                                        ? 'border-red-400 bg-red-50'
+                                        : item.is_checked
+                                        ? 'bg-[#17402C] border-[#17402C]'
+                                        : 'border-[#5A7064]/50 bg-white/40'
                                     )}
+                                    aria-hidden="true"
                                   >
-                                    {item.weight_g * qty < 1000
-                                      ? `${item.weight_g * qty} g`
-                                      : `${((item.weight_g * qty) / 1000).toFixed(1)} kg`}
+                                    {item.is_checked && (
+                                      <motion.span
+                                        initial={shouldReduceMotion ? false : { scale: 0 }}
+                                        animate={{ scale: 1 }}
+                                        transition={{ type: 'spring', stiffness: 500, damping: 20 }}
+                                      >
+                                        <Check size={9} className="text-white" strokeWidth={3} />
+                                      </motion.span>
+                                    )}
+                                    {hasError && <AlertCircle size={9} className="text-red-400" />}
                                   </span>
-                                )}
 
-                                {/* Lien boutique si article manquant */}
-                                {!item.is_checked && (
-                                  <Link
-                                    href={`/materiel/boutique?q=${encodeURIComponent(item.name)}`}
-                                    className="p-1 rounded-lg text-[#5A7064] hover:text-[#17402C] hover:bg-black/5"
-                                    title="Voir dans la boutique LKDV"
-                                  >
-                                    <ShoppingBag size={12} />
-                                  </Link>
-                                )}
+                                  <div className="min-w-0 flex-1">
+                                    <div className="flex items-center gap-1.5 flex-wrap">
+                                      <span
+                                        className={cn(
+                                          'text-xs sm:text-[13px] font-medium leading-snug',
+                                          item.is_checked
+                                            ? 'line-through text-[#5A7064]/90 decoration-[#5A7064]/70'
+                                            : 'text-[#17402C] font-semibold'
+                                        )}
+                                      >
+                                        {item.name}
+                                      </span>
+                                      {item.is_vital && (
+                                        <span className="text-[9px] font-bold px-1.5 py-0.2 rounded-full bg-[#8A241B]/15 text-[#8A241B] flex items-center gap-0.5">
+                                          <Zap size={8} />
+                                          Vital
+                                        </span>
+                                      )}
+                                      {item.is_worn && (
+                                        <span className="text-[9px] font-medium px-1.5 py-0.2 rounded-full bg-black/5 text-[#5A7064]">
+                                          Porté
+                                        </span>
+                                      )}
+                                      {item.is_consumable && (
+                                        <span className="text-[9px] font-medium px-1.5 py-0.2 rounded-full bg-emerald-100/80 text-emerald-900 flex items-center gap-0.5">
+                                          <Sparkles size={8} />
+                                          Consommable
+                                        </span>
+                                      )}
+                                    </div>
+                                  </div>
+                                </button>
 
-                                {/* Suppression */}
-                                {!item.is_consumable && (
-                                  <button
-                                    type="button"
-                                    onClick={() => handleDelete(item)}
-                                    className="p-1 rounded-lg text-[#5A7064]/50 hover:text-red-600 hover:bg-red-50 cursor-pointer"
-                                    title="Supprimer de ce départ"
-                                  >
-                                    <Trash2 size={12} />
-                                  </button>
-                                )}
+                                {/* Poids, Contrôle Quantité (+/-), Bouton Boutique LKDV */}
+                                <div className="flex items-center gap-2 shrink-0">
+                                  {/* Contrôle Quantité (+ / -) */}
+                                  {!item.is_consumable && (
+                                    <div className="flex items-center bg-black/5 rounded-lg text-xs font-mono">
+                                      <button
+                                        type="button"
+                                        onClick={() => handleQuantityChange(item, -1)}
+                                        disabled={qty <= 1}
+                                        className="px-1.5 py-0.5 text-[#5A7064] hover:text-[#17402C] disabled:opacity-30 cursor-pointer"
+                                        title="Diminuer la quantité"
+                                      >
+                                        -
+                                      </button>
+                                      <span className="px-1 font-bold text-[11px] text-[#17402C]">{qty}</span>
+                                      <button
+                                        type="button"
+                                        onClick={() => handleQuantityChange(item, 1)}
+                                        className="px-1.5 py-0.5 text-[#5A7064] hover:text-[#17402C] cursor-pointer"
+                                        title="Augmenter la quantité"
+                                      >
+                                        +
+                                      </button>
+                                    </div>
+                                  )}
+
+                                  {/* Poids affiché */}
+                                  {item.weight_g > 0 && (
+                                    <span
+                                      className={cn(
+                                        'text-[11px] font-mono tabular-nums min-w-[42px] text-right',
+                                        item.is_checked ? 'text-[#5A7064]/60' : 'text-[#5A7064]'
+                                      )}
+                                    >
+                                      {item.weight_g * qty < 1000
+                                        ? `${item.weight_g * qty} g`
+                                        : `${((item.weight_g * qty) / 1000).toFixed(1)} kg`}
+                                    </span>
+                                  )}
+
+                                  {/* Lien boutique si article manquant */}
+                                  {!item.is_checked && (
+                                    <Link
+                                      href={`/materiel/boutique?q=${encodeURIComponent(item.name)}`}
+                                      className="p-1 rounded-lg text-[#5A7064] hover:text-[#17402C] hover:bg-black/5"
+                                      title="Voir dans la boutique LKDV"
+                                    >
+                                      <ShoppingBag size={12} />
+                                    </Link>
+                                  )}
+
+                                  {/* Suppression */}
+                                  {!item.is_consumable && (
+                                    <button
+                                      type="button"
+                                      onClick={() => handleDelete(item)}
+                                      className="p-1 rounded-lg text-[#5A7064]/50 hover:text-red-600 hover:bg-red-50 cursor-pointer"
+                                      title="Supprimer de ce départ"
+                                    >
+                                      <Trash2 size={12} />
+                                    </button>
+                                  )}
+                                </div>
                               </div>
                             </li>
                           );

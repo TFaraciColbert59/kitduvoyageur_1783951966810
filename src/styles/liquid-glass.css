@@ -1147,3 +1147,30 @@
   transition-duration: var(--dur-xfast);
 }
 
+/* ============================================================
+   OLED ULTRA-SAVE MODE (#000000 pure black, no GPU backdrop blur)
+   ============================================================ */
+.ultra-save-mode,
+.ultra-save-mode body {
+  background-color: #000000 !important;
+  color: #FFFFFF !important;
+}
+
+.ultra-save-mode .glass,
+.ultra-save-mode [data-glass],
+.ultra-save-mode header,
+.ultra-save-mode nav,
+.ultra-save-mode aside {
+  background: #000000 !important;
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+  border-color: rgba(255, 255, 255, 0.2) !important;
+  box-shadow: none !important;
+}
+
+.ultra-save-mode .glass::before,
+.ultra-save-mode .glass::after {
+  display: none !important;
+}
+
+

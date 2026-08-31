@@ -23,6 +23,9 @@ import { DepartWeightBreakdown } from './DepartWeightBreakdown';
 import { DepartEquipmentHub } from './DepartEquipmentHub';
 import { DepartureSheetModal } from './DepartureSheetModal';
 import { KitSwitcher } from './KitSwitcher';
+import { MobileWeightHeader } from '@/features/materiel/components/mobile/MobileWeightHeader';
+import { MobileVitalAlertBanner } from '@/features/materiel/components/mobile/MobileVitalAlertBanner';
+import { MobileFloatingIsland } from '@/features/materiel/components/mobile/MobileFloatingIsland';
 import { resolveGearImage } from '@/features/materiel/services/gearImageResolver';
 import { formatWeight } from '@/features/materiel/domain/departCalculations';
 import ScrollableTabs, { type TabOption } from '@/components/ui/ScrollableTabs';
@@ -80,6 +83,8 @@ export function DepartCockpit({
   const [batteryLevel, setBatteryLevel] = useState<number | null>(null);
   const [isOnline, setIsOnline] = useState(true);
   const [isSheetOpen, setIsSheetOpen] = useState(false);
+  const [mobileFilterMode, setMobileFilterMode] = useState<'all' | 'remaining'>('all');
+  const [isMobileSpeaking, setIsMobileSpeaking] = useState(false);
 
   const shouldReduceMotion = useReducedMotion();
 
@@ -174,6 +179,35 @@ export function DepartCockpit({
 
   const totalItemsCount = depart?.assignedKit?.items?.length || 0;
   const checkedItemsCount = depart?.assignedKit?.items?.filter((i) => i.is_checked)?.length || 0;
+
+  const handleToggleMobileSpeak = () => {
+    if (typeof window === 'undefined' || !('speechSynthesis' in window)) return;
+
+    if (isMobileSpeaking) {
+      window.speechSynthesis.cancel();
+      setIsMobileSpeaking(false);
+      return;
+    }
+
+    const items = depart?.assignedKit?.items || [];
+    const remaining = items.filter((i) => !i.is_checked);
+    if (remaining.length === 0) {
+      const u = new SpeechSynthesisUtterance('Bravo ! Tous vos équipements sont prêts dans votre sac.');
+      u.lang = 'fr-FR';
+      window.speechSynthesis.speak(u);
+      return;
+    }
+
+    const text = `Articles restants à mettre dans votre sac : ${remaining.map((i) => i.name).join(', ')}.`;
+    const utterance = new SpeechSynthesisUtterance(text);
+    utterance.lang = 'fr-FR';
+    utterance.rate = 0.95;
+    utterance.onend = () => setIsMobileSpeaking(false);
+    utterance.onerror = () => setIsMobileSpeaking(false);
+
+    setIsMobileSpeaking(true);
+    window.speechSynthesis.speak(utterance);
+  };
 
   const renderMainContent = () => (
     <div className="flex flex-col gap-4 w-full">
@@ -396,7 +430,7 @@ export function DepartCockpit({
   );
 
   return (
-    <div className={cn('w-full h-full min-h-0 overflow-hidden', isUltraSave && 'ultra-save-mode')}>
+    <div className={cn('w-full h-full min-h-0 overflow-hidden', isUltraSave && 'bg-black text-white ultra-save-mode')}>
       {/* Modal Fiche de Départ */}
       <DepartureSheetModal
         depart={depart}
@@ -407,17 +441,40 @@ export function DepartCockpit({
       />
 
       {/* ════ 1. VERSION MOBILE (< 768px) ════ */}
-      <div className="block md:hidden w-full h-full overflow-y-auto max-w-3xl mx-auto px-3 sm:px-4 pb-[calc(5rem+env(safe-area-inset-bottom))] space-y-3 overscroll-contain">
-        <div className="space-y-2 sticky top-0 z-30 pt-1 pb-1 backdrop-blur-md bg-white/30 rounded-2xl border border-white/40">
+      <div
+        className={cn(
+          'block md:hidden w-full h-full overflow-y-auto max-w-3xl mx-auto px-3 sm:px-4 pb-[calc(5.5rem+env(safe-area-inset-bottom))] space-y-3 overscroll-contain',
+          isUltraSave && 'bg-black text-white'
+        )}
+      >
+        <div
+          className={cn(
+            'space-y-2 sticky top-0 z-30 pt-1 pb-1 backdrop-blur-md rounded-2xl border transition-colors',
+            isUltraSave
+              ? 'bg-black/95 border-white/20 text-white'
+              : 'bg-white/30 border-white/40'
+          )}
+        >
           <div className="flex items-center justify-between gap-2 px-2">
             <div className="flex items-center gap-1.5">
-              <span className="text-[10.5px] font-semibold uppercase tracking-wider text-[#5A7064]">
+              <span
+                className={cn(
+                  'text-[10.5px] font-semibold uppercase tracking-wider',
+                  isUltraSave ? 'text-stone-300' : 'text-[#5A7064]'
+                )}
+              >
                 Cockpit
               </span>
               <span
                 className={cn(
                   'flex items-center gap-1 text-[9.5px] font-mono px-1.5 py-0.2 rounded-full font-bold',
-                  isOnline ? 'bg-emerald-100 text-emerald-800' : 'bg-amber-100 text-amber-800'
+                  isOnline
+                    ? isUltraSave
+                      ? 'bg-emerald-950 text-emerald-300 border border-emerald-800'
+                      : 'bg-emerald-100 text-emerald-800'
+                    : isUltraSave
+                    ? 'bg-amber-950 text-amber-300 border border-amber-800'
+                    : 'bg-amber-100 text-amber-800'
                 )}
               >
                 {isOnline ? <Wifi size={9} /> : <WifiOff size={9} />}
@@ -432,7 +489,7 @@ export function DepartCockpit({
                 className={cn(
                   'px-2 py-0.5 rounded-lg text-[10px] font-bold flex items-center gap-1 transition-all cursor-pointer',
                   isUltraSave
-                    ? 'bg-[#2D6B4A] text-white shadow-xs'
+                    ? 'bg-emerald-600 text-white shadow-xs'
                     : 'bg-white/40 text-[#17402C] hover:bg-white/60'
                 )}
                 title="Mode Éco Batterie Ultra-Save"
@@ -450,13 +507,33 @@ export function DepartCockpit({
               {kits && kits.length > 1 && <KitSwitcher kits={kits} currentId={depart?.id} />}
               <Link
                 href="/materiel/kits"
-                className="p-1 rounded-lg bg-white/40 hover:bg-white/70 text-[#17402C] transition-colors"
+                className={cn(
+                  'p-1 rounded-lg transition-colors',
+                  isUltraSave
+                    ? 'bg-white/10 hover:bg-white/20 text-white'
+                    : 'bg-white/40 hover:bg-white/70 text-[#17402C]'
+                )}
                 title="Gérer tous mes kits"
                 aria-label="Gérer tous mes kits"
               >
                 <Layers size={12} />
               </Link>
             </div>
+          </div>
+
+          {/* ════ EN-TÊTE POIDS APPLE HEALTH SUR MOBILE ════ */}
+          <div className="px-1">
+            <MobileWeightHeader
+              readinessPercentage={
+                totalItemsCount > 0
+                  ? Math.round((checkedItemsCount / totalItemsCount) * 100)
+                  : 100
+              }
+              baseWeightG={depart?.baseWeightG || 0}
+              wornWeightG={depart?.wornWeightG || 0}
+              consumablesWeightG={depart?.consumablesWeightG || 0}
+              onOpenDetails={() => setIsSheetOpen(true)}
+            />
           </div>
 
           <ScrollableTabs
@@ -467,6 +544,33 @@ export function DepartCockpit({
             className="px-0.5"
           />
         </div>
+
+        {/* ════ BANNIÈRE ALERTE VITALE MOBILE CONTEXTUELLE ════ */}
+        {smartAlerts.length > 0 && (
+          <MobileVitalAlertBanner
+            alerts={smartAlerts}
+            onAction={(alert) => {
+              if (alert.targetItemId) {
+                if (typeof window !== 'undefined') {
+                  window.dispatchEvent(
+                    new CustomEvent('highlight-checklist-item', {
+                      detail: { id: alert.targetItemId },
+                    })
+                  );
+                }
+                if (activeSection !== 'equipment_hub') {
+                  setActiveSection('equipment_hub');
+                }
+              } else if (alert.actionType === 'scroll_checklist' || alert.actionType === 'view_dispo') {
+                setActiveSection('equipment_hub');
+              } else if (alert.actionType === 'scroll_weather') {
+                setActiveSection('terrain');
+              } else if (alert.actionType === 'edit_emergency') {
+                setIsSheetOpen(true);
+              }
+            }}
+          />
+        )}
 
         <AnimatePresence mode="wait">
           <motion.div
@@ -479,6 +583,33 @@ export function DepartCockpit({
             {renderMainContent()}
           </motion.div>
         </AnimatePresence>
+
+        {/* ════ CAPSULE FLOTTANTE « LIQUID ISLAND » SUR MOBILE ════ */}
+        <MobileFloatingIsland
+          totalCount={totalItemsCount}
+          remainingCount={totalItemsCount - checkedItemsCount}
+          filterMode={mobileFilterMode}
+          onFilterChange={(mode) => {
+            setMobileFilterMode(mode);
+            if (typeof window !== 'undefined') {
+              window.dispatchEvent(
+                new CustomEvent('set-checklist-filter-mode', {
+                  detail: { mode },
+                })
+              );
+            }
+          }}
+          isSpeaking={isMobileSpeaking}
+          onToggleSpeak={handleToggleMobileSpeak}
+          onQuickAdd={() => {
+            if (activeSection !== 'equipment_hub') {
+              setActiveSection('equipment_hub');
+            }
+            if (typeof window !== 'undefined') {
+              window.dispatchEvent(new CustomEvent('open-add-item-modal'));
+            }
+          }}
+        />
       </div>
 
       {/* ════ 2. VERSION DESKTOP COCKPIT FULLSCREEN STRICT (hidden md:flex) ════ */}
