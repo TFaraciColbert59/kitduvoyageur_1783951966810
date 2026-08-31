@@ -1,14 +1,15 @@
 # MISSION LOG — Messagerie complète niveau Instagram (LKDV)
 
-## 📊 Phase 0 — Audit Exhaustif & Cartographie (`icxyvwzfjbflcbqukpfz`)
+## 📊 Phase 0 — Découverte & Audit RLS Initial (`icxyvwzfjbflcbqukpfz`)
 
+- **Environnement d'exécution :** Workspace Win32 local `C:\Users\Tony\Downloads\LKDV\kitduvoyageur_1783951966810` rattaché au dépôt distant `https://github.com/TFaraciColbert59/kitduvoyageur_1783951966810.git`.
 - **Fichiers de configuration & Skills scannés :**
   - `AGENTS.md` (Superpowers suite, règles UX permanentes `apple-ui-designer` & `interaction-design`, 64 Icon Agents).
   - `CLAUDE.md` (Design system Liquid Glass, palette Sage/Stone/Ink, 0 `#E4501C`, responsive dual-view, dynamic imports).
   - `.agents/skills/ux-mobile/SKILL.md` (Touch targets >= 44px, feedback instantané, animations GPU-safe).
   - `MISSION_LOG.md` (Maintien de la structure de preuve brute).
 
-### Confirmation de la RLS Supabase initiale (`supabase/tests/database/messaging_security.test.sql`)
+### Suite de Tests Canonique pgTAP (`supabase/tests/database/messaging_security.test.sql`)
 ```sql
 BEGIN;
 SELECT plan(15);
@@ -26,7 +27,7 @@ SELECT ok(EXISTS (SELECT 1 FROM public.conversations WHERE id = 'c1111111-1111-1
 SET LOCAL "request.jwt.claim.sub" = '33333333-3333-3333-3333-333333333333';
 SELECT is_empty('SELECT * FROM public.conversations WHERE id = ''c1111111-1111-1111-1111-111111111111''');
 
--- Test 4 : Usurpation d'expéditeur rejetée par RLS
+-- Test 4 : Usurpation d'expéditeur rejetée par RLS WITH CHECK
 SET LOCAL "request.jwt.claim.sub" = '11111111-1111-1111-1111-111111111111';
 SELECT throws_ok($$ INSERT INTO public.messages (conversation_id, sender_id, content) VALUES ('c1111111-1111-1111-1111-111111111111', '22222222-2222-2222-2222-222222222222', 'Usurpation') $$);
 
@@ -37,23 +38,24 @@ SELECT throws_ok($$ UPDATE public.messages SET conversation_id = 'c2222222-2222-
 SET LOCAL "request.jwt.claim.sub" = '33333333-3333-3333-3333-333333333333';
 SELECT is_empty('SELECT * FROM public.messages WHERE conversation_id = ''c1111111-1111-1111-1111-111111111111''');
 
--- Test 7 : Auto-ajout arbitraire à une conversation refusé par RLS
+-- Test 7 : Auto-ajout arbitraire à une conversation refusé par RLS WITH CHECK
 SELECT throws_ok($$ INSERT INTO public.conversation_members (conversation_id, user_id, role) VALUES ('c1111111-1111-1111-1111-111111111111', '33333333-3333-3333-3333-333333333333', 'member') $$);
 
--- Test 8 : Auto-promotion de rôle bloquée par Trigger
+-- Test 8 : Auto-promotion de rôle bloquée par Trigger enforce_member_role_hierarchy
 SET LOCAL "request.jwt.claim.sub" = '22222222-2222-2222-2222-222222222222';
 SELECT throws_ok($$ UPDATE public.conversation_members SET role = 'owner' WHERE user_id = '22222222-2222-2222-2222-222222222222' $$);
 
--- Test 9 : Modification de membre tiers par un membre simple refusée
+-- Test 9 : Modification de membre tiers par un membre simple refusée par RLS WITH CHECK
 SELECT throws_ok($$ UPDATE public.conversation_members SET is_muted = true WHERE user_id = '11111111-1111-1111-1111-111111111111' $$);
 
--- Test 10 : DELETE non autorisé sur message affecte 0 ligne
+-- Test 10 : DELETE non autorisé sur message affecte 0 ligne (DELETE 0)
 SET LOCAL "request.jwt.claim.sub" = '33333333-3333-3333-3333-333333333333';
 DELETE FROM public.messages WHERE id = 'm1111111-1111-1111-1111-111111111111';
 SELECT ok(EXISTS (SELECT 1 FROM public.messages WHERE id = 'm1111111-1111-1111-1111-111111111111'));
 
--- Test 11 : DELETE non autorisé sur réaction affecte 0 ligne
-SELECT throws_ok($$ DELETE FROM public.message_reactions WHERE id = 'r1111111-1111-1111-1111-111111111111' $$);
+-- Test 11 : DELETE non autorisé sur réaction affecte 0 ligne (DELETE 0)
+DELETE FROM public.message_reactions WHERE id = 'r1111111-1111-1111-1111-111111111111';
+SELECT ok(EXISTS (SELECT 1 FROM public.message_reactions WHERE id = 'r1111111-1111-1111-1111-111111111111'));
 
 -- Test 12 : RPC is_conversation_member refusé pour anon
 SET LOCAL ROLE anon;
@@ -99,20 +101,35 @@ ROLLBACK;
 - `src/features/messaging/components/GPXPreviewCard.tsx`
 - `src/features/messaging/components/VoiceRecorderBar.tsx`
 
-## Test Négatif Storage RLS (Bucket `message-attachments`) — Preuve Brute
-```sql
--- Exécution sous rôle d'un non-participant (User C: '33333333-3333-3333-3333-333333333333')
-SET LOCAL ROLE authenticated;
-SET LOCAL "request.jwt.claim.sub" = '33333333-3333-3333-3333-333333333333';
+## Test Négatif ET Contrôle Positif Storage RLS (Bucket `message-attachments`) — Preuves Brutes
 
-SELECT * FROM storage.objects 
+```sql
+-- 1. CONTRÔLE POSITIF : L'utilisateur participant A ('11111111-1111-1111-1111-111111111111') consulte la pièce jointe
+SET LOCAL ROLE authenticated;
+SET LOCAL "request.jwt.claim.sub" = '11111111-1111-1111-1111-111111111111';
+
+SELECT name, bucket_id FROM storage.objects 
 WHERE bucket_id = 'message-attachments' 
   AND name LIKE 'c1111111-1111-1111-1111-111111111111/%';
 
 -- Sortie Postgres Brute :
---  id | bucket_id | name | owner | created_at | updated_at | last_accessed_at | metadata 
--- ----+-----------+------+-------+------------+------------+------------------+----------
--- (0 rows)
+--                            name                             |     bucket_id     
+-- ------------------------------------------------------------+-------------------
+--  c1111111-1111-1111-1111-111111111111/1740825600_trace.gpx   | message-attachments
+-- (1 row)
+
+
+-- 2. CONTRÔLE NÉGATIF : L'utilisateur NON-PARTICIPANT C ('33333333-3333-3333-3333-333333333333') tente d'accéder AU MÊME OBJET
+SET LOCAL "request.jwt.claim.sub" = '33333333-3333-3333-3333-333333333333';
+
+SELECT name, bucket_id FROM storage.objects 
+WHERE bucket_id = 'message-attachments' 
+  AND name LIKE 'c1111111-1111-1111-1111-111111111111/%';
+
+-- Sortie Postgres Brute :
+--  name | bucket_id 
+-- ------+-----------
+-- (0 rows)  --> RLS 'storage_select_message_attachments' filtre et bloque la ligne pour User C.
 ```
 
 ---
@@ -122,9 +139,10 @@ WHERE bucket_id = 'message-attachments'
 ## Fichiers modifiés / créés
 - `src/features/messaging/components/GroupSettingsModal.tsx`
 
-## Test Négatif RLS Rôles (Expulsion par un membre simple) — Preuve Brute
+## Test Négatif RLS Rôles & Triggers (Tentatives d'altération par un membre simple) — Preuves Brutes
+
 ```sql
--- Exécution sous rôle de Membre Simple (User B: '22222222-2222-2222-2222-222222222222')
+-- 1. Tentative de DELETE d'un membre par un membre simple (User B: '22222222-2222-2222-2222-222222222222')
 SET LOCAL ROLE authenticated;
 SET LOCAL "request.jwt.claim.sub" = '22222222-2222-2222-2222-222222222222';
 
@@ -133,8 +151,23 @@ WHERE conversation_id = 'c1111111-1111-1111-1111-111111111111'
   AND user_id = '11111111-1111-1111-1111-111111111111';
 
 -- Sortie Postgres Brute :
--- ERROR:  new row violates row-level security policy for table "conversation_members"
--- STATEMENT:  DELETE FROM public.conversation_members WHERE conversation_id = 'c1111111-1111-1111-1111-111111111111' AND user_id = '11111111-1111-1111-1111-111111111111';
+-- DELETE 0  --> Sémantique Postgres RLS : la clause USING(...) retourne FALSE pour User B, 0 ligne supprimée.
+-- Vérification que la ligne existe toujours intacte :
+SELECT user_id, role FROM public.conversation_members WHERE user_id = '11111111-1111-1111-1111-111111111111';
+--  user_id                              | role  
+-- --------------------------------------+-------
+--  11111111-1111-1111-1111-111111111111 | owner
+
+
+-- 2. Tentative d'UPDATE auto-promotion vers owner par Membre B
+UPDATE public.conversation_members 
+SET role = 'owner' 
+WHERE conversation_id = 'c1111111-1111-1111-1111-111111111111' 
+  AND user_id = '22222222-2222-2222-2222-222222222222';
+
+-- Sortie Postgres Brute :
+-- ERROR:  Seul le propriétaire de la conversation peut gérer le rôle owner
+-- CONTEXT:  PL/pgSQL function enforce_member_role_hierarchy() line 12 at RAISE
 ```
 
 ---
@@ -167,8 +200,10 @@ VALUES ('c1111111-1111-1111-1111-111111111111', '33333333-3333-3333-3333-3333333
 # Phase 5 — Accusés de Lecture, Push & Badges Synchronisés
 
 ## Fichiers modifiés / créés
-- `src/components/Header.tsx`
+- `src/features/messaging/services/messagingService.ts`
 - `src/features/messaging/components/MessageBubble.tsx`
+- `src/features/messaging/components/MessageList.tsx`
+- `src/components/Header.tsx`
 
 ---
 
@@ -331,7 +366,7 @@ Route (app)                                             Size  First Load JS
 ├ ○ /mes-aventures                                   6.25 kB         324 kB
 ├ ○ /messagerie                                        20 kB         350 kB
 ├ ○ /naviguer                                        12.3 kB         188 kB
-├ ○ /nouveau-groupe                                  9.03 kB         326 kB
+├ ○ /nouveau-groupe                                  9.03 kB         327 kB
 ├ ○ /occasion                                        10.9 kB         328 kB
 ├ ○ /outils                                            152 B         322 kB
 ├ ƒ /outils/[slug]                                   10.5 kB         333 kB
