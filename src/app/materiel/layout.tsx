@@ -13,9 +13,9 @@ export default function MaterielLayout({ children }: { children: React.ReactNode
   return (
     <div
       data-lkv-material-theme="light"
-      className="relative h-screen md:h-dvh max-h-screen md:max-h-dvh overflow-hidden w-full max-w-full font-sans text-[#17402C] flex flex-col"
+      className="relative h-screen md:h-dvh max-h-screen md:max-h-dvh overflow-hidden w-full max-w-full font-sans text-[#17402C] bg-[#FBFAF6] flex flex-col"
     >
-      {/* Fond vidéo immersif b_fait_bouger_uniqueme.mp4 */}
+      {/* Fond vidéo immersif */}
       <BackgroundVideo />
 
       {/* Interface UI Fullscreen sur desktop — Aucun débordement possible */}

@@ -537,8 +537,24 @@ export function DepartEquipmentHub({
 
       {/* ════ DISPOSITION D'ÉLITE 2 COLONNES (Grille à gauche + Checklist à droite) ════ */}
       <div className="grid grid-cols-1 lg:grid-cols-12 xl:grid-cols-12 gap-5 items-start w-full">
-        {/* ── COLONNE CATALOGUE 3-CARDS (Span 8) ── */}
+        {/* ── COLONNE CATALOGUE 3-CARDS & ANALYSE DU POIDS (Span 8) ── */}
         <div className={cn('space-y-4 min-w-0 w-full', mobileTab === 'bag' ? 'hidden md:block lg:col-span-7 xl:col-span-7 2xl:col-span-8' : 'lg:col-span-7 xl:col-span-7 2xl:col-span-8')}>
+          {/* ════ SECTION 3 INTÉGRÉE : ANALYSE DU POIDS (Accordéon élégant) ════ */}
+          {weightBreakdown && weightBreakdown.length > 0 && (
+            <div className="w-full">
+              <DepartWeightBreakdown
+                breakdown={weightBreakdown}
+                totalWeightG={baseWeightG}
+                baseWeightG={baseWeightG}
+                wornWeightG={wornWeightG}
+                consumablesWeightG={consumablesWeightG}
+                items={kitItems}
+                participants={participants}
+                comparableTripName={comparableTripName}
+              />
+            </div>
+          )}
+
           <div className="glass rounded-[28px] p-5 sm:p-6 space-y-4 border border-white/80 dark:border-white/10 shadow-sm backdrop-blur-md">
             {/* Top Header Apple */}
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-black/5 dark:border-white/10 pb-3.5">

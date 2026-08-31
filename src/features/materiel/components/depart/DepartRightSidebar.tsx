@@ -25,7 +25,8 @@ export function DepartRightSidebar({
   alertInput,
   onOpenDepartureSheet,
 }: DepartRightSidebarProps) {
-  const cleanDestination = cleanText(depart.destination);
+  const cleanDestination = cleanText(depart?.destination || 'Mon Départ');
+  const readiness = depart?.readinessScore || { status: 'ok', percentage: 100 };
 
   return (
     <aside className="w-full h-full max-h-full flex flex-col gap-3 overflow-y-auto no-scrollbar pb-2 select-none" aria-label="Statut du départ et alertes">
@@ -36,9 +37,9 @@ export function DepartRightSidebar({
             <Compass size={12} className="text-[#2D6B4A]" />
             <span>Fiche & Statut</span>
           </div>
-          <Badge tone={depart.readinessScore.status === 'ok' ? 'sage' : 'warn'}>
+          <Badge tone={readiness.status === 'ok' ? 'sage' : 'warn'}>
             <span className="text-[9px] font-bold">
-              {depart.readinessScore.percentage}% Prêt
+              {readiness.percentage}% Prêt
             </span>
           </Badge>
         </div>
@@ -49,14 +50,14 @@ export function DepartRightSidebar({
           </h3>
           <div className="flex items-center gap-1 text-[11px] text-[#5A7064] font-medium mt-0.5">
             <Calendar size={11} />
-            <span>Départ prévu le {depart.startsAt ? new Date(depart.startsAt).toLocaleDateString('fr-FR', { day: 'numeric', month: 'short' }) : 'prochainement'}</span>
+            <span>Départ prévu le {depart?.startsAt ? new Date(depart.startsAt).toLocaleDateString('fr-FR', { day: 'numeric', month: 'short' }) : 'prochainement'}</span>
           </div>
         </div>
 
         {/* Compte à rebours temps réel */}
         <div className="p-2 rounded-xl bg-black/5 dark:bg-white/10 flex items-center justify-between gap-2">
           <span className="text-[10px] font-mono font-semibold text-[#5A7064]">Compte à rebours :</span>
-          <CountdownLive target={depart.startsAt} />
+          <CountdownLive target={depart?.startsAt} />
         </div>
 
         {/* Bouton Fiche de départ */}

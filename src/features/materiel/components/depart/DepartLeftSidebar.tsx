@@ -20,7 +20,7 @@ interface DepartLeftSidebarProps {
   depart: DepartDetail;
   activeSection: DepartSectionId;
   onSectionChange: (section: DepartSectionId) => void;
-  kits: { id: string; name: string }[];
+  kits?: { id: string; name: string }[];
   alertsCount?: number;
   isUltraSave?: boolean;
   onToggleUltraSave?: () => void;
@@ -36,13 +36,14 @@ export function DepartLeftSidebar({
   depart,
   activeSection,
   onSectionChange,
-  kits,
+  kits = [],
   isUltraSave = false,
   onToggleUltraSave,
   batteryLevel = null,
   isOnline = true,
 }: DepartLeftSidebarProps) {
-  const cleanDestination = cleanText(depart.destination);
+  const cleanDestination = cleanText(depart?.destination || 'Mon Départ Actif');
+  const isReady = depart?.readinessScore?.status === 'ok';
 
   const sections: {
     id: DepartSectionId;
@@ -71,9 +72,9 @@ export function DepartLeftSidebar({
             <span className="text-[9.5px] font-mono font-bold uppercase tracking-wider text-[#5A7064]">
               Départ Actif
             </span>
-            <Badge tone={depart.readinessScore.status === 'ok' ? 'sage' : 'warn'}>
+            <Badge tone={isReady ? 'sage' : 'warn'}>
               <span className="text-[8.5px] font-bold">
-                {depart.readinessScore.status === 'ok' ? '✓ Prêt' : 'En préparation'}
+                {isReady ? '✓ Prêt' : 'En préparation'}
               </span>
             </Badge>
           </div>
@@ -114,9 +115,9 @@ export function DepartLeftSidebar({
           </div>
 
           {/* Kit Switcher */}
-          {kits.length > 1 && (
+          {kits && kits.length > 1 && (
             <div className="pt-1 border-t border-white/30">
-              <KitSwitcher kits={kits} currentId={depart.id} />
+              <KitSwitcher kits={kits} currentId={depart?.id} />
             </div>
           )}
         </div>
