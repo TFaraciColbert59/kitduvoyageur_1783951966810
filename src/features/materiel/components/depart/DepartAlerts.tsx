@@ -5,7 +5,6 @@ import { motion, AnimatePresence, useReducedMotion } from 'framer-motion';
 import {
   AlertTriangle,
   AlertCircle,
-  Info,
   Clock,
   X,
   ArrowRight,
@@ -106,30 +105,28 @@ export function DepartAlerts({ input }: { input: SmartPromptsInput }) {
 
   if (visibleAlerts.length === 0) {
     return (
-      <div className="glass rounded-[28px] p-5 text-center space-y-2 border border-emerald-300/50 bg-emerald-50/40 dark:bg-emerald-950/20 backdrop-blur-md">
-        <div className="w-9 h-9 rounded-2xl bg-emerald-100 dark:bg-emerald-900/40 text-[#2D6B4A] dark:text-emerald-400 flex items-center justify-center mx-auto shadow-2xs">
-          <ShieldCheck size={18} />
+      <div className="p-3.5 rounded-2xl bg-white/70 dark:bg-stone-900/60 border border-white/80 text-center space-y-1.5 shadow-2xs">
+        <div className="w-8 h-8 rounded-xl bg-emerald-100 dark:bg-emerald-900/40 text-[#2D6B4A] dark:text-emerald-400 flex items-center justify-center mx-auto shadow-2xs">
+          <ShieldCheck size={16} />
         </div>
-        <div>
-          <h3 className="text-xs sm:text-[13px] font-bold text-[#17402C]">
-            Aucun point bloquant détecté
-          </h3>
-          <p className="text-[11px] text-[#5A7064] mt-0.5 max-w-md mx-auto">
-            Vos équipements vitaux, vivres et paramètres de sécurité sont prêts.
-          </p>
-        </div>
+        <h4 className="text-xs font-bold text-[#17402C]">
+          Aucun point bloquant
+        </h4>
+        <p className="text-[10.5px] text-[#5A7064]">
+          Équipements et sécurité prêts.
+        </p>
       </div>
     );
   }
 
   return (
-    <div className="space-y-3" role="region" aria-label="Alertes avant départ">
-      {/* En-tête de section avec badge de compteur */}
-      <div className="flex items-center justify-between px-1.5">
+    <div className="space-y-2.5" role="region" aria-label="Alertes avant départ">
+      {/* En-tête avec compteur */}
+      <div className="flex items-center justify-between px-1">
         <div className="flex items-center gap-1.5">
-          <span className="w-2 h-2 rounded-full bg-[#8A241B] animate-pulse" />
-          <span className="text-[10.5px] font-mono font-bold uppercase tracking-wider text-[#8A241B]">
-            À régler avant le départ ({activeAlerts.length})
+          <span className="w-1.5 h-1.5 rounded-full bg-[#8A241B] animate-pulse" />
+          <span className="text-[9.5px] font-mono font-bold uppercase tracking-wider text-[#8A241B]">
+            À régler ({activeAlerts.length})
           </span>
         </div>
 
@@ -137,16 +134,16 @@ export function DepartAlerts({ input }: { input: SmartPromptsInput }) {
           <button
             type="button"
             onClick={() => setExpanded(true)}
-            className="text-[10.5px] font-semibold text-[#5A7064] hover:text-[#17402C] flex items-center gap-0.5 cursor-pointer"
+            className="text-[9.5px] font-semibold text-[#5A7064] hover:text-[#17402C] flex items-center gap-0.5 cursor-pointer"
           >
-            <span>+{hiddenCount} autre{hiddenCount > 1 ? 's' : ''}</span>
-            <ChevronDown size={11} />
+            <span>+{hiddenCount}</span>
+            <ChevronDown size={10} />
           </button>
         )}
       </div>
 
       <AnimatePresence>
-        <div className="space-y-2.5">
+        <div className="space-y-2">
           {visibleAlerts.map((alert) => {
             const isCritical = alert.severity === 'critical';
             const isWhyOpen = openWhyId === alert.id;
@@ -154,74 +151,73 @@ export function DepartAlerts({ input }: { input: SmartPromptsInput }) {
             return (
               <motion.div
                 key={alert.id}
-                initial={shouldReduceMotion ? false : { opacity: 0, y: 6 }}
+                initial={shouldReduceMotion ? false : { opacity: 0, y: 4 }}
                 animate={{ opacity: 1, y: 0 }}
                 exit={shouldReduceMotion ? { opacity: 0 } : { opacity: 0, scale: 0.98 }}
-                transition={{ duration: shouldReduceMotion ? 0 : 0.18 }}
+                transition={{ duration: shouldReduceMotion ? 0 : 0.16 }}
                 className={cn(
-                  'rounded-[24px] p-3.5 space-y-2.5 border shadow-xs backdrop-blur-md transition-all',
+                  'p-3 rounded-2xl border space-y-2 shadow-2xs backdrop-blur-md transition-all',
                   isCritical
                     ? 'bg-rose-50/90 dark:bg-rose-950/20 border-rose-200/80 text-[#8A241B]'
                     : 'bg-white/85 dark:bg-stone-900/80 border-white/90 dark:border-white/20 text-[#17402C]'
                 )}
                 role="alert"
               >
-                {/* ── ÉTAGE 1 : ICÔNE + TITRE + BOUTONS SNOOZE / DISMISS ── */}
-                <div className="flex items-start justify-between gap-2">
-                  <div className="flex items-center gap-2 min-w-0">
+                {/* ── LIGNE 1 : ICÔNE + TITRE + ACTIONS DISMISS/SNOOZE ── */}
+                <div className="flex items-start justify-between gap-1.5">
+                  <div className="flex items-center gap-1.5 min-w-0">
                     <div
                       className={cn(
-                        'w-7 h-7 rounded-xl flex items-center justify-center shrink-0 shadow-2xs',
+                        'w-6 h-6 rounded-lg flex items-center justify-center shrink-0 shadow-2xs',
                         isCritical ? 'bg-rose-200/80 text-[#8A241B]' : 'bg-[#2D6B4A]/10 text-[#2D6B4A]'
                       )}
                     >
-                      {isCritical ? <AlertTriangle size={14} /> : <AlertCircle size={14} />}
+                      {isCritical ? <AlertTriangle size={12} /> : <AlertCircle size={12} />}
                     </div>
 
-                    <h4 className="text-xs font-bold leading-snug truncate">
+                    <h5 className="text-[11.5px] font-bold leading-tight line-clamp-1">
                       {alert.title}
-                    </h4>
+                    </h5>
                   </div>
 
-                  {/* Boutons d'action rapide Liquid Glass (Image 4) */}
                   <div className="flex items-center gap-1 shrink-0">
                     <button
                       type="button"
                       onClick={() => handleSnooze(alert.id)}
-                      className="glass-circle-btn !w-6 !h-6 text-[9.5px] font-bold cursor-pointer text-[#17402C]"
+                      className="glass-circle-btn !w-5.5 !h-5.5 text-[9px] font-bold cursor-pointer text-[#17402C]"
                       title="Reporter de 24h"
-                      aria-label={`Reporter l'alerte : ${alert.title}`}
+                      aria-label={`Reporter : ${alert.title}`}
                     >
-                      <Clock size={10} />
+                      <Clock size={9} />
                     </button>
 
                     <button
                       type="button"
                       onClick={() => handleSnooze(alert.id)}
-                      className="glass-circle-btn !w-6 !h-6 cursor-pointer text-[#17402C]"
+                      className="glass-circle-btn !w-5.5 !h-5.5 cursor-pointer text-[#17402C]"
                       title="Masquer"
-                      aria-label="Masquer l'alerte"
+                      aria-label="Masquer"
                     >
-                      <X size={11} />
+                      <X size={10} />
                     </button>
                   </div>
                 </div>
 
-                {/* ── ÉTAGE 2 : MESSAGE EXPLICATIF SANS CHEVAUCHEMENT ── */}
-                <p className="text-[11px] text-[#5A7064] dark:text-stone-300 leading-relaxed line-clamp-2">
+                {/* ── LIGNE 2 : MESSAGE LISIBLE SANS CHEVAUCHEMENT ── */}
+                <p className="text-[10.5px] text-[#5A7064] dark:text-stone-300 leading-snug line-clamp-2">
                   {alert.message}
                 </p>
 
-                {/* ── ÉTAGE 3 : PIED D'ACTION (Lien Pourquoi + Bouton Capsule Liquid Glass) ── */}
-                <div className="pt-1.5 border-t border-black/5 dark:border-white/10 flex items-center justify-between gap-2">
+                {/* ── LIGNE 3 : LIEN POURQUOI & BOUTON ACTION CAPSULE ── */}
+                <div className="pt-1 border-t border-black/5 dark:border-white/10 flex items-center justify-between gap-1.5">
                   {alert.whyExplanation ? (
                     <button
                       type="button"
                       onClick={() => setOpenWhyId(isWhyOpen ? null : alert.id)}
-                      className="inline-flex items-center gap-1 text-[10px] font-semibold text-[#5A7064] hover:text-[#17402C] cursor-pointer underline underline-offset-2"
+                      className="inline-flex items-center gap-0.5 text-[9.5px] font-semibold text-[#5A7064] hover:text-[#17402C] cursor-pointer underline underline-offset-2"
                       title="Pourquoi cette alerte ?"
                     >
-                      <HelpCircle size={11} />
+                      <HelpCircle size={9.5} />
                       <span>Pourquoi ?</span>
                     </button>
                   ) : (
@@ -233,21 +229,21 @@ export function DepartAlerts({ input }: { input: SmartPromptsInput }) {
                       type="button"
                       onClick={() => handleAction(alert)}
                       className={cn(
-                        'glass-capsule-btn !py-1 !px-3 text-[10.5px] font-bold flex items-center gap-1 cursor-pointer shadow-2xs transition-all active:scale-95',
+                        'glass-capsule-btn !py-1 !px-2.5 text-[10px] font-bold flex items-center gap-1 cursor-pointer shadow-2xs transition-all active:scale-95 shrink-0',
                         isCritical ? 'primary !bg-[#8A241B] !text-white' : 'primary'
                       )}
                     >
                       <span>{alert.actionLabel}</span>
                       {alert.actionType === 'view_dispo' ? (
-                        <ExternalLink size={10} />
+                        <ExternalLink size={9} />
                       ) : (
-                        <ArrowRight size={10} />
+                        <ArrowRight size={9} />
                       )}
                     </button>
                   )}
                 </div>
 
-                {/* Volet "Pourquoi cette alerte ?" */}
+                {/* Volet explicatif dépliable */}
                 <AnimatePresence>
                   {isWhyOpen && alert.whyExplanation && (
                     <motion.div
@@ -255,7 +251,7 @@ export function DepartAlerts({ input }: { input: SmartPromptsInput }) {
                       animate={{ opacity: 1, height: 'auto' }}
                       exit={{ opacity: 0, height: 0 }}
                       transition={{ duration: 0.15 }}
-                      className="text-[10.5px] p-2.5 rounded-xl bg-white/90 dark:bg-stone-900 border border-black/5 text-[#17402C] leading-relaxed shadow-2xs"
+                      className="text-[10px] p-2 rounded-xl bg-white/95 dark:bg-stone-900 border border-black/5 text-[#17402C] leading-relaxed shadow-2xs"
                     >
                       <p>
                         <strong>Règle LKDV :</strong> {alert.whyExplanation}
