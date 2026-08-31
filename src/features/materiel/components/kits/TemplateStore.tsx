@@ -6,7 +6,8 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { GlassCard } from '@/components/ui/GlassCard';
 import { Badge } from '@/components/ui/Badge';
 import { useToast } from '@/contexts/ToastContext';
-import { ArrowDown, Check } from 'lucide-react';
+import { Check } from 'lucide-react';
+import { ArrowDownIcon as ArrowDown } from '@/components/icons/arrow-down';
 import type { PublicKit } from '@/features/materiel/services/getPublicKits';
 
 const CURATED_COMMUNITY_KITS: PublicKit[] = [

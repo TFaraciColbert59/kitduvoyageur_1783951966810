@@ -2,7 +2,12 @@
 
 import React, { useEffect, useRef, useState, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { MapPin, Navigation, TrendingUp, Backpack, FileText, List, Layers } from 'lucide-react';
+import { MapPin, Backpack } from 'lucide-react';
+import { TrendingUpIcon as TrendingUp } from '@/components/icons/trending-up';
+import { NavigationIcon as Navigation } from '@/components/icons/navigation';
+import { DocIcon as FileText } from '@/components/icons/doc';
+import { ListIcon as List } from '@/components/icons/list';
+import { LayersIcon as Layers } from '@/components/icons/layers';
 import { ClockIcon as Clock } from '@/components/icons/clock';
 import { ChevronDownIcon as ChevronDown } from '@/components/icons/chevron-down';
 import { ChevronUpIcon as ChevronUp } from '@/components/icons/chevron-up';

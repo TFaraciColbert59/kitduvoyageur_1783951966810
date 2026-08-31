@@ -2,14 +2,11 @@
 import React, { useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
 import 'leaflet/dist/leaflet.css';
-import {
-  MapPin,
-  Navigation,
-  Layers,
-  Minimize2,
-  Check,
-  Compass,
-} from 'lucide-react';
+import { MapPin, Check } from 'lucide-react';
+import { CompassIcon as Compass } from '@/components/icons/compass';
+import { NavigationIcon as Navigation } from '@/components/icons/navigation';
+import { LayersIcon as Layers } from '@/components/icons/layers';
+import { Minimize2Icon as Minimize2 } from '@/components/icons/minimize-2';
 import { DownloadIcon as DownloadAnimated } from '@/components/icons/download';
 import { Maximize2Icon as Maximize2Animated } from '@/components/icons/maximize-2';
 import { Skeleton } from '@/components/ui/Skeleton';

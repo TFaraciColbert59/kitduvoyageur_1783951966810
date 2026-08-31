@@ -3,7 +3,11 @@
 import React, { useEffect, useState, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import { motion } from 'framer-motion';
-import { MapPin, TrendingUp, Backpack, Compass, Check, Sparkles, Navigation, Mountain } from 'lucide-react';
+import { MapPin, Backpack, Check, Sparkles } from 'lucide-react';
+import { TrendingUpIcon as TrendingUp } from '@/components/icons/trending-up';
+import { NavigationIcon as Navigation } from '@/components/icons/navigation';
+import { CompassIcon as Compass } from '@/components/icons/compass';
+import { MountainIcon as Mountain } from '@/components/icons/mountain';
 import { Share2Icon as Share2 } from '@/components/icons/share-2';
 import { DownloadIcon as Download } from '@/components/icons/download';
 import { PlayIcon as Play } from '@/components/icons/play';

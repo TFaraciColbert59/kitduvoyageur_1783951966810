@@ -7,7 +7,9 @@ import { GlassCard } from '@/components/ui/GlassCard';
 import { Eyebrow } from '@/components/ui/Eyebrow';
 import { useToast } from '@/contexts/ToastContext';
 import { addToCart } from '@/lib/cart';
-import { ShoppingBag, Plus, Sparkles, Check, ChevronDown } from 'lucide-react';
+import { Plus, Sparkles, Check } from 'lucide-react';
+import { ShoppingBagIcon as ShoppingBag } from '@/components/icons/shopping-bag';
+import { ChevronDownIcon as ChevronDown } from '@/components/icons/chevron-down';
 import type { ProductSuggestion } from '@/features/materiel/services/getProductSuggestions';
 
 const CURATED_SUGGESTIONS: ProductSuggestion[] = [

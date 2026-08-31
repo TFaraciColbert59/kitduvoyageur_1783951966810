@@ -2,7 +2,10 @@
 import React from 'react';
 import { DepartAlerts } from './DepartAlerts';
 import { CountdownLive } from '@/features/materiel/components/cards/CountdownLive';
-import { FileText, Calendar, Compass, Timer, ShieldCheck } from 'lucide-react';
+import { Calendar, ShieldCheck } from 'lucide-react';
+import { CompassIcon as Compass } from '@/components/icons/compass';
+import { DocIcon as FileText } from '@/components/icons/doc';
+import { TimerIcon as Timer } from '@/components/icons/timer';
 import type { DepartDetail } from '@/features/materiel/services/getDepartDetail';
 import type { WeatherForecast } from '@/features/materiel/services/getWeather';
 import type { SmartPromptsInput } from '@/features/materiel/services/generateSmartPrompts';

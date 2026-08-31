@@ -6,7 +6,8 @@ import { usePreparationStore } from '../../stores/usePreparationStore';
 import { GlassBreakModal } from '../modals/GlassBreakModal';
 import { AddParticipantModal } from '../modals/AddParticipantModal';
 import { useHapticFeedback } from '@/hooks/useHapticFeedback';
-import { Users, Plus, Shield, HeartPulse, Trash2, AlertTriangle, CheckCircle2 } from 'lucide-react';
+import { Plus, Shield, HeartPulse, Trash2, AlertTriangle, CheckCircle2 } from 'lucide-react';
+import { UsersIcon as Users } from '@/components/icons/users';
 
 export function TeamTab() {
   const {

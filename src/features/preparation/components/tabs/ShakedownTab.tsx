@@ -4,7 +4,8 @@ import React from 'react';
 import Link from 'next/link';
 import { usePreparationStore } from '../../stores/usePreparationStore';
 import { useHapticFeedback } from '@/hooks/useHapticFeedback';
-import { Sparkles, AlertTriangle, ShieldAlert, Scale, ShoppingBag, ArrowRight } from 'lucide-react';
+import { Sparkles, AlertTriangle, ShieldAlert, Scale, ArrowRight } from 'lucide-react';
+import { ShoppingBagIcon as ShoppingBag } from '@/components/icons/shopping-bag';
 
 export function ShakedownTab() {
   const { getShakedownReport, addItem } = usePreparationStore();

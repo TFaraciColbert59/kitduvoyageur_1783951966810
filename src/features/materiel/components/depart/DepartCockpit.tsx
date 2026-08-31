@@ -3,17 +3,9 @@ import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import dynamic from 'next/dynamic';
 import { motion, AnimatePresence, useReducedMotion } from 'framer-motion';
-import {
-  Zap,
-  Wifi,
-  WifiOff,
-  Layers,
-  ArrowRight,
-  Boxes,
-  CheckCircle2,
-  ShieldCheck,
-  CloudSun,
-} from 'lucide-react';
+import { Zap, Wifi, WifiOff, ArrowRight, CheckCircle2, ShieldCheck, CloudSun } from 'lucide-react';
+import { LayersIcon as Layers } from '@/components/icons/layers';
+import { BoxIcon as Boxes } from '@/components/icons/box';
 import { DepartWeather } from './DepartWeather';
 import { DepartParticipants } from './DepartParticipants';
 import { DepartLeftSidebar } from './DepartLeftSidebar';

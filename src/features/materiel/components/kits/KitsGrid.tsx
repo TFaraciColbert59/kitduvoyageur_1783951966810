@@ -4,7 +4,9 @@ import { useState } from 'react';
 import { GlassCard } from '@/components/ui/GlassCard';
 import { Eyebrow } from '@/components/ui/Eyebrow';
 import { Badge } from '@/components/ui/Badge';
-import { Check, Clock, ShoppingBag } from 'lucide-react';
+import { Check } from 'lucide-react';
+import { ShoppingBagIcon as ShoppingBag } from '@/components/icons/shopping-bag';
+import { ClockIcon as Clock } from '@/components/icons/clock';
 import type { KitListItem } from '@/features/materiel/services/getKits';
 
 interface Props {

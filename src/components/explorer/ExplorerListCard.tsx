@@ -2,7 +2,9 @@
 
 import React from 'react';
 import { motion } from 'framer-motion';
-import { MapPin, TrendingUp, Star, Navigation } from 'lucide-react';
+import { MapPin, Star } from 'lucide-react';
+import { TrendingUpIcon as TrendingUp } from '@/components/icons/trending-up';
+import { NavigationIcon as Navigation } from '@/components/icons/navigation';
 import { ClockIcon as Clock } from '@/components/icons/clock';
 import { ChevronRightIcon as ChevronRight } from '@/components/icons/chevron-right';
 import type { MapTrail } from './types';

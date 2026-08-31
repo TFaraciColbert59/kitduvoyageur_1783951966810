@@ -1,7 +1,8 @@
 'use client';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { Clock, Backpack } from 'lucide-react';
+import { Backpack } from 'lucide-react';
+import { ClockIcon as Clock } from '@/components/icons/clock';
 import { ArrowRightIcon as ArrowRightAnimated } from '@/components/icons/arrow-right';
 import { GlassCard } from '@/components/ui/GlassCard';
 import { Eyebrow } from '@/components/ui/Eyebrow';

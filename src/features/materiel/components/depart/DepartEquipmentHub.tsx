@@ -2,7 +2,12 @@
 import React, { useState, useMemo } from 'react';
 import dynamic from 'next/dynamic';
 import Link from 'next/link';
-import { Boxes, Handshake, ShoppingBag, Plus, Trash2, Check, Scale, X, Layers, ArrowRight, ArrowUpRight, List } from 'lucide-react';
+import { Handshake, Plus, Trash2, Check, Scale, X, ArrowRight } from 'lucide-react';
+import { ShoppingBagIcon as ShoppingBag } from '@/components/icons/shopping-bag';
+import { ListIcon as List } from '@/components/icons/list';
+import { LayersIcon as Layers } from '@/components/icons/layers';
+import { ArrowUpRightIcon as ArrowUpRight } from '@/components/icons/arrow-up-right';
+import { BoxIcon as Boxes } from '@/components/icons/box';
 import { ExternalLinkIcon as ExternalLink } from '@/components/icons/external-link';
 import { CheckSquareIcon as CheckSquare } from '@/components/icons/check-square';
 import { SearchIcon as SearchAnimated } from '@/components/icons/search';

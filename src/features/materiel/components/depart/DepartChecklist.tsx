@@ -1,22 +1,13 @@
 'use client';
 import React, { useOptimistic, useTransition, useState, useCallback, useEffect, useMemo } from 'react';
 import Link from 'next/link';
-import {
-  Check,
-  ChevronDown,
-  Package,
-  AlertCircle,
-  Zap,
-  Droplets,
-  Sparkles,
-  Plus,
-  Volume2,
-  VolumeX,
-  ShoppingBag,
-  Trash2,
-  X,
-  CheckSquare,
-} from 'lucide-react';
+import { Check, Package, AlertCircle, Zap, Droplets, Sparkles, Plus, Trash2 } from 'lucide-react';
+import { Volume2Icon as Volume2 } from '@/components/icons/volume-2';
+import { VolumeXIcon as VolumeX } from '@/components/icons/volume-x';
+import { ShoppingBagIcon as ShoppingBag } from '@/components/icons/shopping-bag';
+import { CheckSquareIcon as CheckSquare } from '@/components/icons/check-square';
+import { XIcon as X } from '@/components/icons/x';
+import { ChevronDownIcon as ChevronDown } from '@/components/icons/chevron-down';
 import { RotateCCWIcon as RotateCcwAnimated } from '@/components/icons/rotate-ccw';
 import { motion, AnimatePresence, useReducedMotion } from 'framer-motion';
 import { cn } from '@/lib/utils';

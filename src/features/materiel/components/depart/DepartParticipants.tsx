@@ -1,6 +1,9 @@
 'use client';
 import { useState } from 'react';
-import { Users, ShieldCheck, Check, AlertOctagon, Radio, PhoneCall } from 'lucide-react';
+import { ShieldCheck, Check, PhoneCall } from 'lucide-react';
+import { UsersIcon as Users } from '@/components/icons/users';
+import { AlertOctagonIcon as AlertOctagon } from '@/components/icons/alert-octagon';
+import { RadioIcon as Radio } from '@/components/icons/radio';
 import { Share2Icon as Share2 } from '@/components/icons/share-2';
 import { PhoneCallIcon as PhoneCallAnimated } from '@/components/icons/phone-call';
 import { GlassCard } from '@/components/ui/GlassCard';

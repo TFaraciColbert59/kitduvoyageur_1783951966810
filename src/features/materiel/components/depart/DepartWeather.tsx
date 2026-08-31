@@ -1,22 +1,8 @@
 'use client';
 import { useState } from 'react';
-import {
-  Sun,
-  CloudSun,
-  Cloud,
-  CloudRain,
-  CloudSnow,
-  CloudLightning,
-  CloudFog,
-  Droplets,
-  CloudDrizzle,
-  Thermometer,
-  ChevronDown,
-  Clock,
-  Sunrise,
-  Sunset,
-  Wind,
-} from 'lucide-react';
+import { Sun, CloudSun, Cloud, CloudRain, CloudSnow, CloudLightning, CloudFog, Droplets, CloudDrizzle, Thermometer, Sunrise, Sunset, Wind } from 'lucide-react';
+import { ClockIcon as Clock } from '@/components/icons/clock';
+import { ChevronDownIcon as ChevronDown } from '@/components/icons/chevron-down';
 import { motion, AnimatePresence, useReducedMotion } from 'framer-motion';
 import { GlassCard } from '@/components/ui/GlassCard';
 import { weatherLabel, type WeatherForecast } from '@/features/materiel/services/getWeather';

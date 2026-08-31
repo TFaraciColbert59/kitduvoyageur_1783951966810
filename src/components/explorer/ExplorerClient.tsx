@@ -5,17 +5,15 @@ import dynamic from 'next/dynamic';
 import { useRouter } from 'next/navigation';
 import { useQuery } from '@tanstack/react-query';
 import { motion, AnimatePresence } from 'framer-motion';
-import {
-  Compass,
-  FileText,
-  Backpack,
-  Clock,
-  TrendingUp,
-  ChevronDown,
-  Navigation,
-  Bell,
-  ShoppingBag,
-} from 'lucide-react';
+import { Backpack } from 'lucide-react';
+import { TrendingUpIcon as TrendingUp } from '@/components/icons/trending-up';
+import { NavigationIcon as Navigation } from '@/components/icons/navigation';
+import { CompassIcon as Compass } from '@/components/icons/compass';
+import { DocIcon as FileText } from '@/components/icons/doc';
+import { BellIcon as Bell } from '@/components/icons/bell';
+import { ShoppingBagIcon as ShoppingBag } from '@/components/icons/shopping-bag';
+import { ClockIcon as Clock } from '@/components/icons/clock';
+import { ChevronDownIcon as ChevronDown } from '@/components/icons/chevron-down';
 import { SlidersHorizontalIcon as SlidersHorizontalAnimated } from '@/components/icons/sliders-horizontal';
 import { XIcon as XAnimated } from '@/components/icons/x';
 import { RotateCCWIcon as RotateCcwAnimated } from '@/components/icons/rotate-ccw';

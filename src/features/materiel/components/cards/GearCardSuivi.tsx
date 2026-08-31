@@ -1,7 +1,8 @@
 'use client';
 
 import Link from 'next/link';
-import { ShieldCheck, AlertTriangle, CheckCircle2, Clock, Check, ArrowRight } from 'lucide-react';
+import { ShieldCheck, AlertTriangle, CheckCircle2, Check, ArrowRight } from 'lucide-react';
+import { ClockIcon as Clock } from '@/components/icons/clock';
 import { GlassCard } from '@/components/ui/GlassCard';
 import { Eyebrow } from '@/components/ui/Eyebrow';
 import { Badge } from '@/components/ui/Badge';

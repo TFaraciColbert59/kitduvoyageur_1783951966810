@@ -2,7 +2,9 @@
 
 import { motion } from 'framer-motion';
 import { GlassCard } from '@/components/ui/GlassCard';
-import { Package, Scale, ShoppingBag, Layers } from 'lucide-react';
+import { Package, Scale } from 'lucide-react';
+import { ShoppingBagIcon as ShoppingBag } from '@/components/icons/shopping-bag';
+import { LayersIcon as Layers } from '@/components/icons/layers';
 
 interface Props {
   activeCount: number;
