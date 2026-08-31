@@ -8,9 +8,7 @@ import {
   AlertCircle,
   Zap,
   Droplets,
-  RotateCcw,
   Sparkles,
-  Search,
   Plus,
   Volume2,
   VolumeX,
@@ -19,6 +17,7 @@ import {
   X,
   CheckSquare,
 } from 'lucide-react';
+import { RotateCcwAnimated } from '@/components/icons';
 import { motion, AnimatePresence, useReducedMotion } from 'framer-motion';
 import { cn } from '@/lib/utils';
 import { toggleKitItem } from '@/features/materiel/actions/toggleKitItem';
@@ -565,7 +564,7 @@ export function DepartChecklist({
               onClick={() => handleToggle(failedItem)}
               className="px-2 py-1 rounded-lg bg-red-600 text-white font-bold text-[11px] flex items-center gap-1 hover:bg-red-700"
             >
-              <RotateCcw size={11} />
+              <RotateCcwAnimated size={11} />
               <span>Réessayer</span>
             </button>
           </div>

@@ -1,7 +1,6 @@
-﻿'use client';
+'use client';
 import { useState, useTransition } from 'react';
 import {
-  X,
   Printer,
   Share2,
   Check,
@@ -12,9 +11,8 @@ import {
   Droplets,
   Thermometer,
   Zap,
-  Play,
-  RotateCcw,
 } from 'lucide-react';
+import { XAnimated, PlayAnimated, RotateCcwAnimated } from '@/components/icons';
 import { motion, AnimatePresence } from 'framer-motion';
 import { formatDistanceKm, formatWeight } from '@/features/materiel/domain/departCalculations';
 import { updateDepartStatus } from '@/features/materiel/actions/updateDepartStatus';
@@ -127,7 +125,7 @@ export function DepartureSheetModal({
               className="p-1.5 rounded-full hover:bg-black/5 text-[#5A7064] hover:text-[#17402C] transition-colors"
               aria-label="Fermer la fiche de départ"
             >
-              <X size={18} />
+              <XAnimated size={18} />
             </button>
           </div>
 
@@ -238,7 +236,7 @@ export function DepartureSheetModal({
                   disabled={isPending}
                   className="px-4 py-2 rounded-xl bg-[#17402C] text-white text-xs font-bold flex items-center gap-1.5 shadow-xs hover:bg-[#17402C]/90 transition-all cursor-pointer"
                 >
-                  <Play size={12} />
+                  <PlayAnimated size={12} />
                   <span>Démarrer le trek (Mode Actif)</span>
                 </button>
               ) : (
@@ -248,7 +246,7 @@ export function DepartureSheetModal({
                   disabled={isPending}
                   className="px-4 py-2 rounded-xl bg-[#2D6B4A] text-white text-xs font-bold flex items-center gap-1.5 shadow-xs hover:bg-[#2D6B4A]/90 transition-all cursor-pointer"
                 >
-                  <RotateCcw size={12} />
+                  <RotateCcwAnimated size={12} />
                   <span>Terminer et archiver le trek</span>
                 </button>
               )}

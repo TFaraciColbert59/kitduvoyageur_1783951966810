@@ -1,7 +1,7 @@
 'use client';
 
 import React from 'react';
-import { RotateCcw, Search } from 'lucide-react';
+import { SearchAnimated, RotateCcwAnimated } from '@/components/icons';
 import { getDifficultyColor } from './types';
 
 export interface PoiFilterItem {
@@ -71,7 +71,7 @@ export default function ExplorerFilterPanel({
       <div className="flex flex-col gap-1.5">
         <span className={sectionLabel}>Recherche directe</span>
         <div className="relative w-full">
-          <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-[#5A7064]" />
+          <SearchAnimated size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-[#5A7064]" />
           <input
             type="text"
             placeholder="Rechercher par nom, lieu…"
@@ -97,7 +97,7 @@ export default function ExplorerFilterPanel({
           onClick={onReset}
           className="self-start glass-capsule-btn primary !py-1 !px-3 text-[10px] font-bold shadow-xs active:scale-95 transition-all cursor-pointer flex items-center gap-1.5"
         >
-          <RotateCcw size={10} />
+          <RotateCcwAnimated size={10} />
           <span>Réinitialiser les filtres</span>
         </button>
       )}

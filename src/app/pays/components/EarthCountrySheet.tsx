@@ -3,7 +3,8 @@
 import React, { useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useRouter } from 'next/navigation';
-import { X, ChevronRight, MapPin, Calendar, Coins, Tag, Sparkles } from 'lucide-react';
+import { MapPin, Calendar, Coins, Tag, Sparkles } from 'lucide-react';
+import { XAnimated, ChevronRightAnimated } from '@/components/icons';
 import type { Country } from '@/lib/countries';
 import { DANGER_META } from '@/lib/pays/danger';
 import { useHapticFeedback } from '@/hooks/useHapticFeedback';
@@ -92,7 +93,7 @@ export default function EarthCountrySheet({ country, onClose }: EarthCountryShee
                   aria-label="Fermer la fiche"
                   className="w-8 h-8 rounded-full bg-[#17402C]/08 hover:bg-[#17402C]/15 flex items-center justify-center text-[#17402C] shrink-0 transition-transform active:scale-90 cursor-pointer"
                 >
-                  <X size={15} />
+                  <XAnimated size={15} />
                 </button>
               </div>
 
@@ -150,7 +151,7 @@ export default function EarthCountrySheet({ country, onClose }: EarthCountryShee
                   className="flex-1 glass-capsule-btn primary justify-center !min-h-[44px] !font-bold !gap-1.5 shadow-md active:scale-[0.98] transition-transform cursor-pointer"
                 >
                   <span>Explorer le guide</span>
-                  <ChevronRight size={15} />
+                  <ChevronRightAnimated size={15} />
                 </button>
 
                 <button

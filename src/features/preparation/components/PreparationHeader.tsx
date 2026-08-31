@@ -2,7 +2,8 @@
 
 import React from 'react';
 import Link from 'next/link';
-import { ChevronLeft, Sparkles, Scale, CheckCircle2, ShieldAlert } from 'lucide-react';
+import { Sparkles, Scale, CheckCircle2, ShieldAlert } from 'lucide-react';
+import { ChevronLeftAnimated } from '@/components/icons';
 import { usePreparationStore } from '../stores/usePreparationStore';
 import { useHapticFeedback } from '@/hooks/useHapticFeedback';
 
@@ -33,7 +34,7 @@ export function PreparationHeader() {
             onClick={() => triggerHaptic('light')}
             className="bg-white/85 hover:bg-white text-[#17402C] h-8 w-8 rounded-full flex items-center justify-center text-xs font-semibold shrink-0 border border-white/80 shadow-xs backdrop-blur-md transition-all active:scale-95"
           >
-            <ChevronLeft size={18} />
+            <ChevronLeftAnimated size={18} />
           </Link>
 
           <div className="min-w-0">

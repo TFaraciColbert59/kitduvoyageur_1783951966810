@@ -6,13 +6,12 @@ import {
   AlertTriangle,
   AlertCircle,
   Clock,
-  X,
-  ArrowRight,
   ExternalLink,
   ShieldCheck,
   ChevronDown,
   HelpCircle,
 } from 'lucide-react';
+import { ArrowRightAnimated, XAnimated } from '@/components/icons';
 import { cn } from '@/lib/utils';
 import type { ActionableAlert, SmartPromptsInput } from '@/features/materiel/services/generateSmartPrompts';
 import { generateSmartPrompts } from '@/features/materiel/services/generateSmartPrompts';
@@ -198,7 +197,7 @@ export function DepartAlerts({ input }: { input: SmartPromptsInput }) {
                       title="Masquer"
                       aria-label="Masquer"
                     >
-                      <X size={10} />
+                      <XAnimated size={10} />
                     </button>
                   </div>
                 </div>
@@ -237,7 +236,7 @@ export function DepartAlerts({ input }: { input: SmartPromptsInput }) {
                       {alert.actionType === 'view_dispo' ? (
                         <ExternalLink size={9} />
                       ) : (
-                        <ArrowRight size={9} />
+                        <ArrowRightAnimated size={9} />
                       )}
                     </button>
                   )}

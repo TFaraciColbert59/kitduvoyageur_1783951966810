@@ -3,7 +3,7 @@
 import React, { useCallback, useMemo, useRef, useState } from 'react';
 import Link from 'next/link';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Search, X, ChevronLeft } from 'lucide-react';
+import { ChevronLeftAnimated, SearchAnimated, XAnimated } from '@/components/icons';
 import type { Country } from '@/lib/countries';
 import { useHapticFeedback } from '@/hooks/useHapticFeedback';
 
@@ -68,12 +68,12 @@ export default function EarthMobileHeader({ countries, onSelect }: EarthMobileHe
           aria-label="Retour à l'accueil"
           className="w-8.5 h-8.5 rounded-full bg-white/80 hover:bg-white text-[#17402C] border border-white/80 flex-shrink-0 flex items-center justify-center font-bold shadow-2xs transition-all active:scale-95"
         >
-          <ChevronLeft size={18} />
+          <ChevronLeftAnimated size={18} />
         </Link>
 
         {/* Recherche */}
         <div className="relative flex-1 min-w-0">
-          <Search size={13} className="absolute left-3 top-1/2 -translate-y-1/2 text-[#5A7064]" />
+          <SearchAnimated size={13} className="absolute left-3 top-1/2 -translate-y-1/2 text-[#5A7064]" />
           <input
             ref={inputRef}
             type="text"
@@ -92,7 +92,7 @@ export default function EarthMobileHeader({ countries, onSelect }: EarthMobileHe
               aria-label="Effacer la recherche"
               className="absolute right-2.5 top-1/2 -translate-y-1/2 text-[#5A7064] hover:text-[#17402C]"
             >
-              <X size={13} />
+              <XAnimated size={13} />
             </button>
           )}
 
