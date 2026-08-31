@@ -9,7 +9,7 @@ import React from 'react';
 export function CompteBackground() {
   return (
     <div
-      className="fixed inset-0 overflow-hidden pointer-events-none select-none"
+      className="hidden md:block fixed inset-0 overflow-hidden pointer-events-none select-none"
       style={{
         zIndex: 0,
         width: '100vw',

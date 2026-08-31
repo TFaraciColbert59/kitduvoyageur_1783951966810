@@ -300,7 +300,7 @@ export default function PreparationClient({ route, userId }: PreparationClientPr
 
   if (loading || !report) {
     return (
-      <div className="flex flex-col items-center justify-center min-h-screen bg-[#EAE6DF] text-black">
+      <div className="flex flex-col items-center justify-center min-h-screen bg-[#F5F2EC] text-black">
          <div className="text-sm font-mono tracking-widest text-[#17402C] uppercase mb-2 animate-pulse">Initialisation Cockpit...</div>
       </div>
     );

@@ -64,8 +64,8 @@ export default function HorsLignePage() {
   const totalTiles = routes.reduce((sum, r) => sum + r.tileCount, 0);
 
   return (
-    <MobilePageShell background="#F8F5EE">
-      <div className="min-h-screen bg-[#F8F5EE]">
+    <MobilePageShell background="#F5F2EC">
+      <div className="min-h-screen bg-[#F5F2EC]">
         {/* Header */}
         <div className="bg-[#17402C] text-white px-4 pt-8 pb-6">
           <div className="flex items-center gap-3 mb-1">

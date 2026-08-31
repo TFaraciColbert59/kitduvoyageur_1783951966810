@@ -4,6 +4,8 @@ import React, { useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { createClient } from '@/lib/supabase/client';
+import LkvButton from '@/components/ui/LkvButton';
+import LkvIcon from '@/components/ui/LkvIcon';
 import Icon from '@/components/ui/AppIcon';
 
 interface GlobalSearchModalProps {
@@ -253,12 +255,14 @@ export default function GlobalSearchModal({ isOpen, onClose }: GlobalSearchModal
               <p className="text-xs text-white/40 max-w-sm mx-auto">
                 Essayez des termes plus généraux comme « tente », « randonnée », « sac », ou consultez notre boutique complète.
               </p>
-              <button
+              <LkvButton
                 onClick={() => handleSelectResult(`/boutique?search=${encodeURIComponent(query.trim())}`)}
-                className="mt-2 inline-flex items-center gap-2 px-5 py-2.5 bg-emerald-500 text-emerald-950 font-extrabold rounded-full text-xs hover:bg-emerald-400 transition-colors"
+                size="sm"
+                variant="primary"
+                className="mt-2"
               >
                 Voir dans la boutique →
-              </button>
+              </LkvButton>
             </div>
           )}
 

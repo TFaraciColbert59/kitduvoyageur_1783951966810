@@ -5,6 +5,7 @@ import Link from 'next/link';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
 import Icon from '@/components/ui/AppIcon';
+import LkvButton from '@/components/ui/LkvButton';
 import { getCart, getCartTotals, clearCart, CartItem } from '@/lib/cart';
 import { createClient } from '@/lib/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
@@ -284,7 +285,7 @@ export default function CheckoutPage() {
 
   if (!mounted) {
     return (
-      <div className="min-h-screen bg-[#FAF8F5]">
+      <div className="min-h-screen bg-[#F5F2EC]">
         <Header />
         <div className="pt-24 flex items-center justify-center min-h-[60vh]">
           <div className="w-8 h-8 border-2 border-[#17402C] border-t-transparent rounded-full animate-spin" />
@@ -459,9 +460,9 @@ export default function CheckoutPage() {
                       </div>
 
                       {step === 'livraison' && (
-                        <button onClick={handleShippingSubmit} className="glass-capsule-btn w-full mt-8">
-                          Continuer vers le paiement
-                        </button>
+                        <LkvButton onClick={handleShippingSubmit} variant="primary" size="lg" fullWidth className="mt-8">
+                          Continuer vers le paiement →
+                        </LkvButton>
                       )}
                     </div>
 
@@ -547,13 +548,16 @@ export default function CheckoutPage() {
                             </label>
                           </div>
 
-                          <button
+                          <LkvButton
                             onClick={handleStripeCheckout}
                             disabled={processing}
-                            className="glass-capsule-btn w-full"
+                            loading={processing}
+                            variant="primary"
+                            size="lg"
+                            fullWidth
                           >
-                            {processing ? 'Traitement...' : `Payer ${grandTotal.toFixed(2)} €`}
-                          </button>
+                            Payer {grandTotal.toFixed(2)} €
+                          </LkvButton>
                         </>
                       )}
                     </div>

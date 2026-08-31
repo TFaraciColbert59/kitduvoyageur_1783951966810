@@ -3,6 +3,8 @@
 import React from 'react';
 import { SearchIcon as SearchAnimated } from '@/components/icons/search';
 import { RotateCCWIcon as RotateCcwAnimated } from '@/components/icons/rotate-ccw';
+import LkvButton from '@/components/ui/LkvButton';
+import LkvChip from '@/components/ui/LkvChip';
 import { getDifficultyColor } from './types';
 
 export interface PoiFilterItem {
@@ -93,14 +95,15 @@ export default function ExplorerFilterPanel({
       </div>
 
       {hasFilters && (
-        <button
-          type="button"
+        <LkvButton
+          variant="secondary"
+          size="sm"
           onClick={onReset}
-          className="self-start glass-capsule-btn primary !py-1 !px-3 text-[10px] font-bold shadow-xs active:scale-95 transition-all cursor-pointer flex items-center gap-1.5"
+          icon={<RotateCcwAnimated size={10} />}
+          className="self-start"
         >
-          <RotateCcwAnimated size={10} />
-          <span>Réinitialiser les filtres</span>
-        </button>
+          Réinitialiser les filtres
+        </LkvButton>
       )}
 
       {/* Difficulté */}
@@ -133,16 +136,12 @@ export default function ExplorerFilterPanel({
           {DURATION_FILTERS.map((f) => {
             const active = activeDuration === f.label;
             return (
-              <button
+              <LkvChip
                 key={f.label}
-                type="button"
+                label={f.label}
+                active={active}
                 onClick={() => onSelectDuration(active ? null : f.label)}
-                className={`glass-capsule-btn !py-1 !px-3 text-[10.5px] font-bold transition-all cursor-pointer ${
-                  active ? 'primary shadow-xs scale-105' : 'hover:scale-105'
-                }`}
-              >
-                {f.label}
-              </button>
+              />
             );
           })}
         </div>
@@ -155,16 +154,12 @@ export default function ExplorerFilterPanel({
           {CATEGORIES.map((c) => {
             const active = activeCategory === c;
             return (
-              <button
+              <LkvChip
                 key={c}
-                type="button"
+                label={c}
+                active={active}
                 onClick={() => onSelectCategory(c)}
-                className={`glass-capsule-btn !py-1 !px-3 text-[10.5px] font-bold transition-all cursor-pointer ${
-                  active ? 'primary shadow-xs scale-105' : 'hover:scale-105'
-                }`}
-              >
-                {c}
-              </button>
+              />
             );
           })}
         </div>

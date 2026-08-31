@@ -72,31 +72,8 @@ export function DepartMap({ trail, height = '240px', className }: DepartMapProps
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [isOfflineSaved, setIsOfflineSaved] = useState(false);
 
-  // État vide si aucun tracé
-  if (!trail) {
-    return (
-      <div className="glass rounded-[24px] p-5 text-center space-y-2.5 border border-white/60">
-        <div className="w-10 h-10 rounded-2xl bg-white/40 border border-white/60 flex items-center justify-center mx-auto text-[#17402C]">
-          <Compass size={20} />
-        </div>
-        <div>
-          <h3 className="text-xs sm:text-[13px] font-bold text-[#17402C]">Aucun tracé associé à ce départ</h3>
-          <p className="text-[11px] text-[#5A7064] mt-0.5">
-            Liez un itinéraire GPX pour activer la carte interactive.
-          </p>
-        </div>
-        <Link
-          href="/preparer-randonnee"
-          className="glass-capsule-btn primary inline-flex items-center gap-1.5 text-xs py-1.5 px-3 font-semibold mt-1"
-        >
-          <MapPin size={12} />
-          <span>Associer une randonnée</span>
-        </Link>
-      </div>
-    );
-  }
-
   useEffect(() => {
+    if (!trail) return;
     let cancelled = false;
 
     async function initMap() {
@@ -206,7 +183,32 @@ export function DepartMap({ trail, height = '240px', className }: DepartMapProps
         mapRef.current = null;
       }
     };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [trail]);
+
+  // État vide si aucun tracé
+  if (!trail) {
+    return (
+      <div className="glass rounded-[24px] p-5 text-center space-y-2.5 border border-white/60">
+        <div className="w-10 h-10 rounded-2xl bg-white/40 border border-white/60 flex items-center justify-center mx-auto text-[#17402C]">
+          <Compass size={20} />
+        </div>
+        <div>
+          <h3 className="text-xs sm:text-[13px] font-bold text-[#17402C]">Aucun tracé associé à ce départ</h3>
+          <p className="text-[11px] text-[#5A7064] mt-0.5">
+            Liez un itinéraire GPX pour activer la carte interactive.
+          </p>
+        </div>
+        <Link
+          href="/preparer-randonnee"
+          className="glass-capsule-btn primary inline-flex items-center gap-1.5 text-xs py-1.5 px-3 font-semibold mt-1"
+        >
+          <MapPin size={12} />
+          <span>Associer une randonnée</span>
+        </Link>
+      </div>
+    );
+  }
 
   const handleTileChange = async (mode: TileMode) => {
     setTileMode(mode);

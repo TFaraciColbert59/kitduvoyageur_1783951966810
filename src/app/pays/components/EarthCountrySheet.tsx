@@ -7,6 +7,8 @@ import { MapPin, Calendar, Coins, Tag, Sparkles } from 'lucide-react';
 import { XIcon as XAnimated } from '@/components/icons/x';
 import { ChevronRightIcon as ChevronRightAnimated } from '@/components/icons/chevron-right';
 import type { Country } from '@/lib/countries';
+import LkvButton from '@/components/ui/LkvButton';
+import LkvChip from '@/components/ui/LkvChip';
 import { DANGER_META } from '@/lib/pays/danger';
 import { useHapticFeedback } from '@/hooks/useHapticFeedback';
 
@@ -132,38 +134,34 @@ export default function EarthCountrySheet({ country, onClose }: EarthCountryShee
               {/* Tags */}
               {country.tags.length > 0 && (
                 <div className="flex items-center gap-1.5 flex-wrap">
-                  <Tag size={11} className="text-[#5A7064]" />
                   {country.tags.slice(0, 3).map((t) => (
-                    <span
-                      key={t}
-                      className="glass-pill text-[9.5px] font-mono bg-white/80 border border-white"
-                    >
-                      {t}
-                    </span>
+                    <LkvChip key={t} label={t} tone="stone" />
                   ))}
                 </div>
               )}
 
               {/* CTAs with Apple 44px touch targets */}
               <div className="flex items-center gap-2 pt-1">
-                <button
-                  type="button"
+                <LkvButton
+                  variant="primary"
+                  size="md"
+                  fullWidth
                   onClick={handleExplore}
-                  className="flex-1 glass-capsule-btn primary justify-center !min-h-[44px] !font-bold !gap-1.5 shadow-md active:scale-[0.98] transition-transform cursor-pointer"
+                  icon={<ChevronRightAnimated size={15} />}
+                  iconPosition="right"
                 >
-                  <span>Explorer le guide</span>
-                  <ChevronRightAnimated size={15} />
-                </button>
+                  Explorer le guide
+                </LkvButton>
 
-                <button
-                  type="button"
+                <LkvButton
+                  variant="secondary"
+                  size="md"
                   onClick={handleOpenKitConfigurator}
-                  className="glass-capsule-btn !min-h-[44px] !px-4 !font-bold !gap-1.5 shadow-xs active:scale-[0.98] transition-transform cursor-pointer"
+                  icon={<Sparkles size={14} className="text-[#5B7F55]" />}
                   title="Générer un kit pour ce pays"
                 >
-                  <Sparkles size={14} className="text-[#5B7F55]" />
-                  <span>Kit IA</span>
-                </button>
+                  Kit IA
+                </LkvButton>
               </div>
             </div>
           </motion.div>

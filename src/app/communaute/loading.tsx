@@ -3,7 +3,7 @@ import { Skeleton } from '@/components/ui/Skeleton';
 
 export default function CommunityLoading() {
   return (
-    <div className="min-h-screen bg-[#F0EBE1] pb-24 md:pb-12 pt-2 md:pt-24" aria-busy="true" aria-label="Chargement de la communauté…">
+    <div className="min-h-screen bg-[#F5F2EC] pb-24 md:pb-12 pt-2 md:pt-24" aria-busy="true" aria-label="Chargement de la communauté…">
       <div className="max-w-3xl mx-auto px-3 sm:px-6 space-y-3">
         {/* Category switcher pills */}
         <div className="flex gap-2 overflow-x-hidden pb-1">

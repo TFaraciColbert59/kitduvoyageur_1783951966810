@@ -11,6 +11,7 @@ import MobilePageShell from '@/components/mobile-nav/MobilePageShell';
 import MobileGroupesHub from '@/components/groupes/MobileGroupesHub';
 import CompteBackground from '@/components/compte/CompteBackground';
 import CommunityHubNav from '@/components/social/CommunityHubNav';
+import CommunityLeftSidebar from '@/components/communaute/CommunityLeftSidebar';
 import { BackgroundVideo } from '@/components/materiel/BackgroundVideo';
 import { createClient } from '@/lib/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
@@ -411,18 +412,14 @@ function GroupesPageInner() {
           {/* MAIN FULLSCREEN GRID (15% Left Nav / 85% Content Area) */}
           <main className="flex-1 min-h-0 overflow-hidden w-full max-w-[1440px] mx-auto px-4 sm:px-6 lg:px-8 pt-24 pb-4 flex gap-6">
 
-            {/* NAV GAUCHE (15% / ~220px) */}
-            <aside className="w-[220px] shrink-0 h-full overflow-y-auto custom-scrollbar flex flex-col gap-4">
-              <div className="px-2 py-1">
-                <span className="glass-pill px-3 py-1 text-[10px] font-bold tracking-widest uppercase block text-center">
-                  🌲 Groupes LKDV
-                </span>
-              </div>
-              <CommunityHubNav
-                layoutVariant="vertical"
+            {/* NAV GAUCHE (~230px) */}
+            <div className="w-[230px] shrink-0 h-full overflow-hidden">
+              <CommunityLeftSidebar
                 activeTab="groupes"
+                onTabChange={(tab) => router.push(`/communaute?tab=${tab}`)}
+                badgeCounts={{}}
               />
-            </aside>
+            </div>
 
             {/* ZONE CONTENU DROITE (85% / flex-1) - SEULE ZONE SCROLLABLE */}
             <div className="flex-1 min-w-0 h-full overflow-y-auto custom-scrollbar pr-2 space-y-6">

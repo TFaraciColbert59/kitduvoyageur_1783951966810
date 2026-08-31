@@ -98,7 +98,7 @@ export const MobilePreparationView: React.FC<MobilePreparationViewProps> = ({
   ];
 
   return (
-    <div className="min-h-screen bg-[#EAE6DF] font-sans pb-[190px] relative overflow-x-hidden">
+    <div className="min-h-screen bg-[#F5F2EC] font-sans pb-[190px] relative overflow-x-hidden">
       {!isOnline && (
          <div className="w-full bg-[#B85838] text-white text-[10px] uppercase tracking-widest font-mono text-center py-1 absolute top-0 z-50">
            Mode Hors-Ligne Actif

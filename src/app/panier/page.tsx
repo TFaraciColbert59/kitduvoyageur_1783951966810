@@ -6,6 +6,7 @@ import Header from '@/components/Header';
 import Footer from '@/components/Footer';
 import WeightGauge from '@/components/WeightGauge';
 import Icon from '@/components/ui/AppIcon';
+import LkvButton from '@/components/ui/LkvButton';
 import { getCart, updateQuantity, removeFromCart, getCartTotals, applyLoyaltyFree, removeLoyaltyFree, CartItem } from '@/lib/cart';
 import { createClient } from '@/lib/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
@@ -123,7 +124,7 @@ export default function PanierPage() {
 
   if (!mounted) {
     return (
-      <div className="min-h-screen bg-[#FAF8F5]">
+      <div className="min-h-screen bg-[#F5F2EC]">
         <Header />
         <div className="pt-24 flex items-center justify-center min-h-[60vh]">
           <div className="w-8 h-8 border-2 border-[#17402C] border-t-transparent rounded-full animate-spin" aria-label="Chargement du panier" />
@@ -286,7 +287,7 @@ export default function PanierPage() {
 
                       <div className="flex gap-2 mb-8">
                         <input type="text" placeholder="Code promo" className="glass-input flex-1 min-w-0" />
-                        <button className="glass-capsule-btn flex-shrink-0">Appliquer</button>
+                        <LkvButton variant="secondary" size="sm">Appliquer</LkvButton>
                       </div>
 
                       <div className="flex justify-between items-end font-display font-800 text-2xl pt-6 border-t border-white/50 mb-6">
@@ -294,8 +295,10 @@ export default function PanierPage() {
                         <span className="font-mono font-bold text-[#17402C]">{grandTotal.toFixed(0)} €</span>
                       </div>
 
-                      <Link href="/checkout" className="glass-capsule-btn w-full mb-4">
-                        Passer au paiement
+                      <Link href="/checkout" className="block w-full mb-4">
+                        <LkvButton variant="primary" size="lg" fullWidth>
+                          Passer au paiement →
+                        </LkvButton>
                       </Link>
                       <p className="text-center text-[10px] text-[#5A7064] flex items-center justify-center gap-1.5 mb-8">
                         <Icon name="LockClosedIcon" size={12} /> Paiement sécurisé Stripe

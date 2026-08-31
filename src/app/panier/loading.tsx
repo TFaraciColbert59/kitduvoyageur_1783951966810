@@ -3,7 +3,7 @@ import { Skeleton } from '@/components/ui/Skeleton';
 
 export default function CartLoading() {
   return (
-    <div className="min-h-screen bg-[#FAF8F5] pb-24 lg:pb-12 pt-24 lg:pt-32">
+    <div className="min-h-screen bg-[#F5F2EC] pb-24 lg:pb-12 pt-24 lg:pt-32">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <Skeleton className="h-10 w-48 mb-8" />
 

@@ -1,49 +1,37 @@
 import React from 'react';
+import { GlassCard } from './GlassCard';
 
 type CardVariant = 'default' | 'elevated' | 'outlined';
 
 export interface CardProps extends React.HTMLAttributes<HTMLDivElement> {
   variant?: CardVariant;
+  interactive?: boolean;
   children: React.ReactNode;
   className?: string;
 }
 
-const VARIANT_STYLES: Record<CardVariant, React.CSSProperties> = {
-  default: {
-    background: '#FAF8F5',
-    border: '1px solid #E8E4D8',
-    borderRadius: '8px',
-    boxShadow: '0 2px 6px rgba(23,64,44,0.06), 0 4px 12px rgba(23,64,44,0.05)',
-  },
-  elevated: {
-    background: '#FAF8F5',
-    border: '1px solid #E8E4D8',
-    borderRadius: '8px',
-    boxShadow: '0 6px 16px rgba(23,64,44,0.08), 0 12px 32px rgba(23,64,44,0.06)',
-  },
-  outlined: {
-    background: '#FAF8F5',
-    border: '1px solid #E8E4D8',
-    borderRadius: '8px',
-    boxShadow: 'none',
-  },
-};
-
 export const Card: React.FC<CardProps> = ({
   variant = 'default',
+  interactive = false,
   className,
   children,
-  style,
   ...rest
 }) => {
+  const toneMap = {
+    default: 'neutral',
+    elevated: 'sage',
+    outlined: 'neutral',
+  } as const;
+
   return (
-    <div
-      style={{ ...VARIANT_STYLES[variant], ...style }}
+    <GlassCard
+      tone={toneMap[variant]}
+      interactive={interactive}
       className={className}
       {...rest}
     >
       {children}
-    </div>
+    </GlassCard>
   );
 };
 

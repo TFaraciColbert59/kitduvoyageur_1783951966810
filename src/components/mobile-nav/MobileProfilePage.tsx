@@ -4,6 +4,7 @@ import React, { useState } from 'react';
 import Link from 'next/link';
 import { useAuth } from '@/contexts/AuthContext';
 import HikingProfileCard from '@/components/profile/HikingProfileCard';
+import LkvButton from '@/components/ui/LkvButton';
 
 
 // ── Types ──────────────────────────────────────────────────────────────────────
@@ -91,33 +92,15 @@ function LoggedOutProfile() {
           </div>
 
           <div className="flex gap-3 w-full">
-            <Link
-              href="/connexion"
-              className="flex-1 flex items-center justify-center font-semibold haptic-press"
-              style={{
-                background: '#5B7F55',
-                color: 'white',
-                borderRadius: '16px',
-                padding: '14px',
-                fontSize: '15px',
-                boxShadow: '0 8px 24px rgba(23,64,44,0.35)',
-              }}
-            >
-              Se connecter
+            <Link href="/connexion" className="flex-1">
+              <LkvButton variant="primary" size="lg" fullWidth>
+                Se connecter
+              </LkvButton>
             </Link>
-            <Link
-              href="/inscription"
-              className="flex-1 flex items-center justify-center font-semibold haptic-press"
-              style={{
-                background: 'rgba(255,255,255,0.08)',
-                color: 'rgba(231,227,214,0.9)',
-                borderRadius: '16px',
-                padding: '14px',
-                fontSize: '15px',
-                border: '1px solid rgba(255,255,255,0.12)',
-              }}
-            >
-              Créer un compte
+            <Link href="/inscription" className="flex-1">
+              <LkvButton variant="ghost-light" size="lg" fullWidth>
+                Créer un compte
+              </LkvButton>
             </Link>
           </div>
         </div>

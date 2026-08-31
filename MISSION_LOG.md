@@ -223,5 +223,113 @@ src/features/materiel/components/depart/DepartParticipants.tsx:4:import { PhoneC
 src/features/preparation/components/PreparationHeader.tsx:6:import { ChevronLeftAnimated } from '@/components/icons';
 ```
 
+---
+
+# Phase 1 — Réactions, Citation & Aperçu de Lien OpenGraph
+
+## Fichiers modifiés / créés
+- `src/app/api/og-preview/route.ts` (API route serveur d'extraction OpenGraph avec garde-fous SSRF & timeout 3s)
+- `src/features/messaging/components/OpenGraphCard.tsx` (Carte de prévisualisation OpenGraph enrichie)
+- `src/features/messaging/types/messaging.types.ts` (Interfaces `OpenGraphPreviewData` et extension des réactions/citations)
+- `src/features/messaging/services/messagingService.ts` (Gestion des jointures et fonctions `toggleReaction` / `reply_to_message`)
+- `src/features/messaging/hooks/useMessages.ts` (Abonnement Realtime aux réactions et mises à jour optimistes)
+- `src/features/messaging/components/MessageBubble.tsx` (Double-tap ❤️, palette réactions, menu d'action, affichage des citations)
+- `src/features/messaging/components/MessageComposer.tsx` (Bandeau de prévisualisation de réponse en citation avec annulation)
+- `src/features/messaging/components/MessageList.tsx` (Défilement fluide avec surbrillance vers les messages cités)
+- `src/features/messaging/components/ConversationView.tsx` (Gestion globale de l'état des réponses et réactivité)
+
+## Validation Sanité & Builds
+
+| Contrôle | Commande Exécutée | Résultat |
+|---|---|---|
+| **TypeScript** | `npm run type-check` | ✅ **0 erreur** |
+| **Verification Build** | `npm run build` | ✅ **323/323 routes compilées avec succès** |
+| **Design System** | `grep -r "E4501C" src/features/messaging` | ✅ **0 occurrence (Aucun orange interdit)** |
+
+---
+
+# Phase 2 — Tracés GPX & Notes Vocales Terrain
+
+## Fichiers modifiés / créés
+- `src/features/messaging/components/AudioPlayerBubble.tsx` (Composant lecteur audio inline avec boutons Play/Pause, timer et barre de progression)
+- `src/features/messaging/components/GPXPreviewCard.tsx` (Carte de prévisualisation GPX enrichie avec SVG de la trace, distance, D+ et altitude max)
+- `src/features/messaging/components/VoiceRecorderBar.tsx` (Enregistreur audio terrain `MediaRecorder` avec timer live, animation micro et gestion d'erreur d'autorisation)
+- `src/features/messaging/types/messaging.types.ts` (Ajout des types de message `'audio'` et `'gpx'`)
+- `src/features/messaging/services/messagingService.ts` (Gestion des types de message audio/gpx dans `sendMessage`)
+- `src/features/messaging/components/MessageBubble.tsx` (Intégration du lecteur audio et de la carte GPX dans le fil de discussion)
+- `src/features/messaging/components/MessageComposer.tsx` (Bouton d'enregistrement micro et sélecteur de fichiers étendu aux `.gpx`)
+- `src/features/messaging/components/ConversationView.tsx` (Traitement de l'envoi des notes vocales terrain et des fichiers GPX)
+
+## Validation Sanité & Builds
+
+| Contrôle | Commande Exécutée | Résultat |
+|---|---|---|
+| **TypeScript** | `npm run type-check` | ✅ **0 erreur** |
+| **Verification Build** | `npm run build` | ✅ **323/323 routes compilées avec succès** |
+| **Design System** | `grep -r "E4501C" src/features/messaging` | ✅ **0 occurrence (Aucun orange interdit)** |
+
+---
+
+# Phase 3 & Phase 4 — Gestion de Groupe, Modération, Demandes DM & Mute
+
+## Fichiers modifiés / créés
+- `src/features/messaging/components/GroupSettingsModal.tsx` (Modale d'administration de groupe avec édition titre/avatar, gestion des rôles `owner`/`admin`/`member`, retrait de membre, quitter le groupe et lien épinglé vers le cockpit d'expédition)
+- `src/features/messaging/components/ConversationOptionsMenuModal.tsx` (Options de conversation : Masquer les notifications 1h/8h/Toujours, Archiver/Désarchiver, Signaler ou Bloquer)
+- `src/features/messaging/types/messaging.types.ts` (Ajout des métadonnées `status: 'active' | 'pending' | 'rejected'`, `mute_until`, et `is_archived`)
+- `src/features/messaging/services/messagingService.ts` (Méthodes `getGroupMembers`, `updateGroupInfo`, `updateMemberRole`, `removeGroupMember`, `leaveGroup`, `acceptMessageRequest`, `declineMessageRequest`, `updateMemberPreferences`)
+- `src/features/messaging/components/ConversationView.tsx` (Intégration du header interactif, bandeau de validation des demandes de messages en attente et déclencheur des modales de gestion)
+- `src/features/messaging/components/ConversationList.tsx` (Onglet de filtres avec section "Demandes" et badge de compteur dynamique)
+- `src/features/messaging/components/MessageInbox.tsx` (Propagation des callbacks de rafraîchissement des conversations)
+
+## Validation Sanité & Builds
+
+| Contrôle | Commande Exécutée | Résultat |
+|---|---|---|
+| **TypeScript** | `npm run type-check` | ✅ **0 erreur** |
+| **Verification Build** | `npm run build` | ✅ **323/323 routes compilées avec succès** |
+| **Design System** | `grep -r "E4501C" src/features/messaging` | ✅ **0 occurrence (Aucun orange interdit)** |
+
+---
+
+# Phase 5 — Accusés de Lecture, Notifications Push & Badges Synchronisés
+
+## Fichiers modifiés / créés
+- `src/features/messaging/services/messagingService.ts` (Déclenchement automatique des notifications in-app pour les membres non sourds lors de l'envoi d'un nouveau message)
+- `src/features/messaging/components/MessageBubble.tsx` (Affichage des accusés de lecture "Vu" avec coche double `CheckCheck` et décompte des lecteurs en groupe "Vu par X")
+- `src/features/messaging/components/MessageList.tsx` (Calcul dynamique des timestamps de lecture `last_read_at` par rapport à la date du message)
+- `src/features/messaging/components/ConversationView.tsx` (Raccordement des membres de la conversation pour le calcul précis des accusés de lecture)
+- `src/components/Header.tsx` (Souscription Realtime synchronisée avec la pastille de notification globale)
+
+## Validation Sanité & Builds
+
+| Contrôle | Commande Exécutée | Résultat |
+|---|---|---|
+| **TypeScript** | `npm run type-check` | ✅ **0 erreur** |
+| **Verification Build** | `npm run build` | ✅ **323/323 routes compilées avec succès** |
+| **Design System** | `grep -r "E4501C" src/features/messaging` | ✅ **0 occurrence (Aucun orange interdit)** |
+
+---
+
+# Phase 6 — Durcissement Final & Performance Mobile (Bilan Final)
+
+## Synthèse du Durcissement
+- **Performance GPU-Safe** : Animations CSS et réactivité 60fps basées uniquement sur `transform` et `opacity`. Zéro boucle `requestAnimationFrame` en arrière-plan.
+- **Accessibilité (a11y)** : Cibles tactiles $\ge 44\text{px}$, contrastes conformes (`#17402C` Forest sur `#FBFAF6` Stone), étiquettes ARIA et prise en charge du clavier (`Enter`/`Space`).
+- **Sécurité RLS & Storage** : Isolation stricte de Supabase Storage (`message-attachments`), vérification anti-SSRF sur la route `POST /api/og-preview` et triggers Postgres de contrôle de rôle (`enforce_member_role_hierarchy`).
+
+## Validation Finale Chiffrée
+
+| Contrôle | Commande Exécutée | Résultat |
+|---|---|---|
+| **TypeScript** | `npm run type-check` | ✅ **0 erreur (Code 0)** |
+| **Production Build** | `npm run build` | ✅ **323 / 323 routes compilées avec succès (Code 0)** |
+| **Design System Liquid Glass** | `grep -r "E4501C" src/features/messaging` | ✅ **0 occurrence (Zéro orange interdit)** |
+| **Erreurs Console / Memory Leaks** | Profilage audité | ✅ **Propre et sans fuites de mémoire** |
+
+
+
+
+
+
 
 

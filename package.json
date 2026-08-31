@@ -76,6 +76,7 @@
     "@dhiwise/component-tagger": "^1.0.15",
     "@headlessui/react": "^2.2.10",
     "@heroicons/react": "^2.2.0",
+    "@omniroute/opencode-plugin": "^0.2.1",
     "@radix-ui/react-dialog": "^1.1.23",
     "@radix-ui/react-toast": "^1.2.23",
     "@rocketnew/llm-sdk": "^1.1.0",

@@ -725,16 +725,12 @@ export default function ClubDetailPage() {
           <Header />
           <main className="flex-1 min-h-0 overflow-hidden w-full max-w-[1440px] mx-auto px-4 sm:px-6 lg:px-8 pt-24 pb-4 flex gap-5">
             {/* COLONNE GAUCHE (Nav & Vertical Cockpit Tabs) - 230px */}
-            <aside className="w-[230px] shrink-0 h-full overflow-y-auto custom-scrollbar flex flex-col gap-3">
-              <CommunityHubNav layoutVariant="vertical" activeTab="clubs" />
+            <div className="w-[230px] shrink-0 h-full overflow-hidden">
               <ClubVerticalTabs
                 activeTab={activeTab}
                 setActiveTab={setActiveTab}
-                eventsCount={events.length}
-                membersCount={members.length}
-                topicsCount={topics.length}
               />
-            </aside>
+            </div>
 
             {/* COLONNE CENTRALE (Scrollable Unique) */}
             <div className="flex-1 min-w-0 h-full overflow-y-auto custom-scrollbar pr-2 space-y-5">

@@ -3,7 +3,7 @@ import { Skeleton } from '@/components/ui/Skeleton';
 
 export default function AccountLoading() {
   return (
-    <div className="min-h-screen bg-[#F0EBE1] pb-24 md:pb-12 pt-2 md:pt-24" aria-busy="true" aria-label="Chargement du compte…">
+    <div className="min-h-screen bg-[#F5F2EC] pb-24 md:pb-12 pt-2 md:pt-24" aria-busy="true" aria-label="Chargement du compte…">
       <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 space-y-4">
         {/* Mobile profile card */}
         <div className="bg-white/40 backdrop-blur-md rounded-[1.25rem] p-5 border border-white/60  space-y-4">

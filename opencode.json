@@ -1,0 +1,19 @@
+{
+  "$schema": "https://opencode.ai/config.json",
+  "plugin": [
+    [
+      "@omniroute/opencode-plugin",
+      {
+        "providerId": "omniroute",
+        "baseURL": "http://localhost:20128",
+        "autoSyncIntervalMs": 300000,
+        "features": {
+          "combos": true,
+          "enrichment": true,
+          "providerTag": true,
+          "diskCache": true
+        }
+      }
+    ]
+  ]
+}

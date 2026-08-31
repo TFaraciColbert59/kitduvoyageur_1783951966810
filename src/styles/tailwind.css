@@ -201,14 +201,20 @@
     height: 100%;
     min-height: 100dvh;
     min-height: -webkit-fill-available;
-    background-color: #FBFAF6;
+    background-color: #F5F2EC;
     overscroll-behavior: none;
     overscroll-behavior-y: none;
     -webkit-tap-highlight-color: transparent;
   }
 
+  @media (min-width: 768px) {
+    html {
+      background-color: #FBFAF6;
+    }
+  }
+
   body {
-    background-color: #FBFAF6;
+    background-color: #F5F2EC;
     color: var(--foreground);
     font-family: var(--font-sans);
     -webkit-font-smoothing: antialiased;
@@ -224,6 +230,12 @@
     overscroll-behavior-y: none;
     max-width: 100%;
     -webkit-touch-callout: none;
+  }
+
+  @media (min-width: 768px) {
+    body {
+      background-color: #FBFAF6;
+    }
   }
 
   #main-content {

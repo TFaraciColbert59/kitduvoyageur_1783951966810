@@ -4,6 +4,7 @@ import React from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useHapticFeedback } from '@/hooks/useHapticFeedback';
+import { ChevronRightIcon as ChevronRightAnimated } from '@/components/icons/chevron-right';
 
 export type CommunityHubTab = 'fil' | 'carnets' | 'clubs' | 'groupes' | 'evenements' | 'entraide';
 
@@ -49,32 +50,23 @@ export default function CommunityHubNav({
 
   if (layoutVariant === 'vertical') {
     return (
-      <nav className="w-full glass p-1.5 rounded-2xl flex flex-col gap-1">
+      <nav className="w-full space-y-1.5" aria-label="Navigation de la communauté">
         {TABS.map((tab) => {
           const isActive = activeTab === tab.key;
-          const badge = badgeCounts[tab.key];
 
           return (
             <Link
               key={tab.key}
               href={tab.href}
               onClick={(e) => handleTabClick(tab.key, e)}
-              className={`flex items-center gap-2.5 px-3 py-1.5 rounded-xl text-[11px] font-semibold select-none transition-all ${
+              className={`w-full px-3 py-2.5 rounded-xl font-bold text-xs transition-all flex items-center justify-between group cursor-pointer border ${
                 isActive
-                  ? 'bg-gradient-to-r from-white/95 to-white/75 text-[#17402C] font-bold border border-white/80'
-                  : 'text-[#365233] hover:bg-white/40 hover:text-[#17402C]'
+                  ? 'bg-[#17402C] text-white border-[#17402C] shadow-sm'
+                  : 'bg-white/80 hover:bg-white text-[#17402C] border-white/80 shadow-2xs'
               }`}
             >
-              <span className="truncate flex-1">{tab.label}</span>
-              {badge !== undefined && badge > 0 && (
-                <span
-                  className={`text-[9px] px-1.5 py-0.2 rounded-full font-mono font-bold shrink-0 ${
-                    isActive ? 'bg-[#17402C]/10 text-[#17402C]' : 'bg-[#365233]/10 text-[#365233]'
-                  }`}
-                >
-                  {badge}
-                </span>
-              )}
+              <span className="truncate text-left">{tab.label}</span>
+              {isActive && <ChevronRightAnimated size={13} className="text-white/70 shrink-0" />}
             </Link>
           );
         })}

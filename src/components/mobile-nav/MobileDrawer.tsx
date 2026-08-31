@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { motion, AnimatePresence } from 'framer-motion';
 import LkvIcon from '@/components/ui/LkvIcon';
+import LkvButton from '@/components/ui/LkvButton';
 import { useAuth } from '@/contexts/AuthContext';
 import { useCartCount } from '@/hooks/useCartCount';
 
@@ -291,7 +292,7 @@ export default function MobileDrawer({ isOpen, onClose, onSearchOpen }: MobileDr
                     <em
                       style={{
                         display: 'block',
-                        fontFamily: 'Georgia, serif',
+                        fontFamily: 'var(--font-serif)',
                         fontStyle: 'italic',
                         color: '#C6DCBE',
                         fontSize: '12px',
@@ -320,7 +321,7 @@ export default function MobileDrawer({ isOpen, onClose, onSearchOpen }: MobileDr
                         borderRadius: '999px',
                         background: '#A8C8A0',
                         color: '#06120C',
-                        fontFamily: 'Georgia, serif',
+                        fontFamily: 'var(--font-serif)',
                         fontStyle: 'italic',
                         fontSize: '18px',
                         display: 'flex',
@@ -339,7 +340,7 @@ export default function MobileDrawer({ isOpen, onClose, onSearchOpen }: MobileDr
                         style={{
                           fontSize: '11px',
                           color: 'rgba(255,255,255,0.6)',
-                          fontFamily: 'ui-monospace, monospace',
+                          fontFamily: 'var(--font-mono)',
                         }}
                       >
                         MEMBRE · NIVEAU {profile?.level || 1}
@@ -348,17 +349,10 @@ export default function MobileDrawer({ isOpen, onClose, onSearchOpen }: MobileDr
                   </div>
                 ) : (
                   <div style={{ position: 'relative', zIndex: 2 }}>
-                    <Link
-                      href="/connexion"
-                      style={{
-                        color: '#A8C8A0',
-                        fontSize: '14px',
-                        fontWeight: 500,
-                        textDecoration: 'none',
-                      }}
-                      onClick={onClose}
-                    >
-                      Se connecter
+                    <Link href="/connexion" onClick={onClose}>
+                      <LkvButton variant="secondary" size="sm">
+                        Se connecter
+                      </LkvButton>
                     </Link>
                   </div>
                 )}
@@ -489,7 +483,7 @@ export default function MobileDrawer({ isOpen, onClose, onSearchOpen }: MobileDr
                     color: '#8B978F',
                     textAlign: 'center',
                     marginTop: '14px',
-                    fontFamily: 'ui-monospace, monospace',
+                    fontFamily: 'var(--font-mono)',
                   }}
                 >
                   {version} · GRENOBLE · FR

@@ -129,20 +129,14 @@ export default function GroupesPage() {
           <main className="flex-1 min-h-0 overflow-hidden w-full max-w-[1440px] mx-auto px-4 sm:px-6 lg:px-8 pt-24 pb-4 flex gap-5">
 
             {/* COLONNE GAUCHE (Nav & Vertical Cockpit Side Tabs) - 230px */}
-            <aside className="w-[230px] shrink-0 h-full overflow-y-auto custom-scrollbar flex flex-col gap-3">
-              <CommunityHubNav
-                layoutVariant="vertical"
-                activeTab="groupes"
-              />
-
-              {/* VERTICAL SIDE TABS FOR COCKPIT SECTIONS */}
+            <div className="w-[230px] shrink-0 h-full overflow-hidden">
               <TabsGroupe
                 layoutVariant="vertical"
                 activeTab={activeTab}
                 setActiveTab={setActiveTab}
                 data={formattedData}
               />
-            </aside>
+            </div>
 
             {/* COLONNE CENTRALE (FLUX DE CONTENU SCROLLABLE UNIQUE) */}
             <div className="flex-1 min-w-0 h-full overflow-y-auto custom-scrollbar pr-2 space-y-5">

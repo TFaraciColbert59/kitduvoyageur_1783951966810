@@ -80,15 +80,12 @@ export default function CarnetView({ data }: CarnetViewProps) {
 
           <main className="flex-1 min-h-0 overflow-hidden w-full max-w-[1440px] mx-auto px-4 sm:px-6 lg:px-8 pt-24 pb-4 flex gap-5">
             {/* COLONNE GAUCHE (Nav & Vertical Cockpit Tabs) - 230px */}
-            <aside className="w-[230px] shrink-0 h-full overflow-y-auto custom-scrollbar flex flex-col gap-3">
-              <CommunityHubNav layoutVariant="vertical" activeTab="carnets" />
+            <div className="w-[230px] shrink-0 h-full overflow-hidden">
               <CarnetDetailVerticalTabs
                 activeTab={activeTab}
                 setActiveTab={setActiveTab}
-                momentsCount={moments.length}
-                itemsCount={kitItems.length}
               />
-            </aside>
+            </div>
 
             {/* COLONNE CENTRALE (Scrollable Unique) */}
             <div className="flex-1 min-w-0 h-full overflow-y-auto custom-scrollbar pr-2 space-y-5">

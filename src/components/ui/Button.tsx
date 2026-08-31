@@ -1,105 +1,13 @@
 'use client';
-import React, { useState } from 'react';
+import React from 'react';
+import { LkvButton, type LkvButtonProps, type LkvButtonVariant } from './LkvButton';
 
-type ButtonVariant = 'primary' | 'secondary' | 'danger' | 'ghost';
-type ButtonSize = 'sm' | 'md' | 'lg';
-
-export interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
-  variant?: ButtonVariant;
-  size?: ButtonSize;
-  loading?: boolean;
-  children: React.ReactNode;
+export interface ButtonProps extends Omit<LkvButtonProps, 'variant'> {
+  variant?: 'primary' | 'secondary' | 'danger' | 'ghost' | LkvButtonVariant;
 }
 
-const VARIANT_STYLES: Record<ButtonVariant, React.CSSProperties> = {
-  primary: { background: '#17402C', color: '#fff', border: 'none' },
-  secondary: { background: '#FAF8F5', color: '#17402C', border: '1px solid #E8E4D8' },
-  danger: { background: '#A8443A', color: '#fff', border: 'none' },
-  ghost: { background: 'transparent', color: '#17402C', border: 'none' },
-};
-
-const HOVER_STYLES: Partial<Record<ButtonVariant, React.CSSProperties>> = {
-  primary: { background: '#365233' },
-  secondary: { background: '#F0ECE1' },
-  danger: { background: '#8A241B' },
-  ghost: { background: '#FAF8F5' },
-};
-
-const SIZE_STYLES: Record<ButtonSize, React.CSSProperties> = {
-  sm: { fontSize: '12px', padding: '6px 12px' },
-  md: { fontSize: '14px', padding: '10px 16px' },
-  lg: { fontSize: '16px', padding: '12px 20px' },
-};
-
-export const Button: React.FC<ButtonProps> = ({
-  variant = 'primary',
-  size = 'md',
-  loading = false,
-  disabled,
-  style,
-  children,
-  onMouseDown,
-  onMouseUp,
-  onTouchStart,
-  onTouchEnd,
-  ...rest
-}) => {
-  const [isHovered, setIsHovered] = useState(false);
-  const [isFocused, setIsFocused] = useState(false);
-  const [isPressed, setIsPressed] = useState(false);
-
-  const isDisabled = disabled || loading;
-
-  const baseStyle: React.CSSProperties = {
-    display: 'inline-flex',
-    alignItems: 'center',
-    justifyContent: 'center',
-    fontWeight: 500,
-    borderRadius: '10px',
-    cursor: isDisabled ? 'not-allowed' : 'pointer',
-    fontFamily: 'inherit',
-    lineHeight: 1.4,
-    transform: !isDisabled && isPressed ? 'scale(0.97)' : !isDisabled && isHovered ? 'scale(1.012)' : 'scale(1)',
-    transition: 'transform 120ms cubic-bezier(0.16, 1, 0.3, 1), background-color 200ms ease, opacity 200ms ease, box-shadow 200ms ease',
-    opacity: isDisabled ? 0.5 : 1,
-    userSelect: 'none',
-    WebkitTapHighlightColor: 'transparent',
-    ...VARIANT_STYLES[variant],
-    ...SIZE_STYLES[size],
-    ...(isHovered && !isDisabled ? HOVER_STYLES[variant] || {} : {}),
-    ...(isFocused ? { outline: '2px solid #5B7F55', outlineOffset: '2px' } : {}),
-    ...style,
-  };
-
-  return (
-    <button
-      style={baseStyle}
-      disabled={isDisabled}
-      onMouseEnter={(e) => { setIsHovered(true); rest.onMouseEnter?.(e); }}
-      onMouseLeave={(e) => { setIsHovered(false); setIsPressed(false); rest.onMouseLeave?.(e); }}
-      onMouseDown={(e) => { setIsPressed(true); onMouseDown?.(e); }}
-      onMouseUp={(e) => { setIsPressed(false); onMouseUp?.(e); }}
-      onTouchStart={(e) => { setIsPressed(true); onTouchStart?.(e); }}
-      onTouchEnd={(e) => { setIsPressed(false); onTouchEnd?.(e); }}
-      onFocus={(e) => { setIsFocused(true); rest.onFocus?.(e); }}
-      onBlur={(e) => { setIsFocused(false); setIsPressed(false); rest.onBlur?.(e); }}
-      {...rest}
-    >
-      {loading && (
-        <svg
-          className="animate-spin"
-          style={{ height: '16px', width: '16px', marginRight: '8px' }}
-          xmlns="http://www.w3.org/2000/svg"
-          fill="none"
-          viewBox="0 0 24 24"
-        >
-          <circle style={{ opacity: 0.25 }} cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
-          <path style={{ opacity: 0.75 }} fill="currentColor" d="M4 12a8 8 0 018-8v8H4z" />
-        </svg>
-      )}
-      {children}
-    </button>
-  );
+export const Button: React.FC<ButtonProps> = ({ variant = 'primary', ...props }) => {
+  return <LkvButton variant={variant as LkvButtonVariant} {...props} />;
 };
 
 export default Button;

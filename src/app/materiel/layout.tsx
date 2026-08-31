@@ -13,10 +13,12 @@ export default function MaterielLayout({ children }: { children: React.ReactNode
   return (
     <div
       data-lkv-material-theme="light"
-      className="relative h-screen md:h-dvh max-h-screen md:max-h-dvh overflow-hidden w-full max-w-full font-sans text-[#17402C] bg-[#FBFAF6] flex flex-col"
+      className="relative h-screen md:h-dvh max-h-screen md:max-h-dvh overflow-hidden w-full max-w-full font-sans text-[#17402C] bg-[#F5F2EC] md:bg-[#FBFAF6] flex flex-col"
     >
-      {/* Fond vidéo immersif */}
-      <BackgroundVideo />
+      {/* Fond vidéo immersif uniquement sur PC / Desktop */}
+      <div className="hidden md:block">
+        <BackgroundVideo />
+      </div>
 
       {/* Interface UI Fullscreen sur desktop — Aucun débordement possible */}
       <div className="relative z-10 w-full h-full flex flex-col overflow-hidden">

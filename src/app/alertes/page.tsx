@@ -9,6 +9,9 @@ import { useRouter } from 'next/navigation';
 import { createClient } from '@/lib/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import MobilePageShell from '@/components/mobile-nav/MobilePageShell';
+import IOSSegmentedControl from '@/components/ui/IOSSegmentedControl';
+import LkvButton from '@/components/ui/LkvButton';
+import LkvCheckbox from '@/components/ui/LkvCheckbox';
 import toast from 'react-hot-toast';
 
 const NOTIFICATION_TYPES = [
@@ -299,105 +302,35 @@ export default function AlertesPage() {
     }
   };
 
+  const unreadCount = notifications.filter((n) => !n.read).length;
+
+  const TAB_OPTIONS = [
+    { id: 'notifications', label: "Fil d'Alertes", badge: unreadCount > 0 ? unreadCount : undefined },
+    { id: 'weather', label: 'Météo & Secours (SOS)' },
+    { id: 'settings', label: 'Préférences' },
+  ];
+
   const renderDesktopTabs = () => (
-    <div className="flex border-b border-stone-200 mb-6 gap-6">
-      <button 
-        onClick={() => setActiveTab('notifications')} 
-        className={`pb-2.5 text-xs font-bold uppercase tracking-wider transition-colors relative ${activeTab === 'notifications' ? 'text-[#17402C]' : 'text-stone-400 hover:text-stone-600'}`}
-      >
-        Fil d'Alertes
-        {activeTab === 'notifications' && <span className="absolute bottom-0 left-0 w-full h-0.5 bg-[#17402C]" />}
-      </button>
-      <button 
-        onClick={() => setActiveTab('weather')} 
-        className={`pb-2.5 text-xs font-bold uppercase tracking-wider transition-colors relative ${activeTab === 'weather' ? 'text-[#17402C]' : 'text-stone-400 hover:text-stone-600'}`}
-      >
-        Météo & Secours (SOS)
-        {activeTab === 'weather' && <span className="absolute bottom-0 left-0 w-full h-0.5 bg-[#17402C]" />}
-      </button>
-      <button 
-        onClick={() => setActiveTab('settings')} 
-        className={`pb-2.5 text-xs font-bold uppercase tracking-wider transition-colors relative ${activeTab === 'settings' ? 'text-[#17402C]' : 'text-stone-400 hover:text-stone-600'}`}
-      >
-        Préférences
-        {activeTab === 'settings' && <span className="absolute bottom-0 left-0 w-full h-0.5 bg-[#17402C]" />}
-      </button>
+    <div className="mb-6">
+      <IOSSegmentedControl
+        options={TAB_OPTIONS}
+        value={activeTab}
+        onChange={(id) => setActiveTab(id as any)}
+      />
     </div>
   );
 
   const renderMobileTabs = () => (
-    <div
-      style={{
-        display: 'flex',
-        alignItems: 'center',
-        background: 'rgba(255, 255, 255, 0.75)',
-        backdropFilter: 'blur(16px)',
-        WebkitBackdropFilter: 'blur(16px)',
-        border: '1px solid rgba(255, 255, 255, 0.85)',
-        boxShadow: 'inset 0 1px 1px rgba(255,255,255,0.9), 0 2px 8px rgba(23, 64, 44, 0.05)',
-        borderRadius: '999px',
-        padding: '3px',
-        marginBottom: '20px',
-        gap: '2px',
-      }}
-    >
-      <button
-        type="button"
-        onClick={() => setActiveTab('notifications')}
-        style={{
-          flex: 1,
-          padding: '8px 12px',
-          borderRadius: '999px',
-          background: activeTab === 'notifications' ? '#17402C' : 'transparent',
-          color: activeTab === 'notifications' ? '#ffffff' : '#5A7064',
-          border: 'none',
-          fontSize: '12px',
-          fontWeight: activeTab === 'notifications' ? 700 : 500,
-          cursor: 'pointer',
-          transition: 'all 0.2s ease',
-          boxShadow: activeTab === 'notifications' ? '0 2px 6px rgba(23, 64, 44, 0.2)' : 'none',
-        }}
-      >
-        Alertes
-      </button>
-      <button
-        type="button"
-        onClick={() => setActiveTab('weather')}
-        style={{
-          flex: 1,
-          padding: '8px 12px',
-          borderRadius: '999px',
-          background: activeTab === 'weather' ? '#17402C' : 'transparent',
-          color: activeTab === 'weather' ? '#ffffff' : '#5A7064',
-          border: 'none',
-          fontSize: '12px',
-          fontWeight: activeTab === 'weather' ? 700 : 500,
-          cursor: 'pointer',
-          transition: 'all 0.2s ease',
-          boxShadow: activeTab === 'weather' ? '0 2px 6px rgba(23, 64, 44, 0.2)' : 'none',
-        }}
-      >
-        Météo / SOS
-      </button>
-      <button
-        type="button"
-        onClick={() => setActiveTab('settings')}
-        style={{
-          flex: 1,
-          padding: '8px 12px',
-          borderRadius: '999px',
-          background: activeTab === 'settings' ? '#17402C' : 'transparent',
-          color: activeTab === 'settings' ? '#ffffff' : '#5A7064',
-          border: 'none',
-          fontSize: '12px',
-          fontWeight: activeTab === 'settings' ? 700 : 500,
-          cursor: 'pointer',
-          transition: 'all 0.2s ease',
-          boxShadow: activeTab === 'settings' ? '0 2px 6px rgba(23, 64, 44, 0.2)' : 'none',
-        }}
-      >
-        Réglages
-      </button>
+    <div className="mb-5">
+      <IOSSegmentedControl
+        options={[
+          { id: 'notifications', label: 'Alertes', badge: unreadCount > 0 ? unreadCount : undefined },
+          { id: 'weather', label: 'Météo / SOS' },
+          { id: 'settings', label: 'Réglages' },
+        ]}
+        value={activeTab}
+        onChange={(id) => setActiveTab(id as any)}
+      />
     </div>
   );
 
@@ -503,13 +436,15 @@ export default function AlertesPage() {
                         <p className="text-xs text-stone-500 mb-4">
                           Le système SOS envoie une alerte prioritaire à tous les membres de votre groupe de voyage en ignorant leurs préférences de notification pour leur sécurité.
                         </p>
-                        <button 
+                        <LkvButton
                           onClick={handleTriggerTestSOS}
                           disabled={sosSending}
-                          className="px-5 py-2.5 bg-rose-600 text-white rounded-full text-xs font-bold hover:bg-rose-700 disabled:opacity-50 transition-colors flex items-center gap-1.5"
+                          loading={sosSending}
+                          variant="danger"
+                          size="sm"
                         >
-                          {sosSending ? 'Déclenchement en cours...' : 'Déclencher un SOS de test'}
-                        </button>
+                          Déclencher un SOS de test
+                        </LkvButton>
                       </div>
                     </div>
                   )}
@@ -521,17 +456,15 @@ export default function AlertesPage() {
                         <div className="bg-white border border-stone-200 rounded-2xl p-6">
                           <h3 className="font-display font-700 text-base text-[#17402C] mb-1">Web Push Navigateur</h3>
                           <p className="text-xs text-stone-500 mb-4">Abonnez cet appareil pour recevoir des notifications en temps réel même lorsque l'application est fermée.</p>
-                          <button
+                          <LkvButton
                             onClick={handlePushToggle}
                             disabled={registeringPush}
-                            className={`px-5 py-2.5 rounded-full text-xs font-bold transition-colors ${
-                              pushSubscribed 
-                                ? 'bg-stone-100 text-stone-700 hover:bg-stone-200' 
-                                : 'bg-[#17402C] text-white hover:bg-[#2D6A4F]'
-                            }`}
+                            loading={registeringPush}
+                            variant={pushSubscribed ? 'secondary' : 'primary'}
+                            size="sm"
                           >
-                            {registeringPush ? 'Action en cours...' : pushSubscribed ? 'Désactiver les Push sur ce navigateur' : 'Autoriser les Push sur ce navigateur'}
-                          </button>
+                            {pushSubscribed ? 'Désactiver les Push sur ce navigateur' : 'Autoriser les Push sur ce navigateur'}
+                          </LkvButton>
                         </div>
                       )}
 

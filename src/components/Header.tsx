@@ -4,11 +4,13 @@ import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { motion } from 'framer-motion';
-import Icon from '@/components/ui/AppIcon';
+import LkvIcon from '@/components/ui/LkvIcon';
 import { useAuth } from '@/contexts/AuthContext';
 import GlobalSearchModal from '@/components/ui/GlobalSearchModal';
 import { createClient } from '@/lib/supabase/client';
 import { useCartCount } from '@/hooks/useCartCount';
+import { useConversations } from '@/features/messaging/hooks/useConversations';
+import { MessageSquare } from 'lucide-react';
 
 const NAV_LINKS = [
   { label: 'Aventures', href: '/explorer' },
@@ -25,6 +27,7 @@ export default function Header() {
   const [scrolled, setScrolled] = useState(false);
   const [unreadCount, setUnreadCount] = useState(0);
   const cartCount = useCartCount();
+  const { totalUnread: unreadMessagesCount } = useConversations(user?.id);
 
   useEffect(() => {
     if (!user) {
@@ -156,7 +159,7 @@ export default function Header() {
                   aria-label="Panier"
                   title={cartCount > 0 ? `Panier (${cartCount} article${cartCount > 1 ? 's' : ''})` : 'Panier'}
                 >
-                  <Icon name="ShoppingBagIcon" size={14} />
+                  <LkvIcon name="bag" size={14} />
                   {cartCount > 0 && (
                     <span
                       className="absolute top-1 right-1 w-2 h-2 rounded-full bg-[#5B7F55] ring-2 ring-white"
@@ -172,11 +175,27 @@ export default function Header() {
                   aria-label="Notifications"
                   title={unreadCount > 0 ? `Notifications (${unreadCount} non lue${unreadCount > 1 ? 's' : ''})` : 'Notifications'}
                 >
-                  <Icon name="BellIcon" size={14} />
+                  <LkvIcon name="bell" size={14} />
                   {unreadCount > 0 && (
                     <span
                       className="absolute top-1 right-1 w-2 h-2 rounded-full bg-[#5B7F55] ring-2 ring-white animate-pulse"
                       title={`${unreadCount} notification(s)`}
+                    />
+                  )}
+                </Link>
+
+                {/* Messagerie Button */}
+                <Link
+                  href="/messagerie"
+                  className="w-7 h-7 rounded-full hover:bg-white/30 text-[#17402C] active:opacity-70 transition-colors flex items-center justify-center cursor-pointer touch-manipulation relative"
+                  aria-label="Messagerie"
+                  title={unreadMessagesCount > 0 ? `Messagerie (${unreadMessagesCount} non lu${unreadMessagesCount > 1 ? 's' : ''})` : 'Messagerie'}
+                >
+                  <MessageSquare className="w-[14px] h-[14px]" />
+                  {unreadMessagesCount > 0 && (
+                    <span
+                      className="absolute top-1 right-1 w-2 h-2 rounded-full bg-emerald-600 ring-2 ring-white animate-pulse"
+                      title={`${unreadMessagesCount} message(s) non lu(s)`}
                     />
                   )}
                 </Link>
@@ -188,10 +207,7 @@ export default function Header() {
                   aria-label="Rechercher sur tout le site"
                   title="Rechercher sur tout le site"
                 >
-                  <svg width="13" height="13" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
-                    <circle cx="11" cy="11" r="8" />
-                    <line x1="21" y1="21" x2="16.65" y2="16.65" />
-                  </svg>
+                  <LkvIcon name="search" size={13} />
                 </button>
               </div>
             </div>
