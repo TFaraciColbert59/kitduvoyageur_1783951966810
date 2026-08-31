@@ -30,7 +30,7 @@ import { resolveGearImage } from '@/features/materiel/services/gearImageResolver
 import { formatWeight } from '@/features/materiel/domain/departCalculations';
 import ScrollableTabs, { type TabOption } from '@/components/ui/ScrollableTabs';
 import { Skeleton } from '@/components/ui/Skeleton';
-import { generateSmartPrompts } from '@/features/materiel/services/generateSmartPrompts';
+import { generateSmartPrompts, type ActionableAlert } from '@/features/materiel/services/generateSmartPrompts';
 import { flushOfflineQueue } from '@/features/materiel/offline/departOfflineQueue';
 import { cn } from '@/lib/utils';
 import type { DepartDetail } from '@/features/materiel/services/getDepartDetail';
@@ -215,11 +215,44 @@ export function DepartCockpit({
     const utterance = new SpeechSynthesisUtterance(text);
     utterance.lang = 'fr-FR';
     utterance.rate = 0.95;
-    utterance.onend = () => setIsMobileSpeaking(false);
-    utterance.onerror = () => setIsMobileSpeaking(false);
-
     setIsMobileSpeaking(true);
     window.speechSynthesis.speak(utterance);
+  };
+
+  const [dismissedAlertIds, setDismissedAlertIds] = useState<string[]>([]);
+
+  const handleAlertAction = (alert: ActionableAlert) => {
+    if (alert.targetItemId) {
+      if (typeof window !== 'undefined') {
+        window.dispatchEvent(new CustomEvent('depart-section-change', { detail: 'equipment_hub' }));
+        window.dispatchEvent(new CustomEvent('depart-switch-mobile-tab', { detail: 'bag' }));
+        setTimeout(() => {
+          window.dispatchEvent(
+            new CustomEvent('highlight-checklist-item', {
+              detail: { id: alert.targetItemId },
+            })
+          );
+        }, 150);
+      }
+      setActiveSection('equipment_hub');
+    } else if (alert.actionType === 'scroll_checklist' || alert.actionType === 'view_dispo') {
+      if (typeof window !== 'undefined') {
+        window.dispatchEvent(new CustomEvent('depart-section-change', { detail: 'equipment_hub' }));
+        window.dispatchEvent(new CustomEvent('depart-switch-mobile-tab', { detail: 'bag' }));
+      }
+      setActiveSection('equipment_hub');
+    } else if (alert.actionType === 'scroll_weather') {
+      if (typeof window !== 'undefined') {
+        window.dispatchEvent(new CustomEvent('depart-section-change', { detail: 'terrain' }));
+      }
+      setActiveSection('terrain');
+    } else if (alert.actionType === 'edit_emergency') {
+      setIsSheetOpen(true);
+    }
+  };
+
+  const handleAlertDismiss = (alert: ActionableAlert) => {
+    setDismissedAlertIds((prev) => [...prev, alert.id]);
   };
 
   const renderMainContent = () => (
@@ -242,31 +275,6 @@ export function DepartCockpit({
       {/* ════ 1. VUE D'ENSEMBLE (COCKPIT EXÉCUTIF 360° : TOUT EN UN COUP D'ŒIL) ════ */}
       {activeSection === 'all' && (
         <div className="space-y-4 w-full">
-          {/* 1.0 Bannière Alertes Intelligentes & Vitales si actives */}
-          {smartAlerts.length > 0 && (
-            <MobileVitalAlertBanner
-              alerts={smartAlerts}
-              onAction={(alert) => {
-                if (alert.targetItemId) {
-                  if (typeof window !== 'undefined') {
-                    window.dispatchEvent(
-                      new CustomEvent('highlight-checklist-item', {
-                        detail: { id: alert.targetItemId },
-                      })
-                    );
-                  }
-                  setActiveSection('equipment_hub');
-                } else if (alert.actionType === 'scroll_checklist' || alert.actionType === 'view_dispo') {
-                  setActiveSection('equipment_hub');
-                } else if (alert.actionType === 'scroll_weather') {
-                  setActiveSection('terrain');
-                } else if (alert.actionType === 'edit_emergency') {
-                  setIsSheetOpen(true);
-                }
-              }}
-            />
-          )}
-
           {/* 1.1 Carte interactive du tracé GPS (En tête de vue) */}
           {depart?.trail && (
             <div className="w-full">
@@ -274,31 +282,33 @@ export function DepartCockpit({
             </div>
           )}
 
-          {/* 1.2 Bandeau Météo Synthétique avec Pastilles Blanc Éclatant (Image 1) */}
+          {/* 1.2 Bandeau Météo Synthétique avec Défilement Horizontal (Image 2) */}
           {weather && weather.days.length > 0 && (
-            <div className="glass rounded-[24px] p-3 sm:p-3.5 border border-white/80 dark:border-white/10 shadow-xs flex items-center justify-between gap-3 overflow-x-auto no-scrollbar">
-              <div className="flex items-center gap-2.5 shrink-0">
+            <div className="glass rounded-[24px] p-2.5 sm:p-3.5 border border-white/80 dark:border-white/10 shadow-xs flex items-center justify-between gap-2 overflow-hidden">
+              <div className="flex items-center gap-2 shrink-0">
                 <div className="w-8 h-8 rounded-2xl bg-[#2D6B4A]/10 border border-[#2D6B4A]/20 flex items-center justify-center text-[#2D6B4A] shadow-2xs">
                   <CloudSun size={16} />
                 </div>
-                <div>
-                  <span className="text-[9.5px] font-mono font-bold uppercase tracking-wider text-[#5A7064] block">
-                    Météo du secteur
+                <div className="min-w-0 max-w-[120px] sm:max-w-none">
+                  <span className="text-[9px] font-mono font-bold uppercase tracking-wider text-[#5A7064] block">
+                    MÉTÉO DU SECTEUR
                   </span>
-                  <span className="text-xs font-bold text-[#17402C]">
+                  <span className="text-xs font-bold text-[#17402C] truncate block">
                     {weather.location.label || 'Massif'} · {weather.current.tempC}°C
                   </span>
                 </div>
               </div>
 
-              {/* 4 prochains jours avec pastilles blanc éclatant */}
-              <div className="flex items-center gap-1.5 shrink-0">
-                {weather.days.slice(0, 4).map((d, idx) => (
+              {/* Prévisions défilables horizontalement */}
+              <div className="flex items-center gap-1.5 overflow-x-auto no-scrollbar scroll-smooth py-0.5 min-w-0 flex-1 justify-end">
+                {weather.days.map((d, idx) => (
                   <div
                     key={d.date}
-                    className="px-2.5 py-1 rounded-full bg-white dark:bg-stone-900 border border-white/90 dark:border-white/20 text-center min-w-[52px] shadow-xs"
+                    className="px-2.5 py-1 rounded-full bg-white dark:bg-stone-900 border border-white/90 dark:border-white/20 text-center min-w-[50px] shrink-0 shadow-xs"
                   >
-                    <span className="text-[8.5px] font-mono font-bold text-[#5A7064] block uppercase">{idx === 0 ? 'Auj.' : d.day.slice(0, 3)}</span>
+                    <span className="text-[8.5px] font-mono font-bold text-[#5A7064] block uppercase">
+                      {idx === 0 ? 'AUJ.' : d.day.slice(0, 3)}
+                    </span>
                     <span className="text-xs font-bold text-[#17402C]">{d.tempMaxC}°</span>
                   </div>
                 ))}
@@ -523,26 +533,9 @@ export function DepartCockpit({
         {smartAlerts.length > 0 && (
           <MobileVitalAlertBanner
             alerts={smartAlerts}
-            onAction={(alert) => {
-              if (alert.targetItemId) {
-                if (typeof window !== 'undefined') {
-                  window.dispatchEvent(
-                    new CustomEvent('highlight-checklist-item', {
-                      detail: { id: alert.targetItemId },
-                    })
-                  );
-                }
-                if (activeSection !== 'equipment_hub') {
-                  setActiveSection('equipment_hub');
-                }
-              } else if (alert.actionType === 'scroll_checklist' || alert.actionType === 'view_dispo') {
-                setActiveSection('equipment_hub');
-              } else if (alert.actionType === 'scroll_weather') {
-                setActiveSection('terrain');
-              } else if (alert.actionType === 'edit_emergency') {
-                setIsSheetOpen(true);
-              }
-            }}
+            dismissedIds={dismissedAlertIds}
+            onAction={handleAlertAction}
+            onDismiss={handleAlertDismiss}
           />
         )}
 
@@ -604,7 +597,16 @@ export function DepartCockpit({
         </div>
 
         {/* Colonne 2 : Flux Central Dynamique (Vue d'ensemble 360° / Terrain / Hub Matériel) */}
-        <div className="flex-1 min-w-0 h-full max-h-full overflow-y-auto no-scrollbar pr-1 pb-4">
+        <div className="flex-1 min-w-0 h-full max-h-full overflow-y-auto no-scrollbar pr-1 pb-4 space-y-4">
+          {smartAlerts.length > 0 && (
+            <MobileVitalAlertBanner
+              alerts={smartAlerts}
+              dismissedIds={dismissedAlertIds}
+              onAction={handleAlertAction}
+              onDismiss={handleAlertDismiss}
+            />
+          )}
+
           <AnimatePresence mode="wait">
             <motion.div
               key={activeSection}

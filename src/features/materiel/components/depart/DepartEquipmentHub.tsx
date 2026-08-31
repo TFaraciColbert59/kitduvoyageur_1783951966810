@@ -124,6 +124,23 @@ export function DepartEquipmentHub({
   const [mobileTab, setMobileTab] = useState<'catalog' | 'bag'>('catalog');
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
 
+  React.useEffect(() => {
+    const handleSwitch = (e: Event) => {
+      const customEvent = e as CustomEvent<string>;
+      if (customEvent.detail === 'bag' || customEvent.detail === 'catalog') {
+        setMobileTab(customEvent.detail);
+      }
+    };
+    if (typeof window !== 'undefined') {
+      window.addEventListener('depart-switch-mobile-tab', handleSwitch);
+    }
+    return () => {
+      if (typeof window !== 'undefined') {
+        window.removeEventListener('depart-switch-mobile-tab', handleSwitch);
+      }
+    };
+  }, []);
+
   const [inventoryList, setInventoryList] = useState<InventoryItem[]>(initialInventory);
   const [loanList, setLoanList] = useState<LoanItem[]>(initialLoans);
 
@@ -524,183 +541,143 @@ export function DepartEquipmentHub({
             </div>
           )}
 
-          <div className="glass rounded-[28px] p-5 sm:p-6 space-y-4 border border-white/80 dark:border-white/10 shadow-sm backdrop-blur-md">
-            {/* Top Header Apple */}
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-black/5 dark:border-white/10 pb-3.5">
-              <div className="flex items-center gap-3">
-                <div className="w-9 h-9 rounded-2xl bg-[#2D6B4A]/10 border border-[#2D6B4A]/20 flex items-center justify-center text-[#2D6B4A] shadow-2xs">
-                  <Boxes size={18} aria-hidden="true" />
+          <div className="glass rounded-2xl sm:rounded-[28px] p-3 sm:p-5 space-y-2.5 sm:space-y-3.5 border border-white/80 dark:border-white/10 shadow-xs backdrop-blur-md">
+            {/* Top Header Compact Apple */}
+            <div className="flex items-center justify-between gap-2 border-b border-black/5 dark:border-white/10 pb-2">
+              <div className="flex items-center gap-2 min-w-0">
+                <div className="w-7 h-7 rounded-xl bg-[#2D6B4A]/10 border border-[#2D6B4A]/20 flex items-center justify-center text-[#2D6B4A] shadow-2xs shrink-0">
+                  <Boxes size={14} aria-hidden="true" />
                 </div>
-                <div>
-                  <h2 className="text-base font-bold text-[#17402C] tracking-tight">
-                    Mon Parc Matériel & Équipements
+                <div className="min-w-0">
+                  <h2 className="text-xs sm:text-sm font-bold text-[#17402C] tracking-tight truncate">
+                    Parc Matériel & Équipements
                   </h2>
-                  <p className="text-[11.5px] text-[#5A7064]">
-                    Gestion centralisée de vos équipements et de votre sac actif.
-                  </p>
                 </div>
               </div>
 
               <button
                 type="button"
                 onClick={() => setIsAddModalOpen(true)}
-                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold bg-[#17402C] text-white hover:bg-[#17402C]/90 shadow-2xs cursor-pointer transition-all active:scale-95 self-end sm:self-auto"
+                className="inline-flex items-center gap-1 px-2.5 py-1 rounded-xl text-[11px] font-bold bg-[#17402C] text-white hover:bg-[#17402C]/90 shadow-2xs cursor-pointer transition-all active:scale-95 shrink-0"
               >
-                <Plus size={13} />
+                <Plus size={12} />
                 <span>Ajouter</span>
               </button>
             </div>
 
-            {/* Filtres de statuts (Apple Pills) */}
+            {/* Barre de recherche & Bascule Grille / Liste */}
+            <div className="flex items-center gap-2">
+              <div className="relative flex-1 min-w-0">
+                <Search size={13} className="absolute left-3 top-1/2 -translate-y-1/2 text-[#5A7064]" />
+                <input
+                  type="text"
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  placeholder="Rechercher un équipement..."
+                  className="w-full pl-8 pr-7 py-1.5 rounded-xl text-xs bg-white/70 dark:bg-white/10 border border-white/90 focus:outline-none focus:ring-2 focus:ring-[#17402C]/25 text-[#17402C] placeholder-[#5A7064]"
+                />
+                {searchQuery && (
+                  <button
+                    type="button"
+                    onClick={() => setSearchQuery('')}
+                    className="absolute right-2 top-1/2 -translate-y-1/2 text-[#5A7064] hover:text-[#17402C] p-0.5 cursor-pointer"
+                  >
+                    <X size={12} />
+                  </button>
+                )}
+              </div>
+
+              {/* Bascule Grille 2 colonnes / Liste */}
+              <div className="flex items-center p-0.5 bg-black/5 dark:bg-white/10 rounded-xl gap-0.5 shrink-0">
+                <button
+                  type="button"
+                  onClick={() => setViewMode('grid')}
+                  className={cn(
+                    'p-1.5 rounded-lg transition-colors cursor-pointer',
+                    viewMode === 'grid'
+                      ? 'bg-[#17402C] text-white shadow-2xs'
+                      : 'text-[#5A7064] hover:text-[#17402C]'
+                  )}
+                  title="Vue Grille 2 colonnes"
+                  aria-label="Vue Grille"
+                >
+                  <LayoutGrid size={13} />
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setViewMode('list')}
+                  className={cn(
+                    'p-1.5 rounded-lg transition-colors cursor-pointer',
+                    viewMode === 'list'
+                      ? 'bg-[#17402C] text-white shadow-2xs'
+                      : 'text-[#5A7064] hover:text-[#17402C]'
+                  )}
+                  title="Vue Liste compacte"
+                  aria-label="Vue Liste"
+                >
+                  <List size={13} />
+                </button>
+              </div>
+            </div>
+
+            {/* Filtres de statuts & Catégories (Défilement Horizontal Unique) */}
             <div className="flex items-center gap-1.5 overflow-x-auto no-scrollbar pb-0.5">
               <button
                 type="button"
                 onClick={() => setStatusFilter('all')}
                 className={cn(
-                  'px-3 py-1.5 rounded-xl text-xs font-semibold whitespace-nowrap transition-all cursor-pointer flex items-center gap-1.5',
+                  'px-2.5 py-1 rounded-xl text-[10.5px] font-semibold whitespace-nowrap transition-all cursor-pointer shrink-0',
                   statusFilter === 'all'
                     ? 'bg-[#17402C] text-white shadow-xs'
                     : 'bg-black/5 dark:bg-white/10 text-[#5A7064] hover:text-[#17402C]'
                 )}
               >
-                <Layers size={13} />
-                <span>Tous ({stats.totalCount})</span>
+                Tous ({stats.totalCount})
               </button>
 
               <button
                 type="button"
                 onClick={() => setStatusFilter('in_bag')}
                 className={cn(
-                  'px-3 py-1.5 rounded-xl text-xs font-semibold whitespace-nowrap transition-all cursor-pointer flex items-center gap-1.5',
+                  'px-2.5 py-1 rounded-xl text-[10.5px] font-semibold whitespace-nowrap transition-all cursor-pointer shrink-0',
                   statusFilter === 'in_bag'
                     ? 'bg-[#17402C] text-white shadow-xs'
                     : 'bg-black/5 dark:bg-white/10 text-[#5A7064] hover:text-[#17402C]'
                 )}
               >
-                <CheckSquare size={13} />
-                <span>Au sac ({stats.inBagCount})</span>
+                Au sac ({stats.inBagCount})
               </button>
 
               <button
                 type="button"
                 onClick={() => setStatusFilter('in_inventory')}
                 className={cn(
-                  'px-3 py-1.5 rounded-xl text-xs font-semibold whitespace-nowrap transition-all cursor-pointer flex items-center gap-1.5',
+                  'px-2.5 py-1 rounded-xl text-[10.5px] font-semibold whitespace-nowrap transition-all cursor-pointer shrink-0',
                   statusFilter === 'in_inventory'
-                    ? 'bg-[#17402C] text-white shadow-xs'
-                    : stats.inInventoryCount === 0
-                    ? 'bg-black/3 text-[#5A7064]/60'
-                    : 'bg-black/5 text-[#5A7064] hover:text-[#17402C]'
-                )}
-              >
-                <Boxes size={13} />
-                <span>Inventaire ({stats.inInventoryCount})</span>
-              </button>
-
-              <button
-                type="button"
-                onClick={() => setStatusFilter('lent')}
-                className={cn(
-                  'px-3 py-1.5 rounded-xl text-xs font-semibold whitespace-nowrap transition-all cursor-pointer flex items-center gap-1.5',
-                  statusFilter === 'lent'
-                    ? 'bg-[#17402C] text-white shadow-xs'
-                    : stats.lentCount === 0
-                    ? 'bg-black/3 text-[#5A7064]/60'
-                    : 'bg-black/5 text-[#5A7064] hover:text-[#17402C]'
-                )}
-              >
-                <Handshake size={13} />
-                <span>En prêt ({stats.lentCount})</span>
-              </button>
-
-              <button
-                type="button"
-                onClick={() => setStatusFilter('to_acquire')}
-                className={cn(
-                  'px-3 py-1.5 rounded-xl text-xs font-semibold whitespace-nowrap transition-all cursor-pointer flex items-center gap-1.5',
-                  statusFilter === 'to_acquire'
                     ? 'bg-[#17402C] text-white shadow-xs'
                     : 'bg-black/5 dark:bg-white/10 text-[#5A7064] hover:text-[#17402C]'
                 )}
               >
-                <ShoppingBag size={13} />
-                <span>Boutique ({stats.toAcquireCount})</span>
+                Inventaire ({stats.inInventoryCount})
               </button>
-            </div>
 
-            {/* Barre de recherche large, Catégories fluides & Bascule Grille / Liste */}
-            <div className="flex flex-col gap-2.5">
-              <div className="flex items-center gap-2">
-                <div className="relative flex-1 min-w-0">
-                  <Search size={14} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-[#5A7064]" />
-                  <input
-                    type="text"
-                    value={searchQuery}
-                    onChange={(e) => setSearchQuery(e.target.value)}
-                    placeholder="Rechercher un équipement, une marque..."
-                    className="w-full pl-9 pr-8 py-2 rounded-xl text-xs bg-white/70 dark:bg-white/10 border border-white/90 focus:outline-none focus:ring-2 focus:ring-[#17402C]/25 text-[#17402C] placeholder-[#5A7064]"
-                  />
-                  {searchQuery && (
-                    <button
-                      type="button"
-                      onClick={() => setSearchQuery('')}
-                      className="absolute right-2.5 top-1/2 -translate-y-1/2 text-[#5A7064] hover:text-[#17402C] p-0.5 cursor-pointer"
-                    >
-                      <X size={13} />
-                    </button>
+              <div className="h-4 w-px bg-black/10 dark:bg-white/10 shrink-0 mx-0.5" />
+
+              {CATEGORIES.filter((c) => c !== 'Toutes').map((cat) => (
+                <button
+                  key={cat}
+                  type="button"
+                  onClick={() => setSelectedCat(selectedCat === cat ? 'Toutes' : cat)}
+                  className={cn(
+                    'px-2.5 py-1 rounded-xl text-[10.5px] font-semibold whitespace-nowrap transition-all cursor-pointer shrink-0',
+                    selectedCat === cat
+                      ? 'bg-[#17402C] text-white shadow-2xs'
+                      : 'bg-white/60 dark:bg-white/5 text-[#5A7064] hover:text-[#17402C]'
                   )}
-                </div>
-
-                {/* Bascule Grille 2 colonnes / Liste */}
-                <div className="flex items-center p-1 bg-black/5 dark:bg-white/10 rounded-xl gap-0.5 shrink-0">
-                  <button
-                    type="button"
-                    onClick={() => setViewMode('grid')}
-                    className={cn(
-                      'p-1.5 rounded-lg transition-colors cursor-pointer',
-                      viewMode === 'grid'
-                        ? 'bg-[#17402C] text-white shadow-2xs'
-                        : 'text-[#5A7064] hover:text-[#17402C]'
-                    )}
-                    title="Vue Grille 2 colonnes"
-                    aria-label="Vue Grille"
-                  >
-                    <LayoutGrid size={14} />
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => setViewMode('list')}
-                    className={cn(
-                      'p-1.5 rounded-lg transition-colors cursor-pointer',
-                      viewMode === 'list'
-                        ? 'bg-[#17402C] text-white shadow-2xs'
-                        : 'text-[#5A7064] hover:text-[#17402C]'
-                    )}
-                    title="Vue Liste compacte"
-                    aria-label="Vue Liste"
-                  >
-                    <List size={14} />
-                  </button>
-                </div>
-              </div>
-
-              <div className="flex gap-1.5 overflow-x-auto no-scrollbar max-w-full pb-0.5 shrink-0">
-                {CATEGORIES.map((cat) => (
-                  <button
-                    key={cat}
-                    type="button"
-                    onClick={() => setSelectedCat(cat)}
-                    className={cn(
-                      'px-2.5 py-1 rounded-xl text-[11px] font-semibold whitespace-nowrap transition-all cursor-pointer',
-                      selectedCat === cat
-                        ? 'bg-[#17402C] text-white shadow-2xs'
-                        : 'bg-white/50 text-[#5A7064] hover:text-[#17402C] hover:bg-white/80'
-                    )}
-                  >
-                    {cat}
-                  </button>
-                ))}
-              </div>
+                >
+                  {cat}
+                </button>
+              ))}
             </div>
 
             {/* ════ CATALOGUE : VUE GRILLE OU LISTE ════ */}
