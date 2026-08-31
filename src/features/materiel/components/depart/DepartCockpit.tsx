@@ -4,26 +4,20 @@ import Link from 'next/link';
 import dynamic from 'next/dynamic';
 import { motion, AnimatePresence, useReducedMotion } from 'framer-motion';
 import {
-  Compass,
-  AlertTriangle,
-  Scale,
-  MapPin,
-  LayoutGrid,
   Zap,
   Wifi,
   WifiOff,
   Layers,
-  Boxes,
 } from 'lucide-react';
-import { DepartHeader } from './DepartHeader';
-import { DepartAlerts } from './DepartAlerts';
-import { DepartWeightBreakdown } from './DepartWeightBreakdown';
+import { DepartWeather } from './DepartWeather';
+import { DepartParticipants } from './DepartParticipants';
 import { DepartLeftSidebar } from './DepartLeftSidebar';
 import { DepartRightSidebar } from './DepartRightSidebar';
 import { DepartEquipmentHub } from './DepartEquipmentHub';
 import { DepartureSheetModal } from './DepartureSheetModal';
 import { KitSwitcher } from './KitSwitcher';
 import ScrollableTabs, { type TabOption } from '@/components/ui/ScrollableTabs';
+import { Skeleton } from '@/components/ui/Skeleton';
 import { generateSmartPrompts } from '@/features/materiel/services/generateSmartPrompts';
 import { flushOfflineQueue } from '@/features/materiel/offline/departOfflineQueue';
 import { cn } from '@/lib/utils';
@@ -35,9 +29,24 @@ import type { ProductSuggestion } from '@/features/materiel/services/getProductS
 
 const SHOWCASE_IDS = new Set(['tmb-4j', 'vercors-ultra', 'belledonne-winter', 'none']);
 
+const DepartMap = dynamic(
+  () => import('./DepartMap').then((m) => ({ default: m.DepartMap })),
+  {
+    ssr: false,
+    loading: () => (
+      <div className="glass rounded-[28px] overflow-hidden">
+        <div className="px-4 py-2.5 border-b border-white/20">
+          <Skeleton className="h-4 w-40" />
+        </div>
+        <Skeleton className="h-[360px] rounded-none" />
+      </div>
+    ),
+  }
+);
+
 export type DepartSectionId =
   | 'all'
-  | 'weight'
+  | 'terrain'
   | 'equipment_hub';
 
 interface DepartCockpitProps {
@@ -150,8 +159,8 @@ export function DepartCockpit({
 
   const SECTIONS_TABS: TabOption[] = [
     { id: 'all', label: "Vue d'ensemble" },
-    { id: 'weight', label: 'Analyse du Poids' },
-    { id: 'equipment_hub', label: 'Parc Matériel & Terrain' },
+    { id: 'terrain', label: 'Terrain & Météo' },
+    { id: 'equipment_hub', label: 'Parc Matériel & Sac' },
   ];
 
   const showAll = activeSection === 'all';
@@ -173,29 +182,29 @@ export function DepartCockpit({
         </div>
       )}
 
-      {/* ════ ANALYSE DU POIDS (Onglet dédié ou vue complète) ════ */}
-      {(showAll || activeSection === 'weight') && (
+      {/* ════ ONGLET TERRAIN, CARTE INTERACTIVE & MÉTÉO ════ */}
+      {activeSection === 'terrain' && (
         <section
-          id="section-depart-weight"
-          aria-label="Analyse du poids"
-          className={cn(showAll && 'hidden md:block')}
+          id="section-depart-terrain"
+          aria-label="Terrain, carte interactive et météo"
+          className="space-y-4"
         >
-          <DepartWeightBreakdown
-            breakdown={depart.weightBreakdown}
-            totalWeightG={depart.baseWeightG}
-            baseWeightG={depart.baseWeightG}
-            wornWeightG={depart.wornWeightG}
-            consumablesWeightG={depart.consumablesWeightG}
-            items={depart.assignedKit.items}
+          {depart.trail && (
+            <div className="w-full">
+              <DepartMap trail={depart.trail} height="380px" />
+            </div>
+          )}
+          <DepartWeather weather={weather} updatedAt={depart.updatedAt} />
+          <DepartParticipants
             participants={depart.participants}
-            comparableTripName={depart.comparableTrip?.name}
+            emergencyContact={depart.emergencyContact}
           />
         </section>
       )}
 
-      {/* ════ PARC MATÉRIEL & TERRAIN (Sections 4 & 6 fusionnées) ════ */}
+      {/* ════ PARC MATÉRIEL & ANALYSE DU POIDS (Sections 6 & 3 fusionnées) ════ */}
       {(showAll || activeSection === 'equipment_hub') && (
-        <section id="section-depart-equipment-hub" aria-label="Parc Matériel, Terrain & Équipements">
+        <section id="section-depart-equipment-hub" aria-label="Parc Matériel & Analyse du Poids">
           <DepartEquipmentHub
             inventory={inventory}
             loans={loans}
@@ -203,9 +212,11 @@ export function DepartCockpit({
             kitItems={depart.assignedKit.items}
             consumables={depart.consumables}
             participants={depart.participants}
-            emergencyContact={depart.emergencyContact}
-            trail={depart.trail}
-            weather={weather}
+            weightBreakdown={depart.weightBreakdown}
+            baseWeightG={depart.baseWeightG}
+            wornWeightG={depart.wornWeightG}
+            consumablesWeightG={depart.consumablesWeightG}
+            comparableTripName={depart.comparableTrip?.name}
             kitId={depart.id}
             isRealKit={isRealKit}
           />
@@ -336,7 +347,6 @@ export function DepartCockpit({
         <div className={cn('w-[300px] xl:w-[320px] shrink-0 h-full max-h-full overflow-hidden flex flex-col', !showAll && 'hidden')}>
           <DepartRightSidebar
             depart={depart}
-            weather={weather}
             alertInput={alertInput}
             onOpenDepartureSheet={() => setIsSheetOpen(true)}
           />

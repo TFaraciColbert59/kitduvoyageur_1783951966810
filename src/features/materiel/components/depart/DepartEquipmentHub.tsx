@@ -27,6 +27,7 @@ import { createLoan } from '@/features/materiel/actions/createLoan';
 import { addDepartItem } from '@/features/materiel/actions/addDepartItem';
 import { resolveGearImage } from '@/features/materiel/services/gearImageResolver';
 import { DepartChecklist } from './DepartChecklist';
+import { DepartWeightBreakdown } from './DepartWeightBreakdown';
 import { DepartWeather } from './DepartWeather';
 import { DepartParticipants } from './DepartParticipants';
 import { cn } from '@/lib/utils';
@@ -80,6 +81,11 @@ interface DepartEquipmentHubProps {
   emergencyContact?: string | null;
   trail?: MapTrail | null;
   weather?: WeatherForecast | null;
+  weightBreakdown?: { category: string; value: number }[];
+  baseWeightG?: number;
+  wornWeightG?: number;
+  consumablesWeightG?: number;
+  comparableTripName?: string;
   kitId: string;
   isRealKit?: boolean;
 }
@@ -115,6 +121,11 @@ export function DepartEquipmentHub({
   emergencyContact = null,
   trail = null,
   weather = null,
+  weightBreakdown = [],
+  baseWeightG = 0,
+  wornWeightG = 0,
+  consumablesWeightG = 0,
+  comparableTripName,
   kitId,
   isRealKit = false,
 }: DepartEquipmentHubProps) {

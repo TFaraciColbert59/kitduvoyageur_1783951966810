@@ -4,14 +4,14 @@ import { DepartAlerts } from './DepartAlerts';
 import { GlassCard } from '@/components/ui/GlassCard';
 import { Badge } from '@/components/ui/Badge';
 import { CountdownLive } from '@/features/materiel/components/cards/CountdownLive';
-import { FileText, Calendar, Compass, ShieldCheck } from 'lucide-react';
+import { FileText, Calendar, Compass } from 'lucide-react';
 import type { DepartDetail } from '@/features/materiel/services/getDepartDetail';
 import type { WeatherForecast } from '@/features/materiel/services/getWeather';
 import type { SmartPromptsInput } from '@/features/materiel/services/generateSmartPrompts';
 
 interface DepartRightSidebarProps {
   depart: DepartDetail;
-  weather: WeatherForecast | null;
+  weather?: WeatherForecast | null;
   alertInput: SmartPromptsInput;
   onOpenDepartureSheet?: () => void;
 }
@@ -22,7 +22,6 @@ function cleanText(text: string): string {
 
 export function DepartRightSidebar({
   depart,
-  weather,
   alertInput,
   onOpenDepartureSheet,
 }: DepartRightSidebarProps) {
