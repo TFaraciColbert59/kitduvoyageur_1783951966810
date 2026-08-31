@@ -8,11 +8,15 @@ import {
   Wifi,
   WifiOff,
   Layers,
+  ArrowRight,
+  Boxes,
+  CheckCircle2,
 } from 'lucide-react';
 import { DepartWeather } from './DepartWeather';
 import { DepartParticipants } from './DepartParticipants';
 import { DepartLeftSidebar } from './DepartLeftSidebar';
 import { DepartRightSidebar } from './DepartRightSidebar';
+import { DepartWeightBreakdown } from './DepartWeightBreakdown';
 import { DepartEquipmentHub } from './DepartEquipmentHub';
 import { DepartureSheetModal } from './DepartureSheetModal';
 import { KitSwitcher } from './KitSwitcher';
@@ -38,7 +42,7 @@ const DepartMap = dynamic(
         <div className="px-4 py-2.5 border-b border-white/20">
           <Skeleton className="h-4 w-40" />
         </div>
-        <Skeleton className="h-[360px] rounded-none" />
+        <Skeleton className="h-[240px] rounded-none" />
       </div>
     ),
   }
@@ -74,10 +78,10 @@ export function DepartCockpit({
 
   const shouldReduceMotion = useReducedMotion();
 
-  const isRealKit = !SHOWCASE_IDS.has(depart.id);
+  const isRealKit = !SHOWCASE_IDS.has(depart?.id);
 
   const alertInput = {
-    items: depart.assignedKit.items.map((i) => ({
+    items: (depart?.assignedKit?.items || []).map((i) => ({
       id: i.id,
       name: i.name,
       category: i.category,
@@ -91,16 +95,16 @@ export function DepartCockpit({
       productHref: i.productHref,
     })),
     weather,
-    participants: depart.participants,
-    emergencyContact: depart.emergencyContact,
-    trailDistanceKm: depart.trail?.distance_km ?? null,
-    activityType: depart.activityType,
+    participants: depart?.participants || [],
+    emergencyContact: depart?.emergencyContact || null,
+    trailDistanceKm: depart?.trail?.distance_km ?? null,
+    activityType: depart?.activityType || 'trekking',
   };
 
   const smartAlerts = generateSmartPrompts(alertInput);
 
   useEffect(() => {
-    if (typeof window === 'undefined') return;
+    if (typeof window === 'undefined' || !depart?.id) return;
 
     try {
       localStorage.setItem(
@@ -163,7 +167,8 @@ export function DepartCockpit({
     { id: 'equipment_hub', label: 'Parc Matériel & Sac' },
   ];
 
-  const showAll = activeSection === 'all';
+  const totalItemsCount = depart?.assignedKit?.items?.length || 0;
+  const checkedItemsCount = depart?.assignedKit?.items?.filter((i) => i.is_checked)?.length || 0;
 
   const renderMainContent = () => (
     <div className="flex flex-col gap-4 w-full">
@@ -182,42 +187,94 @@ export function DepartCockpit({
         </div>
       )}
 
-      {/* ════ ONGLET TERRAIN, CARTE INTERACTIVE & MÉTÉO ════ */}
+      {/* ════ 1. VUE D'ENSEMBLE (Strict Minimum : Carte du parcours tout en haut + Poids synthétique + Accès direct) ════ */}
+      {activeSection === 'all' && (
+        <div className="space-y-4 w-full">
+          {/* 1.1 Carte interactive du tracé GPS TOUT EN HAUT */}
+          {depart?.trail && (
+            <div className="w-full">
+              <DepartMap trail={depart.trail} height="260px" />
+            </div>
+          )}
+
+          {/* 1.2 Analyse du Poids & Décision Synthétique */}
+          <div className="w-full">
+            <DepartWeightBreakdown
+              breakdown={depart?.weightBreakdown || []}
+              totalWeightG={depart?.baseWeightG || 0}
+              baseWeightG={depart?.baseWeightG || 0}
+              wornWeightG={depart?.wornWeightG || 0}
+              consumablesWeightG={depart?.consumablesWeightG || 0}
+              items={depart?.assignedKit?.items || []}
+              participants={depart?.participants || []}
+              comparableTripName={depart?.comparableTrip?.name}
+            />
+          </div>
+
+          {/* 1.3 Synthèse Rapide & Accès au Parc Matériel */}
+          <div className="glass rounded-[24px] p-4 sm:p-5 border border-white/80 dark:border-white/10 shadow-sm flex flex-col sm:flex-row items-center justify-between gap-3">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-2xl bg-[#17402C] text-white flex items-center justify-center shadow-xs shrink-0">
+                <Boxes size={18} />
+              </div>
+              <div>
+                <h3 className="text-sm font-bold text-[#17402C]">
+                  Préparation du Sac & Parc Matériel
+                </h3>
+                <p className="text-xs text-[#5A7064]">
+                  {checkedItemsCount} sur {totalItemsCount} équipements prêts ({totalItemsCount > 0 ? Math.round((checkedItemsCount / totalItemsCount) * 100) : 100}% finalisé).
+                </p>
+              </div>
+            </div>
+
+            <button
+              type="button"
+              onClick={() => setActiveSection('equipment_hub')}
+              className="px-4 py-2 rounded-xl text-xs font-bold bg-[#17402C] text-white hover:bg-[#17402C]/90 shadow-2xs flex items-center gap-1.5 cursor-pointer transition-all active:scale-98 shrink-0"
+            >
+              <span>Ouvrir le Parc Matériel & Sac</span>
+              <ArrowRight size={13} />
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* ════ 2. ONGLET TERRAIN & MÉTÉO (Carte complète, Météo détaillée & Groupe) ════ */}
       {activeSection === 'terrain' && (
         <section
           id="section-depart-terrain"
           aria-label="Terrain, carte interactive et météo"
           className="space-y-4"
         >
-          {depart.trail && (
+          {depart?.trail && (
             <div className="w-full">
               <DepartMap trail={depart.trail} height="380px" />
             </div>
           )}
-          <DepartWeather weather={weather} updatedAt={depart.updatedAt} />
+          <DepartWeather weather={weather} updatedAt={depart?.updatedAt} />
           <DepartParticipants
-            participants={depart.participants}
-            emergencyContact={depart.emergencyContact}
+            participants={depart?.participants || []}
+            emergencyContact={depart?.emergencyContact}
           />
         </section>
       )}
 
-      {/* ════ PARC MATÉRIEL & ANALYSE DU POIDS (Sections 6 & 3 fusionnées) ════ */}
-      {(showAll || activeSection === 'equipment_hub') && (
+      {/* ════ 3. ONGLET PARC MATÉRIEL & SAC (Poids, Catalogue 3-cards & Checklist en direct) ════ */}
+      {activeSection === 'equipment_hub' && (
         <section id="section-depart-equipment-hub" aria-label="Parc Matériel & Analyse du Poids">
           <DepartEquipmentHub
             inventory={inventory}
             loans={loans}
             products={products}
-            kitItems={depart.assignedKit.items}
-            consumables={depart.consumables}
-            participants={depart.participants}
-            weightBreakdown={depart.weightBreakdown}
-            baseWeightG={depart.baseWeightG}
-            wornWeightG={depart.wornWeightG}
-            consumablesWeightG={depart.consumablesWeightG}
-            comparableTripName={depart.comparableTrip?.name}
-            kitId={depart.id}
+            kitItems={depart?.assignedKit?.items || []}
+            consumables={depart?.consumables}
+            participants={depart?.participants || []}
+            weightBreakdown={depart?.weightBreakdown || []}
+            baseWeightG={depart?.baseWeightG || 0}
+            wornWeightG={depart?.wornWeightG || 0}
+            consumablesWeightG={depart?.consumablesWeightG || 0}
+            comparableTripName={depart?.comparableTrip?.name}
+            kitId={depart?.id || 'kit-default'}
             isRealKit={isRealKit}
           />
         </section>
@@ -277,7 +334,7 @@ export function DepartCockpit({
                 )}
               </button>
 
-              {kits.length > 1 && <KitSwitcher kits={kits} currentId={depart.id} />}
+              {kits && kits.length > 1 && <KitSwitcher kits={kits} currentId={depart?.id} />}
               <Link
                 href="/materiel/kits"
                 className="p-1 rounded-lg bg-white/40 hover:bg-white/70 text-[#17402C] transition-colors"
@@ -328,7 +385,7 @@ export function DepartCockpit({
           />
         </div>
 
-        {/* Colonne 2 : Flux Central Dynamique (LA SEULE ZONE SCROLLABLE DE TOUTE LA PAGE) */}
+        {/* Colonne 2 : Flux Central Dynamique (Strict Minimum en Vue d'ensemble, Hub en Parc Matériel) */}
         <div className="flex-1 min-w-0 h-full max-h-full overflow-y-auto no-scrollbar pr-1 pb-4">
           <AnimatePresence mode="wait">
             <motion.div
@@ -344,7 +401,7 @@ export function DepartCockpit({
         </div>
 
         {/* Colonne 3 : Sidebar Droite (Sections 1 & 2 : Statut du départ + Alertes & Fiabilité) */}
-        <div className={cn('w-[300px] xl:w-[320px] shrink-0 h-full max-h-full overflow-hidden flex flex-col', !showAll && 'hidden')}>
+        <div className="w-[300px] xl:w-[320px] shrink-0 h-full max-h-full overflow-hidden flex flex-col">
           <DepartRightSidebar
             depart={depart}
             alertInput={alertInput}

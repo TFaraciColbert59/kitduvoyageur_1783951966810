@@ -42,7 +42,7 @@ export function DepartLeftSidebar({
   batteryLevel = null,
   isOnline = true,
 }: DepartLeftSidebarProps) {
-  const cleanDestination = cleanText(depart?.destination || 'Mon Départ Actif');
+  const cleanDestination = cleanText(depart?.destination || 'Tour du Mont-Blanc — 4j Bivouac');
   const isReady = depart?.readinessScore?.status === 'ok';
 
   const sections: {
@@ -65,9 +65,9 @@ export function DepartLeftSidebar({
 
   return (
     <aside className="h-full max-h-full w-full flex-1 flex flex-col justify-between glass rounded-[1.5rem] p-3.5 text-[#17402C] font-sans overflow-hidden border border-white/40 shadow-sm select-none">
-      {/* ── 1. ZONE HAUTE FIXE (Identité du trek & Actions) — IMMOBILE ── */}
+      {/* ── 1. ZONE HAUTE FIXE (Identité du trek, Switcher & Actions) ── */}
       <div className="shrink-0 space-y-2.5">
-        <div className="p-3 rounded-2xl glass-sub-card space-y-1.5 relative overflow-hidden border border-white/50">
+        <div className="p-3 rounded-2xl glass-sub-card space-y-2 relative overflow-hidden border border-white/50">
           <div className="flex items-start justify-between gap-1.5">
             <span className="text-[9.5px] font-mono font-bold uppercase tracking-wider text-[#5A7064]">
               Départ Actif
@@ -79,14 +79,14 @@ export function DepartLeftSidebar({
             </Badge>
           </div>
 
-          <h4 className="font-display font-bold text-xs sm:text-sm text-[#17402C] line-clamp-2 leading-tight">
+          <h4 className="font-display font-bold text-xs sm:text-sm text-[#17402C] line-clamp-2 leading-snug">
             {cleanDestination}
           </h4>
 
           {/* Statut réseau & Ultra-Save toggle */}
           <div className="pt-1.5 border-t border-white/30 flex items-center justify-between gap-1.5">
-            <span className={cn('flex items-center gap-1 text-[8.5px] font-mono font-bold px-1.5 py-0.2 rounded-full', isOnline ? 'bg-emerald-100/80 text-emerald-900' : 'bg-amber-100 text-amber-900')}>
-              {isOnline ? <Wifi size={8.5} /> : <WifiOff size={8.5} />}
+            <span className={cn('flex items-center gap-1 text-[9px] font-mono font-bold px-2 py-0.5 rounded-full', isOnline ? 'bg-emerald-100/90 text-emerald-900' : 'bg-amber-100 text-amber-900')}>
+              {isOnline ? <Wifi size={9} /> : <WifiOff size={9} />}
               {isOnline ? 'En ligne' : 'Hors-ligne'}
             </span>
 
@@ -95,7 +95,7 @@ export function DepartLeftSidebar({
                 type="button"
                 onClick={onToggleUltraSave}
                 className={cn(
-                  'px-1.5 py-0.5 rounded-lg text-[9px] font-bold flex items-center gap-1 transition-all cursor-pointer',
+                  'px-2 py-0.5 rounded-lg text-[9px] font-bold flex items-center gap-1 transition-all cursor-pointer',
                   isUltraSave
                     ? 'bg-[#2D6B4A] text-white shadow-xs'
                     : 'bg-white/40 text-[#17402C] hover:bg-white/60'
@@ -103,7 +103,7 @@ export function DepartLeftSidebar({
                 title="Mode Éco Batterie Ultra-Save"
                 aria-pressed={isUltraSave}
               >
-                <Zap size={8.5} />
+                <Zap size={9} />
                 <span>{isUltraSave ? 'ECO' : 'ÉCO'}</span>
                 {batteryLevel !== null && (
                   <span className="font-mono text-[8px] opacity-80">
