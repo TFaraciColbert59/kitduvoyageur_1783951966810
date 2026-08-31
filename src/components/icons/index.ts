@@ -1,3 +1,4 @@
+'use client';
 // Auto-generated Lucide Animated Icons Barrel for LKDV
 export { BellIcon as BellAnimated, BellIcon } from './bell';
 export { SearchIcon as SearchAnimated, SearchIcon } from './search';

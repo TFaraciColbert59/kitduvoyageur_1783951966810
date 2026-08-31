@@ -1,3 +1,4 @@
+'use client';
 import { useState } from 'react';
 import { Users, ShieldCheck, Share2, Check, AlertOctagon, Radio, PhoneCall } from 'lucide-react';
 import { PhoneCallAnimated } from '@/components/icons';
