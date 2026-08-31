@@ -91,54 +91,52 @@ export function MobileVitalAlertBanner({
         }
         transition={{ type: 'spring', stiffness: 400, damping: 30 }}
         className={cn(
-          'w-full p-3 rounded-2xl border select-none transition-all',
-          'bg-rose-50/95 dark:bg-rose-950/30 border-rose-200/90 dark:border-rose-900/50 text-[#8A241B] dark:text-rose-200',
+          'w-full p-2.5 sm:p-3 rounded-2xl border select-none transition-all',
+          'bg-rose-50/95 dark:bg-rose-950/40 border-rose-200/90 dark:border-rose-900/50 text-[#8A241B] dark:text-rose-200',
           'shadow-2xs backdrop-blur-md',
           className
         )}
       >
-        {/* ════ EN-TÊTE : ICÔNE + TITRE / MESSAGE + BOUTON FERMER ════ */}
-        <div className="flex items-start justify-between gap-2">
-          <div className="flex items-start gap-2 min-w-0 flex-1">
-            <div className="w-6 h-6 rounded-lg bg-rose-200/80 dark:bg-rose-900/60 text-[#8A241B] dark:text-rose-300 flex items-center justify-center shrink-0 mt-0.5 shadow-2xs">
+        {/* ════ EN-TÊTE COMPACT : ICÔNE + TITRE & MESSAGE + BOUTONS ACTION & FERMER ════ */}
+        <div className="flex items-center justify-between gap-2">
+          <div className="flex items-center gap-2 min-w-0 flex-1">
+            <div className="w-7 h-7 rounded-xl bg-rose-200/80 dark:bg-rose-900/60 text-[#8A241B] dark:text-rose-300 flex items-center justify-center shrink-0 shadow-2xs">
               <AlertTriangle size={14} aria-hidden="true" />
             </div>
 
             <div className="min-w-0 flex-1">
-              <h4 className="text-xs font-bold text-[#8A241B] dark:text-rose-200 truncate leading-snug">
+              <h4 className="text-xs font-bold text-[#8A241B] dark:text-rose-200 truncate leading-tight">
                 {currentAlert.title}
               </h4>
-              <p className="text-[11px] text-[#8A241B]/90 dark:text-rose-300/90 leading-tight line-clamp-2 mt-0.5">
+              <p className="text-[10.5px] text-[#8A241B]/90 dark:text-rose-300/90 leading-tight truncate mt-0.5">
                 {currentAlert.message}
               </p>
             </div>
           </div>
 
-          {/* Bouton Fermer (Hitbox accessible >= 44px) */}
-          <button
-            type="button"
-            data-testid="vital-alert-dismiss"
-            onClick={handleDismiss}
-            aria-label="Masquer l'alerte"
-            className="min-w-[44px] min-h-[44px] w-11 h-11 -mr-2 -mt-2 flex items-center justify-center text-[#8A241B]/70 hover:text-[#8A241B] dark:text-rose-300/70 dark:hover:text-rose-200 cursor-pointer rounded-full transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-rose-500 shrink-0"
-          >
-            <div className="w-6 h-6 rounded-full bg-rose-200/50 hover:bg-rose-200 dark:bg-rose-900/40 dark:hover:bg-rose-900/70 flex items-center justify-center transition-colors">
-              <X size={12} strokeWidth={2.5} aria-hidden="true" />
-            </div>
-          </button>
-        </div>
+          <div className="flex items-center gap-1.5 shrink-0">
+            {/* Bouton Action Rapide */}
+            <button
+              type="button"
+              data-testid="vital-alert-action"
+              onClick={handleAction}
+              className="px-2.5 py-1 rounded-full text-[10.5px] font-bold bg-[#8A241B] hover:bg-[#6b1c15] text-white shadow-2xs flex items-center gap-1 cursor-pointer transition-transform active:scale-95 shrink-0 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#8A241B]"
+            >
+              <span>{currentAlert.actionLabel || "Régler"}</span>
+              <ArrowRight size={10} aria-hidden="true" />
+            </button>
 
-        {/* ════ ACTION CAPSULE (1-TAP DIRECT) ════ */}
-        <div className="mt-2 pt-2 border-t border-rose-200/60 dark:border-rose-900/40 flex items-center justify-end">
-          <button
-            type="button"
-            data-testid="vital-alert-action"
-            onClick={handleAction}
-            className="min-h-[36px] px-3.5 py-1.5 rounded-full text-[11px] font-bold bg-[#8A241B] hover:bg-[#6b1c15] text-white shadow-xs flex items-center gap-1.5 cursor-pointer transition-transform active:scale-95 shrink-0 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#8A241B]"
-          >
-            <span>{currentAlert.actionLabel || "Voir l'article"}</span>
-            <ArrowRight size={11} aria-hidden="true" />
-          </button>
+            {/* Bouton Fermer */}
+            <button
+              type="button"
+              data-testid="vital-alert-dismiss"
+              onClick={handleDismiss}
+              aria-label="Masquer l'alerte"
+              className="w-7 h-7 flex items-center justify-center text-[#8A241B]/70 hover:text-[#8A241B] dark:text-rose-300/70 hover:bg-rose-200/50 dark:hover:bg-rose-900/50 rounded-full cursor-pointer transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-rose-500 shrink-0"
+            >
+              <X size={12} strokeWidth={2.5} aria-hidden="true" />
+            </button>
+          </div>
         </div>
       </motion.aside>
     </AnimatePresence>

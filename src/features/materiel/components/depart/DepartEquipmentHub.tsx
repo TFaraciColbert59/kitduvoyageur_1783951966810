@@ -16,7 +16,10 @@ import {
   ExternalLink,
   CheckSquare,
   Layers,
-  ArrowRight, ArrowUpRight,
+  ArrowRight,
+  ArrowUpRight,
+  LayoutGrid,
+  List,
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { formatWeight } from '@/features/materiel/domain/departCalculations';
@@ -119,6 +122,7 @@ export function DepartEquipmentHub({
   const [selectedCat, setSelectedCat] = useState('Toutes');
   const [searchQuery, setSearchQuery] = useState('');
   const [mobileTab, setMobileTab] = useState<'catalog' | 'bag'>('catalog');
+  const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
 
   const [inventoryList, setInventoryList] = useState<InventoryItem[]>(initialInventory);
   const [loanList, setLoanList] = useState<LoanItem[]>(initialLoans);
@@ -624,26 +628,60 @@ export function DepartEquipmentHub({
               </button>
             </div>
 
-            {/* Barre de recherche large & Catégories fluides */}
-            <div className="flex flex-col sm:flex-row gap-2.5 items-stretch sm:items-center justify-between">
-              <div className="relative flex-1 min-w-[200px]">
-                <Search size={14} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-[#5A7064]" />
-                <input
-                  type="text"
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  placeholder="Rechercher un équipement, une marque..."
-                  className="w-full pl-9 pr-8 py-2 rounded-xl text-xs bg-white/70 dark:bg-white/10 border border-white/90 focus:outline-none focus:ring-2 focus:ring-[#17402C]/25 text-[#17402C] placeholder-[#5A7064]"
-                />
-                {searchQuery && (
+            {/* Barre de recherche large, Catégories fluides & Bascule Grille / Liste */}
+            <div className="flex flex-col gap-2.5">
+              <div className="flex items-center gap-2">
+                <div className="relative flex-1 min-w-0">
+                  <Search size={14} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-[#5A7064]" />
+                  <input
+                    type="text"
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                    placeholder="Rechercher un équipement, une marque..."
+                    className="w-full pl-9 pr-8 py-2 rounded-xl text-xs bg-white/70 dark:bg-white/10 border border-white/90 focus:outline-none focus:ring-2 focus:ring-[#17402C]/25 text-[#17402C] placeholder-[#5A7064]"
+                  />
+                  {searchQuery && (
+                    <button
+                      type="button"
+                      onClick={() => setSearchQuery('')}
+                      className="absolute right-2.5 top-1/2 -translate-y-1/2 text-[#5A7064] hover:text-[#17402C] p-0.5 cursor-pointer"
+                    >
+                      <X size={13} />
+                    </button>
+                  )}
+                </div>
+
+                {/* Bascule Grille 2 colonnes / Liste */}
+                <div className="flex items-center p-1 bg-black/5 dark:bg-white/10 rounded-xl gap-0.5 shrink-0">
                   <button
                     type="button"
-                    onClick={() => setSearchQuery('')}
-                    className="absolute right-2.5 top-1/2 -translate-y-1/2 text-[#5A7064] hover:text-[#17402C] p-0.5 cursor-pointer"
+                    onClick={() => setViewMode('grid')}
+                    className={cn(
+                      'p-1.5 rounded-lg transition-colors cursor-pointer',
+                      viewMode === 'grid'
+                        ? 'bg-[#17402C] text-white shadow-2xs'
+                        : 'text-[#5A7064] hover:text-[#17402C]'
+                    )}
+                    title="Vue Grille 2 colonnes"
+                    aria-label="Vue Grille"
                   >
-                    <X size={13} />
+                    <LayoutGrid size={14} />
                   </button>
-                )}
+                  <button
+                    type="button"
+                    onClick={() => setViewMode('list')}
+                    className={cn(
+                      'p-1.5 rounded-lg transition-colors cursor-pointer',
+                      viewMode === 'list'
+                        ? 'bg-[#17402C] text-white shadow-2xs'
+                        : 'text-[#5A7064] hover:text-[#17402C]'
+                    )}
+                    title="Vue Liste compacte"
+                    aria-label="Vue Liste"
+                  >
+                    <List size={14} />
+                  </button>
+                </div>
               </div>
 
               <div className="flex gap-1.5 overflow-x-auto no-scrollbar max-w-full pb-0.5 shrink-0">
@@ -665,15 +703,16 @@ export function DepartEquipmentHub({
               </div>
             </div>
 
-            {/* ════ GRILLE DES CARTES PAR 3 (iOS Apple Card Layout Épuré) ════ */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-2 2xl:grid-cols-3 gap-4 pr-0.5">
-              {filteredItems.length === 0 ? (
-                <div className="col-span-full py-12 px-4 text-center bg-white/40 rounded-3xl border border-dashed border-black/10 text-xs text-[#5A7064] space-y-2">
-                  <Boxes size={24} className="mx-auto text-[#5A7064]/60" />
-                  <p className="font-semibold text-[#17402C]">Aucun équipement ne correspond à vos filtres.</p>
-                </div>
-              ) : (
-                filteredItems.map((item) => {
+            {/* ════ CATALOGUE : VUE GRILLE OU LISTE ════ */}
+            {filteredItems.length === 0 ? (
+              <div className="col-span-full py-12 px-4 text-center bg-white/40 rounded-3xl border border-dashed border-black/10 text-xs text-[#5A7064] space-y-2">
+                <Boxes size={24} className="mx-auto text-[#5A7064]/60" />
+                <p className="font-semibold text-[#17402C]">Aucun équipement ne correspond à vos filtres.</p>
+              </div>
+            ) : viewMode === 'grid' ? (
+              /* ════ VUE GRILLE 2 COLONNES (Apple Store / Photos Style) ════ */
+              <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-2 2xl:grid-cols-3 gap-2.5 sm:gap-4 pr-0.5">
+                {filteredItems.map((item) => {
                   const cond = item.condition ? CONDITION_LABELS[item.condition] : null;
                   const isItemInBag = item.inBag || localBagItems.has(item.id);
                   const isConsumable =
@@ -693,163 +732,154 @@ export function DepartEquipmentHub({
                     : `/materiel/boutique?q=${encodeURIComponent(item.name)}`;
 
                   return (
-                        <div
-                          key={item.id}
-                          className={cn(
-                            'group rounded-[20px] overflow-hidden border transition-all duration-200 flex flex-col justify-between shadow-2xs hover:shadow-md backdrop-blur-md',
-                            item.isLent
-                              ? 'bg-amber-50/70 border-amber-200/90 text-amber-950'
-                              : isItemInBag
-                              ? 'bg-emerald-50/50 border-emerald-200/80 text-[#17402C]'
-                              : 'bg-white/85 dark:bg-white/10 border-white/80 text-[#17402C]'
-                          )}
-                        >
-                          {/* 1. Zone Image Cadrée 16:10 CLIQUABLE vers la Fiche Produit (Sans bouton flèche) */}
+                    <div
+                      key={item.id}
+                      className={cn(
+                        'group rounded-2xl overflow-hidden border transition-all duration-200 flex flex-col justify-between shadow-2xs hover:shadow-md backdrop-blur-md',
+                        item.isLent
+                          ? 'bg-amber-50/70 border-amber-200/90 text-amber-950'
+                          : isItemInBag
+                          ? 'bg-emerald-50/50 border-emerald-200/80 text-[#17402C]'
+                          : 'bg-white/85 dark:bg-white/10 border-white/80 text-[#17402C]'
+                      )}
+                    >
+                      {/* Image Cliquable 4:3 */}
+                      <Link
+                        href={targetUrl}
+                        className="relative w-full aspect-[4/3] overflow-hidden bg-black/5 rounded-t-2xl block cursor-pointer group/img"
+                        title={`Voir la fiche détaillée de ${item.name}`}
+                      >
+                        <img
+                          src={item.image}
+                          alt={item.name}
+                          className="w-full h-full object-cover object-center group-hover/img:scale-105 transition-transform duration-500"
+                          loading="lazy"
+                        />
+                        <div className="absolute inset-0 bg-gradient-to-t from-black/50 via-transparent to-black/20 pointer-events-none" />
+
+                        {/* Badge Catégorie */}
+                        <span className="absolute top-1.5 left-1.5 text-[8px] sm:text-[9px] font-bold uppercase tracking-wider px-1.5 py-0.5 rounded-md bg-black/60 text-white backdrop-blur-md shadow-xs">
+                          {item.category}
+                        </span>
+                      </Link>
+
+                      {/* Contenu de la Carte */}
+                      <div className="p-2 sm:p-2.5 space-y-1.5 flex-1 flex flex-col justify-between">
+                        <div className="space-y-0.5">
                           <Link
                             href={targetUrl}
-                            className="relative w-full aspect-[16/10] overflow-hidden bg-black/5 rounded-t-[20px] block cursor-pointer group/img"
-                            title={`Voir la fiche détaillée de ${item.name}`}
+                            className="text-[11.5px] sm:text-xs font-bold text-[#17402C] hover:text-[#2D6B4A] transition-colors leading-snug line-clamp-1 block cursor-pointer"
+                            title={item.name}
                           >
-                            <img
-                              src={item.image}
-                              alt={item.name}
-                              className="w-full h-full object-cover object-center group-hover/img:scale-105 transition-transform duration-500"
-                              loading="lazy"
-                            />
-                            <div className="absolute inset-0 bg-gradient-to-t from-black/50 via-transparent to-black/20 pointer-events-none" />
-
-                            {/* Badge Catégorie Flottant Haut-Gauche */}
-                            <span className="absolute top-2.5 left-2.5 text-[9px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-lg bg-black/60 text-white backdrop-blur-md shadow-xs">
-                              {item.category}
-                            </span>
+                            {item.name}
                           </Link>
-
-                          {/* 2. Titre Cliquable & Badges */}
-                          <div className="p-3 space-y-2 flex-1 flex flex-col justify-between">
-                            <div className="space-y-1">
-                              <div className="flex items-start justify-between gap-1.5">
-                                <Link
-                                  href={targetUrl}
-                                  className="text-xs sm:text-[13px] font-bold text-[#17402C] hover:text-[#2D6B4A] transition-colors leading-snug line-clamp-1 block cursor-pointer"
-                                  title={item.name}
-                                >
-                                  {item.name}
-                                </Link>
-                                {item.brand && (
-                                  <span className="text-[10px] text-[#5A7064] font-medium shrink-0">
-                                    {item.brand}
-                                  </span>
-                                )}
-                              </div>
-
-                              {/* Statuts & État */}
-                              <div className="flex items-center gap-1 flex-wrap">
-                                {item.inInventory && (
-                                  <span className="text-[8.5px] font-bold px-1.5 py-0.2 rounded-md bg-emerald-100 text-emerald-900 border border-emerald-200">
-                                    Inventaire
-                                  </span>
-                                )}
-
-                                {item.toAcquire && !item.inInventory && (
-                                  <span className="text-[8.5px] font-bold px-1.5 py-0.2 rounded-md bg-blue-100 text-blue-900 border border-blue-200">
-                                    Boutique
-                                  </span>
-                                )}
-
-                                {cond && (
-                                  <span className={cn('text-[8.5px] font-medium px-1.5 py-0.2 rounded-md', cond.tone)}>
-                                    {cond.label}
-                                  </span>
-                                )}
-                              </div>
-                            </div>
-
-                            {/* 3. Ligne Poids / Prix & Action Contextuelle Unique */}
-                            <div className="pt-2 border-t border-black/5 space-y-2">
-                              <div className="flex items-center justify-between text-xs">
-                                <span className="text-[11px] font-mono text-[#5A7064] flex items-center gap-1">
-                                  <Scale size={11} />
-                                  <strong>{formatWeight(item.weightG)}</strong>
-                                </span>
-
-                                {item.priceEur !== null && (
-                                  <span className="font-mono font-bold text-[#17402C] text-xs">
-                                    {item.priceEur.toFixed(2)} €
-                                  </span>
-                                )}
-                              </div>
-
-                              {/* 4. Bouton d'Action Primaire Unique Strictement Adapté */}
-                              <div>
-                                {item.isLent && item.loanId ? (
-                                  <button
-                                    type="button"
-                                    onClick={() => handleReturnLoan(item.loanId!, item.inventoryId)}
-                                    className="w-full py-1.5 rounded-xl text-xs font-bold bg-[#17402C] text-white hover:bg-[#17402C]/90 shadow-2xs flex items-center justify-center gap-1 cursor-pointer transition-all active:scale-98"
-                                  >
-                                    <Check size={12} />
-                                    <span>Marquer Rendu</span>
-                                  </button>
-                                ) : isConsumable ? (
-                                  <button
-                                    type="button"
-                                    onClick={() => handleReplenishConsumable(item)}
-                                    className="w-full py-1.5 rounded-xl text-xs font-bold bg-[#17402C] text-white hover:bg-[#17402C]/90 shadow-2xs flex items-center justify-center gap-1.5 cursor-pointer transition-all active:scale-98"
-                                    title="Réapprovisionner les vivres et consommables"
-                                  >
-                                    <RotateCcw size={12} />
-                                    <span>Réapprovisionner</span>
-                                  </button>
-                                ) : isItemInBag ? (
-                                  <div className="w-full py-1.5 rounded-xl text-xs font-bold bg-emerald-100 text-emerald-900 border border-emerald-200 flex items-center justify-center gap-1">
-                                    <Check size={12} />
-                                    <span>Dans le sac</span>
-                                  </div>
-                                ) : !item.inInventory ? (
-                                  <button
-                                    type="button"
-                                    onClick={() => handleQuickAddToBag(item)}
-                                    className="w-full py-1.5 rounded-xl text-xs font-bold bg-[#17402C] text-white hover:bg-[#17402C]/90 shadow-2xs flex items-center justify-center gap-1 cursor-pointer transition-all active:scale-98"
-                                    title="Ajouter cet équipement au sac actif"
-                                  >
-                                    <Plus size={13} />
-                                    <span>Ajouter à l'équipement</span>
-                                  </button>
-                                ) : (
-                                  <>
-                                    <button
-                                      type="button"
-                                      onClick={() => handleQuickAddToBag(item)}
-                                      className="w-full py-1.5 rounded-xl text-xs font-bold bg-[#17402C] text-white hover:bg-[#17402C]/90 shadow-2xs flex items-center justify-center gap-1 cursor-pointer transition-all active:scale-98"
-                                      title="Ajouter cet équipement au sac actif"
-                                    >
-                                      <Plus size={13} />
-                                      <span>Ajouter au sac</span>
-                                    </button>
-
-                                    {!item.isLent && (
-                                      <button
-                                        type="button"
-                                        onClick={() => {
-                                          setSelectedItemForLoan(item);
-                                          setIsLoanModalOpen(true);
-                                        }}
-                                        className="w-full mt-1 py-1 rounded-lg text-[10.5px] font-semibold text-[#2D6B4A] hover:bg-black/5 flex items-center justify-center gap-1 cursor-pointer"
-                                      >
-                                        <Handshake size={11} />
-                                        <span>Prêter à un proche</span>
-                                      </button>
-                                    )}
-                                  </>
-                                )}
-                              </div>
-                            </div>
+                          <div className="flex items-center justify-between text-[10px] font-mono text-[#5A7064]">
+                            <span>{formatWeight(item.weightG)}</span>
+                            {item.brand && <span className="truncate max-w-[70px]">{item.brand}</span>}
                           </div>
                         </div>
+
+                        {/* Bouton d'Action 1-tap Compact */}
+                        <div className="pt-1 border-t border-black/5">
+                          {item.isLent && item.loanId ? (
+                            <button
+                              type="button"
+                              onClick={() => handleReturnLoan(item.loanId!, item.inventoryId)}
+                              className="w-full py-1 rounded-xl text-[10.5px] font-bold bg-[#17402C] text-white hover:bg-[#17402C]/90 shadow-2xs flex items-center justify-center gap-1 cursor-pointer transition-all active:scale-98"
+                            >
+                              <Check size={11} />
+                              <span>Rendu</span>
+                            </button>
+                          ) : isConsumable ? (
+                            <button
+                              type="button"
+                              onClick={() => handleReplenishConsumable(item)}
+                              className="w-full py-1 rounded-xl text-[10.5px] font-bold bg-[#17402C] text-white hover:bg-[#17402C]/90 shadow-2xs flex items-center justify-center gap-1 cursor-pointer transition-all active:scale-98"
+                            >
+                              <RotateCcw size={11} />
+                              <span>Recharger</span>
+                            </button>
+                          ) : isItemInBag ? (
+                            <div className="w-full py-1 rounded-xl text-[10.5px] font-bold bg-emerald-100 text-emerald-900 border border-emerald-200 flex items-center justify-center gap-1">
+                              <Check size={11} />
+                              <span>Dans le sac</span>
+                            </div>
+                          ) : (
+                            <button
+                              type="button"
+                              onClick={() => handleQuickAddToBag(item)}
+                              className="w-full py-1 rounded-xl text-[10.5px] font-bold bg-[#17402C] text-white hover:bg-[#17402C]/90 shadow-2xs flex items-center justify-center gap-1 cursor-pointer transition-all active:scale-98"
+                            >
+                              <Plus size={11} />
+                              <span>+ Au sac</span>
+                            </button>
+                          )}
+                        </div>
+                      </div>
+                    </div>
                   );
-                })
-              )}
-            </div>
+                })}
+              </div>
+            ) : (
+              /* ════ VUE LISTE COMPACTE (Apple Files Style) ════ */
+              <div className="flex flex-col gap-2 pr-0.5">
+                {filteredItems.map((item) => {
+                  const isItemInBag = item.inBag || localBagItems.has(item.id);
+                  const isConsumable =
+                    item.category === 'Vivres & Eau' ||
+                    item.category === 'Nutrition' ||
+                    item.category === 'Hydratation';
+
+                  return (
+                    <div
+                      key={item.id}
+                      className={cn(
+                        'p-2 rounded-2xl border flex items-center justify-between gap-2.5 transition-all shadow-2xs',
+                        isItemInBag
+                          ? 'bg-emerald-50/60 border-emerald-200/80'
+                          : 'bg-white/90 dark:bg-stone-900/90 border-white/90 dark:border-white/10'
+                      )}
+                    >
+                      <div className="flex items-center gap-2.5 min-w-0 flex-1">
+                        <img
+                          src={item.image}
+                          alt={item.name}
+                          className="w-10 h-10 rounded-xl object-cover shrink-0 bg-black/5"
+                          loading="lazy"
+                        />
+                        <div className="min-w-0 flex-1">
+                          <h4 className="text-xs font-bold text-[#17402C] dark:text-white truncate">
+                            {item.name}
+                          </h4>
+                          <div className="flex items-center gap-2 text-[10.5px] font-mono text-[#5A7064] mt-0.5">
+                            <span>{formatWeight(item.weightG)}</span>
+                            <span className="text-[9px] font-sans px-1.5 py-0.2 rounded bg-black/5 dark:bg-white/10">{item.category}</span>
+                          </div>
+                        </div>
+                      </div>
+
+                      <div className="shrink-0">
+                        {isItemInBag ? (
+                          <div className="px-2.5 py-1 rounded-xl text-[10.5px] font-bold bg-emerald-100 text-emerald-900 border border-emerald-200 flex items-center gap-1">
+                            <Check size={11} />
+                            <span>Dans le sac</span>
+                          </div>
+                        ) : (
+                          <button
+                            type="button"
+                            onClick={() => handleQuickAddToBag(item)}
+                            className="px-2.5 py-1 rounded-xl text-[10.5px] font-bold bg-[#17402C] text-white hover:bg-[#17402C]/90 shadow-2xs flex items-center gap-1 cursor-pointer"
+                          >
+                            <Plus size={11} />
+                            <span>+ Sac</span>
+                          </button>
+                        )}
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
           </div>
         </div>
       </div>

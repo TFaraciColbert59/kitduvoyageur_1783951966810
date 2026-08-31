@@ -82,10 +82,10 @@ export function MobileChecklistItem({
         }}
         whileTap={{ scale: 0.99 }}
         className={cn(
-          'relative w-full flex items-center justify-between gap-2.5 px-2 py-1.5 rounded-2xl transition-all',
-          'bg-white/90 dark:bg-stone-900/90 border border-white/80 dark:border-white/10 shadow-2xs backdrop-blur-xs',
-          item.is_checked && 'bg-white/50 dark:bg-stone-900/50 opacity-75 hover:opacity-100',
-          isHighlighted && 'ring-2 ring-[#8A241B] bg-rose-50/90 dark:bg-rose-950/40 border-rose-200 dark:border-rose-900'
+          'relative z-10 w-full flex items-center justify-between gap-2.5 px-2 py-1.5 rounded-2xl transition-all',
+          'bg-white dark:bg-stone-900 border border-white/90 dark:border-white/10 shadow-2xs',
+          item.is_checked && 'bg-stone-50/95 dark:bg-stone-900/95 opacity-80 hover:opacity-100',
+          isHighlighted && 'ring-2 ring-[#8A241B] bg-rose-50 dark:bg-rose-950/40 border-rose-200 dark:border-rose-900'
         )}
       >
         {/* ════ GAUCHE : COCHE CIRCULAIRE 32PX DANS HIT-BOX 48PX APPLE HIG ════ */}
@@ -102,10 +102,10 @@ export function MobileChecklistItem({
         >
           <div
             className={cn(
-              'w-8 h-8 rounded-full border-[1.5px] flex items-center justify-center transition-all duration-200',
+              'w-8 h-8 rounded-full border-[1.5px] flex items-center justify-center transition-all duration-200 shadow-2xs',
               item.is_checked
                 ? 'bg-[#2D6B4A] border-[#2D6B4A] text-white shadow-xs'
-                : 'border-[#5A7064]/40 bg-white/70 dark:bg-stone-800/70 dark:border-white/20 text-transparent hover:border-[#2D6B4A]'
+                : 'border-[#5A7064]/40 bg-white dark:bg-stone-800 dark:border-white/20 text-transparent hover:border-[#2D6B4A]'
             )}
           >
             {item.is_checked && (
