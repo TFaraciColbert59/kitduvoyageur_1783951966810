@@ -1,7 +1,8 @@
 'use client';
 import React from 'react';
 import { motion, AnimatePresence, useReducedMotion } from 'framer-motion';
-import { AlertTriangle, X, ArrowRight } from 'lucide-react';
+import { AlertTriangle } from 'lucide-react';
+import { ArrowRightAnimated, XAnimated } from '@/components/icons';
 import { cn } from '@/lib/utils';
 import type { ActionableAlert } from '@/features/materiel/services/generateSmartPrompts';
 
@@ -123,7 +124,7 @@ export function MobileVitalAlertBanner({
               className="px-2.5 py-1 rounded-full text-[10.5px] font-bold bg-[#8A241B] hover:bg-[#6b1c15] text-white shadow-2xs flex items-center gap-1 cursor-pointer transition-transform active:scale-95 shrink-0 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#8A241B]"
             >
               <span>{currentAlert.actionLabel || "Régler"}</span>
-              <ArrowRight size={10} aria-hidden="true" />
+              <ArrowRightAnimated size={10} aria-hidden="true" />
             </button>
 
             {/* Bouton Fermer */}
@@ -134,7 +135,7 @@ export function MobileVitalAlertBanner({
               aria-label="Masquer l'alerte"
               className="w-7 h-7 flex items-center justify-center text-[#8A241B]/70 hover:text-[#8A241B] dark:text-rose-300/70 hover:bg-rose-200/50 dark:hover:bg-rose-900/50 rounded-full cursor-pointer transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-rose-500 shrink-0"
             >
-              <X size={12} strokeWidth={2.5} aria-hidden="true" />
+              <XAnimated size={12} aria-hidden="true" />
             </button>
           </div>
         </div>

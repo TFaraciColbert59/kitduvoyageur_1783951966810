@@ -6,11 +6,9 @@ import {
   Boxes,
   Handshake,
   ShoppingBag,
-  Search,
   Plus,
   Trash2,
   Check,
-  RotateCcw,
   Scale,
   X,
   ExternalLink,
@@ -18,9 +16,9 @@ import {
   Layers,
   ArrowRight,
   ArrowUpRight,
-  LayoutGrid,
   List,
 } from 'lucide-react';
+import { SearchAnimated, LayoutGridAnimated, XAnimated, RotateCcwAnimated } from '@/components/icons';
 import { motion, AnimatePresence } from 'framer-motion';
 import { formatWeight } from '@/features/materiel/domain/departCalculations';
 import { addInventoryItem } from '@/features/materiel/actions/addInventoryItem';
@@ -568,7 +566,7 @@ export function DepartEquipmentHub({
             {/* Barre de recherche & Bascule Grille / Liste */}
             <div className="flex items-center gap-2">
               <div className="relative flex-1 min-w-0">
-                <Search size={13} className="absolute left-3 top-1/2 -translate-y-1/2 text-[#5A7064]" />
+                <SearchAnimated size={13} className="absolute left-3 top-1/2 -translate-y-1/2 text-[#5A7064]" />
                 <input
                   type="text"
                   value={searchQuery}
@@ -582,7 +580,7 @@ export function DepartEquipmentHub({
                     onClick={() => setSearchQuery('')}
                     className="absolute right-2 top-1/2 -translate-y-1/2 text-[#5A7064] hover:text-[#17402C] p-0.5 cursor-pointer"
                   >
-                    <X size={12} />
+                    <XAnimated size={12} />
                   </button>
                 )}
               </div>
@@ -601,7 +599,7 @@ export function DepartEquipmentHub({
                   title="Vue Grille 2 colonnes"
                   aria-label="Vue Grille"
                 >
-                  <LayoutGrid size={13} />
+                  <LayoutGridAnimated size={13} />
                 </button>
                 <button
                   type="button"
@@ -773,7 +771,7 @@ export function DepartEquipmentHub({
                               onClick={() => handleReplenishConsumable(item)}
                               className="w-full py-1 rounded-xl text-[10.5px] font-bold bg-[#17402C] text-white hover:bg-[#17402C]/90 shadow-2xs flex items-center justify-center gap-1 cursor-pointer transition-all active:scale-98"
                             >
-                              <RotateCcw size={11} />
+                              <RotateCcwAnimated size={11} />
                               <span>Recharger</span>
                             </button>
                           ) : isItemInBag ? (

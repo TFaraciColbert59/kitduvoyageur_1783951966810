@@ -1,6 +1,6 @@
-﻿'use client';
 import { useState } from 'react';
-import { Users, PhoneCall, ShieldCheck, Share2, Check, AlertOctagon, Radio } from 'lucide-react';
+import { Users, ShieldCheck, Share2, Check, AlertOctagon, Radio, PhoneCall } from 'lucide-react';
+import { PhoneCallAnimated } from '@/components/icons';
 import { GlassCard } from '@/components/ui/GlassCard';
 import type { Participant } from '@/features/materiel/types/trekHub';
 
@@ -111,7 +111,7 @@ export function DepartParticipants({
               className="glass-capsule-btn danger px-3 py-1.5 text-xs font-semibold flex items-center gap-1.5 shrink-0"
               aria-label={`Appeler le contact d'urgence au ${emergencyContact}`}
             >
-              <PhoneCall size={12} aria-hidden="true" />
+              <PhoneCallAnimated size={12} aria-hidden="true" />
               <span>Appeler</span>
             </a>
           </div>
