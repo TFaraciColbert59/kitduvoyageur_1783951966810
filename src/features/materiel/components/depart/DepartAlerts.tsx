@@ -164,18 +164,18 @@ export function DepartAlerts({ input }: { input: SmartPromptsInput }) {
                 role="alert"
               >
                 {/* ── LIGNE 1 : ICÔNE + TITRE + ACTIONS DISMISS/SNOOZE ── */}
-                <div className="flex items-start justify-between gap-1.5">
-                  <div className="flex items-center gap-1.5 min-w-0">
+                <div className="flex items-start justify-between gap-2">
+                  <div className="flex items-start gap-1.5 min-w-0 flex-1">
                     <div
                       className={cn(
-                        'w-6 h-6 rounded-lg flex items-center justify-center shrink-0 shadow-2xs',
+                        'w-5.5 h-5.5 rounded-lg flex items-center justify-center shrink-0 shadow-2xs mt-0.5',
                         isCritical ? 'bg-rose-200/80 text-[#8A241B]' : 'bg-[#2D6B4A]/10 text-[#2D6B4A]'
                       )}
                     >
-                      {isCritical ? <AlertTriangle size={12} /> : <AlertCircle size={12} />}
+                      {isCritical ? <AlertTriangle size={11} /> : <AlertCircle size={11} />}
                     </div>
 
-                    <h5 className="text-[11.5px] font-bold leading-tight line-clamp-1">
+                    <h5 className="text-[11.5px] font-bold leading-tight text-[#17402C] break-words line-clamp-2">
                       {alert.title}
                     </h5>
                   </div>

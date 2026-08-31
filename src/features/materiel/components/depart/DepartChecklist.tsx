@@ -17,9 +17,9 @@ import {
   ShoppingBag,
   Trash2,
   X,
+  CheckSquare,
 } from 'lucide-react';
 import { motion, AnimatePresence, useReducedMotion } from 'framer-motion';
-import { GlassCard } from '@/components/ui/GlassCard';
 import { cn } from '@/lib/utils';
 import { toggleKitItem } from '@/features/materiel/actions/toggleKitItem';
 import { addDepartItem } from '@/features/materiel/actions/addDepartItem';
@@ -74,6 +74,7 @@ interface DepartChecklistProps {
   participants?: Participant[];
   kitId?: string;
   isRealKit: boolean;
+  className?: string;
 }
 
 export function DepartChecklist({
@@ -82,6 +83,7 @@ export function DepartChecklist({
   participants = [],
   kitId,
   isRealKit,
+  className,
 }: DepartChecklistProps) {
   const shouldReduceMotion = useReducedMotion();
   const [searchQuery, setSearchQuery] = useState('');
@@ -460,43 +462,49 @@ export function DepartChecklist({
   const remaining = total - done;
 
   return (
-    <GlassCard tone="neutral" as="article" ariaLabelledBy="depart-checklist-heading" className="relative h-full max-h-full flex flex-col justify-between overflow-hidden select-none">
-      <div className="p-3.5 flex flex-col h-full max-h-full min-h-0 justify-between gap-2">
+    <aside
+      aria-label="Checklist du Sac en Direct"
+      className={cn(
+        'relative h-full max-h-full w-full flex-1 flex flex-col justify-between glass rounded-[1.5rem] p-3.5 text-[#17402C] font-sans overflow-hidden border border-white/40 shadow-sm select-none',
+        className
+      )}
+    >
+      <div className="flex flex-col h-full max-h-full min-h-0 justify-between gap-2">
         {/* ════ HEADER CHECKLIST FIXE IMMOBILE SUR UNE SEULE LIGNE ════ */}
         <div className="shrink-0 flex items-center justify-between gap-2 pb-2 border-b border-black/5 dark:border-white/10">
-          <div className="flex items-center gap-1.5 shrink-0">
-            <Package size={14} className="text-[#2D6B4A] shrink-0" aria-hidden="true" />
-            <h2 id="depart-checklist-heading" className="text-[12px] sm:text-[13px] font-bold text-[#17402C] whitespace-nowrap">
-              Préparation active du sac
+          <div className="flex items-center gap-1.5 min-w-0">
+            <CheckSquare size={14} className="text-[#2D6B4A] shrink-0" aria-hidden="true" />
+            <h2 id="depart-checklist-heading" className="text-xs sm:text-[13px] font-bold text-[#17402C] truncate">
+              Checklist du Sac en Direct
             </h2>
-            <span className="text-[9.5px] font-mono font-bold px-1.5 py-0.2 rounded-full bg-[#17402C]/10 text-[#17402C] shrink-0">
-              {done}/{total}
+            <span className="text-[9.5px] font-mono font-bold px-2 py-0.5 rounded-full bg-[#17402C]/10 text-[#17402C] shrink-0">
+              {done}/{total} prêts
             </span>
           </div>
 
           {/* Barre d actions droite : Filtres + Audio + Bouton Plus Icône Seule */}
-          <div className="flex items-center gap-1.5 shrink-0">
+          <div className="flex items-center gap-1 shrink-0">
             {/* Bascule Reste à faire / Tous */}
-            <div className="flex items-center bg-black/5 dark:bg-white/10 rounded-xl p-0.5 text-[10.5px] font-semibold">
+            <div className="flex items-center bg-black/5 dark:bg-white/10 rounded-xl p-0.5 text-[10px] font-semibold">
               <button
                 type="button"
                 onClick={() => setFilterMode('all')}
                 className={cn(
-                  'px-2 py-0.5 rounded-lg transition-colors cursor-pointer',
+                  'px-1.5 py-0.5 rounded-lg transition-colors cursor-pointer',
                   filterMode === 'all' ? 'bg-[#17402C] text-white shadow-2xs' : 'text-[#5A7064] hover:text-[#17402C]'
                 )}
               >
-                Tous ({total})
+                Tous
               </button>
               <button
                 type="button"
                 onClick={() => setFilterMode('remaining')}
                 className={cn(
-                  'px-2 py-0.5 rounded-lg transition-colors cursor-pointer',
+                  'px-1.5 py-0.5 rounded-lg transition-colors cursor-pointer',
                   filterMode === 'remaining' ? 'bg-[#17402C] text-white shadow-2xs' : 'text-[#5A7064] hover:text-[#17402C]'
                 )}
               >
-                Restants ({remaining})
+                Restants
               </button>
             </div>
 
@@ -505,7 +513,7 @@ export function DepartChecklist({
               type="button"
               onClick={handleToggleSpeak}
               className={cn(
-                'w-7 h-7 rounded-xl flex items-center justify-center transition-all cursor-pointer shadow-2xs shrink-0',
+                'w-6 h-6 rounded-lg flex items-center justify-center transition-all cursor-pointer shadow-2xs shrink-0',
                 isSpeaking
                   ? 'bg-[#2D6B4A] text-white animate-pulse'
                   : 'bg-white/60 dark:bg-white/10 text-[#17402C] hover:bg-white'
@@ -513,18 +521,18 @@ export function DepartChecklist({
               title={isSpeaking ? 'Arrêter la lecture' : 'Lire les articles restants à voix haute'}
               aria-label={isSpeaking ? 'Arrêter la lecture audio' : 'Lire la checklist à voix haute'}
             >
-              {isSpeaking ? <VolumeX size={13} /> : <Volume2 size={13} />}
+              {isSpeaking ? <VolumeX size={12} /> : <Volume2 size={12} />}
             </button>
 
             {/* Bouton Ajouter un équipement (JUSTE L'ICÔNE PLUS) */}
             <button
               type="button"
               onClick={() => setIsAddModalOpen(true)}
-              className="w-7 h-7 rounded-xl bg-[#17402C] text-white hover:bg-[#17402C]/90 shadow-2xs flex items-center justify-center cursor-pointer shrink-0 transition-transform active:scale-95"
+              className="w-6 h-6 rounded-lg bg-[#17402C] text-white hover:bg-[#17402C]/90 shadow-2xs flex items-center justify-center cursor-pointer shrink-0 transition-transform active:scale-95"
               title="Ajouter un équipement au sac"
               aria-label="Ajouter un équipement au sac"
             >
-              <Plus size={14} strokeWidth={2.5} />
+              <Plus size={13} strokeWidth={2.5} />
             </button>
           </div>
         </div>
@@ -784,6 +792,17 @@ export function DepartChecklist({
             );
           })}
         </div>
+
+        {/* ── ZONE BASSE FIXE (Statut de préparation du sac) ── */}
+        <div className="shrink-0 pt-2 border-t border-[#17402C]/5 flex items-center justify-between gap-1 px-1">
+          <div className="flex items-center gap-1 text-[9px] font-mono text-[#5A7064]">
+            <CheckSquare size={11} className="text-[#2D6B4A]" />
+            <span>{done === total ? 'Sac 100% prêt' : `${remaining} article${remaining > 1 ? 's' : ''} restant${remaining > 1 ? 's' : ''}`}</span>
+          </div>
+          <span className="text-[8.5px] font-mono font-bold text-[#2D6B4A]">
+            {total > 0 ? Math.round((done / total) * 100) : 100}% PRÊT
+          </span>
+        </div>
       </div>
 
       {/* ════ MODAL AJOUT D UN ÉQUIPEMENT OUBLIÉ ════ */}
@@ -900,6 +919,6 @@ export function DepartChecklist({
           </div>
         )}
       </AnimatePresence>
-    </GlassCard>
+    </aside>
   );
 }

@@ -535,11 +535,22 @@ export function DepartEquipmentHub({
         </button>
       </div>
 
-      {/* ════ DISPOSITION D'ÉLITE 2 COLONNES (Grille à gauche + Checklist à droite) ════ */}
-      <div className="grid grid-cols-1 lg:grid-cols-12 xl:grid-cols-12 gap-5 items-start w-full">
-        {/* ── COLONNE CATALOGUE 3-CARDS & ANALYSE DU POIDS (Span 8) ── */}
-        <div className={cn('space-y-4 min-w-0 w-full', mobileTab === 'bag' ? 'hidden md:block lg:col-span-7 xl:col-span-7 2xl:col-span-8' : 'lg:col-span-7 xl:col-span-7 2xl:col-span-8')}>
-          {/* ════ SECTION 3 INTÉGRÉE : ANALYSE DU POIDS (Accordéon élégant) ════ */}
+      {/* ════ CONTENU DU PARC MATÉRIEL (Plein format sur Desktop, avec bascule sur Mobile) ════ */}
+      <div className="w-full space-y-4">
+        {/* Vue Mobile "Sac Actif" */}
+        <div className={cn('w-full min-h-[480px]', mobileTab === 'bag' ? 'block md:hidden' : 'hidden')}>
+          <DepartChecklist
+            items={kitItems}
+            consumables={consumables}
+            participants={participants}
+            kitId={kitId}
+            isRealKit={isRealKit}
+          />
+        </div>
+
+        {/* Vue Catalogue & Poids (Plein format Desktop, masqué sur mobile quand l'onglet sac est actif) */}
+        <div className={cn('space-y-4 min-w-0 w-full', mobileTab === 'bag' ? 'hidden md:block' : 'block')}>
+          {/* ════ ANALYSE DU POIDS (Plein format) ════ */}
           {weightBreakdown && weightBreakdown.length > 0 && (
             <div className="w-full">
               <DepartWeightBreakdown
@@ -885,29 +896,6 @@ export function DepartEquipmentHub({
                 })
               )}
             </div>
-          </div>
-        </div>
-
-        {/* ── COLONNE CHECKLIST DU SAC (Span 4 / Card Fixe & Scroll Interne) ── */}
-        <div className={cn('w-full min-w-[340px] xl:min-w-[380px] h-[calc(100vh-100px)] max-h-[calc(100vh-100px)] sticky top-1 flex flex-col min-h-0', mobileTab === 'catalog' ? 'hidden md:flex lg:col-span-5 xl:col-span-5 2xl:col-span-4' : 'lg:col-span-5 xl:col-span-5 2xl:col-span-4 flex flex-col')}>
-          <div className="h-full max-h-full min-h-0 flex flex-col">
-            <div className="flex items-center justify-between px-1.5">
-              <span className="text-xs font-bold uppercase tracking-wider text-[#5A7064] flex items-center gap-1.5">
-                <CheckSquare size={14} className="text-[#2D6B4A]" />
-                <span>Checklist du Sac en Direct</span>
-              </span>
-              <span className="text-xs font-mono font-bold px-2.5 py-0.5 rounded-full bg-[#17402C]/10 text-[#17402C]">
-                {kitItems.filter((i) => i.is_checked).length}/{kitItems.length} prêts
-              </span>
-            </div>
-
-            <DepartChecklist
-              items={kitItems}
-              consumables={consumables}
-              participants={participants}
-              kitId={kitId}
-              isRealKit={isRealKit}
-            />
           </div>
         </div>
       </div>

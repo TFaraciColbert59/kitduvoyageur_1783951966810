@@ -18,6 +18,7 @@ import { DepartWeather } from './DepartWeather';
 import { DepartParticipants } from './DepartParticipants';
 import { DepartLeftSidebar } from './DepartLeftSidebar';
 import { DepartRightSidebar } from './DepartRightSidebar';
+import { DepartChecklist } from './DepartChecklist';
 import { DepartWeightBreakdown } from './DepartWeightBreakdown';
 import { DepartEquipmentHub } from './DepartEquipmentHub';
 import { DepartureSheetModal } from './DepartureSheetModal';
@@ -512,13 +513,43 @@ export function DepartCockpit({
           </AnimatePresence>
         </div>
 
-        {/* Colonne 3 : Sidebar Droite (Sections 1 & 2 : Statut du départ + Alertes & Fiabilité) */}
-        <div className="w-[300px] xl:w-[320px] shrink-0 h-full max-h-full overflow-hidden flex flex-col">
-          <DepartRightSidebar
-            depart={depart}
-            alertInput={alertInput}
-            onOpenDepartureSheet={() => setIsSheetOpen(true)}
-          />
+        {/* Colonne 3 : Sidebar Droite (Sections 1 & 2 : Statut du départ & Alertes / Section 3 : Checklist du Sac en Direct) */}
+        <div className="w-[300px] xl:w-[330px] shrink-0 h-full max-h-full overflow-hidden flex flex-col">
+          <AnimatePresence mode="wait">
+            {activeSection === 'equipment_hub' ? (
+              <motion.div
+                key="checklist-right-sidebar"
+                initial={shouldReduceMotion ? false : { opacity: 0, x: 8 }}
+                animate={{ opacity: 1, x: 0 }}
+                exit={shouldReduceMotion ? { opacity: 0 } : { opacity: 0, x: 8 }}
+                transition={{ duration: shouldReduceMotion ? 0 : 0.16 }}
+                className="h-full max-h-full w-full flex-1 flex flex-col min-h-0"
+              >
+                <DepartChecklist
+                  items={depart?.assignedKit?.items || []}
+                  consumables={depart?.consumables}
+                  participants={depart?.participants || []}
+                  kitId={depart?.id || 'kit-default'}
+                  isRealKit={isRealKit}
+                />
+              </motion.div>
+            ) : (
+              <motion.div
+                key="default-right-sidebar"
+                initial={shouldReduceMotion ? false : { opacity: 0, x: 8 }}
+                animate={{ opacity: 1, x: 0 }}
+                exit={shouldReduceMotion ? { opacity: 0 } : { opacity: 0, x: 8 }}
+                transition={{ duration: shouldReduceMotion ? 0 : 0.16 }}
+                className="h-full max-h-full w-full flex-1 flex flex-col min-h-0"
+              >
+                <DepartRightSidebar
+                  depart={depart}
+                  alertInput={alertInput}
+                  onOpenDepartureSheet={() => setIsSheetOpen(true)}
+                />
+              </motion.div>
+            )}
+          </AnimatePresence>
         </div>
       </div>
     </div>
