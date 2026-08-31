@@ -440,7 +440,7 @@ function BottomTabBar() {
     )
   );
 
-  const hasUpperExtension = isGroupesHub || isGroupeCockpit || isClubsHub || isClubDetail || isCarnetsHub || isCarnetDetail || isPaysHub || isPaysDetail || isCommunityPage;
+  const hasUpperExtension = isGroupesHub || isGroupeCockpit || isClubsHub || isClubDetail || isCarnetsHub || isCarnetDetail || isPaysHub || isPaysDetail || isCommunityPage || isMaterielSection;
 
   const [activeGroupesTab, setActiveGroupesTab] = useState<'mes-groupes' | 'decouvrir'>('mes-groupes');
   const [activeCockpitTab, setActiveCockpitTab] = useState<string>('overview');
@@ -451,8 +451,8 @@ function BottomTabBar() {
   const [activePaysContinent, setActivePaysContinent] = useState<string>('all');
   const [activePaysDetailTab, setActivePaysDetailTab] = useState<string>('presentation');
   const [activeCommunityTab, setActiveCommunityTab] = useState<string>('fil');
-  const [activeDepartTab, setActiveDepartTab] = useState<string>('all');
-  const [activeMaterielTab, setActiveMaterielTab] = useState<string>('cockpit');
+  const [activeDepartTab, setActiveDepartTab] = useState<string>('overview');
+  const [activeMaterielTab, setActiveMaterielTab] = useState<string>('overview');
   const [activeKitsTab, setActiveKitsTab] = useState<string>('all');
 
   useEffect(() => {
@@ -490,8 +490,9 @@ function BottomTabBar() {
         const t = params.get('tab') || 'fil';
         setActiveCommunityTab(t);
       }
-    } else if (pathname.startsWith('/materiel/depart')) {
-      setActiveDepartTab('all');
+    } else if (pathname.startsWith('/materiel/depart') || pathname === '/materiel') {
+      setActiveDepartTab('overview');
+      setActiveMaterielTab('overview');
     }
 
     if (typeof window !== 'undefined') {
@@ -523,7 +524,10 @@ function BottomTabBar() {
         if (e.detail) setActivePaysDetailTab(e.detail);
       };
       const departHandler = (e: any) => {
-        if (e.detail) setActiveDepartTab(e.detail);
+        if (e.detail) {
+          setActiveDepartTab(e.detail);
+          setActiveMaterielTab(e.detail);
+        }
       };
       const kitsHandler = (e: any) => {
         if (e.detail) setActiveKitsTab(e.detail);
@@ -561,10 +565,9 @@ function BottomTabBar() {
     triggerHaptic('selection');
 
     if (isMaterielSection) {
-      if (tabKey === 'hub' || tabKey === 'depart') {
-        router.push('/materiel/depart');
-      } else if (tabKey === 'preparation') {
-        router.push('/materiel/preparation');
+      setActiveMaterielTab(tabKey);
+      if (typeof window !== 'undefined') {
+        window.dispatchEvent(new CustomEvent('depart-section-change', { detail: tabKey }));
       }
     } else if (isGroupesHub) {
       setActiveGroupesTab(tabKey as 'mes-groupes' | 'decouvrir');
@@ -630,8 +633,9 @@ function BottomTabBar() {
   const getUpperTabs = () => {
     if (isMaterielSection) {
       return [
-        { id: 'hub', label: '1. Le Hub' },
-        { id: 'preparation', label: '2. Préparation' },
+        { id: 'overview', label: "Vue d'ensemble" },
+        { id: 'terrain', label: 'Terrain & Météo' },
+        { id: 'equipment_hub', label: 'Sac & Matériel' },
       ];
     }
     if (isGroupesHub) {
@@ -712,7 +716,7 @@ function BottomTabBar() {
   };
 
   const currentUpperId = isMaterielSection
-    ? (isMaterielPreparation ? 'preparation' : 'hub')
+    ? activeMaterielTab
     : isGroupesHub
     ? activeGroupesTab
     : isGroupeCockpit

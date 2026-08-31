@@ -1,4 +1,4 @@
-﻿'use client';
+'use client';
 import { useState } from 'react';
 import {
   Sun,
@@ -55,10 +55,10 @@ export function DepartWeather({ weather, updatedAt }: DepartWeatherProps) {
 
   return (
     <GlassCard tone="neutral" as="article" ariaLabelledBy="weather-heading">
-      <div className="p-4 sm:p-5 space-y-3">
+      <div className="p-3.5 sm:p-4 space-y-2.5">
         {/* Header : Temp actuelle + lieu + fraîcheur */}
         <div className="flex items-start justify-between gap-2">
-          <div className="space-y-0.5">
+          <div className="space-y-0.5 min-w-0">
             <h2
               id="weather-heading"
               className="text-xs sm:text-[13px] font-bold text-[#17402C] flex items-center gap-2"
@@ -66,136 +66,96 @@ export function DepartWeather({ weather, updatedAt }: DepartWeatherProps) {
               <Thermometer size={15} className="text-[#2D6B4A]" aria-hidden="true" />
               <span>Météo du secteur</span>
             </h2>
-            <p className="text-[11px] text-[#5A7064] truncate max-w-xs">{locationLabel}</p>
+            <p className="text-[11px] text-[#5A7064] truncate">{locationLabel}</p>
           </div>
 
-          <div className="flex items-center gap-2 bg-white/40 dark:bg-white/10 px-2.5 py-1 rounded-xl border border-white/60 shadow-2xs">
+          <div className="flex items-center gap-2 bg-white/50 dark:bg-white/10 px-2.5 py-1 rounded-xl border border-white/60 shadow-2xs shrink-0">
             {getWeatherIcon(weather.current.weathercode, 18)}
             <div className="text-right">
               <div className="text-sm sm:text-base font-mono font-bold text-[#17402C] leading-none">
                 {weather.current.tempC}°C
               </div>
-              <div className="text-[9.5px] text-[#5A7064] mt-0.5">
+              <div className="text-[9px] text-[#5A7064] mt-0.5">
                 {weather.current.precipPct}% pluie
               </div>
             </div>
           </div>
         </div>
 
-        {/* Prévisions 3 jours du départ (§4E) */}
-        <div className="grid grid-cols-3 gap-2">
+        {/* ════ PRÉVISIONS & ÉPHÉMÉRIDE DÉFILABLES HORIZONTALEMENT ════ */}
+        <div className="flex gap-2 overflow-x-auto no-scrollbar py-0.5 scroll-smooth -mx-1 px-1">
+          {/* Prévisions 3 jours du départ */}
           {days.map((day, idx) => (
             <div
               key={day.date}
               className={cn(
-                'p-2 rounded-xl text-center space-y-1 transition-colors',
+                'shrink-0 p-2 rounded-xl text-center space-y-1 transition-colors w-[100px]',
                 idx === 0
-                  ? 'bg-white/50 dark:bg-white/10 border border-white/60 shadow-2xs'
-                  : 'bg-white/20 dark:bg-white/5 border border-white/30'
+                  ? 'bg-white/60 dark:bg-white/10 border border-white/70 shadow-2xs'
+                  : 'bg-white/25 dark:bg-white/5 border border-white/30'
               )}
             >
-              <p className="text-[10.5px] font-semibold text-[#17402C] truncate">
+              <p className="text-[10px] font-semibold text-[#17402C] truncate">
                 {idx === 0 ? 'Aujourd’hui' : day.day}
               </p>
               <div className="flex justify-center py-0.5">
-                {getWeatherIcon(day.weathercode, 18)}
+                {getWeatherIcon(day.weathercode, 16)}
               </div>
-              <div className="text-[11px] font-mono font-bold text-[#17402C]">
-                {day.tempMaxC}° <span className="text-[10px] text-[#5A7064] font-normal">{day.tempMinC}°</span>
+              <div className="text-[10.5px] font-mono font-bold text-[#17402C]">
+                {day.tempMaxC}° <span className="text-[9.5px] text-[#5A7064] font-normal">{day.tempMinC}°</span>
               </div>
               {day.precipPct > 0 && (
-                <div className="flex items-center justify-center gap-0.5 text-[9.5px] text-blue-700 dark:text-blue-400 font-medium">
-                  <Droplets size={9} />
+                <div className="flex items-center justify-center gap-0.5 text-[9px] text-blue-700 dark:text-blue-400 font-medium">
+                  <Droplets size={8.5} />
                   <span>{day.precipPct}%</span>
                 </div>
               )}
             </div>
           ))}
-        </div>
 
-        {/* ════ ÉPHÉMÉRIDE DU JOUR DU DÉPART (§Phase 5) ════ */}
-        <div className="grid grid-cols-3 gap-2 pt-0.5 text-center text-xs">
-          <div className="p-2 rounded-xl bg-white/30 border border-white/40 flex flex-col items-center">
-            <span className="text-[9.5px] uppercase tracking-wider text-[#5A7064] flex items-center gap-1 font-semibold">
-              <Sunrise size={11} className="text-amber-600" />
+          {/* Éphéméride du jour */}
+          <div className="shrink-0 p-2 rounded-xl bg-white/30 dark:bg-white/5 border border-white/40 flex flex-col items-center justify-between w-[80px]">
+            <span className="text-[9px] uppercase tracking-wider text-[#5A7064] flex items-center gap-1 font-semibold">
+              <Sunrise size={10} className="text-amber-600" />
               <span>Lever</span>
             </span>
-            <span className="font-mono font-bold text-[#17402C] text-xs mt-0.5">
+            <span className="font-mono font-bold text-[#17402C] text-[11px] my-auto">
               {sunriseTime}
             </span>
           </div>
 
-          <div className="p-2 rounded-xl bg-white/30 border border-white/40 flex flex-col items-center">
-            <span className="text-[9.5px] uppercase tracking-wider text-[#5A7064] flex items-center gap-1 font-semibold">
-              <Sunset size={11} className="text-amber-700" />
+          <div className="shrink-0 p-2 rounded-xl bg-white/30 dark:bg-white/5 border border-white/40 flex flex-col items-center justify-between w-[80px]">
+            <span className="text-[9px] uppercase tracking-wider text-[#5A7064] flex items-center gap-1 font-semibold">
+              <Sunset size={10} className="text-amber-700" />
               <span>Coucher</span>
             </span>
-            <span className="font-mono font-bold text-[#17402C] text-xs mt-0.5">
+            <span className="font-mono font-bold text-[#17402C] text-[11px] my-auto">
               {sunsetTime}
             </span>
           </div>
 
-          <div className="p-2 rounded-xl bg-white/30 border border-white/40 flex flex-col items-center">
-            <span className="text-[9.5px] uppercase tracking-wider text-[#5A7064] flex items-center gap-1 font-semibold">
-              <Sun size={11} className="text-emerald-700" />
+          <div className="shrink-0 p-2 rounded-xl bg-white/30 dark:bg-white/5 border border-white/40 flex flex-col items-center justify-between w-[80px]">
+            <span className="text-[9px] uppercase tracking-wider text-[#5A7064] flex items-center gap-1 font-semibold">
+              <Sun size={10} className="text-emerald-700" />
               <span>Jour</span>
             </span>
-            <span className="font-mono font-bold text-[#17402C] text-xs mt-0.5">
+            <span className="font-mono font-bold text-[#17402C] text-[11px] my-auto">
               {daylightHours}
             </span>
           </div>
-        </div>
 
-        {/* Bouton accordéon détail heure par heure (§4E) */}
-        {weather.cells && weather.cells.length > 0 && (
-          <div>
-            <button
-              type="button"
-              onClick={() => setShowHourly((v) => !v)}
-              className="w-full flex items-center justify-between text-[11px] font-semibold text-[#5A7064] hover:text-[#17402C] pt-1 cursor-pointer"
-              aria-expanded={showHourly}
+          {/* Heures de la journée si disponibles */}
+          {weather.cells && weather.cells.slice(0, 8).map((cell) => (
+            <div
+              key={cell.hour}
+              className="shrink-0 p-2 rounded-xl bg-white/20 dark:bg-white/5 border border-white/30 text-center w-[68px] space-y-0.5 flex flex-col justify-between"
             >
-              <span className="flex items-center gap-1">
-                <Clock size={12} />
-                <span>Détail heure par heure (24h)</span>
-              </span>
-              <motion.span
-                animate={shouldReduceMotion ? {} : { rotate: showHourly ? 180 : 0 }}
-                transition={{ duration: 0.18 }}
-              >
-                <ChevronDown size={13} />
-              </motion.span>
-            </button>
-
-            <AnimatePresence initial={false}>
-              {showHourly && (
-                <motion.div
-                  initial={shouldReduceMotion ? false : { height: 0, opacity: 0 }}
-                  animate={{ height: 'auto', opacity: 1 }}
-                  exit={shouldReduceMotion ? { opacity: 0 } : { height: 0, opacity: 0 }}
-                  transition={{ duration: shouldReduceMotion ? 0 : 0.2 }}
-                  className="overflow-hidden pt-2"
-                >
-                  <div className="flex gap-2 overflow-x-auto no-scrollbar pb-1">
-                    {weather.cells.slice(0, 12).map((cell) => (
-                      <div
-                        key={cell.hour}
-                        className="shrink-0 p-2 rounded-xl bg-white/30 dark:bg-white/5 border border-white/40 text-center w-14 space-y-1"
-                      >
-                        <p className="text-[9.5px] font-mono text-[#5A7064]">{cell.hour}</p>
-                        <div className="flex justify-center">{getWeatherIcon(cell.weathercode, 14)}</div>
-                        <p className="text-[11px] font-mono font-bold text-[#17402C]">{cell.tempC}°</p>
-                        {cell.precipPct > 0 && (
-                          <p className="text-[8.5px] text-blue-700 font-medium">{cell.precipPct}%</p>
-                        )}
-                      </div>
-                    ))}
-                  </div>
-                </motion.div>
-              )}
-            </AnimatePresence>
-          </div>
-        )}
+              <p className="text-[9px] font-mono text-[#5A7064]">{cell.hour}</p>
+              <div className="flex justify-center">{getWeatherIcon(cell.weathercode, 14)}</div>
+              <p className="text-[10.5px] font-mono font-bold text-[#17402C]">{cell.tempC}°</p>
+            </div>
+          ))}
+        </div>
       </div>
     </GlassCard>
   );

@@ -144,6 +144,14 @@ export function DepartCockpit({
     const handleOpenSheet = () => setIsSheetOpen(true);
     window.addEventListener('open-departure-sheet', handleOpenSheet);
 
+    const handleSectionChange = (e: any) => {
+      if (e.detail) {
+        const sec = e.detail === 'all' || e.detail === 'overview' ? 'all' : e.detail;
+        setActiveSection(sec as DepartSectionId);
+      }
+    };
+    window.addEventListener('depart-section-change', handleSectionChange);
+
     if ('getBattery' in navigator) {
       (navigator as any)
         .getBattery()
@@ -164,11 +172,16 @@ export function DepartCockpit({
       window.removeEventListener('online', handleOnline);
       window.removeEventListener('offline', handleOffline);
       window.removeEventListener('open-departure-sheet', handleOpenSheet);
+      window.removeEventListener('depart-section-change', handleSectionChange);
     };
   }, [depart, weather]);
 
   const handleSelectTab = (tabId: string) => {
-    setActiveSection(tabId as DepartSectionId);
+    const sec = tabId === 'overview' ? 'all' : tabId;
+    setActiveSection(sec as DepartSectionId);
+    if (typeof window !== 'undefined') {
+      window.dispatchEvent(new CustomEvent('depart-section-change', { detail: tabId }));
+    }
   };
 
   const SECTIONS_TABS: TabOption[] = [
@@ -361,7 +374,7 @@ export function DepartCockpit({
         >
           {depart?.trail && (
             <div className="w-full">
-              <DepartMap trail={depart.trail} height="380px" />
+              <DepartMap trail={depart.trail} height="180px" />
             </div>
           )}
           <DepartWeather weather={weather} updatedAt={depart?.updatedAt} />
@@ -415,13 +428,13 @@ export function DepartCockpit({
       >
         <div
           className={cn(
-            'space-y-2 sticky top-0 z-30 pt-2 pb-2 px-2.5 backdrop-blur-md rounded-2xl border transition-colors shadow-xs',
+            'sticky top-0 z-30 pt-1.5 pb-1.5 px-3 backdrop-blur-md rounded-2xl border transition-colors shadow-xs',
             isUltraSave
               ? 'bg-black/95 border-white/20 text-white'
               : 'bg-white/80 border-white/80'
           )}
         >
-          {/* Ligne 1 : Sélecteur de Trek + % Prêt + Statuts Éco / En Ligne */}
+          {/* Ligne 1 Unique : Sélecteur de Trek + % Prêt + Statuts Éco / En Ligne */}
           <div className="flex items-center justify-between gap-2">
             <div className="flex items-center gap-1.5 min-w-0">
               {kits && kits.length > 1 ? (
@@ -471,15 +484,6 @@ export function DepartCockpit({
               />
             </div>
           </div>
-
-          {/* Ligne 2 : Onglets Segmentés Fins */}
-          <ScrollableTabs
-            tabs={SECTIONS_TABS}
-            activeTab={activeSection}
-            onSelectTab={handleSelectTab}
-            size="sm"
-            className="px-0"
-          />
         </div>
 
         {/* ════ BANNIÈRE ALERTE VITALE MOBILE CONTEXTUELLE ════ */}

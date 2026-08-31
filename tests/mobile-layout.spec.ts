@@ -41,7 +41,8 @@ describe('Mobile Layout & Shell Navigation Architecture', () => {
         pathname?.startsWith('/clubs') ||
         pathname?.startsWith('/entraide') ||
         pathname?.startsWith('/evenements') ||
-        pathname?.startsWith('/alertes');
+        pathname?.startsWith('/alertes') ||
+        pathname?.startsWith('/materiel');
 
       return hasUpperExtension
         ? 'var(--bottom-tab-extended-height, calc(92px + env(safe-area-inset-bottom, 0px)))'
@@ -55,11 +56,11 @@ describe('Mobile Layout & Shell Navigation Architecture', () => {
     expect(computeBottomNavHeight('/explorer')).toBe(
       'var(--bottom-tab-base-height, calc(52px + env(safe-area-inset-bottom, 0px)))'
     );
-    expect(computeBottomNavHeight('/materiel')).toBe(
-      'var(--bottom-tab-base-height, calc(52px + env(safe-area-inset-bottom, 0px)))'
-    );
 
     // Routes with upper extension tray
+    expect(computeBottomNavHeight('/materiel')).toBe(
+      'var(--bottom-tab-extended-height, calc(92px + env(safe-area-inset-bottom, 0px)))'
+    );
     expect(computeBottomNavHeight('/communaute')).toBe(
       'var(--bottom-tab-extended-height, calc(92px + env(safe-area-inset-bottom, 0px)))'
     );
