@@ -264,12 +264,12 @@ export function DepartMap({ trail, height = '240px', className }: DepartMapProps
           )}
         </div>
 
-        {/* Contrôles d'action rapide */}
-        <div className="flex items-center gap-1 shrink-0">
+        {/* Contrôles d'action rapide Liquid Glass */}
+        <div className="flex items-center gap-1.5 shrink-0">
           <button
             type="button"
             onClick={handleDownloadGPX}
-            className="p-1.5 rounded-lg bg-white/50 dark:bg-white/10 hover:bg-white/80 text-[#17402C] transition-colors cursor-pointer"
+            className="glass-circle-btn !w-7 !h-7 text-[#17402C] cursor-pointer"
             title="Exporter le tracé"
             aria-label="Exporter le tracé"
           >
@@ -278,7 +278,7 @@ export function DepartMap({ trail, height = '240px', className }: DepartMapProps
           <button
             type="button"
             onClick={() => setIsFullscreen((v) => !v)}
-            className="p-1.5 rounded-lg bg-white/50 dark:bg-white/10 hover:bg-white/80 text-[#17402C] transition-colors cursor-pointer"
+            className="glass-circle-btn !w-7 !h-7 text-[#17402C] cursor-pointer"
             title={isFullscreen ? 'Réduire' : 'Plein écran'}
             aria-label={isFullscreen ? 'Quitter le mode plein écran' : 'Afficher la carte en plein écran'}
           >
@@ -300,12 +300,12 @@ export function DepartMap({ trail, height = '240px', className }: DepartMapProps
           style={{ height: actualHeight, minHeight: actualHeight }}
         />
 
-        {/* Boutons flottants de contrôle */}
-        <div className="absolute top-2.5 right-2.5 z-[400] flex flex-col gap-1">
+        {/* Boutons flottants de contrôle Liquid Glass */}
+        <div className="absolute top-2.5 right-2.5 z-[400] flex flex-col gap-1.5">
           <button
             type="button"
             onClick={handleRecenter}
-            className="p-1.5 rounded-xl bg-white/90 dark:bg-black/80 shadow-md text-[#17402C] hover:bg-white cursor-pointer"
+            className="glass-circle-btn !w-8 !h-8 text-[#17402C] cursor-pointer shadow-md"
             title="Recentrer le tracé"
           >
             <Navigation size={13} />
@@ -313,7 +313,7 @@ export function DepartMap({ trail, height = '240px', className }: DepartMapProps
           <button
             type="button"
             onClick={() => setShowTilePicker((v) => !v)}
-            className="p-1.5 rounded-xl bg-white/90 dark:bg-black/80 shadow-md text-[#17402C] hover:bg-white cursor-pointer"
+            className="glass-circle-btn !w-8 !h-8 text-[#17402C] cursor-pointer shadow-md"
             title="Changer de fond de carte"
           >
             <Layers size={13} />

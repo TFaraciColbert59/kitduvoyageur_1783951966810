@@ -248,59 +248,67 @@ export function DepartCockpit({
             />
           </div>
 
-          {/* 1.4 Vitrine Visuelle des Équipements Clés & Préparation Active du Sac */}
-          <div className="glass rounded-[28px] p-5 space-y-4 border border-white/80 dark:border-white/10 shadow-sm">
+          {/* 1.4 Vitrine Visuelle des Équipements Indispensables (Défilement Horizontal Fluide) */}
+          <div className="glass rounded-[28px] p-4 sm:p-5 space-y-3.5 border border-white/80 dark:border-white/10 shadow-sm backdrop-blur-md">
             <div className="flex items-center justify-between gap-3 border-b border-black/5 pb-3">
               <div className="flex items-center gap-2.5">
-                <div className="w-9 h-9 rounded-2xl bg-[#17402C] text-white flex items-center justify-center shadow-xs">
+                <div className="w-9 h-9 rounded-2xl bg-[#17402C] text-white flex items-center justify-center shadow-xs shrink-0">
                   <Boxes size={17} />
                 </div>
                 <div>
-                  <h3 className="text-sm font-bold text-[#17402C]">
+                  <h3 className="text-xs sm:text-sm font-bold text-[#17402C]">
                     Préparation du Sac & Équipements Indispensables
                   </h3>
-                  <p className="text-[11.5px] text-[#5A7064]">
+                  <p className="text-[11px] text-[#5A7064]">
                     {checkedItemsCount} sur {totalItemsCount} équipements prêts ({totalItemsCount > 0 ? Math.round((checkedItemsCount / totalItemsCount) * 100) : 100}% finalisé).
                   </p>
                 </div>
               </div>
 
+              {/* Bouton Capsule Liquid Glass Primaire */}
               <button
                 type="button"
                 onClick={() => setActiveSection('equipment_hub')}
-                className="px-3.5 py-1.5 rounded-xl text-xs font-bold bg-[#17402C] text-white hover:bg-[#17402C]/90 shadow-2xs flex items-center gap-1.5 cursor-pointer transition-all active:scale-98 shrink-0"
+                className="glass-capsule-btn primary !py-1.5 !px-3.5 text-xs font-bold flex items-center gap-1.5 cursor-pointer shrink-0"
               >
                 <span>Gérer le Parc Matériel</span>
                 <ArrowRight size={13} />
               </button>
             </div>
 
-            {/* Mini-galerie 4 indispensables avec vraies photos de montagne */}
-            <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-              {showcaseItems.map((it) => {
+            {/* Vitrine Défilante Horizontalement à 100% */}
+            <div className="flex gap-3 overflow-x-auto no-scrollbar py-1 px-0.5 scroll-smooth">
+              {(depart?.assignedKit?.items || []).map((it) => {
                 const img = resolveGearImage(it.name, it.category || 'Autre', it.photoUrl);
                 return (
                   <div
                     key={it.id || it.name}
-                    className="group rounded-2xl overflow-hidden bg-white/70 dark:bg-white/10 border border-white/80 shadow-2xs p-2 space-y-1.5 flex flex-col justify-between"
+                    className="w-[190px] sm:w-[210px] shrink-0 rounded-2xl overflow-hidden bg-white/85 dark:bg-white/15 border border-white/90 shadow-2xs p-2.5 space-y-2 flex flex-col justify-between backdrop-blur-md transition-transform hover:scale-[1.02]"
                   >
                     <div className="relative w-full aspect-[16/10] rounded-xl overflow-hidden bg-black/5">
                       <img
                         src={img}
                         alt={it.name}
-                        className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                        className="w-full h-full object-cover"
                         loading="lazy"
                       />
-                      {it.is_checked && (
-                        <div className="absolute top-1.5 right-1.5 px-1.5 py-0.2 rounded-md bg-emerald-700 text-white text-[8px] font-bold flex items-center gap-0.5 shadow-xs">
-                          <CheckCircle2 size={9} />
-                          <span>Prêt</span>
+                      {it.is_checked ? (
+                        <div className="absolute top-1.5 right-1.5 px-2 py-0.5 rounded-full bg-emerald-800 text-white text-[8.5px] font-bold flex items-center gap-1 shadow-xs">
+                          <CheckCircle2 size={9.5} />
+                          <span>✓ Prêt</span>
+                        </div>
+                      ) : (
+                        <div className="absolute top-1.5 right-1.5 px-2 py-0.5 rounded-full bg-black/60 text-white text-[8.5px] font-bold backdrop-blur-md">
+                          <span>À préparer</span>
                         </div>
                       )}
                     </div>
-                    <div>
-                      <h4 className="text-[11px] font-bold text-[#17402C] line-clamp-1">{it.name}</h4>
-                      <span className="text-[10px] font-mono text-[#5A7064]">{formatWeight(it.weight_g)}</span>
+                    <div className="space-y-0.5">
+                      <h4 className="text-xs font-bold text-[#17402C] line-clamp-1">{it.name}</h4>
+                      <div className="flex items-center justify-between text-[10.5px] font-mono text-[#5A7064]">
+                        <span>{formatWeight(it.weight_g)}</span>
+                        <span className="text-[9px] font-sans font-semibold px-1.5 py-0.2 rounded-md bg-black/5">{it.category}</span>
+                      </div>
                     </div>
                   </div>
                 );
@@ -327,14 +335,14 @@ export function DepartCockpit({
             <div className="grid grid-cols-2 gap-2 pt-1 border-t border-black/5">
               <a
                 href="tel:112"
-                className="py-1.5 px-3 rounded-xl bg-black/5 dark:bg-white/10 hover:bg-black/10 text-[#17402C] text-xs font-semibold flex items-center justify-between"
+                className="glass-capsule-btn !py-2 !px-3.5 text-xs font-bold flex items-center justify-between cursor-pointer"
               >
                 <span>112 (Europe / Montagne)</span>
                 <span className="text-[10px] font-mono text-[#5A7064]">Appel 📞</span>
               </a>
               <a
                 href="tel:15"
-                className="py-1.5 px-3 rounded-xl bg-black/5 dark:bg-white/10 hover:bg-black/10 text-[#17402C] text-xs font-semibold flex items-center justify-between"
+                className="glass-capsule-btn !py-2 !px-3.5 text-xs font-bold flex items-center justify-between cursor-pointer"
               >
                 <span>15 (SAMU Urgences)</span>
                 <span className="text-[10px] font-mono text-[#5A7064]">Appel 📞</span>

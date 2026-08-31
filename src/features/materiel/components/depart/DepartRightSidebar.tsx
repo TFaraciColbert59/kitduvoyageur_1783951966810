@@ -60,12 +60,12 @@ export function DepartRightSidebar({
           <CountdownLive target={depart?.startsAt} />
         </div>
 
-        {/* Bouton Fiche de départ */}
+        {/* Bouton Fiche de départ Liquid Glass */}
         {onOpenDepartureSheet && (
           <button
             type="button"
             onClick={onOpenDepartureSheet}
-            className="w-full py-2 rounded-xl text-xs font-bold bg-[#17402C] text-white hover:bg-[#17402C]/90 shadow-2xs flex items-center justify-center gap-1.5 cursor-pointer transition-all active:scale-98"
+            className="glass-capsule-btn primary w-full !py-2 text-xs font-bold flex items-center justify-center gap-1.5 cursor-pointer"
           >
             <FileText size={13} />
             <span>Ouvrir la fiche de départ</span>

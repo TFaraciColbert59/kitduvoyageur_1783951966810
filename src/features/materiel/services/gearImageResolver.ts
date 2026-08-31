@@ -93,8 +93,8 @@ export function resolveGearImage(name?: string | null, category?: string | null,
     }
   }
 
-  // 2. Si une URL externe valide est fournie et n'est pas un placeholder
-  if (existingUrl && existingUrl.trim() !== '' && !existingUrl.includes('no_image.png')) {
+  // 2. Si une URL externe valide HTTP/HTTPS est fournie
+  if (existingUrl && (existingUrl.startsWith('http://') || existingUrl.startsWith('https://')) && !existingUrl.includes('no_image.png')) {
     return existingUrl;
   }
 
