@@ -1,4 +1,4 @@
-﻿import { Suspense } from 'react';
+import { Suspense } from 'react';
 import { getDepartDetail } from '@/features/materiel/services/getDepartDetail';
 import { getKits } from '@/features/materiel/services/getKits';
 import { getWeather } from '@/features/materiel/services/getWeather';
@@ -10,10 +10,6 @@ import { DepartCockpitSkeleton } from '@/features/materiel/components/depart/Dep
 
 export const dynamic = 'force-dynamic';
 
-/**
- * /materiel — Hub Central Matériel LKDV.
- * Cockpit unifié : Préparation active, Sac & Vivres, Poids, Alertes, Inventaire & Prêts, Boutique.
- */
 export default async function MaterielPage({
   searchParams,
 }: {
@@ -29,11 +25,11 @@ export default async function MaterielPage({
     getProductSuggestions(undefined, 8),
   ]);
 
-  const weather = depart.trail?.lat && depart.trail?.lng
+  const weather = depart?.trail?.lat && depart?.trail?.lng
     ? await getWeather(depart.trail.lat, depart.trail.lng, depart.trail.name)
     : null;
 
-  const kitList = kits
+  const kitList = (kits || [])
     .filter((k) => !k.is_trashed)
     .map((k) => ({ id: k.id, name: k.name }));
 
@@ -45,9 +41,9 @@ export default async function MaterielPage({
           depart={depart}
           weather={weather}
           kits={kitList}
-          inventory={inventory}
-          loans={loans}
-          products={products}
+          inventory={inventory || []}
+          loans={loans || []}
+          products={products || []}
         />
       </Suspense>
     </div>

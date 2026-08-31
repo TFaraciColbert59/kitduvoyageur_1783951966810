@@ -89,7 +89,7 @@ export async function getWeather(
 
   try {
     const url = `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&hourly=temperature_2m,precipitation_probability,weathercode&daily=weathercode,temperature_2m_max,temperature_2m_min,precipitation_probability_max&current_weather=true&forecast_days=5&timezone=auto`;
-    const res = await fetch(url, { next: { revalidate: 900 } });
+    const res = await fetch(url, { next: { revalidate: 900 }, signal: AbortSignal.timeout(1500) });
     if (!res.ok) return getFallbackForecast(lat, lon, locLabel);
     const data = await res.json();
 
