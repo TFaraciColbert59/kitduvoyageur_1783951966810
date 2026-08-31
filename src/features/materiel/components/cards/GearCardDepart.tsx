@@ -1,7 +1,8 @@
 'use client';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { Clock, ArrowRight, Backpack } from 'lucide-react';
+import { Clock, Backpack } from 'lucide-react';
+import { ArrowRightAnimated } from '@/components/icons';
 import { GlassCard } from '@/components/ui/GlassCard';
 import { Eyebrow } from '@/components/ui/Eyebrow';
 import { Badge } from '@/components/ui/Badge';
@@ -113,7 +114,7 @@ export function GearCardDepart({ data, className }: { data: DepartData; classNam
               className="glass-capsule-btn primary !h-7 sm:!h-9 !text-[11px] sm:!text-xs !px-3 sm:!px-4"
             >
               <span>Cockpit</span>
-              <ArrowRight size={13} />
+              <ArrowRightAnimated size={13} />
             </Link>
           ) : (
             <Link
@@ -122,7 +123,7 @@ export function GearCardDepart({ data, className }: { data: DepartData; classNam
               className="glass-capsule-btn primary !h-7 sm:!h-9 !text-[11px] sm:!text-xs !px-3 sm:!px-4"
             >
               <span>Préparer</span>
-              <ArrowRight size={13} />
+              <ArrowRightAnimated size={13} />
             </Link>
           )}
         </div>

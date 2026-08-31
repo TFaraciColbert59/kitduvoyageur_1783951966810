@@ -7,9 +7,9 @@ import {
   WifiOff,
   Layers,
   Printer,
-  ChevronRight,
   Share2,
 } from 'lucide-react';
+import { ChevronRightAnimated } from '@/components/icons';
 import { KitSwitcher } from './KitSwitcher';
 import { Badge } from '@/components/ui/Badge';
 import { cn } from '@/lib/utils';
@@ -164,7 +164,7 @@ export function DepartLeftSidebar({
               }`}
             >
               <span className="truncate text-left">{t.label}</span>
-              {isActive && <ChevronRight size={13} className="text-white/70 shrink-0" />}
+              {isActive && <ChevronRightAnimated size={13} className="text-white/70 shrink-0" />}
             </button>
           );
         })}

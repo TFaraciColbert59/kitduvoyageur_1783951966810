@@ -1,7 +1,8 @@
-﻿'use client';
+'use client';
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
-import { AlertTriangle, RefreshCw, ArrowLeft, WifiOff, ShieldCheck } from 'lucide-react';
+import { AlertTriangle, WifiOff, ShieldCheck } from 'lucide-react';
+import { RefreshCwAnimated, ArrowLeftAnimated } from '@/components/icons';
 import { GlassCard } from '@/components/ui/GlassCard';
 
 export default function DepartError({
@@ -47,7 +48,7 @@ export default function DepartError({
                 onClick={() => reset()}
                 className="glass-capsule-btn primary flex-1 py-2.5 px-4 text-xs font-bold flex items-center justify-center gap-1.5"
               >
-                <RefreshCw size={13} />
+                <RefreshCwAnimated size={13} />
                 <span>Réessayer</span>
               </button>
 
@@ -55,7 +56,7 @@ export default function DepartError({
                 href="/materiel"
                 className="glass-capsule-btn flex-1 py-2.5 px-4 text-xs font-semibold flex items-center justify-center gap-1.5"
               >
-                <ArrowLeft size={13} />
+                <ArrowLeftAnimated size={13} />
                 <span>Hub Matériel</span>
               </Link>
             </div>

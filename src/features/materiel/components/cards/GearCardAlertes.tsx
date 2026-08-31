@@ -1,6 +1,7 @@
 'use client';
 import Link from 'next/link';
-import { ShieldCheck, ArrowRight, AlertTriangle } from 'lucide-react';
+import { ShieldCheck, AlertTriangle } from 'lucide-react';
+import { ArrowRightAnimated } from '@/components/icons';
 import { GlassCard } from '@/components/ui/GlassCard';
 import { Eyebrow } from '@/components/ui/Eyebrow';
 import { Badge } from '@/components/ui/Badge';
@@ -85,7 +86,7 @@ export function GearCardAlertes({ data, className }: { data: AlertesData; classN
           </span>
           <Link href="/materiel/alertes" className="glass-capsule-btn secondary text-[9.5px] sm:text-xs !h-6 sm:!h-7 !px-2 sm:!px-2.5">
             <span>Détails</span>
-            <ArrowRight size={10} />
+            <ArrowRightAnimated size={10} />
           </Link>
         </div>
       </div>
