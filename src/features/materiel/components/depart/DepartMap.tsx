@@ -10,7 +10,8 @@ import {
   Check,
   Compass,
 } from 'lucide-react';
-import { DownloadAnimated, Maximize2Animated } from '@/components/icons';
+import { DownloadIcon as DownloadAnimated } from '@/components/icons/download';
+import { Maximize2Icon as Maximize2Animated } from '@/components/icons/maximize-2';
 import { Skeleton } from '@/components/ui/Skeleton';
 import { formatDistanceKm } from '@/features/materiel/domain/departCalculations';
 import { cn } from '@/lib/utils';

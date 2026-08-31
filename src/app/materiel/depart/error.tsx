@@ -2,7 +2,8 @@
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { AlertTriangle, WifiOff, ShieldCheck } from 'lucide-react';
-import { RefreshCwAnimated, ArrowLeftAnimated } from '@/components/icons';
+import { RefreshCWIcon as RefreshCwAnimated } from '@/components/icons/refresh-cw';
+import { ArrowLeftIcon as ArrowLeftAnimated } from '@/components/icons/arrow-left';
 import { GlassCard } from '@/components/ui/GlassCard';
 
 export default function DepartError({

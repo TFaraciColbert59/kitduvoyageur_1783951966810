@@ -2,7 +2,8 @@
 import React from 'react';
 import { motion, AnimatePresence, useReducedMotion } from 'framer-motion';
 import { AlertTriangle } from 'lucide-react';
-import { ArrowRightAnimated, XAnimated } from '@/components/icons';
+import { ArrowRightIcon as ArrowRightAnimated } from '@/components/icons/arrow-right';
+import { XIcon as XAnimated } from '@/components/icons/x';
 import { cn } from '@/lib/utils';
 import type { ActionableAlert } from '@/features/materiel/services/generateSmartPrompts';
 

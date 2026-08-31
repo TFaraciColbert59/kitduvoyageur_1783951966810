@@ -11,7 +11,8 @@ import {
   ChevronDown,
   HelpCircle,
 } from 'lucide-react';
-import { ArrowRightAnimated, XAnimated } from '@/components/icons';
+import { ArrowRightIcon as ArrowRightAnimated } from '@/components/icons/arrow-right';
+import { XIcon as XAnimated } from '@/components/icons/x';
 import { cn } from '@/lib/utils';
 import type { ActionableAlert, SmartPromptsInput } from '@/features/materiel/services/generateSmartPrompts';
 import { generateSmartPrompts } from '@/features/materiel/services/generateSmartPrompts';

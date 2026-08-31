@@ -18,7 +18,10 @@ import {
   ArrowUpRight,
   List,
 } from 'lucide-react';
-import { SearchAnimated, LayoutGridAnimated, XAnimated, RotateCcwAnimated } from '@/components/icons';
+import { SearchIcon as SearchAnimated } from '@/components/icons/search';
+import { LayoutGridIcon as LayoutGridAnimated } from '@/components/icons/layout-grid';
+import { XIcon as XAnimated } from '@/components/icons/x';
+import { RotateCCWIcon as RotateCcwAnimated } from '@/components/icons/rotate-ccw';
 import { motion, AnimatePresence } from 'framer-motion';
 import { formatWeight } from '@/features/materiel/domain/departCalculations';
 import { addInventoryItem } from '@/features/materiel/actions/addInventoryItem';

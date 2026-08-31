@@ -1,34 +1,32 @@
 'use client';
 import React from 'react';
-import {
-  HomeAnimated,
-  MountainAnimated,
-  CompassAnimated,
-  BoxAnimated,
-  UsersAnimated,
-  UserAnimated,
-  SparklesAnimated,
-  TentAnimated,
-  BookAnimated,
-  ShoppingBagAnimated,
-  DocAnimated,
-  SearchAnimated,
-  ChevronLeftAnimated,
-  ChevronRightAnimated,
-  ArrowRightAnimated,
-  ArrowLeftAnimated,
-  XAnimated,
-  MenuAnimated,
-  BellAnimated,
-  HeartAnimated,
-  BookmarkAnimated,
-  MapPinAnimated,
-  StarAnimated,
-  LockAnimated,
-  FilterAnimated,
-  MinusAnimated,
-  PlusAnimated,
-} from '@/components/icons';
+import { HomeIcon as HomeAnimated } from '@/components/icons/home';
+import { MountainIcon as MountainAnimated } from '@/components/icons/mountain';
+import { CompassIcon as CompassAnimated } from '@/components/icons/compass';
+import { BoxIcon as BoxAnimated } from '@/components/icons/box';
+import { UsersIcon as UsersAnimated } from '@/components/icons/users';
+import { UserIcon as UserAnimated } from '@/components/icons/user';
+import { SparklesIcon as SparklesAnimated } from '@/components/icons/sparkles';
+import { TentIcon as TentAnimated } from '@/components/icons/tent';
+import { BookIcon as BookAnimated } from '@/components/icons/book';
+import { ShoppingBagIcon as ShoppingBagAnimated } from '@/components/icons/shopping-bag';
+import { DocIcon as DocAnimated } from '@/components/icons/doc';
+import { SearchIcon as SearchAnimated } from '@/components/icons/search';
+import { ChevronLeftIcon as ChevronLeftAnimated } from '@/components/icons/chevron-left';
+import { ChevronRightIcon as ChevronRightAnimated } from '@/components/icons/chevron-right';
+import { ArrowRightIcon as ArrowRightAnimated } from '@/components/icons/arrow-right';
+import { ArrowLeftIcon as ArrowLeftAnimated } from '@/components/icons/arrow-left';
+import { XIcon as XAnimated } from '@/components/icons/x';
+import { MenuIcon as MenuAnimated } from '@/components/icons/menu';
+import { BellIcon as BellAnimated } from '@/components/icons/bell';
+import { HeartIcon as HeartAnimated } from '@/components/icons/heart';
+import { BookmarkIcon as BookmarkAnimated } from '@/components/icons/bookmark';
+import { MapPinIcon as MapPinAnimated } from '@/components/icons/map-pin';
+import { StarIcon as StarAnimated } from '@/components/icons/star';
+import { LockIcon as LockAnimated } from '@/components/icons/lock';
+import { FilterIcon as FilterAnimated } from '@/components/icons/filter';
+import { MinusIcon as MinusAnimated } from '@/components/icons/minus';
+import { PlusIcon as PlusAnimated } from '@/components/icons/plus';
 
 export interface LkvIconProps {
   name:

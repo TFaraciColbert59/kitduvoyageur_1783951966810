@@ -9,7 +9,7 @@ import {
   Printer,
   Share2,
 } from 'lucide-react';
-import { ChevronRightAnimated } from '@/components/icons';
+import { ChevronRightIcon as ChevronRightAnimated } from '@/components/icons/chevron-right';
 import { KitSwitcher } from './KitSwitcher';
 import { Badge } from '@/components/ui/Badge';
 import { cn } from '@/lib/utils';

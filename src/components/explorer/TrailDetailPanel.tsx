@@ -17,7 +17,7 @@ import {
   Play,
   Mountain,
 } from 'lucide-react';
-import { XAnimated } from '@/components/icons';
+import { XIcon as XAnimated } from '@/components/icons/x';
 import type { MapTrail } from './types';
 import { useOfflineDownload } from '@/hooks/useOfflineDownload';
 import { listOfflineRoutes } from '@/lib/offlineStorage';

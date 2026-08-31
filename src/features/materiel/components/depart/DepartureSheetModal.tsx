@@ -12,7 +12,9 @@ import {
   Thermometer,
   Zap,
 } from 'lucide-react';
-import { XAnimated, PlayAnimated, RotateCcwAnimated } from '@/components/icons';
+import { XIcon as XAnimated } from '@/components/icons/x';
+import { PlayIcon as PlayAnimated } from '@/components/icons/play';
+import { RotateCCWIcon as RotateCcwAnimated } from '@/components/icons/rotate-ccw';
 import { motion, AnimatePresence } from 'framer-motion';
 import { formatDistanceKm, formatWeight } from '@/features/materiel/domain/departCalculations';
 import { updateDepartStatus } from '@/features/materiel/actions/updateDepartStatus';

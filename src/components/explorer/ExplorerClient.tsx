@@ -16,12 +16,10 @@ import {
   Bell,
   ShoppingBag,
 } from 'lucide-react';
-import {
-  SlidersHorizontalAnimated,
-  XAnimated,
-  RotateCcwAnimated,
-  SearchAnimated,
-} from '@/components/icons';
+import { SlidersHorizontalIcon as SlidersHorizontalAnimated } from '@/components/icons/sliders-horizontal';
+import { XIcon as XAnimated } from '@/components/icons/x';
+import { RotateCCWIcon as RotateCcwAnimated } from '@/components/icons/rotate-ccw';
+import { SearchIcon as SearchAnimated } from '@/components/icons/search';
 import Link from 'next/link';
 import type { MapTrail } from '@/components/explorer/types';
 import {

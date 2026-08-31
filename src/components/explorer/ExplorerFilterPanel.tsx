@@ -1,7 +1,8 @@
 'use client';
 
 import React from 'react';
-import { SearchAnimated, RotateCcwAnimated } from '@/components/icons';
+import { SearchIcon as SearchAnimated } from '@/components/icons/search';
+import { RotateCCWIcon as RotateCcwAnimated } from '@/components/icons/rotate-ccw';
 import { getDifficultyColor } from './types';
 
 export interface PoiFilterItem {

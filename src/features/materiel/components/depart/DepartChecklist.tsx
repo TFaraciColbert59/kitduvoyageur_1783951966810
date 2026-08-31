@@ -17,7 +17,7 @@ import {
   X,
   CheckSquare,
 } from 'lucide-react';
-import { RotateCcwAnimated } from '@/components/icons';
+import { RotateCCWIcon as RotateCcwAnimated } from '@/components/icons/rotate-ccw';
 import { motion, AnimatePresence, useReducedMotion } from 'framer-motion';
 import { cn } from '@/lib/utils';
 import { toggleKitItem } from '@/features/materiel/actions/toggleKitItem';

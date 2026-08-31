@@ -3,7 +3,8 @@
 import React, { useCallback, useRef } from 'react';
 import { motion } from 'framer-motion';
 import { MapPin } from 'lucide-react';
-import { ChevronDownAnimated, ChevronUpAnimated } from '@/components/icons';
+import { ChevronDownIcon as ChevronDownAnimated } from '@/components/icons/chevron-down';
+import { ChevronUpIcon as ChevronUpAnimated } from '@/components/icons/chevron-up';
 import type { MapTrail } from './types';
 import ExplorerListCard from './ExplorerListCard';
 import { useHapticFeedback } from '@/hooks/useHapticFeedback';

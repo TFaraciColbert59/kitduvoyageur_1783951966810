@@ -1,7 +1,7 @@
 'use client';
 import * as Dialog from '@radix-ui/react-dialog';
 import { motion, AnimatePresence } from 'framer-motion';
-import { ArrowLeftAnimated } from '@/components/icons';
+import { ArrowLeftIcon as ArrowLeftAnimated } from '@/components/icons/arrow-left';
 
 export function GlassSheet({
   open, onOpenChange, title, children,

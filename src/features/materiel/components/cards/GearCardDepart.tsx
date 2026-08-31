@@ -2,7 +2,7 @@
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { Clock, Backpack } from 'lucide-react';
-import { ArrowRightAnimated } from '@/components/icons';
+import { ArrowRightIcon as ArrowRightAnimated } from '@/components/icons/arrow-right';
 import { GlassCard } from '@/components/ui/GlassCard';
 import { Eyebrow } from '@/components/ui/Eyebrow';
 import { Badge } from '@/components/ui/Badge';

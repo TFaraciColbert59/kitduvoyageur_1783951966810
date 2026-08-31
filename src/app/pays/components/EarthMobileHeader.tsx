@@ -3,7 +3,9 @@
 import React, { useCallback, useMemo, useRef, useState } from 'react';
 import Link from 'next/link';
 import { motion, AnimatePresence } from 'framer-motion';
-import { ChevronLeftAnimated, SearchAnimated, XAnimated } from '@/components/icons';
+import { ChevronLeftIcon as ChevronLeftAnimated } from '@/components/icons/chevron-left';
+import { SearchIcon as SearchAnimated } from '@/components/icons/search';
+import { XIcon as XAnimated } from '@/components/icons/x';
 import type { Country } from '@/lib/countries';
 import { useHapticFeedback } from '@/hooks/useHapticFeedback';
 

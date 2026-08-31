@@ -3,7 +3,7 @@
 import React from 'react';
 import Link from 'next/link';
 import { Sparkles, Scale, CheckCircle2, ShieldAlert } from 'lucide-react';
-import { ChevronLeftAnimated } from '@/components/icons';
+import { ChevronLeftIcon as ChevronLeftAnimated } from '@/components/icons/chevron-left';
 import { usePreparationStore } from '../stores/usePreparationStore';
 import { useHapticFeedback } from '@/hooks/useHapticFeedback';
 
