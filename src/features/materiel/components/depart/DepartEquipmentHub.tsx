@@ -28,8 +28,6 @@ import { addDepartItem } from '@/features/materiel/actions/addDepartItem';
 import { resolveGearImage } from '@/features/materiel/services/gearImageResolver';
 import { DepartChecklist } from './DepartChecklist';
 import { DepartWeightBreakdown } from './DepartWeightBreakdown';
-import { DepartWeather } from './DepartWeather';
-import { DepartParticipants } from './DepartParticipants';
 import { cn } from '@/lib/utils';
 import type { InventoryItem } from '@/features/materiel/services/getInventory';
 import type { LoanItem } from '@/features/materiel/services/getLoans';
@@ -37,18 +35,6 @@ import type { ProductSuggestion } from '@/features/materiel/services/getProductS
 import type { ChecklistItem, Participant } from '@/features/materiel/types/trekHub';
 import type { MapTrail } from '@/components/explorer/types';
 import type { WeatherForecast } from '@/features/materiel/services/getWeather';
-
-const DepartMap = dynamic(
-  () => import('./DepartMap').then((m) => ({ default: m.DepartMap })),
-  {
-    ssr: false,
-    loading: () => (
-      <div className="glass rounded-[20px] overflow-hidden p-4 text-center text-xs text-[#5A7064]">
-        Chargement de la carte du tracé...
-      </div>
-    ),
-  }
-);
 
 export interface UnifiedEquipmentItem {
   id: string;
@@ -473,38 +459,6 @@ export function DepartEquipmentHub({
 
   return (
     <div className="w-full space-y-4 font-sans">
-      {/* ════ SECTION TERRAIN & MÉTÉO FUSIONNÉE AVEC LE MATÉRIEL ════ */}
-      {(trail || weather || participants.length > 0) && (
-        <div className="glass rounded-[24px] p-4 space-y-3 border border-white/60 shadow-xs">
-          <div className="flex items-center justify-between">
-            <span className="text-xs font-bold uppercase tracking-wider text-[#5A7064] flex items-center gap-1.5">
-              <span>Terrain, Météo & Groupe</span>
-            </span>
-            {trail?.distance_km && (
-              <span className="text-[10px] font-mono font-bold px-2 py-0.5 rounded-full bg-[#17402C]/10 text-[#17402C]">
-                {Math.round(trail.distance_km)} km de tracé
-              </span>
-            )}
-          </div>
-
-          <div className="grid grid-cols-1 lg:grid-cols-12 gap-3.5 items-start">
-            {trail && (
-              <div className="lg:col-span-6 w-full rounded-2xl overflow-hidden shadow-2xs">
-                <DepartMap trail={trail} height="220px" />
-              </div>
-            )}
-            <div className={cn('space-y-2.5', trail ? 'lg:col-span-6' : 'lg:col-span-12')}>
-              {weather && <DepartWeather weather={weather} />}
-              {participants.length > 0 && (
-                <DepartParticipants
-                  participants={participants}
-                  emergencyContact={emergencyContact}
-                />
-              )}
-            </div>
-          </div>
-        </div>
-      )}
       {/* ════ BASCULE MOBILE (Segmented Control iOS) ════ */}
       <div className="flex md:hidden items-center p-1 bg-black/5 dark:bg-white/10 rounded-2xl gap-1">
         <button

@@ -242,22 +242,47 @@ export function DepartCockpit({
       {/* ════ 1. VUE D'ENSEMBLE (COCKPIT EXÉCUTIF 360° : TOUT EN UN COUP D'ŒIL) ════ */}
       {activeSection === 'all' && (
         <div className="space-y-4 w-full">
+          {/* 1.0 Bannière Alertes Intelligentes & Vitales si actives */}
+          {smartAlerts.length > 0 && (
+            <MobileVitalAlertBanner
+              alerts={smartAlerts}
+              onAction={(alert) => {
+                if (alert.targetItemId) {
+                  if (typeof window !== 'undefined') {
+                    window.dispatchEvent(
+                      new CustomEvent('highlight-checklist-item', {
+                        detail: { id: alert.targetItemId },
+                      })
+                    );
+                  }
+                  setActiveSection('equipment_hub');
+                } else if (alert.actionType === 'scroll_checklist' || alert.actionType === 'view_dispo') {
+                  setActiveSection('equipment_hub');
+                } else if (alert.actionType === 'scroll_weather') {
+                  setActiveSection('terrain');
+                } else if (alert.actionType === 'edit_emergency') {
+                  setIsSheetOpen(true);
+                }
+              }}
+            />
+          )}
+
           {/* 1.1 Carte interactive du tracé GPS (En tête de vue) */}
           {depart?.trail && (
             <div className="w-full">
-              <DepartMap trail={depart.trail} height="240px" />
+              <DepartMap trail={depart.trail} height="180px" />
             </div>
           )}
 
-          {/* 1.2 Bandeau Météo Synthétique avec Pastilles Blanc Éclatant (Images 1 & 2) */}
+          {/* 1.2 Bandeau Météo Synthétique avec Pastilles Blanc Éclatant (Image 1) */}
           {weather && weather.days.length > 0 && (
-            <div className="glass rounded-[24px] p-3.5 sm:p-4 border border-white/80 dark:border-white/10 shadow-xs flex items-center justify-between gap-3 overflow-x-auto no-scrollbar">
+            <div className="glass rounded-[24px] p-3 sm:p-3.5 border border-white/80 dark:border-white/10 shadow-xs flex items-center justify-between gap-3 overflow-x-auto no-scrollbar">
               <div className="flex items-center gap-2.5 shrink-0">
-                <div className="w-9 h-9 rounded-2xl bg-[#2D6B4A]/10 border border-[#2D6B4A]/20 flex items-center justify-center text-[#2D6B4A] shadow-2xs">
-                  <CloudSun size={17} />
+                <div className="w-8 h-8 rounded-2xl bg-[#2D6B4A]/10 border border-[#2D6B4A]/20 flex items-center justify-center text-[#2D6B4A] shadow-2xs">
+                  <CloudSun size={16} />
                 </div>
                 <div>
-                  <span className="text-[10px] font-mono font-bold uppercase tracking-wider text-[#5A7064] block">
+                  <span className="text-[9.5px] font-mono font-bold uppercase tracking-wider text-[#5A7064] block">
                     Météo du secteur
                   </span>
                   <span className="text-xs font-bold text-[#17402C]">
@@ -267,13 +292,13 @@ export function DepartCockpit({
               </div>
 
               {/* 4 prochains jours avec pastilles blanc éclatant */}
-              <div className="flex items-center gap-2 shrink-0">
-                {weather.days.slice(0, 4).map((d) => (
+              <div className="flex items-center gap-1.5 shrink-0">
+                {weather.days.slice(0, 4).map((d, idx) => (
                   <div
                     key={d.date}
-                    className="px-3 py-1.5 rounded-full bg-white dark:bg-stone-900 border border-white/90 dark:border-white/20 text-center min-w-[58px] shadow-xs"
+                    className="px-2.5 py-1 rounded-full bg-white dark:bg-stone-900 border border-white/90 dark:border-white/20 text-center min-w-[52px] shadow-xs"
                   >
-                    <span className="text-[9px] font-mono font-bold text-[#5A7064] block uppercase">{d.day}</span>
+                    <span className="text-[8.5px] font-mono font-bold text-[#5A7064] block uppercase">{idx === 0 ? 'Auj.' : d.day.slice(0, 3)}</span>
                     <span className="text-xs font-bold text-[#17402C]">{d.tempMaxC}°</span>
                   </div>
                 ))}
@@ -295,7 +320,7 @@ export function DepartCockpit({
             />
           </div>
 
-          {/* 1.4 Vitrine Visuelle des Équipements Indispensables (Défilement Horizontal Fluide - Image 3) */}
+          {/* 1.4 Vitrine Visuelle des Équipements Indispensables */}
           <div className="glass rounded-[28px] p-4 sm:p-5 space-y-3.5 border border-white/80 dark:border-white/10 shadow-sm backdrop-blur-md">
             <div className="flex items-center justify-between gap-3 border-b border-black/5 pb-3">
               <div className="flex items-center gap-2.5">
@@ -312,14 +337,20 @@ export function DepartCockpit({
                 </div>
               </div>
 
-              {/* Bouton Capsule Liquid Glass (Image 5) */}
+              {/* Bouton Flèche Minimaliste */}
               <button
                 type="button"
-                onClick={() => setActiveSection('equipment_hub')}
-                className="glass-capsule-btn primary !py-1.5 !px-3.5 text-xs font-bold flex items-center gap-1.5 cursor-pointer shrink-0 shadow-2xs"
+                onClick={() => {
+                  setActiveSection('equipment_hub');
+                  if (typeof window !== 'undefined') {
+                    window.dispatchEvent(new CustomEvent('depart-section-change', { detail: 'equipment_hub' }));
+                  }
+                }}
+                className="glass-circle-btn primary !w-8 !h-8 flex items-center justify-center cursor-pointer shrink-0 shadow-2xs hover:scale-105 active:scale-95 transition-transform"
+                title="Gérer le Parc Matériel"
+                aria-label="Gérer le Parc Matériel"
               >
-                <span>Gérer le Parc Matériel</span>
-                <ArrowRight size={13} />
+                <ArrowRight size={14} />
               </button>
             </div>
 
@@ -362,10 +393,16 @@ export function DepartCockpit({
               })}
             </div>
           </div>
+
+          {/* 1.5 Équipe & Sécurité Montagne (Image 3) */}
+          <DepartParticipants
+            participants={depart?.participants || []}
+            emergencyContact={depart?.emergencyContact}
+          />
         </div>
       )}
 
-      {/* ════ 2. ONGLET TERRAIN & MÉTÉO (Carte étendue, Météo détaillée & Groupe) ════ */}
+      {/* ════ 2. ONGLET TERRAIN & MÉTÉO (Carte étendue & Météo détaillée) ════ */}
       {activeSection === 'terrain' && (
         <section
           id="section-depart-terrain"
@@ -378,10 +415,6 @@ export function DepartCockpit({
             </div>
           )}
           <DepartWeather weather={weather} updatedAt={depart?.updatedAt} />
-          <DepartParticipants
-            participants={depart?.participants || []}
-            emergencyContact={depart?.emergencyContact}
-          />
         </section>
       )}
 

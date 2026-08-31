@@ -1,11 +1,8 @@
-'use client';
 import React, { useState } from 'react';
 import { motion, AnimatePresence, useReducedMotion } from 'framer-motion';
 import {
   Scale,
-  Sparkles,
   ChevronDown,
-  ArrowRight,
 } from 'lucide-react';
 import { formatWeight } from '@/features/materiel/domain/departCalculations';
 import { cn } from '@/lib/utils';
@@ -51,9 +48,6 @@ export function DepartWeightBreakdown({
   comparableTripName,
 }: DepartWeightBreakdownProps) {
   const [isOpen, setIsOpen] = useState(false);
-  const [showSimulator, setShowSimulator] = useState(false);
-  const [targetWeightG, setTargetWeightG] = useState(baseWeightG || 4060);
-
   const shouldReduceMotion = useReducedMotion();
 
   const effectiveBaseG = baseWeightG || totalWeightG;
@@ -155,42 +149,7 @@ export function DepartWeightBreakdown({
         </div>
       </div>
 
-      {/* ════ RECOMMANDATION & BOUTON SIMULER ALLÈGEMENT (Liquid Glass - Image 5) ════ */}
-      <div className="flex items-center justify-between gap-2 p-2.5 rounded-2xl bg-white/70 dark:bg-white/10 border border-white/80 shadow-2xs">
-        <div className="flex items-center gap-2 min-w-0">
-          <Sparkles size={14} className="text-[#2D6B4A] shrink-0" />
-          <span className="text-xs font-semibold text-[#17402C] truncate">
-            {autoInsight}
-          </span>
-        </div>
 
-        <button
-          type="button"
-          onClick={() => setShowSimulator((v) => !v)}
-          className="glass-capsule-btn !py-1.5 !px-3 text-[11px] font-bold flex items-center gap-1 cursor-pointer shrink-0 shadow-2xs"
-        >
-          <span>Simuler allègement</span>
-        </button>
-      </div>
-
-      {/* Simulateur dépliable */}
-      {showSimulator && (
-        <div className="p-3 rounded-2xl bg-white/85 dark:bg-white/10 border border-white space-y-2">
-          <div className="flex items-center justify-between text-xs font-bold text-[#17402C]">
-            <span>Objectif de poids de base :</span>
-            <span className="font-mono">{(targetWeightG / 1000).toFixed(2)} kg</span>
-          </div>
-          <input
-            type="range"
-            min={3000}
-            max={12000}
-            step={100}
-            value={targetWeightG}
-            onChange={(e) => setTargetWeightG(Number(e.target.value))}
-            className="w-full accent-[#17402C] cursor-pointer"
-          />
-        </div>
-      )}
 
       {/* Accordéon détaillé des catégories */}
       <AnimatePresence initial={false}>
