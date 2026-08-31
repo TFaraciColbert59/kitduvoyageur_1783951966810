@@ -11,6 +11,9 @@ import {
   ArrowRight,
   Boxes,
   CheckCircle2,
+  ShieldCheck,
+  CloudSun,
+  Scale,
 } from 'lucide-react';
 import { DepartWeather } from './DepartWeather';
 import { DepartParticipants } from './DepartParticipants';
@@ -20,6 +23,8 @@ import { DepartWeightBreakdown } from './DepartWeightBreakdown';
 import { DepartEquipmentHub } from './DepartEquipmentHub';
 import { DepartureSheetModal } from './DepartureSheetModal';
 import { KitSwitcher } from './KitSwitcher';
+import { resolveGearImage } from '@/features/materiel/services/gearImageResolver';
+import { formatWeight } from '@/features/materiel/domain/departCalculations';
 import ScrollableTabs, { type TabOption } from '@/components/ui/ScrollableTabs';
 import { Skeleton } from '@/components/ui/Skeleton';
 import { generateSmartPrompts } from '@/features/materiel/services/generateSmartPrompts';
@@ -170,6 +175,9 @@ export function DepartCockpit({
   const totalItemsCount = depart?.assignedKit?.items?.length || 0;
   const checkedItemsCount = depart?.assignedKit?.items?.filter((i) => i.is_checked)?.length || 0;
 
+  // 4 équipements phares pour la vitrine synthèse du sac
+  const showcaseItems = (depart?.assignedKit?.items || []).slice(0, 4);
+
   const renderMainContent = () => (
     <div className="flex flex-col gap-4 w-full">
       {/* ════ BANNIÈRE HORS-LIGNE TRANSPARENTE ════ */}
@@ -187,17 +195,46 @@ export function DepartCockpit({
         </div>
       )}
 
-      {/* ════ 1. VUE D'ENSEMBLE (Strict Minimum : Carte du parcours tout en haut + Poids synthétique + Accès direct) ════ */}
+      {/* ════ 1. VUE D'ENSEMBLE (COCKPIT EXÉCUTIF 360° : TOUT EN UN COUP D'ŒIL) ════ */}
       {activeSection === 'all' && (
         <div className="space-y-4 w-full">
-          {/* 1.1 Carte interactive du tracé GPS TOUT EN HAUT */}
+          {/* 1.1 Carte interactive du tracé GPS (En tête de vue) */}
           {depart?.trail && (
             <div className="w-full">
-              <DepartMap trail={depart.trail} height="260px" />
+              <DepartMap trail={depart.trail} height="240px" />
             </div>
           )}
 
-          {/* 1.2 Analyse du Poids & Décision Synthétique */}
+          {/* 1.2 Bandeau Météo Synthétique en coup d'œil */}
+          {weather && weather.days.length > 0 && (
+            <div className="glass rounded-[24px] p-3.5 sm:p-4 border border-white/80 dark:border-white/10 shadow-xs flex items-center justify-between gap-3 overflow-x-auto no-scrollbar">
+              <div className="flex items-center gap-2.5 shrink-0">
+                <div className="w-9 h-9 rounded-2xl bg-[#2D6B4A]/10 border border-[#2D6B4A]/20 flex items-center justify-center text-[#2D6B4A] shadow-2xs">
+                  <CloudSun size={17} />
+                </div>
+                <div>
+                  <span className="text-[10px] font-mono font-bold uppercase tracking-wider text-[#5A7064] block">
+                    Météo du secteur
+                  </span>
+                  <span className="text-xs font-bold text-[#17402C]">
+                    {weather.location.label || 'Massif'} · {weather.current.tempC}°C
+                  </span>
+                </div>
+              </div>
+
+              {/* 4 prochains jours */}
+              <div className="flex items-center gap-2 shrink-0">
+                {weather.days.slice(0, 4).map((d) => (
+                  <div key={d.date} className="px-2.5 py-1 rounded-xl bg-black/5 dark:bg-white/10 text-center min-w-[55px]">
+                    <span className="text-[9.5px] font-mono font-bold text-[#5A7064] block uppercase">{d.day}</span>
+                    <span className="text-xs font-bold text-[#17402C]">{d.tempMaxC}°</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* 1.3 Analyse du Poids & Décision Synthétique */}
           <div className="w-full">
             <DepartWeightBreakdown
               breakdown={depart?.weightBreakdown || []}
@@ -211,35 +248,103 @@ export function DepartCockpit({
             />
           </div>
 
-          {/* 1.3 Synthèse Rapide & Accès au Parc Matériel */}
-          <div className="glass rounded-[24px] p-4 sm:p-5 border border-white/80 dark:border-white/10 shadow-sm flex flex-col sm:flex-row items-center justify-between gap-3">
-            <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-2xl bg-[#17402C] text-white flex items-center justify-center shadow-xs shrink-0">
-                <Boxes size={18} />
+          {/* 1.4 Vitrine Visuelle des Équipements Clés & Préparation Active du Sac */}
+          <div className="glass rounded-[28px] p-5 space-y-4 border border-white/80 dark:border-white/10 shadow-sm">
+            <div className="flex items-center justify-between gap-3 border-b border-black/5 pb-3">
+              <div className="flex items-center gap-2.5">
+                <div className="w-9 h-9 rounded-2xl bg-[#17402C] text-white flex items-center justify-center shadow-xs">
+                  <Boxes size={17} />
+                </div>
+                <div>
+                  <h3 className="text-sm font-bold text-[#17402C]">
+                    Préparation du Sac & Équipements Indispensables
+                  </h3>
+                  <p className="text-[11.5px] text-[#5A7064]">
+                    {checkedItemsCount} sur {totalItemsCount} équipements prêts ({totalItemsCount > 0 ? Math.round((checkedItemsCount / totalItemsCount) * 100) : 100}% finalisé).
+                  </p>
+                </div>
               </div>
-              <div>
-                <h3 className="text-sm font-bold text-[#17402C]">
-                  Préparation du Sac & Parc Matériel
-                </h3>
-                <p className="text-xs text-[#5A7064]">
-                  {checkedItemsCount} sur {totalItemsCount} équipements prêts ({totalItemsCount > 0 ? Math.round((checkedItemsCount / totalItemsCount) * 100) : 100}% finalisé).
-                </p>
+
+              <button
+                type="button"
+                onClick={() => setActiveSection('equipment_hub')}
+                className="px-3.5 py-1.5 rounded-xl text-xs font-bold bg-[#17402C] text-white hover:bg-[#17402C]/90 shadow-2xs flex items-center gap-1.5 cursor-pointer transition-all active:scale-98 shrink-0"
+              >
+                <span>Gérer le Parc Matériel</span>
+                <ArrowRight size={13} />
+              </button>
+            </div>
+
+            {/* Mini-galerie 4 indispensables avec vraies photos de montagne */}
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+              {showcaseItems.map((it) => {
+                const img = resolveGearImage(it.name, it.category || 'Autre', it.photoUrl);
+                return (
+                  <div
+                    key={it.id || it.name}
+                    className="group rounded-2xl overflow-hidden bg-white/70 dark:bg-white/10 border border-white/80 shadow-2xs p-2 space-y-1.5 flex flex-col justify-between"
+                  >
+                    <div className="relative w-full aspect-[16/10] rounded-xl overflow-hidden bg-black/5">
+                      <img
+                        src={img}
+                        alt={it.name}
+                        className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                        loading="lazy"
+                      />
+                      {it.is_checked && (
+                        <div className="absolute top-1.5 right-1.5 px-1.5 py-0.2 rounded-md bg-emerald-700 text-white text-[8px] font-bold flex items-center gap-0.5 shadow-xs">
+                          <CheckCircle2 size={9} />
+                          <span>Prêt</span>
+                        </div>
+                      )}
+                    </div>
+                    <div>
+                      <h4 className="text-[11px] font-bold text-[#17402C] line-clamp-1">{it.name}</h4>
+                      <span className="text-[10px] font-mono text-[#5A7064]">{formatWeight(it.weight_g)}</span>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+
+          {/* 1.5 Équipe & Sécurité Montagne (Accès rapide aux secours) */}
+          <div className="glass rounded-[24px] p-4 border border-white/80 dark:border-white/10 shadow-xs space-y-2.5">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <ShieldCheck size={16} className="text-[#2D6B4A]" />
+                <span className="text-xs font-bold text-[#17402C]">Équipe & Secours Montagne</span>
+              </div>
+              <div className="flex items-center gap-1.5">
+                {(depart?.participants || []).map((p) => (
+                  <span key={p.name} className="w-6 h-6 rounded-full bg-[#17402C] text-white text-[10px] font-bold flex items-center justify-center shadow-2xs" title={p.name}>
+                    {p.name.charAt(0)}
+                  </span>
+                ))}
               </div>
             </div>
 
-            <button
-              type="button"
-              onClick={() => setActiveSection('equipment_hub')}
-              className="px-4 py-2 rounded-xl text-xs font-bold bg-[#17402C] text-white hover:bg-[#17402C]/90 shadow-2xs flex items-center gap-1.5 cursor-pointer transition-all active:scale-98 shrink-0"
-            >
-              <span>Ouvrir le Parc Matériel & Sac</span>
-              <ArrowRight size={13} />
-            </button>
+            <div className="grid grid-cols-2 gap-2 pt-1 border-t border-black/5">
+              <a
+                href="tel:112"
+                className="py-1.5 px-3 rounded-xl bg-black/5 dark:bg-white/10 hover:bg-black/10 text-[#17402C] text-xs font-semibold flex items-center justify-between"
+              >
+                <span>112 (Europe / Montagne)</span>
+                <span className="text-[10px] font-mono text-[#5A7064]">Appel 📞</span>
+              </a>
+              <a
+                href="tel:15"
+                className="py-1.5 px-3 rounded-xl bg-black/5 dark:bg-white/10 hover:bg-black/10 text-[#17402C] text-xs font-semibold flex items-center justify-between"
+              >
+                <span>15 (SAMU Urgences)</span>
+                <span className="text-[10px] font-mono text-[#5A7064]">Appel 📞</span>
+              </a>
+            </div>
           </div>
         </div>
       )}
 
-      {/* ════ 2. ONGLET TERRAIN & MÉTÉO (Carte complète, Météo détaillée & Groupe) ════ */}
+      {/* ════ 2. ONGLET TERRAIN & MÉTÉO (Carte étendue, Météo détaillée & Groupe) ════ */}
       {activeSection === 'terrain' && (
         <section
           id="section-depart-terrain"
@@ -385,7 +490,7 @@ export function DepartCockpit({
           />
         </div>
 
-        {/* Colonne 2 : Flux Central Dynamique (Strict Minimum en Vue d'ensemble, Hub en Parc Matériel) */}
+        {/* Colonne 2 : Flux Central Dynamique (Vue d'ensemble 360° / Terrain / Hub Matériel) */}
         <div className="flex-1 min-w-0 h-full max-h-full overflow-y-auto no-scrollbar pr-1 pb-4">
           <AnimatePresence mode="wait">
             <motion.div

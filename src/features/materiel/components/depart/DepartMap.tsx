@@ -4,8 +4,6 @@ import Link from 'next/link';
 import 'leaflet/dist/leaflet.css';
 import {
   MapPin,
-  ZoomIn,
-  ZoomOut,
   Navigation,
   Layers,
   Maximize2,
@@ -13,10 +11,6 @@ import {
   Download,
   Check,
   Compass,
-  Droplets,
-  Home,
-  ShoppingBag,
-  TrendingUp,
 } from 'lucide-react';
 import { Skeleton } from '@/components/ui/Skeleton';
 import { formatDistanceKm } from '@/features/materiel/domain/departCalculations';
@@ -74,17 +68,12 @@ export function DepartMap({ trail, height = '240px', className }: DepartMapProps
   const mapRef = useRef<any>(null);
   const polyRef = useRef<any>(null);
   const tileLayerRef = useRef<any>(null);
-  const poiLayerRef = useRef<any>(null);
 
   const [loaded, setLoaded] = useState(false);
   const [tileMode, setTileMode] = useState<TileMode>('topo');
   const [showTilePicker, setShowTilePicker] = useState(false);
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [isOfflineSaved, setIsOfflineSaved] = useState(false);
-
-  // Calques de POIs interactifs (§Phase 5)
-  const [showWaterPOIs, setShowWaterPOIs] = useState(true);
-  const [showShelters, setShowShelters] = useState(true);
 
   // État vide si aucun tracé
   if (!trail) {
@@ -96,7 +85,7 @@ export function DepartMap({ trail, height = '240px', className }: DepartMapProps
         <div>
           <h3 className="text-xs sm:text-[13px] font-bold text-[#17402C]">Aucun tracé associé à ce départ</h3>
           <p className="text-[11px] text-[#5A7064] mt-0.5">
-            Liez un itinéraire GPX pour activer le calcul de dénivelé et la carte interactive.
+            Liez un itinéraire GPX pour activer la carte interactive.
           </p>
         </div>
         <Link
@@ -120,7 +109,7 @@ export function DepartMap({ trail, height = '240px', className }: DepartMapProps
       if (cancelled || !containerRef.current) return;
 
       const lines = extractCoords(trail?.geojson);
-      const startPt: [number, number] = lines[0]?.[0] || [45.4, 6.6];
+      const startPt: [number, number] = lines[0]?.[0] || [trail?.lat || 45.83, trail?.lng || 6.86];
 
       const map = L.map(containerRef.current, {
         zoomControl: false,
@@ -167,30 +156,22 @@ export function DepartMap({ trail, height = '240px', className }: DepartMapProps
           iconAnchor: [6, 6],
         });
         L.marker(endPt, { icon: endIcon }).addTo(map).bindPopup('<strong>Arrivée</strong>');
-
-        // POIs d'eau le long du tracé (§Phase 5)
-        const poiGroup = L.layerGroup().addTo(map);
-        poiLayerRef.current = poiGroup;
-
-        if (lines[0].length > 10) {
-          const midPt = lines[0][Math.floor(lines[0].length / 2)];
-          const waterIcon = L.divIcon({
-            className: 'custom-pin-water',
-            html: `<div style="background-color:#0284c7;color:white;width:18px;height:18px;border-radius:50%;border:2px solid white;display:flex;align-items:center;justify-content:center;font-size:10px;box-shadow:0 2px 4px rgba(0,0,0,0.25)">💧</div>`,
-            iconSize: [18, 18],
-            iconAnchor: [9, 9],
-          });
-          L.marker(midPt, { icon: waterIcon })
-            .addTo(poiGroup)
-            .bindPopup('<strong>Point d’eau potable</strong><br/>Source naturelle testée (débit continu)');
-        }
+      } else {
+        // Point unique si pas de ligne
+        const pinIcon = L.divIcon({
+          className: 'custom-pin-center',
+          html: `<div style="background-color:#17402C;width:14px;height:14px;border-radius:50%;border:2px solid white;box-shadow:0 2px 4px rgba(0,0,0,0.3)"></div>`,
+          iconSize: [14, 14],
+          iconAnchor: [7, 7],
+        });
+        L.marker(startPt, { icon: pinIcon }).addTo(map).bindPopup(`<strong>${trail?.name || 'Point de départ'}</strong>`);
       }
 
       mapRef.current = map;
       setLoaded(true);
 
-      // Auto-refresh layout when container becomes visible or resizes
-      const ro = new ResizeObserver(() => {
+      // Force recalcul dimensions
+      setTimeout(() => {
         if (mapRef.current) {
           mapRef.current.invalidateSize();
           if (polyRef.current) {
@@ -199,17 +180,24 @@ export function DepartMap({ trail, height = '240px', className }: DepartMapProps
             } catch {}
           }
         }
-      });
-
-      if (containerRef.current) {
-        ro.observe(containerRef.current);
-      }
+      }, 100);
 
       setTimeout(() => {
         if (mapRef.current) {
           mapRef.current.invalidateSize();
         }
-      }, 200);
+      }, 350);
+
+      // Auto-refresh layout on container resize
+      const ro = new ResizeObserver(() => {
+        if (mapRef.current) {
+          mapRef.current.invalidateSize();
+        }
+      });
+
+      if (containerRef.current) {
+        ro.observe(containerRef.current);
+      }
     }
 
     initMap();
@@ -227,13 +215,16 @@ export function DepartMap({ trail, height = '240px', className }: DepartMapProps
     setTileMode(mode);
     setShowTilePicker(false);
     if (!mapRef.current || !tileLayerRef.current) return;
-    const L = (await import('leaflet')).default;
     tileLayerRef.current.setUrl(TILES[mode].url);
   };
 
   const handleRecenter = () => {
-    if (!mapRef.current || !polyRef.current) return;
-    mapRef.current.fitBounds(polyRef.current.getBounds(), { padding: [24, 24] });
+    if (!mapRef.current) return;
+    if (polyRef.current) {
+      mapRef.current.fitBounds(polyRef.current.getBounds(), { padding: [24, 24] });
+    } else if (trail?.lat && trail?.lng) {
+      mapRef.current.setView([trail.lat, trail.lng], 12);
+    }
   };
 
   const handleDownloadGPX = () => {
@@ -249,24 +240,28 @@ export function DepartMap({ trail, height = '240px', className }: DepartMapProps
     setTimeout(() => setIsOfflineSaved(false), 3000);
   };
 
+  const actualHeight = isFullscreen ? 'calc(100vh - 45px)' : height;
+
   return (
     <div
       className={cn(
-        'glass rounded-[24px] overflow-hidden relative border border-white/60 flex flex-col',
+        'glass rounded-[24px] overflow-hidden relative border border-white/60 flex flex-col shadow-xs',
         isFullscreen && 'fixed inset-0 z-50 rounded-none h-screen w-screen',
         className
       )}
     >
       {/* ════ HEADER CARTE : NOM DU TRACÉ & DISTANCE ════ */}
-      <div className="px-4 py-2.5 border-b border-black/5 dark:border-white/10 flex items-center justify-between gap-2 bg-white/40 dark:bg-white/5 backdrop-blur-md">
+      <div className="px-4 py-2.5 border-b border-black/5 dark:border-white/10 flex items-center justify-between gap-2 bg-white/40 dark:bg-white/5 backdrop-blur-md shrink-0">
         <div className="flex items-center gap-2 min-w-0">
           <MapPin size={14} className="text-[#2D6B4A] shrink-0" />
           <span className="text-xs font-bold text-[#17402C] truncate">
             {trail.name}
           </span>
-          <span className="text-[11px] font-mono font-semibold text-[#5A7064] shrink-0 bg-white/50 px-1.5 py-0.2 rounded-md">
-            {formatDistanceKm(trail.distance_km)}
-          </span>
+          {trail.distance_km !== null && (
+            <span className="text-[11px] font-mono font-semibold text-[#5A7064] shrink-0 bg-white/50 px-1.5 py-0.2 rounded-md">
+              {formatDistanceKm(trail.distance_km)}
+            </span>
+          )}
         </div>
 
         {/* Contrôles d'action rapide */}
@@ -292,17 +287,21 @@ export function DepartMap({ trail, height = '240px', className }: DepartMapProps
         </div>
       </div>
 
-      {/* ════ ZONE DE RENDU LEAFLET ════ */}
-      <div className="relative flex-1 w-full" style={{ height: isFullscreen ? 'calc(100vh - 45px)' : height }}>
+      {/* ════ ZONE DE RENDU LEAFLET AVEC HAUTEUR PIXEL STRICTE GARANTIE ════ */}
+      <div className="relative w-full overflow-hidden" style={{ height: actualHeight, minHeight: actualHeight }}>
         {!loaded && (
           <div className="absolute inset-0 z-10 flex items-center justify-center bg-black/5">
             <Skeleton className="w-full h-full rounded-none" />
           </div>
         )}
-        <div ref={containerRef} className="w-full h-full z-0" />
+        <div
+          ref={containerRef}
+          className="w-full h-full"
+          style={{ height: actualHeight, minHeight: actualHeight }}
+        />
 
         {/* Boutons flottants de contrôle */}
-        <div className="absolute top-2.5 right-2.5 z-20 flex flex-col gap-1">
+        <div className="absolute top-2.5 right-2.5 z-[400] flex flex-col gap-1">
           <button
             type="button"
             onClick={handleRecenter}
@@ -323,7 +322,7 @@ export function DepartMap({ trail, height = '240px', className }: DepartMapProps
 
         {/* Sélecteur de tuiles */}
         {showTilePicker && (
-          <div className="absolute top-12 right-2.5 z-30 p-1.5 rounded-2xl bg-white/95 dark:bg-black/90 shadow-xl border border-black/10 flex flex-col gap-1 text-[11px] font-semibold text-[#17402C]">
+          <div className="absolute top-12 right-2.5 z-[401] p-1.5 rounded-2xl bg-white/95 dark:bg-black/90 shadow-xl border border-black/10 flex flex-col gap-1 text-[11px] font-semibold text-[#17402C]">
             <button
               type="button"
               onClick={() => handleTileChange('topo')}
