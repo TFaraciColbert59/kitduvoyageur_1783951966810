@@ -1,335 +1,372 @@
-# MISSION LOG : Migration Icônes → lucide-animated
+# MISSION LOG — Messagerie complète niveau Instagram (LKDV)
 
-## 📊 Phase 0 — Audit Exhaustif des Icônes lucide-react
+## 📊 Phase 0 — Audit Exhaustif & Cartographie (`icxyvwzfjbflcbqukpfz`)
 
-- **Fichiers scannés :** 809 fichiers dans `src/`
-- **Total d'icônes uniques trouvées :** 83
-- **Total d'occurrences d'import :** 295
-- **Répartition :**
-  - **🟢 Interactives (31 icônes) :** Candidats prioritaires pour `lucide-animated` (avec trigger au tap tactile).
-  - **🔴 Critique Perf (11 icônes) :** **INTERDICTION d'animer**, maintien strict en `lucide-react` statique pour préserver les 60fps et la mémoire mobile sur les listes longues.
-  - **⚪ Décoratives Statiques (41 icônes) :** Conservées en `lucide-react` statique pour minimiser le First Load JS.
+- **Fichiers de configuration & Skills scannés :**
+  - `AGENTS.md` (Superpowers suite, règles UX permanentes `apple-ui-designer` & `interaction-design`, 64 Icon Agents).
+  - `CLAUDE.md` (Design system Liquid Glass, palette Sage/Stone/Ink, 0 `#E4501C`, responsive dual-view, dynamic imports).
+  - `.agents/skills/ux-mobile/SKILL.md` (Touch targets >= 44px, feedback instantané, animations GPU-safe).
+  - `MISSION_LOG.md` (Maintien de la structure de preuve brute).
 
----
+### Confirmation de la RLS Supabase initiale (`supabase/tests/database/messaging_security.test.sql`)
+```sql
+BEGIN;
+SELECT plan(15);
 
-### Tableau d'Audit Détaillé (Phase 0)
+-- Test 1 : Anonyme ne peut pas lire conversations
+SET LOCAL ROLE anon;
+SELECT is_empty('SELECT * FROM public.conversations');
 
-| Icône | Occurrences | Catégorie | Recommandation | Fichiers types d'usage |
-|---|---|---|---|---|
-| `ArrowDown` | 1 | **Interactive** | ✅ Candidate lucide-animated (Tap & Montage) | `src/features/materiel/components/kits/TemplateStore.tsx` |
-| `ArrowLeft` | 3 | **Interactive** | ✅ Candidate lucide-animated (Tap & Montage) | `src/app/materiel/depart/error.tsx<br>src/app/materiel/depart/[id]/error.tsx<br>src/components/ui/GlassSheet.tsx` |
-| `ArrowRight` | 13 | **Interactive** | ✅ Candidate lucide-animated (Tap & Montage) | `src/app/kits/page.tsx<br>src/features/materiel/components/cards/GearCardAlertes.tsx<br>src/features/materiel/components/cards/GearCardDepart.tsx` |
-| `ArrowUpRight` | 1 | **Interactive** | ✅ Candidate lucide-animated (Tap & Montage) | `src/features/materiel/components/depart/DepartEquipmentHub.tsx` |
-| `Bell` | 1 | **Interactive** | ✅ Candidate lucide-animated (Tap & Montage) | `src/components/explorer/ExplorerClient.tsx` |
-| `Boxes` | 2 | **Interactive** | ✅ Candidate lucide-animated (Tap & Montage) | `src/features/materiel/components/depart/DepartCockpit.tsx<br>src/features/materiel/components/depart/DepartEquipmentHub.tsx` |
-| `CheckSquare` | 2 | **Interactive** | ✅ Candidate lucide-animated (Tap & Montage) | `src/features/materiel/components/depart/DepartChecklist.tsx<br>src/features/materiel/components/depart/DepartEquipmentHub.tsx` |
-| `ChevronDown` | 10 | **Interactive** | ✅ Candidate lucide-animated (Tap & Montage) | `src/components/explorer/ExplorerClient.tsx<br>src/components/explorer/ExplorerMobileHikeCarousel.tsx<br>src/components/explorer/ExplorerMobileSheet.tsx` |
-| `ChevronLeft` | 2 | **Interactive** | ✅ Candidate lucide-animated (Tap & Montage) | `src/app/pays/components/EarthMobileHeader.tsx<br>src/features/preparation/components/PreparationHeader.tsx` |
-| `ChevronRight` | 3 | **Interactive** | ✅ Candidate lucide-animated (Tap & Montage) | `src/app/pays/components/EarthCountrySheet.tsx<br>src/components/explorer/ExplorerListCard.tsx<br>src/features/materiel/components/depart/DepartLeftSidebar.tsx` |
-| `ChevronUp` | 2 | **Interactive** | ✅ Candidate lucide-animated (Tap & Montage) | `src/components/explorer/ExplorerMobileHikeCarousel.tsx<br>src/components/explorer/ExplorerMobileSheet.tsx` |
-| `Download` | 2 | **Interactive** | ✅ Candidate lucide-animated (Tap & Montage) | `src/components/explorer/TrailDetailPanel.tsx<br>src/features/materiel/components/depart/DepartMap.tsx` |
-| `Edit2` | 1 | **Interactive** | ✅ Candidate lucide-animated (Tap & Montage) | `src/features/materiel/components/depart/DepartHeader.tsx` |
-| `Handshake` | 1 | **Interactive** | ✅ Candidate lucide-animated (Tap & Montage) | `src/features/materiel/components/depart/DepartEquipmentHub.tsx` |
-| `Layers` | 6 | **Interactive** | ✅ Candidate lucide-animated (Tap & Montage) | `src/components/explorer/ExplorerMobileHikeCarousel.tsx<br>src/features/materiel/components/depart/DepartCockpit.tsx<br>src/features/materiel/components/depart/DepartEquipmentHub.tsx` |
-| `LayoutGrid` | 1 | **Interactive** | ✅ Candidate lucide-animated (Tap & Montage) | `src/features/materiel/components/depart/DepartEquipmentHub.tsx` |
-| `List` | 2 | **Interactive** | ✅ Candidate lucide-animated (Tap & Montage) | `src/components/explorer/ExplorerMobileHikeCarousel.tsx<br>src/features/materiel/components/depart/DepartEquipmentHub.tsx` |
-| `Maximize2` | 1 | **Interactive** | ✅ Candidate lucide-animated (Tap & Montage) | `src/features/materiel/components/depart/DepartMap.tsx` |
-| `Minimize2` | 1 | **Interactive** | ✅ Candidate lucide-animated (Tap & Montage) | `src/features/materiel/components/depart/DepartMap.tsx` |
-| `PhoneCall` | 1 | **Interactive** | ✅ Candidate lucide-animated (Tap & Montage) | `src/features/materiel/components/depart/DepartParticipants.tsx` |
-| `Play` | 2 | **Interactive** | ✅ Candidate lucide-animated (Tap & Montage) | `src/components/explorer/TrailDetailPanel.tsx<br>src/features/materiel/components/depart/DepartureSheetModal.tsx` |
-| `Printer` | 2 | **Interactive** | ✅ Candidate lucide-animated (Tap & Montage) | `src/features/materiel/components/depart/DepartLeftSidebar.tsx<br>src/features/materiel/components/depart/DepartureSheetModal.tsx` |
-| `RefreshCw` | 2 | **Interactive** | ✅ Candidate lucide-animated (Tap & Montage) | `src/app/materiel/depart/error.tsx<br>src/app/materiel/depart/[id]/error.tsx` |
-| `RotateCcw` | 5 | **Interactive** | ✅ Candidate lucide-animated (Tap & Montage) | `src/components/explorer/ExplorerClient.tsx<br>src/components/explorer/ExplorerFilterPanel.tsx<br>src/features/materiel/components/depart/DepartChecklist.tsx` |
-| `Search` | 6 | **Interactive** | ✅ Candidate lucide-animated (Tap & Montage) | `src/app/pays/components/EarthMobileHeader.tsx<br>src/components/explorer/ExplorerClient.tsx<br>src/components/explorer/ExplorerFilterPanel.tsx` |
-| `Share2` | 4 | **Interactive** | ✅ Candidate lucide-animated (Tap & Montage) | `src/components/explorer/TrailDetailPanel.tsx<br>src/features/materiel/components/depart/DepartLeftSidebar.tsx<br>src/features/materiel/components/depart/DepartParticipants.tsx` |
-| `ShoppingBag` | 8 | **Interactive** | ✅ Candidate lucide-animated (Tap & Montage) | `src/components/explorer/ExplorerClient.tsx<br>src/features/materiel/components/depart/DepartChecklist.tsx<br>src/features/materiel/components/depart/DepartEquipmentHub.tsx` |
-| `SlidersHorizontal` | 1 | **Interactive** | ✅ Candidate lucide-animated (Tap & Montage) | `src/components/explorer/ExplorerClient.tsx` |
-| `Volume2` | 2 | **Interactive** | ✅ Candidate lucide-animated (Tap & Montage) | `src/features/materiel/components/depart/DepartChecklist.tsx<br>src/features/materiel/components/mobile/MobileFloatingIsland.tsx` |
-| `VolumeX` | 1 | **Interactive** | ✅ Candidate lucide-animated (Tap & Montage) | `src/features/materiel/components/depart/DepartChecklist.tsx` |
-| `X` | 11 | **Interactive** | ✅ Candidate lucide-animated (Tap & Montage) | `src/app/pays/components/EarthCountrySheet.tsx<br>src/app/pays/components/EarthMobileHeader.tsx<br>src/components/explorer/ExplorerClient.tsx` |
-| `Check` | 18 | **Critique perf** | ⛔ STRICTEMENT STATIQUE (Garder lucide-react) | `src/components/explorer/TrailDetailPanel.tsx<br>src/features/materiel/components/cards/GearCardForget.tsx<br>src/features/materiel/components/cards/GearCardKits.tsx` |
-| `CheckCircle2` | 8 | **Critique perf** | ⛔ STRICTEMENT STATIQUE (Garder lucide-react) | `src/features/materiel/components/cards/GearCardDispo.tsx<br>src/features/materiel/components/cards/GearCardInventaire.tsx<br>src/features/materiel/components/cards/GearCardSuivi.tsx` |
-| `GripVertical` | 2 | **Critique perf** | ⛔ STRICTEMENT STATIQUE (Garder lucide-react) | `src/features/materiel/components/kits/KitsCockpit.tsx<br>src/features/materiel/components/MaterielGrid.tsx` |
-| `MapPin` | 8 | **Critique perf** | ⛔ STRICTEMENT STATIQUE (Garder lucide-react) | `src/app/pays/components/EarthCountrySheet.tsx<br>src/components/explorer/ExplorerListCard.tsx<br>src/components/explorer/ExplorerMobileHikeCarousel.tsx` |
-| `Plus` | 8 | **Critique perf** | ⛔ STRICTEMENT STATIQUE (Garder lucide-react) | `src/features/materiel/components/cards/GearCardInventaire.tsx<br>src/features/materiel/components/depart/DepartChecklist.tsx<br>src/features/materiel/components/depart/DepartEquipmentHub.tsx` |
-| `Scale` | 7 | **Critique perf** | ⛔ STRICTEMENT STATIQUE (Garder lucide-react) | `src/features/materiel/components/depart/DepartEquipmentHub.tsx<br>src/features/materiel/components/depart/DepartWeightBreakdown.tsx<br>src/features/materiel/components/kits/KitsKpiBar.tsx` |
-| `Sparkles` | 9 | **Critique perf** | ⛔ STRICTEMENT STATIQUE (Garder lucide-react) | `src/app/pays/components/EarthCountrySheet.tsx<br>src/components/explorer/TrailDetailPanel.tsx<br>src/features/materiel/components/depart/DepartChecklist.tsx` |
-| `Star` | 1 | **Critique perf** | ⛔ STRICTEMENT STATIQUE (Garder lucide-react) | `src/components/explorer/ExplorerListCard.tsx` |
-| `Tag` | 1 | **Critique perf** | ⛔ STRICTEMENT STATIQUE (Garder lucide-react) | `src/app/pays/components/EarthCountrySheet.tsx` |
-| `Trash2` | 6 | **Critique perf** | ⛔ STRICTEMENT STATIQUE (Garder lucide-react) | `src/features/materiel/components/depart/DepartChecklist.tsx<br>src/features/materiel/components/depart/DepartEquipmentHub.tsx<br>src/features/materiel/components/kits/KitBuilder.tsx` |
-| `Zap` | 6 | **Critique perf** | ⛔ STRICTEMENT STATIQUE (Garder lucide-react) | `src/features/materiel/components/depart/DepartChecklist.tsx<br>src/features/materiel/components/depart/DepartCockpit.tsx<br>src/features/materiel/components/depart/DepartHeader.tsx` |
-| `AlertCircle` | 3 | **Décorative statique** | Optionnelle / Non prioritaire | `src/features/materiel/components/cards/GearCardDispo.tsx<br>src/features/materiel/components/depart/DepartAlerts.tsx<br>src/features/materiel/components/depart/DepartChecklist.tsx` |
-| `AlertOctagon` | 1 | **Décorative statique** | Optionnelle / Non prioritaire | `src/features/materiel/components/depart/DepartParticipants.tsx` |
-| `AlertTriangle` | 9 | **Décorative statique** | Optionnelle / Non prioritaire | `src/app/materiel/depart/error.tsx<br>src/app/materiel/depart/[id]/error.tsx<br>src/features/materiel/components/cards/GearCardAlertes.tsx` |
-| `Backpack` | 7 | **Décorative statique** | Optionnelle / Non prioritaire | `src/app/kits/page.tsx<br>src/components/explorer/ExplorerClient.tsx<br>src/components/explorer/ExplorerMobileHikeCarousel.tsx` |
-| `Calendar` | 5 | **Décorative statique** | Optionnelle / Non prioritaire | `src/app/pays/components/EarthCountrySheet.tsx<br>src/features/materiel/components/depart/DepartHeader.tsx<br>src/features/materiel/components/depart/DepartRightSidebar.tsx` |
-| `Clock` | 12 | **Décorative statique** | Optionnelle / Non prioritaire | `src/components/explorer/ExplorerClient.tsx<br>src/components/explorer/ExplorerListCard.tsx<br>src/components/explorer/ExplorerMobileHikeCarousel.tsx` |
-| `Cloud` | 2 | **Décorative statique** | Optionnelle / Non prioritaire | `src/features/materiel/components/depart/DepartHeader.tsx<br>src/features/materiel/components/depart/DepartWeather.tsx` |
-| `CloudDrizzle` | 1 | **Décorative statique** | Optionnelle / Non prioritaire | `src/features/materiel/components/depart/DepartWeather.tsx` |
-| `CloudFog` | 2 | **Décorative statique** | Optionnelle / Non prioritaire | `src/features/materiel/components/depart/DepartHeader.tsx<br>src/features/materiel/components/depart/DepartWeather.tsx` |
-| `CloudLightning` | 2 | **Décorative statique** | Optionnelle / Non prioritaire | `src/features/materiel/components/depart/DepartHeader.tsx<br>src/features/materiel/components/depart/DepartWeather.tsx` |
-| `CloudRain` | 2 | **Décorative statique** | Optionnelle / Non prioritaire | `src/features/materiel/components/depart/DepartHeader.tsx<br>src/features/materiel/components/depart/DepartWeather.tsx` |
-| `CloudSnow` | 2 | **Décorative statique** | Optionnelle / Non prioritaire | `src/features/materiel/components/depart/DepartHeader.tsx<br>src/features/materiel/components/depart/DepartWeather.tsx` |
-| `CloudSun` | 3 | **Décorative statique** | Optionnelle / Non prioritaire | `src/features/materiel/components/depart/DepartCockpit.tsx<br>src/features/materiel/components/depart/DepartHeader.tsx<br>src/features/materiel/components/depart/DepartWeather.tsx` |
-| `Coins` | 1 | **Décorative statique** | Optionnelle / Non prioritaire | `src/app/pays/components/EarthCountrySheet.tsx` |
-| `Compass` | 6 | **Décorative statique** | Optionnelle / Non prioritaire | `src/components/explorer/ExplorerClient.tsx<br>src/components/explorer/TrailDetailPanel.tsx<br>src/features/materiel/components/depart/DepartHeader.tsx` |
-| `Droplet` | 1 | **Décorative statique** | Optionnelle / Non prioritaire | `src/features/preparation/components/tabs/WeightTab.tsx` |
-| `Droplets` | 3 | **Décorative statique** | Optionnelle / Non prioritaire | `src/features/materiel/components/depart/DepartChecklist.tsx<br>src/features/materiel/components/depart/DepartureSheetModal.tsx<br>src/features/materiel/components/depart/DepartWeather.tsx` |
-| `ExternalLink` | 2 | **Décorative statique** | Optionnelle / Non prioritaire | `src/features/materiel/components/depart/DepartAlerts.tsx<br>src/features/materiel/components/depart/DepartEquipmentHub.tsx` |
-| `FileText` | 3 | **Décorative statique** | Optionnelle / Non prioritaire | `src/components/explorer/ExplorerClient.tsx<br>src/components/explorer/ExplorerMobileHikeCarousel.tsx<br>src/features/materiel/components/depart/DepartRightSidebar.tsx` |
-| `Flame` | 1 | **Décorative statique** | Optionnelle / Non prioritaire | `src/features/preparation/components/tabs/GearTab.tsx` |
-| `HeartPulse` | 1 | **Décorative statique** | Optionnelle / Non prioritaire | `src/features/preparation/components/tabs/TeamTab.tsx` |
-| `HelpCircle` | 1 | **Décorative statique** | Optionnelle / Non prioritaire | `src/features/materiel/components/depart/DepartAlerts.tsx` |
-| `ImageOff` | 1 | **Décorative statique** | Optionnelle / Non prioritaire | `src/components/ui/SmartImage.tsx` |
-| `Mountain` | 2 | **Décorative statique** | Optionnelle / Non prioritaire | `src/components/explorer/TrailDetailPanel.tsx<br>src/components/ui/SmartImage.tsx` |
-| `Navigation` | 5 | **Décorative statique** | Optionnelle / Non prioritaire | `src/components/explorer/ExplorerClient.tsx<br>src/components/explorer/ExplorerListCard.tsx<br>src/components/explorer/ExplorerMobileHikeCarousel.tsx` |
-| `Package` | 5 | **Décorative statique** | Optionnelle / Non prioritaire | `src/features/materiel/components/cards/GearCardKits.tsx<br>src/features/materiel/components/depart/DepartChecklist.tsx<br>src/features/materiel/components/kits/KitsKpiBar.tsx` |
-| `Radio` | 1 | **Décorative statique** | Optionnelle / Non prioritaire | `src/features/materiel/components/depart/DepartParticipants.tsx` |
-| `Shield` | 2 | **Décorative statique** | Optionnelle / Non prioritaire | `src/features/preparation/components/tabs/GearTab.tsx<br>src/features/preparation/components/tabs/TeamTab.tsx` |
-| `ShieldAlert` | 2 | **Décorative statique** | Optionnelle / Non prioritaire | `src/features/preparation/components/PreparationHeader.tsx<br>src/features/preparation/components/tabs/ShakedownTab.tsx` |
-| `ShieldCheck` | 10 | **Décorative statique** | Optionnelle / Non prioritaire | `src/app/materiel/depart/error.tsx<br>src/app/materiel/depart/[id]/error.tsx<br>src/features/materiel/components/cards/GearCardAlertes.tsx` |
-| `Shirt` | 2 | **Décorative statique** | Optionnelle / Non prioritaire | `src/features/preparation/components/tabs/GearTab.tsx<br>src/features/preparation/components/tabs/WeightTab.tsx` |
-| `Sun` | 2 | **Décorative statique** | Optionnelle / Non prioritaire | `src/features/materiel/components/depart/DepartHeader.tsx<br>src/features/materiel/components/depart/DepartWeather.tsx` |
-| `Sunrise` | 1 | **Décorative statique** | Optionnelle / Non prioritaire | `src/features/materiel/components/depart/DepartWeather.tsx` |
-| `Sunset` | 1 | **Décorative statique** | Optionnelle / Non prioritaire | `src/features/materiel/components/depart/DepartWeather.tsx` |
-| `Thermometer` | 2 | **Décorative statique** | Optionnelle / Non prioritaire | `src/features/materiel/components/depart/DepartureSheetModal.tsx<br>src/features/materiel/components/depart/DepartWeather.tsx` |
-| `Timer` | 1 | **Décorative statique** | Optionnelle / Non prioritaire | `src/features/materiel/components/depart/DepartRightSidebar.tsx` |
-| `TrendingUp` | 4 | **Décorative statique** | Optionnelle / Non prioritaire | `src/components/explorer/ExplorerClient.tsx<br>src/components/explorer/ExplorerListCard.tsx<br>src/components/explorer/ExplorerMobileHikeCarousel.tsx` |
-| `Users` | 3 | **Décorative statique** | Optionnelle / Non prioritaire | `src/features/materiel/components/depart/DepartHeader.tsx<br>src/features/materiel/components/depart/DepartParticipants.tsx<br>src/features/preparation/components/tabs/TeamTab.tsx` |
-| `Wifi` | 2 | **Décorative statique** | Optionnelle / Non prioritaire | `src/features/materiel/components/depart/DepartCockpit.tsx<br>src/features/materiel/components/depart/DepartLeftSidebar.tsx` |
-| `WifiOff` | 4 | **Décorative statique** | Optionnelle / Non prioritaire | `src/app/materiel/depart/error.tsx<br>src/app/materiel/depart/[id]/error.tsx<br>src/features/materiel/components/depart/DepartCockpit.tsx` |
-| `Wind` | 1 | **Décorative statique** | Optionnelle / Non prioritaire | `src/features/materiel/components/depart/DepartWeather.tsx` |
+-- Test 2 : Membre A voit sa conversation
+SET LOCAL ROLE authenticated;
+SET LOCAL "request.jwt.claim.sub" = '11111111-1111-1111-1111-111111111111';
+SELECT ok(EXISTS (SELECT 1 FROM public.conversations WHERE id = 'c1111111-1111-1111-1111-111111111111'));
 
----
+-- Test 3 : Non-membre C ne voit pas la conversation A-B
+SET LOCAL "request.jwt.claim.sub" = '33333333-3333-3333-3333-333333333333';
+SELECT is_empty('SELECT * FROM public.conversations WHERE id = ''c1111111-1111-1111-1111-111111111111''');
 
-## 🚦 Phase 1 — Mesure de Compatibilité & Bundle Baseline
+-- Test 4 : Usurpation d'expéditeur rejetée par RLS
+SET LOCAL "request.jwt.claim.sub" = '11111111-1111-1111-1111-111111111111';
+SELECT throws_ok($$ INSERT INTO public.messages (conversation_id, sender_id, content) VALUES ('c1111111-1111-1111-1111-111111111111', '22222222-2222-2222-2222-222222222222', 'Usurpation') $$);
 
-1. **Vérification Moteur d'Animation :** `framer-motion@^12.43.0` est déjà embarqué dans le projet, éliminant tout surcoût de runtime externe.
-2. **Mesures First Load JS Comparatives (`next build`) :**
-   - **First Load JS partagé (Baseline) :** `103 kB`
-   - **First Load JS partagé (Post-Migration) :** **`103 kB` (0 kB de régression !)**
-   - **Route `/materiel/depart` :** `195 kB` → `198 kB` (+3 kB JSX brut, soit < 0.8 kB gzip, largement inférieur au plafond de 5 kB).
-   - **Route `/terrain` :** `116 kB` → `116 kB` (inchangé).
+-- Test 5 : Déplacement de conversation_id bloqué par Trigger
+SELECT throws_ok($$ UPDATE public.messages SET conversation_id = 'c2222222-2222-2222-2222-222222222222' WHERE id = 'm1111111-1111-1111-1111-111111111111' $$);
 
----
+-- Test 6 : Non-membre C ne voit pas les messages A-B
+SET LOCAL "request.jwt.claim.sub" = '33333333-3333-3333-3333-333333333333';
+SELECT is_empty('SELECT * FROM public.messages WHERE conversation_id = ''c1111111-1111-1111-1111-111111111111''');
 
-## 🚀 Phase 2 — Migration Ciblée sur les Composants Clés
+-- Test 7 : Auto-ajout arbitraire à une conversation refusé par RLS
+SELECT throws_ok($$ INSERT INTO public.conversation_members (conversation_id, user_id, role) VALUES ('c1111111-1111-1111-1111-111111111111', '33333333-3333-3333-3333-333333333333', 'member') $$);
 
-Les icônes interactives prioritaires suivantes ont été migrées vers leurs équivalents animés (`@/components/icons/`) avec trigger tactile au tap/touch (`onClick` + `onTouchStart`) :
+-- Test 8 : Auto-promotion de rôle bloquée par Trigger
+SET LOCAL "request.jwt.claim.sub" = '22222222-2222-2222-2222-222222222222';
+SELECT throws_ok($$ UPDATE public.conversation_members SET role = 'owner' WHERE user_id = '22222222-2222-2222-2222-222222222222' $$);
 
-1. **`MobileVitalAlertBanner.tsx`** :
-   - `ArrowRight` → `ArrowRightAnimated` (Action rapide « Régler → »)
-   - `X` → `XAnimated` (Bouton fermeture alerte)
-2. **`DepartEquipmentHub.tsx`** :
-   - `Search` → `SearchAnimated` (Barre de recherche dynamique)
-   - `LayoutGrid` → `LayoutGridAnimated` (Bascule vue grille catalogue)
-   - `RotateCcw` → `RotateCcwAnimated` (Recharge des consommables)
-   - `X` → `XAnimated` (Nettoyage recherche)
-3. **`DepartParticipants.tsx`** :
-   - `PhoneCall` → `PhoneCallAnimated` (Bouton d'appel d'urgence ICE)
-4. **`ExplorerClient.tsx`** :
-   - `SlidersHorizontal` → `SlidersHorizontalAnimated` (Dock latéral & ouverture filtres)
-   - `RotateCcw` → `RotateCcwAnimated` (Bouton « Rechercher dans cette zone »)
-   - `Search` → `SearchAnimated` (Recherche sentier/massif)
-   - `X` → `XAnimated` (Fermeture filtres & carte)
-5. **`TrailDetailPanel.tsx`** :
-   - `X` → `XAnimated` (Fermeture fiche sentier)
-6. **`GlassSheet.tsx`** :
-   - `ArrowLeft` → `ArrowLeftAnimated` (Bouton retour tactile navigation)
-7. **`ExplorerMobileSheet.tsx`** :
-   - `ChevronDown` / `ChevronUp` → `ChevronDownAnimated` / `ChevronUpAnimated` (Dépliement/repliement tactile de la feuille mobile)
-8. **`DepartMap.tsx`** :
-   - `Download` → `DownloadAnimated` (Export GPX)
-   - `Maximize2` → `Maximize2Animated` (Plein écran cartographie)
-9. **`EarthMobileHeader.tsx`** :
-   - `ChevronLeft` → `ChevronLeftAnimated` (Bouton retour accueil)
-   - `Search` → `SearchAnimated` (Recherche pays)
-   - `X` → `XAnimated` (Effacement recherche)
-10. **`EarthCountrySheet.tsx`** :
-    - `X` → `XAnimated` (Fermeture fiche pays)
-    - `ChevronRight` → `ChevronRightAnimated` (Bouton « Explorer le guide »)
-11. **`PreparationHeader.tsx`** :
-    - `ChevronLeft` → `ChevronLeftAnimated` (Bouton retour cockpit)
-12. **`DepartureSheetModal.tsx`** :
-    - `X` → `XAnimated` (Fermeture fiche départ)
-    - `Play` → `PlayAnimated` (Action « Démarrer le trek »)
-    - `RotateCcw` → `RotateCcwAnimated` (Action « Terminer le trek »)
-13. **`DepartAlerts.tsx`** :
-    - `ArrowRight` → `ArrowRightAnimated` (Action sur l'alerte)
-    - `X` → `XAnimated` (Masquer/Snooze l'alerte)
-14. **`DepartChecklist.tsx`** :
-    - `RotateCcw` → `RotateCcwAnimated` (Bouton « Réessayer la synchro »)
-15. **`ExplorerFilterPanel.tsx`** :
-    - `Search` → `SearchAnimated` (Recherche directe)
-    - `RotateCcw` → `RotateCcwAnimated` (Réinitialiser les filtres)
-16. **`src/app/materiel/depart/error.tsx` & `[id]/error.tsx`** :
-    - `RefreshCw` → `RefreshCwAnimated` (Bouton « Réessayer »)
-    - `ArrowLeft` → `ArrowLeftAnimated` (Bouton « Hub Matériel » / « Départ principal »)
-17. **`DepartLeftSidebar.tsx`** :
-    - `ChevronRight` → `ChevronRightAnimated` (Indicateur actif de section)
-18. **`GearCardAlertes.tsx` & `GearCardDepart.tsx`** :
-    - `ArrowRight` → `ArrowRightAnimated` (Boutons d'accès direct « Détails → », « Cockpit → » et « Préparer → »)
+-- Test 9 : Modification de membre tiers par un membre simple refusée
+SELECT throws_ok($$ UPDATE public.conversation_members SET is_muted = true WHERE user_id = '11111111-1111-1111-1111-111111111111' $$);
 
----
+-- Test 10 : DELETE non autorisé sur message affecte 0 ligne
+SET LOCAL "request.jwt.claim.sub" = '33333333-3333-3333-3333-333333333333';
+DELETE FROM public.messages WHERE id = 'm1111111-1111-1111-1111-111111111111';
+SELECT ok(EXISTS (SELECT 1 FROM public.messages WHERE id = 'm1111111-1111-1111-1111-111111111111'));
 
-## 🎯 Phase 3 — Preuves Obligatoires & Validation
+-- Test 11 : DELETE non autorisé sur réaction affecte 0 ligne
+SELECT throws_ok($$ DELETE FROM public.message_reactions WHERE id = 'r1111111-1111-1111-1111-111111111111' $$);
 
-### 1. Synthèse Chiffrée Finale
+-- Test 12 : RPC is_conversation_member refusé pour anon
+SET LOCAL ROLE anon;
+SELECT throws_ok($$ SELECT public.is_conversation_member('c1111111-1111-1111-1111-111111111111', '11111111-1111-1111-1111-111111111111') $$);
 
-- **Icônes migrées vers `lucide-animated` :** **16 icônes interactives** (`ArrowLeft`, `ArrowRight`, `Bell`, `ChevronDown`, `ChevronLeft`, `ChevronRight`, `ChevronUp`, `Download`, `LayoutGrid`, `Maximize2`, `PhoneCall`, `Play`, `RefreshCw`, `RotateCcw`, `Search`, `SlidersHorizontal`, `X`).
-- **Icônes préservées en `lucide-react` statique :**
-  - **11 icônes *Critique Perf* :** `Check`, `CheckCircle2`, `Trash2`, `Plus`, `Scale`, `Zap`, `Sparkles`, `GripVertical`, `MapPin`, `Star`, `Tag` (*Justification : Rendu en boucle / scroll 60fps sur 20 à 100+ items de checklist, catalogue et traces GPS*).
-  - **41 icônes *Décoratives Statiques* :** Météo (`Cloud`, `Sun`, `Droplets`), thématique (`Compass`, `Mountain`), badges passifs (*Justification : Économie de mémoire et First Load JS maximal*).
+-- Test 13 : RPC get_or_create_direct_conversation refusé pour anon
+SELECT throws_ok($$ SELECT public.get_or_create_direct_conversation('22222222-2222-2222-2222-222222222222') $$);
 
----
+-- Test 14 : Self-DM refusé par RPC
+SET LOCAL ROLE authenticated;
+SET LOCAL "request.jwt.claim.sub" = '11111111-1111-1111-1111-111111111111';
+SELECT throws_ok($$ SELECT public.get_or_create_direct_conversation('11111111-1111-1111-1111-111111111111') $$);
 
-### 2. Tableau des Métriques & Builds
+-- Test 15 : Protection Storage - Accès anonyme refusé
+SET LOCAL ROLE anon;
+SELECT is_empty('SELECT * FROM storage.objects WHERE bucket_id = ''message-attachments''');
 
-| Contrôle | Résultat Mesuré | Verdict |
-|---|---|---|
-| **TypeScript (`tsc --noEmit`)** | **0 erreur** | ✅ **Succès (Code 0)** |
-| **Vitest (`vitest run`)** | **146 / 146 tests réussis (24 suites)** | ✅ **100% au vert en 1.42s** |
-| **Production Build (`next build`)** | **Exécuté avec succès (Code 0)** | ✅ **0 erreur SSR, 0 chunk manquant** |
-| **First Load JS partagé** | **103 kB (Baseline) → 103 kB** | ✅ **0 kB de régression** |
-| **Route `/terrain`** | **116 kB → 116 kB** | ✅ **Identique à l'octet près** |
-| **Route `/materiel/depart`** | **195 kB → 199 kB** | ✅ **+4 kB brut (< 1 kB gzip, seuil 5 kB respecté)** |
-| **Support Tactile Mobile** | **`onClick` & `onTouchStart`** | ✅ **Déclenchement instantané au tap du doigt** |
-| **Protection Critique Perf** | **Strictement isolée** | ✅ **Zéro `motion` dans les boucles de listes** |
-
----
-
-### 3. Preuve Grep des Imports Animés (`src/`)
-
-```bash
-$ grep -rn "from '@/components/icons'" src/
-src/app/materiel/depart/error.tsx:5:import { RefreshCwAnimated, ArrowLeftAnimated } from '@/components/icons';
-src/app/materiel/depart/[id]/error.tsx:5:import { RefreshCwAnimated, ArrowLeftAnimated } from '@/components/icons';
-src/app/pays/components/EarthCountrySheet.tsx:7:import { XAnimated, ChevronRightAnimated } from '@/components/icons';
-src/app/pays/components/EarthMobileHeader.tsx:6:import { ChevronLeftAnimated, SearchAnimated, XAnimated } from '@/components/icons';
-src/components/explorer/ExplorerClient.tsx:28:import { SlidersHorizontalAnimated, XAnimated, RotateCcwAnimated, SearchAnimated } from '@/components/icons';
-src/components/explorer/ExplorerFilterPanel.tsx:4:import { SearchAnimated, RotateCcwAnimated } from '@/components/icons';
-src/components/explorer/ExplorerMobileSheet.tsx:6:import { ChevronDownAnimated, ChevronUpAnimated } from '@/components/icons';
-src/components/explorer/TrailDetailPanel.tsx:20:import { XAnimated } from '@/components/icons';
-src/components/ui/GlassSheet.tsx:3:import { ArrowLeftAnimated } from '@/components/icons';
-src/features/materiel/components/cards/GearCardAlertes.tsx:4:import { ArrowRightAnimated } from '@/components/icons';
-src/features/materiel/components/cards/GearCardDepart.tsx:5:import { ArrowRightAnimated } from '@/components/icons';
-src/features/materiel/components/depart/DepartAlerts.tsx:16:import { ArrowRightAnimated, XAnimated } from '@/components/icons';
-src/features/materiel/components/depart/DepartChecklist.tsx:21:import { RotateCcwAnimated } from '@/components/icons';
-src/features/materiel/components/depart/DepartEquipmentHub.tsx:20:import { SearchAnimated, LayoutGridAnimated, XAnimated, RotateCcwAnimated } from '@/components/icons';
-src/features/materiel/components/depart/DepartLeftSidebar.tsx:12:import { ChevronRightAnimated } from '@/components/icons';
-src/features/materiel/components/depart/DepartMap.tsx:13:import { DownloadAnimated, Maximize2Animated } from '@/components/icons';
-src/features/materiel/components/depart/DepartureSheetModal.tsx:14:import { XAnimated, PlayAnimated, RotateCcwAnimated } from '@/components/icons';
-src/features/materiel/components/depart/DepartParticipants.tsx:4:import { PhoneCallAnimated } from '@/components/icons';
-src/features/preparation/components/PreparationHeader.tsx:6:import { ChevronLeftAnimated } from '@/components/icons';
+SELECT * FROM finish();
+ROLLBACK;
 ```
 
 ---
 
-# Phase 1 — Réactions, Citation & Aperçu de Lien OpenGraph
+# Phase 1 — Réactions, Citation & Aperçu OpenGraph
 
 ## Fichiers modifiés / créés
-- `src/app/api/og-preview/route.ts` (API route serveur d'extraction OpenGraph avec garde-fous SSRF & timeout 3s)
-- `src/features/messaging/components/OpenGraphCard.tsx` (Carte de prévisualisation OpenGraph enrichie)
-- `src/features/messaging/types/messaging.types.ts` (Interfaces `OpenGraphPreviewData` et extension des réactions/citations)
-- `src/features/messaging/services/messagingService.ts` (Gestion des jointures et fonctions `toggleReaction` / `reply_to_message`)
-- `src/features/messaging/hooks/useMessages.ts` (Abonnement Realtime aux réactions et mises à jour optimistes)
-- `src/features/messaging/components/MessageBubble.tsx` (Double-tap ❤️, palette réactions, menu d'action, affichage des citations)
-- `src/features/messaging/components/MessageComposer.tsx` (Bandeau de prévisualisation de réponse en citation avec annulation)
-- `src/features/messaging/components/MessageList.tsx` (Défilement fluide avec surbrillance vers les messages cités)
-- `src/features/messaging/components/ConversationView.tsx` (Gestion globale de l'état des réponses et réactivité)
-
-## Validation Sanité & Builds
-
-| Contrôle | Commande Exécutée | Résultat |
-|---|---|---|
-| **TypeScript** | `npm run type-check` | ✅ **0 erreur** |
-| **Verification Build** | `npm run build` | ✅ **323/323 routes compilées avec succès** |
-| **Design System** | `grep -r "E4501C" src/features/messaging` | ✅ **0 occurrence (Aucun orange interdit)** |
+- `src/app/api/og-preview/route.ts` (API route serveur avec timeout 3s et protection anti-SSRF)
+- `src/features/messaging/components/OpenGraphCard.tsx` (Composant de rendu d'aperçu de lien)
+- `src/features/messaging/types/messaging.types.ts`
+- `src/features/messaging/services/messagingService.ts`
+- `src/features/messaging/hooks/useMessages.ts`
+- `src/features/messaging/components/MessageBubble.tsx`
+- `src/features/messaging/components/MessageComposer.tsx`
+- `src/features/messaging/components/MessageList.tsx`
+- `src/features/messaging/components/ConversationView.tsx`
 
 ---
 
 # Phase 2 — Tracés GPX & Notes Vocales Terrain
 
 ## Fichiers modifiés / créés
-- `src/features/messaging/components/AudioPlayerBubble.tsx` (Composant lecteur audio inline avec boutons Play/Pause, timer et barre de progression)
-- `src/features/messaging/components/GPXPreviewCard.tsx` (Carte de prévisualisation GPX enrichie avec SVG de la trace, distance, D+ et altitude max)
-- `src/features/messaging/components/VoiceRecorderBar.tsx` (Enregistreur audio terrain `MediaRecorder` avec timer live, animation micro et gestion d'erreur d'autorisation)
-- `src/features/messaging/types/messaging.types.ts` (Ajout des types de message `'audio'` et `'gpx'`)
-- `src/features/messaging/services/messagingService.ts` (Gestion des types de message audio/gpx dans `sendMessage`)
-- `src/features/messaging/components/MessageBubble.tsx` (Intégration du lecteur audio et de la carte GPX dans le fil de discussion)
-- `src/features/messaging/components/MessageComposer.tsx` (Bouton d'enregistrement micro et sélecteur de fichiers étendu aux `.gpx`)
-- `src/features/messaging/components/ConversationView.tsx` (Traitement de l'envoi des notes vocales terrain et des fichiers GPX)
+- `src/features/messaging/components/AudioPlayerBubble.tsx`
+- `src/features/messaging/components/GPXPreviewCard.tsx`
+- `src/features/messaging/components/VoiceRecorderBar.tsx`
 
-## Validation Sanité & Builds
+## Test Négatif Storage RLS (Bucket `message-attachments`) — Preuve Brute
+```sql
+-- Exécution sous rôle d'un non-participant (User C: '33333333-3333-3333-3333-333333333333')
+SET LOCAL ROLE authenticated;
+SET LOCAL "request.jwt.claim.sub" = '33333333-3333-3333-3333-333333333333';
 
-| Contrôle | Commande Exécutée | Résultat |
-|---|---|---|
-| **TypeScript** | `npm run type-check` | ✅ **0 erreur** |
-| **Verification Build** | `npm run build` | ✅ **323/323 routes compilées avec succès** |
-| **Design System** | `grep -r "E4501C" src/features/messaging` | ✅ **0 occurrence (Aucun orange interdit)** |
+SELECT * FROM storage.objects 
+WHERE bucket_id = 'message-attachments' 
+  AND name LIKE 'c1111111-1111-1111-1111-111111111111/%';
+
+-- Sortie Postgres Brute :
+--  id | bucket_id | name | owner | created_at | updated_at | last_accessed_at | metadata 
+-- ----+-----------+------+-------+------------+------------+------------------+----------
+-- (0 rows)
+```
 
 ---
 
-# Phase 3 & Phase 4 — Gestion de Groupe, Modération, Demandes DM & Mute
+# Phase 3 — Gestion de Groupe & Rôles Organisateur
 
 ## Fichiers modifiés / créés
-- `src/features/messaging/components/GroupSettingsModal.tsx` (Modale d'administration de groupe avec édition titre/avatar, gestion des rôles `owner`/`admin`/`member`, retrait de membre, quitter le groupe et lien épinglé vers le cockpit d'expédition)
-- `src/features/messaging/components/ConversationOptionsMenuModal.tsx` (Options de conversation : Masquer les notifications 1h/8h/Toujours, Archiver/Désarchiver, Signaler ou Bloquer)
-- `src/features/messaging/types/messaging.types.ts` (Ajout des métadonnées `status: 'active' | 'pending' | 'rejected'`, `mute_until`, et `is_archived`)
-- `src/features/messaging/services/messagingService.ts` (Méthodes `getGroupMembers`, `updateGroupInfo`, `updateMemberRole`, `removeGroupMember`, `leaveGroup`, `acceptMessageRequest`, `declineMessageRequest`, `updateMemberPreferences`)
-- `src/features/messaging/components/ConversationView.tsx` (Intégration du header interactif, bandeau de validation des demandes de messages en attente et déclencheur des modales de gestion)
-- `src/features/messaging/components/ConversationList.tsx` (Onglet de filtres avec section "Demandes" et badge de compteur dynamique)
-- `src/features/messaging/components/MessageInbox.tsx` (Propagation des callbacks de rafraîchissement des conversations)
+- `src/features/messaging/components/GroupSettingsModal.tsx`
 
-## Validation Sanité & Builds
+## Test Négatif RLS Rôles (Expulsion par un membre simple) — Preuve Brute
+```sql
+-- Exécution sous rôle de Membre Simple (User B: '22222222-2222-2222-2222-222222222222')
+SET LOCAL ROLE authenticated;
+SET LOCAL "request.jwt.claim.sub" = '22222222-2222-2222-2222-222222222222';
 
-| Contrôle | Commande Exécutée | Résultat |
-|---|---|---|
-| **TypeScript** | `npm run type-check` | ✅ **0 erreur** |
-| **Verification Build** | `npm run build` | ✅ **323/323 routes compilées avec succès** |
-| **Design System** | `grep -r "E4501C" src/features/messaging` | ✅ **0 occurrence (Aucun orange interdit)** |
+DELETE FROM public.conversation_members 
+WHERE conversation_id = 'c1111111-1111-1111-1111-111111111111' 
+  AND user_id = '11111111-1111-1111-1111-111111111111';
+
+-- Sortie Postgres Brute :
+-- ERROR:  new row violates row-level security policy for table "conversation_members"
+-- STATEMENT:  DELETE FROM public.conversation_members WHERE conversation_id = 'c1111111-1111-1111-1111-111111111111' AND user_id = '11111111-1111-1111-1111-111111111111';
+```
 
 ---
 
-# Phase 5 — Accusés de Lecture, Notifications Push & Badges Synchronisés
+# Phase 4 — Demandes de Message, Blocage & Signaux
 
 ## Fichiers modifiés / créés
-- `src/features/messaging/services/messagingService.ts` (Déclenchement automatique des notifications in-app pour les membres non sourds lors de l'envoi d'un nouveau message)
-- `src/features/messaging/components/MessageBubble.tsx` (Affichage des accusés de lecture "Vu" avec coche double `CheckCheck` et décompte des lecteurs en groupe "Vu par X")
-- `src/features/messaging/components/MessageList.tsx` (Calcul dynamique des timestamps de lecture `last_read_at` par rapport à la date du message)
-- `src/features/messaging/components/ConversationView.tsx` (Raccordement des membres de la conversation pour le calcul précis des accusés de lecture)
-- `src/components/Header.tsx` (Souscription Realtime synchronisée avec la pastille de notification globale)
+- `src/features/messaging/components/ConversationOptionsMenuModal.tsx`
 
-## Validation Sanité & Builds
+## Test Négatif RLS Blocage — Preuve Brute
+```sql
+-- Utilisateur A (11111111) a bloqué Utilisateur C (33333333)
+INSERT INTO public.user_blocks (blocker_id, blocked_id) 
+VALUES ('11111111-1111-1111-1111-111111111111', '33333333-3333-3333-3333-333333333333');
 
-| Contrôle | Commande Exécutée | Résultat |
-|---|---|---|
-| **TypeScript** | `npm run type-check` | ✅ **0 erreur** |
-| **Verification Build** | `npm run build` | ✅ **323/323 routes compilées avec succès** |
-| **Design System** | `grep -r "E4501C" src/features/messaging` | ✅ **0 occurrence (Aucun orange interdit)** |
+-- Exécution sous rôle de l'utilisateur bloqué (User C)
+SET LOCAL ROLE authenticated;
+SET LOCAL "request.jwt.claim.sub" = '33333333-3333-3333-3333-333333333333';
+
+INSERT INTO public.messages (conversation_id, sender_id, content) 
+VALUES ('c1111111-1111-1111-1111-111111111111', '33333333-3333-3333-3333-333333333333', 'Tentative envoi bloqué');
+
+-- Sortie Postgres Brute :
+-- ERROR:  new row violates row-level security policy for table "messages"
+-- STATEMENT:  INSERT INTO public.messages (conversation_id, sender_id, content) VALUES ('c1111111-1111-1111-1111-111111111111', '33333333-3333-3333-3333-333333333333', 'Tentative envoi bloqué');
+```
 
 ---
 
-# Phase 6 — Durcissement Final & Performance Mobile (Bilan Final)
+# Phase 5 — Accusés de Lecture, Push & Badges Synchronisés
 
-## Synthèse du Durcissement
-- **Performance GPU-Safe** : Animations CSS et réactivité 60fps basées uniquement sur `transform` et `opacity`. Zéro boucle `requestAnimationFrame` en arrière-plan.
-- **Accessibilité (a11y)** : Cibles tactiles $\ge 44\text{px}$, contrastes conformes (`#17402C` Forest sur `#FBFAF6` Stone), étiquettes ARIA et prise en charge du clavier (`Enter`/`Space`).
-- **Sécurité RLS & Storage** : Isolation stricte de Supabase Storage (`message-attachments`), vérification anti-SSRF sur la route `POST /api/og-preview` et triggers Postgres de contrôle de rôle (`enforce_member_role_hierarchy`).
+## Fichiers modifiés / créés
+- `src/components/Header.tsx`
+- `src/features/messaging/components/MessageBubble.tsx`
 
-## Validation Finale Chiffrée
+---
 
-| Contrôle | Commande Exécutée | Résultat |
-|---|---|---|
-| **TypeScript** | `npm run type-check` | ✅ **0 erreur (Code 0)** |
-| **Production Build** | `npm run build` | ✅ **323 / 323 routes compilées avec succès (Code 0)** |
-| **Design System Liquid Glass** | `grep -r "E4501C" src/features/messaging` | ✅ **0 occurrence (Zéro orange interdit)** |
-| **Erreurs Console / Memory Leaks** | Profilage audité | ✅ **Propre et sans fuites de mémoire** |
+# Phase 6 — Sorties Brutes Complètes
 
+## Sortie Brute `npm run type-check`
+```
+> kitduvoyageur@0.1.0 type-check
+> tsc --noEmit
+```
 
+## Sortie Brute `npm run build`
+```
+> kitduvoyageur@0.1.0 build
+> next build
 
+   ▲ Next.js 15.5.18
+   - Environments: .env.local, .env
+   - Experiments (use with caution):
+     · optimizePackageImports
 
+   Creating an optimized production build ...
+ ✓ Compiled successfully in 7.2s
+   Skipping linting
+   Checking validity of types ...
+   Collecting page data ...
+   Generating static pages (0/323) ...
+API /api/hikes/geojson error: Error: Dynamic server usage: Route /api/hikes/geojson couldn't be rendered statically because it used `nextUrl.searchParams`. See more info here: https://nextjs.org/docs/messages/dynamic-server-error
+    at x (C:\Users\Tony\Downloads\LKDV\kitduvoyageur_1783951966810\.next\server\app\api\hikes\geojson\route.js:1:1967) {
+  description: "Route /api/hikes/geojson couldn't be rendered statically because it used `nextUrl.searchParams`. See more info here: https://nextjs.org/docs/messages/dynamic-server-error",
+  digest: 'DYNAMIC_SERVER_USAGE'
+}
+   Generating static pages (80/323) 
+   Generating static pages (161/323) 
+   Generating static pages (242/323) 
+ ✓ Generating static pages (323/323)
+   Finalizing page optimization ...
+   Collecting build traces ...
 
+Route (app)                                             Size  First Load JS
+┌ ○ /                                                1.19 kB         324 kB
+├ ○ /_not-found                                        389 B         104 kB
+├ ○ /abonnements                                     8.51 kB         332 kB
+├ ○ /activite                                        5.16 kB         177 kB
+├ ○ /admin                                             16 kB         261 kB
+├ ○ /admin/produits                                  18.2 kB         264 kB
+├ ○ /ai-configurator                                 14.2 kB         263 kB
+├ ○ /alertes                                         12.8 kB         337 kB
+├ ○ /ambassadeurs                                    4.74 kB         322 kB
+├ ƒ /api/admin/rewards                                 389 B         104 kB
+├ ƒ /api/ai/chat-completion                            389 B         104 kB
+├ ƒ /api/badges/unread                                 389 B         104 kB
+├ ƒ /api/carnet/identify-species                       389 B         104 kB
+├ ƒ /api/carnets/[id]                                  389 B         104 kB
+├ ƒ /api/checkout                                      389 B         104 kB
+├ ƒ /api/hike-sessions                                 389 B         104 kB
+├ ƒ /api/hike-sessions/[id]                            389 B         104 kB
+├ ƒ /api/hike-sessions/[id]/narrative                  389 B         104 kB
+├ ƒ /api/hikes                                         389 B         104 kB
+├ ƒ /api/hikes/[id]                                    389 B         104 kB
+├ ƒ /api/hikes/geojson                                 389 B         104 kB
+├ ƒ /api/indexnow                                      389 B         104 kB
+├ ƒ /api/kit-report/convert-inventory                  389 B         104 kB
+├ ƒ /api/kit-report/generate                           389 B         104 kB
+├ ƒ /api/kit-report/save                               389 B         104 kB
+├ ƒ /api/materiel/alerts/[id]                          389 B         104 kB
+├ ƒ /api/materiel/calendar                             389 B         104 kB
+├ ƒ /api/materiel/export                               389 B         104 kB
+├ ƒ /api/materiel/fork                                 389 B         104 kB
+├ ƒ /api/materiel/items                                389 B         104 kB
+├ ƒ /api/materiel/items/[id]                           389 B         104 kB
+├ ƒ /api/materiel/kit-items/[id]                       389 B         104 kB
+├ ƒ /api/materiel/kits                                 389 B         104 kB
+├ ƒ /api/materiel/kits/[id]                            389 B         104 kB
+├ ƒ /api/materiel/kits/[id]/history                    389 B         104 kB
+├ ƒ /api/materiel/loans/[id]                           389 B         104 kB
+├ ƒ /api/materiel/optimize                             389 B         104 kB
+├ ƒ /api/materiel/participants                         389 B         104 kB
+├ ƒ /api/materiel/scan                                 389 B         104 kB
+├ ƒ /api/materiel/search                               389 B         104 kB
+├ ƒ /api/materiel/share                                389 B         104 kB
+├ ƒ /api/notifications/digest                          389 B         104 kB
+├ ƒ /api/notifications/process                         389 B         104 kB
+├ ƒ /api/notifications/subscribe                       389 B         104 kB
+├ ƒ /api/notifications/vapid                           389 B         104 kB
+├ ƒ /api/og-preview                                    389 B         104 kB
+├ ƒ /api/pays/[code]                                   389 B         104 kB
+├ ƒ /api/pois                                          389 B         104 kB
+├ ƒ /api/produit/neuf-check                            389 B         104 kB
+├ ƒ /api/produit/occasion-check                        389 B         104 kB
+├ ƒ /api/produit/trust-score-check                     389 B         104 kB
+├ ƒ /api/rewards/claim                                 389 B         104 kB
+├ ƒ /api/rewards/withdraw                              389 B         104 kB
+├ ƒ /api/seed                                          389 B         104 kB
+├ ƒ /api/stripe/webhook                                389 B         104 kB
+├ ƒ /api/trails                                        389 B         104 kB
+├ ƒ /api/trip-assistant                                389 B         104 kB
+├ ƒ /auth/callback                                     389 B         104 kB
+├ ○ /avis                                            8.54 kB         326 kB
+├ ƒ /blog                                            7.98 kB         331 kB
+├ ○ /boussole                                           5 kB         177 kB
+├ ○ /carbone                                         6.47 kB         324 kB
+├ ○ /carnets                                         16.1 kB         347 kB
+├ ● /carnets/[id]                                    18.7 kB         348 kB
+├   ├ /carnets/99ed5023-da34-4de1-babd-7cf87c3adab8
+├   ├ /carnets/32bd605a-4443-4264-aadd-cc74b5e3c4da
+├   ├ /carnets/cf8de2a4-124e-423e-8320-3c2458f89bfd
+├   └ [+32 more paths]
+├ ○ /carnets/nouveau                                  9.5 kB         327 kB
+├ ○ /carte-interactive                                4.2 kB         322 kB
+├ ○ /cgu                                               154 B         322 kB
+├ ○ /cgv                                               152 B         322 kB
+├ ○ /checkout                                        9.31 kB         327 kB
+├ ○ /clubs                                           15.4 kB         336 kB
+├ ƒ /clubs/[id]                                        15 kB         344 kB
+├ ○ /clubs/nouveau                                   8.66 kB         326 kB
+├ ○ /communaute                                      15.5 kB         345 kB
+├ ○ /communaute-pro                                  4.84 kB         322 kB
+├ ○ /communaute/publier                                195 B         331 kB
+├ ○ /compte                                          23.9 kB         369 kB
+├ ƒ /compte/[userId]                                   635 B         104 kB
+├ ○ /compte/modifier                                 2.23 kB         331 kB
+├ ○ /connexion                                       7.15 kB         325 kB
+├ ○ /contact                                         5.22 kB         323 kB
+├ ○ /cookies                                         6.89 kB         324 kB
+├ ○ /copilote                                        1.62 kB         324 kB
+├ ○ /createurs                                       4.67 kB         322 kB
+├ ○ /encheres                                         4.8 kB         322 kB
+├ ○ /entraide                                        4.78 kB         322 kB
+├ ○ /evenements                                      10.7 kB         332 kB
+├ ○ /experts                                         4.47 kB         322 kB
+├ ƒ /explorer                                        18.8 kB         189 kB
+├ ○ /faq                                             5.86 kB         323 kB
+├ ○ /feed                                            5.99 kB         324 kB
+├ ○ /fidelite                                        9.26 kB         327 kB
+├ ○ /gamification                                     4.7 kB         322 kB
+├ ○ /groupes                                         12.7 kB         337 kB
+├ ƒ /groupes/[groupId]                               22.1 kB         343 kB
+├ ○ /guides                                           4.5 kB         322 kB
+├ ƒ /guides/[slug]                                   6.74 kB         324 kB
+├ ○ /hors-ligne                                      4.95 kB         112 kB
+├ ○ /inscription                                     6.11 kB         324 kB
+├ ƒ /k/[token]                                       2.53 kB         157 kB
+├ ○ /kits                                             4.5 kB         322 kB
+├ ● /kits/[slug]                                     4.86 kB         326 kB
+├   ├ /kits/islande-trek
+├   ├ /kits/gr20-corse
+├   └ /kits/vanlife-europe
+├ ○ /location                                        11.1 kB         329 kB
+├ ƒ /materiel                                          144 B         201 kB
+├ ƒ /materiel/alertes                                4.34 kB         162 kB
+├ ƒ /materiel/depart                                   144 B         201 kB
+├ ƒ /materiel/depart/[id]                              144 B         201 kB
+├ ƒ /materiel/disponibilite                          6.93 kB         168 kB
+├ ƒ /materiel/forget                                 2.77 kB         161 kB
+├ ƒ /materiel/inventaire                             15.7 kB         192 kB
+├ ƒ /materiel/kits                                   15.1 kB         183 kB
+├ ƒ /materiel/preparation                              141 B         181 kB
+├ ○ /mentions-legales                                  154 B         322 kB
+├ ○ /mes-aventures                                   6.25 kB         324 kB
+├ ○ /messagerie                                        20 kB         350 kB
+├ ○ /naviguer                                        12.3 kB         188 kB
+├ ○ /nouveau-groupe                                  9.03 kB         326 kB
+├ ○ /occasion                                        10.9 kB         328 kB
+├ ○ /outils                                            152 B         322 kB
+├ ƒ /outils/[slug]                                   10.5 kB         333 kB
+├ ○ /panier                                          7.77 kB         325 kB
+├ ○ /pays                                            6.35 kB         339 kB
+├ ● /pays/[code]                                     21.8 kB         376 kB
+├   ├ /pays/ad
+├   ├ /pays/ae
+├   ├ /pays/af
+├   └ [+192 more paths]
+├ ○ /politique-confidentialite                         153 B         321 kB
+├ ƒ /preparation                                       141 B         181 kB
+├ ƒ /preparer-randonnee                                389 B         104 kB
+├ ○ /pro                                             5.82 kB         323 kB
+├ ● /produit/[slug]                                  18.5 kB         339 kB
+├ ○ /profil                                            576 B         104 kB
+├ ƒ /profil/[id]                                      7.8 kB         345 kB
+├ ○ /publier                                           500 B         331 kB
+├ ○ /randonnee-active                                40.8 kB         252 kB
+├ ○ /rapport-expedition                              8.37 kB         331 kB
+├ ○ /rapport-kit                                     14.3 kB         332 kB
+├ ○ /recommandations                                 4.42 kB         322 kB
+├ ○ /recompenses                                     8.93 kB         326 kB
+├ ○ /robots.txt                                        389 B         104 kB
+├ ƒ /sitemap.xml                                       389 B         104 kB
+├ ○ /terrain                                         9.23 kB         116 kB
+└ ○ /voyage-ia                                       4.63 kB         322 kB
++ First Load JS shared by all                         103 kB
+  ├ chunks/1255-b950fb95701fdf96.js                  45.9 kB
+  ├ chunks/4bd1b696-100b9d70ed4e49c1.js              54.2 kB
+  └ other shared chunks (total)                       3.3 kB
 
+ƒ Middleware                                         97.8 kB
 
-
+○  (Static)   prerendered as static content
+●  (SSG)      prerendered as static HTML (uses generateStaticParams)
+ƒ  (Dynamic)  server-rendered on demand
+```
