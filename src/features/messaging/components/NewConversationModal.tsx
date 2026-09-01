@@ -91,7 +91,7 @@ export const NewConversationModal: React.FC<NewConversationModalProps> = ({
           <h3 className="text-lg font-bold text-[#17402C]">Nouvelle Discussion</h3>
           <button
             onClick={onClose}
-            className="glass-circle-btn w-9 h-9 text-[#5A574E] hover:text-[#17402C] shrink-0"
+            className="glass-circle-btn w-11 h-11 text-[#5A574E] hover:text-[#17402C] shrink-0"
           >
             <X className="w-4 h-4" />
           </button>
@@ -104,7 +104,7 @@ export const NewConversationModal: React.FC<NewConversationModalProps> = ({
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             placeholder="Rechercher par nom..."
-            className="w-full pl-9 pr-4 py-2.5 text-[16px] md:text-sm rounded-2xl bg-white/85 border border-stone-200/80 focus:outline-none focus:border-[#17402C]/40 focus:ring-2 focus:ring-[#17402C]/15 text-[#14140F] placeholder-stone-400 font-medium shadow-inner-xs"
+            className="w-full pl-9 pr-4 py-2.5 text-[16px] md:text-sm glass-input font-medium"
           />
         </div>
 

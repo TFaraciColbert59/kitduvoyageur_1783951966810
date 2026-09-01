@@ -105,7 +105,7 @@ export const ConversationList: React.FC<ConversationListProps> = ({
           value={search}
           onChange={(e) => setSearch(e.target.value)}
           placeholder="Rechercher un voyageur, groupe..."
-          className="w-full pl-9 pr-9 py-2.5 text-[16px] md:text-xs rounded-2xl bg-white/85 border border-stone-200/80 focus:outline-none focus:border-[#17402C]/40 focus:ring-2 focus:ring-[#17402C]/15 text-[#14140F] placeholder-stone-400 font-medium shadow-inner-xs transition-colors"
+          className="w-full pl-9 pr-9 py-2.5 text-[16px] md:text-xs glass-input font-medium transition-colors"
         />
         {search && (
           <button

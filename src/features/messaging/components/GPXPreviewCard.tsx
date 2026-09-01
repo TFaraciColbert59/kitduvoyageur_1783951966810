@@ -173,7 +173,7 @@ export const GPXPreviewCard: React.FC<GPXPreviewCardProps> = ({
       </div>
 
       {loading ? (
-        <div className="h-20 bg-black/5 animate-pulse rounded-xl flex items-center justify-center text-xs opacity-75">
+        <div className="h-20 bg-[#17402C]/5 animate-pulse rounded-xl flex items-center justify-center text-xs opacity-75">
           Chargement de la trace GPS...
         </div>
       ) : error || !stats ? (
@@ -184,7 +184,7 @@ export const GPXPreviewCard: React.FC<GPXPreviewCardProps> = ({
       ) : (
         <div className="space-y-2">
           {/* SVG Map Path Preview */}
-          <div className="relative w-full h-24 bg-stone-900/10 rounded-xl overflow-hidden flex items-center justify-center p-1 border border-black/5">
+          <div className="relative w-full h-24 bg-[#17402C]/10 rounded-xl overflow-hidden flex items-center justify-center p-1 border border-[#17402C]/10">
             <svg viewBox="0 0 240 90" className="w-full h-full">
               <polyline
                 fill="none"
@@ -202,14 +202,14 @@ export const GPXPreviewCard: React.FC<GPXPreviewCardProps> = ({
 
           {/* Stats Grid */}
           <div className="grid grid-cols-3 gap-1.5 text-center">
-            <div className="p-1.5 bg-black/5 rounded-lg">
+            <div className="p-1.5 bg-[#17402C]/5 rounded-lg">
               <span className="block text-[9px] uppercase tracking-wider font-semibold opacity-70">
                 Distance
               </span>
               <span className="font-bold text-xs font-mono">{stats.distKm} km</span>
             </div>
 
-            <div className="p-1.5 bg-black/5 rounded-lg">
+            <div className="p-1.5 bg-[#17402C]/5 rounded-lg">
               <span className="block text-[9px] uppercase tracking-wider font-semibold opacity-70">
                 Dénivelé D+
               </span>
@@ -218,7 +218,7 @@ export const GPXPreviewCard: React.FC<GPXPreviewCardProps> = ({
               </span>
             </div>
 
-            <div className="p-1.5 bg-black/5 rounded-lg">
+            <div className="p-1.5 bg-[#17402C]/5 rounded-lg">
               <span className="block text-[9px] uppercase tracking-wider font-semibold opacity-70">
                 Alt. Max
               </span>

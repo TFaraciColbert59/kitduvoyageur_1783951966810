@@ -61,12 +61,12 @@ export const OpenGraphCard: React.FC<OpenGraphCardProps> = ({ url, isMine }) => 
   if (failed || (!loading && !ogData)) return null;
 
   return (
-    <div className="mt-2 overflow-hidden rounded-xl border border-black/10 transition-all hover:shadow-md">
+    <div className="mt-2 overflow-hidden rounded-xl border border-[#17402C]/10 transition-all hover:shadow-md">
       {loading ? (
-        <div className="p-3 bg-black/5 animate-pulse flex flex-col gap-2">
-          <div className="h-28 bg-stone-300/40 rounded-lg w-full" />
-          <div className="h-3 bg-stone-300/60 rounded w-3/4" />
-          <div className="h-2 bg-stone-300/40 rounded w-1/2" />
+        <div className="p-3 bg-[#17402C]/5 animate-pulse flex flex-col gap-2">
+          <div className="h-28 bg-[#C8DAC3]/40 rounded-lg w-full" />
+          <div className="h-3 bg-[#C8DAC3]/60 rounded w-3/4" />
+          <div className="h-2 bg-[#C8DAC3]/40 rounded w-1/2" />
         </div>
       ) : ogData ? (
         <a
@@ -74,11 +74,11 @@ export const OpenGraphCard: React.FC<OpenGraphCardProps> = ({ url, isMine }) => 
           target="_blank"
           rel="noopener noreferrer"
           className={`block text-left group ${
-            isMine ? 'bg-black/15 text-white' : 'bg-stone-50/90 text-stone-900 border border-stone-200/80'
+            isMine ? 'bg-white/15 text-white' : 'bg-[#F1EDE6]/90 text-[#17402C] border border-[#E4DED3]/80'
           }`}
         >
           {ogData.image && (
-            <div className="relative w-full h-32 bg-stone-900/10 overflow-hidden">
+            <div className="relative w-full h-32 bg-[#17402C]/10 overflow-hidden">
               <Image
                 src={ogData.image}
                 alt={ogData.title}

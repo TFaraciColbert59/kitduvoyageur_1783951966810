@@ -229,12 +229,14 @@ export const ConversationView: React.FC<ConversationViewProps> = ({
 
       {/* Message Request Action Bar (Pending status) */}
       {convStatus === 'pending' ? (
-        <div className="p-4 bg-stone-900 text-white border-t border-stone-800 flex flex-col gap-3 animate-slide-up shrink-0 pb-[calc(env(safe-area-inset-bottom,0px)+12px)]">
-          <div className="flex items-center gap-2">
-            <ShieldAlert className="w-5 h-5 text-amber-400 shrink-0" />
+        <div className="p-4 glass border-t border-white/40 flex flex-col gap-3 animate-slide-up shrink-0 pb-[calc(env(safe-area-inset-bottom,0px)+12px)]">
+          <div className="flex items-center gap-2.5">
+            <div className="w-9 h-9 rounded-full bg-[#C89A3B]/15 text-[#C89A3B] flex items-center justify-center shrink-0">
+              <ShieldAlert className="w-5 h-5" />
+            </div>
             <div>
-              <p className="text-xs font-bold text-white">Demande de message</p>
-              <p className="text-[11px] text-stone-400">
+              <p className="text-xs font-bold text-[#17402C]">Demande de message</p>
+              <p className="text-[11px] text-[#5A7064]">
                 Souhaitez-vous autoriser {conversation.other_member?.full_name || 'ce voyageur'} à échanger avec vous ?
               </p>
             </div>
@@ -243,21 +245,22 @@ export const ConversationView: React.FC<ConversationViewProps> = ({
           <div className="flex items-center gap-2 pt-1">
             <button
               onClick={handleAcceptRequest}
-              className="flex-1 py-2.5 px-3 bg-emerald-600 hover:bg-emerald-500 text-white rounded-xl text-xs font-bold transition-all shadow-md active:scale-95 flex items-center justify-center gap-1.5 min-h-[44px]"
+              className="flex-1 glass-capsule-btn primary text-xs font-bold min-h-[44px] flex items-center justify-center gap-1.5 active:scale-95"
             >
               <Check className="w-4 h-4" />
               Accepter
             </button>
             <button
               onClick={handleDeclineRequest}
-              className="flex-1 py-2.5 px-3 bg-stone-800 hover:bg-stone-700 text-stone-300 rounded-xl text-xs font-semibold transition-all flex items-center justify-center gap-1.5 min-h-[44px]"
+              className="flex-1 glass-capsule-btn text-xs font-semibold min-h-[44px] flex items-center justify-center gap-1.5 active:scale-95"
             >
               <X className="w-4 h-4" />
               Refuser
             </button>
             <button
               onClick={handleOpenReportBlock}
-              className="py-2.5 px-3 bg-rose-950/60 hover:bg-rose-900 text-rose-300 rounded-xl text-xs font-semibold transition-all min-h-[44px]"
+              className="glass-capsule-btn px-4 text-xs font-semibold min-h-[44px] flex items-center justify-center gap-1.5 active:scale-95"
+              style={{ background: 'color-mix(in oklab, var(--danger) 14%, transparent)', color: 'var(--danger)', borderColor: 'color-mix(in oklab, var(--danger) 35%, transparent)' }}
             >
               Bloquer
             </button>

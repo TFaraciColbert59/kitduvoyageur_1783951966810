@@ -166,7 +166,7 @@ export const MessageComposer: React.FC<MessageComposerProps> = ({
                 ? `Répondre à ${replyToMessage.sender_profile?.full_name || 'voyageur'}...`
                 : 'Votre message...'
             }
-            className="w-full pl-4 pr-3 py-2 text-[16px] md:text-sm rounded-2xl bg-white/85 border border-stone-200/80 focus:outline-none focus:border-[#17402C]/40 focus:ring-2 focus:ring-[#17402C]/15 text-[#14140F] placeholder-stone-400 font-medium resize-none min-h-[40px] max-h-[120px] leading-relaxed custom-scrollbar shadow-inner-xs transition-all"
+            className="w-full pl-4 pr-3 py-2 text-[16px] md:text-sm glass-input font-medium resize-none min-h-[40px] max-h-[120px] leading-relaxed custom-scrollbar transition-all"
           />
         </div>
 

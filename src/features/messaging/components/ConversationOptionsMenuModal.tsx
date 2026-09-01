@@ -78,7 +78,7 @@ export const ConversationOptionsMenuModal: React.FC<ConversationOptionsMenuModal
           <h3 className="font-bold text-base text-[#17402C]">Options de conversation</h3>
           <button
             onClick={onClose}
-            className="glass-circle-btn w-9 h-9 text-[#5A574E] hover:text-[#17402C] shrink-0"
+            className="glass-circle-btn w-11 h-11 text-[#5A574E] hover:text-[#17402C] shrink-0"
           >
             <X className="w-4 h-4" />
           </button>
@@ -162,9 +162,9 @@ export const ConversationOptionsMenuModal: React.FC<ConversationOptionsMenuModal
                   onClose();
                   onOpenReportBlock();
                 }}
-                className="w-full p-3.5 rounded-2xl bg-rose-50/80 hover:bg-rose-100/90 border border-rose-200/80 flex items-center gap-3 text-xs font-semibold text-[#A8443A] transition-colors mt-2 min-h-[44px]"
+                className="w-full p-3.5 rounded-2xl bg-[#F5DDD9]/70 hover:bg-[#F5DDD9]/90 border border-[#A8443A]/30 flex items-center gap-3 text-xs font-semibold text-[#8A241B] transition-colors mt-2 min-h-[44px]"
               >
-                <ShieldAlert className="w-4 h-4 text-[#A8443A]" />
+                <ShieldAlert className="w-4 h-4 text-[#8A241B]" />
                 <span>Signaler ou Bloquer {conversation.other_member.full_name}</span>
               </button>
             )}

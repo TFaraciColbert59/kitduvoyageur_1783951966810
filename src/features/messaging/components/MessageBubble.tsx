@@ -6,11 +6,12 @@ import type { Message } from '../types/messaging.types';
 import { formatMessageDate } from '../lib/messagingUtils';
 import { FileText, Check, CheckCheck, Reply, Smile } from 'lucide-react';
 import { useHapticFeedback } from '@/hooks/useHapticFeedback';
+import { useSwipe } from '@/hooks/useSwipe';
 import { OpenGraphCard } from './OpenGraphCard';
 import { AudioPlayerBubble } from './AudioPlayerBubble';
 import { GPXPreviewCard } from './GPXPreviewCard';
 
-const REACTION_PALETTE = ['❤️', '👍', '🔥', '😮', '😂', '🙏'];
+const REACTION_PALETTE = ['👍', '❤️', '😂', '😮', '🙏'];
 const URL_REGEX = /(https?:\/\/[^\s]+)/gi;
 
 export type BubbleGroupPosition = 'single' | 'first' | 'middle' | 'last';
@@ -46,6 +47,16 @@ export const MessageBubble: React.FC<MessageBubbleProps> = ({
   const [showActionMenu, setShowActionMenu] = useState(false);
   const lastTapRef = useRef<number>(0);
   const touchTimerRef = useRef<NodeJS.Timeout | null>(null);
+
+  // Swipe à droite sur un message reçu → répondre (comme Instagram DM)
+  const swipeHandlers = useSwipe({
+    onSwipeRight: () => {
+      if (!isMine) {
+        haptic('light');
+        onReply?.(message);
+      }
+    },
+  }, { threshold: 60 });
 
   const senderName = message.sender_profile?.full_name || 'Voyageur';
   const avatarUrl = message.sender_profile?.avatar_url || '/assets/images/no_image.png';
@@ -136,6 +147,7 @@ export const MessageBubble: React.FC<MessageBubbleProps> = ({
   return (
     <div
       id={`msg-bubble-${message.id}`}
+      {...swipeHandlers}
       className={`group relative flex items-end gap-2.5 ${marginClass} transition-all ${
         isMine ? 'flex-row-reverse' : 'flex-row'
       }`}
@@ -161,7 +173,7 @@ export const MessageBubble: React.FC<MessageBubbleProps> = ({
 
       <div className={`max-w-[78%] sm:max-w-[70%] flex flex-col ${isMine ? 'items-end' : 'items-start'}`}>
         {showHeader && (
-          <span className="text-[11px] font-semibold text-stone-500 ml-1 mb-1 block">
+          <span className="text-[11px] font-semibold text-[#5A7064] ml-1 mb-1 block">
             {senderName}
           </span>
         )}
@@ -204,11 +216,11 @@ export const MessageBubble: React.FC<MessageBubbleProps> = ({
         )}
 
         <div className="relative group/bubble flex items-center gap-1.5">
-          {/* Action trigger button on hover */}
+          {/* Action trigger button on hover / focus / first-of-group */}
           <div
-            className={`opacity-0 group-hover/bubble:opacity-100 transition-opacity flex items-center gap-1 ${
+            className={`opacity-0 group-hover/bubble:opacity-100 focus-within:opacity-100 transition-opacity flex items-center gap-1 ${
               isMine ? 'flex-row-reverse' : 'flex-row'
-            }`}
+            } ${groupPosition === 'first' || groupPosition === 'single' ? 'max-md:opacity-100' : ''}`}
           >
             <button
               type="button"
@@ -238,10 +250,10 @@ export const MessageBubble: React.FC<MessageBubbleProps> = ({
             onClick={handleBubbleClick}
             onTouchStart={handleTouchStart}
             onTouchEnd={handleTouchEnd}
-            className={`relative px-4 py-3 shadow-xs transition-all select-none cursor-pointer ${bubbleRadiusClass} ${
+            className={`relative px-4 py-3 transition-all select-none cursor-pointer ${bubbleRadiusClass} ${
               isMine
-                ? 'bg-gradient-to-br from-[#17402C] to-[#0F2B1E] text-[#FAF8F5] border border-white/20'
-                : 'bg-white/92 backdrop-blur-md text-[#14140F] border border-white/90 shadow-2xs'
+                ? 'bg-gradient-to-br from-[#5B7F55] to-[#365233] text-[#FAF8F5] border border-white/25 shadow-xs'
+                : 'bg-white/55 backdrop-blur-xl text-[#14140F] border border-white/50 shadow-[inset_0_1px_0_rgba(255,255,255,0.65),0_2px_8px_-1px_rgba(23,64,44,0.10)]'
             }`}
           >
             {/* Quoted Message */}
@@ -256,7 +268,7 @@ export const MessageBubble: React.FC<MessageBubbleProps> = ({
                 className={`text-xs px-3 py-1.5 rounded-lg mb-2 border-l-2 cursor-pointer transition-opacity hover:opacity-90 ${
                   isMine
                     ? 'bg-white/10 border-white/80 text-[#FAF8F5]/90'
-                    : 'bg-stone-100/90 border-[#17402C] text-[#2B2A24]'
+                    : 'bg-white/45 border-[#17402C]/60 text-[#17402C]'
                 }`}
               >
                 <p className="font-bold text-[11px]">{message.reply_to_message.sender_name}</p>
@@ -287,7 +299,7 @@ export const MessageBubble: React.FC<MessageBubbleProps> = ({
                   }
 
                   return (
-                    <div key={att.id} className="rounded-xl overflow-hidden max-w-sm border border-black/10">
+                    <div key={att.id} className="rounded-xl overflow-hidden max-w-sm border border-[#17402C]/10">
                       {att.file_type.startsWith('image/') ? (
                         <div className="relative w-64 h-48">
                           <Image
@@ -302,7 +314,7 @@ export const MessageBubble: React.FC<MessageBubbleProps> = ({
                           href={att.file_url}
                           target="_blank"
                           rel="noopener noreferrer"
-                          className="flex items-center gap-2 p-2 bg-black/5 hover:bg-black/10 rounded-lg text-xs"
+                          className="flex items-center gap-2 p-2 bg-[#17402C]/5 hover:bg-[#17402C]/10 rounded-lg text-xs"
                         >
                           <FileText className="w-4 h-4" />
                           <span className="truncate underline">{att.file_name || 'Télécharger le fichier'}</span>
@@ -351,7 +363,7 @@ export const MessageBubble: React.FC<MessageBubbleProps> = ({
                   {message.status === 'sending' ? (
                     <span className="w-2.5 h-2.5 rounded-full border-2 border-[#FAF8F5] border-t-transparent animate-spin inline-block" />
                   ) : message.status === 'error' ? (
-                    <span className="text-rose-200 text-[10px] font-bold">! Échec</span>
+                    <span className="bg-[#A8443A] text-white px-1.5 py-0.5 rounded-full text-[10px] font-bold">! Échec</span>
                   ) : isReadByRecipient || (readByCount && readByCount > 0) ? (
                     <span
                       className="flex items-center gap-0.5 text-[#C8DAC3] text-[10px] font-semibold"
@@ -384,10 +396,10 @@ export const MessageBubble: React.FC<MessageBubbleProps> = ({
                   haptic('light');
                   onToggleReaction?.(message.id, item.emoji);
                 }}
-                className={`px-2 py-0.5 rounded-full text-[11px] font-bold flex items-center gap-1 border shadow-2xs transition-transform active:scale-90 ${
+                className={`px-2.5 py-1 rounded-full text-[11px] font-bold flex items-center gap-1.5 border transition-transform active:scale-90 ${
                   item.userReacted
-                    ? 'bg-[#17402C]/10 text-[#17402C] border-[#17402C]/35 ring-1 ring-[#17402C]/20'
-                    : 'bg-white/90 text-[#2B2A24] border-stone-200 hover:bg-stone-100'
+                    ? 'bg-[#17402C]/12 text-[#17402C] border-[#17402C]/40 ring-1 ring-[#17402C]/20 shadow-[inset_0_1px_0_rgba(255,255,255,0.5)]'
+                    : 'bg-white/60 backdrop-blur-md text-[#17402C] border-white/60 hover:bg-white/85 shadow-[inset_0_1px_0_rgba(255,255,255,0.6)]'
                 }`}
               >
                 <span>{item.emoji}</span>

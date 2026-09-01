@@ -139,14 +139,14 @@ export const GroupSettingsModal: React.FC<GroupSettingsModalProps> = ({
           </div>
           <button
             onClick={onClose}
-            className="glass-circle-btn w-9 h-9 text-[#5A574E] hover:text-[#17402C] shrink-0"
+            className="glass-circle-btn w-11 h-11 text-[#5A574E] hover:text-[#17402C] shrink-0"
           >
             <X className="w-4 h-4" />
           </button>
         </div>
 
         {errorMessage && (
-          <div className="mb-3 p-2.5 bg-rose-50/90 border border-rose-200 text-[#A8443A] rounded-2xl text-xs font-semibold shrink-0">
+          <div className="mb-3 p-2.5 bg-[#F5DDD9]/90 border border-[#A8443A]/25 text-[#8A241B] rounded-2xl text-xs font-semibold shrink-0">
             {errorMessage}
           </div>
         )}
@@ -262,7 +262,7 @@ export const GroupSettingsModal: React.FC<GroupSettingsModalProps> = ({
                           <span
                             className={`inline-flex items-center gap-1 text-[10px] font-semibold px-2 py-0.5 rounded-full ${
                               mem.role === 'owner'
-                                ? 'bg-amber-100 text-amber-900 border border-amber-300'
+                                ? 'bg-[#FBF1DC] text-[#8C6418] border border-[#C89A3B]/35'
                                 : mem.role === 'admin'
                                 ? 'bg-[#5B7F55]/15 text-[#17402C] border border-[#5B7F55]/40'
                                 : 'bg-stone-100 text-[#5A574E]'
@@ -270,7 +270,7 @@ export const GroupSettingsModal: React.FC<GroupSettingsModalProps> = ({
                           >
                             {mem.role === 'owner' ? (
                               <>
-                                <Crown className="w-2.5 h-2.5 text-amber-600" /> Organisateur
+                                <Crown className="w-2.5 h-2.5 text-[#C89A3B]" /> Organisateur
                               </>
                             ) : mem.role === 'admin' ? (
                               <>
@@ -306,7 +306,7 @@ export const GroupSettingsModal: React.FC<GroupSettingsModalProps> = ({
                           <button
                             type="button"
                             onClick={() => handleRemoveMember(mem.user_id, name)}
-                            className="glass-circle-btn w-8 h-8 text-[#A8443A] hover:bg-rose-50"
+                            className="glass-circle-btn w-8 h-8 text-[#A8443A] hover:bg-[#F5DDD9]/60"
                             title="Retirer du groupe"
                           >
                             <UserMinus className="w-3.5 h-3.5" />
@@ -326,9 +326,9 @@ export const GroupSettingsModal: React.FC<GroupSettingsModalProps> = ({
           <button
             onClick={handleLeaveGroup}
             disabled={loading}
-            className="w-full min-h-[44px] py-2.5 px-4 bg-rose-50/80 hover:bg-rose-100/90 text-[#A8443A] border border-rose-200/80 rounded-2xl text-xs font-bold transition-all flex items-center justify-center gap-2 active:scale-95"
+            className="w-full min-h-[44px] py-2.5 px-4 bg-[#F5DDD9]/70 hover:bg-[#F5DDD9]/90 text-[#8A241B] border border-[#A8443A]/30 rounded-2xl text-xs font-bold transition-all flex items-center justify-center gap-2 active:scale-95"
           >
-            <LogOut className="w-4 h-4 text-[#A8443A]" />
+            <LogOut className="w-4 h-4 text-[#8A241B]" />
             Quitter le groupe d&apos;expédition
           </button>
         </div>

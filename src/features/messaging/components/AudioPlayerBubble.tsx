@@ -111,7 +111,7 @@ export const AudioPlayerBubble: React.FC<AudioPlayerBubbleProps> = ({ audioUrl, 
             step={0.1}
             value={currentTime}
             onChange={handleSeek}
-            className="w-full h-1.5 rounded-lg appearance-none cursor-pointer bg-black/20 accent-[#5B7F55] focus:outline-none"
+            className="w-full h-1.5 rounded-lg appearance-none cursor-pointer bg-[#17402C]/15 accent-[#5B7F55] focus:outline-none"
           />
         </div>
       </div>

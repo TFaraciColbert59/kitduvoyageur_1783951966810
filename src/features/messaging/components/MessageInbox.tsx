@@ -41,8 +41,11 @@ export const MessageInbox: React.FC<MessageInboxProps> = ({
 
   return (
     <div className="w-full h-full md:h-[740px] md:max-h-[calc(100vh-140px)] md:min-h-[500px] max-w-7xl mx-auto flex flex-col items-stretch justify-center p-0 md:p-2 overflow-hidden relative">
+      {/* Ambiance Liquid Glass subtile derrière les panneaux */}
+      <div aria-hidden="true" className="absolute inset-0 pointer-events-none" style={{ background: 'radial-gradient(ellipse_at_top_left,rgba(168,200,160,0.16),transparent_50%)' }} />
+      <div aria-hidden="true" className="absolute inset-0 pointer-events-none" style={{ background: 'radial-gradient(circle_at_20%_80%,rgba(91,127,85,0.10),transparent_45%)' }} />
       {/* Layout Mobile (< md) avec transition par glissement (slide) GPU-safe */}
-      <div className="flex md:hidden w-full h-full relative overflow-hidden">
+      <div className="flex md:hidden w-full h-full relative z-10 overflow-hidden">
         {/* Vue Liste Mobile */}
         <div
           className={`w-full h-full shrink-0 transition-transform duration-300 ease-out ${
@@ -80,7 +83,7 @@ export const MessageInbox: React.FC<MessageInboxProps> = ({
       </div>
 
       {/* Layout Desktop (≥ md) Double Colonne (Dual-Pane) */}
-      <div className="hidden md:flex w-full h-full gap-4 items-stretch justify-center overflow-hidden">
+      <div className="hidden md:flex w-full h-full gap-4 items-stretch justify-center overflow-hidden relative z-10">
         {/* Colonne Liste des Conversations (Taille fixe) */}
         <div className="w-80 lg:w-96 shrink-0 h-full overflow-hidden">
           <ConversationList

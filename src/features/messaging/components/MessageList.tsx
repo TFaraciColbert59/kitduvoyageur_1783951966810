@@ -29,8 +29,8 @@ export const MessageListSkeleton = () => (
     </div>
     <div className="flex items-end gap-2.5 justify-end">
       <div className="space-y-1.5 max-w-[65%] flex flex-col items-end">
-        <div className="h-12 w-56 bg-emerald-600/20 rounded-2xl rounded-tr-xs" />
-        <div className="h-8 w-36 bg-emerald-600/15 rounded-2xl" />
+        <div className="h-12 w-56 bg-[#5B7F55]/20 rounded-2xl rounded-tr-xs" />
+        <div className="h-8 w-36 bg-[#5B7F55]/15 rounded-2xl" />
       </div>
     </div>
     <div className="flex items-end gap-2.5">
@@ -106,9 +106,9 @@ export const MessageList: React.FC<MessageListProps> = ({
     const el = document.getElementById(`msg-bubble-${messageId}`);
     if (el) {
       el.scrollIntoView({ behavior: 'smooth', block: 'center' });
-      el.classList.add('ring-2', 'ring-emerald-400', 'ring-offset-2', 'rounded-2xl');
+      el.classList.add('ring-2', 'ring-[#5B7F55]', 'ring-offset-2', 'rounded-2xl');
       setTimeout(() => {
-        el.classList.remove('ring-2', 'ring-emerald-400', 'ring-offset-2', 'rounded-2xl');
+        el.classList.remove('ring-2', 'ring-[#5B7F55]', 'ring-offset-2', 'rounded-2xl');
       }, 1500);
     }
   };

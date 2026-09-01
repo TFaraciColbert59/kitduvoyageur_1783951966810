@@ -26,15 +26,20 @@ export default function MessageriePage() {
   }, [hasActiveConv]);
 
   return (
-    <div className="h-dvh w-screen overflow-hidden flex flex-col bg-[#FAF8F5]">
+    <div className="h-dvh w-screen overflow-hidden flex flex-col bg-[#FAF8F5] relative">
+      {/* Ambiance Liquid Glass LKDV — brume & dégradés climatiques */}
+      <div aria-hidden="true" className="absolute inset-0 pointer-events-none" style={{ background: 'radial-gradient(ellipse_at_top_left,rgba(148,181,161,0.18),transparent_55%)' }} />
+      <div aria-hidden="true" className="absolute inset-0 pointer-events-none" style={{ background: 'radial-gradient(ellipse_at_bottom_right,rgba(91,127,85,0.12),transparent_50%)' }} />
+      <div aria-hidden="true" className="absolute inset-0 pointer-events-none" style={{ background: 'radial-gradient(ellipse_at_50%_15%,rgba(168,200,160,0.14),transparent_60%)' }} />
+
       {/* Header global desktop */}
-      <div className="hidden md:block">
+      <div className="hidden md:block relative z-10">
         <Header />
       </div>
 
       <MobilePageShell safeTop={false} hasBottomNav={!hasActiveConv}>
         <main
-          className={`w-full ${
+          className={`w-full relative z-10 ${
             hasActiveConv
               ? 'h-dvh md:h-[calc(100dvh-80px)]'
               : 'h-[calc(100dvh-var(--bottom-nav-height))] md:h-[calc(100dvh-80px)]'
