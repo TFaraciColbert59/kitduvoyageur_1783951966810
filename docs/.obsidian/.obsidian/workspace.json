@@ -11,10 +11,14 @@
             "id": "65f3f7068d80a290",
             "type": "leaf",
             "state": {
-              "type": "graph",
-              "state": {},
-              "icon": "lucide-git-fork",
-              "title": "Vue graphique"
+              "type": "markdown",
+              "state": {
+                "file": "10 — 📈 SEO & MARKETING/SEO.md",
+                "mode": "source",
+                "source": false
+              },
+              "icon": "lucide-file",
+              "title": "SEO"
             }
           }
         ]
@@ -95,6 +99,7 @@
             "state": {
               "type": "backlink",
               "state": {
+                "file": "10 — 📈 SEO & MARKETING/SEO.md",
                 "collapseAll": false,
                 "extraContext": false,
                 "sortOrder": "alphabetical",
@@ -183,32 +188,33 @@
   },
   "active": "65f3f7068d80a290",
   "lastOpenFiles": [
+    "00 — 🗺️ CARTE ULTIME/Audit vérifié du projet LKDV.md",
+    "00 — 🗺️ CARTE ULTIME/Audit vérifié du projet LKDV.md.tmp.24992.01de3b2b22d5",
+    "10 — 📈 SEO & MARKETING/Acquisition.md",
+    "10 — 📈 SEO & MARKETING/SEO.md",
+    "10 — 📈 SEO & MARKETING/Réseaux sociaux.md",
+    "10 — 📈 SEO & MARKETING/Contenu.md",
+    "09 — 💰 BUSINESS/Points & récompenses.md",
+    "09 — 💰 BUSINESS/Monétisation.md",
+    "09 — 💰 BUSINESS/Modèle économique.md",
+    "09 — 💰 BUSINESS/Marketplace.md",
+    "09 — 💰 BUSINESS/KPIs.md",
+    "05 — 🗄️ SUPABASE/Storage.md",
+    "05 — 🗄️ SUPABASE/RLS.md",
+    "05 — 🗄️ SUPABASE/Relations.md",
+    "05 — 🗄️ SUPABASE/Functions.md",
+    "05 — 🗄️ SUPABASE/Architecture BDD.md",
+    "00 — 🗺️ CARTE ULTIME/🗺️ CARTE ULTIME LKDV.md",
+    "06 — 🔗 SYSTÈMES/Auth.md",
+    "00 — 🗺️ CARTE ULTIME/Tâche accomplie - Audit LKDV.md",
+    "00 — 🗺️ CARTE ULTIME/Tâche terminée - Audit LKDV complet.md",
+    "00 — 🗺️ CARTE ULTIME/Audit LKDV - Terminé.md",
+    "00 — 🗺️ CARTE ULTIME/Mise à jour terminée.md",
+    "00 — 🗺️ CARTE ULTIME/Audit complet du projet LKDV.md",
     "07 — 🛒 COMMERCE/Produits.md",
     "99 — 📦 ARCHIVES/Livrables passés.md",
     "05 — 🗄️ SUPABASE/Triggers.md",
     "02 — 🧩 ÉCOSYSTÈME/Voyages.md",
-    "02 — 🧩 ÉCOSYSTÈME/Inventaire.md",
-    "05 — 🗄️ SUPABASE/Architecture BDD.md",
-    "00 — 🗺️ CARTE ULTIME/Dépendances système.md",
-    "03 — 🎨 UX & UI/Design System.md",
-    "13 — 📋 DÉCISIONS/Décisions UX.md",
-    "05 — 🗄️ SUPABASE/Tables.md",
-    "00 — 🗺️ CARTE ULTIME/Carte ultime LKDV.md",
-    "08 — 👥 COMMUNAUTÉ/Groupes.md",
-    "07 — 🛒 COMMERCE/Kits.md",
-    "09 — 💰 BUSINESS/Points & récompenses.md",
-    "06 — 🔗 SYSTÈMES/Récompenses.md",
-    "03 — TECHNIQUE/API.md",
-    "99 — 📦 ARCHIVES/Audits historiques.md",
-    "99 — 📦 ARCHIVES/Index des archives.md",
-    "13 — 📋 DÉCISIONS/ADR/ADR-006-notification-system-webpush.md",
-    "13 — 📋 DÉCISIONS/ADR/ADR-005-reward-engine-ledger.md",
-    "13 — 📋 DÉCISIONS/ADR/ADR-004-mon-materiel-unifie.md",
-    "13 — 📋 DÉCISIONS/ADR/ADR-003-design-system-palette.md",
-    "13 — 📋 DÉCISIONS/ADR/ADR-002-postgis-geodata.md",
-    "13 — 📋 DÉCISIONS/ADR/ADR-001-stack-technique.md",
-    "13 — 📋 DÉCISIONS/Décisions techniques.md",
-    "13 — 📋 DÉCISIONS/Décisions produit.md",
     "99 — 📦 ARCHIVES",
     "13 — 📋 DÉCISIONS/ADR",
     "13 — 📋 DÉCISIONS",
@@ -217,7 +223,6 @@
     "10 — 📈 SEO & MARKETING",
     "09 — 💰 BUSINESS",
     "08 — 👥 COMMUNAUTÉ",
-    "07 — 🛒 COMMERCE",
-    "06 — 🔗 SYSTÈMES"
+    "07 — 🛒 COMMERCE"
   ]
 }
