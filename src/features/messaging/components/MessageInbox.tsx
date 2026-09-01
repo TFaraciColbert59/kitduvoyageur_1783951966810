@@ -1,12 +1,13 @@
 "use client";
 
 import React, { useState, useCallback } from 'react';
-import type { UserProfileSummary } from '../types/messaging.types';
+import type { UserProfileSummary, Conversation } from '../types/messaging.types';
 import { useConversations } from '../hooks/useConversations';
 import { useBackGuard } from '../hooks/useBackGuard';
 import { ConversationList } from './ConversationList';
 import { ConversationView } from './ConversationView';
 import { NewConversationModal } from './NewConversationModal';
+import ReportBlockModal, { ReportTarget } from '@/components/ui/ReportBlockModal';
 import { Send, Plus, AlertTriangle } from 'lucide-react';
 import { useHapticFeedback } from '@/hooks/useHapticFeedback';
 
@@ -27,6 +28,16 @@ export const MessageInbox: React.FC<MessageInboxProps> = ({
   const [selectedConvId, setSelectedConvId] = useState<string | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isClosing, setIsClosing] = useState(false);
+  const [reportTarget, setReportTarget] = useState<ReportTarget | null>(null);
+
+  const handleReportConversation = (conv: Conversation) => {
+    setReportTarget({
+      userId: conv.other_member?.id || conv.created_by || 'unknown',
+      userName: conv.other_member?.full_name || conv.title || 'Voyageur LKDV',
+      groupId: conv.type === 'group' ? conv.id : undefined,
+      groupName: conv.type === 'group' ? conv.title || undefined : undefined,
+    });
+  };
 
   const open = (convId: string) => {
     setSelectedConvId(convId);
@@ -85,6 +96,9 @@ export const MessageInbox: React.FC<MessageInboxProps> = ({
             selectedId={selectedConvId}
             onSelect={(c) => open(c.id)}
             onNewConversation={() => setIsModalOpen(true)}
+            onRefresh={refreshConversations}
+            onReportConversation={handleReportConversation}
+            currentUserId={currentUserId}
             loading={loading}
           />
         )}
@@ -136,6 +150,9 @@ export const MessageInbox: React.FC<MessageInboxProps> = ({
               selectedId={selectedConvId}
               onSelect={(c) => setSelectedConvId(c.id)}
               onNewConversation={() => setIsModalOpen(true)}
+              onRefresh={refreshConversations}
+              onReportConversation={handleReportConversation}
+              currentUserId={currentUserId}
               loading={loading}
             />
           )}
@@ -180,6 +197,16 @@ export const MessageInbox: React.FC<MessageInboxProps> = ({
         onClose={() => setIsModalOpen(false)}
         currentUserId={currentUserId}
         onConversationCreated={handleConversationCreated}
+      />
+
+      {/* Signalement / blocage depuis le menu appui long (liste) */}
+      <ReportBlockModal
+        target={reportTarget}
+        onClose={() => setReportTarget(null)}
+        onSuccess={() => {
+          setReportTarget(null);
+          refreshConversations();
+        }}
       />
     </div>
   );

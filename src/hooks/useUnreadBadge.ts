@@ -7,9 +7,10 @@ interface UnreadBadges {
   materiel: number;
   communaute: number;
   profil: number;
+  messages: number;
 }
 
-const EMPTY: UnreadBadges = { materiel: 0, communaute: 0, profil: 0 };
+const EMPTY: UnreadBadges = { materiel: 0, communaute: 0, profil: 0, messages: 0 };
 
 /**
  * Badges réels de notification (bottom bar). Relit `/api/badges/unread` à chaque

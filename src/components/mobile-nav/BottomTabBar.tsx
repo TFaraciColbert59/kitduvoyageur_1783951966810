@@ -5,7 +5,6 @@ import { useRouter, usePathname } from 'next/navigation';
 import { useQueryClient } from '@tanstack/react-query';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useHapticFeedback } from '@/hooks/useHapticFeedback';
-import { useSearchContext } from '@/contexts/SearchContext';
 import { useUnreadBadge } from '@/hooks/useUnreadBadge';
 import { useCartCount } from '@/hooks/useCartCount';
 import LkvIcon from '@/components/ui/LkvIcon';
@@ -203,7 +202,7 @@ const TabLink = memo(function TabLink({ tab, isActive, onPress, badge }: { tab: 
   );
 });
 
-function HamburgerMenu({ menuOpen, setMenuOpen, openSearch, isCommunity }: { menuOpen: boolean; setMenuOpen: React.Dispatch<React.SetStateAction<boolean>>; openSearch?: () => void; isCommunity?: boolean }) {
+function HamburgerMenu({ menuOpen, setMenuOpen, messagerieBadge }: { menuOpen: boolean; setMenuOpen: React.Dispatch<React.SetStateAction<boolean>>; messagerieBadge?: number }) {
   const { triggerHaptic } = useHapticFeedback();
   const cartCount = useCartCount();
   return (
@@ -270,14 +269,14 @@ function HamburgerMenu({ menuOpen, setMenuOpen, openSearch, isCommunity }: { men
                 minWidth: '135px',
               }}
             >
-              {/* Search */}
-              <button
+              {/* Messages */}
+              <Link
+                href="/messagerie"
                 onClick={() => {
                   triggerHaptic('light');
                   setMenuOpen(false);
-                  openSearch?.();
                 }}
-                aria-label="Rechercher"
+                aria-label="Messages"
                 style={{
                   display: 'flex',
                   alignItems: 'center',
@@ -285,44 +284,34 @@ function HamburgerMenu({ menuOpen, setMenuOpen, openSearch, isCommunity }: { men
                   padding: '8px 10px',
                   borderRadius: '10px',
                   background: 'rgba(23, 64, 44, 0.06)',
-                  border: 'none',
+                  textDecoration: 'none',
                   color: '#17402C',
                   fontSize: '13px',
                   fontWeight: 600,
-                  cursor: 'pointer',
-                  textAlign: 'left',
+                  position: 'relative',
                 }}
               >
-                <LkvIcon name="search" size={16} color="#17402C" />
-                Recherche
-              </button>
-
-              {/* Enregistrés / Favoris */}
-              {isCommunity && (
-                <Link
-                  href="/carnets?tab=favorites"
-                  onClick={() => {
-                    triggerHaptic('light');
-                    setMenuOpen(false);
-                  }}
-                  aria-label="Enregistrés"
-                  style={{
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: '8px',
-                    padding: '8px 10px',
-                    borderRadius: '10px',
-                    background: 'rgba(23, 64, 44, 0.06)',
-                    textDecoration: 'none',
-                    color: '#17402C',
-                    fontSize: '13px',
-                    fontWeight: 600,
-                  }}
-                >
-                  <LkvIcon name="bookmark" size={16} color="#17402C" />
-                  Enregistrés
-                </Link>
-              )}
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#17402C" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                  <path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z" />
+                </svg>
+                Messages
+                {!!messagerieBadge && (
+                  <span style={{
+                    position: 'absolute',
+                    top: '8px',
+                    right: '8px',
+                    background: '#5B7F55',
+                    color: '#fff',
+                    fontSize: '9px',
+                    fontWeight: 700,
+                    padding: '1px 5px',
+                    borderRadius: '999px',
+                    fontFamily: 'monospace',
+                  }}>
+                    {messagerieBadge > 9 ? '9+' : messagerieBadge}
+                  </span>
+                )}
+              </Link>
 
               {/* Notifications */}
               <Link
@@ -406,7 +395,6 @@ function BottomTabBar() {
   const pathname = usePathname();
   const router = useRouter();
   const { triggerHaptic } = useHapticFeedback();
-  const { openSearch } = useSearchContext();
   const [mounted, setMounted] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
   const [pressedTab, setPressedTab] = useState<string | null>(null);
@@ -442,8 +430,9 @@ function BottomTabBar() {
       pathname.startsWith('/evenements')
     )
   );
+  const isMessageriePage = pathname === '/messagerie';
 
-  const hasUpperExtension = isGroupesHub || isGroupeCockpit || isClubsHub || isClubDetail || isCarnetsHub || isCarnetDetail || isPaysHub || isPaysDetail || isCommunityPage || isMaterielSection;
+  const hasUpperExtension = isGroupesHub || isGroupeCockpit || isClubsHub || isClubDetail || isCarnetsHub || isCarnetDetail || isPaysHub || isPaysDetail || isCommunityPage || isMaterielSection || isMessageriePage;
 
   const [activeGroupesTab, setActiveGroupesTab] = useState<'mes-groupes' | 'decouvrir'>('mes-groupes');
   const [activeCockpitTab, setActiveCockpitTab] = useState<string>('overview');
@@ -454,6 +443,8 @@ function BottomTabBar() {
   const [activePaysContinent, setActivePaysContinent] = useState<string>('all');
   const [activePaysDetailTab, setActivePaysDetailTab] = useState<string>('presentation');
   const [activeCommunityTab, setActiveCommunityTab] = useState<string>('fil');
+  const [activeMessagerieTab, setActiveMessagerieTab] = useState<string>('all');
+  const [messagerieRequestsCount, setMessagerieRequestsCount] = useState<number>(0);
   const [activeDepartTab, setActiveDepartTab] = useState<string>('overview');
   const [activeMaterielTab, setActiveMaterielTab] = useState<string>('overview');
   const [activeKitsTab, setActiveKitsTab] = useState<string>('all');
@@ -535,6 +526,15 @@ function BottomTabBar() {
       const kitsHandler = (e: any) => {
         if (e.detail) setActiveKitsTab(e.detail);
       };
+      // Messagerie : la liste publie son onglet actif + le nb de demandes,
+      // la barre publie les taps utilisateur (evenements distincts, pas d'echo).
+      const messagerieStateHandler = (e: any) => {
+        if (e.detail?.tab) setActiveMessagerieTab(e.detail.tab);
+        if (typeof e.detail?.count === 'number') setMessagerieRequestsCount(e.detail.count);
+      };
+      const messagerieTabHandler = (e: any) => {
+        if (e.detail) setActiveMessagerieTab(e.detail);
+      };
       const toggleBottomBarHandler = (e: any) => {
         if (e.detail && typeof e.detail.hide === 'boolean') {
           setHiddenByEvent(e.detail.hide);
@@ -552,6 +552,8 @@ function BottomTabBar() {
       window.addEventListener('pays-detail-tab-change', paysDetailHandler);
       window.addEventListener('depart-section-change', departHandler);
       window.addEventListener('kits-section-change', kitsHandler);
+      window.addEventListener('messagerie-tab-state', messagerieStateHandler);
+      window.addEventListener('messagerie-tab-change', messagerieTabHandler);
       window.addEventListener('lkdv-toggle-bottom-bar', toggleBottomBarHandler);
 
       return () => {
@@ -566,6 +568,8 @@ function BottomTabBar() {
         window.removeEventListener('pays-detail-tab-change', paysDetailHandler);
         window.removeEventListener('depart-section-change', departHandler);
         window.removeEventListener('kits-section-change', kitsHandler);
+        window.removeEventListener('messagerie-tab-state', messagerieStateHandler);
+        window.removeEventListener('messagerie-tab-change', messagerieTabHandler);
         window.removeEventListener('lkdv-toggle-bottom-bar', toggleBottomBarHandler);
       };
     }
@@ -574,7 +578,12 @@ function BottomTabBar() {
   const handleUpperTabSelect = (tabKey: string) => {
     triggerHaptic('selection');
 
-    if (isMaterielSection) {
+    if (isMessageriePage) {
+      setActiveMessagerieTab(tabKey);
+      if (typeof window !== 'undefined') {
+        window.dispatchEvent(new CustomEvent('messagerie-tab-change', { detail: tabKey }));
+      }
+    } else if (isMaterielSection) {
       setActiveMaterielTab(tabKey);
       if (typeof window !== 'undefined') {
         window.dispatchEvent(new CustomEvent('depart-section-change', { detail: tabKey }));
@@ -641,6 +650,14 @@ function BottomTabBar() {
   };
 
   const getUpperTabs = () => {
+    if (isMessageriePage) {
+      return [
+        { id: 'all', label: 'Toutes' },
+        { id: 'direct', label: 'Directs' },
+        { id: 'group', label: 'Groupes' },
+        { id: 'requests', label: 'Demandes', count: messagerieRequestsCount },
+      ];
+    }
     if (isMaterielSection) {
       return [
         { id: 'overview', label: "Vue d'ensemble" },
@@ -725,7 +742,9 @@ function BottomTabBar() {
     ];
   };
 
-  const currentUpperId = isMaterielSection
+  const currentUpperId = isMessageriePage
+    ? activeMessagerieTab
+    : isMaterielSection
     ? activeMaterielTab
     : isGroupesHub
     ? activeGroupesTab
@@ -914,9 +933,36 @@ function BottomTabBar() {
                         lineHeight: 1,
                         transform: isSelected ? 'scale(1.04)' : 'scale(1)',
                         transition: 'transform 0.2s ease',
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: 5,
                       }}
                     >
                       {subTab.label}
+                      {(subTab as { count?: number }).count != null &&
+                      (subTab as { count?: number }).count! > 0 ? (
+                        <span
+                          className="glass-pill"
+                          aria-label={`${(subTab as { count?: number }).count} demandes en attente`}
+                          style={{
+                            minWidth: 16,
+                            height: 16,
+                            padding: '0 4px',
+                            borderRadius: 999,
+                            fontSize: 9.5,
+                            fontWeight: 800,
+                            lineHeight: '16px',
+                            fontFamily: 'monospace',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                          }}
+                        >
+                          {(subTab as { count?: number }).count! > 9
+                            ? '9+'
+                            : (subTab as { count?: number }).count}
+                        </span>
+                      ) : null}
                     </span>
                   </button>
                 );
@@ -952,8 +998,7 @@ function BottomTabBar() {
           <HamburgerMenu
             menuOpen={menuOpen}
             setMenuOpen={setMenuOpen}
-            openSearch={openSearch}
-            isCommunity={hasUpperExtension}
+            messagerieBadge={badges.messages}
           />
         </div>
       </div>

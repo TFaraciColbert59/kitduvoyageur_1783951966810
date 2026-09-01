@@ -591,7 +591,7 @@ export function DepartEquipmentHub({
                       ? 'bg-[#17402C] text-white shadow-2xs'
                       : 'text-[#5A7064] hover:text-[#17402C]'
                   )}
-                  title="Vue Grille 2 colonnes"
+                  title="Vue Grille 3 colonnes"
                   aria-label="Vue Grille"
                 >
                   <LayoutGridAnimated size={13} />
@@ -680,8 +680,8 @@ export function DepartEquipmentHub({
                 <p className="font-semibold text-[#17402C]">Aucun équipement ne correspond à vos filtres.</p>
               </div>
             ) : viewMode === 'grid' ? (
-              /* ════ VUE GRILLE 2 COLONNES (Apple Store / Photos Style) ════ */
-              <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-2 2xl:grid-cols-3 gap-2.5 sm:gap-4 pr-0.5">
+              /* ════ VUE GRILLE 3 COLONNES (Apple Store / Photos Style) ════ */
+              <div className="grid grid-cols-3 gap-2 sm:gap-3 pr-0.5">
                 {filteredItems.map((item) => {
                   const cond = item.condition ? CONDITION_LABELS[item.condition] : null;
                   const isItemInBag = item.inBag || localBagItems.has(item.id);
@@ -695,17 +695,15 @@ export function DepartEquipmentHub({
                     item.name.toLowerCase().includes('en-cas') ||
                     item.name.toLowerCase().includes('nourriture');
 
-                  const targetUrl = item.slug
-                    ? `/produit/${item.slug}`
-                    : item.inInventory
-                    ? `/materiel/inventaire?q=${encodeURIComponent(item.name)}`
-                    : `/materiel/boutique?q=${encodeURIComponent(item.name)}`;
+                  // Seules les fiches produit opérationnelles sont cliquables
+                  // (/produit/<slug>). Pas de fallback recherche inventaire/boutique.
+                  const targetUrl = item.slug ? `/produit/${item.slug}` : null;
 
                   return (
                     <div
                       key={item.id}
                       className={cn(
-                        'group rounded-2xl overflow-hidden border transition-all duration-200 flex flex-col justify-between shadow-2xs hover:shadow-md backdrop-blur-md',
+                        'group rounded-2xl overflow-hidden border transition-all duration-200 flex flex-col justify-between shadow-2xs hover:shadow-md backdrop-blur-md active:scale-[0.98]',
                         item.isLent
                           ? 'bg-amber-50/70 border-amber-200/90 text-amber-950'
                           : isItemInBag
@@ -713,36 +711,60 @@ export function DepartEquipmentHub({
                           : 'bg-white/85 dark:bg-white/10 border-white/80 text-[#17402C]'
                       )}
                     >
-                      {/* Image Cliquable 4:3 */}
-                      <Link
-                        href={targetUrl}
-                        className="relative w-full aspect-[4/3] overflow-hidden bg-black/5 rounded-t-2xl block cursor-pointer group/img"
-                        title={`Voir la fiche détaillée de ${item.name}`}
-                      >
-                        <img
-                          src={item.image}
-                          alt={item.name}
-                          className="w-full h-full object-cover object-center group-hover/img:scale-105 transition-transform duration-500"
-                          loading="lazy"
-                        />
-                        <div className="absolute inset-0 bg-gradient-to-t from-black/50 via-transparent to-black/20 pointer-events-none" />
+                      {/* Image — cliquable uniquement si fiche produit opérationnelle */}
+                      {targetUrl ? (
+                        <Link
+                          href={targetUrl}
+                          className="relative w-full aspect-[4/3] overflow-hidden bg-black/5 rounded-t-2xl block cursor-pointer group/img"
+                          title={`Voir la fiche détaillée de ${item.name}`}
+                        >
+                          <img
+                            src={item.image}
+                            alt={item.name}
+                            className="w-full h-full object-cover object-center group-hover/img:scale-105 transition-transform duration-500"
+                            loading="lazy"
+                          />
+                          <div className="absolute inset-0 bg-gradient-to-t from-black/50 via-transparent to-black/20 pointer-events-none" />
 
-                        {/* Badge Catégorie */}
-                        <span className="absolute top-1.5 left-1.5 text-[8px] sm:text-[9px] font-bold uppercase tracking-wider px-1.5 py-0.5 rounded-md bg-black/60 text-white backdrop-blur-md shadow-xs">
-                          {item.category}
-                        </span>
-                      </Link>
+                          {/* Badge Catégorie */}
+                          <span className="absolute top-1.5 left-1.5 text-[8px] sm:text-[9px] font-bold uppercase tracking-wider px-1.5 py-0.5 rounded-md bg-black/60 text-white backdrop-blur-md shadow-xs">
+                            {item.category}
+                          </span>
+                        </Link>
+                      ) : (
+                        <div className="relative w-full aspect-[4/3] overflow-hidden bg-black/5 rounded-t-2xl block group/img">
+                          <img
+                            src={item.image}
+                            alt={item.name}
+                            className="w-full h-full object-cover object-center"
+                            loading="lazy"
+                          />
+                          <div className="absolute inset-0 bg-gradient-to-t from-black/50 via-transparent to-black/20 pointer-events-none" />
+                          <span className="absolute top-1.5 left-1.5 text-[8px] sm:text-[9px] font-bold uppercase tracking-wider px-1.5 py-0.5 rounded-md bg-black/60 text-white backdrop-blur-md shadow-xs">
+                            {item.category}
+                          </span>
+                        </div>
+                      )}
 
                       {/* Contenu de la Carte */}
                       <div className="p-2 sm:p-2.5 space-y-1.5 flex-1 flex flex-col justify-between">
                         <div className="space-y-0.5">
-                          <Link
-                            href={targetUrl}
-                            className="text-[11.5px] sm:text-xs font-bold text-[#17402C] hover:text-[#2D6B4A] transition-colors leading-snug line-clamp-1 block cursor-pointer"
-                            title={item.name}
-                          >
-                            {item.name}
-                          </Link>
+                          {targetUrl ? (
+                            <Link
+                              href={targetUrl}
+                              className="text-[11.5px] sm:text-xs font-bold text-[#17402C] hover:text-[#2D6B4A] transition-colors leading-snug line-clamp-1 block cursor-pointer"
+                              title={item.name}
+                            >
+                              {item.name}
+                            </Link>
+                          ) : (
+                            <span
+                              className="text-[11.5px] sm:text-xs font-bold text-[#17402C] leading-snug line-clamp-1 block"
+                              title={item.name}
+                            >
+                              {item.name}
+                            </span>
+                          )}
                           <div className="flex items-center justify-between text-[10px] font-mono text-[#5A7064]">
                             <span>{formatWeight(item.weightG)}</span>
                             {item.brand && <span className="truncate max-w-[70px]">{item.brand}</span>}
@@ -799,28 +821,54 @@ export function DepartEquipmentHub({
                     item.category === 'Vivres & Eau' ||
                     item.category === 'Nutrition' ||
                     item.category === 'Hydratation';
+                  const listTargetUrl = item.slug ? `/produit/${item.slug}` : null;
 
                   return (
                     <div
                       key={item.id}
                       className={cn(
-                        'p-2 rounded-2xl border flex items-center justify-between gap-2.5 transition-all shadow-2xs',
+                        'p-2 rounded-2xl border flex items-center justify-between gap-2.5 transition-all shadow-2xs active:scale-[0.98]',
                         isItemInBag
                           ? 'bg-emerald-50/60 border-emerald-200/80'
                           : 'bg-white/90 dark:bg-stone-900/90 border-white/90 dark:border-white/10'
                       )}
                     >
                       <div className="flex items-center gap-2.5 min-w-0 flex-1">
-                        <img
-                          src={item.image}
-                          alt={item.name}
-                          className="w-10 h-10 rounded-xl object-cover shrink-0 bg-black/5"
-                          loading="lazy"
-                        />
+                        {listTargetUrl ? (
+                          <Link
+                            href={listTargetUrl}
+                            title={`Voir la fiche détaillée de ${item.name}`}
+                            className="w-10 h-10 rounded-xl overflow-hidden shrink-0 bg-black/5 block cursor-pointer"
+                          >
+                            <img
+                              src={item.image}
+                              alt={item.name}
+                              className="w-full h-full object-cover"
+                              loading="lazy"
+                            />
+                          </Link>
+                        ) : (
+                          <img
+                            src={item.image}
+                            alt={item.name}
+                            className="w-10 h-10 rounded-xl object-cover shrink-0 bg-black/5"
+                            loading="lazy"
+                          />
+                        )}
                         <div className="min-w-0 flex-1">
-                          <h4 className="text-xs font-bold text-[#17402C] dark:text-white truncate">
-                            {item.name}
-                          </h4>
+                          {listTargetUrl ? (
+                            <Link
+                              href={listTargetUrl}
+                              title={item.name}
+                              className="text-xs font-bold text-[#17402C] dark:text-white truncate hover:text-[#2D6B4A] transition-colors block cursor-pointer"
+                            >
+                              {item.name}
+                            </Link>
+                          ) : (
+                            <h4 className="text-xs font-bold text-[#17402C] dark:text-white truncate">
+                              {item.name}
+                            </h4>
+                          )}
                           <div className="flex items-center gap-2 text-[10.5px] font-mono text-[#5A7064] mt-0.5">
                             <span>{formatWeight(item.weightG)}</span>
                             <span className="text-[9px] font-sans px-1.5 py-0.2 rounded bg-black/5 dark:bg-white/10">{item.category}</span>

@@ -92,12 +92,6 @@ export default function ExplorerMap({
   // Uniformité : le même jeu de boutons compact que « Préparer la randonnée », partout.
   const effectiveCompact = true;
 
-  // Position sûre des contrôles de carte :
-  // Sur mobile : toujours en haut sous le header flottant (jamais sous le carousel ni la bottom bar)
-  // Sur desktop : colonne droite haute dégagée
-  const controlPos = isAutoCompact
-    ? { zoom: 'left-3 top-[calc(env(safe-area-inset-top,0px)+68px)]', tiles: 'right-3 top-[calc(env(safe-area-inset-top,0px)+68px)]' }
-    : { zoom: 'right-4 top-[84px]', tiles: 'right-4 top-[152px]' };
   const userTrackPolylineRef = useRef<import('leaflet').Polyline | null>(null);
   const userDraggingRef = useRef(false);
 
@@ -309,7 +303,8 @@ export default function ExplorerMap({
           // Only fly on startup if the user hasn't already started panning or dragging
           if (!isUserPanned && !userDraggingRef.current && mapRef.current && (mapRef.current as any)._loaded) {
             try {
-              mapRef.current.flyTo(validPos, 14, { duration: 1.2 });
+              // À l'arrivée : centrage direct sur la position GPS (zoom resserré).
+              mapRef.current.flyTo(validPos, 16, { duration: 1.0 });
             } catch (err) {
               console.warn('[ExplorerMap] flyTo position error:', err);
             }
@@ -319,7 +314,7 @@ export default function ExplorerMap({
       () => {
         setLocationState('denied');
       },
-      { enableHighAccuracy: true, timeout: 8000 }
+      { enableHighAccuracy: true, timeout: 5000 }
     );
   }, [mapReady, onLocationUpdate, disableGeolocate, isUserPanned]);
 
@@ -394,7 +389,7 @@ export default function ExplorerMap({
 
       if (!isUserPanned && !userDraggingRef.current && mapRef.current && (mapRef.current as any)._loaded && !disableGeolocate) {
         try {
-          mapRef.current.flyTo(validLoc, 14, { duration: 1.0 });
+          mapRef.current.flyTo(validLoc, 16, { duration: 1.0 });
         } catch { /* ignore */ }
       }
     });
@@ -512,7 +507,7 @@ export default function ExplorerMap({
           setLocationState('located');
           onLocationUpdate?.(validPos);
           try {
-            mapRef.current.flyTo(validPos, 14, { duration: 1.0 });
+            mapRef.current.flyTo(validPos, 16, { duration: 1.0 });
           } catch (err) {
             console.warn('[ExplorerMap] flyTo position error:', err);
           }
@@ -531,17 +526,25 @@ export default function ExplorerMap({
         <TrailLayer map={mapInstance} trails={trails} pois={pois} selectedTrailId={selectedTrailId} onTrailClick={onTrailClick} onPoiClick={onPoiClick} />
       )}
 
-      {/* 1. Sélecteur de Calques (EN BAS À GAUCHE — Canonique Liquid Glass) */}
-      <div className="absolute z-[400] pointer-events-auto left-3.5 bottom-[calc(var(--bottom-tab-base-height,68px)+16px)] md:bottom-6 md:left-4">
-        <div className="glass flex items-center gap-1.5 p-1 rounded-full shadow-md border border-white/80">
+      {/* 1. Sélecteur de Calques — capsule bar Liquid Glass (comme le reste du site).
+          Mobile : rangée du haut à DROITE (aligné sur le bouton « rechercher
+          cette zone »), jamais sous l'avatar / l'indicateur dev à gauche. */}
+      <div
+        className={`absolute z-[400] pointer-events-auto ${
+          isAutoCompact
+            ? 'right-3 top-[calc(env(safe-area-inset-top,0px)+16px)]'
+            : 'left-3.5 bottom-[calc(var(--bottom-tab-base-height,68px)+16px)] md:bottom-6 md:left-4'
+        }`}
+      >
+        <div className="glass-capsule-bar gap-0.5">
           <button
             type="button"
             onClick={() => handleTileChange('osm')}
             title="Carte standard (Plan)"
             aria-label="Carte standard (Plan)"
-            className={`glass-circle-btn !w-8 !h-8 ${tileMode === 'osm' ? 'primary' : ''}`}
+            className={`glass-capsule-segment !min-w-0 !px-2.5 !py-2 ${tileMode === 'osm' ? 'active' : ''}`}
           >
-            <svg width="14" height="14" fill="none" stroke="currentColor" strokeWidth="2.2" viewBox="0 0 24 24">
+            <svg width="15" height="15" fill="none" stroke="currentColor" strokeWidth="2.2" viewBox="0 0 24 24">
               <path d="M3 6l6-3 6 3 6-3v12l-6 3-6-3-6 3V6z"></path>
               <path d="M9 3v12"></path>
               <path d="M15 6v12"></path>
@@ -552,9 +555,9 @@ export default function ExplorerMap({
             onClick={() => handleTileChange('topo')}
             title="Relief / Topographie"
             aria-label="Relief / Topographie"
-            className={`glass-circle-btn !w-8 !h-8 ${tileMode === 'topo' ? 'primary' : ''}`}
+            className={`glass-capsule-segment !min-w-0 !px-2.5 !py-2 ${tileMode === 'topo' ? 'active' : ''}`}
           >
-            <svg width="14" height="14" fill="none" stroke="currentColor" strokeWidth="2.2" viewBox="0 0 24 24">
+            <svg width="15" height="15" fill="none" stroke="currentColor" strokeWidth="2.2" viewBox="0 0 24 24">
               <path d="M8 3l4 8 5-5 5 15H2L8 3z"></path>
             </svg>
           </button>
@@ -563,9 +566,9 @@ export default function ExplorerMap({
             onClick={() => handleTileChange('satellite')}
             title="Vue Satellite"
             aria-label="Vue Satellite"
-            className={`glass-circle-btn !w-8 !h-8 ${tileMode === 'satellite' ? 'primary' : ''}`}
+            className={`glass-capsule-segment !min-w-0 !px-2.5 !py-2 ${tileMode === 'satellite' ? 'active' : ''}`}
           >
-            <svg width="14" height="14" fill="none" stroke="currentColor" strokeWidth="2.2" viewBox="0 0 24 24">
+            <svg width="15" height="15" fill="none" stroke="currentColor" strokeWidth="2.2" viewBox="0 0 24 24">
               <circle cx="12" cy="12" r="10"></circle>
               <line x1="2" y1="12" x2="22" y2="12"></line>
               <path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"></path>

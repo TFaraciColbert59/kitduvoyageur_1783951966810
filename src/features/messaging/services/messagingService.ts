@@ -1,10 +1,16 @@
 import { createClient } from '@/lib/supabase/client';
+import { resolveGearImage } from '@/features/materiel/services/gearImageResolver';
 import type { Conversation, Message, UserProfileSummary, MessageReaction, MessageType, ConversationMember } from '../types/messaging.types';
 
 // Mémoire locale pour les conversations démo interactives
 const localDemoMessages = new Map<string, Message[]>();
 
-function getDemoConversations(): Conversation[] {
+// Cache module-level des conversations démo : persiste les mutations
+// (status accepté/refusé, muet, archivé) entre les appels — sinon chaque
+// appel regénérait un tableau neuf et perdait l'état (cf. retour utilisateur).
+let demoConversationsCache: Conversation[] | null = null;
+
+function buildDemoConversations(): Conversation[] {
   const now = Date.now();
   return [
     {
@@ -133,6 +139,18 @@ function getDemoConversations(): Conversation[] {
       status: 'pending',
     },
   ];
+}
+
+/**
+ * Retourne les conversations démo en préservant l'état entre rendus.
+ * Chaque appel renvoie un shallow-clone du cache afin que React détecte
+ * une nouvelle référence et re-rende (les mutations agissent sur le cache).
+ */
+function getDemoConversations(): Conversation[] {
+  if (!demoConversationsCache) {
+    demoConversationsCache = buildDemoConversations();
+  }
+  return demoConversationsCache.map((c) => ({ ...c }));
 }
 
 function initDemoMessages(currentUserId: string): Map<string, Message[]> {
@@ -580,6 +598,7 @@ export const messagingService = {
         sender_id,
         content,
         message_type,
+        metadata,
         reply_to_id,
         deleted_at,
         created_at,
@@ -631,6 +650,7 @@ export const messagingService = {
         sender_id: msg.sender_id,
         content: msg.content,
         message_type: msg.message_type || 'text',
+        metadata: msg.metadata ?? null,
         reply_to_id: msg.reply_to_id,
         reply_to_message: replyToMsg,
         deleted_at: msg.deleted_at,
@@ -740,7 +760,8 @@ export const messagingService = {
     senderId: string,
     content: string,
     messageType: MessageType = 'text',
-    replyToId?: string
+    replyToId?: string,
+    metadata?: Record<string, unknown>
   ): Promise<Message | null> {
     const newMsg: Message = {
       id: `msg-${Date.now()}`,
@@ -749,6 +770,7 @@ export const messagingService = {
       content,
       message_type: messageType,
       reply_to_id: replyToId || null,
+      metadata: metadata ?? null,
       created_at: new Date().toISOString(),
       updated_at: new Date().toISOString(),
       status: 'sent',
@@ -771,6 +793,7 @@ export const messagingService = {
         content,
         message_type: messageType,
         reply_to_id: replyToId || null,
+        metadata: metadata ?? null,
       })
       .select('*')
       .single();
@@ -866,8 +889,8 @@ export const messagingService = {
     prefs: { is_muted?: boolean; mute_until?: string | null; is_archived?: boolean }
   ): Promise<boolean> {
     if (conversationId.startsWith('demo-conv-')) {
-      const demoConvs = getDemoConversations();
-      const target = demoConvs.find((c) => c.id === conversationId);
+      // Mute le CACHE (pas le clone) pour que l'état persiste au refresh.
+      const target = demoConversationsCache?.find((c) => c.id === conversationId);
       if (target) {
         if (prefs.is_muted !== undefined) target.is_muted = prefs.is_muted;
         if (prefs.mute_until !== undefined) target.mute_until = prefs.mute_until;
@@ -891,8 +914,8 @@ export const messagingService = {
 
   async acceptMessageRequest(conversationId: string, userId: string): Promise<boolean> {
     if (conversationId.startsWith('demo-conv-')) {
-      const demoConvs = getDemoConversations();
-      const target = demoConvs.find((c) => c.id === conversationId);
+      // Accepté sur le CACHE : la demande quitte l'onglet "Demandes" au refresh.
+      const target = demoConversationsCache?.find((c) => c.id === conversationId);
       if (target) {
         target.status = 'active';
       }
@@ -911,8 +934,8 @@ export const messagingService = {
 
   async declineMessageRequest(conversationId: string, userId: string): Promise<boolean> {
     if (conversationId.startsWith('demo-conv-')) {
-      const demoConvs = getDemoConversations();
-      const target = demoConvs.find((c) => c.id === conversationId);
+      // Refusé sur le CACHE : la demande disparaît de la liste au refresh.
+      const target = demoConversationsCache?.find((c) => c.id === conversationId);
       if (target) {
         target.status = 'rejected';
       }
@@ -927,6 +950,193 @@ export const messagingService = {
       .eq('user_id', userId);
 
     return !error;
+  },
+
+  /**
+   * Transfert d'un message vers une autre conversation.
+   * Vérifie l'appartenance à la cible, l'absence de blocage réciproque, puis
+   * duplique le message (contenu, type, métadonnées) et ses pièces jointes.
+   */
+  async forwardMessage(
+    fromMessage: Message,
+    targetConvId: string,
+    userId: string
+  ): Promise<{ ok: boolean; error?: string }> {
+    // Mode démo : copie dans le Map local.
+    if (targetConvId.startsWith('demo-conv-') || fromMessage.conversation_id.startsWith('demo-conv-')) {
+      const map = initDemoMessages(userId);
+      const list = map.get(targetConvId) || [];
+      list.push({
+        id: `msg-${Date.now()}`,
+        conversation_id: targetConvId,
+        sender_id: userId,
+        content: fromMessage.content,
+        message_type: fromMessage.message_type,
+        metadata: {
+          ...(fromMessage.metadata || {}),
+          forwarded_from: {
+            message_id: fromMessage.id,
+            conversation_id: fromMessage.conversation_id,
+            sender_name: fromMessage.sender_profile?.full_name || 'Voyageur',
+          },
+        },
+        reply_to_id: null,
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString(),
+        status: 'sent',
+      } as Message);
+      map.set(targetConvId, list);
+      return { ok: true };
+    }
+
+    const supabase = createClient();
+
+    // 1. L'expéditeur est-il membre de la conversation cible ?
+    const { data: membership } = await supabase
+      .from('conversation_members')
+      .select('id')
+      .eq('conversation_id', targetConvId)
+      .eq('user_id', userId)
+      .maybeSingle();
+    if (!membership) {
+      return { ok: false, error: 'Vous ne faites pas partie de cette conversation.' };
+    }
+
+    // 2. Autres membres de la cible + contrôle d'absence de blocage.
+    const { data: otherMembers } = await supabase
+      .from('conversation_members')
+      .select('user_id')
+      .eq('conversation_id', targetConvId)
+      .neq('user_id', userId);
+    const otherIds = (otherMembers ?? []).map((m) => m.user_id);
+    if (otherIds.length > 0) {
+      // Blocage réciproque, paire par paire : (X bloque O) ou (O bloque X).
+      const blockExpr = otherIds
+        .map(
+          (oid) =>
+            `and(blocker_id.eq.${userId},blocked_id.eq.${oid}),and(blocker_id.eq.${oid},blocked_id.eq.${userId})`
+        )
+        .join(',');
+      const { data: blocks } = await supabase
+        .from('user_blocks')
+        .select('id')
+        .or(blockExpr);
+      if (blocks && blocks.length > 0) {
+        return { ok: false, error: 'Transfert impossible : contact bloqué.' };
+      }
+    }
+
+    // 3. Copie du message (contenu, type, métadonnées enrichies).
+    const forwardedMeta = {
+      ...(fromMessage.metadata || {}),
+      forwarded_from: {
+        message_id: fromMessage.id,
+        conversation_id: fromMessage.conversation_id,
+        sender_name: fromMessage.sender_profile?.full_name || 'Voyageur',
+      },
+    };
+
+    const { data: inserted, error: insertError } = await supabase
+      .from('messages')
+      .insert({
+        conversation_id: targetConvId,
+        sender_id: userId,
+        content: fromMessage.content,
+        message_type: fromMessage.message_type,
+        metadata: forwardedMeta,
+        reply_to_id: null,
+      })
+      .select('id')
+      .single();
+
+    if (insertError || !inserted) {
+      return { ok: false, error: 'Impossible de transférer le message.' };
+    }
+
+    // 4. Copie des pièces jointes du message source.
+    const { data: attachments } = await supabase
+      .from('message_attachments')
+      .select('file_url, file_name, file_type, file_size')
+      .eq('message_id', fromMessage.id);
+    if (attachments && attachments.length > 0) {
+      const { error: attError } = await supabase.from('message_attachments').insert(
+        attachments.map((a) => ({
+          message_id: inserted.id,
+          file_url: a.file_url,
+          file_name: a.file_name,
+          file_type: a.file_type,
+          file_size: a.file_size,
+        }))
+      );
+      if (attError) {
+        return { ok: true, error: 'Message transféré sans ses pièces jointes.' };
+      }
+    }
+
+    // 5. Rafraîchit le timestamp de la conversation cible.
+    await supabase
+      .from('conversations')
+      .update({ last_message_at: new Date().toISOString() })
+      .eq('id', targetConvId);
+
+    return { ok: true };
+  },
+
+  /** Équipement partageable de l'utilisateur (inventaire, RLS own).
+      product_slug est résolu par correspondance de nom avec le catalogue
+      boutique (public), pour faire pointer la carte vers la fiche produit. */
+  async getShareableInventory(
+    userId: string
+  ): Promise<
+    { id: string; name: string; photo_url: string | null; category: string | null; price_cents: number | null; product_slug: string | null }[]
+  > {
+    const supabase = createClient();
+
+    const [ownResult, catalogResult] = await Promise.all([
+      supabase
+        .from('product_ownership')
+        .select('id, name, photo_url, category, price_cents')
+        .eq('user_id', userId)
+        .order('created_at', { ascending: false })
+        .limit(50),
+      supabase.from('products').select('slug, name').limit(500),
+    ]);
+
+    const normalize = (s: string) => s.toLowerCase().trim().replace(/\s+/g, ' ');
+    const nameToSlug = new Map<string, string>();
+    (catalogResult.data ?? []).forEach((p) => {
+      nameToSlug.set(normalize(p.name), p.slug);
+    });
+
+    return (ownResult.data ?? []).map((i) => ({
+      id: i.id,
+      name: i.name || 'Équipement LKDV',
+      // Meme resolution d'image que l'inventaire (materiel) : photo brute
+      // souvent NULL -> image curatee par mot-cle/categorie, sinon grisaille.
+      photo_url: resolveGearImage(i.name, i.category, i.photo_url),
+      category: i.category,
+      price_cents: i.price_cents,
+      product_slug: nameToSlug.get(normalize(i.name)) || null,
+    }));
+  },
+
+  /** Randonnées partageables (catalogue explorer). */
+  async getShareableTrails(): Promise<
+    { id: string; name: string; distance_km: number | null; elevation_gain_m: number | null; region: string | null }[]
+  > {
+    const supabase = createClient();
+    const { data } = await supabase
+      .from('hiking_routes')
+      .select('id, name, distance_km, elevation_gain_m, region')
+      .order('name', { ascending: true })
+      .limit(50);
+    return (data ?? []).map((t) => ({
+      id: t.id,
+      name: t.name || 'Randonnée LKDV',
+      distance_km: t.distance_km,
+      elevation_gain_m: t.elevation_gain_m,
+      region: t.region,
+    }));
   },
 
   async getGroupMembers(conversationId: string): Promise<ConversationMember[]> {

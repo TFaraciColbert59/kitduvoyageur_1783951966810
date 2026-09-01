@@ -2,12 +2,14 @@
 
 import React, { useState, useEffect } from 'react';
 import Image from 'next/image';
-import type { Conversation, UserProfileSummary, Message, ConversationMember } from '../types/messaging.types';
+import { useRouter } from 'next/navigation';
+import type { Conversation, UserProfileSummary, Message, ConversationMember, ProductMessageMeta, TrailMessageMeta } from '../types/messaging.types';
 import { useMessages } from '../hooks/useMessages';
 import { useRealtimeMessaging } from '../hooks/useRealtimeMessaging';
 import { messagingService } from '../services/messagingService';
 import { MessageList } from './MessageList';
 import { MessageComposer } from './MessageComposer';
+import { ForwardMessageSheet } from './ForwardMessageSheet';
 import { ConversationOptionsMenuModal } from './ConversationOptionsMenuModal';
 import { GroupSettingsModal } from './GroupSettingsModal';
 import ReportBlockModal, { ReportTarget } from '@/components/ui/ReportBlockModal';
@@ -30,11 +32,15 @@ export const ConversationView: React.FC<ConversationViewProps> = ({
   onRefreshConversations,
 }) => {
   const { haptic } = useHapticFeedback();
+  const router = useRouter();
   const isGroup = conversation.type === 'group';
   const title = conversation.title || (isGroup ? 'Groupe d\'expédition' : 'Voyageur LKDV');
   const avatarUrl = conversation.avatar_url || '/assets/images/no_image.png';
+  // Convention app : photo de profil / nom -> fiche profil (/profil/<id>).
+  const otherProfileId = conversation.other_member?.id || null;
 
   const [replyToMessage, setReplyToMessage] = useState<Message | null>(null);
+  const [forwardMessage, setForwardMessage] = useState<Message | null>(null);
   const [showOptionsModal, setShowOptionsModal] = useState(false);
   const [showGroupSettingsModal, setShowGroupSettingsModal] = useState(false);
   const [reportTarget, setReportTarget] = useState<ReportTarget | null>(null);
@@ -42,6 +48,16 @@ export const ConversationView: React.FC<ConversationViewProps> = ({
   const [convStatus, setConvStatus] = useState<'active' | 'pending' | 'rejected'>(
     conversation.status || 'active'
   );
+
+  const openHeaderTarget = () => {
+    if (isGroup) {
+      haptic('light');
+      setShowGroupSettingsModal(true);
+    } else if (otherProfileId) {
+      haptic('light');
+      router.push(`/profil/${otherProfileId}`);
+    }
+  };
 
   useEffect(() => {
     let isMounted = true;
@@ -53,7 +69,7 @@ export const ConversationView: React.FC<ConversationViewProps> = ({
     };
   }, [conversation.id]);
 
-  const { messages, loading, sendMessage, toggleReaction } = useMessages(
+  const { messages, loading, sendMessage, toggleReaction, refreshMessages } = useMessages(
     conversation.id,
     currentUserId,
     currentUserProfile
@@ -83,6 +99,9 @@ export const ConversationView: React.FC<ConversationViewProps> = ({
         replyToMessage?.id || undefined
       );
       setReplyToMessage(null);
+      // Les envois directs ne passent pas par le canal optimiste du hook :
+      // sans refresh, le message n'apparait jamais (surtout en demo).
+      await refreshMessages();
     }
   };
 
@@ -98,7 +117,49 @@ export const ConversationView: React.FC<ConversationViewProps> = ({
         replyToMessage?.id || undefined
       );
       setReplyToMessage(null);
+      await refreshMessages();
     }
+  };
+
+  const handleSendGpx = async (file: File) => {
+    const fileUrl = await messagingService.uploadAttachment(conversation.id, file);
+    if (fileUrl) {
+      await messagingService.sendMessage(
+        conversation.id,
+        currentUserId,
+        fileUrl,
+        'gpx',
+        replyToMessage?.id || undefined
+      );
+      setReplyToMessage(null);
+      await refreshMessages();
+    }
+  };
+
+  const handleSendProduct = async (meta: ProductMessageMeta) => {
+    await messagingService.sendMessage(
+      conversation.id,
+      currentUserId,
+      meta.name,
+      'product',
+      replyToMessage?.id || undefined,
+      meta as unknown as Record<string, unknown>
+    );
+    setReplyToMessage(null);
+    await refreshMessages();
+  };
+
+  const handleSendTrail = async (meta: TrailMessageMeta) => {
+    await messagingService.sendMessage(
+      conversation.id,
+      currentUserId,
+      meta.name,
+      'trail',
+      replyToMessage?.id || undefined,
+      meta as unknown as Record<string, unknown>
+    );
+    setReplyToMessage(null);
+    await refreshMessages();
   };
 
   const handleAcceptRequest = async () => {
@@ -151,7 +212,12 @@ export const ConversationView: React.FC<ConversationViewProps> = ({
             </button>
           )}
 
-          <div className="relative cursor-pointer shrink-0" onClick={() => isGroup && setShowGroupSettingsModal(true)}>
+          <div
+            className="relative shrink-0"
+            style={{ cursor: isGroup || otherProfileId ? 'pointer' : 'default' }}
+            onClick={openHeaderTarget}
+            title={isGroup ? 'Gérer le groupe' : `Voir le profil de ${title}`}
+          >
             <div className="w-10 h-10 rounded-full overflow-hidden relative ring-2 ring-white/90 shadow-xs bg-stone-100">
               <Image
                 src={avatarUrl}
@@ -172,13 +238,9 @@ export const ConversationView: React.FC<ConversationViewProps> = ({
           </div>
 
           <div
-            className="cursor-pointer overflow-hidden"
-            onClick={() => {
-              if (isGroup) {
-                haptic('light');
-                setShowGroupSettingsModal(true);
-              }
-            }}
+            className="overflow-hidden"
+            style={{ cursor: isGroup || otherProfileId ? 'pointer' : 'default' }}
+            onClick={openHeaderTarget}
           >
             <h3 className="text-sm font-bold text-[#17402C] leading-tight truncate flex items-center gap-1.5">
               <span className="truncate">{title}</span>
@@ -231,6 +293,7 @@ export const ConversationView: React.FC<ConversationViewProps> = ({
         members={members}
         onReply={(msg) => setReplyToMessage(msg)}
         onToggleReaction={toggleReaction}
+        onForward={setForwardMessage}
       />
 
       {/* Message Request Action Bar (Pending status) */}
@@ -276,9 +339,13 @@ export const ConversationView: React.FC<ConversationViewProps> = ({
         </div>
       ) : (
         <MessageComposer
+          currentUserId={currentUserId}
           onSendMessage={handleSendMessage}
           onSendAttachment={handleSendAttachment}
           onSendVoiceNote={handleSendVoiceNote}
+          onSendGpx={handleSendGpx}
+          onSendProduct={handleSendProduct}
+          onSendTrail={handleSendTrail}
           onTyping={sendTypingSignal}
           replyToMessage={replyToMessage}
           onCancelReply={() => setReplyToMessage(null)}
@@ -318,6 +385,16 @@ export const ConversationView: React.FC<ConversationViewProps> = ({
           if (onRefreshConversations) onRefreshConversations();
           if (onBack) onBack();
         }}
+      />
+
+      {/* Transfert de message — ce sheet passe au-dessus du calque conversation
+          (MobileSheet en z-[10010], conversaton en z-[10000]). */}
+      <ForwardMessageSheet
+        isOpen={forwardMessage !== null}
+        onClose={() => setForwardMessage(null)}
+        message={forwardMessage}
+        currentUserId={currentUserId}
+        onForwarded={onRefreshConversations}
       />
     </div>
   );

@@ -18,6 +18,7 @@ export async function GET() {
       materiel: 0,
       communaute: 0,
       profil: 0,
+      messages: 0,
     };
 
     if (!user) {
@@ -36,8 +37,22 @@ export async function GET() {
       out.materiel = 0;
     }
 
+    // Messagerie : somme des compteurs non-lus (RLS conversation_members)
+    try {
+      const { data: unreadRows } = await supabase
+        .from('conversation_members')
+        .select('unread_count')
+        .eq('user_id', user.id);
+      out.messages = (unreadRows ?? []).reduce(
+        (sum, row) => sum + (row.unread_count || 0),
+        0
+      );
+    } catch {
+      out.messages = 0;
+    }
+
     return NextResponse.json(out);
   } catch {
-    return NextResponse.json({ materiel: 0, communaute: 0, profil: 0 });
+    return NextResponse.json({ materiel: 0, communaute: 0, profil: 0, messages: 0 });
   }
 }

@@ -1,15 +1,20 @@
 "use client";
 
 import React, { useState, useRef, useEffect } from 'react';
-import { Paperclip, Send, X, Reply, Mic } from 'lucide-react';
-import type { Message } from '../types/messaging.types';
+import { ImagePlus, Send, X, Reply, Mic, Ellipsis } from 'lucide-react';
+import type { Message, ProductMessageMeta, TrailMessageMeta } from '../types/messaging.types';
 import { VoiceRecorderBar } from './VoiceRecorderBar';
+import { ComposerMenuSheet } from './ComposerMenuSheet';
 import { useHapticFeedback } from '@/hooks/useHapticFeedback';
 
 interface MessageComposerProps {
+  currentUserId: string;
   onSendMessage: (content: string) => void;
   onSendAttachment?: (file: File) => void;
   onSendVoiceNote?: (blob: Blob, durationSec: number) => void;
+  onSendGpx?: (file: File) => void;
+  onSendProduct?: (meta: ProductMessageMeta) => void;
+  onSendTrail?: (meta: TrailMessageMeta) => void;
   onTyping?: () => void;
   replyToMessage?: Message | null;
   onCancelReply?: () => void;
@@ -17,9 +22,13 @@ interface MessageComposerProps {
 }
 
 export const MessageComposer: React.FC<MessageComposerProps> = ({
+  currentUserId,
   onSendMessage,
   onSendAttachment,
   onSendVoiceNote,
+  onSendGpx,
+  onSendProduct,
+  onSendTrail,
   onTyping,
   replyToMessage,
   onCancelReply,
@@ -28,11 +37,11 @@ export const MessageComposer: React.FC<MessageComposerProps> = ({
   const { haptic } = useHapticFeedback();
   const [content, setContent] = useState('');
   const [isRecordingVoice, setIsRecordingVoice] = useState(false);
+  const [isMenuOpen, setIsMenuOpen] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
 
-  // Auto-resize textarea — aligné sur le min-height 44px de .glass-input
-  // et plafonné à 132px (cf. audit 1.9).
+  // Auto-resize — aligné sur le min-height 44px de .glass-input, max 132px.
   useEffect(() => {
     const el = textareaRef.current;
     if (!el) return;
@@ -52,12 +61,8 @@ export const MessageComposer: React.FC<MessageComposerProps> = ({
   };
 
   const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
-    // Envoi sur Entrée UNIQUEMENT sur pointeur fin (desktop) : sur mobile,
-    // le clavier iOS utilise la touche Entrée pour insérer un retour à la ligne
-    // et `enterKeyHint="send"` affiche la touche d'envoi dédiée.
     const isFinePointer =
-      typeof window !== 'undefined' &&
-      window.matchMedia('(pointer: fine)').matches;
+      typeof window !== 'undefined' && window.matchMedia('(pointer: fine)').matches;
     if (isFinePointer && e.key === 'Enter' && !e.shiftKey) {
       e.preventDefault();
       handleSubmit();
@@ -66,9 +71,7 @@ export const MessageComposer: React.FC<MessageComposerProps> = ({
 
   const handleInputChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
     setContent(e.target.value);
-    if (onTyping) {
-      onTyping();
-    }
+    if (onTyping) onTyping();
   };
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -95,8 +98,7 @@ export const MessageComposer: React.FC<MessageComposerProps> = ({
     <div
       className="bg-white/90 backdrop-blur-2xl border-t border-stone-200/60 flex flex-col shrink-0 shadow-lg"
       style={{
-        paddingBottom:
-          'max(calc(env(safe-area-inset-bottom, 0px) - var(--kb-inset, 0px)), 8px)',
+        paddingBottom: 'max(calc(env(safe-area-inset-bottom, 0px) - var(--kb-inset, 0px)), 8px)',
       }}
     >
       {replyToMessage && (
@@ -133,9 +135,10 @@ export const MessageComposer: React.FC<MessageComposerProps> = ({
           ref={fileInputRef}
           onChange={handleFileChange}
           className="hidden"
-          accept="image/*,application/pdf,.gpx,application/gpx+xml"
+          accept="image/*"
         />
 
+        {/* Photo — envoie une image via le flux d'upload existant */}
         <button
           type="button"
           onClick={() => {
@@ -143,28 +146,12 @@ export const MessageComposer: React.FC<MessageComposerProps> = ({
             fileInputRef.current?.click();
           }}
           disabled={disabled}
-          aria-label="Joindre un fichier, une photo ou un GPX"
+          aria-label="Envoyer une photo"
           className="glass-circle-btn w-11 h-11 text-[#17402C] shrink-0 active:scale-95 shadow-2xs"
-          title="Joindre un fichier, une photo ou un GPX"
+          title="Envoyer une photo"
         >
-          <Paperclip className="w-5 h-5" />
+          <ImagePlus className="w-5 h-5" />
         </button>
-
-        {onSendVoiceNote && (
-          <button
-            type="button"
-            onClick={() => {
-              haptic('medium');
-              setIsRecordingVoice(true);
-            }}
-            disabled={disabled}
-            aria-label="Enregistrer une note vocale terrain"
-            className="glass-circle-btn w-11 h-11 text-[#17402C] hover:text-[#A8443A] shrink-0 active:scale-95 shadow-2xs"
-            title="Enregistrer une note vocale terrain"
-          >
-            <Mic className="w-5 h-5" />
-          </button>
-        )}
 
         <div className="flex-1 relative flex items-center min-w-0">
           <textarea
@@ -185,6 +172,37 @@ export const MessageComposer: React.FC<MessageComposerProps> = ({
           />
         </div>
 
+        {onSendVoiceNote && (
+          <button
+            type="button"
+            onClick={() => {
+              haptic('medium');
+              setIsRecordingVoice(true);
+            }}
+            disabled={disabled}
+            aria-label="Enregistrer une note vocale terrain"
+            className="glass-circle-btn w-11 h-11 text-[#17402C] hover:text-[#A8443A] shrink-0 active:scale-95 shadow-2xs"
+            title="Enregistrer une note vocale terrain"
+          >
+            <Mic className="w-5 h-5" />
+          </button>
+        )}
+
+        {/* Menu ••• — GPX, équipement, randonnée */}
+        <button
+          type="button"
+          onClick={() => {
+            haptic('medium');
+            setIsMenuOpen(true);
+          }}
+          disabled={disabled}
+          aria-label="Partager un GPX, un équipement ou une randonnée"
+          className="glass-circle-btn w-11 h-11 text-[#17402C] shrink-0 active:scale-95 shadow-2xs"
+          title="Partager un GPX, un équipement ou une randonnée"
+        >
+          <Ellipsis className="w-5 h-5" />
+        </button>
+
         <button
           type="submit"
           disabled={!content.trim() || disabled}
@@ -192,13 +210,31 @@ export const MessageComposer: React.FC<MessageComposerProps> = ({
           className={`w-11 h-11 shrink-0 ${
             content.trim() && !disabled
               ? 'glass-circle-btn primary shadow-md active:scale-95 cursor-pointer'
-              : 'glass-circle-btn opacity-40 cursor-not-allowed text-[#5A574E]'
+              : 'glass-circle-btn opacity-55 cursor-not-allowed text-[#5A574E]'
           }`}
           title="Envoyer le message"
         >
           <Send className="w-4 h-4" />
         </button>
       </form>
+
+      <ComposerMenuSheet
+        isOpen={isMenuOpen}
+        onClose={() => setIsMenuOpen(false)}
+        currentUserId={currentUserId}
+        onSendGpx={(file) => {
+          haptic('medium');
+          onSendGpx?.(file);
+        }}
+        onSendProduct={(meta) => {
+          haptic('medium');
+          onSendProduct?.(meta);
+        }}
+        onSendTrail={(meta) => {
+          haptic('medium');
+          onSendTrail?.(meta);
+        }}
+      />
     </div>
   );
 };

@@ -1,8 +1,10 @@
 "use client";
 
-import React, { useState, useMemo, useEffect, useRef } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import type { Conversation } from '../types/messaging.types';
-import { ConversationRow } from './ConversationRow';
+import { ConversationRow, type SwipeAction } from './ConversationRow';
+import { ConversationOptionsSheet } from './ConversationOptionsSheet';
+import { messagingService } from '../services/messagingService';
 import { Plus, Search, MessageSquare, X } from 'lucide-react';
 import { useHapticFeedback } from '@/hooks/useHapticFeedback';
 
@@ -11,6 +13,9 @@ interface ConversationListProps {
   selectedId: string | null;
   onSelect: (conv: Conversation) => void;
   onNewConversation: () => void;
+  onRefresh?: () => void;
+  onReportConversation?: (conv: Conversation) => void;
+  currentUserId?: string;
   loading: boolean;
 }
 
@@ -22,6 +27,13 @@ const TABS = [
 ] as const;
 
 type TabId = (typeof TABS)[number]['id'];
+
+// Mobile : les onglets vivent dans le tray d'extension de la BottomTabBar
+// (pattern canonique du site, cf. BottomTabBar.getUpperTabs). Sync par events :
+//  - 'messagerie-tab-state'  (liste -> barre) : onglet actif + nb demandes
+//  - 'messagerie-tab-change' (barre -> liste) : tap utilisateur sur le tray
+const MESSAGERIE_TAB_STATE = 'messagerie-tab-state';
+const MESSAGERIE_TAB_CHANGE = 'messagerie-tab-change';
 
 export const ConversationListSkeleton = () => (
   <div className="space-y-2 p-1 animate-pulse" aria-busy="true" aria-label="Chargement des conversations">
@@ -48,38 +60,72 @@ export const ConversationList: React.FC<ConversationListProps> = ({
   selectedId,
   onSelect,
   onNewConversation,
+  onRefresh,
+  onReportConversation,
+  currentUserId,
   loading,
 }) => {
   const { haptic } = useHapticFeedback();
   const [search, setSearch] = useState('');
   const [debouncedSearch, setDebouncedSearch] = useState('');
   const [activeTab, setActiveTab] = useState<TabId>('all');
-  const [condensed, setCondensed] = useState(false);
-  const scrollRef = useRef<HTMLDivElement>(null);
+  const [longPressConv, setLongPressConv] = useState<Conversation | null>(null);
+
+  // Action rapide via glissement (swipe) d'une conversation.
+  const handleSwipeAction = async (conv: Conversation, action: SwipeAction) => {
+    if (!currentUserId) return;
+    if (action === 'accept') {
+      await messagingService.acceptMessageRequest(conv.id, currentUserId);
+    } else if (action === 'decline') {
+      await messagingService.declineMessageRequest(conv.id, currentUserId);
+    } else if (action === 'archive') {
+      await messagingService.updateMemberPreferences(conv.id, currentUserId, {
+        is_archived: !conv.is_archived,
+      });
+    } else if (action === 'mute') {
+      await messagingService.updateMemberPreferences(conv.id, currentUserId, {
+        is_muted: !conv.is_muted,
+        mute_until: conv.is_muted ? null : new Date(Date.now() + 24 * 3600 * 1000).toISOString(),
+      });
+    }
+    onRefresh?.();
+  };
 
   useEffect(() => {
     const t = setTimeout(() => setDebouncedSearch(search), 150);
     return () => clearTimeout(t);
   }, [search]);
 
-  // Header repliable : hystérésis pour éviter le clignotement.
-  const handleScroll = () => {
-    const y = scrollRef.current?.scrollTop ?? 0;
-    setCondensed((c) => (c ? y > 12 : y > 48));
-  };
-
   const pendingRequestsCount = useMemo(
     () => conversations.filter((c) => c.status === 'pending').length,
     [conversations]
   );
 
+  // Publie l'etat du filtre vers le tray de la BottomTabBar.
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    window.dispatchEvent(
+      new CustomEvent(MESSAGERIE_TAB_STATE, {
+        detail: { tab: activeTab, count: pendingRequestsCount },
+      })
+    );
+  }, [activeTab, pendingRequestsCount]);
+
+  // Ecoute les taps sur le tray (mobile).
+  useEffect(() => {
+    const handler = (e: Event) => {
+      const tab = (e as CustomEvent).detail;
+      if (tab) setActiveTab(tab);
+    };
+    window.addEventListener(MESSAGERIE_TAB_CHANGE, handler);
+    return () => window.removeEventListener(MESSAGERIE_TAB_CHANGE, handler);
+  }, []);
+
   const filteredConversations = useMemo(() => {
     return conversations.filter((c) => {
-      // Requests tab
       if (activeTab === 'requests') {
         if (c.status !== 'pending') return false;
       } else {
-        // Exclude pending/rejected from standard tabs
         if (c.status === 'pending' || c.status === 'rejected') return false;
         if (activeTab === 'direct' && c.type !== 'direct') return false;
         if (activeTab === 'group' && c.type !== 'group') return false;
@@ -97,99 +143,67 @@ export const ConversationList: React.FC<ConversationListProps> = ({
 
   return (
     <div className="flex flex-col h-full w-full glass rounded-none md:rounded-3xl overflow-hidden relative">
-      {/* Chrome sticky — gère env(safe-area-inset-top) pour toute la vue liste */}
+      {/* Chrome haut — recherche + bouton « + » unique (gère le safe-area top) */}
       <div className="msg-safe-top shrink-0 px-3 md:px-4 pb-3 border-b border-stone-200/60 bg-white/70 backdrop-blur-2xl">
-        <div
-          className="flex items-end justify-between overflow-hidden transition-[max-height,opacity] duration-200 ease-out"
-          style={{
-            maxHeight: condensed ? 0 : 64,
-            opacity: condensed ? 0 : 1,
-            marginBottom: condensed ? 0 : 12,
-          }}
-        >
-          <div>
-            <h2 className="text-2xl font-bold tracking-tight text-[#17402C] leading-tight">
-              Messages
-            </h2>
-            <p className="text-[13px] text-[#5A574E] font-medium">
-              Discussions &amp; expéditions LKDV
-            </p>
-          </div>
-        </div>
-
-        <div className="relative">
-          <Search className="w-4 h-4 text-[#5A574E] absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none" />
-          <input
-            type="search"
-            inputMode="search"
-            enterKeyHint="search"
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            placeholder="Rechercher un voyageur, un groupe…"
-            aria-label="Rechercher une conversation"
-            className="w-full pl-9 pr-12 text-[16px] glass-input font-medium"
-            style={{ minHeight: 44 }}
-          />
-          {search && (
-            <button
-              type="button"
-              onClick={() => {
-                haptic('light');
-                setSearch('');
-                setDebouncedSearch('');
+        <div className="flex items-center gap-2">
+          <div className="relative flex-1 min-w-0">
+            <Search className="w-4 h-4 text-[#5A574E] absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none" />
+            <input
+              type="search"
+              inputMode="search"
+              enterKeyHint="search"
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              placeholder="Rechercher un voyageur, un groupe…"
+              aria-label="Rechercher une conversation"
+              className="w-full text-[16px] glass-input font-medium"
+              style={{
+                minHeight: 44,
+                borderRadius: 14,
+                // Le padding Tailwind est écrasé par .glass-input (10px 14px) :
+                // on force les marges inline pour dégager l'icône et le clear.
+                paddingLeft: 38,
+                paddingRight: 44,
               }}
-              aria-label="Effacer la recherche"
-              className="absolute right-1 top-1/2 -translate-y-1/2 w-11 h-11 flex items-center justify-center text-[#5A574E]"
-            >
-              <span className="glass-circle-btn w-7 h-7 flex items-center justify-center shadow-2xs">
-                <X className="w-3.5 h-3.5" />
-              </span>
-            </button>
-          )}
-        </div>
-
-        {/* Segmented control — 44px de cible, libellés lisibles */}
-        <div
-          role="tablist"
-          aria-label="Filtrer les conversations"
-          className="flex items-center gap-1 mt-3 p-1 rounded-2xl bg-stone-100/90 border border-stone-200/60"
-        >
-          {TABS.map((t) => {
-            const isActive = activeTab === t.id;
-            return (
+            />
+            {search && (
               <button
-                key={t.id}
                 type="button"
-                role="tab"
-                aria-selected={isActive}
                 onClick={() => {
                   haptic('light');
-                  setActiveTab(t.id);
+                  setSearch('');
+                  setDebouncedSearch('');
                 }}
-                className={`flex-1 min-h-[44px] px-1 rounded-xl text-[13px] font-semibold transition-all flex items-center justify-center gap-1 ${
-                  isActive
-                    ? 'bg-white text-[#17402C] shadow-xs border border-white/80'
-                    : 'text-[#5A574E]'
-                }`}
+                aria-label="Effacer la recherche"
+                className="absolute right-1 top-1/2 -translate-y-1/2 w-11 h-11 flex items-center justify-center text-[#5A574E]"
               >
-                <span className="truncate">{t.label}</span>
-                {t.id === 'requests' && pendingRequestsCount > 0 && (
-                  <span className="px-1.5 min-w-[18px] h-[18px] bg-[#C89A3B] text-white rounded-full text-[10px] font-mono font-bold flex items-center justify-center">
-                    {pendingRequestsCount}
-                  </span>
-                )}
+                <span className="glass-circle-btn w-7 h-7 flex items-center justify-center shadow-2xs">
+                  <X className="w-3.5 h-3.5" />
+                </span>
               </button>
-            );
-          })}
+            )}
+          </div>
+
+          {/* Bouton « + » unique — verre givré, comme les autres boutons ronds du site */}
+          <button
+            type="button"
+            onClick={() => {
+              haptic('medium');
+              onNewConversation();
+            }}
+            aria-label="Nouvelle discussion"
+            className="glass-circle-btn w-11 h-11 shadow-md active:scale-95 flex items-center justify-center shrink-0"
+            title="Nouvelle discussion"
+          >
+            <Plus className="w-5 h-5" />
+          </button>
         </div>
       </div>
 
       {/* Liste */}
       <div
-        ref={scrollRef}
-        onScroll={handleScroll}
         className="flex-1 overflow-y-auto overscroll-contain px-3 md:px-4 pt-3 space-y-2 custom-scrollbar"
-        style={{ WebkitOverflowScrolling: 'touch', paddingBottom: 96 }}
+        style={{ WebkitOverflowScrolling: 'touch', paddingBottom: 12 }}
       >
         {loading ? (
           <ConversationListSkeleton />
@@ -212,18 +226,6 @@ export const ConversationList: React.FC<ConversationListProps> = ({
                 ? 'Les nouvelles demandes de message apparaîtront ici.'
                 : 'Lancez une discussion avec un membre de la communauté.'}
             </p>
-            {!debouncedSearch && activeTab !== 'requests' && (
-              <button
-                type="button"
-                onClick={() => {
-                  haptic('light');
-                  onNewConversation();
-                }}
-                className="glass-capsule-btn primary mt-5 px-5 min-h-[44px] text-[13px] font-bold"
-              >
-                Nouvelle discussion
-              </button>
-            )}
           </div>
         ) : (
           filteredConversations.map((conv) => (
@@ -232,37 +234,60 @@ export const ConversationList: React.FC<ConversationListProps> = ({
               conversation={conv}
               isSelected={conv.id === selectedId}
               onSelect={onSelect}
+              onLongPress={currentUserId ? setLongPressConv : undefined}
+              onSwipeAction={currentUserId ? handleSwipeAction : undefined}
             />
           ))
         )}
       </div>
 
-      {/* FAB — zone du pouce, au-dessus de la BottomTabBar */}
-      <button
-        type="button"
-        onClick={() => {
-          haptic('medium');
-          onNewConversation();
-        }}
-        aria-label="Nouvelle discussion"
-        className="md:hidden glass-circle-btn primary absolute right-4 w-14 h-14 shadow-lg z-20"
-        style={{ bottom: 'calc(16px + env(safe-area-inset-bottom, 0px))' }}
-      >
-        <Plus className="w-6 h-6" />
-      </button>
+      {/* Menu appui long — gestion des demandes et options de conversation */}
+      {currentUserId && (
+        <ConversationOptionsSheet
+          isOpen={longPressConv !== null}
+          onClose={() => setLongPressConv(null)}
+          conversation={longPressConv}
+          currentUserId={currentUserId}
+          onRefreshConversations={onRefresh}
+          onReport={onReportConversation}
+        />
+      )}
 
-      {/* Desktop conserve le + en tête de colonne */}
-      <button
-        type="button"
-        onClick={() => {
-          haptic('light');
-          onNewConversation();
-        }}
-        aria-label="Nouvelle discussion"
-        className="hidden md:flex glass-circle-btn primary absolute top-4 right-4 w-11 h-11 shadow-md items-center justify-center"
-      >
-        <Plus className="w-5 h-5" />
-      </button>
+      {/* Onglets — DESKTOP uniquement (sidebar dual-pane). Sur mobile le
+          filtre vit dans le tray d'extension de la BottomTabBar (canonique). */}
+      <div className="hidden md:block shrink-0 px-3 md:px-4 pt-2 pb-3 mt-1 border-t border-stone-200/60 bg-white/40 backdrop-blur-2xl">
+        <div
+          role="tablist"
+          aria-label="Filtrer les conversations"
+          className="glass-capsule-bar w-full justify-between gap-1"
+        >
+          {TABS.map((t) => {
+            const isActive = activeTab === t.id;
+            return (
+              <button
+                key={t.id}
+                type="button"
+                role="tab"
+                aria-selected={isActive}
+                onClick={() => {
+                  haptic('light');
+                  setActiveTab(t.id);
+                }}
+                className={`glass-capsule-segment flex-1 !min-w-0 min-h-[36px] !px-1.5 text-[13px] flex items-center justify-center gap-1 ${
+                  isActive ? 'active' : ''
+                }`}
+              >
+                <span className="truncate">{t.label}</span>
+                {t.id === 'requests' && pendingRequestsCount > 0 && (
+                  <span className="px-1.5 min-w-[18px] h-[18px] bg-[#C89A3B] text-white rounded-full text-[10px] font-mono font-bold flex items-center justify-center">
+                    {pendingRequestsCount}
+                  </span>
+                )}
+              </button>
+            );
+          })}
+        </div>
+      </div>
     </div>
   );
 };

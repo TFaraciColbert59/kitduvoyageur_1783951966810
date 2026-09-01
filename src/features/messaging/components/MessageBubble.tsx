@@ -2,16 +2,21 @@
 
 import React, { useState, useRef, useEffect } from 'react';
 import Image from 'next/image';
+import Link from 'next/link';
 import type { Message } from '../types/messaging.types';
 import { formatMessageDate } from '../lib/messagingUtils';
-import { FileText, Check, CheckCheck, Reply, Smile } from 'lucide-react';
+import { FileText, Check, CheckCheck, Reply, Smile, Share2 } from 'lucide-react';
 import { useHapticFeedback } from '@/hooks/useHapticFeedback';
 import { useSwipe } from '@/hooks/useSwipe';
 import { OpenGraphCard } from './OpenGraphCard';
 import { AudioPlayerBubble } from './AudioPlayerBubble';
 import { GPXPreviewCard } from './GPXPreviewCard';
+import { ProductCard } from './ProductCard';
+import { TrailCard } from './TrailCard';
+import type { ProductMessageMeta, TrailMessageMeta } from '../types/messaging.types';
 
-const REACTION_PALETTE = ['👍', '❤️', '😂', '😮', '🙏'];
+// Les six réactions d'iMessage (Compose intégration pomme).
+const REACTION_PALETTE = ['❤️', '👍', '😂', '😮', '😢', '🙏'];
 const URL_REGEX = /(https?:\/\/[^\s]+)/gi;
 
 export type BubbleGroupPosition = 'single' | 'first' | 'middle' | 'last';
@@ -28,6 +33,7 @@ interface MessageBubbleProps {
   onReply?: (message: Message) => void;
   onToggleReaction?: (messageId: string, reactionValue: string) => void;
   onScrollToMessage?: (messageId: string) => void;
+  onForward?: (message: Message) => void;
 }
 
 export const MessageBubble: React.FC<MessageBubbleProps> = ({
@@ -42,6 +48,7 @@ export const MessageBubble: React.FC<MessageBubbleProps> = ({
   onReply,
   onToggleReaction,
   onScrollToMessage,
+  onForward,
 }) => {
   const { haptic } = useHapticFeedback();
   const [showActionMenu, setShowActionMenu] = useState(false);
@@ -187,7 +194,12 @@ export const MessageBubble: React.FC<MessageBubbleProps> = ({
     >
       {!isMine && (
         showAvatar ? (
-          <div className="w-8 h-8 rounded-full overflow-hidden relative shrink-0 ring-1 ring-white/80 shadow-xs bg-stone-100 mb-0.5">
+          <Link
+            href={`/profil/${message.sender_profile?.id || ''}`}
+            className="w-8 h-8 rounded-full overflow-hidden relative shrink-0 ring-1 ring-white/80 shadow-xs bg-stone-100 mb-0.5 cursor-pointer hover:ring-2 hover:ring-[#A3C4A3] transition-shadow"
+            title={`Voir le profil de ${senderName}`}
+            aria-label={`Voir le profil de ${senderName}`}
+          >
             <Image
               src={avatarUrl}
               alt={senderName}
@@ -198,7 +210,7 @@ export const MessageBubble: React.FC<MessageBubbleProps> = ({
                 (e.target as HTMLImageElement).src = '/assets/images/no_image.png';
               }}
             />
-          </div>
+          </Link>
         ) : (
           <div className="w-8 shrink-0" aria-hidden="true" />
         )
@@ -206,9 +218,12 @@ export const MessageBubble: React.FC<MessageBubbleProps> = ({
 
       <div className={`max-w-[78%] sm:max-w-[70%] flex flex-col ${isMine ? 'items-end' : 'items-start'}`}>
         {showHeader && (
-          <span className="text-[12px] font-semibold text-[#5A7064] ml-1 mb-1 block">
+          <Link
+            href={`/profil/${message.sender_profile?.id || ''}`}
+            className="text-[12px] font-semibold text-[#5A7064] hover:text-[#17402C] transition-colors ml-1 mb-1 block cursor-pointer"
+          >
             {senderName}
-          </span>
+          </Link>
         )}
 
         {/* Action Menu overlay */}
@@ -244,6 +259,18 @@ export const MessageBubble: React.FC<MessageBubbleProps> = ({
               title="Répondre"
             >
               <Reply className="w-3.5 h-3.5" />
+            </button>
+            <button
+              type="button"
+              onClick={() => {
+                haptic('light');
+                onForward?.(message);
+                setShowActionMenu(false);
+              }}
+              className="glass-circle-btn w-8 h-8 text-[#17402C] text-xs font-semibold flex items-center justify-center shadow-xs"
+              title="Transférer"
+            >
+              <Share2 className="w-3.5 h-3.5" />
             </button>
           </div>
         )}
@@ -293,8 +320,8 @@ export const MessageBubble: React.FC<MessageBubbleProps> = ({
             onTouchEnd={handleTouchEnd}
             className={`relative px-4 py-3 transition-all select-none cursor-pointer ${bubbleRadiusClass} ${
               isMine
-                ? 'bg-gradient-to-br from-[#5B7F55] to-[#365233] text-[#FAF8F5] border border-white/25 shadow-xs'
-                : 'bg-white/55 backdrop-blur-xl text-[#14140F] border border-white/50 shadow-[inset_0_1px_0_rgba(255,255,255,0.65),0_2px_8px_-1px_rgba(23,64,44,0.10)]'
+                ? 'msg-bubble--mine'
+                : 'msg-bubble text-[#14140F]'
             }`}
           >
             {/* Quoted Message */}
@@ -377,15 +404,62 @@ export const MessageBubble: React.FC<MessageBubbleProps> = ({
               <GPXPreviewCard gpxUrl={message.content} isMine={isMine} />
             )}
 
-            {/* Message Content */}
-            {message.message_type !== 'audio' && message.message_type !== 'gpx' && (
-              <p className="text-[15px] leading-[1.45] whitespace-pre-wrap break-words font-normal">
-                {message.content}
-              </p>
+            {/* Image Message Type — envoi Photo : l'URL (signee ou blob) est
+                portee par content. <img> natif : compatible blob: et hotlinks,
+                contrairement a next/image. */}
+            {message.message_type === 'image' && message.content && (
+              <a
+                href={message.content}
+                target="_blank"
+                rel="noopener noreferrer"
+                className={`block mt-1 rounded-2xl overflow-hidden border ${
+                  isMine ? 'border-white/25' : 'border-[#17402C]/10'
+                }`}
+                title="Ouvrir l'image"
+              >
+                {/* eslint-disable-next-line @next/next/no-img-element -- blob: et URLs signees non supportees par next/image */}
+                <img
+                  src={message.content}
+                  alt="Photo partagée"
+                  loading="lazy"
+                  className="block w-full max-w-[260px] max-h-72 object-cover cursor-zoom-in"
+                  onError={(e) => {
+                    (e.target as HTMLImageElement).src = '/assets/images/no_image.png';
+                  }}
+                />
+              </a>
             )}
 
+            {/* Product / Trail — cartes cliquables portées par metadata */}
+            {message.message_type === 'product' && message.metadata && (
+              <ProductCard
+                meta={message.metadata as unknown as ProductMessageMeta}
+                isMine={isMine}
+              />
+            )}
+            {message.message_type === 'trail' && message.metadata && (
+              <TrailCard
+                meta={message.metadata as unknown as TrailMessageMeta}
+                isMine={isMine}
+              />
+            )}
+
+            {/* Message Content */}
+            {message.message_type !== 'audio' &&
+              message.message_type !== 'gpx' &&
+              message.message_type !== 'image' &&
+              message.message_type !== 'product' &&
+              message.message_type !== 'trail' && (
+                <p className="text-[15px] leading-[1.45] whitespace-pre-wrap break-words font-normal">
+                  {message.content}
+                </p>
+              )}
+
             {/* OpenGraph Card Preview */}
-            {firstUrl && message.message_type !== 'audio' && message.message_type !== 'gpx' && (
+            {firstUrl &&
+              message.message_type !== 'audio' &&
+              message.message_type !== 'gpx' &&
+              message.message_type !== 'image' && (
               <OpenGraphCard url={firstUrl} isMine={isMine} />
             )}
 

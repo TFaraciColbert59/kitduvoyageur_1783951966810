@@ -5,8 +5,9 @@ import Image from 'next/image';
 import Link from 'next/link';
 import type { Conversation, ConversationMember } from '../types/messaging.types';
 import { messagingService } from '../services/messagingService';
+import { MobileSheet } from './MobileSheet';
 import { useHapticFeedback } from '@/hooks/useHapticFeedback';
-import { Crown, Shield, User, UserMinus, LogOut, X, Edit2, Check, ExternalLink, Users } from 'lucide-react';
+import { Crown, Shield, User, UserMinus, LogOut, Edit2, Check, ExternalLink } from 'lucide-react';
 
 interface GroupSettingsModalProps {
   isOpen: boolean;
@@ -128,31 +129,18 @@ export const GroupSettingsModal: React.FC<GroupSettingsModalProps> = ({
   // Linked Expedition Departure Cockpit URL for expedition groups
   const expeditionUrl = conversation.id === 'demo-conv-2' ? '/materiel/depart/demo-expedition' : '/materiel/depart';
 
+  // Bottom sheet Liquid Glass (MobileSheet) : pattern canonique des modales
+  // messagerie mobile (drag-to-dismiss, z-[10010], scrim), au lieu d'une
+  // modale centrée hors système.
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm animate-fade-in">
-      <div className="glass rounded-3xl max-w-md w-full p-5 text-[#14140F] relative overflow-hidden flex flex-col max-h-[85vh]">
-        {/* Header */}
-        <div className="flex items-center justify-between pb-3 border-b border-stone-200/60 mb-4 shrink-0">
-          <div className="flex items-center gap-2">
-            <Users className="w-5 h-5 text-[#17402C]" />
-            <h3 className="font-bold text-base text-[#17402C]">Gestion du Groupe</h3>
-          </div>
-          <button
-            onClick={onClose}
-            aria-label="Fermer"
-            className="glass-circle-btn w-11 h-11 text-[#5A574E] hover:text-[#17402C] shrink-0"
-          >
-            <X className="w-4 h-4" />
-          </button>
+    <MobileSheet isOpen={isOpen} onClose={onClose} title="Gestion du groupe">
+      {errorMessage && (
+        <div className="mb-3 p-2.5 bg-[#F5DDD9]/90 border border-[#A8443A]/25 text-[#8A241B] rounded-2xl text-xs font-semibold">
+          {errorMessage}
         </div>
+      )}
 
-        {errorMessage && (
-          <div className="mb-3 p-2.5 bg-[#F5DDD9]/90 border border-[#A8443A]/25 text-[#8A241B] rounded-2xl text-xs font-semibold shrink-0">
-            {errorMessage}
-          </div>
-        )}
-
-        <div className="flex-1 overflow-y-auto space-y-4 pr-1 custom-scrollbar">
+      <div className="flex flex-col gap-4">
           {/* Group Header Info Edit */}
           <div className="p-3.5 bg-white/70 rounded-2xl border border-stone-200/60 flex flex-col gap-3 shadow-2xs">
             <div className="flex items-center gap-3">
@@ -242,7 +230,12 @@ export const GroupSettingsModal: React.FC<GroupSettingsModalProps> = ({
                       className="p-2.5 bg-white/70 hover:bg-white/90 border border-stone-200/60 rounded-2xl flex items-center justify-between gap-2 shadow-2xs"
                     >
                       <div className="flex items-center gap-2.5 overflow-hidden">
-                        <div className="w-8 h-8 rounded-full overflow-hidden relative shrink-0 bg-stone-200 ring-1 ring-white">
+                        <Link
+                          href={`/profil/${mem.user_id}`}
+                          className="w-8 h-8 rounded-full overflow-hidden relative shrink-0 bg-stone-200 ring-1 ring-white cursor-pointer hover:ring-2 hover:ring-[#A3C4A3] transition-shadow"
+                          title={`Voir le profil de ${name}`}
+                          aria-label={`Voir le profil de ${name}`}
+                        >
                           <Image
                             src={avatar}
                             alt={name}
@@ -253,13 +246,17 @@ export const GroupSettingsModal: React.FC<GroupSettingsModalProps> = ({
                               (e.target as HTMLImageElement).src = '/assets/images/no_image.png';
                             }}
                           />
-                        </div>
+                        </Link>
 
                         <div className="overflow-hidden">
-                          <p className="font-bold text-xs text-[#17402C] truncate flex items-center gap-1">
+                          <Link
+                            href={`/profil/${mem.user_id}`}
+                            className="font-bold text-xs text-[#17402C] truncate flex items-center gap-1 hover:underline decoration-[#A3C4A3] underline-offset-2"
+                            title={`Voir le profil de ${name}`}
+                          >
                             <span>{name}</span>
                             {isMe && <span className="text-[10px] text-[#5A574E] font-normal">(Vous)</span>}
-                          </p>
+                          </Link>
                           <span
                             className={`inline-flex items-center gap-1 text-[10px] font-semibold px-2 py-0.5 rounded-full ${
                               mem.role === 'owner'
@@ -322,18 +319,17 @@ export const GroupSettingsModal: React.FC<GroupSettingsModalProps> = ({
           </div>
         </div>
 
-        {/* Footer Leave Group */}
-        <div className="pt-3 border-t border-stone-200/60 mt-2 shrink-0">
-          <button
-            onClick={handleLeaveGroup}
-            disabled={loading}
-            className="w-full min-h-[44px] py-2.5 px-4 bg-[#F5DDD9]/70 hover:bg-[#F5DDD9]/90 text-[#8A241B] border border-[#A8443A]/30 rounded-2xl text-xs font-bold transition-all flex items-center justify-center gap-2 active:scale-95"
-          >
-            <LogOut className="w-4 h-4 text-[#8A241B]" />
-            Quitter le groupe d&apos;expédition
-          </button>
-        </div>
+      {/* Footer Leave Group */}
+      <div className="pt-3 border-t border-stone-200/60 mt-3 shrink-0">
+        <button
+          onClick={handleLeaveGroup}
+          disabled={loading}
+          className="w-full min-h-[44px] py-2.5 px-4 bg-[#F5DDD9]/70 hover:bg-[#F5DDD9]/90 text-[#8A241B] border border-[#A8443A]/30 rounded-2xl text-xs font-bold transition-all flex items-center justify-center gap-2 active:scale-95"
+        >
+          <LogOut className="w-4 h-4 text-[#8A241B]" />
+          Quitter le groupe d&apos;expédition
+        </button>
       </div>
-    </div>
+    </MobileSheet>
   );
 };

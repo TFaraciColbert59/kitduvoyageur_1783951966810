@@ -82,7 +82,7 @@ export const MobileSheet: React.FC<MobileSheetProps> = ({
       <div
         ref={panelRef}
         tabIndex={-1}
-        className={`relative glass w-full sm:max-w-md rounded-t-3xl sm:rounded-3xl outline-none ${
+        className={`relative glass w-full sm:max-w-md rounded-t-3xl sm:rounded-3xl outline-none flex flex-col overflow-hidden ${
           closing ? 'msg-sheet-down-out' : 'msg-sheet-up-in'
         }`}
         style={{
@@ -118,7 +118,7 @@ export const MobileSheet: React.FC<MobileSheetProps> = ({
         <div className="px-5 pt-2 pb-3 border-b border-stone-200/60">
           <h3 className="font-bold text-[17px] text-[#17402C]">{title}</h3>
         </div>
-        <div className="px-5 py-4 overflow-y-auto overscroll-contain">{children}</div>
+        <div className="px-5 py-4 overflow-y-auto overscroll-contain flex-1 min-h-0">{children}</div>
       </div>
     </div>
   );

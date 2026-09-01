@@ -66,7 +66,8 @@ export default function AppShell({
     pathname?.startsWith('/clubs') ||
     pathname?.startsWith('/entraide') ||
     pathname?.startsWith('/evenements') ||
-    pathname?.startsWith('/alertes');
+    pathname?.startsWith('/alertes') ||
+    pathname === '/messagerie';
 
   const bottomNavHeight = !hasBottomNav
     ? 'calc(12px + env(safe-area-inset-bottom, 0px))'

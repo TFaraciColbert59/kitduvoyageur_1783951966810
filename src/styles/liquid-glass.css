@@ -1238,4 +1238,72 @@
   }
 }
 
+/* ============================================================
+   MESSAGERIE V2 — bulles Liquid Glass & bouton d'envoi
+   Verre translucide (speculaire) pour les bulles recues,
+   verre de conifere sage pour les bulles envoyees.
+   ============================================================ */
+
+.msg-bubble {
+  position: relative;
+  isolation: isolate;
+  background: linear-gradient(
+    180deg,
+    rgba(255, 255, 255, 0.92),
+    rgba(251, 250, 246, 0.86)
+  );
+  backdrop-filter: blur(var(--glass-blur-md)) saturate(var(--glass-sat));
+  -webkit-backdrop-filter: blur(var(--glass-blur-md)) saturate(var(--glass-sat));
+  border: 1px solid rgba(255, 255, 255, 0.9);
+  box-shadow:
+    inset 0 1px 1px rgba(255, 255, 255, 0.95),
+    inset 0 -1px 1px rgba(23, 64, 44, 0.03),
+    0 2px 8px -2px rgba(23, 64, 44, 0.08),
+    0 8px 22px -8px rgba(23, 64, 44, 0.12);
+}
+
+.msg-bubble::before {
+  content: "";
+  position: absolute;
+  inset: 0 0 auto 0;
+  height: 1px;
+  background: var(--glass-highlight-top);
+  pointer-events: none;
+}
+
+/* Bulle envoyee : conifere fondu (CTA primaire du site) — texte blanc lisible,
+   meme traitement que .glass-capsule-btn.primary / .glass-circle-btn.primary. */
+.msg-bubble--mine {
+  background: linear-gradient(165deg, #2F7050 0%, #23503B 45%, #17402C 100%);
+  border-color: rgba(255, 255, 255, 0.32);
+  color: #FAF8F5;
+  box-shadow:
+    inset 0 1.5px 1px rgba(255, 255, 255, 0.32),
+    inset 0 -1px 1.5px rgba(11, 31, 23, 0.28),
+    0 3px 10px -3px rgba(23, 64, 44, 0.32),
+    0 10px 24px -10px rgba(23, 64, 44, 0.5);
+}
+
+/* Bouton d'envoi Liquid Glass : translucide sage + speculaire */
+.glass-send-btn {
+  background: linear-gradient(
+    180deg,
+    rgba(255, 255, 255, 0.5) 0%,
+    rgba(255, 255, 255, 0.12) 45%,
+    color-mix(in oklab, var(--sage-500) 30%, transparent) 110%
+  );
+  border: 1.5px solid rgba(255, 255, 255, 0.8);
+  box-shadow:
+    inset 0 1px 1.5px rgba(255, 255, 255, 0.9),
+    0 6px 18px -6px rgba(23, 64, 44, 0.28);
+  color: #17402C;
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+}
+
+.glass-send-btn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
 

@@ -95,8 +95,8 @@ export const NewConversationModal: React.FC<NewConversationModalProps> = ({
           onChange={(e) => setSearch(e.target.value)}
           placeholder="Rechercher par nom..."
           aria-label="Rechercher un voyageur"
-          className="w-full pl-9 pr-4 py-2.5 text-[16px] glass-input font-medium"
-          style={{ minHeight: 44 }}
+          className="w-full py-2.5 text-[16px] glass-input font-medium"
+          style={{ minHeight: 44, paddingLeft: 38, paddingRight: 14 }}
         />
       </div>
 

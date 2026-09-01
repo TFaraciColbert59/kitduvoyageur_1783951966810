@@ -1,5 +1,35 @@
 export type ConversationType = 'direct' | 'group';
-export type MessageType = 'text' | 'image' | 'video' | 'file' | 'system' | 'audio' | 'gpx';
+export type MessageType =
+  | 'text'
+  | 'image'
+  | 'video'
+  | 'file'
+  | 'system'
+  | 'audio'
+  | 'gpx'
+  | 'product'
+  | 'trail';
+
+/** Payload des messages équipement (message_type = 'product'). Série dans messages.metadata. */
+export interface ProductMessageMeta {
+  kind: 'product';
+  id: string;
+  name: string;
+  photo_url?: string | null;
+  category?: string | null;
+  price_cents?: number | null;
+  product_slug?: string | null;
+}
+
+/** Payload des messages randonnée (message_type = 'trail'). Série dans messages.metadata. */
+export interface TrailMessageMeta {
+  kind: 'trail';
+  id: string;
+  name: string;
+  distance_km?: number | null;
+  elevation_gain_m?: number | null;
+  region?: string | null;
+}
 export type MemberRole = 'member' | 'admin' | 'owner';
 
 export interface UserProfileSummary {
@@ -93,6 +123,8 @@ export interface Message {
   reactions?: MessageReaction[];
   attachments?: MessageAttachment[];
   status?: 'sending' | 'sent' | 'error';
+  /** Payload structuré pour les types enrichis ('product', 'trail', transferts…). */
+  metadata?: Record<string, unknown> | null;
 }
 
 export interface MessageSummary {

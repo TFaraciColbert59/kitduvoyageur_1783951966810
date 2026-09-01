@@ -16,6 +16,7 @@ interface MessageListProps {
   members?: ConversationMember[];
   onReply?: (message: Message) => void;
   onToggleReaction?: (messageId: string, reactionValue: string) => void;
+  onForward?: (message: Message) => void;
 }
 
 export const MessageListSkeleton = () => (
@@ -68,6 +69,7 @@ export const MessageList: React.FC<MessageListProps> = ({
   members = [],
   onReply,
   onToggleReaction,
+  onForward,
 }) => {
   const { haptic } = useHapticFeedback();
   const containerRef = useRef<HTMLDivElement>(null);
@@ -234,6 +236,7 @@ export const MessageList: React.FC<MessageListProps> = ({
                 onReply={onReply}
                 onToggleReaction={onToggleReaction}
                 onScrollToMessage={handleScrollToMessage}
+                onForward={onForward}
               />
             </React.Fragment>
           );

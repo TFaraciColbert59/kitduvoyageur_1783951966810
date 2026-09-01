@@ -16,7 +16,7 @@ import { ClockIcon as Clock } from '@/components/icons/clock';
 import { ChevronDownIcon as ChevronDown } from '@/components/icons/chevron-down';
 import { SlidersHorizontalIcon as SlidersHorizontalAnimated } from '@/components/icons/sliders-horizontal';
 import { XIcon as XAnimated } from '@/components/icons/x';
-import { RotateCCWIcon as RotateCcwAnimated } from '@/components/icons/rotate-ccw';
+import { RotateCCWIcon as RotateCcwAnimated, type RotateCCWIconHandle } from '@/components/icons/rotate-ccw';
 import { SearchIcon as SearchAnimated } from '@/components/icons/search';
 import Link from 'next/link';
 import type { MapTrail } from '@/components/explorer/types';
@@ -36,9 +36,9 @@ import ExplorerMobileHikeCarousel from '@/components/explorer/ExplorerMobileHike
 const ExplorerMap = dynamic(() => import('@/components/explorer/ExplorerMap'), {
   ssr: false,
   loading: () => (
-    <div className="w-full h-full flex flex-col items-center justify-center gap-3 bg-[#EAE6DF]">
-      <div className="w-7 h-7 border-[3px] border-[#17402C] border-t-transparent rounded-full animate-spin" />
-      <span className="text-xs font-mono font-bold text-[#17402C]">Chargement de la carte…</span>
+    // Icône de chargement seule, centrée (sans texte).
+    <div className="w-full h-full flex items-center justify-center bg-[#EAE6DF]">
+      <div className="w-8 h-8 border-[3px] border-[#17402C] border-t-transparent rounded-full animate-spin" />
     </div>
   ),
 });
@@ -153,6 +153,7 @@ export default function ExplorerClient({ initialTrails }: ExplorerClientProps) {
     }
   }, []);
 
+  const searchHereIconRef = useRef<RotateCCWIconHandle | null>(null);
   const handleSearchHere = useCallback(() => {
     if (liveViewportBbox) {
       setQueriedBbox(liveViewportBbox);
@@ -471,18 +472,25 @@ export default function ExplorerClient({ initialTrails }: ExplorerClientProps) {
             transition={{ type: 'spring', stiffness: 500, damping: 30 }}
             className="fixed top-[calc(env(safe-area-inset-top,0px)+16px)] sm:top-[76px] left-1/2 -translate-x-1/2 z-[850] pointer-events-auto"
           >
+            {/* Icône seule (44px), même verre givré que les autres boutons carte.
+                Animation garantie : rotation continue pendant le fetch +
+                déclenchement impératif au tap (mouseenter ne bulle pas). */}
             <button
               type="button"
-              onClick={handleSearchHere}
-              className="glass-capsule-btn primary !py-1.5 !px-4 text-xs font-bold shadow-lg flex items-center gap-1.5 cursor-pointer active:scale-95"
+              onClick={() => {
+                searchHereIconRef.current?.startAnimation();
+                handleSearchHere();
+              }}
+              className="glass-circle-btn w-11 h-11 shadow-lg flex items-center justify-center cursor-pointer active:scale-95"
               title="Rechercher les randonnées dans cette zone"
               aria-label="Rechercher les randonnées dans cette zone"
+              aria-busy={trailsFetching}
             >
               <RotateCcwAnimated
-                size={14}
-                className={`transition-transform duration-500 ${trailsFetching ? 'animate-spin' : ''}`}
+                ref={searchHereIconRef}
+                size={16}
+                className={trailsFetching ? 'animate-spin' : ''}
               />
-              <span>Rechercher dans cette zone</span>
             </button>
           </motion.div>
         )}
