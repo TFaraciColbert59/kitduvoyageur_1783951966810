@@ -761,8 +761,7 @@ function BottomTabBar() {
     return tab.matchPaths.some(p => pathname === p || pathname?.startsWith(p + '/'));
   };
 
-  if (!mounted || hiddenByEvent) {
-    if (hiddenByEvent) return null;
+  if (!mounted) {
     return (
       <nav role="navigation" aria-label="Chargement de la navigation" className="md:hidden flex items-center justify-center" style={{ position: 'fixed', left: 0, right: 0, bottom: 0, zIndex: 9999, pointerEvents: 'none', paddingBottom: 'env(safe-area-inset-bottom, 0px)' }}>
         <div style={{
@@ -801,6 +800,15 @@ function BottomTabBar() {
         zIndex: 9999,
         pointerEvents: 'none',
         paddingBottom: 'env(safe-area-inset-bottom, 0px)',
+        // Masquage par glissement (lkdv-toggle-bottom-bar) plutôt que return
+        // null : translate + visibility évitent le saut de ~40px quand
+        // --bottom-nav-height bascule entre 52px et 12px (cf. audit 1.8).
+        // visibility ne passe en hidden qu'après les 220ms de translation.
+        transform: hiddenByEvent ? 'translate3d(0,120%,0)' : 'translate3d(0,0,0)',
+        transition: hiddenByEvent
+          ? 'transform 220ms cubic-bezier(0.32,0.72,0,1), visibility 0s linear 220ms'
+          : 'transform 220ms cubic-bezier(0.32,0.72,0,1)',
+        visibility: hiddenByEvent ? 'hidden' : 'visible',
       }}
     >
       <div

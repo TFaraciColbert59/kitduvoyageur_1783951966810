@@ -139,6 +139,7 @@ export const GroupSettingsModal: React.FC<GroupSettingsModalProps> = ({
           </div>
           <button
             onClick={onClose}
+            aria-label="Fermer"
             className="glass-circle-btn w-11 h-11 text-[#5A574E] hover:text-[#17402C] shrink-0"
           >
             <X className="w-4 h-4" />

@@ -143,6 +143,7 @@ export const ConversationView: React.FC<ConversationViewProps> = ({
                 haptic('light');
                 onBack();
               }}
+              aria-label="Retour aux conversations"
               className="glass-circle-btn w-10 h-10 text-[#17402C] shadow-xs active:scale-95 shrink-0"
               title="Retour aux conversations"
             >
@@ -163,9 +164,11 @@ export const ConversationView: React.FC<ConversationViewProps> = ({
                 }}
               />
             </div>
-            {!isGroup && (
-              <span className="absolute bottom-0 right-0 w-3 h-3 bg-[#5B7F55] rounded-full border-2 border-white shadow-2xs" />
-            )}
+            {/*
+              Pastille de présence retirée : elle était affichée en dur sans
+              channel de présence Supabase (cf. audit 1.6). Rebrancher quand un
+              channel rejoin/leave ou un champ last_seen_at existera.
+            */}
           </div>
 
           <div
@@ -182,7 +185,7 @@ export const ConversationView: React.FC<ConversationViewProps> = ({
               {isGroup && <Users className="w-3.5 h-3.5 text-[#5A574E] shrink-0" />}
             </h3>
             <p className="text-[11px] text-[#486944] font-medium truncate">
-              {isGroup ? 'Groupe de Voyage' : 'En ligne'}
+              {isGroup ? 'Groupe de Voyage' : 'Membre LKDV'}
             </p>
           </div>
         </div>
@@ -195,6 +198,7 @@ export const ConversationView: React.FC<ConversationViewProps> = ({
                 haptic('light');
                 setShowGroupSettingsModal(true);
               }}
+              aria-label="Gérer le groupe"
               className="glass-circle-btn w-10 h-10 text-[#17402C] shadow-xs active:scale-95"
               title="Gérer le groupe"
             >
@@ -208,6 +212,7 @@ export const ConversationView: React.FC<ConversationViewProps> = ({
               haptic('light');
               setShowOptionsModal(true);
             }}
+            aria-label="Options de conversation"
             className="glass-circle-btn w-10 h-10 text-[#17402C] shadow-xs active:scale-95"
             title="Options de conversation"
           >
@@ -217,6 +222,7 @@ export const ConversationView: React.FC<ConversationViewProps> = ({
       </div>
 
       <MessageList
+        key={conversation.id}
         messages={messages}
         currentUserId={currentUserId}
         isGroup={isGroup}
@@ -242,7 +248,9 @@ export const ConversationView: React.FC<ConversationViewProps> = ({
             </div>
           </div>
 
-          <div className="flex items-center gap-2 pt-1">
+          {/* Sous 360px les trois actions ne tiennent pas sur une ligne :
+              flex-wrap laisse « Bloquer » passer à la ligne suivante. */}
+          <div className="flex flex-wrap items-center gap-2 pt-1">
             <button
               onClick={handleAcceptRequest}
               className="flex-1 glass-capsule-btn primary text-xs font-bold min-h-[44px] flex items-center justify-center gap-1.5 active:scale-95"

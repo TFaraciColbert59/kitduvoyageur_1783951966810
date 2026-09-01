@@ -1173,4 +1173,69 @@
   display: none !important;
 }
 
+/* ============================================================
+   MESSAGERIE — transitions & safe-areas
+   Uniquement transform/opacity (GPU-safe), durée 180–240ms.
+   ============================================================ */
+
+.msg-safe-top {
+  padding-top: calc(env(safe-area-inset-top, 0px) + 10px);
+}
+
+@keyframes msgSheetIn {
+  from { transform: translate3d(100%, 0, 0); }
+  to   { transform: translate3d(0, 0, 0); }
+}
+@keyframes msgSheetOut {
+  from { transform: translate3d(0, 0, 0); }
+  to   { transform: translate3d(100%, 0, 0); }
+}
+@keyframes msgSheetUp {
+  from { transform: translate3d(0, 100%, 0); }
+  to   { transform: translate3d(0, 0, 0); }
+}
+@keyframes msgSheetDown {
+  from { transform: translate3d(0, 0, 0); }
+  to   { transform: translate3d(0, 100%, 0); }
+}
+@keyframes msgFadeIn {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+@keyframes msgFadeOut {
+  from { opacity: 1; }
+  to   { opacity: 0; }
+}
+@keyframes msgPillIn {
+  from { opacity: 0; transform: translate3d(0, 8px, 0); }
+  to   { opacity: 1; transform: translate3d(0, 0, 0); }
+}
+
+.msg-sheet-in       { animation: msgSheetIn   240ms var(--ease-emphasis) both; }
+.msg-sheet-out      { animation: msgSheetOut  180ms var(--ease-emphasis) both; }
+.msg-sheet-up-in    { animation: msgSheetUp   240ms var(--ease-emphasis) both; }
+.msg-sheet-down-out { animation: msgSheetDown 200ms var(--ease-emphasis) both; }
+.msg-fade-in        { animation: msgFadeIn    180ms var(--ease-glass) both; }
+.msg-fade-out       { animation: msgFadeOut   160ms var(--ease-glass) both; }
+.msg-pill-in        { animation: msgPillIn    200ms var(--ease-glass) both; }
+
+/* Paysage bas de plafond : on comprime le chrome plutôt que les messages. */
+@media (orientation: landscape) and (max-height: 480px) {
+  .msg-safe-top {
+    padding-top: calc(env(safe-area-inset-top, 0px) + 4px);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .msg-sheet-in,
+  .msg-sheet-out,
+  .msg-sheet-up-in,
+  .msg-sheet-down-out,
+  .msg-fade-in,
+  .msg-fade-out,
+  .msg-pill-in {
+    animation-duration: 1ms !important;
+  }
+}
+
 

@@ -42,6 +42,23 @@ export const MessageListSkeleton = () => (
   </div>
 );
 
+const dayKey = (iso: string) => new Date(iso).toDateString();
+
+const dayLabel = (iso: string) => {
+  const d = new Date(iso);
+  const now = new Date();
+  const y = new Date(now);
+  y.setDate(now.getDate() - 1);
+  if (d.toDateString() === now.toDateString()) return "Aujourd'hui";
+  if (d.toDateString() === y.toDateString()) return 'Hier';
+  return d.toLocaleDateString('fr-FR', {
+    weekday: 'long',
+    day: 'numeric',
+    month: 'long',
+    year: d.getFullYear() === now.getFullYear() ? undefined : 'numeric',
+  });
+};
+
 export const MessageList: React.FC<MessageListProps> = ({
   messages,
   currentUserId,
@@ -54,13 +71,17 @@ export const MessageList: React.FC<MessageListProps> = ({
 }) => {
   const { haptic } = useHapticFeedback();
   const containerRef = useRef<HTMLDivElement>(null);
-  const bottomRef = useRef<HTMLDivElement>(null);
   const [isNearBottom, setIsNearBottom] = useState(true);
   const [hasNewUnseenMessages, setHasNewUnseenMessages] = useState(false);
   const prevMessagesCountRef = useRef(messages.length);
+  const didInitialScroll = useRef(false);
 
+  // Scroll sur le conteneur : scrollIntoView sur iOS remonte l'ancêtre
+  // scrollable et faisait sauter toute la page (cf. audit 1.2/2.7).
   const scrollToBottom = useCallback((behavior: ScrollBehavior = 'smooth') => {
-    bottomRef.current?.scrollIntoView({ behavior });
+    const el = containerRef.current;
+    if (!el) return;
+    el.scrollTo({ top: el.scrollHeight, behavior });
   }, []);
 
   const handleScroll = () => {
@@ -95,12 +116,15 @@ export const MessageList: React.FC<MessageListProps> = ({
     }
   }, [typingUserNames.length, isNearBottom, scrollToBottom]);
 
-  // Initial scroll on load
+  // Ancre le fond dès que le contenu est peint (évite l'atterrissage en plein
+  // historique sur réseau lent), sans animation au premier rendu. Le
+  // `key={conversation.id}` posé sur <MessageList> par ConversationView
+  // réinitialise ce ref à chaque changement de conversation.
   useEffect(() => {
-    if (messages.length > 0) {
-      scrollToBottom('auto');
-    }
-  }, [loading, scrollToBottom]);
+    if (loading || messages.length === 0 || didInitialScroll.current) return;
+    requestAnimationFrame(() => scrollToBottom('auto'));
+    didInitialScroll.current = true;
+  }, [loading, messages.length, scrollToBottom]);
 
   const handleScrollToMessage = (messageId: string) => {
     const el = document.getElementById(`msg-bubble-${messageId}`);
@@ -117,7 +141,9 @@ export const MessageList: React.FC<MessageListProps> = ({
     <div
       ref={containerRef}
       onScroll={handleScroll}
-      className="flex-1 overflow-y-auto p-3 sm:p-4 space-y-0.5 custom-scrollbar relative"
+      aria-label="Fil de discussion"
+      className="flex-1 overflow-y-auto overscroll-contain p-3 sm:p-4 space-y-0.5 custom-scrollbar relative"
+      style={{ WebkitOverflowScrolling: 'touch' }}
     >
       {loading && messages.length === 0 ? (
         <MessageListSkeleton />
@@ -161,6 +187,8 @@ export const MessageList: React.FC<MessageListProps> = ({
           }
 
           const showSenderHeader = isGroup && !isSameSenderAsPrev;
+          const showDaySeparator =
+            !prevMsg || dayKey(prevMsg.created_at) !== dayKey(msg.created_at);
 
           // Compute read receipt status
           let isReadByRecipient = false;
@@ -186,20 +214,28 @@ export const MessageList: React.FC<MessageListProps> = ({
           }
 
           return (
-            <MessageBubble
-              key={msg.id}
-              message={msg}
-              isMine={isMine}
-              currentUserId={currentUserId}
-              showSenderHeader={showSenderHeader}
-              groupPosition={groupPosition}
-              isReadByRecipient={isReadByRecipient}
-              readByCount={readByCount}
-              readByNames={readByNames}
-              onReply={onReply}
-              onToggleReaction={onToggleReaction}
-              onScrollToMessage={handleScrollToMessage}
-            />
+            <React.Fragment key={msg.id}>
+              {showDaySeparator && (
+                <div className="flex justify-center my-4" role="separator">
+                  <span className="px-3 py-1 rounded-full bg-white/70 backdrop-blur-md border border-white/60 text-[11px] font-semibold text-[#5A574E] uppercase tracking-[0.1em]">
+                    {dayLabel(msg.created_at)}
+                  </span>
+                </div>
+              )}
+              <MessageBubble
+                message={msg}
+                isMine={isMine}
+                currentUserId={currentUserId}
+                showSenderHeader={showSenderHeader}
+                groupPosition={groupPosition}
+                isReadByRecipient={isReadByRecipient}
+                readByCount={readByCount}
+                readByNames={readByNames}
+                onReply={onReply}
+                onToggleReaction={onToggleReaction}
+                onScrollToMessage={handleScrollToMessage}
+              />
+            </React.Fragment>
           );
         })
       )}
@@ -216,15 +252,13 @@ export const MessageList: React.FC<MessageListProps> = ({
               scrollToBottom('smooth');
               setHasNewUnseenMessages(false);
             }}
-            className="pointer-events-auto glass-capsule-btn primary py-2 px-4 text-xs font-bold shadow-lg flex items-center gap-1.5 active:scale-95 animate-bounce min-h-[36px]"
+            className="pointer-events-auto glass-capsule-btn primary py-2 px-4 text-[13px] font-bold shadow-lg flex items-center gap-1.5 active:scale-95 min-h-[44px] msg-pill-in"
           >
             <ArrowDown className="w-4 h-4" />
             <span>Nouveaux messages</span>
           </button>
         </div>
       )}
-
-      <div ref={bottomRef} />
     </div>
   );
 };

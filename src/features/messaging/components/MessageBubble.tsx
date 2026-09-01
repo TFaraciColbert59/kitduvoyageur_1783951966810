@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import Image from 'next/image';
 import type { Message } from '../types/messaging.types';
 import { formatMessageDate } from '../lib/messagingUtils';
@@ -76,18 +76,51 @@ export const MessageBubble: React.FC<MessageBubbleProps> = ({
   };
 
   // Long press for action menu on touch devices
-  const handleTouchStart = () => {
+  const touchStart = useRef<{ x: number; y: number } | null>(null);
+
+  const handleTouchStart = (e: React.TouchEvent) => {
+    touchStart.current = { x: e.touches[0].clientX, y: e.touches[0].clientY };
     touchTimerRef.current = setTimeout(() => {
       haptic('medium');
       setShowActionMenu(true);
     }, 450);
   };
 
+  // Annule le long-press dès que le doigt bouge (scroll de la liste) :
+  // sans onTouchMove, faire défiler en posant le doigt sur une bulle
+  // ouvrait le menu de réactions (cf. audit 1.4).
+  const handleTouchMove = (e: React.TouchEvent) => {
+    if (!touchStart.current || !touchTimerRef.current) return;
+    const dx = Math.abs(e.touches[0].clientX - touchStart.current.x);
+    const dy = Math.abs(e.touches[0].clientY - touchStart.current.y);
+    if (dx > 8 || dy > 8) {
+      clearTimeout(touchTimerRef.current);
+      touchTimerRef.current = null;
+    }
+  };
+
   const handleTouchEnd = () => {
     if (touchTimerRef.current) {
       clearTimeout(touchTimerRef.current);
+      touchTimerRef.current = null;
     }
+    touchStart.current = null;
   };
+
+  // Fermeture du menu au clic extérieur et au scroll
+  useEffect(() => {
+    if (!showActionMenu) return;
+    const close = () => setShowActionMenu(false);
+    const t = window.setTimeout(() => {
+      document.addEventListener('pointerdown', close);
+      window.addEventListener('scroll', close, true);
+    }, 0);
+    return () => {
+      window.clearTimeout(t);
+      document.removeEventListener('pointerdown', close);
+      window.removeEventListener('scroll', close, true);
+    };
+  }, [showActionMenu]);
 
   // URL matching for OpenGraph
   const urls = message.content ? message.content.match(URL_REGEX) || [] : [];
@@ -173,7 +206,7 @@ export const MessageBubble: React.FC<MessageBubbleProps> = ({
 
       <div className={`max-w-[78%] sm:max-w-[70%] flex flex-col ${isMine ? 'items-end' : 'items-start'}`}>
         {showHeader && (
-          <span className="text-[11px] font-semibold text-[#5A7064] ml-1 mb-1 block">
+          <span className="text-[12px] font-semibold text-[#5A7064] ml-1 mb-1 block">
             {senderName}
           </span>
         )}
@@ -194,7 +227,7 @@ export const MessageBubble: React.FC<MessageBubbleProps> = ({
                   onToggleReaction?.(message.id, emoji);
                   setShowActionMenu(false);
                 }}
-                className="w-8 h-8 rounded-full flex items-center justify-center hover:bg-stone-100/80 text-base active:scale-125 transition-transform"
+                className="w-11 h-11 rounded-full flex items-center justify-center hover:bg-stone-100/80 text-xl active:scale-125 transition-transform"
               >
                 {emoji}
               </button>
@@ -207,7 +240,7 @@ export const MessageBubble: React.FC<MessageBubbleProps> = ({
                 onReply?.(message);
                 setShowActionMenu(false);
               }}
-              className="glass-circle-btn w-7 h-7 text-[#17402C] text-xs font-semibold flex items-center justify-center shadow-xs"
+              className="glass-circle-btn w-8 h-8 text-[#17402C] text-xs font-semibold flex items-center justify-center shadow-xs"
               title="Répondre"
             >
               <Reply className="w-3.5 h-3.5" />
@@ -217,10 +250,15 @@ export const MessageBubble: React.FC<MessageBubbleProps> = ({
 
         <div className="relative group/bubble flex items-center gap-1.5">
           {/* Action trigger button on hover / focus / first-of-group */}
+          {/*
+            Boutons d'action masqués sur tactile : sur mobile le long-press et
+            le swipe-droite suffisent, et max-md:opacity-100 volait ~70px de
+            largeur utile (cf. audit 1.4).
+          */}
           <div
-            className={`opacity-0 group-hover/bubble:opacity-100 focus-within:opacity-100 transition-opacity flex items-center gap-1 ${
+            className={`hidden md:flex opacity-0 group-hover/bubble:opacity-100 focus-within:opacity-100 transition-opacity items-center gap-1 ${
               isMine ? 'flex-row-reverse' : 'flex-row'
-            } ${groupPosition === 'first' || groupPosition === 'single' ? 'max-md:opacity-100' : ''}`}
+            }`}
           >
             <button
               type="button"
@@ -228,7 +266,8 @@ export const MessageBubble: React.FC<MessageBubbleProps> = ({
                 haptic('light');
                 setShowActionMenu(!showActionMenu);
               }}
-              className="glass-circle-btn w-7 h-7 text-[#5A574E] hover:text-[#17402C] shadow-2xs"
+              aria-label="Réagir"
+              className="glass-circle-btn w-8 h-8 text-[#5A574E] hover:text-[#17402C] shadow-2xs"
               title="Réagir"
             >
               <Smile className="w-3.5 h-3.5" />
@@ -239,7 +278,8 @@ export const MessageBubble: React.FC<MessageBubbleProps> = ({
                 haptic('light');
                 onReply?.(message);
               }}
-              className="glass-circle-btn w-7 h-7 text-[#5A574E] hover:text-[#17402C] shadow-2xs"
+              aria-label="Répondre"
+              className="glass-circle-btn w-8 h-8 text-[#5A574E] hover:text-[#17402C] shadow-2xs"
               title="Répondre"
             >
               <Reply className="w-3.5 h-3.5" />
@@ -249,6 +289,7 @@ export const MessageBubble: React.FC<MessageBubbleProps> = ({
           <div
             onClick={handleBubbleClick}
             onTouchStart={handleTouchStart}
+            onTouchMove={handleTouchMove}
             onTouchEnd={handleTouchEnd}
             className={`relative px-4 py-3 transition-all select-none cursor-pointer ${bubbleRadiusClass} ${
               isMine
@@ -338,7 +379,7 @@ export const MessageBubble: React.FC<MessageBubbleProps> = ({
 
             {/* Message Content */}
             {message.message_type !== 'audio' && message.message_type !== 'gpx' && (
-              <p className="text-xs sm:text-sm leading-relaxed whitespace-pre-wrap break-words font-medium">
+              <p className="text-[15px] leading-[1.45] whitespace-pre-wrap break-words font-normal">
                 {message.content}
               </p>
             )}
@@ -351,7 +392,7 @@ export const MessageBubble: React.FC<MessageBubbleProps> = ({
             {/* Footer timestamp & status / read receipts */}
             <div className="flex items-center justify-end gap-1.5 mt-1.5">
               <span
-                className={`text-[10px] font-medium ${
+                className={`text-[11px] font-medium ${
                   isMine ? 'text-[#FAF8F5]/80' : 'text-[#5A574E]'
                 }`}
               >

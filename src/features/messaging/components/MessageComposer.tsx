@@ -31,13 +31,13 @@ export const MessageComposer: React.FC<MessageComposerProps> = ({
   const fileInputRef = useRef<HTMLInputElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
 
-  // Auto-resize textarea height
+  // Auto-resize textarea — aligné sur le min-height 44px de .glass-input
+  // et plafonné à 132px (cf. audit 1.9).
   useEffect(() => {
-    if (textareaRef.current) {
-      textareaRef.current.style.height = 'auto';
-      const newHeight = Math.min(textareaRef.current.scrollHeight, 120);
-      textareaRef.current.style.height = `${Math.max(newHeight, 40)}px`;
-    }
+    const el = textareaRef.current;
+    if (!el) return;
+    el.style.height = 'auto';
+    el.style.height = `${Math.min(Math.max(el.scrollHeight, 44), 132)}px`;
   }, [content]);
 
   const handleSubmit = (e?: React.FormEvent) => {
@@ -47,13 +47,18 @@ export const MessageComposer: React.FC<MessageComposerProps> = ({
     onSendMessage(content.trim());
     setContent('');
     if (textareaRef.current) {
-      textareaRef.current.style.height = '40px';
+      textareaRef.current.style.height = '44px';
     }
   };
 
   const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
-    // Send on Enter (without Shift) on desktop / non-touch
-    if (e.key === 'Enter' && !e.shiftKey) {
+    // Envoi sur Entrée UNIQUEMENT sur pointeur fin (desktop) : sur mobile,
+    // le clavier iOS utilise la touche Entrée pour insérer un retour à la ligne
+    // et `enterKeyHint="send"` affiche la touche d'envoi dédiée.
+    const isFinePointer =
+      typeof window !== 'undefined' &&
+      window.matchMedia('(pointer: fine)').matches;
+    if (isFinePointer && e.key === 'Enter' && !e.shiftKey) {
       e.preventDefault();
       handleSubmit();
     }
@@ -87,7 +92,13 @@ export const MessageComposer: React.FC<MessageComposerProps> = ({
   }
 
   return (
-    <div className="bg-white/90 backdrop-blur-2xl border-t border-stone-200/60 flex flex-col shrink-0 pb-[max(env(safe-area-inset-bottom,0px),8px)] shadow-lg">
+    <div
+      className="bg-white/90 backdrop-blur-2xl border-t border-stone-200/60 flex flex-col shrink-0 shadow-lg"
+      style={{
+        paddingBottom:
+          'max(calc(env(safe-area-inset-bottom, 0px) - var(--kb-inset, 0px)), 8px)',
+      }}
+    >
       {replyToMessage && (
         <div className="px-4 py-2 bg-stone-50/95 border-b border-stone-200/60 flex items-center justify-between animate-fade-in">
           <div className="flex items-center gap-2.5 overflow-hidden">
@@ -132,7 +143,8 @@ export const MessageComposer: React.FC<MessageComposerProps> = ({
             fileInputRef.current?.click();
           }}
           disabled={disabled}
-          className="glass-circle-btn w-10 h-10 text-[#17402C] shrink-0 active:scale-95 shadow-2xs"
+          aria-label="Joindre un fichier, une photo ou un GPX"
+          className="glass-circle-btn w-11 h-11 text-[#17402C] shrink-0 active:scale-95 shadow-2xs"
           title="Joindre un fichier, une photo ou un GPX"
         >
           <Paperclip className="w-5 h-5" />
@@ -146,7 +158,8 @@ export const MessageComposer: React.FC<MessageComposerProps> = ({
               setIsRecordingVoice(true);
             }}
             disabled={disabled}
-            className="glass-circle-btn w-10 h-10 text-[#17402C] hover:text-[#A8443A] shrink-0 active:scale-95 shadow-2xs"
+            aria-label="Enregistrer une note vocale terrain"
+            className="glass-circle-btn w-11 h-11 text-[#17402C] hover:text-[#A8443A] shrink-0 active:scale-95 shadow-2xs"
             title="Enregistrer une note vocale terrain"
           >
             <Mic className="w-5 h-5" />
@@ -161,19 +174,22 @@ export const MessageComposer: React.FC<MessageComposerProps> = ({
             onChange={handleInputChange}
             onKeyDown={handleKeyDown}
             disabled={disabled}
+            enterKeyHint="send"
+            inputMode="text"
             placeholder={
               replyToMessage
                 ? `Répondre à ${replyToMessage.sender_profile?.full_name || 'voyageur'}...`
                 : 'Votre message...'
             }
-            className="w-full pl-4 pr-3 py-2 text-[16px] md:text-sm glass-input font-medium resize-none min-h-[40px] max-h-[120px] leading-relaxed custom-scrollbar transition-all"
+            className="w-full pl-4 pr-3 py-2 text-[16px] md:text-sm glass-input font-medium resize-none min-h-[44px] max-h-[132px] leading-relaxed custom-scrollbar transition-all"
           />
         </div>
 
         <button
           type="submit"
           disabled={!content.trim() || disabled}
-          className={`w-10 h-10 shrink-0 ${
+          aria-label="Envoyer le message"
+          className={`w-11 h-11 shrink-0 ${
             content.trim() && !disabled
               ? 'glass-circle-btn primary shadow-md active:scale-95 cursor-pointer'
               : 'glass-circle-btn opacity-40 cursor-not-allowed text-[#5A574E]'

@@ -115,7 +115,13 @@ export const VoiceRecorderBar: React.FC<VoiceRecorderBarProps> = ({
   }
 
   return (
-    <div className="p-3 glass border-t border-white/40 flex items-center justify-between gap-3 animate-slide-up">
+    <div
+      className="p-3 glass border-t border-white/40 flex items-center justify-between gap-3 msg-sheet-in"
+      style={{
+        paddingBottom:
+          'max(calc(env(safe-area-inset-bottom, 0px) - var(--kb-inset, 0px)), 12px)',
+      }}
+    >
       <div className="flex items-center gap-3">
         <div className="relative flex items-center justify-center" aria-hidden="true">
           <span className="w-3 h-3 bg-[#A8443A] rounded-full animate-ping absolute" />
@@ -137,6 +143,7 @@ export const VoiceRecorderBar: React.FC<VoiceRecorderBarProps> = ({
             haptic('light');
             onCancel();
           }}
+          aria-label="Annuler l'enregistrement"
           className="glass-circle-btn w-10 h-10 text-[#A8443A] active:scale-95"
           title="Annuler"
         >
