@@ -76,16 +76,16 @@ export const AudioPlayerBubble: React.FC<AudioPlayerBubbleProps> = ({ audioUrl, 
   const progressPct = duration > 0 ? (currentTime / duration) * 100 : 0;
 
   return (
-    <div className={`flex items-center gap-3 p-2.5 my-1 rounded-xl max-w-xs ${
-      isMine ? 'bg-black/15 text-white' : 'bg-stone-100/90 text-stone-900 border border-stone-200/80'
+    <div className={`flex items-center gap-3 p-2.5 my-1 rounded-2xl max-w-xs ${
+      isMine ? 'bg-white/10 text-[#FAF8F5] border border-white/20' : 'bg-stone-50/95 text-[#14140F] border border-stone-200/80 shadow-2xs'
     }`}>
       <button
         type="button"
         onClick={togglePlay}
-        className={`w-9 h-9 rounded-full flex items-center justify-center shrink-0 shadow-md transition-transform active:scale-95 ${
+        className={`w-9 h-9 rounded-full flex items-center justify-center shrink-0 shadow-xs transition-transform active:scale-95 ${
           isMine
-            ? 'bg-white text-emerald-800 hover:bg-stone-100'
-            : 'bg-emerald-600 text-white hover:bg-emerald-700'
+            ? 'glass-circle-btn text-[#17402C]'
+            : 'glass-circle-btn primary text-white'
         }`}
         title={isPlaying ? 'Pause' : 'Écouter la note vocale'}
       >
@@ -95,7 +95,7 @@ export const AudioPlayerBubble: React.FC<AudioPlayerBubbleProps> = ({ audioUrl, 
       <div className="flex-1 flex flex-col gap-1">
         <div className="flex items-center justify-between text-[10px] font-semibold opacity-90">
           <span className="flex items-center gap-1">
-            <Mic className="w-3 h-3 text-emerald-500" />
+            <Mic className="w-3 h-3 text-[#5B7F55]" />
             Note vocale
           </span>
           <span className="font-mono">
@@ -111,7 +111,7 @@ export const AudioPlayerBubble: React.FC<AudioPlayerBubbleProps> = ({ audioUrl, 
             step={0.1}
             value={currentTime}
             onChange={handleSeek}
-            className="w-full h-1.5 rounded-lg appearance-none cursor-pointer bg-black/20 accent-emerald-500 focus:outline-none"
+            className="w-full h-1.5 rounded-lg appearance-none cursor-pointer bg-black/20 accent-[#5B7F55] focus:outline-none"
           />
         </div>
       </div>

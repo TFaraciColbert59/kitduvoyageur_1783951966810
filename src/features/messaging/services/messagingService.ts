@@ -166,7 +166,7 @@ function initDemoMessages(currentUserId: string): Map<string, Message[]> {
         sender_profile: {
           id: currentUserId,
           full_name: 'Vous',
-          avatar_url: '/images/default-avatar.png',
+          avatar_url: '/assets/images/no_image.png',
         },
         status: 'sent',
       },
@@ -296,7 +296,7 @@ function initDemoMessages(currentUserId: string): Map<string, Message[]> {
         sender_profile: {
           id: currentUserId,
           full_name: 'Vous',
-          avatar_url: '/images/default-avatar.png',
+          avatar_url: '/assets/images/no_image.png',
         },
         status: 'sent',
       },
@@ -361,7 +361,7 @@ function initDemoMessages(currentUserId: string): Map<string, Message[]> {
         sender_profile: {
           id: currentUserId,
           full_name: 'Vous',
-          avatar_url: '/images/default-avatar.png',
+          avatar_url: '/assets/images/no_image.png',
         },
         status: 'sent',
       },
@@ -473,7 +473,7 @@ export const messagingService = {
             membersByConv.set(m.conversation_id, {
               id: profile.id,
               full_name: profile.full_name || 'Voyageur LKDV',
-              avatar_url: profile.avatar_url || '/images/default-avatar.png',
+              avatar_url: profile.avatar_url || '/assets/images/no_image.png',
               username: profile.username,
             });
           }
@@ -640,7 +640,7 @@ export const messagingService = {
           ? {
               id: profile.id,
               full_name: profile.full_name || 'Voyageur LKDV',
-              avatar_url: profile.avatar_url || '/images/default-avatar.png',
+              avatar_url: profile.avatar_url || '/assets/images/no_image.png',
               username: profile.username,
             }
           : undefined,
@@ -817,8 +817,13 @@ export const messagingService = {
 
   async uploadAttachment(conversationId: string, file: File): Promise<string | null> {
     const supabase = createClient();
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) return URL.createObjectURL(file);
+
     const fileExt = file.name.split('.').pop();
-    const fileName = `${conversationId}/${Date.now()}_${Math.random().toString(36).substring(2, 9)}.${fileExt}`;
+    // Chemin 2 segments {conversationId}/{userId}/{file} : requis par les policies storage
+    // (INSERT exige 2e segment = auth.uid(), DELETE exige 2e segment = expéditeur)
+    const fileName = `${conversationId}/${user.id}/${Date.now()}_${Math.random().toString(36).substring(2, 9)}.${fileExt}`;
 
     const { error } = await supabase.storage
       .from('message-attachments')
@@ -828,8 +833,13 @@ export const messagingService = {
       return URL.createObjectURL(file);
     }
 
-    const { data } = supabase.storage.from('message-attachments').getPublicUrl(fileName);
-    return data.publicUrl;
+    // Bucket privé (public = false) : URL publique inopérante → URL signée 24h
+    const { data: signed } = await supabase.storage
+      .from('message-attachments')
+      .createSignedUrl(fileName, 60 * 60 * 24);
+
+    if (signed?.signedUrl) return signed.signedUrl;
+    return URL.createObjectURL(file);
   },
 
   async markAsRead(conversationId: string, userId: string): Promise<void> {
@@ -1020,7 +1030,7 @@ export const messagingService = {
           ? {
               id: prof.id,
               full_name: prof.full_name || 'Voyageur LKDV',
-              avatar_url: prof.avatar_url || '/images/default-avatar.png',
+              avatar_url: prof.avatar_url || '/assets/images/no_image.png',
               username: prof.username,
             }
           : undefined,

@@ -1,9 +1,10 @@
 "use client";
 
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { Paperclip, Send, X, Reply, Mic } from 'lucide-react';
 import type { Message } from '../types/messaging.types';
 import { VoiceRecorderBar } from './VoiceRecorderBar';
+import { useHapticFeedback } from '@/hooks/useHapticFeedback';
 
 interface MessageComposerProps {
   onSendMessage: (content: string) => void;
@@ -24,25 +25,41 @@ export const MessageComposer: React.FC<MessageComposerProps> = ({
   onCancelReply,
   disabled,
 }) => {
+  const { haptic } = useHapticFeedback();
   const [content, setContent] = useState('');
   const [isRecordingVoice, setIsRecordingVoice] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const textareaRef = useRef<HTMLTextAreaElement>(null);
 
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
+  // Auto-resize textarea height
+  useEffect(() => {
+    if (textareaRef.current) {
+      textareaRef.current.style.height = 'auto';
+      const newHeight = Math.min(textareaRef.current.scrollHeight, 120);
+      textareaRef.current.style.height = `${Math.max(newHeight, 40)}px`;
+    }
+  }, [content]);
+
+  const handleSubmit = (e?: React.FormEvent) => {
+    if (e) e.preventDefault();
     if (!content.trim() || disabled) return;
+    haptic('light');
     onSendMessage(content.trim());
     setContent('');
-  };
-
-  const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
-    if (e.key === 'Enter' && !e.shiftKey) {
-      e.preventDefault();
-      handleSubmit(e);
+    if (textareaRef.current) {
+      textareaRef.current.style.height = '40px';
     }
   };
 
-  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
+    // Send on Enter (without Shift) on desktop / non-touch
+    if (e.key === 'Enter' && !e.shiftKey) {
+      e.preventDefault();
+      handleSubmit();
+    }
+  };
+
+  const handleInputChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
     setContent(e.target.value);
     if (onTyping) {
       onTyping();
@@ -52,6 +69,7 @@ export const MessageComposer: React.FC<MessageComposerProps> = ({
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file && onSendAttachment) {
+      haptic('light');
       onSendAttachment(file);
     }
   };
@@ -69,33 +87,36 @@ export const MessageComposer: React.FC<MessageComposerProps> = ({
   }
 
   return (
-    <div className="bg-white/70 backdrop-blur-xl border-t border-stone-200/50 flex flex-col">
+    <div className="bg-white/90 backdrop-blur-2xl border-t border-stone-200/60 flex flex-col shrink-0 pb-[max(env(safe-area-inset-bottom,0px),8px)] shadow-lg">
       {replyToMessage && (
-        <div className="px-4 py-2 bg-stone-100/90 border-b border-stone-200/50 flex items-center justify-between animate-fadeIn">
+        <div className="px-4 py-2 bg-stone-50/95 border-b border-stone-200/60 flex items-center justify-between animate-fade-in">
           <div className="flex items-center gap-2.5 overflow-hidden">
-            <div className="w-1 h-8 bg-emerald-600 rounded-full shrink-0" />
-            <Reply className="w-4 h-4 text-emerald-700 shrink-0" />
+            <div className="w-1 h-8 bg-[#17402C] rounded-full shrink-0" />
+            <Reply className="w-4 h-4 text-[#17402C] shrink-0" />
             <div className="text-xs overflow-hidden">
-              <span className="font-bold text-stone-900 block truncate">
+              <span className="font-bold text-[#17402C] block truncate">
                 Réponse à {replyToMessage.sender_profile?.full_name || 'un voyageur'}
               </span>
-              <span className="text-stone-500 truncate block text-[11px]">
+              <span className="text-[#5A574E] truncate block text-[11px]">
                 {replyToMessage.content}
               </span>
             </div>
           </div>
           <button
             type="button"
-            onClick={onCancelReply}
-            className="p-1 rounded-full text-stone-400 hover:text-stone-700 hover:bg-stone-200/60 transition-colors shrink-0"
+            onClick={() => {
+              haptic('light');
+              onCancelReply?.();
+            }}
+            className="glass-circle-btn w-7 h-7 text-[#5A574E] hover:text-[#17402C] shrink-0"
             title="Annuler la réponse"
           >
-            <X className="w-4 h-4" />
+            <X className="w-3.5 h-3.5" />
           </button>
         </div>
       )}
 
-      <form onSubmit={handleSubmit} className="p-3 flex items-center gap-2">
+      <form onSubmit={handleSubmit} className="p-2 sm:p-3 flex items-end gap-1.5 sm:gap-2">
         <input
           type="file"
           ref={fileInputRef}
@@ -106,9 +127,12 @@ export const MessageComposer: React.FC<MessageComposerProps> = ({
 
         <button
           type="button"
-          onClick={() => fileInputRef.current?.click()}
+          onClick={() => {
+            haptic('light');
+            fileInputRef.current?.click();
+          }}
           disabled={disabled}
-          className="p-2.5 rounded-full text-stone-500 hover:text-emerald-700 hover:bg-stone-100 transition-colors shrink-0"
+          className="glass-circle-btn w-10 h-10 text-[#17402C] shrink-0 active:scale-95 shadow-2xs"
           title="Joindre un fichier, une photo ou un GPX"
         >
           <Paperclip className="w-5 h-5" />
@@ -117,18 +141,22 @@ export const MessageComposer: React.FC<MessageComposerProps> = ({
         {onSendVoiceNote && (
           <button
             type="button"
-            onClick={() => setIsRecordingVoice(true)}
+            onClick={() => {
+              haptic('medium');
+              setIsRecordingVoice(true);
+            }}
             disabled={disabled}
-            className="p-2.5 rounded-full text-stone-500 hover:text-rose-600 hover:bg-stone-100 transition-colors shrink-0"
+            className="glass-circle-btn w-10 h-10 text-[#17402C] hover:text-[#A8443A] shrink-0 active:scale-95 shadow-2xs"
             title="Enregistrer une note vocale terrain"
           >
             <Mic className="w-5 h-5" />
           </button>
         )}
 
-        <div className="flex-1 relative">
-          <input
-            type="text"
+        <div className="flex-1 relative flex items-center min-w-0">
+          <textarea
+            ref={textareaRef}
+            rows={1}
             value={content}
             onChange={handleInputChange}
             onKeyDown={handleKeyDown}
@@ -138,18 +166,19 @@ export const MessageComposer: React.FC<MessageComposerProps> = ({
                 ? `Répondre à ${replyToMessage.sender_profile?.full_name || 'voyageur'}...`
                 : 'Votre message...'
             }
-            className="w-full pl-4 pr-10 py-2.5 text-[16px] md:text-sm rounded-2xl bg-stone-100/90 border border-stone-200/60 focus:outline-none focus:ring-2 focus:ring-emerald-500/30 text-stone-900 placeholder-stone-400 font-medium"
+            className="w-full pl-4 pr-3 py-2 text-[16px] md:text-sm rounded-2xl bg-white/85 border border-stone-200/80 focus:outline-none focus:border-[#17402C]/40 focus:ring-2 focus:ring-[#17402C]/15 text-[#14140F] placeholder-stone-400 font-medium resize-none min-h-[40px] max-h-[120px] leading-relaxed custom-scrollbar shadow-inner-xs transition-all"
           />
         </div>
 
         <button
           type="submit"
           disabled={!content.trim() || disabled}
-          className={`p-2.5 rounded-full transition-all shrink-0 flex items-center justify-center ${
+          className={`w-10 h-10 shrink-0 ${
             content.trim() && !disabled
-              ? 'bg-emerald-600 hover:bg-emerald-700 text-white shadow-md active:scale-95'
-              : 'bg-stone-200 text-stone-400 cursor-not-allowed'
+              ? 'glass-circle-btn primary shadow-md active:scale-95 cursor-pointer'
+              : 'glass-circle-btn opacity-40 cursor-not-allowed text-[#5A574E]'
           }`}
+          title="Envoyer le message"
         >
           <Send className="w-4 h-4" />
         </button>

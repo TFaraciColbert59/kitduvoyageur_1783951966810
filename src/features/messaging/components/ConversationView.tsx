@@ -32,7 +32,7 @@ export const ConversationView: React.FC<ConversationViewProps> = ({
   const { haptic } = useHapticFeedback();
   const isGroup = conversation.type === 'group';
   const title = conversation.title || (isGroup ? 'Groupe d\'expédition' : 'Voyageur LKDV');
-  const avatarUrl = conversation.avatar_url || '/images/default-avatar.png';
+  const avatarUrl = conversation.avatar_url || '/assets/images/no_image.png';
 
   const [replyToMessage, setReplyToMessage] = useState<Message | null>(null);
   const [showOptionsModal, setShowOptionsModal] = useState(false);
@@ -133,21 +133,25 @@ export const ConversationView: React.FC<ConversationViewProps> = ({
   };
 
   return (
-    <div className="flex flex-col h-full bg-white/40 backdrop-blur-2xl border border-white/60 rounded-3xl overflow-hidden shadow-xs relative">
-      {/* Top Header */}
-      <div className="p-3.5 bg-white/80 backdrop-blur-xl border-b border-stone-200/50 flex items-center justify-between z-10">
-        <div className="flex items-center gap-3">
+    <div className="flex flex-col h-full w-full glass rounded-none md:rounded-3xl overflow-hidden relative">
+      {/* Top Header avec safe-area iOS */}
+      <div className="pt-[calc(env(safe-area-inset-top,0px)+8px)] md:pt-3 p-3 bg-white/90 backdrop-blur-2xl border-b border-stone-200/60 flex items-center justify-between z-10 shrink-0 shadow-2xs">
+        <div className="flex items-center gap-2 sm:gap-3 overflow-hidden">
           {onBack && (
             <button
-              onClick={onBack}
-              className="p-1.5 rounded-full hover:bg-stone-100 text-stone-600 md:hidden"
+              onClick={() => {
+                haptic('light');
+                onBack();
+              }}
+              className="glass-circle-btn w-10 h-10 text-[#17402C] shadow-xs active:scale-95 shrink-0"
+              title="Retour aux conversations"
             >
               <ArrowLeft className="w-5 h-5" />
             </button>
           )}
 
-          <div className="relative cursor-pointer" onClick={() => isGroup && setShowGroupSettingsModal(true)}>
-            <div className="w-10 h-10 rounded-full overflow-hidden relative ring-2 ring-white shadow-xs bg-stone-100">
+          <div className="relative cursor-pointer shrink-0" onClick={() => isGroup && setShowGroupSettingsModal(true)}>
+            <div className="w-10 h-10 rounded-full overflow-hidden relative ring-2 ring-white/90 shadow-xs bg-stone-100">
               <Image
                 src={avatarUrl}
                 alt={title}
@@ -155,17 +159,17 @@ export const ConversationView: React.FC<ConversationViewProps> = ({
                 className="object-cover"
                 sizes="40px"
                 onError={(e) => {
-                  (e.target as HTMLImageElement).src = '/images/default-avatar.png';
+                  (e.target as HTMLImageElement).src = '/assets/images/no_image.png';
                 }}
               />
             </div>
             {!isGroup && (
-              <span className="absolute bottom-0 right-0 w-3 h-3 bg-emerald-500 rounded-full border-2 border-white" />
+              <span className="absolute bottom-0 right-0 w-3 h-3 bg-[#5B7F55] rounded-full border-2 border-white shadow-2xs" />
             )}
           </div>
 
           <div
-            className="cursor-pointer"
+            className="cursor-pointer overflow-hidden"
             onClick={() => {
               if (isGroup) {
                 haptic('light');
@@ -173,17 +177,17 @@ export const ConversationView: React.FC<ConversationViewProps> = ({
               }
             }}
           >
-            <h3 className="text-sm font-bold text-stone-900 leading-tight flex items-center gap-1.5">
-              <span>{title}</span>
-              {isGroup && <Users className="w-3.5 h-3.5 text-stone-400" />}
+            <h3 className="text-sm font-bold text-[#17402C] leading-tight truncate flex items-center gap-1.5">
+              <span className="truncate">{title}</span>
+              {isGroup && <Users className="w-3.5 h-3.5 text-[#5A574E] shrink-0" />}
             </h3>
-            <p className="text-[11px] text-emerald-600 font-medium">
+            <p className="text-[11px] text-[#486944] font-medium truncate">
               {isGroup ? 'Groupe de Voyage' : 'En ligne'}
             </p>
           </div>
         </div>
 
-        <div className="flex items-center gap-1">
+        <div className="flex items-center gap-1.5 shrink-0">
           {isGroup && (
             <button
               type="button"
@@ -191,7 +195,7 @@ export const ConversationView: React.FC<ConversationViewProps> = ({
                 haptic('light');
                 setShowGroupSettingsModal(true);
               }}
-              className="p-2 rounded-full hover:bg-stone-100 text-stone-600 transition-colors"
+              className="glass-circle-btn w-10 h-10 text-[#17402C] shadow-xs active:scale-95"
               title="Gérer le groupe"
             >
               <Users className="w-5 h-5" />
@@ -204,7 +208,7 @@ export const ConversationView: React.FC<ConversationViewProps> = ({
               haptic('light');
               setShowOptionsModal(true);
             }}
-            className="p-2 rounded-full hover:bg-stone-100 text-stone-600 transition-colors"
+            className="glass-circle-btn w-10 h-10 text-[#17402C] shadow-xs active:scale-95"
             title="Options de conversation"
           >
             <MoreVertical className="w-5 h-5" />
@@ -225,7 +229,7 @@ export const ConversationView: React.FC<ConversationViewProps> = ({
 
       {/* Message Request Action Bar (Pending status) */}
       {convStatus === 'pending' ? (
-        <div className="p-4 bg-stone-900 text-white border-t border-stone-800 flex flex-col gap-3 animate-slideUp">
+        <div className="p-4 bg-stone-900 text-white border-t border-stone-800 flex flex-col gap-3 animate-slide-up shrink-0 pb-[calc(env(safe-area-inset-bottom,0px)+12px)]">
           <div className="flex items-center gap-2">
             <ShieldAlert className="w-5 h-5 text-amber-400 shrink-0" />
             <div>
@@ -239,21 +243,21 @@ export const ConversationView: React.FC<ConversationViewProps> = ({
           <div className="flex items-center gap-2 pt-1">
             <button
               onClick={handleAcceptRequest}
-              className="flex-1 py-2 px-3 bg-emerald-600 hover:bg-emerald-500 text-white rounded-xl text-xs font-bold transition-all shadow-md active:scale-95 flex items-center justify-center gap-1.5"
+              className="flex-1 py-2.5 px-3 bg-emerald-600 hover:bg-emerald-500 text-white rounded-xl text-xs font-bold transition-all shadow-md active:scale-95 flex items-center justify-center gap-1.5 min-h-[44px]"
             >
               <Check className="w-4 h-4" />
               Accepter
             </button>
             <button
               onClick={handleDeclineRequest}
-              className="flex-1 py-2 px-3 bg-stone-800 hover:bg-stone-700 text-stone-300 rounded-xl text-xs font-semibold transition-all flex items-center justify-center gap-1.5"
+              className="flex-1 py-2.5 px-3 bg-stone-800 hover:bg-stone-700 text-stone-300 rounded-xl text-xs font-semibold transition-all flex items-center justify-center gap-1.5 min-h-[44px]"
             >
               <X className="w-4 h-4" />
               Refuser
             </button>
             <button
               onClick={handleOpenReportBlock}
-              className="py-2 px-3 bg-rose-950/60 hover:bg-rose-900 text-rose-300 rounded-xl text-xs font-semibold transition-all"
+              className="py-2.5 px-3 bg-rose-950/60 hover:bg-rose-900 text-rose-300 rounded-xl text-xs font-semibold transition-all min-h-[44px]"
             >
               Bloquer
             </button>

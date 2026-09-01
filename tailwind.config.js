@@ -128,6 +128,8 @@ module.exports = {
         body: ['var(--font-body)', 'sans-serif'],
       },
       boxShadow: {
+        '2xs': '0 1px 2px rgba(26,31,28,0.025)',
+        'inner-xs': 'inset 0 1px 2px rgba(26,31,28,0.04)',
         xs:  '0 1px 2px rgba(26,31,28,0.05)',
         sm:  '0 2px 8px rgba(26,31,28,0.06), 0 1px 2px rgba(26,31,28,0.04)',
         md:  '0 4px 16px rgba(26,31,28,0.08), 0 2px 4px rgba(26,31,28,0.05)',
@@ -152,21 +154,6 @@ module.exports = {
       backgroundImage: {
         'topo-pattern': "url('/assets/images/topo-pattern.svg')",
       },
-      boxShadow: {
-        xs:  '0 1px 2px rgba(26,31,28,0.05)',
-        sm:  '0 2px 8px rgba(26,31,28,0.06), 0 1px 2px rgba(26,31,28,0.04)',
-        md:  '0 4px 16px rgba(26,31,28,0.08), 0 2px 4px rgba(26,31,28,0.05)',
-        lg:  '0 8px 32px rgba(26,31,28,0.12), 0 4px 8px rgba(26,31,28,0.06)',
-        xl:  '0 16px 48px rgba(26,31,28,0.14), 0 8px 16px rgba(26,31,28,0.08)',
-        '2xl': '0 32px 80px rgba(26,31,28,0.18), 0 16px 32px rgba(26,31,28,0.10)',
-        'green': '0 8px 24px rgba(45,90,61,0.28)',
-        'green-lg': '0 16px 48px rgba(45,90,61,0.35)',
-      },
-      transitionTimingFunction: {
-        'spring-bounce': 'cubic-bezier(0.34, 1.56, 0.64, 1)',
-        'spring-smooth': 'cubic-bezier(0.16, 1, 0.3, 1)',
-        'spring-snappy': 'cubic-bezier(0.19, 1, 0.22, 1)',
-      },
       animation: {
         'slide-up':   'slideUp 500ms cubic-bezier(0.16,1,0.3,1) both',
         'slide-down': 'slideDown 300ms cubic-bezier(0.16,1,0.3,1) both',
@@ -179,5 +166,5 @@ module.exports = {
       },
     },
   },
-  plugins: [require('@tailwindcss/typography')],
+  plugins: [require('@tailwindcss/typography'), require('tailwindcss-animate')],
 };

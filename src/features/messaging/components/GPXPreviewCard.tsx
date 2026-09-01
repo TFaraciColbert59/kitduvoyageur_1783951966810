@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useEffect } from 'react';
-import { MapPin, Navigation, Download, Mountain } from 'lucide-react';
+import { MapPin, Navigation, Download } from 'lucide-react';
 import { GPXEngine, ParsedGPXData } from '@/features/hiking/gpx/GPXEngine';
 import { useHapticFeedback } from '@/hooks/useHapticFeedback';
 
@@ -138,13 +138,13 @@ export const GPXPreviewCard: React.FC<GPXPreviewCardProps> = ({
     <div
       className={`my-2 p-3 rounded-2xl overflow-hidden border transition-all ${
         isMine
-          ? 'bg-black/15 text-white border-white/20'
-          : 'bg-stone-50/95 text-stone-900 border-stone-200/80 shadow-xs'
+          ? 'bg-white/10 text-[#FAF8F5] border-white/20'
+          : 'bg-stone-50/95 text-[#14140F] border-stone-200/80 shadow-xs'
       }`}
     >
       <div className="flex items-center justify-between gap-2 mb-2">
         <div className="flex items-center gap-2 overflow-hidden">
-          <div className="w-8 h-8 rounded-full bg-emerald-500/20 text-emerald-600 flex items-center justify-center shrink-0">
+          <div className="w-8 h-8 rounded-full bg-[#5B7F55]/20 text-[#17402C] flex items-center justify-center shrink-0">
             <Navigation className="w-4 h-4" />
           </div>
           <div className="overflow-hidden">
@@ -160,14 +160,14 @@ export const GPXPreviewCard: React.FC<GPXPreviewCardProps> = ({
             href={gpxUrl}
             download={fileName}
             onClick={() => haptic('light')}
-            className={`p-1.5 rounded-full transition-all shrink-0 ${
+            className={`w-8 h-8 rounded-full flex items-center justify-center transition-all shrink-0 ${
               isMine
-                ? 'bg-white/20 hover:bg-white/30 text-white'
-                : 'bg-emerald-600 hover:bg-emerald-700 text-white'
+                ? 'glass-circle-btn text-[#17402C]'
+                : 'glass-circle-btn primary text-white'
             }`}
             title="Télécharger le fichier GPX"
           >
-            <Download className="w-4 h-4" />
+            <Download className="w-3.5 h-3.5" />
           </a>
         )}
       </div>
@@ -178,7 +178,7 @@ export const GPXPreviewCard: React.FC<GPXPreviewCardProps> = ({
         </div>
       ) : error || !stats ? (
         <div className="p-2 text-[11px] opacity-80 border border-dashed rounded-xl flex items-center gap-1.5">
-          <MapPin className="w-3.5 h-3.5 shrink-0 text-emerald-500" />
+          <MapPin className="w-3.5 h-3.5 shrink-0 text-[#5B7F55]" />
           <span className="truncate">Tracé GPX prêt pour synchronisation hors-ligne.</span>
         </div>
       ) : (
@@ -188,7 +188,7 @@ export const GPXPreviewCard: React.FC<GPXPreviewCardProps> = ({
             <svg viewBox="0 0 240 90" className="w-full h-full">
               <polyline
                 fill="none"
-                stroke="#10B981"
+                stroke="#5B7F55"
                 strokeWidth="3"
                 strokeLinecap="round"
                 strokeLinejoin="round"
@@ -213,7 +213,7 @@ export const GPXPreviewCard: React.FC<GPXPreviewCardProps> = ({
               <span className="block text-[9px] uppercase tracking-wider font-semibold opacity-70">
                 Dénivelé D+
               </span>
-              <span className="font-bold text-xs font-mono text-emerald-600">
+              <span className="font-bold text-xs font-mono text-[#5B7F55]">
                 +{stats.dPlus} m
               </span>
             </div>

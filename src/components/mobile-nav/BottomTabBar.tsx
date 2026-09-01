@@ -410,6 +410,7 @@ function BottomTabBar() {
   const [mounted, setMounted] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
   const [pressedTab, setPressedTab] = useState<string | null>(null);
+  const [hiddenByEvent, setHiddenByEvent] = useState(false);
 
   useEffect(() => {
     setMounted(true);
@@ -417,6 +418,7 @@ function BottomTabBar() {
 
   useEffect(() => {
     setPressedTab(null);
+    setHiddenByEvent(false);
   }, [pathname]);
 
   const isGroupesHub = pathname === '/groupes';
@@ -533,6 +535,11 @@ function BottomTabBar() {
       const kitsHandler = (e: any) => {
         if (e.detail) setActiveKitsTab(e.detail);
       };
+      const toggleBottomBarHandler = (e: any) => {
+        if (e.detail && typeof e.detail.hide === 'boolean') {
+          setHiddenByEvent(e.detail.hide);
+        }
+      };
 
       window.addEventListener('community-tab-change', commHandler);
       window.addEventListener('groupes-tab-change', grpHandler);
@@ -545,6 +552,7 @@ function BottomTabBar() {
       window.addEventListener('pays-detail-tab-change', paysDetailHandler);
       window.addEventListener('depart-section-change', departHandler);
       window.addEventListener('kits-section-change', kitsHandler);
+      window.addEventListener('lkdv-toggle-bottom-bar', toggleBottomBarHandler);
 
       return () => {
         window.removeEventListener('community-tab-change', commHandler);
@@ -558,6 +566,7 @@ function BottomTabBar() {
         window.removeEventListener('pays-detail-tab-change', paysDetailHandler);
         window.removeEventListener('depart-section-change', departHandler);
         window.removeEventListener('kits-section-change', kitsHandler);
+        window.removeEventListener('lkdv-toggle-bottom-bar', toggleBottomBarHandler);
       };
     }
   }, [pathname]);
@@ -752,7 +761,8 @@ function BottomTabBar() {
     return tab.matchPaths.some(p => pathname === p || pathname?.startsWith(p + '/'));
   };
 
-  if (!mounted) {
+  if (!mounted || hiddenByEvent) {
+    if (hiddenByEvent) return null;
     return (
       <nav role="navigation" aria-label="Chargement de la navigation" className="md:hidden flex items-center justify-center" style={{ position: 'fixed', left: 0, right: 0, bottom: 0, zIndex: 9999, pointerEvents: 'none', paddingBottom: 'env(safe-area-inset-bottom, 0px)' }}>
         <div style={{

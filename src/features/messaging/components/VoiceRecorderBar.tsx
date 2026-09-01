@@ -115,7 +115,7 @@ export const VoiceRecorderBar: React.FC<VoiceRecorderBarProps> = ({
   }
 
   return (
-    <div className="p-3 bg-stone-900 text-white border-t border-stone-800 flex items-center justify-between gap-3 animate-slideUp">
+    <div className="p-3 bg-stone-900 text-white border-t border-stone-800 flex items-center justify-between gap-3 animate-slide-up">
       <div className="flex items-center gap-3">
         <div className="relative flex items-center justify-center">
           <span className="w-3 h-3 bg-rose-500 rounded-full animate-ping absolute" />

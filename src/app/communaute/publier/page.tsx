@@ -295,7 +295,7 @@ function PublierPostContent() {
         <main className="min-h-screen bg-[#F5F2EA] text-[#17402C] pt-24 pb-32">
           {/* Toast Notification */}
           {toastMessage && (
-            <div className="fixed top-24 right-6 z-[999] bg-[#17402C] text-white px-5 py-3 rounded-2xl  text-xs font-bold animate-fadeIn border border-emerald-500">
+            <div className="fixed top-24 right-6 z-[999] bg-[#17402C] text-white px-5 py-3 rounded-2xl  text-xs font-bold animate-fade-in border border-emerald-500">
               {toastMessage}
             </div>
           )}

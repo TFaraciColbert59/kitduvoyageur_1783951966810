@@ -4,7 +4,7 @@ import React, { useState, useEffect } from 'react';
 import Image from 'next/image';
 import { createClient } from '@/lib/supabase/client';
 import { messagingService } from '../services/messagingService';
-import { Search, X, ChevronRight } from 'lucide-react';
+import { Search, X } from 'lucide-react';
 
 interface Traveler {
   id: string;
@@ -53,7 +53,7 @@ export const NewConversationModal: React.FC<NewConversationModalProps> = ({
           data.map((u) => ({
             id: u.id,
             full_name: u.full_name || 'Voyageur LKDV',
-            avatar_url: u.avatar_url || '/images/default-avatar.png',
+            avatar_url: u.avatar_url || '/assets/images/no_image.png',
             username: u.username,
           }))
         );
@@ -85,26 +85,26 @@ export const NewConversationModal: React.FC<NewConversationModalProps> = ({
   };
 
   return (
-    <div className="fixed inset-0 z-50 bg-stone-900/40 backdrop-blur-sm flex items-center justify-center p-4">
-      <div className="bg-white/90 backdrop-blur-2xl border border-white/80 rounded-3xl w-full max-w-md shadow-2xl p-5 flex flex-col max-h-[85vh] animate-in fade-in zoom-in duration-200">
+    <div className="fixed inset-0 z-50 bg-black/40 backdrop-blur-sm flex items-center justify-center p-4">
+      <div className="glass rounded-3xl w-full max-w-md p-5 flex flex-col max-h-[85vh] animate-fade-in">
         <div className="flex items-center justify-between pb-3 border-b border-stone-200/60">
-          <h3 className="text-lg font-bold text-stone-900">Nouvelle Discussion</h3>
+          <h3 className="text-lg font-bold text-[#17402C]">Nouvelle Discussion</h3>
           <button
             onClick={onClose}
-            className="p-1.5 rounded-full hover:bg-stone-100 text-stone-400 hover:text-stone-700 transition-colors"
+            className="glass-circle-btn w-9 h-9 text-[#5A574E] hover:text-[#17402C] shrink-0"
           >
-            <X className="w-5 h-5" />
+            <X className="w-4 h-4" />
           </button>
         </div>
 
         <div className="mt-4 relative">
-          <Search className="w-4 h-4 text-stone-400 absolute left-3.5 top-1/2 -translate-y-1/2" />
+          <Search className="w-4 h-4 text-[#5A574E] absolute left-3.5 top-1/2 -translate-y-1/2" />
           <input
             type="text"
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             placeholder="Rechercher par nom..."
-            className="w-full pl-9 pr-4 py-2.5 text-sm rounded-xl bg-stone-100/80 border border-stone-200/60 focus:outline-none focus:ring-2 focus:ring-emerald-500/30 text-stone-900 placeholder-stone-400 font-medium"
+            className="w-full pl-9 pr-4 py-2.5 text-[16px] md:text-sm rounded-2xl bg-white/85 border border-stone-200/80 focus:outline-none focus:border-[#17402C]/40 focus:ring-2 focus:ring-[#17402C]/15 text-[#14140F] placeholder-stone-400 font-medium shadow-inner-xs"
           />
         </div>
 
@@ -112,11 +112,11 @@ export const NewConversationModal: React.FC<NewConversationModalProps> = ({
           {loading ? (
             <div className="space-y-2 p-2">
               {[1, 2, 3].map((i) => (
-                <div key={i} className="h-12 bg-stone-100 rounded-xl animate-pulse" />
+                <div key={i} className="h-12 bg-stone-100/80 rounded-2xl animate-pulse" />
               ))}
             </div>
           ) : travelers.length === 0 ? (
-            <p className="text-xs text-center text-stone-500 py-8">
+            <p className="text-xs text-center text-[#5A574E] py-8">
               Aucun voyageur trouvé.
             </p>
           ) : (
@@ -125,7 +125,7 @@ export const NewConversationModal: React.FC<NewConversationModalProps> = ({
                 key={traveler.id}
                 disabled={starting}
                 onClick={() => handleStartConversation(traveler.id)}
-                className="w-full text-left p-3 rounded-2xl bg-white/50 hover:bg-emerald-500/10 border border-stone-200/50 hover:border-emerald-500/30 transition-all flex items-center gap-3 group"
+                className="w-full text-left p-3 rounded-2xl bg-white/70 hover:bg-[#17402C]/10 border border-stone-200/60 hover:border-[#17402C]/30 transition-all flex items-center gap-3 group active:scale-[0.98]"
               >
                 <div className="w-10 h-10 rounded-full overflow-hidden relative ring-1 ring-white/80 shrink-0">
                   <Image
@@ -135,19 +135,18 @@ export const NewConversationModal: React.FC<NewConversationModalProps> = ({
                     className="object-cover"
                     sizes="40px"
                     onError={(e) => {
-                      (e.target as HTMLImageElement).src = '/images/default-avatar.png';
+                      (e.target as HTMLImageElement).src = '/assets/images/no_image.png';
                     }}
                   />
                 </div>
-                <div className="flex-1 min-w-0">
-                  <h4 className="text-sm font-semibold text-stone-900 truncate group-hover:text-emerald-700">
+                <div className="flex-1 overflow-hidden">
+                  <p className="font-semibold text-xs text-[#17402C] group-hover:font-bold truncate">
                     {traveler.full_name}
-                  </h4>
-                  {traveler.username && (
-                    <p className="text-xs text-stone-400 truncate">@{traveler.username}</p>
-                  )}
+                  </p>
+                  <p className="text-[11px] text-[#5A574E] truncate">
+                    {traveler.username ? `@${traveler.username}` : 'Membre LKDV'}
+                  </p>
                 </div>
-                <ChevronRight className="w-4 h-4 text-stone-400 group-hover:text-emerald-600 group-hover:translate-x-0.5 transition-all" />
               </button>
             ))
           )}

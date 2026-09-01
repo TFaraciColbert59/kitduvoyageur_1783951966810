@@ -8,29 +8,54 @@ import { MessageInbox } from '@/features/messaging/components/MessageInbox';
 
 export default function MessageriePage() {
   const { user, profile, loading } = useAuth();
+  const [hasActiveConv, setHasActiveConv] = React.useState(false);
+
+  React.useEffect(() => {
+    if (typeof window !== 'undefined') {
+      window.dispatchEvent(
+        new CustomEvent('lkdv-toggle-bottom-bar', { detail: { hide: hasActiveConv } })
+      );
+    }
+    return () => {
+      if (typeof window !== 'undefined') {
+        window.dispatchEvent(
+          new CustomEvent('lkdv-toggle-bottom-bar', { detail: { hide: false } })
+        );
+      }
+    };
+  }, [hasActiveConv]);
 
   return (
-    <div className="h-screen w-screen overflow-hidden flex flex-col bg-[#F5F2EC]">
-      <Header />
+    <div className="h-dvh w-screen overflow-hidden flex flex-col bg-[#FAF8F5]">
+      {/* Header global desktop */}
+      <div className="hidden md:block">
+        <Header />
+      </div>
 
-      <MobilePageShell>
-        <main className="flex-1 overflow-hidden flex items-center justify-center pt-16 pb-16 md:pb-4 px-2 sm:px-4 md:px-6">
+      <MobilePageShell safeTop={false} hasBottomNav={!hasActiveConv}>
+        <main
+          className={`w-full ${
+            hasActiveConv
+              ? 'h-dvh md:h-[calc(100dvh-80px)]'
+              : 'h-[calc(100dvh-var(--bottom-nav-height))] md:h-[calc(100dvh-80px)]'
+          } overflow-hidden flex flex-col items-center justify-center pt-0 md:pt-2 pb-0 md:pb-2 px-0 md:px-6`}
+        >
           {loading ? (
-            <div className="flex items-center justify-center">
-              <div className="w-10 h-10 border-4 border-emerald-600 border-t-transparent rounded-full animate-spin" />
+            <div className="flex items-center justify-center h-full">
+              <div className="w-10 h-10 border-4 border-[#17402C] border-t-transparent rounded-full animate-spin" />
             </div>
           ) : !user ? (
-            <div className="max-w-md w-full mx-auto text-center bg-white/80 backdrop-blur-xl border border-white/80 rounded-3xl p-8 shadow-sm">
-              <div className="w-16 h-16 bg-emerald-500/10 text-emerald-600 rounded-full flex items-center justify-center mx-auto mb-4 text-2xl">
+            <div className="max-w-md w-full mx-auto text-center glass rounded-3xl p-8 shadow-sm m-4">
+              <div className="w-16 h-16 bg-[#17402C]/10 text-[#17402C] rounded-full flex items-center justify-center mx-auto mb-4 text-2xl">
                 💬
               </div>
-              <h2 className="text-xl font-bold text-stone-900">Connexion Requise</h2>
-              <p className="text-xs text-stone-500 mt-2 mb-6">
+              <h2 className="text-xl font-bold text-[#17402C]">Connexion Requise</h2>
+              <p className="text-xs text-[#5A574E] mt-2 mb-6">
                 Veuillez vous connecter pour accéder à vos discussions et échanger avec les membres de la communauté LKDV.
               </p>
               <a
                 href="/auth/login"
-                className="inline-block px-6 py-3 rounded-full bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold transition-all shadow-md"
+                className="glass-capsule-btn primary inline-flex px-6 py-3 text-xs font-bold shadow-md"
               >
                 Se connecter
               </a>
@@ -48,6 +73,7 @@ export default function MessageriePage() {
                     }
                   : null
               }
+              onActiveConversationChange={setHasActiveConv}
             />
           )}
         </main>

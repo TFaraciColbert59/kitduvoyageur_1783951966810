@@ -71,48 +71,48 @@ export const ConversationOptionsMenuModal: React.FC<ConversationOptionsMenuModal
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-fadeIn">
-      <div className="bg-white/95 backdrop-blur-2xl border border-stone-200/80 rounded-3xl max-w-sm w-full p-5 text-stone-900 shadow-xl relative overflow-hidden">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm animate-fade-in">
+      <div className="glass rounded-3xl max-w-sm w-full p-5 text-[#14140F] relative overflow-hidden">
         {/* Header */}
         <div className="flex items-center justify-between pb-3 border-b border-stone-200/60 mb-4">
-          <h3 className="font-bold text-base text-stone-900">Options de conversation</h3>
+          <h3 className="font-bold text-base text-[#17402C]">Options de conversation</h3>
           <button
             onClick={onClose}
-            className="p-1.5 rounded-full hover:bg-stone-100 text-stone-500 transition-colors"
+            className="glass-circle-btn w-9 h-9 text-[#5A574E] hover:text-[#17402C] shrink-0"
           >
-            <X className="w-5 h-5" />
+            <X className="w-4 h-4" />
           </button>
         </div>
 
         {showMuteSubmenu ? (
-          <div className="space-y-2 animate-fadeIn">
-            <h4 className="text-xs font-bold text-stone-500 uppercase tracking-wider mb-2">
+          <div className="space-y-2 animate-fade-in">
+            <h4 className="text-xs font-bold text-[#5A574E] uppercase tracking-wider mb-2">
               Masquer les notifications
             </h4>
             <button
               onClick={() => handleMuteToggle(1)}
               disabled={loading}
-              className="w-full text-left p-3 rounded-xl hover:bg-stone-100 font-medium text-xs text-stone-800 transition-colors"
+              className="w-full text-left p-3.5 rounded-2xl bg-white/70 hover:bg-[#17402C]/10 font-medium text-xs text-[#17402C] transition-colors min-h-[44px] flex items-center border border-stone-200/50"
             >
               Pendant 1 heure
             </button>
             <button
               onClick={() => handleMuteToggle(8)}
               disabled={loading}
-              className="w-full text-left p-3 rounded-xl hover:bg-stone-100 font-medium text-xs text-stone-800 transition-colors"
+              className="w-full text-left p-3.5 rounded-2xl bg-white/70 hover:bg-[#17402C]/10 font-medium text-xs text-[#17402C] transition-colors min-h-[44px] flex items-center border border-stone-200/50"
             >
               Pendant 8 heures
             </button>
             <button
               onClick={() => handleMuteToggle(undefined)}
               disabled={loading}
-              className="w-full text-left p-3 rounded-xl hover:bg-stone-100 font-medium text-xs text-stone-800 transition-colors"
+              className="w-full text-left p-3.5 rounded-2xl bg-white/70 hover:bg-[#17402C]/10 font-medium text-xs text-[#17402C] transition-colors min-h-[44px] flex items-center border border-stone-200/50"
             >
               Jusqu&apos;à réactivation (Toujours)
             </button>
             <button
               onClick={() => setShowMuteSubmenu(false)}
-              className="w-full text-center mt-2 py-2 text-xs text-stone-400 font-semibold hover:text-stone-700"
+              className="w-full text-center mt-2 py-3 text-xs text-[#5A574E] font-semibold hover:text-[#17402C] min-h-[44px] flex items-center justify-center"
             >
               Retour
             </button>
@@ -129,30 +129,30 @@ export const ConversationOptionsMenuModal: React.FC<ConversationOptionsMenuModal
                 }
               }}
               disabled={loading}
-              className="w-full p-3 rounded-xl hover:bg-stone-100 flex items-center justify-between text-xs font-semibold text-stone-800 transition-colors"
+              className="w-full p-3.5 rounded-2xl bg-white/70 hover:bg-[#17402C]/10 border border-stone-200/50 flex items-center justify-between text-xs font-semibold text-[#17402C] transition-colors min-h-[44px]"
             >
               <div className="flex items-center gap-3">
                 {isMuted ? (
-                  <Bell className="w-4 h-4 text-emerald-600" />
+                  <Bell className="w-4 h-4 text-[#5B7F55]" />
                 ) : (
-                  <BellOff className="w-4 h-4 text-stone-500" />
+                  <BellOff className="w-4 h-4 text-[#5A574E]" />
                 )}
                 <span>{isMuted ? 'Réactiver les notifications' : 'Masquer les notifications (Mute)'}</span>
               </div>
-              {isMuted && <Check className="w-4 h-4 text-emerald-600" />}
+              {isMuted && <Check className="w-4 h-4 text-[#5B7F55]" />}
             </button>
 
             {/* Archive Button */}
             <button
               onClick={handleArchiveToggle}
               disabled={loading}
-              className="w-full p-3 rounded-xl hover:bg-stone-100 flex items-center justify-between text-xs font-semibold text-stone-800 transition-colors"
+              className="w-full p-3.5 rounded-2xl bg-white/70 hover:bg-[#17402C]/10 border border-stone-200/50 flex items-center justify-between text-xs font-semibold text-[#17402C] transition-colors min-h-[44px]"
             >
               <div className="flex items-center gap-3">
-                <Archive className="w-4 h-4 text-stone-500" />
+                <Archive className="w-4 h-4 text-[#5A574E]" />
                 <span>{isArchived ? 'Désarchiver la conversation' : 'Archiver la conversation'}</span>
               </div>
-              {isArchived && <Check className="w-4 h-4 text-emerald-600" />}
+              {isArchived && <Check className="w-4 h-4 text-[#5B7F55]" />}
             </button>
 
             {/* Report & Block Button */}
@@ -162,9 +162,9 @@ export const ConversationOptionsMenuModal: React.FC<ConversationOptionsMenuModal
                   onClose();
                   onOpenReportBlock();
                 }}
-                className="w-full p-3 rounded-xl hover:bg-rose-50 flex items-center gap-3 text-xs font-semibold text-rose-700 transition-colors mt-2 border-t border-stone-100"
+                className="w-full p-3.5 rounded-2xl bg-rose-50/80 hover:bg-rose-100/90 border border-rose-200/80 flex items-center gap-3 text-xs font-semibold text-[#A8443A] transition-colors mt-2 min-h-[44px]"
               >
-                <ShieldAlert className="w-4 h-4 text-rose-600" />
+                <ShieldAlert className="w-4 h-4 text-[#A8443A]" />
                 <span>Signaler ou Bloquer {conversation.other_member.full_name}</span>
               </button>
             )}
