@@ -1,5 +1,15 @@
 # État des lieux consolidé — 16 août 2026
 
+> [!warning] **ERRATUM du 01/09/2026 (audit vérifié)**
+> Certaines affirmations de ce document ne reflètent plus le code au commit `fb47b24` :
+> - **TopBar** : ✅ en fait **supprimé** (commit `9ac0eae`, 16 août) — la section 1 « reste à faire » est obsolète.
+> - **`usePullToRefresh`** : ✅ **branché** sur `/communaute` via `MobileCommunityHub` — seul `useInfiniteScroll` reste orphelin.
+> - **Redirects** : le code réel pointe `/boutique` → `/explorer` (et non `/mon-materiel` comme dans Obsidian, ni `/boutique` comme dans CLAUDE.md).
+> - **Build** : 323 pages statiques vérifiées (01/09), pas 194.
+> - **CI** : `.github/ci.yml` et `scripts/validate-country-cache.mjs` **n'existent pas** — le CI réel est `.github/workflows/{nextjs,lighthouse-ci,ios,visual-regression}.yml`.
+> - **Implémentation communautaire** : 3 modales (`CarnetFormModal`, `ClubFormModal`, `ClubDetailModal`) sont du **code mort** (0 import).
+> Voir l'audit complet : `docs/.obsidian/00 — 🗺️ CARTE ULTIME/Audit vérifié du projet LKDV.md`.
+
 ## Résumé en une phrase par chantier
 1. **TopBar (suppression)** : 🔴 **Déclaré terminé (non confirmé, écart trouvé)** — Le composant a bien été retiré des pages mobiles et de la mise en page globale, mais le fichier physique `TopBar.tsx` n'a pas été supprimé comme l'annonçait le log.
 2. **Navigation** : 🟡 **En cours** — La BottomTabBar a été refondue avec retour haptique, préchargement au survol et retour tactile instantané, mais l'intégration des transitions fluides et l'optimisation des redirections sur d'autres cartes d'action restent à généraliser.

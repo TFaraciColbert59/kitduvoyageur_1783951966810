@@ -35,7 +35,7 @@ updated: 2026-08-17
   - Fusion totale achevée le 17 août 2026 : `/mon-materiel` est la source unique d'équipement, connectée au hook `useEquipment.ts`.
   - La table morte `products` a été purgée au profit strict de `shop_products` et `gear_items`.
   - Le hook obsolète `useOwnedEquipment.ts` a été supprimé physiquement.
-  - La route `/boutique` redirige proprement vers `/mon-materiel` en conservant l'indexation SEO et les balises OpenGraph / Schema.org.
+  - La route `/boutique` redirige (301 permanent) vers `/explorer` via `next.config.mjs` (vérifié 01/09/2026 — l'ancienne doc « → /mon-materiel » est obsolète).
   - Gestion complète des 5 sous-catégories, des états d'usure, alertes d'entretien et prêts de matériel entre utilisateurs.
 
 ### 3. 🗺️ GPS, Cartes & Randonnée Active
@@ -85,13 +85,17 @@ updated: 2026-08-17
 
 ---
 
-## ⚠️ Points d'Attention & Chantiers Ouverts
+## ⚠️ Points d'Attention & Chantiers Ouverts (mis à jour 01/09/2026 — audit vérifié)
 
 | Item | Niveau de gravité | Diagnostic | Action requise |
 | :--- | :---: | :--- | :--- |
-| **Chargement LCP Images Mobile** | 🟠 Important | LCP élevé sur certaines connexions lentes dû à de grandes images hero non préchargées. | Appliquer balises `<Image priority />` et WebP systématique. |
-| **Code Mort TopBar** | 🟡 Faible | Le composant `TopBar.tsx` est débranché mais le fichier subsiste. | Suppression physique du fichier. |
-| **Intégration Hooks Feed Mobile** | 🟡 Faible | Hooks `useInfiniteScroll` et `usePullToRefresh` créés mais non reliés à `/communaute/page.tsx`. | Brancher les hooks dans le feed. |
+| **Fonctions SQL helper absentes du repo** | 🔴 Critique | `is_conversation_member`, `is_conv_owner`, `is_conv_admin` référencées ~15× dans la migration canonique messagerie mais jamais créées dans les migrations (existantes en prod via SQL Editor). | Nouvelle migration de rattrapage + rejouer les 15 tests pgTAP. |
+| **Table `user_blocks` non versionnée** | 🔴 Critique | Absente des migrations, requêtée par `messagingService.ts` + MISSION_LOG Phase 4. | L'ajouter avec la migration de rattrapage (RLS par `auth.uid()`). |
+| **Upload pièces jointes → refus RLS** | 🟠 Majeur | Path upload app (1 segment) ≠ policy storage INSERT (2 segments) → uploads rejetés silencieusement. | Aligner path ou policy ; URLs signées au lieu de `getPublicUrl`. |
+| **Redirects : 3 sources contradictoires** | 🟠 Majeur | Code : `/boutique`→`/explorer` ; CLAUDE.md : `→/boutique` ; Obsidian : `→/mon-materiel`. Aucune ne décrit le réel. | Choisir une cible, mettre à jour CLAUDE.md + Obsidian + middleware. |
+| **Code mort réel (non documenté)** | 🟠 Majeur | 3 modales communaute (`CarnetFormModal`, `ClubFormModal`, `ClubDetailModal`) importées nulle part. | Suppression physique. (Le « code mort TopBar » documenté était déjà supprimé — commit `9ac0eae`.) |
+| **CI documenté inexistant** | 🟠 Majeur | Pas de `.github/ci.yml`, pas de `validate-country-cache.mjs`. CI réel = GitHub Pages + lighthouse/css regression. | Mettre à jour CLAUDE.md, ou créer les gates réels. |
+| **`useInfiniteScroll` orphelin** | 🟡 Faible | Existe (37 lignes), importé nulle part. (`usePullToRefresh` est **branché** depuis août via MobileCommunityHub.) | Brancher sur `/communaute` ou supprimer. |
 | **Crons Externes** | 🟡 Faible | Les routes `/api/notifications/digest` et calculs mensuels nécessitent un déclenchement périodique. | Configurer un cron provider (Vercel Cron ou GitHub Action). |
 
 ---
