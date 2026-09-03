@@ -1,5 +1,32 @@
 # LKDV — Mission Log
 
+## 2026-09-03 — Chantier « Lignées de kits » — LOT 4 : conservation (terminé, mode autonome)
+
+### Lot 4 — Le moteur de jugement (code vert)
+- **Migration `supabase/migrations/20260903040000_kit_conservation.sql`** :
+  - Matview `kit_item_survival` (conservation par item_key, auto-forks exclus) — découverte
+    « ce qui revient du terrain ».
+  - Matview `kit_item_survival_by_kit` (par parent + item_key) — KitSheet.
+  - Matview `kit_trust_scores` — **deux axes distincts** (propagation : forks réels à
+    ≥1 session, user uniques, décroissance 1/pow(age_h+2,1.5) ; endurance : sessions,
+    saisons, massifs, ratio essentiel/jamais_servi) + `has_min_sessions` (plancher 5).
+  - Index uniques (CONCURRENTLY), grants anon/authenticated en lecture, RPC
+    `refresh_kit_conservation()` SECURITY DEFINER (service_role uniquement).
+- **Migration `20260903041000_kit_souches_seed.sql`** : compte système LKDV
+  (`00000000-0000-4000-8000-0000000000a1`, lkdv-studio@) + conversion des kits éditoriaux en
+  souches (`is_souche=true`, `origin='souche_editoriale'`, is_public) avec items reliés à
+  shop_products par slug exact (sinon NULL). Idempotente.
+- **Route cron `GET /api/cron/refresh-kit-scores`** — convention `Authorization: Bearer
+  ${CRON_SECRET}` (identique à refresh-country-guides / process-ai-jobs).
+- **Module pur `src/features/kits/trust.ts` + 15 tests Vitest** (`tests/kits/trust.spec.ts`) :
+  survivalRate, plancher 5 sessions (scoreStatus : pas encore éprouvé / lignée jeune /
+  éprouvé), décroissance temporelle miroir SQL, phrase publique « gardé par X voyageurs sur
+  10 », seuil 20 lignées régionales.
+- **Tests DB `supabase/tests/database/conservation.test.sql`** (8 assertions pgTAP) : jeu
+  synthétique 1 souche + 5 forks (2 auto) + 3 sessions → auto-forks exclus (total_pairs=3),
+  réchaud à 33,3 %, tente à 100 %, forks sans session exclus, users uniques, plancher.
+- **Vérifs** : tsc OK · npm test 290/290 (41 fichiers) OK · build OK.
+
 ## 2026-09-03 — Chantier « Lignées de kits » — LOT 3 : tuyau Stripe réparé (code vert, GATE 3 infra requis)
 
 ### Lot 3 — Le tuyau Stripe (découvertes + corrections)
