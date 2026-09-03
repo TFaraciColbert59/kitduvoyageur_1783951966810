@@ -17,6 +17,7 @@ import CommunityRightSidebar from '@/components/communaute/CommunityRightSidebar
 import MobilePageShell from '@/components/mobile-nav/MobilePageShell';
 import MobileCommunityHub from '@/components/communaute/MobileCommunityHub';
 import CommunityPostCard from '@/components/communaute/CommunityPostCard';
+import LineageDiscovery from '@/components/kits/LineageDiscovery';
 
 function CommunautePageContent() {
   const { user } = useAuth();
@@ -257,6 +258,13 @@ function CommunautePageContent() {
               <div className="glass rounded-[1.5rem] p-3.5 border border-white/50 shadow-xs">
                 <CommunityStoriesBar currentUser={user} />
               </div>
+
+              {/* DÉCOUVERTE LIGNÉES (Lot 7) — ce qui revient du terrain + lignées endurantes */}
+              {activeTab === 'fil' && (
+                <div className="glass rounded-[1.5rem] p-4 border border-white/50 shadow-xs">
+                  <LineageDiscovery />
+                </div>
+              )}
 
               {/* ONGLET 1: FIL D'ACTUALITÉ */}
               {activeTab === 'fil' && (

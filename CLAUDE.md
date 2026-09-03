@@ -72,6 +72,58 @@ Le cockpit de randonnée (`/randonnee-active`) est une interface desktop temps r
 
 ---
 
+## 🌳 Lignées de kits (Chantier « L'Épreuve du terrain »)
+
+La métrique fondatrice : **taux de conservation d'un objet à travers les générations,
+pondéré par la preuve terrain GPS** (filiation + terrain + commerce).
+
+### Modèle
+- `materiel_kits` est **l'entité vivante unique** ; `kit_reports` (configurateur) est un
+  snapshot rattaché (`kit_reports.kit_id`). ADR-007.
+- Filiation **matérialisée** (ADR-008) : `forked_from`, `lineage_root_id`, `generation`,
+  `ancestors uuid[]` (ordre racine → parent) — dérivés UNIQUEMENT par le trigger serveur
+  `handle_kit_lineage` (SECURITY DEFINER, search_path verrouillé) ; anti-cycle,
+  profondeur 50 ; la suppression du parent conserve la lignée (`ancestors` garde l'uuid).
+- Vocabulaire public : « lignée », « kit souche », « éprouvé », « gardé par X voyageurs
+  sur 10 », « part créateur ». **Jamais** de vocabulaire génétique dans l'UI.
+
+### Règles clés
+- **Auto-fork interdit de filiation** : forker son propre kit → `origin='manuel'`,
+  `forked_from=NULL` (vecteur de fraude n°1, neutre pour conservation/commission).
+  Fonctions : `src/features/kits/lineage.ts`, `royalty.ts`, `trust.ts`, `kitRef.ts`,
+  `fieldProof.ts` (modules purs testés dans `tests/kits/`).
+- **Preuve terrain** : `hike_sessions.kit_id` ; `kit_field_reports` (verdicts
+  essentiel/utile/jamais_servi/defaillant/manquait, upsert (session,item_key), RLS own) ;
+  `field_proven_count` incrémenté ≥ 1 km (trigger).
+- **Anonymisation RGPD stricte** : `get_kit_journal` n'expose jamais de lat/lon/noms —
+  granularité max = massif (`hiking_routes.region`). Les `positions_geojson` ne sortent
+  jamais via un kit partagé.
+- **Scores** : matviews `kit_trust_scores` (2 axes distincts propagation/endurance,
+  jamais une note unique), plancher 5 sessions (`has_min_sessions`), indépendance au
+  prix, auto-forks exclus, 1 user/lignée. Refresh via `refresh_kit_conservation()` +
+  route cron (Bearer CRON_SECRET).
+- **Part créateur (Lot 6)** : `royalty_config` (défaut 300 bps, 70/20/10, 3 générations),
+  `kit_attributions` (UNIQUE order_item_id → idempotence), `kit_royalty_shares` (RLS own),
+  versement en **crédit boutique** (`reward_accounts.store_credit_cents` +
+  `store_credit_ledger`), conditionnée à la preuve terrain. Cookie `lkdv_kit_ref`
+  signé HMAC (secret `KIT_REF_SECRET`), posé au partage/KitSheet, vérifié au checkout.
+- **UI** : `KitSheetProvider` + `useKitSheet()` (layout racine droite) — le kit n'a
+  aucune page (`/k/[token]` = partage externe uniquement). Points d'invocation : cockpit
+  (sélecteur kit), messagerie (`kind:'kit'`), produit (encart), /communaute (découverte).
+
+### Endpoints
+`/api/kits/[id]/sheet` · `/api/kits/[id]/refer` · `/api/kits/[id]/field-report` ·
+`/api/kits/discovery` · `/api/kits/my-royalties` · crons `refresh-kit-scores`,
+`finalize-kit-attributions` · `/api/materiel/fork` (filiation) · `/api/checkout` +
+`/api/stripe/webhook` (metadata serveur, attributions, refund).
+
+### Migrations (ordre strict, validation sur copie d'abord)
+`20260903010000_kit_lineage` → `20260903020000_kit_field_proof` →
+`20260903030000_stripe_fix` → `20260903040000_kit_conservation` →
+`20260903041000_kit_souches_seed` → `20260903050000_kit_attributions`.
+
+---
+
 ## 🎨 Design Système — Mobile Redesign (v2)
 
 ### Palette

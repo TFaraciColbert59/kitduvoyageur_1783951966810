@@ -1,3 +1,23 @@
+# PROGRESS — LKDV
+
+## Chantier « Lignées de kits » (2026-09-03) — code terminé, base en validation
+
+- **Rapport complet** : `docs/reports/RAPPORT_LIGNEES.md` · Audit : `AUDIT_KITS_LIGNEE.md`
+  · Guidance base : `docs/guides/LIGNEES_VALIDATION_BASE.md` · ADR-007/008/009.
+- **Lots 0-8 livrés en code** (cs 229fd44, c67f996, 0962f8a, e83d387 + final) :
+  filiation (trigger anti-cycle), preuve terrain (débriefing, journal anonymisé),
+  tuyau Stripe réparé (webhook service_role, metadata, idempotence), conservation
+  (matviews, plancher 5 sessions, souches éditoriales), KitSheet (aucune page /
+  `k/[token]` externe), part créateur (70/20/10, crédit boutique, cookie signé),
+  découverte (items conservés + lignées endurantes), sécurité RLS (5 suites pgTAP).
+- **Vérifs** : tsc 0 · Vitest 303/303 (43 fichiers) · build OK · lint 0 erreur.
+- **Migrations non appliquées** (validation sur copie obligatoire) :
+  `20260903010000_kit_lineage` → `20260903020000_kit_field_proof` →
+  `20260903030000_stripe_fix` → `20260903040000_kit_conservation` →
+  `20260903041000_kit_souches_seed` → `20260903050000_kit_attributions`.
+
+---
+
 # PROGRESS — MISSION: 8 bugs bloquants mobile (30-31/07/2026)
 
 ## Livrable final — Récapitulatif des 12 chantiers

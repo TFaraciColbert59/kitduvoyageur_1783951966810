@@ -1,5 +1,33 @@
 # LKDV — Mission Log
 
+## 2026-09-03 — Chantier « Lignées de kits » — LOTS 7 & 8 : découverte + livraison (mode autonome)
+
+### Lot 7 — Découverte (conservation et endurance, pas de palmarès)
+- Route `GET /api/kits/discovery` enrichie : filtres `region` (massif) et `season`
+  (printemps/ete/automne/hiver, calculés sur les sessions) ; deux tableaux (items
+  conservés ≥ 50 %, lignées endurantes à `has_min_sessions`) ; noms de kits.
+- Composant `LineageDiscovery` (desktop /communaute, onglet fil) : « Ce qui revient du
+  terrain » (badges « gardé par X voyageurs sur 10 ») + « Lignées endurantes » (cartes →
+  KitSheet). **Aucun compteur de partages.** Seuil 20 lignées régionales (trust.ts).
+
+### Lot 8 — Sécurité, revue, livraison
+- **Test pgTAP `security_lignees.test.sql`** (10 assert.) : anon bloqué sur
+  checkout_intents / kit_field_reports / kit_royalty_shares / kit_attributions ; B ne
+  voit pas les données de A ; A voit ses parts ; anon ne peut pas invoquer
+  insert_kit_attribution ; matviews publiques lisibles.
+- **RAPPORT_LIGNEES.md** : migrations ordonnées + rollback par lot + checklist
+  d'exposition de données (RGPD/XSS) + endpoints + reste à faire infra.
+- **CLAUDE.md** : section « Lignées de kits » ; **PROGRESS.md** : entrée chantier.
+- **Vérifs finales** : tsc 0 · Vitest **303/303 (43 fichiers)** · build OK · lint 0 erreur.
+
+### 🏁 FIN DU CHANTIER (code)
+- Branche `feat/lignees-kits` : 6 migrations, 5 suites pgTAP (54 assertions), 2 routes
+  cron, 2 API kits, refonte checkout/webhook/fork, KitSheet + messagerie/produit/
+  communaute, modules purs testés (lineage, fieldProof, trust, royalty, kitRef).
+- **Reste infra (Tony)** : application migrations + backfill sur copie + pgTAP (GATE 1),
+  Stripe test (GATE 3), puis production + crons ; taux bps réel ; consommation crédit
+  boutique (Phase 2). Rien n'a été appliqué en base.
+
 ## 2026-09-03 — Chantier « Lignées de kits » — LOT 6 : la part créateur (terminé, mode autonome)
 
 ### Lot 6 — La part créateur (dépend de 1, 3, 4 — tous verts)
