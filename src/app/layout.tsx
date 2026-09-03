@@ -8,6 +8,7 @@ import { AuthProvider } from '@/contexts/AuthContext';
 import { ToastProvider } from '@/contexts/ToastContext';
 import { WishlistProvider } from '@/contexts/WishlistContext';
 import { SearchProvider } from '@/contexts/SearchContext';
+import { KitSheetProvider } from '@/features/kits/KitSheetContext';
 import ErrorBoundaryWrapper from '@/components/ErrorBoundaryWrapper';
 import GoogleAnalytics from '@/components/GoogleAnalytics';
 import MobileNavWrapper from '@/components/mobile-nav/MobileNavWrapper';
@@ -232,6 +233,7 @@ export default function RootLayout({
                 <ErrorBoundaryWrapper>
                   <ReactQueryProvider>
                     <NativeAppBootstrap />
+                    <KitSheetProvider>
                     <PrefetchRoutes />
                     <Suspense fallback={null}>
                       <GoogleAnalytics />
@@ -254,6 +256,7 @@ export default function RootLayout({
                     <ConditionalCursor />
                     {/* Migration Mon Matériel — exécutée UNE SEULE FOIS au montage */}
                     <MigrationEffect />
+                    </KitSheetProvider>
                   </ReactQueryProvider>
                 </ErrorBoundaryWrapper>
               </SearchProvider>

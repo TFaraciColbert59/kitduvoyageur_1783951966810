@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import { useKitSheet } from '@/features/kits/KitSheetContext';
 
 interface KitOption {
   id: string;
@@ -24,6 +25,7 @@ interface KitCarrySelectorProps {
 export default function KitCarrySelector({ kitId, onSelect, disabled }: KitCarrySelectorProps) {
   const [kits, setKits] = useState<KitOption[]>([]);
   const [loading, setLoading] = useState(true);
+  const { openKit } = useKitSheet();
 
   useEffect(() => {
     let active = true;
@@ -82,12 +84,20 @@ export default function KitCarrySelector({ kitId, onSelect, disabled }: KitCarry
         })}
       </div>
       {kitId && (
-        <button
-          onClick={() => onSelect(null)}
-          className="mt-2 w-full py-1.5 rounded-lg text-[11px] font-medium text-[#6B7A72] hover:text-[#17402C] transition-colors"
-        >
-          Retirer le kit
-        </button>
+        <div className="mt-2 flex items-center justify-between gap-2">
+          <button
+            onClick={() => openKit(kitId, 'cockpit')}
+            className="flex-1 py-1.5 rounded-lg text-[11px] font-medium text-[#17402C] hover:bg-[#EDF3ED] transition-colors"
+          >
+            Voir la fiche →
+          </button>
+          <button
+            onClick={() => onSelect(null)}
+            className="flex-1 py-1.5 rounded-lg text-[11px] font-medium text-[#6B7A72] hover:text-[#17402C] transition-colors"
+          >
+            Retirer le kit
+          </button>
+        </div>
       )}
     </div>
   );

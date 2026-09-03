@@ -1,5 +1,26 @@
 # LKDV — Mission Log
 
+## 2026-09-03 — Chantier « Lignées de kits » — LOT 5 : le KitSheet (terminé, mode autonome)
+
+### Lot 5 — L'objet qui circule (aucune page /kits/[slug])
+- **Route `GET /api/kits/[id]/sheet`** : kit (RLS own-or-public) + parent name + journal RPC
+  anonymisé + trust/survival (matviews, connecté uniquement).
+- **Route `GET /api/kits/discovery`** : encart produit (lignages_count, lineage_root_id,
+  conservation) + découverte (items conservés / lignées endurantes, plancher appliqué).
+- **`KitSheetContext`** (provider + `useKitSheet`) monté dans le layout racine ; **`KitSheetModal`**
+  : bottom sheet mobile / drawer desktop, palette maison, haptique, mention obligatoire de la
+  part créateur (transparence Lot 6), actions Emporter / Forker / Envoyer (copie lien /k/token).
+  Dynamic import (poids initial préservé).
+- **Points d'invocation** :
+  - Cockpit : bouton « Voir la fiche » dans `KitCarrySelector` + présélection `?kitId=` ;
+  - Messagerie : type `'kit'` dans `MessageType` + `KitMessageMeta` + carte `KitCard` rendue
+    inline dans `MessageBubble` (clic → KitSheet) + envoi depuis `ComposerMenuSheet` (vue
+    « Mes kits ») câblé de bout en bout (ConversationView → MessageComposer) ;
+  - Produit : `ProductLineageCard` (« présent dans N lignées, gardé par X sur 10 ») inséré
+    dans `ProductDetailClient`, clic → KitSheet de la lignée.
+- **Vérifs** : tsc OK · npm test 290/290 OK · build OK · lint 0 erreur (7 warnings
+  préexistants / patterns maison).
+
 ## 2026-09-03 — Chantier « Lignées de kits » — LOT 4 : conservation (terminé, mode autonome)
 
 ### Lot 4 — Le moteur de jugement (code vert)

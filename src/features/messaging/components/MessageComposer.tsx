@@ -2,7 +2,7 @@
 
 import React, { useState, useRef, useEffect } from 'react';
 import { ImagePlus, Send, X, Reply, Mic, Ellipsis } from 'lucide-react';
-import type { Message, ProductMessageMeta, TrailMessageMeta } from '../types/messaging.types';
+import type { Message, ProductMessageMeta, TrailMessageMeta, KitMessageMeta } from '../types/messaging.types';
 import { VoiceRecorderBar } from './VoiceRecorderBar';
 import { ComposerMenuSheet } from './ComposerMenuSheet';
 import { useHapticFeedback } from '@/hooks/useHapticFeedback';
@@ -15,6 +15,7 @@ interface MessageComposerProps {
   onSendGpx?: (file: File) => void;
   onSendProduct?: (meta: ProductMessageMeta) => void;
   onSendTrail?: (meta: TrailMessageMeta) => void;
+  onSendKit?: (meta: KitMessageMeta) => void;
   onTyping?: () => void;
   replyToMessage?: Message | null;
   onCancelReply?: () => void;
@@ -29,6 +30,7 @@ export const MessageComposer: React.FC<MessageComposerProps> = ({
   onSendGpx,
   onSendProduct,
   onSendTrail,
+  onSendKit,
   onTyping,
   replyToMessage,
   onCancelReply,
@@ -233,6 +235,10 @@ export const MessageComposer: React.FC<MessageComposerProps> = ({
         onSendTrail={(meta) => {
           haptic('medium');
           onSendTrail?.(meta);
+        }}
+        onSendKit={(meta) => {
+          haptic('medium');
+          onSendKit?.(meta);
         }}
       />
     </div>

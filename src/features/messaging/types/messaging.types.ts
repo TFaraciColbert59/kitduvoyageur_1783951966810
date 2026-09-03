@@ -8,7 +8,8 @@ export type MessageType =
   | 'audio'
   | 'gpx'
   | 'product'
-  | 'trail';
+  | 'trail'
+  | 'kit';
 
 /** Payload des messages équipement (message_type = 'product'). Série dans messages.metadata. */
 export interface ProductMessageMeta {
@@ -29,6 +30,13 @@ export interface TrailMessageMeta {
   distance_km?: number | null;
   elevation_gain_m?: number | null;
   region?: string | null;
+}
+
+/** Payload des messages lignée de kit (message_type = 'kit', chantier lignées). */
+export interface KitMessageMeta {
+  kind: 'kit';
+  kit_id: string;
+  kit_name: string;
 }
 export type MemberRole = 'member' | 'admin' | 'owner';
 

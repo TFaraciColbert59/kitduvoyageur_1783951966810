@@ -2,10 +2,10 @@
 
 import React, { useState, useEffect, useRef } from 'react';
 import Image from 'next/image';
-import type { ProductMessageMeta, TrailMessageMeta } from '../types/messaging.types';
+import type { ProductMessageMeta, TrailMessageMeta, KitMessageMeta } from '../types/messaging.types';
 import { messagingService } from '../services/messagingService';
 import { MobileSheet } from './MobileSheet';
-import { Route, MapPin, ArrowLeft, Mountain } from 'lucide-react';
+import { Route, MapPin, ArrowLeft, Mountain, Backpack } from 'lucide-react';
 import { useHapticFeedback } from '@/hooks/useHapticFeedback';
 
 type InventoryItem = {
@@ -25,6 +25,11 @@ type TrailItem = {
   region: string | null;
 };
 
+type KitItem = {
+  id: string;
+  name: string;
+};
+
 interface ComposerMenuSheetProps {
   isOpen: boolean;
   onClose: () => void;
@@ -32,6 +37,7 @@ interface ComposerMenuSheetProps {
   onSendGpx: (file: File) => void;
   onSendProduct: (meta: ProductMessageMeta) => void;
   onSendTrail: (meta: TrailMessageMeta) => void;
+  onSendKit: (meta: KitMessageMeta) => void;
 }
 
 export const ComposerMenuSheet: React.FC<ComposerMenuSheetProps> = ({
@@ -41,13 +47,16 @@ export const ComposerMenuSheet: React.FC<ComposerMenuSheetProps> = ({
   onSendGpx,
   onSendProduct,
   onSendTrail,
+  onSendKit,
 }) => {
   const { haptic } = useHapticFeedback();
-  const [view, setView] = useState<'menu' | 'equip' | 'trail'>('menu');
+  const [view, setView] = useState<'menu' | 'equip' | 'trail' | 'kit'>('menu');
   const [inventory, setInventory] = useState<InventoryItem[]>([]);
   const [trails, setTrails] = useState<TrailItem[]>([]);
+  const [kits, setKits] = useState<KitItem[]>([]);
   const [loadingInv, setLoadingInv] = useState(false);
   const [loadingTrails, setLoadingTrails] = useState(false);
+  const [loadingKits, setLoadingKits] = useState(false);
   const gpxInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
@@ -64,6 +73,19 @@ export const ComposerMenuSheet: React.FC<ComposerMenuSheetProps> = ({
         .then(setInventory)
         .catch(() => setInventory([]))
         .finally(() => setLoadingInv(false));
+    }
+  };
+
+  const openKits = () => {
+    haptic('light');
+    setView('kit');
+    if (kits.length === 0) {
+      setLoadingKits(true);
+      fetch('/api/materiel/kits')
+        .then((r) => (r.ok ? r.json() : { kits: [] }))
+        .then((data: { kits?: KitItem[] }) => setKits(data.kits ?? []))
+        .catch(() => setKits([]))
+        .finally(() => setLoadingKits(false));
     }
   };
 
@@ -97,7 +119,7 @@ export const ComposerMenuSheet: React.FC<ComposerMenuSheetProps> = ({
     <MobileSheet
       isOpen={isOpen}
       onClose={onClose}
-      title={view === 'menu' ? 'Partager dans le chat' : view === 'equip' ? 'Équipement' : 'Randonnée'}
+      title={view === 'menu' ? 'Partager dans le chat' : view === 'equip' ? 'Équipement' : view === 'kit' ? 'Mes kits' : 'Randonnée'}
     >
       <input
         ref={gpxInputRef}
@@ -122,6 +144,54 @@ export const ComposerMenuSheet: React.FC<ComposerMenuSheetProps> = ({
             <Mountain className="w-5 h-5 text-[#2D6B4A]" />
             Partager une randonnée
           </button>
+          <button type="button" onClick={openKits} className={itemClass}>
+            <Backpack className="w-5 h-5 text-[#2D6B4A]" />
+            Partager un kit — lignée
+          </button>
+        </div>
+      )}
+
+      {view === 'kit' && (
+        <div className="space-y-2">
+          <button
+            type="button"
+            onClick={() => setView('menu')}
+            className="flex items-center gap-2 px-2 py-1 text-[13px] font-semibold text-[#5A574E] hover:text-[#17402C]"
+          >
+            <ArrowLeft className="w-4 h-4" />
+            Retour
+          </button>
+          {loadingKits ? (
+            <div className="space-y-2">
+              {[1, 2, 3].map((i) => (
+                <div key={i} className="h-14 bg-stone-100/80 rounded-2xl animate-pulse" />
+              ))}
+            </div>
+          ) : kits.length === 0 ? (
+            <p className="text-center text-[14px] text-[#5A574E] py-6">
+              Aucun kit à partager.
+            </p>
+          ) : (
+            kits.map((kit) => (
+              <button
+                key={kit.id}
+                type="button"
+                onClick={() => {
+                  haptic('light');
+                  onSendKit({ kind: 'kit', kit_id: kit.id, kit_name: kit.name });
+                  onClose();
+                }}
+                className="w-full text-left p-3 rounded-2xl bg-white/70 hover:bg-[#17402C]/10 border border-stone-200/60 flex items-center gap-3 active:scale-[0.98] min-h-[60px]"
+              >
+                <div className="w-10 h-10 rounded-xl bg-[#EDF3ED] ring-1 ring-[#A3C4A3]/50 shrink-0 flex items-center justify-center">
+                  <Backpack className="w-5 h-5 text-[#17402C]" />
+                </div>
+                <span className="text-[15px] font-medium text-[#14140F] flex-1 min-w-0 truncate">
+                  {kit.name}
+                </span>
+              </button>
+            ))
+          )}
         </div>
       )}
 

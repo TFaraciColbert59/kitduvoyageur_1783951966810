@@ -1,5 +1,7 @@
 'use client';
 
+import ProductLineageCard from '@/components/kits/ProductLineageCard';
+
 import React, { useState, useEffect } from 'react';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
@@ -679,6 +681,13 @@ export default function ProductDetailClient({ slug, initialProduct }: { slug: st
               </div>
             </div>
           </div>
+
+          {/* Présence dans les lignées — encart Lignées de kits (Lot 5) */}
+          {product.id && (
+            <div style={{ padding: '8px 20px' }}>
+              <ProductLineageCard productId={product.id} />
+            </div>
+          )}
 
           {/* Specifications Grid */}
           <div style={{ padding: '8px 20px' }}>

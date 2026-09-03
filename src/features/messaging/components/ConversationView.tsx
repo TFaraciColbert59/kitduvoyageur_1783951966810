@@ -3,7 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import Image from 'next/image';
 import { useRouter } from 'next/navigation';
-import type { Conversation, UserProfileSummary, Message, ConversationMember, ProductMessageMeta, TrailMessageMeta } from '../types/messaging.types';
+import type { Conversation, UserProfileSummary, Message, ConversationMember, ProductMessageMeta, TrailMessageMeta, KitMessageMeta } from '../types/messaging.types';
 import { useMessages } from '../hooks/useMessages';
 import { useRealtimeMessaging } from '../hooks/useRealtimeMessaging';
 import { messagingService } from '../services/messagingService';
@@ -155,6 +155,19 @@ export const ConversationView: React.FC<ConversationViewProps> = ({
       currentUserId,
       meta.name,
       'trail',
+      replyToMessage?.id || undefined,
+      meta as unknown as Record<string, unknown>
+    );
+    setReplyToMessage(null);
+    await refreshMessages();
+  };
+
+  const handleSendKit = async (meta: KitMessageMeta) => {
+    await messagingService.sendMessage(
+      conversation.id,
+      currentUserId,
+      meta.kit_name,
+      'kit',
       replyToMessage?.id || undefined,
       meta as unknown as Record<string, unknown>
     );
@@ -346,6 +359,7 @@ export const ConversationView: React.FC<ConversationViewProps> = ({
           onSendGpx={handleSendGpx}
           onSendProduct={handleSendProduct}
           onSendTrail={handleSendTrail}
+          onSendKit={handleSendKit}
           onTyping={sendTypingSignal}
           replyToMessage={replyToMessage}
           onCancelReply={() => setReplyToMessage(null)}

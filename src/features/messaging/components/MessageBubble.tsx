@@ -14,7 +14,8 @@ import { AudioPlayerBubble } from './AudioPlayerBubble';
 import { GPXPreviewCard } from './GPXPreviewCard';
 import { ProductCard } from './ProductCard';
 import { TrailCard } from './TrailCard';
-import type { ProductMessageMeta, TrailMessageMeta } from '../types/messaging.types';
+import { KitCard } from './KitCard';
+import type { ProductMessageMeta, TrailMessageMeta, KitMessageMeta } from '../types/messaging.types';
 
 // Les six réactions d'iMessage (Compose intégration pomme).
 const REACTION_PALETTE = ['❤️', '👍', '😂', '😮', '😢', '🙏'];
@@ -411,13 +412,20 @@ export const MessageBubble: React.FC<MessageBubbleProps> = ({
                 isMine={isMine}
               />
             )}
+            {message.message_type === 'kit' && message.metadata && (
+              <KitCard
+                meta={message.metadata as unknown as KitMessageMeta}
+                isMine={isMine}
+              />
+            )}
 
             {/* Message Content */}
             {message.message_type !== 'audio' &&
               message.message_type !== 'gpx' &&
               message.message_type !== 'image' &&
               message.message_type !== 'product' &&
-              message.message_type !== 'trail' && (
+              message.message_type !== 'trail' &&
+              message.message_type !== 'kit' && (
                 <p className="text-[15px] leading-[1.45] whitespace-pre-wrap break-words font-normal">
                   {message.content}
                 </p>

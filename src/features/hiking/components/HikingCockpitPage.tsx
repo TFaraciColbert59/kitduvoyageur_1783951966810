@@ -171,6 +171,14 @@ export default function HikingCockpitPage() {
   const [geoPermissionState, setGeoPermissionState] = useState<'checking' | 'prompt' | 'granted' | 'denied'>('checking');
   const autoStartedRef = useRef(false);
 
+  // Présélection du kit emporté via /randonnee-active?kitId= (KitSheet, Lot 5)
+  const kitIdParam = searchParams?.get('kitId');
+  useEffect(() => {
+    if (kitIdParam && !hikingStore.kitId && !hikingStore.isActive) {
+      hikingStore.setKit(kitIdParam);
+    }
+  }, [kitIdParam, hikingStore]);
+
   // Auto-start and geolocation permission management for URL routeIdParam
   useEffect(() => {
     if (!routeIdParam || hikingStore.isActive || hikingStore.state === 'COMPLETED' || autoStartedRef.current) {
