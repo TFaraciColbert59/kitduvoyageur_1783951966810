@@ -1,86 +1,89 @@
 import 'server-only';
-import { createClient, type SupabaseClient } from '@supabase/supabase-js';
 import { createHash } from 'node:crypto';
+import { getServiceSupabase } from './serviceClient';
+import type { AIResponse } from './providers/types';
 
 /**
- * Store de réponses IA (routeur Nemotron) — SERVEUR UNIQUEMENT.
- * Accès exclusivement via les fonctions SECURITY DEFINER avec le service role
- * (SUPABASE_SERVICE_ROLE_KEY) : la table n'est lisible par aucun client
- * (policy select=false). Le cache est best-effort : tout échec est loggé et
- * silencieusement ignoré — il ne doit jamais casser une requête IA.
- * Ne jamais logger de contenu utilisateur ni de clé.
+ * Store de réponses IA — SERVEUR UNIQUEMENT, service role.
+ * Accès exclusivement via les fonctions SECURITY DEFINER (get_ai_cache /
+ * set_ai_cache) : la table n'est lisible par aucun client (policy select=false).
+ * Le cache est best-effort : tout échec est loggé puis ignoré — il ne doit
+ * jamais casser une requête IA. La clé de service n'est JAMAIS loggée.
+ *
+ * Choix du hash : SHA-256 côté TS (node:crypto) — stable, pas de dépendance
+ * pgcrypto côté SQL, calcul serveur-only. Locale constante 'fr' (site monolingue).
  */
 
-let serviceClient: SupabaseClient | null | undefined;
+const SITE_LOCALE = 'fr';
 
-function getServiceClient(): SupabaseClient | null {
-  if (serviceClient !== undefined) return serviceClient;
-
-  const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
-  const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
-  if (!url || !serviceKey) {
-    console.error('[ai/responseStore] SUPABASE_SERVICE_ROLE_KEY absente — cache IA désactivé');
-    serviceClient = null;
-    return null;
-  }
-
-  serviceClient = createClient(url, serviceKey, {
-    auth: { persistSession: false, autoRefreshToken: false },
-  });
-  return serviceClient;
+/** Normalisation : trim + lowercase + collapse des espaces (insensible à la mise en forme). */
+export function normalizePrompt(prompt: string): string {
+  return prompt.trim().toLowerCase().replace(/\s+/g, ' ');
 }
 
-export function buildCacheKey(parts: {
-  feature: string;
-  task: string;
-  system: string;
-  prompt: string;
-  maxTokens?: number;
-}): string {
+export function buildCacheKey(feature: string, prompt: string): string {
   return createHash('sha256')
-    .update(
-      `${parts.feature}|${parts.task}|${parts.system}|${parts.prompt}|${parts.maxTokens ?? ''}`
-    )
+    .update(`${feature}|${normalizePrompt(prompt)}|${SITE_LOCALE}`)
     .digest('hex');
 }
 
-export async function getCachedResponse(cacheKey: string): Promise<string | null> {
-  const client = getServiceClient();
+export async function getCached(feature: string, prompt: string): Promise<AIResponse | null> {
+  const client = getServiceSupabase();
   if (!client) return null;
+
+  const cacheKey = buildCacheKey(feature, prompt);
   try {
     const { data, error } = await client.rpc('get_ai_cache', { p_cache_key: cacheKey });
     if (error) {
-      console.error('[ai/responseStore] get_ai_cache:', error.message);
+      console.error('[ai/cache] get_ai_cache:', error.message);
       return null;
     }
-    return typeof data === 'string' && data.length > 0 ? data : null;
+    const stored = data as { text?: unknown; model?: unknown; provider?: unknown; degraded?: unknown } | null;
+    if (!stored || typeof stored.text !== 'string' || stored.text.length === 0) return null;
+
+    return {
+      text: stored.text,
+      model: typeof stored.model === 'string' ? stored.model : 'cache',
+      degraded: stored.degraded === true,
+      cached: true,
+      provider: typeof stored.provider === 'string' ? stored.provider : 'cache',
+    };
   } catch (err) {
-    console.error('[ai/responseStore] get_ai_cache a échoué:', err instanceof Error ? err.message : err);
+    console.error('[ai/cache] getCached a échoué:', err instanceof Error ? err.message : err);
     return null;
   }
 }
 
-export async function storeCachedResponse(
-  cacheKey: string,
+export async function setCached(
   feature: string,
-  response: string,
-  model: string,
+  prompt: string,
+  response: AIResponse,
   ttlSeconds: number
 ): Promise<void> {
-  const client = getServiceClient();
+  if (!ttlSeconds || ttlSeconds <= 0) return; // TTL 0 = pas de cache (kit personnel, chat…)
+
+  const client = getServiceSupabase();
   if (!client) return;
+
+  const cacheKey = buildCacheKey(feature, prompt);
   try {
     const { error } = await client.rpc('set_ai_cache', {
       p_cache_key: cacheKey,
       p_feature: feature,
-      p_response: response,
-      p_model: model,
+      p_response: {
+        text: response.text,
+        model: response.model,
+        degraded: response.degraded,
+        provider: response.provider,
+      },
+      p_model: response.model,
+      p_provider: response.provider,
       p_ttl_seconds: ttlSeconds,
     });
     if (error) {
-      console.error('[ai/responseStore] set_ai_cache:', error.message);
+      console.error('[ai/cache] set_ai_cache:', error.message);
     }
   } catch (err) {
-    console.error('[ai/responseStore] set_ai_cache a échoué:', err instanceof Error ? err.message : err);
+    console.error('[ai/cache] setCached a échoué:', err instanceof Error ? err.message : err);
   }
 }
