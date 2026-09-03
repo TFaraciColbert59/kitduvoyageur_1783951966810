@@ -1,0 +1,39 @@
+{
+  "sessionParams": {
+    "destination": "Chamonix",
+    "country": "France",
+    "startDate": "2026-09-10",
+    "endDate": "2026-09-15",
+    "season": "automne",
+    "activity": "randonnée",
+    "level": "intermédiaire",
+    "maxWeightG": 12000,
+    "budgetEur": 900
+  },
+  "selectedItems": [
+    {
+      "id": "smoke-sac-1",
+      "name": "Sac de randonnée 50L",
+      "brand": "Test",
+      "slug": "smoke-sac-1",
+      "category": "Sacs à dos",
+      "weight_g": 1400,
+      "price_eur": 150,
+      "description": "Smoke test",
+      "image": "",
+      "image_alt": ""
+    },
+    {
+      "id": "smoke-duvet-1",
+      "name": "Duvet synthétique -2°C",
+      "brand": "Test",
+      "slug": "smoke-duvet-1",
+      "category": "Couchage",
+      "weight_g": 1100,
+      "price_eur": 120,
+      "description": "Smoke test",
+      "image": "",
+      "image_alt": ""
+    }
+  ]
+}

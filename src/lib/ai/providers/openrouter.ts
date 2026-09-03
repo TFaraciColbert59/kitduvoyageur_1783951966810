@@ -9,7 +9,9 @@ import { ProviderError } from './types';
 
 export const MODEL_BY_TIER: Record<AITier, string> = {
   heavy: 'nvidia/nemotron-3-ultra-550b-a55b:free',
-  fast: 'nvidia/nemotron-3-nano-30b-a3b:free',
+  // NB : nemotron-3-nano-30b-a3b:free a été retiré d'OpenRouter (404, 2026-09-03)
+  // → remplacé par la génération 3.5 la plus rapide disponible en :free.
+  fast: 'nvidia/nemotron-3.5-lightning:free',
 };
 
 export function modelFor(tier: AITier): string {
@@ -18,6 +20,13 @@ export function modelFor(tier: AITier): string {
 
 const OPENROUTER_URL = 'https://openrouter.ai/api/v1/chat/completions';
 const TIMEOUT_MS: Record<AITier, number> = { fast: 8_000, heavy: 45_000 };
+/**
+ * Chez les modèles à raisonnement (Nemotron Ultra), les tokens de raisonnement
+ * comptent DANS max_tokens : sans buffer, le budget est épuisé par le
+ * raisonnement et la réponse finale est vide (smoke test 2026-09-03).
+ */
+const MIN_COMPLETION_BUFFER = 512;
+const MIN_REASONING = 64;
 
 function openRouterHeaders(apiKey: string): Record<string, string> {
   return {
@@ -41,6 +50,21 @@ export const openrouterProvider: AIProvider = {
       throw new ProviderError('Clé OpenRouter absente', 503);
     }
 
+    // Raisonnement :
+    // - heavy (Ultra, modèle de raisonnement) : budget fourni raboté pour garantir
+    //   un buffer de complétion (sinon réponse vide — cf. smoke 2026-09-03).
+    // - fast (modèles rapides type lightning) : raisonnement DÉSACTIVÉ — leur CoT
+    //   inline multipliait la latence par 6 (12-19 s → 2 s) et polluait le contenu.
+    const reasoning =
+      req.tier === 'heavy'
+        ? (() => {
+            const effective = req.reasoningBudget
+              ? Math.min(req.reasoningBudget, req.maxTokens - MIN_COMPLETION_BUFFER)
+              : undefined;
+            return effective && effective >= MIN_REASONING ? { max_tokens: effective } : undefined;
+          })()
+        : { enabled: false, exclude: true };
+
     const controller = new AbortController();
     const timer = setTimeout(() => controller.abort(), TIMEOUT_MS[req.tier]);
 
@@ -56,10 +80,7 @@ export const openrouterProvider: AIProvider = {
             { role: 'system', content: req.system },
             { role: 'user', content: req.prompt },
           ],
-          // Raisonnement UNIQUEMENT pour Ultra (heavy) ET si un budget est fourni.
-          ...(req.tier === 'heavy' && req.reasoningBudget
-            ? { reasoning: { max_tokens: req.reasoningBudget } }
-            : {}),
+          ...(reasoning ? { reasoning } : {}),
         }),
       });
 
@@ -68,6 +89,15 @@ export const openrouterProvider: AIProvider = {
       }
 
       const data = await res.json();
+
+      // OpenRouter peut répondre 200 avec une erreur embarquée (upstream en panne).
+      if (data?.error) {
+        throw new ProviderError(
+          `OpenRouter: ${data.error.message ?? 'erreur upstream'}`,
+          typeof data.error.code === 'number' ? data.error.code : 502
+        );
+      }
+
       const content: unknown = data?.choices?.[0]?.message?.content;
       if (typeof content !== 'string' || content.trim().length === 0) {
         throw new ProviderError('OpenRouter: réponse vide', 502);

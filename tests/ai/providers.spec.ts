@@ -39,7 +39,8 @@ describe('src/lib/ai/providers — port IA + adapters', () => {
 
   it('TEST-PRV-01: les IDs de modèles sont exacts', () => {
     expect(MODEL_BY_TIER.heavy).toBe('nvidia/nemotron-3-ultra-550b-a55b:free');
-    expect(MODEL_BY_TIER.fast).toBe('nvidia/nemotron-3-nano-30b-a3b:free');
+    // nano :free a été retiré d'OpenRouter (404 le 2026-09-03) → lightning 3.5
+    expect(MODEL_BY_TIER.fast).toBe('nvidia/nemotron-3.5-lightning:free');
     expect(modelFor('heavy')).toBe(MODEL_BY_TIER.heavy);
   });
 
@@ -62,22 +63,38 @@ describe('src/lib/ai/providers — port IA + adapters', () => {
       { role: 'system', content: 'sys' },
       { role: 'user', content: 'salut' },
     ]);
-    expect(body.reasoning).toBeUndefined();
+    // fast = raisonnement désactivé (CoT inline interdit)
+    expect(body.reasoning).toEqual({ enabled: false, exclude: true });
   });
 
   it('TEST-PRV-03: reasoning envoyé UNIQUEMENT pour heavy avec reasoningBudget', async () => {
     fetchMock.mockResolvedValue(orResponse(200, 'ok'));
 
-    await openrouterProvider.complete(makeReq({ tier: 'heavy', reasoningBudget: 4000 }));
+    await openrouterProvider.complete(makeReq({ tier: 'heavy', reasoningBudget: 1000, maxTokens: 4000 }));
     expect(JSON.parse((fetchMock.mock.calls[0][1] as RequestInit).body as string).reasoning)
-      .toEqual({ max_tokens: 4000 });
+      .toEqual({ max_tokens: 1000 });
 
     await openrouterProvider.complete(makeReq({ tier: 'fast', reasoningBudget: 4000 }));
+    // fast = modèle rapide : raisonnement DÉSACTIVÉ (CoT inline → latence x6 et contenu pollué)
     expect(JSON.parse((fetchMock.mock.calls[1][1] as RequestInit).body as string).reasoning)
-      .toBeUndefined();
+      .toEqual({ enabled: false, exclude: true });
 
     await openrouterProvider.complete(makeReq({ tier: 'heavy' }));
     expect(JSON.parse((fetchMock.mock.calls[2][1] as RequestInit).body as string).reasoning)
+      .toBeUndefined();
+  });
+
+  it('TEST-PRV-08: le reasoning ne peut pas consommer tout le budget max_tokens (bug réponse vide)', async () => {
+    fetchMock.mockResolvedValue(orResponse(200, 'ok'));
+
+    // maxTokens 4000 + budget 4000 → le raisonnement est raboté (buffer 512 de complétion)
+    await openrouterProvider.complete(makeReq({ tier: 'heavy', reasoningBudget: 4000, maxTokens: 4000 }));
+    expect(JSON.parse((fetchMock.mock.calls[0][1] as RequestInit).body as string).reasoning)
+      .toEqual({ max_tokens: 3488 });
+
+    // maxTokens trop petit pour du raisonnement → pas de paramètre reasoning du tout
+    await openrouterProvider.complete(makeReq({ tier: 'heavy', reasoningBudget: 4000, maxTokens: 512 }));
+    expect(JSON.parse((fetchMock.mock.calls[1][1] as RequestInit).body as string).reasoning)
       .toBeUndefined();
   });
 
@@ -92,6 +109,22 @@ describe('src/lib/ai/providers — port IA + adapters', () => {
     await expect(openrouterProvider.complete(makeReq())).rejects.toMatchObject({ status: 502 });
 
     expect(fetchMock).toHaveBeenCalledTimes(3);
+  });
+
+  it('TEST-PRV-09: HTTP 200 avec erreur embarquée OpenRouter (upstream Nvidia 502) → throw ProviderError', async () => {
+    fetchMock.mockResolvedValueOnce({
+      ok: true,
+      status: 200,
+      json: async () => ({
+        error: { message: 'Upstream error from Nvidia: Internal server error', code: 502 },
+      }),
+    });
+
+    await expect(openrouterProvider.complete(makeReq())).rejects.toMatchObject({
+      name: 'ProviderError',
+      status: 502,
+    });
+    expect(fetchMock).toHaveBeenCalledTimes(1);
   });
 
   it('TEST-PRV-05: AbortSignal transmis pour le timeout', async () => {
