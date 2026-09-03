@@ -212,6 +212,11 @@ export class HikingController {
         });
         sessionId = res.sessionId;
         if (res.carnetId) savedCarnetId = res.carnetId;
+
+        // Récit post-randonnée ASYNCHRONE (Chantier C) : on dépose un job IA,
+        // jamais d'appel synchrone à la fermeture. Fire-and-forget : un échec
+        // d'enfilement ne doit JAMAIS perturber la fin de sortie.
+        this.enqueueTrailNarrativeJob(res.sessionId, startedAt).catch(() => {});
       } catch (err) {
         console.error('[HikingController] stopHike save error:', err);
       }
@@ -224,8 +229,31 @@ export class HikingController {
     return sessionId ? { sessionId, carnetId: savedCarnetId } : null;
   }
 
-  public dismissOffRoute(): void {
-    this.offRouteDismissed = true;
+  /** Chantier C — dépose un job 'trail-narrative' (traité par le cron IA). */
+  private async enqueueTrailNarrativeJob(sessionId: string, startedAt: string): Promise<void> {
+    try {
+      await fetch('/api/ai/jobs', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          feature: 'trail-narrative',
+          payload: {
+            sessionId,
+            distanceKm: this.state.distanceKm,
+            durationSeconds: this.state.durationSeconds,
+            elevationGainM: this.state.elevationGainM,
+            routeName: this.state.routeName ?? undefined,
+            weather: this.state.weather?.condition ?? undefined,
+            startedAt,
+          },
+        }),
+      });
+    } catch {
+      // Silencieux : le récit est un plus, jamais un blocage.
+    }
+  }
+
+  public dismissOffRoute(): void {    this.offRouteDismissed = true;
     this.updateState({ isOffRoute: false, deviation: null });
     this.offRouteBuffer = [];
     if (this.stateMachine.getState() === 'OFF_ROUTE') {
