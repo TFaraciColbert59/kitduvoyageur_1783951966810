@@ -2,8 +2,8 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 
 const { askAIMock, getCachedMock, setCachedMock } = vi.hoisted(() => ({
   askAIMock: vi.fn(),
-  getCachedMock: vi.fn(async () => null),
-  setCachedMock: vi.fn(async () => {}),
+  getCachedMock: vi.fn(async (..._args: unknown[]) => null as unknown),
+  setCachedMock: vi.fn(async (..._args: unknown[]) => {}),
 }));
 
 vi.mock('../../src/lib/ai/askAI', () => ({ askAI: askAIMock }));
