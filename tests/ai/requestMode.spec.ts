@@ -4,7 +4,6 @@ import {
   resolveAiMode,
   derivePromptAndSystem,
   buildSsePayload,
-  ASKAI_ERROR_STATUS,
   DEFAULT_LKDV_SYSTEM,
 } from '../../src/lib/ai/requestMode';
 
@@ -114,7 +113,7 @@ describe('src/lib/ai/requestMode — résolution de mode + dérivation', () => {
     });
   });
 
-  describe('buildSsePayload + erreurs', () => {
+  describe('buildSsePayload', () => {
     it('TEST-MODE-12: payload SSE = 3 frames start/chunk/done (contrat client conservé)', () => {
       const payload = buildSsePayload('texte', true);
       const frames = payload
@@ -127,12 +126,6 @@ describe('src/lib/ai/requestMode — résolution de mode + dérivation', () => {
         { type: 'chunk', chunk: { text: 'texte', degraded: true } },
         { type: 'done' },
       ]);
-    });
-
-    it('TEST-MODE-13: mapping codes → statuts HTTP', () => {
-      expect(ASKAI_ERROR_STATUS.INVALID_INPUT).toBe(400);
-      expect(ASKAI_ERROR_STATUS.NO_KEY).toBe(503);
-      expect(ASKAI_ERROR_STATUS.ALL_PROVIDERS_FAILED).toBe(502);
     });
   });
 });

@@ -3,7 +3,7 @@ import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 const { providerCompleteMock, getCachedMock, setCachedMock, consumeQuotaMock, getProviderMock } =
   vi.hoisted(() => ({
     providerCompleteMock: vi.fn(),
-    getCachedMock: vi.fn(async () => null),
+    getCachedMock: vi.fn(async (..._args: unknown[]) => null as unknown),
     setCachedMock: vi.fn(async () => {}),
     consumeQuotaMock: vi.fn(async () => true),
     getProviderMock: vi.fn(),

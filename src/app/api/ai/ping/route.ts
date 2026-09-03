@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
-import { askAI } from '@/lib/ai/nemotronRouter';
+import { askAI } from '@/lib/ai/askAI';
 
 export const dynamic = 'force-dynamic';
 
@@ -31,30 +31,30 @@ export async function GET() {
 
     const ultraStart = Date.now();
     const ultra = await askAI({
-      task: 'heavy',
+      feature: 'diagnostic',
+      tier: 'heavy',
       system: PING_SYSTEM,
-      prompt: 'ping',
+      prompt: 'ping ultra',
       maxTokens: 1_024,
       reasoningBudget: 512,
-      cache: false,
-      feature: 'diagnostic',
+      cacheTtlSeconds: 0,
     });
     const ultraMs = Date.now() - ultraStart;
 
     const nanoStart = Date.now();
     const nano = await askAI({
-      task: 'fast',
-      system: PING_SYSTEM,
-      prompt: 'ping',
-      maxTokens: 256,
-      cache: false,
       feature: 'diagnostic',
+      tier: 'fast',
+      system: PING_SYSTEM,
+      prompt: 'ping nano',
+      maxTokens: 256,
+      cacheTtlSeconds: 0,
     });
     const nanoMs = Date.now() - nanoStart;
 
     return NextResponse.json({
-      ultra: { ok: ultra.ok, ms: ultraMs, degraded: ultra.degraded },
-      nano: { ok: nano.ok, ms: nanoMs, degraded: nano.degraded },
+      ultra: { ok: true, ms: ultraMs, degraded: ultra.degraded },
+      nano: { ok: true, ms: nanoMs, degraded: nano.degraded },
     });
   } catch (error) {
     console.error('[ai/ping] erreur inattendue:', error instanceof Error ? error.message : error);

@@ -1,13 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { completion } from '@rocketnew/llm-sdk';
 import { createClient } from '@/lib/supabase/server';
-import { askAI } from '@/lib/ai/nemotronRouter';
-import {
-  resolveAiMode,
-  derivePromptAndSystem,
-  buildSsePayload,
-  ASKAI_ERROR_STATUS,
-} from '@/lib/ai/requestMode';
+import { askAI } from '@/lib/ai/askAI';
+import { resolveAiMode, derivePromptAndSystem, buildSsePayload } from '@/lib/ai/requestMode';
 
 export const dynamic = 'force-dynamic';
 
@@ -15,10 +10,10 @@ export const dynamic = 'force-dynamic';
  * Point d'entrée IA unique de LKDV.
  * - Mode legacy (rétrocompatibilité) : provider payant demandé explicitement ET
  *   sa clé existe → comportement historique `@rocketnew/llm-sdk` (SSE inclus).
- * - Mode défaut : routeur Nemotron via OpenRouter (`askAI`), avec quota
- *   quotidien (`check_and_increment_ai_quota`) et cache serveur.
+ * - Mode défaut : routeur Nemotron via OpenRouter (`askAI`) — quota et cache
+ *   gérés en interne par le routeur (registre + port IA).
  * Toute entrée est validée par Zod (`resolveAiMode`). Aucun throw non géré :
- * erreurs typées traduites en réponses gracieuses pour l'UI.
+ * en mode Nemotron, la dégradation est gracieuse (flag `degraded`), jamais 500.
  */
 
 const API_KEYS: Record<string, string | undefined> = {
@@ -62,10 +57,9 @@ export async function POST(request: NextRequest) {
 
   try {
     // Authenticate user in production (inchangé)
-    let userId: string | null = null;
-    let supabase: Awaited<ReturnType<typeof createClient>> | null = null;
+    let userId: string | undefined;
     if (process.env.NODE_ENV === 'production') {
-      supabase = await createClient();
+      const supabase = await createClient();
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) {
         return NextResponse.json(
@@ -148,7 +142,7 @@ export async function POST(request: NextRequest) {
       return NextResponse.json(response);
     }
 
-    // ── Mode défaut : routeur Nemotron via OpenRouter ─────────────────────────
+    // ── Mode défaut : routeur Nemotron via OpenRouter (port + registre) ───────
     const derived = derivePromptAndSystem(body);
     if (!derived) {
       return NextResponse.json(
@@ -160,45 +154,16 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Quota quotidien (20 heavy + 100 fast / jour / user). En dev sans session,
-    // le quota est ignoré (pas d'utilisateur) — warn pour le rendre visible.
-    if (userId && supabase) {
-      const { data: allowed, error: quotaError } = await supabase.rpc(
-        'check_and_increment_ai_quota',
-        { p_user_id: userId, p_tier: body.task }
-      );
-      if (quotaError) {
-        console.warn('[ai/chat-completion] quota indisponible:', quotaError.message);
-      } else if (allowed === false) {
-        return NextResponse.json(
-          { error: 'Quota IA quotidien atteint pour ce tier.', code: 'QUOTA_EXCEEDED' },
-          { status: 429 }
-        );
-      }
-    } else if (process.env.NODE_ENV === 'production') {
-      console.warn('[ai/chat-completion] quota ignoré: utilisateur inconnu');
-    }
-
     const result = await askAI({
-      task: body.task,
+      feature: 'chat-completion',
+      tier: body.task,
       system: derived.system,
       prompt: derived.prompt,
-      maxTokens: body.maxTokens,
+      maxTokens: body.maxTokens ?? 2_048,
       reasoningBudget: body.reasoningBudget,
-      feature: 'chat-completion',
+      cacheTtlSeconds: 0, // chat = personnel : pas de cache
+      userId,
     });
-
-    if (!result.ok) {
-      console.error('[ai/chat-completion] askAI en échec:', result.error.code);
-      return NextResponse.json(
-        {
-          error: 'Service IA momentanément indisponible',
-          code: result.error.code,
-          details: result.error.message,
-        },
-        { status: ASKAI_ERROR_STATUS[result.error.code] }
-      );
-    }
 
     if (body.stream) {
       // Contrat SSE conservé pour les clients existants (réponse complète en un chunk).
@@ -210,6 +175,7 @@ export async function POST(request: NextRequest) {
       model: result.model,
       degraded: result.degraded,
       cached: result.cached,
+      provider: result.provider,
     });
   } catch (error) {
     const formatted = formatErrorResponse(error, (rawBody as any)?.provider);

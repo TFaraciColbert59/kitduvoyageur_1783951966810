@@ -12,6 +12,7 @@ import type { AIResponse } from './providers/types';
  *
  * Choix du hash : SHA-256 côté TS (node:crypto) — stable, pas de dépendance
  * pgcrypto côté SQL, calcul serveur-only. Locale constante 'fr' (site monolingue).
+ * NB : nom de fichier sans "cache" (règle *cache* du .gitignore).
  */
 
 const SITE_LOCALE = 'fr';
@@ -35,7 +36,7 @@ export async function getCached(feature: string, prompt: string): Promise<AIResp
   try {
     const { data, error } = await client.rpc('get_ai_cache', { p_cache_key: cacheKey });
     if (error) {
-      console.error('[ai/cache] get_ai_cache:', error.message);
+      console.error('[ai/responseStore] get_ai_cache:', error.message);
       return null;
     }
     const stored = data as { text?: unknown; model?: unknown; provider?: unknown; degraded?: unknown } | null;
@@ -49,7 +50,7 @@ export async function getCached(feature: string, prompt: string): Promise<AIResp
       provider: typeof stored.provider === 'string' ? stored.provider : 'cache',
     };
   } catch (err) {
-    console.error('[ai/cache] getCached a échoué:', err instanceof Error ? err.message : err);
+    console.error('[ai/responseStore] getCached a échoué:', err instanceof Error ? err.message : err);
     return null;
   }
 }
@@ -81,9 +82,9 @@ export async function setCached(
       p_ttl_seconds: ttlSeconds,
     });
     if (error) {
-      console.error('[ai/cache] set_ai_cache:', error.message);
+      console.error('[ai/responseStore] set_ai_cache:', error.message);
     }
   } catch (err) {
-    console.error('[ai/cache] setCached a échoué:', err instanceof Error ? err.message : err);
+    console.error('[ai/responseStore] setCached a échoué:', err instanceof Error ? err.message : err);
   }
 }

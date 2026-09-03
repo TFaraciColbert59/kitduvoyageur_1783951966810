@@ -1,11 +1,9 @@
 import { z } from 'zod';
-import type { AskAIErrorCode } from '@/lib/ai/nemotronRouter';
 
 /**
  * Logique pure du point d'entrée IA `/api/ai/chat-completion` :
  * validation Zod de TOUTE entrée, résolution du mode (legacy payant vs
  * routeur Nemotron par défaut), dérivation prompt/système, payload SSE.
- * Import de types uniquement (aucune dépendance runtime vers le routeur).
  */
 
 export const LEGACY_PROVIDERS = ['OPEN_AI', 'ANTHROPIC', 'GEMINI', 'PERPLEXITY'] as const;
@@ -98,9 +96,3 @@ export function buildSsePayload(text: string, degraded: boolean): string {
   ];
   return frames.map((f) => `data: ${JSON.stringify(f)}\n\n`).join('');
 }
-
-export const ASKAI_ERROR_STATUS: Record<AskAIErrorCode, number> = {
-  INVALID_INPUT: 400,
-  NO_KEY: 503,
-  ALL_PROVIDERS_FAILED: 502,
-};
