@@ -1,8 +1,8 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 
 const { createBrowserClientMock, createServerClientMock, cookieSetMock } = vi.hoisted(() => ({
-  createBrowserClientMock: vi.fn(() => ({ __kind: 'browser' })),
-  createServerClientMock: vi.fn(() => ({ __kind: 'server' })),
+  createBrowserClientMock: vi.fn((_url: string, _key: string) => ({ __kind: 'browser' })),
+  createServerClientMock: vi.fn((_url: string, _key: string, _opts: unknown) => ({ __kind: 'server' })),
   cookieSetMock: vi.fn(),
 }));
 
@@ -72,7 +72,7 @@ describe('src/lib/supabase/server — configuration sécurisée (Chantier 0)', (
 
     await createClient();
 
-    const config = createServerClientMock.mock.calls[0][2] as {
+    const config = (createServerClientMock.mock.calls[0] as unknown[])[2] as {
       cookies: {
         setAll: (cookies: { name: string; value: string; options?: Record<string, unknown> }[]) => void;
       };

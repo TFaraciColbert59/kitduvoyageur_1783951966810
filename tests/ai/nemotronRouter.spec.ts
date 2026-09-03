@@ -1,9 +1,11 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 
 const { getCachedResponseMock, storeCachedResponseMock, buildCacheKeyMock } = vi.hoisted(() => ({
-  getCachedResponseMock: vi.fn(async () => null),
-  storeCachedResponseMock: vi.fn(async () => {}),
-  buildCacheKeyMock: vi.fn(() => 'test-cache-key'),
+  getCachedResponseMock: vi.fn(async (_key: string) => null as string | null),
+  storeCachedResponseMock: vi.fn(
+    async (_key: string, _feature: string, _response: string, _model: string, _ttl: number) => {}
+  ),
+  buildCacheKeyMock: vi.fn((_parts: unknown) => 'test-cache-key'),
 }));
 
 vi.mock('@/lib/ai/responseStore', () => ({
