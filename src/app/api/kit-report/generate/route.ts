@@ -1,35 +1,53 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
-import { getChatCompletion } from '@/lib/ai/chatCompletion';
+import { askAI } from '@/lib/ai/askAI';
+import { KIT_CONFIGURATOR_SPEC, kitReportBodySchema, kitAIOutputSchema, buildKitPrompt, sanitizeAIKitOutput, buildDeterministicFallback, type KitAIOutput } from '@/lib/ai/features/kitConfigurator';
+import { analyzeKit, type RealShopProduct } from '@/lib/ai/configuratorCore';
 
 export const runtime = 'nodejs';
 export const maxDuration = 60;
+export const dynamic = 'force-dynamic';
 
-interface SessionParams {
-  destination: string;
-  country: string;
-  startDate: string;
-  endDate: string;
-  season: string;
-  activity: string;
-  level: string;
-  maxWeightG: number;
-  budgetEur: number;
-  bodyWeightKg?: number;
-  climate?: string;
+/**
+ * Rapport de kit connecté — architecture « IA-comme-enrichisseur » :
+ *   1. CALCUL DÉTERMINISTE D'ABORD (analyzeKit) : manques/alertes réels du
+ *      catalogue, zéro hallucination, règle « never fabricate ».
+ *   2. IA ENSUITE (Nemotron via askAI) : justifications + alternatives RÉELLES.
+ *   3. Validation Zod stricte + sanitize anti-fabrication ; en cas d'échec ou
+ *      de dégradation IA → fallback déterministe (jamais d'erreur 500).
+ * Calculs poids/prix et insertion kit_reports INCHANGÉS.
+ */
+
+// season/climate → weatherKey du moteur déterministe (mapping documenté).
+function deriveWeatherKey(season: string, climate?: string): 'sec_chaud' | 'frais_brumeux' | 'pluvieux_vente' | 'froid_sec' {
+  const haystack = `${season} ${climate ?? ''}`.toLowerCase();
+  if (/hiver|froid|neige|glace|polaire/.test(haystack)) return 'froid_sec';
+  if (/pluie|pluvieux|vent|orage|mousson/.test(haystack)) return 'pluvieux_vente';
+  if (/été|ete|chaud|sec|désert|desert|tropical/.test(haystack)) return 'sec_chaud';
+  return 'frais_brumeux';
 }
 
-interface ProductItem {
-  id: string;
-  name: string;
-  brand: string;
-  slug: string;
-  category: string;
-  weight_g: number;
-  price_eur: number;
-  description: string;
-  image: string;
-  image_alt: string;
+function deriveDurationKey(startDate: string, endDate: string): '1-2d' | '3-5d' | '1-2w' | '2w+' {
+  const start = Date.parse(startDate);
+  const end = Date.parse(endDate);
+  if (Number.isNaN(start) || Number.isNaN(end) || end <= start) return '3-5d';
+  const days = Math.ceil((end - start) / 86_400_000);
+  if (days <= 2) return '1-2d';
+  if (days <= 5) return '3-5d';
+  if (days <= 14) return '1-2w';
+  return '2w+';
+}
+
+function extractAIJson(raw: string): unknown | null {
+  const cleaned = raw.replace(/```json\n?/g, '').replace(/```\n?/g, '').trim();
+  const start = cleaned.indexOf('{');
+  const end = cleaned.lastIndexOf('}');
+  if (start === -1 || end === -1 || end <= start) return null;
+  try {
+    return JSON.parse(cleaned.slice(start, end + 1));
+  } catch {
+    return null;
+  }
 }
 
 export async function POST(req: NextRequest) {
@@ -37,12 +55,15 @@ export async function POST(req: NextRequest) {
     const supabase = await createClient();
     const { data: { user } } = await supabase.auth.getUser();
 
-    const body = await req.json();
-    const { sessionParams, selectedItems }: { sessionParams: SessionParams; selectedItems: ProductItem[] } = body;
-
-    if (!sessionParams || !selectedItems) {
-      return NextResponse.json({ error: 'Paramètres manquants' }, { status: 400 });
+    const rawBody = await req.json();
+    const parsedBody = kitReportBodySchema.safeParse(rawBody);
+    if (!parsedBody.success) {
+      return NextResponse.json(
+        { error: 'Paramètres invalides', details: parsedBody.error.issues.map((i) => i.path.join('.')).join(', ') },
+        { status: 400 }
+      );
     }
+    const { sessionParams, selectedItems } = parsedBody.data;
 
     // Fetch products from products table
     const { data: dbProducts } = await supabase
@@ -52,7 +73,7 @@ export async function POST(req: NextRequest) {
       .order('category');
 
     // Fetch user owned inventory if logged in
-    let userOwnedGear: any[] = [];
+    let userOwnedGear: { id: string; name: string; brand?: string; category: string; weight_g: number }[] = [];
     if (user) {
       const { data: gear } = await supabase
         .from('gear_items')
@@ -61,105 +82,80 @@ export async function POST(req: NextRequest) {
       userOwnedGear = gear || [];
     }
 
-    const sourceable = dbProducts ?? [];
-
-    // Build AI prompt for justifications + alternatives + consumables
-    const itemsForAI = selectedItems.map(item => ({
-      id: item.id,
-      name: item.name,
-      brand: item.brand,
-      category: item.category,
-      weight_g: item.weight_g,
-      price_eur: item.price_eur,
+    const sourceable: RealShopProduct[] = (dbProducts ?? []).map((p: any) => ({
+      id: p.id,
+      slug: p.slug || p.id,
+      name: p.name,
+      brand: p.brand || 'Le Kit du Voyageur',
+      category: p.category || 'Accessoires',
+      priceEur: Number(p.price_eur) || 0,
+      weightGrams: Number(p.weight_g) || 0,
+      image: p.image || '',
+      stock: p.stock || 0,
     }));
 
-    const systemPrompt = `Tu es un expert équipement outdoor. Tu génères des rapports de kit personnalisés en JSON strict.
-Réponds UNIQUEMENT avec du JSON valide, sans markdown, sans commentaires.`;
+    // ── 1. CALCUL DÉTERMINISTE (source de vérité, zéro hallucination) ─────────
+    const analysis = analyzeKit({
+      catalog: sourceable,
+      ownedItems: userOwnedGear.map((item) => ({
+        id: item.id,
+        name: item.name,
+        brand: item.brand ?? undefined,
+        category: item.category ?? 'Équipement',
+        weightGrams: item.weight_g ?? 300,
+        source: 'inventory' as const,
+      })),
+      weatherKey: deriveWeatherKey(sessionParams.season, sessionParams.climate),
+      durationKey: deriveDurationKey(sessionParams.startDate, sessionParams.endDate),
+    });
 
-    const userPrompt = `Génère un rapport de kit pour ce voyage :
-- Destination : ${sessionParams.destination} (${sessionParams.country})
-- Dates : ${sessionParams.startDate} → ${sessionParams.endDate}
-- Saison : ${sessionParams.season}
-- Activité : ${sessionParams.activity}
-- Niveau : ${sessionParams.level}
-- Budget max : ${sessionParams.budgetEur}€
-- Poids max : ${(sessionParams.maxWeightG / 1000).toFixed(1)}kg
-${sessionParams.bodyWeightKg ? `- Poids corporel : ${sessionParams.bodyWeightKg}kg` : ''}
-${sessionParams.climate ? `- Climat : ${sessionParams.climate}` : ''}
+    // ── 2. IA ENRICHISSEUSE (Nemotron via askAI — quota géré par le routeur) ──
+    const { system, prompt } = buildKitPrompt({
+      sessionParams,
+      selectedItems: selectedItems.map((item) => ({
+        id: item.id,
+        name: item.name,
+        brand: item.brand,
+        category: item.category,
+        weight_g: item.weight_g,
+        price_eur: item.price_eur,
+      })),
+      sourceable,
+      analysis,
+    });
 
-Articles sélectionnés :
-${JSON.stringify(itemsForAI, null, 2)}
+    const result = await askAI({
+      feature: 'kit-configurator',
+      tier: KIT_CONFIGURATOR_SPEC.tier,
+      system,
+      prompt,
+      maxTokens: 4_000,
+      reasoningBudget: KIT_CONFIGURATOR_SPEC.maxReasoningBudget,
+      cacheTtlSeconds: 0,
+      userId: user?.id,
+    });
 
-Catalogue disponible (sourceable) :
-${JSON.stringify(sourceable.slice(0, 30).map(p => ({ id: p.id, name: p.name, brand: p.brand, category: p.category, weight_g: p.weight_g, price_eur: Number(p.price_eur) })), null, 2)}
-
-Retourne ce JSON exact :
-{
-  "justifications": { "<item_id>": "phrase de justification IA pour ce voyage précis (1-2 phrases)" },
-  "alternatives": {
-    "<item_id>": {
-      "eco": { "name": "...", "brand": "...", "price_eur": 0, "reason": "..." },
-      "premium": { "name": "...", "brand": "...", "price_eur": 0, "reason": "..." }
+    // ── 3. Validation Zod + sanitize « never fabricate » → fallback si échec ──
+    let aiData: KitAIOutput | null = null;
+    if (!result.degraded) {
+      const raw = extractAIJson(result.text);
+      const parsedAI = raw ? kitAIOutputSchema.safeParse(raw) : null;
+      if (parsedAI?.success) {
+        const { data: sanitized, fabricatedDropped } = sanitizeAIKitOutput(parsedAI.data, sourceable);
+        if (fabricatedDropped > 0) {
+          console.warn('[kit-report] alternatives fabriquées supprimées:', fabricatedDropped);
+        }
+        aiData = sanitized;
+      }
     }
-  },
-  "consumables": [
-    { "name": "...", "category": "...", "reason": "...", "estimated_price_eur": 0 }
-  ],
-  "bring_yourself": [
-    { "item": "...", "guide": "...", "affiliate_hint": "..." }
-  ],
-  "carbon_kg_estimate": 0,
-  "destination_context": {
-    "weather_summary": "...",
-    "security_level": "faible|modéré|élevé",
-    "security_notes": "...",
-    "country_page_code": "${sessionParams.country.toLowerCase().replace(/\s+/g, '-')}"
-  }
-}`;
-
-    const aiResponse = await getChatCompletion(
-      'GEMINI',
-      'gemini/gemini-2.5-flash',
-      [
-        { role: 'system', content: systemPrompt },
-        { role: 'user', content: userPrompt },
-      ],
-      { temperature: 0.4, max_tokens: 4000 }
-    );
-
-    let aiData: {
-      justifications: Record<string, string>;
-      alternatives: Record<string, { eco: { name: string; brand: string; price_eur: number; reason: string }; premium: { name: string; brand: string; price_eur: number; reason: string } }>;
-      consumables: { name: string; category: string; reason: string; estimated_price_eur: number }[];
-      bring_yourself: { item: string; guide: string; affiliate_hint: string }[];
-      carbon_kg_estimate: number;
-      destination_context: { weather_summary: string; security_level: string; security_notes: string; country_page_code: string };
-    };
-
-    try {
-      const raw = aiResponse.choices[0].message.content ?? '{}';
-      const cleaned = raw.replace(/```json\n?/g, '').replace(/```\n?/g, '').trim();
-      aiData = JSON.parse(cleaned);
-    } catch {
-      aiData = {
-        justifications: {},
-        alternatives: {},
-        consumables: [],
-        bring_yourself: [
-          { item: 'Chaussures de randonnée', guide: 'Choisir selon le terrain et la durée', affiliate_hint: '' },
-          { item: 'Vêtements techniques', guide: 'Adapter aux conditions climatiques', affiliate_hint: '' },
-        ],
-        carbon_kg_estimate: 0,
-        destination_context: {
-          weather_summary: `Conditions typiques pour ${sessionParams.destination} en ${sessionParams.season}`,
-          security_level: 'modéré',
-          security_notes: 'Consultez la fiche pays pour les informations de sécurité actualisées.',
-          country_page_code: sessionParams.country.toLowerCase().replace(/\s+/g, '-'),
-        },
-      };
+    if (!aiData) {
+      if (result.degraded) {
+        console.warn('[kit-report] IA dégradée → fallback déterministe');
+      }
+      aiData = buildDeterministicFallback(sessionParams, analysis);
     }
 
-    // Compute weight breakdown by category
+    // Compute weight breakdown by category (inchangé)
     const weightBreakdown: Record<string, number> = {};
     let totalWeightG = 0;
     let totalPriceEur = 0;
@@ -171,14 +167,14 @@ Retourne ce JSON exact :
       totalPriceEur += item.price_eur;
     }
 
-    // Enrich selected items with justifications
+    // Enrich selected items with justifications (inchangé)
     const enrichedItems = selectedItems.map(item => ({
       ...item,
-      justification: aiData.justifications?.[item.id] ?? `Recommandé pour ${sessionParams.activity} en ${sessionParams.season}.`,
+      justification: aiData?.justifications?.[item.id] ?? `Recommandé pour ${sessionParams.activity} en ${sessionParams.season}.`,
       sourceable: true,
     }));
 
-    // Save session + report if user is logged in
+    // Save session + report if user is logged in (inchangé)
     let reportId: string | null = null;
     if (user) {
       const { data: session } = await supabase
@@ -243,6 +239,7 @@ Retourne ce JSON exact :
       totalPriceEur,
       carbonKgEstimate: aiData.carbon_kg_estimate ?? null,
       destinationContext: aiData.destination_context ?? null,
+      degraded: result.degraded,
       generatedAt: new Date().toISOString(),
     });
   } catch (err: unknown) {
