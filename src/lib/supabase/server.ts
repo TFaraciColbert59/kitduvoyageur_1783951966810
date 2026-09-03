@@ -1,11 +1,30 @@
 import { createServerClient, createBrowserClient } from '@supabase/ssr';
 
-const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL || 'https://icxyvwzfjbflcbqukpfz.supabase.co';
-const SUPABASE_ANON_KEY = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImljeHl2d3pmamJmbGNicXVrcGZ6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODM5NDc3ODcsImV4cCI6MjA5OTUyMzc4N30.-zry9a_kzwgZU_SpLuguT6P4HMbd7czPdMzBJx7ICMA';
+/**
+ * Chantier 0 — Sécurité : plus AUCUNE clé en dur.
+ * Les variables NEXT_PUBLIC_* sont référencées statiquement (inlining Next.js
+ * pour le bundle client) et validées à l'usage. Une absence est une erreur
+ * explicite, jamais un fallback silencieux.
+ * Voir .env.example pour les variables requises.
+ */
+function getSupabaseConfig() {
+  const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
+  const anonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+  if (!url || !anonKey) {
+    throw new Error(
+      '[LKDV] Configuration Supabase manquante : NEXT_PUBLIC_SUPABASE_URL et ' +
+        'NEXT_PUBLIC_SUPABASE_ANON_KEY sont requis. Copiez .env.example vers ' +
+        '.env.local et renseignez-les (jamais commité).'
+    );
+  }
+  return { url, anonKey };
+}
 
 export async function createClient() {
+  const { url, anonKey } = getSupabaseConfig();
+
   if (typeof window !== 'undefined') {
-    return createBrowserClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+    return createBrowserClient(url, anonKey);
   }
 
   try {
@@ -13,8 +32,8 @@ export async function createClient() {
     const cookieStore = await cookies();
 
     return createServerClient(
-      SUPABASE_URL,
-      SUPABASE_ANON_KEY,
+      url,
+      anonKey,
       {
         cookies: {
           getAll() {
@@ -37,6 +56,6 @@ export async function createClient() {
       }
     );
   } catch {
-    return createBrowserClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+    return createBrowserClient(url, anonKey);
   }
 }
