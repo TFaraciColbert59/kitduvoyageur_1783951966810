@@ -244,3 +244,55 @@ export async function fallbackResponse(): Promise<{ text: string; model: string;
     provider: 'fallback',
   };
 }
+
+// ── Décision sortie IA vs fallback (pure, testée) ───────────────────────────
+
+/** Extrait le JSON objet d'une réponse IA (gère les fences ```json et le bruit). */
+export function extractAIJson(raw: string): unknown | null {
+  const cleaned = raw.replace(/```json\n?/g, '').replace(/```\n?/g, '').trim();
+  const start = cleaned.indexOf('{');
+  const end = cleaned.lastIndexOf('}');
+  if (start === -1 || end === -1 || end <= start) return null;
+  try {
+    return JSON.parse(cleaned.slice(start, end + 1));
+  } catch {
+    return null;
+  }
+}
+
+export interface ResolveKitAIOutputParams {
+  result: { degraded: boolean; text: string };
+  sourceable: RealShopProduct[];
+  sessionParams: KitSessionParams;
+  analysis: KitAnalysis;
+}
+
+/**
+ * Valide la sortie IA (Zod + sanitize « never fabricate ») et retombe sur le
+ * fallback déterministe si le provider est dégradé ou si la sortie est
+ * inexploitable. Jamais de throw : le rapport reste vendable dans tous les cas.
+ * NB : des fabrications supprimées ne déclenchent PAS le fallback — les
+ * alternatives réelles subsistantes sont conservées (comportement de la route).
+ */
+export function resolveKitAIOutput(params: ResolveKitAIOutputParams): {
+  data: KitAIOutput;
+  usedFallback: boolean;
+  fabricatedDropped: number;
+} {
+  const { result, sourceable, sessionParams, analysis } = params;
+
+  if (!result.degraded) {
+    const raw = extractAIJson(result.text);
+    const parsedAI = raw ? kitAIOutputSchema.safeParse(raw) : null;
+    if (parsedAI?.success) {
+      const { data: sanitized, fabricatedDropped } = sanitizeAIKitOutput(parsedAI.data, sourceable);
+      return { data: sanitized, usedFallback: false, fabricatedDropped };
+    }
+  }
+
+  return {
+    data: buildDeterministicFallback(sessionParams, analysis),
+    usedFallback: true,
+    fabricatedDropped: 0,
+  };
+}

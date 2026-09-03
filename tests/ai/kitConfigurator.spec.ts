@@ -6,6 +6,7 @@ import {
   sanitizeAIKitOutput,
   buildKitPrompt,
   buildDeterministicFallback,
+  resolveKitAIOutput,
 } from '../../src/lib/ai/features/kitConfigurator';
 import type { RealShopProduct, KitAnalysis } from '../../src/lib/ai/configuratorCore';
 
@@ -140,5 +141,50 @@ describe('src/lib/ai/features/kitConfigurator — enrichissement IA du kit', () 
     expect(fallback.bring_yourself.length).toBeGreaterThan(0);
     expect(fallback.destination_context.country_page_code).toBe('france');
     expect(fallback.carbon_kg_estimate).toBeNull();
+  });
+
+  describe('resolveKitAIOutput — décision sortie IA vs fallback (pure)', () => {
+    const routeArgs = { sourceable: CATALOG, sessionParams: SESSION, analysis: ANALYSIS };
+
+    it('TEST-KCF-07: sortie IA valide, 100 % IDs réels → données sanitizées telles quelles, sans fallback', () => {
+      const result = resolveKitAIOutput({
+        ...routeArgs,
+        result: { degraded: false, text: JSON.stringify(VALID_AI_OUTPUT) },
+      });
+
+      expect(result.usedFallback).toBe(false);
+      expect(result.fabricatedDropped).toBe(0);
+      expect(result.data.justifications.p1).toBe('Parfait pour 5 jours en autonomie.');
+      expect(result.data.alternatives?.p1?.eco?.id).toBe('p2');
+      expect(result.data.destination_context.country_page_code).toBe('france');
+    });
+
+    it('TEST-KCF-08: texte IA non-JSON / markdown inextractible → fallback déterministe, jamais de throw', () => {
+      const result = resolveKitAIOutput({
+        ...routeArgs,
+        result: { degraded: false, text: "Désolé, voici ma réponse en prose sans JSON..." },
+      });
+
+      expect(result.usedFallback).toBe(true);
+      expect(result.data.alternatives).toEqual({});
+      expect(result.data.destination_context.country_page_code).toBe('france');
+    });
+
+    it('TEST-KCF-09: provider en échec (degraded) → fallback déterministe, jamais de throw', () => {
+      const result = resolveKitAIOutput({
+        ...routeArgs,
+        result: { degraded: true, text: '' },
+      });
+
+      expect(result.usedFallback).toBe(true);
+      expect(result.data).toEqual(buildDeterministicFallback(SESSION, ANALYSIS));
+    });
+
+    it('TEST-KCF-10: sorties partielles variées (JSON tronqué, array) → fallback sans exception', () => {
+      for (const text of ['{"justifications": {"p1": "tronqué...', '[1, 2, 3]', 'null', '']) {
+        const result = resolveKitAIOutput({ ...routeArgs, result: { degraded: false, text } });
+        expect(result.usedFallback).toBe(true);
+      }
+    });
   });
 });
