@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
 import { askAI } from '@/lib/ai/askAI';
-import { KIT_CONFIGURATOR_SPEC, kitReportBodySchema, kitAIOutputSchema, buildKitPrompt, sanitizeAIKitOutput, buildDeterministicFallback, type KitAIOutput } from '@/lib/ai/features/kitConfigurator';
+import { KIT_CONFIGURATOR_SPEC, kitReportBodySchema, buildKitPrompt, resolveKitAIOutput } from '@/lib/ai/features/kitConfigurator';
 import { analyzeKit, type RealShopProduct } from '@/lib/ai/configuratorCore';
 
 export const runtime = 'nodejs';
@@ -36,18 +36,6 @@ function deriveDurationKey(startDate: string, endDate: string): '1-2d' | '3-5d' 
   if (days <= 5) return '3-5d';
   if (days <= 14) return '1-2w';
   return '2w+';
-}
-
-function extractAIJson(raw: string): unknown | null {
-  const cleaned = raw.replace(/```json\n?/g, '').replace(/```\n?/g, '').trim();
-  const start = cleaned.indexOf('{');
-  const end = cleaned.lastIndexOf('}');
-  if (start === -1 || end === -1 || end <= start) return null;
-  try {
-    return JSON.parse(cleaned.slice(start, end + 1));
-  } catch {
-    return null;
-  }
 }
 
 export async function POST(req: NextRequest) {
@@ -136,23 +124,17 @@ export async function POST(req: NextRequest) {
     });
 
     // ── 3. Validation Zod + sanitize « never fabricate » → fallback si échec ──
-    let aiData: KitAIOutput | null = null;
-    if (!result.degraded) {
-      const raw = extractAIJson(result.text);
-      const parsedAI = raw ? kitAIOutputSchema.safeParse(raw) : null;
-      if (parsedAI?.success) {
-        const { data: sanitized, fabricatedDropped } = sanitizeAIKitOutput(parsedAI.data, sourceable);
-        if (fabricatedDropped > 0) {
-          console.warn('[kit-report] alternatives fabriquées supprimées:', fabricatedDropped);
-        }
-        aiData = sanitized;
-      }
+    const { data: aiData, usedFallback, fabricatedDropped } = resolveKitAIOutput({
+      result: { degraded: result.degraded, text: result.text },
+      sourceable,
+      sessionParams,
+      analysis,
+    });
+    if (usedFallback) {
+      console.warn('[kit-report] IA dégradée/inexploitable → fallback déterministe');
     }
-    if (!aiData) {
-      if (result.degraded) {
-        console.warn('[kit-report] IA dégradée → fallback déterministe');
-      }
-      aiData = buildDeterministicFallback(sessionParams, analysis);
+    if (fabricatedDropped > 0) {
+      console.warn('[kit-report] alternatives fabriquées supprimées:', fabricatedDropped);
     }
 
     // Compute weight breakdown by category (inchangé)
