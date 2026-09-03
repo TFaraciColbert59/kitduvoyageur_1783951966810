@@ -5,6 +5,7 @@ import {
   buildStripeCheckoutMetadata,
   StripeCartItemRef,
 } from '@/features/checkout/stripeMetadata';
+import { verifyKitRef, KIT_REF_COOKIE } from '@/features/kits/kitRef';
 
 // Rate limiting: simple in-memory store (use Redis in production)
 const rateLimitMap = new Map<string, { count: number; resetAt: number }>();
@@ -188,6 +189,17 @@ export async function POST(request: NextRequest) {
       quantity: v.quantity,
     }));
     const plan = buildStripeCheckoutMetadata(userId, refs);
+
+    // Attribution (Lot 6.3) : le cookie lkdv_kit_ref est lu et VÉRIFIÉ ici
+    // (signature HMAC, expiration). Invalide/expiré → ignoré silencieusement.
+    const kitRefSecret = process.env.KIT_REF_SECRET;
+    const kitRefToken = request.cookies.get(KIT_REF_COOKIE)?.value ?? null;
+    if (kitRefSecret && kitRefToken) {
+      const kitRef = await verifyKitRef(kitRefToken, kitRefSecret);
+      if (kitRef) {
+        plan.metadata.kit_ref = kitRef.kit_id;
+      }
+    }
 
     // Panier trop long pour les metadata Stripe → checkout_intents (service)
     if (plan.needsIntent && plan.intentPayload) {

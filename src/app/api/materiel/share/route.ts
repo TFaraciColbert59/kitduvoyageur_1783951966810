@@ -78,7 +78,23 @@ export async function GET(req: NextRequest) {
       .eq('id', shareToken.kit_id)
       .single();
 
-    return NextResponse.json({ kit, permission: shareToken.permission });
+    // Pose du cookie d'attribution (Lot 6.3) : un lien /k/token ouvert devient
+    // une référence signée que le checkout lira (httpOnly, signé HMAC).
+    let res: NextResponse = NextResponse.json({ kit, permission: shareToken.permission });
+    const secret = process.env.KIT_REF_SECRET;
+    if (secret) {
+      const { signKitRef, KIT_REF_COOKIE, KIT_REF_TTL_MS } = await import('@/features/kits/kitRef');
+      const tokenSigned = await signKitRef(shareToken.kit_id, secret);
+      res = NextResponse.json({ kit, permission: shareToken.permission });
+      res.cookies.set(KIT_REF_COOKIE, tokenSigned, {
+        httpOnly: true,
+        secure: process.env.NODE_ENV === 'production',
+        sameSite: 'lax',
+        path: '/',
+        maxAge: Math.floor(KIT_REF_TTL_MS / 1000),
+      });
+    }
+    return res;
   } catch (err) {
     console.error('GET /api/materiel/share', err);
     return NextResponse.json(

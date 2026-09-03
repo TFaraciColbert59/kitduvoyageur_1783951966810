@@ -1,5 +1,36 @@
 # LKDV — Mission Log
 
+## 2026-09-03 — Chantier « Lignées de kits » — LOT 6 : la part créateur (terminé, mode autonome)
+
+### Lot 6 — La part créateur (dépend de 1, 3, 4 — tous verts)
+- **Décisions appliquées** : barème 70/20/10 par défaut (300 bps = 3 %, modifiable via
+  `royalty_config` sans migration — question Tony reportée à la config, pas au code) ;
+  versement en **crédit boutique** (extension reward engine, décision GATE 0) ; nom des
+  forks : liberté de renommage + mention « Issu de X » dans le KitSheet (question Tony
+  tranchée par défaut conservateur, documentée).
+- **Migration `supabase/migrations/20260903050000_kit_attributions.sql`** :
+  `royalty_config` (config en base) · `kit_attributions` (UNIQUE order_item_id →
+  idempotence rejeu) · `kit_royalty_shares` (RLS : bénéficiaire lit ses parts, écriture
+  service_role) · **store credit** (`reward_accounts.store_credit_cents` + ledger
+  append-only `store_credit_ledger`, RLS own) · RPC SECURITY DEFINER :
+  `insert_kit_attribution` (condition TERRAIN : ≥1 session ≥1 km dans la lignée, produit
+  du kit requis, idempotente), `finalize_kit_attributions` (14 j → confirmed + crédit),
+  `reverse_kit_attribution_by_session` (refund → reversed, débit si déjà crédité).
+- **Cookie d'attribution** `lkdv_kit_ref` : module `kitRef.ts` (HMAC-SHA256 Web Crypto,
+  httpOnly/secure/sameSite=lax, TTL 30 j, forgé/expiré → ignoré silencieusement) + 6 tests.
+  Posé par `GET /api/materiel/share` (lien externe) et `GET /api/kits/[id]/refer` (KitSheet).
+- **Checkout** : lit et VÉRIFIE le cookie → `metadata.kit_ref`.
+- **Webhook** : après `order_items`, calcul `computeRoyaltyShares` (TS, invariant strict
+  somme=commission) + RPC d'insertion (remote ancestors, 3 générations, acheteur exclu) ;
+  `charge.refunded` → reversal par session.
+- **Module pur `royalty.ts`** : `computeRoyaltyShares` avec invariant strict (aucun centime
+  perdu/créé), plancher 1 cent, acheteur exclu, 3 générations max — **7 tests**.
+- **Cron `GET /api/cron/finalize-kit-attributions`** (Bearer CRON_SECRET) + **API
+  `GET /api/kits/my-royalties`** (« ma part créateur »).
+- **Test DB `supabase/tests/database/attributions.test.sql`** (7 assertions : condition
+  terrain, idempotence rejeu, auto-achat exclu, somme = 900 cts, reversal).
+- **Vérifs** : tsc OK · npm test 303/303 (43 fichiers) OK · build OK · lint 0 erreur.
+
 ## 2026-09-03 — Chantier « Lignées de kits » — LOT 5 : le KitSheet (terminé, mode autonome)
 
 ### Lot 5 — L'objet qui circule (aucune page /kits/[slug])

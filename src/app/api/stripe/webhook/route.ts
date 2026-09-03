@@ -1,6 +1,11 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
 import { parseMetadataItems, StripeCartItemRef } from '@/features/checkout/stripeMetadata';
+import {
+  computeRoyaltyShares,
+  MAX_ROYALTY_GENERATIONS,
+  DEFAULT_ROYALTY_GLOBAL_BPS,
+} from '@/features/kits/royalty';
 
 export const dynamic = 'force-dynamic';
 
@@ -132,6 +137,7 @@ export async function POST(request: NextRequest) {
       }
 
       // ── order_items + déstockage (product_id depuis les items validés) ──
+      const createdOrderItemIds: { productId: string; orderItemId: string; totalCents: number }[] = [];
       for (const item of items) {
         if (!item.id) continue;
 
@@ -155,20 +161,29 @@ export async function POST(request: NextRequest) {
           unitPrice = Number(expandedSession.amount_total) / 100 / Math.max(1, items.length * qty);
         }
 
-        const { error: itemError } = await supabase.from('order_items').insert({
-          order_id: order.id,
-          product_id: item.id,
-          product_slug: productSlug,
-          product_name: productName,
-          quantity: qty,
-          unit_price_eur: unitPrice,
-          total_price_eur: unitPrice * qty,
-          transaction_type: 'achat',
-        });
-        if (itemError) {
+        const { data: orderItemRow, error: itemError } = await supabase
+          .from('order_items')
+          .insert({
+            order_id: order.id,
+            product_id: item.id,
+            product_slug: productSlug,
+            product_name: productName,
+            quantity: qty,
+            unit_price_eur: unitPrice,
+            total_price_eur: unitPrice * qty,
+            transaction_type: 'achat',
+          })
+          .select('id')
+          .single();
+        if (itemError || !orderItemRow) {
           console.error(`❌ Webhook: order_items ${item.id}`, itemError);
           continue;
         }
+        createdOrderItemIds.push({
+          productId: item.id,
+          orderItemId: orderItemRow.id,
+          totalCents: Math.round(unitPrice * 100 * qty),
+        });
 
         try {
           await supabase.rpc('decrement_stock_on_order', {
@@ -179,6 +194,96 @@ export async function POST(request: NextRequest) {
           });
         } catch (stockErr) {
           console.error(`⚠️ Webhook: échec déstockage ${item.id}`, stockErr);
+        }
+      }
+
+      // ── Part créateur (Lot 6) : attribution depuis metadata.kit_ref validé ──
+      const kitRef = expandedSession.metadata?.kit_ref as string | undefined;
+      const buyerId = userId && userId !== 'anonymous' ? userId : null;
+      if (kitRef && createdOrderItemIds.length > 0 && buyerId) {
+        try {
+          const { data: kitRow } = await supabase
+            .from('materiel_kits')
+            .select('user_id, ancestors')
+            .eq('id', kitRef)
+            .maybeSingle();
+          if (kitRow) {
+            const ancestors = (kitRow.ancestors as string[] | null) ?? [];
+            const ancestorOwners = new Map<string, string>();
+            if (ancestors.length > 0) {
+              const { data: ancKits } = await supabase
+                .from('materiel_kits')
+                .select('id, user_id')
+                .in('id', ancestors);
+              for (const a of (ancKits ?? []) as { id: string; user_id: string }[]) {
+                ancestorOwners.set(a.id, a.user_id);
+              }
+            }
+            const gaps = [{ beneficiaryId: kitRow.user_id, generationGap: 0 }];
+            for (const [idx, ancId] of ancestors.entries()) {
+              const gap = ancestors.length - idx;
+              if (gap >= MAX_ROYALTY_GENERATIONS) continue;
+              const owner = ancestorOwners.get(ancId);
+              if (owner) gaps.push({ beneficiaryId: owner, generationGap: gap });
+            }
+            const { data: cfgRow } = await supabase
+              .from('royalty_config')
+              .select('value')
+              .eq('key', 'global')
+              .maybeSingle();
+            const rateBps =
+              (cfgRow?.value as { global_bps?: number } | null)?.global_bps ??
+              DEFAULT_ROYALTY_GLOBAL_BPS;
+
+            for (const oi of createdOrderItemIds) {
+              const commission = Math.floor((oi.totalCents * rateBps) / 10000);
+              if (commission <= 0) continue;
+              const { shares } = computeRoyaltyShares({
+                commissionCents: commission,
+                gaps,
+                buyerId,
+              });
+              if (shares.length === 0) continue;
+              await supabase.rpc('insert_kit_attribution', {
+                p_kit_id: kitRef,
+                p_order_item_id: oi.orderItemId,
+                p_product_id: oi.productId,
+                p_amount_cents: oi.totalCents,
+                p_rate_bps: rateBps,
+                p_shares: JSON.stringify(
+                  shares.map((s) => ({
+                    beneficiary_id: s.beneficiaryId,
+                    generation_gap: s.generationGap,
+                    share_cents: s.shareCents,
+                  }))
+                ),
+                p_buyer_user_id: buyerId,
+              });
+            }
+          }
+        } catch (attrErr) {
+          console.error('⚠️ Webhook: attribution échouée', attrErr);
+        }
+      }
+    }
+
+    // ── Retour / remboursement : la commission est annulée (reversed) ──
+    if (event.type === 'charge.refunded') {
+      const charge = event.data.object as unknown as { payment_intent?: string | null };
+      if (charge.payment_intent) {
+        try {
+          const listed = await stripe.checkout.sessions.list({
+            payment_intent: charge.payment_intent,
+            limit: 1,
+          });
+          const sessionId = listed.data[0]?.id;
+          if (sessionId) {
+            await supabase.rpc('reverse_kit_attribution_by_session', {
+              p_stripe_session_id: sessionId,
+            });
+          }
+        } catch (refundErr) {
+          console.error('⚠️ Webhook: reversement attribution échoué', refundErr);
         }
       }
     }
