@@ -2,6 +2,7 @@
 
 import React from 'react';
 import { motion } from 'framer-motion';
+import KitDebriefPanel from './KitDebriefPanel';
 
 interface HighlightItem {
   icon: string;
@@ -19,6 +20,9 @@ interface CompletionViewProps {
   averageSpeedKmH?: number | null;
   maxAltitudeM?: number | null;
   highlights?: HighlightItem[];
+  /** Kit emporté (chantier lignées) — déclenche le débriefing facultatif. */
+  kitId?: string | null;
+  sessionId?: string | null;
   onViewCarnet: () => void;
   onShare?: () => void;
   onEditCarnet?: () => void;
@@ -42,6 +46,8 @@ export default function CompletionView({
   averageSpeedKmH = null,
   maxAltitudeM = null,
   highlights = [],
+  kitId = null,
+  sessionId = null,
   onViewCarnet,
   onShare,
   onEditCarnet,
@@ -179,6 +185,11 @@ export default function CompletionView({
               ))}
             </div>
           </div>
+        )}
+
+        {/* Débriefing facultatif du kit emporté (chantier lignées, Lot 2.3) */}
+        {kitId && sessionId && (
+          <KitDebriefPanel kitId={kitId} sessionId={sessionId} />
         )}
 
         {/* Main CTA Button: Voir mon aventure */}

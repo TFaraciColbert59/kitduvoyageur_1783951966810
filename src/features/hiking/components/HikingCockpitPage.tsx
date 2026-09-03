@@ -10,6 +10,7 @@ import DesktopDockBar, { DesktopDockTab } from './DesktopDockBar';
 import DesktopMapOverlay from './DesktopMapOverlay';
 import ContextualInsight from './ContextualInsight';
 import CompletionView from './CompletionView';
+import KitCarrySelector from './KitCarrySelector';
 import SafetyCenterModal from './SafetyCenterModal';
 import Terrain3DViewer from './Terrain3DViewer';
 import GPXImportExportModal from './GPXImportExportModal';
@@ -322,6 +323,8 @@ export default function HikingCockpitPage() {
               elevationGainM={hikingStore.elevationGainM}
               averageSpeedKmH={hikingStore.averageSpeedKmH}
               maxAltitudeM={currentPos?.altitude ? Math.round(currentPos.altitude) : null}
+              kitId={hikingStore.kitId}
+              sessionId={savedSessionId}
               onViewCarnet={() => {
                 if (savedCarnetId) {
                   router.push(`/carnets/${savedCarnetId}`);
@@ -363,6 +366,13 @@ export default function HikingCockpitPage() {
                 autoFollow={autoFollow}
                 onAutoFollowChange={setAutoFollow}
                 onRecentre={() => setAutoFollow(true)}
+              />
+
+              {/* Sélecteur « Emporter un kit ? » — posé avant le départ, jamais rejoué */}
+              <KitCarrySelector
+                kitId={hikingStore.kitId}
+                onSelect={(id) => hikingStore.setKit(id)}
+                disabled={hikingStore.isActive}
               />
 
               {/* Floating TopBar */}

@@ -6,6 +6,7 @@ export class HikeSessionService {
    */
   public static async saveSession(params: {
     routeId?: string | number | null;
+    kitId?: string | null;
     carnetId?: string | null;
     startedAt: string;
     endedAt: string;

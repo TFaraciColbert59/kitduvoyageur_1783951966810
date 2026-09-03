@@ -53,6 +53,8 @@ export type ProductOwnershipInput = z.infer<typeof productOwnershipSchema>;
 /** Article de kit utilisateur (table materiel_kit_items). */
 export const materielKitItemSchema = z.object({
   product_ownership_id: z.string().uuid().nullable().optional(),
+  /** Lien catalogue (shop_products(id)) — porté par la lignée à travers les forks. */
+  product_id: z.string().uuid().nullable().optional(),
   name: z.string().min(1, 'Le nom de l’article est requis').max(120),
   category: categorySchema.default('Autre'),
   weight_g: z.number().int().min(0).max(50000).default(0),
@@ -61,6 +63,10 @@ export const materielKitItemSchema = z.object({
 });
 
 /** Kit utilisateur (table materiel_kits). */
+// NOTE lignées (chantier) : lineage_root_id, generation, ancestors,
+// field_proven_count sont des champs SERVEUR — jamais acceptés en entrée.
+// La route les rejette explicitement (assertNoServerKitFields) ; le trigger
+// handle_kit_lineage les écrase quoi qu'il arrive.
 export const materielKitSchema = z.object({
   name: z.string().min(1, 'Le nom du kit est requis').max(120),
   description: z.string().max(1000).nullable().optional(),

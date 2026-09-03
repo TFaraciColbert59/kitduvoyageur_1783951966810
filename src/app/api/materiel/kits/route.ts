@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
 import { materielKitSchema } from '@/lib/schemas/materiel';
+import { assertNoServerKitFields } from '@/features/kits/lineage';
 
 export const runtime = 'nodejs';
 export const maxDuration = 60;
@@ -12,7 +13,11 @@ export async function POST(req: NextRequest) {
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) return NextResponse.json({ error: 'Non authentifié' }, { status: 401 });
 
-    const parsed = materielKitSchema.safeParse(await req.json());
+    const body = await req.json();
+    // Champs dérivés serveur (filiation, preuve terrain) : jamais acceptés du client.
+    assertNoServerKitFields(body);
+
+    const parsed = materielKitSchema.safeParse(body);
     if (!parsed.success) {
       return NextResponse.json(
         { error: parsed.error.issues[0]?.message ?? 'Données invalides' },
@@ -34,6 +39,7 @@ export async function POST(req: NextRequest) {
         kit_id: created.id,
         user_id: user.id,
         product_ownership_id: i.product_ownership_id ?? null,
+        product_id: i.product_id ?? null,
         name: i.name,
         category: i.category,
         weight_g: i.weight_g,

@@ -1,6 +1,142 @@
 # LKDV — Mission Log
 
-## 2026-08-18 — Refonte Définitive Cockpit KarZentra Dark Titanium Glass
+## 2026-09-03 — Chantier « Lignées de kits » — LOT 3 : tuyau Stripe réparé (code vert, GATE 3 infra requis)
+
+### Lot 3 — Le tuyau Stripe (découvertes + corrections)
+- **Découvertes aggravantes** (audit + lecture) :
+  1. `createClient()` serveur = **clé anon** + cookies → dans le webhook (sans session user)
+     c'est un client ANON → l'insert `orders` était rejeté par la RLS
+     (`users_manage_own_orders` TO authenticated) → **le webhook ne créait JAMAIS de
+     commande** (« warning: Order creation failed », 200 silencieux).
+  2. Checkout sans metadata → items du webhook sans id → 0 `order_items`, 0 déstockage.
+  3. Pas de `stripe_session_id` (idempotence par `notes` seul).
+- **Corrections** :
+  - `webhook/route.ts` réécrit : client **service_role** pour les écritures ; idempotence par
+    `orders.stripe_session_id` (index UNIQUE) ; items depuis `metadata.items`/
+    `metadata.intent_id` ; fallback line_items (sans id) = commande tracée sans order_items.
+  - `checkout/route.ts` : `validatePrices` renvoie l'`id` validé serveur (jamais le prix) ;
+    **metadata { user_id (cookies), items }** — panier > 480 chars → `checkout_intents`
+    (payload validé serveur) + `metadata.intent_id`.
+  - Nouveau module pur `src/features/checkout/stripeMetadata.ts` (10 specs verts).
+  - **Migration `20260903030000_stripe_fix.sql`** : table `checkout_intents` (écritures
+    service_role uniquement, aucune policy client), colonnes v2 d'`orders` (payment_method,
+    subtotal_eur, shipping_eur) jamais appliquées + `stripe_session_id` UNIQUE, durcissement
+    `SET search_path` sur `decrement_stock_on_order` (signature découverte au runtime).
+- **Vérifications** : `tsc` OK · `npm test` **275/275 (40 fichiers)** OK · build OK · lint 0 erreur.
+- **🚦 GATE 3 requis (infra, par Tony)** : `STRIPE_WEBHOOK_SECRET` absent de `.env.local` ;
+  migrations 03/09 (lineage, field_proof, stripe_fix) à appliquer sur COPIE puis prod ;
+  test Stripe CLI en mode test (commande complète tracée : orders + order_items + déstockage).
+
+## 2026-09-03 — Chantier « Lignées de kits » — LOT 2 : l'épreuve du terrain (terminé)
+
+### Lot 2 — Preuve terrain (tests DB à exécuter sur copie au GATE 1)
+- **Migration `supabase/migrations/20260903020000_kit_field_proof.sql`** :
+  - `hike_sessions.kit_id → materiel_kits(id) ON DELETE SET NULL` + index (kit_id, started_at DESC).
+  - `hiking_routes.region text` + index (constat : la table n'avait PAS de région, sa géométrie est
+    `geom` ; granularité massif pour le journal — enrichissement éditorial à prévoir).
+  - `kit_field_reports` (verdicts CHECK fermé, note ≤ 500, UNIQUE (hike_session_id, item_key)) +
+    **RLS own uniquement** (aucune lecture publique directe).
+  - **Trigger `handle_field_proven_count`** (INSERT/UPDATE OF kit_id,distance_km/DELETE, seuil
+    distance_km ≥ 1, clamp ≥ 0) — SECURITY DEFINER + search_path verrouillé.
+  - **`get_kit_journal`** SECURITY DEFINER : agrégats anonymisés (naissance, descendances,
+    sessions, km, D+, saisons, régions/massifs, carnets publics du propriétaire). **RGPD : jamais
+    de positions_geojson, jamais de lat/lon, jamais de noms** — GRANT authenticated.
+- **Tests DB `supabase/tests/database/field_proof.test.sql`** (15 assertions) — exécution sur copie.
+- **Service + route débriefing** : `src/features/kits/fieldProof.ts` (item_key miroir SQL exact,
+  verdicts zod) + `POST /api/kits/[id]/field-report` (session appartenant à l'utilisateur ET
+  rattachée au kit, upsert par (hike_session_id, item_key) → débriefing partiel jamais perdu).
+- **Cockpit (2.2 + 2.3)** : `HikingController.kitId` (setKit, startHike(routeId, kitId), persistance
+  localStorage, saveSession → kit_id) ; `KitCarrySelector` (« Emporter un kit ? », une seule fois,
+  avant départ) ; `KitDebriefPanel` dans CompletionView (verdicts par tap envoyés immédiatement,
+  champ « ce qui manquait », repliable).
+- **⚠️ Écart structurel découvert et corrigé** : `vitest.config.ts` `include` ne couvre que
+  `tests/**/*.spec.ts`. Les tests du pattern `src/**/__tests__` (y compris les 32 tests hiking
+  vantés dans CLAUDE.md) ne sont **jamais exécutés** par `npm test`. Mes tests Lot 1/2 y résidaient
+  → constatés non exécutés, **migrés vers `tests/kits/*.spec.ts`**, fichiers morts supprimés.
+  La dette préexistante (hiking) est documentée, pas nettoyée (hors périmètre).
+- **Vérifications** : `npx tsc --noEmit` OK · `npm test` **266/266 (39 fichiers)** OK · build OK.
+- Séquentiel respecté : Lot 1 validé (GATE 1), Lot 2 terminé, **LOT 3 (Stripe) démarré** — prioritaire.
+
+## 2026-09-03 — Chantier « Lignées de kits » — LOT 1 : filiation (terminé, GATE 1)
+
+### Lot 1 — La filiation (irréversible)
+- **Migration `supabase/migrations/20260903010000_kit_lineage.sql`** :
+  - `materiel_kits` : `forked_from`, `lineage_root_id`, `generation`, `ancestors uuid[]`,
+    `origin` (CHECK 5 valeurs), `is_souche`, `field_proven_count` + index (root, forked_from,
+    GIN ancestors).
+  - `materiel_kit_items` : `product_id → shop_products(id)` (décision Tony GATE 0) +
+    `item_key` GENERATED STORED (nom normalisé ou uuid produit) + index.
+  - `kit_reports` : `kit_id → materiel_kits(id) ON DELETE SET NULL` (écart acté ADR-007).
+  - **Trigger `handle_kit_lineage`** (BEFORE INSERT OR UPDATE OF forked_from, SECURITY
+    DEFINER, search_path verrouillé) : racine si parent NULL, dérivation depuis le parent,
+    anti-cycle, profondeur max 50. **Cas spécial** : suppression du parent (SET NULL FK) →
+    la lignée est CONSERVÉE (pas de ré-encrage), ancestors garde l'uuid disparu.
+- **Écart acté** : timestamp `20260903010000` (le `20260903000000_ai_foundations.sql` existait
+  déjà aujourd'hui).
+- **Tests DB écrits avant la migration** `supabase/tests/database/lineage.test.sql` (14
+  assertions pgTAP : racine, fork simple, fork de fork, écrasement client, parent inconnu,
+  cycle, SET NULL conservé, CHECK origin, item_key, profondeur 51 refusée). ⚠️ Non
+  exécutables localement (Docker injoignable) → **exécution sur copie au GATE 1**.
+- **Module pur `src/features/kits/lineage.ts` + 15 tests Vitest** (`__tests__/`) :
+  `isAutoFork`, `buildAdaptiveForkName` (jamais « (copie) »), `decideKitFork` (auto-fork →
+  origin='manuel', forked_from=NULL, vecteur fraude n°1 neutralisé), `assertNoServerKitFields`
+  (champs serveur interdits en entrée).
+- **Refonte `POST /api/materiel/fork`** : filiation via `forked_from` + `origin='fork'`,
+  nom adaptatif « Nom — Prénom » (pseudo du créateur via user_profiles) ou libre (body.name),
+  copie de `product_id` sur les articles, évènement history conservé (payload + origin).
+- **Zod (1.5)** : `product_id` optionnel sur `materielKitItemSchema` ; champs serveur
+  explicitement interdits (assertNoServerKitFields dans la route de création) ; trigger =
+  garantie finale.
+- **Backfill non destructif `supabase/backfill/kit_lineage_backfill.sql`** (en transaction,
+  idempotent, passes successives pour respecter racine→feuilles, appariement shop_products
+  exact+unique, **ROLLBACK final volontaire** pour forcer la revue avant COMMIT). ⚠️ À
+  exécuter d'abord sur COPIE Supabase.
+- **Vérifications** : `npx tsc --noEmit` OK · `npm test` 246/246 ✅ · `npx next build` OK ·
+  eslint ciblé 0 erreur (2 warnings no-console = pattern maison).
+- **🚦 GATE 1 en attente de validation Tony** : application migration + backfill sur copie,
+  exécution de la suite pgTAP, puis production. Rien n'a été appliqué en base.
+
+## 2026-09-03 — Chantier « Lignées de kits » (L'Épreuve du terrain) — LOT 0 : audit + ADR
+
+### Lot 0 — Audit de réalité (aucun code)
+- **Branche de travail créée** : `feat/lignees-kits` (départ = `feat/nemotron-ai-router`,
+  qui portait l'état du routeur IA non mergé).
+- **Audit complet écrit** : `docs/reports/AUDIT_KITS_LIGNEE.md` (2 agents d'audit +
+  vérifications manuelles, 111 migrations).
+- **Verdicts des 5 hypothèses** : H1 CONFIRMÉE (pas de `product_id` sur
+  `materiel_kit_items`) · H2 CONFIRMÉE (pas de `kit_id` sur `hike_sessions`) · H3 CONFIRMÉE
+  (fork orphelin, source dans `materiel_kit_history.payload`) · H4 CONFIRMÉE **et
+  aggravée** (checkout sans metadata → webhook : 0 `order_items`, 0 déstockage, et
+  `orders` peut-être jamais créée — colonnes fantômes, à prouver au Lot 3) · H5 CONFIRMÉE
+  (messagerie : PJ typée EXISTE — `messages.metadata` kind product/trail +
+  `message_attachments`).
+- **Écarts au plan documentés** :
+  1. Project ID : plan maître dit `lwrmuggefbmboikjgudc`, réalité = **`icxyvwzfjbflcbqukpfz`**
+     (.env.local + MISSION_LOG 16/08) → c'est le réel qui fait foi.
+  2. Numérotation ADR : 001-003 déjà pris → ADR **007/008/009** (format maison).
+  3. `product_id` des items → cible **`shop_products(id)`** (même table que
+     `order_items.product_id`), pas `products` (legacy) comme le SQL figé du plan.
+  4. `orders` : schéma v2 jamais appliqué → le webhook insère des colonnes
+     probablement inexistantes (`payment_method`, `subtotal_eur`, `shipping_eur`) →
+     trou supplémentaire, Lot 3.
+  5. Lot 6.5 : « crédit boutique » INEXISTANT dans le reward engine (cashout =
+     virement bancaire) → extension store credit à trancher avec Tony.
+  6. `decrement_stock_on_order` : SECURITY DEFINER sans search_path, sans verrou → à
+     durcir (Lot 3).
+- **ADR rédigés** : ADR-007 (materiel_kits entité vivante unique, kit_reports = snapshot),
+  ADR-008 (filiation matérialisée `ancestors uuid[]` vs ltree vs CTE), ADR-009 (commission
+  70/20/10 sur 3 générations, crédit boutique, conditionnée à la preuve terrain).
+- **Prompt #1 du plan maître** : RLS constatée activée sur toutes les tables auditées +
+  `validatePrices` serveur présent → considéré validé pour ce chantier (à confirmer Tony).
+- **🚦 GATE 0 : VALIDÉ par Tony (2026-09-03)** · Décisions actées :
+  1. Continuer le Lot 1 (filiation) — l'audit et les ADR-007/008/009 sont acceptés.
+  2. Kits souches fondatrices → **compte système LKDV dédié** (ex. lkdv@lekitduvoyageur.com).
+  3. `materiel_kit_items.product_id` → **`shop_products(id)`** (même table que order_items).
+  4. Part créateur → **extension « store credit »** du reward engine (pas de virement).
+  - Écart acté (ADR-007) : `kit_reports.kit_id` en **ON DELETE SET NULL** (le SQL figé du
+    plan disait CASCADE — le snapshot configurateur doit survivre à la suppression du kit).
+  - Questions reportées (non bloquantes) : taux bps global (Lot 6), verrouillage du nom
+    « issu de X » (Lot 1.4).
 
 ### ✅ Alignement 100% Fidèle sur le Mockup KarZentra (TERMINÉ ET VÉRIFIÉ AU BUILD)
 - **Suppression du voile délavé et des conflits de filtres :** Remplacement des doubles `backdrop-filter` imbriqués par des panneaux en verre fumé titane sombre (`#141820`/80) avec liseré supérieur lumineux (`border-t-white/20`) et ombres profondes 32px.

@@ -13,6 +13,7 @@ interface PoiEvent {
 
 interface SaveHikeSessionBody {
   routeId?: string | null;
+  kitId?: string | null;
   carnetId?: string | null;
   startedAt: string;
   endedAt: string;
@@ -122,6 +123,7 @@ export async function POST(req: NextRequest) {
       .insert({
         user_id: userId,
         route_id: body.routeId ? Number(body.routeId) : null,
+        kit_id: body.kitId || null,
         carnet_id: carnetId,
         started_at: body.startedAt,
         ended_at: body.endedAt,
@@ -181,7 +183,7 @@ export async function GET(req: NextRequest) {
 
     let query = supabase
       .from('hike_sessions')
-      .select('id, route_id, carnet_id, started_at, ended_at, distance_km, duration_seconds, elevation_gain_m, poi_events, narratives, created_at')
+      .select('id, route_id, kit_id, carnet_id, started_at, ended_at, distance_km, duration_seconds, elevation_gain_m, poi_events, narratives, created_at')
       .eq('user_id', user.id)
       .order('started_at', { ascending: false });
 

@@ -39,6 +39,8 @@ export interface HikingControllerState {
   routeId: string | null;
   routeTotalKm: number | null;
   routeName: string | null;
+  /** Kit emporté sur le terrain (chantier lignées, Lot 2) — null = aucun kit. */
+  kitId: string | null;
 }
 
 interface PoiEvent {
@@ -102,6 +104,7 @@ export class HikingController {
       routeId: null,
       routeTotalKm: null,
       routeName: null,
+      kitId: null,
     };
 
     this.stateMachine.subscribe((nextState) => {
@@ -126,7 +129,12 @@ export class HikingController {
     };
   }
 
-  public async startHike(routeId?: string): Promise<void> {
+  /**
+   * Démarre une randonnée. Le kit emporté vient de setKit (ou de l'état
+   * restauré) ; kitId explicite = override ponctuel (aucune régression :
+   * les appelants existants ne passent que routeId).
+   */
+  public async startHike(routeId?: string, kitId?: string | null): Promise<void> {
     if (!this.stateMachine.transitionTo('PREPARING')) return;
 
     this.trackingEngine.reset();
@@ -140,6 +148,7 @@ export class HikingController {
 
     this.updateState({
       routeId: routeId || null,
+      kitId: kitId !== undefined ? kitId : this.state.kitId,
       routeName: null,
       routeTotalKm: null,
       distanceKm: 0,
@@ -172,6 +181,12 @@ export class HikingController {
     this.persistSession();
   }
 
+  /** Sélectionne le kit emporté (chantier lignées, Lot 2). null = aucun kit. */
+  public setKit(kitId: string | null): void {
+    this.updateState({ kitId });
+    this.persistSession();
+  }
+
   public pauseHike(): void {
     if (!this.stateMachine.transitionTo('PAUSED')) return;
     this.persistSession();
@@ -201,6 +216,7 @@ export class HikingController {
       try {
         const res = await HikeSessionService.saveSession({
           routeId: this.state.routeId,
+          kitId: this.state.kitId,
           carnetId: carnetId || null,
           startedAt,
           endedAt,
@@ -622,6 +638,7 @@ export class HikingController {
           PERSISTENCE_KEY,
           JSON.stringify({
             routeId: this.state.routeId,
+            kitId: this.state.kitId,
             routeName: this.state.routeName,
             routeTotalKm: this.state.routeTotalKm,
             distanceKm: this.state.distanceKm,
@@ -646,6 +663,7 @@ export class HikingController {
         if (parsed && parsed.positions && parsed.positions.length > 0) {
           this.updateState({
             routeId: parsed.routeId ?? null,
+            kitId: parsed.kitId ?? null,
             routeName: parsed.routeName ?? null,
             routeTotalKm: parsed.routeTotalKm != null ? Number(parsed.routeTotalKm) : null,
             distanceKm: Number(parsed.distanceKm) || 0,

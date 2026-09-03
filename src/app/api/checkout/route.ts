@@ -1,5 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { createClient } from '@supabase/supabase-js';
+import { createClient, SupabaseClient } from '@supabase/supabase-js';
+import { createClient as createServerClient } from '@/lib/supabase/server';
+import {
+  buildStripeCheckoutMetadata,
+  StripeCartItemRef,
+} from '@/features/checkout/stripeMetadata';
 
 // Rate limiting: simple in-memory store (use Redis in production)
 const rateLimitMap = new Map<string, { count: number; resetAt: number }>();
@@ -25,17 +30,31 @@ interface CartItem {
   type?: 'product' | 'kit';
 }
 
-async function validatePrices(items: CartItem[]): Promise<{ valid: boolean; errors: string[]; validatedItems: { name: string; unitAmount: number; quantity: number; image?: string }[] }> {
+interface ValidatedItem {
+  id: string;
+  name: string;
+  unitAmount: number;
+  quantity: number;
+  image?: string;
+}
+
+let serviceClientCache: SupabaseClient | null = null;
+function getServiceClient() {
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
   const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
-
   if (!supabaseUrl || !supabaseKey) {
-    return { valid: false, errors: ['Configuration serveur manquante'], validatedItems: [] };
+    throw new Error('Configuration serveur manquante');
   }
+  if (!serviceClientCache) {
+    serviceClientCache = createClient(supabaseUrl, supabaseKey);
+  }
+  return serviceClientCache;
+}
 
-  const supabase = createClient(supabaseUrl, supabaseKey);
+async function validatePrices(items: CartItem[]): Promise<{ valid: boolean; errors: string[]; validatedItems: ValidatedItem[] }> {
+  const supabase = getServiceClient();
   const errors: string[] = [];
-  const validatedItems: { name: string; unitAmount: number; quantity: number; image?: string }[] = [];
+  const validatedItems: ValidatedItem[] = [];
 
   for (const item of items) {
     // Try to find in products table
@@ -52,6 +71,7 @@ async function validatePrices(items: CartItem[]): Promise<{ valid: boolean; erro
         errors.push(`Prix incorrect pour "${item.name}". Attendu: ${serverPrice}€, reçu: ${item.priceEur}€`);
       }
       validatedItems.push({
+        id: item.id,
         name: product.name || item.name,
         unitAmount: Math.round(serverPrice * 100),
         quantity: item.quantity,
@@ -75,6 +95,7 @@ async function validatePrices(items: CartItem[]): Promise<{ valid: boolean; erro
         errors.push(`Prix incorrect pour "${item.name}". Attendu: ${serverPriceEur}€, reçu: ${item.priceEur}€`);
       }
       validatedItems.push({
+        id: item.id,
         name: kit.nom || item.name,
         unitAmount: serverPriceCents,
         quantity: item.quantity,
@@ -97,6 +118,7 @@ async function validatePrices(items: CartItem[]): Promise<{ valid: boolean; erro
         errors.push(`Prix incorrect pour "${item.name}". Attendu: ${serverPrice}€, reçu: ${item.priceEur}€`);
       }
       validatedItems.push({
+        id: item.id,
         name: shopProduct.name || item.name,
         unitAmount: Math.round(serverPrice * 100),
         quantity: item.quantity,
@@ -149,6 +171,37 @@ export async function POST(request: NextRequest) {
 
     const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://lekitduvoyageur.com';
 
+    // ── Metadata : construites UNIQUEMENT depuis les items validés serveur ──
+    // user_id vient des cookies (jamais du body client).
+    let userId: string | null = null;
+    try {
+      const authClient = await createServerClient();
+      const { data } = await authClient.auth.getUser();
+      userId = data?.user?.id ?? null;
+    } catch {
+      userId = null;
+    }
+
+    const refs: StripeCartItemRef[] = validation.validatedItems.map((v) => ({
+      id: v.id,
+      name: v.name,
+      quantity: v.quantity,
+    }));
+    const plan = buildStripeCheckoutMetadata(userId, refs);
+
+    // Panier trop long pour les metadata Stripe → checkout_intents (service)
+    if (plan.needsIntent && plan.intentPayload) {
+      await getServiceClient().from('checkout_intents').upsert(
+        {
+          id: plan.metadata.intent_id,
+          user_id: userId,
+          payload: plan.intentPayload,
+          status: 'pending',
+        },
+        { onConflict: 'id' }
+      );
+    }
+
     // Dynamic import to avoid build errors when Stripe is not installed
     const Stripe = (await import('stripe')).default;
     const stripe = new Stripe(stripeKey, { apiVersion: '2025-02-24.acacia' as const });
@@ -171,6 +224,7 @@ export async function POST(request: NextRequest) {
       success_url: successUrl || `${siteUrl}/checkout?success=true`,
       cancel_url: cancelUrl || `${siteUrl}/panier`,
       shipping_address_collection: { allowed_countries: ['FR', 'BE', 'CH', 'LU', 'MC'] },
+      metadata: plan.metadata,
     });
 
     return NextResponse.json({ url: session.url, sessionId: session.id });
