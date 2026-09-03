@@ -8,8 +8,22 @@ export const runtime = 'nodejs';
  * GET /api/kits/my-royalties
  * « Ma part créateur » (Lot 6.5) : liste les parts de l'utilisateur connecté
  * (RLS `royalty_shares_select_own`), avec le contexte d'attribution.
+ *
+ * ⚠️ FEATURE GELÉE (Lot 6) : la part créateur n'est pas encore versable au
+ * checkout (le crédit boutique n'est pas consommable). Tant que
+ * `KIT_ROYALTY_ENABLED` n'est pas 'true' (défaut : désactivé), cette route
+ * répond `enabled:false` SANS interroger la base — les tables du Lot 6 ne
+ * sont d'ailleurs pas encore créées (migration exclue de la vague).
  */
 export async function GET() {
+  const royaltyEnabled = process.env.KIT_ROYALTY_ENABLED === 'true';
+  if (!royaltyEnabled) {
+    return NextResponse.json(
+      { enabled: false, message: 'La part créateur arrive bientôt.' },
+      { status: 200 }
+    );
+  }
+
   try {
     const supabase = await createClient();
     const { data: { user } } = await supabase.auth.getUser();

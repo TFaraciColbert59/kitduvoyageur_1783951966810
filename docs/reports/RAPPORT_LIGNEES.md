@@ -24,7 +24,7 @@ par X voyageurs sur 10 », « part créateur ». Jamais de vocabulaire génétiq
 | `20260903030000_stripe_fix.sql` | `checkout_intents` (service_role) ; `orders.payment_method/subtotal_eur/shipping_eur/stripe_session_id UNIQUE` ; search_path sur `decrement_stock_on_order` |
 | `20260903040000_kit_conservation.sql` | Matviews `kit_item_survival`, `kit_item_survival_by_kit`, `kit_trust_scores` (2 axes distincts, auto-forks exclus, plancher 5 sessions) ; `refresh_kit_conservation()` |
 | `20260903041000_kit_souches_seed.sql` | Compte système LKDV + souches éditoriales (`is_souche`, `souche_editoriale`) |
-| `20260903050000_kit_attributions.sql` | `royalty_config` (300 bps, 70/20/10) ; `kit_attributions` (UNIQUE order_item_id) ; `kit_royalty_shares` (RLS own) ; store credit (`reward_accounts.store_credit_cents`, `store_credit_ledger`) ; RPC insert/finalize/reverse |
+| `20260903050000_kit_attributions.sql` | **❄️ EXCLUE de cette vague (Lot 6 gelé)** — code livré dans la branche, migration non appliquée : le crédit boutique n'est pas consommable au checkout (Phase 2), une part créateur serait une promesse non tenue. Tables absentes de la base tant que la décision n'est pas prise. |
 
 **Backfill** : `supabase/backfill/kit_lineage_backfill.sql` (non destructif, transaction,
 **ROLLBACK final volontaire** — inspecter les NOTICE avant COMMIT).
@@ -45,18 +45,32 @@ par X voyageurs sur 10 », « part créateur ». Jamais de vocabulaire génétiq
 - **Lot 6** : `DROP TABLE kit_royalty_shares, kit_attributions, store_credit_ledger, royalty_config`,
   `ALTER TABLE reward_accounts DROP COLUMN store_credit_cents`, `DROP FUNCTION ...`.
 
-## 4. Checklist d'exposition de données (Lot 8.2) — RÉPONDU
+## 4. Checklist d'exposition de données (Lot 8.2) — à confirmer par les sorties pgTAP réelles
 
-- Aucune coordonnée GPS d'autrui : `get_kit_journal` n'émet que massifs (régions) et
-  compteurs ; les `positions_geojson` ne sortent jamais via un partage. ✅
-- Aucun nom d'utilisateur dans les compteurs d'usage : journal anonymisé. ✅
-- `kit_field_reports` lisible uniquement par son propriétaire (RLS own) ; l'exposition
-  publique passe par les matviews agrégées (read-only) — jamais les verdicts unitaires. ✅
-- XSS : entrées (`name`, `description`, `note`, verdicts) validées zod côté serveur,
-  rendu React (échappé) ; `note` plafonnée à 500 caractères. ✅
-- Tables d'écriture : `checkout_intents`, `kit_attributions`, `kit_royalty_shares`
+> Les ✅ ci-dessous sont des garanties de DESIGN, pas des preuves d'exécution. Elles
+> doivent être confirmées par les sorties des 5 suites pgTAP (GATE 1) — coller les
+> sorties à la section 4bis.
+
+- ☐ Aucune coordonnée GPS d'autrui : `get_kit_journal` n'émet que massifs (régions) et
+  compteurs ; les `positions_geojson` ne sortent jamais via un partage.
+- ☐ Aucun nom d'utilisateur dans les compteurs d'usage : journal anonymisé.
+- ☐ `kit_field_reports` lisible uniquement par son propriétaire (RLS own) ; l'exposition
+  publique passe par les matviews agrégées (read-only) — jamais les verdicts unitaires.
+- ☐ XSS : entrées (`name`, `description`, `note`, verdicts) validées zod côté serveur,
+  rendu React (échappé) ; `note` plafonnée à 500 caractères.
+- ☐ Tables d'écriture : `checkout_intents`, `kit_attributions`, `kit_royalty_shares`
   (écriture), `store_credit_ledger` — aucun insert client possible (service_role seul),
-  vérifié par `security_lignees.test.sql`. ✅
+  vérifié par `security_lignees.test.sql`.
+
+### 4bis. Sorties pgTAP réelles (à coller après exécution sur copie)
+
+| Suite | Assertions attendues | Sortie à coller |
+|---|---|---|
+| `lineage.test.sql` | ok 14/14 | ☐ |
+| `field_proof.test.sql` | ok 15/15 | ☐ |
+| `conservation.test.sql` | ok 8/8 | ☐ |
+| `attributions.test.sql` | ok 7/7 | ☐ |
+| `security_lignees.test.sql` | ok 10/10 | ☐ |
 
 ## 5. Endpoints livrés
 
@@ -68,12 +82,23 @@ par X voyageurs sur 10 », « part créateur ». Jamais de vocabulaire génétiq
 
 ## 6. Ce qui reste à la main de Tony (infra UNIQUEMENT)
 
-1. Appliquer les 6 migrations + backfill sur une **copie** Supabase (`icxyvwzfjbflcbqukpfz`),
-   exécuter les 5 suites pgTAP, rapporter les compteurs → **GATE 1**.
-2. `STRIPE_WEBHOOK_SECRET` dans `.env.local` + test Stripe CLI en mode test (commande
-   complète : orders + order_items + déstockage + attribution) → **GATE 3**.
-3. Puis application en production, activation des crons (refresh-kit-scores, 
-   finalize-kit-attributions).
-4. **Choix GATE 0 en attente** : taux bps réel (config `royalty_config`, défaut 300) ;
-   consommation du crédit boutique au checkout (Phase 2, hors chantier).
-5. Vérifier la rotation de la clé anon du routeur IA (chantier nemotron, branche parente).
+1. **Réconciliation Stripe** (bloquant PR) : `docs/reports/RECONCILIATION_STRIPE.md` —
+   paiements encaissés sans commande (avant Lot 3), décision par orphelin.
+2. Appliquer les **5 migrations de la vague** (la 6e, attributions, est EXCLUE — Lot 6
+   gelé) + backfill sur une **copie** Supabase (`icxyvwzfjbflcbqukpfz`) ; exécuter les
+   5 suites pgTAP ; coller les sorties en section 4bis → **GATE 1**.
+3. `STRIPE_WEBHOOK_SECRET` dans `.env.local` + test Stripe CLI en mode test (commande
+   complète : orders + order_items + déstockage) → **GATE 3**.
+4. **Scan de sécurité historique (fait, 2026-09-04)** : `.env.local` n'a jamais été
+   commité ; `.env` commité puis retiré (`086e6b1`) contenait des clés provider
+   probablement placeholder (formats non-live, longueurs 24-53). **Aucun `sk_live_`,
+   `whsec_`, `SUPABASE_SERVICE_ROLE_KEY` dans tout l'historique (808 commits).**
+   Précaution recommandée : vérifier que les 4 valeurs du `.env.local` actuel diffèrent
+   de celles de l'historique ; si doute, rotation OPENAI/GEMINI/ANTHROPIC/PERPLEXITY.
+5. **Lot 6 gelé** : flag serveur `KIT_ROYALTY_ENABLED` (défaut désactivé) coupe
+   `/api/kits/my-royalties` et la mention KitSheet tant que le crédit boutique n'est pas
+   dépensable. Aucun objet Lot 6 en base.
+6. **Vitest** : include élargi à `src/**/__tests__/**/*.test.ts` — les 9 suites hiking
+   s'exécutent enfin dans `npm test` (312 tests / 52 fichiers). CLAUDE.md corrigé.
+7. Application en production + crons (`refresh-kit-scores` ; `finalize-kit-attributions`
+   à n'activer qu'avec le Lot 6). Taux bps réel (`royalty_config`) au dégel.

@@ -1,4 +1,5 @@
 import assert from 'node:assert';
+import { describe, it, expect } from 'vitest';
 import { CopilotEngine, HikeContextSummary } from '../CopilotEngine';
 
 export function runAllCopilotEngineTests(): { success: boolean; passed: number; failed: number } {
@@ -63,3 +64,12 @@ export function runAllCopilotEngineTests(): { success: boolean; passed: number; 
 if (typeof process !== 'undefined' && process.argv && process.argv[1]?.includes('CopilotEngine.test')) {
   runAllCopilotEngineTests();
 }
+
+
+// Enregistrement Vitest — suite exécutable par npm test
+describe('hiking', () => {
+  it('exécute la suite (runAllCopilotEngineTests)', () => {
+    const result = runAllCopilotEngineTests();
+    expect(result.failed).toBe(0);
+  });
+});

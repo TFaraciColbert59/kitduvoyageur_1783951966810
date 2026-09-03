@@ -1,4 +1,5 @@
 import assert from 'node:assert';
+import { describe, it, expect } from 'vitest';
 import { TrailIntelligenceEngine, AnonymizedHikeSample } from '../TrailIntelligenceEngine';
 import { HikeSession, Trail } from '../../types';
 
@@ -95,3 +96,12 @@ export function runAllTrailIntelligenceEngineTests(): { success: boolean; passed
 if (typeof process !== 'undefined' && process.argv && process.argv[1]?.includes('TrailIntelligenceEngine.test')) {
   runAllTrailIntelligenceEngineTests();
 }
+
+
+// Enregistrement Vitest — suite exécutable par npm test
+describe('hiking', () => {
+  it('exécute la suite (runAllTrailIntelligenceEngineTests)', () => {
+    const result = runAllTrailIntelligenceEngineTests();
+    expect(result.failed).toBe(0);
+  });
+});

@@ -59,6 +59,11 @@ export async function GET(_req: NextRequest, { params }: { params: { id: string 
       journal,
       trust,
       survival: survival ?? [],
+      /**
+       * Part créateur (Lot 6, gelé) : la mention de transparence n'est affichée
+       * dans le KitSheet que lorsque la feature est réellement active.
+       */
+      royalty_enabled: process.env.KIT_ROYALTY_ENABLED === 'true',
     });
   } catch (err) {
     console.error('GET /api/kits/[id]/sheet', err);

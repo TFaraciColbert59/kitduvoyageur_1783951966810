@@ -1,4 +1,5 @@
 import assert from 'node:assert';
+import { describe, it, expect } from 'vitest';
 import { NavigationEngine } from '../NavigationEngine';
 import { GPSPosition, POI } from '../../types';
 
@@ -86,3 +87,12 @@ export function runAllNavigationEngineTests(): { success: boolean; passed: numbe
 if (typeof process !== 'undefined' && process.argv && process.argv[1]?.includes('NavigationEngine.test')) {
   runAllNavigationEngineTests();
 }
+
+
+// Enregistrement Vitest — suite exécutable par npm test
+describe('hiking', () => {
+  it('exécute la suite (runAllNavigationEngineTests)', () => {
+    const result = runAllNavigationEngineTests();
+    expect(result.failed).toBe(0);
+  });
+});

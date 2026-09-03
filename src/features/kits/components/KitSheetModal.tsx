@@ -145,7 +145,7 @@ export default function KitSheetModal({ kitId, context: _context, onClose }: Kit
     );
   }
 
-  const { kit, journal, trust, survival } = data;
+  const { kit, journal, trust, survival, royalty_enabled: royaltyEnabled } = data;
   const status = scoreStatus(trust?.sessions_count ?? 0);
   const originLabel = ORIGIN_LABEL[kit.origin] ?? kit.origin;
   const hasItems = survival.length > 0;
@@ -299,11 +299,14 @@ export default function KitSheetModal({ kitId, context: _context, onClose }: Kit
             </button>
           </div>
 
-          {/* Transparence — mention obligatoire de la part créateur (Lot 6) */}
-          <p className="text-[10px] leading-relaxed" style={{ color: '#6B7A72' }}>
-            Transparence : les créateurs de cette lignée perçoivent une part sur les commandes
-            issues de leur kit. LKDV reste le vendeur unique.
-          </p>
+          {/* Transparence — mention obligatoire de la part créateur (Lot 6,
+              affichée UNIQUEMENT quand la feature est active : KIT_ROYALTY_ENABLED) */}
+          {royaltyEnabled && (
+            <p className="text-[10px] leading-relaxed" style={{ color: '#6B7A72' }}>
+              Transparence : les créateurs de cette lignée perçoivent une part sur les commandes
+              issues de leur kit. LKDV reste le vendeur unique.
+            </p>
+          )}
         </div>
       </div>
     </div>

@@ -1,5 +1,40 @@
 # LKDV — Mission Log
 
+## 2026-09-04 — Corrections revue PR « Lignées de kits » (bloquants adressés)
+
+### Décision : Lot 6 GELÉ (part créateur non déployée)
+- **`20260903050000_kit_attributions.sql` EXCLUE de la vague** : le crédit boutique n'est
+  pas consommable au checkout → une part créateur serait une promesse non tenue. Migration
+  conservée dans la branche, non appliquée.
+- **Flag serveur `KIT_ROYALTY_ENABLED`** (défaut OFF) : `/api/kits/my-royalties` répond
+  `enabled:false` SANS interroger la base ; la mention de transparence du KitSheet n'est
+  rendue que si `true`. Aucun objet Lot 6 n'existe en base tant que le gel dure.
+- Webhook : l'appel RPC d'attribution absent (table inexistante) est dans un try/catch →
+  non bloquant. `metadata.kit_ref` posé au checkout reste inoffensif.
+
+### Scan de sécurité historique (808 commits, toutes branches)
+- `.env.local` : **jamais commité**.
+- `.env` : commité (5 commits) puis **retiré du tracking** (`086e6b1` « gitignore .env »).
+  Contenait uniquement des clés PUBLIC + 4 clés provider (OPENAI/GEMINI/ANTHROPIC/
+  PERPLEXITY) à longueurs 24-53 en format NON-live (probables placeholders).
+- **Aucun `sk_live_`, `whsec_`, `SUPABASE_SERVICE_ROLE_KEY` dans l'historique.** Pas de
+  rotation Stripe/Supabase requise. Précaution : vérifier que le `.env.local` actuel
+  diffère des 4 valeurs historiques (sinon rotation).
+
+### Vitest élargi aux tests hiking + correction CLAUDE.md
+- `vitest.config.ts` include += `src/**/__tests__/**/*.test.ts`.
+- Les 9 suites hiking (runner legacy auto-run) **enveloppées en suites Vitest** (describe/
+  it + `expect(result.failed).toBe(0)`, garde `process.env.VITEST` sur les `process.exit`)
+  → elles s'exécutent ENFIN réellement dans `npm test` : **312 tests / 52 fichiers, verts**.
+- CLAUDE.md : « 32 tests unitaires » → description exacte des 9 suites maintenant exécutées.
+
+### Réconciliation Stripe + rapports
+- **`docs/reports/RECONCILIATION_STRIPE.md`** : méthodologie de rapprochement des
+  paiements orphelins (avant Lot 3), décision par orphelin (honorer/rembourser), requêtes
+  SQL, tableau de traçage — **bloquant PR, données réelles à exécuter par Tony**.
+- `RAPPORT_LIGNEES.md` : migration 6 marquée ❄️ EXCLUE ; section 4 → checklist à confirmer
+  par pgTAP (sorties à coller en 4bis) ; résultats du scan sécurité; flag mentionné.
+
 ## 2026-09-03 — Chantier « Lignées de kits » — LOTS 7 & 8 : découverte + livraison (mode autonome)
 
 ### Lot 7 — Découverte (conservation et endurance, pas de palmarès)

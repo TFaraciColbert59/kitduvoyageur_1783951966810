@@ -34,7 +34,15 @@ function runTests() {
 
   // Summary
   console.log(`🏁 GPX Test Summary: ${passed} Passed, ${failed} Failed.`);
-  if (failed > 0) process.exit(1);
+  if (failed > 0 && process.env.VITEST !== 'true') process.exit(1);
+  return { passed, failed };
 }
 
-runTests();
+// Enregistrement Vitest (npm test)
+import { describe, it, expect } from 'vitest';
+describe('hiking', () => {
+  it('exécute la suite GPXEngine', () => {
+    const result = runTests();
+    expect(result.failed).toBe(0);
+  });
+});

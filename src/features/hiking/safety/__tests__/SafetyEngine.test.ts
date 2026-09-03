@@ -1,4 +1,5 @@
 import assert from 'node:assert';
+import { describe, it, expect } from 'vitest';
 import { SafetyEngine } from '../SafetyEngine';
 import { GPSPosition } from '../../types';
 
@@ -48,3 +49,12 @@ export function runAllSafetyEngineTests(): { success: boolean; passed: number; f
 if (typeof process !== 'undefined' && process.argv && process.argv[1]?.includes('SafetyEngine.test')) {
   runAllSafetyEngineTests();
 }
+
+
+// Enregistrement Vitest — suite exécutable par npm test
+describe('hiking', () => {
+  it('exécute la suite (runAllSafetyEngineTests)', () => {
+    const result = runAllSafetyEngineTests();
+    expect(result.failed).toBe(0);
+  });
+});

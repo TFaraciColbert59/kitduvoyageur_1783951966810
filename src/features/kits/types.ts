@@ -59,4 +59,6 @@ export interface KitSheetData {
   journal: KitJournal | null;
   trust: KitTrustRow | null;
   survival: KitSurvivalRow[];
+  /** Part créateur (Lot 6, gelé) — true uniquement si KIT_ROYALTY_ENABLED. */
+  royalty_enabled: boolean;
 }

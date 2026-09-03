@@ -1,4 +1,5 @@
 import assert from 'node:assert';
+import { describe, it, expect } from 'vitest';
 import { JournalEventBuilder } from '../JournalEventBuilder';
 import { JournalStore } from '../JournalStore';
 import { GPSPosition, POI } from '../../types';
@@ -88,3 +89,12 @@ export function runAllJournalTests(): { success: boolean; passed: number; failed
 if (typeof process !== 'undefined' && process.argv && process.argv[1]?.includes('JournalEventBuilder.test')) {
   runAllJournalTests();
 }
+
+
+// Enregistrement Vitest — suite exécutable par npm test
+describe('hiking', () => {
+  it('exécute la suite (runAllJournalTests)', () => {
+    const result = runAllJournalTests();
+    expect(result.failed).toBe(0);
+  });
+});

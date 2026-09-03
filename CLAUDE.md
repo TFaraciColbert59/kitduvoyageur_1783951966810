@@ -68,7 +68,7 @@ Le cockpit de randonnée (`/randonnee-active`) est une interface desktop temps r
 - **3D Terrain** — `Terrain3DViewer` (vue 3D du terrain avec three.js)
 - **AI Narratives** — Génération de récits post-randonnée via OpenRouter
 - **Safety Center** — `SafetyCenterModal` (numéros d'urgence, position sharing)
-- **32 tests unitaires** — Suite de tests pour les modules hiking
+- **9 suites de tests Vitest (modules hiking)** — TrackingEngine, NavigationEngine, SafetyEngine, OfflineManager, CopilotEngine, TrailIntelligenceEngine, JournalEventBuilder, GPXEngine, HikeNarrativeService. Exécutées par `npm test` (wrapped dans `describe`/`it` Vitest — pattern legacy auto-run converti).
 
 ---
 
