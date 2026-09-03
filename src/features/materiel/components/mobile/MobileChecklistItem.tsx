@@ -5,6 +5,7 @@ import { Check, Zap, Sparkles, Trash2 } from 'lucide-react';
 import { formatWeight } from '@/features/materiel/domain/departCalculations';
 import { resolveGearImage } from '@/features/materiel/services/gearImageResolver';
 import { cn } from '@/lib/utils';
+import { useHapticFeedback } from '@/hooks/useHapticFeedback';
 import type { ChecklistItem } from '@/features/materiel/types/trekHub';
 
 export interface MobileChecklistItemProps {
@@ -33,16 +34,12 @@ export function MobileChecklistItem({
   className,
 }: MobileChecklistItemProps) {
   const shouldReduceMotion = useReducedMotion();
+  const { haptic } = useHapticFeedback();
   const imageUrl = resolveGearImage(item.name, item.category, item.photoUrl);
 
   const handleToggle = () => {
-    if (typeof navigator !== 'undefined' && 'vibrate' in navigator) {
-      try {
-        navigator.vibrate(8);
-      } catch {
-        // Fallback gracefully on environments without vibration support
-      }
-    }
+    // Wrapper haptique unique (mission gestes, Phase 7) — remplace navigator.vibrate direct.
+    haptic('light');
     onToggle(item);
   };
 

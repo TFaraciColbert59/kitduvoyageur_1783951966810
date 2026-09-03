@@ -5,6 +5,7 @@ import { AlertTriangle } from 'lucide-react';
 import { ArrowRightIcon as ArrowRightAnimated } from '@/components/icons/arrow-right';
 import { XIcon as XAnimated } from '@/components/icons/x';
 import { cn } from '@/lib/utils';
+import { useHapticFeedback } from '@/hooks/useHapticFeedback';
 import type { ActionableAlert } from '@/features/materiel/services/generateSmartPrompts';
 
 export interface MobileVitalAlertBannerProps {
@@ -39,16 +40,10 @@ export function MobileVitalAlertBanner({
   className,
 }: MobileVitalAlertBannerProps) {
   const shouldReduceMotion = useReducedMotion();
-
-  const triggerHaptic = () => {
-    if (typeof navigator !== 'undefined' && 'vibrate' in navigator) {
-      try {
-        navigator.vibrate(8);
-      } catch {
-        // Fallback gracefully on environments without vibration support
-      }
-    }
-  };
+  // Wrapper haptique unique (mission gestes, Phase 7) — remplace navigator.vibrate direct.
+  // Signature zéro-arg conservée (l'ancien vibrate(8) = feedback léger).
+  const { haptic } = useHapticFeedback();
+  const triggerHaptic = () => haptic('light');
 
   const activeAlerts = (alerts || []).filter(
     (a) => a && (!dismissedIds || !dismissedIds.includes(a.id))

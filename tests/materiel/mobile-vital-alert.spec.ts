@@ -12,6 +12,14 @@ vi.mock('framer-motion', async () => {
   };
 });
 
+// Le composant est invoqué comme fonction pure dans ces tests (pas de
+// renderer React) : le wrapper haptique est mocké en fonction simple.
+// (Mission gestes, Phase 7 : l'haptique passe par useHapticFeedback.)
+const hapticMock = vi.fn();
+vi.mock('@/hooks/useHapticFeedback', () => ({
+  useHapticFeedback: () => ({ haptic: hapticMock, triggerHaptic: hapticMock, vibrate: hapticMock }),
+}));
+
 describe('MobileVitalAlertBanner (Retractable Vital Safety Notification Banner)', () => {
   const criticalAlert: ActionableAlert = {
     id: 'alert-vital-gear',
@@ -224,16 +232,7 @@ describe('MobileVitalAlertBanner (Retractable Vital Safety Notification Banner)'
     });
 
     it('triggers haptic feedback on dismiss and action interactions', () => {
-      const vibrateMock = vi.fn();
-      const originalNavigator = global.navigator;
-      Object.defineProperty(global, 'navigator', {
-        value: {
-          ...originalNavigator,
-          vibrate: vibrateMock,
-        },
-        configurable: true,
-        writable: true,
-      });
+      hapticMock.mockClear();
 
       const onAction = vi.fn();
       const rendered = MobileVitalAlertBanner({
@@ -257,13 +256,7 @@ describe('MobileVitalAlertBanner (Retractable Vital Safety Notification Banner)'
 
       const actionBtn = findActionBtn(rendered);
       actionBtn?.props.onClick?.({ stopPropagation: () => {} });
-      expect(vibrateMock).toHaveBeenCalledWith(8);
-
-      Object.defineProperty(global, 'navigator', {
-        value: originalNavigator,
-        configurable: true,
-        writable: true,
-      });
+      expect(hapticMock).toHaveBeenCalledWith('light');
     });
   });
 

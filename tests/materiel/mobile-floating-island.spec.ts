@@ -3,6 +3,14 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { renderToStaticMarkup } from 'react-dom/server';
 import { MobileFloatingIsland } from '@/features/materiel/components/mobile/MobileFloatingIsland';
 
+// Le composant est invoqué comme fonction pure dans ces tests (pas de
+// renderer React) : le wrapper haptique est mocké en fonction simple.
+// (Mission gestes, Phase 7 : l'haptique passe par useHapticFeedback.)
+const hapticMock = vi.fn();
+vi.mock('@/hooks/useHapticFeedback', () => ({
+  useHapticFeedback: () => ({ haptic: hapticMock, triggerHaptic: hapticMock, vibrate: hapticMock }),
+}));
+
 vi.mock('framer-motion', async () => {
   const actual = await vi.importActual<Record<string, unknown>>('framer-motion');
   return {
@@ -94,17 +102,7 @@ describe('MobileFloatingIsland (« Liquid Island » Bottom Controller)', () => {
 
     it('triggers onFilterChange callback and haptic feedback when clicking segmented tabs', () => {
       const onFilterChange = vi.fn();
-      const vibrateMock = vi.fn();
-
-      const originalNavigator = global.navigator;
-      Object.defineProperty(global, 'navigator', {
-        value: {
-          ...originalNavigator,
-          vibrate: vibrateMock,
-        },
-        configurable: true,
-        writable: true,
-      });
+      hapticMock.mockClear();
 
       const rendered = MobileFloatingIsland({
         ...defaultProps,
@@ -125,18 +123,11 @@ describe('MobileFloatingIsland (« Liquid Island » Bottom Controller)', () => {
       expect(tabRemaining.props.onClick).toBeDefined();
       tabRemaining.props.onClick?.({ stopPropagation: () => {} });
       expect(onFilterChange).toHaveBeenCalledWith('remaining');
-      expect(vibrateMock).toHaveBeenCalledWith(8);
+      expect(hapticMock).toHaveBeenCalledWith('light');
 
       expect(tabAll.props.onClick).toBeDefined();
       tabAll.props.onClick?.({ stopPropagation: () => {} });
       expect(onFilterChange).toHaveBeenCalledWith('all');
-
-      // Cleanup
-      Object.defineProperty(global, 'navigator', {
-        value: originalNavigator,
-        configurable: true,
-        writable: true,
-      });
     });
   });
 

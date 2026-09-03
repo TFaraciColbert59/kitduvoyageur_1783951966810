@@ -4,6 +4,7 @@ import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import Icon from '@/components/ui/AppIcon';
 import { useHapticFeedback } from '@/hooks/useHapticFeedback';
+import { useDragDismiss } from '@/hooks/gestures';
 
 export interface ReportSheetProps {
   isOpen: boolean;
@@ -33,6 +34,8 @@ export default function ReportSheet({
   const [details, setDetails] = useState('');
   const [submitting, setSubmitting] = useState(false);
   const [submitted, setSubmitted] = useState(false);
+  // Fermeture au drag (mission gestes, Phase 2) — poignée + en-tête.
+  const { dragProps, handleProps, y } = useDragDismiss({ onDismiss: onClose, mode: 'handle' });
 
   if (!isOpen) return null;
 
@@ -74,10 +77,15 @@ export default function ReportSheet({
           animate={{ y: 0 }}
           exit={{ y: '100%' }}
           transition={{ type: 'spring', damping: 28, stiffness: 350 }}
+          style={{ y }}
+          {...dragProps}
           className="relative z-10 w-full max-w-lg glass rounded-t-3xl p-5 pb-8 flex flex-col gap-3 max-h-[85vh] overflow-y-auto"
         >
           {/* Drag handle */}
-          <div className="w-10 h-1 bg-gray-300 rounded-full mx-auto mb-2" />
+          <div
+            {...handleProps}
+            className="w-10 h-1 bg-gray-300 rounded-full mx-auto mb-2 cursor-grab active:cursor-grabbing touch-none"
+          />
 
           {submitted ? (
             <div className="py-10 text-center flex flex-col items-center gap-3">

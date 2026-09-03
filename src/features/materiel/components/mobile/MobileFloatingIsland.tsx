@@ -4,6 +4,7 @@ import { motion, useReducedMotion } from 'framer-motion';
 import { Plus } from 'lucide-react';
 import { Volume2Icon as Volume2 } from '@/components/icons/volume-2';
 import { cn } from '@/lib/utils';
+import { useHapticFeedback } from '@/hooks/useHapticFeedback';
 
 export interface MobileFloatingIslandProps {
   totalCount: number;
@@ -38,16 +39,10 @@ export function MobileFloatingIsland({
   className,
 }: MobileFloatingIslandProps) {
   const shouldReduceMotion = useReducedMotion();
-
-  const triggerHaptic = () => {
-    if (typeof navigator !== 'undefined' && 'vibrate' in navigator) {
-      try {
-        navigator.vibrate(8);
-      } catch {
-        // Graceful fallback for browsers without vibration API
-      }
-    }
-  };
+  // Wrapper haptique unique (mission gestes, Phase 7) — remplace navigator.vibrate direct.
+  // Signature zéro-arg conservée (l'ancien vibrate(8) = feedback léger).
+  const { haptic } = useHapticFeedback();
+  const triggerHaptic = () => haptic('light');
 
   return (
     <motion.nav

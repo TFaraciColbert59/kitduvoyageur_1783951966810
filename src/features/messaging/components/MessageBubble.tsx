@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
 import type { Message } from '../types/messaging.types';
@@ -8,6 +8,7 @@ import { formatMessageDate } from '../lib/messagingUtils';
 import { FileText, Check, CheckCheck, Reply, Smile, Share2 } from 'lucide-react';
 import { useHapticFeedback } from '@/hooks/useHapticFeedback';
 import { useSwipe } from '@/hooks/useSwipe';
+import { useDoubleTap, useLongPress } from '@/hooks/gestures';
 import { OpenGraphCard } from './OpenGraphCard';
 import { AudioPlayerBubble } from './AudioPlayerBubble';
 import { GPXPreviewCard } from './GPXPreviewCard';
@@ -52,8 +53,6 @@ export const MessageBubble: React.FC<MessageBubbleProps> = ({
 }) => {
   const { haptic } = useHapticFeedback();
   const [showActionMenu, setShowActionMenu] = useState(false);
-  const lastTapRef = useRef<number>(0);
-  const touchTimerRef = useRef<NodeJS.Timeout | null>(null);
 
   // Swipe à droite sur un message reçu → répondre (comme Instagram DM)
   const swipeHandlers = useSwipe({
@@ -68,51 +67,22 @@ export const MessageBubble: React.FC<MessageBubbleProps> = ({
   const senderName = message.sender_profile?.full_name || 'Voyageur';
   const avatarUrl = message.sender_profile?.avatar_url || '/assets/images/no_image.png';
 
-  // Double-tap for ❤️
-  const handleBubbleClick = () => {
-    const now = Date.now();
-    if (now - lastTapRef.current < 300) {
-      haptic('light');
-      if (onToggleReaction) {
-        onToggleReaction(message.id, '❤️');
-      }
-      lastTapRef.current = 0;
-    } else {
-      lastTapRef.current = now;
+  // Double-tap for ❤️ — hook partagé (mission gestes, Phase 3) ;
+  // comportement identique à l'ancien inline (fenêtre 300ms).
+  const doubleTap = useDoubleTap(() => {
+    haptic('light');
+    if (onToggleReaction) {
+      onToggleReaction(message.id, '❤️');
     }
-  };
+  });
 
-  // Long press for action menu on touch devices
-  const touchStart = useRef<{ x: number; y: number } | null>(null);
-
-  const handleTouchStart = (e: React.TouchEvent) => {
-    touchStart.current = { x: e.touches[0].clientX, y: e.touches[0].clientY };
-    touchTimerRef.current = setTimeout(() => {
-      haptic('medium');
-      setShowActionMenu(true);
-    }, 450);
-  };
-
-  // Annule le long-press dès que le doigt bouge (scroll de la liste) :
-  // sans onTouchMove, faire défiler en posant le doigt sur une bulle
-  // ouvrait le menu de réactions (cf. audit 1.4).
-  const handleTouchMove = (e: React.TouchEvent) => {
-    if (!touchStart.current || !touchTimerRef.current) return;
-    const dx = Math.abs(e.touches[0].clientX - touchStart.current.x);
-    const dy = Math.abs(e.touches[0].clientY - touchStart.current.y);
-    if (dx > 8 || dy > 8) {
-      clearTimeout(touchTimerRef.current);
-      touchTimerRef.current = null;
-    }
-  };
-
-  const handleTouchEnd = () => {
-    if (touchTimerRef.current) {
-      clearTimeout(touchTimerRef.current);
-      touchTimerRef.current = null;
-    }
-    touchStart.current = null;
-  };
+  // Long press for action menu on touch devices — hook partagé (Phase 3) ;
+  // l'annulation au touchmove (>8px, scroll de la liste) est incluse
+  // dans le hook (cf. audit 1.4).
+  const longPress = useLongPress(() => {
+    haptic('medium');
+    setShowActionMenu(true);
+  });
 
   // Fermeture du menu au clic extérieur et au scroll
   useEffect(() => {
@@ -314,10 +284,8 @@ export const MessageBubble: React.FC<MessageBubbleProps> = ({
           </div>
 
           <div
-            onClick={handleBubbleClick}
-            onTouchStart={handleTouchStart}
-            onTouchMove={handleTouchMove}
-            onTouchEnd={handleTouchEnd}
+            onClick={doubleTap.onClick}
+            {...longPress}
             className={`relative px-4 py-3 transition-all select-none cursor-pointer ${bubbleRadiusClass} ${
               isMine
                 ? 'msg-bubble--mine'

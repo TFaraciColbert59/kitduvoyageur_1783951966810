@@ -2,11 +2,18 @@
 
 import React, { useState, useRef, useEffect } from 'react';
 import Link from 'next/link';
+import dynamic from 'next/dynamic';
 import { motion, AnimatePresence } from 'framer-motion';
 import Icon from '@/components/ui/AppIcon';
 import GlassIconButton from '@/components/ui/GlassIconButton';
 import SmartImage from '@/components/ui/SmartImage';
 import { createClient } from '@/lib/supabase/client';
+import { useHapticFeedback } from '@/hooks/useHapticFeedback';
+import { useDoubleTap, useLongPress } from '@/hooks/gestures';
+
+// Visionneuse plein écran en dynamic import — protège le First Load JS
+// (mission gestes, Phase 6 : budget ≤170 KB).
+const ImageViewer = dynamic(() => import('@/components/ui/ImageViewer'), { ssr: false });
 
 export interface PostAuthor {
   id?: string;
@@ -103,6 +110,27 @@ export default function CommunityPostCard({
   const commentInputRef = useRef<HTMLInputElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const gpxInputRef = useRef<HTMLInputElement>(null);
+  const { haptic } = useHapticFeedback();
+
+  // ── Gestes feed niveau Instagram (mission gestes, Phase 4) ──
+  const [heartBurst, setHeartBurst] = useState(0);
+  const [showQuickMenu, setShowQuickMenu] = useState(false);
+  const [viewerOpen, setViewerOpen] = useState(false);
+
+  // Fermeture du menu rapide au clic extérieur et au scroll.
+  useEffect(() => {
+    if (!showQuickMenu) return;
+    const close = () => setShowQuickMenu(false);
+    const t = window.setTimeout(() => {
+      document.addEventListener('pointerdown', close);
+      window.addEventListener('scroll', close, true);
+    }, 0);
+    return () => {
+      window.clearTimeout(t);
+      document.removeEventListener('pointerdown', close);
+      window.removeEventListener('scroll', close, true);
+    };
+  }, [showQuickMenu]);
 
   const [comments, setComments] = useState<PostCommentItem[]>([
     {
@@ -157,6 +185,26 @@ export default function CommunityPostCard({
       console.error(err);
     }
   };
+
+  // Double-tap sur le média → like + cœur animé (jamais d'unlike, comme IG).
+  // Tap isolé (différé par le hook) → ouverture de la visionneuse plein écran.
+  const doubleTap = useDoubleTap(() => {
+    haptic('light');
+    if (!isLiked) {
+      handleLike();
+    }
+    setHeartBurst((k) => k + 1);
+  }, {
+    onSingleTap: () => {
+      if (post.image_url) setViewerOpen(true);
+    },
+  });
+
+  // Long-press sur le corps du post → menu rapide (réaction, enregistrer, masquer, signaler).
+  const longPress = useLongPress(() => {
+    haptic('medium');
+    setShowQuickMenu(true);
+  });
 
   const handleToggleComments = () => {
     setShowComments(!showComments);
@@ -323,6 +371,52 @@ export default function CommunityPostCard({
         </div>
       )}
 
+      {/* Menu rapide long-press (mission gestes, Phase 4) — glass, palette LKDV */}
+      {showQuickMenu && (
+        <div className="absolute top-10 left-1/2 -translate-x-1/2 z-40 p-1.5 glass rounded-2xl shadow-lg flex items-center gap-1 animate-scale-in">
+          <button
+            type="button"
+            onClick={() => {
+              haptic('light');
+              if (!isLiked) handleLike();
+              setHeartBurst((k) => k + 1);
+              setShowQuickMenu(false);
+            }}
+            className="w-11 h-11 rounded-full flex items-center justify-center hover:bg-stone-100/80 text-xl active:scale-125 transition-transform"
+            title="J'aime"
+          >
+            ❤️
+          </button>
+          <button
+            type="button"
+            onClick={() => { haptic('light'); handleToggleSave(); }}
+            className="w-11 h-11 rounded-full flex items-center justify-center hover:bg-stone-100/80 text-xl active:scale-125 transition-transform"
+            title={isSaved ? 'Retirer des favoris' : 'Enregistrer'}
+          >
+            {isSaved ? '⭐' : '🔖'}
+          </button>
+          <div className="w-px h-5 bg-stone-200/80 mx-0.5" />
+          <button
+            type="button"
+            onClick={() => { haptic('light'); handleHidePost(); }}
+            className="w-11 h-11 rounded-full flex items-center justify-center hover:bg-stone-100/80 text-base active:scale-125 transition-transform"
+            title="Masquer"
+          >
+            🙈
+          </button>
+          <button
+            type="button"
+            onClick={() => { haptic('light'); handleReport(); }}
+            className="w-11 h-11 rounded-full flex items-center justify-center hover:bg-stone-100/80 text-base active:scale-125 transition-transform"
+            title="Signaler"
+          >
+            🚩
+          </button>
+        </div>
+      )}
+
+      {/* Zone geste : header + contenu + média (long-press menu rapide) */}
+      <div {...longPress}>
       {/* Header author & Badge */}
       <div className="flex items-center justify-between">
         <Link
@@ -353,16 +447,43 @@ export default function CommunityPostCard({
         {post.content}
       </p>
 
-      {/* Attached Media */}
+      {/* Attached Media — tap = visionneuse, double-tap = like + cœur animé (IG) */}
       {post.image_url && (
-        <div className="rounded-2xl overflow-hidden aspect-[16/10] bg-[#FAF8F5] border border-white/80 shadow-2xs">
+        <div
+          {...doubleTap}
+          className="relative rounded-2xl overflow-hidden aspect-[16/10] bg-[#FAF8F5] border border-white/80 shadow-2xs select-none cursor-zoom-in"
+        >
           <SmartImage
             src={post.image_url}
             alt="Photo de l'expédition"
             className="w-full h-full object-cover"
           />
+
+          {/* Cœur animé du double-tap — transform/opacity uniquement, 60fps */}
+          <AnimatePresence>
+            {heartBurst > 0 && (
+              <motion.div
+                key={heartBurst}
+                className="pointer-events-none absolute inset-0 flex items-center justify-center"
+                initial={{ opacity: 0, scale: 0.3 }}
+                animate={{
+                  opacity: [0, 1, 1, 0],
+                  scale: [0.3, 1.25, 1, 1.15],
+                  rotate: [-8, 0, 0, 8],
+                }}
+                transition={{ duration: 0.7, times: [0, 0.25, 0.6, 1], ease: 'easeOut' }}
+                onAnimationComplete={() => setHeartBurst(0)}
+              >
+                <svg viewBox="0 0 24 24" fill="currentColor" className="w-20 h-20 text-rose-500 drop-shadow-lg">
+                  <path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z" />
+                </svg>
+              </motion.div>
+            )}
+          </AnimatePresence>
         </div>
       )}
+      </div>
+      {/* Fin zone geste */}
 
       {/* Actions Row: Like, Comment (left) | Share, More Options (right) */}
       <div className="pt-2.5 border-t border-[#17402C]/10 flex items-center justify-between">
@@ -757,6 +878,17 @@ export default function CommunityPostCard({
           </motion.div>
         )}
       </AnimatePresence>
+
+      {/* Visionneuse plein écran (mission gestes, Phase 6) — pinch, double-tap-zoom,
+          swipe-down close, swipe horizontal. Dynamic import (First Load JS). */}
+      {viewerOpen && post.image_url && (
+        <ImageViewer
+          images={[post.image_url]}
+          index={0}
+          alt="Photo de l'expédition — vue plein écran"
+          onClose={() => setViewerOpen(false)}
+        />
+      )}
     </div>
   );
 }

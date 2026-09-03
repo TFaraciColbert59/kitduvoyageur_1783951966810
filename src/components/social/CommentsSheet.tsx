@@ -3,6 +3,7 @@
 import React, { useState, useMemo, useRef, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useHapticFeedback } from '@/hooks/useHapticFeedback';
+import { useDragDismiss } from '@/hooks/gestures';
 
 export interface CommentData {
   id: string;
@@ -51,6 +52,9 @@ export default function CommentsSheet({
   onDeleteComment,
 }: CommentsSheetProps) {
   const { triggerHaptic } = useHapticFeedback();
+  // Fermeture au drag (mission gestes, Phase 2) — poignée + en-tête ;
+  // la liste de commentaires reste libre de scroller (mode 'handle').
+  const { dragProps, handleProps, y } = useDragDismiss({ onDismiss: onClose, mode: 'handle' });
   const [newComment, setNewComment] = useState('');
   const [replyTarget, setReplyTarget] = useState<{ id: string; authorName: string } | null>(null);
   const [submitting, setSubmitting] = useState(false);
@@ -134,10 +138,15 @@ export default function CommentsSheet({
           exit={{ y: '100%' }}
           transition={{ type: 'spring', damping: 28, stiffness: 350 }}
           onClick={(e) => e.stopPropagation()}
+          style={{ y }}
+          {...dragProps}
           className="relative z-10 w-full max-w-lg glass bg-white/95 backdrop-blur-2xl text-[#17402C] rounded-t-[32px] p-4 sm:p-5 pb-8 sm:pb-6 flex flex-col h-[82vh] max-h-[680px] border-t border-white shadow-2xl"
         >
           {/* Drag handle */}
-          <div className="w-12 h-1.5 bg-[#17402C]/20 rounded-full mx-auto mb-3 shrink-0 cursor-grab" onClick={onClose} />
+          <div
+            {...handleProps}
+            className="w-12 h-1.5 bg-[#17402C]/20 rounded-full mx-auto mb-3 shrink-0 cursor-grab active:cursor-grabbing touch-none"
+          />
 
           {/* Header */}
           <div className="flex items-center justify-between pb-3 border-b border-[#17402C]/10 shrink-0">

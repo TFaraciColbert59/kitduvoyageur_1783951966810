@@ -12,6 +12,14 @@ vi.mock('framer-motion', async () => {
   };
 });
 
+// Le composant est invoqué comme fonction pure dans ces tests (pas de
+// renderer React) : le wrapper haptique est mocké en fonction simple.
+// (Mission gestes, Phase 7 : l'haptique passe par useHapticFeedback.)
+const hapticMock = vi.fn();
+vi.mock('@/hooks/useHapticFeedback', () => ({
+  useHapticFeedback: () => ({ haptic: hapticMock, triggerHaptic: hapticMock, vibrate: hapticMock }),
+}));
+
 describe('MobileChecklistItem (Apple Reminders Style)', () => {
   const mockItem: ChecklistItem = {
     id: 'item-1',
@@ -123,17 +131,7 @@ describe('MobileChecklistItem (Apple Reminders Style)', () => {
 
     it('triggers onToggle callback and haptic feedback on toggle interaction', () => {
       const onToggle = vi.fn();
-      const vibrateMock = vi.fn();
-
-      const originalNavigator = global.navigator;
-      Object.defineProperty(global, 'navigator', {
-        value: {
-          ...originalNavigator,
-          vibrate: vibrateMock,
-        },
-        configurable: true,
-        writable: true,
-      });
+      hapticMock.mockClear();
 
       const rendered = MobileChecklistItem({
         item: mockItem,
@@ -152,14 +150,7 @@ describe('MobileChecklistItem (Apple Reminders Style)', () => {
       checkBtn.props.onClick?.({ stopPropagation: () => {} });
 
       expect(onToggle).toHaveBeenCalledWith(mockItem);
-      expect(vibrateMock).toHaveBeenCalledWith(8);
-
-      // Cleanup
-      Object.defineProperty(global, 'navigator', {
-        value: originalNavigator,
-        configurable: true,
-        writable: true,
-      });
+      expect(hapticMock).toHaveBeenCalledWith('light');
     });
   });
 

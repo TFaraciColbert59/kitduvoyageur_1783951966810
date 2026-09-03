@@ -43,11 +43,35 @@ export default function ExplorerMobileHikeCarousel({
   const carouselScrollRef = useRef<HTMLDivElement>(null);
   const [viewMode, setViewMode] = useState<'carousel' | 'list'>('carousel');
 
+  // Haptique au changement de carte centrée (mission gestes, Phase 6) —
+  // le scroll natif + snap-x est conservé (momentum, a11y, perf) ; on
+  // détecte la carte la plus proche du centre au scroll et on confirme
+  // par retour léger. Garde anti-spam : pas d'haptique pendant les
+  // 700ms qui suivent un auto-scroll programmatique.
+  const programmaticUntilRef = useRef(0);
+  const lastSnappedIndexRef = useRef(0);
+
+  const handleCarouselScroll = useCallback(() => {
+    const el = carouselScrollRef.current;
+    if (!el || el.children.length < 2) return;
+    const first = el.querySelector<HTMLElement>('[data-trail-id]');
+    if (!first) return;
+    const step = first.offsetWidth + 12; // gap-3
+    const idx = Math.round(el.scrollLeft / step);
+    if (idx !== lastSnappedIndexRef.current) {
+      lastSnappedIndexRef.current = idx;
+      if (Date.now() > programmaticUntilRef.current) {
+        triggerHaptic('light');
+      }
+    }
+  }, [triggerHaptic]);
+
   // Auto-scroll the horizontal carousel to center the selected trail card
   useEffect(() => {
     if (!selectedTrailId || viewMode !== 'carousel' || !carouselScrollRef.current) return;
     const activeEl = carouselScrollRef.current.querySelector<HTMLElement>(`[data-trail-id="${selectedTrailId}"]`);
     if (activeEl) {
+      programmaticUntilRef.current = Date.now() + 700;
       activeEl.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' });
     }
   }, [selectedTrailId, viewMode]);
@@ -94,6 +118,7 @@ export default function ExplorerMobileHikeCarousel({
       {viewMode === 'carousel' && (
         <div
           ref={carouselScrollRef}
+          onScroll={handleCarouselScroll}
           className="flex gap-3 overflow-x-auto snap-x snap-mandatory px-3.5 pb-1 pointer-events-auto no-scrollbar"
           style={{
             WebkitOverflowScrolling: 'touch',

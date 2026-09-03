@@ -16,6 +16,7 @@ import { addDepartItem } from '@/features/materiel/actions/addDepartItem';
 import { updateItemQuantity } from '@/features/materiel/actions/updateItemQuantity';
 import { deleteDepartItem } from '@/features/materiel/actions/deleteDepartItem';
 import { queueOfflineAction } from '@/features/materiel/offline/departOfflineQueue';
+import { useHapticFeedback } from '@/hooks/useHapticFeedback';
 import { MobileChecklistItem } from '@/features/materiel/components/mobile/MobileChecklistItem';
 import type { ChecklistItem, Participant } from '@/features/materiel/types/trekHub';
 
@@ -77,6 +78,7 @@ export function DepartChecklist({
   className,
 }: DepartChecklistProps) {
   const shouldReduceMotion = useReducedMotion();
+  const { haptic } = useHapticFeedback();
   const [searchQuery, setSearchQuery] = useState('');
   const [filterMode, setFilterMode] = useState<'all' | 'remaining'>('all');
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
@@ -199,9 +201,8 @@ export function DepartChecklist({
       const nextChecked = !item.is_checked;
       const itemKey = item.id ?? item.name;
 
-      if (typeof navigator !== 'undefined' && 'vibrate' in navigator) {
-        try { navigator.vibrate(8); } catch {}
-      }
+      // Wrapper haptique unique (mission gestes, Phase 7) — remplace navigator.vibrate direct.
+      haptic('light');
 
       setErrorItemId(null);
       setFailedItem(null);
@@ -240,7 +241,7 @@ export function DepartChecklist({
         }
       });
     },
-    [addOptimistic, isRealKit]
+    [addOptimistic, isRealKit, haptic]
   );
 
   const handleQuantityChange = async (item: ChecklistItem, delta: number) => {

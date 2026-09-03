@@ -1,11 +1,13 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
 import Icon from '@/components/ui/AppIcon';
 import Link from 'next/link';
 import MobilePageShell from '@/components/mobile-nav/MobilePageShell';
+import { usePullToRefresh } from '@/hooks/usePullToRefresh';
+import { useHapticFeedback } from '@/hooks/useHapticFeedback';
 
 const JOURNALS = [
   { id: 'j1', author: 'Thomas Vernet', authorId: 'fake-author-1', authorAvatar: 'TV', authorTrustScore: 94, authorLevel: 'ambassadeur', title: 'Circuit des Annapurnas — 18 jours en autonomie complète', destination: 'Circuit des Annapurnas', country: 'Népal', countryCode: 'np', duration: '18 jours', date: '2026-07-01', coverImage: "https://img.rocket.new/generatedImages/rocket_gen_img_1fc94b322-1777501827822.png", coverAlt: 'Randonneur avec sac à dos sur sentier himalayan', excerpt: 'Départ de Besisahar le 12 mars, retour à Pokhara le 30.', gpsTrace: true, gpsPoints: 2847, weatherReal: 'Ensoleillé J1–J14, tempête neige J15–J18', gearUsed: [{ name: 'Osprey Atmos 65', category: 'Sac à dos', rating: 5, linked: true }], missingGear: ['Guêtres imperméables'], routeRating: 9.2, reactions: { useful: 203, securityConfirmed: 87, bagHelped: 156 }, comments: 34, readTime: 12, verified: true },
@@ -15,6 +17,23 @@ const JOURNALS = [
 export default function FeedPage() {
   const [filter, setFilter] = useState<'all' | 'verified' | 'gps' | 'recent'>('all');
   const [showNewJournal, setShowNewJournal] = useState(false);
+  const [refreshedAt, setRefreshedAt] = useState<number | null>(null);
+  const { haptic } = useHapticFeedback();
+
+  // Pull-to-refresh mobile (mission gestes, Phase 4) — hook existant,
+  // déjà branché sur les 4 hubs communautaires.
+  const { isRefreshing, pullProgress } = usePullToRefresh(async () => {
+    haptic('medium');
+    // Le fil est statique (données mock) : on rafraîchit l'horodatage.
+    await new Promise((r) => setTimeout(r, 600));
+    setRefreshedAt(Date.now());
+  });
+
+  useEffect(() => {
+    if (!refreshedAt) return;
+    const t = setTimeout(() => setRefreshedAt(null), 2000);
+    return () => clearTimeout(t);
+  }, [refreshedAt]);
 
   const filtered = JOURNALS.filter((j) => { if (filter === 'verified') return j.verified; if (filter === 'gps') return j.gpsTrace; return true; });
 
@@ -53,6 +72,23 @@ export default function FeedPage() {
       <div className="block md:hidden">
         <MobilePageShell>
           <div style={{ padding: '16px' }}>
+            {/* Indicateur pull-to-refresh (même pattern que MobileCommunityHub) */}
+            {(pullProgress > 0 || isRefreshing) && (
+              <div
+                className="w-full flex items-center justify-center py-2 transition-all overflow-hidden"
+                style={{ height: isRefreshing ? '44px' : `${Math.min(pullProgress * 44, 44)}px` }}
+              >
+                <div className="flex items-center gap-2 px-3 py-1 rounded-full glass-pill text-xs font-medium text-[#17402C] shadow-2xs">
+                  <div className={`w-3.5 h-3.5 rounded-full border-2 border-[#17402C] border-t-transparent ${isRefreshing ? 'animate-spin' : ''}`} />
+                  <span className="text-[11px] font-mono">{isRefreshing ? 'Actualisation...' : 'Tirer pour rafraîchir'}</span>
+                </div>
+              </div>
+            )}
+            {refreshedAt && (
+              <div className="w-full flex justify-center mb-2">
+                <span className="px-3 py-1 rounded-full bg-[#EDF3ED] text-[11px] font-mono text-[#17402C]">Fil actualisé</span>
+              </div>
+            )}
             <h1 style={{ fontSize: '20px', fontWeight: 800, color: '#17402C', marginBottom: '8px' }}>Carnets d&apos;expédition</h1>
             <p style={{ fontSize: '13px', color: 'rgba(23,64,44,0.6)', marginBottom: '16px' }}>Récits avec tracé GPS et matériel utilisé.</p>
             <div style={{ display: 'flex', gap: '6px', marginBottom: '16px', overflowX: 'auto' }}>

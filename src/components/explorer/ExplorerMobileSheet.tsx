@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useCallback, useRef } from 'react';
+import React, { useCallback } from 'react';
 import { motion } from 'framer-motion';
 import { MapPin } from 'lucide-react';
 import { ChevronDownIcon as ChevronDownAnimated } from '@/components/icons/chevron-down';
@@ -8,6 +8,7 @@ import { ChevronUpIcon as ChevronUpAnimated } from '@/components/icons/chevron-u
 import type { MapTrail } from './types';
 import ExplorerListCard from './ExplorerListCard';
 import { useHapticFeedback } from '@/hooks/useHapticFeedback';
+import { useDragDismiss } from '@/hooks/gestures';
 
 interface ExplorerMobileSheetProps {
   trails: MapTrail[];
@@ -30,27 +31,31 @@ export default function ExplorerMobileSheet({
   onTrailClick,
 }: ExplorerMobileSheetProps) {
   const { triggerHaptic } = useHapticFeedback();
-  const dragStartY = useRef<number | null>(null);
 
-  const handleTouchStart = useCallback((e: React.TouchEvent) => {
-    dragStartY.current = e.touches[0].clientY;
-  }, []);
+  // Migré (mission gestes, Phase 2) : l'ancien toggle binaire
+  // (touchstart/touchend, seuil 40px, aucun suivi du doigt) est remplacé
+  // par une vraie physique framer-motion via useDragDismiss — la sheet
+  // suit le doigt (élastique) sur la poignée et l'en-tête, puis snap.
+  const onDismiss = useCallback(() => {
+    if (expanded) {
+      triggerHaptic('light');
+      onExpandChange(false);
+    }
+  }, [expanded, onExpandChange, triggerHaptic]);
 
-  const handleTouchEnd = useCallback(
-    (e: React.TouchEvent) => {
-      if (dragStartY.current === null) return;
-      const delta = dragStartY.current - e.changedTouches[0].clientY;
-      if (delta > 40) {
-        if (!expanded) triggerHaptic('medium');
-        onExpandChange(true);
-      } else if (delta < -40) {
-        if (expanded) triggerHaptic('light');
-        onExpandChange(false);
-      }
-      dragStartY.current = null;
-    },
-    [expanded, onExpandChange, triggerHaptic]
-  );
+  const onDragUp = useCallback(() => {
+    if (!expanded) {
+      triggerHaptic('medium');
+      onExpandChange(true);
+    }
+  }, [expanded, onExpandChange, triggerHaptic]);
+
+  const { dragProps, handleProps, y } = useDragDismiss({
+    onDismiss,
+    onDragUp,
+    threshold: 48,
+    mode: 'handle',
+  });
 
   const toggle = useCallback(() => {
     const next = !expanded;
@@ -63,12 +68,11 @@ export default function ExplorerMobileSheet({
   return (
     <motion.div
       className="block md:hidden fixed left-2.5 right-2.5 z-[800] pointer-events-auto flex flex-col"
-      style={{ bottom: 'calc(env(safe-area-inset-bottom, 0px) + 74px)' }}
+      style={{ bottom: 'calc(env(safe-area-inset-bottom, 0px) + 74px)', y }}
       initial={false}
       animate={{ height: expanded ? `${EXPANDED_VH}vh` : `${PEEK_VH}vh` }}
       transition={{ type: 'spring', stiffness: 380, damping: 38 }}
-      onTouchStart={handleTouchStart}
-      onTouchEnd={handleTouchEnd}
+      {...dragProps}
       aria-label="Liste des sentiers"
     >
       {/* Sheet surface Liquid Glass */}
@@ -83,13 +87,19 @@ export default function ExplorerMobileSheet({
         }}
       />
 
-      {/* Drag handle */}
-      <div className="relative z-10 flex justify-center pt-2 pb-1 cursor-grab active:cursor-grabbing">
+      {/* Drag handle — zone de grip */}
+      <div
+        {...handleProps}
+        className="relative z-10 flex justify-center pt-2 pb-1 cursor-grab active:cursor-grabbing touch-none"
+      >
         <div className="w-10 h-1.5 rounded-full bg-[#17402C]/25" />
       </div>
 
-      {/* Header pill */}
-      <div className="relative z-10 flex items-center justify-between px-3 py-1 shrink-0">
+      {/* Header pill — draggable également */}
+      <div
+        {...handleProps}
+        className="relative z-10 flex items-center justify-between px-3 py-1 shrink-0 touch-none"
+      >
         <span className="flex items-center gap-1.5 text-[11px] font-bold text-[#17402C]">
           <MapPin size={11} className="text-[#17402C]" />
           <span>Sentiers ({count})</span>
@@ -102,6 +112,7 @@ export default function ExplorerMobileSheet({
           <button
             type="button"
             onClick={toggle}
+            onPointerDown={(e) => e.stopPropagation()}
             aria-label={expanded ? 'Replier la liste' : 'Déplier la liste'}
             className="w-7 h-7 rounded-full bg-white/70 hover:bg-white border border-white/60 text-[#17402C] flex items-center justify-center transition-all active:scale-90 "
           >

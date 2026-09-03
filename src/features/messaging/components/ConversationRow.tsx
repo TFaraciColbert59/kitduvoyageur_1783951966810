@@ -7,6 +7,7 @@ import type { Conversation } from '../types/messaging.types';
 import { formatConversationTimestamp } from '../lib/messagingUtils';
 import { Users, BellOff, Bell, Archive, Check, X, ArchiveRestore } from 'lucide-react';
 import { useHapticFeedback } from '@/hooks/useHapticFeedback';
+import { useLongPress } from '@/hooks/gestures';
 
 export type SwipeAction = 'accept' | 'decline' | 'archive' | 'mute';
 
@@ -39,7 +40,17 @@ export const ConversationRow: React.FC<ConversationRowProps> = ({
   const axis = useRef<'none' | 'x' | 'y'>('none');
   const didSwipeRef = useRef(false);
   const suppressClickRef = useRef(false);
-  const longPressTimer = useRef<NodeJS.Timeout | null>(null);
+
+  // Long-press unifié (mission gestes, Phase 3) — remplace le
+  // `longPressTimer` inline (même timing 450ms, même annulation au
+  // déplacement >8px incluse dans le hook). Le swipe-reveal iOS Mail
+  // existant est conservé tel quel (cf. MISSION_LOG D2).
+  const longPress = useLongPress(() => {
+    if (!onLongPress) return; // comportement historique : sans handler, aucun effet ni haptique
+    suppressClickRef.current = true;
+    haptic('medium');
+    onLongPress(conversation);
+  });
 
   const isGroup = conversation.type === 'group';
   const isPending = conversation.status === 'pending';
@@ -71,13 +82,6 @@ export const ConversationRow: React.FC<ConversationRowProps> = ({
     else lastMessageDisplay = lastMsg.content;
   }
 
-  const clearLongPress = () => {
-    if (longPressTimer.current) {
-      clearTimeout(longPressTimer.current);
-      longPressTimer.current = null;
-    }
-  };
-
   const fire = (action: SwipeAction) => {
     haptic('medium');
     setDx(0);
@@ -91,14 +95,7 @@ export const ConversationRow: React.FC<ConversationRowProps> = ({
     axis.current = 'none';
     dxRef.current = snappedOpen ? -REVEAL_WIDTH : 0;
     suppressClickRef.current = false;
-    if (onLongPress) {
-      clearLongPress();
-      longPressTimer.current = setTimeout(() => {
-        suppressClickRef.current = true;
-        haptic('medium');
-        onLongPress(conversation);
-      }, 450);
-    }
+    longPress.onTouchStart(e);
   };
 
   const onTouchMove = (e: React.TouchEvent) => {
@@ -106,7 +103,6 @@ export const ConversationRow: React.FC<ConversationRowProps> = ({
     const ddy = e.touches[0].clientY - startY.current;
     if (axis.current === 'none' && (Math.abs(ddx) > 8 || Math.abs(ddy) > 8)) {
       axis.current = Math.abs(ddx) > Math.abs(ddy) ? 'x' : 'y';
-      clearLongPress();
     }
     if (axis.current === 'x') {
       // Glissement gauche → révèle les actions ; droite → referme.
@@ -114,13 +110,15 @@ export const ConversationRow: React.FC<ConversationRowProps> = ({
       dxRef.current = Math.max(-REVEAL_WIDTH, Math.min(base + ddx, 0));
       setDx(dxRef.current);
     }
+    // Le hook annule lui-même le long-press au-delà de 8px de déplacement.
+    longPress.onTouchMove(e);
   };
 
   const onTouchEnd = () => {
     // Tout mouvement (horizontal OU vertical) empêche le click d'ouvrir la
     // conversation : seul un tap sans déplacement sélectionne.
     didSwipeRef.current = axis.current !== 'none';
-    clearLongPress();
+    longPress.onTouchEnd();
     if (axis.current === 'x') {
       if (dxRef.current < -REVEAL_WIDTH * 0.4) {
         dxRef.current = -REVEAL_WIDTH;

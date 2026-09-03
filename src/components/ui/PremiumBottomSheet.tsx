@@ -1,6 +1,9 @@
 'use client';
 
-import React, { useEffect, useRef, useState, useCallback } from 'react';
+import React, { useEffect, useState, useCallback } from 'react';
+import { motion, useReducedMotion } from 'framer-motion';
+import { useDragDismiss } from '@/hooks/gestures';
+import { useHapticFeedback } from '@/hooks/useHapticFeedback';
 
 interface PremiumBottomSheetProps {
   isOpen: boolean;
@@ -17,8 +20,18 @@ const SNAP_HEIGHTS = {
   peek: '30dvh',
   half: '55dvh',
   full: '92dvh',
-};
+} as const;
 
+/**
+ * Sheet Liquid Glass à snap points.
+ *
+ * Migré (mission gestes, Phase 2) des touch handlers manuels
+ * (touchstart/touchmove/touchend + dragOffset, seuil 80px) vers le hook
+ * partagé `useDragDismiss` (framer-motion) — même seuil 80px, mêmes snap
+ * points, API publique inchangée. Le drag démarre désormais depuis la
+ * poignée et l'en-tête uniquement (mode 'handle') : le contenu reste
+ * libre de scroller, comme sur Instagram.
+ */
 export default function PremiumBottomSheet({
   isOpen,
   onClose,
@@ -30,54 +43,44 @@ export default function PremiumBottomSheet({
   className = '',
 }: PremiumBottomSheetProps) {
   const [currentSnap, setCurrentSnap] = useState(defaultSnap);
-  const [isDragging, setIsDragging] = useState(false);
-  const [dragOffset, setDragOffset] = useState(0);
-  const startY = useRef(0);
-  const startOffset = useRef(0);
-  const sheetRef = useRef<HTMLDivElement>(null);
+  const { haptic } = useHapticFeedback();
+  const reduceMotion = useReducedMotion();
+
+  const onDismiss = useCallback(() => {
+    const currentIndex = snapPoints.indexOf(currentSnap);
+    if (currentIndex === 0) {
+      haptic('medium');
+      onClose();
+    } else {
+      haptic('light');
+      setCurrentSnap(snapPoints[currentIndex - 1]);
+    }
+  }, [snapPoints, currentSnap, onClose, haptic]);
+
+  const onDragUp = useCallback(() => {
+    const currentIndex = snapPoints.indexOf(currentSnap);
+    if (currentIndex < snapPoints.length - 1) {
+      haptic('light');
+      setCurrentSnap(snapPoints[currentIndex + 1]);
+    }
+  }, [snapPoints, currentSnap, haptic]);
+
+  const { dragProps, handleProps, y } = useDragDismiss({
+    onDismiss,
+    onDragUp,
+    threshold: 80,
+    mode: 'handle',
+  });
 
   useEffect(() => {
     if (isOpen) {
       setCurrentSnap(defaultSnap);
-      setDragOffset(0);
       document.body.style.overflow = 'hidden';
     } else {
       document.body.style.overflow = '';
     }
     return () => { document.body.style.overflow = ''; };
   }, [isOpen, defaultSnap]);
-
-  const handleTouchStart = useCallback((e: React.TouchEvent) => {
-    startY.current = e.touches[0].clientY;
-    startOffset.current = dragOffset;
-    setIsDragging(true);
-  }, [dragOffset]);
-
-  const handleTouchMove = useCallback((e: React.TouchEvent) => {
-    if (!isDragging) return;
-    const delta = e.touches[0].clientY - startY.current;
-    setDragOffset(Math.max(0, delta));
-  }, [isDragging]);
-
-  const handleTouchEnd = useCallback(() => {
-    setIsDragging(false);
-    const threshold = 80;
-
-    if (dragOffset > threshold) {
-      const currentIndex = snapPoints.indexOf(currentSnap);
-      if (currentIndex === 0) {
-        onClose();
-      } else {
-        setCurrentSnap(snapPoints[currentIndex - 1]);
-      }
-    } else if (dragOffset < -threshold) {
-      const currentIndex = snapPoints.indexOf(currentSnap);
-      if (currentIndex < snapPoints.length - 1) {
-        setCurrentSnap(snapPoints[currentIndex + 1]);
-      }
-    }
-    setDragOffset(0);
-  }, [dragOffset, currentSnap, snapPoints, onClose]);
 
   if (!isOpen) return null;
 
@@ -99,32 +102,33 @@ export default function PremiumBottomSheet({
       />
 
       {/* Sheet */}
-      <div
-        ref={sheetRef}
+      <motion.div
         role="dialog"
         aria-modal="true"
         aria-label={title || 'Panneau'}
         className={`fixed left-0 right-0 bottom-0 z-50 flex flex-col ${className}`}
         style={{
           height,
-          transform: `translateY(${dragOffset}px)`,
-          transition: isDragging ? 'none' : 'height 400ms cubic-bezier(0.16,1,0.3,1), transform 400ms cubic-bezier(0.16,1,0.3,1)',
+          y,
           background: 'rgba(237,234,224,0.96)',
           backdropFilter: 'blur(32px) saturate(200%)',
           WebkitBackdropFilter: 'blur(32px) saturate(200%)',
           borderRadius: '28px 28px 0 0',
           boxShadow: '0 -4px 40px rgba(14,21,18,0.18), 0 -1px 0 rgba(255,255,255,0.5)',
           paddingBottom: 'max(16px, env(safe-area-inset-bottom, 16px))',
-          animation: 'slideUp 400ms cubic-bezier(0.16,1,0.3,1) both',
         }}
-        onTouchStart={handleTouchStart}
-        onTouchMove={handleTouchMove}
-        onTouchEnd={handleTouchEnd}
+        // Entrée via framer-motion (remplace l'animation CSS `slideUp` qui
+        // entrait en conflit de cascade avec le transform du drag).
+        initial={{ y: reduceMotion ? 0 : '100%' }}
+        animate={{ y: 0 }}
+        transition={{ duration: reduceMotion ? 0 : 0.4, ease: [0.16, 1, 0.3, 1] }}
+        {...dragProps}
       >
-        {/* Handle */}
+        {/* Handle — zone de drag principale */}
         {showHandle && (
           <div
-            className="flex items-center justify-center pt-3 pb-2 flex-shrink-0 cursor-grab active:cursor-grabbing"
+            {...handleProps}
+            className="flex items-center justify-center pt-3 pb-2 flex-shrink-0 cursor-grab active:cursor-grabbing touch-none"
             aria-hidden="true"
           >
             <div
@@ -138,9 +142,12 @@ export default function PremiumBottomSheet({
           </div>
         )}
 
-        {/* Title */}
+        {/* Title — draggable également */}
         {title && (
-          <div className="flex items-center justify-between px-5 pb-3 flex-shrink-0">
+          <div
+            {...(showHandle ? handleProps : {})}
+            className="flex items-center justify-between px-5 pb-3 flex-shrink-0 touch-none"
+          >
             <h2
               className="font-display font-bold text-[#17402C]"
               style={{ fontSize: '18px', letterSpacing: '-0.02em' }}
@@ -164,7 +171,7 @@ export default function PremiumBottomSheet({
         <div className="flex-1 overflow-y-auto overscroll-contain scrollbar-hide">
           {children}
         </div>
-      </div>
+      </motion.div>
     </>
   );
 }

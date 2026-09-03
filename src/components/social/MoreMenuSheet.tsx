@@ -4,6 +4,7 @@ import React from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import Icon from '@/components/ui/AppIcon';
 import { useHapticFeedback } from '@/hooks/useHapticFeedback';
+import { useDragDismiss } from '@/hooks/gestures';
 
 export interface MoreMenuSheetProps {
   isOpen: boolean;
@@ -33,6 +34,8 @@ export default function MoreMenuSheet({
   leaveLabel = 'Masquer cette publication',
 }: MoreMenuSheetProps) {
   const { triggerHaptic } = useHapticFeedback();
+  // Fermeture au drag (mission gestes, Phase 2) — poignée + en-tête.
+  const { dragProps, handleProps, y } = useDragDismiss({ onDismiss: onClose, mode: 'handle' });
 
   if (!isOpen) return null;
 
@@ -60,10 +63,15 @@ export default function MoreMenuSheet({
           animate={{ y: 0 }}
           exit={{ y: '100%' }}
           transition={{ type: 'spring', damping: 28, stiffness: 350 }}
+          style={{ y }}
+          {...dragProps}
           className="relative z-10 w-full max-w-lg glass rounded-t-3xl p-5 pb-8 flex flex-col gap-2"
         >
           {/* Drag handle */}
-          <div className="w-10 h-1 bg-gray-300 rounded-full mx-auto mb-3" />
+          <div
+            {...handleProps}
+            className="w-10 h-1 bg-gray-300 rounded-full mx-auto mb-3 cursor-grab active:cursor-grabbing touch-none"
+          />
 
           {title && (
             <p className="text-xs font-semibold text-center text-[#5C6B5E] mb-2 truncate px-4">

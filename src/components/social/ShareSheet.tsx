@@ -6,6 +6,7 @@ import Icon from '@/components/ui/AppIcon';
 import LkvIcon from '@/components/ui/LkvIcon';
 import { createClient } from '@/lib/supabase/client';
 import { useHapticFeedback } from '@/hooks/useHapticFeedback';
+import { useDragDismiss } from '@/hooks/gestures';
 
 export interface ShareSheetProps {
   isOpen: boolean;
@@ -27,6 +28,8 @@ export default function ShareSheet({
   currentUserId,
 }: ShareSheetProps) {
   const { triggerHaptic } = useHapticFeedback();
+  // Fermeture au drag (mission gestes, Phase 2) — poignée + en-tête.
+  const { dragProps, handleProps, y } = useDragDismiss({ onDismiss: onClose, mode: 'handle' });
   const [copied, setCopied] = useState(false);
   const [groups, setGroups] = useState<Array<{ id: string; name: string; destination?: string }>>([]);
   const [sendingToGroup, setSendingToGroup] = useState<string | null>(null);
@@ -118,10 +121,15 @@ export default function ShareSheet({
           animate={{ y: 0 }}
           exit={{ y: '100%' }}
           transition={{ type: 'spring', damping: 28, stiffness: 350 }}
+          style={{ y }}
+          {...dragProps}
           className="relative z-10 w-full max-w-lg glass text-[#17402C] rounded-t-3xl p-5 pb-8 flex flex-col gap-4 max-h-[80vh] overflow-y-auto"
         >
           {/* Drag handle */}
-          <div className="w-10 h-1 bg-[#17402C]/20 rounded-full mx-auto shrink-0" />
+          <div
+            {...handleProps}
+            className="w-10 h-1 bg-[#17402C]/20 rounded-full mx-auto shrink-0 cursor-grab active:cursor-grabbing touch-none"
+          />
 
           {/* Header */}
           <div className="flex items-center justify-between pb-2 border-b border-[#17402C]/10 shrink-0">
