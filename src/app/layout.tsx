@@ -97,7 +97,7 @@ export const metadata: Metadata = {
   },
   appleWebApp: {
     capable: true,
-    statusBarStyle: 'black-translucent',
+    statusBarStyle: 'default',
     title: 'LKDV',
   },
   manifest: '/manifest.json',
@@ -225,7 +225,7 @@ export default function RootLayout({
           />
         )}
       </head>
-      <body className={`${dmSans.variable} ${manrope.variable} ${ibmPlexMono.variable} ${instrumentSerif.variable} ${dmSans.className}`}>
+      <body className={`${dmSans.variable} ${manrope.variable} ${ibmPlexMono.variable} ${instrumentSerif.variable} ${dmSans.className} bg-[#FBFAF6] text-[#17402C] min-h-[100dvh]`}>
         <AuthProvider>
           <WishlistProvider>
             <ToastProvider>

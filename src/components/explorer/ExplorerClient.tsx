@@ -370,7 +370,7 @@ export default function ExplorerClient({ initialTrails }: ExplorerClientProps) {
   // ── RENDER ────────────────────────────────────────────────────────────────────
 
   return (
-    <div className="relative w-full h-[100dvh] overflow-hidden bg-[#FAF8F5] select-none" style={{ minHeight: '100dvh', height: '100dvh', width: '100%' }}>
+    <div className="relative w-full h-[100dvh] overflow-hidden bg-[#FBFAF6] select-none" style={{ minHeight: '100dvh', height: '100dvh', width: '100%' }}>
 
       {/* ── 1A. HEADER DESKTOP (GRAND ÉCRAN >= 768px) ── */}
       <header className="hidden md:block fixed top-3 left-1/2 -translate-x-1/2 z-[1000] w-full max-w-[640px] px-3 pointer-events-none">

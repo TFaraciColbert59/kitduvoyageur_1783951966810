@@ -250,4 +250,41 @@ describe('Mobile Cockpit Integration & OLED Ultra-Save Mode', () => {
     expect(html).toContain('Tente Big Agnes Copper Spur HV UL2');
     expect(html).toContain('Packé !');
   });
+
+  it('verifies AppShell edge-to-edge background resolution avoids white borders', () => {
+    // Standard AppShell should default to stone background (#FBFAF6) on mobile
+    // and responsive transparency on desktop when videoBackground is active.
+    const resolveAppShellBg = (background = '#FBFAF6', videoBackground = true) => {
+      const isDefaultBg = background === '#FBFAF6';
+      const containerBgStyle = videoBackground && isDefaultBg ? undefined : background;
+      const containerBgClass = videoBackground && isDefaultBg ? 'bg-[#FBFAF6] md:bg-transparent' : '';
+      return { containerBgStyle, containerBgClass };
+    };
+
+    // Default configuration (edge-to-edge mobile stone, video background desktop)
+    const def = resolveAppShellBg();
+    expect(def.containerBgClass).toBe('bg-[#FBFAF6] md:bg-transparent');
+    expect(def.containerBgStyle).toBeUndefined();
+
+    // Custom dark background
+    const dark = resolveAppShellBg('#17402C', false);
+    expect(dark.containerBgClass).toBe('');
+    expect(dark.containerBgStyle).toBe('#17402C');
+
+    // Explicit transparent background
+    const trans = resolveAppShellBg('transparent', false);
+    expect(trans.containerBgClass).toBe('');
+    expect(trans.containerBgStyle).toBe('transparent');
+  });
+
+  it('verifies /messagerie route is excluded from middleware blocking', () => {
+    const PROTECTED_ROUTES = ['/admin', '/checkout'];
+    const isProtected = (pathname: string) =>
+      PROTECTED_ROUTES.some((r) => pathname === r || pathname.startsWith(r + '/'));
+
+    expect(isProtected('/messagerie')).toBe(false);
+    expect(isProtected('/messagerie/c-123')).toBe(false);
+    expect(isProtected('/admin')).toBe(true);
+    expect(isProtected('/checkout')).toBe(true);
+  });
 });

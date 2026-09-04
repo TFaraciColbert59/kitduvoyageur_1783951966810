@@ -38,7 +38,7 @@ export default function MessageriePage() {
 
   return (
     <div
-      className="w-full overflow-hidden flex flex-col bg-[#FAF8F5] relative"
+      className="w-full min-h-[100dvh] flex-1 overflow-hidden flex flex-col bg-[#FBFAF6] relative"
       style={{ ['--kb-inset' as string]: `${kbInset}px` }}
     >
       {/* Ambiance Liquid Glass LKDV — dégradés climatiques (CSS valide, cf. audit 1.1c) */}
@@ -65,11 +65,7 @@ export default function MessageriePage() {
       */}
       <MobilePageShell safeTop={false} hasBottomNav={!hasActiveConv} videoBackground={false}>
         <main
-          className="w-full relative z-10 overflow-hidden flex flex-col items-center justify-center md:pt-2 md:pb-2 md:px-6"
-          style={{
-            height:
-              'calc(100dvh - var(--bottom-nav-height) - var(--kb-inset, 0px))',
-          }}
+          className="w-full flex-1 min-h-0 relative z-10 overflow-hidden flex flex-col items-center justify-center md:pt-2 md:pb-2 md:px-6"
         >
           {loading ? (
             <div
@@ -90,7 +86,7 @@ export default function MessageriePage() {
                 membres de la communauté LKDV.
               </p>
               <a
-                href="/auth/login"
+                href="/connexion"
                 className="glass-capsule-btn primary inline-flex px-6 min-h-[48px] text-sm font-bold shadow-md"
               >
                 Se connecter

@@ -8,7 +8,7 @@ export const colors = {
   // Surfaces et fonds
   surface: '#FAF8F5',
   surfacePaper: '#FBFAF6',
-  background: '#F5F2EC',
+  background: '#FBFAF6',
   border: '#E8E4D8',
   borderGlass: 'rgba(255, 255, 255, 0.60)',
   // Accent / Sage

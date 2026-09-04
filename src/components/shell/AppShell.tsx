@@ -47,7 +47,7 @@ export interface AppShellProps {
  */
 export default function AppShell({
   children,
-  background = 'transparent',
+  background = '#FBFAF6',
   videoBackground = true,
   safeTop = true,
   hasBottomNav = true,
@@ -75,12 +75,18 @@ export default function AppShell({
     ? 'var(--bottom-tab-extended-height, calc(92px + env(safe-area-inset-bottom, 0px)))'
     : 'var(--bottom-tab-base-height, calc(52px + env(safe-area-inset-bottom, 0px)))';
 
+  // Sur mobile, le fond edge-to-edge garantit zéro rebord blanc / jour sous la safe-area.
+  // Sur desktop avec videoBackground, on bascule en transparent pour laisser voir CompteBackground.
+  const isDefaultBg = background === '#FBFAF6';
+  const containerBgStyle = videoBackground && isDefaultBg ? undefined : background;
+  const containerBgClass = videoBackground && isDefaultBg ? 'bg-[#FBFAF6] md:bg-transparent' : '';
+
   return (
     <div
-      className={`app-shell ${className}`}
+      className={`app-shell ${containerBgClass} ${className}`}
       style={{
         ['--bottom-nav-height' as any]: bottomNavHeight,
-        background: videoBackground ? 'transparent' : background,
+        ...(containerBgStyle ? { background: containerBgStyle } : {}),
         paddingTop: safeTop ? 'calc(env(safe-area-inset-top, 0px) + 8px)' : '0px',
         // Quand bottomExtra est présent, pas de padding-bottom sur le conteneur principal
         // (le bottomExtra lui-même gère son spacing via padding-bottom: var(--bottom-nav-height))
