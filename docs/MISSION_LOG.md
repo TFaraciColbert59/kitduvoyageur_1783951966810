@@ -896,3 +896,37 @@ Les deux occurrences de chaque dans les matviews. Migrations ré-appliquées apr
 - pgTAP (3 suites Lignées + identity) : à exécuter (prévu copie, mais prod override OK car ROLLBACK).
 - GATE 3 (Stripe test) + réconciliation Stripe : `STRIPE_SECRET_KEY` (live) toujours absente du .env.local.
 - GATE A (ADR-010) : validation Tony toujours en attente.
+
+---
+
+## 2026-09-04 — Mission : Vérification d'intégration globale « Lignées + Orientation/Empreinte »
+
+Mode : autonome sous charte. Audit exhaustif sans complaisance des affirmations déclarées vs réalité du dépôt.
+Branche de travail : `feat/orientation-empreinte` (fondée sur `feat/lignees-kits` @ `6d0c7b7`).
+
+### 1. Analyse de Dépendance (Phase 2)
+- Recherche de motifs stricts dans `20260904010000_user_orientation.sql` et `20260904020000_user_field_signature.sql` : 0 référence aux concepts de lignées (`materiel_kits`, `forked_from`, `kit_id`, etc.).
+- La vue matérialisée `user_field_signature` n'a aucune clause WHERE sur `kit_id` : elle agrège toutes les sorties utilisateur.
+- Seule dépendance technique : `user_field_signature.sql:63` fait `count(distinct r.region)` sur `hiking_routes`, dont la colonne `region` a été introduite par `20260903020000_kit_field_proof.sql:25`. `user_orientation` est 100% autonome.
+
+### 2. Écarts Découverts & Corrigés (Commits Atomiques)
+- `5607832` : `fix(stripe): webhook renvoie 500 sur erreur de commande au lieu d'avaler` (Affirmation 3.5 — levée d'un statut 500 franc pour déclencher le retry Stripe au lieu de 200).
+- `0c939bb` : `fix(kits): refus serveur 404 sur /api/kits/my-royalties tant que le Lot 6 est gelé` (Affirmation 6.2 — statut 404 franc au lieu de 200 promotionnel).
+- `81e7ef9` : `fix(kits): applique le seuil de 20 lignées minimum sur l'affichage régional` (Affirmation 7.2 — filtrage `shouldShowRegionRanking` branché dans `/api/kits/discovery`).
+- `046f608` : `fix(kits): verrouille l'immuabilité de filiation sur UPDATE et ajuste les plans pgTAP` (Affirmation 1.4 & 8.2 — trigger `handle_kit_lineage` bloque l'altération de filiation sur UPDATE, test 4c ajouté, `plan(21)` sur `lineage.test.sql` et `plan(16)` sur `field_proof.test.sql`).
+- `04a63e3` : `fix(identity): géométrie FieldSeal dérivée du userId seul et k-anonymat par agrégat` (Affirmation O.2 & O.4 — structure discrète branches/amplitude issue du seed userId, activité modulant uniquement la densité continue 0.25..1 ; k-anonymat plancher 3 appliqué par saison et région exposée).
+- `eb28b9c` : `fix(inscription): conformité design system (palette sage/danger et boutons)` (Affirmation O.7 — éradication des classes interdites `emerald-500`, `red-50`, `#10b981`).
+- `5f2f25d` : `ci: ajout des garde-fous anti-dérive (palette, finance score, partage, gel Lot 6)` (Phase 5 — `scripts/verify/ci_invariants.mjs` vérifiant les 5 invariants obligatoires).
+- `c3f4a1e` : `feat(stripe): script de réconciliation sécurisé par clé restreinte rk_live et emails hachés` (Phase 4 — obligation clé `rk_live_...`, refus de toute clé maîtresse `sk_`, hachage SHA-256 tronqué des emails clients).
+- `b7829dd` : `docs: rapports de vérification globale, réconciliation migrations et Stripe` (Phase 1, 3, 4 — `VERIF_INTEGRATION_GLOBALE.md`, `MIGRATION_HISTORY_RECONCILIATION.md`, `RECONCILIATION_STRIPE.md`).
+
+### 3. Affirmations Fausse ou Écarts Structurels Non Corrigés en Local
+- **1.8 Configurateur génère dans materiel_kits** (`AFFIRMATION FAUSSE`) : `ConfiguratorWizard.tsx` insère toujours dans la table legacy `kits` / `kit_items`, et `KitConfiguratorWizard.tsx` dans `custom_kits`. La table `materiel_kits` n'est pas alimentée par le configurateur actuel.
+- **4.5 Colonne return_rate = NULL** (`AFFIRMATION FAUSSE`) : `return_rate` n'existe nulle part dans le code ni dans la base.
+- **5.3 Invocations KitSheet** (`ÉCART`) : Seuls 3 points d'entrée sur 5 sont branchés (`messages`, `cockpit`, `page produit`). Le `feed` et les `groupes` n'ont pas encore d'invocation.
+
+### 4. Ce qui reste Bloqué & Non Vérifiable sans Infra
+1. **Réconciliation Stripe Live** : Requiert que Tony renseigne `STRIPE_RESTRICTED_KEY` (`rk_live_...`) dans `.env.local` et exécute `node scripts/db/reconcile_stripe.mjs` pour renseigner le tableau de décision de `RECONCILIATION_STRIPE.md`.
+2. **Déstockage physique** : Le trigger `decrement_stock_on_order` n'ayant jamais tourné pour les commandes Stripe historiques, l'inventaire physique réel en réserve doit être vérifié avant toute validation manuelle de commande.
+3. **Validation distante pgTAP** : Les 61 assertions pgTAP doivent être lancées via CLI sur le projet réel `icxyvwzfjbflcbqukpfz` (ne JAMAIS cibler `lwrmuggefbmboikjgudc`).
+
