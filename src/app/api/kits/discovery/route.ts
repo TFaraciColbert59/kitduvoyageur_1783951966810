@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
+import { shouldShowRegionRanking } from '@/features/kits/trust';
 
 export const dynamic = 'force-dynamic';
 export const runtime = 'nodejs';
@@ -137,6 +138,11 @@ export async function GET(req: NextRequest) {
         rootOf.add(r.lineage_root_id ?? r.id);
       }
       lineages = lineages.filter((l) => rootOf.has(l.kit_id));
+    }
+
+    // Seuil anti-plateforme-vide (ADR-008, Lot 7.2) : pas de classement sous 20 lignées
+    if (region && !shouldShowRegionRanking(lineages.length)) {
+      lineages = [];
     }
 
     return NextResponse.json({
