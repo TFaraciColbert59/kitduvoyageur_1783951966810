@@ -396,7 +396,7 @@ export async function createTrip(
 export async function updateTrip(
   id: string,
   input: UpdateTripInput,
-  userId: string
+  _userId?: string
 ): Promise<Trip> {
   const validated = updateTripSchema.parse(input);
   const supabase = await createClient();

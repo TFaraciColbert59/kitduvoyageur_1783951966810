@@ -5,3 +5,10 @@
 
 export * from './types/trip.types';
 export * from './schemas/trip.schema';
+export * from './components/TripBadge';
+export * from './components/TripCard';
+export * from './components/TripHero';
+export * from './components/TripOverviewTab';
+export * from './components/TripPlaceholderTab';
+export * from './components/TripFiltersBar';
+export * from './components/QuickCreateTripModal';

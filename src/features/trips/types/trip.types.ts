@@ -243,6 +243,19 @@ export interface TripFull extends Trip {
   permissions: TripPermissions;
 }
 
+export interface TripStats {
+  trip_id: string;
+  total_days: number;
+  total_distance_km: number;
+  total_elevation_gain_m: number;
+  total_elevation_loss_m: number;
+  items_packed: number;
+  items_total: number;
+  estimated_budget: number;
+  total_spent: number;
+  participants_count: number;
+}
+
 export interface TripFilters {
   search?: string;
   status?: TripStatus | 'all';
