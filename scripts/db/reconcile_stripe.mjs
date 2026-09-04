@@ -16,10 +16,19 @@
  *   node scripts/db/reconcile_stripe.mjs [--limit 300]
  *
  * Exige dans .env.local (ne jamais commiter) :
- *   STRIPE_SECRET_KEY        — sk_live_... pour la vérité des encaissements
- *                              (sk_test_... → warning et sortie vide probable)
+ *   STRIPE_RESTRICTED_KEY    — Clé restreinte rk_live_... (lecture seule)
+ *                              PERMISSIONS MINIMALES REQUISES DANS LE DASHBOARD STRIPE :
+ *                                - Checkout Sessions : Read
+ *                                - Charges : Read
+ *                                - PaymentIntents : Read
+ *                                - Refunds : Read
+ *                              INTERDICTION : Les clés complètes sk_ sont refusées au démarrage.
  *   SUPABASE_SERVICE_ROLE_KEY
  *   SUPABASE_URL  ou  NEXT_PUBLIC_SUPABASE_URL
+ *
+ * Confidentialité RGPD / PII :
+ *   Les emails clients ne sont JAMAIS exportés en clair dans les rapports :
+ *   ils sont hachés en SHA-256 tronqué à 10 caractères (ex: email_hash: 7a8f3b9c1d).
  *
  * Sorties (dans docs/reconciliation/) :
  *   orphans_<AAAA-MM-JJ>.csv   → tableau de décision prêt à coller dans
@@ -29,6 +38,7 @@
  */
 
 import 'dotenv/config';
+import crypto from 'node:crypto';
 import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -43,29 +53,49 @@ const args = process.argv.slice(2);
 const limitArg = args.indexOf('--limit');
 const MAX_SESSIONS = limitArg !== -1 ? Number(args[limitArg + 1]) : 300;
 
-const stripeKey = process.env.STRIPE_SECRET_KEY;
+// VÉRIFICATION STRICTE DE SÉCURITÉ DE LA CLÉ STRIPE
+const rawStripeKey = process.env.STRIPE_RESTRICTED_KEY;
+const forbiddenSkKey = process.env.STRIPE_SECRET_KEY;
+
+if (forbiddenSkKey && forbiddenSkKey.startsWith('sk_')) {
+  console.error('❌ SÉCURITÉ (Zone Orange) : Détection de STRIPE_SECRET_KEY (sk_...).');
+  console.error('   L\'utilisation de clés maîtresses sk_ est strictement interdite pour la réconciliation.');
+  console.error('   Définissez uniquement STRIPE_RESTRICTED_KEY avec une clé restreinte rk_live_... (Read-only).');
+  process.exit(1);
+}
+
+if (!rawStripeKey) {
+  console.error('❌ Clé manquante : STRIPE_RESTRICTED_KEY doit être définie dans .env.local (rk_live_...).');
+  console.error('   Permissions Stripe minimales requises en lecture seule :');
+  console.error('     - Checkout Sessions : Read');
+  console.error('     - PaymentIntents : Read');
+  console.error('     - Charges : Read');
+  console.error('     - Refunds : Read');
+  process.exit(1);
+}
+
+if (rawStripeKey.startsWith('sk_')) {
+  console.error('❌ SÉCURITÉ : La clé fournie commence par sk_.');
+  console.error('   Seules les clés restreintes (rk_live_ ou rk_test_) sont autorisées.');
+  process.exit(1);
+}
+
+if (!rawStripeKey.startsWith('rk_live_') && !rawStripeKey.startsWith('rk_test_')) {
+  console.error('❌ Format invalide : STRIPE_RESTRICTED_KEY doit commencer par rk_live_ ou rk_test_.');
+  process.exit(1);
+}
+
+const stripeKey = rawStripeKey;
 const supabaseUrl = process.env.SUPABASE_URL || process.env.NEXT_PUBLIC_SUPABASE_URL;
 const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
 
 const missing = [];
-if (!stripeKey) missing.push('STRIPE_SECRET_KEY');
 if (!supabaseUrl) missing.push('SUPABASE_URL (ou NEXT_PUBLIC_SUPABASE_URL)');
 if (!serviceKey) missing.push('SUPABASE_SERVICE_ROLE_KEY');
 if (missing.length) {
-  console.error(`❌ Clés manquantes dans .env.local : ${missing.join(', ')}`);
+  console.error(`❌ Clés Supabase manquantes dans .env.local : ${missing.join(', ')}`);
   console.error('   Rien exécuté — lecture seule, aucune donnée touchée.');
   process.exit(1);
-}
-
-if (stripeKey.startsWith('sk_test_')) {
-  console.warn(
-    '⚠️  STRIPE_SECRET_KEY est en MODE TEST (sk_test_).\n' +
-    '    Une réconciliation sur le mode test ne montre PAS les encaissements réels.\n' +
-    '    Pour traiter les orphelins de production, mettre sk_live_... (et être sur le\n' +
-    '    dashboard Live). La suite continue quand même (utile pour vérifier le flux).'
-  );
-} else if (!stripeKey.startsWith('sk_live_')) {
-  console.warn(`⚠️  STRIPE_SECRET_KEY ne commence ni par sk_live_ ni par sk_test_ (début: ${stripeKey.slice(0, 8)}…).`);
 }
 
 const stripe = new Stripe(stripeKey, { apiVersion: '2025-06-16.basil' });
@@ -74,6 +104,12 @@ const supabase = createClient(supabaseUrl, serviceKey);
 // ─── Helpers ────────────────────────────────────────────────────────────────
 const centsToEur = (c, currency) =>
   currency === 'eur' ? Number(c) / 100 : `${currency.toUpperCase()} ${(Number(c) / 100).toFixed(2)}`;
+
+/** Hachage SHA-256 tronqué à 10 caractères pour respecter la vie privée (RGPD). */
+const hashEmail = (email) =>
+  email
+    ? crypto.createHash('sha256').update(email.trim().toLowerCase()).digest('hex').slice(0, 10)
+    : null;
 
 async function listAll(fn, params, max) {
   const out = [];
@@ -161,7 +197,7 @@ for (const s of orphansBase) {
   orphans.push({
     date: new Date(s.created * 1000).toISOString().slice(0, 10),
     session_id: s.id,
-    customer_email: s.customer_email ?? null,
+    customer_email_hash: hashEmail(s.customer_email),
     amount_total_cents: s.amount_total ?? 0,
     currency: s.currency ?? 'eur',
     amount_eur: centsToEur(s.amount_total ?? 0, s.currency ?? 'eur'),
@@ -181,8 +217,15 @@ const jsonPath = path.join(OUT_DIR, `orphans_${today}.json`);
 // CSV au format tableau de décision de RECONCILIATION_STRIPE.md (séparateur ;)
 const csvEsc = (v) => `"${String(v ?? '').replaceAll('"', '""')}"`;
 const csvRows = [
-  ['Date paiement', 'Session ID', 'Email', 'Montant (€)', 'Décision (honorer/rembourser)', 'N° commande créé / refund ID'],
-  ...orphans.map((o) => [o.date, o.session_id, o.customer_email, o.amount_eur, o.decision, o.order_number_or_refund]),
+  ['Date paiement', 'Session ID', 'Hash email client (SHA-256:10)', 'Montant (€)', 'Décision (honorer/rembourser)', 'N° commande créé / refund ID'],
+  ...orphans.map((o) => [
+    o.date,
+    o.session_id,
+    o.customer_email_hash ? `hash_${o.customer_email_hash}` : '',
+    o.amount_eur,
+    o.decision,
+    o.order_number_or_refund,
+  ]),
 ];
 fs.writeFileSync(csvPath, csvRows.map((r) => r.map(csvEsc).join(';')).join('\n'), 'utf8');
 fs.writeFileSync(jsonPath, JSON.stringify(orphans, null, 2), 'utf8');
@@ -193,16 +236,17 @@ if (!orphans.length) {
   console.log('   (Vérifier quand même la cohérence income : sum(orders.total_eur) ≈ sum(Stripe) − refunds)');
 } else {
   const w1 = Math.max(...orphans.map((o) => o.session_id.length), 'SESSION ID'.length);
-  const w2 = Math.max(...orphans.map((o) => (o.customer_email ?? '').length), 'EMAIL'.length);
+  const w2 = Math.max(...orphans.map((o) => (o.customer_email_hash ? `hash_${o.customer_email_hash}` : '').length), 'EMAIL HASH'.length);
   const line = (cols) => '  ' + cols.map((c, i) => String(c).padEnd([w1, w2, 12, 24][i] ?? 12)).join(' | ');
-  console.log('\n' + line(['SESSION ID', 'EMAIL', 'MONTANT', 'PRODUITS (line items)']));
+  console.log('\n' + line(['SESSION ID', 'EMAIL HASH', 'MONTANT', 'PRODUITS (line items)']));
   console.log('  ' + '-'.repeat(w1 + w2 + 42));
   for (const o of orphans) {
     const prods = o.line_items
       .filter((l) => l.name)
       .map((l) => `${l.name}×${l.quantity}`)
       .join(', ') || (o.line_items[0]?.note ?? '');
-    console.log(line([o.session_id, o.customer_email ?? '', `${o.amount_eur}`, prods.slice(0, 24)]));
+    const emailDisplay = o.customer_email_hash ? `hash_${o.customer_email_hash}` : '';
+    console.log(line([o.session_id, emailDisplay, `${o.amount_eur}`, prods.slice(0, 24)]));
   }
   console.log(`\n📄 CSV prêt à décider : ${path.relative(process.cwd(), csvPath)}`);
   console.log(`📄 JSON complet (line items) : ${path.relative(process.cwd(), jsonPath)}`);
