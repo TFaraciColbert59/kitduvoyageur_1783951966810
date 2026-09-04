@@ -31,6 +31,12 @@ updated: 2026-08-17
 - **Colonnes Clés :** `user_id` (UUID), `email_digests` (bool), `push_enabled` (bool), `sos_contacts` (JSONB).
 - **Utilisé par :** [[Notifications]], [[Alertes]].
 
+### `user_orientations` (ADR-010)
+- **Objectif :** Profil d'activité intime du voyageur (alpiniste, randonneur, bushcraft, minimaliste).
+- **Colonnes Clés :** `user_id` (PK, UUID, FK `auth.users`), `primary_orientation`, `experience_level`, `created_at`, `updated_at`.
+- **Utilisé par :** [[Orientation]], [[Identité]].
+- **RLS :** Strictement intime et étanche (`user_id = auth.uid()`). Verrouillé par l'invariant CI n°1.
+
 ---
 
 ## 🧭 2. Tables Sentiers & PostGIS
@@ -65,9 +71,25 @@ updated: 2026-08-17
 - **Utilisé par :** [[Boutique]], [[Produits]], [[Stripe]].
 
 ### `kit_reports`
-- **Objectif :** Rapports de kits générés par l'IA.
-- **Colonnes Clés :** `id`, `user_id`, `destination`, `season`, `duration_days`, `total_weight_g`, `items_json` (JSONB), `created_at`.
+- **Objectif :** Rapports de kits générés par l'IA et liés aux kits créés.
+- **Colonnes Clés :** `id`, `user_id`, `kit_id` (FK `materiel_kits`), `destination`, `season`, `duration_days`, `total_weight_g`, `items_json` (JSONB), `created_at`.
 - **Utilisé par :** [[Configurateur]], [[Rapport-Kit]].
+
+### `materiel_kits` (Lignées & Entité Vivante — ADR-007, ADR-011)
+- **Objectif :** Entité vivante unique des kits utilisateurs, souches éditoriales et lignées.
+- **Colonnes Clés :** `id` (UUID), `user_id` (FK `auth.users`), `name`, `description`, `season`, `origin` (`configurateur`, `manuel`, `fork`, `import_gpx`, `souche_editoriale`), `forked_from` (FK `materiel_kits`), `lineage_root_id`, `generation`, `ancestors` (UUID[]), `field_proven_count`, `derivatives_count`, `is_souche`, `is_public`.
+- **Utilisé par :** [[Mon Matériel]], [[Lignées de Kits]], [[Configurateur]], [[Randonnée Active]].
+- **RLS :** Lecture publique si `is_public = true` ou propriétaire (`auth.uid() = user_id`). Filiation immuable sur UPDATE (`handle_kit_lineage`).
+
+### `materiel_kit_items`
+- **Objectif :** Objets composant un kit (équipements, poids, quantités).
+- **Colonnes Clés :** `id`, `kit_id` (FK `materiel_kits`), `user_id`, `name`, `category`, `weight_g`, `quantity`, `is_checked`, `item_key` (STORED, clé de conservation).
+- **Utilisé par :** [[Mon Matériel]], [[Conservation de Matériel]].
+
+### `kit_field_sessions`
+- **Objectif :** Validation des sorties réelles de terrain associées à un kit.
+- **Colonnes Clés :** `id`, `kit_id` (FK `materiel_kits`), `user_id`, `started_at`, `ended_at`, `distance_km`, `elevation_gain_m`, `massif`.
+- **Utilisé par :** [[Épreuve Terrain]], [[Trust Score]]. RLS stricte propriétaire.
 
 ---
 

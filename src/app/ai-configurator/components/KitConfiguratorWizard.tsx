@@ -254,8 +254,47 @@ export default function KitConfiguratorWizard({ isMobile = false }: KitConfigura
           .select('id')
           .single();
 
+        // 1. Persistance dans materiel_kits (table vivante unifiée des kits & lignées)
+        const normalizedSeason = (() => {
+          const s = (season || '').toLowerCase();
+          if (s.includes('printemps')) return 'printemps';
+          if (s.includes('ete') || s.includes('été')) return 'ete';
+          if (s.includes('automne')) return 'automne';
+          if (s.includes('hiver')) return 'hiver';
+          return 'toute_saison';
+        })();
+
+        const { data: newMaterielKit } = await supabase
+          .from('materiel_kits')
+          .insert({
+            user_id: currentUserId,
+            name: `Kit ${dest} — ${activity}`,
+            description: `Généré automatiquement par le Configurateur IA (${report.weatherLabel})`,
+            season: normalizedSeason,
+            total_weight_g: totalWeightG,
+            origin: 'configurateur',
+            is_public: false,
+          })
+          .select('id')
+          .single();
+
+        if (newMaterielKit && report.missingItems && report.missingItems.length > 0) {
+          const materielItems = report.missingItems.map((item: any) => ({
+            kit_id: newMaterielKit.id,
+            user_id: currentUserId,
+            name: item.name || 'Article',
+            category: item.category || 'Autre',
+            weight_g: item.weightG || 0,
+            quantity: 1,
+            is_checked: false,
+          }));
+          await supabase.from('materiel_kit_items').insert(materielItems);
+        }
+
+        // 2. Rapport de kit lié à materiel_kits.id (Bloqueur N°1 résolu)
         await supabase.from('kit_reports').insert({
           user_id: currentUserId,
+          kit_id: newMaterielKit?.id || null,
           session_id: session?.id || null,
           destination: dest,
           country: 'France',
@@ -270,7 +309,7 @@ export default function KitConfiguratorWizard({ isMobile = false }: KitConfigura
           status: 'active',
         });
 
-        // Enregistrement dans custom_kits pour Mon Matériel
+        // 3. Miroir rétrocompatible dans custom_kits
         const { data: newCustomKit } = await supabase
           .from('custom_kits')
           .insert({

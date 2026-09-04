@@ -50,20 +50,23 @@ Une fois ces points compris, commence par le PROMPT #1 ci-dessous.
 
 ## 🔎 État réel du projet (audit live)
 
-### ✅ Corrigé depuis le dernier audit
-- `/admin` protégé par middleware + vérification du rôle (`user_profiles.role = 'admin'`)
-- Webhook Stripe (`/api/stripe/webhook`) écrit correctement les commandes, avec idempotence
-- Refonte mobile : **73/76 pages** utilisent `MobilePageShell` (~96% d'adoption)
-- RLS activé sur toutes les tables e-commerce, communauté, groupes, carnets
+### ✅ Corrigé depuis les chantiers d'août-septembre 2026
+- **/admin** protégé par middleware + vérification du rôle (`user_profiles.role = 'admin'`)
+- **Webhook Stripe** (`/api/stripe/webhook`) écrit correctement les commandes, avec idempotence stricte
+- **Refonte mobile & Gestes Apple** : 100% des pages et modals unifiées avec `MobilePageShell`, `PremiumBottomSheet` et les hooks de gestes tactiles
+- **RLS verrouillé** sur l'ensemble des tables (e-commerce, communauté, groupes, carnets, et les 7 tables trail)
+- **Vues SQL** passées en `SECURITY INVOKER` et `search_path` fixé sur les fonctions PL/pgSQL
+- **Table `kit_reports`** créée et fiabilisée
+- **Prix recalculés côté serveur** au checkout
+- **Lignées de kits (`materiel_kits`) & Épreuve du terrain** implémentées (filiation, immuabilité, score de confiance sans métrique monétaire)
+- **Bloqueur N°1 Résolu (ADR-011)** : Le configurateur alimente directement `materiel_kits` et `kit_reports.kit_id`
+- **Orientation & Empreinte de Terrain (ADR-010)** : Étanchéité RLS stricte et Sceau FieldSeal déterministe
+- **Mode hors-ligne** : Cache vectoriel IndexedDB + tuiles OSM z=14 via `useOfflineDownload` et `offlineStorage`
 
-### ⚠️ Toujours cassé (à corriger avant toute nouvelle feature)
-1. **RLS désactivé sur 7 tables trail** : `trail_segments`, `hiking_routes`, `trail_metadata`, `trail_pois`, `trail_route_pois`, `trail_scores`, `spatial_ref_sys` — lecture ET écriture publiques via la clé anon
-2. **Table `kit_reports` inexistante** — le code y fait référence (`/api/kit-report/generate`, `/save`, `/convert-inventory`, `KitConfiguratorWizard.tsx`) mais échoue silencieusement à chaque appel
-3. **Prix client-controlled au checkout** (`/api/checkout/route.ts`) — `item.priceEur` vient directement du body de la requête, jamais revérifié côté serveur contre `products`/`kits`
-4. **3 vues `SECURITY DEFINER`** contournant RLS : `featured_hiking_routes`, `trail_full`, `explore_trails`
-5. **Fonctions sans `search_path` fixé** : `delete_old_trails`, `get_nearby_trails`, `can_view_carnet`, `is_groupe_member`
-6. **Protection mot de passe compromis désactivée** dans Supabase Auth (HaveIBeenPwned check)
-7. Extension `postgis` installée dans le schema `public` (mineur, à faire un jour)
+### ⚠️ Points sous vigilance résiduelle
+1. **Réconciliation Stripe Live** : À exécuter via la clé restreinte en mémoire volatile PowerShell (`$env:STRIPE_RESTRICTED_KEY`).
+2. **Lot 6 (Attributions/Royalties)** : Maintenu gelé et isolé physiquement dans `supabase/migrations_frozen/`.
+3. **Déstockage physique** : Inventaire physique à vérifier avant exécution de `honor_order.sql`.
 
 ### 🧱 Fondations GPS déjà présentes (bonne nouvelle pour la suite)
 - `useGeolocation.ts` — hook de géolocalisation navigateur

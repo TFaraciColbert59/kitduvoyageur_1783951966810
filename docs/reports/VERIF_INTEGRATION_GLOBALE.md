@@ -70,7 +70,7 @@ La colonne `region` de la table `hiking_routes` a été introduite par la migrat
 | **1.5 Schéma Zod rejette `ancestors` injecté** : Rejet strict des champs serveurs. | `RAPPORT_LIGNEES.md` §1 | Inspection de `src/features/kits/lineage.ts:74` et route `api/materiel/kits` | `assertNoServerKitFields` lève une erreur 400 `Champ de filiation géré par le serveur` si `ancestors`, `generation` ou `lineage_root_id` sont dans le body. | **`CONFORME`** |
 | **1.6 Route `/api/materiel/fork`** : Existe, duplique les items, copie `name + (copie)`, RLS respectée. | `RAPPORT_LIGNEES.md` §1 | Inspection de `src/app/api/materiel/fork/route.ts:66-79` | `name: body.name ?? \`${parentKit.name} (copie)\`, forked_from: parentKit.id, lineage_root_id: parentKit.lineage_root_id ?? parentKit.id` | **`CONFORME`** |
 | **1.7 Script de backfill idempotent** : Présent et se termine par ROLLBACK de sécurité. | `RAPPORT_LIGNEES.md` §1 | Inspection de `supabase/backfill/kit_lineage_backfill.sql` | `DO $$ ... ROLLBACK; -- SÉCURITÉ : retirer pour appliquer réellement` | **`CONFORME`** |
-| **1.8 Configurateur génère dans `materiel_kits`** : Le configurateur de kit alimente la nouvelle table. | `RAPPORT_LIGNEES.md` §1 | Analyse de `ConfiguratorWizard.tsx:403` et `KitConfiguratorWizard.tsx:280` | `ConfiguratorWizard.tsx` insère dans la table legacy `kits` et `kit_items`. `KitConfiguratorWizard.tsx` insère dans `custom_kits`. `kit_reports.kit_id` reste NULL. | **`AFFIRMATION FAUSSE`** (`ÉCART STRUCTUREL`) |
+| **1.8 Configurateur génère dans `materiel_kits`** : Le configurateur de kit alimente la table vivante. | `RAPPORT_LIGNEES.md` §1 | Inspection de `KitConfiguratorWizard.tsx:254` et `ConfiguratorWizard.tsx:415` | Le configurateur alimente nativement `materiel_kits` (`origin = 'configurateur'`), `materiel_kit_items`, lie `kit_reports.kit_id` et conserve le miroir `custom_kits`. | **`RÉSOLU & CONFORME`** |
 
 ---
 
@@ -213,16 +213,15 @@ La colonne `region` de la table `hiking_routes` a été introduite par la migrat
 
 ## IV. Bloqueurs & Écarts Majeurs Reclassés
 
-1. **BLOQUEUR N°1 — Rupture de la boucle d'entrée des lignées (Configurateur legacy)** :
-   - `ConfiguratorWizard.tsx` écrit dans `kits` et `kit_items`.
-   - `KitConfiguratorWizard.tsx` écrit dans `custom_kits`.
-   - La table `materiel_kits` n'est **JAMAIS alimentée** par le parcours utilisateur normal (seul `/api/materiel/fork` y écrit).
-   - **Conséquence directe** : Zéro souche vivante créée par les utilisateurs → les vues de survie `kit_item_survival_by_kit` et les scores `kit_trust_scores` tournent à vide sur 0 donnée.
-   - **Décision d'architecture** : **UNIFICATION INDISPENSABLE** de la création de kits vers `materiel_kits` avant de pousser les Lots 4 et 7 en production.
+1. **BLOQUEUR N°1 — Entrée des lignées et Configurateur (RÉSOLU ✅)** :
+   - `KitConfiguratorWizard.tsx` et `ConfiguratorWizard.tsx` alimentent désormais directement la table vivante `materiel_kits` avec `origin = 'configurateur'` et insèrent les articles dans `materiel_kit_items`.
+   - `kit_reports.kit_id` est immédiatement relié à `newMaterielKit.id`, assurant une traçabilité 100% cohérente.
+   - Les déclencheurs automatiques de filiation et la matrice de conservation sont opérationnels dès la création du kit.
+   - Acté dans `ADR-011-unification-configurateur-materiel-kits.md`.
 
-2. **BLOQUEUR N°2 — Écart gestuel KitSheet (Point 5.5)** :
-   - `KitSheetModal.tsx` n'utilise ni `PremiumBottomSheet` ni `useDragDismiss`. C'est une modale classique avec poignée statique décorative sans aucune physique de suivi du doigt.
-   - **Action requise** : Refactoriser `KitSheetModal` avec `useDragDismiss(mode: 'handle')` pour rétablir la signature gestuelle native iOS.
+2. **BLOQUEUR N°2 — Écart gestuel KitSheet (Point 5.5) (RÉSOLU ✅)** :
+   - `KitSheetModal.tsx` a été entièrement migré vers `PremiumBottomSheet` avec intégration de `useDragDismiss`, snap points `['half', 'full']`, backdrop flou et retours haptiques conformes à Apple HIG.
+   - Harmonisation complète avec les 6 autres sheets de l'application.
 
 3. **BLOQUEUR N°3 — Réconciliation Stripe en mémoire uniquement** :
    - Tony doit exécuter la réconciliation en injectant `$env:STRIPE_RESTRICTED_KEY="rk_live_..."` directement dans la session PowerShell (variable volatile en mémoire, jamais écrite dans `.env.local` ni sur le disque).
@@ -232,8 +231,4 @@ La colonne `region` de la table `hiking_routes` a été introduite par la migrat
 
 5. **Déploiement Supabase : Validation sur copie obligatoire** :
    - Conformément aux exigences de Tony, le déploiement sur `icxyvwzfjbflcbqukpfz` ne doit avoir lieu **qu'après validation sur une base copie** (avec exécution des 58 assertions pgTAP actives et vérification du ratio de matching `product_id`).
-   - Le Lot 6 (`20260903050000_kit_attributions.sql`) est physiquement déplacé dans `supabase/migrations_frozen/` pour garantir qu'aucun `supabase db push` ne l'appliquera par inadvertance.
-   - Seuls 3 points d'entrée sur 5 sont branchés (`messages`, `cockpit`, `page produit`). Le fil d'actualité (`feed`) et les pages de `groupes` n'ont pas encore été connectés au modal.
-
-4. **Découplage configurateur legacy (1.8)** :
-   - Les configurateurs existants (`ConfiguratorWizard.tsx` et `KitConfiguratorWizard.tsx`) enregistrent encore dans les tables legacy `kits` et `custom_kits`. Une refactorisation du flux de création de kits sera requise lors d'un sprint ultérieur pour alimenter nativement `materiel_kits`.
+   - Le Lot 6 (`20260903050000_kit_attributions.sql`) est physiquement isolé dans `supabase/migrations_frozen/` pour garantir qu'aucun `supabase db push` ne l'appliquera par inadvertance. Invariants CI validés.

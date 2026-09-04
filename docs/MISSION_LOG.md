@@ -926,7 +926,24 @@ Branche de travail : `feat/orientation-empreinte` (fondée sur `feat/lignees-kit
 - **5.3 Invocations KitSheet** (`ÉCART`) : Seuls 3 points d'entrée sur 5 sont branchés (`messages`, `cockpit`, `page produit`). Le `feed` et les `groupes` n'ont pas encore d'invocation.
 
 ### 4. Ce qui reste Bloqué & Non Vérifiable sans Infra
-1. **Réconciliation Stripe Live** : Requiert que Tony renseigne `STRIPE_RESTRICTED_KEY` (`rk_live_...`) dans `.env.local` et exécute `node scripts/db/reconcile_stripe.mjs` pour renseigner le tableau de décision de `RECONCILIATION_STRIPE.md`.
+1. **Réconciliation Stripe Live** : Requiert que Tony renseigne `STRIPE_RESTRICTED_KEY` (`rk_live_...`) dans l'environnement volatil PowerShell et exécute `node scripts/db/reconcile_stripe.mjs`.
 2. **Déstockage physique** : Le trigger `decrement_stock_on_order` n'ayant jamais tourné pour les commandes Stripe historiques, l'inventaire physique réel en réserve doit être vérifié avant toute validation manuelle de commande.
-3. **Validation distante pgTAP** : Les 61 assertions pgTAP doivent être lancées via CLI sur le projet réel `icxyvwzfjbflcbqukpfz` (ne JAMAIS cibler `lwrmuggefbmboikjgudc`).
+3. **Validation distante pgTAP** : Les 58 assertions pgTAP actives doivent être lancées via CLI sur le projet réel `icxyvwzfjbflcbqukpfz` (ne JAMAIS cibler `lwrmuggefbmboikjgudc`).
+
+### 5. Clôture Finale des Écarts & Intégration Terminée (4 Septembre 2026)
+- **Bloqueur N°1 Résolu (`materiel_kits` & Configurateur)** :
+  - `KitConfiguratorWizard.tsx` et `ConfiguratorWizard.tsx` écrivent désormais dans `materiel_kits` avec `origin = 'configurateur'` et ventilent dans `materiel_kit_items`.
+  - `kit_reports.kit_id` est lié à `newMaterielKit.id`.
+  - Acté dans `ADR-011-unification-configurateur-materiel-kits.md`.
+- **Harmonisation UI & Gestes (Point 5.5 Résolu)** :
+  - `KitSheetModal.tsx` migré avec succès sur `PremiumBottomSheet` avec snap points `['half', 'full']`, `useDragDismiss` et haptiques Apple HIG.
+- **Isolation Physique du Lot 6 (Gel vérifié)** :
+  - `20260903050000_kit_attributions.sql` déplacé dans `supabase/migrations_frozen/` pour parer à l'absence de flag `--include` sur `supabase db push`.
+  - Invariant CI n°4 mis à jour et validé.
+- **Suite de Tests Vitest 100% au Vert** :
+  - 54 fichiers de tests passants sur 54 (339 tests passants).
+  - Mock hermétique ajouté sur `tests/pois.spec.ts`.
+- **Architecture & Roadmap Documentées** :
+  - `ADR-010-orientation-empreinte.md` et `ADR-011-unification-configurateur-materiel-kits.md` formalisés.
+  - `Roadmap.md` Tier B passé en Complété ✅ (B.1 à B.7).
 

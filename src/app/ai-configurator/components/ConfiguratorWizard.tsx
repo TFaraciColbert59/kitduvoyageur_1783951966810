@@ -415,6 +415,47 @@ function StepResult({ state }: { state: WizardState }) {
         .select('id')
         .single();
 
+      // Persistance dans materiel_kits (table vivante des kits & lignées)
+      const normalizedSeason = (() => {
+        const s = (state.season || '').toLowerCase();
+        if (s.includes('printemps')) return 'printemps';
+        if (s.includes('ete') || s.includes('été')) return 'ete';
+        if (s.includes('automne')) return 'automne';
+        if (s.includes('hiver')) return 'hiver';
+        return 'toute_saison';
+      })();
+
+      const { data: materielKit } = await supabase
+        .from('materiel_kits')
+        .insert({
+          user_id: user.id,
+          name: kitName,
+          description: `Configuré pour ${state.destination || 'Voyage'} (${state.season || 'Toutes saisons'})`,
+          season: normalizedSeason,
+          total_weight_g: result.liste_equipement.filter(i => selected.has(i.id) && !i.already_owned).reduce((s, i) => s + i.weightG, 0),
+          origin: 'configurateur',
+          is_public: false,
+        })
+        .select('id')
+        .single();
+
+      if (materielKit) {
+        const materielItems = result.liste_equipement
+          .filter(i => selected.has(i.id))
+          .map(item => ({
+            kit_id: materielKit.id,
+            user_id: user.id,
+            name: item.name,
+            category: item.category,
+            weight_g: item.weightG,
+            quantity: 1,
+            is_checked: false,
+          }));
+        if (materielItems.length > 0) {
+          await supabase.from('materiel_kit_items').insert(materielItems);
+        }
+      }
+
       if (kitError || !kit) return;
 
       const kitItems = result.liste_equipement

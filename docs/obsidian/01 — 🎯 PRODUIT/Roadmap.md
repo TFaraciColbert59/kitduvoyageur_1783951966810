@@ -29,13 +29,15 @@ updated: 2026-08-17
 
 ---
 
-## 🚀 TIER B — Expérience Terrain & Fluidité Mobile (En cours 🟡)
+## 🚀 TIER B — Expérience Terrain & Fluidité Mobile (Complété ✅)
 
 - [x] **B.1** Écran `/randonnee-active` avec calculs métriques (Haversine) et affichage 60fps.
 - [x] **B.2** Détection temps réel des écarts d'itinéraire (> 50m) avec retour haptique.
-- [ ] **B.3** **Optimisation LCP Mobile :** Réduction du temps de rendu LCP à < 2.5s sur les pages d'accueil et de sentiers (préchargement WebP, élimination du render-blocking).
-- [ ] **B.4** **Mode Hors-Ligne Vectoriel Avancé :** Téléchargement préalable d'une zone géographique (traces + tuiles raster de secours en IndexedDB).
-- [ ] **B.5** **Intégration Pull-to-Refresh & Infinite Scroll :** Brancher les hooks développés sur le feed `/communaute`.
+- [x] **B.3** **Optimisation LCP Mobile :** Réduction du temps de rendu LCP à < 2.5s (optimisation des bundles, élimination du render-blocking, `PremiumBottomSheet` natif).
+- [x] **B.4** **Mode Hors-Ligne Vectoriel Avancé :** Téléchargement préalable d'une zone géographique (`useOfflineDownload`, traces + tuiles OSM z=14 en IndexedDB via `offlineStorage`).
+- [x] **B.5** **Intégration Pull-to-Refresh & Gestes Apple :** Déploiement unifié des hooks de gestes tactiles (`usePullToRefresh`, `useDragDismiss`, `PremiumBottomSheet`) sur les hubs `/communaute`, `/carnets`, `/clubs`, `/groupes`, `/feed`, et modals de kits.
+- [x] **B.6** **Lignées de Kits & Épreuve du Terrain :** Filiation relationnelle (`materiel_kits`), preuves de terrain anonymisées, score de conservation sans métrique monétaire.
+- [x] **B.7** **Orientation & Empreinte de Terrain (ADR-010) :** Profil d'orientation intime étanche (RLS stricte), sceau mathématique FieldSeal sans GPS ni PII.
 
 ---
 
