@@ -48,8 +48,8 @@ par X voyageurs sur 10 », « part créateur ». Jamais de vocabulaire génétiq
 ## 4. Checklist d'exposition de données (Lot 8.2) — à confirmer par les sorties pgTAP réelles
 
 > Les ✅ ci-dessous sont des garanties de DESIGN, pas des preuves d'exécution. Elles
-> doivent être confirmées par les sorties des 5 suites pgTAP (GATE 1) — coller les
-> sorties à la section 4bis.
+> doivent être confirmées par les sorties des 3 suites pgTAP de la vague (GATE 1 —
+> attributions/security_lignees différées, Lot 6) — coller les sorties à la section 4bis.
 
 - ☐ Aucune coordonnée GPS d'autrui : `get_kit_journal` n'émet que massifs (régions) et
   compteurs ; les `positions_geojson` ne sortent jamais via un partage.
@@ -69,8 +69,12 @@ par X voyageurs sur 10 », « part créateur ». Jamais de vocabulaire génétiq
 | `lineage.test.sql` | ok 14/14 | ☐ |
 | `field_proof.test.sql` | ok 15/15 | ☐ |
 | `conservation.test.sql` | ok 8/8 | ☐ |
-| `attributions.test.sql` | ok 7/7 | ☐ |
-| `security_lignees.test.sql` | ok 10/10 | ☐ |
+| `attributions.test.sql` | ok 7/7 | **⏸ différée — Lot 6 gelé** (tables absentes) |
+| `security_lignees.test.sql` | ok 10/10 | **⏸ différée — Lot 6 gelé** (INSERT kit_attributions/kit_royalty_shares) |
+
+> **GATE 1 = 3 suites** (lineage, field_proof, conservation). Les deux autres ne peuvent
+> pas passer sans les tables du Lot 6 (voir `docs/guides/LIGNEES_VALIDATION_BASE.md` §B)
+> et repasseront à l'activation du Lot 6.
 
 ## 5. Endpoints livrés
 
@@ -86,7 +90,8 @@ par X voyageurs sur 10 », « part créateur ». Jamais de vocabulaire génétiq
    paiements encaissés sans commande (avant Lot 3), décision par orphelin.
 2. Appliquer les **5 migrations de la vague** (la 6e, attributions, est EXCLUE — Lot 6
    gelé) + backfill sur une **copie** Supabase (`icxyvwzfjbflcbqukpfz`) ; exécuter les
-   5 suites pgTAP ; coller les sorties en section 4bis → **GATE 1**.
+   3 suites pgTAP de la vague (lineage, field_proof, conservation — attributions et
+   security_lignees différées, Lot 6) ; coller les sorties en section 4bis → **GATE 1**.
 3. `STRIPE_WEBHOOK_SECRET` dans `.env.local` + test Stripe CLI en mode test (commande
    complète : orders + order_items + déstockage) → **GATE 3**.
 4. **Scan de sécurité historique (fait, 2026-09-04)** : `.env.local` n'a jamais été

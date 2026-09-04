@@ -826,3 +826,73 @@ Adaptation complète et optimisation de l'expérience cockpit randonnée sur éc
 
 
 
+
+## 2026-09-04 — Mode autonome « jusqu'au bout » : sondage prod, dry-run, Lot A livré (Orientation & Empreinte)
+
+### Sondage lecture seule de la base prod (service role — aucune écriture)
+- Migrations Lignées 1→5 **NON appliquées** en prod (colonnes/tables absentes, Lot 6 absent OK).
+- Volume réel : `materiel_kits`=5 · `hike_sessions`=20 · `user_profiles`=53 · `orders`=3 (confirmed,
+  460/159/219 €, 07-15/20) · **`order_items`=0** → les 3 commandes n'ont aucune ligne article ni
+  trace Stripe (colonne `stripe_session_id` absente). Données consignées dans
+  `RECONCILIATION_STRIPE.md` §B-bis.
+
+### Gates explorés (autonomie maximale, aucun prod touché)
+- Branching Supabase : **indisponible (plan Free, 402 `branching_limit`)**.
+- Docker Desktop : absent → validation locale impossible aujourd'hui.
+- `db push --dry-run` : **découverte — l'historique migrations local↔prod est désynchronisé**
+  (5 versions distantes absentes localement). NE PAS pousser en prod avant réconciliation.
+- Projet `lwrmuggefbmboikjgudc` (« LKDV ») : **à confirmer par Tony** comme copie de validation
+  éventuelle — non touché.
+- Deux chemins GATE 1 documentés dans `docs/guides/LIGNEES_VALIDATION_BASE.md` (local Docker vs copie distante).
+
+### Chantier « Orientation & Empreinte » — Lot A livré (aucun code)
+- **A.1** : table de profil prouvée = `user_profiles` (53 lignes ; `profiles` n'existe pas). ✓
+- **A.2** : contraste recalculé sur la palette **réelle Design-tokens v2.0** (le plan citait
+  l'ancienne palette — `#0B1F17`/`#2D6B4A`/`#A3C4A3` désormais interdits). Label `#17402C` 10,97:1 ·
+  sage-700 `#365233` 8,21:1 · tertiaire `#5A7064` 5,03:1 · sage-500 `#5B7F55` 4,30:1 (grand) ·
+  sage-300 `#A6C1A0` 1,84:1 (remplissage). → 3 niveaux texte discriminables ; verdict du plan
+  **confirmé**. Script : `scripts/verify/contrast_palette.mjs`.
+- **A.3** : `docs/reports/AUDIT_INSCRIPTION_DS.md` — 8 violations listées (emerald, `#10b981`,
+  red-50/200/700, `#FEE2E2/#FECACA/#DC2626`, CTA maison, 0 `.glass`). **Rien corrigé** (chantier séparé).
+- **A.4** : `ADR-010-orientation-vs-empreinte.md` (Proposé, en attente GATE A) — rejet du
+  rôle-couleur avec preuves de contraste, séparation Orientation(privée)/Empreinte(public dérivée),
+  alternatives écartées, **mécanisme de renoncement explicite** documenté.
+- Outils : `scripts/db/probe_lignees_state.mjs` (sondage lecture seule), `scripts/db/reconcile_stripe.mjs`
+  (réconciliation lecture seule), kit `supabase/reconciliation/` (orphans + honorer).
+
+### Reste bloquant (Tony uniquement)
+1. `STRIPE_SECRET_KEY` (live) dans `.env.local` → `node scripts/db/reconcile_stripe.mjs` → décisions
+   par orphelin → remplir RECONCILIATION_STRIPE.md (§ côté base déjà sondée).
+2. Valider GATE 1 : installer Docker Desktop (ou activer Pro / confirmer la copie `lwrmug…`) →
+   je fais migrations + pgTAP (3 suites) + backfill.
+3. Réconcilier l'historique migrations local↔prod avant tout push en prod.
+4. Valider GATE A (ADR-010). Alors seulement : Lots B/C/D.
+
+## 2026-09-04 — Migrations APPLIQUÉES À LA PROD (icxyvwzfjbflcbqukpfz) — override Tony
+
+Tony a explicitement demandé l'application sur la prod (`https://icxyvwzfjbflcbqukpfz.supabase.co`), en choisissant « appliquer en direct, ordre strict » pour la réconciliation. 7 migrations appliquées dans l'ordre via `supabase db query --linked` + enregistrées dans `supabase_migrations.schema_migrations` :
+  20260903010000 kit_lineage → 20260903020000 kit_field_proof → 20260903030000 stripe_fix
+  → 20260903040000 kit_conservation → 20260903041000 kit_souches_seed
+  → 20260904010000 user_orientation → 20260904020000 user_field_signature
+- **Lot 6 (20260903050000 kit_attributions) NON appliqué** (gelé) — vérifié absence en base.
+- **5 migrations « étrangères » de prod** (20260824/29/30) laissées INTACTES.
+- ✅ Vérifié (lecture readonly) : client user_orientation + matviews (kit_item_survival,
+  _by_kit, kit_trust_scores, user_field_signature) + signature_visibility + fonctions
+  (handle_kit_lineage, refresh_kit_conservation, get_user_signature, refresh_user_field_signature)
+  + RLS user_orientation (4 policies authenticated-only) + get_user_signature renvoie {} privé.
+
+### 🐛 2 bugs latents découverts & corrigés dans 20260903040000_kit_conservation.sql
+La base n'ayant jamais été appliquée (GATE 1 en attente), ces bugs n'avaient pas été attrapés :
+1. `(ci.child_id IS NOT NULL)` → `(ci.kit_id IS NOT NULL)` (materiel_kit_items n'a pas de
+   colonne child_id) — détection « le child a gardé cet item ».
+2. `min(pairs.product_id)` (uuid) → `min(pairs.product_id::text)::uuid` (min(uuid) n'existe pas).
+Les deux occurrences de chaque dans les matviews. Migrations ré-appliquées après fix (exit 0).
+
+### Test fonctionnel empreinte
+`get_user_signature(<user private>)` → `{}` (consentement privé par défaut respecté).
+À noter : le bug M4 doit être appliqué AUSSI sur toute copie/validation de façon cohérente.
+
+### Reste (gates)
+- pgTAP (3 suites Lignées + identity) : à exécuter (prévu copie, mais prod override OK car ROLLBACK).
+- GATE 3 (Stripe test) + réconciliation Stripe : `STRIPE_SECRET_KEY` (live) toujours absente du .env.local.
+- GATE A (ADR-010) : validation Tony toujours en attente.

@@ -2,6 +2,17 @@
 
 Statut : **À EXÉCUTER (données réelles requises)** · Bloquant PR · Document cadre.
 
+> 🛠️ **Kit prêt à l'emploi** (2026-09-04) : `supabase/reconciliation/README.md` —
+> script lecture seule `scripts/db/reconcile_stripe.mjs` (sort CSVs prêts à décider),
+> requêtes SQL de recoupement `supabase/reconciliation/reconcile_orphans.sql`, template
+> « honorer » `supabase/reconciliation/honor_order.sql`. Il reste à coller les sorties
+> dans le tableau en fin de doc.
+>
+> ⚠️ **Bloqueur côté Stripe identifié (2026-09-04)** : `.env.local` ne contient **aucune
+> `STRIPE_SECRET_KEY`** (ni live ni test). Le côté « vérité des encaissements » (A) n'est
+> pas exécutable depuis ce poste tant que la clé n'est pas ajoutée (et `sk_live_…` pour
+> les orphelins réels). Côté base (B), les données réelles sont déjà sondées — voir B-bis.
+
 ## Contexte (pourquoi il y a des orphelins)
 
 Avant la réparation du Lot 3 (`feat/lignees-kits`), le webhook Stripe écrivait avec un
@@ -49,6 +60,26 @@ WHERE stripe_session_id IS NOT NULL;
 SELECT id, order_number, notes FROM public.orders
 WHERE stripe_session_id IS NULL AND notes LIKE 'Stripe session: %';
 ```
+
+### B-bis. Données réelles côté base — sondage lecture seule (2026-09-04, service role)
+
+Réalisé via `scripts/db/probe_lignees_state.mjs` + requêtes ciblées (aucune écriture).
+
+| Objet | Valeur réelle | Implication |
+|---|---|---|
+| `orders` (total) | **3** — toutes `confirmed`, 460 € / 159 € / 219 €, créées 2026-07-15/20 | 3 commandes seulement, et aucune n'a de trace Stripe |
+| `orders.stripe_session_id` | **colonne ABSENTE** (migration 3 non appliquée) | aucune commande n'est couverte au format actuel |
+| `orders.notes` legacy | **0** ligne avec `'Stripe session: …'` | aucune couverture au format legacy non plus |
+| `order_items` | **0** | les 3 commandes n'ont AUCUNE ligne article en base (le JSONB `items` porte peut-être les produits — à vérifier par commande au moment de décider) ; le déstockage (`decrement_stock_on_order`) n'a jamais tourné |
+| `materiel_kits` / `hike_sessions` / `user_profiles` | 5 / 20 / 53 | petite base — les encaissements Stripe de la période sont le vrai sujet |
+
+**Lecture** : la base ne couvre *rien* côté Stripe. Toute session payée (avant ou après
+juillet) est un orphelin candidat. Les 3 commandes existantes sont elles-mêmes douteuses
+(statut `confirmed` sans items ni paiement tracé) : à inclure dans « à enquêter » si
+l'écart de cohérence (Σ Stripe − Σ orders) ne colle pas. `order_items = 0` confirme que le
+webhook pré-réparation échouait dès l'INSERT order_items — le tableau de décision doit
+prévoir, pour chaque « honorer », la création des `order_items` + déstockage
+(`supabase/reconciliation/honor_order.sql`).
 
 ### C. Le rapprochement (par outil au choix)
 Pour chaque session `paid` et non refundée de la liste A, chercher une commande

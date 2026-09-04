@@ -3,6 +3,7 @@ import { createClient } from '@/lib/supabase/server';
 import { askAI } from '@/lib/ai/askAI';
 import { KIT_CONFIGURATOR_SPEC, kitReportBodySchema, buildKitPrompt, resolveKitAIOutput } from '@/lib/ai/features/kitConfigurator';
 import { analyzeKit, type RealShopProduct } from '@/lib/ai/configuratorCore';
+import { applyOrientationPrefill, isValidOrientation, type PrefillTarget } from '@/features/identity/orientation';
 
 export const runtime = 'nodejs';
 export const maxDuration = 60;
@@ -51,7 +52,26 @@ export async function POST(req: NextRequest) {
         { status: 400 }
       );
     }
-    const { sessionParams, selectedItems } = parsedBody.data;
+    let { sessionParams, selectedItems } = parsedBody.data;
+
+    // ── Pré-remplissage ORIENTATION (ADR-010, Lot B.3) ─────────────────────
+    // L'orientation (privée) sert de prior au configurateur : on ne comble que
+    // les champs vides, on ne touche JAMAIS une valeur posée, et on annonce les
+    // champs réellement pré-remplis (jamais silencieux → l'UI affiche
+    // « pré-rempli d'après ta pratique — modifier »).
+    const prefilledFrom: PrefillTarget[] = [];
+    if (user) {
+      const { data: orientation } = await supabase
+        .from('user_orientation')
+        .select('terrain, autonomy, priority, experience')
+        .eq('user_id', user.id)
+        .maybeSingle();
+      if (isValidOrientation(orientation)) {
+        const applied = applyOrientationPrefill(sessionParams, orientation);
+        sessionParams = applied.sessionParams;
+        prefilledFrom.push(...applied.prefilledFields);
+      }
+    }
 
     // Fetch products from products table
     const { data: dbProducts } = await supabase
@@ -212,6 +232,7 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({
       reportId,
       sessionParams,
+      prefilledFrom,
       selectedItems: enrichedItems,
       alternatives: aiData.alternatives ?? {},
       consumables: aiData.consumables ?? [],

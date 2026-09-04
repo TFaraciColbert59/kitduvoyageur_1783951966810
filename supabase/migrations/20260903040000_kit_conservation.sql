@@ -22,7 +22,7 @@ DROP MATERIALIZED VIEW IF EXISTS public.kit_item_survival;
 CREATE MATERIALIZED VIEW public.kit_item_survival AS
 SELECT
   pairs.item_key,
-  min(pairs.product_id)                          AS product_id,
+  min(pairs.product_id::text)::uuid                AS product_id,
   count(*) FILTER (WHERE pairs.kept)             AS kept_count,
   count(*) FILTER (WHERE NOT pairs.kept)         AS dropped_count,
   count(*)                                       AS total_pairs
@@ -30,7 +30,7 @@ FROM (
   SELECT
     pi.item_key,
     pi.product_id,
-    (ci.child_id IS NOT NULL) AS kept
+    (ci.kit_id IS NOT NULL) AS kept
   FROM (
     -- Paires (parent, enfant) en VRAIE filiation : auto-forks exclus
     -- (enfant.user_id <> parent.user_id).
@@ -58,7 +58,7 @@ CREATE MATERIALIZED VIEW public.kit_item_survival_by_kit AS
 SELECT
   pairs.parent_id                                AS kit_id,
   pairs.item_key,
-  min(pairs.product_id)                          AS product_id,
+  min(pairs.product_id::text)::uuid                AS product_id,
   count(*) FILTER (WHERE pairs.kept)             AS kept_count,
   count(*) FILTER (WHERE NOT pairs.kept)         AS dropped_count,
   count(*)                                       AS total_pairs
@@ -67,7 +67,7 @@ FROM (
     edges.parent_id,
     pi.item_key,
     pi.product_id,
-    (ci.child_id IS NOT NULL) AS kept
+    (ci.kit_id IS NOT NULL) AS kept
   FROM (
     SELECT
       parent.id      AS parent_id,

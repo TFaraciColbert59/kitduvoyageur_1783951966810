@@ -10,6 +10,8 @@ import { getChatCompletion } from '@/lib/ai/chatCompletion';
 import { getCart, saveCart } from '@/lib/cart';
 import { createClient } from '@/lib/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
+import { orientationToSessionParams, isValidOrientation } from '@/features/identity/orientation';
+import OrientationCard from '@/components/identity/OrientationCard';
 
 // ── Types ──────────────────────────────────────────────────────────────────────
 interface WizardState {
@@ -189,6 +191,55 @@ function StepDates({ state, onChange }: { state: WizardState; onChange: (k: keyo
 }
 
 function StepProfile({ state, onChange }: { state: WizardState; onChange: (k: keyof WizardState, v: string | number | boolean) => void }) {
+  const { user } = useAuth();
+  const [prefilledFromPractice, setPrefilledFromPractice] = useState(false);
+  const [hasOrientation, setHasOrientation] = useState<boolean | null>(null);
+  const [showPractice, setShowPractice] = useState(false);
+  const [practiceDismissed, setPracticeDismissed] = useState(false);
+
+  const dismissPracticeCard = () => {
+    setPracticeDismissed(true);
+    setShowPractice(false);
+  };
+
+  // Au premier passage : l'orientation (privée) pré-remplit activité/niveau,
+  // TOUJOURS annoncé (jamais silencieux) et surchargeable sans friction.
+  useEffect(() => {
+    if (!user || hasOrientation !== null) return;
+    let cancelled = false;
+    (async () => {
+      try {
+        const supabase = createClient();
+        const { data } = await supabase
+          .from('user_orientation')
+          .select('terrain, autonomy, priority, experience')
+          .eq('user_id', user.id)
+          .maybeSingle();
+        if (cancelled) return;
+        const o = data && isValidOrientation(data) ? data : null;
+        setHasOrientation(o !== null);
+        if (o) {
+          const defaults = orientationToSessionParams(o);
+          if ((state.activity === '' || state.level === '') && (defaults.activity || defaults.level)) {
+            if (defaults.activity && state.activity === '') onChange('activity', defaults.activity);
+            if (defaults.level && state.level === '') onChange('level', defaults.level);
+            setPrefilledFromPractice(true);
+          }
+        }
+      } catch {
+        setHasOrientation(false);
+      }
+    })();
+    return () => { cancelled = true; };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [user]);
+
+  const dismissPractice = () => {
+    setPrefilledFromPractice(false);
+    if (state.activity === 'Randonnée' || state.activity === 'Randonnée montagne' || state.activity === 'Trek' || state.activity === 'Trekking' || state.activity === 'Voyage') onChange('activity', '');
+    if (state.level === 'debutant' || state.level === 'intermediaire' || state.level === 'confirme') onChange('level', '');
+  };
+
   const activities = ['Randonnée', 'Alpinisme', 'Camping', 'Vanlife', 'Trekking', 'Photo nature', 'Sports eau'];
   const levels = [
     { id: 'debutant', label: 'Débutant', desc: 'Premiers pas en outdoor' },
@@ -199,6 +250,26 @@ function StepProfile({ state, onChange }: { state: WizardState; onChange: (k: ke
 
   return (
     <div className="space-y-6">
+      {/* Pré-remplissage ORIENTATION annoncé (ADR-010 : jamais silencieux) */}
+      {prefilledFromPractice && (
+        <div className="flex items-start gap-3 p-3 rounded-2xl bg-[rgba(91,127,85,0.12)] border border-[rgba(91,127,85,0.3)]" role="status" aria-live="polite">
+          <Icon name="InformationCircleIcon" size={16} variant="outline" className="text-[#4B6B7C] flex-shrink-0" />
+          <p className="text-sm text-[#365233]">
+            Pré-rempli d’après ta <button type="button" onClick={() => setShowPractice(true)} onMouseDown={(e) => e.preventDefault()} className="underline cursor-pointer text-[#17402C] font-medium" style={{ minHeight: 44, background: 'none', border: 'none', padding: 0 }}>pratique</button> — tu peux tout modifier.
+            <button type="button" onClick={dismissPractice} className="block cursor-pointer text-[#17402C] font-medium underline" style={{ background: 'none', border: 'none', padding: 0 }}>
+              Ce n’est pas ma pratique
+            </button>
+          </p>
+        </div>
+      )}
+      {/* Carte « ta pratique » — posée à la première ouverture, masquable durablement */}
+      {(showPractice || (user && hasOrientation === false && !practiceDismissed)) && (
+        <OrientationCard
+          mode={user && hasOrientation === false && !practiceDismissed ? 'collect' : 'edit'}
+          onSaved={() => { setHasOrientation(true); setShowPractice(false); setPracticeDismissed(false); }}
+          onPasser={dismissPracticeCard}
+        />
+      )}
       <div>
         <p className="text-sm font-semibold text-[#17402C] mb-3">Activité principale</p>
         <div className="flex flex-wrap gap-2">

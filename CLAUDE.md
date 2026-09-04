@@ -77,6 +77,40 @@ Le cockpit de randonnée (`/randonnee-active`) est une interface desktop temps r
 La métrique fondatrice : **taux de conservation d'un objet à travers les générations,
 pondéré par la preuve terrain GPS** (filiation + terrain + commerce).
 
+---
+
+## 🧭 Orientation & Empreinte (Chantier « L'identité se révèle »)
+
+La doctrine « rien ne s'affiche sans preuve terrain » des Lignées s'étend aux **profils** :
+un rôle auto-déclaré et affiché classe des personnes → rejeté (ADR-010, une teinte d'accent
+→ pas de couleur par rôle possible). Deux objets strictement séparés :
+
+- **ORIENTATION (privée)** — `public.user_orientation` (terrain/autonomie/priorité/
+  expérience), **RLS `user_id = auth.uid()` en lecture ET écriture, aucune policy publique**.
+  Posée après la création du compte (configurateur, carte `OrientationCard`, « passer »
+  toujours visible), modifiable depuis `/compte`. Ne sert QUE de prior au configurateur :
+  `/api/kit-report/generate` pré-remplit les champs vides via `applyOrientationPrefill`,
+  **annoncé** (préfixe `prefilledFrom`) — jamais silencieux.
+- **EMPREINTE (publique, dérivée)** — matview `user_field_signature` exclusivement depuis
+  `hike_sessions` (+ `hiking_routes.region`). Granularité = région, **jamais de coordonnées** ;
+  plancher 3 sorties ; **aucun agrégat inter-utilisateurs**. Consentement
+  `user_profiles.signature_visibility` (**private par défaut**) vérifié par la fonction
+  `get_user_signature()` (matview non lisible directement). Rendu `UserFieldSignature`
+  (sceau `FieldSeal` déterministe seed=hash(user_id), **ink + sage uniquement**, sans ordre).
+
+**Contraintes dures (verrou `scripts/verify/identity_compliance.mjs`, casse le build) :**
+aucun token `--role-*`, aucun grade/rang/palier/classement, l'orientation jamais dans un
+composant public hors `src/components/identity`, aucun hex hors palette dans les fichiers
+`identity`.
+
+- **Aliases** : Table de profil = `user_profiles` (pas `profiles`). Palette de référence =
+  **`docs/Design-tokens.md` v2.0** (sage-500 `#5B7F55`) — PAS `#A3C4A3`/`#0B1F17`/`#2D6B4A`
+  (interdits depuis la v2.0).
+- **Liens migration** : `20260904010000_user_orientation` →
+  `20260904020000_user_field_signature` (dépend de `20260903020000`, vague Lignées 1→5).
+
+---
+
 ### Modèle
 - `materiel_kits` est **l'entité vivante unique** ; `kit_reports` (configurateur) est un
   snapshot rattaché (`kit_reports.kit_id`). ADR-007.

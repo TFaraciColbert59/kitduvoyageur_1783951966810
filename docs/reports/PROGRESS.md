@@ -1,5 +1,22 @@
 # PROGRESS — LKDV
 
+## Chantier « Orientation & Empreinte » (2026-09-04) — code terminé, gates non levés
+
+- **Rapport complet** : `docs/reports/RAPPORT_EMPREINTE.md` · ADR-010 (GATE A) ·
+  audit DS inscription : `docs/reports/AUDIT_INSCRIPTION_DS.md`.
+- **Lots A-B-C-D livrés en code** : Lot A (audit profil = `user_profiles`, contraste
+  recalculé palette v2.0, audit `/inscription`, ADR-010) ; Lot B (orientation privée, RLS
+  own, prior configurateur annoncé, boucle de correction) ; Lot C (empreinte dérivée
+  `hike_sessions`, matview + consentement + `FieldSeal` déterministe) ; Lot D (conformité,
+  a11y, verrou anti-dérive `scripts/verify/identity_compliance.mjs`).
+- **Vérifs réelles** : tsc 0 · Vitest **339/339 (54 fichiers, +27 identity)** · build OK ·
+  conformité 0 hex interdit · anti-dérive passe.
+- **Migrations nouvelles** (à appliquer APRÈS la vague Lignées 1→5) :
+  `20260904010000_user_orientation` → `20260904020000_user_field_signature`.
+- **Gates non levés** : réconciliation Stripe (clé live manque) · GATE 1 (migrations
+  Lignées non appliquées) · GATE A (ADR-010 à valider). Kit de déblocage :
+  `scripts/db/reconcile_stripe.mjs` + `supabase/reconciliation/`.
+
 ## Chantier « Lignées de kits » (2026-09-03) — code terminé, base en validation
 
 - **Rapport complet** : `docs/reports/RAPPORT_LIGNEES.md` · Audit : `AUDIT_KITS_LIGNEE.md`
