@@ -11,10 +11,17 @@
             "id": "65f3f7068d80a290",
             "type": "leaf",
             "state": {
-              "type": "graph",
-              "state": {},
-              "icon": "lucide-git-fork",
-              "title": "Vue graphique"
+              "type": "canvas",
+              "state": {
+                "file": "Sans titre.canvas",
+                "viewState": {
+                  "x": 0,
+                  "y": 0,
+                  "zoom": 0
+                }
+              },
+              "icon": "lucide-layout-dashboard",
+              "title": "Sans titre"
             }
           }
         ]
@@ -95,6 +102,7 @@
             "state": {
               "type": "backlink",
               "state": {
+                "file": "Sans titre.canvas",
                 "collapseAll": false,
                 "extraContext": false,
                 "sortOrder": "alphabetical",
@@ -113,6 +121,7 @@
             "state": {
               "type": "outgoing-link",
               "state": {
+                "file": "Sans titre.canvas",
                 "linksCollapsed": false,
                 "unlinkedCollapsed": true
               },
@@ -183,6 +192,7 @@
   },
   "active": "65f3f7068d80a290",
   "lastOpenFiles": [
+    "Sans titre.canvas",
     "13 — 📋 DÉCISIONS/ADR/ADR-006-notification-system-webpush.md",
     "01 — 🎯 PRODUIT/Roadmap.md",
     "01 — 🎯 PRODUIT/Proposition de valeur.md",
@@ -209,7 +219,6 @@
     "00 — 🗺️ CARTE ULTIME/Audit LKDV - Terminé.md",
     "00 — 🗺️ CARTE ULTIME/Mise à jour terminée.md",
     "00 — 🗺️ CARTE ULTIME/Audit complet du projet LKDV.md",
-    "07 — 🛒 COMMERCE/Produits.md",
     "99 — 📦 ARCHIVES",
     "13 — 📋 DÉCISIONS/ADR",
     "13 — 📋 DÉCISIONS",
