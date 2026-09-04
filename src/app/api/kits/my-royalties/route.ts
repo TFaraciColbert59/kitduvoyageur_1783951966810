@@ -19,8 +19,8 @@ export async function GET() {
   const royaltyEnabled = process.env.KIT_ROYALTY_ENABLED === 'true';
   if (!royaltyEnabled) {
     return NextResponse.json(
-      { enabled: false, message: 'La part créateur arrive bientôt.' },
-      { status: 200 }
+      { error: 'Not Found', message: 'Fonctionnalité désactivée' },
+      { status: 404 }
     );
   }
 
