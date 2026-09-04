@@ -29,7 +29,7 @@
 | 1.0.7 Créer branche git | ✅ Fait | Git | `git checkout -b feat/c1-trips-core` (exécuté avec succès) | 2026-09-04 |
 | **1.1 Migration Supabase** | ✅ Fait | `supabase/migrations/20260904050000_trips_core.sql` | `apply_migration` exécuté avec succès sur `icxyvwzfjbflcbqukpfz`. Preuve SQL : 9 tables créées, 100% `rls_enabled = true`, 4 policies chacune. | 2026-09-04 |
 | **1.2 Types TypeScript & Schémas Zod** | ✅ Fait | `src/features/trips/types/trip.types.ts`, `schemas/trip.schema.ts`, `index.ts`, `tests/trips/trip-schemas.spec.ts` | 20 tests Vitest réussis (100%), `npx tsc --noEmit` code 0 (Zod 4 compatible) | 2026-09-04 |
-| **1.3 Service Layer (Server-Only)** | ⬜ À faire | `src/lib/queries-trips.ts` | Tests TDD d'intégration et mocks Supabase | 2026-09-04 |
+| **1.3 Service Layer (Server-Only)** | ✅ Fait | `src/lib/queries-trips.ts`, `tests/trips/queries-trips.spec.ts` | 8 fonctions implémentées, RGPD document gating validé, 7 tests Vitest réussis (100%), `npx tsc --noEmit` code 0 | 2026-09-04 |
 | **1.4 Routes & Pages** | ⬜ À faire | `src/app/voyages/page.tsx`, `src/app/voyages/[slug]/page.tsx`, composants | Tests de rendu et accessibilité | 2026-09-04 |
 | **1.5 Composants UI Dédiés** | ⬜ À faire | `src/features/trips/components/*` | Liquid Glass DS, LkvButton, GlassCard, AppShell | 2026-09-04 |
 | **1.6 Suite de Tests & Validation** | ⬜ À faire | `tests/trips/*`, `tests/visual/trips.spec.ts` | Vitest, Playwright, Invariants CI | 2026-09-04 |
