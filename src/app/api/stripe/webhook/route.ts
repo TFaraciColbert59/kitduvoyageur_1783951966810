@@ -133,7 +133,10 @@ export async function POST(request: NextRequest) {
 
       if (orderError || !order) {
         console.error('❌ Webhook: création commande échouée', orderError);
-        return NextResponse.json({ received: true, warning: 'Order creation failed' });
+        return NextResponse.json(
+          { error: 'Order creation failed', details: orderError?.message ?? 'Unknown database error' },
+          { status: 500 }
+        );
       }
 
       // ── order_items + déstockage (product_id depuis les items validés) ──
