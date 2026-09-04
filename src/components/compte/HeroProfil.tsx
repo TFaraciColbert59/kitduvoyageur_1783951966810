@@ -5,6 +5,7 @@ import Image from 'next/image';
 import Link from 'next/link';
 import Icon from '@/components/ui/AppIcon';
 import { UserProfile } from '@/lib/types/profile';
+import UserFieldSignature from '@/components/identity/UserFieldSignature';
 
 interface HeroProfilProps {
   profile: UserProfile;
@@ -94,6 +95,15 @@ export default function HeroProfil({ profile, onEditProfile, onShareProfile }: H
               <p className="text-xs sm:text-sm text-[#365233] leading-relaxed font-medium">
                 {profile.bio}
               </p>
+
+              {/* Empreinte terrain (ADR-010, Lot C.4) — dérivée, jamais choisie */}
+              <div className="pt-1">
+                <UserFieldSignature
+                  userId={profile.id}
+                  sealSize={40}
+                  ariaLabel={profile.first_name ? `Empreinte terrain de ${profile.first_name}` : 'Empreinte terrain'}
+                />
+              </div>
 
               {/* Meta tags */}
               <div className="flex flex-wrap items-center gap-2 pt-1 text-[11px] font-mono text-[#5A7064]">

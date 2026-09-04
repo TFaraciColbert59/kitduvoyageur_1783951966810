@@ -5,6 +5,8 @@ import React, { useState, useEffect, useRef } from 'react';
 import Image from 'next/image';
 import Icon from '@/components/ui/AppIcon';
 import { UserProfile } from '@/lib/mock/compte-marceline';
+import SignatureVisibilityControl from '@/components/identity/SignatureVisibilityControl';
+import OrientationCard from '@/components/identity/OrientationCard';
 
 interface ParametresCompteCardProps {
   profile: UserProfile;
@@ -404,6 +406,9 @@ export default function ParametresCompteCard({ profile, onSave }: ParametresComp
                 </span>
               </div>
 
+              {/* Ta pratique (orientation) — modifiable depuis /compte (ADR-010, Lot B) */}
+              <OrientationCard mode="edit" />
+
               {/* Photo Upload Block */}
               <div className="flex items-center gap-5 p-4 rounded-2xl glass-sub-card">
                 <div className="relative w-16 h-16 rounded-full overflow-hidden border-2 border-[#17402C]/20 shrink-0">
@@ -661,6 +666,9 @@ export default function ParametresCompteCard({ profile, onSave }: ParametresComp
                   3 modes d'accès
                 </span>
               </div>
+
+              {/* Empreinte terrain — consentement (ADR-010, Lot C.2) */}
+              <SignatureVisibilityControl />
 
               {/* Radio options */}
               <div className="space-y-4 text-xs sm:text-sm">
