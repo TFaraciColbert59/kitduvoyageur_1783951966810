@@ -22,6 +22,12 @@ Ce repository contient des configurations, des règles, des skills et des agents
   - `finishing-a-development-branch` : Finalisation propre, fusion et publication des branches
   - `writing-skills` : Création et affinage de nouveaux skills
   - `using-superpowers` : Guidage d'amorçage et priorisation des processus de développement
+- **`obsidian-skills`** (`kepano/obsidian-skills` dans `.agents/skills/`, `.claude/skills/` & `.agent/skills/`) :
+  - `obsidian-markdown` : Création et édition de Markdown Obsidian (wikilinks `[[Note]]`, embeds `![[embed]]`, callouts `> [!type]`, propriétés frontmatter)
+  - `obsidian-bases` : Création et édition d'Obsidian Bases (`.base`) avec vues tabulaires, filtres et formules
+  - `json-canvas` : Création et manipulation de graphes visuels JSON Canvas (`.canvas`)
+  - `obsidian-cli` : Pilotage en ligne de commande de coffres Obsidian, recherche et automatisation
+  - `defuddle` : Extraction de markdown propre et concis depuis des pages web pour économiser les tokens
 
 ## Règle Permanente UX & Interaction Design
 
