@@ -1,29 +1,30 @@
 # RÉCONCILIATION STRIPE — paiements orphelins
 
-Statut : **À EXÉCUTER (données réelles requises)** · Bloquant PR · Document cadre.
+Statut : **ZONE ORANGE (Prêt à l'emploi — Requiert exécution sécurisée par Tony avec clé restreinte)** · Bloquant PR.
 
-> 🛠️ **Kit prêt à l'emploi** (2026-09-04) : `supabase/reconciliation/README.md` —
-> script lecture seule `scripts/db/reconcile_stripe.mjs` (sort CSVs prêts à décider),
-> requêtes SQL de recoupement `supabase/reconciliation/reconcile_orphans.sql`, template
-> « honorer » `supabase/reconciliation/honor_order.sql`. Il reste à coller les sorties
-> dans le tableau en fin de doc.
->
-> ⚠️ **Bloqueur côté Stripe identifié (2026-09-04)** : `.env.local` ne contient **aucune
-> `STRIPE_SECRET_KEY`** (ni live ni test). Le côté « vérité des encaissements » (A) n'est
-> pas exécutable depuis ce poste tant que la clé n'est pas ajoutée (et `sk_live_…` pour
-> les orphelins réels). Côté base (B), les données réelles sont déjà sondées — voir B-bis.
+> 🛡️ **SÉCURITÉ & PROTOCOLE ZONE ORANGE (Strictement respecté)** :
+> - **Clé maîtresse `sk_live_...` INTERDITE** : Le script refuse impérativement toute clé commençant par `sk_`.
+> - **Clé restreinte obligatoire** : Utiliser impérativement `STRIPE_RESTRICTED_KEY` commençant par `rk_live_...` avec permissions strictes en lecture seule (`Charges: Read`, `PaymentIntents: Read`, `Checkout Sessions: Read`, `Refunds: Read`).
+> - **Protection PII / RGPD** : Les emails clients sont systématiquement hachés en SHA-256 tronqué à 10 caractères (`hash_xxxxxxxxxx`) dans les exports et tableaux.
+> - **Aucune écriture automatique** : Aucun appel d'écriture Stripe ni mutation Supabase en production n'est effectué par l'agent.
 
-## Contexte (pourquoi il y a des orphelins)
+> 🛠️ **Kit prêt à l'emploi** :
+> - Script lecture seule sécurisé : `scripts/db/reconcile_stripe.mjs`
+> - Requêtes SQL de recoupement : `supabase/reconciliation/reconcile_orphans.sql`
+> - Template sécurisé pour honorer : `supabase/reconciliation/honor_order.sql`
 
-Avant la réparation du Lot 3 (`feat/lignees-kits`), le webhook Stripe écrivait avec un
-client **anon** bloqué par la RLS (`users_manage_own_orders` → authenticated) :
-- `orders` n'était **presque jamais créée** (l'INSERT échouait → retour `warning` 200) ;
-- `order_items` **jamais** insérés, `decrement_stock_on_order` **jamais** appelé ;
-- les paiements Stripe, eux, étaient **réellement encaissés** (client payait).
+## Contexte (Origine de l'anomalie)
+
+Avant la réparation du Lot 3 (`feat/lignees-kits` / commit `5607832`), le webhook Stripe écrivait avec un
+client anon bloqué par la RLS (`users_manage_own_orders` → authenticated) :
+- `orders` n'était **presque jamais créée** (l'INSERT échouait et le webhook renvoyait `200 { received: true, warning }`, avalant silencieusement l'erreur) ;
+- `order_items` n'étaient **jamais** insérés ;
+- Le trigger de déstockage `decrement_stock_on_order` n'a **jamais** été déclenché ;
+- Les paiements Stripe, eux, étaient **réellement encaissés** sur le compte Stripe du marchand.
 
 → Des paiements Stripe « orphelins » (encaissés, sans commande en base) se sont
 accumulés depuis la mise en service. **Aucune donnée de la base actuelle n'a été
-modifiée** : cette réconciliation est purement additive/corrective, disjoint du chantier.
+modifiée** : cette réconciliation est purement additive/corrective, disjointe du chantier.
 
 Après correctif : les nouvelles commandes ont `stripe_session_id` (idempotence) et les
 metadata posées ; les ORPHELINS restent ceux d'avant.
@@ -81,7 +82,17 @@ webhook pré-réparation échouait dès l'INSERT order_items — le tableau de d
 prévoir, pour chaque « honorer », la création des `order_items` + déstockage
 (`supabase/reconciliation/honor_order.sql`).
 
-### C. Le rapprochement (par outil au choix)
+### C. Inventaire physique impératif (Écart de stock)
+
+> ⚠️ **ALERTE CRITIQUE SUR LES STOCKS PHYSIQUES** :
+> Puisque le webhook avalait silencieusement les erreurs et que `order_items` n'a jamais été alimenté, la fonction trigger `decrement_stock_on_order` n'a **JAMAIS** tourné pour aucune commande historique passée par Stripe !
+> 
+> **Conséquences concrètes** :
+> 1. Le stock en base de données (`stock_quantity` dans les tables produits) est **supérieur au stock physique réel** en réserve/entrepôt si des colis ont été expédiés manuellement.
+> 2. Avant de marquer une commande comme « Honorée », Tony doit **impérativement réaliser un inventaire physique** des pièces en rayon.
+> 3. L'exécution du template `supabase/reconciliation/honor_order.sql` appliquera le déstockage rétroactif (`decrement_stock_on_order`).
+
+### D. Le rapprochement (par outil au choix)
 Pour chaque session `paid` et non refundée de la liste A, chercher une commande
 correspondante en B (par `stripe_session_id`, puis par `notes`). Toute session sans
 correspondance = **orphelin**.
@@ -104,7 +115,7 @@ Pour CHAQUE orphelin, cocher une case et tracer la décision (tableau en fin de 
 
 | Option | Quand | Action |
 |---|---|---|
-| **Honorer** | Le produit a été livré/expédié (colis parti, ou bien commande physiquement excécutée) | Créer la commande + `order_items` (service_role) avec `stripe_session_id`, ajuster le stock (toujours `decrement_stock_on_order`), `notes='RÉCONCILIATION: <session_id>'` |
+| **Honorer** | Le produit a été livré/expédié (colis parti, ou bien commande physiquement exécutée) | Créer la commande + `order_items` (service_role) avec `stripe_session_id`, ajuster le stock (toujours `decrement_stock_on_order`), `notes='RÉCONCILIATION: <session_id>'` |
 | **Rembourser** | Rien n'a été livré, ou le client demande le remboursement | `stripe refund` de la session (CLI/dashboard), tracer la décision |
 | **À enquêter** | Doute (montant incohérent, produit inconnu…) | Ne pas toucher, ouvrir une ligne "enquête" |
 
@@ -119,8 +130,8 @@ montants récents puis les plus élevés.
    − refunds − orphelins en enquête.
 3. Activer la réconciliation périodique (mensuelle) comme contrôle de santé.
 
-## Tableau de décision (à remplir)
+## Tableau de décision (à remplir après exécution du script de réconciliation)
 
-| Date paiement | Session ID | Email | Montant (€) | Décision (honorer/rembourser) | N° commande créé / refund ID |
+| Date paiement | Session ID | Hash email client (SHA-256:10) | Montant (€) | Décision (honorer / rembourser / enquête) | N° commande créé / refund ID |
 |---|---|---|---|---|---|
-| (…) | (…) | (…) | (…) | ☐ … | (…) |
+| *(À coller depuis `docs/reconciliation/orphans_YYYY-MM-DD.csv`)* | | | | | |
