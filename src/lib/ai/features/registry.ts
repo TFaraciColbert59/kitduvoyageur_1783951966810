@@ -51,6 +51,22 @@ export const FEATURES: Record<string, FeatureSpec> = {
     maxPerUserPerDay: countryGuides.COUNTRY_GUIDES_SPEC.maxPerUserPerDay,
     fallbackResponse: countryGuides.fallbackResponse,
   },
+  'country-practical-guide': {
+    tier: 'fast',
+    maxReasoningBudget: 0,
+    cacheTtlSeconds: 2_592_000, // 30 jours
+    maxPerUserPerDay: 100,
+    fallbackResponse: async (_req: AIRequest): Promise<AIResponse> => ({
+      text: JSON.stringify({
+        content_md: "Informations pratiques temporairement indisponibles. Veuillez vérifier auprès de l'ambassade ou des services officiels.",
+        sources: [],
+      }),
+      model: 'fallback-deterministe',
+      degraded: true,
+      cached: false,
+      provider: 'fallback',
+    }),
+  },
   'chat-completion': {
     tier: 'heavy', // défaut déclaré — l'appelant passe toujours req.tier
     maxReasoningBudget: 4096,

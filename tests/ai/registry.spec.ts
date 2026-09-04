@@ -17,12 +17,13 @@ const EXPECTED_SPECS: Record<string, { tier: string; maxReasoningBudget: number;
   'kit-configurator': { tier: 'heavy', maxReasoningBudget: 4000, cacheTtlSeconds: 0, maxPerUserPerDay: 10 },
   'trail-narrative': { tier: 'heavy', maxReasoningBudget: 6000, cacheTtlSeconds: 31_536_000, maxPerUserPerDay: 5 },
   'country-guides': { tier: 'heavy', maxReasoningBudget: 2000, cacheTtlSeconds: 2_592_000, maxPerUserPerDay: 30 },
+  'country-practical-guide': { tier: 'fast', maxReasoningBudget: 0, cacheTtlSeconds: 2_592_000, maxPerUserPerDay: 100 },
   'chat-completion': { tier: 'heavy', maxReasoningBudget: 4096, cacheTtlSeconds: 0, maxPerUserPerDay: 100 },
   diagnostic: { tier: 'heavy', maxReasoningBudget: 512, cacheTtlSeconds: 0, maxPerUserPerDay: 50 },
 };
 
 describe('src/lib/ai/features/registry — registre des features IA', () => {
-  it('TEST-REG-01: les 5 features sont déclarées avec leurs specs exactes', () => {
+  it('TEST-REG-01: les 6 features sont déclarées avec leurs specs exactes', () => {
     expect(Object.keys(FEATURES).sort()).toEqual(Object.keys(EXPECTED_SPECS).sort());
 
     for (const [name, spec] of Object.entries(EXPECTED_SPECS)) {

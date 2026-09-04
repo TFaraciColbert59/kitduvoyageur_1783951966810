@@ -19,7 +19,7 @@ export function modelFor(tier: AITier): string {
 }
 
 const OPENROUTER_URL = 'https://openrouter.ai/api/v1/chat/completions';
-const TIMEOUT_MS: Record<AITier, number> = { fast: 8_000, heavy: 45_000 };
+const TIMEOUT_MS: Record<AITier, number> = { fast: 30_000, heavy: 45_000 };
 /**
  * Chez les modèles à raisonnement (Nemotron Ultra), les tokens de raisonnement
  * comptent DANS max_tokens : sans buffer, le budget est épuisé par le
