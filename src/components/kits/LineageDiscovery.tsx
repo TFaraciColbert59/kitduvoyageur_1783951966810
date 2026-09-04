@@ -69,7 +69,7 @@ export default function LineageDiscovery() {
                 <span
                   key={i.item_key}
                   className="px-3 py-1.5 rounded-full text-[12px]"
-                  style={{ background: '#EDF3ED', border: '1px solid rgba(163,196,163,0.6)', color: '#0B1F17' }}
+                  style={{ background: '#EDF3ED', border: '1px solid rgba(166,193,160,0.6)', color: '#17402C' }}
                   title={i.item_key}
                 >
                   {conservationPhrase(rate)} · {i.item_key.slice(0, 24)}
@@ -92,9 +92,9 @@ export default function LineageDiscovery() {
                 type="button"
                 onClick={() => openKit(l.kit_id, 'discovery')}
                 className="text-left p-3.5 rounded-2xl border transition-colors hover:border-[#17402C]/40"
-                style={{ background: '#FBFAF6', borderColor: 'rgba(163,196,163,0.5)' }}
+                style={{ background: '#FBFAF6', borderColor: 'rgba(166,193,160,0.5)' }}
               >
-                <div className="text-[14px] font-medium truncate" style={{ color: '#0B1F17' }}>
+                <div className="text-[14px] font-medium truncate" style={{ color: '#17402C' }}>
                   {l.kit_name}
                 </div>
                 <div className="mt-1 flex items-center justify-between font-mono text-[11px]" style={{ color: '#6B7A72' }}>

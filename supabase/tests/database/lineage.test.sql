@@ -6,7 +6,7 @@
 -- ============================================================================
 BEGIN;
 SET LOCAL search_path = public;
-SELECT plan(21);
+SELECT plan(24);
 
 -- ----------------------------------------------------------------------------
 -- Fixtures : 3 utilisateurs (auth.users, cible des FK de materiel_kits) + 1 produit
@@ -104,6 +104,20 @@ SELECT throws_ok(
   $$ UPDATE public.materiel_kits SET generation = 99 WHERE id = '00000000-0000-0000-0000-000000000004' $$,
   'Les champs de filiation sont immuables après insertion',
   '4c. Tenter d''altérer generation par UPDATE est rejeté (immuabilité)'
+);
+SELECT lives_ok(
+  $$ UPDATE public.materiel_kits SET name = 'Kit Renommé' WHERE id = '00000000-0000-0000-0000-000000000004' $$,
+  '4d. Renommer un kit par UPDATE passe normalement (pas de blocage du nom)'
+);
+SELECT throws_ok(
+  $$ UPDATE public.materiel_kits SET forked_from = '00000000-0000-0000-0000-000000000002' WHERE id = '00000000-0000-0000-0000-000000000004' $$,
+  'La filiation (forked_from) est immuable après insertion',
+  '4e. Tenter de réassigner forked_from par UPDATE est rejeté (immuabilité)'
+);
+SELECT throws_ok(
+  $$ UPDATE public.materiel_kits SET ancestors = ARRAY['00000000-0000-0000-0000-000000000099']::uuid[] WHERE id = '00000000-0000-0000-0000-000000000004' $$,
+  'Les champs de filiation sont immuables après insertion',
+  '4f. Tenter d''altérer ancestors par UPDATE est rejeté (immuabilité)'
 );
 
 -- ----------------------------------------------------------------------------

@@ -91,6 +91,12 @@ BEGIN
       NEW.generation      := OLD.generation;
       NEW.ancestors       := OLD.ancestors;
       RETURN NEW;
+    ELSE
+      -- Le parent forked_from ne peut être altéré manuellement par UPDATE (immuabilité)
+      -- Seul le trigger ON DELETE SET NULL (cascade BD) peut passer forked_from à NULL
+      IF NEW.forked_from IS NOT NULL THEN
+        RAISE EXCEPTION 'La filiation (forked_from) est immuable après insertion';
+      END IF;
     END IF;
   END IF;
 

@@ -50,12 +50,12 @@ export default function ProductLineageCard({ productId }: { productId: string })
       }}
       disabled={!stats.lineage_root_id}
       className="block w-full mt-4 rounded-2xl px-4 py-3 border transition-colors hover:border-[#17402C]/40 disabled:opacity-80 disabled:cursor-default text-left"
-      style={{ background: '#EDF3ED', borderColor: 'rgba(163,196,163,0.6)' }}
+      style={{ background: '#EDF3ED', borderColor: 'rgba(166,193,160,0.6)' }}
     >
       <span className="font-mono text-[10px] tracking-[0.16em] uppercase" style={{ color: '#17402C' }}>
         Éprouvé par les lignées
       </span>
-      <span className="block mt-1 text-[13px]" style={{ color: '#0B1F17' }}>
+      <span className="block mt-1 text-[13px]" style={{ color: '#17402C' }}>
         Présent dans <strong>{stats.lineages_count}</strong> lignée{stats.lineages_count > 1 ? 's' : ''}
       </span>
       {totalPairs > 0 && (

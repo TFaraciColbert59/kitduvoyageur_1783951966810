@@ -136,7 +136,7 @@ export default function KitSheetModal({ kitId, context: _context, onClose }: Kit
     return (
       <div className="fixed inset-0 z-[80] flex items-end md:items-center justify-center bg-black/40 backdrop-blur-sm" onClick={close}>
         <div className="w-full md:w-96 bg-[#FBFAF6] rounded-t-3xl md:rounded-3xl p-6">
-          <p style={{ color: '#0B1F17' }}>⚠️ {error ?? 'Kit introuvable'}</p>
+          <p style={{ color: '#17402C' }}>⚠️ {error ?? 'Kit introuvable'}</p>
           <button onClick={close} className="mt-4 w-full py-3 rounded-xl font-semibold text-sm" style={{ background: '#17402C', color: '#FBFAF6' }}>
             Fermer
           </button>
@@ -159,12 +159,12 @@ export default function KitSheetModal({ kitId, context: _context, onClose }: Kit
   return (
     <div className="fixed inset-0 z-[80] flex items-end md:items-center justify-center bg-black/40 backdrop-blur-sm" onClick={close}>
       <div
-        className="w-full md:w-[420px] max-h-[88dvh] overflow-y-auto bg-[#FBFAF6] rounded-t-3xl md:rounded-3xl shadow-[0_-24px_60px_rgba(11,31,23,0.25)]"
+        className="w-full md:w-[420px] max-h-[88dvh] overflow-y-auto bg-[#FBFAF6] rounded-t-3xl md:rounded-3xl shadow-[0_-24px_60px_rgba(23,64,44,0.20)]"
         onClick={(e) => e.stopPropagation()}
       >
         {/* Poignée mobile */}
         <div className="md:hidden flex justify-center pt-3 pb-1">
-          <div style={{ width: 40, height: 4, borderRadius: 2, background: 'rgba(11,31,23,0.15)' }} />
+          <div style={{ width: 40, height: 4, borderRadius: 2, background: 'rgba(23,64,44,0.15)' }} />
         </div>
 
         {/* En-tête */}
@@ -172,12 +172,12 @@ export default function KitSheetModal({ kitId, context: _context, onClose }: Kit
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
             <div>
               <Eyebrow>Lignée de kit</Eyebrow>
-              <h2 className="font-display font-semibold text-[22px] tracking-tight" style={{ color: '#0B1F17', marginTop: 2 }}>
+              <h2 className="font-display font-semibold text-[22px] tracking-tight" style={{ color: '#17402C', marginTop: 2 }}>
                 {kit.name}
               </h2>
             </div>
             <button onClick={close} aria-label="Fermer" className="rounded-full p-2 hover:bg-[#EDF3ED]">
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#0B1F17" strokeWidth="2">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#17402C" strokeWidth="2">
                 <path strokeLinecap="round" d="M6 6l12 12M18 6L6 18" />
               </svg>
             </button>
@@ -207,7 +207,7 @@ export default function KitSheetModal({ kitId, context: _context, onClose }: Kit
               Épreuve du terrain
             </div>
             <div className="mt-2 flex items-baseline gap-2">
-              <span className="font-display text-[26px] font-semibold" style={{ color: '#0B1F17' }}>
+              <span className="font-display text-[26px] font-semibold" style={{ color: '#17402C' }}>
                 {fieldKm > 0 ? `${fieldKm.toLocaleString('fr-FR')} km` : '—'}
               </span>
               <span className="text-[12px]" style={{ color: '#6B7A72' }}>
@@ -248,7 +248,7 @@ export default function KitSheetModal({ kitId, context: _context, onClose }: Kit
                   const rate = survivalRate(row.kept_count, row.dropped_count);
                   return (
                     <div key={row.item_key} className="flex items-center justify-between text-[13px]">
-                      <span style={{ color: '#0B1F17' }}>{row.item_key.slice(0, 28)}</span>
+                      <span style={{ color: '#17402C' }}>{row.item_key.slice(0, 28)}</span>
                       {rate != null && (
                         <span className="font-mono text-[11px]" style={{ color: '#17402C' }}>
                           {conservationPhrase(rate)}

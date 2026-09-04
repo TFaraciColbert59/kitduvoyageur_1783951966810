@@ -101,20 +101,24 @@ if (shareCountLeaks.length > 0) {
   ok('Invariant 3 : Aucun compteur de partage dans les composants UI de kits');
 }
 
-// 4. MIGRATION D'ATTRIBUTION LOT 6 GELÉE
-const frozenMigrationName = '20260903050000_kit_attributions.sql';
-const activeMigrationLists = [
-  path.join(supabaseDir, 'active_migrations.txt'),
-  path.join(supabaseDir, 'migrations.manifest'),
-];
+// 4. MIGRATION D'ATTRIBUTION LOT 6 GELÉE (PHYSIQUEMENT ISOLÉE)
+const migrationsDir = path.join(supabaseDir, 'migrations');
+const migrationsFrozenDir = path.join(supabaseDir, 'migrations_frozen');
 
-for (const listPath of activeMigrationLists) {
-  if (fs.existsSync(listPath)) {
-    const listContent = fs.readFileSync(listPath, 'utf8');
-    if (listContent.includes(frozenMigrationName)) {
-      fail(`Migration gelée ${frozenMigrationName} présente dans la liste active : ${path.relative(root, listPath)}`);
-    }
+if (fs.existsSync(migrationsDir)) {
+  const activeFiles = fs.readdirSync(migrationsDir);
+  const leakedAttributions = activeFiles.filter((f) => f.toLowerCase().includes('attributions'));
+  if (leakedAttributions.length > 0) {
+    fail(`Migration Lot 6 présente dans supabase/migrations/ : ${leakedAttributions.join(', ')} (doit être déplacée dans supabase/migrations_frozen/)`);
+  } else {
+    ok('Invariant 4a : Aucune migration d\'attribution présente dans supabase/migrations/');
   }
+}
+
+if (!fs.existsSync(path.join(migrationsFrozenDir, '20260903050000_kit_attributions.sql'))) {
+  fail('La migration gelée 20260903050000_kit_attributions.sql est introuvable dans supabase/migrations_frozen/');
+} else {
+  ok('Invariant 4b : Migration 20260903050000_kit_attributions.sql correctement isolée dans supabase/migrations_frozen/');
 }
 
 // Vérifier que la route royalties renvoie bien 404 tant que gelée
@@ -124,10 +128,10 @@ if (fs.existsSync(royaltiesRoutePath)) {
   if (!royaltiesCode.includes('status: 404')) {
     fail('La route /api/kits/my-royalties ne renvoie pas un statut 404 alors que le Lot 6 est gelé');
   } else {
-    ok('Invariant 4 : Lot 6 gelé respecté (migration isolée et route en 404)');
+    ok('Invariant 4c : Route /api/kits/my-royalties verrouillée à 404');
   }
 } else {
-  ok('Invariant 4 : Route /api/kits/my-royalties absente');
+  ok('Invariant 4c : Route /api/kits/my-royalties absente');
 }
 
 // 5. AUCUN SECRET EN DUR NI FICHIER .ENV STAGÉ

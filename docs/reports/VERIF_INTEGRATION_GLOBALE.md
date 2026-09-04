@@ -80,7 +80,7 @@ La colonne `region` de la table `hiking_routes` a été introduite par la migrat
 |---|---|---|---|---|
 | **2.1 Colonne `hike_sessions.kit_id` & index** : FK vers `materiel_kits(id)` ON DELETE SET NULL avec index partiel. | `RAPPORT_LIGNEES.md` §2 | Inspection de `20260903020000_kit_field_proof.sql:15-19` | `ALTER TABLE public.hike_sessions ADD COLUMN IF NOT EXISTS kit_id uuid REFERENCES public.materiel_kits(id) ON DELETE SET NULL; CREATE INDEX IF NOT EXISTS hike_sessions_kit_id_idx ON public.hike_sessions (kit_id) WHERE kit_id IS NOT NULL;` | **`CONFORME`** |
 | **2.2 Table `kit_field_reports` & RLS** : Débriefing d'items (`essentiel`, `utile`, `inutile`, `jamais_servi`), RLS restrictive. | `RAPPORT_LIGNEES.md` §2 | Inspection de `20260903020000_kit_field_proof.sql:34-83` | Table créée, contraintes check, RLS activée avec policies `kit_field_reports_select_own` et `kit_field_reports_insert_own`. | **`CONFORME`** |
-| **2.3 Fonction `get_kit_field_journal`** : Anonymisation des retours terrain, zéro GPS, zéro user_id. | `RAPPORT_LIGNEES.md` §2 | Inspection de `20260903020000_kit_field_proof.sql:137-207` | Retourne uniquement : `session_date`, `season`, `region`, `duration_hours`, `distance_km`, `dplus_m`, `verdicts` (JSON). Aucun champ nominatif ni coordonnée GPS. | **`CONFORME`** |
+| **2.3 Fonction `get_kit_journal`** : Anonymisation des retours terrain, zéro GPS, zéro user_id. | `RAPPORT_LIGNEES.md` §2 | Inspection de `20260903020000_kit_field_proof.sql:137-207` et exécution | **Preuve brute — JSON généré pour un kit tiers** :<br>```json<br>{<br>  "kit_id": "00000000-0000-0000-0000-000000000001",<br>  "birth": { "origin": "curated", "generation": 0 },<br>  "lineage": { "fork_count": 4, "max_generation": 2 },<br>  "field": {<br>    "session_count": 8,<br>    "total_km": 142.5,<br>    "total_elevation_gain_m": 8400,<br>    "seasons": { "ete": 5, "automne": 3 },<br>    "regions": [<br>      { "region": "Écrins", "sessions": 5 },<br>      { "region": "Vercors", "sessions": 3 }<br>    ]<br>  },<br>  "ecosystem": { "public_carnet_count": 2 }<br>}<br>```<br>Zéro clé `lat`, `lng`, `geom`, `user_id`, `author_id` ou `email`. Granularité spatiale maximale = `region`. | **`CONFORME`** |
 | **2.4 Définition exacte de `field_proven_count`** : Compte de sessions qualifiantes. | `RAPPORT_LIGNEES.md` §2 | Inspection du code SQL | `s.distance_km >= 1` et `s.kit_id IS NOT NULL` dans `20260903020000_kit_field_proof.sql:110-120`. | **`CONFORME`** |
 
 ---
@@ -94,8 +94,8 @@ La colonne `region` de la table `hiking_routes` a été introduite par la migrat
 | **3.3 Webhook service_role & `order_items`** : Webhook utilise le client admin service_role et insère les lignes de commande. | `RAPPORT_LIGNEES.md` §3 | Inspection de `src/app/api/stripe/webhook/route.ts:36-43, 116, 164` | `createAdminClient()` utilisé. Insertion dans `orders` puis `order_items` par itération sur `line_items`. | **`CONFORME`** |
 | **3.4 Idempotence sur `stripe_session_id`** : Contrainte unique et protection double webhook. | `RAPPORT_LIGNEES.md` §3 | Inspection de `20260903030000_stripe_fix.sql:47-51` | `CREATE UNIQUE INDEX IF NOT EXISTS orders_stripe_session_id_key ON public.orders (stripe_session_id) WHERE stripe_session_id IS NOT NULL;` | **`CONFORME`** |
 | **3.5 Webhook avale erreur commande** : Le webhook renvoie une 500 sur échec d'insertion pour déclencher le retry Stripe. | `RAPPORT_LIGNEES.md` §3 | Inspection de `src/app/api/stripe/webhook/route.ts:136` | Renvoyait 200 `{ received: true, warning: ... }`. Corrigé dans commit `5607832` pour lever une 500 (`NextResponse.json({ error: ... }, { status: 500 })`). | **`ÉCART`** → **`CORRIGÉ`** (`5607832`) |
-| **3.6 Trigger `decrement_stock_on_order`** : Déclenché lors de la création d'une commande payée. | `RAPPORT_LIGNEES.md` §3 | Inspection de `20260903030000_stripe_fix.sql:63-88` et webhook | `CREATE TRIGGER trg_order_decrement_stock AFTER INSERT ON public.orders FOR EACH ROW EXECUTE FUNCTION public.decrement_stock_on_order();` | **`CONFORME`** |
-| **3.7 Colonnes `orders` déployées en production** : Les colonnes `stripe_session_id`, `subtotal_eur`, `shipping_eur` sont sur `icxyvwzfjbflcbqukpfz`. | `RAPPORT_LIGNEES.md` §3 | Sondage distant lecture seule | Colonnes non détectées sur la base distante (migration 3 non encore poussée). | **`NON VÉRIFIABLE SANS INFRA`** *(local conforme)* |
+| **3.6 Trigger `decrement_stock_on_order`** : Déclenché lors de la création d'une commande payée. | `RAPPORT_LIGNEES.md` §3 | Inspection de `20260903030000_stripe_fix.sql:63-88` et webhook | `decrement_stock_on_order` appelé pour chaque article validé. Ordre d'exécution vérifié : la vérification d'idempotence (`existingOrder`) intervient AVANT l'insertion `orders`, et le déstockage intervient APRÈS l'insertion `orders`. Si `orders` échoue (renvoi 500), aucun déstockage n'a lieu. Lors du retry Stripe après succès d'`orders`, `existingOrder` intercepte et renvoie `duplicate: true` (aucun re-déstockage). | **`CONFORME`** |
+| **3.7 Colonnes `orders` déployées vs code applicatif** : Le schéma réel en base supporte-t-il les champs insérés par le webhook ? | Hypothèse H4 / `RAPPORT_LIGNEES.md` §3 | Comparaison de `webhook/route.ts:116-130` et `20260903030000_stripe_fix.sql:38-42` | Le code applicatif insère : `payment_method`, `subtotal_eur`, `shipping_eur`, `stripe_session_id`. Dans le schéma historique de production (`orders`), ces 4 colonnes étaient **absentes**. La migration `20260903030000_stripe_fix.sql` ajoute précisément ces 4 colonnes manquantes + l'index unique. Tant que la migration 3 n'est pas appliquée sur la base cible, le webhook échouera à 100% avec levée d'erreur 500. La migration 3 est le prérequis indispensable pour que le webhook insère avec succès. | **`ÉCART HISTORIQUE COUVERT PAR MIGRATION 3`** |
 
 ---
 
@@ -117,9 +117,10 @@ La colonne `region` de la table `hiking_routes` a été introduite par la migrat
 | Affirmation | Source | Méthode de vérification | Preuve brute | Verdict |
 |---|---|---|---|---|
 | **5.1 Aucune route `kits/[slug]` créée** : Seule `/k/[token]` pour les lignées. | `RAPPORT_LIGNEES.md` §5 | Inspection du système de fichiers `src/app` | Une route préexistante `src/app/kits/[slug]/page.tsx` date de juillet 2026 (éditoriale). Le chantier lignées n'a créé que `src/app/k/[token]/page.tsx`. | **`ÉCART DE FORMULATION`** *(aucun conflit fonctionnel)* |
-| **5.2 KitSheet tokens Design System** : Respect strict de la palette et typographie. | `RAPPORT_LIGNEES.md` §5 | Audit CSS de `KitSheetModal.tsx` | Utilise les tokens et polices système de LKDV (`#17402C`, `#5B7F55`, SF Pro / font-mono). | **`CONFORME`** |
+| **5.2 KitSheet tokens Design System** : Respect strict de la palette et typographie. | `RAPPORT_LIGNEES.md` §5 | Audit CSS de `KitSheetModal.tsx` | Contenait l'ancienne couleur `#0B1F17` en 6 endroits. Corrigé vers `#17402C` et `#5B7F55`. | **`ÉCART`** → **`CORRIGÉ`** |
 | **5.3 Invocations KitSheet sur 5 points d'entrée** : Branché sur messages, cockpit, page produit, feed, groupes. | `RAPPORT_LIGNEES.md` §5 | Grep sur `KitSheetModal` et `useKitSheet` | Présent dans : `src/features/messaging/components/UnifiedChatModal.tsx`, `src/app/cockpit/page.tsx`, `src/app/materiel/kits/[id]/page.tsx`. ABSENT du feed social et des pages de groupes. | **`ÉCART`** *(3 points branchés sur 5)* |
 | **5.4 Aucune UI part créateur dans KitSheet** : Aucune donnée de commission affichée. | `RAPPORT_LIGNEES.md` §5 | Inspection du composant `KitSheetModal.tsx` | Zéro mention d'euros, de pourcentage ou de royalties créateur. | **`CONFORME`** |
+| **5.5 Signature gestuelle KitSheet vs `PremiumBottomSheet`** : KitSheet consomme-t-il `PremiumBottomSheet` en mode `handle` ou a-t-il réécrit des touch handlers ? | Relecture critique de Tony | Inspection de `src/features/kits/components/KitSheetModal.tsx:160-170` | `KitSheetModal` n'utilise NI `PremiumBottomSheet` NI le hook `useDragDismiss` de la Phase Gestes. Il affiche un simple conteneur `div` avec poignée statique (`<div style={{ width: 40, height: 4, background: 'rgba(23,64,44,0.15)' }} />`) sans aucun suivi tactile du doigt ni drag-to-dismiss. | **`ÉCART GESTUEL MAJEUR`** |
 
 ---
 
@@ -176,6 +177,24 @@ La colonne `region` de la table `hiking_routes` a été introduite par la migrat
 
 ---
 
+### Phase Gestes Tactiles & Interaction Design (G.1 à G.11)
+
+| Affirmation | Source | Méthode de vérification | Preuve brute | Verdict |
+|---|---|---|---|---|
+| **G.1 Fondations `gestureMath.ts`** : Logique de décision pure (double-tap 300ms, long-press 450ms, seuil dismiss 80px). | MISSION_LOG (Gestes) | Exécution de `npx vitest run tests/gestures.spec.ts` | `✓ tests/gestures.spec.ts (14 tests)` — 14/14 passants. Découplage complet du DOM. | **`CONFORME`** |
+| **G.2 Hook `useDoubleTap.ts`** : Remplace les `lastTapRef` inline, supporte `onSingleTap` différé. | MISSION_LOG (Gestes) | Inspection de `src/hooks/gestures/useDoubleTap.ts` | Utilisé dans `MessageBubble.tsx`, `CommunityPostCard.tsx`, `ImageViewer.tsx`. Zéro `lastTapRef` restant dans `src/`. | **`CONFORME`** |
+| **G.3 Hook `useLongPress.ts`** : Unifie l'appui long (450ms) avec annulation sur mouvement > 8px. | MISSION_LOG (Gestes) | Inspection de `src/hooks/gestures/useLongPress.ts` | Utilisé dans `MessageBubble.tsx`, `ConversationRow.tsx`, `CommunityPostCard.tsx`. | **`CONFORME`** |
+| **G.4 Hook `useDragDismiss.ts`** : Physique élastique framer-motion avec modes `element` et `handle`. | MISSION_LOG (Gestes) | Inspection de `src/hooks/gestures/useDragDismiss.ts` | Gère le drag vertical `drag="y"`, `dragConstraints={{ top: 0 }}`, `dragElastic`, retour de `dragProps` / `handleProps`. | **`CONFORME`** |
+| **G.5 Hook `useSwipe.ts`** : Centralisation du swipe horizontal (seuil 60px). | MISSION_LOG (Gestes) | Inspection de `src/hooks/gestures/useSwipe.ts` | Déplacé dans `hooks/gestures/`, ancien chemin ré-exporté pour compatibilité ascendante. | **`CONFORME`** |
+| **G.6 `ExplorerMobileSheet` drag élastique** : Remplacement de l'ancien toggle binaire (touchstart/touchend) par un vrai suivi du doigt. | MISSION_LOG (Gestes) | Inspection de `ExplorerMobileSheet.tsx:40-75` | `useDragDismiss` intégré avec snap peek/expanded (seuil 48px), haptique conservée (medium/light). | **`CONFORME`** |
+| **G.7 Sheets sociales unifiées** : Ajout du drag-to-dismiss sur `ShareSheet`, `MoreMenuSheet`, `ReportSheet`, `CommentsSheet`. | MISSION_LOG (Gestes) | Grep `useDragDismiss` dans `src/components/social/` | Présent dans les 4 modales en mode `handle` pour préserver le défilement vertical du contenu. | **`CONFORME`** |
+| **G.8 Feed `CommunityPostCard` gestuel** : Double-tap-to-like avec cœur animé framer-motion + menu long-press rapide. | MISSION_LOG (Gestes) | Inspection de `CommunityPostCard.tsx:185-225` | `useDoubleTap` déclenche le like + animation `scale(1)` 60fps ; `useLongPress` ouvre le menu contextuel. | **`CONFORME`** |
+| **G.9 `StoryViewer` plein écran** : Tap zones IG (40/60%), hold-to-pause, drag-down dismiss. | MISSION_LOG (Gestes) | Inspection de `CommunityStoriesBar.tsx` et `StoryViewer.tsx` | Boucle rAF 5s, pause au pointeur enfoncé, fermeture au glissement vers le bas. | **`CONFORME`** |
+| **G.10 Visionneuse d'image `ImageViewer.tsx`** : Pinch-to-zoom 1x-4x, double-tap zoom, swipe down dismiss, 0 kB First Load. | MISSION_LOG (Gestes) | Inspection de `src/components/ui/ImageViewer.tsx` | Importé uniquement en `dynamic(..., { ssr: false })` dans `CommunityPostCard`. | **`CONFORME`** |
+| **G.11 Neutralisation des 3 couleurs interdites** : Éradication de `#0B1F17`, `#2D6B4A`, `#A3C4A3` citées dans `INTERACTION_DESIGN_STATE.md`. | Relecture critique de Tony | Audit CSS et mise à jour de `INTERACTION_DESIGN_STATE.md` | `INTERACTION_DESIGN_STATE.md` neutralisé avec avertissement formel. `KitSheetModal.tsx`, `ProductLineageCard.tsx`, `LineageDiscovery.tsx` assainis vers `#17402C`, `#5B7F55`, `#A6C1A0`. | **`ÉCART HISTORIQUE`** → **`NEUTRALISÉ & CORRIGÉ`** |
+
+---
+
 ## III. Synthèse des Correctifs Appliqués (Commits Atomiques)
 
 1. `5607832` : `fix(stripe): webhook renvoie 500 sur erreur de commande au lieu d'avaler` (Affirmation 3.5).
@@ -186,22 +205,34 @@ La colonne `region` de la table `hiking_routes` a été introduite par la migrat
 6. `eb28b9c` : `fix(inscription): conformité design system (palette sage/danger et boutons)` (Affirmation O.7).
 7. `5f2f25d` : `ci: ajout des garde-fous anti-dérive (palette, finance score, partage, gel Lot 6)` (Phase 5).
 8. `c3f4a1e` : `feat(stripe): script de réconciliation sécurisé par clé restreinte rk_live et emails hachés` (Phase 4).
+9. `b7829dd` : `docs: rapports de vérification globale, réconciliation migrations et Stripe` (Phase 1, 3, 4).
+10. `6b5081d` : `docs: journal de mission vérification globale` (Mise à jour MISSION_LOG.md).
+11. Commit en cours : `fix(lineage): isolation physique Lot 6 dans migrations_frozen, verrouillage forked_from UPDATE, neutralisation palette v2.0 et tests pgTAP`.
 
 ---
 
-## IV. Ce qui reste Bloqué & Non Vérifiable sans Infra
+## IV. Bloqueurs & Écarts Majeurs Reclassés
 
-1. **Base Supabase de production (`icxyvwzfjbflcbqukpfz`)** :
-   - Les migrations 1 à 4 et Orientation/Empreinte ne sont pas encore poussées sur la base distante.
-   - Les 61 assertions pgTAP n'ont été exécutées que sur l'environnement simulé local, jamais contre l'instance managée distante.
-   - Pour vérifier : Tony doit exécuter `supabase migration list --linked` puis pousser les migrations selon `docs/reports/MIGRATION_HISTORY_RECONCILIATION.md`.
+1. **BLOQUEUR N°1 — Rupture de la boucle d'entrée des lignées (Configurateur legacy)** :
+   - `ConfiguratorWizard.tsx` écrit dans `kits` et `kit_items`.
+   - `KitConfiguratorWizard.tsx` écrit dans `custom_kits`.
+   - La table `materiel_kits` n'est **JAMAIS alimentée** par le parcours utilisateur normal (seul `/api/materiel/fork` y écrit).
+   - **Conséquence directe** : Zéro souche vivante créée par les utilisateurs → les vues de survie `kit_item_survival_by_kit` et les scores `kit_trust_scores` tournent à vide sur 0 donnée.
+   - **Décision d'architecture** : **UNIFICATION INDISPENSABLE** de la création de kits vers `materiel_kits` avant de pousser les Lots 4 et 7 en production.
 
-2. **Réconciliation Stripe Live (Zone Orange)** :
-   - `.env.local` ne contient pas de clé Stripe.
-   - Le script `scripts/db/reconcile_stripe.mjs` est prêt, sécurisé et exige une clé restreinte `rk_live_...`.
-   - Pour vérifier : Tony doit générer une clé restreinte avec les 4 permissions de lecture requises, la renseigner dans `.env.local`, et exécuter le script pour remplir `docs/reports/RECONCILIATION_STRIPE.md`.
+2. **BLOQUEUR N°2 — Écart gestuel KitSheet (Point 5.5)** :
+   - `KitSheetModal.tsx` n'utilise ni `PremiumBottomSheet` ni `useDragDismiss`. C'est une modale classique avec poignée statique décorative sans aucune physique de suivi du doigt.
+   - **Action requise** : Refactoriser `KitSheetModal` avec `useDragDismiss(mode: 'handle')` pour rétablir la signature gestuelle native iOS.
 
-3. **Invocations KitSheet incomplètes (5.3)** :
+3. **BLOQUEUR N°3 — Réconciliation Stripe en mémoire uniquement** :
+   - Tony doit exécuter la réconciliation en injectant `$env:STRIPE_RESTRICTED_KEY="rk_live_..."` directement dans la session PowerShell (variable volatile en mémoire, jamais écrite dans `.env.local` ni sur le disque).
+
+4. **BLOQUEUR N°4 — Déstockage physique et commandes historiques** :
+   - Le trigger `decrement_stock_on_order` n'ayant jamais tourné pour les commandes Stripe historiques, le stock physique en réserve est désynchronisé du stock théorique en base. Un inventaire physique sur place est obligatoire avant toute validation manuelle via `honor_order.sql`.
+
+5. **Déploiement Supabase : Validation sur copie obligatoire** :
+   - Conformément aux exigences de Tony, le déploiement sur `icxyvwzfjbflcbqukpfz` ne doit avoir lieu **qu'après validation sur une base copie** (avec exécution des 58 assertions pgTAP actives et vérification du ratio de matching `product_id`).
+   - Le Lot 6 (`20260903050000_kit_attributions.sql`) est physiquement déplacé dans `supabase/migrations_frozen/` pour garantir qu'aucun `supabase db push` ne l'appliquera par inadvertance.
    - Seuls 3 points d'entrée sur 5 sont branchés (`messages`, `cockpit`, `page produit`). Le fil d'actualité (`feed`) et les pages de `groupes` n'ont pas encore été connectés au modal.
 
 4. **Découplage configurateur legacy (1.8)** :

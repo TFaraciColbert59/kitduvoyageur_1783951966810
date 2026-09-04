@@ -1,8 +1,9 @@
 # INTERACTION DESIGN STATE — LE KIT DU VOYAGEUR × AURA
 
-**Dernière mise à jour :** 16 août 2026  
+**Dernière mise à jour :** 4 septembre 2026 (Audit & Neutralisation palette v2.0)  
 **Référence normative :** Skill Aura Interaction Design (`.agents/skills/interaction-design/SKILL.md`)  
-**Design System :** LKDV Forest & Sage (`#0B1F17`, `#17402C`, `#2D6B4A`, `#A3C4A3`, `#FBFAF6`, zéro orange `#E4501C`)
+**Design System :** LKDV Design Tokens v2.0 (`#17402C` Ink Forest, `#365233` Sage-700, `#5B7F55` Sage-500, `#A6C1A0` Sage-300, `#FBFAF6` Fond chaud)  
+> ⚠️ **NOTE DE NEUTRALISATION (2026-09-04)** : Les anciennes mentions de `#0B1F17`, `#2D6B4A`, et `#A3C4A3` issues de la version v1.0 sont formellement **obsolètes et interdites**. La charte en vigueur (ADR-010 et `scripts/verify/identity_compliance.mjs`) n'autorise que la palette ink/sage v2.0.
 
 ---
 
