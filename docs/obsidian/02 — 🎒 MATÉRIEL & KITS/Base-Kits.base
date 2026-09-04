@@ -1,0 +1,27 @@
+filters:
+  and:
+    - 'file.hasTag("matériel")'
+    - not:
+        - 'file.hasTag("archived")'
+
+properties:
+  file.name:
+    displayName: "Fiche Matériel / Kit"
+  status:
+    displayName: "Statut"
+  tags:
+    displayName: "Tags"
+  description:
+    displayName: "Description Technique"
+  date:
+    displayName: "Date"
+
+views:
+  - type: table
+    name: "Vue d'Ensemble Matériel & Lignées"
+    order:
+      - file.name
+      - description
+      - status
+      - tags
+      - date

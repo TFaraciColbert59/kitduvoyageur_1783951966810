@@ -1,0 +1,201 @@
+{
+    "edges":  [
+                  {
+                      "id":  "e100100000000001",
+                      "label":  "Requêtes API \u0026 Synchro Supabase Client",
+                      "toSide":  "left",
+                      "toNode":  "a1b2c3d4e5f60006",
+                      "fromSide":  "right",
+                      "fromNode":  "a1b2c3d4e5f60002"
+                  },
+                  {
+                      "id":  "e100100000000002",
+                      "label":  "Reconnexion réseau (Sync)",
+                      "toSide":  "bottom",
+                      "toNode":  "a1b2c3d4e5f60002",
+                      "fromSide":  "bottom",
+                      "fromNode":  "a1b2c3d4e5f60004"
+                  },
+                  {
+                      "id":  "e100100000000003",
+                      "label":  "Table vivante materiel_kits",
+                      "toSide":  "left",
+                      "toNode":  "a1b2c3d4e5f60010",
+                      "fromSide":  "right",
+                      "fromNode":  "a1b2c3d4e5f60006"
+                  },
+                  {
+                      "id":  "e100100000000004",
+                      "label":  "Poids, volume et filiation",
+                      "toSide":  "top",
+                      "toNode":  "a1b2c3d4e5f60011",
+                      "fromSide":  "bottom",
+                      "fromNode":  "a1b2c3d4e5f60010"
+                  },
+                  {
+                      "id":  "e100100000000005",
+                      "label":  "Validation FieldSeal",
+                      "toSide":  "top",
+                      "toNode":  "a1b2c3d4e5f60012",
+                      "fromSide":  "bottom",
+                      "fromNode":  "a1b2c3d4e5f60011"
+                  },
+                  {
+                      "id":  "e100100000000006",
+                      "label":  "Contrôle d\u0027intégrité automatique",
+                      "toSide":  "bottom",
+                      "toNode":  "a1b2c3d4e5f60008",
+                      "fromSide":  "top",
+                      "fromNode":  "a1b2c3d4e5f60014"
+                  },
+                  {
+                      "id":  "e100100000000007",
+                      "label":  "Statut Premium \u0026 Déblocage",
+                      "toSide":  "right",
+                      "toNode":  "a1b2c3d4e5f60004",
+                      "fromSide":  "left",
+                      "fromNode":  "a1b2c3d4e5f60015"
+                  }
+              ],
+    "nodes":  [
+                  {
+                      "id":  "a1b2c3d4e5f60001",
+                      "y":  -350,
+                      "width":  520,
+                      "color":  "1",
+                      "type":  "group",
+                      "height":  680,
+                      "x":  -600,
+                      "label":  "📱 Frontend Mobile (Next.js 15 App Router)"
+                  },
+                  {
+                      "id":  "a1b2c3d4e5f60002",
+                      "text":  "### PWA \u0026 Client Mobile\\n- Next.js 15 + React 19\\n- Tailwind CSS (Palette v2.0)\\n- Gestes Apple HIG (Swipe-to-dismiss)\\n- Safe-area aware \u0026 inertie fluide",
+                      "width":  440,
+                      "y":  -280,
+                      "type":  "text",
+                      "x":  -560,
+                      "height":  140
+                  },
+                  {
+                      "id":  "a1b2c3d4e5f60003",
+                      "width":  440,
+                      "height":  180,
+                      "y":  -100,
+                      "type":  "file",
+                      "x":  -560,
+                      "file":  "03 — 🎨 DESIGN SYSTEM \u0026 MOBILE/Gestes Apple HIG.md"
+                  },
+                  {
+                      "id":  "a1b2c3d4e5f60004",
+                      "width":  440,
+                      "height":  170,
+                      "y":  120,
+                      "type":  "file",
+                      "x":  -560,
+                      "file":  "04 — 🏗️ ARCHITECTURE \u0026 BACKEND/Mode Hors-Ligne.md"
+                  },
+                  {
+                      "id":  "a1b2c3d4e5f60005",
+                      "y":  -350,
+                      "width":  520,
+                      "color":  "4",
+                      "type":  "group",
+                      "height":  680,
+                      "x":  80,
+                      "label":  "☁️ Backend \u0026 Persistance (Supabase PostGIS)"
+                  },
+                  {
+                      "id":  "a1b2c3d4e5f60006",
+                      "text":  "### Supabase Hub\\n- Projet : icxyvwzfjbflcbqukpfz\\n- PostgreSQL 15 + PostGIS\\n- Row Level Security (RLS) strict\\n- Triggers d\u0027intégrité cyclique",
+                      "width":  440,
+                      "y":  -280,
+                      "type":  "text",
+                      "x":  120,
+                      "height":  150
+                  },
+                  {
+                      "id":  "a1b2c3d4e5f60007",
+                      "width":  440,
+                      "height":  180,
+                      "y":  -90,
+                      "type":  "file",
+                      "x":  120,
+                      "file":  "04 — 🏗️ ARCHITECTURE \u0026 BACKEND/BDD \u0026 Schéma.md"
+                  },
+                  {
+                      "id":  "a1b2c3d4e5f60008",
+                      "width":  440,
+                      "height":  160,
+                      "y":  130,
+                      "type":  "file",
+                      "x":  120,
+                      "file":  "05 — 🛡️ SÉCURITÉ \u0026 INVARIANTS/Politiques RLS.md"
+                  },
+                  {
+                      "id":  "a1b2c3d4e5f60009",
+                      "y":  -350,
+                      "width":  520,
+                      "color":  "2",
+                      "type":  "group",
+                      "height":  680,
+                      "x":  760,
+                      "label":  "🎒 Moteur Métier \u0026 Écosystème Kits"
+                  },
+                  {
+                      "id":  "a1b2c3d4e5f60010",
+                      "width":  440,
+                      "height":  180,
+                      "y":  -280,
+                      "type":  "file",
+                      "x":  800,
+                      "file":  "02 — 🎒 MATÉRIEL \u0026 KITS/Architecture Lignées.md"
+                  },
+                  {
+                      "id":  "a1b2c3d4e5f60011",
+                      "width":  440,
+                      "height":  170,
+                      "y":  -60,
+                      "type":  "file",
+                      "x":  800,
+                      "file":  "02 — 🎒 MATÉRIEL \u0026 KITS/Configurateur IA.md"
+                  },
+                  {
+                      "id":  "a1b2c3d4e5f60012",
+                      "width":  440,
+                      "height":  150,
+                      "y":  150,
+                      "type":  "file",
+                      "x":  800,
+                      "file":  "02 — 🎒 MATÉRIEL \u0026 KITS/Sceau FieldSeal.md"
+                  },
+                  {
+                      "id":  "a1b2c3d4e5f60013",
+                      "y":  420,
+                      "width":  520,
+                      "color":  "5",
+                      "type":  "group",
+                      "height":  360,
+                      "x":  80,
+                      "label":  "🛡️ CI, Garde-Fous \u0026 Intégrations"
+                  },
+                  {
+                      "id":  "a1b2c3d4e5f60014",
+                      "width":  440,
+                      "height":  130,
+                      "y":  480,
+                      "type":  "file",
+                      "x":  120,
+                      "file":  "05 — 🛡️ SÉCURITÉ \u0026 INVARIANTS/Invariants CI Anti-Dérive.md"
+                  },
+                  {
+                      "id":  "a1b2c3d4e5f60015",
+                      "width":  440,
+                      "height":  120,
+                      "y":  630,
+                      "type":  "file",
+                      "x":  120,
+                      "file":  "04 — 🏗️ ARCHITECTURE \u0026 BACKEND/Intégration Stripe.md"
+                  }
+              ]
+}
