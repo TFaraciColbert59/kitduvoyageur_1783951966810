@@ -47,7 +47,7 @@ function mulberry32(seed: number) {
 export default function FieldSeal({ userId, signature, size = 48, ariaLabel }: FieldSealProps) {
   const seed = fieldSealSeed(userId);
   const rnd = mulberry32(seed);
-  const g = sealGeometry(signature);
+  const g = sealGeometry(userId, signature);
   const branches = g.branches;
   const cx = size / 2;
   const cy = size / 2;
