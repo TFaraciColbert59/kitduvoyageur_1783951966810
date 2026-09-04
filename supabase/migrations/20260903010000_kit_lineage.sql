@@ -77,6 +77,23 @@ AS $$
 DECLARE
   v_parent public.materiel_kits%ROWTYPE;
 BEGIN
+  -- Lors d'un UPDATE, vérifier l'immuabilité des champs de filiation
+  IF TG_OP = 'UPDATE' THEN
+    IF NEW.forked_from IS NOT DISTINCT FROM OLD.forked_from THEN
+      -- Tentative de modifier manuellement un champ de filiation sans changer forked_from
+      IF NEW.generation IS DISTINCT FROM OLD.generation
+         OR NEW.ancestors IS DISTINCT FROM OLD.ancestors
+         OR NEW.lineage_root_id IS DISTINCT FROM OLD.lineage_root_id THEN
+        RAISE EXCEPTION 'Les champs de filiation sont immuables après insertion';
+      END IF;
+      -- Pas de changement de filiation : préserver intacts les champs historiques
+      NEW.lineage_root_id := OLD.lineage_root_id;
+      NEW.generation      := OLD.generation;
+      NEW.ancestors       := OLD.ancestors;
+      RETURN NEW;
+    END IF;
+  END IF;
+
   IF NEW.forked_from IS NULL THEN
     IF TG_OP = 'UPDATE' AND OLD.forked_from IS NOT NULL THEN
       -- Suppression de parent (ON DELETE SET NULL) : on conserve la lignée
@@ -120,5 +137,5 @@ $$;
 
 DROP TRIGGER IF EXISTS trg_materiel_kits_lineage ON public.materiel_kits;
 CREATE TRIGGER trg_materiel_kits_lineage
-BEFORE INSERT OR UPDATE OF forked_from ON public.materiel_kits
+BEFORE INSERT OR UPDATE ON public.materiel_kits
 FOR EACH ROW EXECUTE FUNCTION public.handle_kit_lineage();

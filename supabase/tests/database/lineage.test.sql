@@ -6,7 +6,7 @@
 -- ============================================================================
 BEGIN;
 SET LOCAL search_path = public;
-SELECT plan(14);
+SELECT plan(21);
 
 -- ----------------------------------------------------------------------------
 -- Fixtures : 3 utilisateurs (auth.users, cible des FK de materiel_kits) + 1 produit
@@ -99,6 +99,11 @@ SELECT is(
 SELECT ok(
   (SELECT ancestors = '{}'::uuid[] FROM public.materiel_kits WHERE id = '00000000-0000-0000-0000-000000000004'),
   '4b. ancestors envoyé par le client est écrasé à vide'
+);
+SELECT throws_ok(
+  $$ UPDATE public.materiel_kits SET generation = 99 WHERE id = '00000000-0000-0000-0000-000000000004' $$,
+  'Les champs de filiation sont immuables après insertion',
+  '4c. Tenter d''altérer generation par UPDATE est rejeté (immuabilité)'
 );
 
 -- ----------------------------------------------------------------------------
