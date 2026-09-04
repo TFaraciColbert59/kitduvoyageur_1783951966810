@@ -44,6 +44,8 @@ export default function OfflineBanner() {
             maxWidth: '460px',
             margin: '0 auto',
             zIndex: 100,
+            touchAction: 'none',
+            overscrollBehavior: 'none',
             alignItems: 'center',
             gap: '10px',
             padding: '10px 14px',

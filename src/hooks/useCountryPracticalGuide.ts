@@ -1,5 +1,6 @@
 import { useQuery } from '@tanstack/react-query';
 import type { PracticalSection, GuideSource } from '@/lib/ai/jobs/generateCountryGuide';
+import type { ContentBlockType, ContentSource, ContentTier } from '@/lib/ai/country-content/contentBlocksTypes';
 
 export interface SectionGuideData {
   content_md: string;
@@ -9,8 +10,21 @@ export interface SectionGuideData {
   stale_after: string;
 }
 
+export interface BlockGuideData {
+  block_type: ContentBlockType;
+  tier: ContentTier;
+  content_md: string;
+  content_json: any;
+  sources: ContentSource[];
+  model_used: string;
+  generated_at: string;
+  stale_after: string;
+  reviewed_at: string | null;
+}
+
 export interface CountryPracticalGuideResponse {
   country_code: string;
+  blocks?: Partial<Record<ContentBlockType, BlockGuideData>>;
   sections: Partial<Record<PracticalSection, SectionGuideData>>;
   updated_at: string | null;
   has_content: boolean;
@@ -23,7 +37,7 @@ export function useCountryPracticalGuide(countryCode?: string) {
     queryKey: ['country-practical-guide', normalizedCode],
     queryFn: async () => {
       if (!normalizedCode) {
-        return { country_code: '', sections: {}, updated_at: null, has_content: false };
+        return { country_code: '', blocks: {}, sections: {}, updated_at: null, has_content: false };
       }
       const res = await fetch(`/api/ai/country-guide/${normalizedCode}`);
       if (!res.ok) {

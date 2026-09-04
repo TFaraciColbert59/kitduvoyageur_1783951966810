@@ -157,7 +157,8 @@ export default function RootLayout({
     <html
       lang="fr"
       suppressHydrationWarning
-      className={`${dmSans.variable} ${manrope.variable} ${ibmPlexMono.variable}`}
+      className={`${dmSans.variable} ${manrope.variable} ${ibmPlexMono.variable} bg-[#FBFAF6] text-[#17402C]`}
+      style={{ backgroundColor: '#FBFAF6', colorScheme: 'light' }}
     >
       <head>
         {/* Preload critical images for LCP optimization */}
@@ -225,7 +226,10 @@ export default function RootLayout({
           />
         )}
       </head>
-      <body className={`${dmSans.variable} ${manrope.variable} ${ibmPlexMono.variable} ${instrumentSerif.variable} ${dmSans.className} bg-[#FBFAF6] text-[#17402C] min-h-[100dvh]`}>
+      <body
+        className={`${dmSans.variable} ${manrope.variable} ${ibmPlexMono.variable} ${instrumentSerif.variable} ${dmSans.className} bg-[#FBFAF6] text-[#17402C] min-h-[100dvh]`}
+        style={{ backgroundColor: '#FBFAF6' }}
+      >
         <AuthProvider>
           <WishlistProvider>
             <ToastProvider>

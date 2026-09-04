@@ -98,6 +98,8 @@ const scrimStyle: React.CSSProperties = {
   background: 'rgba(23,64,44,0.55)',
   backdropFilter: 'blur(2px)',
   WebkitBackdropFilter: 'blur(2px)',
+  touchAction: 'none',
+  overscrollBehavior: 'none',
   zIndex: 50,
 };
 

@@ -13,6 +13,7 @@ import PaysCarnetsList from '@/components/pays/PaysCarnetsList';
 import CountryFlag from '@/components/ui/CountryFlag';
 import SmartImage from '@/components/ui/SmartImage';
 import { useCountryPracticalGuide } from '@/hooks/useCountryPracticalGuide';
+import PaysPratiqueView from '@/components/pays/PaysPratiqueView';
 import type { PracticalSection } from '@/lib/ai/jobs/generateCountryGuide';
 
 export type MobilePaysSection =
@@ -510,137 +511,8 @@ export default function MobileCountryDetailView({
                 </div>
                 )}
 
-                {/* Safety Card */}
-                {country.securite && (
-                <div className="glass p-4 rounded-[22px] border border-white/80 shadow-xs bg-white/85 space-y-2.5">
-                  <div className="flex items-center justify-between">
-                    <h4 className="font-display font-bold text-xs text-[#17402C]">
-                      Indicateur de Sécurité
-                    </h4>
-                    <span className="glass-pill text-[9.5px] font-mono font-bold text-[#5B7F55] bg-white">
-                      {country.securite.niveau_label}
-                    </span>
-                  </div>
-
-                  <div className="flex gap-1">
-                    {[1, 2, 3, 4, 5].map((s) => (
-                      <div
-                        key={s}
-                        className={`h-2 flex-1 rounded-full ${
-                          s <= country.securite!.niveau_score
-                            ? 'bg-[#5B7F55]'
-                            : 'bg-[#17402C]/15'
-                        }`}
-                      />
-                    ))}
-                  </div>
-
-                  <div className="space-y-1.5 pt-1">
-                    {country.securite.conseils.map((c, idx) => (
-                      <div key={idx} className="flex items-start gap-1.5 text-xs text-[#2D4536]">
-                        <span className="text-[#5B7F55] font-bold">✓</span>
-                        <p>
-                          <strong className="text-[#17402C]">{c.titre} :</strong> {c.description}
-                        </p>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-                )}
-
-                {/* Practical Sections List (Générées par IA, Sourcées & Datées) */}
-                {isGuidesLoading ? (
-                  <div className="space-y-2.5">
-                    {[1, 2, 3].map((i) => (
-                      <div key={i} className="glass p-3.5 rounded-[22px] border border-white/80 bg-white/60 animate-pulse space-y-2">
-                        <div className="h-4 bg-[#17402C]/10 rounded w-1/3" />
-                        <div className="h-3 bg-[#17402C]/10 rounded w-full" />
-                        <div className="h-3 bg-[#17402C]/10 rounded w-2/3" />
-                      </div>
-                    ))}
-                  </div>
-                ) : (
-                  [
-                    { tag: 'formalites' as PracticalSection, title: "🛂 Formalités d'entrée & Visa", badge: "Entrée" },
-                    { tag: 'transport' as PracticalSection, title: "✈️ Transports & Mobilité", badge: "Mobilité" },
-                    { tag: 'budget' as PracticalSection, title: "💶 Budget & Devises", badge: "Dépenses" },
-                    { tag: 'sante' as PracticalSection, title: "🏥 Santé & Recommandations", badge: "Santé" },
-                    { tag: 'securite' as PracticalSection, title: "🛡️ Vigilance & Sécurité", badge: "Sécurité" },
-                    { tag: 'meilleure_saison' as PracticalSection, title: "☀️ Climat & Meilleure saison", badge: "Météo" },
-                  ].map((secMeta) => {
-                    const secData = guideData?.sections?.[secMeta.tag];
-                    if (!secData || !secData.content_md || secData.content_md.trim().length === 0) {
-                      return null;
-                    }
-
-                    const hasSources = secData.sources && secData.sources.length > 0;
-
-                    return (
-                      <div key={secMeta.tag} className="glass p-4 rounded-[22px] border border-white/80 shadow-xs bg-white/85 space-y-2.5">
-                        <div className="flex items-center justify-between pb-1.5 border-b border-[#17402C]/10">
-                          <h4 className="font-display font-bold text-xs text-[#17402C]">
-                            {secMeta.title}
-                          </h4>
-                          <span className="glass-pill text-[8.5px] font-mono font-bold text-[#5A7064]">
-                            {secMeta.badge}
-                          </span>
-                        </div>
-
-                        <div className="space-y-1.5 text-xs text-[#2D4536] leading-relaxed">
-                          {secData.content_md.split('\n\n').filter(Boolean).map((p, pIdx) => (
-                            <p key={pIdx}>
-                              {p.split(/(\*\*.*?\*\*)/g).map((part, i) =>
-                                part.startsWith('**') && part.endsWith('**') ? (
-                                  <strong key={i} className="font-bold text-[#17402C]">{part.slice(2, -2)}</strong>
-                                ) : (
-                                  part
-                                )
-                              )}
-                            </p>
-                          ))}
-                        </div>
-
-                        <div className="pt-2 border-t border-[#17402C]/10 flex flex-col gap-1.5 text-[9px] font-mono text-[#5A7064]">
-                          <div className="flex items-center justify-between">
-                            <span className="inline-flex items-center gap-1 font-bold text-[#5B7F55]">
-                              <span>✨</span>
-                              <span>Généré par IA</span>
-                            </span>
-                            <span>Mis à jour le {new Date(secData.generated_at).toLocaleDateString('fr-FR', { day: 'numeric', month: 'short', year: 'numeric' })}</span>
-                          </div>
-
-                          {hasSources && (
-                            <div className="flex flex-wrap items-center gap-1 pt-0.5">
-                              <span className="text-[8.5px] text-[#5A7064]">Sources :</span>
-                              {secData.sources.map((src, sIdx) => (
-                                <a
-                                  key={sIdx}
-                                  href={src.url}
-                                  target="_blank"
-                                  rel="noopener noreferrer"
-                                  className="glass-pill !px-1.5 !py-0.2 text-[8px] font-mono text-[#17402C] hover:text-[#5B7F55]"
-                                >
-                                  <span className="truncate max-w-[120px]">{src.title}</span> ↗
-                                </a>
-                              ))}
-                            </div>
-                          )}
-                        </div>
-                      </div>
-                    );
-                  })
-                )}
-
-                {/* Urgences */}
-                <a
-                  href="tel:112"
-                  className="glass p-3.5 rounded-[20px] border border-white/80 shadow-xs bg-white/85 space-y-1 block active:scale-95 transition-all"
-                >
-                  <span className="text-xs block font-bold text-[#17402C]">🚨 Numéro d'urgence international</span>
-                  <p className="text-xs font-mono font-bold text-rose-700">
-                    112 (Appel gratuit) →
-                  </p>
-                </a>
+                {/* Practical Sections — Multi-Tiers enrichis par IA (PaysPratiqueView) */}
+                <PaysPratiqueView country={country} isMobile={true} />
               </div>
             )}
 

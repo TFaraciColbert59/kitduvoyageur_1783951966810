@@ -6,6 +6,7 @@ const config: CapacitorConfig = {
   appId: "com.lekitduvoyageur.app",
   appName: "Le Kit du Voyageur",
   webDir: "public",
+  backgroundColor: "#FBFAF6",
   server: serverUrl
     ? {
         url: serverUrl,
@@ -46,12 +47,14 @@ const config: CapacitorConfig = {
     },
   },
   ios: {
-    contentInset: "always",
+    contentInset: "never",
+    backgroundColor: "#FBFAF6",
     preferredContentMode: "mobile",
     handleApplicationNotifications: true,
     scheme: "lkdv",
   },
   android: {
+    backgroundColor: "#FBFAF6",
     allowMixedContent: true,
     captureInput: true,
     webContentsDebuggingEnabled: process.env.NODE_ENV !== "production",

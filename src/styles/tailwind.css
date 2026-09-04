@@ -198,17 +198,17 @@
   html {
     scroll-behavior: smooth;
     -webkit-text-size-adjust: 100%;
-    height: 100%;
+    min-height: 100%;
     min-height: 100dvh;
     min-height: -webkit-fill-available;
-    background-color: #FBFAF6;
-    overscroll-behavior: none;
-    overscroll-behavior-y: none;
+    background-color: #FBFAF6 !important;
+    overscroll-behavior: none !important;
+    overscroll-behavior-y: none !important;
     -webkit-tap-highlight-color: transparent;
   }
 
   body {
-    background-color: #FBFAF6;
+    background-color: #FBFAF6 !important;
     color: var(--foreground);
     font-family: var(--font-sans);
     -webkit-font-smoothing: antialiased;
@@ -220,8 +220,8 @@
     margin: 0;
     padding: 0;
     overflow-x: clip;
-    overscroll-behavior: none;
-    overscroll-behavior-y: none;
+    overscroll-behavior: none !important;
+    overscroll-behavior-y: none !important;
     max-width: 100%;
     -webkit-touch-callout: none;
   }
@@ -776,10 +776,12 @@ a, button, input, select, textarea, [role="button"] {
   -webkit-touch-callout: none;
 }
 
-/* 2. Momentum scrolling fluide iOS/Android */
+/* 2. Momentum scrolling fluide iOS/Android sans rebond élastique */
 html, body {
   -webkit-overflow-scrolling: touch;
-  overscroll-behavior-y: none;
+  overscroll-behavior: none !important;
+  overscroll-behavior-y: none !important;
+  background-color: #FBFAF6 !important;
 }
 
 /* 3. Accélération matérielle GPU pour conteneurs animés */

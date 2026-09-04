@@ -6,6 +6,11 @@
 
 export type AITier = 'heavy' | 'fast';
 
+export interface AIPluginConfig {
+  id: string;
+  max_results?: number;
+}
+
 export interface AIRequest {
   feature: string; // clé du registre (src/lib/ai/features/registry.ts)
   tier: AITier;
@@ -15,6 +20,7 @@ export interface AIRequest {
   reasoningBudget?: number; // borne le raisonnement d'Ultra (crucial pour le quota)
   cacheTtlSeconds?: number; // 0 = pas de cache (utilisé par askAI, pas le provider)
   userId?: string; // pour le quota (utilisé par askAI, pas le provider)
+  plugins?: AIPluginConfig[]; // plugins OpenRouter optionnels (ex: web search)
 }
 
 export interface AIResponse {

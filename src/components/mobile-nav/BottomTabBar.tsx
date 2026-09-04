@@ -168,6 +168,8 @@ const TabLink = memo(function TabLink({ tab, isActive, onPress, badge }: { tab: 
         textDecoration: 'none',
         position: 'relative',
         userSelect: 'none',
+        WebkitUserSelect: 'none',
+        touchAction: 'manipulation',
         WebkitTapHighlightColor: 'transparent',
         width: 44,
         height: 44,
@@ -810,7 +812,7 @@ function BottomTabBar() {
     <nav
       role="navigation"
       aria-label="Navigation principale"
-      className="md:hidden flex items-center justify-center"
+      className="md:hidden flex items-center justify-center select-none"
       style={{
         position: 'fixed',
         left: 0,
@@ -818,6 +820,9 @@ function BottomTabBar() {
         bottom: 0,
         zIndex: 9999,
         pointerEvents: 'none',
+        touchAction: 'none',
+        userSelect: 'none',
+        WebkitUserSelect: 'none',
         paddingBottom: 'env(safe-area-inset-bottom, 0px)',
         // Masquage par glissement (lkdv-toggle-bottom-bar) plutôt que return
         // null : translate + visibility évitent le saut de ~40px quand
@@ -838,6 +843,8 @@ function BottomTabBar() {
           flexDirection: 'column',
           alignItems: 'center',
           pointerEvents: 'auto',
+          touchAction: 'none',
+          overscrollBehavior: 'contain',
           paddingBottom: '2px',
         }}
       >
@@ -867,7 +874,11 @@ function BottomTabBar() {
                 alignItems: 'center',
                 justifyContent: isWideUpperTray ? 'flex-start' : 'space-between',
                 overflowX: 'auto',
+                overflowY: 'hidden',
                 WebkitOverflowScrolling: 'touch',
+                touchAction: 'pan-x',
+                overscrollBehaviorX: 'contain',
+                overscrollBehaviorY: 'none',
                 scrollbarWidth: 'none',
                 msOverflowStyle: 'none',
                 scrollSnapType: 'x proximity',
@@ -989,6 +1000,12 @@ function BottomTabBar() {
             justifyContent: 'space-around',
             padding: '0 clamp(4px, 1.5vw, 8px)',
             gap: 'clamp(2px, 1.2vw, 6px)',
+            touchAction: 'none',
+            overscrollBehavior: 'none',
+          }}
+          onTouchMove={(e) => {
+            // Empêcher tout scroll résiduel de la page au glissement sur la bottom bar
+            e.stopPropagation();
           }}
         >
           {DEFAULT_TABS.map((tab) => (

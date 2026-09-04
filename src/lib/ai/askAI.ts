@@ -30,6 +30,14 @@ const askAISchema = z.object({
   reasoningBudget: z.number().int().min(64).optional(),
   cacheTtlSeconds: z.number().int().min(0).max(31_536_000).optional(),
   userId: z.string().uuid().optional(),
+  plugins: z
+    .array(
+      z.object({
+        id: z.string(),
+        max_results: z.number().int().positive().optional(),
+      })
+    )
+    .optional(),
 });
 
 export async function askAI(rawRequest: AIRequest): Promise<AIResponse> {
