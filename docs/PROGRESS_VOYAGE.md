@@ -8,7 +8,7 @@
 | **C1** | **Fondations de l'entité Trip (Schéma, RLS, Services, Cockpit)** | ✅ **Validé** | `feat/c1-trips-core` | 2026-09-04 | 2026-09-04 | `9e9caed` |
 | **C2** | **Wizard de création & moteur de répartition (5 étapes, déterministe)** | ✅ **Validé** | `feat/c2-trip-wizard` | 2026-09-05 | 2026-09-05 | `4a78964` |
 | **C3** | **Planificateur d'itinéraire (Édition jour/jour, réordonnancement, dual-view)** | ✅ **Validé** | `feat/c3-itinerary-planner` | 2026-09-05 | 2026-09-05 | `f8ce1c6` |
-| C4 | Lieux communautaires (Places, topos, avis, scoring) | ⬜ À venir | `feat/c4-community-places` | - | - | - |
+| **C4** | **Lieux communautaires (Places, topos, avis, scoring, floutage éthique)** | ✅ **Validé** | `feat/c4-community-places` | 2026-09-05 | 2026-09-05 | En cours de commit |
 | C5 | Affiliation Travelpayouts (Vols, hôtels, activités, disclosure légal) | ⬜ À venir | `feat/c5-affiliation` | - | - | - |
 | C6 | IA & Kit contextuel (Boutique LKDV, équipement, marge pleine) | ⬜ À venir | `feat/c6-ai-kit` | - | - | - |
 | C7 | Collaboratif, partage, offline, papiers, budget | ⬜ À venir | `feat/c7-collab-offline` | - | - | - |
@@ -71,6 +71,22 @@
 
 ---
 
+## 2.quater Chantier 4 — Suivi des Sous-Étapes (Lieux Communautaires & Floutage Éthique)
+
+| Étape | Statut | Fichiers touchés | Preuve / Commande | Date |
+| :--- | :---: | :--- | :--- | :--- |
+| **4.0 Reconnaissance & Baseline** | | | | |
+| 4.0.1 Baseline technique C4 | ✅ Fait | Terminal | `tsc` : 0 err (code 0) ; `lint` : 0 err (code 0) ; tests : 462/462 verts ; build : code 0 | 2026-09-05 |
+| 4.0.2 Créer branche git | ✅ Fait | Git | `git checkout -b feat/c4-community-places` | 2026-09-05 |
+| **4.1 Migration Supabase & RLS** | ✅ Fait | `supabase/migrations/20260905110000_community_places.sql` | 4 tables créées (`places`, `place_reviews`, `place_photos`, `place_reports`). 100% `rowsecurity = true` vérifié via Supabase MCP `execute_sql`. Triggers PostGIS `sync_place_geom` et recalcul bayésien `recalculate_place_rating` actifs. | 2026-09-05 |
+| **4.2 Types, Schémas & Moteur de Scoring (TDD)** | ✅ Fait | `src/features/places/types/place.types.ts`, `schemas/place.schema.ts`, `engine/placeScoring.ts`, `tests/places/scoring.spec.ts` | Calcul bayésien (C=3, m=3.5) et pondération x2 pour preuve terrain (`has_field_proof`). ZÉRO terme monétaire. Floutage serveur ~500m (2 décimales) pour sensibilité `sensitive` et ~5000m pour `protected`. 13 tests verts. | 2026-09-05 |
+| **4.3 Données Réelles & Seed Idempotent** | ✅ Fait | `src/features/places/data/placesSeed.ts`, `scripts/seed-places.ts` | 42 lieux réels qualifiés (FR: 10, NP: 8, PE: 8, IS: 8, MA: 8). Seuil cold-start (40) dépassé. Script idempotent vérifié par double exécution (exit code 0). | 2026-09-05 |
+| **4.4 Couche Service & Server Actions** | ✅ Fait | `src/lib/queries-places.ts`, `src/app/lieux/actions.ts`, `tests/places/queries-places.spec.ts`, `tests/places/placesActions.spec.ts` | `getPlaces`, `getPlaceBySlug`, `getPlaceById`, `createPlace`, `getUserTripsForPicker`. Actions serveur transactionnelles : `addPlaceReviewAction`, `reportPlaceAction`, `addPlaceToTripAction`. 10 tests unitaires verts. | 2026-09-05 |
+| **4.5 Interface Utilisateur & Pages Apple HIG** | ✅ Fait | `src/features/places/components/*`, `src/app/lieux/page.tsx`, `loading.tsx`, `[slug]/page.tsx`, `tests/places/placeComponents.spec.ts` | Composants : `PlaceCard`, `PlacesExplorerClient`, `PlaceDetailClient`, `PlaceReviewSection`, `AddPlaceToTripModal`, `ReportPlaceModal`. Routes `/lieux` et `/lieux/[slug]` avec SEO Schema.org `Campground`/`TouristAttraction`. 6 tests verts. | 2026-09-05 |
+| **4.6 Validation Globale & CI** | ✅ Fait | `npm run test`, `npm run build`, `npm run lint`, `npm run verify:invariants` | 29/29 tests places verts, 107/107 trips verts, 489/489 tests repo verts (73 suites), `tsc --noEmit` 0 erreur, `eslint` 0 erreur (0 warning), build Next.js 15.5.18 exit 0, invariants CI validés. | 2026-09-05 |
+
+---
+
 ## 3. Journal des Décisions d'Architecture
 
 | Date | Décision | Justification | Impact sur les chantiers suivants |
@@ -87,6 +103,9 @@
 | 2026-09-05 | **Insertion France (`FR`) dans `countries_geo`** | `countries_geo` contenait 195 pays mais la France y était omise, bloquant la FK de `destination_steps`. Insertion propre avec géométrie et codes ISO officiels. | Cohérence territoriale totale pour les treks alpins et nationaux. |
 | 2026-09-05 | **Réordonnancement en 2 phases anti-collision (C3)** | Pour respecter la contrainte `UNIQUE(trip_id, day_number, order_index)` sans violer l'intégrité SQL lors des swaps d'indices, les `order_index` sont d'abord basculés en négatif (`-1000 - i`) avant d'être réassignés en continu `0, 1, 2...`. | Zéro erreur de contrainte unique, atomicité garantie sur toutes les bases Supabase. |
 | 2026-09-05 | **Décalages directionnels pour les jours (C3)** | Lors de l'insertion d'un jour, les étapes sont décalées en ordre décroissant de `day_number` ; lors de la suppression, en ordre croissant. | Élimine tout risque de collision sur `(trip_id, day_number, order_index)` lors des mutations de journées. |
+| 2026-09-05 | **Floutage éthique serveur des coordonnées (~500m / 2 décimales) pour lieux sensibles (C4)** | Prévention active de la surfréquentation des spots fragiles (bivouacs non aménagés, sources d'eau en zone aride) et sécurité physique des randonneurs (ROADMAP §5.7). | Coordonnées protégées côté serveur avant restitution au client, préservant la biodiversité et l'éthique outdoor. |
+| 2026-09-05 | **Scoring bayésien avec preuve terrain doublée (C4)** | Moyenne bayésienne pondérée ($C=3, m=3.5$) et coefficient x2 pour les avis certifiés avec `has_field_proof = true`. ZÉRO terme monétaire ou sponsorisé (Invariant CI 2). | Indépendance totale des notes communautaires face à tout intérêt commercial ou publicitaire. |
+| 2026-09-05 | **Seuil cold-start de 42 lieux réels qualifiés (C4)** | Injection de 42 lieux réels (refuges alpins, bivouacs réglementés, cols, sources) répartis équitablement sur les 5 pays socles (FR: 10, NP: 8, PE: 8, IS: 8, MA: 8). | Catalogue immédiatement opérationnel pour l'exploration, l'ajout au voyage et l'affiliation (C5). |
 
 ---
 
@@ -108,4 +127,9 @@
 | **Préservation Matériel Utilisateur** | Nettoyage sélectif `trip_items` (`source != 'user'`) lors de la régénération | ✅ Conforme | Testé dans `tests/trips/wizard.spec.ts` : les ajouts manuels du voyageur ne sont jamais écrasés. |
 | **Ergonomie Mobile Apple HIG** | Cibles tactiles $\ge 44\text{px}$, sticky bottom bar, safe-areas via `AppShell` | ✅ Conforme | Conforme aux guidelines iOS et skills `apple-ui-designer` / `interaction-design`. |
 | **Intégrité Ordonnancement C3** | Moteur déterministe `plannerEngine.ts` et tests TDD (compactage, réordonnancement, décalages) | ✅ Conforme | 26 tests unitaires et intégration verts dans `tests/trips/planner/`. |
+| **RLS 100% sur Tables Lieux C4** | 4 tables (`places`, `place_reviews`, `place_photos`, `place_reports`) avec RLS activée | ✅ Conforme | Vérifié via Supabase MCP `execute_sql` : `rowsecurity = true` sur les 4 tables. |
+| **Floutage Éthique Serveur C4** | Arrondi à 2 décimales (~500m) pour `sensitive` et 1 décimale (~5000m) pour `protected` | ✅ Conforme | Testé dans `tests/places/scoring.spec.ts` et `tests/places/queries-places.spec.ts`. |
+| **ZÉRO Terme Monétaire Scoring C4** | Formule bayésienne pure, aucun biais publicitaire ou sponsorisé | ✅ Conforme | Test d'inspection et AST dans `tests/places/scoring.spec.ts` (Invariant CI 2 validé). |
+| **Seuil Cold Start 40+ Lieux Réels C4** | 42 lieux réels qualifiés (FR, NP, PE, IS, MA) avec topos et contacts | ✅ Conforme | Synchronisé sur Supabase `icxyvwzfjbflcbqukpfz` via `scripts/seed-places.ts`. |
+
 
