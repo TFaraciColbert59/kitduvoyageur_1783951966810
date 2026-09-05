@@ -7,7 +7,7 @@
 | **C0** | **Unification messagerie ↔ groupes** | ✅ **Validé** | `feat/c0-messaging-unification` | 2026-09-04 | 2026-09-04 | Inclus C1 |
 | **C1** | **Fondations de l'entité Trip (Schéma, RLS, Services, Cockpit)** | ✅ **Validé** | `feat/c1-trips-core` | 2026-09-04 | 2026-09-04 | `9e9caed` |
 | **C2** | **Wizard de création & moteur de répartition (5 étapes, déterministe)** | ✅ **Validé** | `feat/c2-trip-wizard` | 2026-09-05 | 2026-09-05 | `4a78964` |
-| **C3** | **Planificateur d'itinéraire (Édition jour/jour, réordonnancement, dual-view)** | ✅ **Validé** | `feat/c3-itinerary-planner` | 2026-09-05 | 2026-09-05 | `9478f1a` |
+| **C3** | **Planificateur d'itinéraire (Édition jour/jour, réordonnancement, dual-view)** | ✅ **Validé** | `feat/c3-itinerary-planner` | 2026-09-05 | 2026-09-05 | `f8ce1c6` |
 | C4 | Lieux communautaires (Places, topos, avis, scoring) | ⬜ À venir | `feat/c4-community-places` | - | - | - |
 | C5 | Affiliation Travelpayouts (Vols, hôtels, activités, disclosure légal) | ⬜ À venir | `feat/c5-affiliation` | - | - | - |
 | C6 | IA & Kit contextuel (Boutique LKDV, équipement, marge pleine) | ⬜ À venir | `feat/c6-ai-kit` | - | - | - |
