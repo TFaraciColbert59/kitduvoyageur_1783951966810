@@ -3,6 +3,7 @@ import { notFound } from 'next/navigation';
 import { createClient } from '@/lib/supabase/server';
 import { getTripBySlug, getTripStats } from '@/lib/queries-trips';
 import { getAffiliateLinks } from '@/lib/queries-affiliation';
+import { getTripKitDetails } from '@/lib/queries-trip-kit';
 import TripDetailClient from './TripDetailClient';
 
 export const dynamic = 'force-dynamic';
@@ -64,6 +65,9 @@ export default async function TripDetailPage({ params }: PageProps) {
     limit: 6,
   });
 
+  // Analyse du Kit contextuel & Équipement LKDV (Chantier 6)
+  const kitResult = await getTripKitDetails(slug, user?.id);
+
   // Schema.org TouristTrip
   const jsonLd = {
     '@context': 'https://schema.org',
@@ -94,7 +98,12 @@ export default async function TripDetailPage({ params }: PageProps) {
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
       />
-      <TripDetailClient trip={trip} stats={stats} affiliateLinks={affiliateLinks} />
+      <TripDetailClient
+        trip={trip}
+        stats={stats}
+        affiliateLinks={affiliateLinks}
+        kitAnalysis={kitResult?.analysis}
+      />
     </>
   );
 }

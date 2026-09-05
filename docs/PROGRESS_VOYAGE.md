@@ -10,8 +10,8 @@
 | **C3** | **Planificateur d'itinéraire (Édition jour/jour, réordonnancement, dual-view)** | ✅ **Validé** | `feat/c3-itinerary-planner` | 2026-09-05 | 2026-09-05 | `f8ce1c6` |
 | **C4** | **Lieux communautaires (Places, topos, avis, scoring, floutage éthique)** | ✅ **Validé** | `feat/c4-community-places` | 2026-09-05 | 2026-09-05 | `a33298a` |
 | **C5** | **Affiliation Travelpayouts (Vols, hôtels, activités, disclosure légal)** | ✅ **Validé** | `feat/c5-affiliation` | 2026-09-05 | 2026-09-05 | `ab0c096` |
-| C6 | IA & Kit contextuel (Boutique LKDV, équipement, marge pleine) | ⬜ À venir | `feat/c6-ai-kit` | - | - | - |
-| C7 | Collaboratif, partage, offline, papiers, budget | ⬜ À venir | `feat/c7-collab-offline` | - | - | - |
+| **C6** | **IA & Kit contextuel (Boutique LKDV, équipement, marge pleine)** | ✅ **Validé** | `feat/c6-ai-kit` | 2026-09-05 | 2026-09-05 | `d565dd7` |
+| **C7** | **Collaboratif, partage, offline, papiers, budget** | 🟡 **En cours** | `feat/c7-collab-offline` | 2026-09-05 | - | - |
 | C8 | Rétrospective & Publication Communautaire (Carnet, Retour d'Expérience) | ⬜ À venir | `feat/c8-trip-completion` | - | - | - |
 | RF | Recette Finale & Pré-lancement | ⬜ À venir | `release/voyage-v1` | - | - | - |
 
@@ -103,6 +103,21 @@
 
 ---
 
+## 2.sexies Chantier 6 — Suivi des Sous-Étapes (IA & Kit Contextuel LKDV, Boutique, Marge Pleine)
+
+| Étape | Statut | Fichiers touchés | Preuve / Commande | Date |
+| :--- | :---: | :--- | :--- | :--- |
+| **6.0 Reconnaissance & Baseline** | | | | |
+| 6.0.1 Inventaire `shop_products` et `cart.ts` | ✅ Fait | Supabase MCP / Codebase | 68 produits vérifiés en base avec marque, prix, poids en grammes et photo. Intégration directe au panier Stripe existant (`addToCart`). | 2026-09-05 |
+| 6.0.2 Créer branche git | ✅ Fait | Git | `git checkout -b feat/c6-ai-kit` | 2026-09-05 |
+| **6.1 Migration Supabase `trip_items`** | ✅ Fait | `supabase/migrations/20260905140000_trip_contextual_kit.sql` | Colonnes additives : `shop_product_id`, `priority`, `is_vital`, `is_worn`, `is_consumable`, `notes`. Index sur `(trip_id, is_packed)` et `(trip_id, priority)`. Appliquée avec succès sur `icxyvwzfjbflcbqukpfz`. | 2026-09-05 |
+| **6.2 Types & Moteur Contextuel (TDD)** | ✅ Fait | `src/features/trips/types/kit.types.ts`, `src/features/trips/engine/contextualKitEngine.ts`, `tests/trips/engine/contextualKitEngine.spec.ts` | Moteur pur déterministe (zéro LLM pour le calcul socle) croisant climat/pays, altitude max (crampons/gants si > 2400m), durée et activité (bivouac = tente 2P, réchaud, popote). Calcul du Gear Gap et du Base Weight (excluant porté et consommables). 7 tests verts. | 2026-09-05 |
+| **6.3 Couche Service & Server Actions** | ✅ Fait | `src/lib/queries-trip-kit.ts`, `src/app/voyages/kit-actions.ts`, `tests/trips/kit/queries-trip-kit.spec.ts` | `getTripKitDetails`, `getShopProducts`, `addTripItem`, `toggleTripItemPacked`, `deleteTripItem`, `addRecommendedItemToTrip`. Actions serveur : `togglePackedAction`, `addCustomTripItemAction`, `deleteTripItemAction`, `addRecommendedItemAction`. 6 tests verts. | 2026-09-05 |
+| **6.4 Interface Utilisateur & Route Dédiée (Apple HIG)** | ✅ Fait | `src/features/trips/components/TripKitView.tsx`, `src/app/voyages/[slug]/kit/page.tsx`, `loading.tsx`, `TripDetailClient.tsx`, `page.tsx`, `tests/trips/kit/kitComponents.spec.ts` | Route `/voyages/[slug]/kit` créée avec fil d'Ariane et SEO. Intégré dans l'onglet `gear` du Cockpit voyage (remplace le placeholder C4). Jauge de poids, barre de complétude sac, alertes climat, suggestions de la boutique LKDV avec boutons « Acheter » (panier Stripe) et « Dans mon sac ». 4 tests verts. | 2026-09-05 |
+| **6.5 Validation Globale & CI** | ✅ Fait | `npm run test`, `npm run build`, `npm run lint`, `npm run verify:invariants` | 17/17 tests kit/engine verts, 525/525 tests repo verts (79 suites), `tsc --noEmit` 0 erreur, `eslint` 0 erreur, build Next.js 15.5.18 exit 0 (`ƒ /voyages/[slug]/kit` compilée), invariants CI validés. | 2026-09-05 |
+
+---
+
 ## 3. Journal des Décisions d'Architecture
 
 | Date | Décision | Justification | Impact sur les chantiers suivants |
@@ -126,23 +141,25 @@
 | 2026-09-05 | **Minimisation RGPD : Zéro IP en clair (C5)** | Hachage salé SHA-256 (`hashSessionForRgpd`) combinant IP + User-Agent + sel secret serveur. Seul le `session_hash` de 64 caractères hex est persisté dans `affiliate_clicks`. | Conformité stricte aux exigences CNIL et RGPD §5.3, évitant la collecte de données nominatives. |
 | 2026-09-05 | **Conformité Légale DGCCRF / Loi 9 juin 2023 (C5)** | Présence obligatoire de `<AffiliateDisclosure />` en amont des liens, rappelant la gratuité pour l'utilisateur et l'absence d'influence sur l'ordre éditorial. Attribut `rel="sponsored nofollow"` systématique. | Zéro risque de requalification en publicité clandestine ou pratique trompeuse. |
 | 2026-09-05 | **Signature Webhook Postback HMAC-SHA256 Timing-Safe (C5)** | Vérification cryptographique des webhooks Travelpayouts avec `timingSafeEqual` pour empêcher les attaques par canal auxiliaire (timing attacks). | Protection absolue contre les fausses notifications de conversion. |
+| 2026-09-05 | **Moteur Déterministe de Kit & Gear Gap (C6)** | Zéro appel LLM pour le kit de base : règles climatiques, d'altitude (> 2400m) et de durée pour une prédictibilité 100%. Marge pleine LKDV via `shop_products` réels. | Sécurité maximale en montagne, zéro hallucination sur le matériel vital, conversion boutique directe. |
+| 2026-09-05 | **Base Weight Canonique sans consommables ni portés (C6)** | Calcul strict excluant `is_worn = true` (vêtements sur soi) et `is_consumable = true` (nourriture, eau, gaz) pour le poids de base du sac. | Calcul conforme aux standards internationaux du trekking ultraléger. |
 
 ---
 
 ## 4. Invariants de Sécurité & Conformité
 
 | Règle / Invariant | Mécanisme de Contrôle | Statut | Preuve |
-| :--- | :--- | :--- :---: | :--- |
+| :--- | :--- | :---: | :--- |
 | **RLS activée sur 100% des tables** (`trips` + 8 tables filles) | Migration SQL `alter table ... enable row level security;` + pg_policy check | ✅ Conforme | Vérifié via Supabase MCP `apply_migration` sur `icxyvwzfjbflcbqukpfz` : 9 tables avec RLS activée, 4 policies distinctes par table. |
 | **Anti-récursion RLS** (`can_read_trip`, `can_edit_trip`) | Fonctions `security definer stable` avec `search_path = public` | ✅ Conforme | Testé dans `tests/trips/rls-isolation.spec.ts` (6 assertions RLS concluantes, zéro récursion). |
 | **Protection RGPD Documents** (`trip_documents` SELECT réservé à `can_edit_trip`) | Policy restrictive : inaccessible aux simples `viewer` et visiteurs anonymes | ✅ Conforme | Testé dans `tests/trips/rls-isolation.spec.ts` (test RLS-06 garantit que `viewerCanReadDocs = false`). |
 | **Conformité Palette Liquid Glass** (Zéro orange `#E4501C`, Zéro `#1C2620`, Forest `#17402C`, Sage `#5B7F55`, Stone `#FAF8F5`) | Script `scripts/verify/ci_invariants.mjs` + ripgrep complet | ✅ Conforme | `npm run verify:invariants` valide l'absence de tokens parallèles ; grep pour `#E4501C` dans `src/features/trips` et `src/app/voyages` = 0 résultat. |
 | **Pas de composants custom réinventés** | Utilisation stricte de `GlassCard`, `LkvButton`, `LkvChip`, `LkvIcon` | ✅ Conforme | 100% des composants de `src/features/trips/components` et `src/features/trips/planner` consomment les primitives canoniques du Design System LKDV. |
-| **Navigation Mobile Canonique** | `AppShell` avec safe-areas (`safeTop={true}`, `hasBottomNav={true}`) et touch-targets $\ge 44\text{px}$ | ✅ Conforme | Utilisé sur `/voyages`, `/voyages/[slug]`, `/voyages/[slug]/itineraire`, `loading.tsx` et `not-found.tsx`. |
+| **Navigation Mobile Canonique** | `AppShell` avec safe-areas (`safeTop={true}`, `hasBottomNav={true}`) et touch-targets $\ge 44\text{px}$ | ✅ Conforme | Utilisé sur `/voyages`, `/voyages/[slug]`, `/voyages/[slug]/itineraire`, `/voyages/[slug]/kit`, `loading.tsx` et `not-found.tsx`. |
 | **Zero ESLint errors & zero TS errors** | `npx tsc --noEmit` & `npm run lint` | ✅ Conforme | `tsc --noEmit` exit 0 (0 erreur) ; `eslint` exit 0 (0 erreur). |
 | **Build de Production Next.js** | `npm run build` | ✅ Conforme | Next.js 15.5.18 compile et génère toutes les routes sans erreur (`npm run build` exit 0). |
 | **Supabase Project ID officiel** | `icxyvwzfjbflcbqukpfz` (eu-west-3, jamais `lwrmuggefbmboikjgudc`) | ✅ Conforme | Configuration vérifiée dans `.env` et Supabase MCP. |
-| **ZÉRO Appel LLM dans le Moteur C2 & C3** | Test AST ripgrep (`tests/trips/engine/antiLlm.spec.ts`) bannissant tout appel AI | ✅ Conforme | 0 import de `getChatCompletion`, 0 appel OpenRouter / OpenAI. Moteur 100% déterministe. |
+| **ZÉRO Appel LLM dans le Moteur C2 & C3 & C6** | Test AST ripgrep (`tests/trips/engine/antiLlm.spec.ts`) bannissant tout appel AI | ✅ Conforme | 0 import de `getChatCompletion`, 0 appel OpenRouter / OpenAI. Moteur 100% déterministe. |
 | **Idempotence du Seed Destinations** | Script `scripts/seed-destinations.ts` avec contrainte unique `natural_key` | ✅ Conforme | Exécution double vérifiée : 33 lignes synchronisées sur les 5 pays sans doublon ni régression. |
 | **Préservation Matériel Utilisateur** | Nettoyage sélectif `trip_items` (`source != 'user'`) lors de la régénération | ✅ Conforme | Testé dans `tests/trips/wizard.spec.ts` : les ajouts manuels du voyageur ne sont jamais écrasés. |
 | **Ergonomie Mobile Apple HIG** | Cibles tactiles $\ge 44\text{px}$, sticky bottom bar, safe-areas via `AppShell` | ✅ Conforme | Conforme aux guidelines iOS et skills `apple-ui-designer` / `interaction-design`. |
@@ -155,6 +172,9 @@
 | **Minimisation RGPD Clics Sortants C5** | Hachage salé SHA-256 sans conservation de l'IP brute | ✅ Conforme | Testé dans `tests/affiliation/engine.spec.ts` et `tests/affiliation/queries-affiliation.spec.ts`. |
 | **Mentions Légales & rel="sponsored" C5** | `<AffiliateDisclosure />` et `rel="sponsored nofollow"` sur chaque lien partenaire | ✅ Conforme | Testé dans `tests/affiliation/components.spec.ts`. |
 | **Redirection 307 Non Cachée C5** | Route `/go/[slug]` en HTTP 307 avec logging RGPD | ✅ Conforme | Conforme aux spécifications Travelpayouts et SEO. |
+| **Marge Pleine & Catalogue Réel LKDV C6** | 68 produits `shop_products` reliés sans produit inventé, panier Stripe `addToCart` | ✅ Conforme | Testé dans `tests/trips/kit/queries-trip-kit.spec.ts` et `tests/trips/kit/kitComponents.spec.ts`. |
+| **Règles Vitales Montagne (> 2400m) C6** | Équipement sécurité automatique (crampons, gants, couverture survie) | ✅ Conforme | Testé dans `tests/trips/engine/contextualKitEngine.spec.ts`. |
+
 
 
 

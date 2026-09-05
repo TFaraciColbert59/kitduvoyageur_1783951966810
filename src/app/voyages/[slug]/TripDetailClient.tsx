@@ -21,15 +21,23 @@ import {
   ArrowLeft,
 } from 'lucide-react';
 import type { TripFull, TripStats } from '@/features/trips/types/trip.types';
+import type { TripKitAnalysis } from '@/features/trips/types/kit.types';
 import { TripAffiliateSection, type AffiliateLink } from '@/features/affiliation';
+import { TripKitView } from '@/features/trips/components/TripKitView';
 
 export interface TripDetailClientProps {
   trip: TripFull;
   stats: TripStats;
   affiliateLinks?: AffiliateLink[];
+  kitAnalysis?: TripKitAnalysis;
 }
 
-export default function TripDetailClient({ trip, stats, affiliateLinks = [] }: TripDetailClientProps) {
+export default function TripDetailClient({
+  trip,
+  stats,
+  affiliateLinks = [],
+  kitAnalysis,
+}: TripDetailClientProps) {
   const [activeTab, setActiveTab] = useState<string>('overview');
 
   const tabs = [
@@ -152,16 +160,22 @@ export default function TripDetailClient({ trip, stats, affiliateLinks = [] }: T
             </TripPlaceholderTab>
           )}
 
-          {/* Onglet 4 : Équipement (Chantier 4) */}
-          {activeTab === 'gear' && (
-            <TripPlaceholderTab
-              chantierNumber={4}
-              chantierTitle="Préparation & Équipement (Liaison Sac à Dos, Poids, Shakedown)"
-              description="Ce module synchronisera l'inventaire Mon Matériel de chaque participant avec le voyage pour calculer le poids total du sac à dos, détecter les manques et faire le shakedown."
-              icon={<Package size={24} />}
-              hasData={trip.items.length > 0}
-              emptyMessage="Aucun équipement renseigné dans la liste pour le moment."
-            >
+          {/* Onglet 4 : Équipement & Kit Contextuel (Chantier 6) */}
+          {activeTab === 'gear' && kitAnalysis && (
+            <TripKitView trip={trip} analysis={kitAnalysis} />
+          )}
+
+          {activeTab === 'gear' && !kitAnalysis && (
+            <div className="space-y-4">
+              <div className="flex items-center justify-between">
+                <h3 className="text-lg font-bold text-[#17402C]">Équipements du voyage</h3>
+                <Link
+                  href={`/voyages/${trip.slug}/kit`}
+                  className="px-4 py-2 rounded-xl bg-[#17402C] text-white text-xs font-bold hover:bg-[#123323] transition-all"
+                >
+                  Ouvrir le Kit Contextuel Complet
+                </Link>
+              </div>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 {trip.items.map(item => (
                   <GlassCard key={item.id} tone="neutral" className="p-3.5 rounded-[18px] border border-white/60">
@@ -186,7 +200,7 @@ export default function TripDetailClient({ trip, stats, affiliateLinks = [] }: T
                   </GlassCard>
                 ))}
               </div>
-            </TripPlaceholderTab>
+            </div>
           )}
 
           {/* Onglet 5 : Budget (Chantier 5) */}

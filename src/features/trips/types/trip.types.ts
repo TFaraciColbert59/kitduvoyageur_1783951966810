@@ -116,6 +116,12 @@ export interface TripItem {
   packed_by: string | null;
   inventory_item_id: string | null;
   affiliate_link_id: string | null;
+  shop_product_id?: string | null;
+  priority?: 'vital' | 'recommended' | 'optional';
+  is_vital?: boolean;
+  is_worn?: boolean;
+  is_consumable?: boolean;
+  notes?: string | null;
   source?: string | null;
   created_at: string;
   updated_at: string;
