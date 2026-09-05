@@ -344,3 +344,61 @@ export function computeTripPermissions(role?: TripRole | null): TripPermissions 
       };
   }
 }
+
+/**
+ * Schéma de validation pour la persistance du Wizard de création d'itinéraire
+ */
+export const wizardPersistInputSchema = z.object({
+  tripId: z.string().uuid().optional().nullable(),
+  title: z
+    .string()
+    .trim()
+    .min(2, 'Le titre doit comporter au moins 2 caractères')
+    .max(120, 'Le titre ne peut pas dépasser 120 caractères'),
+  description: z.string().trim().max(2000).optional().nullable(),
+  countries: z
+    .array(z.string().length(2, 'Code pays ISO 2 lettres requis'))
+    .min(1, 'Au moins un pays requis'),
+  destinationName: z.string().trim().max(150).optional().nullable(),
+  startDate: z
+    .string()
+    .regex(/^\d{4}-\d{2}-\d{2}$/, 'Format de date invalide (AAAA-MM-JJ)')
+    .optional()
+    .nullable(),
+  endDate: z
+    .string()
+    .regex(/^\d{4}-\d{2}-\d{2}$/, 'Format de date invalide (AAAA-MM-JJ)')
+    .optional()
+    .nullable(),
+  durationDays: z.number().int().min(1, 'Durée minimale de 1 jour').max(90, 'Durée maximale de 90 jours'),
+  pace: z.enum(['chill', 'standard', 'intense']).default('standard'),
+  activityType: tripActivityTypeEnum.default('trekking'),
+  difficulty: tripDifficultyEnum.default('moderate'),
+  accommodationType: z.enum(['bivouac', 'refuge', 'hotel', 'mixed']).default('bivouac'),
+  travelersCount: z.number().int().min(1).max(50).default(1),
+  groupType: z.enum(['solo', 'couple', 'friends', 'family']).default('solo'),
+  groupId: z.string().uuid().optional().nullable(),
+  publishStatus: tripStatusEnum.default('planned'),
+});
+
+export type WizardPersistInput = z.infer<typeof wizardPersistInputSchema>;
+
+export const saveDraftTripSchema = z.object({
+  tripId: z.string().uuid().optional().nullable(),
+  title: z.string().trim().min(2).max(120),
+  description: z.string().trim().max(2000).optional().nullable(),
+  countries: z.array(z.string().length(2)).min(1),
+  destinationName: z.string().trim().max(150).optional().nullable(),
+  startDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).optional().nullable(),
+  endDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).optional().nullable(),
+  durationDays: z.number().int().min(1).max(90),
+  pace: z.enum(['chill', 'standard', 'intense']).default('standard'),
+  activityType: tripActivityTypeEnum.default('trekking'),
+  difficulty: tripDifficultyEnum.default('moderate'),
+  accommodationType: z.enum(['bivouac', 'refuge', 'hotel', 'mixed']).default('bivouac'),
+  travelersCount: z.number().int().min(1).max(50).default(1),
+  groupType: z.enum(['solo', 'couple', 'friends', 'family']).default('solo'),
+  groupId: z.string().uuid().optional().nullable(),
+});
+
+export type SaveDraftTripInput = z.infer<typeof saveDraftTripSchema>;

@@ -5,7 +5,7 @@
 | N° | Chantier | Statut | Branche | Début | Fin | Commit Fin |
 | :---: | :--- | :---: | :--- | :---: | :---: | :---: |
 | **C1** | **Fondations de l'entité Trip (Schéma, RLS, Services, Vue Read-Only)** | ✅ **Validé** | `feat/c1-trips-core` | 2026-09-04 | 2026-09-04 | `9e9caed` |
-| C2 | Création & Épisodes (Wizard, Itinéraire, Hébergement, Transport) | ⬜ À venir | `feat/c2-trips-episodes` | - | - | - |
+| **C2** | **Wizard de création & moteur de répartition (5 étapes, déterministe, seed)** | ✅ **Validé** | `feat/c2-trip-wizard` | 2026-09-05 | 2026-09-05 | `261fee7` |
 | C3 | Collaboration & Partage (Membres, Rôles, Invitations, Sécurité) | ⬜ À venir | `feat/c3-trips-collab` | - | - | - |
 | C4 | Préparation & Équipement (Liaison Sac à Dos, Poids, Shakedown) | ⬜ À venir | `feat/c4-trips-gear` | - | - | - |
 | C5 | Budget & Dépenses (Split, Catégorisation, Multi-devises) | ⬜ À venir | `feat/c5-trips-budget` | - | - | - |
@@ -36,6 +36,24 @@
 
 ---
 
+## 2.bis Chantier 2 — Suivi des Sous-Étapes (Wizard & Moteur de Répartition)
+
+| Étape | Statut | Fichiers touchés | Preuve / Commande | Date |
+| :--- | :---: | :--- | :--- | :---: |
+| **2.0 Reconnaissance & Baseline** | | | | |
+| 2.0.1 Inventaire Skills & Agents | ✅ Fait | `.claude/skills/*`, `.claude/agents/*` | 12 skills & 7 pods chargés et confirmés | 2026-09-05 |
+| 2.0.2 Constat des données réelles | ✅ Fait | Terminal / SQL | 1 169 routes et 1 811 POIs (100% Hauts-de-France, 0 en Islande/Népal/Pérou/Maroc). Nécessité d'un catalogue curé réel. | 2026-09-05 |
+| 2.0.3 Baseline technique C2 | ✅ Fait | Terminal | `tsc` : 0 err (code 0) ; `lint` : 0 err (code 0) ; tests trips : 47/47 verts ; build : code 0 | 2026-09-05 |
+| 2.0.4 Créer branche git | ✅ Fait | Git | `git checkout -b feat/c2-trip-wizard` (exécuté avec succès) | 2026-09-05 |
+| **2.1 Moteur Déterministe (TDD)** | ✅ Fait | `src/features/trips/engine/*`, `tests/trips/engine/*` | 7 modules purs créés (`allocateDays`, `travelTime`, `paceRules`, `seasonality`, `selectCandidates`, `buildItinerary`, `antiLlm`). ZÉRO appel LLM garanti par test AST ripgrep. 27 tests unitaires verts. | 2026-09-05 |
+| **2.2 Table & Seed Destinations** | ✅ Fait | `supabase/migrations/20260905090000_destination_steps.sql`, `src/features/trips/data/destinationsSeed.ts`, `scripts/seed-destinations.ts` | Table `public.destination_steps` créée avec RLS et policy publique. 33 étapes réelles curées pour FR (7), NP (8), PE (6), IS (6), MA (6) + matériel. Script idempotent exécuté avec succès (exit 0). | 2026-09-05 |
+| **2.3 Wizard `/voyages/nouveau`** | ✅ Fait | `src/app/voyages/nouveau/page.tsx`, `src/features/trips/wizard/*` | Wizard 5 étapes synchronisé URL `?step=X` et `localStorage` (`lkdv:trip-draft`). Étape 1 : Destinations réordonnables. Étape 2 : Dates avec avertissement météo/saisonnalité live. Étape 3 : Style & Rythme. Étape 4 : Voyageurs & Groupe. Étape 5 : Aperçu complet. Dual-view responsive (Desktop Tailwind / Mobile `AppShell` avec touch targets $\ge 44\text{px}$). | 2026-09-05 |
+| **2.4 Server Actions & Transactionnel** | ✅ Fait | `src/app/voyages/actions.ts`, `src/features/trips/schemas/trip.schema.ts` | Server Actions : `saveDraftTripAction` (sauvegarde dès étape 3), `generateAndPersistItinerary` (transactionnel, insertion `trip_steps` et `trip_items` template, statut planned), `regenerateItineraryAction` (préserve `source='user'`). Schémas Zod validés. | 2026-09-05 |
+| **2.5 Intégration & Redirections** | ✅ Fait | `src/app/voyages/[slug]/TripDetailClient.tsx`, `src/features/trips/components/TripItineraryTab.tsx`, `next.config.mjs`, `src/app/preparation/page.tsx` | Onglet Itinéraire enrichi avec `TripItineraryTab`, bandeau saisonnalité live et modal de régénération. Redirection 308 permanente `/voyage-ia` -> `/voyages/nouveau`. Suppression de `src/app/voyage-ia/`. Lien d'accès créé dans `/preparation`. | 2026-09-05 |
+| **2.6 Validation Globale & CI** | ✅ Fait | `npm run test`, `npm run build`, `npm run lint`, `npm run verify:invariants` | 81/81 tests trips verts (100%), 436/436 tests repo verts (66 suites), `tsc --noEmit` 0 erreur, `eslint` 0 erreur, build Next.js 15.5.18 exit 0, invariants CI validés. | 2026-09-05 |
+
+---
+
 ## 3. Journal des Décisions d'Architecture
 
 | Date | Décision | Justification | Impact sur les chantiers suivants |
@@ -46,6 +64,10 @@
 | 2026-09-04 | Fonctions RLS `security definer stable` pour casser la récursion | Empêche la récursion infinie entre `trips` et `trip_collaborators`. | Robustesse et performances d'accès sur toutes les tables filles (C1 à C8). |
 | 2026-09-04 | `affiliate_link_id` sans foreign key sur `trip_items` au C1 | La table d'affiliation cible est programmée pour le Chantier 5. | Champ présent dès le schéma C1 pour ne pas bloquer les futures migrations C5. |
 | 2026-09-04 | Onglets C2-C8 avec composant `TripPlaceholderTab` affichant les données réelles | Permet de rendre dès le C1 les éléments existants (étapes, matériel, participants, dépenses, etc.) en lecture seule sans modifier le scope des chantiers suivants. | Expérience utilisateur cockpit complète et prête à être enrichie aux chantiers C2 à C8. |
+| 2026-09-05 | **ZÉRO appel LLM dans le Moteur de Répartition (C2)** | Fiabilité 100%, déterminisme bit-pour-bit, temps de réponse < 50ms, zéro coût API et zéro hallucination géographique. | Les étapes sont toujours réelles et vérifiables. L'IA sera réservée au Copilote C7 pour le conseil conversationnel sans toucher aux données socles. |
+| 2026-09-05 | **Table catalogue `destination_steps` avec RLS publique** | Séparation claire entre le catalogue de référence (étapes curées, topo-guides) et les étapes instanciées d'un voyage (`trip_steps`). | Évolutivité : de nouveaux pays peuvent être ajoutés par simple INSERT sans altérer le code du moteur. |
+| 2026-09-05 | **Colonne `source` sur `trip_items` ('template' vs 'user')** | Permet à l'utilisateur de régénérer son itinéraire ou modifier ses dates sans jamais perdre les articles de matériel ajoutés manuellement. | Préservation intégrale des données utilisateur lors des réitérations du planificateur. |
+| 2026-09-05 | **Insertion France (`FR`) dans `countries_geo`** | `countries_geo` contenait 195 pays mais la France y était omise, bloquant la FK de `destination_steps`. Insertion propre avec géométrie et codes ISO officiels. | Cohérence territoriale totale pour les treks alpins et nationaux. |
 
 ---
 
@@ -62,3 +84,8 @@
 | **Zero ESLint errors & zero TS errors** | `npx tsc --noEmit` & `npm run lint` | ✅ Conforme | `tsc --noEmit` exit 0 (0 erreur) ; `eslint src/features/trips src/app/voyages src/app/api/voyages src/lib/queries-trips.ts` exit 0 (0 erreur, 0 warning). |
 | **Build de Production Next.js** | `npm run build` | ✅ Conforme | Next.js 15.5.18 compile et génère toutes les routes statiques et dynamiques (`/voyages`, `/voyages/[slug]`, `/api/voyages`) sans erreur. |
 | **Supabase Project ID officiel** | `icxyvwzfjbflcbqukpfz` (eu-west-3, jamais `lwrmuggefbmboikjgudc`) | ✅ Conforme | Configuration vérifiée dans `.env` et Supabase MCP. |
+| **ZÉRO Appel LLM dans le Moteur C2** | Test AST ripgrep (`tests/trips/engine/antiLlm.spec.ts`) bannissant tout appel AI | ✅ Conforme | 0 import de `getChatCompletion`, 0 appel OpenRouter / OpenAI. Moteur 100% déterministe. |
+| **Idempotence du Seed Destinations** | Script `scripts/seed-destinations.ts` avec contrainte unique `natural_key` | ✅ Conforme | Exécution double vérifiée : 33 lignes synchronisées sur les 5 pays sans doublon ni régression. |
+| **Préservation Matériel Utilisateur** | Nettoyage sélectif `trip_items` (`source != 'user'`) lors de la régénération | ✅ Conforme | Testé dans `tests/trips/wizard.spec.ts` : les ajouts manuels du voyageur ne sont jamais écrasés. |
+| **Ergonomie Mobile Apple HIG** | Cibles tactiles $\ge 44\text{px}$, sticky bottom bar, safe-areas via `AppShell` | ✅ Conforme | Conforme aux guidelines iOS et skills `apple-ui-designer` / `interaction-design`. |
+

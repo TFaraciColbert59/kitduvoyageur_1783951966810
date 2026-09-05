@@ -116,6 +116,7 @@ export interface TripItem {
   packed_by: string | null;
   inventory_item_id: string | null;
   affiliate_link_id: string | null;
+  source?: string | null;
   created_at: string;
   updated_at: string;
 }

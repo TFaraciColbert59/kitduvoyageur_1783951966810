@@ -5,6 +5,7 @@ import Link from 'next/link';
 import AppShell from '@/components/shell/AppShell';
 import { TripHero } from '@/features/trips/components/TripHero';
 import { TripOverviewTab } from '@/features/trips/components/TripOverviewTab';
+import { TripItineraryTab } from '@/features/trips/components/TripItineraryTab';
 import { TripPlaceholderTab } from '@/features/trips/components/TripPlaceholderTab';
 import { TripBadge } from '@/features/trips/components/TripBadge';
 import { GlassCard } from '@/components/ui/GlassCard';
@@ -102,44 +103,9 @@ export default function TripDetailClient({ trip, stats }: TripDetailClientProps)
             <TripOverviewTab trip={trip} stats={stats} onTabChange={setActiveTab} />
           )}
 
-          {/* Onglet 2 : Itinéraire (Chantier 2) */}
+          {/* Onglet 2 : Itinéraire (Complet C2) */}
           {activeTab === 'steps' && (
-            <TripPlaceholderTab
-              chantierNumber={2}
-              chantierTitle="Création & Épisodes (Itinéraire fin, hébergements, transport)"
-              description="Ce module permettra d'ajouter, modifier et réorganiser les étapes jour par jour, avec calcul automatique du profil altimétrique, temps de marche estimé et POIs."
-              icon={<Navigation size={24} />}
-              hasData={trip.steps.length > 0}
-              emptyMessage="Aucune étape n'a encore été ajoutée à cet itinéraire."
-            >
-              <div className="space-y-3">
-                {trip.steps.map(step => (
-                  <GlassCard key={step.id} tone="neutral" className="p-4 rounded-[20px] border border-white/60">
-                    <div className="flex items-start justify-between gap-3">
-                      <div>
-                        <div className="text-xs font-bold text-[#5B7F55] uppercase">
-                          Jour {step.day_number}
-                        </div>
-                        <h4 className="font-semibold text-[#17402C] text-base">{step.title}</h4>
-                        {step.location_name && (
-                          <div className="text-xs text-[#5B7F55] mt-0.5 flex items-center gap-1">
-                            <MapPin size={12} />
-                            {step.location_name}
-                          </div>
-                        )}
-                        {step.description && (
-                          <p className="text-xs text-gray-600 mt-2 leading-relaxed">{step.description}</p>
-                        )}
-                      </div>
-                      <div className="text-right text-xs text-[#5B7F55] shrink-0">
-                        {step.distance_km && <div>{step.distance_km} km</div>}
-                        {step.elevation_gain_m && <div>+{step.elevation_gain_m}m D+</div>}
-                      </div>
-                    </div>
-                  </GlassCard>
-                ))}
-              </div>
-            </TripPlaceholderTab>
+            <TripItineraryTab trip={trip} stats={stats} />
           )}
 
           {/* Onglet 3 : Équipe (Chantier 3) */}
