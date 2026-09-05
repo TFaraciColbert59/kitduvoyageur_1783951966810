@@ -13,7 +13,7 @@
 | **C6** | **IA & Kit contextuel (Boutique LKDV, équipement, marge pleine)** | ✅ **Validé** | `feat/c6-ai-kit` | 2026-09-05 | 2026-09-05 | `06413db` |
 | **C7** | **Collaboratif, partage, offline, papiers, budget** | ✅ **Validé** | `feat/c7-collab-offline` | 2026-09-05 | 2026-09-05 | `f9cfb6c` |
 | **C8** | **Rétrospective & Publication Communautaire (Carnet, REX)** | ✅ **Validé** | `feat/c8-trip-completion` | 2026-09-05 | 2026-09-05 | `1d54883` |
-| RF | Recette Finale & Pré-lancement | 🟡 **En cours** | `release/voyage-v1` | 2026-09-05 | - | - |
+| **RF** | **Recette Finale & Pré-lancement** | ✅ **Validé** | `release/voyage-v1` | 2026-09-05 | 2026-09-05 | `6196dab` |
 
 ---
 
@@ -146,6 +146,22 @@
 | **8.3 Couche Service & Server Actions** | ✅ Fait | `src/lib/queries-trip-notes.ts`, `src/lib/queries-trip-completion.ts`, `src/app/voyages/completion-actions.ts`, `tests/trips/notes/queries-trip-notes.spec.ts` | Services : `getTripNotes`, `addTripNote`, `updateTripNote`, `deleteTripNote`, `updateTripStatus`, `publishTripToCarnet`, `submitTripFieldReviews`. Server Actions transactionnelles avec validation Zod et vérification d'authentification. 7 tests unitaires verts. | 2026-09-05 |
 | **8.4 Interface Utilisateur & Intégration Cockpit (Apple HIG)** | ✅ Fait | `src/features/trips/components/TripNotesView.tsx`, `TripCompletionModal.tsx`, `TripDetailClient.tsx`, `tests/trips/notes/notesComponents.spec.ts` | Dernier placeholder du cockpit remplacé : `TripNotesView` affiche les notes avec filtres par jour, indicateur épinglé, création inline de récits et bannière de statut. Modal `TripCompletionModal` avec métriques visuelles, bascule carnet public et formulaire d'avis certifiés terrain avec notation étoilée. 4 tests verts. | 2026-09-05 |
 | **8.5 Validation Globale & CI** | ✅ Fait | `npm run test`, `npm run build`, `npm run lint`, `npm run verify:invariants` | 17/17 tests C8 verts, 572/572 tests repo verts (87 suites), `tsc --noEmit` 0 erreur, `eslint` 0 erreur (0 warning nouveau), build Next.js 15.5.18 exit 0 (`ƒ /voyages/[slug]` compilée avec toutes les vues actives), invariants CI validés. | 2026-09-05 |
+
+---
+
+## 2.nonies Recette Finale (RF) — Validation Globale & Pré-Lancement
+
+| Étape | Statut | Domaine | Preuve / Commande | Date |
+| :--- | :---: | :--- | :--- | :--- |
+| **RF.1 Intégrité Technique & Types** | ✅ Fait | TypeScript & Linters | `npx tsc --noEmit` exit 0 (0 erreur TS). `npm run lint` exit 0 (0 erreur, 0 warning nouveau). | 2026-09-05 |
+| **RF.2 Build de Production Next.js** | ✅ Fait | App Router / Bundle | `npm run build` exit 0. 100% des routes compilées sans régression (`/voyages`, `/voyages/nouveau`, `/voyages/[slug]`, `/voyages/[slug]/itineraire`, `/voyages/[slug]/kit`, `/voyages/[slug]/export`, `/api/voyages/[slug]/gpx`, `/lieux`, `/lieux/[slug]`, `/go/[slug]`, `/api/affiliate/travelpayouts`, `/carnets`). | 2026-09-05 |
+| **RF.3 Suite Complète de Tests Vitest** | ✅ Fait | Runner Vitest | `npm test` : 87 suites de tests, **572/572 tests verts** (100% passés). Couverture totale des 9 chantiers (C0 à C8) sans aucune régression. | 2026-09-05 |
+| **RF.4 Audit de Sécurité RLS Exhaustif** | ✅ Fait | Supabase / PostgreSQL | Vérification SQL sur base de production `icxyvwzfjbflcbqukpfz` : **100% des 20 tables du module Voyage ont `rowsecurity = true`**. Isolation RLS prouvée dans `tests/trips/rls-isolation.spec.ts`. | 2026-09-05 |
+| **RF.5 Confidentialité & Minimisation RGPD** | ✅ Fait | RGPD & Droit CNIL | Zéro adresse IP en clair persistée (`hashSessionForRgpd` salé SHA-256). Rétention des clics isolée. Protection stricte des scans de passeports et pièces d'identité (`trip_documents` réservé à `can_edit_trip`, exclu des exports et des carnets). | 2026-09-05 |
+| **RF.6 Conformité Légale DGCCRF & Affiliation** | ✅ Fait | Code de la consommation | Mention d'information obligatoire `<AffiliateDisclosure />` en amont des liens partenaires. Attribut `rel="sponsored nofollow"` systématique. Redirections HTTP 307 sécurisées avec validation d'URL cible stricte (`isValidAffiliateTargetUrl`). | 2026-09-05 |
+| **RF.7 Invariants Visuels Liquid Glass** | ✅ Fait | Design System Apple HIG | `npm run verify:invariants` exit 0. Grep complet dans `src/features/trips` et `src/app/voyages` : 0 occurrence de `#E4501C`, 0 occurrence de `#1C2620`. Respect strict de la palette canonique (Forest `#17402C`, Sage `#5B7F55`, Stone `#FAF8F5`). Primitives `GlassCard`, `LkvButton`, `LkvChip` et `AppShell` avec safe-areas et touch-targets $\ge 44\text{px}$. | 2026-09-05 |
+| **RF.8 ZÉRO Appel LLM dans le Socle Déterministe** | ✅ Fait | Anti-Hallucination | Test AST ripgrep `tests/trips/engine/antiLlm.spec.ts` réussi (0 appel `getChatCompletion` dans le moteur de répartition, de kit et de calcul). Moteurs déterministes bit-pour-bit et reproductibles. | 2026-09-05 |
+| **RF.9 Cycle de Vie Produit Bout-en-Bout** | ✅ Fait | Parcours Utilisateur | Le parcours complet est opérationnel de bout en bout : Wizard 5 étapes (C2) $\rightarrow$ Planificateur itinéraire jour/jour (C3) $\rightarrow$ Lieux communautaires scoring bayésien (C4) $\rightarrow$ Offres d'affiliation éthiques (C5) $\rightarrow$ Analyse sac & boutique LKDV marge pleine (C6) $\rightarrow$ Équipe, budget glouton, offline, export GPX/Print (C7) $\rightarrow$ Récits, clôture, publication carnet & preuve terrain certifiée (C8). | 2026-09-05 |
 
 ---
 
