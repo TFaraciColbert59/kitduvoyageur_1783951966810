@@ -19,7 +19,6 @@ import {
   Shield,
   BookOpen,
   ArrowLeft,
-  MapPin,
 } from 'lucide-react';
 import type { TripFull, TripStats } from '@/features/trips/types/trip.types';
 

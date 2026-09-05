@@ -1,17 +1,19 @@
 # MODULE VOYAGE — JOURNAL DE PROGRESSION & CONFORMITÉ
 
-## 1. Vue d'Ensemble des 8 Chantiers
+## 1. Vue d'Ensemble du Programme Voyage (Source : ROADMAP_VOYAGE.md §13)
 
 | N° | Chantier | Statut | Branche | Début | Fin | Commit Fin |
 | :---: | :--- | :---: | :--- | :---: | :---: | :---: |
-| **C1** | **Fondations de l'entité Trip (Schéma, RLS, Services, Vue Read-Only)** | ✅ **Validé** | `feat/c1-trips-core` | 2026-09-04 | 2026-09-04 | `9e9caed` |
-| **C2** | **Wizard de création & moteur de répartition (5 étapes, déterministe, seed)** | ✅ **Validé** | `feat/c2-trip-wizard` | 2026-09-05 | 2026-09-05 | `261fee7` |
-| C3 | Collaboration & Partage (Membres, Rôles, Invitations, Sécurité) | ⬜ À venir | `feat/c3-trips-collab` | - | - | - |
-| C4 | Préparation & Équipement (Liaison Sac à Dos, Poids, Shakedown) | ⬜ À venir | `feat/c4-trips-gear` | - | - | - |
-| C5 | Budget & Dépenses (Split, Catégorisation, Multi-devises) | ⬜ À venir | `feat/c5-trips-budget` | - | - | - |
-| C6 | Documents & Réservations (Storage, Chiffrement, Offline) | ⬜ À venir | `feat/c6-trips-docs` | - | - | - |
-| C7 | Intégration IA & Copilote Terrain (Météo, Recommandations, Alertes) | ⬜ À venir | `feat/c7-trips-ai` | - | - | - |
-| C8 | Rétrospective & Publication Communautaire (Carnet, Retour d'Expérience) | ⬜ À venir | `feat/c8-trips-retro` | - | - | - |
+| **C0** | **Unification messagerie ↔ groupes** | ✅ **Validé** | `feat/c0-messaging-unification` | 2026-09-04 | 2026-09-04 | Inclus C1 |
+| **C1** | **Fondations de l'entité Trip (Schéma, RLS, Services, Cockpit)** | ✅ **Validé** | `feat/c1-trips-core` | 2026-09-04 | 2026-09-04 | `9e9caed` |
+| **C2** | **Wizard de création & moteur de répartition (5 étapes, déterministe)** | ✅ **Validé** | `feat/c2-trip-wizard` | 2026-09-05 | 2026-09-05 | `4a78964` |
+| **C3** | **Planificateur d'itinéraire (Édition jour/jour, réordonnancement, dual-view)** | ✅ **Validé** | `feat/c3-itinerary-planner` | 2026-09-05 | 2026-09-05 | `9478f1a` |
+| C4 | Lieux communautaires (Places, topos, avis, scoring) | ⬜ À venir | `feat/c4-community-places` | - | - | - |
+| C5 | Affiliation Travelpayouts (Vols, hôtels, activités, disclosure légal) | ⬜ À venir | `feat/c5-affiliation` | - | - | - |
+| C6 | IA & Kit contextuel (Boutique LKDV, équipement, marge pleine) | ⬜ À venir | `feat/c6-ai-kit` | - | - | - |
+| C7 | Collaboratif, partage, offline, papiers, budget | ⬜ À venir | `feat/c7-collab-offline` | - | - | - |
+| C8 | Rétrospective & Publication Communautaire (Carnet, Retour d'Expérience) | ⬜ À venir | `feat/c8-trip-completion` | - | - | - |
+| RF | Recette Finale & Pré-lancement | ⬜ À venir | `release/voyage-v1` | - | - | - |
 
 ---
 
@@ -54,6 +56,21 @@
 
 ---
 
+## 2.ter Chantier 3 — Suivi des Sous-Étapes (Planificateur d'Itinéraire)
+
+| Étape | Statut | Fichiers touchés | Preuve / Commande | Date |
+| :--- | :---: | :--- | :--- | :--- |
+| **3.0 Reconnaissance & Baseline** | | | | |
+| 3.0.1 Baseline technique C3 | ✅ Fait | Terminal | `tsc` : 0 err (code 0) ; `lint` : 0 err (code 0) ; tests trips : 81/81 verts ; build : code 0 | 2026-09-05 |
+| 3.0.2 Créer branche git | ✅ Fait | Git | `git checkout -b feat/c3-itinerary-planner` (exécuté avec succès) | 2026-09-05 |
+| **3.1 Moteur d'Itinéraire & Métriques (TDD)** | ✅ Fait | `src/features/trips/planner/plannerEngine.ts`, `tests/trips/planner/plannerEngine.spec.ts` | Calculs déterministes (distance Haversine/explicite, D+, D-, durée Naismith/transport), renumérotation `order_index` continue, décalages `day_number`. 13 tests verts. | 2026-09-05 |
+| **3.2 Server Actions Transactionnelles** | ✅ Fait | `src/app/voyages/actions.ts`, `src/features/trips/planner/planner.schema.ts`, `tests/trips/planner/plannerActions.spec.ts` | 8 mutations sécurisées par `can_edit_trip` (ajout, mise à jour, suppression retassée, réordonnancement 2-phases anti-collision `order_index`, déplacement inter-jours, insertion/suppression/duplication de jour). 8 tests verts. | 2026-09-05 |
+| **3.3 Route `/voyages/[slug]/itineraire`** | ✅ Fait | `src/app/voyages/[slug]/itineraire/page.tsx`, `loading.tsx` | Route serveur Next.js avec SEO dynamique, fetch ordonné par `day_number, order_index`, skeleton de chargement et intégration `AppShell`. | 2026-09-05 |
+| **3.4 Composants UI Dual-View (Apple HIG)** | ✅ Fait | `src/features/trips/planner/*`, `src/features/trips/components/TripItineraryTab.tsx` | `DayNavigator` tactile sticky avec auto-centrage, `DayView` avec métriques en temps réel, `StepCard` avec boutons monter/descendre/déplacer/éditer/supprimer (cibles $\ge 44\text{px}$), `StepEditModal`, `MoveStepModal`. Lien d'accès depuis le cockpit. 5 tests unitaires verts. | 2026-09-05 |
+| **3.5 Tests & Validation Complète** | ✅ Fait | `tests/trips/planner/*`, `npm run test`, `npm run build` | 26/26 tests planner verts, 107/107 tests trips verts (13 suites), 462/462 tests repo verts (69 suites), `tsc --noEmit` 0 erreur, `eslint` 0 erreur (0 warning), build Next.js 15.5.18 validé, invariants CI validés. | 2026-09-05 |
+
+---
+
 ## 3. Journal des Décisions d'Architecture
 
 | Date | Décision | Justification | Impact sur les chantiers suivants |
@@ -68,6 +85,8 @@
 | 2026-09-05 | **Table catalogue `destination_steps` avec RLS publique** | Séparation claire entre le catalogue de référence (étapes curées, topo-guides) et les étapes instanciées d'un voyage (`trip_steps`). | Évolutivité : de nouveaux pays peuvent être ajoutés par simple INSERT sans altérer le code du moteur. |
 | 2026-09-05 | **Colonne `source` sur `trip_items` ('template' vs 'user')** | Permet à l'utilisateur de régénérer son itinéraire ou modifier ses dates sans jamais perdre les articles de matériel ajoutés manuellement. | Préservation intégrale des données utilisateur lors des réitérations du planificateur. |
 | 2026-09-05 | **Insertion France (`FR`) dans `countries_geo`** | `countries_geo` contenait 195 pays mais la France y était omise, bloquant la FK de `destination_steps`. Insertion propre avec géométrie et codes ISO officiels. | Cohérence territoriale totale pour les treks alpins et nationaux. |
+| 2026-09-05 | **Réordonnancement en 2 phases anti-collision (C3)** | Pour respecter la contrainte `UNIQUE(trip_id, day_number, order_index)` sans violer l'intégrité SQL lors des swaps d'indices, les `order_index` sont d'abord basculés en négatif (`-1000 - i`) avant d'être réassignés en continu `0, 1, 2...`. | Zéro erreur de contrainte unique, atomicité garantie sur toutes les bases Supabase. |
+| 2026-09-05 | **Décalages directionnels pour les jours (C3)** | Lors de l'insertion d'un jour, les étapes sont décalées en ordre décroissant de `day_number` ; lors de la suppression, en ordre croissant. | Élimine tout risque de collision sur `(trip_id, day_number, order_index)` lors des mutations de journées. |
 
 ---
 
@@ -79,13 +98,14 @@
 | **Anti-récursion RLS** (`can_read_trip`, `can_edit_trip`) | Fonctions `security definer stable` avec `search_path = public` | ✅ Conforme | Testé dans `tests/trips/rls-isolation.spec.ts` (6 assertions RLS concluantes, zéro récursion). |
 | **Protection RGPD Documents** (`trip_documents` SELECT réservé à `can_edit_trip`) | Policy restrictive : inaccessible aux simples `viewer` et visiteurs anonymes | ✅ Conforme | Testé dans `tests/trips/rls-isolation.spec.ts` (test RLS-06 garantit que `viewerCanReadDocs = false`). |
 | **Conformité Palette Liquid Glass** (Zéro orange `#E4501C`, Zéro `#1C2620`, Forest `#17402C`, Sage `#5B7F55`, Stone `#FAF8F5`) | Script `scripts/verify/ci_invariants.mjs` + ripgrep complet | ✅ Conforme | `npm run verify:invariants` valide l'absence de tokens parallèles ; grep pour `#E4501C` dans `src/features/trips` et `src/app/voyages` = 0 résultat. |
-| **Pas de composants custom réinventés** | Utilisation stricte de `GlassCard`, `LkvButton`, `LkvChip`, `LkvIcon` | ✅ Conforme | 100% des composants de `src/features/trips/components` consomment les primitives canoniques du Design System LKDV. |
-| **Navigation Mobile Canonique** | `AppShell` avec safe-areas (`safeTop={true}`, `hasBottomNav={true}`) et touch-targets $\ge 44\text{px}$ | ✅ Conforme | Utilisé sur `/voyages`, `/voyages/[slug]`, `loading.tsx` et `not-found.tsx`. |
+| **Pas de composants custom réinventés** | Utilisation stricte de `GlassCard`, `LkvButton`, `LkvChip`, `LkvIcon` | ✅ Conforme | 100% des composants de `src/features/trips/components` et `src/features/trips/planner` consomment les primitives canoniques du Design System LKDV. |
+| **Navigation Mobile Canonique** | `AppShell` avec safe-areas (`safeTop={true}`, `hasBottomNav={true}`) et touch-targets $\ge 44\text{px}$ | ✅ Conforme | Utilisé sur `/voyages`, `/voyages/[slug]`, `/voyages/[slug]/itineraire`, `loading.tsx` et `not-found.tsx`. |
 | **Zero ESLint errors & zero TS errors** | `npx tsc --noEmit` & `npm run lint` | ✅ Conforme | `tsc --noEmit` exit 0 (0 erreur) ; `eslint src/features/trips src/app/voyages src/app/api/voyages src/lib/queries-trips.ts` exit 0 (0 erreur, 0 warning). |
-| **Build de Production Next.js** | `npm run build` | ✅ Conforme | Next.js 15.5.18 compile et génère toutes les routes statiques et dynamiques (`/voyages`, `/voyages/[slug]`, `/api/voyages`) sans erreur. |
+| **Build de Production Next.js** | `npm run build` | ✅ Conforme | Next.js 15.5.18 compile et génère toutes les routes statiques et dynamiques (`/voyages`, `/voyages/[slug]`, `/voyages/[slug]/itineraire`, `/api/voyages`) sans erreur. |
 | **Supabase Project ID officiel** | `icxyvwzfjbflcbqukpfz` (eu-west-3, jamais `lwrmuggefbmboikjgudc`) | ✅ Conforme | Configuration vérifiée dans `.env` et Supabase MCP. |
-| **ZÉRO Appel LLM dans le Moteur C2** | Test AST ripgrep (`tests/trips/engine/antiLlm.spec.ts`) bannissant tout appel AI | ✅ Conforme | 0 import de `getChatCompletion`, 0 appel OpenRouter / OpenAI. Moteur 100% déterministe. |
+| **ZÉRO Appel LLM dans le Moteur C2 & C3** | Test AST ripgrep (`tests/trips/engine/antiLlm.spec.ts`) bannissant tout appel AI | ✅ Conforme | 0 import de `getChatCompletion`, 0 appel OpenRouter / OpenAI. Moteur 100% déterministe. |
 | **Idempotence du Seed Destinations** | Script `scripts/seed-destinations.ts` avec contrainte unique `natural_key` | ✅ Conforme | Exécution double vérifiée : 33 lignes synchronisées sur les 5 pays sans doublon ni régression. |
 | **Préservation Matériel Utilisateur** | Nettoyage sélectif `trip_items` (`source != 'user'`) lors de la régénération | ✅ Conforme | Testé dans `tests/trips/wizard.spec.ts` : les ajouts manuels du voyageur ne sont jamais écrasés. |
 | **Ergonomie Mobile Apple HIG** | Cibles tactiles $\ge 44\text{px}$, sticky bottom bar, safe-areas via `AppShell` | ✅ Conforme | Conforme aux guidelines iOS et skills `apple-ui-designer` / `interaction-design`. |
+| **Intégrité Ordonnancement C3** | Moteur déterministe `plannerEngine.ts` et tests TDD (compactage, réordonnancement, décalages) | ✅ Conforme | 26 tests unitaires et intégration verts dans `tests/trips/planner/`. |
 

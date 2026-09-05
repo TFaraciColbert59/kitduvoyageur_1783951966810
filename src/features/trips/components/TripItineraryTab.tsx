@@ -6,6 +6,7 @@ import type { TripFull, TripStats } from '../types/trip.types';
 import { GlassCard } from '@/components/ui/GlassCard';
 import { checkSeasonalityForDates } from '../engine/seasonality';
 import { regenerateItineraryAction } from '@/app/voyages/actions';
+import Link from 'next/link';
 import {
   Navigation,
   MapPin,
@@ -15,6 +16,7 @@ import {
   CheckCircle2,
   Home,
   Sparkles,
+  Calendar,
 } from 'lucide-react';
 
 interface TripItineraryTabProps {
@@ -107,15 +109,22 @@ export function TripItineraryTab({ trip, stats }: TripItineraryTabProps) {
         </div>
 
         {trip.permissions.canEdit && (
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2 flex-wrap">
+            <Link
+              href={`/voyages/${trip.slug}/itineraire`}
+              className="px-4 py-2 rounded-xl bg-forest-900 text-white text-xs font-semibold hover:bg-forest-800 flex items-center gap-1.5 transition-all min-h-[40px] shadow-sm active:scale-95"
+            >
+              <Calendar size={15} />
+              <span>Ouvrir le Planificateur</span>
+            </Link>
             <button
               type="button"
               onClick={() => setConfirmOpen(true)}
               disabled={isRegenerating}
-              className="px-3.5 py-2 rounded-xl border border-black/10 text-xs font-semibold text-[#17402C] hover:bg-black/5 flex items-center gap-1.5 transition-all min-h-[40px]"
+              className="px-3.5 py-2 rounded-xl border border-black/10 text-xs font-semibold text-forest-900 hover:bg-black/5 flex items-center gap-1.5 transition-all min-h-[40px]"
             >
               <RotateCcw size={14} className={isRegenerating ? 'animate-spin' : ''} />
-              <span>{isRegenerating ? 'Calcul en cours...' : 'Régénérer l’itinéraire'}</span>
+              <span>{isRegenerating ? 'Calcul...' : 'Régénérer'}</span>
             </button>
           </div>
         )}
