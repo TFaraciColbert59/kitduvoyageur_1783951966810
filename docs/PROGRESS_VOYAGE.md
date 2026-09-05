@@ -11,7 +11,7 @@
 | **C4** | **Lieux communautaires (Places, topos, avis, scoring, floutage éthique)** | ✅ **Validé** | `feat/c4-community-places` | 2026-09-05 | 2026-09-05 | `a33298a` |
 | **C5** | **Affiliation Travelpayouts (Vols, hôtels, activités, disclosure légal)** | ✅ **Validé** | `feat/c5-affiliation` | 2026-09-05 | 2026-09-05 | `ab0c096` |
 | **C6** | **IA & Kit contextuel (Boutique LKDV, équipement, marge pleine)** | ✅ **Validé** | `feat/c6-ai-kit` | 2026-09-05 | 2026-09-05 | `06413db` |
-| **C7** | **Collaboratif, partage, offline, papiers, budget** | ✅ **Validé** | `feat/c7-collab-offline` | 2026-09-05 | 2026-09-05 | `(en cours)` |
+| **C7** | **Collaboratif, partage, offline, papiers, budget** | ✅ **Validé** | `feat/c7-collab-offline` | 2026-09-05 | 2026-09-05 | `73a87df` |
 | **C8** | **Rétrospective & Publication Communautaire (Carnet, REX)** | 🟡 **En cours** | `feat/c8-trip-completion` | 2026-09-05 | - | - |
 | RF | Recette Finale & Pré-lancement | ⬜ À venir | `release/voyage-v1` | - | - | - |
 
