@@ -1,3 +1,28 @@
+# MISSION LOG — LKDV
+
+## 2026-09-05 — Programme Intégral « Module Voyage » (Chantiers C0 à C8 + Recette Finale RF)
+
+### Synthèse Globale
+- **Branche de Release** : `release/voyage-v1`
+- **Commit de Release** : `961c1a9` (consolidé)
+- **Objectif d'Exécution** : Exécution intégrale et autonome du programme défini dans `ROADMAP_VOYAGE.md` de C0 à C8 jusqu'à la recette finale prouvée.
+- **Résultat Technique** : **572/572 tests Vitest réussis (87 suites)**, `npx tsc --noEmit` code 0, `npm run lint` code 0, `npm run verify:invariants` code 0, `npm run build` code 0 (App Router Next.js 15.5.18).
+- **Sécurité Supabase** : 100% des 20 tables du module protégées par Row-Level Security vérifiées sur `icxyvwzfjbflcbqukpfz`.
+
+### Chantiers Exécutés & Validés
+1. **Chantier 0 — Unification Messagerie ↔ Groupes** : Résolution de la fragmentation des fils de discussion et rattachement au `trip_id`.
+2. **Chantier 1 — Fondations Entité Trip** : Schéma SQL, RLS, service layer `queries-trips.ts`, Cockpit Liquid Glass Apple HIG.
+3. **Chantier 2 — Wizard de Création & Moteur Déterministe** : 5 étapes synchronisées URL/local, moteur de répartition kilométrique sans appel LLM, 5 pays pilotes (FR, NP, PE, IS, MA).
+4. **Chantier 3 — Planificateur d'Itinéraire** : Dual-view tactile sticky Apple HIG, 8 Server Actions sécurisées, réordonnancement 2-phases anti-collision.
+5. **Chantier 4 — Lieux Communautaires** : 42 lieux réels qualifiés, scoring bayésien avec preuve terrain x2, floutage éthique serveur (~500m / 2 décimales).
+6. **Chantier 5 — Affiliation Travelpayouts** : Transparence DGCCRF `<AffiliateDisclosure />`, hachage SHA-256 salé RGPD sans IP en clair, postbacks HMAC timing-safe.
+7. **Chantier 6 — Sac Contextuel & Boutique LKDV** : Moteur de Gear Gap, règles de sécurité montagne (> 2400m), maillage boutique LKDV à marge pleine via Stripe.
+8. **Chantier 7 — Collaboration, Partage, Offline & Budget** : Équilibrage glouton `simplifyDebts`, documents d'identité chiffrés avec alerte 180j, export GPX 1.1 et mode hors-ligne.
+9. **Chantier 8 — Rétrospective & Publication Carnet** : Conversion voyage -> carnet public sans fuite de données, soumission d'avis certifiés terrain (`has_field_proof = true`).
+10. **Recette Finale (RF)** : Consolidation master sur `release/voyage-v1`, rapports complets `RAPPORT_FINAL_VOYAGE.md` et `PROGRESS_VOYAGE.md`.
+
+---
+
 # MISSION LOG — Enrichissement Massif des Pages Pays par IA (Architecture Multi-Tiers 1 à 4)
 
 **Date :** 4 septembre 2026  

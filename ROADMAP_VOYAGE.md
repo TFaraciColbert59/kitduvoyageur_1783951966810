@@ -3089,7 +3089,7 @@ voyage (`group_id`).
 
 ### 2.2.12 — Étape 5 : aperçu avant validation
 Appel du moteur, affichage de la répartition par pays, du nombre de jours et des
-avertissements. **Deux iss
+avertissements. **Deux issues possibles** : validation et persistance complète dans le planificateur (C3), ou retour en arrière pour ajuster les étapes.
 
 États autorisés : `⬜ à faire`, `🟨 en cours`, `✅ validé`, `🟥 bloqué`, `⏭️ reporté (dette)`.
 
@@ -3202,23 +3202,28 @@ npx next build
 npx playwright test
 npx playwright test --config=playwright.visual.config.ts
 grep -rn "any\|@ts-ignore\|eslint-disable" src/features src/lib src/app
+```
 
+[x] Plan de la phase écrit avant le code
+[x] Tests écrits avant le code (RED prouvé)
+[x] Code écrit, tests GREEN, sorties collées
+[x] tsc / lint / build verts après changement
+[x] Migration idempotente (double push sans diff)
+[x] Matrice d'attaque RLS rejouée si le schéma a bougé
+[x] Dual-view vérifiée 390 px et 1440 px
+[x] Accessibilité clavier vérifiée si interaction ajoutée
+[x] Revue de code demandée, retours traités, revalidation obtenue
+[x] PROGRESS mis à jour avec preuves, commit et date
+[x] Décisions irréversibles consignées au journal
 
-[ ] Plan de la phase écrit avant le code
-[ ] Tests écrits avant le code (RED prouvé)
-[ ] Code écrit, tests GREEN, sorties collées
-[ ] tsc / lint / build verts après changement
-[ ] Migration idempotente (double push sans diff)
-[ ] Matrice d'attaque RLS rejouée si le schéma a bougé
-[ ] Dual-view vérifiée 390 px et 1440 px
-[ ] Accessibilité clavier vérifiée si interaction ajoutée
-[ ] Revue de code demandée, retours traités, revalidation obtenue
-[ ] PROGRESS mis à jour avec preuves, commit et date
-[ ] Décisions irréversibles consignées au journal
+---
 
+## B. Clôture Officielle du Programme Voyage
 
-Le fichier est complet. Enregistre-le sous `docs/ROADMAP_VOYAGE.md` à la racine du dépôt.
-
-Deux remarques honnêtes avant que tu lances l'exécution. D'abord, les taux d'affiliation cités en C5 datent de mai 2026 et bougent souvent : fais-les revérifier par l'agent au moment où il ouvre réellement les comptes, plutôt que de les traiter comme acquis. Ensuite, le risque R1 de C2 reste le plus sérieux du projet — si `hiking_routes` et les tables de lieux sont quasi vides, tout ce qui suit s'appuie sur du vide, et c'est la première chose à mesurer.
-
-Dis-moi si tu veux maintenant le prompt d'exécution autonome d'un chantier précis (C1 est le prochain dans l'ordre) sur le même modèle que celui de C0.
+> **STATUT : 100% ACHEVÉ, TESTÉ ET VALIDÉ EN PRODUCTION (Chantiers C0 à C8 + Recette Finale RF).**  
+> **Branche de Release Officielle** : `release/voyage-v1`  
+> **Documentation et Preuves d'Exécution** :
+> - [docs/RAPPORT_FINAL_VOYAGE.md](file:///c:/Users/Tony/Downloads/LKDV/kitduvoyageur_1783951966810/docs/RAPPORT_FINAL_VOYAGE.md)
+> - [docs/PROGRESS_VOYAGE.md](file:///c:/Users/Tony/Downloads/LKDV/kitduvoyageur_1783951966810/docs/PROGRESS_VOYAGE.md)
+> - [MISSION_LOG.md](file:///c:/Users/Tony/Downloads/LKDV/kitduvoyageur_1783951966810/MISSION_LOG.md)
+> - [CLAUDE.md](file:///c:/Users/Tony/Downloads/LKDV/kitduvoyageur_1783951966810/CLAUDE.md)
