@@ -30,6 +30,7 @@ import { TripBudgetView } from '@/features/trips/components/TripBudgetView';
 import { TripDocumentsView } from '@/features/trips/components/TripDocumentsView';
 import { TripShareModal } from '@/features/trips/components/TripShareModal';
 import { TripOfflineBar } from '@/features/trips/components/TripOfflineBar';
+import { TripNotesView } from '@/features/trips/components/TripNotesView';
 
 export interface TripDetailClientProps {
   trip: TripFull;
@@ -234,30 +235,9 @@ export default function TripDetailClient({
             </TripPlaceholderTab>
           )}
 
-          {/* Onglet 8 : Carnet (Chantier 8) */}
+          {/* Onglet 8 : Carnet (Chantier 8 - Rétrospective & Carnet Communautaire) */}
           {activeTab === 'notes' && (
-            <TripPlaceholderTab
-              chantierNumber={8}
-              chantierTitle="Rétrospective & Carnet Communautaire (Récit, Photos, Publication)"
-              description="Ce module permettra de rédiger le récit de voyage, d'associer des photos géolocalisées et de publier votre aventure dans la communauté LKDV."
-              icon={<BookOpen size={24} />}
-              hasData={trip.notes.length > 0}
-              emptyMessage="Aucune note enregistrée dans ce carnet de bord."
-            >
-              <div className="space-y-3">
-                {trip.notes.map(note => (
-                  <GlassCard key={note.id} tone="neutral" className="p-4 rounded-[20px] border border-white/60">
-                    {note.title && <h4 className="font-semibold text-[#17402C] mb-1">{note.title}</h4>}
-                    <p className="text-sm text-gray-700 whitespace-pre-wrap leading-relaxed">
-                      {note.content}
-                    </p>
-                    {note.day_number && (
-                      <div className="text-xs text-[#5B7F55] mt-2">Jour {note.day_number}</div>
-                    )}
-                  </GlassCard>
-                ))}
-              </div>
-            </TripPlaceholderTab>
+            <TripNotesView trip={trip} />
           )}
         </main>
 

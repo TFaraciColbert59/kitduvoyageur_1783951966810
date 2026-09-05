@@ -492,3 +492,57 @@ export const updateTripVisibilitySchema = z.object({
 });
 export type UpdateTripVisibilityInput = z.infer<typeof updateTripVisibilitySchema>;
 
+/**
+ * Schémas Chantier 8 : Notes & Carnet de bord, Clôture et Avis de lieux
+ */
+export const addTripNoteSchema = z.object({
+  tripId: z.string().uuid('ID de voyage invalide'),
+  title: z.string().trim().max(150, 'Le titre ne peut pas dépasser 150 caractères').optional().nullable(),
+  content: z.string().trim().min(2, 'Le récit doit comporter au moins 2 caractères').max(5000, 'Le récit ne peut pas dépasser 5000 caractères'),
+  dayNumber: z.number().int().min(1, 'Le numéro de jour doit être positif').optional().nullable(),
+  isPinned: z.boolean().default(false).optional(),
+});
+export type AddTripNoteInput = z.infer<typeof addTripNoteSchema>;
+
+export const updateTripNoteSchema = z.object({
+  tripId: z.string().uuid('ID de voyage invalide'),
+  noteId: z.string().uuid('ID de note invalide'),
+  title: z.string().trim().max(150).optional().nullable(),
+  content: z.string().trim().min(2).max(5000).optional(),
+  dayNumber: z.number().int().min(1).optional().nullable(),
+  isPinned: z.boolean().optional(),
+});
+export type UpdateTripNoteInput = z.infer<typeof updateTripNoteSchema>;
+
+export const deleteTripNoteSchema = z.object({
+  tripId: z.string().uuid('ID de voyage invalide'),
+  noteId: z.string().uuid('ID de note invalide'),
+});
+export type DeleteTripNoteInput = z.infer<typeof deleteTripNoteSchema>;
+
+export const updateTripStatusSchema = z.object({
+  tripId: z.string().uuid('ID de voyage invalide'),
+  status: tripStatusEnum,
+});
+export type UpdateTripStatusInput = z.infer<typeof updateTripStatusSchema>;
+
+export const publishTripCarnetSchema = z.object({
+  tripId: z.string().uuid('ID de voyage invalide'),
+  title: z.string().trim().min(2, 'Le titre doit comporter au moins 2 caractères').max(150).optional(),
+  description: z.string().trim().max(1000).optional().nullable(),
+  isPublic: z.boolean().default(true).optional(),
+});
+export type PublishTripCarnetInput = z.infer<typeof publishTripCarnetSchema>;
+
+export const submitTripFieldReviewsSchema = z.object({
+  tripId: z.string().uuid('ID de voyage invalide'),
+  reviews: z.array(
+    z.object({
+      placeId: z.string().uuid('ID de lieu invalide'),
+      rating: z.number().int().min(1, 'La note minimale est 1').max(5, 'La note maximale est 5'),
+      comment: z.string().trim().min(5, 'Le commentaire doit comporter au moins 5 caractères').max(2000),
+    })
+  ).min(1, 'Au moins un avis doit être fourni'),
+});
+export type SubmitTripFieldReviewsInput = z.infer<typeof submitTripFieldReviewsSchema>;
+

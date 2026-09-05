@@ -11,9 +11,9 @@
 | **C4** | **Lieux communautaires (Places, topos, avis, scoring, floutage éthique)** | ✅ **Validé** | `feat/c4-community-places` | 2026-09-05 | 2026-09-05 | `a33298a` |
 | **C5** | **Affiliation Travelpayouts (Vols, hôtels, activités, disclosure légal)** | ✅ **Validé** | `feat/c5-affiliation` | 2026-09-05 | 2026-09-05 | `ab0c096` |
 | **C6** | **IA & Kit contextuel (Boutique LKDV, équipement, marge pleine)** | ✅ **Validé** | `feat/c6-ai-kit` | 2026-09-05 | 2026-09-05 | `06413db` |
-| **C7** | **Collaboratif, partage, offline, papiers, budget** | ✅ **Validé** | `feat/c7-collab-offline` | 2026-09-05 | 2026-09-05 | `73a87df` |
-| **C8** | **Rétrospective & Publication Communautaire (Carnet, REX)** | 🟡 **En cours** | `feat/c8-trip-completion` | 2026-09-05 | - | - |
-| RF | Recette Finale & Pré-lancement | ⬜ À venir | `release/voyage-v1` | - | - | - |
+| **C7** | **Collaboratif, partage, offline, papiers, budget** | ✅ **Validé** | `feat/c7-collab-offline` | 2026-09-05 | 2026-09-05 | `f9cfb6c` |
+| **C8** | **Rétrospective & Publication Communautaire (Carnet, REX)** | ✅ **Validé** | `feat/c8-trip-completion` | 2026-09-05 | 2026-09-05 | `(en cours)` |
+| RF | Recette Finale & Pré-lancement | 🟡 **En cours** | `release/voyage-v1` | 2026-09-05 | - | - |
 
 ---
 
@@ -134,6 +134,21 @@
 
 ---
 
+## 2.octies Chantier 8 — Suivi des Sous-Étapes (Rétrospective & Publication Communautaire : Carnet, REX, Preuve Terrain)
+
+| Étape | Statut | Fichiers touchés | Preuve / Commande | Date |
+| :--- | :---: | :--- | :--- | :--- |
+| **8.0 Reconnaissance & Baseline** | | | | |
+| 8.0.1 Vérification tables `carnets`, `carnet_moments`, `carnet_kit_items`, `place_reviews` | ✅ Fait | Supabase MCP / migrations | Tables existantes confirmées. RLS active sur 100% des tables. | 2026-09-05 |
+| 8.0.2 Créer branche git | ✅ Fait | Git | `git checkout -b feat/c8-trip-completion` | 2026-09-05 |
+| **8.1 Migration Supabase & FKs Additives** | ✅ Fait | `supabase/migrations/20260905160000_trip_completion_carnet.sql` | Colonnes additives `carnets.trip_id` et `place_reviews.trip_id` avec index `idx_carnets_trip_id` et `idx_place_reviews_trip_id`. Appliquée et vérifiée idempotente sur `icxyvwzfjbflcbqukpfz`. | 2026-09-05 |
+| **8.2 Moteur Pur de Rétrospective & Conversion Carnet (TDD)** | ✅ Fait | `src/features/trips/engine/carnetConversionEngine.ts`, `tests/trips/engine/carnetConversionEngine.spec.ts` | Calcul déterministe des métriques d'aventure (km, D+, poids de sac emporté, jours/nuits). Conversion `TripFull` vers payload `carnets`, `carnet_moments` (depuis `trip_notes`) et `carnet_kit_items` (depuis `trip_items` où `is_packed = true`). Extraction des lieux pour preuve terrain (`extractCertifiedPlaceCandidates`). Garantie RGPD stricte : zéro fuite de document ni de compte personnel. 6 tests verts. | 2026-09-05 |
+| **8.3 Couche Service & Server Actions** | ✅ Fait | `src/lib/queries-trip-notes.ts`, `src/lib/queries-trip-completion.ts`, `src/app/voyages/completion-actions.ts`, `tests/trips/notes/queries-trip-notes.spec.ts` | Services : `getTripNotes`, `addTripNote`, `updateTripNote`, `deleteTripNote`, `updateTripStatus`, `publishTripToCarnet`, `submitTripFieldReviews`. Server Actions transactionnelles avec validation Zod et vérification d'authentification. 7 tests unitaires verts. | 2026-09-05 |
+| **8.4 Interface Utilisateur & Intégration Cockpit (Apple HIG)** | ✅ Fait | `src/features/trips/components/TripNotesView.tsx`, `TripCompletionModal.tsx`, `TripDetailClient.tsx`, `tests/trips/notes/notesComponents.spec.ts` | Dernier placeholder du cockpit remplacé : `TripNotesView` affiche les notes avec filtres par jour, indicateur épinglé, création inline de récits et bannière de statut. Modal `TripCompletionModal` avec métriques visuelles, bascule carnet public et formulaire d'avis certifiés terrain avec notation étoilée. 4 tests verts. | 2026-09-05 |
+| **8.5 Validation Globale & CI** | ✅ Fait | `npm run test`, `npm run build`, `npm run lint`, `npm run verify:invariants` | 17/17 tests C8 verts, 572/572 tests repo verts (87 suites), `tsc --noEmit` 0 erreur, `eslint` 0 erreur (0 warning nouveau), build Next.js 15.5.18 exit 0 (`ƒ /voyages/[slug]` compilée avec toutes les vues actives), invariants CI validés. | 2026-09-05 |
+
+---
+
 ## 3. Journal des Décisions d'Architecture
 
 | Date | Décision | Justification | Impact sur les chantiers suivants |
@@ -162,6 +177,8 @@
 | 2026-09-05 | **Format Standard GPX 1.1 Garmin / Topo (C7)** | Générateur XML strict conforme au schéma TopoGrafix GPX 1.1 (`<wpt>` pour étapes/POIs, `<trkpt>` chronologiques). | Export universel immédiatement importable dans Garmin Connect, Strava, Komoot ou OSM. |
 | 2026-09-05 | **Règle Internationale Validité Passeport 180j (C7)** | Contrôle de validité des pièces d'identité avec seuil d'alerte critique à 180 jours (exigence des 6 mois post-retour requise par la plupart des pays hors UE). | Sécurité juridique et prévention des refus d'embarquement pour les voyageurs. |
 | 2026-09-05 | **Isolation Hors-Ligne SSR-Safe (C7)** | Persistance `localStorage` sous `lkdv:offline:trip:[slug]` avec détection sécurisée de l'environnement (`typeof window === 'undefined'`). | Fonctionnement hors réseau garanti en fond de vallée sans altérer le SSR Next.js. |
+| 2026-09-05 | **Conversion Déterministe Trip -> Carnet sans Fuite (C8)** | Transformation pure via `convertTripToCarnetData` qui exclut formellement les passeports, assurances et comptes privés. | Préservation intégrale du RGPD tout en alimentant la communauté en récits authentiques. |
+| 2026-09-05 | **Boucle de Rétroaction Lieux & Preuve Terrain (C8)** | Les avis de lieux soumis en clôture de voyage portent automatiquement `has_field_proof = true` et `trip_id`. | Pondération double dans l'algorithme bayésien (C4) et valorisation des retours d'expérience vécus. |
 
 ---
 
@@ -196,6 +213,8 @@
 | **Ségrégation Rôles Collaborateurs C7** | Matrice de droits stricte : seul `owner` modifie les rôles ou supprime le voyage | ✅ Conforme | Testé dans `tests/trips/collab/queries-trip-collab.spec.ts`. |
 | **Protection Export Public des Papiers C7** | Les documents d'identité sont exclus à 100% de la page d'export imprimable et des tokens publics | ✅ Conforme | Testé dans `tests/trips/collab/collabComponents.spec.ts` et `tests/trips/rls-isolation.spec.ts`. |
 | **Conformité Schéma GPX 1.1 C7** | Génération XML validée avec balises canoniques `<gpx>`, `<wpt>`, `<trk>` | ✅ Conforme | Testé dans `tests/trips/engine/exportEngine.spec.ts`. |
+| **Inviolabilité RGPD Carnet Public C8** | Les récits publiés en carnet n'exposent jamais les documents d'identité ni les dépenses privées des participants | ✅ Conforme | Testé dans `tests/trips/engine/carnetConversionEngine.spec.ts`. |
+| **Authenticité Preuve Terrain Certifiée C8** | L'avis de lieu suite à un voyage vécu porte `has_field_proof = true` certifié par le rattachement au voyage | ✅ Conforme | Testé dans `tests/trips/notes/queries-trip-notes.spec.ts`. |
 
 
 

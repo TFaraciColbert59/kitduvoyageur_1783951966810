@@ -12,3 +12,5 @@ export * from './components/TripOverviewTab';
 export * from './components/TripPlaceholderTab';
 export * from './components/TripFiltersBar';
 export * from './components/QuickCreateTripModal';
+export * from './components/TripNotesView';
+export * from './components/TripCompletionModal';
