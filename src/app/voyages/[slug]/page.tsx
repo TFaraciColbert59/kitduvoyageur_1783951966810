@@ -2,6 +2,7 @@ import { Metadata } from 'next';
 import { notFound } from 'next/navigation';
 import { createClient } from '@/lib/supabase/server';
 import { getTripBySlug, getTripStats } from '@/lib/queries-trips';
+import { getAffiliateLinks } from '@/lib/queries-affiliation';
 import TripDetailClient from './TripDetailClient';
 
 export const dynamic = 'force-dynamic';
@@ -56,6 +57,13 @@ export default async function TripDetailPage({ params }: PageProps) {
 
   const stats = await getTripStats(trip.id);
 
+  // Liens d'affiliation ciblés par pays
+  const countryCode = trip.destination_country_code || undefined;
+  const affiliateLinks = await getAffiliateLinks({
+    countryCode,
+    limit: 6,
+  });
+
   // Schema.org TouristTrip
   const jsonLd = {
     '@context': 'https://schema.org',
@@ -86,7 +94,7 @@ export default async function TripDetailPage({ params }: PageProps) {
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
       />
-      <TripDetailClient trip={trip} stats={stats} />
+      <TripDetailClient trip={trip} stats={stats} affiliateLinks={affiliateLinks} />
     </>
   );
 }

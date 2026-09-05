@@ -21,13 +21,15 @@ import {
   ArrowLeft,
 } from 'lucide-react';
 import type { TripFull, TripStats } from '@/features/trips/types/trip.types';
+import { TripAffiliateSection, type AffiliateLink } from '@/features/affiliation';
 
 export interface TripDetailClientProps {
   trip: TripFull;
   stats: TripStats;
+  affiliateLinks?: AffiliateLink[];
 }
 
-export default function TripDetailClient({ trip, stats }: TripDetailClientProps) {
+export default function TripDetailClient({ trip, stats, affiliateLinks = [] }: TripDetailClientProps) {
   const [activeTab, setActiveTab] = useState<string>('overview');
 
   const tabs = [
@@ -97,9 +99,18 @@ export default function TripDetailClient({ trip, stats }: TripDetailClientProps)
 
         {/* 3. Contenu de l'onglet actif */}
         <main>
-          {/* Onglet 1 : Vue d'ensemble (Complet C1) */}
+          {/* Onglet 1 : Vue d'ensemble (Complet C1 + C5 Affiliation) */}
           {activeTab === 'overview' && (
-            <TripOverviewTab trip={trip} stats={stats} onTabChange={setActiveTab} />
+            <>
+              <TripOverviewTab trip={trip} stats={stats} onTabChange={setActiveTab} />
+              {affiliateLinks.length > 0 && (
+                <TripAffiliateSection
+                  links={affiliateLinks}
+                  tripId={trip.id}
+                  countryNames={trip.destination_name ? [trip.destination_name] : []}
+                />
+              )}
+            </>
           )}
 
           {/* Onglet 2 : Itinéraire (Complet C2) */}

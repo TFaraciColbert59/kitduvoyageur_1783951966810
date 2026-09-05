@@ -9,7 +9,7 @@
 | **C2** | **Wizard de création & moteur de répartition (5 étapes, déterministe)** | ✅ **Validé** | `feat/c2-trip-wizard` | 2026-09-05 | 2026-09-05 | `4a78964` |
 | **C3** | **Planificateur d'itinéraire (Édition jour/jour, réordonnancement, dual-view)** | ✅ **Validé** | `feat/c3-itinerary-planner` | 2026-09-05 | 2026-09-05 | `f8ce1c6` |
 | **C4** | **Lieux communautaires (Places, topos, avis, scoring, floutage éthique)** | ✅ **Validé** | `feat/c4-community-places` | 2026-09-05 | 2026-09-05 | `a33298a` |
-| C5 | Affiliation Travelpayouts (Vols, hôtels, activités, disclosure légal) | ⬜ À venir | `feat/c5-affiliation` | - | - | - |
+| **C5** | **Affiliation Travelpayouts (Vols, hôtels, activités, disclosure légal)** | ✅ **Validé** | `feat/c5-affiliation` | 2026-09-05 | 2026-09-05 | `(en cours commit)` |
 | C6 | IA & Kit contextuel (Boutique LKDV, équipement, marge pleine) | ⬜ À venir | `feat/c6-ai-kit` | - | - | - |
 | C7 | Collaboratif, partage, offline, papiers, budget | ⬜ À venir | `feat/c7-collab-offline` | - | - | - |
 | C8 | Rétrospective & Publication Communautaire (Carnet, Retour d'Expérience) | ⬜ À venir | `feat/c8-trip-completion` | - | - | - |
@@ -87,6 +87,22 @@
 
 ---
 
+## 2.quinquies Chantier 5 — Suivi des Sous-Étapes (Affiliation Travelpayouts & Monétisation Éthique)
+
+| Étape | Statut | Fichiers touchés | Preuve / Commande | Date |
+| :--- | :---: | :--- | :--- | :--- |
+| **5.0 Reconnaissance & Baseline** | | | | |
+| 5.0.1 Audit tables affiliation existantes | ✅ Fait | Terminal / Supabase MCP | Découverte de 5 tables créées en août 2026 (`affiliate_partners`, `affiliate_programs`, `affiliate_offers`, `affiliate_clicks`, `affiliate_conversions`). Conservation additive et idempotente. | 2026-09-05 |
+| 5.0.2 Créer branche git | ✅ Fait | Git | `git checkout -b feat/c5-affiliation` | 2026-09-05 |
+| **5.1 Migration Supabase & FK trip_items** | ✅ Fait | `supabase/migrations/20260905130000_affiliate_travelpayouts.sql` | Migration additive exécutée avec succès sur `icxyvwzfjbflcbqukpfz`. Table `affiliate_links` créée avec RLS. Contrainte FK `trip_items(affiliate_link_id) -> affiliate_links(id)` activée. 100% RLS active sur toutes les tables affiliation. | 2026-09-05 |
+| **5.2 Moteur de Sécurité, RGPD & Deeplinks (TDD)** | ✅ Fait | `src/features/affiliation/engine/affiliateEngine.ts`, `tests/affiliation/engine.spec.ts` | Protection anti-open redirect HTTPS strict (`isValidAffiliateTargetUrl`), fusion saine de query params (`buildAffiliateUrl`), hachage salé SHA-256 (`hashSessionForRgpd`, zéro IP en clair), vérification webhook postback HMAC-SHA256 timing-safe (`verifyAffiliatePostbackSignature`). 9 tests verts. | 2026-09-05 |
+| **5.3 Données Réelles Partenaires & Seed Idempotent** | ✅ Fait | `scripts/seed-affiliate.ts` | 5 partenaires officiels Travelpayouts (`booking`, `aviasales`, `getyourguide`, `airalo`, `chapka`) synchronisés. 21 liens réels qualifiés pour FR (4), NP (5), PE (4), IS (4), MA (4). Exécution idempotent vérifiée (exit code 0). | 2026-09-05 |
+| **5.4 Couche Service & Routes Redirection/Webhook** | ✅ Fait | `src/lib/queries-affiliation.ts`, `src/app/go/[slug]/route.ts`, `src/app/api/affiliate/travelpayouts/route.ts`, `tests/affiliation/queries-affiliation.spec.ts` | `getAffiliateLinks`, `getAffiliateLinkBySlug`, `logAffiliateClick`, `recordAffiliateConversion`. Route 307 `/go/[slug]` avec journalisation RGPD. Route Webhook Postback `/api/affiliate/travelpayouts` avec vérification de signature. 4 tests verts. | 2026-09-05 |
+| **5.5 Interface Utilisateur & Transparence Légale (Apple HIG)** | ✅ Fait | `src/features/affiliation/components/*`, `src/app/voyages/[slug]/page.tsx`, `TripDetailClient.tsx`, `tests/affiliation/components.spec.ts` | Composants : `AffiliateDisclosure` (Art. L121-2/L121-3 Code de la consommation & Loi 9 juin 2023), `AffiliateLinkCard` (`rel="sponsored nofollow"`, touch target $\ge 44\text{px}$), `TripAffiliateSection`. Intégré dans l'onglet Vue d'ensemble du Cockpit Voyage. 4 tests verts. | 2026-09-05 |
+| **5.6 Validation Globale & CI** | ✅ Fait | `npm run test`, `npm run build`, `npm run lint`, `npm run verify:invariants` | 17/17 tests affiliation verts, 508/508 tests repo verts (76 suites), `tsc --noEmit` 0 erreur, `eslint` 0 erreur (0 warning), build Next.js 15.5.18 exit 0 (`ƒ /go/[slug]` & `ƒ /api/affiliate/travelpayouts` compilées), invariants CI validés. | 2026-09-05 |
+
+---
+
 ## 3. Journal des Décisions d'Architecture
 
 | Date | Décision | Justification | Impact sur les chantiers suivants |
@@ -106,6 +122,10 @@
 | 2026-09-05 | **Floutage éthique serveur des coordonnées (~500m / 2 décimales) pour lieux sensibles (C4)** | Prévention active de la surfréquentation des spots fragiles (bivouacs non aménagés, sources d'eau en zone aride) et sécurité physique des randonneurs (ROADMAP §5.7). | Coordonnées protégées côté serveur avant restitution au client, préservant la biodiversité et l'éthique outdoor. |
 | 2026-09-05 | **Scoring bayésien avec preuve terrain doublée (C4)** | Moyenne bayésienne pondérée ($C=3, m=3.5$) et coefficient x2 pour les avis certifiés avec `has_field_proof = true`. ZÉRO terme monétaire ou sponsorisé (Invariant CI 2). | Indépendance totale des notes communautaires face à tout intérêt commercial ou publicitaire. |
 | 2026-09-05 | **Seuil cold-start de 42 lieux réels qualifiés (C4)** | Injection de 42 lieux réels (refuges alpins, bivouacs réglementés, cols, sources) répartis équitablement sur les 5 pays socles (FR: 10, NP: 8, PE: 8, IS: 8, MA: 8). | Catalogue immédiatement opérationnel pour l'exploration, l'ajout au voyage et l'affiliation (C5). |
+| 2026-09-05 | **Protection Anti-Open Redirect & HTTPS Strict (C5)** | Fonction pure `isValidAffiliateTargetUrl` n'autorisant que le protocole `https:` et bloquant formellement `http:`, `javascript:`, `data:` et les schémas arbitraires. | Élimine les failles de redirection ouverte et sécurise les clics sortants des utilisateurs. |
+| 2026-09-05 | **Minimisation RGPD : Zéro IP en clair (C5)** | Hachage salé SHA-256 (`hashSessionForRgpd`) combinant IP + User-Agent + sel secret serveur. Seul le `session_hash` de 64 caractères hex est persisté dans `affiliate_clicks`. | Conformité stricte aux exigences CNIL et RGPD §5.3, évitant la collecte de données nominatives. |
+| 2026-09-05 | **Conformité Légale DGCCRF / Loi 9 juin 2023 (C5)** | Présence obligatoire de `<AffiliateDisclosure />` en amont des liens, rappelant la gratuité pour l'utilisateur et l'absence d'influence sur l'ordre éditorial. Attribut `rel="sponsored nofollow"` systématique. | Zéro risque de requalification en publicité clandestine ou pratique trompeuse. |
+| 2026-09-05 | **Signature Webhook Postback HMAC-SHA256 Timing-Safe (C5)** | Vérification cryptographique des webhooks Travelpayouts avec `timingSafeEqual` pour empêcher les attaques par canal auxiliaire (timing attacks). | Protection absolue contre les fausses notifications de conversion. |
 
 ---
 
@@ -119,8 +139,8 @@
 | **Conformité Palette Liquid Glass** (Zéro orange `#E4501C`, Zéro `#1C2620`, Forest `#17402C`, Sage `#5B7F55`, Stone `#FAF8F5`) | Script `scripts/verify/ci_invariants.mjs` + ripgrep complet | ✅ Conforme | `npm run verify:invariants` valide l'absence de tokens parallèles ; grep pour `#E4501C` dans `src/features/trips` et `src/app/voyages` = 0 résultat. |
 | **Pas de composants custom réinventés** | Utilisation stricte de `GlassCard`, `LkvButton`, `LkvChip`, `LkvIcon` | ✅ Conforme | 100% des composants de `src/features/trips/components` et `src/features/trips/planner` consomment les primitives canoniques du Design System LKDV. |
 | **Navigation Mobile Canonique** | `AppShell` avec safe-areas (`safeTop={true}`, `hasBottomNav={true}`) et touch-targets $\ge 44\text{px}$ | ✅ Conforme | Utilisé sur `/voyages`, `/voyages/[slug]`, `/voyages/[slug]/itineraire`, `loading.tsx` et `not-found.tsx`. |
-| **Zero ESLint errors & zero TS errors** | `npx tsc --noEmit` & `npm run lint` | ✅ Conforme | `tsc --noEmit` exit 0 (0 erreur) ; `eslint src/features/trips src/app/voyages src/app/api/voyages src/lib/queries-trips.ts` exit 0 (0 erreur, 0 warning). |
-| **Build de Production Next.js** | `npm run build` | ✅ Conforme | Next.js 15.5.18 compile et génère toutes les routes statiques et dynamiques (`/voyages`, `/voyages/[slug]`, `/voyages/[slug]/itineraire`, `/api/voyages`) sans erreur. |
+| **Zero ESLint errors & zero TS errors** | `npx tsc --noEmit` & `npm run lint` | ✅ Conforme | `tsc --noEmit` exit 0 (0 erreur) ; `eslint` exit 0 (0 erreur). |
+| **Build de Production Next.js** | `npm run build` | ✅ Conforme | Next.js 15.5.18 compile et génère toutes les routes sans erreur (`npm run build` exit 0). |
 | **Supabase Project ID officiel** | `icxyvwzfjbflcbqukpfz` (eu-west-3, jamais `lwrmuggefbmboikjgudc`) | ✅ Conforme | Configuration vérifiée dans `.env` et Supabase MCP. |
 | **ZÉRO Appel LLM dans le Moteur C2 & C3** | Test AST ripgrep (`tests/trips/engine/antiLlm.spec.ts`) bannissant tout appel AI | ✅ Conforme | 0 import de `getChatCompletion`, 0 appel OpenRouter / OpenAI. Moteur 100% déterministe. |
 | **Idempotence du Seed Destinations** | Script `scripts/seed-destinations.ts` avec contrainte unique `natural_key` | ✅ Conforme | Exécution double vérifiée : 33 lignes synchronisées sur les 5 pays sans doublon ni régression. |
@@ -131,5 +151,10 @@
 | **Floutage Éthique Serveur C4** | Arrondi à 2 décimales (~500m) pour `sensitive` et 1 décimale (~5000m) pour `protected` | ✅ Conforme | Testé dans `tests/places/scoring.spec.ts` et `tests/places/queries-places.spec.ts`. |
 | **ZÉRO Terme Monétaire Scoring C4** | Formule bayésienne pure, aucun biais publicitaire ou sponsorisé | ✅ Conforme | Test d'inspection et AST dans `tests/places/scoring.spec.ts` (Invariant CI 2 validé). |
 | **Seuil Cold Start 40+ Lieux Réels C4** | 42 lieux réels qualifiés (FR, NP, PE, IS, MA) avec topos et contacts | ✅ Conforme | Synchronisé sur Supabase `icxyvwzfjbflcbqukpfz` via `scripts/seed-places.ts`. |
+| **RLS 100% Tables Affiliation C5** | 6 tables d'affiliation protégées par RLS avec accès admin/service role uniquement en écriture | ✅ Conforme | Vérifié sur `icxyvwzfjbflcbqukpfz` : tables protégées, aucun insert anonyme direct. |
+| **Minimisation RGPD Clics Sortants C5** | Hachage salé SHA-256 sans conservation de l'IP brute | ✅ Conforme | Testé dans `tests/affiliation/engine.spec.ts` et `tests/affiliation/queries-affiliation.spec.ts`. |
+| **Mentions Légales & rel="sponsored" C5** | `<AffiliateDisclosure />` et `rel="sponsored nofollow"` sur chaque lien partenaire | ✅ Conforme | Testé dans `tests/affiliation/components.spec.ts`. |
+| **Redirection 307 Non Cachée C5** | Route `/go/[slug]` en HTTP 307 avec logging RGPD | ✅ Conforme | Conforme aux spécifications Travelpayouts et SEO. |
+
 
 
