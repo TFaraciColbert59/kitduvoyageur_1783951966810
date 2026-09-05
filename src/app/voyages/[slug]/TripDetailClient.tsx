@@ -19,11 +19,17 @@ import {
   Shield,
   BookOpen,
   ArrowLeft,
+  Share2,
 } from 'lucide-react';
 import type { TripFull, TripStats } from '@/features/trips/types/trip.types';
 import type { TripKitAnalysis } from '@/features/trips/types/kit.types';
 import { TripAffiliateSection, type AffiliateLink } from '@/features/affiliation';
 import { TripKitView } from '@/features/trips/components/TripKitView';
+import { TripTeamView } from '@/features/trips/components/TripTeamView';
+import { TripBudgetView } from '@/features/trips/components/TripBudgetView';
+import { TripDocumentsView } from '@/features/trips/components/TripDocumentsView';
+import { TripShareModal } from '@/features/trips/components/TripShareModal';
+import { TripOfflineBar } from '@/features/trips/components/TripOfflineBar';
 
 export interface TripDetailClientProps {
   trip: TripFull;
@@ -39,6 +45,7 @@ export default function TripDetailClient({
   kitAnalysis,
 }: TripDetailClientProps) {
   const [activeTab, setActiveTab] = useState<string>('overview');
+  const [isShareOpen, setIsShareOpen] = useState(false);
 
   const tabs = [
     { id: 'overview', label: 'Vue d’ensemble', Icon: Compass, count: undefined },
@@ -55,18 +62,31 @@ export default function TripDetailClient({
 
   return (
     <AppShell safeTop={true} hasBottomNav={true}>
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 sm:py-6 pb-28">
-        {/* Navigation fil d'Ariane */}
-        <div className="flex items-center gap-2 text-xs text-[#5B7F55] mb-4">
-          <Link href="/voyages" className="hover:underline flex items-center gap-1 font-medium">
-            <ArrowLeft size={13} />
-            Voyages
-          </Link>
-          <span>/</span>
-          <span className="text-[#17402C] font-semibold truncate max-w-xs sm:max-w-md">
-            {trip.title}
-          </span>
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 sm:py-6 pb-28 space-y-4">
+        {/* Navigation fil d'Ariane & Action Partager */}
+        <div className="flex items-center justify-between gap-2 mb-2">
+          <div className="flex items-center gap-2 text-xs text-[#5B7F55]">
+            <Link href="/voyages" className="hover:underline flex items-center gap-1 font-medium">
+              <ArrowLeft size={13} />
+              Voyages
+            </Link>
+            <span>/</span>
+            <span className="text-[#17402C] font-semibold truncate max-w-[180px] sm:max-w-md">
+              {trip.title}
+            </span>
+          </div>
+
+          <button
+            onClick={() => setIsShareOpen(true)}
+            className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-full bg-white/80 hover:bg-white text-xs font-semibold text-[#17402C] border border-black/10 shadow-2xs transition-all hover:scale-102"
+          >
+            <Share2 size={13} className="text-[#5B7F55]" />
+            <span>Partager / Exporter</span>
+          </button>
         </div>
+
+        {/* Barre de statut Hors-Ligne */}
+        <TripOfflineBar trip={trip} />
 
         {/* 1. Hero Immersif */}
         <TripHero trip={trip} />
@@ -126,38 +146,9 @@ export default function TripDetailClient({
             <TripItineraryTab trip={trip} stats={stats} />
           )}
 
-          {/* Onglet 3 : Équipe (Chantier 3) */}
+          {/* Onglet 3 : Équipe (Chantier 7 - Collaboratif & Rôles) */}
           {activeTab === 'team' && (
-            <TripPlaceholderTab
-              chantierNumber={3}
-              chantierTitle="Collaboration & Partage (Membres, invitations, droits)"
-              description="Ce module permettra d'inviter des compagnons de voyage, d'attribuer des rôles fins (éditeur, lecteur), et de synchroniser les modifications en temps réel."
-              icon={<Users size={24} />}
-              hasData={trip.collaborators.length > 0}
-            >
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                {trip.collaborators.map(collab => (
-                  <GlassCard key={collab.id} tone="neutral" className="p-4 rounded-[20px] border border-white/60">
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center gap-3">
-                        <div className="w-10 h-10 rounded-full bg-[#17402C] text-white flex items-center justify-center font-bold text-sm">
-                          {collab.user_id.substring(0, 2).toUpperCase()}
-                        </div>
-                        <div>
-                          <div className="text-sm font-semibold text-[#17402C]">
-                            {collab.profile?.full_name || 'Voyageur LKDV'}
-                          </div>
-                          <div className="text-xs text-[#5B7F55]">
-                            Membre depuis le {new Date(collab.joined_at).toLocaleDateString('fr-FR')}
-                          </div>
-                        </div>
-                      </div>
-                      <TripBadge type="role" value={collab.role} size="sm" />
-                    </div>
-                  </GlassCard>
-                ))}
-              </div>
-            </TripPlaceholderTab>
+            <TripTeamView trip={trip} />
           )}
 
           {/* Onglet 4 : Équipement & Kit Contextuel (Chantier 6) */}
@@ -203,73 +194,17 @@ export default function TripDetailClient({
             </div>
           )}
 
-          {/* Onglet 5 : Budget (Chantier 5) */}
+          {/* Onglet 5 : Budget (Chantier 7 - Budget & Dépenses) */}
           {activeTab === 'budget' && (
-            <TripPlaceholderTab
-              chantierNumber={5}
-              chantierTitle="Budget & Dépenses (Split, Catégorisation, Multi-devises)"
-              description="Ce module permettra d'enregistrer les dépenses partagées, de calculer qui doit combien à qui, et de suivre les dépenses réelles par rapport au budget prévisionnel."
-              icon={<CreditCard size={24} />}
-              hasData={trip.expenses.length > 0}
-              emptyMessage="Aucune dépense enregistrée sur cette expédition."
-            >
-              <div className="space-y-3">
-                {trip.expenses.map(exp => (
-                  <GlassCard key={exp.id} tone="neutral" className="p-3.5 rounded-[18px] border border-white/60">
-                    <div className="flex items-center justify-between">
-                      <div>
-                        <div className="text-sm font-medium text-[#17402C]">{exp.title}</div>
-                        <div className="text-xs text-[#5B7F55]">
-                          {exp.category || 'Dépense'} · {exp.expense_date}
-                        </div>
-                      </div>
-                      <div className="text-base font-bold text-[#17402C]">
-                        {exp.amount} {exp.currency}
-                      </div>
-                    </div>
-                  </GlassCard>
-                ))}
-              </div>
-            </TripPlaceholderTab>
+            <TripBudgetView trip={trip} />
           )}
 
-          {/* Onglet 6 : Documents (Chantier 6) - Uniquement si autorisé */}
+          {/* Onglet 6 : Documents (Chantier 7 - Papiers chiffrés & RGPD) */}
           {activeTab === 'docs' && trip.permissions.canViewDocuments && (
-            <TripPlaceholderTab
-              chantierNumber={6}
-              chantierTitle="Documents & Réservations (Storage sécurisé, Offline, Chiffrement)"
-              description="Ce module permettra de stocker les passeports, assurances, billets et réservations en mode sécurisé avec accès hors ligne garanti."
-              icon={<FileText size={24} />}
-              hasData={trip.documents.length > 0}
-              emptyMessage="Aucun document attaché à ce voyage."
-            >
-              <div className="space-y-3">
-                {trip.documents.map(doc => (
-                  <GlassCard key={doc.id} tone="neutral" className="p-3.5 rounded-[18px] border border-white/60">
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center gap-3">
-                        <FileText size={20} className="text-[#5B7F55]" />
-                        <div>
-                          <div className="text-sm font-medium text-[#17402C]">{doc.title}</div>
-                          <div className="text-xs text-[#5B7F55]">Catégorie : {doc.category}</div>
-                        </div>
-                      </div>
-                      <a
-                        href={doc.file_url}
-                        target="_blank"
-                        rel="noreferrer"
-                        className="text-xs text-[#5B7F55] underline hover:text-[#17402C]"
-                      >
-                        Consulter
-                      </a>
-                    </div>
-                  </GlassCard>
-                ))}
-              </div>
-            </TripPlaceholderTab>
+            <TripDocumentsView trip={trip} />
           )}
 
-          {/* Onglet 7 : Sécurité (Chantier 7) */}
+          {/* Onglet 7 : Sécurité (Chantier 7 / 8) */}
           {activeTab === 'safety' && (
             <TripPlaceholderTab
               chantierNumber={7}
@@ -325,6 +260,13 @@ export default function TripDetailClient({
             </TripPlaceholderTab>
           )}
         </main>
+
+        {/* Modal de partage & export */}
+        <TripShareModal
+          trip={trip}
+          isOpen={isShareOpen}
+          onClose={() => setIsShareOpen(false)}
+        />
       </div>
     </AppShell>
   );

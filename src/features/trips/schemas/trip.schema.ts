@@ -402,3 +402,93 @@ export const saveDraftTripSchema = z.object({
 });
 
 export type SaveDraftTripInput = z.infer<typeof saveDraftTripSchema>;
+
+/**
+ * ==============================================================================
+ * CHANTIER 7 — SCHÉMAS COLLABORATIF, BUDGET, DOCUMENTS, VISIBILITÉ
+ * ==============================================================================
+ */
+
+export const inviteCollaboratorSchema = z.object({
+  tripId: z.string().uuid('ID de voyage invalide'),
+  identifier: z
+    .string()
+    .trim()
+    .min(3, 'L\'identifiant ou l\'email doit comporter au moins 3 caractères')
+    .max(100, 'L\'identifiant est trop long'),
+  role: z.enum(['editor', 'viewer']).default('viewer'),
+});
+export type InviteCollaboratorInput = z.infer<typeof inviteCollaboratorSchema>;
+
+export const updateCollaboratorRoleSchema = z.object({
+  tripId: z.string().uuid('ID de voyage invalide'),
+  collaboratorId: z.string().uuid('ID de collaborateur invalide'),
+  role: tripCollaboratorRoleEnum,
+});
+export type UpdateCollaboratorRoleInput = z.infer<typeof updateCollaboratorRoleSchema>;
+
+export const removeCollaboratorSchema = z.object({
+  tripId: z.string().uuid('ID de voyage invalide'),
+  collaboratorId: z.string().uuid('ID de collaborateur invalide'),
+});
+export type RemoveCollaboratorInput = z.infer<typeof removeCollaboratorSchema>;
+
+export const addTripExpenseSchema = z.object({
+  tripId: z.string().uuid('ID de voyage invalide'),
+  title: z
+    .string()
+    .trim()
+    .min(2, 'Le titre de la dépense doit comporter au moins 2 caractères')
+    .max(100, 'Le titre ne peut pas dépasser 100 caractères'),
+  amount: z.coerce
+    .number()
+    .positive('Le montant doit être strictement supérieur à 0')
+    .max(100000, 'Le montant maximal est de 100 000 €'),
+  currency: tripBudgetCurrencyEnum.default('EUR'),
+  category: z.string().trim().min(1).default('divers'),
+  expenseDate: z
+    .string()
+    .regex(/^\d{4}-\d{2}-\d{2}$/, 'Format de date invalide (AAAA-MM-JJ)')
+    .default(() => new Date().toISOString().slice(0, 10)),
+  splitType: z.enum(['equal', 'custom', 'individual']).default('equal'),
+  metadata: z.record(z.string(), z.unknown()).optional(),
+});
+export type AddTripExpenseInput = z.infer<typeof addTripExpenseSchema>;
+
+export const deleteTripExpenseSchema = z.object({
+  tripId: z.string().uuid('ID de voyage invalide'),
+  expenseId: z.string().uuid('ID de dépense invalide'),
+});
+export type DeleteTripExpenseInput = z.infer<typeof deleteTripExpenseSchema>;
+
+export const addTripDocumentSchema = z.object({
+  tripId: z.string().uuid('ID de voyage invalide'),
+  title: z
+    .string()
+    .trim()
+    .min(2, 'Le titre doit comporter au moins 2 caractères')
+    .max(120, 'Le titre ne peut pas dépasser 120 caractères'),
+  category: tripDocumentCategoryEnum.default('other'),
+  fileUrl: z.string().url('URL de fichier invalide'),
+  fileName: z.string().trim().max(150).optional().nullable(),
+  expiresAt: z
+    .string()
+    .regex(/^\d{4}-\d{2}-\d{2}$/, 'Format de date invalide (AAAA-MM-JJ)')
+    .optional()
+    .nullable(),
+  notes: z.string().trim().max(1000).optional().nullable(),
+});
+export type AddTripDocumentInput = z.infer<typeof addTripDocumentSchema>;
+
+export const deleteTripDocumentSchema = z.object({
+  tripId: z.string().uuid('ID de voyage invalide'),
+  documentId: z.string().uuid('ID de document invalide'),
+});
+export type DeleteTripDocumentInput = z.infer<typeof deleteTripDocumentSchema>;
+
+export const updateTripVisibilitySchema = z.object({
+  tripId: z.string().uuid('ID de voyage invalide'),
+  visibility: tripVisibilityEnum,
+});
+export type UpdateTripVisibilityInput = z.infer<typeof updateTripVisibilitySchema>;
+

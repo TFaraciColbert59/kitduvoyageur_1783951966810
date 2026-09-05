@@ -10,9 +10,9 @@
 | **C3** | **Planificateur d'itinéraire (Édition jour/jour, réordonnancement, dual-view)** | ✅ **Validé** | `feat/c3-itinerary-planner` | 2026-09-05 | 2026-09-05 | `f8ce1c6` |
 | **C4** | **Lieux communautaires (Places, topos, avis, scoring, floutage éthique)** | ✅ **Validé** | `feat/c4-community-places` | 2026-09-05 | 2026-09-05 | `a33298a` |
 | **C5** | **Affiliation Travelpayouts (Vols, hôtels, activités, disclosure légal)** | ✅ **Validé** | `feat/c5-affiliation` | 2026-09-05 | 2026-09-05 | `ab0c096` |
-| **C6** | **IA & Kit contextuel (Boutique LKDV, équipement, marge pleine)** | ✅ **Validé** | `feat/c6-ai-kit` | 2026-09-05 | 2026-09-05 | `d565dd7` |
-| **C7** | **Collaboratif, partage, offline, papiers, budget** | 🟡 **En cours** | `feat/c7-collab-offline` | 2026-09-05 | - | - |
-| C8 | Rétrospective & Publication Communautaire (Carnet, Retour d'Expérience) | ⬜ À venir | `feat/c8-trip-completion` | - | - | - |
+| **C6** | **IA & Kit contextuel (Boutique LKDV, équipement, marge pleine)** | ✅ **Validé** | `feat/c6-ai-kit` | 2026-09-05 | 2026-09-05 | `06413db` |
+| **C7** | **Collaboratif, partage, offline, papiers, budget** | ✅ **Validé** | `feat/c7-collab-offline` | 2026-09-05 | 2026-09-05 | `(en cours)` |
+| **C8** | **Rétrospective & Publication Communautaire (Carnet, REX)** | 🟡 **En cours** | `feat/c8-trip-completion` | 2026-09-05 | - | - |
 | RF | Recette Finale & Pré-lancement | ⬜ À venir | `release/voyage-v1` | - | - | - |
 
 ---
@@ -118,6 +118,22 @@
 
 ---
 
+## 2.septies Chantier 7 — Suivi des Sous-Étapes (Collaboratif, Partage, Offline, Papiers, Budget)
+
+| Étape | Statut | Fichiers touchés | Preuve / Commande | Date |
+| :--- | :---: | :--- | :--- | :--- |
+| **7.0 Reconnaissance & Baseline** | | | | |
+| 7.0.1 Vérification tables C1 `trip_collaborators`, `trip_expenses`, `trip_documents` | ✅ Fait | `supabase/migrations/20260904050000_trips_core.sql` | 3 tables et RLS confirmées actives en base `icxyvwzfjbflcbqukpfz`. RLS stricte sur `trip_documents` restreinte à `can_edit_trip`. | 2026-09-05 |
+| 7.0.2 Créer branche git | ✅ Fait | Git | `git checkout -b feat/c7-collab-offline` | 2026-09-05 |
+| **7.1 Moteur de Budget & Équilibrage des Comptes (TDD)** | ✅ Fait | `src/features/trips/engine/budgetEngine.ts`, `tests/trips/engine/budgetEngine.spec.ts` | Calcul dépenses totales, jauge budget estimé vs réel, ventilation par catégorie, calcul des parts (`share`), balances individuelles nettes (`net`) et algorithme glouton (greedy) de simplification des dettes (`simplifyDebts`) avec nombre minimal de virements. 6 tests verts. | 2026-09-05 |
+| **7.2 Moteur d'Export GPX & Validité Documents (TDD)** | ✅ Fait | `src/features/trips/engine/exportEngine.ts`, `tests/trips/engine/exportEngine.spec.ts` | Générateur XML GPX 1.1 conforme Garmin/OSM (`generateTripGpx`) avec waypoints (`<wpt>`) et trace chronologique (`<trkpt>`), vérificateur d'expiration de documents (`checkDocumentExpiry`, alertes 180j passeport et 30j assurance), constructeur d'URL de partage (`formatTripShareUrl`). 8 tests verts. | 2026-09-05 |
+| **7.3 Stockage Hors-Ligne & Manifeste (TDD)** | ✅ Fait | `src/features/trips/offline/tripOfflineStorage.ts`, `tests/trips/offline/offlineStorage.spec.ts` | Stockage local autonome (`localStorage`) sous clé `lkdv:offline:trip:[slug]`, index des voyages hors-ligne, suppression sélective, tolérance SSR (`typeof window === 'undefined'`). 3 tests verts. | 2026-09-05 |
+| **7.4 Couche Service & Server Actions** | ✅ Fait | `src/lib/queries-trip-collab.ts`, `queries-trip-budget.ts`, `queries-trip-docs.ts`, `src/app/voyages/*-actions.ts`, `tests/trips/collab/queries-trip-collab.spec.ts` | Services serveur : `getTripCollaborators`, `inviteCollaborator`, `updateCollaboratorRole`, `removeCollaborator`, `getTripExpenses`, `addTripExpense`, `deleteTripExpense`, `getTripDocuments`, `addTripDocument`, `deleteTripDocument`. Actions : `inviteCollaboratorAction`, `updateRoleAction`, `removeCollaboratorAction`, `addExpenseAction`, `deleteExpenseAction`, `addTripDocumentAction`, `deleteTripDocumentAction`, `updateTripVisibilityAction`. 9 tests verts. | 2026-09-05 |
+| **7.5 Interface Utilisateur & Pages Dédiées (Apple HIG)** | ✅ Fait | `src/features/trips/components/*`, `src/app/voyages/[slug]/export/*`, `src/app/api/voyages/[slug]/gpx/route.ts`, `TripDetailClient.tsx`, `tests/trips/collab/collabComponents.spec.ts` | Remplacement des placeholders cockpit C3, C5, C6 par les vues actives : `TripTeamView` (collaborateurs, rôles), `TripBudgetView` (dépenses, balances, remboursements), `TripDocumentsView` (papiers, alertes validité), `TripShareModal` (liens de partage, visibilité, export), `TripOfflineBar` (statut réseau). Page d'impression `/voyages/[slug]/export` (@media print) et endpoint GPX `/api/voyages/[slug]/gpx`. 4 tests verts. | 2026-09-05 |
+| **7.6 Validation Globale & CI** | ✅ Fait | `npm run test`, `npm run build`, `npm run lint`, `npm run verify:invariants` | 30/30 tests C7 verts, 555/555 tests repo verts (84 suites), `tsc --noEmit` 0 erreur, `eslint` 0 erreur, build Next.js 15.5.18 exit 0 (`ƒ /api/voyages/[slug]/gpx`, `ƒ /voyages/[slug]/export` compilées), invariants CI validés. | 2026-09-05 |
+
+---
+
 ## 3. Journal des Décisions d'Architecture
 
 | Date | Décision | Justification | Impact sur les chantiers suivants |
@@ -142,7 +158,10 @@
 | 2026-09-05 | **Conformité Légale DGCCRF / Loi 9 juin 2023 (C5)** | Présence obligatoire de `<AffiliateDisclosure />` en amont des liens, rappelant la gratuité pour l'utilisateur et l'absence d'influence sur l'ordre éditorial. Attribut `rel="sponsored nofollow"` systématique. | Zéro risque de requalification en publicité clandestine ou pratique trompeuse. |
 | 2026-09-05 | **Signature Webhook Postback HMAC-SHA256 Timing-Safe (C5)** | Vérification cryptographique des webhooks Travelpayouts avec `timingSafeEqual` pour empêcher les attaques par canal auxiliaire (timing attacks). | Protection absolue contre les fausses notifications de conversion. |
 | 2026-09-05 | **Moteur Déterministe de Kit & Gear Gap (C6)** | Zéro appel LLM pour le kit de base : règles climatiques, d'altitude (> 2400m) et de durée pour une prédictibilité 100%. Marge pleine LKDV via `shop_products` réels. | Sécurité maximale en montagne, zéro hallucination sur le matériel vital, conversion boutique directe. |
-| 2026-09-05 | **Base Weight Canonique sans consommables ni portés (C6)** | Calcul strict excluant `is_worn = true` (vêtements sur soi) et `is_consumable = true` (nourriture, eau, gaz) pour le poids de base du sac. | Calcul conforme aux standards internationaux du trekking ultraléger. |
+| 2026-09-05 | **Algorithme Glouton d'Équilibrage de Budget (C7)** | Algorithme glouton `simplifyDebts` qui calcule les soldes nets de chaque participant et génère le nombre minimal de transactions de remboursement. | Zéro dépendance externe (Splid, Tricount), calcul instantané côté client ou serveur. |
+| 2026-09-05 | **Format Standard GPX 1.1 Garmin / Topo (C7)** | Générateur XML strict conforme au schéma TopoGrafix GPX 1.1 (`<wpt>` pour étapes/POIs, `<trkpt>` chronologiques). | Export universel immédiatement importable dans Garmin Connect, Strava, Komoot ou OSM. |
+| 2026-09-05 | **Règle Internationale Validité Passeport 180j (C7)** | Contrôle de validité des pièces d'identité avec seuil d'alerte critique à 180 jours (exigence des 6 mois post-retour requise par la plupart des pays hors UE). | Sécurité juridique et prévention des refus d'embarquement pour les voyageurs. |
+| 2026-09-05 | **Isolation Hors-Ligne SSR-Safe (C7)** | Persistance `localStorage` sous `lkdv:offline:trip:[slug]` avec détection sécurisée de l'environnement (`typeof window === 'undefined'`). | Fonctionnement hors réseau garanti en fond de vallée sans altérer le SSR Next.js. |
 
 ---
 
@@ -174,6 +193,10 @@
 | **Redirection 307 Non Cachée C5** | Route `/go/[slug]` en HTTP 307 avec logging RGPD | ✅ Conforme | Conforme aux spécifications Travelpayouts et SEO. |
 | **Marge Pleine & Catalogue Réel LKDV C6** | 68 produits `shop_products` reliés sans produit inventé, panier Stripe `addToCart` | ✅ Conforme | Testé dans `tests/trips/kit/queries-trip-kit.spec.ts` et `tests/trips/kit/kitComponents.spec.ts`. |
 | **Règles Vitales Montagne (> 2400m) C6** | Équipement sécurité automatique (crampons, gants, couverture survie) | ✅ Conforme | Testé dans `tests/trips/engine/contextualKitEngine.spec.ts`. |
+| **Ségrégation Rôles Collaborateurs C7** | Matrice de droits stricte : seul `owner` modifie les rôles ou supprime le voyage | ✅ Conforme | Testé dans `tests/trips/collab/queries-trip-collab.spec.ts`. |
+| **Protection Export Public des Papiers C7** | Les documents d'identité sont exclus à 100% de la page d'export imprimable et des tokens publics | ✅ Conforme | Testé dans `tests/trips/collab/collabComponents.spec.ts` et `tests/trips/rls-isolation.spec.ts`. |
+| **Conformité Schéma GPX 1.1 C7** | Génération XML validée avec balises canoniques `<gpx>`, `<wpt>`, `<trk>` | ✅ Conforme | Testé dans `tests/trips/engine/exportEngine.spec.ts`. |
+
 
 
 
