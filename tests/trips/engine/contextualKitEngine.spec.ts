@@ -1,4 +1,4 @@
-﻿import { describe, it, expect } from 'vitest';
+import { describe, it, expect } from 'vitest';
 import {
   generateTripContextualKit,
   type ContextualKitInput,
@@ -64,7 +64,7 @@ describe('Contextual Kit Engine (Chantier 6 — IA & Kit Contextuel)', () => {
     },
   ];
 
-  it('identifies universal vital safety items for any outdoor trip', () => {
+  it('identifies universal vital safety items for any outdoor trip with max 2 vital cap (D7)', () => {
     const input: ContextualKitInput = {
       durationDays: 3,
       currentItems: [],
@@ -73,12 +73,17 @@ describe('Contextual Kit Engine (Chantier 6 — IA & Kit Contextuel)', () => {
 
     const analysis = generateTripContextualKit(input);
 
-    const vitalKeys = analysis.vitalGaps.map((g) => g.id);
-    expect(vitalKeys).toContain('rec-first-aid');
-    expect(vitalKeys).toContain('rec-whistle');
-    expect(vitalKeys).toContain('rec-headlamp');
+    // Contrat D7 : Plafond dur de maximum 2 recommandations vitales
+    expect(analysis.vitalGaps.length).toBeLessThanOrEqual(2);
+    expect(analysis.vitalGaps.some((g) => g.id === 'rec-first-aid')).toBe(true);
 
-    const headlampGap = analysis.vitalGaps.find((g) => g.id === 'rec-headlamp');
+    // Les autres indispensables de sécurité sont bien présents dans les recommandations globales
+    const allGapKeys = analysis.gearGaps.map((g) => g.id);
+    expect(allGapKeys).toContain('rec-first-aid');
+    expect(allGapKeys).toContain('rec-whistle');
+    expect(allGapKeys).toContain('rec-headlamp');
+
+    const headlampGap = analysis.gearGaps.find((g) => g.id === 'rec-headlamp');
     expect(headlampGap?.shopProduct).not.toBeNull();
     expect(headlampGap?.shopProduct?.brand).toBe('Black Diamond');
     expect(headlampGap?.shopProduct?.price_eur).toBe(75.0);

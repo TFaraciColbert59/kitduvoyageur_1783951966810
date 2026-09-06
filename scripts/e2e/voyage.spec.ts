@@ -40,7 +40,7 @@ test.describe('Module Voyage E2E Suite — Parcours Utilisateur & Ergonomie (C1-
   });
 
   test('TEST-E2E-VOYAGE-03: Wizard /voyages/nouveau charge l\'étape 1 et les contrôles tactiles', async ({ page }) => {
-    await page.goto('/voyages/nouveau', { waitUntil: 'domcontentloaded' });
+    await page.goto('/voyages/nouveau', { waitUntil: 'networkidle' });
     
     // Vérification du wizard
     const wizardContainer = page.locator('main').first();

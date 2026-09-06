@@ -15,6 +15,7 @@ import {
 import { StepCard } from './StepCard';
 import { recalculateDayMetrics, type PlannerStep } from './plannerEngine';
 import { LkvButton } from '@/components/ui/LkvButton';
+import { formatCivilDayIndex } from '@/lib/dates/tripDates';
 
 export interface DayViewProps {
   dayNumber: number;
@@ -51,19 +52,7 @@ export function DayView({
   const metrics = recalculateDayMetrics(steps);
 
   function formatFullDate(dayIndex: number): string | null {
-    if (!startDate) return null;
-    try {
-      const d = new Date(startDate);
-      d.setDate(d.getDate() + (dayIndex - 1));
-      return new Intl.DateTimeFormat('fr-FR', {
-        weekday: 'long',
-        day: 'numeric',
-        month: 'long',
-        year: 'numeric',
-      }).format(d);
-    } catch {
-      return null;
-    }
+    return formatCivilDayIndex(startDate, dayIndex, { weekday: 'long', month: 'long', includeYear: true });
   }
 
   function formatDuration(minutes: number): string {

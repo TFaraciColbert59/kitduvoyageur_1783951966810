@@ -11,6 +11,7 @@ import {
   shiftDayNumbers,
   compactOrderIndices,
 } from './plannerEngine';
+import { getCivilDurationDays } from '@/lib/dates/tripDates';
 import { DayNavigator } from './DayNavigator';
 import { DayView } from './DayView';
 import { StepEditModal } from './StepEditModal';
@@ -58,10 +59,7 @@ export default function ItineraryPlannerClient({
 
     let durationDays = 1;
     if (trip.start_date && trip.end_date) {
-      const d1 = new Date(trip.start_date);
-      const d2 = new Date(trip.end_date);
-      const diff = Math.round((d2.getTime() - d1.getTime()) / (1000 * 3600 * 24)) + 1;
-      if (diff > 0) durationDays = diff;
+      durationDays = getCivilDurationDays(trip.start_date, trip.end_date);
     }
 
     return Math.max(maxDayFromSteps, durationDays, 1);

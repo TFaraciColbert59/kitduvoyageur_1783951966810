@@ -16,6 +16,7 @@ export async function getAffiliateLinks(options?: {
   countryCode?: string;
   category?: AffiliateCategory;
   limit?: number;
+  maxAltitudeM?: number;
 }): Promise<AffiliateLink[]> {
   const supabase = await createClient();
 
@@ -38,7 +39,7 @@ export async function getAffiliateLinks(options?: {
 
   query = query.order('created_at', { ascending: false });
 
-  if (options?.limit) {
+  if (options?.limit && !options.maxAltitudeM) {
     query = query.limit(options.limit);
   }
 
@@ -49,7 +50,7 @@ export async function getAffiliateLinks(options?: {
     return [];
   }
 
-  return (data || []).map((row: any) => {
+  let results: AffiliateLink[] = (data || []).map((row: any) => {
     const partnerData = Array.isArray(row.partner) ? row.partner[0] : row.partner;
     return {
       id: row.id,
@@ -67,6 +68,23 @@ export async function getAffiliateLinks(options?: {
       updated_at: row.updated_at,
     };
   });
+
+  // Découplage D2 : Si voyage de plaine ou basse/moyenne altitude (< 2400m), filtrer les offres haute montagne
+  if (typeof options?.maxAltitudeM === 'number' && options.maxAltitudeM <= 2400) {
+    results = results.filter((link) => {
+      const isHighAlpineLink =
+        link.slug.includes('chamonix') ||
+        link.slug.includes('aiguille-du-midi') ||
+        link.slug.includes('secours-en-montagne');
+      return !isHighAlpineLink;
+    });
+  }
+
+  if (options?.limit) {
+    results = results.slice(0, options.limit);
+  }
+
+  return results;
 }
 
 /**

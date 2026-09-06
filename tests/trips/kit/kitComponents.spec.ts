@@ -86,6 +86,7 @@ describe('TripKitView Component (Apple HIG & Core Business Monetization)', () =>
     vitalGaps: [
       {
         id: 'rec-rain-poncho',
+        key: 'rain-poncho',
         name: 'Poncho Imperméable Pluie',
         category: 'clothing',
         priority: 'vital',
@@ -103,6 +104,8 @@ describe('TripKitView Component (Apple HIG & Core Business Monetization)', () =>
       },
     ],
     recommendedGaps: [],
+    gearGaps: [],
+    unweighedItemsCount: 0,
   };
 
   it('renders preparation progress and weight indicators', () => {

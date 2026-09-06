@@ -21,6 +21,8 @@ import {
   Battery,
   Shield,
   Navigation,
+  ChevronDown,
+  ChevronUp,
 } from 'lucide-react';
 import type { TripFull, TripItem } from '../types/trip.types';
 import type { TripKitAnalysis, ContextualGearRecommendation } from '../types/kit.types';
@@ -69,6 +71,7 @@ export function TripKitView({ trip, analysis, showBackLink: _showBackLink = fals
   const [optimisticItems, setOptimisticItems] = useState<TripItem[]>(trip.items || []);
   const [cartToast, setCartToast] = useState<string | null>(null);
   const [isAddModalOpen, setIsAddModalOpen] = useState<boolean>(false);
+  const [showAllRecommendations, setShowAllRecommendations] = useState<boolean>(false);
 
   // Filtrer les items par catégorie
   const filteredItems = optimisticItems.filter((item) => {
@@ -170,7 +173,7 @@ export function TripKitView({ trip, analysis, showBackLink: _showBackLink = fals
           </div>
         </GlassCard>
 
-        {/* Carte Poids */}
+        {/* Carte Poids (Résolution D3, D4) */}
         <GlassCard tone="neutral" blur="md" className="p-5 rounded-[24px] border border-white/70">
           <div className="flex items-center justify-between mb-2">
             <span className="text-xs font-bold uppercase tracking-wider text-[#5B7F55] flex items-center gap-1.5">
@@ -179,7 +182,11 @@ export function TripKitView({ trip, analysis, showBackLink: _showBackLink = fals
             </span>
             <span
               className={`text-[10px] font-bold px-2 py-0.5 rounded-full uppercase ${
-                analysis.weightCategory === 'ultralight'
+                analysis.weightCategory === 'none'
+                  ? 'bg-stone-100 text-stone-600'
+                  : analysis.weightCategory === 'incomplet'
+                  ? 'bg-amber-100 text-amber-800'
+                  : analysis.weightCategory === 'ultralight'
                   ? 'bg-emerald-100 text-emerald-800'
                   : analysis.weightCategory === 'light'
                   ? 'bg-blue-100 text-blue-800'
@@ -188,7 +195,11 @@ export function TripKitView({ trip, analysis, showBackLink: _showBackLink = fals
                   : 'bg-rose-100 text-rose-800'
               }`}
             >
-              {analysis.weightCategory}
+              {analysis.weightCategory === 'none'
+                ? 'Poids non renseigné'
+                : analysis.weightCategory === 'incomplet'
+                ? `Incomplet (${analysis.unweighedItemsCount || 1} sans poids)`
+                : analysis.weightCategory}
             </span>
           </div>
           <div className="text-2xl font-black text-[#17402C] mb-1">
@@ -199,7 +210,7 @@ export function TripKitView({ trip, analysis, showBackLink: _showBackLink = fals
           </p>
         </GlassCard>
 
-        {/* Carte Contexte Expédition */}
+        {/* Carte Contexte Expédition (Résolution D2) */}
         <GlassCard tone="neutral" blur="md" className="p-5 rounded-[24px] border border-white/70">
           <span className="text-xs font-bold uppercase tracking-wider text-[#5B7F55] flex items-center gap-1.5 mb-2">
             <Compass className="w-4 h-4" />
@@ -209,7 +220,12 @@ export function TripKitView({ trip, analysis, showBackLink: _showBackLink = fals
             {trip.destination_name || 'Expédition Outdoor'}
           </div>
           <div className="text-xs text-stone-600 mt-1 space-y-0.5">
-            <div>Altitude maximale : <strong>{analysis.maxAltitudeM > 0 ? `${analysis.maxAltitudeM} m` : 'Plaine'}</strong></div>
+            <div>
+              Altitude maximale : <strong>{analysis.maxAltitudeM > 0 ? `${analysis.maxAltitudeM} m` : 'Plaine'}</strong>
+              {analysis.maxAltitudeM <= 500 && (
+                <span className="text-[10px] text-stone-400 ml-1.5">(estimation pays)</span>
+              )}
+            </div>
             <div>Durée de l’autonomie : <strong>{getTripDurationDays(trip)} jours</strong></div>
           </div>
         </GlassCard>
@@ -253,7 +269,10 @@ export function TripKitView({ trip, analysis, showBackLink: _showBackLink = fals
           </p>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-2">
-            {[...analysis.vitalGaps, ...analysis.recommendedGaps].slice(0, 6).map((gap) => {
+            {(() => {
+              const allGaps = [...analysis.vitalGaps, ...analysis.recommendedGaps];
+              const displayedGaps = showAllRecommendations ? allGaps : allGaps.slice(0, 6);
+              return displayedGaps.map((gap) => {
               const Icon = CATEGORY_ICONS[gap.category] || Package;
               const product = gap.shopProduct;
 
@@ -325,9 +344,35 @@ export function TripKitView({ trip, analysis, showBackLink: _showBackLink = fals
                   </div>
                 </div>
               );
-            })}
-          </div>
-        </GlassCard>
+            });
+          })()}
+        </div>
+
+        {(() => {
+          const totalCount = analysis.vitalGaps.length + analysis.recommendedGaps.length;
+          return totalCount > 6 ? (
+            <div className="pt-2 flex justify-center">
+              <button
+                type="button"
+                onClick={() => setShowAllRecommendations(!showAllRecommendations)}
+                className="px-4 py-2 rounded-xl text-xs font-bold text-[#17402C] bg-white/80 hover:bg-white border border-stone-200/80 transition-all flex items-center gap-1.5 shadow-sm active:scale-95"
+              >
+                {showAllRecommendations ? (
+                  <>
+                    <ChevronUp className="w-3.5 h-3.5 text-[#5B7F55]" />
+                    <span>Afficher moins (6 premiers)</span>
+                  </>
+                ) : (
+                  <>
+                    <ChevronDown className="w-3.5 h-3.5 text-[#5B7F55]" />
+                    <span>Voir tous les équipements conseillés ({totalCount})</span>
+                  </>
+                )}
+              </button>
+            </div>
+          ) : null;
+        })()}
+      </GlassCard>
       )}
 
       {/* 3. Check-list des Objets du Sac & Filtrage */}

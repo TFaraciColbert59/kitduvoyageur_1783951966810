@@ -16,13 +16,13 @@ Dernière mise à jour : 2026-09-07T01:15:00+02:00
 | **P0** | **0.6** | Baseline mesurée (Temps de réponse, tailles JS, E2E Playwright) | **TERMINE** | Benchmarks routes /, /voyages, /groupes, Playwright 6/7 (D11 bloque 1 test) |
 | **P0** | **0.7** | Livrables Phase 0 (`AUDIT_UNIFICATION.md`, `PROGRESS_UNIFICATION.md`) | **TERMINE** | Fichiers créés et validés |
 |---|---|---|---|---|
-| **P1** | **1.1** | Fallback du générateur d'itinéraire (Template / Paramétrique / Squelette) [D1] | À FAIRE | TDD requis : `generateItinerary` ne renvoie jamais `[]` |
-| **P1** | **1.2** | Source unique du profil d'altitude & découplage offres partenaires [D2] | À FAIRE | TDD requis : `getTripElevationProfile`, altitude réelle vs D+ |
-| **P1** | **1.3** | Cohérence des poids et des badges (Fix trousse 0g, faux ultralight) [D3, D4] | À FAIRE | TDD requis : `computeKitWeight`, pas d'ultralight si sac vide |
-| **P1** | **1.4** | Compteurs dérivés des données réelles (alignement badges/onglets) [D5, D6] | À FAIRE | TDD requis : `useTripCounters(trip)` |
-| **P1** | **1.5** | Hiérarchie des recommandations (max 2 vitales justifiées) [D7] | À FAIRE | TDD requis : plafonnement et scoring de criticité |
-| **P1** | **1.6** | Dates civiles locales et fuseaux (élimination décalage UTC) [D8] | À FAIRE | TDD requis : `tripDates.ts` |
-| **P1** | **1.7** | Clôture Phase 1 & Démo vérifiée | À FAIRE | PR `chantier/u1-*`, démo voyage 28j non vide |
+| **P1** | **1.1** | Fallback du générateur d'itinéraire (Template / Paramétrique / Squelette) [D1] | **TERMINE** | Tests 15/15 verts (`itineraryFallback.spec.ts`, `buildItinerary.spec.ts`), 0 étape vide |
+| **P1** | **1.2** | Source unique du profil d'altitude & découplage offres partenaires [D2] | **TERMINE** | Tests 8/8 verts (`elevationProfile.spec.ts`), découplage Chamonix < 2400m validé |
+| **P1** | **1.3** | Cohérence des poids et des badges (Fix trousse 0g, faux ultralight) [D3, D4] | **TERMINE** | Tests 5/5 verts (`kitWeight.spec.ts`), badge 'none' si 0g, fallback 200g trousse |
+| **P1** | **1.4** | Compteurs dérivés des données réelles (alignement badges/onglets) [D5, D6] | **TERMINE** | Tests 3/3 verts (`useTripCounters.spec.ts`), toggle recommandations > 6 dans UI |
+| **P1** | **1.5** | Hiérarchie des recommandations (max 2 vitales justifiées) [D7] | **TERMINE** | Tests 3/3 verts (`recommendationHierarchy.spec.ts`), max 2 vitaux par trip garanti |
+| **P1** | **1.6** | Dates civiles locales et fuseaux (élimination décalage UTC) [D8] | **TERMINE** | Tests 17/17 verts (`tripDates.spec.ts`), `formatCivilDateRange` sans dérive DST/fuseau |
+| **P1** | **1.7** | Clôture Phase 1 & Démo vérifiée | **TERMINE** | Vitest 617/617 (93 files), `tsc` 0 err, `lint` 0 err, `build` 0 err, Playwright 7/7 |
 |---|---|---|---|---|
 | **P2** | **2.1** | Tokens CSS unifiés (`tokens.css`, trancher #5C6B5E vs #5B7F55) [D10] | À FAIRE | Variables CSS et contrastes WCAG AA |
 | **P2** | **2.2** | Codemod et règle ESLint anti-hexadécimal JSX | À FAIRE | Zéro couleur en dur dans le JSX |

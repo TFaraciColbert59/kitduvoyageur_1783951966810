@@ -23,10 +23,12 @@ export default defineConfig({
   projects: [
     { name: 'chromium', use: { ...devices['Desktop Chrome'] } },
   ],
-  webServer: {
-    command: process.env.PW_BASE_URL ? 'echo using existing server' : 'npm run start',
-    url: process.env.PW_BASE_URL || 'http://localhost:4028',
-    reuseExistingServer: true,
-    timeout: 120_000,
-  },
+  webServer: process.env.PW_BASE_URL
+    ? undefined
+    : {
+        command: 'npm run start',
+        url: 'http://localhost:4028',
+        reuseExistingServer: true,
+        timeout: 120_000,
+      },
 });

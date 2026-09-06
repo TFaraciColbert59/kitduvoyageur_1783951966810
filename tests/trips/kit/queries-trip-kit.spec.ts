@@ -1,4 +1,4 @@
-﻿import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { describe, it, expect, vi, beforeEach } from 'vitest';
 import {
   getShopProducts,
   getTripKitDetails,
@@ -54,7 +54,8 @@ vi.mock('@/lib/queries-trips', () => ({
           day_number: 1,
           order_index: 0,
           title: 'Montée vers les refuges',
-          elevation_gain_m: 2800,
+          elevation_gain_m: 1200,
+          elevation_max_m: 2800,
         },
       ],
       items: [
@@ -194,6 +195,7 @@ describe('queries-trip-kit (Chantier 6 — Service Layer)', () => {
 
     const item = await addRecommendedItemToTrip('trip-1', {
       id: 'rec-crampons',
+      key: 'crampons',
       name: 'Crampons de traction',
       category: 'clothing',
       priority: 'vital',

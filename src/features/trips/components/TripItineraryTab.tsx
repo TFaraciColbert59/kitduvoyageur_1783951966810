@@ -55,8 +55,43 @@ export function TripItineraryTab({ trip, stats }: TripItineraryTabProps) {
     }
   };
 
+  // Provenance de l'itinéraire (Tier 1 Template / Tier 2 Paramétrique / Tier 3 Squelette)
+  const provenanceInfo = useMemo(() => {
+    const metaSource = (trip.metadata as any)?.itinerary_source;
+    if (metaSource === 'template' || (trip.metadata as any)?.itinerary_source_label) {
+      return {
+        label: (trip.metadata as any)?.itinerary_source_label || 'D’après tracé de référence',
+        variant: 'template' as const,
+      };
+    }
+    const hasDistances = trip.steps.some((s) => (s.distance_km ?? 0) > 0);
+    const hasRest = trip.steps.some((s) => s.title.toLowerCase().includes('repos'));
+    if (hasRest || (hasDistances && trip.steps.some((s) => s.description?.includes('Naismith')))) {
+      return { label: 'Itinéraire calculé', variant: 'computed' as const };
+    }
+    if (!hasDistances && trip.steps.length > 0) {
+      return { label: 'Squelette d’itinéraire', variant: 'skeleton' as const };
+    }
+    const dest = (trip.destination_name || trip.title || '').toLowerCase();
+    if (dest.includes('gr20') || dest.includes('gr 20')) {
+      return { label: 'D’après le tracé GR20', variant: 'template' as const };
+    }
+    return { label: 'Calculé', variant: 'computed' as const };
+  }, [trip]);
+
   return (
     <div className="space-y-6">
+      {/* 0. Bandeau d'information squelette si aucune donnée de référence */}
+      {provenanceInfo.variant === 'skeleton' && (
+        <div className="p-4 bg-amber-50/90 border border-amber-200 rounded-2xl flex items-start gap-3 text-amber-950">
+          <AlertTriangle size={18} className="text-amber-600 shrink-0 mt-0.5" />
+          <div className="text-xs leading-relaxed">
+            <span className="font-semibold block mb-0.5">Squelette d’itinéraire :</span>
+            Aucun tracé de référence pour cette destination. Ajoute tes étapes, les distances se calculeront automatiquement.
+          </div>
+        </div>
+      )}
+
       {/* 1. Bandeau de Saisonnalité */}
       {seasonalityWarnings.length > 0 ? (
         <div className="space-y-2">
@@ -91,7 +126,7 @@ export function TripItineraryTab({ trip, stats }: TripItineraryTabProps) {
 
       {/* 2. Barre d'outils et statistiques */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 p-4 bg-white/80 backdrop-blur-sm rounded-2xl border border-black/5">
-        <div className="flex items-center gap-4 text-xs">
+        <div className="flex items-center gap-4 text-xs flex-wrap">
           <div>
             <span className="text-gray-500 block">Étapes</span>
             <span className="font-bold text-[#17402C] text-sm">{trip.steps.length} jours</span>
@@ -105,6 +140,14 @@ export function TripItineraryTab({ trip, stats }: TripItineraryTabProps) {
           <div>
             <span className="text-gray-500 block">Dénivelé positif</span>
             <span className="font-bold text-[#17402C] text-sm">+{stats.total_elevation_gain_m}m D+</span>
+          </div>
+          <div className="h-6 w-px bg-black/10" />
+          <div>
+            <span className="text-gray-500 block">Provenance</span>
+            <span className="inline-flex items-center gap-1 font-semibold text-xs text-[#17402C]">
+              <Sparkles size={12} className="text-forest-600" />
+              {provenanceInfo.label}
+            </span>
           </div>
         </div>
 
