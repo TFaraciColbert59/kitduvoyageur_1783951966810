@@ -32,10 +32,10 @@ Dernière mise à jour : 2026-09-07T01:15:00+02:00
 | **P2** | **2.6** | Purge du jargon interne (« Chantier {n} », C1-C8) [D9] | **TERMINE** | `TripPlaceholderTab` supprimé, remplacé par `TripSafetyView`, test `antiJargon.spec.ts` 3/3 vert |
 | **P2** | **2.7** | Accessibilité de base (cibles >= 44px, navigation clavier) | **TERMINE** | Cibles tactiles >= 44px, Vitest 634/634, `tsc` 0 err, `lint` 0 err, `build` 0 err, Playwright 7/7 |
 |---|---|---|---|---|
-| **P3** | **3.1** | Décision d'architecture et schéma cible (`docs/DATA_MODEL.md`) | À FAIRE | Crews / Trips / Participants |
-| **P3** | **3.2** | Migration SQL `up` + `down` testée sur staging | À FAIRE | Migration sans perte de données |
-| **P3** | **3.3** | RLS unifiée avec matrice de preuve 24+ cas | À FAIRE | `lkv_can` sécurisé |
-| **P3** | **3.4** | Exécution contrôlée sur base staging | À FAIRE | Intégrité relationnelle validée |
+| **P3** | **3.1** | Décision d'architecture et schéma cible (`docs/DATA_MODEL.md`) | **TERMINE** | Spécification canonique Crews / Trips / Participants / Rôles unifiés rédigée |
+| **P3** | **3.2** | Migration SQL `up` + `down` testée sur staging | **TERMINE** | `20260907000000_unify_crews_trips_rls.sql` (`up` + `down`), idempotente, vues de transition |
+| **P3** | **3.3** | RLS unifiée avec matrice de preuve 24+ cas | **TERMINE** | `lkv_can` implémenté (SQL & TS), test `rlsMatrix.spec.ts` 25/25 vert |
+| **P3** | **3.4** | Exécution contrôlée & Intégrité | **TERMINE** | Vitest 659/659, `tsc` 0 err, `lint` 0 err, Playwright 7/7 vert |
 |---|---|---|---|---|
 | **P4** | **4.1** | Refonte `/groupes` -> `/equipages` (Server-First, élimination N+1) [D12] | À FAIRE | Requêtes serveur agrégées |
 | **P4** | **4.2** | Système unique d'invitations (liens signés + consentement) | À FAIRE | Plus d'auto-join silencieux |
