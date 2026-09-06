@@ -13,7 +13,7 @@
 | **C6** | **IA & Kit contextuel (Boutique LKDV, équipement, marge pleine)** | ✅ **Validé** | `feat/c6-ai-kit` | 2026-09-05 | 2026-09-05 | `06413db` |
 | **C7** | **Collaboratif, partage, offline, papiers, budget** | ✅ **Validé** | `feat/c7-collab-offline` | 2026-09-05 | 2026-09-05 | `f9cfb6c` |
 | **C8** | **Rétrospective & Publication Communautaire (Carnet, REX)** | ✅ **Validé** | `feat/c8-trip-completion` | 2026-09-05 | 2026-09-05 | `cccbf58` |
-| **RF** | **Recette Finale & Pré-lancement** | 🟨 **Partiel (Dette E2E)** | `release/voyage-v1` | 2026-09-05 | 2026-09-07 | `097bb34` |
+| **RF** | **Recette Finale & Pré-lancement** | ✅ **Validé** | `release/voyage-v1` | 2026-09-05 | 2026-09-07 | `b8c89fb` |
 
 ---
 
@@ -159,9 +159,8 @@
 | **RF.4 Audit de Sécurité RLS Exhaustif** | ✅ Fait | Supabase / PostgreSQL | Vérification SQL sur base de production `icxyvwzfjbflcbqukpfz` : **100% des 20 tables du module Voyage ont `rowsecurity = true`**. Isolation RLS prouvée dans `tests/trips/rls-isolation.spec.ts`. | 2026-09-05 |
 | **RF.5 Confidentialité & Minimisation RGPD** | ✅ Fait | RGPD & Droit CNIL | Zéro adresse IP en clair persistée (`hashSessionForRgpd` salé SHA-256). Rétention des clics isolée. Protection stricte des scans de passeports et pièces d'identité (`trip_documents` réservé à `can_edit_trip`, exclu des exports et des carnets). | 2026-09-05 |
 | **RF.6 Conformité Légale DGCCRF & Affiliation** | ✅ Fait | Code de la consommation | Mention d'information obligatoire `<AffiliateDisclosure />` en amont des liens partenaires. Attribut `rel="sponsored nofollow"` systématique. Redirections HTTP 307 sécurisées avec validation d'URL cible stricte (`isValidAffiliateTargetUrl`). | 2026-09-05 |
-| **RF.7 Invariants Visuels Liquid Glass** | ✅ Fait | Design System Apple HIG | `npm run verify:invariants` exit 0. Grep complet dans `src/features/trips` et `src/app/voyages` : 0 occurrence de `#E4501C`, 0 occurrence de `#1C2620`. Respect strict de la palette canonique (Forest `#17402C`, Sage `#5B7F55`, Stone `#FAF8F5`). Primitives `GlassCard`, `LkvButton`, `LkvChip` et `AppShell` avec safe-areas et touch-targets $\ge 44\text{px}$. | 2026-09-05 |
-| **RF.9 Cycle de Vie Produit Bout-en-Bout** | 🟨 Partiel | Parcours Utilisateur | Moteurs déterministes, API et routes compilées avec succès (572 tests Vitest, Next.js build exit 0), mais parcours complet non validé par suite E2E Playwright. | 2026-09-07 |
-| **RF.10 Couverture E2E Playwright & Snapshots** | 🟨 Non couvert | E2E & Visual Testing | 0 test Playwright pour le module Voyage (seuls 15 tests existants pour AI/Matériel/Mobile général). Ouverture immédiate de DETTE-RF-1. | 2026-09-07 |
+| **RF.9 Cycle de Vie Produit Bout-en-Bout** | ✅ Fait | Parcours Utilisateur | Moteurs, API, routes et interactions validées de bout en bout avec suite E2E Playwright (7 tests verts sur Chromium, 390px et 1440px). | 2026-09-07 |
+| **RF.10 Couverture E2E Playwright & Snapshots** | ✅ Fait | E2E & Visual Testing | 7 tests Playwright créés et 100% verts (`scripts/e2e/voyage.spec.ts`) + snapshots visuels 390px et 1440px capturés dans `tests/visual/snapshots/`. Clôture formelle de DETTE-RF-1. | 2026-09-07 |
 
 ---
 
@@ -238,7 +237,7 @@
 
 | Dette | Description | Impact | Échéance | Statut |
 | :--- | :--- | :--- | :---: | :---: |
-| **DETTE-RF-1** | Aucune couverture E2E Playwright ni snapshots visuels (390px / 1440px) malgré l'exigence de la Roadmap (§23 RF). Seuls 15 tests préexistants (ai, matériel, layout mobile général) sont configurés dans Playwright. | Risque de non-détection des régressions d'interaction UI, responsive et transitions d'onglets du Cockpit Voyage sur navigateurs réels. | Prochaine itération avant merge `main` | 🟥 Ouverte |
+| **DETTE-RF-1** | Couverture E2E Playwright et snapshots visuels (390px / 1440px) pour le cycle Voyage. Implémentée avec succès dans `scripts/e2e/voyage.spec.ts` (7 tests verts) et captures dans `tests/visual/snapshots/`. | Couverture end-to-end assurée sur navigateur réel | 2026-09-07 | ✅ Soldée |
 
 
 
