@@ -528,3 +528,39 @@ Utiliser `useRouter()` de Next.js (`router.push()`) — jamais `window.location.
 - `CarnetKitItem` étendu : `weightG`
 - `AppIcon` : prop `title?: string` ajouté
 - `LendItemModal` : prop `item` maintenant optionnel (`item?`)
+
+---
+
+## 🧭 Module Voyage — Plateforme d'Expédition Collaborative (Chantiers C0 à C8 + RF)
+
+Le **Module Voyage** fédère l'intégralité du cycle de vie du voyageur outdoor : planification, logistique, réservation éthique, sac à dos contextuel, collaboration d'équipe, mode hors-ligne et rétrospective communautaire.
+
+### Routes Principales
+- `/voyages` — Liste des expéditions de l'utilisateur et voyages communautaires inspirants
+- `/voyages/nouveau` — Wizard de création guidé en 5 étapes (URL `?step=X` + persistance locale + draft serveur à l'étape 3)
+- `/voyages/[slug]` — Cockpit de voyage Liquid Glass à onglets (Vue d'ensemble, Itinéraire, Kit, Équipe, Budget, Papiers, Notes/Carnet)
+- `/voyages/[slug]/itineraire` — Planificateur jour par jour avec sélecteur horizontal sticky Apple HIG et réordonnancement 2-phases anti-collision
+- `/voyages/[slug]/kit` — Diagnostic de sac à dos, calcul de Gear Gap et pont boutique LKDV marge pleine
+- `/voyages/[slug]/export` — Feuille de route imprimable A4 (@media print) sans fuite de documents privés
+- `/lieux` & `/lieux/[slug]` — Annuaire et topos de refuges et bivouacs avec scoring bayésien et floutage éthique
+- `/go/[slug]` — Redirection d'affiliation sécurisée HTTP 307 avec logging RGPD SHA-256 sans IP en clair
+- `/api/voyages` & `/api/voyages/[slug]/gpx` — API CRUD voyages et export GPX 1.1 conforme Garmin/OSM
+- `/api/affiliate/travelpayouts` — Endpoint webhook postback timing-safe HMAC-SHA256
+
+### Architecture de Données & RLS (20 tables)
+- **Tables Voyages** : `trips`, `trip_collaborators`, `trip_steps`, `trip_items`, `trip_expenses`, `trip_documents`, `trip_pois`, `trip_safety_checkpoints`, `trip_notes`, `destination_steps`
+- **Tables Lieux** : `places`, `place_reviews`, `place_photos`, `place_reports`
+- **Tables Affiliation** : `affiliate_partners`, `affiliate_programs`, `affiliate_offers`, `affiliate_links`, `affiliate_clicks`, `affiliate_conversions`
+- **Tables Carnets** : `carnets`, `carnet_moments`, `carnet_kit_items`
+- **Isolation RLS** : 100% des 20 tables ont `rowsecurity = true`. Fonctions de sécurité `can_read_trip` et `can_edit_trip` en `security definer stable` avec `search_path = public`.
+- **Règle RGPD Absolue** : Les documents d'identité (`trip_documents`) et scans de passeport sont strictement inaccessibles aux viewers publics (`viewerCanReadDocs = false`) et exclus de tous les exports et carnets.
+
+### Moteurs Métier Purs (TDD & Déterministes)
+- `src/features/trips/engine/` : `tripWizardEngine.ts` (répartition sans LLM), `plannerEngine.ts` (Naismith & Haversine), `contextualKitEngine.ts` (règles altitude > 2400m), `budgetEngine.ts` (algorithme glouton `simplifyDebts`), `exportEngine.ts` (GPX 1.1 TopoGrafix), `carnetConversionEngine.ts` (conversion voyage -> carnet).
+- `src/features/places/engine/` : `ethicalBlurring.ts` (floutage ~500m coordonnées sensibles), `placeScoreEngine.ts` (moyenne bayésienne sans terme monétaire).
+- `src/features/affiliation/engine/` : `affiliateEngine.ts` (anti-open redirect, hachage RGPD, vérification HMAC timing-safe).
+
+### Conformité & Design System
+- **Palette Liquid Glass** : Forest `#17402C`, Sage `#5B7F55`, Stone `#FAF8F5`. Zéro orange `#E4501C`, zéro `#1C2620`.
+- **Composants Primitives** : `GlassCard`, `LkvButton`, `LkvChip`, `LkvIcon`, `AppShell` avec safe-areas. Touch targets $\ge 44\text{px}$.
+- **Transparence DGCCRF** : Composant obligatoire `<AffiliateDisclosure />` et balisage `rel="sponsored nofollow"`.
