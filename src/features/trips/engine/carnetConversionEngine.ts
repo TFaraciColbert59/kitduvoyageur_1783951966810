@@ -6,6 +6,7 @@
  */
 
 import type { TripFull } from '@/features/trips/types/trip.types';
+import { getCivilDurationDays } from '@/lib/dates/tripDates';
 
 export interface TripRetrospectiveMetrics {
   totalKm: number;
@@ -87,10 +88,7 @@ export function calculateTripRetrospectiveMetrics(trip: TripFull): TripRetrospec
   // Durée en jours et nuits
   let durationDays = 1;
   if (trip.start_date && trip.end_date) {
-    const start = new Date(trip.start_date).getTime();
-    const end = new Date(trip.end_date).getTime();
-    const diffDays = Math.round((end - start) / (1000 * 60 * 60 * 24)) + 1;
-    durationDays = diffDays > 0 ? diffDays : 1;
+    durationDays = getCivilDurationDays(trip.start_date, trip.end_date);
   } else if (steps.length > 0) {
     durationDays = Math.max(...steps.map(s => s.day_number), 1);
   }

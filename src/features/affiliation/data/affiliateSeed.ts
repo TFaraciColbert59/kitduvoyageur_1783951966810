@@ -9,12 +9,24 @@ export interface AffiliateSeedLink {
   destination_name: string;
   target_url: string;
   tracking_params: Record<string, string>;
+  min_altitude_m?: number;
 }
 
 export const REAL_AFFILIATE_LINKS_SEED: AffiliateSeedLink[] = [
   // ==========================================
   // FRANCE (FR)
   // ==========================================
+  {
+    slug: 'booking-france-randonnee-hebergements',
+    partner_slug: 'booking',
+    category: 'hotel',
+    country_code: 'FR',
+    title: 'Gîtes, Refuges & Hébergements Randonnée en France',
+    destination_name: 'France',
+    target_url: 'https://www.booking.com/searchresults.fr.html?ss=France',
+    tracking_params: { aid: '800100', label: 'lkdv_trip_fr_general' },
+    min_altitude_m: 0,
+  },
   {
     slug: 'booking-chamonix-alpes-hebergements',
     partner_slug: 'booking',
@@ -24,6 +36,7 @@ export const REAL_AFFILIATE_LINKS_SEED: AffiliateSeedLink[] = [
     destination_name: 'Chamonix-Mont-Blanc',
     target_url: 'https://www.booking.com/searchresults.fr.html?ss=Chamonix-Mont-Blanc',
     tracking_params: { aid: '800100', label: 'lkdv_trip_fr_chamonix' },
+    min_altitude_m: 1000,
   },
   {
     slug: 'aviasales-vols-alpes-geneve-lyon',
@@ -34,6 +47,18 @@ export const REAL_AFFILIATE_LINKS_SEED: AffiliateSeedLink[] = [
     destination_name: 'Genève / Lyon',
     target_url: 'https://www.aviasales.com/search/PARGVA',
     tracking_params: { marker: '584920' },
+    min_altitude_m: 0,
+  },
+  {
+    slug: 'getyourguide-activites-france-nature',
+    partner_slug: 'getyourguide',
+    category: 'activity',
+    country_code: 'FR',
+    title: 'Activités Outdoor, Kayak & Visites Nature en France',
+    destination_name: 'France',
+    target_url: 'https://www.getyourguide.com/france-l16/',
+    tracking_params: { partner_id: 'LKDV2026' },
+    min_altitude_m: 0,
   },
   {
     slug: 'getyourguide-activites-chamonix-mont-blanc',
@@ -44,6 +69,18 @@ export const REAL_AFFILIATE_LINKS_SEED: AffiliateSeedLink[] = [
     destination_name: 'Chamonix-Mont-Blanc',
     target_url: 'https://www.getyourguide.com/chamonix-mont-blanc-l804/',
     tracking_params: { partner_id: 'LKDV2026' },
+    min_altitude_m: 2400,
+  },
+  {
+    slug: 'chapka-assurance-assistance-france',
+    partner_slug: 'chapka',
+    category: 'insurance',
+    country_code: 'FR',
+    title: 'Assurance Randonnée & Rapatriement France (Cap Assistance)',
+    destination_name: 'France',
+    target_url: 'https://www.chapkassurances.com/contrat/cap-assistance-24-24/',
+    tracking_params: { promo: 'LKDV' },
+    min_altitude_m: 0,
   },
   {
     slug: 'chapka-assurance-trek-alpes-france',
@@ -54,6 +91,7 @@ export const REAL_AFFILIATE_LINKS_SEED: AffiliateSeedLink[] = [
     destination_name: 'Alpes & Pyrénées',
     target_url: 'https://www.chapkassurances.com/contrat/cap-aventure/',
     tracking_params: { promo: 'LKDV' },
+    min_altitude_m: 2400,
   },
 
   // ==========================================
@@ -242,3 +280,24 @@ export const REAL_AFFILIATE_LINKS_SEED: AffiliateSeedLink[] = [
     tracking_params: { ref: 'LKDV' },
   },
 ];
+
+/**
+ * Filtre déterministe des liens d'affiliation pour un voyage.
+ * Résout le défaut D2 en découplant les offres haute montagne des voyages de plaine.
+ */
+export function filterAffiliateLinksForTrip(
+  countryCode: string,
+  maxAltitudeM?: number
+): AffiliateSeedLink[] {
+  const normCountry = (countryCode || 'FR').toUpperCase();
+  return REAL_AFFILIATE_LINKS_SEED.filter((link) => {
+    if (link.country_code !== normCountry) return false;
+    if (typeof maxAltitudeM === 'number' && typeof link.min_altitude_m === 'number') {
+      if (link.min_altitude_m > maxAltitudeM) {
+        return false;
+      }
+    }
+    return true;
+  });
+}
+

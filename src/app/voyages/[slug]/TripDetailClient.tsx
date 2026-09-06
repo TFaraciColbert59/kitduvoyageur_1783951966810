@@ -32,6 +32,8 @@ import { TripShareModal } from '@/features/trips/components/TripShareModal';
 import { TripOfflineBar } from '@/features/trips/components/TripOfflineBar';
 import { TripNotesView } from '@/features/trips/components/TripNotesView';
 
+import { useTripCounters } from '@/features/trips/hooks/useTripCounters';
+
 export interface TripDetailClientProps {
   trip: TripFull;
   stats: TripStats;
@@ -48,17 +50,19 @@ export default function TripDetailClient({
   const [activeTab, setActiveTab] = useState<string>('overview');
   const [isShareOpen, setIsShareOpen] = useState(false);
 
+  const counters = useTripCounters(trip, kitAnalysis);
+
   const tabs = [
     { id: 'overview', label: 'Vue d’ensemble', Icon: Compass, count: undefined },
-    { id: 'steps', label: 'Itinéraire', Icon: Navigation, count: trip.steps.length },
-    { id: 'team', label: 'Équipe', Icon: Users, count: trip.collaborators.length },
-    { id: 'gear', label: 'Équipement', Icon: Package, count: trip.items.length },
-    { id: 'budget', label: 'Budget', Icon: CreditCard, count: trip.expenses.length },
+    { id: 'steps', label: 'Itinéraire', Icon: Navigation, count: counters.itinerary },
+    { id: 'team', label: 'Équipe', Icon: Users, count: counters.team },
+    { id: 'gear', label: 'Équipement', Icon: Package, count: counters.gearItems },
+    { id: 'budget', label: 'Budget', Icon: CreditCard, count: counters.budget },
     ...(trip.permissions.canViewDocuments
-      ? [{ id: 'docs', label: 'Documents', Icon: FileText, count: trip.documents.length }]
+      ? [{ id: 'docs', label: 'Documents', Icon: FileText, count: counters.documents }]
       : []),
-    { id: 'safety', label: 'Sécurité', Icon: Shield, count: trip.safety_checkpoints.length },
-    { id: 'notes', label: 'Carnet', Icon: BookOpen, count: trip.notes.length },
+    { id: 'safety', label: 'Sécurité', Icon: Shield, count: trip.safety_checkpoints?.length || 0 },
+    { id: 'notes', label: 'Carnet', Icon: BookOpen, count: trip.notes?.length || 0 },
   ];
 
   return (

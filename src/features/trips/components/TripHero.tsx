@@ -6,19 +6,11 @@ import { LkvButton } from '@/components/ui/LkvButton';
 import { MapPin, Calendar, CreditCard, Users, Share2, Check, Edit3 } from 'lucide-react';
 import { TripBadge } from './TripBadge';
 import type { TripFull } from '../types/trip.types';
+import { formatCivilDateRange } from '@/lib/dates/tripDates';
 
 export interface TripHeroProps {
   trip: TripFull;
   onEditClick?: () => void;
-}
-
-function formatDate(dateStr?: string | null): string {
-  if (!dateStr) return '';
-  return new Intl.DateTimeFormat('fr-FR', {
-    day: 'numeric',
-    month: 'long',
-    year: 'numeric',
-  }).format(new Date(dateStr));
 }
 
 export function TripHero({ trip, onEditClick }: TripHeroProps) {
@@ -126,9 +118,7 @@ export function TripHero({ trip, onEditClick }: TripHeroProps) {
             {(trip.start_date || trip.end_date) && (
               <span className="flex items-center gap-1.5 bg-black/30 backdrop-blur-sm px-3 py-1 rounded-full border border-white/10">
                 <Calendar size={14} className="text-[#A6C1A0]" />
-                {trip.start_date && formatDate(trip.start_date)}
-                {trip.start_date && trip.end_date && ' → '}
-                {trip.end_date && formatDate(trip.end_date)}
+                {formatCivilDateRange(trip.start_date, trip.end_date, undefined, 'fr-FR')}
               </span>
             )}
 

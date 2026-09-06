@@ -2,6 +2,7 @@ import 'server-only';
 import { createClient } from '@/lib/supabase/server';
 import { getTripBySlug } from '@/lib/queries-trips';
 import { generateTripContextualKit, getTripDurationDays } from '@/features/trips/engine/contextualKitEngine';
+import { getTripElevationProfile } from '@/features/trips/lib/elevation';
 import type { TripFull, TripItem } from '@/features/trips/types/trip.types';
 import type {
   ShopProductReference,
@@ -24,29 +25,30 @@ export async function getShopProducts(): Promise<ShopProductReference[]> {
   const { data, error } = await supabase
     .from('shop_products')
     .select('id, slug, name, brand, price_eur, weight_g, category_main, image, image_alt, score_kdv')
-    .order('category_main', { ascending: true });
+    .eq('is_active', true)
+    .order('score_kdv', { ascending: false });
 
-  if (error || !data) {
+  if (error) {
     console.error('[getShopProducts] Erreur Supabase :', error);
     return [];
   }
 
-  return data.map((row: any) => ({
+  return (data || []).map((row: any) => ({
     id: row.id,
     slug: row.slug,
     name: row.name,
-    brand: row.brand,
-    price_eur: Number(row.price_eur) || 0,
-    weight_g: Number(row.weight_g) || 0,
-    category_main: row.category_main,
-    image: row.image || null,
-    image_alt: row.image_alt || null,
-    score_kdv: row.score_kdv ? Number(row.score_kdv) : null,
+    brand: row.brand || 'LKDV Sélection',
+    price_eur: Number(row.price_eur || 0),
+    weight_g: Number(row.weight_g || 0),
+    category_main: row.category_main || 'Équipement',
+    image: row.image,
+    image_alt: row.image_alt,
+    score_kdv: row.score_kdv,
   }));
 }
 
 /**
- * Récupère le voyage, ses items et génère l'analyse de kit contextuelle LKDV
+ * Récupère les détails du kit d'un voyage : items réels + recommandations contextuelles IA
  */
 export async function getTripKitDetails(
   slug: string,
@@ -66,6 +68,8 @@ export async function getTripKitDetails(
     }
   }
 
+  const elevationProfile = getTripElevationProfile(trip);
+
   const analysis = generateTripContextualKit({
     countryCode: trip.destination_country_code,
     activity: trip.primary_activity,
@@ -74,6 +78,7 @@ export async function getTripKitDetails(
     steps: trip.steps,
     currentItems: trip.items,
     availableProducts,
+    elevationProfile,
   });
 
   return {

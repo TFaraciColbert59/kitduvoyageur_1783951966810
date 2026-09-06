@@ -8,6 +8,8 @@ import { TripBadge } from './TripBadge';
 import { MapPin, Calendar, Navigation, Users } from 'lucide-react';
 import type { TripSummary, TripWithDetails } from '../types/trip.types';
 
+import { formatCivilDate, formatCivilDateRange } from '@/lib/dates/tripDates';
+
 export interface TripCardProps {
   trip: TripSummary | TripWithDetails;
   showRole?: boolean;
@@ -15,26 +17,9 @@ export interface TripCardProps {
 
 function formatDateRange(start?: string | null, end?: string | null): string {
   if (!start && !end) return 'Dates à définir';
-  const formatter = new Intl.DateTimeFormat('fr-FR', {
-    day: 'numeric',
-    month: 'short',
-    year: 'numeric',
-  });
-  if (start && !end) return `Dès le ${formatter.format(new Date(start))}`;
-  if (!start && end) return `Jusqu'au ${formatter.format(new Date(end))}`;
-  if (start && end) {
-    const sDate = new Date(start);
-    const eDate = new Date(end);
-    if (sDate.getFullYear() === eDate.getFullYear()) {
-      const shortFormatter = new Intl.DateTimeFormat('fr-FR', {
-        day: 'numeric',
-        month: 'short',
-      });
-      return `${shortFormatter.format(sDate)} — ${formatter.format(eDate)}`;
-    }
-    return `${formatter.format(sDate)} — ${formatter.format(eDate)}`;
-  }
-  return '';
+  if (start && !end) return `Dès le ${formatCivilDate(start, 'fr-FR', 'short')}`;
+  if (!start && end) return `Jusqu'au ${formatCivilDate(end, 'fr-FR', 'short')}`;
+  return formatCivilDateRange(start, end, undefined, 'fr-FR');
 }
 
 export function TripCard({ trip, showRole = true }: TripCardProps) {

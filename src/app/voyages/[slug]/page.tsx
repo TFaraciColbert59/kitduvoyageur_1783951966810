@@ -4,6 +4,7 @@ import { createClient } from '@/lib/supabase/server';
 import { getTripBySlug, getTripStats } from '@/lib/queries-trips';
 import { getAffiliateLinks } from '@/lib/queries-affiliation';
 import { getTripKitDetails } from '@/lib/queries-trip-kit';
+import { getTripElevationProfile } from '@/features/trips/lib/elevation';
 import TripDetailClient from './TripDetailClient';
 
 export const dynamic = 'force-dynamic';
@@ -18,23 +19,17 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
 
   if (!trip) {
     return {
-      title: 'Voyage introuvable — Le Kit du Voyageur',
+      title: 'Voyage introuvable | Le Kit du Voyageur',
     };
   }
 
-  const title = `${trip.title} — Expédition Outdoor | LKDV`;
-  const description =
-    trip.description ||
-    `Détails et itinéraire de l'expédition ${trip.title} à ${trip.destination_name || 'destination outdoor'}. Organisé sur Le Kit du Voyageur.`;
-
   return {
-    title,
-    description,
+    title: `${trip.title} | Carnet & Organisation | Le Kit du Voyageur`,
+    description: trip.description || `Préparez votre voyage ${trip.title} avec LKDV.`,
     openGraph: {
-      title,
-      description,
-      type: 'article',
-      url: `https://lekitduvoyageur.fr/voyages/${trip.slug}`,
+      title: trip.title,
+      description: trip.description || undefined,
+      type: 'website',
       images: trip.cover_image_url ? [{ url: trip.cover_image_url }] : [],
     },
     alternates: {
@@ -57,11 +52,13 @@ export default async function TripDetailPage({ params }: PageProps) {
   }
 
   const stats = await getTripStats(trip.id);
+  const elevationProfile = getTripElevationProfile(trip);
 
-  // Liens d'affiliation ciblés par pays
+  // Liens d'affiliation ciblés par pays et altitude (résolution D2)
   const countryCode = trip.destination_country_code || undefined;
   const affiliateLinks = await getAffiliateLinks({
     countryCode,
+    maxAltitudeM: elevationProfile.maxM,
     limit: 6,
   });
 

@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { ArrowLeft, Printer, Download, MapPin, Calendar, Users, Shield, CheckSquare } from 'lucide-react';
 import type { TripFull, TripStats } from '@/features/trips/types/trip.types';
 import type { BudgetSummary } from '@/features/trips/engine/budgetEngine';
+import { formatCivilDateRange } from '@/lib/dates/tripDates';
 
 interface ExportClientViewProps {
   trip: TripFull;
@@ -96,8 +97,7 @@ export default function ExportClientView({ trip, stats, budgetSummary }: ExportC
               <div>
                 <div className="text-[10px] text-gray-500 uppercase">Dates</div>
                 <div className="text-sm font-semibold text-[#17402C]">
-                  {trip.start_date ? new Date(trip.start_date).toLocaleDateString('fr-FR') : 'Date libre'}
-                  {trip.end_date ? ` au ${new Date(trip.end_date).toLocaleDateString('fr-FR')}` : ''}
+                  {formatCivilDateRange(trip.start_date, trip.end_date, undefined, 'fr-FR') || 'Date libre'}
                 </div>
               </div>
             </div>

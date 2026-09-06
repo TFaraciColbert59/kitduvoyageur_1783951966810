@@ -1,4 +1,4 @@
-﻿/**
+/**
  * Types pour le Chantier 6 : IA & Kit Contextuel (Boutique LKDV, équipement, marge pleine)
  */
 
@@ -17,6 +17,7 @@ export interface ShopProductReference {
 
 export interface ContextualGearRecommendation {
   id: string;
+  key: string;
   name: string;
   category: 'shelter' | 'sleep' | 'clothing' | 'cook' | 'water' | 'tech' | 'safety' | 'navigation' | 'misc';
   priority: 'vital' | 'recommended' | 'optional';
@@ -35,10 +36,12 @@ export interface TripKitAnalysis {
   baseWeightGrams: number;
   wornWeightGrams: number;
   consumableWeightGrams: number;
-  weightCategory: 'ultralight' | 'light' | 'standard' | 'heavy';
+  weightCategory: 'none' | 'incomplet' | 'ultralight' | 'light' | 'standard' | 'heavy';
+  unweighedItemsCount: number;
   maxAltitudeM: number;
   seasonContext: string;
   climateWarnings: string[];
   vitalGaps: ContextualGearRecommendation[];
   recommendedGaps: ContextualGearRecommendation[];
+  gearGaps: ContextualGearRecommendation[];
 }

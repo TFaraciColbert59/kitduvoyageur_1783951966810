@@ -221,7 +221,7 @@ describe('buildItinerary — Orchestrateur déterministe d’itinéraire (TDD)',
     }
   });
 
-  it('TEST-BUILD-05: Si aucune donnée candidate n’est fournie pour un pays, produit zéro placeholder et un avertissement explicite', () => {
+  it('TEST-BUILD-05: Si aucune donnée candidate n’est fournie pour un pays, produit un squelette de 5 jours et un avertissement explicite (D1 Fix)', () => {
     const input: PlannerInput = {
       countries: [{ country_code: 'IS' }], // Islande, 0 candidates
       duration_days: 5,
@@ -236,10 +236,14 @@ describe('buildItinerary — Orchestrateur déterministe d’itinéraire (TDD)',
       candidateItems: [],
     });
 
-    expect(output.steps).toHaveLength(0);
+    // D1 Contract: Invariant jamais de retour [], produit N jours squelette
+    expect(output.steps).toHaveLength(5);
+    expect(output.source).toBe('skeleton');
     const noDataWarning = output.warnings.find((w) => w.code === 'NO_STEPS_AVAILABLE');
     expect(noDataWarning).toBeDefined();
     expect(noDataWarning?.country_code).toBe('IS');
+    const skeletonWarning = output.warnings.find((w) => w.code === 'SKELETON_ITINERARY');
+    expect(skeletonWarning).toBeDefined();
   });
 
   it('TEST-BUILD-06: Déterminisme absolu — 100 exécutions produisent une sortie bit pour bit identique', () => {

@@ -3,6 +3,7 @@
 import React, { useRef, useEffect } from 'react';
 import { Plus } from 'lucide-react';
 import type { PlannerStep } from './plannerEngine';
+import { formatCivilDayIndex } from '@/lib/dates/tripDates';
 
 export interface DayNavigatorProps {
   daysCount: number;
@@ -44,18 +45,7 @@ export function DayNavigator({
   const daysList = Array.from({ length: Math.max(1, daysCount) }, (_, i) => i + 1);
 
   function formatDayDate(dayIndex: number): string | null {
-    if (!startDate) return null;
-    try {
-      const d = new Date(startDate);
-      d.setDate(d.getDate() + (dayIndex - 1));
-      return new Intl.DateTimeFormat('fr-FR', {
-        weekday: 'short',
-        day: 'numeric',
-        month: 'short',
-      }).format(d);
-    } catch {
-      return null;
-    }
+    return formatCivilDayIndex(startDate, dayIndex, { weekday: 'short', month: 'short' });
   }
 
   return (

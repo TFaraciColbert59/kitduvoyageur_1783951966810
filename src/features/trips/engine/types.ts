@@ -47,6 +47,28 @@ export interface PlannerInput {
   pace: PlannerPace;
   travelers_count: number;
   reference_date?: string;
+  slug?: string | null;
+  totalDistanceKm?: number | null;
+  totalElevationGainM?: number | null;
+}
+
+export interface GenerateItineraryInput {
+  days?: number | null;
+  duration_days?: number | null;
+  slug?: string | null;
+  country?: string | null;
+  countries?: CountryInput[];
+  totalDistanceKm?: number | null;
+  totalElevationGainM?: number | null;
+  dailyDistanceLimitKm?: number | null;
+  styles?: string[];
+  pace?: PlannerPace;
+  travelers_count?: number;
+  start_date?: string | null;
+  end_date?: string | null;
+  reference_date?: string;
+  candidateSteps?: CandidateStep[];
+  candidateItems?: CandidateItem[];
 }
 
 export interface CountryAllocation {
@@ -78,7 +100,7 @@ export interface GeneratedStep {
   elevation_gain_m: number | null;
   elevation_loss_m: number | null;
   accommodation_name: string | null;
-  source: 'import' | 'ai' | 'user';
+  source: 'template' | 'computed' | 'skeleton' | 'import' | 'ai' | 'user';
 }
 
 export interface GeneratedItem {
@@ -101,6 +123,8 @@ export interface PlannerOutput {
   total_days: number;
   total_distance_km: number;
   total_elevation_gain_m: number;
+  source: 'template' | 'computed' | 'skeleton';
+  sourceLabel: string;
 }
 
 export interface EngineCandidateData {

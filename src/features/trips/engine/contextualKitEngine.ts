@@ -4,6 +4,8 @@ import type {
   ContextualGearRecommendation,
   TripKitAnalysis,
 } from '../types/kit.types';
+import type { ElevationProfile } from '../lib/elevation';
+import { getCivilDurationDays } from '@/lib/dates/tripDates';
 
 export interface ContextualKitInput {
   countryCode?: string | null;
@@ -13,6 +15,73 @@ export interface ContextualKitInput {
   steps?: TripStep[];
   currentItems?: TripItem[];
   availableProducts?: ShopProductReference[];
+  elevationProfile?: ElevationProfile;
+}
+
+export interface KitWeightResult {
+  totalWeightGrams: number;
+  baseWeightGrams: number;
+  wornWeightGrams: number;
+  consumableWeightGrams: number;
+  unweighedItemsCount: number;
+  weightCategory: 'none' | 'incomplet' | 'ultralight' | 'light' | 'standard' | 'heavy';
+}
+
+/**
+ * Calcul déterministe et cohérent du poids du sac (résout D3 et D4)
+ * Invariants :
+ * - Sac vide (0g ou 0 items) -> pas de badge ULTRALIGHT (weightCategory: 'none')
+ * - Item sans poids renseigné (null/undefined) -> 'incomplet'
+ * - Conditionné à totalWeightGrams > 0
+ */
+export function computeKitWeight(items: TripItem[]): KitWeightResult {
+  let totalWeightGrams = 0;
+  let baseWeightGrams = 0;
+  let wornWeightGrams = 0;
+  let consumableWeightGrams = 0;
+  let unweighedItemsCount = 0;
+
+  for (const item of items) {
+    const qty = item.quantity || 1;
+    if (item.weight_grams === null || item.weight_grams === undefined) {
+      unweighedItemsCount++;
+      continue;
+    }
+    const w = item.weight_grams * qty;
+    totalWeightGrams += w;
+    if ((item as any).is_worn) {
+      wornWeightGrams += w;
+    } else if ((item as any).is_consumable) {
+      consumableWeightGrams += w;
+    } else {
+      baseWeightGrams += w;
+    }
+  }
+
+  let weightCategory: KitWeightResult['weightCategory'] = 'none';
+
+  if (items.length === 0 || totalWeightGrams === 0) {
+    weightCategory = 'none';
+  } else if (unweighedItemsCount > 0) {
+    weightCategory = 'incomplet';
+  } else if (baseWeightGrams < 5000) {
+    weightCategory = 'ultralight';
+  } else if (baseWeightGrams < 8000) {
+    weightCategory = 'light';
+  } else if (baseWeightGrams <= 12000) {
+    weightCategory = 'standard';
+  } else {
+    weightCategory = 'heavy';
+  }
+
+  return {
+    totalWeightGrams,
+    baseWeightGrams,
+    wornWeightGrams,
+    consumableWeightGrams,
+    unweighedItemsCount,
+    weightCategory,
+  };
 }
 
 /**
@@ -47,12 +116,12 @@ export const CONTEXTUAL_RULES: KitRuleTemplate[] = [
     key: 'whistle',
     name: 'Sifflet de survie et détresse',
     category: 'safety',
-    defaultPriority: 'vital',
+    defaultPriority: 'recommended',
     baseWeightGrams: 20,
     condition: () => ({
       match: true,
       reason: 'Signal sonore d’urgence audible à longue distance en cas de brouillard ou chute.',
-      priority: 'vital',
+      priority: 'recommended',
     }),
     preferredProductSlug: 'sifflet-de-survie-urgence-categorie-bigbuy',
   },
@@ -60,12 +129,12 @@ export const CONTEXTUAL_RULES: KitRuleTemplate[] = [
     key: 'headlamp',
     name: 'Lampe frontale LED haute autonomie',
     category: 'tech',
-    defaultPriority: 'vital',
+    defaultPriority: 'recommended',
     baseWeightGrams: 90,
     condition: () => ({
       match: true,
       reason: 'Éclairage mains libres essentiel pour les départs matinaux, arrivées tardives et nuits en refuge/bivouac.',
-      priority: 'vital',
+      priority: 'recommended',
     }),
     preferredProductSlug: 'lampe-frontale-led-rechargeable-black-diamond-spot-400',
   },
@@ -82,7 +151,61 @@ export const CONTEXTUAL_RULES: KitRuleTemplate[] = [
     preferredProductSlug: 'kit-de-reparation-colliers-de-cable-jokari-system-4-70-n70',
   },
 
-  // 2. ALTITUDE & CONDITIONS ALPINES (Montagne, passages de cols)
+  // 2. RÈGLES D'ALTITUDE > 2400M (Contrat D2 strict)
+  {
+    key: 'water-filter',
+    name: 'Filtre à eau / paille filtrante',
+    category: 'water',
+    defaultPriority: 'vital',
+    baseWeightGrams: 140,
+    condition: (_input, maxAlt) => {
+      const needFilter = maxAlt > 2400;
+      return {
+        match: needFilter,
+        reason: needFilter
+          ? `Altitude supérieure à 2400m (${maxAlt}m) : filtration indispensable des névés, torrents et sources naturelles non contrôlées.`
+          : '',
+        priority: 'vital',
+      };
+    },
+    preferredProductSlug: 'filtre-a-eau-randonnee-categorie-bigbuy',
+  },
+  {
+    key: 'cold-down-jacket',
+    name: 'Doudoune grand froid en duvet compressible',
+    category: 'clothing',
+    defaultPriority: 'vital',
+    baseWeightGrams: 380,
+    condition: (_input, maxAlt) => {
+      const extremeCold = maxAlt > 2400;
+      return {
+        match: extremeCold,
+        reason: extremeCold
+          ? `Haute altitude (${maxAlt}m > 2400m) : isolation thermique grand froid indispensable face aux températures nocturnes négatives.`
+          : '',
+        priority: 'vital',
+      };
+    },
+    preferredProductSlug: 'doudoune-grand-froid-categorie-bigbuy',
+  },
+  {
+    key: 'survival-blanket',
+    name: 'Couverture de survie renforcée',
+    category: 'safety',
+    defaultPriority: 'vital',
+    baseWeightGrams: 60,
+    condition: (_input, maxAlt) => {
+      const isHigh = maxAlt > 2400;
+      return {
+        match: isHigh,
+        reason: isHigh
+          ? `Haute altitude (${maxAlt}m > 2400m) : isolation thermique vitale d’urgence en cas d’aléa météo ou blessure immobilisante.`
+          : '',
+        priority: 'vital',
+      };
+    },
+    preferredProductSlug: 'couverture-de-survie-categorie-bigbuy',
+  },
   {
     key: 'crampons',
     name: 'Crampons de traction / neige & glace',
@@ -144,14 +267,14 @@ export const CONTEXTUAL_RULES: KitRuleTemplate[] = [
     key: 'sunscreen',
     name: 'Crème solaire haute protection SPF 50+',
     category: 'safety',
-    defaultPriority: 'vital',
+    defaultPriority: 'recommended',
     baseWeightGrams: 120,
     condition: (input, maxAlt) => {
       const intenseUv = maxAlt >= 1800 || input.countryCode === 'MA' || input.countryCode === 'PE';
       return {
         match: true,
         reason: intenseUv
-          ? `Rayonnement UV démultiplié par l’altitude (${maxAlt}m) ou l'exposition désertique : protection vitale contre les brûlures solaires.`
+          ? `Rayonnement UV démultiplié par l’altitude (${maxAlt}m) ou l'exposition désertique : protection cutanée indispensable.`
           : 'Protection cutanée contre le soleil.',
         priority: intenseUv ? 'vital' : 'recommended',
       };
@@ -162,7 +285,7 @@ export const CONTEXTUAL_RULES: KitRuleTemplate[] = [
     key: 'sunglasses',
     name: 'Lunettes de soleil sport UV400 cat. 3/4',
     category: 'safety',
-    defaultPriority: 'vital',
+    defaultPriority: 'recommended',
     baseWeightGrams: 30,
     condition: (input, maxAlt) => {
       const needGlasses = maxAlt >= 1500 || input.countryCode === 'MA' || input.countryCode === 'IS';
@@ -192,12 +315,12 @@ export const CONTEXTUAL_RULES: KitRuleTemplate[] = [
     key: 'water-bottle',
     name: 'Bouteille d’eau légère de randonnée',
     category: 'water',
-    defaultPriority: 'vital',
+    defaultPriority: 'recommended',
     baseWeightGrams: 200,
     condition: () => ({
       match: true,
       reason: 'Réservoir principal d’eau pour sécuriser l’autonomie entre deux points de ravitaillement.',
-      priority: 'vital',
+      priority: 'recommended',
     }),
     preferredProductSlug: 'bouteille-deau-picture-acc121-a-blanc-naturel-acier',
   },
@@ -207,7 +330,7 @@ export const CONTEXTUAL_RULES: KitRuleTemplate[] = [
     key: 'rain-poncho',
     name: 'Poncho imperméable & coupe-vent',
     category: 'clothing',
-    defaultPriority: 'vital',
+    defaultPriority: 'recommended',
     baseWeightGrams: 150,
     condition: (input) => {
       const wetClimate = input.countryCode === 'IS' || input.countryCode === 'NP' || input.countryCode === 'FR';
@@ -242,7 +365,7 @@ export const CONTEXTUAL_RULES: KitRuleTemplate[] = [
     key: 'tent-2p',
     name: 'Tente de randonnée légère 2 personnes',
     category: 'shelter',
-    defaultPriority: 'vital',
+    defaultPriority: 'recommended',
     baseWeightGrams: 1800,
     condition: (input) => {
       const needsShelter = input.activity === 'bivouac' || input.activity === 'trekking' || input.durationDays >= 3;
@@ -288,14 +411,14 @@ export const CONTEXTUAL_RULES: KitRuleTemplate[] = [
     key: 'fire-starter',
     name: 'Briquet / allume-feu résistant au vent',
     category: 'cook',
-    defaultPriority: 'vital',
+    defaultPriority: 'recommended',
     baseWeightGrams: 50,
     condition: (input) => {
       const needsFire = input.activity === 'bivouac' || input.activity === 'trekking';
       return {
         match: needsFire,
         reason: 'Source de feu indispensable pour allumer réchaud, feu de secours ou signaux.',
-        priority: 'vital',
+        priority: 'recommended',
       };
     },
     preferredProductSlug: 'briquetallume-feu-camping-baton-trekking-black-diamond-bd110065-pourpre',
@@ -333,12 +456,12 @@ export const CONTEXTUAL_RULES: KitRuleTemplate[] = [
     key: 'powerbank',
     name: 'Batterie externe étanche Power Bank',
     category: 'tech',
-    defaultPriority: 'vital',
+    defaultPriority: 'recommended',
     baseWeightGrams: 200,
     condition: (input) => ({
       match: input.durationDays >= 2,
       reason: 'Garantit la charge continue de votre smartphone ou GPS de secours sans prise électrique.',
-      priority: 'vital',
+      priority: 'recommended',
     }),
     preferredProductSlug: 'batterie-externe-power-bank-categorie-bigbuy',
   },
@@ -346,12 +469,12 @@ export const CONTEXTUAL_RULES: KitRuleTemplate[] = [
     key: 'backpack',
     name: 'Sac à dos technique de randonnée',
     category: 'misc',
-    defaultPriority: 'vital',
+    defaultPriority: 'recommended',
     baseWeightGrams: 800,
     condition: () => ({
       match: true,
       reason: 'Portage équilibré et ergonomique adapté à la charge totale de votre aventure.',
-      priority: 'vital',
+      priority: 'recommended',
     }),
     preferredProductSlug: 'sac-a-dos-de-randonnee-categorie-bigbuy',
   },
@@ -365,11 +488,29 @@ export function generateTripContextualKit(input: ContextualKitInput): TripKitAna
   const steps = input.steps || [];
   const availableProducts = input.availableProducts || [];
 
-  // 1. Calcul de l'altitude maximale sur les étapes du voyage
+  // 1. Calcul de l'altitude maximale sur la source unique ElevationProfile (résolution D2)
   let maxAltitudeM = 0;
-  for (const step of steps) {
-    if (step.elevation_gain_m && step.elevation_gain_m > maxAltitudeM) {
-      maxAltitudeM = Math.max(maxAltitudeM, step.elevation_gain_m);
+  if (input.elevationProfile) {
+    maxAltitudeM = input.elevationProfile.maxM;
+  } else {
+    for (const step of steps) {
+      const explicitMax = (step as any).elevation_max_m;
+      if (typeof explicitMax === 'number' && explicitMax > maxAltitudeM) {
+        maxAltitudeM = explicitMax;
+      }
+    }
+    if (maxAltitudeM === 0) {
+      // Vérifier si des étapes ont un dénivelé très élevé (>2000m) comme indice de haute altitude
+      for (const step of steps) {
+        if (step.elevation_gain_m && step.elevation_gain_m > 2000) {
+          maxAltitudeM = Math.max(maxAltitudeM, step.elevation_gain_m);
+        }
+      }
+    }
+    if (maxAltitudeM === 0 && input.countryCode) {
+      const countryCode = input.countryCode.toUpperCase();
+      const fallbacks: Record<string, number> = { NP: 3500, PE: 3400, MA: 1200, IS: 500, FR: 480 };
+      maxAltitudeM = fallbacks[countryCode] || 0;
     }
   }
 
@@ -399,7 +540,6 @@ export function generateTripContextualKit(input: ContextualKitInput): TripKitAna
     const hasItem = currentItems.some((item) => {
       const name = item.item_name.toLowerCase();
       const ruleKeyWords = rule.name.toLowerCase().split(' ');
-      // Correspondance exacte ou partielle significative
       return (
         name.includes(rule.key) ||
         ruleKeyWords.filter((w) => w.length > 4).some((w) => name.includes(w))
@@ -407,52 +547,79 @@ export function generateTripContextualKit(input: ContextualKitInput): TripKitAna
     });
 
     if (!hasItem) {
-      // Rechercher le produit réel de la boutique LKDV correspondant
       const matchedProduct = availableProducts.find(
         (p) => p.slug === rule.preferredProductSlug
       ) || null;
 
+      // Anti-D3 : si le produit boutique a un poids de 0g, repli sur le poids de base calibré
+      const weightGrams =
+        matchedProduct && matchedProduct.weight_g > 0
+          ? matchedProduct.weight_g
+          : rule.baseWeightGrams;
+
       requiredGaps.push({
         id: `rec-${rule.key}`,
+        key: rule.key,
         name: rule.name,
         category: rule.category,
         priority: priority || rule.defaultPriority,
         reason,
-        weightGrams: matchedProduct ? matchedProduct.weight_g : rule.baseWeightGrams,
+        weightGrams,
         shopProduct: matchedProduct,
       });
     }
   }
 
-  const vitalGaps = requiredGaps.filter((g) => g.priority === 'vital');
-  const recommendedGaps = requiredGaps.filter((g) => g.priority !== 'vital');
+  // 4. Plafond dur de maximum 2 recommandations vitales / safety_critical (résolution D7)
+  const candidateVitals = requiredGaps.filter((g) => g.priority === 'vital');
+  const candidateOthers = requiredGaps.filter((g) => g.priority !== 'vital');
 
-  // 4. Métriques de poids et de complétude
-  let totalWeightGrams = 0;
-  let baseWeightGrams = 0;
-  let wornWeightGrams = 0;
-  let consumableWeightGrams = 0;
+  // Scoring de criticité technique pour sélectionner les 2 plus vitaux (Plafond D7)
+  const scoreRisk = (gap: ContextualGearRecommendation) => {
+    let score = 0;
+    if (gap.key === 'first-aid') score += 10;
+    if (gap.key === 'rain-poncho' && input.countryCode === 'IS') score += 9.8;
+    if (gap.key === 'crampons' && (maxAltitudeM >= 2400 || input.countryCode === 'IS' || input.countryCode === 'NP')) score += 9.5;
+    if (gap.key === 'water-filter' && maxAltitudeM > 2400) score += 8.8;
+    if (gap.key === 'cold-down-jacket' && maxAltitudeM > 2400) score += 8.5;
+    if (gap.key === 'survival-blanket' && maxAltitudeM > 2400) score += 8.2;
+    if (gap.key === 'headlamp') score += 5;
+    if (gap.key === 'whistle') score += 4.5;
+    if (gap.key === 'water-bottle') score += 3;
+    return score;
+  };
+
+  candidateVitals.sort((a, b) => scoreRisk(b) - scoreRisk(a));
+
+  const vitalGaps: ContextualGearRecommendation[] = [];
+  const recommendedGaps: ContextualGearRecommendation[] = [...candidateOthers];
+
+  for (let i = 0; i < candidateVitals.length; i++) {
+    if (i < 2) {
+      vitalGaps.push(candidateVitals[i]);
+    } else {
+      // Reclassement en recommandé avec raison technique conservée
+      recommendedGaps.push({
+        ...candidateVitals[i],
+        priority: 'recommended',
+      });
+    }
+  }
+
+  const gearGaps = [...vitalGaps, ...recommendedGaps];
+
+  // 5. Métriques de poids et de complétude via computeKitWeight (résolution D3, D4)
+  const weightResult = computeKitWeight(currentItems);
+
   let packedItemsCount = 0;
   let vitalItemsCount = 0;
   let packedVitalCount = 0;
 
   for (const item of currentItems) {
-    const weight = (item.weight_grams || 0) * (item.quantity || 1);
-    totalWeightGrams += weight;
-
-    if (item.is_worn) {
-      wornWeightGrams += weight;
-    } else if (item.is_consumable) {
-      consumableWeightGrams += weight;
-    } else {
-      baseWeightGrams += weight;
-    }
-
     if (item.is_packed) {
       packedItemsCount++;
     }
-
-    if (item.is_vital || item.priority === 'vital') {
+    if ((item as any).is_vital || item.priority === 'vital') {
       vitalItemsCount++;
       if (item.is_packed) {
         packedVitalCount++;
@@ -461,18 +628,8 @@ export function generateTripContextualKit(input: ContextualKitInput): TripKitAna
   }
 
   const totalItemsCount = currentItems.length;
-  const completionPercent = totalItemsCount > 0 ? Math.round((packedItemsCount / totalItemsCount) * 100) : 0;
-
-  let weightCategory: TripKitAnalysis['weightCategory'] = 'standard';
-  if (baseWeightGrams < 5000) {
-    weightCategory = 'ultralight';
-  } else if (baseWeightGrams < 8000) {
-    weightCategory = 'light';
-  } else if (baseWeightGrams <= 12000) {
-    weightCategory = 'standard';
-  } else {
-    weightCategory = 'heavy';
-  }
+  const completionPercent =
+    totalItemsCount > 0 ? Math.round((packedItemsCount / totalItemsCount) * 100) : 0;
 
   return {
     totalItemsCount,
@@ -480,16 +637,18 @@ export function generateTripContextualKit(input: ContextualKitInput): TripKitAna
     vitalItemsCount,
     packedVitalCount,
     completionPercent,
-    totalWeightGrams,
-    baseWeightGrams,
-    wornWeightGrams,
-    consumableWeightGrams,
-    weightCategory,
+    totalWeightGrams: weightResult.totalWeightGrams,
+    baseWeightGrams: weightResult.baseWeightGrams,
+    wornWeightGrams: weightResult.wornWeightGrams,
+    consumableWeightGrams: weightResult.consumableWeightGrams,
+    weightCategory: weightResult.weightCategory,
+    unweighedItemsCount: weightResult.unweighedItemsCount,
     maxAltitudeM,
     seasonContext: input.seasonMonth ? `Mois ${input.seasonMonth}` : 'Dates flexibles',
     climateWarnings,
     vitalGaps,
     recommendedGaps,
+    gearGaps,
   };
 }
 
@@ -502,10 +661,8 @@ export function getTripDurationDays(trip: {
   steps?: { day_number: number }[];
 }): number {
   if (trip.start_date && trip.end_date) {
-    const start = new Date(trip.start_date).getTime();
-    const end = new Date(trip.end_date).getTime();
-    const diff = Math.ceil((end - start) / (1000 * 60 * 60 * 24)) + 1;
-    if (diff > 0) return diff;
+    const duration = getCivilDurationDays(trip.start_date, trip.end_date);
+    if (duration > 0) return duration;
   }
   if (trip.steps && trip.steps.length > 0) {
     const maxDay = Math.max(...trip.steps.map((s) => s.day_number || 1));
