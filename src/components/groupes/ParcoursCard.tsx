@@ -5,8 +5,6 @@ import Link from 'next/link';
 import Icon from '@/components/ui/AppIcon';
 import 'leaflet/dist/leaflet.css';
 
-import GlassIconButton from '@/components/ui/GlassIconButton';
-
 interface ParcoursCardProps {
   groupId?: string;
   trail?: any;
@@ -25,15 +23,20 @@ export default function ParcoursCard({ groupId, trail, meta }: ParcoursCardProps
 
   useEffect(() => {
     if (!containerRef.current || typeof window === 'undefined') return;
-    const container = containerRef.current;
-
-    if (mapRef.current) {
-      try { mapRef.current.remove(); } catch {}
-      mapRef.current = null;
-    }
-    try { delete (container as any)._leaflet_id; } catch {}
+    let isCancelled = false;
 
     import('leaflet').then((L) => {
+      if (isCancelled || !containerRef.current) return;
+      const container = containerRef.current;
+
+      if (mapRef.current) {
+        try { mapRef.current.remove(); } catch {}
+        mapRef.current = null;
+      }
+      if ((container as any)._leaflet_id) {
+        try { delete (container as any)._leaflet_id; } catch {}
+      }
+
       delete (L.Icon.Default.prototype as any)._getIconUrl;
       L.Icon.Default.mergeOptions({
         iconRetinaUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon-2x.png',
@@ -115,7 +118,7 @@ export default function ParcoursCard({ groupId, trail, meta }: ParcoursCardProps
       mapRef.current = map;
 
       setTimeout(() => {
-        if (mapRef.current) {
+        if (!isCancelled && mapRef.current) {
           mapRef.current.invalidateSize();
           mapRef.current.fitBounds(polyline.getBounds(), { padding: [28, 28] });
         }
@@ -123,10 +126,13 @@ export default function ParcoursCard({ groupId, trail, meta }: ParcoursCardProps
     });
 
     return () => {
+      isCancelled = true;
       if (mapRef.current) {
         try { mapRef.current.remove(); } catch {}
         mapRef.current = null;
-        try { delete (container as any)._leaflet_id; } catch {}
+      }
+      if (containerRef.current) {
+        try { delete (containerRef.current as any)._leaflet_id; } catch {}
       }
     };
   }, [startLat, startLng, trailName, distanceKm, elevationGain]);
@@ -176,27 +182,23 @@ export default function ParcoursCard({ groupId, trail, meta }: ParcoursCardProps
           <button
             type="button"
             onClick={handleDownloadGpx}
-            className="flex items-center gap-1 text-xs font-bold text-[#17402C] hover:opacity-80"
+            className="flex items-center gap-1.5 text-xs font-bold text-[#17402C] hover:opacity-80"
             title="Télécharger la trace GPX"
           >
             <span className="text-[11px] font-bold">GPX</span>
-            <GlassIconButton
-              size="sm"
-              title="Télécharger GPX"
-              icon={<Icon name="ArrowDownTrayIcon" size={12} />}
-            />
+            <span className="glass-circle-btn w-7 h-7 text-xs flex items-center justify-center pointer-events-none">
+              <Icon name="ArrowDownTrayIcon" size={12} />
+            </span>
           </button>
           <Link
             href="/explorer"
-            className="flex items-center gap-1 text-xs font-bold text-[#17402C] hover:opacity-80"
+            className="flex items-center gap-1.5 text-xs font-bold text-[#17402C] hover:opacity-80"
             title="Ouvrir la carte interactive"
           >
             <span className="text-[11px] font-bold">Carte</span>
-            <GlassIconButton
-              size="sm"
-              title="Ouvrir la carte"
-              icon={<Icon name="ArrowRightIcon" size={12} />}
-            />
+            <span className="glass-circle-btn w-7 h-7 text-xs flex items-center justify-center pointer-events-none">
+              <Icon name="ArrowRightIcon" size={12} />
+            </span>
           </Link>
         </div>
       </div>

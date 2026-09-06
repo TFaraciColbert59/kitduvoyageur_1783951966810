@@ -3,7 +3,6 @@
 import React from 'react';
 import Link from 'next/link';
 import Icon from '@/components/ui/AppIcon';
-import GlassIconButton from '@/components/ui/GlassIconButton';
 import { useHapticFeedback } from '@/hooks/useHapticFeedback';
 
 export interface TravelGroupItem {
@@ -139,11 +138,12 @@ export default function MobileGroupCard({
             className="flex items-center gap-1 text-xs font-bold text-[#17402C] hover:opacity-80"
           >
             <span className="text-[11px] font-bold">Cockpit</span>
-            <GlassIconButton
-              size="sm"
-              title="Accéder au Cockpit de groupe"
-              icon={<Icon name="ArrowRightIcon" size={12} />}
-            />
+            <span
+              className="glass-circle-btn w-7 h-7 text-xs flex items-center justify-center pointer-events-none"
+              aria-hidden="true"
+            >
+              <Icon name="ArrowRightIcon" size={12} />
+            </span>
           </Link>
         ) : (
           <button
@@ -156,11 +156,12 @@ export default function MobileGroupCard({
             className="flex items-center gap-1.5 text-xs font-bold text-[#17402C] disabled:opacity-50"
           >
             <span className="text-[11px] font-bold">{joining ? 'Inscription...' : 'Rejoindre'}</span>
-            <GlassIconButton
-              size="sm"
-              title="Rejoindre l'expédition"
-              icon={<Icon name="PlusIcon" size={12} />}
-            />
+            <span
+              className="glass-circle-btn w-7 h-7 text-xs flex items-center justify-center pointer-events-none"
+              aria-hidden="true"
+            >
+              <Icon name="PlusIcon" size={12} />
+            </span>
           </button>
         )}
       </div>
