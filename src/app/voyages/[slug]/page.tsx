@@ -11,6 +11,7 @@ export const dynamic = 'force-dynamic';
 
 interface PageProps {
   params: Promise<{ slug: string }>;
+  searchParams?: Promise<{ phase?: string }>;
 }
 
 export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
@@ -38,8 +39,10 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
   };
 }
 
-export default async function TripDetailPage({ params }: PageProps) {
+export default async function TripDetailPage({ params, searchParams }: PageProps) {
   const { slug } = await params;
+  const resolvedSearchParams = searchParams ? await searchParams : undefined;
+  const initialPhase = resolvedSearchParams?.phase as any;
   const supabase = await createClient();
   const {
     data: { user },
@@ -100,6 +103,7 @@ export default async function TripDetailPage({ params }: PageProps) {
         stats={stats}
         affiliateLinks={affiliateLinks}
         kitAnalysis={kitResult?.analysis}
+        initialPhase={initialPhase}
       />
     </>
   );

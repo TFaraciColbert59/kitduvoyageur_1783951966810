@@ -1,44 +1,33 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import AppShell from '@/components/shell/AppShell';
 import { TripHero } from '@/features/trips/components/TripHero';
-import { TripOverviewTab } from '@/features/trips/components/TripOverviewTab';
-import { TripItineraryTab } from '@/features/trips/components/TripItineraryTab';
-import { TripSafetyView } from '@/features/trips/components/TripSafetyView';
-import { TripBadge } from '@/features/trips/components/TripBadge';
-import { GlassCard } from '@/components/ui/GlassCard';
-import {
-  Compass,
-  Navigation,
-  Users,
-  Package,
-  CreditCard,
-  FileText,
-  Shield,
-  BookOpen,
-  ArrowLeft,
-  Share2,
-} from 'lucide-react';
-import type { TripFull, TripStats } from '@/features/trips/types/trip.types';
-import type { TripKitAnalysis } from '@/features/trips/types/kit.types';
-import { TripAffiliateSection, type AffiliateLink } from '@/features/affiliation';
-import { TripKitView } from '@/features/trips/components/TripKitView';
-import { TripTeamView } from '@/features/trips/components/TripTeamView';
-import { TripBudgetView } from '@/features/trips/components/TripBudgetView';
-import { TripDocumentsView } from '@/features/trips/components/TripDocumentsView';
 import { TripShareModal } from '@/features/trips/components/TripShareModal';
 import { TripOfflineBar } from '@/features/trips/components/TripOfflineBar';
-import { TripNotesView } from '@/features/trips/components/TripNotesView';
+import { ArrowLeft, Share2 } from 'lucide-react';
+import type { TripFull, TripStats } from '@/features/trips/types/trip.types';
+import type { TripKitAnalysis } from '@/features/trips/types/kit.types';
+import type { AffiliateLink } from '@/features/affiliation';
 
-import { useTripCounters } from '@/features/trips/hooks/useTripCounters';
+import {
+  getTripPhaseDetails,
+  isValidTripPhase,
+  getPhaseLabel,
+  type TripPhase,
+} from '@/features/trips/engine/temporalPhaseEngine';
+import { TripPhaseController } from '@/features/trips/components/TripPhaseController';
+import { TripPhasePrepareView } from '@/features/trips/components/TripPhasePrepareView';
+import { TripLiveCockpitView } from '@/features/trips/components/TripLiveCockpitView';
+import { TripPhaseRecountView } from '@/features/trips/components/TripPhaseRecountView';
 
 export interface TripDetailClientProps {
   trip: TripFull;
   stats: TripStats;
   affiliateLinks?: AffiliateLink[];
   kitAnalysis?: TripKitAnalysis;
+  initialPhase?: TripPhase;
 }
 
 export default function TripDetailClient({
@@ -46,24 +35,42 @@ export default function TripDetailClient({
   stats,
   affiliateLinks = [],
   kitAnalysis,
+  initialPhase,
 }: TripDetailClientProps) {
-  const [activeTab, setActiveTab] = useState<string>('overview');
   const [isShareOpen, setIsShareOpen] = useState(false);
 
-  const counters = useTripCounters(trip, kitAnalysis);
+  // 1. Calcul pur et déterministe de la phase temporelle
+  const phaseDetails = getTripPhaseDetails(trip);
+  const naturalPhase = phaseDetails.phase;
 
-  const tabs = [
-    { id: 'overview', label: 'Vue d’ensemble', Icon: Compass, count: undefined },
-    { id: 'steps', label: 'Itinéraire', Icon: Navigation, count: counters.itinerary },
-    { id: 'team', label: 'Équipe', Icon: Users, count: counters.team },
-    { id: 'gear', label: 'Équipement', Icon: Package, count: counters.gearItems },
-    { id: 'budget', label: 'Budget', Icon: CreditCard, count: counters.budget },
-    ...(trip.permissions.canViewDocuments
-      ? [{ id: 'docs', label: 'Documents', Icon: FileText, count: counters.documents }]
-      : []),
-    { id: 'safety', label: 'Sécurité', Icon: Shield, count: trip.safety_checkpoints?.length || 0 },
-    { id: 'notes', label: 'Carnet', Icon: BookOpen, count: trip.notes?.length || 0 },
-  ];
+  // 2. Phase active (avec priorité au query param URL ?phase= ou initialPhase)
+  const [activePhase, setActivePhase] = useState<TripPhase>(() => {
+    if (initialPhase && isValidTripPhase(initialPhase)) {
+      return initialPhase;
+    }
+    return naturalPhase;
+  });
+
+  // 3. Synchronisation avec l'URL côté client au montage
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const params = new URLSearchParams(window.location.search);
+      const urlPhase = params.get('phase');
+      if (urlPhase && isValidTripPhase(urlPhase)) {
+        setActivePhase(urlPhase);
+      }
+    }
+  }, []);
+
+  // 4. Gestionnaire de bascule manuelle de phase
+  const handlePhaseChange = (newPhase: TripPhase) => {
+    setActivePhase(newPhase);
+    if (typeof window !== 'undefined') {
+      const url = new URL(window.location.href);
+      url.searchParams.set('phase', newPhase);
+      window.history.replaceState({}, '', url.toString());
+    }
+  };
 
   return (
     <AppShell safeTop={true} hasBottomNav={true}>
@@ -76,14 +83,18 @@ export default function TripDetailClient({
               Voyages
             </Link>
             <span>/</span>
-            <span className="text-lkv-primary font-semibold truncate max-w-[180px] sm:max-w-md">
+            <span className="text-lkv-primary font-semibold truncate max-w-[140px] sm:max-w-xs">
               {trip.title}
+            </span>
+            <span>/</span>
+            <span className="text-lkv-secondary font-medium hidden sm:inline">
+              {getPhaseLabel(activePhase)}
             </span>
           </div>
 
           <button
             onClick={() => setIsShareOpen(true)}
-            className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-full bg-white/80 hover:bg-white text-xs font-semibold text-lkv-primary border border-black/10 shadow-2xs transition-all hover:scale-102"
+            className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-full bg-white/80 hover:bg-white text-xs font-semibold text-lkv-primary border border-black/10 shadow-2xs transition-all hover:scale-102 min-h-[38px]"
           >
             <Share2 size={13} className="text-lkv-secondary" />
             <span>Partager / Exporter</span>
@@ -96,127 +107,39 @@ export default function TripDetailClient({
         {/* 1. Hero Immersif */}
         <TripHero trip={trip} />
 
-        {/* 2. Onglets Navigation Scrollable Liquid Glass */}
-        <div className="flex items-center gap-2 overflow-x-auto pb-3 mb-6 scrollbar-none -mx-4 px-4 sm:mx-0 sm:px-0">
-          {tabs.map(tab => {
-            const isActive = activeTab === tab.id;
-            const Icon = tab.Icon;
-            return (
-              <button
-                key={tab.id}
-                onClick={() => setActiveTab(tab.id)}
-                className={`flex items-center gap-2 px-4 py-2.5 rounded-full text-xs sm:text-sm font-medium whitespace-nowrap transition-all duration-200 border ${
-                  isActive
-                    ? 'bg-lkv-primary text-white border-lkv-primary shadow-md scale-100'
-                    : 'bg-white/70 hover:bg-white text-lkv-primary border-white/80 hover:border-black/10 backdrop-blur-sm'
-                }`}
-              >
-                <Icon
-                  size={15}
-                  className={isActive ? 'text-[#A6C1A0]' : 'text-lkv-secondary'}
-                />
-                <span>{tab.label}</span>
-                {tab.count !== undefined && (
-                  <span
-                    className={`text-[10px] px-1.5 py-0.5 rounded-full ${
-                      isActive ? 'bg-white/20 text-white' : 'bg-black/5 text-lkv-secondary'
-                    }`}
-                  >
-                    {tab.count}
-                  </span>
-                )}
-              </button>
-            );
-          })}
-        </div>
+        {/* 2. Contrôleur de Phase Temporelle Unifié (Préparer / Vivre / Raconter) */}
+        <TripPhaseController
+          activePhase={activePhase}
+          naturalPhase={naturalPhase}
+          onPhaseChange={handlePhaseChange}
+          dayIndex={phaseDetails.dayIndex}
+          totalDays={phaseDetails.totalDays}
+          daysUntilStart={phaseDetails.daysUntilStart}
+        />
 
-        {/* 3. Contenu de l'onglet actif */}
-        <main>
-          {/* Onglet 1 : Vue d'ensemble (Complet C1 + C5 Affiliation) */}
-          {activeTab === 'overview' && (
-            <>
-              <TripOverviewTab trip={trip} stats={stats} onTabChange={setActiveTab} />
-              {affiliateLinks.length > 0 && (
-                <TripAffiliateSection
-                  links={affiliateLinks}
-                  tripId={trip.id}
-                  countryNames={trip.destination_name ? [trip.destination_name] : []}
-                />
-              )}
-            </>
+        {/* 3. Vue de la phase sélectionnée */}
+        <main className="pt-2">
+          {activePhase === 'prepare' && (
+            <TripPhasePrepareView
+              trip={trip}
+              stats={stats}
+              affiliateLinks={affiliateLinks}
+              kitAnalysis={kitAnalysis}
+              daysUntilStart={phaseDetails.daysUntilStart}
+            />
           )}
 
-          {/* Onglet 2 : Itinéraire (Complet C2) */}
-          {activeTab === 'steps' && (
-            <TripItineraryTab trip={trip} stats={stats} />
+          {activePhase === 'live' && (
+            <TripLiveCockpitView
+              trip={trip}
+              stats={stats}
+              dayIndex={phaseDetails.dayIndex}
+              totalDays={phaseDetails.totalDays}
+            />
           )}
 
-          {/* Onglet 3 : Équipe (Chantier 7 - Collaboratif & Rôles) */}
-          {activeTab === 'team' && (
-            <TripTeamView trip={trip} />
-          )}
-
-          {/* Onglet 4 : Équipement & Kit Contextuel (Chantier 6) */}
-          {activeTab === 'gear' && kitAnalysis && (
-            <TripKitView trip={trip} analysis={kitAnalysis} />
-          )}
-
-          {activeTab === 'gear' && !kitAnalysis && (
-            <div className="space-y-4">
-              <div className="flex items-center justify-between">
-                <h3 className="text-lg font-bold text-lkv-primary">Équipements du voyage</h3>
-                <Link
-                  href={`/voyages/${trip.slug}/kit`}
-                  className="px-4 py-2 rounded-xl bg-lkv-primary text-white text-xs font-bold hover:bg-[#123323] transition-all"
-                >
-                  Ouvrir le Kit Contextuel Complet
-                </Link>
-              </div>
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                {trip.items.map(item => (
-                  <GlassCard key={item.id} tone="neutral" className="p-3.5 rounded-[18px] border border-white/60">
-                    <div className="flex items-center justify-between gap-2">
-                      <div>
-                        <div className="text-sm font-medium text-lkv-primary">{item.item_name}</div>
-                        <div className="text-xs text-lkv-secondary">
-                          {item.category || 'Général'} · Qté : {item.quantity}
-                          {item.weight_grams ? ` · ${item.weight_grams}g` : ''}
-                        </div>
-                      </div>
-                      <span
-                        className={`text-xs px-2 py-0.5 rounded-full font-medium ${
-                          item.is_packed
-                            ? 'bg-lkv-secondary/20 text-lkv-primary'
-                            : 'bg-black/5 text-gray-500'
-                        }`}
-                      >
-                        {item.is_packed ? 'Emballé' : 'À préparer'}
-                      </span>
-                    </div>
-                  </GlassCard>
-                ))}
-              </div>
-            </div>
-          )}
-
-          {/* Onglet 5 : Budget (Chantier 7 - Budget & Dépenses) */}
-          {activeTab === 'budget' && (
-            <TripBudgetView trip={trip} />
-          )}
-
-          {/* Onglet 6 : Documents (Chantier 7 - Papiers chiffrés & RGPD) */}
-          {activeTab === 'docs' && trip.permissions.canViewDocuments && (
-            <TripDocumentsView trip={trip} />
-          )}
-
-          {/* Onglet 7 : Sécurité */}
-          {activeTab === 'safety' && (
-            <TripSafetyView trip={trip} />
-          )}
-
-          {/* Onglet 8 : Carnet (Chantier 8 - Rétrospective & Carnet Communautaire) */}
-          {activeTab === 'notes' && (
-            <TripNotesView trip={trip} />
+          {activePhase === 'recount' && (
+            <TripPhaseRecountView trip={trip} />
           )}
         </main>
 
