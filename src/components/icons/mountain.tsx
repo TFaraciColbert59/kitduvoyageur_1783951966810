@@ -52,9 +52,8 @@ const MountainIcon = forwardRef<MountainIconHandle, MountainIconProps>(
             animate={controls}
             d="m8 3 4 8 5-5 5 15H2L8 3z"
             transition={{
-              type: 'spring',
-              stiffness: 260,
-              damping: 20,
+              duration: 0.4,
+              ease: 'easeInOut',
             }}
             variants={{
               normal: { scale: 1, y: 0 },

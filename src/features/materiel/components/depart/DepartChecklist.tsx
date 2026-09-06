@@ -206,25 +206,26 @@ export function DepartChecklist({
 
       setErrorItemId(null);
       setFailedItem(null);
-      addOptimistic({ id: itemKey, checked: nextChecked });
-
-      setLocalItems((prev) =>
-        prev.map((i) =>
-          (i.id ?? i.name) === itemKey ? { ...i, is_checked: nextChecked } : i
-        )
-      );
-
-      if (!isRealKit || !item.id || item.id.startsWith('consumable-')) return;
-
-      if (typeof window !== 'undefined' && !navigator.onLine) {
-        queueOfflineAction({
-          type: 'toggle',
-          payload: { itemId: item.id, currentChecked: !nextChecked },
-        });
-        return;
-      }
 
       startTransition(async () => {
+        addOptimistic({ id: itemKey, checked: nextChecked });
+
+        setLocalItems((prev) =>
+          prev.map((i) =>
+            (i.id ?? i.name) === itemKey ? { ...i, is_checked: nextChecked } : i
+          )
+        );
+
+        if (!isRealKit || !item.id || item.id.startsWith('consumable-')) return;
+
+        if (typeof window !== 'undefined' && !navigator.onLine) {
+          queueOfflineAction({
+            type: 'toggle',
+            payload: { itemId: item.id, currentChecked: !nextChecked },
+          });
+          return;
+        }
+
         try {
           const res = await toggleKitItem(item.id!, nextChecked);
           if (!res.success) {
@@ -241,7 +242,7 @@ export function DepartChecklist({
         }
       });
     },
-    [addOptimistic, isRealKit, haptic]
+    [addOptimistic, isRealKit, haptic, startTransition]
   );
 
   const handleQuantityChange = async (item: ChecklistItem, delta: number) => {

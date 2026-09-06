@@ -42,7 +42,7 @@ const TentIcon = forwardRef<TentIconHandle, TentIconProps>(
           <motion.path
             animate={controls}
             d="M3.5 21 14 3l10.5 18H3.5z"
-            transition={{ type: 'spring', stiffness: 300, damping: 15 }}
+            transition={{ duration: 0.4, ease: 'easeInOut' }}
             variants={{
               normal: { scale: 1 },
               animate: { scale: [1, 1.15, 0.95, 1] },

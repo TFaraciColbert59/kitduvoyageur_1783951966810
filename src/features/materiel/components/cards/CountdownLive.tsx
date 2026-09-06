@@ -34,9 +34,9 @@ export function CountdownLive({ target }: { target: string | null | undefined })
     };
   }, [target]);
 
-  if (!target) return <span>Date à fixer</span>;
+  if (!target) return <span suppressHydrationWarning>Date à fixer</span>;
   const targetTime = new Date(target).getTime();
-  if (isNaN(targetTime)) return <span>Date à fixer</span>;
+  if (isNaN(targetTime)) return <span suppressHydrationWarning>Date à fixer</span>;
 
   const diff = Math.max(0, targetTime - now);
   const d = Math.floor(diff / 86400000);
@@ -44,9 +44,9 @@ export function CountdownLive({ target }: { target: string | null | undefined })
   const m = Math.floor((diff % 3600000) / 60000);
   const s = Math.floor((diff % 60000) / 1000);
 
-  if (diff === 0) return <span>Aujourd’hui</span>;
+  if (diff === 0) return <span suppressHydrationWarning>Aujourd’hui</span>;
   return (
-    <span className="tabular-nums">
+    <span className="tabular-nums" suppressHydrationWarning>
       {d > 0 ? `${d} j ` : ''}
       {String(h).padStart(2, '0')}:{String(m).padStart(2, '0')}:{String(s).padStart(2, '0')}
     </span>
