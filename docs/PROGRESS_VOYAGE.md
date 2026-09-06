@@ -12,8 +12,8 @@
 | **C5** | **Affiliation Travelpayouts (Vols, hôtels, activités, disclosure légal)** | ✅ **Validé** | `feat/c5-affiliation` | 2026-09-05 | 2026-09-05 | `ab0c096` |
 | **C6** | **IA & Kit contextuel (Boutique LKDV, équipement, marge pleine)** | ✅ **Validé** | `feat/c6-ai-kit` | 2026-09-05 | 2026-09-05 | `06413db` |
 | **C7** | **Collaboratif, partage, offline, papiers, budget** | ✅ **Validé** | `feat/c7-collab-offline` | 2026-09-05 | 2026-09-05 | `f9cfb6c` |
-| **C8** | **Rétrospective & Publication Communautaire (Carnet, REX)** | ✅ **Validé** | `feat/c8-trip-completion` | 2026-09-05 | 2026-09-05 | `1d54883` |
-| **RF** | **Recette Finale & Pré-lancement** | ✅ **Validé** | `release/voyage-v1` | 2026-09-05 | 2026-09-05 | `6196dab` |
+| **C8** | **Rétrospective & Publication Communautaire (Carnet, REX)** | ✅ **Validé** | `feat/c8-trip-completion` | 2026-09-05 | 2026-09-05 | `cccbf58` |
+| **RF** | **Recette Finale & Pré-lancement** | 🟨 **Partiel (Dette E2E)** | `release/voyage-v1` | 2026-09-05 | 2026-09-07 | `097bb34` |
 
 ---
 
@@ -160,8 +160,8 @@
 | **RF.5 Confidentialité & Minimisation RGPD** | ✅ Fait | RGPD & Droit CNIL | Zéro adresse IP en clair persistée (`hashSessionForRgpd` salé SHA-256). Rétention des clics isolée. Protection stricte des scans de passeports et pièces d'identité (`trip_documents` réservé à `can_edit_trip`, exclu des exports et des carnets). | 2026-09-05 |
 | **RF.6 Conformité Légale DGCCRF & Affiliation** | ✅ Fait | Code de la consommation | Mention d'information obligatoire `<AffiliateDisclosure />` en amont des liens partenaires. Attribut `rel="sponsored nofollow"` systématique. Redirections HTTP 307 sécurisées avec validation d'URL cible stricte (`isValidAffiliateTargetUrl`). | 2026-09-05 |
 | **RF.7 Invariants Visuels Liquid Glass** | ✅ Fait | Design System Apple HIG | `npm run verify:invariants` exit 0. Grep complet dans `src/features/trips` et `src/app/voyages` : 0 occurrence de `#E4501C`, 0 occurrence de `#1C2620`. Respect strict de la palette canonique (Forest `#17402C`, Sage `#5B7F55`, Stone `#FAF8F5`). Primitives `GlassCard`, `LkvButton`, `LkvChip` et `AppShell` avec safe-areas et touch-targets $\ge 44\text{px}$. | 2026-09-05 |
-| **RF.8 ZÉRO Appel LLM dans le Socle Déterministe** | ✅ Fait | Anti-Hallucination | Test AST ripgrep `tests/trips/engine/antiLlm.spec.ts` réussi (0 appel `getChatCompletion` dans le moteur de répartition, de kit et de calcul). Moteurs déterministes bit-pour-bit et reproductibles. | 2026-09-05 |
-| **RF.9 Cycle de Vie Produit Bout-en-Bout** | ✅ Fait | Parcours Utilisateur | Le parcours complet est opérationnel de bout en bout : Wizard 5 étapes (C2) $\rightarrow$ Planificateur itinéraire jour/jour (C3) $\rightarrow$ Lieux communautaires scoring bayésien (C4) $\rightarrow$ Offres d'affiliation éthiques (C5) $\rightarrow$ Analyse sac & boutique LKDV marge pleine (C6) $\rightarrow$ Équipe, budget glouton, offline, export GPX/Print (C7) $\rightarrow$ Récits, clôture, publication carnet & preuve terrain certifiée (C8). | 2026-09-05 |
+| **RF.9 Cycle de Vie Produit Bout-en-Bout** | 🟨 Partiel | Parcours Utilisateur | Moteurs déterministes, API et routes compilées avec succès (572 tests Vitest, Next.js build exit 0), mais parcours complet non validé par suite E2E Playwright. | 2026-09-07 |
+| **RF.10 Couverture E2E Playwright & Snapshots** | 🟨 Non couvert | E2E & Visual Testing | 0 test Playwright pour le module Voyage (seuls 15 tests existants pour AI/Matériel/Mobile général). Ouverture immédiate de DETTE-RF-1. | 2026-09-07 |
 
 ---
 
@@ -231,6 +231,15 @@
 | **Conformité Schéma GPX 1.1 C7** | Génération XML validée avec balises canoniques `<gpx>`, `<wpt>`, `<trk>` | ✅ Conforme | Testé dans `tests/trips/engine/exportEngine.spec.ts`. |
 | **Inviolabilité RGPD Carnet Public C8** | Les récits publiés en carnet n'exposent jamais les documents d'identité ni les dépenses privées des participants | ✅ Conforme | Testé dans `tests/trips/engine/carnetConversionEngine.spec.ts`. |
 | **Authenticité Preuve Terrain Certifiée C8** | L'avis de lieu suite à un voyage vécu porte `has_field_proof = true` certifié par le rattachement au voyage | ✅ Conforme | Testé dans `tests/trips/notes/queries-trip-notes.spec.ts`. |
+
+---
+
+## 5. Registre des Dettes Techniques Ouvertes
+
+| Dette | Description | Impact | Échéance | Statut |
+| :--- | :--- | :--- | :---: | :---: |
+| **DETTE-RF-1** | Aucune couverture E2E Playwright ni snapshots visuels (390px / 1440px) malgré l'exigence de la Roadmap (§23 RF). Seuls 15 tests préexistants (ai, matériel, layout mobile général) sont configurés dans Playwright. | Risque de non-détection des régressions d'interaction UI, responsive et transitions d'onglets du Cockpit Voyage sur navigateurs réels. | Prochaine itération avant merge `main` | 🟥 Ouverte |
+
 
 
 
