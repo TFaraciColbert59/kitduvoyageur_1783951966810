@@ -11,6 +11,15 @@ test.describe('Module Voyage E2E Suite — Parcours Utilisateur & Ergonomie (C1-
     }
   });
 
+  test.beforeEach(async ({ context }) => {
+    await context.addInitScript(() => {
+      window.localStorage.setItem(
+        'lkdv_cookie_consent',
+        JSON.stringify({ necessary: true, analytics: true, marketing: true, version: '1' })
+      );
+    });
+  });
+
   test('TEST-E2E-VOYAGE-01: API /api/voyages répond en JSON 200 avec structure canonique', async ({ request }) => {
     const res = await request.get('/api/voyages');
     expect(res.status()).toBe(200);
@@ -115,4 +124,42 @@ test.describe('Module Voyage E2E Suite — Parcours Utilisateur & Ergonomie (C1-
     expect(fs.existsSync(snapshotDesktopPath)).toBe(true);
   });
 
+  test('TEST-E2E-VOYAGE-08: Architecture temporelle des 3 phases (Préparer / Vivre / Raconter)', async ({ page }) => {
+    // 1. Navigation vers le voyage existant
+    await page.goto('/voyages/fdgb-3c3a92', { waitUntil: 'domcontentloaded' });
+
+    // Contrôleur de phase présent
+    const phaseController = page.locator('div[role="tablist"]');
+    await expect(phaseController).toBeVisible();
+
+    // Les 3 onglets temporels doivent être présents
+    const prepareTab = page.locator('button[role="tab"]:has-text("Préparer")');
+    const liveTab = page.locator('button[role="tab"]:has-text("Vivre")');
+    const recountTab = page.locator('button[role="tab"]:has-text("Raconter")');
+
+    await expect(prepareTab).toBeVisible();
+    await expect(liveTab).toBeVisible();
+    await expect(recountTab).toBeVisible();
+
+    // Par défaut, le voyage futur est en phase Préparer
+    await expect(prepareTab).toHaveAttribute('aria-selected', 'true');
+
+    // 2. Bascule manuelle vers le mode Vivre
+    await liveTab.click();
+    await expect(page.locator('text=Cockpit Terrain · Mode Vivre')).toBeVisible();
+    await expect(page.locator('text=Secours & Urgences')).toBeVisible();
+    expect(page.url()).toContain('phase=live');
+
+    // 3. Bascule manuelle vers la phase Raconter
+    await recountTab.click();
+    await expect(page.locator('text=Récits, Bilan & Partage de l’Aventure')).toBeVisible();
+    expect(page.url()).toContain('phase=recount');
+
+    // 4. Accès direct avec ?phase=live
+    await page.goto('/voyages/fdgb-3c3a92?phase=live', { waitUntil: 'domcontentloaded' });
+    await expect(page.locator('text=Cockpit Terrain · Mode Vivre')).toBeVisible();
+    await expect(liveTab).toHaveAttribute('aria-selected', 'true');
+  });
+
 });
+

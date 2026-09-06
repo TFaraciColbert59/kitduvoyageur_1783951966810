@@ -42,9 +42,9 @@ Dernière mise à jour : 2026-09-07T01:15:00+02:00
 | **P4** | **4.3** | Redirections 308 et compatibilité anciens liens | **TERMINE** | Redirection `/groupes` -> `/equipages` (308), test `crew-routes.spec.ts` vert |
 | **P4** | **4.4** | UI équipage complète | **TERMINE** | Fiche `/equipages` et `/equipages/[slug]` avec AppShell, membres, expéditions |
 |---|---|---|---|---|
-| **P5** | **5.1** | Moteur des 3 phases temporelles (Préparer / Vivre / Raconter) | À FAIRE | Remplacement barre 8 onglets |
-| **P5** | **5.2** | Implémentation de la vue par phase | À FAIRE | Accordéon mobile + ancrage |
-| **P5** | **5.3** | Mode Vivre (terrain, hors-ligne, urgence) | À FAIRE | Interface plein soleil |
+| **P5** | **5.1** | Moteur des 3 phases temporelles (Préparer / Vivre / Raconter) | **TERMINE** | `temporalPhaseEngine.ts`, tests unitaires 13/13 verts (`temporalPhaseEngine.spec.ts`) |
+| **P5** | **5.2** | Implémentation de la vue par phase | **TERMINE** | Contrôleur segmenté `TripPhaseController`, réutilisation vues existantes, synchro URL `?phase=` |
+| **P5** | **5.3** | Mode Vivre (terrain, hors-ligne, urgence) | **TERMINE** | `TripLiveCockpitView` (plein soleil, dépense 2 taps, 112/114 & GPS), Playwright TEST-E2E-VOYAGE-08 8/8 vert |
 |---|---|---|---|---|
 | **P6** | **6.1** | Provider de contexte actif `ActiveTripProvider` (cookie httpOnly) | À FAIRE | Contexte global disponible |
 | **P6** | **6.2** | Interconnexion des modules (Boutique, Carte, Lieux, Carnets, etc.) | À FAIRE | Consommation du voyage actif |
