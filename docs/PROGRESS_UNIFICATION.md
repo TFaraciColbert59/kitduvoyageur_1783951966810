@@ -37,10 +37,10 @@ Dernière mise à jour : 2026-09-07T01:15:00+02:00
 | **P3** | **3.3** | RLS unifiée avec matrice de preuve 24+ cas | **TERMINE** | `lkv_can` implémenté (SQL & TS), test `rlsMatrix.spec.ts` 25/25 vert |
 | **P3** | **3.4** | Exécution contrôlée & Intégrité | **TERMINE** | Vitest 659/659, `tsc` 0 err, `lint` 0 err, Playwright 7/7 vert |
 |---|---|---|---|---|
-| **P4** | **4.1** | Refonte `/groupes` -> `/equipages` (Server-First, élimination N+1) [D12] | À FAIRE | Requêtes serveur agrégées |
-| **P4** | **4.2** | Système unique d'invitations (liens signés + consentement) | À FAIRE | Plus d'auto-join silencieux |
-| **P4** | **4.3** | Redirections 308 et compatibilité anciens liens | À FAIRE | `/groupes` -> `/equipages` |
-| **P4** | **4.4** | UI équipage complète | À FAIRE | Fiche équipage et gestion des membres |
+| **P4** | **4.1** | Refonte `/groupes` -> `/equipages` (Server-First, élimination N+1) [D12] | **TERMINE** | Requêtes agrégées O(1), `queries-crews.ts`, test `crew-queries.spec.ts` vert |
+| **P4** | **4.2** | Système unique d'invitations (liens signés + consentement) | **TERMINE** | Tokens signés HMAC avec expiration, modal de consentement explicite, test `crew-invitations.spec.ts` 7/7 |
+| **P4** | **4.3** | Redirections 308 et compatibilité anciens liens | **TERMINE** | Redirection `/groupes` -> `/equipages` (308), test `crew-routes.spec.ts` vert |
+| **P4** | **4.4** | UI équipage complète | **TERMINE** | Fiche `/equipages` et `/equipages/[slug]` avec AppShell, membres, expéditions |
 |---|---|---|---|---|
 | **P5** | **5.1** | Moteur des 3 phases temporelles (Préparer / Vivre / Raconter) | À FAIRE | Remplacement barre 8 onglets |
 | **P5** | **5.2** | Implémentation de la vue par phase | À FAIRE | Accordéon mobile + ancrage |
