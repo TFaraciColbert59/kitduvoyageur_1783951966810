@@ -68,11 +68,11 @@ export function TripTeamView({ trip }: TripTeamViewProps) {
       {/* En-tête de section */}
       <div className="flex flex-wrap items-center justify-between gap-4">
         <div>
-          <h3 className="text-xl font-bold text-[#17402C] flex items-center gap-2">
-            <Users size={22} className="text-[#5B7F55]" />
+          <h3 className="text-xl font-bold text-lkv-primary flex items-center gap-2">
+            <Users size={22} className="text-lkv-secondary" />
             <span>Équipe & Compagnons de Route</span>
           </h3>
-          <p className="text-xs text-[#5B7F55] mt-1">
+          <p className="text-xs text-lkv-secondary mt-1">
             Gérez les participants, attribuez les rôles (organisateur, éditeur, lecteur) et coordonnez votre expédition.
           </p>
         </div>
@@ -93,18 +93,18 @@ export function TripTeamView({ trip }: TripTeamViewProps) {
       {/* Explication des rôles */}
       <GlassCard tone="neutral" className="p-4 rounded-[20px] border border-white/60 text-xs text-gray-700">
         <div className="flex items-start gap-3">
-          <ShieldCheck size={18} className="text-[#5B7F55] shrink-0 mt-0.5" />
+          <ShieldCheck size={18} className="text-lkv-secondary shrink-0 mt-0.5" />
           <div className="space-y-1">
-            <div className="font-semibold text-[#17402C]">Droits &amp; Rôles sur l&apos;expédition</div>
+            <div className="font-semibold text-lkv-primary">Droits &amp; Rôles sur l&apos;expédition</div>
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 pt-1 text-[11px]">
               <div>
-                <strong className="text-[#17402C]">Organisateur (Owner) :</strong> Contrôle total, invitation/retrait, suppression, budget.
+                <strong className="text-lkv-primary">Organisateur (Owner) :</strong> Contrôle total, invitation/retrait, suppression, budget.
               </div>
               <div>
-                <strong className="text-[#17402C]">Éditeur :</strong> Modification de l&apos;itinéraire, matériel, saisie des dépenses et documents.
+                <strong className="text-lkv-primary">Éditeur :</strong> Modification de l&apos;itinéraire, matériel, saisie des dépenses et documents.
               </div>
               <div>
-                <strong className="text-[#17402C]">Lecteur :</strong> Consultation de l&apos;itinéraire et du kit en lecture seule.
+                <strong className="text-lkv-primary">Lecteur :</strong> Consultation de l&apos;itinéraire et du kit en lecture seule.
               </div>
             </div>
           </div>
@@ -131,12 +131,12 @@ export function TripTeamView({ trip }: TripTeamViewProps) {
             >
               <div className="flex items-start justify-between gap-3">
                 <div className="flex items-center gap-3">
-                  <div className="w-11 h-11 rounded-full bg-[#17402C] text-white flex items-center justify-center font-bold text-sm shadow-inner shrink-0">
+                  <div className="w-11 h-11 rounded-full bg-lkv-primary text-white flex items-center justify-center font-bold text-sm shadow-inner shrink-0">
                     {initials}
                   </div>
                   <div>
-                    <div className="text-sm font-bold text-[#17402C]">{name}</div>
-                    <div className="text-xs text-[#5B7F55]">
+                    <div className="text-sm font-bold text-lkv-primary">{name}</div>
+                    <div className="text-xs text-lkv-secondary">
                       Rejoint le {new Date(collab.joined_at).toLocaleDateString('fr-FR')}
                     </div>
                   </div>
@@ -148,13 +148,13 @@ export function TripTeamView({ trip }: TripTeamViewProps) {
               {/* Contrôles de rôle & retrait pour l'Owner */}
               {isOwner && !isCollabOwner && (
                 <div className="flex items-center justify-between pt-3 border-t border-black/5 gap-2">
-                  <div className="flex items-center gap-1.5 text-xs text-[#5B7F55]">
+                  <div className="flex items-center gap-1.5 text-xs text-lkv-secondary">
                     <span>Rôle :</span>
                     <select
                       value={collab.role}
                       disabled={isPending}
                       onChange={e => handleRoleChange(collab.id, e.target.value as any)}
-                      className="text-xs font-semibold bg-white/80 border border-gray-200 rounded-lg px-2 py-1 text-[#17402C] focus:outline-none focus:ring-1 focus:ring-[#17402C]"
+                      className="text-xs font-semibold bg-white/80 border border-gray-200 rounded-lg px-2 py-1 text-lkv-primary focus:outline-none focus:ring-1 focus:ring-lkv-primary"
                     >
                       <option value="editor">Éditeur</option>
                       <option value="viewer">Lecteur</option>
@@ -184,8 +184,8 @@ export function TripTeamView({ trip }: TripTeamViewProps) {
             className="w-full max-w-md p-6 rounded-[24px] bg-white border border-white/80 shadow-2xl space-y-4"
           >
             <div className="flex items-center justify-between pb-3 border-b border-gray-100">
-              <h4 className="text-base font-bold text-[#17402C] flex items-center gap-2">
-                <UserPlus size={18} className="text-[#5B7F55]" />
+              <h4 className="text-base font-bold text-lkv-primary flex items-center gap-2">
+                <UserPlus size={18} className="text-lkv-secondary" />
                 <span>Inviter un compagnon</span>
               </h4>
               <button
@@ -212,7 +212,7 @@ export function TripTeamView({ trip }: TripTeamViewProps) {
 
             <form onSubmit={handleInviteSubmit} className="space-y-4">
               <div>
-                <label className="block text-xs font-semibold text-[#17402C] mb-1">
+                <label className="block text-xs font-semibold text-lkv-primary mb-1">
                   Email ou Pseudo LKDV du voyageur
                 </label>
                 <div className="relative">
@@ -222,19 +222,19 @@ export function TripTeamView({ trip }: TripTeamViewProps) {
                     name="identifier"
                     required
                     placeholder="ex: marie.curie@example.com ou montagnard74"
-                    className="w-full pl-9 pr-3 py-2 text-sm rounded-xl border border-gray-200 bg-gray-50/50 focus:bg-white focus:outline-none focus:ring-2 focus:ring-[#17402C]/20"
+                    className="w-full pl-9 pr-3 py-2 text-sm rounded-xl border border-gray-200 bg-gray-50/50 focus:bg-white focus:outline-none focus:ring-2 focus:ring-lkv-primary/20"
                   />
                 </div>
               </div>
 
               <div>
-                <label className="block text-xs font-semibold text-[#17402C] mb-1">
+                <label className="block text-xs font-semibold text-lkv-primary mb-1">
                   Rôle attribué
                 </label>
                 <select
                   name="role"
                   defaultValue="editor"
-                  className="w-full px-3 py-2 text-sm rounded-xl border border-gray-200 bg-gray-50/50 focus:bg-white focus:outline-none focus:ring-2 focus:ring-[#17402C]/20"
+                  className="w-full px-3 py-2 text-sm rounded-xl border border-gray-200 bg-gray-50/50 focus:bg-white focus:outline-none focus:ring-2 focus:ring-lkv-primary/20"
                 >
                   <option value="editor">Éditeur (peut modifier l&apos;itinéraire et les listes)</option>
                   <option value="viewer">Lecteur (consultation seule)</option>

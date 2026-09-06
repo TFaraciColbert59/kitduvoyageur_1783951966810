@@ -6,14 +6,14 @@ export default function CarnetCTACard() {
   return (
     <div className="glass tone-sage p-6 relative overflow-hidden transition-all duration-300">
       <div className="inline-block glass-pill mb-4">
-        <span className="font-mono text-[9px] uppercase tracking-widest text-[#17402C] font-bold">APRÈS LE RETOUR</span>
+        <span className="font-mono text-[9px] uppercase tracking-widest text-lkv-primary font-bold">APRÈS LE RETOUR</span>
       </div>
       
-      <h2 className="font-display font-bold text-2xl text-[#17402C] mb-3 leading-tight">
-        Ce voyage deviendra un <span className="font-serif italic font-normal text-[#17402C]">carnet.</span>
+      <h2 className="font-display font-bold text-2xl text-lkv-primary mb-3 leading-tight">
+        Ce voyage deviendra un <span className="font-serif italic font-normal text-lkv-primary">carnet.</span>
       </h2>
       
-      <p className="text-xs text-[#5C6B5E] font-sans mb-6 leading-relaxed">
+      <p className="text-xs text-lkv-text-muted font-sans mb-6 leading-relaxed">
         Étapes, photos, hébergements et dépenses seront automatiquement archivés dans votre Carnet le 15 octobre.
       </p>
       

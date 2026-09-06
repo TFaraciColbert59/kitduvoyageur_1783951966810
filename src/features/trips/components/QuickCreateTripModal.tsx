@@ -100,10 +100,10 @@ export function QuickCreateTripModal({
           {/* Header */}
           <div className="flex items-center justify-between pb-4 border-b border-black/5 mb-4">
             <div className="flex items-center gap-2">
-              <div className="p-2 rounded-xl bg-[#5B7F55]/15 text-[#17402C]">
+              <div className="p-2 rounded-xl bg-lkv-secondary/15 text-lkv-primary">
                 <Compass size={20} />
               </div>
-              <h2 className="text-lg font-bold text-[#17402C]">
+              <h2 className="text-lg font-bold text-lkv-primary">
                 Créer un nouveau voyage
               </h2>
             </div>
@@ -167,13 +167,13 @@ export function QuickCreateTripModal({
 
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
               <div>
-                <label className="text-xs font-semibold text-[#17402C] block mb-1.5">
+                <label className="text-xs font-semibold text-lkv-primary block mb-1.5">
                   Activité
                 </label>
                 <select
                   value={activity}
                   onChange={e => setActivity(e.target.value as TripActivityType)}
-                  className="w-full bg-white/70 border border-[#17402C]/15 rounded-2xl px-3 py-2.5 text-[16px] sm:text-sm text-[#17402C] outline-none cursor-pointer"
+                  className="w-full bg-white/70 border border-lkv-primary/15 rounded-2xl px-3 py-2.5 text-[16px] sm:text-sm text-lkv-primary outline-none cursor-pointer"
                 >
                   <option value="hiking">Randonnée</option>
                   <option value="trekking">Trek</option>
@@ -186,13 +186,13 @@ export function QuickCreateTripModal({
               </div>
 
               <div>
-                <label className="text-xs font-semibold text-[#17402C] block mb-1.5">
+                <label className="text-xs font-semibold text-lkv-primary block mb-1.5">
                   Difficulté
                 </label>
                 <select
                   value={difficulty}
                   onChange={e => setDifficulty(e.target.value as TripDifficulty)}
-                  className="w-full bg-white/70 border border-[#17402C]/15 rounded-2xl px-3 py-2.5 text-[16px] sm:text-sm text-[#17402C] outline-none cursor-pointer"
+                  className="w-full bg-white/70 border border-lkv-primary/15 rounded-2xl px-3 py-2.5 text-[16px] sm:text-sm text-lkv-primary outline-none cursor-pointer"
                 >
                   <option value="easy">Facile</option>
                   <option value="moderate">Modéré</option>
@@ -202,13 +202,13 @@ export function QuickCreateTripModal({
               </div>
 
               <div>
-                <label className="text-xs font-semibold text-[#17402C] block mb-1.5">
+                <label className="text-xs font-semibold text-lkv-primary block mb-1.5">
                   Visibilité
                 </label>
                 <select
                   value={visibility}
                   onChange={e => setVisibility(e.target.value as TripVisibility)}
-                  className="w-full bg-white/70 border border-[#17402C]/15 rounded-2xl px-3 py-2.5 text-[16px] sm:text-sm text-[#17402C] outline-none cursor-pointer"
+                  className="w-full bg-white/70 border border-lkv-primary/15 rounded-2xl px-3 py-2.5 text-[16px] sm:text-sm text-lkv-primary outline-none cursor-pointer"
                 >
                   <option value="private">Privé</option>
                   <option value="unlisted">Lien partagé</option>

@@ -166,14 +166,14 @@ export default function ParcoursCard({ groupId, trail, meta }: ParcoursCardProps
     <div className="glass bg-white/90 backdrop-blur-xl p-4 sm:p-6 rounded-3xl border border-white shadow-xs relative overflow-hidden transition-all duration-300">
       <div className="flex justify-between items-start mb-3">
         <div>
-          <h2 className="font-display font-bold text-lg sm:text-xl text-[#17402C]">
-            Le <span className="font-serif italic font-normal text-[#17402C]">parcours GPS</span>
+          <h2 className="font-display font-bold text-lg sm:text-xl text-lkv-primary">
+            Le <span className="font-serif italic font-normal text-lkv-primary">parcours GPS</span>
           </h2>
           <div className="flex items-center gap-1.5 mt-1">
-            <span className="glass-pill text-[10px] font-mono font-bold text-[#17402C]">
+            <span className="glass-pill text-[10px] font-mono font-bold text-lkv-primary">
               {meta?.durationDays || 3} jours
             </span>
-            <span className="glass-pill text-[10px] font-mono font-bold text-[#17402C]">
+            <span className="glass-pill text-[10px] font-mono font-bold text-lkv-primary">
               {distanceKm} km
             </span>
           </div>
@@ -182,7 +182,7 @@ export default function ParcoursCard({ groupId, trail, meta }: ParcoursCardProps
           <button
             type="button"
             onClick={handleDownloadGpx}
-            className="flex items-center gap-1.5 text-xs font-bold text-[#17402C] hover:opacity-80"
+            className="flex items-center gap-1.5 text-xs font-bold text-lkv-primary hover:opacity-80"
             title="Télécharger la trace GPX"
           >
             <span className="text-[11px] font-bold">GPX</span>
@@ -192,7 +192,7 @@ export default function ParcoursCard({ groupId, trail, meta }: ParcoursCardProps
           </button>
           <Link
             href="/explorer"
-            className="flex items-center gap-1.5 text-xs font-bold text-[#17402C] hover:opacity-80"
+            className="flex items-center gap-1.5 text-xs font-bold text-lkv-primary hover:opacity-80"
             title="Ouvrir la carte interactive"
           >
             <span className="text-[11px] font-bold">Carte</span>
@@ -203,7 +203,7 @@ export default function ParcoursCard({ groupId, trail, meta }: ParcoursCardProps
         </div>
       </div>
       
-      <p className="text-xs text-[#5C6B5E] mb-4 font-normal leading-relaxed">
+      <p className="text-xs text-lkv-text-muted mb-4 font-normal leading-relaxed">
         {meta?.description || `Tracé de ${trailName} avec dénivelé cumulé de +${elevationGain} m.`}
       </p>
       
@@ -212,11 +212,11 @@ export default function ParcoursCard({ groupId, trail, meta }: ParcoursCardProps
         <div ref={containerRef} className="w-full h-full z-0" />
       </div>
       
-      <div className="flex flex-wrap items-center gap-4 text-[10px] font-mono uppercase tracking-widest text-[#5C6B5E]">
-        <span className="flex items-center gap-1.5 font-bold text-[#17402C]">
-          <span className="w-3 h-[2px] bg-[#17402C]" /> Tracé GPS actif
+      <div className="flex flex-wrap items-center gap-4 text-[10px] font-mono uppercase tracking-widest text-lkv-text-muted">
+        <span className="flex items-center gap-1.5 font-bold text-lkv-primary">
+          <span className="w-3 h-[2px] bg-lkv-primary" /> Tracé GPS actif
         </span>
-        <span className="flex items-center gap-1.5 font-bold text-[#17402C]">
+        <span className="flex items-center gap-1.5 font-bold text-lkv-primary">
           <Icon name="ArrowTrendingUpIcon" size={12} className="relative z-10" /> +{elevationGain} m D+
         </span>
         <span className="flex items-center gap-1.5 font-semibold">

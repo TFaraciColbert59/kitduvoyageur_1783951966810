@@ -250,9 +250,9 @@ export default function EquipementCard({ equipment, groupId, onRefresh, user, me
       <div className="flex flex-col gap-2 mb-4">
         <div className="flex items-center justify-between">
           <div>
-            <span className="text-[10px] font-mono uppercase tracking-widest text-[#5C6B5E] font-bold">Kit collaboratif</span>
-            <h2 className="font-display text-lg sm:text-xl text-[#17402C] font-bold">
-              Équipement <em className="font-serif italic font-normal text-[#17402C]">partagé</em>
+            <span className="text-[10px] font-mono uppercase tracking-widest text-lkv-text-muted font-bold">Kit collaboratif</span>
+            <h2 className="font-display text-lg sm:text-xl text-lkv-primary font-bold">
+              Équipement <em className="font-serif italic font-normal text-lkv-primary">partagé</em>
             </h2>
           </div>
 
@@ -265,20 +265,20 @@ export default function EquipementCard({ equipment, groupId, onRefresh, user, me
         {groupId && (
           <Link
             href={`/ai-configurator?groupId=${groupId}`}
-            className="w-full mt-1 p-3 rounded-2xl glass-sub-card text-[#17402C] text-xs font-bold flex items-center justify-between transition-transform"
+            className="w-full mt-1 p-3 rounded-2xl glass-sub-card text-lkv-primary text-xs font-bold flex items-center justify-between transition-transform"
           >
             <span className="flex items-center gap-2">
               <span>🎒</span>
               <span>Optimiser le sac avec l'IA</span>
             </span>
-            <span className="text-[#17402C] text-xs">Configurer →</span>
+            <span className="text-lkv-primary text-xs">Configurer →</span>
           </Link>
         )}
       </div>
 
       <div className="flex items-center gap-2 mb-3">
         <div className="flex-1 relative flex items-center">
-          <Icon name="MagnifyingGlassIcon" size={14} className="absolute left-3 text-[#5C6B5E] shrink-0 relative z-10" />
+          <Icon name="MagnifyingGlassIcon" size={14} className="absolute left-3 text-lkv-text-muted shrink-0 relative z-10" />
           <input
             type="text"
             value={search}
@@ -287,7 +287,7 @@ export default function EquipementCard({ equipment, groupId, onRefresh, user, me
             className="glass-input w-full pl-9 pr-8 text-xs min-h-[36px]"
           />
           {search && (
-            <button onClick={() => setSearch('')} className="absolute right-2 text-xs text-[#5C6B5E] px-1">✕</button>
+            <button onClick={() => setSearch('')} className="absolute right-2 text-xs text-lkv-text-muted px-1">✕</button>
           )}
         </div>
 
@@ -322,7 +322,7 @@ export default function EquipementCard({ equipment, groupId, onRefresh, user, me
                 triggerHaptic('light');
                 setSelectedCategory(cat);
               }}
-              className={`glass-pill cursor-pointer whitespace-nowrap ${isSelected ? 'bg-[#17402C] text-white' : ''}`}
+              className={`glass-pill cursor-pointer whitespace-nowrap ${isSelected ? 'bg-lkv-primary text-white' : ''}`}
             >
               <span>{CATEGORY_EMOJI[cat] || '🎒'}</span>
               <span>{cat}</span>
@@ -345,8 +345,8 @@ export default function EquipementCard({ equipment, groupId, onRefresh, user, me
       {isAdding && (
         <form onSubmit={handleAddItem} className="mb-4 glass-sub-card p-4 rounded-2xl space-y-3">
           <div className="flex items-center justify-between">
-            <h4 className="text-xs font-bold text-[#17402C]">Ajouter un équipement commun</h4>
-            <span className="text-[10px] font-mono text-[#5C6B5E] font-bold">Kit partagé</span>
+            <h4 className="text-xs font-bold text-lkv-primary">Ajouter un équipement commun</h4>
+            <span className="text-[10px] font-mono text-lkv-text-muted font-bold">Kit partagé</span>
           </div>
 
           <div className="space-y-2">
@@ -422,8 +422,8 @@ export default function EquipementCard({ equipment, groupId, onRefresh, user, me
       {editingId && (
         <div className="mb-4 glass-sub-card p-4 rounded-2xl space-y-3">
           <div className="flex items-center justify-between">
-            <h4 className="text-xs font-bold text-[#17402C]">Modifier l'équipement</h4>
-            <button onClick={() => setEditingId(null)} className="text-xs text-[#5C6B5E]">✕</button>
+            <h4 className="text-xs font-bold text-lkv-primary">Modifier l'équipement</h4>
+            <button onClick={() => setEditingId(null)} className="text-xs text-lkv-text-muted">✕</button>
           </div>
 
           <input
@@ -476,10 +476,10 @@ export default function EquipementCard({ equipment, groupId, onRefresh, user, me
         {filteredItems.length === 0 ? (
           <div className="py-8 text-center glass-sub-card rounded-2xl p-4">
             <span className="text-3xl block mb-1">🎒</span>
-            <p className="text-xs font-bold text-[#17402C]">
+            <p className="text-xs font-bold text-lkv-primary">
               {search ? 'Aucun objet trouvé' : 'Aucun équipement dans cette catégorie'}
             </p>
-            <p className="text-[11px] text-[#5C6B5E] mt-0.5">
+            <p className="text-[11px] text-lkv-text-muted mt-0.5">
               Ajoutez les éléments clés du bivouac pour équilibrer les sacs.
             </p>
             {!search && (
@@ -508,7 +508,7 @@ export default function EquipementCard({ equipment, groupId, onRefresh, user, me
 
                   <div className="min-w-0 flex-1">
                     <div className="flex items-center gap-1.5">
-                      <h4 className="font-bold text-xs text-[#17402C] truncate">
+                      <h4 className="font-bold text-xs text-lkv-primary truncate">
                         {item.item}
                       </h4>
                       {item.quantity && item.quantity > 1 && (
@@ -518,8 +518,8 @@ export default function EquipementCard({ equipment, groupId, onRefresh, user, me
                       )}
                     </div>
 
-                    <div className="flex items-center gap-2 text-[10px] font-mono text-[#5C6B5E] mt-0.5">
-                      <span className="font-bold text-[#17402C]">
+                    <div className="flex items-center gap-2 text-[10px] font-mono text-lkv-text-muted mt-0.5">
+                      <span className="font-bold text-lkv-primary">
                         {item.weightGrams ? `${item.weightGrams}g` : item.weight || '—'}
                       </span>
                       <span>·</span>
@@ -527,7 +527,7 @@ export default function EquipementCard({ equipment, groupId, onRefresh, user, me
                         onClick={() => handleAssignToMe(item)}
                         disabled={busyId === item.id}
                         className={`truncate underline decoration-dotted ${
-                          isMyAssignment ? 'text-emerald-700 font-bold' : isAssigned ? 'text-[#17402C]' : 'text-[#D97746] font-semibold'
+                          isMyAssignment ? 'text-emerald-700 font-bold' : isAssigned ? 'text-lkv-primary' : 'text-[#D97746] font-semibold'
                         }`}
                         title="Cliquer pour changer l'attribution"
                       >
@@ -560,18 +560,18 @@ export default function EquipementCard({ equipment, groupId, onRefresh, user, me
         )}
       </div>
 
-      <div className="mt-4 pt-3 border-t border-[#17402C]/10 flex items-center justify-between">
-        <span className="text-[11px] font-mono text-[#5C6B5E] font-bold">Poids total du matériel partagé</span>
-        <span className="font-mono font-bold text-sm text-[#17402C]">{totalKg} kg</span>
+      <div className="mt-4 pt-3 border-t border-lkv-primary/10 flex items-center justify-between">
+        <span className="text-[11px] font-mono text-lkv-text-muted font-bold">Poids total du matériel partagé</span>
+        <span className="font-mono font-bold text-sm text-lkv-primary">{totalKg} kg</span>
       </div>
 
       {isImporting && (
         <div className="fixed inset-0 z-[100] bg-black/50 backdrop-blur-md flex items-center justify-center p-4">
           <div className="glass w-full max-w-lg p-5 max-h-[85vh] flex flex-col">
-            <div className="flex items-center justify-between pb-3 border-b border-[#17402C]/10">
+            <div className="flex items-center justify-between pb-3 border-b border-lkv-primary/10">
               <div>
-                <h3 className="font-display font-bold text-base text-[#17402C]">Importer depuis mon kit</h3>
-                <p className="text-[11px] text-[#5C6B5E]">Sélectionnez les objets à partager avec l'équipe</p>
+                <h3 className="font-display font-bold text-base text-lkv-primary">Importer depuis mon kit</h3>
+                <p className="text-[11px] text-lkv-text-muted">Sélectionnez les objets à partager avec l'équipe</p>
               </div>
               <button onClick={() => setIsImporting(false)} className="glass-capsule-btn p-2 text-xs font-bold">
                 <span className="relative z-10">✕</span>
@@ -598,17 +598,17 @@ export default function EquipementCard({ equipment, groupId, onRefresh, user, me
                       key={gear.id}
                       onClick={() => setSelectedGear(s => ({ ...s, [gear.id]: !s[gear.id] }))}
                       className={`p-2.5 rounded-xl border transition-all cursor-pointer flex items-center justify-between gap-2 ${
-                        isChecked ? 'bg-[#17402C] text-white border-[#17402C]' : 'glass-sub-card text-[#17402C]'
+                        isChecked ? 'bg-lkv-primary text-white border-lkv-primary' : 'glass-sub-card text-lkv-primary'
                       }`}
                     >
                       <div>
                         <h5 className="font-bold text-xs truncate">{gear.name}</h5>
-                        <p className={`text-[10px] font-mono ${isChecked ? 'text-white/80' : 'text-[#5C6B5E]'}`}>
+                        <p className={`text-[10px] font-mono ${isChecked ? 'text-white/80' : 'text-lkv-text-muted'}`}>
                           {gear.weight_g ? `${gear.weight_g}g` : '—'} · {gear.category || 'Divers'}
                         </p>
                       </div>
                       <span className={`w-5 h-5 rounded-md flex items-center justify-center text-xs font-bold ${
-                        isChecked ? 'bg-white text-[#17402C]' : 'border border-[#17402C]/20'
+                        isChecked ? 'bg-white text-lkv-primary' : 'border border-lkv-primary/20'
                       }`}>
                         {isChecked ? '✓' : ''}
                       </span>
@@ -617,7 +617,7 @@ export default function EquipementCard({ equipment, groupId, onRefresh, user, me
                 })}
             </div>
 
-            <div className="pt-3 border-t border-[#17402C]/10 flex justify-end gap-2">
+            <div className="pt-3 border-t border-lkv-primary/10 flex justify-end gap-2">
               <button onClick={() => setIsImporting(false)} className="glass-capsule-btn py-1.5 px-3 text-xs font-semibold">
                 <span className="relative z-10">Annuler</span>
               </button>

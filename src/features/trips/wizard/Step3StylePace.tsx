@@ -89,11 +89,11 @@ export function Step3StylePace({
   return (
     <div className="space-y-6">
       <div>
-        <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-wider text-[#5B7F55] mb-1">
+        <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-wider text-lkv-secondary mb-1">
           <Compass size={14} />
           <span>Étape 3 sur 5</span>
         </div>
-        <h2 className="text-2xl sm:text-3xl font-bold text-[#17402C]">
+        <h2 className="text-2xl sm:text-3xl font-bold text-lkv-primary">
           Quel est votre style d&apos;expédition ?
         </h2>
         <p className="text-sm text-gray-600 mt-1">
@@ -103,7 +103,7 @@ export function Step3StylePace({
 
       {/* 1. Hébergement */}
       <div>
-        <label className="block text-xs font-semibold text-[#17402C] uppercase tracking-wider mb-2.5">
+        <label className="block text-xs font-semibold text-lkv-primary uppercase tracking-wider mb-2.5">
           Type d&apos;hébergement privilégié
         </label>
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
@@ -116,13 +116,13 @@ export function Step3StylePace({
                 onClick={() => onAccommodationChange(id)}
                 className={`flex items-start gap-3 p-3.5 rounded-2xl border text-left transition-all min-h-[52px] ${
                   active
-                    ? 'bg-[#17402C] text-white border-[#17402C] shadow-sm'
-                    : 'bg-white/80 hover:bg-white text-[#17402C] border-black/5 hover:border-black/10'
+                    ? 'bg-lkv-primary text-white border-lkv-primary shadow-sm'
+                    : 'bg-white/80 hover:bg-white text-lkv-primary border-black/5 hover:border-black/10'
                 }`}
               >
                 <div
                   className={`p-2 rounded-xl shrink-0 ${
-                    active ? 'bg-white/20 text-white' : 'bg-black/5 text-[#5B7F55]'
+                    active ? 'bg-white/20 text-white' : 'bg-black/5 text-lkv-secondary'
                   }`}
                 >
                   <Icon size={18} />
@@ -142,7 +142,7 @@ export function Step3StylePace({
 
       {/* 2. Rythme de marche */}
       <div>
-        <label className="block text-xs font-semibold text-[#17402C] uppercase tracking-wider mb-2.5">
+        <label className="block text-xs font-semibold text-lkv-primary uppercase tracking-wider mb-2.5">
           Rythme quotidien
         </label>
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5">
@@ -155,15 +155,15 @@ export function Step3StylePace({
                 onClick={() => onPaceChange(id)}
                 className={`p-3.5 rounded-2xl border text-left transition-all min-h-[52px] ${
                   active
-                    ? 'bg-[#17402C] text-white border-[#17402C] shadow-sm'
-                    : 'bg-white/80 hover:bg-white text-[#17402C] border-black/5 hover:border-black/10'
+                    ? 'bg-lkv-primary text-white border-lkv-primary shadow-sm'
+                    : 'bg-white/80 hover:bg-white text-lkv-primary border-black/5 hover:border-black/10'
                 }`}
               >
                 <div className="flex items-center justify-between">
                   <div className="text-sm font-semibold">{title}</div>
                   {active && <Check size={15} />}
                 </div>
-                <div className={`text-xs font-bold mt-1 ${active ? 'text-[#A6C1A0]' : 'text-[#5B7F55]'}`}>
+                <div className={`text-xs font-bold mt-1 ${active ? 'text-[#A6C1A0]' : 'text-lkv-secondary'}`}>
                   {kms}
                 </div>
                 <div className={`text-[11px] mt-1.5 leading-snug ${active ? 'text-white/80' : 'text-gray-500'}`}>
@@ -177,7 +177,7 @@ export function Step3StylePace({
 
       {/* 3. Activité principale */}
       <div>
-        <label className="block text-xs font-semibold text-[#17402C] uppercase tracking-wider mb-2.5">
+        <label className="block text-xs font-semibold text-lkv-primary uppercase tracking-wider mb-2.5">
           Activité dominante
         </label>
         <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-2">
@@ -190,11 +190,11 @@ export function Step3StylePace({
                 onClick={() => onActivityChange(id)}
                 className={`flex flex-col items-center justify-center p-3 rounded-2xl border text-center transition-all min-h-[64px] ${
                   active
-                    ? 'bg-[#17402C] text-white border-[#17402C]'
-                    : 'bg-white/80 hover:bg-white text-[#17402C] border-black/5'
+                    ? 'bg-lkv-primary text-white border-lkv-primary'
+                    : 'bg-white/80 hover:bg-white text-lkv-primary border-black/5'
                 }`}
               >
-                <Icon size={18} className={active ? 'text-[#A6C1A0]' : 'text-[#5B7F55]'} />
+                <Icon size={18} className={active ? 'text-[#A6C1A0]' : 'text-lkv-secondary'} />
                 <span className="text-xs font-semibold mt-1.5">{title}</span>
               </button>
             );
@@ -204,7 +204,7 @@ export function Step3StylePace({
 
       {/* 4. Niveau / Difficulté */}
       <div>
-        <label className="block text-xs font-semibold text-[#17402C] uppercase tracking-wider mb-2.5">
+        <label className="block text-xs font-semibold text-lkv-primary uppercase tracking-wider mb-2.5">
           Niveau technique & expérience
         </label>
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
@@ -217,8 +217,8 @@ export function Step3StylePace({
                 onClick={() => onDifficultyChange(id)}
                 className={`p-3 rounded-xl border text-left transition-all min-h-[44px] ${
                   active
-                    ? 'bg-[#17402C] text-white border-[#17402C]'
-                    : 'bg-white/80 hover:bg-white text-[#17402C] border-black/5'
+                    ? 'bg-lkv-primary text-white border-lkv-primary'
+                    : 'bg-white/80 hover:bg-white text-lkv-primary border-black/5'
                 }`}
               >
                 <div className="text-xs font-semibold">{title}</div>

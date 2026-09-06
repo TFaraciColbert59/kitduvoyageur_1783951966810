@@ -27,14 +27,14 @@ export function TripFiltersBar({ filters, onChange, onReset }: TripFiltersBarPro
         <div className="relative flex-1">
           <Search
             size={18}
-            className="absolute left-3.5 top-1/2 -translate-y-1/2 text-[#5B7F55] pointer-events-none"
+            className="absolute left-3.5 top-1/2 -translate-y-1/2 text-lkv-secondary pointer-events-none"
           />
           <input
             type="text"
             placeholder="Rechercher par titre ou destination..."
             value={filters.search || ''}
             onChange={e => onChange({ ...filters, search: e.target.value, page: 1 })}
-            className="w-full pl-10 pr-4 py-2.5 rounded-full bg-white/70 border border-black/10 focus:border-[#5B7F55] focus:bg-white text-[16px] sm:text-sm text-[#17402C] placeholder-[#5B7F55]/60 outline-none transition-all shadow-inner"
+            className="w-full pl-10 pr-4 py-2.5 rounded-full bg-white/70 border border-black/10 focus:border-lkv-secondary focus:bg-white text-[16px] sm:text-sm text-lkv-primary placeholder-var(--lkv-secondary)/60 outline-none transition-all shadow-inner"
           />
           {filters.search && (
             <button
@@ -60,7 +60,7 @@ export function TripFiltersBar({ filters, onChange, onReset }: TripFiltersBarPro
                 page: 1,
               })
             }
-            className="px-3 py-2 rounded-full bg-white/70 border border-black/10 text-xs sm:text-sm text-[#17402C] focus:border-[#5B7F55] outline-none font-medium cursor-pointer"
+            className="px-3 py-2 rounded-full bg-white/70 border border-black/10 text-xs sm:text-sm text-lkv-primary focus:border-lkv-secondary outline-none font-medium cursor-pointer"
           >
             <option value="all">Toutes difficultés</option>
             <option value="easy">Facile</option>
@@ -80,7 +80,7 @@ export function TripFiltersBar({ filters, onChange, onReset }: TripFiltersBarPro
                 page: 1,
               })
             }
-            className="px-3 py-2 rounded-full bg-white/70 border border-black/10 text-xs sm:text-sm text-[#17402C] focus:border-[#5B7F55] outline-none font-medium cursor-pointer"
+            className="px-3 py-2 rounded-full bg-white/70 border border-black/10 text-xs sm:text-sm text-lkv-primary focus:border-lkv-secondary outline-none font-medium cursor-pointer"
           >
             <option value="all">Toutes activités</option>
             <option value="hiking">Randonnée</option>
@@ -103,7 +103,7 @@ export function TripFiltersBar({ filters, onChange, onReset }: TripFiltersBarPro
                 page: 1,
               })
             }
-            className="px-3 py-2 rounded-full bg-white/70 border border-black/10 text-xs sm:text-sm text-[#17402C] focus:border-[#5B7F55] outline-none font-medium cursor-pointer"
+            className="px-3 py-2 rounded-full bg-white/70 border border-black/10 text-xs sm:text-sm text-lkv-primary focus:border-lkv-secondary outline-none font-medium cursor-pointer"
           >
             <option value="all">Tous statuts</option>
             <option value="planned">Planifié</option>

@@ -1,0 +1,62 @@
+/**
+ * LKDV DESIGN SYSTEM — CANONICAL TOKENS (Phase 2.1)
+ * 
+ * Source unique de vérité stylistique pour Le Kit du Voyageur :
+ * - Vert primaire de référence : #17402C (Forest Deep LKDV)
+ * - Vert secondaire / accent : #5B7F55 (Sage 500)
+ * - Surface maîtresse : #FBFAF6 (Crème Papier)
+ * - Élimination stricte de #5C6B5E au profit de #5B7F55
+ * - Conforme Apple HIG & WCAG AA (contraste >= 4.5:1 texte standard)
+ */
+
+:root {
+  /* ── 1. Couleurs Maîtresses LKDV ── */
+  --lkv-primary: #17402C;
+  --lkv-primary-hover: #123323;
+  --lkv-primary-subtle: #EBF2EC;
+  --lkv-primary-rgb: 23, 64, 44;
+
+  --lkv-secondary: #5B7F55;
+  --lkv-secondary-hover: #486944;
+  --lkv-secondary-subtle: #F2F6F1;
+  --lkv-secondary-rgb: 91, 127, 85;
+
+  --lkv-surface: #FBFAF6;
+  --lkv-surface-card: #FFFFFF;
+  --lkv-surface-elevated: rgba(255, 255, 255, 0.85);
+  --lkv-surface-muted: #F1EDE6;
+
+  /* ── 2. Typographie & Contrastes ── */
+  --lkv-text-primary: #17402C;
+  --lkv-text-secondary: #5B7F55;
+  --lkv-text-muted: #6B7568;
+  --lkv-text-subtle: #8C8779;
+  --lkv-text-inverted: #FFFFFF;
+
+  /* ── 3. Bordures et Séparateurs ── */
+  --lkv-border: rgba(23, 64, 44, 0.12);
+  --lkv-border-subtle: rgba(23, 64, 44, 0.06);
+  --lkv-border-strong: rgba(23, 64, 44, 0.24);
+
+  /* ── 4. Statuts et Alertes Terrain ── */
+  --lkv-success: #5B7F55;
+  --lkv-success-bg: #E1EBDE;
+  --lkv-warning: #C89A3B;
+  --lkv-warning-bg: #FBF1DC;
+  --lkv-danger: #A8443A;
+  --lkv-danger-bg: #F5DDD9;
+  --lkv-info: #4B6B7C;
+  --lkv-info-bg: #DDE7EE;
+
+  /* ── 5. Apple HIG Touch & Rayons ── */
+  --lkv-touch-min: 44px;
+  --lkv-touch-comfortable: 48px;
+
+  --lkv-radius-xs: 6px;
+  --lkv-radius-sm: 10px;
+  --lkv-radius-md: 14px;
+  --lkv-radius-lg: 20px;
+  --lkv-radius-xl: 26px;
+  --lkv-radius-2xl: 32px;
+  --lkv-radius-full: 9999px;
+}

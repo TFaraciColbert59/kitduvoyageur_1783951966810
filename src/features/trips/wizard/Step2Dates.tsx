@@ -97,11 +97,11 @@ export function Step2Dates({
   return (
     <div className="space-y-6">
       <div>
-        <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-wider text-[#5B7F55] mb-1">
+        <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-wider text-lkv-secondary mb-1">
           <Calendar size={14} />
           <span>Étape 2 sur 5</span>
         </div>
-        <h2 className="text-2xl sm:text-3xl font-bold text-[#17402C]">
+        <h2 className="text-2xl sm:text-3xl font-bold text-lkv-primary">
           Quand et combien de temps partez-vous ?
         </h2>
         <p className="text-sm text-gray-600 mt-1">
@@ -116,8 +116,8 @@ export function Step2Dates({
           onClick={() => onDatesChoiceChange('duration')}
           className={`flex-1 py-2.5 px-4 rounded-xl text-xs font-semibold transition-all min-h-[44px] ${
             datesChoice === 'duration'
-              ? 'bg-white text-[#17402C] shadow-sm'
-              : 'text-gray-600 hover:text-[#17402C]'
+              ? 'bg-white text-lkv-primary shadow-sm'
+              : 'text-gray-600 hover:text-lkv-primary'
           }`}
         >
           <div className="flex items-center justify-center gap-1.5">
@@ -130,8 +130,8 @@ export function Step2Dates({
           onClick={() => onDatesChoiceChange('dates')}
           className={`flex-1 py-2.5 px-4 rounded-xl text-xs font-semibold transition-all min-h-[44px] ${
             datesChoice === 'dates'
-              ? 'bg-white text-[#17402C] shadow-sm'
-              : 'text-gray-600 hover:text-[#17402C]'
+              ? 'bg-white text-lkv-primary shadow-sm'
+              : 'text-gray-600 hover:text-lkv-primary'
           }`}
         >
           <div className="flex items-center justify-center gap-1.5">
@@ -145,18 +145,18 @@ export function Step2Dates({
       {datesChoice === 'dates' && (
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <div>
-            <label className="block text-xs font-semibold text-[#17402C] mb-1">
+            <label className="block text-xs font-semibold text-lkv-primary mb-1">
               Date de départ
             </label>
             <input
               type="date"
               value={startDate}
               onChange={(e) => handleStartDate(e.target.value)}
-              className="w-full px-4 py-3 bg-white rounded-xl border border-black/10 text-sm focus:ring-2 focus:ring-[#17402C] focus:outline-none min-h-[48px]"
+              className="w-full px-4 py-3 bg-white rounded-xl border border-black/10 text-sm focus:ring-2 focus:ring-lkv-primary focus:outline-none min-h-[48px]"
             />
           </div>
           <div>
-            <label className="block text-xs font-semibold text-[#17402C] mb-1">
+            <label className="block text-xs font-semibold text-lkv-primary mb-1">
               Date de retour
             </label>
             <input
@@ -164,7 +164,7 @@ export function Step2Dates({
               value={endDate}
               min={startDate || undefined}
               onChange={(e) => handleEndDate(e.target.value)}
-              className="w-full px-4 py-3 bg-white rounded-xl border border-black/10 text-sm focus:ring-2 focus:ring-[#17402C] focus:outline-none min-h-[48px]"
+              className="w-full px-4 py-3 bg-white rounded-xl border border-black/10 text-sm focus:ring-2 focus:ring-lkv-primary focus:outline-none min-h-[48px]"
             />
           </div>
         </div>
@@ -173,10 +173,10 @@ export function Step2Dates({
       {/* Sélecteur de durée (affiché ou ajusté dans les deux modes) */}
       <div className="p-4 sm:p-5 bg-white/80 rounded-2xl border border-black/5 space-y-4">
         <div className="flex items-center justify-between">
-          <span className="text-xs font-semibold text-[#17402C] uppercase tracking-wider">
+          <span className="text-xs font-semibold text-lkv-primary uppercase tracking-wider">
             Durée de l&apos;expédition
           </span>
-          <span className="text-lg font-bold text-[#17402C]">
+          <span className="text-lg font-bold text-lkv-primary">
             {durationDays} {durationDays > 1 ? 'jours' : 'jour'}
           </span>
         </div>
@@ -189,8 +189,8 @@ export function Step2Dates({
               onClick={() => onDurationChange(d)}
               className={`py-2 px-3 rounded-xl text-xs font-semibold border transition-all min-h-[44px] ${
                 durationDays === d
-                  ? 'bg-[#17402C] text-white border-[#17402C]'
-                  : 'bg-white hover:bg-black/5 text-[#17402C] border-black/10'
+                  ? 'bg-lkv-primary text-white border-lkv-primary'
+                  : 'bg-white hover:bg-black/5 text-lkv-primary border-black/10'
               }`}
             >
               {d} jours
@@ -204,7 +204,7 @@ export function Step2Dates({
           max={30}
           value={durationDays}
           onChange={(e) => onDurationChange(parseInt(e.target.value, 10))}
-          className="w-full accent-[#17402C] cursor-pointer"
+          className="w-full accent-var(--lkv-primary) cursor-pointer"
         />
         <div className="flex justify-between text-[11px] text-gray-500 font-medium">
           <span>1 jour (Micro-aventure)</span>

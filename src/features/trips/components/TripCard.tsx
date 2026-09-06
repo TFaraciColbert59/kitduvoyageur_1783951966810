@@ -32,7 +32,7 @@ export function TripCard({ trip, showRole = true }: TripCardProps) {
         tone="neutral"
         blur="md"
         interactive
-        className="h-full border border-white/60 hover:border-[#5B7F55]/40 transition-all duration-300 hover:shadow-lg rounded-[24px] overflow-hidden"
+        className="h-full border border-white/60 hover:border-lkv-secondary/40 transition-all duration-300 hover:shadow-lg rounded-[24px] overflow-hidden"
       >
         {/* Cover Image */}
         <div className="relative w-full h-48 bg-[#FAF8F5] overflow-hidden">
@@ -70,20 +70,20 @@ export function TripCard({ trip, showRole = true }: TripCardProps) {
         {/* Card Body */}
         <div className="p-4 flex flex-col justify-between flex-1 gap-3">
           <div>
-            <h3 className="font-semibold text-base sm:text-lg text-[#17402C] line-clamp-1 group-hover:text-[#205238] transition-colors">
+            <h3 className="font-semibold text-base sm:text-lg text-lkv-primary line-clamp-1 group-hover:text-[#205238] transition-colors">
               {trip.title}
             </h3>
             {trip.description && (
-              <p className="text-xs sm:text-sm text-[#5B7F55] line-clamp-2 mt-1 leading-relaxed">
+              <p className="text-xs sm:text-sm text-lkv-secondary line-clamp-2 mt-1 leading-relaxed">
                 {trip.description}
               </p>
             )}
           </div>
 
           {/* Bottom Meta */}
-          <div className="pt-2 border-t border-black/5 flex items-center justify-between text-xs text-[#5B7F55]">
+          <div className="pt-2 border-t border-black/5 flex items-center justify-between text-xs text-lkv-secondary">
             <span className="flex items-center gap-1">
-              <Calendar size={13} className="text-[#5B7F55]" />
+              <Calendar size={13} className="text-lkv-secondary" />
               {formatDateRange(trip.start_date, trip.end_date)}
             </span>
 

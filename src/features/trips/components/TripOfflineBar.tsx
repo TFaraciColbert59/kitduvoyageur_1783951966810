@@ -66,7 +66,7 @@ export function TripOfflineBar({ trip }: TripOfflineBarProps) {
         </div>
       )}
 
-      <div className="flex items-center justify-between text-xs text-[#5B7F55] px-1">
+      <div className="flex items-center justify-between text-xs text-lkv-secondary px-1">
         <div className="flex items-center gap-1.5">
           {isOnline ? (
             <span className="flex items-center gap-1 text-emerald-700">
@@ -88,7 +88,7 @@ export function TripOfflineBar({ trip }: TripOfflineBarProps) {
         {!isSavedOffline && (
           <button
             onClick={handleSaveOffline}
-            className="flex items-center gap-1 font-semibold text-[#17402C] hover:text-[#5B7F55] transition-colors py-1 px-2 rounded-lg hover:bg-black/5"
+            className="flex items-center gap-1 font-semibold text-lkv-primary hover:text-lkv-secondary transition-colors py-1 px-2 rounded-lg hover:bg-black/5"
           >
             <HardDriveDownload size={13} />
             <span>Garder hors-ligne</span>

@@ -194,7 +194,7 @@ export default function DiscussionCard({ discussions, groupId, onRefresh, user }
   return (
     <div className="glass p-6 flex flex-col h-[600px] transition-all duration-300">
       <div className="flex justify-between items-start mb-2 flex-shrink-0">
-        <h2 className="font-display font-bold text-xl text-[#17402C]">Discussion <span className="font-serif italic font-normal text-[#17402C]">du voyage</span></h2>
+        <h2 className="font-display font-bold text-xl text-lkv-primary">Discussion <span className="font-serif italic font-normal text-lkv-primary">du voyage</span></h2>
         <div className="flex items-center gap-2">
           <span className="glass-pill">{totalMessages} messages</span>
         </div>
@@ -211,13 +211,13 @@ export default function DiscussionCard({ discussions, groupId, onRefresh, user }
       
       <div className="flex-1 overflow-y-auto space-y-4 pr-2 mb-4">
         {discussions.length === 0 && (
-          <p className="text-center text-sm text-[#5C6B5E] py-4">Soyez le premier à lancer la discussion.</p>
+          <p className="text-center text-sm text-lkv-text-muted py-4">Soyez le premier à lancer la discussion.</p>
         )}
         {discussions.map(msg => (
           <div key={msg.id} className="flex gap-3">
             <Link
               href={msg.author_id ? `/profil/${msg.author_id}` : '/communaute'}
-              className="w-10 h-10 rounded-full bg-[#17402C]/10 hover:bg-[#17402C]/20 transition-colors flex items-center justify-center text-[#17402C] font-bold text-sm flex-shrink-0 cursor-pointer"
+              className="w-10 h-10 rounded-full bg-lkv-primary/10 hover:bg-lkv-primary/20 transition-colors flex items-center justify-center text-lkv-primary font-bold text-sm flex-shrink-0 cursor-pointer"
             >
               {msg.author.charAt(0)}
             </Link>
@@ -225,7 +225,7 @@ export default function DiscussionCard({ discussions, groupId, onRefresh, user }
               <div className="flex items-center gap-2 mb-1">
                 <Link
                   href={msg.author_id ? `/profil/${msg.author_id}` : '/communaute'}
-                  className="font-bold text-sm text-[#17402C] hover:underline cursor-pointer"
+                  className="font-bold text-sm text-lkv-primary hover:underline cursor-pointer"
                 >
                   {msg.author}
                 </Link>
@@ -234,21 +234,21 @@ export default function DiscussionCard({ discussions, groupId, onRefresh, user }
                 )}
                 <button
                   onClick={() => { setReplyingTo(replyingTo?.id === msg.id ? null : msg); setNewMessage(''); composerInputRef.current?.focus(); }}
-                  className="text-[10px] font-bold text-[#17402C] hover:underline ml-1"
+                  className="text-[10px] font-bold text-lkv-primary hover:underline ml-1"
                 >
                   Répondre
                 </button>
-                <span className="text-xs text-[#5C6B5E] font-mono ml-auto">{msg.time}</span>
+                <span className="text-xs text-lkv-text-muted font-mono ml-auto">{msg.time}</span>
               </div>
               
               {msg.reply_to && (
-                <p className="text-[10px] text-[#5C6B5E] italic mb-1">
+                <p className="text-[10px] text-lkv-text-muted italic mb-1">
                   ↩ en réponse à {discussions.find((d) => d.id === msg.reply_to)?.author || 'un message'}
                 </p>
               )}
               
               <div className="glass-sub-card p-4 rounded-2xl rounded-tl-none mb-2">
-                <p className="text-sm text-[#17402C] font-sans leading-relaxed whitespace-pre-wrap">
+                <p className="text-sm text-lkv-primary font-sans leading-relaxed whitespace-pre-wrap">
                   {msg.content.split(/(#\w+)/g).map((part, i) => 
                     part.startsWith('#') ? <span key={i} className="text-[#3A63B2] font-semibold">{part}</span> : part
                   )}
@@ -256,12 +256,12 @@ export default function DiscussionCard({ discussions, groupId, onRefresh, user }
                 
                 {msg.attachment && (
                   <div className="mt-3 p-3 glass-sub-card rounded-xl flex items-center gap-3">
-                    <div className="w-10 h-10 rounded-lg bg-[#17402C]/10 flex items-center justify-center text-[#17402C]">
+                    <div className="w-10 h-10 rounded-lg bg-lkv-primary/10 flex items-center justify-center text-lkv-primary">
                       <Icon name="MapIcon" size={20} className="relative z-10" />
                     </div>
                     <div>
-                      <p className="text-xs font-bold text-[#17402C]">{msg.attachment}</p>
-                      <p className="text-[10px] text-[#5C6B5E] font-mono">Pièce jointe</p>
+                      <p className="text-xs font-bold text-lkv-primary">{msg.attachment}</p>
+                      <p className="text-[10px] text-lkv-text-muted font-mono">Pièce jointe</p>
                     </div>
                     <button
                       onClick={() => {
@@ -325,14 +325,14 @@ export default function DiscussionCard({ discussions, groupId, onRefresh, user }
 
       <div className="relative flex-shrink-0">
         {replyingTo && (
-          <div className="flex items-center gap-2 mb-2 px-3 py-2 glass-sub-card rounded-xl text-xs text-[#17402C]">
+          <div className="flex items-center gap-2 mb-2 px-3 py-2 glass-sub-card rounded-xl text-xs text-lkv-primary">
             <span className="font-bold">↩ Répondre à {replyingTo.author}</span>
-            <span className="text-[#5C6B5E] truncate flex-1">« {replyingTo.content.slice(0, 60)}{replyingTo.content.length > 60 ? '…' : ''} »</span>
-            <button onClick={() => setReplyingTo(null)} className="text-[#5C6B5E] hover:text-red-600 font-bold px-1">✕</button>
+            <span className="text-lkv-text-muted truncate flex-1">« {replyingTo.content.slice(0, 60)}{replyingTo.content.length > 60 ? '…' : ''} »</span>
+            <button onClick={() => setReplyingTo(null)} className="text-lkv-text-muted hover:text-red-600 font-bold px-1">✕</button>
           </div>
         )}
         <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-          <div className="w-8 h-8 rounded-full bg-[#17402C] flex items-center justify-center text-white text-xs font-bold">
+          <div className="w-8 h-8 rounded-full bg-lkv-primary flex items-center justify-center text-white text-xs font-bold">
             {user?.user_metadata?.first_name ? user.user_metadata.first_name.charAt(0) : (user?.user_metadata?.full_name ? user.user_metadata.full_name.charAt(0) : 'V')}
           </div>
         </div>
@@ -344,7 +344,7 @@ export default function DiscussionCard({ discussions, groupId, onRefresh, user }
           onKeyDown={handleKeyDown}
           disabled={loading || uploading || locating}
           placeholder={uploading ? "Upload en cours..." : locating ? "Localisation..." : "Ajouter un message pour le groupe..."} 
-          className="glass-input w-full pl-14 pr-[152px] text-sm text-[#17402C] min-h-[48px]"
+          className="glass-input w-full pl-14 pr-[152px] text-sm text-lkv-primary min-h-[48px]"
         />
         <div className="absolute inset-y-0 right-0 pr-2 flex items-center gap-1">
           <button 

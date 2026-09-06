@@ -193,7 +193,7 @@ export default function TachesCard({ tasks: initialTasks, groupId, onRefresh, us
   return (
     <div className="glass p-6 transition-all duration-300">
       <div className="flex justify-between items-start mb-2">
-        <h2 className="font-display font-bold text-xl text-[#17402C]">Tâches <span className="font-serif italic font-normal text-[#17402C]">à faire</span></h2>
+        <h2 className="font-display font-bold text-xl text-lkv-primary">Tâches <span className="font-serif italic font-normal text-lkv-primary">à faire</span></h2>
         <div className="flex items-center gap-2">
           <span className="glass-pill">{remainingCount} restantes</span>
           <span className="glass-pill">{completedCount} terminées</span>
@@ -201,7 +201,7 @@ export default function TachesCard({ tasks: initialTasks, groupId, onRefresh, us
       </div>
       
       <div className="flex justify-between items-center mb-6">
-        <p className="text-sm text-[#5C6B5E] font-sans max-w-sm hidden sm:block">
+        <p className="text-sm text-lkv-text-muted font-sans max-w-sm hidden sm:block">
           Chacun s'attribue une tâche. Les rappels partent 48h avant l'échéance.
         </p>
         <div className="flex gap-2 w-full sm:w-auto justify-end flex-wrap">
@@ -267,7 +267,7 @@ export default function TachesCard({ tasks: initialTasks, groupId, onRefresh, us
       
       <div className="space-y-3 mb-6">
         {filteredTasks.length === 0 && (
-          <p className="text-center text-sm text-[#5C6B5E] py-4">Aucune tâche trouvée.</p>
+          <p className="text-center text-sm text-lkv-text-muted py-4">Aucune tâche trouvée.</p>
         )}
         {filteredTasks.map((task) => (
           <div key={task.id} className="glass-sub-card p-3 rounded-xl flex gap-4 items-center group">
@@ -285,7 +285,7 @@ export default function TachesCard({ tasks: initialTasks, groupId, onRefresh, us
             </button>
             <div className="flex-1 min-w-0">
               <div className="flex flex-wrap items-center gap-2">
-                <h3 className={`font-sans font-semibold text-sm ${task.completed ? 'text-[#5C6B5E] line-through' : 'text-[#17402C]'}`}>
+                <h3 className={`font-sans font-semibold text-sm ${task.completed ? 'text-lkv-text-muted line-through' : 'text-lkv-primary'}`}>
                   {task.title}
                 </h3>
                 <span className="text-xs text-[#D97746] font-medium">— {task.assignee}</span>
@@ -297,14 +297,14 @@ export default function TachesCard({ tasks: initialTasks, groupId, onRefresh, us
                   ))}
                   <button
                     onClick={() => handleDeleteTask(task.id)}
-                    className="p-1 text-[#5C6B5E] hover:text-red-600 transition-colors ml-2 opacity-0 group-hover:opacity-100"
+                    className="p-1 text-lkv-text-muted hover:text-red-600 transition-colors ml-2 opacity-0 group-hover:opacity-100"
                     title="Supprimer la tâche"
                   >
                     <Icon name="TrashIcon" size={14} className="relative z-10" />
                   </button>
                 </div>
               </div>
-              {task.details && <p className="text-xs text-[#5C6B5E] font-sans mt-0.5">{task.details}</p>}
+              {task.details && <p className="text-xs text-lkv-text-muted font-sans mt-0.5">{task.details}</p>}
             </div>
           </div>
         ))}

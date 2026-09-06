@@ -103,13 +103,13 @@ export default function ScrollableTabs({
               className={`snap-start shrink-0 relative flex items-center justify-center font-bold whitespace-nowrap rounded-xl transition-all cursor-pointer select-none ${sizeClasses} ${
                 isSelected
                   ? 'text-white'
-                  : 'text-[#17402C]/70 hover:text-[#17402C] hover:bg-white/40'
+                  : 'text-lkv-primary/70 hover:text-lkv-primary hover:bg-white/40'
               }`}
             >
               {isSelected && (
                 <motion.div
                   layoutId={`${layoutIdPrefix}-active`}
-                  className="absolute inset-0 rounded-xl bg-[#17402C] shadow-xs -z-10"
+                  className="absolute inset-0 rounded-xl bg-lkv-primary shadow-xs -z-10"
                   transition={{ type: 'spring', stiffness: 500, damping: 35 }}
                 />
               )}
@@ -122,7 +122,7 @@ export default function ScrollableTabs({
                   className={`ml-1 text-[10px] font-mono px-1.5 py-0.2 rounded-full font-bold ${
                     isSelected
                       ? 'bg-white/20 text-white'
-                      : 'bg-[#17402C]/10 text-[#17402C]'
+                      : 'bg-lkv-primary/10 text-lkv-primary'
                   }`}
                 >
                   {tab.badge}

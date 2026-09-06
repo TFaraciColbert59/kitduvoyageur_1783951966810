@@ -200,7 +200,7 @@ export default function VoyageursCard({ travelers, groupId, onRefresh, user, mem
   return (
     <div className="glass p-3.5 transition-all duration-300 space-y-2.5">
       <div className="flex justify-between items-center">
-        <h2 className="font-display font-bold text-xs text-[#17402C]">
+        <h2 className="font-display font-bold text-xs text-lkv-primary">
           Voyageurs ({travelers.length})
         </h2>
         {isOrganizer && (
@@ -217,13 +217,13 @@ export default function VoyageursCard({ travelers, groupId, onRefresh, user, mem
         {travelers.slice(0, 3).map(t => (
           <div key={t.id} className="flex items-center gap-2 glass-sub-card p-2 rounded-xl">
             <Link href={t.user_id ? `/profil/${t.user_id}` : '#'} className="relative shrink-0">
-              <div className="w-6 h-6 rounded-full bg-[#17402C]/10 flex items-center justify-center text-[#17402C] font-bold text-[10px]">
+              <div className="w-6 h-6 rounded-full bg-lkv-primary/10 flex items-center justify-center text-lkv-primary font-bold text-[10px]">
                 {t.name.charAt(0)}
               </div>
             </Link>
             
             <div className="flex-1 min-w-0">
-              <span className="font-sans font-bold text-xs text-[#17402C] truncate block leading-tight">
+              <span className="font-sans font-bold text-xs text-lkv-primary truncate block leading-tight">
                 {t.name}
               </span>
             </div>
@@ -233,23 +233,23 @@ export default function VoyageursCard({ travelers, groupId, onRefresh, user, mem
                 {t.status}
               </span>
             ) : (
-              <span className="text-[9px] font-mono font-bold text-[#17402C] shrink-0">
+              <span className="text-[9px] font-mono font-bold text-lkv-primary shrink-0">
                 {t.progress}%
               </span>
             )}
           </div>
         ))}
         {travelers.length > 3 && (
-          <button onClick={openManage} className="text-[10px] text-[#5C6B5E] font-medium text-center w-full block hover:underline pt-0.5">
+          <button onClick={openManage} className="text-[10px] text-lkv-text-muted font-medium text-center w-full block hover:underline pt-0.5">
             + {travelers.length - 3} autre{travelers.length - 3 > 1 ? 's' : ''} voyageur{travelers.length - 3 > 1 ? 's' : ''}
           </button>
         )}
       </div>
 
       {group?.invite_code && (
-        <div className="flex items-center justify-between p-2 glass-sub-card rounded-xl text-[10px] text-[#5C6B5E] border-t border-[#17402C]/10">
+        <div className="flex items-center justify-between p-2 glass-sub-card rounded-xl text-[10px] text-lkv-text-muted border-t border-lkv-primary/10">
           <span>Code invitation :</span>
-          <strong className="font-mono text-[#17402C] font-bold tracking-widest">{group.invite_code}</strong>
+          <strong className="font-mono text-lkv-primary font-bold tracking-widest">{group.invite_code}</strong>
         </div>
       )}
 
@@ -263,12 +263,12 @@ export default function VoyageursCard({ travelers, groupId, onRefresh, user, mem
             >
               <Icon name="XMarkIcon" size={18} className="relative z-10" />
             </button>
-            <h2 className="font-display font-bold text-xl text-[#17402C] mb-4">Gérer les <span className="font-serif italic font-normal text-[#17402C]">membres</span></h2>
+            <h2 className="font-display font-bold text-xl text-lkv-primary mb-4">Gérer les <span className="font-serif italic font-normal text-lkv-primary">membres</span></h2>
             
             <div className="mb-4 p-3 glass-sub-card rounded-xl">
-              <p className="text-xs font-bold text-[#17402C] mb-2">Code d'invitation secret :</p>
+              <p className="text-xs font-bold text-lkv-primary mb-2">Code d'invitation secret :</p>
               <div className="flex gap-2">
-                <input type="text" readOnly value={group?.invite_code || ''} className="glass-input flex-1 font-mono tracking-widest font-bold text-xs text-[#17402C] text-center min-h-[36px]" />
+                <input type="text" readOnly value={group?.invite_code || ''} className="glass-input flex-1 font-mono tracking-widest font-bold text-xs text-lkv-primary text-center min-h-[36px]" />
                 <button 
                   onClick={() => {
                     navigator.clipboard.writeText(group?.invite_code || '');
@@ -290,13 +290,13 @@ export default function VoyageursCard({ travelers, groupId, onRefresh, user, mem
                 <div key={m.id} className="flex items-center justify-between p-2.5 glass-sub-card rounded-xl">
                   <div>
                     {m.user_id ? (
-                      <Link href={`/profil/${m.user_id}`} className="text-xs font-bold text-[#17402C] hover:underline">
+                      <Link href={`/profil/${m.user_id}`} className="text-xs font-bold text-lkv-primary hover:underline">
                         {name} {isMe && '(Vous)'}
                       </Link>
                     ) : (
-                      <p className="text-xs font-bold text-[#17402C]">{name} {isMe && '(Vous)'}</p>
+                      <p className="text-xs font-bold text-lkv-primary">{name} {isMe && '(Vous)'}</p>
                     )}
-                    <p className="text-[10px] text-[#5C6B5E]">{m.role === 'organizer' ? 'Organisateur' : 'Membre'}</p>
+                    <p className="text-[10px] text-lkv-text-muted">{m.role === 'organizer' ? 'Organisateur' : 'Membre'}</p>
                   </div>
                   {!isMe && (
                     <div className="flex gap-1.5">
@@ -323,7 +323,7 @@ export default function VoyageursCard({ travelers, groupId, onRefresh, user, mem
             {/* Inviter un membre */}
             {isOrganizer && (
               <div className="mb-4">
-                <p className="text-xs font-bold text-[#17402C] mb-2">Inviter un membre</p>
+                <p className="text-xs font-bold text-lkv-primary mb-2">Inviter un membre</p>
                 <div className="relative">
                   <input
                     type="text"
@@ -333,7 +333,7 @@ export default function VoyageursCard({ travelers, groupId, onRefresh, user, mem
                     className="glass-input w-full text-xs min-h-[36px]"
                   />
                   {memberSearchBusy && (
-                    <div className="absolute right-3 top-1/2 -translate-y-1/2 w-3 h-3 border-2 border-[#17402C] border-t-transparent rounded-full animate-spin" />
+                    <div className="absolute right-3 top-1/2 -translate-y-1/2 w-3 h-3 border-2 border-lkv-primary border-t-transparent rounded-full animate-spin" />
                   )}
                 </div>
                 {memberResults.length > 0 && (
@@ -341,10 +341,10 @@ export default function VoyageursCard({ travelers, groupId, onRefresh, user, mem
                     {memberResults.map(p => (
                       <div key={p.id} className="flex items-center justify-between glass-sub-card p-2 rounded-xl">
                         <div className="flex items-center gap-2 min-w-0">
-                          <div className="w-6 h-6 rounded-full bg-[#17402C]/10 flex items-center justify-center text-[10px] font-bold text-[#17402C] shrink-0">
+                          <div className="w-6 h-6 rounded-full bg-lkv-primary/10 flex items-center justify-center text-[10px] font-bold text-lkv-primary shrink-0">
                             {p.full_name?.charAt(0) || '?'}
                           </div>
-                          <span className="text-xs font-semibold text-[#17402C] truncate">{p.full_name}</span>
+                          <span className="text-xs font-semibold text-lkv-primary truncate">{p.full_name}</span>
                         </div>
                         <button
                           onClick={() => addMember(p)}

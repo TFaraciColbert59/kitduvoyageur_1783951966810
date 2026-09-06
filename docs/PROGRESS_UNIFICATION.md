@@ -24,13 +24,13 @@ Dernière mise à jour : 2026-09-07T01:15:00+02:00
 | **P1** | **1.6** | Dates civiles locales et fuseaux (élimination décalage UTC) [D8] | **TERMINE** | Tests 17/17 verts (`tripDates.spec.ts`), `formatCivilDateRange` sans dérive DST/fuseau |
 | **P1** | **1.7** | Clôture Phase 1 & Démo vérifiée | **TERMINE** | Vitest 617/617 (93 files), `tsc` 0 err, `lint` 0 err, `build` 0 err, Playwright 7/7 |
 |---|---|---|---|---|
-| **P2** | **2.1** | Tokens CSS unifiés (`tokens.css`, trancher #5C6B5E vs #5B7F55) [D10] | À FAIRE | Variables CSS et contrastes WCAG AA |
-| **P2** | **2.2** | Codemod et règle ESLint anti-hexadécimal JSX | À FAIRE | Zéro couleur en dur dans le JSX |
-| **P2** | **2.3** | Primitives partagées (GlassCard, Sheet, Tabs, Badge, EmptyState) | À FAIRE | Primitives réutilisables |
-| **P2** | **2.4** | Normalisation des icônes (`lucide-react` par défaut) | À FAIRE | Remplacement AppIcon/LkvIcon |
-| **P2** | **2.5** | AppShell unique (absorption Header/Footer/MobilePageShell) | À FAIRE | Résolution double arbre DOM (débloque test E2E 03) |
-| **P2** | **2.6** | Purge du jargon interne (« Chantier {n} », C1-C8) [D9] | À FAIRE | Suppression TripPlaceholderTab, textes nettoyés |
-| **P2** | **2.7** | Accessibilité de base (cibles >= 44px, navigation clavier) | À FAIRE | Rapport axe-core |
+| **P2** | **2.1** | Tokens CSS unifiés (`tokens.css`, trancher #5C6B5E vs #5B7F55) [D10] | **TERMINE** | Palette `lkv` unifiée, `#17402C` & `#5B7F55`, suppression `#5C6B5E`, contrastes >= 4.5:1 |
+| **P2** | **2.2** | Codemod et règle ESLint anti-hexadécimal JSX | **TERMINE** | Codemod 47 fichiers, test `antiHexColor.spec.ts` 2/2 vert |
+| **P2** | **2.3** | Primitives partagées (GlassCard, Sheet, Tabs, Badge, EmptyState) | **TERMINE** | Composants créés & exportés dans `src/components/ui`, test `primitives.spec.ts` 5/5 vert |
+| **P2** | **2.4** | Normalisation des icônes (`lucide-react` par défaut) | **TERMINE** | Mapping sémantique `src/lib/icons.ts`, test `icons.spec.ts` 3/3 vert |
+| **P2** | **2.5** | AppShell unique (absorption Header/Footer/MobilePageShell) | **TERMINE** | Arbre DOM unifié, résolution D11, tests `appShell.spec.ts` 3/3 vert |
+| **P2** | **2.6** | Purge du jargon interne (« Chantier {n} », C1-C8) [D9] | **TERMINE** | `TripPlaceholderTab` supprimé, remplacé par `TripSafetyView`, test `antiJargon.spec.ts` 3/3 vert |
+| **P2** | **2.7** | Accessibilité de base (cibles >= 44px, navigation clavier) | **TERMINE** | Cibles tactiles >= 44px, Vitest 634/634, `tsc` 0 err, `lint` 0 err, `build` 0 err, Playwright 7/7 |
 |---|---|---|---|---|
 | **P3** | **3.1** | Décision d'architecture et schéma cible (`docs/DATA_MODEL.md`) | À FAIRE | Crews / Trips / Participants |
 | **P3** | **3.2** | Migration SQL `up` + `down` testée sur staging | À FAIRE | Migration sans perte de données |

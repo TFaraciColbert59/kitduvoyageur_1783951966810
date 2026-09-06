@@ -78,11 +78,11 @@ export function Step1Destinations({
   return (
     <div className="space-y-6">
       <div>
-        <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-wider text-[#5B7F55] mb-1">
+        <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-wider text-lkv-secondary mb-1">
           <MapPin size={14} />
           <span>Étape 1 sur 5</span>
         </div>
-        <h2 className="text-2xl sm:text-3xl font-bold text-[#17402C]">
+        <h2 className="text-2xl sm:text-3xl font-bold text-lkv-primary">
           Où partez-vous à l&apos;aventure ?
         </h2>
         <p className="text-sm text-gray-600 mt-1">
@@ -92,8 +92,8 @@ export function Step1Destinations({
 
       {/* Destinations phares curées (5 pays réels) */}
       <div>
-        <div className="flex items-center gap-1.5 text-xs font-semibold text-[#17402C] mb-3">
-          <Sparkles size={14} className="text-[#5B7F55]" />
+        <div className="flex items-center gap-1.5 text-xs font-semibold text-lkv-primary mb-3">
+          <Sparkles size={14} className="text-lkv-secondary" />
           <span>Destinations phares (itinéraires réels sourcés)</span>
         </div>
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
@@ -106,8 +106,8 @@ export function Step1Destinations({
                 onClick={() => toggleCountry(country)}
                 className={`flex items-center justify-between p-3.5 sm:p-4 rounded-2xl border text-left transition-all min-h-[56px] ${
                   active
-                    ? 'bg-[#17402C] text-white border-[#17402C] shadow-md'
-                    : 'bg-white/80 hover:bg-white text-[#17402C] border-black/5 hover:border-black/10'
+                    ? 'bg-lkv-primary text-white border-lkv-primary shadow-md'
+                    : 'bg-white/80 hover:bg-white text-lkv-primary border-black/5 hover:border-black/10'
                 }`}
               >
                 <div className="flex items-center gap-3">
@@ -116,7 +116,7 @@ export function Step1Destinations({
                     <div className="text-sm font-semibold">{country.name}</div>
                     <div
                       className={`text-[11px] ${
-                        active ? 'text-[#A6C1A0]' : 'text-[#5B7F55]'
+                        active ? 'text-[#A6C1A0]' : 'text-lkv-secondary'
                       }`}
                     >
                       Étapes GPS & refuges vérifiés
@@ -126,7 +126,7 @@ export function Step1Destinations({
                 <div
                   className={`w-5 h-5 rounded-full flex items-center justify-center text-xs font-bold ${
                     active
-                      ? 'bg-white text-[#17402C]'
+                      ? 'bg-white text-lkv-primary'
                       : 'border border-black/20 text-transparent'
                   }`}
                 >
@@ -140,7 +140,7 @@ export function Step1Destinations({
 
       {/* Sélecteur de recherche d'autres destinations */}
       <div>
-        <div className="text-xs font-semibold text-[#17402C] mb-2">
+        <div className="text-xs font-semibold text-lkv-primary mb-2">
           Ajouter une autre destination
         </div>
         <div className="relative">
@@ -153,7 +153,7 @@ export function Step1Destinations({
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             placeholder="Rechercher un pays (ex: Norvège, Suisse, Japon...)"
-            className="w-full pl-10 pr-4 py-3 bg-white/90 rounded-xl border border-black/10 text-sm focus:outline-none focus:ring-2 focus:ring-[#17402C] text-[#17402C]"
+            className="w-full pl-10 pr-4 py-3 bg-white/90 rounded-xl border border-black/10 text-sm focus:outline-none focus:ring-2 focus:ring-lkv-primary text-lkv-primary"
           />
         </div>
 
@@ -170,7 +170,7 @@ export function Step1Destinations({
                     setSearch('');
                   }}
                   className={`w-full flex items-center justify-between px-3 py-2 rounded-lg text-left text-xs transition-colors min-h-[44px] ${
-                    active ? 'bg-emerald-50 text-[#17402C] font-semibold' : 'hover:bg-gray-50 text-gray-700'
+                    active ? 'bg-emerald-50 text-lkv-primary font-semibold' : 'hover:bg-gray-50 text-gray-700'
                   }`}
                 >
                   <span className="flex items-center gap-2">
@@ -178,7 +178,7 @@ export function Step1Destinations({
                     <span>{c.name}</span>
                   </span>
                   {active ? (
-                    <span className="text-[11px] text-[#5B7F55]">Sélectionné</span>
+                    <span className="text-[11px] text-lkv-secondary">Sélectionné</span>
                   ) : (
                     <Plus size={14} className="text-gray-400" />
                   )}
@@ -191,7 +191,7 @@ export function Step1Destinations({
 
       {/* Liste des pays sélectionnés avec ordre modifiable */}
       <div className="pt-2">
-        <div className="text-xs font-semibold text-[#17402C] uppercase tracking-wider mb-2">
+        <div className="text-xs font-semibold text-lkv-primary uppercase tracking-wider mb-2">
           Itinéraire multi-destinations ({selectedCountries.length})
         </div>
         <div className="space-y-2">
@@ -201,15 +201,15 @@ export function Step1Destinations({
               className="flex items-center justify-between p-3 bg-white/80 backdrop-blur-sm rounded-xl border border-black/5"
             >
               <div className="flex items-center gap-3">
-                <span className="w-6 h-6 rounded-full bg-[#FAF8F5] border border-black/10 text-xs font-bold text-[#17402C] flex items-center justify-center">
+                <span className="w-6 h-6 rounded-full bg-[#FAF8F5] border border-black/10 text-xs font-bold text-lkv-primary flex items-center justify-center">
                   {idx + 1}
                 </span>
                 <span className="text-xl">{country.flag}</span>
-                <span className="text-sm font-medium text-[#17402C]">
+                <span className="text-sm font-medium text-lkv-primary">
                   {country.name}
                 </span>
                 {country.isCurated && (
-                  <span className="text-[10px] bg-emerald-100/80 text-[#17402C] px-2 py-0.5 rounded-full font-medium hidden sm:inline">
+                  <span className="text-[10px] bg-emerald-100/80 text-lkv-primary px-2 py-0.5 rounded-full font-medium hidden sm:inline">
                     Curé
                   </span>
                 )}

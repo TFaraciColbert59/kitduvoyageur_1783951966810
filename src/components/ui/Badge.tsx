@@ -3,9 +3,15 @@ import { LkvChip, type LkvChipTone } from './LkvChip';
 
 export type BadgeTone = 'sage' | 'warn' | 'danger' | 'info' | 'stone';
 
-export function Badge({ tone, children }: { tone: BadgeTone; children: React.ReactNode }) {
+export interface BadgeProps {
+  tone?: BadgeTone;
+  children?: React.ReactNode;
+  className?: string;
+}
+
+export function Badge({ tone, children, className }: BadgeProps) {
   return (
-    <LkvChip tone={tone as LkvChipTone}>
+    <LkvChip tone={tone as LkvChipTone} className={className}>
       {children}
     </LkvChip>
   );

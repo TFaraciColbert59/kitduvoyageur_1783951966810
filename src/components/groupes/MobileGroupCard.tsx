@@ -56,23 +56,23 @@ export default function MobileGroupCard({
       {/* Top Header: Pictogram, Destination, Status Badge */}
       <div className="flex items-start justify-between gap-3">
         <div className="flex items-center gap-3 min-w-0">
-          <div className="w-11 h-11 rounded-2xl bg-[#17402C]/5 border border-[#17402C]/10 flex items-center justify-center text-xl shrink-0">
+          <div className="w-11 h-11 rounded-2xl bg-lkv-primary/5 border border-lkv-primary/10 flex items-center justify-center text-xl shrink-0">
             {THEME_EMOJI[group.theme] || '🎒'}
           </div>
 
           <div className="min-w-0 space-y-0.5">
             <div className="flex items-center gap-1.5 flex-wrap">
               {group.destination && (
-                <span className="glass-pill text-[9px] font-mono font-bold text-[#17402C] shrink-0">
+                <span className="glass-pill text-[9px] font-mono font-bold text-lkv-primary shrink-0">
                   📍 {group.destination}
                 </span>
               )}
-              <span className="text-[10px] font-mono text-[#5C6B5E]">
+              <span className="text-[10px] font-mono text-lkv-text-muted">
                 {group.theme || 'Aventure'}
               </span>
             </div>
 
-            <h3 className="font-display font-bold text-sm text-[#17402C] leading-snug truncate">
+            <h3 className="font-display font-bold text-sm text-lkv-primary leading-snug truncate">
               {group.name}
             </h3>
           </div>
@@ -83,7 +83,7 @@ export default function MobileGroupCard({
             {group.my_role === 'organizer' ? '👑 Leader' : 'Membre'}
           </span>
         ) : (
-          <span className="glass-pill text-[9px] font-mono text-[#5C6B5E] shrink-0">
+          <span className="glass-pill text-[9px] font-mono text-lkv-text-muted shrink-0">
             {group.visibility === 'private' ? '🔒 Privé' : '🌍 Public'}
           </span>
         )}
@@ -91,14 +91,14 @@ export default function MobileGroupCard({
 
       {/* Description */}
       {group.description && (
-        <p className="text-xs text-[#5C6B5E] line-clamp-2 leading-relaxed pl-1">
+        <p className="text-xs text-lkv-text-muted line-clamp-2 leading-relaxed pl-1">
           {group.description}
         </p>
       )}
 
       {/* Dates Banner if available */}
       {(departure || group.budget_target) && (
-        <div className="flex items-center gap-3 text-[10.5px] font-mono text-[#5C6B5E] bg-[#17402C]/5 px-3 py-1.5 rounded-xl">
+        <div className="flex items-center gap-3 text-[10.5px] font-mono text-lkv-text-muted bg-lkv-primary/5 px-3 py-1.5 rounded-xl">
           {departure && (
             <span className="flex items-center gap-1">
               <span>📅</span>
@@ -115,17 +115,17 @@ export default function MobileGroupCard({
       )}
 
       {/* Footer: Member count gauge & Image 3 Action button */}
-      <div className="pt-2.5 border-t border-[#17402C]/10 flex items-center justify-between">
+      <div className="pt-2.5 border-t border-lkv-primary/10 flex items-center justify-between">
         <div className="flex items-center gap-2">
-          <div className="flex items-center gap-1 text-[11px] font-mono text-[#5C6B5E]">
+          <div className="flex items-center gap-1 text-[11px] font-mono text-lkv-text-muted">
             <span>👥</span>
-            <span className="font-bold text-[#17402C]">{group.member_count || 1}</span>
+            <span className="font-bold text-lkv-primary">{group.member_count || 1}</span>
             <span className="text-[10px]">/ {group.max_members || 12}</span>
           </div>
 
           {/* Spots remaining badge */}
           {group.max_members && (
-            <span className="text-[9.5px] font-mono font-bold px-1.5 py-0.2 rounded-full bg-[#17402C]/10 text-[#17402C]">
+            <span className="text-[9.5px] font-mono font-bold px-1.5 py-0.2 rounded-full bg-lkv-primary/10 text-lkv-primary">
               {Math.max(0, group.max_members - (group.member_count || 1))} places libres
             </span>
           )}
@@ -135,7 +135,7 @@ export default function MobileGroupCard({
           <Link
             href={`/groupes/${group.id}`}
             onClick={() => triggerHaptic('light')}
-            className="flex items-center gap-1 text-xs font-bold text-[#17402C] hover:opacity-80"
+            className="flex items-center gap-1 text-xs font-bold text-lkv-primary hover:opacity-80"
           >
             <span className="text-[11px] font-bold">Cockpit</span>
             <span
@@ -153,7 +153,7 @@ export default function MobileGroupCard({
               triggerHaptic('selection');
               if (onJoin) onJoin(group.id);
             }}
-            className="flex items-center gap-1.5 text-xs font-bold text-[#17402C] disabled:opacity-50"
+            className="flex items-center gap-1.5 text-xs font-bold text-lkv-primary disabled:opacity-50"
           >
             <span className="text-[11px] font-bold">{joining ? 'Inscription...' : 'Rejoindre'}</span>
             <span

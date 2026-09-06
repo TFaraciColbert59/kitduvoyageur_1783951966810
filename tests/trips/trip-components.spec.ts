@@ -4,7 +4,7 @@ import { renderToStaticMarkup } from 'react-dom/server';
 import { TripBadge } from '@/features/trips/components/TripBadge';
 import { TripCard } from '@/features/trips/components/TripCard';
 import { TripOverviewTab } from '@/features/trips/components/TripOverviewTab';
-import { TripPlaceholderTab } from '@/features/trips/components/TripPlaceholderTab';
+import { TripSafetyView } from '@/features/trips/components/TripSafetyView';
 import type { TripFull, TripStats, TripWithDetails } from '@/features/trips/types/trip.types';
 
 // Mock Next.js Link
@@ -118,80 +118,81 @@ describe('Trips UI Components', () => {
     });
   });
 
-  describe('TripOverviewTab', () => {
-    const mockTripFull: TripFull = {
-      id: 'trip-101',
-      user_id: 'user-abc',
-      group_id: null,
-      title: 'Tour des Annapurnas',
-      slug: 'tour-des-annapurnas',
-      description: 'Expédition complète',
-      destination_name: 'Népal',
-      destination_country_code: 'NP',
-      start_date: '2026-10-10',
-      end_date: '2026-10-25',
-      difficulty: 'hard',
-      primary_activity: 'trekking',
-      status: 'planned',
-      visibility: 'public',
-      estimated_budget: 1500,
-      budget_currency: 'EUR',
-      cover_image_url: null,
-      share_token: null,
-      metadata: {},
-      created_at: '2026-09-01T00:00:00Z',
-      updated_at: '2026-09-01T00:00:00Z',
-      collaborators: [
-        {
-          id: 'collab-1',
-          trip_id: 'trip-101',
-          user_id: 'user-abc',
-          role: 'owner',
-          invited_by: null,
-          joined_at: '2026-09-01T00:00:00Z',
-          created_at: '2026-09-01T00:00:00Z',
-          updated_at: '2026-09-01T00:00:00Z',
-          profile: {
-            full_name: 'Jean Explorateur',
-            username: 'jean_trek',
-            avatar_url: null,
-          },
+  const mockTripFull: TripFull = {
+    id: 'trip-101',
+    user_id: 'user-abc',
+    group_id: null,
+    title: 'Tour des Annapurnas',
+    slug: 'tour-des-annapurnas',
+    description: 'Expédition complète',
+    destination_name: 'Népal',
+    destination_country_code: 'NP',
+    start_date: '2026-10-10',
+    end_date: '2026-10-25',
+    difficulty: 'hard',
+    primary_activity: 'trekking',
+    status: 'planned',
+    visibility: 'public',
+    estimated_budget: 1500,
+    budget_currency: 'EUR',
+    cover_image_url: null,
+    share_token: null,
+    metadata: {},
+    created_at: '2026-09-01T00:00:00Z',
+    updated_at: '2026-09-01T00:00:00Z',
+    collaborators: [
+      {
+        id: 'collab-1',
+        trip_id: 'trip-101',
+        user_id: 'user-abc',
+        role: 'owner',
+        invited_by: null,
+        joined_at: '2026-09-01T00:00:00Z',
+        created_at: '2026-09-01T00:00:00Z',
+        updated_at: '2026-09-01T00:00:00Z',
+        profile: {
+          full_name: 'Jean Explorateur',
+          username: 'jean_trek',
+          avatar_url: null,
         },
-      ],
-      steps: [
-        {
-          id: 'step-1',
-          trip_id: 'trip-101',
-          day_number: 1,
-          title: 'Besisahar - Bahundanda',
-          description: 'Première étape',
-          location_name: 'Besisahar',
-          latitude: 28.23,
-          longitude: 84.37,
-          distance_km: 14,
-          elevation_gain_m: 550,
-          elevation_loss_m: 100,
-          transport_mode: 'foot',
-          accommodation_name: 'Lodge',
-          order_index: 0,
-          created_at: '2026-09-01T00:00:00Z',
-          updated_at: '2026-09-01T00:00:00Z',
-        },
-      ],
-      items: [],
-      expenses: [],
-      documents: [],
-      pois: [],
-      safety_checkpoints: [],
-      notes: [],
-      permissions: {
-        canEdit: true,
-        canDelete: true,
-        canInvite: true,
-        canManageBudget: true,
-        canViewDocuments: true,
       },
-    };
+    ],
+    steps: [
+      {
+        id: 'step-1',
+        trip_id: 'trip-101',
+        day_number: 1,
+        title: 'Besisahar - Bahundanda',
+        description: 'Première étape',
+        location_name: 'Besisahar',
+        latitude: 28.23,
+        longitude: 84.37,
+        distance_km: 14,
+        elevation_gain_m: 550,
+        elevation_loss_m: 100,
+        transport_mode: 'foot',
+        accommodation_name: 'Lodge',
+        order_index: 0,
+        created_at: '2026-09-01T00:00:00Z',
+        updated_at: '2026-09-01T00:00:00Z',
+      },
+    ],
+    items: [],
+    expenses: [],
+    documents: [],
+    pois: [],
+    safety_checkpoints: [],
+    notes: [],
+    permissions: {
+      canEdit: true,
+      canDelete: true,
+      canInvite: true,
+      canManageBudget: true,
+      canViewDocuments: true,
+    },
+  };
+
+  describe('TripOverviewTab', () => {
 
     const mockStats: TripStats = {
       trip_id: 'trip-101',
@@ -224,24 +225,49 @@ describe('Trips UI Components', () => {
     });
   });
 
-  describe('TripPlaceholderTab', () => {
-    it('displays Master Plan badge and chantier info', () => {
-      const html = renderToStaticMarkup(
-        React.createElement(
-          TripPlaceholderTab,
+  describe('TripSafetyView', () => {
+    it('displays safety checkpoints and emergency contacts', () => {
+      const tripWithCheckpoints = {
+        ...mockTripFull,
+        safety_checkpoints: [
           {
-            chantierNumber: 4,
-            chantierTitle: 'Shakedown Sac & Matériel',
-            description: "Module d'optimisation du poids",
-            hasData: true,
-            children: React.createElement('div', null, 'Tente ultra-légère - 1.2 kg'),
-          }
-        )
+            id: 'cp-1',
+            trip_id: 'trip-1',
+            label: 'Refuge du Goûter - Check in',
+            scheduled_at: '2026-07-16T18:00:00Z',
+            checked_at: null,
+            contact_phone: '+33600000000',
+            contact_name: 'Secours Haute Montagne',
+            status: 'pending' as const,
+            notes: 'Appel radio si pas de GSM',
+            created_at: '2026-07-01T10:00:00Z',
+            updated_at: '2026-07-01T10:00:00Z',
+          },
+        ],
+      };
+
+      const html = renderToStaticMarkup(
+        React.createElement(TripSafetyView, { trip: tripWithCheckpoints })
       );
 
-      expect(html).toContain('Chantier 4');
-      expect(html).toContain('Shakedown Sac &amp; Matériel');
-      expect(html).toContain('Tente ultra-légère - 1.2 kg');
+      expect(html).toContain('Points de contrôle &amp; Copilote');
+      expect(html).toContain('Refuge du Goûter - Check in');
+      expect(html).toContain('Secours Haute Montagne');
+      expect(html).toContain('112');
+    });
+
+    it('renders empty state when no checkpoints are configured', () => {
+      const tripEmpty = {
+        ...mockTripFull,
+        safety_checkpoints: [],
+      };
+
+      const html = renderToStaticMarkup(
+        React.createElement(TripSafetyView, { trip: tripEmpty })
+      );
+
+      expect(html).toContain('Aucun point de contrôle configuré');
+      expect(html).toContain('Numéros d&#x27;urgence');
     });
   });
 });

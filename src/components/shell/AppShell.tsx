@@ -5,7 +5,7 @@ import { usePathname } from 'next/navigation';
 import CompteBackground from '@/components/compte/CompteBackground';
 
 export interface AppShellProps {
-  children: React.ReactNode;
+  children?: React.ReactNode;
   background?: string;
   videoBackground?: boolean;
   /**

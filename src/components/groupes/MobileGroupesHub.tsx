@@ -93,16 +93,16 @@ export default function MobileGroupesHub({
   };
 
   return (
-    <div className="w-full min-h-full bg-transparent pb-6 relative font-sans text-[#17402C]">
+    <div className="w-full min-h-full bg-transparent pb-6 relative font-sans text-lkv-primary">
       {/* Pull to refresh visual feedback indicator */}
       {(pullProgress > 0 || isRefreshing) && (
         <div
           className="w-full flex items-center justify-center py-2 transition-all overflow-hidden"
           style={{ height: isRefreshing ? '44px' : `${Math.min(pullProgress * 44, 44)}px` }}
         >
-          <div className="flex items-center gap-2 px-3 py-1 rounded-full glass-pill text-xs font-medium text-[#17402C] shadow-2xs">
+          <div className="flex items-center gap-2 px-3 py-1 rounded-full glass-pill text-xs font-medium text-lkv-primary shadow-2xs">
             <div
-              className={`w-3.5 h-3.5 rounded-full border-2 border-[#17402C] border-t-transparent ${
+              className={`w-3.5 h-3.5 rounded-full border-2 border-lkv-primary border-t-transparent ${
                 isRefreshing ? 'animate-spin' : ''
               }`}
             />
@@ -124,7 +124,7 @@ export default function MobileGroupesHub({
               value={search}
               onChange={(e) => setSearch(e.target.value)}
               placeholder="Rechercher une expédition, massif..."
-              className="glass w-full pl-9 pr-8 py-2 rounded-full text-xs text-[#17402C] placeholder-[#5A7064] border border-white/80 bg-white/80 focus:outline-none focus:ring-1 focus:ring-[#17402C] shadow-2xs"
+              className="glass w-full pl-9 pr-8 py-2 rounded-full text-xs text-lkv-primary placeholder-[#5A7064] border border-white/80 bg-white/80 focus:outline-none focus:ring-1 focus:ring-lkv-primary shadow-2xs"
             />
             {search && (
               <button
@@ -176,8 +176,8 @@ export default function MobileGroupesHub({
                 }}
                 className={`px-3 py-1.5 rounded-full text-xs font-bold whitespace-nowrap transition-all flex items-center gap-1 border ${
                   isSelected
-                    ? 'bg-[#17402C] text-white border-[#17402C] shadow-sm'
-                    : 'bg-white/80 hover:bg-white text-[#17402C] border-white/70 shadow-2xs'
+                    ? 'bg-lkv-primary text-white border-lkv-primary shadow-sm'
+                    : 'bg-white/80 hover:bg-white text-lkv-primary border-white/70 shadow-2xs'
                 }`}
               >
                 <span>{THEME_EMOJI[th] || '🎒'}</span>
@@ -195,23 +195,23 @@ export default function MobileGroupesHub({
             {[1, 2, 3].map((i) => (
               <div key={i} className="glass p-4 rounded-2xl animate-pulse space-y-3 bg-white/70">
                 <div className="flex items-center gap-3">
-                  <div className="w-11 h-11 rounded-2xl bg-[#17402C]/10" />
+                  <div className="w-11 h-11 rounded-2xl bg-lkv-primary/10" />
                   <div className="space-y-1.5 flex-1">
-                    <div className="w-32 h-3.5 bg-[#17402C]/10 rounded" />
-                    <div className="w-20 h-2.5 bg-[#17402C]/5 rounded" />
+                    <div className="w-32 h-3.5 bg-lkv-primary/10 rounded" />
+                    <div className="w-20 h-2.5 bg-lkv-primary/5 rounded" />
                   </div>
                 </div>
-                <div className="w-full h-10 bg-[#17402C]/5 rounded-xl" />
+                <div className="w-full h-10 bg-lkv-primary/5 rounded-xl" />
               </div>
             ))}
           </div>
         ) : filteredGroups.length === 0 ? (
           <div className="py-12 text-center glass bg-white/80 p-6 rounded-3xl space-y-2.5 border border-white">
             <span className="text-3xl block">🏕️</span>
-            <h3 className="font-display font-bold text-[#17402C] text-sm">
+            <h3 className="font-display font-bold text-lkv-primary text-sm">
               {tab === 'mes-groupes' ? 'Aucune expédition en cours' : 'Aucun projet trouvé'}
             </h3>
-            <p className="text-xs text-[#5C6B5E] max-w-xs mx-auto leading-relaxed">
+            <p className="text-xs text-lkv-text-muted max-w-xs mx-auto leading-relaxed">
               {tab === 'mes-groupes'
                 ? 'Lancez votre première aventure avec vos coéquipiers ou rejoignez un départ public.'
                 : 'Essayez un autre filtre ou créez votre propre expédition.'}
@@ -219,7 +219,7 @@ export default function MobileGroupesHub({
             <button
               type="button"
               onClick={onOpenCreateModal}
-              className="inline-block mt-2 glass-circle-btn px-4 py-1.5 text-xs font-bold !bg-[#17402C] !text-white"
+              className="inline-block mt-2 glass-circle-btn px-4 py-1.5 text-xs font-bold !bg-lkv-primary !text-white"
             >
               + Créer un groupe
             </button>
@@ -259,14 +259,14 @@ export default function MobileGroupesHub({
               animate={{ y: 0 }}
               exit={{ y: '100%' }}
               transition={{ type: 'spring', damping: 28, stiffness: 400 }}
-              className="relative w-full max-w-lg glass bg-white/95 backdrop-blur-2xl rounded-t-[32px] p-6 border-t border-white shadow-2xl space-y-4 z-10 text-[#17402C]"
+              className="relative w-full max-w-lg glass bg-white/95 backdrop-blur-2xl rounded-t-[32px] p-6 border-t border-white shadow-2xl space-y-4 z-10 text-lkv-primary"
             >
-              <div className="w-10 h-1 rounded-full bg-[#17402C]/20 mx-auto" />
+              <div className="w-10 h-1 rounded-full bg-lkv-primary/20 mx-auto" />
 
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2">
                   <span className="text-xl">🔑</span>
-                  <h3 className="font-display font-bold text-base text-[#17402C]">
+                  <h3 className="font-display font-bold text-base text-lkv-primary">
                     Rejoindre par Code Secret
                   </h3>
                 </div>
@@ -279,7 +279,7 @@ export default function MobileGroupesHub({
                 </button>
               </div>
 
-              <p className="text-xs text-[#5C6B5E] leading-relaxed">
+              <p className="text-xs text-lkv-text-muted leading-relaxed">
                 Entrez le code d'invitation à 6 caractères transmis par l'organisateur de l'expédition.
               </p>
 
@@ -291,12 +291,12 @@ export default function MobileGroupesHub({
                   value={secretCodeInput}
                   onChange={(e) => setSecretCodeInput(e.target.value.toUpperCase())}
                   placeholder="EX: ALPES-26"
-                  className="glass w-full text-center text-lg font-mono font-bold tracking-widest uppercase py-3 rounded-2xl border border-white/80 bg-white/80 focus:outline-none focus:ring-2 focus:ring-[#17402C]"
+                  className="glass w-full text-center text-lg font-mono font-bold tracking-widest uppercase py-3 rounded-2xl border border-white/80 bg-white/80 focus:outline-none focus:ring-2 focus:ring-lkv-primary"
                 />
 
                 <button
                   type="submit"
-                  className="w-full py-3 rounded-2xl bg-[#17402C] text-white font-bold text-xs shadow-md active:scale-98 transition-transform"
+                  className="w-full py-3 rounded-2xl bg-lkv-primary text-white font-bold text-xs shadow-md active:scale-98 transition-transform"
                 >
                   Valider et rejoindre l'expédition
                 </button>

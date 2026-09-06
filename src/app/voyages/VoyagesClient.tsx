@@ -89,14 +89,14 @@ export default function VoyagesClient({
         {/* Header de la page */}
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
           <div>
-            <div className="flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-[#5B7F55] mb-1">
+            <div className="flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-lkv-secondary mb-1">
               <Compass size={15} />
               Module Voyage
             </div>
-            <h1 className="text-2xl sm:text-3xl font-extrabold text-[#17402C] tracking-tight">
+            <h1 className="text-2xl sm:text-3xl font-extrabold text-lkv-primary tracking-tight">
               Expéditions & Treks
             </h1>
-            <p className="text-xs sm:text-sm text-[#5B7F55] mt-1 max-w-xl">
+            <p className="text-xs sm:text-sm text-lkv-secondary mt-1 max-w-xl">
               Planifiez vos aventures en autonomie, tracez vos étapes et préparez votre équipement de terrain.
             </p>
           </div>

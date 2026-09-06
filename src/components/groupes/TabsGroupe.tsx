@@ -23,7 +23,7 @@ export default function TabsGroupe({ activeTab, setActiveTab, data, layoutVarian
 
   if (layoutVariant === 'vertical') {
     return (
-      <aside className="h-full max-h-full w-full flex-1 flex flex-col justify-between glass rounded-[1.5rem] p-3.5 text-[#17402C] font-sans overflow-hidden border border-white/40 shadow-sm select-none">
+      <aside className="h-full max-h-full w-full flex-1 flex flex-col justify-between glass rounded-[1.5rem] p-3.5 text-lkv-primary font-sans overflow-hidden border border-white/40 shadow-sm select-none">
         {/* ── 1. ZONE HAUTE FIXE (Identité Groupe & Actions Rapides) ── */}
         <div className="shrink-0 space-y-2.5">
           <div className="p-3 rounded-2xl glass-sub-card flex items-center gap-3 relative overflow-hidden border border-white/50">
@@ -31,9 +31,9 @@ export default function TabsGroupe({ activeTab, setActiveTab, data, layoutVarian
               ⛺
             </div>
             <div className="min-w-0 flex-1">
-              <h4 className="font-display font-bold text-xs sm:text-sm text-[#17402C] truncate leading-tight">
+              <h4 className="font-display font-bold text-xs sm:text-sm text-lkv-primary truncate leading-tight">
                 Expédition{' '}
-                <span className="font-serif italic font-normal text-[#5B7F55] text-xs">
+                <span className="font-serif italic font-normal text-lkv-secondary text-xs">
                   LKDV
                 </span>
               </h4>
@@ -77,8 +77,8 @@ export default function TabsGroupe({ activeTab, setActiveTab, data, layoutVarian
                 onClick={() => setActiveTab(tab.id)}
                 className={`w-full px-3 py-2.5 rounded-xl font-bold text-xs transition-all flex items-center justify-between group cursor-pointer border ${
                   isActive
-                    ? 'bg-[#17402C] text-white border-[#17402C] shadow-sm'
-                    : 'bg-white/80 hover:bg-white text-[#17402C] border-white/80 shadow-2xs'
+                    ? 'bg-lkv-primary text-white border-lkv-primary shadow-sm'
+                    : 'bg-white/80 hover:bg-white text-lkv-primary border-white/80 shadow-2xs'
                 }`}
               >
                 <span className="truncate text-left">{tab.label}</span>
@@ -89,7 +89,7 @@ export default function TabsGroupe({ activeTab, setActiveTab, data, layoutVarian
         </nav>
 
         {/* ── 3. ZONE BASSE FIXE (Footer) ── */}
-        <div className="shrink-0 pt-2 border-t border-[#17402C]/5 text-center">
+        <div className="shrink-0 pt-2 border-t border-lkv-primary/5 text-center">
           <span className="text-[8.5px] font-mono text-[#5A7064] tracking-wider uppercase">
             Le Kit du Voyageur · Expéditions v2.0
           </span>
@@ -99,7 +99,7 @@ export default function TabsGroupe({ activeTab, setActiveTab, data, layoutVarian
   }
 
   return (
-    <div className="glass-capsule-bar w-full overflow-x-auto scrollbar-hide py-2 px-3 mt-6 border-b border-[#17402C]/10" style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}>
+    <div className="glass-capsule-bar w-full overflow-x-auto scrollbar-hide py-2 px-3 mt-6 border-b border-lkv-primary/10" style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}>
       {tabs.map((tab) => (
         <button
           key={tab.id}
@@ -109,7 +109,7 @@ export default function TabsGroupe({ activeTab, setActiveTab, data, layoutVarian
           <div className="flex items-center gap-2">
             <span className="relative z-10">{tab.label}</span>
             {tab.count !== undefined && (
-              <span className={`text-[10px] font-mono px-2 py-0.5 rounded-full font-bold relative z-10 ${activeTab === tab.id ? 'bg-[#17402C]/10 text-[#17402C]' : 'bg-black/5 text-[#5C6B5E]'}`}>
+              <span className={`text-[10px] font-mono px-2 py-0.5 rounded-full font-bold relative z-10 ${activeTab === tab.id ? 'bg-lkv-primary/10 text-lkv-primary' : 'bg-black/5 text-lkv-text-muted'}`}>
                 {tab.count}
               </span>
             )}

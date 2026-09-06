@@ -84,7 +84,7 @@ export function TripHero({ trip, onEditClick }: TripHeroProps) {
                 variant="primary"
                 size="sm"
                 onClick={onEditClick}
-                className="bg-[#5B7F55] hover:bg-[#205238] text-white border-none shadow-md"
+                className="bg-lkv-secondary hover:bg-[#205238] text-white border-none shadow-md"
               >
                 <Edit3 size={15} className="mr-1.5" />
                 Modifier

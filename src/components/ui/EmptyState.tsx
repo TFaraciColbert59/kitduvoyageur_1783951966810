@@ -2,8 +2,9 @@
 
 import React from 'react';
 import Link from 'next/link';
+import { ArrowRight, RotateCcw, AlertTriangle, Compass } from 'lucide-react';
 
-interface EmptyStateProps {
+export interface EmptyStateProps {
   icon?: React.ReactNode;
   title: string;
   description?: string;
@@ -24,33 +25,29 @@ export function EmptyState({
 }: EmptyStateProps) {
   const actionBtn = (
     <button
+      type="button"
       onClick={onAction}
-      className="inline-flex items-center gap-2 px-5 py-2.5 bg-[#17402C] text-white text-sm font-semibold rounded-xl hover:bg-[#2D3F35] active:scale-[0.97] transition-all duration-150 "
+      className="inline-flex items-center gap-2 px-5 py-2.5 bg-lkv-primary text-white text-xs sm:text-sm font-semibold rounded-xl hover:bg-lkv-primary-hover active:scale-[0.97] transition-all duration-150 min-h-[44px] shadow-sm"
     >
-      {actionLabel}
-      <svg width="14" height="14" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
-        <path d="M5 12h14M12 5l7 7-7 7" />
-      </svg>
+      <span>{actionLabel}</span>
+      <ArrowRight className="w-4 h-4" />
     </button>
   );
 
   return (
-    <div className={`flex flex-col items-center justify-center py-16 px-6 text-center ${className}`}>
+    <div className={`flex flex-col items-center justify-center py-12 px-6 text-center ${className}`}>
       {icon ? (
-        <div className="mb-5 text-[#C8D4C0]">{icon}</div>
+        <div className="mb-4 text-lkv-secondary flex items-center justify-center">{icon}</div>
       ) : (
-        <div className="mb-5 w-16 h-16 rounded-full bg-[#F0ECE1] flex items-center justify-center">
-          <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#A0B0A0" strokeWidth="1.5" strokeLinecap="round">
-            <circle cx="12" cy="12" r="9" />
-            <path d="M9 10a1 1 0 012 0v2a1 1 0 01-2 0v-2z" />
-            <path d="M15 10a1 1 0 012 0v2a1 1 0 01-2 0v-2z" />
-            <path d="M8 16c.5-1 2-2 4-2s3.5 1 4 2" />
-          </svg>
+        <div className="mb-4 w-14 h-14 rounded-2xl bg-lkv-primary/5 border border-lkv-primary/10 flex items-center justify-center text-lkv-secondary">
+          <Compass className="w-7 h-7" />
         </div>
       )}
-      <h3 className="text-base font-bold text-[#17402C] mb-1.5">{title}</h3>
+      <h3 className="text-base font-bold text-lkv-primary mb-1.5">{title}</h3>
       {description && (
-        <p className="text-sm text-[#7A8A7D] max-w-xs mb-6 leading-relaxed">{description}</p>
+        <p className="text-xs sm:text-sm text-lkv-text-muted max-w-sm mb-6 leading-relaxed">
+          {description}
+        </p>
       )}
       {actionLabel && actionHref && (
         <Link href={actionHref}>{actionBtn}</Link>
@@ -60,7 +57,7 @@ export function EmptyState({
   );
 }
 
-interface ErrorStateProps {
+export interface ErrorStateProps {
   title?: string;
   message?: string;
   onRetry?: () => void;
@@ -69,33 +66,31 @@ interface ErrorStateProps {
 
 export function ErrorState({
   title = 'Une erreur est survenue',
-  message = 'Nous n&apos;avons pas pu charger cette page. Vérifiez votre connexion et réessayez.',
+  message = "Nous n'avons pas pu charger cette vue. Vérifiez votre connexion et réessayez.",
   onRetry,
   className = '',
 }: ErrorStateProps) {
   return (
-    <div className={`flex flex-col items-center justify-center py-16 px-6 text-center ${className}`}>
-      <div className="mb-5 w-16 h-16 rounded-full bg-red-50 flex items-center justify-center">
-        <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#E53E3E" strokeWidth="1.5" strokeLinecap="round">
-          <circle cx="12" cy="12" r="9" />
-          <line x1="12" y1="8" x2="12" y2="13" />
-          <line x1="12" y1="16" x2="12.01" y2="16" />
-        </svg>
+    <div className={`flex flex-col items-center justify-center py-12 px-6 text-center ${className}`}>
+      <div className="mb-4 w-14 h-14 rounded-2xl bg-rose-50 border border-rose-200/80 flex items-center justify-center text-rose-600">
+        <AlertTriangle className="w-7 h-7" />
       </div>
-      <h3 className="text-base font-bold text-[#17402C] mb-1.5">{title}</h3>
-      <p className="text-sm text-[#7A8A7D] max-w-xs mb-6 leading-relaxed">{message}</p>
+      <h3 className="text-base font-bold text-lkv-primary mb-1.5">{title}</h3>
+      <p className="text-xs sm:text-sm text-lkv-text-muted max-w-sm mb-6 leading-relaxed">
+        {message}
+      </p>
       {onRetry && (
         <button
+          type="button"
           onClick={onRetry}
-          className="inline-flex items-center gap-2 px-5 py-2.5 bg-[#17402C] text-white text-sm font-semibold rounded-xl hover:bg-[#2D3F35] active:scale-[0.97] transition-all duration-150 "
+          className="inline-flex items-center gap-2 px-5 py-2.5 bg-lkv-primary text-white text-xs sm:text-sm font-semibold rounded-xl hover:bg-lkv-primary-hover active:scale-[0.97] transition-all duration-150 min-h-[44px] shadow-sm"
         >
-          <svg width="14" height="14" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
-            <polyline points="23 4 23 10 17 10" />
-            <path d="M20.49 15a9 9 0 11-2.12-9.36L23 10" />
-          </svg>
-          Réessayer
+          <RotateCcw className="w-4 h-4" />
+          <span>Réessayer</span>
         </button>
       )}
     </div>
   );
 }
+
+export default EmptyState;

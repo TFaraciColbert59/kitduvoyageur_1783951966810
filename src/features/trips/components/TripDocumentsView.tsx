@@ -73,11 +73,11 @@ export function TripDocumentsView({ trip }: TripDocumentsViewProps) {
       {/* En-tête de section */}
       <div className="flex flex-wrap items-center justify-between gap-4">
         <div>
-          <h3 className="text-xl font-bold text-[#17402C] flex items-center gap-2">
-            <FileText size={22} className="text-[#5B7F55]" />
+          <h3 className="text-xl font-bold text-lkv-primary flex items-center gap-2">
+            <FileText size={22} className="text-lkv-secondary" />
             <span>Papiers & Documents Sécurisés</span>
           </h3>
-          <p className="text-xs text-[#5B7F55] mt-1">
+          <p className="text-xs text-lkv-secondary mt-1">
             Coffre-fort chiffré des réservations, passeports et attestations avec surveillance automatique des échéances.
           </p>
         </div>
@@ -98,10 +98,10 @@ export function TripDocumentsView({ trip }: TripDocumentsViewProps) {
       {/* Garantie RGPD */}
       <GlassCard tone="neutral" className="p-4 rounded-[20px] border border-white/60 text-xs text-gray-700">
         <div className="flex items-start gap-3">
-          <ShieldCheck size={18} className="text-[#5B7F55] shrink-0 mt-0.5" />
+          <ShieldCheck size={18} className="text-lkv-secondary shrink-0 mt-0.5" />
           <div className="space-y-1">
-            <div className="font-semibold text-[#17402C]">Protection RGPD & Chiffrement de vos documents</div>
-            <p className="text-[11px] text-[#5B7F55] leading-relaxed">
+            <div className="font-semibold text-lkv-primary">Protection RGPD & Chiffrement de vos documents</div>
+            <p className="text-[11px] text-lkv-secondary leading-relaxed">
               Ces documents ne sont jamais exposés aux visiteurs anonymes ni sur les liens publics de partage. Seuls les organisateurs et éditeurs authentifiés peuvent les consulter.
             </p>
           </div>
@@ -111,8 +111,8 @@ export function TripDocumentsView({ trip }: TripDocumentsViewProps) {
       {/* Liste des documents */}
       {trip.documents.length === 0 ? (
         <GlassCard tone="neutral" className="p-8 rounded-[24px] text-center space-y-2 border border-white/60">
-          <FileCheck size={32} className="text-[#5B7F55] mx-auto" />
-          <div className="text-sm font-semibold text-[#17402C]">Aucun document attaché</div>
+          <FileCheck size={32} className="text-lkv-secondary mx-auto" />
+          <div className="text-sm font-semibold text-lkv-primary">Aucun document attaché</div>
           <p className="text-xs text-gray-500 max-w-sm mx-auto">
             Attachez vos billets d&apos;avion, réservations de refuges, assurances et passeports pour les garder accessibles partout.
           </p>
@@ -131,12 +131,12 @@ export function TripDocumentsView({ trip }: TripDocumentsViewProps) {
                 <div className="space-y-2">
                   <div className="flex items-start justify-between gap-2">
                     <div className="flex items-center gap-2.5">
-                      <div className="w-9 h-9 rounded-xl bg-[#17402C]/10 text-[#17402C] flex items-center justify-center shrink-0">
+                      <div className="w-9 h-9 rounded-xl bg-lkv-primary/10 text-lkv-primary flex items-center justify-center shrink-0">
                         <FileText size={18} />
                       </div>
                       <div>
-                        <div className="text-sm font-bold text-[#17402C] leading-snug">{doc.title}</div>
-                        <div className="text-[11px] text-[#5B7F55]">
+                        <div className="text-sm font-bold text-lkv-primary leading-snug">{doc.title}</div>
+                        <div className="text-[11px] text-lkv-secondary">
                           {CATEGORY_LABELS[doc.category] || doc.category}
                         </div>
                       </div>
@@ -174,7 +174,7 @@ export function TripDocumentsView({ trip }: TripDocumentsViewProps) {
                     href={doc.file_url}
                     target="_blank"
                     rel="noreferrer"
-                    className="inline-flex items-center gap-1.5 font-semibold text-[#17402C] hover:text-[#5B7F55] transition-colors py-1"
+                    className="inline-flex items-center gap-1.5 font-semibold text-lkv-primary hover:text-lkv-secondary transition-colors py-1"
                   >
                     <span>Ouvrir le document</span>
                     <ExternalLink size={13} />
@@ -205,8 +205,8 @@ export function TripDocumentsView({ trip }: TripDocumentsViewProps) {
             className="w-full max-w-md p-6 rounded-[24px] bg-white border border-white/80 shadow-2xl space-y-4"
           >
             <div className="flex items-center justify-between pb-3 border-b border-gray-100">
-              <h4 className="text-base font-bold text-[#17402C] flex items-center gap-2">
-                <FileText size={18} className="text-[#5B7F55]" />
+              <h4 className="text-base font-bold text-lkv-primary flex items-center gap-2">
+                <FileText size={18} className="text-lkv-secondary" />
                 <span>Attacher un document sécurisé</span>
               </h4>
               <button
@@ -225,7 +225,7 @@ export function TripDocumentsView({ trip }: TripDocumentsViewProps) {
 
             <form onSubmit={handleAddSubmit} className="space-y-4">
               <div>
-                <label className="block text-xs font-semibold text-[#17402C] mb-1">
+                <label className="block text-xs font-semibold text-lkv-primary mb-1">
                   Nom du document
                 </label>
                 <input
@@ -233,19 +233,19 @@ export function TripDocumentsView({ trip }: TripDocumentsViewProps) {
                   name="title"
                   required
                   placeholder="ex: Passeport biométrique, Billet Vol AR Lima"
-                  className="w-full px-3 py-2 text-sm rounded-xl border border-gray-200 bg-gray-50/50 focus:bg-white focus:outline-none focus:ring-2 focus:ring-[#17402C]/20"
+                  className="w-full px-3 py-2 text-sm rounded-xl border border-gray-200 bg-gray-50/50 focus:bg-white focus:outline-none focus:ring-2 focus:ring-lkv-primary/20"
                 />
               </div>
 
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className="block text-xs font-semibold text-[#17402C] mb-1">
+                  <label className="block text-xs font-semibold text-lkv-primary mb-1">
                     Catégorie
                   </label>
                   <select
                     name="category"
                     defaultValue="passport"
-                    className="w-full px-3 py-2 text-sm rounded-xl border border-gray-200 bg-gray-50/50 focus:bg-white focus:outline-none focus:ring-2 focus:ring-[#17402C]/20"
+                    className="w-full px-3 py-2 text-sm rounded-xl border border-gray-200 bg-gray-50/50 focus:bg-white focus:outline-none focus:ring-2 focus:ring-lkv-primary/20"
                   >
                     <option value="passport">Passeport / ID</option>
                     <option value="insurance">Assurance</option>
@@ -257,19 +257,19 @@ export function TripDocumentsView({ trip }: TripDocumentsViewProps) {
                 </div>
 
                 <div>
-                  <label className="block text-xs font-semibold text-[#17402C] mb-1">
+                  <label className="block text-xs font-semibold text-lkv-primary mb-1">
                     Date d&apos;expiration (optionnelle)
                   </label>
                   <input
                     type="date"
                     name="expiresAt"
-                    className="w-full px-3 py-2 text-sm rounded-xl border border-gray-200 bg-gray-50/50 focus:bg-white focus:outline-none focus:ring-2 focus:ring-[#17402C]/20"
+                    className="w-full px-3 py-2 text-sm rounded-xl border border-gray-200 bg-gray-50/50 focus:bg-white focus:outline-none focus:ring-2 focus:ring-lkv-primary/20"
                   />
                 </div>
               </div>
 
               <div>
-                <label className="block text-xs font-semibold text-[#17402C] mb-1">
+                <label className="block text-xs font-semibold text-lkv-primary mb-1">
                   Lien sécurisé (URL Cloud / Drive)
                 </label>
                 <input
@@ -277,19 +277,19 @@ export function TripDocumentsView({ trip }: TripDocumentsViewProps) {
                   name="fileUrl"
                   required
                   placeholder="https://..."
-                  className="w-full px-3 py-2 text-sm rounded-xl border border-gray-200 bg-gray-50/50 focus:bg-white focus:outline-none focus:ring-2 focus:ring-[#17402C]/20"
+                  className="w-full px-3 py-2 text-sm rounded-xl border border-gray-200 bg-gray-50/50 focus:bg-white focus:outline-none focus:ring-2 focus:ring-lkv-primary/20"
                 />
               </div>
 
               <div>
-                <label className="block text-xs font-semibold text-[#17402C] mb-1">
+                <label className="block text-xs font-semibold text-lkv-primary mb-1">
                   Notes ou consignes particulières
                 </label>
                 <textarea
                   name="notes"
                   rows={2}
                   placeholder="ex: Numéro d'assuré #12345, contact d'urgence 24/7"
-                  className="w-full px-3 py-2 text-sm rounded-xl border border-gray-200 bg-gray-50/50 focus:bg-white focus:outline-none focus:ring-2 focus:ring-[#17402C]/20"
+                  className="w-full px-3 py-2 text-sm rounded-xl border border-gray-200 bg-gray-50/50 focus:bg-white focus:outline-none focus:ring-2 focus:ring-lkv-primary/20"
                 />
               </div>
 

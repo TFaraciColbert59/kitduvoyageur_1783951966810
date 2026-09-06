@@ -129,21 +129,21 @@ export function TripCompletionModal({ trip, isOpen, onClose }: TripCompletionMod
         {/* En-tête modal */}
         <div className="flex items-center justify-between border-b border-black/5 pb-4">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-full bg-[#17402C]/10 flex items-center justify-center text-[#17402C]">
+            <div className="w-10 h-10 rounded-full bg-lkv-primary/10 flex items-center justify-center text-lkv-primary">
               <Award size={22} />
             </div>
             <div>
-              <h3 id="completion-modal-title" className="text-xl font-bold text-[#17402C]">
+              <h3 id="completion-modal-title" className="text-xl font-bold text-lkv-primary">
                 Rétrospective & Carnet de Voyage
               </h3>
-              <p className="text-xs text-[#5B7F55]">
+              <p className="text-xs text-lkv-secondary">
                 Clôturez votre aventure, célébrez vos kilomètres et inspirez la communauté.
               </p>
             </div>
           </div>
           <button
             onClick={onClose}
-            className="w-9 h-9 flex items-center justify-center rounded-full hover:bg-black/5 text-[#5B7F55] transition-colors"
+            className="w-9 h-9 flex items-center justify-center rounded-full hover:bg-black/5 text-lkv-secondary transition-colors"
             aria-label="Fermer"
           >
             <X size={20} />
@@ -152,8 +152,8 @@ export function TripCompletionModal({ trip, isOpen, onClose }: TripCompletionMod
 
         {/* Messages de retour */}
         {successMessage && (
-          <div className="p-4 rounded-2xl bg-[#17402C]/10 border border-[#17402C]/20 text-sm text-[#17402C] flex items-center gap-2">
-            <CheckCircle2 size={18} className="text-[#17402C] shrink-0" />
+          <div className="p-4 rounded-2xl bg-lkv-primary/10 border border-lkv-primary/20 text-sm text-lkv-primary flex items-center gap-2">
+            <CheckCircle2 size={18} className="text-lkv-primary shrink-0" />
             <span>{successMessage}</span>
           </div>
         )}
@@ -167,27 +167,27 @@ export function TripCompletionModal({ trip, isOpen, onClose }: TripCompletionMod
         {/* Métriques d'aventure */}
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
           <GlassCard tone="neutral" className="p-3.5 rounded-[18px] border border-white/60 text-center">
-            <Navigation size={18} className="mx-auto text-[#17402C] mb-1" />
-            <div className="text-lg font-bold text-[#17402C]">{metrics.totalKm} km</div>
-            <div className="text-[11px] text-[#5B7F55]">Distance totale</div>
+            <Navigation size={18} className="mx-auto text-lkv-primary mb-1" />
+            <div className="text-lg font-bold text-lkv-primary">{metrics.totalKm} km</div>
+            <div className="text-[11px] text-lkv-secondary">Distance totale</div>
           </GlassCard>
 
           <GlassCard tone="neutral" className="p-3.5 rounded-[18px] border border-white/60 text-center">
-            <Mountain size={18} className="mx-auto text-[#17402C] mb-1" />
-            <div className="text-lg font-bold text-[#17402C]">+{metrics.totalElevationGainM} m</div>
-            <div className="text-[11px] text-[#5B7F55]">Dénivelé positif</div>
+            <Mountain size={18} className="mx-auto text-lkv-primary mb-1" />
+            <div className="text-lg font-bold text-lkv-primary">+{metrics.totalElevationGainM} m</div>
+            <div className="text-[11px] text-lkv-secondary">Dénivelé positif</div>
           </GlassCard>
 
           <GlassCard tone="neutral" className="p-3.5 rounded-[18px] border border-white/60 text-center">
-            <Package size={18} className="mx-auto text-[#17402C] mb-1" />
-            <div className="text-lg font-bold text-[#17402C]">{metrics.packedWeightKg} kg</div>
-            <div className="text-[11px] text-[#5B7F55]">{metrics.packedGearCount} items emportés</div>
+            <Package size={18} className="mx-auto text-lkv-primary mb-1" />
+            <div className="text-lg font-bold text-lkv-primary">{metrics.packedWeightKg} kg</div>
+            <div className="text-[11px] text-lkv-secondary">{metrics.packedGearCount} items emportés</div>
           </GlassCard>
 
           <GlassCard tone="neutral" className="p-3.5 rounded-[18px] border border-white/60 text-center">
-            <Award size={18} className="mx-auto text-[#17402C] mb-1" />
-            <div className="text-lg font-bold text-[#17402C]">{metrics.durationDays} jours</div>
-            <div className="text-[11px] text-[#5B7F55]">{metrics.nbNuits} nuits vécues</div>
+            <Award size={18} className="mx-auto text-lkv-primary mb-1" />
+            <div className="text-lg font-bold text-lkv-primary">{metrics.durationDays} jours</div>
+            <div className="text-[11px] text-lkv-secondary">{metrics.nbNuits} nuits vécues</div>
           </GlassCard>
         </div>
 
@@ -201,9 +201,9 @@ export function TripCompletionModal({ trip, isOpen, onClose }: TripCompletionMod
                   type="checkbox"
                   checked={publishCarnet}
                   onChange={e => setPublishCarnet(e.target.checked)}
-                  className="w-4 h-4 rounded border-gray-300 text-[#17402C] focus:ring-[#17402C]"
+                  className="w-4 h-4 rounded border-gray-300 text-lkv-primary focus:ring-lkv-primary"
                 />
-                <span className="text-sm font-semibold text-[#17402C] flex items-center gap-1.5">
+                <span className="text-sm font-semibold text-lkv-primary flex items-center gap-1.5">
                   <BookOpen size={16} /> Publier en carnet de bord communautaire
                 </span>
               </label>
@@ -212,7 +212,7 @@ export function TripCompletionModal({ trip, isOpen, onClose }: TripCompletionMod
             {publishCarnet && (
               <div className="p-4 rounded-2xl bg-white/70 border border-black/5 space-y-3">
                 <div>
-                  <label className="block text-xs font-semibold text-[#17402C] mb-1">
+                  <label className="block text-xs font-semibold text-lkv-primary mb-1">
                     Titre du carnet d&apos;expédition
                   </label>
                   <input
@@ -220,12 +220,12 @@ export function TripCompletionModal({ trip, isOpen, onClose }: TripCompletionMod
                     value={carnetTitle}
                     onChange={e => setCarnetTitle(e.target.value)}
                     required
-                    className="w-full text-sm px-3 py-2 rounded-xl border border-black/10 bg-white focus:outline-none focus:ring-2 focus:ring-[#17402C]/20"
+                    className="w-full text-sm px-3 py-2 rounded-xl border border-black/10 bg-white focus:outline-none focus:ring-2 focus:ring-lkv-primary/20"
                   />
                 </div>
 
                 <div>
-                  <label className="block text-xs font-semibold text-[#17402C] mb-1">
+                  <label className="block text-xs font-semibold text-lkv-primary mb-1">
                     Introduction / Récit de synthèse
                   </label>
                   <textarea
@@ -233,28 +233,28 @@ export function TripCompletionModal({ trip, isOpen, onClose }: TripCompletionMod
                     value={carnetDescription}
                     onChange={e => setCarnetDescription(e.target.value)}
                     placeholder="Résumez les moments forts, la météo, l'ambiance..."
-                    className="w-full text-sm px-3 py-2 rounded-xl border border-black/10 bg-white focus:outline-none focus:ring-2 focus:ring-[#17402C]/20"
+                    className="w-full text-sm px-3 py-2 rounded-xl border border-black/10 bg-white focus:outline-none focus:ring-2 focus:ring-lkv-primary/20"
                   />
                 </div>
 
                 <div className="flex items-center gap-4 text-xs">
-                  <label className="flex items-center gap-1.5 cursor-pointer text-[#17402C]">
+                  <label className="flex items-center gap-1.5 cursor-pointer text-lkv-primary">
                     <input
                       type="radio"
                       name="visibility"
                       checked={isPublic}
                       onChange={() => setIsPublic(true)}
-                      className="text-[#17402C]"
+                      className="text-lkv-primary"
                     />
                     <span>Public (visible dans Explorer & Carnets)</span>
                   </label>
-                  <label className="flex items-center gap-1.5 cursor-pointer text-[#5B7F55]">
+                  <label className="flex items-center gap-1.5 cursor-pointer text-lkv-secondary">
                     <input
                       type="radio"
                       name="visibility"
                       checked={!isPublic}
                       onChange={() => setIsPublic(false)}
-                      className="text-[#17402C]"
+                      className="text-lkv-primary"
                     />
                     <span>Privé (visible uniquement par l&apos;équipe)</span>
                   </label>
@@ -267,10 +267,10 @@ export function TripCompletionModal({ trip, isOpen, onClose }: TripCompletionMod
           {placeCandidates.length > 0 && (
             <div className="space-y-3">
               <div>
-                <h4 className="text-sm font-semibold text-[#17402C] flex items-center gap-1.5">
+                <h4 className="text-sm font-semibold text-lkv-primary flex items-center gap-1.5">
                   <MapPin size={16} /> Certifier vos lieux visités (Preuve terrain)
                 </h4>
-                <p className="text-xs text-[#5B7F55]">
+                <p className="text-xs text-lkv-secondary">
                   Vos avis sont certifiés réels (pondération x2 dans le scoring communautaire).
                 </p>
               </div>
@@ -281,7 +281,7 @@ export function TripCompletionModal({ trip, isOpen, onClose }: TripCompletionMod
                   return (
                     <div key={candidate.placeId} className="p-3.5 rounded-2xl bg-white/70 border border-black/5 space-y-2">
                       <div className="flex items-center justify-between">
-                        <span className="text-xs font-semibold text-[#17402C]">{candidate.name}</span>
+                        <span className="text-xs font-semibold text-lkv-primary">{candidate.name}</span>
                         {/* Note étoiles */}
                         <div className="flex items-center gap-1">
                           {[1, 2, 3, 4, 5].map(star => (
@@ -315,7 +315,7 @@ export function TripCompletionModal({ trip, isOpen, onClose }: TripCompletionMod
                             [candidate.placeId]: { ...currentRev, comment: e.target.value },
                           }))
                         }
-                        className="w-full text-xs px-3 py-1.5 rounded-xl border border-black/10 bg-white focus:outline-none focus:ring-2 focus:ring-[#17402C]/20"
+                        className="w-full text-xs px-3 py-1.5 rounded-xl border border-black/10 bg-white focus:outline-none focus:ring-2 focus:ring-lkv-primary/20"
                       />
                     </div>
                   );

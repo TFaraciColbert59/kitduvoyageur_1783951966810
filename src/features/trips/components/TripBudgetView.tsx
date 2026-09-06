@@ -62,11 +62,11 @@ export function TripBudgetView({ trip }: TripBudgetViewProps) {
       {/* En-tête de section */}
       <div className="flex flex-wrap items-center justify-between gap-4">
         <div>
-          <h3 className="text-xl font-bold text-[#17402C] flex items-center gap-2">
-            <CreditCard size={22} className="text-[#5B7F55]" />
+          <h3 className="text-xl font-bold text-lkv-primary flex items-center gap-2">
+            <CreditCard size={22} className="text-lkv-secondary" />
             <span>Budget & Partage des Dépenses</span>
           </h3>
-          <p className="text-xs text-[#5B7F55] mt-1">
+          <p className="text-xs text-lkv-secondary mt-1">
             Suivi des dépenses en temps réel, répartition équitable entre membres et simplification des remboursements.
           </p>
         </div>
@@ -88,8 +88,8 @@ export function TripBudgetView({ trip }: TripBudgetViewProps) {
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
         {/* Total dépensé */}
         <GlassCard tone="neutral" className="p-4 rounded-[20px] border border-white/60 shadow-sm">
-          <div className="text-xs text-[#5B7F55] font-semibold">Total des dépenses réelles</div>
-          <div className="text-2xl font-extrabold text-[#17402C] mt-1">
+          <div className="text-xs text-lkv-secondary font-semibold">Total des dépenses réelles</div>
+          <div className="text-2xl font-extrabold text-lkv-primary mt-1">
             {budgetSummary.totalSpent} {budgetSummary.currency}
           </div>
           <div className="text-[11px] text-gray-500 mt-1">
@@ -99,8 +99,8 @@ export function TripBudgetView({ trip }: TripBudgetViewProps) {
 
         {/* Budget prévisionnel & reste */}
         <GlassCard tone="neutral" className="p-4 rounded-[20px] border border-white/60 shadow-sm">
-          <div className="text-xs text-[#5B7F55] font-semibold">Budget prévisionnel</div>
-          <div className="text-2xl font-extrabold text-[#17402C] mt-1">
+          <div className="text-xs text-lkv-secondary font-semibold">Budget prévisionnel</div>
+          <div className="text-2xl font-extrabold text-lkv-primary mt-1">
             {budgetSummary.estimatedBudget ? `${budgetSummary.estimatedBudget} ${budgetSummary.currency}` : 'Non défini'}
           </div>
           <div className="text-[11px] mt-1">
@@ -119,15 +119,15 @@ export function TripBudgetView({ trip }: TripBudgetViewProps) {
 
         {/* Taux de consommation */}
         <GlassCard tone="neutral" className="p-4 rounded-[20px] border border-white/60 shadow-sm">
-          <div className="text-xs text-[#5B7F55] font-semibold">Taux de consommation</div>
-          <div className="text-2xl font-extrabold text-[#17402C] mt-1">
+          <div className="text-xs text-lkv-secondary font-semibold">Taux de consommation</div>
+          <div className="text-2xl font-extrabold text-lkv-primary mt-1">
             {budgetSummary.spentPercentage !== null ? `${budgetSummary.spentPercentage}%` : '—'}
           </div>
           {budgetSummary.spentPercentage !== null && (
             <div className="w-full bg-black/5 h-2 rounded-full mt-2 overflow-hidden">
               <div
                 className={`h-full rounded-full transition-all duration-500 ${
-                  budgetSummary.isOverBudget ? 'bg-red-500' : 'bg-[#17402C]'
+                  budgetSummary.isOverBudget ? 'bg-red-500' : 'bg-lkv-primary'
                 }`}
                 style={{ width: `${Math.min(budgetSummary.spentPercentage, 100)}%` }}
               />
@@ -141,11 +141,11 @@ export function TripBudgetView({ trip }: TripBudgetViewProps) {
         {/* Settlements (Qui doit à qui) */}
         <GlassCard tone="neutral" className="p-5 rounded-[22px] border border-white/60 shadow-sm space-y-3">
           <div className="flex items-center justify-between border-b border-black/5 pb-2">
-            <h4 className="text-sm font-bold text-[#17402C] flex items-center gap-2">
-              <TrendingUp size={16} className="text-[#5B7F55]" />
+            <h4 className="text-sm font-bold text-lkv-primary flex items-center gap-2">
+              <TrendingUp size={16} className="text-lkv-secondary" />
               <span>Règlements de compte optimaux</span>
             </h4>
-            <span className="text-[11px] text-[#5B7F55]">Algorithme de split</span>
+            <span className="text-[11px] text-lkv-secondary">Algorithme de split</span>
           </div>
 
           {budgetSummary.settlements.length === 0 ? (
@@ -162,10 +162,10 @@ export function TripBudgetView({ trip }: TripBudgetViewProps) {
                 >
                   <div className="flex items-center gap-2 truncate">
                     <span className="font-semibold text-gray-900">{s.fromName}</span>
-                    <ArrowRight size={14} className="text-[#5B7F55] shrink-0" />
-                    <span className="font-semibold text-[#17402C]">{s.toName}</span>
+                    <ArrowRight size={14} className="text-lkv-secondary shrink-0" />
+                    <span className="font-semibold text-lkv-primary">{s.toName}</span>
                   </div>
-                  <div className="text-sm font-extrabold text-[#17402C] shrink-0">
+                  <div className="text-sm font-extrabold text-lkv-primary shrink-0">
                     {s.amount} {budgetSummary.currency}
                   </div>
                 </div>
@@ -177,8 +177,8 @@ export function TripBudgetView({ trip }: TripBudgetViewProps) {
         {/* Balances individuelles */}
         <GlassCard tone="neutral" className="p-5 rounded-[22px] border border-white/60 shadow-sm space-y-3">
           <div className="flex items-center justify-between border-b border-black/5 pb-2">
-            <h4 className="text-sm font-bold text-[#17402C]">Solde net par participant</h4>
-            <span className="text-[11px] text-[#5B7F55]">{budgetSummary.balances.length} membres</span>
+            <h4 className="text-sm font-bold text-lkv-primary">Solde net par participant</h4>
+            <span className="text-[11px] text-lkv-secondary">{budgetSummary.balances.length} membres</span>
           </div>
 
           <div className="space-y-2">
@@ -188,7 +188,7 @@ export function TripBudgetView({ trip }: TripBudgetViewProps) {
                 className="p-2.5 rounded-xl bg-white/60 border border-black/5 flex items-center justify-between text-xs"
               >
                 <div>
-                  <div className="font-semibold text-[#17402C]">{b.name}</div>
+                  <div className="font-semibold text-lkv-primary">{b.name}</div>
                   <div className="text-[10px] text-gray-500">
                     Payé : {b.paid} {budgetSummary.currency} · Part : {b.share} {budgetSummary.currency}
                   </div>
@@ -213,21 +213,21 @@ export function TripBudgetView({ trip }: TripBudgetViewProps) {
       {/* Ventilation par Catégories */}
       {categoryEntries.length > 0 && (
         <GlassCard tone="neutral" className="p-5 rounded-[22px] border border-white/60 shadow-sm space-y-3">
-          <h4 className="text-sm font-bold text-[#17402C]">Ventilation par catégorie</h4>
+          <h4 className="text-sm font-bold text-lkv-primary">Ventilation par catégorie</h4>
           <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
             {categoryEntries.map(([cat, amt]) => {
               const pct = Math.round((amt / budgetSummary.totalSpent) * 100);
               return (
                 <div key={cat} className="p-3 rounded-xl bg-white/70 border border-black/5 space-y-1">
                   <div className="flex justify-between text-xs">
-                    <span className="capitalize font-semibold text-[#17402C]">{cat}</span>
+                    <span className="capitalize font-semibold text-lkv-primary">{cat}</span>
                     <span className="text-gray-500">{pct}%</span>
                   </div>
                   <div className="text-sm font-bold text-gray-800">
                     {amt} {budgetSummary.currency}
                   </div>
                   <div className="w-full bg-black/5 h-1.5 rounded-full overflow-hidden">
-                    <div className="bg-[#5B7F55] h-full rounded-full" style={{ width: `${pct}%` }} />
+                    <div className="bg-lkv-secondary h-full rounded-full" style={{ width: `${pct}%` }} />
                   </div>
                 </div>
               );
@@ -238,7 +238,7 @@ export function TripBudgetView({ trip }: TripBudgetViewProps) {
 
       {/* Liste des dépenses détaillées */}
       <div className="space-y-3">
-        <h4 className="text-base font-bold text-[#17402C]">Historique des dépenses</h4>
+        <h4 className="text-base font-bold text-lkv-primary">Historique des dépenses</h4>
         {trip.expenses.length === 0 ? (
           <GlassCard tone="neutral" className="p-6 rounded-[20px] text-center text-xs text-gray-500">
             Aucune dépense enregistrée sur cette expédition.
@@ -252,8 +252,8 @@ export function TripBudgetView({ trip }: TripBudgetViewProps) {
                 className="p-3.5 rounded-[18px] border border-white/60 flex items-center justify-between gap-3 shadow-xs"
               >
                 <div>
-                  <div className="text-sm font-bold text-[#17402C]">{exp.title}</div>
-                  <div className="text-xs text-[#5B7F55] mt-0.5">
+                  <div className="text-sm font-bold text-lkv-primary">{exp.title}</div>
+                  <div className="text-xs text-lkv-secondary mt-0.5">
                     Payé par <span className="font-semibold">{exp.payer?.full_name || 'Voyageur'}</span> ·{' '}
                     <span className="capitalize">{exp.category || 'divers'}</span> · {exp.expense_date}
                     {exp.split_type === 'individual' && ' · Individuel'}
@@ -261,7 +261,7 @@ export function TripBudgetView({ trip }: TripBudgetViewProps) {
                 </div>
 
                 <div className="flex items-center gap-3 shrink-0">
-                  <div className="text-base font-extrabold text-[#17402C]">
+                  <div className="text-base font-extrabold text-lkv-primary">
                     {exp.amount} {exp.currency}
                   </div>
                   {canManage && (
@@ -289,8 +289,8 @@ export function TripBudgetView({ trip }: TripBudgetViewProps) {
             className="w-full max-w-md p-6 rounded-[24px] bg-white border border-white/80 shadow-2xl space-y-4"
           >
             <div className="flex items-center justify-between pb-3 border-b border-gray-100">
-              <h4 className="text-base font-bold text-[#17402C] flex items-center gap-2">
-                <CreditCard size={18} className="text-[#5B7F55]" />
+              <h4 className="text-base font-bold text-lkv-primary flex items-center gap-2">
+                <CreditCard size={18} className="text-lkv-secondary" />
                 <span>Nouvelle dépense</span>
               </h4>
               <button
@@ -309,7 +309,7 @@ export function TripBudgetView({ trip }: TripBudgetViewProps) {
 
             <form onSubmit={handleAddSubmit} className="space-y-4">
               <div>
-                <label className="block text-xs font-semibold text-[#17402C] mb-1">
+                <label className="block text-xs font-semibold text-lkv-primary mb-1">
                   Intitulé de la dépense
                 </label>
                 <input
@@ -317,13 +317,13 @@ export function TripBudgetView({ trip }: TripBudgetViewProps) {
                   name="title"
                   required
                   placeholder="ex: Refuge des Écrins, Ravitaillement bivouac"
-                  className="w-full px-3 py-2 text-sm rounded-xl border border-gray-200 bg-gray-50/50 focus:bg-white focus:outline-none focus:ring-2 focus:ring-[#17402C]/20"
+                  className="w-full px-3 py-2 text-sm rounded-xl border border-gray-200 bg-gray-50/50 focus:bg-white focus:outline-none focus:ring-2 focus:ring-lkv-primary/20"
                 />
               </div>
 
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className="block text-xs font-semibold text-[#17402C] mb-1">
+                  <label className="block text-xs font-semibold text-lkv-primary mb-1">
                     Montant ({trip.budget_currency || 'EUR'})
                   </label>
                   <input
@@ -333,18 +333,18 @@ export function TripBudgetView({ trip }: TripBudgetViewProps) {
                     min="0.01"
                     required
                     placeholder="0.00"
-                    className="w-full px-3 py-2 text-sm rounded-xl border border-gray-200 bg-gray-50/50 focus:bg-white focus:outline-none focus:ring-2 focus:ring-[#17402C]/20"
+                    className="w-full px-3 py-2 text-sm rounded-xl border border-gray-200 bg-gray-50/50 focus:bg-white focus:outline-none focus:ring-2 focus:ring-lkv-primary/20"
                   />
                 </div>
 
                 <div>
-                  <label className="block text-xs font-semibold text-[#17402C] mb-1">
+                  <label className="block text-xs font-semibold text-lkv-primary mb-1">
                     Catégorie
                   </label>
                   <select
                     name="category"
                     defaultValue="hébergement"
-                    className="w-full px-3 py-2 text-sm rounded-xl border border-gray-200 bg-gray-50/50 focus:bg-white focus:outline-none focus:ring-2 focus:ring-[#17402C]/20"
+                    className="w-full px-3 py-2 text-sm rounded-xl border border-gray-200 bg-gray-50/50 focus:bg-white focus:outline-none focus:ring-2 focus:ring-lkv-primary/20"
                   >
                     <option value="hébergement">Hébergement</option>
                     <option value="nourriture">Nourriture</option>
@@ -358,7 +358,7 @@ export function TripBudgetView({ trip }: TripBudgetViewProps) {
 
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className="block text-xs font-semibold text-[#17402C] mb-1">
+                  <label className="block text-xs font-semibold text-lkv-primary mb-1">
                     Date
                   </label>
                   <input
@@ -366,18 +366,18 @@ export function TripBudgetView({ trip }: TripBudgetViewProps) {
                     name="expenseDate"
                     defaultValue={new Date().toISOString().slice(0, 10)}
                     required
-                    className="w-full px-3 py-2 text-sm rounded-xl border border-gray-200 bg-gray-50/50 focus:bg-white focus:outline-none focus:ring-2 focus:ring-[#17402C]/20"
+                    className="w-full px-3 py-2 text-sm rounded-xl border border-gray-200 bg-gray-50/50 focus:bg-white focus:outline-none focus:ring-2 focus:ring-lkv-primary/20"
                   />
                 </div>
 
                 <div>
-                  <label className="block text-xs font-semibold text-[#17402C] mb-1">
+                  <label className="block text-xs font-semibold text-lkv-primary mb-1">
                     Répartition
                   </label>
                   <select
                     name="splitType"
                     defaultValue="equal"
-                    className="w-full px-3 py-2 text-sm rounded-xl border border-gray-200 bg-gray-50/50 focus:bg-white focus:outline-none focus:ring-2 focus:ring-[#17402C]/20"
+                    className="w-full px-3 py-2 text-sm rounded-xl border border-gray-200 bg-gray-50/50 focus:bg-white focus:outline-none focus:ring-2 focus:ring-lkv-primary/20"
                   >
                     <option value="equal">Partagée équitablement</option>
                     <option value="individual">Dépense personnelle</option>

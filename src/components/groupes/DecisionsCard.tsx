@@ -163,7 +163,7 @@ export default function DecisionsCard({ decisions: initialDecisions, groupId, on
   return (
     <div className="glass p-6 transition-all duration-300">
       <div className="flex justify-between items-start mb-2">
-        <h2 className="font-display font-bold text-xl text-[#17402C]">Décisions <span className="font-serif italic font-normal text-[#17402C]">en cours</span></h2>
+        <h2 className="font-display font-bold text-xl text-lkv-primary">Décisions <span className="font-serif italic font-normal text-lkv-primary">en cours</span></h2>
         <div className="flex items-center gap-2">
           <span className="glass-pill">{decisions.length} actifs</span>
         </div>
@@ -183,7 +183,7 @@ export default function DecisionsCard({ decisions: initialDecisions, groupId, on
       {isAdding && (
         <form onSubmit={handleCreatePoll} className="mb-8 glass-sub-card p-5 rounded-2xl">
           <div className="mb-4">
-            <label className="block text-xs font-bold text-[#17402C] mb-2">La question à trancher :</label>
+            <label className="block text-xs font-bold text-lkv-primary mb-2">La question à trancher :</label>
             <input 
               type="text" 
               autoFocus
@@ -196,7 +196,7 @@ export default function DecisionsCard({ decisions: initialDecisions, groupId, on
           </div>
           
           <div className="space-y-3 mb-4">
-            <label className="block text-xs font-bold text-[#17402C]">Les options (minimum 2) :</label>
+            <label className="block text-xs font-bold text-lkv-primary">Les options (minimum 2) :</label>
             {newOptions.map((opt, i) => (
               <div key={i} className="flex gap-2">
                 <input 
@@ -233,7 +233,7 @@ export default function DecisionsCard({ decisions: initialDecisions, groupId, on
 
       <div className="space-y-6">
         {decisions.length === 0 && !isAdding && (
-          <p className="text-center text-sm text-[#5C6B5E] py-4">Aucun sondage en cours.</p>
+          <p className="text-center text-sm text-lkv-text-muted py-4">Aucun sondage en cours.</p>
         )}
         
         {decisions.map(decision => {
@@ -242,12 +242,12 @@ export default function DecisionsCard({ decisions: initialDecisions, groupId, on
           return (
           <div key={decision.id} className="glass-sub-card rounded-2xl p-5">
             <div className="flex items-center gap-2 mb-3">
-              <span className="font-bold text-sm text-[#17402C]">{decision.author}</span>
+              <span className="font-bold text-sm text-lkv-primary">{decision.author}</span>
               <span className="glass-pill text-[9px]">{decision.tag}</span>
-              <span className="text-xs text-[#5C6B5E] ml-auto font-mono">{decision.meta}</span>
+              <span className="text-xs text-lkv-text-muted ml-auto font-mono">{decision.meta}</span>
             </div>
             
-            <p className="text-sm text-[#17402C] mb-5 font-sans leading-relaxed">
+            <p className="text-sm text-lkv-primary mb-5 font-sans leading-relaxed">
               {decision.question}
             </p>
             
@@ -262,10 +262,10 @@ export default function DecisionsCard({ decisions: initialDecisions, groupId, on
                   onClick={() => handleVote(decision.id, option.index)}
                   disabled={savingVoteId === decision.id}
                   className={`group w-full relative overflow-hidden rounded-xl border text-left transition-colors disabled:opacity-70 cursor-pointer
-                    ${option.selected ? 'border-[#17402C] bg-white' : 'glass-sub-card'}`}
+                    ${option.selected ? 'border-lkv-primary bg-white' : 'glass-sub-card'}`}
                 >
                   <motion.div 
-                    className={`absolute inset-y-0 left-0 ${option.selected ? 'bg-[#17402C]/20' : 'bg-[#17402C]/10'}`}
+                    className={`absolute inset-y-0 left-0 ${option.selected ? 'bg-lkv-primary/20' : 'bg-lkv-primary/10'}`}
                     initial={{ width: 0 }}
                     animate={{ width: `${pct}%` }}
                     transition={{ duration: 0.5 }}
@@ -277,10 +277,10 @@ export default function DecisionsCard({ decisions: initialDecisions, groupId, on
                         {option.selected && <Icon name="CheckIcon" size={12} className="relative z-10" />}
                       </div>
                       <div>
-                        <p className={`text-sm font-semibold ${option.selected ? 'text-[#17402C]' : 'text-[#5C6B5E]'}`}>{option.label}</p>
+                        <p className={`text-sm font-semibold ${option.selected ? 'text-lkv-primary' : 'text-lkv-text-muted'}`}>{option.label}</p>
                       </div>
                     </div>
-                    <span className={`font-mono font-bold text-sm ${option.selected ? 'text-[#17402C]' : 'text-[#5C6B5E]'}`}>
+                    <span className={`font-mono font-bold text-sm ${option.selected ? 'text-lkv-primary' : 'text-lkv-text-muted'}`}>
                       {pct}%
                     </span>
                   </div>
@@ -288,7 +288,7 @@ export default function DecisionsCard({ decisions: initialDecisions, groupId, on
               )})}
             </div>
             
-            <div className="flex justify-between items-center text-[10px] font-mono uppercase tracking-widest text-[#5C6B5E] pt-3 border-t border-[#17402C]/10 font-bold">
+            <div className="flex justify-between items-center text-[10px] font-mono uppercase tracking-widest text-lkv-text-muted pt-3 border-t border-lkv-primary/10 font-bold">
               <span>{totalVotes} votes exprimés</span>
             </div>
           </div>

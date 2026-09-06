@@ -66,8 +66,8 @@ export function TripShareModal({ trip, isOpen, onClose }: TripShareModalProps) {
       >
         {/* En-tête */}
         <div className="flex items-center justify-between pb-3 border-b border-gray-100">
-          <h3 className="text-lg font-bold text-[#17402C] flex items-center gap-2">
-            <Share2 size={20} className="text-[#5B7F55]" />
+          <h3 className="text-lg font-bold text-lkv-primary flex items-center gap-2">
+            <Share2 size={20} className="text-lkv-secondary" />
             <span>Partager &amp; Exporter l&apos;Expédition</span>
           </h3>
           <button
@@ -80,7 +80,7 @@ export function TripShareModal({ trip, isOpen, onClose }: TripShareModalProps) {
 
         {/* 1. Visibilité du voyage */}
         <div className="space-y-2">
-          <label className="block text-xs font-semibold text-[#17402C]">
+          <label className="block text-xs font-semibold text-lkv-primary">
             Niveau de confidentialité du voyage
           </label>
           <div className="grid grid-cols-3 gap-2">
@@ -90,8 +90,8 @@ export function TripShareModal({ trip, isOpen, onClose }: TripShareModalProps) {
               onClick={() => handleVisibilityChange('private')}
               className={`p-3 rounded-xl border text-left transition-all ${
                 visibility === 'private'
-                  ? 'bg-[#17402C] text-white border-[#17402C] shadow-sm'
-                  : 'bg-white text-gray-700 border-gray-200 hover:border-[#17402C]/30'
+                  ? 'bg-lkv-primary text-white border-lkv-primary shadow-sm'
+                  : 'bg-white text-gray-700 border-gray-200 hover:border-lkv-primary/30'
               }`}
             >
               <div className="flex items-center gap-1.5 font-bold text-xs">
@@ -109,8 +109,8 @@ export function TripShareModal({ trip, isOpen, onClose }: TripShareModalProps) {
               onClick={() => handleVisibilityChange('unlisted')}
               className={`p-3 rounded-xl border text-left transition-all ${
                 visibility === 'unlisted'
-                  ? 'bg-[#17402C] text-white border-[#17402C] shadow-sm'
-                  : 'bg-white text-gray-700 border-gray-200 hover:border-[#17402C]/30'
+                  ? 'bg-lkv-primary text-white border-lkv-primary shadow-sm'
+                  : 'bg-white text-gray-700 border-gray-200 hover:border-lkv-primary/30'
               }`}
             >
               <div className="flex items-center gap-1.5 font-bold text-xs">
@@ -128,8 +128,8 @@ export function TripShareModal({ trip, isOpen, onClose }: TripShareModalProps) {
               onClick={() => handleVisibilityChange('public')}
               className={`p-3 rounded-xl border text-left transition-all ${
                 visibility === 'public'
-                  ? 'bg-[#17402C] text-white border-[#17402C] shadow-sm'
-                  : 'bg-white text-gray-700 border-gray-200 hover:border-[#17402C]/30'
+                  ? 'bg-lkv-primary text-white border-lkv-primary shadow-sm'
+                  : 'bg-white text-gray-700 border-gray-200 hover:border-lkv-primary/30'
               }`}
             >
               <div className="flex items-center gap-1.5 font-bold text-xs">
@@ -145,7 +145,7 @@ export function TripShareModal({ trip, isOpen, onClose }: TripShareModalProps) {
 
         {/* 2. Lien de partage */}
         <div className="space-y-1.5">
-          <label className="block text-xs font-semibold text-[#17402C]">
+          <label className="block text-xs font-semibold text-lkv-primary">
             Lien d&apos;accès direct
           </label>
           <div className="flex items-center gap-2">
@@ -157,7 +157,7 @@ export function TripShareModal({ trip, isOpen, onClose }: TripShareModalProps) {
             />
             <button
               onClick={handleCopy}
-              className="px-3.5 py-2 min-h-[44px] rounded-xl bg-[#17402C] text-white text-xs font-semibold flex items-center gap-1.5 hover:bg-[#123323] transition-colors shrink-0 shadow-sm"
+              className="px-3.5 py-2 min-h-[44px] rounded-xl bg-lkv-primary text-white text-xs font-semibold flex items-center gap-1.5 hover:bg-[#123323] transition-colors shrink-0 shadow-sm"
             >
               {copied ? <Check size={14} /> : <Copy size={14} />}
               <span>{copied ? 'Copié !' : 'Copier'}</span>
@@ -167,7 +167,7 @@ export function TripShareModal({ trip, isOpen, onClose }: TripShareModalProps) {
 
         {/* Règle RGPD Documents */}
         <div className="p-3 rounded-xl bg-gray-50 border border-gray-200/80 text-[11px] text-gray-600 flex items-start gap-2">
-          <ShieldAlert size={16} className="text-[#5B7F55] shrink-0 mt-0.5" />
+          <ShieldAlert size={16} className="text-lkv-secondary shrink-0 mt-0.5" />
           <span>
             <strong>Sécurité des documents :</strong> Les pièces sensibles (passeports, attestations) restent protégées et ne sont jamais partagées via ce lien.
           </span>
@@ -175,23 +175,23 @@ export function TripShareModal({ trip, isOpen, onClose }: TripShareModalProps) {
 
         {/* 3. Exports disponibles */}
         <div className="space-y-2 pt-2 border-t border-gray-100">
-          <div className="text-xs font-semibold text-[#17402C]">Exports de terrain</div>
+          <div className="text-xs font-semibold text-lkv-primary">Exports de terrain</div>
           <div className="grid grid-cols-2 gap-3">
             <a
               href={`/api/voyages/${trip.slug}/gpx?token=${trip.share_token}`}
               download={`${trip.slug}.gpx`}
-              className="flex items-center justify-center gap-2 p-3 rounded-xl border border-gray-200 bg-white text-xs font-semibold text-[#17402C] hover:bg-gray-50 transition-colors shadow-xs"
+              className="flex items-center justify-center gap-2 p-3 rounded-xl border border-gray-200 bg-white text-xs font-semibold text-lkv-primary hover:bg-gray-50 transition-colors shadow-xs"
             >
-              <Download size={15} className="text-[#5B7F55]" />
+              <Download size={15} className="text-lkv-secondary" />
               <span>Trace GPX 1.1</span>
             </a>
 
             <Link
               href={`/voyages/${trip.slug}/export`}
               target="_blank"
-              className="flex items-center justify-center gap-2 p-3 rounded-xl border border-gray-200 bg-white text-xs font-semibold text-[#17402C] hover:bg-gray-50 transition-colors shadow-xs"
+              className="flex items-center justify-center gap-2 p-3 rounded-xl border border-gray-200 bg-white text-xs font-semibold text-lkv-primary hover:bg-gray-50 transition-colors shadow-xs"
             >
-              <Printer size={15} className="text-[#5B7F55]" />
+              <Printer size={15} className="text-lkv-secondary" />
               <span>Feuille de Route / PDF</span>
             </Link>
           </div>

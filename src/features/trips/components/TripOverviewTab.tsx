@@ -31,53 +31,53 @@ export function TripOverviewTab({ trip, stats, onTabChange }: TripOverviewTabPro
       {/* 1. Métriques Clés */}
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-4">
         <GlassCard tone="sage" blur="sm" className="p-4 rounded-[20px] border border-white/60">
-          <div className="flex items-center gap-2 text-[#5B7F55] text-xs font-medium uppercase tracking-wider mb-1">
+          <div className="flex items-center gap-2 text-lkv-secondary text-xs font-medium uppercase tracking-wider mb-1">
             <Calendar size={14} />
             Durée
           </div>
-          <div className="text-xl sm:text-2xl font-bold text-[#17402C]">
+          <div className="text-xl sm:text-2xl font-bold text-lkv-primary">
             {stats.total_days} {stats.total_days > 1 ? 'jours' : 'jour'}
           </div>
-          <div className="text-xs text-[#5B7F55] mt-0.5">
+          <div className="text-xs text-lkv-secondary mt-0.5">
             {trip.steps.length} étapes prévues
           </div>
         </GlassCard>
 
         <GlassCard tone="neutral" blur="sm" className="p-4 rounded-[20px] border border-white/60">
-          <div className="flex items-center gap-2 text-[#5B7F55] text-xs font-medium uppercase tracking-wider mb-1">
+          <div className="flex items-center gap-2 text-lkv-secondary text-xs font-medium uppercase tracking-wider mb-1">
             <Navigation size={14} />
             Distance
           </div>
-          <div className="text-xl sm:text-2xl font-bold text-[#17402C]">
+          <div className="text-xl sm:text-2xl font-bold text-lkv-primary">
             {stats.total_distance_km} km
           </div>
-          <div className="text-xs text-[#5B7F55] mt-0.5">
+          <div className="text-xs text-lkv-secondary mt-0.5">
             +{stats.total_elevation_gain_m}m / -{stats.total_elevation_loss_m}m D±
           </div>
         </GlassCard>
 
         <GlassCard tone="neutral" blur="sm" className="p-4 rounded-[20px] border border-white/60">
-          <div className="flex items-center gap-2 text-[#5B7F55] text-xs font-medium uppercase tracking-wider mb-1">
+          <div className="flex items-center gap-2 text-lkv-secondary text-xs font-medium uppercase tracking-wider mb-1">
             <Package size={14} />
             Sac à dos
           </div>
-          <div className="text-xl sm:text-2xl font-bold text-[#17402C]">
+          <div className="text-xl sm:text-2xl font-bold text-lkv-primary">
             {packedPercent}%
           </div>
-          <div className="text-xs text-[#5B7F55] mt-0.5">
+          <div className="text-xs text-lkv-secondary mt-0.5">
             {stats.items_packed}/{stats.items_total} objets prêts
           </div>
         </GlassCard>
 
         <GlassCard tone="neutral" blur="sm" className="p-4 rounded-[20px] border border-white/60">
-          <div className="flex items-center gap-2 text-[#5B7F55] text-xs font-medium uppercase tracking-wider mb-1">
+          <div className="flex items-center gap-2 text-lkv-secondary text-xs font-medium uppercase tracking-wider mb-1">
             <CreditCard size={14} />
             Budget
           </div>
-          <div className="text-xl sm:text-2xl font-bold text-[#17402C]">
+          <div className="text-xl sm:text-2xl font-bold text-lkv-primary">
             {stats.total_spent} €
           </div>
-          <div className="text-xs text-[#5B7F55] mt-0.5">
+          <div className="text-xs text-lkv-secondary mt-0.5">
             sur {stats.estimated_budget > 0 ? `${stats.estimated_budget} €` : 'non défini'}
           </div>
         </GlassCard>
@@ -87,16 +87,16 @@ export function TripOverviewTab({ trip, stats, onTabChange }: TripOverviewTabPro
       {stats.items_total > 0 && (
         <GlassCard tone="sage" blur="md" className="p-5 rounded-[24px] border border-white/70">
           <div className="flex items-center justify-between mb-2">
-            <span className="text-sm font-semibold text-[#17402C]">
+            <span className="text-sm font-semibold text-lkv-primary">
               Préparation de l’équipement
             </span>
-            <span className="text-xs font-medium text-[#5B7F55]">
+            <span className="text-xs font-medium text-lkv-secondary">
               {stats.items_packed} sur {stats.items_total} emballés ({packedPercent}%)
             </span>
           </div>
           <div className="w-full h-3 bg-black/5 rounded-full overflow-hidden">
             <div
-              className="h-full bg-gradient-to-r from-[#5B7F55] to-[#17402C] transition-all duration-500 rounded-full"
+              className="h-full bg-gradient-to-r from-var(--lkv-secondary) to-var(--lkv-primary) transition-all duration-500 rounded-full"
               style={{ width: `${packedPercent}%` }}
             />
           </div>
@@ -108,40 +108,40 @@ export function TripOverviewTab({ trip, stats, onTabChange }: TripOverviewTabPro
         {/* Aperçu Étapes */}
         <GlassCard tone="neutral" blur="md" className="p-6 rounded-[28px] border border-white/60">
           <div className="flex items-center justify-between mb-4">
-            <h2 className="text-lg font-bold text-[#17402C] flex items-center gap-2">
-              <Navigation size={18} className="text-[#5B7F55]" />
+            <h2 className="text-lg font-bold text-lkv-primary flex items-center gap-2">
+              <Navigation size={18} className="text-lkv-secondary" />
               Aperçu de l’itinéraire
             </h2>
             <LkvButton
               variant="ghost"
               size="sm"
               onClick={() => onTabChange('steps')}
-              className="text-xs text-[#5B7F55]"
+              className="text-xs text-lkv-secondary"
             >
               Voir tout ({trip.steps.length})
             </LkvButton>
           </div>
 
           {trip.steps.length === 0 ? (
-            <div className="text-center py-8 text-sm text-[#5B7F55]">
+            <div className="text-center py-8 text-sm text-lkv-secondary">
               <p>Aucune étape enregistrée pour le moment.</p>
-              <p className="text-xs text-[#5B7F55]/80 mt-1">
-                L’éditeur d’itinéraire complet sera activé au Chantier 2.
+              <p className="text-xs text-lkv-secondary/80 mt-1">
+                Ajoutez des étapes à votre voyage pour visualiser l’itinéraire détaillé.
               </p>
             </div>
           ) : (
-            <div className="relative pl-6 space-y-4 border-l-2 border-[#5B7F55]/30 ml-2">
+            <div className="relative pl-6 space-y-4 border-l-2 border-lkv-secondary/30 ml-2">
               {trip.steps.slice(0, 4).map(step => (
                 <div key={step.id} className="relative">
-                  <span className="absolute -left-[31px] top-1 w-3.5 h-3.5 rounded-full bg-[#5B7F55] border-2 border-white" />
-                  <div className="text-xs font-semibold text-[#5B7F55] uppercase tracking-wide">
+                  <span className="absolute -left-[31px] top-1 w-3.5 h-3.5 rounded-full bg-lkv-secondary border-2 border-white" />
+                  <div className="text-xs font-semibold text-lkv-secondary uppercase tracking-wide">
                     Jour {step.day_number}
                   </div>
-                  <div className="font-medium text-sm text-[#17402C]">
+                  <div className="font-medium text-sm text-lkv-primary">
                     {step.title}
                   </div>
                   {step.location_name && (
-                    <div className="text-xs text-[#5B7F55]">
+                    <div className="text-xs text-lkv-secondary">
                       {step.location_name}
                     </div>
                   )}
@@ -154,15 +154,15 @@ export function TripOverviewTab({ trip, stats, onTabChange }: TripOverviewTabPro
         {/* Aperçu Équipe */}
         <GlassCard tone="neutral" blur="md" className="p-6 rounded-[28px] border border-white/60">
           <div className="flex items-center justify-between mb-4">
-            <h2 className="text-lg font-bold text-[#17402C] flex items-center gap-2">
-              <Users size={18} className="text-[#5B7F55]" />
+            <h2 className="text-lg font-bold text-lkv-primary flex items-center gap-2">
+              <Users size={18} className="text-lkv-secondary" />
               Équipe d’expédition
             </h2>
             <LkvButton
               variant="ghost"
               size="sm"
               onClick={() => onTabChange('team')}
-              className="text-xs text-[#5B7F55]"
+              className="text-xs text-lkv-secondary"
             >
               Gérer ({trip.collaborators.length})
             </LkvButton>
@@ -175,15 +175,15 @@ export function TripOverviewTab({ trip, stats, onTabChange }: TripOverviewTabPro
                 className="flex items-center justify-between p-3 rounded-[16px] bg-white/40 border border-white/60"
               >
                 <div className="flex items-center gap-3">
-                  <div className="w-9 h-9 rounded-full bg-[#17402C] text-white flex items-center justify-center font-bold text-xs uppercase shadow-sm">
+                  <div className="w-9 h-9 rounded-full bg-lkv-primary text-white flex items-center justify-center font-bold text-xs uppercase shadow-sm">
                     {collab.profile?.full_name?.substring(0, 2) ||
                       collab.user_id.substring(0, 2)}
                   </div>
                   <div>
-                    <div className="text-sm font-semibold text-[#17402C]">
+                    <div className="text-sm font-semibold text-lkv-primary">
                       {collab.profile?.full_name || 'Membre de l’expédition'}
                     </div>
-                    <div className="text-xs text-[#5B7F55]">
+                    <div className="text-xs text-lkv-secondary">
                       {collab.profile?.username ? `@${collab.profile.username}` : 'Voyageur LKDV'}
                     </div>
                   </div>
@@ -196,18 +196,18 @@ export function TripOverviewTab({ trip, stats, onTabChange }: TripOverviewTabPro
         </GlassCard>
       </div>
 
-      {/* 4. Bloc Prochaines Étapes / Roadmap */}
+      {/* 4. Bloc Conseils de préparation */}
       <GlassCard tone="neutral" blur="sm" className="p-6 rounded-[28px] border border-white/60 bg-[#FAF8F5]/80">
         <div className="flex items-start gap-3">
-          <div className="p-2 rounded-xl bg-[#5B7F55]/15 text-[#17402C]">
+          <div className="p-2 rounded-xl bg-lkv-secondary/15 text-lkv-primary">
             <Compass size={22} />
           </div>
           <div>
-            <h3 className="text-sm font-bold text-[#17402C]">
-              Feuille de route du voyage
+            <h3 className="text-sm font-bold text-lkv-primary">
+              Conseils pour votre préparation
             </h3>
-            <p className="text-xs sm:text-sm text-[#5B7F55] mt-1 leading-relaxed">
-              Ce voyage est actuellement en phase de fondation (Chantier 1). Les modules d’édition fine d’itinéraire (C2), de collaboration temps réel (C3), de shakedown de sac à dos (C4) et de split de budget (C5) seront déployés progressivement.
+            <p className="text-xs sm:text-sm text-lkv-secondary mt-1 leading-relaxed">
+              Organisez les étapes de votre parcours, invitez vos co-voyageurs pour préparer le matériel ensemble, et ajustez votre équipement selon la météo et le terrain pour partir l’esprit tranquille.
             </p>
           </div>
         </div>

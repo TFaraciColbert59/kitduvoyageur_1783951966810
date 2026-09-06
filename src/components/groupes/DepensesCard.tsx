@@ -79,7 +79,7 @@ export default function DepensesCard({ expenses, groupId, onRefresh, user, membe
   return (
     <div className="glass p-6 relative transition-all duration-300">
       <div className="flex justify-between items-start mb-2">
-        <h2 className="font-display font-bold text-xl text-[#17402C]">Dépenses <span className="font-serif italic font-normal text-[#17402C]">du voyage</span></h2>
+        <h2 className="font-display font-bold text-xl text-lkv-primary">Dépenses <span className="font-serif italic font-normal text-lkv-primary">du voyage</span></h2>
         <div className="flex items-center gap-2">
           <span className="glass-pill">{expenses.total}€</span>
         </div>
@@ -105,7 +105,7 @@ export default function DepensesCard({ expenses, groupId, onRefresh, user, membe
         <form onSubmit={handleAddExpense} className="mb-6 glass-sub-card p-4 rounded-2xl">
           <div className="flex flex-wrap gap-3 mb-3">
             <div className="flex-1 min-w-[200px]">
-              <label className="block text-[10px] font-mono text-[#5C6B5E] uppercase tracking-widest mb-1.5 font-bold">Titre</label>
+              <label className="block text-[10px] font-mono text-lkv-text-muted uppercase tracking-widest mb-1.5 font-bold">Titre</label>
               <input 
                 type="text" 
                 autoFocus
@@ -117,7 +117,7 @@ export default function DepensesCard({ expenses, groupId, onRefresh, user, membe
               />
             </div>
             <div className="w-24">
-              <label className="block text-[10px] font-mono text-[#5C6B5E] uppercase tracking-widest mb-1.5 font-bold">Montant (€)</label>
+              <label className="block text-[10px] font-mono text-lkv-text-muted uppercase tracking-widest mb-1.5 font-bold">Montant (€)</label>
               <input 
                 type="number" 
                 step="0.01"
@@ -129,7 +129,7 @@ export default function DepensesCard({ expenses, groupId, onRefresh, user, membe
               />
             </div>
             <div className="w-full sm:w-40">
-              <label className="block text-[10px] font-mono text-[#5C6B5E] uppercase tracking-widest mb-1.5 font-bold">Payé par</label>
+              <label className="block text-[10px] font-mono text-lkv-text-muted uppercase tracking-widest mb-1.5 font-bold">Payé par</label>
               <select 
                 value={paidBy}
                 onChange={e => setPaidBy(e.target.value)}
@@ -159,38 +159,38 @@ export default function DepensesCard({ expenses, groupId, onRefresh, user, membe
       
       <div className="grid grid-cols-3 gap-2 mb-6">
         <div className="glass-sub-card p-3 rounded-xl">
-          <p className="font-mono text-[9px] uppercase tracking-widest text-[#5C6B5E] mb-1 font-bold">Total engagé</p>
-          <p className="font-mono font-bold text-lg text-[#17402C]">{expenses.total}€</p>
+          <p className="font-mono text-[9px] uppercase tracking-widest text-lkv-text-muted mb-1 font-bold">Total engagé</p>
+          <p className="font-mono font-bold text-lg text-lkv-primary">{expenses.total}€</p>
         </div>
         <div className="glass-sub-card p-3 rounded-xl">
-          <p className="font-mono text-[9px] uppercase tracking-widest text-[#5C6B5E] mb-1 font-bold">Par personne</p>
-          <p className="font-mono font-bold text-lg text-[#17402C]">{expenses.perPerson}€</p>
+          <p className="font-mono text-[9px] uppercase tracking-widest text-lkv-text-muted mb-1 font-bold">Par personne</p>
+          <p className="font-mono font-bold text-lg text-lkv-primary">{expenses.perPerson}€</p>
         </div>
         <div className="glass-sub-card p-3 rounded-xl">
-          <p className="font-mono text-[9px] uppercase tracking-widest text-[#5C6B5E] mb-1 font-bold">Vous devez</p>
-          <p className="font-mono font-bold text-lg text-[#17402C]">{expenses.userBalance}€</p>
+          <p className="font-mono text-[9px] uppercase tracking-widest text-lkv-text-muted mb-1 font-bold">Vous devez</p>
+          <p className="font-mono font-bold text-lg text-lkv-primary">{expenses.userBalance}€</p>
         </div>
       </div>
       
       <div className="space-y-3 mb-6">
         {expenses.items.length === 0 && (
-          <p className="text-center text-sm text-[#5C6B5E] py-2">Aucune dépense enregistrée.</p>
+          <p className="text-center text-sm text-lkv-text-muted py-2">Aucune dépense enregistrée.</p>
         )}
         {expenses.items.map((item) => (
           <div key={item.id} className="flex items-center justify-between group p-3 glass-sub-card rounded-xl">
             <div className="flex items-start gap-3">
-              <div className="w-8 h-8 rounded-full glass-sub-card flex items-center justify-center text-[#17402C] flex-shrink-0 mt-0.5">
+              <div className="w-8 h-8 rounded-full glass-sub-card flex items-center justify-center text-lkv-primary flex-shrink-0 mt-0.5">
                 <Icon name="CurrencyEuroIcon" size={14} className="relative z-10" />
               </div>
               <div>
-                <h3 className="font-sans font-bold text-sm text-[#17402C]">{item.title}</h3>
-                <p className="text-[11px] text-[#5C6B5E] font-sans">{item.payer}</p>
+                <h3 className="font-sans font-bold text-sm text-lkv-primary">{item.title}</h3>
+                <p className="text-[11px] text-lkv-text-muted font-sans">{item.payer}</p>
               </div>
             </div>
             <div className="flex items-center gap-4">
               <div className="text-right">
-                <p className="font-mono font-bold text-sm text-[#17402C]">{item.amount}€</p>
-                <p className="font-mono text-[9px] uppercase tracking-widest text-[#5C6B5E]">{item.parts} parts</p>
+                <p className="font-mono font-bold text-sm text-lkv-primary">{item.amount}€</p>
+                <p className="font-mono text-[9px] uppercase tracking-widest text-lkv-text-muted">{item.parts} parts</p>
               </div>
               <button 
                 onClick={() => handleDeleteExpense(item.id)}
@@ -205,7 +205,7 @@ export default function DepensesCard({ expenses, groupId, onRefresh, user, membe
       </div>
       
       <div className="glass-sub-card rounded-2xl p-4 flex flex-col sm:flex-row items-center justify-between gap-4">
-        <p className="text-xs text-[#5C6B5E] font-sans leading-relaxed">
+        <p className="text-xs text-lkv-text-muted font-sans leading-relaxed">
           {expenses.userDebts}
         </p>
         <button 
@@ -225,12 +225,12 @@ export default function DepensesCard({ expenses, groupId, onRefresh, user, membe
             >
               <Icon name="XMarkIcon" size={18} className="relative z-10" />
             </button>
-            <h2 className="font-display font-bold text-2xl text-[#17402C] mb-4">Équilibre <span className="font-serif italic font-normal text-[#17402C]">des comptes</span></h2>
-            <p className="text-sm text-[#5C6B5E] mb-6">
+            <h2 className="font-display font-bold text-2xl text-lkv-primary mb-4">Équilibre <span className="font-serif italic font-normal text-lkv-primary">des comptes</span></h2>
+            <p className="text-sm text-lkv-text-muted mb-6">
               Simulation du calcul des dettes pour {expenses.items.length > 0 ? expenses.items.length : 0} dépenses.
             </p>
             <div className="glass-sub-card p-4 rounded-xl mb-6">
-              <p className="text-center font-mono text-sm text-[#17402C] font-semibold">Vous ne devez rien à personne pour l'instant (démo statique).</p>
+              <p className="text-center font-mono text-sm text-lkv-primary font-semibold">Vous ne devez rien à personne pour l'instant (démo statique).</p>
             </div>
             <button 
               onClick={() => setShowBalanceModal(false)}

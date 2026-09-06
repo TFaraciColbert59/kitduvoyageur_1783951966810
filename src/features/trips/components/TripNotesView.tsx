@@ -83,7 +83,7 @@ export function TripNotesView({ trip }: TripNotesViewProps) {
   return (
     <div className="space-y-6">
       {/* Bannière de statut & Action Clôture */}
-      <GlassCard tone="sage" className="p-5 rounded-[24px] border border-white/60 bg-[#17402C] text-white">
+      <GlassCard tone="sage" className="p-5 rounded-[24px] border border-white/60 bg-lkv-primary text-white">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
           <div className="flex items-start sm:items-center gap-3">
             <div className="w-10 h-10 rounded-full bg-white/20 flex items-center justify-center text-white shrink-0">
@@ -118,7 +118,7 @@ export function TripNotesView({ trip }: TripNotesViewProps) {
                 variant="primary"
                 size="sm"
                 onClick={() => setIsAddOpen(true)}
-                className="bg-white text-[#17402C] hover:bg-white/90"
+                className="bg-white text-lkv-primary hover:bg-white/90"
               >
                 <Plus size={16} className="mr-1.5" />
                 Ajouter un récit
@@ -135,8 +135,8 @@ export function TripNotesView({ trip }: TripNotesViewProps) {
             onClick={() => setSelectedDayFilter('all')}
             className={`px-3 py-1.5 rounded-full font-medium transition-colors ${
               selectedDayFilter === 'all'
-                ? 'bg-[#17402C] text-white'
-                : 'bg-black/5 text-[#5B7F55] hover:bg-black/10'
+                ? 'bg-lkv-primary text-white'
+                : 'bg-black/5 text-lkv-secondary hover:bg-black/10'
             }`}
           >
             Toutes ({notes.length})
@@ -147,8 +147,8 @@ export function TripNotesView({ trip }: TripNotesViewProps) {
               onClick={() => setSelectedDayFilter(day)}
               className={`px-3 py-1.5 rounded-full font-medium transition-colors ${
                 selectedDayFilter === day
-                  ? 'bg-[#17402C] text-white'
-                  : 'bg-black/5 text-[#5B7F55] hover:bg-black/10'
+                  ? 'bg-lkv-primary text-white'
+                  : 'bg-black/5 text-lkv-secondary hover:bg-black/10'
               }`}
             >
               Jour {day}
@@ -160,9 +160,9 @@ export function TripNotesView({ trip }: TripNotesViewProps) {
       {/* Liste des notes */}
       {filteredNotes.length === 0 ? (
         <GlassCard tone="neutral" className="p-8 rounded-[24px] text-center border border-white/60">
-          <BookOpen size={36} className="mx-auto text-[#5B7F55]/40 mb-2" />
-          <h4 className="text-sm font-semibold text-[#17402C]">Aucune note enregistrée</h4>
-          <p className="text-xs text-[#5B7F55] mt-1 max-w-sm mx-auto">
+          <BookOpen size={36} className="mx-auto text-lkv-secondary/40 mb-2" />
+          <h4 className="text-sm font-semibold text-lkv-primary">Aucune note enregistrée</h4>
+          <p className="text-xs text-lkv-secondary mt-1 max-w-sm mx-auto">
             {canEdit
               ? 'Racontez votre première étape ou vos impressions de terrain pour enrichir votre carnet.'
               : 'Aucun récit n\'a encore été partagé pour ce voyage.'}
@@ -187,14 +187,14 @@ export function TripNotesView({ trip }: TripNotesViewProps) {
               tone="neutral"
               className={`p-5 rounded-[22px] border transition-shadow ${
                 note.is_pinned
-                  ? 'border-[#17402C]/30 bg-[#FAF8F5]/90 shadow-sm'
+                  ? 'border-lkv-primary/30 bg-[#FAF8F5]/90 shadow-sm'
                   : 'border-white/70 bg-white/60'
               }`}
             >
               <div className="flex items-start justify-between gap-3 mb-2">
                 <div className="flex items-center gap-2 flex-wrap">
                   {note.day_number && (
-                    <span className="text-[11px] font-semibold px-2 py-0.5 rounded-full bg-[#17402C]/10 text-[#17402C]">
+                    <span className="text-[11px] font-semibold px-2 py-0.5 rounded-full bg-lkv-primary/10 text-lkv-primary">
                       Jour {note.day_number}
                     </span>
                   )}
@@ -209,7 +209,7 @@ export function TripNotesView({ trip }: TripNotesViewProps) {
                   <button
                     onClick={() => handleDelete(note.id, note.title)}
                     disabled={isPending}
-                    className="w-8 h-8 rounded-full flex items-center justify-center text-[#5B7F55] hover:text-red-600 hover:bg-red-50 transition-colors"
+                    className="w-8 h-8 rounded-full flex items-center justify-center text-lkv-secondary hover:text-red-600 hover:bg-red-50 transition-colors"
                     aria-label="Supprimer la note"
                   >
                     <Trash2 size={16} />
@@ -218,14 +218,14 @@ export function TripNotesView({ trip }: TripNotesViewProps) {
               </div>
 
               {note.title && (
-                <h4 className="font-semibold text-base text-[#17402C] mb-2">{note.title}</h4>
+                <h4 className="font-semibold text-base text-lkv-primary mb-2">{note.title}</h4>
               )}
 
-              <p className="text-sm text-[#17402C]/90 whitespace-pre-wrap leading-relaxed">
+              <p className="text-sm text-lkv-primary/90 whitespace-pre-wrap leading-relaxed">
                 {note.content}
               </p>
 
-              <div className="mt-4 pt-3 border-t border-black/5 flex items-center justify-between text-[11px] text-[#5B7F55]">
+              <div className="mt-4 pt-3 border-t border-black/5 flex items-center justify-between text-[11px] text-lkv-secondary">
                 <div className="flex items-center gap-1.5">
                   <User size={12} />
                   <span>{note.author?.full_name || 'Explorateur'}</span>
@@ -250,13 +250,13 @@ export function TripNotesView({ trip }: TripNotesViewProps) {
         >
           <div className="bg-[#FAF8F5] border border-white/80 rounded-[26px] max-w-lg w-full p-6 shadow-2xl space-y-4">
             <div className="flex items-center justify-between border-b border-black/5 pb-3">
-              <h3 id="add-note-title" className="text-base font-bold text-[#17402C] flex items-center gap-2">
+              <h3 id="add-note-title" className="text-base font-bold text-lkv-primary flex items-center gap-2">
                 <Edit3 size={18} />
                 Nouvelle page du carnet de bord
               </h3>
               <button
                 onClick={() => setIsAddOpen(false)}
-                className="w-8 h-8 flex items-center justify-center rounded-full hover:bg-black/5 text-[#5B7F55]"
+                className="w-8 h-8 flex items-center justify-center rounded-full hover:bg-black/5 text-lkv-secondary"
                 aria-label="Fermer"
               >
                 <X size={18} />
@@ -271,20 +271,20 @@ export function TripNotesView({ trip }: TripNotesViewProps) {
 
             <form onSubmit={handleAddSubmit} className="space-y-4">
               <div>
-                <label className="block text-xs font-semibold text-[#17402C] mb-1">
+                <label className="block text-xs font-semibold text-lkv-primary mb-1">
                   Titre de la note (optionnel)
                 </label>
                 <input
                   type="text"
                   name="title"
                   placeholder="Ex : Sommet atteint au lever du jour"
-                  className="w-full text-sm px-3 py-2 rounded-xl border border-black/10 bg-white focus:outline-none focus:ring-2 focus:ring-[#17402C]/20"
+                  className="w-full text-sm px-3 py-2 rounded-xl border border-black/10 bg-white focus:outline-none focus:ring-2 focus:ring-lkv-primary/20"
                 />
               </div>
 
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className="block text-xs font-semibold text-[#17402C] mb-1">
+                  <label className="block text-xs font-semibold text-lkv-primary mb-1">
                     Jour de trek (optionnel)
                   </label>
                   <input
@@ -293,17 +293,17 @@ export function TripNotesView({ trip }: TripNotesViewProps) {
                     min={1}
                     max={60}
                     placeholder="Ex : 1"
-                    className="w-full text-sm px-3 py-2 rounded-xl border border-black/10 bg-white focus:outline-none focus:ring-2 focus:ring-[#17402C]/20"
+                    className="w-full text-sm px-3 py-2 rounded-xl border border-black/10 bg-white focus:outline-none focus:ring-2 focus:ring-lkv-primary/20"
                   />
                 </div>
 
                 <div className="flex items-center pt-5">
-                  <label className="flex items-center gap-2 cursor-pointer select-none text-xs text-[#17402C] font-medium">
+                  <label className="flex items-center gap-2 cursor-pointer select-none text-xs text-lkv-primary font-medium">
                     <input
                       type="checkbox"
                       name="isPinned"
                       value="true"
-                      className="w-4 h-4 rounded border-gray-300 text-[#17402C] focus:ring-[#17402C]"
+                      className="w-4 h-4 rounded border-gray-300 text-lkv-primary focus:ring-lkv-primary"
                     />
                     Épingler en haut
                   </label>
@@ -311,7 +311,7 @@ export function TripNotesView({ trip }: TripNotesViewProps) {
               </div>
 
               <div>
-                <label className="block text-xs font-semibold text-[#17402C] mb-1">
+                <label className="block text-xs font-semibold text-lkv-primary mb-1">
                   Récit & Notes de terrain *
                 </label>
                 <textarea
@@ -319,7 +319,7 @@ export function TripNotesView({ trip }: TripNotesViewProps) {
                   required
                   rows={4}
                   placeholder="Conditions du sentier, faune observée, sensations, astuces..."
-                  className="w-full text-sm px-3 py-2 rounded-xl border border-black/10 bg-white focus:outline-none focus:ring-2 focus:ring-[#17402C]/20"
+                  className="w-full text-sm px-3 py-2 rounded-xl border border-black/10 bg-white focus:outline-none focus:ring-2 focus:ring-lkv-primary/20"
                 />
               </div>
 

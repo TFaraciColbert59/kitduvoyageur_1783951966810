@@ -88,10 +88,10 @@ export default function MobileGroupesV2({
   const skeletons = [0, 1, 2];
 
   return (
-    <div className="bg-stone-50 min-h-screen text-[#17402C]">
+    <div className="bg-stone-50 min-h-screen text-lkv-primary">
       {/* ── HEADER ── */}
-      <div className="flex justify-between items-center px-4 py-3 bg-white/80 backdrop-blur-md border-b border-[#17402C]/10">
-        <div className="inline-flex items-center gap-2 text-[#17402C] text-xs font-bold">
+      <div className="flex justify-between items-center px-4 py-3 bg-white/80 backdrop-blur-md border-b border-lkv-primary/10">
+        <div className="inline-flex items-center gap-2 text-lkv-primary text-xs font-bold">
           <svg viewBox="0 0 32 32" width="16" height="16" fill="none">
             <path d="M2 24 L10 10 L14 16 L20 6 L30 24 Z" stroke="currentColor" strokeWidth="1.6" strokeLinejoin="round" />
             <path d="M2 24 L30 24" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" />
@@ -111,7 +111,7 @@ export default function MobileGroupesV2({
 
       {/* ── SEARCH OVERLAY ── */}
       {searchOpen && (
-        <div className="p-3 bg-white border-b border-[#17402C]/10">
+        <div className="p-3 bg-white border-b border-lkv-primary/10">
           <div className="flex items-center gap-2 relative">
             <input
               autoFocus
@@ -121,7 +121,7 @@ export default function MobileGroupesV2({
               className="glass-input w-full text-xs"
             />
             {search && (
-              <button onClick={() => setSearch('')} aria-label="Effacer" className="absolute right-3 text-xs text-[#5C6B5E]">
+              <button onClick={() => setSearch('')} aria-label="Effacer" className="absolute right-3 text-xs text-lkv-text-muted">
                 {Ic.close}
               </button>
             )}
@@ -135,10 +135,10 @@ export default function MobileGroupesV2({
           <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
           {myGroups.length} groupe{myGroups.length > 1 ? 's' : ''}{myGroups.length > 0 ? ` · ${prepCount} en préparation` : ''}
         </div>
-        <h1 className="font-display text-3xl font-bold tracking-tight leading-tight mb-2 text-[#17402C]">
-          {myGroups.length === 0 ? <>Le voyage se prépare<br /><em className="font-serif italic text-[#5C6B5E] font-normal">à plusieurs.</em></> : <>Vos voyages,<br /><em className="font-serif italic text-[#5C6B5E] font-normal">en préparation.</em></>}
+        <h1 className="font-display text-3xl font-bold tracking-tight leading-tight mb-2 text-lkv-primary">
+          {myGroups.length === 0 ? <>Le voyage se prépare<br /><em className="font-serif italic text-lkv-text-muted font-normal">à plusieurs.</em></> : <>Vos voyages,<br /><em className="font-serif italic text-lkv-text-muted font-normal">en préparation.</em></>}
         </h1>
-        <p className="text-xs text-[#5C6B5E] leading-relaxed">
+        <p className="text-xs text-lkv-text-muted leading-relaxed">
           {myGroups.length === 0
             ? 'Créez votre premier groupe pour rassembler vos compagnons, planifier les étapes, partager la logistique.'
             : 'Un groupe par traversée. On prépare à plusieurs, on part, puis tout atterrit dans le Carnet.'}
@@ -154,11 +154,11 @@ export default function MobileGroupesV2({
             { v: String(prepCount), l: 'À préparer', em: 'actifs' },
           ].map((k) => (
             <div key={k.l} className="glass-sub-card p-3 rounded-xl text-center">
-              <div className="font-display text-lg font-bold text-[#17402C]">
+              <div className="font-display text-lg font-bold text-lkv-primary">
                 {k.v}
-                {k.em && <em className="font-serif italic font-normal text-xs text-[#5C6B5E] ml-1">{k.em}</em>}
+                {k.em && <em className="font-serif italic font-normal text-xs text-lkv-text-muted ml-1">{k.em}</em>}
               </div>
-              <div className="text-[9px] font-mono uppercase tracking-widest text-[#5C6B5E] mt-1 font-bold">{k.l}</div>
+              <div className="text-[9px] font-mono uppercase tracking-widest text-lkv-text-muted mt-1 font-bold">{k.l}</div>
             </div>
           ))}
         </div>
@@ -195,8 +195,8 @@ export default function MobileGroupesV2({
       ) : error ? (
         <div className="glass p-8 m-4 text-center">
           <p className="text-4xl mb-3">⚠️</p>
-          <h3 className="font-display font-bold text-lg text-[#17402C] mb-1">Erreur de chargement</h3>
-          <p className="text-xs text-[#5C6B5E] mb-4">{error}</p>
+          <h3 className="font-display font-bold text-lg text-lkv-primary mb-1">Erreur de chargement</h3>
+          <p className="text-xs text-lkv-text-muted mb-4">{error}</p>
           <button onClick={onRetry} className="glass-capsule-btn primary py-2 px-4 text-xs font-bold">
             <span className="relative z-10">Réessayer</span>
           </button>
@@ -207,8 +207,8 @@ export default function MobileGroupesV2({
         ) : !user ? (
           <div className="glass p-8 m-4 text-center">
             <p className="text-4xl mb-3">🗺️</p>
-            <h3 className="font-display font-bold text-lg text-[#17402C] mb-1">Connectez-vous</h3>
-            <p className="text-xs text-[#5C6B5E] mb-4">Retrouvez vos groupes et vos compagnons.</p>
+            <h3 className="font-display font-bold text-lg text-lkv-primary mb-1">Connectez-vous</h3>
+            <p className="text-xs text-lkv-text-muted mb-4">Retrouvez vos groupes et vos compagnons.</p>
             <Link href="/connexion" className="glass-capsule-btn primary py-2.5 px-6 text-xs font-bold inline-flex">
               <span className="relative z-10">Se connecter</span>
             </Link>
@@ -269,7 +269,7 @@ function MainList({ featured, rest, pendingCount, showDiscover, onOpenGroup, men
     <div className="px-4 pb-28 space-y-4">
       {featured && (
         <Link href={`/groupes/${featured.id}`} className="block">
-          <div className="glass p-5 rounded-2xl relative overflow-hidden bg-gradient-to-br from-[#17402C]/90 to-[#17402C]/70 text-white min-h-[220px] flex flex-col justify-between">
+          <div className="glass p-5 rounded-2xl relative overflow-hidden bg-gradient-to-br from-var(--lkv-primary)/90 to-var(--lkv-primary)/70 text-white min-h-[220px] flex flex-col justify-between">
             <div className="glass-pill text-white border-white/20 self-start">
               <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
               Cockpit actif · {featured.optimization_score || 0}%
@@ -293,7 +293,7 @@ function MainList({ featured, rest, pendingCount, showDiscover, onOpenGroup, men
       )}
 
       {pendingCount > 0 && (
-        <button onClick={goInsInvites} className="w-full glass-sub-card p-3 rounded-xl flex items-center justify-between text-xs font-semibold text-[#17402C]">
+        <button onClick={goInsInvites} className="w-full glass-sub-card p-3 rounded-xl flex items-center justify-between text-xs font-semibold text-lkv-primary">
           <span>{pendingCount} invitation{pendingCount > 1 ? 's' : ''} à traiter</span>
           <span>{Ic.chev}</span>
         </button>
@@ -301,7 +301,7 @@ function MainList({ featured, rest, pendingCount, showDiscover, onOpenGroup, men
 
       {rest.length > 0 && (
         <div>
-          <h3 className="font-display font-bold text-sm text-[#17402C] mb-3">Vos autres groupes</h3>
+          <h3 className="font-display font-bold text-sm text-lkv-primary mb-3">Vos autres groupes</h3>
           <div className="space-y-3">
             {rest.map((g: any) => (
               <GroupRow key={g.id} g={g} user={user} onOpen={() => onOpenGroup(g.id)} menuFor={menuFor} setMenuFor={setMenuFor} onEdit={() => onEdit(g)} onDelete={() => onDelete(g)} onLeave={() => onLeave(g)} />
@@ -327,8 +327,8 @@ function GroupRow({ g, user, onOpen, menuFor, setMenuFor, onEdit, onDelete, onLe
           {THEME_EMOJI[g.theme] || '🎒'}
         </div>
         <div className="min-w-0">
-          <h4 className="font-bold text-xs text-[#17402C] truncate">{g.name}</h4>
-          <p className="text-[10px] text-[#5C6B5E] font-mono mt-0.5">{g.destination || 'Voyage'} · {g.member_count || 1} pers.</p>
+          <h4 className="font-bold text-xs text-lkv-primary truncate">{g.name}</h4>
+          <p className="text-[10px] text-lkv-text-muted font-mono mt-0.5">{g.destination || 'Voyage'} · {g.member_count || 1} pers.</p>
         </div>
       </div>
       <div className="flex items-center gap-2">
@@ -357,7 +357,7 @@ function DiscoverList({ groups, total, search, setSearch, theme, setTheme, myGro
     <div className="px-4 pb-28 space-y-3">
       <div className="flex gap-1.5 overflow-x-auto pb-1 scrollbar-none">
         {['Tous', ...THEMES].map(t => (
-          <button key={t} onClick={() => setTheme(t)} className={`glass-pill cursor-pointer whitespace-nowrap ${theme === t ? 'bg-[#17402C] text-white' : ''}`}>
+          <button key={t} onClick={() => setTheme(t)} className={`glass-pill cursor-pointer whitespace-nowrap ${theme === t ? 'bg-lkv-primary text-white' : ''}`}>
             {t !== 'Tous' ? `${THEME_EMOJI[t]} ` : ''}{t}
           </button>
         ))}
@@ -366,7 +366,7 @@ function DiscoverList({ groups, total, search, setSearch, theme, setTheme, myGro
       {groups.length === 0 ? (
         <div className="glass p-8 text-center">
           <p className="text-3xl mb-2">🔍</p>
-          <p className="font-bold text-xs text-[#17402C]">Aucun groupe disponible</p>
+          <p className="font-bold text-xs text-lkv-primary">Aucun groupe disponible</p>
         </div>
       ) : (
         groups.map(g => {
@@ -378,8 +378,8 @@ function DiscoverList({ groups, total, search, setSearch, theme, setTheme, myGro
                   {THEME_EMOJI[g.theme] || '🎒'}
                 </div>
                 <div className="min-w-0">
-                  <h4 className="font-bold text-xs text-[#17402C] truncate">{g.name}</h4>
-                  <p className="text-[10px] text-[#5C6B5E] font-mono mt-0.5">{g.destination} · {g.member_count || 1} pers.</p>
+                  <h4 className="font-bold text-xs text-lkv-primary truncate">{g.name}</h4>
+                  <p className="text-[10px] text-lkv-text-muted font-mono mt-0.5">{g.destination} · {g.member_count || 1} pers.</p>
                 </div>
               </div>
               <div>
@@ -404,8 +404,8 @@ function DiscoverList({ groups, total, search, setSearch, theme, setTheme, myGro
 function DiscoverBlock({ onExplore }: { onExplore: () => void }) {
   return (
     <div className="glass p-5 rounded-2xl text-center space-y-3">
-      <h5 className="font-display font-bold text-base text-[#17402C]">Envie de partir avec quelqu'un ?</h5>
-      <p className="text-xs text-[#5C6B5E] leading-relaxed">Rejoignez un groupe existant ou lancez le vôtre en trois minutes.</p>
+      <h5 className="font-display font-bold text-base text-lkv-primary">Envie de partir avec quelqu'un ?</h5>
+      <p className="text-xs text-lkv-text-muted leading-relaxed">Rejoignez un groupe existant ou lancez le vôtre en trois minutes.</p>
       <button onClick={onExplore} className="glass-capsule-btn primary py-2 px-4 text-xs font-bold">
         <span className="relative z-10">Découvrir des groupes →</span>
       </button>
@@ -418,8 +418,8 @@ function EmptyState({ onExplore, onCreate }: { onExplore: () => void; onCreate: 
     <div className="px-4 pb-28">
       <div className="glass p-8 text-center space-y-4 rounded-2xl">
         <span className="text-4xl block">🗺️</span>
-        <h3 className="font-display font-bold text-xl text-[#17402C]">Rien à préparer pour l'instant.</h3>
-        <p className="text-xs text-[#5C6B5E] max-w-xs mx-auto leading-relaxed">Créez un groupe autour d'une traversée, invitez vos compagnons, et le carnet se composera tout seul au retour.</p>
+        <h3 className="font-display font-bold text-xl text-lkv-primary">Rien à préparer pour l'instant.</h3>
+        <p className="text-xs text-lkv-text-muted max-w-xs mx-auto leading-relaxed">Créez un groupe autour d'une traversée, invitez vos compagnons, et le carnet se composera tout seul au retour.</p>
         <div className="flex flex-col gap-2 pt-2">
           <button onClick={onCreate} className="glass-capsule-btn primary py-2.5 px-6 text-xs font-bold">
             <span className="relative z-10">+ Créer mon premier groupe</span>
@@ -438,8 +438,8 @@ function InvitesList({ invites, onAccept, onDecline, user, goDecouvrir }: any) {
     return (
       <div className="glass p-8 m-4 text-center">
         <p className="text-4xl mb-3">🗺️</p>
-        <h3 className="font-display font-bold text-lg text-[#17402C] mb-1">Connectez-vous</h3>
-        <p className="text-xs text-[#5C6B5E] mb-4">Pour voir vos invitations.</p>
+        <h3 className="font-display font-bold text-lg text-lkv-primary mb-1">Connectez-vous</h3>
+        <p className="text-xs text-lkv-text-muted mb-4">Pour voir vos invitations.</p>
         <Link href="/connexion" className="glass-capsule-btn primary py-2.5 px-6 text-xs font-bold inline-flex">
           <span className="relative z-10">Se connecter</span>
         </Link>
@@ -450,8 +450,8 @@ function InvitesList({ invites, onAccept, onDecline, user, goDecouvrir }: any) {
     return (
       <div className="glass p-8 m-4 text-center space-y-3">
         <p className="text-4xl">📬</p>
-        <h3 className="font-display font-bold text-lg text-[#17402C]">Aucune invitation</h3>
-        <p className="text-xs text-[#5C6B5E] max-w-xs mx-auto">Quand quelqu'un vous invitera à rejoindre un groupe, vous le verrez ici.</p>
+        <h3 className="font-display font-bold text-lg text-lkv-primary">Aucune invitation</h3>
+        <p className="text-xs text-lkv-text-muted max-w-xs mx-auto">Quand quelqu'un vous invitera à rejoindre un groupe, vous le verrez ici.</p>
         <button onClick={goDecouvrir} className="glass-capsule-btn primary py-2 px-4 text-xs font-bold">
           <span className="relative z-10">Découvrir des groupes</span>
         </button>
@@ -464,7 +464,7 @@ function InvitesList({ invites, onAccept, onDecline, user, goDecouvrir }: any) {
         <div key={inv.id} className="glass p-4 rounded-2xl flex items-center justify-between gap-3">
           <div>
             <span className="glass-pill text-[9px]">Invitation</span>
-            <p className="text-xs font-bold text-[#17402C] mt-1">Rejoindre {inv.name}</p>
+            <p className="text-xs font-bold text-lkv-primary mt-1">Rejoindre {inv.name}</p>
           </div>
           <div className="flex gap-2">
             <button onClick={() => onDecline(inv.group_id)} className="glass-capsule-btn py-1.5 px-3 text-xs font-semibold text-red-600">
