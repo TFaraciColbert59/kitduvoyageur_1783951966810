@@ -2,10 +2,9 @@
 
 import React, { useState, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
-import Header from '@/components/Header';
 import MobilePageShell from '@/components/mobile-nav/MobilePageShell';
 import { CountryDetail } from '@/lib/countryDetails';
-import { CompteBackground } from '@/components/compte/CompteBackground';
+import AppShellDesktop from '@/components/shell/AppShellDesktop';
 import PaysLeftSidebar, { PaysSection } from '@/components/pays/PaysLeftSidebar';
 import PaysRightSidebar from '@/components/pays/PaysRightSidebar';
 import PaysHeroOverview from '@/components/pays/PaysHeroOverview';
@@ -77,58 +76,30 @@ export default function CountryDetailClient({ country }: CountryDetailClientProp
   };
 
   return (
-    <div className="min-h-screen md:h-dvh md:overflow-hidden text-[#17402C] selection:bg-[#17402C]/10 font-sans relative">
-      {/* Background immersif végétal / canopée */}
-      <CompteBackground />
-
-      {/* ══════════════════════════════════════════════════════════════════════
-          1. VERSION MOBILE (< 768px)
-         ══════════════════════════════════════════════════════════════════════ */}
-      <div className="block md:hidden min-h-screen">
+    <AppShellDesktop
+      mobileSlot={
         <MobilePageShell videoBackground={true}>
           <MobileCountryDetailView country={country} flagEmoji={flagEmoji} />
         </MobilePageShell>
-      </div>
-
-      {/* ══════════════════════════════════════════════════════════════════════
-          2. VERSION DESKTOP COCKPIT 3 COLONNES FULLSCREEN (hidden md:flex)
-         ══════════════════════════════════════════════════════════════════════ */}
-      <div className="hidden md:flex flex-col h-full overflow-hidden">
-        {/* Global Site Header */}
-        <Header />
-
-        {/* Main 3-Column Cockpit Container */}
-        <div className="flex-1 overflow-hidden pt-14 sm:pt-[62px] pb-4 px-4 sm:px-6 lg:px-8 max-w-[1680px] w-full mx-auto">
-          <div className="flex items-start gap-5 h-full">
-
-            {/* LEFT COLUMN: NAVIGATION TABS SIDEBAR (260px) */}
-            <div className="w-[260px] shrink-0 h-full overflow-hidden">
-              <PaysLeftSidebar
-                country={country}
-                activeSection={activeSection}
-                onSectionChange={setActiveSection}
-                flagEmoji={flagEmoji}
-                onPrint={() => window.print()}
-              />
-            </div>
-
-            {/* CENTER COLUMN: EXPANDED MAIN TAB CONTENT */}
-            <main className="flex-1 h-full overflow-y-auto no-scrollbar space-y-4 px-1 pb-6">
-              {renderSectionContent()}
-            </main>
-
-            {/* RIGHT COLUMN: SIDEBAR WIDGETS WITHOUT HEADERS (300px) */}
-            <div className="w-[300px] shrink-0 h-full overflow-hidden">
-              <PaysRightSidebar
-                country={country}
-                flagEmoji={flagEmoji}
-                onCountryGlobeClick={handleCountryGlobeClick}
-              />
-            </div>
-
-          </div>
-        </div>
-      </div>
-    </div>
+      }
+      sidebarLeft={
+        <PaysLeftSidebar
+          country={country}
+          activeSection={activeSection}
+          onSectionChange={setActiveSection}
+          flagEmoji={flagEmoji}
+          onPrint={() => window.print()}
+        />
+      }
+      sidebarRight={
+        <PaysRightSidebar
+          country={country}
+          flagEmoji={flagEmoji}
+          onCountryGlobeClick={handleCountryGlobeClick}
+        />
+      }
+    >
+      {renderSectionContent()}
+    </AppShellDesktop>
   );
 }

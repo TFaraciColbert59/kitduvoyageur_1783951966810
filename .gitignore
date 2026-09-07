@@ -43,6 +43,7 @@ dev-server.err.log
 
 # Playwright
 test-results/
+playwright-report/
 
 # Géodonnées volumineuses générées (3 Go)
 geo_data/
