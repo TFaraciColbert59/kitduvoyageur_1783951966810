@@ -117,7 +117,7 @@ export default function VoyagesClient({
                 className={`w-full px-3 py-2.5 rounded-[var(--lkv-radius-md)] font-bold text-xs flex items-center justify-between border transition-all min-h-[var(--lkv-touch-min)] cursor-pointer ${
                   activeTab === tab.id
                     ? 'bg-[var(--lkv-primary)] text-white border-[var(--lkv-primary)] shadow-sm'
-                    : 'bg-white/80 hover:bg-white text-[var(--lkv-text-primary)] border-white/80 shadow-[0_1px_2px_rgba(0,0,0,0.04)]'
+                    : 'bg-white/80 hover:bg-white text-[var(--lkv-text-primary)] border-white/80 shadow-2xs'
                 }`}
               >
                 <span>{tab.label}</span>
