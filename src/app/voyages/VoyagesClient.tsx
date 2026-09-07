@@ -199,16 +199,16 @@ export default function VoyagesClient({
       sidebarRight={renderSidebarRight()}
       mobileSlot={
         <MobilePageShell safeTop={true} hasBottomNav={true}>
-          <div className="max-w-7xl mx-auto px-4 py-4 pb-24 text-forest-900">
+          <div className="max-w-7xl mx-auto px-4 py-4 pb-28 text-[var(--lkv-text-primary)]">
             <div className="flex items-center justify-between gap-4 mb-4">
               <div>
                 <h1 className="text-2xl font-extrabold tracking-tight">Expéditions</h1>
-                <p className="text-xs text-sage-700">Planifiez et suivez vos aventures.</p>
+                <p className="text-xs text-[var(--lkv-text-secondary)]">Planifiez et suivez vos aventures.</p>
               </div>
               <GlassCapsuleBtn
                 variant="primary"
                 onClick={() => setIsCreateModalOpen(true)}
-                className="flex items-center gap-1"
+                className="flex items-center gap-1 min-h-[var(--lkv-touch-min)] cursor-pointer"
               >
                 <Plus size={14} />
                 <span>Nouveau</span>
@@ -245,7 +245,7 @@ export default function VoyagesClient({
     >
       <div className="space-y-4">
         {/* Barre de recherche et filtres principale */}
-        <div className="p-3.5 rounded-2xl glass border border-white/60">
+        <div className="p-3.5 rounded-[var(--lkv-radius-card)] glass border border-white/60">
           <TripFiltersBar
             filters={filters}
             onChange={setFilters}
