@@ -18,6 +18,7 @@ import { ActiveTripSwitcher } from './ActiveTripSwitcher';
 import { TripCompactHeader } from './TripCompactHeader';
 import { TripMobileSectionsSheet } from './TripMobileSectionsSheet';
 import { TripShareModal } from './TripShareModal';
+import { applyLKDVStatusBarTheme } from '@/lib/native/status-bar';
 
 export interface TripHubShellProps {
   trip: TripFull;
@@ -50,6 +51,11 @@ export function TripHubShell({ trip, profile, phase, children }: TripHubShellPro
 
   // Y5.4 — Gestion du retour matériel Android (section -> aperçu -> /voyages)
   useAndroidTripBackNav(trip.slug, activeSection);
+
+  // Y7.5 — Thème de barre d'état natif LKDV (vert forêt)
+  useEffect(() => {
+    applyLKDVStatusBarTheme();
+  }, []);
 
   const handleToggleActive = async () => {
     if (isTripActive) {

@@ -18,6 +18,7 @@ import { GlassCapsuleBtn } from '@/components/ui/GlassCapsuleBtn';
 import { EmptyState } from '@/components/ui/EmptyState';
 import { TripCompletionModal } from './TripCompletionModal';
 import { ConfirmDialog } from './ConfirmDialog';
+import { useHapticFeedback } from '@/hooks/useHapticFeedback';
 import { addTripNoteAction, deleteTripNoteAction } from '@/app/voyages/completion-actions';
 import type { TripFull } from '../types/trip.types';
 
@@ -32,6 +33,7 @@ export function TripNotesView({ trip }: TripNotesViewProps) {
   const [isPending, startTransition] = useTransition();
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [confirmState, setConfirmState] = useState<{ noteId: string; label: string } | null>(null);
+  const { triggerHaptic } = useHapticFeedback();
 
   const canEdit = trip.permissions.canEdit;
   const notes = trip.notes || [];
@@ -56,6 +58,7 @@ export function TripNotesView({ trip }: TripNotesViewProps) {
     if (!confirmState) return;
     const { noteId } = confirmState;
     setConfirmState(null);
+    triggerHaptic('medium');
     startTransition(async () => {
       const formData = new FormData();
       formData.set('tripId', trip.id);
@@ -80,6 +83,7 @@ export function TripNotesView({ trip }: TripNotesViewProps) {
     startTransition(async () => {
       const res = await addTripNoteAction(null, formData);
       if (res.success) {
+        triggerHaptic('success');
         setIsAddOpen(false);
         form.reset();
       } else {

@@ -7,6 +7,7 @@ import { GlassCapsuleBtn } from '@/components/ui/GlassCapsuleBtn';
 import { EmptyState } from '@/components/ui/EmptyState';
 import { TripBadge } from './TripBadge';
 import { ConfirmDialog } from './ConfirmDialog';
+import { useHapticFeedback } from '@/hooks/useHapticFeedback';
 import { inviteCollaboratorAction, updateRoleAction, removeCollaboratorAction } from '@/app/voyages/collab-actions';
 import type { TripFull } from '../types/trip.types';
 
@@ -21,10 +22,12 @@ export function TripTeamView({ trip }: TripTeamViewProps) {
   const [actionError, setActionError] = useState<string | null>(null);
   const [confirmState, setConfirmState] = useState<{ collaboratorId: string; name: string } | null>(null);
   const [isPending, startTransition] = useTransition();
+  const { triggerHaptic } = useHapticFeedback();
 
   const isOwner = trip.permissions.canInvite; // Seul l'owner a canInvite
 
   const handleRoleChange = (collaboratorId: string, newRole: 'owner' | 'editor' | 'viewer') => {
+    triggerHaptic('selection');
     setActionError(null);
     startTransition(async () => {
       const res = await updateRoleAction(trip.id, collaboratorId, newRole, trip.slug);
@@ -43,6 +46,7 @@ export function TripTeamView({ trip }: TripTeamViewProps) {
     if (!confirmState) return;
     const { collaboratorId } = confirmState;
     setConfirmState(null);
+    triggerHaptic('medium');
     startTransition(async () => {
       const res = await removeCollaboratorAction(trip.id, collaboratorId, trip.slug);
       if (!res.success) {
@@ -65,6 +69,7 @@ export function TripTeamView({ trip }: TripTeamViewProps) {
       if (!res.success) {
         setInviteError(res.error || 'Erreur lors de l\'invitation');
       } else {
+        triggerHaptic('success');
         setInviteSuccess('Invitation envoyée ! Le voyageur a été ajouté.');
         setTimeout(() => {
           setIsInviteOpen(false);

@@ -158,6 +158,7 @@ export function TripKitView({ trip, analysis, showBackLink: _showBackLink = fals
   });
 
   const handleTogglePacked = (item: TripItem) => {
+    triggerHaptic('selection');
     const nextPacked = !item.is_packed;
     setOptimisticItems((prev) =>
       prev.map((i) => (i.id === item.id ? { ...i, is_packed: nextPacked } : i))
@@ -169,6 +170,7 @@ export function TripKitView({ trip, analysis, showBackLink: _showBackLink = fals
   };
 
   const handleDeleteItem = (itemId: string) => {
+    triggerHaptic('medium');
     setOptimisticItems((prev) => prev.filter((i) => i.id !== itemId));
 
     startTransition(async () => {
@@ -177,12 +179,14 @@ export function TripKitView({ trip, analysis, showBackLink: _showBackLink = fals
   };
 
   const handleAddRecommended = (rec: ContextualGearRecommendation) => {
+    triggerHaptic('success');
     startTransition(async () => {
       await addRecommendedItemAction(trip.id, trip.slug, rec);
     });
   };
 
   const handleBuyOnShop = (rec: ContextualGearRecommendation) => {
+    triggerHaptic('success');
     if (!rec.shopProduct) return;
     const p = rec.shopProduct;
 

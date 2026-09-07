@@ -6,6 +6,7 @@ import { GlassCard } from '@/components/ui/GlassCard';
 import { EmptyState } from '@/components/ui/EmptyState';
 import { Shield, CheckCircle2, Clock, AlertTriangle, PhoneCall, Radio, Plus } from 'lucide-react';
 import { GlassCapsuleBtn } from '@/components/ui/GlassCapsuleBtn';
+import { useHapticFeedback } from '@/hooks/useHapticFeedback';
 
 interface TripSafetyViewProps {
   trip: TripFull;
@@ -43,8 +44,15 @@ const STATUS_CONFIG: Record<
 
 export function TripSafetyView({ trip }: TripSafetyViewProps) {
   const [infoNote, setInfoNote] = useState(false);
+  const [checkpoints, setCheckpoints] = useState<TripSafetyCheckpoint[]>(trip.safety_checkpoints || []);
+  const { triggerHaptic } = useHapticFeedback();
 
-  const checkpoints = trip.safety_checkpoints || [];
+  const handleCheckIn = (cpId: string) => {
+    triggerHaptic('success');
+    setCheckpoints(prev =>
+      prev.map(c => (c.id === cpId ? { ...c, status: 'checked' as const } : c))
+    );
+  };
 
   return (
     <div className="space-y-6">
@@ -129,12 +137,25 @@ export function TripSafetyView({ trip }: TripSafetyViewProps) {
                         </p>
                       )}
                     </div>
-                    <span
-                      className={`text-xs px-2.5 py-1 rounded-full border font-medium flex items-center gap-1 shrink-0 ${statusCfg.bg}`}
-                    >
-                      {statusCfg.icon}
-                      {statusCfg.label}
-                    </span>
+                    <div className="flex flex-col items-end gap-2 shrink-0">
+                      <span
+                        className={`text-xs px-2.5 py-1 rounded-full border font-medium flex items-center gap-1 shrink-0 ${statusCfg.bg}`}
+                      >
+                        {statusCfg.icon}
+                        {statusCfg.label}
+                      </span>
+                      {cp.status !== 'checked' && trip.permissions.canEdit && (
+                        <button
+                          type="button"
+                          onClick={() => handleCheckIn(cp.id)}
+                          className="min-h-[44px] px-3 py-1.5 rounded-full text-xs font-semibold glass-sub-card border border-white/60 hover:bg-white text-[var(--lkv-primary)] flex items-center gap-1.5 cursor-pointer active:scale-95 transition-transform"
+                          aria-label={`Pointer le passage : ${cp.label}`}
+                        >
+                          <CheckCircle2 size={13} className="text-[var(--lkv-success)]" />
+                          <span>Pointer</span>
+                        </button>
+                      )}
+                    </div>
                   </div>
                 </GlassCard>
               );

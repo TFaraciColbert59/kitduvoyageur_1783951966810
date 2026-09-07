@@ -18,6 +18,7 @@ import { GlassCapsuleBtn } from '@/components/ui/GlassCapsuleBtn';
 import { EmptyState } from '@/components/ui/EmptyState';
 import { checkDocumentExpiry } from '../engine/exportEngine';
 import { ConfirmDialog } from './ConfirmDialog';
+import { useHapticFeedback } from '@/hooks/useHapticFeedback';
 import { addTripDocumentAction, deleteTripDocumentAction } from '@/app/voyages/document-actions';
 import type { TripFull, TripDocumentCategory } from '../types/trip.types';
 
@@ -39,6 +40,7 @@ export function TripDocumentsView({ trip }: TripDocumentsViewProps) {
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
   const [isPending, startTransition] = useTransition();
   const [confirmState, setConfirmState] = useState<{ docId: string; title: string } | null>(null);
+  const { triggerHaptic } = useHapticFeedback();
 
   const canEdit = trip.permissions.canEdit;
 
@@ -46,6 +48,7 @@ export function TripDocumentsView({ trip }: TripDocumentsViewProps) {
     if (!confirmState) return;
     const { docId } = confirmState;
     setConfirmState(null);
+    triggerHaptic('medium');
     startTransition(async () => {
       const res = await deleteTripDocumentAction(trip.id, docId, trip.slug);
       if (!res.success) {
@@ -67,6 +70,7 @@ export function TripDocumentsView({ trip }: TripDocumentsViewProps) {
       if (!res.success) {
         setErrorMsg(res.error || 'Erreur lors de l\'enregistrement');
       } else {
+        triggerHaptic('success');
         setIsAddOpen(false);
       }
     });

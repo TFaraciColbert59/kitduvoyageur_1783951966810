@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { ArrowLeft, Compass, Share2, Check, Plus } from 'lucide-react';
 import { GlassSubCard, GlassPill, GlassCapsuleBtn } from '@/components/ui';
+import { useHapticFeedback } from '@/hooks/useHapticFeedback';
 import { getPhaseLabel, type TripPhase } from '../engine/temporalPhaseEngine';
 import type { TripProfile } from '../engine/tripProfileEngine';
 import {
@@ -48,6 +49,7 @@ export default function TripSidebarLeft({
 }: TripSidebarLeftProps) {
   const pathname = usePathname();
   const activeSection = sectionIdFromPathname(pathname);
+  const { triggerHaptic } = useHapticFeedback();
 
   const visible = tripSectionRegistry.filter((s: TripSectionDef) => {
     if (!profile.sections.includes(s.id)) return false;
@@ -65,7 +67,11 @@ export default function TripSidebarLeft({
     >
       <div className="shrink-0 space-y-2.5">
         <nav aria-label="Fil d'Ariane" className="text-xs text-[var(--lkv-text-primary)]">
-          <Link href="/voyages" className="inline-flex items-center gap-1.5 font-medium hover:underline">
+          <Link
+            href="/voyages"
+            onClick={() => triggerHaptic('selection')}
+            className="inline-flex items-center gap-1.5 font-medium hover:underline min-h-[44px]"
+          >
             <ArrowLeft size={13} />
             <span>Tous les voyages</span>
           </Link>
@@ -93,7 +99,10 @@ export default function TripSidebarLeft({
           <GlassCapsuleBtn
             variant={isTripActive ? 'default' : 'primary'}
             size="sm"
-            onClick={onToggleActive}
+            onClick={() => {
+              triggerHaptic(isTripActive ? 'medium' : 'success');
+              onToggleActive();
+            }}
             disabled={isPending}
             icon={isTripActive ? <Check size={13} /> : <Compass size={13} />}
             className="flex items-center justify-center gap-1.5 !py-1.5 !px-2 !text-[10.5px] min-h-[var(--lkv-touch-min)] w-full"
@@ -103,7 +112,10 @@ export default function TripSidebarLeft({
           <GlassCapsuleBtn
             variant="default"
             size="sm"
-            onClick={onShare}
+            onClick={() => {
+              triggerHaptic('light');
+              onShare();
+            }}
             icon={<Share2 size={13} />}
             className="flex items-center justify-center gap-1.5 !py-1.5 !px-2 !text-[10.5px] min-h-[var(--lkv-touch-min)] w-full"
           >
@@ -124,8 +136,9 @@ export default function TripSidebarLeft({
             <Link
               key={s.id}
               href={tripSectionHref(trip.slug, s.id)}
+              onClick={() => triggerHaptic('selection')}
               aria-current={isActive ? 'page' : undefined}
-              className={`w-full px-3 py-2.5 rounded-[var(--lkv-radius-md)] font-bold text-xs transition-all flex items-center justify-between group cursor-pointer border ${
+              className={`w-full px-3 py-2.5 rounded-[var(--lkv-radius-md)] min-h-[44px] font-bold text-xs transition-all flex items-center justify-between group cursor-pointer border ${
                 isActive
                   ? 'bg-[var(--lkv-primary)] text-white border-[var(--lkv-primary)] shadow-sm'
                   : 'glass-sub-card border border-white/60 text-[var(--lkv-text-primary)] hover:bg-white shadow-2xs'

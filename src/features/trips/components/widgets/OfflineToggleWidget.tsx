@@ -3,6 +3,7 @@
 import React, { useState, useTransition } from 'react';
 import { WifiOff, Trash2, Check } from 'lucide-react';
 import { GlassCard } from '@/components/ui/GlassCard';
+import { useHapticFeedback } from '@/hooks/useHapticFeedback';
 import { saveTripOffline, isTripAvailableOffline, removeOfflineTrip } from '../../offline/tripOfflineStorage';
 import type { TripFull } from '../../types/trip.types';
 
@@ -19,6 +20,7 @@ export function OfflineToggleWidget({ trip }: OfflineToggleWidgetProps) {
   const [available, setAvailable] = useState(false);
   const [mounted, setMounted] = useState(false);
   const [isPending, startTransition] = useTransition();
+  const { triggerHaptic } = useHapticFeedback();
 
   React.useEffect(() => {
     setAvailable(isTripAvailableOffline(trip.slug));
@@ -26,6 +28,7 @@ export function OfflineToggleWidget({ trip }: OfflineToggleWidgetProps) {
   }, [trip.slug]);
 
   const toggle = () => {
+    triggerHaptic(available ? 'medium' : 'success');
     startTransition(async () => {
       if (available) {
         removeOfflineTrip(trip.slug);
@@ -48,7 +51,7 @@ export function OfflineToggleWidget({ trip }: OfflineToggleWidgetProps) {
         onClick={toggle}
         disabled={!mounted || isPending}
         aria-pressed={available}
-        className={`glass-capsule-btn w-full justify-center ${available ? '' : 'primary'}`}
+        className={`glass-capsule-btn w-full justify-center min-h-[44px] ${available ? '' : 'primary'}`}
       >
         {available ? <Check size={14} /> : <WifiOff size={14} />}
         <span>
@@ -59,9 +62,9 @@ export function OfflineToggleWidget({ trip }: OfflineToggleWidgetProps) {
         <button
           type="button"
           onClick={toggle}
-          className="text-[10px] text-[var(--lkv-text-muted)] hover:text-[var(--lkv-danger)] transition-colors flex items-center gap-1 mx-auto cursor-pointer"
+          className="min-h-[44px] px-3 text-[11px] text-[var(--lkv-text-muted)] hover:text-[var(--lkv-danger)] transition-colors flex items-center justify-center gap-1 mx-auto cursor-pointer"
         >
-          <Trash2 size={10} />
+          <Trash2 size={12} />
           <span>Retirer du cache local</span>
         </button>
       )}

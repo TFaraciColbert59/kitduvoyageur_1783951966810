@@ -8,6 +8,7 @@ import { EmptyState } from '@/components/ui/EmptyState';
 import { calculateBudgetSummary } from '../engine/budgetEngine';
 import { addExpenseAction, deleteExpenseAction } from '@/app/voyages/budget-actions';
 import { ConfirmDialog } from './ConfirmDialog';
+import { useHapticFeedback } from '@/hooks/useHapticFeedback';
 import type { TripFull } from '../types/trip.types';
 
 interface TripBudgetViewProps {
@@ -19,6 +20,7 @@ export function TripBudgetView({ trip }: TripBudgetViewProps) {
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
   const [isPending, startTransition] = useTransition();
   const [confirmState, setConfirmState] = useState<{ expenseId: string; title: string } | null>(null);
+  const { triggerHaptic } = useHapticFeedback();
 
   const budgetSummary = calculateBudgetSummary(
     { estimated_budget: trip.estimated_budget, budget_currency: trip.budget_currency },
@@ -32,6 +34,7 @@ export function TripBudgetView({ trip }: TripBudgetViewProps) {
     if (!confirmState) return;
     const { expenseId } = confirmState;
     setConfirmState(null);
+    triggerHaptic('medium');
     startTransition(async () => {
       const res = await deleteExpenseAction(trip.id, expenseId, trip.slug);
       if (!res.success) {
@@ -54,6 +57,7 @@ export function TripBudgetView({ trip }: TripBudgetViewProps) {
       if (!res.success) {
         setErrorMsg(res.error || 'Erreur lors de l\'enregistrement');
       } else {
+        triggerHaptic('success');
         setIsAddOpen(false);
       }
     });

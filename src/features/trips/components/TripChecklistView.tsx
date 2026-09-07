@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { GlassCard } from '@/components/ui/GlassCard';
+import { useHapticFeedback } from '@/hooks/useHapticFeedback';
 import { CheckCircle2, Circle, Calendar, ShieldCheck } from 'lucide-react';
 
 export interface ChecklistItem {
@@ -241,6 +242,7 @@ export function TripChecklistView({ tripId, daysUntilStart }: TripChecklistViewP
   const checklist = getPreDepartureChecklist(daysUntilStart);
   const allItems = [...checklist.j30, ...checklist.j7, ...checklist.j1];
   const totalCount = allItems.length;
+  const { triggerHaptic } = useHapticFeedback();
 
   const [checkedIds, setCheckedIds] = useState<Set<string>>(new Set());
 
@@ -259,6 +261,7 @@ export function TripChecklistView({ tripId, daysUntilStart }: TripChecklistViewP
   }, [tripId]);
 
   const toggleItem = (id: string) => {
+    triggerHaptic('selection');
     setCheckedIds(prev => {
       const next = new Set(prev);
       if (next.has(id)) {

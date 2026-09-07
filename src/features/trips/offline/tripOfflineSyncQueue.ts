@@ -8,6 +8,8 @@
  * 4. Dépilement automatique avec reprise sur erreur réseau.
  */
 
+import Dexie, { type Table } from 'dexie';
+
 export type TripActionType =
   | 'add_expense'
   | 'update_expense'
@@ -35,6 +37,24 @@ export interface TripSyncJournalEntry {
   remoteTimestamp: string;
   details?: Record<string, unknown>;
 }
+
+/**
+ * Y7.4 — Base Dexie (IndexedDB) pour la file d'attente hors-ligne et le journal de conflits.
+ */
+export class TripSyncDexieDatabase extends Dexie {
+  queue!: Table<TripOfflineAction, string>;
+  journal!: Table<TripSyncJournalEntry, string>;
+
+  constructor() {
+    super('lkdv-trip-sync');
+    this.version(1).stores({
+      queue: 'id, tripSlug, type, clientTimestamp',
+      journal: 'id, tripSlug, entityType, resolvedAt',
+    });
+  }
+}
+
+export const tripSyncDB = new TripSyncDexieDatabase();
 
 const QUEUE_STORAGE_KEY = 'lkdv_trip_offline_queue_v1';
 const JOURNAL_STORAGE_KEY = 'lkdv_trip_sync_journal_v1';
@@ -99,6 +119,14 @@ export function enqueueTripOfflineAction(
 
   all.push(queuedAction);
   saveTripOfflineQueue(all);
+
+  // Y7.4 — Persistance asynchrone Dexie
+  if (typeof indexedDB !== 'undefined') {
+    tripSyncDB.queue.put(queuedAction).catch(err => {
+      console.warn('[LKDV SyncQueue] Avertissement Dexie put queue:', err);
+    });
+  }
+
   return queuedAction;
 }
 
@@ -111,10 +139,20 @@ export function clearTripOfflineQueue(tripSlug?: string): void {
 
   if (!tripSlug) {
     storage.removeItem(QUEUE_STORAGE_KEY);
+    if (typeof indexedDB !== 'undefined') {
+      tripSyncDB.queue.clear().catch(err => {
+        console.warn('[LKDV SyncQueue] Avertissement Dexie clear queue:', err);
+      });
+    }
   } else {
     const all = getTripOfflineQueue();
     const filtered = all.filter(a => a.tripSlug !== tripSlug);
     saveTripOfflineQueue(filtered);
+    if (typeof indexedDB !== 'undefined') {
+      tripSyncDB.queue.where('tripSlug').equals(tripSlug).delete().catch(err => {
+        console.warn('[LKDV SyncQueue] Avertissement Dexie delete queue:', err);
+      });
+    }
   }
 }
 
@@ -155,8 +193,46 @@ function logConflictToJournal(entry: Omit<TripSyncJournalEntry, 'id' | 'resolved
     all.unshift(newEntry);
     // Conserver max 200 entrées pour limiter l'espace local
     storage.setItem(JOURNAL_STORAGE_KEY, JSON.stringify(all.slice(0, 200)));
+
+    if (typeof indexedDB !== 'undefined') {
+      tripSyncDB.journal.put(newEntry).catch(err => {
+        console.warn('[LKDV SyncJournal] Avertissement Dexie put journal:', err);
+      });
+    }
   } catch (err) {
     console.error('[LKDV SyncJournal] Erreur enregistrement:', err);
+  }
+}
+
+/** Récupère la file Dexie de manière asynchrone */
+export async function getTripOfflineQueueDexie(tripSlug?: string): Promise<TripOfflineAction[]> {
+  if (typeof indexedDB === 'undefined') {
+    return getTripOfflineQueue(tripSlug);
+  }
+
+  try {
+    if (tripSlug) {
+      return await tripSyncDB.queue.where('tripSlug').equals(tripSlug).toArray();
+    }
+    return await tripSyncDB.queue.toArray();
+  } catch {
+    return getTripOfflineQueue(tripSlug);
+  }
+}
+
+/** Récupère le journal Dexie de manière asynchrone */
+export async function getTripSyncJournalDexie(tripSlug?: string): Promise<TripSyncJournalEntry[]> {
+  if (typeof indexedDB === 'undefined') {
+    return getTripSyncJournal(tripSlug);
+  }
+
+  try {
+    if (tripSlug) {
+      return await tripSyncDB.journal.where('tripSlug').equals(tripSlug).reverse().sortBy('resolvedAt');
+    }
+    return await tripSyncDB.journal.toCollection().reverse().sortBy('resolvedAt');
+  } catch {
+    return getTripSyncJournal(tripSlug);
   }
 }
 
