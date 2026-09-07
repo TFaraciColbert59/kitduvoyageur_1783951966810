@@ -54,12 +54,12 @@ Dernière mise à jour : 2026-09-07T01:15:00+02:00
 | **P7** | **7.2** | Consommateurs d'événements (fil d'activité, scoring, notifications) | **TERMINE** | Handlers typés (activity, notifications, scoring), composant `LiveActivityFeed` intégré `/communaute` & `/activite` |
 | **P7** | **7.3** | RLS et confidentialité du bus | **TERMINE** | Migration `20260907010000_create_lkv_events_bus.sql` appliquée, 5 RLS policies, rétention RGPD 13 mois |
 |---|---|---|---|---|
-| **P8** | **8.1** | Export / import GPX 1.1 certifié | À FAIRE | Compatibilité montres GPS |
-| **P8** | **8.2** | Checklist pré-départ automatisée | À FAIRE | Validité passeport, vaccins |
-| **P8** | **8.3** | Météo saisonnière déterministe | À FAIRE | Normales climatiques versionnées |
-| **P8** | **8.4** | Carnet public indexable & SEO | À FAIRE | OpenGraph, JSON-LD |
-| **P8** | **8.5** | Règlements de dépenses et budget réel | À FAIRE | Algorithme de split testé |
-| **P8** | **8.6** | Segments d'itinéraires réutilisables | À FAIRE | Bibliothèque de tronçons |
+| **P8** | **8.1** | Export / import GPX 1.1 certifié | **TERMINE** | `parseTripGpx` & `generateTripGpx` GPX 1.1, action `importGpxToTripAction`, test `phase8-features.spec.ts` 4/4 vert |
+| **P8** | **8.2** | Checklist pré-départ automatisée | **TERMINE** | Formalités pays intelligentes (UE vs non-UE, CEAM, vaccins), test 2/2 vert |
+| **P8** | **8.3** | Météo saisonnière déterministe | **TERMINE** | Normales climatiques mensuelles (T°, pluie, vent) et `evaluateTripClimateRisk`, test 2/2 vert |
+| **P8** | **8.4** | Carnet public indexable & SEO | **TERMINE** | Metadata OpenGraph, Twitter card, Schema.org TouristTrip & CreativeWork vérifiés |
+| **P8** | **8.5** | Règlements de dépenses et budget réel | **TERMINE** | `simplifyDebts` (glouton équitable) et `calculateBudgetSummary`, test 2/2 vert |
+| **P8** | **8.6** | Segments d'itinéraires réutilisables | **TERMINE** | `segmentEngine.ts`, catalogue certifié TMB/GR20/Laugavegur, `insertSegmentIntoTripSteps`, test 2/2 vert |
 |---|---|---|---|---|
 | **P9** | **9.1** | Monétisation éthique (Boutique prioritaire, tri technique neutre) | À FAIRE | Séparation conseil / pub |
 | **P9** | **9.2** | Conformité légale (loi influence 2023, RGPD, HMAC) | À FAIRE | Mentions visibles mobile |

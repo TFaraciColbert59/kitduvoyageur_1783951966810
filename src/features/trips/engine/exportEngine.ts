@@ -163,3 +163,219 @@ export function formatTripShareUrl(
   return `${base}/voyages/${slug}${tokenQuery}`;
 }
 
+export interface ParsedWaypoint {
+  name: string;
+  lat: number;
+  lon: number;
+  ele?: number;
+  desc?: string;
+  type?: string;
+}
+
+export interface ParsedTrackPoint {
+  lat: number;
+  lon: number;
+  ele?: number;
+  time?: string;
+}
+
+export interface SuggestedTripStep {
+  title: string;
+  description?: string;
+  latitude: number;
+  longitude: number;
+  elevation_gain_m?: number;
+  elevation_loss_m?: number;
+  distance_km?: number;
+}
+
+export interface ParsedTripGpx {
+  isValid: boolean;
+  title: string;
+  description: string;
+  waypoints: ParsedWaypoint[];
+  trackPoints: ParsedTrackPoint[];
+  totalDistanceKm: number;
+  totalElevationGainM: number;
+  totalElevationLossM: number;
+  suggestedSteps: SuggestedTripStep[];
+}
+
+function haversineDistanceKm(lat1: number, lon1: number, lat2: number, lon2: number): number {
+  const R = 6371;
+  const dLat = ((lat2 - lat1) * Math.PI) / 180;
+  const dLon = ((lon2 - lon1) * Math.PI) / 180;
+  const a =
+    Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+    Math.cos((lat1 * Math.PI) / 180) *
+      Math.cos((lat2 * Math.PI) / 180) *
+      Math.sin(dLon / 2) *
+      Math.sin(dLon / 2);
+  const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+  return R * c;
+}
+
+/**
+ * Parse un fichier GPX 1.1 universellement (Node.js et navigateur)
+ * Extrait les métadonnées, waypoints, points de trace, calcule distance et dénivelés,
+ * et génère des étapes de voyage directement exploitables.
+ */
+export function parseTripGpx(xmlString: string): ParsedTripGpx {
+  const emptyResult: ParsedTripGpx = {
+    isValid: false,
+    title: '',
+    description: '',
+    waypoints: [],
+    trackPoints: [],
+    totalDistanceKm: 0,
+    totalElevationGainM: 0,
+    totalElevationLossM: 0,
+    suggestedSteps: [],
+  };
+
+  if (!xmlString || typeof xmlString !== 'string' || !xmlString.includes('<gpx')) {
+    return emptyResult;
+  }
+
+  try {
+    // 1. Extraction du Titre
+    const metaMatch = xmlString.match(/<metadata>([\s\S]*?)<\/metadata>/i);
+    const metaContent = metaMatch ? metaMatch[1] : xmlString;
+
+    const titleMatch =
+      metaContent.match(/<name>(.*?)<\/name>/i) ||
+      xmlString.match(/<trk>[\s\S]*?<name>(.*?)<\/name>/i) ||
+      xmlString.match(/<name>(.*?)<\/name>/i);
+    const title = titleMatch ? titleMatch[1].replace(/<!\[CDATA\[(.*?)\]\]>/gi, '$1').trim() : 'Tracé GPX importé';
+
+    // 2. Extraction de la Description
+    const descMatch =
+      metaContent.match(/<desc>([\s\S]*?)<\/desc>/i) ||
+      xmlString.match(/<trk>[\s\S]*?<desc>([\s\S]*?)<\/desc>/i);
+    const description = descMatch ? descMatch[1].replace(/<!\[CDATA\[(.*?)\]\]>/gi, '$1').trim() : '';
+
+    // 3. Extraction des Waypoints (<wpt>)
+    const waypoints: ParsedWaypoint[] = [];
+    const wptRegex = /<wpt\s+[^>]*?lat="([^"]+)"[^>]*?lon="([^"]+)"[^>]*?>([\s\S]*?)<\/wpt>/gi;
+    let wptMatch: RegExpExecArray | null;
+
+    while ((wptMatch = wptRegex.exec(xmlString)) !== null) {
+      const lat = parseFloat(wptMatch[1]);
+      const lon = parseFloat(wptMatch[2]);
+      const body = wptMatch[3];
+
+      const nameM = body.match(/<name>(.*?)<\/name>/i);
+      const descM = body.match(/<desc>(.*?)<\/desc>/i);
+      const typeM = body.match(/<type>(.*?)<\/type>/i);
+      const eleM = body.match(/<ele>(.*?)<\/ele>/i);
+
+      if (!isNaN(lat) && !isNaN(lon)) {
+        waypoints.push({
+          name: nameM ? nameM[1].trim() : `Point ${waypoints.length + 1}`,
+          lat,
+          lon,
+          desc: descM ? descM[1].trim() : undefined,
+          type: typeM ? typeM[1].trim() : undefined,
+          ele: eleM ? parseFloat(eleM[1]) : undefined,
+        });
+      }
+    }
+
+    // 4. Extraction des Trackpoints (<trkpt>)
+    const trackPoints: ParsedTrackPoint[] = [];
+    const trkptRegex = /<trkpt\s+[^>]*?lat="([^"]+)"[^>]*?lon="([^"]+)"[^>]*?>([\s\S]*?)<\/trkpt>/gi;
+    let trkMatch: RegExpExecArray | null;
+
+    while ((trkMatch = trkptRegex.exec(xmlString)) !== null) {
+      const lat = parseFloat(trkMatch[1]);
+      const lon = parseFloat(trkMatch[2]);
+      const body = trkMatch[3];
+
+      const eleM = body.match(/<ele>(.*?)<\/ele>/i);
+      const timeM = body.match(/<time>(.*?)<\/time>/i);
+
+      if (!isNaN(lat) && !isNaN(lon)) {
+        trackPoints.push({
+          lat,
+          lon,
+          ele: eleM ? parseFloat(eleM[1]) : undefined,
+          time: timeM ? timeM[1].trim() : undefined,
+        });
+      }
+    }
+
+    // 5. Calcul des Métriques (Distance cumulée, D+, D-)
+    let totalDistanceKm = 0;
+    let totalElevationGainM = 0;
+    let totalElevationLossM = 0;
+
+    for (let i = 1; i < trackPoints.length; i++) {
+      const prev = trackPoints[i - 1];
+      const curr = trackPoints[i];
+
+      totalDistanceKm += haversineDistanceKm(prev.lat, prev.lon, curr.lat, curr.lon);
+
+      if (typeof prev.ele === 'number' && typeof curr.ele === 'number') {
+        const diff = curr.ele - prev.ele;
+        if (diff > 0) {
+          totalElevationGainM += diff;
+        } else {
+          totalElevationLossM += Math.abs(diff);
+        }
+      }
+    }
+
+    // Arrondi propre
+    totalDistanceKm = Math.round(totalDistanceKm * 100) / 100;
+    totalElevationGainM = Math.round(totalElevationGainM);
+    totalElevationLossM = Math.round(totalElevationLossM);
+
+    // 6. Génération des étapes suggérées
+    const suggestedSteps: SuggestedTripStep[] = [];
+
+    if (waypoints.length > 0) {
+      waypoints.forEach((wpt) => {
+        suggestedSteps.push({
+          title: wpt.name,
+          description: wpt.desc,
+          latitude: wpt.lat,
+          longitude: wpt.lon,
+        });
+      });
+    } else if (trackPoints.length > 0) {
+      // Si pas de waypoints explicites, créer une étape de départ et une étape d'arrivée
+      suggestedSteps.push({
+        title: `${title} - Départ`,
+        latitude: trackPoints[0].lat,
+        longitude: trackPoints[0].lon,
+        elevation_gain_m: totalElevationGainM,
+        distance_km: totalDistanceKm,
+      });
+
+      if (trackPoints.length > 1) {
+        const last = trackPoints[trackPoints.length - 1];
+        suggestedSteps.push({
+          title: `${title} - Arrivée`,
+          latitude: last.lat,
+          longitude: last.lon,
+        });
+      }
+    }
+
+    return {
+      isValid: true,
+      title,
+      description,
+      waypoints,
+      trackPoints,
+      totalDistanceKm,
+      totalElevationGainM,
+      totalElevationLossM,
+      suggestedSteps,
+    };
+  } catch (err) {
+    console.warn('[GPX] Erreur de parsing GPX:', err);
+    return emptyResult;
+  }
+}
+

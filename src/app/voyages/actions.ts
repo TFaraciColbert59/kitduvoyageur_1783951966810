@@ -4,6 +4,8 @@ import { revalidatePath } from 'next/cache';
 import { createClient } from '@/lib/supabase/server';
 import { createTrip, getTripById } from '@/lib/queries-trips';
 import { emitEvent } from '@/lib/events/eventBus';
+import { parseTripGpx } from '@/features/trips/engine/exportEngine';
+import { getReusableSegments, insertSegmentIntoTripSteps } from '@/features/trips/engine/segmentEngine';
 import {
   saveDraftTripSchema,
   wizardPersistInputSchema,
@@ -1027,3 +1029,175 @@ export async function recordTripPhaseChangeAction(
 
   return { success: true };
 }
+
+/**
+ * 11. Importe une trace GPX 1.1 certifiée dans un voyage existant
+ */
+export async function importGpxToTripAction(
+  tripId: string,
+  gpxContent: string
+): Promise<{ success: boolean; importedCount: number; error?: string }> {
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  if (!user) {
+    return { success: false, importedCount: 0, error: 'Connexion requise.' };
+  }
+
+  const { data: trip, error: tripErr } = await supabase
+    .from('trips')
+    .select('id, slug, title, group_id, visibility')
+    .eq('id', tripId)
+    .single();
+
+  if (tripErr || !trip) {
+    return { success: false, importedCount: 0, error: 'Voyage introuvable.' };
+  }
+
+  const parsed = parseTripGpx(gpxContent);
+  if (!parsed.isValid || parsed.suggestedSteps.length === 0) {
+    return {
+      success: false,
+      importedCount: 0,
+      error: 'Format GPX invalide ou aucun waypoint/trace exploitable détecté.',
+    };
+  }
+
+  // Trouver le dernier numéro de jour actuel
+  const { data: existingSteps } = await supabase
+    .from('trip_steps')
+    .select('day_number')
+    .eq('trip_id', tripId)
+    .order('day_number', { ascending: false })
+    .limit(1);
+
+  const startDay = (existingSteps && existingSteps.length > 0 ? existingSteps[0].day_number : 0) + 1;
+
+  const payload = parsed.suggestedSteps.map((step, idx) => ({
+    trip_id: tripId,
+    day_number: startDay + idx,
+    order_index: 0,
+    title: step.title,
+    description: step.description || null,
+    location_name: step.title,
+    latitude: step.latitude,
+    longitude: step.longitude,
+    elevation_gain_m: step.elevation_gain_m || null,
+    elevation_loss_m: step.elevation_loss_m || null,
+    distance_km: step.distance_km || null,
+    transport_mode: 'foot',
+  }));
+
+  const { error: insertErr } = await supabase.from('trip_steps').insert(payload);
+  if (insertErr) {
+    return { success: false, importedCount: 0, error: insertErr.message };
+  }
+
+  await emitEvent({
+    event_type: 'trip.updated',
+    actor_id: user.id,
+    entity_type: 'trip',
+    entity_id: tripId,
+    visibility: trip.visibility === 'public' ? 'public' : trip.group_id ? 'crew' : 'private',
+    crew_id: trip.group_id || null,
+    metadata: {
+      action: 'gpx_imported',
+      title: trip.title,
+      importedStepsCount: payload.length,
+      gpxTitle: parsed.title,
+    },
+  });
+
+  revalidatePath(`/voyages/${trip.slug}`);
+  revalidatePath(`/voyages/${trip.slug}/itineraire`);
+  return { success: true, importedCount: payload.length };
+}
+
+/**
+ * 12. Insère un tronçon d'itinéraire réutilisable certifié dans un voyage
+ */
+export async function insertSegmentToTripAction(
+  tripId: string,
+  segmentId: string,
+  targetDayNumber: number
+): Promise<{ success: boolean; insertedCount: number; error?: string }> {
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  if (!user) {
+    return { success: false, insertedCount: 0, error: 'Connexion requise.' };
+  }
+
+  const { data: trip, error: tripErr } = await supabase
+    .from('trips')
+    .select('id, slug, title, group_id, visibility')
+    .eq('id', tripId)
+    .single();
+
+  if (tripErr || !trip) {
+    return { success: false, insertedCount: 0, error: 'Voyage introuvable.' };
+  }
+
+  const segment = getReusableSegments().find((s) => s.id === segmentId);
+  if (!segment) {
+    return { success: false, insertedCount: 0, error: 'Tronçon réutilisable introuvable.' };
+  }
+
+  // Récupérer les étapes existantes
+  const { data: existingSteps } = await supabase
+    .from('trip_steps')
+    .select('*')
+    .eq('trip_id', tripId)
+    .order('day_number', { ascending: true })
+    .order('order_index', { ascending: true });
+
+  const updatedSteps = insertSegmentIntoTripSteps(existingSteps || [], segment, targetDayNumber);
+
+  // Supprimer les étapes et réinsérer les étapes ordonnées
+  await supabase.from('trip_steps').delete().eq('trip_id', tripId);
+
+  const payload = updatedSteps.map((s, idx) => ({
+    trip_id: tripId,
+    day_number: s.day_number,
+    order_index: s.order_index ?? idx,
+    title: s.title,
+    description: s.description,
+    location_name: s.location_name,
+    latitude: s.latitude,
+    longitude: s.longitude,
+    accommodation_name: s.accommodation_name,
+    transport_mode: s.transport_mode,
+    distance_km: s.distance_km,
+    elevation_gain_m: s.elevation_gain_m,
+    elevation_loss_m: s.elevation_loss_m,
+  }));
+
+  const { error: insertErr } = await supabase.from('trip_steps').insert(payload);
+  if (insertErr) {
+    return { success: false, insertedCount: 0, error: insertErr.message };
+  }
+
+  await emitEvent({
+    event_type: 'trip.updated',
+    actor_id: user.id,
+    entity_type: 'trip',
+    entity_id: tripId,
+    visibility: trip.visibility === 'public' ? 'public' : trip.group_id ? 'crew' : 'private',
+    crew_id: trip.group_id || null,
+    metadata: {
+      action: 'segment_inserted',
+      title: trip.title,
+      segmentTitle: segment.title,
+      insertedStepsCount: segment.steps.length,
+    },
+  });
+
+  revalidatePath(`/voyages/${trip.slug}`);
+  revalidatePath(`/voyages/${trip.slug}/itineraire`);
+  return { success: true, insertedCount: segment.steps.length };
+}
+
