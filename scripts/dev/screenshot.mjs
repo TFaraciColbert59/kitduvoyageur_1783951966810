@@ -1,0 +1,15 @@
+import { chromium } from 'playwright-core';
+const browser = await chromium.launch();
+const ctx = await browser.newContext({ viewport: { width: 1440, height: 900 }, deviceScaleFactor: 1.5 });
+const p = await ctx.newPage();
+const errors = [];
+p.on('pageerror', (e) => errors.push(e.message));
+p.on('response', (r) => { if (r.status() >= 400) errors.push(`${r.status()} ${r.url()}`); });
+await p.goto('http://localhost:4000/voyages/fdgb-3c3a92', { waitUntil: 'networkidle', timeout: 60000 });
+await p.waitForTimeout(2000);
+await p.screenshot({ path: 'shots/final-smoke-detail.png' });
+const p2 = await ctx.newPage();
+await p2.goto('http://localhost:4000/voyages/fdgb-3c3a92/export', { waitUntil: 'networkidle', timeout: 60000 });
+await p2.waitForTimeout(1500);
+console.log('export status OK, erreurs:', errors.length ? errors.slice(0, 5) : 'aucune');
+await browser.close();
