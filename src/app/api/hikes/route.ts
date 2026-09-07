@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getTrails } from '@/lib/queries/trails';
 
 export const revalidate = 60;
+export const dynamic = 'force-dynamic';
 
 /**
  * GET /api/hikes
