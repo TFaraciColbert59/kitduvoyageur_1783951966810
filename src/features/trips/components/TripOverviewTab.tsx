@@ -42,7 +42,7 @@ export function TripOverviewTab({ trip, stats, onTabChange }: TripOverviewTabPro
     <div className="space-y-6">
       {/* 1. Métriques Clés */}
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-4">
-        <GlassCard tone="sage" blur="sm" className="p-4 rounded-[20px] border border-white/60">
+        <GlassCard tone="sage" blur="sm" className="p-4 rounded-[var(--lkv-radius-lg)] border border-white/60">
           <div className="flex items-center gap-2 text-lkv-secondary text-xs font-medium uppercase tracking-wider mb-1">
             <Calendar size={14} />
             Durée
@@ -55,7 +55,7 @@ export function TripOverviewTab({ trip, stats, onTabChange }: TripOverviewTabPro
           </div>
         </GlassCard>
 
-        <GlassCard tone="neutral" blur="sm" className="p-4 rounded-[20px] border border-white/60">
+        <GlassCard tone="neutral" blur="sm" className="p-4 rounded-[var(--lkv-radius-lg)] border border-white/60">
           <div className="flex items-center gap-2 text-lkv-secondary text-xs font-medium uppercase tracking-wider mb-1">
             <Navigation size={14} />
             Distance
@@ -68,7 +68,7 @@ export function TripOverviewTab({ trip, stats, onTabChange }: TripOverviewTabPro
           </div>
         </GlassCard>
 
-        <GlassCard tone="neutral" blur="sm" className="p-4 rounded-[20px] border border-white/60">
+        <GlassCard tone="neutral" blur="sm" className="p-4 rounded-[var(--lkv-radius-lg)] border border-white/60">
           <div className="flex items-center gap-2 text-lkv-secondary text-xs font-medium uppercase tracking-wider mb-1">
             <Package size={14} />
             Sac à dos
@@ -81,7 +81,7 @@ export function TripOverviewTab({ trip, stats, onTabChange }: TripOverviewTabPro
           </div>
         </GlassCard>
 
-        <GlassCard tone="neutral" blur="sm" className="p-4 rounded-[20px] border border-white/60">
+        <GlassCard tone="neutral" blur="sm" className="p-4 rounded-[var(--lkv-radius-lg)] border border-white/60">
           <div className="flex items-center gap-2 text-lkv-secondary text-xs font-medium uppercase tracking-wider mb-1">
             <CreditCard size={14} />
             Budget

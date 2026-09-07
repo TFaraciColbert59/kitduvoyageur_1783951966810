@@ -86,9 +86,9 @@ export default function VoyagesClient({
 
   // Colonne Gauche Desktop (260px)
   const renderSidebarLeft = () => (
-    <aside className="h-full max-h-full w-full flex-1 flex flex-col justify-between glass rounded-2xl p-3.5 text-forest-900 font-sans overflow-y-auto no-scrollbar border border-white/40 shadow-sm select-none gap-3">
+    <aside className="h-full max-h-full w-full flex-1 flex flex-col justify-between glass rounded-[var(--lkv-radius-card)] p-3.5 text-[var(--lkv-text-primary)] font-sans overflow-y-auto no-scrollbar border border-white/40 shadow-sm select-none gap-3">
       <div className="space-y-3 shrink-0">
-        <div className="flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-sage-800">
+        <div className="flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-[var(--lkv-text-secondary)]">
           <Compass size={15} />
           <span>Module Voyage</span>
         </div>
@@ -97,29 +97,45 @@ export default function VoyagesClient({
         <GlassCapsuleBtn
           variant="primary"
           onClick={() => setIsCreateModalOpen(true)}
-          className="w-full flex items-center justify-center gap-2 !py-2.5 shadow-md"
+          className="w-full flex items-center justify-center gap-2 !py-2.5 shadow-md min-h-[var(--lkv-touch-min)] cursor-pointer"
         >
           <Plus size={16} />
           <span>Nouveau voyage</span>
         </GlassCapsuleBtn>
 
-        {/* Sélecteur de vue */}
+        {/* Sélecteur de vue vertical pilule desktop */}
         {isAuthenticated && (
-          <div className="pt-1">
-            <IOSSegmentedControl
-              options={[
-                { id: 'user', label: `Mes voyages (${initialUserTrips.length})` },
-                { id: 'public', label: `Explorer (${initialPublicTrips.length})` },
-              ]}
-              value={activeTab}
-              onChange={(val: string) => setActiveTab(val as 'public' | 'user')}
-            />
+          <div className="space-y-1">
+            {[
+              { id: 'user' as const, label: 'Mes voyages', count: initialUserTrips.length },
+              { id: 'public' as const, label: 'Explorer', count: initialPublicTrips.length },
+            ].map((tab) => (
+              <button
+                key={tab.id}
+                type="button"
+                onClick={() => setActiveTab(tab.id)}
+                className={`w-full px-3 py-2.5 rounded-[var(--lkv-radius-md)] font-bold text-xs flex items-center justify-between border transition-all min-h-[var(--lkv-touch-min)] cursor-pointer ${
+                  activeTab === tab.id
+                    ? 'bg-[var(--lkv-primary)] text-white border-[var(--lkv-primary)] shadow-sm'
+                    : 'bg-white/80 hover:bg-white text-[var(--lkv-text-primary)] border-white/80 shadow-[0_1px_2px_rgba(0,0,0,0.04)]'
+                }`}
+              >
+                <span>{tab.label}</span>
+                <span
+                  className={`text-[9px] px-1.5 py-0.5 rounded-full font-mono ${
+                    activeTab === tab.id ? 'bg-white/20 text-white' : 'bg-black/5 text-[var(--lkv-text-secondary)]'
+                  }`}
+                >
+                  {tab.count}
+                </span>
+              </button>
+            ))}
           </div>
         )}
 
         {/* Résumé des filtres */}
         <GlassSubCard className="p-3 space-y-2">
-          <div className="flex items-center justify-between text-xs font-semibold text-forest-900">
+          <div className="flex items-center justify-between text-xs font-semibold text-[var(--lkv-text-primary)]">
             <span className="flex items-center gap-1">
               <Filter size={12} />
               <span>Filtres actifs</span>
@@ -127,7 +143,7 @@ export default function VoyagesClient({
             {(filters.activity !== 'all' || filters.difficulty !== 'all' || filters.status !== 'all' || filters.search) && (
               <button
                 onClick={handleResetFilters}
-                className="text-[10px] text-sage-700 hover:underline"
+                className="text-[10px] text-[var(--lkv-text-secondary)] hover:underline cursor-pointer"
               >
                 Effacer
               </button>
@@ -141,7 +157,7 @@ export default function VoyagesClient({
         </GlassSubCard>
       </div>
 
-      <div className="pt-3 border-t border-white/30 text-[10px] text-sage-700 space-y-1">
+      <div className="pt-3 border-t border-[var(--lkv-border-subtle)] text-[10px] text-[var(--lkv-text-secondary)] space-y-1">
         <div>Catalogue des treks & itinéraires</div>
         <div className="font-mono">LKDV EXPEDITIONS</div>
       </div>
