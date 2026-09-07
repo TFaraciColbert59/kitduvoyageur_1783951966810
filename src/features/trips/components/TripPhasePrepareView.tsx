@@ -32,6 +32,10 @@ export interface TripPhasePrepareViewProps {
   affiliateLinks?: AffiliateLink[];
   kitAnalysis?: TripKitAnalysis;
   daysUntilStart?: number | null;
+  /** Section active — pilotée par TripSidebarLeft (desktop) ou état interne (mobile) */
+  activeSection?: PrepareSectionId;
+  /** Callback de changement — obligatoire en mode contrôlé */
+  onSectionChange?: (s: PrepareSectionId) => void;
 }
 
 export type PrepareSectionId =
@@ -49,8 +53,22 @@ export function TripPhasePrepareView({
   affiliateLinks = [],
   kitAnalysis,
   daysUntilStart,
+  activeSection: activeSectionProp,
+  onSectionChange,
 }: TripPhasePrepareViewProps) {
-  const [activeSection, setActiveSection] = useState<PrepareSectionId>('overview');
+  // Mode non-contrôlé (mobile) : état interne
+  const [internalSection, setInternalSection] = useState<PrepareSectionId>('overview');
+
+  // Mode contrôlé (desktop via sidebar) si prop fournie
+  const isControlled = activeSectionProp !== undefined;
+  const activeSection = isControlled ? activeSectionProp : internalSection;
+  const handleSectionChange = (s: PrepareSectionId) => {
+    if (isControlled && onSectionChange) {
+      onSectionChange(s);
+    } else {
+      setInternalSection(s);
+    }
+  };
 
   // Source de vérité unique des compteurs (Z-R3 / Chantier Z3).
   const counters = getTripCounters(trip, kitAnalysis);
@@ -70,42 +88,44 @@ export function TripPhasePrepareView({
 
   return (
     <div className="space-y-6">
-      {/* 1. Sous-navigation fluide (Sous-onglets de préparation) */}
-      <div className="flex items-center gap-2 overflow-x-auto pb-2 scrollbar-none -mx-4 px-4 sm:mx-0 sm:px-0">
-        {sections.map(s => {
-          const isActive = activeSection === s.id;
-          return (
-            <button
-              key={s.id}
-              type="button"
-              onClick={() => setActiveSection(s.id)}
-              className={`flex items-center gap-2 px-3.5 sm:px-4 py-2 sm:py-2.5 rounded-full text-xs sm:text-sm font-semibold whitespace-nowrap transition-all duration-200 border min-h-[44px] ${
-                isActive
-                  ? 'bg-lkv-primary text-white border-lkv-primary shadow-sm'
-                  : 'bg-white/70 hover:bg-white text-lkv-primary border-white/80 hover:border-black/10'
-              }`}
-            >
-              <span className="text-lkv-secondary">{s.icon}</span>
-              <span>{s.label}</span>
-              {s.count !== undefined && (
-                <span
-                  className={`text-[10px] px-1.5 py-0.5 rounded-full ${
-                    isActive ? 'bg-white/20 text-white' : 'bg-black/5 text-lkv-secondary'
-                  }`}
-                >
-                  {s.count}
-                </span>
-              )}
-            </button>
-          );
-        })}
-      </div>
+      {/* Sous-navigation horizontale — visible uniquement sur mobile (sidebar pilote sur desktop) */}
+      {!isControlled && (
+        <div className="flex items-center gap-2 overflow-x-auto pb-2 scrollbar-none -mx-4 px-4 sm:mx-0 sm:px-0">
+          {sections.map(s => {
+            const isActive = activeSection === s.id;
+            return (
+              <button
+                key={s.id}
+                type="button"
+                onClick={() => handleSectionChange(s.id)}
+                className={`flex items-center gap-2 px-3.5 sm:px-4 py-2 sm:py-2.5 rounded-full text-xs sm:text-sm font-semibold whitespace-nowrap transition-all duration-200 border min-h-[44px] ${
+                  isActive
+                    ? 'bg-lkv-primary text-white border-lkv-primary shadow-sm'
+                    : 'bg-white/70 hover:bg-white text-lkv-primary border-white/80 hover:border-black/10'
+                }`}
+              >
+                <span className="text-lkv-secondary">{s.icon}</span>
+                <span>{s.label}</span>
+                {s.count !== undefined && (
+                  <span
+                    className={`text-[10px] px-1.5 py-0.5 rounded-full ${
+                      isActive ? 'bg-white/20 text-white' : 'bg-black/5 text-lkv-secondary'
+                    }`}
+                  >
+                    {s.count}
+                  </span>
+                )}
+              </button>
+            );
+          })}
+        </div>
+      )}
 
-      {/* 2. Contenu de la sous-section active */}
+      {/* Contenu de la sous-section active */}
       <div>
         {activeSection === 'overview' && (
           <div className="space-y-6">
-            <TripOverviewTab trip={trip} stats={stats} onTabChange={tab => setActiveSection(tab as PrepareSectionId)} />
+            <TripOverviewTab trip={trip} stats={stats} onTabChange={tab => handleSectionChange(tab as PrepareSectionId)} />
             {affiliateLinks.length > 0 && (
               <TripAffiliateSection
                 links={affiliateLinks}
