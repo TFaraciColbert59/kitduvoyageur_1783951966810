@@ -19,8 +19,9 @@ import CommandesCard from '@/components/compte/CommandesCard';
 import ParametresCompteCard from '@/components/compte/ParametresCompteCard';
 import EditProfileModal from '@/components/compte/EditProfileModal';
 import MobileCompteV2 from '@/components/compte/MobileCompteV2';
-import MobilePageShell from '@/components/mobile-nav/MobilePageShell';
 import CompteFooter from '@/components/compte/CompteFooter';
+import MobilePageShell from '@/components/mobile-nav/MobilePageShell';
+import AppShell from '@/components/shell/AppShell';
 import dynamic from 'next/dynamic';
 
 const AventuresTab = dynamic(() => import('@/components/compte/AventuresTab'), { ssr: false });
@@ -81,17 +82,18 @@ export default function ComptePage() {
 
   if (!user) {
     return (
-      <div className="h-dvh flex items-center justify-center font-sans relative">
-        <CompteBackground />
-        <div className="glass rounded-3xl p-8 text-center max-w-md shadow-xl">
-          <p className="text-5xl mb-4">🔐</p>
-          <h2 className="font-display font-bold text-2xl text-[#17402C] mb-2 tracking-tight">Connexion requise</h2>
-          <p className="text-sm text-[#5A7064] mb-6">Connectez-vous pour accéder à votre tableau de bord voyageur.</p>
-          <Link href="/connexion?mode=connexion" className="glass-capsule-btn primary">
-            Se connecter
-          </Link>
+      <AppShell>
+        <div className="min-h-[70vh] flex items-center justify-center font-sans relative p-4">
+          <div className="glass rounded-3xl p-8 text-center max-w-md shadow-xl">
+            <p className="text-5xl mb-4">🔐</p>
+            <h2 className="font-display font-bold text-2xl text-[#17402C] mb-2 tracking-tight">Connexion requise</h2>
+            <p className="text-sm text-[#5A7064] mb-6">Connectez-vous pour accéder à votre tableau de bord voyageur.</p>
+            <Link href="/connexion?mode=connexion" className="glass-capsule-btn primary">
+              Se connecter
+            </Link>
+          </div>
         </div>
-      </div>
+      </AppShell>
     );
   }
 

@@ -64,6 +64,7 @@ export default function AppShell({
     pathname?.startsWith('/pays') ||
     pathname?.startsWith('/carnets') ||
     pathname?.startsWith('/groupes') ||
+    pathname?.startsWith('/equipages') ||
     pathname?.startsWith('/clubs') ||
     pathname?.startsWith('/entraide') ||
     pathname?.startsWith('/evenements') ||
@@ -84,7 +85,7 @@ export default function AppShell({
 
   return (
     <div
-      className={`app-shell ${containerBgClass} ${className}`}
+      className={`app-shell mobile-page-shell ${containerBgClass} ${className}`}
       style={{
         ['--bottom-nav-height' as any]: bottomNavHeight,
         ...(containerBgStyle ? { background: containerBgStyle } : {}),
@@ -105,6 +106,14 @@ export default function AppShell({
         boxSizing: 'border-box',
       }}
     >
+      {/* Skip Link pour navigation clavier et lecteurs d'écran (WCAG AA 2.4.1) */}
+      <a
+        href="#main-content"
+        className="sr-only focus:not-sr-only focus:fixed focus:top-4 focus:left-4 focus:z-50 focus:px-4 focus:py-2 focus:bg-[#17402C] focus:text-white focus:text-sm focus:font-semibold focus:rounded-xl focus:shadow-xl focus:outline-none focus:ring-2 focus:ring-amber-400"
+      >
+        Aller au contenu principal
+      </a>
+
       {videoBackground && <CompteBackground />}
 
       {/* Bandeau d'expédition active cross-modules (Phase 6.1) */}
@@ -112,15 +121,15 @@ export default function AppShell({
 
       {/* Slot header sticky (optionnel) */}
       {header && (
-        <div style={{ position: 'sticky', top: 0, zIndex: 40, width: '100%' }}>
+        <header style={{ position: 'sticky', top: 0, zIndex: 40, width: '100%' }}>
           {header}
-        </div>
+        </header>
       )}
 
-      {/* Contenu principal */}
-      <div style={{ position: 'relative', zIndex: 1, width: '100%', maxWidth: '100%' }}>
+      {/* Contenu principal accessible */}
+      <main id="main-content" style={{ position: 'relative', zIndex: 1, width: '100%', maxWidth: '100%' }}>
         {children}
-      </div>
+      </main>
 
       {/* Slot bottomExtra (optionnel) — contenu au-dessus de la bottom bar */}
       {bottomExtra && (

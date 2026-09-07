@@ -7,6 +7,22 @@ import React from 'react';
  * Utilise kling_20260826_VIDEO_Cinematic__5411_0.mp4 (via /mobile-cinematic-bg.mp4).
  */
 export function CompteBackground() {
+  const [shouldPlayVideo, setShouldPlayVideo] = React.useState(false);
+
+  React.useEffect(() => {
+    if (typeof window === 'undefined') return;
+
+    // Ne pas charger la vidéo si l'utilisateur souhaite économiser ses données
+    const nav = navigator as any;
+    const isSaveData = Boolean(nav.connection?.saveData);
+    const isSlowConnection = nav.connection?.effectiveType === '2g' || nav.connection?.effectiveType === 'slow-2g';
+    const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+    if (!isSaveData && !isSlowConnection && !prefersReducedMotion) {
+      setShouldPlayVideo(true);
+    }
+  }, []);
+
   return (
     <div
       className="hidden md:block fixed inset-0 overflow-hidden pointer-events-none select-none"
@@ -18,33 +34,36 @@ export function CompteBackground() {
       }}
       aria-hidden="true"
     >
-      {/* Fallback image poster */}
+      {/* Fallback image poster optimisée */}
       <img
         src="/assets/images/forest-1.jpg"
         alt=""
         className="absolute inset-0 w-full h-full object-cover opacity-60 mix-blend-overlay"
-        loading="eager"
+        loading="lazy"
+        decoding="async"
       />
 
-      {/* Cinematic Video Layer */}
-      <video
-        className="absolute inset-0 w-full h-full object-cover opacity-85"
-        src="/mobile-cinematic-bg.mp4"
-        poster="/assets/images/forest-1.jpg"
-        autoPlay
-        muted
-        loop
-        playsInline
-        preload="metadata"
-        suppressHydrationWarning
-        style={{
-          objectFit: 'cover',
-          width: '100vw',
-          height: '100dvh',
-          transform: 'scale(1.08)',
-          transformOrigin: 'center center',
-        }}
-      />
+      {/* Cinematic Video Layer (chargée conditionnellement pour préserver les budgets Web Vitals) */}
+      {shouldPlayVideo && (
+        <video
+          className="absolute inset-0 w-full h-full object-cover opacity-85 transition-opacity duration-1000"
+          src="/mobile-cinematic-bg.mp4"
+          poster="/assets/images/forest-1.jpg"
+          autoPlay
+          muted
+          loop
+          playsInline
+          preload="none"
+          suppressHydrationWarning
+          style={{
+            objectFit: 'cover',
+            width: '100vw',
+            height: '100dvh',
+            transform: 'scale(1.08)',
+            transformOrigin: 'center center',
+          }}
+        />
+      )}
 
       {/* Atmospheric Vignette & Depth Overlay */}
       <div

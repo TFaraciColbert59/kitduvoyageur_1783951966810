@@ -13,6 +13,8 @@ const IMAGE_CACHE = `lkdv-images-${CACHE_VERSION}`;
 
 const PRECACHE_ASSETS = [
   '/',
+  '/voyages',
+  '/equipages',
   '/explorer',
   '/communaute',
   '/materiel',
@@ -105,7 +107,14 @@ self.addEventListener('fetch', (event) => {
   }
 
   // -- Stratégie C : API Routes GET (Stale-While-Revalidate) --
-  if (url.pathname.startsWith('/api/hikes') || url.pathname.startsWith('/api/carnets') || url.pathname.startsWith('/api/materiel')) {
+  if (
+    url.pathname.startsWith('/api/hikes') ||
+    url.pathname.startsWith('/api/carnets') ||
+    url.pathname.startsWith('/api/materiel') ||
+    url.pathname.startsWith('/api/voyages') ||
+    url.pathname.startsWith('/api/trips') ||
+    url.pathname.startsWith('/api/equipages')
+  ) {
     event.respondWith(
       caches.open(RUNTIME_CACHE).then(async (cache) => {
         const cached = await cache.match(request);
