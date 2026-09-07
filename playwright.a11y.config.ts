@@ -6,7 +6,7 @@ import { defineConfig, devices } from '@playwright/test';
  * Critère : zéro violation axe de gravité critical ou serious par surface × viewport.
  */
 export default defineConfig({
-  testDir: './tests/a11y',
+  testDir: './tests/a11y/e2e',
   fullyParallel: false,
   forbidOnly: !!process.env.CI,
   retries: process.env.CI ? 1 : 0,
