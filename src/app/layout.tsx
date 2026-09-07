@@ -15,6 +15,7 @@ import GoogleAnalytics from '@/components/GoogleAnalytics';
 import MobileNavWrapper from '@/components/mobile-nav/MobileNavWrapper';
 import CookieConsentBanner from '@/components/CookieConsentBanner';
 import RocketConsentScripts from '@/components/RocketConsentScripts';
+import TravelpayoutsDrive from '@/components/TravelpayoutsDrive';
 import MigrationEffect from '@/lib/storage/MigrationEffect';
 import { getOrganizationSchema, getWebsiteSchema } from '@/lib/seo-utils';
 import ReactQueryProvider from '@/components/ReactQueryProvider';
@@ -210,6 +211,9 @@ export default async function RootLayout({
 
         {/* Rocket analytics scripts — chargés uniquement après consentement */}
         <RocketConsentScripts />
+
+        {/* Travelpayouts Drive — chargé uniquement après consentement (Z7) */}
+        <TravelpayoutsDrive />
         {process.env.NODE_ENV === 'production' && (
           <script
             id="service-worker-registration"
