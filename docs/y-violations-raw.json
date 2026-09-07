@@ -276,42 +276,6 @@
   "extract": "className=\"px-3 py-1 min-h-[32px] text-xs bg-zinc-100 dark:bg-zinc-800 text-zinc-600 dark:text-zinc-300 hover:bg-emerald"
  },
  {
-  "rule": "R11",
-  "file": "src/features/trips/components/KitSidebarLeft.tsx",
-  "line": 14,
-  "extract": "{ href: `/voyages/${trip.slug}/itineraire`, icon: Navigation, label: 'Planificateur' },"
- },
- {
-  "rule": "R11",
-  "file": "src/features/trips/components/KitSidebarLeft.tsx",
-  "line": 14,
-  "extract": "{ href: `/voyages/${trip.slug}/itineraire`, icon: Navigation, label: 'Planificateur' },"
- },
- {
-  "rule": "R11",
-  "file": "src/features/trips/components/KitSidebarLeft.tsx",
-  "line": 15,
-  "extract": "{ href: `/voyages/${trip.slug}/export`, icon: FileText, label: 'Export PDF' },"
- },
- {
-  "rule": "R11",
-  "file": "src/features/trips/components/KitSidebarLeft.tsx",
-  "line": 15,
-  "extract": "{ href: `/voyages/${trip.slug}/export`, icon: FileText, label: 'Export PDF' },"
- },
- {
-  "rule": "R11",
-  "file": "src/features/trips/components/KitSidebarLeft.tsx",
-  "line": 22,
-  "extract": "<Link href={`/voyages/${trip.slug}`} className=\"inline-flex items-center gap-1.5 font-medium hover:underline text-[var(-"
- },
- {
-  "rule": "R10",
-  "file": "src/features/trips/components/KitSidebarLeft.tsx",
-  "line": 0,
-  "extract": "<aside"
- },
- {
   "rule": "R10",
   "file": "src/features/trips/components/KitSidebarRight.tsx",
   "line": 0,
@@ -612,12 +576,6 @@
   "extract": "<div className=\"glass rounded-[26px] border border-white/60 max-w-lg w-full p-6 shadow-2xl space-y-4\">"
  },
  {
-  "rule": "R8",
-  "file": "src/features/trips/components/TripOfflineBar.tsx",
-  "line": 19,
-  "extract": "setIsOnline(navigator.onLine);"
- },
- {
   "rule": "R3",
   "file": "src/features/trips/components/TripSafetyView.tsx",
   "line": 50,
@@ -664,54 +622,6 @@
   "file": "src/features/trips/components/TripShareModal.tsx",
   "line": 192,
   "extract": "href={`/voyages/${trip.slug}/export`}"
- },
- {
-  "rule": "R8",
-  "file": "src/features/trips/components/TripSyncStatusIndicator.tsx",
-  "line": 31,
-  "extract": "setIsOnline(navigator.onLine);"
- },
- {
-  "rule": "R8",
-  "file": "src/features/trips/components/TripSyncStatusIndicator.tsx",
-  "line": 34,
-  "extract": "setIsOnline(navigator.onLine);"
- },
- {
-  "rule": "R1",
-  "file": "src/features/trips/components/TripSyncStatusIndicator.tsx",
-  "line": 85,
-  "extract": "className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-medium bg-amber-50 text-amber-800 borde"
- },
- {
-  "rule": "R1",
-  "file": "src/features/trips/components/TripSyncStatusIndicator.tsx",
-  "line": 91,
-  "extract": "<RefreshCw className=\"w-3.5 h-3.5 animate-spin text-amber-600\" aria-hidden=\"true\" />"
- },
- {
-  "rule": "R1",
-  "file": "src/features/trips/components/TripSyncStatusIndicator.tsx",
-  "line": 93,
-  "extract": "<span className=\"w-2 h-2 rounded-full bg-amber-500 animate-pulse\" aria-hidden=\"true\" />"
- },
- {
-  "rule": "R1",
-  "file": "src/features/trips/components/TripSyncStatusIndicator.tsx",
-  "line": 103,
-  "extract": "className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-medium bg-emerald-50 text-emerald-800 b"
- },
- {
-  "rule": "R1",
-  "file": "src/features/trips/components/TripSyncStatusIndicator.tsx",
-  "line": 106,
-  "extract": "<Check className=\"w-3.5 h-3.5 text-emerald-600\" aria-hidden=\"true\" />"
- },
- {
-  "rule": "R1",
-  "file": "src/features/trips/components/TripSyncStatusIndicator.tsx",
-  "line": 118,
-  "extract": "<Cloud className=\"w-3.5 h-3.5 text-emerald-600\" aria-hidden=\"true\" />"
  },
  {
   "rule": "R5",
@@ -766,42 +676,6 @@
   "file": "src/features/trips/planner/ItineraryPlannerClient.tsx",
   "line": 383,
   "extract": "href={`/voyages/${trip.slug}`}"
- },
- {
-  "rule": "R11",
-  "file": "src/features/trips/planner/ItinerarySidebarLeft.tsx",
-  "line": 14,
-  "extract": "{ href: `/voyages/${trip.slug}/kit`, icon: Package, label: 'Kit & Equipement' },"
- },
- {
-  "rule": "R11",
-  "file": "src/features/trips/planner/ItinerarySidebarLeft.tsx",
-  "line": 14,
-  "extract": "{ href: `/voyages/${trip.slug}/kit`, icon: Package, label: 'Kit & Equipement' },"
- },
- {
-  "rule": "R11",
-  "file": "src/features/trips/planner/ItinerarySidebarLeft.tsx",
-  "line": 15,
-  "extract": "{ href: `/voyages/${trip.slug}/export`, icon: FileText, label: 'Export PDF' },"
- },
- {
-  "rule": "R11",
-  "file": "src/features/trips/planner/ItinerarySidebarLeft.tsx",
-  "line": 15,
-  "extract": "{ href: `/voyages/${trip.slug}/export`, icon: FileText, label: 'Export PDF' },"
- },
- {
-  "rule": "R11",
-  "file": "src/features/trips/planner/ItinerarySidebarLeft.tsx",
-  "line": 22,
-  "extract": "<Link href={`/voyages/${trip.slug}`} className=\"inline-flex items-center gap-1.5 font-medium hover:underline text-[var(-"
- },
- {
-  "rule": "R10",
-  "file": "src/features/trips/planner/ItinerarySidebarLeft.tsx",
-  "line": 0,
-  "extract": "<aside"
  },
  {
   "rule": "R10",

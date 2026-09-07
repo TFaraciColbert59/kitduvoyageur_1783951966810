@@ -1,26 +1,26 @@
 # Y_VIOLATIONS — Inventaire du garde-fou Y-D80
 
-Régénéré le 2026-09-07T20:21:30.134Z
-Total : **501 violations** · Cible : 0 (G3 = 12/12 en fin de Y3.5).
+Régénéré le 2026-09-07T21:13:22.477Z
+Total : **480 violations** · Cible : 0 (G3 = 12/12 en fin de Y3.5).
 
 | Règle | Objet | Total | Phase |
 |---|---|---|---|
-| R1 | Classes froides | 89 | Y3.5 |
+| R1 | Classes froides | 83 | Y3.5 |
 | R2 | Hex brut | 240 | Y3.5 |
 | R3 | rounded-[Npx] | 45 | Y3.5 |
 | R4 | shadow-[…] | 1 | Y3.5 |
 | R5 | Dialogues natifs | 15 | Y3.5 |
 | R6 | Cibles < 44px | 9 | Y3.5 |
 | R7 | Contrôles non stylés | 8 | Y3.5 |
-| R8 | Statut réseau multiple | 3 | Y3.2 |
+| R8 | Statut réseau multiple | 0 | Y3.2 |
 | R9 | h1 multiples | 0 | Y3.5 |
-| R10 | aside hors canonique | 7 | Y2.2/Y3.1 |
-| R11 | Routes littérales | 83 | Y3.5 |
+| R10 | aside hors canonique | 5 | Y2.2/Y3.1 |
+| R11 | Routes littérales | 73 | Y3.5 |
 | R12 | window.print | 1 | Y4.10 |
 
 ## Détail par règle (fichiers les plus touchés)
 
-### R1 — Classes froides (89)
+### R1 — Classes froides (83)
 
 - `src/features/trips/components/autoGen/ProposalCard.tsx` × 22
 - `src/features/trips/wizard/Step5Preview.tsx` × 9
@@ -28,13 +28,12 @@ Total : **501 violations** · Cible : 0 (G3 = 12/12 en fin de Y3.5).
 - `src/features/trips/components/ResumeActiveTripCard.tsx` × 8
 - `src/features/trips/wizard/Step2Dates.tsx` × 8
 - `src/features/trips/wizard/Step1Destinations.tsx` × 7
-- `src/features/trips/components/TripSyncStatusIndicator.tsx` × 6
 - `src/features/trips/components/autoGen/AutoGenTripView.tsx` × 5
 - `src/app/groupes/page.tsx` × 5
 - `src/features/trips/wizard/Step3StylePace.tsx` × 4
 - `src/features/trips/wizard/Step4Travelers.tsx` × 3
 - `src/features/trips/components/ActiveTripBanner.tsx` × 2
-- … +1 autres fichiers
+- `src/app/ai-configurator/components/KitConfiguratorWizard.tsx` × 2
 
 ### R2 — Hex brut (240)
 
@@ -93,31 +92,26 @@ Total : **501 violations** · Cible : 0 (G3 = 12/12 en fin de Y3.5).
 
 - `src/app/groupes/page.tsx` × 8
 
-### R8 — Statut réseau multiple (3)
+### R8 — Statut réseau multiple (0)
 
-- `src/features/trips/components/TripSyncStatusIndicator.tsx` × 2
-- `src/features/trips/components/TripOfflineBar.tsx` × 1
+
 
 ### R9 — h1 multiples (0)
 
 
 
-### R10 — aside hors canonique (7)
+### R10 — aside hors canonique (5)
 
-- `src/features/trips/components/KitSidebarLeft.tsx` × 1
 - `src/features/trips/components/KitSidebarRight.tsx` × 1
-- `src/features/trips/planner/ItinerarySidebarLeft.tsx` × 1
 - `src/features/trips/planner/ItinerarySidebarRight.tsx` × 1
 - `src/features/trips/wizard/TripWizard.tsx` × 1
 - `src/app/voyages/VoyagesClient.tsx` × 1
 - `src/app/groupes/[groupId]/page.tsx` × 1
 
-### R11 — Routes littérales (83)
+### R11 — Routes littérales (73)
 
 - `src/app/voyages/actions.ts` × 31
 - `src/app/voyages/kit-actions.ts` × 12
-- `src/features/trips/components/KitSidebarLeft.tsx` × 5
-- `src/features/trips/planner/ItinerarySidebarLeft.tsx` × 5
 - `src/app/voyages/completion-actions.ts` × 5
 - `src/app/voyages/collab-actions.ts` × 3
 - `src/features/trips/components/ActiveTripBanner.tsx` × 2
@@ -126,7 +120,9 @@ Total : **501 violations** · Cible : 0 (G3 = 12/12 en fin de Y3.5).
 - `src/features/trips/components/TripItineraryTab.tsx` × 2
 - `src/features/trips/components/TripShareModal.tsx` × 2
 - `src/features/trips/planner/ItineraryPlannerClient.tsx` × 2
-- … +7 autres fichiers
+- `src/features/trips/wizard/useTripDraft.ts` × 2
+- `src/app/voyages/budget-actions.ts` × 2
+- … +5 autres fichiers
 
 ### R12 — window.print (1)
 

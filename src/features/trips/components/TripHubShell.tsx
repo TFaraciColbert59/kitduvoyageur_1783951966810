@@ -12,6 +12,7 @@ import { useActiveTrip } from '../context/ActiveTripContext';
 import { useTripStatus } from '../hooks/useTripStatus';
 import TripSidebarLeft from './TripSidebarLeft';
 import TripSidebarRight from './TripSidebarRight';
+import TripNetworkStatus from './TripNetworkStatus';
 import { TripCompactHeader } from './TripCompactHeader';
 import { TripShareModal } from './TripShareModal';
 
@@ -57,6 +58,8 @@ export function TripHubShell({ trip, profile, phase, children }: TripHubShellPro
     />
   );
 
+  const networkStatus = <TripNetworkStatus tripSlug={trip.slug} />;
+
   const sidebarRight = <TripSidebarRight trip={trip} profile={profile} phase={phase} activeSection={activeSection} />;
 
   return (
@@ -77,6 +80,12 @@ export function TripHubShell({ trip, profile, phase, children }: TripHubShellPro
       }
     >
       <div className="space-y-4">
+        <div className="flex items-center justify-between">
+          <span className="text-[9.5px] font-mono font-bold uppercase tracking-widest text-[var(--lkv-text-secondary)]">
+            Hub de voyage
+          </span>
+          {networkStatus}
+        </div>
         {activeSection !== 'overview' && (
           <TripCompactHeader trip={trip} activePhase={phase} />
         )}
