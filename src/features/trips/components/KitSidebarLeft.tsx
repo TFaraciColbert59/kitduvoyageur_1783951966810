@@ -38,7 +38,7 @@ export default function KitSidebarLeft({ trip }: KitSidebarLeftProps) {
       <nav aria-label="Acces rapide" className="space-y-1.5">
         <p className="text-[9.5px] font-mono font-bold uppercase tracking-widest text-[var(--lkv-text-secondary)] px-2 mb-1">Acces rapide</p>
         {links.map(({ href, icon: Icon, label }) => (
-          <Link key={href} href={href} className="w-full px-3 py-2.5 rounded-[var(--lkv-radius-md)] font-bold text-xs flex items-center gap-2 bg-white/80 hover:bg-white text-[var(--lkv-text-primary)] border border-white/80 transition-all min-h-[var(--lkv-touch-min)]">
+          <Link key={href} href={href} className="w-full px-3 py-2.5 rounded-[var(--lkv-radius-md)] font-bold text-xs flex items-center gap-2 glass-sub-card hover:bg-white text-[var(--lkv-text-primary)] border border-white/60 transition-all min-h-[var(--lkv-touch-min)] shadow-2xs">
             <Icon size={13} className="text-[var(--lkv-text-secondary)] shrink-0" />
             {label}
           </Link>

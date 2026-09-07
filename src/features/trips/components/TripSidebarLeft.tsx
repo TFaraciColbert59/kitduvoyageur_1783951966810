@@ -96,26 +96,25 @@ export default function TripSidebarLeft({
           </div>
         </GlassSubCard>
         <div className="grid grid-cols-2 gap-1.5">
-          <button
-            type="button"
+          <GlassCapsuleBtn
+            variant={isTripActive ? 'primary' : 'default'}
+            size="sm"
             onClick={onToggleActive}
             disabled={isPending}
-            className={`flex items-center justify-center gap-1.5 px-2 py-1.5 rounded-[var(--lkv-radius-full)] text-[10.5px] font-bold border min-h-[var(--lkv-touch-min)] transition-all cursor-pointer ${
-              isTripActive
-                ? 'bg-[var(--lkv-success)] text-white border-[var(--lkv-success)]'
-                : 'glass-capsule-btn text-[var(--lkv-text-primary)]'
+            icon={isTripActive ? <Check size={13} /> : <Compass size={13} />}
+            className={`flex items-center justify-center gap-1.5 !py-1.5 !px-2 !text-[10.5px] min-h-[var(--lkv-touch-min)] w-full ${
+              isTripActive ? '!bg-[var(--lkv-success)] !border-[var(--lkv-success)] text-white' : ''
             }`}
           >
-            {isTripActive ? <Check size={13} /> : <Compass size={13} />}
             <span>{isTripActive ? 'Active' : 'Activer'}</span>
-          </button>
+          </GlassCapsuleBtn>
           <GlassCapsuleBtn
-            variant="secondary"
+            variant="default"
             size="sm"
             onClick={onShare}
-            className="flex items-center justify-center gap-1.5 !py-1.5 !px-2 !text-[10.5px] min-h-[var(--lkv-touch-min)]"
+            icon={<Share2 size={13} />}
+            className="flex items-center justify-center gap-1.5 !py-1.5 !px-2 !text-[10.5px] min-h-[var(--lkv-touch-min)] w-full"
           >
-            <Share2 size={13} />
             <span>Partager</span>
           </GlassCapsuleBtn>
         </div>
@@ -134,7 +133,7 @@ export default function TripSidebarLeft({
               className={`w-full px-3 py-2.5 rounded-[var(--lkv-radius-md)] font-bold text-xs transition-all flex items-center justify-between group cursor-pointer border ${
                 isActive
                   ? 'bg-[var(--lkv-primary)] text-white border-[var(--lkv-primary)] shadow-sm'
-                  : 'bg-white/80 hover:bg-white text-[var(--lkv-text-primary)] border-white/80 shadow-2xs'
+                  : 'glass-sub-card border border-white/50 text-[var(--lkv-text-primary)] hover:bg-white'
               }`}
             >
               <span className="truncate text-left flex items-center gap-2">

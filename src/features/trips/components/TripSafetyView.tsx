@@ -5,7 +5,7 @@ import { TripFull, TripSafetyCheckpoint } from '../types/trip.types';
 import { GlassCard } from '@/components/ui/GlassCard';
 import { EmptyState } from '@/components/ui/EmptyState';
 import { Shield, CheckCircle2, Clock, AlertTriangle, PhoneCall, Radio, Plus } from 'lucide-react';
-import { LkvButton } from '@/components/ui/LkvButton';
+import { GlassCapsuleBtn } from '@/components/ui/GlassCapsuleBtn';
 
 interface TripSafetyViewProps {
   trip: TripFull;
@@ -17,26 +17,26 @@ const STATUS_CONFIG: Record<
 > = {
   pending: {
     label: 'En attente',
-    bg: 'bg-amber-500/10 text-amber-800 border-amber-500/20',
-    text: 'text-amber-700',
+    bg: 'bg-[var(--lkv-warning)]/10 text-[var(--lkv-warning)] border-[var(--lkv-warning)]/20',
+    text: 'text-[var(--lkv-warning)]',
     icon: <Clock size={14} />,
   },
   checked: {
     label: 'Validé',
-    bg: 'bg-emerald-500/10 text-emerald-800 border-emerald-500/20',
-    text: 'text-emerald-700',
+    bg: 'bg-[var(--lkv-success)]/10 text-[var(--lkv-success)] border-[var(--lkv-success)]/20',
+    text: 'text-[var(--lkv-success)]',
     icon: <CheckCircle2 size={14} />,
   },
   missed: {
     label: 'En retard',
-    bg: 'bg-rose-500/10 text-rose-800 border-rose-500/20',
-    text: 'text-rose-700',
+    bg: 'bg-[var(--lkv-danger)]/10 text-[var(--lkv-danger)] border-[var(--lkv-danger)]/20',
+    text: 'text-[var(--lkv-danger)]',
     icon: <AlertTriangle size={14} />,
   },
   alert_sent: {
     label: 'Alerte envoyée',
-    bg: 'bg-red-500/15 text-red-900 border-red-500/30',
-    text: 'text-red-700',
+    bg: 'bg-[var(--lkv-danger)]/15 text-[var(--lkv-danger)] border-[var(--lkv-danger)]/30',
+    text: 'text-[var(--lkv-danger)]',
     icon: <Radio size={14} />,
   },
 };
@@ -50,7 +50,7 @@ export function TripSafetyView({ trip }: TripSafetyViewProps) {
       <GlassCard tone="sage" blur="md" className="p-6 rounded-[28px] border border-white/70">
         <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
           <div className="flex items-start gap-4">
-            <div className="p-3.5 rounded-2xl bg-lkv-primary text-white shadow-md">
+            <div className="p-3.5 rounded-2xl bg-[var(--lkv-primary)]/10 text-[var(--lkv-primary)]">
               <Shield size={24} />
             </div>
             <div>
@@ -69,17 +69,16 @@ export function TripSafetyView({ trip }: TripSafetyViewProps) {
             </div>
           </div>
           {trip.permissions.canEdit && (
-            <LkvButton
+            <GlassCapsuleBtn
               variant="secondary"
               size="sm"
-              className="gap-2 shrink-0"
+              icon={<Plus size={16} />}
               onClick={() => {
                 alert('La configuration de nouveaux points de contrôle sera disponible prochainement.');
               }}
             >
-              <Plus size={16} />
               Nouveau point
-            </LkvButton>
+            </GlassCapsuleBtn>
           )}
         </div>
       </GlassCard>
@@ -145,7 +144,7 @@ export function TripSafetyView({ trip }: TripSafetyViewProps) {
       )}
 
       {/* Rappels de sécurité & Urgences */}
-      <GlassCard tone="neutral" blur="sm" className="p-6 rounded-[28px] border border-white/60 bg-[#FAF8F5]/80">
+      <GlassCard tone="neutral" blur="sm" className="p-6 rounded-[28px] border border-white/60">
         <div className="flex items-start gap-3.5">
           <div className="p-2.5 rounded-xl bg-lkv-primary/10 text-lkv-primary">
             <PhoneCall size={20} />

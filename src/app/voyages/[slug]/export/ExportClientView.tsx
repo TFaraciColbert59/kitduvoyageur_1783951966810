@@ -8,7 +8,7 @@ import type { BudgetSummary } from '@/features/trips/engine/budgetEngine';
 import { formatCivilDateRange } from '@/lib/dates/tripDates';
 import AppShellDesktop from '@/components/shell/AppShellDesktop';
 import MobilePageShell from '@/components/mobile-nav/MobilePageShell';
-import { GlassSubCard } from '@/components/ui';
+import { GlassSubCard, GlassCapsuleBtn } from '@/components/ui';
 
 interface ExportClientViewProps {
   trip: TripFull;
@@ -36,7 +36,7 @@ export default function ExportClientView({ trip, stats, budgetSummary }: ExportC
   const renderPrintContent = () => (
     <div className="bg-white rounded-[var(--lkv-radius-card)] p-6 sm:p-8 shadow-sm border border-white/60 print:p-0 print:border-none print:shadow-none print:rounded-none max-w-4xl mx-auto space-y-8 print:space-y-6">
       {/* En-tete officiel */}
-      <header className="border-b border-border/60 pb-6">
+      <header className="border-b border-white/60 pb-6">
         <div className="flex justify-between items-start">
           <div>
             <div className="text-xs uppercase tracking-widest text-lkv-secondary font-semibold mb-1">
@@ -44,21 +44,21 @@ export default function ExportClientView({ trip, stats, budgetSummary }: ExportC
             </div>
             <h1 className="text-2xl sm:text-3xl font-bold text-lkv-primary">{trip.title}</h1>
             {trip.description && (
-              <p className="text-sm text-text-secondary mt-2 max-w-2xl">{trip.description}</p>
+              <p className="text-sm text-[var(--lkv-text-secondary)] mt-2 max-w-2xl">{trip.description}</p>
             )}
           </div>
-          <div className="text-right text-xs text-text-muted">
+          <div className="text-right text-xs text-[var(--lkv-text-muted)]">
             <div>Edite le {new Date().toLocaleDateString('fr-FR')}</div>
             <div className="font-mono mt-1 text-[10px]">Ref : {trip.slug}</div>
           </div>
         </div>
 
         {/* Metriques cles */}
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 mt-6 pt-4 border-t border-border/40">
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 mt-6 pt-4 border-t border-white/40">
           <div className="flex items-center gap-2">
             <MapPin size={16} className="text-lkv-secondary" />
             <div>
-              <div className="text-[10px] text-text-muted uppercase">Destination</div>
+              <div className="text-[10px] text-[var(--lkv-text-muted)] uppercase">Destination</div>
               <div className="text-sm font-semibold text-lkv-primary">
                 {trip.destination_name || trip.destination_country_code || 'Non renseigne'}
               </div>
@@ -68,7 +68,7 @@ export default function ExportClientView({ trip, stats, budgetSummary }: ExportC
           <div className="flex items-center gap-2">
             <Calendar size={16} className="text-lkv-secondary" />
             <div>
-              <div className="text-[10px] text-text-muted uppercase">Dates</div>
+              <div className="text-[10px] text-[var(--lkv-text-muted)] uppercase">Dates</div>
               <div className="text-sm font-semibold text-lkv-primary">
                 {formatCivilDateRange(trip.start_date, trip.end_date, undefined, 'fr-FR') || 'Date libre'}
               </div>
@@ -78,7 +78,7 @@ export default function ExportClientView({ trip, stats, budgetSummary }: ExportC
           <div className="flex items-center gap-2">
             <Users size={16} className="text-lkv-secondary" />
             <div>
-              <div className="text-[10px] text-text-muted uppercase">Equipe</div>
+              <div className="text-[10px] text-[var(--lkv-text-muted)] uppercase">Equipe</div>
               <div className="text-sm font-semibold text-lkv-primary">
                 {trip.collaborators.length} voyageur{trip.collaborators.length > 1 ? 's' : ''}
               </div>
@@ -88,7 +88,7 @@ export default function ExportClientView({ trip, stats, budgetSummary }: ExportC
           <div className="flex items-center gap-2">
             <Shield size={16} className="text-lkv-secondary" />
             <div>
-              <div className="text-[10px] text-text-muted uppercase">Activite & Niveau</div>
+              <div className="text-[10px] text-[var(--lkv-text-muted)] uppercase">Activite & Niveau</div>
               <div className="text-sm font-semibold text-lkv-primary">
                 {trip.primary_activity} &middot; {trip.difficulty}
               </div>
@@ -109,29 +109,29 @@ export default function ExportClientView({ trip, stats, budgetSummary }: ExportC
         </h2>
 
         {sortedDays.length === 0 ? (
-          <p className="text-sm text-text-muted italic">Aucune etape enregistree.</p>
+          <p className="text-sm text-[var(--lkv-text-muted)] italic">Aucune etape enregistree.</p>
         ) : (
           <div className="space-y-4">
             {sortedDays.map(dayNum => {
               const daySteps = stepsByDay[dayNum] || [];
               return (
-                <div key={dayNum} className="border border-border/60 rounded-xl p-4 page-break-inside-avoid">
+                <div key={dayNum} className="border border-white/60 rounded-xl p-4 page-break-inside-avoid">
                   <div className="font-bold text-sm text-lkv-primary mb-2 flex items-center justify-between">
                     <span>Jour {dayNum}</span>
-                    <span className="text-xs text-text-muted font-normal">
+                    <span className="text-xs text-[var(--lkv-text-muted)] font-normal">
                       {daySteps.length} etape{daySteps.length > 1 ? 's' : ''}
                     </span>
                   </div>
                   <div className="space-y-3">
                     {daySteps.map((step, idx) => (
                       <div key={step.id} className="text-xs pl-3 border-l-2 border-lkv-secondary">
-                        <div className="font-semibold text-text-primary">
+                        <div className="font-semibold text-[var(--lkv-text-primary)]">
                           {idx + 1}. {step.title}
                         </div>
                         {step.description && (
-                          <p className="text-text-secondary mt-0.5">{step.description}</p>
+                          <p className="text-[var(--lkv-text-secondary)] mt-0.5">{step.description}</p>
                         )}
-                        <div className="flex flex-wrap gap-x-4 gap-y-1 text-text-muted mt-1 text-[11px]">
+                        <div className="flex flex-wrap gap-x-4 gap-y-1 text-[var(--lkv-text-muted)] mt-1 text-[11px]">
                           {step.distance_km && <span>Distance : {step.distance_km} km</span>}
                           {step.elevation_gain_m && <span>D+ : +{step.elevation_gain_m}m</span>}
                           {step.elevation_loss_m && <span>D- : -{step.elevation_loss_m}m</span>}
@@ -163,16 +163,16 @@ export default function ExportClientView({ trip, stats, budgetSummary }: ExportC
           {trip.items.map(item => (
             <div
               key={item.id}
-              className="flex items-center gap-2 p-2 rounded-lg border border-border/40 bg-surface-subtle"
+              className="flex items-center gap-2 p-2 rounded-lg border border-white/40 bg-white/40"
             >
-              <div className="w-3.5 h-3.5 border border-border rounded-sm flex items-center justify-center">
+              <div className="w-3.5 h-3.5 border border-white rounded-sm flex items-center justify-center">
                 {item.is_packed && <div className="w-2 h-2 bg-lkv-primary rounded-2xs" />}
               </div>
               <div className="truncate">
-                <span className="font-medium text-text-primary">{item.item_name}</span>
-                {item.quantity > 1 && <span className="text-text-muted"> (x{item.quantity})</span>}
+                <span className="font-medium text-[var(--lkv-text-primary)]">{item.item_name}</span>
+                {item.quantity > 1 && <span className="text-[var(--lkv-text-muted)]"> (x{item.quantity})</span>}
                 {item.weight_grams && (
-                  <span className="text-text-muted text-[10px]"> &middot; {item.weight_grams}g</span>
+                  <span className="text-[var(--lkv-text-muted)] text-[10px]"> &middot; {item.weight_grams}g</span>
                 )}
               </div>
             </div>
@@ -190,12 +190,12 @@ export default function ExportClientView({ trip, stats, budgetSummary }: ExportC
         </h2>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-xs">
-          <div className="border border-border/60 rounded-xl p-3">
-            <div className="font-semibold text-text-secondary mb-2">Balances par membre</div>
+          <div className="border border-white/60 rounded-xl p-3">
+            <div className="font-semibold text-[var(--lkv-text-secondary)] mb-2">Balances par membre</div>
             <div className="space-y-1.5">
               {budgetSummary.balances.map(b => (
                 <div key={b.userId} className="flex justify-between items-center text-[11px]">
-                  <span className="text-text-secondary">{b.name}</span>
+                  <span className="text-[var(--lkv-text-secondary)]">{b.name}</span>
                   <span className={b.net >= 0 ? 'text-[var(--lkv-success)] font-medium' : 'text-[var(--lkv-danger)] font-medium'}>
                     {b.net >= 0 ? `+${b.net}` : b.net} {budgetSummary.currency}
                   </span>
@@ -204,14 +204,14 @@ export default function ExportClientView({ trip, stats, budgetSummary }: ExportC
             </div>
           </div>
 
-          <div className="border border-border/60 rounded-xl p-3">
-            <div className="font-semibold text-text-secondary mb-2">Reglements de compte</div>
+          <div className="border border-white/60 rounded-xl p-3">
+            <div className="font-semibold text-[var(--lkv-text-secondary)] mb-2">Reglements de compte</div>
             {budgetSummary.settlements.length === 0 ? (
-              <p className="text-text-muted italic text-[11px]">Tous les comptes sont equilibres.</p>
+              <p className="text-[var(--lkv-text-muted)] italic text-[11px]">Tous les comptes sont equilibres.</p>
             ) : (
               <div className="space-y-1.5">
                 {budgetSummary.settlements.map((s, idx) => (
-                  <div key={idx} className="text-[11px] text-text-primary">
+                  <div key={idx} className="text-[11px] text-[var(--lkv-text-primary)]">
                     <span className="font-medium">{s.fromName}</span> doit verser{' '}
                     <span className="font-bold text-lkv-primary">
                       {s.amount} {budgetSummary.currency}
@@ -226,9 +226,9 @@ export default function ExportClientView({ trip, stats, budgetSummary }: ExportC
       </section>
 
       {/* Section 4 : Securite & Contacts d'urgence */}
-      <footer className="pt-6 border-t border-border/60 text-xs text-text-muted flex flex-wrap justify-between gap-4 page-break-inside-avoid">
+      <footer className="pt-6 border-t border-white/60 text-xs text-[var(--lkv-text-muted)] flex flex-wrap justify-between gap-4 page-break-inside-avoid">
         <div>
-          <div className="font-bold text-text-secondary">Securite & Numeros d'urgence</div>
+          <div className="font-bold text-[var(--lkv-text-secondary)]">Securite & Numeros d'urgence</div>
           <div>Secours en montagne europeen : 112 &middot; SAMU : 15 &middot; Pompiers : 18</div>
         </div>
         <div className="text-right">
@@ -273,18 +273,20 @@ export default function ExportClientView({ trip, stats, budgetSummary }: ExportC
         <a
           href={`/api/voyages/${trip.slug}/gpx`}
           download={`${trip.slug}.gpx`}
-          className="w-full px-3 py-2.5 rounded-[var(--lkv-radius-md)] font-bold text-xs flex items-center gap-2 bg-white/80 hover:bg-white text-[var(--lkv-text-primary)] border border-white/80 transition-all min-h-[var(--lkv-touch-min)] shadow-2xs"
+          className="glass-capsule-btn w-full justify-start flex items-center gap-1.5"
         >
-          <Download size={13} className="text-[var(--lkv-text-secondary)] shrink-0" />
+          <Download size={13} />
           <span>Telecharger GPX</span>
         </a>
-        <button
+        <GlassCapsuleBtn
+          variant="primary"
+          size="sm"
           onClick={handlePrint}
-          className="w-full px-3 py-2.5 rounded-[var(--lkv-radius-md)] font-bold text-xs flex items-center gap-2 bg-[var(--lkv-primary)] text-white border border-[var(--lkv-primary)] transition-all min-h-[var(--lkv-touch-min)] shadow-sm cursor-pointer"
+          icon={<Printer size={13} />}
+          className="w-full justify-start"
         >
-          <Printer size={13} className="shrink-0" />
-          <span>Imprimer / PDF</span>
-        </button>
+          Imprimer / PDF
+        </GlassCapsuleBtn>
       </div>
 
       <div className="mt-auto pt-2 border-t border-[var(--lkv-border-subtle)]">
@@ -310,18 +312,19 @@ export default function ExportClientView({ trip, stats, budgetSummary }: ExportC
                 <a
                   href={`/api/voyages/${trip.slug}/gpx`}
                   download={`${trip.slug}.gpx`}
-                  className="px-2.5 py-1.5 rounded-lg border text-xs font-semibold flex items-center gap-1 bg-white"
+                  className="glass-capsule-btn flex items-center gap-1.5"
                 >
                   <Download size={12} />
-                  GPX
+                  <span>GPX</span>
                 </a>
-                <button
+                <GlassCapsuleBtn
+                  variant="primary"
+                  size="xs"
                   onClick={handlePrint}
-                  className="px-2.5 py-1.5 rounded-lg bg-[var(--lkv-primary)] text-white text-xs font-semibold flex items-center gap-1"
+                  icon={<Printer size={12} />}
                 >
-                  <Printer size={12} />
                   PDF
-                </button>
+                </GlassCapsuleBtn>
               </div>
             </div>
             {renderPrintContent()}

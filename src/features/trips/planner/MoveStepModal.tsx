@@ -39,19 +39,19 @@ export function MoveStepModal({
   }
 
   return (
-    <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4 bg-black/50 backdrop-blur-sm animate-in fade-in">
+    <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4 bg-black/40 backdrop-blur-sm animate-in fade-in">
       <div
-        className="w-full sm:max-w-md bg-surface-card border border-border/60 rounded-t-3xl sm:rounded-2xl shadow-2xl overflow-hidden max-h-[80vh] flex flex-col"
+        className="w-full sm:max-w-md glass rounded-t-3xl sm:rounded-[var(--lkv-radius-card)] border border-white/60 shadow-2xl overflow-hidden max-h-[80vh] flex flex-col"
         role="dialog"
         aria-modal="true"
       >
         {/* Header */}
-        <div className="flex items-center justify-between px-5 py-4 border-b border-border/40">
+        <div className="flex items-center justify-between px-5 py-4 border-b border-white/40">
           <div>
-            <span className="text-[11px] font-bold uppercase tracking-wider text-forest-800">
+            <span className="text-[11px] font-bold uppercase tracking-wider text-[var(--lkv-primary)]">
               Déplacer l’étape
             </span>
-            <h3 className="font-bold text-base text-text-primary truncate max-w-[260px]">
+            <h3 className="font-bold text-base text-[var(--lkv-text)] truncate max-w-[260px]">
               {step.title}
             </h3>
           </div>
@@ -59,7 +59,7 @@ export function MoveStepModal({
             type="button"
             onClick={onClose}
             aria-label="Fermer"
-            className="w-9 h-9 rounded-full flex items-center justify-center hover:bg-surface-subtle text-text-secondary transition-colors"
+            className="w-9 h-9 rounded-full flex items-center justify-center glass-sub-card border border-white/60 text-[var(--lkv-text-muted)] hover:text-[var(--lkv-primary)] transition-all shadow-2xs"
           >
             <X className="w-5 h-5" />
           </button>
@@ -67,7 +67,7 @@ export function MoveStepModal({
 
         {/* Liste des jours */}
         <div className="p-4 overflow-y-auto space-y-2">
-          <p className="text-xs text-text-secondary mb-3">
+          <p className="text-xs text-[var(--lkv-text-muted)] mb-3">
             Sélectionnez la journée de destination (actuellement au Jour {step.day_number}) :
           </p>
 
@@ -82,32 +82,32 @@ export function MoveStepModal({
                 type="button"
                 disabled={isCurrent}
                 onClick={() => handlePick(dayNum)}
-                className={`w-full flex items-center justify-between p-3.5 rounded-xl border text-left transition-all min-h-[48px] ${
+                className={`w-full flex items-center justify-between p-3.5 rounded-[var(--lkv-radius-md)] border text-left transition-all min-h-[48px] shadow-2xs ${
                   isCurrent
-                    ? 'bg-surface-subtle/50 border-border/40 opacity-60 cursor-not-allowed'
-                    : 'bg-surface-card hover:bg-forest-900/5 hover:border-forest-800/40 border-border/40 active:scale-[0.99]'
+                    ? 'glass-sub-card border-white/30 opacity-60 cursor-not-allowed'
+                    : 'glass-sub-card border-white/60 hover:bg-white/90 active:scale-[0.99]'
                 }`}
               >
                 <div className="flex items-center gap-3">
                   <div
-                    className={`w-9 h-9 rounded-lg flex items-center justify-center font-bold text-xs ${
+                    className={`w-9 h-9 rounded-full flex items-center justify-center font-bold text-xs shadow-2xs ${
                       isCurrent
-                        ? 'bg-forest-900/10 text-forest-800'
-                        : 'bg-surface-subtle text-text-primary'
+                        ? 'bg-[var(--lkv-primary)] text-white'
+                        : 'glass border border-white/60 text-[var(--lkv-primary)]'
                     }`}
                   >
                     J{dayNum}
                   </div>
                   <div>
-                    <div className="font-semibold text-sm text-text-primary flex items-center gap-2">
+                    <div className="font-semibold text-sm text-[var(--lkv-text)] flex items-center gap-2">
                       <span>Jour {dayNum}</span>
                       {isCurrent && (
-                        <span className="text-[10px] bg-forest-900/10 text-forest-800 px-2 py-0.5 rounded-full font-medium">
+                        <span className="text-[10px] bg-[var(--lkv-primary)]/10 text-[var(--lkv-primary)] px-2 py-0.5 rounded-full font-medium border border-[var(--lkv-primary)]/20">
                           Actuel
                         </span>
                       )}
                     </div>
-                    <div className="text-xs text-text-muted flex items-center gap-2 mt-0.5">
+                    <div className="text-xs text-[var(--lkv-text-muted)] flex items-center gap-2 mt-0.5">
                       {dateStr && <span>{dateStr}</span>}
                       <span>•</span>
                       <span>{daySteps.length} étape(s)</span>
@@ -116,7 +116,7 @@ export function MoveStepModal({
                 </div>
 
                 {!isCurrent && (
-                  <ArrowRight className="w-4 h-4 text-forest-800 shrink-0 mr-1" />
+                  <ArrowRight className="w-4 h-4 text-[var(--lkv-primary)] shrink-0 mr-1" />
                 )}
               </button>
             );

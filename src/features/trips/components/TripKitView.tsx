@@ -3,6 +3,7 @@
 import React, { useState, useTransition } from 'react';
 import Link from 'next/link';
 import { GlassCard } from '@/components/ui/GlassCard';
+import { GlassCapsuleBtn } from '@/components/ui/GlassCapsuleBtn';
 import {
   Package,
   CheckCircle2,
@@ -143,12 +144,13 @@ export function TripKitView({ trip, analysis, showBackLink: _showBackLink = fals
             <CheckCircle2 className="w-4 h-4 text-lkv-secondary shrink-0" />
             <span>{cartToast}</span>
           </div>
-          <Link
+          <GlassCapsuleBtn
             href="/panier"
-            className="px-3 py-1 text-xs font-bold bg-surface text-lkv-primary rounded-lg hover:bg-white transition-all shrink-0"
+            variant="default"
+            size="xs"
           >
             Voir le panier
-          </Link>
+          </GlassCapsuleBtn>
         </div>
       )}
 
@@ -222,9 +224,9 @@ export function TripKitView({ trip, analysis, showBackLink: _showBackLink = fals
           </div>
           <div className="text-xs text-stone-600 mt-1 space-y-0.5">
             <div>
-              Altitude maximale : <strong>{analysis.maxAltitudeM > 0 ? `${analysis.maxAltitudeM} m` : 'Plaine'}</strong>
+              Altitude maximale : <strong className="whitespace-nowrap">{analysis.maxAltitudeM > 0 ? `${analysis.maxAltitudeM} m` : 'Plaine'}</strong>
               {analysis.maxAltitudeM <= 500 && (
-                <span className="text-[10px] text-stone-400 ml-1.5">(estimation pays)</span>
+                <span className="text-[10px] text-[var(--lkv-text-muted)] ml-1.5">(estimation pays)</span>
               )}
             </div>
             <div>Durée de l’autonomie : <strong>{tripDuration.durationDays} jours</strong></div>
@@ -256,7 +258,7 @@ export function TripKitView({ trip, analysis, showBackLink: _showBackLink = fals
                 <Sparkles className="w-3.5 h-3.5 text-lkv-secondary" />
                 Équipements Manquants Détectés (Gear Gap)
               </span>
-              <h3 className="text-lg font-black text-stone-900 mt-0.5">
+              <h3 className="text-lg font-black text-[var(--lkv-text-primary)] mt-0.5">
                 Recommandations contextuelles certifiées LKDV
               </h3>
             </div>
@@ -265,7 +267,7 @@ export function TripKitView({ trip, analysis, showBackLink: _showBackLink = fals
             </span>
           </div>
 
-          <p className="text-xs text-stone-600 leading-relaxed">
+          <p className="text-xs text-[var(--lkv-text-secondary)] leading-relaxed">
             Notre moteur analyse vos étapes de trek, l’altitude maximale et la météo saisonnière pour identifier les manques critiques dans votre sac avant le départ.
           </p>
 
@@ -280,67 +282,68 @@ export function TripKitView({ trip, analysis, showBackLink: _showBackLink = fals
               return (
                 <div
                   key={gap.id}
-                  className="p-4 rounded-2xl bg-white/90 border border-stone-200/80 shadow-sm hover:border-lkv-secondary/60 transition-all flex flex-col justify-between"
+                  className="glass-sub-card p-4 rounded-[var(--lkv-radius-card)] border border-white/60 shadow-sm hover:shadow-md transition-all flex flex-col justify-between"
                 >
                   <div>
                     <div className="flex items-center justify-between gap-2 mb-2">
-                      <span className="inline-flex items-center gap-1 text-[11px] font-semibold text-stone-500">
+                      <span className="inline-flex items-center gap-1 text-[11px] font-semibold text-[var(--lkv-text-secondary)]">
                         <Icon className="w-3 h-3 text-lkv-secondary" />
                         {CATEGORY_LABELS[gap.category] || gap.category}
                       </span>
                       <span
-                        className={`text-[10px] font-black uppercase px-2 py-0.5 rounded-full ${
+                        className={`text-[10px] font-black uppercase px-2.5 py-1 rounded-full border ${
                           gap.priority === 'vital'
-                            ? 'bg-rose-100 text-rose-800'
-                            : 'bg-[var(--lkv-warning)]/15 text-[var(--lkv-warning)]'
+                            ? 'bg-[var(--lkv-danger)]/10 text-[var(--lkv-danger)] border-[var(--lkv-danger)]/20'
+                            : 'bg-[var(--lkv-warning)]/15 text-[var(--lkv-warning)] border-[var(--lkv-warning)]/25'
                         }`}
                       >
                         {gap.priority === 'vital' ? 'Vital pour la sécurité' : 'Recommandé'}
                       </span>
                     </div>
 
-                    <h4 className="text-sm font-bold text-stone-900 mb-1">
+                    <h4 className="text-sm font-bold text-[var(--lkv-text-primary)] mb-1">
                       {product ? product.name : gap.name}
                     </h4>
-                    <p className="text-xs text-stone-600 mb-3 leading-relaxed">
+                    <p className="text-xs text-[var(--lkv-text-secondary)] mb-3 leading-relaxed">
                       {gap.reason}
                     </p>
                   </div>
 
-                  <div className="pt-3 border-t border-stone-100 flex flex-col sm:flex-row sm:items-center justify-between gap-2">
-                    <div className="text-xs text-stone-700">
+                  <div className="pt-3 border-t border-white/40 flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+                    <div className="text-xs text-[var(--lkv-text-secondary)]">
                       {product ? (
                         <>
-                          <strong className="text-sm font-black text-lkv-primary">{product.price_eur} €</strong>
-                          <span className="text-stone-400"> · {product.weight_g}g</span>
+                          <strong className="text-sm font-black text-[var(--lkv-text-primary)]">{product.price_eur} €</strong>
+                          <span className="text-[var(--lkv-text-muted)]"> · {product.weight_g}g</span>
                         </>
                       ) : (
-                        <span className="text-stone-400">~{gap.weightGrams}g</span>
+                        <span className="text-[var(--lkv-text-muted)]">~{gap.weightGrams}g</span>
                       )}
                     </div>
 
                     <div className="flex items-center gap-2">
                       {product && (
-                        <button
+                        <GlassCapsuleBtn
                           onClick={() => handleBuyOnShop(gap)}
                           disabled={isPending}
-                          className="px-3 py-1.5 rounded-xl bg-lkv-primary hover:opacity-90 text-white text-xs font-bold transition-all flex items-center gap-1.5 shadow-sm active:scale-95"
+                          variant="primary"
+                          size="xs"
+                          icon={<ShoppingCart className="w-3.5 h-3.5" />}
                           title="Acheter sur la boutique LKDV avec expédition rapide"
                         >
-                          <ShoppingCart className="w-3.5 h-3.5" />
-                          <span>Acheter</span>
-                        </button>
+                          Acheter
+                        </GlassCapsuleBtn>
                       )}
 
-                      <button
+                      <GlassCapsuleBtn
                         onClick={() => handleAddRecommended(gap)}
                         disabled={isPending}
-                        className="px-3 py-1.5 rounded-xl bg-stone-100 hover:bg-stone-200 text-stone-800 text-xs font-semibold transition-all flex items-center gap-1"
+                        size="xs"
+                        icon={<Plus className="w-3.5 h-3.5 text-lkv-secondary" />}
                         title="Ajouter cet élément dans ma check-list sac de voyage"
                       >
-                        <Plus className="w-3.5 h-3.5 text-lkv-secondary" />
-                        <span>Dans mon sac</span>
-                      </button>
+                        Dans mon sac
+                      </GlassCapsuleBtn>
                     </div>
                   </div>
                 </div>
@@ -353,23 +356,14 @@ export function TripKitView({ trip, analysis, showBackLink: _showBackLink = fals
           const totalCount = analysis.vitalGaps.length + analysis.recommendedGaps.length;
           return totalCount > 6 ? (
             <div className="pt-2 flex justify-center">
-              <button
+              <GlassCapsuleBtn
                 type="button"
                 onClick={() => setShowAllRecommendations(!showAllRecommendations)}
-                className="px-4 py-2 rounded-xl text-xs font-bold text-lkv-primary bg-white/80 hover:bg-white border border-stone-200/80 transition-all flex items-center gap-1.5 shadow-sm active:scale-95"
+                size="sm"
+                icon={showAllRecommendations ? <ChevronUp className="w-3.5 h-3.5 text-lkv-secondary" /> : <ChevronDown className="w-3.5 h-3.5 text-lkv-secondary" />}
               >
-                {showAllRecommendations ? (
-                  <>
-                    <ChevronUp className="w-3.5 h-3.5 text-lkv-secondary" />
-                    <span>Afficher moins (6 premiers)</span>
-                  </>
-                ) : (
-                  <>
-                    <ChevronDown className="w-3.5 h-3.5 text-lkv-secondary" />
-                    <span>Voir tous les équipements conseillés ({totalCount})</span>
-                  </>
-                )}
-              </button>
+                {showAllRecommendations ? 'Afficher moins (6 premiers)' : `Voir tous les équipements conseillés (${totalCount})`}
+              </GlassCapsuleBtn>
             </div>
           ) : null;
         })()}
@@ -389,13 +383,15 @@ export function TripKitView({ trip, analysis, showBackLink: _showBackLink = fals
             </p>
           </div>
 
-          <button
+          <GlassCapsuleBtn
             onClick={() => setIsAddModalOpen(true)}
-            className="px-4 py-2 rounded-xl bg-lkv-primary hover:opacity-90 text-white text-xs font-bold transition-all flex items-center gap-1.5 shadow-sm self-start sm:self-auto"
+            variant="primary"
+            size="sm"
+            icon={<Plus className="w-4 h-4" />}
+            className="self-start sm:self-auto"
           >
-            <Plus className="w-4 h-4" />
             Ajouter un objet
-          </button>
+          </GlassCapsuleBtn>
         </div>
 
         {/* Pilules de Catégories */}
@@ -404,10 +400,10 @@ export function TripKitView({ trip, analysis, showBackLink: _showBackLink = fals
             <button
               key={catKey}
               onClick={() => setSelectedCategory(catKey)}
-              className={`px-3 py-1.5 rounded-full text-xs font-medium whitespace-nowrap transition-all ${
+              className={`px-3.5 py-2 rounded-full text-xs font-medium whitespace-nowrap transition-all border min-h-[44px] ${
                 selectedCategory === catKey
-                  ? 'bg-lkv-primary text-white shadow-sm'
-                  : 'bg-stone-100 text-stone-600 hover:bg-stone-200'
+                  ? 'bg-[var(--lkv-primary)] text-white border-[var(--lkv-primary)] shadow-sm'
+                  : 'glass-sub-card border border-white/60 text-[var(--lkv-text-secondary)] hover:bg-white'
               }`}
             >
               {catLabel}
@@ -417,8 +413,8 @@ export function TripKitView({ trip, analysis, showBackLink: _showBackLink = fals
 
         {/* Liste des équipements */}
         {filteredItems.length === 0 ? (
-          <div className="text-center py-12 text-stone-500 text-xs">
-            <Package className="w-8 h-8 text-stone-300 mx-auto mb-2" />
+          <div className="text-center py-12 text-[var(--lkv-text-muted)] text-xs">
+            <Package className="w-8 h-8 text-[var(--lkv-text-muted)] mx-auto mb-2" />
             <p>Aucun équipement dans cette catégorie.</p>
             <button
               onClick={() => setIsAddModalOpen(true)}
@@ -428,7 +424,7 @@ export function TripKitView({ trip, analysis, showBackLink: _showBackLink = fals
             </button>
           </div>
         ) : (
-          <div className="divide-y divide-stone-100">
+          <div className="divide-y divide-white/40">
             {filteredItems.map((item) => {
               const Icon = CATEGORY_ICONS[item.category || 'misc'] || Package;
 
@@ -448,7 +444,7 @@ export function TripKitView({ trip, analysis, showBackLink: _showBackLink = fals
                       {item.is_packed ? (
                         <CheckCircle2 className="w-5 h-5 text-lkv-secondary" />
                       ) : (
-                        <Circle className="w-5 h-5 text-stone-300 hover:text-lkv-secondary" />
+                        <Circle className="w-5 h-5 text-[var(--lkv-text-muted)] hover:text-lkv-secondary" />
                       )}
                     </button>
 
@@ -456,19 +452,19 @@ export function TripKitView({ trip, analysis, showBackLink: _showBackLink = fals
                       <div className="flex items-center gap-2">
                         <span
                           className={`text-sm font-medium truncate ${
-                            item.is_packed ? 'line-through text-stone-500' : 'text-stone-900'
+                            item.is_packed ? 'line-through text-[var(--lkv-text-muted)]' : 'text-[var(--lkv-text-primary)]'
                           }`}
                         >
                           {item.item_name}
                         </span>
                         {item.quantity > 1 && (
-                          <span className="text-[10px] font-bold px-1.5 py-0.2 rounded bg-stone-100 text-stone-600">
+                          <span className="text-[10px] font-bold px-1.5 py-0.2 rounded glass-sub-card border border-white/60 text-[var(--lkv-text-secondary)]">
                             ×{item.quantity}
                           </span>
                         )}
                       </div>
 
-                      <div className="flex items-center gap-2 text-[11px] text-stone-500 mt-0.5">
+                      <div className="flex items-center gap-2 text-[11px] text-[var(--lkv-text-secondary)] mt-0.5">
                         <span className="flex items-center gap-1">
                           <Icon className="w-3 h-3 text-lkv-secondary" />
                           {CATEGORY_LABELS[item.category || 'misc'] || item.category}
@@ -477,7 +473,7 @@ export function TripKitView({ trip, analysis, showBackLink: _showBackLink = fals
                           <span>· {item.weight_grams} g</span>
                         )}
                         {item.is_vital && (
-                          <span className="text-rose-600 font-bold">· Vital</span>
+                          <span className="text-[var(--lkv-danger)] font-bold">· Vital</span>
                         )}
                       </div>
                     </div>
@@ -486,7 +482,7 @@ export function TripKitView({ trip, analysis, showBackLink: _showBackLink = fals
                   <div className="flex items-center gap-2 shrink-0">
                     <button
                       onClick={() => handleDeleteItem(item.id)}
-                      className="p-2 text-stone-300 hover:text-rose-600 rounded-lg transition-colors"
+                      className="min-h-[44px] min-w-[44px] flex items-center justify-center rounded-full glass-sub-card border border-white/60 text-[var(--lkv-text-muted)] hover:text-[var(--lkv-danger)] hover:bg-[var(--lkv-danger)]/10 transition-all shadow-2xs"
                       title="Supprimer du sac"
                       aria-label="Supprimer"
                     >
@@ -503,8 +499,8 @@ export function TripKitView({ trip, analysis, showBackLink: _showBackLink = fals
       {/* Modal Ajout Rapide d'Équipement */}
       {isAddModalOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm animate-fade-in">
-          <div className="w-full max-w-md bg-white rounded-3xl p-6 shadow-2xl border border-stone-200">
-            <h3 className="text-base font-bold text-stone-900 mb-4">
+          <div className="w-full max-w-md glass border border-white/60 rounded-[var(--lkv-radius-card)] p-6 shadow-2xl">
+            <h3 className="text-base font-bold text-[var(--lkv-text-primary)] mb-4">
               Ajouter un équipement au sac
             </h3>
 
@@ -518,25 +514,25 @@ export function TripKitView({ trip, analysis, showBackLink: _showBackLink = fals
               className="space-y-4"
             >
               <div>
-                <label className="block text-xs font-bold text-stone-700 mb-1">
+                <label className="block text-xs font-semibold text-[var(--lkv-text-primary)] mb-1">
                   Nom de l’équipement *
                 </label>
                 <input
                   name="itemName"
                   required
                   placeholder="ex: Sac de couchage 0°C, Lunettes..."
-                  className="w-full px-3 py-2 text-sm rounded-xl border border-stone-300 focus:outline-none focus:ring-2 focus:ring-lkv-primary"
+                  className="glass-input w-full px-3 py-2 text-sm text-[var(--lkv-text-primary)]"
                 />
               </div>
 
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className="block text-xs font-bold text-stone-700 mb-1">
+                  <label className="block text-xs font-semibold text-[var(--lkv-text-primary)] mb-1">
                     Catégorie
                   </label>
                   <select
                     name="category"
-                    className="w-full px-3 py-2 text-sm rounded-xl border border-stone-300 focus:outline-none focus:ring-2 focus:ring-lkv-primary"
+                    className="w-full px-3 py-2 text-sm rounded-[var(--lkv-radius-md)] border border-white/60 bg-white/70 backdrop-blur-md text-[var(--lkv-text-primary)] focus:outline-none focus:ring-2 focus:ring-[var(--lkv-primary)]/20 shadow-2xs cursor-pointer"
                   >
                     <option value="safety">Sécurité & Secours</option>
                     <option value="shelter">Abri & Tente</option>
@@ -550,7 +546,7 @@ export function TripKitView({ trip, analysis, showBackLink: _showBackLink = fals
                 </div>
 
                 <div>
-                  <label className="block text-xs font-bold text-stone-700 mb-1">
+                  <label className="block text-xs font-semibold text-[var(--lkv-text-primary)] mb-1">
                     Poids (grammes)
                   </label>
                   <input
@@ -558,12 +554,12 @@ export function TripKitView({ trip, analysis, showBackLink: _showBackLink = fals
                     name="weightGrams"
                     placeholder="ex: 450"
                     min={0}
-                    className="w-full px-3 py-2 text-sm rounded-xl border border-stone-300 focus:outline-none focus:ring-2 focus:ring-lkv-primary"
+                    className="glass-input w-full px-3 py-2 text-sm text-[var(--lkv-text-primary)]"
                   />
                 </div>
               </div>
 
-              <div className="space-y-2 pt-2 text-xs text-stone-700">
+              <div className="space-y-2 pt-2 text-xs text-[var(--lkv-text-muted)]">
                 <label className="flex items-center gap-2 cursor-pointer">
                   <input type="checkbox" name="isVital" value="true" className="rounded" />
                   <span>Équipement vital pour la sécurité ou survie</span>
@@ -578,21 +574,23 @@ export function TripKitView({ trip, analysis, showBackLink: _showBackLink = fals
                 </label>
               </div>
 
-              <div className="flex items-center justify-end gap-3 pt-4 border-t border-stone-100">
-                <button
+              <div className="flex items-center justify-end gap-3 pt-4 border-t border-white/40">
+                <GlassCapsuleBtn
                   type="button"
+                  variant="default"
+                  size="sm"
                   onClick={() => setIsAddModalOpen(false)}
-                  className="px-4 py-2 text-xs font-semibold text-stone-600 hover:text-stone-900"
                 >
                   Annuler
-                </button>
-                <button
+                </GlassCapsuleBtn>
+                <GlassCapsuleBtn
                   type="submit"
+                  variant="primary"
+                  size="sm"
                   disabled={isPending}
-                  className="px-4 py-2 text-xs font-bold bg-lkv-primary text-white rounded-xl hover:opacity-90 transition-all"
                 >
                   Ajouter au sac
-                </button>
+                </GlassCapsuleBtn>
               </div>
             </form>
           </div>

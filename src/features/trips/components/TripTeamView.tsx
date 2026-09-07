@@ -3,7 +3,7 @@
 import React, { useState, useTransition } from 'react';
 import { Users, UserPlus, Trash2, ShieldCheck, Mail, AlertCircle, CheckCircle2, X } from 'lucide-react';
 import { GlassCard } from '@/components/ui/GlassCard';
-import { LkvButton } from '@/components/ui/LkvButton';
+import { GlassCapsuleBtn } from '@/components/ui/GlassCapsuleBtn';
 import { TripBadge } from './TripBadge';
 import { inviteCollaboratorAction, updateRoleAction, removeCollaboratorAction } from '@/app/voyages/collab-actions';
 import type { TripFull } from '../types/trip.types';
@@ -78,20 +78,19 @@ export function TripTeamView({ trip }: TripTeamViewProps) {
         </div>
 
         {isOwner && (
-          <LkvButton
+          <GlassCapsuleBtn
             variant="primary"
             size="sm"
             onClick={() => setIsInviteOpen(true)}
-            className="flex items-center gap-2 min-h-[44px]"
+            icon={<UserPlus size={16} />}
           >
-            <UserPlus size={16} />
-            <span>Inviter un voyageur</span>
-          </LkvButton>
+            Inviter un voyageur
+          </GlassCapsuleBtn>
         )}
       </div>
 
       {/* Explication des rôles */}
-      <GlassCard tone="neutral" className="p-4 rounded-[20px] border border-white/60 text-xs text-gray-700">
+      <GlassCard tone="neutral" className="p-4 rounded-[20px] border border-white/60 text-xs text-[var(--lkv-text-muted)]">
         <div className="flex items-start gap-3">
           <ShieldCheck size={18} className="text-lkv-secondary shrink-0 mt-0.5" />
           <div className="space-y-1">
@@ -154,7 +153,7 @@ export function TripTeamView({ trip }: TripTeamViewProps) {
                       value={collab.role}
                       disabled={isPending}
                       onChange={e => handleRoleChange(collab.id, e.target.value as any)}
-                      className="text-xs font-semibold bg-white/80 border border-gray-200 rounded-lg px-2 py-1 text-lkv-primary focus:outline-none focus:ring-1 focus:ring-lkv-primary"
+                      className="glass-input text-xs font-semibold px-2 py-1 text-[var(--lkv-text-primary)]"
                     >
                       <option value="editor">Éditeur</option>
                       <option value="viewer">Lecteur</option>
@@ -165,7 +164,7 @@ export function TripTeamView({ trip }: TripTeamViewProps) {
                     onClick={() => handleRemove(collab.id, name)}
                     disabled={isPending}
                     title="Retirer de l'expédition"
-                    className="min-h-[44px] min-w-[44px] flex items-center justify-center rounded-xl text-red-500 hover:bg-red-50 hover:text-red-700 transition-colors"
+                    className="min-h-[44px] min-w-[44px] flex items-center justify-center rounded-full glass-sub-card border border-white/60 text-[var(--lkv-danger)] hover:bg-[var(--lkv-danger)]/10 hover:text-[var(--lkv-danger)] transition-all shadow-2xs"
                   >
                     <Trash2 size={16} />
                   </button>
@@ -178,33 +177,34 @@ export function TripTeamView({ trip }: TripTeamViewProps) {
 
       {/* Modal d'invitation */}
       {isInviteOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40 backdrop-blur-xs animate-in fade-in">
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm animate-in fade-in">
           <GlassCard
             tone="neutral"
-            className="w-full max-w-md p-6 rounded-[24px] bg-white border border-white/80 shadow-2xl space-y-4"
+            className="w-full max-w-md p-6 rounded-[24px] border border-white/80 shadow-2xl space-y-4"
           >
-            <div className="flex items-center justify-between pb-3 border-b border-gray-100">
+            <div className="flex items-center justify-between pb-3 border-b border-white/40">
               <h4 className="text-base font-bold text-lkv-primary flex items-center gap-2">
                 <UserPlus size={18} className="text-lkv-secondary" />
                 <span>Inviter un compagnon</span>
               </h4>
               <button
                 onClick={() => setIsInviteOpen(false)}
-                className="w-8 h-8 rounded-full flex items-center justify-center text-gray-400 hover:bg-gray-100"
+                aria-label="Fermer"
+                className="w-8 h-8 rounded-full glass-sub-card border border-white/60 flex items-center justify-center text-[var(--lkv-text-secondary)] hover:text-[var(--lkv-text-primary)] hover:bg-white transition-all cursor-pointer shadow-2xs"
               >
                 <X size={18} />
               </button>
             </div>
 
             {inviteError && (
-              <div className="p-3 rounded-xl bg-red-50 border border-red-200 text-xs text-red-700 flex items-center gap-2">
+              <div className="p-3 rounded-xl glass tone-danger text-xs text-[var(--lkv-danger)] flex items-center gap-2">
                 <AlertCircle size={16} className="shrink-0" />
                 <span>{inviteError}</span>
               </div>
             )}
 
             {inviteSuccess && (
-              <div className="p-3 rounded-xl bg-emerald-50 border border-emerald-200 text-xs text-emerald-700 flex items-center gap-2">
+              <div className="p-3 rounded-xl glass tone-sage text-xs text-[var(--lkv-success)] flex items-center gap-2">
                 <CheckCircle2 size={16} className="shrink-0" />
                 <span>{inviteSuccess}</span>
               </div>
@@ -216,13 +216,13 @@ export function TripTeamView({ trip }: TripTeamViewProps) {
                   Email ou Pseudo LKDV du voyageur
                 </label>
                 <div className="relative">
-                  <Mail size={16} className="absolute left-3 top-3 text-gray-400" />
+                  <Mail size={16} className="absolute left-3.5 top-3 text-[var(--lkv-text-muted)]" />
                   <input
                     type="text"
                     name="identifier"
                     required
                     placeholder="ex: marie.curie@example.com ou montagnard74"
-                    className="w-full pl-9 pr-3 py-2 text-sm rounded-xl border border-gray-200 bg-gray-50/50 focus:bg-white focus:outline-none focus:ring-2 focus:ring-lkv-primary/20"
+                    className="glass-input w-full pl-9 pr-3 py-2 text-sm text-[var(--lkv-text-primary)]"
                   />
                 </div>
               </div>
@@ -234,7 +234,7 @@ export function TripTeamView({ trip }: TripTeamViewProps) {
                 <select
                   name="role"
                   defaultValue="editor"
-                  className="w-full px-3 py-2 text-sm rounded-xl border border-gray-200 bg-gray-50/50 focus:bg-white focus:outline-none focus:ring-2 focus:ring-lkv-primary/20"
+                  className="glass-input w-full px-3 py-2 text-sm text-[var(--lkv-text-primary)] cursor-pointer"
                 >
                   <option value="editor">Éditeur (peut modifier l&apos;itinéraire et les listes)</option>
                   <option value="viewer">Lecteur (consultation seule)</option>
@@ -242,23 +242,22 @@ export function TripTeamView({ trip }: TripTeamViewProps) {
               </div>
 
               <div className="flex items-center justify-end gap-3 pt-2">
-                <LkvButton
+                <GlassCapsuleBtn
                   type="button"
-                  variant="secondary"
+                  variant="default"
                   size="sm"
                   onClick={() => setIsInviteOpen(false)}
                 >
                   Annuler
-                </LkvButton>
-                <LkvButton
+                </GlassCapsuleBtn>
+                <GlassCapsuleBtn
                   type="submit"
                   variant="primary"
                   size="sm"
                   disabled={isPending}
-                  className="min-h-[44px]"
                 >
                   {isPending ? 'Envoi...' : 'Envoyer l\'invitation'}
-                </LkvButton>
+                </GlassCapsuleBtn>
               </div>
             </form>
           </GlassCard>

@@ -63,9 +63,26 @@ export default function TripDetailClient({
     }
   }, []);
 
+  useEffect(() => {
+    const handleDetailTabChange = (e: any) => {
+      if (e.detail) {
+        setActiveSection(e.detail as TripSectionId);
+      }
+    };
+    window.addEventListener('voyage-detail-tab-change', handleDetailTabChange);
+    return () => window.removeEventListener('voyage-detail-tab-change', handleDetailTabChange);
+  }, []);
+
+  const handleSectionChange = (section: TripSectionId) => {
+    setActiveSection(section);
+    if (typeof window !== 'undefined') {
+      window.dispatchEvent(new CustomEvent('voyage-detail-tab-change', { detail: section }));
+    }
+  };
+
   const handlePhaseChange = (newPhase: TripPhase) => {
     setActivePhase(newPhase);
-    setActiveSection('overview');
+    handleSectionChange('overview');
     if (typeof window !== 'undefined') {
       const url = new URL(window.location.href);
       url.searchParams.set('phase', newPhase);
@@ -90,7 +107,7 @@ export default function TripDetailClient({
     <TripSidebarLeft
       trip={trip}
       activeSection={activeSection}
-      onSectionChange={setActiveSection}
+      onSectionChange={handleSectionChange}
       activePhase={activePhase}
       onToggleActive={handleToggleActiveTrip}
       isTripActive={showActiveState}
@@ -177,6 +194,9 @@ export default function TripDetailClient({
                   affiliateLinks={affiliateLinks}
                   kitAnalysis={kitAnalysis}
                   daysUntilStart={phaseDetails.daysUntilStart}
+                  activeSection={activeSection as PrepareSectionId}
+                  onSectionChange={(s) => handleSectionChange(s as TripSectionId)}
+                  hideMobileTabs={true}
                 />
               )}
               {activePhase === 'live' && (
@@ -192,7 +212,6 @@ export default function TripDetailClient({
     >
       <div className="space-y-4">
         <TripCompactHeader trip={trip} activePhase={activePhase} daysUntilStart={phaseDetails.daysUntilStart} />
-        <TripOfflineBar trip={trip} />
         {activePhase === 'prepare' && (
           <TripPhasePrepareView
             trip={trip}
@@ -201,7 +220,7 @@ export default function TripDetailClient({
             kitAnalysis={kitAnalysis}
             daysUntilStart={phaseDetails.daysUntilStart}
             activeSection={activeSection as PrepareSectionId}
-            onSectionChange={(s) => setActiveSection(s as TripSectionId)}
+            onSectionChange={(s) => handleSectionChange(s as TripSectionId)}
           />
         )}
         {activePhase === 'live' && (

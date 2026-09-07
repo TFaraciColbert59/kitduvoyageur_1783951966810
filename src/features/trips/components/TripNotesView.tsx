@@ -14,7 +14,7 @@ import {
   X,
 } from 'lucide-react';
 import { GlassCard } from '@/components/ui/GlassCard';
-import { LkvButton } from '@/components/ui/LkvButton';
+import { GlassCapsuleBtn } from '@/components/ui/GlassCapsuleBtn';
 import { TripCompletionModal } from './TripCompletionModal';
 import { addTripNoteAction, deleteTripNoteAction } from '@/app/voyages/completion-actions';
 import type { TripFull } from '../types/trip.types';
@@ -83,19 +83,19 @@ export function TripNotesView({ trip }: TripNotesViewProps) {
   return (
     <div className="space-y-6">
       {/* Bannière de statut & Action Clôture */}
-      <GlassCard tone="sage" className="p-5 rounded-[24px] border border-white/60 bg-lkv-primary text-white">
+      <GlassCard tone="sage" className="p-5 rounded-[24px] border border-white/60 shadow-sm">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
           <div className="flex items-start sm:items-center gap-3">
-            <div className="w-10 h-10 rounded-full bg-white/20 flex items-center justify-center text-white shrink-0">
+            <div className="w-10 h-10 rounded-full bg-[var(--lkv-primary)]/10 flex items-center justify-center text-[var(--lkv-primary)] shrink-0">
               {trip.status === 'completed' ? <CheckCircle2 size={22} /> : <BookOpen size={22} />}
             </div>
             <div>
-              <h3 className="font-semibold text-white text-base">
+              <h3 className="font-semibold text-[var(--lkv-text-primary)] text-base">
                 {trip.status === 'completed'
                   ? 'Expédition terminée · Carnet de bord clôturé'
                   : 'Carnet de bord & Récits de voyage'}
               </h3>
-              <p className="text-xs text-white/80">
+              <p className="text-xs text-[var(--lkv-text-secondary)]">
                 {trip.status === 'completed'
                   ? 'Votre rétrospective est enregistrée et prête à inspirer les futurs trekkeurs.'
                   : 'Immortalisez vos journées, conditions météo, topos et anecdotes au jour le jour.'}
@@ -105,24 +105,22 @@ export function TripNotesView({ trip }: TripNotesViewProps) {
 
           {canEdit && (
             <div className="flex items-center gap-2 shrink-0">
-              <LkvButton
-                variant="ghost-light"
+              <GlassCapsuleBtn
+                variant="secondary"
                 size="sm"
                 onClick={() => setIsCompletionOpen(true)}
-                className="bg-white/10 text-white border-white/30 hover:bg-white/20"
+                icon={<Award size={16} />}
               >
-                <Award size={16} className="mr-1.5" />
                 {trip.status === 'completed' ? 'Bilan & Rétrospective' : 'Clôturer le voyage'}
-              </LkvButton>
-              <LkvButton
+              </GlassCapsuleBtn>
+              <GlassCapsuleBtn
                 variant="primary"
                 size="sm"
                 onClick={() => setIsAddOpen(true)}
-                className="bg-white text-lkv-primary hover:bg-white/90"
+                icon={<Plus size={16} />}
               >
-                <Plus size={16} className="mr-1.5" />
                 Ajouter un récit
-              </LkvButton>
+              </GlassCapsuleBtn>
             </div>
           )}
         </div>
@@ -133,10 +131,10 @@ export function TripNotesView({ trip }: TripNotesViewProps) {
         <div className="flex items-center gap-1.5 overflow-x-auto pb-1 text-xs">
           <button
             onClick={() => setSelectedDayFilter('all')}
-            className={`px-3 py-1.5 rounded-full font-medium transition-colors ${
+            className={`px-3 py-1.5 rounded-full font-medium transition-all shadow-2xs ${
               selectedDayFilter === 'all'
-                ? 'bg-lkv-primary text-white'
-                : 'bg-black/5 text-lkv-secondary hover:bg-black/10'
+                ? 'bg-[var(--lkv-primary)] text-white shadow-sm'
+                : 'glass-sub-card border border-white/60 text-[var(--lkv-text-muted)] hover:text-[var(--lkv-primary)] hover:bg-white/90'
             }`}
           >
             Toutes ({notes.length})
@@ -145,10 +143,10 @@ export function TripNotesView({ trip }: TripNotesViewProps) {
             <button
               key={day}
               onClick={() => setSelectedDayFilter(day)}
-              className={`px-3 py-1.5 rounded-full font-medium transition-colors ${
+              className={`px-3 py-1.5 rounded-full font-medium transition-all shadow-2xs ${
                 selectedDayFilter === day
-                  ? 'bg-lkv-primary text-white'
-                  : 'bg-black/5 text-lkv-secondary hover:bg-black/10'
+                  ? 'bg-[var(--lkv-primary)] text-white shadow-sm'
+                  : 'glass-sub-card border border-white/60 text-[var(--lkv-text-muted)] hover:text-[var(--lkv-primary)] hover:bg-white/90'
               }`}
             >
               Jour {day}
@@ -168,15 +166,16 @@ export function TripNotesView({ trip }: TripNotesViewProps) {
               : 'Aucun récit n\'a encore été partagé pour ce voyage.'}
           </p>
           {canEdit && (
-            <LkvButton
-              variant="secondary"
-              size="sm"
-              onClick={() => setIsAddOpen(true)}
-              className="mt-4"
-            >
-              <Plus size={16} className="mr-1" />
-              Écrire dans le carnet
-            </LkvButton>
+            <div className="mt-4 flex justify-center">
+              <GlassCapsuleBtn
+                variant="default"
+                size="sm"
+                onClick={() => setIsAddOpen(true)}
+                icon={<Plus size={16} />}
+              >
+                Écrire dans le carnet
+              </GlassCapsuleBtn>
+            </div>
           )}
         </GlassCard>
       ) : (
@@ -187,8 +186,8 @@ export function TripNotesView({ trip }: TripNotesViewProps) {
               tone="neutral"
               className={`p-5 rounded-[22px] border transition-shadow ${
                 note.is_pinned
-                  ? 'border-lkv-primary/30 bg-[#FAF8F5]/90 shadow-sm'
-                  : 'border-white/70 bg-white/60'
+                  ? 'border-lkv-primary/30 shadow-sm'
+                  : 'border-white/60'
               }`}
             >
               <div className="flex items-start justify-between gap-3 mb-2">
@@ -199,7 +198,7 @@ export function TripNotesView({ trip }: TripNotesViewProps) {
                     </span>
                   )}
                   {note.is_pinned && (
-                    <span className="text-[11px] font-semibold px-2 py-0.5 rounded-full bg-amber-50 text-amber-700 border border-amber-200 flex items-center gap-1">
+                    <span className="text-[11px] font-semibold px-2 py-0.5 rounded-full bg-[var(--lkv-warning)]/10 text-[var(--lkv-warning)] border border-[var(--lkv-warning)]/20 flex items-center gap-1">
                       <Pin size={11} /> Épinglé
                     </span>
                   )}
@@ -209,7 +208,7 @@ export function TripNotesView({ trip }: TripNotesViewProps) {
                   <button
                     onClick={() => handleDelete(note.id, note.title)}
                     disabled={isPending}
-                    className="w-8 h-8 rounded-full flex items-center justify-center text-lkv-secondary hover:text-red-600 hover:bg-red-50 transition-colors"
+                    className="min-h-[44px] min-w-[44px] flex items-center justify-center rounded-full glass-sub-card border border-white/60 text-[var(--lkv-text-muted)] hover:text-[var(--lkv-danger)] hover:bg-[var(--lkv-danger)]/10 transition-all shadow-2xs"
                     aria-label="Supprimer la note"
                   >
                     <Trash2 size={16} />
@@ -225,7 +224,7 @@ export function TripNotesView({ trip }: TripNotesViewProps) {
                 {note.content}
               </p>
 
-              <div className="mt-4 pt-3 border-t border-black/5 flex items-center justify-between text-[11px] text-lkv-secondary">
+              <div className="mt-4 pt-3 border-t border-white/40 flex items-center justify-between text-[11px] text-lkv-secondary">
                 <div className="flex items-center gap-1.5">
                   <User size={12} />
                   <span>{note.author?.full_name || 'Explorateur'}</span>
@@ -246,17 +245,17 @@ export function TripNotesView({ trip }: TripNotesViewProps) {
           role="dialog"
           aria-modal="true"
           aria-labelledby="add-note-title"
-          className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40 backdrop-blur-md animate-fadeIn"
+          className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm animate-fadeIn"
         >
-          <div className="bg-[#FAF8F5] border border-white/80 rounded-[26px] max-w-lg w-full p-6 shadow-2xl space-y-4">
-            <div className="flex items-center justify-between border-b border-black/5 pb-3">
+          <div className="glass rounded-[26px] border border-white/60 max-w-lg w-full p-6 shadow-2xl space-y-4">
+            <div className="flex items-center justify-between border-b border-white/40 pb-3">
               <h3 id="add-note-title" className="text-base font-bold text-lkv-primary flex items-center gap-2">
                 <Edit3 size={18} />
                 Nouvelle page du carnet de bord
               </h3>
               <button
                 onClick={() => setIsAddOpen(false)}
-                className="w-8 h-8 flex items-center justify-center rounded-full hover:bg-black/5 text-lkv-secondary"
+                className="min-h-[44px] min-w-[44px] flex items-center justify-center rounded-full glass-sub-card border border-white/60 text-[var(--lkv-text-muted)] hover:bg-white transition-all shadow-2xs"
                 aria-label="Fermer"
               >
                 <X size={18} />
@@ -264,7 +263,7 @@ export function TripNotesView({ trip }: TripNotesViewProps) {
             </div>
 
             {errorMessage && (
-              <div className="p-3 rounded-xl bg-red-50 text-red-700 text-xs border border-red-200">
+              <div className="p-3 rounded-xl glass tone-danger text-[var(--lkv-danger)] text-xs border">
                 {errorMessage}
               </div>
             )}
@@ -278,7 +277,7 @@ export function TripNotesView({ trip }: TripNotesViewProps) {
                   type="text"
                   name="title"
                   placeholder="Ex : Sommet atteint au lever du jour"
-                  className="w-full text-sm px-3 py-2 rounded-xl border border-black/10 bg-white focus:outline-none focus:ring-2 focus:ring-lkv-primary/20"
+                  className="glass-input w-full px-3 py-2 text-sm text-[var(--lkv-text-primary)]"
                 />
               </div>
 
@@ -293,7 +292,7 @@ export function TripNotesView({ trip }: TripNotesViewProps) {
                     min={1}
                     max={60}
                     placeholder="Ex : 1"
-                    className="w-full text-sm px-3 py-2 rounded-xl border border-black/10 bg-white focus:outline-none focus:ring-2 focus:ring-lkv-primary/20"
+                    className="glass-input w-full px-3 py-2 text-sm text-[var(--lkv-text-primary)]"
                   />
                 </div>
 
@@ -303,7 +302,7 @@ export function TripNotesView({ trip }: TripNotesViewProps) {
                       type="checkbox"
                       name="isPinned"
                       value="true"
-                      className="w-4 h-4 rounded border-gray-300 text-lkv-primary focus:ring-lkv-primary"
+                      className="w-4 h-4 rounded text-lkv-primary focus:ring-lkv-primary"
                     />
                     Épingler en haut
                   </label>
@@ -319,23 +318,28 @@ export function TripNotesView({ trip }: TripNotesViewProps) {
                   required
                   rows={4}
                   placeholder="Conditions du sentier, faune observée, sensations, astuces..."
-                  className="w-full text-sm px-3 py-2 rounded-xl border border-black/10 bg-white focus:outline-none focus:ring-2 focus:ring-lkv-primary/20"
+                  className="glass-input w-full px-3 py-2 text-sm text-[var(--lkv-text-primary)]"
                 />
               </div>
 
-              <div className="flex items-center justify-end gap-2 pt-2 border-t border-black/5">
-                <LkvButton
+              <div className="flex items-center justify-end gap-2 pt-2 border-t border-white/40">
+                <GlassCapsuleBtn
                   type="button"
-                  variant="secondary"
+                  variant="default"
                   size="sm"
                   onClick={() => setIsAddOpen(false)}
                   disabled={isPending}
                 >
                   Annuler
-                </LkvButton>
-                <LkvButton type="submit" variant="primary" size="sm" disabled={isPending}>
+                </GlassCapsuleBtn>
+                <GlassCapsuleBtn
+                  type="submit"
+                  variant="primary"
+                  size="sm"
+                  disabled={isPending}
+                >
                   {isPending ? 'Enregistrement...' : 'Enregistrer la note'}
-                </LkvButton>
+                </GlassCapsuleBtn>
               </div>
             </form>
           </div>

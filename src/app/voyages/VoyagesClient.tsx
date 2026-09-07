@@ -8,7 +8,6 @@ import { TripFiltersBar } from '@/features/trips/components/TripFiltersBar';
 import { QuickCreateTripModal } from '@/features/trips/components/QuickCreateTripModal';
 import { GlassCard, GlassCapsuleBtn, GlassSubCard, GlassPill } from '@/components/ui';
 import { EmptyState } from '@/components/ui/EmptyState';
-import IOSSegmentedControl from '@/components/ui/IOSSegmentedControl';
 import { Compass, Plus, Sparkles, Filter } from 'lucide-react';
 import { createTripAction } from './actions';
 import type {
@@ -34,6 +33,23 @@ export default function VoyagesClient({
     isAuthenticated && initialUserTrips.length > 0 ? 'user' : 'public'
   );
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
+
+  React.useEffect(() => {
+    const handleTabEvent = (e: any) => {
+      if (e.detail === 'user' || e.detail === 'public') {
+        setActiveTab(e.detail);
+      }
+    };
+    window.addEventListener('voyages-hub-tab-change', handleTabEvent);
+    return () => window.removeEventListener('voyages-hub-tab-change', handleTabEvent);
+  }, []);
+
+  const handleTabChange = (tab: 'user' | 'public') => {
+    setActiveTab(tab);
+    if (typeof window !== 'undefined') {
+      window.dispatchEvent(new CustomEvent('voyages-hub-tab-change', { detail: tab }));
+    }
+  };
 
   // Filtres
   const [filters, setFilters] = useState<TripFilters>({
@@ -113,11 +129,11 @@ export default function VoyagesClient({
               <button
                 key={tab.id}
                 type="button"
-                onClick={() => setActiveTab(tab.id)}
+                onClick={() => handleTabChange(tab.id)}
                 className={`w-full px-3 py-2.5 rounded-[var(--lkv-radius-md)] font-bold text-xs flex items-center justify-between border transition-all min-h-[var(--lkv-touch-min)] cursor-pointer ${
                   activeTab === tab.id
                     ? 'bg-[var(--lkv-primary)] text-white border-[var(--lkv-primary)] shadow-sm'
-                    : 'bg-white/80 hover:bg-white text-[var(--lkv-text-primary)] border-white/80 shadow-2xs'
+                    : 'glass-sub-card border border-white/50 text-[var(--lkv-text-primary)] hover:bg-white'
                 }`}
               >
                 <span>{tab.label}</span>
@@ -214,19 +230,6 @@ export default function VoyagesClient({
                 <span>Nouveau</span>
               </GlassCapsuleBtn>
             </div>
-
-            {isAuthenticated && (
-              <div className="mb-4">
-                <IOSSegmentedControl
-                  options={[
-                    { id: 'user', label: `Mes voyages (${initialUserTrips.length})` },
-                    { id: 'public', label: `Explorer (${initialPublicTrips.length})` },
-                  ]}
-                  value={activeTab}
-                  onChange={(val: string) => setActiveTab(val as 'public' | 'user')}
-                />
-              </div>
-            )}
 
             <TripFiltersBar
               filters={filters}

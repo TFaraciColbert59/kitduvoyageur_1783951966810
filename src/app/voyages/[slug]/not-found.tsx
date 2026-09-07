@@ -2,7 +2,7 @@ import React from 'react';
 import Link from 'next/link';
 import AppShell from '@/components/shell/AppShell';
 import { GlassCard } from '@/components/ui/GlassCard';
-import { LkvButton } from '@/components/ui/LkvButton';
+import { GlassCapsuleBtn } from '@/components/ui/GlassCapsuleBtn';
 import LkvIcon from '@/components/ui/LkvIcon';
 
 export default function TripNotFound() {
@@ -20,12 +20,9 @@ export default function TripNotFound() {
             Ce voyage n’existe pas, a été supprimé ou est privé. Si vous avez reçu un lien de partage, vérifiez qu’il est correct ou connectez-vous avec le compte invité.
           </p>
           <div className="flex items-center justify-center gap-3">
-            <Link href="/voyages">
-              <LkvButton variant="primary">
-                <LkvIcon name="arrow-left" size={16} className="mr-2" />
-                Retourner aux voyages
-              </LkvButton>
-            </Link>
+            <GlassCapsuleBtn href="/voyages" variant="primary" icon={<LkvIcon name="arrow-left" size={16} />}>
+              Retourner aux voyages
+            </GlassCapsuleBtn>
           </div>
         </GlassCard>
       </div>

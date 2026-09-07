@@ -2,7 +2,7 @@
 
 import React from 'react';
 import { Search, X, RotateCcw } from 'lucide-react';
-import { LkvButton } from '@/components/ui/LkvButton';
+import { GlassCapsuleBtn } from '@/components/ui/GlassCapsuleBtn';
 import { GlassCard } from '@/components/ui/GlassCard';
 import type { TripFilters, TripStatus, TripDifficulty, TripActivityType } from '../types/trip.types';
 
@@ -34,12 +34,12 @@ export function TripFiltersBar({ filters, onChange, onReset }: TripFiltersBarPro
             placeholder="Rechercher par titre ou destination..."
             value={filters.search || ''}
             onChange={e => onChange({ ...filters, search: e.target.value, page: 1 })}
-            className="w-full pl-10 pr-4 py-2.5 rounded-full bg-white/70 border border-black/10 focus:border-lkv-secondary focus:bg-white text-[16px] sm:text-sm text-lkv-primary placeholder-var(--lkv-secondary)/60 outline-none transition-all shadow-inner"
+            className="glass-input w-full pl-10 pr-4 py-2.5 rounded-[var(--lkv-radius-full)] text-[16px] sm:text-sm text-lkv-primary placeholder:text-[var(--lkv-text-secondary)]"
           />
           {filters.search && (
             <button
               onClick={() => onChange({ ...filters, search: '', page: 1 })}
-              className="absolute right-3.5 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 p-1"
+              className="absolute right-3.5 top-1/2 -translate-y-1/2 min-h-[44px] min-w-[44px] flex items-center justify-center rounded-full glass-sub-card border border-white/60 text-[var(--lkv-text-muted)] hover:text-[var(--lkv-text-primary)] hover:bg-white transition-all shadow-2xs"
               aria-label="Effacer la recherche"
             >
               <X size={14} />
@@ -60,7 +60,7 @@ export function TripFiltersBar({ filters, onChange, onReset }: TripFiltersBarPro
                 page: 1,
               })
             }
-            className="px-3 py-2 rounded-full bg-white/70 border border-black/10 text-xs sm:text-sm text-lkv-primary focus:border-lkv-secondary outline-none font-medium cursor-pointer"
+            className="glass-input px-3 py-2 rounded-[var(--lkv-radius-full)] text-xs sm:text-sm text-lkv-primary font-medium cursor-pointer"
           >
             <option value="all">Toutes difficultés</option>
             <option value="easy">Facile</option>
@@ -80,7 +80,7 @@ export function TripFiltersBar({ filters, onChange, onReset }: TripFiltersBarPro
                 page: 1,
               })
             }
-            className="px-3 py-2 rounded-full bg-white/70 border border-black/10 text-xs sm:text-sm text-lkv-primary focus:border-lkv-secondary outline-none font-medium cursor-pointer"
+            className="glass-input px-3 py-2 rounded-[var(--lkv-radius-full)] text-xs sm:text-sm text-lkv-primary font-medium cursor-pointer"
           >
             <option value="all">Toutes activités</option>
             <option value="hiking">Randonnée</option>
@@ -103,7 +103,7 @@ export function TripFiltersBar({ filters, onChange, onReset }: TripFiltersBarPro
                 page: 1,
               })
             }
-            className="px-3 py-2 rounded-full bg-white/70 border border-black/10 text-xs sm:text-sm text-lkv-primary focus:border-lkv-secondary outline-none font-medium cursor-pointer"
+            className="glass-input px-3 py-2 rounded-[var(--lkv-radius-full)] text-xs sm:text-sm text-lkv-primary font-medium cursor-pointer"
           >
             <option value="all">Tous statuts</option>
             <option value="planned">Planifié</option>
@@ -113,15 +113,15 @@ export function TripFiltersBar({ filters, onChange, onReset }: TripFiltersBarPro
 
           {/* Reset Filters */}
           {hasActiveFilters && (
-            <LkvButton
-              variant="ghost"
-              size="sm"
+            <GlassCapsuleBtn
+              variant="default"
+              size="xs"
               onClick={onReset}
-              className="text-xs text-[#A8443A] hover:bg-[#A8443A]/10 rounded-full px-3"
+              icon={<RotateCcw size={13} />}
+              className="text-[var(--lkv-danger)] hover:text-[var(--lkv-danger)]"
             >
-              <RotateCcw size={13} className="mr-1" />
               Réinitialiser
-            </LkvButton>
+            </GlassCapsuleBtn>
           )}
         </div>
       </div>

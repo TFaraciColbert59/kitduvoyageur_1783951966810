@@ -3,7 +3,7 @@
 import React, { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { GlassCard } from '@/components/ui/GlassCard';
-import { LkvButton } from '@/components/ui/LkvButton';
+import { GlassCapsuleBtn } from '@/components/ui/GlassCapsuleBtn';
 import { LkvInput } from '@/components/ui/LkvInput';
 import { Compass, X, AlertCircle } from 'lucide-react';
 import {
@@ -96,9 +96,9 @@ export function QuickCreateTripModal({
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm animate-fade-in">
       <div className="relative w-full max-w-lg">
-        <GlassCard tone="neutral" blur="lg" className="p-6 rounded-[32px] border border-white/80 shadow-2xl bg-white/95">
+        <GlassCard tone="neutral" blur="lg" className="p-6 rounded-[32px] border border-white/80 shadow-2xl">
           {/* Header */}
-          <div className="flex items-center justify-between pb-4 border-b border-black/5 mb-4">
+          <div className="flex items-center justify-between pb-4 border-b border-white/40 mb-4">
             <div className="flex items-center gap-2">
               <div className="p-2 rounded-xl bg-lkv-secondary/15 text-lkv-primary">
                 <Compass size={20} />
@@ -109,7 +109,7 @@ export function QuickCreateTripModal({
             </div>
             <button
               onClick={onClose}
-              className="p-2 text-gray-400 hover:text-gray-600 rounded-full hover:bg-black/5 transition-colors"
+              className="min-h-[44px] min-w-[44px] flex items-center justify-center rounded-full glass-sub-card border border-white/60 text-[var(--lkv-text-muted)] hover:bg-white transition-all shadow-2xs"
               aria-label="Fermer"
             >
               <X size={18} />
@@ -118,7 +118,7 @@ export function QuickCreateTripModal({
 
           {/* Error alert */}
           {formError && (
-            <div className="p-3 mb-4 rounded-xl bg-[#A8443A]/10 border border-[#A8443A]/30 text-xs text-[#A8443A] flex items-center gap-2">
+            <div className="p-3 mb-4 rounded-xl glass tone-danger border text-xs text-[var(--lkv-danger)] flex items-center gap-2">
               <AlertCircle size={16} />
               <span>{formError}</span>
             </div>
@@ -173,7 +173,7 @@ export function QuickCreateTripModal({
                 <select
                   value={activity}
                   onChange={e => setActivity(e.target.value as TripActivityType)}
-                  className="w-full bg-white/70 border border-lkv-primary/15 rounded-2xl px-3 py-2.5 text-[16px] sm:text-sm text-lkv-primary outline-none cursor-pointer"
+                  className="glass-input w-full px-3 py-2.5 text-[16px] sm:text-sm text-[var(--lkv-text-primary)] cursor-pointer"
                 >
                   <option value="hiking">Randonnée</option>
                   <option value="trekking">Trek</option>
@@ -192,7 +192,7 @@ export function QuickCreateTripModal({
                 <select
                   value={difficulty}
                   onChange={e => setDifficulty(e.target.value as TripDifficulty)}
-                  className="w-full bg-white/70 border border-lkv-primary/15 rounded-2xl px-3 py-2.5 text-[16px] sm:text-sm text-lkv-primary outline-none cursor-pointer"
+                  className="glass-input w-full px-3 py-2.5 text-[16px] sm:text-sm text-[var(--lkv-text-primary)] cursor-pointer"
                 >
                   <option value="easy">Facile</option>
                   <option value="moderate">Modéré</option>
@@ -208,7 +208,7 @@ export function QuickCreateTripModal({
                 <select
                   value={visibility}
                   onChange={e => setVisibility(e.target.value as TripVisibility)}
-                  className="w-full bg-white/70 border border-lkv-primary/15 rounded-2xl px-3 py-2.5 text-[16px] sm:text-sm text-lkv-primary outline-none cursor-pointer"
+                  className="glass-input w-full px-3 py-2.5 text-[16px] sm:text-sm text-[var(--lkv-text-primary)] cursor-pointer"
                 >
                   <option value="private">Privé</option>
                   <option value="unlisted">Lien partagé</option>
@@ -228,23 +228,22 @@ export function QuickCreateTripModal({
             />
 
             {/* Actions */}
-            <div className="flex items-center justify-end gap-3 pt-4 border-t border-black/5">
-              <LkvButton
-                variant="ghost"
+            <div className="flex items-center justify-end gap-3 pt-4 border-t border-white/40">
+              <GlassCapsuleBtn
+                variant="default"
                 type="button"
                 onClick={onClose}
                 disabled={loading}
               >
                 Annuler
-              </LkvButton>
-              <LkvButton
+              </GlassCapsuleBtn>
+              <GlassCapsuleBtn
                 variant="primary"
                 type="submit"
-                loading={loading}
                 disabled={loading}
               >
-                Créer l’expédition
-              </LkvButton>
+                {loading ? 'Création...' : 'Créer l’expédition'}
+              </GlassCapsuleBtn>
             </div>
           </form>
         </GlassCard>

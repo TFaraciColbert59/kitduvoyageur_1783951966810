@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState } from 'react';
-import { GlassCard } from '@/components/ui/GlassCard';
+import { GlassCard, GlassCapsuleBtn } from '@/components/ui';
 import {
   Compass,
   Navigation,
@@ -24,7 +24,6 @@ import { TripChecklistView } from './TripChecklistView';
 import { TripAffiliateSection } from '@/features/affiliation';
 import { getTripCounters } from '../hooks/useTripCounters';
 import { getKitCounters } from '../hooks/useKitCounters';
-import Link from 'next/link';
 
 export interface TripPhasePrepareViewProps {
   trip: TripFull;
@@ -36,6 +35,8 @@ export interface TripPhasePrepareViewProps {
   activeSection?: PrepareSectionId;
   /** Callback de changement — obligatoire en mode contrôlé */
   onSectionChange?: (s: PrepareSectionId) => void;
+  /** Masquer la barre d'onglets mobile si gérée par la BottomTabBar */
+  hideMobileTabs?: boolean;
 }
 
 export type PrepareSectionId =
@@ -55,11 +56,12 @@ export function TripPhasePrepareView({
   daysUntilStart,
   activeSection: activeSectionProp,
   onSectionChange,
+  hideMobileTabs = false,
 }: TripPhasePrepareViewProps) {
   // Mode non-contrôlé (mobile) : état interne
   const [internalSection, setInternalSection] = useState<PrepareSectionId>('overview');
 
-  // Mode contrôlé (desktop via sidebar) si prop fournie
+  // Mode contrôlé (desktop via sidebar ou mobile via BottomTabBar) si prop fournie
   const isControlled = activeSectionProp !== undefined;
   const activeSection = isControlled ? activeSectionProp : internalSection;
   const handleSectionChange = (s: PrepareSectionId) => {
@@ -88,8 +90,8 @@ export function TripPhasePrepareView({
 
   return (
     <div className="space-y-6">
-      {/* Sous-navigation horizontale — visible uniquement sur mobile (sidebar pilote sur desktop) */}
-      {!isControlled && (
+      {/* Sous-navigation horizontale — visible uniquement si non gérée par BottomTabBar ou sidebar */}
+      {!isControlled && !hideMobileTabs && (
         <div className="flex items-center gap-2 overflow-x-auto pb-2 scrollbar-none -mx-4 px-4 sm:mx-0 sm:px-0">
           {sections.map(s => {
             const isActive = activeSection === s.id;
@@ -98,18 +100,18 @@ export function TripPhasePrepareView({
                 key={s.id}
                 type="button"
                 onClick={() => handleSectionChange(s.id)}
-                className={`flex items-center gap-2 px-3.5 sm:px-4 py-2 sm:py-2.5 rounded-full text-xs sm:text-sm font-semibold whitespace-nowrap transition-all duration-200 border min-h-[44px] ${
+                className={`flex items-center gap-2 px-3.5 sm:px-4 py-2 sm:py-2.5 rounded-[var(--lkv-radius-full)] text-xs sm:text-sm font-semibold whitespace-nowrap transition-all duration-200 border min-h-[44px] cursor-pointer ${
                   isActive
-                    ? 'bg-lkv-primary text-white border-lkv-primary shadow-sm'
-                    : 'bg-white/70 hover:bg-white text-lkv-primary border-white/80 hover:border-black/10'
+                    ? 'bg-[var(--lkv-primary)] text-white border-[var(--lkv-primary)] shadow-sm'
+                    : 'glass-sub-card border border-white/60 text-[var(--lkv-text-primary)] hover:bg-white'
                 }`}
               >
-                <span className="text-lkv-secondary">{s.icon}</span>
+                <span className={isActive ? 'text-white/80' : 'text-[var(--lkv-text-secondary)]'}>{s.icon}</span>
                 <span>{s.label}</span>
                 {s.count !== undefined && (
                   <span
-                    className={`text-[10px] px-1.5 py-0.5 rounded-full ${
-                      isActive ? 'bg-white/20 text-white' : 'bg-black/5 text-lkv-secondary'
+                    className={`text-[10px] px-1.5 py-0.5 rounded-full font-mono ${
+                      isActive ? 'bg-white/20 text-white' : 'bg-black/5 text-[var(--lkv-text-secondary)]'
                     }`}
                   >
                     {s.count}
@@ -148,12 +150,13 @@ export function TripPhasePrepareView({
               <div className="space-y-4">
                 <div className="flex items-center justify-between">
                   <h3 className="text-lg font-bold text-lkv-primary">Équipements du voyage</h3>
-                  <Link
+                  <GlassCapsuleBtn
                     href={`/voyages/${trip.slug}/kit`}
-                    className="px-4 py-2 rounded-xl bg-lkv-primary text-white text-xs font-bold hover:opacity-90 transition-all min-h-[44px] flex items-center"
+                    variant="primary"
+                    size="sm"
                   >
                     Ouvrir le Kit Contextuel Complet
-                  </Link>
+                  </GlassCapsuleBtn>
                 </div>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                   {trip.items.map(item => (
@@ -167,10 +170,10 @@ export function TripPhasePrepareView({
                           </div>
                         </div>
                         <span
-                          className={`text-xs px-2 py-0.5 rounded-full font-medium ${
+                          className={`text-xs px-2.5 py-1 rounded-full border font-medium ${
                             item.is_packed
-                              ? 'bg-lkv-secondary/20 text-lkv-primary'
-                              : 'bg-black/5 text-text-muted'
+                              ? 'bg-[var(--lkv-success)]/15 text-[var(--lkv-success)] border-[var(--lkv-success)]/25'
+                              : 'glass-pill'
                           }`}
                         >
                           {item.is_packed ? 'Emballé' : 'À préparer'}

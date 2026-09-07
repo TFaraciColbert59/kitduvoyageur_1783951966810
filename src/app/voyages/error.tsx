@@ -3,7 +3,7 @@
 import React from 'react';
 import AppShell from '@/components/shell/AppShell';
 import { GlassCard } from '@/components/ui/GlassCard';
-import { LkvButton } from '@/components/ui/LkvButton';
+import { GlassCapsuleBtn } from '@/components/ui/GlassCapsuleBtn';
 import { AlertTriangle, RotateCcw } from 'lucide-react';
 
 export default function VoyagesError({
@@ -26,16 +26,15 @@ export default function VoyagesError({
           <p className="text-sm text-lkv-secondary mb-6">
             Une erreur inattendue est survenue lors de la récupération des données.
             {error?.message && (
-              <span className="block mt-2 font-mono text-xs text-gray-500 bg-white/50 p-2 rounded-lg">
+              <span className="block mt-2 font-mono text-xs text-[var(--lkv-text-muted)] glass-sub-card p-2 rounded-lg border border-white/60 shadow-2xs">
                 {error.message}
               </span>
             )}
           </p>
           <div className="flex items-center justify-center gap-3">
-            <LkvButton variant="primary" onClick={() => reset()}>
-              <RotateCcw size={16} className="mr-2" />
+            <GlassCapsuleBtn variant="primary" onClick={() => reset()} icon={<RotateCcw size={16} />}>
               Réessayer
-            </LkvButton>
+            </GlassCapsuleBtn>
           </div>
         </GlassCard>
       </div>

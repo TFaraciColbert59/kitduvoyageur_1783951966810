@@ -1,4 +1,4 @@
-﻿'use client';
+'use client';
 
 import React from 'react';
 import { GlassSubCard, GlassPill } from '@/components/ui';
@@ -36,26 +36,28 @@ export function TripCompactHeader({ trip, activePhase, daysUntilStart }: TripCom
         </div>
       </div>
       <div className="flex items-center gap-2 shrink-0">
-        <GlassSubCard className="!p-2 text-center min-w-[70px]">
-          <span className="text-[9px] text-[var(--lkv-text-secondary)] block uppercase font-mono">Phase</span>
-          <span className="text-xs font-bold text-[var(--lkv-text-primary)] capitalize">
-            {getPhaseLabel(activePhase)}
-          </span>
-        </GlassSubCard>
-        {countdown && (
-          <GlassSubCard className="!p-2 text-center min-w-[60px]">
-            <span className="text-[9px] text-[var(--lkv-text-secondary)] block uppercase font-mono">Depart</span>
-            <span className="text-xs font-bold text-[var(--lkv-warning)] font-mono">{countdown}</span>
-          </GlassSubCard>
-        )}
-        {trip.destination_country_code && (
-          <GlassSubCard className="!p-2 text-center min-w-[60px]">
-            <span className="text-[9px] text-[var(--lkv-text-secondary)] block uppercase font-mono">Pays</span>
-            <span className="text-xs font-bold text-[var(--lkv-text-primary)]">
-              {trip.destination_country_code}
+        <div className="glass-sub-card flex items-center divide-x divide-white/50 px-3.5 py-1.5 rounded-[var(--lkv-radius-md)] border border-white/60 shadow-2xs">
+          <div className="pr-3 text-center">
+            <span className="text-[8.5px] text-[var(--lkv-text-secondary)] block uppercase font-mono tracking-wider font-medium">Phase</span>
+            <span className="text-xs font-bold text-[var(--lkv-text-primary)] capitalize">
+              {getPhaseLabel(activePhase)}
             </span>
-          </GlassSubCard>
-        )}
+          </div>
+          {countdown && (
+            <div className="px-3 text-center">
+              <span className="text-[8.5px] text-[var(--lkv-text-secondary)] block uppercase font-mono tracking-wider font-medium">Départ</span>
+              <span className="text-xs font-bold text-[var(--lkv-warning)] font-mono">{countdown}</span>
+            </div>
+          )}
+          {trip.destination_country_code && (
+            <div className="pl-3 text-center">
+              <span className="text-[8.5px] text-[var(--lkv-text-secondary)] block uppercase font-mono tracking-wider font-medium">Pays</span>
+              <span className="text-xs font-bold text-[var(--lkv-text-primary)] font-mono">
+                {trip.destination_country_code}
+              </span>
+            </div>
+          )}
+        </div>
       </div>
     </div>
   );

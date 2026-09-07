@@ -259,13 +259,13 @@ export function TripWizard() {
               <span>Étape {state.step} sur 5</span>
               <span>{STEP_LABELS[state.step - 1].label}</span>
             </div>
-            <div className="w-full h-1.5 bg-black/5 rounded-full overflow-hidden mb-4">
+            <div className="w-full h-1.5 bg-white/30 rounded-full overflow-hidden mb-4">
               <div
                 className="h-full bg-[var(--lkv-primary)] transition-all duration-300 rounded-full"
                 style={{ width: `${(state.step / 5) * 100}%` }}
               />
             </div>
-            <div className="bg-white/90 backdrop-blur-md rounded-2xl p-5 border border-white/60 shadow-md">
+            <div className="glass rounded-2xl p-5 border border-white/60 shadow-md">
               {renderCurrentStep()}
             </div>
           </div>
@@ -274,30 +274,32 @@ export function TripWizard() {
     >
       <div className="space-y-4">
         {/* Conteneur principal de l'étape */}
-        <div className="bg-white/90 backdrop-blur-md rounded-2xl p-6 sm:p-8 border border-white/60 shadow-md">
+        <div className="glass rounded-2xl p-6 sm:p-8 border border-white/60 shadow-md">
           {renderCurrentStep()}
 
           {/* Contrôles de navigation */}
           {state.step < 5 && (
-            <div className="flex mt-8 pt-6 border-t border-black/5 items-center justify-between">
-              <button
+            <div className="flex mt-8 pt-6 border-t border-white/40 items-center justify-between">
+              <GlassCapsuleBtn
                 type="button"
                 onClick={handlePrev}
                 disabled={state.step === 1}
-                className="px-5 py-2.5 rounded-xl border border-black/10 text-xs font-semibold text-forest-900 hover:bg-black/5 disabled:opacity-30 disabled:hover:bg-transparent flex items-center gap-1.5 min-h-[44px]"
+                variant="default"
+                icon={<ChevronLeft size={16} />}
+                className="flex-1 justify-center"
               >
-                <ChevronLeft size={16} />
-                <span>Précédent</span>
-              </button>
+                Précédent
+              </GlassCapsuleBtn>
 
-              <button
+              <GlassCapsuleBtn
                 type="button"
                 onClick={handleNext}
-                className="px-6 py-2.5 rounded-xl bg-[var(--lkv-primary)] hover:bg-[var(--lkv-primary-hover)] text-white text-xs font-bold shadow-sm flex items-center gap-1.5 transition-all min-h-[44px]"
+                variant="primary"
+                icon={<ChevronRight size={16} />}
+                className="flex-1 justify-center"
               >
-                <span>Continuer</span>
-                <ChevronRight size={16} />
-              </button>
+                Continuer
+              </GlassCapsuleBtn>
             </div>
           )}
         </div>

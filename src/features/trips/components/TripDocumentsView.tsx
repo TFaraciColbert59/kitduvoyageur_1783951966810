@@ -14,7 +14,7 @@ import {
   FileCheck,
 } from 'lucide-react';
 import { GlassCard } from '@/components/ui/GlassCard';
-import { LkvButton } from '@/components/ui/LkvButton';
+import { GlassCapsuleBtn } from '@/components/ui/GlassCapsuleBtn';
 import { checkDocumentExpiry } from '../engine/exportEngine';
 import { addTripDocumentAction, deleteTripDocumentAction } from '@/app/voyages/document-actions';
 import type { TripFull, TripDocumentCategory } from '../types/trip.types';
@@ -83,20 +83,19 @@ export function TripDocumentsView({ trip }: TripDocumentsViewProps) {
         </div>
 
         {canEdit && (
-          <LkvButton
+          <GlassCapsuleBtn
             variant="primary"
             size="sm"
             onClick={() => setIsAddOpen(true)}
-            className="flex items-center gap-2 min-h-[44px]"
+            icon={<Plus size={16} />}
           >
-            <Plus size={16} />
-            <span>Attacher un document</span>
-          </LkvButton>
+            Attacher un document
+          </GlassCapsuleBtn>
         )}
       </div>
 
       {/* Garantie RGPD */}
-      <GlassCard tone="neutral" className="p-4 rounded-[20px] border border-white/60 text-xs text-gray-700">
+      <GlassCard tone="neutral" className="p-4 rounded-[20px] border border-white/60 text-xs text-[var(--lkv-text-muted)]">
         <div className="flex items-start gap-3">
           <ShieldCheck size={18} className="text-lkv-secondary shrink-0 mt-0.5" />
           <div className="space-y-1">
@@ -113,7 +112,7 @@ export function TripDocumentsView({ trip }: TripDocumentsViewProps) {
         <GlassCard tone="neutral" className="p-8 rounded-[24px] text-center space-y-2 border border-white/60">
           <FileCheck size={32} className="text-lkv-secondary mx-auto" />
           <div className="text-sm font-semibold text-lkv-primary">Aucun document attaché</div>
-          <p className="text-xs text-gray-500 max-w-sm mx-auto">
+          <p className="text-xs text-[var(--lkv-text-muted)] max-w-sm mx-auto">
             Attachez vos billets d&apos;avion, réservations de refuges, assurances et passeports pour les garder accessibles partout.
           </p>
         </GlassCard>
@@ -145,12 +144,12 @@ export function TripDocumentsView({ trip }: TripDocumentsViewProps) {
                     {/* Badge d'échéance */}
                     {expiryCheck.status !== 'none' && (
                       <span
-                        className={`text-[10px] font-semibold px-2 py-0.5 rounded-full flex items-center gap-1 shrink-0 ${
+                        className={`text-[10px] font-semibold px-2.5 py-1 rounded-full border flex items-center gap-1 shrink-0 ${
                           expiryCheck.status === 'expired'
-                            ? 'bg-red-100 text-red-700'
+                            ? 'bg-[var(--lkv-danger)]/10 text-[var(--lkv-danger)] border-[var(--lkv-danger)]/20'
                             : expiryCheck.status === 'warning'
-                            ? 'bg-amber-100 text-amber-800'
-                            : 'bg-emerald-100 text-emerald-800'
+                            ? 'bg-[var(--lkv-warning)]/10 text-[var(--lkv-warning)] border-[var(--lkv-warning)]/20'
+                            : 'bg-[var(--lkv-success)]/10 text-[var(--lkv-success)] border-[var(--lkv-success)]/20'
                         }`}
                       >
                         {expiryCheck.status === 'expired' && <AlertTriangle size={10} />}
@@ -162,14 +161,14 @@ export function TripDocumentsView({ trip }: TripDocumentsViewProps) {
                   </div>
 
                   {doc.notes && (
-                    <p className="text-xs text-gray-600 bg-white/50 p-2 rounded-xl border border-black/5">
+                    <p className="text-xs text-[var(--lkv-text-muted)] glass-sub-card p-2 rounded-[var(--lkv-radius-md)] border border-white/60 shadow-2xs">
                       {doc.notes}
                     </p>
                   )}
                 </div>
 
                 {/* Barre d'action document */}
-                <div className="flex items-center justify-between pt-3 border-t border-black/5 text-xs">
+                <div className="flex items-center justify-between pt-3 border-t border-white/40 text-xs">
                   <a
                     href={doc.file_url}
                     target="_blank"
@@ -184,10 +183,10 @@ export function TripDocumentsView({ trip }: TripDocumentsViewProps) {
                     <button
                       onClick={() => handleDelete(doc.id, doc.title)}
                       disabled={isPending}
-                      className="min-h-[44px] min-w-[44px] flex items-center justify-center rounded-xl text-gray-400 hover:text-red-600 hover:bg-red-50 transition-colors"
+                      className="min-h-[44px] min-w-[44px] rounded-full flex items-center justify-center glass-sub-card border border-white/60 text-[var(--lkv-text-muted)] hover:text-[var(--lkv-danger)] hover:bg-[var(--lkv-danger)]/10 transition-all shadow-2xs"
                       title="Supprimer ce document"
                     >
-                      <Trash2 size={16} />
+                      <Trash2 size={15} />
                     </button>
                   )}
                 </div>
@@ -199,26 +198,27 @@ export function TripDocumentsView({ trip }: TripDocumentsViewProps) {
 
       {/* Modal d'ajout de document */}
       {isAddOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40 backdrop-blur-xs animate-in fade-in">
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm animate-in fade-in">
           <GlassCard
             tone="neutral"
-            className="w-full max-w-md p-6 rounded-[24px] bg-white border border-white/80 shadow-2xl space-y-4"
+            className="w-full max-w-md p-6 rounded-[24px] border border-white/80 shadow-2xl space-y-4"
           >
-            <div className="flex items-center justify-between pb-3 border-b border-gray-100">
+            <div className="flex items-center justify-between pb-3 border-b border-white/40">
               <h4 className="text-base font-bold text-lkv-primary flex items-center gap-2">
                 <FileText size={18} className="text-lkv-secondary" />
                 <span>Attacher un document sécurisé</span>
               </h4>
               <button
                 onClick={() => setIsAddOpen(false)}
-                className="w-8 h-8 rounded-full flex items-center justify-center text-gray-400 hover:bg-gray-100"
+                aria-label="Fermer"
+                className="w-8 h-8 rounded-full glass-sub-card border border-white/60 flex items-center justify-center text-[var(--lkv-text-secondary)] hover:text-[var(--lkv-text-primary)] hover:bg-white transition-all cursor-pointer shadow-2xs"
               >
                 <X size={18} />
               </button>
             </div>
 
             {errorMsg && (
-              <div className="p-3 rounded-xl bg-red-50 border border-red-200 text-xs text-red-700">
+              <div className="p-3 rounded-xl glass tone-danger text-[var(--lkv-danger)] text-xs">
                 {errorMsg}
               </div>
             )}
@@ -233,7 +233,7 @@ export function TripDocumentsView({ trip }: TripDocumentsViewProps) {
                   name="title"
                   required
                   placeholder="ex: Passeport biométrique, Billet Vol AR Lima"
-                  className="w-full px-3 py-2 text-sm rounded-xl border border-gray-200 bg-gray-50/50 focus:bg-white focus:outline-none focus:ring-2 focus:ring-lkv-primary/20"
+                  className="glass-input w-full px-3 py-2 text-sm text-[var(--lkv-text-primary)]"
                 />
               </div>
 
@@ -245,7 +245,7 @@ export function TripDocumentsView({ trip }: TripDocumentsViewProps) {
                   <select
                     name="category"
                     defaultValue="passport"
-                    className="w-full px-3 py-2 text-sm rounded-xl border border-gray-200 bg-gray-50/50 focus:bg-white focus:outline-none focus:ring-2 focus:ring-lkv-primary/20"
+                    className="glass-input w-full px-3 py-2 text-sm text-[var(--lkv-text-primary)]"
                   >
                     <option value="passport">Passeport / ID</option>
                     <option value="insurance">Assurance</option>
@@ -263,7 +263,7 @@ export function TripDocumentsView({ trip }: TripDocumentsViewProps) {
                   <input
                     type="date"
                     name="expiresAt"
-                    className="w-full px-3 py-2 text-sm rounded-xl border border-gray-200 bg-gray-50/50 focus:bg-white focus:outline-none focus:ring-2 focus:ring-lkv-primary/20"
+                    className="glass-input w-full px-3 py-2 text-sm text-[var(--lkv-text-primary)]"
                   />
                 </div>
               </div>
@@ -277,7 +277,7 @@ export function TripDocumentsView({ trip }: TripDocumentsViewProps) {
                   name="fileUrl"
                   required
                   placeholder="https://..."
-                  className="w-full px-3 py-2 text-sm rounded-xl border border-gray-200 bg-gray-50/50 focus:bg-white focus:outline-none focus:ring-2 focus:ring-lkv-primary/20"
+                  className="glass-input w-full px-3 py-2 text-sm text-[var(--lkv-text-primary)]"
                 />
               </div>
 
@@ -289,28 +289,27 @@ export function TripDocumentsView({ trip }: TripDocumentsViewProps) {
                   name="notes"
                   rows={2}
                   placeholder="ex: Numéro d'assuré #12345, contact d'urgence 24/7"
-                  className="w-full px-3 py-2 text-sm rounded-xl border border-gray-200 bg-gray-50/50 focus:bg-white focus:outline-none focus:ring-2 focus:ring-lkv-primary/20"
+                  className="glass-input w-full px-3 py-2 text-sm text-[var(--lkv-text-primary)]"
                 />
               </div>
 
               <div className="flex items-center justify-end gap-3 pt-2">
-                <LkvButton
+                <GlassCapsuleBtn
                   type="button"
-                  variant="secondary"
+                  variant="default"
                   size="sm"
                   onClick={() => setIsAddOpen(false)}
                 >
                   Annuler
-                </LkvButton>
-                <LkvButton
+                </GlassCapsuleBtn>
+                <GlassCapsuleBtn
                   type="submit"
                   variant="primary"
                   size="sm"
                   disabled={isPending}
-                  className="min-h-[44px]"
                 >
                   {isPending ? 'Enregistrement...' : 'Attacher le document'}
-                </LkvButton>
+                </GlassCapsuleBtn>
               </div>
             </form>
           </GlassCard>
