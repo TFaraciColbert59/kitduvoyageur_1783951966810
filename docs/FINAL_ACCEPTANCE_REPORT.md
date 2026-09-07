@@ -164,10 +164,14 @@ Running 13 tests using 7 workers
 ```
 
 ### git ls-remote --heads origin | grep chantier/u12-cloture-documentation
-*(Capture insérée suite au push distant)*
+```
+6422ff534e5522c6303dc95d5828d7859c6eee18	refs/heads/chantier/u12-cloture-documentation
+```
 
 ### git rev-parse HEAD
-*(Capture insérée suite au commit)*
+```
+6422ff534e5522c6303dc95d5828d7859c6eee18
+```
 
 ## Preuves visuelles (chemins des captures 390/768/1440)
 - Mobile (390x844) : `tests/visual/snapshots/voyage-cockpit-390px.png` (88 287 octets)
