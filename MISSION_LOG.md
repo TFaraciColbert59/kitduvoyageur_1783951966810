@@ -390,3 +390,12 @@ ORDER BY country_code;
   `TripOverviewClient` (?phase=), shell locaux retirés de kit/itineraire/export,
   BottomTabBar navigation URL. Y-D80 501 violations (−9).
   Portes : G1 OK · G2 1009/1020 (Y-D80 rouge documenté) · G3 rouge attendu.
+- **Y3** ✅ (tag y3-done) : dédoublonnage complet du hub voyage 7 sous-phases :
+  Y3.1 sidebars gauches supprimées (règle 10) · Y3.2 TripNetworkStatus unique
+  (règle 8, abstraction réseau unifiée) · Y3.3 ActiveTripSwitcher (cmdk +
+  GlassSheet) remplace ActiveTripBanner, contexte étendu + /api/voyages/mine ·
+  Y3.4 en-têtes (3 cartes métriques → widgets, CountryCard) · **Y3.5 jalon G3
+  ATTEINT : garde-fou Y-D80 12/12 vert, 475 violations → 0** (tokenisation
+  complète, ConfirmDialog, tripPaths, print dédié) · Y3.6 code mort supprimé
+  (ItinerarySidebarRight + KitSidebarRight, 5512 o) · Y3.7 fin.
+  Portes : G1 OK · G2 **1020/1020** · G3 **12/12**.
