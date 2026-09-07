@@ -21,7 +21,7 @@ export function TripFiltersBar({ filters, onChange, onReset }: TripFiltersBarPro
   );
 
   return (
-    <GlassCard tone="neutral" blur="sm" className="p-3 sm:p-4 rounded-[24px] border border-white/70 shadow-sm mb-6">
+    <GlassCard tone="neutral" blur="sm" className="p-3 sm:p-4 rounded-xl border border-white/70 shadow-sm mb-6">
       <div className="flex flex-col md:flex-row items-stretch md:items-center gap-3">
         {/* Barre de Recherche Texte */}
         <div className="relative flex-1">

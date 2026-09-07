@@ -1,4 +1,5 @@
 'use client';
+import { lkvConfirm } from '@/components/ui/dialogs';
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { GlassCard } from '@/components/ui/GlassCard';
@@ -71,7 +72,7 @@ export function KitManager({ kits, inventory }: { kits: KitListItem[]; inventory
   };
 
   const remove = async (k: KitListItem) => {
-    if (!confirm(`Supprimer le kit « ${k.name} » ?`)) return;
+    if (!lkvConfirm(`Supprimer le kit « ${k.name} » ?`)) return;
     const res = await fetch(`/api/materiel/kits/${k.id}`, { method: 'DELETE' });
     if (res.ok) { toast('Kit supprimé', 'success'); router.refresh(); }
     else toast('Erreur', 'error');

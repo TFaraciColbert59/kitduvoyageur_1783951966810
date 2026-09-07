@@ -1,4 +1,5 @@
 'use client';
+import { lkvConfirm } from '@/components/ui/dialogs';
 
 import React, { useEffect, useMemo, useState, useCallback } from 'react';
 import Link from 'next/link';
@@ -1290,7 +1291,7 @@ export default function MobileCompteV2() {
                     onClick={async () => {
                       triggerHaptic('warning');
                       setMenuOpen(false);
-                      if (confirm('Voulez-vous vraiment vous déconnecter ?')) {
+                      if (lkvConfirm('Voulez-vous vraiment vous déconnecter ?')) {
                         await signOut();
                         router.push('/connexion');
                       }

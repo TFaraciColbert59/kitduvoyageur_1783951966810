@@ -10,7 +10,7 @@ export default function TripDetailLoading() {
         <div className="w-36 h-4 bg-black/5 rounded-full animate-pulse" />
 
         {/* Hero Skeleton */}
-        <div className="w-full h-80 bg-black/10 rounded-[32px] animate-pulse" />
+        <div className="w-full h-80 bg-black/10 rounded-2xl animate-pulse" />
 
         {/* Tabs Skeleton */}
         <div className="flex gap-2 overflow-hidden">
@@ -22,7 +22,7 @@ export default function TripDetailLoading() {
         {/* Stats Cards Skeleton */}
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
           {[1, 2, 3, 4].map(i => (
-            <GlassCard key={i} tone="neutral" className="h-28 rounded-[20px] p-4">
+            <GlassCard key={i} tone="neutral" className="h-28 rounded-lg p-4">
               <div className="w-16 h-3 bg-black/5 rounded-full mb-2 animate-pulse" />
               <div className="w-24 h-6 bg-black/10 rounded-lg animate-pulse" />
             </GlassCard>

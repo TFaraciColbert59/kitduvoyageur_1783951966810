@@ -353,7 +353,7 @@ export function DepartHeader({
             <span className="font-mono font-bold text-[#17402C]">{score.percentage}%</span>
           </div>
 
-          <div className="h-2 w-full rounded-full bg-black/5 dark:bg-white/10 overflow-hidden shadow-[inset_0_1px_2px_rgba(0,0,0,0.06)]">
+          <div className="h-2 w-full rounded-full bg-black/5 dark:bg-white/10 overflow-hidden shadow-inner">
             <div
               className={cn(
                 'h-full rounded-full transition-all duration-300',

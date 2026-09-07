@@ -137,7 +137,7 @@ export function TripPhasePrepareView({
                 </div>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                   {trip.items.map(item => (
-                    <GlassCard key={item.id} tone="neutral" className="p-3.5 rounded-[18px] border border-white/60">
+                    <GlassCard key={item.id} tone="neutral" className="p-3.5 rounded-lg border border-white/60">
                       <div className="flex items-center justify-between gap-2">
                         <div>
                           <div className="text-sm font-medium text-lkv-primary">{item.item_name}</div>

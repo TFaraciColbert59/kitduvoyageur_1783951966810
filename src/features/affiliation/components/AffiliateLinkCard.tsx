@@ -54,7 +54,7 @@ export function AffiliateLinkCard({ link, tripId }: AffiliateLinkCardProps) {
       tone="neutral"
       blur="sm"
       interactive
-      className="p-4 rounded-[22px] border border-stone-200/80 hover:border-[#5B7F55]/40 transition-all flex flex-col justify-between h-full bg-white/80"
+      className="p-4 rounded-lg border border-stone-200/80 hover:border-[#5B7F55]/40 transition-all flex flex-col justify-between h-full bg-white/80"
     >
       <div>
         <div className="flex items-center justify-between gap-2 mb-2.5">

@@ -1,4 +1,5 @@
 'use client';
+import { lkvAlert } from '@/components/ui/dialogs';
 
 import React, { useState } from 'react';
 import Link from 'next/link';
@@ -43,7 +44,7 @@ export default function CommunityRightSidebar() {
   const handleToggleOuting = (id: string, title: string) => {
     setJoinedOutings(prev => {
       const next = !prev[id];
-      alert(next ? `Vous êtes inscrit à "${title}" !` : `Inscription annulée pour "${title}".`);
+      lkvAlert(next ? `Vous êtes inscrit à "${title}" !` : `Inscription annulée pour "${title}".`);
       return { ...prev, [id]: next };
     });
   };

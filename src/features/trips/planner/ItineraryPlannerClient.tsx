@@ -1,4 +1,5 @@
 'use client';
+import { lkvConfirm } from '@/components/ui/dialogs';
 
 import React, { useState, useTransition, useMemo } from 'react';
 import Link from 'next/link';
@@ -304,7 +305,7 @@ export default function ItineraryPlannerClient({
     const daySteps = steps.filter((s) => s.day_number === dayNumber);
     if (
       daySteps.length > 0 &&
-      !window.confirm(
+      !lkvConfirm(
         `Cette journée contient ${daySteps.length} étape(s). Confirmez-vous la suppression intégrale de la journée et de ses étapes ?`
       )
     ) {

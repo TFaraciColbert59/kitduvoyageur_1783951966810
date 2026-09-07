@@ -1,3 +1,4 @@
+import { lkvConfirm } from '@/components/ui/dialogs';
 import React, { useState } from 'react';
 import Link from 'next/link';
 import { createClient } from '@/lib/supabase/client';
@@ -100,7 +101,7 @@ export default function VoyageursCard({ travelers, groupId, onRefresh, user, mem
   };
 
   const removePending = async (id: string) => {
-    if (!confirm('Retirer cette invitation ?')) return;
+    if (!lkvConfirm('Retirer cette invitation ?')) return;
     setLoadingId(id);
     await supabase.from('group_members').delete().eq('id', id);
     setLoadingId(null);
@@ -110,7 +111,7 @@ export default function VoyageursCard({ travelers, groupId, onRefresh, user, mem
 
   const handleRemoveMember = async (memberId: string) => {
     if (!groupId || !isOrganizer) return;
-    if (!confirm('Êtes-vous sûr de vouloir retirer ce membre du groupe ?')) return;
+    if (!lkvConfirm('Êtes-vous sûr de vouloir retirer ce membre du groupe ?')) return;
     
     setLoadingId(memberId);
     const { error } = await supabase
@@ -140,7 +141,7 @@ export default function VoyageursCard({ travelers, groupId, onRefresh, user, mem
     if (!groupId || !user) return;
     const myMembership = members?.find((m: any) => m.user_id === user.id);
     if (!myMembership) return;
-    if (!confirm('Voulez-vous quitter ce groupe ? Vous pourrez rejoindre un autre groupe sans aucune pénalité.')) return;
+    if (!lkvConfirm('Voulez-vous quitter ce groupe ? Vous pourrez rejoindre un autre groupe sans aucune pénalité.')) return;
 
     setLoadingId(myMembership.id);
     const { error } = await supabase

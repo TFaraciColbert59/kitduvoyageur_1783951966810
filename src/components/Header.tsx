@@ -115,7 +115,7 @@ export default function Header() {
             </Link>
 
             {/* Center: Navigation Links with Animated Sliding Pill */}
-            <nav className="flex items-center gap-1 p-0.5 rounded-full bg-white/[0.08] border border-white/25 shadow-[inset_0_1px_1px_rgba(255,255,255,0.25)] shrink-0">
+            <nav className="flex items-center gap-1 p-0.5 rounded-full bg-white/[0.08] border border-white/25 shadow-inner shrink-0">
               {[
                 { label: 'Aventures', href: '/explorer' },
                 { label: 'Earth', href: '/pays' },
@@ -133,7 +133,7 @@ export default function Header() {
                     {isActive && (
                       <motion.span
                         layoutId="header-active-pill"
-                        className="absolute inset-0 rounded-full bg-[#17402C]/10 border border-[#17402C]/15 shadow-[inset_0_1px_1.5px_rgba(255,255,255,0.8)]"
+                        className="absolute inset-0 rounded-full bg-[#17402C]/10 border border-[#17402C]/15 shadow-inner"
                         transition={{ type: 'spring', stiffness: 450, damping: 32 }}
                       />
                     )}
@@ -151,7 +151,7 @@ export default function Header() {
 
             {/* Right: Actions in Liquid Glass Style */}
             <div className="flex items-center gap-1 shrink-0">
-              <div className="flex items-center gap-1 rounded-full bg-white/[0.08] border border-white/25 p-0.5 shadow-[inset_0_1px_1px_rgba(255,255,255,0.25)]">
+              <div className="flex items-center gap-1 rounded-full bg-white/[0.08] border border-white/25 p-0.5 shadow-inner">
                 {/* Panier */}
                 <Link
                   href="/panier"

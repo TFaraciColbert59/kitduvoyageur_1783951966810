@@ -534,7 +534,7 @@ export function DepartEquipmentHub({
             </div>
           )}
 
-          <div className="glass rounded-2xl sm:rounded-[28px] p-3 sm:p-5 space-y-2.5 sm:space-y-3.5 border border-white/80 dark:border-white/10 shadow-xs backdrop-blur-md">
+          <div className="glass rounded-2xl sm:rounded-card p-3 sm:p-5 space-y-2.5 sm:space-y-3.5 border border-white/80 dark:border-white/10 shadow-xs backdrop-blur-md">
             {/* Top Header Compact Apple */}
             <div className="flex items-center justify-between gap-2 border-b border-black/5 dark:border-white/10 pb-2">
               <div className="flex items-center gap-2 min-w-0">

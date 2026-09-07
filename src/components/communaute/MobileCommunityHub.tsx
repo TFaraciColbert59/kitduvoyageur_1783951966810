@@ -1,4 +1,5 @@
 'use client';
+import { lkvAlert } from '@/components/ui/dialogs';
 
 import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
@@ -266,7 +267,7 @@ export default function MobileCommunityHub({
                 <button
                   onClick={() => {
                     triggerHaptic('success');
-                    alert(`Inscription confirmée pour "${ev.title}" !`);
+                    lkvAlert(`Inscription confirmée pour "${ev.title}" !`);
                   }}
                   className="glass-capsule-btn primary text-[10.5px] font-bold !py-1 !px-2.5 shrink-0"
                 >

@@ -65,7 +65,7 @@ export function PlacesExplorerClient({
   return (
     <div className="space-y-6">
       {/* Barre de Recherche et Filtres */}
-      <div className="bg-white/80 backdrop-blur-md border border-stone-200/80 rounded-[24px] p-4 sm:p-5 shadow-sm space-y-4">
+      <div className="bg-white/80 backdrop-blur-md border border-stone-200/80 rounded-xl p-4 sm:p-5 shadow-sm space-y-4">
         {/* Champ de recherche */}
         <div className="relative">
           <Search className="w-5 h-5 text-stone-600 absolute left-4 top-1/2 -translate-y-1/2" />
@@ -135,7 +135,7 @@ export function PlacesExplorerClient({
 
       {/* Grille des Lieux */}
       {filteredPlaces.length === 0 ? (
-        <div className="p-12 text-center bg-white/70 border border-stone-200/80 rounded-[28px]">
+        <div className="p-12 text-center bg-white/70 border border-stone-200/80 rounded-card">
           <MapPin className="w-8 h-8 text-stone-600 mx-auto mb-2" />
           <h3 className="text-base font-bold text-stone-900">
             Aucun lieu ne correspond à ces critères

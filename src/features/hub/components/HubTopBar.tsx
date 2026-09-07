@@ -91,7 +91,7 @@ export const HubTopBar: React.FC<HubTopBarProps> = ({
             title="Activer/désactiver le mode Ultra-Save"
             className={`px-2.5 py-1 rounded-xl text-[11px] font-semibold transition-all ${
               isUltraSaveActive
-                ? 'bg-[#4ADE80] text-black font-bold shadow-[0_0_12px_rgba(74,222,128,0.4)]'
+                ? 'bg-[#4ADE80] text-black font-bold shadow-md'
                 : 'bg-black/5 dark:bg-white/10 text-[#17402C] dark:text-[#E7E3D6] hover:bg-black/10'
             }`}
           >

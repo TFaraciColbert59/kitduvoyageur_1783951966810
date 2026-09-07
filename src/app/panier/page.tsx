@@ -142,7 +142,7 @@ export default function PanierPage() {
 
         {confirmDeleteId && (
           <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-[#17402C]/25 backdrop-blur-sm" role="dialog" aria-modal="true">
-            <div className="glass rounded-[24px] p-8 max-w-sm w-full text-center">
+            <div className="glass rounded-xl p-8 max-w-sm w-full text-center">
               <h2 className="font-display font-700 text-xl text-[#17402C] mb-3">Retirer cet article ?</h2>
               <p className="text-sm text-[#5A7064] mb-6">
                 {items.find((i) => i.id === confirmDeleteId)?.name} sera retiré de votre panier.
@@ -312,7 +312,7 @@ export default function PanierPage() {
                         <div className="glass-pill px-3 py-1.5 text-[10px] font-600 font-mono">Apple Pay</div>
                       </div>
 
-                      <div className="glass-sub-card rounded-[16px] p-4 flex justify-between gap-2 text-center text-[10px] font-600 text-[#5A7064]" style={{ boxShadow: 'none' }}>
+                      <div className="glass-sub-card rounded-md p-4 flex justify-between gap-2 text-center text-[10px] font-600 text-[#5A7064]" style={{ boxShadow: 'none' }}>
                         <div className="flex flex-col items-center gap-2 flex-1">
                           <Icon name="StarIcon" size={16} /> Garantie à vie
                         </div>

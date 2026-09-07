@@ -273,7 +273,7 @@ export default function PostCard({
   return (
     <article
       id={`post-${post.id}`}
-      className={`glass rounded-[24px] p-4 sm:p-5 transition-shadow duration-200 flex flex-col gap-3.5 ${className}`}
+      className={`glass rounded-xl p-4 sm:p-5 transition-shadow duration-200 flex flex-col gap-3.5 ${className}`}
     >
       {/* Header : Author info, Origin/Time & context menu */}
       <div className="flex items-center justify-between">

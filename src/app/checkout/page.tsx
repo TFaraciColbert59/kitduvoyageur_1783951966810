@@ -443,7 +443,7 @@ export default function CheckoutPage() {
                             { id: 'express', label: 'Express 48h', desc: 'Livré à domicile en 48 h - sur créneau choisi', price: '14 €' },
                             { id: 'relay', label: 'Retrait en atelier', desc: 'Manosque, Alpes-de-Haute-Provence - disponible dès demain', price: 'Offerte' },
                           ].map((opt) => (
-                            <label key={opt.id} className="glass p-4 flex items-center justify-between rounded-[16px] cursor-pointer transition-all" style={shippingOption === opt.id ? { borderColor: 'rgba(91,127,85,0.85)' } : undefined}>
+                            <label key={opt.id} className="glass p-4 flex items-center justify-between rounded-md cursor-pointer transition-all" style={shippingOption === opt.id ? { borderColor: 'rgba(91,127,85,0.85)' } : undefined}>
                               <div className="flex items-center gap-4">
                                 <div className={`w-4 h-4 rounded-full border flex items-center justify-center flex-shrink-0 ${shippingOption === opt.id ? 'border-[#17402C]' : 'border-[#365233]'}`}>
                                   {shippingOption === opt.id && <div className="w-2 h-2 bg-[#17402C] rounded-full" />}
@@ -475,24 +475,24 @@ export default function CheckoutPage() {
                       {step === 'paiement' && (
                         <>
                           {error && (
-                            <div className="mb-8 p-4 rounded-[16px] bg-[#F5DDD9] border border-[#A8443A]/30 text-[#8A241B] text-sm leading-relaxed">
+                            <div className="mb-8 p-4 rounded-md bg-[#F5DDD9] border border-[#A8443A]/30 text-[#8A241B] text-sm leading-relaxed">
                               {error}
                             </div>
                           )}
                           <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 mb-8">
-                            <button className="glass p-3 flex flex-col items-center justify-center rounded-[16px] text-[#17402C]" style={{ borderColor: 'rgba(91,127,85,0.85)' }}>
+                            <button className="glass p-3 flex flex-col items-center justify-center rounded-md text-[#17402C]" style={{ borderColor: 'rgba(91,127,85,0.85)' }}>
                               <Icon name="CreditCardIcon" size={24} className="mb-1" />
                               <span className="text-[10px] font-600 font-mono tracking-widest uppercase">Carte</span>
                             </button>
-                            <button className="glass p-3 flex flex-col items-center justify-center rounded-[16px] text-[#5A7064] hover:text-[#17402C]">
+                            <button className="glass p-3 flex flex-col items-center justify-center rounded-md text-[#5A7064] hover:text-[#17402C]">
                               <span className="text-xl mb-1">🍎</span>
                               <span className="text-[10px] font-600 font-mono tracking-widest uppercase">Apple Pay</span>
                             </button>
-                            <button className="glass p-3 flex flex-col items-center justify-center rounded-[16px] text-[#5A7064] hover:text-[#17402C]">
+                            <button className="glass p-3 flex flex-col items-center justify-center rounded-md text-[#5A7064] hover:text-[#17402C]">
                               <span className="text-xl mb-1 text-[#4B6B7C] font-bold">P</span>
                               <span className="text-[10px] font-600 font-mono tracking-widest uppercase">Compte</span>
                             </button>
-                            <button className="glass p-3 flex flex-col items-center justify-center rounded-[16px] text-[#8C6418] hover:text-[#17402C]">
+                            <button className="glass p-3 flex flex-col items-center justify-center rounded-md text-[#8C6418] hover:text-[#17402C]">
                               <span className="text-xs font-700 italic mb-1">3× sans frais</span>
                               <span className="text-[10px] font-600 font-mono tracking-widest uppercase">Alma</span>
                             </button>

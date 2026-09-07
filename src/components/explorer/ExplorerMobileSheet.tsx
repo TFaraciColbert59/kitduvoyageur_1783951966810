@@ -77,7 +77,7 @@ export default function ExplorerMobileSheet({
     >
       {/* Sheet surface Liquid Glass */}
       <div
-        className="absolute inset-0 rounded-[26px] overflow-hidden"
+        className="absolute inset-0 rounded-xl overflow-hidden"
         style={{
           background: 'linear-gradient(180deg, rgba(255, 255, 255, 0.55) 0%, rgba(255, 255, 255, 0.28) 100%)',
           backdropFilter: 'blur(24px) saturate(180%)',

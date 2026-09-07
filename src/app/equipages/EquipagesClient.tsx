@@ -161,7 +161,7 @@ export function EquipagesClient({
                   >
                     <GlassCard
                       tone="neutral"
-                      className="p-5 rounded-[24px] border border-white/70 h-full flex flex-col justify-between transition-all duration-200 group-hover:shadow-md group-hover:border-lkv-primary/30"
+                      className="p-5 rounded-xl border border-white/70 h-full flex flex-col justify-between transition-all duration-200 group-hover:shadow-md group-hover:border-lkv-primary/30"
                     >
                       <div>
                         <div className="flex items-start justify-between gap-3 mb-2">
@@ -241,7 +241,7 @@ export function EquipagesClient({
                   >
                     <GlassCard
                       tone="neutral"
-                      className="p-5 rounded-[24px] border border-white/70 h-full flex flex-col justify-between transition-all duration-200 group-hover:shadow-md"
+                      className="p-5 rounded-xl border border-white/70 h-full flex flex-col justify-between transition-all duration-200 group-hover:shadow-md"
                     >
                       <div>
                         <div className="flex items-start justify-between gap-3 mb-2">

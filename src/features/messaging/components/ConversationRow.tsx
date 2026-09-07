@@ -234,7 +234,7 @@ export const ConversationRow: React.FC<ConversationRowProps> = ({
             ? 'bg-[#17402C]/10 border-[#17402C]/30 shadow-xs ring-1 ring-[#17402C]/20'
             : unreadCount > 0
             ? // Conversation avec messages non lus : ombre portée douce (pas de compteur).
-              'bg-white/95 border-white/90 shadow-[0_10px_26px_-8px_rgba(23,64,44,0.32),0_2px_6px_-2px_rgba(23,64,44,0.14)]'
+              'bg-white/95 border-white/90 shadow-md'
             : 'bg-white/95 border-white/85 shadow-2xs'
         }`}
         style={{

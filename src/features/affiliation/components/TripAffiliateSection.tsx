@@ -32,7 +32,7 @@ export function TripAffiliateSection({
       <GlassCard
         tone="neutral"
         blur="md"
-        className="p-6 sm:p-7 rounded-[28px] border border-white/70 shadow-sm space-y-6"
+        className="p-6 sm:p-7 rounded-card border border-white/70 shadow-sm space-y-6"
       >
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pb-4 border-b border-stone-200/60">
           <div>

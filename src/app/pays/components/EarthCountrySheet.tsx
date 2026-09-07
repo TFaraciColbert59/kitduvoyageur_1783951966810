@@ -67,7 +67,7 @@ export default function EarthCountrySheet({ country, onClose }: EarthCountryShee
             animate={{ y: 0, opacity: 1 }}
             exit={{ y: '100%', opacity: 0 }}
             transition={{ type: 'spring', stiffness: 400, damping: 32 }}
-            className="relative z-10 mx-3 rounded-[26px] overflow-hidden glass bg-white/95 backdrop-blur-2xl border border-white shadow-2xl pointer-events-auto max-h-[calc(100dvh-180px)] flex flex-col"
+            className="relative z-10 mx-3 rounded-xl overflow-hidden glass bg-white/95 backdrop-blur-2xl border border-white shadow-2xl pointer-events-auto max-h-[calc(100dvh-180px)] flex flex-col"
             style={{
               marginBottom: 'calc(var(--bottom-tab-extended-height, 92px) + 8px)',
             }}

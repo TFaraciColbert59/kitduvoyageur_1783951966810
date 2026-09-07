@@ -1,4 +1,5 @@
 'use client';
+import { lkvAlert, lkvConfirm } from '@/components/ui/dialogs';
 
 import React, { useState, useTransition } from 'react';
 import { CreditCard, Plus, Trash2, TrendingUp, AlertTriangle, CheckCircle, ArrowRight, X } from 'lucide-react';
@@ -26,11 +27,11 @@ export function TripBudgetView({ trip }: TripBudgetViewProps) {
   const canManage = trip.permissions.canManageBudget;
 
   const handleDelete = (expenseId: string, title: string) => {
-    if (confirm(`Supprimer la dépense "${title}" ?`)) {
+    if (lkvConfirm(`Supprimer la dépense "${title}" ?`)) {
       startTransition(async () => {
         const res = await deleteExpenseAction(trip.id, expenseId, trip.slug);
         if (!res.success) {
-          alert(res.error || 'Impossible de supprimer cette dépense');
+          lkvAlert(res.error || 'Impossible de supprimer cette dépense');
         }
       });
     }
@@ -87,7 +88,7 @@ export function TripBudgetView({ trip }: TripBudgetViewProps) {
       {/* Cartes de synthèse budgétaire */}
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
         {/* Total dépensé */}
-        <GlassCard tone="neutral" className="p-4 rounded-[20px] border border-white/60 shadow-sm">
+        <GlassCard tone="neutral" className="p-4 rounded-lg border border-white/60 shadow-sm">
           <div className="text-xs text-lkv-secondary font-semibold">Total des dépenses réelles</div>
           <div className="text-2xl font-extrabold text-lkv-primary mt-1">
             {budgetSummary.totalSpent} {budgetSummary.currency}
@@ -98,7 +99,7 @@ export function TripBudgetView({ trip }: TripBudgetViewProps) {
         </GlassCard>
 
         {/* Budget prévisionnel & reste */}
-        <GlassCard tone="neutral" className="p-4 rounded-[20px] border border-white/60 shadow-sm">
+        <GlassCard tone="neutral" className="p-4 rounded-lg border border-white/60 shadow-sm">
           <div className="text-xs text-lkv-secondary font-semibold">Budget prévisionnel</div>
           <div className="text-2xl font-extrabold text-lkv-primary mt-1">
             {budgetSummary.estimatedBudget ? `${budgetSummary.estimatedBudget} ${budgetSummary.currency}` : 'Non défini'}
@@ -118,7 +119,7 @@ export function TripBudgetView({ trip }: TripBudgetViewProps) {
         </GlassCard>
 
         {/* Taux de consommation */}
-        <GlassCard tone="neutral" className="p-4 rounded-[20px] border border-white/60 shadow-sm">
+        <GlassCard tone="neutral" className="p-4 rounded-lg border border-white/60 shadow-sm">
           <div className="text-xs text-lkv-secondary font-semibold">Taux de consommation</div>
           <div className="text-2xl font-extrabold text-lkv-primary mt-1">
             {budgetSummary.spentPercentage !== null ? `${budgetSummary.spentPercentage}%` : '—'}
@@ -139,7 +140,7 @@ export function TripBudgetView({ trip }: TripBudgetViewProps) {
       {/* Règlements de compte simplifiés & Balances */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         {/* Settlements (Qui doit à qui) */}
-        <GlassCard tone="neutral" className="p-5 rounded-[22px] border border-white/60 shadow-sm space-y-3">
+        <GlassCard tone="neutral" className="p-5 rounded-lg border border-white/60 shadow-sm space-y-3">
           <div className="flex items-center justify-between border-b border-black/5 pb-2">
             <h4 className="text-sm font-bold text-lkv-primary flex items-center gap-2">
               <TrendingUp size={16} className="text-lkv-secondary" />
@@ -175,7 +176,7 @@ export function TripBudgetView({ trip }: TripBudgetViewProps) {
         </GlassCard>
 
         {/* Balances individuelles */}
-        <GlassCard tone="neutral" className="p-5 rounded-[22px] border border-white/60 shadow-sm space-y-3">
+        <GlassCard tone="neutral" className="p-5 rounded-lg border border-white/60 shadow-sm space-y-3">
           <div className="flex items-center justify-between border-b border-black/5 pb-2">
             <h4 className="text-sm font-bold text-lkv-primary">Solde net par participant</h4>
             <span className="text-[11px] text-lkv-secondary">{budgetSummary.balances.length} membres</span>
@@ -212,7 +213,7 @@ export function TripBudgetView({ trip }: TripBudgetViewProps) {
 
       {/* Ventilation par Catégories */}
       {categoryEntries.length > 0 && (
-        <GlassCard tone="neutral" className="p-5 rounded-[22px] border border-white/60 shadow-sm space-y-3">
+        <GlassCard tone="neutral" className="p-5 rounded-lg border border-white/60 shadow-sm space-y-3">
           <h4 className="text-sm font-bold text-lkv-primary">Ventilation par catégorie</h4>
           <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
             {categoryEntries.map(([cat, amt]) => {
@@ -240,7 +241,7 @@ export function TripBudgetView({ trip }: TripBudgetViewProps) {
       <div className="space-y-3">
         <h4 className="text-base font-bold text-lkv-primary">Historique des dépenses</h4>
         {trip.expenses.length === 0 ? (
-          <GlassCard tone="neutral" className="p-6 rounded-[20px] text-center text-xs text-gray-500">
+          <GlassCard tone="neutral" className="p-6 rounded-lg text-center text-xs text-gray-500">
             Aucune dépense enregistrée sur cette expédition.
           </GlassCard>
         ) : (
@@ -249,7 +250,7 @@ export function TripBudgetView({ trip }: TripBudgetViewProps) {
               <GlassCard
                 key={exp.id}
                 tone="neutral"
-                className="p-3.5 rounded-[18px] border border-white/60 flex items-center justify-between gap-3 shadow-xs"
+                className="p-3.5 rounded-lg border border-white/60 flex items-center justify-between gap-3 shadow-xs"
               >
                 <div>
                   <div className="text-sm font-bold text-lkv-primary">{exp.title}</div>
@@ -286,7 +287,7 @@ export function TripBudgetView({ trip }: TripBudgetViewProps) {
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40 backdrop-blur-xs animate-in fade-in">
           <GlassCard
             tone="neutral"
-            className="w-full max-w-md p-6 rounded-[24px] bg-white border border-white/80 shadow-2xl space-y-4"
+            className="w-full max-w-md p-6 rounded-xl bg-white border border-white/80 shadow-2xl space-y-4"
           >
             <div className="flex items-center justify-between pb-3 border-b border-gray-100">
               <h4 className="text-base font-bold text-lkv-primary flex items-center gap-2">

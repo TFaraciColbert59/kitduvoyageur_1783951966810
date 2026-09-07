@@ -16,7 +16,7 @@ export default function CarnetHubHero({
   onCreateClick,
 }: CarnetHubHeroProps) {
   return (
-    <div className="glass bg-gradient-to-br from-[#17402C]/95 via-[#17402C]/85 to-[#33463C]/90 rounded-[28px] p-7 sm:p-8 text-[#FAF8F5] relative overflow-hidden flex flex-col md:flex-row justify-between items-start md:items-end gap-6 border border-white/20">
+    <div className="glass bg-gradient-to-br from-[#17402C]/95 via-[#17402C]/85 to-[#33463C]/90 rounded-card p-7 sm:p-8 text-[#FAF8F5] relative overflow-hidden flex flex-col md:flex-row justify-between items-start md:items-end gap-6 border border-white/20">
       {/* Background Glow */}
       <div className="absolute top-0 right-0 w-[35rem] h-[35rem] bg-white opacity-5 blur-[90px] rounded-full pointer-events-none" />
 

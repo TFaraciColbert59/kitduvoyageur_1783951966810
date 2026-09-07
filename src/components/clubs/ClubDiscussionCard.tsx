@@ -1,4 +1,5 @@
 'use client';
+import { lkvAlert } from '@/components/ui/dialogs';
 
 import React, { useState, useRef, useEffect, useMemo } from 'react';
 import Link from 'next/link';
@@ -77,7 +78,7 @@ export default function ClubDiscussionCard({
     const msg = newMessage.trim();
     if (!msg && !mediaUrl && !locationData && !gpxAttachment) return;
     if (!clubId || !user) {
-      alert('Veuillez vous connecter pour participer aux discussions.');
+      lkvAlert('Veuillez vous connecter pour participer aux discussions.');
       return;
     }
 
@@ -139,7 +140,7 @@ export default function ClubDiscussionCard({
     if (!file || !clubId || !user) return;
 
     if (file.size > 10 * 1024 * 1024) {
-      alert('Le fichier est trop volumineux (max 10 Mo)');
+      lkvAlert('Le fichier est trop volumineux (max 10 Mo)');
       return;
     }
 
@@ -168,7 +169,7 @@ export default function ClubDiscussionCard({
       }
     } catch (err: any) {
       console.error('Upload error:', err);
-      alert('Erreur d\'upload : ' + (err?.message || 'inconnue'));
+      lkvAlert('Erreur d\'upload : ' + (err?.message || 'inconnue'));
     } finally {
       setUploading(false);
       if (fileInputRef.current) fileInputRef.current.value = '';
@@ -177,7 +178,7 @@ export default function ClubDiscussionCard({
 
   const handleShareLocation = async () => {
     if (typeof window === 'undefined' || !navigator?.geolocation) {
-      alert('La géolocalisation n\'est pas disponible');
+      lkvAlert('La géolocalisation n\'est pas disponible');
       return;
     }
 
@@ -195,7 +196,7 @@ export default function ClubDiscussionCard({
       },
       (err) => {
         console.warn('Geolocation error:', err?.message || err);
-        alert('Impossible d\'obtenir votre position. Vérifiez les permissions de votre navigateur.');
+        lkvAlert('Impossible d\'obtenir votre position. Vérifiez les permissions de votre navigateur.');
         setLocating(false);
       },
       { enableHighAccuracy: true, timeout: 10000 }
@@ -204,7 +205,7 @@ export default function ClubDiscussionCard({
 
   const handleToggleLike = async (msg: ClubMessage) => {
     if (!user) {
-      alert('Connectez-vous pour aimer ce message');
+      lkvAlert('Connectez-vous pour aimer ce message');
       return;
     }
 

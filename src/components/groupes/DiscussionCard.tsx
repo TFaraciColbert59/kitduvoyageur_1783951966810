@@ -1,3 +1,4 @@
+import { lkvAlert } from '@/components/ui/dialogs';
 import React, { useState, useRef, useEffect } from 'react';
 import Link from 'next/link';
 import { createClient } from '@/lib/supabase/client';
@@ -79,7 +80,7 @@ export default function DiscussionCard({ discussions, groupId, onRefresh, user }
     
     if (error) {
       console.error(error);
-      alert('Erreur: ' + error.message);
+      lkvAlert('Erreur: ' + error.message);
     } else {
       setNewMessage('');
       setReplyingTo(null);
@@ -101,7 +102,7 @@ export default function DiscussionCard({ discussions, groupId, onRefresh, user }
     if (!file || !groupId || !user) return;
 
     if (file.size > 10 * 1024 * 1024) {
-      alert('Le fichier est trop volumineux (max 10 Mo)');
+      lkvAlert('Le fichier est trop volumineux (max 10 Mo)');
       return;
     }
 
@@ -140,7 +141,7 @@ export default function DiscussionCard({ discussions, groupId, onRefresh, user }
       }
     } catch (err: any) {
       console.error('Upload error:', err);
-      alert('Erreur d\'upload : ' + (err.message || 'inconnue'));
+      lkvAlert('Erreur d\'upload : ' + (err.message || 'inconnue'));
     }
 
     setUploading(false);
@@ -149,7 +150,7 @@ export default function DiscussionCard({ discussions, groupId, onRefresh, user }
 
   const handleShareLocation = async () => {
     if (!navigator.geolocation) {
-      alert('La géolocalisation n\'est pas supportée par votre navigateur');
+      lkvAlert('La géolocalisation n\'est pas supportée par votre navigateur');
       return;
     }
 
@@ -173,7 +174,7 @@ export default function DiscussionCard({ discussions, groupId, onRefresh, user }
         
         if (error) {
           console.error(error);
-          alert('Erreur: ' + error.message);
+          lkvAlert('Erreur: ' + error.message);
         } else {
           if (onRefresh) onRefresh();
           triggerMessageReward(locationMsg);
@@ -182,7 +183,7 @@ export default function DiscussionCard({ discussions, groupId, onRefresh, user }
       },
       (err) => {
         console.warn('Geolocation error:', err?.message || `Code ${err?.code}` || err);
-        alert('Impossible d\'obtenir votre position. Vérifiez les permissions de votre navigateur.');
+        lkvAlert('Impossible d\'obtenir votre position. Vérifiez les permissions de votre navigateur.');
         setLocating(false);
       },
       { enableHighAccuracy: true, timeout: 10000 }

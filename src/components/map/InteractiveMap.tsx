@@ -961,7 +961,7 @@ export default function InteractiveMap() {
             className="absolute left-1/2 -translate-x-1/2 z-[500] w-full max-w-sm px-4 pointer-events-auto"
             style={{ bottom: 'calc(var(--bottom-tab-base-height, 68px) + 12px)' }}
           >
-            <div className="glass rounded-[24px] p-4.5 relative shadow-2xl border border-white/80 backdrop-blur-xl">
+            <div className="glass rounded-xl p-4.5 relative shadow-2xl border border-white/80 backdrop-blur-xl">
               <button 
                 onClick={() => setSelectedTrailId(null)}
                 className="absolute top-4 right-4 glass-circle-btn !w-6.5 !h-6.5 text-[11px]"
@@ -1025,7 +1025,7 @@ export default function InteractiveMap() {
             className="absolute left-1/2 -translate-x-1/2 z-[500] w-full max-w-sm px-4 pointer-events-auto"
             style={{ bottom: 'calc(var(--bottom-tab-base-height, 68px) + 12px)' }}
           >
-            <div className="glass rounded-[24px] p-4.5 relative shadow-2xl border border-white/80 backdrop-blur-xl">
+            <div className="glass rounded-xl p-4.5 relative shadow-2xl border border-white/80 backdrop-blur-xl">
               <button 
                 onClick={() => setSelectedPoiId(null)}
                 className="absolute top-4 right-4 glass-circle-btn !w-6.5 !h-6.5 text-[11px]"

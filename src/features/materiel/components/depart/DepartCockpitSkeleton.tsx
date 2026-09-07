@@ -29,7 +29,7 @@ export function DepartCockpitSkeleton() {
       {/* Colonne 2 : Skeleton Flux Central (Matériel & Poids) */}
       <div className="flex-1 min-w-0 h-full max-h-full flex flex-col gap-4 overflow-hidden">
         {/* Accordéon Poids */}
-        <div className="glass rounded-[28px] p-4 space-y-3 border border-white/80">
+        <div className="glass rounded-card p-4 space-y-3 border border-white/80">
           <div className="flex items-center justify-between">
             <Skeleton className="h-4 w-48" />
             <Skeleton className="h-4 w-16" />
@@ -42,15 +42,15 @@ export function DepartCockpitSkeleton() {
         </div>
 
         {/* Grille Cartes */}
-        <div className="glass rounded-[28px] p-5 flex-1 space-y-4 border border-white/80 overflow-hidden">
+        <div className="glass rounded-card p-5 flex-1 space-y-4 border border-white/80 overflow-hidden">
           <div className="flex items-center justify-between pb-3 border-b border-black/5">
             <Skeleton className="h-6 w-56" />
             <Skeleton className="h-8 w-28 rounded-xl" />
           </div>
           <div className="grid grid-cols-2 2xl:grid-cols-3 gap-4">
-            <Skeleton className="h-44 rounded-[20px]" />
-            <Skeleton className="h-44 rounded-[20px]" />
-            <Skeleton className="h-44 rounded-[20px]" />
+            <Skeleton className="h-44 rounded-lg" />
+            <Skeleton className="h-44 rounded-lg" />
+            <Skeleton className="h-44 rounded-lg" />
           </div>
         </div>
       </div>

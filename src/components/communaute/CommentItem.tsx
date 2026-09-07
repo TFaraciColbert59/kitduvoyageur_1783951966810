@@ -1,4 +1,5 @@
 'use client';
+import { lkvConfirm } from '@/components/ui/dialogs';
 
 import React, { useState } from 'react';
 import Link from 'next/link';
@@ -96,7 +97,7 @@ export default function CommentItem({
 
   // Handle Delete Comment
   const handleDeleteComment = async () => {
-    if (!window.confirm('Voulez-vous vraiment supprimer ce commentaire ?')) return;
+    if (!lkvConfirm('Voulez-vous vraiment supprimer ce commentaire ?')) return;
     try {
       const supabase = createClient();
       const { error } = await supabase.from(tableName).delete().eq('id', comment.id);

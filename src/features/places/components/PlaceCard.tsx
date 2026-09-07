@@ -76,7 +76,7 @@ export function PlaceCard({ place, onAddToTrip }: PlaceCardProps) {
           tone="neutral"
           blur="md"
           interactive
-          className="h-full border border-white/60 hover:border-[#5B7F55]/40 transition-all duration-300 hover:shadow-lg rounded-[24px] p-5 flex flex-col justify-between"
+          className="h-full border border-white/60 hover:border-[#5B7F55]/40 transition-all duration-300 hover:shadow-lg rounded-xl p-5 flex flex-col justify-between"
         >
           <div>
             {/* Header badges */}

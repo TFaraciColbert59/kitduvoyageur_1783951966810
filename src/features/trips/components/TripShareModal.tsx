@@ -1,4 +1,5 @@
 'use client';
+import { lkvAlert } from '@/components/ui/dialogs';
 
 import React, { useState, useTransition } from 'react';
 import Link from 'next/link';
@@ -50,7 +51,7 @@ export function TripShareModal({ trip, isOpen, onClose }: TripShareModalProps) {
     startTransition(async () => {
       const res = await updateTripVisibilityAction(trip.id, newVis, trip.slug);
       if (!res.success) {
-        alert(res.error || 'Impossible de modifier la visibilité');
+        lkvAlert(res.error || 'Impossible de modifier la visibilité');
         setVisibility(trip.visibility);
       }
     });
@@ -62,7 +63,7 @@ export function TripShareModal({ trip, isOpen, onClose }: TripShareModalProps) {
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40 backdrop-blur-xs animate-in fade-in">
       <GlassCard
         tone="neutral"
-        className="w-full max-w-lg p-6 rounded-[24px] bg-white border border-white/80 shadow-2xl space-y-5"
+        className="w-full max-w-lg p-6 rounded-xl bg-white border border-white/80 shadow-2xl space-y-5"
       >
         {/* En-tête */}
         <div className="flex items-center justify-between pb-3 border-b border-gray-100">

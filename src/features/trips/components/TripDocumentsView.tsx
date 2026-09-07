@@ -1,4 +1,5 @@
 'use client';
+import { lkvAlert, lkvConfirm } from '@/components/ui/dialogs';
 
 import React, { useState, useTransition } from 'react';
 import {
@@ -40,11 +41,11 @@ export function TripDocumentsView({ trip }: TripDocumentsViewProps) {
   const canEdit = trip.permissions.canEdit;
 
   const handleDelete = (docId: string, title: string) => {
-    if (confirm(`Supprimer le document "${title}" ?`)) {
+    if (lkvConfirm(`Supprimer le document "${title}" ?`)) {
       startTransition(async () => {
         const res = await deleteTripDocumentAction(trip.id, docId, trip.slug);
         if (!res.success) {
-          alert(res.error || 'Impossible de supprimer ce document');
+          lkvAlert(res.error || 'Impossible de supprimer ce document');
         }
       });
     }
@@ -96,7 +97,7 @@ export function TripDocumentsView({ trip }: TripDocumentsViewProps) {
       </div>
 
       {/* Garantie RGPD */}
-      <GlassCard tone="neutral" className="p-4 rounded-[20px] border border-white/60 text-xs text-gray-700">
+      <GlassCard tone="neutral" className="p-4 rounded-lg border border-white/60 text-xs text-gray-700">
         <div className="flex items-start gap-3">
           <ShieldCheck size={18} className="text-lkv-secondary shrink-0 mt-0.5" />
           <div className="space-y-1">
@@ -110,7 +111,7 @@ export function TripDocumentsView({ trip }: TripDocumentsViewProps) {
 
       {/* Liste des documents */}
       {trip.documents.length === 0 ? (
-        <GlassCard tone="neutral" className="p-8 rounded-[24px] text-center space-y-2 border border-white/60">
+        <GlassCard tone="neutral" className="p-8 rounded-xl text-center space-y-2 border border-white/60">
           <FileCheck size={32} className="text-lkv-secondary mx-auto" />
           <div className="text-sm font-semibold text-lkv-primary">Aucun document attaché</div>
           <p className="text-xs text-gray-500 max-w-sm mx-auto">
@@ -126,7 +127,7 @@ export function TripDocumentsView({ trip }: TripDocumentsViewProps) {
               <GlassCard
                 key={doc.id}
                 tone="neutral"
-                className="p-4 rounded-[20px] border border-white/60 flex flex-col justify-between gap-4 shadow-sm"
+                className="p-4 rounded-lg border border-white/60 flex flex-col justify-between gap-4 shadow-sm"
               >
                 <div className="space-y-2">
                   <div className="flex items-start justify-between gap-2">
@@ -202,7 +203,7 @@ export function TripDocumentsView({ trip }: TripDocumentsViewProps) {
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40 backdrop-blur-xs animate-in fade-in">
           <GlassCard
             tone="neutral"
-            className="w-full max-w-md p-6 rounded-[24px] bg-white border border-white/80 shadow-2xl space-y-4"
+            className="w-full max-w-md p-6 rounded-xl bg-white border border-white/80 shadow-2xl space-y-4"
           >
             <div className="flex items-center justify-between pb-3 border-b border-gray-100">
               <h4 className="text-base font-bold text-lkv-primary flex items-center gap-2">

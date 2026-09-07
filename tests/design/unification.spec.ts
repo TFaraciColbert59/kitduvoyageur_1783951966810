@@ -77,7 +77,7 @@ function literalRadiusOrShadow(file: string): string[] {
 function nativeDialog(file: string): string[] {
   const src = readFileSync(file, 'utf8');
   const hits: string[] = [];
-  const re = /(?:window\.)?(?:alert|confirm|prompt)\s*\(/g;
+  const re = /(?:\bwindow\.(?:alert|confirm|prompt)|(?<!\.)\b(?:alert|confirm|prompt))\s*\(/g;
   let m: RegExpExecArray | null;
   while ((m = re.exec(src))) {
     // Ignore les définitions de fonctions (ex: `function confirm(...)`).

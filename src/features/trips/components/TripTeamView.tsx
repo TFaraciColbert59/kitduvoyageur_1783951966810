@@ -1,4 +1,5 @@
 'use client';
+import { lkvAlert, lkvConfirm } from '@/components/ui/dialogs';
 
 import React, { useState, useTransition } from 'react';
 import { Users, UserPlus, Trash2, ShieldCheck, Mail, AlertCircle, CheckCircle2, X } from 'lucide-react';
@@ -24,17 +25,17 @@ export function TripTeamView({ trip }: TripTeamViewProps) {
     startTransition(async () => {
       const res = await updateRoleAction(trip.id, collaboratorId, newRole, trip.slug);
       if (!res.success) {
-        alert(res.error || 'Impossible de modifier le rôle');
+        lkvAlert(res.error || 'Impossible de modifier le rôle');
       }
     });
   };
 
   const handleRemove = (collaboratorId: string, name: string) => {
-    if (confirm(`Confirmez-vous le retrait de ${name} de cette expédition ?`)) {
+    if (lkvConfirm(`Confirmez-vous le retrait de ${name} de cette expédition ?`)) {
       startTransition(async () => {
         const res = await removeCollaboratorAction(trip.id, collaboratorId, trip.slug);
         if (!res.success) {
-          alert(res.error || 'Impossible de retirer ce membre');
+          lkvAlert(res.error || 'Impossible de retirer ce membre');
         }
       });
     }
@@ -91,7 +92,7 @@ export function TripTeamView({ trip }: TripTeamViewProps) {
       </div>
 
       {/* Explication des rôles */}
-      <GlassCard tone="neutral" className="p-4 rounded-[20px] border border-white/60 text-xs text-gray-700">
+      <GlassCard tone="neutral" className="p-4 rounded-lg border border-white/60 text-xs text-gray-700">
         <div className="flex items-start gap-3">
           <ShieldCheck size={18} className="text-lkv-secondary shrink-0 mt-0.5" />
           <div className="space-y-1">
@@ -127,7 +128,7 @@ export function TripTeamView({ trip }: TripTeamViewProps) {
             <GlassCard
               key={collab.id}
               tone="neutral"
-              className="p-4 rounded-[20px] border border-white/60 flex flex-col justify-between gap-4 shadow-sm"
+              className="p-4 rounded-lg border border-white/60 flex flex-col justify-between gap-4 shadow-sm"
             >
               <div className="flex items-start justify-between gap-3">
                 <div className="flex items-center gap-3">
@@ -181,7 +182,7 @@ export function TripTeamView({ trip }: TripTeamViewProps) {
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40 backdrop-blur-xs animate-in fade-in">
           <GlassCard
             tone="neutral"
-            className="w-full max-w-md p-6 rounded-[24px] bg-white border border-white/80 shadow-2xl space-y-4"
+            className="w-full max-w-md p-6 rounded-xl bg-white border border-white/80 shadow-2xl space-y-4"
           >
             <div className="flex items-center justify-between pb-3 border-b border-gray-100">
               <h4 className="text-base font-bold text-lkv-primary flex items-center gap-2">

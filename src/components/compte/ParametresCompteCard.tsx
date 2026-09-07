@@ -1,3 +1,4 @@
+import { lkvAlert } from '@/components/ui/dialogs';
 // src/components/compte/ParametresCompteCard.tsx
 'use client';
 
@@ -154,7 +155,7 @@ export default function ParametresCompteCard({ profile, onSave }: ParametresComp
     if (!file) return;
 
     if (file.size > 5 * 1024 * 1024) {
-      alert('La taille du fichier ne doit pas dépasser 5 Mo.');
+      lkvAlert('La taille du fichier ne doit pas dépasser 5 Mo.');
       return;
     }
 

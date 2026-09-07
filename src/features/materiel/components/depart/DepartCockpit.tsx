@@ -38,7 +38,7 @@ const DepartMap = dynamic(
   {
     ssr: false,
     loading: () => (
-      <div className="glass rounded-[28px] overflow-hidden">
+      <div className="glass rounded-card overflow-hidden">
         <div className="px-4 py-2.5 border-b border-white/20">
           <Skeleton className="h-4 w-40" />
         </div>
@@ -276,7 +276,7 @@ export function DepartCockpit({
 
           {/* 1.2 Bandeau Météo Synthétique avec Défilement Horizontal (Image 2) */}
           {weather && weather.days.length > 0 && (
-            <div className="glass rounded-[24px] p-2.5 sm:p-3.5 border border-white/80 dark:border-white/10 shadow-xs flex items-center justify-between gap-2 overflow-hidden">
+            <div className="glass rounded-xl p-2.5 sm:p-3.5 border border-white/80 dark:border-white/10 shadow-xs flex items-center justify-between gap-2 overflow-hidden">
               <div className="flex items-center gap-2 shrink-0">
                 <div className="w-8 h-8 rounded-2xl bg-[#2D6B4A]/10 border border-[#2D6B4A]/20 flex items-center justify-center text-[#2D6B4A] shadow-2xs">
                   <CloudSun size={16} />
@@ -323,7 +323,7 @@ export function DepartCockpit({
           </div>
 
           {/* 1.4 Vitrine Visuelle des Équipements Indispensables */}
-          <div className="glass rounded-[28px] p-4 sm:p-5 space-y-3.5 border border-white/80 dark:border-white/10 shadow-sm backdrop-blur-md">
+          <div className="glass rounded-card p-4 sm:p-5 space-y-3.5 border border-white/80 dark:border-white/10 shadow-sm backdrop-blur-md">
             <div className="flex items-center justify-between gap-3 border-b border-black/5 pb-3">
               <div className="flex items-center gap-2.5">
                 <div className="w-9 h-9 rounded-2xl bg-[#17402C] text-white flex items-center justify-center shadow-xs shrink-0">

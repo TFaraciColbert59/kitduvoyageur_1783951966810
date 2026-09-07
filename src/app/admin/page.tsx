@@ -1,4 +1,5 @@
 'use client';
+import { lkvPrompt } from '@/components/ui/dialogs';
 
 import React, { useState, useEffect, useMemo } from 'react';
 import Icon from '@/components/ui/AppIcon';
@@ -1045,10 +1046,10 @@ function RewardsSection() {
     let reason = null;
 
     if (approve) {
-      reference = prompt('Entrez la référence de transaction bancaire (ex: TXN123456) :');
+      reference = lkvPrompt('Entrez la référence de transaction bancaire (ex: TXN123456) :');
       if (reference === null) return;
     } else {
-      reason = prompt('Entrez le motif du rejet :');
+      reason = lkvPrompt('Entrez le motif du rejet :');
       if (reason === null) return;
     }
 

@@ -125,7 +125,7 @@ export function TripCompletionModal({ trip, isOpen, onClose }: TripCompletionMod
       aria-labelledby="completion-modal-title"
       className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40 backdrop-blur-md animate-fadeIn"
     >
-      <div className="bg-[#FAF8F5] border border-white/80 rounded-[28px] max-w-2xl w-full p-6 sm:p-8 max-h-[90vh] overflow-y-auto shadow-2xl space-y-6">
+      <div className="bg-[#FAF8F5] border border-white/80 rounded-card max-w-2xl w-full p-6 sm:p-8 max-h-[90vh] overflow-y-auto shadow-2xl space-y-6">
         {/* En-tête modal */}
         <div className="flex items-center justify-between border-b border-black/5 pb-4">
           <div className="flex items-center gap-3">
@@ -166,25 +166,25 @@ export function TripCompletionModal({ trip, isOpen, onClose }: TripCompletionMod
 
         {/* Métriques d'aventure */}
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-          <GlassCard tone="neutral" className="p-3.5 rounded-[18px] border border-white/60 text-center">
+          <GlassCard tone="neutral" className="p-3.5 rounded-lg border border-white/60 text-center">
             <Navigation size={18} className="mx-auto text-lkv-primary mb-1" />
             <div className="text-lg font-bold text-lkv-primary">{metrics.totalKm} km</div>
             <div className="text-[11px] text-lkv-secondary">Distance totale</div>
           </GlassCard>
 
-          <GlassCard tone="neutral" className="p-3.5 rounded-[18px] border border-white/60 text-center">
+          <GlassCard tone="neutral" className="p-3.5 rounded-lg border border-white/60 text-center">
             <Mountain size={18} className="mx-auto text-lkv-primary mb-1" />
             <div className="text-lg font-bold text-lkv-primary">+{metrics.totalElevationGainM} m</div>
             <div className="text-[11px] text-lkv-secondary">Dénivelé positif</div>
           </GlassCard>
 
-          <GlassCard tone="neutral" className="p-3.5 rounded-[18px] border border-white/60 text-center">
+          <GlassCard tone="neutral" className="p-3.5 rounded-lg border border-white/60 text-center">
             <Package size={18} className="mx-auto text-lkv-primary mb-1" />
             <div className="text-lg font-bold text-lkv-primary">{metrics.packedWeightKg} kg</div>
             <div className="text-[11px] text-lkv-secondary">{metrics.packedGearCount} items emportés</div>
           </GlassCard>
 
-          <GlassCard tone="neutral" className="p-3.5 rounded-[18px] border border-white/60 text-center">
+          <GlassCard tone="neutral" className="p-3.5 rounded-lg border border-white/60 text-center">
             <Award size={18} className="mx-auto text-lkv-primary mb-1" />
             <div className="text-lg font-bold text-lkv-primary">{metrics.durationDays} jours</div>
             <div className="text-[11px] text-lkv-secondary">{metrics.nbNuits} nuits vécues</div>

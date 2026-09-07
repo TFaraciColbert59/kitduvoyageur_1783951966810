@@ -140,6 +140,7 @@ module.exports = {
         md: '14px',
         lg: '20px',
         xl: '26px',
+        card: '28px',
         '2xl': '32px',
         full: '9999px',
       },

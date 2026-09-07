@@ -1,4 +1,5 @@
 'use client';
+import { lkvPrompt } from '@/components/ui/dialogs';
 
 import React, { useState } from 'react';
 import {
@@ -109,7 +110,7 @@ export const ProposalCard: React.FC<ProposalCardProps> = ({
   // Geste 3 : Dictée / Édition rapide
   const handleVoiceEdit = () => {
     haptic('light');
-    const prompt = window.prompt(
+    const prompt = lkvPrompt(
       'Ajustez ce composant par commande vocale ou texte :',
       ''
     );

@@ -42,7 +42,7 @@ export function TripOverviewTab({ trip, stats, onTabChange }: TripOverviewTabPro
     <div className="space-y-6">
       {/* 1. Métriques Clés */}
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-4">
-        <GlassCard tone="sage" blur="sm" className="p-4 rounded-[20px] border border-white/60">
+        <GlassCard tone="sage" blur="sm" className="p-4 rounded-lg border border-white/60">
           <div className="flex items-center gap-2 text-lkv-secondary text-xs font-medium uppercase tracking-wider mb-1">
             <Calendar size={14} />
             Durée
@@ -55,7 +55,7 @@ export function TripOverviewTab({ trip, stats, onTabChange }: TripOverviewTabPro
           </div>
         </GlassCard>
 
-        <GlassCard tone="neutral" blur="sm" className="p-4 rounded-[20px] border border-white/60">
+        <GlassCard tone="neutral" blur="sm" className="p-4 rounded-lg border border-white/60">
           <div className="flex items-center gap-2 text-lkv-secondary text-xs font-medium uppercase tracking-wider mb-1">
             <Navigation size={14} />
             Distance
@@ -68,7 +68,7 @@ export function TripOverviewTab({ trip, stats, onTabChange }: TripOverviewTabPro
           </div>
         </GlassCard>
 
-        <GlassCard tone="neutral" blur="sm" className="p-4 rounded-[20px] border border-white/60">
+        <GlassCard tone="neutral" blur="sm" className="p-4 rounded-lg border border-white/60">
           <div className="flex items-center gap-2 text-lkv-secondary text-xs font-medium uppercase tracking-wider mb-1">
             <Package size={14} />
             Sac à dos
@@ -81,7 +81,7 @@ export function TripOverviewTab({ trip, stats, onTabChange }: TripOverviewTabPro
           </div>
         </GlassCard>
 
-        <GlassCard tone="neutral" blur="sm" className="p-4 rounded-[20px] border border-white/60">
+        <GlassCard tone="neutral" blur="sm" className="p-4 rounded-lg border border-white/60">
           <div className="flex items-center gap-2 text-lkv-secondary text-xs font-medium uppercase tracking-wider mb-1">
             <CreditCard size={14} />
             Budget
@@ -97,7 +97,7 @@ export function TripOverviewTab({ trip, stats, onTabChange }: TripOverviewTabPro
 
       {/* 2. Barre de Préparation Matériel */}
       {kit.total > 0 && (
-        <GlassCard tone="sage" blur="md" className="p-5 rounded-[24px] border border-white/70">
+        <GlassCard tone="sage" blur="md" className="p-5 rounded-xl border border-white/70">
           <div className="flex items-center justify-between mb-2">
             <span className="text-sm font-semibold text-lkv-primary">
               Préparation de l’équipement
@@ -118,7 +118,7 @@ export function TripOverviewTab({ trip, stats, onTabChange }: TripOverviewTabPro
       {/* 3. Aperçu Itinéraire & Participants */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         {/* Aperçu Étapes */}
-        <GlassCard tone="neutral" blur="md" className="p-6 rounded-[28px] border border-white/60">
+        <GlassCard tone="neutral" blur="md" className="p-6 rounded-card border border-white/60">
           <div className="flex items-center justify-between mb-4">
             <h2 className="text-lg font-bold text-lkv-primary flex items-center gap-2">
               <Navigation size={18} className="text-lkv-secondary" />
@@ -164,7 +164,7 @@ export function TripOverviewTab({ trip, stats, onTabChange }: TripOverviewTabPro
         </GlassCard>
 
         {/* Aperçu Équipe */}
-        <GlassCard tone="neutral" blur="md" className="p-6 rounded-[28px] border border-white/60">
+        <GlassCard tone="neutral" blur="md" className="p-6 rounded-card border border-white/60">
           <div className="flex items-center justify-between mb-4">
             <h2 className="text-lg font-bold text-lkv-primary flex items-center gap-2">
               <Users size={18} className="text-lkv-secondary" />
@@ -184,7 +184,7 @@ export function TripOverviewTab({ trip, stats, onTabChange }: TripOverviewTabPro
             {trip.collaborators.map(collab => (
               <div
                 key={collab.id}
-                className="flex items-center justify-between p-3 rounded-[16px] bg-white/40 border border-white/60"
+                className="flex items-center justify-between p-3 rounded-md bg-white/40 border border-white/60"
               >
                 <div className="flex items-center gap-3">
                   <div className="w-9 h-9 rounded-full bg-lkv-primary text-white flex items-center justify-center font-bold text-xs uppercase shadow-sm">
@@ -209,7 +209,7 @@ export function TripOverviewTab({ trip, stats, onTabChange }: TripOverviewTabPro
       </div>
 
       {/* 4. Bloc Conseils de préparation */}
-      <GlassCard tone="neutral" blur="sm" className="p-6 rounded-[28px] border border-white/60 bg-[#FAF8F5]/80">
+      <GlassCard tone="neutral" blur="sm" className="p-6 rounded-card border border-white/60 bg-[#FAF8F5]/80">
         <div className="flex items-start gap-3">
           <div className="p-2 rounded-xl bg-lkv-secondary/15 text-lkv-primary">
             <Compass size={22} />

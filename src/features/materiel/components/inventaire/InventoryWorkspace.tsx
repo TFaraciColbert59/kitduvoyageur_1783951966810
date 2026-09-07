@@ -1,4 +1,5 @@
 'use client';
+import { lkvConfirm } from '@/components/ui/dialogs';
 import { useMemo, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { GlassCard } from '@/components/ui/GlassCard';
@@ -104,7 +105,7 @@ export function InventoryWorkspace({ items }: { items: InventoryItem[] }) {
   };
 
   const handleDelete = async (item: InventoryItem) => {
-    if (!confirm(`Supprimer « ${item.name} » ?`)) return;
+    if (!lkvConfirm(`Supprimer « ${item.name} » ?`)) return;
     try {
       const res = await fetch(`/api/materiel/items/${item.id}`, { method: 'DELETE' });
       if (!res.ok) throw new Error('Erreur');
@@ -238,7 +239,7 @@ export function InventoryWorkspace({ items }: { items: InventoryItem[] }) {
 
       {/* W-I-6 Scan */}
       <input ref={fileRef} type="file" accept="image/*" className="hidden" onChange={(e) => { const f = e.target.files?.[0]; if (f) handleScan(f); e.target.value = ''; }} aria-label="Scanner un article" />
-      <button type="button" onClick={() => fileRef.current?.click()} className="fixed bottom-24 right-5 z-30 h-14 w-14 rounded-full glass interactive flex items-center justify-center text-[color:var(--label)] shadow-[var(--elevation-4)]" aria-label="Scanner un article (OCR)">📷</button>
+      <button type="button" onClick={() => fileRef.current?.click()} className="fixed bottom-24 right-5 z-30 h-14 w-14 rounded-full glass interactive flex items-center justify-center text-[color:var(--label)] shadow-elevation-4" aria-label="Scanner un article (OCR)">📷</button>
       {scanning && <p className="text-sm text-[color:var(--label-secondary)]">Analyse…</p>}
       {scanError && <p className="text-sm text-danger">{scanError}</p>}
       {scanResult && <p className="text-sm text-[color:var(--label-secondary)]">Ajouté : {scanResult}</p>}

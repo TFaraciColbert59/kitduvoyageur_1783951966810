@@ -153,7 +153,7 @@ export function TripLiveCockpitView({
   return (
     <div
       className={`space-y-6 transition-colors duration-200 ${
-        isSunMode ? 'bg-black text-white p-4 sm:p-6 rounded-[32px]' : ''
+        isSunMode ? 'bg-black text-white p-4 sm:p-6 rounded-2xl' : ''
       }`}
     >
       {/* 1. Barre de statut Cockpit & Mode Plein Soleil */}
@@ -191,7 +191,7 @@ export function TripLiveCockpitView({
       {/* 2. Sélecteur de Jour & Progression de l'étape */}
       <GlassCard
         tone={isSunMode ? 'neutral' : 'sage'}
-        className={`p-4 sm:p-6 rounded-[28px] border transition-all ${
+        className={`p-4 sm:p-6 rounded-card border transition-all ${
           isSunMode ? 'bg-[#111] border-white/20 text-white' : 'border-white/70'
         }`}
       >
@@ -394,7 +394,7 @@ export function TripLiveCockpitView({
         {/* Saisie rapide de dépense en 2 clics */}
         <GlassCard
           tone="neutral"
-          className={`p-5 rounded-[24px] border ${
+          className={`p-5 rounded-xl border ${
             isSunMode ? 'bg-[#181818] border-white/20 text-white' : 'border-white/60'
           }`}
         >
@@ -526,7 +526,7 @@ export function TripLiveCockpitView({
         {/* Urgence & Secours Montagne Hors-Ligne */}
         <GlassCard
           tone="neutral"
-          className={`p-5 rounded-[24px] border ${
+          className={`p-5 rounded-xl border ${
             isSunMode ? 'bg-[#181818] border-white/20 text-white' : 'border-white/60'
           }`}
         >

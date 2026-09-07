@@ -65,7 +65,7 @@ export function DepartWeightBreakdown({
     : `Sac optimisé : poids de base sous contrôle.`;
 
   return (
-    <div className="glass rounded-[28px] p-4 sm:p-5 space-y-4 border border-white/80 dark:border-white/10 shadow-sm backdrop-blur-md">
+    <div className="glass rounded-card p-4 sm:p-5 space-y-4 border border-white/80 dark:border-white/10 shadow-sm backdrop-blur-md">
       {/* ════ HEADER : TITRE & POIDS TOTAL ════ */}
       <button
         type="button"

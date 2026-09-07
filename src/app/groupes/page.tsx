@@ -1,4 +1,5 @@
 'use client';
+import { lkvConfirm, lkvPrompt } from '@/components/ui/dialogs';
 
 import React, { useState, useEffect, useCallback, Suspense } from 'react';
 import Link from 'next/link';
@@ -217,7 +218,7 @@ function GroupesPageInner() {
 
   async function handleLeaveGroup(groupId: string) {
     if (!user) return;
-    if (!confirm('Quitter ce groupe ?')) return;
+    if (!lkvConfirm('Quitter ce groupe ?')) return;
     try {
       await supabase.from('group_members').delete().eq('group_id', groupId).eq('user_id', user.id);
       toast('Vous avez quitté le groupe', 'success');
@@ -226,7 +227,7 @@ function GroupesPageInner() {
   }
 
   async function handleDeleteGroup(groupId: string) {
-    if (!confirm('Supprimer définitivement ce groupe ? Cette action est irréversible.')) return;
+    if (!lkvConfirm('Supprimer définitivement ce groupe ? Cette action est irréversible.')) return;
     try {
       await supabase.from('travel_groups').delete().eq('id', groupId);
       toast('Groupe supprimé', 'success');
@@ -699,7 +700,7 @@ function GroupesPageInner() {
               router.push('/nouveau-groupe');
             }}
             onOpenJoinByCode={() => {
-              const code = window.prompt('Entrez le code d’invitation du groupe :');
+              const code = lkvPrompt('Entrez le code d’invitation du groupe :');
               if (code) {
                 setJoinCode(code);
                 handleJoinByCode(code);

@@ -1,4 +1,5 @@
 'use client';
+import { lkvAlert } from '@/components/ui/dialogs';
 
 import React, { useState, useMemo, useRef, useEffect, Suspense } from 'react';
 import Header from '@/components/Header';
@@ -120,7 +121,7 @@ function PublierPostContent() {
   // Functional Geolocation Detection
   const handleDetectLocation = () => {
     if (!navigator.geolocation) {
-      alert('La géolocalisation n\'est pas supportée par votre navigateur.');
+      lkvAlert('La géolocalisation n\'est pas supportée par votre navigateur.');
       return;
     }
     setIsDetectingLocation(true);
@@ -280,7 +281,7 @@ function PublierPostContent() {
         setToastMessage(draft ? 'Brouillon sauvegardé !' : 'Post publié avec succès ! 🎉');
         setTimeout(() => router.push('/communaute'), 1500);
       } catch (e) {
-        alert('Erreur lors de la publication : ' + (err.message || String(err)));
+        lkvAlert('Erreur lors de la publication : ' + (err.message || String(err)));
       }
     } finally {
       setIsSubmitting(false);

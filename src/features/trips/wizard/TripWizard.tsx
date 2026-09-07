@@ -208,7 +208,7 @@ export function TripWizard() {
         </div>
 
         {/* 3. Step Content Container */}
-        <div className="bg-white/90 backdrop-blur-md rounded-[24px] sm:rounded-[32px] p-5 sm:p-8 border border-white/60 shadow-[0_8px_32px_rgba(0,0,0,0.04)]">
+        <div className="bg-white/90 backdrop-blur-md rounded-xl sm:rounded-2xl p-5 sm:p-8 border border-white/60 shadow-xl">
           {renderCurrentStep()}
 
           {/* Desktop Navigation Controls */}

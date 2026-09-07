@@ -9,13 +9,13 @@ export default function TripKitLoading() {
         <div className="h-4 w-96 bg-stone-200 rounded mb-6" />
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
-          <div className="h-32 bg-stone-200/60 rounded-[24px]" />
-          <div className="h-32 bg-stone-200/60 rounded-[24px]" />
-          <div className="h-32 bg-stone-200/60 rounded-[24px]" />
+          <div className="h-32 bg-stone-200/60 rounded-xl" />
+          <div className="h-32 bg-stone-200/60 rounded-xl" />
+          <div className="h-32 bg-stone-200/60 rounded-xl" />
         </div>
 
-        <div className="h-64 bg-stone-200/60 rounded-[28px] mb-6" />
-        <div className="h-96 bg-stone-200/60 rounded-[28px]" />
+        <div className="h-64 bg-stone-200/60 rounded-card mb-6" />
+        <div className="h-96 bg-stone-200/60 rounded-card" />
       </div>
     </AppShell>
   );

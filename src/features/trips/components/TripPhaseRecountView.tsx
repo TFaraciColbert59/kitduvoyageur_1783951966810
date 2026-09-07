@@ -21,7 +21,7 @@ export function TripPhaseRecountView({ trip }: TripPhaseRecountViewProps) {
   return (
     <div className="space-y-6">
       {/* 1. Bannière d'accomplissement & Export */}
-      <GlassCard tone="sage" className="p-5 sm:p-6 rounded-[28px] border border-white/70">
+      <GlassCard tone="sage" className="p-5 sm:p-6 rounded-card border border-white/70">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
           <div className="flex items-start sm:items-center gap-3.5">
             <div className="w-12 h-12 rounded-2xl bg-lkv-primary text-white flex items-center justify-center shrink-0 shadow-md">

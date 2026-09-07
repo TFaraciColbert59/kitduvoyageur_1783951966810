@@ -1,4 +1,5 @@
 'use client';
+import { lkvConfirm } from '@/components/ui/dialogs';
 
 import React, { useState, useEffect, useCallback } from 'react';
 import Image from 'next/image';
@@ -215,7 +216,7 @@ export default function CarnetsTab({ profile }: CarnetsTabProps) {
 
   // ─── delete draft ─────────────────────────
   async function handleDeleteDraft(id: string) {
-    if (!confirm('Supprimer ce brouillon définitivement ?')) return;
+    if (!lkvConfirm('Supprimer ce brouillon définitivement ?')) return;
     await supabase.from('carnets').delete().eq('id', id);
     setDrafts(prev => prev.filter(d => d.id !== id));
   }

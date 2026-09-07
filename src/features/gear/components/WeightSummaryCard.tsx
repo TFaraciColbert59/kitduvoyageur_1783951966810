@@ -43,7 +43,7 @@ export const WeightSummaryCard: React.FC<WeightSummaryCardProps> = ({ breakdown 
   const wornPct = Math.round((wornWeightGrams / total) * 100);
 
   return (
-    <div className="p-6 rounded-3xl bg-gradient-to-br from-[#17402C] to-[#244E36] text-white shadow-xl shadow-[#17402C]/15 relative overflow-hidden space-y-4">
+    <div className="p-6 rounded-3xl bg-gradient-to-br from-[#17402C] to-[#244E36] text-white shadow-xl shadow-md/15 relative overflow-hidden space-y-4">
       {/* Top Header */}
       <div className="flex items-center justify-between gap-2">
         <div>

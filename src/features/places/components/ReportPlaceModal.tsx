@@ -64,7 +64,7 @@ export function ReportPlaceModal({
         <GlassCard
           tone="neutral"
           blur="lg"
-          className="border border-white/70 shadow-2xl rounded-[28px] overflow-hidden p-6 relative bg-white/95"
+          className="border border-white/70 shadow-2xl rounded-card overflow-hidden p-6 relative bg-white/95"
         >
           <button
             type="button"

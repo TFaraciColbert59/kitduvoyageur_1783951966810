@@ -81,7 +81,7 @@ export function AddPlaceToTripModal({
         <GlassCard
           tone="neutral"
           blur="lg"
-          className="border border-white/70 shadow-2xl rounded-[28px] overflow-hidden p-6 sm:p-7 relative bg-white/95"
+          className="border border-white/70 shadow-2xl rounded-card overflow-hidden p-6 sm:p-7 relative bg-white/95"
         >
           {/* Close button */}
           <button

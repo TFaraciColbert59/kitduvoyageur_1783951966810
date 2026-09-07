@@ -85,7 +85,7 @@ export const ParticipantsManager: React.FC = () => {
   return (
     <div className="space-y-6 pb-24 animate-in fade-in duration-300">
       {/* Group Telemetry Summary Banner */}
-      <div className="p-6 rounded-3xl bg-gradient-to-br from-[#17402C] to-[#2D5A40] text-white shadow-xl shadow-[#17402C]/10 relative overflow-hidden">
+      <div className="p-6 rounded-3xl bg-gradient-to-br from-[#17402C] to-[#2D5A40] text-white shadow-xl shadow-md/10 relative overflow-hidden">
         <div className="flex items-center justify-between gap-2 mb-2">
           <span className="text-[10px] font-mono uppercase tracking-[0.2em] text-[#A6C1A0]">
             MATRICE DE GROUPE & LOGISTIQUE
