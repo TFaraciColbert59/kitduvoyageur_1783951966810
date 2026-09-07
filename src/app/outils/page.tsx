@@ -171,7 +171,7 @@ const tools: Tool[] = [
   {
     slug: 'vaccins',
     nom: 'Recommandations vaccins',
-    description: 'Consultez les recommandations vaccinales par destination selon les données officielles.',
+    description: 'Repères vaccinaux par destination : à vérifier auprès de votre médecin traitant ou d’un centre de vaccinations internationales avant le départ.',
     icon: '💉',
     categorie: 'Préparation',
     offline: false,

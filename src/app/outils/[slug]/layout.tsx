@@ -100,7 +100,7 @@ const TOOL_META: Record<string, { title: string; description: string; schemaType
   },
   'vaccins': {
     title: 'Recommandations vaccins voyage — Le Kit du Voyageur',
-    description: 'Consultez les recommandations vaccinales par destination selon les données officielles. Guide santé.',
+    description: 'Repères vaccinaux par destination : à vérifier auprès de votre médecin traitant ou d’un centre de vaccinations internationales avant le départ. Guide santé.',
     schemaType: 'SoftwareApplication',
   },
   'langue': {

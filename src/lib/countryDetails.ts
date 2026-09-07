@@ -1436,7 +1436,7 @@ export function getCompleteCountryDetail(
     nom: name,
     nom_en: geoCountry?.name_en || custom.nom_en || undefined,
     slogan: custom.slogan || (contentCountry?.climat?.climat_general ? `climat ${contentCountry.climat.climat_general.split(',')[0].toLowerCase()}` : 'terre d\'aventure'),
-    subtitle: custom.subtitle || `Explorez ${name}, destination située en ${continent} (${subregion}). Capitale : ${capital}, fuseau : ${timezone}. Préparez votre voyage avec les données officielles vérifiées.`,
+    subtitle: custom.subtitle || `Explorez ${name}, destination située en ${continent} (${subregion}). Capitale : ${capital}, fuseau : ${timezone}. Repères pratiques non exhaustifs, à recouper avec les sources officielles et locales.`,
     subtitle_is_custom: !!custom.subtitle || !!contentCountry,
     region: subregion,
     subregion: geoCountry?.subregion || undefined,
