@@ -39,7 +39,7 @@ export function TripHero({ trip, onEditClick }: TripHeroProps) {
   };
 
   return (
-    <section className="relative w-full min-h-[340px] sm:min-h-[420px] rounded-[32px] overflow-hidden shadow-xl mb-6">
+    <section className="relative w-full min-h-[340px] sm:min-h-[420px] rounded-2xl overflow-hidden shadow-xl mb-6">
       {/* Background Image (D32 : fallback onError vers no_image si URL cassée) */}
       <AppImage
         src={imageUrl}
@@ -87,7 +87,7 @@ export function TripHero({ trip, onEditClick }: TripHeroProps) {
                 variant="primary"
                 size="sm"
                 onClick={onEditClick}
-                className="bg-lkv-secondary hover:bg-[#205238] text-white border-none shadow-md"
+                className="bg-lkv-secondary hover:bg-[var(--lkv-primary-hover)] text-white border-none shadow-md"
               >
                 <Edit3 size={15} className="mr-1.5" />
                 Modifier
@@ -99,8 +99,8 @@ export function TripHero({ trip, onEditClick }: TripHeroProps) {
         {/* Title and Destination Meta */}
         <div className="max-w-4xl space-y-3 mt-8">
           {trip.destination_name && (
-            <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-white/15 backdrop-blur-md border border-white/20 text-xs sm:text-sm font-medium text-[#A6C1A0]">
-              <MapPin size={14} className="text-[#A6C1A0]" />
+            <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-white/15 backdrop-blur-md border border-white/20 text-xs sm:text-sm font-medium text-sage-300">
+              <MapPin size={14} className="text-sage-300" />
               {trip.destination_name}
               {trip.destination_country_code && ` (${trip.destination_country_code})`}
             </div>
@@ -120,20 +120,20 @@ export function TripHero({ trip, onEditClick }: TripHeroProps) {
           <div className="flex items-center gap-4 pt-2 text-xs sm:text-sm text-white/80 flex-wrap">
             {(trip.start_date || trip.end_date) && (
               <span className="flex items-center gap-1.5 bg-black/30 backdrop-blur-sm px-3 py-1 rounded-full border border-white/10">
-                <Calendar size={14} className="text-[#A6C1A0]" />
+                <Calendar size={14} className="text-sage-300" />
                 {formatCivilDateRange(trip.start_date, trip.end_date, undefined, 'fr-FR')}
               </span>
             )}
 
             {trip.estimated_budget !== null && trip.estimated_budget !== undefined && (
               <span className="flex items-center gap-1.5 bg-black/30 backdrop-blur-sm px-3 py-1 rounded-full border border-white/10">
-                <CreditCard size={14} className="text-[#A6C1A0]" />
+                <CreditCard size={14} className="text-sage-300" />
                 Budget prévu : {trip.estimated_budget} {trip.budget_currency}
               </span>
             )}
 
             <span className="flex items-center gap-1.5 bg-black/30 backdrop-blur-sm px-3 py-1 rounded-full border border-white/10">
-              <Users size={14} className="text-[#A6C1A0]" />
+              <Users size={14} className="text-sage-300" />
               {participantsCount} {participantsCount > 1 ? 'participants' : 'participant'}
             </span>
           </div>
