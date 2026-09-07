@@ -22,6 +22,8 @@ import { TripBudgetView } from './TripBudgetView';
 import { TripDocumentsView } from './TripDocumentsView';
 import { TripChecklistView } from './TripChecklistView';
 import { TripAffiliateSection } from '@/features/affiliation';
+import { getTripCounters } from '../hooks/useTripCounters';
+import { getKitCounters } from '../hooks/useKitCounters';
 import Link from 'next/link';
 
 export interface TripPhasePrepareViewProps {
@@ -50,11 +52,15 @@ export function TripPhasePrepareView({
 }: TripPhasePrepareViewProps) {
   const [activeSection, setActiveSection] = useState<PrepareSectionId>('overview');
 
+  // Source de vérité unique des compteurs (Z-R3 / Chantier Z3).
+  const counters = getTripCounters(trip, kitAnalysis);
+  const kit = getKitCounters(trip.items);
+
   const sections: { id: PrepareSectionId; label: string; icon: React.ReactNode; count?: number }[] = [
     { id: 'overview', label: 'Aperçu', icon: <Compass size={15} /> },
-    { id: 'itinerary', label: 'Itinéraire', icon: <Navigation size={15} />, count: trip.steps?.length },
-    { id: 'gear', label: 'Équipement', icon: <Package size={15} />, count: trip.items?.length },
-    { id: 'team', label: 'Équipage', icon: <Users size={15} />, count: (trip.collaborators?.length || 0) + 1 },
+    { id: 'itinerary', label: 'Itinéraire', icon: <Navigation size={15} />, count: counters.itinerary },
+    { id: 'gear', label: 'Équipement', icon: <Package size={15} />, count: kit.total },
+    { id: 'team', label: 'Équipage', icon: <Users size={15} />, count: counters.participantsCount },
     { id: 'budget', label: 'Budget', icon: <CreditCard size={15} /> },
     ...(trip.permissions.canViewDocuments
       ? [{ id: 'docs' as const, label: 'Documents', icon: <FileText size={15} />, count: trip.documents?.length }]

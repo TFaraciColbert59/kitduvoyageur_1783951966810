@@ -12,6 +12,10 @@ import {
 } from 'lucide-react';
 import { LkvButton } from '@/components/ui/LkvButton';
 import { TripBadge } from './TripBadge';
+import { getTripDuration } from '../hooks/useTripDuration';
+import { getKitCounters } from '../hooks/useKitCounters';
+import { getTripDistance } from '../hooks/useTripDistance';
+import { getCanonicalTripSteps, getTripCounters } from '../hooks/useTripCounters';
 import type { TripFull, TripStats } from '../types/trip.types';
 
 export interface TripOverviewTabProps {
@@ -21,9 +25,17 @@ export interface TripOverviewTabProps {
 }
 
 export function TripOverviewTab({ trip, stats, onTabChange }: TripOverviewTabProps) {
+  // Source de vérité unique (Z-R3 / Chantier Z3) : toutes les métriques sont
+  // dérivées de trip (pas de stats serveur) pour être identiques aux autres onglets.
+  const duration = getTripDuration(trip);
+  const kit = getKitCounters(trip.items);
+  const dist = getTripDistance(trip.steps);
+  const steps = getCanonicalTripSteps(trip.steps);
+  const participants = getTripCounters(trip).participantsCount;
+
   const packedPercent =
-    stats.items_total > 0
-      ? Math.round((stats.items_packed / stats.items_total) * 100)
+    kit.total > 0
+      ? Math.round((kit.ready / kit.total) * 100)
       : 0;
 
   return (
@@ -36,10 +48,10 @@ export function TripOverviewTab({ trip, stats, onTabChange }: TripOverviewTabPro
             Durée
           </div>
           <div className="text-xl sm:text-2xl font-bold text-lkv-primary">
-            {stats.total_days} {stats.total_days > 1 ? 'jours' : 'jour'}
+            {duration.durationDays} {duration.durationDays > 1 ? 'jours' : 'jour'}
           </div>
           <div className="text-xs text-lkv-secondary mt-0.5">
-            {trip.steps.length} étapes prévues
+            {steps.length} étapes prévues
           </div>
         </GlassCard>
 
@@ -49,10 +61,10 @@ export function TripOverviewTab({ trip, stats, onTabChange }: TripOverviewTabPro
             Distance
           </div>
           <div className="text-xl sm:text-2xl font-bold text-lkv-primary">
-            {stats.total_distance_km} km
+            {dist.totalKm} km
           </div>
           <div className="text-xs text-lkv-secondary mt-0.5">
-            +{stats.total_elevation_gain_m}m / -{stats.total_elevation_loss_m}m D±
+            +{dist.dPlus}m / -{dist.dMinus}m D±
           </div>
         </GlassCard>
 
@@ -65,7 +77,7 @@ export function TripOverviewTab({ trip, stats, onTabChange }: TripOverviewTabPro
             {packedPercent}%
           </div>
           <div className="text-xs text-lkv-secondary mt-0.5">
-            {stats.items_packed}/{stats.items_total} objets prêts
+            {kit.ready}/{kit.total} objets prêts
           </div>
         </GlassCard>
 
@@ -84,14 +96,14 @@ export function TripOverviewTab({ trip, stats, onTabChange }: TripOverviewTabPro
       </div>
 
       {/* 2. Barre de Préparation Matériel */}
-      {stats.items_total > 0 && (
+      {kit.total > 0 && (
         <GlassCard tone="sage" blur="md" className="p-5 rounded-[24px] border border-white/70">
           <div className="flex items-center justify-between mb-2">
             <span className="text-sm font-semibold text-lkv-primary">
               Préparation de l’équipement
             </span>
             <span className="text-xs font-medium text-lkv-secondary">
-              {stats.items_packed} sur {stats.items_total} emballés ({packedPercent}%)
+              {kit.ready} sur {kit.total} emballés ({packedPercent}%)
             </span>
           </div>
           <div className="w-full h-3 bg-black/5 rounded-full overflow-hidden">
@@ -118,11 +130,11 @@ export function TripOverviewTab({ trip, stats, onTabChange }: TripOverviewTabPro
               onClick={() => onTabChange('steps')}
               className="text-xs text-lkv-secondary"
             >
-              Voir tout ({trip.steps.length})
+              Voir tout ({steps.length})
             </LkvButton>
           </div>
 
-          {trip.steps.length === 0 ? (
+          {steps.length === 0 ? (
             <div className="text-center py-8 text-sm text-lkv-secondary">
               <p>Aucune étape enregistrée pour le moment.</p>
               <p className="text-xs text-lkv-secondary/80 mt-1">
@@ -131,7 +143,7 @@ export function TripOverviewTab({ trip, stats, onTabChange }: TripOverviewTabPro
             </div>
           ) : (
             <div className="relative pl-6 space-y-4 border-l-2 border-lkv-secondary/30 ml-2">
-              {trip.steps.slice(0, 4).map(step => (
+              {steps.slice(0, 4).map(step => (
                 <div key={step.id} className="relative">
                   <span className="absolute -left-[31px] top-1 w-3.5 h-3.5 rounded-full bg-lkv-secondary border-2 border-white" />
                   <div className="text-xs font-semibold text-lkv-secondary uppercase tracking-wide">
@@ -164,7 +176,7 @@ export function TripOverviewTab({ trip, stats, onTabChange }: TripOverviewTabPro
               onClick={() => onTabChange('team')}
               className="text-xs text-lkv-secondary"
             >
-              Gérer ({trip.collaborators.length})
+              Gérer ({participants})
             </LkvButton>
           </div>
 

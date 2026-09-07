@@ -5,6 +5,7 @@ import Image from 'next/image';
 import { LkvButton } from '@/components/ui/LkvButton';
 import { MapPin, Calendar, CreditCard, Users, Share2, Check, Edit3 } from 'lucide-react';
 import { TripBadge } from './TripBadge';
+import { getTripCounters } from '../hooks/useTripCounters';
 import type { TripFull } from '../types/trip.types';
 import { formatCivilDateRange } from '@/lib/dates/tripDates';
 
@@ -16,6 +17,7 @@ export interface TripHeroProps {
 export function TripHero({ trip, onEditClick }: TripHeroProps) {
   const [copied, setCopied] = useState(false);
   const imageUrl = trip.cover_image_url || '/assets/images/no_image.png';
+  const participantsCount = getTripCounters(trip).participantsCount;
 
   const handleShare = async () => {
     const url = window.location.href;
@@ -131,7 +133,7 @@ export function TripHero({ trip, onEditClick }: TripHeroProps) {
 
             <span className="flex items-center gap-1.5 bg-black/30 backdrop-blur-sm px-3 py-1 rounded-full border border-white/10">
               <Users size={14} className="text-[#A6C1A0]" />
-              {trip.collaborators.length} {trip.collaborators.length > 1 ? 'participants' : 'participant'}
+              {participantsCount} {participantsCount > 1 ? 'participants' : 'participant'}
             </span>
           </div>
         </div>
