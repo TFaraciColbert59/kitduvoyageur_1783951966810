@@ -9,3 +9,6 @@ export * from './paceRules';
 export * from './seasonality';
 export * from './selectCandidates';
 export * from './buildItinerary';
+export * from './tripBriefExtractor';
+export * from './coherenceSolver';
+export * from './autoGenPipeline';
