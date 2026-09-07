@@ -1,7 +1,7 @@
 /* ============================================
    Le Kit du Voyageur — Earth Page Styles (Liquid Glass)
    Fond papier clair + surfaces verre blanc, palette
-   Forest #17402C · Sage #A6C1A0 · Ink #17402C/#365233/#5A7064
+   Forest var(--lkv-primary) · Sage var(--sage-300) · Ink var(--lkv-primary)/var(--lkv-primary-soft)/var(--lkv-text-muted)
    ============================================ */
 
 /* Fond d'écran (classe utilitaire) */
@@ -16,7 +16,7 @@
 .earth-hero {
   position: relative;
   height: 100%;
-  color: #17402C;
+  color: var(--lkv-primary);
   overflow: hidden;
   padding: 0;
   background: transparent;
@@ -93,7 +93,7 @@
   padding: 12px 60px 28px;
   display: flex; align-items: center; justify-content: space-between;
   gap: 40px;
-  color: #5A7064;
+  color: var(--lkv-text-muted);
   font-size: 12px;
 }
 
@@ -123,10 +123,10 @@
   border: 1px solid rgba(23, 64, 44, 0.12);
   border-radius: 6px;
   font-family: var(--lkv-font-mono);
-  font-size: 10px; color: #365233;
+  font-size: 10px; color: var(--lkv-primary-soft);
 }
 .earth-bottom .marker { display: flex; align-items: center; gap: 8px; }
-.earth-bottom .marker .d { width: 6px; height: 6px; background: #17402C; border-radius: 50%; box-shadow: 0 0 10px #A6C1A0; }
+.earth-bottom .marker .d { width: 6px; height: 6px; background: var(--lkv-primary); border-radius: 50%; box-shadow: 0 0 10px var(--sage-300); }
 
 /* Mobile */
 .m-earth {
@@ -141,7 +141,7 @@
 .m-earth-body {
   flex: 1;
   background: transparent;
-  color: #17402C;
+  color: var(--lkv-primary);
   position: relative;
   width: 100%;
   height: 100%;
@@ -180,7 +180,7 @@
   background: rgba(255, 255, 255, 0.28);
   border: 1px solid rgba(255, 255, 255, 0.70);
   border-radius: 999px;
-  font-size: 12px; color: #365233;
+  font-size: 12px; color: var(--lkv-primary-soft);
   white-space: nowrap;
   display: inline-flex; align-items: center; gap: 6px;
   box-shadow: inset 0 1px 1px rgba(255, 255, 255, 0.8);
@@ -190,12 +190,12 @@
 }
 .m-cont-strip .p:focus-visible {
   outline: none;
-  box-shadow: inset 0 1px 1px rgba(255, 255, 255, 0.8), 0 0 0 2px #FBFAF6, 0 0 0 4px rgba(23, 64, 44, 0.55);
+  box-shadow: inset 0 1px 1px rgba(255, 255, 255, 0.8), 0 0 0 2px var(--lkv-surface), 0 0 0 4px rgba(23, 64, 44, 0.55);
 }
 .m-cont-strip .p.on {
-  background: #17402C;
-  color: #fff;
-  border-color: #17402C;
+  background: var(--lkv-primary);
+  color: #ffffff;
+  border-color: var(--lkv-primary);
   box-shadow: inset 0 1px 1px rgba(255, 255, 255, 0.4);
 }
 .m-cont-strip .p .k {

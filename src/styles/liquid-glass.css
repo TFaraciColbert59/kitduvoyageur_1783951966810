@@ -1,48 +1,18 @@
 /* ============================================================
    LIQUID GLASS DESIGN TOKENS — Mon Matériel (LKDV)
    Inspiration Apple iOS 26 / WWDC 2025 — calé sur la charte
-   LKDV canonique (forest / sage / stone / ink). Zéro #E4501C.
+   LKDV canonique (forest / sage / stone / ink). Zéro var(--lkv-primary).
+   Recettes Liquid Glass pointant vers src/styles/tokens.css
    ============================================================ */
 
 :root {
-  /* ---- Stone (neutres) — spec iOS 26 ---- */
-  --stone-50: #FAF8F5;
-  --stone-100: #F1EDE6;
-  --stone-200: #E4DED3;
-  --stone-300: #D2CABC;
-  --stone-400: #B8AE9E;
-  --stone-500: #9A9182;
-  --stone-600: #7A7365;
-  --stone-700: #5B554A;
-  --stone-800: #3F3B34;
+  /* ---- Stone (neutres) — pointe vers tokens.css ---- */
 
-  /* ---- Sage (primaire) — spec iOS 26 ---- */
-  --sage-50: #F2F6F1;
-  --sage-100: #E1EBDE;
-  --sage-200: #C8DAC3;
-  --sage-300: #A6C1A0;
-  --sage-400: #82A47C;
-  --sage-500: #5B7F55;
-  --sage-600: #486944;
-  --sage-700: #365233;
-  --sage-800: #223B23;
-  --sage-900: #1E3A1D;
+  /* ---- Sage (primaire) — pointe vers tokens.css ---- */
 
-  /* ---- Ink (typo) — spec iOS 26 ---- */
-  --ink-900: #14140F;
-  --ink-700: #2B2A24;
-  --ink-500: #5A574E;
-  --ink-300: #8C8779;
+  /* ---- Ink (typo) — pointe vers tokens.css ---- */
 
-  /* ---- Sémantiques (jamais #E4501C) ---- */
-  --warn: #C89A3B;
-  --warn-bg: #FBF1DC;
-  --danger: #A8443A;
-  --danger-bg: #F5DDD9;
-  --info: #4B6B7C;
-  --info-bg: #DDE7EE;
-  --success: var(--sage-500);
-  --success-bg: var(--sage-100);
+  /* ---- Sémantiques (jamais var(--lkv-primary)) ---- */
 
   /* ---- Tokens sémantiques (préférés) ---- */
   --label: var(--ink-900);
@@ -82,100 +52,30 @@
     rgba(11, 31, 23, 0.04) 100%
   );
   --glass-sheen: radial-gradient(130% 85% at 24% 0%, rgba(255, 255, 255, 0.45) 0%, rgba(255, 255, 255, 0.15) 100%);
-  --glass-depth-inset: inset 0 1.5px 1px 0 rgba(255, 255, 255, 0.95), inset 0 -1px 2px 0 rgba(11, 31, 23, 0.03);
 
-  /* ---- Elevation (5 niveaux Apple iOS, ink-based) ---- */
-  --elevation-1: 0 1px 3px rgba(20, 25, 22, 0.04), 0 1px 2px rgba(20, 25, 22, 0.02);
-  --elevation-2: 0 4px 12px rgba(20, 25, 22, 0.06), 0 1px 3px rgba(20, 25, 22, 0.03);
-  --elevation-3: 0 8px 24px rgba(20, 25, 22, 0.08), 0 2px 6px rgba(20, 25, 22, 0.04);
-  --elevation-4: 0 16px 36px rgba(20, 25, 22, 0.10), 0 4px 12px rgba(20, 25, 22, 0.05);
-  --elevation-5: 0 24px 56px rgba(20, 25, 22, 0.14), 0 8px 20px rgba(20, 25, 22, 0.06);
+  /* ---- Elevation (5 niveaux Apple iOS) ---- */
 
-  /* ---- Radius (iOS 26 aligned) ---- */
-  --r-xs: 6px;
-  --r-sm: 10px;
-  --r-md: 16px;
-  --r-lg: 24px;
-  --r-xl: 28px;
-  --r-2xl: 34px;
-  --r-full: 9999px;
+  /* ---- Radius (échelles réconciliées avec tokens.css) ---- */
+  --r-xs: var(--lkv-radius-xs);
+  --r-sm: var(--lkv-radius-sm);
+  --r-md: var(--lkv-radius-md);
+  --r-lg: var(--lkv-radius-lg);
+  --r-xl: var(--lkv-radius-xl);
+  --r-2xl: var(--lkv-radius-card); /* 28px ! */
+  --r-3xl: var(--lkv-radius-2xl);  /* 32px ! */
+  --r-full: var(--lkv-radius-full);
 
   /* ---- Spacing (4 pt hybride) ---- */
-  --space-1: 4px;
-  --space-2: 8px;
-  --space-3: 12px;
-  --space-4: 16px;
-  --space-5: 20px;
-  --space-6: 24px;
-  --space-8: 32px;
-  --space-10: 40px;
-  --space-12: 48px;
-  --space-16: 64px;
 
   /* ---- Grille de page ---- */
   --page-max-w: 1280px;
   --grid-gap: var(--space-5);
 
   /* ---- Motion ---- */
-  --ease-glass: cubic-bezier(0.22, 1, 0.36, 1);
-  --ease-emphasis: cubic-bezier(0.32, 0.72, 0, 1);
-  --ease-in-out: cubic-bezier(0.65, 0, 0.35, 1);
-  --ease-linear: linear;
-  --dur-xfast: 120ms;
-  --dur-fast: 180ms;
-  --dur-med: 280ms;
-  --dur-slow: 420ms;
-  --dur-xslow: 800ms;
 
-  /* ---- Z-index ---- */
-  --z-base: 0;
-  --z-sticky: 20;
-  --z-drawer: 40;
-  --z-sheet: 50;
-  --z-command: 60;
-  --z-toast: 70;
-
-  /* ---- Typography ---- */
-  --font-display: "Inter Tight", -apple-system, BlinkMacSystemFont, "SF Pro Display", system-ui, sans-serif;
-  --font-body: "Inter", -apple-system, BlinkMacSystemFont, "SF Pro Text", system-ui, sans-serif;
-  --font-mono: "JetBrains Mono", ui-monospace, "SF Mono", Menlo, monospace;
 }
 
-/* Dark mode auto */
-@media (prefers-color-scheme: dark) {
-  :root {
-    --label: #F4F1EB;
-    --label-secondary: color-mix(in oklab, #F4F1EB 60%, transparent);
-    --separator: color-mix(in oklab, white 15%, transparent);
-    --bg-primary: #14140F;
-    --bg-secondary: #1E1E17;
-    --bg-tertiary: #2B2A24;
-    --glass-bg-light: rgba(255, 255, 255, 0.15);
-    --glass-bg-medium: rgba(255, 255, 255, 0.10);
-    --glass-bg-strong: rgba(255, 255, 255, 0.22);
-    --glass-border: rgba(255, 255, 255, 0.18);
-    --elevation-3: none;
-  }
-}
-
-/* Le cockpit Mon Matériel reste ultra-lumineux et cristallin */
-[data-lkv-material-theme='light'] {
-  --label: #17402C;
-  --label-secondary: #365233;
-  --label-tertiary: #5A7064;
-  --bg-primary: #FAF8F5;
-  --bg-secondary: #F1EDE6;
-  --bg-tertiary: #E4DED3;
-  --glass-bg-light: rgba(255, 255, 255, 0.14);
-  --glass-bg-medium: rgba(255, 255, 255, 0.08);
-  --glass-bg-strong: rgba(255, 255, 255, 0.18);
-  --glass-border: rgba(255, 255, 255, 0.35);
-  --elevation-3: none;
-}
-
-/* Accessibilité — reduce-transparency */
-@media (prefers-reduced-transparency: reduce) {
-  .glass,
+.glass,
   [data-glass] {
     background: var(--bg-primary) !important;
     backdrop-filter: none !important;
@@ -248,9 +148,9 @@
   border-radius: inherit;
   padding: 1px;
   background: var(--glass-edge-light);
-  -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+  -webkit-mask: linear-gradient(#000000 0 0) content-box, linear-gradient(#000000 0 0);
   -webkit-mask-composite: xor;
-  mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+  mask: linear-gradient(#000000 0 0) content-box, linear-gradient(#000000 0 0);
   mask-composite: exclude;
   pointer-events: none;
   z-index: 1;
@@ -527,7 +427,7 @@
     rgba(225, 221, 208, 0.84) 100%
   );
   border: 1.5px solid rgba(255, 255, 255, 0.88);
-  color: #17402C;
+  color: var(--lkv-primary);
   backdrop-filter: blur(16px) saturate(180%) brightness(1.02);
   -webkit-backdrop-filter: blur(16px) saturate(180%) brightness(1.02);
   box-shadow:
@@ -578,9 +478,9 @@
     rgba(255, 255, 255, 0.98) 0%,
     rgba(235, 232, 222, 0.92) 100%
   );
-  border-color: #ffffff;
+  border-color: #fffffffff;
   box-shadow:
-    inset 0 2px 2.5px 0 #ffffff,
+    inset 0 2px 2.5px 0 #fffffffff,
     0 4px 14px -2px rgba(23, 64, 44, 0.18);
 }
 
@@ -624,7 +524,7 @@
     rgba(15, 43, 30, 0.96) 100%
   );
   border: 1.5px solid rgba(255, 255, 255, 0.45);
-  color: #FAF8F5;
+  color: var(--lkv-surface-paper);
   box-shadow:
     inset 0 1px 1.5px 0 rgba(255, 255, 255, 0.6),
     0 6px 20px -4px rgba(11, 31, 23, 0.25);
@@ -644,7 +544,7 @@
     rgba(254, 205, 211, 0.65) 100%
   );
   border: 1.5px solid rgba(244, 63, 94, 0.55);
-  color: #E11D48;
+  color: var(--lkv-danger);
   backdrop-filter: blur(24px) saturate(200%) brightness(1.06);
   -webkit-backdrop-filter: blur(24px) saturate(200%) brightness(1.06);
   box-shadow:
@@ -672,7 +572,7 @@
     rgba(226, 237, 228, 0.88) 100%
   );
   border: 1.5px solid rgba(255, 255, 255, 0.95);
-  color: #17402C;
+  color: var(--lkv-primary);
   backdrop-filter: blur(16px) saturate(180%);
   -webkit-backdrop-filter: blur(16px) saturate(180%);
   box-shadow:
@@ -701,7 +601,7 @@
   border-radius: 9999px;
   background: radial-gradient(
     ellipse at center,
-    #ffffff 0%,
+    #fffffffff 0%,
     rgba(255, 255, 255, 0.95) 50%,
     transparent 100%
   );
@@ -714,12 +614,12 @@
   transform: translateY(-1px) scale(1.08);
   background: linear-gradient(
     180deg,
-    #ffffff 0%,
+    #fffffffff 0%,
     rgba(238, 246, 240, 0.96) 100%
   );
-  border-color: #ffffff;
+  border-color: #fffffffff;
   box-shadow:
-    inset 0 2px 2.5px 0 #ffffff,
+    inset 0 2px 2.5px 0 #fffffffff,
     0 4px 14px -2px rgba(23, 64, 44, 0.18);
 }
 
@@ -733,8 +633,8 @@
 .glass-circle-btn.primary {
   background: linear-gradient(
     180deg,
-    #235039 0%,
-    #17402C 100%
+    var(--lkv-primary) 0%,
+    var(--lkv-primary) 100%
   ) !important;
   border-color: rgba(255, 255, 255, 0.65) !important;
   color: #FFFFFF !important;
@@ -757,8 +657,8 @@
 .glass-circle-btn.primary:hover {
   background: linear-gradient(
     180deg,
-    #255C40 0%,
-    #17402C 100%
+    var(--lkv-primary) 0%,
+    var(--lkv-primary) 100%
   ) !important;
   border-color: rgba(255, 255, 255, 0.65) !important;
   box-shadow:
@@ -774,7 +674,7 @@
     rgba(254, 205, 211, 0.85) 100%
   );
   border-color: rgba(225, 29, 72, 0.85);
-  color: #BE123C;
+  color: var(--lkv-primary);
 }
 
 .glass-capsule-btn-like:active {
@@ -792,7 +692,7 @@
   box-shadow:
     inset 0 1px 1.5px 0 rgba(255, 255, 255, 0.7),
     0 8px 24px -4px rgba(11, 31, 23, 0.35);
-  color: #ffffff;
+  color: #fffffffff;
 }
 
 /* Secondary Capsule Button (Verre liquide translucide) */
@@ -804,7 +704,7 @@
     rgba(255, 255, 255, 0.06) 100%
   );
   border: 1px solid rgba(255, 255, 255, 0.45);
-  color: #17402C;
+  color: var(--lkv-primary);
   box-shadow:
     inset 0 1px 1px 0 rgba(255, 255, 255, 0.7),
     0 4px 14px -2px rgba(11, 31, 23, 0.06);
@@ -821,7 +721,7 @@
   box-shadow:
     inset 0 1px 1.5px 0 rgba(255, 255, 255, 0.9),
     0 6px 18px -2px rgba(11, 31, 23, 0.10);
-  color: #17402C;
+  color: var(--lkv-primary);
 }
 
 .glass-btn-danger {
@@ -867,7 +767,7 @@
   border-radius: 9999px;
   font-size: 12.5px;
   font-weight: 600;
-  color: #17402C;
+  color: var(--lkv-primary);
   gap: 4px;
   transition: all var(--dur-fast) var(--ease-glass);
   cursor: pointer;
@@ -885,7 +785,7 @@
   box-shadow:
     inset 0 1px 1.5px rgba(255, 255, 255, 0.95),
     0 3px 10px -2px rgba(23, 64, 44, 0.15);
-  color: #17402C;
+  color: var(--lkv-primary);
 }
 
 .glass-capsule-segment:not(.active):hover {
@@ -1089,7 +989,7 @@
 }
 
 .glass-segmented-item.active {
-  background: #ffffff;
+  background: #fffffffff;
   color: var(--ink-900);
   box-shadow: var(--elevation-1);
 }
@@ -1148,11 +1048,11 @@
 }
 
 /* ============================================================
-   OLED ULTRA-SAVE MODE (#000000 pure black, no GPU backdrop blur)
+   OLED ULTRA-SAVE MODE (#000000000 pure black, no GPU backdrop blur)
    ============================================================ */
 .ultra-save-mode,
 .ultra-save-mode body {
-  background-color: #000000 !important;
+  background-color: #000000000 !important;
   color: #FFFFFF !important;
 }
 
@@ -1161,7 +1061,7 @@
 .ultra-save-mode header,
 .ultra-save-mode nav,
 .ultra-save-mode aside {
-  background: #000000 !important;
+  background: #000000000 !important;
   backdrop-filter: none !important;
   -webkit-backdrop-filter: none !important;
   border-color: rgba(255, 255, 255, 0.2) !important;
@@ -1274,9 +1174,9 @@
 /* Bulle envoyee : conifere fondu (CTA primaire du site) — texte blanc lisible,
    meme traitement que .glass-capsule-btn.primary / .glass-circle-btn.primary. */
 .msg-bubble--mine {
-  background: linear-gradient(165deg, #2F7050 0%, #23503B 45%, #17402C 100%);
+  background: linear-gradient(165deg, var(--lkv-primary) 0%, var(--lkv-primary) 45%, var(--lkv-primary) 100%);
   border-color: rgba(255, 255, 255, 0.32);
-  color: #FAF8F5;
+  color: var(--lkv-surface-paper);
   box-shadow:
     inset 0 1.5px 1px rgba(255, 255, 255, 0.32),
     inset 0 -1px 1.5px rgba(11, 31, 23, 0.28),
@@ -1296,7 +1196,7 @@
   box-shadow:
     inset 0 1px 1.5px rgba(255, 255, 255, 0.9),
     0 6px 18px -6px rgba(23, 64, 44, 0.28);
-  color: #17402C;
+  color: var(--lkv-primary);
   backdrop-filter: blur(14px);
   -webkit-backdrop-filter: blur(14px);
 }
