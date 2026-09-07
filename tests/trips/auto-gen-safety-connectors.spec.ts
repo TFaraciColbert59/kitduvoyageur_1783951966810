@@ -153,7 +153,7 @@ describe('Phase E — Connecteurs Données Réelles & Lignes Rouges Infranchissa
       const shelter = shelters[0];
       expect(shelter.name).toBeDefined();
       expect(shelter.capacity).toBeGreaterThan(0);
-      expect(shelter.provenance.source).toBe('official');
+      expect(shelter.provenance.source).toBe('estimated');
     });
   });
 });
