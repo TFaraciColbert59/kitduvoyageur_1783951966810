@@ -76,8 +76,7 @@ Dernière mise à jour : 2026-09-07T01:15:00+02:00
 | **P11** | **11.3** | Parcours E2E Playwright complets (12 parcours) | **TERMINE** | 12 parcours réels (création 28j, phases, équipages, GPX, snapshots 390/768/1440), 12/12 vert |
 | **P11** | **11.4** | Preuves de sécurité et rejeu RLS | **TERMINE** | Matrice RLS rejouée (25/25 vert `rlsMatrix.spec.ts`), URLs signées (6/6 vert `ethical-legal-security.spec.ts`) |
 | **P11** | **11.5** | CI et blocage des régressions | **TERMINE** | Pipeline `.github/workflows/ci.yml` avec 5 portes bloquantes (type-check, lint, test, build, e2e) |
-|---|---|---|---|---|
-| **P12** | **12.1** | Documentation technique et runbook | À FAIRE | Fiches d'architecture |
-| **P12** | **12.2** | Nettoyage du code mort et suppression des flags | À FAIRE | Zéro vestige |
-| **P12** | **12.3** | Script démo investisseur (7 min) | À FAIRE | Jeu de données reproductible |
-| **P12** | **12.4** | Rapport final d'acceptation | À FAIRE | Format §14 strict |
+| **P12** | **12.1** | Documentation technique et runbook | **TERMINE** | DATA_MODEL, DESIGN_SYSTEM, EVENTS, PERMISSIONS, OFFLINE, COMPLIANCE, CHANGELOG, RUNBOOK |
+| **P12** | **12.2** | Nettoyage du code mort et suppression des flags | **TERMINE** | Absence de travel_groups_legacy, 0 jargon (test `antiJargon.spec.ts` 3/3 vert) |
+| **P12** | **12.3** | Script démo investisseur (7 min) | **TERMINE** | Guide minuté `docs/DEMO_INVESTOR_SCRIPT.md`, jeu de données reproductible `npm run seed:demo` |
+| **P12** | **12.4** | Rapport final d'acceptation | **TERMINE** | Rapport de clôture format §14 strict dans `docs/FINAL_ACCEPTANCE_REPORT.md` |
