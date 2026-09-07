@@ -85,7 +85,7 @@ export function TripPhasePrepareView({
                   : 'bg-white/70 hover:bg-white text-lkv-primary border-white/80 hover:border-black/10'
               }`}
             >
-              <span className={isActive ? 'text-[#A6C1A0]' : 'text-lkv-secondary'}>{s.icon}</span>
+              <span className="text-lkv-secondary">{s.icon}</span>
               <span>{s.label}</span>
               {s.count !== undefined && (
                 <span
@@ -130,14 +130,14 @@ export function TripPhasePrepareView({
                   <h3 className="text-lg font-bold text-lkv-primary">Équipements du voyage</h3>
                   <Link
                     href={`/voyages/${trip.slug}/kit`}
-                    className="px-4 py-2 rounded-xl bg-lkv-primary text-white text-xs font-bold hover:bg-[#123323] transition-all min-h-[44px] flex items-center"
+                    className="px-4 py-2 rounded-xl bg-lkv-primary text-white text-xs font-bold hover:opacity-90 transition-all min-h-[44px] flex items-center"
                   >
                     Ouvrir le Kit Contextuel Complet
                   </Link>
                 </div>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                   {trip.items.map(item => (
-                    <GlassCard key={item.id} tone="neutral" className="p-3.5 rounded-[18px] border border-white/60">
+                    <GlassCard key={item.id} tone="neutral" className="p-3.5 rounded-2xl border border-white/60">
                       <div className="flex items-center justify-between gap-2">
                         <div>
                           <div className="text-sm font-medium text-lkv-primary">{item.item_name}</div>
@@ -150,7 +150,7 @@ export function TripPhasePrepareView({
                           className={`text-xs px-2 py-0.5 rounded-full font-medium ${
                             item.is_packed
                               ? 'bg-lkv-secondary/20 text-lkv-primary'
-                              : 'bg-black/5 text-gray-500'
+                              : 'bg-black/5 text-text-muted'
                           }`}
                         >
                           {item.is_packed ? 'Emballé' : 'À préparer'}
