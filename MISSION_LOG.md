@@ -414,3 +414,10 @@ ORDER BY country_code;
   Y5.3 navigation mobile hub (TripMobileSectionsSheet GlassSheet avec haptique triggerHaptic('selection'), touch targets ≥ 44px, BottomTabBar 10 sections) ·
   Y5.4 retour matériel Android (useAndroidTripBackNav via @capacitor/app, remontée section → aperçu → liste, zéro sortie accidentelle d'app).
   Portes : G1 OK (`npm run type-check`) · G2 OK (**1023/1023**, +3 tests) · G3 OK (12/12 règles Y-D80).
+- **Y6** ✅ (tag y6-done) : fusion des modules kit, configurateur IA et inventaire matériel :
+  Y6.1 configurateur en panneau depuis gear : `KitConfiguratorWizard` invocable depuis `TripKitView`, préchargé via `tripContext` (activité, durée civile/échelle, météo altitude, style de portage), contournement des questions déjà résolues par le voyage, bouton d'application directe au sac du voyage via `applyConfiguratorKitToTripAction` ·
+  Y6.2 route `/ai-configurator` : conservée intacte en mode découverte sans voyage, zéro violation token Y-D80 ·
+  Y6.3 pont matériel (inventaire -> voyage) : sélecteur « Importer depuis Mon Matériel » dans `TripKitView` avec notice explicite que le stock n'est jamais consommé ni modifié (seulement référencé via `inventory_item_id`), action serveur `addInventoryItemToTripAction`, 7 sous-routes de `/materiel` vérifiées et fonctionnelles ·
+  Y6.4 pont groupes : liaison bidirectionnelle entre `travel_groups` et `trips` via `group_id`, bannière/bouton Apple-grade « Expédition LKDV associée : Ouvrir le Cockpit Voyage → » dans `/groupes/[groupId]` (desktop & `MobileGroupeView`) ·
+  Y6.5 pont pays : `CountryCardWidget` reliant le voyage à `/pays/[code]` opérationnel dans la sidebar droite.
+  Portes : G1 OK (`npm run type-check`) · G2 OK (**1029/1029**, +6 tests, 138 suites) · G3 OK (12/12 règles Y-D80) · G4 OK (`npm run build` sans `.env.local`) · G5 OK (`visual:sheet`, 38 captures) · G6 OK (`test:a11y`, 39/39 tests passés).

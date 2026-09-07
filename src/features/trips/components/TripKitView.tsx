@@ -29,11 +29,15 @@ import {
 import type { TripFull, TripItem } from '../types/trip.types';
 import type { TripKitAnalysis, ContextualGearRecommendation } from '../types/kit.types';
 import { getTripDuration } from '../hooks/useTripDuration';
+import { deriveScale } from '../engine/tripProfileEngine';
+import { useHapticFeedback } from '@/hooks/useHapticFeedback';
+import KitConfiguratorWizard from '@/app/ai-configurator/components/KitConfiguratorWizard';
 import {
   togglePackedAction,
   addCustomTripItemAction,
   deleteTripItemAction,
   addRecommendedItemAction,
+  addInventoryItemToTripAction,
 } from '@/app/voyages/kit-actions';
 import { addToCart } from '@/lib/cart';
 
@@ -74,6 +78,78 @@ export function TripKitView({ trip, analysis, showBackLink: _showBackLink = fals
   const [cartToast, setCartToast] = useState<string | null>(null);
   const [isAddModalOpen, setIsAddModalOpen] = useState<boolean>(false);
   const [showAllRecommendations, setShowAllRecommendations] = useState<boolean>(false);
+  const [isConfiguratorOpen, setIsConfiguratorOpen] = useState<boolean>(false);
+  const [isInventoryModalOpen, setIsInventoryModalOpen] = useState<boolean>(false);
+  const [userInventory, setUserInventory] = useState<any[]>([]);
+  const [isLoadingInventory, setIsLoadingInventory] = useState<boolean>(false);
+  const [inventorySearch, setInventorySearch] = useState<string>('');
+  const { triggerHaptic } = useHapticFeedback();
+
+  const handleOpenInventory = async () => {
+    triggerHaptic('light');
+    setIsInventoryModalOpen(true);
+    if (userInventory.length === 0) {
+      setIsLoadingInventory(true);
+      try {
+        const res = await fetch('/api/materiel/items');
+        if (res.ok) {
+          const json = await res.json();
+          setUserInventory(json.items || []);
+        }
+      } catch (err) {
+        console.error('Erreur chargement inventaire:', err);
+      } finally {
+        setIsLoadingInventory(false);
+      }
+    }
+  };
+
+  const handleImportFromInventory = (item: any) => {
+    triggerHaptic('selection');
+    const tempId = `inv-${item.id}-${Date.now()}`;
+    const newItem: TripItem = {
+      id: tempId,
+      trip_id: trip.id,
+      item_name: item.name,
+      category: item.category || 'misc',
+      weight_grams: item.weight_g || null,
+      quantity: 1,
+      is_packed: false,
+      status: 'needed',
+      priority: 'recommended',
+      inventory_item_id: item.id,
+      packed_by: null,
+      affiliate_link_id: null,
+      source: 'inventory',
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString(),
+    };
+    setOptimisticItems((prev) => [newItem, ...prev]);
+
+    startTransition(async () => {
+      const res = await addInventoryItemToTripAction(
+        trip.id,
+        trip.slug,
+        item.id,
+        item.name,
+        item.category,
+        item.weight_g
+      );
+      if (!res.success) {
+        setOptimisticItems((prev) => prev.filter((i) => i.id !== tempId));
+      }
+    });
+  };
+
+  const filteredInventory = userInventory.filter((item: any) => {
+    if (!inventorySearch.trim()) return true;
+    const q = inventorySearch.toLowerCase();
+    return (
+      item.name?.toLowerCase().includes(q) ||
+      item.brand?.toLowerCase().includes(q) ||
+      item.category?.toLowerCase().includes(q)
+    );
+  });
 
   // Filtrer les items par catégorie
   const filteredItems = optimisticItems.filter((item) => {
@@ -384,15 +460,37 @@ export function TripKitView({ trip, analysis, showBackLink: _showBackLink = fals
             </p>
           </div>
 
-          <GlassCapsuleBtn
-            onClick={() => setIsAddModalOpen(true)}
-            variant="primary"
-            size="sm"
-            icon={<Plus className="w-4 h-4" />}
-            className="self-start sm:self-auto"
-          >
-            Ajouter un objet
-          </GlassCapsuleBtn>
+          <div className="flex items-center gap-2 flex-wrap self-start sm:self-auto">
+            <GlassCapsuleBtn
+              type="button"
+              onClick={() => setIsConfiguratorOpen(true)}
+              variant="default"
+              size="sm"
+              icon={<Sparkles className="w-4 h-4 text-lkv-secondary" />}
+              title="Configurer ou optimiser le sac avec l'Assistant IA"
+            >
+              Assistant IA Sac
+            </GlassCapsuleBtn>
+            <GlassCapsuleBtn
+              type="button"
+              onClick={handleOpenInventory}
+              variant="default"
+              size="sm"
+              icon={<Package className="w-4 h-4 text-lkv-secondary" />}
+              title="Importer des équipements depuis mon matériel personnel"
+            >
+              Mon Matériel
+            </GlassCapsuleBtn>
+            <GlassCapsuleBtn
+              type="button"
+              onClick={() => setIsAddModalOpen(true)}
+              variant="primary"
+              size="sm"
+              icon={<Plus className="w-4 h-4" />}
+            >
+              Ajouter un objet
+            </GlassCapsuleBtn>
+          </div>
         </div>
 
         {/* Pilules de Catégories */}
@@ -591,6 +689,153 @@ export function TripKitView({ trip, analysis, showBackLink: _showBackLink = fals
                 </GlassCapsuleBtn>
               </div>
             </form>
+          </div>
+        </div>
+      )}
+
+      {/* Modal Configurateur IA en panneau (Y6.1) */}
+      {isConfiguratorOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-2 sm:p-4 bg-black/60 backdrop-blur-md animate-fade-in">
+          <div className="w-full max-w-6xl h-[92vh] max-h-[960px] bg-white/90 rounded-[2rem] border border-white/80 shadow-2xl overflow-hidden flex flex-col p-3 sm:p-6 relative">
+            <KitConfiguratorWizard
+              tripContext={{
+                tripId: trip.id,
+                tripSlug: trip.slug,
+                title: trip.title,
+                activity: trip.primary_activity || undefined,
+                difficulty: trip.difficulty || undefined,
+                scale: deriveScale(trip.start_date, trip.end_date),
+                destination: trip.destination_name || undefined,
+                maxAltitudeM: analysis.maxAltitudeM || undefined,
+                days: tripDuration.durationDays,
+                countryCode: trip.destination_country_code || undefined,
+              }}
+              onClose={() => setIsConfiguratorOpen(false)}
+              onApplied={() => {
+                setIsConfiguratorOpen(false);
+              }}
+            />
+          </div>
+        </div>
+      )}
+
+      {/* Modal Sélecteur d'inventaire personnel (Y6.3 — Pont matériel) */}
+      {isInventoryModalOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm animate-fade-in">
+          <div className="w-full max-w-2xl glass border border-white/70 rounded-[var(--lkv-radius-card)] p-6 shadow-2xl max-h-[85vh] flex flex-col">
+            <div className="flex items-center justify-between pb-4 border-b border-white/40 shrink-0">
+              <div>
+                <h3 className="text-base font-bold text-[var(--lkv-text-primary)] flex items-center gap-2">
+                  <Package className="w-5 h-5 text-lkv-secondary" />
+                  Importer depuis Mon Matériel
+                </h3>
+                <p className="text-xs text-[var(--lkv-text-muted)] mt-0.5">
+                  Associez un équipement personnel à ce voyage.
+                </p>
+              </div>
+              <button
+                type="button"
+                onClick={() => setIsInventoryModalOpen(false)}
+                className="text-xs text-[var(--lkv-text-muted)] hover:text-[var(--lkv-text-primary)] px-2 py-1 rounded-lg hover:bg-white/60 min-h-[44px] min-w-[44px] flex items-center justify-center cursor-pointer"
+                aria-label="Fermer"
+              >
+                ✕
+              </button>
+            </div>
+
+            {/* Règle Y6.3 : Le stock n'est jamais consommé ni altéré */}
+            <div className="mt-3 p-3 rounded-xl bg-white/70 border border-white/60 text-xs text-[var(--lkv-text-secondary)] flex items-center gap-2 shrink-0">
+              <span className="text-base shrink-0">ℹ️</span>
+              <span>
+                Votre inventaire personnel reste intact — votre matériel est simplement référencé pour cette aventure sans décompte de stock.
+              </span>
+            </div>
+
+            {/* Barre de recherche */}
+            <div className="mt-3 shrink-0">
+              <input className="glass-input w-full px-3 py-2 text-xs text-[var(--lkv-text-primary)]"
+                type="text"
+                placeholder="Rechercher dans mon matériel (nom, marque)..."
+                value={inventorySearch}
+                onChange={(e) => setInventorySearch(e.target.value)}
+              />
+            </div>
+
+            {/* Liste scrollable */}
+            <div className="flex-1 min-h-0 overflow-y-auto custom-scrollbar my-4 divide-y divide-white/40 pr-1">
+              {isLoadingInventory ? (
+                <div className="py-12 flex flex-col items-center justify-center gap-3">
+                  <div className="w-6 h-6 border-2 border-lkv-primary border-t-transparent rounded-full animate-spin" />
+                  <span className="text-xs text-[var(--lkv-text-muted)]">Chargement de votre matériel...</span>
+                </div>
+              ) : filteredInventory.length === 0 ? (
+                <div className="py-12 text-center text-xs text-[var(--lkv-text-muted)]">
+                  {userInventory.length === 0 ? (
+                    <div className="space-y-3">
+                      <p>Aucun équipement trouvé dans votre inventaire personnel.</p>
+                      <Link href="/materiel" className="inline-block glass-capsule-btn text-xs font-bold px-4 py-2">
+                        Gérer mon matériel →
+                      </Link>
+                    </div>
+                  ) : (
+                    <p>Aucun équipement ne correspond à votre recherche.</p>
+                  )}
+                </div>
+              ) : (
+                filteredInventory.map((item: any) => {
+                  const isAlreadyInTrip = optimisticItems.some(
+                    (i) => i.inventory_item_id === item.id || (i.item_name.toLowerCase() === item.name.toLowerCase() && i.source === 'inventory')
+                  );
+
+                  return (
+                    <div key={item.id} className="py-3 flex items-center justify-between gap-3">
+                      <div className="min-w-0">
+                        <p className="text-sm font-semibold text-[var(--lkv-text-primary)] truncate">
+                          {item.name}
+                        </p>
+                        <div className="flex items-center gap-2 text-[11px] text-[var(--lkv-text-muted)] mt-0.5">
+                          {item.brand && <span>{item.brand}</span>}
+                          {item.category && <span>· {item.category}</span>}
+                          {item.weight_g > 0 && <span>· {item.weight_g} g</span>}
+                        </div>
+                      </div>
+
+                      <div className="shrink-0">
+                        {isAlreadyInTrip ? (
+                          <span className="text-[11px] font-mono text-[var(--lkv-text-muted)] bg-white/80 px-2.5 py-1 rounded-full border border-white/60">
+                            ✓ Dans le sac
+                          </span>
+                        ) : (
+                          <button
+                            type="button"
+                            onClick={() => handleImportFromInventory(item)}
+                            disabled={isPending}
+                            className="glass-capsule-btn primary text-xs font-bold !py-1.5 !px-3 shadow-2xs min-h-[44px] flex items-center cursor-pointer"
+                          >
+                            + Dans mon sac
+                          </button>
+                        )}
+                      </div>
+                    </div>
+                  );
+                })
+              )}
+            </div>
+
+            {/* Pied de modale */}
+            <div className="pt-3 border-t border-white/40 flex items-center justify-between shrink-0">
+              <Link href="/materiel" className="text-xs text-lkv-secondary hover:underline font-medium">
+                Ouvrir l'inventaire complet →
+              </Link>
+              <GlassCapsuleBtn
+                type="button"
+                variant="default"
+                size="sm"
+                onClick={() => setIsInventoryModalOpen(false)}
+              >
+                Fermer
+              </GlassCapsuleBtn>
+            </div>
           </div>
         </div>
       )}

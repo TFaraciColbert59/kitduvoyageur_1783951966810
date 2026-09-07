@@ -217,4 +217,36 @@ describe('queries-trip-kit (Chantier 6 — Service Layer)', () => {
     expect(item?.source).toBe('contextual_kit');
     expect(item?.shop_product_id).toBe('p-crampons');
   });
+
+  it('adds an item referencing user inventory without modifying the inventory stock (Y6.3)', async () => {
+    const invItem = {
+      id: 'item-inv-1',
+      trip_id: 'trip-1',
+      item_name: 'Réchaud MSR PocketRocket 2',
+      category: 'cook',
+      weight_grams: 73,
+      quantity: 1,
+      is_packed: false,
+      status: 'needed',
+      priority: 'recommended',
+      inventory_item_id: 'ownership-uuid-123',
+      source: 'inventory',
+    };
+
+    mockFrom.mockReturnValue(createMockChain([invItem]));
+
+    const item = await addTripItem({
+      tripId: 'trip-1',
+      itemName: 'Réchaud MSR PocketRocket 2',
+      category: 'cook',
+      weightGrams: 73,
+      inventoryItemId: 'ownership-uuid-123',
+      source: 'inventory',
+    });
+
+    expect(mockFrom).toHaveBeenCalledWith('trip_items');
+    expect(item).not.toBeNull();
+    expect(item?.inventory_item_id).toBe('ownership-uuid-123');
+    expect(item?.source).toBe('inventory');
+  });
 });

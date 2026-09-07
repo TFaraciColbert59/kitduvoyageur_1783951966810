@@ -9,6 +9,7 @@ import { createClient } from '@/lib/supabase/client';
 import { newId } from '@/lib/uuid';
 import Icon from '@/components/ui/AppIcon';
 import { useHapticFeedback } from '@/hooks/useHapticFeedback';
+import { applyConfiguratorKitToTripAction } from '@/app/voyages/kit-actions';
 import {
   fetchUserInventory,
   fetchGroupContext,
@@ -99,11 +100,103 @@ function StepIcon({ icon, active }: { icon: string; active: boolean }) {
   );
 }
 
-interface KitConfiguratorWizardProps {
-  isMobile?: boolean;
+export interface TripConfiguratorContext {
+  tripId: string;
+  tripSlug: string;
+  title: string;
+  activity?: string;
+  difficulty?: string;
+  scale?: string;
+  destination?: string;
+  maxAltitudeM?: number;
+  days?: number;
+  countryCode?: string;
 }
 
-export default function KitConfiguratorWizard({ isMobile = false }: KitConfiguratorWizardProps) {
+export interface KitConfiguratorWizardProps {
+  isMobile?: boolean;
+  tripContext?: TripConfiguratorContext;
+  onClose?: () => void;
+  onApplied?: () => void;
+}
+
+function deriveInitialConfig(tripContext?: TripConfiguratorContext) {
+  if (!tripContext) {
+    return {
+      answers: {
+        1: 'trek',
+        2: '3-5d',
+        3: 'frais_brumeux',
+        4: 'equilibre',
+      },
+      stepIndex: 0,
+    };
+  }
+
+  // 1. Usage / Activité
+  let actChoice = 'trek';
+  const act = (tripContext.activity || '').toLowerCase();
+  if (act.includes('bike') || act.includes('velo') || act.includes('cycl')) {
+    actChoice = 'bikepacking';
+  } else if (act.includes('alpin') || act.includes('escalad') || act.includes('montagne')) {
+    actChoice = 'alpinisme';
+  } else if (act.includes('voyage') || act.includes('road') || act.includes('nomad')) {
+    actChoice = 'voyage';
+  } else if (act.includes('trek') || act.includes('rando') || act.includes('hik')) {
+    actChoice = 'trek';
+  }
+
+  // 2. Durée / Autonomie
+  let durChoice = '3-5d';
+  if (tripContext.days) {
+    if (tripContext.days <= 2) durChoice = '1-2d';
+    else if (tripContext.days <= 5) durChoice = '3-5d';
+    else if (tripContext.days <= 14) durChoice = '1-2w';
+    else durChoice = '2w+';
+  } else if (tripContext.scale) {
+    if (tripContext.scale === 'day') durChoice = '1-2d';
+    else if (tripContext.scale === 'short') durChoice = '3-5d';
+    else if (tripContext.scale === 'long') durChoice = '1-2w';
+    else if (tripContext.scale === 'expedition') durChoice = '2w+';
+  }
+
+  // 3. Météo attendue
+  let weatherChoice = 'frais_brumeux';
+  if (tripContext.maxAltitudeM && tripContext.maxAltitudeM > 2200) {
+    weatherChoice = 'froid_sec';
+  }
+
+  // 4. Style de portage
+  let comfortChoice = 'equilibre';
+  const diff = (tripContext.difficulty || '').toLowerCase();
+  if (diff.includes('facile') || diff.includes('easy')) {
+    comfortChoice = 'grand_confort';
+  } else if (diff.includes('difficile') || diff.includes('hard') || diff.includes('expert')) {
+    comfortChoice = 'ultralight';
+  }
+
+  // Sauter les questions déjà résolues par le voyage (Y6.1)
+  const hasActivity = Boolean(tripContext.activity);
+  const hasDuration = Boolean(tripContext.days || tripContext.scale);
+  const stepIndex = hasActivity && hasDuration ? 2 : hasActivity ? 1 : 0;
+
+  return {
+    answers: {
+      1: actChoice,
+      2: durChoice,
+      3: weatherChoice,
+      4: comfortChoice,
+    },
+    stepIndex,
+  };
+}
+
+export default function KitConfiguratorWizard({
+  isMobile = false,
+  tripContext,
+  onClose,
+  onApplied,
+}: KitConfiguratorWizardProps) {
   const router = useRouter();
   const searchParams = useSearchParams();
   const [, startTransition] = useTransition();
@@ -113,14 +206,9 @@ export default function KitConfiguratorWizard({ isMobile = false }: KitConfigura
   const carnetId = searchParams?.get('carnetId');
   const trailName = searchParams?.get('trail');
 
-  const [currentStepIndex, setCurrentStepIndex] = useState(0);
-
-  const [answers, setAnswers] = useState<Record<number, string>>({
-    1: 'trek',
-    2: '3-5d',
-    3: 'frais_brumeux',
-    4: 'equilibre',
-  });
+  const initialConfig = deriveInitialConfig(tripContext);
+  const [currentStepIndex, setCurrentStepIndex] = useState(initialConfig.stepIndex);
+  const [answers, setAnswers] = useState<Record<number, string>>(initialConfig.answers);
 
   const [userId, setUserId] = useState<string | null>(null);
   const [userInventory, setUserInventory] = useState<OwnedGearItem[]>([]);
@@ -134,6 +222,8 @@ export default function KitConfiguratorWizard({ isMobile = false }: KitConfigura
   const [report, setReport] = useState<ConnectedKitReport | null>(null);
   const [savedSuccess, setSavedSuccess] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
+  const [appliedToTrip, setAppliedToTrip] = useState(false);
+  const [isApplyingToTrip, setIsApplyingToTrip] = useState(false);
 
   // Load context on mount
   useEffect(() => {
@@ -198,6 +288,8 @@ export default function KitConfiguratorWizard({ isMobile = false }: KitConfigura
     triggerHaptic('light');
     if (currentStepIndex < CONFIGURATOR_STEPS.length - 1) {
       setCurrentStepIndex((prev) => prev + 1);
+    } else if (tripContext?.tripId) {
+      handleApplyToTrip();
     } else if (report) {
       triggerHaptic('success');
       report.missingItems.forEach((item) => {
@@ -381,6 +473,49 @@ export default function KitConfiguratorWizard({ isMobile = false }: KitConfigura
     }
   };
 
+  const handleApplyToTrip = async () => {
+    if (!report || !tripContext?.tripId) return;
+    setIsApplyingToTrip(true);
+    triggerHaptic('selection');
+    try {
+      const itemsToApply = (report.missingItems || []).map((item: any) => ({
+        name: item.name || 'Article',
+        category: item.category || 'misc',
+        weightGrams: item.weightGrams || item.weightG || 0,
+        essential: Boolean(item.essential),
+      }));
+
+      if (itemsToApply.length === 0) {
+        itemsToApply.push({
+          name: 'Kit outdoor essentiel',
+          category: 'misc',
+          weightGrams: Math.round(report.totalWeightKg * 1000),
+          essential: true,
+        });
+      }
+
+      const res = await applyConfiguratorKitToTripAction(
+        tripContext.tripId,
+        tripContext.tripSlug,
+        itemsToApply
+      );
+
+      if (res.success) {
+        setAppliedToTrip(true);
+        triggerHaptic('success');
+        onApplied?.();
+        setTimeout(() => {
+          setAppliedToTrip(false);
+          onClose?.();
+        }, 1500);
+      }
+    } catch (_e) {
+      // Best effort
+    } finally {
+      setIsApplyingToTrip(false);
+    }
+  };
+
   const nextStepLabel =
     currentStepIndex === 0
       ? 'Continuer vers Durée →'
@@ -390,6 +525,8 @@ export default function KitConfiguratorWizard({ isMobile = false }: KitConfigura
       ? 'Continuer vers Confort →'
       : currentStepIndex === 3
       ? 'Voir le récapitulatif 360° →'
+      : tripContext?.tripId
+      ? 'Appliquer au sac du voyage →'
       : 'Ajouter les manquants au panier →';
 
   return (
@@ -397,14 +534,33 @@ export default function KitConfiguratorWizard({ isMobile = false }: KitConfigura
       {/* ── TOP BREADCRUMB BADGES (Liquid Glass) ── */}
       <div className="flex items-center justify-between text-xs text-[var(--lkv-text-muted)] mb-3 px-1 shrink-0">
         <div className="flex items-center gap-2 flex-wrap">
-          <Link href="/" className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-white/80 hover:bg-white text-xs font-bold text-[var(--lkv-text-primary)] border border-white/80 shadow-2xs transition-all">
-            <span>🌲</span>
-            <span>Configurateur IA</span>
-          </Link>
+          {tripContext ? (
+            <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-white/80 text-xs font-bold text-[var(--lkv-text-primary)] border border-white/80 shadow-2xs">
+              <span>🗺️</span>
+              <span className="truncate max-w-[200px]">{tripContext.title}</span>
+            </span>
+          ) : (
+            <Link href="/" className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-white/80 hover:bg-white text-xs font-bold text-[var(--lkv-text-primary)] border border-white/80 shadow-2xs transition-all">
+              <span>🌲</span>
+              <span>Configurateur IA</span>
+            </Link>
+          )}
 
           <span className="glass-pill text-[10px] font-mono font-bold text-[var(--lkv-text-primary)]">
             Étape {step.id}/5
           </span>
+
+          {tripContext?.activity && (
+            <span className="glass-pill text-[10px] font-mono font-bold text-[var(--lkv-text-secondary)]">
+              ⚡ {tripContext.activity}
+            </span>
+          )}
+
+          {tripContext?.maxAltitudeM && tripContext.maxAltitudeM > 0 ? (
+            <span className="glass-pill text-[10px] font-mono font-bold text-[var(--lkv-text-secondary)]">
+              ⛰️ {tripContext.maxAltitudeM} m
+            </span>
+          ) : null}
 
           {groupInfo && (
             <span className="glass-pill text-[10px] font-mono font-bold text-[var(--lkv-text-primary)]">
@@ -425,12 +581,26 @@ export default function KitConfiguratorWizard({ isMobile = false }: KitConfigura
           )}
         </div>
 
-        <Link
-          href="/"
-          className="text-xs text-[var(--lkv-text-muted)] hover:text-[var(--lkv-text-primary)] transition-colors font-medium px-2 py-1 rounded-lg hover:bg-white/60"
-        >
-          Quitter ✕
-        </Link>
+        {onClose ? (
+          <button
+            type="button"
+            onClick={() => {
+              triggerHaptic('light');
+              onClose();
+            }}
+            className="text-xs text-[var(--lkv-text-muted)] hover:text-[var(--lkv-text-primary)] transition-colors font-medium px-3 py-1.5 rounded-lg hover:bg-white/60 min-h-[44px] min-w-[44px] flex items-center justify-center cursor-pointer"
+            aria-label="Fermer le configurateur"
+          >
+            Fermer ✕
+          </button>
+        ) : (
+          <Link
+            href="/"
+            className="text-xs text-[var(--lkv-text-muted)] hover:text-[var(--lkv-text-primary)] transition-colors font-medium px-2 py-1 rounded-lg hover:bg-white/60 min-h-[44px] flex items-center"
+          >
+            Quitter ✕
+          </Link>
+        )}
       </div>
 
       {/* ── MAIN 2-COLUMN COCKPIT CARD (Liquid Glass) ── */}
@@ -632,12 +802,34 @@ export default function KitConfiguratorWizard({ isMobile = false }: KitConfigura
                     </div>
                   )}
 
+                  {/* Apply to Trip Button (Y6.1) */}
+                  {tripContext?.tripId && (
+                    <div className="pt-2">
+                      <button
+                        type="button"
+                        onClick={handleApplyToTrip}
+                        disabled={isApplyingToTrip}
+                        className="w-full glass-capsule-btn primary text-xs font-bold !py-3 flex items-center justify-center gap-2 shadow-sm min-h-[44px] cursor-pointer"
+                      >
+                        <Icon name="SparklesIcon" size={14} />
+                        <span>
+                          {appliedToTrip
+                            ? '✅ Équipements appliqués au sac de l’expédition !'
+                            : isApplyingToTrip
+                            ? 'Intégration au voyage...'
+                            : `Ajouter au sac de l’expédition (${report?.missingItems?.length || 0} recommandés)`}
+                        </span>
+                      </button>
+                    </div>
+                  )}
+
                   {/* Save Configuration Button */}
                   <div className="pt-2">
                     <button
+                      type="button"
                       onClick={handleSaveConfiguration}
                       disabled={isSaving}
-                      className="w-full glass-capsule-btn text-xs font-bold !py-2.5 flex items-center justify-center gap-2 shadow-xs"
+                      className="w-full glass-capsule-btn text-xs font-bold !py-2.5 flex items-center justify-center gap-2 shadow-xs min-h-[44px]"
                     >
                       <Icon name="BookmarkIcon" size={14} />
                       <span>

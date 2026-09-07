@@ -102,6 +102,7 @@ export async function addTripItem(input: {
   isWorn?: boolean;
   isConsumable?: boolean;
   shopProductId?: string;
+  inventoryItemId?: string | null;
   notes?: string;
   source?: string;
 }): Promise<TripItem | null> {
@@ -124,6 +125,7 @@ export async function addTripItem(input: {
       is_worn: input.isWorn ?? false,
       is_consumable: input.isConsumable ?? false,
       shop_product_id: input.shopProductId || null,
+      inventory_item_id: input.inventoryItemId || null,
       notes: input.notes || null,
       source: input.source || 'user',
     })

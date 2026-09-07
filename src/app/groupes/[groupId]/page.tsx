@@ -10,6 +10,8 @@ import LkvIcon from '@/components/ui/LkvIcon';
 import CommunityHubNav from '@/components/social/CommunityHubNav';
 import CompteBackground from '@/components/compte/CompteBackground';
 import { getGroupeComplet } from '@/lib/queries/groupe';
+import { createClient } from '@/lib/supabase/client';
+import { tripPath } from '@/features/trips/registry/tripPaths';
 import nextDynamic from 'next/dynamic';
 
 // Components — always visible
@@ -42,6 +44,7 @@ export default function GroupesPage() {
   const [activeTab, setActiveTab] = useState('overview');
   const [loading, setLoading] = useState(true);
   const [formattedData, setFormattedData] = useState<any>(null);
+  const [linkedTrip, setLinkedTrip] = useState<{ id: string; slug: string; title: string } | null>(null);
   const loadedRef = useRef(false);
 
   const loadData = async (rawGroupId: string) => {
@@ -50,6 +53,21 @@ export default function GroupesPage() {
     try {
       const data = await getGroupeComplet(rawGroupId);
       setFormattedData(data);
+
+      // Y6.4 — Vérifier si un voyage LKDV est rattaché à ce groupe
+      const realId = data?.id || rawGroupId;
+      const supabase = createClient();
+      const { data: tripData } = await supabase
+        .from('trips')
+        .select('id, slug, title')
+        .eq('group_id', realId)
+        .maybeSingle();
+
+      if (tripData) {
+        setLinkedTrip(tripData);
+      } else {
+        setLinkedTrip(null);
+      }
     } catch (err) {
       console.error('Error loading group data:', err);
     } finally {
@@ -115,7 +133,14 @@ export default function GroupesPage() {
       {/* ── MOBILE ── */}
       <div className="block md:hidden">
         <MobilePageShell videoBackground={true}>
-          <MobileGroupeView data={formattedData} groupId={groupId} user={user} members={members} onRefresh={refreshData} />
+          <MobileGroupeView
+            data={formattedData}
+            groupId={groupId}
+            user={user}
+            members={members}
+            onRefresh={refreshData}
+            linkedTrip={linkedTrip}
+          />
         </MobilePageShell>
       </div>
 
@@ -148,6 +173,31 @@ export default function GroupesPage() {
                 <LkvIcon name="chevron-right" size={12} />
                 <span className="text-[var(--lkv-text-primary)] font-semibold">{formattedData.meta.titlePrefix} {formattedData.meta.titleSuffix}</span>
               </div>
+
+              {/* Pont Groupes -> Voyage (Y6.4) */}
+              {linkedTrip && (
+                <div className="p-4 rounded-2xl glass border border-white/80 bg-white/70 shadow-sm flex items-center justify-between gap-4 animate-fade-in">
+                  <div className="flex items-center gap-3 min-w-0">
+                    <div className="w-10 h-10 rounded-xl bg-[var(--lkv-primary)]/10 flex items-center justify-center shrink-0">
+                      <span className="text-xl">🗺️</span>
+                    </div>
+                    <div className="min-w-0">
+                      <span className="text-[10px] font-mono font-bold uppercase tracking-wider text-[var(--lkv-text-secondary)] block">
+                        Expédition LKDV associée
+                      </span>
+                      <h4 className="text-sm font-bold text-[var(--lkv-text-primary)] truncate">
+                        {linkedTrip.title}
+                      </h4>
+                    </div>
+                  </div>
+                  <Link
+                    href={tripPath(linkedTrip.slug)}
+                    className="glass-capsule-btn primary text-xs font-bold px-4 py-2 min-h-[44px] flex items-center shrink-0"
+                  >
+                    Ouvrir le Cockpit Voyage →
+                  </Link>
+                </div>
+              )}
 
               {/* OVERVIEW TAB ONLY: Hero & Progression Card */}
               {activeTab === 'overview' && (

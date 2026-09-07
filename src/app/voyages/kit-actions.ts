@@ -210,3 +210,122 @@ export async function addRecommendedItemAction(
     return { success: false, error: 'Erreur serveur' };
   }
 }
+
+const addInventoryItemSchema = z.object({
+  tripId: uuidSchema,
+  tripSlug: slugSchema,
+  inventoryItemId: uuidSchema,
+  itemName: z.string().trim().min(1, 'Le nom de l’équipement est requis.').max(160),
+  category: z.string().max(60).optional(),
+  weightGrams: z.number().int().min(0).max(1_000_000).optional(),
+});
+
+/**
+ * Ajoute un équipement depuis l'inventaire personnel sans consommer ni modifier le stock
+ * (Y6.3 — Pont matériel).
+ */
+export async function addInventoryItemToTripAction(
+  tripId: string,
+  tripSlug: string,
+  inventoryItemId: string,
+  itemName: string,
+  category?: string,
+  weightGrams?: number
+): Promise<{ success: boolean; error?: string }> {
+  try {
+    const parsed = addInventoryItemSchema.safeParse({
+      tripId,
+      tripSlug,
+      inventoryItemId,
+      itemName,
+      category,
+      weightGrams,
+    });
+    if (!parsed.success) {
+      return { success: false, error: parsed.error.issues[0]?.message || 'Données invalides' };
+    }
+
+    const auth = await requireTripEditor(parsed.data.tripId);
+    if ('error' in auth) return { success: false, error: auth.error };
+
+    // Important (Y6.3) : Le stock de l'inventaire n'est jamais consommé ni modifié.
+    // L'équipement personnel est seulement référencé via inventory_item_id dans trip_items.
+    const item = await addTripItem({
+      tripId: parsed.data.tripId,
+      itemName: parsed.data.itemName,
+      category: parsed.data.category || 'misc',
+      weightGrams: parsed.data.weightGrams,
+      inventoryItemId: parsed.data.inventoryItemId,
+      quantity: 1,
+      priority: 'recommended',
+      isVital: false,
+      source: 'inventory',
+    });
+
+    if (!item) {
+      return { success: false, error: 'Erreur lors de l’ajout du matériel au voyage' };
+    }
+
+    revalidatePath(tripSegmentPath(parsed.data.tripSlug, ''));
+    revalidatePath(tripSegmentPath(parsed.data.tripSlug, 'kit'));
+    return { success: true };
+  } catch (err) {
+    console.error('[LKDV Action] addInventoryItemToTripAction error:', err);
+    return { success: false, error: 'Erreur serveur' };
+  }
+}
+
+const applyConfiguratorKitSchema = z.object({
+  tripId: uuidSchema,
+  tripSlug: slugSchema,
+  items: z.array(
+    z.object({
+      name: z.string().min(1).max(160),
+      category: z.string().max(60).optional(),
+      weightGrams: z.number().int().min(0).max(1_000_000).optional(),
+      essential: z.boolean().optional(),
+    })
+  ).min(1, 'Au moins un équipement requis'),
+});
+
+/**
+ * Applique une configuration de kit IA directement aux items du voyage (Y6.1).
+ */
+export async function applyConfiguratorKitToTripAction(
+  tripId: string,
+  tripSlug: string,
+  items: Array<{ name: string; category?: string; weightGrams?: number; essential?: boolean }>
+): Promise<{ success: boolean; count?: number; error?: string }> {
+  try {
+    const parsed = applyConfiguratorKitSchema.safeParse({ tripId, tripSlug, items });
+    if (!parsed.success) {
+      return { success: false, error: 'Données de configuration invalides' };
+    }
+
+    const auth = await requireTripEditor(parsed.data.tripId);
+    if ('error' in auth) return { success: false, error: auth.error };
+
+    let addedCount = 0;
+    for (const item of parsed.data.items) {
+      const isVital = Boolean(item.essential);
+      const inserted = await addTripItem({
+        tripId: parsed.data.tripId,
+        itemName: item.name,
+        category: item.category || 'misc',
+        weightGrams: item.weightGrams,
+        quantity: 1,
+        priority: isVital ? 'vital' : 'recommended',
+        isVital,
+        source: 'configurator',
+      });
+      if (inserted) addedCount++;
+    }
+
+    revalidatePath(tripSegmentPath(parsed.data.tripSlug, ''));
+    revalidatePath(tripSegmentPath(parsed.data.tripSlug, 'kit'));
+    return { success: true, count: addedCount };
+  } catch (err) {
+    console.error('[LKDV Action] applyConfiguratorKitToTripAction error:', err);
+    return { success: false, error: 'Erreur serveur' };
+  }
+}
