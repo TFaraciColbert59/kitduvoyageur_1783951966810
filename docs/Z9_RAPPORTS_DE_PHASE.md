@@ -202,14 +202,34 @@ Les 6 conditions de la spec (non récupérables dans le workspace) + Z7 bloquant
 | Phase | Branche | SHA | Statut |
 |---|---|---|---|
 | Z1 | chantier/z1-securite | 4363391 | ✅ 13 tests |
-| Z2 | chantier/z2-donnees-verite | c1b7046 | ✅ 7 tests |
+| Z2 | chantier/z2-donnees-verite | **c1b7046** | ✅ 7 tests |
 | Z3 | chantier/z3-coherence-chiffres | c5bc243 | ✅ 14 tests |
 | Z4 | chantier/z4-honnetete-conseil | 7984e7a | ✅ 5 tests |
 | Z5 | chantier/z5-finition | c817421 | ✅ 3 tests |
 | Z6 | chantier/z6-tests-verite | db5e73a | ✅ 11 tests |
 | Z7 | — (avis humain) | — | 🔄 BLOQUÉ |
 | Z8 | chantier/z8-rectificatif | d98d822 | ✅ 3 tests |
-| Z9 | chantier/z9-rapports | — | ✅ rapports rédigés |
+| Z9 | chantier/z9-rapports | 1f66529 | ✅ rapports rédigés |
 | Z10 | — (décision produit) | — | 🔄 NO-GO jusqu'à conditions |
+
+> **Précision SHA Z2** : le SHA du travail de mise en vérité des données est
+> **`c1b7046`** (commit de code : connecteur Overpass réel, provenanceValidator,
+> rétrogradation blueprints + test `chantier-z2.spec.ts`). Le commit
+> `e9bda88` (« docs(handoff) ») a été posé au sommet de la branche
+> `chantier/z2-donnees-verite` mais ne contient QUE `HANDOFF_AGENT.md` (docs) —
+> il ne doit pas être confondu avec le SHA du correctif Z2.
+
+---
+
+## Note — Revert du tag Travelpayouts Drive (client)
+**Décision technique (relevé de Z7, avis juridique à venir) :**
+- Le script client `https://tpembars.com/NTYxMTY5.js` injecté via
+  `dangerouslySetInnerHTML` dans `src/app/layout.tsx`, sans consentement
+  préalable, a été **retiré** (ainsi que le dns-prefetch/preconnect `tpembars.com`).
+- Le code **serveur** d'affiliation Travelpayouts (webhook postback HMAC,
+  construction d'URL, `go/[slug]` redirection) est **conservé** — il est
+  fonctionnel et ne relève pas du même risque (pas de traceur client passif).
+- Réinstallation du traceur uniquement APRÈS avis juridique sur le consentement
+  cookies (bannière) — cf. Z7.
 
 **Total suite vitest : 860/860 tests · 128 fichiers · tsc 0 · lint clean · build OK.**
