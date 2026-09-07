@@ -60,12 +60,9 @@ export function normalizeCivilDateString(now?: Date | string): string {
  * Détermine la phase temporelle d'un voyage de façon pure et déterministe.
  */
 export function getTripPhase(trip: TripPhaseInput, now?: Date | string): TripPhase {
-  // Statut explicite prioritaire
+  // Statut explicite terminé
   if (trip.status === 'completed') {
     return 'recount';
-  }
-  if (trip.status === 'active') {
-    return 'live';
   }
 
   const nowIso = normalizeCivilDateString(now);
@@ -73,12 +70,23 @@ export function getTripPhase(trip: TripPhaseInput, now?: Date | string): TripPha
   const start = trip.start_date ? parseCivilDate(trip.start_date) : null;
   const end = trip.end_date ? parseCivilDate(trip.end_date) : null;
 
-  if (!start && !end) {
+  const startIso = start ? toCivilIsoString(start.year, start.month, start.day) : null;
+  const endIso = end ? toCivilIsoString(end.year, end.month, end.day) : null;
+
+  // RÈGLE CRITIQUE Z-D18 : Un voyage à départ futur est toujours en 'prepare', jamais 'live'
+  if (startIso && nowIso < startIso) {
     return 'prepare';
   }
 
-  const startIso = start ? toCivilIsoString(start.year, start.month, start.day) : null;
-  const endIso = end ? toCivilIsoString(end.year, end.month, end.day) : null;
+  // Statut actif respecté seulement si le départ est advenu
+  if (trip.status === 'active') {
+    if (endIso && nowIso > endIso) return 'recount';
+    return 'live';
+  }
+
+  if (!start && !end) {
+    return 'prepare';
+  }
 
   if (startIso && !endIso) {
     if (nowIso < startIso) return 'prepare';

@@ -90,13 +90,15 @@ describe('Phase 5.1 — Moteur des 3 Phases Temporelles (Préparer / Vivre / Rac
       });
       expect(getTripPhase(tripCompleted, '2026-09-05')).toBe('recount');
 
-      // Active trip is always live even if start_date is tomorrow
+      // Z-D18 : A future trip is never live before start_date, even if status is active
       const tripActive = createMockTrip({
         start_date: '2026-09-10',
         end_date: '2026-09-20',
         status: 'active',
       });
-      expect(getTripPhase(tripActive, '2026-09-05')).toBe('live');
+      expect(getTripPhase(tripActive, '2026-09-05')).toBe('prepare');
+      // When start_date arrives, active trip is live
+      expect(getTripPhase(tripActive, '2026-09-10')).toBe('live');
     });
 
     it('accepts Date objects as now parameter', () => {

@@ -120,67 +120,80 @@ export function lookupBivouacRegulation(countryCode: string, regionOrPark?: stri
   };
 }
 
+function isPointInBounds(lat: number, lon: number, bounds: GeoBounds): boolean {
+  return lat >= bounds.minLat && lat <= bounds.maxLat && lon >= bounds.minLon && lon <= bounds.maxLon;
+}
+
+const VERIFIED_WATER_SOURCES: WaterSource[] = [
+  {
+    id: 'water-osm-102938',
+    name: 'Source du Plan de l’Aiguille',
+    latitude: 45.9015,
+    longitude: 6.8835,
+    potable: true,
+    provenance: {
+      source: 'community',
+      sourceRef: 'OpenStreetMap ODbL · amenity=drinking_water',
+      observedAt: '2026-04-15T10:00:00Z',
+    },
+  },
+  {
+    id: 'water-osm-102939',
+    name: 'Fontaine des Houches Gare',
+    latitude: 45.8905,
+    longitude: 6.7980,
+    potable: true,
+    provenance: {
+      source: 'community',
+      sourceRef: 'OpenStreetMap ODbL · amenity=fountain',
+      observedAt: '2026-04-15T10:00:00Z',
+    },
+  },
+];
+
+const VERIFIED_MOUNTAIN_SHELTERS: (MountainShelter & { latitude: number; longitude: number })[] = [
+  {
+    id: 'shelter-ffcam-001',
+    name: 'Refuge du Goûter',
+    capacity: 120,
+    altitudeM: 3835,
+    latitude: 45.8533,
+    longitude: 6.8302,
+    guarded: true,
+    provenance: {
+      source: 'official',
+      sourceRef: 'FFCAM Club Alpin Français',
+      observedAt: '2026-05-01T00:00:00Z',
+    },
+  },
+  {
+    id: 'shelter-ffcam-002',
+    name: 'Refuge de Tête Rousse',
+    capacity: 72,
+    altitudeM: 3167,
+    latitude: 45.8550,
+    longitude: 6.8186,
+    guarded: true,
+    provenance: {
+      source: 'official',
+      sourceRef: 'FFCAM Club Alpin Français',
+      observedAt: '2026-05-01T00:00:00Z',
+    },
+  },
+];
+
 /**
  * Connecteur Points d'Eau réels certifiés OpenStreetMap / ODbL.
+ * Ne retourne JAMAIS de données fabriquées : si aucun point n'est dans la boîte, retourne [].
  */
 export async function lookupWaterSources(bounds: GeoBounds): Promise<WaterSource[]> {
-  // Points d'eau réels vérifiés dans la boîte englobante (ex: Massif du Mont-Blanc / Chamonix)
-  return [
-    {
-      id: 'water-osm-102938',
-      name: 'Source du Plan de l’Aiguille',
-      latitude: (bounds.minLat + bounds.maxLat) / 2,
-      longitude: (bounds.minLon + bounds.maxLon) / 2,
-      potable: true,
-      provenance: {
-        source: 'community',
-        sourceRef: 'OpenStreetMap ODbL · amenity=drinking_water',
-        observedAt: '2026-04-15T10:00:00Z',
-      },
-    },
-    {
-      id: 'water-osm-102939',
-      name: 'Fontaine des Houches Gare',
-      latitude: bounds.minLat + 0.05,
-      longitude: bounds.minLon + 0.05,
-      potable: true,
-      provenance: {
-        source: 'community',
-        sourceRef: 'OpenStreetMap ODbL · amenity=fountain',
-        observedAt: '2026-04-15T10:00:00Z',
-      },
-    },
-  ];
+  return VERIFIED_WATER_SOURCES.filter(s => isPointInBounds(s.latitude, s.longitude, bounds));
 }
 
 /**
  * Connecteur Refuges de Montagne réels certifiés (FFCAM, DNT, CAI).
+ * Ne substitue JAMAIS un lieu par un autre : retourne [] si aucun refuge n'est dans la zone.
  */
 export async function lookupMountainShelters(bounds: GeoBounds): Promise<MountainShelter[]> {
-  return [
-    {
-      id: 'shelter-ffcam-001',
-      name: 'Refuge du Goûter',
-      capacity: 120,
-      altitudeM: 3835,
-      guarded: true,
-      provenance: {
-        source: 'official',
-        sourceRef: 'FFCAM Club Alpin Français',
-        observedAt: '2026-05-01T00:00:00Z',
-      },
-    },
-    {
-      id: 'shelter-ffcam-002',
-      name: 'Refuge de Tête Rousse',
-      capacity: 72,
-      altitudeM: 3167,
-      guarded: true,
-      provenance: {
-        source: 'official',
-        sourceRef: 'FFCAM Club Alpin Français',
-        observedAt: '2026-05-01T00:00:00Z',
-      },
-    },
-  ];
+  return VERIFIED_MOUNTAIN_SHELTERS.filter(s => isPointInBounds(s.latitude, s.longitude, bounds));
 }

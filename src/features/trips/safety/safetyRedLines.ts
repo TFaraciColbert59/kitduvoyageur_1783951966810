@@ -125,30 +125,54 @@ export function checkSafetyRedLines(
   };
 }
 
+export interface BlurredCoordinates {
+  latitude: number;
+  longitude: number;
+  radiusKm: number;
+  blurred: boolean;
+  isIrreversible: boolean;
+}
+
 /**
- * LIGNE ROUGE 4 : Floutage de sécurité écologique de 1,5 km.
- * Décale déterministement les coordonnées sensibles pour préserver les biotopes fragiles.
+ * LIGNE ROUGE 4 : Floutage de sécurité écologique (D17).
+ * Alignement sur grille avec arrondi destructif (non réversible).
+ * Deux coordonnées voisines dans la même cellule sont projetées sur le même point de grille,
+ * rendant mathématiquement impossible la déduction de la coordonnée réelle par inversion analytique.
  */
 export function blurSensitiveCoordinates(
   lat: number,
   lon: number,
   radiusKm = 1.5
-): {
-  latitude: number;
-  longitude: number;
-  radiusKm: number;
-  blurred: boolean;
-} {
+): BlurredCoordinates {
   // 1 degré de latitude ~= 111.32 km
-  const deltaLat = (radiusKm / 111.32) * 0.707;
-  // 1 degré de longitude ~= 111.32 * cos(lat)
-  const deltaLon =
-    (radiusKm / (111.32 * Math.cos((lat * Math.PI) / 180))) * 0.707;
+  const gridStepLat = radiusKm / 111.32;
+  const cosLat = Math.cos((lat * Math.PI) / 180) || 1;
+  const gridStepLon = radiusKm / (111.32 * Math.abs(cosLat));
+
+  // Alignement sur grille (quantification destructive many-to-one)
+  const cellY = Math.floor(lat / gridStepLat);
+  const cellX = Math.floor(lon / gridStepLon);
+
+  // Projection au centre de la cellule de grille + arrondi destructif à 3 décimales (~110 m)
+  const rawBlurredLat = (cellY + 0.5) * gridStepLat;
+  const rawBlurredLon = (cellX + 0.5) * gridStepLon;
+
+  let blurredLat = Number(rawBlurredLat.toFixed(3));
+  let blurredLon = Number(rawBlurredLon.toFixed(3));
+
+  // Garantie que le point flouté ne coïncide pas exactement avec la coordonnée d'entrée
+  if (Math.abs(blurredLat - lat) < 0.0005) {
+    blurredLat = Number((rawBlurredLat + gridStepLat * 0.3).toFixed(3));
+  }
+  if (Math.abs(blurredLon - lon) < 0.0005) {
+    blurredLon = Number((rawBlurredLon + gridStepLon * 0.3).toFixed(3));
+  }
 
   return {
-    latitude: Number((lat + deltaLat).toFixed(4)),
-    longitude: Number((lon + deltaLon).toFixed(4)),
+    latitude: blurredLat,
+    longitude: blurredLon,
     radiusKm,
     blurred: true,
+    isIrreversible: true,
   };
 }

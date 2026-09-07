@@ -27,6 +27,7 @@ import type { TripFull, TripStep, TripStats } from '../types/trip.types';
 import { addExpenseAction } from '@/app/voyages/budget-actions';
 import { TripSafetyView } from './TripSafetyView';
 import { TripItineraryTab } from './TripItineraryTab';
+import { getTripPhaseDetails } from '../engine/temporalPhaseEngine';
 
 export interface TripLiveCockpitViewProps {
   trip: TripFull;
@@ -54,7 +55,7 @@ export function formatEmergencyCoordinates(
   lng: number | null | undefined
 ): string {
   if (typeof lat !== 'number' || typeof lng !== 'number' || isNaN(lat) || isNaN(lng)) {
-    return 'Coordonnées non disponibles';
+    return 'Position non disponible — utilise l’application de ton téléphone pour communiquer ta position exacte au 112';
   }
 
   const latDir = lat >= 0 ? 'N' : 'S';
@@ -86,6 +87,9 @@ export function TripLiveCockpitView({
   const [isPendingExpense, startExpenseTransition] = useTransition();
   const [expenseSuccessMsg, setExpenseSuccessMsg] = useState<string | null>(null);
   const [expenseErrorMsg, setExpenseErrorMsg] = useState<string | null>(null);
+
+  const phaseDetails = getTripPhaseDetails(trip);
+  const isFutureTrip = phaseDetails.phase === 'prepare';
 
   const steps = trip.steps || [];
   const currentStep = getCurrentStepForDay(steps, activeDay);
@@ -190,14 +194,16 @@ export function TripLiveCockpitView({
                 isSunMode ? 'text-amber-400' : 'text-lkv-secondary'
               }`}
             >
-              Étape active
+              {isFutureTrip ? 'Voyage à venir' : 'Étape active'}
             </span>
             <div
               className={`text-xl sm:text-2xl font-extrabold ${
                 isSunMode ? 'text-white' : 'text-lkv-primary'
               }`}
             >
-              Jour {activeDay} / {calculatedTotalDays}
+              {isFutureTrip && phaseDetails.daysUntilStart !== null
+                ? `Départ dans ${phaseDetails.daysUntilStart} jour${phaseDetails.daysUntilStart > 1 ? 's' : ''}`
+                : `Jour ${activeDay} / ${calculatedTotalDays}`}
             </div>
           </div>
 
@@ -561,8 +567,7 @@ export function TripLiveCockpitView({
             </div>
 
             <p className="text-[11px] text-lkv-secondary leading-snug">
-              En montagne ou zone blanche, le 112 fonctionne sur n’importe quel réseau opérateur
-              capté.
+              En cas d’urgence vitale, composez immédiatement le 112 ou envoyez un SMS au 114.
             </p>
           </div>
         </GlassCard>

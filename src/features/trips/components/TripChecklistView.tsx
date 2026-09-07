@@ -24,6 +24,7 @@ export interface CountryFormalities {
   passportValidityMonths: number;
   healthInsuranceCard: string;
   vaccineRecommendations: string[];
+  vaccineNotice?: string;
   visaRequired: boolean;
   notes?: string;
 }
@@ -33,8 +34,12 @@ const EU_EEA_COUNTRIES = new Set([
   'DK', 'IE', 'GR', 'PL', 'CZ', 'SK', 'HU', 'SI', 'HR', 'EE', 'LV', 'LT', 'IS',
 ]);
 
+const DEFAULT_VACCINE_NOTICE =
+  'Recommandations vaccinales à vérifier auprès de ton médecin traitant ou d’un centre de vaccinations internationales (ex: Institut Pasteur, Conseils aux Voyageurs MEAE).';
+
 /**
  * Détermine les formalités légales et sanitaires spécifiques selon le pays de destination.
+ * Z1.5 / D19 : Sans source officielle connectée et datée, aucune liste de vaccins n'est affirmée.
  */
 export function getCountrySpecificFormalities(countryCode?: string | null): CountryFormalities {
   const code = (countryCode || 'FR').toUpperCase();
@@ -46,7 +51,8 @@ export function getCountrySpecificFormalities(countryCode?: string | null): Coun
       requiresPassport: true,
       passportValidityMonths: 6,
       healthInsuranceCard: 'Assurance rapatriement et recherche héliportée obligatoire (> 5000m)',
-      vaccineRecommendations: ['DT Polio', 'Hépatite A', 'Typhoïde', 'Rage (recommandé)'],
+      vaccineRecommendations: [],
+      vaccineNotice: DEFAULT_VACCINE_NOTICE,
       visaRequired: true,
       notes: 'Visa à l’arrivée ou en ligne. Permis TIMS et entrées parcs nationaux requis.',
     };
@@ -58,7 +64,8 @@ export function getCountrySpecificFormalities(countryCode?: string | null): Coun
       requiresPassport: true,
       passportValidityMonths: 6,
       healthInsuranceCard: 'Assurance secours montagne haute altitude',
-      vaccineRecommendations: ['DT Polio', 'Fièvre jaune (si Amazonie)', 'Hépatite A'],
+      vaccineRecommendations: [],
+      vaccineNotice: DEFAULT_VACCINE_NOTICE,
       visaRequired: false,
       notes: 'Tampon d’entrée gratuit 90 jours pour ressortissants UE. Altitude > 3000m.',
     };
@@ -70,7 +77,8 @@ export function getCountrySpecificFormalities(countryCode?: string | null): Coun
       requiresPassport: true,
       passportValidityMonths: 3,
       healthInsuranceCard: 'Assurance rapatriement et secours',
-      vaccineRecommendations: ['DT Polio', 'Hépatite A'],
+      vaccineRecommendations: [],
+      vaccineNotice: DEFAULT_VACCINE_NOTICE,
       visaRequired: false,
       notes: 'Passeport valide obligatoire pour le Maroc. Pas de visa pour les séjours de moins de 90 jours.',
     };
@@ -82,7 +90,8 @@ export function getCountrySpecificFormalities(countryCode?: string | null): Coun
       requiresPassport: true,
       passportValidityMonths: 6,
       healthInsuranceCard: 'Assurance voyage internationale complète',
-      vaccineRecommendations: ['DT Polio', 'Hépatite A'],
+      vaccineRecommendations: [],
+      vaccineNotice: DEFAULT_VACCINE_NOTICE,
       visaRequired: false,
     };
   }
@@ -93,7 +102,8 @@ export function getCountrySpecificFormalities(countryCode?: string | null): Coun
     requiresPassport: false,
     passportValidityMonths: 0,
     healthInsuranceCard: 'Carte Européenne d’Assurance Maladie (CEAM) à jour',
-    vaccineRecommendations: ['DT Polio'],
+    vaccineRecommendations: [],
+    vaccineNotice: DEFAULT_VACCINE_NOTICE,
     visaRequired: false,
     notes: 'Carte nationale d’identité valide ou passeport. Libre circulation Schengen.',
   };
@@ -111,10 +121,11 @@ export function getPreDepartureChecklist(
 
   const insuranceDescription = formalities.healthInsuranceCard;
 
+  const vaccineNoticeText = formalities.vaccineNotice || DEFAULT_VACCINE_NOTICE;
   const vaccineDescription =
     formalities.vaccineRecommendations.length > 0
-      ? `Recommandations pour ${formalities.countryCode} : ${formalities.vaccineRecommendations.join(', ')}.`
-      : `Traitements spécifiques, DT Polio à jour.`;
+      ? `Recommandations : ${formalities.vaccineRecommendations.join(', ')}. ${vaccineNoticeText}`
+      : vaccineNoticeText;
 
   return {
     j30: [
@@ -136,7 +147,7 @@ export function getPreDepartureChecklist(
       },
       {
         id: 'j30-vaccines',
-        label: 'Vaccins et ordonnances nécessaires à jour',
+        label: 'Vaccins et santé de voyage à jour',
         category: 'sante',
         description: vaccineDescription,
         recommendedDays: 30,

@@ -63,6 +63,8 @@ describe('Phase 5.3 — Mode Vivre (Terrain)', () => {
     const southWest = formatEmergencyCoordinates(-21.12346, -55.56789);
     expect(southWest).toBe('21.1235° S, 55.5679° W');
 
-    expect(formatEmergencyCoordinates(null, null)).toBe('Coordonnées non disponibles');
+    expect(formatEmergencyCoordinates(null, null)).toBe(
+      'Position non disponible — utilise l’application de ton téléphone pour communiquer ta position exacte au 112'
+    );
   });
 });

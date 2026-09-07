@@ -1,4 +1,5 @@
 import type { TripFull } from '@/features/trips/types/trip.types';
+import { blurSensitiveCoordinates } from '../safety/safetyRedLines';
 
 /**
  * Échappe les entités XML pour garantir la validité du flux GPX
@@ -15,7 +16,7 @@ export function escapeXml(unsafe: string | null | undefined): string {
 
 /**
  * Génère un export GPX 1.1 conforme aux standards Garmin / OSM
- * - Waypoints pour chaque étape et POI géolocalisé
+ * - Waypoints pour chaque étape et POI géolocalisé (floutage écologique sur lieux sensibles)
  * - Track ordonné chronologiquement par jour et index d'étape
  */
 export function generateTripGpx(trip: TripFull): string {
@@ -46,7 +47,20 @@ export function generateTripGpx(trip: TripFull): string {
 
   for (const step of sortedSteps) {
     if (typeof step.latitude === 'number' && typeof step.longitude === 'number') {
-      lines.push(`  <wpt lat="${step.latitude}" lon="${step.longitude}">`);
+      const isSensitive = Boolean(
+        (step as any).is_sensitive ||
+        (step as any).sensitive_ecological ||
+        (step as any).sensitivity === 'sensitive' ||
+        (step as any).sensitivity === 'protected'
+      );
+      const lat = isSensitive
+        ? blurSensitiveCoordinates(step.latitude, step.longitude).latitude
+        : step.latitude;
+      const lon = isSensitive
+        ? blurSensitiveCoordinates(step.latitude, step.longitude).longitude
+        : step.longitude;
+
+      lines.push(`  <wpt lat="${lat}" lon="${lon}">`);
       lines.push(`    <name>${escapeXml(step.title)}</name>`);
       if (step.description || step.accommodation_name) {
         const desc = [step.description, step.accommodation_name ? `Hébergement : ${step.accommodation_name}` : '']
@@ -62,7 +76,20 @@ export function generateTripGpx(trip: TripFull): string {
   // 3. Waypoints additionnels (POIs)
   for (const poi of trip.pois || []) {
     if (typeof poi.latitude === 'number' && typeof poi.longitude === 'number') {
-      lines.push(`  <wpt lat="${poi.latitude}" lon="${poi.longitude}">`);
+      const isSensitive = Boolean(
+        (poi as any).is_sensitive ||
+        (poi as any).sensitive_ecological ||
+        (poi as any).sensitivity === 'sensitive' ||
+        (poi as any).sensitivity === 'protected'
+      );
+      const lat = isSensitive
+        ? blurSensitiveCoordinates(poi.latitude, poi.longitude).latitude
+        : poi.latitude;
+      const lon = isSensitive
+        ? blurSensitiveCoordinates(poi.latitude, poi.longitude).longitude
+        : poi.longitude;
+
+      lines.push(`  <wpt lat="${lat}" lon="${lon}">`);
       lines.push(`    <name>${escapeXml(poi.name)}</name>`);
       if (poi.notes) {
         lines.push(`    <desc>${escapeXml(poi.notes)}</desc>`);
@@ -84,7 +111,20 @@ export function generateTripGpx(trip: TripFull): string {
     lines.push(`    <name>${escapeXml(trip.title)} - Itinéraire complet</name>`);
     lines.push('    <trkseg>');
     for (const s of trackSteps) {
-      lines.push(`      <trkpt lat="${s.latitude}" lon="${s.longitude}">`);
+      const isSensitive = Boolean(
+        (s as any).is_sensitive ||
+        (s as any).sensitive_ecological ||
+        (s as any).sensitivity === 'sensitive' ||
+        (s as any).sensitivity === 'protected'
+      );
+      const lat = isSensitive
+        ? blurSensitiveCoordinates(s.latitude!, s.longitude!).latitude
+        : s.latitude;
+      const lon = isSensitive
+        ? blurSensitiveCoordinates(s.latitude!, s.longitude!).longitude
+        : s.longitude;
+
+      lines.push(`      <trkpt lat="${lat}" lon="${lon}">`);
       lines.push(`        <name>${escapeXml(s.title)}</name>`);
       if (typeof s.elevation_gain_m === 'number') {
         lines.push(`        <ele>${s.elevation_gain_m}</ele>`);
