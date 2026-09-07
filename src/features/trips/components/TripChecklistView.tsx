@@ -18,28 +18,127 @@ export interface GroupedChecklist {
   j1: ChecklistItem[];
 }
 
-export function getPreDepartureChecklist(_daysUntilStart?: number | null): GroupedChecklist {
+export interface CountryFormalities {
+  countryCode: string;
+  requiresPassport: boolean;
+  passportValidityMonths: number;
+  healthInsuranceCard: string;
+  vaccineRecommendations: string[];
+  visaRequired: boolean;
+  notes?: string;
+}
+
+const EU_EEA_COUNTRIES = new Set([
+  'FR', 'DE', 'IT', 'ES', 'PT', 'BE', 'NL', 'LU', 'CH', 'AT', 'SE', 'NO', 'FI',
+  'DK', 'IE', 'GR', 'PL', 'CZ', 'SK', 'HU', 'SI', 'HR', 'EE', 'LV', 'LT', 'IS',
+]);
+
+/**
+ * Détermine les formalités légales et sanitaires spécifiques selon le pays de destination.
+ */
+export function getCountrySpecificFormalities(countryCode?: string | null): CountryFormalities {
+  const code = (countryCode || 'FR').toUpperCase();
+  const isEu = EU_EEA_COUNTRIES.has(code);
+
+  if (code === 'NP') {
+    return {
+      countryCode: 'NP',
+      requiresPassport: true,
+      passportValidityMonths: 6,
+      healthInsuranceCard: 'Assurance rapatriement et recherche héliportée obligatoire (> 5000m)',
+      vaccineRecommendations: ['DT Polio', 'Hépatite A', 'Typhoïde', 'Rage (recommandé)'],
+      visaRequired: true,
+      notes: 'Visa à l’arrivée ou en ligne. Permis TIMS et entrées parcs nationaux requis.',
+    };
+  }
+
+  if (code === 'PE') {
+    return {
+      countryCode: 'PE',
+      requiresPassport: true,
+      passportValidityMonths: 6,
+      healthInsuranceCard: 'Assurance secours montagne haute altitude',
+      vaccineRecommendations: ['DT Polio', 'Fièvre jaune (si Amazonie)', 'Hépatite A'],
+      visaRequired: false,
+      notes: 'Tampon d’entrée gratuit 90 jours pour ressortissants UE. Altitude > 3000m.',
+    };
+  }
+
+  if (code === 'MA') {
+    return {
+      countryCode: 'MA',
+      requiresPassport: true,
+      passportValidityMonths: 3,
+      healthInsuranceCard: 'Assurance rapatriement et secours',
+      vaccineRecommendations: ['DT Polio', 'Hépatite A'],
+      visaRequired: false,
+      notes: 'Passeport valide obligatoire pour le Maroc. Pas de visa pour les séjours de moins de 90 jours.',
+    };
+  }
+
+  if (!isEu) {
+    return {
+      countryCode: code,
+      requiresPassport: true,
+      passportValidityMonths: 6,
+      healthInsuranceCard: 'Assurance voyage internationale complète',
+      vaccineRecommendations: ['DT Polio', 'Hépatite A'],
+      visaRequired: false,
+    };
+  }
+
+  // Pays UE / Schengen
+  return {
+    countryCode: code,
+    requiresPassport: false,
+    passportValidityMonths: 0,
+    healthInsuranceCard: 'Carte Européenne d’Assurance Maladie (CEAM) à jour',
+    vaccineRecommendations: ['DT Polio'],
+    visaRequired: false,
+    notes: 'Carte nationale d’identité valide ou passeport. Libre circulation Schengen.',
+  };
+}
+
+export function getPreDepartureChecklist(
+  _daysUntilStart?: number | null,
+  countryCode?: string | null
+): GroupedChecklist {
+  const formalities = getCountrySpecificFormalities(countryCode);
+
+  const passportDescription = formalities.requiresPassport
+    ? `Passeport biométrique valide au moins ${formalities.passportValidityMonths} mois après la date de retour prévue.`
+    : `Carte Nationale d’Identité ou Passeport en cours de validité (espace Schengen).`;
+
+  const insuranceDescription = formalities.healthInsuranceCard;
+
+  const vaccineDescription =
+    formalities.vaccineRecommendations.length > 0
+      ? `Recommandations pour ${formalities.countryCode} : ${formalities.vaccineRecommendations.join(', ')}.`
+      : `Traitements spécifiques, DT Polio à jour.`;
+
   return {
     j30: [
       {
         id: 'j30-passport',
-        label: 'Validité des documents d’identité (Passeport / CNI > 6 mois)',
+        label: formalities.requiresPassport
+          ? `Validité du Passeport (> ${formalities.passportValidityMonths} mois)`
+          : `Validité de la pièce d’identité (CNI / Passeport)`,
         category: 'formalites',
-        description: 'Vérifiez la date d’expiration de vos pièces d’identité et visas requis.',
+        description: passportDescription,
         recommendedDays: 30,
       },
       {
         id: 'j30-insurance',
-        label: 'Assurance rapatriement & secours en montagne (carte ou contrat)',
+        label: `Couverture médicale & assurance (${formalities.requiresPassport ? 'Secours étranger' : 'CEAM'})`,
         category: 'securite',
-        description: 'Assurez-vous d’avoir une couverture incluant les frais de recherche et de secours.',
+        description: insuranceDescription,
         recommendedDays: 30,
       },
       {
         id: 'j30-vaccines',
         label: 'Vaccins et ordonnances nécessaires à jour',
         category: 'sante',
-        description: 'Traitements spécifiques, DT Polio, ou vaccins endémiques selon le pays.',
+        description: vaccineDescription,
         recommendedDays: 30,
       },
       {

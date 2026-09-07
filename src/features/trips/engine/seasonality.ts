@@ -210,3 +210,162 @@ export function getSeasonalityAdvice(countryCode: string): {
     notes: profile.notes,
   };
 }
+
+export interface MonthlyClimateNormals {
+  month: number;
+  tempMinC: number;
+  tempMaxC: number;
+  precipitationMm: number;
+  rainDays: number;
+  windSpeedKmH: number;
+  suitabilityScore: number; // 0 à 100
+}
+
+export interface TripClimateRisk {
+  overallRisk: 'low' | 'moderate' | 'high';
+  primaryConcern?: string;
+  advice: string;
+  averageSuitability: number;
+}
+
+const CLIMATE_NORMALS_DATABASE: Record<string, Record<number, MonthlyClimateNormals>> = {
+  IS: {
+    1: { month: 1, tempMinC: -3, tempMaxC: 2, precipitationMm: 85, rainDays: 14, windSpeedKmH: 26, suitabilityScore: 25 },
+    2: { month: 2, tempMinC: -2, tempMaxC: 3, precipitationMm: 80, rainDays: 13, windSpeedKmH: 25, suitabilityScore: 30 },
+    3: { month: 3, tempMinC: -1, tempMaxC: 3, precipitationMm: 75, rainDays: 13, windSpeedKmH: 24, suitabilityScore: 35 },
+    4: { month: 4, tempMinC: 1, tempMaxC: 6, precipitationMm: 60, rainDays: 11, windSpeedKmH: 22, suitabilityScore: 45 },
+    5: { month: 5, tempMinC: 4, tempMaxC: 10, precipitationMm: 45, rainDays: 10, windSpeedKmH: 20, suitabilityScore: 60 },
+    6: { month: 6, tempMinC: 7, tempMaxC: 13, precipitationMm: 40, rainDays: 9, windSpeedKmH: 18, suitabilityScore: 85 },
+    7: { month: 7, tempMinC: 9, tempMaxC: 15, precipitationMm: 50, rainDays: 10, windSpeedKmH: 17, suitabilityScore: 90 },
+    8: { month: 8, tempMinC: 8, tempMaxC: 14, precipitationMm: 65, rainDays: 11, windSpeedKmH: 19, suitabilityScore: 85 },
+    9: { month: 9, tempMinC: 6, tempMaxC: 11, precipitationMm: 85, rainDays: 13, windSpeedKmH: 22, suitabilityScore: 65 },
+    10: { month: 10, tempMinC: 2, tempMaxC: 7, precipitationMm: 95, rainDays: 15, windSpeedKmH: 24, suitabilityScore: 35 },
+    11: { month: 11, tempMinC: -1, tempMaxC: 4, precipitationMm: 90, rainDays: 14, windSpeedKmH: 26, suitabilityScore: 25 },
+    12: { month: 12, tempMinC: -3, tempMaxC: 2, precipitationMm: 95, rainDays: 15, windSpeedKmH: 27, suitabilityScore: 20 },
+  },
+  NP: {
+    1: { month: 1, tempMinC: 2, tempMaxC: 18, precipitationMm: 15, rainDays: 2, windSpeedKmH: 8, suitabilityScore: 70 },
+    2: { month: 2, tempMinC: 5, tempMaxC: 21, precipitationMm: 20, rainDays: 3, windSpeedKmH: 9, suitabilityScore: 75 },
+    3: { month: 3, tempMinC: 9, tempMaxC: 26, precipitationMm: 35, rainDays: 4, windSpeedKmH: 10, suitabilityScore: 85 },
+    4: { month: 4, tempMinC: 12, tempMaxC: 29, precipitationMm: 60, rainDays: 7, windSpeedKmH: 11, suitabilityScore: 90 },
+    5: { month: 5, tempMinC: 16, tempMaxC: 30, precipitationMm: 120, rainDays: 12, windSpeedKmH: 10, suitabilityScore: 75 },
+    6: { month: 6, tempMinC: 19, tempMaxC: 29, precipitationMm: 250, rainDays: 18, windSpeedKmH: 9, suitabilityScore: 40 },
+    7: { month: 7, tempMinC: 20, tempMaxC: 28, precipitationMm: 380, rainDays: 23, windSpeedKmH: 8, suitabilityScore: 25 },
+    8: { month: 8, tempMinC: 20, tempMaxC: 28, precipitationMm: 340, rainDays: 21, windSpeedKmH: 8, suitabilityScore: 30 },
+    9: { month: 9, tempMinC: 18, tempMaxC: 28, precipitationMm: 200, rainDays: 15, windSpeedKmH: 8, suitabilityScore: 50 },
+    10: { month: 10, tempMinC: 13, tempMaxC: 27, precipitationMm: 50, rainDays: 4, windSpeedKmH: 8, suitabilityScore: 95 },
+    11: { month: 11, tempMinC: 7, tempMaxC: 23, precipitationMm: 10, rainDays: 1, windSpeedKmH: 7, suitabilityScore: 95 },
+    12: { month: 12, tempMinC: 3, tempMaxC: 19, precipitationMm: 10, rainDays: 1, windSpeedKmH: 7, suitabilityScore: 75 },
+  },
+  FR: {
+    1: { month: 1, tempMinC: 1, tempMaxC: 7, precipitationMm: 55, rainDays: 10, windSpeedKmH: 15, suitabilityScore: 45 },
+    2: { month: 2, tempMinC: 2, tempMaxC: 8, precipitationMm: 45, rainDays: 9, windSpeedKmH: 15, suitabilityScore: 50 },
+    3: { month: 3, tempMinC: 4, tempMaxC: 12, precipitationMm: 50, rainDays: 9, windSpeedKmH: 16, suitabilityScore: 65 },
+    4: { month: 4, tempMinC: 7, tempMaxC: 16, precipitationMm: 55, rainDays: 9, windSpeedKmH: 15, suitabilityScore: 75 },
+    5: { month: 5, tempMinC: 10, tempMaxC: 20, precipitationMm: 65, rainDays: 10, windSpeedKmH: 14, suitabilityScore: 85 },
+    6: { month: 6, tempMinC: 14, tempMaxC: 24, precipitationMm: 55, rainDays: 8, windSpeedKmH: 13, suitabilityScore: 92 },
+    7: { month: 7, tempMinC: 16, tempMaxC: 26, precipitationMm: 50, rainDays: 7, windSpeedKmH: 13, suitabilityScore: 95 },
+    8: { month: 8, tempMinC: 15, tempMaxC: 26, precipitationMm: 55, rainDays: 7, windSpeedKmH: 12, suitabilityScore: 93 },
+    9: { month: 9, tempMinC: 12, tempMaxC: 22, precipitationMm: 60, rainDays: 8, windSpeedKmH: 13, suitabilityScore: 90 },
+    10: { month: 10, tempMinC: 9, tempMaxC: 16, precipitationMm: 70, rainDays: 10, windSpeedKmH: 14, suitabilityScore: 70 },
+    11: { month: 11, tempMinC: 5, tempMaxC: 11, precipitationMm: 65, rainDays: 11, windSpeedKmH: 15, suitabilityScore: 55 },
+    12: { month: 12, tempMinC: 2, tempMaxC: 8, precipitationMm: 60, rainDays: 11, windSpeedKmH: 16, suitabilityScore: 45 },
+  },
+};
+
+/**
+ * Récupère les normales climatiques mensuelles déterministes d'une destination.
+ */
+export function getMonthlyClimateNormals(countryCode: string, month: number): MonthlyClimateNormals | null {
+  const code = countryCode.toUpperCase();
+  const countryData = CLIMATE_NORMALS_DATABASE[code];
+  if (countryData && countryData[month]) {
+    return countryData[month];
+  }
+
+  // Fallback générique tempéré
+  const isSummer = month >= 6 && month <= 8;
+  const isWinter = month === 12 || month <= 2;
+  return {
+    month,
+    tempMinC: isWinter ? 0 : isSummer ? 14 : 7,
+    tempMaxC: isWinter ? 8 : isSummer ? 25 : 17,
+    precipitationMm: 60,
+    rainDays: 9,
+    windSpeedKmH: 15,
+    suitabilityScore: isSummer ? 85 : isWinter ? 40 : 70,
+  };
+}
+
+/**
+ * Évalue le risque climatique global d'un voyage sur une plage de dates donnée.
+ */
+export function evaluateTripClimateRisk(
+  countryCode: string,
+  startDate: string,
+  endDate: string
+): TripClimateRisk {
+  const start = new Date(startDate);
+  const end = new Date(endDate);
+  const code = countryCode.toUpperCase();
+
+  const months = new Set<number>();
+  if (!isNaN(start.getTime())) months.add(start.getMonth() + 1);
+  if (!isNaN(end.getTime())) months.add(end.getMonth() + 1);
+
+  if (months.size === 0) {
+    return {
+      overallRisk: 'moderate',
+      advice: 'Dates non spécifiées, vérifiez les prévisions météo locales.',
+      averageSuitability: 60,
+    };
+  }
+
+  let totalScore = 0;
+  let count = 0;
+  for (const m of months) {
+    const normals = getMonthlyClimateNormals(code, m);
+    if (normals) {
+      totalScore += normals.suitabilityScore;
+      count++;
+    }
+  }
+
+  const avgSuitability = count > 0 ? Math.round(totalScore / count) : 60;
+
+  // Détection de règles spécifiques critiques
+  if (code === 'NP' && Array.from(months).some((m) => m >= 6 && m <= 9)) {
+    return {
+      overallRisk: 'high',
+      primaryConcern: 'Mousson d’été violente et risques de glissements',
+      advice: 'Fortes précipitations et nébulosité. Privilégier octobre-novembre ou mars-avril.',
+      averageSuitability: avgSuitability,
+    };
+  }
+
+  if (code === 'IS' && Array.from(months).some((m) => m >= 10 || m <= 5)) {
+    return {
+      overallRisk: 'high',
+      primaryConcern: 'Fermeture des pistes intérieures F-Roads et tempêtes de neige',
+      advice: 'Accès aux hautes terres fermé. Privilégier juin à août.',
+      averageSuitability: avgSuitability,
+    };
+  }
+
+  if (code === 'MA' && Array.from(months).some((m) => m === 7 || m === 8)) {
+    return {
+      overallRisk: 'moderate',
+      primaryConcern: 'Chaleurs extrêmes en plaine et désert (> 40°C)',
+      advice: 'Rester en très haute altitude dans l’Atlas ou sur la côte Atlantique.',
+      averageSuitability: avgSuitability,
+    };
+  }
+
+  const overallRisk = avgSuitability >= 75 ? 'low' : avgSuitability >= 50 ? 'moderate' : 'high';
+
+  return {
+    overallRisk,
+    advice: overallRisk === 'low' ? 'Excellentes conditions climatiques attendues.' : 'Conditions variables, équipement adapté requis.',
+    averageSuitability: avgSuitability,
+  };
+}
