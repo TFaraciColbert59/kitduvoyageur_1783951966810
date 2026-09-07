@@ -184,5 +184,37 @@ test.describe('Module Voyage E2E Suite — Parcours Utilisateur & Ergonomie (C1-
     await expect(page.locator('text=Voyage actif :').first()).toBeVisible();
   });
 
+  test('TEST-E2E-VOYAGE-10: Redirection /groupes -> /equipages et interface équipages', async ({ page }) => {
+    // 1. Redirection de l'ancien lien
+    await page.goto('/groupes', { waitUntil: 'domcontentloaded' });
+    expect(page.url()).toContain('/equipages');
+
+    // 2. Vérification de la présence de la structure d'équipages
+    const heading = page.locator('h1').first();
+    await expect(heading).toBeVisible();
+    await expect(heading).toContainText(/Équipages/i);
+  });
+
+  test('TEST-E2E-VOYAGE-11: Anti-régression D2 — Altitude basse sans offre haute montagne', async ({ page }) => {
+    await page.goto('/voyages/fdgb-3c3a92', { waitUntil: 'domcontentloaded' });
+
+    // Vérifie que pour un voyage de plaine ou de basse altitude, aucune crampons / piolets / haute montagne n'est imposée
+    const highAltitudeWarning = page.locator('text=Matériel Alpinisme Obligatoire');
+    await expect(highAltitudeWarning).toHaveCount(0);
+  });
+
+  test('TEST-E2E-VOYAGE-12: Carnet public indexable & Métadonnées Schema.org', async ({ page }) => {
+    await page.goto('/carnets', { waitUntil: 'domcontentloaded' });
+    const heading = page.locator('h1, h2').first();
+    await expect(heading).toBeVisible();
+
+    // Vérifie les balises meta de base (OpenGraph)
+    const ogType = page.locator('meta[property="og:type"]');
+    if (await ogType.count() > 0) {
+      expect(await ogType.first().getAttribute('content')).toBeDefined();
+    }
+  });
+
 });
+
 

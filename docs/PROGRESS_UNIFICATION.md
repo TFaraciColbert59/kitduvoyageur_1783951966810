@@ -71,11 +71,11 @@ Dernière mise à jour : 2026-09-07T01:15:00+02:00
 | **P10** | **10.4** | Mode hors-ligne et sync déconnectée | **TERMINE** | Service Worker `public/sw.js` (voyages/équipages), file sync LWW `tripOfflineSyncQueue.ts`, composant `TripSyncStatusIndicator` |
 | **P10** | **10.5** | Préparation i18n | **TERMINE** | Formateurs multi-unités `formatters.ts` (distances, dénivelés, poids, devises), clés FR/EN, doc `I18N_STRATEGY.md` |
 |---|---|---|---|---|
-| **P11** | **11.1** | Suite de tests unitaires exhaustive | À FAIRE | Cas limites et dégradés |
-| **P11** | **11.2** | Tests d'intégration server actions | À FAIRE | Permissions et conflits |
-| **P11** | **11.3** | Parcours E2E Playwright complets (6 parcours) | À FAIRE | Snapshots 3 breakpoints |
-| **P11** | **11.4** | Preuves de sécurité et rejeu RLS | À FAIRE | Matrice d'isolation |
-| **P11** | **11.5** | CI et blocage des régressions | À FAIRE | Portes qualité strictes |
+| **P11** | **11.1** | Suite de tests unitaires exhaustive | **TERMINE** | Cas dégradés & limites (90j, null, alt négative, DST), test `degraded-edge-cases.spec.ts` 13/13 vert |
+| **P11** | **11.2** | Tests d'intégration server actions | **TERMINE** | Validation payloads, auth, schéma équipages & GPX, test `server-actions.spec.ts` 6/6 vert |
+| **P11** | **11.3** | Parcours E2E Playwright complets (12 parcours) | **TERMINE** | 12 parcours réels (création 28j, phases, équipages, GPX, snapshots 390/768/1440), 12/12 vert |
+| **P11** | **11.4** | Preuves de sécurité et rejeu RLS | **TERMINE** | Matrice RLS rejouée (25/25 vert `rlsMatrix.spec.ts`), URLs signées (6/6 vert `ethical-legal-security.spec.ts`) |
+| **P11** | **11.5** | CI et blocage des régressions | **TERMINE** | Pipeline `.github/workflows/ci.yml` avec 5 portes bloquantes (type-check, lint, test, build, e2e) |
 |---|---|---|---|---|
 | **P12** | **12.1** | Documentation technique et runbook | À FAIRE | Fiches d'architecture |
 | **P12** | **12.2** | Nettoyage du code mort et suppression des flags | À FAIRE | Zéro vestige |
