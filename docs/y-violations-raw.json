@@ -410,7 +410,7 @@
  {
   "rule": "R4",
   "file": "src/features/trips/components/TripCompactHeader.tsx",
-  "line": 24,
+  "line": 16,
   "extract": "<div className=\"flex items-center justify-between gap-4 p-4 rounded-[var(--lkv-radius-card)] glass border border-white/6"
  },
  {

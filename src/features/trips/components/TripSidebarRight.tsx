@@ -8,6 +8,7 @@ import { tripWidgetRegistry, widgetDef, estimatedHeight, WIDGET_COLUMN_MAX_HEIGH
 import type { TripFull } from '../types/trip.types';
 import { CountdownWidget } from './widgets/CountdownWidget';
 import { OfflineToggleWidget } from './widgets/OfflineToggleWidget';
+import { CountryCardWidget } from './widgets/CountryCardWidget';
 
 export interface TripSidebarRightProps {
   trip: TripFull;
@@ -50,6 +51,14 @@ export function TripSidebarRight({ trip, profile, phase, activeSection: _activeS
         );
       case 'offline-toggle':
         return <OfflineToggleWidget key={id} trip={trip} />;
+      case 'country-card':
+        return (
+          <CountryCardWidget
+            key={id}
+            countryCode={trip.destination_country_code}
+            countryName={trip.destination_name}
+          />
+        );
       default:
         // Widgets restants : livrés section par section en Y4 (§Y_HUB_SPEC §3).
         return null;
