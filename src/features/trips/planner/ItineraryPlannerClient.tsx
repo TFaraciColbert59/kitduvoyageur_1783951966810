@@ -299,18 +299,10 @@ export default function ItineraryPlannerClient({
     });
   }
 
-  // 8. Supprimer une journée
-  function handleDeleteDay(dayNumber: number) {
-    const daySteps = steps.filter((s) => s.day_number === dayNumber);
-    if (
-      daySteps.length > 0 &&
-      !window.confirm(
-        `Cette journée contient ${daySteps.length} étape(s). Confirmez-vous la suppression intégrale de la journée et de ses étapes ?`
-      )
-    ) {
-      return;
-    }
+  const [dayPendingDeletion, setDayPendingDeletion] = useState<number | null>(null);
 
+  // 8. Exécuter la suppression d'une journée
+  function executeDeleteDay(dayNumber: number) {
     const prevSteps = [...steps];
     const prevCount = daysCount;
 
@@ -336,6 +328,16 @@ export default function ItineraryPlannerClient({
         notifyError(err.message || 'Erreur lors de la suppression.');
       }
     });
+  }
+
+  // Demander confirmation ou supprimer directement
+  function handleDeleteDay(dayNumber: number) {
+    const daySteps = steps.filter((s) => s.day_number === dayNumber);
+    if (daySteps.length > 0) {
+      setDayPendingDeletion(dayNumber);
+      return;
+    }
+    executeDeleteDay(dayNumber);
   }
 
   // Étapes de la journée active, triées
@@ -388,7 +390,7 @@ export default function ItineraryPlannerClient({
 
         {/* Toasts flottants discrets */}
         {errorMessage && (
-          <div className="bg-red-50 text-red-700 border-b border-red-200 px-4 py-2 text-xs flex items-center gap-2 animate-in fade-in">
+          <div className="bg-[var(--lkv-danger)]/10 text-[var(--lkv-danger)] border-b border-[var(--lkv-danger)]/20 px-4 py-2 text-xs flex items-center gap-2 animate-in fade-in">
             <AlertCircle className="w-4 h-4 shrink-0" />
             <span>{errorMessage}</span>
           </div>
@@ -459,6 +461,44 @@ export default function ItineraryPlannerClient({
         steps={steps}
         onSelectTargetDay={handleSelectTargetDay}
       />
+
+      {/* Dialogue accessible de confirmation de suppression */}
+      {dayPendingDeletion !== null && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm animate-in fade-in">
+          <div className="w-full max-w-md bg-surface border border-border/80 rounded-2xl p-6 shadow-2xl space-y-4">
+            <div className="flex items-center gap-3 text-[var(--lkv-danger)]">
+              <AlertCircle className="w-6 h-6 shrink-0" />
+              <h3 className="font-semibold text-base text-text-primary">
+                Supprimer le Jour {dayPendingDeletion} ?
+              </h3>
+            </div>
+            <p className="text-sm text-text-secondary leading-relaxed">
+              Cette journée contient {steps.filter((s) => s.day_number === dayPendingDeletion).length} étape(s).
+              Confirmez-vous la suppression intégrale de la journée et de ses étapes ?
+            </p>
+            <div className="flex items-center justify-end gap-3 pt-2">
+              <button
+                type="button"
+                onClick={() => setDayPendingDeletion(null)}
+                className="px-4 py-2 rounded-xl border border-border/60 hover:bg-surface-subtle text-xs font-semibold text-text-secondary transition-colors"
+              >
+                Annuler
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  const day = dayPendingDeletion;
+                  setDayPendingDeletion(null);
+                  if (day !== null) executeDeleteDay(day);
+                }}
+                className="px-4 py-2 rounded-xl bg-[var(--lkv-danger)] text-white hover:opacity-90 text-xs font-semibold transition-opacity"
+              >
+                Supprimer définitivement
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
