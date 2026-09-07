@@ -58,7 +58,9 @@
     "mobile:build": "npm run build && npx cap sync",
     "mobile:open:ios": "npx cap open ios",
     "mobile:open:android": "npx cap open android",
-    "verify:invariants": "node scripts/verify/ci_invariants.mjs"
+    "verify:invariants": "node scripts/verify/ci_invariants.mjs",
+    "test:a11y": "playwright test --config=playwright.a11y.config.ts",
+    "visual:sheet": "node scripts/visual/contact-sheet.mjs"
   },
   "dependencies": {
     "@capacitor/android": "^8.5.0",

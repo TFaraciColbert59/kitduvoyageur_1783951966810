@@ -1,16 +1,17 @@
 import { defineConfig, devices } from '@playwright/test';
 
 /**
- * Config Playwright pour les tests de régression visuelle du shell mobile LKDV.
- * Utiliser : npx playwright test --config=playwright.visual.config.ts
+ * Y0.5 — Config des scans d'accessibilité (porte G6).
+ * Utiliser : npm run test:a11y
+ * Critère : zéro violation axe de gravité critical ou serious par surface × viewport.
  */
 export default defineConfig({
-  testDir: './tests/visual',
+  testDir: './tests/a11y',
   fullyParallel: false,
   forbidOnly: !!process.env.CI,
   retries: process.env.CI ? 1 : 0,
   workers: 1,
-  reporter: [['list'], ['html', { open: 'never' }]],
+  reporter: [['list'], ['html', { open: 'never', outputFolder: 'playwright-a11y-report' }]],
   timeout: 60_000,
   use: {
     baseURL: process.env.PW_BASE_URL || 'http://localhost:4000',
@@ -19,10 +20,7 @@ export default defineConfig({
   projects: [
     {
       name: 'desktop-chrome',
-      use: {
-        ...devices['Desktop Chrome'],
-        viewport: { width: 1440, height: 900 },
-      },
+      use: { ...devices['Desktop Chrome'], viewport: { width: 1440, height: 900 } },
     },
     {
       name: 'iphone-14-pro',
@@ -33,10 +31,9 @@ export default defineConfig({
       },
     },
     {
-      // Y0.5 — la tablette est le point de rupture entre mobile et cockpit 3 colonnes.
       name: 'ipad-portrait',
       use: {
-        ...(devices['iPad (gen 7)'] ?? devices['iPad Mini']),
+        ...devices['iPad (gen 7)'] ?? devices['iPad Mini'],
         defaultBrowserType: 'chromium',
         viewport: { width: 834, height: 1194 },
       },

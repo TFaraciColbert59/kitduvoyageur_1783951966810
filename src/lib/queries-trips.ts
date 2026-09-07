@@ -41,7 +41,9 @@ export async function getPublicTrips(
   let query = supabase
     .from('trips')
     .select(
-      'id, slug, title, description, destination_country_code, destination_name, start_date, end_date, status, visibility, difficulty, primary_activity, cover_image_url, created_at, trip_collaborators(count), trip_steps(count), trip_expenses(amount)',
+      // RGPD / portée publique : ni dépenses, ni documents, ni identités —
+      // uniquement des compteurs agrégés.
+      'id, slug, title, description, destination_country_code, destination_name, start_date, end_date, status, visibility, difficulty, primary_activity, cover_image_url, created_at, trip_collaborators(count), trip_steps(count)',
       { count: 'exact' }
     )
     .in('visibility', ['public', 'unlisted']);

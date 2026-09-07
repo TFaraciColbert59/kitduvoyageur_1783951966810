@@ -29,17 +29,28 @@ function getStorage(): Storage | null {
 }
 
 /**
- * Sauvegarde localement l'intégralité d'un voyage pour consultation hors-ligne
+ * Sauvegarde localement un voyage pour consultation hors-ligne.
+ *
+ * RGPD (audit Y0.7 / risque R7) : le stockage local est en clair et peut être
+ * lu sur un appareil partagé — le payload est donc assaini : ni documents
+ * (file_url des pièces d'identité), ni token de partage, ni dépenses.
  */
 export function saveTripOffline(trip: TripFull): boolean {
   const storage = getStorage();
   if (!storage || !trip?.slug) return false;
 
   try {
+    const safeTrip: TripFull = {
+      ...trip,
+      documents: [],
+      share_token: null,
+      expenses: [],
+    };
+
     const payload: StoredTripPayload = {
       version: 1,
       savedAt: new Date().toISOString(),
-      trip,
+      trip: safeTrip,
     };
 
     storage.setItem(`${PREFIX}${trip.slug}`, JSON.stringify(payload));
