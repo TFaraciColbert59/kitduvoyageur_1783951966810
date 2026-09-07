@@ -153,19 +153,19 @@ export function TripLiveCockpitView({
   return (
     <div
       className={`space-y-6 transition-colors duration-200 ${
-        isSunMode ? 'bg-black text-white p-4 sm:p-6 rounded-[32px]' : ''
+        isSunMode ? 'bg-black text-white p-4 sm:p-6 rounded-3xl' : ''
       }`}
     >
       {/* 1. Barre de statut Cockpit & Mode Plein Soleil */}
       <div className="flex items-center justify-between gap-3">
         <div className="flex items-center gap-2.5">
           <span className="relative flex h-3 w-3">
-            <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75" />
-            <span className="relative inline-flex rounded-full h-3 w-3 bg-emerald-500" />
+            <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-[var(--lkv-success)]/80 opacity-75" />
+            <span className="relative inline-flex rounded-full h-3 w-3 bg-[var(--lkv-success)]" />
           </span>
           <span
             className={`text-xs font-bold uppercase tracking-wider ${
-              isSunMode ? 'text-amber-400' : 'text-lkv-primary'
+              isSunMode ? 'text-[var(--lkv-warning)]' : 'text-lkv-primary'
             }`}
           >
             Cockpit Terrain · Mode Vivre
@@ -178,7 +178,7 @@ export function TripLiveCockpitView({
           onClick={() => setIsSunMode(!isSunMode)}
           className={`flex items-center gap-2 px-3.5 py-2 rounded-full text-xs font-bold transition-all min-h-[44px] ${
             isSunMode
-              ? 'bg-amber-400 text-black shadow-lg shadow-amber-400/20'
+              ? 'bg-[var(--lkv-warning)] text-black shadow-lg'
               : 'bg-white/80 hover:bg-white text-lkv-primary border border-black/10'
           }`}
           title="Bascule en contraste élevé plein soleil pour consultation sous forte luminosité"
@@ -191,8 +191,8 @@ export function TripLiveCockpitView({
       {/* 2. Sélecteur de Jour & Progression de l'étape */}
       <GlassCard
         tone={isSunMode ? 'neutral' : 'sage'}
-        className={`p-4 sm:p-6 rounded-[28px] border transition-all ${
-          isSunMode ? 'bg-[#111] border-white/20 text-white' : 'border-white/70'
+        className={`p-4 sm:p-6 rounded-3xl border transition-all ${
+          isSunMode ? 'bg-black/90 border-white/20 text-white' : 'border-white/70'
         }`}
       >
         <div className="flex items-center justify-between gap-2 mb-4">
@@ -215,7 +215,7 @@ export function TripLiveCockpitView({
           <div className="text-center">
             <span
               className={`text-xs font-bold uppercase tracking-wider ${
-                isSunMode ? 'text-amber-400' : 'text-lkv-secondary'
+                isSunMode ? 'text-[var(--lkv-warning)]' : 'text-lkv-secondary'
               }`}
             >
               {isFutureTrip ? 'Voyage à venir' : 'Étape active'}
@@ -252,7 +252,7 @@ export function TripLiveCockpitView({
         <div className="w-full bg-black/10 rounded-full h-2 overflow-hidden mb-6">
           <div
             className={`h-full transition-all duration-300 rounded-full ${
-              isSunMode ? 'bg-amber-400' : 'bg-lkv-primary'
+              isSunMode ? 'bg-[var(--lkv-warning)]' : 'bg-lkv-primary'
             }`}
             style={{ width: `${Math.round((activeDay / calculatedTotalDays) * 100)}%` }}
           />
@@ -264,7 +264,7 @@ export function TripLiveCockpitView({
             <div>
               <div
                 className={`text-xs font-semibold ${
-                  isSunMode ? 'text-amber-300' : 'text-lkv-secondary'
+                  isSunMode ? 'text-[var(--lkv-warning)]' : 'text-lkv-secondary'
                 }`}
               >
                 {currentStep.location_name || 'En chemin'}
@@ -279,7 +279,7 @@ export function TripLiveCockpitView({
               {currentStep.description && (
                 <p
                   className={`text-xs sm:text-sm mt-1 leading-relaxed ${
-                    isSunMode ? 'text-gray-200' : 'text-lkv-secondary'
+                    isSunMode ? 'text-white/80' : 'text-lkv-secondary'
                   }`}
                 >
                   {currentStep.description}
@@ -295,12 +295,12 @@ export function TripLiveCockpitView({
                 }`}
               >
                 <div className="flex items-center gap-1.5 text-xs text-lkv-secondary mb-1">
-                  <Navigation size={13} className={isSunMode ? 'text-amber-400' : 'text-lkv-primary'} />
+                  <Navigation size={13} className={isSunMode ? 'text-[var(--lkv-warning)]' : 'text-lkv-primary'} />
                   <span>Distance</span>
                 </div>
                 <div
                   className={`text-lg sm:text-xl font-black ${
-                    isSunMode ? 'text-amber-400' : 'text-lkv-primary'
+                    isSunMode ? 'text-[var(--lkv-warning)]' : 'text-lkv-primary'
                   }`}
                 >
                   {currentStep.distance_km ? `${currentStep.distance_km} km` : '—'}
@@ -313,12 +313,12 @@ export function TripLiveCockpitView({
                 }`}
               >
                 <div className="flex items-center gap-1.5 text-xs text-lkv-secondary mb-1">
-                  <Mountain size={13} className={isSunMode ? 'text-amber-400' : 'text-lkv-primary'} />
+                  <Mountain size={13} className={isSunMode ? 'text-[var(--lkv-warning)]' : 'text-lkv-primary'} />
                   <span>Dénivelé +</span>
                 </div>
                 <div
                   className={`text-lg sm:text-xl font-black ${
-                    isSunMode ? 'text-amber-400' : 'text-lkv-primary'
+                    isSunMode ? 'text-[var(--lkv-warning)]' : 'text-lkv-primary'
                   }`}
                 >
                   {currentStep.elevation_gain_m ? `+${currentStep.elevation_gain_m} m` : '—'}
@@ -331,12 +331,12 @@ export function TripLiveCockpitView({
                 }`}
               >
                 <div className="flex items-center gap-1.5 text-xs text-lkv-secondary mb-1">
-                  <Mountain size={13} className={isSunMode ? 'text-amber-400' : 'text-lkv-primary'} />
+                  <Mountain size={13} className={isSunMode ? 'text-[var(--lkv-warning)]' : 'text-lkv-primary'} />
                   <span>Dénivelé -</span>
                 </div>
                 <div
                   className={`text-lg sm:text-xl font-black ${
-                    isSunMode ? 'text-amber-400' : 'text-lkv-primary'
+                    isSunMode ? 'text-[var(--lkv-warning)]' : 'text-lkv-primary'
                   }`}
                 >
                   {currentStep.elevation_loss_m ? `-${currentStep.elevation_loss_m} m` : '—'}
@@ -349,7 +349,7 @@ export function TripLiveCockpitView({
                 }`}
               >
                 <div className="flex items-center gap-1.5 text-xs text-lkv-secondary mb-1">
-                  <Home size={13} className={isSunMode ? 'text-amber-400' : 'text-lkv-primary'} />
+                  <Home size={13} className={isSunMode ? 'text-[var(--lkv-warning)]' : 'text-lkv-primary'} />
                   <span>Hébergement</span>
                 </div>
                 <div
@@ -367,7 +367,7 @@ export function TripLiveCockpitView({
               <div
                 className={`p-3 rounded-2xl border text-xs flex items-start gap-2 ${
                   isSunMode
-                    ? 'bg-amber-400/10 border-amber-400/30 text-amber-200'
+                    ? 'bg-[var(--lkv-warning)]/10 border-[var(--lkv-warning)]/30 text-[var(--lkv-warning)]'
                     : 'bg-lkv-primary/5 border-lkv-primary/10 text-lkv-primary'
                 }`}
               >
@@ -394,21 +394,21 @@ export function TripLiveCockpitView({
         {/* Saisie rapide de dépense en 2 clics */}
         <GlassCard
           tone="neutral"
-          className={`p-5 rounded-[24px] border ${
-            isSunMode ? 'bg-[#181818] border-white/20 text-white' : 'border-white/60'
+          className={`p-5 rounded-3xl border ${
+            isSunMode ? 'bg-black/80 border-white/20 text-white' : 'border-white/60'
           }`}
         >
           <div className="flex items-center justify-between mb-3">
             <div className="flex items-center gap-2">
-              <CreditCard className="w-5 h-5 text-emerald-500" />
+              <CreditCard className="w-5 h-5 text-[var(--lkv-success)]" />
               <h4 className="font-bold text-sm">Dépense Express Terrain</h4>
             </div>
-            <span className="text-[11px] px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-600 font-semibold">
+            <span className="text-[11px] px-2 py-0.5 rounded-full bg-[var(--lkv-success)]/10 text-[var(--lkv-success)] font-semibold">
               2 taps
             </span>
           </div>
 
-          <p className={`text-xs mb-4 ${isSunMode ? 'text-gray-300' : 'text-lkv-secondary'}`}>
+          <p className={`text-xs mb-4 ${isSunMode ? 'text-white/70' : 'text-lkv-secondary'}`}>
             Enregistrez instantanément vos frais de refuge, ravitaillement ou transport sans
             quitter la piste.
           </p>
@@ -426,7 +426,7 @@ export function TripLiveCockpitView({
           ) : (
             <form onSubmit={handleQuickExpenseSubmit} className="space-y-3">
               {expenseSuccessMsg && (
-                <div className="p-2.5 rounded-xl bg-emerald-500/15 border border-emerald-500/30 text-emerald-700 text-xs font-semibold flex items-center gap-2">
+                <div className="p-2.5 rounded-xl bg-[var(--lkv-success)]/15 border border-[var(--lkv-success)]/30 text-[var(--lkv-success)] text-xs font-semibold flex items-center gap-2">
                   <CheckCircle2 size={16} />
                   <span>{expenseSuccessMsg}</span>
                 </div>
@@ -504,7 +504,7 @@ export function TripLiveCockpitView({
                   type="button"
                   onClick={() => setIsQuickExpenseOpen(false)}
                   className={`flex-1 py-2 rounded-xl text-xs font-medium min-h-[44px] border ${
-                    isSunMode ? 'border-white/20 text-gray-300' : 'border-black/10 text-gray-600'
+                    isSunMode ? 'border-white/20 text-white/70' : 'border-black/10 text-text-secondary'
                   }`}
                 >
                   Annuler
@@ -526,8 +526,8 @@ export function TripLiveCockpitView({
         {/* Urgence & Secours Montagne Hors-Ligne */}
         <GlassCard
           tone="neutral"
-          className={`p-5 rounded-[24px] border ${
-            isSunMode ? 'bg-[#181818] border-white/20 text-white' : 'border-white/60'
+          className={`p-5 rounded-3xl border ${
+            isSunMode ? 'bg-black/80 border-white/20 text-white' : 'border-white/60'
           }`}
         >
           <div className="flex items-center justify-between mb-3">
@@ -553,7 +553,7 @@ export function TripLiveCockpitView({
 
               <a
                 href="sms:114"
-                className="flex items-center justify-center gap-2 p-3 rounded-2xl bg-white hover:bg-gray-50 text-rose-600 border border-rose-200 text-sm font-extrabold shadow-xs min-h-[48px] transition-all"
+                className="flex items-center justify-center gap-2 p-3 rounded-2xl bg-white hover:bg-surface-subtle text-rose-600 border border-rose-200 text-sm font-extrabold shadow-xs min-h-[48px] transition-all"
               >
                 <MessageSquare size={16} />
                 <span>SMS 114</span>
@@ -583,7 +583,7 @@ export function TripLiveCockpitView({
                 title="Copier les coordonnées pour les secours"
               >
                 {copiedCoords ? (
-                  <Check size={16} className="text-emerald-600" />
+                  <Check size={16} className="text-[var(--lkv-success)]" />
                 ) : (
                   <Copy size={16} />
                 )}
