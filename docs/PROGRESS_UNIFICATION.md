@@ -50,9 +50,9 @@ Dernière mise à jour : 2026-09-07T01:15:00+02:00
 | **P6** | **6.2** | Interconnexion des modules (Matériel, Carte, Copilote, etc.) | **TERMINE** | Bannières contextuelles, injection prompt copilote, doc `MODULE_INTERCONNECTIONS.md` |
 | **P6** | **6.3** | Recherche et navigation globale | **TERMINE** | GlobalSearch (Cmd+K) trips/crews/places/carnets, breadcrumb équipage/voyage/phase, reprise accueil, Playwright 9/9 vert |
 |---|---|---|---|---|
-| **P7** | **7.1** | Bus d'événements `lkv_events` et fonction `emitEvent()` | À FAIRE | Émission server-side |
-| **P7** | **7.2** | Consommateurs d'événements (fil d'activité, scoring, notifications) | À FAIRE | Pas de recalcul local |
-| **P7** | **7.3** | RLS et confidentialité du bus | À FAIRE | Rétention 13 mois |
+| **P7** | **7.1** | Bus d'événements `lkv_events` et fonction `emitEvent()` | **TERMINE** | `EventBus` résilient in-process + Supabase server action dispatch, test `eventBus.spec.ts` 12/12 vert |
+| **P7** | **7.2** | Consommateurs d'événements (fil d'activité, scoring, notifications) | **TERMINE** | Handlers typés (activity, notifications, scoring), composant `LiveActivityFeed` intégré `/communaute` & `/activite` |
+| **P7** | **7.3** | RLS et confidentialité du bus | **TERMINE** | Migration `20260907010000_create_lkv_events_bus.sql` appliquée, 5 RLS policies, rétention RGPD 13 mois |
 |---|---|---|---|---|
 | **P8** | **8.1** | Export / import GPX 1.1 certifié | À FAIRE | Compatibilité montres GPS |
 | **P8** | **8.2** | Checklist pré-départ automatisée | À FAIRE | Validité passeport, vaccins |

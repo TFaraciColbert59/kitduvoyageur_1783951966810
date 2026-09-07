@@ -12,6 +12,7 @@ import {
   verifyInviteToken,
   validateJoinAttempt,
 } from '../lib/invitations';
+import { emitEvent } from '@/lib/events/eventBus';
 
 export interface ActionResponse<T = unknown> {
   success: boolean;
@@ -88,6 +89,20 @@ export async function createCrewAction(
     user_id: user.id,
     role: 'owner',
     status: 'active',
+  });
+
+  // Émission d'événement crew.created
+  await emitEvent({
+    event_type: 'crew.created',
+    actor_id: user.id,
+    entity_type: 'crew',
+    entity_id: crew.id,
+    visibility: (crew as any).visibility === 'public' ? 'public' : 'crew',
+    crew_id: crew.id,
+    metadata: {
+      crewName: (crew as any).name,
+      slug: (crew as any).slug,
+    },
   });
 
   revalidatePath('/equipages');
@@ -167,6 +182,21 @@ export async function joinCrewByCodeAction(
     return { success: false, error: joinErr.message };
   }
 
+  // Émission d'événement crew.joined
+  await emitEvent({
+    event_type: 'crew.joined',
+    actor_id: user.id,
+    entity_type: 'crew',
+    entity_id: crew.id,
+    visibility: 'crew',
+    crew_id: crew.id,
+    metadata: {
+      crewId: crew.id,
+      slug: crew.slug,
+      userId: user.id,
+    },
+  });
+
   revalidatePath('/equipages');
   revalidatePath(`/equipages/${crew.slug}`);
   return { success: true, data: { crewId: crew.id, slug: crew.slug } };
@@ -192,6 +222,20 @@ export async function leaveCrewAction(crewId: string): Promise<ActionResponse> {
   if (error) {
     return { success: false, error: error.message };
   }
+
+  // Émission d'événement crew.left
+  await emitEvent({
+    event_type: 'crew.left',
+    actor_id: user.id,
+    entity_type: 'crew',
+    entity_id: crewId,
+    visibility: 'crew',
+    crew_id: crewId,
+    metadata: {
+      crewId,
+      userId: user.id,
+    },
+  });
 
   revalidatePath('/equipages');
   return { success: true };

@@ -1,9 +1,10 @@
-﻿'use client';
+'use client';
 
 import React, { useState } from 'react';
 import Link from 'next/link';
 import { useAuth } from '@/contexts/AuthContext';
 import MobilePageShell from '@/components/mobile-nav/MobilePageShell';
+import { LiveActivityFeed } from '@/components/activity/LiveActivityFeed';
 
 type Tab = 'vous' | 'communaute' | 'amis';
 
@@ -71,6 +72,9 @@ function CommunauteTab() {
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#5C6B5E" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><polyline points="9 18 15 12 9 6" /></svg>
         </Link>
       ))}
+      <div className="pt-2">
+        <LiveActivityFeed limit={5} title="Dernières activités" />
+      </div>
     </div>
   );
 }
