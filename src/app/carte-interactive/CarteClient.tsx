@@ -3,6 +3,7 @@
 import React from 'react';
 import dynamic from 'next/dynamic';
 import Header from '@/components/Header';
+import { ActiveTripBanner } from '@/features/trips/components/ActiveTripBanner';
 
 const InteractiveMap = dynamic(() => import('@/components/map/InteractiveMap'), {
   ssr: false,
@@ -23,6 +24,7 @@ export default function CarteClient() {
       <div className="hidden md:block">
         <Header />
       </div>
+      <ActiveTripBanner />
       <main className="flex-1 md:pt-16 flex flex-col relative w-full h-full min-h-0" style={{ touchAction: 'none', overscrollBehavior: 'none' }}>
         <InteractiveMap />
       </main>

@@ -3,6 +3,7 @@
 import React from 'react';
 import { usePathname } from 'next/navigation';
 import CompteBackground from '@/components/compte/CompteBackground';
+import { ActiveTripBanner } from '@/features/trips/components/ActiveTripBanner';
 
 export interface AppShellProps {
   children?: React.ReactNode;
@@ -105,6 +106,9 @@ export default function AppShell({
       }}
     >
       {videoBackground && <CompteBackground />}
+
+      {/* Bandeau d'expédition active cross-modules (Phase 6.1) */}
+      <ActiveTripBanner />
 
       {/* Slot header sticky (optionnel) */}
       {header && (

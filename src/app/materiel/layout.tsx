@@ -1,5 +1,6 @@
 import type { Metadata } from 'next';
 import Header from '@/components/Header';
+import { ActiveTripBanner } from '@/features/trips/components/ActiveTripBanner';
 import { BackgroundVideo } from '@/components/materiel/BackgroundVideo';
 import { GlassCommand } from '@/components/ui/GlassCommand';
 
@@ -23,6 +24,7 @@ export default function MaterielLayout({ children }: { children: React.ReactNode
       {/* Interface UI Fullscreen sur desktop — Aucun débordement possible */}
       <div className="relative z-10 w-full h-full flex flex-col overflow-hidden">
         <Header />
+        <ActiveTripBanner />
         <main className="flex-1 min-h-0 w-full h-full overflow-hidden pt-16 sm:pt-[70px] pb-1">
           {children}
         </main>

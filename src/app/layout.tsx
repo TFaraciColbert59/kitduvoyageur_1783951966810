@@ -22,6 +22,8 @@ import PageTransition from '@/components/ui/PageTransition';
 import { ConditionalCursor } from '@/components/ui/CustomCursor';
 import PrefetchRoutes from '@/components/PrefetchRoutes';
 import NativeAppBootstrap from '@/components/NativeAppBootstrap';
+import { ActiveTripProvider } from '@/features/trips/context/ActiveTripContext';
+import { getActiveTrip } from '@/features/trips/context/activeTripServer';
 
 // Fonts
 const dmSans = DM_Sans({
@@ -148,9 +150,10 @@ export const metadata: Metadata = {
   },
 };
 
-export default function RootLayout({
+export default async function RootLayout({
   children,
 }: Readonly<{ children: React.ReactNode }>) {
+  const activeTrip = await getActiveTrip();
   const organizationSchema = getOrganizationSchema(siteUrl);
   const websiteSchema = getWebsiteSchema(siteUrl);
 
@@ -232,41 +235,43 @@ export default function RootLayout({
         style={{ backgroundColor: '#FBFAF6' }}
       >
         <AuthProvider>
-          <WishlistProvider>
-            <ToastProvider>
-              <SearchProvider>
-                <ErrorBoundaryWrapper>
-                  <ReactQueryProvider>
-                    <NativeAppBootstrap />
-                    <KitSheetProvider>
-                    <PrefetchRoutes />
-                    <Suspense fallback={null}>
-                      <GoogleAnalytics />
-                    </Suspense>
-                    {/* Skip navigation for accessibility */}
-                    <a
-                      href="#main-content"
-                      className="sr-only focus:not-sr-only focus:fixed focus:top-4 focus:left-4 focus:z-[9999] focus:px-4 focus:py-2 focus:bg-[#17402C] focus:text-white focus:rounded-lg focus:font-semibold focus:text-sm"
-                    >
-                      Aller au contenu principal
-                    </a>
+          <ActiveTripProvider initialTrip={activeTrip}>
+            <WishlistProvider>
+              <ToastProvider>
+                <SearchProvider>
+                  <ErrorBoundaryWrapper>
+                    <ReactQueryProvider>
+                      <NativeAppBootstrap />
+                      <KitSheetProvider>
+                      <PrefetchRoutes />
+                      <Suspense fallback={null}>
+                        <GoogleAnalytics />
+                      </Suspense>
+                      {/* Skip navigation for accessibility */}
+                      <a
+                        href="#main-content"
+                        className="sr-only focus:not-sr-only focus:fixed focus:top-4 focus:left-4 focus:z-[9999] focus:px-4 focus:py-2 focus:bg-[#17402C] focus:text-white focus:rounded-lg focus:font-semibold focus:text-sm"
+                      >
+                        Aller au contenu principal
+                      </a>
 
-                    {/* Mobile navigation — hidden on desktop (md+) */}
-                    <MobileNavWrapper />
+                      {/* Mobile navigation — hidden on desktop (md+) */}
+                      <MobileNavWrapper />
 
-                    <main id="main-content">
-                      <PageTransition>{children}</PageTransition>
-                    </main>
-                    <CookieConsentBanner />
-                    <ConditionalCursor />
-                    {/* Migration Mon Matériel — exécutée UNE SEULE FOIS au montage */}
-                    <MigrationEffect />
-                    </KitSheetProvider>
-                  </ReactQueryProvider>
-                </ErrorBoundaryWrapper>
-              </SearchProvider>
-            </ToastProvider>
-          </WishlistProvider>
+                      <main id="main-content">
+                        <PageTransition>{children}</PageTransition>
+                      </main>
+                      <CookieConsentBanner />
+                      <ConditionalCursor />
+                      {/* Migration Mon Matériel — exécutée UNE SEULE FOIS au montage */}
+                      <MigrationEffect />
+                      </KitSheetProvider>
+                    </ReactQueryProvider>
+                  </ErrorBoundaryWrapper>
+                </SearchProvider>
+              </ToastProvider>
+            </WishlistProvider>
+          </ActiveTripProvider>
         </AuthProvider>
         <SpeedInsights />
       </body>

@@ -161,5 +161,28 @@ test.describe('Module Voyage E2E Suite — Parcours Utilisateur & Ergonomie (C1-
     await expect(liveTab).toHaveAttribute('aria-selected', 'true');
   });
 
+  test('TEST-E2E-VOYAGE-09: Activation voyage, bannière persistante et interconnexions', async ({ page }) => {
+    // 1. Ouvrir la page de détail du voyage
+    await page.goto('/voyages/fdgb-3c3a92', { waitUntil: 'domcontentloaded' });
+
+    // 2. Clic sur le bouton d'activation "Activer"
+    const activateButton = page.locator('button:has-text("Activer")');
+    await activateButton.waitFor({ state: 'visible', timeout: 5000 });
+    await activateButton.click();
+    await expect(page.locator('button:has-text("Active")')).toBeVisible({ timeout: 5000 });
+
+    // 3. Navigation vers la page d'accueil : vérification de la carte de reprise
+    await page.goto('/', { waitUntil: 'domcontentloaded' });
+    await expect(page.locator('text=Expédition en cours')).toBeVisible();
+
+    // 4. Navigation vers le matériel : vérification du contexte d'expédition
+    await page.goto('/materiel', { waitUntil: 'domcontentloaded' });
+    await expect(page.locator('text=Voyage actif :').first()).toBeVisible();
+
+    // 5. Navigation vers la carte interactive : vérification du badge de focus
+    await page.goto('/carte-interactive', { waitUntil: 'domcontentloaded' });
+    await expect(page.locator('text=Voyage actif :').first()).toBeVisible();
+  });
+
 });
 
