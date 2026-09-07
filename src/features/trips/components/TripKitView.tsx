@@ -140,12 +140,12 @@ export function TripKitView({ trip, analysis, showBackLink: _showBackLink = fals
       {cartToast && (
         <div className="fixed bottom-24 right-4 z-50 max-w-sm p-4 rounded-2xl bg-lkv-primary text-white shadow-xl flex items-center justify-between gap-3 animate-slide-up border border-lkv-secondary">
           <div className="flex items-center gap-2 text-xs">
-            <CheckCircle2 className="w-4 h-4 text-[#A6C1A0] shrink-0" />
+            <CheckCircle2 className="w-4 h-4 text-lkv-secondary shrink-0" />
             <span>{cartToast}</span>
           </div>
           <Link
             href="/panier"
-            className="px-3 py-1 text-xs font-bold bg-[#FAF8F5] text-lkv-primary rounded-lg hover:bg-white transition-all shrink-0"
+            className="px-3 py-1 text-xs font-bold bg-surface text-lkv-primary rounded-lg hover:bg-white transition-all shrink-0"
           >
             Voir le panier
           </Link>
@@ -155,7 +155,7 @@ export function TripKitView({ trip, analysis, showBackLink: _showBackLink = fals
       {/* 1. En-tête Statut Sac & Bilan de Charge */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         {/* Carte Complétude */}
-        <GlassCard tone="sage" blur="md" className="p-5 rounded-[24px] border border-white/70">
+        <GlassCard tone="sage" blur="md" className="p-5 rounded-3xl border border-white/70">
           <div className="flex items-center justify-between mb-2">
             <span className="text-xs font-bold uppercase tracking-wider text-lkv-secondary flex items-center gap-1.5">
               <CheckCircle2 className="w-4 h-4" />
@@ -168,14 +168,14 @@ export function TripKitView({ trip, analysis, showBackLink: _showBackLink = fals
           </div>
           <div className="w-full h-2.5 bg-black/5 rounded-full overflow-hidden mt-3">
             <div
-              className="h-full bg-gradient-to-r from-var(--lkv-secondary) to-var(--lkv-primary) transition-all duration-300 rounded-full"
+              className="h-full bg-gradient-to-r from-[var(--lkv-secondary)] to-[var(--lkv-primary)] transition-all duration-300 rounded-full"
               style={{ width: `${progressPct}%` }}
             />
           </div>
         </GlassCard>
 
         {/* Carte Poids (Résolution D3, D4) */}
-        <GlassCard tone="neutral" blur="md" className="p-5 rounded-[24px] border border-white/70">
+        <GlassCard tone="neutral" blur="md" className="p-5 rounded-3xl border border-white/70">
           <div className="flex items-center justify-between mb-2">
             <span className="text-xs font-bold uppercase tracking-wider text-lkv-secondary flex items-center gap-1.5">
               <Scale className="w-4 h-4" />
@@ -186,13 +186,13 @@ export function TripKitView({ trip, analysis, showBackLink: _showBackLink = fals
                 analysis.weightCategory === 'none'
                   ? 'bg-stone-100 text-stone-600'
                   : analysis.weightCategory === 'incomplet'
-                  ? 'bg-amber-100 text-amber-800'
+                  ? 'bg-[var(--lkv-warning)]/15 text-[var(--lkv-warning)]'
                   : analysis.weightCategory === 'ultralight'
-                  ? 'bg-emerald-100 text-emerald-800'
+                  ? 'bg-[var(--lkv-success)]/15 text-[var(--lkv-success)]'
                   : analysis.weightCategory === 'light'
-                  ? 'bg-blue-100 text-blue-800'
+                  ? 'bg-lkv-primary/15 text-lkv-primary'
                   : analysis.weightCategory === 'standard'
-                  ? 'bg-amber-100 text-amber-800'
+                  ? 'bg-[var(--lkv-warning)]/15 text-[var(--lkv-warning)]'
                   : 'bg-rose-100 text-rose-800'
               }`}
             >
@@ -212,7 +212,7 @@ export function TripKitView({ trip, analysis, showBackLink: _showBackLink = fals
         </GlassCard>
 
         {/* Carte Contexte Expédition (Résolution D2) */}
-        <GlassCard tone="neutral" blur="md" className="p-5 rounded-[24px] border border-white/70">
+        <GlassCard tone="neutral" blur="md" className="p-5 rounded-3xl border border-white/70">
           <span className="text-xs font-bold uppercase tracking-wider text-lkv-secondary flex items-center gap-1.5 mb-2">
             <Compass className="w-4 h-4" />
             Contexte Itinéraire
@@ -234,12 +234,12 @@ export function TripKitView({ trip, analysis, showBackLink: _showBackLink = fals
 
       {/* Alertes de sécurité & climat */}
       {analysis.climateWarnings.length > 0 && (
-        <div className="p-4 rounded-2xl bg-amber-50 border border-amber-200/80 text-amber-900 text-xs sm:text-sm space-y-1.5">
-          <div className="font-bold flex items-center gap-2 text-amber-800">
-            <AlertTriangle className="w-4 h-4 shrink-0 text-amber-600" />
+        <div className="p-4 rounded-2xl bg-[var(--lkv-warning)]/10 border border-[var(--lkv-warning)]/20 text-text-primary text-xs sm:text-sm space-y-1.5">
+          <div className="font-bold flex items-center gap-2 text-[var(--lkv-warning)]">
+            <AlertTriangle className="w-4 h-4 shrink-0 text-[var(--lkv-warning)]" />
             Conditions de terrain identifiées pour votre expédition
           </div>
-          <ul className="list-disc list-inside space-y-0.5 pl-1 text-xs text-amber-800/90">
+          <ul className="list-disc list-inside space-y-0.5 pl-1 text-xs text-text-secondary">
             {analysis.climateWarnings.map((w, idx) => (
               <li key={idx}>{w}</li>
             ))}
@@ -249,7 +249,7 @@ export function TripKitView({ trip, analysis, showBackLink: _showBackLink = fals
 
       {/* 2. Recommandations Contextuelles & Boutique LKDV (CŒUR BUSINESS) */}
       {(analysis.vitalGaps.length > 0 || analysis.recommendedGaps.length > 0) && (
-        <GlassCard tone="sage" blur="md" className="p-6 rounded-[28px] border border-white/80 shadow-sm space-y-4">
+        <GlassCard tone="sage" blur="md" className="p-6 rounded-3xl border border-white/80 shadow-sm space-y-4">
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pb-3 border-b border-stone-200/60">
             <div>
               <span className="text-xs font-bold text-lkv-secondary uppercase tracking-wider flex items-center gap-1.5">
@@ -280,7 +280,7 @@ export function TripKitView({ trip, analysis, showBackLink: _showBackLink = fals
               return (
                 <div
                   key={gap.id}
-                  className="p-4 rounded-[20px] bg-white/90 border border-stone-200/80 shadow-sm hover:border-lkv-secondary/60 transition-all flex flex-col justify-between"
+                  className="p-4 rounded-2xl bg-white/90 border border-stone-200/80 shadow-sm hover:border-lkv-secondary/60 transition-all flex flex-col justify-between"
                 >
                   <div>
                     <div className="flex items-center justify-between gap-2 mb-2">
@@ -292,7 +292,7 @@ export function TripKitView({ trip, analysis, showBackLink: _showBackLink = fals
                         className={`text-[10px] font-black uppercase px-2 py-0.5 rounded-full ${
                           gap.priority === 'vital'
                             ? 'bg-rose-100 text-rose-800'
-                            : 'bg-amber-100 text-amber-800'
+                            : 'bg-[var(--lkv-warning)]/15 text-[var(--lkv-warning)]'
                         }`}
                       >
                         {gap.priority === 'vital' ? 'Vital pour la sécurité' : 'Recommandé'}
@@ -324,7 +324,7 @@ export function TripKitView({ trip, analysis, showBackLink: _showBackLink = fals
                         <button
                           onClick={() => handleBuyOnShop(gap)}
                           disabled={isPending}
-                          className="px-3 py-1.5 rounded-xl bg-lkv-primary hover:bg-[#123323] text-white text-xs font-bold transition-all flex items-center gap-1.5 shadow-sm active:scale-95"
+                          className="px-3 py-1.5 rounded-xl bg-lkv-primary hover:opacity-90 text-white text-xs font-bold transition-all flex items-center gap-1.5 shadow-sm active:scale-95"
                           title="Acheter sur la boutique LKDV avec expédition rapide"
                         >
                           <ShoppingCart className="w-3.5 h-3.5" />
@@ -377,7 +377,7 @@ export function TripKitView({ trip, analysis, showBackLink: _showBackLink = fals
       )}
 
       {/* 3. Check-list des Objets du Sac & Filtrage */}
-      <GlassCard tone="neutral" blur="md" className="p-6 rounded-[28px] border border-white/70 shadow-sm space-y-5">
+      <GlassCard tone="neutral" blur="md" className="p-6 rounded-3xl border border-white/70 shadow-sm space-y-5">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
           <div>
             <h3 className="text-lg font-black text-lkv-primary flex items-center gap-2">
@@ -391,7 +391,7 @@ export function TripKitView({ trip, analysis, showBackLink: _showBackLink = fals
 
           <button
             onClick={() => setIsAddModalOpen(true)}
-            className="px-4 py-2 rounded-xl bg-lkv-primary hover:bg-[#123323] text-white text-xs font-bold transition-all flex items-center gap-1.5 shadow-sm self-start sm:self-auto"
+            className="px-4 py-2 rounded-xl bg-lkv-primary hover:opacity-90 text-white text-xs font-bold transition-all flex items-center gap-1.5 shadow-sm self-start sm:self-auto"
           >
             <Plus className="w-4 h-4" />
             Ajouter un objet
@@ -503,7 +503,7 @@ export function TripKitView({ trip, analysis, showBackLink: _showBackLink = fals
       {/* Modal Ajout Rapide d'Équipement */}
       {isAddModalOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm animate-fade-in">
-          <div className="w-full max-w-md bg-white rounded-[24px] p-6 shadow-2xl border border-stone-200">
+          <div className="w-full max-w-md bg-white rounded-3xl p-6 shadow-2xl border border-stone-200">
             <h3 className="text-base font-bold text-stone-900 mb-4">
               Ajouter un équipement au sac
             </h3>
@@ -589,7 +589,7 @@ export function TripKitView({ trip, analysis, showBackLink: _showBackLink = fals
                 <button
                   type="submit"
                   disabled={isPending}
-                  className="px-4 py-2 text-xs font-bold bg-lkv-primary text-white rounded-xl hover:bg-[#123323] transition-all"
+                  className="px-4 py-2 text-xs font-bold bg-lkv-primary text-white rounded-xl hover:opacity-90 transition-all"
                 >
                   Ajouter au sac
                 </button>
