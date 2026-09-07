@@ -32,10 +32,10 @@ export function TripCard({ trip, showRole = true }: TripCardProps) {
         tone="neutral"
         blur="md"
         interactive
-        className="h-full border border-white/60 hover:border-lkv-secondary/40 transition-all duration-300 hover:shadow-lg rounded-[24px] overflow-hidden"
+        className="h-full border border-white/60 hover:border-lkv-secondary/40 transition-all duration-300 hover:shadow-lg rounded-2xl overflow-hidden"
       >
         {/* Cover Image (D32 : fallback onError vers no_image si URL cassée) */}
-        <div className="relative w-full h-48 bg-[#FAF8F5] overflow-hidden">
+        <div className="relative w-full h-48 bg-[var(--lkv-surface-paper)] overflow-hidden">
           <AppImage
             src={imageUrl}
             alt={trip.title}
@@ -58,7 +58,7 @@ export function TripCard({ trip, showRole = true }: TripCardProps) {
           {/* Destination Overlay */}
           <div className="absolute bottom-3 left-3 right-3 flex items-center justify-between text-white text-xs">
             <span className="flex items-center gap-1 font-medium drop-shadow">
-              <MapPin size={14} className="text-[#A6C1A0]" />
+              <MapPin size={14} className="text-sage-300" />
               {trip.destination_name || trip.destination_country_code || 'Destination sauvage'}
             </span>
             {showRole && role && (
@@ -70,7 +70,7 @@ export function TripCard({ trip, showRole = true }: TripCardProps) {
         {/* Card Body */}
         <div className="p-4 flex flex-col justify-between flex-1 gap-3">
           <div>
-            <h3 className="font-semibold text-base sm:text-lg text-lkv-primary line-clamp-1 group-hover:text-[#205238] transition-colors">
+            <h3 className="font-semibold text-base sm:text-lg text-lkv-primary line-clamp-1 group-hover:text-[var(--lkv-primary-hover)] transition-colors">
               {trip.title}
             </h3>
             {trip.description && (

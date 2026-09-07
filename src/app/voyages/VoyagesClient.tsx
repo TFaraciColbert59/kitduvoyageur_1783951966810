@@ -1,14 +1,15 @@
 'use client';
 
 import React, { useState, useMemo } from 'react';
-import AppShell from '@/components/shell/AppShell';
+import AppShellDesktop from '@/components/shell/AppShellDesktop';
+import MobilePageShell from '@/components/mobile-nav/MobilePageShell';
 import { TripCard } from '@/features/trips/components/TripCard';
 import { TripFiltersBar } from '@/features/trips/components/TripFiltersBar';
 import { QuickCreateTripModal } from '@/features/trips/components/QuickCreateTripModal';
-import LkvButton from '@/components/ui/LkvButton';
+import { GlassCard, GlassCapsuleBtn, GlassSubCard, GlassPill } from '@/components/ui';
 import { EmptyState } from '@/components/ui/EmptyState';
 import IOSSegmentedControl from '@/components/ui/IOSSegmentedControl';
-import { Compass, Plus } from 'lucide-react';
+import { Compass, Plus, Sparkles, Filter } from 'lucide-react';
 import { createTripAction } from './actions';
 import type {
   TripSummary,
@@ -83,37 +84,28 @@ export default function VoyagesClient({
     });
   }, [activeTab, initialUserTrips, initialPublicTrips, filters]);
 
-  return (
-    <AppShell safeTop={true} hasBottomNav={true}>
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 pb-24">
-        {/* Header de la page */}
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
-          <div>
-            <div className="flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-lkv-secondary mb-1">
-              <Compass size={15} />
-              Module Voyage
-            </div>
-            <h1 className="text-2xl sm:text-3xl font-extrabold text-lkv-primary tracking-tight">
-              Expéditions & Treks
-            </h1>
-            <p className="text-xs sm:text-sm text-lkv-secondary mt-1 max-w-xl">
-              Planifiez vos aventures en autonomie, tracez vos étapes et préparez votre équipement de terrain.
-            </p>
-          </div>
-
-          <LkvButton
-            variant="primary"
-            onClick={() => setIsCreateModalOpen(true)}
-            className="self-start sm:self-center shadow-lg hover:shadow-xl transition-all"
-          >
-            <Plus size={16} className="mr-1.5" />
-            Nouveau voyage
-          </LkvButton>
+  // Colonne Gauche Desktop (260px)
+  const renderSidebarLeft = () => (
+    <aside className="h-full max-h-full w-full flex-1 flex flex-col justify-between glass rounded-2xl p-3.5 text-forest-900 font-sans overflow-y-auto no-scrollbar border border-white/40 shadow-sm select-none gap-3">
+      <div className="space-y-3 shrink-0">
+        <div className="flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-sage-800">
+          <Compass size={15} />
+          <span>Module Voyage</span>
         </div>
 
-        {/* Sélecteur d'onglets (si connecté) */}
+        {/* Bouton Créer */}
+        <GlassCapsuleBtn
+          variant="primary"
+          onClick={() => setIsCreateModalOpen(true)}
+          className="w-full flex items-center justify-center gap-2 !py-2.5 shadow-md"
+        >
+          <Plus size={16} />
+          <span>Nouveau voyage</span>
+        </GlassCapsuleBtn>
+
+        {/* Sélecteur de vue */}
         {isAuthenticated && (
-          <div className="mb-6 max-w-md">
+          <div className="pt-1">
             <IOSSegmentedControl
               options={[
                 { id: 'user', label: `Mes voyages (${initialUserTrips.length})` },
@@ -125,16 +117,129 @@ export default function VoyagesClient({
           </div>
         )}
 
-        {/* Barre de filtres */}
-        <TripFiltersBar
-          filters={filters}
-          onChange={setFilters}
-          onReset={handleResetFilters}
-        />
+        {/* Résumé des filtres */}
+        <GlassSubCard className="p-3 space-y-2">
+          <div className="flex items-center justify-between text-xs font-semibold text-forest-900">
+            <span className="flex items-center gap-1">
+              <Filter size={12} />
+              <span>Filtres actifs</span>
+            </span>
+            {(filters.activity !== 'all' || filters.difficulty !== 'all' || filters.status !== 'all' || filters.search) && (
+              <button
+                onClick={handleResetFilters}
+                className="text-[10px] text-sage-700 hover:underline"
+              >
+                Effacer
+              </button>
+            )}
+          </div>
+          <div className="flex flex-wrap gap-1 text-[10px]">
+            <GlassPill>{displayedTrips.length} affichés</GlassPill>
+            {filters.activity !== 'all' && <GlassPill tone="info">{filters.activity}</GlassPill>}
+            {filters.difficulty !== 'all' && <GlassPill tone="warn">{filters.difficulty}</GlassPill>}
+          </div>
+        </GlassSubCard>
+      </div>
+
+      <div className="pt-3 border-t border-white/30 text-[10px] text-sage-700 space-y-1">
+        <div>Catalogue des treks & itinéraires</div>
+        <div className="font-mono">LKDV EXPEDITIONS</div>
+      </div>
+    </aside>
+  );
+
+  // Colonne Droite Desktop (300px)
+  const renderSidebarRight = () => (
+    <aside className="w-full shrink-0 h-full overflow-y-auto custom-scrollbar flex flex-col gap-3 pb-6 font-sans">
+      <GlassCard className="p-3.5 space-y-2.5 text-forest-900">
+        <span className="text-xs font-bold uppercase tracking-wider text-sage-800 flex items-center gap-1.5">
+          <Sparkles size={13} />
+          <span>Statistiques</span>
+        </span>
+        <div className="grid grid-cols-2 gap-2 text-xs">
+          <div className="p-2 rounded-xl bg-white/40 border border-white/60">
+            <span className="text-[10px] text-sage-700 block">Total public</span>
+            <span className="font-semibold text-forest-900">{initialPublicTrips.length}</span>
+          </div>
+          <div className="p-2 rounded-xl bg-white/40 border border-white/60">
+            <span className="text-[10px] text-sage-700 block">Mes voyages</span>
+            <span className="font-semibold text-forest-900">{initialUserTrips.length}</span>
+          </div>
+        </div>
+      </GlassCard>
+
+      <GlassCard className="p-3.5 text-xs text-forest-800 space-y-2">
+        <h4 className="font-bold text-forest-900">Conseil d’expédition</h4>
+        <p className="text-[11px] leading-relaxed text-sage-800">
+          Chaque voyage calculera automatiquement vos phases : <strong>Préparer</strong> (avant départ), <strong>Vivre</strong> (cockpit direct), et <strong>Raconter</strong> (retour et partage).
+        </p>
+      </GlassCard>
+    </aside>
+  );
+
+  return (
+    <AppShellDesktop
+      sidebarLeft={renderSidebarLeft()}
+      sidebarRight={renderSidebarRight()}
+      mobileSlot={
+        <MobilePageShell safeTop={true} hasBottomNav={true}>
+          <div className="max-w-7xl mx-auto px-4 py-4 pb-24 text-forest-900">
+            <div className="flex items-center justify-between gap-4 mb-4">
+              <div>
+                <h1 className="text-2xl font-extrabold tracking-tight">Expéditions</h1>
+                <p className="text-xs text-sage-700">Planifiez et suivez vos aventures.</p>
+              </div>
+              <GlassCapsuleBtn
+                variant="primary"
+                onClick={() => setIsCreateModalOpen(true)}
+                className="flex items-center gap-1"
+              >
+                <Plus size={14} />
+                <span>Nouveau</span>
+              </GlassCapsuleBtn>
+            </div>
+
+            {isAuthenticated && (
+              <div className="mb-4">
+                <IOSSegmentedControl
+                  options={[
+                    { id: 'user', label: `Mes voyages (${initialUserTrips.length})` },
+                    { id: 'public', label: `Explorer (${initialPublicTrips.length})` },
+                  ]}
+                  value={activeTab}
+                  onChange={(val: string) => setActiveTab(val as 'public' | 'user')}
+                />
+              </div>
+            )}
+
+            <TripFiltersBar
+              filters={filters}
+              onChange={setFilters}
+              onReset={handleResetFilters}
+            />
+
+            <div className="grid grid-cols-1 gap-4 pt-2">
+              {displayedTrips.map(trip => (
+                <TripCard key={trip.id} trip={trip} showRole={activeTab === 'user'} />
+              ))}
+            </div>
+          </div>
+        </MobilePageShell>
+      }
+    >
+      <div className="space-y-4">
+        {/* Barre de recherche et filtres principale */}
+        <div className="p-3.5 rounded-2xl glass border border-white/60">
+          <TripFiltersBar
+            filters={filters}
+            onChange={setFilters}
+            onReset={handleResetFilters}
+          />
+        </div>
 
         {/* Grille de voyages */}
         {displayedTrips.length > 0 ? (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
             {displayedTrips.map(trip => (
               <TripCard key={trip.id} trip={trip} showRole={activeTab === 'user'} />
             ))}
@@ -169,6 +274,6 @@ export default function VoyagesClient({
         onClose={() => setIsCreateModalOpen(false)}
         onSubmitTrip={createTripAction}
       />
-    </AppShell>
+    </AppShellDesktop>
   );
 }
