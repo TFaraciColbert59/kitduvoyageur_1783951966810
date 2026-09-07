@@ -94,3 +94,82 @@ export function verifyAffiliatePostbackSignature(
     return false;
   }
 }
+
+/**
+ * Masque les numéros sensibles (passeports, CNI, permis) pour l'affichage et les logs.
+ * Préserve uniquement les 4 derniers caractères.
+ * Ex: '21AA12345' -> '•••••2345'
+ */
+export function maskSensitiveIdentityNumber(idNumber: string): string {
+  if (!idNumber) return '';
+  const trimmed = idNumber.trim();
+  if (trimmed.length <= 4) {
+    return '•'.repeat(trimmed.length);
+  }
+  const maskedCount = trimmed.length - 4;
+  const visible = trimmed.slice(-4);
+  return '•'.repeat(maskedCount) + visible;
+}
+
+const DEFAULT_DOC_SECRET = process.env.SUPABASE_SERVICE_ROLE_KEY || 'lkdv-doc-secret-2026';
+
+/**
+ * Génère une URL signée HMAC à durée limitée pour accéder à un document sensible
+ */
+export function generateSignedDocumentUrl(
+  filePath: string,
+  expiresInSeconds = 900, // 15 minutes par défaut
+  secret = DEFAULT_DOC_SECRET
+): string {
+  const expires = Math.floor(Date.now() / 1000) + expiresInSeconds;
+  const dataToSign = `${filePath}|${expires}`;
+  const signature = crypto.createHmac('sha256', secret).update(dataToSign).digest('hex');
+  const encodedPath = encodeURIComponent(filePath);
+  return `/api/documents/secure?file=${encodedPath}&expires=${expires}&sig=${signature}`;
+}
+
+export interface VerifySignedDocResult {
+  isValid: boolean;
+  filePath?: string;
+  error?: 'EXPIRED' | 'INVALID_SIGNATURE' | 'MALFORMED';
+}
+
+/**
+ * Vérifie l'authenticité et l'expiration d'une URL signée pour un document sensible
+ */
+export function verifySignedDocumentUrl(
+  signedUrl: string,
+  secret = DEFAULT_DOC_SECRET
+): VerifySignedDocResult {
+  try {
+    const url = new URL(signedUrl, 'https://lekitduvoyageur.fr');
+    const file = url.searchParams.get('file');
+    const expiresStr = url.searchParams.get('expires');
+    const sig = url.searchParams.get('sig');
+
+    if (!file || !expiresStr || !sig) {
+      return { isValid: false, error: 'MALFORMED' };
+    }
+
+    const expires = parseInt(expiresStr, 10);
+    const nowSec = Math.floor(Date.now() / 1000);
+
+    if (nowSec > expires) {
+      return { isValid: false, error: 'EXPIRED' };
+    }
+
+    const dataToSign = `${file}|${expires}`;
+    const expectedSig = crypto.createHmac('sha256', secret).update(dataToSign).digest('hex');
+
+    const expectedBuf = Buffer.from(expectedSig, 'utf8');
+    const receivedBuf = Buffer.from(sig, 'utf8');
+
+    if (expectedBuf.length !== receivedBuf.length || !crypto.timingSafeEqual(expectedBuf, receivedBuf)) {
+      return { isValid: false, error: 'INVALID_SIGNATURE' };
+    }
+
+    return { isValid: true, filePath: file };
+  } catch {
+    return { isValid: false, error: 'MALFORMED' };
+  }
+}
