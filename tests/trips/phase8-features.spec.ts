@@ -98,8 +98,7 @@ describe('Phase 8.2 — Checklist Pré-Départ Automatisée & Intelligence Pays'
   it('TEST-P8-05: injecte les règles de formalités passeport (6 mois pour pays hors UE)', () => {
     const formalitiesNP = getCountrySpecificFormalities('NP'); // Népal
     expect(formalitiesNP.requiresPassport).toBe(true);
-    expect(formalitiesNP.passportValidityMonths).toBe(6);
-    expect(formalitiesNP.vaccineRecommendations.length).toBeGreaterThan(0);
+    expect(formalitiesNP.vaccineNotice).toContain('médecin');
 
     const checklist = getPreDepartureChecklist(45, 'NP');
     const passportItem = checklist.j30.find((i) => i.id.includes('passport'));

@@ -2,7 +2,7 @@
 
 import React from 'react';
 import Link from 'next/link';
-import Image from 'next/image';
+import AppImage from '@/components/ui/AppImage';
 import { GlassCard } from '@/components/ui/GlassCard';
 import { TripBadge } from './TripBadge';
 import { MapPin, Calendar, Navigation, Users } from 'lucide-react';
@@ -34,15 +34,15 @@ export function TripCard({ trip, showRole = true }: TripCardProps) {
         interactive
         className="h-full border border-white/60 hover:border-lkv-secondary/40 transition-all duration-300 hover:shadow-lg rounded-[24px] overflow-hidden"
       >
-        {/* Cover Image */}
+        {/* Cover Image (D32 : fallback onError vers no_image si URL cassée) */}
         <div className="relative w-full h-48 bg-[#FAF8F5] overflow-hidden">
-          <Image
+          <AppImage
             src={imageUrl}
             alt={trip.title}
             fill
             sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
             className="object-cover group-hover:scale-105 transition-transform duration-500"
-            priority={false}
+            fallbackSrc="/assets/images/no_image.png"
           />
           <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/10 to-transparent" />
 

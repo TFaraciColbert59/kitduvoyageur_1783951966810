@@ -5,6 +5,8 @@ import { useRouter } from 'next/navigation';
 import type { TripFull, TripStats } from '../types/trip.types';
 import { GlassCard } from '@/components/ui/GlassCard';
 import { checkSeasonalityForDates } from '../engine/seasonality';
+import { getCanonicalTripSteps } from '../hooks/useTripCounters';
+import { getTripDistance } from '../hooks/useTripDistance';
 import { regenerateItineraryAction } from '@/app/voyages/actions';
 import Link from 'next/link';
 import {
@@ -24,7 +26,7 @@ interface TripItineraryTabProps {
   stats: TripStats;
 }
 
-export function TripItineraryTab({ trip, stats }: TripItineraryTabProps) {
+export function TripItineraryTab({ trip }: TripItineraryTabProps) {
   const router = useRouter();
   const [isRegenerating, setIsRegenerating] = useState(false);
   const [confirmOpen, setConfirmOpen] = useState(false);
@@ -39,6 +41,14 @@ export function TripItineraryTab({ trip, stats }: TripItineraryTabProps) {
       trip.end_date
     );
   }, [trip.destination_country_code, trip.start_date, trip.end_date]);
+
+  // Source de vérité unique (Z-R3 / Chantier Z3) : étapes canoniques (dédupliquées
+  // par jour) et distances/dénivelés dérivés de trip, cohérents avec l'Aperçu.
+  const canonicalSteps = useMemo(
+    () => getCanonicalTripSteps(trip.steps),
+    [trip.steps]
+  );
+  const distance = useMemo(() => getTripDistance(trip.steps), [trip.steps]);
 
   const handleRegenerate = async () => {
     setIsRegenerating(true);
@@ -129,17 +139,17 @@ export function TripItineraryTab({ trip, stats }: TripItineraryTabProps) {
         <div className="flex items-center gap-4 text-xs flex-wrap">
           <div>
             <span className="text-gray-500 block">Étapes</span>
-            <span className="font-bold text-lkv-primary text-sm">{trip.steps.length} jours</span>
+            <span className="font-bold text-lkv-primary text-sm">{canonicalSteps.length} jours</span>
           </div>
           <div className="h-6 w-px bg-black/10" />
           <div>
             <span className="text-gray-500 block">Distance totale</span>
-            <span className="font-bold text-lkv-primary text-sm">{stats.total_distance_km} km</span>
+            <span className="font-bold text-lkv-primary text-sm">{distance.totalKm} km</span>
           </div>
           <div className="h-6 w-px bg-black/10" />
           <div>
             <span className="text-gray-500 block">Dénivelé positif</span>
-            <span className="font-bold text-lkv-primary text-sm">+{stats.total_elevation_gain_m}m D+</span>
+            <span className="font-bold text-lkv-primary text-sm">+{distance.dPlus}m D+</span>
           </div>
           <div className="h-6 w-px bg-black/10" />
           <div>
@@ -220,9 +230,9 @@ export function TripItineraryTab({ trip, stats }: TripItineraryTabProps) {
       )}
 
       {/* 3. Liste détaillée des étapes */}
-      {trip.steps.length > 0 ? (
+      {canonicalSteps.length > 0 ? (
         <div className="space-y-3">
-          {trip.steps.map((step) => (
+          {canonicalSteps.map((step) => (
             <GlassCard key={step.id} tone="neutral" className="p-4 sm:p-5 rounded-[22px] border border-white/60">
               <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-3">
                 <div className="space-y-1.5">

@@ -26,7 +26,7 @@ import {
 } from 'lucide-react';
 import type { TripFull, TripItem } from '../types/trip.types';
 import type { TripKitAnalysis, ContextualGearRecommendation } from '../types/kit.types';
-import { getTripDurationDays } from '../engine/contextualKitEngine';
+import { getTripDuration } from '../hooks/useTripDuration';
 import {
   togglePackedAction,
   addCustomTripItemAction,
@@ -132,6 +132,7 @@ export function TripKitView({ trip, analysis, showBackLink: _showBackLink = fals
   const progressPct = totalCount > 0 ? Math.round((packedCount / totalCount) * 100) : 0;
   const totalKg = (analysis.totalWeightGrams / 1000).toFixed(1);
   const baseKg = (analysis.baseWeightGrams / 1000).toFixed(1);
+  const tripDuration = getTripDuration(trip);
 
   return (
     <div className="space-y-6 animate-fade-in">
@@ -226,7 +227,7 @@ export function TripKitView({ trip, analysis, showBackLink: _showBackLink = fals
                 <span className="text-[10px] text-stone-400 ml-1.5">(estimation pays)</span>
               )}
             </div>
-            <div>Durée de l’autonomie : <strong>{getTripDurationDays(trip)} jours</strong></div>
+            <div>Durée de l’autonomie : <strong>{tripDuration.durationDays} jours</strong></div>
           </div>
         </GlassCard>
       </div>

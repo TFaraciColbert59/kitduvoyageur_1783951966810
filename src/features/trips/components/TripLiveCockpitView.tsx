@@ -27,6 +27,7 @@ import type { TripFull, TripStep, TripStats } from '../types/trip.types';
 import { addExpenseAction } from '@/app/voyages/budget-actions';
 import { TripSafetyView } from './TripSafetyView';
 import { TripItineraryTab } from './TripItineraryTab';
+import { getTripPhaseDetails } from '../engine/temporalPhaseEngine';
 
 export interface TripLiveCockpitViewProps {
   trip: TripFull;
@@ -49,12 +50,32 @@ export function getCurrentStepForDay(steps: TripStep[], dayNumber: number): Trip
   return steps[0];
 }
 
+export function hasVerifiedEmergencyCoordinates(
+  trip: TripFull,
+  step: TripStep | null
+): boolean {
+  if (!step || typeof step.latitude !== 'number' || typeof step.longitude !== 'number') {
+    return false;
+  }
+  const stepAny = step as any;
+  if (stepAny.source === 'user' || stepAny.source === 'import' || stepAny.is_user_defined === true) {
+    return true;
+  }
+  const meta = (trip.metadata || {}) as Record<string, any>;
+  if (meta.has_imported_gpx === true || meta.source === 'gpx_import' || meta.has_verified_coordinates === true) {
+    return true;
+  }
+  // RÈGLE Z1.1 / D13 : Tout voyage issu d'un blueprint, template ou auto-généré sans import réel
+  // ne doit JAMAIS afficher de coordonnées dans le panneau de secours.
+  return false;
+}
+
 export function formatEmergencyCoordinates(
   lat: number | null | undefined,
   lng: number | null | undefined
 ): string {
   if (typeof lat !== 'number' || typeof lng !== 'number' || isNaN(lat) || isNaN(lng)) {
-    return 'Coordonnées non disponibles';
+    return 'Position non disponible — utilise l’application de ton téléphone pour communiquer ta position exacte au 112';
   }
 
   const latDir = lat >= 0 ? 'N' : 'S';
@@ -87,13 +108,20 @@ export function TripLiveCockpitView({
   const [expenseSuccessMsg, setExpenseSuccessMsg] = useState<string | null>(null);
   const [expenseErrorMsg, setExpenseErrorMsg] = useState<string | null>(null);
 
+  const phaseDetails = getTripPhaseDetails(trip);
+  const isFutureTrip = phaseDetails.phase === 'prepare';
+
   const steps = trip.steps || [];
   const currentStep = getCurrentStepForDay(steps, activeDay);
 
+  const isEmergencyCoordsVerified = hasVerifiedEmergencyCoordinates(trip, currentStep);
+  const emergencyCoordsText = isEmergencyCoordsVerified
+    ? formatEmergencyCoordinates(currentStep?.latitude, currentStep?.longitude)
+    : formatEmergencyCoordinates(null, null);
+
   const handleCopyCoordinates = () => {
-    if (!currentStep?.latitude || !currentStep?.longitude) return;
-    const coordsText = formatEmergencyCoordinates(currentStep.latitude, currentStep.longitude);
-    navigator.clipboard.writeText(coordsText);
+    if (!isEmergencyCoordsVerified) return;
+    navigator.clipboard.writeText(emergencyCoordsText);
     setCopiedCoords(true);
     setTimeout(() => setCopiedCoords(false), 2500);
   };
@@ -190,14 +218,16 @@ export function TripLiveCockpitView({
                 isSunMode ? 'text-amber-400' : 'text-lkv-secondary'
               }`}
             >
-              Étape active
+              {isFutureTrip ? 'Voyage à venir' : 'Étape active'}
             </span>
             <div
               className={`text-xl sm:text-2xl font-extrabold ${
                 isSunMode ? 'text-white' : 'text-lkv-primary'
               }`}
             >
-              Jour {activeDay} / {calculatedTotalDays}
+              {isFutureTrip && phaseDetails.daysUntilStart !== null
+                ? `Départ dans ${phaseDetails.daysUntilStart} jour${phaseDetails.daysUntilStart > 1 ? 's' : ''}`
+                : `Jour ${activeDay} / ${calculatedTotalDays}`}
             </div>
           </div>
 
@@ -541,14 +571,14 @@ export function TripLiveCockpitView({
                   Position étape
                 </div>
                 <div className="font-mono text-xs font-bold truncate">
-                  {formatEmergencyCoordinates(currentStep?.latitude, currentStep?.longitude)}
+                  {emergencyCoordsText}
                 </div>
               </div>
 
               <button
                 type="button"
                 onClick={handleCopyCoordinates}
-                disabled={!currentStep?.latitude}
+                disabled={!isEmergencyCoordsVerified}
                 className="p-2 rounded-lg bg-white/80 hover:bg-white text-lkv-primary shadow-2xs border border-black/5 min-h-[36px] min-w-[36px] flex items-center justify-center"
                 title="Copier les coordonnées pour les secours"
               >
@@ -561,8 +591,7 @@ export function TripLiveCockpitView({
             </div>
 
             <p className="text-[11px] text-lkv-secondary leading-snug">
-              En montagne ou zone blanche, le 112 fonctionne sur n’importe quel réseau opérateur
-              capté.
+              En cas d’urgence vitale, composez immédiatement le 112 ou envoyez un SMS au 114.
             </p>
           </div>
         </GlassCard>

@@ -207,7 +207,7 @@ describe('Trips UI Components', () => {
       participants_count: 1,
     };
 
-    it('renders key metrics and gear progress bar', () => {
+    it('renders key metrics and gear progress bar (source unique Z3)', () => {
       const html = renderToStaticMarkup(
         React.createElement(TripOverviewTab, {
           trip: mockTripFull,
@@ -215,11 +215,15 @@ describe('Trips UI Components', () => {
           onTabChange: () => {},
         })
       );
+      // Chantier Z3 (D20/D21/D24) : TripOverviewTab dérive désormais les métriques
+      // de trip (source de vérité unique) et non des stats serveur, qui pouvaient
+      // diverger (ex : stats.total_distance_km=210 alors que l'étape vaut 14 km).
       expect(html).toContain('16');
       expect(html).toContain('jours');
-      expect(html).toContain('210 km');
-      expect(html).toContain('+8500m');
-      expect(html).toContain('15 sur 20 emballés (75%)');
+      expect(html).toContain('14 km');
+      expect(html).toContain('+550m');
+      expect(html).toContain('-100m');
+      expect(html).toContain('0/0 objets prêts');
       expect(html).toContain('Jean Explorateur');
       expect(html).toContain('Besisahar - Bahundanda');
     });

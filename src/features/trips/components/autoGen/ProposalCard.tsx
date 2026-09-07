@@ -7,6 +7,8 @@ import {
   ChevronLeft,
   ChevronRight,
   ShieldCheck,
+  HelpCircle,
+  ExternalLink,
   Mic,
 } from 'lucide-react';
 import type { Proposal, LayerId } from '@/features/trips/schemas/autoGen.schema';
@@ -140,15 +142,35 @@ export const ProposalCard: React.FC<ProposalCardProps> = ({
     >
       {/* En-tête : Couche + Provenance + Cadenas (Geste 2) */}
       <div className="flex items-center justify-between gap-2 mb-2">
-        <div className="flex items-center space-x-2">
+        <div className="flex flex-wrap items-center gap-1.5">
           <span className="text-xs font-semibold px-2.5 py-0.5 rounded-full bg-zinc-100 dark:bg-zinc-800 text-zinc-700 dark:text-zinc-300">
             {LAYER_LABELS[proposal.layer] || proposal.layer}
           </span>
-          <span className="flex items-center text-[11px] text-zinc-500 dark:text-zinc-400">
-            <ShieldCheck className="w-3.5 h-3.5 mr-1 text-emerald-500" />
-            {PROVENANCE_LABELS[currentItem.provenance?.source] || currentItem.provenance?.source}
-            {currentItem.provenance?.sourceRef && ` · ${currentItem.provenance.sourceRef}`}
-          </span>
+          {currentItem.confidence === 'low' || currentItem.provenance?.source === 'estimated' ? (
+            <span className="inline-flex items-center gap-1 text-[11px] px-2 py-0.5 rounded-full bg-amber-500/10 dark:bg-amber-500/20 text-amber-800 dark:text-amber-300 border border-amber-300/40 dark:border-amber-700/40">
+              <HelpCircle className="w-3 h-3 text-amber-600 dark:text-amber-400" />
+              <span className="font-medium">Estimation</span>
+              {currentItem.provenance?.sourceRef && (
+                <span className="text-amber-700/70 dark:text-amber-400/70 hidden sm:inline">· {currentItem.provenance.sourceRef}</span>
+              )}
+              <a
+                href={currentItem.verifyUrl || `https://www.google.com/search?q=${encodeURIComponent(`${proposal.layer} ${valueName}`)}`}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center text-[10px] font-semibold underline underline-offset-2 ml-1 text-amber-900 dark:text-amber-200 hover:text-amber-950"
+                onClick={(e) => e.stopPropagation()}
+              >
+                vérifier
+                <ExternalLink className="w-2.5 h-2.5 ml-0.5" />
+              </a>
+            </span>
+          ) : (
+            <span className="flex items-center text-[11px] text-zinc-500 dark:text-zinc-400">
+              <ShieldCheck className="w-3.5 h-3.5 mr-1 text-emerald-500" />
+              {PROVENANCE_LABELS[currentItem.provenance?.source] || currentItem.provenance?.source}
+              {currentItem.provenance?.sourceRef && ` · ${currentItem.provenance.sourceRef}`}
+            </span>
+          )}
         </div>
 
         {/* Bouton de Verrouillage (Geste 2) — Target >= 44x44px */}

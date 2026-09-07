@@ -86,7 +86,9 @@ describe('Affiliation Components (Apple HIG & Legal Transparency)', () => {
 
       expect(html).toContain('Réservations et services partenaires');
       expect(html).toContain('Transparence &amp; Indépendance');
-      expect(html).toContain('Partenaires vérifiés pour France');
+      // Z4/D30 : libellé honnête — plus aucune affirmation non fondée de « partenaires vérifiés ».
+      expect(html).toContain('Services et partenaires pour France');
+      expect(html).not.toMatch(/\bvérifi/i);
       expect(html).toContain('Booking.com');
       expect(html).toContain('1 offres disponibles');
     });

@@ -8,6 +8,7 @@ import { TripShareModal } from '@/features/trips/components/TripShareModal';
 import { TripOfflineBar } from '@/features/trips/components/TripOfflineBar';
 import { ArrowLeft, Share2, Compass, Check } from 'lucide-react';
 import { useActiveTrip } from '@/features/trips/context/ActiveTripContext';
+import { useTripStatus } from '@/features/trips/hooks/useTripStatus';
 import type { TripFull, TripStats } from '@/features/trips/types/trip.types';
 import type { TripKitAnalysis } from '@/features/trips/types/kit.types';
 import type { AffiliateLink } from '@/features/affiliation';
@@ -77,6 +78,12 @@ export default function TripDetailClient({
   const { isCurrentTripActive, setActiveTrip, clearActiveTrip, isPending: isActiveTripPending } = useActiveTrip();
   const isTripActive = isCurrentTripActive(trip.id);
 
+  // Z-D25 : le statut 'draft' et l'état 'active' sont mutuellement exclusifs.
+  // La pastille verte « Active » ne s'affiche que si le voyage a réellement le
+  // statut 'active' — jamais simultanément avec le badge « Brouillon ».
+  const { isActive: statusIsActive } = useTripStatus(trip);
+  const showActiveState = isTripActive && statusIsActive;
+
   const handleToggleActiveTrip = async () => {
     if (isTripActive) {
       await clearActiveTrip();
@@ -123,22 +130,24 @@ export default function TripDetailClient({
               onClick={handleToggleActiveTrip}
               disabled={isActiveTripPending}
               className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold transition-all border min-h-[38px] ${
-                isTripActive
+                showActiveState
                   ? 'bg-emerald-600 text-white border-emerald-600 shadow-xs'
                   : 'bg-white/80 hover:bg-white text-lkv-primary border-black/10 shadow-2xs'
               }`}
               title={
-                isTripActive
+                showActiveState
                   ? 'Expédition active partout sur le site'
-                  : 'Définir comme expédition active sur tout le site'
+                  : statusIsActive
+                  ? 'Définir comme expédition active sur tout le site'
+                  : 'Le voyage doit être marqué comme actif pour être suivi en temps réel'
               }
             >
-              {isTripActive ? (
+              {showActiveState ? (
                 <Check size={13} className="text-white" />
               ) : (
                 <Compass size={13} className="text-lkv-secondary" />
               )}
-              <span>{isTripActive ? 'Active' : 'Activer'}</span>
+              <span>{showActiveState ? 'Active' : 'Activer'}</span>
             </button>
 
             <button

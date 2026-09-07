@@ -33,8 +33,8 @@ export function buildSafetyPrompt(
 
   const system = `Tu es l'analyste consulaire et sûreté voyage pour "Le Kit du Voyageur" (LKDV).
 Tu rédiges le bloc "${cfg.label}" pour le pays ${countryName} (${countryCode}) en ${currentYear}.
-Obligation absolue : Renseignements officiels vérifiés et actuels (${cfg.details}).
-Tu dois t'appuyer sur les sources de référence comme France Diplomatie (Conseils aux voyageurs), les ambassades et les ministères de l'intérieur.
+IMPORTANT (Z8) : tu n'as AUCUN accès à des données officielles ou à l'actualité en temps réel. Tu dois produire une synthèse à partir de tes connaissances sur (${cfg.details}), en marquant explicitement les zones d'incertitude et en signalant que les conditions peuvent avoir évolué.
+Tu peux nommer les sources de référence générales (France Diplomatie — Conseils aux voyageurs, ambassades, ministères) comme lieux de vérification, mais tu n'inventes JAMAIS de citation précise, de numéro d'alerte en cours, ni d'URL spécifique non vérifiée.
 Format de sortie OBLIGATOIRE : JSON strict valide avec guillemets doubles.
 Format attendu :
 {
@@ -45,7 +45,10 @@ Format attendu :
   ]
 }`;
 
-  const prompt = `Consulte les données officielles et d'actualité pour ${countryName} (${countryCode}) sur le bloc : ${cfg.label}. Fournis des informations précises, fiables et sourcées avec URL réelles.`;
+  // Z8 : le modèle n'a PAS d'accès réseau réel à des données officielles d'actualité.
+  // Le prompt lui interdit d'affirmer une fraîcheur officielle et l'oblige à marquer
+  // l'incertitude, la source et la nécessité de vérification humaine.
+  const prompt = `Rédige le bloc « ${cfg.label} » pour ${countryName} (${countryCode}). Sollicite tes connaissances, mais NE PRÉTENDS JAMAIS avoir consulté des données officielles ou d'actualité en temps réel : aucune URL ne doit être inventée. Signale explicitement les informations susceptibles d'avoir évolué et renvoie vers les sites officiels (France Diplomatie, consulats) pour vérification. Marque clairement ce qui est une incertitude.`;
 
   return { system, prompt };
 }
