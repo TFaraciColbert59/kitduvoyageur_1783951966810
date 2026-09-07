@@ -324,7 +324,7 @@ export default function RecompensesPage() {
         )}
 
         {successMessage && (
-          <div className="p-4 bg-emerald-50 border border-emerald-200 text-emerald-800 rounded-xl text-xs flex gap-2 items-center">
+          <div className="p-4 bg-forest-50 border border-forest-200 text-forest-800 rounded-xl text-xs flex gap-2 items-center">
             <span>✅</span>
             <span>{successMessage}</span>
           </div>

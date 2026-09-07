@@ -81,7 +81,7 @@ export const ActionModeView: React.FC<ActionModeViewProps> = ({
       >
         <div className="flex items-center justify-between gap-2 mb-3">
           <div className="flex items-center gap-2">
-            <span className="w-2 h-2 rounded-full bg-emerald-400 animate-ping" />
+            <span className="w-2 h-2 rounded-full bg-forest-400 animate-ping" />
             <span className="text-xs font-mono font-bold tracking-wider uppercase text-[#A6C1A0]">
               SESSION EN COURS
             </span>

@@ -248,7 +248,7 @@ export default function PostCard({
     }
     if (post.origin === 'club') {
       return (
-        <span className="px-2 py-0.5 bg-amber-500/10 text-amber-800 rounded-full text-[9px] font-bold font-mono uppercase tracking-wider flex items-center gap-1">
+        <span className="px-2 py-0.5 bg-sand-500/10 text-sand-800 rounded-full text-[9px] font-bold font-mono uppercase tracking-wider flex items-center gap-1">
           <span>🏕️</span>
           <span>{post.origin_name || 'Club'}</span>
         </span>
@@ -256,7 +256,7 @@ export default function PostCard({
     }
     if (post.origin === 'carnet') {
       return (
-        <span className="px-2 py-0.5 bg-emerald-500/10 text-emerald-800 rounded-full text-[9px] font-bold font-mono uppercase tracking-wider flex items-center gap-1">
+        <span className="px-2 py-0.5 bg-forest-500/10 text-forest-800 rounded-full text-[9px] font-bold font-mono uppercase tracking-wider flex items-center gap-1">
           <span>📖</span>
           <span>{post.origin_name || 'Carnet'}</span>
         </span>

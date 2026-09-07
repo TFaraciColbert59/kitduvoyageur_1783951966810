@@ -51,7 +51,7 @@ export default function DesktopTopBar({
 
       {/* Breadcrumb / Active Route Title */}
       <div className="flex-1 flex items-center gap-2 md:gap-3 px-3.5 md:px-5 h-10 md:h-11 bg-[#FBFAF6]/92 backdrop-blur-2xl border border-[#17402C]/07 rounded-full shadow-xl min-w-0">
-        <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse flex-shrink-0" />
+        <span className="w-2 h-2 rounded-full bg-forest-500 animate-pulse flex-shrink-0" />
         <span className="text-xs font-semibold text-[#17402C] truncate">
           {routeName || 'Suivi GPS Actif'}
         </span>

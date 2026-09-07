@@ -66,7 +66,7 @@ export default function MobileCarnetCard({
           </span>
 
           {carnet.route_rating !== undefined && (
-            <span className="glass-pill text-amber-200 border-amber-300/30 font-mono font-bold text-[9.5px] bg-black/40 backdrop-blur-md">
+            <span className="glass-pill text-sand-200 border-sand-300/30 font-mono font-bold text-[9.5px] bg-black/40 backdrop-blur-md">
               ★ {carnet.route_rating}/10
             </span>
           )}
@@ -75,7 +75,7 @@ export default function MobileCarnetCard({
         {/* Bottom Title on Image */}
         <div className="absolute bottom-2.5 left-2.5 right-2.5 z-10">
           {dateRangeStr && (
-            <span className="text-[9.5px] font-mono text-emerald-200 uppercase tracking-widest block mb-0.5 font-bold">
+            <span className="text-[9.5px] font-mono text-forest-200 uppercase tracking-widest block mb-0.5 font-bold">
               {dateRangeStr}
             </span>
           )}

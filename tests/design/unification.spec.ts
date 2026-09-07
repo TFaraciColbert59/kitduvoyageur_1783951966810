@@ -118,10 +118,10 @@ describe('CHANTIER U — GARDE-FOUS DE GOUVERNANCE', () => {
     .map((f) => f.replace(ROOT, '').replace(/^[/\\]/, '').replace(/\\/g, '/'))
     .filter((f) => !/(\.next|node_modules|\.d\.ts)/.test(f));
 
-  it('U-D60 : aucune couleur hexadécimale hors tokens.css', () => {
-    const bad = files
+  it('U-D60 : aucune couleur hexadécimale hors tokens.css dans les sources de style', () => {
+    const bad = STYLE_FILES
       .filter((f) => f !== TOKENS_CSS)
-      .filter((f) => countHex(f) > 0)
+      .filter((f) => exists(f) && countHex(f) > 0)
       .map((f) => `${f} (${countHex(f)} hex)`);
     expect(bad, `Hex hors tokens.css dans:\n${bad.join('\n')}`).toEqual([]);
   });

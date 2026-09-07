@@ -267,7 +267,7 @@ export default function CommentItem({
 
         {/* Report Inline Popover Form */}
         {isReporting && (
-          <div className="mt-3 p-3 bg-white rounded-xl border border-amber-200  text-xs space-y-2">
+          <div className="mt-3 p-3 bg-white rounded-xl border border-sand-200  text-xs space-y-2">
             <p className="font-bold text-[#17402C]">Motif du signalement :</p>
             <select
               value={reportReason}
@@ -282,7 +282,7 @@ export default function CommentItem({
             <div className="flex justify-end gap-2 pt-1">
               <button
                 onClick={() => setIsReporting(false)}
-                className="px-2.5 py-1 bg-gray-100 rounded-lg text-[10px] font-bold text-gray-600"
+                className="px-2.5 py-1 bg-stone-100 rounded-lg text-[10px] font-bold text-stone-600"
               >
                 Annuler
               </button>
@@ -298,7 +298,7 @@ export default function CommentItem({
 
         {/* Success toast badge */}
         {reportSuccessMsg && (
-          <div className="mt-2 text-[10px] font-bold text-amber-700 bg-amber-50 border border-amber-200 px-2.5 py-1 rounded-lg">
+          <div className="mt-2 text-[10px] font-bold text-sand-700 bg-sand-50 border border-sand-200 px-2.5 py-1 rounded-lg">
             {reportSuccessMsg}
           </div>
         )}

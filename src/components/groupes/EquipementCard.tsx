@@ -338,7 +338,7 @@ export default function EquipementCard({ equipment, groupId, onRefresh, user, me
         </div>
       )}
       {notice && (
-        <div className="mb-3 p-2.5 glass-sub-card rounded-xl text-xs text-emerald-800 font-semibold">
+        <div className="mb-3 p-2.5 glass-sub-card rounded-xl text-xs text-forest-800 font-semibold">
           {notice}
         </div>
       )}

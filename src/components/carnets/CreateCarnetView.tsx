@@ -483,7 +483,7 @@ export default function CreateCarnetView({ onCloseModal }: { onCloseModal?: () =
                         onChange={(e) => setField('routeRating', parseInt(e.target.value))}
                         className="w-full bg-white/90 border border-[#17402C]/15 rounded-xl px-3 py-2 text-xs text-[#17402C] font-mono font-bold"
                       />
-                      <span className="absolute right-3 top-2 text-[10px] text-amber-600 font-bold">/10</span>
+                      <span className="absolute right-3 top-2 text-[10px] text-sand-600 font-bold">/10</span>
                     </div>
                   </div>
                 </div>

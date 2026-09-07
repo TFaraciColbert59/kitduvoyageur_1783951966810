@@ -156,7 +156,7 @@ export default function FidelitePage() {
               <div>
                 <div className={s('flex items-center gap-2 mb-2', 'flex items-center gap-3 mb-3')}>
                   <div className={s('w-8 h-8 rounded-lg bg-amber-500/20 flex items-center justify-center', 'w-10 h-10 rounded-xl bg-amber-500/20 flex items-center justify-center')}>
-                    <Icon name="StarIcon" size={s(16, 22)} variant="solid" className="text-amber-400" />
+                    <Icon name="StarIcon" size={s(16, 22)} variant="solid" className="text-sand-400" />
                   </div>
                   <div>
                     <p className={s('text-[9px] font-mono text-amber-400/80 tracking-widest uppercase', 'text-xs font-mono text-amber-400/80 tracking-widest uppercase')}>Phase 3 · Programme Fidélité</p>
@@ -186,7 +186,7 @@ export default function FidelitePage() {
                           <span>{formatPoints(nextLevel.minPoints)} pts</span>
                         </div>
                         <div className={s('h-1 bg-white/10 rounded-full overflow-hidden', 'h-1.5 bg-white/10 rounded-full overflow-hidden')}>
-                          <div className="h-full bg-amber-400 rounded-full transition-all" style={{ width: `${progressToNext}%` }} />
+                          <div className="h-full bg-sand-400 rounded-full transition-all" style={{ width: `${progressToNext}%` }} />
                         </div>
                         <p className={s('text-[10px] text-white/50 mt-0.5', 'text-xs text-white/50 mt-1')}>{formatPoints(nextLevel.minPoints - userPoints)} pts pour {nextLevel.name}</p>
                       </div>
@@ -258,7 +258,7 @@ export default function FidelitePage() {
                   <ul className={s('space-y-1', 'space-y-1.5')}>
                     {currentLevel.perks.map((perk) => (
                       <li key={perk} className={s('flex items-center gap-1.5 text-xs', 'flex items-center gap-2 text-sm')}>
-                        <Icon name="CheckCircleIcon" size={s(14, 16)} variant="solid" className="text-emerald-500 flex-shrink-0" />
+                        <Icon name="CheckCircleIcon" size={s(14, 16)} variant="solid" className="text-forest-500 flex-shrink-0" />
                         {perk}
                       </li>
                     ))}

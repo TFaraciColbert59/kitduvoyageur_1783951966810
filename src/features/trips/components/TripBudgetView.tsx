@@ -93,7 +93,7 @@ export function TripBudgetView({ trip }: TripBudgetViewProps) {
           <div className="text-2xl font-extrabold text-lkv-primary mt-1">
             {budgetSummary.totalSpent} {budgetSummary.currency}
           </div>
-          <div className="text-[11px] text-gray-500 mt-1">
+          <div className="text-[11px] text-stone-500 mt-1">
             {trip.expenses.length} dépense{trip.expenses.length > 1 ? 's' : ''} enregistrée{trip.expenses.length > 1 ? 's' : ''}
           </div>
         </GlassCard>
@@ -113,7 +113,7 @@ export function TripBudgetView({ trip }: TripBudgetViewProps) {
                   : `Reste disponible : ${budgetSummary.remainingBudget} ${budgetSummary.currency}`}
               </span>
             ) : (
-              <span className="text-gray-400">Aucune limite fixée</span>
+              <span className="text-stone-400">Aucune limite fixée</span>
             )}
           </div>
         </GlassCard>
@@ -150,8 +150,8 @@ export function TripBudgetView({ trip }: TripBudgetViewProps) {
           </div>
 
           {budgetSummary.settlements.length === 0 ? (
-            <div className="p-4 rounded-xl bg-emerald-50/60 border border-emerald-200/50 text-emerald-800 text-xs flex items-center gap-2">
-              <CheckCircle size={16} className="shrink-0 text-emerald-600" />
+            <div className="p-4 rounded-xl bg-forest-50/60 border border-forest-200/50 text-forest-800 text-xs flex items-center gap-2">
+              <CheckCircle size={16} className="shrink-0 text-forest-600" />
               <span>Tous les comptes sont équilibrés. Aucun remboursement en attente.</span>
             </div>
           ) : (
@@ -162,7 +162,7 @@ export function TripBudgetView({ trip }: TripBudgetViewProps) {
                   className="p-3 rounded-xl bg-white/70 border border-black/5 flex items-center justify-between text-xs gap-2"
                 >
                   <div className="flex items-center gap-2 truncate">
-                    <span className="font-semibold text-gray-900">{s.fromName}</span>
+                    <span className="font-semibold text-stone-900">{s.fromName}</span>
                     <ArrowRight size={14} className="text-lkv-secondary shrink-0" />
                     <span className="font-semibold text-lkv-primary">{s.toName}</span>
                   </div>
@@ -190,7 +190,7 @@ export function TripBudgetView({ trip }: TripBudgetViewProps) {
               >
                 <div>
                   <div className="font-semibold text-lkv-primary">{b.name}</div>
-                  <div className="text-[10px] text-gray-500">
+                  <div className="text-[10px] text-stone-500">
                     Payé : {b.paid} {budgetSummary.currency} · Part : {b.share} {budgetSummary.currency}
                   </div>
                 </div>
@@ -222,9 +222,9 @@ export function TripBudgetView({ trip }: TripBudgetViewProps) {
                 <div key={cat} className="p-3 rounded-xl bg-white/70 border border-black/5 space-y-1">
                   <div className="flex justify-between text-xs">
                     <span className="capitalize font-semibold text-lkv-primary">{cat}</span>
-                    <span className="text-gray-500">{pct}%</span>
+                    <span className="text-stone-500">{pct}%</span>
                   </div>
-                  <div className="text-sm font-bold text-gray-800">
+                  <div className="text-sm font-bold text-stone-800">
                     {amt} {budgetSummary.currency}
                   </div>
                   <div className="w-full bg-black/5 h-1.5 rounded-full overflow-hidden">
@@ -241,7 +241,7 @@ export function TripBudgetView({ trip }: TripBudgetViewProps) {
       <div className="space-y-3">
         <h4 className="text-base font-bold text-lkv-primary">Historique des dépenses</h4>
         {trip.expenses.length === 0 ? (
-          <GlassCard tone="neutral" className="p-6 rounded-lg text-center text-xs text-gray-500">
+          <GlassCard tone="neutral" className="p-6 rounded-lg text-center text-xs text-stone-500">
             Aucune dépense enregistrée sur cette expédition.
           </GlassCard>
         ) : (
@@ -269,7 +269,7 @@ export function TripBudgetView({ trip }: TripBudgetViewProps) {
                     <button
                       onClick={() => handleDelete(exp.id, exp.title)}
                       disabled={isPending}
-                      className="w-9 h-9 flex items-center justify-center rounded-xl text-gray-400 hover:text-red-600 hover:bg-red-50 transition-colors"
+                      className="w-9 h-9 flex items-center justify-center rounded-xl text-stone-400 hover:text-red-600 hover:bg-red-50 transition-colors"
                       title="Supprimer la dépense"
                     >
                       <Trash2 size={16} />
@@ -289,14 +289,14 @@ export function TripBudgetView({ trip }: TripBudgetViewProps) {
             tone="neutral"
             className="w-full max-w-md p-6 rounded-xl bg-white border border-white/80 shadow-2xl space-y-4"
           >
-            <div className="flex items-center justify-between pb-3 border-b border-gray-100">
+            <div className="flex items-center justify-between pb-3 border-b border-stone-100">
               <h4 className="text-base font-bold text-lkv-primary flex items-center gap-2">
                 <CreditCard size={18} className="text-lkv-secondary" />
                 <span>Nouvelle dépense</span>
               </h4>
               <button
                 onClick={() => setIsAddOpen(false)}
-                className="w-8 h-8 rounded-full flex items-center justify-center text-gray-400 hover:bg-gray-100"
+                className="w-8 h-8 rounded-full flex items-center justify-center text-stone-400 hover:bg-stone-100"
               >
                 <X size={18} />
               </button>
@@ -318,7 +318,7 @@ export function TripBudgetView({ trip }: TripBudgetViewProps) {
                   name="title"
                   required
                   placeholder="ex: Refuge des Écrins, Ravitaillement bivouac"
-                  className="w-full px-3 py-2 text-sm rounded-xl border border-gray-200 bg-gray-50/50 focus:bg-white focus:outline-none focus:ring-2 focus:ring-lkv-primary/20"
+                  className="w-full px-3 py-2 text-sm rounded-xl border border-stone-200 bg-stone-50/50 focus:bg-white focus:outline-none focus:ring-2 focus:ring-lkv-primary/20"
                 />
               </div>
 
@@ -334,7 +334,7 @@ export function TripBudgetView({ trip }: TripBudgetViewProps) {
                     min="0.01"
                     required
                     placeholder="0.00"
-                    className="w-full px-3 py-2 text-sm rounded-xl border border-gray-200 bg-gray-50/50 focus:bg-white focus:outline-none focus:ring-2 focus:ring-lkv-primary/20"
+                    className="w-full px-3 py-2 text-sm rounded-xl border border-stone-200 bg-stone-50/50 focus:bg-white focus:outline-none focus:ring-2 focus:ring-lkv-primary/20"
                   />
                 </div>
 
@@ -345,7 +345,7 @@ export function TripBudgetView({ trip }: TripBudgetViewProps) {
                   <select
                     name="category"
                     defaultValue="hébergement"
-                    className="w-full px-3 py-2 text-sm rounded-xl border border-gray-200 bg-gray-50/50 focus:bg-white focus:outline-none focus:ring-2 focus:ring-lkv-primary/20"
+                    className="w-full px-3 py-2 text-sm rounded-xl border border-stone-200 bg-stone-50/50 focus:bg-white focus:outline-none focus:ring-2 focus:ring-lkv-primary/20"
                   >
                     <option value="hébergement">Hébergement</option>
                     <option value="nourriture">Nourriture</option>
@@ -367,7 +367,7 @@ export function TripBudgetView({ trip }: TripBudgetViewProps) {
                     name="expenseDate"
                     defaultValue={new Date().toISOString().slice(0, 10)}
                     required
-                    className="w-full px-3 py-2 text-sm rounded-xl border border-gray-200 bg-gray-50/50 focus:bg-white focus:outline-none focus:ring-2 focus:ring-lkv-primary/20"
+                    className="w-full px-3 py-2 text-sm rounded-xl border border-stone-200 bg-stone-50/50 focus:bg-white focus:outline-none focus:ring-2 focus:ring-lkv-primary/20"
                   />
                 </div>
 
@@ -378,7 +378,7 @@ export function TripBudgetView({ trip }: TripBudgetViewProps) {
                   <select
                     name="splitType"
                     defaultValue="equal"
-                    className="w-full px-3 py-2 text-sm rounded-xl border border-gray-200 bg-gray-50/50 focus:bg-white focus:outline-none focus:ring-2 focus:ring-lkv-primary/20"
+                    className="w-full px-3 py-2 text-sm rounded-xl border border-stone-200 bg-stone-50/50 focus:bg-white focus:outline-none focus:ring-2 focus:ring-lkv-primary/20"
                   >
                     <option value="equal">Partagée équitablement</option>
                     <option value="individual">Dépense personnelle</option>

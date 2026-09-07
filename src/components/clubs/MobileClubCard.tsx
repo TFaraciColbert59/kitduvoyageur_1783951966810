@@ -74,7 +74,7 @@ export default function MobileClubCard({
                 {club.name}
               </h3>
               {club.is_verified && (
-                <span className="text-emerald-700 text-xs shrink-0" title="Club vérifié">
+                <span className="text-forest-700 text-xs shrink-0" title="Club vérifié">
                   ✓
                 </span>
               )}
@@ -83,7 +83,7 @@ export default function MobileClubCard({
         </div>
 
         {isMember ? (
-          <span className="glass-pill text-[9px] font-mono font-bold text-emerald-900 bg-emerald-50 shrink-0">
+          <span className="glass-pill text-[9px] font-mono font-bold text-forest-900 bg-forest-50 shrink-0">
             ✓ Membre
           </span>
         ) : (
@@ -110,7 +110,7 @@ export default function MobileClubCard({
           </div>
 
           {club.active_this_month !== undefined && club.active_this_month > 0 && (
-            <span className="text-[9.5px] font-mono font-bold px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-900 border border-emerald-200/50">
+            <span className="text-[9.5px] font-mono font-bold px-2 py-0.5 rounded-full bg-forest-50 text-forest-900 border border-forest-200/50">
               🔥 {club.active_this_month} actifs/mois
             </span>
           )}

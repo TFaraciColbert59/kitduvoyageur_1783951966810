@@ -792,7 +792,7 @@ export function DepartEquipmentHub({
                               <span>Recharger</span>
                             </button>
                           ) : isItemInBag ? (
-                            <div className="w-full py-1 rounded-xl text-[10.5px] font-bold bg-emerald-100 text-emerald-900 border border-emerald-200 flex items-center justify-center gap-1">
+                            <div className="w-full py-1 rounded-xl text-[10.5px] font-bold bg-forest-100 text-forest-900 border border-forest-200 flex items-center justify-center gap-1">
                               <Check size={11} />
                               <span>Dans le sac</span>
                             </div>
@@ -878,7 +878,7 @@ export function DepartEquipmentHub({
 
                       <div className="shrink-0">
                         {isItemInBag ? (
-                          <div className="px-2.5 py-1 rounded-xl text-[10.5px] font-bold bg-emerald-100 text-emerald-900 border border-emerald-200 flex items-center gap-1">
+                          <div className="px-2.5 py-1 rounded-xl text-[10.5px] font-bold bg-forest-100 text-forest-900 border border-forest-200 flex items-center gap-1">
                             <Check size={11} />
                             <span>Dans le sac</span>
                           </div>

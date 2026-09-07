@@ -81,7 +81,7 @@ export function TeamTab() {
           </div>
           <div className="p-2 rounded-2xl bg-white/80 dark:bg-white/10 border border-white/60 dark:border-white/10 shadow-2xs">
             <span className="text-[9px] uppercase font-mono text-[#5A7064] dark:text-[#9AAD9E] block">Fiches ICE</span>
-            <span className="text-sm font-extrabold font-mono text-emerald-700 dark:text-emerald-400">Sécurisées 🔒</span>
+            <span className="text-sm font-extrabold font-mono text-forest-700 dark:text-forest-400">Sécurisées 🔒</span>
           </div>
         </div>
       </div>
@@ -110,7 +110,7 @@ export function TeamTab() {
                   {load.isOverloaded ? (
                     <span className="text-red-600 font-bold ml-1">⚠️ Surcharge!</span>
                   ) : (
-                    <span className="text-emerald-700 dark:text-emerald-400 ml-1">✓ OK</span>
+                    <span className="text-forest-700 dark:text-forest-400 ml-1">✓ OK</span>
                   )}
                 </div>
               </div>
@@ -196,7 +196,7 @@ export function TeamTab() {
                 {/* Bottom Action: Glass Break ICE */}
                 <div className="flex items-center justify-between pt-2 border-t border-black/5 dark:border-white/10">
                   <span className="text-[10px] font-mono text-[#5A7064] dark:text-[#9AAD9E] flex items-center gap-1">
-                    <Shield size={11} className="text-emerald-700 dark:text-emerald-400" /> Matrice Médicale Privée
+                    <Shield size={11} className="text-forest-700 dark:text-forest-400" /> Matrice Médicale Privée
                   </span>
 
                   <button
@@ -226,7 +226,7 @@ export function TeamTab() {
           <button
             type="button"
             onClick={() => handleOpenAdd('dog')}
-            className="px-3.5 py-1 rounded-full bg-amber-800 hover:bg-amber-700 text-white font-bold text-xs shadow-xs flex items-center gap-1 active:scale-95 transition-all"
+            className="px-3.5 py-1 rounded-full bg-sand-800 hover:bg-sand-700 text-white font-bold text-xs shadow-xs flex items-center gap-1 active:scale-95 transition-all"
           >
             <Plus size={13} />
             <span>Ajouter un chien</span>
@@ -246,13 +246,13 @@ export function TeamTab() {
               >
                 <div className="flex items-start justify-between gap-2">
                   <div className="flex items-center gap-3">
-                    <div className="w-9 h-9 rounded-xl bg-amber-800 text-white font-bold flex items-center justify-center text-base shadow-xs shrink-0">
+                    <div className="w-9 h-9 rounded-xl bg-sand-800 text-white font-bold flex items-center justify-center text-base shadow-xs shrink-0">
                       🐾
                     </div>
                     <div>
                       <div className="flex items-center gap-1.5">
                         <h4 className="text-xs sm:text-sm font-bold text-[#17402C] dark:text-white">{dog.name}</h4>
-                        <span className="text-[9px] font-bold px-2 py-0.5 rounded-full bg-amber-100 text-amber-900 border border-amber-300">
+                        <span className="text-[9px] font-bold px-2 py-0.5 rounded-full bg-sand-100 text-sand-900 border border-sand-300">
                           {dog.breed}
                         </span>
                       </div>

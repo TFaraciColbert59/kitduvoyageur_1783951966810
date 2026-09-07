@@ -100,13 +100,13 @@ export function Step5Preview({
   if (loading) {
     return (
       <div className="py-16 text-center space-y-4">
-        <div className="w-16 h-16 mx-auto rounded-full bg-emerald-50 text-lkv-primary flex items-center justify-center animate-spin">
+        <div className="w-16 h-16 mx-auto rounded-full bg-forest-50 text-lkv-primary flex items-center justify-center animate-spin">
           <Navigation size={28} />
         </div>
         <h3 className="text-xl font-bold text-lkv-primary">
           Calcul déterministe de votre itinéraire...
         </h3>
-        <p className="text-xs text-gray-500 max-w-sm mx-auto">
+        <p className="text-xs text-stone-500 max-w-sm mx-auto">
           Répartition des étapes journalières, calcul altimétrique et sélection du matériel selon les règles de sécurité LKDV.
         </p>
       </div>
@@ -144,7 +144,7 @@ export function Step5Preview({
         <h2 className="text-2xl sm:text-3xl font-bold text-lkv-primary">
           {finalTitle}
         </h2>
-        <p className="text-sm text-gray-600 mt-1">
+        <p className="text-sm text-stone-600 mt-1">
           Voici votre proposition d&apos;itinéraire détaillée, calculée sans compromis et prête pour l&apos;aventure.
         </p>
       </div>
@@ -226,20 +226,20 @@ export function Step5Preview({
                     {step.country_code}
                   </span>
                   {step.accommodation_name && (
-                    <span className="text-[11px] text-gray-500">
+                    <span className="text-[11px] text-stone-500">
                       · {step.accommodation_name}
                     </span>
                   )}
                 </div>
                 <h4 className="font-semibold text-sm text-lkv-primary">{step.title}</h4>
                 {step.description && (
-                  <p className="text-xs text-gray-600 leading-relaxed max-w-xl">
+                  <p className="text-xs text-stone-600 leading-relaxed max-w-xl">
                     {step.description}
                   </p>
                 )}
               </div>
 
-              <div className="flex items-center gap-4 text-xs font-medium text-gray-600 shrink-0 self-start sm:self-center">
+              <div className="flex items-center gap-4 text-xs font-medium text-stone-600 shrink-0 self-start sm:self-center">
                 {step.distance_km ? (
                   <span className="flex items-center gap-1">
                     <Footprints size={14} className="text-lkv-secondary" />
@@ -279,7 +279,7 @@ export function Step5Preview({
                 </div>
               </div>
               {it.weight_grams ? (
-                <span className="text-[11px] font-medium text-gray-500">
+                <span className="text-[11px] font-medium text-stone-500">
                   {it.weight_grams}g
                 </span>
               ) : null}

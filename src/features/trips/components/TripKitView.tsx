@@ -234,12 +234,12 @@ export function TripKitView({ trip, analysis, showBackLink: _showBackLink = fals
 
       {/* Alertes de sécurité & climat */}
       {analysis.climateWarnings.length > 0 && (
-        <div className="p-4 rounded-2xl bg-amber-50 border border-amber-200/80 text-amber-900 text-xs sm:text-sm space-y-1.5">
-          <div className="font-bold flex items-center gap-2 text-amber-800">
-            <AlertTriangle className="w-4 h-4 shrink-0 text-amber-600" />
+        <div className="p-4 rounded-2xl bg-sand-50 border border-sand-200/80 text-sand-900 text-xs sm:text-sm space-y-1.5">
+          <div className="font-bold flex items-center gap-2 text-sand-800">
+            <AlertTriangle className="w-4 h-4 shrink-0 text-sand-600" />
             Conditions de terrain identifiées pour votre expédition
           </div>
-          <ul className="list-disc list-inside space-y-0.5 pl-1 text-xs text-amber-800/90">
+          <ul className="list-disc list-inside space-y-0.5 pl-1 text-xs text-sand-800/90">
             {analysis.climateWarnings.map((w, idx) => (
               <li key={idx}>{w}</li>
             ))}

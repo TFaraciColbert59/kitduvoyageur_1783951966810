@@ -57,7 +57,7 @@ export function Step4Travelers({
         <h2 className="text-2xl sm:text-3xl font-bold text-lkv-primary">
           Qui prend part à l&apos;aventure ?
         </h2>
-        <p className="text-sm text-gray-600 mt-1">
+        <p className="text-sm text-stone-600 mt-1">
           Le nombre de participants permet de dimensionner le matériel partagé (abri, popote, filtrage) et d&apos;équilibrer les sacs.
         </p>
       </div>
@@ -178,13 +178,13 @@ export function Step4Travelers({
             value={description}
             onChange={(e) => onDescriptionChange(e.target.value)}
             placeholder="Ex : Première expérience de haute altitude, objectif autonomie complète en tente..."
-            className="w-full px-4 py-3 bg-white rounded-xl border border-black/10 text-xs focus:ring-2 focus:ring-lkv-primary focus:outline-none resize-none text-gray-700"
+            className="w-full px-4 py-3 bg-white rounded-xl border border-black/10 text-xs focus:ring-2 focus:ring-lkv-primary focus:outline-none resize-none text-stone-700"
           />
         </div>
       </div>
 
       {/* Info calcul de sac */}
-      <div className="p-3.5 bg-emerald-50/70 border border-emerald-200/60 rounded-xl flex items-center gap-2.5 text-xs text-lkv-primary">
+      <div className="p-3.5 bg-forest-50/70 border border-forest-200/60 rounded-xl flex items-center gap-2.5 text-xs text-lkv-primary">
         <Info size={16} className="text-lkv-secondary shrink-0" />
         <span>
           Le moteur ajustera la liste de matériel : les tentes et réchauds sont partagés, tandis que les duvets et vêtements sont comptés individuellement.

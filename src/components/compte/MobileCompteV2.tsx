@@ -923,7 +923,7 @@ export default function MobileCompteV2() {
                       </p>
                     </div>
                   </div>
-                  <span className="glass-pill bg-emerald-50 text-emerald-800 border-emerald-200">
+                  <span className="glass-pill bg-forest-50 text-forest-800 border-forest-200">
                     Possédé
                   </span>
                 </div>

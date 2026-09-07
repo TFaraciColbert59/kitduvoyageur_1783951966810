@@ -89,7 +89,7 @@ export default function SafetyCenterModal({
           <span className="text-[10px] text-[#A6C1A0] font-mono uppercase tracking-widest block">
             Coordonnées GPS WGS-84
           </span>
-          <p className="font-mono font-bold text-sm text-emerald-300 select-all">
+          <p className="font-mono font-bold text-sm text-forest-300 select-all">
             {formattedCoords}
           </p>
           {currentPos?.timestamp && (

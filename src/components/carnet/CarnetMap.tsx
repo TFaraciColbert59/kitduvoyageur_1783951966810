@@ -203,14 +203,14 @@ export default function CarnetMap({
       {/* Header bar above map */}
       <div className="flex items-center justify-between px-4 py-2.5 bg-white/80 border-b border-[#17402C]/10 text-xs shrink-0">
         <div className="flex items-center gap-2">
-          <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
+          <span className="w-2 h-2 rounded-full bg-forest-500 animate-pulse" />
           <span className="font-display font-bold text-[#17402C]">Trace GPS &amp; Relief 3D</span>
         </div>
         <div className="flex items-center gap-1">
           <button
             type="button"
             onClick={handleZoomIn}
-            className="w-6 h-6 rounded-md bg-white border border-[#17402C]/15 flex items-center justify-center text-xs font-bold text-[#17402C] hover:bg-emerald-50 active:scale-95"
+            className="w-6 h-6 rounded-md bg-white border border-[#17402C]/15 flex items-center justify-center text-xs font-bold text-[#17402C] hover:bg-forest-50 active:scale-95"
             title="Zoom avant"
           >
             +
@@ -218,7 +218,7 @@ export default function CarnetMap({
           <button
             type="button"
             onClick={handleZoomOut}
-            className="w-6 h-6 rounded-md bg-white border border-[#17402C]/15 flex items-center justify-center text-xs font-bold text-[#17402C] hover:bg-emerald-50 active:scale-95"
+            className="w-6 h-6 rounded-md bg-white border border-[#17402C]/15 flex items-center justify-center text-xs font-bold text-[#17402C] hover:bg-forest-50 active:scale-95"
             title="Zoom arrière"
           >
             -

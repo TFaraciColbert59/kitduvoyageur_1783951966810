@@ -200,7 +200,7 @@ export function TripNotesView({ trip }: TripNotesViewProps) {
                     </span>
                   )}
                   {note.is_pinned && (
-                    <span className="text-[11px] font-semibold px-2 py-0.5 rounded-full bg-amber-50 text-amber-700 border border-amber-200 flex items-center gap-1">
+                    <span className="text-[11px] font-semibold px-2 py-0.5 rounded-full bg-sand-50 text-sand-700 border border-sand-200 flex items-center gap-1">
                       <Pin size={11} /> Épinglé
                     </span>
                   )}
@@ -304,7 +304,7 @@ export function TripNotesView({ trip }: TripNotesViewProps) {
                       type="checkbox"
                       name="isPinned"
                       value="true"
-                      className="w-4 h-4 rounded border-gray-300 text-lkv-primary focus:ring-lkv-primary"
+                      className="w-4 h-4 rounded border-stone-300 text-lkv-primary focus:ring-lkv-primary"
                     />
                     Épingler en haut
                   </label>

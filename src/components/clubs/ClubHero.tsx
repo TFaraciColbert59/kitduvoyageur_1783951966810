@@ -43,7 +43,7 @@ export default function ClubHero({
 
       <div className="relative z-10 max-w-2xl">
         <div className="inline-flex items-center gap-2 px-3 py-1 glass-pill mb-6 text-white border-white/20">
-          <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
+          <span className="w-1.5 h-1.5 rounded-full bg-forest-400 animate-pulse" />
           <span className="font-mono text-[10px] uppercase tracking-widest text-[#FAF8F5] font-bold">
             {club.type || 'CLUB'} · {membersCount} MEMBRES · {club.privacy === 'open' ? 'PUBLIC' : 'PRIVÉ'}
           </span>
@@ -68,7 +68,7 @@ export default function ClubHero({
           <div className="w-px h-8 bg-white/20" />
           <div className="flex flex-col">
             <span className="text-white/60 text-[10px] uppercase tracking-widest mb-1 font-bold">En ligne</span>
-            <span className="font-bold text-emerald-400">{isOnline}</span>
+            <span className="font-bold text-forest-400">{isOnline}</span>
           </div>
           <div className="w-px h-8 bg-white/20" />
           <div className="flex flex-col">

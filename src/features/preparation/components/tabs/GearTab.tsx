@@ -163,7 +163,7 @@ export function GearTab() {
             <button
               type="button"
               onClick={() => setIsAddModalOpen(true)}
-              className="text-emerald-700 font-bold hover:underline"
+              className="text-forest-700 font-bold hover:underline"
             >
               + Ajouter un premier équipement
             </button>
@@ -191,7 +191,7 @@ export function GearTab() {
                     )}
 
                     {item.isConsumable && (
-                      <span className="px-1.5 py-0.5 rounded-md bg-amber-100 text-amber-800 text-[9px] font-bold border border-amber-300 flex items-center gap-0.5">
+                      <span className="px-1.5 py-0.5 rounded-md bg-sand-100 text-sand-800 text-[9px] font-bold border border-sand-300 flex items-center gap-0.5">
                         <Flame size={10} /> VIVRES
                       </span>
                     )}
@@ -220,7 +220,7 @@ export function GearTab() {
                         triggerHaptic('light');
                         toggleItemWorn(item.id);
                       }}
-                      className="rounded text-emerald-600 focus:ring-emerald-500 cursor-pointer"
+                      className="rounded text-forest-600 focus:ring-forest-500 cursor-pointer"
                     />
                     <span className="hidden sm:inline">Porté 👕</span>
                   </label>

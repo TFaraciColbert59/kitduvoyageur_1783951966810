@@ -14,8 +14,8 @@ export const SmartPromptsList: React.FC<SmartPromptsListProps> = ({ alerts, onDi
 
   if (visibleAlerts.length === 0) {
     return (
-      <div className="p-4 rounded-2xl bg-emerald-50/50 dark:bg-emerald-950/20 border border-emerald-500/20 text-center">
-        <p className="text-xs font-semibold text-emerald-800 dark:text-emerald-300">
+      <div className="p-4 rounded-2xl bg-forest-50/50 dark:bg-forest-950/20 border border-forest-500/20 text-center">
+        <p className="text-xs font-semibold text-forest-800 dark:text-forest-300">
           ✓ Aucune anomalie détectée pour votre départ.
         </p>
       </div>

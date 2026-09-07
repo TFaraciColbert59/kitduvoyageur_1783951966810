@@ -69,7 +69,7 @@ export function AffiliateLinkCard({ link, tripId }: AffiliateLinkCardProps) {
                 {link.partner.name}
               </span>
             )}
-            <span className="text-[9.5px] font-mono font-bold text-amber-900 bg-amber-100/90 border border-amber-300/60 px-2 py-0.5 rounded-full">
+            <span className="text-[9.5px] font-mono font-bold text-sand-900 bg-sand-100/90 border border-sand-300/60 px-2 py-0.5 rounded-full">
               Sponsorisé
             </span>
           </div>

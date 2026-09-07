@@ -39,7 +39,7 @@ export function TripFiltersBar({ filters, onChange, onReset }: TripFiltersBarPro
           {filters.search && (
             <button
               onClick={() => onChange({ ...filters, search: '', page: 1 })}
-              className="absolute right-3.5 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 p-1"
+              className="absolute right-3.5 top-1/2 -translate-y-1/2 text-stone-400 hover:text-stone-600 p-1"
               aria-label="Effacer la recherche"
             >
               <X size={14} />

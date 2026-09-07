@@ -412,14 +412,14 @@ export default function ClubDetailPage() {
       <>
         {/* DESKTOP LOADING */}
         <div className="hidden md:block">
-          <div className="min-h-screen bg-[#F5F3ED] selection:bg-emerald-900/20 flex flex-col">
+          <div className="min-h-screen bg-[#F5F3ED] selection:bg-forest-900/20 flex flex-col">
             <Header />
             <main className="flex-1 animate-pulse">
-              <div className="h-[400px] bg-emerald-900/10 mx-auto w-full max-w-[1400px] rounded-b-[3rem] mt-16" />
+              <div className="h-[400px] bg-forest-900/10 mx-auto w-full max-w-[1400px] rounded-b-[3rem] mt-16" />
               <div className="max-w-7xl mx-auto px-6 py-12 flex gap-8">
                 <div className="flex-[2] space-y-6">
-                  <div className="h-64 bg-emerald-900/10 rounded-[0.75rem]" />
-                  <div className="h-96 bg-emerald-900/10 rounded-[0.75rem]" />
+                  <div className="h-64 bg-forest-900/10 rounded-[0.75rem]" />
+                  <div className="h-96 bg-forest-900/10 rounded-[0.75rem]" />
                 </div>
               </div>
             </main>
@@ -447,25 +447,25 @@ export default function ClubDetailPage() {
       <>
         {/* DESKTOP NOT FOUND */}
         <div className="hidden md:block">
-          <div className="min-h-screen bg-[#F5F3ED] selection:bg-emerald-900/20 flex flex-col">
+          <div className="min-h-screen bg-[#F5F3ED] selection:bg-forest-900/20 flex flex-col">
             <Header />
             <main className="flex-1 flex flex-col items-center justify-center text-center px-6 py-24">
-              <div className="w-20 h-20 rounded-[0.75rem] bg-emerald-900/10 flex items-center justify-center mb-6">
-                <Icon name="UserGroupIcon" size={32} className="text-emerald-900/40" />
+              <div className="w-20 h-20 rounded-[0.75rem] bg-forest-900/10 flex items-center justify-center mb-6">
+                <Icon name="UserGroupIcon" size={32} className="text-forest-900/40" />
               </div>
               <h1 className="font-display font-800 text-3xl mb-3">Club introuvable</h1>
-              <p className="text-emerald-900/60 max-w-md mb-8">
+              <p className="text-forest-900/60 max-w-md mb-8">
                 Ce club n'existe pas, a été supprimé, ou vous n'en êtes pas membre.
               </p>
               <div className="flex items-center gap-4">
                 <button
                   type="button"
                   onClick={() => { setNotFound(false); loadData(); }}
-                  className="px-6 py-3 rounded-full bg-emerald-900 text-white text-sm font-700 hover:bg-emerald-800 transition-colors"
+                  className="px-6 py-3 rounded-full bg-forest-900 text-white text-sm font-700 hover:bg-forest-800 transition-colors"
                 >
                   Réessayer
                 </button>
-                <Link href="/clubs" className="px-6 py-3 rounded-full border border-emerald-900/20 text-emerald-900 text-sm font-700 hover:bg-emerald-900/5 transition-colors">
+                <Link href="/clubs" className="px-6 py-3 rounded-full border border-forest-900/20 text-forest-900 text-sm font-700 hover:bg-forest-900/5 transition-colors">
                   Tous les clubs
                 </Link>
               </div>
@@ -477,7 +477,7 @@ export default function ClubDetailPage() {
           <MobilePageShell>
             <div style={{ padding: '32px 20px', display: 'flex', flexDirection: 'column', alignItems: 'center', textAlign: 'center', paddingTop: '15vh' }}>
               <div style={{ width: 72, height: 72, borderRadius: 24, background: 'rgba(23,64,44,0.06)', display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: 20 }}>
-                <Icon name="UserGroupIcon" size={28} className="text-emerald-900/40" />
+                <Icon name="UserGroupIcon" size={28} className="text-forest-900/40" />
               </div>
               <h1 style={{ fontFamily: 'Georgia, serif', fontSize: 24, fontWeight: 700, color: '#17402C', marginBottom: 8 }}>Club introuvable</h1>
               <p style={{ color: '#6B7A72', fontSize: 15, lineHeight: 1.5, maxWidth: 300, marginBottom: 24 }}>
@@ -535,7 +535,7 @@ export default function ClubDetailPage() {
                 <div key={ev.id} className="glass rounded-2xl p-5 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 transition-all">
                   <div className="flex items-center gap-4 min-w-0">
                     <div className="w-16 h-16 rounded-2xl bg-[#17402C] text-white flex flex-col items-center justify-center shrink-0 shadow-sm">
-                      <span className="text-[10px] font-mono font-bold uppercase tracking-wider text-emerald-300">{month}</span>
+                      <span className="text-[10px] font-mono font-bold uppercase tracking-wider text-forest-300">{month}</span>
                       <span className="text-2xl font-display font-bold leading-none">{day}</span>
                     </div>
                     <div className="min-w-0">
@@ -676,7 +676,7 @@ export default function ClubDetailPage() {
                   <div key={ev.id} className="glass rounded-2xl p-4 flex items-center justify-between gap-4">
                     <div className="flex items-center gap-3.5 min-w-0">
                       <div className="w-12 h-12 rounded-xl bg-[#17402C] text-white flex flex-col items-center justify-center shrink-0">
-                        <span className="text-[8.5px] font-mono font-bold uppercase text-emerald-300 leading-none">{month}</span>
+                        <span className="text-[8.5px] font-mono font-bold uppercase text-forest-300 leading-none">{month}</span>
                         <span className="text-lg font-display font-bold leading-tight">{day}</span>
                       </div>
                       <div className="min-w-0">
@@ -936,14 +936,14 @@ export default function ClubDetailPage() {
                   >
                     <div className="relative">
                       {participant.user?.trust_score && participant.user.trust_score > 80 && (
-                        <div className="absolute -bottom-1 -right-1 w-5 h-5 bg-emerald-500 rounded-full border-2 border-white flex items-center justify-center text-white">
+                        <div className="absolute -bottom-1 -right-1 w-5 h-5 bg-forest-500 rounded-full border-2 border-white flex items-center justify-center text-white">
                           <Icon name="CheckIcon" size={10} />
                         </div>
                       )}
                     </div>
                     <div>
-                      <h4 className="font-800 text-emerald-950">{participant.user?.full_name || 'Utilisateur'}</h4>
-                      <p className="text-xs text-emerald-900/50">Inscrit le {new Date(participant.joined_at).toLocaleDateString('fr-FR')}</p>
+                      <h4 className="font-800 text-forest-950">{participant.user?.full_name || 'Utilisateur'}</h4>
+                      <p className="text-xs text-forest-900/50">Inscrit le {new Date(participant.joined_at).toLocaleDateString('fr-FR')}</p>
                     </div>
                   </Link>
                 ))
@@ -955,7 +955,7 @@ export default function ClubDetailPage() {
 
       {/* Global Toast */}
       {toast && (
-        <div className="fixed bottom-10 left-1/2 -translate-x-1/2 z-[300] bg-emerald-950 text-white px-8 py-4 rounded-full text-sm font-700 animate-fade-in-up flex items-center gap-3">
+        <div className="fixed bottom-10 left-1/2 -translate-x-1/2 z-[300] bg-forest-950 text-white px-8 py-4 rounded-full text-sm font-700 animate-fade-in-up flex items-center gap-3">
           <Icon name="CheckCircleIcon" size={18} className="text-white/70" />
           {toast}
         </div>

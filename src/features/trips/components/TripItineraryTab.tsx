@@ -93,8 +93,8 @@ export function TripItineraryTab({ trip }: TripItineraryTabProps) {
     <div className="space-y-6">
       {/* 0. Bandeau d'information squelette si aucune donnée de référence */}
       {provenanceInfo.variant === 'skeleton' && (
-        <div className="p-4 bg-amber-50/90 border border-amber-200 rounded-2xl flex items-start gap-3 text-amber-950">
-          <AlertTriangle size={18} className="text-amber-600 shrink-0 mt-0.5" />
+        <div className="p-4 bg-sand-50/90 border border-sand-200 rounded-2xl flex items-start gap-3 text-sand-900">
+          <AlertTriangle size={18} className="text-sand-600 shrink-0 mt-0.5" />
           <div className="text-xs leading-relaxed">
             <span className="font-semibold block mb-0.5">Squelette d’itinéraire :</span>
             Aucun tracé de référence pour cette destination. Ajoute tes étapes, les distances se calculeront automatiquement.
@@ -126,8 +126,8 @@ export function TripItineraryTab({ trip }: TripItineraryTabProps) {
           ))}
         </div>
       ) : trip.start_date ? (
-        <div className="p-3.5 bg-emerald-50/80 border border-emerald-200/80 rounded-2xl flex items-center gap-3 text-emerald-900">
-          <CheckCircle2 size={16} className="text-emerald-600 shrink-0" />
+        <div className="p-3.5 bg-forest-50/80 border border-forest-200/80 rounded-2xl flex items-center gap-3 text-forest-900">
+          <CheckCircle2 size={16} className="text-forest-600 shrink-0" />
           <div className="text-xs">
             <span className="font-semibold">Période optimale :</span> les dates prévues correspondent à la meilleure saison pour cette destination.
           </div>
@@ -138,22 +138,22 @@ export function TripItineraryTab({ trip }: TripItineraryTabProps) {
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 p-4 bg-white/80 backdrop-blur-sm rounded-2xl border border-black/5">
         <div className="flex items-center gap-4 text-xs flex-wrap">
           <div>
-            <span className="text-gray-500 block">Étapes</span>
+            <span className="text-stone-500 block">Étapes</span>
             <span className="font-bold text-lkv-primary text-sm">{canonicalSteps.length} jours</span>
           </div>
           <div className="h-6 w-px bg-black/10" />
           <div>
-            <span className="text-gray-500 block">Distance totale</span>
+            <span className="text-stone-500 block">Distance totale</span>
             <span className="font-bold text-lkv-primary text-sm">{distance.totalKm} km</span>
           </div>
           <div className="h-6 w-px bg-black/10" />
           <div>
-            <span className="text-gray-500 block">Dénivelé positif</span>
+            <span className="text-stone-500 block">Dénivelé positif</span>
             <span className="font-bold text-lkv-primary text-sm">+{distance.dPlus}m D+</span>
           </div>
           <div className="h-6 w-px bg-black/10" />
           <div>
-            <span className="text-gray-500 block">Provenance</span>
+            <span className="text-stone-500 block">Provenance</span>
             <span className="inline-flex items-center gap-1 font-semibold text-xs text-lkv-primary">
               <Sparkles size={12} className="text-forest-600" />
               {provenanceInfo.label}
@@ -195,14 +195,14 @@ export function TripItineraryTab({ trip }: TripItineraryTabProps) {
         <div className="fixed inset-0 z-50 bg-black/40 backdrop-blur-xs flex items-center justify-center p-4">
           <div className="bg-white rounded-3xl p-6 max-w-md w-full space-y-4 shadow-xl border border-black/10">
             <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-full bg-amber-100 text-amber-800 flex items-center justify-center">
+              <div className="w-10 h-10 rounded-full bg-sand-100 text-sand-800 flex items-center justify-center">
                 <RotateCcw size={20} />
               </div>
               <h3 className="text-base font-bold text-lkv-primary">
                 Régénérer cet itinéraire ?
               </h3>
             </div>
-            <p className="text-xs text-gray-600 leading-relaxed">
+            <p className="text-xs text-stone-600 leading-relaxed">
               Le moteur déterministe recalculera les étapes journalières selon les dates et le pays.
               <br />
               <strong className="text-lkv-primary">Vos articles de matériel ajoutés manuellement seront scrupuleusement conservés.</strong>
@@ -212,7 +212,7 @@ export function TripItineraryTab({ trip }: TripItineraryTabProps) {
                 type="button"
                 onClick={() => setConfirmOpen(false)}
                 disabled={isRegenerating}
-                className="px-4 py-2 rounded-xl border border-black/10 text-xs font-semibold text-gray-600 hover:bg-black/5"
+                className="px-4 py-2 rounded-xl border border-black/10 text-xs font-semibold text-stone-600 hover:bg-black/5"
               >
                 Annuler
               </button>
@@ -258,7 +258,7 @@ export function TripItineraryTab({ trip }: TripItineraryTabProps) {
                   )}
 
                   {step.description && (
-                    <p className="text-xs text-gray-600 leading-relaxed max-w-2xl pt-1">
+                    <p className="text-xs text-stone-600 leading-relaxed max-w-2xl pt-1">
                       {step.description}
                     </p>
                   )}
@@ -277,7 +277,7 @@ export function TripItineraryTab({ trip }: TripItineraryTabProps) {
                     </div>
                   ) : null}
                   {step.elevation_loss_m ? (
-                    <div className="text-gray-500 text-[11px]">
+                    <div className="text-stone-500 text-[11px]">
                       -{step.elevation_loss_m}m D-
                     </div>
                   ) : null}
@@ -288,9 +288,9 @@ export function TripItineraryTab({ trip }: TripItineraryTabProps) {
         </div>
       ) : (
         <div className="p-8 bg-white/80 rounded-3xl border border-black/5 text-center space-y-3">
-          <Navigation size={36} className="text-gray-400 mx-auto" />
+          <Navigation size={36} className="text-stone-400 mx-auto" />
           <h4 className="text-sm font-bold text-lkv-primary">Aucune étape définie</h4>
-          <p className="text-xs text-gray-500 max-w-sm mx-auto">
+          <p className="text-xs text-stone-500 max-w-sm mx-auto">
             Ce voyage n&apos;a pas encore d&apos;itinéraire journalier. Vous pouvez le générer automatiquement avec notre moteur de répartition.
           </p>
           {trip.permissions.canEdit && (

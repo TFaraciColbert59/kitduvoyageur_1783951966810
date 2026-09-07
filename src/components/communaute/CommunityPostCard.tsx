@@ -589,7 +589,7 @@ export default function CommunityPostCard({
             {/* Header of comments drawer */}
             <div className="flex items-center justify-between text-xs text-[#5C6B5E] px-1">
               <div className="flex items-center gap-2">
-                <span className="w-2 h-2 rounded-full bg-emerald-600 animate-pulse" />
+                <span className="w-2 h-2 rounded-full bg-forest-600 animate-pulse" />
                 <span className="font-bold text-[#17402C]">Discussions ({comments.length})</span>
               </div>
               <span className="text-[10px] font-mono text-[#5C6B5E]">Fil d'échange en direct</span>
@@ -818,12 +818,12 @@ export default function CommunityPostCard({
             {/* Liquid Glass Composer Bar */}
             <div className="space-y-1.5 pt-1">
               {replyingTo && (
-                <div className="glass px-3 py-1.5 rounded-xl border border-emerald-300/60 bg-emerald-50/60 backdrop-blur-md flex items-center justify-between text-[11px] text-emerald-900 shadow-2xs">
+                <div className="glass px-3 py-1.5 rounded-xl border border-forest-300/60 bg-forest-50/60 backdrop-blur-md flex items-center justify-between text-[11px] text-forest-900 shadow-2xs">
                   <span>En réponse à <strong>@{replyingTo}</strong></span>
                   <button
                     type="button"
                     onClick={() => { setReplyingTo(null); setParentCommentId(null); setCommentText(''); }}
-                    className="font-bold hover:text-emerald-950 px-1"
+                    className="font-bold hover:text-forest-950 px-1"
                   >
                     ✕
                   </button>

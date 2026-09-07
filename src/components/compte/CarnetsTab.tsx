@@ -564,7 +564,7 @@ function DraftRow({
               <button
                 onClick={() => onPublish(draft.id)}
                 title="Publier"
-                className="p-1.5 text-emerald-600 hover:text-emerald-700 hover:bg-emerald-50 rounded-lg transition-colors"
+                className="p-1.5 text-forest-600 hover:text-forest-700 hover:bg-forest-50 rounded-lg transition-colors"
               >
                 <Icon name="ArrowUpOnSquareIcon" size={14} />
               </button>

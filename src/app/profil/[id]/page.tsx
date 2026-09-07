@@ -117,7 +117,7 @@ export default function PublicProfilePage() {
     <>
       {/* DESKTOP */}
       <div className="hidden md:block">
-        <div className="min-h-screen bg-transparent text-[#17402C] selection:bg-emerald-900/20 font-sans relative">
+        <div className="min-h-screen bg-transparent text-[#17402C] selection:bg-forest-900/20 font-sans relative">
           <CompteBackground />
           <Header />
           
@@ -135,7 +135,7 @@ export default function PublicProfilePage() {
                 </div>
                 
                 <div className="flex items-center gap-3">
-                  <span className="px-3 py-1 bg-emerald-100 text-emerald-900 rounded-full text-xs font-bold border border-emerald-300 flex items-center gap-1.5">
+                  <span className="px-3 py-1 bg-forest-100 text-forest-900 rounded-full text-xs font-bold border border-forest-300 flex items-center gap-1.5">
                     <span>✓</span> Profil vérifié
                   </span>
                 </div>

@@ -178,7 +178,7 @@ export const DesktopPreparationView: React.FC<DesktopPreparationViewProps> = ({
                </div>
             </div>
             <div className="flex items-center gap-2.5 border-r border-white/30 pr-4">
-               <div className="w-9 h-9 bg-blue-500/20 backdrop-blur-md rounded-xl flex items-center justify-center text-[#1e40af] border border-blue-500/30 ">
+               <div className="w-9 h-9 bg-sky-500/20 backdrop-blur-md rounded-xl flex items-center justify-center text-[#1e40af] border border-sky-500/30 ">
                  <Icon name="cloud-rain" className="w-4 h-4" />
                </div>
                <div>
@@ -261,8 +261,8 @@ export const DesktopPreparationView: React.FC<DesktopPreparationViewProps> = ({
               </h4>
               <div className="grid gap-2.5">
                 {report.warnings.map((warn, idx) => (
-                  <div key={idx} className="bg-amber-500/15 backdrop-blur-md p-3.5 rounded-xl border border-amber-500/30 flex items-start gap-3 ">
-                     <div className="w-7 h-7 rounded-full bg-amber-500/25 text-amber-950 flex items-center justify-center shrink-0 mt-0.5 border border-amber-500/35">
+                  <div key={idx} className="bg-sand-500/15 backdrop-blur-md p-3.5 rounded-xl border border-sand-500/30 flex items-start gap-3 ">
+                     <div className="w-7 h-7 rounded-full bg-sand-500/25 text-sand-900 flex items-center justify-center shrink-0 mt-0.5 border border-sand-500/35">
                        <Icon name="info" className="w-4 h-4" />
                      </div>
                      <p className="text-xs font-black text-[#17402C] leading-relaxed pt-0.5 drop-">{warn}</p>
@@ -374,8 +374,8 @@ export const DesktopPreparationView: React.FC<DesktopPreparationViewProps> = ({
 
         {/* Toast Notification */}
         <div className={`absolute top-6 right-6 z-50 bg-[#17402C]/90 backdrop-blur-2xl border border-white/30 text-white px-4 py-2.5 rounded-xl  flex items-center gap-2.5 transition-all duration-300 transform ${toastMsg ? 'translate-y-0 opacity-100' : '-translate-y-4 opacity-0 pointer-events-none'}`}>
-          <div className="w-5 h-5 rounded-full bg-emerald-500/20 flex items-center justify-center border border-emerald-500/40">
-             <Icon name="check" className="w-3 h-3 text-emerald-400" />
+          <div className="w-5 h-5 rounded-full bg-forest-500/20 flex items-center justify-center border border-forest-500/40">
+             <Icon name="check" className="w-3 h-3 text-forest-400" />
           </div>
           <span className="text-xs font-bold font-mono">{toastMsg}</span>
         </div>

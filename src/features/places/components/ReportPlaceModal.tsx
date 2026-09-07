@@ -76,8 +76,8 @@ export function ReportPlaceModal({
           </button>
 
           <div className="mb-4 pr-6">
-            <span className="text-xs font-bold text-amber-700 uppercase tracking-wider flex items-center gap-1.5">
-              <AlertTriangle className="w-4 h-4 text-amber-600" />
+            <span className="text-xs font-bold text-sand-700 uppercase tracking-wider flex items-center gap-1.5">
+              <AlertTriangle className="w-4 h-4 text-sand-600" />
               Sécurité & Éthique Outdoor
             </span>
             <h2 className="text-xl font-black text-stone-900 mt-1">
@@ -90,7 +90,7 @@ export function ReportPlaceModal({
 
           {success ? (
             <div className="py-4 text-center">
-              <div className="w-12 h-12 rounded-full bg-emerald-50 text-emerald-700 mx-auto flex items-center justify-center mb-3">
+              <div className="w-12 h-12 rounded-full bg-forest-50 text-forest-700 mx-auto flex items-center justify-center mb-3">
                 <CheckCircle2 className="w-6 h-6" />
               </div>
               <h3 className="text-base font-bold text-stone-900 mb-1">

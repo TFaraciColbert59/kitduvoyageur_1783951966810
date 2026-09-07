@@ -1081,12 +1081,12 @@ export default function AdminProductsManager() {
             <span className="text-2xl font-bold font-display text-white mt-1">{kpis.total}</span>
           </div>
           <div className="bg-[#15231D] border border-white/10 rounded-2xl p-3.5 flex flex-col justify-between">
-            <span className="text-[11px] font-mono text-emerald-400/80 uppercase tracking-wider">Actifs en Boutique</span>
-            <span className="text-2xl font-bold font-display text-emerald-400 mt-1">{kpis.active}</span>
+            <span className="text-[11px] font-mono text-forest-400/80 uppercase tracking-wider">Actifs en Boutique</span>
+            <span className="text-2xl font-bold font-display text-forest-400 mt-1">{kpis.active}</span>
           </div>
           <div className="bg-[#15231D] border border-white/10 rounded-2xl p-3.5 flex flex-col justify-between">
-            <span className="text-[11px] font-mono text-amber-400/80 uppercase tracking-wider">Stock Faible</span>
-            <span className="text-2xl font-bold font-display text-amber-400 mt-1">{kpis.lowStock}</span>
+            <span className="text-[11px] font-mono text-sand-400/80 uppercase tracking-wider">Stock Faible</span>
+            <span className="text-2xl font-bold font-display text-sand-400 mt-1">{kpis.lowStock}</span>
           </div>
           <div className="bg-[#15231D] border border-white/10 rounded-2xl p-3.5 flex flex-col justify-between">
             <span className="text-[11px] font-mono text-red-400/80 uppercase tracking-wider">Ruptures Stock</span>
@@ -1178,7 +1178,7 @@ export default function AdminProductsManager() {
                 {selectedIds.size > 0 && (
                   <button
                     onClick={() => setIsBulkModalOpen(true)}
-                    className="flex items-center gap-1.5 px-3 py-2 rounded-xl bg-amber-600/20 text-amber-300 border border-amber-500/30 text-xs font-bold hover:bg-amber-600/30 transition-all"
+                    className="flex items-center gap-1.5 px-3 py-2 rounded-xl bg-sand-600/20 text-sand-300 border border-sand-500/30 text-xs font-bold hover:bg-sand-600/30 transition-all"
                   >
                     <Icon name="SparklesIcon" size={14} />
                     <span>Actions groupées ({selectedIds.size})</span>
@@ -2281,8 +2281,8 @@ export default function AdminProductsManager() {
                 </div>
 
                 {/* Google SERP Live Preview */}
-                <div className="bg-white p-5 rounded-2xl text-slate-800  space-y-2">
-                  <span className="text-[10px] font-mono text-slate-400 uppercase tracking-wider block">
+                <div className="bg-white p-5 rounded-2xl text-stone-800  space-y-2">
+                  <span className="text-[10px] font-mono text-stone-400 uppercase tracking-wider block">
                     Aperçu dans les résultats Google (SERP)
                   </span>
                   <div className="text-xs text-[#202124] truncate">
@@ -2390,7 +2390,7 @@ export default function AdminProductsManager() {
                       {productAuditLogs.map(log => (
                         <div key={log.id} className="bg-black/30 border border-white/10 rounded-xl p-3 text-xs flex items-center justify-between gap-4">
                           <div>
-                            <span className="font-mono text-[11px] font-bold text-amber-400 uppercase mr-2">{log.action}</span>
+                            <span className="font-mono text-[11px] font-bold text-sand-400 uppercase mr-2">{log.action}</span>
                             <span className="text-white/60">par {log.admin_email}</span>
                           </div>
                           <span className="text-[10px] font-mono text-white/40">{new Date(log.created_at).toLocaleString()}</span>
@@ -2466,7 +2466,7 @@ export default function AdminProductsManager() {
                     </span>
                   </div>
                   <div className="text-xs text-white/60 space-y-1">
-                    <p>Produits actifs : <span className="font-bold text-emerald-400">{data.active}</span></p>
+                    <p>Produits actifs : <span className="font-bold text-forest-400">{data.active}</span></p>
                     <p>Sous-catégories : <span className="text-white/80">{Array.from(data.subcategories).join(', ') || 'Aucune'}</span></p>
                   </div>
                   <button
@@ -2563,7 +2563,7 @@ export default function AdminProductsManager() {
                         <td className="p-3 text-white/50">{new Date(log.created_at).toLocaleString()}</td>
                         <td className="p-3 text-white/80">{log.admin_email}</td>
                         <td className="p-3">
-                          <span className="px-2 py-0.5 rounded-full bg-amber-500/20 text-amber-300 font-bold uppercase text-[10px]">
+                          <span className="px-2 py-0.5 rounded-full bg-sand-500/20 text-sand-300 font-bold uppercase text-[10px]">
                             {log.action}
                           </span>
                         </td>

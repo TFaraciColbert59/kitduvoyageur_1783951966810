@@ -731,7 +731,7 @@ export function DepartChecklist({
                                         </span>
                                       )}
                                       {item.is_consumable && (
-                                        <span className="text-[9px] font-medium px-1.5 py-0.2 rounded-full bg-emerald-100/80 text-emerald-900 flex items-center gap-0.5">
+                                        <span className="text-[9px] font-medium px-1.5 py-0.2 rounded-full bg-forest-100/80 text-forest-900 flex items-center gap-0.5">
                                           <Sparkles size={8} />
                                           Consommable
                                         </span>

@@ -108,13 +108,13 @@ export function PlaceDetailClient({
 
         {/* Alerte Floutage Éthique */}
         {place.is_blurred && (
-          <div className="mb-6 p-4 rounded-2xl bg-amber-50 border border-amber-200/80 text-amber-900 text-xs sm:text-sm flex items-start gap-3">
-            <ShieldAlert className="w-5 h-5 text-amber-700 shrink-0 mt-0.5" />
+          <div className="mb-6 p-4 rounded-2xl bg-sand-50 border border-sand-200/80 text-sand-900 text-xs sm:text-sm flex items-start gap-3">
+            <ShieldAlert className="w-5 h-5 text-sand-700 shrink-0 mt-0.5" />
             <div className="space-y-1">
               <strong className="font-bold block">
                 Préservation de la biodiversité & sécurité physique (Charte LKDV §5.7)
               </strong>
-              <p className="text-xs text-amber-800/90 leading-relaxed">
+              <p className="text-xs text-sand-800/90 leading-relaxed">
                 Ce spot fragile fait l’objet d’un floutage serveur systématique à ~500 m (coordonnées arrondies à 2 décimales) afin de prévenir le surbivouac et protéger les écosystèmes montagnards.
               </p>
             </div>

@@ -24,7 +24,7 @@ export const DogParticipantCard: React.FC<DogParticipantCardProps> = ({
       {/* Top Identity */}
       <div className="flex items-start justify-between gap-3">
         <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-2xl bg-amber-700 text-white font-bold flex items-center justify-center text-lg shadow-sm">
+          <div className="w-10 h-10 rounded-2xl bg-sand-700 text-white font-bold flex items-center justify-center text-lg shadow-sm">
             🐾
           </div>
           <div>
@@ -32,7 +32,7 @@ export const DogParticipantCard: React.FC<DogParticipantCardProps> = ({
               <h4 className="text-sm font-bold text-[#17402C] dark:text-[#E7E3D6]">
                 {dog.name}
               </h4>
-              <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-amber-500/20 text-amber-800 dark:text-amber-300">
+              <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-sand-500/20 text-sand-800 dark:text-sand-300">
                 {dog.breed}
               </span>
             </div>
@@ -71,7 +71,7 @@ export const DogParticipantCard: React.FC<DogParticipantCardProps> = ({
               type="checkbox"
               checked={dog.isCarryingPack}
               onChange={(e) => onToggleCarryingPack(dog.id, e.target.checked)}
-              className="rounded text-emerald-600 focus:ring-emerald-500 cursor-pointer"
+              className="rounded text-forest-600 focus:ring-forest-500 cursor-pointer"
             />
           </div>
         </div>

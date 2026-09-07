@@ -138,7 +138,7 @@ export default function AbonnementsPage() {
     <>
       {/* Hero */}
       <section className="relative overflow-hidden py-16 px-4">
-        <div className="absolute inset-0 bg-gradient-to-br from-primary/10 via-dark-bg to-amber-500/5 pointer-events-none" />
+        <div className="absolute inset-0 bg-gradient-to-br from-primary/10 via-dark-bg to-sand-500/5 pointer-events-none" />
         <div className="absolute top-0 right-0 w-96 h-96 bg-primary/5 rounded-full blur-3xl pointer-events-none" />
         <div className="max-w-4xl mx-auto text-center relative z-10">
           <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-primary/10 border border-primary/20 text-primary text-xs font-mono mb-6" style={{ fontFamily: 'var(--font-mono)' }}>
@@ -220,8 +220,8 @@ export default function AbonnementsPage() {
                 </ul>
 
                 {plan.box &&
-                <div className="mb-4 p-3 rounded-xl bg-amber-400/10 border border-amber-400/20">
-                    <p className="text-xs text-amber-300 flex items-center gap-1.5">
+                <div className="mb-4 p-3 rounded-xl bg-sand-400/10 border border-sand-400/20">
+                    <p className="text-xs text-sand-300 flex items-center gap-1.5">
                       <Icon name="GiftIcon" size={12} variant="outline" />
                       {plan.box}
                     </p>

@@ -194,7 +194,7 @@ export default function Header() {
                   <MessageSquare className="w-[14px] h-[14px]" />
                   {unreadMessagesCount > 0 && (
                     <span
-                      className="absolute top-1 right-1 w-2 h-2 rounded-full bg-emerald-600 ring-2 ring-white animate-pulse"
+                      className="absolute top-1 right-1 w-2 h-2 rounded-full bg-forest-600 ring-2 ring-white animate-pulse"
                       title={`${unreadMessagesCount} message(s) non lu(s)`}
                     />
                   )}

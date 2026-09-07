@@ -96,7 +96,7 @@ export function Step3StylePace({
         <h2 className="text-2xl sm:text-3xl font-bold text-lkv-primary">
           Quel est votre style d&apos;expédition ?
         </h2>
-        <p className="text-sm text-gray-600 mt-1">
+        <p className="text-sm text-stone-600 mt-1">
           Ces préférences guident le moteur pour sélectionner les étapes adaptées à vos envies et à votre forme physique.
         </p>
       </div>

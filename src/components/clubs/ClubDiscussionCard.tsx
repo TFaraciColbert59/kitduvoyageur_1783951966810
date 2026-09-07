@@ -304,7 +304,7 @@ export default function ClubDiscussionCard({
                       <span className="glass-pill text-[9px] font-mono uppercase">{msg.tag}</span>
                     )}
                     {msg.is_pinned && (
-                      <span className="glass-pill text-[9px] bg-amber-500/10 text-amber-800 font-mono">📌 ÉPINGLÉ</span>
+                      <span className="glass-pill text-[9px] bg-sand-500/10 text-sand-800 font-mono">📌 ÉPINGLÉ</span>
                     )}
                     <button
                       type="button"
@@ -367,7 +367,7 @@ export default function ClubDiscussionCard({
                         rel="noopener noreferrer"
                         className="mt-3 inline-flex items-center gap-2 glass-capsule-btn py-1.5 px-3 text-xs font-semibold"
                       >
-                        <Icon name="MapPinIcon" size={14} className="relative z-10 text-emerald-700" />
+                        <Icon name="MapPinIcon" size={14} className="relative z-10 text-forest-700" />
                         <span className="relative z-10">
                           {typeof msg.location === 'string'
                             ? msg.location

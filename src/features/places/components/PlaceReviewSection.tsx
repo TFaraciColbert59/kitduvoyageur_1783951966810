@@ -101,7 +101,7 @@ export function PlaceReviewSection({
               Évaluation Communautaire
             </h3>
             <div className="flex items-center gap-2 mt-1">
-              <div className="flex items-center text-amber-500">
+              <div className="flex items-center text-sand-500">
                 {[1, 2, 3, 4, 5].map((star) => (
                   <Star
                     key={star}
@@ -255,8 +255,8 @@ export function PlaceReviewSection({
       )}
 
       {successMsg && (
-        <div className="p-4 rounded-2xl bg-emerald-50 border border-emerald-200 text-emerald-900 text-xs flex items-center gap-2">
-          <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />
+        <div className="p-4 rounded-2xl bg-forest-50 border border-forest-200 text-forest-900 text-xs flex items-center gap-2">
+          <CheckCircle2 className="w-4 h-4 text-forest-600 shrink-0" />
           <span>{successMsg}</span>
         </div>
       )}
@@ -283,7 +283,7 @@ export function PlaceReviewSection({
             >
               <div className="flex items-center justify-between gap-3 mb-2">
                 <div className="flex items-center gap-2">
-                  <div className="flex items-center text-amber-500">
+                  <div className="flex items-center text-sand-500">
                     {[1, 2, 3, 4, 5].map((s) => (
                       <Star
                         key={s}

@@ -303,13 +303,13 @@ export function EquipagesClient({
             </div>
 
             {/* Écran de consentement explicite (exigence 4.2) */}
-            <div className="p-4 rounded-2xl bg-amber-500/10 border border-amber-500/20 text-xs text-amber-900 space-y-2">
+            <div className="p-4 rounded-2xl bg-sand-500/10 border border-sand-500/20 text-xs text-sand-900 space-y-2">
               <label className="flex items-start gap-2.5 cursor-pointer">
                 <input
                   type="checkbox"
                   checked={hasConsented}
                   onChange={e => setHasConsented(e.target.checked)}
-                  className="mt-0.5 w-4 h-4 rounded border-amber-400 text-lkv-primary focus:ring-lkv-primary"
+                  className="mt-0.5 w-4 h-4 rounded border-sand-400 text-lkv-primary focus:ring-lkv-primary"
                 />
                 <span className="leading-snug">
                   Je consens à rejoindre cet équipage et accepte de partager mon profil de voyageur (nom, matériel partagé et étapes) avec les autres membres.

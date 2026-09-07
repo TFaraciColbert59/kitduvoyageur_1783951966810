@@ -97,7 +97,7 @@ export function TripDocumentsView({ trip }: TripDocumentsViewProps) {
       </div>
 
       {/* Garantie RGPD */}
-      <GlassCard tone="neutral" className="p-4 rounded-lg border border-white/60 text-xs text-gray-700">
+      <GlassCard tone="neutral" className="p-4 rounded-lg border border-white/60 text-xs text-stone-700">
         <div className="flex items-start gap-3">
           <ShieldCheck size={18} className="text-lkv-secondary shrink-0 mt-0.5" />
           <div className="space-y-1">
@@ -114,7 +114,7 @@ export function TripDocumentsView({ trip }: TripDocumentsViewProps) {
         <GlassCard tone="neutral" className="p-8 rounded-xl text-center space-y-2 border border-white/60">
           <FileCheck size={32} className="text-lkv-secondary mx-auto" />
           <div className="text-sm font-semibold text-lkv-primary">Aucun document attaché</div>
-          <p className="text-xs text-gray-500 max-w-sm mx-auto">
+          <p className="text-xs text-stone-500 max-w-sm mx-auto">
             Attachez vos billets d&apos;avion, réservations de refuges, assurances et passeports pour les garder accessibles partout.
           </p>
         </GlassCard>
@@ -163,7 +163,7 @@ export function TripDocumentsView({ trip }: TripDocumentsViewProps) {
                   </div>
 
                   {doc.notes && (
-                    <p className="text-xs text-gray-600 bg-white/50 p-2 rounded-xl border border-black/5">
+                    <p className="text-xs text-stone-600 bg-white/50 p-2 rounded-xl border border-black/5">
                       {doc.notes}
                     </p>
                   )}
@@ -185,7 +185,7 @@ export function TripDocumentsView({ trip }: TripDocumentsViewProps) {
                     <button
                       onClick={() => handleDelete(doc.id, doc.title)}
                       disabled={isPending}
-                      className="min-h-[44px] min-w-[44px] flex items-center justify-center rounded-xl text-gray-400 hover:text-red-600 hover:bg-red-50 transition-colors"
+                      className="min-h-[44px] min-w-[44px] flex items-center justify-center rounded-xl text-stone-400 hover:text-red-600 hover:bg-red-50 transition-colors"
                       title="Supprimer ce document"
                     >
                       <Trash2 size={16} />
@@ -205,14 +205,14 @@ export function TripDocumentsView({ trip }: TripDocumentsViewProps) {
             tone="neutral"
             className="w-full max-w-md p-6 rounded-xl bg-white border border-white/80 shadow-2xl space-y-4"
           >
-            <div className="flex items-center justify-between pb-3 border-b border-gray-100">
+            <div className="flex items-center justify-between pb-3 border-b border-stone-100">
               <h4 className="text-base font-bold text-lkv-primary flex items-center gap-2">
                 <FileText size={18} className="text-lkv-secondary" />
                 <span>Attacher un document sécurisé</span>
               </h4>
               <button
                 onClick={() => setIsAddOpen(false)}
-                className="w-8 h-8 rounded-full flex items-center justify-center text-gray-400 hover:bg-gray-100"
+                className="w-8 h-8 rounded-full flex items-center justify-center text-stone-400 hover:bg-stone-100"
               >
                 <X size={18} />
               </button>
@@ -234,7 +234,7 @@ export function TripDocumentsView({ trip }: TripDocumentsViewProps) {
                   name="title"
                   required
                   placeholder="ex: Passeport biométrique, Billet Vol AR Lima"
-                  className="w-full px-3 py-2 text-sm rounded-xl border border-gray-200 bg-gray-50/50 focus:bg-white focus:outline-none focus:ring-2 focus:ring-lkv-primary/20"
+                  className="w-full px-3 py-2 text-sm rounded-xl border border-stone-200 bg-stone-50/50 focus:bg-white focus:outline-none focus:ring-2 focus:ring-lkv-primary/20"
                 />
               </div>
 
@@ -246,7 +246,7 @@ export function TripDocumentsView({ trip }: TripDocumentsViewProps) {
                   <select
                     name="category"
                     defaultValue="passport"
-                    className="w-full px-3 py-2 text-sm rounded-xl border border-gray-200 bg-gray-50/50 focus:bg-white focus:outline-none focus:ring-2 focus:ring-lkv-primary/20"
+                    className="w-full px-3 py-2 text-sm rounded-xl border border-stone-200 bg-stone-50/50 focus:bg-white focus:outline-none focus:ring-2 focus:ring-lkv-primary/20"
                   >
                     <option value="passport">Passeport / ID</option>
                     <option value="insurance">Assurance</option>
@@ -264,7 +264,7 @@ export function TripDocumentsView({ trip }: TripDocumentsViewProps) {
                   <input
                     type="date"
                     name="expiresAt"
-                    className="w-full px-3 py-2 text-sm rounded-xl border border-gray-200 bg-gray-50/50 focus:bg-white focus:outline-none focus:ring-2 focus:ring-lkv-primary/20"
+                    className="w-full px-3 py-2 text-sm rounded-xl border border-stone-200 bg-stone-50/50 focus:bg-white focus:outline-none focus:ring-2 focus:ring-lkv-primary/20"
                   />
                 </div>
               </div>
@@ -278,7 +278,7 @@ export function TripDocumentsView({ trip }: TripDocumentsViewProps) {
                   name="fileUrl"
                   required
                   placeholder="https://..."
-                  className="w-full px-3 py-2 text-sm rounded-xl border border-gray-200 bg-gray-50/50 focus:bg-white focus:outline-none focus:ring-2 focus:ring-lkv-primary/20"
+                  className="w-full px-3 py-2 text-sm rounded-xl border border-stone-200 bg-stone-50/50 focus:bg-white focus:outline-none focus:ring-2 focus:ring-lkv-primary/20"
                 />
               </div>
 
@@ -290,7 +290,7 @@ export function TripDocumentsView({ trip }: TripDocumentsViewProps) {
                   name="notes"
                   rows={2}
                   placeholder="ex: Numéro d'assuré #12345, contact d'urgence 24/7"
-                  className="w-full px-3 py-2 text-sm rounded-xl border border-gray-200 bg-gray-50/50 focus:bg-white focus:outline-none focus:ring-2 focus:ring-lkv-primary/20"
+                  className="w-full px-3 py-2 text-sm rounded-xl border border-stone-200 bg-stone-50/50 focus:bg-white focus:outline-none focus:ring-2 focus:ring-lkv-primary/20"
                 />
               </div>
 

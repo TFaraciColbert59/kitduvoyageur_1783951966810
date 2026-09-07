@@ -79,7 +79,7 @@ export default function MobileGroupCard({
         </div>
 
         {group.my_role ? (
-          <span className="glass-pill text-[9px] font-mono font-bold text-emerald-900 bg-emerald-50 shrink-0">
+          <span className="glass-pill text-[9px] font-mono font-bold text-forest-900 bg-forest-50 shrink-0">
             {group.my_role === 'organizer' ? '👑 Leader' : 'Membre'}
           </span>
         ) : (

@@ -109,7 +109,7 @@ export function QuickCreateTripModal({
             </div>
             <button
               onClick={onClose}
-              className="p-2 text-gray-400 hover:text-gray-600 rounded-full hover:bg-black/5 transition-colors"
+              className="p-2 text-stone-400 hover:text-stone-600 rounded-full hover:bg-black/5 transition-colors"
               aria-label="Fermer"
             >
               <X size={18} />

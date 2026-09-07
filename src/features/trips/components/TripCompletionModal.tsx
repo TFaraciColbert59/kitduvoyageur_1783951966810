@@ -201,7 +201,7 @@ export function TripCompletionModal({ trip, isOpen, onClose }: TripCompletionMod
                   type="checkbox"
                   checked={publishCarnet}
                   onChange={e => setPublishCarnet(e.target.checked)}
-                  className="w-4 h-4 rounded border-gray-300 text-lkv-primary focus:ring-lkv-primary"
+                  className="w-4 h-4 rounded border-stone-300 text-lkv-primary focus:ring-lkv-primary"
                 />
                 <span className="text-sm font-semibold text-lkv-primary flex items-center gap-1.5">
                   <BookOpen size={16} /> Publier en carnet de bord communautaire
@@ -294,7 +294,7 @@ export function TripCompletionModal({ trip, isOpen, onClose }: TripCompletionMod
                                   [candidate.placeId]: { ...currentRev, rating: star },
                                 }))
                               }
-                              className="text-amber-500 hover:scale-110 transition-transform"
+                              className="text-sand-500 hover:scale-110 transition-transform"
                             >
                               <Star
                                 size={16}

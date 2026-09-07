@@ -272,7 +272,7 @@ export function DepartMap({ trail, height = '240px', className }: DepartMapProps
             title="Exporter le tracé"
             aria-label="Exporter le tracé"
           >
-            {isOfflineSaved ? <Check size={12} className="text-emerald-600" /> : <DownloadAnimated size={12} />}
+            {isOfflineSaved ? <Check size={12} className="text-forest-600" /> : <DownloadAnimated size={12} />}
           </button>
           <button
             type="button"

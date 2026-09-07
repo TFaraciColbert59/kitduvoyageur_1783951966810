@@ -430,7 +430,7 @@ function OrdersSection() {
                         <Icon name="EyeIcon" size={13} variant="outline" />
                       </button>
                       {o.status !== 'annulé' && (
-                        <button onClick={() => setConfirm(o.id)} className="p-1.5 rounded-lg hover:bg-amber-500/15 text-white/40 hover:text-amber-400 transition-all" title="Rembourser">
+                        <button onClick={() => setConfirm(o.id)} className="p-1.5 rounded-lg hover:bg-sand-500/15 text-white/40 hover:text-sand-400 transition-all" title="Rembourser">
                           <Icon name="ArrowUturnLeftIcon" size={13} variant="outline" />
                         </button>
                       )}
@@ -496,7 +496,7 @@ function CountriesSection() {
                     <button className="p-1.5 rounded-lg hover:bg-white/8 text-white/40 hover:text-white transition-all">
                       <Icon name="PencilIcon" size={13} variant="outline" />
                     </button>
-                    <button onClick={() => setConfirm(c.code)} className="p-1.5 rounded-lg hover:bg-blue-500/15 text-white/40 hover:text-blue-400 transition-all" title="Forcer resync dangerosité">
+                    <button onClick={() => setConfirm(c.code)} className="p-1.5 rounded-lg hover:bg-sky-500/15 text-white/40 hover:text-sky-400 transition-all" title="Forcer resync dangerosité">
                       <Icon name="ArrowPathIcon" size={13} variant="outline" />
                     </button>
                   </div>
@@ -584,7 +584,7 @@ function ModerationSection() {
     <div className="space-y-4">
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2">
-          <span className="w-5 h-5 rounded-full bg-amber-400/20 text-amber-400 text-[10px] font-mono font-700 flex items-center justify-center" style={{ fontFamily: 'var(--font-mono)' }}>{queue.length}</span>
+          <span className="w-5 h-5 rounded-full bg-sand-400/20 text-sand-400 text-[10px] font-mono font-700 flex items-center justify-center" style={{ fontFamily: 'var(--font-mono)' }}>{queue.length}</span>
           <p className="text-sm text-white/60">éléments en attente de modération</p>
         </div>
       </div>
@@ -606,7 +606,7 @@ function ModerationSection() {
               <div className="flex gap-1.5 flex-shrink-0">
                 <button
                   onClick={() => setQueue(q => q.filter(x => x.id !== item.id))}
-                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-emerald-500/15 text-emerald-400 hover:bg-emerald-500/25 transition-all text-xs font-medium"
+                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-forest-500/15 text-forest-400 hover:bg-forest-500/25 transition-all text-xs font-medium"
                 >
                   <Icon name="CheckIcon" size={12} variant="outline" />
                   Valider
@@ -624,7 +624,7 @@ function ModerationSection() {
         ))}
         {queue.length === 0 && (
           <div className="bg-[#1E2B25] border border-white/8 rounded-xl p-8 text-center">
-            <Icon name="CheckCircleIcon" size={32} variant="outline" className="text-emerald-400 mx-auto mb-3" />
+            <Icon name="CheckCircleIcon" size={32} variant="outline" className="text-forest-400 mx-auto mb-3" />
             <p className="text-sm text-white/50">File de modération vide — tout est à jour.</p>
           </div>
         )}
@@ -1088,7 +1088,7 @@ function RewardsSection() {
         </div>
       )}
       {success && (
-        <div className="p-4 bg-emerald-955/40 border border-emerald-800/80 text-emerald-200 rounded-xl text-xs">
+        <div className="p-4 bg-forest-955/40 border border-forest-800/80 text-forest-200 rounded-xl text-xs">
           ✅ {success}
         </div>
       )}
@@ -1264,13 +1264,13 @@ function RewardsSection() {
               </div>
               <div className="flex justify-between">
                 <span>Reward Pool Net :</span>
-                <span className="font-bold text-amber-400">{simPoolSize.toFixed(2)} €</span>
+                <span className="font-bold text-sand-400">{simPoolSize.toFixed(2)} €</span>
               </div>
               <div className="flex justify-between">
                 <span>Pertes Fraude estimées :</span>
                 <span className="text-rose-400">-{simFraudValue.toFixed(2)} €</span>
               </div>
-              <div className="flex justify-between font-bold text-emerald-400 border-t border-white/5 pt-2">
+              <div className="flex justify-between font-bold text-forest-400 border-t border-white/5 pt-2">
                 <span>Gains Medians / user :</span>
                 <span>{simMedianPayout} €</span>
               </div>
@@ -1311,7 +1311,7 @@ function RewardsSection() {
                       <p className="font-bold text-white/85">{w.user?.full_name || 'Utilisateur inconnu'}</p>
                       <p className="text-[10px] text-white/40">{w.user?.email || ''} · Confiance : {w.user?.trust_score || 50}/100</p>
                     </td>
-                    <td className="py-3 text-right font-bold text-amber-400">{w.amount.toFixed(2)} €</td>
+                    <td className="py-3 text-right font-bold text-sand-400">{w.amount.toFixed(2)} €</td>
                     <td className="py-3 text-center font-bold text-white/70">
                       {w.payment_provider === 'bank_transfer' ? 'Banque' : 'Paypal'}
                     </td>
@@ -1329,7 +1329,7 @@ function RewardsSection() {
                       <div className="flex items-center justify-center gap-2">
                         <button
                           onClick={() => handleProcessWithdrawal(w.id, true)}
-                          className="px-2.5 py-1 bg-emerald-600 hover:bg-emerald-700 text-white font-bold rounded-lg text-[10px] tracking-wide"
+                          className="px-2.5 py-1 bg-forest-600 hover:bg-forest-700 text-white font-bold rounded-lg text-[10px] tracking-wide"
                         >
                           Valider (Payé)
                         </button>
@@ -1566,7 +1566,7 @@ export default function AdminPage() {
               </div>
               <div className="flex items-center gap-3">
                 <div className="hidden sm:flex items-center gap-1.5">
-                  <div className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
+                  <div className="w-1.5 h-1.5 rounded-full bg-forest-400 animate-pulse" />
                   <span className="text-[10px] font-mono text-white/30" style={{ fontFamily: 'var(--font-mono)' }}>Live</span>
                 </div>
                 <div className="w-7 h-7 rounded-lg bg-[#17402C]/20 flex items-center justify-center">

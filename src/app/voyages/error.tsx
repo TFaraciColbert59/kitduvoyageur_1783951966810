@@ -26,7 +26,7 @@ export default function VoyagesError({
           <p className="text-sm text-lkv-secondary mb-6">
             Une erreur inattendue est survenue lors de la récupération des données.
             {error?.message && (
-              <span className="block mt-2 font-mono text-xs text-gray-500 bg-white/50 p-2 rounded-lg">
+              <span className="block mt-2 font-mono text-xs text-stone-500 bg-white/50 p-2 rounded-lg">
                 {error.message}
               </span>
             )}

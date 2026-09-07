@@ -50,7 +50,7 @@ export default function HeroVoyage({ data, groupId, inviteCode, onOpenChat }: He
       
       <div className="relative z-10 max-w-2xl">
         <div className="inline-flex items-center gap-2 px-3 py-1 glass-pill mb-6 text-white border-white/20">
-          <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
+          <span className="w-1.5 h-1.5 rounded-full bg-forest-400 animate-pulse" />
           <span className="font-mono text-[10px] uppercase tracking-widest text-[#FAF8F5] font-bold">{data.meta.type} · {data.meta.participantsCount} PERSONNES · {data.meta.season}</span>
         </div>
         

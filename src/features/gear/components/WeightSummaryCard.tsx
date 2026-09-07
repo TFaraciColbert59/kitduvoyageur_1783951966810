@@ -92,14 +92,14 @@ export const WeightSummaryCard: React.FC<WeightSummaryCardProps> = ({ breakdown 
           <span className="text-[9px] text-[#C5D0C7] block mt-0.5">Vêtements, bâtons</span>
         </div>
 
-        <div className="p-3 rounded-2xl bg-white/15 border border-emerald-400/40">
+        <div className="p-3 rounded-2xl bg-white/15 border border-forest-400/40">
           <span className="text-[10px] uppercase font-mono text-[#4ADE80] block">
             ⚖️ Poids sur le dos
           </span>
           <span className="text-2xl font-extrabold font-mono text-[#4ADE80]">
             {totalPackKg} <span className="text-xs font-normal">kg</span>
           </span>
-          <span className="text-[9px] text-emerald-200 block mt-0.5">Base + Consommables</span>
+          <span className="text-[9px] text-forest-200 block mt-0.5">Base + Consommables</span>
         </div>
       </div>
 
@@ -107,12 +107,12 @@ export const WeightSummaryCard: React.FC<WeightSummaryCardProps> = ({ breakdown 
       <div className="space-y-1.5 pt-2">
         <div className="w-full bg-black/40 rounded-full h-3 flex overflow-hidden border border-white/10">
           <div
-            className="bg-emerald-400 h-full transition-all duration-500"
+            className="bg-forest-400 h-full transition-all duration-500"
             style={{ width: `${basePct}%` }}
             title={`Base Weight : ${basePct}%`}
           />
           <div
-            className="bg-amber-400 h-full transition-all duration-500"
+            className="bg-sand-400 h-full transition-all duration-500"
             style={{ width: `${consumablePct}%` }}
             title={`Consommables : ${consumablePct}%`}
           />
@@ -125,10 +125,10 @@ export const WeightSummaryCard: React.FC<WeightSummaryCardProps> = ({ breakdown 
 
         <div className="flex items-center justify-between text-[10px] font-mono opacity-75">
           <span className="flex items-center gap-1">
-            <span className="w-2 h-2 rounded-full bg-emerald-400 inline-block" /> Base ({basePct}%)
+            <span className="w-2 h-2 rounded-full bg-forest-400 inline-block" /> Base ({basePct}%)
           </span>
           <span className="flex items-center gap-1">
-            <span className="w-2 h-2 rounded-full bg-amber-400 inline-block" /> Consommables ({consumablePct}%)
+            <span className="w-2 h-2 rounded-full bg-sand-400 inline-block" /> Consommables ({consumablePct}%)
           </span>
           <span className="flex items-center gap-1">
             <span className="w-2 h-2 rounded-full bg-sky-400 inline-block" /> Porté ({wornPct}%)

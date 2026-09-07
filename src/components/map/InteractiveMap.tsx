@@ -717,7 +717,7 @@ export default function InteractiveMap() {
             <div className="bg-white p-3 rounded-2xl border border-[#E4DED3] text-xs space-y-2 shadow-xs">
               <div className="flex items-center justify-between">
                 <span className="text-[10px] font-mono font-bold text-[#5A7064] uppercase tracking-wider">Filtres affichés :</span>
-                <span className="text-[10px] font-mono text-emerald-800 font-bold bg-emerald-100/80 px-1.5 py-0.5 rounded">
+                <span className="text-[10px] font-mono text-forest-800 font-bold bg-forest-100/80 px-1.5 py-0.5 rounded">
                   {filteredPois.length} POI{filteredPois.length > 1 ? 's' : ''} actif{filteredPois.length > 1 ? 's' : ''}
                 </span>
               </div>
@@ -973,7 +973,7 @@ export default function InteractiveMap() {
               <div className="flex items-center gap-2 mb-1">
                 <span className="glass-pill text-[9px] font-mono tracking-widest text-[#17402C] uppercase font-bold">Randonnée Sélectionnée</span>
                 {selectedTrailGeojson && (
-                  <span className="text-[9px] font-mono font-bold text-emerald-800 bg-emerald-100/80 px-2 py-0.5 rounded-full border border-emerald-200">Tracé GPS Réel ✓</span>
+                  <span className="text-[9px] font-mono font-bold text-forest-800 bg-forest-100/80 px-2 py-0.5 rounded-full border border-forest-200">Tracé GPS Réel ✓</span>
                 )}
               </div>
 
@@ -1039,7 +1039,7 @@ export default function InteractiveMap() {
                   {selectedPoi.category === 'refuge' ? '🏡 Refuge' : selectedPoi.category === 'summit' ? '⛰️ Sommet' : selectedPoi.category === 'water' ? '💧 Point d\'eau' : selectedPoi.category === 'viewpoint' ? '👁️ Panorama' : selectedPoi.category === 'camping' ? '⛺ Bivouac / Camping' : selectedPoi.category === 'waterfall' ? '🌊 Cascade' : '⛰️ Col'}
                 </span>
                 {selectedPoi.is_verified && (
-                  <span className="text-[9px] font-mono font-bold text-emerald-800 bg-emerald-100/80 px-2 py-0.5 rounded-full border border-emerald-200">Vérifié ✓</span>
+                  <span className="text-[9px] font-mono font-bold text-forest-800 bg-forest-100/80 px-2 py-0.5 rounded-full border border-forest-200">Vérifié ✓</span>
                 )}
                 {selectedPoi.altitude_m && (
                   <span className="glass-pill text-[10px] font-mono font-bold text-[#17402C]">

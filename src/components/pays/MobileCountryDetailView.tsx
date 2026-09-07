@@ -113,7 +113,7 @@ export default function MobileCountryDetailView({
           {/* Slogan & Destination Details */}
           <div className="absolute bottom-3.5 left-4 right-4 z-10 text-white">
             <div className="flex flex-wrap items-center gap-1.5 mb-1">
-              <span className="text-[9.5px] font-mono uppercase tracking-widest text-emerald-300 font-bold bg-black/40 px-2.5 py-0.5 rounded-full backdrop-blur-xs">
+              <span className="text-[9.5px] font-mono uppercase tracking-widest text-forest-300 font-bold bg-black/40 px-2.5 py-0.5 rounded-full backdrop-blur-xs">
                 🌍 {country.code}{country.iso_a3 ? ` · ${country.iso_a3}` : ''}
               </span>
               <span className="text-white/90 font-mono text-[9.5px] bg-black/30 px-2 py-0.5 rounded-full backdrop-blur-xs">
@@ -126,14 +126,14 @@ export default function MobileCountryDetailView({
                 {country.nom}
               </h1>
               {country.nom_en && country.nom_en.toLowerCase() !== country.nom.toLowerCase() && (
-                <span className="text-xs font-mono font-medium text-emerald-200">
+                <span className="text-xs font-mono font-medium text-forest-200">
                   ({country.nom_en})
                 </span>
               )}
             </div>
 
             {country.slogan && (
-              <p className="font-serif italic text-emerald-100 text-xs mt-0.5 line-clamp-1">
+              <p className="font-serif italic text-forest-100 text-xs mt-0.5 line-clamp-1">
                 « {country.slogan} »
               </p>
             )}
@@ -173,7 +173,7 @@ export default function MobileCountryDetailView({
             </div>
 
             <div className="glass-sub-card p-2 rounded-xl border border-white/90 bg-white/90 shadow-2xs">
-              <span className="block font-mono font-bold text-xs text-amber-800 truncate" title={country.fuseau}>
+              <span className="block font-mono font-bold text-xs text-sand-800 truncate" title={country.fuseau}>
                 {country.fuseau}
               </span>
               <span className="text-[8px] text-[#5A7064] uppercase font-mono font-bold">
@@ -381,7 +381,7 @@ export default function MobileCountryDetailView({
 
                         <div className="absolute bottom-2.5 left-3 right-3 text-white">
                           <h4 className="font-display font-bold text-base leading-snug">
-                            {dest.titre} {dest.titre_em && <em className="font-serif font-normal text-emerald-200">({dest.titre_em})</em>}
+                            {dest.titre} {dest.titre_em && <em className="font-serif font-normal text-forest-200">({dest.titre_em})</em>}
                           </h4>
                         </div>
                       </div>

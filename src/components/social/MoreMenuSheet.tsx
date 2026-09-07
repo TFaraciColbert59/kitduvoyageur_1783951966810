@@ -70,7 +70,7 @@ export default function MoreMenuSheet({
           {/* Drag handle */}
           <div
             {...handleProps}
-            className="w-10 h-1 bg-gray-300 rounded-full mx-auto mb-3 cursor-grab active:cursor-grabbing touch-none"
+            className="w-10 h-1 bg-stone-300 rounded-full mx-auto mb-3 cursor-grab active:cursor-grabbing touch-none"
           />
 
           {title && (
@@ -79,7 +79,7 @@ export default function MoreMenuSheet({
             </p>
           )}
 
-          <div className="flex flex-col divide-y divide-gray-100 bg-[#F5F2E8]/40 rounded-2xl overflow-hidden border border-black/5">
+          <div className="flex flex-col divide-y divide-stone-100 bg-[#F5F2E8]/40 rounded-2xl overflow-hidden border border-black/5">
             {/* Share action */}
             {onShare && (
               <button
@@ -156,7 +156,7 @@ export default function MoreMenuSheet({
           <button
             type="button"
             onClick={onClose}
-            className="w-full py-3 mt-1 bg-white border border-[#17402C]/10 rounded-2xl text-xs font-bold text-[#17402C] hover:bg-gray-50 active:scale-[0.99] transition-all text-center"
+            className="w-full py-3 mt-1 bg-white border border-[#17402C]/10 rounded-2xl text-xs font-bold text-[#17402C] hover:bg-stone-50 active:scale-[0.99] transition-all text-center"
           >
             Annuler
           </button>

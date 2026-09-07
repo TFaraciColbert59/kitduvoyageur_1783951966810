@@ -53,10 +53,10 @@ export default function ClubFeaturedEventCard({
         {/* Title & Location */}
         <div className="min-w-0 flex-1 space-y-0.5">
           <div className="flex items-center justify-between">
-            <span className="text-[10px] font-mono text-emerald-800 font-bold uppercase tracking-wide">
+            <span className="text-[10px] font-mono text-forest-800 font-bold uppercase tracking-wide">
               🏕️ Sortie Collective
             </span>
-            <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" title="Sortie active" />
+            <span className="w-2 h-2 rounded-full bg-forest-500 animate-pulse" title="Sortie active" />
           </div>
           <h3 className="font-display font-bold text-sm text-[#17402C] truncate">
             {event.title}
@@ -84,7 +84,7 @@ export default function ClubFeaturedEventCard({
         </div>
         <div className="w-full h-1.5 bg-[#17402C]/10 rounded-full overflow-hidden">
           <div
-            className="h-full bg-emerald-600 rounded-full transition-all duration-500"
+            className="h-full bg-forest-600 rounded-full transition-all duration-500"
             style={{ width: `${progressPercent}%` }}
           />
         </div>

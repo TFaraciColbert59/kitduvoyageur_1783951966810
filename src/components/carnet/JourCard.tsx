@@ -15,14 +15,14 @@ export default function JourCard({ jour }: JourCardProps) {
           {jour.label}
         </span>
         {jour.titleItalic && (
-          <span className="glass-pill text-[9px] font-mono font-bold text-emerald-900 bg-emerald-50">
+          <span className="glass-pill text-[9px] font-mono font-bold text-forest-900 bg-forest-50">
             {jour.titleItalic}
           </span>
         )}
       </div>
 
       <h3 className="font-display font-bold text-sm sm:text-base text-[#17402C] leading-snug">
-        {jour.title} <span className="font-serif italic text-emerald-800 font-normal">{jour.titleItalic}</span>
+        {jour.title} <span className="font-serif italic text-forest-800 font-normal">{jour.titleItalic}</span>
       </h3>
 
       <p className="text-xs text-[#2D4536] leading-relaxed font-sans pl-0.5">
