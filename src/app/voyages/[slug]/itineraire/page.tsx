@@ -2,8 +2,11 @@ import { Metadata } from 'next';
 import { notFound } from 'next/navigation';
 import { createClient } from '@/lib/supabase/server';
 import { getTripBySlug } from '@/lib/queries-trips';
-import AppShell from '@/components/shell/AppShell';
+import AppShellDesktop from '@/components/shell/AppShellDesktop';
+import MobilePageShell from '@/components/mobile-nav/MobilePageShell';
 import ItineraryPlannerClient from '@/features/trips/planner/ItineraryPlannerClient';
+import ItinerarySidebarLeft from '@/features/trips/planner/ItinerarySidebarLeft';
+import ItinerarySidebarRight from '@/features/trips/planner/ItinerarySidebarRight';
 import type { PlannerStep } from '@/features/trips/planner/plannerEngine';
 
 export const dynamic = 'force-dynamic';
@@ -15,32 +18,21 @@ interface PageProps {
 export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
   const { slug } = await params;
   const trip = await getTripBySlug(slug);
-
-  if (!trip) {
-    return {
-      title: 'Voyage introuvable — Le Kit du Voyageur',
-    };
-  }
-
+  if (!trip) return { title: 'Voyage introuvable — Le Kit du Voyageur' };
   return {
     title: `Planificateur — ${trip.title} | LKDV`,
-    description: `Planifiez et réorganisez jour par jour les étapes de ${trip.title}.`,
+    description: `Planifiez et reorganisez jour par jour les etapes de ${trip.title}.`,
   };
 }
 
 export default async function TripItineraryPage({ params }: PageProps) {
   const { slug } = await params;
   const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  const { data: { user } } = await supabase.auth.getUser();
 
   const trip = await getTripBySlug(slug, user?.id);
-  if (!trip) {
-    notFound();
-  }
+  if (!trip) notFound();
 
-  // Récupérer toutes les étapes ordonnées
   const { data: rawSteps } = await supabase
     .from('trip_steps')
     .select('*')
@@ -66,8 +58,16 @@ export default async function TripItineraryPage({ params }: PageProps) {
   }));
 
   return (
-    <AppShell safeTop={true} hasBottomNav={false}>
+    <AppShellDesktop
+      sidebarLeft={<ItinerarySidebarLeft trip={trip} />}
+      sidebarRight={<ItinerarySidebarRight trip={trip} stepsCount={initialSteps.length} />}
+      mobileSlot={
+        <MobilePageShell safeTop={true} hasBottomNav={false}>
+          <ItineraryPlannerClient trip={trip} initialSteps={initialSteps} />
+        </MobilePageShell>
+      }
+    >
       <ItineraryPlannerClient trip={trip} initialSteps={initialSteps} />
-    </AppShell>
+    </AppShellDesktop>
   );
 }
