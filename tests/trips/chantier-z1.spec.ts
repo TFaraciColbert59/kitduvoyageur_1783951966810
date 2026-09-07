@@ -4,6 +4,7 @@ import { renderToStaticMarkup } from 'react-dom/server';
 import {
   formatEmergencyCoordinates,
   getCurrentStepForDay,
+  hasVerifiedEmergencyCoordinates,
   TripLiveCockpitView,
 } from '@/features/trips/components/TripLiveCockpitView';
 import {
@@ -129,6 +130,95 @@ describe('CHANTIER Z — Phase Z1 : Neutralisation Immédiate des Risques', () =
       expect(html).toContain('sms:114');
       // La mention non sourcée sur le réseau doit être retirée
       expect(html).not.toContain('fonctionne sur n’importe quel réseau opérateur capté');
+    });
+
+    it('Z-D13-03: TripLiveCockpitView n’affiche JAMAIS de coordonnées de blueprint/template dans le secours même si les étapes en base en contiennent', () => {
+      // Cas réel du voyage fdgb : étapes stockées avec coordonnées Chamonix générées par blueprint
+      const blueprintTrip: TripFull = {
+        id: 'trip-fdgb-bp',
+        slug: 'fdgb-bp',
+        title: 'fdgb',
+        description: null,
+        destination_country_code: 'FR',
+        destination_name: 'France',
+        start_date: '2026-09-29',
+        end_date: '2026-10-27',
+        status: 'active',
+        visibility: 'private',
+        difficulty: 'moderate',
+        primary_activity: 'hiking',
+        estimated_budget: 100,
+        budget_currency: 'EUR',
+        cover_image_url: null,
+        user_id: 'u1',
+        group_id: null,
+        share_token: null,
+        metadata: {
+          engine_summary: [{ allocated_days: 29, country_code: 'FR' }],
+          countries: ['FR'],
+        },
+        created_at: '',
+        updated_at: '',
+        user_role: 'owner',
+        permissions: {
+          canEdit: true,
+          canDelete: true,
+          canInvite: true,
+          canManageBudget: true,
+          canViewDocuments: true,
+        },
+        collaborators: [],
+        steps: [
+          {
+            id: 's-bp-1',
+            trip_id: 'trip-fdgb-bp',
+            day_number: 1,
+            order_index: 0,
+            title: 'Chamonix à Les Houches (Sentier des Rives)',
+            description: null,
+            location_name: 'Les Houches',
+            latitude: 45.8902,
+            longitude: 6.7985,
+            accommodation_name: null,
+            transport_mode: 'foot',
+            distance_km: 8.5,
+            elevation_gain_m: 350,
+            elevation_loss_m: 400,
+            created_at: '',
+            updated_at: '',
+          },
+        ],
+        items: [],
+        expenses: [],
+        documents: [],
+        pois: [],
+        safety_checkpoints: [],
+        notes: [],
+      };
+
+      expect(hasVerifiedEmergencyCoordinates(blueprintTrip, blueprintTrip.steps[0])).toBe(false);
+
+      const html = renderToStaticMarkup(
+        React.createElement(TripLiveCockpitView, {
+          trip: blueprintTrip,
+          stats: {
+            trip_id: 'trip-fdgb-bp',
+            total_days: 29,
+            total_distance_km: 8.5,
+            total_elevation_gain_m: 350,
+            total_elevation_loss_m: 400,
+            items_packed: 0,
+            items_total: 0,
+            estimated_budget: 100,
+            total_spent: 0,
+            participants_count: 1,
+          },
+        })
+      );
+
+      // Dans le panneau de secours, 45.8902° N ne doit JAMAIS apparaître
+      expect(html).not.toContain('45.8902° N');
+      expect(html).toContain('Position non disponible');
     });
   });
 
