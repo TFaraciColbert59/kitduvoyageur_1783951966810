@@ -13,6 +13,7 @@ import { useTripStatus } from '../hooks/useTripStatus';
 import TripSidebarLeft from './TripSidebarLeft';
 import TripSidebarRight from './TripSidebarRight';
 import TripNetworkStatus from './TripNetworkStatus';
+import { ActiveTripSwitcher } from './ActiveTripSwitcher';
 import { TripCompactHeader } from './TripCompactHeader';
 import { TripShareModal } from './TripShareModal';
 
@@ -80,10 +81,8 @@ export function TripHubShell({ trip, profile, phase, children }: TripHubShellPro
       }
     >
       <div className="space-y-4">
-        <div className="flex items-center justify-between">
-          <span className="text-[9.5px] font-mono font-bold uppercase tracking-widest text-[var(--lkv-text-secondary)]">
-            Hub de voyage
-          </span>
+        <div className="flex items-center justify-between gap-3 flex-wrap">
+          <ActiveTripSwitcher />
           {networkStatus}
         </div>
         {activeSection !== 'overview' && (

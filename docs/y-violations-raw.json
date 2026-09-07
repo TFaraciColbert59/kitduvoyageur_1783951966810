@@ -1,39 +1,9 @@
 [
  {
   "rule": "R11",
-  "file": "src/features/trips/components/ActiveTripBanner.tsx",
-  "line": 16,
-  "extract": "const isCurrentlyOnTripPage = pathname === `/voyages/${activeTrip.slug}`;"
- },
- {
-  "rule": "R1",
-  "file": "src/features/trips/components/ActiveTripBanner.tsx",
-  "line": 23,
-  "extract": "<span className=\"animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75\" />"
- },
- {
-  "rule": "R1",
-  "file": "src/features/trips/components/ActiveTripBanner.tsx",
-  "line": 24,
-  "extract": "<span className=\"relative inline-flex rounded-full h-2 w-2 bg-emerald-500\" />"
- },
- {
-  "rule": "R11",
-  "file": "src/features/trips/components/ActiveTripBanner.tsx",
-  "line": 35,
-  "extract": "href={`/voyages/${activeTrip.slug}`}"
- },
- {
-  "rule": "R6",
-  "file": "src/features/trips/components/ActiveTripBanner.tsx",
-  "line": 36,
-  "extract": "className=\"flex items-center gap-1 px-2.5 py-1 rounded-full bg-white/15 hover:bg-white/25 text-white font-semibold trans"
- },
- {
-  "rule": "R6",
-  "file": "src/features/trips/components/ActiveTripBanner.tsx",
-  "line": 47,
-  "extract": "className=\"p-1.5 rounded-full hover:bg-white/15 text-white/70 hover:text-white transition-all min-h-[32px] min-w-[32px] "
+  "file": "src/features/trips/components/ActiveTripSwitcher.tsx",
+  "line": 59,
+  "extract": "const href = lastSection ? `/voyages/${slug}/${lastSection}` : `/voyages/${slug}`;"
  },
  {
   "rule": "R1",
