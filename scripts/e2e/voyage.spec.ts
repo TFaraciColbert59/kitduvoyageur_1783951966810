@@ -111,6 +111,19 @@ test.describe('Module Voyage E2E Suite — Parcours Utilisateur & Ergonomie (C1-
     expect(fs.existsSync(snapshotMobilePath)).toBe(true);
   });
 
+  test('TEST-E2E-VOYAGE-06b: Responsive Tablet iPad & Snapshot Visuel (768x1024)', async ({ page }) => {
+    await page.setViewportSize({ width: 768, height: 1024 });
+    await page.goto('/voyages', { waitUntil: 'networkidle' });
+
+    const mainElement = page.locator('main').first();
+    await expect(mainElement).toBeVisible();
+
+    // Capture snapshot visuel tablette 768px
+    const snapshotTabletPath = path.join(screenshotsDir, 'voyage-cockpit-768px.png');
+    await page.screenshot({ path: snapshotTabletPath, fullPage: false });
+    expect(fs.existsSync(snapshotTabletPath)).toBe(true);
+  });
+
   test('TEST-E2E-VOYAGE-07: Desktop Navigation & Snapshot Visuel (1440x900)', async ({ page }) => {
     await page.setViewportSize({ width: 1440, height: 900 });
     await page.goto('/voyages', { waitUntil: 'networkidle' });
