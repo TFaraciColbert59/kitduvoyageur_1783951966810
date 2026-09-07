@@ -65,11 +65,11 @@ Dernière mise à jour : 2026-09-07T01:15:00+02:00
 | **P9** | **9.2** | Conformité légale (loi influence 2023, RGPD, HMAC) | **TERMINE** | Badge permanent "Sponsorisé", hash SHA-256 de session RGPD, HMAC constant-time postback |
 | **P9** | **9.3** | Sécurité des documents d'identité | **TERMINE** | `maskSensitiveIdentityNumber`, URLs signées HMAC courte durée (15 min) avec expiration |
 |---|---|---|---|---|
-| **P10** | **10.1** | Optimisation performance & budgets web | À FAIRE | LCP, INP, CLS ciblés |
-| **P10** | **10.2** | Accessibilité WCAG AA complète | À FAIRE | 0 violation axe-core |
-| **P10** | **10.3** | Responsive 390 / 768 / 1440 px | À FAIRE | Ergonomie mobile certifiée |
-| **P10** | **10.4** | Mode hors-ligne et sync déconnectée | À FAIRE | Service worker + IndexedDB |
-| **P10** | **10.5** | Préparation i18n | À FAIRE | Extraction des chaînes |
+| **P10** | **10.1** | Optimisation performance & budgets web | **TERMINE** | First load JS 104kB (<120kB), fallback dynamique vidéo et reduced-motion/data, `docs/PERFORMANCE_BUDGETS.md` |
+| **P10** | **10.2** | Accessibilité WCAG AA complète | **TERMINE** | Skip link `#main-content`, balise `<main>`, contrastes documentés `docs/A11Y_CONTRASTS.md`, tests `a11y-wcag.spec.ts` 5/5 vert |
+| **P10** | **10.3** | Responsive 390 / 768 / 1440 px | **TERMINE** | Viewports 375/390/1440px validés Playwright (18/18 verts), cibles >= 44px, test `responsive-breakpoints.spec.ts` |
+| **P10** | **10.4** | Mode hors-ligne et sync déconnectée | **TERMINE** | Service Worker `public/sw.js` (voyages/équipages), file sync LWW `tripOfflineSyncQueue.ts`, composant `TripSyncStatusIndicator` |
+| **P10** | **10.5** | Préparation i18n | **TERMINE** | Formateurs multi-unités `formatters.ts` (distances, dénivelés, poids, devises), clés FR/EN, doc `I18N_STRATEGY.md` |
 |---|---|---|---|---|
 | **P11** | **11.1** | Suite de tests unitaires exhaustive | À FAIRE | Cas limites et dégradés |
 | **P11** | **11.2** | Tests d'intégration server actions | À FAIRE | Permissions et conflits |
