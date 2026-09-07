@@ -10,6 +10,10 @@ interface Props {
 
 const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://lekitduvoyageur.fr';
 
+// Les fiches pays sont rendues à la requête (Supabase) : jamais de pré-rendu
+// statique au build, sinon le build exige la DB (PGRST002) et échoue sans env.
+export const dynamic = 'force-dynamic';
+
 export async function generateStaticParams() {
   try {
     const slugs = await fetchAllCountrySlugs();

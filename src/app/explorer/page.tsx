@@ -4,6 +4,7 @@ import ExplorerClient from '@/components/explorer/ExplorerClient';
 import type { MapTrail } from '@/components/explorer/types';
 
 export const revalidate = 60;
+export const dynamic = 'force-dynamic';
 
 export default async function ExplorerPage() {
   let initialTrails: MapTrail[] = [];
