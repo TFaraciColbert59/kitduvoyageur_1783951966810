@@ -70,15 +70,17 @@ Le Design System LKDV s'articule autour des principes d'ergonomie mobile Apple H
 4. **`LkvBadge`** :
    - Pastille sémantique pour les statuts, catégories de poids, difficultés et avertissements.
 5. **Dialogues canoniques (`src/components/ui/dialogs.ts`)** :
-   - `lkvAlert`, `lkvConfirm`, `lkvPrompt` remplacent universellement `window.alert`, `window.confirm`, `window.prompt` (garde-fou U-D63).
+   - `lkvAlert`, `lkvConfirm`, `lkvPrompt` centralisent en un point unique d'architecture tous les dialogues applicatifs autrefois dispersés (41 appels directs dans 33 fichiers éliminés, garde-fou U-D63).
+   - *Note d'évolution : Le remplacement des implémentations de secours par des modales `GlassSheet`/`GlassModal` purement React est consigné au backlog UX (point de contact unique prêt).*
 
 ---
 
 ## 6. Garde-Fous Exécutables en CI (`tests/design/unification.spec.ts`)
 
-- **U-D60** : 0 couleur hexadécimale hors `src/styles/tokens.css` dans les sources de styles.
+- **U-D60** : 0 couleur hexadécimale hors `src/styles/tokens.css` dans les sources de styles déclaratives (`liquid-glass.css`, `tailwind.css`, `country.css`, `earth.css`, `tokens.ts`).
 - **U-D61** : 0 classe froide (`zinc`, `gray`, `slate`, `amber`, `emerald`, `blue`) dans `src/`.
 - **U-D62** : 0 rayon littéral `rounded-[Npx]` ni ombre `shadow-[...]` hors primitives (`src/components/ui`).
-- **U-D63** : 0 dialogue natif (`alert`, `confirm`, `prompt`) hors primitives (`src/components/ui`).
+- **U-D63** : 0 appel direct à un dialogue natif (`alert`, `confirm`, `prompt`) hors primitives (`src/components/ui`).
 - **U-D64** : 0 variable CSS déclarée dans 2+ fichiers de styles.
+
 
