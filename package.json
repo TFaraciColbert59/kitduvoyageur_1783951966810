@@ -60,7 +60,8 @@
     "mobile:open:android": "npx cap open android",
     "verify:invariants": "node scripts/verify/ci_invariants.mjs",
     "test:a11y": "playwright test --config=playwright.a11y.config.ts",
-    "visual:sheet": "node scripts/visual/contact-sheet.mjs"
+    "visual:sheet": "node scripts/visual/contact-sheet.mjs",
+    "seed:y": "node scripts/seed/seed_y_profiles.mjs"
   },
   "dependencies": {
     "@capacitor/android": "^8.5.0",
