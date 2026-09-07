@@ -31,9 +31,9 @@ export default function ExportClientView({ trip, stats, budgetSummary }: ExportC
     .sort((a, b) => a - b);
 
   return (
-    <div className="min-h-screen bg-white text-gray-900 font-sans p-4 sm:p-8 print:p-0">
+    <div className="min-h-screen bg-white text-text-primary font-sans p-4 sm:p-8 print:p-0">
       {/* Barre d'action supérieure - masquée à l'impression */}
-      <div className="max-w-4xl mx-auto mb-8 print:hidden flex flex-wrap items-center justify-between gap-4 p-4 rounded-2xl bg-[#FAF8F5] border border-lkv-primary/10">
+      <div className="max-w-4xl mx-auto mb-8 print:hidden flex flex-wrap items-center justify-between gap-4 p-4 rounded-2xl bg-surface border border-lkv-primary/10">
         <Link
           href={`/voyages/${trip.slug}`}
           className="inline-flex items-center gap-2 text-sm font-medium text-lkv-primary hover:text-lkv-secondary transition-colors"
@@ -45,14 +45,14 @@ export default function ExportClientView({ trip, stats, budgetSummary }: ExportC
           <a
             href={`/api/voyages/${trip.slug}/gpx`}
             download={`${trip.slug}.gpx`}
-            className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-white border border-lkv-primary/20 text-lkv-primary text-xs font-semibold hover:bg-gray-50 transition-all shadow-sm"
+            className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-white border border-lkv-primary/20 text-lkv-primary text-xs font-semibold hover:bg-surface-subtle transition-all shadow-sm"
           >
             <Download size={15} />
             Télécharger GPX
           </a>
           <button
             onClick={handlePrint}
-            className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-lkv-primary text-white text-xs font-semibold hover:bg-[#123323] transition-all shadow-md"
+            className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-lkv-primary text-white text-xs font-semibold hover:opacity-90 transition-all shadow-md"
           >
             <Printer size={15} />
             Imprimer / Exporter PDF
@@ -63,7 +63,7 @@ export default function ExportClientView({ trip, stats, budgetSummary }: ExportC
       {/* Feuille de route imprimable */}
       <div className="max-w-4xl mx-auto space-y-8 print:space-y-6">
         {/* En-tête officiel */}
-        <header className="border-b border-gray-200 pb-6">
+        <header className="border-b border-border/60 pb-6">
           <div className="flex justify-between items-start">
             <div>
               <div className="text-xs uppercase tracking-widest text-lkv-secondary font-semibold mb-1">
@@ -71,21 +71,21 @@ export default function ExportClientView({ trip, stats, budgetSummary }: ExportC
               </div>
               <h1 className="text-2xl sm:text-3xl font-bold text-lkv-primary">{trip.title}</h1>
               {trip.description && (
-                <p className="text-sm text-gray-600 mt-2 max-w-2xl">{trip.description}</p>
+                <p className="text-sm text-text-secondary mt-2 max-w-2xl">{trip.description}</p>
               )}
             </div>
-            <div className="text-right text-xs text-gray-500">
+            <div className="text-right text-xs text-text-muted">
               <div>Édité le {new Date().toLocaleDateString('fr-FR')}</div>
               <div className="font-mono mt-1 text-[10px]">Réf : {trip.slug}</div>
             </div>
           </div>
 
           {/* Métriques clés */}
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 mt-6 pt-4 border-t border-gray-100">
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 mt-6 pt-4 border-t border-border/40">
             <div className="flex items-center gap-2">
               <MapPin size={16} className="text-lkv-secondary" />
               <div>
-                <div className="text-[10px] text-gray-500 uppercase">Destination</div>
+                <div className="text-[10px] text-text-muted uppercase">Destination</div>
                 <div className="text-sm font-semibold text-lkv-primary">
                   {trip.destination_name || trip.destination_country_code || 'Non renseigné'}
                 </div>
@@ -95,7 +95,7 @@ export default function ExportClientView({ trip, stats, budgetSummary }: ExportC
             <div className="flex items-center gap-2">
               <Calendar size={16} className="text-lkv-secondary" />
               <div>
-                <div className="text-[10px] text-gray-500 uppercase">Dates</div>
+                <div className="text-[10px] text-text-muted uppercase">Dates</div>
                 <div className="text-sm font-semibold text-lkv-primary">
                   {formatCivilDateRange(trip.start_date, trip.end_date, undefined, 'fr-FR') || 'Date libre'}
                 </div>
@@ -105,7 +105,7 @@ export default function ExportClientView({ trip, stats, budgetSummary }: ExportC
             <div className="flex items-center gap-2">
               <Users size={16} className="text-lkv-secondary" />
               <div>
-                <div className="text-[10px] text-gray-500 uppercase">Équipe</div>
+                <div className="text-[10px] text-text-muted uppercase">Équipe</div>
                 <div className="text-sm font-semibold text-lkv-primary">
                   {trip.collaborators.length} voyageur{trip.collaborators.length > 1 ? 's' : ''}
                 </div>
@@ -115,7 +115,7 @@ export default function ExportClientView({ trip, stats, budgetSummary }: ExportC
             <div className="flex items-center gap-2">
               <Shield size={16} className="text-lkv-secondary" />
               <div>
-                <div className="text-[10px] text-gray-500 uppercase">Activité & Niveau</div>
+                <div className="text-[10px] text-text-muted uppercase">Activité & Niveau</div>
                 <div className="text-sm font-semibold text-lkv-primary">
                   {trip.primary_activity} · {trip.difficulty}
                 </div>
@@ -136,29 +136,29 @@ export default function ExportClientView({ trip, stats, budgetSummary }: ExportC
           </h2>
 
           {sortedDays.length === 0 ? (
-            <p className="text-sm text-gray-500 italic">Aucune étape enregistrée.</p>
+            <p className="text-sm text-text-muted italic">Aucune étape enregistrée.</p>
           ) : (
             <div className="space-y-4">
               {sortedDays.map(dayNum => {
                 const daySteps = stepsByDay[dayNum] || [];
                 return (
-                  <div key={dayNum} className="border border-gray-200 rounded-xl p-4 page-break-inside-avoid">
+                  <div key={dayNum} className="border border-border/60 rounded-xl p-4 page-break-inside-avoid">
                     <div className="font-bold text-sm text-lkv-primary mb-2 flex items-center justify-between">
                       <span>Jour {dayNum}</span>
-                      <span className="text-xs text-gray-500 font-normal">
+                      <span className="text-xs text-text-muted font-normal">
                         {daySteps.length} étape{daySteps.length > 1 ? 's' : ''}
                       </span>
                     </div>
                     <div className="space-y-3">
                       {daySteps.map((step, idx) => (
                         <div key={step.id} className="text-xs pl-3 border-l-2 border-lkv-secondary">
-                          <div className="font-semibold text-gray-900">
+                          <div className="font-semibold text-text-primary">
                             {idx + 1}. {step.title}
                           </div>
                           {step.description && (
-                            <p className="text-gray-600 mt-0.5">{step.description}</p>
+                            <p className="text-text-secondary mt-0.5">{step.description}</p>
                           )}
-                          <div className="flex flex-wrap gap-x-4 gap-y-1 text-gray-500 mt-1 text-[11px]">
+                          <div className="flex flex-wrap gap-x-4 gap-y-1 text-text-muted mt-1 text-[11px]">
                             {step.distance_km && <span>Distance : {step.distance_km} km</span>}
                             {step.elevation_gain_m && <span>D+ : +{step.elevation_gain_m}m</span>}
                             {step.elevation_loss_m && <span>D- : -{step.elevation_loss_m}m</span>}
@@ -190,16 +190,16 @@ export default function ExportClientView({ trip, stats, budgetSummary }: ExportC
             {trip.items.map(item => (
               <div
                 key={item.id}
-                className="flex items-center gap-2 p-2 rounded-lg border border-gray-100 bg-gray-50/50"
+                className="flex items-center gap-2 p-2 rounded-lg border border-border/40 bg-surface-subtle"
               >
-                <div className="w-3.5 h-3.5 border border-gray-400 rounded-sm flex items-center justify-center">
+                <div className="w-3.5 h-3.5 border border-border rounded-sm flex items-center justify-center">
                   {item.is_packed && <div className="w-2 h-2 bg-lkv-primary rounded-2xs" />}
                 </div>
                 <div className="truncate">
-                  <span className="font-medium text-gray-800">{item.item_name}</span>
-                  {item.quantity > 1 && <span className="text-gray-500"> (x{item.quantity})</span>}
+                  <span className="font-medium text-text-primary">{item.item_name}</span>
+                  {item.quantity > 1 && <span className="text-text-muted"> (x{item.quantity})</span>}
                   {item.weight_grams && (
-                    <span className="text-gray-400 text-[10px]"> · {item.weight_grams}g</span>
+                    <span className="text-text-muted text-[10px]"> · {item.weight_grams}g</span>
                   )}
                 </div>
               </div>
@@ -218,13 +218,13 @@ export default function ExportClientView({ trip, stats, budgetSummary }: ExportC
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-xs">
             {/* Balances individuelles */}
-            <div className="border border-gray-200 rounded-xl p-3">
-              <div className="font-semibold text-gray-700 mb-2">Balances par membre</div>
+            <div className="border border-border/60 rounded-xl p-3">
+              <div className="font-semibold text-text-secondary mb-2">Balances par membre</div>
               <div className="space-y-1.5">
                 {budgetSummary.balances.map(b => (
                   <div key={b.userId} className="flex justify-between items-center text-[11px]">
-                    <span className="text-gray-700">{b.name}</span>
-                    <span className={b.net >= 0 ? 'text-emerald-700 font-medium' : 'text-red-600 font-medium'}>
+                    <span className="text-text-secondary">{b.name}</span>
+                    <span className={b.net >= 0 ? 'text-[var(--lkv-success)] font-medium' : 'text-[var(--lkv-danger)] font-medium'}>
                       {b.net >= 0 ? `+${b.net}` : b.net} {budgetSummary.currency}
                     </span>
                   </div>
@@ -233,14 +233,14 @@ export default function ExportClientView({ trip, stats, budgetSummary }: ExportC
             </div>
 
             {/* Règlements suggérés */}
-            <div className="border border-gray-200 rounded-xl p-3">
-              <div className="font-semibold text-gray-700 mb-2">Règlements de compte</div>
+            <div className="border border-border/60 rounded-xl p-3">
+              <div className="font-semibold text-text-secondary mb-2">Règlements de compte</div>
               {budgetSummary.settlements.length === 0 ? (
-                <p className="text-gray-500 italic text-[11px]">Tous les comptes sont équilibrés.</p>
+                <p className="text-text-muted italic text-[11px]">Tous les comptes sont équilibrés.</p>
               ) : (
                 <div className="space-y-1.5">
                   {budgetSummary.settlements.map((s, idx) => (
-                    <div key={idx} className="text-[11px] text-gray-800">
+                    <div key={idx} className="text-[11px] text-text-primary">
                       <span className="font-medium">{s.fromName}</span> doit verser{' '}
                       <span className="font-bold text-lkv-primary">
                         {s.amount} {budgetSummary.currency}
@@ -255,9 +255,9 @@ export default function ExportClientView({ trip, stats, budgetSummary }: ExportC
         </section>
 
         {/* Section 4 : Sécurité & Contacts d'urgence */}
-        <footer className="pt-6 border-t border-gray-200 text-xs text-gray-500 flex flex-wrap justify-between gap-4 page-break-inside-avoid">
+        <footer className="pt-6 border-t border-border/60 text-xs text-text-muted flex flex-wrap justify-between gap-4 page-break-inside-avoid">
           <div>
-            <div className="font-bold text-gray-700">Sécurité & Numéros d'urgence</div>
+            <div className="font-bold text-text-secondary">Sécurité & Numéros d'urgence</div>
             <div>Secours en montagne européen : 112 · SAMU : 15 · Pompiers : 18</div>
           </div>
           <div className="text-right">

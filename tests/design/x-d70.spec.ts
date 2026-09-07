@@ -29,6 +29,7 @@ export const VOYAGE_SURFACES: Record<string, string[]> = {
   ],
   export: [
     'src/app/voyages/[slug]/export/page.tsx',
+    'src/app/voyages/[slug]/export/ExportClientView.tsx',
   ],
   'phase-1-prepare': [
     'src/features/trips/components/TripPhasePrepareView.tsx',
