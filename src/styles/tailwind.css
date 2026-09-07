@@ -136,7 +136,8 @@
     min-height: -webkit-fill-available;
     width: 100%;
     max-width: 100vw;
-    background-color: var(--lkv-surface);
+    /* Transparent : le fond (papier body ou CompteBackground immersif) transite
+       à travers le verre. Le blanc papier reste porté par le body en secours. */
     position: relative;
     overscroll-behavior: none;
     overscroll-behavior-y: none;
