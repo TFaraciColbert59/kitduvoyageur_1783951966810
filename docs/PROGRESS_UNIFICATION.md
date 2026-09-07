@@ -61,9 +61,9 @@ Dernière mise à jour : 2026-09-07T01:15:00+02:00
 | **P8** | **8.5** | Règlements de dépenses et budget réel | **TERMINE** | `simplifyDebts` (glouton équitable) et `calculateBudgetSummary`, test 2/2 vert |
 | **P8** | **8.6** | Segments d'itinéraires réutilisables | **TERMINE** | `segmentEngine.ts`, catalogue certifié TMB/GR20/Laugavegur, `insertSegmentIntoTripSteps`, test 2/2 vert |
 |---|---|---|---|---|
-| **P9** | **9.1** | Monétisation éthique (Boutique prioritaire, tri technique neutre) | À FAIRE | Séparation conseil / pub |
-| **P9** | **9.2** | Conformité légale (loi influence 2023, RGPD, HMAC) | À FAIRE | Mentions visibles mobile |
-| **P9** | **9.3** | Sécurité des documents d'identité | À FAIRE | URLs signées courte durée |
+| **P9** | **9.1** | Monétisation éthique (Boutique prioritaire, tri technique neutre) | **TERMINE** | Séparation conseil / pub, `isValidAffiliateTargetUrl`, test `ethical-legal-security.spec.ts` |
+| **P9** | **9.2** | Conformité légale (loi influence 2023, RGPD, HMAC) | **TERMINE** | Badge permanent "Sponsorisé", hash SHA-256 de session RGPD, HMAC constant-time postback |
+| **P9** | **9.3** | Sécurité des documents d'identité | **TERMINE** | `maskSensitiveIdentityNumber`, URLs signées HMAC courte durée (15 min) avec expiration |
 |---|---|---|---|---|
 | **P10** | **10.1** | Optimisation performance & budgets web | À FAIRE | LCP, INP, CLS ciblés |
 | **P10** | **10.2** | Accessibilité WCAG AA complète | À FAIRE | 0 violation axe-core |

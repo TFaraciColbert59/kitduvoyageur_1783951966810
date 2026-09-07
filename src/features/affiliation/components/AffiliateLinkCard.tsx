@@ -63,11 +63,16 @@ export function AffiliateLinkCard({ link, tripId }: AffiliateLinkCardProps) {
             {categoryLabel}
           </span>
 
-          {link.partner && (
-            <span className="text-[11px] font-semibold text-stone-500 bg-stone-100 px-2 py-0.5 rounded-full">
-              {link.partner.name}
+          <div className="flex items-center gap-1.5 flex-wrap justify-end">
+            {link.partner && (
+              <span className="text-[10px] font-semibold text-stone-500 bg-stone-100 px-2 py-0.5 rounded-full">
+                {link.partner.name}
+              </span>
+            )}
+            <span className="text-[9.5px] font-mono font-bold text-amber-900 bg-amber-100/90 border border-amber-300/60 px-2 py-0.5 rounded-full">
+              Sponsorisé
             </span>
-          )}
+          </div>
         </div>
 
         <h4 className="text-sm font-bold text-stone-900 line-clamp-2 mb-1">
