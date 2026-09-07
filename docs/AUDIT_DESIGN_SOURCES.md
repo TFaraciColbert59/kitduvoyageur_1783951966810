@@ -103,6 +103,22 @@ chantier qui doit converger vers la référence `/materiel` (et non l'inverse).
 
 **Décision d'architecture (U1)** : `tokens.css` = unique déclaration de valeurs ; `tokens.ts` dérivé ou supprimé (grep usages) ; `liquid-glass.css` conserve recettes + alias vers tokens ; `tailwind.css` expose via `@theme` sans redéfinir ; `country.css`/`earth.css` vidés des littéraux ; rayons à réconcilier vers DESIGN_SYSTEM (12/16/24) avec preuve de non-régression /pays·/materiel·/compte.
 
+### DÉCISION U1 (tranchée avec preuve — RULING)
+1. **Rayons : le code appliqué gagne, DESIGN_SYSTEM.md est amendé.** Preuve : les tokens CSS
+   `--lkv-radius-*` n'ont **0 usage** dans le code (grep) ; l'échelle réellement compilée par
+   Tailwind v3 est celle de `tailwind.config.js` (**6/10/14/20/26/32 px**) ; la référence visuelle
+   `/materiel` (que DESIGN_SYSTEM nomme autorité) applique **majoritairement 28px en dur** (7×),
+   24px, 20px. Imposer 12/16/24 casserait `/materiel` → point d'arrêt dur U1. DESIGN_SYSTEM.md
+   enregistrera l'échelle réelle : LkvRadiusCard=28px, 2xl=32, xl=26, lg=20, md=14, sm=10, xs=6,
+   full=9999.
+2. **Polices : Manrope/DM Sans gagnent** (chargées par layout.tsx + fontFamily), Inter est mort
+   (variable écrasée par next/font, 0 application).
+3. **Blur GlassCard : réparée** (classes littérales) — amélioration de la référence (le verre
+   devient réellement verre), pas une dégradation → pas un arrêt.
+4. **Mode sombre : tranché = clair seul** (la référence /materiel n'a pas de dark ; tokens.css
+   n'en a pas ; le toggle pose data-theme mais pas de classe .dark Tailwind → les dark: du code
+   sont morts). Suppression documentée des variantes dark: du module voyage lors de U3.
+
 ### Complément — usages réels de `tokens.ts` (grep preuve, pour U1)
 
 `src/design/tokens.ts` n'est PAS orphelin :

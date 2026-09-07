@@ -14,6 +14,13 @@ interface GlassCardProps extends HTMLAttributes<HTMLDivElement> {
   ariaLabelledBy?: string;
 }
 
+/** U1 : classes littérales — Tailwind ne compile jamais `backdrop-blur-${value}` interpolé. */
+const blurClass: Record<GlassBlur, string> = {
+  sm: 'backdrop-blur-[8px]',
+  md: 'backdrop-blur-[10px]',
+  lg: 'backdrop-blur-[16px]',
+};
+
 const toneTint: Record<GlassTone, string> = {
   neutral: 'border-white/40 shadow-[0_8px_32px_rgba(0,0,0,0.06),inset_0_1.5px_1px_rgba(255,255,255,0.7)]',
   sage: 'border-white/50 shadow-[0_8px_32px_rgba(0,0,0,0.08),inset_0_1.5px_1px_rgba(255,255,255,0.8)]',
@@ -45,9 +52,9 @@ export const GlassCard = forwardRef<HTMLDivElement, GlassCardProps>(
         aria-labelledby={ariaLabelledBy}
         tabIndex={interactive ? 0 : undefined}
         className={cn(
-          'glass rounded-[28px] relative overflow-hidden',
+          'glass rounded-[var(--lkv-radius-card)] relative overflow-hidden',
           interactive && 'interactive cursor-pointer',
-          `backdrop-blur-${blur === 'sm' ? '[8px]' : blur === 'lg' ? '[16px]' : '[10px]'}`,
+          blurClass[blur],
           toneTint[tone],
           className
         )}

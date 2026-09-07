@@ -41,7 +41,8 @@ function walk(dir: string, acc: string[] = []): string[] {
 }
 
 function isPrimitive(file: string): boolean {
-  return file.startsWith(join(SRC, 'components', 'ui')) || file.startsWith('src/components/ui');
+  const norm = file.replace(/\\/g, '/');
+  return norm.includes('src/components/ui');
 }
 
 function countHex(file: string): number {
@@ -114,7 +115,7 @@ function exists(p: string): boolean {
 describe('CHANTIER U — GARDE-FOUS DE GOUVERNANCE', () => {
   const files = walk(SRC)
     .filter((f) => !f.includes('__tests__'))
-    .map((f) => f.replace(ROOT + '/', ''))
+    .map((f) => f.replace(ROOT, '').replace(/^[/\\]/, '').replace(/\\/g, '/'))
     .filter((f) => !/(\.next|node_modules|\.d\.ts)/.test(f));
 
   it('U-D60 : aucune couleur hexadécimale hors tokens.css', () => {

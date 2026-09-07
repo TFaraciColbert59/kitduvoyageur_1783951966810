@@ -1,34 +1,30 @@
-// src/design/tokens.ts — Design System LKDV (Source de vérité issue de /materiel)
+// src/design/tokens.ts — Miroir typé dérivé de tokens.css (Chantier U)
+// Source unique canonique des valeurs : src/styles/tokens.css
 
 export const colors = {
-  // Primary brand color – Forest Green canon LKDV
-  primary: '#17402C',
-  primaryHover: '#205238',
-  primarySoft: '#365233',
-  // Surfaces et fonds
-  surface: '#FAF8F5',
-  surfacePaper: '#FBFAF6',
-  background: '#FBFAF6',
-  border: '#E8E4D8',
+  primary: 'var(--lkv-primary)',
+  primaryHover: 'var(--lkv-primary-hover)',
+  primarySoft: 'var(--lkv-primary-soft)',
+  surface: 'var(--stone-50)',
+  surfacePaper: 'var(--lkv-surface)',
+  background: 'var(--lkv-surface)',
+  border: 'var(--stone-200)',
   borderGlass: 'rgba(255, 255, 255, 0.60)',
-  // Accent / Sage
-  accent: '#5B7F55',
-  accentSubtle: '#A6C1A0',
-  // Sémantiques canoniques
-  error: '#A8443A',
-  errorBg: '#F5DDD9',
-  warning: '#C89A3B',
-  warningBg: '#FBF1DC',
-  info: '#4B6B7C',
-  infoBg: '#DDE7EE',
-  success: '#5B7F55',
-  successBg: '#F2F6F1',
-  // Typographie & Neutres
-  muted: '#5A7064',
-  textMain: '#14140F',
-  textSecondary: '#5A574E',
-  white: '#ffffff',
-  black: '#000000',
+  accent: 'var(--lkv-secondary)',
+  accentSubtle: 'var(--sage-300)',
+  error: 'var(--lkv-danger)',
+  errorBg: 'var(--lkv-danger-bg)',
+  warning: 'var(--lkv-warning)',
+  warningBg: 'var(--lkv-warning-bg)',
+  info: 'var(--lkv-info)',
+  infoBg: 'var(--lkv-info-bg)',
+  success: 'var(--lkv-success)',
+  successBg: 'var(--sage-50)',
+  muted: 'var(--lkv-text-muted)',
+  textMain: 'var(--ink-900)',
+  textSecondary: 'var(--ink-500)',
+  white: 'var(--lkv-text-inverted)',
+  black: 'black',
 } as const;
 
 export const typography = {
@@ -39,14 +35,14 @@ export const typography = {
     mono: 'var(--font-mono), IBM Plex Mono, monospace',
   },
   size: {
-    xs: '0.75rem',  // 12px
-    sm: '0.875rem', // 14px
-    base: '1rem',   // 16px
-    lg: '1.125rem', // 18px
-    xl: '1.25rem',  // 20px
-    '2xl': '1.5rem',// 24px
-    '3xl': '1.875rem', // 30px
-    '4xl': '2.25rem', // 36px
+    xs: '0.75rem',
+    sm: '0.875rem',
+    base: '1rem',
+    lg: '1.125rem',
+    xl: '1.25rem',
+    '2xl': '1.5rem',
+    '3xl': '1.875rem',
+    '4xl': '2.25rem',
   },
   weight: {
     regular: '400',
@@ -59,81 +55,80 @@ export const typography = {
 
 export const spacing = {
   0: '0rem',
-  1: '0.25rem', // 4px
-  2: '0.5rem',  // 8px
-  3: '0.75rem', // 12px
-  4: '1rem',    // 16px
-  5: '1.25rem', // 20px
-  6: '1.5rem',  // 24px
-  8: '2rem',    // 32px
-  10: '2.5rem', // 40px
-  12: '3rem',   // 48px
-  16: '4rem',   // 64px
+  1: 'var(--space-1)',
+  2: 'var(--space-2)',
+  3: 'var(--space-3)',
+  4: 'var(--space-4)',
+  5: 'var(--space-5)',
+  6: 'var(--space-6)',
+  8: 'var(--space-8)',
+  10: 'var(--space-10)',
+  12: 'var(--space-12)',
+  16: 'var(--space-16)',
 } as const;
 
 export const radius = {
-  sm: '0.5rem',    // 8px
-  md: '0.75rem',   // 12px
-  lg: '1rem',      // 16px
-  xl: '1.5rem',    // 24px
-  '2xl': '1.75rem',// 28px
-  full: '9999px',
+  xs: 'var(--lkv-radius-xs)',
+  sm: 'var(--lkv-radius-sm)',
+  md: 'var(--lkv-radius-md)',
+  lg: 'var(--lkv-radius-lg)',
+  xl: 'var(--lkv-radius-xl)',
+  '2xl': 'var(--lkv-radius-2xl)',
+  card: 'var(--lkv-radius-card)',
+  full: 'var(--lkv-radius-full)',
 } as const;
 
 export const forest = {
-  950: '#0B1F17',
-  900: '#17402C',
-  800: '#205238',
-  700: '#2A6648',
-  600: '#365233',
-  500: '#5B7F55',
+  950: 'var(--lkv-forest-950)',
+  900: 'var(--lkv-forest-900)',
+  800: 'var(--lkv-forest-800)',
+  700: 'var(--lkv-forest-700)',
+  600: 'var(--lkv-forest-600)',
+  500: 'var(--lkv-forest-500)',
 } as const;
 
 export const sage = {
-  500: '#5B7F55',
-  400: '#82A47C',
-  300: '#A6C1A0',
-  200: '#C8DAC3',
-  100: '#E1EBDE',
-  50:  '#F2F6F1',
+  500: 'var(--sage-500)',
+  400: 'var(--sage-400)',
+  300: 'var(--sage-300)',
+  200: 'var(--sage-200)',
+  100: 'var(--sage-100)',
+  50:  'var(--sage-50)',
 } as const;
 
 export const stone = {
-  50:  '#FAF8F5',
-  100: '#F1EDE6',
-  200: '#E4DED3',
-  300: '#D2CABC',
+  50: 'var(--stone-50)',
+  100: 'var(--stone-100)',
+  200: 'var(--stone-200)',
+  300: 'var(--stone-300)',
+  400: 'var(--stone-400)',
+  500: 'var(--stone-500)',
+  600: 'var(--stone-600)',
+  700: 'var(--stone-700)',
+  800: 'var(--stone-800)',
 } as const;
 
 export const ink = {
-  900: '#14140F',
-  700: '#2B2A24',
-  500: '#5A574E',
-  300: '#8C8779',
+  900: 'var(--ink-900)',
+  700: 'var(--ink-700)',
+  500: 'var(--ink-500)',
+  300: 'var(--ink-300)',
 } as const;
 
-export const paper = '#FBFAF6';
+export const paper = {
+  DEFAULT: 'var(--lkv-surface)',
+  cream: 'var(--lkv-surface-paper)',
+} as const;
 
 export const shadows = {
-  xs: '0 1px 2px rgba(23,64,44,0.05), 0 1px 3px rgba(23,64,44,0.04)',
-  sm: '0 2px 6px rgba(23,64,44,0.06), 0 4px 12px rgba(23,64,44,0.05)',
-  md: '0 8px 32px rgba(0,0,0,0.06), inset 0 1.5px 1px rgba(255,255,255,0.7)',
-  lg: '0 12px 32px rgba(0,0,0,0.08), inset 0 1.5px 1px rgba(255,255,255,0.8)',
+  glass: 'var(--elevation-1)',
+  card: 'var(--elevation-2)',
+  modal: 'var(--elevation-4)',
 } as const;
 
 export const transition = {
-  default: 'transform 120ms cubic-bezier(0.16, 1, 0.3, 1), background-color 200ms ease, opacity 200ms ease, box-shadow 200ms ease',
-  fast: 'all 120ms cubic-bezier(0.16, 1, 0.3, 1)',
-  slow: 'all 300ms cubic-bezier(0.16, 1, 0.3, 1)',
+  default: 'var(--dur-med) var(--ease-glass)',
+  fast: 'var(--dur-fast) var(--ease-glass)',
+  base: 'var(--dur-med) var(--ease-glass)',
+  slow: 'var(--dur-slow) var(--ease-glass)',
 } as const;
-
-export const theme = {
-  colors, forest, sage, stone, ink, paper,
-  typography,
-  spacing,
-  radius,
-  shadows,
-  transition,
-};
-
-export default theme;
