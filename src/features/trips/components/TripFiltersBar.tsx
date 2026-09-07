@@ -5,6 +5,7 @@ import { Search, X, RotateCcw } from 'lucide-react';
 import { GlassCapsuleBtn } from '@/components/ui/GlassCapsuleBtn';
 import { GlassCard } from '@/components/ui/GlassCard';
 import type { TripFilters, TripStatus, TripDifficulty, TripActivityType } from '../types/trip.types';
+import type { TripScale, TripParty } from '../engine/tripProfileEngine';
 
 export interface TripFiltersBarProps {
   filters: TripFilters;
@@ -17,7 +18,9 @@ export function TripFiltersBar({ filters, onChange, onReset }: TripFiltersBarPro
     filters.search ||
       (filters.status && filters.status !== 'all') ||
       (filters.difficulty && filters.difficulty !== 'all') ||
-      (filters.activity && filters.activity !== 'all')
+      (filters.activity && filters.activity !== 'all') ||
+      (filters.scale && filters.scale !== 'all') ||
+      (filters.party && filters.party !== 'all')
   );
 
   return (
@@ -109,6 +112,45 @@ export function TripFiltersBar({ filters, onChange, onReset }: TripFiltersBarPro
             <option value="planned">Planifié</option>
             <option value="active">En cours</option>
             <option value="completed">Terminé</option>
+          </select>
+
+          {/* Échelle (profil dérivé) */}
+          <select
+            value={filters.scale || 'all'}
+            aria-label="Échelle"
+            onChange={e =>
+              onChange({
+                ...filters,
+                scale: e.target.value as TripScale | 'all',
+                page: 1,
+              })
+            }
+            className="glass-input px-3 py-2 rounded-[var(--lkv-radius-full)] text-xs sm:text-sm text-lkv-primary font-medium cursor-pointer"
+          >
+            <option value="all">Toutes durées</option>
+            <option value="day">Journée (≤1j)</option>
+            <option value="short">Court séjour (2-4j)</option>
+            <option value="long">Itinérance (5-14j)</option>
+            <option value="expedition">Expédition (&gt;14j)</option>
+          </select>
+
+          {/* Équipage (profil dérivé) */}
+          <select
+            value={filters.party || 'all'}
+            aria-label="Équipage"
+            onChange={e =>
+              onChange({
+                ...filters,
+                party: e.target.value as TripParty | 'all',
+                page: 1,
+              })
+            }
+            className="glass-input px-3 py-2 rounded-[var(--lkv-radius-full)] text-xs sm:text-sm text-lkv-primary font-medium cursor-pointer"
+          >
+            <option value="all">Tous formats</option>
+            <option value="solo">Solo</option>
+            <option value="duo">Duo (2)</option>
+            <option value="group">Groupe (≥3)</option>
           </select>
 
           {/* Reset Filters */}

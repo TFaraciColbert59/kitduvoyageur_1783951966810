@@ -263,11 +263,15 @@ export interface TripStats {
   participants_count: number;
 }
 
+import type { TripScale, TripParty } from '../engine/tripProfileEngine';
+
 export interface TripFilters {
   search?: string;
   status?: TripStatus | 'all';
   difficulty?: TripDifficulty | 'all';
   activity?: TripActivityType | 'all';
+  scale?: TripScale | 'all';
+  party?: TripParty | 'all';
   destination?: string;
   page?: number;
   limit?: number;

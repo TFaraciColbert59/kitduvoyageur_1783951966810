@@ -5,7 +5,10 @@ import Link from 'next/link';
 import AppImage from '@/components/ui/AppImage';
 import { GlassCard } from '@/components/ui/GlassCard';
 import { TripBadge } from './TripBadge';
-import { tripSectionHref } from '../registry/tripSectionRegistry';
+import { tripSectionHref, TRIP_SECTION_ORDER } from '../registry/tripSectionRegistry';
+import { deriveScale, deriveParty, getProfileBadgeLabel } from '../engine/tripProfileEngine';
+import type { TripSectionId } from '../engine/tripProfileEngine';
+import { useActiveTrip } from '../context/ActiveTripContext';
 import { MapPin, Calendar, Navigation, Users } from 'lucide-react';
 import type { TripSummary, TripWithDetails } from '../types/trip.types';
 
@@ -27,8 +30,22 @@ export function TripCard({ trip, showRole = true }: TripCardProps) {
   const imageUrl = trip.cover_image_url || '/assets/images/no_image.png';
   const role = 'user_role' in trip ? trip.user_role : undefined;
 
+  const { getLastSection } = useActiveTrip();
+  const lastSection = getLastSection(trip.slug);
+  const targetSection = (lastSection && (TRIP_SECTION_ORDER as readonly string[]).includes(lastSection)
+    ? lastSection
+    : 'overview') as TripSectionId;
+
+  const scale = deriveScale(trip.start_date, trip.end_date);
+  const party = deriveParty(
+    'collaborators' in trip && Array.isArray((trip as any).collaborators)
+      ? (trip as any).collaborators.length + 1
+      : trip.collaborators_count
+  );
+  const profileLabel = getProfileBadgeLabel(scale, party);
+
   return (
-    <Link href={tripSectionHref(trip.slug, 'overview')} className="block group">
+    <Link href={tripSectionHref(trip.slug, targetSection)} className="block group">
       <GlassCard
         tone="neutral"
         blur="md"
@@ -52,6 +69,9 @@ export function TripCard({ trip, showRole = true }: TripCardProps) {
             <div className="flex items-center gap-1.5 flex-wrap">
               <TripBadge type="activity" value={trip.primary_activity} size="sm" />
               <TripBadge type="difficulty" value={trip.difficulty} size="sm" />
+              <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-white/90 backdrop-blur-xs text-[var(--lkv-primary)] border border-white/60 shadow-2xs">
+                {profileLabel}
+              </span>
             </div>
             <TripBadge type="status" value={trip.status} size="sm" />
           </div>

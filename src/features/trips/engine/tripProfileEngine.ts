@@ -264,4 +264,32 @@ export function deriveTripProfile(trip: TripFull, now: Date): TripProfile {
   };
 }
 
+/** Y5.1 — Dérivation de l'échelle à partir des dates de voyage. */
+export function deriveScale(startDate?: string | null, endDate?: string | null): TripScale {
+  const days = civilDays(startDate, endDate);
+  return scaleFromDays(days);
+}
+
+/** Y5.1 — Dérivation du format d'équipage (solo / duo / groupe). */
+export function deriveParty(collaboratorsCount?: number | null): TripParty {
+  const count = collaboratorsCount ?? 0;
+  return count <= 1 ? 'solo' : count === 2 ? 'duo' : 'group';
+}
+
+/** Y5.1 — Libellé lisible du profil dérivé pour affichage sur TripCard / filtres. */
+export function getProfileBadgeLabel(scale: TripScale, party: TripParty): string {
+  const scaleLabels: Record<TripScale, string> = {
+    day: 'Journée',
+    short: 'Court séjour',
+    long: 'Itinérance',
+    expedition: 'Expédition',
+  };
+  const partyLabels: Record<TripParty, string> = {
+    solo: 'Solo',
+    duo: 'Duo',
+    group: 'Groupe',
+  };
+  return `${scaleLabels[scale]} · ${partyLabels[party]}`;
+}
+
 export { SECTION_LABELS as tripSectionLabels };

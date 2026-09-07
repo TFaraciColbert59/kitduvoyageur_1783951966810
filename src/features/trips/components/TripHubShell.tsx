@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { usePathname } from 'next/navigation';
 import AppShellDesktop from '@/components/shell/AppShellDesktop';
 import MobilePageShell from '@/components/mobile-nav/MobilePageShell';
@@ -10,11 +10,13 @@ import type { TripProfile } from '../engine/tripProfileEngine';
 import type { TripFull } from '../types/trip.types';
 import { useActiveTrip } from '../context/ActiveTripContext';
 import { useTripStatus } from '../hooks/useTripStatus';
+import { useAndroidTripBackNav } from '../hooks/useAndroidTripBackNav';
 import TripSidebarLeft from './TripSidebarLeft';
 import TripSidebarRight from './TripSidebarRight';
 import TripNetworkStatus from './TripNetworkStatus';
 import { ActiveTripSwitcher } from './ActiveTripSwitcher';
 import { TripCompactHeader } from './TripCompactHeader';
+import { TripMobileSectionsSheet } from './TripMobileSectionsSheet';
 import { TripShareModal } from './TripShareModal';
 
 export interface TripHubShellProps {
@@ -35,9 +37,19 @@ export function TripHubShell({ trip, profile, phase, children }: TripHubShellPro
   const activeSection = sectionIdFromPathname(pathname) ?? 'overview';
   const [isShareOpen, setIsShareOpen] = useState(false);
 
-  const { isCurrentTripActive, setActiveTrip, clearActiveTrip, isPending } = useActiveTrip();
+  const { isCurrentTripActive, setActiveTrip, clearActiveTrip, isPending, setLastSection } = useActiveTrip();
   const isTripActive = isCurrentTripActive(trip.id);
   const { isActive: statusIsActive } = useTripStatus(trip);
+
+  // Y5.2 — Mémoire de la dernière section visitée pour ce voyage
+  useEffect(() => {
+    if (trip?.slug && activeSection) {
+      setLastSection(trip.slug, activeSection);
+    }
+  }, [trip?.slug, activeSection, setLastSection]);
+
+  // Y5.4 — Gestion du retour matériel Android (section -> aperçu -> /voyages)
+  useAndroidTripBackNav(trip.slug, activeSection);
 
   const handleToggleActive = async () => {
     if (isTripActive) {
@@ -70,6 +82,13 @@ export function TripHubShell({ trip, profile, phase, children }: TripHubShellPro
       mobileSlot={
         <MobilePageShell safeTop={true} hasBottomNav={true}>
           <div className="px-4 py-4 pb-32 text-[var(--lkv-text-primary)]">
+            <div className="flex items-center justify-between gap-2 mb-3">
+              <ActiveTripSwitcher />
+              <div className="flex items-center gap-2">
+                <TripMobileSectionsSheet trip={trip} profile={profile} activeSection={activeSection} />
+                {networkStatus}
+              </div>
+            </div>
             {activeSection !== 'overview' && (
               <div className="mb-3">
                 <TripCompactHeader trip={trip} activePhase={phase} />

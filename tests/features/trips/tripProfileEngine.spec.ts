@@ -1,5 +1,10 @@
 import { describe, it, expect } from 'vitest';
-import { deriveTripProfile } from '@/features/trips/engine/tripProfileEngine';
+import {
+  deriveTripProfile,
+  deriveScale,
+  deriveParty,
+  getProfileBadgeLabel,
+} from '@/features/trips/engine/tripProfileEngine';
 import type { TripFull } from '@/features/trips/types/trip.types';
 
 /**
@@ -363,5 +368,30 @@ describe('Y1 — cas limites divers', () => {
   });
   it('activity reflète l’activité du voyage', () => {
     expect(deriveTripProfile(mkTrip({ primary_activity: 'bushcraft' }), NOW).activity).toBe('bushcraft');
+  });
+});
+
+describe('Y5.1 — Aides de profil dérivé pour cartes et filtres', () => {
+  it('deriveScale calcule correctement les 4 échelles', () => {
+    expect(deriveScale('2026-06-01', '2026-06-01')).toBe('day');
+    expect(deriveScale('2026-06-01', '2026-06-03')).toBe('short');
+    expect(deriveScale('2026-06-01', '2026-06-09')).toBe('long');
+    expect(deriveScale('2026-06-01', '2026-06-25')).toBe('expedition');
+    expect(deriveScale(null, null)).toBe('short');
+  });
+
+  it('deriveParty calcule correctement solo, duo et groupe', () => {
+    expect(deriveParty(0)).toBe('solo');
+    expect(deriveParty(1)).toBe('solo');
+    expect(deriveParty(2)).toBe('duo');
+    expect(deriveParty(4)).toBe('group');
+    expect(deriveParty(undefined)).toBe('solo');
+  });
+
+  it('getProfileBadgeLabel génère le libellé composé', () => {
+    expect(getProfileBadgeLabel('day', 'solo')).toBe('Journée · Solo');
+    expect(getProfileBadgeLabel('long', 'group')).toBe('Itinérance · Groupe');
+    expect(getProfileBadgeLabel('expedition', 'solo')).toBe('Expédition · Solo');
+    expect(getProfileBadgeLabel('short', 'duo')).toBe('Court séjour · Duo');
   });
 });

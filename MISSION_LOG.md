@@ -408,3 +408,9 @@ ORDER BY country_code;
   Y4.10 export (ExportClientView h2, suppression code mort renderSidebarLeft, masquage section budget si !canManageBudget) ·
   Y4.11 convergence (tests/a11y/e2e étendu aux 11 sections avec session démo SSR, tests/visual/voyages-y-profiles-visual.spec.ts créé, contact-sheet régénérée 38 captures).
   Portes : G1 OK (`npm run type-check`) · G2 OK (1020/1020, 137 suites) · G3 OK (12/12 règles Y-D80).
+- **Y5** ✅ (tag y5-done) : navigation globale, filtres profil, mémoire de section et retour natif Android :
+  Y5.1 liste /voyages enrichie (ActiveTripSwitcher desktop + mobile, filtres scale/party, TripCard badge profil dérivé + réouverture section mémorisée) ·
+  Y5.2 mémoire de section (persistance activeSection par slug via useActiveTrip().setLastSection, restauration automatique dans switcher et card) ·
+  Y5.3 navigation mobile hub (TripMobileSectionsSheet GlassSheet avec haptique triggerHaptic('selection'), touch targets ≥ 44px, BottomTabBar 10 sections) ·
+  Y5.4 retour matériel Android (useAndroidTripBackNav via @capacitor/app, remontée section → aperçu → liste, zéro sortie accidentelle d'app).
+  Portes : G1 OK (`npm run type-check`) · G2 OK (**1023/1023**, +3 tests) · G3 OK (12/12 règles Y-D80).

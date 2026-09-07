@@ -6,6 +6,8 @@ import MobilePageShell from '@/components/mobile-nav/MobilePageShell';
 import { TripCard } from '@/features/trips/components/TripCard';
 import { TripFiltersBar } from '@/features/trips/components/TripFiltersBar';
 import { QuickCreateTripModal } from '@/features/trips/components/QuickCreateTripModal';
+import { ActiveTripSwitcher } from '@/features/trips/components/ActiveTripSwitcher';
+import { deriveScale, deriveParty } from '@/features/trips/engine/tripProfileEngine';
 import { GlassCard, GlassCapsuleBtn, GlassSubCard, GlassPill } from '@/components/ui';
 import { EmptyState } from '@/components/ui/EmptyState';
 import { Compass, Plus, Sparkles, Filter } from 'lucide-react';
@@ -57,6 +59,8 @@ export default function VoyagesClient({
     status: 'all',
     difficulty: 'all',
     activity: 'all',
+    scale: 'all',
+    party: 'all',
   });
 
   const handleResetFilters = () => {
@@ -65,6 +69,8 @@ export default function VoyagesClient({
       status: 'all',
       difficulty: 'all',
       activity: 'all',
+      scale: 'all',
+      party: 'all',
     });
   };
 
@@ -96,6 +102,21 @@ export default function VoyagesClient({
         if (trip.status !== filters.status) return false;
       }
 
+      // Échelle (profil dérivé)
+      if (filters.scale && filters.scale !== 'all') {
+        const tripScale = deriveScale(trip.start_date, trip.end_date);
+        if (tripScale !== filters.scale) return false;
+      }
+
+      // Équipage (profil dérivé)
+      if (filters.party && filters.party !== 'all') {
+        const count = 'collaborators' in trip && Array.isArray((trip as any).collaborators)
+          ? (trip as any).collaborators.length + 1
+          : trip.collaborators_count;
+        const tripParty = deriveParty(count);
+        if (tripParty !== filters.party) return false;
+      }
+
       return true;
     });
   }, [activeTab, initialUserTrips, initialPublicTrips, filters]);
@@ -118,6 +139,9 @@ export default function VoyagesClient({
           <Plus size={16} />
           <span>Nouveau voyage</span>
         </GlassCapsuleBtn>
+
+        {/* Sélecteur de voyage actif (cmdk / GlassSheet) */}
+        <ActiveTripSwitcher />
 
         {/* Sélecteur de vue vertical pilule desktop */}
         {isAuthenticated && (
@@ -229,6 +253,10 @@ export default function VoyagesClient({
                 <Plus size={14} />
                 <span>Nouveau</span>
               </GlassCapsuleBtn>
+            </div>
+
+            <div className="mb-3">
+              <ActiveTripSwitcher />
             </div>
 
             <TripFiltersBar

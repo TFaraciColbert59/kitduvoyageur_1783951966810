@@ -8,7 +8,7 @@ import { useHapticFeedback } from '@/hooks/useHapticFeedback';
 import { useUnreadBadge } from '@/hooks/useUnreadBadge';
 import { useCartCount } from '@/hooks/useCartCount';
 import LkvIcon from '@/components/ui/LkvIcon';
-import { tripSectionHref, sectionIdFromPathname } from '@/features/trips/registry/tripSectionRegistry';
+import { tripSectionHref, sectionIdFromPathname, tripSectionRegistry } from '@/features/trips/registry/tripSectionRegistry';
 import type { TripSectionId } from '@/features/trips/engine/tripProfileEngine';
 
 interface Tab {
@@ -770,15 +770,10 @@ function BottomTabBar() {
       ];
     }
     if (isVoyageDetail) {
-      return [
-        { id: 'overview', label: 'Aperçu' },
-        { id: 'itinerary', label: 'Itinéraire' },
-        { id: 'gear', label: 'Équipement' },
-        { id: 'team', label: 'Équipage' },
-        { id: 'budget', label: 'Budget' },
-        { id: 'docs', label: 'Documents' },
-        { id: 'checklist', label: 'Checklist' },
-      ];
+      return tripSectionRegistry.map((s) => ({
+        id: s.id,
+        label: s.label,
+      }));
     }
     return [
       { id: 'fil', label: 'Fil' },
