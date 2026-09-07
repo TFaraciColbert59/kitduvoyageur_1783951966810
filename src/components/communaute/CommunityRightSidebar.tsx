@@ -4,6 +4,7 @@ import React, { useState } from 'react';
 import Link from 'next/link';
 import Icon from '@/components/ui/AppIcon';
 import GlassIconButton from '@/components/ui/GlassIconButton';
+import { LiveActivityFeed } from '@/components/activity/LiveActivityFeed';
 
 export default function CommunityRightSidebar() {
   const [joinedOutings, setJoinedOutings] = useState<Record<string, boolean>>({});
@@ -89,6 +90,9 @@ export default function CommunityRightSidebar() {
           ))}
         </div>
       </div>
+
+      {/* WIDGET LIVE ACTIVITY FEED (Phase 7) */}
+      <LiveActivityFeed limit={4} title="Événements en direct" />
 
       {/* WIDGET 2: SORTIES CE WEEK-END */}
       <div className="glass p-3.5 space-y-2.5 rounded-2xl border border-white/70 shadow-xs">

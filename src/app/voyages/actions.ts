@@ -3,6 +3,7 @@
 import { revalidatePath } from 'next/cache';
 import { createClient } from '@/lib/supabase/server';
 import { createTrip, getTripById } from '@/lib/queries-trips';
+import { emitEvent } from '@/lib/events/eventBus';
 import {
   saveDraftTripSchema,
   wizardPersistInputSchema,
@@ -44,6 +45,21 @@ export async function createTripAction(input: CreateTripInput): Promise<{ slug: 
   }
 
   const trip = await createTrip(input, user.id);
+
+  // Émission d'événement sur le bus unifié lkv_events
+  await emitEvent({
+    event_type: 'trip.created',
+    actor_id: user.id,
+    entity_type: 'trip',
+    entity_id: trip.id,
+    visibility: trip.visibility === 'public' ? 'public' : trip.group_id ? 'crew' : 'private',
+    crew_id: trip.group_id || null,
+    metadata: {
+      title: trip.title,
+      destination: trip.destination_name || trip.destination_country_code || '',
+    },
+  });
+
   revalidatePath('/voyages');
   return { slug: trip.slug };
 }
@@ -336,6 +352,23 @@ export async function generateAndPersistItinerary(
       console.error('[LKDV trips] Erreur insertion trip_items:', itemsInsertErr);
       // Non bloquant mais tracé
     }
+  }
+
+  // Émission d'événement sur le bus unifié lkv_events
+  if (tripId) {
+    await emitEvent({
+      event_type: validated.tripId ? 'trip.updated' : 'trip.created',
+      actor_id: user.id,
+      entity_type: 'trip',
+      entity_id: tripId,
+      visibility: validated.groupId ? 'crew' : 'private',
+      crew_id: validated.groupId || null,
+      metadata: {
+        title: validated.title,
+        destination: validated.destinationName || primaryCountry || '',
+        daysCount: output.steps?.length || output.total_days || 0,
+      },
+    });
   }
 
   revalidatePath('/voyages');
@@ -949,6 +982,48 @@ export async function duplicateDayAction(
 
   revalidatePath(`/voyages/${trip.slug}`);
   revalidatePath(`/voyages/${trip.slug}/itineraire`);
+
+  return { success: true };
+}
+
+/**
+ * Enregistre le changement de phase d'un voyage sur le bus d'événements
+ */
+export async function recordTripPhaseChangeAction(
+  tripId: string,
+  newPhase: string
+): Promise<{ success: boolean; error?: string }> {
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  if (!user) {
+    return { success: false, error: 'Connexion requise' };
+  }
+
+  const { data: trip, error } = await supabase
+    .from('trips')
+    .select('id, title, group_id, visibility')
+    .eq('id', tripId)
+    .single();
+
+  if (error || !trip) {
+    return { success: false, error: 'Voyage introuvable' };
+  }
+
+  await emitEvent({
+    event_type: 'trip.phase_changed',
+    actor_id: user.id,
+    entity_type: 'trip',
+    entity_id: tripId,
+    visibility: trip.visibility === 'public' ? 'public' : trip.group_id ? 'crew' : 'private',
+    crew_id: trip.group_id || null,
+    metadata: {
+      phase: newPhase,
+      title: trip.title,
+    },
+  });
 
   return { success: true };
 }
