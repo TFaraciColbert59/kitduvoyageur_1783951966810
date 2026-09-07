@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState } from 'react';
-import Image from 'next/image';
+import AppImage from '@/components/ui/AppImage';
 import { LkvButton } from '@/components/ui/LkvButton';
 import { MapPin, Calendar, CreditCard, Users, Share2, Check, Edit3 } from 'lucide-react';
 import { TripBadge } from './TripBadge';
@@ -40,14 +40,15 @@ export function TripHero({ trip, onEditClick }: TripHeroProps) {
 
   return (
     <section className="relative w-full min-h-[340px] sm:min-h-[420px] rounded-[32px] overflow-hidden shadow-xl mb-6">
-      {/* Background Image */}
-      <Image
+      {/* Background Image (D32 : fallback onError vers no_image si URL cassée) */}
+      <AppImage
         src={imageUrl}
         alt={trip.title}
         fill
         sizes="100vw"
         priority
         className="object-cover scale-105"
+        fallbackSrc="/assets/images/no_image.png"
       />
       {/* Subtle darkening overlays */}
       <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-black/40 to-black/20" />
