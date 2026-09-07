@@ -2,11 +2,11 @@
 
 import React from 'react';
 import Link from 'next/link';
-import { ArrowLeft, Printer, Download, MapPin, Calendar, Users, Shield, FileText } from 'lucide-react';
+import { ArrowLeft, Printer, Download, MapPin, Calendar, Users, Shield } from 'lucide-react';
 import type { TripFull, TripStats } from '@/features/trips/types/trip.types';
 import type { BudgetSummary } from '@/features/trips/engine/budgetEngine';
 import { formatCivilDateRange } from '@/lib/dates/tripDates';
-import { GlassSubCard, GlassCapsuleBtn } from '@/components/ui';
+import { GlassCapsuleBtn } from '@/components/ui';
 import { tripSectionHref } from '@/features/trips/registry/tripSectionRegistry';
 import { printActiveView } from '@/lib/native/print';
 
@@ -39,7 +39,7 @@ export default function ExportClientView({ trip, stats, budgetSummary }: ExportC
             <div className="text-xs uppercase tracking-widest text-lkv-secondary font-semibold mb-1">
               Le Kit du Voyageur &middot; Feuille de Route d'Expedition
             </div>
-            <h1 className="text-2xl sm:text-3xl font-bold text-lkv-primary">{trip.title}</h1>
+            <h2 className="text-2xl sm:text-3xl font-bold text-lkv-primary">{trip.title}</h2>
             {trip.description && (
               <p className="text-sm text-[var(--lkv-text-secondary)] mt-2 max-w-2xl">{trip.description}</p>
             )}
@@ -178,49 +178,51 @@ export default function ExportClientView({ trip, stats, budgetSummary }: ExportC
       </section>
 
       {/* Section 3 : Budget & Equilibre des Comptes */}
-      <section className="space-y-3 page-break-inside-avoid">
-        <h2 className="text-lg font-bold text-lkv-primary border-b pb-2 flex items-center justify-between">
-          <span>3. Synthese Budgetaire & Reglements</span>
-          <span className="text-xs font-semibold text-lkv-primary">
-            Total : {budgetSummary.totalSpent} {budgetSummary.currency}
-          </span>
-        </h2>
+      {trip.permissions.canManageBudget && (
+        <section className="space-y-3 page-break-inside-avoid">
+          <h2 className="text-lg font-bold text-lkv-primary border-b pb-2 flex items-center justify-between">
+            <span>3. Synthese Budgetaire & Reglements</span>
+            <span className="text-xs font-semibold text-lkv-primary">
+              Total : {budgetSummary.totalSpent} {budgetSummary.currency}
+            </span>
+          </h2>
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-xs">
-          <div className="border border-white/60 rounded-xl p-3">
-            <div className="font-semibold text-[var(--lkv-text-secondary)] mb-2">Balances par membre</div>
-            <div className="space-y-1.5">
-              {budgetSummary.balances.map(b => (
-                <div key={b.userId} className="flex justify-between items-center text-[11px]">
-                  <span className="text-[var(--lkv-text-secondary)]">{b.name}</span>
-                  <span className={b.net >= 0 ? 'text-[var(--lkv-success)] font-medium' : 'text-[var(--lkv-danger)] font-medium'}>
-                    {b.net >= 0 ? `+${b.net}` : b.net} {budgetSummary.currency}
-                  </span>
-                </div>
-              ))}
-            </div>
-          </div>
-
-          <div className="border border-white/60 rounded-xl p-3">
-            <div className="font-semibold text-[var(--lkv-text-secondary)] mb-2">Reglements de compte</div>
-            {budgetSummary.settlements.length === 0 ? (
-              <p className="text-[var(--lkv-text-muted)] italic text-[11px]">Tous les comptes sont equilibres.</p>
-            ) : (
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-xs">
+            <div className="border border-white/60 rounded-xl p-3">
+              <div className="font-semibold text-[var(--lkv-text-secondary)] mb-2">Balances par membre</div>
               <div className="space-y-1.5">
-                {budgetSummary.settlements.map((s, idx) => (
-                  <div key={idx} className="text-[11px] text-[var(--lkv-text-primary)]">
-                    <span className="font-medium">{s.fromName}</span> doit verser{' '}
-                    <span className="font-bold text-lkv-primary">
-                      {s.amount} {budgetSummary.currency}
-                    </span>{' '}
-                    a <span className="font-medium">{s.toName}</span>
+                {budgetSummary.balances.map(b => (
+                  <div key={b.userId} className="flex justify-between items-center text-[11px]">
+                    <span className="text-[var(--lkv-text-secondary)]">{b.name}</span>
+                    <span className={b.net >= 0 ? 'text-[var(--lkv-success)] font-medium' : 'text-[var(--lkv-danger)] font-medium'}>
+                      {b.net >= 0 ? `+${b.net}` : b.net} {budgetSummary.currency}
+                    </span>
                   </div>
                 ))}
               </div>
-            )}
+            </div>
+
+            <div className="border border-white/60 rounded-xl p-3">
+              <div className="font-semibold text-[var(--lkv-text-secondary)] mb-2">Reglements de compte</div>
+              {budgetSummary.settlements.length === 0 ? (
+                <p className="text-[var(--lkv-text-muted)] italic text-[11px]">Tous les comptes sont equilibres.</p>
+              ) : (
+                <div className="space-y-1.5">
+                  {budgetSummary.settlements.map((s, idx) => (
+                    <div key={idx} className="text-[11px] text-[var(--lkv-text-primary)]">
+                      <span className="font-medium">{s.fromName}</span> doit verser{' '}
+                      <span className="font-bold text-lkv-primary">
+                        {s.amount} {budgetSummary.currency}
+                      </span>{' '}
+                      a <span className="font-medium">{s.toName}</span>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
           </div>
-        </div>
-      </section>
+        </section>
+      )}
 
       {/* Section 4 : Securite & Contacts d'urgence */}
       <footer className="pt-6 border-t border-white/60 text-xs text-[var(--lkv-text-muted)] flex flex-wrap justify-between gap-4 page-break-inside-avoid">
@@ -233,64 +235,6 @@ export default function ExportClientView({ trip, stats, budgetSummary }: ExportC
           <div>https://lekitduvoyageur.fr</div>
         </div>
       </footer>
-    </div>
-  );
-
-  const renderSidebarLeft = () => (
-    <div className="h-full max-h-full w-full flex flex-col gap-3 glass rounded-[var(--lkv-radius-card)] p-3.5 text-[var(--lkv-text-primary)] font-sans overflow-y-auto no-scrollbar border border-white/40 shadow-sm select-none print:hidden">
-      <div className="shrink-0 space-y-2.5">
-        <nav aria-label="Retour" className="text-xs">
-          <Link
-            href={tripSectionHref(trip.slug, 'overview')}
-            className="inline-flex items-center gap-1.5 font-medium hover:underline text-[var(--lkv-text-primary)]"
-          >
-            <ArrowLeft size={13} />
-            <span>Retour au cockpit</span>
-          </Link>
-        </nav>
-        <GlassSubCard className="p-3">
-          <div className="flex items-center gap-2">
-            <FileText size={16} className="text-[var(--lkv-text-secondary)] shrink-0" />
-            <div className="min-w-0">
-              <p className="text-[9.5px] font-mono uppercase tracking-widest text-[var(--lkv-text-secondary)]">
-                Export &amp; PDF
-              </p>
-              <h4 className="font-display font-bold text-xs text-[var(--lkv-text-primary)] truncate mt-0.5">
-                {trip.title}
-              </h4>
-            </div>
-          </div>
-        </GlassSubCard>
-      </div>
-
-      <div className="space-y-1.5">
-        <p className="text-[9.5px] font-mono font-bold uppercase tracking-widest text-[var(--lkv-text-secondary)] px-2 mb-1">
-          Actions
-        </p>
-        <a
-          href={`/api/voyages/${trip.slug}/gpx`}
-          download={`${trip.slug}.gpx`}
-          className="glass-capsule-btn w-full justify-start flex items-center gap-1.5"
-        >
-          <Download size={13} />
-          <span>Telecharger GPX</span>
-        </a>
-        <GlassCapsuleBtn
-          variant="primary"
-          size="sm"
-          onClick={handlePrint}
-          icon={<Printer size={13} />}
-          className="w-full justify-start"
-        >
-          Imprimer / PDF
-        </GlassCapsuleBtn>
-      </div>
-
-      <div className="mt-auto pt-2 border-t border-[var(--lkv-border-subtle)]">
-        <span className="text-[8.5px] font-mono text-[var(--lkv-text-secondary)] tracking-wider uppercase">
-          LKDV Feuille de Route
-        </span>
-      </div>
     </div>
   );
 

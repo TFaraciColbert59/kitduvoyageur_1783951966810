@@ -15,6 +15,7 @@ import {
 } from 'lucide-react';
 import { GlassCard } from '@/components/ui/GlassCard';
 import { GlassCapsuleBtn } from '@/components/ui/GlassCapsuleBtn';
+import { EmptyState } from '@/components/ui/EmptyState';
 import { TripCompletionModal } from './TripCompletionModal';
 import { ConfirmDialog } from './ConfirmDialog';
 import { addTripNoteAction, deleteTripNoteAction } from '@/app/voyages/completion-actions';
@@ -164,27 +165,17 @@ export function TripNotesView({ trip }: TripNotesViewProps) {
 
       {/* Liste des notes */}
       {filteredNotes.length === 0 ? (
-        <GlassCard tone="neutral" className="p-8 rounded-[var(--lkv-radius-xl)] text-center border border-white/60">
-          <BookOpen size={36} className="mx-auto text-lkv-secondary/40 mb-2" />
-          <h4 className="text-sm font-semibold text-lkv-primary">Aucune note enregistrée</h4>
-          <p className="text-xs text-lkv-secondary mt-1 max-w-sm mx-auto">
-            {canEdit
+        <EmptyState
+          icon={<BookOpen size={36} className="text-lkv-secondary/40" />}
+          title="Aucune note enregistrée"
+          description={
+            canEdit
               ? 'Racontez votre première étape ou vos impressions de terrain pour enrichir votre carnet.'
-              : 'Aucun récit n\'a encore été partagé pour ce voyage.'}
-          </p>
-          {canEdit && (
-            <div className="mt-4 flex justify-center">
-              <GlassCapsuleBtn
-                variant="default"
-                size="sm"
-                onClick={() => setIsAddOpen(true)}
-                icon={<Plus size={16} />}
-              >
-                Écrire dans le carnet
-              </GlassCapsuleBtn>
-            </div>
-          )}
-        </GlassCard>
+              : "Aucun récit n'a encore été partagé pour ce voyage."
+          }
+          actionLabel={canEdit ? 'Écrire dans le carnet' : undefined}
+          onAction={canEdit ? () => setIsAddOpen(true) : undefined}
+        />
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           {filteredNotes.map(note => (

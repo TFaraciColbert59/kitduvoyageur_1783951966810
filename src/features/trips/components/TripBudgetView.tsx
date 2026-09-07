@@ -4,6 +4,7 @@ import React, { useState, useTransition } from 'react';
 import { CreditCard, Plus, Trash2, TrendingUp, AlertTriangle, CheckCircle, ArrowRight, X } from 'lucide-react';
 import { GlassCard } from '@/components/ui/GlassCard';
 import { GlassCapsuleBtn } from '@/components/ui/GlassCapsuleBtn';
+import { EmptyState } from '@/components/ui/EmptyState';
 import { calculateBudgetSummary } from '../engine/budgetEngine';
 import { addExpenseAction, deleteExpenseAction } from '@/app/voyages/budget-actions';
 import { ConfirmDialog } from './ConfirmDialog';
@@ -92,7 +93,7 @@ export function TripBudgetView({ trip }: TripBudgetViewProps) {
       </div>
 
       {/* Cartes de synthèse budgétaire */}
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+      <div className={`grid grid-cols-1 sm:grid-cols-2 ${trip.collaborators.length > 0 ? 'lg:grid-cols-4' : 'sm:grid-cols-3'} gap-4`}>
         {/* Total dépensé */}
         <GlassCard tone="neutral" className="p-4 rounded-[var(--lkv-radius-lg)] border border-white/60 shadow-sm">
           <div className="text-xs text-lkv-secondary font-semibold">Total des dépenses réelles</div>
@@ -141,6 +142,19 @@ export function TripBudgetView({ trip }: TripBudgetViewProps) {
             </div>
           )}
         </GlassCard>
+
+        {/* Répartition par tête si groupe / duo */}
+        {trip.collaborators.length > 0 && (
+          <GlassCard tone="neutral" className="p-4 rounded-[var(--lkv-radius-lg)] border border-white/60 shadow-sm">
+            <div className="text-xs text-lkv-secondary font-semibold">Part moyenne / voyageur</div>
+            <div className="text-2xl font-extrabold text-lkv-primary mt-1">
+              {Math.round(budgetSummary.totalSpent / (trip.collaborators.length + 1))} {budgetSummary.currency}
+            </div>
+            <div className="text-[11px] text-[var(--lkv-text-muted)] mt-1">
+              Sur {trip.collaborators.length + 1} participants
+            </div>
+          </GlassCard>
+        )}
       </div>
 
       {/* Règlements de compte simplifiés & Balances */}
@@ -247,9 +261,13 @@ export function TripBudgetView({ trip }: TripBudgetViewProps) {
       <div className="space-y-3">
         <h4 className="text-base font-bold text-lkv-primary">Historique des dépenses</h4>
         {trip.expenses.length === 0 ? (
-          <GlassCard tone="neutral" className="p-6 rounded-[var(--lkv-radius-lg)] text-center text-xs text-[var(--lkv-text-muted)]">
-            Aucune dépense enregistrée sur cette expédition.
-          </GlassCard>
+          <EmptyState
+            icon={<CreditCard size={32} className="text-lkv-secondary" />}
+            title="Aucune dépense enregistrée"
+            description="Enregistrez les frais d'hébergement, transport, nourriture ou matériel pour suivre les comptes."
+            actionLabel={canManage ? "Ajouter une dépense" : undefined}
+            onAction={canManage ? () => setIsAddOpen(true) : undefined}
+          />
         ) : (
           <div className="space-y-2">
             {trip.expenses.map(exp => (

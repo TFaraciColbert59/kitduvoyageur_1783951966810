@@ -373,9 +373,9 @@ export default function ItineraryPlannerClient({
                   </span>
                 )}
               </div>
-              <h1 className="text-base sm:text-lg font-bold text-[var(--lkv-text-primary)] truncate font-display">
+              <h2 className="text-base sm:text-lg font-bold text-[var(--lkv-text-primary)] truncate font-display">
                 {trip.title}
-              </h1>
+              </h2>
             </div>
           </div>
 

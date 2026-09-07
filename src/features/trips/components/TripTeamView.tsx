@@ -4,6 +4,7 @@ import React, { useState, useTransition } from 'react';
 import { Users, UserPlus, Trash2, ShieldCheck, Mail, AlertCircle, CheckCircle2, X } from 'lucide-react';
 import { GlassCard } from '@/components/ui/GlassCard';
 import { GlassCapsuleBtn } from '@/components/ui/GlassCapsuleBtn';
+import { EmptyState } from '@/components/ui/EmptyState';
 import { TripBadge } from './TripBadge';
 import { ConfirmDialog } from './ConfirmDialog';
 import { inviteCollaboratorAction, updateRoleAction, removeCollaboratorAction } from '@/app/voyages/collab-actions';
@@ -127,69 +128,79 @@ export function TripTeamView({ trip }: TripTeamViewProps) {
       </GlassCard>
 
       {/* Liste des membres */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-        {trip.collaborators.map(collab => {
-          const isCollabOwner = collab.role === 'owner';
-          const name = collab.profile?.full_name || 'Voyageur LKDV';
-          const initials = name
-            .split(' ')
-            .map(n => n[0])
-            .slice(0, 2)
-            .join('')
-            .toUpperCase() || 'V';
+      {trip.collaborators.length === 0 ? (
+        <EmptyState
+          icon={<Users size={32} className="text-lkv-secondary" />}
+          title="Aucun compagnon de route"
+          description="Vous préparez actuellement cette expédition en solo. Invitez des coéquipiers pour partager l'itinéraire, le matériel et les dépenses."
+          actionLabel={isOwner ? "Inviter un voyageur" : undefined}
+          onAction={isOwner ? () => setIsInviteOpen(true) : undefined}
+        />
+      ) : (
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          {trip.collaborators.map(collab => {
+            const isCollabOwner = collab.role === 'owner';
+            const name = collab.profile?.full_name || 'Voyageur LKDV';
+            const initials = name
+              .split(' ')
+              .map(n => n[0])
+              .slice(0, 2)
+              .join('')
+              .toUpperCase() || 'V';
 
-          return (
-            <GlassCard
-              key={collab.id}
-              tone="neutral"
-              className="p-4 rounded-[var(--lkv-radius-lg)] border border-white/60 flex flex-col justify-between gap-4 shadow-sm"
-            >
-              <div className="flex items-start justify-between gap-3">
-                <div className="flex items-center gap-3">
-                  <div className="w-11 h-11 rounded-full bg-lkv-primary text-white flex items-center justify-center font-bold text-sm shadow-inner shrink-0">
-                    {initials}
-                  </div>
-                  <div>
-                    <div className="text-sm font-bold text-lkv-primary">{name}</div>
-                    <div className="text-xs text-lkv-secondary">
-                      Rejoint le {new Date(collab.joined_at).toLocaleDateString('fr-FR')}
+            return (
+              <GlassCard
+                key={collab.id}
+                tone="neutral"
+                className="p-4 rounded-[var(--lkv-radius-lg)] border border-white/60 flex flex-col justify-between gap-4 shadow-sm"
+              >
+                <div className="flex items-start justify-between gap-3">
+                  <div className="flex items-center gap-3">
+                    <div className="w-11 h-11 rounded-full bg-lkv-primary text-white flex items-center justify-center font-bold text-sm shadow-inner shrink-0">
+                      {initials}
+                    </div>
+                    <div>
+                      <div className="text-sm font-bold text-lkv-primary">{name}</div>
+                      <div className="text-xs text-lkv-secondary">
+                        Rejoint le {new Date(collab.joined_at).toLocaleDateString('fr-FR')}
+                      </div>
                     </div>
                   </div>
+
+                  <TripBadge type="role" value={collab.role} size="sm" />
                 </div>
 
-                <TripBadge type="role" value={collab.role} size="sm" />
-              </div>
+                {/* Contrôles de rôle & retrait pour l'Owner */}
+                {isOwner && !isCollabOwner && (
+                  <div className="flex items-center justify-between pt-3 border-t border-black/5 gap-2">
+                    <div className="flex items-center gap-1.5 text-xs text-lkv-secondary">
+                      <span>Rôle :</span>
+                      <select
+                        value={collab.role}
+                        disabled={isPending}
+                        onChange={e => handleRoleChange(collab.id, e.target.value as any)}
+                        className="glass-input text-xs font-semibold px-2 py-1 text-[var(--lkv-text-primary)]"
+                      >
+                        <option value="editor">Éditeur</option>
+                        <option value="viewer">Lecteur</option>
+                      </select>
+                    </div>
 
-              {/* Contrôles de rôle & retrait pour l'Owner */}
-              {isOwner && !isCollabOwner && (
-                <div className="flex items-center justify-between pt-3 border-t border-black/5 gap-2">
-                  <div className="flex items-center gap-1.5 text-xs text-lkv-secondary">
-                    <span>Rôle :</span>
-                    <select
-                      value={collab.role}
+                    <button
+                      onClick={() => requestRemove(collab.id, name)}
                       disabled={isPending}
-                      onChange={e => handleRoleChange(collab.id, e.target.value as any)}
-                      className="glass-input text-xs font-semibold px-2 py-1 text-[var(--lkv-text-primary)]"
+                      title="Retirer de l'expédition"
+                      className="min-h-[44px] min-w-[44px] flex items-center justify-center rounded-full glass-sub-card border border-white/60 text-[var(--lkv-danger)] hover:bg-[var(--lkv-danger)]/10 hover:text-[var(--lkv-danger)] transition-all shadow-2xs"
                     >
-                      <option value="editor">Éditeur</option>
-                      <option value="viewer">Lecteur</option>
-                    </select>
+                      <Trash2 size={16} />
+                    </button>
                   </div>
-
-                  <button
-                    onClick={() => requestRemove(collab.id, name)}
-                    disabled={isPending}
-                    title="Retirer de l'expédition"
-                    className="min-h-[44px] min-w-[44px] flex items-center justify-center rounded-full glass-sub-card border border-white/60 text-[var(--lkv-danger)] hover:bg-[var(--lkv-danger)]/10 hover:text-[var(--lkv-danger)] transition-all shadow-2xs"
-                  >
-                    <Trash2 size={16} />
-                  </button>
-                </div>
-              )}
-            </GlassCard>
-          );
-        })}
-      </div>
+                )}
+              </GlassCard>
+            );
+          })}
+        </div>
+      )}
 
       {/* Modal d'invitation */}
       {isInviteOpen && (

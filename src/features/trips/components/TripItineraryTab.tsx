@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import type { TripFull, TripStats } from '../types/trip.types';
 import { GlassCard } from '@/components/ui/GlassCard';
 import { GlassCapsuleBtn } from '@/components/ui/GlassCapsuleBtn';
+import { EmptyState } from '@/components/ui/EmptyState';
 import { checkSeasonalityForDates } from '../engine/seasonality';
 import { getCanonicalTripSteps } from '../hooks/useTripCounters';
 import { getTripDistance } from '../hooks/useTripDistance';
@@ -173,15 +174,6 @@ export function TripItineraryTab({ trip }: TripItineraryTabProps) {
             >
               Ouvrir le Planificateur
             </GlassCapsuleBtn>
-            <GlassCapsuleBtn
-              type="button"
-              onClick={() => setConfirmOpen(true)}
-              disabled={isRegenerating}
-              size="sm"
-              icon={<RotateCcw size={14} className={isRegenerating ? 'animate-spin' : ''} />}
-            >
-              {isRegenerating ? 'Calcul...' : 'Régénérer'}
-            </GlassCapsuleBtn>
           </div>
         )}
       </div>
@@ -293,25 +285,13 @@ export function TripItineraryTab({ trip }: TripItineraryTabProps) {
           ))}
         </div>
       ) : (
-        <div className="p-8 glass border border-white/60 rounded-3xl text-center space-y-3 shadow-sm">
-          <Navigation size={36} className="text-[var(--lkv-text-muted)] mx-auto" />
-          <h4 className="text-sm font-bold text-lkv-primary">Aucune étape définie</h4>
-          <p className="text-xs text-[var(--lkv-text-muted)] max-w-sm mx-auto">
-            Ce voyage n&apos;a pas encore d&apos;itinéraire journalier. Vous pouvez le générer automatiquement avec notre moteur de répartition.
-          </p>
-          {trip.permissions.canEdit && (
-            <GlassCapsuleBtn
-              type="button"
-              onClick={handleRegenerate}
-              disabled={isRegenerating}
-              size="sm"
-              variant="primary"
-              icon={<Sparkles size={14} />}
-            >
-              Générer l’itinéraire maintenant
-            </GlassCapsuleBtn>
-          )}
-        </div>
+        <EmptyState
+          icon={<Navigation size={36} className="text-[var(--lkv-text-muted)]" />}
+          title="Aucune étape définie"
+          description="Ce voyage n'a pas encore d'itinéraire journalier. Vous pouvez le générer automatiquement avec notre moteur de répartition."
+          actionLabel={trip.permissions.canEdit ? (isRegenerating ? 'Calcul...' : 'Générer l’itinéraire maintenant') : undefined}
+          onAction={trip.permissions.canEdit ? handleRegenerate : undefined}
+        />
       )}
     </div>
   );

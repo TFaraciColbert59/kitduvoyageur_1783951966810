@@ -1,3 +1,4 @@
+import { notFound } from 'next/navigation';
 import { loadTripSection } from '@/lib/tripSection';
 import { TripBudgetView } from '@/features/trips/components/TripBudgetView';
 
@@ -11,5 +12,8 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
 export default async function BudgetPage({ params }: { params: Promise<{ slug: string }> }) {
   const { slug } = await params;
   const trip = await loadTripSection(slug);
+  if (!trip.permissions.canManageBudget) {
+    notFound();
+  }
   return <TripBudgetView trip={trip} />;
 }

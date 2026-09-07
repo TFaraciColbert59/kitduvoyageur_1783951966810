@@ -72,7 +72,7 @@ export function TripOverviewClient({
         totalDays={phaseDetails.totalDays}
         daysUntilStart={phaseDetails.daysUntilStart}
       />
-      <main>
+      <div>
         {activePhase === 'prepare' && (
           <div className="space-y-6">
             <TripOverviewTab
@@ -100,7 +100,7 @@ export function TripOverviewClient({
           />
         )}
         {activePhase === 'recount' && <TripPhaseRecountView trip={trip} />}
-      </main>
+      </div>
     </div>
   );
 }

@@ -399,3 +399,12 @@ ORDER BY country_code;
   complète, ConfirmDialog, tripPaths, print dédié) · Y3.6 code mort supprimé
   (ItinerarySidebarRight + KitSidebarRight, 5512 o) · Y3.7 fin.
   Portes : G1 OK · G2 **1020/1020** · G3 **12/12**.
+- **Y4** ✅ (tag y4-done) : audit et harmonisation complète des 11 sections du Hub Voyage Unique :
+  Y4.1 overview (dé-imbrication <main>) · Y4.2 itinerary (TripItineraryTab EmptyState + retrait CTA régénérer toolbar, ItineraryPlannerClient h2) ·
+  Y4.3 gear (TripKitView EmptyState sur catégorie vide) · Y4.4 team (TripTeamView EmptyState équipage vide) ·
+  Y4.5 budget (page.tsx check canManageBudget server-side, EmptyState dépenses, métrique part par voyageur si groupe) ·
+  Y4.6 docs (page.tsx check canViewDocuments server-side, EmptyState docs) · Y4.7 checklist (validé) ·
+  Y4.8 safety (validé) · Y4.9 journal (TripNotesView EmptyState avec CTA rédaction) ·
+  Y4.10 export (ExportClientView h2, suppression code mort renderSidebarLeft, masquage section budget si !canManageBudget) ·
+  Y4.11 convergence (tests/a11y/e2e étendu aux 11 sections avec session démo SSR, tests/visual/voyages-y-profiles-visual.spec.ts créé, contact-sheet régénérée 38 captures).
+  Portes : G1 OK (`npm run type-check`) · G2 OK (1020/1020, 137 suites) · G3 OK (12/12 règles Y-D80).

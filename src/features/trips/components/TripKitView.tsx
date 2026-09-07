@@ -4,6 +4,7 @@ import React, { useState, useTransition } from 'react';
 import Link from 'next/link';
 import { GlassCard } from '@/components/ui/GlassCard';
 import { GlassCapsuleBtn } from '@/components/ui/GlassCapsuleBtn';
+import { EmptyState } from '@/components/ui/EmptyState';
 import {
   Package,
   CheckCircle2,
@@ -413,16 +414,13 @@ export function TripKitView({ trip, analysis, showBackLink: _showBackLink = fals
 
         {/* Liste des équipements */}
         {filteredItems.length === 0 ? (
-          <div className="text-center py-12 text-[var(--lkv-text-muted)] text-xs">
-            <Package className="w-8 h-8 text-[var(--lkv-text-muted)] mx-auto mb-2" />
-            <p>Aucun équipement dans cette catégorie.</p>
-            <button
-              onClick={() => setIsAddModalOpen(true)}
-              className="mt-3 text-xs font-bold text-lkv-primary hover:underline"
-            >
-              + Ajouter un premier équipement
-            </button>
-          </div>
+          <EmptyState
+            icon={<Package className="w-8 h-8 text-[var(--lkv-text-muted)]" />}
+            title="Aucun équipement dans cette catégorie"
+            description="Ajoutez du matériel à votre sac d'expédition pour cette aventure."
+            actionLabel="+ Ajouter un équipement"
+            onAction={() => setIsAddModalOpen(true)}
+          />
         ) : (
           <div className="divide-y divide-white/40">
             {filteredItems.map((item) => {

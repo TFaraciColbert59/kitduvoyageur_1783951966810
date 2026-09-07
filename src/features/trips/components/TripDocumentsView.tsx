@@ -15,6 +15,7 @@ import {
 } from 'lucide-react';
 import { GlassCard } from '@/components/ui/GlassCard';
 import { GlassCapsuleBtn } from '@/components/ui/GlassCapsuleBtn';
+import { EmptyState } from '@/components/ui/EmptyState';
 import { checkDocumentExpiry } from '../engine/exportEngine';
 import { ConfirmDialog } from './ConfirmDialog';
 import { addTripDocumentAction, deleteTripDocumentAction } from '@/app/voyages/document-actions';
@@ -117,13 +118,13 @@ export function TripDocumentsView({ trip }: TripDocumentsViewProps) {
 
       {/* Liste des documents */}
       {trip.documents.length === 0 ? (
-        <GlassCard tone="neutral" className="p-8 rounded-[var(--lkv-radius-xl)] text-center space-y-2 border border-white/60">
-          <FileCheck size={32} className="text-lkv-secondary mx-auto" />
-          <div className="text-sm font-semibold text-lkv-primary">Aucun document attaché</div>
-          <p className="text-xs text-[var(--lkv-text-muted)] max-w-sm mx-auto">
-            Attachez vos billets d&apos;avion, réservations de refuges, assurances et passeports pour les garder accessibles partout.
-          </p>
-        </GlassCard>
+        <EmptyState
+          icon={<FileCheck size={32} className="text-lkv-secondary" />}
+          title="Aucun document attaché"
+          description="Attachez vos billets d'avion, réservations de refuges, assurances et passeports pour les garder accessibles partout."
+          actionLabel={canEdit ? "Attacher un document" : undefined}
+          onAction={canEdit ? () => setIsAddOpen(true) : undefined}
+        />
       ) : (
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           {trip.documents.map(doc => {
