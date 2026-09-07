@@ -1,4 +1,4 @@
-﻿'use client';
+'use client';
 
 import React from 'react';
 import Link from 'next/link';
@@ -134,7 +134,7 @@ export default function TripSidebarLeft({
               className={`w-full px-3 py-2.5 rounded-[var(--lkv-radius-md)] font-bold text-xs transition-all flex items-center justify-between group cursor-pointer border ${
                 isActive
                   ? 'bg-[var(--lkv-primary)] text-white border-[var(--lkv-primary)] shadow-sm'
-                  : 'bg-white/80 hover:bg-white text-[var(--lkv-text-primary)] border-white/80 shadow-[0_1px_2px_rgba(0,0,0,0.04)]'
+                  : 'bg-white/80 hover:bg-white text-[var(--lkv-text-primary)] border-white/80 shadow-2xs'
               }`}
             >
               <span className="truncate text-left flex items-center gap-2">

@@ -48,11 +48,13 @@ const ALLOWED_HEX = new Set(['#ffffff', '#fff', '#000000', '#000']);
 const ROUNDED_REGEX = /\brounded-\[\d+px\]/g;
 const SHADOW_REGEX = /\bshadow-\[[^\]]+\]/g;
 const DIALOG_REGEX = /\b(?:window\.)?(?:alert|confirm|prompt)\s*\(/g;
+const SUB_44_TOUCH_REGEX = /\bmin-h-\[(?:[0-3]?\d|4[0-3])px\]/g;
+const UNSTYLED_CONTROL_REGEX = /<(?:select|input)(?![^>]*className=)[^>]*>/g;
 
-describe('GARDE-FOU EXÉCUTABLE X-D70 — NEUF SURFACES VOYAGE', () => {
+describe('GARDE-FOU EXÉCUTABLE X-D70 — NEUF SURFACES VOYAGE (7 RÈGLES)', () => {
   for (const [surfaceName, files] of Object.entries(VOYAGE_SURFACES)) {
     describe(`Surface : ${surfaceName}`, () => {
-      it(`[${surfaceName}] 0 classe froide (zinc, gray, slate, amber, emerald, blue, red, orange)`, () => {
+      it(`[${surfaceName}] Règle 1 : 0 classe froide (zinc, gray, slate, amber, emerald, blue, red, orange)`, () => {
         const violations: string[] = [];
         for (const file of files) {
           if (!existsSync(file)) continue;
@@ -65,7 +67,7 @@ describe('GARDE-FOU EXÉCUTABLE X-D70 — NEUF SURFACES VOYAGE', () => {
         expect(violations, `Violations classes froides dans ${surfaceName}`).toEqual([]);
       });
 
-      it(`[${surfaceName}] 0 hexadécimal brut hors tokens (hors blanc/noir pur)`, () => {
+      it(`[${surfaceName}] Règle 2 : 0 hexadécimal brut hors tokens (hors blanc/noir pur)`, () => {
         const violations: string[] = [];
         for (const file of files) {
           if (!existsSync(file)) continue;
@@ -82,7 +84,7 @@ describe('GARDE-FOU EXÉCUTABLE X-D70 — NEUF SURFACES VOYAGE', () => {
         expect(violations, `Violations hexadécimales dans ${surfaceName}`).toEqual([]);
       });
 
-      it(`[${surfaceName}] 0 rayon arbitraire rounded-[Npx]`, () => {
+      it(`[${surfaceName}] Règle 3 : 0 rayon arbitraire rounded-[Npx]`, () => {
         const violations: string[] = [];
         for (const file of files) {
           if (!existsSync(file)) continue;
@@ -95,7 +97,7 @@ describe('GARDE-FOU EXÉCUTABLE X-D70 — NEUF SURFACES VOYAGE', () => {
         expect(violations, `Violations rounded-[Npx] dans ${surfaceName}`).toEqual([]);
       });
 
-      it(`[${surfaceName}] 0 ombre littérale shadow-[...]`, () => {
+      it(`[${surfaceName}] Règle 4 : 0 ombre littérale shadow-[...]`, () => {
         const violations: string[] = [];
         for (const file of files) {
           if (!existsSync(file)) continue;
@@ -108,7 +110,7 @@ describe('GARDE-FOU EXÉCUTABLE X-D70 — NEUF SURFACES VOYAGE', () => {
         expect(violations, `Violations shadow-[...] dans ${surfaceName}`).toEqual([]);
       });
 
-      it(`[${surfaceName}] 0 dialogue natif (alert, confirm, prompt)`, () => {
+      it(`[${surfaceName}] Règle 5 : 0 dialogue natif (alert, confirm, prompt)`, () => {
         const violations: string[] = [];
         for (const file of files) {
           if (!existsSync(file)) continue;
@@ -119,6 +121,32 @@ describe('GARDE-FOU EXÉCUTABLE X-D70 — NEUF SURFACES VOYAGE', () => {
           }
         }
         expect(violations, `Violations dialogues natifs dans ${surfaceName}`).toEqual([]);
+      });
+
+      it(`[${surfaceName}] Règle 6 : 0 cible tactile arbitraire < 44px (min-h-[<44px])`, () => {
+        const violations: string[] = [];
+        for (const file of files) {
+          if (!existsSync(file)) continue;
+          const content = readFileSync(file, 'utf8');
+          const matches = content.match(SUB_44_TOUCH_REGEX);
+          if (matches) {
+            for (const m of matches) violations.push(`${file}: ${m}`);
+          }
+        }
+        expect(violations, `Violations cibles tactiles sub-44px dans ${surfaceName}`).toEqual([]);
+      });
+
+      it(`[${surfaceName}] Règle 7 : 0 contrôle natif (<select>, <input>) non stylisé`, () => {
+        const violations: string[] = [];
+        for (const file of files) {
+          if (!existsSync(file)) continue;
+          const content = readFileSync(file, 'utf8');
+          const matches = content.match(UNSTYLED_CONTROL_REGEX);
+          if (matches) {
+            for (const m of matches) violations.push(`${file}: ${m}`);
+          }
+        }
+        expect(violations, `Violations contrôles natifs non stylisés dans ${surfaceName}`).toEqual([]);
       });
     });
   }

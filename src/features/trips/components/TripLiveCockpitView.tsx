@@ -579,7 +579,7 @@ export function TripLiveCockpitView({
                 type="button"
                 onClick={handleCopyCoordinates}
                 disabled={!isEmergencyCoordsVerified}
-                className="p-2 rounded-lg bg-white/80 hover:bg-white text-lkv-primary shadow-2xs border border-black/5 min-h-[36px] min-w-[36px] flex items-center justify-center"
+                className="p-2 rounded-lg bg-white/80 hover:bg-white text-lkv-primary shadow-2xs border border-black/5 min-h-[44px] min-w-[44px] flex items-center justify-center cursor-pointer"
                 title="Copier les coordonnées pour les secours"
               >
                 {copiedCoords ? (

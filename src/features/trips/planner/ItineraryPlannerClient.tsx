@@ -355,7 +355,7 @@ export default function ItineraryPlannerClient({
           <div className="flex items-center gap-3 min-w-0">
             <Link
               href={`/voyages/${trip.slug}`}
-              className="w-9 h-9 min-w-[36px] min-h-[36px] rounded-xl flex items-center justify-center hover:bg-forest-900/10 text-text-primary transition-colors active:scale-95"
+              className="w-11 h-11 min-w-[44px] min-h-[44px] rounded-xl flex items-center justify-center hover:bg-forest-900/10 text-text-primary transition-colors active:scale-95 cursor-pointer"
               aria-label="Retour au cockpit du voyage"
             >
               <ArrowLeft className="w-5 h-5" />
@@ -380,7 +380,7 @@ export default function ItineraryPlannerClient({
           <div className="flex items-center gap-2">
             <Link
               href={`/voyages/${trip.slug}`}
-              className="px-3.5 py-1.5 rounded-xl border border-border/60 hover:bg-surface-subtle text-xs font-semibold text-text-secondary transition-colors min-h-[36px] flex items-center gap-1.5"
+              className="px-3.5 py-1.5 rounded-xl border border-border/60 hover:bg-surface-subtle text-xs font-semibold text-text-secondary transition-colors min-h-[44px] flex items-center gap-1.5 cursor-pointer"
             >
               <Map className="w-4 h-4 text-forest-800" />
               <span className="hidden sm:inline">Cockpit</span>
