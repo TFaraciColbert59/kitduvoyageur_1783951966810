@@ -1,0 +1,44 @@
+name: LKDV Unified Quality Gates
+
+on:
+  push:
+    branches: [main, 'chantier/**']
+  pull_request:
+    branches: [main]
+
+jobs:
+  quality-gates:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Gate 1 — TypeScript Check
+        run: npm run type-check
+
+      - name: Gate 2 — ESLint Analysis
+        run: npm run lint
+
+      - name: Gate 3 — Unit & Integration Test Suite
+        run: npm test
+
+      - name: Gate 4 — Next.js Production Build
+        run: npm run build
+
+      - name: Install Playwright Browsers
+        run: npx playwright install --with-deps chromium
+
+      - name: Gate 5 — End-to-End Playwright Suite
+        run: npx playwright test scripts/e2e/voyage.spec.ts
+        env:
+          CI: true
