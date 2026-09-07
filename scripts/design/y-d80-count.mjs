@@ -11,7 +11,10 @@ import path from 'node:path';
 const ROOT = process.cwd();
 const SCOPE = ['src/features/trips', 'src/app/voyages', 'src/app/groupes', 'src/app/ai-configurator'];
 const ALLOW = new Set(['#ffffff', '#fff', '#000000', '#000']);
-const R11_ALLOW = ['src/features/trips/registry/tripSectionRegistry.ts'];
+const R11_ALLOW = [
+  'src/features/trips/registry/tripSectionRegistry.ts',
+  'src/features/trips/registry/tripPaths.ts',
+];
 
 function files(dir, acc = []) {
   const full = path.join(ROOT, dir);
@@ -40,8 +43,9 @@ for (const dir of SCOPE) {
       if (/\bmin-[hw]-\[(?:[0-3]?\d|4[0-3])px\]/.test(l)) push('R6', i, l);
       if (/<(?:select|input)(?![^>]*className=)[^>]*>/.test(l)) push('R7', i, l);
       if (/navigator\.onLine|@capacitor\/network/.test(l) && !/TripNetworkStatus|networkStatus|useOnlineStatus/.test(f)) push('R8', i, l);
-      if (/['"`]\/voyages\/[^'"`]*['"`]/.test(l) && !R11_ALLOW.includes(f)) push('R11', i, l);
-      if (/`\/voyages\/\$\{[^}]+\}\/(?!gpx)[a-z]+/.test(l) && !R11_ALLOW.includes(f)) push('R11', i, l);
+      const fSlash = f.split(path.sep).join('/');
+      if (/['"`]\/voyages\/[^'"`]*['"`]/.test(l) && !R11_ALLOW.includes(fSlash)) push('R11', i, l);
+      if (/`\/voyages\/\$\{[^}]+\}\/(?!gpx)[a-z]+/.test(l) && !R11_ALLOW.includes(fSlash)) push('R11', i, l);
       if (/window\.print\s*\(/.test(l)) push('R12', i, l);
     });
     const h1 = (c.match(/<h1[\s>]/g) || []).length;

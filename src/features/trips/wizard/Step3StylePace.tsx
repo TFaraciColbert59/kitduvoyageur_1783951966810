@@ -96,7 +96,7 @@ export function Step3StylePace({
         <h2 className="text-2xl sm:text-3xl font-bold text-lkv-primary">
           Quel est votre style d&apos;expédition ?
         </h2>
-        <p className="text-sm text-gray-600 mt-1">
+        <p className="text-sm text-[var(--lkv-text-muted)] mt-1">
           Ces préférences guident le moteur pour sélectionner les étapes adaptées à vos envies et à votre forme physique.
         </p>
       </div>
@@ -129,7 +129,7 @@ export function Step3StylePace({
                 </div>
                 <div className="flex-1 min-w-0">
                   <div className="text-sm font-semibold">{title}</div>
-                  <div className={`text-xs mt-0.5 ${active ? 'text-[#A6C1A0]' : 'text-gray-500'}`}>
+                  <div className={`text-xs mt-0.5 ${active ? 'text-[var(--sage-300)]' : 'text-[var(--lkv-text-muted)]'}`}>
                     {desc}
                   </div>
                 </div>
@@ -163,10 +163,10 @@ export function Step3StylePace({
                   <div className="text-sm font-semibold">{title}</div>
                   {active && <Check size={15} />}
                 </div>
-                <div className={`text-xs font-bold mt-1 ${active ? 'text-[#A6C1A0]' : 'text-lkv-secondary'}`}>
+                <div className={`text-xs font-bold mt-1 ${active ? 'text-[var(--sage-300)]' : 'text-lkv-secondary'}`}>
                   {kms}
                 </div>
-                <div className={`text-[11px] mt-1.5 leading-snug ${active ? 'text-white/80' : 'text-gray-500'}`}>
+                <div className={`text-[11px] mt-1.5 leading-snug ${active ? 'text-white/80' : 'text-[var(--lkv-text-muted)]'}`}>
                   {desc}
                 </div>
               </button>
@@ -194,7 +194,7 @@ export function Step3StylePace({
                     : 'bg-white/80 hover:bg-white text-lkv-primary border-black/5'
                 }`}
               >
-                <Icon size={18} className={active ? 'text-[#A6C1A0]' : 'text-lkv-secondary'} />
+                <Icon size={18} className={active ? 'text-[var(--sage-300)]' : 'text-lkv-secondary'} />
                 <span className="text-xs font-semibold mt-1.5">{title}</span>
               </button>
             );
@@ -222,7 +222,7 @@ export function Step3StylePace({
                 }`}
               >
                 <div className="text-xs font-semibold">{title}</div>
-                <div className={`text-[10px] mt-0.5 truncate ${active ? 'text-white/80' : 'text-gray-500'}`}>
+                <div className={`text-[10px] mt-0.5 truncate ${active ? 'text-white/80' : 'text-[var(--lkv-text-muted)]'}`}>
                   {desc}
                 </div>
               </button>

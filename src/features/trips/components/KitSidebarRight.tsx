@@ -19,7 +19,7 @@ export default function KitSidebarRight({ trip, analysis }: KitSidebarRightProps
   const totalWeightKg = analysis.totalWeightGrams ? (analysis.totalWeightGrams / 1000).toFixed(1) : '0.0';
 
   return (
-    <aside className="w-full shrink-0 h-full overflow-y-auto custom-scrollbar flex flex-col gap-3 pb-6 font-sans">
+    <div className="w-full shrink-0 h-full overflow-y-auto custom-scrollbar flex flex-col gap-3 pb-6 font-sans">
       <GlassCard className="p-3.5 space-y-2.5 text-[var(--lkv-text-primary)]">
         <span className="text-xs font-bold uppercase tracking-wider text-[var(--lkv-text-secondary)] flex items-center gap-1.5">
           <Scale size={13} />
@@ -53,6 +53,6 @@ export default function KitSidebarRight({ trip, analysis }: KitSidebarRightProps
           <div className="flex justify-between"><span className="text-[var(--lkv-text-secondary)]">Duree</span><span className="font-mono font-semibold">{duration.durationDays}j</span></div>
         </div>
       </GlassCard>
-    </aside>
+    </div>
   );
 }

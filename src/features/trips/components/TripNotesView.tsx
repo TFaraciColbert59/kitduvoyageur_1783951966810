@@ -16,6 +16,7 @@ import {
 import { GlassCard } from '@/components/ui/GlassCard';
 import { GlassCapsuleBtn } from '@/components/ui/GlassCapsuleBtn';
 import { TripCompletionModal } from './TripCompletionModal';
+import { ConfirmDialog } from './ConfirmDialog';
 import { addTripNoteAction, deleteTripNoteAction } from '@/app/voyages/completion-actions';
 import type { TripFull } from '../types/trip.types';
 
@@ -29,6 +30,7 @@ export function TripNotesView({ trip }: TripNotesViewProps) {
   const [selectedDayFilter, setSelectedDayFilter] = useState<number | 'all'>('all');
   const [isPending, startTransition] = useTransition();
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const [confirmState, setConfirmState] = useState<{ noteId: string; label: string } | null>(null);
 
   const canEdit = trip.permissions.canEdit;
   const notes = trip.notes || [];
@@ -46,18 +48,23 @@ export function TripNotesView({ trip }: TripNotesViewProps) {
 
   const handleDelete = (noteId: string, title?: string | null) => {
     const label = title ? `"${title}"` : 'cette note';
-    if (confirm(`Supprimer ${label} du carnet de bord ?`)) {
-      startTransition(async () => {
-        const formData = new FormData();
-        formData.set('tripId', trip.id);
-        formData.set('noteId', noteId);
-        formData.set('tripSlug', trip.slug);
-        const res = await deleteTripNoteAction(null, formData);
-        if (!res.success) {
-          alert(res.error || 'Erreur lors de la suppression de la note');
-        }
-      });
-    }
+    setConfirmState({ noteId, label });
+  };
+
+  const confirmDelete = () => {
+    if (!confirmState) return;
+    const { noteId } = confirmState;
+    setConfirmState(null);
+    startTransition(async () => {
+      const formData = new FormData();
+      formData.set('tripId', trip.id);
+      formData.set('noteId', noteId);
+      formData.set('tripSlug', trip.slug);
+      const res = await deleteTripNoteAction(null, formData);
+      if (!res.success) {
+        setErrorMessage(res.error || 'Erreur lors de la suppression de la note');
+      }
+    });
   };
 
   const handleAddSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
@@ -83,7 +90,7 @@ export function TripNotesView({ trip }: TripNotesViewProps) {
   return (
     <div className="space-y-6">
       {/* Bannière de statut & Action Clôture */}
-      <GlassCard tone="sage" className="p-5 rounded-[24px] border border-white/60 shadow-sm">
+      <GlassCard tone="sage" className="p-5 rounded-[var(--lkv-radius-xl)] border border-white/60 shadow-sm">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
           <div className="flex items-start sm:items-center gap-3">
             <div className="w-10 h-10 rounded-full bg-[var(--lkv-primary)]/10 flex items-center justify-center text-[var(--lkv-primary)] shrink-0">
@@ -157,7 +164,7 @@ export function TripNotesView({ trip }: TripNotesViewProps) {
 
       {/* Liste des notes */}
       {filteredNotes.length === 0 ? (
-        <GlassCard tone="neutral" className="p-8 rounded-[24px] text-center border border-white/60">
+        <GlassCard tone="neutral" className="p-8 rounded-[var(--lkv-radius-xl)] text-center border border-white/60">
           <BookOpen size={36} className="mx-auto text-lkv-secondary/40 mb-2" />
           <h4 className="text-sm font-semibold text-lkv-primary">Aucune note enregistrée</h4>
           <p className="text-xs text-lkv-secondary mt-1 max-w-sm mx-auto">
@@ -184,7 +191,7 @@ export function TripNotesView({ trip }: TripNotesViewProps) {
             <GlassCard
               key={note.id}
               tone="neutral"
-              className={`p-5 rounded-[22px] border transition-shadow ${
+              className={`p-5 rounded-[var(--lkv-radius-lg)] border transition-shadow ${
                 note.is_pinned
                   ? 'border-lkv-primary/30 shadow-sm'
                   : 'border-white/60'
@@ -247,7 +254,7 @@ export function TripNotesView({ trip }: TripNotesViewProps) {
           aria-labelledby="add-note-title"
           className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm animate-fadeIn"
         >
-          <div className="glass rounded-[26px] border border-white/60 max-w-lg w-full p-6 shadow-2xl space-y-4">
+          <div className="glass rounded-[var(--lkv-radius-xl)] border border-white/60 max-w-lg w-full p-6 shadow-2xl space-y-4">
             <div className="flex items-center justify-between border-b border-white/40 pb-3">
               <h3 id="add-note-title" className="text-base font-bold text-lkv-primary flex items-center gap-2">
                 <Edit3 size={18} />
@@ -351,6 +358,18 @@ export function TripNotesView({ trip }: TripNotesViewProps) {
         trip={trip}
         isOpen={isCompletionOpen}
         onClose={() => setIsCompletionOpen(false)}
+      />
+
+      {/* Modale de confirmation de suppression */}
+      <ConfirmDialog
+        open={confirmState !== null}
+        title="Supprimer cette note ?"
+        message={confirmState ? `${confirmState.label} sera supprimée du carnet de bord.` : undefined}
+        confirmLabel="Supprimer"
+        cancelLabel="Annuler"
+        danger
+        onConfirm={confirmDelete}
+        onCancel={() => setConfirmState(null)}
       />
     </div>
   );

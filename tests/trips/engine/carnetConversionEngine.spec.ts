@@ -316,14 +316,14 @@ describe('carnetConversionEngine — Chantier 8 (TDD)', () => {
       nom: 'Tente Ultralégère 2P',
       detail: 'Abri',
       poids_g: 1200,
-      couleur_tag: '#17402C',
+      couleur_tag: 'var(--lkv-primary)',
       sort_order: 0,
     });
     expect(result.kitItems[1]).toMatchObject({
       nom: 'Duvet 0°C',
       detail: 'Couchage',
       poids_g: 850,
-      couleur_tag: '#17402C',
+      couleur_tag: 'var(--lkv-primary)',
       sort_order: 1,
     });
   });

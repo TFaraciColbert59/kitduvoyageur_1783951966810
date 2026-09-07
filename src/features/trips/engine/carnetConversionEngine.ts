@@ -224,7 +224,7 @@ export function convertTripToCarnetData(
   const packedItems = (trip.items || []).filter(i => i.is_packed);
   const kitItems: CarnetKitItemPayload[] = packedItems.map((item, index) => {
     const poidsG = Math.round(Number(item.weight_grams) || 0);
-    const couleurTag = item.priority === 'vital' ? '#17402C' : '#5B7F55';
+    const couleurTag = item.priority === 'vital' ? 'var(--lkv-primary)' : 'var(--lkv-secondary)';
 
     return {
       nom: item.item_name,

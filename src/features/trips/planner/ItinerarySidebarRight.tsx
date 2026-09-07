@@ -14,7 +14,7 @@ export default function ItinerarySidebarRight({ trip, stepsCount }: ItinerarySid
   const totalElevationGain = trip.steps?.reduce((sum, s) => sum + (s.elevation_gain_m ?? 0), 0) ?? 0;
 
   return (
-    <aside className="w-full shrink-0 h-full overflow-y-auto custom-scrollbar flex flex-col gap-3 pb-6 font-sans">
+    <div className="w-full shrink-0 h-full overflow-y-auto custom-scrollbar flex flex-col gap-3 pb-6 font-sans">
       <GlassCard className="p-3.5 space-y-2.5 text-[var(--lkv-text-primary)]">
         <span className="text-xs font-bold uppercase tracking-wider text-[var(--lkv-text-secondary)] flex items-center gap-1.5">
           <Navigation size={13} />
@@ -42,6 +42,6 @@ export default function ItinerarySidebarRight({ trip, stepsCount }: ItinerarySid
           Glissez-deposez les etapes pour reorganiser votre itineraire jour par jour.
         </p>
       </GlassCard>
-    </aside>
+    </div>
   );
 }

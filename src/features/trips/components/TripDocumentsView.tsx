@@ -16,6 +16,7 @@ import {
 import { GlassCard } from '@/components/ui/GlassCard';
 import { GlassCapsuleBtn } from '@/components/ui/GlassCapsuleBtn';
 import { checkDocumentExpiry } from '../engine/exportEngine';
+import { ConfirmDialog } from './ConfirmDialog';
 import { addTripDocumentAction, deleteTripDocumentAction } from '@/app/voyages/document-actions';
 import type { TripFull, TripDocumentCategory } from '../types/trip.types';
 
@@ -36,18 +37,20 @@ export function TripDocumentsView({ trip }: TripDocumentsViewProps) {
   const [isAddOpen, setIsAddOpen] = useState(false);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
   const [isPending, startTransition] = useTransition();
+  const [confirmState, setConfirmState] = useState<{ docId: string; title: string } | null>(null);
 
   const canEdit = trip.permissions.canEdit;
 
-  const handleDelete = (docId: string, title: string) => {
-    if (confirm(`Supprimer le document "${title}" ?`)) {
-      startTransition(async () => {
-        const res = await deleteTripDocumentAction(trip.id, docId, trip.slug);
-        if (!res.success) {
-          alert(res.error || 'Impossible de supprimer ce document');
-        }
-      });
-    }
+  const confirmDelete = () => {
+    if (!confirmState) return;
+    const { docId } = confirmState;
+    setConfirmState(null);
+    startTransition(async () => {
+      const res = await deleteTripDocumentAction(trip.id, docId, trip.slug);
+      if (!res.success) {
+        setErrorMsg(res.error || 'Impossible de supprimer ce document');
+      }
+    });
   };
 
   const handleAddSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
@@ -95,7 +98,12 @@ export function TripDocumentsView({ trip }: TripDocumentsViewProps) {
       </div>
 
       {/* Garantie RGPD */}
-      <GlassCard tone="neutral" className="p-4 rounded-[20px] border border-white/60 text-xs text-[var(--lkv-text-muted)]">
+      {errorMsg && (
+        <div className="p-3 rounded-xl glass tone-danger text-[var(--lkv-danger)] text-xs">
+          {errorMsg}
+        </div>
+      )}
+      <GlassCard tone="neutral" className="p-4 rounded-[var(--lkv-radius-lg)] border border-white/60 text-xs text-[var(--lkv-text-muted)]">
         <div className="flex items-start gap-3">
           <ShieldCheck size={18} className="text-lkv-secondary shrink-0 mt-0.5" />
           <div className="space-y-1">
@@ -109,7 +117,7 @@ export function TripDocumentsView({ trip }: TripDocumentsViewProps) {
 
       {/* Liste des documents */}
       {trip.documents.length === 0 ? (
-        <GlassCard tone="neutral" className="p-8 rounded-[24px] text-center space-y-2 border border-white/60">
+        <GlassCard tone="neutral" className="p-8 rounded-[var(--lkv-radius-xl)] text-center space-y-2 border border-white/60">
           <FileCheck size={32} className="text-lkv-secondary mx-auto" />
           <div className="text-sm font-semibold text-lkv-primary">Aucun document attaché</div>
           <p className="text-xs text-[var(--lkv-text-muted)] max-w-sm mx-auto">
@@ -125,7 +133,7 @@ export function TripDocumentsView({ trip }: TripDocumentsViewProps) {
               <GlassCard
                 key={doc.id}
                 tone="neutral"
-                className="p-4 rounded-[20px] border border-white/60 flex flex-col justify-between gap-4 shadow-sm"
+                className="p-4 rounded-[var(--lkv-radius-lg)] border border-white/60 flex flex-col justify-between gap-4 shadow-sm"
               >
                 <div className="space-y-2">
                   <div className="flex items-start justify-between gap-2">
@@ -181,7 +189,7 @@ export function TripDocumentsView({ trip }: TripDocumentsViewProps) {
 
                   {canEdit && (
                     <button
-                      onClick={() => handleDelete(doc.id, doc.title)}
+                      onClick={() => setConfirmState({ docId: doc.id, title: doc.title })}
                       disabled={isPending}
                       className="min-h-[44px] min-w-[44px] rounded-full flex items-center justify-center glass-sub-card border border-white/60 text-[var(--lkv-text-muted)] hover:text-[var(--lkv-danger)] hover:bg-[var(--lkv-danger)]/10 transition-all shadow-2xs"
                       title="Supprimer ce document"
@@ -201,7 +209,7 @@ export function TripDocumentsView({ trip }: TripDocumentsViewProps) {
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm animate-in fade-in">
           <GlassCard
             tone="neutral"
-            className="w-full max-w-md p-6 rounded-[24px] border border-white/80 shadow-2xl space-y-4"
+            className="w-full max-w-md p-6 rounded-[var(--lkv-radius-xl)] border border-white/80 shadow-2xl space-y-4"
           >
             <div className="flex items-center justify-between pb-3 border-b border-white/40">
               <h4 className="text-base font-bold text-lkv-primary flex items-center gap-2">
@@ -288,7 +296,7 @@ export function TripDocumentsView({ trip }: TripDocumentsViewProps) {
                 <textarea
                   name="notes"
                   rows={2}
-                  placeholder="ex: Numéro d'assuré #12345, contact d'urgence 24/7"
+                  placeholder="ex: N° d'assuré 12345, contact d'urgence 24/7"
                   className="glass-input w-full px-3 py-2 text-sm text-[var(--lkv-text-primary)]"
                 />
               </div>
@@ -315,6 +323,18 @@ export function TripDocumentsView({ trip }: TripDocumentsViewProps) {
           </GlassCard>
         </div>
       )}
+
+      {/* Modale de confirmation de suppression */}
+      <ConfirmDialog
+        open={confirmState !== null}
+        title="Supprimer ce document ?"
+        message={confirmState ? `Le document « ${confirmState.title} » sera définitivement supprimé.` : undefined}
+        confirmLabel="Supprimer"
+        cancelLabel="Annuler"
+        danger
+        onConfirm={confirmDelete}
+        onCancel={() => setConfirmState(null)}
+      />
     </div>
   );
 }

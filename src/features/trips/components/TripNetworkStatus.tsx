@@ -115,13 +115,13 @@ export function TripNetworkStatus({
       <div
         className={cn(
           'inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-medium',
-          'bg-[var(--lkv-accent)]/10 text-[var(--lkv-accent)] border border-[var(--lkv-accent)]/30 shadow-sm',
+          'bg-[var(--lkv-secondary)]/10 text-[var(--lkv-secondary)] border border-[var(--lkv-secondary)]/30 shadow-sm',
           'animate-in fade-in',
           className
         )}
         role="status"
       >
-        <Check className="w-3.5 h-3.5 text-[var(--lkv-accent)]" aria-hidden="true" />
+        <Check className="w-3.5 h-3.5 text-[var(--lkv-secondary)]" aria-hidden="true" />
         <span>Synchronisé</span>
       </div>
     );
@@ -131,13 +131,13 @@ export function TripNetworkStatus({
     <div
       className={cn(
         'inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium',
-        'bg-[var(--lkv-accent)]/10 text-[var(--lkv-text-secondary)] border border-[var(--lkv-accent)]/20',
+        'bg-[var(--lkv-secondary)]/10 text-[var(--lkv-text-secondary)] border border-[var(--lkv-secondary)]/20',
         className
       )}
       role="status"
       title="Toutes les données sont synchronisées"
     >
-      <Cloud className="w-3.5 h-3.5 text-[var(--lkv-accent)]" aria-hidden="true" />
+      <Cloud className="w-3.5 h-3.5 text-[var(--lkv-secondary)]" aria-hidden="true" />
       <span>À jour</span>
     </div>
   );

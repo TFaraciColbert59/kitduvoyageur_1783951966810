@@ -1,6 +1,7 @@
 'use server';
 
 import { revalidatePath } from 'next/cache';
+import { tripSegmentPath } from '@/features/trips/registry/tripPaths';
 import { z } from 'zod';
 import { createClient } from '@/lib/supabase/server';
 import {
@@ -94,8 +95,8 @@ export async function togglePackedAction(
     const ok = await toggleTripItemPacked(parsed.data.itemId, parsed.data.isPacked);
     if (!ok) return { success: false, error: 'Impossible de modifier le statut de l’équipement' };
 
-    revalidatePath(`/voyages/${parsed.data.tripSlug}`);
-    revalidatePath(`/voyages/${parsed.data.tripSlug}/kit`);
+    revalidatePath(tripSegmentPath(parsed.data.tripSlug, ''));
+    revalidatePath(tripSegmentPath(parsed.data.tripSlug, 'kit'));
     return { success: true };
   } catch (err) {
     console.error('[LKDV Action] togglePackedAction error:', err);
@@ -144,8 +145,8 @@ export async function addCustomTripItemAction(
       return { success: false, error: 'Erreur lors de l’ajout de l’équipement' };
     }
 
-    revalidatePath(`/voyages/${parsed.data.tripSlug}`);
-    revalidatePath(`/voyages/${parsed.data.tripSlug}/kit`);
+    revalidatePath(tripSegmentPath(parsed.data.tripSlug, ''));
+    revalidatePath(tripSegmentPath(parsed.data.tripSlug, 'kit'));
     return { success: true };
   } catch (err) {
     console.error('[LKDV Action] addCustomTripItemAction error:', err);
@@ -173,8 +174,8 @@ export async function deleteTripItemAction(
     const ok = await deleteTripItem(parsed.data.itemId);
     if (!ok) return { success: false, error: 'Impossible de supprimer l’équipement' };
 
-    revalidatePath(`/voyages/${parsed.data.tripSlug}`);
-    revalidatePath(`/voyages/${parsed.data.tripSlug}/kit`);
+    revalidatePath(tripSegmentPath(parsed.data.tripSlug, ''));
+    revalidatePath(tripSegmentPath(parsed.data.tripSlug, 'kit'));
     return { success: true };
   } catch (err) {
     console.error('[LKDV Action] deleteTripItemAction error:', err);
@@ -201,8 +202,8 @@ export async function addRecommendedItemAction(
     const item = await addRecommendedItemToTrip(parsed.data.tripId, recommendation);
     if (!item) return { success: false, error: 'Erreur lors de l’ajout de la recommandation' };
 
-    revalidatePath(`/voyages/${parsed.data.tripSlug}`);
-    revalidatePath(`/voyages/${parsed.data.tripSlug}/kit`);
+    revalidatePath(tripSegmentPath(parsed.data.tripSlug, ''));
+    revalidatePath(tripSegmentPath(parsed.data.tripSlug, 'kit'));
     return { success: true };
   } catch (err) {
     console.error('[LKDV Action] addRecommendedItemAction error:', err);

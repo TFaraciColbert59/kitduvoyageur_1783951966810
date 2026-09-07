@@ -6,7 +6,8 @@ import * as Cmd from 'cmdk';
 import { ChevronsUpDown, Compass, Search, Check, RefreshCw } from 'lucide-react';
 import { GlassSheet } from '@/components/ui/GlassSheet';
 import { useActiveTrip } from '../context/ActiveTripContext';
-import { sectionIdFromPathname, TRIP_SECTION_ORDER } from '../registry/tripSectionRegistry';
+import { sectionIdFromPathname, tripSectionHref, TRIP_SECTION_ORDER } from '../registry/tripSectionRegistry';
+import type { TripSectionId } from '../engine/tripProfileEngine';
 
 /**
  * Y3.3 — Sélecteur persistant de voyage actif (ex-`ActiveTripBanner`).
@@ -55,8 +56,9 @@ export function ActiveTripSwitcher() {
 
   const goToTrip = (slug: string) => {
     const lastSection = getLastSection(slug);
-    // restore la section mémorisée, sinon overview
-    const href = lastSection ? `/voyages/${slug}/${lastSection}` : `/voyages/${slug}`;
+    // restore la section mémorisée, sinon overview — via le constructeur typé (règle 11)
+    const section = (lastSection && isValidSection(lastSection) ? lastSection : 'overview') as TripSectionId;
+    const href = tripSectionHref(slug, section);
     setOpen(false);
     setSheetOpen(false);
     setQuery('');
@@ -101,7 +103,7 @@ export function ActiveTripSwitcher() {
                   {activityLabel(t.primary_activity)}
                 </span>
               </span>
-              {isCurrent && <Check size={14} className="shrink-0 text-[var(--lkv-accent)]" aria-hidden="true" />}
+              {isCurrent && <Check size={14} className="shrink-0 text-[var(--lkv-secondary)]" aria-hidden="true" />}
             </Cmd.CommandItem>
           );
         })}
@@ -147,7 +149,7 @@ export function ActiveTripSwitcher() {
         aria-expanded={open}
         title="Changer de voyage (Ctrl/Cmd+J)"
       >
-        <Compass size={14} className="text-[var(--lkv-accent)]" aria-hidden="true" />
+        <Compass size={14} className="text-[var(--lkv-secondary)]" aria-hidden="true" />
         <span className="max-w-[160px] truncate hidden sm:inline">{triggerLabel}</span>
         <ChevronsUpDown size={12} className="text-[var(--lkv-text-muted)]" aria-hidden="true" />
       </button>
@@ -182,7 +184,7 @@ export function ActiveTripSwitcher() {
         className="md:hidden inline-flex items-center gap-1.5 px-3 py-2 rounded-full glass-capsule-btn text-xs font-semibold text-[var(--lkv-text-primary)] min-h-[44px] cursor-pointer"
         aria-haspopup="dialog"
       >
-        <Compass size={14} className="text-[var(--lkv-accent)]" aria-hidden="true" />
+        <Compass size={14} className="text-[var(--lkv-secondary)]" aria-hidden="true" />
         <span className="max-w-[140px] truncate">{triggerLabel}</span>
       </button>
 
@@ -195,5 +197,10 @@ export function ActiveTripSwitcher() {
 
 /** Retourne la dernière section mémorisée (Y5.2) — exporté pour les tests. */
 export { TRIP_SECTION_ORDER };
+
+/** Vrai si la valeur est un identifiant de section connu du registre. */
+function isValidSection(value: string): boolean {
+  return TRIP_SECTION_ORDER.includes(value as TripSectionId);
+}
 
 export default ActiveTripSwitcher;

@@ -74,8 +74,8 @@ export default function GroupesPage() {
       <div className="min-h-screen bg-transparent flex items-center justify-center p-4">
         <CompteBackground />
         <div className="glass p-8 text-center max-w-md w-full relative z-10">
-          <div className="w-8 h-8 border-2 border-[#17402C] border-t-transparent rounded-full animate-spin mx-auto mb-4" />
-          <div className="font-display font-bold text-xl text-[#17402C]">Chargement du cockpit...</div>
+          <div className="w-8 h-8 border-2 border-[var(--lkv-text-primary)] border-t-transparent rounded-full animate-spin mx-auto mb-4" />
+          <div className="font-display font-bold text-xl text-[var(--lkv-text-primary)]">Chargement du cockpit...</div>
         </div>
       </div>
     );
@@ -86,8 +86,8 @@ export default function GroupesPage() {
       <div className="min-h-screen bg-transparent flex flex-col items-center justify-center p-4">
         <CompteBackground />
         <div className="glass p-8 text-center max-w-md w-full relative z-10">
-          <h2 className="font-display font-bold text-2xl text-[#17402C] mb-2">Groupe introuvable</h2>
-          <p className="text-sm text-[#5C6B5E] mb-6">Ce groupe n'existe pas ou vous n'y avez pas accès.</p>
+          <h2 className="font-display font-bold text-2xl text-[var(--lkv-text-primary)] mb-2">Groupe introuvable</h2>
+          <p className="text-sm text-[var(--lkv-text-muted)] mb-6">Ce groupe n'existe pas ou vous n'y avez pas accès.</p>
           <div className="flex gap-3 justify-center">
             <button
               onClick={refreshData}
@@ -121,7 +121,7 @@ export default function GroupesPage() {
 
       {/* ── DESKTOP (3-Column Fullscreen 100dvh + CompteBackground) ── */}
       <div className="hidden md:block">
-        <div className="h-[100dvh] max-h-[100dvh] overflow-hidden bg-transparent font-sans text-[#17402C] relative flex flex-col">
+        <div className="h-[100dvh] max-h-[100dvh] overflow-hidden bg-transparent font-sans text-[var(--lkv-text-primary)] relative flex flex-col">
           <CompteBackground />
           <Header />
 
@@ -141,12 +141,12 @@ export default function GroupesPage() {
             {/* COLONNE CENTRALE (FLUX DE CONTENU SCROLLABLE UNIQUE) */}
             <div className="flex-1 min-w-0 h-full overflow-y-auto custom-scrollbar pr-2 space-y-5">
               {/* Breadcrumbs */}
-              <div className="flex items-center gap-2 text-xs font-medium text-[#5C6B5E]">
-                <Link href="/communaute" className="hover:text-[#17402C] transition-colors">Communauté</Link>
+              <div className="flex items-center gap-2 text-xs font-medium text-[var(--lkv-text-muted)]">
+                <Link href="/communaute" className="hover:text-[var(--lkv-text-primary)] transition-colors">Communauté</Link>
                 <LkvIcon name="chevron-right" size={12} />
-                <Link href="/groupes" className="hover:text-[#17402C] transition-colors">Mes groupes</Link>
+                <Link href="/groupes" className="hover:text-[var(--lkv-text-primary)] transition-colors">Mes groupes</Link>
                 <LkvIcon name="chevron-right" size={12} />
-                <span className="text-[#17402C] font-semibold">{formattedData.meta.titlePrefix} {formattedData.meta.titleSuffix}</span>
+                <span className="text-[var(--lkv-text-primary)] font-semibold">{formattedData.meta.titlePrefix} {formattedData.meta.titleSuffix}</span>
               </div>
 
               {/* OVERVIEW TAB ONLY: Hero & Progression Card */}
@@ -170,11 +170,11 @@ export default function GroupesPage() {
             </div>
 
             {/* COLONNE DROITE (WIDGETS SIDEBAR) - 300px */}
-            <aside className="w-[300px] shrink-0 h-full overflow-y-auto custom-scrollbar flex flex-col gap-4">
+            <div className="w-[300px] shrink-0 h-full overflow-y-auto custom-scrollbar flex flex-col gap-4">
               <CountdownCard data={formattedData} />
               <VoyageursCard travelers={formattedData.travelers} groupId={groupId} onRefresh={refreshData} user={user} members={members} group={formattedData} isOrganizer={isCurrentUserOrganizer} />
               <AProposCard data={formattedData} />
-            </aside>
+            </div>
           </main>
         </div>
       </div>

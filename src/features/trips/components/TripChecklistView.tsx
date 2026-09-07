@@ -341,7 +341,7 @@ export function TripChecklistView({ tripId, daysUntilStart }: TripChecklistViewP
   return (
     <div className="space-y-6">
       {/* Barre de progression */}
-      <GlassCard tone="sage" className="p-5 rounded-[24px] border border-white/70">
+      <GlassCard tone="sage" className="p-5 rounded-[var(--lkv-radius-xl)] border border-white/70">
         <div className="flex items-center justify-between gap-4 mb-2">
           <div className="flex items-center gap-2.5">
             <ShieldCheck className="w-5 h-5 text-lkv-primary" />

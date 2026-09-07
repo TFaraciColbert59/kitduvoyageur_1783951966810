@@ -5,6 +5,7 @@ import { Users, UserPlus, Trash2, ShieldCheck, Mail, AlertCircle, CheckCircle2, 
 import { GlassCard } from '@/components/ui/GlassCard';
 import { GlassCapsuleBtn } from '@/components/ui/GlassCapsuleBtn';
 import { TripBadge } from './TripBadge';
+import { ConfirmDialog } from './ConfirmDialog';
 import { inviteCollaboratorAction, updateRoleAction, removeCollaboratorAction } from '@/app/voyages/collab-actions';
 import type { TripFull } from '../types/trip.types';
 
@@ -16,28 +17,37 @@ export function TripTeamView({ trip }: TripTeamViewProps) {
   const [isInviteOpen, setIsInviteOpen] = useState(false);
   const [inviteError, setInviteError] = useState<string | null>(null);
   const [inviteSuccess, setInviteSuccess] = useState<string | null>(null);
+  const [actionError, setActionError] = useState<string | null>(null);
+  const [confirmState, setConfirmState] = useState<{ collaboratorId: string; name: string } | null>(null);
   const [isPending, startTransition] = useTransition();
 
   const isOwner = trip.permissions.canInvite; // Seul l'owner a canInvite
 
   const handleRoleChange = (collaboratorId: string, newRole: 'owner' | 'editor' | 'viewer') => {
+    setActionError(null);
     startTransition(async () => {
       const res = await updateRoleAction(trip.id, collaboratorId, newRole, trip.slug);
       if (!res.success) {
-        alert(res.error || 'Impossible de modifier le rôle');
+        setActionError(res.error || 'Impossible de modifier le rôle');
       }
     });
   };
 
-  const handleRemove = (collaboratorId: string, name: string) => {
-    if (confirm(`Confirmez-vous le retrait de ${name} de cette expédition ?`)) {
-      startTransition(async () => {
-        const res = await removeCollaboratorAction(trip.id, collaboratorId, trip.slug);
-        if (!res.success) {
-          alert(res.error || 'Impossible de retirer ce membre');
-        }
-      });
-    }
+  const requestRemove = (collaboratorId: string, name: string) => {
+    setActionError(null);
+    setConfirmState({ collaboratorId, name });
+  };
+
+  const confirmRemove = () => {
+    if (!confirmState) return;
+    const { collaboratorId } = confirmState;
+    setConfirmState(null);
+    startTransition(async () => {
+      const res = await removeCollaboratorAction(trip.id, collaboratorId, trip.slug);
+      if (!res.success) {
+        setActionError(res.error || 'Impossible de retirer ce membre');
+      }
+    });
   };
 
   const handleInviteSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
@@ -66,6 +76,12 @@ export function TripTeamView({ trip }: TripTeamViewProps) {
   return (
     <div className="space-y-6">
       {/* En-tête de section */}
+      {actionError && (
+        <div className="p-3 rounded-xl glass tone-danger text-xs text-[var(--lkv-danger)] flex items-center gap-2">
+          <AlertCircle size={16} className="shrink-0" />
+          <span>{actionError}</span>
+        </div>
+      )}
       <div className="flex flex-wrap items-center justify-between gap-4">
         <div>
           <h3 className="text-xl font-bold text-lkv-primary flex items-center gap-2">
@@ -90,7 +106,7 @@ export function TripTeamView({ trip }: TripTeamViewProps) {
       </div>
 
       {/* Explication des rôles */}
-      <GlassCard tone="neutral" className="p-4 rounded-[20px] border border-white/60 text-xs text-[var(--lkv-text-muted)]">
+      <GlassCard tone="neutral" className="p-4 rounded-[var(--lkv-radius-lg)] border border-white/60 text-xs text-[var(--lkv-text-muted)]">
         <div className="flex items-start gap-3">
           <ShieldCheck size={18} className="text-lkv-secondary shrink-0 mt-0.5" />
           <div className="space-y-1">
@@ -126,7 +142,7 @@ export function TripTeamView({ trip }: TripTeamViewProps) {
             <GlassCard
               key={collab.id}
               tone="neutral"
-              className="p-4 rounded-[20px] border border-white/60 flex flex-col justify-between gap-4 shadow-sm"
+              className="p-4 rounded-[var(--lkv-radius-lg)] border border-white/60 flex flex-col justify-between gap-4 shadow-sm"
             >
               <div className="flex items-start justify-between gap-3">
                 <div className="flex items-center gap-3">
@@ -161,7 +177,7 @@ export function TripTeamView({ trip }: TripTeamViewProps) {
                   </div>
 
                   <button
-                    onClick={() => handleRemove(collab.id, name)}
+                    onClick={() => requestRemove(collab.id, name)}
                     disabled={isPending}
                     title="Retirer de l'expédition"
                     className="min-h-[44px] min-w-[44px] flex items-center justify-center rounded-full glass-sub-card border border-white/60 text-[var(--lkv-danger)] hover:bg-[var(--lkv-danger)]/10 hover:text-[var(--lkv-danger)] transition-all shadow-2xs"
@@ -180,7 +196,7 @@ export function TripTeamView({ trip }: TripTeamViewProps) {
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm animate-in fade-in">
           <GlassCard
             tone="neutral"
-            className="w-full max-w-md p-6 rounded-[24px] border border-white/80 shadow-2xl space-y-4"
+            className="w-full max-w-md p-6 rounded-[var(--lkv-radius-xl)] border border-white/80 shadow-2xl space-y-4"
           >
             <div className="flex items-center justify-between pb-3 border-b border-white/40">
               <h4 className="text-base font-bold text-lkv-primary flex items-center gap-2">
@@ -263,6 +279,18 @@ export function TripTeamView({ trip }: TripTeamViewProps) {
           </GlassCard>
         </div>
       )}
+
+      {/* Modale de confirmation de retrait */}
+      <ConfirmDialog
+        open={confirmState !== null}
+        title="Retirer ce membre ?"
+        message={confirmState ? `${confirmState.name} sera retiré(e) de cette expédition.` : undefined}
+        confirmLabel="Retirer"
+        cancelLabel="Annuler"
+        danger
+        onConfirm={confirmRemove}
+        onCancel={() => setConfirmState(null)}
+      />
     </div>
   );
 }

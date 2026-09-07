@@ -9,6 +9,7 @@ import { checkSeasonalityForDates } from '../engine/seasonality';
 import { getCanonicalTripSteps } from '../hooks/useTripCounters';
 import { getTripDistance } from '../hooks/useTripDistance';
 import { regenerateItineraryAction } from '@/app/voyages/actions';
+import { tripSectionHref } from '../registry/tripSectionRegistry';
 import Link from 'next/link';
 import {
   Navigation,
@@ -165,7 +166,7 @@ export function TripItineraryTab({ trip }: TripItineraryTabProps) {
         {trip.permissions.canEdit && (
           <div className="flex items-center gap-2 flex-wrap">
             <GlassCapsuleBtn
-              href={`/voyages/${trip.slug}/itineraire`}
+              href={tripSectionHref(trip.slug, 'itinerary')}
               variant="primary"
               size="sm"
               icon={<Calendar size={15} />}
@@ -238,7 +239,7 @@ export function TripItineraryTab({ trip }: TripItineraryTabProps) {
       {canonicalSteps.length > 0 ? (
         <div className="space-y-3">
           {canonicalSteps.map((step) => (
-            <GlassCard key={step.id} tone="neutral" className="p-4 sm:p-5 rounded-[22px] border border-white/60">
+            <GlassCard key={step.id} tone="neutral" className="p-4 sm:p-5 rounded-[var(--lkv-radius-lg)] border border-white/60">
               <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-3">
                 <div className="space-y-1.5">
                   <div className="flex items-center gap-2">

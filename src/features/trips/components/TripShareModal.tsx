@@ -15,6 +15,7 @@ import {
 } from 'lucide-react';
 import { GlassCard, GlassCapsuleBtn } from '@/components/ui';
 import { formatTripShareUrl } from '../engine/exportEngine';
+import { tripSectionHref } from '../registry/tripSectionRegistry';
 import { updateTripVisibilityAction } from '@/app/voyages/share-actions';
 import type { TripFull, TripVisibility } from '../types/trip.types';
 
@@ -27,6 +28,7 @@ interface TripShareModalProps {
 export function TripShareModal({ trip, isOpen, onClose }: TripShareModalProps) {
   const [copied, setCopied] = useState(false);
   const [visibility, setVisibility] = useState<TripVisibility>(trip.visibility);
+  const [visError, setVisError] = useState<string | null>(null);
   const [isPending, startTransition] = useTransition();
 
   if (!isOpen) return null;
@@ -46,10 +48,11 @@ export function TripShareModal({ trip, isOpen, onClose }: TripShareModalProps) {
 
   const handleVisibilityChange = (newVis: TripVisibility) => {
     setVisibility(newVis);
+    setVisError(null);
     startTransition(async () => {
       const res = await updateTripVisibilityAction(trip.id, newVis, trip.slug);
       if (!res.success) {
-        alert(res.error || 'Impossible de modifier la visibilité');
+        setVisError(res.error || 'Impossible de modifier la visibilité');
         setVisibility(trip.visibility);
       }
     });
@@ -61,7 +64,7 @@ export function TripShareModal({ trip, isOpen, onClose }: TripShareModalProps) {
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm animate-in fade-in">
       <GlassCard
         tone="neutral"
-        className="w-full max-w-lg p-6 rounded-[24px] border border-white/80 shadow-2xl space-y-5"
+        className="w-full max-w-lg p-6 rounded-[var(--lkv-radius-xl)] border border-white/80 shadow-2xl space-y-5"
       >
         {/* En-tête */}
         <div className="flex items-center justify-between pb-3 border-b border-white/40">
@@ -142,6 +145,11 @@ export function TripShareModal({ trip, isOpen, onClose }: TripShareModalProps) {
             </button>
           </div>
         </div>
+        {visError && (
+          <div className="p-3 rounded-xl glass tone-danger text-xs text-[var(--lkv-danger)]">
+            {visError}
+          </div>
+        )}
 
         {/* 2. Lien de partage */}
         <div className="space-y-1.5">
@@ -189,7 +197,7 @@ export function TripShareModal({ trip, isOpen, onClose }: TripShareModalProps) {
             </a>
 
             <a
-              href={`/voyages/${trip.slug}/export`}
+              href={tripSectionHref(trip.slug, 'export')}
               target="_blank"
               rel="noopener noreferrer"
               className="glass-capsule-btn w-full flex items-center gap-1.5"

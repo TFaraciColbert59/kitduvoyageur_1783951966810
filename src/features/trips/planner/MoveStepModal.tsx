@@ -51,7 +51,7 @@ export function MoveStepModal({
             <span className="text-[11px] font-bold uppercase tracking-wider text-[var(--lkv-primary)]">
               Déplacer l’étape
             </span>
-            <h3 className="font-bold text-base text-[var(--lkv-text)] truncate max-w-[260px]">
+            <h3 className="font-bold text-base text-[var(--lkv-text-primary)] truncate max-w-[260px]">
               {step.title}
             </h3>
           </div>
@@ -99,7 +99,7 @@ export function MoveStepModal({
                     J{dayNum}
                   </div>
                   <div>
-                    <div className="font-semibold text-sm text-[var(--lkv-text)] flex items-center gap-2">
+                    <div className="font-semibold text-sm text-[var(--lkv-text-primary)] flex items-center gap-2">
                       <span>Jour {dayNum}</span>
                       {isCurrent && (
                         <span className="text-[10px] bg-[var(--lkv-primary)]/10 text-[var(--lkv-primary)] px-2 py-0.5 rounded-full font-medium border border-[var(--lkv-primary)]/20">

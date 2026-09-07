@@ -5,6 +5,7 @@ import Link from 'next/link';
 import AppImage from '@/components/ui/AppImage';
 import { GlassCard } from '@/components/ui/GlassCard';
 import { TripBadge } from './TripBadge';
+import { tripSectionHref } from '../registry/tripSectionRegistry';
 import { MapPin, Calendar, Navigation, Users } from 'lucide-react';
 import type { TripSummary, TripWithDetails } from '../types/trip.types';
 
@@ -27,7 +28,7 @@ export function TripCard({ trip, showRole = true }: TripCardProps) {
   const role = 'user_role' in trip ? trip.user_role : undefined;
 
   return (
-    <Link href={`/voyages/${trip.slug}`} className="block group">
+    <Link href={tripSectionHref(trip.slug, 'overview')} className="block group">
       <GlassCard
         tone="neutral"
         blur="md"

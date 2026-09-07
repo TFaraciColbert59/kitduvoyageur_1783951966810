@@ -13,7 +13,7 @@ interface TripCompactHeaderProps {
 
 export function TripCompactHeader({ trip, activePhase: _activePhase, daysUntilStart: _daysUntilStart }: TripCompactHeaderProps) {
   return (
-    <div className="flex items-center justify-between gap-4 p-4 rounded-[var(--lkv-radius-card)] glass border border-white/60 shadow-[var(--elevation-1)]">
+    <div className="flex items-center justify-between gap-4 p-4 rounded-[var(--lkv-radius-card)] glass border border-white/60 shadow-sm">
       <div className="min-w-0 flex-1">
         <span className="text-[9.5px] font-mono uppercase tracking-widest text-[var(--lkv-text-secondary)] font-bold block mb-0.5">
           Expedition Outdoor

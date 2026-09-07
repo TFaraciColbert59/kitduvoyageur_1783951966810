@@ -119,7 +119,7 @@ export function StepCard({
               )}
             </div>
 
-            <h4 className="font-semibold text-[var(--lkv-text)] text-sm sm:text-base leading-snug break-words">
+            <h4 className="font-semibold text-[var(--lkv-text-primary)] text-sm sm:text-base leading-snug break-words">
               {step.title}
             </h4>
 

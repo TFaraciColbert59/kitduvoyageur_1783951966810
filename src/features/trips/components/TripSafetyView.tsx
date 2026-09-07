@@ -1,6 +1,6 @@
 'use client';
 
-import React from 'react';
+import React, { useState } from 'react';
 import { TripFull, TripSafetyCheckpoint } from '../types/trip.types';
 import { GlassCard } from '@/components/ui/GlassCard';
 import { EmptyState } from '@/components/ui/EmptyState';
@@ -42,12 +42,14 @@ const STATUS_CONFIG: Record<
 };
 
 export function TripSafetyView({ trip }: TripSafetyViewProps) {
+  const [infoNote, setInfoNote] = useState(false);
+
   const checkpoints = trip.safety_checkpoints || [];
 
   return (
     <div className="space-y-6">
       {/* En-tête Sécurité & Checkpoints */}
-      <GlassCard tone="sage" blur="md" className="p-6 rounded-[28px] border border-white/70">
+      <GlassCard tone="sage" blur="md" className="p-6 rounded-[var(--lkv-radius-card)] border border-white/70">
         <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
           <div className="flex items-start gap-4">
             <div className="p-3.5 rounded-2xl bg-[var(--lkv-primary)]/10 text-[var(--lkv-primary)]">
@@ -73,14 +75,18 @@ export function TripSafetyView({ trip }: TripSafetyViewProps) {
               variant="secondary"
               size="sm"
               icon={<Plus size={16} />}
-              onClick={() => {
-                alert('La configuration de nouveaux points de contrôle sera disponible prochainement.');
-              }}
+              onClick={() => setInfoNote(true)}
             >
               Nouveau point
             </GlassCapsuleBtn>
           )}
         </div>
+        {infoNote && (
+          <div className="mt-3 p-3 rounded-2xl glass tone-info text-xs text-[var(--lkv-info)] flex items-center gap-2">
+            <Shield size={16} className="shrink-0" />
+            <span>La configuration de nouveaux points de contrôle sera disponible prochainement.</span>
+          </div>
+        )}
       </GlassCard>
 
       {/* Liste des checkpoints ou état vide */}
@@ -96,7 +102,7 @@ export function TripSafetyView({ trip }: TripSafetyViewProps) {
                 <GlassCard
                   key={cp.id}
                   tone="neutral"
-                  className="p-4 rounded-[22px] border border-white/60 hover:shadow-md transition-shadow"
+                  className="p-4 rounded-[var(--lkv-radius-lg)] border border-white/60 hover:shadow-md transition-shadow"
                 >
                   <div className="flex items-start justify-between gap-3">
                     <div>
@@ -144,7 +150,7 @@ export function TripSafetyView({ trip }: TripSafetyViewProps) {
       )}
 
       {/* Rappels de sécurité & Urgences */}
-      <GlassCard tone="neutral" blur="sm" className="p-6 rounded-[28px] border border-white/60">
+      <GlassCard tone="neutral" blur="sm" className="p-6 rounded-[var(--lkv-radius-card)] border border-white/60">
         <div className="flex items-start gap-3.5">
           <div className="p-2.5 rounded-xl bg-lkv-primary/10 text-lkv-primary">
             <PhoneCall size={20} />

@@ -4,6 +4,7 @@ import React, { useMemo } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { useTripDraft } from './useTripDraft';
+import { tripSectionHref } from '../registry/tripSectionRegistry';
 import { Step1Destinations } from './Step1Destinations';
 import { Step2Dates } from './Step2Dates';
 import { Step3StylePace } from './Step3StylePace';
@@ -74,7 +75,7 @@ export function TripWizard() {
 
   const handleComplete = (slug: string) => {
     resetDraft();
-    router.push(`/voyages/${slug}`);
+    router.push(tripSectionHref(slug, 'overview'));
   };
 
   // Contenu interactif de l'étape active
@@ -145,7 +146,7 @@ export function TripWizard() {
 
   // Colonne Gauche Desktop (260px) : Stepper vertical
   const renderSidebarLeft = () => (
-    <aside className="h-full max-h-full w-full flex-1 flex flex-col justify-between glass rounded-2xl p-3.5 text-forest-900 font-sans overflow-y-auto no-scrollbar border border-white/40 shadow-sm select-none gap-3">
+    <div className="h-full max-h-full w-full flex-1 flex flex-col justify-between glass rounded-2xl p-3.5 text-forest-900 font-sans overflow-y-auto no-scrollbar border border-white/40 shadow-sm select-none gap-3">
       <div className="space-y-3 shrink-0">
         <Link
           href="/voyages"
@@ -213,12 +214,12 @@ export function TripWizard() {
         <div>Planificateur d’expédition</div>
         <div className="font-mono">LKDV WIZARD V2</div>
       </div>
-    </aside>
+    </div>
   );
 
   // Colonne Droite Desktop (300px) : Résumé du projet
   const renderSidebarRight = () => (
-    <aside className="w-full shrink-0 h-full overflow-y-auto custom-scrollbar flex flex-col gap-3 pb-6 font-sans">
+    <div className="w-full shrink-0 h-full overflow-y-auto custom-scrollbar flex flex-col gap-3 pb-6 font-sans">
       <GlassCard className="p-3.5 space-y-2.5 text-forest-900">
         <span className="text-xs font-bold uppercase tracking-wider text-sage-800 flex items-center gap-1.5">
           <Sparkles size={13} />
@@ -245,7 +246,7 @@ export function TripWizard() {
           </div>
         </div>
       </GlassCard>
-    </aside>
+    </div>
   );
 
   return (

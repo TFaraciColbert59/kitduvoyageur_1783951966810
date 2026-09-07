@@ -102,7 +102,7 @@ export default function VoyagesClient({
 
   // Colonne Gauche Desktop (260px)
   const renderSidebarLeft = () => (
-    <aside className="h-full max-h-full w-full flex-1 flex flex-col justify-between glass rounded-[var(--lkv-radius-card)] p-3.5 text-[var(--lkv-text-primary)] font-sans overflow-y-auto no-scrollbar border border-white/40 shadow-sm select-none gap-3">
+    <div className="h-full max-h-full w-full flex-1 flex flex-col justify-between glass rounded-[var(--lkv-radius-card)] p-3.5 text-[var(--lkv-text-primary)] font-sans overflow-y-auto no-scrollbar border border-white/40 shadow-sm select-none gap-3">
       <div className="space-y-3 shrink-0">
         <div className="flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-[var(--lkv-text-secondary)]">
           <Compass size={15} />
@@ -177,12 +177,12 @@ export default function VoyagesClient({
         <div>Catalogue des treks & itinéraires</div>
         <div className="font-mono">LKDV EXPEDITIONS</div>
       </div>
-    </aside>
+    </div>
   );
 
   // Colonne Droite Desktop (300px)
   const renderSidebarRight = () => (
-    <aside className="w-full shrink-0 h-full overflow-y-auto custom-scrollbar flex flex-col gap-3 pb-6 font-sans">
+    <div className="w-full shrink-0 h-full overflow-y-auto custom-scrollbar flex flex-col gap-3 pb-6 font-sans">
       <GlassCard className="p-3.5 space-y-2.5 text-forest-900">
         <span className="text-xs font-bold uppercase tracking-wider text-sage-800 flex items-center gap-1.5">
           <Sparkles size={13} />
@@ -206,7 +206,7 @@ export default function VoyagesClient({
           Chaque voyage calculera automatiquement vos phases : <strong>Préparer</strong> (avant départ), <strong>Vivre</strong> (cockpit direct), et <strong>Raconter</strong> (retour et partage).
         </p>
       </GlassCard>
-    </aside>
+    </div>
   );
 
   return (

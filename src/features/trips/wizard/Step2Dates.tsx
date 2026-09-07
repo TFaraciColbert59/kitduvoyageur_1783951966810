@@ -104,7 +104,7 @@ export function Step2Dates({
         <h2 className="text-2xl sm:text-3xl font-bold text-lkv-primary">
           Quand et combien de temps partez-vous ?
         </h2>
-        <p className="text-sm text-gray-600 mt-1">
+        <p className="text-sm text-[var(--lkv-text-muted)] mt-1">
           Définissez vos dates précises ou indiquez simplement la durée souhaitée si vos billets ne sont pas encore pris.
         </p>
       </div>
@@ -117,7 +117,7 @@ export function Step2Dates({
           className={`flex-1 py-2.5 px-4 rounded-xl text-xs font-semibold transition-all min-h-[44px] ${
             datesChoice === 'duration'
               ? 'bg-white text-lkv-primary shadow-sm'
-              : 'text-gray-600 hover:text-lkv-primary'
+              : 'text-[var(--lkv-text-muted)] hover:text-lkv-primary'
           }`}
         >
           <div className="flex items-center justify-center gap-1.5">
@@ -131,7 +131,7 @@ export function Step2Dates({
           className={`flex-1 py-2.5 px-4 rounded-xl text-xs font-semibold transition-all min-h-[44px] ${
             datesChoice === 'dates'
               ? 'bg-white text-lkv-primary shadow-sm'
-              : 'text-gray-600 hover:text-lkv-primary'
+              : 'text-[var(--lkv-text-muted)] hover:text-lkv-primary'
           }`}
         >
           <div className="flex items-center justify-center gap-1.5">
@@ -206,7 +206,7 @@ export function Step2Dates({
           onChange={(e) => onDurationChange(parseInt(e.target.value, 10))}
           className="w-full accent-var(--lkv-primary) cursor-pointer"
         />
-        <div className="flex justify-between text-[11px] text-gray-500 font-medium">
+        <div className="flex justify-between text-[11px] text-[var(--lkv-text-muted)] font-medium">
           <span>1 jour (Micro-aventure)</span>
           <span>15 jours</span>
           <span>30 jours (Grande traversée)</span>
@@ -222,12 +222,12 @@ export function Step2Dates({
               className={`p-4 rounded-2xl border flex items-start gap-3 ${
                 w.severity === 'alert'
                   ? 'bg-rose-50/90 border-rose-200 text-rose-900'
-                  : 'bg-amber-50/90 border-amber-200 text-amber-950'
+                  : 'bg-[var(--lkv-warning-bg)] border-[var(--lkv-warning-subtle)] text-[var(--lkv-warning-dark)]'
               }`}
             >
               <AlertTriangle
                 size={18}
-                className={w.severity === 'alert' ? 'text-rose-600' : 'text-amber-600'}
+                className={w.severity === 'alert' ? 'text-rose-600' : 'text-[var(--lkv-warning-dark)]'}
               />
               <div className="text-xs leading-relaxed">
                 <span className="font-semibold block mb-0.5">
@@ -239,8 +239,8 @@ export function Step2Dates({
           ))}
         </div>
       ) : (
-        <div className="p-3.5 bg-emerald-50/80 border border-emerald-200/80 rounded-2xl flex items-center gap-3 text-emerald-900">
-          <CheckCircle2 size={16} className="text-emerald-600 shrink-0" />
+        <div className="p-3.5 bg-[var(--lkv-success-bg)] border border-[var(--lkv-success-bg)] rounded-2xl flex items-center gap-3 text-[var(--lkv-primary)]">
+          <CheckCircle2 size={16} className="text-[var(--lkv-secondary-hover)] shrink-0" />
           <div className="text-xs">
             <span className="font-semibold">Période favorable pour {countries[0]?.name || 'cette destination'} :</span> les conditions de praticabilité et de météo sont adaptées aux sentiers.
           </div>

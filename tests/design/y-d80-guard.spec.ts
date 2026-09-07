@@ -35,7 +35,13 @@ const ALLOWLIST_HEX = new Set(['#ffffff', '#fff', '#000000', '#000']);
 /** Fichiers autorisés à contenir des littéraux /voyages/... (rule 11). */
 const RULE11_ALLOWLIST = [
   'src/features/trips/registry/tripSectionRegistry.ts',
+  'src/features/trips/registry/tripPaths.ts',
 ];
+
+/** Normalise un chemin relatif en séparateurs '/' (indépendant de l'OS). */
+function norm(file: string): string {
+  return file.split('\\').join('/');
+}
 
 function collectFiles(dir: string, acc: string[] = []): string[] {
   const full = path.join(ROOT, dir);
@@ -134,7 +140,7 @@ describe('GARDE-FOU Y-D80 — module voyage (12 règles)', () => {
     ];
     for (const dir of SCOPE_DIRS) {
       walk(dir, (content, file) => {
-        if (allowed.includes(file)) return;
+        if (allowed.map(norm).includes(norm(file))) return;
         if (/navigator\.onLine|@capacitor\/network/.test(content)) {
           const lines = content.split(/\r?\n/);
           lines.forEach((l, i) => {
@@ -168,13 +174,13 @@ describe('GARDE-FOU Y-D80 — module voyage (12 règles)', () => {
       'src/features/trips/components/TripSidebarRight.tsx',
     ];
     walk('src/app/voyages', (content, file) => {
-      if (file.endsWith('layout.tsx')) return;
+      if (norm(file).endsWith('layout.tsx')) return;
       if (/<aside[\s>]/.test(content)) {
         v.push({ file, line: 0, extract: '<aside hors layout.tsx', rule: 'R10' });
       }
     });
     walk('src/features/trips', (content, file) => {
-      if (allowedAside.includes(file)) return;
+      if (allowedAside.map(norm).includes(norm(file))) return;
       if (/<aside[\s>]/.test(content)) {
         v.push({ file, line: 0, extract: '<aside hors sidebars canoniques', rule: 'R10' });
       }
@@ -186,7 +192,7 @@ describe('GARDE-FOU Y-D80 — module voyage (12 règles)', () => {
     const v: Violation[] = [];
     for (const dir of SCOPE_DIRS) {
       walk(dir, (content, file) => {
-        if (RULE11_ALLOWLIST.includes(file)) return;
+        if (RULE11_ALLOWLIST.includes(norm(file))) return;
         scanLine(/['"`]\/voyages\/[^'"`]*['"`]/, file, content, 'R11', v);
         // template literals construisant un lien section sans passer par le registre
         scanLine(/`\/voyages\/\$\{[^}]+\}\/(?!gpx)[a-z]+/, file, content, 'R11', v);

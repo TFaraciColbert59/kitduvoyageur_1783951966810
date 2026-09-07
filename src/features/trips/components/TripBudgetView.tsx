@@ -6,6 +6,7 @@ import { GlassCard } from '@/components/ui/GlassCard';
 import { GlassCapsuleBtn } from '@/components/ui/GlassCapsuleBtn';
 import { calculateBudgetSummary } from '../engine/budgetEngine';
 import { addExpenseAction, deleteExpenseAction } from '@/app/voyages/budget-actions';
+import { ConfirmDialog } from './ConfirmDialog';
 import type { TripFull } from '../types/trip.types';
 
 interface TripBudgetViewProps {
@@ -16,6 +17,7 @@ export function TripBudgetView({ trip }: TripBudgetViewProps) {
   const [isAddOpen, setIsAddOpen] = useState(false);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
   const [isPending, startTransition] = useTransition();
+  const [confirmState, setConfirmState] = useState<{ expenseId: string; title: string } | null>(null);
 
   const budgetSummary = calculateBudgetSummary(
     { estimated_budget: trip.estimated_budget, budget_currency: trip.budget_currency },
@@ -25,15 +27,16 @@ export function TripBudgetView({ trip }: TripBudgetViewProps) {
 
   const canManage = trip.permissions.canManageBudget;
 
-  const handleDelete = (expenseId: string, title: string) => {
-    if (confirm(`Supprimer la dépense "${title}" ?`)) {
-      startTransition(async () => {
-        const res = await deleteExpenseAction(trip.id, expenseId, trip.slug);
-        if (!res.success) {
-          alert(res.error || 'Impossible de supprimer cette dépense');
-        }
-      });
-    }
+  const confirmDelete = () => {
+    if (!confirmState) return;
+    const { expenseId } = confirmState;
+    setConfirmState(null);
+    startTransition(async () => {
+      const res = await deleteExpenseAction(trip.id, expenseId, trip.slug);
+      if (!res.success) {
+        setErrorMsg(res.error || 'Impossible de supprimer cette dépense');
+      }
+    });
   };
 
   const handleAddSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
@@ -60,6 +63,11 @@ export function TripBudgetView({ trip }: TripBudgetViewProps) {
   return (
     <div className="space-y-6">
       {/* En-tête de section */}
+      {errorMsg && (
+        <div className="p-3 rounded-xl glass tone-danger text-[var(--lkv-danger)] text-xs">
+          {errorMsg}
+        </div>
+      )}
       <div className="flex flex-wrap items-center justify-between gap-4">
         <div>
           <h3 className="text-xl font-bold text-lkv-primary flex items-center gap-2">
@@ -86,7 +94,7 @@ export function TripBudgetView({ trip }: TripBudgetViewProps) {
       {/* Cartes de synthèse budgétaire */}
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
         {/* Total dépensé */}
-        <GlassCard tone="neutral" className="p-4 rounded-[20px] border border-white/60 shadow-sm">
+        <GlassCard tone="neutral" className="p-4 rounded-[var(--lkv-radius-lg)] border border-white/60 shadow-sm">
           <div className="text-xs text-lkv-secondary font-semibold">Total des dépenses réelles</div>
           <div className="text-2xl font-extrabold text-lkv-primary mt-1">
             {budgetSummary.totalSpent} {budgetSummary.currency}
@@ -97,7 +105,7 @@ export function TripBudgetView({ trip }: TripBudgetViewProps) {
         </GlassCard>
 
         {/* Budget prévisionnel & reste */}
-        <GlassCard tone="neutral" className="p-4 rounded-[20px] border border-white/60 shadow-sm">
+        <GlassCard tone="neutral" className="p-4 rounded-[var(--lkv-radius-lg)] border border-white/60 shadow-sm">
           <div className="text-xs text-lkv-secondary font-semibold">Budget prévisionnel</div>
           <div className="text-2xl font-extrabold text-lkv-primary mt-1">
             {budgetSummary.estimatedBudget ? `${budgetSummary.estimatedBudget} ${budgetSummary.currency}` : 'Non défini'}
@@ -117,7 +125,7 @@ export function TripBudgetView({ trip }: TripBudgetViewProps) {
         </GlassCard>
 
         {/* Taux de consommation */}
-        <GlassCard tone="neutral" className="p-4 rounded-[20px] border border-white/60 shadow-sm">
+        <GlassCard tone="neutral" className="p-4 rounded-[var(--lkv-radius-lg)] border border-white/60 shadow-sm">
           <div className="text-xs text-lkv-secondary font-semibold">Taux de consommation</div>
           <div className="text-2xl font-extrabold text-lkv-primary mt-1">
             {budgetSummary.spentPercentage !== null ? `${budgetSummary.spentPercentage}%` : '—'}
@@ -138,7 +146,7 @@ export function TripBudgetView({ trip }: TripBudgetViewProps) {
       {/* Règlements de compte simplifiés & Balances */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         {/* Settlements (Qui doit à qui) */}
-        <GlassCard tone="neutral" className="p-5 rounded-[22px] border border-white/60 shadow-sm space-y-3">
+        <GlassCard tone="neutral" className="p-5 rounded-[var(--lkv-radius-lg)] border border-white/60 shadow-sm space-y-3">
           <div className="flex items-center justify-between border-b border-white/40 pb-2">
             <h4 className="text-sm font-bold text-lkv-primary flex items-center gap-2">
               <TrendingUp size={16} className="text-lkv-secondary" />
@@ -174,7 +182,7 @@ export function TripBudgetView({ trip }: TripBudgetViewProps) {
         </GlassCard>
 
         {/* Balances individuelles */}
-        <GlassCard tone="neutral" className="p-5 rounded-[22px] border border-white/60 shadow-sm space-y-3">
+        <GlassCard tone="neutral" className="p-5 rounded-[var(--lkv-radius-lg)] border border-white/60 shadow-sm space-y-3">
           <div className="flex items-center justify-between border-b border-white/40 pb-2">
             <h4 className="text-sm font-bold text-lkv-primary">Solde net par participant</h4>
             <span className="text-[11px] text-lkv-secondary">{budgetSummary.balances.length} membre{budgetSummary.balances.length > 1 ? 's' : ''}</span>
@@ -211,7 +219,7 @@ export function TripBudgetView({ trip }: TripBudgetViewProps) {
 
       {/* Ventilation par Catégories */}
       {categoryEntries.length > 0 && (
-        <GlassCard tone="neutral" className="p-5 rounded-[22px] border border-white/60 shadow-sm space-y-3">
+        <GlassCard tone="neutral" className="p-5 rounded-[var(--lkv-radius-lg)] border border-white/60 shadow-sm space-y-3">
           <h4 className="text-sm font-bold text-lkv-primary">Ventilation par catégorie</h4>
           <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
             {categoryEntries.map(([cat, amt]) => {
@@ -239,7 +247,7 @@ export function TripBudgetView({ trip }: TripBudgetViewProps) {
       <div className="space-y-3">
         <h4 className="text-base font-bold text-lkv-primary">Historique des dépenses</h4>
         {trip.expenses.length === 0 ? (
-          <GlassCard tone="neutral" className="p-6 rounded-[20px] text-center text-xs text-[var(--lkv-text-muted)]">
+          <GlassCard tone="neutral" className="p-6 rounded-[var(--lkv-radius-lg)] text-center text-xs text-[var(--lkv-text-muted)]">
             Aucune dépense enregistrée sur cette expédition.
           </GlassCard>
         ) : (
@@ -248,7 +256,7 @@ export function TripBudgetView({ trip }: TripBudgetViewProps) {
               <GlassCard
                 key={exp.id}
                 tone="neutral"
-                className="p-3.5 rounded-[18px] border border-white/60 flex items-center justify-between gap-3 shadow-xs"
+                className="p-3.5 rounded-[var(--lkv-radius-lg)] border border-white/60 flex items-center justify-between gap-3 shadow-xs"
               >
                 <div>
                   <div className="text-sm font-bold text-lkv-primary">{exp.title}</div>
@@ -265,7 +273,7 @@ export function TripBudgetView({ trip }: TripBudgetViewProps) {
                   </div>
                   {canManage && (
                     <button
-                      onClick={() => handleDelete(exp.id, exp.title)}
+                      onClick={() => setConfirmState({ expenseId: exp.id, title: exp.title })}
                       disabled={isPending}
                       className="min-h-[44px] min-w-[44px] flex items-center justify-center rounded-full glass-sub-card border border-white/60 text-[var(--lkv-text-muted)] hover:text-[var(--lkv-danger)] hover:bg-[var(--lkv-danger)]/10 transition-all shadow-2xs"
                       title="Supprimer la dépense"
@@ -285,7 +293,7 @@ export function TripBudgetView({ trip }: TripBudgetViewProps) {
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm animate-in fade-in">
           <GlassCard
             tone="neutral"
-            className="w-full max-w-md p-6 rounded-[24px] border border-white/80 shadow-2xl space-y-4"
+            className="w-full max-w-md p-6 rounded-[var(--lkv-radius-xl)] border border-white/80 shadow-2xl space-y-4"
           >
             <div className="flex items-center justify-between pb-3 border-b border-white/40">
               <h4 className="text-base font-bold text-lkv-primary flex items-center gap-2">
@@ -407,6 +415,18 @@ export function TripBudgetView({ trip }: TripBudgetViewProps) {
           </GlassCard>
         </div>
       )}
+
+      {/* Modale de confirmation de suppression */}
+      <ConfirmDialog
+        open={confirmState !== null}
+        title='Supprimer la dépense ?'
+        message={confirmState ? `La dépense « ${confirmState.title} » sera définitivement supprimée.` : undefined}
+        confirmLabel="Supprimer"
+        cancelLabel="Annuler"
+        danger
+        onConfirm={confirmDelete}
+        onCancel={() => setConfirmState(null)}
+      />
     </div>
   );
 }

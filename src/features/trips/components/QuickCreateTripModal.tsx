@@ -6,6 +6,7 @@ import { GlassCard } from '@/components/ui/GlassCard';
 import { GlassCapsuleBtn } from '@/components/ui/GlassCapsuleBtn';
 import { LkvInput } from '@/components/ui/LkvInput';
 import { Compass, X, AlertCircle } from 'lucide-react';
+import { tripSectionHref } from '../registry/tripSectionRegistry';
 import {
   createTripSchema,
   type CreateTripInput,
@@ -70,7 +71,7 @@ export function QuickCreateTripModal({
       if (onSubmitTrip) {
         const res = await onSubmitTrip(validation.data as CreateTripInput);
         onClose();
-        router.push(`/voyages/${res.slug}`);
+        router.push(tripSectionHref(res.slug, 'overview'));
       } else {
         // Envoi vers l'API de création
         const response = await fetch('/api/voyages', {
@@ -84,7 +85,7 @@ export function QuickCreateTripModal({
         }
         const created = await response.json();
         onClose();
-        router.push(`/voyages/${created.slug}`);
+        router.push(tripSectionHref(created.slug, 'overview'));
       }
     } catch (err: any) {
       setFormError(err.message || 'Une erreur est survenue');
@@ -96,7 +97,7 @@ export function QuickCreateTripModal({
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm animate-fade-in">
       <div className="relative w-full max-w-lg">
-        <GlassCard tone="neutral" blur="lg" className="p-6 rounded-[32px] border border-white/80 shadow-2xl">
+        <GlassCard tone="neutral" blur="lg" className="p-6 rounded-[var(--lkv-radius-2xl)] border border-white/80 shadow-2xl">
           {/* Header */}
           <div className="flex items-center justify-between pb-4 border-b border-white/40 mb-4">
             <div className="flex items-center gap-2">

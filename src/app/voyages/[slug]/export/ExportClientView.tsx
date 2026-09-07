@@ -8,6 +8,7 @@ import type { BudgetSummary } from '@/features/trips/engine/budgetEngine';
 import { formatCivilDateRange } from '@/lib/dates/tripDates';
 import { GlassSubCard, GlassCapsuleBtn } from '@/components/ui';
 import { tripSectionHref } from '@/features/trips/registry/tripSectionRegistry';
+import { printActiveView } from '@/lib/native/print';
 
 interface ExportClientViewProps {
   trip: TripFull;
@@ -16,11 +17,8 @@ interface ExportClientViewProps {
 }
 
 export default function ExportClientView({ trip, stats, budgetSummary }: ExportClientViewProps) {
-  const handlePrint = () => {
-    if (typeof window !== 'undefined') {
-      window.print();
-    }
-  };
+  // Y3.5 : export via l'action dédiée (règle Y-D80 n°12) — pas de window.print en dur ici.
+  const handlePrint = printActiveView;
 
   const stepsByDay = (trip.steps || []).reduce((acc, step) => {
     if (!acc[step.day_number]) acc[step.day_number] = [];

@@ -13,6 +13,7 @@ import {
   compactOrderIndices,
 } from './plannerEngine';
 import { getCivilDurationDays } from '@/lib/dates/tripDates';
+import { tripSectionHref } from '../registry/tripSectionRegistry';
 import { DayNavigator } from './DayNavigator';
 import { DayView } from './DayView';
 import { StepEditModal } from './StepEditModal';
@@ -355,7 +356,7 @@ export default function ItineraryPlannerClient({
         <div className="flex items-center justify-between gap-4">
           <div className="flex items-center gap-3 min-w-0">
             <Link
-              href={`/voyages/${trip.slug}`}
+              href={tripSectionHref(trip.slug, 'overview')}
               className="w-11 h-11 min-w-[44px] min-h-[44px] rounded-full glass-sub-card border border-white/60 flex items-center justify-center text-[var(--lkv-text-primary)] hover:bg-white transition-all active:scale-95 cursor-pointer shadow-2xs"
               aria-label="Retour au cockpit du voyage"
             >
@@ -380,7 +381,7 @@ export default function ItineraryPlannerClient({
 
           <div className="flex items-center gap-2">
             <GlassCapsuleBtn
-              href={`/voyages/${trip.slug}`}
+              href={tripSectionHref(trip.slug, 'overview')}
               size="sm"
               icon={<Map className="w-3.5 h-3.5" />}
             >
@@ -471,7 +472,7 @@ export default function ItineraryPlannerClient({
           <div className="w-full max-w-md glass border border-white/60 rounded-[var(--lkv-radius-card)] p-6 shadow-2xl space-y-4">
             <div className="flex items-center gap-3 text-[var(--lkv-danger)]">
               <AlertCircle className="w-6 h-6 shrink-0" />
-              <h3 className="font-semibold text-base text-[var(--lkv-text)]">
+              <h3 className="font-semibold text-base text-[var(--lkv-text-primary)]">
                 Supprimer le Jour {dayPendingDeletion} ?
               </h3>
             </div>
