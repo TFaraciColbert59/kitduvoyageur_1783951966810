@@ -6,11 +6,19 @@ import Footer from '@/components/Footer';
 import Icon from '@/components/ui/AppIcon';
 import { useChat } from '@/lib/hooks/useChat';
 import MobilePageShell from '@/components/mobile-nav/MobilePageShell';
+import { useActiveTrip } from '@/features/trips/context/ActiveTripContext';
+import { ActiveTripBanner } from '@/features/trips/components/ActiveTripBanner';
 
 export default function CopilotePage() {
+  const { activeTrip } = useActiveTrip();
   const [input, setInput] = useState('');
   const [messages, setMessages] = useState<{ role: 'user' | 'assistant'; content: string }[]>([
-    { role: 'assistant', content: 'Bonjour ! Je suis votre copilote d\'expédition IA. Comment puis-je vous aider ?' },
+    {
+      role: 'assistant',
+      content: activeTrip
+        ? `Bonjour ! Je suis votre copilote IA pour votre expédition « ${activeTrip.title} ». Comment puis-je vous guider ?`
+        : "Bonjour ! Je suis votre copilote d'expédition IA. Comment puis-je vous aider ?",
+    },
   ]);
   const [activeTab, setActiveTab] = useState<'chat' | 'plan' | 'suggestions'>('chat');
   const messagesEndRef = useRef<HTMLDivElement>(null);
@@ -24,7 +32,8 @@ export default function CopilotePage() {
     setInput('');
     const newMessages: { role: 'user' | 'assistant'; content: string }[] = [...messages, { role: 'user', content: msg }];
     setMessages(newMessages);
-    const systemPrompt = 'Tu es un copilote d\'expédition expert pour Kit du Voyageur. Réponds en français.';
+    const tripContext = activeTrip ? ` Le voyageur prépare l'expédition : "${activeTrip.title}".` : '';
+    const systemPrompt = `Tu es un copilote d'expédition expert pour Kit du Voyageur.${tripContext} Garde-fous : pas de conseil médical ou de sécurité en montagne présenté comme certain, renvoi vers les sources officielles et le 112 en cas de danger. Réponds en français.`;
     await sendMessage([{ role: 'system', content: systemPrompt }, ...newMessages.map(m => ({ role: m.role, content: m.content }))], { max_tokens: 600 });
   };
 
@@ -44,6 +53,7 @@ export default function CopilotePage() {
       <div className="hidden md:block">
         <div className="min-h-screen bg-background text-foreground">
           <Header />
+          <ActiveTripBanner />
           <section className="pt-20 bg-dark-bg">
             <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
               <h1 className="font-display font-800 text-4xl md:text-5xl text-white tracking-tight mb-3">Votre assistant<br />d&apos;expédition intelligent</h1>
@@ -56,6 +66,7 @@ export default function CopilotePage() {
       {/* MOBILE */}
       <div className="block md:hidden">
         <MobilePageShell>
+          <ActiveTripBanner />
           <div style={{ padding: '16px' }}>
             <h1 style={{ fontSize: '20px', fontWeight: 800, color: '#17402C', marginBottom: '8px' }}>Copilote IA</h1>
             <p style={{ fontSize: '13px', color: 'rgba(23,64,44,0.6)', marginBottom: '16px' }}>Assistant d&apos;expédition intelligent.</p>

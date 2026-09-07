@@ -15,7 +15,7 @@ interface GlobalSearchModalProps {
 
 interface SearchResultItem {
   id: string;
-  type: 'product' | 'club' | 'country' | 'guide';
+  type: 'product' | 'trip' | 'crew' | 'place' | 'carnet' | 'club' | 'country' | 'guide';
   title: string;
   subtitle?: string;
   url: string;
@@ -35,7 +35,9 @@ const POPULAR_SEARCHES = [
 export default function GlobalSearchModal({ isOpen, onClose }: GlobalSearchModalProps) {
   const router = useRouter();
   const [query, setQuery] = useState('');
-  const [activeFilter, setActiveFilter] = useState<'all' | 'product' | 'club' | 'guide'>('all');
+  const [activeFilter, setActiveFilter] = useState<
+    'all' | 'trip' | 'crew' | 'product' | 'place' | 'carnet' | 'club' | 'guide'
+  >('all');
   const [results, setResults] = useState<SearchResultItem[]>([]);
   const [loading, setLoading] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
@@ -88,7 +90,7 @@ export default function GlobalSearchModal({ isOpen, onClose }: GlobalSearchModal
           .from('products')
           .select('id, name, category, price, image_url')
           .or(`name.ilike.%${q}%,category.ilike.%${q}%`)
-          .limit(5);
+          .limit(4);
 
         if (products) {
           products.forEach((p: any) => {
@@ -98,14 +100,95 @@ export default function GlobalSearchModal({ isOpen, onClose }: GlobalSearchModal
               title: p.name,
               subtitle: p.category ? `Matériel • ${p.category}` : 'Équipement',
               url: `/boutique`,
-              badge: 'Boutique',
+              badge: 'Matériel',
               image: p.image_url,
               price: p.price,
             });
           });
         }
 
-        // 2. Search clubs
+        // 2. Search trips (voyages)
+        const { data: trips } = await supabase
+          .from('trips')
+          .select('id, slug, title, destination, status')
+          .or(`title.ilike.%${q}%,destination.ilike.%${q}%`)
+          .limit(4);
+
+        if (trips) {
+          trips.forEach((t: any) => {
+            combinedResults.push({
+              id: t.id,
+              type: 'trip',
+              title: t.title,
+              subtitle: t.destination ? `Voyage • ${t.destination}` : 'Expédition',
+              url: `/voyages/${t.slug}`,
+              badge: 'Voyage',
+            });
+          });
+        }
+
+        // 3. Search crews (équipages)
+        const { data: crews } = await supabase
+          .from('crews')
+          .select('id, name, type, members_count')
+          .or(`name.ilike.%${q}%`)
+          .limit(4);
+
+        if (crews) {
+          crews.forEach((c: any) => {
+            combinedResults.push({
+              id: c.id,
+              type: 'crew',
+              title: c.name,
+              subtitle: `${c.members_count || 0} membres • ${c.type || 'Équipage'}`,
+              url: `/groupes/${c.id}`,
+              badge: 'Équipage',
+            });
+          });
+        }
+
+        // 4. Search community places (lieux)
+        const { data: places } = await supabase
+          .from('places')
+          .select('id, slug, name, category, region, city, altitude_m')
+          .or(`name.ilike.%${q}%,category.ilike.%${q}%,region.ilike.%${q}%,city.ilike.%${q}%`)
+          .limit(4);
+
+        if (places) {
+          places.forEach((p: any) => {
+            combinedResults.push({
+              id: p.id,
+              type: 'place',
+              title: p.name,
+              subtitle: `${p.category || 'Lieu'}${p.region ? ` • ${p.region}` : ''}${p.altitude_m ? ` (${p.altitude_m}m)` : ''}`,
+              url: `/lieux/${p.slug}`,
+              badge: 'Lieu',
+            });
+          });
+        }
+
+        // 5. Search carnets
+        const { data: carnets } = await supabase
+          .from('carnets')
+          .select('id, title, destination, cover_image')
+          .or(`title.ilike.%${q}%,destination.ilike.%${q}%`)
+          .limit(4);
+
+        if (carnets) {
+          carnets.forEach((c: any) => {
+            combinedResults.push({
+              id: c.id,
+              type: 'carnet',
+              title: c.title || 'Carnet sans titre',
+              subtitle: c.destination ? `Carnet • ${c.destination}` : 'Récit d\'aventure',
+              url: `/carnets/${c.id}`,
+              badge: 'Carnet',
+              image: c.cover_image,
+            });
+          });
+        }
+
+        // 6. Search clubs
         const { data: clubs } = await supabase
           .from('clubs')
           .select('id, name, slug, type, cover_url, members_count')
@@ -126,7 +209,7 @@ export default function GlobalSearchModal({ isOpen, onClose }: GlobalSearchModal
           });
         }
 
-        // 3. Static destinations & guides match
+        // 7. Static destinations & guides match
         const destinations = [
           { name: 'Islande', desc: 'Terres de feu et de glace', url: '/pays', badge: 'Destination' },
           { name: 'Norvège', desc: 'Fjords & Aurores Boréales', url: '/pays', badge: 'Destination' },
@@ -219,8 +302,12 @@ export default function GlobalSearchModal({ isOpen, onClose }: GlobalSearchModal
         {query.trim() && (
           <div className="px-5 py-2.5 bg-black/30 border-b border-white/5 flex items-center gap-2 overflow-x-auto no-scrollbar">
             {[
-              { id: 'all', label: 'Tous les résultats' },
-              { id: 'product', label: 'Équipements' },
+              { id: 'all', label: 'Tous' },
+              { id: 'trip', label: 'Voyages' },
+              { id: 'crew', label: 'Équipages' },
+              { id: 'product', label: 'Matériel' },
+              { id: 'place', label: 'Lieux' },
+              { id: 'carnet', label: 'Carnets' },
               { id: 'club', label: 'Clubs' },
               { id: 'guide', label: 'Destinations' },
             ].map((tab) => (
@@ -280,7 +367,21 @@ export default function GlobalSearchModal({ isOpen, onClose }: GlobalSearchModal
                         <img src={item.image} alt={item.title} className="w-full h-full object-cover group-hover:scale-105 transition-transform" />
                       ) : (
                         <Icon
-                          name={item.type === 'product' ? 'ShoppingBagIcon' : item.type === 'club' ? 'UsersIcon' : 'GlobeAltIcon'}
+                          name={
+                            item.type === 'product'
+                              ? 'ShoppingBagIcon'
+                              : item.type === 'trip'
+                              ? 'MapIcon'
+                              : item.type === 'crew'
+                              ? 'UserGroupIcon'
+                              : item.type === 'place'
+                              ? 'MapPinIcon'
+                              : item.type === 'carnet'
+                              ? 'BookOpenIcon'
+                              : item.type === 'club'
+                              ? 'UsersIcon'
+                              : 'GlobeAltIcon'
+                          }
                           size={20}
                           className="text-emerald-400"
                         />

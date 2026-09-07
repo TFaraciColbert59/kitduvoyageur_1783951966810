@@ -46,9 +46,9 @@ Dernière mise à jour : 2026-09-07T01:15:00+02:00
 | **P5** | **5.2** | Implémentation de la vue par phase | **TERMINE** | Contrôleur segmenté `TripPhaseController`, réutilisation vues existantes, synchro URL `?phase=` |
 | **P5** | **5.3** | Mode Vivre (terrain, hors-ligne, urgence) | **TERMINE** | `TripLiveCockpitView` (plein soleil, dépense 2 taps, 112/114 & GPS), Playwright TEST-E2E-VOYAGE-08 8/8 vert |
 |---|---|---|---|---|
-| **P6** | **6.1** | Provider de contexte actif `ActiveTripProvider` (cookie httpOnly) | À FAIRE | Contexte global disponible |
-| **P6** | **6.2** | Interconnexion des modules (Boutique, Carte, Lieux, Carnets, etc.) | À FAIRE | Consommation du voyage actif |
-| **P6** | **6.3** | Recherche et navigation globale | À FAIRE | Fil d'Ariane unifié |
+| **P6** | **6.1** | Provider de contexte actif `ActiveTripProvider` (cookie httpOnly) | **TERMINE** | Cookie `lkv_active_trip` SSR + client mirror, test `activeTrip.spec.ts` 4/4 vert |
+| **P6** | **6.2** | Interconnexion des modules (Matériel, Carte, Copilote, etc.) | **TERMINE** | Bannières contextuelles, injection prompt copilote, doc `MODULE_INTERCONNECTIONS.md` |
+| **P6** | **6.3** | Recherche et navigation globale | **TERMINE** | GlobalSearch (Cmd+K) trips/crews/places/carnets, breadcrumb équipage/voyage/phase, reprise accueil, Playwright 9/9 vert |
 |---|---|---|---|---|
 | **P7** | **7.1** | Bus d'événements `lkv_events` et fonction `emitEvent()` | À FAIRE | Émission server-side |
 | **P7** | **7.2** | Consommateurs d'événements (fil d'activité, scoring, notifications) | À FAIRE | Pas de recalcul local |

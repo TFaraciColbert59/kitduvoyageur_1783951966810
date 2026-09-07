@@ -2,6 +2,7 @@ import React from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import Header from '@/components/Header';
+import { ResumeActiveTripCard } from '@/features/trips/components/ResumeActiveTripCard';
 
 const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://lekitduvoyageur.fr';
 
@@ -32,6 +33,7 @@ export default function HomePage() {
       <div>
         <div className="min-h-screen bg-[#F7FAF8] font-sans text-[#17402C]">
           <Header />
+          <ResumeActiveTripCard />
           
           {/* ── HERO ── */}
           <section className="relative min-h-[90vh] flex flex-col pt-40 px-4 pb-12 overflow-hidden">
