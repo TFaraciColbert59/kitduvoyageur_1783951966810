@@ -18,6 +18,7 @@ import {
   publishTripToCarnet,
   submitTripFieldReviews,
 } from '@/lib/queries-trip-completion';
+import { getTripById } from '@/lib/queries-trips';
 
 /**
  * Action : Ajouter une note / récit au carnet de bord du voyage
@@ -207,6 +208,17 @@ export async function publishTripCarnetAction(
 
     if (!user) {
       return { success: false, error: 'Vous devez être connecté pour publier un carnet' };
+    }
+
+    // Ownership + permission : le voyage est chargé DANS le contexte de
+    // l'utilisateur et seul un éditeur/organisateur peut publier le carnet
+    // (sinon, n'importe quel lecteur d'un voyage public pourrait le publier).
+    const trip = await getTripById(parsed.data.tripId, user.id);
+    if (!trip) {
+      return { success: false, error: 'Voyage introuvable ou non autorisé' };
+    }
+    if (!trip.permissions.canEdit) {
+      return { success: false, error: 'Seuls les organisateurs et éditeurs peuvent publier ce carnet' };
     }
 
     const result = await publishTripToCarnet(parsed.data.tripId, {

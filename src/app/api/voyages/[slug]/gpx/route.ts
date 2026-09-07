@@ -2,6 +2,8 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getTripBySlug } from '@/lib/queries-trips';
 import { generateTripGpx } from '@/features/trips/engine/exportEngine';
 
+export const dynamic = 'force-dynamic';
+
 export async function GET(
   request: NextRequest,
   { params }: { params: Promise<{ slug: string }> }
@@ -10,7 +12,8 @@ export async function GET(
     const { slug } = await params;
     const token = request.nextUrl.searchParams.get('token') || undefined;
 
-    const trip = await getTripBySlug(slug, token);
+    // Le token est vérifié comme token de partage (jamais passé comme userId).
+    const trip = await getTripBySlug(slug, undefined, { shareToken: token });
 
     if (!trip) {
       return new NextResponse('Voyage introuvable ou non autorisé', { status: 404 });

@@ -96,7 +96,10 @@ export default async function TripDetailPage({ params, searchParams }: PageProps
     <>
       <script
         type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+        dangerouslySetInnerHTML={{
+          // Échappement < : un titre/étape utilisateur ne peut pas sortir du bloc script.
+          __html: JSON.stringify(jsonLd).replace(/</g, '\\u003c'),
+        }}
       />
       <TripDetailClient
         trip={trip}

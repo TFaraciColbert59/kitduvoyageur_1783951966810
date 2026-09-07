@@ -76,19 +76,31 @@ export async function inviteCollaborator(
   const isUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(targetUserId);
 
   if (!isUuid) {
-    // Chercher dans profiles par username ou email
-    const { data: foundProfile } = await supabase
+    // Chercher dans profiles par username ou email — lookups paramétrés
+    // (jamais d'interpolation dans .or(), surface d'injection PostgREST).
+    const { data: byUsername } = await supabase
       .from('profiles')
       .select('id, full_name, username')
-      .or(`username.eq.${targetUserId},email.eq.${targetUserId}`)
+      .eq('username', targetUserId)
       .maybeSingle();
+
+    let foundProfile = byUsername;
+    if (!foundProfile) {
+      const { data: byEmail } = await supabase
+        .from('profiles')
+        .select('id, full_name, username')
+        .eq('email', targetUserId)
+        .maybeSingle();
+      foundProfile = byEmail;
+    }
 
     if (foundProfile) {
       targetUserId = foundProfile.id;
     } else {
+      // Pas d'écho de l'identifiant fourni (énumération de profils/emails).
       return {
         success: false,
-        error: `Aucun utilisateur trouvé avec l'identifiant "${identifier}"`,
+        error: 'Aucun utilisateur trouvé avec cet identifiant',
       };
     }
   }
