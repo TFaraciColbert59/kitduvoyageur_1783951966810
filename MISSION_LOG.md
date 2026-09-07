@@ -357,3 +357,26 @@ ORDER BY country_code;
 - **Aura Interaction Design :** Transitions douces avec Framer Motion, feedback tactile haptique sur chaque action interactive (`triggerHaptic`), accordéon FAQ fluide.
 - **Design Tokens :** Palette Ink (`#17402C`), Sage (`#5B7F55`), Stone (`#FBFAF6`), zéro token orange (`#E4501C` banni).
 - **Masquage Strict :** Tout bloc absent ou dégradé est totalement omis de l'interface utilisateur.
+
+## Chantier Y — Hub Voyage Unique (débuté 07/09/2026)
+
+- **Y-pré** ✅ : 46 fichiers de session commités en 4 commits atomiques (6581a6ec →
+  c1c981cb), portes G1/G2/G3 vertes, poussés sur chantier/x-design-unique.
+- **Y0.0** 🔄 : inventaire + docs de gouvernance (agent), G4 build baseline OK
+  (exit 0 ; /voyages/[slug] 529 kB First Load — cible Y8.2 < 250 kB), ci_invariants OK.
+- **Y0.1** ⛔ B1 : fusion PR #31 impossible (gh indisponible) → clic manuel Tony
+  (docs/Y_BLOCKERS.md). Sous-phases indépendantes poursuivies sur la branche X (§7.4).
+- **Y0.2** ✅ : 6 arbitrages tranchés par preuves → docs/Y_DECISIONS.md
+  (ConfiguratorWizard VIVANT ; planner éditeur + onglet lecteur ; autoGen hors hub ;
+  ResumeActiveTripCard conservé (accueil) ; carte = mode ; no-scrollbar canonique).
+- **Y0.3** ✅ : docs/Y_HUB_SPEC.md (valeurs revérifiées dans tokens.css).
+- **Y0.4** ✅ : seed:y — 8 voyages y-* déterministes, preuve requête 8/8 compteurs exacts.
+- **Y0.5** 🔄 : helper prepareVisualPage (horloge figée, masques nommés), contact-sheet
+  + visual:sheet, tests/a11y/e2e + test:a11y (axe, 3 viewports), projet ipad —
+  conversion des 10 specs + rebase G5 inspecté (agent en cours).
+- **Y0.6** ✅ : workflow CI étendu (invariants, G6 a11y, G5 visuel artefact).
+- **Y0.7** ✅ : docs/Y_SECURITY.md — R7 confirmé et corrigé (localStorage assaini),
+  montants publics retirés, migration RLS écrite non appliquée.
+- **Y1** ✅ (tag y1-done) : tripProfileEngine TDD 53 tests, registres sections (10) +
+  widgets (12) 13 tests — 1008/1008 ; garde-fou Y-D80 12 règles, 510 violations
+  inventoriées (docs/Y_VIOLATIONS.md, rouge documenté, G3=12/12 attendu fin Y3.5).
