@@ -8,6 +8,8 @@ import { useHapticFeedback } from '@/hooks/useHapticFeedback';
 import { useUnreadBadge } from '@/hooks/useUnreadBadge';
 import { useCartCount } from '@/hooks/useCartCount';
 import LkvIcon from '@/components/ui/LkvIcon';
+import { tripSectionHref, sectionIdFromPathname } from '@/features/trips/registry/tripSectionRegistry';
+import type { TripSectionId } from '@/features/trips/engine/tripProfileEngine';
 
 interface Tab {
   href: string;
@@ -434,16 +436,9 @@ function BottomTabBar() {
   );
   const isMessageriePage = pathname === '/messagerie';
   const isVoyagesHub = pathname === '/voyages';
-  // Sous-pages outillées (nouveau/itineraire/kit/export) : elles ont leur propre
-  // chrome, le plateau d'onglets du cockpit y serait non fonctionnel (pas de
-  // listener TripDetailClient monté sur ces routes).
-  const isVoyageSubpage = Boolean(
-    pathname &&
-    (pathname === '/voyages/nouveau' ||
-      pathname.endsWith('/export') ||
-      pathname.endsWith('/itineraire') ||
-      pathname.endsWith('/kit'))
-  );
+  // Y2 : le hub est URL-driven (layout de segment). Toute route sous
+  // /voyages/[slug] sauf le wizard est une section du cockpit.
+  const isVoyageSubpage = pathname === '/voyages/nouveau';
   const isVoyageDetail = Boolean(
     pathname &&
     pathname.startsWith('/voyages/') &&
@@ -468,7 +463,6 @@ function BottomTabBar() {
   const [activeMaterielTab, setActiveMaterielTab] = useState<string>('overview');
   const [activeKitsTab, setActiveKitsTab] = useState<string>('all');
   const [activeVoyagesHubTab, setActiveVoyagesHubTab] = useState<'user' | 'public'>('user');
-  const [activeVoyageDetailTab, setActiveVoyageDetailTab] = useState<string>('overview');
 
   useEffect(() => {
     if (!pathname) return;
@@ -541,9 +535,6 @@ function BottomTabBar() {
       const voyagesHubHandler = (e: any) => {
         if (e.detail) setActiveVoyagesHubTab(e.detail);
       };
-      const voyageDetailHandler = (e: any) => {
-        if (e.detail) setActiveVoyageDetailTab(e.detail);
-      };
       const departHandler = (e: any) => {
         if (e.detail) {
           setActiveDepartTab(e.detail);
@@ -578,7 +569,6 @@ function BottomTabBar() {
       window.addEventListener('pays-continent-change', paysContinentHandler);
       window.addEventListener('pays-detail-tab-change', paysDetailHandler);
       window.addEventListener('voyages-hub-tab-change', voyagesHubHandler);
-      window.addEventListener('voyage-detail-tab-change', voyageDetailHandler);
       window.addEventListener('depart-section-change', departHandler);
       window.addEventListener('kits-section-change', kitsHandler);
       window.addEventListener('messagerie-tab-state', messagerieStateHandler);
@@ -596,8 +586,7 @@ function BottomTabBar() {
         window.removeEventListener('pays-continent-change', paysContinentHandler);
         window.removeEventListener('pays-detail-tab-change', paysDetailHandler);
         window.removeEventListener('voyages-hub-tab-change', voyagesHubHandler);
-        window.removeEventListener('voyage-detail-tab-change', voyageDetailHandler);
-        window.removeEventListener('depart-section-change', departHandler);
+          window.removeEventListener('depart-section-change', departHandler);
         window.removeEventListener('kits-section-change', kitsHandler);
         window.removeEventListener('messagerie-tab-state', messagerieStateHandler);
         window.removeEventListener('messagerie-tab-change', messagerieTabHandler);
@@ -620,9 +609,10 @@ function BottomTabBar() {
         window.dispatchEvent(new CustomEvent('voyages-hub-tab-change', { detail: tabKey }));
       }
     } else if (isVoyageDetail) {
-      setActiveVoyageDetailTab(tabKey);
-      if (typeof window !== 'undefined') {
-        window.dispatchEvent(new CustomEvent('voyage-detail-tab-change', { detail: tabKey }));
+      // Y2 : navigation URL via le registre des sections (slug = 2e segment).
+      const slug = pathname?.split('/')[2];
+      if (slug) {
+        router.push(tripSectionHref(slug, tabKey as TripSectionId));
       }
     } else if (isMaterielSection) {
       setActiveMaterielTab(tabKey);
@@ -805,7 +795,7 @@ function BottomTabBar() {
     : isVoyagesHub
     ? activeVoyagesHubTab
     : isVoyageDetail
-    ? activeVoyageDetailTab
+    ? (sectionIdFromPathname(pathname) ?? 'overview')
     : isMaterielSection
     ? activeMaterielTab
     : isGroupesHub

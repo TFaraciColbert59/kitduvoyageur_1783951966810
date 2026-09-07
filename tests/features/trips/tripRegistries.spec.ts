@@ -43,9 +43,9 @@ describe('Y1.3 — registre des sections', () => {
     }
   });
 
-  // Segments déclarés mais dont la route n'existe pas encore — vidée par Y2/Y4.
-  // Chaque entrée restante devient un travail Y2/Y4 ; ce test garde le contrat.
-  const PENDING_ROUTE_SEGMENTS: string[] = ['equipage', 'documents', 'checklist', 'securite', 'journal', 'budget'];
+  // Y2 : toutes les routes de sections existent désormais (layout de segment).
+  // Cette liste doit rester VIDE — elle documentait le contrat pré-Y2.
+  const PENDING_ROUTE_SEGMENTS: string[] = [];
 
   it('segments cohérents avec les dossiers de routes réels (ou en attente Y2/Y4)', () => {
     const slugsDir = path.join(process.cwd(), 'src', 'app', 'voyages', '[slug]');

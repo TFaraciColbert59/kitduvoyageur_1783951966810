@@ -1,15 +1,9 @@
 import { Metadata } from 'next';
 import { notFound } from 'next/navigation';
-import Link from 'next/link';
-import { ArrowLeft, Package } from 'lucide-react';
 import { createClient } from '@/lib/supabase/server';
 import { getTripKitDetails } from '@/lib/queries-trip-kit';
 import { getTripDurationDays } from '@/features/trips/engine/contextualKitEngine';
 import { TripKitView } from '@/features/trips/components/TripKitView';
-import AppShellDesktop from '@/components/shell/AppShellDesktop';
-import MobilePageShell from '@/components/mobile-nav/MobilePageShell';
-import KitSidebarLeft from '@/features/trips/components/KitSidebarLeft';
-import KitSidebarRight from '@/features/trips/components/KitSidebarRight';
 
 export const dynamic = 'force-dynamic';
 
@@ -22,9 +16,7 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
   const result = await getTripKitDetails(slug);
 
   if (!result) {
-    return {
-      title: 'Kit de voyage introuvable — Le Kit du Voyageur',
-    };
+    return { title: 'Kit de voyage introuvable — Le Kit du Voyageur' };
   }
 
   const { trip } = result;
@@ -34,15 +26,11 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
   return {
     title,
     description,
-    openGraph: {
-      title,
-      description,
-      type: 'article',
-      url: `https://lekitduvoyageur.fr/voyages/${trip.slug}/kit`,
-    },
+    openGraph: { title, description, type: 'article', url: `https://lekitduvoyageur.fr/voyages/${trip.slug}/kit` },
   };
 }
 
+/** Y2 — le shell (colonnes, mobile) est fourni par le layout du segment. */
 export default async function TripKitPage({ params }: PageProps) {
   const { slug } = await params;
   const supabase = await createClient();
@@ -51,55 +39,21 @@ export default async function TripKitPage({ params }: PageProps) {
   } = await supabase.auth.getUser();
 
   const result = await getTripKitDetails(slug, user?.id);
-
-  if (!result) {
-    notFound();
-  }
+  if (!result) notFound();
 
   const { trip, analysis } = result;
 
   return (
-    <AppShellDesktop
-      sidebarLeft={<KitSidebarLeft trip={trip} />}
-      sidebarRight={<KitSidebarRight trip={trip} analysis={analysis} />}
-      mobileSlot={
-        <MobilePageShell safeTop={true} hasBottomNav={true}>
-          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 sm:py-6 pb-28">
-            <div className="flex items-center gap-2 text-xs text-lkv-secondary mb-4">
-              <Link href="/voyages" className="hover:underline flex items-center gap-1 font-medium">
-                <ArrowLeft size={13} />
-                Voyages
-              </Link>
-              <span>/</span>
-              <Link href={`/voyages/${trip.slug}`} className="hover:underline truncate max-w-xs font-medium">
-                {trip.title}
-              </Link>
-              <span>/</span>
-              <span className="text-lkv-primary font-semibold flex items-center gap-1">
-                <Package size={13} />
-                Kit & Sac à dos
-              </span>
-            </div>
-            <div className="mb-6">
-              <div className="flex items-center gap-2 text-lkv-secondary text-xs font-bold uppercase tracking-wider mb-1">
-                <Package size={14} />
-                Préparation & Matériel Technique
-              </div>
-              <h1 className="text-2xl sm:text-3xl font-black text-lkv-primary">
-                Kit du voyage & Sac à dos
-              </h1>
-              <p className="text-xs sm:text-sm text-lkv-secondary mt-1">
-                Recommandations contextuelles basées sur le climat, l’altitude ({analysis.maxAltitudeM}m) et la durée ({getTripDurationDays(trip)}j).
-              </p>
-            </div>
-            <TripKitView trip={trip} analysis={analysis} showBackLink={true} />
-          </div>
-        </MobilePageShell>
-      }
-    >
-      <div className="space-y-4">
-        <TripKitView trip={trip} analysis={analysis} showBackLink={false} />
+    <div className="space-y-4">
+      <div className="mb-2">
+        <div className="flex items-center gap-2 text-[var(--lkv-text-secondary)] text-xs font-bold uppercase tracking-wider mb-1">
+          Kit & Sac à dos
+        </div>
+        <p className="text-xs sm:text-sm text-[var(--lkv-text-secondary)]">
+          Recommandations contextuelles basées sur le climat, l’altitude ({analysis.maxAltitudeM}m) et la durée ({getTripDurationDays(trip)}j).
+        </p>
       </div>
-    </AppShellDesktop>
+      <TripKitView trip={trip} analysis={analysis} showBackLink={false} />
+    </div>
   );
 }

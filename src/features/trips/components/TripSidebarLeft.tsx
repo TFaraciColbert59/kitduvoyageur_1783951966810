@@ -2,67 +2,61 @@
 
 import React from 'react';
 import Link from 'next/link';
-import { ArrowLeft, Compass, Share2, Check } from 'lucide-react';
+import { usePathname } from 'next/navigation';
+import { ArrowLeft, Compass, Share2, Check, Plus } from 'lucide-react';
 import { GlassSubCard, GlassPill, GlassCapsuleBtn } from '@/components/ui';
-import { ChevronRightIcon as ChevronRightAnimated } from '@/components/icons/chevron-right';
-import { getPhaseLabel, type TripPhase } from '@/features/trips/engine/temporalPhaseEngine';
-import type { TripFull } from '@/features/trips/types/trip.types';
+import { getPhaseLabel, type TripPhase } from '../engine/temporalPhaseEngine';
+import type { TripProfile } from '../engine/tripProfileEngine';
+import {
+  tripSectionRegistry,
+  tripSectionHref,
+  sectionIdFromPathname,
+  type TripSectionDef,
+} from '../registry/tripSectionRegistry';
+import type { TripFull } from '../types/trip.types';
 
-export type TripSectionId =
-  | 'overview'
-  | 'itinerary'
-  | 'gear'
-  | 'team'
-  | 'budget'
-  | 'docs'
-  | 'checklist';
+export type { TripSectionId } from '../engine/tripProfileEngine';
 
-interface SectionDef {
-  id: TripSectionId;
-  label: string;
-  count?: number;
-  phases: TripPhase[];
-}
-
-interface TripSidebarLeftProps {
+export interface TripSidebarLeftProps {
   trip: TripFull;
-  activeSection: TripSectionId;
-  onSectionChange: (s: TripSectionId) => void;
+  profile: TripProfile;
   activePhase: TripPhase;
   onToggleActive: () => void;
   isTripActive: boolean;
   isPending: boolean;
   onShare: () => void;
+  /** Ouvre le TripSectionPicker (Y2.4) — sections masquées activables. */
+  onOpenSectionPicker?: () => void;
 }
 
+/**
+ * Y2.3 — Colonne gauche canonique du hub, pilotée par le registre des sections.
+ * Navigation par <Link> (URLs réelles, partageables), état actif dérivé du
+ * pathname, toutes les permissions appliquées (budget → canManageBudget,
+ * docs → canViewDocuments), sections filtrées par profil (matrice) et phase.
+ * Recettes de classes : docs/Y_HUB_SPEC §5 (au caractère près).
+ */
 export default function TripSidebarLeft({
   trip,
-  activeSection,
-  onSectionChange,
+  profile,
   activePhase,
   onToggleActive,
   isTripActive,
   isPending,
   onShare,
+  onOpenSectionPicker,
 }: TripSidebarLeftProps) {
-  const itineraryCount = trip.steps?.length ?? 0;
-  const gearCount = trip.items?.length ?? 0;
-  const docsCount = trip.documents?.length ?? 0;
-  const participantsCount = (trip.collaborators?.length ?? 0) + 1;
+  const pathname = usePathname();
+  const activeSection = sectionIdFromPathname(pathname);
 
-  const allSections: SectionDef[] = [
-    { id: 'overview',   label: 'Apercu',           phases: ['prepare', 'live', 'recount'] },
-    { id: 'itinerary',  label: 'Itineraire',        count: itineraryCount, phases: ['prepare', 'live'] },
-    { id: 'gear',       label: 'Equipement',        count: gearCount,      phases: ['prepare'] },
-    { id: 'team',       label: 'Equipage',          count: participantsCount, phases: ['prepare', 'live'] },
-    { id: 'budget',     label: 'Budget',            phases: ['prepare', 'recount'] },
-    ...(trip.permissions.canViewDocuments
-      ? [{ id: 'docs' as TripSectionId, label: 'Documents', count: docsCount, phases: ['prepare'] as TripPhase[] }]
-      : []),
-    { id: 'checklist',  label: 'Checklist Depart', phases: ['prepare'] },
-  ];
+  const visible = tripSectionRegistry.filter((s: TripSectionDef) => {
+    if (!profile.sections.includes(s.id)) return false;
+    if (!s.phases.includes(activePhase)) return false;
+    if (s.permission && !trip.permissions[s.permission]) return false;
+    return true;
+  });
 
-  const visibleSections = allSections.filter(s => s.phases.includes(activePhase));
+  const hiddenCount = profile.sections.length - visible.length;
 
   return (
     <aside
@@ -97,14 +91,12 @@ export default function TripSidebarLeft({
         </GlassSubCard>
         <div className="grid grid-cols-2 gap-1.5">
           <GlassCapsuleBtn
-            variant={isTripActive ? 'primary' : 'default'}
+            variant={isTripActive ? 'default' : 'primary'}
             size="sm"
             onClick={onToggleActive}
             disabled={isPending}
             icon={isTripActive ? <Check size={13} /> : <Compass size={13} />}
-            className={`flex items-center justify-center gap-1.5 !py-1.5 !px-2 !text-[10.5px] min-h-[var(--lkv-touch-min)] w-full ${
-              isTripActive ? '!bg-[var(--lkv-success)] !border-[var(--lkv-success)] text-white' : ''
-            }`}
+            className="flex items-center justify-center gap-1.5 !py-1.5 !px-2 !text-[10.5px] min-h-[var(--lkv-touch-min)] w-full"
           >
             <span>{isTripActive ? 'Active' : 'Activer'}</span>
           </GlassCapsuleBtn>
@@ -119,36 +111,55 @@ export default function TripSidebarLeft({
           </GlassCapsuleBtn>
         </div>
       </div>
+
       <nav className="flex-1 min-h-0 overflow-y-auto no-scrollbar py-2 space-y-1.5" aria-label="Sections du voyage">
         <p className="text-[9.5px] font-mono font-bold uppercase tracking-widest text-[var(--lkv-text-secondary)] px-2 mb-1">
           Navigation
         </p>
-        {visibleSections.map((s) => {
+        {visible.map((s) => {
           const isActive = activeSection === s.id;
+          const Icon = s.icon;
+          const count = s.counter(trip);
           return (
-            <button
+            <Link
               key={s.id}
-              type="button"
-              onClick={() => onSectionChange(s.id)}
+              href={tripSectionHref(trip.slug, s.id)}
+              aria-current={isActive ? 'page' : undefined}
               className={`w-full px-3 py-2.5 rounded-[var(--lkv-radius-md)] font-bold text-xs transition-all flex items-center justify-between group cursor-pointer border ${
                 isActive
                   ? 'bg-[var(--lkv-primary)] text-white border-[var(--lkv-primary)] shadow-sm'
-                  : 'glass-sub-card border border-white/50 text-[var(--lkv-text-primary)] hover:bg-white'
+                  : 'glass-sub-card border border-white/60 text-[var(--lkv-text-primary)] hover:bg-white shadow-2xs'
               }`}
             >
               <span className="truncate text-left flex items-center gap-2">
+                <Icon size={13} className={isActive ? 'text-white/90 shrink-0' : 'text-[var(--lkv-text-secondary)] shrink-0'} />
                 {s.label}
-                {s.count !== undefined && s.count > 0 && (
-                  <span className={`text-[9px] px-1.5 py-0.5 rounded-full font-mono ${isActive ? 'bg-white/20 text-white' : 'bg-black/5 text-[var(--lkv-text-secondary)]'}`}>
-                    {s.count}
+                {count !== null && count > 0 && (
+                  <span
+                    className={`text-[9px] px-1.5 py-0.5 rounded-full font-mono ${
+                      isActive ? 'bg-white/20 text-white' : 'text-[var(--lkv-text-muted)]'
+                    }`}
+                  >
+                    {count}
                   </span>
                 )}
               </span>
-              {isActive && <ChevronRightAnimated size={13} className="text-white/70 shrink-0" />}
-            </button>
+            </Link>
           );
         })}
+
+        {hiddenCount > 0 && onOpenSectionPicker && (
+          <button
+            type="button"
+            onClick={onOpenSectionPicker}
+            className="w-full px-3 py-2.5 rounded-[var(--lkv-radius-md)] font-bold text-xs transition-all flex items-center gap-2 border border-dashed border-white/70 glass-sub-card text-[var(--lkv-text-secondary)] hover:text-[var(--lkv-text-primary)] hover:bg-white shadow-2xs cursor-pointer"
+          >
+            <Plus size={13} />
+            <span>Ajouter une section ({hiddenCount})</span>
+          </button>
+        )}
       </nav>
+
       <div className="shrink-0 pt-2 border-t border-[var(--lkv-border-subtle)]">
         <div className="text-center">
           <span className="text-[8.5px] font-mono text-[var(--lkv-text-secondary)] tracking-wider uppercase">

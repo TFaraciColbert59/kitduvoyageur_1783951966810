@@ -1,4 +1,5 @@
-import { test, expect, Page } from '@playwright/test';
+import { test, expect } from '@playwright/test';
+import { prepareVisualPage, expectVisualSnapshot } from './_helpers/prepareVisualPage';
 
 /**
  * Tests de régression visuelle — Shell Mobile LKDV
@@ -15,40 +16,23 @@ const PUBLIC_ROUTES = [
   { path: '/carte-interactive', name: 'carte-interactive' },
 ];
 
-async function waitForShellReady(page: Page): Promise<void> {
-  // Attendre la stabilisation du réseau
-  await page.waitForLoadState('networkidle', { timeout: 30_000 }).catch(() => {
-    // Certaines pages ont des WebSocket persistants — on continue
-  });
-  // Attendre la disparition des spinners de chargement
-  await page.waitForSelector('[class*="animate-spin"]', {
-    state: 'hidden',
-    timeout: 15_000,
-  }).catch(() => {
-    // Pas de spinner = déjà chargé
-  });
-  // Pause pour les transitions CSS/Framer Motion
-  await page.waitForTimeout(800);
-}
-
 // Tests de screenshot pour chaque route publique
 for (const route of PUBLIC_ROUTES) {
   test(`shell visuel — ${route.name} (iPhone 14 Pro)`, async ({ page }) => {
-    await page.goto(route.path);
-    await waitForShellReady(page);
+    await prepareVisualPage(page, route.path);
 
     // Vérifier qu'il y a du contenu (pas d'écran blanc total)
     const elementCount = await page.locator('body *').count();
     expect(elementCount).toBeGreaterThan(10);
 
-    await expect(page).toHaveScreenshot(`${route.name}.png`, {
-      fullPage: false,
-      threshold: 0.01,
-      maxDiffPixels: 500,
-    });
+    await expectVisualSnapshot(page, `${route.name}.png`);
   });
 }
 
+// Test dédié : le spinner DOIT rester visible pendant le chargement du globe.
+// Il n'utilise PAS le protocole helper (prepareVisualPage attend la disparition
+// des spinners) : la route est interceptée et ralentie AVANT navigation, et la
+// capture fige volontairement l'état de chargement.
 test('pays — skeleton visible pendant le chargement du globe (réseau ralenti)', async ({ page }) => {
   // Intercepter le GeoJSON local et le retarder de 2 secondes
   await page.route('/data/countries-110m.geojson', async route => {

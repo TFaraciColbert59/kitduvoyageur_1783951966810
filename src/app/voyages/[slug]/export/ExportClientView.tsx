@@ -6,9 +6,8 @@ import { ArrowLeft, Printer, Download, MapPin, Calendar, Users, Shield, FileText
 import type { TripFull, TripStats } from '@/features/trips/types/trip.types';
 import type { BudgetSummary } from '@/features/trips/engine/budgetEngine';
 import { formatCivilDateRange } from '@/lib/dates/tripDates';
-import AppShellDesktop from '@/components/shell/AppShellDesktop';
-import MobilePageShell from '@/components/mobile-nav/MobilePageShell';
 import { GlassSubCard, GlassCapsuleBtn } from '@/components/ui';
+import { tripSectionHref } from '@/features/trips/registry/tripSectionRegistry';
 
 interface ExportClientViewProps {
   trip: TripFull;
@@ -240,11 +239,11 @@ export default function ExportClientView({ trip, stats, budgetSummary }: ExportC
   );
 
   const renderSidebarLeft = () => (
-    <aside className="h-full max-h-full w-full flex-1 flex flex-col gap-3 glass rounded-[var(--lkv-radius-card)] p-3.5 text-[var(--lkv-text-primary)] font-sans overflow-y-auto no-scrollbar border border-white/40 shadow-sm select-none print:hidden">
+    <div className="h-full max-h-full w-full flex flex-col gap-3 glass rounded-[var(--lkv-radius-card)] p-3.5 text-[var(--lkv-text-primary)] font-sans overflow-y-auto no-scrollbar border border-white/40 shadow-sm select-none print:hidden">
       <div className="shrink-0 space-y-2.5">
         <nav aria-label="Retour" className="text-xs">
           <Link
-            href={`/voyages/${trip.slug}`}
+            href={tripSectionHref(trip.slug, 'overview')}
             className="inline-flex items-center gap-1.5 font-medium hover:underline text-[var(--lkv-text-primary)]"
           >
             <ArrowLeft size={13} />
@@ -294,45 +293,35 @@ export default function ExportClientView({ trip, stats, budgetSummary }: ExportC
           LKDV Feuille de Route
         </span>
       </div>
-    </aside>
+    </div>
   );
 
   return (
-    <AppShellDesktop
-      sidebarLeft={renderSidebarLeft()}
-      mobileSlot={
-        <MobilePageShell safeTop={true} hasBottomNav={false}>
-          <div className="p-4 pb-28 space-y-4">
-            <div className="flex items-center justify-between gap-2">
-              <Link href={`/voyages/${trip.slug}`} className="text-xs font-medium text-[var(--lkv-text-primary)] flex items-center gap-1">
-                <ArrowLeft size={13} />
-                <span>Cockpit</span>
-              </Link>
-              <div className="flex items-center gap-2">
-                <a
-                  href={`/api/voyages/${trip.slug}/gpx`}
-                  download={`${trip.slug}.gpx`}
-                  className="glass-capsule-btn flex items-center gap-1.5"
-                >
-                  <Download size={12} />
-                  <span>GPX</span>
-                </a>
-                <GlassCapsuleBtn
-                  variant="primary"
-                  size="xs"
-                  onClick={handlePrint}
-                  icon={<Printer size={12} />}
-                >
-                  PDF
-                </GlassCapsuleBtn>
-              </div>
-            </div>
-            {renderPrintContent()}
-          </div>
-        </MobilePageShell>
-      }
-    >
-      {renderPrintContent()}
-    </AppShellDesktop>
+    <>
+      {/* Barre d'actions (le shell desktop/mobile est fourni par le layout) */}
+      <div className="glass border border-white/60 rounded-[var(--lkv-radius-card)] p-3 flex items-center justify-between gap-3 print:hidden">
+        <Link
+          href={tripSectionHref(trip.slug, 'overview')}
+          className="text-xs font-medium text-[var(--lkv-text-primary)] flex items-center gap-1"
+        >
+          <ArrowLeft size={13} />
+          <span>Cockpit</span>
+        </Link>
+        <div className="flex items-center gap-2">
+          <a
+            href={`/api/voyages/${trip.slug}/gpx`}
+            download={`${trip.slug}.gpx`}
+            className="glass-capsule-btn flex items-center gap-1.5"
+          >
+            <Download size={12} />
+            <span>GPX</span>
+          </a>
+          <GlassCapsuleBtn variant="primary" size="xs" onClick={handlePrint} icon={<Printer size={12} />}>
+            PDF
+          </GlassCapsuleBtn>
+        </div>
+      </div>
+      <div className="max-w-4xl w-full mx-auto">{renderPrintContent()}</div>
+    </>
   );
 }
