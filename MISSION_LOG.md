@@ -380,3 +380,13 @@ ORDER BY country_code;
 - **Y1** ✅ (tag y1-done) : tripProfileEngine TDD 53 tests, registres sections (10) +
   widgets (12) 13 tests — 1008/1008 ; garde-fou Y-D80 12 règles, 510 violations
   inventoriées (docs/Y_VIOLATIONS.md, rouge documenté, G3=12/12 attendu fin Y3.5).
+- **Y2** ✅ (tag y2-done) : layout unique du hub voyage — `layout.tsx` de segment
+  (charge le voyage une fois, phase + profil), `TripHubShell` unique (colonnes
+  gauche 260px / droite 300px / centre + mobile), `TripSidebarLeft` pilotée par le
+  registre (10 sections, Link/tripSectionHref, actif par pathname, permissions
+  budget+docs, déclencheur picker), `TripSidebarRight` générique (registre widgets,
+  tri priorité, repli hauteur) + widgets Countdown/OfflineToggle, 6 routes nouvelles
+  (equipage, budget, documents, checklist, securite, journal), overview via
+  `TripOverviewClient` (?phase=), shell locaux retirés de kit/itineraire/export,
+  BottomTabBar navigation URL. Y-D80 501 violations (−9).
+  Portes : G1 OK · G2 1009/1020 (Y-D80 rouge documenté) · G3 rouge attendu.
