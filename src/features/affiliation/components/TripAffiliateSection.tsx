@@ -4,7 +4,7 @@ import React from 'react';
 import { GlassCard } from '@/components/ui/GlassCard';
 import { AffiliateDisclosure } from './AffiliateDisclosure';
 import { AffiliateLinkCard } from './AffiliateLinkCard';
-import { Compass, Sparkles } from 'lucide-react';
+import { Compass } from 'lucide-react';
 import type { AffiliateLink } from '../types/affiliate.types';
 
 export interface TripAffiliateSectionProps {
@@ -41,7 +41,7 @@ export function TripAffiliateSection({
               Réservations & Préparation Logistique
             </span>
             <h3 className="text-lg sm:text-xl font-black text-stone-900 mt-1">
-              Partenaires vérifiés pour {destinationLabel}
+              Services et partenaires pour {destinationLabel}
             </h3>
           </div>
 

@@ -652,7 +652,7 @@ export const COUNTRY_DETAILS: Record<string, Partial<CountryDetail>> = {
       niveau_label: 'Très sûr',
       niveau_score: 5,
       conseils: [
-        { titre: 'Sécurité publique absolue.', description: 'L’un des pays les plus sûrs au monde, criminalité quasi-nulle même la nuit.' },
+        { titre: 'Sécurité générale.', description: 'Un faible taux de criminalité. Comme partout, restez vigilant la nuit dans les quartiers très fréquentés et gardez vos effets de valeur.' },
         { titre: 'Risque sismique.', description: 'Bâtiments aux normes antisismiques de pointe, suivre les consignes en cas d’alerte.' },
         { titre: 'Règles de savoir-vivre.', description: 'Ne pas manger en marchant, trier rigoureusement ses déchets, silence dans les trains.' },
       ],
