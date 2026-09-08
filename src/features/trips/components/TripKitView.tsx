@@ -41,6 +41,11 @@ import {
   addInventoryItemToTripAction,
 } from '@/app/voyages/kit-actions';
 import { addToCart } from '@/lib/cart';
+import {
+  generateShakedownReport,
+  type GearItem as ShakedownGearItem,
+  type ShakedownReport,
+} from '@/features/materiel/domain/shakedownEngine';
 
 export interface TripKitViewProps {
   trip: TripFull;
@@ -217,6 +222,21 @@ export function TripKitView({ trip, analysis, showBackLink: _showBackLink = fals
   const baseKg = (analysis.baseWeightGrams / 1000).toFixed(1);
   const tripDuration = getTripDuration(trip);
 
+  const shakedownReport = React.useMemo<ShakedownReport>(() => {
+    const gearItems: ShakedownGearItem[] = optimisticItems.map((i) => ({
+      id: i.id,
+      name: i.item_name,
+      weightGrams: i.weight_grams || 0,
+      category: i.category || 'misc',
+      status: i.is_packed ? 'packed' : 'to_buy',
+      isWorn: i.is_worn ?? false,
+      isConsumable: i.is_consumable ?? false,
+      isVital: i.is_vital ?? false,
+      quantity: i.quantity || 1,
+    }));
+    return generateShakedownReport(gearItems);
+  }, [optimisticItems]);
+
   return (
     <div className="space-y-6 animate-fade-in">
       {/* Toast Notification d'ajout panier */}
@@ -236,8 +256,8 @@ export function TripKitView({ trip, analysis, showBackLink: _showBackLink = fals
         </div>
       )}
 
-      {/* 1. En-tête Statut Sac & Bilan de Charge */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+      {/* 1. En-tête Statut Sac & Bilan de Charge & Audit Shakedown */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         {/* Carte Complétude */}
         <GlassCard tone="sage" blur="md" className="p-5 rounded-3xl border border-white/70">
           <div className="flex items-center justify-between mb-2">
@@ -295,6 +315,45 @@ export function TripKitView({ trip, analysis, showBackLink: _showBackLink = fals
           </p>
         </GlassCard>
 
+        {/* Carte Audit Shakedown Canonique */}
+        <GlassCard tone="neutral" blur="md" className="p-5 rounded-3xl border border-white/70">
+          <div className="flex items-center justify-between mb-2">
+            <span className="text-xs font-bold uppercase tracking-wider text-lkv-secondary flex items-center gap-1.5">
+              <Sparkles className="w-4 h-4" />
+              Audit Shakedown
+            </span>
+            <span
+              className={`text-[10px] font-bold px-2 py-0.5 rounded-full uppercase ${
+                shakedownReport.score >= 80
+                  ? 'bg-[var(--lkv-success)]/15 text-[var(--lkv-success)]'
+                  : shakedownReport.score >= 50
+                  ? 'bg-[var(--lkv-warning)]/15 text-[var(--lkv-warning)]'
+                  : 'bg-[var(--lkv-danger)]/15 text-[var(--lkv-danger)]'
+              }`}
+            >
+              Score {shakedownReport.score}/100
+            </span>
+          </div>
+          <div className="text-sm font-bold text-lkv-primary mb-1">
+            {shakedownReport.missingVitalWarnings.length === 0 && shakedownReport.duplicateWarnings.length === 0 ? (
+              <span className="text-[var(--lkv-success)] font-medium">✓ Sac équilibré & sécurisé</span>
+            ) : (
+              <span className="text-[var(--lkv-warning)] font-medium">
+                {shakedownReport.missingVitalWarnings.length > 0 && `${shakedownReport.missingVitalWarnings.length} vital manquant`}
+                {shakedownReport.missingVitalWarnings.length > 0 && shakedownReport.duplicateWarnings.length > 0 && ' · '}
+                {shakedownReport.duplicateWarnings.length > 0 && `${shakedownReport.duplicateWarnings.length} doublon`}
+              </span>
+            )}
+          </div>
+          <p className="text-xs text-stone-500 mt-1">
+            {shakedownReport.potentialWeightSavedGrams > 0 ? (
+              <span>Gain possible : <strong className="text-[var(--lkv-success)]">-{(shakedownReport.potentialWeightSavedGrams / 1000).toFixed(1)} kg</strong></span>
+            ) : (
+              <span>Aucun doublon superflu détecté</span>
+            )}
+          </p>
+        </GlassCard>
+
         {/* Carte Contexte Expédition (Résolution D2) */}
         <GlassCard tone="neutral" blur="md" className="p-5 rounded-3xl border border-white/70">
           <span className="text-xs font-bold uppercase tracking-wider text-lkv-secondary flex items-center gap-1.5 mb-2">
@@ -306,7 +365,7 @@ export function TripKitView({ trip, analysis, showBackLink: _showBackLink = fals
           </div>
           <div className="text-xs text-stone-600 mt-1 space-y-0.5">
             <div>
-              Altitude maximale : <strong className="whitespace-nowrap">{analysis.maxAltitudeM > 0 ? `${analysis.maxAltitudeM} m` : 'Plaine'}</strong>
+              Altitude maximale : <strong className="whitespace-nowrap">{analysis.maxAltitudeM > 0 ? `${analysis.maxAltitudeM} m` : 'Plaine'}</strong>
               {analysis.maxAltitudeM <= 500 && (
                 <span className="text-[10px] text-[var(--lkv-text-muted)] ml-1.5">(estimation pays)</span>
               )}
@@ -835,6 +894,11 @@ function TripKitItemRow({ item, onTogglePacked, onDeleteItem }: ItemRowProps) {
             {item.quantity > 1 && (
               <span className="text-[10px] font-bold px-1.5 py-0.2 rounded glass-sub-card border border-white/60 text-[var(--lkv-text-secondary)]">
                 ×{item.quantity}
+              </span>
+            )}
+            {(item.inventory_item_id || item.source === 'inventory') && (
+              <span className="text-[10px] font-medium text-[var(--lkv-primary)] bg-[var(--lkv-primary)]/10 px-1.5 py-0.5 rounded-full border border-[var(--lkv-primary)]/20">
+                Inventaire possédé
               </span>
             )}
           </div>
