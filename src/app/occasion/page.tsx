@@ -542,13 +542,13 @@ export default function OccasionPage() {
                 <p className="text-xs text-white/50">Annonces actives</p>
               </div>
               <div className="bg-white/5 border border-white/10 rounded-xl p-3 text-center">
-                <p className="text-xl font-display font-700 text-amber-400">
+                <p className="text-xl font-display font-700 text-sand-400">
                   {listings.filter((l) => l.condition === 'comme_neuf' || l.condition === 'tres_bon').length}
                 </p>
                 <p className="text-xs text-white/50">Très bon état</p>
               </div>
               <div className="bg-white/5 border border-white/10 rounded-xl p-3 text-center">
-                <p className="text-xl font-display font-700 text-emerald-400">{listings.filter((l) => l.negotiable).length}</p>
+                <p className="text-xl font-display font-700 text-forest-400">{listings.filter((l) => l.negotiable).length}</p>
                 <p className="text-xs text-white/50">Négociables</p>
               </div>
             </div>
@@ -623,7 +623,7 @@ export default function OccasionPage() {
                       <div className="absolute top-2 left-2 flex gap-1.5 flex-wrap">
                         <span className={cond.pill}>{cond.label}</span>
                         {isVerifiedPurchase && (
-                          <span className="text-xs px-2 py-0.5 rounded-full bg-blue-500 text-white font-medium flex items-center gap-1">
+                          <span className="text-xs px-2 py-0.5 rounded-full bg-sky-500 text-white font-medium flex items-center gap-1">
                             <Icon name="ShieldCheckIcon" size={10} variant="outline" />
                             Ajouter
                           </span>
@@ -702,7 +702,7 @@ export default function OccasionPage() {
                   </button>
                 </div>
                 {user && (
-                  <div className="mb-4 p-3 bg-blue-50 border border-blue-200 rounded-xl text-blue-700 text-xs flex items-center gap-2">
+                  <div className="mb-4 p-3 bg-sky-50 border border-sky-200 rounded-xl text-sky-700 text-xs flex items-center gap-2">
                     <Icon name="LightBulbIcon" size={14} variant="outline" />
                     Astuce : vendez directement depuis votre{' '}
                     <Link href="/compte" className="font-600 underline" onClick={() => setShowSellModal(false)}>compte</Link>
@@ -745,8 +745,8 @@ export default function OccasionPage() {
               </>
             ) : (
               <div className="text-center py-6">
-                <div className="w-16 h-16 rounded-full bg-emerald-100 flex items-center justify-center mx-auto mb-4">
-                  <Icon name="CheckIcon" size={28} className="text-emerald-600" />
+                <div className="w-16 h-16 rounded-full bg-forest-100 flex items-center justify-center mx-auto mb-4">
+                  <Icon name="CheckIcon" size={28} className="text-forest-600" />
                 </div>
                 <h3 className="font-display font-700 text-foreground text-lg mb-2">Annonce publiée !</h3>
                 <p className="text-sm text-muted-foreground mb-6">Votre annonce est maintenant visible.</p>

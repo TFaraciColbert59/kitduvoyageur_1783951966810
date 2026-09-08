@@ -151,7 +151,7 @@ export const GearChecklist: React.FC<GearChecklistProps> = ({
                       </span>
                     )}
                     {item.isConsumable && (
-                      <span className="px-1.5 py-0.5 rounded-md bg-amber-500/20 text-amber-700 dark:text-amber-300 text-[9px] font-bold flex-shrink-0">
+                      <span className="px-1.5 py-0.5 rounded-md bg-sand-500/20 text-sand-700 dark:text-sand-300 text-[9px] font-bold flex-shrink-0">
                         VIVRES
                       </span>
                     )}
@@ -177,7 +177,7 @@ export const GearChecklist: React.FC<GearChecklistProps> = ({
                       type="checkbox"
                       checked={item.isWorn}
                       onChange={() => onToggleItemWorn(item.id)}
-                      className="rounded text-emerald-600 focus:ring-emerald-500 cursor-pointer"
+                      className="rounded text-forest-600 focus:ring-forest-500 cursor-pointer"
                     />
                     <span className="hidden sm:inline">Porté 👕</span>
                   </label>

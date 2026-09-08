@@ -9,7 +9,7 @@ export default function TripNotFound() {
   return (
     <AppShell safeTop={true} hasBottomNav={true}>
       <div className="max-w-xl mx-auto px-4 py-20 text-center">
-        <GlassCard tone="neutral" blur="md" className="p-8 rounded-[32px] border border-white/70 shadow-lg">
+        <GlassCard tone="neutral" blur="md" className="p-8 rounded-2xl border border-white/70 shadow-lg">
           <div className="inline-flex p-4 rounded-full bg-lkv-secondary/10 text-lkv-primary mb-4">
             <LkvIcon name="compass" size={40} />
           </div>

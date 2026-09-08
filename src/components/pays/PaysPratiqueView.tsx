@@ -239,7 +239,7 @@ export default function PaysPratiqueView({ country, isMobile = false }: PaysPrat
         <div className="space-y-4">
           <div className="flex items-center justify-between px-1">
             <div className="flex items-center gap-2">
-              <span className="w-2.5 h-2.5 rounded-full bg-emerald-600 animate-pulse" />
+              <span className="w-2.5 h-2.5 rounded-full bg-forest-600 animate-pulse" />
               <h3 className="font-display font-bold text-base sm:text-lg text-[#17402C]">
                 À savoir avant de partir
               </h3>
@@ -256,7 +256,7 @@ export default function PaysPratiqueView({ country, isMobile = false }: PaysPrat
                 <div className="space-y-2.5">
                   <div className="flex items-center justify-between pb-2 border-b border-[#17402C]/10">
                     <div className="flex items-center gap-2">
-                      <div className="w-8 h-8 rounded-xl bg-emerald-500/15 text-emerald-700 flex items-center justify-center font-bold text-sm">
+                      <div className="w-8 h-8 rounded-xl bg-forest-500/15 text-forest-700 flex items-center justify-center font-bold text-sm">
                         🛂
                       </div>
                       <h4 className="font-display font-bold text-sm text-[#17402C]">
@@ -304,14 +304,14 @@ export default function PaysPratiqueView({ country, isMobile = false }: PaysPrat
                 <div className="space-y-2.5">
                   <div className="flex items-center justify-between pb-2 border-b border-[#17402C]/10">
                     <div className="flex items-center gap-2">
-                      <div className="w-8 h-8 rounded-xl bg-amber-500/15 text-amber-800 flex items-center justify-center font-bold text-sm">
+                      <div className="w-8 h-8 rounded-xl bg-sand-500/15 text-sand-800 flex items-center justify-center font-bold text-sm">
                         🛡️
                       </div>
                       <h4 className="font-display font-bold text-sm text-[#17402C]">
                         Vigilance &amp; Alertes terrain
                       </h4>
                     </div>
-                    <span className="glass-pill text-[8.5px] font-mono font-bold text-amber-700 bg-amber-500/10 border-amber-500/20">
+                    <span className="glass-pill text-[8.5px] font-mono font-bold text-sand-700 bg-sand-500/10 border-sand-500/20">
                       Fraîcheur &lt; 7 jours
                     </span>
                   </div>
@@ -321,7 +321,7 @@ export default function PaysPratiqueView({ country, isMobile = false }: PaysPrat
                 <div className="pt-2.5 border-t border-[#17402C]/10 space-y-1.5 text-[9.5px] font-mono text-[#5A7064]">
                   {securite.generated_at && (
                     <div className="flex items-center justify-between">
-                      <span className="text-emerald-700 font-semibold">✓ France Diplomatie live</span>
+                      <span className="text-forest-700 font-semibold">✓ France Diplomatie live</span>
                       <span>Mise à jour : {formatDate(securite.generated_at)}</span>
                     </div>
                   )}
@@ -424,7 +424,7 @@ export default function PaysPratiqueView({ country, isMobile = false }: PaysPrat
                 <div className="space-y-2.5">
                   <div className="flex items-center justify-between pb-2 border-b border-[#17402C]/10">
                     <div className="flex items-center gap-2">
-                      <div className="w-8 h-8 rounded-xl bg-amber-500/15 text-amber-700 flex items-center justify-center font-bold text-sm">
+                      <div className="w-8 h-8 rounded-xl bg-sand-500/15 text-sand-700 flex items-center justify-center font-bold text-sm">
                         💶
                       </div>
                       <h4 className="font-display font-bold text-sm text-[#17402C]">
@@ -488,7 +488,7 @@ export default function PaysPratiqueView({ country, isMobile = false }: PaysPrat
                 <div className="space-y-2.5">
                   <div className="flex items-center justify-between pb-2 border-b border-[#17402C]/10">
                     <div className="flex items-center gap-2">
-                      <div className="w-8 h-8 rounded-xl bg-emerald-500/15 text-emerald-700 flex items-center justify-center font-bold text-sm">
+                      <div className="w-8 h-8 rounded-xl bg-forest-500/15 text-forest-700 flex items-center justify-center font-bold text-sm">
                         🌿
                       </div>
                       <h4 className="font-display font-bold text-sm text-[#17402C]">
@@ -549,7 +549,7 @@ export default function PaysPratiqueView({ country, isMobile = false }: PaysPrat
                   </div>
                   <p className="text-[11px] text-[#2D4536] leading-relaxed">{item.conditions}</p>
                   {item.points_vigilance && (
-                    <p className="text-[10px] text-amber-800 font-mono">⚠️ {item.points_vigilance}</p>
+                    <p className="text-[10px] text-sand-800 font-mono">⚠️ {item.points_vigilance}</p>
                   )}
                 </div>
               ))}
@@ -726,7 +726,7 @@ export default function PaysPratiqueView({ country, isMobile = false }: PaysPrat
                 </p>
               </div>
             </div>
-            <span className="glass-pill text-[9px] font-mono font-bold text-emerald-800 bg-emerald-500/10 border-emerald-500/20">
+            <span className="glass-pill text-[9px] font-mono font-bold text-forest-800 bg-forest-500/10 border-forest-500/20">
               Certifié LKDV
             </span>
           </div>

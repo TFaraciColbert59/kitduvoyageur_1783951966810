@@ -32,7 +32,7 @@ export function TripCard({ trip, showRole = true }: TripCardProps) {
         tone="neutral"
         blur="md"
         interactive
-        className="h-full border border-white/60 hover:border-lkv-secondary/40 transition-all duration-300 hover:shadow-lg rounded-[24px] overflow-hidden"
+        className="h-full border border-white/60 hover:border-lkv-secondary/40 transition-all duration-300 hover:shadow-lg rounded-xl overflow-hidden"
       >
         {/* Cover Image (D32 : fallback onError vers no_image si URL cassée) */}
         <div className="relative w-full h-48 bg-[#FAF8F5] overflow-hidden">

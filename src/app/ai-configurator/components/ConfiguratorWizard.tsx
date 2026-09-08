@@ -1091,7 +1091,7 @@ export default function ConfiguratorWizard() {
             <div className="w-12 h-12 bg-[#17402C] rounded-2xl flex items-center justify-center mb-6">
               <Icon name="SparklesIcon" size={24} className="text-[#FAF8F5]" />
             </div>
-            <div className="bg-[rgba(255,255,255,0.92)] border border-[rgba(255,255,255,0.60)] rounded-[12px] px-3 py-2.5">
+            <div className="bg-[rgba(255,255,255,0.92)] border border-[rgba(255,255,255,0.60)] rounded-sm px-3 py-2.5">
               <h2 className="text-4xl md:text-5xl font-display font-bold text-[#17402C] leading-[1.1] tracking-tight mb-3">
                 Intelligence<br/>Outdoor
               </h2>
@@ -1103,7 +1103,7 @@ export default function ConfiguratorWizard() {
 
           <div className="mt-auto space-y-4">
             {/* Dynamic summary based on state */}
-            <div className="bg-[rgba(255,255,255,0.92)] border border-[rgba(255,255,255,0.60)] rounded-[12px] p-6">
+            <div className="bg-[rgba(255,255,255,0.92)] border border-[rgba(255,255,255,0.60)] rounded-sm p-6">
               <p className="glass-eyebrow mb-4">Configuration en cours</p>
 
               <ul className="space-y-4">
@@ -1127,7 +1127,7 @@ export default function ConfiguratorWizard() {
             </div>
 
             {state.generated && (
-              <div className="flex items-center justify-center gap-2 text-[#365233] mt-4 bg-[rgba(255,255,255,0.92)] border border-[rgba(255,255,255,0.60)] rounded-[9px] px-2.5 py-1.5">
+              <div className="flex items-center justify-center gap-2 text-[#365233] mt-4 bg-[rgba(255,255,255,0.92)] border border-[rgba(255,255,255,0.60)] rounded-sm px-2.5 py-1.5">
                 <span className="w-2 h-2 rounded-full bg-[#5B7F55] animate-pulse" />
                 <span className="text-xs font-mono uppercase tracking-widest">Analyse terminée</span>
               </div>

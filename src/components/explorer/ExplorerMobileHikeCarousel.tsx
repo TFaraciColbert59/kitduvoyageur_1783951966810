@@ -138,7 +138,7 @@ export default function ExplorerMobileHikeCarousel({
                   triggerHaptic('selection');
                   onSelectTrail(trail);
                 }}
-                className="snap-start shrink-0 w-[calc(100vw-68px)] max-w-[290px] rounded-[22px] overflow-hidden transition-all duration-200 cursor-pointer"
+                className="snap-start shrink-0 w-[calc(100vw-68px)] max-w-[290px] rounded-lg overflow-hidden transition-all duration-200 cursor-pointer"
                 style={{
                   background: isSelected
                     ? 'linear-gradient(180deg, rgba(255, 255, 255, 0.85) 0%, rgba(251, 250, 246, 0.55) 100%)'
@@ -243,7 +243,7 @@ export default function ExplorerMobileHikeCarousel({
           initial={{ opacity: 0, y: 16 }}
           animate={{ opacity: 1, y: 0 }}
           exit={{ opacity: 0, y: 16 }}
-          className="mx-3 rounded-[24px] p-3 pointer-events-auto max-h-[50vh] flex flex-col shadow-2xl"
+          className="mx-3 rounded-xl p-3 pointer-events-auto max-h-[50vh] flex flex-col shadow-2xl"
           style={{
             background: 'linear-gradient(180deg, rgba(255, 255, 255, 0.70) 0%, rgba(251, 250, 246, 0.40) 100%)',
             backdropFilter: 'blur(24px) saturate(180%)',

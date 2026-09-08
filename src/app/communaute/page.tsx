@@ -390,7 +390,7 @@ function CommunautePageContent() {
                           </div>
                           <div className="p-4 space-y-2 flex-1 flex flex-col justify-between">
                             <div>
-                              <h3 className="font-display font-bold text-base text-[#17402C] group-hover:text-emerald-800 transition-colors">
+                              <h3 className="font-display font-bold text-base text-[#17402C] group-hover:text-forest-800 transition-colors">
                                 {clubName}
                               </h3>
                               <p className="text-xs text-[#5C6B5E] line-clamp-2 mt-1">
@@ -444,7 +444,7 @@ function CommunautePageContent() {
                               {grp.max_members || 6} PLACES
                             </span>
                           </div>
-                          <h4 className="font-display font-bold text-base text-[#17402C] group-hover:text-emerald-800 transition-colors">
+                          <h4 className="font-display font-bold text-base text-[#17402C] group-hover:text-forest-800 transition-colors">
                             {grp.name || 'Expédition Chartreuse'}
                           </h4>
                           <p className="text-xs text-[#5C6B5E] line-clamp-2">
@@ -495,7 +495,7 @@ function CommunautePageContent() {
                         </div>
 
                         <div className="flex items-center justify-between sm:justify-end gap-3 pt-2 sm:pt-0 border-t sm:border-t-0 border-[#17402C]/10">
-                          <span className="text-[10px] font-mono font-bold text-emerald-800">
+                          <span className="text-[10px] font-mono font-bold text-forest-800">
                             {ev.participants}/{ev.maxParticipants} inscrits
                           </span>
                           <button
@@ -522,7 +522,7 @@ function CommunautePageContent() {
                     <p className="text-xs text-[#5C6B5E] leading-relaxed">
                       Posez vos questions sur l&apos;état des sentiers, le débit des sources, les conditions d&apos;enneigement et le matériel.
                     </p>
-                    <div className="p-3.5 rounded-xl bg-emerald-50/80 border border-emerald-200/60 text-xs text-[#17402C] space-y-1">
+                    <div className="p-3.5 rounded-xl bg-forest-50/80 border border-forest-200/60 text-xs text-[#17402C] space-y-1">
                       <span className="font-bold block">✓ Réponses validées par les Guides</span>
                       <p className="text-[11px] text-[#5C6B5E]">Chaque information critique sur les sources et passages délicats est vérifiée par les référents du massif.</p>
                     </div>

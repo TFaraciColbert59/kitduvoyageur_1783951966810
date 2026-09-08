@@ -44,15 +44,15 @@ export function TripOfflineBar({ trip }: TripOfflineBarProps) {
   return (
     <div className="w-full">
       {!isOnline && (
-        <div className="mb-4 p-3 rounded-2xl bg-amber-500/10 border border-amber-500/20 text-amber-900 text-xs flex items-center justify-between gap-2 animate-in fade-in">
+        <div className="mb-4 p-3 rounded-2xl bg-sand-500/10 border border-sand-500/20 text-sand-900 text-xs flex items-center justify-between gap-2 animate-in fade-in">
           <div className="flex items-center gap-2">
-            <WifiOff size={16} className="text-amber-700 shrink-0" />
+            <WifiOff size={16} className="text-sand-700 shrink-0" />
             <span>
               <strong>Mode hors-ligne :</strong> Vous êtes déconnecté du réseau. Consultation des données locales actives.
             </span>
           </div>
           {isSavedOffline && (
-            <span className="text-[10px] font-bold uppercase tracking-wider bg-amber-200/60 px-2 py-0.5 rounded-full text-amber-900">
+            <span className="text-[10px] font-bold uppercase tracking-wider bg-sand-200/60 px-2 py-0.5 rounded-full text-sand-900">
               Synchronisé
             </span>
           )}
@@ -60,8 +60,8 @@ export function TripOfflineBar({ trip }: TripOfflineBarProps) {
       )}
 
       {feedback && (
-        <div className="mb-4 p-3 rounded-2xl bg-emerald-50 border border-emerald-200 text-emerald-800 text-xs flex items-center gap-2 animate-in fade-in">
-          <CheckCircle2 size={16} className="text-emerald-600 shrink-0" />
+        <div className="mb-4 p-3 rounded-2xl bg-forest-50 border border-forest-200 text-forest-800 text-xs flex items-center gap-2 animate-in fade-in">
+          <CheckCircle2 size={16} className="text-forest-600 shrink-0" />
           <span>{feedback}</span>
         </div>
       )}
@@ -69,12 +69,12 @@ export function TripOfflineBar({ trip }: TripOfflineBarProps) {
       <div className="flex items-center justify-between text-xs text-lkv-secondary px-1">
         <div className="flex items-center gap-1.5">
           {isOnline ? (
-            <span className="flex items-center gap-1 text-emerald-700">
+            <span className="flex items-center gap-1 text-forest-700">
               <Wifi size={13} />
               <span>Connecté</span>
             </span>
           ) : (
-            <span className="flex items-center gap-1 text-amber-700">
+            <span className="flex items-center gap-1 text-sand-700">
               <WifiOff size={13} />
               <span>Hors-ligne</span>
             </span>

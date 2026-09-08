@@ -80,3 +80,11 @@ Dernière mise à jour : 2026-09-07T01:15:00+02:00
 | **P12** | **12.2** | Nettoyage du code mort et suppression des flags | **TERMINE** | Absence de travel_groups_legacy, 0 jargon (test `antiJargon.spec.ts` 3/3 vert) |
 | **P12** | **12.3** | Script démo investisseur (7 min) | **TERMINE** | Guide minuté `docs/DEMO_INVESTOR_SCRIPT.md`, jeu de données reproductible `npm run seed:demo` |
 | **P12** | **12.4** | Rapport final d'acceptation | **TERMINE** | Rapport de clôture format §14 strict dans `docs/FINAL_ACCEPTANCE_REPORT.md` |
+|---|---|---|---|---|
+| **U** | **U0** | Cartographie des 6 sources de design & Ruling | **TERMINE** | `docs/AUDIT_DESIGN_SOURCES.md` (commit `60c7e1f6`) |
+| **U** | **U1** | Réconciliation des valeurs (`tokens.css` source unique, GlassCard réparé) | **TERMINE** | 0 hex hors `tokens.css` dans les sources de styles, U-D64 vert (commit `83a00da1`) |
+| **U** | **U2** | Libération du shell desktop (`AppShellDesktop.tsx` et migration `/pays`) | **TERMINE** | Shell 3 colonnes mutualisé, non-régression `/pays` prouvée (commit `64baa283`) |
+| **U** | **U3** | Purge des littéraux (rayons U-D62, classes froides U-D61) | **TERMINE** | 97 fichiers migrés rayons, 129 fichiers migrés classes froides (commits `f664483d`, `ee61c47f`) |
+| **U** | **U4** | Primitives obligatoires (`src/components/ui/dialogs.ts`) | **TERMINE** | 33 fichiers migrés vers `lkvAlert`/`lkvConfirm`/`lkvPrompt`, U-D63 vert (commit `f664483d`) |
+| **U** | **U5** | Gouvernance exécutable & Intégration CI | **TERMINE** | U-D60 à U-D64 5/5 verts, Gate 2.5 dans `ci.yml`, captures Playwright finales validées (commit `913ea6f4`) |
+

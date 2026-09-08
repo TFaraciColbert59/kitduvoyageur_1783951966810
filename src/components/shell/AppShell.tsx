@@ -140,3 +140,7 @@ export default function AppShell({
     </div>
   );
 }
+
+export { AppShellDesktop } from './AppShellDesktop';
+export type { AppShellDesktopProps } from './AppShellDesktop';
+

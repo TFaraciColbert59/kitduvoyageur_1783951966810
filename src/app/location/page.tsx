@@ -196,7 +196,7 @@ function MiniCalendar({ available }: { available: boolean }) {
       <div className="flex items-center justify-between mb-3">
         <span className="font-display font-700 text-sm text-foreground">Juillet 2026</span>
         <div className="flex gap-3 text-xs">
-          <span className="flex items-center gap-1.5"><span className="w-2.5 h-2.5 rounded-sm bg-emerald-100 border border-emerald-300 inline-block" />Dispo</span>
+          <span className="flex items-center gap-1.5"><span className="w-2.5 h-2.5 rounded-sm bg-forest-100 border border-forest-300 inline-block" />Dispo</span>
           <span className="flex items-center gap-1.5"><span className="w-2.5 h-2.5 rounded-sm bg-red-100 border border-red-300 inline-block" />Réservé</span>
         </div>
       </div>
@@ -266,7 +266,7 @@ function RentalDetailModal({ listing, onClose }: { listing: RentalListing; onClo
                 <p className="text-xs text-muted-foreground">par semaine</p>
               </div>
               <div className="bg-background rounded-xl p-3 border border-border text-center">
-                <p className="font-display font-700 text-amber-500 text-xl">{listing.deposit}€</p>
+                <p className="font-display font-700 text-sand-500 text-xl">{listing.deposit}€</p>
                 <p className="text-xs text-muted-foreground">caution</p>
               </div>
             </div>
@@ -363,8 +363,8 @@ function RentalDetailModal({ listing, onClose }: { listing: RentalListing; onClo
           </div>
         ) : (
           <div className="p-8 text-center">
-            <div className="w-16 h-16 rounded-full bg-emerald-100 flex items-center justify-center mx-auto mb-4">
-              <Icon name="CheckIcon" size={28} className="text-emerald-600" />
+            <div className="w-16 h-16 rounded-full bg-forest-100 flex items-center justify-center mx-auto mb-4">
+              <Icon name="CheckIcon" size={28} className="text-forest-600" />
             </div>
             <h3 className="font-display font-700 text-foreground text-xl mb-2">Réservation confirmée !</h3>
             <p className="text-sm text-muted-foreground mb-2">{listing.title}</p>
@@ -412,7 +412,7 @@ function RentalCard({ listing, onClick }: { listing: RentalListing; onClick: () 
               <span className="text-xs text-muted-foreground ml-1">/jour</span>
             </div>
             <div className="flex items-center gap-1">
-              <Icon name="StarIcon" size={12} variant="solid" className="text-amber-400" />
+              <Icon name="StarIcon" size={12} variant="solid" className="text-sand-400" />
               <span className="text-xs font-600 text-foreground">{listing.rating}</span>
               <span className="text-xs text-muted-foreground">({listing.reviewCount})</span>
             </div>
@@ -531,11 +531,11 @@ export default function LocationPage() {
                 <p className="text-xs text-white/50">Articles disponibles</p>
               </div>
               <div className="bg-white/5 border border-white/10 rounded-xl p-3 text-center">
-                <p className="text-xl font-display font-700 text-amber-400">{listings.filter((l) => l.available).length}</p>
+                <p className="text-xl font-display font-700 text-sand-400">{listings.filter((l) => l.available).length}</p>
                 <p className="text-xs text-white/50">Disponibles maintenant</p>
               </div>
               <div className="bg-white/5 border border-white/10 rounded-xl p-3 text-center">
-                <p className="text-xl font-display font-700 text-emerald-400">
+                <p className="text-xl font-display font-700 text-forest-400">
                   {listings.length > 0 ? Math.round(listings.reduce((s, l) => s + l.pricePerDay, 0) / listings.length) : 0}€
                 </p>
                 <p className="text-xs text-white/50">Prix moyen/jour</p>
@@ -659,8 +659,8 @@ export default function LocationPage() {
               </>
             ) : (
               <div className="text-center py-6">
-                <div className="w-16 h-16 rounded-full bg-emerald-100 flex items-center justify-center mx-auto mb-4">
-                  <Icon name="CheckIcon" size={28} className="text-emerald-600" />
+                <div className="w-16 h-16 rounded-full bg-forest-100 flex items-center justify-center mx-auto mb-4">
+                  <Icon name="CheckIcon" size={28} className="text-forest-600" />
                 </div>
                 <h3 className="font-display font-700 text-foreground text-lg mb-2">Demande envoyée !</h3>
                 <p className="text-sm text-muted-foreground mb-6">Notre équipe validera votre annonce sous 24h.</p>

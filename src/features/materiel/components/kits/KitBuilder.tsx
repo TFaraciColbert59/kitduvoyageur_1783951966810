@@ -675,7 +675,7 @@ export function KitBuilder({
                           className={`h-6 w-6 !rounded-full flex items-center justify-center transition-all shrink-0 focus-visible:ring-2 focus-visible:ring-[#17402C] focus-visible:ring-offset-1 ${
                             isAdded
                               ? 'bg-white/10 text-[#5A7064] cursor-default'
-                              : 'glass interactive text-[#17402C] hover:bg-[#17402C] hover:text-white border border-white/40 shadow-[inset_0_1px_1px_rgba(255,255,255,0.6)]'
+                              : 'glass interactive text-[#17402C] hover:bg-[#17402C] hover:text-white border border-white/40 shadow-inner'
                           }`}
                         >
                           {isAdded ? (
@@ -779,7 +779,7 @@ export function KitBuilder({
           <select
             value={season}
             onChange={(e) => setSeason(e.target.value)}
-            className="glass interactive h-7 py-0 pl-2.5 pr-6 text-[10px] text-[#17402C] font-bold rounded-full cursor-pointer appearance-none outline-none border border-white/40 shadow-[inset_0_1px_1px_rgba(255,255,255,0.6)] focus-visible:ring-2 focus-visible:ring-[#17402C]"
+            className="glass interactive h-7 py-0 pl-2.5 pr-6 text-[10px] text-[#17402C] font-bold rounded-full cursor-pointer appearance-none outline-none border border-white/40 shadow-inner focus-visible:ring-2 focus-visible:ring-[#17402C]"
           >
             <option value="toute_saison">🌿 Toutes saisons</option>
             <option value="ete">☀️ Été</option>

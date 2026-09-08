@@ -387,7 +387,7 @@ export default function AventuresTab({ profile }: AventuresTabProps) {
                   className="glass-sub-card rounded-2xl p-4 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 cursor-pointer hover:bg-white/80 transition-all border border-white/40 group"
                 >
                   <div className="flex items-center gap-3.5 min-w-0">
-                    <div className="relative w-14 h-14 rounded-xl overflow-hidden shrink-0 border border-white bg-slate-200">
+                    <div className="relative w-14 h-14 rounded-xl overflow-hidden shrink-0 border border-white bg-stone-200">
                       <Image
                         src={av.image_url}
                         alt={av.title}

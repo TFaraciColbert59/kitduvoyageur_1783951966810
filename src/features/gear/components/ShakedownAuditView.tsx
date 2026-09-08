@@ -99,10 +99,10 @@ export const ShakedownAuditView: React.FC<ShakedownAuditViewProps> = ({ report }
             {duplicateWarnings.map((warning, idx) => (
               <div
                 key={idx}
-                className="p-3.5 rounded-2xl bg-amber-500/10 dark:bg-amber-950/30 border border-amber-500/30 flex items-center gap-3 text-xs"
+                className="p-3.5 rounded-2xl bg-sand-500/10 dark:bg-sand-900/30 border border-sand-500/30 flex items-center gap-3 text-xs"
               >
                 <span className="text-base">⚠️</span>
-                <span className="font-semibold text-amber-800 dark:text-amber-300 flex-1">
+                <span className="font-semibold text-sand-800 dark:text-sand-300 flex-1">
                   {warning}
                 </span>
               </div>
@@ -132,7 +132,7 @@ export const ShakedownAuditView: React.FC<ShakedownAuditViewProps> = ({ report }
                     {heavy.weightGrams} g (Seuil opti : {heavy.thresholdGrams} g)
                   </span>
                 </div>
-                <span className="text-xs font-mono font-bold text-amber-600">
+                <span className="text-xs font-mono font-bold text-sand-600">
                   +{heavy.weightGrams - heavy.thresholdGrams} g
                 </span>
               </div>
@@ -144,7 +144,7 @@ export const ShakedownAuditView: React.FC<ShakedownAuditViewProps> = ({ report }
       {/* Recommendations & Shop Alternatives */}
       {recommendations.length > 0 && (
         <div className="space-y-3">
-          <h4 className="text-xs font-mono uppercase tracking-widest text-emerald-700 dark:text-emerald-400">
+          <h4 className="text-xs font-mono uppercase tracking-widest text-forest-700 dark:text-forest-400">
             Recommandations d'Allègement Ultra-Light
           </h4>
 
@@ -152,11 +152,11 @@ export const ShakedownAuditView: React.FC<ShakedownAuditViewProps> = ({ report }
             {recommendations.map((rec) => (
               <div
                 key={rec.itemId}
-                className="p-4 rounded-3xl bg-emerald-500/10 dark:bg-emerald-950/20 border border-emerald-500/30 space-y-3"
+                className="p-4 rounded-3xl bg-forest-500/10 dark:bg-forest-950/20 border border-forest-500/30 space-y-3"
               >
                 <div className="flex items-start justify-between gap-3">
                   <div>
-                    <span className="text-[10px] font-mono uppercase text-emerald-700 dark:text-emerald-300">
+                    <span className="text-[10px] font-mono uppercase text-forest-700 dark:text-forest-300">
                       Remplacer : {rec.itemName} ({rec.currentWeightGrams} g)
                     </span>
                     <h5 className="text-sm font-bold text-[#17402C] dark:text-[#E7E3D6] mt-0.5">
@@ -168,13 +168,13 @@ export const ShakedownAuditView: React.FC<ShakedownAuditViewProps> = ({ report }
                   </div>
 
                   <div className="text-right flex-shrink-0">
-                    <span className="px-2.5 py-1 rounded-full bg-emerald-600 text-white font-mono font-bold text-xs">
+                    <span className="px-2.5 py-1 rounded-full bg-forest-600 text-white font-mono font-bold text-xs">
                       -{rec.weightSavedGrams} g
                     </span>
                   </div>
                 </div>
 
-                <div className="flex items-center justify-between pt-2 border-t border-emerald-500/20 text-xs">
+                <div className="flex items-center justify-between pt-2 border-t border-forest-500/20 text-xs">
                   {rec.estimatedPriceEur && (
                     <span className="font-bold text-[#17402C] dark:text-[#E7E3D6]">
                       Prix estimé : ~{rec.estimatedPriceEur} €
@@ -183,7 +183,7 @@ export const ShakedownAuditView: React.FC<ShakedownAuditViewProps> = ({ report }
 
                   <Link
                     href={`/produit/${rec.shopSlug || 'equipement-ultralight'}`}
-                    className="px-3.5 py-1.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs shadow-sm transition-all"
+                    className="px-3.5 py-1.5 rounded-xl bg-forest-600 hover:bg-forest-500 text-white font-bold text-xs shadow-sm transition-all"
                   >
                     Voir l'alternative en boutique →
                   </Link>

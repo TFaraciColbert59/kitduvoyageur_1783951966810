@@ -167,7 +167,7 @@ export default function CarnetHubCard({
             {carnet.elevation_m && <span>⛰️ +{carnet.elevation_m} m</span>}
           </div>
           {Number(carnet.route_rating) > 0 ? (
-            <span className="font-bold text-amber-300">★ {carnet.route_rating}/10</span>
+            <span className="font-bold text-sand-300">★ {carnet.route_rating}/10</span>
           ) : (
             <span className="font-bold text-white/90 bg-white/20 backdrop-blur-md px-2 py-0.5 rounded-full text-[9px]">Nouveau</span>
           )}
@@ -177,7 +177,7 @@ export default function CarnetHubCard({
       {/* Body Content */}
       <div className="p-4 sm:p-5 flex-1 flex flex-col justify-between space-y-3">
         <div className="space-y-1.5">
-          <h3 className="font-display font-bold text-base text-[#17402C] leading-snug group-hover:text-emerald-800 transition-colors line-clamp-2">
+          <h3 className="font-display font-bold text-base text-[#17402C] leading-snug group-hover:text-forest-800 transition-colors line-clamp-2">
             {carnet.title}
           </h3>
 

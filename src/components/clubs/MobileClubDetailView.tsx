@@ -105,7 +105,7 @@ export default function MobileClubDetailView({
 
         {/* Hero Title & Emoji */}
         <div className="absolute bottom-4 left-4 right-4 z-10">
-          <span className="text-[10px] font-mono uppercase tracking-widest text-emerald-300 block mb-1 font-bold">
+          <span className="text-[10px] font-mono uppercase tracking-widest text-forest-300 block mb-1 font-bold">
             {club.emoji || '🏕️'} COLLECTIF OFFICIEL
           </span>
           <h1 className="font-display font-extrabold text-2xl sm:text-3xl text-white leading-tight">

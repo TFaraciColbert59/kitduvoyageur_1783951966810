@@ -64,7 +64,7 @@ export const EquipmentUnifiedList: React.FC<EquipmentUnifiedListProps> = ({
     <div className="flex flex-col gap-2.5">
       {/* Alerte de conflit de livraison si départ imminent */}
       {isDeliveryTight && (
-        <div className="p-3 rounded-xl bg-amber-500/20 border border-amber-500/40 text-xs text-amber-950 flex items-center gap-2 font-bold">
+        <div className="p-3 rounded-xl bg-sand-500/20 border border-sand-500/40 text-xs text-sand-900 flex items-center gap-2 font-bold">
           <span>⚠️</span>
           <span>Départ dans {daysUntilDeparture} jour{daysUntilDeparture > 1 ? 's' : ''} : les commandes passées aujourd'hui risquent d'arriver après votre départ (délai standard 48h).</span>
         </div>

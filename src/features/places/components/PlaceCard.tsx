@@ -76,7 +76,7 @@ export function PlaceCard({ place, onAddToTrip }: PlaceCardProps) {
           tone="neutral"
           blur="md"
           interactive
-          className="h-full border border-white/60 hover:border-[#5B7F55]/40 transition-all duration-300 hover:shadow-lg rounded-[24px] p-5 flex flex-col justify-between"
+          className="h-full border border-white/60 hover:border-[#5B7F55]/40 transition-all duration-300 hover:shadow-lg rounded-xl p-5 flex flex-col justify-between"
         >
           <div>
             {/* Header badges */}
@@ -120,8 +120,8 @@ export function PlaceCard({ place, onAddToTrip }: PlaceCardProps) {
 
             {/* Alerte éthique si floutage */}
             {place.is_blurred && (
-              <div className="flex items-center gap-1.5 p-2 rounded-xl bg-amber-500/10 border border-amber-500/20 text-amber-900 text-[11px] mb-3">
-                <ShieldAlert className="w-3.5 h-3.5 text-amber-700 shrink-0" />
+              <div className="flex items-center gap-1.5 p-2 rounded-xl bg-sand-500/10 border border-sand-500/20 text-sand-900 text-[11px] mb-3">
+                <ShieldAlert className="w-3.5 h-3.5 text-sand-700 shrink-0" />
                 <span>Zone fragile : coordonnées floutées à ~500m</span>
               </div>
             )}
@@ -131,8 +131,8 @@ export function PlaceCard({ place, onAddToTrip }: PlaceCardProps) {
           <div className="pt-3 border-t border-stone-200/60 flex items-center justify-between mt-auto">
             {/* Note bayésienne */}
             <div className="flex items-center gap-1.5">
-              <div className="flex items-center gap-1 text-amber-500 font-bold text-sm">
-                <Star className="w-4 h-4 fill-amber-400 text-amber-500" />
+              <div className="flex items-center gap-1 text-sand-500 font-bold text-sm">
+                <Star className="w-4 h-4 fill-sand-400 text-sand-500" />
                 <span>
                   {place.bayesian_rating > 0 ? place.bayesian_rating.toFixed(1) : 'Nouveau'}
                 </span>

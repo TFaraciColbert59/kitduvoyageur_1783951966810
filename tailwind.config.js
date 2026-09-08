@@ -97,12 +97,16 @@ module.exports = {
         },
         // Sky blue — secondary accent (maps, water)
         sky: {
+          900: '#10222B',
+          800: '#17313C',
+          700: '#1F4251',
           600: '#2A5A6E',
           500: '#3E6B7A',
           400: '#5A8A9A',
           300: '#7AAAB8',
           200: '#A8C8D4',
           100: '#D4E8EE',
+          50: '#F0F7FA',
         },
         // Mon Matériel — Liquid Glass palette (iOS 26 / WWDC 2025)
         stone: {
@@ -115,6 +119,8 @@ module.exports = {
           600: '#7A7365',
           700: '#5B554A',
           800: '#3F3B34',
+          900: '#2A2722',
+          950: '#1A1815',
         },
         sage: {
           50: '#F2F6F1',
@@ -140,6 +146,7 @@ module.exports = {
         md: '14px',
         lg: '20px',
         xl: '26px',
+        card: '28px',
         '2xl': '32px',
         full: '9999px',
       },

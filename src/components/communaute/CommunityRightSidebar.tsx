@@ -1,4 +1,5 @@
 'use client';
+import { lkvAlert } from '@/components/ui/dialogs';
 
 import React, { useState } from 'react';
 import Link from 'next/link';
@@ -43,7 +44,7 @@ export default function CommunityRightSidebar() {
   const handleToggleOuting = (id: string, title: string) => {
     setJoinedOutings(prev => {
       const next = !prev[id];
-      alert(next ? `Vous êtes inscrit à "${title}" !` : `Inscription annulée pour "${title}".`);
+      lkvAlert(next ? `Vous êtes inscrit à "${title}" !` : `Inscription annulée pour "${title}".`);
       return { ...prev, [id]: next };
     });
   };
@@ -54,10 +55,10 @@ export default function CommunityRightSidebar() {
       <div className="glass p-3.5 space-y-2.5 rounded-2xl border border-white/70 shadow-xs">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-1.5">
-            <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
+            <span className="w-2 h-2 rounded-full bg-forest-500 animate-pulse" />
             <h3 className="font-display font-bold text-xs text-[#17402C]">Sur les sentiers</h3>
           </div>
-          <span className="glass-pill text-[8.5px] font-mono font-bold text-emerald-800">
+          <span className="glass-pill text-[8.5px] font-mono font-bold text-forest-800">
             {onlineMembers.length} ACTIFS
           </span>
         </div>
@@ -75,7 +76,7 @@ export default function CommunityRightSidebar() {
                     alt={m.name}
                     className="w-8 h-8 rounded-full object-cover border border-[#17402C]/10"
                   />
-                  <span className="absolute -bottom-0.5 -right-0.5 w-2.5 h-2.5 rounded-full bg-emerald-500 border border-white" />
+                  <span className="absolute -bottom-0.5 -right-0.5 w-2.5 h-2.5 rounded-full bg-forest-500 border border-white" />
                 </div>
                 <div className="min-w-0">
                   <div className="text-xs font-bold text-[#17402C] truncate">{m.name}</div>
@@ -112,7 +113,7 @@ export default function CommunityRightSidebar() {
                 className="p-2.5 rounded-xl bg-white/75 hover:bg-white border border-white/70 space-y-2 shadow-2xs transition-all"
               >
                 <div className="flex items-center justify-between">
-                  <span className="text-[9.5px] font-mono font-bold text-emerald-800 bg-emerald-50 px-2 py-0.5 rounded">
+                  <span className="text-[9.5px] font-mono font-bold text-forest-800 bg-forest-50 px-2 py-0.5 rounded">
                     📅 {out.date}
                   </span>
                   <span className="text-[9px] font-mono font-bold text-[#D97746]">
@@ -172,7 +173,7 @@ export default function CommunityRightSidebar() {
               <div className="flex items-center gap-2 min-w-0">
                 <span className="text-base shrink-0">{club.emoji}</span>
                 <div className="min-w-0">
-                  <div className="text-xs font-bold text-[#17402C] truncate group-hover:text-emerald-800 transition-colors">
+                  <div className="text-xs font-bold text-[#17402C] truncate group-hover:text-forest-800 transition-colors">
                     {club.name}
                   </div>
                   <div className="text-[9px] text-[#5C6B5E] truncate">{club.category}</div>

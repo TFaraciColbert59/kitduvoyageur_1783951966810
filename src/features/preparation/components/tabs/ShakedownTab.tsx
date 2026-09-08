@@ -108,7 +108,7 @@ export function ShakedownTab() {
             {duplicateWarnings.map((warning, idx) => (
               <div
                 key={idx}
-                className="p-3.5 rounded-2xl bg-amber-100 border border-amber-300 flex items-center gap-2 text-xs text-amber-950 font-bold shadow-2xs"
+                className="p-3.5 rounded-2xl bg-sand-100 border border-sand-300 flex items-center gap-2 text-xs text-sand-900 font-bold shadow-2xs"
               >
                 <span className="text-sm">⚠️</span>
                 <span>{warning}</span>
@@ -188,7 +188,7 @@ export function ShakedownTab() {
                     {heavy.weightGrams} g (Seuil : {heavy.thresholdGrams} g)
                   </span>
                 </div>
-                <span className="text-xs font-mono font-bold text-amber-800 dark:text-amber-300">
+                <span className="text-xs font-mono font-bold text-sand-800 dark:text-sand-300">
                   +{heavy.weightGrams - heavy.thresholdGrams} g
                 </span>
               </div>
@@ -200,7 +200,7 @@ export function ShakedownTab() {
       {/* Recommendations & Shop Alternatives */}
       {recommendations.length > 0 && (
         <div className="space-y-2">
-          <h4 className="text-xs font-bold uppercase tracking-wider text-emerald-800 dark:text-emerald-400 flex items-center gap-1.5 px-1">
+          <h4 className="text-xs font-bold uppercase tracking-wider text-forest-800 dark:text-forest-400 flex items-center gap-1.5 px-1">
             <Sparkles size={14} />
             <span>Opportunités d'Allègement Ultra-Light</span>
           </h4>
@@ -209,11 +209,11 @@ export function ShakedownTab() {
             {recommendations.map((rec) => (
               <div
                 key={rec.itemId}
-                className="p-4 rounded-3xl bg-emerald-50 dark:bg-[#17402C]/90 backdrop-blur-xl border border-emerald-300 dark:border-emerald-500/40 space-y-2.5 shadow-xs"
+                className="p-4 rounded-3xl bg-forest-50 dark:bg-[#17402C]/90 backdrop-blur-xl border border-forest-300 dark:border-forest-500/40 space-y-2.5 shadow-xs"
               >
                 <div className="flex items-start justify-between gap-2">
                   <div>
-                    <span className="text-[10px] font-mono uppercase text-emerald-900 dark:text-emerald-300 font-semibold">
+                    <span className="text-[10px] font-mono uppercase text-forest-900 dark:text-forest-300 font-semibold">
                       Remplacer : {rec.itemName} ({rec.currentWeightGrams} g)
                     </span>
                     <h5 className="text-xs sm:text-sm font-bold text-[#17402C] dark:text-white mt-0.5">
@@ -222,12 +222,12 @@ export function ShakedownTab() {
                     <p className="text-[11px] text-[#365233] dark:text-[#9AAD9E] mt-0.5">{rec.reason}</p>
                   </div>
 
-                  <span className="px-2.5 py-1 rounded-full bg-emerald-800 text-white font-mono font-bold text-xs shrink-0">
+                  <span className="px-2.5 py-1 rounded-full bg-forest-800 text-white font-mono font-bold text-xs shrink-0">
                     -{rec.weightSavedGrams} g
                   </span>
                 </div>
 
-                <div className="flex items-center justify-between pt-2 border-t border-emerald-200 dark:border-emerald-500/20 text-xs">
+                <div className="flex items-center justify-between pt-2 border-t border-forest-200 dark:border-forest-500/20 text-xs">
                   {rec.estimatedPriceEur && (
                     <span className="font-bold text-[#17402C] dark:text-white text-[11px]">
                       Estimé : ~{rec.estimatedPriceEur} €
@@ -236,7 +236,7 @@ export function ShakedownTab() {
 
                   <Link
                     href={`/produit/${rec.shopSlug || 'equipement-ultralight'}`}
-                    className="px-3 py-1.5 rounded-xl bg-emerald-800 hover:bg-emerald-700 text-white font-bold text-[11px] shadow-2xs flex items-center gap-1 transition-all"
+                    className="px-3 py-1.5 rounded-xl bg-forest-800 hover:bg-forest-700 text-white font-bold text-[11px] shadow-2xs flex items-center gap-1 transition-all"
                   >
                     <span>Voir l'alternative</span>
                     <ArrowRight size={12} />

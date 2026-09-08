@@ -54,7 +54,7 @@ export function AffiliateLinkCard({ link, tripId }: AffiliateLinkCardProps) {
       tone="neutral"
       blur="sm"
       interactive
-      className="p-4 rounded-[22px] border border-stone-200/80 hover:border-[#5B7F55]/40 transition-all flex flex-col justify-between h-full bg-white/80"
+      className="p-4 rounded-lg border border-stone-200/80 hover:border-[#5B7F55]/40 transition-all flex flex-col justify-between h-full bg-white/80"
     >
       <div>
         <div className="flex items-center justify-between gap-2 mb-2.5">
@@ -69,7 +69,7 @@ export function AffiliateLinkCard({ link, tripId }: AffiliateLinkCardProps) {
                 {link.partner.name}
               </span>
             )}
-            <span className="text-[9.5px] font-mono font-bold text-amber-900 bg-amber-100/90 border border-amber-300/60 px-2 py-0.5 rounded-full">
+            <span className="text-[9.5px] font-mono font-bold text-sand-900 bg-sand-100/90 border border-sand-300/60 px-2 py-0.5 rounded-full">
               Sponsorisé
             </span>
           </div>

@@ -614,7 +614,7 @@ export default function RapportExpeditionPage() {
                       <p className="text-[10px] text-white/40">Expéditions</p>
                     </div>
                     <div className="bg-white/5 rounded-xl p-3 text-center">
-                      <p className="font-display font-700 text-xl text-amber-400">{avgScore > 0 ? `${avgScore}/100` : '—'}</p>
+                      <p className="font-display font-700 text-xl text-sand-400">{avgScore > 0 ? `${avgScore}/100` : '—'}</p>
                       <p className="text-[10px] text-white/40">Score moyen</p>
                     </div>
                     <div className="bg-white/5 rounded-xl p-3 text-center">
@@ -623,8 +623,8 @@ export default function RapportExpeditionPage() {
                     </div>
                   </div>
                   {reports.length === 0 && (
-                    <div className="mt-3 p-3 bg-amber-500/10 border border-amber-500/20 rounded-xl">
-                      <p className="text-xs text-amber-400">💡 Créez votre premier rapport d&apos;expédition pour obtenir une analyse personnalisée.</p>
+                    <div className="mt-3 p-3 bg-sand-500/10 border border-sand-500/20 rounded-xl">
+                      <p className="text-xs text-sand-400">💡 Créez votre premier rapport d&apos;expédition pour obtenir une analyse personnalisée.</p>
                     </div>
                   )}
                 </div>

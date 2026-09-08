@@ -56,7 +56,7 @@ export default function CarbonePage() {
           <Header />
           <section className="pt-20 bg-dark-bg">
             <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
-              <div className="flex items-center gap-3 mb-4"><div className="w-10 h-10 rounded-xl bg-emerald-500/20 flex items-center justify-center"><Icon name="LeafIcon" size={20} className="text-emerald-400" variant="outline" /></div><p className="font-mono text-xs text-emerald-400 tracking-widest uppercase">BILAN CARBONE VOYAGE</p></div>
+              <div className="flex items-center gap-3 mb-4"><div className="w-10 h-10 rounded-xl bg-forest-500/20 flex items-center justify-center"><Icon name="LeafIcon" size={20} className="text-forest-400" variant="outline" /></div><p className="font-mono text-xs text-forest-400 tracking-widest uppercase">BILAN CARBONE VOYAGE</p></div>
               <h1 className="font-display font-800 text-4xl md:text-5xl text-white tracking-tight mb-3">Mesurez et compensez<br />votre empreinte</h1>
               <p className="text-white/60 text-lg max-w-xl">Calculez l&apos;impact CO₂ de votre expédition.</p>
             </div>

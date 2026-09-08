@@ -209,9 +209,9 @@ function WeightSection({ report }: { report: KitReport }) {
           )}
         </div>
         {isHeavy && (
-          <div className="flex items-start gap-2 bg-amber-50 border border-amber-200 rounded-xl px-4 py-3">
-            <Icon name="ExclamationTriangleIcon" size={16} variant="outline" className="text-amber-600 flex-shrink-0 mt-0.5" />
-            <p className="text-xs text-amber-700">
+          <div className="flex items-start gap-2 bg-sand-50 border border-sand-200 rounded-xl px-4 py-3">
+            <Icon name="ExclamationTriangleIcon" size={16} variant="outline" className="text-sand-600 flex-shrink-0 mt-0.5" />
+            <p className="text-xs text-sand-700">
               Poids supérieur à votre objectif de {formatWeight(sessionParams.maxWeightG)}. Envisagez de retirer des articles non essentiels.
             </p>
           </div>
@@ -268,9 +268,9 @@ function BudgetSection({ report }: { report: KitReport }) {
           </p>
         </div>
         {totalPriceEur > sessionParams.budgetEur && (
-          <div className="flex items-start gap-2 bg-amber-50 border border-amber-200 rounded-xl px-4 py-3">
-            <Icon name="ExclamationTriangleIcon" size={16} variant="outline" className="text-amber-600 flex-shrink-0 mt-0.5" />
-            <p className="text-xs text-amber-700">
+          <div className="flex items-start gap-2 bg-sand-50 border border-sand-200 rounded-xl px-4 py-3">
+            <Icon name="ExclamationTriangleIcon" size={16} variant="outline" className="text-sand-600 flex-shrink-0 mt-0.5" />
+            <p className="text-xs text-sand-700">
               Dépasse votre budget de {(totalPriceEur - sessionParams.budgetEur).toFixed(2)} €. Utilisez les alternatives économiques ci-dessous.
             </p>
           </div>
@@ -387,20 +387,20 @@ function ProductsSection({
                   {isExpanded && (
                     <div className="px-4 pb-4 grid grid-cols-1 sm:grid-cols-2 gap-3">
                       {alt.eco && (
-                        <div className="bg-emerald-50 border border-emerald-200 rounded-xl p-3">
-                          <p className="text-[9px] font-mono text-emerald-600 uppercase tracking-widest mb-1">Option économique</p>
+                        <div className="bg-forest-50 border border-forest-200 rounded-xl p-3">
+                          <p className="text-[9px] font-mono text-forest-600 uppercase tracking-widest mb-1">Option économique</p>
                           <p className="text-sm font-600 text-[#17402C]">{alt.eco.name}</p>
                           <p className="text-xs text-[#5C6B5E]">{alt.eco.brand}</p>
-                          <p className="font-mono font-700 text-emerald-700 text-sm mt-1">{alt.eco.price_eur} €</p>
+                          <p className="font-mono font-700 text-forest-700 text-sm mt-1">{alt.eco.price_eur} €</p>
                           <p className="text-xs text-[#5C6B5E] mt-1 leading-relaxed">{alt.eco.reason}</p>
                         </div>
                       )}
                       {alt.premium && (
-                        <div className="bg-amber-50 border border-amber-200 rounded-xl p-3">
-                          <p className="text-[9px] font-mono text-amber-600 uppercase tracking-widest mb-1">Option premium</p>
+                        <div className="bg-sand-50 border border-sand-200 rounded-xl p-3">
+                          <p className="text-[9px] font-mono text-sand-600 uppercase tracking-widest mb-1">Option premium</p>
                           <p className="text-sm font-600 text-[#17402C]">{alt.premium.name}</p>
                           <p className="text-xs text-[#5C6B5E]">{alt.premium.brand}</p>
-                          <p className="font-mono font-700 text-amber-700 text-sm mt-1">{alt.premium.price_eur} €</p>
+                          <p className="font-mono font-700 text-sand-700 text-sm mt-1">{alt.premium.price_eur} €</p>
                           <p className="text-xs text-[#5C6B5E] mt-1 leading-relaxed">{alt.premium.reason}</p>
                         </div>
                       )}
@@ -542,9 +542,9 @@ function CarbonSection({ carbonKg }: { carbonKg: number }) {
         </div>
       </div>
       <div className="flex items-center gap-4">
-        <div className="bg-emerald-50 border border-emerald-200 rounded-xl px-5 py-4">
-          <p className="font-mono font-700 text-2xl text-emerald-700">{carbonKg.toFixed(1)} kg CO₂</p>
-          <p className="text-xs text-emerald-600 mt-1">équivalent estimé pour ce kit</p>
+        <div className="bg-forest-50 border border-forest-200 rounded-xl px-5 py-4">
+          <p className="font-mono font-700 text-2xl text-forest-700">{carbonKg.toFixed(1)} kg CO₂</p>
+          <p className="text-xs text-forest-600 mt-1">équivalent estimé pour ce kit</p>
         </div>
         <p className="text-xs text-[#5C6B5E] leading-relaxed flex-1">
           Basé sur le poids total du matériel et les moyennes sectorielles. Cette estimation est fournie à titre indicatif uniquement.
@@ -629,7 +629,7 @@ function ActionsBar({
             </button>
           )}
           {saved && (
-            <span className="flex items-center gap-1.5 px-3 py-2 rounded-xl bg-emerald-50 border border-emerald-200 text-sm text-emerald-700">
+            <span className="flex items-center gap-1.5 px-3 py-2 rounded-xl bg-forest-50 border border-forest-200 text-sm text-forest-700">
               <Icon name="CheckIcon" size={14} variant="outline" />
               Sauvegardé
             </span>
@@ -644,7 +644,7 @@ function ActionsBar({
               {purchasing ? 'Traitement...' : `Acheter le kit — ${totalEur.toFixed(2)} €`}
             </button>
           ) : (
-            <span className="flex items-center gap-1.5 px-4 py-2 rounded-xl bg-emerald-600 text-white text-sm font-600">
+            <span className="flex items-center gap-1.5 px-4 py-2 rounded-xl bg-forest-600 text-white text-sm font-600">
               <Icon name="CheckCircleIcon" size={14} variant="outline" />
               Ajouté à l&apos;inventaire
             </span>
@@ -1081,11 +1081,11 @@ export default function KitReportPage() {
               />
 
               {purchased && (
-                <div className="bg-emerald-50 border border-emerald-200 rounded-xl px-5 py-4 flex items-start gap-3">
-                  <Icon name="CheckCircleIcon" size={18} variant="outline" className="text-emerald-600 flex-shrink-0 mt-0.5" />
+                <div className="bg-forest-50 border border-forest-200 rounded-xl px-5 py-4 flex items-start gap-3">
+                  <Icon name="CheckCircleIcon" size={18} variant="outline" className="text-forest-600 flex-shrink-0 mt-0.5" />
                   <div>
-                    <p className="text-sm font-600 text-emerald-800">Kit ajouté à votre inventaire personnel</p>
-                    <p className="text-xs text-emerald-600 mt-0.5">
+                    <p className="text-sm font-600 text-forest-800">Kit ajouté à votre inventaire personnel</p>
+                    <p className="text-xs text-forest-600 mt-0.5">
                       Retrouvez tous vos articles dans{' '}
                       <Link href="/compte" className="underline font-medium">Mon Compte</Link>.
                     </p>

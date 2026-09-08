@@ -192,7 +192,7 @@ export default function MobileCarnetDetailView({
         {/* Hero Title & Destination */}
         <div className="absolute bottom-4 left-4 right-4 z-10">
           <div className="flex items-center gap-2 mb-1">
-            <span className="text-[10px] font-mono uppercase tracking-widest text-emerald-300 font-bold flex items-center gap-1">
+            <span className="text-[10px] font-mono uppercase tracking-widest text-forest-300 font-bold flex items-center gap-1">
               <span>📖</span> CARNET DE TERRAIN
             </span>
             <span className="text-white/70 font-mono text-[10px]">· {dateRange}</span>
@@ -302,7 +302,7 @@ export default function MobileCarnetDetailView({
               <span className="text-[8.5px] text-[#5C6B5E] uppercase font-mono font-bold">Distance</span>
             </div>
             <div className="p-2 rounded-2xl bg-white/70 border border-white/80">
-              <span className="block font-mono font-bold text-xs text-emerald-800">+{elevVal} m</span>
+              <span className="block font-mono font-bold text-xs text-forest-800">+{elevVal} m</span>
               <span className="text-[8.5px] text-[#5C6B5E] uppercase font-mono font-bold">Dénivelé</span>
             </div>
             <div className="p-2 rounded-2xl bg-white/70 border border-white/80">
@@ -310,7 +310,7 @@ export default function MobileCarnetDetailView({
               <span className="text-[8.5px] text-[#5C6B5E] uppercase font-mono font-bold">Durée</span>
             </div>
             <div className="p-2 rounded-2xl bg-white/70 border border-white/80">
-              <span className="block font-mono font-bold text-xs text-amber-700">★ 9.4</span>
+              <span className="block font-mono font-bold text-xs text-sand-700">★ 9.4</span>
               <span className="text-[8.5px] text-[#5C6B5E] uppercase font-mono font-bold">Note</span>
             </div>
           </div>
@@ -334,7 +334,7 @@ export default function MobileCarnetDetailView({
                 {/* Récit intro */}
                 <div className="glass bg-white/90 backdrop-blur-xl p-4 rounded-3xl border border-white shadow-xs space-y-3">
                   <div className="flex items-center justify-between">
-                    <span className="glass-pill text-[9.5px] font-mono font-bold text-emerald-900 bg-emerald-50">
+                    <span className="glass-pill text-[9.5px] font-mono font-bold text-forest-900 bg-forest-50">
                       🌿 Carnet d'expédition
                     </span>
                     <span className="text-[10px] font-mono text-[#5C6B5E]">

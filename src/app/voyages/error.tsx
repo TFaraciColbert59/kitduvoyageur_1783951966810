@@ -16,7 +16,7 @@ export default function VoyagesError({
   return (
     <AppShell safeTop={true} hasBottomNav={true}>
       <div className="max-w-xl mx-auto px-4 py-16 text-center">
-        <GlassCard tone="danger" blur="md" className="p-8 rounded-[32px] border border-[#A8443A]/30">
+        <GlassCard tone="danger" blur="md" className="p-8 rounded-2xl border border-[#A8443A]/30">
           <div className="inline-flex p-3 rounded-full bg-[#A8443A]/10 text-[#A8443A] mb-4">
             <AlertTriangle size={32} />
           </div>
@@ -26,7 +26,7 @@ export default function VoyagesError({
           <p className="text-sm text-lkv-secondary mb-6">
             Une erreur inattendue est survenue lors de la récupération des données.
             {error?.message && (
-              <span className="block mt-2 font-mono text-xs text-gray-500 bg-white/50 p-2 rounded-lg">
+              <span className="block mt-2 font-mono text-xs text-stone-500 bg-white/50 p-2 rounded-lg">
                 {error.message}
               </span>
             )}

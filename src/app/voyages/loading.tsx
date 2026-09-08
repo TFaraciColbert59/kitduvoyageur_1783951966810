@@ -17,7 +17,7 @@ export default function VoyagesLoading() {
         </div>
 
         {/* Filters Skeleton */}
-        <div className="w-full h-16 bg-black/5 rounded-[24px] mb-6 animate-pulse" />
+        <div className="w-full h-16 bg-black/5 rounded-xl mb-6 animate-pulse" />
 
         {/* Cards Grid Skeletons */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -25,7 +25,7 @@ export default function VoyagesLoading() {
             <GlassCard
               key={idx}
               tone="neutral"
-              className="h-80 rounded-[24px] overflow-hidden border border-white/40"
+              className="h-80 rounded-xl overflow-hidden border border-white/40"
             >
               <div className="w-full h-48 bg-black/10 animate-pulse" />
               <div className="p-4 space-y-3">

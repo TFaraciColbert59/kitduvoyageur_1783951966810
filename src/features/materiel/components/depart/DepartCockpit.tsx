@@ -38,7 +38,7 @@ const DepartMap = dynamic(
   {
     ssr: false,
     loading: () => (
-      <div className="glass rounded-[28px] overflow-hidden">
+      <div className="glass rounded-card overflow-hidden">
         <div className="px-4 py-2.5 border-b border-white/20">
           <Skeleton className="h-4 w-40" />
         </div>
@@ -251,14 +251,14 @@ export function DepartCockpit({
     <div className="flex flex-col gap-4 w-full">
       {/* ════ BANNIÈRE HORS-LIGNE TRANSPARENTE ════ */}
       {!isOnline && (
-        <div className="p-3 rounded-2xl bg-amber-500/15 border border-amber-500/30 text-[#17402C] text-xs font-semibold flex items-center justify-between gap-2 shadow-2xs">
+        <div className="p-3 rounded-2xl bg-sand-500/15 border border-sand-500/30 text-[#17402C] text-xs font-semibold flex items-center justify-between gap-2 shadow-2xs">
           <div className="flex items-center gap-2 min-w-0">
-            <WifiOff size={15} className="text-amber-700 shrink-0" />
+            <WifiOff size={15} className="text-sand-700 shrink-0" />
             <span className="truncate">
               Mode hors-ligne actif — Fiche de départ et données en cache. Synchronisation automatique dès reconnexion.
             </span>
           </div>
-          <span className="text-[10px] font-mono font-bold px-2 py-0.5 rounded-lg bg-amber-600/20 text-amber-900 shrink-0">
+          <span className="text-[10px] font-mono font-bold px-2 py-0.5 rounded-lg bg-sand-600/20 text-sand-900 shrink-0">
             Hors-ligne
           </span>
         </div>
@@ -276,7 +276,7 @@ export function DepartCockpit({
 
           {/* 1.2 Bandeau Météo Synthétique avec Défilement Horizontal (Image 2) */}
           {weather && weather.days.length > 0 && (
-            <div className="glass rounded-[24px] p-2.5 sm:p-3.5 border border-white/80 dark:border-white/10 shadow-xs flex items-center justify-between gap-2 overflow-hidden">
+            <div className="glass rounded-xl p-2.5 sm:p-3.5 border border-white/80 dark:border-white/10 shadow-xs flex items-center justify-between gap-2 overflow-hidden">
               <div className="flex items-center gap-2 shrink-0">
                 <div className="w-8 h-8 rounded-2xl bg-[#2D6B4A]/10 border border-[#2D6B4A]/20 flex items-center justify-center text-[#2D6B4A] shadow-2xs">
                   <CloudSun size={16} />
@@ -323,7 +323,7 @@ export function DepartCockpit({
           </div>
 
           {/* 1.4 Vitrine Visuelle des Équipements Indispensables */}
-          <div className="glass rounded-[28px] p-4 sm:p-5 space-y-3.5 border border-white/80 dark:border-white/10 shadow-sm backdrop-blur-md">
+          <div className="glass rounded-card p-4 sm:p-5 space-y-3.5 border border-white/80 dark:border-white/10 shadow-sm backdrop-blur-md">
             <div className="flex items-center justify-between gap-3 border-b border-black/5 pb-3">
               <div className="flex items-center gap-2.5">
                 <div className="w-9 h-9 rounded-2xl bg-[#17402C] text-white flex items-center justify-center shadow-xs shrink-0">
@@ -373,7 +373,7 @@ export function DepartCockpit({
                         loading="lazy"
                       />
                       {it.is_checked ? (
-                        <div className="absolute top-1.5 right-1.5 px-2 py-0.5 rounded-full bg-emerald-800 text-white text-[8.5px] font-bold flex items-center gap-1 shadow-xs">
+                        <div className="absolute top-1.5 right-1.5 px-2 py-0.5 rounded-full bg-forest-800 text-white text-[8.5px] font-bold flex items-center gap-1 shadow-xs">
                           <CheckCircle2 size={9.5} />
                           <span>✓ Prêt</span>
                         </div>
@@ -486,10 +486,10 @@ export function DepartCockpit({
               <button
                 type="button"
                 onClick={() => setIsSheetOpen(true)}
-                className="px-2 py-0.5 rounded-full bg-emerald-100 dark:bg-emerald-950 text-emerald-800 dark:text-emerald-300 border border-emerald-300 dark:border-emerald-800 text-[10px] font-bold flex items-center gap-1 cursor-pointer active:scale-95 transition-transform"
+                className="px-2 py-0.5 rounded-full bg-forest-100 dark:bg-forest-950 text-forest-800 dark:text-forest-300 border border-forest-300 dark:border-forest-800 text-[10px] font-bold flex items-center gap-1 cursor-pointer active:scale-95 transition-transform"
                 title="Ouvrir la fiche de départ"
               >
-                <CheckCircle2 size={11} className="text-emerald-700 dark:text-emerald-400" />
+                <CheckCircle2 size={11} className="text-forest-700 dark:text-forest-400" />
                 <span>{totalItemsCount > 0 ? Math.round((checkedItemsCount / totalItemsCount) * 100) : 100}% Prêt</span>
               </button>
 

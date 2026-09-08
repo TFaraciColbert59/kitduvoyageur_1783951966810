@@ -22,7 +22,7 @@ export const BaseCampView: React.FC<BaseCampViewProps> = ({
   return (
     <div className="space-y-6 pb-24 animate-in fade-in duration-300">
       {/* Trek Header Card */}
-      <div className="p-6 rounded-3xl bg-gradient-to-br from-[#17402C] to-[#2D5A40] text-white shadow-xl shadow-[#17402C]/10 relative overflow-hidden">
+      <div className="p-6 rounded-3xl bg-gradient-to-br from-[#17402C] to-[#2D5A40] text-white shadow-xl shadow-md/10 relative overflow-hidden">
         {/* Subtle glass reflection */}
         <div className="absolute top-0 right-0 w-64 h-64 bg-white/5 rounded-full blur-3xl pointer-events-none" />
 

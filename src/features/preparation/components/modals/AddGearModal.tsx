@@ -172,7 +172,7 @@ export const AddGearModal: React.FC<AddGearModalProps> = ({ isOpen, onClose }) =
                 type="checkbox"
                 checked={isWorn}
                 onChange={(e) => setIsWorn(e.target.checked)}
-                className="rounded text-emerald-600 focus:ring-emerald-500 cursor-pointer"
+                className="rounded text-forest-600 focus:ring-forest-500 cursor-pointer"
               />
               <span className="text-white">Porté sur soi (exclu du Base Weight)</span>
             </label>
@@ -182,7 +182,7 @@ export const AddGearModal: React.FC<AddGearModalProps> = ({ isOpen, onClose }) =
                 type="checkbox"
                 checked={isConsumable}
                 onChange={(e) => setIsConsumable(e.target.checked)}
-                className="rounded text-emerald-600 focus:ring-emerald-500 cursor-pointer"
+                className="rounded text-forest-600 focus:ring-forest-500 cursor-pointer"
               />
               <span className="text-white">Consommable (eau, vivres, gaz)</span>
             </label>
@@ -192,7 +192,7 @@ export const AddGearModal: React.FC<AddGearModalProps> = ({ isOpen, onClose }) =
                 type="checkbox"
                 checked={isVital}
                 onChange={(e) => setIsVital(e.target.checked)}
-                className="rounded text-emerald-600 focus:ring-emerald-500 cursor-pointer"
+                className="rounded text-forest-600 focus:ring-forest-500 cursor-pointer"
               />
               <span className="text-red-300 font-semibold">Équipement vital de sécurité</span>
             </label>
@@ -209,7 +209,7 @@ export const AddGearModal: React.FC<AddGearModalProps> = ({ isOpen, onClose }) =
           </button>
           <button
             type="submit"
-            className="flex-1 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold shadow-md transition-all"
+            className="flex-1 py-2.5 rounded-xl bg-forest-600 hover:bg-forest-500 text-white text-xs font-bold shadow-md transition-all"
           >
             Enregistrer
           </button>

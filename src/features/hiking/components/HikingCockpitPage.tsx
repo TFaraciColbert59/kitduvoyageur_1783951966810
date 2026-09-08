@@ -1,4 +1,5 @@
 'use client';
+import { lkvAlert } from '@/components/ui/dialogs';
 
 import React, { useState, useEffect, useRef } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
@@ -350,7 +351,7 @@ export default function HikingCockpitPage() {
                     url: window.location.href,
                   }).catch(() => {});
                 } else {
-                  alert('Lien copié dans le presse-papier !');
+                  lkvAlert('Lien copié dans le presse-papier !');
                 }
               }}
               onEditCarnet={() => router.push('/carnets')}

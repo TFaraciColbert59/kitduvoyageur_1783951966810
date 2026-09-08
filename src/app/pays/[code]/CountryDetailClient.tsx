@@ -8,6 +8,7 @@ import { CountryDetail } from '@/lib/countryDetails';
 import { CompteBackground } from '@/components/compte/CompteBackground';
 import PaysLeftSidebar, { PaysSection } from '@/components/pays/PaysLeftSidebar';
 import PaysRightSidebar from '@/components/pays/PaysRightSidebar';
+import { AppShellDesktop } from '@/components/shell/AppShellDesktop';
 import PaysHeroOverview from '@/components/pays/PaysHeroOverview';
 import PaysDestinationsView from '@/components/pays/PaysDestinationsView';
 import PaysActivitesView from '@/components/pays/PaysActivitesView';
@@ -91,44 +92,32 @@ export default function CountryDetailClient({ country }: CountryDetailClientProp
       </div>
 
       {/* ══════════════════════════════════════════════════════════════════════
-          2. VERSION DESKTOP COCKPIT 3 COLONNES FULLSCREEN (hidden md:flex)
+          2. VERSION DESKTOP COCKPIT 3 COLONNES FULLSCREEN (AppShellDesktop — Chantier U / U2)
          ══════════════════════════════════════════════════════════════════════ */}
-      <div className="hidden md:flex flex-col h-full overflow-hidden">
-        {/* Global Site Header */}
-        <Header />
-
-        {/* Main 3-Column Cockpit Container */}
-        <div className="flex-1 overflow-hidden pt-14 sm:pt-[62px] pb-4 px-4 sm:px-6 lg:px-8 max-w-[1680px] w-full mx-auto">
-          <div className="flex items-start gap-5 h-full">
-
-            {/* LEFT COLUMN: NAVIGATION TABS SIDEBAR (260px) */}
-            <div className="w-[260px] shrink-0 h-full overflow-hidden">
-              <PaysLeftSidebar
-                country={country}
-                activeSection={activeSection}
-                onSectionChange={setActiveSection}
-                flagEmoji={flagEmoji}
-                onPrint={() => window.print()}
-              />
-            </div>
-
-            {/* CENTER COLUMN: EXPANDED MAIN TAB CONTENT */}
-            <main className="flex-1 h-full overflow-y-auto no-scrollbar space-y-4 px-1 pb-6">
-              {renderSectionContent()}
-            </main>
-
-            {/* RIGHT COLUMN: SIDEBAR WIDGETS WITHOUT HEADERS (300px) */}
-            <div className="w-[300px] shrink-0 h-full overflow-hidden">
-              <PaysRightSidebar
-                country={country}
-                flagEmoji={flagEmoji}
-                onCountryGlobeClick={handleCountryGlobeClick}
-              />
-            </div>
-
-          </div>
-        </div>
-      </div>
+      <AppShellDesktop
+        topNav={<Header />}
+        backgroundVideo={false}
+        leftWidth="w-[260px]"
+        rightWidth="w-[300px]"
+        sidebarLeft={
+          <PaysLeftSidebar
+            country={country}
+            activeSection={activeSection}
+            onSectionChange={setActiveSection}
+            flagEmoji={flagEmoji}
+            onPrint={() => window.print()}
+          />
+        }
+        sidebarRight={
+          <PaysRightSidebar
+            country={country}
+            flagEmoji={flagEmoji}
+            onCountryGlobeClick={handleCountryGlobeClick}
+          />
+        }
+      >
+        {renderSectionContent()}
+      </AppShellDesktop>
     </div>
   );
 }

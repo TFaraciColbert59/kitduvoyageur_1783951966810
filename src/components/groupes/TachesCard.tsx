@@ -1,3 +1,4 @@
+import { lkvAlert, lkvConfirm } from '@/components/ui/dialogs';
 import React, { useState, useEffect } from 'react';
 import { createClient } from '@/lib/supabase/client';
 import Icon from '@/components/ui/AppIcon';
@@ -37,11 +38,11 @@ export default function TachesCard({ tasks: initialTasks, groupId, onRefresh, us
 
   const toggleTask = async (id: string, currentCompleted: boolean) => {
     if (!groupId) {
-      alert("Erreur: Aucun groupe sélectionné.");
+      lkvAlert("Erreur: Aucun groupe sélectionné.");
       return;
     }
     if (!user) {
-      alert("Vous devez être connecté pour modifier une tâche.");
+      lkvAlert("Vous devez être connecté pour modifier une tâche.");
       return;
     }
     
@@ -61,7 +62,7 @@ export default function TachesCard({ tasks: initialTasks, groupId, onRefresh, us
       
     if (error) {
       console.error('Task toggle error:', error);
-      alert('Erreur lors de la modification de la tâche : ' + error.message);
+      lkvAlert('Erreur lors de la modification de la tâche : ' + error.message);
       setTasks(prev => prev.map(t => t.id === id ? { ...t, completed: currentCompleted } : t));
     } else if (onRefresh) {
       onRefresh();
@@ -71,11 +72,11 @@ export default function TachesCard({ tasks: initialTasks, groupId, onRefresh, us
 
   const handleSelectAll = async () => {
     if (!groupId) {
-      alert("Erreur: Aucun groupe sélectionné.");
+      lkvAlert("Erreur: Aucun groupe sélectionné.");
       return;
     }
     if (!user) {
-      alert("Vous devez être connecté pour modifier les tâches.");
+      lkvAlert("Vous devez être connecté pour modifier les tâches.");
       return;
     }
     if (tasks.length === 0) return;
@@ -97,7 +98,7 @@ export default function TachesCard({ tasks: initialTasks, groupId, onRefresh, us
 
     if (error) {
       console.error('Select all error:', error);
-      alert('Erreur lors de la modification des tâches : ' + error.message);
+      lkvAlert('Erreur lors de la modification des tâches : ' + error.message);
       setTasks(prev => prev.map(t => ({
         ...t,
         completed: allDone,
@@ -113,11 +114,11 @@ export default function TachesCard({ tasks: initialTasks, groupId, onRefresh, us
     e.preventDefault();
     if (!newTaskTitle.trim()) return;
     if (!groupId) {
-      alert("Erreur: ID de groupe manquant.");
+      lkvAlert("Erreur: ID de groupe manquant.");
       return;
     }
     if (!user) {
-      alert("Erreur: Vous devez être connecté pour ajouter une tâche.");
+      lkvAlert("Erreur: Vous devez être connecté pour ajouter une tâche.");
       return;
     }
 
@@ -137,7 +138,7 @@ export default function TachesCard({ tasks: initialTasks, groupId, onRefresh, us
     
     if (error) {
       console.error('Task insert error:', error);
-      alert('Erreur lors de la sauvegarde de la tâche : ' + error.message);
+      lkvAlert('Erreur lors de la sauvegarde de la tâche : ' + error.message);
     } else {
       const assignedMember = members?.find(m => m.user_id === assignedTo);
       const assigneeName = assignedMember?.user_profiles?.full_name || (assignedTo ? 'Membre' : 'Non attribué');
@@ -163,7 +164,7 @@ export default function TachesCard({ tasks: initialTasks, groupId, onRefresh, us
   };
 
   const handleDeleteTask = async (id: string) => {
-    if (!confirm('Voulez-vous vraiment supprimer cette tâche ?')) return;
+    if (!lkvConfirm('Voulez-vous vraiment supprimer cette tâche ?')) return;
 
     setTasks(prev => prev.filter(t => t.id !== id));
 
@@ -174,7 +175,7 @@ export default function TachesCard({ tasks: initialTasks, groupId, onRefresh, us
 
     if (error) {
       console.error('Task delete error:', error);
-      alert('Erreur lors de la suppression : ' + error.message);
+      lkvAlert('Erreur lors de la suppression : ' + error.message);
       if (onRefresh) onRefresh();
     } else if (onRefresh) {
       onRefresh();

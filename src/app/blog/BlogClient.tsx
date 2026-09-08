@@ -34,12 +34,12 @@ function FeaturedCard({ post }: { post: BlogPost }) {
           />
           <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/10 to-transparent" />
           <div className="absolute top-4 left-4">
-            <span className="inline-block px-2 py-0.5 rounded-[9px] text-[10px] font-mono font-bold tracking-widest uppercase text-[#17402C] bg-[rgba(255,255,255,0.92)] border border-[rgba(255,255,255,0.60)] " style={{ fontFamily: 'var(--font-mono)' }}>
+            <span className="inline-block px-2 py-0.5 rounded-sm text-[10px] font-mono font-bold tracking-widest uppercase text-[#17402C] bg-[rgba(255,255,255,0.92)] border border-[rgba(255,255,255,0.60)] " style={{ fontFamily: 'var(--font-mono)' }}>
               ⭐ À la une
             </span>
           </div>
           <div className="absolute bottom-4 left-4 right-4">
-            <div className="bg-[rgba(255,255,255,0.92)] border border-[rgba(255,255,255,0.60)] rounded-[12px] px-3 py-2.5 ">
+            <div className="bg-[rgba(255,255,255,0.92)] border border-[rgba(255,255,255,0.60)] rounded-sm px-3 py-2.5 ">
               <span className="inline-block px-2 py-0.5 rounded-full text-[10px] font-mono bg-[rgba(91,127,85,0.14)] text-[#365233] border border-[rgba(91,127,85,0.30)] mb-2" style={{ fontFamily: 'var(--font-mono)' }}>
                 {post.category}
               </span>
@@ -76,7 +76,7 @@ function PostCard({ post }: { post: BlogPost }) {
           />
           <div className="absolute inset-0 bg-gradient-to-t from-black/40 to-transparent" />
           <div className="absolute top-3 left-3">
-            <span className="inline-block px-2 py-0.5 rounded-[9px] text-[10px] font-mono text-[#17402C] bg-[rgba(255,255,255,0.92)] border border-[rgba(255,255,255,0.60)] " style={{ fontFamily: 'var(--font-mono)' }}>
+            <span className="inline-block px-2 py-0.5 rounded-sm text-[10px] font-mono text-[#17402C] bg-[rgba(255,255,255,0.92)] border border-[rgba(255,255,255,0.60)] " style={{ fontFamily: 'var(--font-mono)' }}>
               {post.category}
             </span>
           </div>

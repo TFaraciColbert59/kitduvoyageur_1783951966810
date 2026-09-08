@@ -1,4 +1,5 @@
 "use client";
+import { lkvConfirm } from '@/components/ui/dialogs';
 
 import React, { useState, useEffect } from 'react';
 import Image from 'next/image';
@@ -94,7 +95,7 @@ export const GroupSettingsModal: React.FC<GroupSettingsModalProps> = ({
   };
 
   const handleRemoveMember = async (targetUserId: string, targetName: string) => {
-    if (!confirm(`Voulez-vous vraiment retirer ${targetName} du groupe ?`)) return;
+    if (!lkvConfirm(`Voulez-vous vraiment retirer ${targetName} du groupe ?`)) return;
 
     haptic('medium');
     setErrorMessage(null);
@@ -110,7 +111,7 @@ export const GroupSettingsModal: React.FC<GroupSettingsModalProps> = ({
   };
 
   const handleLeaveGroup = async () => {
-    if (!confirm('Voulez-vous vraiment quitter ce groupe d\'expédition ?')) return;
+    if (!lkvConfirm('Voulez-vous vraiment quitter ce groupe d\'expédition ?')) return;
 
     haptic('medium');
     setErrorMessage(null);

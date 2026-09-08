@@ -96,7 +96,7 @@ export function QuickCreateTripModal({
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm animate-fade-in">
       <div className="relative w-full max-w-lg">
-        <GlassCard tone="neutral" blur="lg" className="p-6 rounded-[32px] border border-white/80 shadow-2xl bg-white/95">
+        <GlassCard tone="neutral" blur="lg" className="p-6 rounded-2xl border border-white/80 shadow-2xl bg-white/95">
           {/* Header */}
           <div className="flex items-center justify-between pb-4 border-b border-black/5 mb-4">
             <div className="flex items-center gap-2">
@@ -109,7 +109,7 @@ export function QuickCreateTripModal({
             </div>
             <button
               onClick={onClose}
-              className="p-2 text-gray-400 hover:text-gray-600 rounded-full hover:bg-black/5 transition-colors"
+              className="p-2 text-stone-400 hover:text-stone-600 rounded-full hover:bg-black/5 transition-colors"
               aria-label="Fermer"
             >
               <X size={18} />

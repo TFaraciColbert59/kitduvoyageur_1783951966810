@@ -59,7 +59,7 @@ function StatPill({
 }) {
   return (
     <div
-      className="p-2.5 rounded-[18px] flex flex-col items-center justify-center text-center gap-0.5"
+      className="p-2.5 rounded-lg flex flex-col items-center justify-center text-center gap-0.5"
       style={{
         background: 'rgba(255, 255, 255, 0.45)',
         backdropFilter: 'blur(12px)',
@@ -133,7 +133,7 @@ export default function TrailDetailPanel({ trail, onClose }: Props) {
         exit={{ x: '110%', opacity: 0, scale: 0.96 }}
         transition={{ type: 'spring', stiffness: 360, damping: 32 }}
         onClick={(e) => e.stopPropagation()}
-        className="relative pointer-events-auto w-full max-w-[460px] sm:max-w-[480px] h-[calc(100vh-20px)] sm:h-[calc(100vh-32px)] md:h-[calc(100vh-48px)] flex flex-col justify-between overflow-hidden rounded-[26px] sm:rounded-[32px] border border-white/80 shadow-2xl"
+        className="relative pointer-events-auto w-full max-w-[460px] sm:max-w-[480px] h-[calc(100vh-20px)] sm:h-[calc(100vh-32px)] md:h-[calc(100vh-48px)] flex flex-col justify-between overflow-hidden rounded-xl sm:rounded-2xl border border-white/80 shadow-2xl"
         style={{
           background: 'linear-gradient(180deg, rgba(255, 255, 255, 0.70) 0%, rgba(251, 250, 246, 0.40) 100%)',
           backdropFilter: 'blur(28px) saturate(190%)',
@@ -184,7 +184,7 @@ export default function TrailDetailPanel({ trail, onClose }: Props) {
           {/* Title on Hero */}
           <div className="absolute bottom-3 left-3.5 right-3.5">
             <div
-              className="rounded-[16px] px-3.5 py-2.5 shadow-xs"
+              className="rounded-md px-3.5 py-2.5 shadow-xs"
               style={{
                 background: 'rgba(255, 255, 255, 0.65)',
                 backdropFilter: 'blur(16px)',
@@ -230,7 +230,7 @@ export default function TrailDetailPanel({ trail, onClose }: Props) {
 
           {/* Scores Breakdown */}
           <div
-            className="p-3.5 rounded-[20px] flex flex-col gap-2.5"
+            className="p-3.5 rounded-lg flex flex-col gap-2.5"
             style={{
               background: 'rgba(255, 255, 255, 0.40)',
               backdropFilter: 'blur(12px)',
@@ -261,7 +261,7 @@ export default function TrailDetailPanel({ trail, onClose }: Props) {
 
           {/* AI Description / Insights */}
           <div
-            className="p-3.5 rounded-[20px] flex flex-col gap-2"
+            className="p-3.5 rounded-lg flex flex-col gap-2"
             style={{
               background: 'rgba(255, 255, 255, 0.40)',
               backdropFilter: 'blur(12px)',
@@ -282,7 +282,7 @@ export default function TrailDetailPanel({ trail, onClose }: Props) {
 
           {/* Offline Storage Card */}
           <div
-            className="p-3 rounded-[20px] flex items-center justify-between gap-3"
+            className="p-3 rounded-lg flex items-center justify-between gap-3"
             style={{
               background: 'rgba(255, 255, 255, 0.40)',
               backdropFilter: 'blur(12px)',

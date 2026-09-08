@@ -29,6 +29,9 @@ jobs:
       - name: Gate 2 — ESLint Analysis
         run: npm run lint
 
+      - name: Gate 2.5 — Design Governance Guardrails (U-D60 -> U-D64)
+        run: npx vitest run tests/design/unification.spec.ts
+
       - name: Gate 3 — Unit & Integration Test Suite
         run: npm test
 

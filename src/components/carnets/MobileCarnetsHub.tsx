@@ -1,4 +1,5 @@
 'use client';
+import { lkvAlert } from '@/components/ui/dialogs';
 
 import React, { useState, useMemo, useEffect } from 'react';
 import Link from 'next/link';
@@ -81,7 +82,7 @@ export default function MobileCarnetsHub({
       } catch {}
     } else {
       navigator.clipboard?.writeText(`${window.location.origin}/carnets/${carnet.id}`);
-      alert('Lien du carnet copié dans le presse-papier !');
+      lkvAlert('Lien du carnet copié dans le presse-papier !');
     }
   };
 

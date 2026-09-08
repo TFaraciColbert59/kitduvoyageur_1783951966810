@@ -88,9 +88,9 @@ export function TripSyncStatusIndicator({
         title="Actions en attente de synchronisation. Cliquez pour synchroniser."
       >
         {isPending ? (
-          <RefreshCw className="w-3.5 h-3.5 animate-spin text-amber-600" aria-hidden="true" />
+          <RefreshCw className="w-3.5 h-3.5 animate-spin text-sand-600" aria-hidden="true" />
         ) : (
-          <span className="w-2 h-2 rounded-full bg-amber-500 animate-pulse" aria-hidden="true" />
+          <span className="w-2 h-2 rounded-full bg-sand-500 animate-pulse" aria-hidden="true" />
         )}
         <span>{isPending ? 'Synchro en cours...' : `${queueCount} en attente`}</span>
       </button>
@@ -103,7 +103,7 @@ export function TripSyncStatusIndicator({
         className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-medium bg-emerald-50 text-emerald-800 border border-emerald-200/80 shadow-sm animate-fade-in ${className}`}
         role="status"
       >
-        <Check className="w-3.5 h-3.5 text-emerald-600" aria-hidden="true" />
+        <Check className="w-3.5 h-3.5 text-forest-600" aria-hidden="true" />
         <span>Synchronisé</span>
       </div>
     );
@@ -115,7 +115,7 @@ export function TripSyncStatusIndicator({
       role="status"
       title="Toutes les données sont synchronisées"
     >
-      <Cloud className="w-3.5 h-3.5 text-emerald-600" aria-hidden="true" />
+      <Cloud className="w-3.5 h-3.5 text-forest-600" aria-hidden="true" />
       <span>À jour</span>
     </div>
   );

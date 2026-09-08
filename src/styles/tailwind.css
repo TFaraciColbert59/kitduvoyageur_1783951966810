@@ -1,175 +1,29 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
-
-:root {
-  --background: #F5F3EE;
-  --foreground: #1A1F1C;
-  --primary: #17402C;
-  --primary-foreground: #FFFFFF;
-  --primary-hover: #365233;
-  --primary-subtle: #EBF2EC;
-  --secondary: #243028;
-  --secondary-foreground: #F5F3EE;
-  --accent: #5B7F55;
-  --accent-foreground: #FFFFFF;
-  --muted: #E0DDD0;
-  --muted-foreground: #6B7568;
-  --card: #FFFFFF;
-  --card-foreground: #1A1F1C;
-  --surface: #F5F3EE;
-  --surface-elevated: #FFFFFF;
-  --border: #DDD9CC;
-  --border-subtle: #E8E5DC;
-  --input: #E0DDD0;
-  --ring: #17402C;
-  --radius: 0.5rem;
-  --font-sans: -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'SF Pro Display', 'DM Sans', system-ui, sans-serif;
-  --font-display: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Manrope', system-ui, sans-serif;
-  --font-mono: ui-monospace, 'SF Mono', 'IBM Plex Mono', Menlo, monospace;
-  --info: #3E6B7A;
-  --info-foreground: #FFFFFF;
-  --dark-bg: #1A1F1C;
-  --dark-surface: #243028;
-
-  /* Mon Matériel — liquid glass : palette verte LKDV (Forest / Stone) */
-  --mm-forest: #17402C;
-  --mm-forest-soft: #365233;
-  --mm-ink: #A6C1A0;
-  --mm-paper: #FBFAF6;
-
-  /* PWA safe-area insets */
-  --safe-top: env(safe-area-inset-top);
-  --safe-bottom: env(safe-area-inset-bottom);
-  --safe-left: env(safe-area-inset-left);
-  --safe-right: env(safe-area-inset-right);
-
-  /* Mobile Navigation Heights & Clearance */
-  --bottom-tab-base-height: calc(52px + env(safe-area-inset-bottom, 0px));
-  --bottom-tab-extended-height: calc(52px + 40px + env(safe-area-inset-bottom, 0px));
-  --bottom-nav-height: var(--bottom-tab-base-height);
-
-  /* ── Premium Design Tokens ── */
-  --shadow-xs: 0 1px 2px rgba(26,31,28,0.05);
-  --shadow-sm: 0 2px 8px rgba(26,31,28,0.06), 0 1px 2px rgba(26,31,28,0.04);
-  --shadow-md: 0 4px 16px rgba(26,31,28,0.08), 0 2px 4px rgba(26,31,28,0.05);
-  --shadow-lg: 0 8px 32px rgba(26,31,28,0.12), 0 4px 8px rgba(26,31,28,0.06);
-  --shadow-xl: 0 16px 48px rgba(26,31,28,0.14), 0 8px 16px rgba(26,31,28,0.08);
-  --shadow-2xl: 0 32px 80px rgba(26,31,28,0.18), 0 16px 32px rgba(26,31,28,0.10);
-
-  /* Spring easing */
-  --spring-bounce: cubic-bezier(0.34, 1.56, 0.64, 1);
-  --spring-smooth: cubic-bezier(0.16, 1, 0.3, 1);
-  --spring-snappy: cubic-bezier(0.19, 1, 0.22, 1);
-
-  /* Border radii */
-  --radius-xs: 4px;
-  --radius-sm: 8px;
-  --radius-md: 12px;
-  --radius-lg: 16px;
-  --radius-xl: 24px;
-  --radius-2xl: 32px;
-  --radius-full: 9999px;
-
-  /* Spacing scale */
-  --space-1: 4px;
-  --space-2: 8px;
-  --space-3: 12px;
-  --space-4: 16px;
-  --space-5: 20px;
-  --space-6: 24px;
-  --space-8: 32px;
-  --space-10: 40px;
-  --space-12: 48px;
-  --space-16: 64px;
-
-  /* Forest green palette */
-  --forest-950: #0D1410;
-  --forest-900: #131A16;
-  --forest-800: #1A1F1C;
-  --forest-700: #243028;
-  --forest-600: #365233;
-  --forest-500: #3D7A52;
-  --forest-400: #4A7C5B;
-  --forest-300: #6B9B7A;
-  --forest-200: #9BBBA8;
-  --forest-100: #C8D9CE;
-  --forest-50: #EBF2EC;
-
-  /* Sand / warm neutrals */
-  --sand-900: #3D3828;
-  --sand-800: #5C5540;
-  --sand-700: #7A7258;
-  --sand-600: #9A9070;
-  --sand-500: #B5AA88;
-  --sand-400: #C8C3A0;
-  --sand-300: #D4CFBF;
-  --sand-200: #E0DDD0;
-  --sand-100: #EDEAE0;
-  --sand-50: #F5F3EE;
-
-  /* Sky blue accent */
-  --sky-600: #2A5A6E;
-  --sky-500: #3E6B7A;
-  --sky-400: #5A8A9A;
-
-  /* Status */
-  --success: #17402C;
-  --warning: #C89A3B;
-  --danger: #A8443A;
-
-  /* ————— LE KIT DU VOYAGEUR — DESIGN TOKENS ————— */
-  --lkv-font-sans: "Inter", -apple-system, BlinkMacSystemFont, "Helvetica Neue", sans-serif;
-  --lkv-font-serif: "Cormorant Garamond", "Playfair Display", Georgia, serif;
-  --lkv-font-mono: "JetBrains Mono", ui-monospace, "SF Mono", Menlo, monospace;
-
-  --lkv-forest-950: #06120C;
-  --lkv-forest-900: #17402C;
-  --lkv-forest-800: #17402C;
-  --lkv-forest-700: #205238;
-  --lkv-forest-600: #365233;
-
-  --lkv-sage-500: #5B7F55;
-  --lkv-sage-300: #A6C1A0;
-  --lkv-sage-200: #DDE9D6;
-  --lkv-sage-100: #EAF1E5;
-
-  --lkv-stone-50: #F4F1EA;
-  --lkv-stone-100: #E9E4D9;
-  --lkv-stone-200: #DDD6C6;
-
-  --lkv-ink-900: #17402C;
-  --lkv-ink-700: #384A42;
-  --lkv-ink-500: #6B7A72;
-  --lkv-ink-400: #8B978F;
-  --lkv-ink-300: #AEB7B1;
-
-  --lkv-paper: #FBFAF6;
-}
+
 
 .dark {
-  --background: #1A1F1C;
-  --foreground: #F5F3EE;
-  --primary: #4A7C5B;
-  --primary-hover: #5A8A6A;
+  --background: var(--lkv-forest-800);
+  --foreground: var(--sand-50);
+  --primary: var(--lkv-forest-400);
+  --primary-hover: var(--lkv-forest-400);
   --primary-subtle: rgba(74,124,91,0.15);
-  --secondary: #2D3830;
-  --secondary-foreground: #EDEAE0;
-  --accent: #6B9B7A;
-  --accent-foreground: #1A1F1C;
-  --card: #243028;
-  --card-foreground: #F5F3EE;
-  --surface: #1E2521;
-  --surface-elevated: #2D3830;
+  --secondary: var(--lkv-forest-700);
+  --secondary-foreground: var(--sand-100);
+  --accent: var(--lkv-forest-300);
+  --accent-foreground: var(--lkv-forest-800);
+  --card: var(--lkv-forest-700);
+  --card-foreground: var(--sand-50);
+  --surface: var(--lkv-forest-800);
+  --surface-elevated: var(--lkv-forest-700);
   --border: rgba(255,255,255,0.08);
   --border-subtle: rgba(255,255,255,0.05);
-  --muted: #2D3830;
-  --muted-foreground: #9BBBA8;
-  --input: #243028;
-  --ring: #4A7C5B;
-  --success: #4A7C5B;
-  --warning: #B8932A;
-  --danger: #C53030;
+  --muted: var(--lkv-forest-700);
+  --muted-foreground: var(--lkv-forest-200);
+  --input: var(--lkv-forest-700);
+  --ring: var(--lkv-forest-400);
+  --warning: var(--lkv-warning);
 
   /* Shadow colors for dark mode */
   --shadow-xs: 0 1px 2px rgba(0,0,0,0.3);
@@ -201,14 +55,14 @@
     min-height: 100%;
     min-height: 100dvh;
     min-height: -webkit-fill-available;
-    background-color: #FBFAF6 !important;
+    background-color: var(--lkv-surface) !important;
     overscroll-behavior: none !important;
     overscroll-behavior-y: none !important;
     -webkit-tap-highlight-color: transparent;
   }
 
   body {
-    background-color: #FBFAF6 !important;
+    background-color: var(--lkv-surface) !important;
     color: var(--foreground);
     font-family: var(--font-sans);
     -webkit-font-smoothing: antialiased;
@@ -231,7 +85,7 @@
     min-height: -webkit-fill-available;
     width: 100%;
     max-width: 100vw;
-    background-color: #FBFAF6;
+    background-color: var(--lkv-surface);
     position: relative;
     overscroll-behavior: none;
     overscroll-behavior-y: none;
@@ -694,51 +548,6 @@ a, button, select, input, textarea, [role="button"], [tabindex]:not([tabindex="-
   cursor: pointer;
 }
 
-/* ============================================================
-   DESIGN SYSTEM LKDV — Mon Matériel Cockpit Vertical
-   ============================================================ */
-:root {
-  --lkv-paper: #FBFAF6;
-  --lkv-stone-50: #F5F3EC;
-  --lkv-stone-100: #EAE7DD;
-  --lkv-stone-200: #DAD5C4;
-
-  --lkv-ink-900: #17402C;
-  --lkv-ink-700: #2A3A31;
-  --lkv-ink-500: #6B7770;
-  --lkv-ink-400: #9AA39C;
-  --lkv-ink-300: #C4CAC5;
-
-  --lkv-forest-950: #05130C;
-  --lkv-forest-900: #17402C;
-  --lkv-forest-800: #17402C;
-  --lkv-forest-700: #1F5C3E;
-
-  --lkv-sage-100: #E4EEDF;
-  --lkv-sage-200: #C7DDBB;
-  --lkv-sage-300: #9ECB8A;
-  --lkv-sage-500: #6BAA55;
-
-  --lkv-warm-300: #F1DAB1;
-  --lkv-warm-500: #E4C695;
-  --lkv-warm-700: #B08A4E;
-
-  --lkv-danger: #C0532E;
-  --lkv-danger-bg: #FBE9E1;
-
-  --lkv-border: rgba(11,31,23,0.06);
-  --lkv-border-strong: rgba(11,31,23,0.12);
-
-  --lkv-: 0 1px 2px rgba(11,31,23,0.04), 0 0 0 1px rgba(11,31,23,0.03);
-  --lkv-: 0 2px 8px rgba(11,31,23,0.05), 0 0 0 1px rgba(11,31,23,0.03);
-  --lkv-: 0 10px 24px rgba(11,31,23,0.08);
-  --lkv-: 0 24px 48px rgba(11,31,23,0.12);
-
-  --lkv-dur: 220ms;
-  --lkv-ease: cubic-bezier(0.4, 0, 0.2, 1);
-  --lkv-ease-out: cubic-bezier(0.16, 1, 0.3, 1);
-}
-
 .font-serif-lkv {
   font-family: var(--font-serif), 'Instrument Serif', Georgia, serif;
 }
@@ -781,7 +590,7 @@ html, body {
   -webkit-overflow-scrolling: touch;
   overscroll-behavior: none !important;
   overscroll-behavior-y: none !important;
-  background-color: #FBFAF6 !important;
+  background-color: var(--lkv-surface) !important;
 }
 
 /* 3. Accélération matérielle GPU pour conteneurs animés */

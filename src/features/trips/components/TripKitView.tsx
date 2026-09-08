@@ -155,7 +155,7 @@ export function TripKitView({ trip, analysis, showBackLink: _showBackLink = fals
       {/* 1. En-tête Statut Sac & Bilan de Charge */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         {/* Carte Complétude */}
-        <GlassCard tone="sage" blur="md" className="p-5 rounded-[24px] border border-white/70">
+        <GlassCard tone="sage" blur="md" className="p-5 rounded-xl border border-white/70">
           <div className="flex items-center justify-between mb-2">
             <span className="text-xs font-bold uppercase tracking-wider text-lkv-secondary flex items-center gap-1.5">
               <CheckCircle2 className="w-4 h-4" />
@@ -175,7 +175,7 @@ export function TripKitView({ trip, analysis, showBackLink: _showBackLink = fals
         </GlassCard>
 
         {/* Carte Poids (Résolution D3, D4) */}
-        <GlassCard tone="neutral" blur="md" className="p-5 rounded-[24px] border border-white/70">
+        <GlassCard tone="neutral" blur="md" className="p-5 rounded-xl border border-white/70">
           <div className="flex items-center justify-between mb-2">
             <span className="text-xs font-bold uppercase tracking-wider text-lkv-secondary flex items-center gap-1.5">
               <Scale className="w-4 h-4" />
@@ -212,7 +212,7 @@ export function TripKitView({ trip, analysis, showBackLink: _showBackLink = fals
         </GlassCard>
 
         {/* Carte Contexte Expédition (Résolution D2) */}
-        <GlassCard tone="neutral" blur="md" className="p-5 rounded-[24px] border border-white/70">
+        <GlassCard tone="neutral" blur="md" className="p-5 rounded-xl border border-white/70">
           <span className="text-xs font-bold uppercase tracking-wider text-lkv-secondary flex items-center gap-1.5 mb-2">
             <Compass className="w-4 h-4" />
             Contexte Itinéraire
@@ -234,12 +234,12 @@ export function TripKitView({ trip, analysis, showBackLink: _showBackLink = fals
 
       {/* Alertes de sécurité & climat */}
       {analysis.climateWarnings.length > 0 && (
-        <div className="p-4 rounded-2xl bg-amber-50 border border-amber-200/80 text-amber-900 text-xs sm:text-sm space-y-1.5">
-          <div className="font-bold flex items-center gap-2 text-amber-800">
-            <AlertTriangle className="w-4 h-4 shrink-0 text-amber-600" />
+        <div className="p-4 rounded-2xl bg-sand-50 border border-sand-200/80 text-sand-900 text-xs sm:text-sm space-y-1.5">
+          <div className="font-bold flex items-center gap-2 text-sand-800">
+            <AlertTriangle className="w-4 h-4 shrink-0 text-sand-600" />
             Conditions de terrain identifiées pour votre expédition
           </div>
-          <ul className="list-disc list-inside space-y-0.5 pl-1 text-xs text-amber-800/90">
+          <ul className="list-disc list-inside space-y-0.5 pl-1 text-xs text-sand-800/90">
             {analysis.climateWarnings.map((w, idx) => (
               <li key={idx}>{w}</li>
             ))}
@@ -249,7 +249,7 @@ export function TripKitView({ trip, analysis, showBackLink: _showBackLink = fals
 
       {/* 2. Recommandations Contextuelles & Boutique LKDV (CŒUR BUSINESS) */}
       {(analysis.vitalGaps.length > 0 || analysis.recommendedGaps.length > 0) && (
-        <GlassCard tone="sage" blur="md" className="p-6 rounded-[28px] border border-white/80 shadow-sm space-y-4">
+        <GlassCard tone="sage" blur="md" className="p-6 rounded-card border border-white/80 shadow-sm space-y-4">
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pb-3 border-b border-stone-200/60">
             <div>
               <span className="text-xs font-bold text-lkv-secondary uppercase tracking-wider flex items-center gap-1.5">
@@ -280,7 +280,7 @@ export function TripKitView({ trip, analysis, showBackLink: _showBackLink = fals
               return (
                 <div
                   key={gap.id}
-                  className="p-4 rounded-[20px] bg-white/90 border border-stone-200/80 shadow-sm hover:border-lkv-secondary/60 transition-all flex flex-col justify-between"
+                  className="p-4 rounded-lg bg-white/90 border border-stone-200/80 shadow-sm hover:border-lkv-secondary/60 transition-all flex flex-col justify-between"
                 >
                   <div>
                     <div className="flex items-center justify-between gap-2 mb-2">
@@ -377,7 +377,7 @@ export function TripKitView({ trip, analysis, showBackLink: _showBackLink = fals
       )}
 
       {/* 3. Check-list des Objets du Sac & Filtrage */}
-      <GlassCard tone="neutral" blur="md" className="p-6 rounded-[28px] border border-white/70 shadow-sm space-y-5">
+      <GlassCard tone="neutral" blur="md" className="p-6 rounded-card border border-white/70 shadow-sm space-y-5">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
           <div>
             <h3 className="text-lg font-black text-lkv-primary flex items-center gap-2">
@@ -503,7 +503,7 @@ export function TripKitView({ trip, analysis, showBackLink: _showBackLink = fals
       {/* Modal Ajout Rapide d'Équipement */}
       {isAddModalOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm animate-fade-in">
-          <div className="w-full max-w-md bg-white rounded-[24px] p-6 shadow-2xl border border-stone-200">
+          <div className="w-full max-w-md bg-white rounded-xl p-6 shadow-2xl border border-stone-200">
             <h3 className="text-base font-bold text-stone-900 mb-4">
               Ajouter un équipement au sac
             </h3>

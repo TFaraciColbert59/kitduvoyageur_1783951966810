@@ -616,8 +616,8 @@ export default function KitConfiguratorWizard({ isMobile = false }: KitConfigura
 
                   {/* Section: Weather / Security Alerts */}
                   {report.inadequateAlerts.length > 0 && (
-                    <div className="glass-sub-card p-4 rounded-2xl border border-amber-200/60 bg-amber-50/40">
-                      <h4 className="text-xs font-bold font-mono uppercase tracking-wider text-amber-900 mb-2 flex items-center gap-1.5">
+                    <div className="glass-sub-card p-4 rounded-2xl border border-sand-200/60 bg-sand-50/40">
+                      <h4 className="text-xs font-bold font-mono uppercase tracking-wider text-sand-900 mb-2 flex items-center gap-1.5">
                         <span>⚠️</span> Points de vigilance terrain
                       </h4>
                       <div className="space-y-2 text-xs">

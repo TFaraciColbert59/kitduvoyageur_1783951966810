@@ -221,7 +221,7 @@ export default function KitDetailPage() {
               <div className="absolute bottom-0 left-0 right-0 p-6 md:p-10">
                 <div className="max-w-7xl mx-auto space-y-2">
                   <nav
-                    className="inline-flex items-center gap-2 text-xs text-[#17402C]/70 bg-[rgba(255,255,255,0.92)] border border-[rgba(255,255,255,0.60)] rounded-[12px] px-3 py-2"
+                    className="inline-flex items-center gap-2 text-xs text-[#17402C]/70 bg-[rgba(255,255,255,0.92)] border border-[rgba(255,255,255,0.60)] rounded-sm px-3 py-2"
                     aria-label="Fil d'Ariane"
                   >
                     <Link href="/" className="hover:text-[#17402C] transition-colors">Accueil</Link>
@@ -231,7 +231,7 @@ export default function KitDetailPage() {
                     <span className="text-[#17402C] font-medium" aria-current="page">{kit.nom}</span>
                   </nav>
 
-                  <div className="bg-[rgba(255,255,255,0.92)] border border-[rgba(255,255,255,0.60)] rounded-[12px] px-3 py-2 max-w-3xl">
+                  <div className="bg-[rgba(255,255,255,0.92)] border border-[rgba(255,255,255,0.60)] rounded-sm px-3 py-2 max-w-3xl">
                     <div className="flex flex-wrap items-center gap-2 mb-1">
                       <span className={`${difficultePill[kit.difficulte] ?? 'glass-pill'}`}>
                         {kit.difficulte.toUpperCase()}
@@ -410,7 +410,7 @@ export default function KitDetailPage() {
               </div>
               <Link
                 href="/kits"
-                className="glass interactive h-7.5 px-3 rounded-full flex items-center text-xs font-semibold text-[#17402C] border border-white/40 shadow-[inset_0_1px_1px_rgba(255,255,255,0.6)] shrink-0"
+                className="glass interactive h-7.5 px-3 rounded-full flex items-center text-xs font-semibold text-[#17402C] border border-white/40 shadow-inner shrink-0"
               >
                 ← Kits
               </Link>
@@ -423,7 +423,7 @@ export default function KitDetailPage() {
                 <img src={kit.image} alt={kit.alt} className="w-full h-full object-cover" />
                 <div className="absolute inset-0 bg-gradient-to-t from-[#FAF8F5]/95 via-[#FAF8F5]/30 to-transparent" />
                 <div className="absolute bottom-3 left-3 right-3">
-                  <p className="text-xs font-medium text-[#17402C] bg-[rgba(255,255,255,0.92)] border border-[rgba(255,255,255,0.60)] rounded-[9px] px-2 py-1 inline-flex">
+                  <p className="text-xs font-medium text-[#17402C] bg-[rgba(255,255,255,0.92)] border border-[rgba(255,255,255,0.60)] rounded-sm px-2 py-1 inline-flex">
                     📍 {kit.destination} · 🗓 {kit.saison}
                   </p>
                 </div>

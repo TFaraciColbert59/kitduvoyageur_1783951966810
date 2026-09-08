@@ -153,15 +153,15 @@ export function TripLiveCockpitView({
   return (
     <div
       className={`space-y-6 transition-colors duration-200 ${
-        isSunMode ? 'bg-black text-white p-4 sm:p-6 rounded-[32px]' : ''
+        isSunMode ? 'bg-black text-white p-4 sm:p-6 rounded-2xl' : ''
       }`}
     >
       {/* 1. Barre de statut Cockpit & Mode Plein Soleil */}
       <div className="flex items-center justify-between gap-3">
         <div className="flex items-center gap-2.5">
           <span className="relative flex h-3 w-3">
-            <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75" />
-            <span className="relative inline-flex rounded-full h-3 w-3 bg-emerald-500" />
+            <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-forest-400 opacity-75" />
+            <span className="relative inline-flex rounded-full h-3 w-3 bg-forest-500" />
           </span>
           <span
             className={`text-xs font-bold uppercase tracking-wider ${
@@ -191,7 +191,7 @@ export function TripLiveCockpitView({
       {/* 2. Sélecteur de Jour & Progression de l'étape */}
       <GlassCard
         tone={isSunMode ? 'neutral' : 'sage'}
-        className={`p-4 sm:p-6 rounded-[28px] border transition-all ${
+        className={`p-4 sm:p-6 rounded-card border transition-all ${
           isSunMode ? 'bg-[#111] border-white/20 text-white' : 'border-white/70'
         }`}
       >
@@ -394,16 +394,16 @@ export function TripLiveCockpitView({
         {/* Saisie rapide de dépense en 2 clics */}
         <GlassCard
           tone="neutral"
-          className={`p-5 rounded-[24px] border ${
+          className={`p-5 rounded-xl border ${
             isSunMode ? 'bg-[#181818] border-white/20 text-white' : 'border-white/60'
           }`}
         >
           <div className="flex items-center justify-between mb-3">
             <div className="flex items-center gap-2">
-              <CreditCard className="w-5 h-5 text-emerald-500" />
+              <CreditCard className="w-5 h-5 text-forest-500" />
               <h4 className="font-bold text-sm">Dépense Express Terrain</h4>
             </div>
-            <span className="text-[11px] px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-600 font-semibold">
+            <span className="text-[11px] px-2 py-0.5 rounded-full bg-forest-500/10 text-forest-600 font-semibold">
               2 taps
             </span>
           </div>
@@ -426,7 +426,7 @@ export function TripLiveCockpitView({
           ) : (
             <form onSubmit={handleQuickExpenseSubmit} className="space-y-3">
               {expenseSuccessMsg && (
-                <div className="p-2.5 rounded-xl bg-emerald-500/15 border border-emerald-500/30 text-emerald-700 text-xs font-semibold flex items-center gap-2">
+                <div className="p-2.5 rounded-xl bg-forest-500/15 border border-forest-500/30 text-forest-700 text-xs font-semibold flex items-center gap-2">
                   <CheckCircle2 size={16} />
                   <span>{expenseSuccessMsg}</span>
                 </div>
@@ -526,7 +526,7 @@ export function TripLiveCockpitView({
         {/* Urgence & Secours Montagne Hors-Ligne */}
         <GlassCard
           tone="neutral"
-          className={`p-5 rounded-[24px] border ${
+          className={`p-5 rounded-xl border ${
             isSunMode ? 'bg-[#181818] border-white/20 text-white' : 'border-white/60'
           }`}
         >
@@ -553,7 +553,7 @@ export function TripLiveCockpitView({
 
               <a
                 href="sms:114"
-                className="flex items-center justify-center gap-2 p-3 rounded-2xl bg-white hover:bg-gray-50 text-rose-600 border border-rose-200 text-sm font-extrabold shadow-xs min-h-[48px] transition-all"
+                className="flex items-center justify-center gap-2 p-3 rounded-2xl bg-white hover:bg-stone-50 text-rose-600 border border-rose-200 text-sm font-extrabold shadow-xs min-h-[48px] transition-all"
               >
                 <MessageSquare size={16} />
                 <span>SMS 114</span>
@@ -583,7 +583,7 @@ export function TripLiveCockpitView({
                 title="Copier les coordonnées pour les secours"
               >
                 {copiedCoords ? (
-                  <Check size={16} className="text-emerald-600" />
+                  <Check size={16} className="text-forest-600" />
                 ) : (
                   <Copy size={16} />
                 )}

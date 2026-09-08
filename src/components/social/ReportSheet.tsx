@@ -84,12 +84,12 @@ export default function ReportSheet({
           {/* Drag handle */}
           <div
             {...handleProps}
-            className="w-10 h-1 bg-gray-300 rounded-full mx-auto mb-2 cursor-grab active:cursor-grabbing touch-none"
+            className="w-10 h-1 bg-stone-300 rounded-full mx-auto mb-2 cursor-grab active:cursor-grabbing touch-none"
           />
 
           {submitted ? (
             <div className="py-10 text-center flex flex-col items-center gap-3">
-              <div className="w-12 h-12 rounded-full bg-emerald-100 text-emerald-800 flex items-center justify-center">
+              <div className="w-12 h-12 rounded-full bg-forest-100 text-forest-800 flex items-center justify-center">
                 <Icon name="CheckCircleIcon" size={28} />
               </div>
               <h4 className="font-bold text-[#17402C] text-base">Signalement envoyé</h4>
@@ -99,7 +99,7 @@ export default function ReportSheet({
             </div>
           ) : (
             <>
-              <div className="flex items-center justify-between pb-2 border-b border-gray-100">
+              <div className="flex items-center justify-between pb-2 border-b border-stone-100">
                 <h3 className="font-display font-bold text-lg text-[#17402C]">
                   Signaler ce contenu
                 </h3>

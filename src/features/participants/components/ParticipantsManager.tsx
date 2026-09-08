@@ -85,7 +85,7 @@ export const ParticipantsManager: React.FC = () => {
   return (
     <div className="space-y-6 pb-24 animate-in fade-in duration-300">
       {/* Group Telemetry Summary Banner */}
-      <div className="p-6 rounded-3xl bg-gradient-to-br from-[#17402C] to-[#2D5A40] text-white shadow-xl shadow-[#17402C]/10 relative overflow-hidden">
+      <div className="p-6 rounded-3xl bg-gradient-to-br from-[#17402C] to-[#2D5A40] text-white shadow-xl shadow-md/10 relative overflow-hidden">
         <div className="flex items-center justify-between gap-2 mb-2">
           <span className="text-[10px] font-mono uppercase tracking-[0.2em] text-[#A6C1A0]">
             MATRICE DE GROUPE & LOGISTIQUE
@@ -132,7 +132,7 @@ export const ParticipantsManager: React.FC = () => {
           </h3>
           <button
             onClick={() => setShowAddHuman(true)}
-            className="px-3 py-1 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs shadow-sm transition-all"
+            className="px-3 py-1 rounded-xl bg-forest-600 hover:bg-forest-500 text-white font-bold text-xs shadow-sm transition-all"
           >
             + Ajouter un équipier
           </button>
@@ -159,7 +159,7 @@ export const ParticipantsManager: React.FC = () => {
           </h3>
           <button
             onClick={() => setShowAddDog(true)}
-            className="px-3 py-1 rounded-xl bg-amber-700 hover:bg-amber-600 text-white font-bold text-xs shadow-sm transition-all"
+            className="px-3 py-1 rounded-xl bg-sand-700 hover:bg-sand-600 text-white font-bold text-xs shadow-sm transition-all"
           >
             + Ajouter un chien
           </button>
@@ -263,7 +263,7 @@ export const ParticipantsManager: React.FC = () => {
               </button>
               <button
                 type="submit"
-                className="flex-1 py-2.5 rounded-xl bg-emerald-600 text-white text-xs font-bold shadow-md"
+                className="flex-1 py-2.5 rounded-xl bg-forest-600 text-white text-xs font-bold shadow-md"
               >
                 Enregistrer
               </button>
@@ -327,7 +327,7 @@ export const ParticipantsManager: React.FC = () => {
               </button>
               <button
                 type="submit"
-                className="flex-1 py-2.5 rounded-xl bg-amber-700 text-white text-xs font-bold shadow-md"
+                className="flex-1 py-2.5 rounded-xl bg-sand-700 text-white text-xs font-bold shadow-md"
               >
                 Enregistrer
               </button>

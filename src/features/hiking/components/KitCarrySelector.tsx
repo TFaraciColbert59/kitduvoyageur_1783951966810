@@ -56,7 +56,7 @@ export default function KitCarrySelector({ kitId, onSelect, disabled }: KitCarry
   if (kits.length === 0) return null;
 
   return (
-    <div className="fixed top-24 left-4 z-20 w-72 rounded-2xl bg-[#FBFAF6]/95 backdrop-blur-md border border-[#A3C4A3]/40 shadow-[0_16px_40px_rgba(11,31,23,0.14)] p-4">
+    <div className="fixed top-24 left-4 z-20 w-72 rounded-2xl bg-[#FBFAF6]/95 backdrop-blur-md border border-[#A3C4A3]/40 shadow-lg p-4">
       <div className="font-mono text-[10px] tracking-[0.18em] uppercase text-[#6B7A72]">
         Emporter un kit ?
       </div>

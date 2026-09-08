@@ -616,7 +616,7 @@ export default function FideliteTab({ profile: initialProfile }: FideliteTabProp
           </div>
 
           {/* ── Hero Card (Progression Niveau) ── */}
-          <div className="bg-[#17402C] rounded-[1.5rem] p-6 sm:p-8 text-white relative overflow-hidden flex flex-col sm:flex-row items-center gap-8 border border-white/10 shadow-[0_16px_40px_-20px_rgba(23,64,44,0.35)]">
+          <div className="bg-[#17402C] rounded-[1.5rem] p-6 sm:p-8 text-white relative overflow-hidden flex flex-col sm:flex-row items-center gap-8 border border-white/10 shadow-lg">
             <div className="absolute top-0 right-0 w-96 h-96 bg-[#5B7F55]/20 rounded-full blur-[80px] -translate-y-1/2 translate-x-1/3 pointer-events-none" />
 
             {/* Left: Circle Gauge */}

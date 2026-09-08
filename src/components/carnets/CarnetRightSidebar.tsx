@@ -27,7 +27,7 @@ export default function CarnetRightSidebar({
           <span className="glass-pill text-[9.5px] font-mono font-bold text-[#8C6418] uppercase">
             ⭐ COUP DE CŒUR
           </span>
-          <span className="w-1.5 h-1.5 rounded-full bg-amber-500 animate-pulse" />
+          <span className="w-1.5 h-1.5 rounded-full bg-sand-500 animate-pulse" />
         </div>
 
         <div>

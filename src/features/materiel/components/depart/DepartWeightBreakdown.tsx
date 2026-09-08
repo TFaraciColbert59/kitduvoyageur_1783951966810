@@ -65,7 +65,7 @@ export function DepartWeightBreakdown({
     : `Sac optimisé : poids de base sous contrôle.`;
 
   return (
-    <div className="glass rounded-[28px] p-4 sm:p-5 space-y-4 border border-white/80 dark:border-white/10 shadow-sm backdrop-blur-md">
+    <div className="glass rounded-card p-4 sm:p-5 space-y-4 border border-white/80 dark:border-white/10 shadow-sm backdrop-blur-md">
       {/* ════ HEADER : TITRE & POIDS TOTAL ════ */}
       <button
         type="button"
@@ -141,9 +141,9 @@ export function DepartWeightBreakdown({
 
         {/* Barre segmentée avec repères visuels */}
         <div className="h-2 w-full rounded-full bg-black/10 dark:bg-white/10 overflow-hidden flex">
-          <div className="h-full bg-emerald-600 w-[35%]" title="Ultraléger (<5kg)" />
-          <div className="h-full bg-emerald-800 w-[35%]" title="Standard 3 saisons (5-9kg)" />
-          <div className="h-full bg-amber-600 w-[15%]" title="Lourd (>9kg)" />
+          <div className="h-full bg-forest-600 w-[35%]" title="Ultraléger (<5kg)" />
+          <div className="h-full bg-forest-800 w-[35%]" title="Standard 3 saisons (5-9kg)" />
+          <div className="h-full bg-sand-600 w-[15%]" title="Lourd (>9kg)" />
           <div className="h-full bg-red-700 w-[15%]" title="Très lourd (>12kg)" />
         </div>
       </div>

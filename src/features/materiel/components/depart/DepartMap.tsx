@@ -189,7 +189,7 @@ export function DepartMap({ trail, height = '240px', className }: DepartMapProps
   // État vide si aucun tracé
   if (!trail) {
     return (
-      <div className="glass rounded-[24px] p-5 text-center space-y-2.5 border border-white/60">
+      <div className="glass rounded-xl p-5 text-center space-y-2.5 border border-white/60">
         <div className="w-10 h-10 rounded-2xl bg-white/40 border border-white/60 flex items-center justify-center mx-auto text-[#17402C]">
           <Compass size={20} />
         </div>
@@ -244,7 +244,7 @@ export function DepartMap({ trail, height = '240px', className }: DepartMapProps
   return (
     <div
       className={cn(
-        'glass rounded-[24px] overflow-hidden relative border border-white/60 flex flex-col shadow-xs',
+        'glass rounded-xl overflow-hidden relative border border-white/60 flex flex-col shadow-xs',
         isFullscreen && 'fixed inset-0 z-50 rounded-none h-screen w-screen',
         className
       )}
@@ -272,7 +272,7 @@ export function DepartMap({ trail, height = '240px', className }: DepartMapProps
             title="Exporter le tracé"
             aria-label="Exporter le tracé"
           >
-            {isOfflineSaved ? <Check size={12} className="text-emerald-600" /> : <DownloadAnimated size={12} />}
+            {isOfflineSaved ? <Check size={12} className="text-forest-600" /> : <DownloadAnimated size={12} />}
           </button>
           <button
             type="button"

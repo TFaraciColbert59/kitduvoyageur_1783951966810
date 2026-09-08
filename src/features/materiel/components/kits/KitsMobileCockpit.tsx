@@ -42,7 +42,7 @@ export function KitsMobileCockpit({
       {/* Mobile View with Animated Sliding Pill Selector (md:hidden) */}
       <div className="md:hidden flex flex-col gap-3.5">
         {/* Animated Segmented Selector */}
-        <div className="p-1 rounded-full bg-white/[0.08] border border-white/25 shadow-[inset_0_1px_1.5px_rgba(255,255,255,0.4)] flex items-center justify-between gap-1">
+        <div className="p-1 rounded-full bg-white/[0.08] border border-white/25 shadow-inner flex items-center justify-between gap-1">
           {TABS.map((tab) => {
             const isActive = activeTab === tab.id;
             return (
@@ -55,7 +55,7 @@ export function KitsMobileCockpit({
                 {isActive && (
                   <motion.span
                     layoutId="kits-mobile-tab-pill"
-                    className="absolute inset-0 rounded-full bg-[#17402C]/12 border border-[#17402C]/20 shadow-[inset_0_1px_1.5px_rgba(255,255,255,0.8),0_2px_8px_rgba(23,64,44,0.08)]"
+                    className="absolute inset-0 rounded-full bg-[#17402C]/12 border border-[#17402C]/20 shadow-inner"
                     transition={{ type: 'spring', stiffness: 450, damping: 32 }}
                   />
                 )}

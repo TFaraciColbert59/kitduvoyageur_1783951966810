@@ -39,7 +39,7 @@ export function TripHero({ trip, onEditClick }: TripHeroProps) {
   };
 
   return (
-    <section className="relative w-full min-h-[340px] sm:min-h-[420px] rounded-[32px] overflow-hidden shadow-xl mb-6">
+    <section className="relative w-full min-h-[340px] sm:min-h-[420px] rounded-2xl overflow-hidden shadow-xl mb-6">
       {/* Background Image (D32 : fallback onError vers no_image si URL cassée) */}
       <AppImage
         src={imageUrl}

@@ -63,7 +63,7 @@ export function PlaceDetailClient({
       <GlassCard
         tone="neutral"
         blur="md"
-        className="p-6 sm:p-8 rounded-[32px] border border-white/70 shadow-sm relative overflow-hidden"
+        className="p-6 sm:p-8 rounded-2xl border border-white/70 shadow-sm relative overflow-hidden"
       >
         <div className="flex flex-wrap items-center justify-between gap-3 mb-4">
           <div className="flex items-center gap-2">
@@ -108,13 +108,13 @@ export function PlaceDetailClient({
 
         {/* Alerte Floutage Éthique */}
         {place.is_blurred && (
-          <div className="mb-6 p-4 rounded-2xl bg-amber-50 border border-amber-200/80 text-amber-900 text-xs sm:text-sm flex items-start gap-3">
-            <ShieldAlert className="w-5 h-5 text-amber-700 shrink-0 mt-0.5" />
+          <div className="mb-6 p-4 rounded-2xl bg-sand-50 border border-sand-200/80 text-sand-900 text-xs sm:text-sm flex items-start gap-3">
+            <ShieldAlert className="w-5 h-5 text-sand-700 shrink-0 mt-0.5" />
             <div className="space-y-1">
               <strong className="font-bold block">
                 Préservation de la biodiversité & sécurité physique (Charte LKDV §5.7)
               </strong>
-              <p className="text-xs text-amber-800/90 leading-relaxed">
+              <p className="text-xs text-sand-800/90 leading-relaxed">
                 Ce spot fragile fait l’objet d’un floutage serveur systématique à ~500 m (coordonnées arrondies à 2 décimales) afin de prévenir le surbivouac et protéger les écosystèmes montagnards.
               </p>
             </div>
@@ -145,7 +145,7 @@ export function PlaceDetailClient({
 
       {/* Description */}
       {place.description && (
-        <GlassCard tone="neutral" blur="sm" className="p-6 sm:p-7 rounded-[28px] border border-white/60">
+        <GlassCard tone="neutral" blur="sm" className="p-6 sm:p-7 rounded-card border border-white/60">
           <h2 className="text-base font-bold text-stone-900 mb-3 flex items-center gap-2">
             <Compass className="w-4 h-4 text-[#17402C]" />
             Présentation & Caractéristiques
@@ -157,7 +157,7 @@ export function PlaceDetailClient({
       )}
 
       {/* Informations Pratiques */}
-      <GlassCard tone="neutral" blur="sm" className="p-6 sm:p-7 rounded-[28px] border border-white/60">
+      <GlassCard tone="neutral" blur="sm" className="p-6 sm:p-7 rounded-card border border-white/60">
         <h2 className="text-base font-bold text-stone-900 mb-4 flex items-center gap-2">
           <Calendar className="w-4 h-4 text-[#17402C]" />
           Informations Pratiques & Équipements
@@ -272,7 +272,7 @@ export function PlaceDetailClient({
 
       {/* Galerie Photos si présente */}
       {photos.length > 0 && (
-        <GlassCard tone="neutral" blur="sm" className="p-6 sm:p-7 rounded-[28px] border border-white/60">
+        <GlassCard tone="neutral" blur="sm" className="p-6 sm:p-7 rounded-card border border-white/60">
           <h2 className="text-base font-bold text-stone-900 mb-4 flex items-center gap-2">
             <Compass className="w-4 h-4 text-[#17402C]" />
             Photos Communautaires ({photos.length})

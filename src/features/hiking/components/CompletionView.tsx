@@ -66,7 +66,7 @@ export default function CompletionView({
 
       <div className="relative z-10 w-full max-w-md space-y-6 my-auto">
         {/* Celebration Badge Icon */}
-        <div className="relative w-24 h-24 rounded-full mx-auto bg-gradient-to-br from-[#A8C8A0] to-[#C6DCBE] text-[#06120C] flex items-center justify-center shadow-[0_0_50px_rgba(168,200,160,0.4)]">
+        <div className="relative w-24 h-24 rounded-full mx-auto bg-gradient-to-br from-[#A8C8A0] to-[#C6DCBE] text-[#06120C] flex items-center justify-center shadow-md">
           <svg className="w-11 h-11 fill-none stroke-current stroke-[2]" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" d="M3 21l3-9h12l3 9M6 12l6-8 6 8M9 17l2 2 4-4" />
           </svg>

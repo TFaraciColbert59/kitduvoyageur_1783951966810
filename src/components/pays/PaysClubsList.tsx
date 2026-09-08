@@ -51,7 +51,7 @@ export default function PaysClubsList({ countryIso, countryName }: Props) {
       <div className="flex items-center justify-between gap-3 px-1">
         <div>
           <h3 className="text-base font-bold font-display text-[#17402C] leading-tight">
-            Clubs outdoor <em className="font-serif italic text-emerald-800 font-normal">en {countryName}</em>
+            Clubs outdoor <em className="font-serif italic text-forest-800 font-normal">en {countryName}</em>
           </h3>
           <p className="text-[10px] text-[#5C6B5E]">Communautés locales et sorties collectives.</p>
         </div>
@@ -84,7 +84,7 @@ export default function PaysClubsList({ countryIso, countryName }: Props) {
                     {club.emoji || '🏔️'}
                   </div>
                   {club.is_verified && (
-                    <span className="glass-pill text-emerald-900 bg-emerald-50 text-[9px] font-mono font-bold">
+                    <span className="glass-pill text-forest-900 bg-forest-50 text-[9px] font-mono font-bold">
                       ✓ Vérifié
                     </span>
                   )}
@@ -103,8 +103,8 @@ export default function PaysClubsList({ countryIso, countryName }: Props) {
                   {club.members_count || 0} membres
                 </span>
                 {club.active_this_month > 0 && (
-                  <span className="flex items-center gap-1 text-emerald-800 font-bold">
-                    <span className="w-1.5 h-1.5 bg-emerald-600 rounded-full animate-pulse" />
+                  <span className="flex items-center gap-1 text-forest-800 font-bold">
+                    <span className="w-1.5 h-1.5 bg-forest-600 rounded-full animate-pulse" />
                     Actif ce mois
                   </span>
                 )}

@@ -146,7 +146,7 @@ export function MobileChecklistItem({
               </span>
             )}
             {item.is_consumable && (
-              <span className="inline-flex items-center gap-0.5 text-[9.5px] font-semibold px-1.5 py-0.2 rounded-full bg-emerald-100/80 text-emerald-900 dark:bg-emerald-950/50 dark:text-emerald-300">
+              <span className="inline-flex items-center gap-0.5 text-[9.5px] font-semibold px-1.5 py-0.2 rounded-full bg-forest-100/80 text-forest-900 dark:bg-forest-950/50 dark:text-forest-300">
                 <Sparkles size={8} aria-hidden="true" />
                 Consommable
               </span>

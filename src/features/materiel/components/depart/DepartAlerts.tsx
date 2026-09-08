@@ -102,7 +102,7 @@ export function DepartAlerts({ input }: { input: SmartPromptsInput }) {
   if (visibleAlerts.length === 0) {
     return (
       <div className="p-3.5 rounded-2xl bg-white/70 dark:bg-stone-900/60 border border-white/80 text-center space-y-1.5 shadow-2xs">
-        <div className="w-8 h-8 rounded-xl bg-emerald-100 dark:bg-emerald-900/40 text-[#2D6B4A] dark:text-emerald-400 flex items-center justify-center mx-auto shadow-2xs">
+        <div className="w-8 h-8 rounded-xl bg-forest-100 dark:bg-forest-900/40 text-[#2D6B4A] dark:text-forest-400 flex items-center justify-center mx-auto shadow-2xs">
           <ShieldCheck size={16} />
         </div>
         <h4 className="text-xs font-bold text-[#17402C]">

@@ -104,7 +104,7 @@ export default function TripDetailClient({
           <nav aria-label="Fil d'Ariane" className="flex items-center gap-2 text-xs text-lkv-secondary">
             {trip.group_id && (
               <>
-                <Link href={`/groupes/${trip.group_id}`} className="hover:underline flex items-center gap-1 font-medium text-emerald-800 dark:text-emerald-400">
+                <Link href={`/groupes/${trip.group_id}`} className="hover:underline flex items-center gap-1 font-medium text-forest-800 dark:text-forest-400">
                   Équipage
                 </Link>
                 <span>/</span>
@@ -119,7 +119,7 @@ export default function TripDetailClient({
               {trip.title}
             </span>
             <span>/</span>
-            <span className="text-emerald-700 dark:text-emerald-400 font-semibold hidden sm:inline">
+            <span className="text-forest-700 dark:text-forest-400 font-semibold hidden sm:inline">
               {getPhaseLabel(activePhase)}
             </span>
           </nav>

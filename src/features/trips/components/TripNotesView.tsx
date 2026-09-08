@@ -1,4 +1,5 @@
 'use client';
+import { lkvAlert, lkvConfirm } from '@/components/ui/dialogs';
 
 import React, { useState, useTransition } from 'react';
 import {
@@ -46,7 +47,7 @@ export function TripNotesView({ trip }: TripNotesViewProps) {
 
   const handleDelete = (noteId: string, title?: string | null) => {
     const label = title ? `"${title}"` : 'cette note';
-    if (confirm(`Supprimer ${label} du carnet de bord ?`)) {
+    if (lkvConfirm(`Supprimer ${label} du carnet de bord ?`)) {
       startTransition(async () => {
         const formData = new FormData();
         formData.set('tripId', trip.id);
@@ -54,7 +55,7 @@ export function TripNotesView({ trip }: TripNotesViewProps) {
         formData.set('tripSlug', trip.slug);
         const res = await deleteTripNoteAction(null, formData);
         if (!res.success) {
-          alert(res.error || 'Erreur lors de la suppression de la note');
+          lkvAlert(res.error || 'Erreur lors de la suppression de la note');
         }
       });
     }
@@ -83,7 +84,7 @@ export function TripNotesView({ trip }: TripNotesViewProps) {
   return (
     <div className="space-y-6">
       {/* Bannière de statut & Action Clôture */}
-      <GlassCard tone="sage" className="p-5 rounded-[24px] border border-white/60 bg-lkv-primary text-white">
+      <GlassCard tone="sage" className="p-5 rounded-xl border border-white/60 bg-lkv-primary text-white">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
           <div className="flex items-start sm:items-center gap-3">
             <div className="w-10 h-10 rounded-full bg-white/20 flex items-center justify-center text-white shrink-0">
@@ -159,7 +160,7 @@ export function TripNotesView({ trip }: TripNotesViewProps) {
 
       {/* Liste des notes */}
       {filteredNotes.length === 0 ? (
-        <GlassCard tone="neutral" className="p-8 rounded-[24px] text-center border border-white/60">
+        <GlassCard tone="neutral" className="p-8 rounded-xl text-center border border-white/60">
           <BookOpen size={36} className="mx-auto text-lkv-secondary/40 mb-2" />
           <h4 className="text-sm font-semibold text-lkv-primary">Aucune note enregistrée</h4>
           <p className="text-xs text-lkv-secondary mt-1 max-w-sm mx-auto">
@@ -185,7 +186,7 @@ export function TripNotesView({ trip }: TripNotesViewProps) {
             <GlassCard
               key={note.id}
               tone="neutral"
-              className={`p-5 rounded-[22px] border transition-shadow ${
+              className={`p-5 rounded-lg border transition-shadow ${
                 note.is_pinned
                   ? 'border-lkv-primary/30 bg-[#FAF8F5]/90 shadow-sm'
                   : 'border-white/70 bg-white/60'
@@ -199,7 +200,7 @@ export function TripNotesView({ trip }: TripNotesViewProps) {
                     </span>
                   )}
                   {note.is_pinned && (
-                    <span className="text-[11px] font-semibold px-2 py-0.5 rounded-full bg-amber-50 text-amber-700 border border-amber-200 flex items-center gap-1">
+                    <span className="text-[11px] font-semibold px-2 py-0.5 rounded-full bg-sand-50 text-sand-700 border border-sand-200 flex items-center gap-1">
                       <Pin size={11} /> Épinglé
                     </span>
                   )}
@@ -248,7 +249,7 @@ export function TripNotesView({ trip }: TripNotesViewProps) {
           aria-labelledby="add-note-title"
           className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40 backdrop-blur-md animate-fadeIn"
         >
-          <div className="bg-[#FAF8F5] border border-white/80 rounded-[26px] max-w-lg w-full p-6 shadow-2xl space-y-4">
+          <div className="bg-[#FAF8F5] border border-white/80 rounded-xl max-w-lg w-full p-6 shadow-2xl space-y-4">
             <div className="flex items-center justify-between border-b border-black/5 pb-3">
               <h3 id="add-note-title" className="text-base font-bold text-lkv-primary flex items-center gap-2">
                 <Edit3 size={18} />
@@ -303,7 +304,7 @@ export function TripNotesView({ trip }: TripNotesViewProps) {
                       type="checkbox"
                       name="isPinned"
                       value="true"
-                      className="w-4 h-4 rounded border-gray-300 text-lkv-primary focus:ring-lkv-primary"
+                      className="w-4 h-4 rounded border-stone-300 text-lkv-primary focus:ring-lkv-primary"
                     />
                     Épingler en haut
                   </label>
