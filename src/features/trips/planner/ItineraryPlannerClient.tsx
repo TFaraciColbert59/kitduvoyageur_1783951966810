@@ -383,6 +383,7 @@ export default function ItineraryPlannerClient({
             <GlassCapsuleBtn
               href={tripSectionHref(trip.slug, 'overview')}
               size="sm"
+              aria-label="Voir le cockpit du voyage"
               icon={<Map className="w-3.5 h-3.5" />}
             >
               <span className="hidden sm:inline">Cockpit</span>

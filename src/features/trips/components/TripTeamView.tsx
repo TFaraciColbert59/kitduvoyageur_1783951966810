@@ -184,6 +184,7 @@ export function TripTeamView({ trip }: TripTeamViewProps) {
                         value={collab.role}
                         disabled={isPending}
                         onChange={e => handleRoleChange(collab.id, e.target.value as any)}
+                        aria-label={`Rôle de ${name}`}
                         className="glass-input text-xs font-semibold px-2 py-1 text-[var(--lkv-text-primary)]"
                       >
                         <option value="editor">Éditeur</option>
