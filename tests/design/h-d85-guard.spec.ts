@@ -120,6 +120,8 @@ const RULE14_ALLOWLIST = [
   'src/features/hub/engine/hubProfileEngine.ts',
   'src/features/hub/registry/hubSectionRegistry.ts',
   'src/features/hub/registry/hubWidgetRegistry.ts',
+  // Couche logique pure du sélecteur (fallbacks typés HubSectionId, testés) — même niveau que le moteur.
+  'src/features/hub/context/adventureLists.ts',
   'tests/design/h-d85-guard.spec.ts',
 ];
 
