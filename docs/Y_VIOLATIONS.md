@@ -1,6 +1,6 @@
 # Y_VIOLATIONS — Inventaire du garde-fou Y-D80
 
-Régénéré le 2026-09-07T22:30:30.036Z
+Régénéré le 2026-09-08T15:31:53.955Z
 Total : **0 violations** · Cible : 0 (G3 = 12/12 en fin de Y3.5).
 
 | Règle | Objet | Total | Phase |

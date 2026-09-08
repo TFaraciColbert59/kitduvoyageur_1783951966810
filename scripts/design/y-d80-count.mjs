@@ -35,8 +35,10 @@ for (const dir of SCOPE) {
     const push = (rule, i, l) => V.push({ rule, file: f.split(path.sep).join('/'), line: i + 1, extract: l.trim().slice(0, 120) });
     lines.forEach((l, i) => {
       if (/\b(?:bg|text|border|ring|stroke|fill|from|via|to|hover:bg|hover:text|divide)-(?:zinc|gray|slate|amber|emerald|blue|red|orange)-\d+/.test(l)) push('R1', i, l);
-      const m = l.match(/#[0-9a-fA-F]{3,8}\b/);
-      if (m && !ALLOW.has(m[0].toLowerCase())) push('R2', i, l);
+      const hexMatches = Array.from(l.matchAll(/#[0-9a-fA-F]{3,8}\b/g));
+      for (const m of hexMatches) {
+        if (!ALLOW.has(m[0].toLowerCase())) push('R2', i, l);
+      }
       if (/\brounded-\[\d+px\]/.test(l)) push('R3', i, l);
       if (/\bshadow-\[[^\]]+\]/.test(l)) push('R4', i, l);
       if (/\b(?:window\.)?(?:alert|confirm|prompt)\s*\(/.test(l)) push('R5', i, l);

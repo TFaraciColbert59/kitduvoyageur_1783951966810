@@ -1,8 +1,8 @@
-﻿'use client';
+'use client';
 
 import React, { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { Layers, ChevronRight, Check } from 'lucide-react';
+import { Layers, ChevronRight, Check, Plus } from 'lucide-react';
 import { GlassSheet } from '@/components/ui/GlassSheet';
 import { GlassCapsuleBtn } from '@/components/ui/GlassCapsuleBtn';
 import { useHapticFeedback } from '@/hooks/useHapticFeedback';
@@ -19,6 +19,7 @@ export interface TripMobileSectionsSheetProps {
   trip: TripFull;
   profile: TripProfile;
   activeSection: TripSectionId;
+  onOpenSectionPicker?: () => void;
 }
 
 /**
@@ -30,6 +31,7 @@ export function TripMobileSectionsSheet({
   trip,
   profile,
   activeSection,
+  onOpenSectionPicker,
 }: TripMobileSectionsSheetProps) {
   const [isOpen, setIsOpen] = useState(false);
   const router = useRouter();
@@ -126,6 +128,21 @@ export function TripMobileSectionsSheet({
                 </button>
               );
             })}
+
+            {onOpenSectionPicker && (
+              <button
+                type="button"
+                onClick={() => {
+                  triggerHaptic('light');
+                  setIsOpen(false);
+                  onOpenSectionPicker();
+                }}
+                className="w-full flex items-center justify-center gap-2 p-3.5 rounded-[var(--lkv-radius-lg)] border border-dashed border-white/60 glass-sub-card text-xs font-bold text-[var(--lkv-text-secondary)] hover:text-[var(--lkv-text-primary)] min-h-[48px] cursor-pointer transition-all active:scale-[0.98]"
+              >
+                <Plus size={14} />
+                <span>Personnaliser les sections</span>
+              </button>
+            )}
           </div>
         </div>
       </GlassSheet>
