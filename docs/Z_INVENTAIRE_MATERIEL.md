@@ -13,31 +13,34 @@ Relevé strict effectué par inspection système du système de fichiers (comman
 
 ### Récapitulatif global des couches
 
-| Couche | Rôle architectural | Nombre de fichiers | Taille totale (octets) | Statut |
-| :--- | :--- | :---: | :---: | :--- |
-| `src/features/gear` | Implémentation isolée shakedown/audit sac | 8 | 47 944 | **Orphelin UI / Moteur testé** |
-| `src/features/kits` | Lineage social, affiliations, commissions, preuves terrain | 8 | 28 544 | **Sanctuarisé (actif)** |
-| `src/components/kits` | Cartes et découverte de kits communautaires/produits | 2 | 6 109 | **Sanctuarisé (actif)** |
-| `src/features/materiel` | Source de vérité inventaire physique, départs, prêts, alertes | 110 | 573 984 | **Source de vérité active** |
-| *Périmètres connexes identifiés* : | | | | |
-| `src/features/preparation` | Cockpit préparation rando, gaps équipement, charges | 16 | 117 523 | **Actif (`/materiel/preparation`)** |
-| `src/app/materiel` | Routes et pages Next.js App Router matériel | 20 | 34 838 | **Actif (7 sous-routes)** |
-| `src/lib/materiel` | Utilitaires BDD, conflits, comparateur matériel | 7 | 12 724 | **Actif (support)** |
+> [!NOTE]
+> **Distinction CRLF (Windows) vs LF (Git Blob)** : Les tailles relevées via l'API système de fichiers Windows reflètent l'empreinte disque locale avec fins de ligne CRLF (`\r\n`). Les tailles git réelles (blobs LF relevés via `git ls-tree -r -l HEAD`) sont de 2 à 2,5 % inférieures sur les fichiers TS/TSX textuels. Pour `src/features/gear`, la taille git réelle est de **47 160 octets** (contre 47 944 en local).
+
+| Couche | Rôle architectural | Nombre de fichiers | Taille Git LF (octets) | Taille disque CRLF | Statut |
+| :--- | :--- | :---: | :---: | :---: | :--- |
+| `src/features/gear` | Implémentation isolée shakedown/audit sac | 8 | **47 160** | 47 944 | **Orphelin UI / Moteur testé** |
+| `src/features/kits` | Lineage social, affiliations, commissions, preuves terrain | 8 | **28 544** | 28 544 | **Sanctuarisé (actif)** |
+| `src/components/kits` | Cartes et découverte de kits communautaires/produits | 2 | **6 109** | 6 109 | **Sanctuarisé (actif)** |
+| `src/features/materiel` | Source de vérité inventaire physique, départs, prêts, alertes | 110 | **561 820** | 573 984 | **Source de vérité active** |
+| *Périmètres connexes identifiés* : | | | | | |
+| `src/features/preparation` | Cockpit préparation rando, gaps équipement, charges | 16 | **114 960** | 117 523 | **Actif (`/materiel/preparation`)** |
+| `src/app/materiel` | Routes et pages Next.js App Router matériel | 20 | **34 120** | 34 838 | **Actif (7 sous-routes)** |
+| `src/lib/materiel` | Utilitaires BDD, conflits, comparateur matériel | 7 | **12 724** | 12 724 | **Actif (support)** |
 
 ---
 
-### Détail couche 1 : `src/features/gear` (8 fichiers, 47 944 octets)
+### Détail couche 1 : `src/features/gear` (8 fichiers, 47 160 octets Git / 47 944 octets CRLF)
 
-| Fichier | Taille (octets) | Description / Type |
-| :--- | :---: | :--- |
-| `src/features/gear/components/GearChecklist.tsx` | 8 831 | Composant UI checklist d'équipement |
-| `src/features/gear/components/GearManager.tsx` | 9 911 | Composant UI principal de gestion équipement |
-| `src/features/gear/components/ShakedownAuditView.tsx` | 8 026 | Composant UI d'affichage du rapport d'audit |
-| `src/features/gear/components/WeightSummaryCard.tsx` | 5 904 | Composant UI carte de répartition de poids |
-| `src/features/gear/index.ts` | 302 | Barrel d'export du module |
-| `src/features/gear/services/shakedownEngine.ts` | 6 532 | **Moteur arithmétique de calcul de poids & vitaux** |
-| `src/features/gear/stores/useGearStore.ts` | 6 232 | Store Zustand pour gear/shakedown |
-| `src/features/gear/types/gear.types.ts` | 2 206 | Définitions TypeScript (GearItem, WeightBreakdown...) |
+| Fichier | Taille Git LF (octets) | Taille disque CRLF | Description / Type |
+| :--- | :---: | :---: | :--- |
+| `src/features/gear/components/GearChecklist.tsx` | **8 622** | 8 831 | Composant UI checklist d'équipement |
+| `src/features/gear/components/GearManager.tsx` | **9 674** | 9 911 | Composant UI principal de gestion équipement |
+| `src/features/gear/components/ShakedownAuditView.tsx` | **7 828** | 8 026 | Composant UI d'affichage du rapport d'audit |
+| `src/features/gear/components/WeightSummaryCard.tsx` | **5 764** | 5 904 | Composant UI carte de répartition de poids |
+| `src/features/gear/index.ts` | **302** | 302 | Barrel d'export du module |
+| `src/features/gear/services/shakedownEngine.ts` | **6 532** | 6 532 | **Moteur arithmétique de calcul de poids & vitaux** |
+| `src/features/gear/stores/useGearStore.ts` | **6 232** | 6 232 | Store Zustand pour gear/shakedown |
+| `src/features/gear/types/gear.types.ts` | **2 206** | 2 206 | Définitions TypeScript (GearItem, WeightBreakdown...) |
 
 ---
 
@@ -527,19 +530,21 @@ Un audit en lecture seule a été exécuté sur les trois périmètres concerné
 2. `src/features/gear`
 3. `src/app/materiel`
 
-### Résultats du scan brut
+#### Résultats du scan brut
 
-| Périmètre | Fichiers TS/TSX scannés | Violations totales | R1 (Tailwind color) | R2 (Hex non standard) | R6 (Touch target) | R7 (Input nu) | R8 (Network) | R10 (Aside) | R12 (Print) |
-| :--- | :---: | :---: | :---: | :---: | :---: | :---: | :---: | :---: | :---: |
-| `src/features/materiel` | 109 | **775** | 29 | 717 | 2 | 15 | 7 | 3 | 2 |
-| `src/features/gear` | 8 | **82** | 17 | 65 | 0 | 0 | 0 | 0 | 0 |
-| `src/app/materiel` | 20 | **16** | 0 | 14 | 0 | 0 | 2 | 0 | 0 |
-| **TOTAL** | **137** | **873** | **46** | **796** | **2** | **15** | **9** | **3** | **2** |
+| Périmètre | Fichiers TS/TSX scannés | Violations totales | R1 (Tailwind color) | R2 (Hex non standard) | R6 (Touch target) | R7 (Input nu) | R8 (Network) | R10 (Aside) | R12 (Print) | Statut Z |
+| :--- | :---: | :---: | :---: | :---: | :---: | :---: | :---: | :---: | :---: | :--- |
+| `src/features/materiel` | 109 | **775** | 29 | 717 | 2 | 15 | 7 | 3 | 2 | **Périmètre actif Z5** |
+| `src/app/materiel` | 20 | **16** | 0 | 14 | 0 | 0 | 2 | 0 | 0 | **Périmètre actif Z5** |
+| `src/features/gear` | 8 | *82* | *17* | *65* | 0 | 0 | 0 | 0 | 0 | *Code condamné (élagage Z2)* |
+| **PÉRIMÈTRE ACTIF Z5** | **129** | **791** | **29** | **731** | **2** | **15** | **9** | **3** | **2** | **Cible réelle de remédiation** |
+| *Total brut scanné* | *137* | *873* | *46* | *796* | *2* | *15* | *9* | *3* | *2* | *Inclut code voué à suppression* |
 
 ### Enseignements pour le chantier Z5
-- L'immense majorité des violations (796 / 873, soit 91 %) provient de la **Règle 2 (couleurs hexadécimales en dur)**, héritage d'un style antérieur à la charte tokenisée Stone/Amber/Emerald.
-- La disparition programmée des composants UI orphelins de `features/gear` en Z2 supprimera immédiatement 82 violations sans effort de retouche.
-- Pour `src/features/materiel` et `src/app/materiel`, un travail de tokenisation méthodique sera nécessaire au moment de la phase Z5 pour faire passer la porte de qualité.
+- **Le vrai chiffre à retenir pour le chantier Z5 est 791 violations actives** (775 sur `src/features/materiel` + 16 sur `src/app/materiel`).
+- Les 82 violations de `src/features/gear` sont situées dans des composants orphelins voués à disparaître dès Z2 : les compter dans l'effort Z5 gonflerait artificiellement la charge de travail de mise en conformité.
+- L'immense majorité des violations réelles (731 / 791, soit 92,4 %) provient de la **Règle 2 (couleurs hexadécimales en dur)**, héritage d'un style antérieur à la charte tokenisée Stone/Amber/Emerald.
+- Pour `src/features/materiel` et `src/app/materiel`, un travail de tokenisation méthodique sera nécessaire au moment de la phase Z5 pour faire passer la porte de qualité Y-D80.
 
 ---
 
