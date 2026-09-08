@@ -8,6 +8,7 @@ import { GlassSheet } from '@/components/ui/GlassSheet';
 import { useActiveAdventure } from '../context/ActiveAdventureContext';
 import {
   adventureKey,
+  consumeSwitcherAutoOpen,
   filterAdventures,
   resolveAdventureHref,
   shouldToggleSwitcher,
@@ -64,6 +65,15 @@ export function AdventureSwitcher({ forceOpenSignal = 0 }: { forceOpenSignal?: n
     };
     window.addEventListener('hub:close-switcher', close);
     return () => window.removeEventListener('hub:close-switcher', close);
+  }, []);
+
+  // Appui long sur le tab Hub central hors surface hub : signal one-shot
+  // consommé au montage (navigation vers /hub → sélecteur ouvert direct).
+  useEffect(() => {
+    if (consumeSwitcherAutoOpen()) {
+      setOpen(true);
+      setSheetOpen(window.innerWidth < 768);
+    }
   }, []);
 
   useEffect(() => {

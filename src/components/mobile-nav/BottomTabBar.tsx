@@ -1,5 +1,5 @@
 'use client';
-import React, { useEffect, useState, memo, useCallback } from 'react';
+import React, { useEffect, useState, memo, useCallback, useRef } from 'react';
 import Link from 'next/link';
 import { useRouter, usePathname } from 'next/navigation';
 import { useQueryClient } from '@tanstack/react-query';
@@ -7,7 +7,12 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { useHapticFeedback } from '@/hooks/useHapticFeedback';
 import { useUnreadBadge } from '@/hooks/useUnreadBadge';
 import { useActiveAdventure } from '@/features/hub/context/ActiveAdventureContext';
+import {
+  HUB_SWITCHER_AUTOPEN_KEY,
+  isHubSurfacePathname,
+} from '@/features/hub/context/adventureLists';
 import { useCartCount } from '@/hooks/useCartCount';
+import { isMoveBeyondTolerance } from '@/hooks/gestures/gestureMath';
 import LkvIcon from '@/components/ui/LkvIcon';
 import { HUB_ALERTES_HREF } from '@/features/hub/registry/hubSectionRegistry';
 
@@ -130,10 +135,41 @@ function BadgeDot({ count }: { count: number }) {
   );
 }
 
-// A memoized tab link — Liquid Glass icon-only, pilule animée glissante
-const TabLink = memo(function TabLink({ tab, isActive, onPress, badge }: { tab: Tab; isActive: boolean; onPress: (href: string) => void; badge: number }) {
+// Durée d'appui long du tab Hub central (alignée sur les gestes du dépôt).
+const HUB_LONG_PRESS_MS = 550;
+
+// A memoized tab link — Liquid Glass icon-only, pilule animée glissante.
+// Tab Hub central (isHero) : appui long → sélecteur d'aventure compact
+// (3 natures) ; le clic simple ouvre toujours l'aventure active, jamais
+// une liste. Alternative accessible : aria-haspopup + Ctrl/Cmd+K/J dans
+// le switcher + déclencheur visible dans le hub.
+const TabLink = memo(function TabLink({
+  tab,
+  isActive,
+  onPress,
+  badge,
+  onLongPress,
+}: {
+  tab: Tab;
+  isActive: boolean;
+  onPress: (href: string) => void;
+  badge: number;
+  onLongPress?: () => void;
+}) {
   const { triggerHaptic } = useHapticFeedback();
   const queryClient = useQueryClient();
+  const longPressFiredRef = useRef(false);
+  const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const startRef = useRef<{ x: number; y: number } | null>(null);
+
+  const clearLongPressTimer = useCallback(() => {
+    if (timerRef.current) {
+      clearTimeout(timerRef.current);
+      timerRef.current = null;
+    }
+  }, []);
+
+  useEffect(() => clearLongPressTimer, [clearLongPressTimer]);
 
   const prefetchData = useCallback(() => {
     if (tab.href === '/explorer') {
@@ -157,7 +193,30 @@ const TabLink = memo(function TabLink({ tab, isActive, onPress, badge }: { tab: 
     }
   }, [tab.href, queryClient]);
 
-  const handleClick = () => {
+  const handlePointerDown = (e: React.PointerEvent) => {
+    if (!onLongPress) return;
+    startRef.current = { x: e.clientX, y: e.clientY };
+    clearLongPressTimer();
+    timerRef.current = setTimeout(() => {
+      timerRef.current = null;
+      longPressFiredRef.current = true;
+      onLongPress();
+    }, HUB_LONG_PRESS_MS);
+  };
+
+  const handlePointerMove = (e: React.PointerEvent) => {
+    if (!timerRef.current || !startRef.current) return;
+    if (isMoveBeyondTolerance(e.clientX - startRef.current.x, e.clientY - startRef.current.y)) {
+      clearLongPressTimer();
+    }
+  };
+
+  const handleClick = (e: React.MouseEvent) => {
+    if (longPressFiredRef.current) {
+      longPressFiredRef.current = false;
+      e.preventDefault();
+      return;
+    }
     onPress(tab.href);
     // H5 : haptique medium à l'ouverture du hub, léger ailleurs.
     triggerHaptic(tab.href === '/hub' ? 'medium' : 'light');
@@ -170,6 +229,14 @@ const TabLink = memo(function TabLink({ tab, isActive, onPress, badge }: { tab: 
       onClick={handleClick}
       onPointerEnter={prefetchData}
       onTouchStart={prefetchData}
+      onPointerDown={tab.isHero ? handlePointerDown : undefined}
+      onPointerMove={tab.isHero ? handlePointerMove : undefined}
+      onPointerUp={tab.isHero ? clearLongPressTimer : undefined}
+      onPointerCancel={tab.isHero ? clearLongPressTimer : undefined}
+      onPointerLeave={tab.isHero ? clearLongPressTimer : undefined}
+      onContextMenu={tab.isHero ? (e) => e.preventDefault() : undefined}
+      aria-haspopup={tab.isHero ? 'dialog' : undefined}
+      title={tab.isHero ? 'Appui long : changer d’aventure' : undefined}
       aria-label={tab.ariaLabel}
       style={{
         display: 'flex',
@@ -721,6 +788,23 @@ function BottomTabBar() {
     return 0;
   };
 
+  // Appui long sur le tab Hub central → sélecteur compact (3 natures).
+  // Sur surface hub : le switcher est monté (HubShell écoute l'événement).
+  // Ailleurs : signal one-shot consommé au montage du switcher après /hub.
+  const openHubSwitcher = useCallback(() => {
+    if (typeof window === 'undefined') return;
+    if (isHubSurfacePathname(pathname)) {
+      window.dispatchEvent(new CustomEvent('hub:open-switcher'));
+    } else {
+      try {
+        sessionStorage.setItem(HUB_SWITCHER_AUTOPEN_KEY, '1');
+      } catch {
+        /* storage indisponible : navigation simple */
+      }
+      router.push('/hub');
+    }
+  }, [pathname, router]);
+
   const isActive = (tab: Tab): boolean => {
     if (pressedTab && pressedTab === tab.href) return true;
     if (!tab.matchPaths) return pathname === tab.href;
@@ -954,7 +1038,14 @@ function BottomTabBar() {
           }}
         >
           {DEFAULT_TABS.map((tab) => (
-            <TabLink key={tab.href} tab={tab} isActive={isActive(tab)} onPress={setPressedTab} badge={badgeFor(tab.href)} />
+            <TabLink
+              key={tab.href}
+              tab={tab}
+              isActive={isActive(tab)}
+              onPress={setPressedTab}
+              badge={badgeFor(tab.href)}
+              onLongPress={tab.isHero ? openHubSwitcher : undefined}
+            />
           ))}
 
           <HamburgerMenu

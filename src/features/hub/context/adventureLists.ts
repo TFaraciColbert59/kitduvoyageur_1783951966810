@@ -169,3 +169,28 @@ export function shouldToggleSwitcher(e: { metaKey: boolean; ctrlKey: boolean; ke
   const key = e.key.toLowerCase();
   return key === 'k' || key === 'j';
 }
+
+/**
+ * Signal one-shot (sessionStorage) de l'appui long sur le tab Hub central :
+ * hors surface hub, aucune instance du switcher n'est encore montée — le
+ * signal est posé AVANT la navigation vers /hub et consommé AU MONTAGE du
+ * switcher. One-shot par construction (clé retirée à la lecture).
+ */
+export const HUB_SWITCHER_AUTOPEN_KEY = 'lkdv_hub_switcher_autopen';
+
+/** Le switcher d'aventure (monté par HubShell) est-il actif sur cette URL ? */
+export function isHubSurfacePathname(pathname: string | null | undefined): boolean {
+  if (!pathname) return false;
+  return pathname === '/hub' || pathname.startsWith('/hub/');
+}
+
+/** Consomme le signal d'ouverture one-shot (retourne vrai une seule fois). */
+export function consumeSwitcherAutoOpen(): boolean {
+  try {
+    if (sessionStorage.getItem(HUB_SWITCHER_AUTOPEN_KEY) !== '1') return false;
+    sessionStorage.removeItem(HUB_SWITCHER_AUTOPEN_KEY);
+    return true;
+  } catch {
+    return false;
+  }
+}

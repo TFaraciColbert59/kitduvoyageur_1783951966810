@@ -5,6 +5,9 @@ import {
   filterAdventures,
   resolveAdventureHref,
   shouldToggleSwitcher,
+  consumeSwitcherAutoOpen,
+  isHubSurfacePathname,
+  HUB_SWITCHER_AUTOPEN_KEY,
   type AdventureEntry,
 } from '@/features/hub/context/adventureLists';
 
@@ -151,5 +154,46 @@ describe('H2 — shouldToggleSwitcher : clavier', () => {
     expect(shouldToggleSwitcher({ metaKey: false, ctrlKey: false, key: 'k' })).toBe(false);
     expect(shouldToggleSwitcher({ metaKey: true, ctrlKey: false, key: 'x' })).toBe(false);
     expect(shouldToggleSwitcher({ metaKey: true, ctrlKey: false, key: 'Control' })).toBe(false);
+  });
+});
+
+describe('H-AUTO-41 — surface hub + signal one-shot (appui long tab Hub)', () => {
+  it('SURF-1: isHubSurfacePathname — racine, profonde, hors hub, null', () => {
+    expect(isHubSurfacePathname('/hub')).toBe(true);
+    expect(isHubSurfacePathname('/hub/kit')).toBe(true);
+    expect(isHubSurfacePathname('/hub/inventaire')).toBe(true);
+    expect(isHubSurfacePathname('/hub/')).toBe(true);
+    expect(isHubSurfacePathname('/hubx')).toBe(false);
+    expect(isHubSurfacePathname('/voyages/gr20')).toBe(false);
+    expect(isHubSurfacePathname('/explorer')).toBe(false);
+    expect(isHubSurfacePathname(null)).toBe(false);
+    expect(isHubSurfacePathname(undefined)).toBe(false);
+  });
+
+  it('AUTO-1: consumeSwitcherAutoOpen lit puis retire le signal (one-shot)', () => {
+    const store = new Map<string, string>();
+    (globalThis as { sessionStorage?: unknown }).sessionStorage = {
+      getItem: (k: string) => (store.has(k) ? store.get(k)! : null),
+      setItem: (k: string, v: string) => void store.set(k, v),
+      removeItem: (k: string) => void store.delete(k),
+    };
+    try {
+      expect(consumeSwitcherAutoOpen()).toBe(false);
+      store.set(HUB_SWITCHER_AUTOPEN_KEY, '1');
+      expect(consumeSwitcherAutoOpen()).toBe(true);
+      expect(store.has(HUB_SWITCHER_AUTOPEN_KEY)).toBe(false);
+      expect(consumeSwitcherAutoOpen()).toBe(false);
+    } finally {
+      delete (globalThis as { sessionStorage?: unknown }).sessionStorage;
+    }
+  });
+
+  it('AUTO-2: storage indisponible = jamais de crash (repli navigation simple)', () => {
+    (globalThis as { sessionStorage?: unknown }).sessionStorage = undefined;
+    try {
+      expect(consumeSwitcherAutoOpen()).toBe(false);
+    } finally {
+      delete (globalThis as { sessionStorage?: unknown }).sessionStorage;
+    }
   });
 });
