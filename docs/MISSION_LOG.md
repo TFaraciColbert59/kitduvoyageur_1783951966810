@@ -1069,3 +1069,7 @@ Branche de travail : `feat/orientation-empreinte` (fondée sur `feat/lignees-kit
 ## H7 — Qualité (08/09/2026, 23:00 UTC)
 - G6 : tests/a11y/e2e/hub-a11y.spec.ts (8 surfaces × 3 viewports = 24/24, 0 critical/serious). 3 violations hub-kit → parité source /materiel/kits prouvée → 3 micro-fixes (listitem/aria-label/tabIndex, prod améliorée). Fix Y-switcher md:hidden (H-AUTO-19 soldé). Perf : first-load [section] 343 kB raw ≈110 kB gzip < 250 (H-AUTO-26/37 soldés, pas de dynamic).
 - Revues Linus (propre) + Schneier (RAS) — H-AUTO-38. Portes : G1 tsc 0 · G2 150+/1158+ · G3 12/12+14/14+inv OK · G4 build OK. Tag : h7-done.
+
+## H8 — Recette (08/09/2026, 23:10 UTC)
+- P4 7/7 prod (mémoire, restore, 3 natures, 0 erreur) après bascule dev->prod (cache .next stale x3, H-AUTO-39). P5 4/4 (SW 3/3, 1 indicateur mobile+desktop après fix repli chip + bannière globale). P1/P2 moteur OK, rendus + P5-toggle + natif = NON EXÉCUTÉ (démo 401, pas d'émulateur). Pont inventory_item_id vérifié statiquement. Planche 18 captures docs/h-captures. H_REPORT.md (modèle Y, 14 sections, sans valeur recopiée).
+- Portes finales : G1 0 (22:34:02) · G2 151/1158 (22:34:21) · G3 26/26+invariants (22:34:04) · G4 build OK · G5 18 planches · G6 24/24 (23:00). Tag : h8-done. PR : impossible sans gh → commande + corps fournis (Tony).
