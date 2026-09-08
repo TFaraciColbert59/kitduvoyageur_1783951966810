@@ -114,3 +114,17 @@ NON EXÉCUTÉ en toutes lettres (aucun émulateur/simulateur disponible dans cet
 6. **Backlog acté** : widget boussole AR (H-AUTO-29), fusion UI copilote (D7), refonte cockpits <44px (H-AUTO-34), cibles internes 24px parité source.
 
 *Fin du rapport. DoD §8.5 : 6 portes vertes ✅ (SHA final = tag h8-done) · P1/P2/P4-voyage/P5-toggle/Natif = NON EXÉCUTÉ (tracé, cause session/natif) · tout le reste vert · chaque exigence UX tracée (capture, parcours ou test).*
+
+---
+
+## Addendum final — 09/09/2026 (clôture des écarts DoD post-h8)
+
+Complète le rapport h8-done. Trois écarts restants de la définition de « terminé » sont soldés (détails et preuves : `docs/H_DECISIONS.md`, addendum H-AUTO-41/42/43) :
+
+1. **Appui long sur le bouton Hub central** (DoD manquant en h8) : implémenté dans `BottomTabBar.tsx` + `AdventureSwitcher.tsx` ; bug a11y Radix (double instance `aria-hidden` mutuelle) corrigé par prop `variant`. Tests : `tests/features/hub/adventureLists.spec.ts` (+3), e2e `scripts/e2e/hub-nav.spec.ts` (BAR-1..5).
+2. **Aucune duplication d'URL** (DoD partiel en h8 : `/materiel/*` restaient vivantes en doublon des sections hub) : 307 canonicalisés, pages supprimées, matrice testée `tests/features/hub/hubRedirects.spec.ts` (13 tests), e2e redirections (19 cas). Nouvelle section `oublis` (`/hub/oublis`) pour `/materiel/forget`.
+3. **Chaîne de redirections /hub/groupe → /groupes → 301 /equipages** : supprimée (H-AUTO-43), test verrouillé `tests/crews/crew-routes.spec.ts`.
+
+État à la clôture : `tsc` 0 erreur ; `vitest` 152 fichiers / 1 175 tests verts (contre 1 158 en h8) ; invariants H-D85 14/14 verts (allowlist R13 documentée) ; build de production compilé avec succès après la phase de canonicalisation (re-run conseillé sur l'état final du commit a11y).
+
+Commits de clôture : `c11f8439` (appui long) · `6755c5f4` (section oublis + deep-links depart) · `f319ccb8` (canonicalisation 307 + suppressions + groupes) · `683a8e86` (fix a11y switcher + e2e hub-nav) · `7fd48e95` (chore).
