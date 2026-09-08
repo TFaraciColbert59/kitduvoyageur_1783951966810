@@ -6,6 +6,7 @@ import { useQueryClient } from '@tanstack/react-query';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useHapticFeedback } from '@/hooks/useHapticFeedback';
 import { useUnreadBadge } from '@/hooks/useUnreadBadge';
+import { useActiveAdventure } from '@/features/hub/context/ActiveAdventureContext';
 import { useCartCount } from '@/hooks/useCartCount';
 import LkvIcon from '@/components/ui/LkvIcon';
 import { tripSectionHref, sectionIdFromPathname, tripSectionRegistry } from '@/features/trips/registry/tripSectionRegistry';
@@ -36,11 +37,12 @@ const DEFAULT_TABS: Tab[] = [
     matchPaths: ['/explorer', '/carte-interactive', '/hors-ligne'],
   },
   {
-    href: '/materiel',
-    label: 'Matériel',
-    iconName: 'box',
-    ariaLabel: 'Mon matériel, kits et prochain départ',
-    matchPaths: ['/materiel', '/materiel/', '/preparation'],
+    href: '/hub',
+    label: 'Hub',
+    iconName: 'tent',
+    ariaLabel: 'Hub, mon aventure active',
+    matchPaths: ['/hub', '/materiel', '/voyages', '/groupes', '/preparation', '/terrain'],
+    isHero: true,
   },
   {
     href: '/communaute',
@@ -141,6 +143,12 @@ const TabLink = memo(function TabLink({ tab, isActive, onPress, badge }: { tab: 
         queryFn: () => fetch('/api/hikes').then((r) => (r.ok ? r.json() : [])),
         staleTime: 60_000,
       });
+    } else if (tab.href === '/hub') {
+      queryClient.prefetchQuery({
+        queryKey: ['hub-adventures'],
+        queryFn: () => fetch('/api/hub/adventures').then((r) => (r.ok ? r.json() : null)),
+        staleTime: 60_000,
+      });
     } else if (tab.href === '/communaute' || tab.href === '/carnets') {
       queryClient.prefetchQuery({
         queryKey: ['carnets'],
@@ -152,7 +160,8 @@ const TabLink = memo(function TabLink({ tab, isActive, onPress, badge }: { tab: 
 
   const handleClick = () => {
     onPress(tab.href);
-    triggerHaptic('light');
+    // H5 : haptique medium à l'ouverture du hub, léger ailleurs.
+    triggerHaptic(tab.href === '/hub' ? 'medium' : 'light');
   };
 
   return (
@@ -199,7 +208,8 @@ const TabLink = memo(function TabLink({ tab, isActive, onPress, badge }: { tab: 
         transition={{ type: 'spring', stiffness: 500, damping: 25 }}
         style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', position: 'relative', zIndex: 1 }}
       >
-        <LkvIcon name={tab.iconName} size={22} color={isActive ? '#17402C' : '#365233'} />
+        {/* H5 : tab central accentué (icône 26 + anneau), pilule layoutId conservée. */}
+        <LkvIcon name={tab.iconName} size={tab.isHero ? 26 : 22} color={isActive ? '#17402C' : '#365233'} />
       </motion.span>
       {badge > 0 && <BadgeDot count={badge} />}
     </Link>
@@ -814,8 +824,10 @@ function BottomTabBar() {
   const isWideUpperTray = isGroupeCockpit || isClubDetail || isCarnetDetail || isPaysHub || isPaysDetail || isMaterielSection || isVoyageDetail;
 
   const badges = useUnreadBadge();
+  const { groups } = useActiveAdventure();
   const badgeFor = (href: string): number => {
-    if (href === '/materiel') return badges.materiel;
+    // H5 : badge hub = agrégat (à préparer serveur + alertes matériel).
+    if (href === '/hub') return badges.materiel + (groups.possession[0]?.alertsCount ?? 0);
     if (href === '/compte') return badges.profil;
     if (href === '/communaute') return badges.communaute;
     return 0;
@@ -955,7 +967,7 @@ function BottomTabBar() {
                       cursor: 'pointer',
                       fontSize: '12px',
                       fontWeight: isSelected ? 700 : 500,
-                      color: isSelected ? '#17402C' : '#5C6B5E',
+                      color: isSelected ? '#17402C' : 'var(--lkv-text-muted)',
                       fontFamily: 'inherit',
                       padding: isWideUpperTray ? '0 12px' : '0 4px',
                       whiteSpace: 'nowrap',
