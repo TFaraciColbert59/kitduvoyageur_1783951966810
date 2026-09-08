@@ -13,6 +13,7 @@ import { HubPreparationSection } from '@/features/hub/components/possession/HubP
 import { HubDepartSection } from '@/features/hub/components/possession/HubDepartSection';
 import { HubDisponibiliteSection } from '@/features/hub/components/possession/HubDisponibiliteSection';
 import { HubAlertesSection } from '@/features/hub/components/possession/HubAlertesSection';
+import { HubOublisSection } from '@/features/hub/components/possession/HubOublisSection';
 import { HubInvitationsSection } from '@/features/hub/components/collectif/HubInvitationsSection';
 import { HubVoyagesLiesSection } from '@/features/hub/components/collectif/HubVoyagesLiesSection';
 
@@ -24,10 +25,12 @@ import { HubVoyagesLiesSection } from '@/features/hub/components/collectif/HubVo
  */
 export default async function HubSectionPage({
   params,
+  searchParams,
 }: {
   params: Promise<{ section: string }>;
+  searchParams: Promise<{ id?: string; route?: string }>;
 }) {
-  const { section } = await params;
+  const [{ section }, sp] = await Promise.all([params, searchParams]);
   const def = hubSectionRegistry.find((d) => d.segment === section);
   if (!def) notFound();
 
@@ -79,9 +82,10 @@ export default async function HubSectionPage({
       {def.id === 'inventaire' && <HubInventaireSection />}
       {def.id === 'kit' && <HubKitSection />}
       {def.id === 'preparation' && <HubPreparationSection />}
-      {def.id === 'depart' && <HubDepartSection />}
+      {def.id === 'depart' && <HubDepartSection departId={sp.id} route={sp.route} />}
       {def.id === 'disponibilite' && <HubDisponibiliteSection />}
       {def.id === 'alertes' && <HubAlertesSection />}
+      {def.id === 'oublis' && <HubOublisSection />}
       {def.id === 'invitations' && <HubInvitationsSection />}
       {def.id === 'voyages-lies' && data.adventure.nature === 'collectif' && (
         <HubVoyagesLiesSection adventure={data.adventure} crews={data.crews} />

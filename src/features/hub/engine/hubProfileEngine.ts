@@ -26,7 +26,8 @@ export type PossessionSectionId =
   | 'preparation'
   | 'depart'
   | 'disponibilite'
-  | 'alertes';
+  | 'alertes'
+  | 'oublis';
 
 export type CollectifSectionId = 'groupe' | 'invitations' | 'voyages-lies';
 
@@ -66,6 +67,7 @@ export const HUB_SECTION_ORDER: HubSectionId[] = [
   'depart',
   'disponibilite',
   'alertes',
+  'oublis',
   'overview',
   'itinerary',
   'gear',
@@ -158,6 +160,7 @@ function derivePossession(input: Extract<HubAdventureInput, { kind: 'possession'
   if (input.hasDepartEnCours) sections.push('depart');
   if (input.loansCount > 0) sections.push('disponibilite');
   if (input.alertsCount > 0) sections.push('alertes');
+  if (input.itemsCount > 0) sections.push('oublis');
 
   const finalSections = withUserEnabled(sections, input.enabledSections);
 
@@ -178,18 +181,20 @@ function derivePossession(input: Extract<HubAdventureInput, { kind: 'possession'
     .map((w) => w.id);
 
   const shownReasons: Record<string, string> = {
-    inventaire: 'affiché : source patrimoniale (/materiel)',
+    inventaire: 'affiché : source patrimoniale de l’aventure',
     kit: 'affiché : kits de l’inventaire',
     preparation: `affiché : ${input.itemsCount} objet(s) à préparer`,
     depart: 'affiché : départ en cours',
     disponibilite: `affiché : ${input.loansCount} prêt(s) en cours`,
     alertes: `affiché : ${input.alertsCount} alerte(s) matériel`,
+    oublis: 'affiché : checklist « à ne pas oublier » du premier kit',
   };
   const maskedReasons: Record<string, string> = {
     preparation: 'masqué : aucun objet dans l’inventaire',
     depart: 'masqué : aucun départ en cours',
     disponibilite: 'masqué : aucun prêt en cours',
     alertes: 'masqué : aucune alerte matériel',
+    oublis: 'masqué : aucun objet dans l’inventaire',
   };
   const reason = fullReason(finalSections, input.enabledSections, (id, shown) =>
     shown

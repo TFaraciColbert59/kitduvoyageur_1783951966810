@@ -9,12 +9,20 @@ import { DepartCockpit } from '@/features/materiel/components/depart/DepartCockp
 import { DepartCockpitSkeleton } from '@/features/materiel/components/depart/DepartCockpitSkeleton';
 
 /**
- * H4.2 — Section départ du hub (composition materiel/depart/page, départ
- * actif par défaut). Cockpit viewport-locked : wrapper hauteur cockpit.
+ * H4.2 — Section départ du hub (composition materiel/depart/page).
+ * Cockpit viewport-locked : wrapper hauteur cockpit.
+ * H-AUTO-42 : les deep-links hérités sont préservés — /materiel/depart/[id]
+ * et ?route= redirigent 307 vers /hub/depart?id=…&route=… (aucune perte).
  */
-export async function HubDepartSection() {
+export async function HubDepartSection({
+  departId,
+  route,
+}: {
+  departId?: string;
+  route?: string;
+}) {
   const [depart, kits, inventory, loans, products] = await Promise.all([
-    getDepartDetail(undefined, undefined),
+    getDepartDetail(departId, route),
     getKits(),
     getInventory(),
     getLoans(),

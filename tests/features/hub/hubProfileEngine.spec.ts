@@ -81,7 +81,7 @@ describe('H1 — deriveHubProfile : nature possession', () => {
 
   it('POS-2: preparation ajoutée si items présents', () => {
     const p = deriveHubProfile(possession({ itemsCount: 5 }), NOW);
-    expect(p.sections).toEqual(['inventaire', 'kit', 'preparation']);
+    expect(p.sections).toEqual(['inventaire', 'kit', 'preparation', 'oublis']);
   });
 
   it('POS-3: depart ajouté si départ en cours', () => {
@@ -106,7 +106,7 @@ describe('H1 — deriveHubProfile : nature possession', () => {
     );
     expect(p.sections).not.toContain('itinerary');
     expect(p.sections).not.toContain('budget');
-    expect(p.sections).toEqual(['inventaire', 'kit', 'preparation', 'depart', 'disponibilite', 'alertes']);
+    expect(p.sections).toEqual(['inventaire', 'kit', 'preparation', 'depart', 'disponibilite', 'alertes', 'oublis']);
   });
 
   it('POS-7: widgets = stock toujours, alertes/dispo/depart sous condition', () => {

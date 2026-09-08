@@ -18,9 +18,9 @@ import { HUB_SECTION_ORDER } from '@/features/hub/engine/hubProfileEngine';
  */
 
 describe('H1 — hubSectionRegistry : source unique des sections', () => {
-  it('REG-1: 19 ids uniques, dans l’ordre HUB_SECTION_ORDER', () => {
+  it('REG-1: 20 ids uniques, dans l’ordre HUB_SECTION_ORDER', () => {
     const ids = hubSectionRegistry.map((s) => s.id);
-    expect(new Set(ids).size).toBe(19);
+    expect(new Set(ids).size).toBe(20);
     expect(ids).toEqual([...HUB_SECTION_ORDER]);
   });
 
