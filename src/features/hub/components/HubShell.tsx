@@ -1,141 +1,163 @@
 'use client';
 
-import React, { useEffect, useRef } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
+import { usePathname } from 'next/navigation';
+import AppShellDesktop from '@/components/shell/AppShellDesktop';
+import MobilePageShell from '@/components/mobile-nav/MobilePageShell';
+import { applyLKDVStatusBarTheme } from '@/lib/native/status-bar';
+import { useActiveAdventure } from '../context/ActiveAdventureContext';
+import { adventureKey, type AdventureEntry } from '../context/adventureLists';
+import type { ActiveAdventureData } from '../context/adventureSchema';
+import {
+  hubSectionFromPathname,
+  type HubAdventureRef,
+  type HubCounters,
+} from '../registry/hubSectionRegistry';
+import { mergeEnabledSections, type AdventureProfile, type HubSectionId } from '../engine/hubProfileEngine';
 import { useHubStore } from '../stores/useHubStore';
-import { HubTopBar } from './HubTopBar';
-import { BaseCampView } from './BaseCampView';
-import { ActionModeView } from './ActionModeView';
+import { useHubLiveSensors } from '../hooks/useHubLiveSensors';
+import { AdventureSwitcher } from './AdventureSwitcher';
+import HubSidebarLeft from './HubSidebarLeft';
+import HubSidebarRight from './HubSidebarRight';
+import { HubMobileSectionsSheet } from './HubMobileSectionsSheet';
+import { HubNetworkStatus } from './HubNetworkStatus';
+import { HubSectionPicker } from './HubSectionPicker';
 
-export const HubShell: React.FC = () => {
+export interface HubShellProps {
+  adventure: ActiveAdventureData;
+  profile: AdventureProfile;
+  /** Sections activées côté serveur (ex. trip.metadata) — base additive. */
+  baseEnabled: HubSectionId[];
+  counts: HubCounters;
+  /** Contenu de section (rendu au centre desktop et dans le shell mobile). */
+  children: React.ReactNode;
+}
+
+function entryOf(adventure: ActiveAdventureData, counts: HubCounters): AdventureEntry {
+  switch (adventure.nature) {
+    case 'possession':
+      return { nature: 'possession', itemsCount: counts.items ?? 0, loansCount: counts.loans ?? 0, alertsCount: counts.alerts ?? 0 };
+    case 'sortie':
+      return { nature: 'sortie', id: adventure.id, slug: adventure.slug, title: adventure.title };
+    case 'collectif':
+      return { nature: 'collectif', kind: adventure.kind, id: adventure.id, title: adventure.title, membersCount: 0, subtitle: '', linkedTripSlug: null };
+  }
+}
+
+function refOf(adventure: ActiveAdventureData): HubAdventureRef {
+  if (adventure.nature === 'sortie') return { nature: 'sortie', slug: adventure.slug };
+  if (adventure.nature === 'collectif') return { nature: 'collectif' };
+  return { nature: 'possession' };
+}
+
+/**
+ * H3.4 — Coquille unique du hub voyageur (généralisation de TripHubShell).
+ * Montée UNE fois par le layout /hub : chrome 3 colonnes desktop, plein écran
+ * mobile, navigation URL-driven lue des registres, mémoire de section par
+ * aventure, customs du picker fusionnés au profil serveur.
+ */
+export function HubShell({ adventure, profile, baseEnabled, counts, children }: HubShellProps) {
+  const pathname = usePathname();
+  const activeSection = hubSectionFromPathname(pathname);
+  const [isPickerOpen, setIsPickerOpen] = useState(false);
+  const [customs, setCustoms] = useState<HubSectionId[]>([]);
+  const { setLastSection } = useActiveAdventure();
   const isTrekActive = useHubStore((s) => s.isTrekActive);
-  const baseCamp = useHubStore((s) => s.baseCamp);
-  const action = useHubStore((s) => s.action);
-  const isOnline = useHubStore((s) => s.isOnline);
-  const setTrekActive = useHubStore((s) => s.setTrekActive);
-  const toggleUltraSave = useHubStore((s) => s.toggleUltraSave);
-  const dismissAlert = useHubStore((s) => s.dismissAlert);
-  const updateAction = useHubStore((s) => s.updateAction);
 
-  const watchIdRef = useRef<number | null>(null);
+  const key = adventureKey(entryOf(adventure, counts));
+  const ref = refOf(adventure);
 
-  // Network & Battery listeners
+  // Customs persistés (HubSectionPicker) — lus une fois au montage.
   useEffect(() => {
-    const handleOnline = () => {
-      useHubStore.setState({ isOnline: true });
-    };
-    const handleOffline = () => {
-      useHubStore.setState({ isOnline: false });
-    };
-
-    window.addEventListener('online', handleOnline);
-    window.addEventListener('offline', handleOffline);
-
-    // Battery API check
-    if (typeof navigator !== 'undefined' && 'getBattery' in navigator) {
-      (navigator as any).getBattery().then((battery: any) => {
-        updateAction({ batteryLevel: battery.level });
-        battery.addEventListener('levelchange', () => {
-          updateAction({ batteryLevel: battery.level });
-          if (battery.level <= 0.15) {
-            toggleUltraSave(true);
-          }
-        });
-      }).catch(() => {});
-    }
-
-    return () => {
-      window.removeEventListener('online', handleOnline);
-      window.removeEventListener('offline', handleOffline);
-    };
-  }, [updateAction, toggleUltraSave]);
-
-  // Geolocation & Compass sensor tracking in Action Mode
-  useEffect(() => {
-    if (isTrekActive && typeof navigator !== 'undefined' && navigator.geolocation) {
-      watchIdRef.current = navigator.geolocation.watchPosition(
-        (pos) => {
-          const { latitude, longitude, altitude, heading } = pos.coords;
-          updateAction({
-            currentPosition: {
-              latitude,
-              longitude,
-              altitude: altitude ?? undefined,
-              timestamp: pos.timestamp,
-            },
-            altitudeMeters: altitude ?? 1840,
-            headingDegrees: heading ?? 42,
-          });
-        },
-        () => {
-          // Fallback if denied or unavailable
-          useHubStore.setState({ gpsStatus: 'UNAVAILABLE' });
-        },
-        { enableHighAccuracy: true, timeout: 10000, maximumAge: 5000 }
-      );
-
-      // Orientation event for compass if supported
-      const handleOrientation = (e: DeviceOrientationEvent) => {
-        if (e.alpha !== null) {
-          updateAction({ headingDegrees: Math.round(e.alpha) });
-        }
-      };
-      if (typeof window !== 'undefined' && 'DeviceOrientationEvent' in window) {
-        window.addEventListener('deviceorientation', handleOrientation, true);
+    try {
+      const raw = localStorage.getItem(`lkdv_hub_sections_${key}`);
+      if (raw) {
+        const parsed = JSON.parse(raw) as HubSectionId[];
+        if (Array.isArray(parsed)) setCustoms(parsed);
       }
-
-      return () => {
-        if (watchIdRef.current !== null) {
-          navigator.geolocation.clearWatch(watchIdRef.current);
-          watchIdRef.current = null;
-        }
-        if (typeof window !== 'undefined') {
-          window.removeEventListener('deviceorientation', handleOrientation, true);
-        }
-      };
+    } catch {
+      /* ignoré */
     }
-  }, [isTrekActive, updateAction]);
+  }, [key]);
 
-  const isUltraSave = action.isUltraSaveActive;
+  const effectiveProfile: AdventureProfile = useMemo(() => {
+    const sections = mergeEnabledSections(profile.sections, [...baseEnabled, ...customs]);
+    const reason = { ...profile.reason };
+    for (const id of customs) {
+      reason[id] = 'affiché : activé manuellement (HubSectionPicker)';
+    }
+    return { ...profile, sections, reason };
+  }, [profile, baseEnabled, customs]);
+
+  // Mémoire de la dernière section visitée pour cette aventure (miroir Y5.2).
+  useEffect(() => {
+    if (activeSection) setLastSection(key, activeSection);
+  }, [key, activeSection, setLastSection]);
+
+  // Thème de barre d'état natif (miroir Y7.5).
+  useEffect(() => {
+    applyLKDVStatusBarTheme();
+  }, []);
+
+  // Capteurs live (D1 — GPS/batterie/ultra-save migrés, actifs en mode trek).
+  useHubLiveSensors(isTrekActive);
+
+  const sidebarLeft = (
+    <HubSidebarLeft
+      adventure={ref}
+      profile={effectiveProfile}
+      counts={counts}
+      onOpenPicker={() => setIsPickerOpen(true)}
+    />
+  );
+  const sidebarRight = <HubSidebarRight profile={effectiveProfile} />;
+  const networkStatus = <HubNetworkStatus />;
 
   return (
-    <div
-      className={`min-h-[100dvh] w-full transition-colors duration-300 ${
-        isUltraSave
-          ? 'bg-black text-[#4ADE80]'
-          : 'bg-[#FBFAF6] dark:bg-[#0B120E] text-[#17402C] dark:text-[#E7E3D6]'
-      }`}
-      style={{
-        paddingBottom: 'calc(64px + env(safe-area-inset-bottom, 16px))',
-      }}
+    <AppShellDesktop
+      sidebarLeft={sidebarLeft}
+      sidebarRight={sidebarRight}
+      mobileSlot={
+        <MobilePageShell safeTop={true} hasBottomNav={true}>
+          <div className="px-4 py-4 pb-32 text-[var(--lkv-text-primary)]">
+            <div className="flex items-center justify-between gap-2 mb-3">
+              <AdventureSwitcher />
+              <div className="flex items-center gap-2">
+                <HubMobileSectionsSheet
+                  adventure={ref}
+                  profile={effectiveProfile}
+                  counts={counts}
+                  activeSection={activeSection}
+                  onOpenPicker={() => setIsPickerOpen(true)}
+                />
+                {networkStatus}
+              </div>
+            </div>
+            <div className="mb-3">
+              <HubSidebarRight profile={effectiveProfile} variant="band" />
+            </div>
+            {children}
+          </div>
+        </MobilePageShell>
+      }
     >
-      {/* Dynamic Top Bar */}
-      <HubTopBar
-        isTrekActive={isTrekActive}
-        isOnline={isOnline}
-        isUltraSaveActive={isUltraSave}
-        batteryLevel={action.batteryLevel}
-        onToggleUltraSave={() => toggleUltraSave()}
+      <div className="space-y-4">
+        <div className="flex items-center justify-between gap-3 flex-wrap">
+          <AdventureSwitcher />
+          {networkStatus}
+        </div>
+        {children}
+      </div>
+      <HubSectionPicker
+        adventureKey={key}
+        profile={effectiveProfile}
+        serverEnabled={baseEnabled}
+        isOpen={isPickerOpen}
+        onClose={() => setIsPickerOpen(false)}
+        onChange={setCustoms}
       />
-
-      {/* Main Content Area */}
-      <main className="max-w-lg mx-auto px-4 pt-4">
-        {!isTrekActive ? (
-          <BaseCampView
-            state={baseCamp}
-            onStartTrek={() => setTrekActive(true)}
-            onDismissAlert={dismissAlert}
-          />
-        ) : (
-          <ActionModeView
-            trekName={baseCamp.trekName}
-            state={action}
-            onPause={() => updateAction({ isPaused: true })}
-            onResume={() => updateAction({ isPaused: false })}
-            onStop={() => setTrekActive(false)}
-            onUpdateAction={updateAction}
-          />
-        )}
-      </main>
-    </div>
+    </AppShellDesktop>
   );
-};
+}
+
+export default HubShell;

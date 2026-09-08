@@ -25,6 +25,8 @@ import PrefetchRoutes from '@/components/PrefetchRoutes';
 import NativeAppBootstrap from '@/components/NativeAppBootstrap';
 import { ActiveTripProvider } from '@/features/trips/context/ActiveTripContext';
 import { getActiveTrip } from '@/features/trips/context/activeTripServer';
+import { ActiveAdventureProvider } from '@/features/hub/context/ActiveAdventureContext';
+import { getActiveAdventure } from '@/features/hub/context/activeAdventureServer';
 
 // Fonts
 const dmSans = DM_Sans({
@@ -155,6 +157,7 @@ export default async function RootLayout({
   children,
 }: Readonly<{ children: React.ReactNode }>) {
   const activeTrip = await getActiveTrip();
+  const activeAdventure = await getActiveAdventure();
   const organizationSchema = getOrganizationSchema(siteUrl);
   const websiteSchema = getWebsiteSchema(siteUrl);
 
@@ -240,6 +243,7 @@ export default async function RootLayout({
       >
         <AuthProvider>
           <ActiveTripProvider initialTrip={activeTrip}>
+            <ActiveAdventureProvider initialAdventure={activeAdventure}>
             <WishlistProvider>
               <ToastProvider>
                 <SearchProvider>
@@ -275,6 +279,7 @@ export default async function RootLayout({
                 </SearchProvider>
               </ToastProvider>
             </WishlistProvider>
+            </ActiveAdventureProvider>
           </ActiveTripProvider>
         </AuthProvider>
         <SpeedInsights />

@@ -66,8 +66,7 @@ describe('H1 — hubSectionRegistry : source unique des sections', () => {
     expect(hubSectionHref({ nature: 'collectif' }, 'team')).toBe('/hub/equipage');
   });
 
-  it('REG-9: visibleHubSections filtre par profil dans l’ordre', () => {
-    const defs = visibleHubSections({
+  it('REG-9: visibleHubSections filtre par profil dans l’ordre', () => {    const defs = visibleHubSections({
       nature: 'possession',
       scale: null,
       party: 'solo',
@@ -77,6 +76,16 @@ describe('H1 — hubSectionRegistry : source unique des sections', () => {
       reason: {} as never,
     });
     expect(defs.map((d) => d.id)).toEqual(['inventaire', 'kit', 'alertes']);
+  });
+
+  it('REG-10: sections cœur déclarées au registre (intégrité par nature)', () => {
+    const coreOf = (id: string) =>
+      hubSectionRegistry.find((s) => s.id === id)?.coreNatures ?? [];
+    expect(coreOf('inventaire')).toEqual(['possession']);
+    expect(coreOf('overview')).toEqual(['sortie']);
+    expect(coreOf('safety')).toEqual(['sortie']);
+    expect(coreOf('groupe')).toEqual(['collectif']);
+    expect(coreOf('kit')).toEqual([]);
   });
 });
 

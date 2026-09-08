@@ -132,12 +132,7 @@ function withUserEnabled(
   sections: HubSectionId[],
   enabledSections: HubSectionId[] | undefined,
 ): HubSectionId[] {
-  if (!enabledSections) return sortByRegistry(sections);
-  const merged = [...sections];
-  for (const s of enabledSections) {
-    if (HUB_SECTION_ORDER.includes(s) && !merged.includes(s)) merged.push(s);
-  }
-  return sortByRegistry(merged);
+  return mergeEnabledSections(sections, enabledSections);
 }
 
 function fullReason(
@@ -287,6 +282,19 @@ function deriveCollectif(input: Extract<HubAdventureInput, { kind: 'collectif' }
     widgets,
     reason,
   };
+}
+
+/** Fusionne base serveur + customs locaux dans l'ordre du registre (client HubShell). */
+export function mergeEnabledSections(
+  base: HubSectionId[],
+  customs: HubSectionId[] | undefined,
+): HubSectionId[] {
+  if (!customs) return sortByRegistry(base);
+  const merged = [...base];
+  for (const s of customs) {
+    if (HUB_SECTION_ORDER.includes(s) && !merged.includes(s)) merged.push(s);
+  }
+  return sortByRegistry(merged);
 }
 
 export function deriveHubProfile(input: HubAdventureInput, now: Date): AdventureProfile {

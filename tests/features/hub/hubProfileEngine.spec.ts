@@ -1,6 +1,7 @@
 import { describe, it, expect } from 'vitest';
 import {
   deriveHubProfile,
+  mergeEnabledSections,
   HUB_SECTION_ORDER,
   type HubAdventureInput,
 } from '@/features/hub/engine/hubProfileEngine';
@@ -303,5 +304,13 @@ describe('H1 — deriveHubProfile : pureté et déterminisme', () => {
     );
     const shared = pos.sections.filter((s) => (col.sections as string[]).includes(s));
     expect(shared).toEqual([]);
+  });
+
+  it('PUR-3: mergeEnabledSections fusionne base + customs dans l’ordre registre', () => {
+    expect(mergeEnabledSections(['kit', 'inventaire'], ['alertes'])).toEqual(['inventaire', 'kit', 'alertes']);
+  });
+
+  it('PUR-4: mergeEnabledSections ignore les inconnus et déduplique', () => {
+    expect(mergeEnabledSections(['kit'], ['kit', 'nope' as never])).toEqual(['kit']);
   });
 });

@@ -74,7 +74,7 @@ const RULE_EXEMPTIONS: Record<string, { files: string[]; burnDown: string }> = {
       'src/features/hub/components/ActionSosWidget.tsx',
       'src/features/hub/components/ActionWaterWidget.tsx',
       'src/features/hub/components/BaseCampView.tsx',
-      'src/features/hub/components/HubShell.tsx',
+      'src/features/hub/components/TerrainShell.tsx',
       'src/features/hub/components/HubTopBar.tsx',
       'src/features/hub/components/PrepScoreGauge.tsx',
       'src/features/hub/components/SmartPromptsList.tsx',

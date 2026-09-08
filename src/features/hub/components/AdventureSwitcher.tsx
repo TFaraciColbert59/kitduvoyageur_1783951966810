@@ -187,19 +187,24 @@ export function AdventureSwitcher() {
 
   return (
     <>
-      {/* Desktop : bouton déclencheur + palette cmdk */}
-      <button
-        type="button"
-        onClick={() => setOpen((v) => !v)}
-        className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full glass-capsule-btn text-xs font-semibold text-[var(--lkv-text-primary)] min-h-[44px] cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--lkv-primary)]"
-        aria-haspopup="dialog"
-        aria-expanded={open}
-        title="Changer d'aventure (Ctrl/Cmd+K ou J)"
-      >
-        <Compass size={14} className="text-[var(--lkv-secondary)]" aria-hidden="true" />
-        <span className="max-w-[160px] truncate hidden sm:inline">{triggerLabel}</span>
-        <ChevronsUpDown size={12} className="text-[var(--lkv-text-muted)]" aria-hidden="true" />
-      </button>
+      {/* Desktop : bouton déclencheur + palette cmdk.
+          Le wrapper porte le responsive (H-AUTO-19) : .glass-capsule-btn
+          (non layeré) bat md:hidden (layer utilities) — jamais de classe
+          responsive display sur le bouton lui-même. */}
+      <div className="hidden md:block">
+        <button
+          type="button"
+          onClick={() => setOpen((v) => !v)}
+          className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full glass-capsule-btn text-xs font-semibold text-[var(--lkv-text-primary)] min-h-[44px] cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--lkv-primary)]"
+          aria-haspopup="dialog"
+          aria-expanded={open}
+          title="Changer d'aventure (Ctrl/Cmd+K ou J)"
+        >
+          <Compass size={14} className="text-[var(--lkv-secondary)]" aria-hidden="true" />
+          <span className="max-w-[160px] truncate hidden sm:inline">{triggerLabel}</span>
+          <ChevronsUpDown size={12} className="text-[var(--lkv-text-muted)]" aria-hidden="true" />
+        </button>
+      </div>
 
       {/* Palette desktop (cmdk via dialog) */}
       {open && (
@@ -224,16 +229,18 @@ export function AdventureSwitcher() {
         />
       )}
 
-      {/* Mobile : déclencheur -> GlassSheet */}
-      <button
-        type="button"
-        onClick={() => setSheetOpen(true)}
-        className="md:hidden inline-flex items-center gap-1.5 px-3 py-2 rounded-full glass-capsule-btn text-xs font-semibold text-[var(--lkv-text-primary)] min-h-[44px] cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--lkv-primary)]"
-        aria-haspopup="dialog"
-      >
-        <Compass size={14} className="text-[var(--lkv-secondary)]" aria-hidden="true" />
-        <span className="max-w-[140px] truncate">{triggerLabel}</span>
-      </button>
+      {/* Mobile : déclencheur -> GlassSheet (wrapper responsive, cf. H-AUTO-19) */}
+      <div className="md:hidden">
+        <button
+          type="button"
+          onClick={() => setSheetOpen(true)}
+          className="inline-flex items-center gap-1.5 px-3 py-2 rounded-full glass-capsule-btn text-xs font-semibold text-[var(--lkv-text-primary)] min-h-[44px] cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--lkv-primary)]"
+          aria-haspopup="dialog"
+        >
+          <Compass size={14} className="text-[var(--lkv-secondary)]" aria-hidden="true" />
+          <span className="max-w-[140px] truncate">{triggerLabel}</span>
+        </button>
+      </div>
 
       <GlassSheet open={sheetOpen} onOpenChange={setSheetOpen} title="Changer d'aventure">
         <div className="glass p-2 rounded-[var(--lkv-radius-card)]">{listContent}</div>
