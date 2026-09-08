@@ -23,7 +23,7 @@ import {
  * recherche, restauration de la dernière section, rechargement.
  * La liste affiche toujours les 3 groupes — jamais de restriction.
  */
-export function AdventureSwitcher() {
+export function AdventureSwitcher({ forceOpenSignal = 0 }: { forceOpenSignal?: number }) {
   const {
     activeAdventure,
     setActiveAdventure,
@@ -41,6 +41,30 @@ export function AdventureSwitcher() {
   const [open, setOpen] = useState(false);
   const [sheetOpen, setSheetOpen] = useState(false);
   const [query, setQuery] = useState('');
+
+  // H6.1 — Pilotage externe (retour Android) : signal croissant → ouvre.
+  const firstSignal = React.useRef(true);
+  useEffect(() => {
+    if (firstSignal.current) {
+      firstSignal.current = false;
+      return;
+    }
+    setOpen(true);
+    setSheetOpen(window.innerWidth < 768);
+  }, [forceOpenSignal]);
+
+  // H6.1 — Dialogue d'état (retour Android) : publie ouvert/fermé, écoute la fermeture.
+  useEffect(() => {
+    window.dispatchEvent(new CustomEvent('hub:switcher-state', { detail: { open: open || sheetOpen } }));
+  }, [open, sheetOpen]);
+  useEffect(() => {
+    const close = () => {
+      setOpen(false);
+      setSheetOpen(false);
+    };
+    window.addEventListener('hub:close-switcher', close);
+    return () => window.removeEventListener('hub:close-switcher', close);
+  }, []);
 
   useEffect(() => {
     const handler = (e: KeyboardEvent) => {

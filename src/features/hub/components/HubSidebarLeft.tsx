@@ -4,7 +4,6 @@ import React from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { SlidersHorizontal } from 'lucide-react';
-import { AdventureSwitcher } from './AdventureSwitcher';
 import {
   hubSectionFromPathname,
   hubSectionHref,
@@ -33,7 +32,6 @@ export function HubSidebarLeft({ adventure, profile, counts, onOpenPicker }: Hub
 
   return (
     <aside aria-label="Navigation du hub" className="flex flex-col gap-4">
-      <AdventureSwitcher />
       <nav aria-label="Sections de l'aventure" className="flex flex-col gap-1">
         {sections.map((def) => {
           const Icon = def.icon;

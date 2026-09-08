@@ -6,7 +6,7 @@
    - NetworkFirst : pages de navigation avec fallback offline
    ============================================================ */
 
-const CACHE_VERSION = 'lkdv-v2';
+const CACHE_VERSION = 'lkdv-v3';
 const STATIC_CACHE = `lkdv-static-${CACHE_VERSION}`;
 const RUNTIME_CACHE = `lkdv-runtime-${CACHE_VERSION}`;
 const IMAGE_CACHE = `lkdv-images-${CACHE_VERSION}`;
@@ -17,7 +17,7 @@ const PRECACHE_ASSETS = [
   '/equipages',
   '/explorer',
   '/communaute',
-  '/materiel',
+  '/hub',
   '/compte',
   '/pays',
   '/hors-ligne',
@@ -111,6 +111,7 @@ self.addEventListener('fetch', (event) => {
     url.pathname.startsWith('/api/hikes') ||
     url.pathname.startsWith('/api/carnets') ||
     url.pathname.startsWith('/api/materiel') ||
+    url.pathname.startsWith('/api/hub') ||
     url.pathname.startsWith('/api/voyages') ||
     url.pathname.startsWith('/api/trips') ||
     url.pathname.startsWith('/api/equipages')

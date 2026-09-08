@@ -17,6 +17,7 @@ import { mergeEnabledSections, type AdventureProfile, type HubSectionId } from '
 import type { TripFull } from '@/features/trips/types/trip.types';
 import { useHubStore } from '../stores/useHubStore';
 import { useHubLiveSensors } from '../hooks/useHubLiveSensors';
+import { useAndroidHubBackNav } from '../hooks/useAndroidHubBackNav';
 import { AdventureSwitcher } from './AdventureSwitcher';
 import HubSidebarLeft from './HubSidebarLeft';
 import HubSidebarRight from './HubSidebarRight';
@@ -76,6 +77,22 @@ export function HubShell({
   const activeSection = hubSectionFromPathname(pathname);
   const [isPickerOpen, setIsPickerOpen] = useState(false);
   const [customs, setCustoms] = useState<HubSectionId[]>([]);
+  // H6.1 — Pilotage sélecteur (retour Android) : signal + état suivi.
+  const [switcherSignal, setSwitcherSignal] = useState(0);
+  const [switcherOpen, setSwitcherOpen] = useState(false);
+  useEffect(() => {
+    const onOpen = () => setSwitcherSignal((n) => n + 1);
+    const onState = (e: Event) => {
+      const open = (e as CustomEvent<{ open: boolean }>).detail?.open ?? false;
+      setSwitcherOpen(open);
+    };
+    window.addEventListener('hub:open-switcher', onOpen);
+    window.addEventListener('hub:switcher-state', onState);
+    return () => {
+      window.removeEventListener('hub:open-switcher', onOpen);
+      window.removeEventListener('hub:switcher-state', onState);
+    };
+  }, []);
   const { setLastSection } = useActiveAdventure();
   const isTrekActive = useHubStore((s) => s.isTrekActive);
 
@@ -117,6 +134,9 @@ export function HubShell({
   // Capteurs live (D1 — GPS/batterie/ultra-save migrés, actifs en mode trek).
   useHubLiveSensors(isTrekActive);
 
+  // Retour matériel Android : section → aperçu → sélecteur (H6.1).
+  useAndroidHubBackNav(activeSection, switcherOpen);
+
   const sidebarLeft = (
     <HubSidebarLeft
       adventure={ref}
@@ -146,7 +166,7 @@ export function HubShell({
         <MobilePageShell safeTop={true} hasBottomNav={true}>
           <div className="px-4 py-4 pb-32 text-[var(--lkv-text-primary)]">
             <div className="flex items-center justify-between gap-2 mb-3">
-              <AdventureSwitcher />
+              <AdventureSwitcher forceOpenSignal={switcherSignal} />
               <div className="flex items-center gap-2">
                 <HubMobileSectionsSheet
                   adventure={ref}
@@ -177,7 +197,7 @@ export function HubShell({
     >
       <div className="space-y-4">
         <div className="flex items-center justify-between gap-3 flex-wrap">
-          <AdventureSwitcher />
+          <AdventureSwitcher forceOpenSignal={switcherSignal} />
           {networkStatus}
         </div>
         {children}
