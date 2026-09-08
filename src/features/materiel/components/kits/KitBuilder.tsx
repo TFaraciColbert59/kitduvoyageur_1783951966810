@@ -714,7 +714,7 @@ export function KitBuilder({
             aria-label="Articles du kit en cours d'assemblage"
           >
             {kitItems.length === 0 ? (
-              <div className="py-5 text-center text-[10px] text-[var(--lkv-text-muted)] flex flex-col items-center justify-center gap-1.5">
+              <div role="listitem" className="py-5 text-center text-[10px] text-[var(--lkv-text-muted)] flex flex-col items-center justify-center gap-1.5">
                 <span className="text-xl opacity-30" aria-hidden="true">🎒</span>
                 <span className="font-semibold text-[var(--lkv-primary-soft)] text-[10px]">Kit vide</span>
                 <span className="text-[8.5px] text-[var(--lkv-text-muted)]/80 leading-relaxed">
@@ -779,6 +779,7 @@ export function KitBuilder({
           <select
             value={season}
             onChange={(e) => setSeason(e.target.value)}
+            aria-label="Filtrer par saison"
             className="glass interactive h-7 py-0 pl-2.5 pr-6 text-[10px] text-[var(--lkv-primary)] font-bold rounded-full cursor-pointer appearance-none outline-none border border-white/40 shadow-inner focus-visible:ring-2 focus-visible:ring-[var(--lkv-primary)]"
           >
             <option value="toute_saison">🌿 Toutes saisons</option>

@@ -41,6 +41,7 @@ export function KitsActiveCockpitCard({ kit }: Props) {
       <div
         className="my-1.5 flex-1 min-h-[90px] max-h-[140px] md:max-h-[160px] overflow-y-auto no-scrollbar flex flex-col gap-1"
         role="list"
+        tabIndex={0}
         aria-label="Articles du kit actif"
       >
         {items.length === 0 ? (

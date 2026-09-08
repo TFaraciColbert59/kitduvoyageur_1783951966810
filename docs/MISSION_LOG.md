@@ -1065,3 +1065,7 @@ Branche de travail : `feat/orientation-empreinte` (fondée sur `feat/lignees-kit
 ## H6 — App-first (08/09/2026, 22:15 UTC, plan docs/superpowers/plans/2026-09-08-h6-app-first.md)
 - Retour Android : hubBackTransition pure + 5 tests + hook Capacitor + switcher piloté (signal/état/fermeture), sidebar allégée (constance Y). SW : precache /hub, /api/hub SWR, v3. Offline sortie+sync composés (vérifié, H-AUTO-35). 44px runtime : chrome hub 100% (skip-links exclus), internes cockpit pré-existants consignés (H-AUTO-34). Safe-areas vérifiées (shell + captures). Revue Kat Holmes : RAS bloquant.
 - Portes : G1 tsc 0 · G2 150+/1158 · G3 12/12+14/14+invariants OK. Tag : h6-done.
+
+## H7 — Qualité (08/09/2026, 23:00 UTC)
+- G6 : tests/a11y/e2e/hub-a11y.spec.ts (8 surfaces × 3 viewports = 24/24, 0 critical/serious). 3 violations hub-kit → parité source /materiel/kits prouvée → 3 micro-fixes (listitem/aria-label/tabIndex, prod améliorée). Fix Y-switcher md:hidden (H-AUTO-19 soldé). Perf : first-load [section] 343 kB raw ≈110 kB gzip < 250 (H-AUTO-26/37 soldés, pas de dynamic).
+- Revues Linus (propre) + Schneier (RAS) — H-AUTO-38. Portes : G1 tsc 0 · G2 150+/1158+ · G3 12/12+14/14+inv OK · G4 build OK. Tag : h7-done.
