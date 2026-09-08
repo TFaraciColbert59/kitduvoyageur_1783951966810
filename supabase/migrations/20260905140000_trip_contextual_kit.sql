@@ -1,4 +1,4 @@
-﻿-- Migration 20260905140000_trip_contextual_kit.sql
+-- Migration 20260905140000_trip_contextual_kit.sql
 -- Chantier 6 : IA & Kit contextuel (Boutique LKDV, équipement, marge pleine)
 
 -- 1. Enrichissement de la table trip_items

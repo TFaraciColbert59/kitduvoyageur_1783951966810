@@ -1,5 +1,6 @@
 -- ============================================================
--- 20260907010000_trips_rls_hardening
+-- 20260907020000_trips_rls_hardening
+-- (renommée depuis 20260907010000 : doublon de version avec create_lkv_events_bus)
 -- Durcissement RLS module voyages (audit sécurité post-refonte Liquid Glass)
 --
 -- ⚠️ NE PAS APPLIQUER EN PROD SANS VALIDATION SUR COPIE (règle repo).

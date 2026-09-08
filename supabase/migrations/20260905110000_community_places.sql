@@ -162,74 +162,90 @@ ALTER TABLE public.place_photos ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.place_reports ENABLE ROW LEVEL SECURITY;
 
 -- 1. Policies public.places
+DROP POLICY IF EXISTS "places_select_public" ON public.places;
 CREATE POLICY "places_select_public"
   ON public.places FOR SELECT TO public
   USING (true);
 
+DROP POLICY IF EXISTS "places_insert_authenticated" ON public.places;
 CREATE POLICY "places_insert_authenticated"
   ON public.places FOR INSERT TO authenticated
   WITH CHECK (auth.uid() = author_id);
 
+DROP POLICY IF EXISTS "places_update_author" ON public.places;
 CREATE POLICY "places_update_author"
   ON public.places FOR UPDATE TO authenticated
   USING (auth.uid() = author_id)
   WITH CHECK (auth.uid() = author_id);
 
+DROP POLICY IF EXISTS "places_all_service" ON public.places;
 CREATE POLICY "places_all_service"
   ON public.places FOR ALL TO service_role
   USING (true)
   WITH CHECK (true);
 
 -- 2. Policies public.place_reviews
+DROP POLICY IF EXISTS "place_reviews_select_public" ON public.place_reviews;
 CREATE POLICY "place_reviews_select_public"
   ON public.place_reviews FOR SELECT TO public
   USING (true);
 
+DROP POLICY IF EXISTS "place_reviews_insert_authenticated" ON public.place_reviews;
 CREATE POLICY "place_reviews_insert_authenticated"
   ON public.place_reviews FOR INSERT TO authenticated
   WITH CHECK (auth.uid() = author_id);
 
+DROP POLICY IF EXISTS "place_reviews_update_author" ON public.place_reviews;
 CREATE POLICY "place_reviews_update_author"
   ON public.place_reviews FOR UPDATE TO authenticated
   USING (auth.uid() = author_id)
   WITH CHECK (auth.uid() = author_id);
 
+DROP POLICY IF EXISTS "place_reviews_delete_author" ON public.place_reviews;
 CREATE POLICY "place_reviews_delete_author"
   ON public.place_reviews FOR DELETE TO authenticated
   USING (auth.uid() = author_id);
 
+DROP POLICY IF EXISTS "place_reviews_all_service" ON public.place_reviews;
 CREATE POLICY "place_reviews_all_service"
   ON public.place_reviews FOR ALL TO service_role
   USING (true)
   WITH CHECK (true);
 
 -- 3. Policies public.place_photos
+DROP POLICY IF EXISTS "place_photos_select_public" ON public.place_photos;
 CREATE POLICY "place_photos_select_public"
   ON public.place_photos FOR SELECT TO public
   USING (true);
 
+DROP POLICY IF EXISTS "place_photos_insert_authenticated" ON public.place_photos;
 CREATE POLICY "place_photos_insert_authenticated"
   ON public.place_photos FOR INSERT TO authenticated
   WITH CHECK (auth.uid() = author_id);
 
+DROP POLICY IF EXISTS "place_photos_delete_author" ON public.place_photos;
 CREATE POLICY "place_photos_delete_author"
   ON public.place_photos FOR DELETE TO authenticated
   USING (auth.uid() = author_id);
 
+DROP POLICY IF EXISTS "place_photos_all_service" ON public.place_photos;
 CREATE POLICY "place_photos_all_service"
   ON public.place_photos FOR ALL TO service_role
   USING (true)
   WITH CHECK (true);
 
 -- 4. Policies public.place_reports
+DROP POLICY IF EXISTS "place_reports_insert_all" ON public.place_reports;
 CREATE POLICY "place_reports_insert_all"
   ON public.place_reports FOR INSERT TO authenticated
   WITH CHECK (reporter_id IS NULL OR reporter_id = auth.uid());
 
+DROP POLICY IF EXISTS "place_reports_select_reporter" ON public.place_reports;
 CREATE POLICY "place_reports_select_reporter"
   ON public.place_reports FOR SELECT TO authenticated
   USING (reporter_id = auth.uid());
 
+DROP POLICY IF EXISTS "place_reports_all_service" ON public.place_reports;
 CREATE POLICY "place_reports_all_service"
   ON public.place_reports FOR ALL TO service_role
   USING (true)

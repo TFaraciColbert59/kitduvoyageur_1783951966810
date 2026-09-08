@@ -23,30 +23,6 @@ BEGIN
 END $$;
 
 -- ----------------------------------------------------------------------------
--- 2. VERROUILLAGE STRICT DES GRANTS SQL (REVOKE PUBLIC/ANON)
--- ----------------------------------------------------------------------------
-REVOKE ALL ON public.conversations FROM PUBLIC, anon;
-REVOKE ALL ON public.conversation_members FROM PUBLIC, anon;
-REVOKE ALL ON public.messages FROM PUBLIC, anon;
-REVOKE ALL ON public.message_attachments FROM PUBLIC, anon;
-REVOKE ALL ON public.message_reactions FROM PUBLIC, anon;
-REVOKE ALL ON public.message_mentions FROM PUBLIC, anon;
-
-GRANT SELECT, UPDATE, DELETE ON public.conversations TO authenticated;
-GRANT SELECT, UPDATE, DELETE ON public.conversation_members TO authenticated;
-GRANT SELECT, INSERT, UPDATE, DELETE ON public.messages TO authenticated;
-GRANT SELECT, INSERT, DELETE ON public.message_attachments TO authenticated;
-GRANT SELECT, INSERT, DELETE ON public.message_reactions TO authenticated;
-GRANT SELECT, UPDATE ON public.message_mentions TO authenticated;
-
-GRANT ALL ON public.conversations TO service_role;
-GRANT ALL ON public.conversation_members TO service_role;
-GRANT ALL ON public.messages TO service_role;
-GRANT ALL ON public.message_attachments TO service_role;
-GRANT ALL ON public.message_reactions TO service_role;
-GRANT ALL ON public.message_mentions TO service_role;
-
--- ----------------------------------------------------------------------------
 -- 3. ADAPTATION STRUCTURELLE ET ASSAINISSEMENT NOT NULL
 -- ----------------------------------------------------------------------------
 
@@ -149,6 +125,31 @@ CREATE TABLE IF NOT EXISTS public.message_mentions (
 
 ALTER TABLE public.travel_groups 
     ADD COLUMN IF NOT EXISTS conversation_id UUID UNIQUE REFERENCES public.conversations(id) ON DELETE SET NULL;
+
+-- ----------------------------------------------------------------------------
+-- 3bis. VERROUILLAGE STRICT DES GRANTS SQL (après création des tables :
+-- REVOKE/GRANT exigent des relations existantes)
+-- ----------------------------------------------------------------------------
+REVOKE ALL ON public.conversations FROM PUBLIC, anon;
+REVOKE ALL ON public.conversation_members FROM PUBLIC, anon;
+REVOKE ALL ON public.messages FROM PUBLIC, anon;
+REVOKE ALL ON public.message_attachments FROM PUBLIC, anon;
+REVOKE ALL ON public.message_reactions FROM PUBLIC, anon;
+REVOKE ALL ON public.message_mentions FROM PUBLIC, anon;
+
+GRANT SELECT, UPDATE, DELETE ON public.conversations TO authenticated;
+GRANT SELECT, UPDATE, DELETE ON public.conversation_members TO authenticated;
+GRANT SELECT, INSERT, UPDATE, DELETE ON public.messages TO authenticated;
+GRANT SELECT, INSERT, DELETE ON public.message_attachments TO authenticated;
+GRANT SELECT, INSERT, DELETE ON public.message_reactions TO authenticated;
+GRANT SELECT, UPDATE ON public.message_mentions TO authenticated;
+
+GRANT ALL ON public.conversations TO service_role;
+GRANT ALL ON public.conversation_members TO service_role;
+GRANT ALL ON public.messages TO service_role;
+GRANT ALL ON public.message_attachments TO service_role;
+GRANT ALL ON public.message_reactions TO service_role;
+GRANT ALL ON public.message_mentions TO service_role;
 
 -- ----------------------------------------------------------------------------
 -- 4. TRIGGERS D'IMMUABILITÉ ET DE CONTRÔLE DE HIÉRARCHIE DES RÔLES

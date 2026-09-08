@@ -40,6 +40,7 @@ CREATE INDEX IF NOT EXISTS idx_destination_steps_order ON public.destination_ste
 ALTER TABLE public.destination_steps ENABLE ROW LEVEL SECURITY;
 
 -- Tout le monde peut lire les étapes candidates (catalogue public de référence)
+DROP POLICY IF EXISTS "destination_steps_select_public" ON public.destination_steps;
 CREATE POLICY "destination_steps_select_public"
   ON public.destination_steps
   FOR SELECT
@@ -47,6 +48,7 @@ CREATE POLICY "destination_steps_select_public"
   USING (true);
 
 -- Seul le service role / admins peuvent modifier le catalogue
+DROP POLICY IF EXISTS "destination_steps_modify_service" ON public.destination_steps;
 CREATE POLICY "destination_steps_modify_service"
   ON public.destination_steps
   FOR ALL

@@ -1,5 +1,18 @@
 BEGIN;
 
+-- 0. Prérequis : la table distante pré-existe en schéma étroit
+-- (id, conversation_id, user_id, joined_at). Les helpers SQL sont validés
+-- à la création : la colonne role (et sœurs) doit exister avant §1.
+ALTER TABLE public.conversation_members
+  ADD COLUMN IF NOT EXISTS role TEXT DEFAULT 'member' CHECK (role IN ('member', 'admin', 'owner')),
+  ADD COLUMN IF NOT EXISTS is_muted BOOLEAN DEFAULT false,
+  ADD COLUMN IF NOT EXISTS is_archived BOOLEAN DEFAULT false,
+  ADD COLUMN IF NOT EXISTS last_read_at TIMESTAMPTZ DEFAULT now(),
+  ADD COLUMN IF NOT EXISTS unread_count INTEGER DEFAULT 0 CHECK (unread_count >= 0),
+  ADD COLUMN IF NOT EXISTS left_at TIMESTAMPTZ,
+  ADD COLUMN IF NOT EXISTS created_at TIMESTAMPTZ DEFAULT now(),
+  ADD COLUMN IF NOT EXISTS updated_at TIMESTAMPTZ DEFAULT now();
+
 -- 1. Helpers membres (signatures uuid, uuid) - SECURITY DEFINER pour eviter recursion RLS
 CREATE OR REPLACE FUNCTION public.is_conversation_member(
   target_conversation_id uuid,
@@ -78,14 +91,17 @@ CREATE INDEX IF NOT EXISTS user_blocks_blocked_idx ON public.user_blocks (blocke
 
 ALTER TABLE public.user_blocks ENABLE ROW LEVEL SECURITY;
 
+DROP POLICY IF EXISTS "user_blocks_select_own" ON public.user_blocks;
 CREATE POLICY "user_blocks_select_own" ON public.user_blocks
   FOR SELECT TO authenticated
   USING (blocker_id = auth.uid() OR blocked_id = auth.uid());
 
+DROP POLICY IF EXISTS "user_blocks_insert_own" ON public.user_blocks;
 CREATE POLICY "user_blocks_insert_own" ON public.user_blocks
   FOR INSERT TO authenticated
   WITH CHECK (blocker_id = auth.uid());
 
+DROP POLICY IF EXISTS "user_blocks_delete_own" ON public.user_blocks;
 CREATE POLICY "user_blocks_delete_own" ON public.user_blocks
   FOR DELETE TO authenticated
   USING (blocker_id = auth.uid());
