@@ -14,15 +14,15 @@ interface DepartWeatherProps {
 }
 
 function getWeatherIcon(code: number, size = 16) {
-  if (code === 0) return <Sun size={size} className="text-amber-500" aria-hidden="true" />;
-  if (code <= 2) return <CloudSun size={size} className="text-amber-600/80" aria-hidden="true" />;
-  if (code === 3) return <Cloud size={size} className="text-slate-500" aria-hidden="true" />;
-  if (code <= 48) return <CloudFog size={size} className="text-slate-400" aria-hidden="true" />;
+  if (code === 0) return <Sun size={size} className="text-sand-500" aria-hidden="true" />;
+  if (code <= 2) return <CloudSun size={size} className="text-sand-600/80" aria-hidden="true" />;
+  if (code === 3) return <Cloud size={size} className="text-stone-500" aria-hidden="true" />;
+  if (code <= 48) return <CloudFog size={size} className="text-stone-400" aria-hidden="true" />;
   if (code <= 57) return <CloudDrizzle size={size} className="text-sky-600" aria-hidden="true" />;
-  if (code <= 67) return <CloudRain size={size} className="text-blue-600" aria-hidden="true" />;
+  if (code <= 67) return <CloudRain size={size} className="text-sky-600" aria-hidden="true" />;
   if (code <= 77) return <CloudSnow size={size} className="text-indigo-400" aria-hidden="true" />;
-  if (code <= 86) return <CloudRain size={size} className="text-blue-700" aria-hidden="true" />;
-  return <CloudLightning size={size} className="text-amber-600" aria-hidden="true" />;
+  if (code <= 86) return <CloudRain size={size} className="text-sky-700" aria-hidden="true" />;
+  return <CloudLightning size={size} className="text-sand-600" aria-hidden="true" />;
 }
 
 export function DepartWeather({ weather, updatedAt }: DepartWeatherProps) {
@@ -91,7 +91,7 @@ export function DepartWeather({ weather, updatedAt }: DepartWeatherProps) {
                 {day.tempMaxC}° <span className="text-[9.5px] text-[#5A7064] font-normal">{day.tempMinC}°</span>
               </div>
               {day.precipPct > 0 && (
-                <div className="flex items-center justify-center gap-0.5 text-[9px] text-blue-700 dark:text-blue-400 font-medium">
+                <div className="flex items-center justify-center gap-0.5 text-[9px] text-sky-700 dark:text-sky-400 font-medium">
                   <Droplets size={8.5} />
                   <span>{day.precipPct}%</span>
                 </div>
@@ -102,7 +102,7 @@ export function DepartWeather({ weather, updatedAt }: DepartWeatherProps) {
           {/* Éphéméride du jour */}
           <div className="shrink-0 p-2 rounded-xl bg-white/30 dark:bg-white/5 border border-white/40 flex flex-col items-center justify-between w-[80px]">
             <span className="text-[9px] uppercase tracking-wider text-[#5A7064] flex items-center gap-1 font-semibold">
-              <Sunrise size={10} className="text-amber-600" />
+              <Sunrise size={10} className="text-sand-600" />
               <span>Lever</span>
             </span>
             <span className="font-mono font-bold text-[#17402C] text-[11px] my-auto">
@@ -112,7 +112,7 @@ export function DepartWeather({ weather, updatedAt }: DepartWeatherProps) {
 
           <div className="shrink-0 p-2 rounded-xl bg-white/30 dark:bg-white/5 border border-white/40 flex flex-col items-center justify-between w-[80px]">
             <span className="text-[9px] uppercase tracking-wider text-[#5A7064] flex items-center gap-1 font-semibold">
-              <Sunset size={10} className="text-amber-700" />
+              <Sunset size={10} className="text-sand-700" />
               <span>Coucher</span>
             </span>
             <span className="font-mono font-bold text-[#17402C] text-[11px] my-auto">
@@ -122,7 +122,7 @@ export function DepartWeather({ weather, updatedAt }: DepartWeatherProps) {
 
           <div className="shrink-0 p-2 rounded-xl bg-white/30 dark:bg-white/5 border border-white/40 flex flex-col items-center justify-between w-[80px]">
             <span className="text-[9px] uppercase tracking-wider text-[#5A7064] flex items-center gap-1 font-semibold">
-              <Sun size={10} className="text-emerald-700" />
+              <Sun size={10} className="text-forest-700" />
               <span>Jour</span>
             </span>
             <span className="font-mono font-bold text-[#17402C] text-[11px] my-auto">

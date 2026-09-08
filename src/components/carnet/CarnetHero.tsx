@@ -109,7 +109,7 @@ export default function CarnetHero({ meta, onExport, carnetId, onOpenComments }:
   const descriptionText = [meta.subtitleLine1, meta.subtitleLine2].filter(Boolean).join(' ');
 
   return (
-    <div className="glass bg-gradient-to-br from-[#17402C]/95 via-[#17402C]/85 to-[#33463C]/90 rounded-[28px] p-8 sm:p-10 text-[#FAF8F5] relative overflow-hidden flex flex-col md:flex-row justify-between items-start md:items-end gap-6 border border-white/20">
+    <div className="glass bg-gradient-to-br from-[#17402C]/95 via-[#17402C]/85 to-[#33463C]/90 rounded-card p-8 sm:p-10 text-[#FAF8F5] relative overflow-hidden flex flex-col md:flex-row justify-between items-start md:items-end gap-6 border border-white/20">
       {/* Subtle glowing orb */}
       <div className="absolute top-0 right-0 w-[40rem] h-[40rem] bg-white opacity-5 blur-[100px] rounded-full pointer-events-none" />
 
@@ -117,7 +117,7 @@ export default function CarnetHero({ meta, onExport, carnetId, onOpenComments }:
       <div className="relative z-10 max-w-2xl">
         <div className="flex items-center gap-2 flex-wrap mb-6">
           <div className="inline-flex items-center gap-2 px-3 py-1 glass-pill text-white border-white/20">
-            <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
+            <span className="w-1.5 h-1.5 rounded-full bg-forest-400 animate-pulse" />
             <span className="font-mono text-[10px] uppercase tracking-widest text-[#FAF8F5] font-bold">
               {meta.badge || 'CARNET D’EXPÉDITION'} · {voyageursCount} {voyageursCount > 1 ? 'VOYAGEURS' : 'VOYAGEUR'} {meta.dateRange ? `· ${meta.dateRange}` : ''}
             </span>
@@ -128,7 +128,7 @@ export default function CarnetHero({ meta, onExport, carnetId, onOpenComments }:
               href={meta.authorId ? `/profil/${meta.authorId}` : '/communaute'}
               className="inline-flex items-center gap-1.5 px-3 py-1 glass-pill text-white border-white/30 bg-black/30 hover:bg-black/50 transition-colors cursor-pointer group"
             >
-              <span className="text-[10px] font-mono text-emerald-300 font-bold">Par</span>
+              <span className="text-[10px] font-mono text-forest-300 font-bold">Par</span>
               <span className="text-xs font-bold text-white group-hover:underline">{meta.authorName}</span>
             </Link>
           )}
@@ -178,7 +178,7 @@ export default function CarnetHero({ meta, onExport, carnetId, onOpenComments }:
           <span className="font-mono text-[9px] uppercase tracking-widest text-white/80 font-bold leading-tight">
             Récit Vérifié
           </span>
-          <span className="text-[10px] text-emerald-300 font-bold mt-0.5">Certifié LKDV</span>
+          <span className="text-[10px] text-forest-300 font-bold mt-0.5">Certifié LKDV</span>
         </div>
 
         {/* Primary CTA button */}

@@ -1,20 +1,11 @@
 /* ============================================================
    LIQUID GLASS DESIGN TOKENS — Mon Matériel (LKDV)
    Inspiration Apple iOS 26 / WWDC 2025 — calé sur la charte
-   LKDV canonique (forest / sage / stone / ink). Zéro var(--lkv-primary).
-   Recettes Liquid Glass pointant vers src/styles/tokens.css
+   LKDV canonique (forest / sage / stone / ink). Zéro var(--lkv-warning).
    ============================================================ */
 
 :root {
-  /* ---- Stone (neutres) — pointe vers tokens.css ---- */
-
-  /* ---- Sage (primaire) — pointe vers tokens.css ---- */
-
-  /* ---- Ink (typo) — pointe vers tokens.css ---- */
-
-  /* ---- Sémantiques (jamais var(--lkv-primary)) ---- */
-
-  /* ---- Tokens sémantiques (préférés) ---- */
+  /* ---- Tokens sémantiques (dérivés de tokens.css) ---- */
   --label: var(--ink-900);
   --label-secondary: var(--ink-500);
   --label-tertiary: var(--ink-300);
@@ -52,27 +43,51 @@
     rgba(11, 31, 23, 0.04) 100%
   );
   --glass-sheen: radial-gradient(130% 85% at 24% 0%, rgba(255, 255, 255, 0.45) 0%, rgba(255, 255, 255, 0.15) 100%);
-
-  /* ---- Elevation (5 niveaux Apple iOS) ---- */
-
-  /* ---- Radius (échelles réconciliées avec tokens.css) ---- */
+  /* ---- Radius (alias vers tokens.css) ---- */
   --r-xs: var(--lkv-radius-xs);
   --r-sm: var(--lkv-radius-sm);
   --r-md: var(--lkv-radius-md);
   --r-lg: var(--lkv-radius-lg);
-  --r-xl: var(--lkv-radius-xl);
-  --r-2xl: var(--lkv-radius-card); /* 28px ! */
-  --r-3xl: var(--lkv-radius-2xl);  /* 32px ! */
+  --r-xl: var(--lkv-radius-card);
+  --r-2xl: var(--lkv-radius-2xl);
   --r-full: var(--lkv-radius-full);
-
-  /* ---- Spacing (4 pt hybride) ---- */
 
   /* ---- Grille de page ---- */
   --page-max-w: 1280px;
   --grid-gap: var(--space-5);
 
-  /* ---- Motion ---- */
+  /* ---- Motion complémentaires ---- */
+  --ease-in-out: cubic-bezier(0.65, 0, 0.35, 1);
+  --ease-linear: linear;
+}
+/* Dark mode auto */
+@media (prefers-color-scheme: dark) {
+  :root {
+    --label: var(--stone-50);
+    --label-secondary: color-mix(in oklab, var(--stone-50) 60%, transparent);
+    --separator: color-mix(in oklab, white 15%, transparent);
+    --bg-primary: var(--ink-900);
+    --bg-secondary: var(--ink-700);
+    --bg-tertiary: var(--ink-700);
+    --glass-bg-light: rgba(255, 255, 255, 0.15);
+    --glass-bg-medium: rgba(255, 255, 255, 0.10);
+    --glass-bg-strong: rgba(255, 255, 255, 0.22);
+    --glass-border: rgba(255, 255, 255, 0.18);
+  }
+}
 
+/* Le cockpit Mon Matériel reste ultra-lumineux et cristallin */
+[data-lkv-material-theme='light'] {
+  --label: var(--lkv-primary);
+  --label-secondary: var(--lkv-primary-soft);
+  --label-tertiary: var(--lkv-text-muted);
+  --bg-primary: var(--stone-50);
+  --bg-secondary: var(--stone-100);
+  --bg-tertiary: var(--stone-200);
+  --glass-bg-light: rgba(255, 255, 255, 0.14);
+  --glass-bg-medium: rgba(255, 255, 255, 0.08);
+  --glass-bg-strong: rgba(255, 255, 255, 0.18);
+  --glass-border: rgba(255, 255, 255, 0.35);
 }
 
 /* Accessibilité — reduce-transparency */
@@ -150,9 +165,9 @@
   border-radius: inherit;
   padding: 1px;
   background: var(--glass-edge-light);
-  -webkit-mask: linear-gradient(#000000 0 0) content-box, linear-gradient(#000000 0 0);
+  -webkit-mask: linear-gradient(black 0 0) content-box, linear-gradient(black 0 0);
   -webkit-mask-composite: xor;
-  mask: linear-gradient(#000000 0 0) content-box, linear-gradient(#000000 0 0);
+  mask: linear-gradient(black 0 0) content-box, linear-gradient(black 0 0);
   mask-composite: exclude;
   pointer-events: none;
   z-index: 1;
@@ -480,9 +495,9 @@
     rgba(255, 255, 255, 0.98) 0%,
     rgba(235, 232, 222, 0.92) 100%
   );
-  border-color: #ffffff;
+  border-color: var(--lkv-text-inverted);
   box-shadow:
-    inset 0 2px 2.5px 0 #ffffff,
+    inset 0 2px 2.5px 0 var(--lkv-text-inverted),
     0 4px 14px -2px rgba(23, 64, 44, 0.18);
 }
 
@@ -526,7 +541,7 @@
     rgba(15, 43, 30, 0.96) 100%
   );
   border: 1.5px solid rgba(255, 255, 255, 0.45);
-  color: var(--lkv-surface-paper);
+  color: var(--stone-50);
   box-shadow:
     inset 0 1px 1.5px 0 rgba(255, 255, 255, 0.6),
     0 6px 20px -4px rgba(11, 31, 23, 0.25);
@@ -603,7 +618,7 @@
   border-radius: 9999px;
   background: radial-gradient(
     ellipse at center,
-    #ffffff 0%,
+    var(--lkv-text-inverted) 0%,
     rgba(255, 255, 255, 0.95) 50%,
     transparent 100%
   );
@@ -616,12 +631,12 @@
   transform: translateY(-1px) scale(1.08);
   background: linear-gradient(
     180deg,
-    #ffffff 0%,
+    var(--lkv-text-inverted) 0%,
     rgba(238, 246, 240, 0.96) 100%
   );
-  border-color: #ffffff;
+  border-color: var(--lkv-text-inverted);
   box-shadow:
-    inset 0 2px 2.5px 0 #ffffff,
+    inset 0 2px 2.5px 0 var(--lkv-text-inverted),
     0 4px 14px -2px rgba(23, 64, 44, 0.18);
 }
 
@@ -635,11 +650,11 @@
 .glass-circle-btn.primary {
   background: linear-gradient(
     180deg,
-    var(--lkv-primary) 0%,
+    var(--lkv-primary-hover) 0%,
     var(--lkv-primary) 100%
   ) !important;
   border-color: rgba(255, 255, 255, 0.65) !important;
-  color: #FFFFFF !important;
+  color: var(--lkv-text-inverted) !important;
   box-shadow:
     inset 0 2px 2.5px 0 rgba(255, 255, 255, 0.6),
     inset 0 -1px 1px 0 rgba(0, 0, 0, 0.25),
@@ -659,7 +674,7 @@
 .glass-circle-btn.primary:hover {
   background: linear-gradient(
     180deg,
-    var(--lkv-primary) 0%,
+    var(--lkv-primary-hover) 0%,
     var(--lkv-primary) 100%
   ) !important;
   border-color: rgba(255, 255, 255, 0.65) !important;
@@ -676,7 +691,7 @@
     rgba(254, 205, 211, 0.85) 100%
   );
   border-color: rgba(225, 29, 72, 0.85);
-  color: var(--lkv-primary);
+  color: var(--lkv-danger);
 }
 
 .glass-capsule-btn-like:active {
@@ -694,7 +709,7 @@
   box-shadow:
     inset 0 1px 1.5px 0 rgba(255, 255, 255, 0.7),
     0 8px 24px -4px rgba(11, 31, 23, 0.35);
-  color: #ffffff;
+  color: var(--lkv-text-inverted);
 }
 
 /* Secondary Capsule Button (Verre liquide translucide) */
@@ -991,7 +1006,7 @@
 }
 
 .glass-segmented-item.active {
-  background: #ffffff;
+  background: var(--lkv-text-inverted);
   color: var(--ink-900);
   box-shadow: var(--elevation-1);
 }
@@ -1050,12 +1065,12 @@
 }
 
 /* ============================================================
-   OLED ULTRA-SAVE MODE (#000000 pure black, no GPU backdrop blur)
+   OLED ULTRA-SAVE MODE (black pure black, no GPU backdrop blur)
    ============================================================ */
 .ultra-save-mode,
 .ultra-save-mode body {
-  background-color: #000000 !important;
-  color: #FFFFFF !important;
+  background-color: black !important;
+  color: var(--lkv-text-inverted) !important;
 }
 
 .ultra-save-mode .glass,
@@ -1063,7 +1078,7 @@
 .ultra-save-mode header,
 .ultra-save-mode nav,
 .ultra-save-mode aside {
-  background: #000000 !important;
+  background: black !important;
   backdrop-filter: none !important;
   -webkit-backdrop-filter: none !important;
   border-color: rgba(255, 255, 255, 0.2) !important;
@@ -1176,9 +1191,9 @@
 /* Bulle envoyee : conifere fondu (CTA primaire du site) — texte blanc lisible,
    meme traitement que .glass-capsule-btn.primary / .glass-circle-btn.primary. */
 .msg-bubble--mine {
-  background: linear-gradient(165deg, var(--lkv-primary) 0%, var(--lkv-primary) 45%, var(--lkv-primary) 100%);
+  background: linear-gradient(165deg, var(--lkv-forest-500) 0%, var(--lkv-primary-hover) 45%, var(--lkv-primary) 100%);
   border-color: rgba(255, 255, 255, 0.32);
-  color: var(--lkv-surface-paper);
+  color: var(--stone-50);
   box-shadow:
     inset 0 1.5px 1px rgba(255, 255, 255, 0.32),
     inset 0 -1px 1.5px rgba(11, 31, 23, 0.28),

@@ -53,11 +53,11 @@ export function LiveActivityFeed({
     switch (badge) {
       case 'Nouvelle aventure':
       case 'Expédition terminée':
-        return <Compass className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />;
+        return <Compass className="w-4 h-4 text-forest-600 dark:text-forest-400" />;
       case 'Équipage':
         return <Users className="w-4 h-4 text-sky-600 dark:text-sky-400" />;
       case 'Avis sentinelle':
-        return <MapPin className="w-4 h-4 text-amber-600 dark:text-amber-400" />;
+        return <MapPin className="w-4 h-4 text-sand-600 dark:text-sand-400" />;
       case 'Carnet d’expédition':
         return <BookOpen className="w-4 h-4 text-purple-600 dark:text-purple-400" />;
       default:
@@ -70,8 +70,8 @@ export function LiveActivityFeed({
       <div className="flex items-center justify-between border-b border-black/5 pb-3">
         <div className="flex items-center gap-2">
           <span className="relative flex h-2 w-2">
-            <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75" />
-            <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500" />
+            <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-forest-400 opacity-75" />
+            <span className="relative inline-flex rounded-full h-2 w-2 bg-forest-500" />
           </span>
           <h3 className="font-display font-bold text-sm sm:text-base text-lkv-primary">
             {title}
@@ -84,7 +84,7 @@ export function LiveActivityFeed({
 
       {loading && (
         <div className="py-8 flex flex-col items-center justify-center text-xs text-lkv-secondary gap-2">
-          <div className="w-5 h-5 border-2 border-emerald-500 border-t-transparent rounded-full animate-spin" />
+          <div className="w-5 h-5 border-2 border-forest-500 border-t-transparent rounded-full animate-spin" />
           <span>Synchronisation des activités...</span>
         </div>
       )}
@@ -112,10 +112,10 @@ export function LiveActivityFeed({
                 </div>
                 <div className="min-w-0 space-y-0.5">
                   <div className="flex items-center gap-2 flex-wrap">
-                    <span className="text-xs font-medium text-lkv-primary group-hover:text-emerald-700 transition-colors line-clamp-1">
+                    <span className="text-xs font-medium text-lkv-primary group-hover:text-forest-700 transition-colors line-clamp-1">
                       {item.headline}
                     </span>
-                    <span className="inline-block text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-800 border border-emerald-200 shrink-0">
+                    <span className="inline-block text-[10px] font-bold px-2 py-0.5 rounded-full bg-forest-50 text-forest-800 border border-forest-200 shrink-0">
                       {item.badge}
                     </span>
                   </div>

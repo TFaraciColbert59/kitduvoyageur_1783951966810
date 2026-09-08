@@ -271,7 +271,7 @@ export default function GlobalSearchModal({ isOpen, onClose }: GlobalSearchModal
         
         {/* Search Header Input */}
         <form onSubmit={handleFormSubmit} className="p-4 sm:p-5 border-b border-white/10 flex items-center gap-3">
-          <Icon name="MagnifyingGlassIcon" size={22} className="text-emerald-400 shrink-0 ml-2" />
+          <Icon name="MagnifyingGlassIcon" size={22} className="text-forest-400 shrink-0 ml-2" />
           <input
             ref={inputRef}
             type="text"
@@ -330,7 +330,7 @@ export default function GlobalSearchModal({ isOpen, onClose }: GlobalSearchModal
         <div className="p-4 sm:p-6 overflow-y-auto flex-1 space-y-4">
           {loading && (
             <div className="py-12 flex flex-col items-center justify-center text-white/50 gap-3">
-              <div className="w-8 h-8 border-2 border-emerald-400 border-t-transparent rounded-full animate-spin" />
+              <div className="w-8 h-8 border-2 border-forest-400 border-t-transparent rounded-full animate-spin" />
               <span className="text-sm font-medium">Recherche dans la base de données...</span>
             </div>
           )}
@@ -359,7 +359,7 @@ export default function GlobalSearchModal({ isOpen, onClose }: GlobalSearchModal
                 <div
                   key={item.id}
                   onClick={() => handleSelectResult(item.url)}
-                  className="group flex items-center justify-between p-3.5 rounded-2xl bg-white/5 hover:bg-emerald-900/30 border border-white/5 hover:border-emerald-500/40 transition-all cursor-pointer"
+                  className="group flex items-center justify-between p-3.5 rounded-2xl bg-white/5 hover:bg-forest-900/30 border border-white/5 hover:border-forest-500/40 transition-all cursor-pointer"
                 >
                   <div className="flex items-center gap-3.5 min-w-0">
                     <div className="w-11 h-11 rounded-xl bg-black/40 border border-white/10 overflow-hidden flex items-center justify-center shrink-0">
@@ -383,17 +383,17 @@ export default function GlobalSearchModal({ isOpen, onClose }: GlobalSearchModal
                               : 'GlobeAltIcon'
                           }
                           size={20}
-                          className="text-emerald-400"
+                          className="text-forest-400"
                         />
                       )}
                     </div>
                     <div className="min-w-0">
                       <div className="flex items-center gap-2">
-                        <h4 className="font-bold text-white text-sm sm:text-base truncate group-hover:text-emerald-300 transition-colors">
+                        <h4 className="font-bold text-white text-sm sm:text-base truncate group-hover:text-forest-300 transition-colors">
                           {item.title}
                         </h4>
                         {item.badge && (
-                          <span className="px-2 py-0.5 rounded text-[10px] font-extrabold uppercase tracking-wider bg-white/10 text-emerald-300 shrink-0">
+                          <span className="px-2 py-0.5 rounded text-[10px] font-extrabold uppercase tracking-wider bg-white/10 text-forest-300 shrink-0">
                             {item.badge}
                           </span>
                         )}
@@ -406,9 +406,9 @@ export default function GlobalSearchModal({ isOpen, onClose }: GlobalSearchModal
 
                   <div className="flex items-center gap-3 shrink-0 ml-3">
                     {item.price !== undefined && (
-                      <span className="font-mono font-bold text-emerald-400 text-sm">{item.price} €</span>
+                      <span className="font-mono font-bold text-forest-400 text-sm">{item.price} €</span>
                     )}
-                    <div className="w-8 h-8 rounded-full bg-white/5 group-hover:bg-emerald-500 group-hover:text-emerald-950 flex items-center justify-center text-white/50 transition-all">
+                    <div className="w-8 h-8 rounded-full bg-white/5 group-hover:bg-forest-500 group-hover:text-forest-950 flex items-center justify-center text-white/50 transition-all">
                       <Icon name="ArrowRightIcon" size={14} />
                     </div>
                   </div>
@@ -420,7 +420,7 @@ export default function GlobalSearchModal({ isOpen, onClose }: GlobalSearchModal
           {!query.trim() && (
             <div className="space-y-6 py-2">
               <div>
-                <h4 className="text-xs font-mono uppercase tracking-widest text-emerald-400/80 mb-3 flex items-center gap-2">
+                <h4 className="text-xs font-mono uppercase tracking-widest text-forest-400/80 mb-3 flex items-center gap-2">
                   <Icon name="SparklesIcon" size={14} /> Searches Populaires
                 </h4>
                 <div className="flex flex-wrap gap-2">
@@ -428,23 +428,23 @@ export default function GlobalSearchModal({ isOpen, onClose }: GlobalSearchModal
                     <button
                       key={item.label}
                       onClick={() => handleSelectResult(item.url)}
-                      className="px-3.5 py-2 bg-white/5 hover:bg-white/10 border border-white/10 hover:border-emerald-500/50 rounded-xl text-xs font-semibold text-white/80 hover:text-white flex items-center gap-2 transition-all group"
+                      className="px-3.5 py-2 bg-white/5 hover:bg-white/10 border border-white/10 hover:border-forest-500/50 rounded-xl text-xs font-semibold text-white/80 hover:text-white flex items-center gap-2 transition-all group"
                     >
                       <span>{item.label}</span>
-                      <span className="text-[10px] text-white/40 group-hover:text-emerald-400 font-mono">• {item.category}</span>
+                      <span className="text-[10px] text-white/40 group-hover:text-forest-400 font-mono">• {item.category}</span>
                     </button>
                   ))}
                 </div>
               </div>
 
-              <div className="p-4 rounded-2xl bg-gradient-to-r from-emerald-950 to-emerald-900/60 border border-emerald-500/20 flex items-center justify-between gap-4">
+              <div className="p-4 rounded-2xl bg-gradient-to-r from-forest-950 to-forest-900/60 border border-forest-500/20 flex items-center justify-between gap-4">
                 <div>
                   <h5 className="font-bold text-white text-sm">Besoin d'un kit personnalisé ?</h5>
                   <p className="text-xs text-white/60 mt-0.5">Laissez notre IA composer votre équipement idéal selon vos critères.</p>
                 </div>
                 <button
                   onClick={() => handleSelectResult('/ai-configurator')}
-                  className="px-4 py-2 bg-emerald-400 text-emerald-950 font-extrabold rounded-xl text-xs whitespace-nowrap hover:bg-emerald-300 transition-colors "
+                  className="px-4 py-2 bg-forest-400 text-forest-950 font-extrabold rounded-xl text-xs whitespace-nowrap hover:bg-forest-300 transition-colors "
                 >
                   Lancer l'IA
                 </button>

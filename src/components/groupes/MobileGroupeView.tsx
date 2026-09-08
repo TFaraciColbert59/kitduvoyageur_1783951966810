@@ -85,11 +85,11 @@ export default function MobileGroupeView({
 
         {/* Hero Title & Destination */}
         <div className="absolute bottom-4 left-4 right-4 z-10">
-          <span className="text-[10px] font-mono uppercase tracking-widest text-emerald-300 block mb-1 font-bold">
+          <span className="text-[10px] font-mono uppercase tracking-widest text-forest-300 block mb-1 font-bold">
             📍 {data.meta?.destination || 'Massif & Aventure'} · DÉPART DANS {data.meta?.daysLeft || 0}J
           </span>
           <h1 className="font-display font-extrabold text-2xl sm:text-3xl text-white leading-tight">
-            {data.meta?.titlePrefix} <em className="font-serif italic font-normal text-emerald-300">{data.meta?.titleSuffix}</em>
+            {data.meta?.titlePrefix} <em className="font-serif italic font-normal text-forest-300">{data.meta?.titleSuffix}</em>
           </h1>
         </div>
       </div>
@@ -149,7 +149,7 @@ export default function MobileGroupeView({
               </div>
               <div className="w-full h-2 rounded-full bg-lkv-primary/10 overflow-hidden">
                 <div
-                  className="h-full bg-gradient-to-r from-emerald-500 to-var(--lkv-primary) rounded-full transition-all duration-500"
+                  className="h-full bg-gradient-to-r from-forest-500 to-var(--lkv-primary) rounded-full transition-all duration-500"
                   style={{ width: `${data.meta.progression}%` }}
                 />
               </div>

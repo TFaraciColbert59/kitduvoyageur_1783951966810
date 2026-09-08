@@ -42,7 +42,7 @@ export default function KitSouvenirCard({ intro, items }: KitSouvenirCardProps) 
           <span className="text-2xl">🎒</span>
           <div>
             <h3 className="font-display font-bold text-base sm:text-lg text-[#17402C]">
-              Dans le sac <span className="font-serif italic text-emerald-800 font-normal">de l’expédition</span>
+              Dans le sac <span className="font-serif italic text-forest-800 font-normal">de l’expédition</span>
             </h3>
             <span className="text-[10px] font-mono text-[#5C6B5E]">
               {items.length} indispensables archivés · Poids estimé 4.8 kg

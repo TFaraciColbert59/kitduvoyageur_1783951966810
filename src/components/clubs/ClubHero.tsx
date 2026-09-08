@@ -37,13 +37,13 @@ export default function ClubHero({
   const isOnline = club.active_this_month || 0;
 
   return (
-    <div className="glass bg-gradient-to-br from-[#17402C]/95 via-[#17402C]/85 to-[#33463C]/90 rounded-[28px] p-8 sm:p-10 text-[#FAF8F5] relative overflow-hidden flex flex-col md:flex-row justify-between items-start md:items-end gap-6 border border-white/20">
+    <div className="glass bg-gradient-to-br from-[#17402C]/95 via-[#17402C]/85 to-[#33463C]/90 rounded-card p-8 sm:p-10 text-[#FAF8F5] relative overflow-hidden flex flex-col md:flex-row justify-between items-start md:items-end gap-6 border border-white/20">
       {/* Background Glow */}
       <div className="absolute top-0 right-0 w-[40rem] h-[40rem] bg-white opacity-5 blur-[100px] rounded-full pointer-events-none" />
 
       <div className="relative z-10 max-w-2xl">
         <div className="inline-flex items-center gap-2 px-3 py-1 glass-pill mb-6 text-white border-white/20">
-          <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
+          <span className="w-1.5 h-1.5 rounded-full bg-forest-400 animate-pulse" />
           <span className="font-mono text-[10px] uppercase tracking-widest text-[#FAF8F5] font-bold">
             {club.type || 'CLUB'} · {membersCount} MEMBRES · {club.privacy === 'open' ? 'PUBLIC' : 'PRIVÉ'}
           </span>
@@ -68,7 +68,7 @@ export default function ClubHero({
           <div className="w-px h-8 bg-white/20" />
           <div className="flex flex-col">
             <span className="text-white/60 text-[10px] uppercase tracking-widest mb-1 font-bold">En ligne</span>
-            <span className="font-bold text-emerald-400">{isOnline}</span>
+            <span className="font-bold text-forest-400">{isOnline}</span>
           </div>
           <div className="w-px h-8 bg-white/20" />
           <div className="flex flex-col">

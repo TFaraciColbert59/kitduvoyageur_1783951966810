@@ -81,7 +81,7 @@ export function AddPlaceToTripModal({
         <GlassCard
           tone="neutral"
           blur="lg"
-          className="border border-white/70 shadow-2xl rounded-[28px] overflow-hidden p-6 sm:p-7 relative bg-white/95"
+          className="border border-white/70 shadow-2xl rounded-card overflow-hidden p-6 sm:p-7 relative bg-white/95"
         >
           {/* Close button */}
           <button
@@ -109,7 +109,7 @@ export function AddPlaceToTripModal({
           {/* Success State */}
           {successResult ? (
             <div className="py-4 text-center">
-              <div className="w-12 h-12 rounded-full bg-emerald-50 text-emerald-700 mx-auto flex items-center justify-center mb-3">
+              <div className="w-12 h-12 rounded-full bg-forest-50 text-forest-700 mx-auto flex items-center justify-center mb-3">
                 <CheckCircle2 className="w-6 h-6" />
               </div>
               <h3 className="text-lg font-bold text-stone-900 mb-1">

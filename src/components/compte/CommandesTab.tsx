@@ -1,4 +1,5 @@
 'use client';
+import { lkvConfirm } from '@/components/ui/dialogs';
 
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import Image from 'next/image';
@@ -245,7 +246,7 @@ export default function CommandesTab({ profile }: CommandesTabProps) {
 
   // ─── actions ──────────────────────────────
   const handleCancelOrder = async (orderId: string) => {
-    if (!confirm('Êtes-vous sûr de vouloir annuler cette commande ?')) return;
+    if (!lkvConfirm('Êtes-vous sûr de vouloir annuler cette commande ?')) return;
     const { error } = await supabase.from('orders').update({ status: 'cancelled' }).eq('id', orderId);
     if (!error) {
       showToast('Commande annulée');
@@ -523,7 +524,7 @@ export default function CommandesTab({ profile }: CommandesTabProps) {
         {/* ════════════════ SIDEBAR ════════════════ */}
         <div className="lg:col-span-4 space-y-6">
           {/* ── Guide annuel Card ── */}
-          <div className="bg-[#17402C] rounded-[1.5rem] p-6 text-white relative overflow-hidden border border-white/10 shadow-[0_16px_40px_-20px_rgba(23,64,44,0.35)]">
+          <div className="bg-[#17402C] rounded-[1.5rem] p-6 text-white relative overflow-hidden border border-white/10 shadow-lg">
             <div className="absolute -top-10 -right-10 w-32 h-32 bg-[#5B7F55]/20 rounded-full blur-[40px] pointer-events-none" />
             <div className="flex items-start justify-between mb-4 relative z-10">
               <div>

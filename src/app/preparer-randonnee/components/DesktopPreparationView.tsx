@@ -131,12 +131,12 @@ export const DesktopPreparationView: React.FC<DesktopPreparationViewProps> = ({
             >
               <Icon name="back" className="w-3 h-3" /> Explorer
             </button>
-            <p className="text-[#A7D3A6] text-[10px] font-mono tracking-wider uppercase font-black drop-shadow-[0_1px_3px_rgba(0,0,0,0.8)] truncate">
+            <p className="text-[#A7D3A6] text-[10px] font-mono tracking-wider uppercase font-black drop-shadow-md truncate">
               Cockpit • {route.location || route.network || 'France'}
             </p>
           </div>
 
-          <h1 className="text-base lg:text-lg font-display font-black text-white tracking-tight leading-snug drop-shadow-[0_2px_6px_rgba(0,0,0,0.9)] mb-2">
+          <h1 className="text-base lg:text-lg font-display font-black text-white tracking-tight leading-snug drop-shadow-sm mb-2">
             {route.name}
           </h1>
           
@@ -167,7 +167,7 @@ export const DesktopPreparationView: React.FC<DesktopPreparationViewProps> = ({
 
         {/* Bottom Floating Weather Capsule (80% Transparent Glass) */}
         <div className="pointer-events-auto mb-2">
-          <div className="inline-flex bg-white/20 backdrop-blur-md p-3.5 px-4 rounded-2xl shadow-[0_10px_35px_rgba(0,0,0,0.15)] border border-white/35 gap-4 items-center">
+          <div className="inline-flex bg-white/20 backdrop-blur-md p-3.5 px-4 rounded-2xl shadow-md border border-white/35 gap-4 items-center">
             <div className="flex items-center gap-2.5 border-r border-white/30 pr-4">
                <div className="w-9 h-9 bg-white/30 backdrop-blur-md rounded-xl flex items-center justify-center text-[#17402C] border border-white/50 ">
                  <Icon name="temp" className="w-4 h-4 text-[#17402C]" />
@@ -178,7 +178,7 @@ export const DesktopPreparationView: React.FC<DesktopPreparationViewProps> = ({
                </div>
             </div>
             <div className="flex items-center gap-2.5 border-r border-white/30 pr-4">
-               <div className="w-9 h-9 bg-blue-500/20 backdrop-blur-md rounded-xl flex items-center justify-center text-[#1e40af] border border-blue-500/30 ">
+               <div className="w-9 h-9 bg-sky-500/20 backdrop-blur-md rounded-xl flex items-center justify-center text-[#1e40af] border border-sky-500/30 ">
                  <Icon name="cloud-rain" className="w-4 h-4" />
                </div>
                <div>
@@ -200,7 +200,7 @@ export const DesktopPreparationView: React.FC<DesktopPreparationViewProps> = ({
       </div>
 
       {/* RIGHT COLUMN: 80% Transparent Liquid Glass Panel (Layer 20) */}
-      <div className="absolute top-0 right-0 bottom-0 w-[48%] max-w-[580px] min-w-[380px] z-20 bg-white/20 backdrop-blur-md border-l border-white/35 flex flex-col overflow-hidden shadow-[-20px_0_60px_rgba(0,0,0,0.15)]">
+      <div className="absolute top-0 right-0 bottom-0 w-[48%] max-w-[580px] min-w-[380px] z-20 bg-white/20 backdrop-blur-md border-l border-white/35 flex flex-col overflow-hidden shadow-md">
         
         {/* Header / Score (80% Transparent Top Card) */}
         <div className="p-6 border-b border-white/30 bg-white/20 backdrop-blur-md flex-shrink-0 ">
@@ -261,8 +261,8 @@ export const DesktopPreparationView: React.FC<DesktopPreparationViewProps> = ({
               </h4>
               <div className="grid gap-2.5">
                 {report.warnings.map((warn, idx) => (
-                  <div key={idx} className="bg-amber-500/15 backdrop-blur-md p-3.5 rounded-xl border border-amber-500/30 flex items-start gap-3 ">
-                     <div className="w-7 h-7 rounded-full bg-amber-500/25 text-amber-950 flex items-center justify-center shrink-0 mt-0.5 border border-amber-500/35">
+                  <div key={idx} className="bg-sand-500/15 backdrop-blur-md p-3.5 rounded-xl border border-sand-500/30 flex items-start gap-3 ">
+                     <div className="w-7 h-7 rounded-full bg-sand-500/25 text-sand-900 flex items-center justify-center shrink-0 mt-0.5 border border-sand-500/35">
                        <Icon name="info" className="w-4 h-4" />
                      </div>
                      <p className="text-xs font-black text-[#17402C] leading-relaxed pt-0.5 drop-">{warn}</p>
@@ -275,23 +275,23 @@ export const DesktopPreparationView: React.FC<DesktopPreparationViewProps> = ({
         </div>
 
         {/* Sticky Footer: 80% Transparent Safety & Action Dock */}
-        <div className="bg-white/20 backdrop-blur-xl border-t border-white/35 p-5 shadow-[0_-10px_40px_rgba(0,0,0,0.1)] z-30 flex-shrink-0">
+        <div className="bg-white/20 backdrop-blur-xl border-t border-white/35 p-5 shadow-md z-30 flex-shrink-0">
            <div className="flex items-center justify-between mb-4">
               <div className="flex items-center gap-4 text-[#17402C]">
                  <div className="flex items-center gap-1.5">
-                   <div className={`w-2.5 h-2.5 rounded-full ${gearOk ? 'bg-emerald-500 shadow-[0_0_10px_#22c55e]' : 'bg-yellow-500 shadow-[0_0_10px_#eab308]'}`} />
+                   <div className={`w-2.5 h-2.5 rounded-full ${gearOk ? 'bg-emerald-500 shadow-md' : 'bg-yellow-500 shadow-md'}`} />
                    <span className="text-[10px] font-black uppercase tracking-wider drop-">Équipement</span>
                  </div>
                  <div className="flex items-center gap-1.5">
-                   <div className={`w-2.5 h-2.5 rounded-full ${wState.ok && !wState.warn ? 'bg-emerald-500 shadow-[0_0_10px_#22c55e]' : wState.warn ? 'bg-yellow-500 shadow-[0_0_10px_#eab308]' : 'bg-red-500 shadow-[0_0_10px_#ef4444]'}`} />
+                   <div className={`w-2.5 h-2.5 rounded-full ${wState.ok && !wState.warn ? 'bg-emerald-500 shadow-md' : wState.warn ? 'bg-yellow-500 shadow-md' : 'bg-red-500 shadow-md'}`} />
                    <span className="text-[10px] font-black uppercase tracking-wider drop-">Météo</span>
                  </div>
                  <div className="flex items-center gap-1.5">
-                   <div className={`w-2.5 h-2.5 rounded-full ${gState.ok ? 'bg-emerald-500 shadow-[0_0_10px_#22c55e]' : 'bg-yellow-500 shadow-[0_0_10px_#eab308]'}`} />
+                   <div className={`w-2.5 h-2.5 rounded-full ${gState.ok ? 'bg-emerald-500 shadow-md' : 'bg-yellow-500 shadow-md'}`} />
                    <span className="text-[10px] font-black uppercase tracking-wider drop-">GPS</span>
                  </div>
                  <div className="flex items-center gap-1.5">
-                   <div className={`w-2.5 h-2.5 rounded-full ${oState.ok ? 'bg-emerald-500 shadow-[0_0_10px_#22c55e]' : 'bg-[#9CA89E]'}`} />
+                   <div className={`w-2.5 h-2.5 rounded-full ${oState.ok ? 'bg-emerald-500 shadow-md' : 'bg-[#9CA89E]'}`} />
                    <span className="text-[10px] font-black uppercase tracking-wider drop-">Carte {oState.ok ? 'OK' : 'N/A'}</span>
                  </div>
               </div>
@@ -306,7 +306,7 @@ export const DesktopPreparationView: React.FC<DesktopPreparationViewProps> = ({
               </button>
               <button
                 onClick={handleStart}
-                className="flex-1 bg-[#17402C] hover:bg-[#2D4034] text-white py-3.5 rounded-xl font-black tracking-wider uppercase text-xs  shadow-[#17402C]/40 flex items-center justify-center gap-2 transition-all hover:scale-[1.005] active:scale-[0.995] cursor-pointer border border-white/20"
+                className="flex-1 bg-[#17402C] hover:bg-[#2D4034] text-white py-3.5 rounded-xl font-black tracking-wider uppercase text-xs  shadow-md/40 flex items-center justify-center gap-2 transition-all hover:scale-[1.005] active:scale-[0.995] cursor-pointer border border-white/20"
               >
                 <Icon name="gps" className="w-4 h-4" />
                 Démarrer
@@ -374,8 +374,8 @@ export const DesktopPreparationView: React.FC<DesktopPreparationViewProps> = ({
 
         {/* Toast Notification */}
         <div className={`absolute top-6 right-6 z-50 bg-[#17402C]/90 backdrop-blur-2xl border border-white/30 text-white px-4 py-2.5 rounded-xl  flex items-center gap-2.5 transition-all duration-300 transform ${toastMsg ? 'translate-y-0 opacity-100' : '-translate-y-4 opacity-0 pointer-events-none'}`}>
-          <div className="w-5 h-5 rounded-full bg-emerald-500/20 flex items-center justify-center border border-emerald-500/40">
-             <Icon name="check" className="w-3 h-3 text-emerald-400" />
+          <div className="w-5 h-5 rounded-full bg-forest-500/20 flex items-center justify-center border border-forest-500/40">
+             <Icon name="check" className="w-3 h-3 text-forest-400" />
           </div>
           <span className="text-xs font-bold font-mono">{toastMsg}</span>
         </div>

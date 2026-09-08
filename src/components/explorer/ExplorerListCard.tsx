@@ -49,7 +49,7 @@ export default function ExplorerListCard({ trail, isSelected, onClick }: Props) 
       }}
     >
       {/* Vignette Photo Liquid Glass */}
-      <div className="relative w-16 h-16 rounded-[14px] overflow-hidden shrink-0 bg-[#F1EDE6] border border-white/60">
+      <div className="relative w-16 h-16 rounded-md overflow-hidden shrink-0 bg-[#F1EDE6] border border-white/60">
         <img
           src={imgUrl}
           alt={trail.name}

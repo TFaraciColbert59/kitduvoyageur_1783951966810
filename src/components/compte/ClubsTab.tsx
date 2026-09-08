@@ -305,7 +305,7 @@ export default function ClubsTab({ profile }: { profile?: any }) {
       <div className="space-y-6">
         {/* Featured Club Banner ("Club à la une") */}
         {featuredClub && (
-          <div className="relative rounded-[1.5rem] overflow-hidden border border-white/10 bg-[#17402C] text-white shadow-[0_16px_40px_-20px_rgba(23,64,44,0.35)]">
+          <div className="relative rounded-[1.5rem] overflow-hidden border border-white/10 bg-[#17402C] text-white shadow-lg">
             {/* Cover Image Background */}
             <div className="absolute inset-0 z-0">
               <Image

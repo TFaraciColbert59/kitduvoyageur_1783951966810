@@ -39,7 +39,7 @@ export function PreparationHeader() {
 
           <div className="min-w-0">
             <div className="flex items-center gap-1.5">
-              <span className="w-2 h-2 rounded-full bg-emerald-600 animate-pulse shrink-0" />
+              <span className="w-2 h-2 rounded-full bg-forest-600 animate-pulse shrink-0" />
               <h1 className="font-display font-bold text-sm sm:text-base md:text-lg leading-tight tracking-tight text-[#17402C] dark:text-[#E7E3D6] truncate drop-shadow-2xs">
                 {cleanDestination}
               </h1>
@@ -61,7 +61,7 @@ export function PreparationHeader() {
       <div className="w-full bg-white/90 dark:bg-[#17402C]/90 p-3.5 rounded-3xl border border-white/80 dark:border-white/20 shadow-sm space-y-2.5 backdrop-blur-xl">
         <div className="flex items-center justify-between text-xs font-bold text-[#17402C] dark:text-[#E7E3D6]">
           <div className="flex items-center gap-1.5">
-            <Sparkles size={15} className="text-emerald-700 dark:text-emerald-400" />
+            <Sparkles size={15} className="text-forest-700 dark:text-forest-400" />
             <span>Complétude globale</span>
           </div>
           <span className="font-mono font-bold text-sm text-[#17402C] dark:text-white">
@@ -72,7 +72,7 @@ export function PreparationHeader() {
         {/* Barre de progression avec dégradé Apple */}
         <div className="relative w-full h-3 rounded-full bg-black/10 dark:bg-white/10 p-0.5 overflow-hidden shadow-inner">
           <div
-            className="h-full rounded-full bg-gradient-to-r from-emerald-500 via-teal-500 to-[#17402C] transition-all duration-500 ease-out shadow-xs"
+            className="h-full rounded-full bg-gradient-to-r from-forest-500 via-teal-500 to-[#17402C] transition-all duration-500 ease-out shadow-xs"
             style={{ width: `${Math.min(100, Math.max(4, stats.overallScore))}%` }}
           />
         </div>
@@ -93,7 +93,7 @@ export function PreparationHeader() {
           </div>
           <div className="p-1.5 rounded-xl bg-white/80 dark:bg-white/10 border border-white/60 dark:border-white/10 shadow-2xs flex flex-col items-center">
             <span className="text-[#5A7064] dark:text-[#9AAD9E] text-[9px] uppercase">À acheter</span>
-            <span className="text-amber-800 dark:text-amber-300 font-bold">{stats.toBuyCount}</span>
+            <span className="text-sand-800 dark:text-sand-300 font-bold">{stats.toBuyCount}</span>
           </div>
         </div>
       </div>

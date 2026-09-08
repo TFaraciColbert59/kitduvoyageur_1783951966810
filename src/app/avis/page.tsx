@@ -254,14 +254,14 @@ export default function AvisPage() {
             </div>
 
             {error && (
-              <div className="mb-6 p-4 rounded-[16px] border text-sm bg-[rgba(168,68,58,0.08)] border-[rgba(168,68,58,0.35)] text-[#8A241B]">
+              <div className="mb-6 p-4 rounded-md border text-sm bg-[rgba(168,68,58,0.08)] border-[rgba(168,68,58,0.35)] text-[#8A241B]">
                 <span className="flex items-center gap-2"><Icon name="ExclamationTriangleIcon" size={16} />{error}</span>
               </div>
             )}
 
             {loading ? (
               <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-                {[1, 2, 3, 4].map((i) => <div key={i} className="h-48 rounded-[24px] glass-sub-card" />)}
+                {[1, 2, 3, 4].map((i) => <div key={i} className="h-48 rounded-xl glass-sub-card" />)}
               </div>
             ) : filtered.length === 0 ? (
               <div className="text-center py-16 text-[#5A7064]">

@@ -489,8 +489,8 @@ export const MessageBubble: React.FC<MessageBubbleProps> = ({
                 }}
                 className={`px-2.5 py-1 rounded-full text-[11px] font-bold flex items-center gap-1.5 border transition-transform active:scale-90 ${
                   item.userReacted
-                    ? 'bg-[#17402C]/12 text-[#17402C] border-[#17402C]/40 ring-1 ring-[#17402C]/20 shadow-[inset_0_1px_0_rgba(255,255,255,0.5)]'
-                    : 'bg-white/60 backdrop-blur-md text-[#17402C] border-white/60 hover:bg-white/85 shadow-[inset_0_1px_0_rgba(255,255,255,0.6)]'
+                    ? 'bg-[#17402C]/12 text-[#17402C] border-[#17402C]/40 ring-1 ring-[#17402C]/20 shadow-inner'
+                    : 'bg-white/60 backdrop-blur-md text-[#17402C] border-white/60 hover:bg-white/85 shadow-inner'
                 }`}
               >
                 <span>{item.emoji}</span>

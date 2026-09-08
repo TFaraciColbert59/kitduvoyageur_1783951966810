@@ -13,7 +13,7 @@ export default function LieuxLoading() {
         </div>
 
         {/* Filter Bar Skeleton */}
-        <div className="h-24 bg-stone-100 rounded-[24px] border border-stone-200/60 p-4 space-y-3">
+        <div className="h-24 bg-stone-100 rounded-xl border border-stone-200/60 p-4 space-y-3">
           <div className="h-10 bg-stone-200 rounded-2xl" />
           <div className="flex gap-2">
             {[1, 2, 3, 4, 5].map((i) => (
@@ -27,7 +27,7 @@ export default function LieuxLoading() {
           {[1, 2, 3, 4, 5, 6].map((i) => (
             <div
               key={i}
-              className="h-64 rounded-[24px] bg-stone-100 border border-stone-200/70 p-5 flex flex-col justify-between"
+              className="h-64 rounded-xl bg-stone-100 border border-stone-200/70 p-5 flex flex-col justify-between"
             >
               <div className="space-y-3">
                 <div className="flex justify-between">

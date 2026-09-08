@@ -162,7 +162,7 @@ export default function ProductDetailClient({ slug, initialProduct }: { slug: st
       <div className="min-h-dvh bg-[#FAF8F5]">
         <Header />
         <div className="pt-24 pb-16 max-w-[1120px] mx-auto px-4">
-          <div className="bg-[rgba(255,255,255,0.92)] border border-[rgba(255,255,255,0.60)] rounded-[20px] max-w-[32rem] mx-auto p-10 text-center">
+          <div className="bg-[rgba(255,255,255,0.92)] border border-[rgba(255,255,255,0.60)] rounded-lg max-w-[32rem] mx-auto p-10 text-center">
             <div className="text-[3rem] mb-4">⚠️</div>
             <h1 className="font-display font-bold text-3xl text-[#17402C] mb-2">Produit introuvable</h1>
             <p className="text-sm text-[#5A7064] mb-6">

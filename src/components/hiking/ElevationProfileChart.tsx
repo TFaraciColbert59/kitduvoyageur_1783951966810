@@ -104,7 +104,7 @@ export default function ElevationProfileChart({
           <span className="bg-[#17402C]/10 text-[#17402C] px-2 py-0.5 rounded-full">
             ▲ +{totalElevationGainM}m
           </span>
-          <span className="bg-amber-500/10 text-amber-800 px-2 py-0.5 rounded-full">
+          <span className="bg-sand-500/10 text-sand-800 px-2 py-0.5 rounded-full">
             ▼ -{totalElevationLossM}m
           </span>
         </div>

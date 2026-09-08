@@ -44,13 +44,13 @@ export default function HeroVoyage({ data, groupId, inviteCode, onOpenChat }: He
   };
 
   return (
-    <div className="glass bg-gradient-to-br from-var(--lkv-primary)/95 via-var(--lkv-primary)/85 to-[#33463C]/90 rounded-[28px] p-8 sm:p-10 text-[#FAF8F5] relative overflow-hidden flex flex-col md:flex-row justify-between items-start md:items-end gap-6 border border-white/20">
+    <div className="glass bg-gradient-to-br from-var(--lkv-primary)/95 via-var(--lkv-primary)/85 to-[#33463C]/90 rounded-card p-8 sm:p-10 text-[#FAF8F5] relative overflow-hidden flex flex-col md:flex-row justify-between items-start md:items-end gap-6 border border-white/20">
       {/* Decors */}
       <div className="absolute top-0 right-0 w-[40rem] h-[40rem] bg-white opacity-5 blur-[100px] rounded-full pointer-events-none" />
       
       <div className="relative z-10 max-w-2xl">
         <div className="inline-flex items-center gap-2 px-3 py-1 glass-pill mb-6 text-white border-white/20">
-          <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
+          <span className="w-1.5 h-1.5 rounded-full bg-forest-400 animate-pulse" />
           <span className="font-mono text-[10px] uppercase tracking-widest text-[#FAF8F5] font-bold">{data.meta.type} · {data.meta.participantsCount} PERSONNES · {data.meta.season}</span>
         </div>
         

@@ -1,75 +1,78 @@
 /**
- * LKDV DESIGN SYSTEM — CANONICAL TOKENS (Chantier X — UN SEUL DESIGN)
+ * LKDV DESIGN SYSTEM — CANONICAL TOKENS (Chantiers U, X & Y)
  *
  * SOURCE UNIQUE DE VÉRITÉ :
  * TOUTES les valeurs brutes (couleurs, rayons, durées, courbes, espacements, élévations)
  * sont écrites ICI et nulle part ailleurs.
  *
- * Tout autre fichier de style (liquid-glass.css, tailwind.css, country.css, earth.css,
- * tokens.ts) ne contient QUE des alias var() et des recettes d'assemblage.
- *
- * Conforme à docs/DESIGN_TRUTH.md
+ * Conforme à docs/DESIGN_TRUTH.md et DESIGN_SYSTEM.md
  */
 
 :root {
   /* ── 1. Couleurs Maîtresses LKDV ──────────────────────────── */
   --lkv-primary: #17402C;
-  --lkv-primary-hover: #205238;   /* Arbitrage X0 : tokens.ts + DESIGN_SYSTEM */
-  --lkv-primary-soft: #365233;    /* Arbitrage X0 : tokens.ts + DESIGN_SYSTEM */
+  --lkv-primary-hover: #205238;   /* Arbitrage X0 / U1 : tokens.ts + DESIGN_SYSTEM */
+  --lkv-primary-soft: #365233;    /* Arbitrage X0 / U1 : tokens.ts + DESIGN_SYSTEM */
   --lkv-primary-subtle: #EBF2EC;
   --lkv-primary-rgb: 23, 64, 44;
 
   --lkv-secondary: #5B7F55;
-  --lkv-secondary-hover: #486944;
-  --lkv-secondary-subtle: #F2F6F1;
+  --lkv-secondary-hover: #4A6B44;
+  --lkv-secondary-subtle: #D8E5D5;
   --lkv-secondary-rgb: 91, 127, 85;
 
-  --lkv-surface: #FBFAF6;
-  --lkv-surface-paper: #FAF8F5;
+  --lkv-surface: #FAF8F5;
+  --lkv-surface-paper: #FBFAF6;
   --lkv-surface-card: #FFFFFF;
-  --lkv-surface-elevated: rgba(255, 255, 255, 0.85);
-  --lkv-surface-muted: #F1EDE6;
-  --lkv-paper: #FBFAF6;
+  --lkv-surface-elevated: #FFFFFF;
+  --lkv-surface-muted: #F3EFEA;
 
-  /* ├─ Forest Palette Complète ──────────────────────────────── */
+  --lkv-text-primary: #17402C;
+  --lkv-text-secondary: #5B7F55;
+  --lkv-text-muted: #6B7568;
+  --lkv-text-subtle: #9BA397;
+  --lkv-text-inverted: #FFFFFF;
+
+  /* ── 2. Échelles Canoniques ──────────────────────────────── */
+  /* ├─ Forest ──────────────────────────────────────────────── */
   --lkv-forest-950: #06120C;
   --lkv-forest-900: #17402C;
   --lkv-forest-800: #17402C;
-  --lkv-forest-700: #2D6B4A;
+  --lkv-forest-700: #2D6B4A;   /* alias hover de référence /materiel */
   --lkv-forest-600: #365233;
   --lkv-forest-500: #3D7A52;
   --lkv-forest-400: #4A7C5B;
-  --lkv-forest-300: #6B9B7A;
-  --lkv-forest-200: #9BBBA8;
-  --lkv-forest-100: #C8D9CE;
-  --lkv-forest-50: #EBF2EC;
+  --lkv-forest-300: #6B9B7B;
+  --lkv-forest-200: #9BBDA7;
+  --lkv-forest-100: #CCE0D4;
+  --lkv-forest-50:  #EBF2EC;
 
-  /* ├─ Sage Palette Complète (spec iOS 26) ─────────────────── */
-  --sage-50: #F2F6F1;
-  --sage-100: #E1EBDE;
-  --sage-200: #C8DAC3;
-  --sage-300: #A6C1A0;
-  --sage-400: #82A47C;
+  /* ├─ Sage ────────────────────────────────────────────────── */
+  --sage-900: #1E301C;
+  --sage-800: #2D482A;
+  --sage-700: #3D6038;
+  --sage-600: #4C7746;
   --sage-500: #5B7F55;
-  --sage-600: #486944;
-  --sage-700: #365233;
-  --sage-800: #223B23;
-  --sage-900: #1E3A1D;
+  --sage-400: #789972;
+  --sage-300: #96B391;
+  --sage-200: #B8CDB4;
+  --sage-100: #D8E5D5;
+  --sage-50:  #F0F5EE;
 
-  --lkv-sage-500: var(--sage-500);
-  --lkv-sage-400: var(--sage-400);
-  --lkv-sage-300: var(--sage-300);
-  --lkv-sage-200: var(--sage-200);
+  --lkv-sage-50:  var(--sage-50);
   --lkv-sage-100: var(--sage-100);
-  --lkv-sage-50: var(--sage-50);
+  --lkv-sage-200: var(--sage-200);
+  --lkv-sage-300: var(--sage-300);
+  --lkv-sage-400: var(--sage-400);
+  --lkv-sage-500: var(--sage-500);
 
-  /* ├─ Stone Palette Complète (spec iOS 26) ─────────────────── */
-  --stone-50: #FAF8F5;
-  --stone-100: #F1EDE6;
-  --stone-200: #E4DED3;
-  --stone-300: #D2CABC;
-  --stone-400: #B8AE9E;
-  --stone-500: #9A9182;
+  /* ├─ Stone / Neutres ─────────────────────────────────────── */
+  --stone-50:  #FAF8F5;
+  --stone-100: #F3EFEA;
+  --stone-200: #E8E2D9;
+  --stone-300: #D4CCC0;
+  --stone-400: #B5ABA0;
+  --stone-500: #968C81;
   --stone-600: #7A7365;
   --stone-700: #5B554A;
   --stone-800: #3F3B34;
@@ -80,51 +83,49 @@
   --lkv-stone-100: var(--stone-100);
   --lkv-stone-200: var(--stone-200);
 
-  /* ├─ Sand / Neutres Chauds ───────────────────────────────── */
+  /* ├─ Sand / Neutres Chauds (Tailwind theme) ───────────────── */
   --sand-900: #3D3828;
   --sand-800: #5C5540;
   --sand-700: #7A7258;
-  --sand-600: #9A9070;
-  --sand-500: #B5AA88;
-  --sand-400: #C8C3A0;
-  --sand-300: #D4CFBF;
-  --sand-200: #E0DDD0;
-  --sand-100: #EDEAE0;
-  --sand-50: #F5F3EE;
+  --sand-600: #998F70;
+  --sand-500: #B8AD8A;
+  --sand-400: #C9C0A3;
+  --sand-300: #DBD4BD;
+  --sand-200: #ECE8D9;
+  --sand-100: #F5F3EB;
+  --sand-50:  #FAF9F5;
 
-  /* ├─ Ink / Typographie & Neutres Sombres ──────────────────── */
-  --ink-900: #14140F;
-  --ink-700: #2B2A24;
-  --ink-500: #5A574E;
-  --ink-300: #8C8779;
+  --lkv-warm-300: #F1DAB1;
+  --lkv-warm-500: #E4C695;
+  --lkv-warm-700: #B08A4E;
 
-  --lkv-ink-900: #0B1F17;
-  --lkv-ink-700: #384A42;
-  --lkv-ink-500: #6B7A72;
-  --lkv-ink-400: #8B978F;
-  --lkv-ink-300: #6B7A72;
+  /* ├─ Ink / Typographie sombre ────────────────────────────── */
+  --ink-900: #141916;
+  --ink-700: #2C3530;
+  --ink-500: #526058;
+  --ink-300: #88978F;
+  --ink-100: #D0D8D3;
 
-  --lkv-text-primary: #17402C;
-  --lkv-text-secondary: #5B7F55;
-  --lkv-text-muted: #6B7568;
-  --lkv-text-subtle: #8C8779;
-  --lkv-text-inverted: #FFFFFF;
+  --lkv-ink-900: var(--ink-900);
+  --lkv-ink-700: var(--ink-700);
+  --lkv-ink-500: var(--ink-500);
+  --lkv-ink-300: var(--ink-300);
 
-  /* ── 2. Bordures et Séparateurs ──────────────────────────── */
+  /* ├─ Bordures unifiées ───────────────────────────────────── */
   --lkv-border: rgba(23, 64, 44, 0.12);
   --lkv-border-subtle: rgba(23, 64, 44, 0.06);
   --lkv-border-strong: rgba(23, 64, 44, 0.24);
 
   /* ── 3. Statuts et Alertes Terrain (0 #E4501C) ───────────── */
-  --lkv-success: #5B7F55;         /* Arbitrage X0 : vert sauge */
+  --lkv-success: #5B7F55;
   --lkv-success-bg: #E1EBDE;
   --lkv-warning: #C89A3B;
   --lkv-warning-bg: #FBF1DC;
   --lkv-warning-dark: #8C6418;
-  --lkv-warning-subtle: #E3C88A;
+  --lkv-warning-subtle: #FDF6E8;
   --lkv-danger: #A8443A;
-  --lkv-danger-bg: #F5DDD9;
-  --lkv-danger-dark: #8A241B;
+  --lkv-danger-bg: #FDE8E6;
+  --lkv-danger-dark: #7E2D25;
   --lkv-info: #4B6B7C;
   --lkv-info-bg: #DDE7EE;
 
@@ -148,11 +149,16 @@
   --lkv-radius-md: 14px;
   --lkv-radius-lg: 20px;
   --lkv-radius-xl: 26px;
-  --lkv-radius-card: 28px;        /* Arbitrage X0 : carte cockpit /materiel & /pays */
+  --lkv-radius-card: 28px;
   --lkv-radius-2xl: 32px;
   --lkv-radius-full: 9999px;
 
-  /* ── 5. Durées et Transitions (Apple HIG) ─────────────────── */
+  /* ── 5. Durées et Transitions (Apple HIG & LKDV) ─────────── */
+  --font-sans: 'DM Sans', -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
+  --font-display: 'Manrope', -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
+  --font-mono: 'IBM Plex Mono', ui-monospace, monospace;
+  --font-body: var(--font-sans);
+
   --dur-xfast: 120ms;
   --dur-fast: 180ms;
   --dur-med: 280ms;
@@ -165,13 +171,19 @@
   --ease-out: cubic-bezier(0.16, 1, 0.3, 1);
   --ease-emphasis: cubic-bezier(0.2, 0.8, 0.2, 1);
 
+  --lkv-dur: 220ms;
+  --lkv-ease: cubic-bezier(0.4, 0, 0.2, 1);
+  --lkv-ease-out: cubic-bezier(0.16, 1, 0.3, 1);
+
   /* ── 6. Z-Index Tokens (Exclusifs) ───────────────────────── */
+  --z-base: 0;
   --z-sticky: 20;
   --z-drawer: 40;
   --z-sheet: 50;
+  --z-command: 60;
   --z-toast: 70;
 
-  /* ── 7. Espacements Canoniques ────────────────────────────── */
+  /* ── 7. Espacements Canoniques (4pt hybride) ──────────────── */
   --space-1: 4px;
   --space-2: 8px;
   --space-3: 12px;
@@ -191,7 +203,7 @@
   --elevation-5: 0 24px 64px rgba(23,64,44,0.16), 0 12px 24px rgba(23,64,44,0.08);
   --glass-depth-inset: inset 0 1px 1px rgba(255,255,255,0.75);
 
-  /* ── Alias sémantiques universels ────────────────────────── */
+  /* ── 9. Alias sémantiques universels ─────────────────────── */
   --danger: var(--lkv-danger);
   --danger-bg: var(--lkv-danger-bg);
   --info: var(--lkv-info);
@@ -202,5 +214,4 @@
   --warn-bg: var(--lkv-warning-bg);
   --warning: var(--lkv-warning);
   --warning-bg: var(--lkv-warning-bg);
-
 }

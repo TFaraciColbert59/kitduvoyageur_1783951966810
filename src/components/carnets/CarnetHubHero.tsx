@@ -16,13 +16,13 @@ export default function CarnetHubHero({
   onCreateClick,
 }: CarnetHubHeroProps) {
   return (
-    <div className="glass bg-gradient-to-br from-[#17402C]/95 via-[#17402C]/85 to-[#33463C]/90 rounded-[28px] p-7 sm:p-8 text-[#FAF8F5] relative overflow-hidden flex flex-col md:flex-row justify-between items-start md:items-end gap-6 border border-white/20">
+    <div className="glass bg-gradient-to-br from-[#17402C]/95 via-[#17402C]/85 to-[#33463C]/90 rounded-card p-7 sm:p-8 text-[#FAF8F5] relative overflow-hidden flex flex-col md:flex-row justify-between items-start md:items-end gap-6 border border-white/20">
       {/* Background Glow */}
       <div className="absolute top-0 right-0 w-[35rem] h-[35rem] bg-white opacity-5 blur-[90px] rounded-full pointer-events-none" />
 
       <div className="relative z-10 max-w-xl">
         <div className="inline-flex items-center gap-2 px-3 py-1 glass-pill mb-4 text-white border-white/20">
-          <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
+          <span className="w-1.5 h-1.5 rounded-full bg-forest-400 animate-pulse" />
           <span className="font-mono text-[10px] uppercase tracking-widest text-[#FAF8F5] font-bold">
             MÉMOIRE OUTDOOR · {totalCarnets} EXPÉDITIONS
           </span>
@@ -45,7 +45,7 @@ export default function CarnetHubHero({
           <div className="w-px h-6 bg-white/20" />
           <div className="flex flex-col">
             <span className="text-white/60 text-[9px] uppercase tracking-widest mb-0.5 font-bold">Distance totale</span>
-            <span className="font-bold text-emerald-400 text-sm">{totalKm} km</span>
+            <span className="font-bold text-forest-400 text-sm">{totalKm} km</span>
           </div>
           <div className="w-px h-6 bg-white/20" />
           <div className="flex flex-col">

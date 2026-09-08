@@ -71,7 +71,7 @@ export default function GuideDetailClient({ slug }: { slug: string }) {
       <div className="animate-pulse space-y-6">
         <div className="h-4 glass-sub-card rounded w-32" />
         <div className="h-8 glass-sub-card rounded w-3/4" />
-        <div className="h-64 glass-sub-card rounded-[24px]" />
+        <div className="h-64 glass-sub-card rounded-xl" />
         <div className="space-y-3">
           {[1, 2, 3, 4].map((i) => <div key={i} className="h-4 glass-sub-card rounded" />)}
         </div>
@@ -139,7 +139,7 @@ export default function GuideDetailClient({ slug }: { slug: string }) {
 
       {/* Hero image */}
       {guide.image && (
-        <div className="glass rounded-[24px] overflow-hidden mb-10 relative h-72 md:h-96">
+        <div className="glass rounded-xl overflow-hidden mb-10 relative h-72 md:h-96">
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img src={guide.image} alt={guide.alt} className="w-full h-full object-cover" />
           <div className="absolute inset-0 bg-gradient-to-t from-black/30 to-transparent" />

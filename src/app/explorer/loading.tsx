@@ -43,7 +43,7 @@ export default function ExplorerLoading() {
 
       {/* ── MOBILE : bottom sheet skeleton au-dessus de la bottom bar ── */}
       <div
-        className="md:hidden absolute left-2.5 right-2.5 z-[600] rounded-[26px] border border-white/60 flex flex-col gap-2 p-3 animate-pulse"
+        className="md:hidden absolute left-2.5 right-2.5 z-[600] rounded-xl border border-white/60 flex flex-col gap-2 p-3 animate-pulse"
         style={{
           bottom: 'calc(env(safe-area-inset-bottom, 0px) + 74px)',
           height: '30vh',

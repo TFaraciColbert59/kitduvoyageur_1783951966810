@@ -438,7 +438,7 @@ export default function ExplorerClient({ initialTrails }: ExplorerClientProps) {
           <div className="flex items-center gap-2 shrink-0">
             <Link
               href="/randonnee-active"
-              className="inline-flex items-center gap-1.5 bg-gradient-to-b from-[#17402C]/15 to-[#17402C]/06 text-[#17402C] border border-white/40 shadow-[inset_0_1px_1px_rgba(255,255,255,0.6)] text-[11px] font-bold px-3.5 py-1.5 rounded-full hover:bg-[#17402C]/20 active:opacity-85 transition-all cursor-pointer select-none"
+              className="inline-flex items-center gap-1.5 bg-gradient-to-b from-[#17402C]/15 to-[#17402C]/06 text-[#17402C] border border-white/40 shadow-inner text-[11px] font-bold px-3.5 py-1.5 rounded-full hover:bg-[#17402C]/20 active:opacity-85 transition-all cursor-pointer select-none"
               title="Lancer le mode randonnée GPS"
             >
               <span>🥾</span>
@@ -636,7 +636,7 @@ export default function ExplorerClient({ initialTrails }: ExplorerClientProps) {
         >
           {filteredTrails.length === 0 ? (
             <div
-              className="p-4 rounded-[20px] text-center flex flex-col items-center gap-2"
+              className="p-4 rounded-lg text-center flex flex-col items-center gap-2"
               style={{
                 background: 'linear-gradient(180deg, rgba(255, 255, 255, 0.60) 0%, rgba(251, 250, 246, 0.35) 100%)',
                 backdropFilter: 'blur(16px)',
@@ -691,7 +691,7 @@ export default function ExplorerClient({ initialTrails }: ExplorerClientProps) {
             className="hidden md:block absolute z-[950] bottom-4 left-[375px] w-[320px] max-w-[calc(100vw-32px)] pointer-events-auto"
           >
             <div
-              className="rounded-[24px] overflow-hidden shadow-2xl"
+              className="rounded-xl overflow-hidden shadow-2xl"
               style={{
                 background: 'linear-gradient(180deg, rgba(255, 255, 255, 0.70) 0%, rgba(251, 250, 246, 0.40) 100%)',
                 backdropFilter: 'blur(24px) saturate(190%)',

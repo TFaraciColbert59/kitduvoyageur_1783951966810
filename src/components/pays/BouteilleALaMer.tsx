@@ -1,4 +1,5 @@
 ﻿"use client";
+import { lkvAlert, lkvConfirm } from '@/components/ui/dialogs';
 
 import React, { useEffect, useState, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
@@ -163,11 +164,11 @@ export default function BouteilleALaMer({ countryIso, countryName }: Props) {
     e.preventDefault();
     if (!user || isSuspended) return;
     if (!canCreate) {
-      alert(`Trust Score insuffisant (${userTrustScore}/${CREATION_THRESHOLD} requis pour lancer une bouteille).`);
+      lkvAlert(`Trust Score insuffisant (${userTrustScore}/${CREATION_THRESHOLD} requis pour lancer une bouteille).`);
       return;
     }
     if (!formData.isAdult) {
-      alert("Vous devez confirmer avoir au moins 18 ans pour créer une expédition.");
+      lkvAlert("Vous devez confirmer avoir au moins 18 ans pour créer une expédition.");
       return;
     }
 
@@ -181,7 +182,7 @@ export default function BouteilleALaMer({ countryIso, countryName }: Props) {
         .eq('visibility', 'public');
 
       if ((ownedCount || 0) >= MAX_ACTIVE_OWNED_GROUPS) {
-        alert(`Limite atteinte : vous avez déjà ${ownedCount} expéditions publiques actives (maximum ${MAX_ACTIVE_OWNED_GROUPS}).`);
+        lkvAlert(`Limite atteinte : vous avez déjà ${ownedCount} expéditions publiques actives (maximum ${MAX_ACTIVE_OWNED_GROUPS}).`);
         setCreating(false);
         return;
       }
@@ -237,7 +238,7 @@ export default function BouteilleALaMer({ countryIso, countryName }: Props) {
       await fetchGroups();
     } catch (error) {
       console.error("Error creating group:", error);
-      alert("Une erreur est survenue lors de la création.");
+      lkvAlert("Une erreur est survenue lors de la création.");
     } finally {
       setCreating(false);
     }
@@ -247,15 +248,15 @@ export default function BouteilleALaMer({ countryIso, countryName }: Props) {
   const handleConfirmJoin = async () => {
     if (!user || !joinModalGroup) return;
     if (isSuspended) {
-      alert("Votre compte est actuellement restreint suite à un signalement.");
+      lkvAlert("Votre compte est actuellement restreint suite à un signalement.");
       return;
     }
     if (!joinIsAdult) {
-      alert("Vous devez certifier être majeur(e) (18 ans ou plus).");
+      lkvAlert("Vous devez certifier être majeur(e) (18 ans ou plus).");
       return;
     }
     if (!joinAcknowledgeExpenses) {
-      alert("Veuillez accepter les conditions financières avant d'envoyer votre demande.");
+      lkvAlert("Veuillez accepter les conditions financières avant d'envoyer votre demande.");
       return;
     }
 
@@ -278,7 +279,7 @@ export default function BouteilleALaMer({ countryIso, countryName }: Props) {
       
       if (error) {
         if (error.code === '23505') {
-          alert("Vous avez déjà une demande en cours sur ce groupe.");
+          lkvAlert("Vous avez déjà une demande en cours sur ce groupe.");
         } else {
           throw error;
         }
@@ -295,7 +296,7 @@ export default function BouteilleALaMer({ countryIso, countryName }: Props) {
           link: `/groupes/${group.id}`,
         });
 
-        alert("Demande envoyée ! Le créateur examinera votre profil et vous recevrez une notification.");
+        lkvAlert("Demande envoyée ! Le créateur examinera votre profil et vous recevrez une notification.");
         setJoinModalGroup(null);
         setJoinIsAdult(false);
         setJoinAcknowledgeExpenses(false);
@@ -303,7 +304,7 @@ export default function BouteilleALaMer({ countryIso, countryName }: Props) {
       }
     } catch (err) {
       console.error(err);
-      alert("Une erreur est survenue.");
+      lkvAlert("Une erreur est survenue.");
     } finally {
       setJoinLoadingId(null);
     }
@@ -312,7 +313,7 @@ export default function BouteilleALaMer({ countryIso, countryName }: Props) {
   // 3. Cancel Pending Request (Voluntary departure with 0 penalty)
   const handleCancelRequest = async (group: any) => {
     if (!user || !group.userMembershipId) return;
-    if (!confirm("Voulez-vous annuler votre demande de participation ?")) return;
+    if (!lkvConfirm("Voulez-vous annuler votre demande de participation ?")) return;
 
     setCancelLoadingId(group.id);
     try {
@@ -325,7 +326,7 @@ export default function BouteilleALaMer({ countryIso, countryName }: Props) {
       await fetchGroups();
     } catch (err) {
       console.error(err);
-      alert("Erreur lors de l'annulation.");
+      lkvAlert("Erreur lors de l'annulation.");
     } finally {
       setCancelLoadingId(null);
     }
@@ -345,7 +346,7 @@ export default function BouteilleALaMer({ countryIso, countryName }: Props) {
         .eq('status', 'active');
 
       if ((activeCount || 0) >= selectedGroupForManagement.max_members) {
-        alert("Action impossible : le groupe a déjà atteint sa capacité maximale de participants actifs.");
+        lkvAlert("Action impossible : le groupe a déjà atteint sa capacité maximale de participants actifs.");
         return;
       }
 
@@ -374,7 +375,7 @@ export default function BouteilleALaMer({ countryIso, countryName }: Props) {
       await fetchGroups();
     } catch (err) {
       console.error(err);
-      alert("Erreur lors de l'acceptation du membre.");
+      lkvAlert("Erreur lors de l'acceptation du membre.");
     } finally {
       setProcessingApplicantId(null);
     }
@@ -383,7 +384,7 @@ export default function BouteilleALaMer({ countryIso, countryName }: Props) {
   // 5. Creator: Reject Applicant
   const handleRejectApplicant = async (applicant: any) => {
     if (!user || !selectedGroupForManagement) return;
-    if (!confirm(`Refuser la demande de ${applicant.profile?.full_name || 'ce membre'} ?`)) return;
+    if (!lkvConfirm(`Refuser la demande de ${applicant.profile?.full_name || 'ce membre'} ?`)) return;
 
     setProcessingApplicantId(applicant.id);
     try {
@@ -408,7 +409,7 @@ export default function BouteilleALaMer({ countryIso, countryName }: Props) {
       await fetchGroups();
     } catch (err) {
       console.error(err);
-      alert("Erreur lors du refus.");
+      lkvAlert("Erreur lors du refus.");
     } finally {
       setProcessingApplicantId(null);
     }
@@ -470,8 +471,8 @@ export default function BouteilleALaMer({ countryIso, countryName }: Props) {
               <button 
                 onClick={() => {
                   if (!user) router.push('/connexion');
-                  else if (isSuspended) alert("Votre compte est actuellement restreint suite à un signalement.");
-                  else if (!canCreate) alert(`Votre Trust Score (${userTrustScore}/100) est insuffisant. Le seuil requis est de ${CREATION_THRESHOLD} pour lancer une bouteille.`);
+                  else if (isSuspended) lkvAlert("Votre compte est actuellement restreint suite à un signalement.");
+                  else if (!canCreate) lkvAlert(`Votre Trust Score (${userTrustScore}/100) est insuffisant. Le seuil requis est de ${CREATION_THRESHOLD} pour lancer une bouteille.`);
                   else setShowCreateForm(true);
                 }}
                 className={`px-5 py-2.5 rounded-full font-bold text-xs transition-all flex items-center gap-2 ${
@@ -700,8 +701,8 @@ export default function BouteilleALaMer({ countryIso, countryName }: Props) {
                           <button 
                             onClick={() => {
                               if (!user) router.push('/connexion');
-                              else if (isSuspended) alert("Votre compte est actuellement restreint suite à un signalement.");
-                              else if (!canJoinScore) alert(`Votre Trust Score (${userTrustScore}) est inférieur au seuil requis (${group.min_trust_score}).`);
+                              else if (isSuspended) lkvAlert("Votre compte est actuellement restreint suite à un signalement.");
+                              else if (!canJoinScore) lkvAlert(`Votre Trust Score (${userTrustScore}) est inférieur au seuil requis (${group.min_trust_score}).`);
                               else {
                                 setJoinModalGroup(group);
                                 setJoinIsAdult(false);

@@ -52,7 +52,7 @@ export default function PaysCarnetsList({ countryIso, countryName }: Props) {
       <div className="flex items-center justify-between gap-3 px-1">
         <div>
           <h3 className="text-base font-bold font-display text-[#17402C] leading-tight">
-            Carnets d’expédition <em className="font-serif italic text-emerald-800 font-normal">en {countryName}</em>
+            Carnets d’expédition <em className="font-serif italic text-forest-800 font-normal">en {countryName}</em>
           </h3>
           <p className="text-[10px] text-[#5C6B5E]">Récits vécus, traces et retours de marcheurs.</p>
         </div>

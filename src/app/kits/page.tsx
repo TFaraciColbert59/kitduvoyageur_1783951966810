@@ -157,7 +157,7 @@ export default function KitsPage() {
               </div>
               <Link
                 href="/materiel"
-                className="glass interactive h-7.5 px-3 rounded-full flex items-center text-xs font-semibold text-[#17402C] border border-white/40 shadow-[inset_0_1px_1px_rgba(255,255,255,0.6)]"
+                className="glass interactive h-7.5 px-3 rounded-full flex items-center text-xs font-semibold text-[#17402C] border border-white/40 shadow-inner"
               >
                 ← Matériel
               </Link>

@@ -1,4 +1,5 @@
 'use client';
+import { lkvAlert } from '@/components/ui/dialogs';
 import React, { useState } from 'react';
 import { motion } from 'framer-motion';
 import { createClient } from '@/lib/supabase/client';
@@ -68,7 +69,7 @@ export default function DecisionsCard({ decisions: initialDecisions, groupId, on
 
   const handleVote = async (pollId: string, optionIndex: number) => {
     if (!groupId || !user) {
-      alert('Connectez-vous pour voter.');
+      lkvAlert('Connectez-vous pour voter.');
       return;
     }
     if (savingVoteId) return;
@@ -113,7 +114,7 @@ export default function DecisionsCard({ decisions: initialDecisions, groupId, on
 
     if (error) {
       console.error('Vote error:', error);
-      alert('Erreur lors du vote : ' + error.message);
+      lkvAlert('Erreur lors du vote : ' + error.message);
     } else if (onRefresh) {
       onRefresh();
     }
@@ -150,7 +151,7 @@ export default function DecisionsCard({ decisions: initialDecisions, groupId, on
 
     if (error) {
       console.error(error);
-      alert('Erreur: ' + error.message);
+      lkvAlert('Erreur: ' + error.message);
     } else {
       setNewQuestion('');
       setNewOptions(['', '']);

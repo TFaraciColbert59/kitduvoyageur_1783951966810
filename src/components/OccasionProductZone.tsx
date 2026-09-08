@@ -168,17 +168,17 @@ function NewProductBanner({ produitId, produitNom }: { produitId?: string; produ
   return (
     <Link
       href={`/produit/${newListing.slug}`}
-      className="flex items-center justify-between gap-3 px-4 py-3 rounded-xl bg-blue-500/10 border border-blue-500/25 hover:border-blue-500/50 transition-colors group"
+      className="flex items-center justify-between gap-3 px-4 py-3 rounded-xl bg-sky-500/10 border border-sky-500/25 hover:border-sky-500/50 transition-colors group"
       aria-label={`Voir ${produitNom} neuf à partir de ${fmt(newListing.prix_cents)}`}
     >
       <div className="flex items-center gap-2.5 min-w-0">
-        <Icon name="SparklesIcon" size={15} variant="outline" className="text-blue-400 flex-shrink-0" />
-        <span className="text-sm text-blue-300 font-medium leading-snug">
+        <Icon name="SparklesIcon" size={15} variant="outline" className="text-sky-400 flex-shrink-0" />
+        <span className="text-sm text-sky-300 font-medium leading-snug">
           Ce modèle existe aussi en neuf à partir de{' '}
           <span className="font-mono font-700" style={{ fontFamily: 'var(--font-mono)' }}>{fmt(newListing.prix_cents)}</span>
         </span>
       </div>
-      <Icon name="ArrowRightIcon" size={14} variant="outline" className="text-blue-400 flex-shrink-0 group-hover:translate-x-0.5 transition-transform" />
+      <Icon name="ArrowRightIcon" size={14} variant="outline" className="text-sky-400 flex-shrink-0 group-hover:translate-x-0.5 transition-transform" />
     </Link>
   );
 }
@@ -224,15 +224,15 @@ function CertificatAuthenticite({ certificat }: { certificat?: OccasionCertifica
   const [open, setOpen] = useState(false);
 
   return (
-    <div className="topo-card p-4 border-emerald-500/20 border">
+    <div className="topo-card p-4 border-forest-500/20 border">
       <button
         onClick={() => setOpen((o) => !o)}
         className="w-full flex items-center justify-between gap-3 text-left"
       >
         <div className="flex items-center gap-2">
-          <Icon name="ShieldCheckIcon" size={16} variant="outline" className="text-emerald-400 flex-shrink-0" />
+          <Icon name="ShieldCheckIcon" size={16} variant="outline" className="text-forest-400 flex-shrink-0" />
           <span className="text-sm font-semibold text-foreground">Certificat d&apos;authenticité</span>
-          <span className="px-2 py-0.5 rounded-full bg-emerald-400/10 text-emerald-400 text-[10px] font-mono border border-emerald-400/20" style={{ fontFamily: 'var(--font-mono)' }}>Ajouter</span>
+          <span className="px-2 py-0.5 rounded-full bg-forest-400/10 text-forest-400 text-[10px] font-mono border border-forest-400/20" style={{ fontFamily: 'var(--font-mono)' }}>Ajouter</span>
         </div>
         <Icon name={open ? 'ChevronUpIcon' : 'ChevronDownIcon'} size={14} variant="outline" className="text-muted-foreground flex-shrink-0" />
       </button>
@@ -259,7 +259,7 @@ function CertificatAuthenticite({ certificat }: { certificat?: OccasionCertifica
           {!certificat?.numero && !certificat?.date_emission && (
             <p className="text-sm text-muted-foreground">Authenticité vérifiée par l&apos;équipe Kit du Voyageur avant publication.</p>
           )}
-          <div className="flex items-center gap-1.5 text-xs text-emerald-400 mt-2">
+          <div className="flex items-center gap-1.5 text-xs text-forest-400 mt-2">
             <Icon name="LockClosedIcon" size={11} variant="outline" />
             Certificat infalsifiable · Enregistré sur notre registre
           </div>

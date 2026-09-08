@@ -275,7 +275,7 @@ export const AddParticipantModal: React.FC<AddParticipantModalProps> = ({
                 type="checkbox"
                 checked={isCarryingPack}
                 onChange={(e) => setIsCarryingPack(e.target.checked)}
-                className="rounded text-amber-700 focus:ring-amber-600 cursor-pointer"
+                className="rounded text-sand-700 focus:ring-sand-600 cursor-pointer"
               />
               <span className="text-white">Équipé d'un sac de bât / portage</span>
             </label>

@@ -107,7 +107,7 @@ export function WeightTab() {
             <span className="text-[9px] uppercase font-mono text-[#5A7064] dark:text-[#9AAD9E] block">
               🥫 Consommables
             </span>
-            <span className="text-xl font-extrabold font-mono text-amber-800 dark:text-amber-300">
+            <span className="text-xl font-extrabold font-mono text-sand-800 dark:text-sand-300">
               {consumableKg} <span className="text-xs font-normal">kg</span>
             </span>
             <span className="text-[9px] text-[#5A7064] dark:text-[#9AAD9E] block">Eau, vivres, gaz</span>
@@ -117,20 +117,20 @@ export function WeightTab() {
             <span className="text-[9px] uppercase font-mono text-[#5A7064] dark:text-[#9AAD9E] block">
               👕 Porté sur soi
             </span>
-            <span className="text-xl font-extrabold font-mono text-blue-800 dark:text-blue-300">
+            <span className="text-xl font-extrabold font-mono text-sky-800 dark:text-sky-300">
               {wornKg} <span className="text-xs font-normal">kg</span>
             </span>
             <span className="text-[9px] text-[#5A7064] dark:text-[#9AAD9E] block">Vêtements, bâtons</span>
           </div>
 
-          <div className="p-2.5 rounded-2xl bg-emerald-100 dark:bg-emerald-950/60 border border-emerald-300 dark:border-emerald-500/30 shadow-2xs">
-            <span className="text-[9px] uppercase font-mono text-emerald-900 dark:text-emerald-300 font-bold block">
+          <div className="p-2.5 rounded-2xl bg-forest-100 dark:bg-forest-950/60 border border-forest-300 dark:border-forest-500/30 shadow-2xs">
+            <span className="text-[9px] uppercase font-mono text-forest-900 dark:text-forest-300 font-bold block">
               ⚖️ Poids sur le dos
             </span>
-            <span className="text-xl font-extrabold font-mono text-emerald-950 dark:text-white">
+            <span className="text-xl font-extrabold font-mono text-forest-950 dark:text-white">
               {totalPackKg} <span className="text-xs font-normal">kg</span>
             </span>
-            <span className="text-[9px] text-emerald-800 dark:text-emerald-300 block">Base + Consommables</span>
+            <span className="text-[9px] text-forest-800 dark:text-forest-300 block">Base + Consommables</span>
           </div>
         </div>
 
@@ -138,12 +138,12 @@ export function WeightTab() {
         <div className="space-y-1.5 pt-1">
           <div className="w-full bg-black/10 dark:bg-white/10 rounded-full h-3 flex overflow-hidden border border-white/60 dark:border-white/10 p-0.5">
             <div
-              className="bg-emerald-600 h-full rounded-l-full transition-all duration-500"
+              className="bg-forest-600 h-full rounded-l-full transition-all duration-500"
               style={{ width: `${Math.max(2, basePct)}%` }}
               title={`Base Weight : ${basePct}%`}
             />
             <div
-              className="bg-amber-500 h-full transition-all duration-500"
+              className="bg-sand-500 h-full transition-all duration-500"
               style={{ width: `${Math.max(2, consumablePct)}%` }}
               title={`Consommables : ${consumablePct}%`}
             />
@@ -156,10 +156,10 @@ export function WeightTab() {
 
           <div className="flex items-center justify-between text-[10px] font-mono text-[#5A7064] dark:text-[#9AAD9E]">
             <span className="flex items-center gap-1">
-              <span className="w-2 h-2 rounded-full bg-emerald-600 inline-block" /> Base ({basePct}%)
+              <span className="w-2 h-2 rounded-full bg-forest-600 inline-block" /> Base ({basePct}%)
             </span>
             <span className="flex items-center gap-1">
-              <span className="w-2 h-2 rounded-full bg-amber-500 inline-block" /> Vivres ({consumablePct}%)
+              <span className="w-2 h-2 rounded-full bg-sand-500 inline-block" /> Vivres ({consumablePct}%)
             </span>
             <span className="flex items-center gap-1">
               <span className="w-2 h-2 rounded-full bg-sky-500 inline-block" /> Porté ({wornPct}%)
@@ -189,7 +189,7 @@ export function WeightTab() {
                 <span className="font-bold text-[#17402C] dark:text-white">{cat.weightGrams} g</span>
                 <div className="w-16 h-1.5 rounded-full bg-black/10 dark:bg-white/10 overflow-hidden hidden sm:block">
                   <div
-                    className="h-full bg-emerald-600 rounded-full"
+                    className="h-full bg-forest-600 rounded-full"
                     style={{ width: `${cat.percentage}%` }}
                   />
                 </div>

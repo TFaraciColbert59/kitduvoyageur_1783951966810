@@ -1,4 +1,5 @@
 ﻿'use client';
+import { lkvConfirm } from '@/components/ui/dialogs';
 
 import React, { useEffect, useState, useCallback } from 'react';
 import MobilePageShell from '@/components/mobile-nav/MobilePageShell';
@@ -42,7 +43,7 @@ export default function HorsLignePage() {
   }, [loadRoutes]);
 
   const handleDelete = useCallback(async (routeId: string) => {
-    if (!confirm('Supprimer cette randonnée du stockage hors-ligne ?')) return;
+    if (!lkvConfirm('Supprimer cette randonnée du stockage hors-ligne ?')) return;
     setDeletingId(routeId);
     try {
       await offline.deleteOffline(routeId);

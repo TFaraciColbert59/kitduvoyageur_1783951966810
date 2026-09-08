@@ -1,4 +1,5 @@
 'use client';
+import { lkvConfirm } from '@/components/ui/dialogs';
 
 import React, { useState, useEffect, useCallback } from 'react';
 import Image from 'next/image';
@@ -215,7 +216,7 @@ export default function CarnetsTab({ profile }: CarnetsTabProps) {
 
   // ─── delete draft ─────────────────────────
   async function handleDeleteDraft(id: string) {
-    if (!confirm('Supprimer ce brouillon définitivement ?')) return;
+    if (!lkvConfirm('Supprimer ce brouillon définitivement ?')) return;
     await supabase.from('carnets').delete().eq('id', id);
     setDrafts(prev => prev.filter(d => d.id !== id));
   }
@@ -563,7 +564,7 @@ function DraftRow({
               <button
                 onClick={() => onPublish(draft.id)}
                 title="Publier"
-                className="p-1.5 text-emerald-600 hover:text-emerald-700 hover:bg-emerald-50 rounded-lg transition-colors"
+                className="p-1.5 text-forest-600 hover:text-forest-700 hover:bg-forest-50 rounded-lg transition-colors"
               >
                 <Icon name="ArrowUpOnSquareIcon" size={14} />
               </button>

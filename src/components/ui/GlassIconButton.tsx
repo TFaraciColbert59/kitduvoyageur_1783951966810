@@ -52,7 +52,7 @@ export default function GlassIconButton({
       )}
 
       {badge && (
-        <span className="absolute -top-1 -right-1 flex h-3.5 w-3.5 items-center justify-center rounded-full bg-emerald-600 text-[8px] font-bold text-white shadow-xs">
+        <span className="absolute -top-1 -right-1 flex h-3.5 w-3.5 items-center justify-center rounded-full bg-forest-600 text-[8px] font-bold text-white shadow-xs">
           {badge}
         </span>
       )}

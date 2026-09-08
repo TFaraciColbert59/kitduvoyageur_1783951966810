@@ -120,7 +120,7 @@ export function KitsCockpit({
               value={primaryKit?.id ?? ''}
               onChange={(e) => setSelectedKitId(e.target.value)}
               aria-label="Sélectionner le kit à gérer"
-              className="glass interactive h-7 py-0 px-2.5 text-[11px] sm:text-xs text-[#17402C] font-bold rounded-full cursor-pointer max-w-[170px] sm:max-w-[260px] truncate outline-none border border-white/40 shadow-[inset_0_1px_1px_rgba(255,255,255,0.6)] focus-visible:ring-2 focus-visible:ring-[#17402C]"
+              className="glass interactive h-7 py-0 px-2.5 text-[11px] sm:text-xs text-[#17402C] font-bold rounded-full cursor-pointer max-w-[170px] sm:max-w-[260px] truncate outline-none border border-white/40 shadow-inner focus-visible:ring-2 focus-visible:ring-[#17402C]"
             >
               {activeKits.map((k) => (
                 <option key={k.id} value={k.id}>
@@ -136,7 +136,7 @@ export function KitsCockpit({
         <div className="flex items-center gap-1.5 shrink-0">
           <Link
             href="/materiel"
-            className="glass interactive h-7 px-2.5 rounded-full flex items-center text-xs font-semibold text-[#17402C] shrink-0 border border-white/40 shadow-[inset_0_1px_1px_rgba(255,255,255,0.6)] focus-visible:ring-2 focus-visible:ring-[#17402C]"
+            className="glass interactive h-7 px-2.5 rounded-full flex items-center text-xs font-semibold text-[#17402C] shrink-0 border border-white/40 shadow-inner focus-visible:ring-2 focus-visible:ring-[#17402C]"
           >
             ← Retour
           </Link>

@@ -1,30 +1,24 @@
-// src/design/tokens.ts — Miroir typé dérivé de src/styles/tokens.css
-// AUTO-GÉNÉRÉ — NE PAS ÉCRIRE DE VALEURS EN DUR ICI (Source unique = tokens.css)
+// src/design/tokens.ts — Miroir typé dérivé de tokens.css (Chantiers U, X & Y)
+// Source unique canonique des valeurs : src/styles/tokens.css (Zéro hexadécimal ici)
 
 export const colors = {
-  // Primary brand color – Forest Green canon LKDV
   primary: 'var(--lkv-primary)',
   primaryHover: 'var(--lkv-primary-hover)',
   primarySoft: 'var(--lkv-primary-soft)',
   primarySubtle: 'var(--lkv-primary-subtle)',
-
-  // Surfaces et fonds
-  surface: 'var(--lkv-surface)',
-  surfacePaper: 'var(--lkv-surface-paper)',
+  surface: 'var(--stone-50)',
+  surfacePaper: 'var(--lkv-surface)',
   background: 'var(--lkv-surface)',
   card: 'var(--lkv-surface-card)',
   elevated: 'var(--lkv-surface-elevated)',
   mutedSurface: 'var(--lkv-surface-muted)',
-  border: 'var(--lkv-border)',
+  border: 'var(--stone-200)',
   borderSubtle: 'var(--lkv-border-subtle)',
   borderStrong: 'var(--lkv-border-strong)',
-
-  // Accent / Sage
+  borderGlass: 'rgba(255, 255, 255, 0.60)',
   accent: 'var(--lkv-secondary)',
   accentHover: 'var(--lkv-secondary-hover)',
-  accentSubtle: 'var(--lkv-secondary-subtle)',
-
-  // Sémantiques canoniques
+  accentSubtle: 'var(--sage-300)',
   error: 'var(--lkv-danger)',
   errorBg: 'var(--lkv-danger-bg)',
   danger: 'var(--lkv-danger)',
@@ -34,9 +28,7 @@ export const colors = {
   info: 'var(--lkv-info)',
   infoBg: 'var(--lkv-info-bg)',
   success: 'var(--lkv-success)',
-  successBg: 'var(--lkv-success-bg)',
-
-  // Typographie & Neutres
+  successBg: 'var(--sage-50)',
   textPrimary: 'var(--lkv-text-primary)',
   textSecondary: 'var(--lkv-text-secondary)',
   textMuted: 'var(--lkv-text-muted)',
@@ -44,26 +36,26 @@ export const colors = {
   textInverted: 'var(--lkv-text-inverted)',
   muted: 'var(--lkv-text-muted)',
   textMain: 'var(--lkv-text-primary)',
-  white: '#ffffff',
-  black: '#000000',
+  white: 'var(--lkv-text-inverted)',
+  black: 'black',
 } as const;
 
 export const typography = {
   fontFamily: {
-    heading: 'var(--font-display), Manrope, sans-serif',
-    body: 'var(--font-sans), DM Sans, sans-serif',
+    heading: 'var(--font-display), Manrope, system-ui, sans-serif',
+    body: 'var(--font-sans), DM Sans, system-ui, sans-serif',
     serif: 'var(--font-serif), Instrument Serif, serif',
     mono: 'var(--font-mono), IBM Plex Mono, monospace',
   },
   size: {
-    xs: '0.75rem',   // 12px
-    sm: '0.875rem',  // 14px
-    base: '1rem',    // 16px
-    lg: '1.125rem',  // 18px
-    xl: '1.25rem',   // 20px
-    '2xl': '1.5rem', // 24px
-    '3xl': '1.875rem',// 30px
-    '4xl': '2.25rem',// 36px
+    xs: '0.75rem',
+    sm: '0.875rem',
+    base: '1rem',
+    lg: '1.125rem',
+    xl: '1.25rem',
+    '2xl': '1.5rem',
+    '3xl': '1.875rem',
+    '4xl': '2.25rem',
   },
   weight: {
     regular: '400',
@@ -94,8 +86,8 @@ export const radius = {
   md: 'var(--lkv-radius-md)',
   lg: 'var(--lkv-radius-lg)',
   xl: 'var(--lkv-radius-xl)',
-  card: 'var(--lkv-radius-card)',
   '2xl': 'var(--lkv-radius-2xl)',
+  card: 'var(--lkv-radius-card)',
   full: 'var(--lkv-radius-full)',
 } as const;
 
@@ -127,17 +119,17 @@ export const sage = {
 } as const;
 
 export const stone = {
-  950: 'var(--stone-950)',
-  900: 'var(--stone-900)',
-  800: 'var(--stone-800)',
-  700: 'var(--stone-700)',
-  600: 'var(--stone-600)',
-  500: 'var(--stone-500)',
-  400: 'var(--stone-400)',
-  300: 'var(--stone-300)',
-  200: 'var(--stone-200)',
+  50: 'var(--stone-50)',
   100: 'var(--stone-100)',
-  50:  'var(--stone-50)',
+  200: 'var(--stone-200)',
+  300: 'var(--stone-300)',
+  400: 'var(--stone-400)',
+  500: 'var(--stone-500)',
+  600: 'var(--stone-600)',
+  700: 'var(--stone-700)',
+  800: 'var(--stone-800)',
+  900: 'var(--stone-900)',
+  950: 'var(--stone-950)',
 } as const;
 
 export const ink = {
@@ -147,7 +139,10 @@ export const ink = {
   300: 'var(--ink-300)',
 } as const;
 
-export const paper = 'var(--lkv-surface)';
+export const paper = {
+  DEFAULT: 'var(--lkv-surface)',
+  cream: 'var(--lkv-surface-paper)',
+} as const;
 
 export const shadows = {
   xs: 'var(--elevation-1)',
@@ -156,12 +151,16 @@ export const shadows = {
   lg: 'var(--elevation-3)',
   xl: 'var(--elevation-4)',
   '2xl': 'var(--elevation-5)',
+  glass: 'var(--elevation-1)',
+  card: 'var(--elevation-2)',
+  modal: 'var(--elevation-4)',
 } as const;
 
 export const transition = {
-  default: 'transform var(--dur-xfast) var(--ease-smooth), background-color var(--dur-fast) ease, opacity var(--dur-fast) ease, box-shadow var(--dur-fast) ease',
-  fast: 'all var(--dur-xfast) var(--ease-smooth)',
-  slow: 'all var(--dur-med) var(--ease-smooth)',
+  default: 'var(--dur-med) var(--ease-glass)',
+  fast: 'var(--dur-fast) var(--ease-glass)',
+  base: 'var(--dur-med) var(--ease-glass)',
+  slow: 'var(--dur-slow) var(--ease-glass)',
 } as const;
 
 export const theme = {

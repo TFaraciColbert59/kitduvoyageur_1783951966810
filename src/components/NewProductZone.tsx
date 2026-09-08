@@ -72,8 +72,8 @@ function StockBadge({ statut, stock, reapproDate }: { statut: 'en_stock' | 'rupt
   if (statut === 'reappro') {
     return (
       <div className="flex flex-col items-end gap-0.5">
-        <div className="flex items-center gap-1.5 text-sm font-medium text-amber-400">
-          <span className="w-2 h-2 rounded-full bg-amber-400" />
+        <div className="flex items-center gap-1.5 text-sm font-medium text-sand-400">
+          <span className="w-2 h-2 rounded-full bg-sand-400" />
           Réapprovisionnement prévu
         </div>
         {reapproDate && (
@@ -120,17 +120,17 @@ function OccasionBanner({ productId, productNom }: { productId: string; productN
   return (
     <Link
       href={`/produit/${occasion.slug}`}
-      className="flex items-center justify-between gap-3 px-4 py-3 rounded-xl bg-amber-500/10 border border-amber-500/25 hover:border-amber-500/50 transition-colors group"
+      className="flex items-center justify-between gap-3 px-4 py-3 rounded-xl bg-sand-500/10 border border-sand-500/25 hover:border-sand-500/50 transition-colors group"
       aria-label={`Voir ${productNom} en occasion à partir de ${fmt(occasion.prix_cents)}`}
     >
       <div className="flex items-center gap-2.5 min-w-0">
-        <Icon name="TagIcon" size={15} variant="outline" className="text-amber-400 flex-shrink-0" />
-        <span className="text-sm text-amber-300 font-medium leading-snug">
+        <Icon name="TagIcon" size={15} variant="outline" className="text-sand-400 flex-shrink-0" />
+        <span className="text-sm text-sand-300 font-medium leading-snug">
           Aussi disponible en occasion à partir de{' '}
           <span className="font-mono font-700" style={{ fontFamily: 'var(--font-mono)' }}>{fmt(occasion.prix_cents)}</span>
         </span>
       </div>
-      <Icon name="ArrowRightIcon" size={14} variant="outline" className="text-amber-400 flex-shrink-0 group-hover:translate-x-0.5 transition-transform" />
+      <Icon name="ArrowRightIcon" size={14} variant="outline" className="text-sand-400 flex-shrink-0 group-hover:translate-x-0.5 transition-transform" />
     </Link>
   );
 }
@@ -285,7 +285,7 @@ function AIComparatorPanel({ product }: { product: NewProductData }) {
                     <span>{c.poids}</span>
                   </div>
                   <div className="mt-2 grid grid-cols-2 gap-2">
-                    <div className="flex items-start gap-1.5 text-xs text-emerald-400">
+                    <div className="flex items-start gap-1.5 text-xs text-forest-400">
                       <Icon name="PlusCircleIcon" size={12} variant="outline" className="flex-shrink-0 mt-0.5" />
                       <span>{c.avantage}</span>
                     </div>
@@ -367,10 +367,10 @@ function AIReviewSummaryPanel({ product }: { product: NewProductData }) {
           ) : result && (
             <div className="space-y-3">
               <div>
-                <p className="text-xs font-mono text-emerald-400 uppercase tracking-widest mb-2" style={{ fontFamily: 'var(--font-mono)' }}>Points forts récurrents</p>
+                <p className="text-xs font-mono text-forest-400 uppercase tracking-widest mb-2" style={{ fontFamily: 'var(--font-mono)' }}>Points forts récurrents</p>
                 {result.pros.map((p, i) => (
                   <div key={i} className="flex items-start gap-2 text-sm text-muted-foreground mb-1.5">
-                    <Icon name="CheckCircleIcon" size={14} variant="outline" className="text-emerald-400 flex-shrink-0 mt-0.5" />
+                    <Icon name="CheckCircleIcon" size={14} variant="outline" className="text-forest-400 flex-shrink-0 mt-0.5" />
                     {p}
                   </div>
                 ))}
@@ -540,9 +540,9 @@ export default function NewProductZone({ product }: { product: NewProductData })
 
         {/* Reappro notice */}
         {stockStatut === 'reappro' && (
-          <div className="flex items-start gap-2.5 px-4 py-3 rounded-xl bg-amber-500/10 border border-amber-500/20">
-            <Icon name="ClockIcon" size={15} variant="outline" className="text-amber-400 flex-shrink-0 mt-0.5" />
-            <p className="text-sm text-amber-300 leading-snug">
+          <div className="flex items-start gap-2.5 px-4 py-3 rounded-xl bg-sand-500/10 border border-sand-500/20">
+            <Icon name="ClockIcon" size={15} variant="outline" className="text-sand-400 flex-shrink-0 mt-0.5" />
+            <p className="text-sm text-sand-300 leading-snug">
               Ce produit est temporairement en rupture.
               {product.reappro_date
                 ? ` Réapprovisionnement prévu le ${fmtDate(product.reappro_date)}.`

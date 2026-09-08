@@ -47,7 +47,7 @@ export default async function CrewDetailPage({ params }: CrewDetailPageProps) {
         </Link>
 
         {/* Fiche Équipage Header */}
-        <GlassCard tone="sage" blur="md" className="p-6 sm:p-8 rounded-[28px] border border-white/70">
+        <GlassCard tone="sage" blur="md" className="p-6 sm:p-8 rounded-card border border-white/70">
           <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
             <div className="flex items-start gap-4">
               <div className="p-4 rounded-2xl bg-lkv-primary text-white shadow-md">
@@ -120,7 +120,7 @@ export default async function CrewDetailPage({ params }: CrewDetailPageProps) {
                   <Link key={trip.id} href={`/voyages/${trip.slug}`} className="block group">
                     <GlassCard
                       tone="neutral"
-                      className="p-4 rounded-[20px] border border-white/70 hover:border-lkv-primary/30 transition-all flex items-center justify-between gap-4"
+                      className="p-4 rounded-lg border border-white/70 hover:border-lkv-primary/30 transition-all flex items-center justify-between gap-4"
                     >
                       <div>
                         <h3 className="text-sm sm:text-base font-bold text-lkv-primary group-hover:text-lkv-secondary transition-colors">
@@ -159,7 +159,7 @@ export default async function CrewDetailPage({ params }: CrewDetailPageProps) {
               Membres ({crew.members.length})
             </h2>
 
-            <GlassCard tone="neutral" className="p-4 rounded-[22px] border border-white/70 space-y-3">
+            <GlassCard tone="neutral" className="p-4 rounded-lg border border-white/70 space-y-3">
               {crew.members.map(member => (
                 <div
                   key={member.user_id}

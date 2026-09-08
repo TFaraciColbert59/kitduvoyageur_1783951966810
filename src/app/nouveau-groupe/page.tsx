@@ -594,7 +594,7 @@ export default function NouveauGroupePage() {
                     {requiredGear.map((gear) => (
                       <div key={gear.id} className="flex items-center justify-between p-2.5 rounded-xl bg-white/90 border border-[#17402C]/10 text-xs">
                         <span className="font-bold text-[#17402C] flex items-center gap-2">
-                          <span className="text-emerald-700">✓</span> {gear.name}
+                          <span className="text-forest-700">✓</span> {gear.name}
                         </span>
                         <button
                           type="button"

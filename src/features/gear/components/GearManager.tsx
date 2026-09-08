@@ -93,7 +93,7 @@ export const GearManager: React.FC = () => {
         <div className="flex justify-end">
           <button
             onClick={() => setShowAddModal(true)}
-            className="px-4 py-2 rounded-2xl bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs shadow-md active:scale-95 transition-all flex items-center gap-1.5"
+            className="px-4 py-2 rounded-2xl bg-forest-600 hover:bg-forest-500 text-white font-bold text-xs shadow-md active:scale-95 transition-all flex items-center gap-1.5"
           >
             <span>+</span>
             <span>Ajouter un équipement</span>
@@ -187,7 +187,7 @@ export const GearManager: React.FC = () => {
                     type="checkbox"
                     checked={newIsWorn}
                     onChange={(e) => setNewIsWorn(e.target.checked)}
-                    className="rounded text-emerald-600 focus:ring-emerald-500"
+                    className="rounded text-forest-600 focus:ring-forest-500"
                   />
                   <span>Porté sur soi (non pesé dans le Base Weight)</span>
                 </label>
@@ -197,7 +197,7 @@ export const GearManager: React.FC = () => {
                     type="checkbox"
                     checked={newIsConsumable}
                     onChange={(e) => setNewIsConsumable(e.target.checked)}
-                    className="rounded text-emerald-600 focus:ring-emerald-500"
+                    className="rounded text-forest-600 focus:ring-forest-500"
                   />
                   <span>Consommable (eau, nourriture, gaz)</span>
                 </label>
@@ -207,7 +207,7 @@ export const GearManager: React.FC = () => {
                     type="checkbox"
                     checked={newIsVital}
                     onChange={(e) => setNewIsVital(e.target.checked)}
-                    className="rounded text-emerald-600 focus:ring-emerald-500"
+                    className="rounded text-forest-600 focus:ring-forest-500"
                   />
                   <span className="text-red-300 font-semibold">Équipement vital de sécurité</span>
                 </label>
@@ -224,7 +224,7 @@ export const GearManager: React.FC = () => {
               </button>
               <button
                 type="submit"
-                className="flex-1 py-2.5 rounded-xl bg-emerald-600 text-white text-xs font-bold shadow-md"
+                className="flex-1 py-2.5 rounded-xl bg-forest-600 text-white text-xs font-bold shadow-md"
               >
                 Enregistrer
               </button>

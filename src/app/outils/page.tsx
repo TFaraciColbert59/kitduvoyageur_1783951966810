@@ -308,7 +308,7 @@ export default function OutilsPage() {
                             {tool.categorie.toUpperCase()}
                           </span>
                           {tool.offline && (
-                            <span className="text-[9px] font-mono px-2 py-0.5 rounded border border-emerald-400/30 text-emerald-400 bg-emerald-400/10" style={{ fontFamily: 'var(--font-mono)' }}>
+                            <span className="text-[9px] font-mono px-2 py-0.5 rounded border border-forest-400/30 text-forest-400 bg-forest-400/10" style={{ fontFamily: 'var(--font-mono)' }}>
                               OFFLINE
                             </span>
                           )}

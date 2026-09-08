@@ -1,4 +1,5 @@
 'use client';
+import { lkvConfirm } from '@/components/ui/dialogs';
 
 import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
@@ -122,7 +123,7 @@ export default function EquipementCard({ equipment, groupId, onRefresh, user, me
   };
 
   const handleDeleteItem = async (itemId: string) => {
-    if (!confirm('Supprimer cet objet du sac partagé ?')) return;
+    if (!lkvConfirm('Supprimer cet objet du sac partagé ?')) return;
     triggerHaptic('warning');
     setBusyId(itemId);
     await runOp(
@@ -337,7 +338,7 @@ export default function EquipementCard({ equipment, groupId, onRefresh, user, me
         </div>
       )}
       {notice && (
-        <div className="mb-3 p-2.5 glass-sub-card rounded-xl text-xs text-emerald-800 font-semibold">
+        <div className="mb-3 p-2.5 glass-sub-card rounded-xl text-xs text-forest-800 font-semibold">
           {notice}
         </div>
       )}

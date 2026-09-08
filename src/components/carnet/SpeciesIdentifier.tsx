@@ -149,7 +149,7 @@ export default function SpeciesIdentifier({ momentId, onIdentified }: Props) {
         <div className="space-y-3 animate-fade-in">
           <div className="flex items-start justify-between gap-3">
             <div className="flex items-center gap-2.5">
-              <div className="w-10 h-10 rounded-2xl bg-emerald-50 border border-emerald-200 flex items-center justify-center text-xl shrink-0">
+              <div className="w-10 h-10 rounded-2xl bg-forest-50 border border-forest-200 flex items-center justify-center text-xl shrink-0">
                 {GROUP_ICONS[species.group] || '🌿'}
               </div>
               <div>
@@ -176,7 +176,7 @@ export default function SpeciesIdentifier({ momentId, onIdentified }: Props) {
           </p>
 
           {species.is_protected && (
-            <div className="p-2 rounded-2xl bg-amber-50 border border-amber-200/60 flex items-center gap-2 text-xs text-amber-900 font-medium">
+            <div className="p-2 rounded-2xl bg-sand-50 border border-sand-200/60 flex items-center gap-2 text-xs text-sand-900 font-medium">
               <span>⚠️</span>
               <span>Espèce protégée — Ne pas cueillir ni déranger.</span>
             </div>

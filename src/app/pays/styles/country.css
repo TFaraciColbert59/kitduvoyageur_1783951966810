@@ -862,7 +862,7 @@
   font-size: 10px;
   font-weight: 500;
   background: var(--lkv-primary);
-  color: #ffffff;
+  color: var(--lkv-text-inverted);
   padding: 3px 8px;
   border-radius: 999px;
   white-space: nowrap;
@@ -939,8 +939,8 @@
   position: relative;
   border-radius: 28px;
   overflow: hidden;
-  background: var(--lkv-stone-100, var(--lkv-surface-muted));
-  color: #ffffff;
+  background: var(--lkv-stone-100, var(--stone-200));
+  color: var(--lkv-text-inverted);
   cursor: pointer;
   text-decoration: none;
   aspect-ratio: auto !important;
@@ -1041,14 +1041,14 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  color: #ffffff;
+  color: var(--lkv-text-inverted);
   transition: transform var(--lkv-dur) var(--lkv-ease-out), background var(--lkv-dur) var(--lkv-ease-out);
   flex-shrink: 0;
 }
 .dest-card:hover .body .arr {
   transform: translate(4px, -4px);
   background: var(--lkv-primary);
-  color: #ffffff;
+  color: var(--lkv-text-inverted);
 }
 
 /* ————— SECTION 03 : ACTIVITÉS ————— */
@@ -1133,12 +1133,12 @@
 }
 .act-card .cover .diff.med {
   background: rgba(200, 154, 59, 0.18);
-  color: var(--lkv-primary);
+  color: var(--lkv-warning-dark);
   border: 1px solid rgba(200, 154, 59, 0.35);
 }
 .act-card .cover .diff.hard {
   background: rgba(168, 68, 58, 0.16);
-  color: var(--lkv-primary);
+  color: var(--lkv-danger-dark);
   border: 1px solid rgba(168, 68, 58, 0.35);
 }
 
@@ -1151,7 +1151,7 @@
   font-family: var(--font-mono, monospace);
   font-size: 10px;
   background: rgba(23, 64, 44, 0.75);
-  color: #ffffff;
+  color: var(--lkv-text-inverted);
   backdrop-filter: blur(6px);
 }
 
@@ -1357,7 +1357,7 @@
   font-size: 10px;
   text-transform: uppercase;
   letter-spacing: 0.14em;
-  color: var(--lkv-primary);
+  color: var(--lkv-warning-dark);
   font-weight: 600;
   margin-bottom: 4px;
 }
@@ -1557,9 +1557,9 @@
   opacity: 0.7;
   transform-origin: bottom;
 }
-.weather-year .m.now-m { color: var(--lkv-primary); }
+.weather-year .m.now-m { color: var(--lkv-warning-dark); }
 .weather-year .m.now-m .bar {
-  background: linear-gradient(to top, var(--lkv-warning), var(--lkv-primary));
+  background: linear-gradient(to top, var(--lkv-warning), var(--lkv-warning-subtle));
   opacity: 1;
 }
 
@@ -1595,12 +1595,12 @@
 .safe-card .level.med {
   background: rgba(200, 154, 59, 0.16);
   border-color: rgba(200, 154, 59, 0.35);
-  color: var(--lkv-primary);
+  color: var(--lkv-warning-dark);
 }
 .safe-card .level.high {
   background: rgba(168, 68, 58, 0.16);
   border-color: rgba(168, 68, 58, 0.35);
-  color: var(--lkv-primary);
+  color: var(--lkv-danger-dark);
 }
 .safe-card .level .dot {
   width: 6px;
@@ -1859,7 +1859,7 @@
   border-radius: 28px;
   position: relative;
   overflow: hidden;
-  background: var(--lkv-stone-100, var(--lkv-surface-muted));
+  background: var(--lkv-stone-100, var(--stone-200));
   scroll-snap-align: start;
   border: 1px solid rgba(255, 255, 255, 0.70);
   box-shadow: 0 12px 32px -16px rgba(23, 64, 44, 0.20);
@@ -1893,7 +1893,7 @@
   font-size: 16px;
   font-weight: 700;
   letter-spacing: -0.01em;
-  color: #ffffff;
+  color: var(--lkv-text-inverted);
   margin: 0;
 }
 .m-dest-card .b h4 em {
@@ -1963,7 +1963,7 @@
   padding: 12px;
   text-align: center;
   background: var(--lkv-primary);
-  color: #ffffff;
+  color: var(--lkv-text-inverted);
   border-radius: 999px;
   font-size: 13px;
   font-weight: 600;

@@ -386,7 +386,7 @@ export default function CommentsSheet({
 
           {/* Active Reply Banner */}
           {replyTarget && (
-            <div className="flex items-center justify-between px-3 py-1.5 bg-emerald-50 rounded-xl border border-emerald-200 text-xs text-emerald-900 mb-2 shrink-0">
+            <div className="flex items-center justify-between px-3 py-1.5 bg-forest-50 rounded-xl border border-forest-200 text-xs text-forest-900 mb-2 shrink-0">
               <span className="truncate">
                 En réponse à <strong className="underline">@{replyTarget.authorName}</strong>
               </span>
@@ -396,7 +396,7 @@ export default function CommentsSheet({
                   setReplyTarget(null);
                   setNewComment('');
                 }}
-                className="text-emerald-800 hover:opacity-80 ml-2 text-xs font-bold cursor-pointer"
+                className="text-forest-800 hover:opacity-80 ml-2 text-xs font-bold cursor-pointer"
               >
                 ✕ Annuler
               </button>

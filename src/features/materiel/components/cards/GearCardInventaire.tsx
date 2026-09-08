@@ -40,7 +40,7 @@ export function GearCardInventaire({ data, className }: { data: InventaireData; 
         {/* Condition Split Cards */}
         <div className="grid grid-cols-2 gap-2">
           <div className="glass-sub-card p-2.5 flex items-center gap-2">
-            <div className="w-7 h-7 rounded-full bg-white/[0.08] border border-white/25 flex items-center justify-center text-[#17402C] flex-shrink-0 shadow-[inset_0_1px_1px_rgba(255,255,255,0.4)]">
+            <div className="w-7 h-7 rounded-full bg-white/[0.08] border border-white/25 flex items-center justify-center text-[#17402C] flex-shrink-0 shadow-inner">
               <CheckCircle2 size={15} />
             </div>
             <div className="truncate">
@@ -49,7 +49,7 @@ export function GearCardInventaire({ data, className }: { data: InventaireData; 
             </div>
           </div>
           <div className="glass-sub-card p-2.5 flex items-center gap-2">
-            <div className="w-7 h-7 rounded-full bg-white/[0.08] border border-white/25 flex items-center justify-center text-[#5A7064] flex-shrink-0 shadow-[inset_0_1px_1px_rgba(255,255,255,0.4)]">
+            <div className="w-7 h-7 rounded-full bg-white/[0.08] border border-white/25 flex items-center justify-center text-[#5A7064] flex-shrink-0 shadow-inner">
               <span className="text-[10px] font-bold font-mono">0</span>
             </div>
             <div className="truncate">

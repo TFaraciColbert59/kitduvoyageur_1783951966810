@@ -134,7 +134,7 @@ export const GlassBreakModal: React.FC<GlassBreakModalProps> = ({
           ) : (
             /* ÉTAT DÉVERROUILLÉ — Visible uniquement après accord explicite */
             <div className="space-y-4 animate-in fade-in zoom-in-95 duration-200">
-              <div className="flex items-center justify-between p-2.5 rounded-xl bg-amber-500/20 border border-amber-500/40 text-amber-200 text-xs">
+              <div className="flex items-center justify-between p-2.5 rounded-xl bg-sand-500/20 border border-sand-500/40 text-sand-200 text-xs">
                 <span className="font-semibold">⚠️ Mode Glass Break Actif</span>
                 <span className="font-mono font-bold">Verrouillage auto : {timeLeft}s</span>
               </div>
@@ -186,7 +186,7 @@ export const GlassBreakModal: React.FC<GlassBreakModalProps> = ({
 
                     <a
                       href={`tel:${privateData.iceContact.phone.replace(/\s+/g, '')}`}
-                      className="px-3 py-1.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs flex items-center gap-1 shadow-sm transition-all"
+                      className="px-3 py-1.5 rounded-xl bg-forest-600 hover:bg-forest-500 text-white font-bold text-xs flex items-center gap-1 shadow-sm transition-all"
                     >
                       📞 Appeler
                     </a>

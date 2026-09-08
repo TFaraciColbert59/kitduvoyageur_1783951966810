@@ -32,7 +32,7 @@ export default function DesktopDockBar({
 }: DesktopDockBarProps) {
   return (
     <div
-      className="absolute left-1/2 -translate-x-1/2 max-w-[95vw] h-[68px] md:h-[82px] px-2.5 md:px-4 bg-[#06120C]/90 backdrop-blur-3xl border border-white/12 rounded-full shadow-[0_24px_70px_rgba(6,18,12,0.55),0_4px_16px_rgba(0,0,0,0.3)] flex items-center gap-1.5 md:gap-3 z-40 select-none transition-all duration-300 overflow-x-auto no-scrollbar"
+      className="absolute left-1/2 -translate-x-1/2 max-w-[95vw] h-[68px] md:h-[82px] px-2.5 md:px-4 bg-[#06120C]/90 backdrop-blur-3xl border border-white/12 rounded-full shadow-lg flex items-center gap-1.5 md:gap-3 z-40 select-none transition-all duration-300 overflow-x-auto no-scrollbar"
       style={{ bottom: 'calc(env(safe-area-inset-bottom, 0px) + 12px)' }}
     >
       
@@ -40,14 +40,14 @@ export default function DesktopDockBar({
       <div className="flex items-center gap-3 pl-2 pr-4 border-r border-white/10">
         <div className="relative flex items-center justify-center w-3 h-3">
           <span className={`absolute w-3 h-3 rounded-full ${isPaused ? 'bg-amber-400' : 'bg-emerald-400 animate-ping opacity-75'}`} />
-          <span className={`w-2.5 h-2.5 rounded-full shadow-[0_0_8px_rgba(52,211,153,0.8)] ${isPaused ? 'bg-amber-400' : 'bg-emerald-400'}`} />
+          <span className={`w-2.5 h-2.5 rounded-full shadow-md ${isPaused ? 'bg-amber-400' : 'bg-emerald-400'}`} />
         </div>
         
         <div className="flex flex-col leading-none">
           <div className="font-mono text-[9px] tracking-widest text-[#C6DCBE]/70 font-semibold uppercase flex items-center gap-1.5">
             <span>{isPaused ? 'EN PAUSE' : 'GPS · LIVE'}</span>
           </div>
-          <div className="text-xl font-medium tracking-tight text-white font-mono tabular-nums mt-1 drop-shadow-[0_2px_4px_rgba(0,0,0,0.5)]">
+          <div className="text-xl font-medium tracking-tight text-white font-mono tabular-nums mt-1 drop-shadow-sm">
             {formatTimer(durationSeconds)}
           </div>
         </div>
@@ -59,7 +59,7 @@ export default function DesktopDockBar({
           onClick={() => onTabSelect('stats')}
           className={`h-[58px] px-3.5 rounded-2xl flex items-center gap-2 transition-all duration-200 ${
             activeTab === 'stats'
-              ? 'bg-[#17402C] text-[#C6DCBE] border border-[#C6DCBE]/30 shadow-[0_0_16px_rgba(168,200,160,0.2)] font-semibold scale-[1.02]'
+              ? 'bg-[#17402C] text-[#C6DCBE] border border-[#C6DCBE]/30 shadow-lg font-semibold scale-[1.02]'
               : 'text-white/70 hover:text-white hover:bg-white/06'
           }`}
         >
@@ -73,7 +73,7 @@ export default function DesktopDockBar({
           onClick={() => onTabSelect('carnet')}
           className={`h-[58px] px-3.5 rounded-2xl flex items-center gap-2 transition-all duration-200 ${
             activeTab === 'carnet'
-              ? 'bg-[#17402C] text-[#C6DCBE] border border-[#C6DCBE]/30 shadow-[0_0_16px_rgba(168,200,160,0.2)] font-semibold scale-[1.02]'
+              ? 'bg-[#17402C] text-[#C6DCBE] border border-[#C6DCBE]/30 shadow-lg font-semibold scale-[1.02]'
               : 'text-white/70 hover:text-white hover:bg-white/06'
           }`}
         >
@@ -128,7 +128,7 @@ export default function DesktopDockBar({
           onClick={() => onTabSelect('capture')}
           className={`h-[58px] px-3.5 rounded-2xl flex items-center gap-2 transition-all duration-200 ${
             activeTab === 'capture'
-              ? 'bg-[#17402C] text-[#C6DCBE] border border-[#C6DCBE]/30 shadow-[0_0_16px_rgba(168,200,160,0.2)] font-semibold scale-[1.02]'
+              ? 'bg-[#17402C] text-[#C6DCBE] border border-[#C6DCBE]/30 shadow-lg font-semibold scale-[1.02]'
               : 'text-white/70 hover:text-white hover:bg-white/06'
           }`}
           title="Capture photo / note"
@@ -145,7 +145,7 @@ export default function DesktopDockBar({
           onClick={() => onTabSelect('moment')}
           className={`h-[58px] px-3.5 rounded-2xl flex items-center gap-2 transition-all duration-200 ${
             activeTab === 'moment'
-              ? 'bg-[#17402C] text-[#C6DCBE] border border-[#C6DCBE]/30 shadow-[0_0_16px_rgba(168,200,160,0.2)] font-semibold scale-[1.02]'
+              ? 'bg-[#17402C] text-[#C6DCBE] border border-[#C6DCBE]/30 shadow-lg font-semibold scale-[1.02]'
               : 'text-white/70 hover:text-white hover:bg-white/06'
           }`}
           title="Ajouter un moment fort"
@@ -160,7 +160,7 @@ export default function DesktopDockBar({
           onClick={() => onTabSelect('more')}
           className={`h-[58px] px-3 rounded-2xl flex items-center justify-center transition-all duration-200 ${
             activeTab === 'more'
-              ? 'bg-[#17402C] text-[#C6DCBE] border border-[#C6DCBE]/30 shadow-[0_0_16px_rgba(168,200,160,0.2)] font-semibold scale-[1.02]'
+              ? 'bg-[#17402C] text-[#C6DCBE] border border-[#C6DCBE]/30 shadow-lg font-semibold scale-[1.02]'
               : 'text-white/70 hover:text-white hover:bg-white/06'
           }`}
           title="Plus d'actions"

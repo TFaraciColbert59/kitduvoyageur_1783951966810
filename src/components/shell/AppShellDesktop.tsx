@@ -18,38 +18,58 @@ export interface AppShellDesktopProps {
   className?: string;
   /** Afficher le header global du site (défaut: true) */
   showHeader?: boolean;
+  /** Slot navigation supérieure personnalisé */
+  topNav?: React.ReactNode;
   /** Background personnalisé (défaut: CompteBackground canopée) */
   background?: React.ReactNode;
+  /** Activer le fond vidéo CompteBackground */
+  backgroundVideo?: boolean;
+  /** Largeur de la colonne gauche (défaut: w-[260px]) */
+  leftWidth?: string;
+  /** Largeur de la colonne droite (défaut: w-[300px]) */
+  rightWidth?: string;
+  /** Largeur max du cockpit (défaut: max-w-[1680px]) */
+  maxWidth?: string;
+  /** Espacement entre colonnes (défaut: gap-5) */
+  gap?: string;
 }
 
 /**
- * AppShellDesktop — Cockpit universel 3 colonnes LKDV
+ * AppShellDesktop — Cockpit universel 3 colonnes LKDV (Chantiers U & Y)
  *
  * Reproduit la structure de référence souveraine de /pays :
- * - Header global (56-62px)
+ * - Header global (56-62px) ou topNav custom
  * - 3 colonnes : 260px (gauche) / flex-1 (centre) / 300px (droite)
  * - Largeur max 1680px, espacement gap-5
  * - Hauteur h-dvh avec scrollbars masquées (no-scrollbar)
  * - Fond immersif CompteBackground par défaut
  */
-export default function AppShellDesktop({
+export function AppShellDesktop({
   sidebarLeft,
   sidebarRight,
   children,
   mobileSlot,
   className,
   showHeader = true,
+  topNav,
   background = <CompteBackground />,
+  backgroundVideo = false,
+  leftWidth = 'w-[260px]',
+  rightWidth = 'w-[300px]',
+  maxWidth = 'max-w-[1680px]',
+  gap = 'gap-5',
 }: AppShellDesktopProps) {
+  const bg = backgroundVideo ? <CompteBackground /> : background;
+
   return (
     <div
       className={cn(
-        'min-h-screen md:h-dvh md:overflow-hidden text-[#17402C] selection:bg-[#17402C]/10 font-sans relative',
+        'min-h-screen md:h-dvh md:overflow-hidden text-[var(--lkv-text-primary)] selection:bg-[var(--lkv-text-primary)]/10 font-sans relative',
         className
       )}
     >
       {/* Background immersif végétal / canopée */}
-      {background}
+      {bg}
 
       {/* 1. VERSION MOBILE (< 768px) */}
       {mobileSlot && (
@@ -60,29 +80,29 @@ export default function AppShellDesktop({
 
       {/* 2. VERSION DESKTOP COCKPIT 3 COLONNES FULLSCREEN */}
       <div className={cn(mobileSlot ? 'hidden md:flex' : 'flex', 'flex-col h-full overflow-hidden')}>
-        {showHeader && <Header />}
+        {topNav ? topNav : (showHeader && <Header />)}
 
         {/* Main 3-Column Cockpit Container */}
-        <div className="flex-1 overflow-hidden pt-14 sm:pt-[62px] pb-4 px-4 sm:px-6 lg:px-8 max-w-[1680px] w-full mx-auto">
-          <div className="flex items-start gap-5 h-full">
+        <div className={`flex-1 overflow-hidden pt-14 sm:pt-[62px] pb-4 px-4 sm:px-6 lg:px-8 ${maxWidth} w-full mx-auto`}>
+          <div className={`flex items-start ${gap} h-full`}>
 
-            {/* LEFT COLUMN: NAVIGATION TABS SIDEBAR (260px) */}
+            {/* LEFT COLUMN: NAVIGATION TABS SIDEBAR */}
             {sidebarLeft && (
-              <div className="w-[260px] shrink-0 h-full overflow-hidden">
+              <aside className={`${leftWidth} shrink-0 h-full overflow-hidden flex flex-col`}>
                 {sidebarLeft}
-              </div>
+              </aside>
             )}
 
             {/* CENTER COLUMN: EXPANDED MAIN TAB CONTENT */}
-            <main id="main-content" className="flex-1 h-full overflow-y-auto no-scrollbar space-y-4 px-1 pb-6">
+            <main id="main-content" className="flex-1 min-w-0 h-full overflow-y-auto no-scrollbar space-y-4 px-1 pb-6">
               {children}
             </main>
 
-            {/* RIGHT COLUMN: SIDEBAR WIDGETS WITHOUT HEADERS (300px) */}
+            {/* RIGHT COLUMN: SIDEBAR WIDGETS WITHOUT HEADERS */}
             {sidebarRight && (
-              <div className="w-[300px] shrink-0 h-full overflow-hidden">
+              <aside className={`${rightWidth} shrink-0 h-full overflow-hidden flex flex-col`}>
                 {sidebarRight}
-              </div>
+              </aside>
             )}
 
           </div>
@@ -91,3 +111,5 @@ export default function AppShellDesktop({
     </div>
   );
 }
+
+export default AppShellDesktop;

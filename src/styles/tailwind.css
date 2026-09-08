@@ -1,92 +1,40 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
 
-:root {
-  --background: var(--lkv-surface);
-  --foreground: var(--lkv-text-primary);
-  --primary: var(--lkv-primary);
-  --primary-foreground: #FFFFFF;
-  --primary-hover: var(--lkv-primary-hover);
-  --primary-soft: var(--lkv-primary-soft);
-  --primary-subtle: var(--lkv-primary-subtle);
-  --secondary: var(--lkv-secondary);
-  --secondary-foreground: #FFFFFF;
-  --accent: var(--lkv-secondary);
-  --accent-foreground: #FFFFFF;
-  --muted: var(--lkv-surface-muted);
-  --muted-foreground: var(--lkv-text-muted);
-  --card: var(--lkv-surface-card);
-  --card-foreground: var(--lkv-text-primary);
-  --surface: var(--lkv-surface);
-  --surface-elevated: var(--lkv-surface-elevated);
-  --border: var(--lkv-border);
-  --border-subtle: var(--lkv-border-subtle);
-  --input: var(--lkv-surface-muted);
-  --ring: var(--lkv-primary);
-  --radius: var(--lkv-radius-sm);
-  --font-sans: var(--font-sans), DM Sans, system-ui, sans-serif;
-  --font-display: var(--font-display), Manrope, system-ui, sans-serif;
-  --font-mono: var(--font-mono), IBM Plex Mono, monospace;
-  --info-foreground: #FFFFFF;
-  --dark-bg: var(--lkv-ink-900);
-  --dark-surface: var(--lkv-forest-900);
+.dark {
+  --background: var(--lkv-forest-800);
+  --foreground: var(--sand-50);
+  --primary: var(--lkv-forest-400);
+  --primary-hover: var(--lkv-forest-400);
+  --primary-subtle: rgba(74,124,91,0.15);
+  --secondary: var(--lkv-forest-700);
+  --secondary-foreground: var(--sand-100);
+  --accent: var(--lkv-forest-300);
+  --accent-foreground: var(--lkv-forest-800);
+  --card: var(--lkv-forest-700);
+  --card-foreground: var(--sand-50);
+  --surface: var(--lkv-forest-800);
+  --surface-elevated: var(--lkv-forest-700);
+  --border: rgba(255,255,255,0.08);
+  --border-subtle: rgba(255,255,255,0.05);
+  --muted: var(--lkv-forest-700);
+  --muted-foreground: var(--lkv-forest-200);
+  --input: var(--lkv-forest-700);
+  --ring: var(--lkv-forest-400);
 
-  /* Mon Matériel — liquid glass : palette verte LKDV (Forest / Stone) */
-  --mm-forest: var(--lkv-primary);
-  --mm-forest-soft: var(--lkv-primary-soft);
-  --mm-ink: var(--lkv-sage-300);
-  --mm-paper: var(--lkv-surface);
+  /* Shadow colors for dark mode */
+  --shadow-xs: 0 1px 2px rgba(0,0,0,0.3);
+  --shadow-sm: 0 2px 8px rgba(0,0,0,0.3), 0 1px 2px rgba(0,0,0,0.2);
+  --shadow-md: 0 4px 16px rgba(0,0,0,0.35), 0 2px 4px rgba(0,0,0,0.25);
+  --shadow-lg: 0 8px 32px rgba(0,0,0,0.4), 0 4px 8px rgba(0,0,0,0.3);
+  --shadow-xl: 0 16px 48px rgba(0,0,0,0.45), 0 8px 16px rgba(0,0,0,0.35);
+  --shadow-2xl: 0 32px 80px rgba(0,0,0,0.5), 0 16px 32px rgba(0,0,0,0.4);
+}
 
-  /* PWA safe-area insets */
-  --safe-top: env(safe-area-inset-top);
-  --safe-bottom: env(safe-area-inset-bottom);
-  --safe-left: env(safe-area-inset-left);
-  --safe-right: env(safe-area-inset-right);
-
-  /* Mobile Navigation Heights & Clearance */
-  --bottom-tab-base-height: calc(52px + env(safe-area-inset-bottom, 0px));
-  --bottom-tab-extended-height: calc(52px + 40px + env(safe-area-inset-bottom, 0px));
-  --bottom-nav-height: var(--bottom-tab-base-height);
-
-  /* ── Premium Design Tokens ── */
-  --shadow-xs: var(--elevation-1);
-  --shadow-sm: var(--elevation-1);
-  --shadow-md: var(--elevation-2);
-  --shadow-lg: var(--elevation-3);
-  --shadow-xl: var(--elevation-4);
-  --shadow-2xl: var(--elevation-5);
-
-  /* Spring easing */
-  --spring-bounce: var(--ease-spring);
-  --spring-smooth: var(--ease-smooth);
-  --spring-snappy: cubic-bezier(0.19, 1, 0.22, 1);
-
-  /* Border radii */
-  --radius-xs: var(--lkv-radius-xs);
-  --radius-sm: var(--lkv-radius-sm);
-  --radius-md: var(--lkv-radius-md);
-  --radius-lg: var(--lkv-radius-lg);
-  --radius-xl: var(--lkv-radius-xl);
-  --radius-2xl: var(--lkv-radius-2xl);
-  --radius-full: var(--lkv-radius-full);
-
-  /* Forest green palette */
-  --forest-950: var(--lkv-forest-950);
-  --forest-900: var(--lkv-forest-900);
-  --forest-800: var(--lkv-forest-800);
-  --forest-700: var(--lkv-forest-700);
-  --forest-600: var(--lkv-forest-600);
-  --forest-500: var(--lkv-forest-500);
-  --forest-400: var(--lkv-forest-400);
-  --forest-300: var(--lkv-forest-300);
-  --forest-200: var(--lkv-forest-200);
-  --forest-100: var(--lkv-forest-100);
-  --forest-50: var(--lkv-forest-50);
-
-  /* Sand / warm neutrals */
-
-  /* Status */
+.dark .premium-card:hover {
+  box-shadow: 0 4px 24px rgba(0,0,0,0.4);
 }
 
 @layer base {
@@ -136,8 +84,7 @@
     min-height: -webkit-fill-available;
     width: 100%;
     max-width: 100vw;
-    /* Transparent : le fond (papier body ou CompteBackground immersif) transite
-       à travers le verre. Le blanc papier reste porté par le body en secours. */
+    background-color: var(--lkv-surface);
     position: relative;
     overscroll-behavior: none;
     overscroll-behavior-y: none;
@@ -598,30 +545,6 @@ html, body {
 /* ── Custom Cursor — Pointer moderne ── */
 a, button, select, input, textarea, [role="button"], [tabindex]:not([tabindex="-1"]) {
   cursor: pointer;
-}
-
-/* ============================================================
-   DESIGN SYSTEM LKDV — Mon Matériel Cockpit Vertical
-   ============================================================ */
-:root {
-
-
-
-
-  --lkv-warm-300: var(--lkv-primary);
-  --lkv-warm-500: var(--lkv-primary);
-  --lkv-warm-700: var(--lkv-primary);
-
-
-
-  --lkv-: 0 1px 2px rgba(11,31,23,0.04), 0 0 0 1px rgba(11,31,23,0.03);
-  --lkv-: 0 2px 8px rgba(11,31,23,0.05), 0 0 0 1px rgba(11,31,23,0.03);
-  --lkv-: 0 10px 24px rgba(11,31,23,0.08);
-  --lkv-: 0 24px 48px rgba(11,31,23,0.12);
-
-  --lkv-dur: 220ms;
-  --lkv-ease: cubic-bezier(0.4, 0, 0.2, 1);
-  --lkv-ease-out: cubic-bezier(0.16, 1, 0.3, 1);
 }
 
 .font-serif-lkv {

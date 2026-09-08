@@ -1,4 +1,5 @@
 'use client';
+import { lkvAlert } from '@/components/ui/dialogs';
 
 import React, { useState, useMemo, useRef, useEffect, Suspense } from 'react';
 import Header from '@/components/Header';
@@ -120,7 +121,7 @@ function PublierPostContent() {
   // Functional Geolocation Detection
   const handleDetectLocation = () => {
     if (!navigator.geolocation) {
-      alert('La géolocalisation n\'est pas supportée par votre navigateur.');
+      lkvAlert('La géolocalisation n\'est pas supportée par votre navigateur.');
       return;
     }
     setIsDetectingLocation(true);
@@ -280,7 +281,7 @@ function PublierPostContent() {
         setToastMessage(draft ? 'Brouillon sauvegardé !' : 'Post publié avec succès ! 🎉');
         setTimeout(() => router.push('/communaute'), 1500);
       } catch (e) {
-        alert('Erreur lors de la publication : ' + (err.message || String(err)));
+        lkvAlert('Erreur lors de la publication : ' + (err.message || String(err)));
       }
     } finally {
       setIsSubmitting(false);
@@ -295,7 +296,7 @@ function PublierPostContent() {
         <main className="min-h-screen bg-[#F5F2EA] text-[#17402C] pt-24 pb-32">
           {/* Toast Notification */}
           {toastMessage && (
-            <div className="fixed top-24 right-6 z-[999] bg-[#17402C] text-white px-5 py-3 rounded-2xl  text-xs font-bold animate-fade-in border border-emerald-500">
+            <div className="fixed top-24 right-6 z-[999] bg-[#17402C] text-white px-5 py-3 rounded-2xl  text-xs font-bold animate-fade-in border border-forest-500">
               {toastMessage}
             </div>
           )}
@@ -803,7 +804,7 @@ function PublierPostContent() {
 
                 {/* CARD 3: MEILLEUR MOMENT BANNER */}
                 <div className="bg-[#17402C] text-white rounded-[0.75rem] p-5  border border-[#2D3F35]">
-                  <div className="text-[10px] font-mono text-emerald-400 uppercase tracking-wider mb-1">MEILLEUR MOMENT</div>
+                  <div className="text-[10px] font-mono text-forest-400 uppercase tracking-wider mb-1">MEILLEUR MOMENT</div>
                   <h4 className="text-base font-bold mb-1">Publier vers 18h.</h4>
                   <p className="text-xs text-white/70 leading-relaxed font-light">C&apos;est l&apos;heure de votre audience — randonneurs actifs — regarde le fil, entre le trajet retour et le dîner.</p>
                 </div>
@@ -815,7 +816,7 @@ function PublierPostContent() {
           <div className="fixed bottom-0 left-0 right-0 z-50 bg-white/95 backdrop-blur-md border-t border-[#E8E4D8] py-3.5 px-6 ">
             <div className="container mx-auto max-w-7xl flex flex-col sm:flex-row items-center justify-between gap-4">
               <div className="flex items-center gap-2 text-xs font-semibold text-[#17402C]">
-                <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
+                <span className="w-2 h-2 rounded-full bg-forest-500 animate-pulse" />
                 <span>Prêt à publier</span>
                 <span className="text-[#7A8A7D]">·</span>
                 <span className="text-[#7A8A7D]">{wordCount} mots</span>

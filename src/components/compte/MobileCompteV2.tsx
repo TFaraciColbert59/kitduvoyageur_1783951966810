@@ -1,4 +1,5 @@
 'use client';
+import { lkvConfirm } from '@/components/ui/dialogs';
 
 import React, { useEffect, useMemo, useState, useCallback } from 'react';
 import Link from 'next/link';
@@ -922,7 +923,7 @@ export default function MobileCompteV2() {
                       </p>
                     </div>
                   </div>
-                  <span className="glass-pill bg-emerald-50 text-emerald-800 border-emerald-200">
+                  <span className="glass-pill bg-forest-50 text-forest-800 border-forest-200">
                     Possédé
                   </span>
                 </div>
@@ -1290,7 +1291,7 @@ export default function MobileCompteV2() {
                     onClick={async () => {
                       triggerHaptic('warning');
                       setMenuOpen(false);
-                      if (confirm('Voulez-vous vraiment vous déconnecter ?')) {
+                      if (lkvConfirm('Voulez-vous vraiment vous déconnecter ?')) {
                         await signOut();
                         router.push('/connexion');
                       }

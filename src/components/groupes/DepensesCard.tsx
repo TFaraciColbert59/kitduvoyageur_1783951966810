@@ -1,3 +1,4 @@
+import { lkvAlert, lkvConfirm } from '@/components/ui/dialogs';
 import React, { useState } from 'react';
 import { createClient } from '@/lib/supabase/client';
 import Icon from '@/components/ui/AppIcon';
@@ -54,7 +55,7 @@ export default function DepensesCard({ expenses, groupId, onRefresh, user, membe
     
     if (error) {
       console.error(error);
-      alert('Erreur: ' + error.message);
+      lkvAlert('Erreur: ' + error.message);
     } else {
       setNewTitle('');
       setNewAmount('');
@@ -67,7 +68,7 @@ export default function DepensesCard({ expenses, groupId, onRefresh, user, membe
   };
 
   const handleDeleteExpense = async (id: string) => {
-    if (!confirm('Voulez-vous vraiment supprimer cette dépense ?')) return;
+    if (!lkvConfirm('Voulez-vous vraiment supprimer cette dépense ?')) return;
     const { error } = await supabase.from('group_expenses').delete().eq('id', id);
     if (!error && onRefresh) onRefresh();
   };

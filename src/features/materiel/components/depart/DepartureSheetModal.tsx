@@ -98,7 +98,7 @@ export function DepartureSheetModal({
           animate={{ opacity: 1, scale: 1, y: 0 }}
           exit={{ opacity: 0, scale: 0.96, y: 8 }}
           transition={{ duration: 0.18, ease: 'easeOut' }}
-          className="relative w-full max-w-2xl bg-[#FAF9F5] text-[#17402C] rounded-[28px] shadow-2xl border border-white/80 p-5 sm:p-7 space-y-4 my-auto overflow-hidden font-sans"
+          className="relative w-full max-w-2xl bg-[#FAF9F5] text-[#17402C] rounded-card shadow-2xl border border-white/80 p-5 sm:p-7 space-y-4 my-auto overflow-hidden font-sans"
         >
           {/* Header de la Fiche */}
           <div className="flex items-start justify-between gap-3 border-b border-black/10 pb-3.5">

@@ -132,7 +132,7 @@ export default function MobileGroupesV2({
       {/* ── MASTHEAD ── */}
       <div className="p-5 glass rounded-b-2xl mb-4">
         <div className="glass-pill mb-3">
-          <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
+          <span className="w-1.5 h-1.5 rounded-full bg-forest-500 animate-pulse" />
           {myGroups.length} groupe{myGroups.length > 1 ? 's' : ''}{myGroups.length > 0 ? ` · ${prepCount} en préparation` : ''}
         </div>
         <h1 className="font-display text-3xl font-bold tracking-tight leading-tight mb-2 text-lkv-primary">
@@ -271,7 +271,7 @@ function MainList({ featured, rest, pendingCount, showDiscover, onOpenGroup, men
         <Link href={`/groupes/${featured.id}`} className="block">
           <div className="glass p-5 rounded-2xl relative overflow-hidden bg-gradient-to-br from-var(--lkv-primary)/90 to-var(--lkv-primary)/70 text-white min-h-[220px] flex flex-col justify-between">
             <div className="glass-pill text-white border-white/20 self-start">
-              <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
+              <span className="w-1.5 h-1.5 rounded-full bg-forest-400 animate-pulse" />
               Cockpit actif · {featured.optimization_score || 0}%
             </div>
             <div>
