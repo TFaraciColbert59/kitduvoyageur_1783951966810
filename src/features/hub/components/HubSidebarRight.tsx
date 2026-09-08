@@ -1,11 +1,8 @@
 'use client';
 
 import React from 'react';
-import {
-  hubWidgetRegistry,
-  hubEstimatedHeight,
-  HUB_WIDGET_COLUMN_MAX_HEIGHT,
-} from '../registry/hubWidgetRegistry';
+import { hubEstimatedHeight } from '../registry/hubWidgetRegistry';
+import { selectHubWidgets } from '../engine/selectHubWidgets';
 import type { AdventureProfile } from '../engine/hubProfileEngine';
 
 export interface HubSidebarRightProps {
@@ -24,18 +21,7 @@ const NATURE_LABELS = { possession: 'Matériel', sortie: 'Voyage', collectif: 'G
 const PARTY_LABELS = { solo: 'Solo', duo: 'Duo', group: 'Groupe' } as const;
 
 export function HubSidebarRight({ profile, variant = 'column' }: HubSidebarRightProps) {
-  const kept = hubWidgetRegistry
-    .filter((w) => w.natures.includes(profile.nature) && profile.widgets.includes(w.id))
-    .sort((a, b) => b.priority - a.priority);
-
-  const shown: typeof kept = [];
-  let used = 0;
-  for (const w of kept) {
-    if (used + w.estimatedHeight > HUB_WIDGET_COLUMN_MAX_HEIGHT) break;
-    shown.push(w);
-    used += w.estimatedHeight;
-  }
-  const folded = kept.length - shown.length;
+  const { shown, folded } = selectHubWidgets(profile);
 
   if (variant === 'band') {
     return (
@@ -94,7 +80,7 @@ export function HubSidebarRight({ profile, variant = 'column' }: HubSidebarRight
       ))}
       {folded > 0 && (
         <p className="text-[11px] text-[var(--lkv-text-muted)] px-1">
-          +{folded} widget(s) replié(s) — {hubEstimatedHeight(kept.map((w) => w.id))} px budgétés
+          +{folded} widget(s) replié(s) — {hubEstimatedHeight(shown.map((w) => w.id))} px affichés
         </p>
       )}
     </aside>
