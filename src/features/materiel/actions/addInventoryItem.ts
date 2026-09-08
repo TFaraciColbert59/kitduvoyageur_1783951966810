@@ -1,4 +1,4 @@
-﻿'use server';
+'use server';
 import { revalidatePath } from 'next/cache';
 import { createClient } from '@/lib/supabase/server';
 
@@ -51,9 +51,9 @@ export async function addInventoryItem({
       return { success: false, error: insertErr.message };
     }
 
-    revalidatePath('/materiel');
-    revalidatePath('/materiel/inventaire');
-    revalidatePath('/materiel/depart');
+    revalidatePath('/hub');
+    revalidatePath('/hub/inventaire');
+    revalidatePath('/hub/depart');
 
     return { success: true, itemId: item.id };
   } catch (err: any) {

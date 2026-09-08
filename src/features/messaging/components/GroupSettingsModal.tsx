@@ -128,7 +128,7 @@ export const GroupSettingsModal: React.FC<GroupSettingsModalProps> = ({
   };
 
   // Linked Expedition Departure Cockpit URL for expedition groups
-  const expeditionUrl = conversation.id === 'demo-conv-2' ? '/materiel/depart/demo-expedition' : '/materiel/depart';
+  const expeditionUrl = conversation.id === 'demo-conv-2' ? '/hub/depart?id=demo-expedition' : '/hub/depart';
 
   // Bottom sheet Liquid Glass (MobileSheet) : pattern canonique des modales
   // messagerie mobile (drag-to-dismiss, z-[10010], scrim), au lieu d'une

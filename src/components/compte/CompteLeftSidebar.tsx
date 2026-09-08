@@ -87,7 +87,7 @@ export default function CompteLeftSidebar({
           </button>
 
           <Link
-            href="/materiel"
+            href="/hub"
             className="glass-capsule-btn primary text-[10.5px] font-bold !py-1.5 !px-2 flex items-center justify-center gap-1 shadow-none cursor-pointer"
           >
             <Icon name="BriefcaseIcon" size={12} />

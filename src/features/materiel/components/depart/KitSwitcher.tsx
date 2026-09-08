@@ -1,4 +1,4 @@
-﻿'use client';
+'use client';
 import { useRouter } from 'next/navigation';
 import { ChevronDownIcon as ChevronDown } from '@/components/icons/chevron-down';
 import { useState } from 'react';
@@ -26,7 +26,7 @@ export function KitSwitcher({ kits, currentId }: KitSwitcherProps) {
   const handleSelect = (id: string) => {
     setOpen(false);
     if (id !== currentId) {
-      router.push(`/materiel/depart/${id}`);
+      router.push(`/hub/depart?id=${id}`);
     }
   };
 

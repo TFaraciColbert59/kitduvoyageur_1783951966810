@@ -7,6 +7,7 @@ import { usePathname } from 'next/navigation';
 import MobileDrawer from '@/components/mobile-nav/MobileDrawer';
 import OfflineBanner from '@/components/mobile-nav/OfflineBanner';
 import SearchOverlay from '@/components/search/SearchOverlay';
+import { HUB_DEPART_HREF } from '@/features/hub/registry/hubSectionRegistry';
 import { useSearchContext } from '@/contexts/SearchContext';
 
 const BottomTabBar = dynamic(() => import('@/components/mobile-nav/BottomTabBar'), {
@@ -21,7 +22,7 @@ export default function MobileNavWrapper() {
   // Hide general top site navigation on map-heavy views to allow full-screen map focus
   const isMapHeavyRoute = 
     pathname?.startsWith('/randonnee-active') || 
-    pathname?.startsWith('/materiel/depart') || 
+    pathname?.startsWith(HUB_DEPART_HREF) || 
     pathname?.startsWith('/carte-interactive');
 
   if (isMapHeavyRoute) {

@@ -2,7 +2,7 @@ import { redirect } from 'next/navigation';
 
 export const dynamic = 'force-dynamic';
 
-/** /preparer-randonnee — Page supprimée, redirige vers /materiel/depart */
+/** /preparer-randonnee — Redirection directe vers le cockpit départ du hub (307, sans chaîne). */
 export default async function PreparerRandonneePage({
   searchParams,
 }: {
@@ -12,8 +12,8 @@ export default async function PreparerRandonneePage({
   const routeId = params?.routeId;
 
   if (routeId) {
-    redirect(`/materiel/depart/none?route=${routeId}`);
+    redirect(`/hub/depart?id=none&route=${routeId}`);
   }
 
-  redirect('/materiel/depart');
+  redirect('/hub/depart');
 }

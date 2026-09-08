@@ -1,4 +1,4 @@
-﻿'use server';
+'use server';
 import { revalidatePath } from 'next/cache';
 import { createClient } from '@/lib/supabase/server';
 
@@ -61,8 +61,8 @@ export async function toggleKitItem(
       return { success: false, error: updateError.message };
     }
 
-    revalidatePath('/materiel/depart', 'page');
-    revalidatePath('/materiel', 'page');
+    revalidatePath('/hub/depart', 'page');
+    revalidatePath('/hub', 'page');
 
     return { success: true, newChecked };
   } catch (err) {

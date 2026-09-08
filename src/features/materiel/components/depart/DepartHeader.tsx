@@ -1,4 +1,4 @@
-﻿'use client';
+'use client';
 import React, { useState, useTransition } from 'react';
 import { useRouter } from 'next/navigation';
 import Image from 'next/image';
@@ -113,9 +113,9 @@ export function DepartHeader({
   const handleSwipe = (direction: 'left' | 'right') => {
     if (kits.length <= 1 || currentKitIndex === -1) return;
     if (direction === 'left' && currentKitIndex < kits.length - 1) {
-      router.push(`/materiel/depart/${kits[currentKitIndex + 1].id}`);
+      router.push(`/hub/depart?id=${kits[currentKitIndex + 1].id}`);
     } else if (direction === 'right' && currentKitIndex > 0) {
-      router.push(`/materiel/depart/${kits[currentKitIndex - 1].id}`);
+      router.push(`/hub/depart?id=${kits[currentKitIndex - 1].id}`);
     }
   };
 
@@ -335,7 +335,7 @@ export function DepartHeader({
               <button
                 key={k.id}
                 type="button"
-                onClick={() => router.push(`/materiel/depart/${k.id}`)}
+                onClick={() => router.push(`/hub/depart?id=${k.id}`)}
                 className={cn(
                   'h-1.5 rounded-full transition-all cursor-pointer',
                   k.id === depart.id ? 'w-5 bg-[var(--lkv-primary)]' : 'w-1.5 bg-black/20 hover:bg-black/40'

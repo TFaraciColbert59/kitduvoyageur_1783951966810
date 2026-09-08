@@ -22,7 +22,7 @@ interface DepartData {
 
 export function GearCardDepart({ data, className }: { data: DepartData; className?: string }) {
   const router = useRouter();
-  const href = data.id !== 'none' ? `/materiel/depart/${data.id}` : '/materiel/depart/none';
+  const href = data.id !== 'none' ? `/hub/depart?id=${data.id}` : '/hub/depart?id=none';
   const go = () => router.push(href);
 
   return (
@@ -110,7 +110,7 @@ export function GearCardDepart({ data, className }: { data: DepartData; classNam
           </span>
           {data.id !== 'none' ? (
             <Link
-              href={`/materiel/depart/${data.id}`}
+              href={`/hub/depart?id=${data.id}`}
               onClick={(e) => e.stopPropagation()}
               className="glass-capsule-btn primary !h-7 sm:!h-9 !text-[11px] sm:!text-xs !px-3 sm:!px-4"
             >
@@ -119,7 +119,7 @@ export function GearCardDepart({ data, className }: { data: DepartData; classNam
             </Link>
           ) : (
             <Link
-              href="/materiel/depart/none"
+              href="/hub/depart?id=none"
               onClick={(e) => e.stopPropagation()}
               className="glass-capsule-btn primary !h-7 sm:!h-9 !text-[11px] sm:!text-xs !px-3 sm:!px-4"
             >

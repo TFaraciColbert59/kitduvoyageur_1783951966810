@@ -1009,7 +1009,7 @@ export default function InteractiveMap() {
                   <span>Point de départ</span>
                 </a>
                 <a
-                  href={`/materiel/depart/none?route=${selectedTrail.id}`}
+                  href={`/hub/depart?id=none&route=${selectedTrail.id}`}
                   className="glass-capsule-btn flex-1 !min-h-[36px] text-xs font-bold flex items-center justify-center transition-all active:scale-95 no-underline"
                 >
                   Préparer

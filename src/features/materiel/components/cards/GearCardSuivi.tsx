@@ -77,7 +77,7 @@ export function GearCardSuivi({ alertes, dispo, forget, className }: Props) {
               <ProgressBar value={alertes.reliabilityScore} label="Fiabilité" tone={alertes.criticalCount > 0 ? 'danger' : 'sage'} />
             </div>
 
-            <Link href="/materiel/alertes" className="flex items-center justify-between text-[10.5px] font-bold text-[var(--lkv-primary)] hover:text-[var(--lkv-primary-soft)] pt-1 border-t border-white/10">
+            <Link href="/hub/alertes" className="flex items-center justify-between text-[10.5px] font-bold text-[var(--lkv-primary)] hover:text-[var(--lkv-primary-soft)] pt-1 border-t border-white/10">
               <span>Voir diagnostic</span>
               <ArrowRight size={12} />
             </Link>
@@ -101,7 +101,7 @@ export function GearCardSuivi({ alertes, dispo, forget, className }: Props) {
               <ProgressBar value={availablePct} label="Disponibilité" tone={dispo.unavailableCount > 0 ? 'warn' : 'sage'} />
             </div>
 
-            <Link href="/materiel/disponibilite" className="flex items-center justify-between text-[10.5px] font-bold text-[var(--lkv-primary)] hover:text-[var(--lkv-primary-soft)] pt-1 border-t border-white/10">
+            <Link href="/hub/disponibilite" className="flex items-center justify-between text-[10.5px] font-bold text-[var(--lkv-primary)] hover:text-[var(--lkv-primary-soft)] pt-1 border-t border-white/10">
               <span>Gérer les prêts</span>
               <ArrowRight size={12} />
             </Link>
@@ -125,7 +125,7 @@ export function GearCardSuivi({ alertes, dispo, forget, className }: Props) {
               <ProgressBar value={forgetPct} label="Complétude checklist" tone={forgetPct === 100 ? 'sage' : 'warn'} />
             </div>
 
-            <Link href="/materiel/forget" className="flex items-center justify-between text-[10.5px] font-bold text-[var(--lkv-primary)] hover:text-[var(--lkv-primary-soft)] pt-1 border-t border-white/10">
+            <Link href="/hub/oublis" className="flex items-center justify-between text-[10.5px] font-bold text-[var(--lkv-primary)] hover:text-[var(--lkv-primary-soft)] pt-1 border-t border-white/10">
               <span>Ouvrir checklist</span>
               <ArrowRight size={12} />
             </Link>

@@ -27,9 +27,9 @@ export async function updateItemQuantity(itemId: string, quantity: number, kitId
     }
 
     if (kitId) {
-      revalidatePath(`/materiel/depart/${kitId}`);
+      revalidatePath(`/hub/depart?id=${kitId}`);
     }
-    revalidatePath(`/materiel/depart`);
+    revalidatePath(`/hub/depart`);
 
     return { success: true };
   } catch (err: any) {

@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createServerClient } from '@supabase/ssr';
 import { getCountryCodeByName, getCountryByCode } from '@/lib/countries';
+import { resolveLegacyRedirect, LEGACY_REDIRECTS } from '@/lib/hub/hubRedirects';
 
 const PROTECTED_ROUTES = ['/admin', '/checkout'];
 const ADMIN_ROUTES = ['/admin'];
@@ -88,25 +89,17 @@ export async function middleware(request: NextRequest) {
     return NextResponse.redirect(url, { status: 301 });
   }
 
-  // ─── H5 : redirects 307 du hub (suppressions/fusions, URLs gardées vivantes) ──
-  const HUB_REDIRECTS: Record<string, string> = {
-    '/materiel': '/hub',
-    '/naviguer': '/randonnee-active',
-    '/boussole': '/randonnee-active',
-    '/preparation': '/hub/preparation',
-    '/rapport-kit': '/ai-configurator',
-    '/activite': '/feed',
-    '/recommandations': '/hub',
-    '/gamification': '/recompenses',
-    '/alertes': '/hub/alertes',
-    '/terrain': '/hub',
-    '/mes-aventures': '/hub',
-    '/encheres': '/occasion',
-  };
-  const hubTarget = HUB_REDIRECTS[pathname];
-  if (hubTarget) {
+  // ─── H5/H-AUTO-42 : redirects 307 du hub (matrice pur, testée) ────────────────
+  // La table statique + le cas dynamique /materiel/depart/[id] vivent dans
+  // src/lib/hub/hubRedirects.ts (resolver pur). Le clone d'URL conserve la
+  // query d'origine (?route=… etc.) ; seuls les params posés sont ajoutés.
+  const legacy = resolveLegacyRedirect(pathname);
+  if (legacy) {
     const url = request.nextUrl.clone();
-    url.pathname = hubTarget;
+    url.pathname = legacy.destination;
+    for (const [key, value] of Object.entries(legacy.setParams ?? {})) {
+      url.searchParams.set(key, value);
+    }
     return NextResponse.redirect(url, { status: 307 });
   }
 
@@ -142,18 +135,9 @@ export const config = {
     '/compte/:path*',
     '/kits',
     '/pays/:path*',
-    // H5 : chemins redirigés (le matcher explicite est requis, sinon le redirect ne tire jamais).
-    '/materiel',
-    '/naviguer',
-    '/boussole',
-    '/preparation',
-    '/rapport-kit',
-    '/activite',
-    '/recommandations',
-    '/gamification',
-    '/alertes',
-    '/terrain',
-    '/mes-aventures',
-    '/encheres',
+    // H5/H-AUTO-42 : chemins redirigés (le matcher explicite est requis, sinon
+    // le redirect ne tire jamais). Généré depuis la matrice LEGACY_REDIRECTS.
+    ...Object.keys(LEGACY_REDIRECTS),
+    '/materiel/depart/:path*',
   ],
 };

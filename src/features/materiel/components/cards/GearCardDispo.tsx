@@ -76,7 +76,7 @@ export function GearCardDispo({ data, className }: { data: DispoData; className?
             </span>
           </div>
 
-          <Link href="/materiel/disponibilite" className="glass-capsule-btn secondary text-[9.5px] sm:text-xs !h-6 sm:!h-7 !px-2 sm:!px-2.5 shrink-0">
+          <Link href="/hub/disponibilite" className="glass-capsule-btn secondary text-[9.5px] sm:text-xs !h-6 sm:!h-7 !px-2 sm:!px-2.5 shrink-0">
             <span>Prêts</span>
             <ArrowRight size={10} />
           </Link>

@@ -89,7 +89,7 @@ export default function KitSheetModal({ kitId, context: _context, onClose }: Kit
       });
       if (!res.ok) throw new Error('Impossible de forker ce kit');
       onClose();
-      router.push('/mon-materiel');
+      router.push('/hub/kit');
     } catch (e) {
       setError(e instanceof Error ? e.message : 'Erreur');
     } finally {

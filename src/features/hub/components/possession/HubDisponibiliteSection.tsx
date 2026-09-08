@@ -15,8 +15,9 @@ import { getInventory } from '@/features/materiel/services/getInventory';
 import { detectConflicts } from '@/lib/materiel/conflicts';
 
 /**
- * H4.2 — Section disponibilité du hub (composition materiel/disponibilite/page :
- * mêmes composants, mêmes services, mêmes dérivations).
+ * H4.2 — Section disponibilité du hub (mêmes composants, mêmes services,
+ * mêmes dérivations que le cockpit canonique disponibilite).
+ * /materiel/disponibilite redirige 307 ici (H-AUTO-42).
  */
 export async function HubDisponibiliteSection() {
   const supabase = await createClient();

@@ -1,4 +1,4 @@
-﻿'use server';
+'use server';
 import { revalidatePath } from 'next/cache';
 import { createClient } from '@/lib/supabase/server';
 
@@ -40,9 +40,9 @@ export async function updateLoanStatus(loanId: string, status: 'en_cours' | 'ren
         .eq('id', loan.product_ownership_id);
     }
 
-    revalidatePath('/materiel');
-    revalidatePath('/materiel/depart');
-    revalidatePath('/materiel/disponibilite');
+    revalidatePath('/hub');
+    revalidatePath('/hub/depart');
+    revalidatePath('/hub/disponibilite');
 
     return { success: true };
   } catch (err: any) {

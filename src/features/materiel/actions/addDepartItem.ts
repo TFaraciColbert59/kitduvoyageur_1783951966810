@@ -73,8 +73,8 @@ export async function addDepartItem({
       return { success: false, error: 'Erreur lors de l’ajout' };
     }
 
-    revalidatePath(`/materiel/depart`);
-    revalidatePath(`/materiel/depart/${kitId}`);
+    revalidatePath(`/hub/depart`);
+    revalidatePath(`/hub/depart?id=${kitId}`);
 
     return { success: true, item: newItem };
   } catch (err: any) {

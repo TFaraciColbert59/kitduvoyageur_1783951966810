@@ -784,7 +784,7 @@ export function TripKitView({ trip, analysis, showBackLink: _showBackLink = fals
                   {userInventory.length === 0 ? (
                     <div className="space-y-3">
                       <p>Aucun équipement trouvé dans votre inventaire personnel.</p>
-                      <Link href="/materiel" className="inline-block glass-capsule-btn text-xs font-bold px-4 py-2">
+                      <Link href="/hub" className="inline-block glass-capsule-btn text-xs font-bold px-4 py-2">
                         Gérer mon matériel →
                       </Link>
                     </div>
@@ -835,7 +835,7 @@ export function TripKitView({ trip, analysis, showBackLink: _showBackLink = fals
 
             {/* Pied de modale */}
             <div className="pt-3 border-t border-white/40 flex items-center justify-between shrink-0">
-              <Link href="/materiel" className="text-xs text-lkv-secondary hover:underline font-medium">
+              <Link href="/hub" className="text-xs text-lkv-secondary hover:underline font-medium">
                 Ouvrir l'inventaire complet →
               </Link>
               <GlassCapsuleBtn

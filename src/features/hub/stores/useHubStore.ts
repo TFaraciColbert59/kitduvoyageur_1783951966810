@@ -1,7 +1,7 @@
 import { create } from 'zustand';
 import { HubStoreState, BaseCampState, ActionState, HubAlert } from '../types/hub.types';
 import { calculatePrepScore, calculateTrekCountdown } from '../services/prepScoreCalculator';
-import { HUB_DEPART_HREF } from '../registry/hubSectionRegistry';
+import { HUB_DEPART_HREF, hubSectionHref } from '../registry/hubSectionRegistry';
 
 const HUB_STORAGE_KEY = 'lkdv_hub_state_v1';
 
@@ -13,7 +13,7 @@ const DEFAULT_ALERTS: HubAlert[] = [
     title: 'Filtre à eau manquant',
     message: 'Votre liste de matériel ne comporte aucun filtre à eau certifié.',
     actionLabel: 'Ajouter au sac',
-    actionHref: '/materiel',
+    actionHref: hubSectionHref({ nature: 'possession' }, 'kit'),
     createdAt: new Date().toISOString(),
   },
   {

@@ -21,7 +21,7 @@ vi.mock('next/navigation', () => ({
     prefetch: vi.fn(),
     back: vi.fn(),
   }),
-  usePathname: () => '/materiel/depart/tmb-4j',
+  usePathname: () => '/hub/depart',
   useSearchParams: () => new URLSearchParams(),
 }));
 

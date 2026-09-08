@@ -130,7 +130,7 @@ export default function HeroProfil({ profile, onEditProfile, onShareProfile }: H
           {/* Quick CTA Matériel */}
           <div className="shrink-0 self-end md:self-center">
             <Link
-              href="/materiel"
+              href="/hub"
               className="glass-capsule-btn primary text-xs font-bold !py-2.5 !px-4 flex items-center gap-2 shadow-sm"
             >
               <span>🎒</span>

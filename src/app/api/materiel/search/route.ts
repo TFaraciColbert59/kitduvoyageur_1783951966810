@@ -32,8 +32,8 @@ export async function GET(req: NextRequest) {
     ]);
 
     const results = [
-      ...(kits.data ?? []).map((k) => ({ id: k.id, type: 'kit', label: k.name, sublabel: 'Kit', href: `/materiel/kits` })),
-      ...(items.data ?? []).map((i) => ({ id: i.id, type: 'item', label: i.name, sublabel: i.brand ?? 'Objet', href: `/materiel/inventaire` })),
+      ...(kits.data ?? []).map((k) => ({ id: k.id, type: 'kit', label: k.name, sublabel: 'Kit', href: `/hub/kit` })),
+      ...(items.data ?? []).map((i) => ({ id: i.id, type: 'item', label: i.name, sublabel: i.brand ?? 'Objet', href: `/hub/inventaire` })),
     ].slice(0, 12);
 
     return NextResponse.json({ results });

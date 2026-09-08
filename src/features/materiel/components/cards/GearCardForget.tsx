@@ -70,7 +70,7 @@ export function GearCardForget({ data, className }: { data: ForgetData; classNam
           <span className="text-[9.5px] sm:text-xs text-[var(--lkv-text-muted)] truncate max-w-[80px] sm:max-w-[140px]">
             {data.nextDepartLabel ?? 'Aucun départ'}
           </span>
-          <Link href="/materiel/forget" className="glass-capsule-btn secondary text-[9.5px] sm:text-xs !h-6 sm:!h-7 !px-2 sm:!px-2.5">
+          <Link href="/hub/oublis" className="glass-capsule-btn secondary text-[9.5px] sm:text-xs !h-6 sm:!h-7 !px-2 sm:!px-2.5">
             <span>Voir</span>
             <ArrowRight size={10} />
           </Link>

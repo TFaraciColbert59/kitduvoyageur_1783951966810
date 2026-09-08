@@ -1,4 +1,4 @@
-﻿'use server';
+'use server';
 import { createClient } from '@/lib/supabase/server';
 import { revalidatePath } from 'next/cache';
 import type { DepartStatus } from '@/features/materiel/services/getDepartDetail';
@@ -30,8 +30,8 @@ export async function updateDepartStatus(kitId: string, status: DepartStatus) {
       return { success: false, error: 'Erreur lors de la mise à jour du statut' };
     }
 
-    revalidatePath('/materiel/depart');
-    revalidatePath(`/materiel/depart/${kitId}`);
+    revalidatePath('/hub/depart');
+    revalidatePath(`/hub/depart?id=${kitId}`);
     return { success: true, status };
   } catch (err: any) {
     console.error('[updateDepartStatus] unexpected error', err);

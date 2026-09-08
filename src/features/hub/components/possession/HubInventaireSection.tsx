@@ -7,9 +7,10 @@ import { getInventory } from '@/features/materiel/services/getInventory';
 import { getProductSuggestions } from '@/features/materiel/services/getProductSuggestions';
 
 /**
- * H4.2 — Section inventaire du hub (composition materiel/inventaire/page :
- * mêmes composants, mêmes services, mêmes dérivations — le chrome hub
- * remplace l'en-tête de page).
+ * H4.2 — Section inventaire du hub (composition des composants canoniques
+ * inventaire : mêmes composants, mêmes services, mêmes dérivations — le
+ * chrome hub remplace l'en-tête de page). /materiel/inventaire redirige
+ * 307 ici (H-AUTO-42).
  */
 export async function HubInventaireSection() {
   const [items, products] = await Promise.all([getInventory(), getProductSuggestions()]);

@@ -1,4 +1,4 @@
-﻿'use server';
+'use server';
 import { createClient } from '@/lib/supabase/server';
 import { revalidatePath } from 'next/cache';
 
@@ -49,8 +49,8 @@ export async function updateDepartMeta({
       return { success: false, error: 'Erreur lors de la mise à jour' };
     }
 
-    revalidatePath(`/materiel/depart`);
-    revalidatePath(`/materiel/depart/${kitId}`);
+    revalidatePath(`/hub/depart`);
+    revalidatePath(`/hub/depart?id=${kitId}`);
     return { success: true };
   } catch (err: any) {
     console.error('[updateDepartMeta] unexpected error', err);

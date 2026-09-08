@@ -45,7 +45,9 @@ const DEFAULT_TABS: Tab[] = [
     label: 'Hub',
     iconName: 'tent',
     ariaLabel: 'Hub, mon aventure active',
-    matchPaths: ['/hub', '/materiel', '/voyages', '/groupes', '/preparation', '/terrain'],
+    // H-AUTO-42 : /materiel, /preparation et /terrain redirigent 307 vers /hub.
+    // Les surfaces collectives vivantes restent des surfaces hub.
+    matchPaths: ['/hub', '/voyages', '/groupes', '/equipages'],
     isHero: true,
   },
   {
@@ -505,7 +507,7 @@ function BottomTabBar() {
   const isMessageriePage = pathname === '/messagerie';
   const isVoyagesHub = pathname === '/voyages';
 
-  // H5 : les surfaces hub (/hub, /materiel/*, /voyages/[slug], /groupes/*)
+  // H5 : les surfaces hub (/hub, /voyages/[slug], /groupes/*, /equipages/*)
   // sont couvertes par le HubShell (nav registre + AdventureSwitcher) —
   // plus d'upper extension dupliquée pour elles.
   const hasUpperExtension = isClubsHub || isClubDetail || isCarnetsHub || isCarnetDetail || isPaysHub || isPaysDetail || isCommunityPage || isMessageriePage || isVoyagesHub;

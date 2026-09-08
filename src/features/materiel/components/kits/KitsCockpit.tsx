@@ -135,7 +135,7 @@ export function KitsCockpit({
 
         <div className="flex items-center gap-1.5 shrink-0">
           <Link
-            href="/materiel"
+            href="/hub"
             className="glass interactive h-7 px-2.5 rounded-full flex items-center text-xs font-semibold text-[var(--lkv-primary)] shrink-0 border border-white/40 shadow-inner focus-visible:ring-2 focus-visible:ring-[var(--lkv-primary)]"
           >
             ← Retour

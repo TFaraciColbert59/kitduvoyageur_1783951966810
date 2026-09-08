@@ -156,7 +156,7 @@ export default function KitsPage() {
                 </h1>
               </div>
               <Link
-                href="/materiel"
+                href="/hub"
                 className="glass interactive h-7.5 px-3 rounded-full flex items-center text-xs font-semibold text-[#17402C] border border-white/40 shadow-inner"
               >
                 ← Matériel

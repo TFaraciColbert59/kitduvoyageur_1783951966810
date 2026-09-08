@@ -16,7 +16,7 @@ const formatPrice = (cents?: number | null): string | null => {
 };
 
 export const ProductCard: React.FC<ProductCardProps> = ({ meta, isMine }) => {
-  const href = meta.product_slug ? `/produit/${meta.product_slug}` : '/materiel/inventaire';
+  const href = meta.product_slug ? `/produit/${meta.product_slug}` : '/hub/inventaire';
   const title = meta.name || 'Équipement LKDV';
   const price = formatPrice(meta.price_cents);
   const imgSrc = meta.photo_url || '/assets/images/no_image.png';

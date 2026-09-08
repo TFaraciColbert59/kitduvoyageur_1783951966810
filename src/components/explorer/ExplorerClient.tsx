@@ -52,7 +52,7 @@ const TrailDetailPanel = dynamic(() => import('@/components/explorer/TrailDetail
 const NAV_LINKS = [
   { label: 'Aventures', href: '/explorer' },
   { label: 'Earth', href: '/pays' },
-  { label: 'Matériel', href: '/materiel' },
+  { label: 'Matériel', href: '/hub' },
   { label: 'Communauté', href: '/communaute' },
 ];
 
@@ -756,7 +756,7 @@ export default function ExplorerClient({ initialTrails }: ExplorerClientProps) {
                 <div className="flex items-center gap-2 pt-1 border-t border-[#17402C]/08">
                   <button
                     type="button"
-                    onClick={() => router.push(`/materiel/depart/none?route=${selectedTrail.id}`)}
+                    onClick={() => router.push(`/hub/depart?id=none&route=${selectedTrail.id}`)}
                     className="glass-capsule-btn flex-1 !min-h-[36px] text-xs font-bold shadow-xs active:scale-[0.97] transition-all cursor-pointer"
                   >
                     <span>Préparer</span>

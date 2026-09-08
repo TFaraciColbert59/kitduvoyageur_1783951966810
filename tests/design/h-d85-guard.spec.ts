@@ -94,7 +94,12 @@ function exempted(rule: string, file: string): boolean {
 }
 
 /** Fichiers autorisés à écrire des littéraux /hub/ (règle 13). */
-const RULE13_ALLOWLIST = ['src/features/hub/registry/hubSectionRegistry.ts'];
+const RULE13_ALLOWLIST = [
+  'src/features/hub/registry/hubSectionRegistry.ts',
+  // H-AUTO-41 : isHubSurfacePathname teste la RACINE /hub (entrée du hub,
+  // pas une URL de section) pour décider si le switcher est monté.
+  'src/features/hub/context/adventureLists.ts',
+];
 
 /** Fichiers autorisés à nommer des segments/ids hub en littéral (règle 14). */
 const RULE14_ALLOWLIST = [

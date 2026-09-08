@@ -5,9 +5,10 @@ import { getPublicKits } from '@/features/materiel/services/getPublicKits';
 import { getProductSuggestions } from '@/features/materiel/services/getProductSuggestions';
 
 /**
- * H4.2 — Section kits du hub (composition materiel/kits/page).
+ * H4.2 — Section kits du hub (composition des composants canoniques kits).
  * Le cockpit est verrouillé viewport : wrapper hauteur cockpit dans la
  * colonne hub (h-full desktop, min-hauteur + scroll interne mobile).
+ * /materiel/kits redirige 307 ici (H-AUTO-42).
  */
 export async function HubKitSection() {
   const [kits, inventory, publicKits, products] = await Promise.all([

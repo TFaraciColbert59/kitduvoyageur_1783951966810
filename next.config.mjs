@@ -79,11 +79,10 @@ const nextConfig = {
 
   async redirects() {
     return [
-      {
-        source: '/groupes',
-        destination: '/equipages',
-        permanent: true,
-      },
+      // H-AUTO-43 : /groupes reste CANONIQUE (recette Tony H-AUTO-40 — la
+      // section groupe du hub pointe vers /groupes, /equipages si équipage).
+      // L'ancien 301 /groupes → /equipages créait une chaîne de redirections
+      // et cassait la nav communauté (tab "Groupes").
       {
         source: '/voyage-ia',
         destination: '/voyages/nouveau',

@@ -30,7 +30,7 @@ export function ExportShareBar() {
 
   const share = async () => {
     try {
-      await navigator.clipboard.writeText(window.location.origin + '/materiel');
+      await navigator.clipboard.writeText(window.location.origin + '/hub');
       setStatus('Lien copié');
     } catch {
       setStatus('Partage non disponible');

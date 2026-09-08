@@ -31,7 +31,7 @@ type PrefetchConfig = {
 
 const PREFETCH_MAP: Record<string, PrefetchConfig> = {
   "/": {
-    routes: ["/explorer", "/materiel", "/communaute", "/pays", "/compte"],
+    routes: ["/explorer", "/hub", "/communaute", "/pays", "/compte"],
     queries: [
       {
         queryKey: ["hikes"],
@@ -41,7 +41,7 @@ const PREFETCH_MAP: Record<string, PrefetchConfig> = {
     ],
   },
   "/explorer": {
-    routes: ["/carte-interactive", "/hors-ligne", "/materiel"],
+    routes: ["/carte-interactive", "/hors-ligne", "/hub"],
     queries: [
       {
         queryKey: ["hikes"],
@@ -53,7 +53,7 @@ const PREFETCH_MAP: Record<string, PrefetchConfig> = {
   "/communaute": {
     routes: ["/carnets", "/groupes", "/clubs", "/evenements", "/entraide"],
   },
-  "/materiel": {
+  "/hub": {
     routes: ["/kits", "/ai-configurator", "/explorer"],
   },
   "/pays": {

@@ -15,9 +15,9 @@ import { getWeather, weatherLabel } from '@/features/materiel/services/getWeathe
 import { currentSeason } from '@/lib/materiel/season';
 
 /**
- * H4.2 — Section alertes du hub (composition materiel/alertes/page).
- * D4 : la section unique `alertes` vit ici (/materiel/alertes) — la racine
- * /alertes (32,9 ko) sera redirigée en H5 après audit de fusion.
+ * H4.2 — Section alertes du hub (composition des composants canoniques
+ * materiel/alertes). D4 : une seule section `alertes` — /alertes et
+ * /materiel/alertes redirigent 307 ici (H-AUTO-42).
  */
 export async function HubAlertesSection() {
   const [alerts, inventory, occasion, weather] = await Promise.all([

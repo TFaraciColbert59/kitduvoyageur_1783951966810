@@ -120,7 +120,7 @@ export function DepartLeftSidebar({
         {/* Quick actions buttons */}
         <div className="grid grid-cols-2 gap-1.5">
           <Link
-            href="/materiel/kits"
+            href="/hub/kit"
             className="glass-capsule-btn text-[10.5px] font-bold !py-1.5 !px-2 flex items-center justify-center gap-1 shadow-none cursor-pointer"
           >
             <Layers size={12} />

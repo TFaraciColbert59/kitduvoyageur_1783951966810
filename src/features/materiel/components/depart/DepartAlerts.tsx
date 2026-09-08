@@ -79,7 +79,7 @@ export function DepartAlerts({ input }: { input: SmartPromptsInput }) {
         );
       }
     } else if (alert.actionType === 'view_dispo') {
-      router.push('/materiel/dispo');
+      router.push('/hub/disponibilite');
     } else if (alert.actionType === 'scroll_weather' || alert.actionType === 'edit_emergency') {
       const el = document.getElementById('section-depart-terrain');
       el?.scrollIntoView({ behavior: 'smooth' });

@@ -81,7 +81,7 @@ export function GearCardKits({ data, className }: { data: KitsData; className?: 
           >
             {data.totalWeightKg > 0 ? `Total parc (${data.count}) : ${data.totalWeightKg} kg` : `${data.count} kits prêts`}
           </span>
-          <Link href="/materiel/kits" className="glass-capsule-btn secondary text-[9.5px] sm:text-xs !h-6 sm:!h-7 !px-2 sm:!px-2.5 shrink-0">
+          <Link href="/hub/kit" className="glass-capsule-btn secondary text-[9.5px] sm:text-xs !h-6 sm:!h-7 !px-2 sm:!px-2.5 shrink-0">
             <span>Ouvrir</span>
             <ArrowRight size={10} />
           </Link>

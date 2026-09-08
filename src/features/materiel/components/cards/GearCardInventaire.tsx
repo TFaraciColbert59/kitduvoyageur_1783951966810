@@ -73,7 +73,7 @@ export function GearCardInventaire({ data, className }: { data: InventaireData; 
           <span className="text-xs text-[var(--lkv-text-muted)] truncate max-w-[130px]">
             {data.lastAddedLabel ?? 'Inventaire opérationnel'}
           </span>
-          <Link href="/materiel/inventaire" className="glass-capsule-btn secondary">
+          <Link href="/hub/inventaire" className="glass-capsule-btn secondary">
             <Plus size={14} />
             <span>Ajouter</span>
           </Link>

@@ -84,7 +84,7 @@ export function GearCardAlertes({ data, className }: { data: AlertesData; classN
           <span className="text-[9.5px] sm:text-xs text-[var(--lkv-text-muted)] truncate max-w-[80px] sm:max-w-[140px]">
             {data.lastAlertLabel ?? 'Tout est sain'}
           </span>
-          <Link href="/materiel/alertes" className="glass-capsule-btn secondary text-[9.5px] sm:text-xs !h-6 sm:!h-7 !px-2 sm:!px-2.5">
+          <Link href="/hub/alertes" className="glass-capsule-btn secondary text-[9.5px] sm:text-xs !h-6 sm:!h-7 !px-2 sm:!px-2.5">
             <span>Détails</span>
             <ArrowRightAnimated size={10} />
           </Link>

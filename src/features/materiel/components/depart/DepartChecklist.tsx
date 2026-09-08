@@ -783,7 +783,7 @@ export function DepartChecklist({
                                   {/* Lien boutique si article manquant */}
                                   {!item.is_checked && (
                                     <Link
-                                      href={`/materiel/boutique?q=${encodeURIComponent(item.name)}`}
+                                      href={`/boutique?q=${encodeURIComponent(item.name)}`}
                                       className="p-1 rounded-lg text-[var(--lkv-text-muted)] hover:text-[var(--lkv-primary)] hover:bg-black/5"
                                       title="Voir dans la boutique LKDV"
                                     >

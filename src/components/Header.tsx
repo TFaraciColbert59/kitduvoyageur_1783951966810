@@ -15,7 +15,7 @@ import { MessageSquare } from 'lucide-react';
 const NAV_LINKS = [
   { label: 'Aventures', href: '/explorer' },
   { label: 'Earth', href: '/pays' },
-  { label: 'Matériel', href: '/materiel' },
+  { label: 'Matériel', href: '/hub' },
   { label: 'Communauté', href: '/communaute' },
 ];
 
@@ -119,7 +119,7 @@ export default function Header() {
               {[
                 { label: 'Aventures', href: '/explorer' },
                 { label: 'Earth', href: '/pays' },
-                { label: 'Matériel', href: '/materiel' },
+                { label: 'Matériel', href: '/hub' },
                 { label: 'Communauté', href: '/communaute' },
                 { label: 'Mon compte', href: user ? '/compte' : '/connexion' },
               ].map((link) => {
