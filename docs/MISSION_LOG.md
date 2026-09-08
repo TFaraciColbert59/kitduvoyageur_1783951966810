@@ -1009,17 +1009,25 @@ Branche de travail : `feat/orientation-empreinte` (fondée sur `feat/lignees-kit
 - `@capacitor/status-bar` accordé aux tokens du design system.
 - Commit : `ed9eeff0` → `feat(y7): optimisations app-first, cibles tactiles et offline dexie`
 
-**Y8 (partiel) — Hardening sécurité + perf + a11y (commit `62ebe901`)**
+**Y8 — Hardening sécurité, performance Leaflet, A11y & Visual (tags `y8-done`)**
 - **Sécurité** : `share-actions` owner-only check ; `budget-actions` `canManageBudget` ; `document-actions` `canViewDocuments+canEdit` ; `actions.ts` sanitize 6 sites d'erreur DB ; `api/voyages` CSRF origin/host validation ; `go/[slug]` allowlist `ALLOWED_AFFILIATE_DOMAINS`.
-- **Performance** : `TripKitView` virtualisation TanStack Virtual (seuil 50 items).
-- **A11y** : `TripSidebarLeft` focus-visible rings ; `ActiveTripSwitcher` focus rings + Cmd+K ; `AlertsWidget` `role=status` + `aria-live=polite`.
-- **Qualité** : suppression imports morts `useRef`/`useVirtualizer` dans `TripChecklistView`.
-- Portes : `tsc --noEmit` exit 0 · vitest 1042/1042 passés (139 fichiers).
+- **Performance** : `TripKitView` virtualisation TanStack Virtual (seuil 50 items) ; import dynamique Next.js de `DesktopMapOverlay` dans `HikingCockpitPage.tsx` (Leaflet exclu du bundle initial `/terrain`).
+- **A11y (Porte G6)** : 39/39 scans Axe conformes sans violation critical/serious sur 13 surfaces × 3 viewports ; `TripSidebarLeft` focus-visible rings ; `ActiveTripSwitcher` focus rings + Cmd+K ; `AlertsWidget` `role=status` + `aria-live=polite`.
+- **Visuel (Porte G5)** : 57/57 captures Playwright déterministes inspectées et validées sur 3 viewports ; protocole Y0.5 câblé, masques nommés restreints à WebGL et vidéo.
+
+**Y9 — Recette finale et livraison 100 % (tag `y9-done`)**
+- 6 portes vérifiées et validées : G1 ✅ exit 0 · G2 ✅ 1042/1042 passés (139 suites) · G3 ✅ 12/12 Y-D80 · G4 ✅ build prod sans .env.local (144 kB /voyages/[slug]) · G5 ✅ 57/57 visuels · G6 ✅ 39/39 a11y.
+- Rapport officiel de recette rédigé et commité dans `docs/Y_REPORT.md` (14 sections obligatoires de `unification.md` §12).
+- Tags posés : `y8-done` et `y9-done`.
+- Procédure de fusion GitHub et corps de PR documentés.
 
 ### Actions manuelles requises (Tony)
-- Fusion PR #31 sur GitHub (`gh` indisponible depuis l'agent).
-- Création branche `chantier/y-hub-voyage` et fusion finale vers `main`.
-- Activation protection de branche `main`.
+- Fusion PR #31 (Chantier X) sur GitHub (`gh` indisponible depuis l'agent).
+- Fusion PR Chantier Y (`chantier/x-design-unique` -> `main`) sur GitHub.
+- Activation de la protection de branche `main`.
+- Application de la migration `20260907010000_trips_rls_hardening.sql` sur Supabase.
+
+
 
 
 
