@@ -1,0 +1,23 @@
+const { chromium } = require('@playwright/test');
+const DLG = "Changer d'aventure";
+(async () => {
+  const b = await chromium.launch();
+  const ctx = await b.newContext({ viewport: { width: 390, height: 844 } });
+  const page = await ctx.newPage();
+  await page.goto('http://localhost:4028/hub');
+  await page.waitForLoadState('domcontentloaded');
+  await page.waitForTimeout(1500);
+  await page.evaluate(() => window.dispatchEvent(new CustomEvent('hub:open-switcher')));
+  await page.waitForTimeout(800);
+  console.log('after manual event, dialogs:', await page.getByRole('dialog', { name: DLG }).count());
+  await page.keyboard.press('Escape');
+  await page.waitForTimeout(400);
+  const tab = page.locator('nav[aria-label="Navigation principale"] a[href="/hub"]');
+  console.log('tab count:', await tab.count(), 'box:', JSON.stringify(await tab.boundingBox()));
+  await tab.dispatchEvent('pointerdown', { pointerId: 1, isPrimary: true, pointerType: 'touch', clientX: 8, clientY: 8, bubbles: true });
+  await page.waitForTimeout(700);
+  await tab.dispatchEvent('pointerup', { pointerId: 1, isPrimary: true, pointerType: 'touch', clientX: 8, clientY: 8, bubbles: true });
+  await page.waitForTimeout(800);
+  console.log('after pointer long-press, dialogs:', await page.getByRole('dialog', { name: DLG }).count());
+  await b.close();
+})();

@@ -109,10 +109,17 @@ describe('H-AUTO-42 — invariants de la matrice (chaînes, boucles, registre)',
   });
 
   it('INV-5: le matcher middleware couvre toutes les sources statiques', () => {
-    // Le matcher est généré depuis la table — ce test verrouille le contrat
-    // (un matcher incomplet = redirect qui ne tire jamais, cf. H5).
+    // Next refuse le spread dans config.matcher : la liste est littérale.
+    // Ce test verrouille la synchro matcher ↔ matrice (un matcher incomplet
+    // = redirect qui ne tire jamais, cf. H5).
     const middleware = fs.readFileSync(path.join(process.cwd(), 'src', 'middleware.ts'), 'utf8');
-    expect(middleware).toContain('...Object.keys(LEGACY_REDIRECTS)');
-    expect(middleware).toContain("'/materiel/depart/:path*'");
+    const matcherMatch = middleware.match(/matcher:\s*\[([\s\S]*?)\n\s*\]/);
+    expect(matcherMatch).not.toBeNull();
+    const matcherEntries = (matcherMatch![1].match(/'([^']+)'/g) ?? []).map((m) => m.slice(1, -1));
+    const matcherSet = new Set(matcherEntries);
+    for (const source of Object.keys(LEGACY_REDIRECTS)) {
+      expect(matcherSet.has(source), `matcher couvre ${source}`).toBe(true);
+    }
+    expect(matcherSet.has('/materiel/depart/:path*')).toBe(true);
   });
 });

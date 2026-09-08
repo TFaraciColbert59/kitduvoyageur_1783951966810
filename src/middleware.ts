@@ -136,8 +136,28 @@ export const config = {
     '/kits',
     '/pays/:path*',
     // H5/H-AUTO-42 : chemins redirigés (le matcher explicite est requis, sinon
-    // le redirect ne tire jamais). Généré depuis la matrice LEGACY_REDIRECTS.
-    ...Object.keys(LEGACY_REDIRECTS),
+    // le redirect ne tire jamais). Littéral obligatoire : Next refuse le spread
+    // dans config.matcher — la synchro avec LEGACY_REDIRECTS est testée
+    // (tests/features/hub/hubRedirects.spec.ts, INV-5).
+    '/materiel',
+    '/materiel/inventaire',
+    '/materiel/kits',
+    '/materiel/preparation',
+    '/materiel/depart',
     '/materiel/depart/:path*',
+    '/materiel/disponibilite',
+    '/materiel/alertes',
+    '/materiel/forget',
+    '/preparation',
+    '/alertes',
+    '/terrain',
+    '/mes-aventures',
+    '/recommandations',
+    '/naviguer',
+    '/boussole',
+    '/rapport-kit',
+    '/activite',
+    '/gamification',
+    '/encheres',
   ],
 };

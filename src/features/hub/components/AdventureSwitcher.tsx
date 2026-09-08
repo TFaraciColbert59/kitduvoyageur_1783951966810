@@ -24,7 +24,14 @@ import {
  * recherche, restauration de la dernière section, rechargement.
  * La liste affiche toujours les 3 groupes — jamais de restriction.
  */
-export function AdventureSwitcher({ forceOpenSignal = 0 }: { forceOpenSignal?: number }) {
+export function AdventureSwitcher({
+  forceOpenSignal = 0,
+  variant = 'desktop',
+}: {
+  forceOpenSignal?: number;
+  /** Quel dialog cette instance contrôle (un seul Root Radix ouvert à la fois). */
+  variant?: 'mobile' | 'desktop';
+}) {
   const {
     activeAdventure,
     setActiveAdventure,
@@ -43,6 +50,15 @@ export function AdventureSwitcher({ forceOpenSignal = 0 }: { forceOpenSignal?: n
   const [sheetOpen, setSheetOpen] = useState(false);
   const [query, setQuery] = useState('');
 
+  /**
+   * H-AUTO-41 — Un SEUL dialog Radix ouvert à la fois : l'instance est
+   * montée deux fois (slot mobile + colonne desktop) et Radix modal marque
+   * `aria-hidden` le portal sœur — deux Roots ouverts s'excluaient mutuellement
+   * de l'arbre d'accessibilité (dialog invisible au lecteur d'écran).
+   * Chaque instance ne contrôle que le dialog de sa variante.
+   */
+  const isMobileViewport = () => typeof window !== 'undefined' && window.innerWidth < 768;
+
   // H6.1 — Pilotage externe (retour Android) : signal croissant → ouvre.
   const firstSignal = React.useRef(true);
   useEffect(() => {
@@ -50,9 +66,9 @@ export function AdventureSwitcher({ forceOpenSignal = 0 }: { forceOpenSignal?: n
       firstSignal.current = false;
       return;
     }
-    setOpen(true);
-    setSheetOpen(window.innerWidth < 768);
-  }, [forceOpenSignal]);
+    if (variant === 'mobile' && isMobileViewport()) setSheetOpen(true);
+    if (variant === 'desktop' && !isMobileViewport()) setOpen(true);
+  }, [forceOpenSignal, variant]);
 
   // H6.1 — Dialogue d'état (retour Android) : publie ouvert/fermé, écoute la fermeture.
   useEffect(() => {
@@ -71,17 +87,18 @@ export function AdventureSwitcher({ forceOpenSignal = 0 }: { forceOpenSignal?: n
   // consommé au montage (navigation vers /hub → sélecteur ouvert direct).
   useEffect(() => {
     if (consumeSwitcherAutoOpen()) {
-      setOpen(true);
-      setSheetOpen(window.innerWidth < 768);
+      if (variant === 'mobile' && isMobileViewport()) setSheetOpen(true);
+      if (variant === 'desktop' && !isMobileViewport()) setOpen(true);
     }
-  }, []);
+  }, [variant]);
 
   useEffect(() => {
     const handler = (e: KeyboardEvent) => {
       if (shouldToggleSwitcher(e)) {
         e.preventDefault();
-        setOpen((v) => !v);
-        setSheetOpen((v) => (window.innerWidth < 768 ? !v : v));
+        // Une seule instance répond (sa variante) — jamais deux dialogs.
+        if (variant === 'mobile' && isMobileViewport()) setSheetOpen((v) => !v);
+        if (variant === 'desktop' && !isMobileViewport()) setOpen((v) => !v);
       }
       if (e.key === 'Escape') {
         setOpen(false);
@@ -90,7 +107,7 @@ export function AdventureSwitcher({ forceOpenSignal = 0 }: { forceOpenSignal?: n
     };
     window.addEventListener('keydown', handler);
     return () => window.removeEventListener('keydown', handler);
-  }, []);
+  }, [variant]);
 
   const filtered = useMemo(() => filterAdventures(groups, query), [groups, query]);
 
@@ -268,7 +285,9 @@ export function AdventureSwitcher({ forceOpenSignal = 0 }: { forceOpenSignal?: n
       <div className="hidden md:block">
         <button
           type="button"
-          onClick={() => setOpen((v) => !v)}
+          onClick={() => {
+            if (!isMobileViewport()) setOpen((v) => !v);
+          }}
           className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full glass-capsule-btn text-xs font-semibold text-[var(--lkv-text-primary)] min-h-[44px] cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--lkv-primary)]"
           aria-haspopup="dialog"
           aria-expanded={open}
@@ -307,7 +326,9 @@ export function AdventureSwitcher({ forceOpenSignal = 0 }: { forceOpenSignal?: n
       <div className="md:hidden">
         <button
           type="button"
-          onClick={() => setSheetOpen(true)}
+          onClick={() => {
+            if (variant === 'mobile' && isMobileViewport()) setSheetOpen(true);
+          }}
           className="inline-flex items-center gap-1.5 px-3 py-2 rounded-full glass-capsule-btn text-xs font-semibold text-[var(--lkv-text-primary)] min-h-[44px] cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--lkv-primary)]"
           aria-haspopup="dialog"
         >

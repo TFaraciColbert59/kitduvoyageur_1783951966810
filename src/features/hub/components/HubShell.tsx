@@ -166,7 +166,7 @@ export function HubShell({
         <MobilePageShell safeTop={true} hasBottomNav={true}>
           <div className="px-4 py-4 pb-32 text-[var(--lkv-text-primary)]">
             <div className="flex items-center justify-between gap-2 mb-3">
-              <AdventureSwitcher forceOpenSignal={switcherSignal} />
+              <AdventureSwitcher forceOpenSignal={switcherSignal} variant="mobile" />
               <div className="flex items-center gap-2">
                 <HubMobileSectionsSheet
                   adventure={ref}
@@ -197,7 +197,7 @@ export function HubShell({
     >
       <div className="space-y-4">
         <div className="flex items-center justify-between gap-3 flex-wrap">
-          <AdventureSwitcher forceOpenSignal={switcherSignal} />
+          <AdventureSwitcher forceOpenSignal={switcherSignal} variant="desktop" />
           {networkStatus}
         </div>
         {children}
