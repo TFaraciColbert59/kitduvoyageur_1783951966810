@@ -35,6 +35,10 @@ export function HubNetworkStatus() {
     );
   }
 
+  // H8 (parcours §5) : hors-ligne, la bannière globale prend le relais —
+  // exactement un indicateur à l'écran (zéro doublon, zéro contradiction).
+  if (!isOnline) return null;
+
   return (
     <p
       role="status"

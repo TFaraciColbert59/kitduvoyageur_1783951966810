@@ -35,7 +35,9 @@ export default function OfflineBanner() {
           transition={{ duration: 0.25, ease: [0.32, 0.72, 0, 1] }}
           role="status"
           aria-live="polite"
-          className="flex md:hidden"
+          // H8 (parcours §5) : visible sur tous les viewports — avec le repli
+          // du chip hub hors-ligne, la bannière est l'unique indicateur.
+          className="flex"
           style={{
             position: 'fixed',
             top: 'calc(env(safe-area-inset-top, 0px) + 8px)',
