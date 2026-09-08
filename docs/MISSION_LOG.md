@@ -1031,3 +1031,11 @@ Branche de travail : `feat/orientation-empreinte` (fondée sur `feat/lignees-kit
 
 
 
+
+## H0 — Prérequis et état des lieux (08/09/2026, 20:31 UTC, branche chantier/h-hub-voyageur @ 8e3b7ffa ff depuis main)
+- État d'arrivée : arbre propre ; Z2 8865a7ff + Y f27dc3ac présents ; features/hub + useHubStore 6787 o + seed_y_profiles.mjs + playwright.visual.config (3 viewports) OK.
+- Écarts : H_ROUTE_DECISIONS.md + H_INVENTAIRE.md absents -> créés + H_DECISIONS.md (D1-D10 arbitrées, preuves tailles/grep) ; branche H en retard d'1 commit -> fast-forward ; migration RLS = 20260907020000 (renommée 8e3b7ffa) ; doc §0 obsolète (HEAD 8e3b7ffa).
+- H0.5 (D8, TDD Rouge->Vert) : /boutique créée (rayons kits/occasion/location), /manifeste créée, footer /ateliers+/presse retirés, /confidentialite -> /politique-confidentialite. Test tests/routes/dead-links-h05.spec.ts 5/5.
+- Portes H0 : G1 tsc EXIT 0 · G2 142 suites / 1056 tests passed (plancher : 1051/141) · G3 Y-D80 12/12 + ci_invariants succès. Tag : h0-done.
+### Actions manuelles requises (Tony, inchangées + H)
+- Activer protection branche main (G1,G2,G4 requis) ; appliquer sur Supabase : 20260907020000_trips_rls_hardening.sql (+ unify_crews_trips, trip_items_inventory_fk) ; ouvrir/merger PR chantier/h-hub-voyageur -> main en fin de chantier (H8).

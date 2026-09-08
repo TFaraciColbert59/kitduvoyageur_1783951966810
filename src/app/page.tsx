@@ -360,8 +360,6 @@ export default function HomePage() {
                   <p className="text-[10px] font-mono tracking-widest uppercase text-white/50 mb-6">MAISON</p>
                   <ul className="space-y-3 text-xs text-white/70">
                     <li><Link href="/manifeste" className="hover:text-white transition-colors">Notre méthode</Link></li>
-                    <li><Link href="/ateliers" className="hover:text-white transition-colors">Ateliers</Link></li>
-                    <li><Link href="/presse" className="hover:text-white transition-colors">Presse</Link></li>
                     <li><Link href="/contact" className="hover:text-white transition-colors">Contact</Link></li>
                   </ul>
                 </div>
@@ -371,7 +369,7 @@ export default function HomePage() {
                 <p>© 2026 Le Kit du Voyageur · Grenoble, France</p>
                 <div className="flex gap-4">
                   <Link href="/mentions-legales" className="hover:text-white">Mentions</Link>
-                  <Link href="/confidentialite" className="hover:text-white">Confidentialité</Link>
+                  <Link href="/politique-confidentialite" className="hover:text-white">Confidentialité</Link>
                   <Link href="/cookies" className="hover:text-white">Cookies</Link>
                 </div>
               </div>
