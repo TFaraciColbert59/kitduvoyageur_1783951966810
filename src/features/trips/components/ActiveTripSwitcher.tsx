@@ -33,7 +33,7 @@ export function ActiveTripSwitcher() {
     const handler = (e: KeyboardEvent) => {
       if (e.metaKey || e.ctrlKey) {
         const key = e.key.toLowerCase();
-        if (key === 'j') {
+        if (key === 'j' || key === 'k') {
           e.preventDefault();
           setOpen((v) => !v);
           setSheetOpen((v) => (window.innerWidth < 768 ? !v : v));
@@ -144,10 +144,10 @@ export function ActiveTripSwitcher() {
       <button
         type="button"
         onClick={() => setOpen((v) => !v)}
-        className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full glass-capsule-btn text-xs font-semibold text-[var(--lkv-text-primary)] min-h-[44px] cursor-pointer"
+        className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full glass-capsule-btn text-xs font-semibold text-[var(--lkv-text-primary)] min-h-[44px] cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--lkv-primary)]"
         aria-haspopup="dialog"
         aria-expanded={open}
-        title="Changer de voyage (Ctrl/Cmd+J)"
+        title="Changer de voyage (Ctrl/Cmd+K ou J)"
       >
         <Compass size={14} className="text-[var(--lkv-secondary)]" aria-hidden="true" />
         <span className="max-w-[160px] truncate hidden sm:inline">{triggerLabel}</span>
@@ -181,7 +181,7 @@ export function ActiveTripSwitcher() {
       <button
         type="button"
         onClick={() => setSheetOpen(true)}
-        className="md:hidden inline-flex items-center gap-1.5 px-3 py-2 rounded-full glass-capsule-btn text-xs font-semibold text-[var(--lkv-text-primary)] min-h-[44px] cursor-pointer"
+        className="md:hidden inline-flex items-center gap-1.5 px-3 py-2 rounded-full glass-capsule-btn text-xs font-semibold text-[var(--lkv-text-primary)] min-h-[44px] cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--lkv-primary)]"
         aria-haspopup="dialog"
       >
         <Compass size={14} className="text-[var(--lkv-secondary)]" aria-hidden="true" />

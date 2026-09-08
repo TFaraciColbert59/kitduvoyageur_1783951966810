@@ -24,7 +24,12 @@ export function AlertsWidget({ trip }: AlertsWidgetProps) {
   if (expiring.length === 0) return null;
 
   return (
-    <GlassCard tone="warn" className="p-3.5 space-y-1.5 rounded-[var(--lkv-radius-card)] border border-[var(--lkv-warning)]/30">
+    <GlassCard
+      tone="warn"
+      role="status"
+      aria-live="polite"
+      className="p-3.5 space-y-1.5 rounded-[var(--lkv-radius-card)] border border-[var(--lkv-warning)]/30"
+    >
       <span className="text-[9.5px] font-mono font-bold uppercase tracking-widest text-[var(--lkv-warning-dark)] flex items-center gap-1.5">
         <span aria-hidden="true">⚠️</span> Alertes
       </span>

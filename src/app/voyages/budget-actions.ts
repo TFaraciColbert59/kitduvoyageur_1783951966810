@@ -8,6 +8,7 @@ import {
   deleteTripExpenseSchema,
 } from '@/features/trips/schemas/trip.schema';
 import { addTripExpense, deleteTripExpense } from '@/lib/queries-trip-budget';
+import { getTripById } from '@/lib/queries-trips';
 
 export async function addExpenseAction(
   prevState: any,
@@ -39,6 +40,11 @@ export async function addExpenseAction(
 
     if (!user) {
       return { success: false, error: 'Vous devez être connecté pour ajouter une dépense' };
+    }
+
+    const trip = await getTripById(parsed.data.tripId, user.id);
+    if (!trip || !trip.permissions.canManageBudget) {
+      return { success: false, error: 'Permission refusée pour la gestion du budget de ce voyage' };
     }
 
     const created = await addTripExpense({
@@ -78,6 +84,20 @@ export async function deleteExpenseAction(
     const parsed = deleteTripExpenseSchema.safeParse({ tripId, expenseId });
     if (!parsed.success) {
       return { success: false, error: 'Identifiants invalides' };
+    }
+
+    const supabase = await createClient();
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
+
+    if (!user) {
+      return { success: false, error: 'Vous devez être connecté pour supprimer une dépense' };
+    }
+
+    const trip = await getTripById(parsed.data.tripId, user.id);
+    if (!trip || !trip.permissions.canManageBudget) {
+      return { success: false, error: 'Permission refusée pour la gestion du budget de ce voyage' };
     }
 
     const ok = await deleteTripExpense(tripId, expenseId);

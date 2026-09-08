@@ -1,6 +1,7 @@
 'use client';
 
-import React, { useState, useTransition } from 'react';
+import React, { useState, useTransition, useRef } from 'react';
+import { useVirtualizer } from '@tanstack/react-virtual';
 import Link from 'next/link';
 import { GlassCard } from '@/components/ui/GlassCard';
 import { GlassCapsuleBtn } from '@/components/ui/GlassCapsuleBtn';
@@ -523,75 +524,22 @@ export function TripKitView({ trip, analysis, showBackLink: _showBackLink = fals
             actionLabel="+ Ajouter un équipement"
             onAction={() => setIsAddModalOpen(true)}
           />
+        ) : filteredItems.length > 50 ? (
+          <VirtualTripKitItemList
+            items={filteredItems}
+            onTogglePacked={handleTogglePacked}
+            onDeleteItem={handleDeleteItem}
+          />
         ) : (
           <div className="divide-y divide-white/40">
-            {filteredItems.map((item) => {
-              const Icon = CATEGORY_ICONS[item.category || 'misc'] || Package;
-
-              return (
-                <div
-                  key={item.id}
-                  className={`py-3 flex items-center justify-between gap-3 transition-colors ${
-                    item.is_packed ? 'opacity-60' : 'opacity-100'
-                  }`}
-                >
-                  <div className="flex items-center gap-3 min-w-0">
-                    <button
-                      onClick={() => handleTogglePacked(item)}
-                      className="p-1 text-lkv-primary hover:scale-110 transition-transform shrink-0"
-                      aria-label={item.is_packed ? 'Décocher' : 'Cocher comme emballé'}
-                    >
-                      {item.is_packed ? (
-                        <CheckCircle2 className="w-5 h-5 text-lkv-secondary" />
-                      ) : (
-                        <Circle className="w-5 h-5 text-[var(--lkv-text-muted)] hover:text-lkv-secondary" />
-                      )}
-                    </button>
-
-                    <div className="min-w-0">
-                      <div className="flex items-center gap-2">
-                        <span
-                          className={`text-sm font-medium truncate ${
-                            item.is_packed ? 'line-through text-[var(--lkv-text-muted)]' : 'text-[var(--lkv-text-primary)]'
-                          }`}
-                        >
-                          {item.item_name}
-                        </span>
-                        {item.quantity > 1 && (
-                          <span className="text-[10px] font-bold px-1.5 py-0.2 rounded glass-sub-card border border-white/60 text-[var(--lkv-text-secondary)]">
-                            ×{item.quantity}
-                          </span>
-                        )}
-                      </div>
-
-                      <div className="flex items-center gap-2 text-[11px] text-[var(--lkv-text-secondary)] mt-0.5">
-                        <span className="flex items-center gap-1">
-                          <Icon className="w-3 h-3 text-lkv-secondary" />
-                          {CATEGORY_LABELS[item.category || 'misc'] || item.category}
-                        </span>
-                        {item.weight_grams && (
-                          <span>· {item.weight_grams} g</span>
-                        )}
-                        {item.is_vital && (
-                          <span className="text-[var(--lkv-danger)] font-bold">· Vital</span>
-                        )}
-                      </div>
-                    </div>
-                  </div>
-
-                  <div className="flex items-center gap-2 shrink-0">
-                    <button
-                      onClick={() => handleDeleteItem(item.id)}
-                      className="min-h-[44px] min-w-[44px] flex items-center justify-center rounded-full glass-sub-card border border-white/60 text-[var(--lkv-text-muted)] hover:text-[var(--lkv-danger)] hover:bg-[var(--lkv-danger)]/10 transition-all shadow-2xs"
-                      title="Supprimer du sac"
-                      aria-label="Supprimer"
-                    >
-                      <Trash2 className="w-4 h-4" />
-                    </button>
-                  </div>
-                </div>
-              );
-            })}
+            {filteredItems.map((item) => (
+              <TripKitItemRow
+                key={item.id}
+                item={item}
+                onTogglePacked={handleTogglePacked}
+                onDeleteItem={handleDeleteItem}
+              />
+            ))}
           </div>
         )}
       </GlassCard>
@@ -843,6 +791,132 @@ export function TripKitView({ trip, analysis, showBackLink: _showBackLink = fals
           </div>
         </div>
       )}
+    </div>
+  );
+}
+
+interface ItemRowProps {
+  item: TripItem;
+  onTogglePacked: (item: TripItem) => void;
+  onDeleteItem: (id: string) => void;
+}
+
+function TripKitItemRow({ item, onTogglePacked, onDeleteItem }: ItemRowProps) {
+  const Icon = CATEGORY_ICONS[item.category || 'misc'] || Package;
+
+  return (
+    <div
+      className={`py-3 flex items-center justify-between gap-3 transition-colors ${
+        item.is_packed ? 'opacity-60' : 'opacity-100'
+      }`}
+    >
+      <div className="flex items-center gap-3 min-w-0">
+        <button
+          onClick={() => onTogglePacked(item)}
+          className="p-1 text-lkv-primary hover:scale-110 transition-transform shrink-0"
+          aria-label={item.is_packed ? 'Décocher' : 'Cocher comme emballé'}
+        >
+          {item.is_packed ? (
+            <CheckCircle2 className="w-5 h-5 text-lkv-secondary" />
+          ) : (
+            <Circle className="w-5 h-5 text-[var(--lkv-text-muted)] hover:text-lkv-secondary" />
+          )}
+        </button>
+
+        <div className="min-w-0">
+          <div className="flex items-center gap-2">
+            <span
+              className={`text-sm font-medium truncate ${
+                item.is_packed ? 'line-through text-[var(--lkv-text-muted)]' : 'text-[var(--lkv-text-primary)]'
+              }`}
+            >
+              {item.item_name}
+            </span>
+            {item.quantity > 1 && (
+              <span className="text-[10px] font-bold px-1.5 py-0.2 rounded glass-sub-card border border-white/60 text-[var(--lkv-text-secondary)]">
+                ×{item.quantity}
+              </span>
+            )}
+          </div>
+
+          <div className="flex items-center gap-2 text-[11px] text-[var(--lkv-text-secondary)] mt-0.5">
+            <span className="flex items-center gap-1">
+              <Icon className="w-3 h-3 text-lkv-secondary" />
+              {CATEGORY_LABELS[item.category || 'misc'] || item.category}
+            </span>
+            {item.weight_grams && (
+              <span>· {item.weight_grams} g</span>
+            )}
+            {item.is_vital && (
+              <span className="text-[var(--lkv-danger)] font-bold">· Vital</span>
+            )}
+          </div>
+        </div>
+      </div>
+
+      <div className="flex items-center gap-2 shrink-0">
+        <button
+          onClick={() => onDeleteItem(item.id)}
+          className="min-h-[44px] min-w-[44px] flex items-center justify-center rounded-full glass-sub-card border border-white/60 text-[var(--lkv-text-muted)] hover:text-[var(--lkv-danger)] hover:bg-[var(--lkv-danger)]/10 transition-all shadow-2xs"
+          title="Supprimer du sac"
+          aria-label="Supprimer"
+        >
+          <Trash2 className="w-4 h-4" />
+        </button>
+      </div>
+    </div>
+  );
+}
+
+function VirtualTripKitItemList({
+  items,
+  onTogglePacked,
+  onDeleteItem,
+}: {
+  items: TripItem[];
+  onTogglePacked: (item: TripItem) => void;
+  onDeleteItem: (id: string) => void;
+}) {
+  const parentRef = useRef<HTMLDivElement>(null);
+  const rowVirtualizer = useVirtualizer({
+    count: items.length,
+    getScrollElement: () => parentRef.current,
+    estimateSize: () => 64,
+    overscan: 6,
+  });
+
+  return (
+    <div ref={parentRef} className="max-h-[500px] overflow-y-auto no-scrollbar">
+      <div
+        style={{
+          height: `${rowVirtualizer.getTotalSize()}px`,
+          width: '100%',
+          position: 'relative',
+        }}
+      >
+        {rowVirtualizer.getVirtualItems().map((virtualRow) => {
+          const item = items[virtualRow.index];
+          return (
+            <div
+              key={item.id}
+              style={{
+                position: 'absolute',
+                top: 0,
+                left: 0,
+                width: '100%',
+                transform: `translateY(${virtualRow.start}px)`,
+              }}
+              className="border-b border-white/40"
+            >
+              <TripKitItemRow
+                item={item}
+                onTogglePacked={onTogglePacked}
+                onDeleteItem={onDeleteItem}
+              />
+            </div>
+          );
+        })}
+      </div>
     </div>
   );
 }

@@ -138,7 +138,7 @@ export default function TripSidebarLeft({
               href={tripSectionHref(trip.slug, s.id)}
               onClick={() => triggerHaptic('selection')}
               aria-current={isActive ? 'page' : undefined}
-              className={`w-full px-3 py-2.5 rounded-[var(--lkv-radius-md)] min-h-[44px] font-bold text-xs transition-all flex items-center justify-between group cursor-pointer border ${
+              className={`w-full px-3 py-2.5 rounded-[var(--lkv-radius-md)] min-h-[44px] font-bold text-xs transition-all flex items-center justify-between group cursor-pointer border focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--lkv-primary)] focus-visible:ring-offset-1 ${
                 isActive
                   ? 'bg-[var(--lkv-primary)] text-white border-[var(--lkv-primary)] shadow-sm'
                   : 'glass-sub-card border border-white/60 text-[var(--lkv-text-primary)] hover:bg-white shadow-2xs'

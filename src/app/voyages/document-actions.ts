@@ -8,6 +8,7 @@ import {
   deleteTripDocumentSchema,
 } from '@/features/trips/schemas/trip.schema';
 import { addTripDocument, deleteTripDocument } from '@/lib/queries-trip-docs';
+import { getTripById } from '@/lib/queries-trips';
 
 export async function addTripDocumentAction(
   prevState: any,
@@ -39,6 +40,11 @@ export async function addTripDocumentAction(
 
     if (!user) {
       return { success: false, error: 'Vous devez être connecté pour ajouter un document' };
+    }
+
+    const trip = await getTripById(parsed.data.tripId, user.id);
+    if (!trip || !trip.permissions.canViewDocuments || !trip.permissions.canEdit) {
+      return { success: false, error: 'Permission refusée pour ajouter un document à ce voyage' };
     }
 
     const created = await addTripDocument({
@@ -77,6 +83,20 @@ export async function deleteTripDocumentAction(
     const parsed = deleteTripDocumentSchema.safeParse({ tripId, documentId });
     if (!parsed.success) {
       return { success: false, error: 'Identifiants invalides' };
+    }
+
+    const supabase = await createClient();
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
+
+    if (!user) {
+      return { success: false, error: 'Vous devez être connecté pour supprimer un document' };
+    }
+
+    const trip = await getTripById(parsed.data.tripId, user.id);
+    if (!trip || !trip.permissions.canViewDocuments || !trip.permissions.canEdit) {
+      return { success: false, error: 'Permission refusée pour supprimer ce document' };
     }
 
     const ok = await deleteTripDocument(tripId, documentId);
