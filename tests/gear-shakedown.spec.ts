@@ -1,12 +1,12 @@
 import { describe, it, expect } from 'vitest';
-import { GearItem } from '../src/features/gear/types/gear.types';
 import {
   calculateWeightBreakdown,
   identifyDuplicates,
   identifyMissingVitals,
   identifyHeavyItems,
   generateShakedownReport,
-} from '../src/features/gear/services/shakedownEngine';
+  type GearItem,
+} from '@/features/materiel/domain/shakedownEngine';
 import { useGearStore } from '../src/features/gear/stores/useGearStore';
 
 const SAMPLE_ITEMS: GearItem[] = [
