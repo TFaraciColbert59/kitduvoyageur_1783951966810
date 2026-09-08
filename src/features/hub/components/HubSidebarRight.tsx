@@ -1,27 +1,76 @@
 'use client';
 
 import React from 'react';
-import { hubEstimatedHeight } from '../registry/hubWidgetRegistry';
+import { usePathname } from 'next/navigation';
+import { deriveTripProfile } from '@/features/trips/engine/tripProfileEngine';
+import { getTripPhaseDetails } from '@/features/trips/engine/temporalPhaseEngine';
+import { sectionIdFromPathname } from '@/features/trips/registry/tripSectionRegistry';
+import TripSidebarRight from '@/features/trips/components/TripSidebarRight';
 import { selectHubWidgets } from '../engine/selectHubWidgets';
 import type { AdventureProfile } from '../engine/hubProfileEngine';
+import type { TripFull } from '@/features/trips/types/trip.types';
+import type { HubAdventureRef, HubCounters } from '../registry/hubSectionRegistry';
+import { HubWidgetBody, type HubWidgetData } from './HubWidgets';
 
 export interface HubSidebarRightProps {
   profile: AdventureProfile;
   /** column = colonne droite desktop · band = bande défilante mobile (§2.1). */
   variant?: 'column' | 'band';
+  adventure: HubAdventureRef;
+  counts: HubCounters;
+  /** Nature sortie : TripFull pour composer TripSidebarRight (zéro duplication). */
+  trip?: TripFull | null;
+  groupLabel?: string | null;
+  linkedTripSlug?: string | null;
+  pendingInvites?: number;
 }
 
 /**
- * H3.3 — Colonne contextuelle du hub (canonique H-D85 R10).
- * Carte contexte (nature/party/échelle) + slots widgets du profil, ordonnés
- * par priorité, repliés au-delà de 2×900 (contrainte Y). Les widgets réels
- * sont livrés par nature en H4 ; le shell garantit déjà l'ordre et le budget.
+ * H3.3/H4.3 — Colonne contextuelle du hub (canonique H-D85 R10).
+ * Sortie : TripSidebarRight composé (vrais widgets Y). Possession/collectif :
+ * widgets réels HubWidgets. Repli au-delà de 2×900 (contrainte Y).
  */
 const NATURE_LABELS = { possession: 'Matériel', sortie: 'Voyage', collectif: 'Groupe' } as const;
 const PARTY_LABELS = { solo: 'Solo', duo: 'Duo', group: 'Groupe' } as const;
 
-export function HubSidebarRight({ profile, variant = 'column' }: HubSidebarRightProps) {
+export function HubSidebarRight({
+  profile,
+  variant = 'column',
+  adventure,
+  counts,
+  trip,
+  groupLabel,
+  linkedTripSlug,
+  pendingInvites = 0,
+}: HubSidebarRightProps) {
+  const pathname = usePathname();
   const { shown, folded } = selectHubWidgets(profile);
+
+  const data: HubWidgetData = {
+    items: counts.items ?? 0,
+    loans: counts.loans ?? 0,
+    alerts: counts.alerts ?? 0,
+    members: counts.members ?? 0,
+    pendingInvites,
+    groupLabel: groupLabel ?? null,
+    linkedTripSlug: linkedTripSlug ?? null,
+  };
+
+  // Nature sortie : les vrais widgets Y, composés (jamais recopiés).
+  if (profile.nature === 'sortie' && trip && variant === 'column') {
+    const tripProfile = deriveTripProfile(trip, new Date());
+    const phase = getTripPhaseDetails(trip).phase;
+    return (
+      <aside aria-label="Widgets du voyage" className="flex flex-col gap-3">
+        <TripSidebarRight
+          trip={trip}
+          profile={tripProfile}
+          phase={phase}
+          activeSection={sectionIdFromPathname(pathname) ?? 'overview'}
+        />
+      </aside>
+    );
+  }
 
   if (variant === 'band') {
     return (
@@ -66,21 +115,13 @@ export function HubSidebarRight({ profile, variant = 'column' }: HubSidebarRight
       </div>
 
       {shown.map((w) => (
-        <div
-          key={w.id}
-          data-hub-widget={w.id}
-          className="glass p-4 rounded-[var(--lkv-radius-card)] min-h-[44px]"
-        >
-          <p className="text-[10px] font-mono uppercase tracking-widest text-[var(--lkv-text-muted)]">
-            {w.id}
-          </p>
-          <div className="mt-2 h-2 rounded-full bg-black/5" aria-hidden="true" />
-          <span className="sr-only">Widget {w.id} — contenu livré en H4</span>
+        <div key={w.id} data-hub-widget={w.id}>
+          <HubWidgetBody id={w.id} adventure={adventure} data={data} />
         </div>
       ))}
       {folded > 0 && (
         <p className="text-[11px] text-[var(--lkv-text-muted)] px-1">
-          +{folded} widget(s) replié(s) — {hubEstimatedHeight(shown.map((w) => w.id))} px affichés
+          +{folded} widget(s) replié(s)
         </p>
       )}
     </aside>

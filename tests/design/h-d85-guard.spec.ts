@@ -122,6 +122,10 @@ const RULE14_ALLOWLIST = [
   'src/features/hub/registry/hubWidgetRegistry.ts',
   // Couche logique pure du sélecteur (fallbacks typés HubSectionId, testés) — même niveau que le moteur.
   'src/features/hub/context/adventureLists.ts',
+  // Présentation des widgets (mapping widget→section via hubSectionHref typé, zéro littéral d'URL — R13 intacte).
+  'src/features/hub/components/HubWidgets.tsx',
+  // Dispatcher de route /hub/[section] (mapping id→composant centralisé et typé — l'unique endroit sanctionné).
+  'src/app/hub/[section]/page.tsx',
   'tests/design/h-d85-guard.spec.ts',
 ];
 

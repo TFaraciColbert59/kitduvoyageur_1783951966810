@@ -14,6 +14,7 @@ import {
   type HubCounters,
 } from '../registry/hubSectionRegistry';
 import { mergeEnabledSections, type AdventureProfile, type HubSectionId } from '../engine/hubProfileEngine';
+import type { TripFull } from '@/features/trips/types/trip.types';
 import { useHubStore } from '../stores/useHubStore';
 import { useHubLiveSensors } from '../hooks/useHubLiveSensors';
 import { AdventureSwitcher } from './AdventureSwitcher';
@@ -29,6 +30,10 @@ export interface HubShellProps {
   /** Sections activées côté serveur (ex. trip.metadata) — base additive. */
   baseEnabled: HubSectionId[];
   counts: HubCounters;
+  trip?: TripFull | null;
+  groupLabel?: string | null;
+  linkedTripSlug?: string | null;
+  pendingInvites?: number;
   /** Contenu de section (rendu au centre desktop et dans le shell mobile). */
   children: React.ReactNode;
 }
@@ -56,7 +61,17 @@ function refOf(adventure: ActiveAdventureData): HubAdventureRef {
  * mobile, navigation URL-driven lue des registres, mémoire de section par
  * aventure, customs du picker fusionnés au profil serveur.
  */
-export function HubShell({ adventure, profile, baseEnabled, counts, children }: HubShellProps) {
+export function HubShell({
+  adventure,
+  profile,
+  baseEnabled,
+  counts,
+  trip,
+  groupLabel,
+  linkedTripSlug,
+  pendingInvites = 0,
+  children,
+}: HubShellProps) {
   const pathname = usePathname();
   const activeSection = hubSectionFromPathname(pathname);
   const [isPickerOpen, setIsPickerOpen] = useState(false);
@@ -110,7 +125,17 @@ export function HubShell({ adventure, profile, baseEnabled, counts, children }: 
       onOpenPicker={() => setIsPickerOpen(true)}
     />
   );
-  const sidebarRight = <HubSidebarRight profile={effectiveProfile} />;
+  const sidebarRight = (
+    <HubSidebarRight
+      profile={effectiveProfile}
+      adventure={ref}
+      counts={counts}
+      trip={trip}
+      groupLabel={groupLabel}
+      linkedTripSlug={linkedTripSlug}
+      pendingInvites={pendingInvites}
+    />
+  );
   const networkStatus = <HubNetworkStatus />;
 
   return (
@@ -134,7 +159,16 @@ export function HubShell({ adventure, profile, baseEnabled, counts, children }: 
               </div>
             </div>
             <div className="mb-3">
-              <HubSidebarRight profile={effectiveProfile} variant="band" />
+              <HubSidebarRight
+                profile={effectiveProfile}
+                variant="band"
+                adventure={ref}
+                counts={counts}
+                trip={trip}
+                groupLabel={groupLabel}
+                linkedTripSlug={linkedTripSlug}
+                pendingInvites={pendingInvites}
+              />
             </div>
             {children}
           </div>

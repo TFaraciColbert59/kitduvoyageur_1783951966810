@@ -13,6 +13,9 @@ import { HubPreparationSection } from '@/features/hub/components/possession/HubP
 import { HubDepartSection } from '@/features/hub/components/possession/HubDepartSection';
 import { HubDisponibiliteSection } from '@/features/hub/components/possession/HubDisponibiliteSection';
 import { HubAlertesSection } from '@/features/hub/components/possession/HubAlertesSection';
+import { HubGroupeSection } from '@/features/hub/components/collectif/HubGroupeSection';
+import { HubInvitationsSection } from '@/features/hub/components/collectif/HubInvitationsSection';
+import { HubVoyagesLiesSection } from '@/features/hub/components/collectif/HubVoyagesLiesSection';
 
 /**
  * H3.4/H4.2 — Section active du hub (URL-driven, registre).
@@ -74,12 +77,12 @@ export default async function HubSectionPage({
       {def.id === 'depart' && <HubDepartSection />}
       {def.id === 'disponibilite' && <HubDisponibiliteSection />}
       {def.id === 'alertes' && <HubAlertesSection />}
-      {(def.id === 'groupe' || def.id === 'invitations' || def.id === 'voyages-lies') && (
-        <div className="glass p-4 rounded-[var(--lkv-radius-card)]">
-          <p className="text-sm text-[var(--lkv-text-primary)]">
-            Le détail de cette section arrive en H4.3 — la page /groupes reste accessible en attendant.
-          </p>
-        </div>
+      {def.id === 'groupe' && data.adventure.nature === 'collectif' && (
+        <HubGroupeSection adventure={data.adventure} groups={data.groups} crews={data.crews} />
+      )}
+      {def.id === 'invitations' && <HubInvitationsSection />}
+      {def.id === 'voyages-lies' && data.adventure.nature === 'collectif' && (
+        <HubVoyagesLiesSection adventure={data.adventure} crews={data.crews} />
       )}
     </div>
   );

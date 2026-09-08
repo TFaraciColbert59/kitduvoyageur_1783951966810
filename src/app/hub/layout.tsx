@@ -16,7 +16,16 @@ export default async function HubLayout({ children }: { children: React.ReactNod
     data.input.kind === 'sortie' ? (data.input.enabledSections ?? []) : [];
 
   return (
-    <HubShell adventure={data.adventure} profile={profile} baseEnabled={baseEnabled} counts={counts}>
+    <HubShell
+      adventure={data.adventure}
+      profile={profile}
+      baseEnabled={baseEnabled}
+      counts={counts}
+      trip={data.trip}
+      groupLabel={data.groupLabel}
+      linkedTripSlug={data.linkedTripSlug}
+      pendingInvites={data.pendingInvites}
+    >
       {children}
     </HubShell>
   );

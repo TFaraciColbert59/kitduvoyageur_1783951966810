@@ -88,3 +88,9 @@
 | H-AUTO-18 | Colonne droite H3 = carte Contexte + slots ordonnés/repliés (widgets réels en H4) ; `coreNatures` remonté au registre (R14) au lieu d'exempter le picker | Pas de coquille vide ; le registre reste la seule source (R13/R14) |
 | H-AUTO-19 | Triggers switcher wrappés en div responsive (`.glass-capsule-btn` non layeré bat `md:hidden`) ; même bug latent dans ActiveTripSwitcher (Y) → noté H_BLOCKERS, fix proposé H7 | Cause racine : cascade layers Tailwind v3 ; captures avant/après à l'appui |
 | H-AUTO-20 | `HubNetworkStatus` neutre pré-montage (anti-hydratation, zéro CLS) — la résolution réseau native est post-effet | Erreur d'hydratation mesurée (En ligne≠Hors ligne) puis 0 après correctif |
+| H-AUTO-21 | H4 : sections = mêmes composants + mêmes services que les pages sources (parité) ; dérivations triviales recopiées, pages sources NON refactorées mid-chantier | Refactor = risque régression ; composants/services partagés (pas de duplication réelle) |
+| H-AUTO-22 | Cockpits viewport-locked (kit, depart) wrappés `md:h-full min-h-[70dvh]` | Hub center = flow mobile, h-full desktop |
+| H-AUTO-23 | Captures collectif via cookie dev `lkv_active_adventure` (base64url, non loggé) — fallbacks vides vérifiés, hydration 0 | Collectif inaccessible sans session ; visuels avec seed en H8 |
+| H-AUTO-24 | `currentSeason` extrait vers `lib/materiel/season` (corrige `/materiel/alertes` en prod — même crash serveur, pré-existant) | Fonction pure piégée dans fichier 'use client' ; re-export compat, 3 usages realignés |
+| H-AUTO-25 | R14 : `HubWidgets.tsx` + dispatcher `[section]/page.tsx` allowlistés (mappings typés via hubSectionHref, R13 intacte, zéro littéral d'URL) | Le garde-fou garde sa morsure partout ailleurs (2 violations légitimes documentées, pas d'exemption large) |
+| H-AUTO-26 | `/hub/[section]` first-load 343 kB → watch H7 (budget <250 ko gzip ; dynamic imports cockpits si dépassé) | Mesuré au build H4, pas estimé |
