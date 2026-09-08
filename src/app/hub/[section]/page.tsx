@@ -13,7 +13,6 @@ import { HubPreparationSection } from '@/features/hub/components/possession/HubP
 import { HubDepartSection } from '@/features/hub/components/possession/HubDepartSection';
 import { HubDisponibiliteSection } from '@/features/hub/components/possession/HubDisponibiliteSection';
 import { HubAlertesSection } from '@/features/hub/components/possession/HubAlertesSection';
-import { HubGroupeSection } from '@/features/hub/components/collectif/HubGroupeSection';
 import { HubInvitationsSection } from '@/features/hub/components/collectif/HubInvitationsSection';
 import { HubVoyagesLiesSection } from '@/features/hub/components/collectif/HubVoyagesLiesSection';
 
@@ -37,6 +36,12 @@ export default async function HubSectionPage({
 
   if (data.adventure.nature === 'sortie' && data.trip) {
     redirect(hubSectionHref({ nature: 'sortie', slug: data.trip.slug }, def.id));
+  }
+
+  // Retour Tony (H-AUTO-40) : la section groupe renvoie vers l'ancienne page
+  // déjà faite (/groupes, resp. /equipages) — composition, pas de re-rendu.
+  if (def.id === 'groupe' && data.adventure.nature === 'collectif') {
+    redirect(data.adventure.kind === 'equipage' ? '/equipages' : '/groupes');
   }
 
   const profile = deriveHubProfile(data.input, new Date());
@@ -77,9 +82,6 @@ export default async function HubSectionPage({
       {def.id === 'depart' && <HubDepartSection />}
       {def.id === 'disponibilite' && <HubDisponibiliteSection />}
       {def.id === 'alertes' && <HubAlertesSection />}
-      {def.id === 'groupe' && data.adventure.nature === 'collectif' && (
-        <HubGroupeSection adventure={data.adventure} groups={data.groups} crews={data.crews} />
-      )}
       {def.id === 'invitations' && <HubInvitationsSection />}
       {def.id === 'voyages-lies' && data.adventure.nature === 'collectif' && (
         <HubVoyagesLiesSection adventure={data.adventure} crews={data.crews} />
