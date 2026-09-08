@@ -26,6 +26,8 @@ describe('Hub Voyages — Intégration Shakedown Canonique & Inventaire Matérie
       is_worn: false,
       is_consumable: false,
       source: 'inventory',
+      created_at: '2026-09-08T12:00:00Z',
+      updated_at: '2026-09-08T12:00:00Z',
     },
     {
       id: 'trip-item-2',
@@ -43,6 +45,8 @@ describe('Hub Voyages — Intégration Shakedown Canonique & Inventaire Matérie
       is_worn: true, // Porté sur soi
       is_consumable: false,
       source: 'inventory',
+      created_at: '2026-09-08T12:00:00Z',
+      updated_at: '2026-09-08T12:00:00Z',
     },
     {
       id: 'trip-item-3',
@@ -60,6 +64,8 @@ describe('Hub Voyages — Intégration Shakedown Canonique & Inventaire Matérie
       is_worn: false,
       is_consumable: true, // Consommable
       source: 'custom',
+      created_at: '2026-09-08T12:00:00Z',
+      updated_at: '2026-09-08T12:00:00Z',
     },
     {
       id: 'trip-item-4',
@@ -77,6 +83,8 @@ describe('Hub Voyages — Intégration Shakedown Canonique & Inventaire Matérie
       is_worn: false,
       is_consumable: false,
       source: 'inventory',
+      created_at: '2026-09-08T12:00:00Z',
+      updated_at: '2026-09-08T12:00:00Z',
     },
   ];
 

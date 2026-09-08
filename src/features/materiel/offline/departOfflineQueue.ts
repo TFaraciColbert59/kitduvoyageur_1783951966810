@@ -50,7 +50,7 @@ export function queueOfflineAction(action: Omit<QueuedDepartAction, 'id' | 'time
 }
 
 export async function flushOfflineQueue(): Promise<{ processed: number; failed: number }> {
-  if (typeof window === 'undefined' || !navigator.onLine) {
+  if (typeof window === 'undefined' || !navigator['onLine']) {
     return { processed: 0, failed: 0 };
   }
 

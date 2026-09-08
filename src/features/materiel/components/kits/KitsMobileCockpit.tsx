@@ -55,11 +55,11 @@ export function KitsMobileCockpit({
                 {isActive && (
                   <motion.span
                     layoutId="kits-mobile-tab-pill"
-                    className="absolute inset-0 rounded-full bg-[#17402C]/12 border border-[#17402C]/20 shadow-inner"
+                    className="absolute inset-0 rounded-full bg-[var(--lkv-primary)]/12 border border-[var(--lkv-primary)]/20 shadow-inner"
                     transition={{ type: 'spring', stiffness: 450, damping: 32 }}
                   />
                 )}
-                <span className={`relative z-10 ${isActive ? 'text-[#17402C] font-extrabold' : 'text-[#365233]/70'}`}>
+                <span className={`relative z-10 ${isActive ? 'text-[var(--lkv-primary)] font-extrabold' : 'text-[var(--lkv-primary-soft)]/70'}`}>
                   {tab.label}
                 </span>
               </button>

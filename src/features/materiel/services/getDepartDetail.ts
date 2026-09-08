@@ -343,11 +343,11 @@ function getShowcaseDepart(kitId?: string | null, customTrail?: MapTrail | null)
         },
       },
     participants: isVercors
-      ? [{ name: 'Vous', initial: 'V', color: '#17402C' }]
+      ? [{ name: 'Vous', initial: 'V', color: 'var(--lkv-primary)' }]
       : [
-          { name: 'Vous', initial: 'V', color: '#17402C' },
-          { name: 'Clémence', initial: 'C', color: '#2D6B4A' },
-          { name: 'Julien', initial: 'J', color: '#5A7064' },
+          { name: 'Vous', initial: 'V', color: 'var(--lkv-primary)' },
+          { name: 'Clémence', initial: 'C', color: 'var(--lkv-primary-hover)' },
+          { name: 'Julien', initial: 'J', color: 'var(--lkv-text-muted)' },
         ],
     emergencyContact: '+33 6 12 34 56 78',
     coverImageUrl: isVercors
@@ -536,7 +536,7 @@ export async function getDepartDetail(id?: string | null, selectedRouteId?: stri
     const participants: Participant[] = (parts ?? []).map((p, i) => ({
       name: p.name,
       initial: p.name.charAt(0).toUpperCase(),
-      color: ['#5B7F55', '#4B6B7C', '#C89A3B', '#7A7365', '#A8443A'][i % 5],
+      color: ['var(--lkv-secondary)', 'var(--lkv-info)', 'var(--lkv-warning)', 'var(--stone-600)', 'var(--lkv-danger)'][i % 5],
     }));
 
     const emergency = (parts ?? []).find((p) => p.is_emergency_contact)?.contact ?? null;
@@ -592,7 +592,7 @@ export async function getDepartDetail(id?: string | null, selectedRouteId?: stri
       durationDays: 3,
       consumables: consumablesMap,
       trail: trailData,
-      participants: participants.length ? participants : [{ name: 'Vous', initial: 'V', color: '#17402C', profileId: user.id }],
+      participants: participants.length ? participants : [{ name: 'Vous', initial: 'V', color: 'var(--lkv-primary)', profileId: user.id }],
       emergencyContact: emergency,
       coverImageUrl: kit.cover_image_url ?? null,
       activityType,

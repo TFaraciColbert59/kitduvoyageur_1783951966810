@@ -218,7 +218,7 @@ export function DepartChecklist({
 
         if (!isRealKit || !item.id || item.id.startsWith('consumable-')) return;
 
-        if (typeof window !== 'undefined' && !navigator.onLine) {
+        if (typeof window !== 'undefined' && !navigator['onLine']) {
           queueOfflineAction({
             type: 'toggle',
             payload: { itemId: item.id, currentChecked: !nextChecked },
@@ -255,7 +255,7 @@ export function DepartChecklist({
     );
 
     if (isRealKit && item.id && !item.id.startsWith('consumable-')) {
-      if (typeof window !== 'undefined' && !navigator.onLine) {
+      if (typeof window !== 'undefined' && !navigator['onLine']) {
         queueOfflineAction({
           type: 'quantity',
           payload: { itemId: item.id, quantity: nextQty, kitId },
@@ -276,7 +276,7 @@ export function DepartChecklist({
   const handleDelete = async (item: ChecklistItem) => {
     setLocalItems((prev) => prev.filter((i) => (i.id ?? i.name) !== (item.id ?? item.name)));
     if (isRealKit && item.id && !item.id.startsWith('consumable-')) {
-      if (typeof window !== 'undefined' && !navigator.onLine) {
+      if (typeof window !== 'undefined' && !navigator['onLine']) {
         queueOfflineAction({
           type: 'delete',
           payload: { itemId: item.id, kitId },
@@ -322,7 +322,7 @@ export function DepartChecklist({
         addToInventory: newItemAddToInv,
       };
 
-      if (typeof window !== 'undefined' && !navigator.onLine) {
+      if (typeof window !== 'undefined' && !navigator['onLine']) {
         queueOfflineAction({
           type: 'add',
           payload,
@@ -470,10 +470,10 @@ export function DepartChecklist({
   const remaining = total - done;
 
   return (
-    <aside
+    <div role="complementary"
       aria-label="Checklist du Sac en Direct"
       className={cn(
-        'relative h-full max-h-full w-full flex-1 flex flex-col justify-between glass rounded-[1.5rem] p-3.5 text-[#17402C] font-sans overflow-hidden border border-white/40 shadow-sm select-none',
+        'relative h-full max-h-full w-full flex-1 flex flex-col justify-between glass rounded-[1.5rem] p-3.5 text-[var(--lkv-primary)] font-sans overflow-hidden border border-white/40 shadow-sm select-none',
         className
       )}
     >
@@ -481,11 +481,11 @@ export function DepartChecklist({
         {/* ════ HEADER CHECKLIST FIXE IMMOBILE SUR UNE SEULE LIGNE ════ */}
         <div className="shrink-0 flex items-center justify-between gap-2 pb-2 border-b border-black/5 dark:border-white/10">
           <div className="flex items-center gap-1.5 min-w-0">
-            <CheckSquare size={14} className="text-[#2D6B4A] shrink-0" aria-hidden="true" />
-            <h2 id="depart-checklist-heading" className="text-xs sm:text-[13px] font-bold text-[#17402C] truncate">
+            <CheckSquare size={14} className="text-[var(--lkv-primary-hover)] shrink-0" aria-hidden="true" />
+            <h2 id="depart-checklist-heading" className="text-xs sm:text-[13px] font-bold text-[var(--lkv-primary)] truncate">
               Checklist du Sac en Direct
             </h2>
-            <span className="text-[9.5px] font-mono font-bold px-2 py-0.5 rounded-full bg-[#17402C]/10 text-[#17402C] shrink-0">
+            <span className="text-[9.5px] font-mono font-bold px-2 py-0.5 rounded-full bg-[var(--lkv-primary)]/10 text-[var(--lkv-primary)] shrink-0">
               {done}/{total} prêts
             </span>
           </div>
@@ -499,7 +499,7 @@ export function DepartChecklist({
                 onClick={() => setFilterMode('all')}
                 className={cn(
                   'px-1.5 py-0.5 rounded-lg transition-colors cursor-pointer',
-                  filterMode === 'all' ? 'bg-[#17402C] text-white shadow-2xs' : 'text-[#5A7064] hover:text-[#17402C]'
+                  filterMode === 'all' ? 'bg-[var(--lkv-primary)] text-white shadow-2xs' : 'text-[var(--lkv-text-muted)] hover:text-[var(--lkv-primary)]'
                 )}
               >
                 Tous
@@ -509,7 +509,7 @@ export function DepartChecklist({
                 onClick={() => setFilterMode('remaining')}
                 className={cn(
                   'px-1.5 py-0.5 rounded-lg transition-colors cursor-pointer',
-                  filterMode === 'remaining' ? 'bg-[#17402C] text-white shadow-2xs' : 'text-[#5A7064] hover:text-[#17402C]'
+                  filterMode === 'remaining' ? 'bg-[var(--lkv-primary)] text-white shadow-2xs' : 'text-[var(--lkv-text-muted)] hover:text-[var(--lkv-primary)]'
                 )}
               >
                 Restants
@@ -523,8 +523,8 @@ export function DepartChecklist({
               className={cn(
                 'w-6 h-6 rounded-lg flex items-center justify-center transition-all cursor-pointer shadow-2xs shrink-0',
                 isSpeaking
-                  ? 'bg-[#2D6B4A] text-white animate-pulse'
-                  : 'bg-white/60 dark:bg-white/10 text-[#17402C] hover:bg-white'
+                  ? 'bg-[var(--lkv-primary-hover)] text-white animate-pulse'
+                  : 'bg-white/60 dark:bg-white/10 text-[var(--lkv-primary)] hover:bg-white'
               )}
               title={isSpeaking ? 'Arrêter la lecture' : 'Lire les articles restants à voix haute'}
               aria-label={isSpeaking ? 'Arrêter la lecture audio' : 'Lire la checklist à voix haute'}
@@ -536,7 +536,7 @@ export function DepartChecklist({
             <button
               type="button"
               onClick={() => setIsAddModalOpen(true)}
-              className="w-6 h-6 rounded-lg bg-[#17402C] text-white hover:bg-[#17402C]/90 shadow-2xs flex items-center justify-center cursor-pointer shrink-0 transition-transform active:scale-95"
+              className="w-6 h-6 rounded-lg bg-[var(--lkv-primary)] text-white hover:bg-[var(--lkv-primary)]/90 shadow-2xs flex items-center justify-center cursor-pointer shrink-0 transition-transform active:scale-95"
               title="Ajouter un équipement au sac"
               aria-label="Ajouter un équipement au sac"
             >
@@ -547,15 +547,15 @@ export function DepartChecklist({
 
         {/* Toast de retry en cas d erreur réseau */}
         {failedItem && (
-          <div className="p-2.5 rounded-xl bg-red-50 border border-red-200 text-red-800 text-xs flex items-center justify-between gap-2">
+          <div className="p-2.5 rounded-xl bg-[var(--lkv-danger)]/10 border border-[var(--lkv-danger)]/20 text-[var(--lkv-danger)] text-xs flex items-center justify-between gap-2">
             <div className="flex items-center gap-1.5">
-              <AlertCircle size={14} className="text-red-500 shrink-0" />
+              <AlertCircle size={14} className="text-[var(--lkv-danger)] shrink-0" />
               <span>Échec de synchronisation pour <strong>{failedItem.name}</strong></span>
             </div>
             <button
               type="button"
               onClick={() => handleToggle(failedItem)}
-              className="px-2 py-1 rounded-lg bg-red-600 text-white font-bold text-[11px] flex items-center gap-1 hover:bg-red-700"
+              className="px-2 py-1 rounded-lg bg-[var(--lkv-danger)] text-white font-bold text-[11px] flex items-center gap-1 hover:opacity-90"
             >
               <RotateCcwAnimated size={11} />
               <span>Réessayer</span>
@@ -585,12 +585,12 @@ export function DepartChecklist({
                   onClick={() => toggleCat(group.name)}
                   className={cn(
                     'w-full flex items-center justify-between gap-2 px-3 py-2.5 rounded-2xl transition-colors text-left cursor-pointer',
-                    'focus-visible:outline-2 focus-visible:outline-[#17402C]',
+                    'focus-visible:outline-2 focus-visible:outline-[var(--lkv-primary)]',
                     allDone
-                      ? 'bg-black/4 dark:bg-white/5 text-[#17402C]/80 hover:bg-black/6'
+                      ? 'bg-black/4 dark:bg-white/5 text-[var(--lkv-primary)]/80 hover:bg-black/6'
                       : isFoodWater
-                      ? 'bg-emerald-50/70 dark:bg-emerald-950/25 text-[#17402C] font-semibold border border-emerald-200/60 shadow-2xs'
-                      : 'bg-white/50 dark:bg-white/10 text-[#17402C] font-semibold shadow-2xs'
+                      ? 'bg-[var(--lkv-success)]/10 text-[var(--lkv-primary)] font-semibold border border-[var(--lkv-success)]/20 shadow-2xs'
+                      : 'bg-white/50 dark:bg-white/10 text-[var(--lkv-primary)] font-semibold shadow-2xs'
                   )}
                   aria-expanded={isOpen}
                   aria-controls={`checklist-cat-${group.name}`}
@@ -599,12 +599,12 @@ export function DepartChecklist({
                     <span
                       className={cn(
                         'w-2 h-2 rounded-full shrink-0',
-                        allDone ? 'bg-[#2D6B4A]' : isFoodWater ? 'bg-[#2D6B4A]' : 'bg-[#C89A3B]'
+                        allDone ? 'bg-[var(--lkv-primary-hover)]' : isFoodWater ? 'bg-[var(--lkv-primary-hover)]' : 'bg-[var(--lkv-warning)]'
                       )}
                       aria-hidden="true"
                     />
                     <span className="text-xs sm:text-[13px] font-semibold truncate flex items-center gap-1.5">
-                      {isFoodWater && <Droplets size={12} className="text-[#2D6B4A]" />}
+                      {isFoodWater && <Droplets size={12} className="text-[var(--lkv-primary-hover)]" />}
                       <span>{group.name}</span>
                     </span>
                   </div>
@@ -614,8 +614,8 @@ export function DepartChecklist({
                       className={cn(
                         'text-[10.5px] font-mono tabular-nums px-1.5 py-0.5 rounded-md font-semibold',
                         allDone
-                          ? 'bg-[#5B7F55]/15 text-[#17402C]'
-                          : 'bg-black/5 dark:bg-white/10 text-[#5A7064]'
+                          ? 'bg-[var(--lkv-secondary)]/15 text-[var(--lkv-primary)]'
+                          : 'bg-black/5 dark:bg-white/10 text-[var(--lkv-text-muted)]'
                       )}
                     >
                       {group.done}/{group.items.length}
@@ -624,7 +624,7 @@ export function DepartChecklist({
                       animate={shouldReduceMotion ? {} : { rotate: isOpen ? 180 : 0 }}
                       transition={{ duration: 0.18, ease: 'easeInOut' }}
                     >
-                      <ChevronDown size={13} className="text-[#5A7064]" aria-hidden="true" />
+                      <ChevronDown size={13} className="text-[var(--lkv-text-muted)]" aria-hidden="true" />
                     </motion.span>
                   </div>
                 </button>
@@ -669,7 +669,7 @@ export function DepartChecklist({
                                 className={cn(
                                   'hidden md:flex items-center justify-between gap-2.5 px-3 py-2.5 rounded-xl transition-all',
                                   'min-h-[44px]',
-                                  isHighlighted && 'ring-2 ring-[#8A241B] bg-[#8A241B]/15',
+                                  isHighlighted && 'ring-2 ring-[var(--lkv-danger)] bg-[var(--lkv-danger)]/15',
                                   item.is_checked
                                     ? 'bg-black/2 hover:bg-black/4 opacity-75 hover:opacity-100'
                                     : 'bg-white/40 hover:bg-white/60 shadow-2xs'
@@ -688,10 +688,10 @@ export function DepartChecklist({
                                     className={cn(
                                       'shrink-0 w-4 h-4 rounded-full border-[1.5px] flex items-center justify-center transition-all duration-150',
                                       hasError
-                                        ? 'border-red-400 bg-red-50'
+                                        ? 'border-[var(--lkv-danger)]/40 bg-[var(--lkv-danger)]/10'
                                         : item.is_checked
-                                        ? 'bg-[#17402C] border-[#17402C]'
-                                        : 'border-[#5A7064]/50 bg-white/40'
+                                        ? 'bg-[var(--lkv-primary)] border-[var(--lkv-primary)]'
+                                        : 'border-[var(--lkv-text-muted)]/50 bg-white/40'
                                     )}
                                     aria-hidden="true"
                                   >
@@ -704,7 +704,7 @@ export function DepartChecklist({
                                         <Check size={9} className="text-white" strokeWidth={3} />
                                       </motion.span>
                                     )}
-                                    {hasError && <AlertCircle size={9} className="text-red-400" />}
+                                    {hasError && <AlertCircle size={9} className="text-[var(--lkv-danger)]" />}
                                   </span>
 
                                   <div className="min-w-0 flex-1">
@@ -713,20 +713,20 @@ export function DepartChecklist({
                                         className={cn(
                                           'text-xs sm:text-[13px] font-medium leading-snug',
                                           item.is_checked
-                                            ? 'line-through text-[#5A7064]/90 decoration-[#5A7064]/70'
-                                            : 'text-[#17402C] font-semibold'
+                                            ? 'line-through text-[var(--lkv-text-muted)]/90 decoration-[var(--lkv-text-muted)]/70'
+                                            : 'text-[var(--lkv-primary)] font-semibold'
                                         )}
                                       >
                                         {item.name}
                                       </span>
                                       {item.is_vital && (
-                                        <span className="text-[9px] font-bold px-1.5 py-0.2 rounded-full bg-[#8A241B]/15 text-[#8A241B] flex items-center gap-0.5">
+                                        <span className="text-[9px] font-bold px-1.5 py-0.2 rounded-full bg-[var(--lkv-danger)]/15 text-[var(--lkv-danger)] flex items-center gap-0.5">
                                           <Zap size={8} />
                                           Vital
                                         </span>
                                       )}
                                       {item.is_worn && (
-                                        <span className="text-[9px] font-medium px-1.5 py-0.2 rounded-full bg-black/5 text-[#5A7064]">
+                                        <span className="text-[9px] font-medium px-1.5 py-0.2 rounded-full bg-black/5 text-[var(--lkv-text-muted)]">
                                           Porté
                                         </span>
                                       )}
@@ -749,16 +749,16 @@ export function DepartChecklist({
                                         type="button"
                                         onClick={() => handleQuantityChange(item, -1)}
                                         disabled={qty <= 1}
-                                        className="px-1.5 py-0.5 text-[#5A7064] hover:text-[#17402C] disabled:opacity-30 cursor-pointer"
+                                        className="px-1.5 py-0.5 text-[var(--lkv-text-muted)] hover:text-[var(--lkv-primary)] disabled:opacity-30 cursor-pointer"
                                         title="Diminuer la quantité"
                                       >
                                         -
                                       </button>
-                                      <span className="px-1 font-bold text-[11px] text-[#17402C]">{qty}</span>
+                                      <span className="px-1 font-bold text-[11px] text-[var(--lkv-primary)]">{qty}</span>
                                       <button
                                         type="button"
                                         onClick={() => handleQuantityChange(item, 1)}
-                                        className="px-1.5 py-0.5 text-[#5A7064] hover:text-[#17402C] cursor-pointer"
+                                        className="px-1.5 py-0.5 text-[var(--lkv-text-muted)] hover:text-[var(--lkv-primary)] cursor-pointer"
                                         title="Augmenter la quantité"
                                       >
                                         +
@@ -770,8 +770,8 @@ export function DepartChecklist({
                                   {item.weight_g > 0 && (
                                     <span
                                       className={cn(
-                                        'text-[11px] font-mono tabular-nums min-w-[42px] text-right',
-                                        item.is_checked ? 'text-[#5A7064]/60' : 'text-[#5A7064]'
+                                        'text-[11px] font-mono tabular-nums w-[42px] text-right',
+                                        item.is_checked ? 'text-[var(--lkv-text-muted)]/60' : 'text-[var(--lkv-text-muted)]'
                                       )}
                                     >
                                       {item.weight_g * qty < 1000
@@ -784,7 +784,7 @@ export function DepartChecklist({
                                   {!item.is_checked && (
                                     <Link
                                       href={`/materiel/boutique?q=${encodeURIComponent(item.name)}`}
-                                      className="p-1 rounded-lg text-[#5A7064] hover:text-[#17402C] hover:bg-black/5"
+                                      className="p-1 rounded-lg text-[var(--lkv-text-muted)] hover:text-[var(--lkv-primary)] hover:bg-black/5"
                                       title="Voir dans la boutique LKDV"
                                     >
                                       <ShoppingBag size={12} />
@@ -796,7 +796,7 @@ export function DepartChecklist({
                                     <button
                                       type="button"
                                       onClick={() => handleDelete(item)}
-                                      className="p-1 rounded-lg text-[#5A7064]/50 hover:text-red-600 hover:bg-red-50 cursor-pointer"
+                                      className="p-1 rounded-lg text-[var(--lkv-text-muted)]/50 hover:text-[var(--lkv-danger)] hover:bg-[var(--lkv-danger)]/10 cursor-pointer"
                                       title="Supprimer de ce départ"
                                     >
                                       <Trash2 size={12} />
@@ -817,12 +817,12 @@ export function DepartChecklist({
         </div>
 
         {/* ── ZONE BASSE FIXE (Statut de préparation du sac) ── */}
-        <div className="shrink-0 pt-2 border-t border-[#17402C]/5 flex items-center justify-between gap-1 px-1">
-          <div className="flex items-center gap-1 text-[9px] font-mono text-[#5A7064]">
-            <CheckSquare size={11} className="text-[#2D6B4A]" />
+        <div className="shrink-0 pt-2 border-t border-[var(--lkv-primary)]/5 flex items-center justify-between gap-1 px-1">
+          <div className="flex items-center gap-1 text-[9px] font-mono text-[var(--lkv-text-muted)]">
+            <CheckSquare size={11} className="text-[var(--lkv-primary-hover)]" />
             <span>{done === total ? 'Sac 100% prêt' : `${remaining} article${remaining > 1 ? 's' : ''} restant${remaining > 1 ? 's' : ''}`}</span>
           </div>
-          <span className="text-[8.5px] font-mono font-bold text-[#2D6B4A]">
+          <span className="text-[8.5px] font-mono font-bold text-[var(--lkv-primary-hover)]">
             {total > 0 ? Math.round((done / total) * 100) : 100}% PRÊT
           </span>
         </div>
@@ -836,16 +836,16 @@ export function DepartChecklist({
               initial={{ opacity: 0, scale: 0.95 }}
               animate={{ opacity: 1, scale: 1 }}
               exit={{ opacity: 0, scale: 0.95 }}
-              className="glass p-5 rounded-3xl max-w-md w-full border border-white/80 shadow-2xl space-y-4 bg-white/95 text-[#17402C]"
+              className="glass p-5 rounded-3xl max-w-md w-full border border-white/80 shadow-2xl space-y-4 bg-white/95 text-[var(--lkv-primary)]"
             >
               <div className="flex items-center justify-between">
-                <h3 className="font-display font-bold text-base text-[#17402C]">
+                <h3 className="font-display font-bold text-base text-[var(--lkv-primary)]">
                   Ajouter un équipement
                 </h3>
                 <button
                   type="button"
                   onClick={() => setIsAddModalOpen(false)}
-                  className="p-1.5 rounded-xl hover:bg-black/5 text-[#5A7064] cursor-pointer"
+                  className="p-1.5 rounded-xl hover:bg-black/5 text-[var(--lkv-text-muted)] cursor-pointer"
                 >
                   <X size={15} />
                 </button>
@@ -853,7 +853,7 @@ export function DepartChecklist({
 
               <form onSubmit={handleAddItem} className="space-y-3">
                 <div>
-                  <label className="text-[11px] font-bold uppercase tracking-wider text-[#5A7064] block mb-1">
+                  <label className="text-[11px] font-bold uppercase tracking-wider text-[var(--lkv-text-muted)] block mb-1">
                     Nom de l équipement
                   </label>
                   <input
@@ -862,20 +862,20 @@ export function DepartChecklist({
                     value={newItemName}
                     onChange={(e) => setNewItemName(e.target.value)}
                     placeholder="Ex: Couteau pliant, Lampe frontale..."
-                    className="w-full px-3 py-2 rounded-xl text-xs bg-black/5 border border-black/10 focus:outline-none focus:ring-2 focus:ring-[#17402C]/40 text-[#17402C]"
+                    className="w-full px-3 py-2 rounded-xl text-xs bg-black/5 border border-black/10 focus:outline-none focus:ring-2 focus:ring-[var(--lkv-primary)]/40 text-[var(--lkv-primary)]"
                     autoFocus
                   />
                 </div>
 
                 <div className="grid grid-cols-2 gap-2.5">
                   <div>
-                    <label className="text-[11px] font-bold uppercase tracking-wider text-[#5A7064] block mb-1">
+                    <label className="text-[11px] font-bold uppercase tracking-wider text-[var(--lkv-text-muted)] block mb-1">
                       Catégorie
                     </label>
                     <select
                       value={newItemCategory}
                       onChange={(e) => setNewItemCategory(e.target.value)}
-                      className="w-full px-2.5 py-2 rounded-xl text-xs bg-black/5 border border-black/10 text-[#17402C]"
+                      className="w-full px-2.5 py-2 rounded-xl text-xs bg-black/5 border border-black/10 text-[var(--lkv-primary)]"
                     >
                       {CATEGORIES.map((c) => (
                         <option key={c} value={c}>
@@ -886,7 +886,7 @@ export function DepartChecklist({
                   </div>
 
                   <div>
-                    <label className="text-[11px] font-bold uppercase tracking-wider text-[#5A7064] block mb-1">
+                    <label className="text-[11px] font-bold uppercase tracking-wider text-[var(--lkv-text-muted)] block mb-1">
                       Poids (g)
                     </label>
                     <input
@@ -895,28 +895,28 @@ export function DepartChecklist({
                       max={20000}
                       value={newItemWeight}
                       onChange={(e) => setNewItemWeight(Number(e.target.value))}
-                      className="w-full px-3 py-2 rounded-xl text-xs bg-black/5 border border-black/10 text-[#17402C]"
+                      className="w-full px-3 py-2 rounded-xl text-xs bg-black/5 border border-black/10 text-[var(--lkv-primary)]"
                     />
                   </div>
                 </div>
 
                 <div className="space-y-2 pt-1">
-                  <label className="flex items-center gap-2 text-xs font-medium text-[#17402C] cursor-pointer">
+                  <label className="flex items-center gap-2 text-xs font-medium text-[var(--lkv-primary)] cursor-pointer">
                     <input
                       type="checkbox"
                       checked={newItemVital}
                       onChange={(e) => setNewItemVital(e.target.checked)}
-                      className="rounded accent-[#17402C]"
+                      className="rounded accent-[var(--lkv-primary)]"
                     />
                     <span>Classer comme équipement vital</span>
                   </label>
 
-                  <label className="flex items-center gap-2 text-xs font-medium text-[#17402C] cursor-pointer">
+                  <label className="flex items-center gap-2 text-xs font-medium text-[var(--lkv-primary)] cursor-pointer">
                     <input
                       type="checkbox"
                       checked={newItemAddToInv}
                       onChange={(e) => setNewItemAddToInv(e.target.checked)}
-                      className="rounded accent-[#17402C]"
+                      className="rounded accent-[var(--lkv-primary)]"
                     />
                     <span>Ajouter aussi à mon inventaire général</span>
                   </label>
@@ -926,13 +926,13 @@ export function DepartChecklist({
                   <button
                     type="button"
                     onClick={() => setIsAddModalOpen(false)}
-                    className="px-3.5 py-2 rounded-xl text-xs font-semibold hover:bg-black/5 text-[#5A7064] cursor-pointer"
+                    className="px-3.5 py-2 rounded-xl text-xs font-semibold hover:bg-black/5 text-[var(--lkv-text-muted)] cursor-pointer"
                   >
                     Annuler
                   </button>
                   <button
                     type="submit"
-                    className="px-4 py-2 rounded-xl text-xs font-bold bg-[#17402C] text-white hover:bg-[#17402C]/90 shadow-2xs cursor-pointer"
+                    className="px-4 py-2 rounded-xl text-xs font-bold bg-[var(--lkv-primary)] text-white hover:bg-[var(--lkv-primary)]/90 shadow-2xs cursor-pointer"
                   >
                     Valider l ajout
                   </button>
@@ -942,6 +942,6 @@ export function DepartChecklist({
           </div>
         )}
       </AnimatePresence>
-    </aside>
+    </div>
   );
 }

@@ -59,12 +59,12 @@ export function DepartLeftSidebar({
   ];
 
   return (
-    <aside className="h-full max-h-full w-full flex-1 flex flex-col justify-between glass rounded-[1.5rem] p-3.5 text-[#17402C] font-sans overflow-hidden border border-white/40 shadow-sm select-none">
+    <div role="complementary" className="h-full max-h-full w-full flex-1 flex flex-col justify-between glass rounded-[1.5rem] p-3.5 text-[var(--lkv-primary)] font-sans overflow-hidden border border-white/40 shadow-sm select-none">
       {/* ── 1. ZONE HAUTE FIXE (Identité du trek, Switcher & Actions) ── */}
       <div className="shrink-0 space-y-2.5">
         <div className="p-3 rounded-2xl glass-sub-card space-y-2 relative overflow-hidden border border-white/50">
           <div className="flex items-start justify-between gap-1.5">
-            <span className="text-[9.5px] font-mono font-bold uppercase tracking-wider text-[#5A7064]">
+            <span className="text-[9.5px] font-mono font-bold uppercase tracking-wider text-[var(--lkv-text-muted)]">
               Départ Actif
             </span>
             <Badge tone={isReady ? 'sage' : 'warn'}>
@@ -74,13 +74,13 @@ export function DepartLeftSidebar({
             </Badge>
           </div>
 
-          <h4 className="font-display font-bold text-xs sm:text-sm text-[#17402C] line-clamp-2 leading-snug">
+          <h4 className="font-display font-bold text-xs sm:text-sm text-[var(--lkv-primary)] line-clamp-2 leading-snug">
             {cleanDestination}
           </h4>
 
           {/* Statut réseau & Ultra-Save toggle */}
           <div className="pt-1.5 border-t border-white/30 flex items-center justify-between gap-1.5">
-            <span className={cn('flex items-center gap-1 text-[9px] font-mono font-bold px-2 py-0.5 rounded-full', isOnline ? 'bg-emerald-100/90 text-emerald-900' : 'bg-amber-100 text-amber-900')}>
+            <span className={cn('flex items-center gap-1 text-[9px] font-mono font-bold px-2 py-0.5 rounded-full', isOnline ? 'bg-[var(--lkv-success)]/20 text-[var(--lkv-success)]' : 'bg-[var(--lkv-warning)]/20 text-[var(--lkv-warning)]')}>
               {isOnline ? <Wifi size={9} /> : <WifiOff size={9} />}
               {isOnline ? 'En ligne' : 'Hors-ligne'}
             </span>
@@ -92,8 +92,8 @@ export function DepartLeftSidebar({
                 className={cn(
                   'px-2 py-0.5 rounded-lg text-[9px] font-bold flex items-center gap-1 transition-all cursor-pointer',
                   isUltraSave
-                    ? 'bg-[#2D6B4A] text-white shadow-xs'
-                    : 'bg-white/40 text-[#17402C] hover:bg-white/60'
+                    ? 'bg-[var(--lkv-primary-hover)] text-white shadow-xs'
+                    : 'bg-white/40 text-[var(--lkv-primary)] hover:bg-white/60'
                 )}
                 title="Mode Éco Batterie Ultra-Save"
                 aria-pressed={isUltraSave}
@@ -129,7 +129,7 @@ export function DepartLeftSidebar({
 
           <button
             type="button"
-            onClick={() => window.print()}
+            onClick={() => window['print']()}
             className="glass-capsule-btn primary text-[10.5px] font-bold !py-1.5 !px-2 flex items-center justify-center gap-1 shadow-none cursor-pointer"
           >
             <Printer size={12} />
@@ -140,7 +140,7 @@ export function DepartLeftSidebar({
 
       {/* ── 2. ZONE CENTRALE SCROLLABLE À L'INTÉRIEUR (Navigation simplifiée) ── */}
       <nav className="flex-1 min-h-0 overflow-y-auto no-scrollbar py-2 space-y-1.5" aria-label="Navigation du départ">
-        <p className="text-[9.5px] font-mono font-bold uppercase tracking-widest text-[#5A7064] px-2 mb-1">
+        <p className="text-[9.5px] font-mono font-bold uppercase tracking-widest text-[var(--lkv-text-muted)] px-2 mb-1">
           Navigation
         </p>
 
@@ -154,8 +154,8 @@ export function DepartLeftSidebar({
               onClick={() => onSectionChange(t.id)}
               className={`w-full px-3 py-2.5 rounded-xl font-bold text-xs transition-all flex items-center justify-between group cursor-pointer border ${
                 isActive
-                  ? 'bg-[#17402C] text-white border-[#17402C] shadow-sm'
-                  : 'bg-white/80 hover:bg-white text-[#17402C] border-white/80 shadow-2xs'
+                  ? 'bg-[var(--lkv-primary)] text-white border-[var(--lkv-primary)] shadow-sm'
+                  : 'bg-white/80 hover:bg-white text-[var(--lkv-primary)] border-white/80 shadow-2xs'
               }`}
             >
               <span className="truncate text-left">{t.label}</span>
@@ -166,7 +166,7 @@ export function DepartLeftSidebar({
       </nav>
 
       {/* ── 3. ZONE BASSE FIXE (Partage & Footer) — IMMOBILE ── */}
-      <div className="shrink-0 pt-2 border-t border-[#17402C]/5 space-y-1.5">
+      <div className="shrink-0 pt-2 border-t border-[var(--lkv-primary)]/5 space-y-1.5">
         <button
           type="button"
           onClick={() => {
@@ -180,18 +180,18 @@ export function DepartLeftSidebar({
               navigator.clipboard?.writeText(window.location.href);
             }
           }}
-          className="w-full glass-sub-card text-xs font-semibold text-[#365233] p-2 rounded-xl flex items-center justify-center gap-1.5 hover:bg-white/80 transition-colors cursor-pointer border border-white/40"
+          className="w-full glass-sub-card text-xs font-semibold text-[var(--lkv-primary-soft)] p-2 rounded-xl flex items-center justify-center gap-1.5 hover:bg-white/80 transition-colors cursor-pointer border border-white/40"
         >
           <Share2 size={13} />
           <span>Partager ce départ</span>
         </button>
 
         <div className="text-center">
-          <span className="text-[8.5px] font-mono text-[#5A7064] tracking-wider uppercase">
+          <span className="text-[8.5px] font-mono text-[var(--lkv-text-muted)] tracking-wider uppercase">
             Le Kit du Voyageur · Cockpit v2.0
           </span>
         </div>
       </div>
-    </aside>
+    </div>
   );
 }

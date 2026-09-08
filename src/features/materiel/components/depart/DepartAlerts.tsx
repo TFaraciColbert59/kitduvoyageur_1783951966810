@@ -102,13 +102,13 @@ export function DepartAlerts({ input }: { input: SmartPromptsInput }) {
   if (visibleAlerts.length === 0) {
     return (
       <div className="p-3.5 rounded-2xl bg-white/70 dark:bg-stone-900/60 border border-white/80 text-center space-y-1.5 shadow-2xs">
-        <div className="w-8 h-8 rounded-xl bg-forest-100 dark:bg-forest-900/40 text-[#2D6B4A] dark:text-forest-400 flex items-center justify-center mx-auto shadow-2xs">
+        <div className="w-8 h-8 rounded-xl bg-forest-100 dark:bg-forest-900/40 text-[var(--lkv-primary-hover)] dark:text-forest-400 flex items-center justify-center mx-auto shadow-2xs">
           <ShieldCheck size={16} />
         </div>
-        <h4 className="text-xs font-bold text-[#17402C]">
+        <h4 className="text-xs font-bold text-[var(--lkv-primary)]">
           Aucun point bloquant
         </h4>
-        <p className="text-[10.5px] text-[#5A7064]">
+        <p className="text-[10.5px] text-[var(--lkv-text-muted)]">
           Équipements et sécurité prêts.
         </p>
       </div>
@@ -120,8 +120,8 @@ export function DepartAlerts({ input }: { input: SmartPromptsInput }) {
       {/* En-tête avec compteur */}
       <div className="flex items-center justify-between px-1">
         <div className="flex items-center gap-1.5">
-          <span className="w-1.5 h-1.5 rounded-full bg-[#8A241B] animate-pulse" />
-          <span className="text-[9.5px] font-mono font-bold uppercase tracking-wider text-[#8A241B]">
+          <span className="w-1.5 h-1.5 rounded-full bg-[var(--lkv-danger)] animate-pulse" />
+          <span className="text-[9.5px] font-mono font-bold uppercase tracking-wider text-[var(--lkv-danger)]">
             À régler ({activeAlerts.length})
           </span>
         </div>
@@ -130,7 +130,7 @@ export function DepartAlerts({ input }: { input: SmartPromptsInput }) {
           <button
             type="button"
             onClick={() => setExpanded(true)}
-            className="text-[9.5px] font-semibold text-[#5A7064] hover:text-[#17402C] flex items-center gap-0.5 cursor-pointer"
+            className="text-[9.5px] font-semibold text-[var(--lkv-text-muted)] hover:text-[var(--lkv-primary)] flex items-center gap-0.5 cursor-pointer"
           >
             <span>+{hiddenCount}</span>
             <ChevronDown size={10} />
@@ -154,8 +154,8 @@ export function DepartAlerts({ input }: { input: SmartPromptsInput }) {
                 className={cn(
                   'p-3 rounded-2xl border space-y-2 shadow-2xs backdrop-blur-md transition-all',
                   isCritical
-                    ? 'bg-rose-50/90 dark:bg-rose-950/20 border-rose-200/80 text-[#8A241B]'
-                    : 'bg-white/85 dark:bg-stone-900/80 border-white/90 dark:border-white/20 text-[#17402C]'
+                    ? 'bg-rose-50/90 dark:bg-rose-950/20 border-rose-200/80 text-[var(--lkv-danger)]'
+                    : 'bg-white/85 dark:bg-stone-900/80 border-white/90 dark:border-white/20 text-[var(--lkv-primary)]'
                 )}
                 role="alert"
               >
@@ -165,13 +165,13 @@ export function DepartAlerts({ input }: { input: SmartPromptsInput }) {
                     <div
                       className={cn(
                         'w-5.5 h-5.5 rounded-lg flex items-center justify-center shrink-0 shadow-2xs mt-0.5',
-                        isCritical ? 'bg-rose-200/80 text-[#8A241B]' : 'bg-[#2D6B4A]/10 text-[#2D6B4A]'
+                        isCritical ? 'bg-rose-200/80 text-[var(--lkv-danger)]' : 'bg-[var(--lkv-primary-hover)]/10 text-[var(--lkv-primary-hover)]'
                       )}
                     >
                       {isCritical ? <AlertTriangle size={11} /> : <AlertCircle size={11} />}
                     </div>
 
-                    <h5 className="text-[11.5px] font-bold leading-tight text-[#17402C] break-words line-clamp-2">
+                    <h5 className="text-[11.5px] font-bold leading-tight text-[var(--lkv-primary)] break-words line-clamp-2">
                       {alert.title}
                     </h5>
                   </div>
@@ -180,7 +180,7 @@ export function DepartAlerts({ input }: { input: SmartPromptsInput }) {
                     <button
                       type="button"
                       onClick={() => handleSnooze(alert.id)}
-                      className="glass-circle-btn !w-5.5 !h-5.5 text-[9px] font-bold cursor-pointer text-[#17402C]"
+                      className="glass-circle-btn !w-5.5 !h-5.5 text-[9px] font-bold cursor-pointer text-[var(--lkv-primary)]"
                       title="Reporter de 24h"
                       aria-label={`Reporter : ${alert.title}`}
                     >
@@ -190,7 +190,7 @@ export function DepartAlerts({ input }: { input: SmartPromptsInput }) {
                     <button
                       type="button"
                       onClick={() => handleSnooze(alert.id)}
-                      className="glass-circle-btn !w-5.5 !h-5.5 cursor-pointer text-[#17402C]"
+                      className="glass-circle-btn !w-5.5 !h-5.5 cursor-pointer text-[var(--lkv-primary)]"
                       title="Masquer"
                       aria-label="Masquer"
                     >
@@ -200,7 +200,7 @@ export function DepartAlerts({ input }: { input: SmartPromptsInput }) {
                 </div>
 
                 {/* ── LIGNE 2 : MESSAGE LISIBLE SANS CHEVAUCHEMENT ── */}
-                <p className="text-[10.5px] text-[#5A7064] dark:text-stone-300 leading-snug line-clamp-2">
+                <p className="text-[10.5px] text-[var(--lkv-text-muted)] dark:text-stone-300 leading-snug line-clamp-2">
                   {alert.message}
                 </p>
 
@@ -210,7 +210,7 @@ export function DepartAlerts({ input }: { input: SmartPromptsInput }) {
                     <button
                       type="button"
                       onClick={() => setOpenWhyId(isWhyOpen ? null : alert.id)}
-                      className="inline-flex items-center gap-0.5 text-[9.5px] font-semibold text-[#5A7064] hover:text-[#17402C] cursor-pointer underline underline-offset-2"
+                      className="inline-flex items-center gap-0.5 text-[9.5px] font-semibold text-[var(--lkv-text-muted)] hover:text-[var(--lkv-primary)] cursor-pointer underline underline-offset-2"
                       title="Pourquoi cette alerte ?"
                     >
                       <HelpCircle size={9.5} />
@@ -226,7 +226,7 @@ export function DepartAlerts({ input }: { input: SmartPromptsInput }) {
                       onClick={() => handleAction(alert)}
                       className={cn(
                         'glass-capsule-btn !py-1 !px-2.5 text-[10px] font-bold flex items-center gap-1 cursor-pointer shadow-2xs transition-all active:scale-95 shrink-0',
-                        isCritical ? 'primary !bg-[#8A241B] !text-white' : 'primary'
+                        isCritical ? 'primary !bg-[var(--lkv-danger)] !text-white' : 'primary'
                       )}
                     >
                       <span>{alert.actionLabel}</span>
@@ -247,7 +247,7 @@ export function DepartAlerts({ input }: { input: SmartPromptsInput }) {
                       animate={{ opacity: 1, height: 'auto' }}
                       exit={{ opacity: 0, height: 0 }}
                       transition={{ duration: 0.15 }}
-                      className="text-[10px] p-2 rounded-xl bg-white/95 dark:bg-stone-900 border border-black/5 text-[#17402C] leading-relaxed shadow-2xs"
+                      className="text-[10px] p-2 rounded-xl bg-white/95 dark:bg-stone-900 border border-black/5 text-[var(--lkv-primary)] leading-relaxed shadow-2xs"
                     >
                       <p>
                         <strong>Règle LKDV :</strong> {alert.whyExplanation}

@@ -101,7 +101,7 @@ export function DepartMap({ trail, height = '240px', className }: DepartMapProps
       // Tracé principal GPX
       if (lines.length > 0) {
         const poly = L.polyline(lines, {
-          color: '#17402C',
+          color: 'var(--lkv-primary)',
           weight: 4,
           opacity: 0.9,
           lineJoin: 'round',
@@ -115,7 +115,7 @@ export function DepartMap({ trail, height = '240px', className }: DepartMapProps
         // Marqueurs Départ / Arrivée
         const startIcon = L.divIcon({
           className: 'custom-pin-start',
-          html: `<div style="background-color:#2D6B4A;width:12px;height:12px;border-radius:50%;border:2px solid white;box-shadow:0 2px 4px rgba(0,0,0,0.3)"></div>`,
+          html: `<div style="background-color:var(--lkv-primary-hover);width:12px;height:12px;border-radius:50%;border:2px solid white;box-shadow:0 2px 4px rgba(0,0,0,0.3)"></div>`,
           iconSize: [12, 12],
           iconAnchor: [6, 6],
         });
@@ -125,7 +125,7 @@ export function DepartMap({ trail, height = '240px', className }: DepartMapProps
         const endPt = lastLine[lastLine.length - 1];
         const endIcon = L.divIcon({
           className: 'custom-pin-end',
-          html: `<div style="background-color:#8A241B;width:12px;height:12px;border-radius:50%;border:2px solid white;box-shadow:0 2px 4px rgba(0,0,0,0.3)"></div>`,
+          html: `<div style="background-color:var(--lkv-danger);width:12px;height:12px;border-radius:50%;border:2px solid white;box-shadow:0 2px 4px rgba(0,0,0,0.3)"></div>`,
           iconSize: [12, 12],
           iconAnchor: [6, 6],
         });
@@ -134,7 +134,7 @@ export function DepartMap({ trail, height = '240px', className }: DepartMapProps
         // Point unique si pas de ligne
         const pinIcon = L.divIcon({
           className: 'custom-pin-center',
-          html: `<div style="background-color:#17402C;width:14px;height:14px;border-radius:50%;border:2px solid white;box-shadow:0 2px 4px rgba(0,0,0,0.3)"></div>`,
+          html: `<div style="background-color:var(--lkv-primary);width:14px;height:14px;border-radius:50%;border:2px solid white;box-shadow:0 2px 4px rgba(0,0,0,0.3)"></div>`,
           iconSize: [14, 14],
           iconAnchor: [7, 7],
         });
@@ -190,12 +190,12 @@ export function DepartMap({ trail, height = '240px', className }: DepartMapProps
   if (!trail) {
     return (
       <div className="glass rounded-xl p-5 text-center space-y-2.5 border border-white/60">
-        <div className="w-10 h-10 rounded-2xl bg-white/40 border border-white/60 flex items-center justify-center mx-auto text-[#17402C]">
+        <div className="w-10 h-10 rounded-2xl bg-white/40 border border-white/60 flex items-center justify-center mx-auto text-[var(--lkv-primary)]">
           <Compass size={20} />
         </div>
         <div>
-          <h3 className="text-xs sm:text-[13px] font-bold text-[#17402C]">Aucun tracé associé à ce départ</h3>
-          <p className="text-[11px] text-[#5A7064] mt-0.5">
+          <h3 className="text-xs sm:text-[13px] font-bold text-[var(--lkv-primary)]">Aucun tracé associé à ce départ</h3>
+          <p className="text-[11px] text-[var(--lkv-text-muted)] mt-0.5">
             Liez un itinéraire GPX pour activer la carte interactive.
           </p>
         </div>
@@ -252,12 +252,12 @@ export function DepartMap({ trail, height = '240px', className }: DepartMapProps
       {/* ════ HEADER CARTE : NOM DU TRACÉ & DISTANCE ════ */}
       <div className="px-4 py-2.5 border-b border-black/5 dark:border-white/10 flex items-center justify-between gap-2 bg-white/40 dark:bg-white/5 backdrop-blur-md shrink-0">
         <div className="flex items-center gap-2 min-w-0">
-          <MapPin size={14} className="text-[#2D6B4A] shrink-0" />
-          <span className="text-xs font-bold text-[#17402C] truncate">
+          <MapPin size={14} className="text-[var(--lkv-primary-hover)] shrink-0" />
+          <span className="text-xs font-bold text-[var(--lkv-primary)] truncate">
             {trail.name}
           </span>
           {trail.distance_km !== null && (
-            <span className="text-[11px] font-mono font-semibold text-[#5A7064] shrink-0 bg-white/50 px-1.5 py-0.2 rounded-md">
+            <span className="text-[11px] font-mono font-semibold text-[var(--lkv-text-muted)] shrink-0 bg-white/50 px-1.5 py-0.2 rounded-md">
               {formatDistanceKm(trail.distance_km)}
             </span>
           )}
@@ -268,7 +268,7 @@ export function DepartMap({ trail, height = '240px', className }: DepartMapProps
           <button
             type="button"
             onClick={handleDownloadGPX}
-            className="glass-circle-btn !w-7 !h-7 text-[#17402C] cursor-pointer"
+            className="glass-circle-btn !w-7 !h-7 text-[var(--lkv-primary)] cursor-pointer"
             title="Exporter le tracé"
             aria-label="Exporter le tracé"
           >
@@ -277,7 +277,7 @@ export function DepartMap({ trail, height = '240px', className }: DepartMapProps
           <button
             type="button"
             onClick={() => setIsFullscreen((v) => !v)}
-            className="glass-circle-btn !w-7 !h-7 text-[#17402C] cursor-pointer"
+            className="glass-circle-btn !w-7 !h-7 text-[var(--lkv-primary)] cursor-pointer"
             title={isFullscreen ? 'Réduire' : 'Plein écran'}
             aria-label={isFullscreen ? 'Quitter le mode plein écran' : 'Afficher la carte en plein écran'}
           >
@@ -304,7 +304,7 @@ export function DepartMap({ trail, height = '240px', className }: DepartMapProps
           <button
             type="button"
             onClick={handleRecenter}
-            className="glass-circle-btn !w-8 !h-8 text-[#17402C] cursor-pointer shadow-md"
+            className="glass-circle-btn !w-8 !h-8 text-[var(--lkv-primary)] cursor-pointer shadow-md"
             title="Recentrer le tracé"
           >
             <Navigation size={13} />
@@ -312,7 +312,7 @@ export function DepartMap({ trail, height = '240px', className }: DepartMapProps
           <button
             type="button"
             onClick={() => setShowTilePicker((v) => !v)}
-            className="glass-circle-btn !w-8 !h-8 text-[#17402C] cursor-pointer shadow-md"
+            className="glass-circle-btn !w-8 !h-8 text-[var(--lkv-primary)] cursor-pointer shadow-md"
             title="Changer de fond de carte"
           >
             <Layers size={13} />
@@ -321,25 +321,25 @@ export function DepartMap({ trail, height = '240px', className }: DepartMapProps
 
         {/* Sélecteur de tuiles */}
         {showTilePicker && (
-          <div className="absolute top-12 right-2.5 z-[401] p-1.5 rounded-2xl bg-white/95 dark:bg-black/90 shadow-xl border border-black/10 flex flex-col gap-1 text-[11px] font-semibold text-[#17402C]">
+          <div className="absolute top-12 right-2.5 z-[401] p-1.5 rounded-2xl bg-white/95 dark:bg-black/90 shadow-xl border border-black/10 flex flex-col gap-1 text-[11px] font-semibold text-[var(--lkv-primary)]">
             <button
               type="button"
               onClick={() => handleTileChange('topo')}
-              className={cn('px-2 py-1 rounded-xl text-left cursor-pointer', tileMode === 'topo' && 'bg-[#17402C] text-white')}
+              className={cn('px-2 py-1 rounded-xl text-left cursor-pointer', tileMode === 'topo' && 'bg-[var(--lkv-primary)] text-white')}
             >
               IGN Topo
             </button>
             <button
               type="button"
               onClick={() => handleTileChange('osm')}
-              className={cn('px-2 py-1 rounded-xl text-left cursor-pointer', tileMode === 'osm' && 'bg-[#17402C] text-white')}
+              className={cn('px-2 py-1 rounded-xl text-left cursor-pointer', tileMode === 'osm' && 'bg-[var(--lkv-primary)] text-white')}
             >
               OpenStreetMap
             </button>
             <button
               type="button"
               onClick={() => handleTileChange('satellite')}
-              className={cn('px-2 py-1 rounded-xl text-left cursor-pointer', tileMode === 'satellite' && 'bg-[#17402C] text-white')}
+              className={cn('px-2 py-1 rounded-xl text-left cursor-pointer', tileMode === 'satellite' && 'bg-[var(--lkv-primary)] text-white')}
             >
               Satellite
             </button>

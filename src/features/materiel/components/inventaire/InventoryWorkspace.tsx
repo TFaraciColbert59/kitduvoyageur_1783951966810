@@ -148,8 +148,8 @@ export function InventoryWorkspace({ items }: { items: InventoryItem[] }) {
       <GlassCard className="p-3" aria-labelledby="inv-toolbar">
         <h2 id="inv-toolbar" className="sr-only">Recherche et tri</h2>
         <div className="flex flex-wrap items-center gap-2">
-          <input value={query} onChange={(e) => setQuery(e.target.value)} placeholder="Rechercher un objet…" aria-label="Rechercher" className="glass-input flex-1 min-w-[160px]" />
-          <select value={sort} onChange={(e) => setSort(e.target.value as typeof sort)} aria-label="Trier" className="glass-input">
+          <input className="glass-input flex-1 min-w-[160px]" value={query} onChange={(e) => setQuery(e.target.value)} placeholder="Rechercher un objet…" aria-label="Rechercher" />
+          <select className="glass-input" value={sort} onChange={(e) => setSort(e.target.value as typeof sort)} aria-label="Trier">
             <option value="recent">Récents</option>
             <option value="weight">Poids</option>
             <option value="price">Prix</option>
@@ -168,10 +168,10 @@ export function InventoryWorkspace({ items }: { items: InventoryItem[] }) {
           <Eyebrow>Filtres</Eyebrow>
           <div className="mt-3 flex flex-col gap-2">
             <label className="flex items-center gap-2 text-sm text-[color:var(--label)]">
-              <input type="checkbox" checked={lentOnly} onChange={(e) => setLentOnly(e.target.checked)} />
+              <input className="rounded border-white/40" type="checkbox" checked={lentOnly} onChange={(e) => setLentOnly(e.target.checked)} />
               En prêt uniquement
             </label>
-            <select value={category} onChange={(e) => setCategory(e.target.value)} aria-label="Filtrer par catégorie" className="glass-input">
+            <select className="glass-input" value={category} onChange={(e) => setCategory(e.target.value)} aria-label="Filtrer par catégorie">
               <option value="all">Toutes catégories</option>
               {categories.map((c) => <option key={c} value={c}>{c}</option>)}
             </select>
@@ -212,12 +212,12 @@ export function InventoryWorkspace({ items }: { items: InventoryItem[] }) {
         <h3 id="inv-comparator" className="sr-only">Comparateur d'objets</h3>
         <Eyebrow>Comparateur</Eyebrow>
         <div className="mt-2 flex flex-wrap items-center gap-2">
-          <select value={cmpA} onChange={(e) => setCmpA(e.target.value)} aria-label="Objet A" className="glass-input flex-1 min-w-[120px]">
+          <select className="glass-input flex-1 min-w-[120px]" value={cmpA} onChange={(e) => setCmpA(e.target.value)} aria-label="Objet A">
             <option value="">— Objet A —</option>
             {items.map((i) => <option key={i.id} value={i.id}>{i.name}</option>)}
           </select>
           <span className="text-sm text-[color:var(--label-tertiary)]">vs</span>
-          <select value={cmpB} onChange={(e) => setCmpB(e.target.value)} aria-label="Objet B" className="glass-input flex-1 min-w-[120px]">
+          <select className="glass-input flex-1 min-w-[120px]" value={cmpB} onChange={(e) => setCmpB(e.target.value)} aria-label="Objet B">
             <option value="">— Objet B —</option>
             {items.map((i) => <option key={i.id} value={i.id}>{i.name}</option>)}
           </select>
@@ -271,29 +271,29 @@ export function InventoryWorkspace({ items }: { items: InventoryItem[] }) {
         <div className="flex flex-col gap-3">
           <label className="flex flex-col gap-1 text-sm">
             <span className="text-[color:var(--label-secondary)]">Nom *</span>
-            <input value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} className="glass-input" />
+            <input className="glass-input" value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} />
           </label>
           <label className="flex flex-col gap-1 text-sm">
             <span className="text-[color:var(--label-secondary)]">Marque</span>
-            <input value={form.brand} onChange={(e) => setForm({ ...form, brand: e.target.value })} className="glass-input" />
+            <input className="glass-input" value={form.brand} onChange={(e) => setForm({ ...form, brand: e.target.value })} />
           </label>
           <label className="flex flex-col gap-1 text-sm">
             <span className="text-[color:var(--label-secondary)]">Catégorie</span>
-            <select value={form.category} onChange={(e) => setForm({ ...form, category: e.target.value })} className="glass-input">
+            <select className="glass-input" value={form.category} onChange={(e) => setForm({ ...form, category: e.target.value })}>
               {CATEGORIES.map((c) => <option key={c} value={c}>{c}</option>)}
             </select>
           </label>
           <label className="flex flex-col gap-1 text-sm">
             <span className="text-[color:var(--label-secondary)]">Poids (g)</span>
-            <input type="number" value={form.weight_g} onChange={(e) => setForm({ ...form, weight_g: e.target.value })} className="glass-input" />
+            <input className="glass-input" type="number" value={form.weight_g} onChange={(e) => setForm({ ...form, weight_g: e.target.value })} />
           </label>
           <label className="flex flex-col gap-1 text-sm">
             <span className="text-[color:var(--label-secondary)]">Prix (centimes)</span>
-            <input type="number" value={form.price_cents} onChange={(e) => setForm({ ...form, price_cents: e.target.value })} className="glass-input" />
+            <input className="glass-input" type="number" value={form.price_cents} onChange={(e) => setForm({ ...form, price_cents: e.target.value })} />
           </label>
           <label className="flex flex-col gap-1 text-sm">
             <span className="text-[color:var(--label-secondary)]">État</span>
-            <select value={form.condition} onChange={(e) => setForm({ ...form, condition: e.target.value })} className="glass-input">
+            <select className="glass-input" value={form.condition} onChange={(e) => setForm({ ...form, condition: e.target.value })}>
               {CONDITIONS.map((c) => <option key={c} value={c}>{c}</option>)}
             </select>
           </label>

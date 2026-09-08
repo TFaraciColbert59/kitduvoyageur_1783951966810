@@ -25,7 +25,7 @@ export function KitsGrid({ kits, onSelect }: Props) {
     return (
       <GlassCard tone="sage" className="p-5 text-center">
         <Eyebrow>Mon Kit</Eyebrow>
-        <p className="text-sm text-[#5A7064] mt-2 mb-3">
+        <p className="text-sm text-[var(--lkv-text-muted)] mt-2 mb-3">
           Aucun kit créé pour le moment. Utilisez l&apos;assembleur ci-dessous pour composer votre premier kit sur-mesure.
         </p>
       </GlassCard>
@@ -42,14 +42,14 @@ export function KitsGrid({ kits, onSelect }: Props) {
       <div className="flex items-center justify-between gap-2 flex-wrap">
         <div>
           <Eyebrow>Kit Actif</Eyebrow>
-          <h2 className="font-display font-bold text-[20px] sm:text-[24px] text-[#17402C] mt-0.5">
+          <h2 className="font-display font-bold text-[20px] sm:text-[24px] text-[var(--lkv-primary)] mt-0.5">
             {currentKit.name}
           </h2>
         </div>
 
         {activeKits.length > 1 && (
           <div className="flex items-center gap-2">
-            <span className="text-xs font-semibold text-[#5A7064]">Changer :</span>
+            <span className="text-xs font-semibold text-[var(--lkv-text-muted)]">Changer :</span>
             <select
               value={currentKit.id}
               onChange={(e) => {
@@ -57,7 +57,7 @@ export function KitsGrid({ kits, onSelect }: Props) {
                 onSelect?.(e.target.value);
               }}
               aria-label="Sélectionner le kit affiché"
-              className="glass-input py-1 px-2.5 text-xs text-[#17402C] font-semibold"
+              className="glass-input py-1 px-2.5 text-xs text-[var(--lkv-primary)] font-semibold"
             >
               {activeKits.map((k) => (
                 <option key={k.id} value={k.id}>
@@ -70,7 +70,7 @@ export function KitsGrid({ kits, onSelect }: Props) {
       </div>
 
       {currentKit.description && (
-        <p className="text-xs sm:text-sm text-[#365233] leading-relaxed">
+        <p className="text-xs sm:text-sm text-[var(--lkv-primary-soft)] leading-relaxed">
           {currentKit.description}
         </p>
       )}
@@ -78,20 +78,20 @@ export function KitsGrid({ kits, onSelect }: Props) {
       {/* Résumé des indicateurs du kit */}
       <div className="grid grid-cols-3 gap-2 p-2.5 rounded-2xl bg-white/[0.06] border border-white/20">
         <div className="text-center">
-          <span className="text-[10px] uppercase font-bold text-[#5A7064]">Poids</span>
-          <p className="font-mono font-bold text-xs sm:text-sm text-[#17402C]">
+          <span className="text-[10px] uppercase font-bold text-[var(--lkv-text-muted)]">Poids</span>
+          <p className="font-mono font-bold text-xs sm:text-sm text-[var(--lkv-primary)]">
             {(currentKit.total_weight_g / 1000).toFixed(1)} kg
           </p>
         </div>
         <div className="text-center border-x border-white/15">
-          <span className="text-[10px] uppercase font-bold text-[#5A7064]">Articles</span>
-          <p className="font-mono font-bold text-xs sm:text-sm text-[#17402C]">
+          <span className="text-[10px] uppercase font-bold text-[var(--lkv-text-muted)]">Articles</span>
+          <p className="font-mono font-bold text-xs sm:text-sm text-[var(--lkv-primary)]">
             {currentKit.item_count}
           </p>
         </div>
         <div className="text-center">
-          <span className="text-[10px] uppercase font-bold text-[#5A7064]">Complétude</span>
-          <p className="font-mono font-bold text-xs sm:text-sm text-[#17402C]">
+          <span className="text-[10px] uppercase font-bold text-[var(--lkv-text-muted)]">Complétude</span>
+          <p className="font-mono font-bold text-xs sm:text-sm text-[var(--lkv-primary)]">
             {completionPct}%
           </p>
         </div>
@@ -100,22 +100,22 @@ export function KitsGrid({ kits, onSelect }: Props) {
       {/* Barre de progression */}
       <div className="h-1.5 w-full rounded-full bg-white/20 overflow-hidden">
         <div
-          className="h-full bg-gradient-to-r from-[#365233] to-[#A6C1A0] transition-all duration-300"
+          className="h-full bg-gradient-to-r from-[var(--lkv-primary-soft)] to-[var(--lkv-secondary)] transition-all duration-300"
           style={{ width: `${completionPct}%` }}
         />
       </div>
 
       {/* Liste des articles du kit (avec état grisé pour les non reçus) */}
       <div className="flex flex-col gap-2">
-        <div className="flex items-center justify-between text-xs font-bold text-[#365233]">
+        <div className="flex items-center justify-between text-xs font-bold text-[var(--lkv-primary-soft)]">
           <span>Composition du kit ({currentKit.items.length})</span>
-          <span className="text-[11px] text-[#5A7064]">
+          <span className="text-[11px] text-[var(--lkv-text-muted)]">
             {currentKit.season ? `Saison : ${currentKit.season}` : ''}
           </span>
         </div>
 
         {currentKit.items.length === 0 ? (
-          <p className="text-xs text-[#5A7064] p-3 text-center">Aucun article dans ce kit.</p>
+          <p className="text-xs text-[var(--lkv-text-muted)] p-3 text-center">Aucun article dans ce kit.</p>
         ) : (
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 max-h-72 overflow-y-auto pr-1">
             {currentKit.items.map((item, idx) => {
@@ -133,8 +133,8 @@ export function KitsGrid({ kits, onSelect }: Props) {
                     <div
                       className={`w-5 h-5 rounded-md flex items-center justify-center shrink-0 border ${
                         isUnowned
-                          ? 'border-white/30 bg-white/5 text-[#5A7064]'
-                          : 'bg-[#17402C]/10 border-[#17402C]/20 text-[#17402C]'
+                          ? 'border-white/30 bg-white/5 text-[var(--lkv-text-muted)]'
+                          : 'bg-[var(--lkv-primary)]/10 border-[var(--lkv-primary)]/20 text-[var(--lkv-primary)]'
                       }`}
                     >
                       {isUnowned ? <Clock size={11} /> : <Check size={12} strokeWidth={3} />}
@@ -142,19 +142,19 @@ export function KitsGrid({ kits, onSelect }: Props) {
                     <div className="min-w-0">
                       <p
                         className={`text-xs font-semibold truncate ${
-                          isUnowned ? 'text-[#5A7064] italic line-through' : 'text-[#17402C]'
+                          isUnowned ? 'text-[var(--lkv-text-muted)] italic line-through' : 'text-[var(--lkv-primary)]'
                         }`}
                       >
                         {item.name}
                       </p>
-                      <p className="text-[10px] text-[#5A7064]">
+                      <p className="text-[10px] text-[var(--lkv-text-muted)]">
                         {item.category || 'Équipement'} · {item.weight_g ? `${item.weight_g}g` : '0g'}
                       </p>
                     </div>
                   </div>
 
                   {isUnowned && (
-                    <span className="shrink-0 text-[9px] font-bold px-1.5 py-0.5 rounded-md bg-[#17402C]/10 text-[#17402C] border border-[#17402C]/20 flex items-center gap-1">
+                    <span className="shrink-0 text-[9px] font-bold px-1.5 py-0.5 rounded-md bg-[var(--lkv-primary)]/10 text-[var(--lkv-primary)] border border-[var(--lkv-primary)]/20 flex items-center gap-1">
                       <ShoppingBag size={9} />
                       En commande
                     </span>

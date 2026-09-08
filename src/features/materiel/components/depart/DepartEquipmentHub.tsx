@@ -86,11 +86,11 @@ const CATEGORIES = [
 ];
 
 const CONDITION_LABELS: Record<string, { label: string; tone: string }> = {
-  neuf: { label: 'Neuf', tone: 'bg-emerald-500/10 text-emerald-800 border border-emerald-500/20' },
-  tres_bon: { label: 'Très bon', tone: 'bg-emerald-500/10 text-emerald-800 border border-emerald-500/20' },
-  bon: { label: 'Bon', tone: 'bg-blue-500/10 text-blue-800 border border-blue-500/20' },
-  moyen: { label: 'Usé', tone: 'bg-amber-500/10 text-amber-800 border border-amber-500/20' },
-  a_remplacer: { label: 'À remplacer', tone: 'bg-red-500/15 text-red-800 border border-red-500/30' },
+  neuf: { label: 'Neuf', tone: 'bg-[var(--lkv-success)]/15 text-[var(--lkv-success)] border border-[var(--lkv-success)]/30' },
+  tres_bon: { label: 'Très bon', tone: 'bg-[var(--lkv-success)]/15 text-[var(--lkv-success)] border border-[var(--lkv-success)]/30' },
+  bon: { label: 'Bon', tone: 'bg-[var(--lkv-info)]/15 text-[var(--lkv-info)] border border-[var(--lkv-info)]/30' },
+  moyen: { label: 'Usé', tone: 'bg-[var(--lkv-warning)]/15 text-[var(--lkv-warning)] border border-[var(--lkv-warning)]/30' },
+  a_remplacer: { label: 'À remplacer', tone: 'bg-[var(--lkv-danger)]/15 text-[var(--lkv-danger)] border border-[var(--lkv-danger)]/30' },
 };
 
 export function DepartEquipmentHub({
@@ -481,8 +481,8 @@ export function DepartEquipmentHub({
           className={cn(
             'flex-1 py-2 rounded-xl text-xs font-semibold transition-all text-center flex items-center justify-center gap-1.5 cursor-pointer',
             mobileTab === 'catalog'
-              ? 'bg-[#17402C] text-white shadow-xs'
-              : 'text-[#5A7064] hover:text-[#17402C]'
+              ? 'bg-[var(--lkv-primary)] text-white shadow-xs'
+              : 'text-[var(--lkv-text-muted)] hover:text-[var(--lkv-primary)]'
           )}
         >
           <Boxes size={14} />
@@ -494,8 +494,8 @@ export function DepartEquipmentHub({
           className={cn(
             'flex-1 py-2 rounded-xl text-xs font-semibold transition-all text-center flex items-center justify-center gap-1.5 cursor-pointer',
             mobileTab === 'bag'
-              ? 'bg-[#17402C] text-white shadow-xs'
-              : 'text-[#5A7064] hover:text-[#17402C]'
+              ? 'bg-[var(--lkv-primary)] text-white shadow-xs'
+              : 'text-[var(--lkv-text-muted)] hover:text-[var(--lkv-primary)]'
           )}
         >
           <CheckSquare size={14} />
@@ -538,11 +538,11 @@ export function DepartEquipmentHub({
             {/* Top Header Compact Apple */}
             <div className="flex items-center justify-between gap-2 border-b border-black/5 dark:border-white/10 pb-2">
               <div className="flex items-center gap-2 min-w-0">
-                <div className="w-7 h-7 rounded-xl bg-[#2D6B4A]/10 border border-[#2D6B4A]/20 flex items-center justify-center text-[#2D6B4A] shadow-2xs shrink-0">
+                <div className="w-7 h-7 rounded-xl bg-[var(--lkv-primary-hover)]/10 border border-[var(--lkv-primary-hover)]/20 flex items-center justify-center text-[var(--lkv-primary-hover)] shadow-2xs shrink-0">
                   <Boxes size={14} aria-hidden="true" />
                 </div>
                 <div className="min-w-0">
-                  <h2 className="text-xs sm:text-sm font-bold text-[#17402C] tracking-tight truncate">
+                  <h2 className="text-xs sm:text-sm font-bold text-[var(--lkv-primary)] tracking-tight truncate">
                     Parc Matériel & Équipements
                   </h2>
                 </div>
@@ -551,7 +551,7 @@ export function DepartEquipmentHub({
               <button
                 type="button"
                 onClick={() => setIsAddModalOpen(true)}
-                className="inline-flex items-center gap-1 px-2.5 py-1 rounded-xl text-[11px] font-bold bg-[#17402C] text-white hover:bg-[#17402C]/90 shadow-2xs cursor-pointer transition-all active:scale-95 shrink-0"
+                className="inline-flex items-center gap-1 px-2.5 py-1 rounded-xl text-[11px] font-bold bg-[var(--lkv-primary)] text-white hover:bg-[var(--lkv-primary)]/90 shadow-2xs cursor-pointer transition-all active:scale-95 shrink-0"
               >
                 <Plus size={12} />
                 <span>Ajouter</span>
@@ -561,19 +561,19 @@ export function DepartEquipmentHub({
             {/* Barre de recherche & Bascule Grille / Liste */}
             <div className="flex items-center gap-2">
               <div className="relative flex-1 min-w-0">
-                <SearchAnimated size={13} className="absolute left-3 top-1/2 -translate-y-1/2 text-[#5A7064]" />
+                <SearchAnimated size={13} className="absolute left-3 top-1/2 -translate-y-1/2 text-[var(--lkv-text-muted)]" />
                 <input
                   type="text"
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
                   placeholder="Rechercher un équipement..."
-                  className="w-full pl-8 pr-7 py-1.5 rounded-xl text-xs bg-white/70 dark:bg-white/10 border border-white/90 focus:outline-none focus:ring-2 focus:ring-[#17402C]/25 text-[#17402C] placeholder-[#5A7064]"
+                  className="w-full pl-8 pr-7 py-1.5 rounded-xl text-xs bg-white/70 dark:bg-white/10 border border-white/90 focus:outline-none focus:ring-2 focus:ring-[var(--lkv-primary)]/25 text-[var(--lkv-primary)] placeholder-[var(--lkv-text-muted)]"
                 />
                 {searchQuery && (
                   <button
                     type="button"
                     onClick={() => setSearchQuery('')}
-                    className="absolute right-2 top-1/2 -translate-y-1/2 text-[#5A7064] hover:text-[#17402C] p-0.5 cursor-pointer"
+                    className="absolute right-2 top-1/2 -translate-y-1/2 text-[var(--lkv-text-muted)] hover:text-[var(--lkv-primary)] p-0.5 cursor-pointer"
                   >
                     <XAnimated size={12} />
                   </button>
@@ -588,8 +588,8 @@ export function DepartEquipmentHub({
                   className={cn(
                     'p-1.5 rounded-lg transition-colors cursor-pointer',
                     viewMode === 'grid'
-                      ? 'bg-[#17402C] text-white shadow-2xs'
-                      : 'text-[#5A7064] hover:text-[#17402C]'
+                      ? 'bg-[var(--lkv-primary)] text-white shadow-2xs'
+                      : 'text-[var(--lkv-text-muted)] hover:text-[var(--lkv-primary)]'
                   )}
                   title="Vue Grille 3 colonnes"
                   aria-label="Vue Grille"
@@ -602,8 +602,8 @@ export function DepartEquipmentHub({
                   className={cn(
                     'p-1.5 rounded-lg transition-colors cursor-pointer',
                     viewMode === 'list'
-                      ? 'bg-[#17402C] text-white shadow-2xs'
-                      : 'text-[#5A7064] hover:text-[#17402C]'
+                      ? 'bg-[var(--lkv-primary)] text-white shadow-2xs'
+                      : 'text-[var(--lkv-text-muted)] hover:text-[var(--lkv-primary)]'
                   )}
                   title="Vue Liste compacte"
                   aria-label="Vue Liste"
@@ -621,8 +621,8 @@ export function DepartEquipmentHub({
                 className={cn(
                   'px-2.5 py-1 rounded-xl text-[10.5px] font-semibold whitespace-nowrap transition-all cursor-pointer shrink-0',
                   statusFilter === 'all'
-                    ? 'bg-[#17402C] text-white shadow-xs'
-                    : 'bg-black/5 dark:bg-white/10 text-[#5A7064] hover:text-[#17402C]'
+                    ? 'bg-[var(--lkv-primary)] text-white shadow-xs'
+                    : 'bg-black/5 dark:bg-white/10 text-[var(--lkv-text-muted)] hover:text-[var(--lkv-primary)]'
                 )}
               >
                 Tous ({stats.totalCount})
@@ -634,8 +634,8 @@ export function DepartEquipmentHub({
                 className={cn(
                   'px-2.5 py-1 rounded-xl text-[10.5px] font-semibold whitespace-nowrap transition-all cursor-pointer shrink-0',
                   statusFilter === 'in_bag'
-                    ? 'bg-[#17402C] text-white shadow-xs'
-                    : 'bg-black/5 dark:bg-white/10 text-[#5A7064] hover:text-[#17402C]'
+                    ? 'bg-[var(--lkv-primary)] text-white shadow-xs'
+                    : 'bg-black/5 dark:bg-white/10 text-[var(--lkv-text-muted)] hover:text-[var(--lkv-primary)]'
                 )}
               >
                 Au sac ({stats.inBagCount})
@@ -647,8 +647,8 @@ export function DepartEquipmentHub({
                 className={cn(
                   'px-2.5 py-1 rounded-xl text-[10.5px] font-semibold whitespace-nowrap transition-all cursor-pointer shrink-0',
                   statusFilter === 'in_inventory'
-                    ? 'bg-[#17402C] text-white shadow-xs'
-                    : 'bg-black/5 dark:bg-white/10 text-[#5A7064] hover:text-[#17402C]'
+                    ? 'bg-[var(--lkv-primary)] text-white shadow-xs'
+                    : 'bg-black/5 dark:bg-white/10 text-[var(--lkv-text-muted)] hover:text-[var(--lkv-primary)]'
                 )}
               >
                 Inventaire ({stats.inInventoryCount})
@@ -664,8 +664,8 @@ export function DepartEquipmentHub({
                   className={cn(
                     'px-2.5 py-1 rounded-xl text-[10.5px] font-semibold whitespace-nowrap transition-all cursor-pointer shrink-0',
                     selectedCat === cat
-                      ? 'bg-[#17402C] text-white shadow-2xs'
-                      : 'bg-white/60 dark:bg-white/5 text-[#5A7064] hover:text-[#17402C]'
+                      ? 'bg-[var(--lkv-primary)] text-white shadow-2xs'
+                      : 'bg-white/60 dark:bg-white/5 text-[var(--lkv-text-muted)] hover:text-[var(--lkv-primary)]'
                   )}
                 >
                   {cat}
@@ -675,9 +675,9 @@ export function DepartEquipmentHub({
 
             {/* ════ CATALOGUE : VUE GRILLE OU LISTE ════ */}
             {filteredItems.length === 0 ? (
-              <div className="col-span-full py-12 px-4 text-center bg-white/40 rounded-3xl border border-dashed border-black/10 text-xs text-[#5A7064] space-y-2">
-                <Boxes size={24} className="mx-auto text-[#5A7064]/60" />
-                <p className="font-semibold text-[#17402C]">Aucun équipement ne correspond à vos filtres.</p>
+              <div className="col-span-full py-12 px-4 text-center bg-white/40 rounded-3xl border border-dashed border-black/10 text-xs text-[var(--lkv-text-muted)] space-y-2">
+                <Boxes size={24} className="mx-auto text-[var(--lkv-text-muted)]/60" />
+                <p className="font-semibold text-[var(--lkv-primary)]">Aucun équipement ne correspond à vos filtres.</p>
               </div>
             ) : viewMode === 'grid' ? (
               /* ════ VUE GRILLE 3 COLONNES (Apple Store / Photos Style) ════ */
@@ -705,10 +705,10 @@ export function DepartEquipmentHub({
                       className={cn(
                         'group rounded-2xl overflow-hidden border transition-all duration-200 flex flex-col justify-between shadow-2xs hover:shadow-md backdrop-blur-md active:scale-[0.98]',
                         item.isLent
-                          ? 'bg-amber-50/70 border-amber-200/90 text-amber-950'
+                          ? 'bg-[var(--lkv-warning)]/10 border-[var(--lkv-warning)]/30 text-[var(--lkv-warning)]'
                           : isItemInBag
-                          ? 'bg-emerald-50/50 border-emerald-200/80 text-[#17402C]'
-                          : 'bg-white/85 dark:bg-white/10 border-white/80 text-[#17402C]'
+                          ? 'bg-[var(--lkv-success)]/10 border-[var(--lkv-success)]/30 text-[var(--lkv-primary)]'
+                          : 'bg-white/85 dark:bg-white/10 border-white/80 text-[var(--lkv-primary)]'
                       )}
                     >
                       {/* Image — cliquable uniquement si fiche produit opérationnelle */}
@@ -752,20 +752,20 @@ export function DepartEquipmentHub({
                           {targetUrl ? (
                             <Link
                               href={targetUrl}
-                              className="text-[11.5px] sm:text-xs font-bold text-[#17402C] hover:text-[#2D6B4A] transition-colors leading-snug line-clamp-1 block cursor-pointer"
+                              className="text-[11.5px] sm:text-xs font-bold text-[var(--lkv-primary)] hover:text-[var(--lkv-primary-hover)] transition-colors leading-snug line-clamp-1 block cursor-pointer"
                               title={item.name}
                             >
                               {item.name}
                             </Link>
                           ) : (
                             <span
-                              className="text-[11.5px] sm:text-xs font-bold text-[#17402C] leading-snug line-clamp-1 block"
+                              className="text-[11.5px] sm:text-xs font-bold text-[var(--lkv-primary)] leading-snug line-clamp-1 block"
                               title={item.name}
                             >
                               {item.name}
                             </span>
                           )}
-                          <div className="flex items-center justify-between text-[10px] font-mono text-[#5A7064]">
+                          <div className="flex items-center justify-between text-[10px] font-mono text-[var(--lkv-text-muted)]">
                             <span>{formatWeight(item.weightG)}</span>
                             {item.brand && <span className="truncate max-w-[70px]">{item.brand}</span>}
                           </div>
@@ -777,7 +777,7 @@ export function DepartEquipmentHub({
                             <button
                               type="button"
                               onClick={() => handleReturnLoan(item.loanId!, item.inventoryId)}
-                              className="w-full py-1 rounded-xl text-[10.5px] font-bold bg-[#17402C] text-white hover:bg-[#17402C]/90 shadow-2xs flex items-center justify-center gap-1 cursor-pointer transition-all active:scale-98"
+                              className="w-full py-1 rounded-xl text-[10.5px] font-bold bg-[var(--lkv-primary)] text-white hover:bg-[var(--lkv-primary)]/90 shadow-2xs flex items-center justify-center gap-1 cursor-pointer transition-all active:scale-98"
                             >
                               <Check size={11} />
                               <span>Rendu</span>
@@ -786,7 +786,7 @@ export function DepartEquipmentHub({
                             <button
                               type="button"
                               onClick={() => handleReplenishConsumable(item)}
-                              className="w-full py-1 rounded-xl text-[10.5px] font-bold bg-[#17402C] text-white hover:bg-[#17402C]/90 shadow-2xs flex items-center justify-center gap-1 cursor-pointer transition-all active:scale-98"
+                              className="w-full py-1 rounded-xl text-[10.5px] font-bold bg-[var(--lkv-primary)] text-white hover:bg-[var(--lkv-primary)]/90 shadow-2xs flex items-center justify-center gap-1 cursor-pointer transition-all active:scale-98"
                             >
                               <RotateCcwAnimated size={11} />
                               <span>Recharger</span>
@@ -800,7 +800,7 @@ export function DepartEquipmentHub({
                             <button
                               type="button"
                               onClick={() => handleQuickAddToBag(item)}
-                              className="w-full py-1 rounded-xl text-[10.5px] font-bold bg-[#17402C] text-white hover:bg-[#17402C]/90 shadow-2xs flex items-center justify-center gap-1 cursor-pointer transition-all active:scale-98"
+                              className="w-full py-1 rounded-xl text-[10.5px] font-bold bg-[var(--lkv-primary)] text-white hover:bg-[var(--lkv-primary)]/90 shadow-2xs flex items-center justify-center gap-1 cursor-pointer transition-all active:scale-98"
                             >
                               <Plus size={11} />
                               <span>+ Au sac</span>
@@ -829,7 +829,7 @@ export function DepartEquipmentHub({
                       className={cn(
                         'p-2 rounded-2xl border flex items-center justify-between gap-2.5 transition-all shadow-2xs active:scale-[0.98]',
                         isItemInBag
-                          ? 'bg-emerald-50/60 border-emerald-200/80'
+                          ? 'bg-[var(--lkv-success)]/10 border-[var(--lkv-success)]/30'
                           : 'bg-white/90 dark:bg-stone-900/90 border-white/90 dark:border-white/10'
                       )}
                     >
@@ -860,16 +860,16 @@ export function DepartEquipmentHub({
                             <Link
                               href={listTargetUrl}
                               title={item.name}
-                              className="text-xs font-bold text-[#17402C] dark:text-white truncate hover:text-[#2D6B4A] transition-colors block cursor-pointer"
+                              className="text-xs font-bold text-[var(--lkv-primary)] dark:text-white truncate hover:text-[var(--lkv-primary-hover)] transition-colors block cursor-pointer"
                             >
                               {item.name}
                             </Link>
                           ) : (
-                            <h4 className="text-xs font-bold text-[#17402C] dark:text-white truncate">
+                            <h4 className="text-xs font-bold text-[var(--lkv-primary)] dark:text-white truncate">
                               {item.name}
                             </h4>
                           )}
-                          <div className="flex items-center gap-2 text-[10.5px] font-mono text-[#5A7064] mt-0.5">
+                          <div className="flex items-center gap-2 text-[10.5px] font-mono text-[var(--lkv-text-muted)] mt-0.5">
                             <span>{formatWeight(item.weightG)}</span>
                             <span className="text-[9px] font-sans px-1.5 py-0.2 rounded bg-black/5 dark:bg-white/10">{item.category}</span>
                           </div>
@@ -886,7 +886,7 @@ export function DepartEquipmentHub({
                           <button
                             type="button"
                             onClick={() => handleQuickAddToBag(item)}
-                            className="px-2.5 py-1 rounded-xl text-[10.5px] font-bold bg-[#17402C] text-white hover:bg-[#17402C]/90 shadow-2xs flex items-center gap-1 cursor-pointer"
+                            className="px-2.5 py-1 rounded-xl text-[10.5px] font-bold bg-[var(--lkv-primary)] text-white hover:bg-[var(--lkv-primary)]/90 shadow-2xs flex items-center gap-1 cursor-pointer"
                           >
                             <Plus size={11} />
                             <span>+ Sac</span>
@@ -910,17 +910,17 @@ export function DepartEquipmentHub({
               initial={{ opacity: 0, scale: 0.95 }}
               animate={{ opacity: 1, scale: 1 }}
               exit={{ opacity: 0, scale: 0.95 }}
-              className="glass p-6 rounded-3xl max-w-md w-full border border-white/90 shadow-2xl space-y-4 bg-white/95 text-[#17402C]"
+              className="glass p-6 rounded-3xl max-w-md w-full border border-white/90 shadow-2xl space-y-4 bg-white/95 text-[var(--lkv-primary)]"
             >
               <div className="flex items-center justify-between">
-                <h3 className="font-display font-bold text-base text-[#17402C] flex items-center gap-2">
-                  <Boxes size={18} className="text-[#2D6B4A]" />
+                <h3 className="font-display font-bold text-base text-[var(--lkv-primary)] flex items-center gap-2">
+                  <Boxes size={18} className="text-[var(--lkv-primary-hover)]" />
                   <span>Ajouter un Équipement</span>
                 </h3>
                 <button
                   type="button"
                   onClick={() => setIsAddModalOpen(false)}
-                  className="p-1.5 rounded-xl hover:bg-black/5 text-[#5A7064] cursor-pointer"
+                  className="p-1.5 rounded-xl hover:bg-black/5 text-[var(--lkv-text-muted)] cursor-pointer"
                 >
                   <X size={16} />
                 </button>
@@ -928,7 +928,7 @@ export function DepartEquipmentHub({
 
               <form onSubmit={handleAddItem} className="space-y-3.5">
                 <div>
-                  <label className="text-[11px] font-bold uppercase tracking-wider text-[#5A7064] block mb-1">
+                  <label className="text-[11px] font-bold uppercase tracking-wider text-[var(--lkv-text-muted)] block mb-1">
                     Nom de l’équipement *
                   </label>
                   <input
@@ -937,14 +937,14 @@ export function DepartEquipmentHub({
                     value={newName}
                     onChange={(e) => setNewName(e.target.value)}
                     placeholder="Ex: Tente Big Agnes Copper Spur 2P"
-                    className="w-full px-3.5 py-2.5 rounded-xl text-xs bg-black/5 border border-black/10 text-[#17402C] focus:outline-none focus:ring-2 focus:ring-[#17402C]/30"
+                    className="w-full px-3.5 py-2.5 rounded-xl text-xs bg-black/5 border border-black/10 text-[var(--lkv-primary)] focus:outline-none focus:ring-2 focus:ring-[var(--lkv-primary)]/30"
                     autoFocus
                   />
                 </div>
 
                 <div className="grid grid-cols-2 gap-2.5">
                   <div>
-                    <label className="text-[11px] font-bold uppercase tracking-wider text-[#5A7064] block mb-1">
+                    <label className="text-[11px] font-bold uppercase tracking-wider text-[var(--lkv-text-muted)] block mb-1">
                       Marque
                     </label>
                     <input
@@ -952,18 +952,18 @@ export function DepartEquipmentHub({
                       value={newBrand}
                       onChange={(e) => setNewBrand(e.target.value)}
                       placeholder="Ex: MSR, Sea to Summit..."
-                      className="w-full px-3 py-2 rounded-xl text-xs bg-black/5 border border-black/10 text-[#17402C]"
+                      className="w-full px-3 py-2 rounded-xl text-xs bg-black/5 border border-black/10 text-[var(--lkv-primary)]"
                     />
                   </div>
 
                   <div>
-                    <label className="text-[11px] font-bold uppercase tracking-wider text-[#5A7064] block mb-1">
+                    <label className="text-[11px] font-bold uppercase tracking-wider text-[var(--lkv-text-muted)] block mb-1">
                       Catégorie
                     </label>
                     <select
                       value={newCategory}
                       onChange={(e) => setNewCategory(e.target.value)}
-                      className="w-full px-2.5 py-2 rounded-xl text-xs bg-black/5 border border-black/10 text-[#17402C]"
+                      className="w-full px-2.5 py-2 rounded-xl text-xs bg-black/5 border border-black/10 text-[var(--lkv-primary)]"
                     >
                       {CATEGORIES.filter((c) => c !== 'Toutes').map((c) => (
                         <option key={c} value={c}>
@@ -976,7 +976,7 @@ export function DepartEquipmentHub({
 
                 <div className="grid grid-cols-3 gap-2.5">
                   <div>
-                    <label className="text-[11px] font-bold uppercase tracking-wider text-[#5A7064] block mb-1">
+                    <label className="text-[11px] font-bold uppercase tracking-wider text-[var(--lkv-text-muted)] block mb-1">
                       Poids (g)
                     </label>
                     <input
@@ -984,18 +984,18 @@ export function DepartEquipmentHub({
                       min={0}
                       value={newWeight}
                       onChange={(e) => setNewWeight(Number(e.target.value))}
-                      className="w-full px-2.5 py-2 rounded-xl text-xs bg-black/5 border border-black/10 text-[#17402C]"
+                      className="w-full px-2.5 py-2 rounded-xl text-xs bg-black/5 border border-black/10 text-[var(--lkv-primary)]"
                     />
                   </div>
 
                   <div>
-                    <label className="text-[11px] font-bold uppercase tracking-wider text-[#5A7064] block mb-1">
+                    <label className="text-[11px] font-bold uppercase tracking-wider text-[var(--lkv-text-muted)] block mb-1">
                       État
                     </label>
                     <select
                       value={newCondition}
                       onChange={(e) => setNewCondition(e.target.value)}
-                      className="w-full px-2 py-2 rounded-xl text-xs bg-black/5 border border-black/10 text-[#17402C]"
+                      className="w-full px-2 py-2 rounded-xl text-xs bg-black/5 border border-black/10 text-[var(--lkv-primary)]"
                     >
                       <option value="neuf">Neuf</option>
                       <option value="tres_bon">Très bon</option>
@@ -1006,7 +1006,7 @@ export function DepartEquipmentHub({
                   </div>
 
                   <div>
-                    <label className="text-[11px] font-bold uppercase tracking-wider text-[#5A7064] block mb-1">
+                    <label className="text-[11px] font-bold uppercase tracking-wider text-[var(--lkv-text-muted)] block mb-1">
                       Prix (€)
                     </label>
                     <input
@@ -1015,7 +1015,7 @@ export function DepartEquipmentHub({
                       value={newPriceEur}
                       onChange={(e) => setNewPriceEur(e.target.value ? Number(e.target.value) : '')}
                       placeholder="Ex: 180"
-                      className="w-full px-2.5 py-2 rounded-xl text-xs bg-black/5 border border-black/10 text-[#17402C]"
+                      className="w-full px-2.5 py-2 rounded-xl text-xs bg-black/5 border border-black/10 text-[var(--lkv-primary)]"
                     />
                   </div>
                 </div>
@@ -1024,13 +1024,13 @@ export function DepartEquipmentHub({
                   <button
                     type="button"
                     onClick={() => setIsAddModalOpen(false)}
-                    className="px-4 py-2 rounded-xl text-xs font-semibold hover:bg-black/5 text-[#5A7064] cursor-pointer"
+                    className="px-4 py-2 rounded-xl text-xs font-semibold hover:bg-black/5 text-[var(--lkv-text-muted)] cursor-pointer"
                   >
                     Annuler
                   </button>
                   <button
                     type="submit"
-                    className="px-5 py-2 rounded-xl text-xs font-bold bg-[#17402C] text-white hover:bg-[#17402C]/90 shadow-xs cursor-pointer"
+                    className="px-5 py-2 rounded-xl text-xs font-bold bg-[var(--lkv-primary)] text-white hover:bg-[var(--lkv-primary)]/90 shadow-xs cursor-pointer"
                   >
                     Enregistrer
                   </button>
@@ -1049,30 +1049,30 @@ export function DepartEquipmentHub({
               initial={{ opacity: 0, scale: 0.95 }}
               animate={{ opacity: 1, scale: 1 }}
               exit={{ opacity: 0, scale: 0.95 }}
-              className="glass p-6 rounded-3xl max-w-md w-full border border-white/90 shadow-2xl space-y-4 bg-white/95 text-[#17402C]"
+              className="glass p-6 rounded-3xl max-w-md w-full border border-white/90 shadow-2xl space-y-4 bg-white/95 text-[var(--lkv-primary)]"
             >
               <div className="flex items-center justify-between">
-                <h3 className="font-display font-bold text-base text-[#17402C] flex items-center gap-2">
-                  <Handshake size={18} className="text-[#2D6B4A]" />
+                <h3 className="font-display font-bold text-base text-[var(--lkv-primary)] flex items-center gap-2">
+                  <Handshake size={18} className="text-[var(--lkv-primary-hover)]" />
                   <span>Prêter un Équipement</span>
                 </h3>
                 <button
                   type="button"
                   onClick={() => setIsLoanModalOpen(false)}
-                  className="p-1.5 rounded-xl hover:bg-black/5 text-[#5A7064] cursor-pointer"
+                  className="p-1.5 rounded-xl hover:bg-black/5 text-[var(--lkv-text-muted)] cursor-pointer"
                 >
                   <X size={16} />
                 </button>
               </div>
 
               <div className="p-3 rounded-2xl bg-black/5 text-xs font-semibold flex items-center gap-2">
-                <Boxes size={14} className="text-[#2D6B4A]" />
+                <Boxes size={14} className="text-[var(--lkv-primary-hover)]" />
                 <span>Objet : <strong>{selectedItemForLoan.name}</strong></span>
               </div>
 
               <form onSubmit={handleCreateLoan} className="space-y-3.5">
                 <div>
-                  <label className="text-[11px] font-bold uppercase tracking-wider text-[#5A7064] block mb-1">
+                  <label className="text-[11px] font-bold uppercase tracking-wider text-[var(--lkv-text-muted)] block mb-1">
                     Nom ou contact de l’emprunteur *
                   </label>
                   <input
@@ -1081,20 +1081,20 @@ export function DepartEquipmentHub({
                     value={borrowerContact}
                     onChange={(e) => setBorrowerContact(e.target.value)}
                     placeholder="Ex: Thomas (+33 6 12 34 56 78)"
-                    className="w-full px-3.5 py-2.5 rounded-xl text-xs bg-black/5 border border-black/10 text-[#17402C] focus:outline-none focus:ring-2 focus:ring-[#17402C]/30"
+                    className="w-full px-3.5 py-2.5 rounded-xl text-xs bg-black/5 border border-black/10 text-[var(--lkv-primary)] focus:outline-none focus:ring-2 focus:ring-[var(--lkv-primary)]/30"
                     autoFocus
                   />
                 </div>
 
                 <div>
-                  <label className="text-[11px] font-bold uppercase tracking-wider text-[#5A7064] block mb-1">
+                  <label className="text-[11px] font-bold uppercase tracking-wider text-[var(--lkv-text-muted)] block mb-1">
                     Date de retour prévue (optionnel)
                   </label>
                   <input
                     type="date"
                     value={dueDate}
                     onChange={(e) => setDueDate(e.target.value)}
-                    className="w-full px-3 py-2 rounded-xl text-xs bg-black/5 border border-black/10 text-[#17402C]"
+                    className="w-full px-3 py-2 rounded-xl text-xs bg-black/5 border border-black/10 text-[var(--lkv-primary)]"
                   />
                 </div>
 
@@ -1102,13 +1102,13 @@ export function DepartEquipmentHub({
                   <button
                     type="button"
                     onClick={() => setIsLoanModalOpen(false)}
-                    className="px-4 py-2 rounded-xl text-xs font-semibold hover:bg-black/5 text-[#5A7064] cursor-pointer"
+                    className="px-4 py-2 rounded-xl text-xs font-semibold hover:bg-black/5 text-[var(--lkv-text-muted)] cursor-pointer"
                   >
                     Annuler
                   </button>
                   <button
                     type="submit"
-                    className="px-5 py-2 rounded-xl text-xs font-bold bg-[#17402C] text-white hover:bg-[#17402C]/90 shadow-xs cursor-pointer"
+                    className="px-5 py-2 rounded-xl text-xs font-bold bg-[var(--lkv-primary)] text-white hover:bg-[var(--lkv-primary)]/90 shadow-xs cursor-pointer"
                   >
                     Confirmer le prêt
                   </button>

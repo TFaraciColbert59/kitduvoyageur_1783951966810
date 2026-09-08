@@ -34,7 +34,7 @@ export function GearCardSuivi({ alertes, dispo, forget, className }: Props) {
         <div className="flex items-start justify-between pr-10 md:pr-12">
           <div className="space-y-1">
             <Eyebrow>Suivi & Vigilance</Eyebrow>
-            <h2 id="suivi-title" className="text-[20px] sm:text-[22px] font-display font-bold text-[#17402C]">
+            <h2 id="suivi-title" className="text-[20px] sm:text-[22px] font-display font-bold text-[var(--lkv-primary)]">
               Diagnostic, Prêts & Checklist
             </h2>
           </div>
@@ -63,21 +63,21 @@ export function GearCardSuivi({ alertes, dispo, forget, className }: Props) {
           <div className="glass-sub-card p-3 rounded-xl flex flex-col justify-between gap-2.5">
             <div className="flex items-start justify-between">
               <div>
-                <span className="text-[9px] uppercase font-bold text-[#5A7064] tracking-wider">Diagnostic</span>
-                <p className="text-[13px] font-bold text-[#17402C] leading-tight mt-0.5">Santé & Alertes</p>
+                <span className="text-[9px] uppercase font-bold text-[var(--lkv-text-muted)] tracking-wider">Diagnostic</span>
+                <p className="text-[13px] font-bold text-[var(--lkv-primary)] leading-tight mt-0.5">Santé & Alertes</p>
               </div>
-              <span className="font-mono text-lg font-bold text-[#17402C]">{alertes.reliabilityScore}%</span>
+              <span className="font-mono text-lg font-bold text-[var(--lkv-primary)]">{alertes.reliabilityScore}%</span>
             </div>
 
             <div className="space-y-1">
-              <div className="flex justify-between text-[10px] text-[#365233] font-medium">
+              <div className="flex justify-between text-[10px] text-[var(--lkv-primary-soft)] font-medium">
                 <span>Fiabilité</span>
                 <span>{alertes.count} alerte(s)</span>
               </div>
               <ProgressBar value={alertes.reliabilityScore} label="Fiabilité" tone={alertes.criticalCount > 0 ? 'danger' : 'sage'} />
             </div>
 
-            <Link href="/materiel/alertes" className="flex items-center justify-between text-[10.5px] font-bold text-[#17402C] hover:text-[#365233] pt-1 border-t border-white/10">
+            <Link href="/materiel/alertes" className="flex items-center justify-between text-[10.5px] font-bold text-[var(--lkv-primary)] hover:text-[var(--lkv-primary-soft)] pt-1 border-t border-white/10">
               <span>Voir diagnostic</span>
               <ArrowRight size={12} />
             </Link>
@@ -87,21 +87,21 @@ export function GearCardSuivi({ alertes, dispo, forget, className }: Props) {
           <div className="glass-sub-card p-3 rounded-xl flex flex-col justify-between gap-2.5">
             <div className="flex items-start justify-between">
               <div>
-                <span className="text-[9px] uppercase font-bold text-[#5A7064] tracking-wider">Parc & Prêts</span>
-                <p className="text-[13px] font-bold text-[#17402C] leading-tight mt-0.5">Disponibilité</p>
+                <span className="text-[9px] uppercase font-bold text-[var(--lkv-text-muted)] tracking-wider">Parc & Prêts</span>
+                <p className="text-[13px] font-bold text-[var(--lkv-primary)] leading-tight mt-0.5">Disponibilité</p>
               </div>
-              <span className="font-mono text-lg font-bold text-[#17402C]">{availablePct}%</span>
+              <span className="font-mono text-lg font-bold text-[var(--lkv-primary)]">{availablePct}%</span>
             </div>
 
             <div className="space-y-1">
-              <div className="flex justify-between text-[10px] text-[#365233] font-medium">
+              <div className="flex justify-between text-[10px] text-[var(--lkv-primary-soft)] font-medium">
                 <span>{available} dispo(s)</span>
                 <span>{dispo.unavailableCount} en prêt</span>
               </div>
               <ProgressBar value={availablePct} label="Disponibilité" tone={dispo.unavailableCount > 0 ? 'warn' : 'sage'} />
             </div>
 
-            <Link href="/materiel/disponibilite" className="flex items-center justify-between text-[10.5px] font-bold text-[#17402C] hover:text-[#365233] pt-1 border-t border-white/10">
+            <Link href="/materiel/disponibilite" className="flex items-center justify-between text-[10.5px] font-bold text-[var(--lkv-primary)] hover:text-[var(--lkv-primary-soft)] pt-1 border-t border-white/10">
               <span>Gérer les prêts</span>
               <ArrowRight size={12} />
             </Link>
@@ -111,21 +111,21 @@ export function GearCardSuivi({ alertes, dispo, forget, className }: Props) {
           <div className="glass-sub-card p-3 rounded-xl flex flex-col justify-between gap-2.5">
             <div className="flex items-start justify-between">
               <div>
-                <span className="text-[9px] uppercase font-bold text-[#5A7064] tracking-wider">Départ</span>
-                <p className="text-[13px] font-bold text-[#17402C] leading-tight mt-0.5">À ne pas oublier</p>
+                <span className="text-[9px] uppercase font-bold text-[var(--lkv-text-muted)] tracking-wider">Départ</span>
+                <p className="text-[13px] font-bold text-[var(--lkv-primary)] leading-tight mt-0.5">À ne pas oublier</p>
               </div>
-              <span className="font-mono text-lg font-bold text-[#17402C]">{forgetPct}%</span>
+              <span className="font-mono text-lg font-bold text-[var(--lkv-primary)]">{forgetPct}%</span>
             </div>
 
             <div className="space-y-1">
-              <div className="flex justify-between text-[10px] text-[#365233] font-medium">
+              <div className="flex justify-between text-[10px] text-[var(--lkv-primary-soft)] font-medium">
                 <span>{forget.checkedItems}/{forget.totalItems} vérifié(s)</span>
                 <span>{forget.forgetRemaining} restant(s)</span>
               </div>
               <ProgressBar value={forgetPct} label="Complétude checklist" tone={forgetPct === 100 ? 'sage' : 'warn'} />
             </div>
 
-            <Link href="/materiel/forget" className="flex items-center justify-between text-[10.5px] font-bold text-[#17402C] hover:text-[#365233] pt-1 border-t border-white/10">
+            <Link href="/materiel/forget" className="flex items-center justify-between text-[10.5px] font-bold text-[var(--lkv-primary)] hover:text-[var(--lkv-primary-soft)] pt-1 border-t border-white/10">
               <span>Ouvrir checklist</span>
               <ArrowRight size={12} />
             </Link>

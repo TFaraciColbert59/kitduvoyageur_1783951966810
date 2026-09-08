@@ -112,7 +112,7 @@ export function KitsCockpit({
       {/* Header unique et interactif avec sélecteur de kit */}
       <div className="shrink-0 flex items-center justify-between gap-1.5 px-0 pt-0.5 pb-1">
         <div className="flex items-center gap-1.5 sm:gap-2 min-w-0">
-          <span className="font-display font-semibold text-xs sm:text-[13px] text-[#17402C] shrink-0">
+          <span className="font-display font-semibold text-xs sm:text-[13px] text-[var(--lkv-primary)] shrink-0">
             Kit géré :
           </span>
           {activeKits.length > 0 ? (
@@ -120,7 +120,7 @@ export function KitsCockpit({
               value={primaryKit?.id ?? ''}
               onChange={(e) => setSelectedKitId(e.target.value)}
               aria-label="Sélectionner le kit à gérer"
-              className="glass interactive h-7 py-0 px-2.5 text-[11px] sm:text-xs text-[#17402C] font-bold rounded-full cursor-pointer max-w-[170px] sm:max-w-[260px] truncate outline-none border border-white/40 shadow-inner focus-visible:ring-2 focus-visible:ring-[#17402C]"
+              className="glass interactive h-7 py-0 px-2.5 text-[11px] sm:text-xs text-[var(--lkv-primary)] font-bold rounded-full cursor-pointer max-w-[170px] sm:max-w-[260px] truncate outline-none border border-white/40 shadow-inner focus-visible:ring-2 focus-visible:ring-[var(--lkv-primary)]"
             >
               {activeKits.map((k) => (
                 <option key={k.id} value={k.id}>
@@ -129,14 +129,14 @@ export function KitsCockpit({
               ))}
             </select>
           ) : (
-            <span className="text-xs font-semibold text-[#5A7064]">Aucun kit</span>
+            <span className="text-xs font-semibold text-[var(--lkv-text-muted)]">Aucun kit</span>
           )}
         </div>
 
         <div className="flex items-center gap-1.5 shrink-0">
           <Link
             href="/materiel"
-            className="glass interactive h-7 px-2.5 rounded-full flex items-center text-xs font-semibold text-[#17402C] shrink-0 border border-white/40 shadow-inner focus-visible:ring-2 focus-visible:ring-[#17402C]"
+            className="glass interactive h-7 px-2.5 rounded-full flex items-center text-xs font-semibold text-[var(--lkv-primary)] shrink-0 border border-white/40 shadow-inner focus-visible:ring-2 focus-visible:ring-[var(--lkv-primary)]"
           >
             ← Retour
           </Link>
@@ -245,7 +245,7 @@ function DraggableCard({
       <button
         type="button"
         onPointerDown={(e) => controls.start(e)}
-        className="!absolute top-1.5 right-1.5 md:top-2 md:right-2 z-20 h-6 w-6 md:h-8 md:w-8 !rounded-full glass interactive flex items-center justify-center text-[#17402C] cursor-grab touch-none focus-visible:ring-2 focus-visible:ring-[#17402C]"
+        className="!absolute top-1.5 right-1.5 md:top-2 md:right-2 z-20 h-6 w-6 md:h-8 md:w-8 !rounded-full glass interactive flex items-center justify-center text-[var(--lkv-primary)] cursor-grab touch-none focus-visible:ring-2 focus-visible:ring-[var(--lkv-primary)]"
         aria-label={`Déplacer le widget ${LABEL[id] ?? id}`}
       >
         <GripVertical size={12} className="md:hidden" aria-hidden="true" />

@@ -94,26 +94,26 @@ export function KitManager({ kits, inventory }: { kits: KitListItem[]; inventory
       <GlassDrawer open={open} onOpenChange={setOpen} title={editing ? 'Modifier le kit' : 'Nouveau kit'}>
         <div className="flex flex-col gap-3.5">
           <label className="flex flex-col gap-1 text-xs sm:text-sm">
-            <span className="font-semibold text-[#365233]">Nom *</span>
-            <input value={name} onChange={(e) => setName(e.target.value)} className="glass-input text-[#17402C]" />
+            <span className="font-semibold text-[var(--lkv-primary-soft)]">Nom *</span>
+            <input className="glass-input text-[var(--lkv-primary)]" value={name} onChange={(e) => setName(e.target.value)} />
           </label>
           <label className="flex flex-col gap-1 text-xs sm:text-sm">
-            <span className="font-semibold text-[#365233]">Saison</span>
-            <select value={season} onChange={(e) => setSeason(e.target.value)} className="glass-input text-[#17402C]">
+            <span className="font-semibold text-[var(--lkv-primary-soft)]">Saison</span>
+            <select className="glass-input text-[var(--lkv-primary)]" value={season} onChange={(e) => setSeason(e.target.value)}>
               {SEASONS.map((s) => <option key={s} value={s}>{s}</option>)}
             </select>
           </label>
           <label className="flex flex-col gap-1 text-xs sm:text-sm">
-            <span className="font-semibold text-[#365233]">Description</span>
-            <textarea value={description} onChange={(e) => setDescription(e.target.value)} className="glass-input text-[#17402C]" rows={2} />
+            <span className="font-semibold text-[var(--lkv-primary-soft)]">Description</span>
+            <textarea value={description} onChange={(e) => setDescription(e.target.value)} className="glass-input text-[var(--lkv-primary)]" rows={2} />
           </label>
           <div>
-            <p className="text-xs sm:text-sm font-semibold text-[#365233] mb-1.5">Articles ({selectedItems.size})</p>
+            <p className="text-xs sm:text-sm font-semibold text-[var(--lkv-primary-soft)] mb-1.5">Articles ({selectedItems.size})</p>
             <ul className="max-h-64 overflow-y-auto flex flex-col gap-1.5">
               {inventory.map((i) => (
                 <li key={i.id} className="glass-sub-card p-2 rounded-xl">
-                  <label className="flex items-center gap-2 text-xs sm:text-sm text-[#17402C] cursor-pointer">
-                    <input type="checkbox" checked={selectedItems.has(i.id)} onChange={() => toggleItem(i.id)} className="rounded border-white/40" />
+                  <label className="flex items-center gap-2 text-xs sm:text-sm text-[var(--lkv-primary)] cursor-pointer">
+                    <input className="rounded border-white/40" type="checkbox" checked={selectedItems.has(i.id)} onChange={() => toggleItem(i.id)} />
                     <span className="truncate">{i.name}</span>
                   </label>
                 </li>

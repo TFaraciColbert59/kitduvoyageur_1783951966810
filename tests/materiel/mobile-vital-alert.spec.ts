@@ -77,13 +77,13 @@ describe('MobileVitalAlertBanner (Retractable Vital Safety Notification Banner)'
 
       // Action capsule
       expect(html).toContain("Voir l&#x27;article");
-      expect(html).toContain('bg-[#8A241B]');
+      expect(html).toMatch(/bg-\[#8A241B\]|bg-\[var\(--lkv-danger\)\]/);
 
       // iOS Notification styling
       expect(html).toContain('rounded-2xl');
       expect(html).toContain('bg-rose-50');
       expect(html).toContain('border-rose-200');
-      expect(html).toContain('text-[#8A241B]');
+      expect(html).toMatch(/text-\[#8A241B\]|text-\[var\(--lkv-danger\)\]/);
     });
 
     it('renders warning alert when only warning alert is present', () => {

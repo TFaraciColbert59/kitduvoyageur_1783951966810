@@ -9,7 +9,14 @@ import fs from 'node:fs';
 import path from 'node:path';
 
 const ROOT = process.cwd();
-const SCOPE = ['src/features/trips', 'src/app/voyages', 'src/app/groupes', 'src/app/ai-configurator'];
+const SCOPE = [
+  'src/features/trips',
+  'src/app/voyages',
+  'src/app/groupes',
+  'src/app/ai-configurator',
+  'src/features/materiel',
+  'src/app/materiel',
+];
 const ALLOW = new Set(['#ffffff', '#fff', '#000000', '#000']);
 const R11_ALLOW = [
   'src/features/trips/registry/tripSectionRegistry.ts',

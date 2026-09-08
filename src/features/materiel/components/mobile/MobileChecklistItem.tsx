@@ -20,7 +20,7 @@ export interface MobileChecklistItemProps {
  * MobileChecklistItem — Apple Reminders Style Equipment Row with Swipe-to-Pack
  *
  * Adheres to Apple iOS 18 Human Interface Guidelines:
- * - 48px interactive touch target with 32px circular check fill in emerald (#2D6B4A)
+ * - 48px interactive touch target with 32px circular check fill in emerald (emerald)
  * - SF Pro bold typography with strike-through completion and metadata tags (Vital, Consumable, Worn)
  * - 36px rounded-xl gear image thumbnail with automatic fallback
  * - Framer Motion horizontal Swipe-to-Pack gesture with spring physics
@@ -49,7 +49,7 @@ export function MobileChecklistItem({
       <div
         className={cn(
           'absolute inset-0 flex items-center justify-between px-4 rounded-2xl transition-colors',
-          item.is_checked ? 'bg-amber-600/90 text-white' : 'bg-[#2D6B4A] text-white'
+          item.is_checked ? 'bg-[var(--lkv-warning)] text-white' : 'bg-[var(--lkv-primary-hover)] text-white'
         )}
         aria-hidden="true"
       >
@@ -82,7 +82,7 @@ export function MobileChecklistItem({
           'relative z-10 w-full flex items-center justify-between gap-2.5 px-2 py-1.5 rounded-2xl transition-all',
           'bg-white dark:bg-stone-900 border border-white/90 dark:border-white/10 shadow-2xs',
           item.is_checked && 'bg-stone-50/95 dark:bg-stone-900/95 opacity-80 hover:opacity-100',
-          isHighlighted && 'ring-2 ring-[#8A241B] bg-rose-50 dark:bg-rose-950/40 border-rose-200 dark:border-rose-900'
+          isHighlighted && 'ring-2 ring-[var(--lkv-danger)] bg-rose-50 dark:bg-rose-950/40 border-rose-200 dark:border-rose-900'
         )}
       >
         {/* ════ GAUCHE : COCHE CIRCULAIRE 32PX DANS HIT-BOX 48PX APPLE HIG ════ */}
@@ -95,14 +95,14 @@ export function MobileChecklistItem({
             e.stopPropagation();
             handleToggle();
           }}
-          className="shrink-0 min-w-[48px] min-h-[48px] w-12 h-12 flex items-center justify-center cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#2D6B4A] rounded-full"
+          className="shrink-0 min-w-[48px] min-h-[48px] w-12 h-12 flex items-center justify-center cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--lkv-primary-hover)] rounded-full"
         >
           <div
             className={cn(
               'w-8 h-8 rounded-full border-[1.5px] flex items-center justify-center transition-all duration-200 shadow-2xs',
               item.is_checked
-                ? 'bg-[#2D6B4A] border-[#2D6B4A] text-white shadow-xs'
-                : 'border-[#5A7064]/40 bg-white dark:bg-stone-800 dark:border-white/20 text-transparent hover:border-[#2D6B4A]'
+                ? 'bg-[var(--lkv-primary-hover)] border-[var(--lkv-primary-hover)] text-white shadow-xs'
+                : 'border-[var(--lkv-text-muted)]/40 bg-white dark:bg-stone-800 dark:border-white/20 text-transparent hover:border-[var(--lkv-primary-hover)]'
             )}
           >
             {item.is_checked && (
@@ -124,23 +124,23 @@ export function MobileChecklistItem({
         >
           <span
             className={cn(
-              'text-[13.5px] font-bold tracking-tight text-[#17402C] dark:text-stone-100 truncate leading-snug',
-              item.is_checked && 'line-through text-[#5A7064] dark:text-stone-400 decoration-[#5A7064]/60 font-medium'
+              'text-[13.5px] font-bold tracking-tight text-[var(--lkv-primary)] dark:text-stone-100 truncate leading-snug',
+              item.is_checked && 'line-through text-[var(--lkv-text-muted)] dark:text-stone-400 decoration-[var(--lkv-text-muted)]/60 font-medium'
             )}
           >
             {item.name}
           </span>
           <div className="flex items-center gap-1.5 flex-wrap mt-0.5">
-            <span className="text-[11px] font-mono font-semibold text-[#5A7064] dark:text-stone-400">
+            <span className="text-[11px] font-mono font-semibold text-[var(--lkv-text-muted)] dark:text-stone-400">
               {formatWeight(item.weight_g)}
             </span>
             {item.quantity && item.quantity > 1 && (
-              <span className="text-[10px] font-mono font-bold text-[#5A7064] dark:text-stone-400 bg-black/5 dark:bg-white/10 px-1 rounded">
+              <span className="text-[10px] font-mono font-bold text-[var(--lkv-text-muted)] dark:text-stone-400 bg-black/5 dark:bg-white/10 px-1 rounded">
                 ×{item.quantity}
               </span>
             )}
             {item.is_vital && (
-              <span className="inline-flex items-center gap-0.5 text-[9.5px] font-bold px-1.5 py-0.2 rounded-full bg-[#8A241B]/15 text-[#8A241B] dark:bg-rose-950/50 dark:text-rose-300">
+              <span className="inline-flex items-center gap-0.5 text-[9.5px] font-bold px-1.5 py-0.2 rounded-full bg-[var(--lkv-danger)]/15 text-[var(--lkv-danger)] dark:bg-rose-950/50 dark:text-rose-300">
                 <Zap size={8} aria-hidden="true" />
                 Vital
               </span>
@@ -152,7 +152,7 @@ export function MobileChecklistItem({
               </span>
             )}
             {item.is_worn && (
-              <span className="inline-flex items-center text-[9.5px] font-medium px-1.5 py-0.2 rounded-full bg-black/5 text-[#5A7064] dark:bg-white/10 dark:text-stone-300">
+              <span className="inline-flex items-center text-[9.5px] font-medium px-1.5 py-0.2 rounded-full bg-black/5 text-[var(--lkv-text-muted)] dark:bg-white/10 dark:text-stone-300">
                 Porté
               </span>
             )}
@@ -169,7 +169,7 @@ export function MobileChecklistItem({
                 onDelete(item);
               }}
               aria-label={`Supprimer : ${item.name}`}
-              className="min-w-[48px] min-h-[48px] w-12 h-12 flex items-center justify-center text-[#5A7064]/60 hover:text-rose-600 dark:hover:text-rose-400 cursor-pointer transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-rose-500 rounded-full"
+              className="min-w-[48px] min-h-[48px] w-12 h-12 flex items-center justify-center text-[var(--lkv-text-muted)]/60 hover:text-rose-600 dark:hover:text-rose-400 cursor-pointer transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-rose-500 rounded-full"
             >
               <Trash2 size={15} aria-hidden="true" />
             </button>

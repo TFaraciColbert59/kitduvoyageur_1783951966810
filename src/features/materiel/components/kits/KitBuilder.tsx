@@ -472,7 +472,7 @@ export function KitBuilder({
         whileTap={{ scale: 0.9 }}
         transition={{ type: 'spring', stiffness: 500, damping: 25 }}
         onClick={() => setShowAi(!showAi)}
-        className="!absolute top-1.5 right-8 md:top-2 md:right-11 z-10 glass interactive h-6 w-6 md:h-8 md:w-8 !rounded-full flex items-center justify-center text-[#17402C] focus-visible:ring-2 focus-visible:ring-[#17402C] focus-visible:ring-offset-1"
+        className="!absolute top-1.5 right-8 md:top-2 md:right-11 z-10 glass interactive h-6 w-6 md:h-8 md:w-8 !rounded-full flex items-center justify-center text-[var(--lkv-primary)] focus-visible:ring-2 focus-visible:ring-[var(--lkv-primary)] focus-visible:ring-offset-1"
         aria-label={showAi ? 'Fermer l’assistant IA' : 'Ouvrir l’assistant IA'}
       >
         <Sparkles size={12} className="md:hidden" aria-hidden="true" />
@@ -482,12 +482,12 @@ export function KitBuilder({
       {/* En-tête compact */}
       <div className="flex items-center justify-between gap-2 pr-16 md:pr-20 shrink-0">
         <div className="flex items-center gap-2 min-w-0">
-          <p className="truncate text-[10px] md:text-xs font-semibold text-[#17402C] font-body">
+          <p className="truncate text-[10px] md:text-xs font-semibold text-[var(--lkv-primary)] font-body">
             Assembleur & IA
           </p>
           <h3
             id="kit-builder-title"
-            className="font-display font-bold text-[#17402C] text-[13px] md:text-[15px] leading-tight truncate"
+            className="font-display font-bold text-[var(--lkv-primary)] text-[13px] md:text-[15px] leading-tight truncate"
           >
             Créer un kit sur-mesure
           </h3>
@@ -502,14 +502,14 @@ export function KitBuilder({
             animate={{ opacity: 1, height: 'auto', y: 0 }}
             exit={{ opacity: 0, height: 0, y: -6 }}
             transition={{ duration: 0.22, ease: [0.16, 1, 0.3, 1] }}
-            className="p-2 rounded-xl bg-white/[0.08] border border-[#17402C]/20 flex flex-col gap-1.5 shrink-0 overflow-hidden"
+            className="p-2 rounded-xl bg-white/[0.08] border border-[var(--lkv-primary)]/20 flex flex-col gap-1.5 shrink-0 overflow-hidden"
           >
             <div className="flex items-center gap-1.5">
               <input
                 value={aiGoal}
                 onChange={(e) => setAiGoal(e.target.value)}
                 placeholder="Objectif d’optimisation (ex: Alléger le sac, Randonnée 3j)"
-                className="glass-input flex-1 text-[10px] text-[#17402C] h-6 py-0 px-2"
+                className="glass-input flex-1 text-[10px] text-[var(--lkv-primary)] h-6 py-0 px-2"
               />
               <motion.button
                 type="button"
@@ -517,13 +517,13 @@ export function KitBuilder({
                 transition={{ type: 'spring', stiffness: 500, damping: 25 }}
                 onClick={runAiOptimization}
                 disabled={aiLoading || kitItems.length === 0}
-                className="glass-capsule-btn primary shrink-0 h-6 text-[9px] font-bold px-2.5 disabled:opacity-40 focus-visible:ring-2 focus-visible:ring-[#17402C]"
+                className="glass-capsule-btn primary shrink-0 h-6 text-[9px] font-bold px-2.5 disabled:opacity-40 focus-visible:ring-2 focus-visible:ring-[var(--lkv-primary)]"
               >
                 {aiLoading ? 'Analyse…' : 'Optimiser ✨'}
               </motion.button>
             </div>
 
-            {aiError && <p className="text-[9px] text-[#A8443A]">{aiError}</p>}
+            {aiError && <p className="text-[9px] text-[var(--lkv-danger)]">{aiError}</p>}
 
             {aiResult && (
               <div className="glass-sub-card p-2 rounded-lg flex flex-col gap-1.5 text-[10px]">
@@ -533,18 +533,18 @@ export function KitBuilder({
                     <Badge tone="info">Poids optimisé : {aiResult.after_weight_kg.toFixed(1)} kg</Badge>
                   </div>
                   {aiResult.co2_kg_saved_estimate > 0 && (
-                    <span className="text-[9px] font-mono text-[#365233]">
+                    <span className="text-[9px] font-mono text-[var(--lkv-primary-soft)]">
                       -{aiResult.co2_kg_saved_estimate}kg CO₂
                     </span>
                   )}
                 </div>
 
-                <p className="text-[9px] text-[#17402C] leading-relaxed">{aiResult.analysis}</p>
+                <p className="text-[9px] text-[var(--lkv-primary)] leading-relaxed">{aiResult.analysis}</p>
 
                 {(aiResult.removals.length > 0 || aiResult.replacements.length > 0) && (
                   <div className="flex flex-col gap-1 pt-1 border-t border-white/10">
                     {aiResult.removals.map((r, i) => (
-                      <div key={`rem-${i}`} className="flex items-center justify-between gap-1 text-[9px] text-[#A8443A]">
+                      <div key={`rem-${i}`} className="flex items-center justify-between gap-1 text-[9px] text-[var(--lkv-danger)]">
                         <span className="truncate">⚠️ À retirer : <b>{r.item}</b> ({r.reason})</span>
                         <button
                           type="button"
@@ -552,7 +552,7 @@ export function KitBuilder({
                             const match = kitItems.find((k) => k.name.toLowerCase().includes(r.item.toLowerCase()));
                             if (match) removeItem(match.id);
                           }}
-                          className="px-1.5 py-0.5 rounded bg-[#A8443A]/10 hover:bg-[#A8443A]/20 font-bold shrink-0 text-[8.5px]"
+                          className="px-1.5 py-0.5 rounded bg-[var(--lkv-danger)]/10 hover:bg-[var(--lkv-danger)]/20 font-bold shrink-0 text-[8.5px]"
                         >
                           Retirer
                         </button>
@@ -560,7 +560,7 @@ export function KitBuilder({
                     ))}
 
                     {aiResult.replacements.map((rep, i) => (
-                      <div key={`rep-${i}`} className="flex items-center justify-between gap-1 text-[9px] text-[#365233]">
+                      <div key={`rep-${i}`} className="flex items-center justify-between gap-1 text-[9px] text-[var(--lkv-primary-soft)]">
                         <span className="truncate">💡 Remplacer <b>{rep.item}</b> par <i>{rep.with}</i></span>
                       </div>
                     ))}
@@ -587,10 +587,10 @@ export function KitBuilder({
               aria-selected={isActive}
               type="button"
               onClick={() => setSelectedCategory(cat)}
-              className={`px-2 py-0.5 rounded-full text-[9px] font-bold transition-all shrink-0 focus-visible:ring-2 focus-visible:ring-[#17402C] focus-visible:ring-offset-1 ${
+              className={`px-2 py-0.5 rounded-full text-[9px] font-bold transition-all shrink-0 focus-visible:ring-2 focus-visible:ring-[var(--lkv-primary)] focus-visible:ring-offset-1 ${
                 isActive
-                  ? 'bg-[#17402C] text-white '
-                  : 'bg-white/[0.08] text-[#365233] hover:bg-white/20 border border-white/20'
+                  ? 'bg-[var(--lkv-primary)] text-white '
+                  : 'bg-white/[0.08] text-[var(--lkv-primary-soft)] hover:bg-white/20 border border-white/20'
               }`}
             >
               {cat}
@@ -603,9 +603,9 @@ export function KitBuilder({
       <div className="flex-1 min-h-[220px] md:min-h-[280px] max-h-[380px] md:max-h-[440px] grid grid-cols-1 md:grid-cols-12 gap-2 content-stretch">
         {/* ÉCRAN 1 (Gauche, 8 colonnes) : Catalogue Fusionné en Colonnes de 3 */}
         <div className="md:col-span-8 flex flex-col min-h-0 gap-1 overflow-y-auto no-scrollbar pr-0.5">
-          <div className="flex items-center justify-between px-1 text-[9px] font-bold text-[#365233] shrink-0">
+          <div className="flex items-center justify-between px-1 text-[9px] font-bold text-[var(--lkv-primary-soft)] shrink-0">
             <span>Matériel disponible ({filteredCatalog.length})</span>
-            <span className="text-[#5A7064]">{selectedCategory}</span>
+            <span className="text-[var(--lkv-text-muted)]">{selectedCategory}</span>
           </div>
 
           <AnimatePresence mode="wait">
@@ -618,7 +618,7 @@ export function KitBuilder({
               className="flex-1"
             >
               {filteredCatalog.length === 0 ? (
-                <p className="text-[10px] text-[#5A7064] py-4 text-center">Aucun équipement disponible dans cette catégorie.</p>
+                <p className="text-[10px] text-[var(--lkv-text-muted)] py-4 text-center">Aucun équipement disponible dans cette catégorie.</p>
               ) : (
                 <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-1.5">
                   {filteredCatalog.map((item) => {
@@ -645,19 +645,19 @@ export function KitBuilder({
                           </div>
 
                           <div className="min-w-0 flex-1">
-                            <p className="font-semibold text-[#17402C] truncate leading-tight text-[10.5px]">
+                            <p className="font-semibold text-[var(--lkv-primary)] truncate leading-tight text-[10.5px]">
                               {item.name}
                             </p>
                             <div className="flex items-center gap-1 text-[8px]">
                               {item.isFromShop ? (
                                 <>
-                                  <span className="text-[#17402C] font-bold">🛒 Boutique</span>
-                                  <span className="text-[#5A7064]">· {item.priceEur?.toFixed(2)}€</span>
+                                  <span className="text-[var(--lkv-primary)] font-bold">🛒 Boutique</span>
+                                  <span className="text-[var(--lkv-text-muted)]">· {item.priceEur?.toFixed(2)}€</span>
                                 </>
                               ) : (
                                 <>
-                                  <span className="text-[#365233] font-medium">Inventaire</span>
-                                  <span className="text-[#5A7064]">· {item.weight_g}g</span>
+                                  <span className="text-[var(--lkv-primary-soft)] font-medium">Inventaire</span>
+                                  <span className="text-[var(--lkv-text-muted)]">· {item.weight_g}g</span>
                                 </>
                               )}
                             </div>
@@ -672,10 +672,10 @@ export function KitBuilder({
                           whileTap={isAdded ? undefined : { scale: 0.86 }}
                           transition={{ type: 'spring', stiffness: 500, damping: 25 }}
                           aria-label={`Ajouter ${item.name} au kit`}
-                          className={`h-6 w-6 !rounded-full flex items-center justify-center transition-all shrink-0 focus-visible:ring-2 focus-visible:ring-[#17402C] focus-visible:ring-offset-1 ${
+                          className={`h-6 w-6 !rounded-full flex items-center justify-center transition-all shrink-0 focus-visible:ring-2 focus-visible:ring-[var(--lkv-primary)] focus-visible:ring-offset-1 ${
                             isAdded
-                              ? 'bg-white/10 text-[#5A7064] cursor-default'
-                              : 'glass interactive text-[#17402C] hover:bg-[#17402C] hover:text-white border border-white/40 shadow-inner'
+                              ? 'bg-white/10 text-[var(--lkv-text-muted)] cursor-default'
+                              : 'glass interactive text-[var(--lkv-primary)] hover:bg-[var(--lkv-primary)] hover:text-white border border-white/40 shadow-inner'
                           }`}
                         >
                           {isAdded ? (
@@ -695,14 +695,14 @@ export function KitBuilder({
 
         {/* ÉCRAN 2 (Droite, 4 colonnes) : Deuxième écran "Kit en cours" */}
         <div className="md:col-span-4 flex flex-col min-h-0 gap-1 pl-0 md:pl-1 md:border-l border-white/15">
-          <div className="flex items-center justify-between px-1 text-[9px] font-bold text-[#17402C] shrink-0">
+          <div className="flex items-center justify-between px-1 text-[9px] font-bold text-[var(--lkv-primary)] shrink-0">
             <span>Kit en cours ({kitItems.length})</span>
             <motion.span
               key={totalWeightG}
               initial={{ opacity: 0, y: -3 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.2, ease: [0.16, 1, 0.3, 1] }}
-              className="font-mono font-bold text-[#17402C]"
+              className="font-mono font-bold text-[var(--lkv-primary)]"
             >
               {(totalWeightG / 1000).toFixed(2)} kg
             </motion.span>
@@ -714,10 +714,10 @@ export function KitBuilder({
             aria-label="Articles du kit en cours d'assemblage"
           >
             {kitItems.length === 0 ? (
-              <div className="py-5 text-center text-[10px] text-[#5A7064] flex flex-col items-center justify-center gap-1.5">
+              <div className="py-5 text-center text-[10px] text-[var(--lkv-text-muted)] flex flex-col items-center justify-center gap-1.5">
                 <span className="text-xl opacity-30" aria-hidden="true">🎒</span>
-                <span className="font-semibold text-[#365233] text-[10px]">Kit vide</span>
-                <span className="text-[8.5px] text-[#5A7064]/80 leading-relaxed">
+                <span className="font-semibold text-[var(--lkv-primary-soft)] text-[10px]">Kit vide</span>
+                <span className="text-[8.5px] text-[var(--lkv-text-muted)]/80 leading-relaxed">
                   Cliquez sur « <Plus size={9} className="inline align-baseline" aria-hidden="true" /> » à gauche pour assembler.
                 </span>
               </div>
@@ -743,10 +743,10 @@ export function KitBuilder({
                       />
                     </div>
                     <div className="min-w-0 flex-1">
-                      <p className="font-semibold text-[#17402C] truncate leading-tight">{item.name}</p>
-                      <div className="flex items-center gap-1 text-[8.5px] text-[#5A7064]">
+                      <p className="font-semibold text-[var(--lkv-primary)] truncate leading-tight">{item.name}</p>
+                      <div className="flex items-center gap-1 text-[8.5px] text-[var(--lkv-text-muted)]">
                         <span>{item.weight_g}g</span>
-                        {item.isFromShop && <span className="text-[#17402C] font-bold">· 🛒 À commander</span>}
+                        {item.isFromShop && <span className="text-[var(--lkv-primary)] font-bold">· 🛒 À commander</span>}
                       </div>
                     </div>
                   </div>
@@ -756,7 +756,7 @@ export function KitBuilder({
                     transition={{ type: 'spring', stiffness: 500, damping: 25 }}
                     onClick={() => removeItem(item.id)}
                     aria-label={`Retirer ${item.name}`}
-                    className="text-[#5A7064] hover:text-[#A8443A] p-0.5 shrink-0 focus-visible:ring-1 focus-visible:ring-[#A8443A] rounded"
+                    className="text-[var(--lkv-text-muted)] hover:text-[var(--lkv-danger)] p-0.5 shrink-0 focus-visible:ring-1 focus-visible:ring-[var(--lkv-danger)] rounded"
                   >
                     <Trash2 size={10} aria-hidden="true" />
                   </motion.button>
@@ -773,13 +773,13 @@ export function KitBuilder({
           value={name}
           onChange={(e) => setName(e.target.value)}
           placeholder="Nom du kit (ex: Bivouac 3j)"
-          className="glass-input text-[10.5px] text-[#17402C] h-7 py-0 px-3 rounded-full flex-1 min-w-[100px] border border-white/30"
+          className="glass-input text-[10.5px] text-[var(--lkv-primary)] h-7 py-0 px-3 rounded-full flex-1 min-w-[100px] border border-white/30"
         />
         <div className="relative shrink-0">
           <select
             value={season}
             onChange={(e) => setSeason(e.target.value)}
-            className="glass interactive h-7 py-0 pl-2.5 pr-6 text-[10px] text-[#17402C] font-bold rounded-full cursor-pointer appearance-none outline-none border border-white/40 shadow-inner focus-visible:ring-2 focus-visible:ring-[#17402C]"
+            className="glass interactive h-7 py-0 pl-2.5 pr-6 text-[10px] text-[var(--lkv-primary)] font-bold rounded-full cursor-pointer appearance-none outline-none border border-white/40 shadow-inner focus-visible:ring-2 focus-visible:ring-[var(--lkv-primary)]"
           >
             <option value="toute_saison">🌿 Toutes saisons</option>
             <option value="ete">☀️ Été</option>
@@ -787,7 +787,7 @@ export function KitBuilder({
             <option value="automne">🍂 Automne</option>
             <option value="hiver">❄️ Hiver</option>
           </select>
-          <ChevronDown size={10} className="absolute right-2 top-2.5 pointer-events-none text-[#17402C]" />
+          <ChevronDown size={10} className="absolute right-2 top-2.5 pointer-events-none text-[var(--lkv-primary)]" />
         </div>
         <motion.button
           type="button"
@@ -795,7 +795,7 @@ export function KitBuilder({
           transition={{ type: 'spring', stiffness: 500, damping: 25 }}
           onClick={save}
           disabled={saving || kitItems.length === 0}
-          className="glass-capsule-btn primary h-7 text-[10.5px] font-bold px-3 rounded-full shrink-0 disabled:opacity-40 focus-visible:ring-2 focus-visible:ring-[#17402C]"
+          className="glass-capsule-btn primary h-7 text-[10.5px] font-bold px-3 rounded-full shrink-0 disabled:opacity-40 focus-visible:ring-2 focus-visible:ring-[var(--lkv-primary)]"
         >
           {saving ? '…' : `Enregistrer (${kitItems.length})`}
         </motion.button>

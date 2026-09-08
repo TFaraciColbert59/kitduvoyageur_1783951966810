@@ -185,7 +185,7 @@ describe('MobileFloatingIsland (« Liquid Island » Bottom Controller)', () => {
       expect(onQuickAdd).toHaveBeenCalledTimes(1);
 
       // Check styling on quick add button (emerald styling)
-      expect(quickAddBtn.props.className).toMatch(/bg-\[#17402C\]|bg-emerald/);
+      expect(quickAddBtn.props.className).toMatch(/bg-\[#17402C\]|bg-\[var\(--lkv-primary\)\]|bg-emerald/);
     });
   });
 

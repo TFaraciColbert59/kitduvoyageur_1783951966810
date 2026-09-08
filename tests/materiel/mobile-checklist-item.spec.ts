@@ -105,8 +105,8 @@ describe('MobileChecklistItem (Apple Reminders Style)', () => {
         })
       );
 
-      expect(htmlNormal).not.toContain('ring-[#8A241B]');
-      expect(htmlHighlighted).toContain('ring-[#8A241B]');
+      expect(htmlNormal).not.toMatch(/ring-\[#8A241B\]|ring-\[var\(--lkv-danger\)\]/);
+      expect(htmlHighlighted).toMatch(/ring-\[#8A241B\]|ring-\[var\(--lkv-danger\)\]/);
     });
   });
 

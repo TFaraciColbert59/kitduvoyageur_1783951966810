@@ -201,10 +201,10 @@ export function DepartHeader({
             priority
             sizes="(max-width: 768px) 100vw, 800px"
           />
-          <div className="absolute inset-0 bg-gradient-to-b from-transparent via-[#F7F9F6]/80 to-[#F7F9F6] dark:via-[#111A15]/80 dark:to-[#111A15]" />
+          <div className="absolute inset-0 bg-gradient-to-b from-transparent via-[var(--lkv-surface)]/80 to-[var(--lkv-surface)] dark:via-[var(--ink-900)]/80 dark:to-[var(--ink-900)]" />
         </div>
       ) : (
-        <div className="absolute top-0 right-0 w-64 h-32 bg-gradient-to-br from-[#17402C]/10 via-[#2D6B4A]/5 to-transparent rounded-bl-full pointer-events-none" />
+        <div className="absolute top-0 right-0 w-64 h-32 bg-gradient-to-br from-[var(--lkv-primary)]/10 via-[var(--lkv-primary-hover)]/5 to-transparent rounded-bl-full pointer-events-none" />
       )}
 
       {/* Conteneur principal avec support de swipe mobile */}
@@ -221,13 +221,13 @@ export function DepartHeader({
         {/* ════ LIGNE 1 : Surtitre avec Fraîcheur & Activité + Badge Statut ════ */}
         <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-2.5">
           <div className="space-y-1 min-w-0 flex-1">
-            <div className="flex items-center gap-2 flex-wrap text-[10px] sm:text-[11px] font-semibold text-[#5A7064]">
-              <span className="uppercase tracking-wider font-bold text-[#17402C]">
+            <div className="flex items-center gap-2 flex-wrap text-[10px] sm:text-[11px] font-semibold text-[var(--lkv-text-muted)]">
+              <span className="uppercase tracking-wider font-bold text-[var(--lkv-primary)]">
                 Cockpit de départ
               </span>
               <span>•</span>
               {depart.activityType && (
-                <span className="px-1.5 py-0.2 rounded-md bg-[#17402C]/10 text-[#17402C] font-medium">
+                <span className="px-1.5 py-0.2 rounded-md bg-[var(--lkv-primary)]/10 text-[var(--lkv-primary)] font-medium">
                   {depart.activityType}
                 </span>
               )}
@@ -243,13 +243,13 @@ export function DepartHeader({
                   type="text"
                   value={nameInput}
                   onChange={(e) => setNameInput(e.target.value)}
-                  className="px-2.5 py-1 rounded-xl text-base sm:text-lg font-display font-bold text-[#17402C] bg-white/90 border border-[#17402C]/30 focus:outline-none w-full"
+                  className="px-2.5 py-1 rounded-xl text-base sm:text-lg font-display font-bold text-[var(--lkv-primary)] bg-white/90 border border-[var(--lkv-primary)]/30 focus:outline-none w-full"
                   autoFocus
                 />
                 <button
                   type="button"
                   onClick={handleSaveName}
-                  className="p-1.5 rounded-xl bg-[#17402C] text-white hover:bg-[#17402C]/90 cursor-pointer"
+                  className="p-1.5 rounded-xl bg-[var(--lkv-primary)] text-white hover:bg-[var(--lkv-primary)]/90 cursor-pointer"
                   aria-label="Valider le nom"
                 >
                   <Check size={14} />
@@ -257,7 +257,7 @@ export function DepartHeader({
                 <button
                   type="button"
                   onClick={() => setIsEditingName(false)}
-                  className="p-1.5 rounded-xl bg-black/5 hover:bg-black/10 text-[#5A7064] cursor-pointer"
+                  className="p-1.5 rounded-xl bg-black/5 hover:bg-black/10 text-[var(--lkv-text-muted)] cursor-pointer"
                   aria-label="Annuler"
                 >
                   <X size={14} />
@@ -267,14 +267,14 @@ export function DepartHeader({
               <div className="flex items-center gap-2 group pt-0.5">
                 <h1
                   id="depart-main-heading"
-                  className="text-lg sm:text-xl md:text-2xl font-display font-bold text-[#17402C] leading-tight truncate"
+                  className="text-lg sm:text-xl md:text-2xl font-display font-bold text-[var(--lkv-primary)] leading-tight truncate"
                 >
                   {cleanDest}
                 </h1>
                 <button
                   type="button"
                   onClick={() => setIsEditingName(true)}
-                  className="p-1 rounded-lg hover:bg-white/40 text-[#5A7064] hover:text-[#17402C] transition-opacity cursor-pointer opacity-70 group-hover:opacity-100"
+                  className="p-1 rounded-lg hover:bg-white/40 text-[var(--lkv-text-muted)] hover:text-[var(--lkv-primary)] transition-opacity cursor-pointer opacity-70 group-hover:opacity-100"
                   title="Renommer la destination"
                   aria-label="Modifier le nom de la destination"
                 >
@@ -284,28 +284,28 @@ export function DepartHeader({
             )}
 
             {/* Sous-titre : Tracé lié + Effectif du groupe */}
-            <div className="flex items-center gap-2.5 text-xs text-[#5A7064] flex-wrap">
+            <div className="flex items-center gap-2.5 text-xs text-[var(--lkv-text-muted)] flex-wrap">
               {depart.trail ? (
-                <span className="flex items-center gap-1 font-medium text-[#17402C]">
-                  <MapPin size={11} className="text-[#2D6B4A]" />
+                <span className="flex items-center gap-1 font-medium text-[var(--lkv-primary)]">
+                  <MapPin size={11} className="text-[var(--lkv-primary-hover)]" />
                   <span>{depart.trail.name} ({formatDistanceKm(depart.trail.distance_km)})</span>
                 </span>
               ) : (
-                <span className="text-[11.5px] italic text-[#5A7064] flex items-center gap-1">
+                <span className="text-[11.5px] italic text-[var(--lkv-text-muted)] flex items-center gap-1">
                   <Compass size={11} />
                   <span>Checklist autonome · Aucun tracé lié</span>
                 </span>
               )}
 
-              <span className="flex items-center gap-1 font-medium text-[#17402C] bg-white/40 px-1.5 py-0.2 rounded-md">
-                <Users size={11} className="text-[#5A7064]" />
+              <span className="flex items-center gap-1 font-medium text-[var(--lkv-primary)] bg-white/40 px-1.5 py-0.2 rounded-md">
+                <Users size={11} className="text-[var(--lkv-text-muted)]" />
                 <span>{groupLabel}</span>
               </span>
             </div>
 
             {/* Rappel discret de trek comparable (§Phase 1) */}
             {depart.comparableTrip && (
-              <div className="pt-0.5 flex items-center gap-1.5 text-[11px] text-[#2D6B4A] font-medium">
+              <div className="pt-0.5 flex items-center gap-1.5 text-[11px] text-[var(--lkv-primary-hover)] font-medium">
                 <Sparkles size={11} className="shrink-0" />
                 <span>
                   {depart.comparableTrip.name} ({depart.comparableTrip.timeAgo}) · {depart.comparableTrip.similarity}
@@ -338,7 +338,7 @@ export function DepartHeader({
                 onClick={() => router.push(`/materiel/depart/${k.id}`)}
                 className={cn(
                   'h-1.5 rounded-full transition-all cursor-pointer',
-                  k.id === depart.id ? 'w-5 bg-[#17402C]' : 'w-1.5 bg-black/20 hover:bg-black/40'
+                  k.id === depart.id ? 'w-5 bg-[var(--lkv-primary)]' : 'w-1.5 bg-black/20 hover:bg-black/40'
                 )}
                 aria-label={`Aller au départ ${cleanText(k.name)}`}
               />
@@ -348,9 +348,9 @@ export function DepartHeader({
 
         {/* ════ LIGNE 2 : Barre de Progression Pondérée ════ */}
         <div className="space-y-1.5 pt-0.5">
-          <div className="flex items-center justify-between text-[11px] font-semibold text-[#5A7064]">
+          <div className="flex items-center justify-between text-[11px] font-semibold text-[var(--lkv-text-muted)]">
             <span>Préparation du pack</span>
-            <span className="font-mono font-bold text-[#17402C]">{score.percentage}%</span>
+            <span className="font-mono font-bold text-[var(--lkv-primary)]">{score.percentage}%</span>
           </div>
 
           <div className="h-2 w-full rounded-full bg-black/5 dark:bg-white/10 overflow-hidden shadow-inner">
@@ -358,10 +358,10 @@ export function DepartHeader({
               className={cn(
                 'h-full rounded-full transition-all duration-300',
                 score.status === 'ok'
-                  ? 'bg-[#2D6B4A]'
+                  ? 'bg-[var(--lkv-primary-hover)]'
                   : score.status === 'warning'
-                  ? 'bg-[#8C6418]'
-                  : 'bg-[#8A241B]'
+                  ? 'bg-[var(--lkv-warning)]'
+                  : 'bg-[var(--lkv-danger)]'
               )}
               style={{ width: `${score.percentage}%` }}
               role="progressbar"
@@ -376,18 +376,18 @@ export function DepartHeader({
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5 pt-1">
           {/* Métrique 1 : Date & Météo Express J-X */}
           <div className="glass-sub-card p-3 rounded-2xl flex items-center gap-2.5">
-            <div className="w-8 h-8 rounded-xl bg-white/50 border border-white/60 flex items-center justify-center text-[#17402C] shrink-0 shadow-2xs">
+            <div className="w-8 h-8 rounded-xl bg-white/50 border border-white/60 flex items-center justify-center text-[var(--lkv-primary)] shrink-0 shadow-2xs">
               <Calendar size={15} />
             </div>
             <div className="min-w-0 flex-1">
               <div className="flex items-center justify-between">
-                <span className="text-[9.5px] font-semibold uppercase tracking-wider text-[#5A7064]">
+                <span className="text-[9.5px] font-semibold uppercase tracking-wider text-[var(--lkv-text-muted)]">
                   Départ
                 </span>
                 <button
                   type="button"
                   onClick={() => setIsEditingDate(true)}
-                  className="text-[9.5px] text-[#5A7064] hover:text-[#17402C] cursor-pointer"
+                  className="text-[9.5px] text-[var(--lkv-text-muted)] hover:text-[var(--lkv-primary)] cursor-pointer"
                   aria-label="Modifier la date"
                 >
                   <Edit2 size={10} />
@@ -400,19 +400,19 @@ export function DepartHeader({
                     type="date"
                     value={dateInput}
                     onChange={(e) => setDateInput(e.target.value)}
-                    className="px-1.5 py-0.5 rounded text-[11px] font-mono text-[#17402C] bg-white/80 border border-[#17402C]/30 w-full"
+                    className="px-1.5 py-0.5 rounded text-[11px] font-mono text-[var(--lkv-primary)] bg-white/80 border border-[var(--lkv-primary)]/30 w-full"
                     autoFocus
                   />
                   <button
                     type="button"
                     onClick={handleSaveDate}
-                    className="p-1 rounded bg-[#17402C] text-white cursor-pointer"
+                    className="p-1 rounded bg-[var(--lkv-primary)] text-white cursor-pointer"
                   >
                     <Check size={11} />
                   </button>
                 </div>
               ) : (
-                <div className="text-xs sm:text-[12.5px] font-bold text-[#17402C] truncate flex items-center gap-1.5">
+                <div className="text-xs sm:text-[12.5px] font-bold text-[var(--lkv-primary)] truncate flex items-center gap-1.5">
                   {isLast24Hours ? (
                     <div className="font-mono text-xs">
                       <CountdownLive target={depart.startsAt} />
@@ -421,7 +421,7 @@ export function DepartHeader({
                     <span>{humanDateText}</span>
                   )}
                   {currentWeather && (
-                    <span className="inline-flex items-center gap-0.5 text-[11px] font-medium text-[#2D6B4A] bg-emerald-50/80 px-1.5 py-0.2 rounded-full shrink-0">
+                    <span className="inline-flex items-center gap-0.5 text-[11px] font-medium text-[var(--lkv-primary-hover)] bg-[var(--lkv-success)]/10 px-1.5 py-0.2 rounded-full shrink-0">
                       <WeatherIconComp size={11} />
                       <span>{currentWeather.tempC}°C</span>
                     </span>
@@ -433,16 +433,16 @@ export function DepartHeader({
 
           {/* Métrique 2 : Poids au dos */}
           <div className="glass-sub-card p-3 rounded-2xl flex items-center gap-2.5">
-            <div className="w-8 h-8 rounded-xl bg-white/50 border border-white/60 flex items-center justify-center text-[#17402C] shrink-0 shadow-2xs">
+            <div className="w-8 h-8 rounded-xl bg-white/50 border border-white/60 flex items-center justify-center text-[var(--lkv-primary)] shrink-0 shadow-2xs">
               <Backpack size={15} />
             </div>
             <div className="min-w-0">
-              <span className="text-[9.5px] font-semibold uppercase tracking-wider text-[#5A7064] block">
+              <span className="text-[9.5px] font-semibold uppercase tracking-wider text-[var(--lkv-text-muted)] block">
                 Poids au dos
               </span>
-              <div className="text-xs sm:text-[12.5px] font-mono font-bold text-[#17402C] truncate">
+              <div className="text-xs sm:text-[12.5px] font-mono font-bold text-[var(--lkv-primary)] truncate">
                 {totalPackKg} kg{' '}
-                <span className="text-[10px] font-sans font-normal text-[#5A7064]">
+                <span className="text-[10px] font-sans font-normal text-[var(--lkv-text-muted)]">
                   (base {baseKg}k)
                 </span>
               </div>
@@ -451,16 +451,16 @@ export function DepartHeader({
 
           {/* Métrique 3 : Articles prêts & Autonomie */}
           <div className="glass-sub-card p-3 rounded-2xl flex items-center gap-2.5">
-            <div className="w-8 h-8 rounded-xl bg-white/50 border border-white/60 flex items-center justify-center text-[#17402C] shrink-0 shadow-2xs">
+            <div className="w-8 h-8 rounded-xl bg-white/50 border border-white/60 flex items-center justify-center text-[var(--lkv-primary)] shrink-0 shadow-2xs">
               <CheckCircle2 size={15} />
             </div>
             <div className="min-w-0">
-              <span className="text-[9.5px] font-semibold uppercase tracking-wider text-[#5A7064] block">
+              <span className="text-[9.5px] font-semibold uppercase tracking-wider text-[var(--lkv-text-muted)] block">
                 Articles & Autonomie
               </span>
-              <div className="text-xs sm:text-[12.5px] font-bold text-[#17402C] truncate">
+              <div className="text-xs sm:text-[12.5px] font-bold text-[var(--lkv-primary)] truncate">
                 {checkedCount}/{totalCount}{' '}
-                <span className="text-[10px] font-medium text-[#5A7064]">
+                <span className="text-[10px] font-medium text-[var(--lkv-text-muted)]">
                   · {depart.durationDays}j vivres
                 </span>
               </div>
@@ -476,10 +476,10 @@ export function DepartHeader({
             className={cn(
               'w-full py-3 px-4 rounded-2xl font-bold text-xs sm:text-sm flex items-center justify-center gap-2 transition-all shadow-xs cursor-pointer',
               score.status === 'ok'
-                ? 'bg-[#17402C] text-white hover:bg-[#17402C]/90 hover:scale-[1.005]'
+                ? 'bg-[var(--lkv-primary)] text-white hover:bg-[var(--lkv-primary)]/90 hover:scale-[1.005]'
                 : score.status === 'warning'
-                ? 'bg-[#2D6B4A] text-white hover:bg-[#2D6B4A]/90 hover:scale-[1.005]'
-                : 'bg-[#8A241B] text-white hover:bg-[#8A241B]/90 hover:scale-[1.005]'
+                ? 'bg-[var(--lkv-primary-hover)] text-white hover:bg-[var(--lkv-primary-hover)]/90 hover:scale-[1.005]'
+                : 'bg-[var(--lkv-danger)] text-white hover:bg-[var(--lkv-danger)]/90 hover:scale-[1.005]'
             )}
           >
             <CtaIcon size={16} className="shrink-0" />

@@ -69,13 +69,13 @@ export function KitOptimizer({ kits }: { kits: KitListItem[] }) {
   return (
     <GlassCard as="article" tone="sage" ariaLabelledBy="optimizer-title" className="p-4 sm:p-5">
       <Eyebrow>Optimiseur IA</Eyebrow>
-      <h3 id="optimizer-title" className="font-display font-bold text-[20px] text-[#17402C] mt-0.5 mb-3">Optimisation intelligente</h3>
+      <h3 id="optimizer-title" className="font-display font-bold text-[20px] text-[var(--lkv-primary)] mt-0.5 mb-3">Optimisation intelligente</h3>
       <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2">
         <select
           value={kitId}
           onChange={(e) => setKitId(e.target.value)}
           aria-label="Kit à optimiser"
-          className="glass-input flex-1 min-w-[140px] text-xs sm:text-sm text-[#17402C]"
+          className="glass-input flex-1 min-w-[140px] text-xs sm:text-sm text-[var(--lkv-primary)]"
         >
           {active.map((k) => <option key={k.id} value={k.id}>{k.name}</option>)}
         </select>
@@ -84,7 +84,7 @@ export function KitOptimizer({ kits }: { kits: KitListItem[] }) {
           onChange={(e) => setGoal(e.target.value)}
           placeholder="Objectif (ex: alléger le kit)"
           aria-label="Objectif d'optimisation"
-          className="glass-input flex-1 min-w-[140px] text-xs sm:text-sm text-[#17402C]"
+          className="glass-input flex-1 min-w-[140px] text-xs sm:text-sm text-[var(--lkv-primary)]"
         />
         <button
           type="button"
@@ -96,7 +96,7 @@ export function KitOptimizer({ kits }: { kits: KitListItem[] }) {
         </button>
       </div>
 
-      {error && <p className="mt-3 text-xs text-[#A8443A]">{error}</p>}
+      {error && <p className="mt-3 text-xs text-[var(--lkv-danger)]">{error}</p>}
 
       {result && diff && (
         <div className="mt-4 glass-sub-card p-3.5 rounded-2xl flex flex-col gap-2.5">
@@ -104,8 +104,8 @@ export function KitOptimizer({ kits }: { kits: KitListItem[] }) {
             <Badge tone="sage">Score {result.score ?? diff.score}/100</Badge>
             <Badge tone="info">{(diff.beforeG / 1000).toFixed(1)} → {(diff.afterG / 1000).toFixed(1)} kg</Badge>
           </div>
-          <p className="text-xs sm:text-sm text-[#17402C] leading-relaxed">{result.analysis}</p>
-          {diffSummary(diff).map((s) => <p key={s} className="text-xs text-[#365233] font-medium">{s}</p>)}
+          <p className="text-xs sm:text-sm text-[var(--lkv-primary)] leading-relaxed">{result.analysis}</p>
+          {diffSummary(diff).map((s) => <p key={s} className="text-xs text-[var(--lkv-primary-soft)] font-medium">{s}</p>)}
         </div>
       )}
     </GlassCard>

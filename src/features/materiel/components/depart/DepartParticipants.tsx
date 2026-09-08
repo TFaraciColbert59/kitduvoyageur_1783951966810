@@ -50,21 +50,21 @@ export function DepartParticipants({
         <div className="flex items-center justify-between">
           <h2
             id="participants-heading"
-            className="text-xs sm:text-[13px] font-bold text-[#17402C] flex items-center gap-2"
+            className="text-xs sm:text-[13px] font-bold text-[var(--lkv-primary)] flex items-center gap-2"
           >
-            <Users size={15} className="text-[#2D6B4A]" aria-hidden="true" />
+            <Users size={15} className="text-[var(--lkv-primary-hover)]" aria-hidden="true" />
             <span>Équipe & Sécurité</span>
           </h2>
 
           <div className="flex items-center gap-2">
-            <span className="text-[11px] font-mono text-[#5A7064]">
+            <span className="text-[11px] font-mono text-[var(--lkv-text-muted)]">
               {participants.length} randonneur{participants.length > 1 ? 's' : ''}
             </span>
 
             <button
               type="button"
               onClick={handleShare}
-              className="text-[11px] font-bold text-[#2D6B4A] hover:underline flex items-center gap-1 cursor-pointer"
+              className="text-[11px] font-bold text-[var(--lkv-primary-hover)] hover:underline flex items-center gap-1 cursor-pointer"
               title="Partager les coordonnées d’urgence"
             >
               {copied ? <Check size={11} /> : <Share2 size={11} />}
@@ -82,12 +82,12 @@ export function DepartParticipants({
             >
               <div
                 className="w-6 h-6 rounded-full flex items-center justify-center text-white text-[10.5px] font-bold shadow-2xs shrink-0"
-                style={{ backgroundColor: p.color || '#17402C' }}
+                style={{ backgroundColor: p.color || 'var(--lkv-primary)' }}
                 aria-hidden="true"
               >
                 {p.initial || p.name.charAt(0).toUpperCase()}
               </div>
-              <span className="text-xs font-semibold text-[#17402C] truncate max-w-[140px]">
+              <span className="text-xs font-semibold text-[var(--lkv-primary)] truncate max-w-[140px]">
                 {p.name}
               </span>
             </div>
@@ -98,14 +98,14 @@ export function DepartParticipants({
         {emergencyContact && (
           <div className="glass-sub-card p-3 flex items-center justify-between gap-3 bg-[rgba(168,68,58,0.06)] border-[rgba(168,68,58,0.20)]">
             <div className="flex items-center gap-2.5 min-w-0">
-              <div className="w-8 h-8 rounded-full bg-[rgba(168,68,58,0.12)] text-[#8A241B] flex items-center justify-center shrink-0">
+              <div className="w-8 h-8 rounded-full bg-[rgba(168,68,58,0.12)] text-[var(--lkv-danger)] flex items-center justify-center shrink-0">
                 <ShieldCheck size={16} aria-hidden="true" />
               </div>
               <div className="min-w-0">
-                <p className="text-[10px] font-semibold uppercase tracking-wider text-[#8A241B]">
+                <p className="text-[10px] font-semibold uppercase tracking-wider text-[var(--lkv-danger)]">
                   Contact d’urgence (ICE)
                 </p>
-                <p className="text-xs font-mono font-bold text-[#17402C] truncate">
+                <p className="text-xs font-mono font-bold text-[var(--lkv-primary)] truncate">
                   {emergencyContact}
                 </p>
               </div>
@@ -124,30 +124,30 @@ export function DepartParticipants({
 
         {/* ════ NUMÉROS D'URGENCE & SECOURS MONTAGNE (§Phase 5) ════ */}
         <div className="p-2.5 rounded-xl bg-black/5 dark:bg-white/5 space-y-1.5">
-          <span className="text-[10px] font-bold uppercase tracking-wider text-[#5A7064] block">
+          <span className="text-[10px] font-bold uppercase tracking-wider text-[var(--lkv-text-muted)] block">
             Secours en Montagne & Territoire
           </span>
           <div className="grid grid-cols-2 gap-2 text-xs">
             <a
               href="tel:112"
-              className="p-2 rounded-xl bg-white/70 dark:bg-white/10 border border-white/60 flex items-center justify-between hover:bg-white text-[#17402C] font-semibold cursor-pointer"
+              className="p-2 rounded-xl bg-white/70 dark:bg-white/10 border border-white/60 flex items-center justify-between hover:bg-white text-[var(--lkv-primary)] font-semibold cursor-pointer"
             >
               <div className="flex items-center gap-1.5">
-                <AlertOctagon size={13} className="text-[#8A241B]" />
+                <AlertOctagon size={13} className="text-[var(--lkv-danger)]" />
                 <span>112 (Europe)</span>
               </div>
-              <PhoneCall size={11} className="text-[#5A7064]" />
+              <PhoneCall size={11} className="text-[var(--lkv-text-muted)]" />
             </a>
 
             <a
               href="tel:15"
-              className="p-2 rounded-xl bg-white/70 dark:bg-white/10 border border-white/60 flex items-center justify-between hover:bg-white text-[#17402C] font-semibold cursor-pointer"
+              className="p-2 rounded-xl bg-white/70 dark:bg-white/10 border border-white/60 flex items-center justify-between hover:bg-white text-[var(--lkv-primary)] font-semibold cursor-pointer"
             >
               <div className="flex items-center gap-1.5">
-                <Radio size={13} className="text-[#2D6B4A]" />
+                <Radio size={13} className="text-[var(--lkv-primary-hover)]" />
                 <span>15 (SAMU / Urgence)</span>
               </div>
-              <PhoneCall size={11} className="text-[#5A7064]" />
+              <PhoneCall size={11} className="text-[var(--lkv-text-muted)]" />
             </a>
           </div>
         </div>

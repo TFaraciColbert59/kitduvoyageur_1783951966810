@@ -169,7 +169,7 @@ function DraggableCard({
       <button
         type="button"
         onPointerDown={(e) => controls.start(e)}
-        className="hidden md:flex !absolute top-2 right-2 z-20 h-8 w-8 !rounded-full glass interactive items-center justify-center text-[#17402C] cursor-grab touch-none border border-white/40 focus-visible:ring-2 focus-visible:ring-[#17402C]"
+        className="hidden md:flex !absolute top-2 right-2 z-20 h-8 w-8 !rounded-full glass interactive items-center justify-center text-[var(--lkv-primary)] cursor-grab touch-none border border-white/40 focus-visible:ring-2 focus-visible:ring-[var(--lkv-primary)]"
         aria-label={`Déplacer la carte ${LABEL[id] ?? id}`}
       >
         <GripVertical size={16} aria-hidden="true" />

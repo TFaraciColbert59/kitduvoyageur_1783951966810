@@ -46,11 +46,11 @@ export function KitsKpiCockpitCard({
   return (
     <GlassCard as="article" tone="sage" ariaLabelledBy="kpi-title" className="p-2 sm:p-3 flex flex-col justify-between h-full min-h-0">
       <div className="flex items-center justify-between gap-1 pr-7 md:pr-14 shrink-0 mb-1">
-        <p className="truncate text-[10px] md:text-xs font-semibold text-[#17402C] font-body">
+        <p className="truncate text-[10px] md:text-xs font-semibold text-[var(--lkv-primary)] font-body">
           <span className="sm:hidden">Indicateurs</span>
           <span className="hidden sm:inline">Indicateurs · Kits</span>
         </p>
-        <span className="text-[8px] sm:text-[9px] font-bold text-[#5A7064] uppercase hidden md:inline tracking-wide">
+        <span className="text-[8px] sm:text-[9px] font-bold text-[var(--lkv-text-muted)] uppercase hidden md:inline tracking-wide">
           Synthèse
         </span>
       </div>
@@ -67,16 +67,16 @@ export function KitsKpiCockpitCard({
             className={`glass-sub-card p-1 sm:p-1.5 flex flex-col justify-center gap-0.2 ${t.muted ? 'opacity-50' : ''}`}
           >
             <div className="flex items-center justify-between">
-              <span className="text-[7.5px] sm:text-[8.5px] md:text-[9px] font-semibold uppercase tracking-wide text-[#365233] truncate">
+              <span className="text-[7.5px] sm:text-[8.5px] md:text-[9px] font-semibold uppercase tracking-wide text-[var(--lkv-primary-soft)] truncate">
                 {t.label}
               </span>
-              <span className="text-[#17402C]/60 shrink-0">{t.icon}</span>
+              <span className="text-[var(--lkv-primary)]/60 shrink-0">{t.icon}</span>
             </div>
             <span className="flex items-baseline gap-0.5 mt-0.5">
-              <span className="font-display font-bold text-[12px] sm:text-[14px] md:text-[16px] text-[#17402C] tabular-nums leading-none">
+              <span className="font-display font-bold text-[12px] sm:text-[14px] md:text-[16px] text-[var(--lkv-primary)] tabular-nums leading-none">
                 {t.value}
               </span>
-              <span className="text-[7.5px] sm:text-[8.5px] md:text-[9px] text-[#365233] font-medium">
+              <span className="text-[7.5px] sm:text-[8.5px] md:text-[9px] text-[var(--lkv-primary-soft)] font-medium">
                 {t.unit}
               </span>
             </span>

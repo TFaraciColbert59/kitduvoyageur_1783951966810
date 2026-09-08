@@ -27,28 +27,28 @@ export function GearCardDispo({ data, className }: { data: DispoData; className?
         <div className="flex items-start justify-between pr-7 md:pr-10 gap-1.5">
           <div className="space-y-0.5 min-w-0 flex-1">
             <Eyebrow>Parc & Prêts</Eyebrow>
-            <h2 id="dispo-title" className="text-[12px] sm:text-[18px] font-display font-bold text-[#17402C] leading-tight truncate">
+            <h2 id="dispo-title" className="text-[12px] sm:text-[18px] font-display font-bold text-[var(--lkv-primary)] leading-tight truncate">
               Dispo parc
             </h2>
           </div>
 
           <div className="flex items-center gap-1 shrink-0">
             <div className="glass-sub-card px-1.5 py-0.5 flex items-center gap-0.5">
-              <CheckCircle2 size={10} className="text-[#17402C]" />
-              <span className="text-[11px] sm:text-[14px] font-mono font-bold text-[#17402C]">{available}</span>
+              <CheckCircle2 size={10} className="text-[var(--lkv-primary)]" />
+              <span className="text-[11px] sm:text-[14px] font-mono font-bold text-[var(--lkv-primary)]">{available}</span>
             </div>
             <div className="glass-sub-card px-1.5 py-0.5 flex items-center gap-0.5">
-              <Clock size={10} className="text-[#8C6418]" />
-              <span className="text-[11px] sm:text-[14px] font-mono font-bold text-[#8C6418]">{data.unavailableCount}</span>
+              <Clock size={10} className="text-[var(--lkv-warning)]" />
+              <span className="text-[11px] sm:text-[14px] font-mono font-bold text-[var(--lkv-warning)]">{data.unavailableCount}</span>
             </div>
           </div>
         </div>
 
         {/* Progress Bar */}
         <div className="space-y-0.5 sm:space-y-1">
-          <div className="flex items-center justify-between text-[9.5px] sm:text-xs font-semibold text-[#365233]">
+          <div className="flex items-center justify-between text-[9.5px] sm:text-xs font-semibold text-[var(--lkv-primary-soft)]">
             <span>Dispo</span>
-            <span className="font-mono text-[#17402C]">{availablePct}%</span>
+            <span className="font-mono text-[var(--lkv-primary)]">{availablePct}%</span>
           </div>
           <ProgressBar value={availablePct} label="Équipement disponible" tone={tone} />
         </div>
@@ -71,7 +71,7 @@ export function GearCardDispo({ data, className }: { data: DispoData; className?
                 </span>
               </Badge>
             )}
-            <span className="text-[9.5px] sm:text-xs text-[#5A7064] hidden sm:inline truncate">
+            <span className="text-[9.5px] sm:text-xs text-[var(--lkv-text-muted)] hidden sm:inline truncate">
               {data.nextReturnLabel ?? 'À jour'}
             </span>
           </div>

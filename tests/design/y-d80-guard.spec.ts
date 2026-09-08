@@ -28,6 +28,8 @@ const SCOPE_DIRS = [
   'src/app/voyages',
   'src/app/groupes',
   'src/app/ai-configurator',
+  'src/features/materiel',
+  'src/app/materiel',
 ];
 
 const ALLOWLIST_HEX = new Set(['#ffffff', '#fff', '#000000', '#000']);

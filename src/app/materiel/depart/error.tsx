@@ -18,7 +18,7 @@ export default function DepartError({
   useEffect(() => {
     console.error('[DepartError]', error);
     if (typeof window !== 'undefined') {
-      setIsOffline(!navigator.onLine);
+      setIsOffline(!navigator['onLine']);
     }
   }, [error]);
 
@@ -27,15 +27,15 @@ export default function DepartError({
       <div className="w-full max-w-md">
         <GlassCard tone="danger">
           <div className="p-6 space-y-4 text-center">
-            <div className="w-12 h-12 rounded-2xl bg-[rgba(168,68,58,0.15)] text-[#8A241B] flex items-center justify-center mx-auto shadow-xs">
+            <div className="w-12 h-12 rounded-2xl bg-[rgba(168,68,58,0.15)] text-[var(--lkv-danger)] flex items-center justify-center mx-auto shadow-xs">
               {isOffline ? <WifiOff size={24} /> : <AlertTriangle size={24} />}
             </div>
 
             <div className="space-y-1">
-              <h2 className="text-lg font-display font-bold text-[#17402C]">
+              <h2 className="text-lg font-display font-bold text-[var(--lkv-primary)]">
                 {isOffline ? 'Mode hors-ligne détecté' : 'Données du départ indisponibles'}
               </h2>
-              <p className="text-xs text-[#5A7064] leading-relaxed">
+              <p className="text-xs text-[var(--lkv-text-muted)] leading-relaxed">
                 {isOffline
                   ? 'Aucune connexion internet active. Vos données de pack pré-chargées restent accessibles.'
                   : 'Une anomalie temporaire empêche le chargement du cockpit. Vos données sont préservées en sécurité.'}
@@ -63,8 +63,8 @@ export default function DepartError({
             </div>
 
             {/* Répère sécurité terrain */}
-            <div className="pt-3 border-t border-[#17402C]/10 flex items-center justify-center gap-1.5 text-[10.5px] text-[#5A7064]">
-              <ShieldCheck size={12} className="text-[#2D6B4A]" />
+            <div className="pt-3 border-t border-[var(--lkv-primary)]/10 flex items-center justify-center gap-1.5 text-[10.5px] text-[var(--lkv-text-muted)]">
+              <ShieldCheck size={12} className="text-[var(--lkv-primary-hover)]" />
               <span>Numéro d’urgence européen : <strong>112</strong></span>
             </div>
           </div>

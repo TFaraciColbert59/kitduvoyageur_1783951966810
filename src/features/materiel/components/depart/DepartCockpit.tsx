@@ -119,8 +119,8 @@ export function DepartCockpit({
       );
     } catch {}
 
-    setIsOnline(navigator.onLine);
-    if (navigator.onLine) {
+    setIsOnline(navigator['onLine']);
+    if (navigator['onLine']) {
       flushOfflineQueue().catch(() => {});
     }
 
@@ -251,7 +251,7 @@ export function DepartCockpit({
     <div className="flex flex-col gap-4 w-full">
       {/* ════ BANNIÈRE HORS-LIGNE TRANSPARENTE ════ */}
       {!isOnline && (
-        <div className="p-3 rounded-2xl bg-sand-500/15 border border-sand-500/30 text-[#17402C] text-xs font-semibold flex items-center justify-between gap-2 shadow-2xs">
+        <div className="p-3 rounded-2xl bg-sand-500/15 border border-sand-500/30 text-[var(--lkv-primary)] text-xs font-semibold flex items-center justify-between gap-2 shadow-2xs">
           <div className="flex items-center gap-2 min-w-0">
             <WifiOff size={15} className="text-sand-700 shrink-0" />
             <span className="truncate">
@@ -278,14 +278,14 @@ export function DepartCockpit({
           {weather && weather.days.length > 0 && (
             <div className="glass rounded-xl p-2.5 sm:p-3.5 border border-white/80 dark:border-white/10 shadow-xs flex items-center justify-between gap-2 overflow-hidden">
               <div className="flex items-center gap-2 shrink-0">
-                <div className="w-8 h-8 rounded-2xl bg-[#2D6B4A]/10 border border-[#2D6B4A]/20 flex items-center justify-center text-[#2D6B4A] shadow-2xs">
+                <div className="w-8 h-8 rounded-2xl bg-[var(--lkv-primary-hover)]/10 border border-[var(--lkv-primary-hover)]/20 flex items-center justify-center text-[var(--lkv-primary-hover)] shadow-2xs">
                   <CloudSun size={16} />
                 </div>
                 <div className="min-w-0 max-w-[120px] sm:max-w-none">
-                  <span className="text-[9px] font-mono font-bold uppercase tracking-wider text-[#5A7064] block">
+                  <span className="text-[9px] font-mono font-bold uppercase tracking-wider text-[var(--lkv-text-muted)] block">
                     MÉTÉO DU SECTEUR
                   </span>
-                  <span className="text-xs font-bold text-[#17402C] truncate block">
+                  <span className="text-xs font-bold text-[var(--lkv-primary)] truncate block">
                     {weather.location.label || 'Massif'} · {weather.current.tempC}°C
                   </span>
                 </div>
@@ -298,10 +298,10 @@ export function DepartCockpit({
                     key={d.date}
                     className="px-2.5 py-1 rounded-full bg-white dark:bg-stone-900 border border-white/90 dark:border-white/20 text-center min-w-[50px] shrink-0 shadow-xs"
                   >
-                    <span className="text-[8.5px] font-mono font-bold text-[#5A7064] block uppercase">
+                    <span className="text-[8.5px] font-mono font-bold text-[var(--lkv-text-muted)] block uppercase">
                       {idx === 0 ? 'AUJ.' : d.day.slice(0, 3)}
                     </span>
-                    <span className="text-xs font-bold text-[#17402C]">{d.tempMaxC}°</span>
+                    <span className="text-xs font-bold text-[var(--lkv-primary)]">{d.tempMaxC}°</span>
                   </div>
                 ))}
               </div>
@@ -326,14 +326,14 @@ export function DepartCockpit({
           <div className="glass rounded-card p-4 sm:p-5 space-y-3.5 border border-white/80 dark:border-white/10 shadow-sm backdrop-blur-md">
             <div className="flex items-center justify-between gap-3 border-b border-black/5 pb-3">
               <div className="flex items-center gap-2.5">
-                <div className="w-9 h-9 rounded-2xl bg-[#17402C] text-white flex items-center justify-center shadow-xs shrink-0">
+                <div className="w-9 h-9 rounded-2xl bg-[var(--lkv-primary)] text-white flex items-center justify-center shadow-xs shrink-0">
                   <Boxes size={17} />
                 </div>
                 <div>
-                  <h3 className="text-xs sm:text-sm font-bold text-[#17402C]">
+                  <h3 className="text-xs sm:text-sm font-bold text-[var(--lkv-primary)]">
                     Préparation du Sac & Équipements Indispensables
                   </h3>
-                  <p className="text-[11px] text-[#5A7064]">
+                  <p className="text-[11px] text-[var(--lkv-text-muted)]">
                     {checkedItemsCount} sur {totalItemsCount} équipements prêts ({totalItemsCount > 0 ? Math.round((checkedItemsCount / totalItemsCount) * 100) : 100}% finalisé).
                   </p>
                 </div>
@@ -384,8 +384,8 @@ export function DepartCockpit({
                       )}
                     </div>
                     <div className="space-y-0.5">
-                      <h4 className="text-xs font-bold text-[#17402C] line-clamp-1">{it.name}</h4>
-                      <div className="flex items-center justify-between text-[10.5px] font-mono text-[#5A7064]">
+                      <h4 className="text-xs font-bold text-[var(--lkv-primary)] line-clamp-1">{it.name}</h4>
+                      <div className="flex items-center justify-between text-[10.5px] font-mono text-[var(--lkv-text-muted)]">
                         <span>{formatWeight(it.weight_g)}</span>
                         <span className="text-[9px] font-sans font-semibold px-1.5 py-0.2 rounded-md bg-black/5">{it.category}</span>
                       </div>
@@ -475,7 +475,7 @@ export function DepartCockpit({
               {kits && kits.length > 1 ? (
                 <KitSwitcher kits={kits} currentId={depart?.id} />
               ) : (
-                <span className="text-xs font-bold text-[#17402C] dark:text-white truncate">
+                <span className="text-xs font-bold text-[var(--lkv-primary)] dark:text-white truncate">
                   {depart?.destination || 'Mon Expédition'}
                 </span>
               )}
@@ -500,8 +500,8 @@ export function DepartCockpit({
                 className={cn(
                   'px-1.5 py-0.5 rounded-lg text-[9.5px] font-bold flex items-center gap-1 transition-all cursor-pointer',
                   isUltraSave
-                    ? 'bg-emerald-600 text-white shadow-xs'
-                    : 'bg-black/5 dark:bg-white/10 text-[#17402C] dark:text-white'
+                    ? 'bg-[var(--lkv-success)] text-white shadow-xs'
+                    : 'bg-black/5 dark:bg-white/10 text-[var(--lkv-primary)] dark:text-white'
                 )}
                 title="Mode Éco Batterie"
               >
@@ -513,7 +513,7 @@ export function DepartCockpit({
               <span
                 className={cn(
                   'w-2 h-2 rounded-full shrink-0',
-                  isOnline ? 'bg-emerald-500' : 'bg-amber-500'
+                  isOnline ? 'bg-[var(--lkv-success)]' : 'bg-[var(--lkv-warning)]'
                 )}
                 title={isOnline ? 'En ligne' : 'Hors-ligne (Cache local)'}
               />

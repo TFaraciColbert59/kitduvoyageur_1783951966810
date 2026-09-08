@@ -30,7 +30,7 @@ export function PurchasesInvest({ series, totalEur }: { series: PurchasePoint[];
                   {/* Bar */}
                   <div
                     style={{ height: `${heightPct}%` }}
-                    className="w-full max-w-[28px] rounded-t-md bg-[#5B7F55]/80 group-hover:bg-[#486944] transition-all"
+                    className="w-full max-w-[28px] rounded-t-md bg-[var(--lkv-secondary)]/80 group-hover:bg-[var(--lkv-secondary)] transition-all"
                   />
                 </div>
               );

@@ -80,12 +80,12 @@ export function TemplateStore({ kits = [] }: { kits: PublicKit[] }) {
     >
       {/* En-tête compact */}
       <div className="flex items-center justify-between gap-1 pr-7 md:pr-14 shrink-0">
-        <p className="truncate text-[10px] md:text-sm font-semibold text-[#17402C] font-body">
+        <p className="truncate text-[10px] md:text-sm font-semibold text-[var(--lkv-primary)] font-body">
           <span className="sm:hidden">Modèles</span>
           <span className="hidden sm:inline">Modèles Communautaires</span>
         </p>
         <span
-          className="shrink-0 px-1.5 py-0.2 rounded-full bg-[#17402C]/10 text-[#17402C] text-[8px] sm:text-[9px] md:text-[10px] font-bold"
+          className="shrink-0 px-1.5 py-0.2 rounded-full bg-[var(--lkv-primary)]/10 text-[var(--lkv-primary)] text-[8px] sm:text-[9px] md:text-[10px] font-bold"
           aria-label={`${displayKits.length} modèles disponibles`}
         >
           {displayKits.length} mod.
@@ -94,7 +94,7 @@ export function TemplateStore({ kits = [] }: { kits: PublicKit[] }) {
 
       <h3
         id="templates-title"
-        className="font-display font-bold text-[#17402C] text-[11px] sm:text-[13px] md:text-[16px] leading-tight truncate shrink-0 mt-0.5"
+        className="font-display font-bold text-[var(--lkv-primary)] text-[11px] sm:text-[13px] md:text-[16px] leading-tight truncate shrink-0 mt-0.5"
       >
         Partagés par les voyageurs
       </h3>
@@ -119,10 +119,10 @@ export function TemplateStore({ kits = [] }: { kits: PublicKit[] }) {
               className="glass-sub-card p-1 sm:p-1.5 rounded-lg flex items-center justify-between gap-1 text-[10.5px] transition-all hover:border-white/60"
             >
               <div className="min-w-0 flex-1">
-                <p className="font-semibold text-[#17402C] truncate leading-tight text-[10px] sm:text-[11px]">
+                <p className="font-semibold text-[var(--lkv-primary)] truncate leading-tight text-[10px] sm:text-[11px]">
                   {k.name}
                 </p>
-                <div className="flex items-center gap-1 text-[8px] sm:text-[9px] font-mono text-[#5A7064]">
+                <div className="flex items-center gap-1 text-[8px] sm:text-[9px] font-mono text-[var(--lkv-text-muted)]">
                   <span>{(k.total_weight_g / 1000).toFixed(1)}kg</span>
                   <span aria-hidden="true">·</span>
                   <span>{k.itemsCount}art.</span>
@@ -137,17 +137,17 @@ export function TemplateStore({ kits = [] }: { kits: PublicKit[] }) {
                 whileTap={{ scale: 0.88 }}
                 transition={{ type: 'spring', stiffness: 500, damping: 25 }}
                 aria-label={`Importer le kit ${k.name}`}
-                className={`h-6 w-6 !rounded-full flex items-center justify-center transition-all shrink-0 focus-visible:ring-2 focus-visible:ring-[#17402C] ${
+                className={`h-6 w-6 !rounded-full flex items-center justify-center transition-all shrink-0 focus-visible:ring-2 focus-visible:ring-[var(--lkv-primary)] ${
                   isJustImported
-                    ? 'bg-[#365233]/20 text-[#365233]'
+                    ? 'bg-[var(--lkv-primary-soft)]/20 text-[var(--lkv-primary-soft)]'
                     : isImporting
-                    ? 'bg-white/10 text-[#5A7064]'
-                    : 'glass interactive text-[#17402C] hover:bg-[#17402C] hover:text-white border border-white/40 shadow-inner'
+                    ? 'bg-white/10 text-[var(--lkv-text-muted)]'
+                    : 'glass interactive text-[var(--lkv-primary)] hover:bg-[var(--lkv-primary)] hover:text-white border border-white/40 shadow-inner'
                 }`}
               >
                 <AnimatePresence mode="wait" initial={false}>
                   {isImporting ? (
-                    <span className="w-2 h-2 rounded-full bg-[#17402C] animate-ping" aria-hidden="true" />
+                    <span className="w-2 h-2 rounded-full bg-[var(--lkv-primary)] animate-ping" aria-hidden="true" />
                   ) : isJustImported ? (
                     <Check size={11} strokeWidth={2.5} aria-hidden="true" />
                   ) : (
@@ -162,10 +162,10 @@ export function TemplateStore({ kits = [] }: { kits: PublicKit[] }) {
 
       {/* Capsule inférieure */}
       <div className="glass-sub-card shrink-0 px-2 py-1 flex items-center justify-between text-[10px]">
-        <span className="text-[8px] sm:text-[9px] font-semibold uppercase tracking-wider text-[#365233] truncate">
+        <span className="text-[8px] sm:text-[9px] font-semibold uppercase tracking-wider text-[var(--lkv-primary-soft)] truncate">
           Communauté
         </span>
-        <span className="text-[8.5px] sm:text-[9px] font-bold text-[#17402C] shrink-0">1 clic · Import</span>
+        <span className="text-[8.5px] sm:text-[9px] font-bold text-[var(--lkv-primary)] shrink-0">1 clic · Import</span>
       </div>
     </GlassCard>
   );

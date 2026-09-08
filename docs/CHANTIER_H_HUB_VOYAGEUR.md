@@ -220,3 +220,129 @@ Skills : `verification-before-completion`, `finishing-a-development-branch`.
 ## 7. INTERDITS (repris de Y, applicables tels quels)
 
 Pas de push sur main · pas de `--update-snapshots` sans inspection · jamais de test skip/only · jamais de schéma Supabase modifié · jamais d'hex hors allowlist · jamais de chiffre recopié sans remesure · jamais « validé » pour une étape non exécutée · toute ambiguïté = `docs/H_BLOCKERS.md`, jamais une invention.
+
+---
+
+## 8. MATRICE SKILLS & AGENTS — QUI, QUAND, POURQUOI
+
+### 8.1 Principes d'orchestration (autonomie 100 %)
+
+1. **Une sous-phase = un cycle** : lire le bloc du plan → relire les fichiers concernés en l'état (jamais de mémoire) → charger les skills déclarées → exécuter → portes → captures → commit → `MISSION_LOG.md` → suivante. Aucune exception.
+2. **Skills = chargeables à la demande**. Avant chaque sous-phase, l'agent charge les skills de sa ligne dans la matrice ci-dessous avec `skill_view` et les suit scrupuleusement. Si une skill référencée est absente de `.agents/skills/`, consigner dans `docs/H_BLOCKERS.md` et poursuivre sans — jamais improviser un équivalent.
+3. **Icon-agents = perspectives de revue**, pas d'exécution. Les agents `.claude/agents/` (Dieter Rams, Kent Beck, Linus Torvalds, Bruce Schneier…) sont invoqués comme **revues adversariales** à la fin des sous-phases indiquées : l'agent soumet son diff au regard du persona et consigne les objections dans le commit ou les corrige. Une objection non traitée = arrêt.
+4. **Parallélisation** : `dispatching-parallel-agents` / `subagent-driven-development` uniquement sur les sections terminales de H4. Jamais sur registres, layout, coquille ou bottom bar (conflit garanti, leçon Y2).
+5. **Arbitrage en autonomie** : si l'agent doit choisir entre deux options techniques valides, il choisit, écrit la décision + justification dans `docs/H_DECISIONS.md` et poursuit. Il ne s'arrête que sur les conditions de §9.3.
+
+### 8.2 Matrice par phase
+
+| Phase | Skills (à charger avant de commencer) | Icon-agents (revue en fin de phase) |
+|---|---|---|
+| **H0** Prérequis | `verification-before-completion`, `lkdv-development`, `using-superpowers`, `finishing-a-development-branch`, `github-workflow` | — (lecture seule) |
+| **H1** Moteur & registres | `test-driven-development`, `testing-anti-patterns`, `code-quality`, `writing-plans` | **Kent Beck** (TDD et frontières de conception), **Leslie Lamport** (pures fonctions, invariant du registre) |
+| **H2** Contexte & sélecteur | `apple-ui-designer`, `interaction-design`, `ux-mobile`, `code-quality` | **Jonathan Ive** (sélecteur : simplicité radicale), **Susan Kare** (icônes & états vides) |
+| **H3** Coquille & nature sortie | `nextjs-performance`, `executing-plans`, `lkdv-development`, `apple-ui-designer` | **Dieter Rams** (invariance des 4 zones — « moins mais mieux »), **Jakob Nielsen** (constance, heuristiques) |
+| **H4** Possession & collectif | `dispatching-parallel-agents`, `subagent-driven-development`, `apple-ui-designer`, `interaction-design`, `ux-mobile` | **Edward Tufte** (densité d'information widgets), **Don Norman** (affordances, gestion du monolithe groupes) |
+| **H5** Bottom bar, IA, redirects | `apple-ui-designer`, `interaction-design`, `ux-mobile`, `ai-engineering-toolkit` | **Jakob Nielsen** (reconnaissance vs rappel — redirects & hamburger), **Alan Kay** détecté absent du pod Programming → remplacé par **Brendan Eich** (perf bundle) |
+| **H6** App-first | `claude-android-skill`, `ux-mobile`, `interaction-design`, `apple-ui-designer` | **Kat Holmes** (inclusion — cibles 44 px, safe areas) |
+| **H7** Qualité | `nextjs-performance`, `code-quality`, `security-audit`, `requesting-code-review`, `receiving-code-review` | **Linus Torvalds** (revue de code sans complaisance), **Bruce Schneier** (revue sécurité), **Steve Jobs** absent du pod → la revue produit est couverte par Rams/Norman |
+| **H8** Recette | `verification-before-completion`, `finishing-a-development-branch`, `github-workflow` | **Barbara Liskov** (contrats respectés — les 5 parcours), revue finale **adversariale** sur le modèle du prompt d'audit Y |
+
+### 8.3 Skills transverses (permanentes, toute sous-phase)
+
+- `verification-before-completion` — active en permanence ; aucune sous-phase close sans ses preuves.
+- `systematic-debugging` + `root-cause-tracing` — chargées à la première porte rouge, avant tout correctif. Un correctif sans cause racine identifiée est interdit.
+- `using-git-worktrees` — obligatoire pour tout travail parallèle H4.
+- `executing-plans` — discipline de séquence H0→H8, jamais de saut de phase.
+- `lkdv-development` — conventions projet (dual-view, palette, RLS) en permanence.
+- Non retenues : les ~30 skills `seo-*` (hors périmètre), `obsidian-*`, `defuddle`, `json-canvas`, `map-geospatial` (aucune géométrie nouvelle dans H ; PostGIS déjà servi), `brainstorming` (le brainstorm est ce document — H est exécution, pas conception). Si H3 touche la carte de l'itinéraire, `map-geospatial` se charge alors, ponctuellement.
+
+---
+
+## 9. MODE AUTONOME 100 % — PROTOCOLE D'EXÉCUTION SANS INTERVENTION
+
+### 9.1 Contrat
+
+L'agent exécute H0→H8 intégralement sans question, sans validation intermédiaire, sans pause. Il s'arrête **uniquement** sur les conditions de §9.3. Chaque décision prise seul est tracée. À l'arrivée : PR ouverte, portes exécutées, planche de contact, rapport `docs/H_REPORT.md` — tout doit être vérifiable par Tony sans relire le travail, uniquement par les preuves.
+
+### 9.2 Boucle d'exécution (invariante)
+
+```
+pour chaque sous-phase:
+  1. relire son bloc dans ce document + CHANTIER Y §pertinents
+  2. charger les skills de sa ligne (matrice §8.2)
+  3. relire les fichiers cibles EN L'ÉTAT (git status propre exigé)
+  4. TDD si code : tests d'abord, rouge consigné, puis implémentation
+  5. exécuter les portes déclarées (G1–G6 selon phase)
+     → échec: systematic-debugging → cause racine → corriger → max 2 ré-essais
+     → 3e échec: STOP (§9.3)
+  6. captures des surfaces touchées + planche de contact + INSPECTION réelle
+     (apple-ui-designer / interaction-design appliqués à la lecture des captures)
+  7. revue icon-agent de fin de phase (§8.2), objections consignées/traitées
+  8. commit convention Y §7.3 (portes ✅ + preuves dans le corps)
+  9. MISSION_LOG.md + tag h{n}-done
+```
+
+### 9.3 Conditions d'arrêt (les seules)
+
+1. Une porte échoue 3 fois de suite malgré 2 cycles cause-racine/correction.
+2. Une migration de schéma Supabase s'avère nécessaire (interdit absolu).
+3. Une ambiguïté de ce document contredite par le code — consignée dans `docs/H_BLOCKERS.md`, l'agent bascule alors sur la sous-phase indépendante suivante si elle existe.
+4. Un risque sécurité non anticipé (leak hors-ligne, permission non servie côté serveur).
+5. Une régression visible sur `/pays`, `/compte` ou une surface hors périmètre.
+6. Le compteur de tests baisse sans justification documentable.
+
+Sur arrêt : `docs/H_BLOCKERS.md` complété (sous-phase, tentatives, sortie brute, hypothèses écartées, décision requise), commit, push, puis reprise de tout ce qui est indépendant. Un arrêt n'est jamais un abandon.
+
+### 9.4 Comportements interdits en autonomie (rappel durci)
+
+Jamais de question à l'utilisateur · jamais de choix par défaut silencieux sur une décision structurante (→ `H_DECISIONS.md`) · jamais de `--update-snapshots` sans diff inspecté élément par élément · jamais de test sauté pour forcer le vert · jamais de « validé » sans sortie de commande horodatée · jamais de valeur recopiée depuis ce document dans le rapport sans remesure · jamais de push sur `main` · jamais de suppression sans grep de preuve collé dans le commit.
+
+### 9.5 Définition de « terminé » (DoD global)
+
+Les 6 portes vertes sur le SHA final · 5 parcours × 2 viewports verts · axe 0 critical/serious · cibles ≥44 px mesurées runtime · planche de contact finale inspectée et comparée à l'« avant » · compteur de tests ≥ référence H0.3 · Z2 mergé · `/materiel` redirigé et ses 7 sections rendues par le hub · bottom bar à 5 accès avec hub central · switcher 3 natures fonctionnel clavier complet · H_REPORT.md sans valeur non mesurée · PR ouverte avec corps = chiffres réellement produits · **les exigences UX de la Partie 10 chacune tracée (capture, parcours ou test)**.
+
+---
+
+## 10. OPTIMISATIONS UX — LA GRAMMAIRE D'EXPÉRIENCE
+
+Règle directrice : le hub ne doit jamais demander à l'utilisateur de « naviguer vers » son aventure ; il doit la lui présenter. Six principes, chacun décliné en exigences testables et rattaché à une phase.
+
+### 10.1 Ouverture « réponse d'abord » (H3/H5)
+- Le hub s'ouvre sur l'aventure active avec **ce qui compte maintenant** en tête (J-N, météo, prochaine action), pas un sommaire de tout.
+- Choix de contexte par défaut **déterministe** : départ dans < 72 h → cette sortie ; sinon voyage actif (`lkdv_active_trip`) ; sinon inventaire (possession). Zéro IA bloquante au rendu.
+- Perceived speed : données du contexte actif dans le payload du layout (pas de chaîne requête→skeleton→contenu à l'ouverture).
+- Trace : capture G5 « hub ouvert aux 3 natures » + parcours 4 (retour = même contexte et même section après rechargement).
+
+### 10.2 Ergonomie au pouce — thumb zone (H2/H5)
+- Tab central = accès hub en un geste. **Appui long sur le tab central** → menu de raccourcis contextuels (nouvelle sortie, ajouter du matériel, reprendre l'itinéraire) calqué sur les Home Screen Quick Actions iOS, généré depuis le registre.
+- Toute action fréquente dans le tiers inférieur de l'écran ; l'information seule en haut.
+- Switcher : ouverture au **premier caractère tapé** (type-ahead comme les listes natives), sélection en un pouce, GlassSheet centré sur la zone de préhension.
+- Trace : parcours 2 (changement de contexte) entièrement pilotable au pouce, vérifié en capture 430×932.
+
+### 10.3 Continuité visuelle (H3)
+- Transitions partagées `layoutId` entre tab bar, switcher et sections (pattern déjà posé dans `BottomTabBar`) ; direction **push** en profondeur / **dismiss** au retour sur mobile — jamais de « rechargement web » entre deux sections.
+- Skeletons par section + streaming : le cadre apparaît instantanément, les données se remplissent ; jamais d'écran blanc ni de spinner plein écran hors première visite.
+- Retour après édition : scroll et focus restaurés sur l'élément modifié (mémoire de position par section, même mécanique que la mémoire de section).
+- Durées/courbes héritées de `liquid-glass.css` (`--dur-fast` 180 ms pour les transitions de section, `--ease-glass`) ; `prefers-reduced-motion` → fondu simple sans translation.
+- Trace : test de navigation de section < 200 ms (Y8.2 reconduit), inspection des captures de transition sur la planche.
+
+### 10.4 Feedback sans dialogues (H4)
+- Actions destructives : exécution immédiate + toast **« Annuler » 5 s** (undo), au lieu d'une confirmation. Les dialogues natifs restent interdits (règle X-D70 reconduite).
+- Langage haptique unique et sobre : `light` = sélection/navigation, `medium` = validation, `success` = objectif atteint, `warning` = destructif. Jamais deux retours sur un même geste, jamais de haptique sur un simple scroll.
+- Badge du hub à **sens** : nombre d'actions bloquantes (à préparer, invitations expirant, matériel manquant au prochain départ), pas de notifications brutes.
+- Trace : parcours 1 (undo d'une suppression testé au clavier et au pouce), assertion toast `aria-live`.
+
+### 10.5 Intelligent sans interruption (H5/H6)
+- Les `reason` du profileur ne s'affichent qu'**à la demande** (info-bulle « Pourquoi cette section ? » dans le picker) — l'adaptation se voit sans jacasser.
+- **Phase live** (sortie en cours) : le hub bascule en mode cockpit — GPS plein écran, cibles ≥ 56 px, contraste renforcé (plein soleil), consultation hors-ligne native ; le vocabulaire des zones reste identique (invariance H-D85).
+- Urgence : J-N < 72 h → compte à rebours en token `--lkv-warning-dark` #8C6418 et alertes remontées en tête de colonne droite.
+- L'IA suggère le contexte et reformule les `reason`, mais n'ajoute ni ne retire jamais une section d'autorité (règle R5 du plan : le picker garde la main).
+- Trace : capture « mode live », test hors-ligne du parcours 5, revue icon-agent Norman.
+
+### 10.6 Vocabulaire et promesses (H1/H8)
+- **Carte de vocabulaire** figée dans `hubSectionRegistry` : un concept = un mot partout (« Équipement », plus « matériel / kit / sac » selon les pages). Libellés FR constants ; mono réservée aux métadonnées, jamais aux libellés d'action.
+- États vides = invitations : premier voyage创建able en 3 étapes depuis le hub ; inventaire vide → « importer depuis mes commandes » ; zéro écran mort.
+- Accessibilité = qualité perçue : Dynamic Type respecté, `prefers-reduced-transparency` → surfaces pleines au lieu du verre, focus visible sur chaque cible (déjà G6, élevé au rang d'exigence UX et pas seulement réglementaire).
+- Trace : test H-D85 règle 15 (unicité des libellés par concept dans les registres), captures d'états vides × 3 natures.
+
+Chaque exigence ci-dessus reçoit une trace dans les livrables de recette (capture dédiée, parcours, ou test). Faute de trace, elle est déclarée — pas faite.

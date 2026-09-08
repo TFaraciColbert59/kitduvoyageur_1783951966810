@@ -148,11 +148,11 @@ export function KitProductSuggestions({ products = [] }: { products?: ProductSug
       <div className="flex items-center justify-between gap-2 flex-wrap">
         <div>
           <Eyebrow>Boutique & Recommandations</Eyebrow>
-          <h3 id="suggestions-title" className="font-display font-bold text-[20px] text-[#17402C] mt-0.5">
+          <h3 id="suggestions-title" className="font-display font-bold text-[20px] text-[var(--lkv-primary)] mt-0.5">
             Matériel recommandé pour vos kits
           </h3>
         </div>
-        <div className="flex items-center gap-1.5 text-xs font-semibold text-[#17402C] bg-[#17402C]/08 px-3 py-1 rounded-full border border-[#17402C]/15">
+        <div className="flex items-center gap-1.5 text-xs font-semibold text-[var(--lkv-primary)] bg-[var(--lkv-primary)]/08 px-3 py-1 rounded-full border border-[var(--lkv-primary)]/15">
           <Sparkles size={13} />
           <span>Sélection Expert</span>
         </div>
@@ -172,8 +172,8 @@ export function KitProductSuggestions({ products = [] }: { products?: ProductSug
               }}
               className={`px-3 py-1 rounded-full text-xs font-bold transition-all shrink-0 ${
                 isActive
-                  ? 'bg-[#17402C] text-white '
-                  : 'bg-white/[0.08] text-[#365233] hover:bg-white/20 border border-white/20'
+                  ? 'bg-[var(--lkv-primary)] text-white '
+                  : 'bg-white/[0.08] text-[var(--lkv-primary-soft)] hover:bg-white/20 border border-white/20'
               }`}
             >
               {cat}
@@ -202,21 +202,21 @@ export function KitProductSuggestions({ products = [] }: { products?: ProductSug
                     unoptimized
                   />
                   {prod.category && (
-                    <span className="absolute top-1.5 left-1.5 px-1.5 py-0.5 rounded-md bg-[#17402C]/80 text-white text-[9px] font-bold backdrop-blur-xs">
+                    <span className="absolute top-1.5 left-1.5 px-1.5 py-0.5 rounded-md bg-[var(--lkv-primary)]/80 text-white text-[9px] font-bold backdrop-blur-xs">
                       {prod.category}
                     </span>
                   )}
                 </div>
 
-                <p className="font-semibold text-xs text-[#17402C] line-clamp-2 leading-tight group-hover:text-[#365233] transition-colors">
+                <p className="font-semibold text-xs text-[var(--lkv-primary)] line-clamp-2 leading-tight group-hover:text-[var(--lkv-primary-soft)] transition-colors">
                   {prod.name}
                 </p>
               </Link>
 
               <div className="pt-1 border-t border-white/15 flex flex-col gap-1.5">
                 <div className="flex items-center justify-between text-[11px] font-mono">
-                  <span className="font-bold text-[#17402C]">{prod.priceEur.toFixed(2)} €</span>
-                  <span className="text-[#5A7064]">{prod.weightG ? `${prod.weightG}g` : ''}</span>
+                  <span className="font-bold text-[var(--lkv-primary)]">{prod.priceEur.toFixed(2)} €</span>
+                  <span className="text-[var(--lkv-text-muted)]">{prod.weightG ? `${prod.weightG}g` : ''}</span>
                 </div>
 
                 <button
@@ -224,7 +224,7 @@ export function KitProductSuggestions({ products = [] }: { products?: ProductSug
                   onClick={(e) => handleAddToCart(prod, e)}
                   className={`w-full h-7 rounded-full text-[10px] font-bold flex items-center justify-center gap-1 transition-all ${
                     isAdded
-                      ? 'bg-[#365233] text-white'
+                      ? 'bg-[var(--lkv-primary-soft)] text-white'
                       : 'glass-capsule-btn primary'
                   }`}
                 >

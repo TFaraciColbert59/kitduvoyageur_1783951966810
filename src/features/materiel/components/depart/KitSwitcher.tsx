@@ -35,13 +35,13 @@ export function KitSwitcher({ kits, currentId }: KitSwitcherProps) {
       <button
         type="button"
         onClick={() => setOpen((v) => !v)}
-        className="w-full glass-sub-card flex items-center justify-between gap-2 px-3 py-1.5 rounded-xl text-[11px] font-semibold text-[#17402C] hover:bg-white/40 transition-colors focus-visible:outline-2 focus-visible:outline-[#17402C] cursor-pointer"
+        className="w-full glass-sub-card flex items-center justify-between gap-2 px-3 py-1.5 rounded-xl text-[11px] font-semibold text-[var(--lkv-primary)] hover:bg-white/40 transition-colors focus-visible:outline-2 focus-visible:outline-[var(--lkv-primary)] cursor-pointer"
         aria-expanded={open}
         aria-haspopup="listbox"
       >
         <span className="truncate">{cleanKitName(current.name)}</span>
         <motion.span animate={{ rotate: open ? 180 : 0 }} transition={{ duration: 0.18 }}>
-          <ChevronDown size={12} aria-hidden="true" className="text-[#5A7064]" />
+          <ChevronDown size={12} aria-hidden="true" className="text-[var(--lkv-text-muted)]" />
         </motion.span>
       </button>
 
@@ -66,8 +66,8 @@ export function KitSwitcher({ kits, currentId }: KitSwitcherProps) {
                   className={cn(
                     'w-full text-left px-3.5 py-2 text-xs font-medium transition-colors cursor-pointer',
                     kit.id === currentId
-                      ? 'text-[#17402C] font-semibold bg-white/40'
-                      : 'text-[#5A7064] hover:bg-white/20 hover:text-[#17402C]'
+                      ? 'text-[var(--lkv-primary)] font-semibold bg-white/40'
+                      : 'text-[var(--lkv-text-muted)] hover:bg-white/20 hover:text-[var(--lkv-primary)]'
                   )}
                 >
                   {cleanKitName(kit.name)}

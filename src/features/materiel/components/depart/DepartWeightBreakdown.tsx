@@ -24,16 +24,16 @@ interface DepartWeightBreakdownProps {
 }
 
 const CATEGORY_COLORS: Record<string, string> = {
-  Bivouac: '#17402C',
-  Couchage: '#2D6B4A',
-  Cuisine: '#486944',
-  Vêtements: '#5A7064',
-  Hydratation: '#2C4857',
-  'Vivres & Eau': '#2D6B4A',
-  Sécurité: '#8A241B',
-  Hygiène: '#6B8E78',
-  Électronique: '#627D98',
-  Autre: '#8C8779',
+  Bivouac: 'var(--lkv-primary)',
+  Couchage: 'var(--lkv-primary-hover)',
+  Cuisine: 'var(--lkv-secondary)',
+  Vêtements: 'var(--lkv-text-muted)',
+  Hydratation: 'var(--lkv-info)',
+  'Vivres & Eau': 'var(--lkv-primary-hover)',
+  Sécurité: 'var(--lkv-danger)',
+  Hygiène: 'var(--lkv-secondary)',
+  Électronique: 'var(--lkv-info)',
+  Autre: 'var(--stone-600)',
 };
 
 export function DepartWeightBreakdown({
@@ -74,28 +74,28 @@ export function DepartWeightBreakdown({
         aria-expanded={isOpen}
       >
         <div className="flex items-center gap-2.5">
-          <div className="w-9 h-9 rounded-2xl bg-[#2D6B4A]/10 border border-[#2D6B4A]/20 flex items-center justify-center text-[#2D6B4A] shadow-2xs shrink-0">
+          <div className="w-9 h-9 rounded-2xl bg-[var(--lkv-primary-hover)]/10 border border-[var(--lkv-primary-hover)]/20 flex items-center justify-center text-[var(--lkv-primary-hover)] shadow-2xs shrink-0">
             <Scale size={18} />
           </div>
           <div>
-            <h3 className="text-xs sm:text-sm font-bold text-[#17402C]">
+            <h3 className="text-xs sm:text-sm font-bold text-[var(--lkv-primary)]">
               Analyse du poids & Décision
             </h3>
-            <span className="text-[11px] text-[#5A7064]">
+            <span className="text-[11px] text-[var(--lkv-text-muted)]">
               Évaluation du portage et synthèse globale
             </span>
           </div>
         </div>
 
         <div className="flex items-center gap-2 shrink-0">
-          <span className="text-xs sm:text-sm font-mono font-bold text-[#17402C]">
+          <span className="text-xs sm:text-sm font-mono font-bold text-[var(--lkv-primary)]">
             {formatWeight(totalCarriedG)}
           </span>
           <motion.div
             animate={shouldReduceMotion ? {} : { rotate: isOpen ? 180 : 0 }}
             transition={{ duration: 0.18 }}
           >
-            <ChevronDown size={15} className="text-[#5A7064]" />
+            <ChevronDown size={15} className="text-[var(--lkv-text-muted)]" />
           </motion.div>
         </div>
       </button>
@@ -103,28 +103,28 @@ export function DepartWeightBreakdown({
       {/* ════ 3 PILIERS DU POIDS : PASTILLES BLANC ÉCLATANT LIQUID GLASS (Images 1 & 2) ════ */}
       <div className="grid grid-cols-3 gap-2.5 sm:gap-3.5">
         <div className="py-2.5 px-3 rounded-full bg-white dark:bg-stone-900 border border-white/90 dark:border-white/20 text-center space-y-0.5 shadow-xs">
-          <span className="text-[8.5px] sm:text-[9.5px] font-mono uppercase tracking-wider text-[#5A7064] block font-bold">
+          <span className="text-[8.5px] sm:text-[9.5px] font-mono uppercase tracking-wider text-[var(--lkv-text-muted)] block font-bold">
             Poids de base
           </span>
-          <span className="text-xs sm:text-sm font-mono font-bold text-[#17402C] block">
+          <span className="text-xs sm:text-sm font-mono font-bold text-[var(--lkv-primary)] block">
             {formatWeight(effectiveBaseG)}
           </span>
         </div>
 
         <div className="py-2.5 px-3 rounded-full bg-white dark:bg-stone-900 border border-white/90 dark:border-white/20 text-center space-y-0.5 shadow-xs">
-          <span className="text-[8.5px] sm:text-[9.5px] font-mono uppercase tracking-wider text-[#5A7064] block font-bold">
+          <span className="text-[8.5px] sm:text-[9.5px] font-mono uppercase tracking-wider text-[var(--lkv-text-muted)] block font-bold">
             Consommables
           </span>
-          <span className="text-xs sm:text-sm font-mono font-bold text-[#17402C] block">
+          <span className="text-xs sm:text-sm font-mono font-bold text-[var(--lkv-primary)] block">
             {formatWeight(consumablesWeightG)}
           </span>
         </div>
 
         <div className="py-2.5 px-3 rounded-full bg-white dark:bg-stone-900 border border-white/90 dark:border-white/20 text-center space-y-0.5 shadow-xs">
-          <span className="text-[8.5px] sm:text-[9.5px] font-mono uppercase tracking-wider text-[#5A7064] block font-bold">
+          <span className="text-[8.5px] sm:text-[9.5px] font-mono uppercase tracking-wider text-[var(--lkv-text-muted)] block font-bold">
             Porté sur soi
           </span>
-          <span className="text-xs sm:text-sm font-mono font-bold text-[#17402C] block">
+          <span className="text-xs sm:text-sm font-mono font-bold text-[var(--lkv-primary)] block">
             {formatWeight(wornWeightG)}
           </span>
         </div>
@@ -133,8 +133,8 @@ export function DepartWeightBreakdown({
       {/* ════ JAUGE D'ÉVALUATION DU PORTAGE ════ */}
       <div className="space-y-1.5 pt-1">
         <div className="flex items-center justify-between text-[10.5px]">
-          <span className="text-[#5A7064] font-medium">Échelle de portage :</span>
-          <span className="font-bold text-[#17402C]">
+          <span className="text-[var(--lkv-text-muted)] font-medium">Échelle de portage :</span>
+          <span className="font-bold text-[var(--lkv-primary)]">
             {effectiveBaseG < 5000 ? 'Ultraléger (< 5 kg)' : effectiveBaseG < 9000 ? 'Standard 3 saisons (5 - 9 kg)' : 'Lourd (> 9 kg)'}
           </span>
         </div>
@@ -144,7 +144,7 @@ export function DepartWeightBreakdown({
           <div className="h-full bg-forest-600 w-[35%]" title="Ultraléger (<5kg)" />
           <div className="h-full bg-forest-800 w-[35%]" title="Standard 3 saisons (5-9kg)" />
           <div className="h-full bg-sand-600 w-[15%]" title="Lourd (>9kg)" />
-          <div className="h-full bg-red-700 w-[15%]" title="Très lourd (>12kg)" />
+          <div className="h-full bg-[var(--lkv-danger)] w-[15%]" title="Très lourd (>12kg)" />
         </div>
       </div>
 
@@ -173,11 +173,11 @@ export function DepartWeightBreakdown({
                         className="w-2 h-2 rounded-full shrink-0"
                         style={{ backgroundColor: color }}
                       />
-                      <span className="text-[11px] font-medium text-[#17402C] truncate">
+                      <span className="text-[11px] font-medium text-[var(--lkv-primary)] truncate">
                         {item.category}
                       </span>
                     </div>
-                    <span className="text-[11px] font-mono font-bold text-[#5A7064] shrink-0">
+                    <span className="text-[11px] font-mono font-bold text-[var(--lkv-text-muted)] shrink-0">
                       {formatWeight(item.value)}
                     </span>
                   </div>

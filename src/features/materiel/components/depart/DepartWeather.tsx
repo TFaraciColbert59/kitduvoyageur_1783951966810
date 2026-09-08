@@ -47,21 +47,21 @@ export function DepartWeather({ weather, updatedAt }: DepartWeatherProps) {
           <div className="space-y-0.5 min-w-0">
             <h2
               id="weather-heading"
-              className="text-xs sm:text-[13px] font-bold text-[#17402C] flex items-center gap-2"
+              className="text-xs sm:text-[13px] font-bold text-[var(--lkv-primary)] flex items-center gap-2"
             >
-              <Thermometer size={15} className="text-[#2D6B4A]" aria-hidden="true" />
+              <Thermometer size={15} className="text-[var(--lkv-primary-hover)]" aria-hidden="true" />
               <span>Météo du secteur</span>
             </h2>
-            <p className="text-[11px] text-[#5A7064] truncate">{locationLabel}</p>
+            <p className="text-[11px] text-[var(--lkv-text-muted)] truncate">{locationLabel}</p>
           </div>
 
           <div className="flex items-center gap-2 bg-white/50 dark:bg-white/10 px-2.5 py-1 rounded-xl border border-white/60 shadow-2xs shrink-0">
             {getWeatherIcon(weather.current.weathercode, 18)}
             <div className="text-right">
-              <div className="text-sm sm:text-base font-mono font-bold text-[#17402C] leading-none">
+              <div className="text-sm sm:text-base font-mono font-bold text-[var(--lkv-primary)] leading-none">
                 {weather.current.tempC}°C
               </div>
-              <div className="text-[9px] text-[#5A7064] mt-0.5">
+              <div className="text-[9px] text-[var(--lkv-text-muted)] mt-0.5">
                 {weather.current.precipPct}% pluie
               </div>
             </div>
@@ -81,14 +81,14 @@ export function DepartWeather({ weather, updatedAt }: DepartWeatherProps) {
                   : 'bg-white/25 dark:bg-white/5 border border-white/30'
               )}
             >
-              <p className="text-[10px] font-semibold text-[#17402C] truncate">
+              <p className="text-[10px] font-semibold text-[var(--lkv-primary)] truncate">
                 {idx === 0 ? 'Aujourd’hui' : day.day}
               </p>
               <div className="flex justify-center py-0.5">
                 {getWeatherIcon(day.weathercode, 16)}
               </div>
-              <div className="text-[10.5px] font-mono font-bold text-[#17402C]">
-                {day.tempMaxC}° <span className="text-[9.5px] text-[#5A7064] font-normal">{day.tempMinC}°</span>
+              <div className="text-[10.5px] font-mono font-bold text-[var(--lkv-primary)]">
+                {day.tempMaxC}° <span className="text-[9.5px] text-[var(--lkv-text-muted)] font-normal">{day.tempMinC}°</span>
               </div>
               {day.precipPct > 0 && (
                 <div className="flex items-center justify-center gap-0.5 text-[9px] text-sky-700 dark:text-sky-400 font-medium">
@@ -101,31 +101,31 @@ export function DepartWeather({ weather, updatedAt }: DepartWeatherProps) {
 
           {/* Éphéméride du jour */}
           <div className="shrink-0 p-2 rounded-xl bg-white/30 dark:bg-white/5 border border-white/40 flex flex-col items-center justify-between w-[80px]">
-            <span className="text-[9px] uppercase tracking-wider text-[#5A7064] flex items-center gap-1 font-semibold">
+            <span className="text-[9px] uppercase tracking-wider text-[var(--lkv-text-muted)] flex items-center gap-1 font-semibold">
               <Sunrise size={10} className="text-sand-600" />
               <span>Lever</span>
             </span>
-            <span className="font-mono font-bold text-[#17402C] text-[11px] my-auto">
+            <span className="font-mono font-bold text-[var(--lkv-primary)] text-[11px] my-auto">
               {sunriseTime}
             </span>
           </div>
 
           <div className="shrink-0 p-2 rounded-xl bg-white/30 dark:bg-white/5 border border-white/40 flex flex-col items-center justify-between w-[80px]">
-            <span className="text-[9px] uppercase tracking-wider text-[#5A7064] flex items-center gap-1 font-semibold">
+            <span className="text-[9px] uppercase tracking-wider text-[var(--lkv-text-muted)] flex items-center gap-1 font-semibold">
               <Sunset size={10} className="text-sand-700" />
               <span>Coucher</span>
             </span>
-            <span className="font-mono font-bold text-[#17402C] text-[11px] my-auto">
+            <span className="font-mono font-bold text-[var(--lkv-primary)] text-[11px] my-auto">
               {sunsetTime}
             </span>
           </div>
 
           <div className="shrink-0 p-2 rounded-xl bg-white/30 dark:bg-white/5 border border-white/40 flex flex-col items-center justify-between w-[80px]">
-            <span className="text-[9px] uppercase tracking-wider text-[#5A7064] flex items-center gap-1 font-semibold">
+            <span className="text-[9px] uppercase tracking-wider text-[var(--lkv-text-muted)] flex items-center gap-1 font-semibold">
               <Sun size={10} className="text-forest-700" />
               <span>Jour</span>
             </span>
-            <span className="font-mono font-bold text-[#17402C] text-[11px] my-auto">
+            <span className="font-mono font-bold text-[var(--lkv-primary)] text-[11px] my-auto">
               {daylightHours}
             </span>
           </div>
@@ -136,9 +136,9 @@ export function DepartWeather({ weather, updatedAt }: DepartWeatherProps) {
               key={cell.hour}
               className="shrink-0 p-2 rounded-xl bg-white/20 dark:bg-white/5 border border-white/30 text-center w-[68px] space-y-0.5 flex flex-col justify-between"
             >
-              <p className="text-[9px] font-mono text-[#5A7064]">{cell.hour}</p>
+              <p className="text-[9px] font-mono text-[var(--lkv-text-muted)]">{cell.hour}</p>
               <div className="flex justify-center">{getWeatherIcon(cell.weathercode, 14)}</div>
-              <p className="text-[10.5px] font-mono font-bold text-[#17402C]">{cell.tempC}°</p>
+              <p className="text-[10.5px] font-mono font-bold text-[var(--lkv-primary)]">{cell.tempC}°</p>
             </div>
           ))}
         </div>
