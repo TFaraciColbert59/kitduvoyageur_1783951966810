@@ -3,7 +3,7 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import * as Cmd from 'cmdk';
-import { ChevronsUpDown, Compass, Package, Users, Search, Check, RefreshCw } from 'lucide-react';
+import { ChevronsUpDown, Compass, Package, Users, Search, Check, RefreshCw, Sparkles } from 'lucide-react';
 import { GlassSheet } from '@/components/ui/GlassSheet';
 import { useActiveAdventure } from '../context/ActiveAdventureContext';
 import {
@@ -27,10 +27,12 @@ export function AdventureSwitcher() {
   const {
     activeAdventure,
     setActiveAdventure,
+    setActiveAdventureByKey,
     clearActiveAdventure,
     isCurrentAdventure,
     groups,
     reloadAdventures,
+    suggestion,
     getLastSection,
     isPending,
   } = useActiveAdventure();
@@ -57,6 +59,21 @@ export function AdventureSwitcher() {
   }, []);
 
   const filtered = useMemo(() => filterAdventures(groups, query), [groups, query]);
+
+  // Suggestion IA déterministe (non restrictive : la liste complète reste affichée).
+  const suggestedEntry: AdventureEntry | null = useMemo(() => {
+    if (!suggestion || query.trim()) return null;
+    const all: AdventureEntry[] = [...groups.possession, ...groups.sorties, ...groups.collectifs];
+    return all.find((e) => adventureKey(e) === suggestion.key) ?? null;
+  }, [suggestion, groups, query]);
+
+  const activateByKey = async (key: string) => {
+    const all: AdventureEntry[] = [...groups.possession, ...groups.sorties, ...groups.collectifs];
+    const entry = all.find((e) => adventureKey(e) === key);
+    if (!entry) return;
+    await setActiveAdventureByKey(key);
+    goToAdventure(entry);
+  };
 
   const goToAdventure = (entry: AdventureEntry) => {
     const href = resolveAdventureHref(entry, getLastSection);
@@ -148,6 +165,29 @@ export function AdventureSwitcher() {
         Aucune aventure ne correspond à « {query} ».
       </Cmd.CommandEmpty>
       <Cmd.CommandList className="mt-1 flex flex-col gap-1 max-h-[340px] overflow-y-auto no-scrollbar">
+        {suggestedEntry && suggestion && (
+          <div>
+            <p className="px-3 pt-2 pb-1 text-[10px] font-mono uppercase tracking-widest text-[var(--lkv-text-muted)]">
+              Suggestion
+            </p>
+            <Cmd.CommandItem
+              key={`suggest-${adventureKey(suggestedEntry)}`}
+              value={`suggestion ${suggestion.reason}`}
+              onSelect={() => activateByKey(suggestion.key)}
+              className="flex items-center gap-2 px-3 py-2.5 rounded-[var(--lkv-radius-md)] text-left cursor-pointer aria-selected:bg-white/40 aria-selected:text-[var(--lkv-text-primary)]"
+            >
+              <Sparkles size={14} className="shrink-0 text-[var(--lkv-text-secondary)]" aria-hidden="true" />
+              <span className="flex-1 min-w-0">
+                <span className="block text-sm font-semibold text-[var(--lkv-text-primary)] truncate">
+                  {suggestedEntry.nature === 'possession' ? 'Mon matériel' : suggestedEntry.title}
+                </span>
+                <span className="block text-[10px] font-mono uppercase tracking-widest text-[var(--lkv-text-secondary)] truncate">
+                  {suggestion.reason}
+                </span>
+              </span>
+            </Cmd.CommandItem>
+          </div>
+        )}
         {renderGroup('Mon matériel', filtered.possession, 'Aucun matériel.')}
         {renderGroup('Mes voyages', filtered.sorties, 'Aucun voyage pour cette recherche.')}
         {renderGroup('Mes groupes', filtered.collectifs, 'Aucun groupe pour cette recherche.')}

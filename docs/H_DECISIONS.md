@@ -94,3 +94,9 @@
 | H-AUTO-24 | `currentSeason` extrait vers `lib/materiel/season` (corrige `/materiel/alertes` en prod — même crash serveur, pré-existant) | Fonction pure piégée dans fichier 'use client' ; re-export compat, 3 usages realignés |
 | H-AUTO-25 | R14 : `HubWidgets.tsx` + dispatcher `[section]/page.tsx` allowlistés (mappings typés via hubSectionHref, R13 intacte, zéro littéral d'URL) | Le garde-fou garde sa morsure partout ailleurs (2 violations légitimes documentées, pas d'exemption large) |
 | H-AUTO-26 | `/hub/[section]` first-load 343 kB → watch H7 (budget <250 ko gzip ; dynamic imports cockpits si dépassé) | Mesuré au build H4, pas estimé |
+| H-AUTO-27 | H5 : `/materiel/*`, `/voyages/*`, `/groupes` vivants (deep-links) ; seul `/materiel` racine redirige ; pas de déplacement d'URL (bookmarks/partages intacts) | R3 : redirects directs, pas de migration d'URL ; canonical → /hub |
+| H-AUTO-28 | D6 : `/carte-interactive` GARDÉE (trails PostGIS vs OSM live + générateur, chevauchement <70%) ; D9 : `/mes-aventures` → /hub (0 entrant) | Diff fonctionnel mesuré, pas d'absorption aveugle |
+| H-AUTO-29 | `/boussole` supprimée, push AR HikingCockpit → `/randonnee-active` (écart capacitaire AR documenté, backlog widget) | D2 validée ; pas de widget AR en H5 (scope), URL gardée vivante |
+| H-AUTO-30 | Redirect `/kits`→`/materiel/kits` SUPPRIMÉ (shadowait la boutique, 4 self-links cassés) | Bug pré-existant : la page shop /kits ne rendait jamais |
+| H-AUTO-31 | ai-engineering-toolkit chargée puis écartée (prompt/RAG/sécu LLM — hors sujet) ; H5-IA = heuristique déterministe + tests (R5) | Skill check obligatoire, usage conditionné à la pertinence réelle |
+| H-AUTO-32 | Délestage réel −5,0 ko (estimation §2.4 haute, chiffre réel retenu) ; `/gamification` → `/recompenses` (loyalty la plus proche) ; `/copilote` vivante + CTA hub (D7-partiel, fusion UI = backlog) | Preuves > estimations, jamais de valeur recopiée |

@@ -1,5 +1,6 @@
 import Link from 'next/link';
 import { ArrowRight, ArrowUpRight } from 'lucide-react';
+import { HubAssistantCta } from './HubAssistantCta';
 import {
   hubSectionHref,
   visibleHubSections,
@@ -50,6 +51,7 @@ export function HubOverviewCollectif({
         </Link>
       )}
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+        <HubAssistantCta contextLabel={`Coordination ${groupLabel}`} />
         {sections.map((def) => {
           const Icon = def.icon;
           return (

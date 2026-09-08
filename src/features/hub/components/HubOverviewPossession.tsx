@@ -1,5 +1,6 @@
 import Link from 'next/link';
 import { ArrowRight } from 'lucide-react';
+import { HubAssistantCta } from './HubAssistantCta';
 import {
   hubSectionHref,
   visibleHubSections,
@@ -32,6 +33,7 @@ export function HubOverviewPossession({ profile, items, loans, alerts }: HubOver
         </p>
       </header>
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+        <HubAssistantCta contextLabel="Conseils matériel et préparation" />
         {sections.map((def) => {
           const Icon = def.icon;
           return (

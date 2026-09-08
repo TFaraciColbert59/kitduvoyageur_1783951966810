@@ -16,6 +16,10 @@ import {
   type GroupLite,
   type PossessionSummary,
 } from './adventureLists';
+import {
+  suggestActiveAdventure,
+  type AdventureSuggestion,
+} from '../engine/suggestAdventure';
 
 /**
  * H2.2 — Contexte d'aventure active du hub (généralisation d'ActiveTripContext).
@@ -36,6 +40,8 @@ export interface ActiveAdventureContextValue {
   /** Listes groupées par nature (jamais restreintes — §2.3). */
   groups: AdventureGroups;
   reloadAdventures: () => Promise<void>;
+  /** Suggestion IA déterministe (jamais restrictive — §H5). */
+  suggestion: AdventureSuggestion | null;
   /** Mémoire de section par aventure (clé stable → sectionId). */
   getLastSection: (key: string) => string | null;
   setLastSection: (key: string, sectionId: string) => void;
@@ -169,6 +175,26 @@ export function ActiveAdventureProvider({ initialAdventure = null, children }: A
     [userTrips, cache],
   );
 
+  // Suggestion IA déterministe (règles pures, mêmes entrées → même sortie).
+  const suggestion: AdventureSuggestion | null = useMemo(
+    () =>
+      suggestActiveAdventure(
+        {
+          trips: userTrips.map((t) => ({ id: t.id, slug: t.slug, title: t.title, start_date: t.start_date ?? null })),
+          groups: cache.groups.map((g) => ({ id: g.id, name: g.name, member_count: g.member_count })),
+          crews: cache.crews.map((c) => ({
+            id: c.id,
+            name: c.name,
+            next_trip: c.next_trip ?? null,
+          })),
+          possession: cache.possession,
+          pendingInvites: cache.pendingInvites,
+        },
+        new Date(),
+      ),
+    [userTrips, cache],
+  );
+
   const persist = useCallback(async (data: ActiveAdventureData | null): Promise<boolean> => {
     if (data) {
       setActiveAdventureState(data);
@@ -251,6 +277,7 @@ export function ActiveAdventureProvider({ initialAdventure = null, children }: A
         isPending,
         groups,
         reloadAdventures,
+        suggestion,
         getLastSection,
         setLastSection,
       }}
@@ -275,6 +302,7 @@ const fallbackActiveAdventureContext: ActiveAdventureContextValue = {
   isPending: false,
   groups: fallbackGroups,
   reloadAdventures: async () => {},
+  suggestion: null,
   getLastSection: () => null,
   setLastSection: () => {},
 };
