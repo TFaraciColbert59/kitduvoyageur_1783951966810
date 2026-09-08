@@ -13,8 +13,8 @@ export const metadata = {
 function WizardFallback() {
   return (
     <div className="w-full h-full flex flex-col items-center justify-center gap-5 min-h-[60vh]">
-      <div className="w-10 h-10 rounded-full border-2 border-[#17402C] border-t-transparent animate-spin" />
-      <p className="text-xs font-mono font-bold text-[#5A7064]">Initialisation de l&apos;intelligence terrain…</p>
+      <div className="w-10 h-10 rounded-full border-2 border-[var(--lkv-text-primary)] border-t-transparent animate-spin" />
+      <p className="text-xs font-mono font-bold text-[var(--lkv-text-muted)]">Initialisation de l&apos;intelligence terrain…</p>
     </div>
   );
 }
@@ -39,7 +39,7 @@ export default function ConfiguratorPage() {
   };
 
   return (
-    <div className="min-h-screen md:h-dvh md:overflow-hidden text-[#17402C] selection:bg-[#17402C]/10 font-sans relative">
+    <div className="min-h-screen md:h-dvh md:overflow-hidden text-[var(--lkv-text-primary)] selection:bg-[var(--lkv-text-primary)]/10 font-sans relative">
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(webPageSchema) }} suppressHydrationWarning />
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbSchema) }} suppressHydrationWarning />
 

@@ -1,8 +1,7 @@
-import { Metadata } from 'next';
+import type { Metadata } from 'next';
 import { notFound } from 'next/navigation';
 import { createClient } from '@/lib/supabase/server';
 import { getTripBySlug } from '@/lib/queries-trips';
-import AppShell from '@/components/shell/AppShell';
 import ItineraryPlannerClient from '@/features/trips/planner/ItineraryPlannerClient';
 import type { PlannerStep } from '@/features/trips/planner/plannerEngine';
 
@@ -15,19 +14,14 @@ interface PageProps {
 export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
   const { slug } = await params;
   const trip = await getTripBySlug(slug);
-
-  if (!trip) {
-    return {
-      title: 'Voyage introuvable — Le Kit du Voyageur',
-    };
-  }
-
+  if (!trip) return { title: 'Voyage introuvable — Le Kit du Voyageur' };
   return {
     title: `Planificateur — ${trip.title} | LKDV`,
-    description: `Planifiez et réorganisez jour par jour les étapes de ${trip.title}.`,
+    description: `Planifiez et reorganisez jour par jour les etapes de ${trip.title}.`,
   };
 }
 
+/** Y2 — le shell (colonnes, mobile) est fourni par le layout du segment. */
 export default async function TripItineraryPage({ params }: PageProps) {
   const { slug } = await params;
   const supabase = await createClient();
@@ -36,11 +30,8 @@ export default async function TripItineraryPage({ params }: PageProps) {
   } = await supabase.auth.getUser();
 
   const trip = await getTripBySlug(slug, user?.id);
-  if (!trip) {
-    notFound();
-  }
+  if (!trip) notFound();
 
-  // Récupérer toutes les étapes ordonnées
   const { data: rawSteps } = await supabase
     .from('trip_steps')
     .select('*')
@@ -65,9 +56,5 @@ export default async function TripItineraryPage({ params }: PageProps) {
     elevation_loss_m: s.elevation_loss_m ? Number(s.elevation_loss_m) : null,
   }));
 
-  return (
-    <AppShell safeTop={true} hasBottomNav={false}>
-      <ItineraryPlannerClient trip={trip} initialSteps={initialSteps} />
-    </AppShell>
-  );
+  return <ItineraryPlannerClient trip={trip} initialSteps={initialSteps} />;
 }

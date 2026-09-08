@@ -2,13 +2,17 @@
 
 import React, { useMemo } from 'react';
 import { useRouter } from 'next/navigation';
+import Link from 'next/link';
 import { useTripDraft } from './useTripDraft';
+import { tripSectionHref } from '../registry/tripSectionRegistry';
 import { Step1Destinations } from './Step1Destinations';
 import { Step2Dates } from './Step2Dates';
 import { Step3StylePace } from './Step3StylePace';
 import { Step4Travelers } from './Step4Travelers';
 import { Step5Preview } from './Step5Preview';
-import AppShell from '@/components/shell/AppShell';
+import AppShellDesktop from '@/components/shell/AppShellDesktop';
+import MobilePageShell from '@/components/mobile-nav/MobilePageShell';
+import { GlassCard, GlassSubCard, GlassPill, GlassCapsuleBtn } from '@/components/ui';
 import {
   ChevronLeft,
   ChevronRight,
@@ -18,14 +22,16 @@ import {
   Users,
   Eye,
   Check,
+  ArrowLeft,
+  Sparkles,
 } from 'lucide-react';
 
 const STEP_LABELS = [
-  { step: 1, label: 'Destinations', Icon: MapPin },
-  { step: 2, label: 'Dates', Icon: Calendar },
-  { step: 3, label: 'Style', Icon: Compass },
-  { step: 4, label: 'Voyageurs', Icon: Users },
-  { step: 5, label: 'Aperçu', Icon: Eye },
+  { step: 1, label: 'Destinations', Icon: MapPin, desc: 'Choix des pays et territoires' },
+  { step: 2, label: 'Dates & Durée', Icon: Calendar, desc: 'Période et calendrier' },
+  { step: 3, label: 'Style & Rythme', Icon: Compass, desc: 'Activité, niveau et hébergement' },
+  { step: 4, label: 'Équipage', Icon: Users, desc: 'Participants et nom du projet' },
+  { step: 5, label: 'Aperçu & Validation', Icon: Eye, desc: 'Bilan et création du cockpit' },
 ];
 
 export function TripWizard() {
@@ -69,7 +75,7 @@ export function TripWizard() {
 
   const handleComplete = (slug: string) => {
     resetDraft();
-    router.push(`/voyages/${slug}`);
+    router.push(tripSectionHref(slug, 'overview'));
   };
 
   // Contenu interactif de l'étape active
@@ -138,128 +144,167 @@ export function TripWizard() {
     }
   };
 
-  return (
-    <AppShell safeTop={true} hasBottomNav={false} className="pb-28">
-      <div className="max-w-4xl mx-auto px-4 sm:px-6 py-4 sm:py-8">
-        {/* 1. Desktop Stepper Progress Header */}
-        <div className="hidden md:block mb-8">
-          <div className="flex items-center justify-between relative">
-            <div className="absolute top-1/2 left-0 right-0 h-0.5 bg-black/5 -translate-y-1/2 z-0" />
-            <div
-              className="absolute top-1/2 left-0 h-0.5 bg-lkv-primary -translate-y-1/2 transition-all duration-300 z-0"
-              style={{ width: `${((state.step - 1) / 4) * 100}%` }}
-            />
-            {STEP_LABELS.map(({ step, label, Icon }) => {
-              const isDone = state.step > step;
-              const isCurrent = state.step === step;
-              return (
-                <button
-                  key={step}
-                  type="button"
-                  onClick={() => setStep(step)}
-                  className={`relative z-10 flex flex-col items-center gap-1.5 focus:outline-none transition-all ${
+  // Colonne Gauche Desktop (260px) : Stepper vertical
+  const renderSidebarLeft = () => (
+    <div className="h-full max-h-full w-full flex-1 flex flex-col justify-between glass rounded-2xl p-3.5 text-forest-900 font-sans overflow-y-auto no-scrollbar border border-white/40 shadow-sm select-none gap-3">
+      <div className="space-y-3 shrink-0">
+        <Link
+          href="/voyages"
+          className="inline-flex items-center gap-1.5 text-xs text-forest-800 hover:underline font-medium"
+        >
+          <ArrowLeft size={13} />
+          <span>Annuler la création</span>
+        </Link>
+
+        <div>
+          <h3 className="text-xs font-bold uppercase tracking-wider text-sage-800">
+            Création d’expédition
+          </h3>
+          <p className="text-[11px] text-sage-700">5 étapes pour planifier votre trek</p>
+        </div>
+
+        {/* Stepper Vertical */}
+        <div className="space-y-1.5 pt-1">
+          {STEP_LABELS.map(({ step, label, Icon, desc }) => {
+            const isDone = state.step > step;
+            const isCurrent = state.step === step;
+
+            return (
+              <button
+                key={step}
+                type="button"
+                onClick={() => isDone && setStep(step)}
+                disabled={!isDone && !isCurrent}
+                className={`w-full text-left p-2.5 rounded-xl transition-all flex items-start gap-2.5 ${
+                  isCurrent
+                    ? 'bg-[var(--lkv-primary)] text-white shadow-sm'
+                    : isDone
+                    ? 'hover:bg-white/60 text-forest-900 cursor-pointer'
+                    : 'text-sage-400 cursor-default opacity-60'
+                }`}
+              >
+                <div
+                  className={`w-6 h-6 rounded-full flex items-center justify-center font-bold text-xs shrink-0 mt-0.5 ${
                     isCurrent
-                      ? 'scale-105'
+                      ? 'bg-white text-[var(--lkv-primary)]'
                       : isDone
-                      ? 'hover:opacity-80'
-                      : 'opacity-60 cursor-default'
+                      ? 'bg-[var(--lkv-success)] text-white'
+                      : 'bg-white/40 border border-black/10 text-sage-400'
                   }`}
                 >
+                  {isDone ? <Check size={12} /> : step}
+                </div>
+                <div className="min-w-0 flex-1">
+                  <div className="text-xs font-bold leading-tight truncate">{label}</div>
                   <div
-                    className={`w-10 h-10 rounded-full flex items-center justify-center font-bold text-xs transition-all ${
-                      isCurrent
-                        ? 'bg-lkv-primary text-white shadow-md ring-4 ring-emerald-100'
-                        : isDone
-                        ? 'bg-lkv-primary text-white'
-                        : 'bg-white border border-black/15 text-gray-400'
+                    className={`text-[9.5px] truncate ${
+                      isCurrent ? 'text-white/80' : 'text-sage-600'
                     }`}
                   >
-                    {isDone ? <Check size={16} /> : <Icon size={16} />}
+                    {desc}
                   </div>
-                  <span
-                    className={`text-xs font-medium ${
-                      isCurrent
-                        ? 'text-lkv-primary font-bold'
-                        : isDone
-                        ? 'text-lkv-secondary'
-                        : 'text-gray-400'
-                    }`}
-                  >
-                    {label}
-                  </span>
-                </button>
-              );
-            })}
+                </div>
+              </button>
+            );
+          })}
+        </div>
+      </div>
+
+      <div className="pt-3 border-t border-white/30 text-[10px] text-sage-700">
+        <div>Planificateur d’expédition</div>
+        <div className="font-mono">LKDV WIZARD V2</div>
+      </div>
+    </div>
+  );
+
+  // Colonne Droite Desktop (300px) : Résumé du projet
+  const renderSidebarRight = () => (
+    <div className="w-full shrink-0 h-full overflow-y-auto custom-scrollbar flex flex-col gap-3 pb-6 font-sans">
+      <GlassCard className="p-3.5 space-y-2.5 text-forest-900">
+        <span className="text-xs font-bold uppercase tracking-wider text-sage-800 flex items-center gap-1.5">
+          <Sparkles size={13} />
+          <span>Brouillon en cours</span>
+        </span>
+        <div className="space-y-2 text-xs">
+          <div className="p-2 rounded-xl bg-white/40 border border-white/60">
+            <span className="text-[10px] text-sage-700 block">Pays choisis</span>
+            <span className="font-semibold text-forest-900">
+              {state.countries.length > 0
+                ? state.countries.map((c) => c.name).join(', ')
+                : 'En sélection...'}
+            </span>
+          </div>
+          <div className="p-2 rounded-xl bg-white/40 border border-white/60">
+            <span className="text-[10px] text-sage-700 block">Durée estimée</span>
+            <span className="font-semibold text-forest-900">{state.durationDays} jours</span>
+          </div>
+          <div className="p-2 rounded-xl bg-white/40 border border-white/60">
+            <span className="text-[10px] text-sage-700 block">Style & Difficulté</span>
+            <span className="font-semibold capitalize text-forest-900">
+              {state.activityType} · {state.difficulty}
+            </span>
           </div>
         </div>
+      </GlassCard>
+    </div>
+  );
 
-        {/* 2. Mobile Stepper Progress Header */}
-        <div className="block md:hidden mb-4">
-          <div className="flex items-center justify-between text-xs text-lkv-secondary font-semibold mb-1.5">
-            <span>Étape {state.step} sur 5</span>
-            <span>{STEP_LABELS[state.step - 1].label}</span>
+  return (
+    <AppShellDesktop
+      sidebarLeft={renderSidebarLeft()}
+      sidebarRight={renderSidebarRight()}
+      mobileSlot={
+        <MobilePageShell safeTop={true} hasBottomNav={false} className="pb-24">
+          <div className="max-w-4xl mx-auto px-4 py-4">
+            <div className="flex items-center justify-between text-xs text-forest-800 font-semibold mb-1.5">
+              <span>Étape {state.step} sur 5</span>
+              <span>{STEP_LABELS[state.step - 1].label}</span>
+            </div>
+            <div className="w-full h-1.5 bg-white/30 rounded-full overflow-hidden mb-4">
+              <div
+                className="h-full bg-[var(--lkv-primary)] transition-all duration-300 rounded-full"
+                style={{ width: `${(state.step / 5) * 100}%` }}
+              />
+            </div>
+            <div className="glass rounded-2xl p-5 border border-white/60 shadow-md">
+              {renderCurrentStep()}
+            </div>
           </div>
-          <div className="w-full h-1.5 bg-black/5 rounded-full overflow-hidden">
-            <div
-              className="h-full bg-lkv-primary transition-all duration-300 rounded-full"
-              style={{ width: `${(state.step / 5) * 100}%` }}
-            />
-          </div>
-        </div>
-
-        {/* 3. Step Content Container */}
-        <div className="bg-white/90 backdrop-blur-md rounded-xl sm:rounded-2xl p-5 sm:p-8 border border-white/60 shadow-xl">
+        </MobilePageShell>
+      }
+    >
+      <div className="space-y-4">
+        {/* Conteneur principal de l'étape */}
+        <div className="glass rounded-2xl p-6 sm:p-8 border border-white/60 shadow-md">
           {renderCurrentStep()}
 
-          {/* Desktop Navigation Controls */}
+          {/* Contrôles de navigation */}
           {state.step < 5 && (
-            <div className="hidden md:flex mt-8 pt-6 border-t border-black/5 items-center justify-between">
-              <button
+            <div className="flex mt-8 pt-6 border-t border-white/40 items-center justify-between">
+              <GlassCapsuleBtn
                 type="button"
                 onClick={handlePrev}
                 disabled={state.step === 1}
-                className="px-5 py-2.5 rounded-xl border border-black/10 text-xs font-semibold text-lkv-primary hover:bg-black/5 disabled:opacity-30 disabled:hover:bg-transparent flex items-center gap-1.5 min-h-[44px]"
+                variant="default"
+                icon={<ChevronLeft size={16} />}
+                className="flex-1 justify-center"
               >
-                <ChevronLeft size={16} />
-                <span>Précédent</span>
-              </button>
+                Précédent
+              </GlassCapsuleBtn>
 
-              <button
+              <GlassCapsuleBtn
                 type="button"
                 onClick={handleNext}
-                className="px-6 py-2.5 rounded-xl bg-lkv-primary hover:bg-[#1f563b] text-white text-xs font-bold shadow-sm flex items-center gap-1.5 transition-all min-h-[44px]"
+                variant="primary"
+                icon={<ChevronRight size={16} />}
+                className="flex-1 justify-center"
               >
-                <span>Continuer</span>
-                <ChevronRight size={16} />
-              </button>
+                Continuer
+              </GlassCapsuleBtn>
             </div>
           )}
         </div>
-
-        {/* 4. Mobile Sticky Bottom Bar */}
-        {state.step < 5 && (
-          <div className="md:hidden fixed bottom-0 left-0 right-0 p-4 bg-white/95 backdrop-blur-md border-t border-black/10 z-50 flex items-center gap-3">
-            {state.step > 1 && (
-              <button
-                type="button"
-                onClick={handlePrev}
-                className="flex-1 py-3 px-4 rounded-xl border border-black/10 text-xs font-semibold text-lkv-primary hover:bg-black/5 flex items-center justify-center gap-1 min-h-[48px]"
-              >
-                <ChevronLeft size={16} />
-                <span>Retour</span>
-              </button>
-            )}
-            <button
-              type="button"
-              onClick={handleNext}
-              className="flex-2 py-3 px-6 rounded-xl bg-lkv-primary text-white text-xs font-bold shadow-md flex items-center justify-center gap-1 min-h-[48px]"
-            >
-              <span>Continuer</span>
-              <ChevronRight size={16} />
-            </button>
-          </div>
-        )}
       </div>
-    </AppShell>
+    </AppShellDesktop>
   );
 }

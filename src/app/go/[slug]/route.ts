@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getAffiliateLinkBySlug, logAffiliateClick } from '@/lib/queries-affiliation';
-import { buildAffiliateUrl } from '@/features/affiliation/engine/affiliateEngine';
+import { buildAffiliateUrl, isValidAffiliateTargetUrl } from '@/features/affiliation/engine/affiliateEngine';
 
 export const dynamic = 'force-dynamic';
 
@@ -14,7 +14,7 @@ export async function GET(request: NextRequest, context: RouteContext) {
   // 1. Récupérer le lien d'affiliation
   const link = await getAffiliateLinkBySlug(slug);
 
-  if (!link || !link.is_active) {
+  if (!link || !link.is_active || !isValidAffiliateTargetUrl(link.target_url, true)) {
     return NextResponse.redirect(new URL('/voyages', request.url), 302);
   }
 

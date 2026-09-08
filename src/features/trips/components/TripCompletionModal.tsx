@@ -13,7 +13,7 @@ import {
   X,
 } from 'lucide-react';
 import { GlassCard } from '@/components/ui/GlassCard';
-import { LkvButton } from '@/components/ui/LkvButton';
+import { GlassCapsuleBtn } from '@/components/ui/GlassCapsuleBtn';
 import {
   calculateTripRetrospectiveMetrics,
   extractCertifiedPlaceCandidates,
@@ -123,11 +123,11 @@ export function TripCompletionModal({ trip, isOpen, onClose }: TripCompletionMod
       role="dialog"
       aria-modal="true"
       aria-labelledby="completion-modal-title"
-      className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40 backdrop-blur-md animate-fadeIn"
+      className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm animate-fadeIn"
     >
-      <div className="bg-[#FAF8F5] border border-white/80 rounded-card max-w-2xl w-full p-6 sm:p-8 max-h-[90vh] overflow-y-auto shadow-2xl space-y-6">
+      <div className="glass rounded-[var(--lkv-radius-card)] border border-white/60 max-w-2xl w-full p-6 sm:p-8 max-h-[90vh] overflow-y-auto shadow-2xl space-y-6">
         {/* En-tête modal */}
-        <div className="flex items-center justify-between border-b border-black/5 pb-4">
+        <div className="flex items-center justify-between border-b border-white/40 pb-4">
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 rounded-full bg-lkv-primary/10 flex items-center justify-center text-lkv-primary">
               <Award size={22} />
@@ -143,7 +143,7 @@ export function TripCompletionModal({ trip, isOpen, onClose }: TripCompletionMod
           </div>
           <button
             onClick={onClose}
-            className="w-9 h-9 flex items-center justify-center rounded-full hover:bg-black/5 text-lkv-secondary transition-colors"
+            className="min-h-[44px] min-w-[44px] flex items-center justify-center rounded-full glass-sub-card border border-white/60 text-[var(--lkv-text-muted)] hover:bg-white transition-all shadow-2xs"
             aria-label="Fermer"
           >
             <X size={20} />
@@ -152,39 +152,39 @@ export function TripCompletionModal({ trip, isOpen, onClose }: TripCompletionMod
 
         {/* Messages de retour */}
         {successMessage && (
-          <div className="p-4 rounded-2xl bg-lkv-primary/10 border border-lkv-primary/20 text-sm text-lkv-primary flex items-center gap-2">
+          <div className="p-4 rounded-2xl glass tone-sage border text-sm text-[var(--lkv-success)] flex items-center gap-2">
             <CheckCircle2 size={18} className="text-lkv-primary shrink-0" />
             <span>{successMessage}</span>
           </div>
         )}
 
         {errorMessage && (
-          <div className="p-4 rounded-2xl bg-red-50 border border-red-200 text-sm text-red-800">
+          <div className="p-4 rounded-2xl glass tone-danger border text-sm text-[var(--lkv-danger)]">
             {errorMessage}
           </div>
         )}
 
         {/* Métriques d'aventure */}
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-          <GlassCard tone="neutral" className="p-3.5 rounded-lg border border-white/60 text-center">
+          <GlassCard tone="neutral" className="p-3.5 rounded-[var(--lkv-radius-lg)] border border-white/60 text-center">
             <Navigation size={18} className="mx-auto text-lkv-primary mb-1" />
             <div className="text-lg font-bold text-lkv-primary">{metrics.totalKm} km</div>
             <div className="text-[11px] text-lkv-secondary">Distance totale</div>
           </GlassCard>
 
-          <GlassCard tone="neutral" className="p-3.5 rounded-lg border border-white/60 text-center">
+          <GlassCard tone="neutral" className="p-3.5 rounded-[var(--lkv-radius-lg)] border border-white/60 text-center">
             <Mountain size={18} className="mx-auto text-lkv-primary mb-1" />
             <div className="text-lg font-bold text-lkv-primary">+{metrics.totalElevationGainM} m</div>
             <div className="text-[11px] text-lkv-secondary">Dénivelé positif</div>
           </GlassCard>
 
-          <GlassCard tone="neutral" className="p-3.5 rounded-lg border border-white/60 text-center">
+          <GlassCard tone="neutral" className="p-3.5 rounded-[var(--lkv-radius-lg)] border border-white/60 text-center">
             <Package size={18} className="mx-auto text-lkv-primary mb-1" />
             <div className="text-lg font-bold text-lkv-primary">{metrics.packedWeightKg} kg</div>
             <div className="text-[11px] text-lkv-secondary">{metrics.packedGearCount} items emportés</div>
           </GlassCard>
 
-          <GlassCard tone="neutral" className="p-3.5 rounded-lg border border-white/60 text-center">
+          <GlassCard tone="neutral" className="p-3.5 rounded-[var(--lkv-radius-lg)] border border-white/60 text-center">
             <Award size={18} className="mx-auto text-lkv-primary mb-1" />
             <div className="text-lg font-bold text-lkv-primary">{metrics.durationDays} jours</div>
             <div className="text-[11px] text-lkv-secondary">{metrics.nbNuits} nuits vécues</div>
@@ -201,7 +201,7 @@ export function TripCompletionModal({ trip, isOpen, onClose }: TripCompletionMod
                   type="checkbox"
                   checked={publishCarnet}
                   onChange={e => setPublishCarnet(e.target.checked)}
-                  className="w-4 h-4 rounded border-stone-300 text-lkv-primary focus:ring-lkv-primary"
+                  className="w-4 h-4 rounded text-lkv-primary focus:ring-lkv-primary"
                 />
                 <span className="text-sm font-semibold text-lkv-primary flex items-center gap-1.5">
                   <BookOpen size={16} /> Publier en carnet de bord communautaire
@@ -210,7 +210,7 @@ export function TripCompletionModal({ trip, isOpen, onClose }: TripCompletionMod
             </div>
 
             {publishCarnet && (
-              <div className="p-4 rounded-2xl bg-white/70 border border-black/5 space-y-3">
+              <div className="p-4 rounded-2xl glass-sub-card border border-white/60 shadow-2xs space-y-3">
                 <div>
                   <label className="block text-xs font-semibold text-lkv-primary mb-1">
                     Titre du carnet d&apos;expédition
@@ -220,7 +220,7 @@ export function TripCompletionModal({ trip, isOpen, onClose }: TripCompletionMod
                     value={carnetTitle}
                     onChange={e => setCarnetTitle(e.target.value)}
                     required
-                    className="w-full text-sm px-3 py-2 rounded-xl border border-black/10 bg-white focus:outline-none focus:ring-2 focus:ring-lkv-primary/20"
+                    className="glass-input w-full px-3 py-2 text-sm text-[var(--lkv-text-primary)]"
                   />
                 </div>
 
@@ -233,7 +233,7 @@ export function TripCompletionModal({ trip, isOpen, onClose }: TripCompletionMod
                     value={carnetDescription}
                     onChange={e => setCarnetDescription(e.target.value)}
                     placeholder="Résumez les moments forts, la météo, l'ambiance..."
-                    className="w-full text-sm px-3 py-2 rounded-xl border border-black/10 bg-white focus:outline-none focus:ring-2 focus:ring-lkv-primary/20"
+                    className="glass-input w-full px-3 py-2 text-sm text-[var(--lkv-text-primary)]"
                   />
                 </div>
 
@@ -279,7 +279,7 @@ export function TripCompletionModal({ trip, isOpen, onClose }: TripCompletionMod
                 {placeCandidates.map(candidate => {
                   const currentRev = reviews[candidate.placeId] || { rating: 5, comment: '' };
                   return (
-                    <div key={candidate.placeId} className="p-3.5 rounded-2xl bg-white/70 border border-black/5 space-y-2">
+                    <div key={candidate.placeId} className="p-3.5 rounded-2xl glass-sub-card border border-white/60 shadow-2xs space-y-2">
                       <div className="flex items-center justify-between">
                         <span className="text-xs font-semibold text-lkv-primary">{candidate.name}</span>
                         {/* Note étoiles */}
@@ -294,7 +294,7 @@ export function TripCompletionModal({ trip, isOpen, onClose }: TripCompletionMod
                                   [candidate.placeId]: { ...currentRev, rating: star },
                                 }))
                               }
-                              className="text-sand-500 hover:scale-110 transition-transform"
+                              className="text-[var(--lkv-warning)] hover:scale-110 transition-transform"
                             >
                               <Star
                                 size={16}
@@ -315,7 +315,7 @@ export function TripCompletionModal({ trip, isOpen, onClose }: TripCompletionMod
                             [candidate.placeId]: { ...currentRev, comment: e.target.value },
                           }))
                         }
-                        className="w-full text-xs px-3 py-1.5 rounded-xl border border-black/10 bg-white focus:outline-none focus:ring-2 focus:ring-lkv-primary/20"
+                        className="glass-input w-full px-3 py-1.5 text-xs text-[var(--lkv-text-primary)]"
                       />
                     </div>
                   );
@@ -325,13 +325,13 @@ export function TripCompletionModal({ trip, isOpen, onClose }: TripCompletionMod
           )}
 
           {/* Boutons d'action */}
-          <div className="flex items-center justify-end gap-3 pt-2 border-t border-black/5">
-            <LkvButton type="button" variant="secondary" size="sm" onClick={onClose} disabled={isPending}>
+          <div className="flex items-center justify-end gap-3 pt-2 border-t border-white/40">
+            <GlassCapsuleBtn type="button" variant="default" size="sm" onClick={onClose} disabled={isPending}>
               Annuler
-            </LkvButton>
-            <LkvButton type="submit" variant="primary" size="sm" disabled={isPending}>
+            </GlassCapsuleBtn>
+            <GlassCapsuleBtn type="submit" variant="primary" size="sm" disabled={isPending}>
               {isPending ? 'Enregistrement en cours...' : 'Valider & Clôturer l\'expédition'}
-            </LkvButton>
+            </GlassCapsuleBtn>
           </div>
         </form>
       </div>

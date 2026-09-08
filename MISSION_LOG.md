@@ -357,3 +357,75 @@ ORDER BY country_code;
 - **Aura Interaction Design :** Transitions douces avec Framer Motion, feedback tactile haptique sur chaque action interactive (`triggerHaptic`), accordéon FAQ fluide.
 - **Design Tokens :** Palette Ink (`#17402C`), Sage (`#5B7F55`), Stone (`#FBFAF6`), zéro token orange (`#E4501C` banni).
 - **Masquage Strict :** Tout bloc absent ou dégradé est totalement omis de l'interface utilisateur.
+
+## Chantier Y — Hub Voyage Unique (débuté 07/09/2026)
+
+- **Y-pré** ✅ : 46 fichiers de session commités en 4 commits atomiques (6581a6ec →
+  c1c981cb), portes G1/G2/G3 vertes, poussés sur chantier/x-design-unique.
+- **Y0.0** 🔄 : inventaire + docs de gouvernance (agent), G4 build baseline OK
+  (exit 0 ; /voyages/[slug] 529 kB First Load — cible Y8.2 < 250 kB), ci_invariants OK.
+- **Y0.1** ⛔ B1 : fusion PR #31 impossible (gh indisponible) → clic manuel Tony
+  (docs/Y_BLOCKERS.md). Sous-phases indépendantes poursuivies sur la branche X (§7.4).
+- **Y0.2** ✅ : 6 arbitrages tranchés par preuves → docs/Y_DECISIONS.md
+  (ConfiguratorWizard VIVANT ; planner éditeur + onglet lecteur ; autoGen hors hub ;
+  ResumeActiveTripCard conservé (accueil) ; carte = mode ; no-scrollbar canonique).
+- **Y0.3** ✅ : docs/Y_HUB_SPEC.md (valeurs revérifiées dans tokens.css).
+- **Y0.4** ✅ : seed:y — 8 voyages y-* déterministes, preuve requête 8/8 compteurs exacts.
+- **Y0.5** 🔄 : helper prepareVisualPage (horloge figée, masques nommés), contact-sheet
+  + visual:sheet, tests/a11y/e2e + test:a11y (axe, 3 viewports), projet ipad —
+  conversion des 10 specs + rebase G5 inspecté (agent en cours).
+- **Y0.6** ✅ : workflow CI étendu (invariants, G6 a11y, G5 visuel artefact).
+- **Y0.7** ✅ : docs/Y_SECURITY.md — R7 confirmé et corrigé (localStorage assaini),
+  montants publics retirés, migration RLS écrite non appliquée.
+- **Y1** ✅ (tag y1-done) : tripProfileEngine TDD 53 tests, registres sections (10) +
+  widgets (12) 13 tests — 1008/1008 ; garde-fou Y-D80 12 règles, 510 violations
+  inventoriées (docs/Y_VIOLATIONS.md, rouge documenté, G3=12/12 attendu fin Y3.5).
+- **Y2** ✅ (tag y2-done) : layout unique du hub voyage — `layout.tsx` de segment
+  (charge le voyage une fois, phase + profil), `TripHubShell` unique (colonnes
+  gauche 260px / droite 300px / centre + mobile), `TripSidebarLeft` pilotée par le
+  registre (10 sections, Link/tripSectionHref, actif par pathname, permissions
+  budget+docs, déclencheur picker), `TripSidebarRight` générique (registre widgets,
+  tri priorité, repli hauteur) + widgets Countdown/OfflineToggle, 6 routes nouvelles
+  (equipage, budget, documents, checklist, securite, journal), overview via
+  `TripOverviewClient` (?phase=), shell locaux retirés de kit/itineraire/export,
+  BottomTabBar navigation URL. Y-D80 501 violations (−9).
+  Portes : G1 OK · G2 1009/1020 (Y-D80 rouge documenté) · G3 rouge attendu.
+- **Y3** ✅ (tag y3-done) : dédoublonnage complet du hub voyage 7 sous-phases :
+  Y3.1 sidebars gauches supprimées (règle 10) · Y3.2 TripNetworkStatus unique
+  (règle 8, abstraction réseau unifiée) · Y3.3 ActiveTripSwitcher (cmdk +
+  GlassSheet) remplace ActiveTripBanner, contexte étendu + /api/voyages/mine ·
+  Y3.4 en-têtes (3 cartes métriques → widgets, CountryCard) · **Y3.5 jalon G3
+  ATTEINT : garde-fou Y-D80 12/12 vert, 475 violations → 0** (tokenisation
+  complète, ConfirmDialog, tripPaths, print dédié) · Y3.6 code mort supprimé
+  (ItinerarySidebarRight + KitSidebarRight, 5512 o) · Y3.7 fin.
+  Portes : G1 OK · G2 **1020/1020** · G3 **12/12**.
+- **Y4** ✅ (tag y4-done) : audit et harmonisation complète des 11 sections du Hub Voyage Unique :
+  Y4.1 overview (dé-imbrication <main>) · Y4.2 itinerary (TripItineraryTab EmptyState + retrait CTA régénérer toolbar, ItineraryPlannerClient h2) ·
+  Y4.3 gear (TripKitView EmptyState sur catégorie vide) · Y4.4 team (TripTeamView EmptyState équipage vide) ·
+  Y4.5 budget (page.tsx check canManageBudget server-side, EmptyState dépenses, métrique part par voyageur si groupe) ·
+  Y4.6 docs (page.tsx check canViewDocuments server-side, EmptyState docs) · Y4.7 checklist (validé) ·
+  Y4.8 safety (validé) · Y4.9 journal (TripNotesView EmptyState avec CTA rédaction) ·
+  Y4.10 export (ExportClientView h2, suppression code mort renderSidebarLeft, masquage section budget si !canManageBudget) ·
+  Y4.11 convergence (tests/a11y/e2e étendu aux 11 sections avec session démo SSR, tests/visual/voyages-y-profiles-visual.spec.ts créé, contact-sheet régénérée 38 captures).
+  Portes : G1 OK (`npm run type-check`) · G2 OK (1020/1020, 137 suites) · G3 OK (12/12 règles Y-D80).
+- **Y5** ✅ (tag y5-done) : navigation globale, filtres profil, mémoire de section et retour natif Android :
+  Y5.1 liste /voyages enrichie (ActiveTripSwitcher desktop + mobile, filtres scale/party, TripCard badge profil dérivé + réouverture section mémorisée) ·
+  Y5.2 mémoire de section (persistance activeSection par slug via useActiveTrip().setLastSection, restauration automatique dans switcher et card) ·
+  Y5.3 navigation mobile hub (TripMobileSectionsSheet GlassSheet avec haptique triggerHaptic('selection'), touch targets ≥ 44px, BottomTabBar 10 sections) ·
+  Y5.4 retour matériel Android (useAndroidTripBackNav via @capacitor/app, remontée section → aperçu → liste, zéro sortie accidentelle d'app).
+  Portes : G1 OK (`npm run type-check`) · G2 OK (**1023/1023**, +3 tests) · G3 OK (12/12 règles Y-D80).
+- **Y6** ✅ (tag y6-done) : fusion des modules kit, configurateur IA et inventaire matériel :
+  Y6.1 configurateur en panneau depuis gear : `KitConfiguratorWizard` invocable depuis `TripKitView`, préchargé via `tripContext` (activité, durée civile/échelle, météo altitude, style de portage), contournement des questions déjà résolues par le voyage, bouton d'application directe au sac du voyage via `applyConfiguratorKitToTripAction` ·
+  Y6.2 route `/ai-configurator` : conservée intacte en mode découverte sans voyage, zéro violation token Y-D80 ·
+  Y6.3 pont matériel (inventaire -> voyage) : sélecteur « Importer depuis Mon Matériel » dans `TripKitView` avec notice explicite que le stock n'est jamais consommé ni modifié (seulement référencé via `inventory_item_id`), action serveur `addInventoryItemToTripAction`, 7 sous-routes de `/materiel` vérifiées et fonctionnelles ·
+  Y6.4 pont groupes : liaison bidirectionnelle entre `travel_groups` et `trips` via `group_id`, bannière/bouton Apple-grade « Expédition LKDV associée : Ouvrir le Cockpit Voyage → » dans `/groupes/[groupId]` (desktop & `MobileGroupeView`) ·
+  Y6.5 pont pays : `CountryCardWidget` reliant le voyage à `/pays/[code]` opérationnel dans la sidebar droite.
+  Portes : G1 OK (`npm run type-check`) · G2 OK (**1029/1029**, +6 tests, 138 suites) · G3 OK (12/12 règles Y-D80) · G4 OK (`npm run build` sans `.env.local`) · G5 OK (`visual:sheet`, 38 captures) · G6 OK (`test:a11y`, 39/39 tests passés).
+- **Y7** ✅ (tag y7-done) : optimisations app-first, cibles tactiles Apple HIG, haptique & offline Dexie :
+  Y7.1 zones sûres : vérification d'absence totale de calcul manuel `env(safe-area-inset-*)` dans `src/features/trips/`, délégation exclusive à `AppShell` / `MobilePageShell` pour portrait et paysage (4 côtés) ·
+  Y7.2 cibles tactiles : garantie de dimensionnement minimal ≥ 44px (Apple HIG) sur l'ensemble des éléments interactifs du hub (`TripSidebarLeft`, `TripMobileSectionsSheet`, `OfflineToggleWidget`, `TripSafetyView`, `TripChecklistView`) ·
+  Y7.3 haptique : `triggerNativeHaptic` enrichi avec respect strict de `prefers-reduced-motion: reduce` ; intégration du retour haptique sur validation, suppression, pointage de sécurité, pack toggle et changement de section (`TripKitView`, `TripBudgetView`, `TripDocumentsView`, `TripNotesView`, `TripSafetyView`, `TripTeamView`, `OfflineToggleWidget`, `TripSidebarLeft`) ·
+  Y7.4 hors-ligne complet Dexie & RGPD : consolidation de `tripOfflineStorage.ts` et `tripOfflineSyncQueue.ts` avec Dexie IndexedDB (`TripDexieDatabase`, `TripSyncDexieDatabase`) ; assainissement strict `sanitizeTripForOffline` (exclusion totale des pièces d'identité / documents, share_token et dépenses financières conformément à l'audit Y0.7 / R7) ; moteur de résolution de conflits LWW (Last-Write-Wins) avec journalisation immuable d'audit ·
+  Y7.5 barre d'état et splash screen natifs : configuration `@capacitor/status-bar` accordée aux tokens (`applyLKDVStatusBarTheme` vert forêt `#17402C`, style dark, overlay) appliquée au montage du hub dans `TripHubShell` ; cohérence avec `capacitor.config.ts`.
+  Portes : G1 OK (`npm run type-check`) · G2 OK (**1042/1042**, +13 tests, 139 suites) · G3 OK (12/12 règles Y-D80) · G4 OK (`npm run build` sans `.env.local`, First Load routes ~163-184 kB) · G5 OK (`visual:sheet`, 38 captures, 12 surfaces) · G6 OK (`test:a11y`, 39/39 tests passés).
+

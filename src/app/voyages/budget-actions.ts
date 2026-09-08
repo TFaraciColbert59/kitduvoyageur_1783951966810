@@ -1,5 +1,6 @@
 'use server';
 
+import { tripSegmentPath } from '@/features/trips/registry/tripPaths';
 import { revalidatePath } from 'next/cache';
 import { createClient } from '@/lib/supabase/server';
 import {
@@ -7,6 +8,7 @@ import {
   deleteTripExpenseSchema,
 } from '@/features/trips/schemas/trip.schema';
 import { addTripExpense, deleteTripExpense } from '@/lib/queries-trip-budget';
+import { getTripById } from '@/lib/queries-trips';
 
 export async function addExpenseAction(
   prevState: any,
@@ -40,6 +42,11 @@ export async function addExpenseAction(
       return { success: false, error: 'Vous devez être connecté pour ajouter une dépense' };
     }
 
+    const trip = await getTripById(parsed.data.tripId, user.id);
+    if (!trip || !trip.permissions.canManageBudget) {
+      return { success: false, error: 'Permission refusée pour la gestion du budget de ce voyage' };
+    }
+
     const created = await addTripExpense({
       trip_id: parsed.data.tripId,
       payer_id: user.id,
@@ -58,7 +65,7 @@ export async function addExpenseAction(
 
     const tripSlug = formData.get('tripSlug')?.toString();
     if (tripSlug) {
-      revalidatePath(`/voyages/${tripSlug}`);
+      revalidatePath(tripSegmentPath(tripSlug, ''));
     }
 
     return { success: true, message: 'Dépense enregistrée avec succès' };
@@ -79,13 +86,27 @@ export async function deleteExpenseAction(
       return { success: false, error: 'Identifiants invalides' };
     }
 
+    const supabase = await createClient();
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
+
+    if (!user) {
+      return { success: false, error: 'Vous devez être connecté pour supprimer une dépense' };
+    }
+
+    const trip = await getTripById(parsed.data.tripId, user.id);
+    if (!trip || !trip.permissions.canManageBudget) {
+      return { success: false, error: 'Permission refusée pour la gestion du budget de ce voyage' };
+    }
+
     const ok = await deleteTripExpense(tripId, expenseId);
     if (!ok) {
       return { success: false, error: 'Impossible de supprimer cette dépense' };
     }
 
     if (tripSlug) {
-      revalidatePath(`/voyages/${tripSlug}`);
+      revalidatePath(tripSegmentPath(tripSlug, ''));
     }
 
     return { success: true };

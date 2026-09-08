@@ -1,5 +1,6 @@
 'use server';
 
+import { tripSegmentPath } from '@/features/trips/registry/tripPaths';
 import { revalidatePath } from 'next/cache';
 import { createClient } from '@/lib/supabase/server';
 import {
@@ -54,7 +55,7 @@ export async function inviteCollaboratorAction(
 
     const tripSlug = formData.get('tripSlug')?.toString();
     if (tripSlug) {
-      revalidatePath(`/voyages/${tripSlug}`);
+      revalidatePath(tripSegmentPath(tripSlug, ''));
     }
 
     return { success: true, message: 'Collaborateur invité avec succès' };
@@ -82,7 +83,7 @@ export async function updateRoleAction(
     }
 
     if (tripSlug) {
-      revalidatePath(`/voyages/${tripSlug}`);
+      revalidatePath(tripSegmentPath(tripSlug, ''));
     }
 
     return { success: true };
@@ -109,7 +110,7 @@ export async function removeCollaboratorAction(
     }
 
     if (tripSlug) {
-      revalidatePath(`/voyages/${tripSlug}`);
+      revalidatePath(tripSegmentPath(tripSlug, ''));
     }
 
     return { success: true };

@@ -2,7 +2,7 @@
 
 import React, { useState } from 'react';
 import AppImage from '@/components/ui/AppImage';
-import { LkvButton } from '@/components/ui/LkvButton';
+import { GlassCapsuleBtn } from '@/components/ui/GlassCapsuleBtn';
 import { MapPin, Calendar, CreditCard, Users, Share2, Check, Edit3 } from 'lucide-react';
 import { TripBadge } from './TripBadge';
 import { getTripCounters } from '../hooks/useTripCounters';
@@ -68,30 +68,24 @@ export function TripHero({ trip, onEditClick }: TripHeroProps) {
           </div>
 
           <div className="flex items-center gap-2">
-            <LkvButton
+            <GlassCapsuleBtn
               variant="secondary"
               size="sm"
               onClick={handleShare}
-              className="bg-white/20 hover:bg-white/30 text-white border-white/30 backdrop-blur-md"
+              icon={copied ? <Check size={15} /> : <Share2 size={15} />}
             >
-              {copied ? (
-                <Check size={15} className="mr-1.5" />
-              ) : (
-                <Share2 size={15} className="mr-1.5" />
-              )}
               {copied ? 'Lien copié !' : 'Partager'}
-            </LkvButton>
+            </GlassCapsuleBtn>
 
             {trip.permissions.canEdit && onEditClick && (
-              <LkvButton
+              <GlassCapsuleBtn
                 variant="primary"
                 size="sm"
                 onClick={onEditClick}
-                className="bg-lkv-secondary hover:bg-[#205238] text-white border-none shadow-md"
+                icon={<Edit3 size={15} />}
               >
-                <Edit3 size={15} className="mr-1.5" />
                 Modifier
-              </LkvButton>
+              </GlassCapsuleBtn>
             )}
           </div>
         </div>
@@ -99,8 +93,8 @@ export function TripHero({ trip, onEditClick }: TripHeroProps) {
         {/* Title and Destination Meta */}
         <div className="max-w-4xl space-y-3 mt-8">
           {trip.destination_name && (
-            <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-white/15 backdrop-blur-md border border-white/20 text-xs sm:text-sm font-medium text-[#A6C1A0]">
-              <MapPin size={14} className="text-[#A6C1A0]" />
+            <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-white/15 backdrop-blur-md border border-white/20 text-xs sm:text-sm font-medium text-white/90">
+              <MapPin size={14} className="text-white/80" />
               {trip.destination_name}
               {trip.destination_country_code && ` (${trip.destination_country_code})`}
             </div>
@@ -120,20 +114,20 @@ export function TripHero({ trip, onEditClick }: TripHeroProps) {
           <div className="flex items-center gap-4 pt-2 text-xs sm:text-sm text-white/80 flex-wrap">
             {(trip.start_date || trip.end_date) && (
               <span className="flex items-center gap-1.5 bg-black/30 backdrop-blur-sm px-3 py-1 rounded-full border border-white/10">
-                <Calendar size={14} className="text-[#A6C1A0]" />
+                <Calendar size={14} className="text-white/80" />
                 {formatCivilDateRange(trip.start_date, trip.end_date, undefined, 'fr-FR')}
               </span>
             )}
 
             {trip.estimated_budget !== null && trip.estimated_budget !== undefined && (
               <span className="flex items-center gap-1.5 bg-black/30 backdrop-blur-sm px-3 py-1 rounded-full border border-white/10">
-                <CreditCard size={14} className="text-[#A6C1A0]" />
+                <CreditCard size={14} className="text-white/80" />
                 Budget prévu : {trip.estimated_budget} {trip.budget_currency}
               </span>
             )}
 
             <span className="flex items-center gap-1.5 bg-black/30 backdrop-blur-sm px-3 py-1 rounded-full border border-white/10">
-              <Users size={14} className="text-[#A6C1A0]" />
+              <Users size={14} className="text-white/80" />
               {participantsCount} {participantsCount > 1 ? 'participants' : 'participant'}
             </span>
           </div>

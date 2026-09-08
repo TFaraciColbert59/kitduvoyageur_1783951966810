@@ -85,7 +85,7 @@ export function Step1Destinations({
         <h2 className="text-2xl sm:text-3xl font-bold text-lkv-primary">
           Où partez-vous à l&apos;aventure ?
         </h2>
-        <p className="text-sm text-stone-600 mt-1">
+        <p className="text-sm text-[var(--lkv-text-muted)] mt-1">
           Choisissez un ou plusieurs pays. Le moteur de répartition distribuera vos journées de marche de manière cohérente.
         </p>
       </div>
@@ -116,7 +116,7 @@ export function Step1Destinations({
                     <div className="text-sm font-semibold">{country.name}</div>
                     <div
                       className={`text-[11px] ${
-                        active ? 'text-[#A6C1A0]' : 'text-lkv-secondary'
+                        active ? 'text-[var(--sage-300)]' : 'text-lkv-secondary'
                       }`}
                     >
                       Étapes GPS & refuges vérifiés
@@ -146,7 +146,7 @@ export function Step1Destinations({
         <div className="relative">
           <Search
             size={16}
-            className="absolute left-3.5 top-1/2 -translate-y-1/2 text-stone-400"
+            className="absolute left-3.5 top-1/2 -translate-y-1/2 text-[var(--lkv-text-subtle)]"
           />
           <input
             type="text"
@@ -170,7 +170,7 @@ export function Step1Destinations({
                     setSearch('');
                   }}
                   className={`w-full flex items-center justify-between px-3 py-2 rounded-lg text-left text-xs transition-colors min-h-[44px] ${
-                    active ? 'bg-emerald-50 text-lkv-primary font-semibold' : 'hover:bg-gray-50 text-gray-700'
+                    active ? 'bg-[var(--lkv-success-bg)] text-lkv-primary font-semibold' : 'hover:bg-[var(--lkv-surface-paper)] text-[var(--lkv-text-secondary)]'
                   }`}
                 >
                   <span className="flex items-center gap-2">
@@ -180,7 +180,7 @@ export function Step1Destinations({
                   {active ? (
                     <span className="text-[11px] text-lkv-secondary">Sélectionné</span>
                   ) : (
-                    <Plus size={14} className="text-stone-400" />
+                    <Plus size={14} className="text-[var(--lkv-text-subtle)]" />
                   )}
                 </button>
               );
@@ -201,7 +201,7 @@ export function Step1Destinations({
               className="flex items-center justify-between p-3 bg-white/80 backdrop-blur-sm rounded-xl border border-black/5"
             >
               <div className="flex items-center gap-3">
-                <span className="w-6 h-6 rounded-full bg-[#FAF8F5] border border-black/10 text-xs font-bold text-lkv-primary flex items-center justify-center">
+                <span className="w-6 h-6 rounded-full bg-[var(--lkv-surface-paper)] border border-black/10 text-xs font-bold text-lkv-primary flex items-center justify-center">
                   {idx + 1}
                 </span>
                 <span className="text-xl">{country.flag}</span>
@@ -209,7 +209,7 @@ export function Step1Destinations({
                   {country.name}
                 </span>
                 {country.isCurated && (
-                  <span className="text-[10px] bg-forest-100/80 text-lkv-primary px-2 py-0.5 rounded-full font-medium hidden sm:inline">
+                  <span className="text-[10px] bg-[var(--lkv-success-bg)] text-lkv-primary px-2 py-0.5 rounded-full font-medium hidden sm:inline">
                     Curé
                   </span>
                 )}
@@ -223,7 +223,7 @@ export function Step1Destinations({
                       disabled={idx === 0}
                       onClick={() => moveUp(idx)}
                       aria-label="Monter ce pays"
-                      className="p-2 rounded-lg text-stone-500 hover:bg-black/5 disabled:opacity-30 disabled:hover:bg-transparent min-w-[36px] min-h-[36px] flex items-center justify-center"
+                      className="p-2 rounded-lg text-[var(--lkv-text-muted)] hover:bg-black/5 disabled:opacity-30 disabled:hover:bg-transparent min-w-[var(--lkv-touch-min)] min-h-[var(--lkv-touch-min)] flex items-center justify-center"
                     >
                       <ArrowUp size={14} />
                     </button>
@@ -232,7 +232,7 @@ export function Step1Destinations({
                       disabled={idx === selectedCountries.length - 1}
                       onClick={() => moveDown(idx)}
                       aria-label="Descendre ce pays"
-                      className="p-2 rounded-lg text-stone-500 hover:bg-black/5 disabled:opacity-30 disabled:hover:bg-transparent min-w-[36px] min-h-[36px] flex items-center justify-center"
+                      className="p-2 rounded-lg text-[var(--lkv-text-muted)] hover:bg-black/5 disabled:opacity-30 disabled:hover:bg-transparent min-w-[var(--lkv-touch-min)] min-h-[var(--lkv-touch-min)] flex items-center justify-center"
                     >
                       <ArrowDown size={14} />
                     </button>
@@ -240,7 +240,7 @@ export function Step1Destinations({
                       type="button"
                       onClick={() => removeCountry(country.code)}
                       aria-label="Retirer ce pays"
-                      className="p-2 rounded-lg text-rose-600 hover:bg-rose-50 min-w-[36px] min-h-[36px] flex items-center justify-center"
+                      className="p-2 rounded-lg text-rose-600 hover:bg-rose-50 min-w-[var(--lkv-touch-min)] min-h-[var(--lkv-touch-min)] flex items-center justify-center"
                     >
                       <Trash2 size={14} />
                     </button>

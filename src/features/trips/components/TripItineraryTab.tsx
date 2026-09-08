@@ -4,10 +4,13 @@ import React, { useState, useMemo } from 'react';
 import { useRouter } from 'next/navigation';
 import type { TripFull, TripStats } from '../types/trip.types';
 import { GlassCard } from '@/components/ui/GlassCard';
+import { GlassCapsuleBtn } from '@/components/ui/GlassCapsuleBtn';
+import { EmptyState } from '@/components/ui/EmptyState';
 import { checkSeasonalityForDates } from '../engine/seasonality';
 import { getCanonicalTripSteps } from '../hooks/useTripCounters';
 import { getTripDistance } from '../hooks/useTripDistance';
 import { regenerateItineraryAction } from '@/app/voyages/actions';
+import { tripSectionHref } from '../registry/tripSectionRegistry';
 import Link from 'next/link';
 import {
   Navigation,
@@ -93,8 +96,8 @@ export function TripItineraryTab({ trip }: TripItineraryTabProps) {
     <div className="space-y-6">
       {/* 0. Bandeau d'information squelette si aucune donnée de référence */}
       {provenanceInfo.variant === 'skeleton' && (
-        <div className="p-4 bg-sand-50/90 border border-sand-200 rounded-2xl flex items-start gap-3 text-sand-900">
-          <AlertTriangle size={18} className="text-sand-600 shrink-0 mt-0.5" />
+        <div className="p-4 glass tone-warn border rounded-2xl flex items-start gap-3 text-[var(--lkv-warning)]">
+          <AlertTriangle size={18} className="shrink-0 mt-0.5" />
           <div className="text-xs leading-relaxed">
             <span className="font-semibold block mb-0.5">Squelette d’itinéraire :</span>
             Aucun tracé de référence pour cette destination. Ajoute tes étapes, les distances se calculeront automatiquement.
@@ -110,13 +113,13 @@ export function TripItineraryTab({ trip }: TripItineraryTabProps) {
               key={idx}
               className={`p-4 rounded-2xl border flex items-start gap-3 ${
                 w.severity === 'alert'
-                  ? 'bg-rose-50/90 border-rose-200 text-rose-950'
-                  : 'bg-amber-50/90 border-amber-200 text-amber-950'
+                  ? 'glass tone-danger text-[var(--lkv-danger)]'
+                  : 'glass tone-warn text-[var(--lkv-warning)]'
               }`}
             >
               <AlertTriangle
                 size={18}
-                className={w.severity === 'alert' ? 'text-rose-600 shrink-0' : 'text-amber-600 shrink-0'}
+                className="shrink-0"
               />
               <div className="text-xs leading-relaxed">
                 <span className="font-semibold block mb-0.5">Alerte météo & praticabilité :</span>
@@ -126,8 +129,8 @@ export function TripItineraryTab({ trip }: TripItineraryTabProps) {
           ))}
         </div>
       ) : trip.start_date ? (
-        <div className="p-3.5 bg-forest-50/80 border border-forest-200/80 rounded-2xl flex items-center gap-3 text-forest-900">
-          <CheckCircle2 size={16} className="text-forest-600 shrink-0" />
+        <div className="p-3.5 glass tone-sage border rounded-2xl flex items-center gap-3 text-[var(--lkv-success)]">
+          <CheckCircle2 size={16} className="shrink-0" />
           <div className="text-xs">
             <span className="font-semibold">Période optimale :</span> les dates prévues correspondent à la meilleure saison pour cette destination.
           </div>
@@ -135,27 +138,27 @@ export function TripItineraryTab({ trip }: TripItineraryTabProps) {
       ) : null}
 
       {/* 2. Barre d'outils et statistiques */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 p-4 bg-white/80 backdrop-blur-sm rounded-2xl border border-black/5">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 p-4 glass border border-white/60 rounded-2xl shadow-sm">
         <div className="flex items-center gap-4 text-xs flex-wrap">
           <div>
-            <span className="text-stone-500 block">Étapes</span>
+            <span className="text-[var(--lkv-text-muted)] block">Étapes</span>
             <span className="font-bold text-lkv-primary text-sm">{canonicalSteps.length} jours</span>
           </div>
-          <div className="h-6 w-px bg-black/10" />
+          <div className="h-6 w-px bg-white/30" />
           <div>
-            <span className="text-stone-500 block">Distance totale</span>
+            <span className="text-[var(--lkv-text-muted)] block">Distance totale</span>
             <span className="font-bold text-lkv-primary text-sm">{distance.totalKm} km</span>
           </div>
-          <div className="h-6 w-px bg-black/10" />
+          <div className="h-6 w-px bg-white/30" />
           <div>
-            <span className="text-stone-500 block">Dénivelé positif</span>
+            <span className="text-[var(--lkv-text-muted)] block">Dénivelé positif</span>
             <span className="font-bold text-lkv-primary text-sm">+{distance.dPlus}m D+</span>
           </div>
-          <div className="h-6 w-px bg-black/10" />
+          <div className="h-6 w-px bg-white/30" />
           <div>
-            <span className="text-stone-500 block">Provenance</span>
+            <span className="text-[var(--lkv-text-muted)] block">Provenance</span>
             <span className="inline-flex items-center gap-1 font-semibold text-xs text-lkv-primary">
-              <Sparkles size={12} className="text-forest-600" />
+              <Sparkles size={12} className="text-[var(--lkv-text-secondary)]" />
               {provenanceInfo.label}
             </span>
           </div>
@@ -163,67 +166,62 @@ export function TripItineraryTab({ trip }: TripItineraryTabProps) {
 
         {trip.permissions.canEdit && (
           <div className="flex items-center gap-2 flex-wrap">
-            <Link
-              href={`/voyages/${trip.slug}/itineraire`}
-              className="px-4 py-2 rounded-xl bg-forest-900 text-white text-xs font-semibold hover:bg-forest-800 flex items-center gap-1.5 transition-all min-h-[40px] shadow-sm active:scale-95"
+            <GlassCapsuleBtn
+              href={tripSectionHref(trip.slug, 'itinerary')}
+              variant="primary"
+              size="sm"
+              icon={<Calendar size={15} />}
             >
-              <Calendar size={15} />
-              <span>Ouvrir le Planificateur</span>
-            </Link>
-            <button
-              type="button"
-              onClick={() => setConfirmOpen(true)}
-              disabled={isRegenerating}
-              className="px-3.5 py-2 rounded-xl border border-black/10 text-xs font-semibold text-forest-900 hover:bg-black/5 flex items-center gap-1.5 transition-all min-h-[40px]"
-            >
-              <RotateCcw size={14} className={isRegenerating ? 'animate-spin' : ''} />
-              <span>{isRegenerating ? 'Calcul...' : 'Régénérer'}</span>
-            </button>
+              Ouvrir le Planificateur
+            </GlassCapsuleBtn>
           </div>
         )}
       </div>
 
       {/* Message d'erreur éventuel */}
       {error && (
-        <div className="p-3 bg-rose-50 border border-rose-200 rounded-xl text-xs text-rose-800">
+        <div className="p-3 glass tone-danger border rounded-xl text-xs text-[var(--lkv-danger)]">
           {error}
         </div>
       )}
 
       {/* Modal de confirmation régénération */}
       {confirmOpen && (
-        <div className="fixed inset-0 z-50 bg-black/40 backdrop-blur-xs flex items-center justify-center p-4">
-          <div className="bg-white rounded-3xl p-6 max-w-md w-full space-y-4 shadow-xl border border-black/10">
+        <div className="fixed inset-0 z-50 bg-black/40 backdrop-blur-sm flex items-center justify-center p-4">
+          <div className="glass border border-white/60 rounded-3xl p-6 max-w-md w-full space-y-4 shadow-xl">
             <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-full bg-sand-100 text-sand-800 flex items-center justify-center">
+              <div className="glass-sub-card w-10 h-10 rounded-full text-[var(--lkv-warning)] flex items-center justify-center border border-white/60 shadow-2xs">
                 <RotateCcw size={20} />
               </div>
               <h3 className="text-base font-bold text-lkv-primary">
                 Régénérer cet itinéraire ?
               </h3>
             </div>
-            <p className="text-xs text-stone-600 leading-relaxed">
+            <p className="text-xs text-[var(--lkv-text-muted)] leading-relaxed">
               Le moteur déterministe recalculera les étapes journalières selon les dates et le pays.
               <br />
               <strong className="text-lkv-primary">Vos articles de matériel ajoutés manuellement seront scrupuleusement conservés.</strong>
             </p>
             <div className="flex items-center justify-end gap-2 pt-2">
-              <button
+              <GlassCapsuleBtn
                 type="button"
                 onClick={() => setConfirmOpen(false)}
                 disabled={isRegenerating}
-                className="px-4 py-2 rounded-xl border border-black/10 text-xs font-semibold text-stone-600 hover:bg-black/5"
+                size="sm"
+                variant="default"
               >
                 Annuler
-              </button>
-              <button
+              </GlassCapsuleBtn>
+              <GlassCapsuleBtn
                 type="button"
                 onClick={handleRegenerate}
                 disabled={isRegenerating}
-                className="px-4 py-2 rounded-xl bg-lkv-primary text-white text-xs font-bold hover:bg-[#1f563b] flex items-center gap-1.5 shadow-sm"
+                size="sm"
+                variant="primary"
+                icon={<RotateCcw size={14} className={isRegenerating ? 'animate-spin' : ''} />}
               >
                 {isRegenerating ? 'Calcul...' : 'Confirmer le recalcul'}
-              </button>
+              </GlassCapsuleBtn>
             </div>
           </div>
         </div>
@@ -233,7 +231,7 @@ export function TripItineraryTab({ trip }: TripItineraryTabProps) {
       {canonicalSteps.length > 0 ? (
         <div className="space-y-3">
           {canonicalSteps.map((step) => (
-            <GlassCard key={step.id} tone="neutral" className="p-4 sm:p-5 rounded-lg border border-white/60">
+            <GlassCard key={step.id} tone="neutral" className="p-4 sm:p-5 rounded-[var(--lkv-radius-lg)] border border-white/60">
               <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-3">
                 <div className="space-y-1.5">
                   <div className="flex items-center gap-2">
@@ -241,7 +239,7 @@ export function TripItineraryTab({ trip }: TripItineraryTabProps) {
                       Jour {step.day_number}
                     </span>
                     {step.accommodation_name && (
-                      <span className="text-[11px] bg-black/5 text-lkv-primary px-2 py-0.5 rounded-full flex items-center gap-1">
+                      <span className="text-[11px] glass-sub-card text-lkv-primary px-2.5 py-1 rounded-full border border-white/60 flex items-center gap-1 shadow-2xs">
                         <Home size={10} />
                         {step.accommodation_name}
                       </span>
@@ -258,7 +256,7 @@ export function TripItineraryTab({ trip }: TripItineraryTabProps) {
                   )}
 
                   {step.description && (
-                    <p className="text-xs text-stone-600 leading-relaxed max-w-2xl pt-1">
+                    <p className="text-xs text-[var(--lkv-text-muted)] leading-relaxed max-w-2xl pt-1">
                       {step.description}
                     </p>
                   )}
@@ -277,7 +275,7 @@ export function TripItineraryTab({ trip }: TripItineraryTabProps) {
                     </div>
                   ) : null}
                   {step.elevation_loss_m ? (
-                    <div className="text-stone-500 text-[11px]">
+                    <div className="text-[var(--lkv-text-muted)] text-[11px]">
                       -{step.elevation_loss_m}m D-
                     </div>
                   ) : null}
@@ -287,24 +285,13 @@ export function TripItineraryTab({ trip }: TripItineraryTabProps) {
           ))}
         </div>
       ) : (
-        <div className="p-8 bg-white/80 rounded-3xl border border-black/5 text-center space-y-3">
-          <Navigation size={36} className="text-stone-400 mx-auto" />
-          <h4 className="text-sm font-bold text-lkv-primary">Aucune étape définie</h4>
-          <p className="text-xs text-stone-500 max-w-sm mx-auto">
-            Ce voyage n&apos;a pas encore d&apos;itinéraire journalier. Vous pouvez le générer automatiquement avec notre moteur de répartition.
-          </p>
-          {trip.permissions.canEdit && (
-            <button
-              type="button"
-              onClick={handleRegenerate}
-              disabled={isRegenerating}
-              className="px-5 py-2.5 bg-lkv-primary text-white text-xs font-bold rounded-xl shadow-sm hover:bg-[#1f563b] inline-flex items-center gap-1.5"
-            >
-              <Sparkles size={14} />
-              <span>Générer l’itinéraire maintenant</span>
-            </button>
-          )}
-        </div>
+        <EmptyState
+          icon={<Navigation size={36} className="text-[var(--lkv-text-muted)]" />}
+          title="Aucune étape définie"
+          description="Ce voyage n'a pas encore d'itinéraire journalier. Vous pouvez le générer automatiquement avec notre moteur de répartition."
+          actionLabel={trip.permissions.canEdit ? (isRegenerating ? 'Calcul...' : 'Générer l’itinéraire maintenant') : undefined}
+          onAction={trip.permissions.canEdit ? handleRegenerate : undefined}
+        />
       )}
     </div>
   );

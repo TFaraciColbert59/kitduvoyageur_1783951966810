@@ -1,5 +1,6 @@
 'use server';
 
+import { tripSegmentPath } from '@/features/trips/registry/tripPaths';
 import { revalidatePath } from 'next/cache';
 import { createClient } from '@/lib/supabase/server';
 import { createTrip, getTripById } from '@/lib/queries-trips';
@@ -263,7 +264,8 @@ export async function generateAndPersistItinerary(
       .single();
 
     if (updateErr || !updated) {
-      throw new Error(`Impossible de mettre à jour le voyage: ${updateErr?.message || 'Inconnu'}`);
+      if (updateErr) console.error('[LKDV trips] updateTrip error:', updateErr);
+      throw new Error('Impossible de mettre à jour le voyage.');
     }
     slug = updated.slug;
   } else {
@@ -297,7 +299,8 @@ export async function generateAndPersistItinerary(
       .single();
 
     if (insertErr || !created) {
-      throw new Error(`Impossible de créer le voyage: ${insertErr?.message || 'Inconnu'}`);
+      if (insertErr) console.error('[LKDV trips] insertTrip error:', insertErr);
+      throw new Error('Impossible de créer le voyage.');
     }
     tripId = created.id;
     slug = created.slug;
@@ -332,7 +335,7 @@ export async function generateAndPersistItinerary(
     const { error: stepsInsertErr } = await supabase.from('trip_steps').insert(stepsPayload);
     if (stepsInsertErr) {
       console.error('[LKDV trips] Erreur insertion trip_steps:', stepsInsertErr);
-      throw new Error(`Erreur insertion des étapes: ${stepsInsertErr.message}`);
+      throw new Error('Erreur lors de l’enregistrement des étapes.');
     }
   }
 
@@ -374,7 +377,7 @@ export async function generateAndPersistItinerary(
   }
 
   revalidatePath('/voyages');
-  revalidatePath(`/voyages/${slug}`);
+  revalidatePath(tripSegmentPath(slug, ''));
 
   return {
     success: true,
@@ -505,11 +508,12 @@ export async function addTripStepAction(
     .single();
 
   if (insertErr || !inserted) {
-    throw new Error(`Erreur lors de l’ajout de l’étape: ${insertErr?.message || 'Inconnue'}`);
+    if (insertErr) console.error('[LKDV trips] insertStep error:', insertErr);
+    throw new Error('Erreur lors de l’ajout de l’étape.');
   }
 
-  revalidatePath(`/voyages/${trip.slug}`);
-  revalidatePath(`/voyages/${trip.slug}/itineraire`);
+  revalidatePath(tripSegmentPath(trip.slug, ''));
+  revalidatePath(tripSegmentPath(trip.slug, 'itineraire'));
 
   return { success: true, stepId: inserted.id };
 }
@@ -559,11 +563,12 @@ export async function updateTripStepAction(
     .eq('trip_id', input.trip_id);
 
   if (error) {
-    throw new Error(`Erreur mise à jour de l’étape: ${error.message}`);
+    console.error('[LKDV trips] updateTripStep error:', error);
+    throw new Error('Erreur lors de la mise à jour de l’étape.');
   }
 
-  revalidatePath(`/voyages/${trip.slug}`);
-  revalidatePath(`/voyages/${trip.slug}/itineraire`);
+  revalidatePath(tripSegmentPath(trip.slug, ''));
+  revalidatePath(tripSegmentPath(trip.slug, 'itineraire'));
 
   return { success: true };
 }
@@ -603,7 +608,8 @@ export async function deleteTripStepAction(
   // 2. Supprimer l'étape
   const { error: delErr } = await supabase.from('trip_steps').delete().eq('id', stepId);
   if (delErr) {
-    throw new Error(`Erreur suppression: ${delErr.message}`);
+    console.error('[LKDV trips] deleteTripStep error:', delErr);
+    throw new Error('Erreur lors de la suppression de l’étape.');
   }
 
   // 3. Retasser les order_index des étapes restantes du même jour
@@ -631,8 +637,8 @@ export async function deleteTripStepAction(
     }
   }
 
-  revalidatePath(`/voyages/${trip.slug}`);
-  revalidatePath(`/voyages/${trip.slug}/itineraire`);
+  revalidatePath(tripSegmentPath(trip.slug, ''));
+  revalidatePath(tripSegmentPath(trip.slug, 'itineraire'));
 
   return { success: true };
 }
@@ -678,8 +684,8 @@ export async function reorderTripStepsAction(
       .eq('trip_id', input.trip_id);
   }
 
-  revalidatePath(`/voyages/${trip.slug}`);
-  revalidatePath(`/voyages/${trip.slug}/itineraire`);
+  revalidatePath(tripSegmentPath(trip.slug, ''));
+  revalidatePath(tripSegmentPath(trip.slug, 'itineraire'));
 
   return { success: true };
 }
@@ -771,8 +777,8 @@ export async function moveStepToDayAction(
     }
   }
 
-  revalidatePath(`/voyages/${trip.slug}`);
-  revalidatePath(`/voyages/${trip.slug}/itineraire`);
+  revalidatePath(tripSegmentPath(trip.slug, ''));
+  revalidatePath(tripSegmentPath(trip.slug, 'itineraire'));
 
   return { success: true };
 }
@@ -826,8 +832,8 @@ export async function insertDayAction(
       .eq('id', trip.id);
   }
 
-  revalidatePath(`/voyages/${trip.slug}`);
-  revalidatePath(`/voyages/${trip.slug}/itineraire`);
+  revalidatePath(tripSegmentPath(trip.slug, ''));
+  revalidatePath(tripSegmentPath(trip.slug, 'itineraire'));
 
   return { success: true };
 }
@@ -900,8 +906,8 @@ export async function deleteDayAction(
       .eq('id', trip.id);
   }
 
-  revalidatePath(`/voyages/${trip.slug}`);
-  revalidatePath(`/voyages/${trip.slug}/itineraire`);
+  revalidatePath(tripSegmentPath(trip.slug, ''));
+  revalidatePath(tripSegmentPath(trip.slug, 'itineraire'));
 
   return { success: true };
 }
@@ -982,8 +988,8 @@ export async function duplicateDayAction(
       .eq('id', trip.id);
   }
 
-  revalidatePath(`/voyages/${trip.slug}`);
-  revalidatePath(`/voyages/${trip.slug}/itineraire`);
+  revalidatePath(tripSegmentPath(trip.slug, ''));
+  revalidatePath(tripSegmentPath(trip.slug, 'itineraire'));
 
   return { success: true };
 }
@@ -1092,7 +1098,8 @@ export async function importGpxToTripAction(
 
   const { error: insertErr } = await supabase.from('trip_steps').insert(payload);
   if (insertErr) {
-    return { success: false, importedCount: 0, error: insertErr.message };
+    console.error('[LKDV trips] importGPXAction insert error:', insertErr);
+    return { success: false, importedCount: 0, error: 'Impossible d’importer les étapes du tracé GPX.' };
   }
 
   await emitEvent({
@@ -1110,8 +1117,8 @@ export async function importGpxToTripAction(
     },
   });
 
-  revalidatePath(`/voyages/${trip.slug}`);
-  revalidatePath(`/voyages/${trip.slug}/itineraire`);
+  revalidatePath(tripSegmentPath(trip.slug, ''));
+  revalidatePath(tripSegmentPath(trip.slug, 'itineraire'));
   return { success: true, importedCount: payload.length };
 }
 
@@ -1178,7 +1185,8 @@ export async function insertSegmentToTripAction(
 
   const { error: insertErr } = await supabase.from('trip_steps').insert(payload);
   if (insertErr) {
-    return { success: false, insertedCount: 0, error: insertErr.message };
+    console.error('[LKDV trips] insertSegmentToTripAction error:', insertErr);
+    return { success: false, insertedCount: 0, error: 'Impossible d’insérer le tronçon dans le voyage.' };
   }
 
   await emitEvent({
@@ -1196,8 +1204,8 @@ export async function insertSegmentToTripAction(
     },
   });
 
-  revalidatePath(`/voyages/${trip.slug}`);
-  revalidatePath(`/voyages/${trip.slug}/itineraire`);
+  revalidatePath(tripSegmentPath(trip.slug, ''));
+  revalidatePath(tripSegmentPath(trip.slug, 'itineraire'));
   return { success: true, insertedCount: segment.steps.length };
 }
 

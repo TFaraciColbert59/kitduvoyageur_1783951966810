@@ -1,5 +1,6 @@
 'use server';
 
+import { tripSegmentPath } from '@/features/trips/registry/tripPaths';
 import { revalidatePath } from 'next/cache';
 import { createClient } from '@/lib/supabase/server';
 import {
@@ -18,6 +19,7 @@ import {
   publishTripToCarnet,
   submitTripFieldReviews,
 } from '@/lib/queries-trip-completion';
+import { getTripById } from '@/lib/queries-trips';
 
 /**
  * Action : Ajouter une note / récit au carnet de bord du voyage
@@ -67,7 +69,7 @@ export async function addTripNoteAction(
 
     const tripSlug = formData.get('tripSlug')?.toString();
     if (tripSlug) {
-      revalidatePath(`/voyages/${tripSlug}`);
+      revalidatePath(tripSegmentPath(tripSlug, ''));
     }
 
     return { success: true, message: 'Note ajoutée au carnet de bord' };
@@ -114,7 +116,7 @@ export async function deleteTripNoteAction(
 
     const tripSlug = formData.get('tripSlug')?.toString();
     if (tripSlug) {
-      revalidatePath(`/voyages/${tripSlug}`);
+      revalidatePath(tripSegmentPath(tripSlug, ''));
     }
 
     return { success: true, message: 'Note supprimée' };
@@ -161,7 +163,7 @@ export async function updateTripStatusAction(
 
     const tripSlug = formData.get('tripSlug')?.toString();
     if (tripSlug) {
-      revalidatePath(`/voyages/${tripSlug}`);
+      revalidatePath(tripSegmentPath(tripSlug, ''));
       revalidatePath('/voyages');
     }
 
@@ -209,6 +211,17 @@ export async function publishTripCarnetAction(
       return { success: false, error: 'Vous devez être connecté pour publier un carnet' };
     }
 
+    // Ownership + permission : le voyage est chargé DANS le contexte de
+    // l'utilisateur et seul un éditeur/organisateur peut publier le carnet
+    // (sinon, n'importe quel lecteur d'un voyage public pourrait le publier).
+    const trip = await getTripById(parsed.data.tripId, user.id);
+    if (!trip) {
+      return { success: false, error: 'Voyage introuvable ou non autorisé' };
+    }
+    if (!trip.permissions.canEdit) {
+      return { success: false, error: 'Seuls les organisateurs et éditeurs peuvent publier ce carnet' };
+    }
+
     const result = await publishTripToCarnet(parsed.data.tripId, {
       title: parsed.data.title,
       description: parsed.data.description || undefined,
@@ -221,7 +234,7 @@ export async function publishTripCarnetAction(
 
     const tripSlug = formData.get('tripSlug')?.toString();
     if (tripSlug) {
-      revalidatePath(`/voyages/${tripSlug}`);
+      revalidatePath(tripSegmentPath(tripSlug, ''));
       revalidatePath('/carnets');
     }
 
@@ -280,7 +293,7 @@ export async function submitTripFieldReviewsAction(
 
     const tripSlug = formData.get('tripSlug')?.toString();
     if (tripSlug) {
-      revalidatePath(`/voyages/${tripSlug}`);
+      revalidatePath(tripSegmentPath(tripSlug, ''));
       revalidatePath('/lieux');
     }
 

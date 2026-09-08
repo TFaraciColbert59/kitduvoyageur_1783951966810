@@ -1,9 +1,9 @@
 'use client';
-import { lkvConfirm } from '@/components/ui/dialogs';
 
 import React, { useState, useTransition, useMemo } from 'react';
 import Link from 'next/link';
 import { ArrowLeft, AlertCircle, CheckCircle2, Map } from 'lucide-react';
+import { GlassCapsuleBtn } from '@/components/ui';
 import type { TripFull } from '@/features/trips/types/trip.types';
 import {
   type PlannerStep,
@@ -13,6 +13,7 @@ import {
   compactOrderIndices,
 } from './plannerEngine';
 import { getCivilDurationDays } from '@/lib/dates/tripDates';
+import { tripSectionHref } from '../registry/tripSectionRegistry';
 import { DayNavigator } from './DayNavigator';
 import { DayView } from './DayView';
 import { StepEditModal } from './StepEditModal';
@@ -300,18 +301,10 @@ export default function ItineraryPlannerClient({
     });
   }
 
-  // 8. Supprimer une journée
-  function handleDeleteDay(dayNumber: number) {
-    const daySteps = steps.filter((s) => s.day_number === dayNumber);
-    if (
-      daySteps.length > 0 &&
-      !lkvConfirm(
-        `Cette journée contient ${daySteps.length} étape(s). Confirmez-vous la suppression intégrale de la journée et de ses étapes ?`
-      )
-    ) {
-      return;
-    }
+  const [dayPendingDeletion, setDayPendingDeletion] = useState<number | null>(null);
 
+  // 8. Exécuter la suppression d'une journée
+  function executeDeleteDay(dayNumber: number) {
     const prevSteps = [...steps];
     const prevCount = daysCount;
 
@@ -339,6 +332,16 @@ export default function ItineraryPlannerClient({
     });
   }
 
+  // Demander confirmation ou supprimer directement
+  function handleDeleteDay(dayNumber: number) {
+    const daySteps = steps.filter((s) => s.day_number === dayNumber);
+    if (daySteps.length > 0) {
+      setDayPendingDeletion(dayNumber);
+      return;
+    }
+    executeDeleteDay(dayNumber);
+  }
+
   // Étapes de la journée active, triées
   const activeDaySteps = useMemo(() => {
     return steps
@@ -347,74 +350,77 @@ export default function ItineraryPlannerClient({
   }, [steps, selectedDay]);
 
   return (
-    <div className="min-h-screen pb-16">
-      {/* Header Sticky Navigation */}
-      <div className="sticky top-0 z-30 bg-surface/90 backdrop-blur-md border-b border-border/40">
-        <div className="max-w-5xl mx-auto px-4 py-3 flex items-center justify-between gap-4">
+    <div className="space-y-4 pb-16">
+      {/* Header Navigation Glass */}
+      <div className="glass rounded-[var(--lkv-radius-card)] border border-white/60 shadow-sm p-4">
+        <div className="flex items-center justify-between gap-4">
           <div className="flex items-center gap-3 min-w-0">
             <Link
-              href={`/voyages/${trip.slug}`}
-              className="w-9 h-9 min-w-[36px] min-h-[36px] rounded-xl flex items-center justify-center hover:bg-forest-900/10 text-text-primary transition-colors active:scale-95"
+              href={tripSectionHref(trip.slug, 'overview')}
+              className="w-11 h-11 min-w-[44px] min-h-[44px] rounded-full glass-sub-card border border-white/60 flex items-center justify-center text-[var(--lkv-text-primary)] hover:bg-white transition-all active:scale-95 cursor-pointer shadow-2xs"
               aria-label="Retour au cockpit du voyage"
             >
-              <ArrowLeft className="w-5 h-5" />
+              <ArrowLeft className="w-4 h-4" />
             </Link>
             <div className="min-w-0">
               <div className="flex items-center gap-2">
-                <span className="text-[11px] font-bold uppercase tracking-wider text-forest-800 bg-forest-900/10 px-2 py-0.5 rounded-full">
-                  Planificateur
+                <span className="text-[9.5px] font-mono font-bold uppercase tracking-wider text-[var(--lkv-text-secondary)]">
+                  Planificateur d'Itinéraire
                 </span>
                 {isPending && (
-                  <span className="text-[11px] text-text-muted animate-pulse">
+                  <span className="text-[10px] text-[var(--lkv-text-secondary)] animate-pulse font-mono">
                     Enregistrement...
                   </span>
                 )}
               </div>
-              <h1 className="text-base sm:text-lg font-bold text-text-primary truncate">
+              <h2 className="text-base sm:text-lg font-bold text-[var(--lkv-text-primary)] truncate font-display">
                 {trip.title}
-              </h1>
+              </h2>
             </div>
           </div>
 
           <div className="flex items-center gap-2">
-            <Link
-              href={`/voyages/${trip.slug}`}
-              className="px-3.5 py-1.5 rounded-xl border border-border/60 hover:bg-surface-subtle text-xs font-semibold text-text-secondary transition-colors min-h-[36px] flex items-center gap-1.5"
+            <GlassCapsuleBtn
+              href={tripSectionHref(trip.slug, 'overview')}
+              size="sm"
+              aria-label="Voir le cockpit du voyage"
+              icon={<Map className="w-3.5 h-3.5" />}
             >
-              <Map className="w-4 h-4 text-forest-800" />
               <span className="hidden sm:inline">Cockpit</span>
-            </Link>
+            </GlassCapsuleBtn>
           </div>
         </div>
 
         {/* Toasts flottants discrets */}
         {errorMessage && (
-          <div className="bg-red-50 text-red-700 border-b border-red-200 px-4 py-2 text-xs flex items-center gap-2 animate-in fade-in">
+          <div className="mt-3 bg-[var(--lkv-danger)]/10 text-[var(--lkv-danger)] border border-[var(--lkv-danger)]/20 px-4 py-2 text-xs flex items-center gap-2 rounded-[var(--lkv-radius-md)] animate-in fade-in">
             <AlertCircle className="w-4 h-4 shrink-0" />
             <span>{errorMessage}</span>
           </div>
         )}
         {successMessage && (
-          <div className="bg-forest-900/10 text-forest-900 border-b border-forest-800/20 px-4 py-2 text-xs flex items-center gap-2 animate-in fade-in">
-            <CheckCircle2 className="w-4 h-4 shrink-0 text-forest-800" />
+          <div className="mt-3 bg-[var(--lkv-success)]/10 text-[var(--lkv-success)] border border-[var(--lkv-success)]/20 px-4 py-2 text-xs flex items-center gap-2 rounded-[var(--lkv-radius-md)] animate-in fade-in">
+            <CheckCircle2 className="w-4 h-4 shrink-0" />
             <span>{successMessage}</span>
           </div>
         )}
 
         {/* Sélecteur horizontal de journées */}
-        <DayNavigator
-          daysCount={daysCount}
-          selectedDay={selectedDay}
-          onSelectDay={setSelectedDay}
-          onAddDay={() => handleInsertDayAfter(daysCount)}
-          startDate={trip.start_date}
-          steps={steps}
-          canEdit={canEdit}
-        />
+        <div className="mt-3 pt-3 border-t border-white/40">
+          <DayNavigator
+            daysCount={daysCount}
+            selectedDay={selectedDay}
+            onSelectDay={setSelectedDay}
+            onAddDay={() => handleInsertDayAfter(daysCount)}
+            startDate={trip.start_date}
+            steps={steps}
+            canEdit={canEdit}
+          />
+        </div>
       </div>
 
       {/* Contenu principal */}
-      <main className="max-w-4xl mx-auto px-4 pt-4 sm:pt-6">
+      <main className="space-y-4">
         <DayView
           dayNumber={selectedDay}
           startDate={trip.start_date}
@@ -460,6 +466,47 @@ export default function ItineraryPlannerClient({
         steps={steps}
         onSelectTargetDay={handleSelectTargetDay}
       />
+
+      {/* Dialogue accessible de confirmation de suppression */}
+      {dayPendingDeletion !== null && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm animate-in fade-in">
+          <div className="w-full max-w-md glass border border-white/60 rounded-[var(--lkv-radius-card)] p-6 shadow-2xl space-y-4">
+            <div className="flex items-center gap-3 text-[var(--lkv-danger)]">
+              <AlertCircle className="w-6 h-6 shrink-0" />
+              <h3 className="font-semibold text-base text-[var(--lkv-text-primary)]">
+                Supprimer le Jour {dayPendingDeletion} ?
+              </h3>
+            </div>
+            <p className="text-sm text-[var(--lkv-text-muted)] leading-relaxed">
+              Cette journée contient {steps.filter((s) => s.day_number === dayPendingDeletion).length} étape(s).
+              Confirmez-vous la suppression intégrale de la journée et de ses étapes ?
+            </p>
+            <div className="flex items-center justify-end gap-3 pt-2">
+              <GlassCapsuleBtn
+                type="button"
+                variant="default"
+                size="sm"
+                onClick={() => setDayPendingDeletion(null)}
+              >
+                Annuler
+              </GlassCapsuleBtn>
+              <GlassCapsuleBtn
+                type="button"
+                variant="primary"
+                size="sm"
+                onClick={() => {
+                  const day = dayPendingDeletion;
+                  setDayPendingDeletion(null);
+                  if (day !== null) executeDeleteDay(day);
+                }}
+                className="bg-[var(--lkv-danger)] hover:bg-[var(--lkv-danger)]/90 text-white border-[var(--lkv-danger)]"
+              >
+                Supprimer définitivement
+              </GlassCapsuleBtn>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

@@ -1,14 +1,16 @@
 'use client';
 
 import React, { useState, useMemo } from 'react';
-import AppShell from '@/components/shell/AppShell';
+import AppShellDesktop from '@/components/shell/AppShellDesktop';
+import MobilePageShell from '@/components/mobile-nav/MobilePageShell';
 import { TripCard } from '@/features/trips/components/TripCard';
 import { TripFiltersBar } from '@/features/trips/components/TripFiltersBar';
 import { QuickCreateTripModal } from '@/features/trips/components/QuickCreateTripModal';
-import LkvButton from '@/components/ui/LkvButton';
+import { ActiveTripSwitcher } from '@/features/trips/components/ActiveTripSwitcher';
+import { deriveScale, deriveParty } from '@/features/trips/engine/tripProfileEngine';
+import { GlassCard, GlassCapsuleBtn, GlassSubCard, GlassPill } from '@/components/ui';
 import { EmptyState } from '@/components/ui/EmptyState';
-import IOSSegmentedControl from '@/components/ui/IOSSegmentedControl';
-import { Compass, Plus } from 'lucide-react';
+import { Compass, Plus, Sparkles, Filter } from 'lucide-react';
 import { createTripAction } from './actions';
 import type {
   TripSummary,
@@ -34,12 +36,31 @@ export default function VoyagesClient({
   );
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
 
+  React.useEffect(() => {
+    const handleTabEvent = (e: any) => {
+      if (e.detail === 'user' || e.detail === 'public') {
+        setActiveTab(e.detail);
+      }
+    };
+    window.addEventListener('voyages-hub-tab-change', handleTabEvent);
+    return () => window.removeEventListener('voyages-hub-tab-change', handleTabEvent);
+  }, []);
+
+  const handleTabChange = (tab: 'user' | 'public') => {
+    setActiveTab(tab);
+    if (typeof window !== 'undefined') {
+      window.dispatchEvent(new CustomEvent('voyages-hub-tab-change', { detail: tab }));
+    }
+  };
+
   // Filtres
   const [filters, setFilters] = useState<TripFilters>({
     search: '',
     status: 'all',
     difficulty: 'all',
     activity: 'all',
+    scale: 'all',
+    party: 'all',
   });
 
   const handleResetFilters = () => {
@@ -48,6 +69,8 @@ export default function VoyagesClient({
       status: 'all',
       difficulty: 'all',
       activity: 'all',
+      scale: 'all',
+      party: 'all',
     });
   };
 
@@ -79,62 +102,191 @@ export default function VoyagesClient({
         if (trip.status !== filters.status) return false;
       }
 
+      // Échelle (profil dérivé)
+      if (filters.scale && filters.scale !== 'all') {
+        const tripScale = deriveScale(trip.start_date, trip.end_date);
+        if (tripScale !== filters.scale) return false;
+      }
+
+      // Équipage (profil dérivé)
+      if (filters.party && filters.party !== 'all') {
+        const count = 'collaborators' in trip && Array.isArray((trip as any).collaborators)
+          ? (trip as any).collaborators.length + 1
+          : trip.collaborators_count;
+        const tripParty = deriveParty(count);
+        if (tripParty !== filters.party) return false;
+      }
+
       return true;
     });
   }, [activeTab, initialUserTrips, initialPublicTrips, filters]);
 
-  return (
-    <AppShell safeTop={true} hasBottomNav={true}>
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 pb-24">
-        {/* Header de la page */}
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
-          <div>
-            <div className="flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-lkv-secondary mb-1">
-              <Compass size={15} />
-              Module Voyage
-            </div>
-            <h1 className="text-2xl sm:text-3xl font-extrabold text-lkv-primary tracking-tight">
-              Expéditions & Treks
-            </h1>
-            <p className="text-xs sm:text-sm text-lkv-secondary mt-1 max-w-xl">
-              Planifiez vos aventures en autonomie, tracez vos étapes et préparez votre équipement de terrain.
-            </p>
-          </div>
-
-          <LkvButton
-            variant="primary"
-            onClick={() => setIsCreateModalOpen(true)}
-            className="self-start sm:self-center shadow-lg hover:shadow-xl transition-all"
-          >
-            <Plus size={16} className="mr-1.5" />
-            Nouveau voyage
-          </LkvButton>
+  // Colonne Gauche Desktop (260px)
+  const renderSidebarLeft = () => (
+    <div className="h-full max-h-full w-full flex-1 flex flex-col justify-between glass rounded-[var(--lkv-radius-card)] p-3.5 text-[var(--lkv-text-primary)] font-sans overflow-y-auto no-scrollbar border border-white/40 shadow-sm select-none gap-3">
+      <div className="space-y-3 shrink-0">
+        <div className="flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-[var(--lkv-text-secondary)]">
+          <Compass size={15} />
+          <span>Module Voyage</span>
         </div>
 
-        {/* Sélecteur d'onglets (si connecté) */}
+        {/* Bouton Créer */}
+        <GlassCapsuleBtn
+          variant="primary"
+          onClick={() => setIsCreateModalOpen(true)}
+          className="w-full flex items-center justify-center gap-2 !py-2.5 shadow-md min-h-[var(--lkv-touch-min)] cursor-pointer"
+        >
+          <Plus size={16} />
+          <span>Nouveau voyage</span>
+        </GlassCapsuleBtn>
+
+        {/* Sélecteur de voyage actif (cmdk / GlassSheet) */}
+        <ActiveTripSwitcher />
+
+        {/* Sélecteur de vue vertical pilule desktop */}
         {isAuthenticated && (
-          <div className="mb-6 max-w-md">
-            <IOSSegmentedControl
-              options={[
-                { id: 'user', label: `Mes voyages (${initialUserTrips.length})` },
-                { id: 'public', label: `Explorer (${initialPublicTrips.length})` },
-              ]}
-              value={activeTab}
-              onChange={(val: string) => setActiveTab(val as 'public' | 'user')}
-            />
+          <div className="space-y-1">
+            {[
+              { id: 'user' as const, label: 'Mes voyages', count: initialUserTrips.length },
+              { id: 'public' as const, label: 'Explorer', count: initialPublicTrips.length },
+            ].map((tab) => (
+              <button
+                key={tab.id}
+                type="button"
+                onClick={() => handleTabChange(tab.id)}
+                className={`w-full px-3 py-2.5 rounded-[var(--lkv-radius-md)] font-bold text-xs flex items-center justify-between border transition-all min-h-[var(--lkv-touch-min)] cursor-pointer ${
+                  activeTab === tab.id
+                    ? 'bg-[var(--lkv-primary)] text-white border-[var(--lkv-primary)] shadow-sm'
+                    : 'glass-sub-card border border-white/50 text-[var(--lkv-text-primary)] hover:bg-white'
+                }`}
+              >
+                <span>{tab.label}</span>
+                <span
+                  className={`text-[9px] px-1.5 py-0.5 rounded-full font-mono ${
+                    activeTab === tab.id ? 'bg-white/20 text-white' : 'bg-black/5 text-[var(--lkv-text-secondary)]'
+                  }`}
+                >
+                  {tab.count}
+                </span>
+              </button>
+            ))}
           </div>
         )}
 
-        {/* Barre de filtres */}
-        <TripFiltersBar
-          filters={filters}
-          onChange={setFilters}
-          onReset={handleResetFilters}
-        />
+        {/* Résumé des filtres */}
+        <GlassSubCard className="p-3 space-y-2">
+          <div className="flex items-center justify-between text-xs font-semibold text-[var(--lkv-text-primary)]">
+            <span className="flex items-center gap-1">
+              <Filter size={12} />
+              <span>Filtres actifs</span>
+            </span>
+            {(filters.activity !== 'all' || filters.difficulty !== 'all' || filters.status !== 'all' || filters.search) && (
+              <button
+                onClick={handleResetFilters}
+                className="text-[10px] text-[var(--lkv-text-secondary)] hover:underline cursor-pointer"
+              >
+                Effacer
+              </button>
+            )}
+          </div>
+          <div className="flex flex-wrap gap-1 text-[10px]">
+            <GlassPill>{displayedTrips.length} affichés</GlassPill>
+            {filters.activity !== 'all' && <GlassPill tone="info">{filters.activity}</GlassPill>}
+            {filters.difficulty !== 'all' && <GlassPill tone="warn">{filters.difficulty}</GlassPill>}
+          </div>
+        </GlassSubCard>
+      </div>
+
+      <div className="pt-3 border-t border-[var(--lkv-border-subtle)] text-[10px] text-[var(--lkv-text-secondary)] space-y-1">
+        <div>Catalogue des treks & itinéraires</div>
+        <div className="font-mono">LKDV EXPEDITIONS</div>
+      </div>
+    </div>
+  );
+
+  // Colonne Droite Desktop (300px)
+  const renderSidebarRight = () => (
+    <div className="w-full shrink-0 h-full overflow-y-auto custom-scrollbar flex flex-col gap-3 pb-6 font-sans">
+      <GlassCard className="p-3.5 space-y-2.5 text-forest-900">
+        <span className="text-xs font-bold uppercase tracking-wider text-sage-800 flex items-center gap-1.5">
+          <Sparkles size={13} />
+          <span>Statistiques</span>
+        </span>
+        <div className="grid grid-cols-2 gap-2 text-xs">
+          <div className="p-2 rounded-xl bg-white/40 border border-white/60">
+            <span className="text-[10px] text-sage-700 block">Total public</span>
+            <span className="font-semibold text-forest-900">{initialPublicTrips.length}</span>
+          </div>
+          <div className="p-2 rounded-xl bg-white/40 border border-white/60">
+            <span className="text-[10px] text-sage-700 block">Mes voyages</span>
+            <span className="font-semibold text-forest-900">{initialUserTrips.length}</span>
+          </div>
+        </div>
+      </GlassCard>
+
+      <GlassCard className="p-3.5 text-xs text-forest-800 space-y-2">
+        <h4 className="font-bold text-forest-900">Conseil d’expédition</h4>
+        <p className="text-[11px] leading-relaxed text-sage-800">
+          Chaque voyage calculera automatiquement vos phases : <strong>Préparer</strong> (avant départ), <strong>Vivre</strong> (cockpit direct), et <strong>Raconter</strong> (retour et partage).
+        </p>
+      </GlassCard>
+    </div>
+  );
+
+  return (
+    <AppShellDesktop
+      sidebarLeft={renderSidebarLeft()}
+      sidebarRight={renderSidebarRight()}
+      mobileSlot={
+        <MobilePageShell safeTop={true} hasBottomNav={true}>
+          <div className="max-w-7xl mx-auto px-4 py-4 pb-28 text-[var(--lkv-text-primary)]">
+            <div className="flex items-center justify-between gap-4 mb-4">
+              <div>
+                <h1 className="text-2xl font-extrabold tracking-tight">Expéditions</h1>
+                <p className="text-xs text-[var(--lkv-text-secondary)]">Planifiez et suivez vos aventures.</p>
+              </div>
+              <GlassCapsuleBtn
+                variant="primary"
+                onClick={() => setIsCreateModalOpen(true)}
+                className="flex items-center gap-1 min-h-[var(--lkv-touch-min)] cursor-pointer"
+              >
+                <Plus size={14} />
+                <span>Nouveau</span>
+              </GlassCapsuleBtn>
+            </div>
+
+            <div className="mb-3">
+              <ActiveTripSwitcher />
+            </div>
+
+            <TripFiltersBar
+              filters={filters}
+              onChange={setFilters}
+              onReset={handleResetFilters}
+            />
+
+            <div className="grid grid-cols-1 gap-4 pt-2">
+              {displayedTrips.map(trip => (
+                <TripCard key={trip.id} trip={trip} showRole={activeTab === 'user'} />
+              ))}
+            </div>
+          </div>
+        </MobilePageShell>
+      }
+    >
+      <div className="space-y-4">
+        {/* Barre de recherche et filtres principale */}
+        <div className="p-3.5 rounded-[var(--lkv-radius-card)] glass border border-white/60">
+          <TripFiltersBar
+            filters={filters}
+            onChange={setFilters}
+            onReset={handleResetFilters}
+          />
+        </div>
 
         {/* Grille de voyages */}
         {displayedTrips.length > 0 ? (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
             {displayedTrips.map(trip => (
               <TripCard key={trip.id} trip={trip} showRole={activeTab === 'user'} />
             ))}
@@ -169,6 +321,6 @@ export default function VoyagesClient({
         onClose={() => setIsCreateModalOpen(false)}
         onSubmitTrip={createTripAction}
       />
-    </AppShell>
+    </AppShellDesktop>
   );
 }

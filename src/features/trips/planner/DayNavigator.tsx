@@ -49,7 +49,7 @@ export function DayNavigator({
   }
 
   return (
-    <div className="w-full bg-surface-card/80 backdrop-blur-md border-b border-border/40 py-2.5 px-4 sticky top-0 z-20">
+    <div className="w-full py-1">
       <div
         ref={scrollContainerRef}
         className="flex items-center gap-2 overflow-x-auto no-scrollbar scroll-smooth"
@@ -65,19 +65,19 @@ export function DayNavigator({
               data-day={dayNum}
               type="button"
               onClick={() => onSelectDay(dayNum)}
-              className={`flex flex-col items-start px-3.5 py-2 rounded-xl transition-all duration-200 shrink-0 min-h-[46px] min-w-[72px] text-left select-none ${
+              className={`flex flex-col items-start px-3.5 py-2 rounded-[var(--lkv-radius-md)] transition-all shrink-0 min-h-[44px] min-w-[72px] text-left select-none cursor-pointer border ${
                 isSelected
-                  ? 'bg-forest-900 text-white shadow-sm ring-2 ring-forest-800/30'
-                  : 'bg-surface-subtle/70 hover:bg-surface-subtle text-text-secondary hover:text-text-primary border border-border/30 active:scale-95'
+                  ? 'bg-[var(--lkv-primary)] text-white border-[var(--lkv-primary)] shadow-sm'
+                  : 'glass-sub-card border border-white/50 text-[var(--lkv-text-primary)] hover:bg-white'
               }`}
             >
               <div className="flex items-center justify-between w-full gap-2">
                 <span className="text-xs font-bold tracking-tight">Jour {dayNum}</span>
                 <span
-                  className={`text-[10px] px-1.5 py-0.2 rounded-full font-semibold ${
+                  className={`text-[9px] px-1.5 py-0.5 rounded-full font-mono font-bold ${
                     isSelected
                       ? 'bg-white/20 text-white'
-                      : 'bg-forest-900/10 text-forest-800'
+                      : 'bg-black/5 text-[var(--lkv-text-secondary)]'
                   }`}
                 >
                   {daySteps.length}
@@ -86,7 +86,7 @@ export function DayNavigator({
               {dateStr && (
                 <span
                   className={`text-[10px] truncate max-w-[85px] mt-0.5 ${
-                    isSelected ? 'text-white/80' : 'text-text-muted'
+                    isSelected ? 'text-white/80' : 'text-[var(--lkv-text-secondary)]'
                   }`}
                 >
                   {dateStr}
@@ -101,10 +101,10 @@ export function DayNavigator({
           <button
             type="button"
             onClick={onAddDay}
-            className="flex items-center justify-center gap-1 px-3 py-2 rounded-xl border border-dashed border-forest-800/40 text-forest-800 hover:bg-forest-900/5 transition-colors shrink-0 min-h-[46px] text-xs font-medium active:scale-95"
+            className="flex items-center justify-center gap-1.5 px-3.5 py-2 rounded-[var(--lkv-radius-md)] glass-sub-card border border-dashed border-white/80 text-[var(--lkv-text-secondary)] hover:text-[var(--lkv-text-primary)] hover:bg-white transition-all shrink-0 min-h-[44px] text-xs font-semibold cursor-pointer"
             title="Ajouter un jour supplémentaire"
           >
-            <Plus className="w-4 h-4" />
+            <Plus className="w-3.5 h-3.5" />
             <span>Ajouter jour</span>
           </button>
         )}

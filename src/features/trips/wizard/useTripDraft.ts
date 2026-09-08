@@ -8,6 +8,7 @@ import {
   CURATED_COUNTRIES,
 } from './wizardTypes';
 import { saveDraftTripAction } from '@/app/voyages/actions';
+import { tripNewPath } from '../registry/tripPaths';
 
 const STORAGE_KEY = 'lkdv:trip-draft';
 
@@ -79,7 +80,7 @@ export function useTripDraft() {
       current.set('step', clamped.toString());
       const search = current.toString();
       const query = search ? `?${search}` : '';
-      router.push(`/voyages/nouveau${query}`, { scroll: false });
+      router.push(`${tripNewPath()}${query}`, { scroll: false });
     },
     [router, searchParams]
   );
@@ -137,7 +138,7 @@ export function useTripDraft() {
       localStorage.removeItem(STORAGE_KEY);
     }
     setState(DEFAULT_WIZARD_STATE);
-    router.push('/voyages/nouveau?step=1');
+    router.push(`${tripNewPath()}?step=1`);
   }, [router]);
 
   return {

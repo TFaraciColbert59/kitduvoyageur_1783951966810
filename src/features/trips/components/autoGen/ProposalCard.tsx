@@ -1,5 +1,4 @@
 'use client';
-import { lkvPrompt } from '@/components/ui/dialogs';
 
 import React, { useState } from 'react';
 import {
@@ -11,6 +10,7 @@ import {
   HelpCircle,
   ExternalLink,
   Mic,
+  X,
 } from 'lucide-react';
 import type { Proposal, LayerId } from '@/features/trips/schemas/autoGen.schema';
 import { useHapticFeedback } from '@/hooks/useHapticFeedback';
@@ -55,6 +55,8 @@ export const ProposalCard: React.FC<ProposalCardProps> = ({
   const { haptic } = useHapticFeedback();
   const [activeAltIndex, setActiveAltIndex] = useState(0);
   const [touchStartX, setTouchStartX] = useState<number | null>(null);
+  const [editOpen, setEditOpen] = useState(false);
+  const [editValue, setEditValue] = useState('');
 
   const totalProposals = 1 + (proposal.alternatives?.length || 0);
   const allProposals = [proposal, ...(proposal.alternatives || [])];
@@ -110,12 +112,14 @@ export const ProposalCard: React.FC<ProposalCardProps> = ({
   // Geste 3 : Dictée / Édition rapide
   const handleVoiceEdit = () => {
     haptic('light');
-    const prompt = lkvPrompt(
-      'Ajustez ce composant par commande vocale ou texte :',
-      ''
-    );
-    if (prompt && onEditPrompt) {
-      onEditPrompt(proposal.id, prompt);
+    setEditValue('');
+    setEditOpen(true);
+  };
+
+  const submitEdit = () => {
+    setEditOpen(false);
+    if (editValue.trim() && onEditPrompt) {
+      onEditPrompt(proposal.id, editValue.trim());
     }
   };
 
@@ -137,28 +141,28 @@ export const ProposalCard: React.FC<ProposalCardProps> = ({
       data-locked={proposal.locked ? 'true' : 'false'}
       className={`relative rounded-2xl p-4 transition-all duration-200 border select-none ${
         proposal.locked
-          ? 'bg-amber-50/60 dark:bg-amber-950/20 border-amber-300 dark:border-amber-700/60 shadow-md'
-          : 'bg-white/90 dark:bg-zinc-900/90 border-zinc-200 dark:border-zinc-800 shadow-sm hover:shadow-md'
+          ? 'bg-[var(--lkv-warning-bg)]  border-[var(--lkv-warning)]  shadow-md'
+          : 'bg-white/90  border-[var(--lkv-stone-200)]  shadow-sm hover:shadow-md'
       }`}
     >
       {/* En-tête : Couche + Provenance + Cadenas (Geste 2) */}
       <div className="flex items-center justify-between gap-2 mb-2">
         <div className="flex flex-wrap items-center gap-1.5">
-          <span className="text-xs font-semibold px-2.5 py-0.5 rounded-full bg-stone-100 dark:bg-stone-800 text-stone-700 dark:text-stone-300">
+          <span className="text-xs font-semibold px-2.5 py-0.5 rounded-full bg-[var(--lkv-surface-muted)]  text-[var(--lkv-text-secondary)] ">
             {LAYER_LABELS[proposal.layer] || proposal.layer}
           </span>
           {currentItem.confidence === 'low' || currentItem.provenance?.source === 'estimated' ? (
-            <span className="inline-flex items-center gap-1 text-[11px] px-2 py-0.5 rounded-full bg-sand-500/10 dark:bg-sand-500/20 text-sand-800 dark:text-sand-300 border border-sand-300/40 dark:border-sand-700/40">
-              <HelpCircle className="w-3 h-3 text-sand-600 dark:text-sand-400" />
+            <span className="inline-flex items-center gap-1 text-[11px] px-2 py-0.5 rounded-full bg-[var(--lkv-warning)]  text-[var(--lkv-warning-dark)]  border border-[var(--lkv-warning)] ">
+              <HelpCircle className="w-3 h-3 text-[var(--lkv-warning-dark)] " />
               <span className="font-medium">Estimation</span>
               {currentItem.provenance?.sourceRef && (
-                <span className="text-sand-700/70 dark:text-sand-400/70 hidden sm:inline">· {currentItem.provenance.sourceRef}</span>
+                <span className="text-[var(--lkv-warning-dark)]  hidden sm:inline">· {currentItem.provenance.sourceRef}</span>
               )}
               <a
                 href={currentItem.verifyUrl || `https://www.google.com/search?q=${encodeURIComponent(`${proposal.layer} ${valueName}`)}`}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="inline-flex items-center text-[10px] font-semibold underline underline-offset-2 ml-1 text-sand-900 dark:text-sand-200 hover:text-sand-900"
+                className="inline-flex items-center text-[10px] font-semibold underline underline-offset-2 ml-1 text-[var(--lkv-warning-dark)]  hover:text-[var(--lkv-warning-dark)]"
                 onClick={(e) => e.stopPropagation()}
               >
                 vérifier
@@ -166,8 +170,8 @@ export const ProposalCard: React.FC<ProposalCardProps> = ({
               </a>
             </span>
           ) : (
-            <span className="flex items-center text-[11px] text-stone-500 dark:text-stone-400">
-              <ShieldCheck className="w-3.5 h-3.5 mr-1 text-forest-500" />
+            <span className="flex items-center text-[11px] text-[var(--lkv-text-muted)] ">
+              <ShieldCheck className="w-3.5 h-3.5 mr-1 text-[var(--lkv-secondary)]" />
               {PROVENANCE_LABELS[currentItem.provenance?.source] || currentItem.provenance?.source}
               {currentItem.provenance?.sourceRef && ` · ${currentItem.provenance.sourceRef}`}
             </span>
@@ -185,8 +189,8 @@ export const ProposalCard: React.FC<ProposalCardProps> = ({
           }
           className={`min-w-[44px] min-h-[44px] flex items-center justify-center rounded-xl transition-colors ${
             proposal.locked
-              ? 'bg-amber-500 text-white shadow-sm'
-              : 'text-zinc-400 hover:text-zinc-600 dark:hover:text-zinc-200 hover:bg-zinc-100 dark:hover:bg-zinc-800'
+              ? 'bg-[var(--lkv-warning)] text-white shadow-sm'
+              : 'text-[var(--lkv-text-subtle)] hover:text-[var(--lkv-text-muted)]  hover:bg-[var(--lkv-surface-muted)] '
           }`}
         >
           {proposal.locked ? <Lock className="w-4 h-4" /> : <Unlock className="w-4 h-4" />}
@@ -196,22 +200,22 @@ export const ProposalCard: React.FC<ProposalCardProps> = ({
       {/* Corps principal : Titre / Valeur */}
       <div className="my-2">
         <div className="flex items-baseline justify-between">
-          <h4 className="font-semibold text-stone-900 dark:text-stone-100 text-base leading-snug">
+          <h4 className="font-semibold text-[var(--lkv-text-primary)]  text-base leading-snug">
             {valueName}
           </h4>
           {priceEur !== undefined && (
-            <span className="font-mono font-bold text-stone-900 dark:text-stone-100 text-base ml-2">
+            <span className="font-mono font-bold text-[var(--lkv-text-primary)]  text-base ml-2">
               {priceEur} €
             </span>
           )}
         </div>
-        <p className="text-xs text-stone-500 dark:text-stone-400 mt-1 line-clamp-2">
+        <p className="text-xs text-[var(--lkv-text-muted)]  mt-1 line-clamp-2">
           {currentItem.rationale}
         </p>
       </div>
 
       {/* Barre basse : Geste 1 (Balayage / Alternatives) & Geste 3 (Dictée) */}
-      <div className="flex items-center justify-between pt-2 border-t border-stone-100 dark:border-stone-800/80 mt-3 text-xs text-stone-500">
+      <div className="flex items-center justify-between pt-2 border-t border-[var(--lkv-surface-muted)]  mt-3 text-xs text-[var(--lkv-text-muted)]">
         {/* Contrôles d'alternatives (Geste 1) */}
         <div className="flex items-center space-x-1">
           <button
@@ -219,7 +223,7 @@ export const ProposalCard: React.FC<ProposalCardProps> = ({
             onClick={handlePrevAlt}
             disabled={activeAltIndex === 0}
             aria-label="Alternative précédente"
-            className="p-1.5 min-w-[36px] min-h-[36px] flex items-center justify-center rounded-lg hover:bg-stone-100 dark:hover:bg-stone-800 disabled:opacity-30"
+            className="p-1.5 min-w-[var(--lkv-touch-min)] min-h-[var(--lkv-touch-min)] flex items-center justify-center rounded-lg hover:bg-[var(--lkv-surface-muted)]  disabled:opacity-30"
           >
             <ChevronLeft className="w-4 h-4" />
           </button>
@@ -231,11 +235,11 @@ export const ProposalCard: React.FC<ProposalCardProps> = ({
             onClick={handleNextAlt}
             disabled={activeAltIndex >= totalProposals - 1}
             aria-label="Alternative suivante"
-            className="p-1.5 min-w-[36px] min-h-[36px] flex items-center justify-center rounded-lg hover:bg-stone-100 dark:hover:bg-stone-800 disabled:opacity-30"
+            className="p-1.5 min-w-[var(--lkv-touch-min)] min-h-[var(--lkv-touch-min)] flex items-center justify-center rounded-lg hover:bg-[var(--lkv-surface-muted)]  disabled:opacity-30"
           >
             <ChevronRight className="w-4 h-4" />
           </button>
-          <span className="text-[11px] text-stone-400 ml-1 hidden sm:inline">
+          <span className="text-[11px] text-[var(--lkv-text-subtle)] ml-1 hidden sm:inline">
             Balayer pour alterner
           </span>
         </div>
@@ -245,9 +249,9 @@ export const ProposalCard: React.FC<ProposalCardProps> = ({
           type="button"
           onClick={handleVoiceEdit}
           aria-label="Ajuster par commande vocale"
-          className="flex items-center space-x-1 px-2.5 py-1.5 min-h-[36px] text-xs font-medium rounded-lg text-stone-600 dark:text-stone-300 hover:bg-stone-100 dark:hover:bg-stone-800"
+          className="flex items-center space-x-1 px-2.5 py-1.5 min-h-[var(--lkv-touch-min)] text-xs font-medium rounded-lg text-[var(--lkv-text-muted)]  hover:bg-[var(--lkv-surface-muted)] "
         >
-          <Mic className="w-3.5 h-3.5 text-forest-500" />
+          <Mic className="w-3.5 h-3.5 text-[var(--lkv-secondary)]" />
           <span>Ajuster</span>
         </button>
       </div>
@@ -255,15 +259,62 @@ export const ProposalCard: React.FC<ProposalCardProps> = ({
       {/* Impact tags */}
       {currentItem.impacts && currentItem.impacts.length > 0 && (
         <div className="mt-2 flex items-center gap-1">
-          <span className="text-[10px] uppercase font-semibold text-stone-400">Impact :</span>
+          <span className="text-[10px] uppercase font-semibold text-[var(--lkv-text-subtle)]">Impact :</span>
           {currentItem.impacts.map((imp: string) => (
             <span
               key={imp}
-              className="text-[10px] px-1.5 py-0.5 rounded bg-sand-100 dark:bg-sand-900/40 text-sand-800 dark:text-sand-300 font-medium"
+              className="text-[10px] px-1.5 py-0.5 rounded bg-[var(--lkv-warning-bg)]  text-[var(--lkv-warning-dark)]  font-medium"
             >
               {imp.replace('slot-', '')}
             </span>
           ))}
+        </div>
+      )}
+
+      {/* Modale d'édition rapide (ex-window.prompt, règle Y-D80 n°5) */}
+      {editOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm animate-in fade-in" role="dialog" aria-modal="true" aria-label="Ajuster ce composant">
+          <div className="glass rounded-[var(--lkv-radius-xl)] border border-white/70 max-w-md w-full p-6 shadow-2xl space-y-4">
+            <div className="flex items-center justify-between">
+              <h4 className="text-sm font-bold text-[var(--lkv-text-primary)] flex items-center gap-2">
+                <Mic size={16} className="text-[var(--lkv-secondary)]" />
+                Ajuster ce composant
+              </h4>
+              <button
+                type="button"
+                onClick={() => setEditOpen(false)}
+                aria-label="Fermer"
+                className="w-9 h-9 min-h-[44px] min-w-[44px] flex items-center justify-center rounded-full glass-sub-card border border-white/60 text-[var(--lkv-text-secondary)] hover:bg-white transition-all cursor-pointer"
+              >
+                <X size={18} />
+              </button>
+            </div>
+            <input
+              autoFocus
+              value={editValue}
+              onChange={(e) => setEditValue(e.target.value)}
+              onKeyDown={(e) => e.key === 'Enter' && submitEdit()}
+              placeholder="Ajustez ce composant par commande vocale ou texte :"
+              className="glass-input w-full px-3 py-2 text-sm text-[var(--lkv-text-primary)]"
+            />
+            <div className="flex items-center justify-end gap-2">
+              <button
+                type="button"
+                onClick={() => setEditOpen(false)}
+                className="glass-capsule-btn px-4 py-2 text-xs font-semibold text-[var(--lkv-text-secondary)]"
+              >
+                Annuler
+              </button>
+              <button
+                type="button"
+                onClick={submitEdit}
+                disabled={!editValue.trim()}
+                className="glass-capsule-btn primary px-4 py-2 text-xs font-bold disabled:opacity-50"
+              >
+                Appliquer
+              </button>
+            </div>
+          </div>
         </div>
       )}
     </div>

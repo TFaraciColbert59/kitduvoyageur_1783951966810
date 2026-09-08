@@ -43,6 +43,7 @@ dev-server.err.log
 
 # Playwright
 test-results/
+playwright-report/
 
 # Géodonnées volumineuses générées (3 Go)
 geo_data/
@@ -64,3 +65,6 @@ MOBILE_OPTIMIZATION_PROGRESS.md
 **/ms-playwright/
 ms-playwright/
 Capture d'écran *.png
+shots/
+Nouveau Document texte.txt
+playwright-a11y-report/

@@ -23,7 +23,6 @@
   --muted-foreground: var(--lkv-forest-200);
   --input: var(--lkv-forest-700);
   --ring: var(--lkv-forest-400);
-  --warning: var(--lkv-warning);
 
   /* Shadow colors for dark mode */
   --shadow-xs: 0 1px 2px rgba(0,0,0,0.3);

@@ -1,5 +1,4 @@
 'use client';
-import { lkvConfirm, lkvPrompt } from '@/components/ui/dialogs';
 
 import React, { useState, useEffect, useCallback, Suspense } from 'react';
 import Link from 'next/link';
@@ -17,6 +16,7 @@ import { BackgroundVideo } from '@/components/materiel/BackgroundVideo';
 import { createClient } from '@/lib/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/contexts/ToastContext';
+import { ConfirmDialog } from '@/features/trips/components/ConfirmDialog';
 
 interface TravelGroup {
   id: string;
@@ -47,8 +47,8 @@ const THEME_EMOJI: Record<string, string> = {
 
 type MainTab = 'mes-groupes' | 'decouvrir';
 
-const inputCls = "glass-input w-full text-sm text-[#17402C] focus:outline-none";
-const labelCls = "block text-[10px] font-mono text-[#5C6B5E] uppercase tracking-[0.15em] mb-1.5 font-bold";
+const inputCls = "glass-input w-full text-sm text-[var(--lkv-text-primary)] focus:outline-none";
+const labelCls = "block text-[10px] font-mono text-[var(--lkv-text-muted)] uppercase tracking-[0.15em] mb-1.5 font-bold";
 
 function GroupesPageInner() {
   const { user } = useAuth();
@@ -74,6 +74,15 @@ function GroupesPageInner() {
   const [creating, setCreating] = useState(false);
   const [pendingInvites, setPendingInvites] = useState<Array<{ id: string; group_id: string; name: string; owner_id: string }>>([]);
   const [inviteBusy, setInviteBusy] = useState<string | null>(null);
+
+  // Y3.5 — remplacement des dialogues natifs par des modales custom (règle Y-D80 n°5)
+  const [confirmState, setConfirmState] = useState<{
+    title: string;
+    message: string;
+    danger: boolean;
+    onConfirm: () => void;
+  } | null>(null);
+  const [joinCodePrompt, setJoinCodePrompt] = useState(false);
   const [createForm, setCreateForm] = useState({
     name: '', description: '', destination: '', theme: 'Trek',
     visibility: 'public', departure_date: '', return_date: '',
@@ -218,21 +227,35 @@ function GroupesPageInner() {
 
   async function handleLeaveGroup(groupId: string) {
     if (!user) return;
-    if (!lkvConfirm('Quitter ce groupe ?')) return;
-    try {
-      await supabase.from('group_members').delete().eq('group_id', groupId).eq('user_id', user.id);
-      toast('Vous avez quitté le groupe', 'success');
-      await loadMyGroups();
-    } catch (err: unknown) { toast((err as Error).message || 'Erreur', 'error'); }
+    setConfirmState({
+      title: 'Quitter ce groupe ?',
+      message: 'Vous quitterez ce groupe. Vous ne ferez plus partie de ses membres.',
+      danger: false,
+      onConfirm: async () => {
+        setConfirmState(null);
+        try {
+          await supabase.from('group_members').delete().eq('group_id', groupId).eq('user_id', user.id);
+          toast('Vous avez quitté le groupe', 'success');
+          await loadMyGroups();
+        } catch (err: unknown) { toast((err as Error).message || 'Erreur', 'error'); }
+      },
+    });
   }
 
   async function handleDeleteGroup(groupId: string) {
-    if (!lkvConfirm('Supprimer définitivement ce groupe ? Cette action est irréversible.')) return;
-    try {
-      await supabase.from('travel_groups').delete().eq('id', groupId);
-      toast('Groupe supprimé', 'success');
-      await Promise.all([loadMyGroups(), loadPublicGroups()]);
-    } catch (err: unknown) { toast((err as Error).message || 'Erreur', 'error'); }
+    setConfirmState({
+      title: 'Supprimer ce groupe ?',
+      message: 'Supprimer définitivement ce groupe ? Cette action est irréversible.',
+      danger: true,
+      onConfirm: async () => {
+        setConfirmState(null);
+        try {
+          await supabase.from('travel_groups').delete().eq('id', groupId);
+          toast('Groupe supprimé', 'success');
+          await Promise.all([loadMyGroups(), loadPublicGroups()]);
+        } catch (err: unknown) { toast((err as Error).message || 'Erreur', 'error'); }
+      },
+    });
   }
 
   async function handleJoinByCode(codeOverride?: string) {
@@ -284,7 +307,7 @@ function GroupesPageInner() {
     return (
       <div className="glass overflow-hidden flex flex-col justify-between transition-all duration-300">
         {/* Header */}
-        <div className="p-4 relative bg-gradient-to-r from-[#17402C]/90 to-[#17402C]/70 text-white">
+        <div className="p-4 relative bg-gradient-to-r from-[var(--lkv-text-primary)]/90 to-[var(--lkv-text-primary)]/70 text-white">
           <div className="flex items-start justify-between gap-3">
             <div className="flex items-center gap-3">
               <div className="w-12 h-12 rounded-2xl glass-sub-card flex items-center justify-center text-2xl flex-shrink-0">
@@ -304,7 +327,7 @@ function GroupesPageInner() {
           </div>
           <div className="flex items-center gap-2 mt-3 flex-wrap">
             <span className="glass-pill">{group.theme}</span>
-            <span className={`text-[10px] px-2.5 py-0.5 rounded-full font-semibold ${group.visibility === 'public' ? 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/30' : 'bg-amber-500/20 text-amber-300 border border-amber-500/30'}`}>
+            <span className={`text-[10px] px-2.5 py-0.5 rounded-full font-semibold ${group.visibility === 'public' ? 'bg-[var(--lkv-success-bg)] text-[var(--lkv-secondary)] border border-[var(--lkv-secondary)]/30' : 'bg-[var(--lkv-warning-bg)] text-[var(--lkv-warning)] border border-[var(--lkv-warning)]/30'}`}>
               {group.visibility === 'public' ? '🌍 Public' : group.visibility === 'private' ? '🔒 Privé' : '🔗 Invitation'}
             </span>
             <span className="text-[10px] font-mono text-white/60">Niv. {group.group_level}</span>
@@ -314,34 +337,34 @@ function GroupesPageInner() {
         {/* Body */}
         <div className="p-4 flex-1 flex flex-col justify-between space-y-3">
           <div>
-            {group.description && <p className="text-xs text-[#5C6B5E] mb-3 line-clamp-2 leading-relaxed">{group.description}</p>}
+            {group.description && <p className="text-xs text-[var(--lkv-text-muted)] mb-3 line-clamp-2 leading-relaxed">{group.description}</p>}
             <div className="grid grid-cols-3 gap-2 mb-3">
               <div className="text-center p-2 glass-sub-card rounded-xl">
-                <p className="font-mono font-bold text-[#17402C] text-sm">{group.member_count || 0}</p>
-                <p className="text-[10px] text-[#5C6B5E]">membres</p>
+                <p className="font-mono font-bold text-[var(--lkv-text-primary)] text-sm">{group.member_count || 0}</p>
+                <p className="text-[10px] text-[var(--lkv-text-muted)]">membres</p>
               </div>
               <div className="text-center p-2 glass-sub-card rounded-xl">
-                <p className="font-mono font-bold text-[#17402C] text-sm">{group.budget_target > 0 ? `${group.budget_target}€` : '—'}</p>
-                <p className="text-[10px] text-[#5C6B5E]">budget</p>
+                <p className="font-mono font-bold text-[var(--lkv-text-primary)] text-sm">{group.budget_target > 0 ? `${group.budget_target}€` : '—'}</p>
+                <p className="text-[10px] text-[var(--lkv-text-muted)]">budget</p>
               </div>
               <div className="text-center p-2 glass-sub-card rounded-xl">
-                <p className="font-mono font-bold text-[#17402C] text-sm">{group.max_members}</p>
-                <p className="text-[10px] text-[#5C6B5E]">max</p>
+                <p className="font-mono font-bold text-[var(--lkv-text-primary)] text-sm">{group.max_members}</p>
+                <p className="text-[10px] text-[var(--lkv-text-muted)]">max</p>
               </div>
             </div>
             {group.departure_date && (
-              <p className="text-[10px] text-[#5C6B5E] flex items-center gap-1 mb-3 font-mono">
+              <p className="text-[10px] text-[var(--lkv-text-muted)] flex items-center gap-1 mb-3 font-mono">
                 <Icon name="CalendarIcon" size={10} className="relative z-10" />
                 {new Date(group.departure_date).toLocaleDateString('fr-FR', { day: 'numeric', month: 'long', year: 'numeric' })}
                 {group.return_date && ` → ${new Date(group.return_date).toLocaleDateString('fr-FR', { day: 'numeric', month: 'short', year: 'numeric' })}`}
               </p>
             )}
             {group.owner && (
-              <div className="flex items-center gap-2 mb-3 pb-3 border-b border-[#17402C]/10">
-                <div className="w-5 h-5 rounded-full bg-[#17402C]/15 flex items-center justify-center text-[10px] font-bold text-[#17402C]">
+              <div className="flex items-center gap-2 mb-3 pb-3 border-b border-[var(--lkv-text-primary)]/10">
+                <div className="w-5 h-5 rounded-full bg-[var(--lkv-text-primary)]/15 flex items-center justify-center text-[10px] font-bold text-[var(--lkv-text-primary)]">
                   {group.owner.full_name?.[0] || '?'}
                 </div>
-                <span className="text-[10px] text-[#5C6B5E]">Organisé par <span className="font-semibold text-[#17402C]">{group.owner.full_name}</span></span>
+                <span className="text-[10px] text-[var(--lkv-text-muted)]">Organisé par <span className="font-semibold text-[var(--lkv-text-primary)]">{group.owner.full_name}</span></span>
               </div>
             )}
           </div>
@@ -355,7 +378,7 @@ function GroupesPageInner() {
                   <span className="relative z-10">Ouvrir</span>
                 </Link>
                 {myRole && (
-                  <span className={`px-2.5 py-2 rounded-xl text-[10px] font-semibold ${myRole === 'organizer' ? 'bg-amber-100/60 text-amber-800' : myRole === 'co_organizer' ? 'bg-blue-100/60 text-blue-800' : 'glass-sub-card text-[#5C6B5E]'}`}>
+                  <span className={`px-2.5 py-2 rounded-xl text-[10px] font-semibold ${myRole === 'organizer' ? 'bg-[var(--lkv-warning-bg)] text-[var(--lkv-warning-dark)]' : myRole === 'co_organizer' ? 'bg-[var(--lkv-info-bg)] text-[var(--lkv-info)]' : 'glass-sub-card text-[var(--lkv-text-muted)]'}`}>
                     {myRole === 'organizer' ? '👑' : myRole === 'co_organizer' ? '🛡️' : '👤'}
                   </span>
                 )}
@@ -365,12 +388,12 @@ function GroupesPageInner() {
                   </button>
                 )}
                 {myRole && myRole !== 'organizer' && (
-                  <button onClick={() => handleLeaveGroup(group.id)} className="glass-capsule-btn p-2 text-red-600 hover:text-red-700" title="Quitter">
+                  <button onClick={() => handleLeaveGroup(group.id)} className="glass-capsule-btn p-2 text-[var(--lkv-danger)] hover:text-[var(--lkv-danger-dark)]" title="Quitter">
                     <Icon name="ArrowRightOnRectangleIcon" size={12} className="relative z-10" />
                   </button>
                 )}
                 {isOwner && (
-                  <button onClick={() => handleDeleteGroup(group.id)} className="glass-capsule-btn p-2 text-red-600 hover:text-red-700" title="Supprimer">
+                  <button onClick={() => handleDeleteGroup(group.id)} className="glass-capsule-btn p-2 text-[var(--lkv-danger)] hover:text-[var(--lkv-danger-dark)]" title="Supprimer">
                     <Icon name="TrashIcon" size={12} className="relative z-10" />
                   </button>
                 )}
@@ -406,7 +429,7 @@ function GroupesPageInner() {
     <>
       {/* ── DESKTOP (Non-scrollable outer page 100dvh + CompteBackground + Nav 15/85 à gauche) ── */}
       <div className="hidden md:block">
-        <div className="h-[100dvh] max-h-[100dvh] overflow-hidden bg-transparent font-sans text-[#17402C] relative flex flex-col">
+        <div className="h-[100dvh] max-h-[100dvh] overflow-hidden bg-transparent font-sans text-[var(--lkv-text-primary)] relative flex flex-col">
           <CompteBackground />
           <Header />
 
@@ -427,11 +450,11 @@ function GroupesPageInner() {
 
               {/* Hero Header Card */}
               <div className="glass p-6 sm:p-8 relative overflow-hidden">
-                <p className="text-[10px] font-mono text-[#5C6B5E] tracking-[0.2em] uppercase mb-2 font-bold">Groupes de voyage</p>
+                <p className="text-[10px] font-mono text-[var(--lkv-text-muted)] tracking-[0.2em] uppercase mb-2 font-bold">Groupes de voyage</p>
                 <div className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-4 mb-6">
                   <div>
-                    <h1 className="font-display font-bold text-3xl md:text-4xl text-[#17402C] tracking-tight">Voyager ensemble</h1>
-                    <p className="text-[#5C6B5E] text-sm mt-1">Créez ou rejoignez des groupes de voyage collaboratifs</p>
+                    <h1 className="font-display font-bold text-3xl md:text-4xl text-[var(--lkv-text-primary)] tracking-tight">Voyager ensemble</h1>
+                    <p className="text-[var(--lkv-text-muted)] text-sm mt-1">Créez ou rejoignez des groupes de voyage collaboratifs</p>
                   </div>
                   <div className="flex items-center gap-2 flex-wrap">
                     <input
@@ -505,8 +528,8 @@ function GroupesPageInner() {
               ) : error ? (
                 <div className="glass text-center py-16 p-8">
                   <p className="text-5xl mb-4">⚠️</p>
-                  <h2 className="font-display font-bold text-xl text-[#17402C] mb-2">Erreur de chargement</h2>
-                  <p className="text-sm text-[#5C6B5E] mb-6">{error}</p>
+                  <h2 className="font-display font-bold text-xl text-[var(--lkv-text-primary)] mb-2">Erreur de chargement</h2>
+                  <p className="text-sm text-[var(--lkv-text-muted)] mb-6">{error}</p>
                   <button
                     onClick={() => { setError(null); setLoading(true); loadAll().finally(() => setLoading(false)); }}
                     className="glass-capsule-btn primary px-6 py-3 text-xs font-bold"
@@ -519,15 +542,15 @@ function GroupesPageInner() {
                   {user && pendingInvites.length > 0 && (
                     <div className="mb-6 p-5 glass rounded-2xl">
                       <div className="flex items-center gap-2 mb-3">
-                        <Icon name="EnvelopeOpenIcon" size={16} className="text-[#17402C] relative z-10" />
-                        <h3 className="font-display font-bold text-[#17402C]">{pendingInvites.length} invitation{pendingInvites.length > 1 ? 's' : ''} à rejoindre</h3>
+                        <Icon name="EnvelopeOpenIcon" size={16} className="text-[var(--lkv-text-primary)] relative z-10" />
+                        <h3 className="font-display font-bold text-[var(--lkv-text-primary)]">{pendingInvites.length} invitation{pendingInvites.length > 1 ? 's' : ''} à rejoindre</h3>
                       </div>
                       <div className="space-y-2">
                         {pendingInvites.map(inv => (
                           <div key={inv.id} className="flex flex-col sm:flex-row sm:items-center gap-3 p-3 glass-sub-card rounded-xl">
                             <div className="flex-1 min-w-0">
-                              <p className="text-sm font-semibold text-[#17402C]">{inv.name}</p>
-                              <p className="text-xs text-[#5C6B5E]">Vous avez été invité à rejoindre ce groupe.</p>
+                              <p className="text-sm font-semibold text-[var(--lkv-text-primary)]">{inv.name}</p>
+                              <p className="text-xs text-[var(--lkv-text-muted)]">Vous avez été invité à rejoindre ce groupe.</p>
                             </div>
                             <div className="flex gap-2 shrink-0">
                               <button
@@ -540,7 +563,7 @@ function GroupesPageInner() {
                               <button
                                 onClick={() => handleInvite(inv.group_id, false)}
                                 disabled={inviteBusy === inv.group_id}
-                                className="glass-capsule-btn px-4 py-2 text-xs font-semibold text-red-600 disabled:opacity-50"
+                                className="glass-capsule-btn px-4 py-2 text-xs font-semibold text-[var(--lkv-danger)] disabled:opacity-50"
                               >
                                 <span className="relative z-10">Refuser</span>
                               </button>
@@ -553,8 +576,8 @@ function GroupesPageInner() {
                   {!user ? (
                     <div className="glass text-center py-16 p-8">
                       <p className="text-5xl mb-4">🗺️</p>
-                      <h2 className="font-display font-bold text-xl text-[#17402C] mb-2">Connectez-vous pour voir vos groupes</h2>
-                      <p className="text-sm text-[#5C6B5E] mb-6">Créez ou rejoignez des groupes de voyage collaboratifs</p>
+                      <h2 className="font-display font-bold text-xl text-[var(--lkv-text-primary)] mb-2">Connectez-vous pour voir vos groupes</h2>
+                      <p className="text-sm text-[var(--lkv-text-muted)] mb-6">Créez ou rejoignez des groupes de voyage collaboratifs</p>
                       <Link href="/connexion" className="glass-capsule-btn primary px-6 py-3 text-xs font-bold inline-flex items-center gap-2">
                         <Icon name="ArrowRightOnRectangleIcon" size={14} className="relative z-10" />
                         <span className="relative z-10">Se connecter</span>
@@ -563,8 +586,8 @@ function GroupesPageInner() {
                   ) : myGroups.length === 0 ? (
                     <div className="glass text-center py-16 p-8">
                       <p className="text-5xl mb-4">🗺️</p>
-                      <h2 className="font-display font-bold text-xl text-[#17402C] mb-2">Vous n&apos;avez pas encore de groupe</h2>
-                      <p className="text-sm text-[#5C6B5E] mb-6">Créez votre premier groupe ou rejoignez-en un avec un code d&apos;invitation</p>
+                      <h2 className="font-display font-bold text-xl text-[var(--lkv-text-primary)] mb-2">Vous n&apos;avez pas encore de groupe</h2>
+                      <p className="text-sm text-[var(--lkv-text-muted)] mb-6">Créez votre premier groupe ou rejoignez-en un avec un code d&apos;invitation</p>
                       <div className="flex gap-3 justify-center flex-wrap">
                         <Link href="/nouveau-groupe" className="glass-capsule-btn primary px-6 py-3 text-xs font-bold inline-flex items-center gap-2">
                           <Icon name="PlusIcon" size={14} className="relative z-10" />
@@ -579,7 +602,7 @@ function GroupesPageInner() {
                   ) : (
                     <div>
                       <div className="flex items-center justify-between mb-4">
-                        <p className="text-sm text-[#5C6B5E] font-medium">{myGroups.length} groupe{myGroups.length > 1 ? 's' : ''}</p>
+                        <p className="text-sm text-[var(--lkv-text-muted)] font-medium">{myGroups.length} groupe{myGroups.length > 1 ? 's' : ''}</p>
                         <Link href="/nouveau-groupe" className="glass-capsule-btn primary px-4 py-2 text-xs font-bold inline-flex items-center gap-1.5">
                           <Icon name="PlusIcon" size={14} className="relative z-10" />
                           <span className="relative z-10">Nouveau groupe</span>
@@ -596,9 +619,9 @@ function GroupesPageInner() {
                   {/* Filters */}
                   <div className="flex flex-col sm:flex-row gap-3 mb-6">
                     <div className="relative flex-1">
-                      <Icon name="MagnifyingGlassIcon" size={16} className="absolute left-4 top-1/2 -translate-y-1/2 text-[#5C6B5E] relative z-10" />
+                      <Icon name="MagnifyingGlassIcon" size={16} className="absolute left-4 top-1/2 -translate-y-1/2 text-[var(--lkv-text-muted)] relative z-10" />
                       <input
-                        className="glass-input w-full pl-10 pr-4 py-2.5 text-sm text-[#17402C] focus:outline-none"
+                        className="glass-input w-full pl-10 pr-4 py-2.5 text-sm text-[var(--lkv-text-primary)] focus:outline-none"
                         placeholder="Rechercher par nom ou destination..."
                         value={search}
                         onChange={e => setSearch(e.target.value)}
@@ -609,7 +632,7 @@ function GroupesPageInner() {
                         <button
                           key={theme}
                           onClick={() => setSelectedTheme(theme)}
-                          className={`glass-pill cursor-pointer whitespace-nowrap ${selectedTheme === theme ? 'bg-[#17402C] text-white' : ''}`}
+                          className={`glass-pill cursor-pointer whitespace-nowrap ${selectedTheme === theme ? 'bg-[var(--lkv-text-primary)] text-white' : ''}`}
                         >
                           {theme !== 'Tous' ? `${THEME_EMOJI[theme]} ` : ''}{theme}
                         </button>
@@ -618,14 +641,14 @@ function GroupesPageInner() {
                   </div>
 
                   {filteredPublic.length === 0 ? (
-                    <div className="glass text-center py-16 p-8 text-[#5C6B5E]">
+                    <div className="glass text-center py-16 p-8 text-[var(--lkv-text-muted)]">
                       <p className="text-4xl mb-3">🔍</p>
-                      <p className="font-display font-bold text-[#17402C] text-lg mb-1">Aucun groupe trouvé</p>
+                      <p className="font-display font-bold text-[var(--lkv-text-primary)] text-lg mb-1">Aucun groupe trouvé</p>
                       <p className="text-sm">{search ? `Aucun résultat pour "${search}"` : 'Aucun groupe public disponible'}</p>
                     </div>
                   ) : (
                     <div>
-                      <p className="text-sm text-[#5C6B5E] mb-4 font-medium">{filteredPublic.length} groupe{filteredPublic.length > 1 ? 's' : ''} public{filteredPublic.length > 1 ? 's' : ''}</p>
+                      <p className="text-sm text-[var(--lkv-text-muted)] mb-4 font-medium">{filteredPublic.length} groupe{filteredPublic.length > 1 ? 's' : ''} public{filteredPublic.length > 1 ? 's' : ''}</p>
                       <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
                         {filteredPublic.map(group => <GroupCard key={group.id} group={group} />)}
                       </div>
@@ -642,35 +665,35 @@ function GroupesPageInner() {
           <div className="fixed inset-0 z-50 bg-black/50 backdrop-blur-md flex items-center justify-center p-4">
             <div className="glass w-full max-w-lg p-6 max-h-[90vh] overflow-y-auto">
               <div className="flex items-center justify-between mb-5">
-                <h3 className="font-display font-bold text-lg text-[#17402C]">Modifier le groupe</h3>
+                <h3 className="font-display font-bold text-lg text-[var(--lkv-text-primary)]">Modifier le groupe</h3>
                 <button onClick={() => { setShowEditModal(false); setEditingGroup(null); }} className="glass-capsule-btn p-2">
                   <Icon name="XMarkIcon" size={18} className="relative z-10" />
                 </button>
               </div>
               {editingGroup?.invite_code && (
                 <div className="mb-4 p-3 glass-sub-card rounded-xl flex items-center gap-3">
-                  <Icon name="LinkIcon" size={14} className="text-[#17402C] flex-shrink-0 relative z-10" />
+                  <Icon name="LinkIcon" size={14} className="text-[var(--lkv-text-primary)] flex-shrink-0 relative z-10" />
                   <div>
-                    <p className="text-[10px] font-mono text-[#5C6B5E] uppercase tracking-wider font-bold">Code d&apos;invitation</p>
-                    <p className="font-mono font-bold text-[#17402C] text-sm tracking-widest">{editingGroup.invite_code}</p>
+                    <p className="text-[10px] font-mono text-[var(--lkv-text-muted)] uppercase tracking-wider font-bold">Code d&apos;invitation</p>
+                    <p className="font-mono font-bold text-[var(--lkv-text-primary)] text-sm tracking-widest">{editingGroup.invite_code}</p>
                   </div>
                 </div>
               )}
               <form onSubmit={handleEditGroup} className="space-y-4">
-                <div><label className={labelCls}>Nom du groupe *</label><input required value={createForm.name} onChange={e => setCreateForm({ ...createForm, name: e.target.value })} className={inputCls} placeholder="Trek Himalaya 2026" /></div>
-                <div><label className={labelCls}>Destination *</label><input required value={createForm.destination} onChange={e => setCreateForm({ ...createForm, destination: e.target.value })} className={inputCls} placeholder="Nepal - Everest Base Camp" /></div>
+                <div><label className={labelCls}>Nom du groupe *</label><input className={inputCls} required value={createForm.name} onChange={e => setCreateForm({ ...createForm, name: e.target.value })} placeholder="Trek Himalaya 2026" /></div>
+                <div><label className={labelCls}>Destination *</label><input className={inputCls} required value={createForm.destination} onChange={e => setCreateForm({ ...createForm, destination: e.target.value })} placeholder="Nepal - Everest Base Camp" /></div>
                 <div><label className={labelCls}>Description</label><textarea value={createForm.description} onChange={e => setCreateForm({ ...createForm, description: e.target.value })} rows={2} className={`${inputCls} resize-none`} placeholder="Décrivez votre aventure..." /></div>
                 <div className="grid grid-cols-2 gap-3">
-                  <div><label className={labelCls}>Thème</label><select value={createForm.theme} onChange={e => setCreateForm({ ...createForm, theme: e.target.value })} className={inputCls}>{THEMES.map(t => <option key={t}>{t}</option>)}</select></div>
-                  <div><label className={labelCls}>Visibilité</label><select value={createForm.visibility} onChange={e => setCreateForm({ ...createForm, visibility: e.target.value })} className={inputCls}><option value="public">🌍 Public</option><option value="private">🔒 Privé</option><option value="invite_only">🔗 Sur invitation</option></select></div>
+                  <div><label className={labelCls}>Thème</label><select className={inputCls} value={createForm.theme} onChange={e => setCreateForm({ ...createForm, theme: e.target.value })}>{THEMES.map(t => <option key={t}>{t}</option>)}</select></div>
+                  <div><label className={labelCls}>Visibilité</label><select className={inputCls} value={createForm.visibility} onChange={e => setCreateForm({ ...createForm, visibility: e.target.value })}><option value="public">🌍 Public</option><option value="private">🔒 Privé</option><option value="invite_only">🔗 Sur invitation</option></select></div>
                 </div>
                 <div className="grid grid-cols-2 gap-3">
-                  <div><label className={labelCls}>Départ</label><input type="date" value={createForm.departure_date} onChange={e => setCreateForm({ ...createForm, departure_date: e.target.value })} className={inputCls} /></div>
-                  <div><label className={labelCls}>Retour</label><input type="date" value={createForm.return_date} onChange={e => setCreateForm({ ...createForm, return_date: e.target.value })} className={inputCls} /></div>
+                  <div><label className={labelCls}>Départ</label><input className={inputCls} type="date" value={createForm.departure_date} onChange={e => setCreateForm({ ...createForm, departure_date: e.target.value })} /></div>
+                  <div><label className={labelCls}>Retour</label><input className={inputCls} type="date" value={createForm.return_date} onChange={e => setCreateForm({ ...createForm, return_date: e.target.value })} /></div>
                 </div>
                 <div className="grid grid-cols-2 gap-3">
-                  <div><label className={labelCls}>Budget (€)</label><input type="number" value={createForm.budget_target} onChange={e => setCreateForm({ ...createForm, budget_target: e.target.value })} className={inputCls} placeholder="2500" /></div>
-                  <div><label className={labelCls}>Max membres</label><input type="number" min={2} max={50} value={createForm.max_members} onChange={e => setCreateForm({ ...createForm, max_members: e.target.value })} className={inputCls} /></div>
+                  <div><label className={labelCls}>Budget (€)</label><input className={inputCls} type="number" value={createForm.budget_target} onChange={e => setCreateForm({ ...createForm, budget_target: e.target.value })} placeholder="2500" /></div>
+                  <div><label className={labelCls}>Max membres</label><input className={inputCls} type="number" min={2} max={50} value={createForm.max_members} onChange={e => setCreateForm({ ...createForm, max_members: e.target.value })} /></div>
                 </div>
                 <button type="submit" disabled={creating} className="w-full glass-capsule-btn primary py-3 text-xs font-bold disabled:opacity-50">
                   <span className="relative z-10">{creating ? 'Enregistrement...' : 'Enregistrer'}</span>
@@ -682,7 +705,7 @@ function GroupesPageInner() {
       </div>
 
       {/* ── MOBILE ── */}
-      <div className="block md:hidden min-h-screen relative font-sans text-[#17402C]">
+      <div className="block md:hidden min-h-screen relative font-sans text-[var(--lkv-text-primary)]">
         <CompteBackground />
         <MobilePageShell videoBackground={false} background="transparent">
           <MobileGroupesHub
@@ -700,11 +723,7 @@ function GroupesPageInner() {
               router.push('/nouveau-groupe');
             }}
             onOpenJoinByCode={() => {
-              const code = lkvPrompt('Entrez le code d’invitation du groupe :');
-              if (code) {
-                setJoinCode(code);
-                handleJoinByCode(code);
-              }
+              setJoinCodePrompt(true);
             }}
             onRefresh={async () => {
               await Promise.all([loadMyGroups(), loadPublicGroups()]);
@@ -712,13 +731,63 @@ function GroupesPageInner() {
           />
         </MobilePageShell>
       </div>
+
+      {/* Y3.5 — modales custom (règle Y-D80 n°5) */}
+      <ConfirmDialog
+        open={confirmState !== null}
+        title={confirmState?.title ?? ''}
+        message={confirmState?.message}
+        danger={confirmState?.danger}
+        confirmLabel="Confirmer"
+        onConfirm={() => confirmState?.onConfirm()}
+        onCancel={() => setConfirmState(null)}
+      />
+
+      {joinCodePrompt && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm"
+          role="dialog"
+          aria-modal="true"
+          aria-label="Rejoindre un groupe par code"
+        >
+          <div className="glass w-full max-w-md p-6 rounded-[var(--lkv-radius-xl)] border border-white/80 shadow-2xl space-y-4">
+            <h4 className="text-base font-bold text-[var(--lkv-text-primary)]">Rejoindre par code d'invitation</h4>
+            <input
+              autoFocus
+              value={joinCode}
+              onChange={e => setJoinCode(e.target.value.toUpperCase())}
+              onKeyDown={e => { if (e.key === 'Enter') { setJoinCodePrompt(false); handleJoinByCode(); } }}
+              placeholder="Code d'invitation"
+              className="glass-input w-full py-2.5 px-3 text-sm uppercase"
+              aria-label="Code d'invitation"
+            />
+            <div className="flex items-center justify-end gap-3 pt-2">
+              <button
+                type="button"
+                onClick={() => { setJoinCodePrompt(false); setJoinCode(''); }}
+                className="glass-capsule-btn px-5 py-2.5 text-xs font-semibold"
+              >
+                <span className="relative z-10">Annuler</span>
+              </button>
+              <button
+                type="button"
+                onClick={() => { setJoinCodePrompt(false); handleJoinByCode(); }}
+                disabled={joiningByCode}
+                className="glass-capsule-btn primary px-5 py-2.5 text-xs font-bold disabled:opacity-50"
+              >
+                <span className="relative z-10">{joiningByCode ? '...' : 'Rejoindre'}</span>
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </>
   );
 }
 
 export default function GroupesPage() {
   return (
-    <Suspense fallback={<div className="min-h-screen bg-stone-50 flex items-center justify-center"><div className="w-8 h-8 border-2 border-[#17402C] border-t-transparent rounded-full animate-spin" /></div>}>
+    <Suspense fallback={<div className="min-h-screen bg-stone-50 flex items-center justify-center"><div className="w-8 h-8 border-2 border-[var(--lkv-text-primary)] border-t-transparent rounded-full animate-spin" /></div>}>
       <GroupesPageInner />
     </Suspense>
   );

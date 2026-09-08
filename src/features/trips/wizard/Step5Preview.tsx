@@ -100,13 +100,13 @@ export function Step5Preview({
   if (loading) {
     return (
       <div className="py-16 text-center space-y-4">
-        <div className="w-16 h-16 mx-auto rounded-full bg-forest-50 text-lkv-primary flex items-center justify-center animate-spin">
+        <div className="w-16 h-16 mx-auto rounded-full bg-[var(--lkv-success-bg)] text-lkv-primary flex items-center justify-center animate-spin">
           <Navigation size={28} />
         </div>
         <h3 className="text-xl font-bold text-lkv-primary">
           Calcul déterministe de votre itinéraire...
         </h3>
-        <p className="text-xs text-stone-500 max-w-sm mx-auto">
+        <p className="text-xs text-[var(--lkv-text-muted)] max-w-sm mx-auto">
           Répartition des étapes journalières, calcul altimétrique et sélection du matériel selon les règles de sécurité LKDV.
         </p>
       </div>
@@ -144,7 +144,7 @@ export function Step5Preview({
         <h2 className="text-2xl sm:text-3xl font-bold text-lkv-primary">
           {finalTitle}
         </h2>
-        <p className="text-sm text-stone-600 mt-1">
+        <p className="text-sm text-[var(--lkv-text-muted)] mt-1">
           Voici votre proposition d&apos;itinéraire détaillée, calculée sans compromis et prête pour l&apos;aventure.
         </p>
       </div>
@@ -186,12 +186,12 @@ export function Step5Preview({
               className={`p-4 rounded-2xl border flex items-start gap-3 ${
                 w.severity === 'alert'
                   ? 'bg-rose-50 border-rose-200 text-rose-950'
-                  : 'bg-amber-50 border-amber-200 text-amber-950'
+                  : 'bg-[var(--lkv-warning-bg)] border-[var(--lkv-warning-subtle)] text-[var(--lkv-warning-dark)]'
               }`}
             >
               <AlertTriangle
                 size={18}
-                className={w.severity === 'alert' ? 'text-rose-600 shrink-0' : 'text-amber-600 shrink-0'}
+                className={w.severity === 'alert' ? 'text-rose-600 shrink-0' : 'text-[var(--lkv-warning-dark)] shrink-0'}
               />
               <div className="text-xs leading-relaxed">
                 <span className="font-semibold block mb-0.5">Note du guide :</span>
@@ -226,20 +226,20 @@ export function Step5Preview({
                     {step.country_code}
                   </span>
                   {step.accommodation_name && (
-                    <span className="text-[11px] text-stone-500">
+                    <span className="text-[11px] text-[var(--lkv-text-muted)]">
                       · {step.accommodation_name}
                     </span>
                   )}
                 </div>
                 <h4 className="font-semibold text-sm text-lkv-primary">{step.title}</h4>
                 {step.description && (
-                  <p className="text-xs text-stone-600 leading-relaxed max-w-xl">
+                  <p className="text-xs text-[var(--lkv-text-muted)] leading-relaxed max-w-xl">
                     {step.description}
                   </p>
                 )}
               </div>
 
-              <div className="flex items-center gap-4 text-xs font-medium text-stone-600 shrink-0 self-start sm:self-center">
+              <div className="flex items-center gap-4 text-xs font-medium text-[var(--lkv-text-muted)] shrink-0 self-start sm:self-center">
                 {step.distance_km ? (
                   <span className="flex items-center gap-1">
                     <Footprints size={14} className="text-lkv-secondary" />
@@ -279,7 +279,7 @@ export function Step5Preview({
                 </div>
               </div>
               {it.weight_grams ? (
-                <span className="text-[11px] font-medium text-stone-500">
+                <span className="text-[11px] font-medium text-[var(--lkv-text-muted)]">
                   {it.weight_grams}g
                 </span>
               ) : null}
@@ -302,7 +302,7 @@ export function Step5Preview({
         <button
           type="button"
           onClick={() => onComplete(persistedSlug || 'mon-voyage')}
-          className="w-full sm:w-auto px-7 py-3.5 rounded-xl bg-lkv-primary hover:bg-[#1f563b] text-white text-sm font-bold shadow-md flex items-center justify-center gap-2 transition-all min-h-[48px]"
+          className="w-full sm:w-auto px-7 py-3.5 rounded-xl bg-lkv-primary hover:bg-[var(--lkv-primary-hover)] text-white text-sm font-bold shadow-md flex items-center justify-center gap-2 transition-all min-h-[48px]"
         >
           <span>Enregistrer et ouvrir mon voyage</span>
           <ArrowRight size={16} />

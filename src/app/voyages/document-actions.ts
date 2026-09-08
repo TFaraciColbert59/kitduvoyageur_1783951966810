@@ -1,5 +1,6 @@
 'use server';
 
+import { tripSegmentPath } from '@/features/trips/registry/tripPaths';
 import { revalidatePath } from 'next/cache';
 import { createClient } from '@/lib/supabase/server';
 import {
@@ -7,6 +8,7 @@ import {
   deleteTripDocumentSchema,
 } from '@/features/trips/schemas/trip.schema';
 import { addTripDocument, deleteTripDocument } from '@/lib/queries-trip-docs';
+import { getTripById } from '@/lib/queries-trips';
 
 export async function addTripDocumentAction(
   prevState: any,
@@ -40,6 +42,11 @@ export async function addTripDocumentAction(
       return { success: false, error: 'Vous devez être connecté pour ajouter un document' };
     }
 
+    const trip = await getTripById(parsed.data.tripId, user.id);
+    if (!trip || !trip.permissions.canViewDocuments || !trip.permissions.canEdit) {
+      return { success: false, error: 'Permission refusée pour ajouter un document à ce voyage' };
+    }
+
     const created = await addTripDocument({
       trip_id: parsed.data.tripId,
       user_id: user.id,
@@ -57,7 +64,7 @@ export async function addTripDocumentAction(
 
     const tripSlug = formData.get('tripSlug')?.toString();
     if (tripSlug) {
-      revalidatePath(`/voyages/${tripSlug}`);
+      revalidatePath(tripSegmentPath(tripSlug, ''));
     }
 
     return { success: true, message: 'Document sécurisé enregistré avec succès' };
@@ -78,13 +85,27 @@ export async function deleteTripDocumentAction(
       return { success: false, error: 'Identifiants invalides' };
     }
 
+    const supabase = await createClient();
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
+
+    if (!user) {
+      return { success: false, error: 'Vous devez être connecté pour supprimer un document' };
+    }
+
+    const trip = await getTripById(parsed.data.tripId, user.id);
+    if (!trip || !trip.permissions.canViewDocuments || !trip.permissions.canEdit) {
+      return { success: false, error: 'Permission refusée pour supprimer ce document' };
+    }
+
     const ok = await deleteTripDocument(tripId, documentId);
     if (!ok) {
       return { success: false, error: 'Impossible de supprimer ce document' };
     }
 
     if (tripSlug) {
-      revalidatePath(`/voyages/${tripSlug}`);
+      revalidatePath(tripSegmentPath(tripSlug, ''));
     }
 
     return { success: true };

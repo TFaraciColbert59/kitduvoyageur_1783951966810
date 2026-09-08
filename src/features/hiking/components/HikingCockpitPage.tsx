@@ -2,13 +2,16 @@
 import { lkvAlert } from '@/components/ui/dialogs';
 
 import React, { useState, useEffect, useRef } from 'react';
+import dynamic from 'next/dynamic';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useHikingStore } from '../hooks/useHikingStore';
 import DesktopTopBar from './DesktopTopBar';
 import DesktopLeftPanel from './DesktopLeftPanel';
 import DesktopRightPanel from './DesktopRightPanel';
 import DesktopDockBar, { DesktopDockTab } from './DesktopDockBar';
-import DesktopMapOverlay from './DesktopMapOverlay';
+// Import dynamique : brise la chaîne HikingCockpitPage → DesktopMapOverlay →
+// ExplorerMap → leaflet — le bundle /terrain ne porte plus la carte (Y8.2).
+const DesktopMapOverlay = dynamic(() => import('./DesktopMapOverlay'), { ssr: false });
 import ContextualInsight from './ContextualInsight';
 import CompletionView from './CompletionView';
 import KitCarrySelector from './KitCarrySelector';

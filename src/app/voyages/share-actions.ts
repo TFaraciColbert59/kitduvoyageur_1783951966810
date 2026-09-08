@@ -1,5 +1,6 @@
 'use server';
 
+import { tripSegmentPath } from '@/features/trips/registry/tripPaths';
 import { revalidatePath } from 'next/cache';
 import { createClient } from '@/lib/supabase/server';
 import { updateTripVisibilitySchema } from '@/features/trips/schemas/trip.schema';
@@ -17,6 +18,24 @@ export async function updateTripVisibilityAction(
     }
 
     const supabase = await createClient();
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
+
+    if (!user) {
+      return { success: false, error: 'Vous devez être connecté pour modifier la visibilité.' };
+    }
+
+    // L1: Seul le propriétaire peut modifier la visibilité d'un voyage
+    const { data: trip } = await supabase
+      .from('trips')
+      .select('user_id')
+      .eq('id', parsed.data.tripId)
+      .maybeSingle();
+
+    if (!trip || trip.user_id !== user.id) {
+      return { success: false, error: 'Seul le propriétaire peut modifier la visibilité de ce voyage.' };
+    }
 
     const { error } = await supabase
       .from('trips')
@@ -29,7 +48,7 @@ export async function updateTripVisibilityAction(
     }
 
     if (tripSlug) {
-      revalidatePath(`/voyages/${tripSlug}`);
+      revalidatePath(tripSegmentPath(tripSlug, ''));
     }
 
     return { success: true };

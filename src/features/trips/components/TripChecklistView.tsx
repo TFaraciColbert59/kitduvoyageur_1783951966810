@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { GlassCard } from '@/components/ui/GlassCard';
+import { useHapticFeedback } from '@/hooks/useHapticFeedback';
 import { CheckCircle2, Circle, Calendar, ShieldCheck } from 'lucide-react';
 
 export interface ChecklistItem {
@@ -241,6 +242,7 @@ export function TripChecklistView({ tripId, daysUntilStart }: TripChecklistViewP
   const checklist = getPreDepartureChecklist(daysUntilStart);
   const allItems = [...checklist.j30, ...checklist.j7, ...checklist.j1];
   const totalCount = allItems.length;
+  const { triggerHaptic } = useHapticFeedback();
 
   const [checkedIds, setCheckedIds] = useState<Set<string>>(new Set());
 
@@ -259,6 +261,7 @@ export function TripChecklistView({ tripId, daysUntilStart }: TripChecklistViewP
   }, [tripId]);
 
   const toggleItem = (id: string) => {
+    triggerHaptic('selection');
     setCheckedIds(prev => {
       const next = new Set(prev);
       if (next.has(id)) {
@@ -308,7 +311,7 @@ export function TripChecklistView({ tripId, daysUntilStart }: TripChecklistViewP
                 className={`w-full text-left p-3.5 sm:p-4 rounded-2xl border transition-all duration-150 flex items-start gap-3 min-h-[44px] ${
                   isChecked
                     ? 'bg-lkv-primary/5 border-lkv-primary/30 text-lkv-primary'
-                    : 'bg-white/80 hover:bg-white border-black/5 hover:border-black/15 text-lkv-primary'
+                    : 'glass-sub-card border border-white/60 shadow-2xs hover:bg-white/90 text-lkv-primary'
                 }`}
               >
                 <div className="mt-0.5 shrink-0">
@@ -341,7 +344,7 @@ export function TripChecklistView({ tripId, daysUntilStart }: TripChecklistViewP
   return (
     <div className="space-y-6">
       {/* Barre de progression */}
-      <GlassCard tone="sage" className="p-5 rounded-xl border border-white/70">
+      <GlassCard tone="sage" className="p-5 rounded-[var(--lkv-radius-xl)] border border-white/70">
         <div className="flex items-center justify-between gap-4 mb-2">
           <div className="flex items-center gap-2.5">
             <ShieldCheck className="w-5 h-5 text-lkv-primary" />
@@ -353,7 +356,7 @@ export function TripChecklistView({ tripId, daysUntilStart }: TripChecklistViewP
         </div>
 
         {/* Barre */}
-        <div className="w-full bg-black/5 rounded-full h-2 overflow-hidden mt-3">
+        <div className="w-full bg-white/30 rounded-full h-2 overflow-hidden mt-3">
           <div
             className="bg-lkv-primary h-full transition-all duration-300 rounded-full"
             style={{ width: `${progress}%` }}

@@ -10,6 +10,8 @@ import LkvIcon from '@/components/ui/LkvIcon';
 import CommunityHubNav from '@/components/social/CommunityHubNav';
 import CompteBackground from '@/components/compte/CompteBackground';
 import { getGroupeComplet } from '@/lib/queries/groupe';
+import { createClient } from '@/lib/supabase/client';
+import { tripPath } from '@/features/trips/registry/tripPaths';
 import nextDynamic from 'next/dynamic';
 
 // Components — always visible
@@ -42,6 +44,7 @@ export default function GroupesPage() {
   const [activeTab, setActiveTab] = useState('overview');
   const [loading, setLoading] = useState(true);
   const [formattedData, setFormattedData] = useState<any>(null);
+  const [linkedTrip, setLinkedTrip] = useState<{ id: string; slug: string; title: string } | null>(null);
   const loadedRef = useRef(false);
 
   const loadData = async (rawGroupId: string) => {
@@ -50,6 +53,21 @@ export default function GroupesPage() {
     try {
       const data = await getGroupeComplet(rawGroupId);
       setFormattedData(data);
+
+      // Y6.4 — Vérifier si un voyage LKDV est rattaché à ce groupe
+      const realId = data?.id || rawGroupId;
+      const supabase = createClient();
+      const { data: tripData } = await supabase
+        .from('trips')
+        .select('id, slug, title')
+        .eq('group_id', realId)
+        .maybeSingle();
+
+      if (tripData) {
+        setLinkedTrip(tripData);
+      } else {
+        setLinkedTrip(null);
+      }
     } catch (err) {
       console.error('Error loading group data:', err);
     } finally {
@@ -74,8 +92,8 @@ export default function GroupesPage() {
       <div className="min-h-screen bg-transparent flex items-center justify-center p-4">
         <CompteBackground />
         <div className="glass p-8 text-center max-w-md w-full relative z-10">
-          <div className="w-8 h-8 border-2 border-[#17402C] border-t-transparent rounded-full animate-spin mx-auto mb-4" />
-          <div className="font-display font-bold text-xl text-[#17402C]">Chargement du cockpit...</div>
+          <div className="w-8 h-8 border-2 border-[var(--lkv-text-primary)] border-t-transparent rounded-full animate-spin mx-auto mb-4" />
+          <div className="font-display font-bold text-xl text-[var(--lkv-text-primary)]">Chargement du cockpit...</div>
         </div>
       </div>
     );
@@ -86,8 +104,8 @@ export default function GroupesPage() {
       <div className="min-h-screen bg-transparent flex flex-col items-center justify-center p-4">
         <CompteBackground />
         <div className="glass p-8 text-center max-w-md w-full relative z-10">
-          <h2 className="font-display font-bold text-2xl text-[#17402C] mb-2">Groupe introuvable</h2>
-          <p className="text-sm text-[#5C6B5E] mb-6">Ce groupe n'existe pas ou vous n'y avez pas accès.</p>
+          <h2 className="font-display font-bold text-2xl text-[var(--lkv-text-primary)] mb-2">Groupe introuvable</h2>
+          <p className="text-sm text-[var(--lkv-text-muted)] mb-6">Ce groupe n'existe pas ou vous n'y avez pas accès.</p>
           <div className="flex gap-3 justify-center">
             <button
               onClick={refreshData}
@@ -115,13 +133,20 @@ export default function GroupesPage() {
       {/* ── MOBILE ── */}
       <div className="block md:hidden">
         <MobilePageShell videoBackground={true}>
-          <MobileGroupeView data={formattedData} groupId={groupId} user={user} members={members} onRefresh={refreshData} />
+          <MobileGroupeView
+            data={formattedData}
+            groupId={groupId}
+            user={user}
+            members={members}
+            onRefresh={refreshData}
+            linkedTrip={linkedTrip}
+          />
         </MobilePageShell>
       </div>
 
       {/* ── DESKTOP (3-Column Fullscreen 100dvh + CompteBackground) ── */}
       <div className="hidden md:block">
-        <div className="h-[100dvh] max-h-[100dvh] overflow-hidden bg-transparent font-sans text-[#17402C] relative flex flex-col">
+        <div className="h-[100dvh] max-h-[100dvh] overflow-hidden bg-transparent font-sans text-[var(--lkv-text-primary)] relative flex flex-col">
           <CompteBackground />
           <Header />
 
@@ -141,13 +166,38 @@ export default function GroupesPage() {
             {/* COLONNE CENTRALE (FLUX DE CONTENU SCROLLABLE UNIQUE) */}
             <div className="flex-1 min-w-0 h-full overflow-y-auto custom-scrollbar pr-2 space-y-5">
               {/* Breadcrumbs */}
-              <div className="flex items-center gap-2 text-xs font-medium text-[#5C6B5E]">
-                <Link href="/communaute" className="hover:text-[#17402C] transition-colors">Communauté</Link>
+              <div className="flex items-center gap-2 text-xs font-medium text-[var(--lkv-text-muted)]">
+                <Link href="/communaute" className="hover:text-[var(--lkv-text-primary)] transition-colors">Communauté</Link>
                 <LkvIcon name="chevron-right" size={12} />
-                <Link href="/groupes" className="hover:text-[#17402C] transition-colors">Mes groupes</Link>
+                <Link href="/groupes" className="hover:text-[var(--lkv-text-primary)] transition-colors">Mes groupes</Link>
                 <LkvIcon name="chevron-right" size={12} />
-                <span className="text-[#17402C] font-semibold">{formattedData.meta.titlePrefix} {formattedData.meta.titleSuffix}</span>
+                <span className="text-[var(--lkv-text-primary)] font-semibold">{formattedData.meta.titlePrefix} {formattedData.meta.titleSuffix}</span>
               </div>
+
+              {/* Pont Groupes -> Voyage (Y6.4) */}
+              {linkedTrip && (
+                <div className="p-4 rounded-2xl glass border border-white/80 bg-white/70 shadow-sm flex items-center justify-between gap-4 animate-fade-in">
+                  <div className="flex items-center gap-3 min-w-0">
+                    <div className="w-10 h-10 rounded-xl bg-[var(--lkv-primary)]/10 flex items-center justify-center shrink-0">
+                      <span className="text-xl">🗺️</span>
+                    </div>
+                    <div className="min-w-0">
+                      <span className="text-[10px] font-mono font-bold uppercase tracking-wider text-[var(--lkv-text-secondary)] block">
+                        Expédition LKDV associée
+                      </span>
+                      <h4 className="text-sm font-bold text-[var(--lkv-text-primary)] truncate">
+                        {linkedTrip.title}
+                      </h4>
+                    </div>
+                  </div>
+                  <Link
+                    href={tripPath(linkedTrip.slug)}
+                    className="glass-capsule-btn primary text-xs font-bold px-4 py-2 min-h-[44px] flex items-center shrink-0"
+                  >
+                    Ouvrir le Cockpit Voyage →
+                  </Link>
+                </div>
+              )}
 
               {/* OVERVIEW TAB ONLY: Hero & Progression Card */}
               {activeTab === 'overview' && (
@@ -170,11 +220,11 @@ export default function GroupesPage() {
             </div>
 
             {/* COLONNE DROITE (WIDGETS SIDEBAR) - 300px */}
-            <aside className="w-[300px] shrink-0 h-full overflow-y-auto custom-scrollbar flex flex-col gap-4">
+            <div className="w-[300px] shrink-0 h-full overflow-y-auto custom-scrollbar flex flex-col gap-4">
               <CountdownCard data={formattedData} />
               <VoyageursCard travelers={formattedData.travelers} groupId={groupId} onRefresh={refreshData} user={user} members={members} group={formattedData} isOrganizer={isCurrentUserOrganizer} />
               <AProposCard data={formattedData} />
-            </aside>
+            </div>
           </main>
         </div>
       </div>

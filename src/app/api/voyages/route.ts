@@ -20,6 +20,20 @@ export async function GET(request: Request) {
 
 export async function POST(request: Request) {
   try {
+    // M8: Protection CSRF sur les mutations
+    const origin = request.headers.get('origin');
+    if (origin) {
+      try {
+        const originHost = new URL(origin).host;
+        const requestHost = request.headers.get('x-forwarded-host') || request.headers.get('host');
+        if (requestHost && originHost !== requestHost) {
+          return NextResponse.json({ error: 'Origine de requête non autorisée' }, { status: 403 });
+        }
+      } catch {
+        return NextResponse.json({ error: 'Origine invalide' }, { status: 403 });
+      }
+    }
+
     const supabase = await createClient();
     const {
       data: { user },

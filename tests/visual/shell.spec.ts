@@ -1,4 +1,5 @@
-import { test, expect, Page } from '@playwright/test';
+import { test, expect } from '@playwright/test';
+import { prepareVisualPage, expectVisualSnapshot } from './_helpers/prepareVisualPage';
 
 /**
  * Tests de régression visuelle — Shell Mobile LKDV
@@ -15,54 +16,68 @@ const PUBLIC_ROUTES = [
   { path: '/carte-interactive', name: 'carte-interactive' },
 ];
 
-async function waitForShellReady(page: Page): Promise<void> {
-  // Attendre la stabilisation du réseau
-  await page.waitForLoadState('networkidle', { timeout: 30_000 }).catch(() => {
-    // Certaines pages ont des WebSocket persistants — on continue
-  });
-  // Attendre la disparition des spinners de chargement
-  await page.waitForSelector('[class*="animate-spin"]', {
-    state: 'hidden',
-    timeout: 15_000,
-  }).catch(() => {
-    // Pas de spinner = déjà chargé
-  });
-  // Pause pour les transitions CSS/Framer Motion
-  await page.waitForTimeout(800);
-}
-
 // Tests de screenshot pour chaque route publique
 for (const route of PUBLIC_ROUTES) {
   test(`shell visuel — ${route.name} (iPhone 14 Pro)`, async ({ page }) => {
-    await page.goto(route.path);
-    await waitForShellReady(page);
+    await prepareVisualPage(page, route.path);
 
     // Vérifier qu'il y a du contenu (pas d'écran blanc total)
     const elementCount = await page.locator('body *').count();
     expect(elementCount).toBeGreaterThan(10);
 
-    await expect(page).toHaveScreenshot(`${route.name}.png`, {
-      fullPage: false,
-      threshold: 0.01,
-      maxDiffPixels: 500,
-    });
+    await expectVisualSnapshot(page, `${route.name}.png`);
   });
 }
 
-test('pays — skeleton visible pendant le chargement du globe (réseau ralenti)', async ({ page }) => {
-  // Intercepter le GeoJSON local et le retarder de 2 secondes
-  await page.route('/data/countries-110m.geojson', async route => {
-    await new Promise<void>(resolve => setTimeout(resolve, 2_000));
-    await route.continue();
-  });
+// Test dédié : le spinner DOIT rester visible pendant le chargement du globe.
+// Il n'utilise PAS le protocole helper (prepareVisualPage attend la disparition
+// des spinners) : la route est interceptée et suspendue AVANT navigation, et la
+// capture fige volontairement l'état de chargement.
+//
+// ⚠ Deux pièges traités ici :
+// 1. Le service worker (public/sw.js, scope /) contourne page.route et peut
+//    servir le GeoJSON depuis son cache — register() est neutralisé (l'option
+//    serviceWorkers:'block' casse l'hydratation de l'app).
+// 2. Un pattern de route sans wildcard ne matche jamais l'URL absolue.
+test.describe('pays — chargement ralenti (sans service worker)', () => {
+  test('pays — skeleton visible pendant le chargement du globe (réseau ralenti)', async ({ page }) => {
+    await page.addInitScript(() => {
+      Object.defineProperty(navigator.serviceWorker, 'register', {
+        value: () => new Promise<never>(() => {}),
+        configurable: true,
+      });
+      navigator.serviceWorker.getRegistrations().then((regs) => {
+        regs.forEach((reg) => reg.unregister());
+      });
+    });
 
-  await page.goto('/pays');
+    await page.emulateMedia({ reducedMotion: 'reduce' });
 
-  // Le spinner DOIT être visible immédiatement
-  await expect(page.locator('[class*="animate-spin"]').first()).toBeVisible({ timeout: 5_000 });
+    // Requête GeoJSON suspendue (jamais de réponse) : l'état « Chargement des
+    // pays… » dure jusqu'à l'abort sécurité de 4 s de CountryGlobe.
+    await page.route('**/data/countries-110m.geojson', async () => {
+      await new Promise<void>(() => {});
+    });
 
-  // Screenshot du skeleton (avec le spinner présent)
-  await expect(page).toHaveScreenshot('pays-skeleton-loading.png', {
-    threshold: 0.03,
+    await page.goto('/pays');
+
+    // Le spinner DOIT être visible pendant le chargement — 15 s pour couvrir
+    // le chargement du chunk dynamique du globe (three.js, cache froid).
+    await expect(page.locator('[class*="animate-spin"]').first()).toBeVisible({ timeout: 15_000 });
+
+    // Masquage persistant (feuille de style) du canvas WebGL et de la vidéo :
+    // globe.gl peut recréer son canvas après un display:none ponctuel, et la
+    // première frame décodée de la vidéo varie d'un run à l'autre. Le fond
+    // statique .page-background sert de référence — hors périmètre du test.
+    await page.addStyleTag({
+      content: 'canvas, video.earth-bg-video { display: none !important; }',
+    });
+
+    // Screenshot du skeleton (avec le spinner présent) — maxDiffPixels couvre
+    // l'anti-aliasing du bord du spinner (1-3 px constatés entre runs).
+    await expect(page).toHaveScreenshot('pays-skeleton-loading.png', {
+      threshold: 0.03,
+      maxDiffPixels: 20,
+    });
   });
 });

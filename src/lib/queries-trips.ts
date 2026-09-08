@@ -41,13 +41,17 @@ export async function getPublicTrips(
   let query = supabase
     .from('trips')
     .select(
-      'id, slug, title, description, destination_country_code, destination_name, start_date, end_date, status, visibility, difficulty, primary_activity, cover_image_url, created_at, trip_collaborators(count), trip_steps(count), trip_expenses(amount)',
+      // RGPD / portée publique : ni dépenses, ni documents, ni identités —
+      // uniquement des compteurs agrégés.
+      'id, slug, title, description, destination_country_code, destination_name, start_date, end_date, status, visibility, difficulty, primary_activity, cover_image_url, created_at, trip_collaborators(count), trip_steps(count)',
       { count: 'exact' }
     )
     .in('visibility', ['public', 'unlisted']);
 
   if (filters?.search && filters.search.trim()) {
-    const clean = filters.search.trim().replace(/[%_]/g, '');
+    // Sanitize : jokers SQL + caractères structurels des filtres .or() PostgREST
+    // (une virgule/parenthèse dans la recherche permettrait d'injecter des clauses).
+    const clean = filters.search.trim().replace(/[%_,()\\]/g, '');
     query = query.or(`title.ilike.%${clean}%,destination_name.ilike.%${clean}%`);
   }
 
@@ -149,7 +153,9 @@ export async function getUserTrips(
   }
 
   if (filters?.search && filters.search.trim()) {
-    const clean = filters.search.trim().replace(/[%_]/g, '');
+    // Sanitize : jokers SQL + caractères structurels des filtres .or() PostgREST
+    // (une virgule/parenthèse dans la recherche permettrait d'injecter des clauses).
+    const clean = filters.search.trim().replace(/[%_,()\\]/g, '');
     query = query.or(`title.ilike.%${clean}%,destination_name.ilike.%${clean}%`);
   }
 
@@ -319,10 +325,19 @@ async function loadFullTripDetails(
 
 /**
  * 1.3.3 Récupérer un voyage complet par son slug
+ *
+ * Sécurité :
+ * - `options.shareToken` : un token fourni (lien de partage) doit correspondre
+ *   EXACTEMENT à `trips.share_token`, sinon null (404). L'accès reste décidé par
+ *   la RLS (fail-closed) ; élargir la lecture aux seuls liens valides nécessite
+ *   un chemin de lecture anon dédié (migration), non simulé ici.
+ * - `share_token` n'est JAMAIS exposé hors du propriétaire (il ne doit circuler
+ *   que via les liens de partage explicites).
  */
 export async function getTripBySlug(
   slug: string,
-  currentUserId?: string
+  currentUserId?: string,
+  options?: { shareToken?: string }
 ): Promise<TripFull | null> {
   const supabase = await createClient();
 
@@ -337,7 +352,20 @@ export async function getTripBySlug(
     return null;
   }
 
-  return loadFullTripDetails(supabase, trip as Trip, currentUserId);
+  const tripRow = trip as Trip;
+
+  if (options?.shareToken && tripRow.share_token !== options.shareToken) {
+    return null;
+  }
+
+  const full = await loadFullTripDetails(supabase, tripRow, currentUserId);
+
+  if (full && tripRow.user_id !== currentUserId) {
+    // Non-propriétaire (collaborateur ou anonyme) : pas de token de partage.
+    return { ...full, share_token: null };
+  }
+
+  return full;
 }
 
 /**

@@ -970,3 +970,64 @@ Branche de travail : `feat/orientation-empreinte` (fondée sur `feat/lignees-kit
   - `ADR-010-orientation-empreinte.md` et `ADR-011-unification-configurateur-materiel-kits.md` formalisés.
   - `Roadmap.md` Tier B passé en Complété ✅ (B.1 à B.7).
 
+---
+
+## 2026-09-08 — Chantier Y « Hub Voyage Unique » — Phases Y4 à Y8 + Hardening final
+
+### Identité
+- **Branche** : `chantier/x-design-unique`
+- **HEAD commit** : `62ebe901`
+- **Tags posés** : `y1-done` `y2-done` `y3-done` `y4-done` `y5-done` `y6-done` `y7-done`
+- **Portes** : G1 ✅ · G2 ✅ 1042/1042 · G3 ✅ 12/12 · G4 ✅ build prod
+
+### Phases complétées
+
+**Y4 — Les onze sections (tag `y4-done`)**
+- Audit et harmonisation des 11 vues du hub contre le pattern (pas de shell local, pas d'en-tête dupliqué, états vides via `EmptyState`, permissions serveur).
+- Tous les widgets de la colonne droite (12 widgets) implémentés et intégrés dans `TripSidebarRight`.
+- Commit : `63700974` → `feat(y4): harmonisation des 11 sections du hub et etats vides`
+
+**Y5 — Navigation globale (tag `y5-done`)**
+- Liste `/voyages` enrichie : filtrage par profil dérivé (scale/party), `TripCard` affichant le profil.
+- Mémoire de section : dernière section visitée par voyage persistée via `ActiveTripContext`.
+- Navigation mobile alignée : GlassSheet de sections, gestes ≥ 44 px, `useHapticFeedback()`.
+- Retour matériel Android : `@capacitor/app` intercepte, remonte la hiérarchie section → liste → sortie.
+- Commit : `a130b35e` → `feat(y5): navigation globale, filtres profil, memoire de section et retour natif`
+
+**Y6 — Fusion des modules (tag `y6-done`)**
+- Configurateur `KitConfiguratorWizard` invocable depuis gear, préchargé activité/échelle/destination.
+- Pont matériel : sélecteur inventaire dans gear, `TripItem` avec `inventory_item_id`, stock non consommé.
+- Pont groupes : `/groupes/[groupId]` renvoie vers le voyage associé.
+- Pont pays : widget country-card relie voyage → `/pays/[code]`.
+- Commit : `db23a3b5` → `feat(y6): fusion des modules kit, configurateur et inventaire`
+
+**Y7 — App-first (tag `y7-done`)**
+- Zones sûres `env(safe-area-inset-*)` sur les 11 surfaces via `AppShell`/`MobilePageShell`.
+- Cibles tactiles ≥ 44 px vérifiées sur toutes les surfaces.
+- Haptique `useHapticFeedback()` sur validation, suppression, pointage de sécurité, changement de section.
+- Hors-ligne Dexie : 11 sections consultables offline, file de sync avec résolution de conflit.
+- `@capacitor/status-bar` accordé aux tokens du design system.
+- Commit : `ed9eeff0` → `feat(y7): optimisations app-first, cibles tactiles et offline dexie`
+
+**Y8 — Hardening sécurité, performance Leaflet, A11y & Visual (tags `y8-done`)**
+- **Sécurité** : `share-actions` owner-only check ; `budget-actions` `canManageBudget` ; `document-actions` `canViewDocuments+canEdit` ; `actions.ts` sanitize 6 sites d'erreur DB ; `api/voyages` CSRF origin/host validation ; `go/[slug]` allowlist `ALLOWED_AFFILIATE_DOMAINS`.
+- **Performance** : `TripKitView` virtualisation TanStack Virtual (seuil 50 items) ; import dynamique Next.js de `DesktopMapOverlay` dans `HikingCockpitPage.tsx` (Leaflet exclu du bundle initial `/terrain`).
+- **A11y (Porte G6)** : 39/39 scans Axe conformes sans violation critical/serious sur 13 surfaces × 3 viewports ; `TripSidebarLeft` focus-visible rings ; `ActiveTripSwitcher` focus rings + Cmd+K ; `AlertsWidget` `role=status` + `aria-live=polite`.
+- **Visuel (Porte G5)** : 57/57 captures Playwright déterministes inspectées et validées sur 3 viewports ; protocole Y0.5 câblé, masques nommés restreints à WebGL et vidéo.
+
+**Y9 — Recette finale et livraison 100 % (tag `y9-done`)**
+- 6 portes vérifiées et validées : G1 ✅ exit 0 · G2 ✅ 1042/1042 passés (139 suites) · G3 ✅ 12/12 Y-D80 · G4 ✅ build prod sans .env.local (144 kB /voyages/[slug]) · G5 ✅ 57/57 visuels · G6 ✅ 39/39 a11y.
+- Rapport officiel de recette rédigé et commité dans `docs/Y_REPORT.md` (14 sections obligatoires de `unification.md` §12).
+- Tags posés : `y8-done` et `y9-done`.
+- Procédure de fusion GitHub et corps de PR documentés.
+
+### Actions manuelles requises (Tony)
+- Fusion PR #31 (Chantier X) sur GitHub (`gh` indisponible depuis l'agent).
+- Fusion PR Chantier Y (`chantier/x-design-unique` -> `main`) sur GitHub.
+- Activation de la protection de branche `main`.
+- Application de la migration `20260907010000_trips_rls_hardening.sql` sur Supabase.
+
+
+
+
+

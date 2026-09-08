@@ -82,9 +82,9 @@ export const AutoGenTripView: React.FC<AutoGenTripViewProps> = ({
   const maxWeightKg = 14.0; // 20% de 70kg
 
   return (
-    <div className="w-full min-h-screen bg-stone-50 dark:bg-stone-950 pb-32">
+    <div className="w-full min-h-screen bg-[var(--lkv-surface-paper)]  pb-32">
       {/* Barre supérieure : Saisie d'intention */}
-      <div className="sticky top-0 z-30 bg-stone-50/80 dark:bg-stone-950/80 backdrop-blur-md border-b border-stone-200 dark:border-stone-800 py-4 px-4">
+      <div className="sticky top-0 z-30 bg-[var(--lkv-surface-paper)]  backdrop-blur-md border-b border-[var(--lkv-stone-200)]  py-4 px-4">
         <TripBriefBar
           initialValue={initialBriefInput}
           onGenerate={handleGenerate}
@@ -95,14 +95,14 @@ export const AutoGenTripView: React.FC<AutoGenTripViewProps> = ({
       <div className="max-w-5xl mx-auto px-4 py-6 space-y-6">
         {/* Journal de compromis (Tradeoffs Log) */}
         {tradeoffsLog.length > 0 && (
-          <div className="rounded-2xl p-4 bg-forest-50/70 dark:bg-forest-950/30 border border-forest-200 dark:border-forest-800/60 text-xs text-forest-900 dark:text-forest-200 space-y-1.5">
-            <div className="flex items-center font-semibold text-forest-800 dark:text-forest-300 gap-1.5 mb-1">
+          <div className="rounded-2xl p-4 bg-[var(--lkv-success-bg)]  border border-[var(--lkv-success-bg)]  text-xs text-[var(--lkv-primary)]  space-y-1.5">
+            <div className="flex items-center font-semibold text-[var(--lkv-primary-soft)]  gap-1.5 mb-1">
               <Sparkles className="w-4 h-4" />
               <span>Optimisations & Compromis Déterministes Appliqués :</span>
             </div>
             {tradeoffsLog.map((log, idx) => (
               <div key={idx} className="flex items-start gap-1.5 pl-1">
-                <span className="text-forest-500 font-bold">•</span>
+                <span className="text-[var(--lkv-secondary)] font-bold">•</span>
                 <span>{log}</span>
               </div>
             ))}

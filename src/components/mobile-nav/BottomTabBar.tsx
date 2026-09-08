@@ -8,6 +8,8 @@ import { useHapticFeedback } from '@/hooks/useHapticFeedback';
 import { useUnreadBadge } from '@/hooks/useUnreadBadge';
 import { useCartCount } from '@/hooks/useCartCount';
 import LkvIcon from '@/components/ui/LkvIcon';
+import { tripSectionHref, sectionIdFromPathname, tripSectionRegistry } from '@/features/trips/registry/tripSectionRegistry';
+import type { TripSectionId } from '@/features/trips/engine/tripProfileEngine';
 
 interface Tab {
   href: string;
@@ -433,8 +435,18 @@ function BottomTabBar() {
     )
   );
   const isMessageriePage = pathname === '/messagerie';
+  const isVoyagesHub = pathname === '/voyages';
+  // Y2 : le hub est URL-driven (layout de segment). Toute route sous
+  // /voyages/[slug] sauf le wizard est une section du cockpit.
+  const isVoyageSubpage = pathname === '/voyages/nouveau';
+  const isVoyageDetail = Boolean(
+    pathname &&
+    pathname.startsWith('/voyages/') &&
+    pathname !== '/voyages' &&
+    !isVoyageSubpage
+  );
 
-  const hasUpperExtension = isGroupesHub || isGroupeCockpit || isClubsHub || isClubDetail || isCarnetsHub || isCarnetDetail || isPaysHub || isPaysDetail || isCommunityPage || isMaterielSection || isMessageriePage;
+  const hasUpperExtension = isGroupesHub || isGroupeCockpit || isClubsHub || isClubDetail || isCarnetsHub || isCarnetDetail || isPaysHub || isPaysDetail || isCommunityPage || isMaterielSection || isMessageriePage || isVoyagesHub || isVoyageDetail;
 
   const [activeGroupesTab, setActiveGroupesTab] = useState<'mes-groupes' | 'decouvrir'>('mes-groupes');
   const [activeCockpitTab, setActiveCockpitTab] = useState<string>('overview');
@@ -450,6 +462,7 @@ function BottomTabBar() {
   const [activeDepartTab, setActiveDepartTab] = useState<string>('overview');
   const [activeMaterielTab, setActiveMaterielTab] = useState<string>('overview');
   const [activeKitsTab, setActiveKitsTab] = useState<string>('all');
+  const [activeVoyagesHubTab, setActiveVoyagesHubTab] = useState<'user' | 'public'>('user');
 
   useEffect(() => {
     if (!pathname) return;
@@ -519,6 +532,9 @@ function BottomTabBar() {
       const paysDetailHandler = (e: any) => {
         if (e.detail) setActivePaysDetailTab(e.detail);
       };
+      const voyagesHubHandler = (e: any) => {
+        if (e.detail) setActiveVoyagesHubTab(e.detail);
+      };
       const departHandler = (e: any) => {
         if (e.detail) {
           setActiveDepartTab(e.detail);
@@ -552,6 +568,7 @@ function BottomTabBar() {
       window.addEventListener('carnet-detail-tab-change', carnetDetailHandler);
       window.addEventListener('pays-continent-change', paysContinentHandler);
       window.addEventListener('pays-detail-tab-change', paysDetailHandler);
+      window.addEventListener('voyages-hub-tab-change', voyagesHubHandler);
       window.addEventListener('depart-section-change', departHandler);
       window.addEventListener('kits-section-change', kitsHandler);
       window.addEventListener('messagerie-tab-state', messagerieStateHandler);
@@ -568,7 +585,8 @@ function BottomTabBar() {
         window.removeEventListener('carnet-detail-tab-change', carnetDetailHandler);
         window.removeEventListener('pays-continent-change', paysContinentHandler);
         window.removeEventListener('pays-detail-tab-change', paysDetailHandler);
-        window.removeEventListener('depart-section-change', departHandler);
+        window.removeEventListener('voyages-hub-tab-change', voyagesHubHandler);
+          window.removeEventListener('depart-section-change', departHandler);
         window.removeEventListener('kits-section-change', kitsHandler);
         window.removeEventListener('messagerie-tab-state', messagerieStateHandler);
         window.removeEventListener('messagerie-tab-change', messagerieTabHandler);
@@ -584,6 +602,17 @@ function BottomTabBar() {
       setActiveMessagerieTab(tabKey);
       if (typeof window !== 'undefined') {
         window.dispatchEvent(new CustomEvent('messagerie-tab-change', { detail: tabKey }));
+      }
+    } else if (isVoyagesHub) {
+      setActiveVoyagesHubTab(tabKey as 'user' | 'public');
+      if (typeof window !== 'undefined') {
+        window.dispatchEvent(new CustomEvent('voyages-hub-tab-change', { detail: tabKey }));
+      }
+    } else if (isVoyageDetail) {
+      // Y2 : navigation URL via le registre des sections (slug = 2e segment).
+      const slug = pathname?.split('/')[2];
+      if (slug) {
+        router.push(tripSectionHref(slug, tabKey as TripSectionId));
       }
     } else if (isMaterielSection) {
       setActiveMaterielTab(tabKey);
@@ -734,6 +763,18 @@ function BottomTabBar() {
         { id: 'communaute', label: 'Communauté' },
       ];
     }
+    if (isVoyagesHub) {
+      return [
+        { id: 'user', label: 'Mes voyages' },
+        { id: 'public', label: 'Explorer' },
+      ];
+    }
+    if (isVoyageDetail) {
+      return tripSectionRegistry.map((s) => ({
+        id: s.id,
+        label: s.label,
+      }));
+    }
     return [
       { id: 'fil', label: 'Fil' },
       { id: 'carnets', label: 'Carnets' },
@@ -746,6 +787,10 @@ function BottomTabBar() {
 
   const currentUpperId = isMessageriePage
     ? activeMessagerieTab
+    : isVoyagesHub
+    ? activeVoyagesHubTab
+    : isVoyageDetail
+    ? (sectionIdFromPathname(pathname) ?? 'overview')
     : isMaterielSection
     ? activeMaterielTab
     : isGroupesHub
@@ -766,7 +811,7 @@ function BottomTabBar() {
     ? activePaysDetailTab
     : activeCommunityTab;
 
-  const isWideUpperTray = isGroupeCockpit || isClubDetail || isCarnetDetail || isPaysHub || isPaysDetail || isMaterielSection;
+  const isWideUpperTray = isGroupeCockpit || isClubDetail || isCarnetDetail || isPaysHub || isPaysDetail || isMaterielSection || isVoyageDetail;
 
   const badges = useUnreadBadge();
   const badgeFor = (href: string): number => {

@@ -11,12 +11,16 @@ export async function POST(request: NextRequest) {
     const signature = request.headers.get('x-travelpayouts-signature') || '';
     const secret = process.env.TRAVELPAYOUTS_WEBHOOK_SECRET || '';
 
-    // Vérification de la signature si le secret est configuré
-    if (secret) {
-      const isValid = verifyAffiliatePostbackSignature(rawBody, signature, secret);
-      if (!isValid) {
-        return NextResponse.json({ error: 'Signature invalide.' }, { status: 401 });
-      }
+    // Fail-closed : sans secret configuré, on refuse le webhook plutôt que
+    // d'enregistrer des conversions non authentifiées (données financières).
+    if (!secret) {
+      console.error('[Travelpayouts Webhook] TRAVELPAYOUTS_WEBHOOK_SECRET non configuré — webhook refusé.');
+      return NextResponse.json({ error: 'Webhook non configuré.' }, { status: 503 });
+    }
+
+    const isValid = verifyAffiliatePostbackSignature(rawBody, signature, secret);
+    if (!isValid) {
+      return NextResponse.json({ error: 'Signature invalide.' }, { status: 401 });
     }
 
     const json = JSON.parse(rawBody);

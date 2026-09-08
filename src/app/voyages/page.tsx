@@ -61,7 +61,11 @@ export default async function VoyagesPage() {
     <>
       <script
         type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+        dangerouslySetInnerHTML={{
+          // Échappement < pour empêcher toute sortie du bloc script via un
+          // titre/description utilisateur contenant "</script>".
+          __html: JSON.stringify(jsonLd).replace(/</g, '\\u003c'),
+        }}
       />
       <VoyagesClient
         initialPublicTrips={initialPublicTrips}

@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { X, Footprints, Car, Bus, Train, Plane, Ship, Bike, Compass } from 'lucide-react';
-import { LkvButton } from '@/components/ui/LkvButton';
+import { GlassCapsuleBtn } from '@/components/ui/GlassCapsuleBtn';
 import type { PlannerStep } from './plannerEngine';
 
 export interface StepEditModalProps {
@@ -104,19 +104,19 @@ export function StepEditModal({
   }
 
   return (
-    <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4 bg-black/50 backdrop-blur-sm animate-in fade-in">
+    <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4 bg-black/40 backdrop-blur-sm animate-in fade-in">
       <div
-        className="w-full sm:max-w-lg bg-surface-card border border-border/60 rounded-t-3xl sm:rounded-2xl shadow-2xl overflow-hidden max-h-[90vh] flex flex-col"
+        className="w-full sm:max-w-lg glass rounded-t-3xl sm:rounded-[var(--lkv-radius-card)] border border-white/60 shadow-2xl overflow-hidden max-h-[90vh] flex flex-col"
         role="dialog"
         aria-modal="true"
       >
         {/* Header modal */}
-        <div className="flex items-center justify-between px-5 py-4 border-b border-border/40">
+        <div className="flex items-center justify-between px-5 py-4 border-b border-white/40">
           <div>
-            <span className="text-[11px] font-bold uppercase tracking-wider text-forest-800">
+            <span className="text-[11px] font-bold uppercase tracking-wider text-[var(--lkv-primary)]">
               Jour {initialStep ? initialStep.day_number : dayNumber}
             </span>
-            <h3 className="font-bold text-base sm:text-lg text-text-primary">
+            <h3 className="font-bold text-base sm:text-lg text-[var(--lkv-text-primary)]">
               {initialStep ? 'Modifier l’étape' : 'Ajouter une étape'}
             </h3>
           </div>
@@ -124,7 +124,7 @@ export function StepEditModal({
             type="button"
             onClick={onClose}
             aria-label="Fermer"
-            className="w-9 h-9 rounded-full flex items-center justify-center hover:bg-surface-subtle text-text-secondary transition-colors"
+            className="min-h-[44px] min-w-[44px] flex items-center justify-center rounded-full glass-sub-card border border-white/60 text-[var(--lkv-text-muted)] hover:text-[var(--lkv-primary)] transition-all shadow-2xs"
           >
             <X className="w-5 h-5" />
           </button>
@@ -133,14 +133,14 @@ export function StepEditModal({
         {/* Formulaire défilant */}
         <form onSubmit={handleSubmit} className="p-5 overflow-y-auto space-y-4 flex-1">
           {error && (
-            <div className="p-3 bg-red-50 border border-red-200 text-red-700 text-xs rounded-xl">
+            <div className="p-3 rounded-xl glass tone-danger border text-xs text-[var(--lkv-danger)]">
               {error}
             </div>
           )}
 
           {/* Titre */}
           <div>
-            <label className="block text-xs font-semibold text-text-primary mb-1">
+            <label className="block text-xs font-semibold text-[var(--lkv-text-primary)] mb-1">
               Titre de l’étape *
             </label>
             <input
@@ -149,13 +149,13 @@ export function StepEditModal({
               onChange={(e) => setTitle(e.target.value)}
               placeholder="Ex: Montée au refuge du glacier"
               required
-              className="w-full px-3.5 py-2.5 rounded-xl border border-border/60 bg-surface-subtle/40 text-text-primary text-sm focus:outline-none focus:ring-2 focus:ring-forest-800/20 focus:border-forest-800"
+              className="glass-input w-full px-3.5 py-2.5 text-sm text-[var(--lkv-text-primary)]"
             />
           </div>
 
           {/* Moyen de transport */}
           <div>
-            <label className="block text-xs font-semibold text-text-primary mb-1.5">
+            <label className="block text-xs font-semibold text-[var(--lkv-text-primary)] mb-1.5">
               Mode de transport / Type
             </label>
             <div className="flex flex-wrap gap-1.5">
@@ -166,10 +166,10 @@ export function StepEditModal({
                     key={id}
                     type="button"
                     onClick={() => setTransportMode(id)}
-                    className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-all ${
+                    className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium transition-all shadow-2xs ${
                       isSelected
-                        ? 'bg-forest-900 text-white shadow-sm'
-                        : 'bg-surface-subtle text-text-secondary hover:text-text-primary border border-border/30'
+                        ? 'bg-[var(--lkv-primary)] text-white shadow-sm border border-[var(--lkv-primary)]'
+                        : 'glass-sub-card border border-white/60 text-[var(--lkv-text-muted)] hover:text-[var(--lkv-primary)] hover:bg-white/90'
                     }`}
                   >
                     <Icon className="w-3.5 h-3.5" />
@@ -183,7 +183,7 @@ export function StepEditModal({
           {/* Lieu & Hébergement */}
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div>
-              <label className="block text-xs font-semibold text-text-primary mb-1">
+              <label className="block text-xs font-semibold text-[var(--lkv-text-primary)] mb-1">
                 Lieu / Destination
               </label>
               <input
@@ -191,11 +191,11 @@ export function StepEditModal({
                 value={locationName}
                 onChange={(e) => setLocationName(e.target.value)}
                 placeholder="Ex: Refuge des Écrins"
-                className="w-full px-3 py-2 rounded-xl border border-border/60 bg-surface-subtle/40 text-text-primary text-sm focus:outline-none focus:ring-2 focus:ring-forest-800/20"
+                className="glass-input w-full px-3 py-2 text-sm text-[var(--lkv-text-primary)]"
               />
             </div>
             <div>
-              <label className="block text-xs font-semibold text-text-primary mb-1">
+              <label className="block text-xs font-semibold text-[var(--lkv-text-primary)] mb-1">
                 Hébergement
               </label>
               <input
@@ -203,7 +203,7 @@ export function StepEditModal({
                 value={accommodationName}
                 onChange={(e) => setAccommodationName(e.target.value)}
                 placeholder="Ex: Bivouac sous tente"
-                className="w-full px-3 py-2 rounded-xl border border-border/60 bg-surface-subtle/40 text-text-primary text-sm focus:outline-none focus:ring-2 focus:ring-forest-800/20"
+                className="glass-input w-full px-3 py-2 text-sm text-[var(--lkv-text-primary)]"
               />
             </div>
           </div>
@@ -211,7 +211,7 @@ export function StepEditModal({
           {/* Distance & Dénivelés */}
           <div className="grid grid-cols-3 gap-2 sm:gap-3">
             <div>
-              <label className="block text-xs font-semibold text-text-primary mb-1">
+              <label className="block text-xs font-semibold text-[var(--lkv-text-primary)] mb-1">
                 Distance (km)
               </label>
               <input
@@ -221,11 +221,11 @@ export function StepEditModal({
                 value={distanceKm}
                 onChange={(e) => setDistanceKm(e.target.value)}
                 placeholder="0"
-                className="w-full px-3 py-2 rounded-xl border border-border/60 bg-surface-subtle/40 text-text-primary text-sm focus:outline-none focus:ring-2 focus:ring-forest-800/20"
+                className="glass-input w-full px-3 py-2 text-sm text-[var(--lkv-text-primary)]"
               />
             </div>
             <div>
-              <label className="block text-xs font-semibold text-text-primary mb-1">
+              <label className="block text-xs font-semibold text-[var(--lkv-text-primary)] mb-1">
                 D+ (mètres)
               </label>
               <input
@@ -234,11 +234,11 @@ export function StepEditModal({
                 value={elevationGainM}
                 onChange={(e) => setElevationGainM(e.target.value)}
                 placeholder="0"
-                className="w-full px-3 py-2 rounded-xl border border-border/60 bg-surface-subtle/40 text-text-primary text-sm focus:outline-none focus:ring-2 focus:ring-forest-800/20"
+                className="glass-input w-full px-3 py-2 text-sm text-[var(--lkv-text-primary)]"
               />
             </div>
             <div>
-              <label className="block text-xs font-semibold text-text-primary mb-1">
+              <label className="block text-xs font-semibold text-[var(--lkv-text-primary)] mb-1">
                 D- (mètres)
               </label>
               <input
@@ -247,14 +247,14 @@ export function StepEditModal({
                 value={elevationLossM}
                 onChange={(e) => setElevationLossM(e.target.value)}
                 placeholder="0"
-                className="w-full px-3 py-2 rounded-xl border border-border/60 bg-surface-subtle/40 text-text-primary text-sm focus:outline-none focus:ring-2 focus:ring-forest-800/20"
+                className="glass-input w-full px-3 py-2 text-sm text-[var(--lkv-text-primary)]"
               />
             </div>
           </div>
 
           {/* Description */}
           <div>
-            <label className="block text-xs font-semibold text-text-primary mb-1">
+            <label className="block text-xs font-semibold text-[var(--lkv-text-primary)] mb-1">
               Description / Conseils
             </label>
             <textarea
@@ -262,28 +262,28 @@ export function StepEditModal({
               value={description}
               onChange={(e) => setDescription(e.target.value)}
               placeholder="Conseils d'accès, horaires de départ conseillés..."
-              className="w-full px-3 py-2 rounded-xl border border-border/60 bg-surface-subtle/40 text-text-primary text-sm focus:outline-none focus:ring-2 focus:ring-forest-800/20 resize-none"
+              className="glass-input w-full px-3 py-2 text-sm text-[var(--lkv-text-primary)] resize-none"
             />
           </div>
 
           {/* Actions */}
-          <div className="flex items-center justify-end gap-2.5 pt-3 border-t border-border/30">
-            <button
+          <div className="flex items-center justify-end gap-2.5 pt-3 border-t border-white/40">
+            <GlassCapsuleBtn
+              variant="default"
+              size="sm"
               type="button"
               onClick={onClose}
-              className="px-4 py-2 rounded-xl text-xs font-semibold text-text-secondary hover:bg-surface-subtle transition-colors min-h-[42px]"
             >
               Annuler
-            </button>
-            <LkvButton
+            </GlassCapsuleBtn>
+            <GlassCapsuleBtn
               variant="primary"
               size="sm"
               type="submit"
               disabled={isSubmitting}
-              className="min-h-[42px] px-5"
             >
               {isSubmitting ? 'Enregistrement...' : 'Enregistrer'}
-            </LkvButton>
+            </GlassCapsuleBtn>
           </div>
         </form>
       </div>

@@ -13,6 +13,7 @@ import ParcoursCard from './ParcoursCard';
 import ProgressionCard from './ProgressionCard';
 import { useHapticFeedback } from '@/hooks/useHapticFeedback';
 import { useToast } from '@/contexts/ToastContext';
+import { tripPath } from '@/features/trips/registry/tripPaths';
 
 interface MobileGroupeViewProps {
   data: any;
@@ -20,9 +21,17 @@ interface MobileGroupeViewProps {
   user?: any;
   members?: any[];
   onRefresh?: () => void;
+  linkedTrip?: { id: string; slug: string; title: string } | null;
 }
 
-export default function MobileGroupeView({ data, groupId, user, members, onRefresh }: MobileGroupeViewProps) {
+export default function MobileGroupeView({
+  data,
+  groupId,
+  user,
+  members,
+  onRefresh,
+  linkedTrip,
+}: MobileGroupeViewProps) {
   const { triggerHaptic } = useHapticFeedback();
   const { toast } = useToast();
   const [activeSection, setActiveSection] = useState<'overview' | 'parcours' | 'tasks' | 'equipment' | 'expenses' | 'decisions' | 'discussion' | 'members'>('overview');
@@ -163,6 +172,29 @@ export default function MobileGroupeView({ data, groupId, user, members, onRefre
             {/* OVERVIEW */}
             {activeSection === 'overview' && (
               <div className="space-y-4">
+                {/* Pont Groupes -> Voyage (Y6.4) */}
+                {linkedTrip && (
+                  <div className="p-3.5 rounded-2xl glass border border-white/80 bg-white/80 shadow-2xs flex items-center justify-between gap-3">
+                    <div className="flex items-center gap-2.5 min-w-0">
+                      <span className="text-xl shrink-0">🗺️</span>
+                      <div className="min-w-0">
+                        <span className="text-[9px] font-mono font-bold uppercase tracking-wider text-[var(--lkv-text-secondary)] block">
+                          Voyage lié
+                        </span>
+                        <span className="text-xs font-bold text-[var(--lkv-text-primary)] truncate block">
+                          {linkedTrip.title}
+                        </span>
+                      </div>
+                    </div>
+                    <Link
+                      href={tripPath(linkedTrip.slug)}
+                      className="glass-capsule-btn primary text-xs font-bold !py-1.5 !px-3 shrink-0 min-h-[44px] flex items-center"
+                    >
+                      Cockpit →
+                    </Link>
+                  </div>
+                )}
+
                 {/* Quick Metrics Grid */}
                 <div className="grid grid-cols-3 gap-2.5">
                   <div className="glass bg-white/80 p-3 rounded-2xl text-center border border-white">

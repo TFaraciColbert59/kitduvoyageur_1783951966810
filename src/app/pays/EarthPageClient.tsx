@@ -73,6 +73,21 @@ export default function EarthPageClient({ initialCountries }: EarthPageClientPro
   const displayedCountry = selectedCountry ?? (countries[0] ?? null);
   const { triggerHaptic } = useHapticFeedback();
 
+  // Fond vidéo décoratif : sous prefers-reduced-motion on fige la lecture
+  // (image fixe à t=0) — WCAG 2.2.2, règle projet « respecter
+  // prefers-reduced-motion », et rendu déterministe pour les captures visuelles.
+  const pauseBackgroundVideoIfReducedMotion = useCallback((el: HTMLVideoElement | null) => {
+    if (!el) return;
+    if (typeof window !== 'undefined' && window.matchMedia?.('(prefers-reduced-motion: reduce)').matches) {
+      const freeze = () => {
+        el.pause();
+        try { el.currentTime = 0; } catch { /* frame courante */ }
+      };
+      if (el.readyState >= 1) freeze();
+      else el.addEventListener('loadedmetadata', freeze, { once: true });
+    }
+  }, []);
+
   // Liste ordonnée des continents réels présents dans la base
   const distinctContinents = useMemo(() => {
     return Array.from(new Set(countries.map((c) => c.continent).filter(Boolean)));
@@ -135,6 +150,8 @@ export default function EarthPageClient({ initialCountries }: EarthPageClientPro
           <section className="earth-hero w-full h-full relative overflow-hidden">
             {/* Fond vidéo */}
             <video
+              ref={pauseBackgroundVideoIfReducedMotion}
+              data-visual-mask
               className="earth-bg-video"
               src="/mobile-cinematic-bg.mp4"
               autoPlay
@@ -331,6 +348,8 @@ export default function EarthPageClient({ initialCountries }: EarthPageClientPro
           <div className="m-earth-body h-full relative">
             {/* Fond vidéo */}
             <video
+              ref={pauseBackgroundVideoIfReducedMotion}
+              data-visual-mask
               className="earth-bg-video"
               src="/mobile-cinematic-bg.mp4"
               autoPlay

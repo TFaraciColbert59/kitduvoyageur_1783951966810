@@ -15,6 +15,19 @@ export const activeTripSchema = z.object({
 
 export type ActiveTripData = z.infer<typeof activeTripSchema>;
 
+/** Entrée légère d'un voyage de l'utilisateur pour le sélecteur (Y3.3). */
+export const tripLiteSchema = z.object({
+  id: z.string(),
+  slug: z.string().min(1),
+  title: z.string().min(1),
+  status: z.string().optional(),
+  primary_activity: z.string().optional(),
+  start_date: z.string().nullable().optional(),
+  end_date: z.string().nullable().optional(),
+});
+
+export type TripLite = z.infer<typeof tripLiteSchema>;
+
 /**
  * Sérialise l'état en chaîne base64url compacte et URL-safe.
  */

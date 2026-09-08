@@ -1,13 +1,39 @@
 import crypto from 'crypto';
 
+export const ALLOWED_AFFILIATE_DOMAINS = [
+  'booking.com',
+  'tp.media',
+  'travelpayouts.com',
+  'aviasales.com',
+  'getyourguide.com',
+  'chapkassurances.com',
+  'airalo.com',
+  'sncf-connect.com',
+  'alltrails.com',
+  'komoot.com',
+  'tiqets.com',
+];
+
+export function isAllowedAffiliateDomain(hostname: string): boolean {
+  const host = hostname.toLowerCase();
+  return ALLOWED_AFFILIATE_DOMAINS.some(
+    (allowed) => host === allowed || host.endsWith(`.${allowed}`)
+  );
+}
+
 /**
- * Validation stricte d'URL sortante contre les attaques Open Redirect.
- * N'autorise que les URL absolues HTTPS avec domaine valide.
+ * Validation stricte d'URL sortante contre les attaques Open Redirect (L6).
+ * N'autorise que les URL absolues HTTPS et optionnellement vérifie le domaine partenaire.
  */
-export function isValidAffiliateTargetUrl(urlStr: string): boolean {
+export function isValidAffiliateTargetUrl(urlStr: string, enforceAllowlist = false): boolean {
   try {
     const parsed = new URL(urlStr);
-    return parsed.protocol === 'https:' && parsed.hostname.length > 3;
+    const isHttps = parsed.protocol === 'https:' && parsed.hostname.length > 3;
+    if (!isHttps) return false;
+    if (enforceAllowlist && !isAllowedAffiliateDomain(parsed.hostname)) {
+      return false;
+    }
+    return true;
   } catch {
     return false;
   }

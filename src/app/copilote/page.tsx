@@ -7,7 +7,6 @@ import Icon from '@/components/ui/AppIcon';
 import { useChat } from '@/lib/hooks/useChat';
 import MobilePageShell from '@/components/mobile-nav/MobilePageShell';
 import { useActiveTrip } from '@/features/trips/context/ActiveTripContext';
-import { ActiveTripBanner } from '@/features/trips/components/ActiveTripBanner';
 
 export default function CopilotePage() {
   const { activeTrip } = useActiveTrip();
@@ -53,7 +52,6 @@ export default function CopilotePage() {
       <div className="hidden md:block">
         <div className="min-h-screen bg-background text-foreground">
           <Header />
-          <ActiveTripBanner />
           <section className="pt-20 bg-dark-bg">
             <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
               <h1 className="font-display font-800 text-4xl md:text-5xl text-white tracking-tight mb-3">Votre assistant<br />d&apos;expédition intelligent</h1>
@@ -66,7 +64,6 @@ export default function CopilotePage() {
       {/* MOBILE */}
       <div className="block md:hidden">
         <MobilePageShell>
-          <ActiveTripBanner />
           <div style={{ padding: '16px' }}>
             <h1 style={{ fontSize: '20px', fontWeight: 800, color: '#17402C', marginBottom: '8px' }}>Copilote IA</h1>
             <p style={{ fontSize: '13px', color: 'rgba(23,64,44,0.6)', marginBottom: '16px' }}>Assistant d&apos;expédition intelligent.</p>

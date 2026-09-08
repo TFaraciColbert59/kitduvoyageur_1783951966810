@@ -1,4 +1,4 @@
-﻿import { isNative } from "./platform";
+import { isNative } from "./platform";
 
 export type HapticStyle = "light" | "medium" | "heavy" | "selection" | "success" | "warning" | "error";
 
@@ -7,6 +7,11 @@ export type HapticStyle = "light" | "medium" | "heavy" | "selection" | "success"
  */
 export async function triggerNativeHaptic(style: HapticStyle = "light"): Promise<void> {
   if (typeof window === "undefined") return;
+
+  // Y7.3 — Respect strict de prefers-reduced-motion
+  if (typeof window.matchMedia === "function" && window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
+    return;
+  }
 
   try {
     if (isNative()) {

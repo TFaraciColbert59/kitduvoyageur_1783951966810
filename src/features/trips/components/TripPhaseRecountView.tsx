@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState } from 'react';
-import { GlassCard } from '@/components/ui/GlassCard';
+import { GlassCard, GlassCapsuleBtn } from '@/components/ui';
 import { BookOpen, CreditCard, Share2, Sparkles } from 'lucide-react';
 import type { TripFull } from '../types/trip.types';
 import { TripNotesView } from './TripNotesView';
@@ -21,7 +21,7 @@ export function TripPhaseRecountView({ trip }: TripPhaseRecountViewProps) {
   return (
     <div className="space-y-6">
       {/* 1. Bannière d'accomplissement & Export */}
-      <GlassCard tone="sage" className="p-5 sm:p-6 rounded-card border border-white/70">
+      <GlassCard tone="sage" className="p-5 sm:p-6 rounded-3xl border border-white/70">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
           <div className="flex items-start sm:items-center gap-3.5">
             <div className="w-12 h-12 rounded-2xl bg-lkv-primary text-white flex items-center justify-center shrink-0 shadow-md">
@@ -40,14 +40,15 @@ export function TripPhaseRecountView({ trip }: TripPhaseRecountViewProps) {
             </div>
           </div>
 
-          <button
+          <GlassCapsuleBtn
             type="button"
             onClick={() => setIsShareModalOpen(true)}
-            className="flex items-center justify-center gap-2 px-4 py-2.5 rounded-full bg-lkv-primary text-white hover:bg-[#123323] text-xs font-bold transition-all shadow-sm min-h-[44px]"
+            variant="primary"
+            size="sm"
+            icon={<Share2 size={15} />}
           >
-            <Share2 size={15} />
-            <span>Partager / Exporter GPX</span>
-          </button>
+            Partager / Exporter GPX
+          </GlassCapsuleBtn>
         </div>
       </GlassCard>
 
@@ -58,8 +59,8 @@ export function TripPhaseRecountView({ trip }: TripPhaseRecountViewProps) {
           onClick={() => setActiveSection('notes')}
           className={`flex items-center gap-2 px-4 py-2.5 rounded-full text-xs sm:text-sm font-semibold transition-all border min-h-[44px] ${
             activeSection === 'notes'
-              ? 'bg-lkv-primary text-white border-lkv-primary shadow-sm'
-              : 'bg-white/70 hover:bg-white text-lkv-primary border-white/80'
+              ? 'bg-[var(--lkv-primary)] text-white border-[var(--lkv-primary)] shadow-sm'
+              : 'glass-sub-card border border-white/60 text-[var(--lkv-text-primary)] hover:bg-white'
           }`}
         >
           <BookOpen size={15} />
@@ -67,7 +68,7 @@ export function TripPhaseRecountView({ trip }: TripPhaseRecountViewProps) {
           {trip.notes && trip.notes.length > 0 && (
             <span
               className={`text-[10px] px-1.5 py-0.5 rounded-full ${
-                activeSection === 'notes' ? 'bg-white/20 text-white' : 'bg-black/5 text-lkv-secondary'
+                activeSection === 'notes' ? 'bg-white/20 text-white' : 'text-[var(--lkv-text-muted)]'
               }`}
             >
               {trip.notes.length}
@@ -80,8 +81,8 @@ export function TripPhaseRecountView({ trip }: TripPhaseRecountViewProps) {
           onClick={() => setActiveSection('budget')}
           className={`flex items-center gap-2 px-4 py-2.5 rounded-full text-xs sm:text-sm font-semibold transition-all border min-h-[44px] ${
             activeSection === 'budget'
-              ? 'bg-lkv-primary text-white border-lkv-primary shadow-sm'
-              : 'bg-white/70 hover:bg-white text-lkv-primary border-white/80'
+              ? 'bg-[var(--lkv-primary)] text-white border-[var(--lkv-primary)] shadow-sm'
+              : 'glass-sub-card border border-white/60 text-[var(--lkv-text-primary)] hover:bg-white'
           }`}
         >
           <CreditCard size={15} />

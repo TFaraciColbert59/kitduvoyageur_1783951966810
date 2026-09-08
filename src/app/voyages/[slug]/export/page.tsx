@@ -12,7 +12,8 @@ export default async function TripExportPage({ params, searchParams }: ExportPag
   const { slug } = await params;
   const { token } = await searchParams;
 
-  const trip = await getTripBySlug(slug, token);
+  // Token vérifié comme token de partage (jamais comme userId).
+  const trip = await getTripBySlug(slug, undefined, token ? { shareToken: token } : undefined);
   if (!trip) {
     notFound();
   }

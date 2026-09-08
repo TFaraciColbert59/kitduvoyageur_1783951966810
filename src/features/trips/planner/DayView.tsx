@@ -14,7 +14,7 @@ import {
 } from 'lucide-react';
 import { StepCard } from './StepCard';
 import { recalculateDayMetrics, type PlannerStep } from './plannerEngine';
-import { LkvButton } from '@/components/ui/LkvButton';
+import { GlassCapsuleBtn, GlassSubCard } from '@/components/ui';
 import { formatCivilDayIndex } from '@/lib/dates/tripDates';
 
 export interface DayViewProps {
@@ -67,20 +67,20 @@ export function DayView({
   return (
     <div className="space-y-4">
       {/* En-tête de la journée */}
-      <div className="bg-surface-card/60 backdrop-blur-sm rounded-2xl p-4 sm:p-5 border border-border/40">
+      <div className="glass rounded-[var(--lkv-radius-card)] p-4 sm:p-5 border border-white/60 shadow-sm">
         <div className="flex items-start justify-between gap-4">
           <div>
             <div className="flex items-center gap-2">
-              <span className="text-xs font-bold uppercase tracking-wider text-forest-800 bg-forest-900/10 px-2.5 py-0.5 rounded-full">
+              <span className="text-[10px] font-mono font-bold uppercase tracking-wider text-[var(--lkv-text-primary)] glass-sub-card px-2.5 py-0.5 rounded-[var(--lkv-radius-full)] border border-white/60">
                 Jour {dayNumber}
               </span>
               {fullDate && (
-                <span className="text-xs font-medium text-text-secondary capitalize">
+                <span className="text-xs font-medium text-[var(--lkv-text-secondary)] capitalize">
                   {fullDate}
                 </span>
               )}
             </div>
-            <h2 className="text-lg sm:text-xl font-bold text-text-primary mt-1">
+            <h2 className="text-lg sm:text-xl font-bold text-[var(--lkv-text-primary)] mt-1 font-display">
               Itinéraire de la journée
             </h2>
           </div>
@@ -88,21 +88,20 @@ export function DayView({
           {/* Actions de journée */}
           {canEdit && (
             <div className="relative flex items-center gap-2">
-              <LkvButton
-                variant="secondary"
+              <GlassCapsuleBtn
                 size="sm"
                 onClick={() => onAddStep(dayNumber)}
-                className="hidden sm:inline-flex items-center gap-1.5 min-h-[38px]"
+                icon={<Plus className="w-3.5 h-3.5" />}
+                className="hidden sm:inline-flex"
               >
-                <Plus className="w-4 h-4" />
                 <span>Ajouter étape</span>
-              </LkvButton>
+              </GlassCapsuleBtn>
 
               <button
                 type="button"
                 onClick={() => setShowMenu(!showMenu)}
                 aria-label="Options de la journée"
-                className="w-9 h-9 min-w-[36px] min-h-[36px] rounded-xl flex items-center justify-center border border-border/40 hover:bg-forest-900/5 text-text-secondary transition-colors"
+                className="w-8 h-8 rounded-full glass-sub-card border border-white/60 flex items-center justify-center text-[var(--lkv-text-secondary)] hover:text-[var(--lkv-text-primary)] hover:bg-white transition-all cursor-pointer shadow-2xs"
               >
                 <MoreVertical className="w-4 h-4" />
               </button>
@@ -114,16 +113,16 @@ export function DayView({
                     className="fixed inset-0 z-30"
                     onClick={() => setShowMenu(false)}
                   />
-                  <div className="absolute right-0 top-11 z-40 w-56 bg-surface-card border border-border/60 rounded-xl shadow-xl py-1.5 text-sm animate-in fade-in zoom-in-95">
+                  <div className="absolute right-0 top-11 z-40 w-56 glass rounded-[var(--lkv-radius-md)] border border-white/80 shadow-xl py-1.5 text-xs text-[var(--lkv-text-primary)] animate-in fade-in zoom-in-95">
                     <button
                       type="button"
                       onClick={() => {
                         setShowMenu(false);
                         onAddStep(dayNumber);
                       }}
-                      className="w-full flex items-center gap-2.5 px-3.5 py-2 hover:bg-forest-900/5 text-left text-text-primary"
+                      className="w-full flex items-center gap-2.5 px-3.5 py-2 hover:bg-white/60 text-left cursor-pointer"
                     >
-                      <Plus className="w-4 h-4 text-forest-800" />
+                      <Plus className="w-4 h-4 text-[var(--lkv-primary)]" />
                       <span>Ajouter une étape</span>
                     </button>
                     <button
@@ -132,9 +131,9 @@ export function DayView({
                         setShowMenu(false);
                         onInsertDayAfter(dayNumber);
                       }}
-                      className="w-full flex items-center gap-2.5 px-3.5 py-2 hover:bg-forest-900/5 text-left text-text-primary"
+                      className="w-full flex items-center gap-2.5 px-3.5 py-2 hover:bg-white/60 text-left cursor-pointer"
                     >
-                      <CalendarPlus className="w-4 h-4 text-forest-800" />
+                      <CalendarPlus className="w-4 h-4 text-[var(--lkv-primary)]" />
                       <span>Insérer un jour après</span>
                     </button>
                     <button
@@ -143,21 +142,21 @@ export function DayView({
                         setShowMenu(false);
                         onDuplicateDay(dayNumber);
                       }}
-                      className="w-full flex items-center gap-2.5 px-3.5 py-2 hover:bg-forest-900/5 text-left text-text-primary"
+                      className="w-full flex items-center gap-2.5 px-3.5 py-2 hover:bg-white/60 text-left cursor-pointer"
                     >
-                      <Copy className="w-4 h-4 text-forest-800" />
+                      <Copy className="w-4 h-4 text-[var(--lkv-primary)]" />
                       <span>Dupliquer la journée</span>
                     </button>
-                    <div className="my-1 border-t border-border/30" />
+                    <div className="my-1 border-t border-white/40" />
                     <button
                       type="button"
                       onClick={() => {
                         setShowMenu(false);
                         onDeleteDay(dayNumber);
                       }}
-                      className="w-full flex items-center gap-2.5 px-3.5 py-2 hover:bg-red-50 text-left text-red-600 font-medium"
+                      className="w-full flex items-center gap-2.5 px-3.5 py-2 hover:bg-[var(--lkv-danger)]/10 text-left text-[var(--lkv-danger)] font-medium cursor-pointer"
                     >
-                      <Trash2 className="w-4 h-4 text-red-600" />
+                      <Trash2 className="w-4 h-4 text-[var(--lkv-danger)]" />
                       <span>Supprimer la journée</span>
                     </button>
                   </div>
@@ -168,58 +167,58 @@ export function DayView({
         </div>
 
         {/* Barre de métriques déterministes */}
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5 sm:gap-3 mt-4 pt-3 border-t border-border/30">
-          <div className="bg-surface-subtle/50 rounded-xl p-2.5 flex items-center gap-2.5">
-            <div className="w-8 h-8 rounded-lg bg-forest-900/10 text-forest-800 flex items-center justify-center shrink-0">
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5 sm:gap-3 mt-4 pt-3 border-t border-white/40">
+          <div className="glass-sub-card rounded-[var(--lkv-radius-md)] p-2.5 flex items-center gap-2.5 border border-white/50 shadow-2xs">
+            <div className="w-8 h-8 rounded-full bg-[var(--lkv-primary)]/10 text-[var(--lkv-primary)] flex items-center justify-center shrink-0">
               <MapPin className="w-4 h-4" />
             </div>
             <div>
-              <span className="text-[10px] text-text-muted uppercase tracking-wider block">
+              <span className="text-[9.5px] font-mono uppercase tracking-wider text-[var(--lkv-text-secondary)] block">
                 Distance
               </span>
-              <span className="text-sm font-bold text-text-primary">
+              <span className="text-sm font-bold text-[var(--lkv-text-primary)]">
                 {metrics.totalDistanceKm} km
               </span>
             </div>
           </div>
 
-          <div className="bg-surface-subtle/50 rounded-xl p-2.5 flex items-center gap-2.5">
-            <div className="w-8 h-8 rounded-lg bg-forest-900/10 text-forest-800 flex items-center justify-center shrink-0">
+          <div className="glass-sub-card rounded-[var(--lkv-radius-md)] p-2.5 flex items-center gap-2.5 border border-white/50 shadow-2xs">
+            <div className="w-8 h-8 rounded-full bg-[var(--lkv-primary)]/10 text-[var(--lkv-primary)] flex items-center justify-center shrink-0">
               <TrendingUp className="w-4 h-4" />
             </div>
             <div>
-              <span className="text-[10px] text-text-muted uppercase tracking-wider block">
+              <span className="text-[9.5px] font-mono uppercase tracking-wider text-[var(--lkv-text-secondary)] block">
                 Dénivelé
               </span>
-              <span className="text-sm font-bold text-text-primary">
+              <span className="text-sm font-bold text-[var(--lkv-text-primary)]">
                 +{metrics.totalElevationGainM}m
               </span>
             </div>
           </div>
 
-          <div className="bg-surface-subtle/50 rounded-xl p-2.5 flex items-center gap-2.5">
-            <div className="w-8 h-8 rounded-lg bg-forest-900/10 text-forest-800 flex items-center justify-center shrink-0">
+          <div className="glass-sub-card rounded-[var(--lkv-radius-md)] p-2.5 flex items-center gap-2.5 border border-white/50 shadow-2xs">
+            <div className="w-8 h-8 rounded-full bg-[var(--lkv-primary)]/10 text-[var(--lkv-primary)] flex items-center justify-center shrink-0">
               <Clock className="w-4 h-4" />
             </div>
             <div>
-              <span className="text-[10px] text-text-muted uppercase tracking-wider block">
+              <span className="text-[9.5px] font-mono uppercase tracking-wider text-[var(--lkv-text-secondary)] block">
                 Durée est.
               </span>
-              <span className="text-sm font-bold text-text-primary">
+              <span className="text-sm font-bold text-[var(--lkv-text-primary)]">
                 {formatDuration(metrics.estimatedDurationMinutes)}
               </span>
             </div>
           </div>
 
-          <div className="bg-surface-subtle/50 rounded-xl p-2.5 flex items-center gap-2.5">
-            <div className="w-8 h-8 rounded-lg bg-forest-900/10 text-forest-800 flex items-center justify-center shrink-0">
+          <div className="glass-sub-card rounded-[var(--lkv-radius-md)] p-2.5 flex items-center gap-2.5 border border-white/50 shadow-2xs">
+            <div className="w-8 h-8 rounded-full bg-[var(--lkv-primary)]/10 text-[var(--lkv-primary)] flex items-center justify-center shrink-0">
               <Footprints className="w-4 h-4" />
             </div>
             <div>
-              <span className="text-[10px] text-text-muted uppercase tracking-wider block">
+              <span className="text-[9.5px] font-mono uppercase tracking-wider text-[var(--lkv-text-secondary)] block">
                 Étapes
               </span>
-              <span className="text-sm font-bold text-text-primary">
+              <span className="text-sm font-bold text-[var(--lkv-text-primary)]">
                 {metrics.stepsCount}
               </span>
             </div>
@@ -229,26 +228,25 @@ export function DayView({
 
       {/* Liste ordonnée des étapes */}
       {steps.length === 0 ? (
-        <div className="text-center py-12 px-4 rounded-2xl border-2 border-dashed border-border/60 bg-surface-card/40">
-          <div className="w-12 h-12 rounded-full bg-forest-900/5 text-forest-800 flex items-center justify-center mx-auto mb-3">
+        <div className="text-center py-12 px-4 rounded-[var(--lkv-radius-card)] glass border border-dashed border-white/60 shadow-sm">
+          <div className="w-12 h-12 rounded-full glass-sub-card text-[var(--lkv-primary)] flex items-center justify-center mx-auto mb-3 shadow-2xs">
             <Footprints className="w-6 h-6" />
           </div>
-          <h3 className="font-semibold text-text-primary text-base">
+          <h3 className="font-bold text-[var(--lkv-text-primary)] text-base font-display">
             Aucune étape pour cette journée
           </h3>
-          <p className="text-xs text-text-muted max-w-sm mx-auto mt-1 mb-4">
+          <p className="text-xs text-[var(--lkv-text-secondary)] max-w-sm mx-auto mt-1 mb-4 leading-relaxed">
             Cette journée peut servir de temps libre, de repos ou d’acclimatation.
           </p>
           {canEdit && (
-            <LkvButton
+            <GlassCapsuleBtn
               variant="primary"
               size="sm"
               onClick={() => onAddStep(dayNumber)}
-              className="inline-flex items-center gap-1.5"
+              icon={<Plus className="w-3.5 h-3.5" />}
             >
-              <Plus className="w-4 h-4" />
               <span>Ajouter la première étape</span>
-            </LkvButton>
+            </GlassCapsuleBtn>
           )}
         </div>
       ) : (
@@ -270,14 +268,14 @@ export function DayView({
 
           {/* Bouton mobile pour ajouter rapidement */}
           {canEdit && (
-            <button
-              type="button"
+            <GlassCapsuleBtn
+              size="sm"
               onClick={() => onAddStep(dayNumber)}
-              className="sm:hidden w-full py-3 rounded-xl border border-dashed border-forest-800/40 text-forest-800 font-medium text-xs flex items-center justify-center gap-1.5 hover:bg-forest-900/5 active:scale-95 transition-all"
+              icon={<Plus className="w-3.5 h-3.5" />}
+              className="sm:hidden w-full !py-2.5"
             >
-              <Plus className="w-4 h-4" />
               <span>Ajouter une étape au Jour {dayNumber}</span>
-            </button>
+            </GlassCapsuleBtn>
           )}
         </div>
       )}

@@ -2,13 +2,11 @@
 
 import React, { useState, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
-import Header from '@/components/Header';
 import MobilePageShell from '@/components/mobile-nav/MobilePageShell';
 import { CountryDetail } from '@/lib/countryDetails';
-import { CompteBackground } from '@/components/compte/CompteBackground';
+import AppShellDesktop from '@/components/shell/AppShellDesktop';
 import PaysLeftSidebar, { PaysSection } from '@/components/pays/PaysLeftSidebar';
 import PaysRightSidebar from '@/components/pays/PaysRightSidebar';
-import { AppShellDesktop } from '@/components/shell/AppShellDesktop';
 import PaysHeroOverview from '@/components/pays/PaysHeroOverview';
 import PaysDestinationsView from '@/components/pays/PaysDestinationsView';
 import PaysActivitesView from '@/components/pays/PaysActivitesView';
@@ -78,46 +76,30 @@ export default function CountryDetailClient({ country }: CountryDetailClientProp
   };
 
   return (
-    <div className="min-h-screen md:h-dvh md:overflow-hidden text-[#17402C] selection:bg-[#17402C]/10 font-sans relative">
-      {/* Background immersif végétal / canopée */}
-      <CompteBackground />
-
-      {/* ══════════════════════════════════════════════════════════════════════
-          1. VERSION MOBILE (< 768px)
-         ══════════════════════════════════════════════════════════════════════ */}
-      <div className="block md:hidden min-h-screen">
+    <AppShellDesktop
+      mobileSlot={
         <MobilePageShell videoBackground={true}>
           <MobileCountryDetailView country={country} flagEmoji={flagEmoji} />
         </MobilePageShell>
-      </div>
-
-      {/* ══════════════════════════════════════════════════════════════════════
-          2. VERSION DESKTOP COCKPIT 3 COLONNES FULLSCREEN (AppShellDesktop — Chantier U / U2)
-         ══════════════════════════════════════════════════════════════════════ */}
-      <AppShellDesktop
-        topNav={<Header />}
-        backgroundVideo={false}
-        leftWidth="w-[260px]"
-        rightWidth="w-[300px]"
-        sidebarLeft={
-          <PaysLeftSidebar
-            country={country}
-            activeSection={activeSection}
-            onSectionChange={setActiveSection}
-            flagEmoji={flagEmoji}
-            onPrint={() => window.print()}
-          />
-        }
-        sidebarRight={
-          <PaysRightSidebar
-            country={country}
-            flagEmoji={flagEmoji}
-            onCountryGlobeClick={handleCountryGlobeClick}
-          />
-        }
-      >
-        {renderSectionContent()}
-      </AppShellDesktop>
-    </div>
+      }
+      sidebarLeft={
+        <PaysLeftSidebar
+          country={country}
+          activeSection={activeSection}
+          onSectionChange={setActiveSection}
+          flagEmoji={flagEmoji}
+          onPrint={() => window.print()}
+        />
+      }
+      sidebarRight={
+        <PaysRightSidebar
+          country={country}
+          flagEmoji={flagEmoji}
+          onCountryGlobeClick={handleCountryGlobeClick}
+        />
+      }
+    >
+      {renderSectionContent()}
+    </AppShellDesktop>
   );
 }
