@@ -9,8 +9,7 @@ import { useUnreadBadge } from '@/hooks/useUnreadBadge';
 import { useActiveAdventure } from '@/features/hub/context/ActiveAdventureContext';
 import { useCartCount } from '@/hooks/useCartCount';
 import LkvIcon from '@/components/ui/LkvIcon';
-import { tripSectionHref, sectionIdFromPathname, tripSectionRegistry } from '@/features/trips/registry/tripSectionRegistry';
-import type { TripSectionId } from '@/features/trips/engine/tripProfileEngine';
+import { HUB_ALERTES_HREF } from '@/features/hub/registry/hubSectionRegistry';
 
 interface Tab {
   href: string;
@@ -327,9 +326,9 @@ function HamburgerMenu({ menuOpen, setMenuOpen, messagerieBadge }: { menuOpen: b
                 )}
               </Link>
 
-              {/* Notifications */}
+              {/* Notifications — hub alertes (D4, allègement H5, href registre R13) */}
               <Link
-                href="/alertes"
+                href={HUB_ALERTES_HREF}
                 onClick={() => {
                   triggerHaptic('light');
                   setMenuOpen(false);
@@ -423,20 +422,12 @@ function BottomTabBar() {
     setHiddenByEvent(false);
   }, [pathname]);
 
-  const isGroupesHub = pathname === '/groupes';
-  const isGroupeCockpit = Boolean(pathname && pathname.startsWith('/groupes/') && pathname !== '/groupes');
   const isClubsHub = pathname === '/clubs';
   const isClubDetail = Boolean(pathname && pathname.startsWith('/clubs/') && pathname !== '/clubs');
   const isCarnetsHub = pathname === '/carnets';
   const isCarnetDetail = Boolean(pathname && pathname.startsWith('/carnets/') && pathname !== '/carnets' && pathname !== '/carnets/nouveau');
   const isPaysHub = pathname === '/pays';
   const isPaysDetail = Boolean(pathname && pathname.startsWith('/pays/') && pathname !== '/pays');
-  const isMaterielPreparation = Boolean(
-    pathname && (pathname.startsWith('/materiel/preparation') || pathname.startsWith('/preparation'))
-  );
-  const isMaterielDepart = Boolean(pathname && pathname.startsWith('/materiel/depart'));
-  const isMaterielHub = pathname === '/materiel';
-  const isMaterielSection = isMaterielDepart || isMaterielPreparation || isMaterielHub;
   const isCommunityPage = Boolean(
     pathname && (
       pathname.startsWith('/communaute') ||
@@ -446,20 +437,12 @@ function BottomTabBar() {
   );
   const isMessageriePage = pathname === '/messagerie';
   const isVoyagesHub = pathname === '/voyages';
-  // Y2 : le hub est URL-driven (layout de segment). Toute route sous
-  // /voyages/[slug] sauf le wizard est une section du cockpit.
-  const isVoyageSubpage = pathname === '/voyages/nouveau';
-  const isVoyageDetail = Boolean(
-    pathname &&
-    pathname.startsWith('/voyages/') &&
-    pathname !== '/voyages' &&
-    !isVoyageSubpage
-  );
 
-  const hasUpperExtension = isGroupesHub || isGroupeCockpit || isClubsHub || isClubDetail || isCarnetsHub || isCarnetDetail || isPaysHub || isPaysDetail || isCommunityPage || isMaterielSection || isMessageriePage || isVoyagesHub || isVoyageDetail;
+  // H5 : les surfaces hub (/hub, /materiel/*, /voyages/[slug], /groupes/*)
+  // sont couvertes par le HubShell (nav registre + AdventureSwitcher) —
+  // plus d'upper extension dupliquée pour elles.
+  const hasUpperExtension = isClubsHub || isClubDetail || isCarnetsHub || isCarnetDetail || isPaysHub || isPaysDetail || isCommunityPage || isMessageriePage || isVoyagesHub;
 
-  const [activeGroupesTab, setActiveGroupesTab] = useState<'mes-groupes' | 'decouvrir'>('mes-groupes');
-  const [activeCockpitTab, setActiveCockpitTab] = useState<string>('overview');
   const [activeClubsTab, setActiveClubsTab] = useState<'decouvrir' | 'mes-clubs'>('decouvrir');
   const [activeClubDetailTab, setActiveClubDetailTab] = useState<string>('overview');
   const [activeCarnetsTab, setActiveCarnetsTab] = useState<'explorer' | 'mes-carnets'>('explorer');
@@ -469,21 +452,11 @@ function BottomTabBar() {
   const [activeCommunityTab, setActiveCommunityTab] = useState<string>('fil');
   const [activeMessagerieTab, setActiveMessagerieTab] = useState<string>('all');
   const [messagerieRequestsCount, setMessagerieRequestsCount] = useState<number>(0);
-  const [activeDepartTab, setActiveDepartTab] = useState<string>('overview');
-  const [activeMaterielTab, setActiveMaterielTab] = useState<string>('overview');
-  const [activeKitsTab, setActiveKitsTab] = useState<string>('all');
   const [activeVoyagesHubTab, setActiveVoyagesHubTab] = useState<'user' | 'public'>('user');
 
   useEffect(() => {
     if (!pathname) return;
-    if (pathname === '/groupes') {
-      if (typeof window !== 'undefined') {
-        const params = new URLSearchParams(window.location.search);
-        const t = params.get('tab');
-        if (t === 'decouvrir') setActiveGroupesTab('decouvrir');
-        else setActiveGroupesTab('mes-groupes');
-      }
-    } else if (pathname === '/clubs') {
+    if (pathname === '/clubs') {
       if (typeof window !== 'undefined') {
         const params = new URLSearchParams(window.location.search);
         const t = params.get('tab');
@@ -509,20 +482,11 @@ function BottomTabBar() {
         const t = params.get('tab') || 'fil';
         setActiveCommunityTab(t);
       }
-    } else if (pathname.startsWith('/materiel/depart') || pathname === '/materiel') {
-      setActiveDepartTab('overview');
-      setActiveMaterielTab('overview');
     }
 
     if (typeof window !== 'undefined') {
       const commHandler = (e: any) => {
         if (e.detail) setActiveCommunityTab(e.detail);
-      };
-      const grpHandler = (e: any) => {
-        if (e.detail) setActiveGroupesTab(e.detail);
-      };
-      const cockpitHandler = (e: any) => {
-        if (e.detail) setActiveCockpitTab(e.detail);
       };
       const clubsHandler = (e: any) => {
         if (e.detail) setActiveClubsTab(e.detail);
@@ -545,15 +509,6 @@ function BottomTabBar() {
       const voyagesHubHandler = (e: any) => {
         if (e.detail) setActiveVoyagesHubTab(e.detail);
       };
-      const departHandler = (e: any) => {
-        if (e.detail) {
-          setActiveDepartTab(e.detail);
-          setActiveMaterielTab(e.detail);
-        }
-      };
-      const kitsHandler = (e: any) => {
-        if (e.detail) setActiveKitsTab(e.detail);
-      };
       // Messagerie : la liste publie son onglet actif + le nb de demandes,
       // la barre publie les taps utilisateur (evenements distincts, pas d'echo).
       const messagerieStateHandler = (e: any) => {
@@ -570,8 +525,6 @@ function BottomTabBar() {
       };
 
       window.addEventListener('community-tab-change', commHandler);
-      window.addEventListener('groupes-tab-change', grpHandler);
-      window.addEventListener('groupe-cockpit-tab-change', cockpitHandler);
       window.addEventListener('clubs-tab-change', clubsHandler);
       window.addEventListener('club-detail-tab-change', clubDetailHandler);
       window.addEventListener('carnets-tab-change', carnetsHandler);
@@ -579,16 +532,12 @@ function BottomTabBar() {
       window.addEventListener('pays-continent-change', paysContinentHandler);
       window.addEventListener('pays-detail-tab-change', paysDetailHandler);
       window.addEventListener('voyages-hub-tab-change', voyagesHubHandler);
-      window.addEventListener('depart-section-change', departHandler);
-      window.addEventListener('kits-section-change', kitsHandler);
       window.addEventListener('messagerie-tab-state', messagerieStateHandler);
       window.addEventListener('messagerie-tab-change', messagerieTabHandler);
       window.addEventListener('lkdv-toggle-bottom-bar', toggleBottomBarHandler);
 
       return () => {
         window.removeEventListener('community-tab-change', commHandler);
-        window.removeEventListener('groupes-tab-change', grpHandler);
-        window.removeEventListener('groupe-cockpit-tab-change', cockpitHandler);
         window.removeEventListener('clubs-tab-change', clubsHandler);
         window.removeEventListener('club-detail-tab-change', clubDetailHandler);
         window.removeEventListener('carnets-tab-change', carnetsHandler);
@@ -596,8 +545,6 @@ function BottomTabBar() {
         window.removeEventListener('pays-continent-change', paysContinentHandler);
         window.removeEventListener('pays-detail-tab-change', paysDetailHandler);
         window.removeEventListener('voyages-hub-tab-change', voyagesHubHandler);
-          window.removeEventListener('depart-section-change', departHandler);
-        window.removeEventListener('kits-section-change', kitsHandler);
         window.removeEventListener('messagerie-tab-state', messagerieStateHandler);
         window.removeEventListener('messagerie-tab-change', messagerieTabHandler);
         window.removeEventListener('lkdv-toggle-bottom-bar', toggleBottomBarHandler);
@@ -617,27 +564,6 @@ function BottomTabBar() {
       setActiveVoyagesHubTab(tabKey as 'user' | 'public');
       if (typeof window !== 'undefined') {
         window.dispatchEvent(new CustomEvent('voyages-hub-tab-change', { detail: tabKey }));
-      }
-    } else if (isVoyageDetail) {
-      // Y2 : navigation URL via le registre des sections (slug = 2e segment).
-      const slug = pathname?.split('/')[2];
-      if (slug) {
-        router.push(tripSectionHref(slug, tabKey as TripSectionId));
-      }
-    } else if (isMaterielSection) {
-      setActiveMaterielTab(tabKey);
-      if (typeof window !== 'undefined') {
-        window.dispatchEvent(new CustomEvent('depart-section-change', { detail: tabKey }));
-      }
-    } else if (isGroupesHub) {
-      setActiveGroupesTab(tabKey as 'mes-groupes' | 'decouvrir');
-      if (typeof window !== 'undefined') {
-        window.dispatchEvent(new CustomEvent('groupes-tab-change', { detail: tabKey }));
-      }
-    } else if (isGroupeCockpit) {
-      setActiveCockpitTab(tabKey);
-      if (typeof window !== 'undefined') {
-        window.dispatchEvent(new CustomEvent('groupe-cockpit-tab-change', { detail: tabKey }));
       }
     } else if (isClubsHub) {
       setActiveClubsTab(tabKey as 'decouvrir' | 'mes-clubs');
@@ -699,30 +625,6 @@ function BottomTabBar() {
         { id: 'requests', label: 'Demandes', count: messagerieRequestsCount },
       ];
     }
-    if (isMaterielSection) {
-      return [
-        { id: 'overview', label: "Vue d'ensemble" },
-        { id: 'terrain', label: 'Terrain & Météo' },
-        { id: 'equipment_hub', label: 'Sac & Matériel' },
-      ];
-    }
-    if (isGroupesHub) {
-      return [
-        { id: 'mes-groupes', label: 'Mes expéditions' },
-        { id: 'decouvrir', label: 'Explorer' },
-      ];
-    }
-    if (isGroupeCockpit) {
-      return [
-        { id: 'overview', label: 'Cockpit' },
-        { id: 'parcours', label: 'Parcours' },
-        { id: 'tasks', label: 'Tâches' },
-        { id: 'equipment', label: 'Matériel' },
-        { id: 'expenses', label: 'Budget' },
-        { id: 'discussion', label: 'Chat' },
-        { id: 'members', label: 'Membres' },
-      ];
-    }
     if (isClubsHub) {
       return [
         { id: 'decouvrir', label: 'Découvrir' },
@@ -779,12 +681,6 @@ function BottomTabBar() {
         { id: 'public', label: 'Explorer' },
       ];
     }
-    if (isVoyageDetail) {
-      return tripSectionRegistry.map((s) => ({
-        id: s.id,
-        label: s.label,
-      }));
-    }
     return [
       { id: 'fil', label: 'Fil' },
       { id: 'carnets', label: 'Carnets' },
@@ -799,14 +695,6 @@ function BottomTabBar() {
     ? activeMessagerieTab
     : isVoyagesHub
     ? activeVoyagesHubTab
-    : isVoyageDetail
-    ? (sectionIdFromPathname(pathname) ?? 'overview')
-    : isMaterielSection
-    ? activeMaterielTab
-    : isGroupesHub
-    ? activeGroupesTab
-    : isGroupeCockpit
-    ? activeCockpitTab
     : isClubsHub
     ? activeClubsTab
     : isClubDetail
@@ -821,7 +709,7 @@ function BottomTabBar() {
     ? activePaysDetailTab
     : activeCommunityTab;
 
-  const isWideUpperTray = isGroupeCockpit || isClubDetail || isCarnetDetail || isPaysHub || isPaysDetail || isMaterielSection || isVoyageDetail;
+  const isWideUpperTray = isClubDetail || isCarnetDetail || isPaysHub || isPaysDetail;
 
   const badges = useUnreadBadge();
   const { groups } = useActiveAdventure();

@@ -95,9 +95,10 @@ const RULE_EXEMPTIONS: Record<string, { files: string[]; burnDown: string }> = {
     burnDown: 'H5 (refonte BottomTabBar + délestage sheets) / H6 (coquille mobile)',
   },
   // matchPaths littéraux du tab bar actuel — H5.
+  // BURNÉ H5-commit2 : plus aucun littéral /voyages/ dans BottomTabBar.
   R11: {
-    files: ['src/components/mobile-nav/BottomTabBar.tsx'],
-    burnDown: 'H5 (refonte 5 tabs, matchPaths du hub central)',
+    files: [],
+    burnDown: 'soldé H5 (délestage upper extensions)',
   },
 };
 

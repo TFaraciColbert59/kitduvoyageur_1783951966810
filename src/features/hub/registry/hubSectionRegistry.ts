@@ -129,4 +129,10 @@ export function visibleHubSections(profile: AdventureProfile): HubSectionDef[] {
   return hubSectionRegistry.filter((s) => shown.has(s.id));
 }
 
+/**
+ * H5 — Lien statique vers les alertes du hub (hamburger mobile).
+ * Calculé par le registre (R13 : aucun littéral /hub/ ailleurs).
+ */
+export const HUB_ALERTES_HREF = hubSectionHref({ nature: 'possession' }, 'alertes');
+
 export { HUB_SECTION_ORDER };
