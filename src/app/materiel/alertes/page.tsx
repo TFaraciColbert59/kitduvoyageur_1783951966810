@@ -14,7 +14,7 @@ import { getAlerts } from '@/features/materiel/services/getAlerts';
 import { getInventory } from '@/features/materiel/services/getInventory';
 import { getOccasionProducts } from '@/features/materiel/services/getOccasionProducts';
 import { getWeather, weatherLabel } from '@/features/materiel/services/getWeather';
-import { currentSeason } from '@/features/materiel/components/kits/WeatherMatchScore';
+import { currentSeason } from '@/lib/materiel/season';
 
 export const dynamic = 'force-dynamic';
 

@@ -2,14 +2,9 @@
 import { GlassCard } from '@/components/ui/GlassCard';
 import { Eyebrow } from '@/components/ui/Eyebrow';
 import { Metric } from '@/components/ui/Metric';
+import { currentSeason } from '@/lib/materiel/season';
 
-export function currentSeason(): string {
-  const m = new Date().getMonth() + 1;
-  if (m >= 3 && m <= 5) return 'printemps';
-  if (m >= 6 && m <= 8) return 'ete';
-  if (m >= 9 && m <= 11) return 'automne';
-  return 'hiver';
-}
+export { currentSeason };
 
 const SCORE: Record<string, number> = { 'toute_saison': 90, ete: 90, printemps: 75, automne: 65, hiver: 55 };
 

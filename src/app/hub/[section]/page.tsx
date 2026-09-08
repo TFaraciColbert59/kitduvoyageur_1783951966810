@@ -7,12 +7,18 @@ import {
   hubSectionHref,
   hubSectionRegistry,
 } from '@/features/hub/registry/hubSectionRegistry';
+import { HubInventaireSection } from '@/features/hub/components/possession/HubInventaireSection';
+import { HubKitSection } from '@/features/hub/components/possession/HubKitSection';
+import { HubPreparationSection } from '@/features/hub/components/possession/HubPreparationSection';
+import { HubDepartSection } from '@/features/hub/components/possession/HubDepartSection';
+import { HubDisponibiliteSection } from '@/features/hub/components/possession/HubDisponibiliteSection';
+import { HubAlertesSection } from '@/features/hub/components/possession/HubAlertesSection';
 
 /**
- * H3.4 — Section active du hub (URL-driven, registre).
+ * H3.4/H4.2 — Section active du hub (URL-driven, registre).
  * Incompatible avec la nature → 404. Sortie → redirect 307 vers la page
- * voyage (composition, zéro re-rendu). Possession/collectif → vue pilotée
- * registre (compteur + traçabilité), enrichie en H4.
+ * voyage (composition, zéro re-rendu). Possession → composants canoniques
+ * materiel (mêmes services). Collectif → H4.3.
  */
 export default async function HubSectionPage({
   params,
@@ -62,13 +68,19 @@ export default async function HubSectionPage({
       <p className="text-xs text-[var(--lkv-text-secondary)]">
         {profile.reason[def.id]}
       </p>
-      <div className="glass p-4 rounded-[var(--lkv-radius-card)]">
-        <p className="text-sm text-[var(--lkv-text-primary)]">
-          {data.adventure.nature === 'possession'
-            ? 'Le détail de cette section arrive en H4 — les 7 routes /materiel restent accessibles en attendant.'
-            : 'Le détail de cette section arrive en H4 — la page /groupes reste accessible en attendant.'}
-        </p>
-      </div>
+      {def.id === 'inventaire' && <HubInventaireSection />}
+      {def.id === 'kit' && <HubKitSection />}
+      {def.id === 'preparation' && <HubPreparationSection />}
+      {def.id === 'depart' && <HubDepartSection />}
+      {def.id === 'disponibilite' && <HubDisponibiliteSection />}
+      {def.id === 'alertes' && <HubAlertesSection />}
+      {(def.id === 'groupe' || def.id === 'invitations' || def.id === 'voyages-lies') && (
+        <div className="glass p-4 rounded-[var(--lkv-radius-card)]">
+          <p className="text-sm text-[var(--lkv-text-primary)]">
+            Le détail de cette section arrive en H4.3 — la page /groupes reste accessible en attendant.
+          </p>
+        </div>
+      )}
     </div>
   );
 }
