@@ -73,6 +73,21 @@ export default function EarthPageClient({ initialCountries }: EarthPageClientPro
   const displayedCountry = selectedCountry ?? (countries[0] ?? null);
   const { triggerHaptic } = useHapticFeedback();
 
+  // Fond vidéo décoratif : sous prefers-reduced-motion on fige la lecture
+  // (image fixe à t=0) — WCAG 2.2.2, règle projet « respecter
+  // prefers-reduced-motion », et rendu déterministe pour les captures visuelles.
+  const pauseBackgroundVideoIfReducedMotion = useCallback((el: HTMLVideoElement | null) => {
+    if (!el) return;
+    if (typeof window !== 'undefined' && window.matchMedia?.('(prefers-reduced-motion: reduce)').matches) {
+      const freeze = () => {
+        el.pause();
+        try { el.currentTime = 0; } catch { /* frame courante */ }
+      };
+      if (el.readyState >= 1) freeze();
+      else el.addEventListener('loadedmetadata', freeze, { once: true });
+    }
+  }, []);
+
   // Liste ordonnée des continents réels présents dans la base
   const distinctContinents = useMemo(() => {
     return Array.from(new Set(countries.map((c) => c.continent).filter(Boolean)));
@@ -135,6 +150,8 @@ export default function EarthPageClient({ initialCountries }: EarthPageClientPro
           <section className="earth-hero w-full h-full relative overflow-hidden">
             {/* Fond vidéo */}
             <video
+              ref={pauseBackgroundVideoIfReducedMotion}
+              data-visual-mask
               className="earth-bg-video"
               src="/mobile-cinematic-bg.mp4"
               autoPlay
@@ -231,7 +248,7 @@ export default function EarthPageClient({ initialCountries }: EarthPageClientPro
                   {displayedCountry && (
                     <>
                       <div className="glass-sub-card p-3.5 flex items-center gap-2.5">
-                        <div className="w-9 h-9 rounded-full bg-white/[0.08] shadow-[inset_0_1px_1px_rgba(255,255,255,0.5)] border border-white/30 flex items-center justify-center text-[#17402C] flex-shrink-0">
+                        <div className="w-9 h-9 rounded-full bg-white/[0.08] shadow-inner border border-white/30 flex items-center justify-center text-[#17402C] flex-shrink-0">
                           <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" strokeWidth="2"><path d="M12 2a8 8 0 0 0-8 8c0 6 8 12 8 12s8-6 8-12a8 8 0 0 0-8-8z"/><circle cx="12" cy="10" r="3"/></svg>
                         </div>
                         <div className="min-w-0">
@@ -331,6 +348,8 @@ export default function EarthPageClient({ initialCountries }: EarthPageClientPro
           <div className="m-earth-body h-full relative">
             {/* Fond vidéo */}
             <video
+              ref={pauseBackgroundVideoIfReducedMotion}
+              data-visual-mask
               className="earth-bg-video"
               src="/mobile-cinematic-bg.mp4"
               autoPlay

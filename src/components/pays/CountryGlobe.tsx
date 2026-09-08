@@ -99,22 +99,29 @@ export default function CountryGlobe({
   useEffect(() => {
     const controller = new AbortController();
     const timer = setTimeout(() => controller.abort(), 4_000);
+    // StrictMode (dev) monte → démonte → remonte l'effet : l'abort du cleanup
+    // du PREMIER montage ne doit pas poser l'état d'erreur, sinon l'écran
+    // « Impossible de charger la carte » s'affiche à tort pendant que le
+    // second fetch, lui, est encore en cours.
+    let cancelled = false;
     fetch(GEOJSON_LOCAL, { signal: controller.signal })
       .then(r => {
         if (!r.ok) throw new Error(`HTTP ${r.status}`);
         return r.json();
       })
       .then(data => {
+        if (cancelled) return;
         setGeoFeatures(data.features || []);
         setGeoLoaded(true);
       })
       .catch(err => {
+        if (cancelled) return; // abort de cleanup (StrictMode) — pas une erreur
         if (err.name !== 'AbortError') console.error('[CountryGlobe] GeoJSON load failed:', err);
         setGeoError(true);
         setGeoLoaded(true); // sortir du spinner même en cas d'erreur
       })
       .finally(() => clearTimeout(timer));
-    return () => { controller.abort(); clearTimeout(timer); };
+    return () => { cancelled = true; controller.abort(); clearTimeout(timer); };
   }, []);
 
   // ── ResizeObserver ──
@@ -235,6 +242,10 @@ export default function CountryGlobe({
   return (
     <div
       ref={containerRef}
+      data-visual-mask
+      // [data-visual-mask] : rendu WebGL non déterministe (échauffement three.js,
+      // frame initiale variable) — doctrine Y0.5 : masque nommé posé sur le seul
+      // élément concerné, les captures visuelles ne arbitrent pas le rendu 3D.
       onMouseDown={() => { document.body.style.cursor = 'grabbing'; }}
       onMouseUp={() => { document.body.style.cursor = hoveredRef.current ? 'pointer' : 'grab'; }}
       style={{

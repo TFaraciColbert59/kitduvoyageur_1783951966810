@@ -114,4 +114,49 @@ test.describe('Profils Y — Decoupage & fidelite visuelle du Hub', () => {
     await expect(main).toBeVisible();
     await expectVisualSnapshot(page, 'y-exped-solo-journal.png');
   });
+
+  // ——— Surfaces hub reprises des specs fdgb supprimées (slug de démo fragile,
+  // baselines X-era « bugs compris ») : couverture rétablie sur slugs seedés. ———
+
+  test('y-long-group — Section kit & sac a dos', async ({ page }) => {
+    await prepareVisualPage(page, '/voyages/y-long-group/kit');
+    const main = page.locator('main').first();
+    await expect(main).toBeVisible();
+    await expectVisualSnapshot(page, 'y-long-group-kit.png');
+  });
+
+  test('y-long-group — Feuille de route export', async ({ page }) => {
+    await prepareVisualPage(page, '/voyages/y-long-group/export');
+    const main = page.locator('main').first();
+    await expect(main).toBeVisible();
+    await expectVisualSnapshot(page, 'y-long-group-export.png');
+  });
+
+  test('y-long-group — Checklist de depart', async ({ page }) => {
+    await prepareVisualPage(page, '/voyages/y-long-group/checklist');
+    const main = page.locator('main').first();
+    await expect(main).toBeVisible();
+    await expectVisualSnapshot(page, 'y-long-group-checklist.png');
+  });
+
+  test('y-long-group — Documents de voyage', async ({ page }) => {
+    await prepareVisualPage(page, '/voyages/y-long-group/documents');
+    const main = page.locator('main').first();
+    await expect(main).toBeVisible();
+    await expectVisualSnapshot(page, 'y-long-group-documents.png');
+  });
+
+  test('liste /voyages — catalogue cockpit et filtres profil', async ({ page }) => {
+    await prepareVisualPage(page, '/voyages');
+    const main = page.locator('main').first();
+    await expect(main).toBeVisible();
+    await expectVisualSnapshot(page, 'voyages-liste.png');
+  });
+
+  test('wizard /voyages/nouveau — creation guidee', async ({ page }) => {
+    await prepareVisualPage(page, '/voyages/nouveau');
+    const main = page.locator('main').first();
+    await expect(main).toBeVisible();
+    await expectVisualSnapshot(page, 'voyages-nouveau.png');
+  });
 });

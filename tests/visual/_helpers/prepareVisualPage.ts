@@ -25,9 +25,17 @@ const DEV_OVERLAY_CSS =
  * Prépare la page de façon déterministe puis navigue.
  * À appeler AVANT toute interaction ; l'horloge est figée avant le goto pour
  * que le premier rendu serveur/hydraté voie déjà la date figée.
+ *
+ * `opts.clock: false` — réservé aux pages sans compteurs temporels (J-N) :
+ * sous horloge figée, l'évaluation d'images de /pays/fr ne résout jamais
+ * (cause non élucidée, blocage page+clock) et l'horloge n'y apporte rien.
  */
-export async function prepareVisualPage(page: Page, url: string): Promise<void> {
-  await page.clock.setFixedTime(VISUAL_CLOCK);
+export async function prepareVisualPage(
+  page: Page,
+  url: string,
+  opts?: { clock?: boolean }
+): Promise<void> {
+  if (opts?.clock !== false) await page.clock.setFixedTime(VISUAL_CLOCK);
   await page.addInitScript(
     ({ key }) => {
       localStorage.setItem(
@@ -38,7 +46,10 @@ export async function prepareVisualPage(page: Page, url: string): Promise<void> 
     { key: CONSENT_STORAGE_KEY }
   );
   await page.emulateMedia({ reducedMotion: 'reduce', colorScheme: 'light' });
-  await page.goto(url);
+  // goto sur domcontentloaded : l'événement `load` n'arrive jamais sur les
+  // pages à connexions persistantes (WebSocket communaute/carte, vidéos pays)
+  // et fait exploser le timeout de test à 60 s.
+  await page.goto(url, { waitUntil: 'domcontentloaded' });
   await waitForVisualReady(page);
 }
 
@@ -49,7 +60,31 @@ export async function waitForVisualReady(page: Page): Promise<void> {
   await page
     .waitForSelector('[class*="animate-spin"]', { state: 'hidden', timeout: 10_000 })
     .catch(() => {});
-  await page.evaluate(() => document.fonts.ready);
+  await page
+    .evaluate(() => Promise.race([
+      document.fonts.ready,
+      new Promise<void>((resolve) => setTimeout(resolve, 10_000)),
+    ]))
+    .catch(() => {});
+  // Images distantes (photos pays, tuiles OSM des cartes) : une <img> capturée
+  // avant la fin de son chargement rend la capture non déterministe d'un run à
+  // l'autre. Pas de networkidle ici : plusieurs pages tiennent des connexions
+  // persistantes (WebSocket, SSE) qui ne s'arrêtent jamais.
+  await page
+    .evaluate(() =>
+      Promise.race([
+        Promise.all(
+          Array.from(document.images)
+            .filter((img) => !img.complete)
+            .map((img) => new Promise<void>((resolve) => {
+              img.addEventListener('load', () => resolve(), { once: true });
+              img.addEventListener('error', () => resolve(), { once: true });
+            }))
+        ),
+        new Promise<void>((resolve) => setTimeout(resolve, 8_000)),
+      ])
+    )
+    .catch(() => {});
   await page.addStyleTag({ content: DEV_OVERLAY_CSS });
   await page.waitForTimeout(1200);
 }
