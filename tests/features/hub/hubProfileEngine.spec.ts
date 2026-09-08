@@ -186,6 +186,15 @@ describe('H1 — deriveHubProfile : nature sortie (composition)', () => {
     expect(p.widgets).toEqual([]);
   });
 
+  it('SOR-8: voyage annulé + sections manuelles = ignorées (miroir Y2.4)', () => {
+    const p = deriveHubProfile(
+      { kind: 'sortie', trip: mkTrip({ status: 'cancelled' }), enabledSections: ['docs', 'budget'] },
+      NOW,
+    );
+    expect(p.sections).toEqual(['overview']);
+    expect(p.reason.docs).toMatch(/annulé/);
+  });
+
   it('SOR-6: reason overview mentionne la composition', () => {
     const p = deriveHubProfile({ kind: 'sortie', trip: mkTrip() }, NOW);
     expect(p.reason.overview).toMatch(/composition/);

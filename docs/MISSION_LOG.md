@@ -1039,3 +1039,7 @@ Branche de travail : `feat/orientation-empreinte` (fondée sur `feat/lignees-kit
 - Portes H0 : G1 tsc EXIT 0 · G2 142 suites / 1056 tests passed (plancher : 1051/141) · G3 Y-D80 12/12 + ci_invariants succès. Tag : h0-done.
 ### Actions manuelles requises (Tony, inchangées + H)
 - Activer protection branche main (G1,G2,G4 requis) ; appliquer sur Supabase : 20260907020000_trips_rls_hardening.sql (+ unify_crews_trips, trip_items_inventory_fk) ; ouvrir/merger PR chantier/h-hub-voyageur -> main en fin de chantier (H8).
+
+## H1 — Moteur et registres (08/09/2026, 20:50 UTC, plan docs/superpowers/plans/2026-09-08-h1-hub-engine.md)
+- hubProfileEngine.ts pur (composition deriveTripProfile, 26 tests) + hubSectionRegistry/hubWidgetRegistry + hubSectionHref (14 tests) + garde-fou H-D85 14 règles (R13/R14 nouvelles, R2 allowlist tokens, dette RULE_EXEMPTIONS). TDD: 3 RED constatés (module manquant x2, garde 5 règles rouges) -> GREEN.
+- Revue Kent Beck/Lamport : SOR-8 (annulé + enabledSections ignorées, miroir Y2.4) + default throw. Portes : G1 tsc EXIT 0 · G2 145 suites / 1110 tests passed (plancher 1056) · G3 Y-D80 12/12 + H-D85 14/14 + ci_invariants OK. Tag : h1-done.

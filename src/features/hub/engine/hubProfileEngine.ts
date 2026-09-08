@@ -102,19 +102,19 @@ export type HubAdventureInput =
 
 // ── Widgets possession/collectif (priorités §H1) ─────────────────────────────
 
-interface HubWidgetRule {
-  id: PossessionWidgetId | CollectifWidgetId;
+interface HubWidgetRule<T extends PossessionWidgetId | CollectifWidgetId> {
+  id: T;
   priority: number;
 }
 
-const POSSESSION_WIDGETS: HubWidgetRule[] = [
+const POSSESSION_WIDGETS: HubWidgetRule<PossessionWidgetId>[] = [
   { id: 'alertes-materiel', priority: 90 },
   { id: 'prochain-depart', priority: 85 },
   { id: 'stock-apercu', priority: 70 },
   { id: 'dispo-apercu', priority: 60 },
 ];
 
-const COLLECTIF_WIDGETS: HubWidgetRule[] = [
+const COLLECTIF_WIDGETS: HubWidgetRule<CollectifWidgetId>[] = [
   { id: 'invitations-apercu', priority: 90 },
   { id: 'entrer-voyage', priority: 88 },
   { id: 'presence-groupe', priority: 75 },
@@ -219,9 +219,15 @@ function deriveSortie(
 ): AdventureProfile {
   // COMPOSITION — le moteur Y décide, le hub transmet (R2 : zéro duplication).
   const trip = deriveTripProfile(input.trip, now);
-  const finalSections = withUserEnabled([...trip.sections], input.enabledSections);
+  // Miroir Y2.4 : un voyage annulé ignore les sections manuelles (aperçu seul).
+  const cancelled = input.trip.status === 'cancelled';
+  const effectiveEnabled = cancelled ? undefined : input.enabledSections;
+  const finalSections = withUserEnabled([...trip.sections], effectiveEnabled);
 
-  const reason = fullReason(finalSections, input.enabledSections, (id, shown) => {
+  const reason = fullReason(finalSections, effectiveEnabled, (id, shown) => {
+    if (cancelled && id !== 'overview') {
+      return 'masqué : voyage annulé (aperçu seul)';
+    }
     if (id === 'overview' && (trip.sections as HubSectionId[]).includes('overview')) {
       return 'affiché : nature sortie (composition tripProfileEngine, zéro duplication)';
     }
@@ -291,5 +297,7 @@ export function deriveHubProfile(input: HubAdventureInput, now: Date): Adventure
       return deriveSortie(input, now);
     case 'collectif':
       return deriveCollectif(input);
+    default:
+      throw new Error(`Nature d'aventure inconnue : ${(input as { kind: string }).kind}`);
   }
 }
