@@ -1061,3 +1061,7 @@ Branche de travail : `feat/orientation-empreinte` (fondée sur `feat/lignees-kit
 ## H5 — Bottom bar, redirects, IA (08/09/2026, 22:30 UTC, plan docs/superpowers/plans/2026-09-08-h5-bottombar-redirects.md)
 - Commit1 tabs : hub central (tent, isHero, matchPaths, badge agrégat, haptique medium, prefetch adventures) + R2 #5C6B5E. Commit2 délestage : upper materiel/voyage/groupes supprimées (tabs, états, listeners), hamburger Alertes->/hub/alertes, -5044 o, R11 burné, R13 HUB_ALERTES_HREF. Commit3 : 12×307 vérifiés curl, 11 routes + 10 vues legacy supprimées (R1/R2hub burnés), greps frais collés, /kits un-shadow (H-AUTO-30). Commit4 : suggestActiveAdventure pure + 8 tests + suggestion switcher + CTA assistant (D7-partiel).
 - Revue Nielsen : recognition (redirects, liste complète) OK. Portes : G1 tsc 0 · G2 150/1153 · G3 12/12+14/14+invariants OK · G4 build (/hub 108kB, [section] 343kB) · captures bar/switcher/redirects inspectées, hydration 0. Tag : h5-done.
+
+## H6 — App-first (08/09/2026, 22:15 UTC, plan docs/superpowers/plans/2026-09-08-h6-app-first.md)
+- Retour Android : hubBackTransition pure + 5 tests + hook Capacitor + switcher piloté (signal/état/fermeture), sidebar allégée (constance Y). SW : precache /hub, /api/hub SWR, v3. Offline sortie+sync composés (vérifié, H-AUTO-35). 44px runtime : chrome hub 100% (skip-links exclus), internes cockpit pré-existants consignés (H-AUTO-34). Safe-areas vérifiées (shell + captures). Revue Kat Holmes : RAS bloquant.
+- Portes : G1 tsc 0 · G2 150+/1158 · G3 12/12+14/14+invariants OK. Tag : h6-done.
