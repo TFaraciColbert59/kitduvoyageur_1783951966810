@@ -206,12 +206,27 @@ export function deriveTripProfile(trip: TripFull, now: Date): TripProfile {
     sections = TRIP_SECTION_ORDER.filter((id) => sections.includes(id));
   }
 
+  // Y2.4 TripSectionPicker — prise en compte des sections activées manuellement dans Trip.metadata
+  const userEnabled = (!cancelled && Array.isArray(trip.metadata?.enabled_sections))
+    ? (trip.metadata.enabled_sections as TripSectionId[])
+    : [];
+  for (const s of userEnabled) {
+    if (TRIP_SECTION_ORDER.includes(s) && !sections.includes(s)) {
+      sections.push(s);
+    }
+  }
+  sections = TRIP_SECTION_ORDER.filter((id) => sections.includes(id));
+
   const includedSet = new Set<TripSectionId>(sections);
 
   const reason = {} as Record<TripSectionId, string>;
   for (const id of TRIP_SECTION_ORDER) {
     if (cancelled && id !== 'overview') {
       reason[id] = 'masqué : voyage annulé (aperçu seul)';
+      continue;
+    }
+    if (userEnabled.includes(id)) {
+      reason[id] = 'affiché : activé manuellement (TripSectionPicker)';
       continue;
     }
     if (includedSet.has(id)) {

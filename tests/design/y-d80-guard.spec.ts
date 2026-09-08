@@ -60,12 +60,14 @@ function walk(dir: string, visit: (content: string, file: string) => void): void
   }
 }
 
-/** Exécute un regex par ligne et collecte les violations. */
+/** Exécute un regex par ligne et collecte TOUTES les violations (matchAll). */
 function scanLine(regex: RegExp, file: string, content: string, rule: string, out: Violation[]): void {
   const lines = content.split(/\r?\n/);
+  const flags = regex.flags.includes('g') ? regex.flags : regex.flags + 'g';
   for (let i = 0; i < lines.length; i++) {
-    const m = lines[i].match(regex);
-    if (m) {
+    const rx = new RegExp(regex.source, flags);
+    const matches = Array.from(lines[i].matchAll(rx));
+    for (const _m of matches) {
       out.push({ file, line: i + 1, extract: lines[i].trim().slice(0, 140), rule });
     }
   }
@@ -91,14 +93,24 @@ describe('GARDE-FOU Y-D80 — module voyage (12 règles)', () => {
     expect(v, `Violations classes froides :\n${fmt(v)}`).toEqual([]);
   });
 
-  it('Règle 2 : 0 hexadécimal brut hors blanc/noir pur', () => {
+  it('Règle 2 : 0 hexadécimal brut hors blanc/noir pur (scan exhaustif matchAll)', () => {
     const v: Violation[] = [];
-    scanAll('R2', /#[0-9a-fA-F]{3,8}\b/g, v);
-    const bad = v.filter((x) => {
-      const hex = x.extract.match(/#[0-9a-fA-F]{3,8}\b/)?.[0]?.toLowerCase() ?? '';
-      return !ALLOWLIST_HEX.has(hex);
-    });
-    expect(bad, `Violations hex brutes :\n${fmt(bad)}`).toEqual([]);
+    for (const dir of SCOPE_DIRS) {
+      walk(dir, (content, file) => {
+        const lines = content.split(/\r?\n/);
+        for (let i = 0; i < lines.length; i++) {
+          const line = lines[i];
+          const hexMatches = Array.from(line.matchAll(/#[0-9a-fA-F]{3,8}\b/g));
+          for (const m of hexMatches) {
+            const hex = m[0].toLowerCase();
+            if (!ALLOWLIST_HEX.has(hex)) {
+              v.push({ file, line: i + 1, extract: line.trim().slice(0, 140), rule: 'R2' });
+            }
+          }
+        }
+      });
+    }
+    expect(v, `Violations hex brutes :\n${fmt(v)}`).toEqual([]);
   });
 
   it('Règle 3 : 0 rayon arbitraire rounded-[Npx]', () => {

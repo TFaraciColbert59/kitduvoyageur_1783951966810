@@ -24,11 +24,9 @@ const DEV_OVERLAY_CSS =
 /**
  * Prépare la page de façon déterministe puis navigue.
  * À appeler AVANT toute interaction ; l'horloge est figée avant le goto pour
- * que le premier rendu serveur/hydraté voie déjà la date figée.
- *
- * `opts.clock: false` — réservé aux pages sans compteurs temporels (J-N) :
- * sous horloge figée, l'évaluation d'images de /pays/fr ne résout jamais
- * (cause non élucidée, blocage page+clock) et l'horloge n'y apporte rien.
+ * que le premier rendu serveur/hydraté voie déjà la date figée (VISUAL_CLOCK).
+ * Les timeouts d'attente (polices, images) sont gérés côté Node.js pour éviter
+ * tout blocage avec l'horloge figée du navigateur.
  */
 export async function prepareVisualPage(
   page: Page,
@@ -60,31 +58,27 @@ export async function waitForVisualReady(page: Page): Promise<void> {
   await page
     .waitForSelector('[class*="animate-spin"]', { state: 'hidden', timeout: 10_000 })
     .catch(() => {});
-  await page
-    .evaluate(() => Promise.race([
-      document.fonts.ready,
-      new Promise<void>((resolve) => setTimeout(resolve, 10_000)),
-    ]))
-    .catch(() => {});
-  // Images distantes (photos pays, tuiles OSM des cartes) : une <img> capturée
-  // avant la fin de son chargement rend la capture non déterministe d'un run à
-  // l'autre. Pas de networkidle ici : plusieurs pages tiennent des connexions
-  // persistantes (WebSocket, SSE) qui ne s'arrêtent jamais.
-  await page
-    .evaluate(() =>
-      Promise.race([
-        Promise.all(
-          Array.from(document.images)
-            .filter((img) => !img.complete)
-            .map((img) => new Promise<void>((resolve) => {
-              img.addEventListener('load', () => resolve(), { once: true });
-              img.addEventListener('error', () => resolve(), { once: true });
-            }))
-        ),
-        new Promise<void>((resolve) => setTimeout(resolve, 8_000)),
-      ])
-    )
-    .catch(() => {});
+  // Polices : attente avec timeout Node.js (immunisé contre le gel de page.clock)
+  await Promise.race([
+    page.evaluate(() => document.fonts.ready),
+    new Promise<void>((resolve) => setTimeout(resolve, 10_000)),
+  ]).catch(() => {});
+
+  // Images distantes (photos pays, tuiles OSM des cartes) : attente de chargement
+  // avec timeout Node.js pour éviter le blocage sous page.clock figée.
+  await Promise.race([
+    page.evaluate(() =>
+      Promise.all(
+        Array.from(document.images)
+          .filter((img) => !img.complete)
+          .map((img) => new Promise<void>((resolve) => {
+            img.addEventListener('load', () => resolve(), { once: true });
+            img.addEventListener('error', () => resolve(), { once: true });
+          }))
+      )
+    ),
+    new Promise<void>((resolve) => setTimeout(resolve, 8_000)),
+  ]).catch(() => {});
   await page.addStyleTag({ content: DEV_OVERLAY_CSS });
   await page.waitForTimeout(1200);
 }

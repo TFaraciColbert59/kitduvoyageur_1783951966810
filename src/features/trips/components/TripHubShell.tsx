@@ -18,6 +18,7 @@ import { ActiveTripSwitcher } from './ActiveTripSwitcher';
 import { TripCompactHeader } from './TripCompactHeader';
 import { TripMobileSectionsSheet } from './TripMobileSectionsSheet';
 import { TripShareModal } from './TripShareModal';
+import { TripSectionPicker } from './TripSectionPicker';
 import { applyLKDVStatusBarTheme } from '@/lib/native/status-bar';
 
 export interface TripHubShellProps {
@@ -37,6 +38,7 @@ export function TripHubShell({ trip, profile, phase, children }: TripHubShellPro
   const pathname = usePathname();
   const activeSection = sectionIdFromPathname(pathname) ?? 'overview';
   const [isShareOpen, setIsShareOpen] = useState(false);
+  const [isSectionPickerOpen, setIsSectionPickerOpen] = useState(false);
 
   const { isCurrentTripActive, setActiveTrip, clearActiveTrip, isPending, setLastSection } = useActiveTrip();
   const isTripActive = isCurrentTripActive(trip.id);
@@ -74,6 +76,7 @@ export function TripHubShell({ trip, profile, phase, children }: TripHubShellPro
       isTripActive={isTripActive && statusIsActive}
       isPending={isPending}
       onShare={() => setIsShareOpen(true)}
+      onOpenSectionPicker={() => setIsSectionPickerOpen(true)}
     />
   );
 
@@ -91,7 +94,12 @@ export function TripHubShell({ trip, profile, phase, children }: TripHubShellPro
             <div className="flex items-center justify-between gap-2 mb-3">
               <ActiveTripSwitcher />
               <div className="flex items-center gap-2">
-                <TripMobileSectionsSheet trip={trip} profile={profile} activeSection={activeSection} />
+                <TripMobileSectionsSheet
+                  trip={trip}
+                  profile={profile}
+                  activeSection={activeSection}
+                  onOpenSectionPicker={() => setIsSectionPickerOpen(true)}
+                />
                 {networkStatus}
               </div>
             </div>
@@ -116,6 +124,12 @@ export function TripHubShell({ trip, profile, phase, children }: TripHubShellPro
         {children}
       </div>
       <TripShareModal trip={trip} isOpen={isShareOpen} onClose={() => setIsShareOpen(false)} />
+      <TripSectionPicker
+        trip={trip}
+        profile={profile}
+        isOpen={isSectionPickerOpen}
+        onClose={() => setIsSectionPickerOpen(false)}
+      />
     </AppShellDesktop>
   );
 }

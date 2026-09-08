@@ -395,3 +395,26 @@ describe('Y5.1 — Aides de profil dérivé pour cartes et filtres', () => {
     expect(getProfileBadgeLabel('short', 'duo')).toBe('Court séjour · Duo');
   });
 });
+
+describe('Y2.4 — TripSectionPicker : sections manuellement activées', () => {
+  it('active une section masquée par le profil si présente dans metadata.enabled_sections', () => {
+    const trip = mkTrip({
+      start_date: '2026-06-01',
+      end_date: '2026-06-01',
+      collaborators: [],
+      metadata: { enabled_sections: ['budget'] },
+    });
+    const p = deriveTripProfile(trip, NOW);
+    expect(p.sections).toContain('budget');
+    expect(p.reason.budget).toContain('activé manuellement (TripSectionPicker)');
+  });
+
+  it('ne réactive pas les sections si le voyage est annulé', () => {
+    const trip = mkTrip({
+      status: 'cancelled',
+      metadata: { enabled_sections: ['budget', 'gear'] },
+    });
+    const p = deriveTripProfile(trip, NOW);
+    expect(p.sections).toEqual(['overview']);
+  });
+});
