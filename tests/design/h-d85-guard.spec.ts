@@ -51,40 +51,20 @@ const ALLOWLIST_HEX = canonicalHex();
  *  R5/R8 n'ont PAS d'exemption : leurs faux positifs sont corrigés dans le
  *  garde-fou lui-même (cause racine, H1.3). */
 const RULE_EXEMPTIONS: Record<string, { files: string[]; burnDown: string }> = {
-  // Composants terrain pré-D1 (classes froides + hex hors tokens) — H3.
+  // Composants terrain pré-D1 — BURNÉ H5-commit3 (tous supprimés, absorption D1 soldée).
   R1: {
-    files: [
-      'src/features/hub/components/ActionCompassWidget.tsx',
-      'src/features/hub/components/ActionHydrationWidget.tsx',
-      'src/features/hub/components/ActionModeView.tsx',
-      'src/features/hub/components/ActionSosWidget.tsx',
-      'src/features/hub/components/ActionWaterWidget.tsx',
-      'src/features/hub/components/BaseCampView.tsx',
-      'src/features/hub/components/HubTopBar.tsx',
-      'src/features/hub/components/SmartPromptsList.tsx',
-    ],
-    burnDown: 'H3 (absorption D1 dans le HubShell)',
+    files: [],
+    burnDown: 'soldé H5 (suppression vues legacy)',
   },
-  // Mêmes composants (hex hors tokens : #4ade80, #e7e3d6, #9aad9e, #dc2626…) — H3.
+  // BURNÉ H5-commit3 : vues legacy supprimées (voir ci-dessus).
   R2hub: {
-    files: [
-      'src/features/hub/components/ActionCompassWidget.tsx',
-      'src/features/hub/components/ActionHydrationWidget.tsx',
-      'src/features/hub/components/ActionModeView.tsx',
-      'src/features/hub/components/ActionSosWidget.tsx',
-      'src/features/hub/components/ActionWaterWidget.tsx',
-      'src/features/hub/components/BaseCampView.tsx',
-      'src/features/hub/components/TerrainShell.tsx',
-      'src/features/hub/components/HubTopBar.tsx',
-      'src/features/hub/components/PrepScoreGauge.tsx',
-      'src/features/hub/components/SmartPromptsList.tsx',
-    ],
-    burnDown: 'H3 (absorption D1 dans le HubShell)',
+    files: [],
+    burnDown: 'soldé H5 (suppression vues legacy)',
   },
   // Shell mobile-nav (hex hors tokens) — H5/H6.
+  // BottomTabBar BURNÉ H5-commit1 (#5C6B5E → var).
   R2nav: {
     files: [
-      'src/components/mobile-nav/BottomTabBar.tsx',
       'src/components/mobile-nav/CopilotFAB.tsx',
       'src/components/mobile-nav/InstallPrompt.tsx',
       'src/components/mobile-nav/MobileDrawer.tsx',

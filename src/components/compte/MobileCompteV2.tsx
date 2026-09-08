@@ -480,7 +480,7 @@ export default function MobileCompteV2() {
         {/* Actions : Notifications + Paramètres Menu */}
         <div className="flex items-center gap-1">
           <Link
-            href="/alertes"
+            href="/hub/alertes"
             onClick={() => triggerHaptic('light')}
             aria-label="Alertes et notifications"
             className="w-9 h-9 rounded-full flex items-center justify-center transition-all bg-white/80 border border-white active:scale-90 shadow-2xs cursor-pointer"
@@ -1263,7 +1263,7 @@ export default function MobileCompteV2() {
                   { label: 'Mes commandes & factures', icon: '📦', href: '/boutique' },
                   { label: 'Programme Fidélité & Récompenses', icon: '🏆', href: '/fidelite' },
                   { label: 'Gains & Parrainage', icon: '💎', href: '/recompenses' },
-                  { label: 'Mes alertes & notifications', icon: '🔔', href: '/alertes' },
+                  { label: 'Mes alertes & notifications', icon: '🔔', href: '/hub/alertes' },
                   { label: 'Confidentialité & Données', icon: '🔒', href: '/politique-confidentialite' },
                   { label: 'Aide & Support voyageur', icon: '💬', href: '/contact' },
                 ] as { label: string; icon: string; href: string }[]).map((item) => (

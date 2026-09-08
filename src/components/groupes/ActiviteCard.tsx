@@ -17,7 +17,7 @@ export default function ActiviteCard({ activities }: ActiviteCardProps) {
     <div className="glass p-6 transition-all duration-300">
       <div className="flex justify-between items-start mb-2">
         <h2 className="font-display font-bold text-xl text-lkv-primary">Activité <span className="font-serif italic font-normal text-lkv-primary">récente</span></h2>
-        <Link href="/activite" className="glass-capsule-btn py-1 px-3 text-xs font-semibold">
+        <Link href="/feed" className="glass-capsule-btn py-1 px-3 text-xs font-semibold">
           <span className="relative z-10">Tout →</span>
         </Link>
       </div>

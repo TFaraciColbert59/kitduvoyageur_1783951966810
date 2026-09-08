@@ -33,8 +33,8 @@ export default function HubError({
         >
           Réessayer
         </button>
-        <Link href="/materiel" className="glass-capsule-btn secondary min-h-[44px] px-5 inline-flex items-center">
-          Retour au matériel
+        <Link href="/hub" className="glass-capsule-btn secondary min-h-[44px] px-5 inline-flex items-center">
+          Retour au hub
         </Link>
       </div>
     </div>

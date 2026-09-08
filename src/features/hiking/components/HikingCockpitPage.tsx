@@ -521,7 +521,9 @@ export default function HikingCockpitPage() {
                 onToggleNightMode={() => setIsNightMode((v) => !v)}
                 onOpenSafety={() => setShowSafetyModal(true)}
                 onOpenWeather={() => setActiveTab('copilot')}
-                onOpenARCompass={() => router.push('/boussole')}
+                // H5 (H-AUTO-29) : /boussole redirigée vers le mode live (D2) ;
+                // la boussole AR reviendra comme widget du cockpit (backlog).
+                onOpenARCompass={() => router.push('/randonnee-active')}
                 onOpen3DTerrain={() => setShow3DTerrain(true)}
                 onOpenGPXModal={() => setShowGPXModal(true)}
                 onStopHike={() => setShowStopModal(true)}

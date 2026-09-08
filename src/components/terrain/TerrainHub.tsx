@@ -104,7 +104,7 @@ export default function TerrainHub() {
       {/* Hero Card */}
       <div style={{ padding: '24px 20px' }}>
         <Link
-          href="/naviguer"
+          href="/randonnee-active"
           style={{
             display: 'block',
             background: 'linear-gradient(135deg, #17402C 0%, #365233 100%)',

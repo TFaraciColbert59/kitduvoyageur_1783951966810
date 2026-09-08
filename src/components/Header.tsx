@@ -168,9 +168,9 @@ export default function Header() {
                   )}
                 </Link>
 
-                {/* Notifications Button */}
+                {/* Notifications Button — hub alertes (D4) */}
                 <Link
-                  href="/alertes"
+                  href="/hub/alertes"
                   className="w-7 h-7 rounded-full hover:bg-white/30 text-[#17402C] active:opacity-70 transition-colors flex items-center justify-center cursor-pointer touch-manipulation relative"
                   aria-label="Notifications"
                   title={unreadCount > 0 ? `Notifications (${unreadCount} non lue${unreadCount > 1 ? 's' : ''})` : 'Notifications'}

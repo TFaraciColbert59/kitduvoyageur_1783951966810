@@ -135,4 +135,7 @@ export function visibleHubSections(profile: AdventureProfile): HubSectionDef[] {
  */
 export const HUB_ALERTES_HREF = hubSectionHref({ nature: 'possession' }, 'alertes');
 
+/** H5 — Idem pour le départ (défauts du store, R13). */
+export const HUB_DEPART_HREF = hubSectionHref({ nature: 'possession' }, 'depart');
+
 export { HUB_SECTION_ORDER };

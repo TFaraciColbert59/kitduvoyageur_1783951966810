@@ -88,11 +88,26 @@ export async function middleware(request: NextRequest) {
     return NextResponse.redirect(url, { status: 301 });
   }
 
-  // ─── /kits → /materiel/kits redirect (301) ───────────────────────────────────
-  if (pathname === '/kits') {
+  // ─── H5 : redirects 307 du hub (suppressions/fusions, URLs gardées vivantes) ──
+  const HUB_REDIRECTS: Record<string, string> = {
+    '/materiel': '/hub',
+    '/naviguer': '/randonnee-active',
+    '/boussole': '/randonnee-active',
+    '/preparation': '/hub/preparation',
+    '/rapport-kit': '/ai-configurator',
+    '/activite': '/feed',
+    '/recommandations': '/hub',
+    '/gamification': '/recompenses',
+    '/alertes': '/hub/alertes',
+    '/terrain': '/hub',
+    '/mes-aventures': '/hub',
+    '/encheres': '/occasion',
+  };
+  const hubTarget = HUB_REDIRECTS[pathname];
+  if (hubTarget) {
     const url = request.nextUrl.clone();
-    url.pathname = '/materiel/kits';
-    return NextResponse.redirect(url, { status: 301 });
+    url.pathname = hubTarget;
+    return NextResponse.redirect(url, { status: 307 });
   }
 
   // ─── Country redirect logic ───────────────────────────────────────────────
@@ -127,5 +142,18 @@ export const config = {
     '/compte/:path*',
     '/kits',
     '/pays/:path*',
+    // H5 : chemins redirigés (le matcher explicite est requis, sinon le redirect ne tire jamais).
+    '/materiel',
+    '/naviguer',
+    '/boussole',
+    '/preparation',
+    '/rapport-kit',
+    '/activite',
+    '/recommandations',
+    '/gamification',
+    '/alertes',
+    '/terrain',
+    '/mes-aventures',
+    '/encheres',
   ],
 };

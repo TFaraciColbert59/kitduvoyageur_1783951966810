@@ -1,6 +1,7 @@
 import { create } from 'zustand';
 import { HubStoreState, BaseCampState, ActionState, HubAlert } from '../types/hub.types';
 import { calculatePrepScore, calculateTrekCountdown } from '../services/prepScoreCalculator';
+import { HUB_DEPART_HREF } from '../registry/hubSectionRegistry';
 
 const HUB_STORAGE_KEY = 'lkdv_hub_state_v1';
 
@@ -22,7 +23,7 @@ const DEFAULT_ALERTS: HubAlert[] = [
     title: 'Baisse nocturne attendue',
     message: 'Températures négatives en altitude au Col de la Seigne (-2°C ressenti).',
     actionLabel: 'Voir météo',
-    actionHref: '/preparer-randonnee',
+    actionHref: HUB_DEPART_HREF,
     createdAt: new Date().toISOString(),
   },
 ];

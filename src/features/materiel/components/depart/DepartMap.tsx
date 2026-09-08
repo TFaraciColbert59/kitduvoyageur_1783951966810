@@ -200,7 +200,7 @@ export function DepartMap({ trail, height = '240px', className }: DepartMapProps
           </p>
         </div>
         <Link
-          href="/preparer-randonnee"
+          href="/hub/depart"
           className="glass-capsule-btn primary inline-flex items-center gap-1.5 text-xs py-1.5 px-3 font-semibold mt-1"
         >
           <MapPin size={12} />
