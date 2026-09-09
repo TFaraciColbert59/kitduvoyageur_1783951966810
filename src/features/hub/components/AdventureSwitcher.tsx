@@ -1,6 +1,6 @@
-'use client';
+﻿'use client';
 
-import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import * as Cmd from 'cmdk';
 import * as Dialog from '@radix-ui/react-dialog';
@@ -86,7 +86,6 @@ export function AdventureSwitcher({
   // H6.1 — Pilotage externe (retour Android) : signal croissant → ouvre.
   // Le réglage différé de controlsVariant (matchMedia) ne doit PAS rouvrir :
   // on ne réagit qu'à un CHANGEMENT réel de la valeur du signal.
-  const firstSignal = React.useRef(true);
   const controlsVariantRef = React.useRef(controlsVariant);
   useEffect(() => {
     controlsVariantRef.current = controlsVariant;

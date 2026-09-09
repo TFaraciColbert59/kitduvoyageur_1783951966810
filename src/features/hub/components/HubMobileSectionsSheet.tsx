@@ -63,41 +63,66 @@ export function HubMobileSectionsSheet({
 
       <GlassSheet open={isOpen} onOpenChange={setIsOpen} title="Navigation du hub">
         <div className="space-y-1 py-2">
-          {sections.map((def) => {
-            const Icon = def.icon;
-            const count = def.counter(counts);
-            const active = activeSection === def.id;
-            return (
-              <button
-                key={def.id}
-                type="button"
-                onClick={() => select(def.id)}
-                aria-current={active ? 'page' : undefined}
-                className={`w-full flex items-center gap-3 px-3 min-h-[44px] rounded-[var(--lkv-radius-md)] text-left cursor-pointer ${
-                  active ? 'bg-[var(--lkv-primary)] text-white' : 'hover:bg-black/5'
-                }`}
-              >
-                <Icon
-                  size={16}
-                  className={`shrink-0 ${active ? 'text-white' : 'text-[var(--lkv-text-secondary)]'}`}
-                  aria-hidden="true"
-                />
-                <span className={`flex-1 text-sm font-semibold ${active ? 'text-white' : 'text-[var(--lkv-text-primary)]'}`}>
-                  {def.label}
-                </span>
-                {count !== null && count > 0 && (
-                  <span
-                    className={`text-[10px] font-mono px-1.5 py-0.5 rounded-full ${
-                      active ? 'bg-white/20 text-white' : 'bg-black/5 text-[var(--lkv-text-secondary)]'
-                    }`}
-                  >
-                    {count}
+          {/* Regroupement par zone : essentiel / compléments — lisibilité mobile */}
+          {(() => {
+            const core = sections.filter((s) => s.coreNatures.includes(profile.nature));
+            const extra = sections.filter((s) => !s.coreNatures.includes(profile.nature));
+            const renderRow = (def: (typeof sections)[number]) => {
+              const Icon = def.icon;
+              const count = def.counter(counts);
+              const active = activeSection === def.id;
+              return (
+                <button
+                  key={def.id}
+                  type="button"
+                  onClick={() => select(def.id)}
+                  aria-current={active ? 'page' : undefined}
+                  className={`w-full flex items-center gap-3 px-3 min-h-[44px] rounded-[var(--lkv-radius-md)] text-left cursor-pointer ${
+                    active ? 'bg-[var(--lkv-primary)] text-white' : 'hover:bg-black/5'
+                  }`}
+                >
+                  <Icon
+                    size={16}
+                    className={`shrink-0 ${active ? 'text-white' : 'text-[var(--lkv-text-secondary)]'}`}
+                    aria-hidden="true"
+                  />
+                  <span className={`flex-1 text-sm font-semibold ${active ? 'text-white' : 'text-[var(--lkv-text-primary)]'}`}>
+                    {def.label}
                   </span>
+                  {count !== null && count > 0 && (
+                    <span
+                      className={`text-[10px] font-mono px-1.5 py-0.5 rounded-full ${
+                        active ? 'bg-white/20 text-white' : 'bg-black/5 text-[var(--lkv-text-secondary)]'
+                      }`}
+                    >
+                      {count}
+                    </span>
+                  )}
+                  {active && <Check size={14} aria-hidden="true" />}
+                </button>
+              );
+            };
+            return (
+              <>
+                {core.length > 0 && (
+                  <>
+                    <p className="px-3 pt-1 pb-1 text-[10px] font-mono font-bold uppercase tracking-widest text-[var(--lkv-text-muted)]">
+                      Essentiel
+                    </p>
+                    {core.map(renderRow)}
+                  </>
                 )}
-                {active && <Check size={14} aria-hidden="true" />}
-              </button>
+                {extra.length > 0 && (
+                  <>
+                    <p className="px-3 pt-3 pb-1 text-[10px] font-mono font-bold uppercase tracking-widest text-[var(--lkv-text-muted)]">
+                      Compléments
+                    </p>
+                    {extra.map(renderRow)}
+                  </>
+                )}
+              </>
             );
-          })}
+          })()}
           {onOpenPicker && (
             <button
               type="button"

@@ -1,4 +1,4 @@
-import Link from 'next/link';
+﻿import Link from 'next/link';
 import { ArrowRight, ArrowUpRight } from 'lucide-react';
 import { hubSectionHref, type HubAdventureRef } from '../registry/hubSectionRegistry';
 import { tripSwitchHref } from '@/features/trips/registry/tripSectionRegistry';
@@ -35,7 +35,6 @@ export function HubWidgetBody({
           label="Stock"
           value={`${data.items} objet(s)`}
           href={hubSectionHref(adventure, 'inventaire')}
-          linkLabel="Inventaire"
         />
       );
     case 'alertes-materiel':
@@ -44,7 +43,6 @@ export function HubWidgetBody({
           label="Alertes matériel"
           value={data.alerts === 0 ? 'RAS — équipement sain' : `${data.alerts} alerte(s)`}
           href={hubSectionHref(adventure, 'alertes')}
-          linkLabel="Alertes"
         />
       );
     case 'dispo-apercu':
@@ -53,7 +51,6 @@ export function HubWidgetBody({
           label="Prêts en cours"
           value={data.loans === 0 ? 'Aucun prêt' : `${data.loans} prêt(s)`}
           href={hubSectionHref(adventure, 'disponibilite')}
-          linkLabel="Disponibilité"
         />
       );
     case 'prochain-depart':
@@ -62,7 +59,6 @@ export function HubWidgetBody({
           label="Départ"
           value="Préparer le départ"
           href={hubSectionHref(adventure, 'depart')}
-          linkLabel="Départ"
         />
       );
     case 'invitations-apercu':
@@ -71,7 +67,6 @@ export function HubWidgetBody({
           label="Invitations"
           value={data.pendingInvites === 0 ? 'Aucune en attente' : `${data.pendingInvites} en attente`}
           href={hubSectionHref(adventure, 'invitations')}
-          linkLabel="Invitations"
         />
       );
     case 'presence-groupe':
@@ -80,7 +75,6 @@ export function HubWidgetBody({
           label={data.groupLabel ?? 'Groupe'}
           value={`${data.members} membre(s)`}
           href={hubSectionHref(adventure, 'groupe')}
-          linkLabel="Groupe"
         />
       );
     case 'entrer-voyage':
@@ -103,25 +97,22 @@ function WidgetCard({
   label,
   value,
   href,
-  linkLabel,
 }: {
   label: string;
   value: string;
   href: string;
-  linkLabel: string;
 }) {
   return (
-    <div className="glass p-4 rounded-[var(--lkv-radius-card)]">
-      <p className="text-[10px] font-mono uppercase tracking-widest text-[var(--lkv-text-muted)]">{label}</p>
-      <p className="text-sm font-bold text-[var(--lkv-text-primary)] mt-1">{value}</p>
-      <Link
-        href={href}
-        className="inline-flex items-center gap-1 mt-2 text-xs font-semibold text-[var(--lkv-text-secondary)] hover:text-[var(--lkv-text-primary)] min-h-[44px]"
-      >
-        <span>{linkLabel}</span>
-        <ArrowRight size={13} aria-hidden="true" />
-      </Link>
-    </div>
+    <Link
+      href={href}
+      className="glass p-4 rounded-[var(--lkv-radius-card)] block cursor-pointer active:scale-[0.98] transition-transform min-h-[44px]"
+    >
+      <p className="text-sm font-bold text-[var(--lkv-text-primary)] leading-snug">{value}</p>
+      <p className="text-[10px] font-mono uppercase tracking-widest text-[var(--lkv-text-muted)] mt-1 flex items-center gap-1">
+        <span>{label}</span>
+        <ArrowRight size={11} aria-hidden="true" />
+      </p>
+    </Link>
   );
 }
 

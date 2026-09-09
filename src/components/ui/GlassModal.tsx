@@ -1,4 +1,4 @@
-'use client';
+﻿'use client';
 
 import React from 'react';
 import * as Dialog from '@radix-ui/react-dialog';
@@ -52,7 +52,7 @@ export function GlassModal({
               aria-describedby={undefined}
               className={
                 isSheet
-                  ? 'fixed inset-x-0 bottom-0 z-[10001] max-h-[92dvh] overflow-y-auto rounded-t-3xl bg-[color:var(--glass-bg-strong)] backdrop-blur-[32px] backdrop-saturate-[200%] border border-white/40 shadow-2xl pb-[calc(16px+env(safe-area-inset-bottom,0px))]'
+                  ? 'fixed inset-x-0 bottom-0 z-[10001] max-h-[92dvh] overflow-y-auto rounded-t-3xl bg-[color:var(--glass-bg-strong)] backdrop-blur-[32px] backdrop-saturate-[200%] border border-white/40 shadow-2xl pb-[calc(16px+env(safe-area-inset-bottom,0px))] // lkdv-safe-area-ok'
                   : 'fixed left-1/2 top-1/2 z-[10001] -translate-x-1/2 -translate-y-1/2 w-[min(520px,92vw)] max-h-[88dvh] overflow-y-auto rounded-3xl bg-[color:var(--glass-bg-strong)] backdrop-blur-[32px] backdrop-saturate-[200%] border border-white/40 shadow-2xl p-6'
               }
             >

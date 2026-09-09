@@ -1,8 +1,7 @@
-'use client';
+﻿'use client';
 
 import React, { useState, useTransition } from 'react';
 import {
-  Share2,
   Copy,
   Check,
   Globe,

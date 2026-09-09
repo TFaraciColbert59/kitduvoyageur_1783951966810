@@ -1,4 +1,4 @@
-'use client';
+﻿'use client';
 
 import React, { useState, useTransition } from 'react';
 import { useRouter } from 'next/navigation';
@@ -11,11 +11,6 @@ import { useActiveAdventure } from '@/features/hub/context/ActiveAdventureContex
 
 export interface AutoGenTripCreateViewProps {
   initialBriefInput?: string;
-}
-
-function cleanDestinationName(raw: string): string | null {
-  const name = raw.trim();
-  return name.length >= 2 ? name.slice(0, 150) : null;
 }
 
 /**

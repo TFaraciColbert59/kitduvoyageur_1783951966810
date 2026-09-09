@@ -117,8 +117,10 @@ export function HubSidebarRight({
     >
       <div className="glass p-3.5 rounded-2xl border border-white/70 shadow-xs">
         <p className="text-sm font-bold text-[var(--lkv-text-primary)]">
-          {NATURE_LABELS[profile.nature]} · {PARTY_LABELS[profile.party]}
-          {profile.scale ? ` · ${profile.scale}` : ''}
+          {NATURE_LABELS[profile.nature]}
+          {profile.nature === 'collectif'
+            ? ` · ${counts.members ?? 0} membre(s)`
+            : ` · ${PARTY_LABELS[profile.party]}${profile.scale ? ` · ${profile.scale}` : ''}`}
         </p>
         <p className="text-xs text-[var(--lkv-text-secondary)] mt-0.5">
           {counts.items ?? 0} objet(s) · {counts.alerts ?? 0} alerte(s)
