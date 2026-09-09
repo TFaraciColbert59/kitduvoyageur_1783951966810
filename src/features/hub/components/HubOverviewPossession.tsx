@@ -5,11 +5,19 @@ import { ArrowRight, BellRing, CalendarCheck, Package, Sparkles } from 'lucide-r
 import { motion } from 'framer-motion';
 import { HUB_POSSESSION_HREFS } from '../registry/hubSectionRegistry';
 import { HubActivityHero } from './HubActivityHero';
+import { GearCardDepart } from '@/features/materiel/components/cards/GearCardDepart';
+import { GearCardKits } from '@/features/materiel/components/cards/GearCardKits';
+import { GearCardForget } from '@/features/materiel/components/cards/GearCardForget';
+import { GearCardAlertes } from '@/features/materiel/components/cards/GearCardAlertes';
+import { GearCardDispo } from '@/features/materiel/components/cards/GearCardDispo';
+import type { MaterielSummary } from '@/features/materiel/services/getMaterielSummary';
 
 export interface HubOverviewPossessionProps {
   items: number;
   loans: number;
   alerts: number;
+  /** Agrégats serveur (getMaterielSummary) — alimente les 5 cartes legacy. */
+  summary: MaterielSummary;
 }
 
 const fade = {
@@ -22,7 +30,7 @@ const fade = {
  * UX Hub — Aperçu matériel : hero d'identité + 3 cartes vitales lisant les
  * compteurs réels. La navigation complète vit dans la sidebar.
  */
-export function HubOverviewPossession({ items, loans, alerts }: HubOverviewPossessionProps) {
+export function HubOverviewPossession({ items, loans, alerts, summary }: HubOverviewPossessionProps) {
   const stats: Array<{
     href: string;
     label: string;
@@ -72,6 +80,16 @@ export function HubOverviewPossession({ items, loans, alerts }: HubOverviewPosse
           );
         })}
       </div>
+
+      <motion.div {...fade} className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+        <div className="sm:col-span-2">
+          <GearCardDepart data={summary.depart} className="h-full" />
+        </div>
+        <GearCardKits data={summary.kits} className="h-full" />
+        <GearCardAlertes data={summary.alertes} className="h-full" />
+        <GearCardForget data={summary.forget} className="h-full" />
+        <GearCardDispo data={summary.dispo} className="h-full" />
+      </motion.div>
 
       <motion.div {...fade}>
         <Link

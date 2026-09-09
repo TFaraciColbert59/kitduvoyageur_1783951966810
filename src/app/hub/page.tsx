@@ -1,6 +1,7 @@
 import { getHubAdventureData } from '@/features/hub/server/getHubAdventureData';
 import { deriveHubProfile } from '@/features/hub/engine/hubProfileEngine';
 import { getTripStats } from '@/lib/queries-trips';
+import { getMaterielSummary } from '@/features/materiel/services/getMaterielSummary';
 import { HubOverviewPossession } from '@/features/hub/components/HubOverviewPossession';
 import { HubOverviewSortie } from '@/features/hub/components/HubOverviewSortie';
 import { HubOverviewCollectif } from '@/features/hub/components/HubOverviewCollectif';
@@ -51,11 +52,13 @@ export default async function HubPage() {
     );
   }
 
+  const materielSummary = await getMaterielSummary();
   return (
     <HubOverviewPossession
       items={data.possession.items}
       loans={data.possession.loans}
       alerts={data.possession.alerts}
+      summary={materielSummary}
     />
   );
 }
