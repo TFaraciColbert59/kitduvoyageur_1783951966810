@@ -3,10 +3,10 @@
 import React from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { ChevronRight, Compass, Map as MapIcon, Plus, SlidersHorizontal, Tent } from 'lucide-react';
+import { ChevronRight, Compass, Map as MapIcon, SlidersHorizontal, Tent } from 'lucide-react';
 import { AdventureSwitcher } from './AdventureSwitcher';
+import { HubQuickCreate } from './HubQuickCreate';
 import {
-  HUB_NEW_HREF,
   hubSectionFromPathname,
   hubSectionHref,
   visibleHubSections,
@@ -114,13 +114,7 @@ export function HubSidebarLeft({ adventure, profile, counts, onOpenPicker, statu
       {/* ── 3. ZONE BASSE — État réseau + Actions ── */}
       <div className="shrink-0 pt-2 space-y-1.5">
         {statusSlot}
-        <Link
-          href={HUB_NEW_HREF}
-          className="glass-capsule-btn primary w-full min-h-[44px] !px-3 flex items-center justify-center gap-1.5 text-xs font-bold cursor-pointer active:scale-[0.98]"
-        >
-          <Plus size={14} aria-hidden="true" />
-          <span>Nouvelle activité</span>
-        </Link>
+        <HubQuickCreate />
         <button
           type="button"
           onClick={onOpenPicker}

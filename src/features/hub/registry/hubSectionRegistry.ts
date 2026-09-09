@@ -143,6 +143,8 @@ export const HUB_DEPART_HREF = hubSectionHref({ nature: 'possession' }, 'depart'
 
 /** H5 — Entrée du wizard de création (bouton « Nouvelle activité », R13). */
 export const HUB_NEW_HREF = '/hub/nouveau';
+/** Mode Génération IA de la création (suite autoGen). */
+export const HUB_NEW_IA_HREF = '/hub/nouveau?mode=ia';
 
 /** H5 — Liens statiques d'aperçu matériel (overviews, R13/R14 : zéro littéral hors registre). */
 export const HUB_POSSESSION_HREFS = {

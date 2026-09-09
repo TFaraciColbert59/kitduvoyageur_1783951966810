@@ -6,13 +6,14 @@ import { ProposalCard } from './ProposalCard';
 import { PersistentMetricsBar } from './PersistentMetricsBar';
 import type { Proposal } from '@/features/trips/schemas/autoGen.schema';
 import { runAutoGenPipeline } from '@/features/trips/engine/autoGenPipeline';
+import type { TripBrief } from '@/features/trips/schemas/autoGen.schema';
 import { Sparkles } from 'lucide-react';
 
 export interface AutoGenTripViewProps {
   initialBriefInput?: string;
   layers?: Record<string, Proposal<any>>;
   tradeoffsLog?: string[];
-  onCompleteTrip?: (tripData: any) => void;
+  onCompleteTrip?: (tripData: { layers: Record<string, Proposal<any>>; brief?: TripBrief | null }) => void;
 }
 
 export const AutoGenTripView: React.FC<AutoGenTripViewProps> = ({
@@ -23,6 +24,7 @@ export const AutoGenTripView: React.FC<AutoGenTripViewProps> = ({
 }) => {
   const [layers, setLayers] = useState<Record<string, Proposal<any>>>(initialLayers);
   const [tradeoffsLog, setTradeoffsLog] = useState<string[]>(initialTradeoffs);
+  const [lastBrief, setLastBrief] = useState<TripBrief | null>(null);
   const [isGenerating, setIsGenerating] = useState(false);
 
   const handleGenerate = async (query: string) => {
@@ -31,6 +33,7 @@ export const AutoGenTripView: React.FC<AutoGenTripViewProps> = ({
       const output = await runAutoGenPipeline(query);
       setLayers(output.layers);
       setTradeoffsLog(output.tradeoffsLog);
+      setLastBrief(output.brief ?? null);
     } catch (err) {
       console.error('Error generating trip:', err);
     } finally {
@@ -128,7 +131,7 @@ export const AutoGenTripView: React.FC<AutoGenTripViewProps> = ({
         maxBudgetEur={maxBudgetEur}
         totalWeightKg={totalWeightKg}
         maxWeightKg={maxWeightKg}
-        onValidate={() => onCompleteTrip && onCompleteTrip({ layers })}
+        onValidate={() => onCompleteTrip && onCompleteTrip({ layers, brief: lastBrief })}
       />
     </div>
   );
