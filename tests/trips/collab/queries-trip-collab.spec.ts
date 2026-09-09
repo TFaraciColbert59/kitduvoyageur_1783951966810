@@ -30,6 +30,10 @@ function createChainedMock(result: any = { error: null }) {
     update: vi.fn(() => chain),
     delete: vi.fn(() => chain),
     eq: vi.fn(() => chain),
+    select: vi.fn(() => chain),
+    in: vi.fn(() => chain),
+    upsert: vi.fn(() => chain),
+    maybeSingle: vi.fn(() => Promise.resolve(result)),
     then: (resolve: any, reject?: any) => Promise.resolve(result).then(resolve, reject),
   };
   return chain;

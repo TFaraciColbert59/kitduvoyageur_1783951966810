@@ -16,6 +16,8 @@ export interface Crew {
   xp: number;
   created_by: string;
   legacy_group_id: string | null;
+  /** Équipage auto-créé pour une activité : invisible tant qu'il est solo. */
+  auto_created?: boolean | null;
   created_at: string;
   updated_at: string;
 }

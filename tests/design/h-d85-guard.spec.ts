@@ -106,6 +106,8 @@ const RULE14_ALLOWLIST = [
   'src/features/hub/engine/hubProfileEngine.ts',
   'src/features/hub/registry/hubSectionRegistry.ts',
   'src/features/hub/registry/hubWidgetRegistry.ts',
+  // Catalogue central des widgets du hub universel (registre de même niveau).
+  'src/features/hub/registry/widgetCatalog.ts',
   // Couche logique pure du sélecteur (fallbacks typés HubSectionId, testés) — même niveau que le moteur.
   'src/features/hub/context/adventureLists.ts',
   // Présentation des widgets (mapping widget→section via hubSectionHref typé, zéro littéral d'URL — R13 intacte).

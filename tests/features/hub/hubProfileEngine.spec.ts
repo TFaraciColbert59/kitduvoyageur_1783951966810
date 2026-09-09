@@ -129,7 +129,7 @@ describe('H1 — deriveHubProfile : nature possession', () => {
 });
 
 describe('H1 — deriveHubProfile : nature sortie (composition)', () => {
-  it('SOR-1: rando solo courte = kit + itinéraire + sécurité, pas de budget/groupe', () => {
+  it('SOR-1: rando solo courte = kit + itinéraire + sécurité + équipage, pas de budget', () => {
     const p = deriveHubProfile(
       { kind: 'sortie', trip: mkTrip({ collaborators: [], estimated_budget: null }) },
       NOW,
@@ -137,11 +137,14 @@ describe('H1 — deriveHubProfile : nature sortie (composition)', () => {
     expect(p.nature).toBe('sortie');
     expect(p.scale).toBe('short');
     expect(p.party).toBe('solo');
+    expect(p.activityType).toBe('hiking');
     expect(p.sections).toContain('itinerary');
     expect(p.sections).toContain('gear');
     expect(p.sections).toContain('safety');
     expect(p.sections).not.toContain('budget');
-    expect(p.sections).not.toContain('team');
+    // Couche groupe universelle : onglet Équipage toujours visible.
+    expect(p.sections).toContain('team');
+    expect(p.reason.team).toMatch(/toujours visible/);
   });
 
   it('SOR-2: road trip multi-pays en groupe = budget + documents forcés', () => {

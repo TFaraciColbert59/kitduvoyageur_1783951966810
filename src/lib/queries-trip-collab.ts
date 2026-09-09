@@ -1,5 +1,6 @@
 import 'server-only';
 import { createClient } from '@/lib/supabase/server';
+import { syncTripCollaboratorsToCrew } from '@/features/hub/server/syncTripCrew';
 import type { TripCollaborator, TripCollaboratorRole } from '@/features/trips/types/trip.types';
 
 /**
@@ -140,6 +141,10 @@ export async function inviteCollaborator(
     };
   }
 
+  // Couche groupe universelle (H-ACT) : le collaborateur rejoint le crew de
+  // l'activité — le fonctionnement collectif s'active dès le 2e membre.
+  await syncTripCollaboratorsToCrew(tripId);
+
   return {
     success: true,
     collaborator: {
@@ -188,6 +193,13 @@ export async function removeCollaborator(
 ): Promise<boolean> {
   const supabase = await createClient();
 
+  const { data: target } = await supabase
+    .from('trip_collaborators')
+    .select('user_id')
+    .eq('id', collaboratorId)
+    .eq('trip_id', tripId)
+    .maybeSingle();
+
   const { error } = await supabase
     .from('trip_collaborators')
     .delete()
@@ -197,6 +209,11 @@ export async function removeCollaborator(
   if (error) {
     console.error('[LKDV Collab] Erreur removeCollaborator:', error);
     return false;
+  }
+
+  const removedUserId = (target as { user_id?: string } | null)?.user_id;
+  if (removedUserId) {
+    await syncTripCollaboratorsToCrew(tripId, { removeUserId: removedUserId });
   }
 
   return true;

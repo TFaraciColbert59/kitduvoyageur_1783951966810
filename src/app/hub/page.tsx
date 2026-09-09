@@ -31,6 +31,8 @@ export default async function HubPage() {
         profile={profile}
         trip={data.trip}
         countdown={daysUntil(data.trip.start_date, Date.now())}
+        group={data.group}
+        hiking={data.hiking}
       />
     );
   }

@@ -2,10 +2,12 @@ import { cache } from 'react';
 import { createClient } from '@/lib/supabase/server';
 import { getTripBySlug } from '@/lib/queries-trips';
 import { fetchUserCrews } from '@/lib/queries-crews';
+import { getWeather, type WeatherDay } from '@/features/materiel/services/getWeather';
 import { getActiveAdventure } from '../context/activeAdventureServer';
 import type { HubCounters } from '../registry/hubSectionRegistry';
 import type { ActiveAdventureData } from '../context/adventureSchema';
 import type { HubAdventureInput, HubSectionId } from '../engine/hubProfileEngine';
+import { deriveActivityType, aggregateHikeStats, estimateHikeDurationMin } from '../engine/activityTypes';
 import type { TripFull } from '@/features/trips/types/trip.types';
 
 /**
@@ -39,6 +41,39 @@ export interface HubAdventureLists {
   possession: { items: number; loans: number; alerts: number };
 }
 
+export interface HubCrewMemberLite {
+  userId: string;
+  role: string;
+  status: string;
+  fullName: string | null;
+  avatarUrl: string | null;
+}
+
+/** Bloc groupe universel (H-ACT §4) — membres, rôles, invitations. */
+export interface HubCrewBlock {
+  crewId: string;
+  crewName: string | null;
+  autoCreated: boolean;
+  /** Membres actifs (propriétaire inclus). */
+  memberCount: number;
+  members: HubCrewMemberLite[];
+  /** Invitations en attente (crew_members pending). */
+  pendingInvites: number;
+}
+
+/** Contexte randonnée (H-ACT §3) — parcours, dénivelé, météo, eau. */
+export interface HubHikingContext {
+  routeId: string | null;
+  routeName: string | null;
+  distanceKm: number | null;
+  elevationGainM: number | null;
+  elevationLossM: number | null;
+  durationMin: number | null;
+  waterPointsCount: number;
+  coords: { lat: number; lon: number } | null;
+  weather: { current: { tempC: number; weathercode: number; precipPct: number }; days: WeatherDay[] } | null;
+}
+
 export interface HubAdventureData extends HubAdventureLists {
   adventure: ActiveAdventureData;
   /** Entrée moteur (compteurs résolus, enabledSections = base serveur). */
@@ -46,6 +81,10 @@ export interface HubAdventureData extends HubAdventureLists {
   trip: TripFull | null;
   groupLabel: string | null;
   linkedTripSlug: string | null;
+  /** Couche groupe universelle — présente pour toute sortie avec équipage. */
+  group: HubCrewBlock | null;
+  /** Contexte randonnée — présent si l'activité active est une randonnée. */
+  hiking: HubHikingContext | null;
 }
 
 const EMPTY_LISTS: HubAdventureLists = {
@@ -141,6 +180,144 @@ function possessionInput(lists: HubAdventureLists, hasDepartEnCours = false): Hu
   };
 }
 
+/** Couche groupe universelle : équipage, membres, rôles, invitations. */
+async function loadCrewBlock(
+  supabase: Awaited<ReturnType<typeof createClient>>,
+  tripId: string,
+): Promise<HubCrewBlock | null> {
+  try {
+    const { data: tripRow } = await supabase
+      .from('trips')
+      .select('crew_id')
+      .eq('id', tripId)
+      .maybeSingle();
+    const crewId = (tripRow as { crew_id?: string | null } | null)?.crew_id;
+    if (!crewId) return null;
+
+    const [crewRes, membersRes] = await Promise.all([
+      supabase.from('crews').select('id, name, auto_created').eq('id', crewId).maybeSingle(),
+      supabase
+        .from('crew_members')
+        .select('user_id, role, status, profile:user_profiles!crew_members_user_id_fkey(full_name, username, avatar_url)')
+        .eq('crew_id', crewId)
+        .order('joined_at', { ascending: true }),
+    ]);
+
+    const crew = crewRes.data as { id: string; name: string; auto_created: boolean } | null;
+    if (!crew) return null;
+
+    const rows = (membersRes.data ?? []) as Array<{
+      user_id: string;
+      role: string;
+      status: string;
+      profile?: { full_name?: string | null; username?: string | null; avatar_url?: string | null } | null;
+    }>;
+
+    const members: HubCrewMemberLite[] = rows
+      .filter((m) => m.status === 'active')
+      .map((m) => ({
+        userId: m.user_id,
+        role: m.role,
+        status: m.status,
+        fullName: m.profile?.full_name ?? m.profile?.username ?? null,
+        avatarUrl: m.profile?.avatar_url ?? null,
+      }));
+    const pendingInvites = rows.filter((m) => m.status === 'pending').length;
+
+    return {
+      crewId: crew.id,
+      crewName: crew.name,
+      autoCreated: Boolean(crew.auto_created),
+      memberCount: members.length,
+      members,
+      pendingInvites,
+    };
+  } catch (err) {
+    console.error('[LKDV hub] crew block error:', err);
+    return null;
+  }
+}
+
+const WATER_PATTERN = /eau|water|source|riviere|rivière|lac|fontaine|ruisseau/i;
+
+/** Contexte randonnée : parcours (route liée ou étapes), dénivelé, météo, eau. */
+async function loadHikingContext(
+  supabase: Awaited<ReturnType<typeof createClient>>,
+  trip: TripFull,
+): Promise<HubHikingContext> {
+  const meta = (trip.metadata ?? {}) as { route_id?: string | number | null };
+  const routeId = meta.route_id != null ? String(meta.route_id) : null;
+
+  const stats = aggregateHikeStats(trip.steps ?? []);
+  let routeName: string | null = null;
+  let distanceKm = stats.hasData ? stats.distanceKm : null;
+  let elevationGainM = stats.hasData ? stats.elevationGainM : null;
+  let elevationLossM = stats.hasData ? stats.elevationLossM : null;
+  let durationMin: number | null = null;
+
+  if (routeId) {
+    const numericId = Number(routeId);
+    if (Number.isFinite(numericId)) {
+      try {
+        const [routeRes, metaRes] = await Promise.all([
+          supabase.from('hiking_routes').select('id, name, distance_km').eq('id', numericId).maybeSingle(),
+          supabase
+            .from('trail_metadata')
+            .select('duration_hours, elevation_gain, elevation_loss')
+            .eq('trail_id', numericId)
+            .maybeSingle(),
+        ]);
+        const route = routeRes.data as { name?: string | null; distance_km?: number | null } | null;
+        const tm = metaRes.data as { duration_hours?: number | null; elevation_gain?: number | null; elevation_loss?: number | null } | null;
+        if (route) {
+          routeName = route.name ?? null;
+          if (route.distance_km != null) distanceKm = route.distance_km;
+        }
+        if (tm) {
+          if (tm.elevation_gain != null) elevationGainM = tm.elevation_gain;
+          if (tm.elevation_loss != null) elevationLossM = tm.elevation_loss;
+          if (tm.duration_hours != null) durationMin = Math.round(tm.duration_hours * 60);
+        }
+      } catch {
+        /* repli : statistiques des étapes */
+      }
+    }
+  }
+
+  if (durationMin === null && distanceKm != null && elevationGainM != null) {
+    durationMin = estimateHikeDurationMin(distanceKm, elevationGainM);
+  }
+
+  const firstStep = (trip.steps ?? []).find((s) => s.latitude != null && s.longitude != null);
+  const coords = firstStep
+    ? { lat: firstStep.latitude as number, lon: firstStep.longitude as number }
+    : null;
+
+  const waterPointsCount = (trip.pois ?? []).filter((p) =>
+    WATER_PATTERN.test(`${p.category ?? ''} ${p.name}`),
+  ).length;
+
+  let weather: HubHikingContext['weather'] = null;
+  try {
+    const forecast = await getWeather(coords?.lat ?? null, coords?.lon ?? null, trip.destination_name);
+    weather = { current: forecast.current, days: forecast.days };
+  } catch (err) {
+    console.error('[LKDV hub] weather error:', err);
+  }
+
+  return {
+    routeId,
+    routeName,
+    distanceKm,
+    elevationGainM,
+    elevationLossM,
+    durationMin,
+    waterPointsCount,
+    coords,
+    weather,
+  };
+}
+
 export async function getHubAdventureDataInner(): Promise<HubAdventureData> {
   const supabase = await createClient();
   const {
@@ -153,6 +330,11 @@ export async function getHubAdventureDataInner(): Promise<HubAdventureData> {
   if (adventure.nature === 'sortie') {
     const trip = await getTripBySlug(adventure.slug, user?.id).catch(() => null);
     if (trip) {
+      const activityType = deriveActivityType(trip.primary_activity);
+      const [group, hiking] = await Promise.all([
+        loadCrewBlock(supabase, trip.id),
+        activityType === 'hiking' ? loadHikingContext(supabase, trip) : Promise.resolve(null),
+      ]);
       return {
         ...lists,
         adventure,
@@ -166,10 +348,12 @@ export async function getHubAdventureDataInner(): Promise<HubAdventureData> {
         trip,
         groupLabel: null,
         linkedTripSlug: null,
+        group,
+        hiking,
       };
     }
     // Repli possession (aventure périmée — jamais de cul-de-sac).
-    return { ...lists, adventure: { nature: 'possession' }, input: possessionInput(lists), trip: null, groupLabel: null, linkedTripSlug: null };
+    return { ...lists, adventure: { nature: 'possession' }, input: possessionInput(lists), trip: null, groupLabel: null, linkedTripSlug: null, group: null, hiking: null };
   }
 
   if (adventure.nature === 'collectif') {
@@ -209,6 +393,8 @@ export async function getHubAdventureDataInner(): Promise<HubAdventureData> {
         trip: null,
         groupLabel: g?.name ?? adventure.title,
         linkedTripSlug,
+        group: null,
+        hiking: null,
       };
     }
     const c = lists.crews.find((x) => x.id === adventure.id);
@@ -225,10 +411,12 @@ export async function getHubAdventureDataInner(): Promise<HubAdventureData> {
       trip: null,
       groupLabel: c?.name ?? adventure.title,
       linkedTripSlug: c?.next_trip?.slug ?? null,
+      group: null,
+      hiking: null,
     };
   }
 
-  return { ...lists, adventure, input: possessionInput(lists), trip: null, groupLabel: null, linkedTripSlug: null };
+  return { ...lists, adventure, input: possessionInput(lists), trip: null, groupLabel: null, linkedTripSlug: null, group: null, hiking: null };
 }
 
 /**
@@ -249,12 +437,16 @@ export function buildHubCounts(data: HubAdventureData): HubCounters {
     unpacked: trip?.items?.filter((i) => !i.is_packed).length ?? 0,
     pendingSafety: trip?.safety_checkpoints?.filter((c) => c.status === 'pending').length ?? 0,
     notes: trip?.notes?.length ?? 0,
+    pois: trip?.pois?.length ?? 0,
+    reservations: trip?.steps?.filter((s) => Boolean(s.accommodation_name)).length ?? 0,
     members:
       data.input.kind === 'collectif'
         ? data.input.membersCount
-        : trip?.collaborators
-          ? trip.collaborators.length + 1
-          : 0,
+        : data.group
+          ? data.group.memberCount
+          : trip?.collaborators
+            ? trip.collaborators.length + 1
+            : 0,
     invites: data.pendingInvites,
     linkedTrips: data.input.kind === 'collectif' ? data.input.linkedTripsCount : 0,
   };

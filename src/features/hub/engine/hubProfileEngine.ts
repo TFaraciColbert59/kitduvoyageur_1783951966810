@@ -3,6 +3,8 @@ import {
   type TripSectionId,
   type TripWidgetId,
 } from '@/features/trips/engine/tripProfileEngine';
+import { deriveActivityType, type ActivityType } from './activityTypes';
+import { applyActivityProfile } from './activityProfiles';
 import type { TripFull } from '@/features/trips/types/trip.types';
 
 /**
@@ -50,6 +52,8 @@ export type HubWidgetId = TripWidgetId | PossessionWidgetId | CollectifWidgetId;
 
 export interface AdventureProfile {
   nature: AdventureNature;
+  /** Type d'activité (phase 1 : randonnée / voyage) — null si possession ou collectif. */
+  activityType?: ActivityType | null;
   /** null si possession ou collectif (pas d'échelle datée). */
   scale: 'day' | 'short' | 'long' | 'expedition' | null;
   party: 'solo' | 'duo' | 'group';
@@ -219,10 +223,25 @@ function deriveSortie(
 ): AdventureProfile {
   // COMPOSITION — le moteur Y décide, le hub transmet (R2 : zéro duplication).
   const trip = deriveTripProfile(input.trip, now);
+  // Couche d'activité : randonnée vs voyage (H-ACT §3).
+  const activityType = deriveActivityType(input.trip.primary_activity);
   // Miroir Y2.4 : un voyage annulé ignore les sections manuelles (aperçu seul).
   const cancelled = input.trip.status === 'cancelled';
+  const withActivity = applyActivityProfile(
+    {
+      nature: 'sortie',
+      scale: trip.scale,
+      party: trip.party,
+      density: trip.density,
+      sections: [...trip.sections],
+      widgets: [...trip.widgets],
+      reason: trip.reason as unknown as Record<HubSectionId, string>,
+    },
+    activityType,
+    cancelled,
+  );
   const effectiveEnabled = cancelled ? undefined : input.enabledSections;
-  const finalSections = withUserEnabled([...trip.sections], effectiveEnabled);
+  const finalSections = withUserEnabled(withActivity.sections, effectiveEnabled);
 
   const reason = fullReason(finalSections, effectiveEnabled, (id, shown) => {
     if (cancelled && id !== 'overview') {
@@ -231,17 +250,21 @@ function deriveSortie(
     if (id === 'overview' && (trip.sections as HubSectionId[]).includes('overview')) {
       return 'affiché : nature sortie (composition tripProfileEngine, zéro duplication)';
     }
+    if (id === 'team' && !withActivity.reason[id]?.includes('masqué')) {
+      return withActivity.reason[id] ?? 'affiché : onglet Équipage toujours visible';
+    }
     if (shown) return (trip.reason as Record<string, string>)[id] ?? `affiché : ${id}`;
     return (trip.reason as Record<string, string>)[id] ?? 'masqué : profil sortie';
   });
 
   return {
     nature: 'sortie',
+    activityType,
     scale: trip.scale,
     party: trip.party,
     density: trip.density,
     sections: finalSections,
-    widgets: [...trip.widgets],
+    widgets: withActivity.widgets,
     reason,
   };
 }

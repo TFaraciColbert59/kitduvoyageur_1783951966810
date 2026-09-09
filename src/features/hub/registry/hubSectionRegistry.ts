@@ -52,6 +52,8 @@ export interface HubCounters {
   members?: number;
   invites?: number;
   linkedTrips?: number;
+  pois?: number;
+  reservations?: number;
 }
 
 export interface HubSectionDef {

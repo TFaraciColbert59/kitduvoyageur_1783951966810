@@ -26,7 +26,47 @@ export async function updateTripStatus(
     return { success: false, error: error.message };
   }
 
+  // Couche groupe universelle (H-ACT §4) : à la fin de l'activité, l'équipage
+  // auto-créé encore solo est supprimé automatiquement.
+  if (status === 'completed' || status === 'cancelled') {
+    await cleanupSoloAutoCrew(supabase, tripId);
+  }
+
   return { success: true };
+}
+
+/** Supprime l'équipage auto-créé d'un voyage s'il est resté solo (best-effort). */
+async function cleanupSoloAutoCrew(
+  supabase: Awaited<ReturnType<typeof createClient>>,
+  tripId: string
+): Promise<void> {
+  try {
+    const { data: trip } = await supabase
+      .from('trips')
+      .select('crew_id')
+      .eq('id', tripId)
+      .maybeSingle();
+    const crewId = (trip as { crew_id?: string | null } | null)?.crew_id;
+    if (!crewId) return;
+
+    const { data: crew } = await supabase
+      .from('crews')
+      .select('id, auto_created')
+      .eq('id', crewId)
+      .maybeSingle();
+    if (!crew?.auto_created) return;
+
+    const { count } = await supabase
+      .from('crew_members')
+      .select('*', { count: 'exact', head: true })
+      .eq('crew_id', crewId)
+      .eq('status', 'active');
+    if ((count ?? 0) <= 1) {
+      await supabase.from('crews').delete().eq('id', crewId);
+    }
+  } catch (err) {
+    console.error('[LKDV TripCompletion] cleanupSoloAutoCrew (non bloquant):', err);
+  }
 }
 
 /**

@@ -5,6 +5,7 @@
 
 import { createClient } from '@/lib/supabase/server';
 import type { Crew, CrewMember, CrewSummary, CrewWithDetails } from '@/features/crews/types/crew.types';
+import { isCrewVisible } from '@/features/hub/engine/crewVisibility';
 
 export interface RawCrewTrip {
   id: string;
@@ -122,7 +123,10 @@ export async function fetchUserCrews(userId: string): Promise<CrewSummary[]> {
     .in('crew_id', crewIds)
     .order('start_date', { ascending: true });
 
-  return aggregateCrewsData(crews as Crew[], (allMembers || []) as any, (allTrips || []) as any, userId);
+  // 5. Couche groupe universelle : un équipage auto-créé reste invisible
+  //    tant qu'il est solo (H-ACT §4).
+  return aggregateCrewsData(crews as Crew[], (allMembers || []) as any, (allTrips || []) as any, userId)
+    .filter(isCrewVisible);
 }
 
 /**
@@ -171,7 +175,8 @@ export async function fetchPublicCrews(options?: {
     .in('crew_id', crewIds)
     .order('start_date', { ascending: true });
 
-  return aggregateCrewsData(crews as Crew[], (allMembers || []) as any, (allTrips || []) as any, options?.currentUserId);
+  return aggregateCrewsData(crews as Crew[], (allMembers || []) as any, (allTrips || []) as any, options?.currentUserId)
+    .filter(isCrewVisible);
 }
 
 /**
