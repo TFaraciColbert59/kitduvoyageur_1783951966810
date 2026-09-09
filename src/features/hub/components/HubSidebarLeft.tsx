@@ -22,6 +22,8 @@ export interface HubSidebarLeftProps {
   onOpenPicker: () => void;
   /** Slot indicateur réseau (offline) — intégré à la zone basse. */
   statusSlot?: React.ReactNode;
+  /** Signal croissant (retour Android) — l'instance desktop doit l'entendre aussi. */
+  switcherSignal?: number;
 }
 
 const NATURE_LABEL: Record<HubAdventureRef['nature'], string> = {
@@ -37,7 +39,7 @@ const NATURE_LABEL: Record<HubAdventureRef['nature'], string> = {
  * lue du registre, et les actions (nouvelle activité, personnalisation).
  * Rien n'est dupliqué : hrefs et compteurs viennent du registre hub.
  */
-export function HubSidebarLeft({ adventure, profile, counts, onOpenPicker, statusSlot }: HubSidebarLeftProps) {
+export function HubSidebarLeft({ adventure, profile, counts, onOpenPicker, statusSlot, switcherSignal }: HubSidebarLeftProps) {
   const pathname = usePathname();
   const activeSection = hubSectionFromPathname(pathname);
   const sections = visibleHubSections(profile);
@@ -49,7 +51,7 @@ export function HubSidebarLeft({ adventure, profile, counts, onOpenPicker, statu
     >
       {/* ── 1. ZONE HAUTE — Identité de l'aventure active ── */}
       <div className="shrink-0 space-y-2.5">
-        <AdventureSwitcher variant="desktop" />
+        <AdventureSwitcher variant="desktop" forceOpenSignal={switcherSignal} />
         <div className="flex items-center gap-2 px-1 text-[10px] font-mono font-bold uppercase tracking-widest text-[var(--lkv-text-secondary)]">
           {adventure.nature === 'sortie' ? (
             <Compass size={12} aria-hidden="true" />

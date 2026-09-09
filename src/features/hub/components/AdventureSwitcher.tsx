@@ -1,28 +1,47 @@
 'use client';
 
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import * as Cmd from 'cmdk';
-import { ChevronsUpDown, Compass, Package, Users, Search, Check, RefreshCw, Sparkles } from 'lucide-react';
+import * as Dialog from '@radix-ui/react-dialog';
+import { ChevronsUpDown, Compass, Package, Users, Search, Check, RefreshCw, Sparkles, AlertTriangle } from 'lucide-react';
 import { GlassSheet } from '@/components/ui/GlassSheet';
 import { useActiveAdventure } from '../context/ActiveAdventureContext';
 import {
   adventureKey,
   consumeSwitcherAutoOpen,
   filterAdventures,
+  peekSwitcherAutoOpen,
   resolveAdventureHref,
   shouldToggleSwitcher,
   type AdventureEntry,
 } from '../context/adventureLists';
 
+/** Viewport mobile réactif (matchMedia — jamais window.innerWidth éphémère). */
+function useIsMobileViewport(): boolean {
+  const [isMobile, setIsMobile] = useState(false);
+  useEffect(() => {
+    const mq = window.matchMedia('(max-width: 767px)');
+    const update = () => setIsMobile(mq.matches);
+    update();
+    mq.addEventListener('change', update);
+    return () => mq.removeEventListener('change', update);
+  }, []);
+  return isMobile;
+}
+
 /**
  * H2.3 — Sélecteur d'aventure du hub (généralisation d'ActiveTripSwitcher).
  *
- * Desktop : palette `cmdk` (Ctrl/Cmd+K ou J, Escape ferme) ; mobile :
- * `GlassSheet` plein écran. Liste groupée par nature (Mon matériel /
- * Mes voyages / Mes groupes) avec compteurs et sous-titres de contexte,
- * recherche, restauration de la dernière section, rechargement.
- * La liste affiche toujours les 3 groupes — jamais de restriction.
+ * Deux instances toujours montées (slot mobile + colonne desktop), chacune ne
+ * pilote que le dialog de SA variante — mais les deux dialogs passent par un
+ * PORTAL Radix : un élément `position: fixed` ne doit jamais être enfant d'un
+ * panneau `.glass` (backdrop-filter = containing block + overflow hidden —
+ * la palette desktop était clippée dans la sidebar). Échelle z-index :
+ * overlays 10000 / contenu 10001, au-dessus de la tab bar (9999).
+ *
+ * Liste groupée par nature (Mon matériel / Mes voyages / Mes groupes) avec
+ * recherche, suggestion IA, restauration de la dernière section, rechargement.
  */
 export function AdventureSwitcher({
   forceOpenSignal = 0,
@@ -45,19 +64,22 @@ export function AdventureSwitcher({
     isPending,
   } = useActiveAdventure();
   const router = useRouter();
+  const isMobile = useIsMobileViewport();
 
   const [open, setOpen] = useState(false);
   const [sheetOpen, setSheetOpen] = useState(false);
   const [query, setQuery] = useState('');
+  const [switchError, setSwitchError] = useState(false);
+  const [mounted, setMounted] = useState(false);
+  useEffect(() => setMounted(true), []);
 
   /**
    * H-AUTO-41 — Un SEUL dialog Radix ouvert à la fois : l'instance est
    * montée deux fois (slot mobile + colonne desktop) et Radix modal marque
    * `aria-hidden` le portal sœur — deux Roots ouverts s'excluaient mutuellement
-   * de l'arbre d'accessibilité (dialog invisible au lecteur d'écran).
-   * Chaque instance ne contrôle que le dialog de sa variante.
+   * de l'arbre d'accessibilité. Chaque instance ne contrôle que sa variante.
    */
-  const isMobileViewport = () => typeof window !== 'undefined' && window.innerWidth < 768;
+  const controlsVariant = variant === 'mobile' ? isMobile : !isMobile;
 
   // H6.1 — Pilotage externe (retour Android) : signal croissant → ouvre.
   const firstSignal = React.useRef(true);
@@ -66,9 +88,10 @@ export function AdventureSwitcher({
       firstSignal.current = false;
       return;
     }
-    if (variant === 'mobile' && isMobileViewport()) setSheetOpen(true);
-    if (variant === 'desktop' && !isMobileViewport()) setOpen(true);
-  }, [forceOpenSignal, variant]);
+    if (!controlsVariant) return;
+    if (variant === 'mobile') setSheetOpen(true);
+    else setOpen(true);
+  }, [forceOpenSignal, variant, controlsVariant]);
 
   // H6.1 — Dialogue d'état (retour Android) : publie ouvert/fermé, écoute la fermeture.
   useEffect(() => {
@@ -84,30 +107,32 @@ export function AdventureSwitcher({
   }, []);
 
   // Appui long sur le tab Hub central hors surface hub : signal one-shot
-  // consommé au montage (navigation vers /hub → sélecteur ouvert direct).
+  // consommé par L'INSTANCE du viewport courant (peek puis consume — sinon
+  // l'instance mobile, montée en premier, avalait le signal sur desktop).
+  const autoOpenDone = React.useRef(false);
   useEffect(() => {
-    if (consumeSwitcherAutoOpen()) {
-      if (variant === 'mobile' && isMobileViewport()) setSheetOpen(true);
-      if (variant === 'desktop' && !isMobileViewport()) setOpen(true);
+    if (autoOpenDone.current || !controlsVariant) return;
+    autoOpenDone.current = true;
+    if (peekSwitcherAutoOpen() && consumeSwitcherAutoOpen()) {
+      if (variant === 'mobile') setSheetOpen(true);
+      else setOpen(true);
     }
-  }, [variant]);
+  }, [controlsVariant, variant]);
 
+  // Raccourci conservé (Ctrl/Cmd+K ou J). Escape : Radix ferme le dialog
+  // ouvert via onOpenChange — aucun listener global dupliqué.
   useEffect(() => {
     const handler = (e: KeyboardEvent) => {
       if (shouldToggleSwitcher(e)) {
         e.preventDefault();
-        // Une seule instance répond (sa variante) — jamais deux dialogs.
-        if (variant === 'mobile' && isMobileViewport()) setSheetOpen((v) => !v);
-        if (variant === 'desktop' && !isMobileViewport()) setOpen((v) => !v);
-      }
-      if (e.key === 'Escape') {
-        setOpen(false);
-        setSheetOpen(false);
+        if (!controlsVariant) return;
+        if (variant === 'mobile') setSheetOpen((v) => !v);
+        else setOpen((v) => !v);
       }
     };
     window.addEventListener('keydown', handler);
     return () => window.removeEventListener('keydown', handler);
-  }, [variant]);
+  }, [controlsVariant, variant]);
 
   const filtered = useMemo(() => filterAdventures(groups, query), [groups, query]);
 
@@ -118,32 +143,60 @@ export function AdventureSwitcher({
     return all.find((e) => adventureKey(e) === suggestion.key) ?? null;
   }, [suggestion, groups, query]);
 
-  const activateByKey = async (key: string) => {
-    const all: AdventureEntry[] = [...groups.possession, ...groups.sorties, ...groups.collectifs];
-    const entry = all.find((e) => adventureKey(e) === key);
-    if (!entry) return;
-    await setActiveAdventureByKey(key);
-    goToAdventure(entry);
-  };
-
-  const goToAdventure = (entry: AdventureEntry) => {
-    const href = resolveAdventureHref(entry, getLastSection);
+  const closeAll = useCallback(() => {
     setOpen(false);
     setSheetOpen(false);
     setQuery('');
-    router.push(href);
-  };
+    setSwitchError(false);
+  }, []);
 
-  const activate = async (entry: AdventureEntry) => {
-    if (entry.nature === 'possession') {
-      await setActiveAdventure({ nature: 'possession' });
-    } else if (entry.nature === 'sortie') {
-      await setActiveAdventure({ nature: 'sortie', id: entry.id, slug: entry.slug, title: entry.title });
-    } else {
-      await setActiveAdventure({ nature: 'collectif', kind: entry.kind, id: entry.id, title: entry.title });
-    }
-    goToAdventure(entry);
-  };
+  /** Cookie posé → push + refresh (l'action revalide /hub côté serveur). */
+  const goToAdventure = useCallback(
+    (entry: AdventureEntry) => {
+      const href = resolveAdventureHref(entry, getLastSection);
+      closeAll();
+      router.push(href);
+      router.refresh();
+    },
+    [closeAll, getLastSection, router],
+  );
+
+  const activate = useCallback(
+    async (entry: AdventureEntry): Promise<void> => {
+      setSwitchError(false);
+      let ok: boolean;
+      if (entry.nature === 'possession') {
+        ok = await setActiveAdventure({ nature: 'possession' });
+      } else if (entry.nature === 'sortie') {
+        ok = await setActiveAdventure({ nature: 'sortie', id: entry.id, slug: entry.slug, title: entry.title });
+      } else {
+        ok = await setActiveAdventure({ nature: 'collectif', kind: entry.kind, id: entry.id, title: entry.title });
+      }
+      if (!ok) {
+        // Échec (offline / serveur) : le dialog reste ouvert, l'optimisme a été
+        // annulé par le contexte — on l'affiche au lieu d'un "rien ne se passe".
+        setSwitchError(true);
+        return;
+      }
+      goToAdventure(entry);
+    },
+    [goToAdventure, setActiveAdventure],
+  );
+
+  const activateByKey = useCallback(
+    async (key: string) => {
+      setSwitchError(false);
+      const ok = await setActiveAdventureByKey(key);
+      if (!ok) {
+        setSwitchError(true);
+        return;
+      }
+      const all: AdventureEntry[] = [...groups.possession, ...groups.sorties, ...groups.collectifs];
+      const entry = all.find((e) => adventureKey(e) === key);
+      if (entry) goToAdventure(entry);
+    },
+    [goToAdventure, groups, setActiveAdventureByKey],
+  );
 
   const entrySubtitle = (entry: AdventureEntry): string => {
     if (entry.nature === 'possession') {
@@ -206,16 +259,55 @@ export function AdventureSwitcher({
     </Cmd.CommandGroup>
   );
 
-  const listContent = (
+  const footer = (
+    <>
+      <Cmd.CommandSeparator className="my-2 border-t border-[var(--lkv-border-subtle)]" />
+      {switchError && (
+        <p className="flex items-center gap-1.5 px-2 pb-1 text-[10.5px] font-semibold text-[var(--lkv-danger)]" role="alert">
+          <AlertTriangle size={11} aria-hidden="true" />
+          Impossible de changer d&apos;aventure — vérifiez la connexion puis réessayez.
+        </p>
+      )}
+      <div className="flex items-center justify-between px-2 pb-1">
+        {activeAdventure ? (
+          <button
+            type="button"
+            onClick={() => { clearActiveAdventure(); closeAll(); }}
+            disabled={isPending}
+            className="text-[10.5px] font-semibold text-[var(--lkv-danger)] hover:underline cursor-pointer"
+          >
+            Détacher l&apos;aventure active
+          </button>
+        ) : (
+          <span className="text-[10.5px] text-[var(--lkv-text-muted)]">Aucune aventure active</span>
+        )}
+        <button
+          type="button"
+          onClick={() => reloadAdventures()}
+          className="inline-flex items-center gap-1 text-[10.5px] font-semibold text-[var(--lkv-text-secondary)] hover:text-[var(--lkv-text-primary)] cursor-pointer"
+          aria-label="Recharger la liste des aventures"
+        >
+          <RefreshCw size={11} />
+          Recharger
+        </button>
+      </div>
+    </>
+  );
+
+  /** Contenu cmdk complet : input en entête + liste + pied (structure miroir desktop/sheet). */
+  const listContent = (withSearchIcon: boolean) => (
     <Cmd.CommandRoot loop onValueChange={() => {}}>
-      <Cmd.CommandInput
-        value={query}
-        onValueChange={setQuery}
-        placeholder="Rechercher (matériel, voyage, groupe)…"
-        autoFocus
-        className="w-full bg-transparent outline-none font-body text-[15px] text-[color:var(--label)] placeholder:text-[color:var(--label-tertiary)]"
-        aria-label="Rechercher une aventure"
-      />
+      <div className="flex items-center gap-2 px-3 h-11 rounded-[var(--lkv-radius-md)] bg-white/35">
+        {withSearchIcon && <Search size={16} className="shrink-0 text-[var(--lkv-text-secondary)]" aria-hidden="true" />}
+        <Cmd.CommandInput
+          value={query}
+          onValueChange={setQuery}
+          placeholder="Rechercher (matériel, voyage, groupe)…"
+          autoFocus
+          className="w-full bg-transparent outline-none font-body text-[15px] text-[color:var(--label)] placeholder:text-[color:var(--label-tertiary)]"
+          aria-label="Rechercher une aventure"
+        />
+      </div>
       <Cmd.CommandEmpty className="px-3 py-4 text-xs text-[color:var(--label-tertiary)]">
         Aucune aventure ne correspond à « {query} ».
       </Cmd.CommandEmpty>
@@ -244,31 +336,7 @@ export function AdventureSwitcher({
         {renderGroup('Mes voyages', filtered.sorties, 'Aucun voyage pour cette recherche.')}
         {renderGroup('Mes groupes', filtered.collectifs, 'Aucun groupe pour cette recherche.')}
       </Cmd.CommandList>
-
-      <Cmd.CommandSeparator className="my-2 border-t border-[var(--lkv-border-subtle)]" />
-      <div className="flex items-center justify-between px-2 pb-1">
-        {activeAdventure ? (
-          <button
-            type="button"
-            onClick={() => { clearActiveAdventure(); setOpen(false); setSheetOpen(false); }}
-            disabled={isPending}
-            className="text-[10.5px] font-semibold text-[var(--lkv-danger)] hover:underline cursor-pointer"
-          >
-            Détacher l&apos;aventure active
-          </button>
-        ) : (
-          <span className="text-[10.5px] text-[var(--lkv-text-muted)]">Aucune aventure active</span>
-        )}
-        <button
-          type="button"
-          onClick={() => reloadAdventures()}
-          className="inline-flex items-center gap-1 text-[10.5px] font-semibold text-[var(--lkv-text-secondary)] hover:text-[var(--lkv-text-primary)] cursor-pointer"
-          aria-label="Recharger la liste des aventures"
-        >
-          <RefreshCw size={11} />
-          Recharger
-        </button>
-      </div>
+      {footer}
     </Cmd.CommandRoot>
   );
 
@@ -279,15 +347,14 @@ export function AdventureSwitcher({
 
   return (
     <>
-      {/* Desktop : bouton déclencheur + palette cmdk.
-          Le wrapper porte le responsive (H-AUTO-19) : .glass-capsule-btn
-          (non layeré) bat md:hidden (layer utilities) — jamais de classe
-          responsive display sur le bouton lui-même. */}
+      {/* Desktop : bouton déclencheur + palette cmdk (PORTAL — la palette ne
+          doit jamais être enfant du panneau .glass : backdrop-filter = block
+          contenant pour position:fixed, overflow:hidden la clippait). */}
       <div className="hidden md:block">
         <button
           type="button"
           onClick={() => {
-            if (!isMobileViewport()) setOpen((v) => !v);
+            if (!isMobile) setOpen((v) => !v);
           }}
           className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full glass-capsule-btn text-xs font-semibold text-[var(--lkv-text-primary)] min-h-[44px] cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--lkv-primary)]"
           aria-haspopup="dialog"
@@ -300,27 +367,28 @@ export function AdventureSwitcher({
         </button>
       </div>
 
-      {/* Palette desktop (cmdk via dialog) */}
-      {open && (
-        <div
-          role="dialog"
-          aria-label="Changer d'aventure"
-          className="fixed z-[70] left-1/2 top-24 -translate-x-1/2 w-[min(520px,92vw)] glass p-2 rounded-[var(--lkv-radius-card)] shadow-lg border border-white/40 hidden md:block"
-          onClick={(e) => e.stopPropagation()}
+      {/* Palette desktop — Dialog Radix portal (focus trap + Escape gérés). */}
+      {mounted && (
+        <Dialog.Root
+          open={open && !isMobile}
+          onOpenChange={(v) => {
+            setOpen(v);
+            if (!v) setSwitchError(false);
+          }}
         >
-          <div className="flex items-center gap-2 px-3 h-11 rounded-[var(--lkv-radius-md)] bg-white/35">
-            <Search size={18} className="text-[var(--lkv-text-secondary)]" aria-hidden="true" />
-            {listContent}
-          </div>
-        </div>
-      )}
-      {open && (
-        <button
-          type="button"
-          aria-label="Fermer"
-          className="fixed inset-0 z-[60] hidden md:block cursor-default"
-          onClick={() => setOpen(false)}
-        />
+          <Dialog.Portal>
+            <Dialog.Overlay className="fixed inset-0 z-[10000] bg-ink-900/30" />
+            <Dialog.Content
+              aria-label="Changer d'aventure"
+              onClick={(e) => e.stopPropagation()}
+              className="fixed left-1/2 top-20 -translate-x-1/2 w-[min(520px,92vw)] z-[10001] rounded-[var(--lkv-radius-card)] shadow-lg border border-white/40 overflow-hidden"
+            >
+              {/* .glass sur un enfant : la classe impose position:relative et
+                  écraserait .fixed sur le Content lui-même. */}
+              <div className="glass p-2">{listContent(true)}</div>
+            </Dialog.Content>
+          </Dialog.Portal>
+        </Dialog.Root>
       )}
 
       {/* Mobile : déclencheur -> GlassSheet (wrapper responsive, cf. H-AUTO-19) */}
@@ -328,18 +396,19 @@ export function AdventureSwitcher({
         <button
           type="button"
           onClick={() => {
-            if (variant === 'mobile' && isMobileViewport()) setSheetOpen(true);
+            if (variant === 'mobile' && isMobile) setSheetOpen(true);
           }}
           className="inline-flex items-center gap-1.5 px-3 py-2 rounded-full glass-capsule-btn text-xs font-semibold text-[var(--lkv-text-primary)] min-h-[44px] cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--lkv-primary)] max-w-full"
           aria-haspopup="dialog"
+          aria-expanded={sheetOpen}
         >
           <Compass size={14} className="shrink-0 text-[var(--lkv-secondary)]" aria-hidden="true" />
           <span className="max-w-[110px] truncate">{triggerLabel}</span>
         </button>
       </div>
 
-      <GlassSheet open={sheetOpen} onOpenChange={setSheetOpen} title="Changer d'aventure">
-        <div className="glass p-2 rounded-[var(--lkv-radius-card)]">{listContent}</div>
+      <GlassSheet open={variant === 'mobile' && isMobile && sheetOpen} onOpenChange={(v) => { setSheetOpen(v); if (!v) setSwitchError(false); }} title="Changer d'aventure">
+        <div className="glass p-2 rounded-[var(--lkv-radius-card)]">{listContent(false)}</div>
       </GlassSheet>
     </>
   );

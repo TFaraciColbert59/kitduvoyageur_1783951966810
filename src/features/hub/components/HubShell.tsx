@@ -145,6 +145,7 @@ export function HubShell({
       counts={counts}
       onOpenPicker={() => setIsPickerOpen(true)}
       statusSlot={networkStatus}
+      switcherSignal={switcherSignal}
     />
   );
   const sidebarRight = (

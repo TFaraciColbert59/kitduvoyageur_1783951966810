@@ -194,3 +194,17 @@ export function consumeSwitcherAutoOpen(): boolean {
     return false;
   }
 }
+
+/**
+ * Consulte le signal SANS le consommer — le switcher est monté en 2 instances
+ * (mobile + desktop) ; seule celle qui correspond au viewport courant peut
+ * consommer, sinon l'instance mobile (montée en premier) avalerait le signal
+ * one-shot sur desktop et la palette ne s'ouvrirait jamais.
+ */
+export function peekSwitcherAutoOpen(): boolean {
+  try {
+    return sessionStorage.getItem(HUB_SWITCHER_AUTOPEN_KEY) === '1';
+  } catch {
+    return false;
+  }
+}

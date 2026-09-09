@@ -195,26 +195,44 @@ export function ActiveAdventureProvider({ initialAdventure = null, children }: A
     [userTrips, cache],
   );
 
+  const activeAdventureRef = React.useRef<ActiveAdventureData | null>(initialAdventure);
+  useEffect(() => {
+    activeAdventureRef.current = activeAdventure;
+  }, [activeAdventure]);
+
   const persist = useCallback(async (data: ActiveAdventureData | null): Promise<boolean> => {
-    if (data) {
-      setActiveAdventureState(data);
+    const previous = activeAdventureRef.current;
+    const applyLocal = (value: ActiveAdventureData | null) => {
+      setActiveAdventureState(value);
       try {
-        localStorage.setItem(ACTIVE_KEY, JSON.stringify(data));
+        if (value) localStorage.setItem(ACTIVE_KEY, JSON.stringify(value));
+        else localStorage.removeItem(ACTIVE_KEY);
       } catch {
-        /* ignoré */
+        /* stockage indisponible */
       }
-    } else {
-      setActiveAdventureState(null);
-      try {
-        localStorage.removeItem(ACTIVE_KEY);
-      } catch {
-        /* ignoré */
-      }
-    }
-    return new Promise((resolve) => {
+    };
+    applyLocal(data);
+    // Robustesse (réseau / PWA) : l'action peut rejeter ou ne jamais répondre —
+    // on résout toujours (jamais de hang), et en échec on annule l'optimisme
+    // (état + localStorage reviennent à l'aventure précédente, cookie = serveur).
+    return new Promise<boolean>((resolve) => {
+      let settled = false;
+      const done = (ok: boolean) => {
+        if (settled) return;
+        settled = true;
+        if (!ok) applyLocal(previous);
+        resolve(ok);
+      };
+      const timer = setTimeout(() => done(false), 15000);
       startTransition(async () => {
-        const res = data ? await setActiveAdventureAction(data) : await clearActiveAdventureAction();
-        resolve(res.success);
+        try {
+          const res = data ? await setActiveAdventureAction(data) : await clearActiveAdventureAction();
+          clearTimeout(timer);
+          done(!!res?.success);
+        } catch {
+          clearTimeout(timer);
+          done(false);
+        }
       });
     });
   }, []);

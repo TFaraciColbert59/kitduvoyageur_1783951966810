@@ -13,14 +13,14 @@ export function GlassSheet({
           <Dialog.Portal forceMount>
             <Dialog.Overlay asChild>
               <motion.div
-                className="fixed inset-0 z-40 bg-ink-900/30"
+                className="fixed inset-0 z-[10000] bg-ink-900/30"
                 initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
                 transition={{ duration: 0.28 }}
               />
             </Dialog.Overlay>
             <Dialog.Content asChild aria-label={title}>
               <motion.div
-                className="fixed inset-0 z-50 overflow-y-auto bg-[color:var(--glass-bg-strong)] backdrop-blur-[32px] backdrop-saturate-[200%]"
+                className="fixed inset-0 z-[10001] overflow-y-auto bg-[color:var(--glass-bg-strong)] backdrop-blur-[32px] backdrop-saturate-[200%]"
                 initial={{ y: '100%' }} animate={{ y: 0 }} exit={{ y: '100%' }}
                 transition={{ duration: 0.32, ease: [0.32, 0.72, 0, 1] }}
               >

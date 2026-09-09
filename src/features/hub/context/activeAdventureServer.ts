@@ -1,6 +1,7 @@
 'use server';
 
 import { cookies } from 'next/headers';
+import { revalidatePath } from 'next/cache';
 import {
   adventureSchema,
   serializeActiveAdventure,
@@ -36,6 +37,10 @@ export async function setActiveAdventureAction(data: ActiveAdventureData): Promi
       path: '/',
       maxAge: 60 * 60 * 24 * 30, // 30 jours
     });
+    // Le cookie pilote le rendu serveur de TOUT le hub (layout inclus) :
+    // sans revalidation, un push vers une URL déjà en cache router afficherait
+    // l'ancienne aventure (composants serveur stales).
+    revalidatePath('/hub', 'layout');
     return { success: true };
   } catch (err) {
     console.error('[LKDV] setActiveAdventureAction error:', err);
@@ -47,6 +52,7 @@ export async function clearActiveAdventureAction(): Promise<{ success: boolean }
   try {
     const cookieStore = await cookies();
     cookieStore.delete(ACTIVE_ADVENTURE_COOKIE);
+    revalidatePath('/hub', 'layout');
     return { success: true };
   } catch (err) {
     console.error('[LKDV] clearActiveAdventureAction error:', err);
