@@ -10,12 +10,12 @@ import {
   Shield,
   Users,
 } from 'lucide-react';
-import { hubSectionHref, type HubAdventureRef } from '../../registry/hubSectionRegistry';
-import { HubMenuGrid } from './HubMenuGrid';
+import { hubSectionHref, HUB_HOME_HREF, type HubAdventureRef } from '../../registry/hubSectionRegistry';
+import { BentoGrid } from '@/components/ui-layouts/bento-grid';
 import { MenuCard } from './MenuCard';
+import { QuickActions, type QuickAction } from './QuickActions';
 import { NumberStat } from '@/components/ui-layouts/number-stat';
 import { ChecklistCardBody } from './ChecklistCardBody';
-import { MenuVitalsCarousel, type MenuVital } from './MenuVitalsCarousel';
 import { getTripDuration } from '@/features/trips/hooks/useTripDuration';
 import { getKitCounters } from '@/features/trips/hooks/useKitCounters';
 import { getTripDistance } from '@/features/trips/hooks/useTripDistance';
@@ -23,7 +23,6 @@ import { getCanonicalTripSteps } from '@/features/trips/hooks/useTripCounters';
 import type { TripFull, TripStats } from '@/features/trips/types/trip.types';
 import type { HubCrewBlock, HubHikingContext } from '../../server/getHubAdventureData';
 import type { TripPhase } from '@/features/trips/engine/temporalPhaseEngine';
-import { HUB_HOME_HREF } from '../../registry/hubSectionRegistry';
 
 export interface SortieMenuProps {
   trip: TripFull;
@@ -48,9 +47,9 @@ function soonestExpiry(docs: TripFull['documents']): { label: string; inDays: nu
 }
 
 /**
- * Hub V4 — MENU d'une SORTIE (voyage/randonnée) : cartes-onglets résumées.
- * Ordre : Itinéraire (héros), Équipement, Équipage & compagnons, Budget,
- * Checklist, Documents, Sécurité, Journal, Export.
+ * Hub V4 — MENU d'une SORTIE en disposition BENTO (racine /hub).
+ * Sans tuile héros : [Itinéraire 6, Équipement 6] → [Budget 4, Équipage 4,
+ * Checklist 4] → [Documents 3, Sécurité 3, Journal 3, Export 3].
  */
 export function SortieMenu({
   trip,
@@ -79,30 +78,32 @@ export function SortieMenu({
     .pop();
   const weather = hiking?.weather?.current;
 
-  const vitals: MenuVital[] = [
-    { id: 'budget', label: 'Budget', value: `${stats.total_spent} ${trip.budget_currency || 'EUR'}`, sub: budgetPct !== null ? `${budgetPct}% de l'estimation` : 'non défini', href: hubSectionHref(ref, 'budget') },
-    { id: 'kit', label: 'Sac', value: `${packedPercent}%`, sub: `${kit.ready}/${kit.total} prêt${weightKg ? ` · ${weightKg.toFixed(1)} kg` : ''}`, href: hubSectionHref(ref, 'gear') },
-    ...(daysUntil !== null && daysUntil !== undefined ? [{ id: 'depart', label: 'Départ', value: daysUntil >= 0 ? `J-${daysUntil}` : 'En cours', sub: `${duration.durationDays} jours`, href: HUB_HOME_HREF }] : []),
-    { id: 'equipage', label: 'Équipage', value: `${collabCount}`, sub: `${crewCount} équipier${crewCount > 1 ? 's' : ''}${pendingInvites ? ` · ${pendingInvites} inv.` : ''}`, href: hubSectionHref(ref, 'team') },
+  const actions: QuickAction[] = [
+    { href: hubSectionHref(ref, 'itinerary'), label: 'Itinéraire', icon: Navigation },
+    { href: hubSectionHref(ref, 'budget'), label: 'Budget', icon: CreditCard },
+    { href: hubSectionHref(ref, 'checklist'), label: 'Checklist', icon: CheckSquare },
+    { href: hubSectionHref(ref, 'journal'), label: 'Journal', icon: Calendar },
   ];
 
-  return (
-    <div className="space-y-4">
-      <MenuVitalsCarousel vitals={vitals} />
-
-      <HubMenuGrid>
-        {phase === 'live' && (
-          <MenuCard href={`${HUB_HOME_HREF}?phase=live`} icon={Play} label="Cockpit terrain" wide tone="accent">
+  const cells = [
+    ...(phase === 'live'
+      ? [{ key: 'phase-live', span: 6 as const, node: (
+          <MenuCard href={`${HUB_HOME_HREF}?phase=live`} icon={Play} label="Cockpit terrain" tone="accent">
             <p className="text-xs text-[var(--lkv-text-secondary)] mt-0.5">Jour en cours, secours 112, dépense express.</p>
           </MenuCard>
-        )}
-        {phase === 'recount' && (
-          <MenuCard href={`${HUB_HOME_HREF}?phase=recount`} icon={Share2} label="Raconter" wide tone="accent">
+        ) }]
+      : []),
+    ...(phase === 'recount'
+      ? [{ key: 'phase-recount', span: 6 as const, node: (
+          <MenuCard href={`${HUB_HOME_HREF}?phase=recount`} icon={Share2} label="Raconter" tone="accent">
             <p className="text-xs text-[var(--lkv-text-secondary)] mt-0.5">Bilan, carnet de bord et partage.</p>
           </MenuCard>
-        )}
-
-        <MenuCard href={hubSectionHref(ref, 'itinerary')} icon={Navigation} label="Itinéraire" wide>
+        ) }]
+      : []),
+    {
+      key: 'itinerary', span: 6 as const,
+      node: (
+        <MenuCard href={hubSectionHref(ref, 'itinerary')} icon={Navigation} label="Itinéraire">
           <p className="mt-0.5 text-[11px] text-[var(--lkv-text-secondary)]">
             {duration.durationDays} jours · {steps.length} étapes ·{' '}
             <NumberStat value={dist.totalKm} decimals={dist.totalKm % 1 === 0 ? 0 : 1} suffix=" km" />
@@ -111,29 +112,44 @@ export function SortieMenu({
             +{dist.dPlus}m / -{dist.dMinus}m{weather ? ` · ${Math.round(weather.tempC)}°C` : ''}
           </p>
           {steps.length > 0 && (
-            <p className="mt-1 text-[11px] text-[var(--lkv-text-primary)] truncate">
-              {steps[0].title}
-            </p>
+            <p className="mt-1 text-[11px] text-[var(--lkv-text-primary)] truncate">{steps[0].title}</p>
           )}
         </MenuCard>
-
+      ),
+    },
+    {
+      key: 'gear', span: 6 as const,
+      node: (
         <MenuCard href={hubSectionHref(ref, 'gear')} icon={Package} label="Équipement">
           <p className="mt-0.5 text-[11px] text-[var(--lkv-text-secondary)]">
             <NumberStat value={packedPercent} suffix="%" /> prêt · {kit.ready}/{kit.total}
+            {weightKg > 0 ? ` · ${weightKg.toFixed(1)} kg` : ''}
           </p>
-          {weightKg > 0 && (
-            <p className="text-[11px] text-[var(--lkv-text-secondary)]">
-              <NumberStat value={weightKg} decimals={1} suffix=" kg" />
-            </p>
-          )}
           <div className="mt-1.5 h-1.5 w-full overflow-hidden rounded-full bg-black/5">
-            <div
-              className="h-full rounded-full bg-gradient-to-r from-[var(--lkv-secondary)] to-[var(--lkv-primary)]"
-              style={{ width: `${packedPercent}%` }}
-            />
+            <div className="h-full rounded-full bg-gradient-to-r from-[var(--lkv-secondary)] to-[var(--lkv-primary)]" style={{ width: `${packedPercent}%` }} />
           </div>
         </MenuCard>
-
+      ),
+    },
+    {
+      key: 'budget', span: 4 as const,
+      node: (
+        <MenuCard href={hubSectionHref(ref, 'budget')} icon={CreditCard} label="Budget">
+          <p className="mt-0.5 text-[11px] text-[var(--lkv-text-secondary)]">
+            <NumberStat value={stats.total_spent} suffix={` ${trip.budget_currency || 'EUR'}`} />
+            {stats.estimated_budget > 0 && <span> sur {stats.estimated_budget}</span>}
+          </p>
+          {budgetPct !== null && (
+            <div className="mt-1.5 h-1.5 w-full overflow-hidden rounded-full bg-black/5">
+              <div className={`h-full rounded-full ${budgetPct > 100 ? 'bg-[var(--lkv-danger)]' : 'bg-gradient-to-r from-[var(--lkv-secondary)] to-[var(--lkv-primary)]'}`} style={{ width: `${Math.min(100, budgetPct)}%` }} />
+            </div>
+          )}
+        </MenuCard>
+      ),
+    },
+    {
+      key: 'team', span: 4 as const,
+      node: (
         <MenuCard href={hubSectionHref(ref, 'team')} icon={Users} label="Équipage & compagnons">
           <p className="mt-0.5 text-[11px] text-[var(--lkv-text-secondary)]">
             {collabCount + crewCount} compagnon{(collabCount + crewCount) > 1 ? 's' : ''}
@@ -141,54 +157,46 @@ export function SortieMenu({
           </p>
           <div className="mt-1.5 flex items-center">
             {[...(trip.collaborators ?? [])].slice(0, 4).map((c) => (
-              <span
-                key={c.id}
-                className="flex h-6 w-6 items-center justify-center rounded-full border-2 border-white bg-[var(--lkv-surface-raised)] text-[10px] font-bold text-[var(--lkv-text-secondary)] -ml-1 first:ml-0"
-              >
+              <span key={c.id} className="flex h-6 w-6 items-center justify-center rounded-full border-2 border-white bg-[var(--lkv-surface-raised)] text-[10px] font-bold text-[var(--lkv-text-secondary)] -ml-1 first:ml-0">
                 {(c.profile?.full_name ?? '?').slice(0, 1).toUpperCase()}
               </span>
             ))}
           </div>
         </MenuCard>
-
-        <MenuCard href={hubSectionHref(ref, 'budget')} icon={CreditCard} label="Budget">
-          <p className="mt-0.5 text-[11px] text-[var(--lkv-text-secondary)]">
-            <NumberStat value={stats.total_spent} decimals={0} suffix={` ${trip.budget_currency || 'EUR'}`} />
-            {stats.estimated_budget > 0 && (
-              <span> sur {stats.estimated_budget}</span>
-            )}
-          </p>
-          {budgetPct !== null && (
-            <div className="mt-1.5 h-1.5 w-full overflow-hidden rounded-full bg-black/5">
-              <div
-                className={`h-full rounded-full ${budgetPct > 100 ? 'bg-[var(--lkv-danger)]' : 'bg-gradient-to-r from-[var(--lkv-secondary)] to-[var(--lkv-primary)]'}`}
-                style={{ width: `${Math.min(100, budgetPct)}%` }}
-              />
-            </div>
-          )}
-        </MenuCard>
-
+      ),
+    },
+    {
+      key: 'checklist', span: 4 as const,
+      node: (
         <MenuCard href={hubSectionHref(ref, 'checklist')} icon={CheckSquare} label="Checklist">
           <ChecklistCardBody tripId={trip.id} href={hubSectionHref(ref, 'checklist')} />
         </MenuCard>
-
+      ),
+    },
+    {
+      key: 'docs', span: 3 as const,
+      node: (
         <MenuCard href={hubSectionHref(ref, 'docs')} icon={FileText} label="Documents">
           <p className="mt-0.5 text-[11px] text-[var(--lkv-text-secondary)]">
             {trip.documents?.length ?? 0} document{(trip.documents?.length ?? 0) > 1 ? 's' : ''}
           </p>
-          {exp && (
-            <p className="text-[11px] text-[var(--lkv-danger)]">
-              {exp.label} — exp. J{exp.inDays}
-            </p>
-          )}
+          {exp && <p className="text-[11px] text-[var(--lkv-danger)]">{exp.label} — exp. J{exp.inDays}</p>}
         </MenuCard>
-
+      ),
+    },
+    {
+      key: 'safety', span: 3 as const,
+      node: (
         <MenuCard href={hubSectionHref(ref, 'safety')} icon={Shield} label="Sécurité">
           <p className="mt-0.5 text-[11px] text-[var(--lkv-text-secondary)]">
             {pendingSafety} point{pendingSafety > 1 ? 's' : ''} de contrôle en attente
           </p>
         </MenuCard>
-
+      ),
+    },
+    {
+      key: 'journal', span: 3 as const,
+      node: (
         <MenuCard href={hubSectionHref(ref, 'journal')} icon={Calendar} label="Journal">
           {lastNote ? (
             <p className="mt-0.5 line-clamp-2 text-[11px] text-[var(--lkv-text-secondary)]">
@@ -198,11 +206,22 @@ export function SortieMenu({
             <p className="mt-0.5 text-[11px] text-[var(--lkv-text-secondary)]">Aucune note encore.</p>
           )}
         </MenuCard>
-
+      ),
+    },
+    {
+      key: 'export', span: 3 as const,
+      node: (
         <MenuCard href={hubSectionHref(ref, 'export')} icon={Share2} label="Export">
           <p className="mt-0.5 text-[11px] text-[var(--lkv-text-secondary)]">GPX · Feuille de route</p>
         </MenuCard>
-      </HubMenuGrid>
+      ),
+    },
+  ];
+
+  return (
+    <div className="space-y-4">
+      <QuickActions actions={actions} />
+      <BentoGrid cells={cells} />
     </div>
   );
 }

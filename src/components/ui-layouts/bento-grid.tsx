@@ -1,0 +1,59 @@
+'use client';
+
+// UI Layouts (MIT) — bento mosaïque (box-grid) adapté LKDV : spans déclaratifs,
+// collapse mobile 1 colonne, tokens, reduced-motion.
+import React from 'react';
+import { motion, useReducedMotion } from 'framer-motion';
+import { cn } from '@/lib/utils';
+import { SpotlightCard } from './spotlight-card';
+
+export type BentoSpan = 3 | 4 | 6;
+
+export interface BentoCell {
+  /** Largeur desktop (lg: 12 cols) : 6 = demi-largeur, 4 = tiers, 3 = quart. */
+  span: BentoSpan;
+  node: React.ReactNode;
+  key?: string;
+}
+
+export interface BentoGridProps {
+  cells: BentoCell[];
+  className?: string;
+}
+
+const SPAN_CLASS: Record<BentoSpan, string> = {
+  // <640 : 1 col · sm(2 cols) : 6→pleine, 4/3→demi · lg(12 cols) : span exact
+  6: 'sm:col-span-2 lg:col-span-6',
+  4: 'sm:col-span-1 lg:col-span-4',
+  3: 'sm:col-span-1 lg:col-span-3',
+};
+
+/**
+ * BentoGrid — grille mosaïque de la racine Hub (UI Layouts, adapté).
+ * Toutes les cellules sont pleine hauteur ; la cascade d'entrée respecte
+ * le reduced motion.
+ */
+export function BentoGrid({ cells, className }: BentoGridProps) {
+  const reduceMotion = useReducedMotion();
+  return (
+    <div className={cn('grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-12 gap-3', className)}>
+      {cells.map((cell, i) => (
+        <motion.div
+          key={cell.key ?? i}
+          initial={reduceMotion ? false : { opacity: 0, y: 8 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{
+            duration: reduceMotion ? 0 : 0.24,
+            delay: reduceMotion ? 0 : Math.min(i * 0.04, 0.3),
+            ease: [0.22, 1, 0.36, 1],
+          }}
+          className={cn('h-full', SPAN_CLASS[cell.span])}
+        >
+          <SpotlightCard className="h-full">{cell.node}</SpotlightCard>
+        </motion.div>
+      ))}
+    </div>
+  );
+}
+
+export default BentoGrid;
