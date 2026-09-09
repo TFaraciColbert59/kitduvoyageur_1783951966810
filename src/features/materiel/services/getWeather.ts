@@ -1,5 +1,3 @@
-import { createClient } from '@/lib/supabase/server';
-
 export interface WeatherCell {
   hour: string;
   tempC: number;
@@ -23,8 +21,6 @@ export interface WeatherForecast {
   location: { latitude: number; longitude: number; label: string };
 }
 
-const DEFAULT_LOCATION = { latitude: 45.4, longitude: 6.6, label: 'Alpes' };
-
 export function weatherLabel(code: number): string {
   if (code === 0) return 'Dégagé';
   if (code <= 3) return 'Partiellement nuageux';
@@ -37,60 +33,22 @@ export function weatherLabel(code: number): string {
 
 const DAY_LABELS = ['Dim', 'Lun', 'Mar', 'Mer', 'Jeu', 'Ven', 'Sam'];
 
-/** Génère un fallback météo de montagne réaliste (5 jours) pour garantir un affichage fluide */
-function getFallbackForecast(lat: number, lon: number, label: string): WeatherForecast {
-  const today = new Date();
-  const sampleCodes = [0, 1, 2, 61, 80]; // Dégagé, peu nuageux, nuageux, pluie légère, averses
-  const minTemps = [9, 11, 10, 8, 12];
-  const maxTemps = [21, 24, 22, 17, 23];
-  const precips = [0, 5, 20, 65, 30];
-
-  const days: WeatherDay[] = Array.from({ length: 5 }).map((_, i) => {
-    const d = new Date(today);
-    d.setDate(today.getDate() + i);
-    return {
-      date: d.toISOString().split('T')[0],
-      day: i === 0 ? 'Auj.' : DAY_LABELS[d.getDay()] ?? '—',
-      tempMinC: minTemps[i] ?? 10,
-      tempMaxC: maxTemps[i] ?? 22,
-      precipPct: precips[i] ?? 10,
-      weathercode: sampleCodes[i] ?? 1,
-    };
-  });
-
-  const cells: WeatherCell[] = Array.from({ length: 24 }).map((_, h) => ({
-    hour: `${String(h).padStart(2, '0')}:00`,
-    tempC: Math.round(12 + Math.sin((h / 24) * Math.PI * 2 - Math.PI / 2) * 8),
-    precipPct: h >= 14 && h <= 18 ? 25 : 5,
-    weathercode: h >= 14 && h <= 18 ? 2 : 0,
-  }));
-
-  return {
-    cells,
-    days,
-    current: {
-      tempC: 18,
-      weathercode: 0,
-      precipPct: 5,
-    },
-    location: { latitude: lat, longitude: lon, label },
-  };
-}
-
-/** getWeather — prévisions Open-Meteo (gratuit, sans clé) : 24h + 5 prochains jours. */
+/**
+ * getWeather — prévisions Open-Meteo (gratuit, sans clé) : 24h + 5 prochains jours.
+ * Zéro donnée fabriquée : sans coordonnées réelles ou en cas d'échec/timeout API,
+ * retourne null (état « indisponible » honnête, jamais de fausses prévisions).
+ */
 export async function getWeather(
   latitude?: number | null,
   longitude?: number | null,
   label?: string | null
-): Promise<WeatherForecast> {
-  const lat = latitude ?? DEFAULT_LOCATION.latitude;
-  const lon = longitude ?? DEFAULT_LOCATION.longitude;
-  const locLabel = label ?? DEFAULT_LOCATION.label;
+): Promise<WeatherForecast | null> {
+  if (latitude == null || longitude == null) return null;
 
   try {
-    const url = `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&hourly=temperature_2m,precipitation_probability,weathercode&daily=weathercode,temperature_2m_max,temperature_2m_min,precipitation_probability_max&current_weather=true&forecast_days=5&timezone=auto`;
+    const url = `https://api.open-meteo.com/v1/forecast?latitude=${latitude}&longitude=${longitude}&hourly=temperature_2m,precipitation_probability,weathercode&daily=weathercode,temperature_2m_max,temperature_2m_min,precipitation_probability_max&current_weather=true&forecast_days=5&timezone=auto`;
     const res = await fetch(url, { next: { revalidate: 900 }, signal: AbortSignal.timeout(1500) });
-    if (!res.ok) return getFallbackForecast(lat, lon, locLabel);
+    if (!res.ok) return null;
     const data = await res.json();
 
     const hours = data.hourly?.time ?? [];
@@ -123,19 +81,21 @@ export async function getWeather(
       };
     });
 
-    const cur = data.current_weather ?? {};
+    if (days.length === 0 || !data.current_weather) return null;
+
+    const cur = data.current_weather;
     return {
       cells,
-      days: days.length ? days : getFallbackForecast(lat, lon, locLabel).days,
+      days,
       current: {
-        tempC: Math.round(cur.temperature ?? 18),
-        weathercode: cur.weathercode ?? 0,
+        tempC: Math.round(cur.temperature),
+        weathercode: cur.weathercode,
         precipPct: cells[0]?.precipPct ?? 0,
       },
-      location: { latitude: lat, longitude: lon, label: locLabel },
+      location: { latitude, longitude, label: label ?? '' },
     };
   } catch (err) {
-    console.error('getWeather error, using mountain fallback', err);
-    return getFallbackForecast(lat, lon, locLabel);
+    console.error('getWeather error, météo indisponible', err);
+    return null;
   }
 }

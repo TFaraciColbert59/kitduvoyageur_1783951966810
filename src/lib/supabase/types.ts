@@ -217,6 +217,19 @@ export interface DatabaseCarnetKitItem {
   sort_order: number;
 }
 
+/** Checklist de préparation d'un voyage (migration 20260909100000). */
+export interface DatabaseTripChecklistItem {
+  id: string;
+  trip_id: string;
+  label: string;
+  due_offset_days: number;
+  done: boolean;
+  done_at: string | null;
+  position: number;
+  created_at: string;
+  updated_at: string;
+}
+
 // ── Géographie (Phase 2 GEODATA) ─────────────────────────────
 // Types alignés sur le schéma Phase 2 (migrations
 // 20230801000200_create_geodata_tables.sql +

@@ -1,5 +1,4 @@
-import { getHubAdventureData } from '@/features/hub/server/getHubAdventureData';
-import { getTripStats } from '@/lib/queries-trips';
+import { getHubAdventureData, getHubTripStats } from '@/features/hub/server/getHubAdventureData';
 import { getMaterielSummary } from '@/features/materiel/services/getMaterielSummary';
 import { getGroupeMenuSummary } from '@/features/hub/server/getGroupeMenu';
 import { getTripPhaseDetails } from '@/features/trips/engine/temporalPhaseEngine';
@@ -33,7 +32,7 @@ export default async function HubPage({
   const data = await getHubAdventureData();
 
   if (data.input.kind === 'sortie' && data.trip) {
-    const stats = await getTripStats(data.trip.id);
+    const stats = await getHubTripStats(data.trip.id);
     const phaseDetails = getTripPhaseDetails(data.trip);
     if (phase === 'live') {
       return (
@@ -52,11 +51,11 @@ export default async function HubPage({
       <SortieMenu
         trip={data.trip}
         stats={stats}
-        crew={data.group}
         pendingInvites={data.pendingInvites}
         daysUntil={daysUntil(data.trip.start_date, Date.now())}
         phase={phaseDetails.phase}
         hiking={data.hiking}
+        checklist={data.checklist}
       />
     );
   }

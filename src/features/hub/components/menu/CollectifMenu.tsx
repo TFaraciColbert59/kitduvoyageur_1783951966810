@@ -54,7 +54,7 @@ export function CollectifMenu({ summary, linkedTripSlug }: CollectifMenuProps) {
       kind: 'all-clear',
       href: hubSectionHref(collectifRef, 'groupe'),
       title: 'Tout est à jour',
-      description: 'Équipage rodé — préparez la prochaine expédition.',
+      description: `${summary.members} membre(s) · ${summary.linkedTrips} voyage(s) lié(s)`,
     });
     const cells = [
       {
@@ -163,7 +163,7 @@ export function CollectifMenu({ summary, linkedTripSlug }: CollectifMenuProps) {
     kind: 'all-clear',
     href: onglet('discussion'),
     title: 'Tout est à jour',
-    description: 'Le groupe est rodé — lancez la discussion.',
+    description: `${summary.members} membre(s) · ${summary.tasksOpen} tâche(s) ouverte(s) · progression ${summary.progression}%`,
   });
 
   const cells = [

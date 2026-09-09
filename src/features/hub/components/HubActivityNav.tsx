@@ -116,7 +116,7 @@ export function HubActivityNav() {
               key={key}
               type="button"
               onClick={() => activate(entry)}
-              className="w-full flex items-center gap-2.5 px-3 py-2.5 min-h-[44px] rounded-xl text-left cursor-pointer border bg-white/80 hover:bg-white text-[var(--lkv-forest-900)] border-white/80 shadow-2xs transition-all active:scale-[0.98]"
+              className="w-full flex items-center gap-2.5 px-3 py-2.5 min-h-[44px] rounded-xl text-left cursor-pointer border bg-white/80 hover:bg-white text-[var(--lkv-forest-900)] border-white/80 transition-all active:scale-[0.98]"
             >
               <Icon size={15} className="shrink-0 text-[var(--lkv-secondary)]" aria-hidden="true" />
               <span className="flex-1 min-w-0 truncate text-xs font-semibold">{label}</span>

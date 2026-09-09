@@ -14,10 +14,12 @@ import {
   hubWidgetDef,
 } from '../registry/hubWidgetRegistry';
 import type { AdventureProfile } from '../engine/hubProfileEngine';
-import type { TripFull } from '@/features/trips/types/trip.types';
+import type { TripFull, TripStats } from '@/features/trips/types/trip.types';
 import type { HubSectionId } from '../engine/hubProfileEngine';
 import type { HubAdventureRef, HubCounters } from '../registry/hubSectionRegistry';
 import { HubWidgetBody, type HubWidgetData } from './HubWidgets';
+import { HubSidebarActivities } from './HubSidebarActivities';
+import type { HubUserTripLite } from '../server/getHubAdventureData';
 
 export interface HubSidebarRightProps {
   profile: AdventureProfile;
@@ -32,6 +34,10 @@ export interface HubSidebarRightProps {
   pendingInvites?: number;
   /** Section active (segment hub) pour le rail contextuel possession/collectif. */
   activeSection?: HubSectionId | null;
+  /** Voyages réels de l'utilisateur — section ACTIVITÉS en tête de rail. */
+  trips?: HubUserTripLite[];
+  /** Stats serveur du voyage actif (source unique budget rail/menu). */
+  tripStats?: TripStats | null;
 }
 
 /**
@@ -52,6 +58,8 @@ export function HubSidebarRight({
   linkedTripSlug,
   pendingInvites = 0,
   activeSection = null,
+  trips,
+  tripStats = null,
 }: HubSidebarRightProps) {
   const pathname = usePathname();
   const { shown: profileShown } = selectHubWidgets(profile);
@@ -87,12 +95,16 @@ export function HubSidebarRight({
         aria-label="Widgets du voyage"
         className="hub-rail w-full h-full overflow-y-auto no-scrollbar flex flex-col gap-3 pb-6 pr-0.5"
       >
-        <TripSidebarRight
-          trip={trip}
-          profile={tripProfile}
-          phase={phase}
-          activeSection={sectionIdFromPathname(pathname) ?? 'overview'}
-        />
+        <HubSidebarActivities trips={trips ?? []} activeSlug={trip.slug} />
+        <div className="shrink-0">
+          <TripSidebarRight
+            trip={trip}
+            profile={tripProfile}
+            phase={phase}
+            activeSection={sectionIdFromPathname(pathname) ?? 'overview'}
+            stats={tripStats}
+          />
+        </div>
       </aside>
     );
   }
@@ -135,7 +147,8 @@ export function HubSidebarRight({
       aria-label="Contexte de l'aventure"
       className="hub-rail w-full h-full overflow-y-auto no-scrollbar flex flex-col gap-3 pb-6"
     >
-      <div className="glass p-3.5 rounded-2xl border border-white/70 shadow-xs">
+      <HubSidebarActivities trips={trips ?? []} activeSlug={profile.nature === 'sortie' ? adventure.slug ?? null : null} />
+      <div className="glass shrink-0 p-3.5 rounded-2xl border border-white/70 shadow-xs">
         <p className="text-sm font-bold text-[var(--lkv-text-primary)]">
           {NATURE_LABELS[profile.nature]}
           {profile.nature === 'collectif'
@@ -148,7 +161,7 @@ export function HubSidebarRight({
       </div>
 
       {shown.map((w) => (
-        <div key={w.id} data-hub-widget={w.id}>
+        <div key={w.id} data-hub-widget={w.id} className="shrink-0">
           <HubWidgetBody id={w.id} adventure={adventure} data={data} />
         </div>
       ))}

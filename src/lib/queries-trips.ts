@@ -308,9 +308,28 @@ async function loadFullTripDetails(
       .order('created_at', { ascending: false }),
   ]);
 
+  // Profils réels des collaborateurs (user_profiles — pas d'embed FK direct :
+  // trip_collaborators.user_id → auth.users). Source unique menu + widgets.
+  const collabRows = (collabsRes.data as TripCollaborator[]) || [];
+  const collaboratorUserIds = [...new Set(collabRows.map((c) => c.user_id))];
+  const profileMap = new Map<string, { full_name?: string | null; avatar_url?: string | null }>();
+  if (collaboratorUserIds.length > 0) {
+    try {
+      const { data: profiles } = await supabase
+        .from('user_profiles')
+        .select('id, full_name, avatar_url')
+        .in('id', collaboratorUserIds);
+      for (const p of (profiles ?? []) as Array<{ id: string; full_name?: string | null; avatar_url?: string | null }>) {
+        profileMap.set(p.id, { full_name: p.full_name || null, avatar_url: p.avatar_url || null });
+      }
+    } catch (err) {
+      console.error('[LKDV trips] collaborator profiles error:', err);
+    }
+  }
+
   return {
     ...trip,
-    collaborators: (collabsRes.data as TripCollaborator[]) || [],
+    collaborators: collabRows.map((c) => ({ ...c, profile: profileMap.get(c.user_id) })),
     steps: (stepsRes.data as TripStep[]) || [],
     items: (itemsRes.data as TripItem[]) || [],
     expenses: (expensesRes.data as TripExpense[]) || [],

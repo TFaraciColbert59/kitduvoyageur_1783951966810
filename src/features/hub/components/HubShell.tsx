@@ -14,7 +14,7 @@ import {
   type HubCounters,
 } from '../registry/hubSectionRegistry';
 import { mergeEnabledSections, type AdventureProfile, type HubSectionId } from '../engine/hubProfileEngine';
-import type { TripFull } from '@/features/trips/types/trip.types';
+import type { TripFull, TripStats } from '@/features/trips/types/trip.types';
 import { useHubStore } from '../stores/useHubStore';
 import { useHubLiveSensors } from '../hooks/useHubLiveSensors';
 import { useAndroidHubBackNav } from '../hooks/useAndroidHubBackNav';
@@ -23,6 +23,7 @@ import HubSidebarLeft from './HubSidebarLeft';
 import HubSidebarRight from './HubSidebarRight';
 import { HubNetworkStatus } from './HubNetworkStatus';
 import { HubRealtimeRefresh } from './HubRealtimeRefresh';
+import type { HubUserTripLite } from '../server/getHubAdventureData';
 
 export interface HubShellProps {
   adventure: ActiveAdventureData;
@@ -34,6 +35,10 @@ export interface HubShellProps {
   groupLabel?: string | null;
   linkedTripSlug?: string | null;
   pendingInvites?: number;
+  /** Voyages réels de l'utilisateur — section ACTIVITÉS du rail droit. */
+  trips?: HubUserTripLite[];
+  /** Stats serveur du voyage actif (source unique budget rail/menu). */
+  tripStats?: TripStats | null;
   /** Contenu de section (rendu au centre desktop et dans le shell mobile). */
   children: React.ReactNode;
 }
@@ -69,6 +74,8 @@ export function HubShell({
   groupLabel,
   linkedTripSlug,
   pendingInvites = 0,
+  trips,
+  tripStats = null,
   children,
 }: HubShellProps) {
   const pathname = usePathname();
@@ -134,6 +141,8 @@ export function HubShell({
       linkedTripSlug={linkedTripSlug}
       pendingInvites={pendingInvites}
       activeSection={activeSection}
+      trips={trips}
+      tripStats={tripStats}
     />
   );
 

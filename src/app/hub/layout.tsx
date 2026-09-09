@@ -1,4 +1,4 @@
-import { getHubAdventureData, buildHubCounts } from '@/features/hub/server/getHubAdventureData';
+import { getHubAdventureData, buildHubCounts, getHubTripStats } from '@/features/hub/server/getHubAdventureData';
 import { deriveHubProfile, type HubSectionId } from '@/features/hub/engine/hubProfileEngine';
 import { HubShell } from '@/features/hub/components/HubShell';
 import { LiquidGlassDefs } from '@/components/ui-layouts/liquid-glass';
@@ -12,6 +12,7 @@ export default async function HubLayout({ children }: { children: React.ReactNod
   const data = await getHubAdventureData();
   const profile = deriveHubProfile(data.input, new Date());
   const counts = buildHubCounts(data);
+  const tripStats = data.trip ? await getHubTripStats(data.trip.id) : null;
 
   const baseEnabled: HubSectionId[] =
     data.input.kind === 'sortie' ? (data.input.enabledSections ?? []) : [];
@@ -28,6 +29,8 @@ export default async function HubLayout({ children }: { children: React.ReactNod
         groupLabel={data.groupLabel}
         linkedTripSlug={data.linkedTripSlug}
         pendingInvites={data.pendingInvites}
+        trips={data.trips}
+        tripStats={tripStats}
       >
         {children}
       </HubShell>

@@ -6,15 +6,15 @@ import type { TripFull } from '../../types/trip.types';
 
 export interface TripContextWidgetProps {
   trip: TripFull;
-  /** Altitude maximale dérivée des étapes (m). */
-  maxAltitudeM?: number;
+  /** D+ maximal dérivé des étapes (Math.max des elevation_gain_m — m). */
+  maxDPlusM?: number;
 }
 
 /**
- * Widget `trip-context` — altitude max, durée, difficulté (prepare). §Y_HUB_SPEC §3.
+ * Widget `trip-context` — D+ max, durée, difficulté (prepare). §Y_HUB_SPEC §3.
  * Non monté pour scale=day ni activité cultural (filtre profil).
  */
-export function TripContextWidget({ trip, maxAltitudeM }: TripContextWidgetProps) {
+export function TripContextWidget({ trip, maxDPlusM }: TripContextWidgetProps) {
   const days = trip.start_date && trip.end_date
     ? Math.max(1, Math.round((new Date(`${trip.end_date}T00:00:00`).getTime() - new Date(`${trip.start_date}T00:00:00`).getTime()) / 86400000) + 1)
     : null;
@@ -25,10 +25,10 @@ export function TripContextWidget({ trip, maxAltitudeM }: TripContextWidgetProps
         <span aria-hidden="true">⛰️</span> Contexte
       </span>
       <div className="grid grid-cols-3 gap-2 text-center">
-        {maxAltitudeM != null && (
+        {maxDPlusM != null && (
           <div>
-            <div className="text-base font-extrabold text-[var(--lkv-text-primary)] font-mono">{maxAltitudeM.toLocaleString('fr-FR')} m</div>
-            <div className="text-[11px] uppercase tracking-widest text-[var(--lkv-text-muted)]">alt. max</div>
+            <div className="text-base font-extrabold text-[var(--lkv-text-primary)] font-mono">{maxDPlusM.toLocaleString('fr-FR')} m</div>
+            <div className="text-[11px] uppercase tracking-widest text-[var(--lkv-text-muted)]">D+ MAX</div>
           </div>
         )}
         {days != null && (

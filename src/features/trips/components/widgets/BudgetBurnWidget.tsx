@@ -4,20 +4,22 @@ import React from 'react';
 import Link from 'next/link';
 import { GlassCard } from '@/components/ui/GlassCard';
 import { tripSectionHref } from '../../registry/tripSectionRegistry';
-import type { TripFull } from '../../types/trip.types';
+import type { TripFull, TripStats } from '../../types/trip.types';
 
 export interface BudgetBurnWidgetProps {
   trip: TripFull;
+  /** total_spent serveur (getTripStats) — même source que la carte budget du menu. */
+  stats?: TripStats | null;
 }
 
 /**
  * Widget `budget-burn` — dépensé / estimé, par tête si groupe (prepare, recount).
- * §Y_HUB_SPEC §3.
+ * §Y_HUB_SPEC §3. Source unique : stats serveur si fournies, sinon somme locale
+ * des dépenses (fallback client).
  */
-export function BudgetBurnWidget({ trip }: BudgetBurnWidgetProps) {
-  const expenses = trip.expenses || [];
-  const spent = expenses.reduce((s, e) => s + Number(e.amount || 0), 0);
-  const estimated = Number(trip.estimated_budget) || 0;
+export function BudgetBurnWidget({ trip, stats = null }: BudgetBurnWidgetProps) {
+  const spent = stats ? stats.total_spent : (trip.expenses || []).reduce((s, e) => s + Number(e.amount || 0), 0);
+  const estimated = stats && stats.estimated_budget > 0 ? stats.estimated_budget : Number(trip.estimated_budget) || 0;
   const partyCount = Math.max(1, (trip.collaborators?.length ?? 0) + 1);
   const isGroup = (trip.collaborators?.length ?? 0) > 0;
 

@@ -1,6 +1,6 @@
 'use client';
 
-// Hub V5e — VRAIE carte (tuiles OSM France) + VRAI tracé depuis la BDD
+// Hub V5e — VRAIE carte (tuiles Esri World_Topo_Map, comme Aventures) + VRAI tracé depuis la BDD
 // (trip_steps géolocalisés), même pattern que la page aventure
 // (components/groupes/ParcoursCard) : import dynamique Leaflet, halo blanc
 // + trace foncée, circleMarkers départ/étapes/arrivée. Carte 100% statique
@@ -8,6 +8,9 @@
 // lien. Fallback synthétique (comme ParcoursCard) si < 2 points géo.
 import React, { useEffect, useRef } from 'react';
 import 'leaflet/dist/leaflet.css';
+
+// Boost de zoom après fitBounds (zoomSnap 0.25 → boost fractionnaire possible).
+const ZOOM_BOOST = 1;
 
 export interface HubMiniMapStep {
   latitude: number | null;
@@ -82,10 +85,9 @@ export default function HubMiniMap({ steps, distanceKm = 0, reserveBottom = 0, c
         zoomSnap: 0.25,
       });
 
-      L.tileLayer('https://{s}.tile.openstreetmap.fr/osmfr/{z}/{x}/{y}.png', {
-        attribution: '&copy; OpenStreetMap contributors | OSM France',
-        subdomains: ['a', 'b', 'c'],
-        maxZoom: 18,
+      L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Topo_Map/MapServer/tile/{z}/{y}/{x}', {
+        attribution: '&copy; <a href="https://www.esri.com">Esri</a>, USGS, NOAA',
+        maxZoom: 19,
         keepBuffer: 6,
       }).addTo(map);
 
@@ -142,12 +144,22 @@ export default function HubMiniMap({ steps, distanceKm = 0, reserveBottom = 0, c
         if (panel && root) {
           const panelR = panel.getBoundingClientRect();
           const rootR = root.getBoundingClientRect();
-          reserveLeft = Math.max(Math.round(panelR.right - rootR.left) + 16, 60);
+          reserveLeft = Math.max(Math.round(panelR.right - rootR.left) + 12, 60);
         }
         map.fitBounds(polyline.getBounds(), {
-          paddingTopLeft: [reserveLeft, 10],
-          paddingBottomRight: [12, Math.max(reserveBottom + 10, 12)],
+          paddingTopLeft: [reserveLeft, 12],
+          paddingBottomRight: [12, Math.max(reserveBottom + 12, 12)],
         });
+        // Boost de zoom avec garde-fou anti-crop : si le tracé déborde de la
+        // zone visible au zoom boosté, on revient au zoom du fitBounds.
+        const fittedZoom = map.getZoom();
+        const boosted = Math.min(fittedZoom + ZOOM_BOOST, 19);
+        if (boosted > fittedZoom) {
+          map.setZoom(boosted);
+          if (!map.getBounds().contains(polyline.getBounds())) {
+            map.setZoom(fittedZoom);
+          }
+        }
       };
       fitToTrace();
       mapRef.current = map;

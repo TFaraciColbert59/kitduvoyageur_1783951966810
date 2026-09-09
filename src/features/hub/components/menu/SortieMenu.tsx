@@ -21,17 +21,18 @@ import { getKitCounters } from '@/features/trips/hooks/useKitCounters';
 import { getTripDistance } from '@/features/trips/hooks/useTripDistance';
 import { getCanonicalTripSteps } from '@/features/trips/hooks/useTripCounters';
 import type { TripFull, TripStats } from '@/features/trips/types/trip.types';
-import type { HubCrewBlock, HubHikingContext } from '../../server/getHubAdventureData';
+import type { HubHikingContext, HubChecklistItem } from '../../server/getHubAdventureData';
 import type { TripPhase } from '@/features/trips/engine/temporalPhaseEngine';
 
 export interface SortieMenuProps {
   trip: TripFull;
   stats: TripStats;
-  crew: HubCrewBlock | null;
   pendingInvites: number;
   daysUntil: number | null;
   phase: TripPhase;
   hiking?: HubHikingContext | null;
+  /** Items réels de la checklist (trip_checklist_items) — carte + fil d'action. */
+  checklist: HubChecklistItem[];
 }
 
 function soonestExpiry(docs: TripFull['documents']): { label: string; inDays: number } | null {
@@ -100,11 +101,11 @@ const PHASE_LABELS: Record<TripPhase, string> = {
 export function SortieMenu({
   trip,
   stats,
-  crew,
   pendingInvites,
   daysUntil,
   phase,
   hiking,
+  checklist,
 }: SortieMenuProps) {
   const ref: HubAdventureRef = { nature: 'sortie', slug: trip.slug };
   const duration = getTripDuration(trip);
@@ -116,9 +117,8 @@ export function SortieMenu({
   const budgetPct =
     stats.estimated_budget > 0 ? Math.round((stats.total_spent / stats.estimated_budget) * 100) : null;
   const currency = trip.budget_currency || 'EUR';
-  const crewCount = crew?.memberCount ?? 0;
   const collabs = trip.collaborators ?? [];
-  const collabCount = collabs.length;
+  const teamCount = collabs.length + 1;
   const pendingList = (trip.safety_checkpoints ?? []).filter((c) => c.status === 'pending');
   const pendingSafety = pendingList.length;
   const nextCheckpoint =
@@ -169,11 +169,21 @@ export function SortieMenu({
       description: 'Vérifiez ou renouvelez ce document.',
     });
   }
+  // ── FIL D'ACTION (règles déterministes, ordonnées par priorité) ──
+  // « all-clear » : copie DÉRIVÉE des données réelles (jamais statique).
+  const allClearDescription =
+    phase === 'live'
+      ? `Voyage en cours · ${steps.length} étapes · ${packedPercent}% équipement`
+      : phase === 'recount'
+        ? `${(trip.notes ?? []).length} note${(trip.notes ?? []).length === 1 ? '' : 's'} dans le journal — racontez.`
+        : daysUntil != null && daysUntil >= 0
+          ? `J-${daysUntil} avant le départ · ${steps.length} étapes · ${packedPercent}% préparé`
+          : `${steps.length} étapes · ${packedPercent}% préparé`;
   nextActions.push({
     kind: 'all-clear',
     href: hubSectionHref(ref, 'journal'),
     title: 'Tout est à jour',
-    description: 'Profite — ou raconte le voyage dans le journal.',
+    description: allClearDescription,
   });
 
   const actions: QuickAction[] = [
@@ -197,12 +207,12 @@ export function SortieMenu({
       span: 6,
       node: (
         <MenuCard href={`${HUB_HOME_HREF}?phase=recount`} label="Raconter" tone="accent">
-          <div className="flex flex-wrap items-center gap-1.5">
+          <div className="flex flex-wrap items-center justify-center gap-1.5">
             <span className="rounded-full bg-[var(--lkv-primary)]/10 px-2.5 py-1 text-[11px] font-bold text-[var(--lkv-primary)]">Carnet</span>
             <span className="rounded-full bg-[var(--lkv-primary)]/10 px-2.5 py-1 text-[11px] font-bold text-[var(--lkv-primary)]">Bilan</span>
             <span className="rounded-full bg-[var(--lkv-primary)]/10 px-2.5 py-1 text-[11px] font-bold text-[var(--lkv-primary)]">Partage</span>
           </div>
-          <p className="mt-1.5 text-xs text-[var(--lkv-text-secondary)]">Bilan, carnet de bord et partage d&apos;équipage.</p>
+          <p className="mt-1.5 text-center text-xs text-[var(--lkv-text-secondary)]">Bilan, carnet de bord et partage d&apos;équipage.</p>
         </MenuCard>
       ),
     },
@@ -217,18 +227,16 @@ export function SortieMenu({
               <HubMiniMap
                 steps={steps}
                 distanceKm={dist.totalKm}
-                reserveBottom={weatherCtx ? 78 : 0}
+                reserveBottom={78}
               />
-              {weatherCtx && (
-                <div className="absolute bottom-2.5 right-2.5 z-20 w-[210px]">
-                  <WeatherStrip
-                    current={weatherCtx.current}
-                    days={weatherCtx.days}
-                    locationLabel={weatherCtx.locationLabel}
-                    variant="capsule"
-                  />
-                </div>
-              )}
+              <div className="absolute bottom-2.5 right-2.5 z-20 w-[210px]">
+                <WeatherStrip
+                  current={weatherCtx?.current ?? null}
+                  days={weatherCtx?.days ?? []}
+                  locationLabel={weatherCtx?.locationLabel ?? null}
+                  variant="capsule"
+                />
+              </div>
             </div>
           }
         >
@@ -320,16 +328,16 @@ export function SortieMenu({
       span: 4,
       node: (
         <MenuCard href={hubSectionHref(ref, 'team')} label="Équipage & compagnons">
-          <p className="mt-1 text-3xl font-extrabold tracking-tight text-[var(--lkv-text-primary)]">
-            <NumberStat value={collabCount + crewCount} />
+          <p className="mt-1 text-2xl font-extrabold tracking-tight text-[var(--lkv-text-primary)]">
+            <NumberStat value={teamCount} />
             <span className="ml-2 text-xs font-semibold text-[var(--lkv-text-secondary)]">
-              compagnon{(collabCount + crewCount) > 1 ? 's' : ''}
+              membre{teamCount > 1 ? 's' : ''}
               {pendingInvites > 0 ? ` · ${pendingInvites} invitation(s)` : ''}
             </span>
           </p>
           {collabs.length > 0 ? (
-            <ul className="mt-2 space-y-1.5">
-              {collabs.slice(0, 3).map((c) => (
+            <ul className="mt-1.5 flex min-h-0 flex-1 flex-col justify-center gap-1.5">
+              {collabs.slice(0, 1).map((c) => (
                 <li key={c.id} className="flex items-center gap-2">
                   <span className="flex h-6 w-6 items-center justify-center rounded-full bg-[var(--lkv-surface-raised)] text-[10px] font-bold text-[var(--lkv-text-secondary)] shrink-0">
                     {(c.profile?.full_name ?? '?').slice(0, 1).toUpperCase()}
@@ -340,6 +348,11 @@ export function SortieMenu({
                   <span className="ml-auto text-[10px] font-mono uppercase text-[var(--lkv-text-muted)] shrink-0">{c.role}</span>
                 </li>
               ))}
+              {collabs.length > 1 && (
+                <li className="text-[10px] font-mono uppercase text-[var(--lkv-text-muted)]">
+                  +{collabs.length - 1} autre{collabs.length - 1 > 1 ? 's' : ''}
+                </li>
+              )}
             </ul>
           ) : (
             <p className="mt-1 text-xs text-[var(--lkv-text-secondary)]">Sortie en solo — invitez un compagnon.</p>
@@ -351,7 +364,7 @@ export function SortieMenu({
       span: 4,
       node: (
         <MenuCard href={hubSectionHref(ref, 'checklist')} label="Checklist">
-          <ChecklistCardBody tripId={trip.id} daysUntil={daysUntil} countryCode={trip.destination_country_code} />
+          <ChecklistCardBody items={checklist} />
         </MenuCard>
       ),
     },
@@ -376,7 +389,7 @@ export function SortieMenu({
               ))}
             </ul>
           ) : (
-            <p className="mt-1 text-xs text-[var(--lkv-text-secondary)]">Aucun document.</p>
+            <p className="mt-1 text-center text-xs text-[var(--lkv-text-secondary)]">Aucun document.</p>
           )}
           {exp && (
             <p className="mt-1 text-xs font-semibold text-[var(--lkv-danger)]">
@@ -400,7 +413,7 @@ export function SortieMenu({
               <span className="ml-1.5 font-mono text-[var(--lkv-text-muted)]">{shortDate(nextCheckpoint.scheduled_at)}</span>
             </p>
           ) : (
-            <p className="mt-1 text-xs text-[var(--lkv-text-secondary)]">Aucun point programmé.</p>
+            <p className="mt-1 text-center text-xs text-[var(--lkv-text-secondary)]">Aucun point programmé.</p>
           )}
         </MenuCard>
       ),
@@ -415,11 +428,11 @@ export function SortieMenu({
                 <span className="text-[10px] font-mono uppercase text-[var(--lkv-text-muted)]">Jour {lastNote.day_number}</span>
               )}
               <p className="truncate text-sm font-semibold text-[var(--lkv-text-primary)]">{lastNote.title || 'Sans titre'}</p>
-              <p className="line-clamp-2 text-xs text-[var(--lkv-text-secondary)]">{lastNote.content}</p>
+              <p className="line-clamp-1 text-xs text-[var(--lkv-text-secondary)]">{lastNote.content}</p>
               <p className="mt-1 text-[11px] font-mono text-[var(--lkv-text-muted)]">{notes.length} note{notes.length > 1 ? 's' : ''}</p>
             </div>
           ) : (
-            <p className="mt-1 text-xs text-[var(--lkv-text-secondary)]">Aucune note encore.</p>
+            <p className="mt-1 text-center text-xs text-[var(--lkv-text-secondary)]">Aucune note encore.</p>
           )}
         </MenuCard>
       ),
@@ -428,11 +441,11 @@ export function SortieMenu({
       span: 3,
       node: (
         <MenuCard href={hubSectionHref(ref, 'export')} label="Export">
-          <div className="mt-2 flex gap-2">
+          <div className="mt-2 flex justify-center gap-2">
             <span className="rounded-full bg-[var(--lkv-primary)]/10 px-2.5 py-1 text-[11px] font-bold text-[var(--lkv-primary)]">GPX</span>
             <span className="rounded-full bg-[var(--lkv-primary)]/10 px-2.5 py-1 text-[11px] font-bold text-[var(--lkv-primary)]">Feuille de route</span>
           </div>
-          <p className="mt-1.5 text-xs text-[var(--lkv-text-secondary)]">Trace + document prêts à partager.</p>
+          <p className="mt-1.5 text-center text-xs text-[var(--lkv-text-secondary)]">Trace + document prêts à partager.</p>
         </MenuCard>
       ),
     },
@@ -455,7 +468,7 @@ export function SortieMenu({
       />
       <NextActionCard
         actions={nextActions}
-        checklist={{ tripId: trip.id, daysUntil, countryCode: trip.destination_country_code }}
+        checklist={{ tripId: trip.id, items: checklist }}
       />
       <QuickActions actions={actions} />
       <div className="flex-1 min-h-0">

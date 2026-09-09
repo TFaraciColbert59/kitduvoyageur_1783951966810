@@ -1,10 +1,11 @@
-import { Droplets } from 'lucide-react';
+import { CloudOff, Droplets } from 'lucide-react';
 import { weatherLabel, type WeatherDay } from '@/features/materiel/services/getWeather';
 import { getWeatherIcon } from './getWeatherIcon';
 
 export interface WeatherStripProps {
-  current: { tempC: number; weathercode: number; precipPct: number };
-  days: WeatherDay[];
+  /** Prévisions réelles — null = météo indisponible (état honnête, jamais de fausse donnée). */
+  current: { tempC: number; weathercode: number; precipPct: number } | null;
+  days?: WeatherDay[];
   locationLabel?: string | null;
   /** strip = bloc pleine largeur · capsule = flottant compact (coin carte). */
   variant?: 'strip' | 'capsule';
@@ -14,8 +15,37 @@ export interface WeatherStripProps {
  * Hub V3 — Bandeau météo réelle (Open-Meteo). Server component, tokens.
  * strip : lieu + conditions actuelles + 4 prochains jours.
  * capsule : flottant compact (coin bas-droit de la carte média).
+ * Météo null : coquille conservée (géométrie/reserveBottom stables) avec
+ * « Météo indisponible » — aucune donnée fabriquée.
  */
-export function WeatherStrip({ current, days, locationLabel, variant = 'strip' }: WeatherStripProps) {
+export function WeatherStrip({ current, days = [], locationLabel, variant = 'strip' }: WeatherStripProps) {
+  if (!current) {
+    if (variant === 'capsule') {
+      return (
+        <div className="rounded-2xl border border-white/60 bg-white/95 p-2 shadow-sm backdrop-blur-sm">
+          <div className="flex items-center gap-2 min-h-[44px]">
+            <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-white/80 border border-white/70 text-[var(--lkv-text-muted)]">
+              <CloudOff size={16} aria-hidden="true" />
+            </span>
+            <p className="text-[9px] font-bold uppercase tracking-widest text-[var(--lkv-text-secondary)] truncate leading-none">
+              Météo indisponible
+            </p>
+          </div>
+        </div>
+      );
+    }
+    return (
+      <div className="rounded-xl border border-white/70 bg-white/55 px-3 py-2">
+        <div className="flex items-center gap-2.5 min-h-[44px]">
+          <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-white/80 border border-white/70 text-[var(--lkv-text-muted)]">
+            <CloudOff size={18} aria-hidden="true" />
+          </span>
+          <p className="text-sm font-bold text-[var(--lkv-text-primary)]">Météo indisponible</p>
+        </div>
+      </div>
+    );
+  }
+
   const CurrentIcon = getWeatherIcon(current.weathercode);
   const upcoming = days.filter((d) => d.day !== 'Auj.').slice(0, 4);
 
@@ -28,7 +58,7 @@ export function WeatherStrip({ current, days, locationLabel, variant = 'strip' }
           </span>
           <div className="min-w-0">
             <p className="text-[9px] font-bold uppercase tracking-widest text-[var(--lkv-text-secondary)] truncate leading-none">
-              {locationLabel ?? 'Météo'}
+              {locationLabel || 'Météo'}
             </p>
             <p className="text-xs font-bold text-[var(--lkv-text-primary)] leading-tight">
               {Math.round(current.tempC)}°C
@@ -68,7 +98,7 @@ export function WeatherStrip({ current, days, locationLabel, variant = 'strip' }
         </span>
         <div className="min-w-0 flex-1">
           <p className="text-[10px] font-bold uppercase tracking-widest text-[var(--lkv-text-secondary)] truncate">
-            {locationLabel ?? 'Météo'}
+            {locationLabel || 'Météo'}
           </p>
           <p className="text-sm font-bold text-[var(--lkv-text-primary)] leading-tight">
             {Math.round(current.tempC)}°C · {weatherLabel(current.weathercode)}

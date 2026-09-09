@@ -22,11 +22,11 @@ const blurClass: Record<GlassBlur, string> = {
 };
 
 const toneTint: Record<GlassTone, string> = {
-  neutral: 'border-white/40 shadow-[0_8px_32px_rgba(0,0,0,0.06),inset_0_1.5px_1px_rgba(255,255,255,0.7)]',
-  sage: 'border-white/50 shadow-[0_8px_32px_rgba(0,0,0,0.08),inset_0_1.5px_1px_rgba(255,255,255,0.8)]',
-  warn: 'border-[rgba(200,154,59,0.35)] shadow-[0_8px_32px_rgba(0,0,0,0.08),inset_0_1.5px_1px_rgba(255,255,255,0.7)]',
-  danger: 'border-[rgba(168,68,58,0.35)] shadow-[0_8px_32px_rgba(0,0,0,0.08),inset_0_1.5px_1px_rgba(255,255,255,0.7)]',
-  info: 'border-[rgba(75,107,124,0.35)] shadow-[0_8px_32px_rgba(0,0,0,0.08),inset_0_1.5px_1px_rgba(255,255,255,0.7)]',
+  neutral: 'border-white/40',
+  sage: 'border-white/50',
+  warn: 'border-[rgba(200,154,59,0.35)]',
+  danger: 'border-[rgba(168,68,58,0.35)]',
+  info: 'border-[rgba(75,107,124,0.35)]',
 };
 
 export const GlassCard = forwardRef<HTMLDivElement, GlassCardProps>(

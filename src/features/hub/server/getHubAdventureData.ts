@@ -1,6 +1,6 @@
 import { cache } from 'react';
 import { createClient } from '@/lib/supabase/server';
-import { getTripBySlug } from '@/lib/queries-trips';
+import { getTripBySlug, getTripStats } from '@/lib/queries-trips';
 import { fetchUserCrews } from '@/lib/queries-crews';
 import { getWeather, type WeatherDay } from '@/features/materiel/services/getWeather';
 import { getActiveAdventure } from '../context/activeAdventureServer';
@@ -39,6 +39,7 @@ export interface HubAdventureLists {
   pendingInvites: number;
   crews: HubCrewLite[];
   possession: { items: number; loans: number; alerts: number };
+  trips: HubUserTripLite[];
 }
 
 export interface HubCrewMemberLite {
@@ -47,6 +48,30 @@ export interface HubCrewMemberLite {
   status: string;
   fullName: string | null;
   avatarUrl: string | null;
+}
+
+/** Voyage de l'utilisateur, résumé pour le rail ACTIVITÉS (aggregats trip_steps réels). */
+export interface HubUserTripLite {
+  id: string;
+  slug: string;
+  title: string;
+  status: string;
+  primary_activity: string;
+  start_date: string | null;
+  cover_image_url: string | null;
+  distanceKm: number;
+  dPlusM: number;
+  stepsCount: number;
+}
+
+/** Item de checklist de préparation (table trip_checklist_items). */
+export interface HubChecklistItem {
+  id: string;
+  label: string;
+  dueOffsetDays: number;
+  done: boolean;
+  doneAt: string | null;
+  position: number;
 }
 
 /** Bloc groupe universel (H-ACT §4) — membres, rôles, invitations. */
@@ -89,6 +114,8 @@ export interface HubAdventureData extends HubAdventureLists {
   group: HubCrewBlock | null;
   /** Contexte randonnée — présent si l'activité active est une randonnée. */
   hiking: HubHikingContext | null;
+  /** Checklist de préparation du voyage actif (trip_checklist_items, [] hors sortie). */
+  checklist: HubChecklistItem[];
 }
 
 const EMPTY_LISTS: HubAdventureLists = {
@@ -96,6 +123,7 @@ const EMPTY_LISTS: HubAdventureLists = {
   pendingInvites: 0,
   crews: [],
   possession: { items: 0, loans: 0, alerts: 0 },
+  trips: [],
 };
 
 async function loadLists(userId: string | undefined): Promise<HubAdventureLists> {
@@ -106,6 +134,7 @@ async function loadLists(userId: string | undefined): Promise<HubAdventureLists>
     pendingInvites: 0,
     crews: [],
     possession: { items: 0, loans: 0, alerts: 0 },
+    trips: [],
   };
 
   try {
@@ -169,6 +198,41 @@ async function loadLists(userId: string | undefined): Promise<HubAdventureLists>
     out.possession = { items: items ?? 0, loans: loans ?? 0, alerts: alerts ?? 0 };
   } catch (err) {
     console.error('[LKDV hub] possession error:', err);
+  }
+
+  try {
+    const { data: tripRows } = await supabase
+      .from('trips')
+      .select('id, slug, title, status, primary_activity, start_date, cover_image_url, trip_steps(distance_km, elevation_gain_m)')
+      .eq('user_id', userId)
+      .order('start_date', { ascending: false, nullsFirst: false })
+      .limit(20);
+    out.trips = ((tripRows ?? []) as Array<{
+      id: string;
+      slug: string;
+      title: string;
+      status: string;
+      primary_activity: string;
+      start_date: string | null;
+      cover_image_url: string | null;
+      trip_steps?: Array<{ distance_km: number | null; elevation_gain_m: number | null }>;
+    }>).map((row) => {
+      const steps = row.trip_steps ?? [];
+      return {
+        id: row.id,
+        slug: row.slug,
+        title: row.title,
+        status: row.status,
+        primary_activity: row.primary_activity,
+        start_date: row.start_date,
+        cover_image_url: row.cover_image_url,
+        distanceKm: Math.round(steps.reduce((s, st) => s + Number(st.distance_km || 0), 0) * 10) / 10,
+        dPlusM: Math.round(steps.reduce((s, st) => s + Number(st.elevation_gain_m || 0), 0)),
+        stepsCount: steps.length,
+      };
+    });
+  } catch (err) {
+    console.error('[LKDV hub] trips error:', err);
   }
 
   return out;
@@ -244,6 +308,39 @@ async function loadCrewBlock(
 
 const WATER_PATTERN = /eau|water|source|riviere|rivière|lac|fontaine|ruisseau/i;
 
+/** Checklist de préparation réelle du voyage (trip_checklist_items, RLS can_read_trip). */
+async function loadChecklist(
+  supabase: Awaited<ReturnType<typeof createClient>>,
+  tripId: string,
+): Promise<HubChecklistItem[]> {
+  try {
+    const { data } = await supabase
+      .from('trip_checklist_items')
+      .select('id, label, due_offset_days, done, done_at, position')
+      .eq('trip_id', tripId)
+      .order('due_offset_days', { ascending: false })
+      .order('position', { ascending: true });
+    return ((data ?? []) as Array<{
+      id: string;
+      label: string;
+      due_offset_days: number;
+      done: boolean;
+      done_at: string | null;
+      position: number;
+    }>).map((row) => ({
+      id: row.id,
+      label: row.label,
+      dueOffsetDays: row.due_offset_days,
+      done: row.done,
+      doneAt: row.done_at,
+      position: row.position,
+    }));
+  } catch (err) {
+    console.error('[LKDV hub] checklist error:', err);
+    return [];
+  }
+}
+
 /** Contexte randonnée : parcours (route liée ou étapes), dénivelé, météo, eau. */
 async function loadHikingContext(
   supabase: Awaited<ReturnType<typeof createClient>>,
@@ -304,11 +401,13 @@ async function loadHikingContext(
   let weather: HubHikingContext['weather'] = null;
   try {
     const forecast = await getWeather(coords?.lat ?? null, coords?.lon ?? null, trip.destination_name);
-    weather = {
-      current: forecast.current,
-      days: forecast.days,
-      locationLabel: forecast.location.label ?? null,
-    };
+    if (forecast) {
+      weather = {
+        current: forecast.current,
+        days: forecast.days,
+        locationLabel: forecast.location.label || null,
+      };
+    }
   } catch (err) {
     console.error('[LKDV hub] weather error:', err);
   }
@@ -344,11 +443,12 @@ export async function getHubAdventureDataInner(): Promise<HubAdventureData> {
       const hasGeoSteps = (trip.steps ?? []).some(
         (s) => s.latitude != null && s.longitude != null,
       );
-      const [group, hiking] = await Promise.all([
+      const [group, hiking, checklist] = await Promise.all([
         loadCrewBlock(supabase, trip.id),
         activityType === 'hiking' || hasGeoSteps
           ? loadHikingContext(supabase, trip)
           : Promise.resolve(null),
+        loadChecklist(supabase, trip.id),
       ]);
       return {
         ...lists,
@@ -365,10 +465,11 @@ export async function getHubAdventureDataInner(): Promise<HubAdventureData> {
         linkedTripSlug: null,
         group,
         hiking,
+        checklist,
       };
     }
     // Repli possession (aventure périmée — jamais de cul-de-sac).
-    return { ...lists, adventure: { nature: 'possession' }, input: possessionInput(lists), trip: null, groupLabel: null, linkedTripSlug: null, group: null, hiking: null };
+    return { ...lists, adventure: { nature: 'possession' }, input: possessionInput(lists), trip: null, groupLabel: null, linkedTripSlug: null, group: null, hiking: null, checklist: [] };
   }
 
   if (adventure.nature === 'collectif') {
@@ -410,6 +511,7 @@ export async function getHubAdventureDataInner(): Promise<HubAdventureData> {
         linkedTripSlug,
         group: null,
         hiking: null,
+        checklist: [],
       };
     }
     const c = lists.crews.find((x) => x.id === adventure.id);
@@ -428,10 +530,11 @@ export async function getHubAdventureDataInner(): Promise<HubAdventureData> {
       linkedTripSlug: c?.next_trip?.slug ?? null,
       group: null,
       hiking: null,
+      checklist: [],
     };
   }
 
-  return { ...lists, adventure, input: possessionInput(lists), trip: null, groupLabel: null, linkedTripSlug: null, group: null, hiking: null };
+  return { ...lists, adventure, input: possessionInput(lists), trip: null, groupLabel: null, linkedTripSlug: null, group: null, hiking: null, checklist: [] };
 }
 
 /**
@@ -472,3 +575,6 @@ export function buildHubCounts(data: HubAdventureData): HubCounters {
  * via React cache — une seule exécution des requêtes par rendu /hub).
  */
 export const getHubAdventureData = cache(getHubAdventureDataInner);
+
+/** Stats voyage déduites UNE fois par requête (layout + pages partagent le cache React). */
+export const getHubTripStats = cache((tripId: string) => getTripStats(tripId));

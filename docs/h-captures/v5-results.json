@@ -1,0 +1,198 @@
+[
+  {
+    "name": "v5-hub-sortie-1440",
+    "status": "ok",
+    "shot": "docs/h-captures/v5-hub-sortie-1440.png",
+    "checks": {
+      "overflow": false,
+      "lastCardBottom": 869,
+      "mainBottom": 900,
+      "clipped": false,
+      "hasActivites": true,
+      "hasEsriTiles": 3,
+      "meteoIndisponible": false
+    }
+  },
+  {
+    "name": "v5-hub-sortie-1920",
+    "status": "ok",
+    "shot": "docs/h-captures/v5-hub-sortie-1920.png",
+    "checks": {
+      "overflow": false,
+      "lastCardBottom": 1049,
+      "mainBottom": 1080,
+      "clipped": false,
+      "hasActivites": true,
+      "hasEsriTiles": 4,
+      "meteoIndisponible": false
+    }
+  },
+  {
+    "name": "v5-hub-sortie-mobile",
+    "status": "ok",
+    "shot": "docs/h-captures/v5-hub-sortie-mobile.png",
+    "checks": {
+      "overflow": false,
+      "lastCardBottom": 1463,
+      "mainBottom": 1699,
+      "clipped": false,
+      "hasActivites": false,
+      "hasEsriTiles": 3,
+      "meteoIndisponible": false
+    }
+  },
+  {
+    "name": "v5-hub-itineraire",
+    "status": "ok",
+    "shot": "docs/h-captures/v5-hub-itineraire.png",
+    "checks": {
+      "overflow": false,
+      "lastCardBottom": 869,
+      "mainBottom": 900,
+      "clipped": false,
+      "hasActivites": true,
+      "hasEsriTiles": 0,
+      "meteoIndisponible": false
+    }
+  },
+  {
+    "name": "v5-hub-kit-voyage",
+    "status": "ok",
+    "shot": "docs/h-captures/v5-hub-kit-voyage.png",
+    "checks": {
+      "overflow": false,
+      "lastCardBottom": 869,
+      "mainBottom": 900,
+      "clipped": false,
+      "hasActivites": true,
+      "hasEsriTiles": 0,
+      "meteoIndisponible": false
+    }
+  },
+  {
+    "name": "v5-hub-equipage",
+    "status": "ok",
+    "shot": "docs/h-captures/v5-hub-equipage.png",
+    "checks": {
+      "overflow": false,
+      "lastCardBottom": 869,
+      "mainBottom": 900,
+      "clipped": false,
+      "hasActivites": true,
+      "hasEsriTiles": 0,
+      "meteoIndisponible": false
+    }
+  },
+  {
+    "name": "v5-hub-budget",
+    "status": "ok",
+    "shot": "docs/h-captures/v5-hub-budget.png",
+    "checks": {
+      "overflow": false,
+      "lastCardBottom": 869,
+      "mainBottom": 900,
+      "clipped": false,
+      "hasActivites": true,
+      "hasEsriTiles": 0,
+      "meteoIndisponible": false
+    }
+  },
+  {
+    "name": "v5-hub-documents",
+    "status": "ok",
+    "shot": "docs/h-captures/v5-hub-documents.png",
+    "checks": {
+      "overflow": false,
+      "lastCardBottom": 869,
+      "mainBottom": 900,
+      "clipped": false,
+      "hasActivites": true,
+      "hasEsriTiles": 0,
+      "meteoIndisponible": false
+    }
+  },
+  {
+    "name": "v5-hub-checklist",
+    "status": "ok",
+    "shot": "docs/h-captures/v5-hub-checklist.png",
+    "checks": {
+      "overflow": false,
+      "lastCardBottom": 869,
+      "mainBottom": 900,
+      "clipped": false,
+      "hasActivites": true,
+      "hasEsriTiles": 0,
+      "meteoIndisponible": false
+    }
+  },
+  {
+    "name": "v5-hub-securite",
+    "status": "ok",
+    "shot": "docs/h-captures/v5-hub-securite.png",
+    "checks": {
+      "overflow": false,
+      "lastCardBottom": 869,
+      "mainBottom": 900,
+      "clipped": false,
+      "hasActivites": true,
+      "hasEsriTiles": 0,
+      "meteoIndisponible": false
+    }
+  },
+  {
+    "name": "v5-hub-journal",
+    "status": "ok",
+    "shot": "docs/h-captures/v5-hub-journal.png",
+    "checks": {
+      "overflow": false,
+      "lastCardBottom": 869,
+      "mainBottom": 900,
+      "clipped": false,
+      "hasActivites": true,
+      "hasEsriTiles": 0,
+      "meteoIndisponible": false
+    }
+  },
+  {
+    "name": "v5-hub-export",
+    "status": "ok",
+    "shot": "docs/h-captures/v5-hub-export.png",
+    "checks": {
+      "overflow": false,
+      "lastCardBottom": 869,
+      "mainBottom": 900,
+      "clipped": false,
+      "hasActivites": true,
+      "hasEsriTiles": 0,
+      "meteoIndisponible": false
+    }
+  },
+  {
+    "name": "v5-hub-possession",
+    "status": "ok",
+    "shot": "docs/h-captures/v5-hub-possession.png",
+    "checks": {
+      "overflow": false,
+      "lastCardBottom": 917,
+      "mainBottom": 900,
+      "clipped": true,
+      "hasActivites": true,
+      "hasEsriTiles": 0,
+      "meteoIndisponible": false
+    }
+  },
+  {
+    "name": "v5-hub-inventaire",
+    "status": "ok",
+    "shot": "docs/h-captures/v5-hub-inventaire.png",
+    "checks": {
+      "overflow": false,
+      "lastCardBottom": 1667,
+      "mainBottom": 900,
+      "clipped": true,
+      "hasActivites": true,
+      "hasEsriTiles": 0,
+      "meteoIndisponible": false
+    }
+  }
+]

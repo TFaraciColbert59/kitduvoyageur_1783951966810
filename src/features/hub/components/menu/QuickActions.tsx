@@ -22,7 +22,7 @@ export function QuickActions({ actions }: { actions: QuickAction[] }) {
             key={a.href}
             href={a.href}
             ariaLabel={a.label}
-            className="flex flex-col items-center justify-center gap-1.5 min-h-[72px] px-1 rounded-2xl glass border border-white/60 shadow-sm active:scale-[0.97] transition-transform"
+            className="flex flex-col items-center justify-center gap-1.5 min-h-[72px] px-1 rounded-2xl glass border border-white/60 active:scale-[0.97] transition-transform"
           >
             <span className="flex h-9 w-9 items-center justify-center rounded-full bg-white/70 border border-white/70 text-[var(--lkv-secondary)] shadow-2xs">
               <Icon size={15} aria-hidden="true" />

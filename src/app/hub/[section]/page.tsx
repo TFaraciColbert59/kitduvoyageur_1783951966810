@@ -16,6 +16,7 @@ import { HubGroupeSection } from '@/features/hub/components/collectif/HubGroupeS
 import { HubGroupeCockpit } from '@/features/hub/components/collectif/HubGroupeCockpit';
 import { loadTripSection } from '@/lib/tripSection';
 import { getTripStats } from '@/lib/queries-trips';
+import type { DatabaseTripChecklistItem } from '@/lib/supabase/types';
 import { getTripKitDetails } from '@/lib/queries-trip-kit';
 import { calculateBudgetSummary } from '@/features/trips/engine/budgetEngine';
 import { getTripPhaseDetails } from '@/features/trips/engine/temporalPhaseEngine';
@@ -89,6 +90,7 @@ export default async function HubSectionPage({
  */
 async function SortieSection({ sectionId, slug }: { sectionId: string; slug: string }) {
   const trip = await loadTripSection(slug);
+  const supabase = await createClient();
 
   switch (sectionId) {
     case 'itinerary': {
@@ -143,7 +145,20 @@ async function SortieSection({ sectionId, slug }: { sectionId: string; slug: str
       return <TripDocumentsView trip={trip} />;
     case 'checklist': {
       const phaseDetails = getTripPhaseDetails(trip);
-      return <TripChecklistView tripId={trip.id} daysUntilStart={phaseDetails.daysUntilStart} />;
+      const { data: checklistRows } = await supabase
+        .from('trip_checklist_items')
+        .select('id, trip_id, label, due_offset_days, done, done_at, position, created_at, updated_at')
+        .eq('trip_id', trip.id)
+        .order('due_offset_days', { ascending: false })
+        .order('position', { ascending: true });
+      const checklistItems = (checklistRows ?? []) as DatabaseTripChecklistItem[];
+      return (
+        <TripChecklistView
+          tripId={trip.id}
+          daysUntilStart={phaseDetails.daysUntilStart}
+          items={checklistItems}
+        />
+      );
     }
     case 'safety':
       return <TripSafetyView trip={trip} />;

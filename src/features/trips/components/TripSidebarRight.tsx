@@ -5,7 +5,7 @@ import { ChevronDown, ChevronUp } from 'lucide-react';
 import type { TripPhase } from '../engine/temporalPhaseEngine';
 import type { TripProfile, TripWidgetId, TripSectionId } from '../engine/tripProfileEngine';
 import { tripWidgetRegistry, widgetDef, estimatedHeight, WIDGET_COLUMN_MAX_HEIGHT, widgetsForPhase } from '../registry/tripWidgetRegistry';
-import type { TripFull } from '../types/trip.types';
+import type { TripFull, TripStats } from '../types/trip.types';
 import { CountdownWidget } from './widgets/CountdownWidget';
 import { OfflineToggleWidget } from './widgets/OfflineToggleWidget';
 import { CountryCardWidget } from './widgets/CountryCardWidget';
@@ -24,13 +24,15 @@ export interface TripSidebarRightProps {
   profile: TripProfile;
   phase: TripPhase;
   activeSection: string;
+  /** Stats serveur (getTripStats) — source unique du budget, identique au menu. */
+  stats?: TripStats | null;
 }
 
 /** Priorité minimale en dessous de laquelle un widget peut être replié. */
 const FOLD_BELOW_PRIORITY = 60;
 
-/** Altitude maximale dérivée des étapes (pour trip-context). */
-function maxAltitude(trip: TripFull): number | undefined {
+/** D+ maximal dérivé des étapes (pour trip-context — ce n'est PAS une altitude). */
+function maxDPlus(trip: TripFull): number | undefined {
   const gains = (trip.steps || [])
     .map((s) => Number(s.elevation_gain_m) || 0)
     .filter((v) => v > 0);
@@ -44,7 +46,7 @@ function maxAltitude(trip: TripFull): number | undefined {
  * ordonne par priorité, replie les widgets de priorité < 60 au-delà de la
  * limite de hauteur (§Y_HUB_SPEC §3). Aucun en-tête de section propre.
  */
-export function TripSidebarRight({ trip, profile, phase, activeSection }: TripSidebarRightProps) {
+export function TripSidebarRight({ trip, profile, phase, activeSection, stats = null }: TripSidebarRightProps) {
   const [folded, setFolded] = useState(false);
 
   const widgetIds = widgetsForPhase(profile.widgets, phase);
@@ -78,11 +80,11 @@ export function TripSidebarRight({ trip, profile, phase, activeSection }: TripSi
       case 'kit-balance':
         return <KitBalanceWidget key={id} trip={trip} />;
       case 'budget-burn':
-        return <BudgetBurnWidget key={id} trip={trip} />;
+        return <BudgetBurnWidget key={id} trip={trip} stats={stats} />;
       case 'group-presence':
         return <GroupPresenceWidget key={id} trip={trip} />;
       case 'trip-context':
-        return <TripContextWidget key={id} trip={trip} maxAltitudeM={maxAltitude(trip)} />;
+        return <TripContextWidget key={id} trip={trip} maxDPlusM={maxDPlus(trip)} />;
       case 'docs-expiry':
         return <DocsExpiryWidget key={id} trip={trip} />;
       case 'country-card':

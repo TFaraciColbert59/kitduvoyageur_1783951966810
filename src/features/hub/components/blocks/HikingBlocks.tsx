@@ -119,19 +119,26 @@ export function MeteoBlock({ hiking }: { hiking: HubHikingContext | null }) {
             {current.precipPct > 0 ? ` · ${Math.round(current.precipPct)}%` : ''}
           </p>
         ) : (
-          <p className="text-sm font-semibold text-[var(--lkv-text-primary)]">Météo</p>
+          <p className="text-sm font-semibold text-[var(--lkv-text-primary)]">Météo indisponible</p>
         )}
       </div>
-      <div className="grid grid-cols-5 gap-1 mt-3">
-        {days.map((d) => (
-          <div key={d.date} className="rounded-lg bg-[var(--lkv-surface-raised)] p-1.5 text-center">
-            <p className="text-[10px] font-mono text-[var(--lkv-text-muted)]">{d.day}</p>
-            <p className="text-[12px] font-bold text-[var(--lkv-text-primary)]">{Math.round(d.tempMaxC)}°</p>
-            <p className="text-[10.5px] text-[var(--lkv-text-secondary)]">{Math.round(d.tempMinC)}°</p>
-            <p className="text-[10.5px] text-[var(--lkv-text-secondary)]">{d.precipPct}%</p>
-          </div>
-        ))}
-      </div>
+      {days.length === 0 && (
+        <p className="mt-2 text-[11px] text-[var(--lkv-text-secondary)]">
+          Prévisions indisponibles pour ce parcours.
+        </p>
+      )}
+      {days.length > 0 && (
+        <div className="grid grid-cols-5 gap-1 mt-3">
+          {days.map((d) => (
+            <div key={d.date} className="rounded-lg bg-[var(--lkv-surface-raised)] p-1.5 text-center">
+              <p className="text-[10px] font-mono text-[var(--lkv-text-muted)]">{d.day}</p>
+              <p className="text-[12px] font-bold text-[var(--lkv-text-primary)]">{Math.round(d.tempMaxC)}°</p>
+              <p className="text-[10.5px] text-[var(--lkv-text-secondary)]">{Math.round(d.tempMinC)}°</p>
+              <p className="text-[10.5px] text-[var(--lkv-text-secondary)]">{d.precipPct}%</p>
+            </div>
+          ))}
+        </div>
+      )}
     </section>
   );
 }

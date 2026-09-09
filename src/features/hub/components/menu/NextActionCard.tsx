@@ -3,9 +3,9 @@
 // Hub V4 — FIL D'ACTION : la prochaine chose à faire, toujours en premier.
 // Le serveur fournit une liste ORDONNÉE de signaux (règles déterministes) ;
 // le client invalide le signal « checklist » si elle est déjà à 100%
-// (localStorage, même clé que TripChecklistView) puis affiche la première
-// action pertinente. Carte pleine largeur, accent, cliquable.
-import React, { useEffect, useState } from 'react';
+// (items réels trip_checklist_items, même source que ChecklistCardBody)
+// puis affiche la première action pertinente. Carte pleine largeur, accent, cliquable.
+import React from 'react';
 import Link from 'next/link';
 import {
   ArrowRight,
@@ -21,7 +21,7 @@ import {
   type LucideIcon,
 } from 'lucide-react';
 import { useReducedMotion } from 'framer-motion';
-import { getPreDepartureChecklist } from '@/features/trips/components/TripChecklistView';
+import type { HubChecklistItem } from '../../server/getHubAdventureData';
 
 export type NextActionKind =
   | 'cockpit'
@@ -56,51 +56,28 @@ const ICONS: Record<NextActionKind, LucideIcon> = {
 };
 
 /**
- * % de complétion réel de la checklist (localStorage + moteur J-30/J-7/J-1).
- * null = inconnu (SSR / erreur) → le signal checklist reste affiché.
+ * % de complétion réel de la checklist (items serveur trip_checklist_items).
+ * Déterministe : mêmes items → même %. Vide = null (signal conservé, pas
+ * de faux « complet » sur une checklist jamais provisionnée).
  */
-function useChecklistPct(
-  tripId: string | null,
-  daysUntil: number | null | undefined,
-  countryCode: string | null | undefined,
-): number | null {
-  const [pct, setPct] = useState<number | null>(null);
-  useEffect(() => {
-    if (!tripId) {
-      setPct(null);
-      return;
-    }
-    try {
-      const raw = localStorage.getItem(`lkv_trip_checklist_${tripId}`);
-      const checked = raw ? (JSON.parse(raw) as string[]) : [];
-      const cl = getPreDepartureChecklist(daysUntil ?? null, countryCode ?? null);
-      const all = [...cl.j30, ...cl.j7, ...cl.j1];
-      const done = all.filter((i) => checked.includes(i.id)).length;
-      setPct(all.length > 0 ? Math.round((done / all.length) * 100) : 100);
-    } catch {
-      setPct(null);
-    }
-  }, [tripId, daysUntil, countryCode]);
-  return pct;
+function checklistPctOf(items: HubChecklistItem[]): number | null {
+  if (items.length === 0) return null;
+  const done = items.filter((i) => i.done).length;
+  return Math.round((done / items.length) * 100);
 }
 
 export interface NextActionCardProps {
   actions: NextActionSignal[];
-  /** Contexte checklist (localStorage + moteur J-30/J-7/J-1) — sortie. */
+  /** Items réels de la checklist (trip_checklist_items) — sortie. */
   checklist?: {
     tripId: string;
-    daysUntil: number | null;
-    countryCode: string | null | undefined;
+    items: HubChecklistItem[];
   };
 }
 
 export function NextActionCard({ actions, checklist }: NextActionCardProps) {
   const reduceMotion = useReducedMotion();
-  const checklistPct = useChecklistPct(
-    checklist?.tripId ?? null,
-    checklist?.daysUntil ?? null,
-    checklist?.countryCode ?? null,
-  );
+  const checklistPct = checklist ? checklistPctOf(checklist.items) : null;
 
   const picked =
     actions.find((a) => {
@@ -123,7 +100,7 @@ export function NextActionCard({ actions, checklist }: NextActionCardProps) {
         className={`flex items-center gap-3.5 rounded-2xl border p-4 min-h-[44px] transition-transform active:scale-[0.99] ${
           isAllClear
             ? 'border-white/60 bg-white/55'
-            : 'border-[var(--lkv-forest-900)]/15 bg-[var(--lkv-forest-900)] text-sage-300 shadow-md'
+            : 'border-[var(--lkv-forest-900)]/15 bg-[var(--lkv-forest-900)] text-sage-300 shadow-sm'
         }`}
         style={reduceMotion ? undefined : { transition: 'transform 0.15s ease' }}
       >

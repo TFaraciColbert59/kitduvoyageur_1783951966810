@@ -1,9 +1,8 @@
-﻿// UI Layouts (MIT) — carte-onglet du MENU Hub, habillée Liquid Glass.
+﻿// UI Layouts (MIT) — carte-onglet du MENU Hub, habillée recette verre du site.
 // Composant SERVEUR. V5e : zéro icône (typographie seule), micro-label
 // uppercase, densification p-3, variante `media` (fond plein, contenu
-// posé sur un scrim — le média reste 100% visible au-dessus du texte).
+// posé sur un panneau verre — le média reste 100% visible au-dessus du texte).
 import Link from 'next/link';
-import { LiquidGlassCard } from '@/components/ui-layouts/liquid-glass';
 
 export interface MenuCardProps {
   href: string;
@@ -36,12 +35,7 @@ export function MenuCard({
       href={href}
       className={`group relative block h-full focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--lkv-primary)] rounded-[var(--lkv-radius-card)] transition-transform active:scale-[0.99] ${className}`}
     >
-      <LiquidGlassCard
-        className="h-full"
-        glowIntensity="sm"
-        shadowIntensity="md"
-        borderRadius="var(--lkv-radius-card)"
-      >
+      <div className="glass relative h-full overflow-hidden rounded-[var(--lkv-radius-card)]">
         {media && (
           <div data-media-root className="absolute inset-0 z-10 overflow-hidden rounded-[var(--lkv-radius-card)]">
             {media}
@@ -49,15 +43,15 @@ export function MenuCard({
         )}
         <div
           className={`relative z-30 flex h-full min-h-0 flex-col justify-end rounded-[var(--lkv-radius-card)] p-3 ${
-            media ? '' : 'border border-white/60 bg-white/55'
+            media ? '' : 'bg-white/55'
           }`}
         >
           <div
             data-media-content-panel
             className={
               media
-                ? 'flex h-full w-[42%] min-w-[230px] max-w-[320px] flex-col rounded-2xl border border-white/60 bg-white/95 p-3 shadow-sm backdrop-blur-sm'
-                : 'flex min-h-0 min-w-0 flex-1 flex-col'
+                ? 'glass flex h-full w-[42%] min-w-[230px] max-w-[320px] flex-col rounded-2xl bg-white/90 backdrop-blur-lg p-3'
+                : 'flex min-h-0 min-w-0 flex-1 flex-col justify-center'
             }
           >
             <p
@@ -69,10 +63,14 @@ export function MenuCard({
             >
               {label}
             </p>
-            {children && <div className="mt-1.5 min-h-0 min-w-0 flex-1 overflow-hidden">{children}</div>}
+            {children && (
+              <div className="mt-1.5 flex min-h-0 min-w-0 flex-1 flex-col justify-center overflow-hidden">
+                {children}
+              </div>
+            )}
           </div>
         </div>
-      </LiquidGlassCard>
+      </div>
     </Link>
   );
 }

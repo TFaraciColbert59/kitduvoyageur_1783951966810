@@ -1,9 +1,17 @@
 ﻿'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { GlassCard } from '@/components/ui/GlassCard';
 import { useHapticFeedback } from '@/hooks/useHapticFeedback';
+import { createClient } from '@/lib/supabase/client';
+import type { DatabaseTripChecklistItem } from '@/lib/supabase/types';
 import { CheckCircle2, Circle, Calendar, ShieldCheck } from 'lucide-react';
+
+let checklistClient: ReturnType<typeof createClient> | null = null;
+function supabaseChecklistClient() {
+  if (!checklistClient) checklistClient = createClient();
+  return checklistClient;
+}
 
 export interface ChecklistItem {
   id: string;
@@ -236,54 +244,46 @@ export function getChecklistProgress(
 interface TripChecklistViewProps {
   tripId: string;
   daysUntilStart?: number | null;
+  /** Items réels de trip_checklist_items (chargés côté serveur). */
+  items: DatabaseTripChecklistItem[];
 }
 
-export function TripChecklistView({ tripId, daysUntilStart }: TripChecklistViewProps) {
-  const checklist = getPreDepartureChecklist(daysUntilStart);
-  const allItems = [...checklist.j30, ...checklist.j7, ...checklist.j1];
-  const totalCount = allItems.length;
+/**
+ * Checklist de préparation PERSISTÉE EN BDD (trip_checklist_items) : plus de
+ * localStorage. Toggle = update Supabase (done/done_at) avec état optimiste
+ * et retour arrière en cas d'erreur.
+ */
+export function TripChecklistView({ tripId, daysUntilStart, items }: TripChecklistViewProps) {
+  const [rows, setRows] = useState<DatabaseTripChecklistItem[]>(items);
   const { triggerHaptic } = useHapticFeedback();
 
-  const [checkedIds, setCheckedIds] = useState<Set<string>>(new Set());
+  const totalCount = rows.length;
+  const doneCount = rows.filter((i) => i.done).length;
 
-  useEffect(() => {
-    try {
-      const stored = localStorage.getItem(`lkv_trip_checklist_${tripId}`);
-      if (stored) {
-        const parsed = JSON.parse(stored);
-        if (Array.isArray(parsed)) {
-          setCheckedIds(new Set(parsed));
-        }
-      }
-    } catch {
-      // Ignorer erreurs localStorage
-    }
-  }, [tripId]);
-
-  const toggleItem = (id: string) => {
+  const toggleItem = (item: DatabaseTripChecklistItem) => {
     triggerHaptic('selection');
-    setCheckedIds(prev => {
-      const next = new Set(prev);
-      if (next.has(id)) {
-        next.delete(id);
-      } else {
-        next.add(id);
+    const nextDone = !item.done;
+    const previous = rows;
+    setRows((prev) => prev.map((r) => (r.id === item.id ? { ...r, done: nextDone } : r)));
+    void (async () => {
+      const { error } = await supabaseChecklistClient()
+        .from('trip_checklist_items')
+        .update({ done: nextDone, done_at: nextDone ? new Date().toISOString() : null })
+        .eq('id', item.id)
+        .eq('trip_id', tripId);
+      if (error) {
+        console.error('[LKDV checklist] toggle error:', error);
+        setRows(previous);
       }
-      try {
-        localStorage.setItem(`lkv_trip_checklist_${tripId}`, JSON.stringify(Array.from(next)));
-      } catch {
-        // Ignorer erreurs localStorage
-      }
-      return next;
-    });
+    })();
   };
 
-  const progress = getChecklistProgress(checkedIds, totalCount);
+  const progress = totalCount > 0 ? Math.min(100, Math.round((doneCount / totalCount) * 100)) : 0;
 
   const renderSection = (
     title: string,
     badgeText: string,
-    items: ChecklistItem[]
+    items: DatabaseTripChecklistItem[]
   ) => {
     return (
       <div className="space-y-3">
@@ -298,12 +298,12 @@ export function TripChecklistView({ tripId, daysUntilStart }: TripChecklistViewP
 
         <div className="space-y-2">
           {items.map(item => {
-            const isChecked = checkedIds.has(item.id);
+            const isChecked = item.done;
             return (
               <button
                 key={item.id}
                 type="button"
-                onClick={() => toggleItem(item.id)}
+                onClick={() => toggleItem(item)}
                 className={`w-full text-left p-3.5 sm:p-4 rounded-2xl border transition-all duration-150 flex items-start gap-3 min-h-[44px] ${
                   isChecked
                     ? 'bg-lkv-primary/5 border-lkv-primary/30 text-lkv-primary'
@@ -325,9 +325,6 @@ export function TripChecklistView({ tripId, daysUntilStart }: TripChecklistViewP
                   >
                     {item.label}
                   </div>
-                  {item.description && (
-                    <div className="text-xs text-lkv-secondary mt-0.5">{item.description}</div>
-                  )}
                 </div>
               </button>
             );
@@ -337,6 +334,10 @@ export function TripChecklistView({ tripId, daysUntilStart }: TripChecklistViewP
     );
   };
 
+  const j30 = rows.filter((i) => i.due_offset_days >= 30);
+  const j7 = rows.filter((i) => i.due_offset_days >= 8 && i.due_offset_days < 30);
+  const j1 = rows.filter((i) => i.due_offset_days < 8);
+
   return (
     <div className="space-y-6">
       {/* Barre de progression */}
@@ -344,7 +345,7 @@ export function TripChecklistView({ tripId, daysUntilStart }: TripChecklistViewP
         <div className="flex items-center justify-between gap-4 mb-2">
           <ShieldCheck className="w-5 h-5 text-lkv-primary" aria-hidden="true" />
           <div className="text-xs font-semibold text-lkv-primary">
-            {checkedIds.size} / {totalCount} ({progress}%)
+            {doneCount} / {totalCount} ({progress}%)
           </div>
         </div>
 
@@ -368,10 +369,17 @@ export function TripChecklistView({ tripId, daysUntilStart }: TripChecklistViewP
         )}
       </GlassCard>
 
-      {/* Sections temporelles */}
-      {renderSection('Préparation fondamentale', 'J-30', checklist.j30)}
-      {renderSection('Dernière ligne droite', 'J-7', checklist.j7)}
-      {renderSection('Veille & jour J', 'J-1', checklist.j1)}
+      {rows.length === 0 ? (
+        <p className="text-center text-sm text-lkv-secondary">
+          Aucune tâche de préparation pour ce voyage.
+        </p>
+      ) : (
+        <>
+          {j30.length > 0 && renderSection('Préparation fondamentale', 'J-30', j30)}
+          {j7.length > 0 && renderSection('Dernière ligne droite', 'J-7', j7)}
+          {j1.length > 0 && renderSection('Veille & jour J', 'Départ', j1)}
+        </>
+      )}
     </div>
   );
 }

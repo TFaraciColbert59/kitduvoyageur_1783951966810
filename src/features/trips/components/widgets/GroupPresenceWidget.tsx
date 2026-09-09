@@ -53,7 +53,7 @@ export function GroupPresenceWidget({ trip }: GroupPresenceWidgetProps) {
             ))}
           </div>
           <span className="text-[11px] text-[var(--lkv-text-secondary)]">
-            {people.length} membre{people.length > 1 ? 's' : ''}
+            {people.length + 1} membre{people.length + 1 > 1 ? 's' : ''}
           </span>
         </div>
       )}

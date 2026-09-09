@@ -81,7 +81,7 @@ export function PossessionMenu({ summary }: PossessionMenuProps) {
     kind: 'all-clear',
     href: hubSectionHref(ref, 'kit'),
     title: 'Tout est à jour',
-    description: 'Matériel prêt — consultez vos kits.',
+    description: `${summary.inventaire.count} objet(s) · ${summary.kits.count} kit(s) · fiabilité ${summary.alertes.reliabilityScore}%`,
   });
 
   const cells = [
