@@ -184,6 +184,20 @@
   transition-duration: var(--dur-xfast);
 }
 
+/* Hub — lisibilité du rail contextuel et des widgets sur fond photo immersif.
+   Les widgets héritent d'un verre renforcé (62 % de blanc) : le texte reste
+   lisible quelle que soit la photo de fond, sans casser la transparence. */
+.hub-rail .glass,
+.hub-rail [data-hub-widget] .glass {
+  background: var(--glass-sheen), rgba(255, 255, 255, 0.62);
+}
+.hub-rail .glass.tone-sage,
+.hub-rail .glass.tone-warn,
+.hub-rail .glass.tone-danger,
+.hub-rail .glass.tone-info {
+  background: var(--glass-sheen), rgba(255, 255, 255, 0.62);
+}
+
 .glass:focus-visible {
   outline: none;
   box-shadow: var(--glass-depth-inset), var(--elevation-3), 0 0 0 2px var(--bg-primary), 0 0 0 4px color-mix(in oklab, var(--sage-500) 60%, transparent);

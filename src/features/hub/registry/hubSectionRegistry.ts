@@ -141,4 +141,19 @@ export const HUB_ALERTES_HREF = hubSectionHref({ nature: 'possession' }, 'alerte
 /** H5 — Idem pour le départ (défauts du store, R13). */
 export const HUB_DEPART_HREF = hubSectionHref({ nature: 'possession' }, 'depart');
 
+/** H5 — Entrée du wizard de création (bouton « Nouvelle activité », R13). */
+export const HUB_NEW_HREF = '/hub/nouveau';
+
+/** H5 — Liens statiques d'aperçu matériel (overviews, R13/R14 : zéro littéral hors registre). */
+export const HUB_POSSESSION_HREFS = {
+  inventaire: hubSectionHref({ nature: 'possession' }, 'inventaire'),
+  disponibilite: hubSectionHref({ nature: 'possession' }, 'disponibilite'),
+  alertes: HUB_ALERTES_HREF,
+} as const;
+
+/** H5 — Lien statique « voyages liés » d'aperçu collectif (overviews, R13/R14). */
+export const HUB_COLLECTIF_HREFS = {
+  voyagesLies: hubSectionHref({ nature: 'collectif' }, 'voyages-lies'),
+} as const;
+
 export { HUB_SECTION_ORDER };

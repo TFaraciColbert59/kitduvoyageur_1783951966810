@@ -1,5 +1,5 @@
 import Link from 'next/link';
-import { ArrowRight, MailPlus, UserPlus, Users } from 'lucide-react';
+import { MailPlus, UserPlus, Users } from 'lucide-react';
 import { tripSectionHref } from '@/features/trips/registry/tripSectionRegistry';
 import type { HubCrewBlock } from '../../server/getHubAdventureData';
 
@@ -67,15 +67,17 @@ export function GroupeBloc({ trip, group }: { trip: { slug: string; collaborator
           </li>
         ))}
         {members.length === 0 ? (
-          <li className="text-sm text-[var(--lkv-text-secondary)]">Participants via l’onglet Équipage</li>
+          <li className="text-sm text-[var(--lkv-text-secondary)]">
+            Aucun compagnon pour l&apos;instant — invitez-en un.
+          </li>
         ) : null}
       </ul>
       <Link
         href={equipageHref}
-        className="inline-flex items-center gap-1 mt-3 text-xs font-semibold text-[var(--lkv-text-secondary)] hover:text-[var(--lkv-text-primary)] min-h-[44px]"
+        className="glass-capsule-btn primary inline-flex items-center gap-2 mt-3 min-h-[44px] px-4"
       >
-        <span>Gérer l’équipage</span>
-        <ArrowRight size={13} aria-hidden="true" />
+        <MailPlus size={14} aria-hidden="true" />
+        <span>{members.length === 0 ? 'Inviter un compagnon' : 'Gérer l’équipage'}</span>
       </Link>
     </section>
   );

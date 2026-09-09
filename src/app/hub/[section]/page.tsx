@@ -3,7 +3,6 @@ import { notFound } from 'next/navigation';
 import { ArrowLeft } from 'lucide-react';
 import { createClient } from '@/lib/supabase/server';
 import { getHubAdventureData, buildHubCounts } from '@/features/hub/server/getHubAdventureData';
-import { deriveHubProfile } from '@/features/hub/engine/hubProfileEngine';
 import { hubSectionRegistry } from '@/features/hub/registry/hubSectionRegistry';
 import { HubInventaireSection } from '@/features/hub/components/possession/HubInventaireSection';
 import { HubKitSection } from '@/features/hub/components/possession/HubKitSection';
@@ -52,7 +51,6 @@ export default async function HubSectionPage({
   const data = await getHubAdventureData();
   if (!def.natures.includes(data.adventure.nature)) notFound();
 
-  const profile = deriveHubProfile(data.input, new Date());
   const counts = buildHubCounts(data);
   const count = def.counter(counts);
   const Icon = def.icon;
@@ -81,9 +79,6 @@ export default async function HubSectionPage({
           )}
         </div>
       </header>
-      <p className="text-xs text-[var(--lkv-text-secondary)]">
-        {profile.reason[def.id]}
-      </p>
       {def.id === 'inventaire' && <HubInventaireSection />}
       {def.id === 'kit' && <HubKitSection />}
       {def.id === 'preparation' && <HubPreparationSection />}

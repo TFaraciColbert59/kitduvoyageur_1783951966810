@@ -1,14 +1,11 @@
-import Link from 'next/link';
-import { ArrowRight } from 'lucide-react';
-import { HubAssistantCta } from './HubAssistantCta';
+'use client';
+
+import { motion, useReducedMotion } from 'framer-motion';
 import { OverviewBlocks } from './blocks';
-import {
-  hubSectionHref,
-  visibleHubSections,
-  type HubAdventureRef,
-} from '../registry/hubSectionRegistry';
-import { activitySectionLabel } from '../engine/activityProfiles';
+import { HubActivityHero } from './HubActivityHero';
 import { selectOverviewBlocks } from '../engine/widgetContext';
+import { getTripPhaseDetails } from '@/features/trips/engine/temporalPhaseEngine';
+import type { TripPhase } from '@/features/trips/engine/temporalPhaseEngine';
 import type { AdventureProfile } from '../engine/hubProfileEngine';
 import type { TripFull } from '@/features/trips/types/trip.types';
 import type { HubCrewBlock, HubHikingContext } from '../server/getHubAdventureData';
@@ -21,71 +18,66 @@ export interface HubOverviewSortieProps {
   hiking: HubHikingContext | null;
 }
 
+const PHASE_HUB_LABELS: Record<TripPhase, string> = {
+  prepare: 'Préparer',
+  live: 'En cours',
+  recount: 'Raconter',
+};
+
 /**
- * H3.4 + H-ACT §6 — Aperçu sortie composé par le profil d'activité.
- * Randonnée et voyage produisent deux tableaux de bord clairement différents
- * à partir de la même coquille : blocs d'aperçu sélectionnés par le catalogue
- * central, puis grille de sections (libellés spécialisés par activité).
+ * UX Hub — Aperçu sortie refondu : le hub n'est plus un carrefour de liens.
+ * Hero de l'activité (cover, titre, phase, J-xx, actions) puis widgets vitaux
+ * composés par le catalogue central (Phase 1). La navigation des sections vit
+ * dans la sidebar gauche — plus aucune grille de liens ici.
  */
 export function HubOverviewSortie({ profile, trip, countdown, group, hiking }: HubOverviewSortieProps) {
-  const ref: HubAdventureRef = { nature: 'sortie', slug: trip.slug };
+  const reduceMotion = useReducedMotion();
   const activityType = profile.activityType ?? 'travel';
   const blocks = selectOverviewBlocks(trip, activityType, group, hiking);
-  const sections = visibleHubSections(profile);
 
-  const hikeLabel = activityType === 'hiking' ? 'Randonnée active' : 'Voyage actif';
+  const phase = getTripPhaseDetails(trip).phase;
+  const badgeLabel = activityType === 'hiking' ? 'Randonnée' : 'Voyage';
+  const subtitle =
+    trip.destination_name ?? trip.destination_country_code ?? 'Destination à définir';
 
   return (
     <div className="space-y-4">
-      <header>
-        <p className="text-[10px] font-mono uppercase tracking-widest text-[var(--lkv-text-muted)]">
-          {hikeLabel}
-          {countdown !== null && countdown >= 0 ? ` · J-${countdown}` : ''}
-        </p>
-        <h1 className="font-display font-bold text-2xl text-[var(--lkv-text-primary)] mt-1">
-          {trip.title}
-        </h1>
-        <p className="text-sm text-[var(--lkv-text-secondary)] mt-1">
-          {trip.destination_name ?? trip.destination_country_code ?? 'Destination à définir'}
-          {trip.status ? ` · ${trip.status}` : ''}
-        </p>
-      </header>
+      <HubActivityHero
+        title={trip.title}
+        subtitle={subtitle}
+        coverUrl={trip.cover_image_url}
+        daysUntil={countdown}
+        phaseLabel={PHASE_HUB_LABELS[phase]}
+        badgeLabel={badgeLabel}
+        assistantContextLabel={`Conseils pour ${trip.title}`}
+      />
 
       {blocks.length > 0 ? (
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
           {blocks.map((block) =>
             block.id === 'cta-randonnee-active' ? (
-              <div key={block.id} className="sm:col-span-2">
+              <motion.div
+                key={block.id}
+                initial={reduceMotion ? false : { opacity: 0, y: 6 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: reduceMotion ? 0 : 0.22, delay: reduceMotion ? 0 : 0.05, ease: [0.22, 1, 0.36, 1] }}
+                className="sm:col-span-2"
+              >
                 <OverviewBlocks blocks={[block]} trip={trip} group={group} hiking={hiking} />
-              </div>
+              </motion.div>
             ) : (
-              <OverviewBlocks key={block.id} blocks={[block]} trip={trip} group={group} hiking={hiking} />
+              <motion.div
+                key={block.id}
+                initial={reduceMotion ? false : { opacity: 0, y: 6 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: reduceMotion ? 0 : 0.22, ease: [0.22, 1, 0.36, 1] }}
+              >
+                <OverviewBlocks blocks={[block]} trip={trip} group={group} hiking={hiking} />
+              </motion.div>
             ),
           )}
         </div>
       ) : null}
-
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-        <HubAssistantCta contextLabel={`Conseils pour ${trip.title}`} />
-        {sections
-          .filter((d) => d.id !== 'overview')
-          .map((def) => {
-            const Icon = def.icon;
-            return (
-              <Link
-                key={def.id}
-                href={hubSectionHref(ref, def.id)}
-                className="glass p-4 rounded-[var(--lkv-radius-card)] flex items-center gap-3 min-h-[44px]"
-              >
-                <Icon size={18} className="shrink-0 text-[var(--lkv-text-secondary)]" aria-hidden="true" />
-                <span className="flex-1 text-sm font-semibold text-[var(--lkv-text-primary)]">
-                  {activitySectionLabel(activityType, def.id, def.label)}
-                </span>
-                <ArrowRight size={14} className="text-[var(--lkv-text-muted)]" aria-hidden="true" />
-              </Link>
-            );
-          })}
-      </div>
     </div>
   );
 }

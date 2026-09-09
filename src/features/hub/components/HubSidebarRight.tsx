@@ -44,7 +44,7 @@ export function HubSidebarRight({
   pendingInvites = 0,
 }: HubSidebarRightProps) {
   const pathname = usePathname();
-  const { shown, folded } = selectHubWidgets(profile);
+  const { shown } = selectHubWidgets(profile);
 
   const data: HubWidgetData = {
     items: counts.items ?? 0,
@@ -57,11 +57,15 @@ export function HubSidebarRight({
   };
 
   // Nature sortie : les vrais widgets Y, composés (jamais recopiés).
+  // `hub-rail` renforce la lisibilité du verre sur le fond photo (voir liquid-glass.css).
   if (profile.nature === 'sortie' && trip && variant === 'column') {
     const tripProfile = deriveTripProfile(trip, new Date());
     const phase = getTripPhaseDetails(trip).phase;
     return (
-      <aside aria-label="Widgets du voyage" className="flex flex-col gap-3">
+      <aside
+        aria-label="Widgets du voyage"
+        className="hub-rail w-full h-full overflow-y-auto no-scrollbar flex flex-col gap-3 pb-6 pr-0.5"
+      >
         <TripSidebarRight
           trip={trip}
           profile={tripProfile}
@@ -100,17 +104,20 @@ export function HubSidebarRight({
   }
 
   return (
-    <aside aria-label="Contexte de l'aventure" className="flex flex-col gap-3">
-      <div className="glass p-4 rounded-[var(--lkv-radius-card)]">
-        <p className="text-[10px] font-mono uppercase tracking-widest text-[var(--lkv-text-muted)]">
-          Contexte
+    <aside
+      aria-label="Contexte de l'aventure"
+      className="hub-rail w-full h-full overflow-y-auto no-scrollbar flex flex-col gap-3 pb-6"
+    >
+      <div className="glass p-3.5 rounded-2xl border border-white/70 shadow-xs">
+        <p className="text-[9.5px] font-mono font-bold uppercase tracking-widest text-[var(--lkv-text-secondary)]">
+          Aventure active
         </p>
         <p className="text-sm font-bold text-[var(--lkv-text-primary)] mt-1">
           {NATURE_LABELS[profile.nature]} · {PARTY_LABELS[profile.party]}
           {profile.scale ? ` · ${profile.scale}` : ''}
         </p>
         <p className="text-xs text-[var(--lkv-text-secondary)] mt-0.5">
-          {profile.sections.length} section(s) · {profile.widgets.length} widget(s)
+          {counts.items ?? 0} objet(s) · {counts.alerts ?? 0} alerte(s)
         </p>
       </div>
 
@@ -119,11 +126,6 @@ export function HubSidebarRight({
           <HubWidgetBody id={w.id} adventure={adventure} data={data} />
         </div>
       ))}
-      {folded > 0 && (
-        <p className="text-[11px] text-[var(--lkv-text-muted)] px-1">
-          +{folded} widget(s) replié(s)
-        </p>
-      )}
     </aside>
   );
 }

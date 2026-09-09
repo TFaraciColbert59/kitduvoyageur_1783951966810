@@ -40,7 +40,6 @@ export default async function HubPage() {
   if (data.input.kind === 'collectif') {
     return (
       <HubOverviewCollectif
-        profile={profile}
         groupLabel={data.groupLabel ?? 'Mon groupe'}
         members={data.input.membersCount}
         pendingInvites={data.pendingInvites}
@@ -51,7 +50,6 @@ export default async function HubPage() {
 
   return (
     <HubOverviewPossession
-      profile={profile}
       items={data.possession.items}
       loans={data.possession.loans}
       alerts={data.possession.alerts}

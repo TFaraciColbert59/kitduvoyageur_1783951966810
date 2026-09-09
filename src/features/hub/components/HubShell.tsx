@@ -137,12 +137,14 @@ export function HubShell({
   // Retour matériel Android : section → aperçu → sélecteur (H6.1).
   useAndroidHubBackNav(activeSection, switcherOpen);
 
+  const networkStatus = <HubNetworkStatus />;
   const sidebarLeft = (
     <HubSidebarLeft
       adventure={ref}
       profile={effectiveProfile}
       counts={counts}
       onOpenPicker={() => setIsPickerOpen(true)}
+      statusSlot={networkStatus}
     />
   );
   const sidebarRight = (
@@ -156,7 +158,6 @@ export function HubShell({
       pendingInvites={pendingInvites}
     />
   );
-  const networkStatus = <HubNetworkStatus />;
 
   return (
     <AppShellDesktop
@@ -164,10 +165,10 @@ export function HubShell({
       sidebarRight={sidebarRight}
       mobileSlot={
         <MobilePageShell safeTop={true} hasBottomNav={true}>
-          <div className="px-4 py-4 pb-32 text-[var(--lkv-text-primary)]">
-            <div className="flex items-center justify-between gap-2 mb-3">
+          <div className="px-4 pt-4 pb-32 text-[var(--lkv-text-primary)]">
+            <div className="flex items-center justify-between gap-2 mb-3 min-w-0">
               <AdventureSwitcher forceOpenSignal={switcherSignal} variant="mobile" />
-              <div className="flex items-center gap-2">
+              <div className="flex items-center gap-2 shrink-0">
                 <HubMobileSectionsSheet
                   adventure={ref}
                   profile={effectiveProfile}
@@ -178,30 +179,12 @@ export function HubShell({
                 {networkStatus}
               </div>
             </div>
-            <div className="mb-3">
-              <HubSidebarRight
-                profile={effectiveProfile}
-                variant="band"
-                adventure={ref}
-                counts={counts}
-                trip={trip}
-                groupLabel={groupLabel}
-                linkedTripSlug={linkedTripSlug}
-                pendingInvites={pendingInvites}
-              />
-            </div>
             {children}
           </div>
         </MobilePageShell>
       }
     >
-      <div className="space-y-4">
-        <div className="flex items-center justify-between gap-3 flex-wrap">
-          <AdventureSwitcher forceOpenSignal={switcherSignal} variant="desktop" />
-          {networkStatus}
-        </div>
-        {children}
-      </div>
+      {children}
       <HubSectionPicker
         adventureKey={key}
         profile={effectiveProfile}

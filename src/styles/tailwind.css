@@ -90,6 +90,16 @@
     overscroll-behavior-y: none;
   }
 
+  /* Desktop : les shells 3 colonnes (hub, comptes, communautés) laissent le
+     fond immersif traverser — le voile surface est réservé aux pages mobiles. */
+  @media (min-width: 768px) {
+    #main-content {
+      background-color: transparent;
+      min-height: 0;
+      max-width: none;
+    }
+  }
+
   /* ── Empêcher l'auto-zoom intrusif d'iOS Safari sur les inputs ── */
   @media screen and (max-width: 768px) {
     input:not([type="checkbox"]):not([type="radio"]):not([type="range"]):not([type="color"]):not([type="button"]):not([type="submit"]):not([type="reset"]),

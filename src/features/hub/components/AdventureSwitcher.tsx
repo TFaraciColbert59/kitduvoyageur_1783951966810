@@ -324,17 +324,17 @@ export function AdventureSwitcher({
       )}
 
       {/* Mobile : déclencheur -> GlassSheet (wrapper responsive, cf. H-AUTO-19) */}
-      <div className="md:hidden">
+      <div className="md:hidden min-w-0">
         <button
           type="button"
           onClick={() => {
             if (variant === 'mobile' && isMobileViewport()) setSheetOpen(true);
           }}
-          className="inline-flex items-center gap-1.5 px-3 py-2 rounded-full glass-capsule-btn text-xs font-semibold text-[var(--lkv-text-primary)] min-h-[44px] cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--lkv-primary)]"
+          className="inline-flex items-center gap-1.5 px-3 py-2 rounded-full glass-capsule-btn text-xs font-semibold text-[var(--lkv-text-primary)] min-h-[44px] cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--lkv-primary)] max-w-full"
           aria-haspopup="dialog"
         >
-          <Compass size={14} className="text-[var(--lkv-secondary)]" aria-hidden="true" />
-          <span className="max-w-[140px] truncate">{triggerLabel}</span>
+          <Compass size={14} className="shrink-0 text-[var(--lkv-secondary)]" aria-hidden="true" />
+          <span className="max-w-[110px] truncate">{triggerLabel}</span>
         </button>
       </div>
 
