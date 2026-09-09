@@ -12,6 +12,8 @@ import { HubOublisSection } from '@/features/hub/components/possession/HubOublis
 import { HubInvitationsSection } from '@/features/hub/components/collectif/HubInvitationsSection';
 import { HubVoyagesLiesSection } from '@/features/hub/components/collectif/HubVoyagesLiesSection';
 import { HubGroupeSection } from '@/features/hub/components/collectif/HubGroupeSection';
+import { HubGroupeCockpit } from '@/features/hub/components/collectif/HubGroupeCockpit';
+import { HubCrewSection } from '@/features/hub/components/collectif/HubCrewSection';
 import { loadTripSection } from '@/lib/tripSection';
 import { getTripStats } from '@/lib/queries-trips';
 import { getTripKitDetails } from '@/lib/queries-trip-kit';
@@ -65,8 +67,16 @@ export default async function HubSectionPage({
       {def.id === 'voyages-lies' && data.adventure.nature === 'collectif' && (
         <HubVoyagesLiesSection adventure={data.adventure} crews={data.crews} />
       )}
-      {(def.id === 'groupe' || (def.id === 'team' && data.adventure.nature === 'collectif')) &&
-        data.adventure.nature === 'collectif' && <HubGroupeSection adventure={data.adventure} />}
+      {def.id === 'groupe' && data.adventure.nature === 'collectif' && (
+        data.adventure.kind === 'groupe' ? (
+          <HubGroupeCockpit groupId={data.adventure.id} />
+        ) : (
+          <HubGroupeSection adventure={data.adventure} />
+        )
+      )}
+      {def.id === 'groupe' && data.adventure.nature === 'sortie' && (
+        <HubCrewSection crew={data.group} adventure={data.adventure} />
+      )}
       {data.adventure.nature === 'sortie' && data.trip && (
         <SortieSection sectionId={def.id} slug={data.trip.slug} />
       )}

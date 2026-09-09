@@ -90,7 +90,7 @@ export const hubSectionRegistry: readonly HubSectionDef[] = [
   { id: 'safety', label: 'Sécurité', segment: 'securite', icon: Shield, natures: ['sortie'], coreNatures: ['sortie'], counter: (d) => num(d.pendingSafety) },
   { id: 'journal', label: 'Journal', segment: 'journal', icon: BookOpen, natures: ['sortie'], coreNatures: [], counter: (d) => num(d.notes) },
   { id: 'export', label: 'Export', segment: 'export', icon: Share2, natures: ['sortie'], coreNatures: [], counter: () => null },
-  { id: 'groupe', label: 'Groupe', segment: 'groupe', icon: Users, natures: ['collectif'], coreNatures: ['collectif'], counter: (d) => num(d.members) },
+  { id: 'groupe', label: 'Groupe', segment: 'groupe', icon: Users, natures: ['sortie', 'collectif'], coreNatures: ['collectif'], counter: (d) => num(d.members) },
   { id: 'invitations', label: 'Invitations', segment: 'invitations', icon: MailPlus, natures: ['collectif'], coreNatures: [], counter: (d) => num(d.invites) },
   { id: 'voyages-lies', label: 'Voyages liés', segment: 'voyages', icon: MapIcon, natures: ['collectif'], coreNatures: [], counter: (d) => num(d.linkedTrips) },
 ] as const;
