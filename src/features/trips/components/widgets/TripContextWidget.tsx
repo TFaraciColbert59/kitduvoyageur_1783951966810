@@ -1,4 +1,4 @@
-'use client';
+﻿'use client';
 
 import React from 'react';
 import { GlassCard } from '@/components/ui/GlassCard';
@@ -28,19 +28,19 @@ export function TripContextWidget({ trip, maxAltitudeM }: TripContextWidgetProps
         {maxAltitudeM != null && (
           <div>
             <div className="text-base font-extrabold text-[var(--lkv-text-primary)] font-mono">{maxAltitudeM.toLocaleString('fr-FR')} m</div>
-            <div className="text-[9px] uppercase tracking-widest text-[var(--lkv-text-muted)]">alt. max</div>
+            <div className="text-[11px] uppercase tracking-widest text-[var(--lkv-text-muted)]">alt. max</div>
           </div>
         )}
         {days != null && (
           <div>
             <div className="text-base font-extrabold text-[var(--lkv-text-primary)] font-mono">{days} j</div>
-            <div className="text-[9px] uppercase tracking-widest text-[var(--lkv-text-muted)]">durée</div>
+            <div className="text-[11px] uppercase tracking-widest text-[var(--lkv-text-muted)]">durée</div>
           </div>
         )}
         {trip.difficulty && (
           <div>
             <div className="text-base font-extrabold text-[var(--lkv-text-primary)] capitalize">{trip.difficulty}</div>
-            <div className="text-[9px] uppercase tracking-widest text-[var(--lkv-text-muted)]">difficulté</div>
+            <div className="text-[11px] uppercase tracking-widest text-[var(--lkv-text-muted)]">difficulté</div>
           </div>
         )}
       </div>

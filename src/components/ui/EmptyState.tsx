@@ -12,6 +12,8 @@ export interface EmptyStateProps {
   actionHref?: string;
   onAction?: () => void;
   className?: string;
+  /** compact = inline, pour les blocs d'aperçu du hub (pas de padding 44px). */
+  compact?: boolean;
 }
 
 export function EmptyState({
@@ -22,17 +24,36 @@ export function EmptyState({
   actionHref,
   onAction,
   className = '',
+  compact = false,
 }: EmptyStateProps) {
   const actionBtn = (
     <button
       type="button"
       onClick={onAction}
-      className="inline-flex items-center gap-2 px-5 py-2.5 bg-lkv-primary text-white text-xs sm:text-sm font-semibold rounded-xl hover:bg-lkv-primary-hover active:scale-[0.97] transition-all duration-150 min-h-[44px] shadow-sm"
+      className={`inline-flex items-center gap-2 bg-lkv-primary text-white font-semibold rounded-xl hover:bg-lkv-primary-hover active:scale-[0.97] transition-all duration-150 min-h-[44px] shadow-sm ${
+        compact ? 'px-4 py-2 text-xs' : 'px-5 py-2.5 text-xs sm:text-sm'
+      }`}
     >
       <span>{actionLabel}</span>
       <ArrowRight className="w-4 h-4" />
     </button>
   );
+
+  if (compact) {
+    return (
+      <div className={`flex flex-col items-center justify-center py-6 px-4 text-center ${className}`}>
+        {icon && <div className="mb-2.5 text-lkv-secondary flex items-center justify-center">{icon}</div>}
+        <h3 className="text-sm font-bold text-lkv-primary">{title}</h3>
+        {description && (
+          <p className="text-xs text-lkv-text-muted max-w-xs mt-1 leading-relaxed">{description}</p>
+        )}
+        {actionLabel && actionHref && (
+          <Link href={actionHref} className="mt-3 inline-flex">{actionBtn}</Link>
+        )}
+        {actionLabel && onAction && !actionHref && <span className="mt-3 inline-flex">{actionBtn}</span>}
+      </div>
+    );
+  }
 
   return (
     <div className={`flex flex-col items-center justify-center py-12 px-6 text-center ${className}`}>

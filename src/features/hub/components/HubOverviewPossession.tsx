@@ -1,8 +1,8 @@
-'use client';
+﻿'use client';
 
 import Link from 'next/link';
 import { ArrowRight, BellRing, CalendarCheck, Package, Sparkles } from 'lucide-react';
-import { motion } from 'framer-motion';
+import { motion, useReducedMotion } from 'framer-motion';
 import { HUB_POSSESSION_HREFS } from '../registry/hubSectionRegistry';
 import { HubActivityHero } from './HubActivityHero';
 import { GearCardDepart } from '@/features/materiel/components/cards/GearCardDepart';
@@ -20,17 +20,17 @@ export interface HubOverviewPossessionProps {
   summary: MaterielSummary;
 }
 
-const fade = {
-  initial: { opacity: 0, y: 6 },
-  animate: { opacity: 1, y: 0 },
-  transition: { duration: 0.22, ease: [0.22, 1, 0.36, 1] as const },
-};
-
 /**
  * UX Hub — Aperçu matériel : hero d'identité + 3 cartes vitales lisant les
  * compteurs réels. La navigation complète vit dans la sidebar.
  */
 export function HubOverviewPossession({ items, loans, alerts, summary }: HubOverviewPossessionProps) {
+  const reduceMotion = useReducedMotion();
+  const fade = {
+    initial: reduceMotion ? false : { opacity: 0, y: 6 },
+    animate: { opacity: 1, y: 0 },
+    transition: { duration: reduceMotion ? 0 : 0.22, ease: [0.22, 1, 0.36, 1] as const },
+  };
   const stats: Array<{
     href: string;
     label: string;

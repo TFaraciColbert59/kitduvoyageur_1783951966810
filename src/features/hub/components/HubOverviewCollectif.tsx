@@ -1,8 +1,8 @@
-'use client';
+﻿'use client';
 
 import Link from 'next/link';
 import { ArrowRight, ArrowUpRight, MailPlus, Map as MapIcon, Sparkles, Users } from 'lucide-react';
-import { motion } from 'framer-motion';
+import { motion, useReducedMotion } from 'framer-motion';
 import { HUB_COLLECTIF_HREFS, hubSectionHref } from '../registry/hubSectionRegistry';
 import { tripSwitchHref } from '@/features/trips/registry/tripSectionRegistry';
 import { HubActivityHero } from './HubActivityHero';
@@ -14,12 +14,6 @@ export interface HubOverviewCollectifProps {
   linkedTripSlug: string | null;
 }
 
-const fade = {
-  initial: { opacity: 0, y: 6 },
-  animate: { opacity: 1, y: 0 },
-  transition: { duration: 0.22, ease: [0.22, 1, 0.36, 1] as const },
-};
-
 /**
  * UX Hub — Aperçu collectif : hero du groupe + accès direct aux sections
  * (groupe, invitations, voyages liés) et CTA d'entrée dans le voyage lié.
@@ -30,6 +24,13 @@ export function HubOverviewCollectif({
   pendingInvites,
   linkedTripSlug,
 }: HubOverviewCollectifProps) {
+  const reduceMotion = useReducedMotion();
+  const fade = {
+    initial: reduceMotion ? false : { opacity: 0, y: 6 },
+    animate: { opacity: 1, y: 0 },
+    transition: { duration: reduceMotion ? 0 : 0.22, ease: [0.22, 1, 0.36, 1] as const },
+  };
+
   const cards: Array<{ href: string; label: string; Icon: typeof Users; count?: number }> = [
     { href: hubSectionHref({ nature: 'collectif' }, 'groupe'), label: 'Groupe', Icon: Users, count: members },
     { href: hubSectionHref({ nature: 'collectif' }, 'invitations'), label: 'Invitations', Icon: MailPlus, count: pendingInvites },

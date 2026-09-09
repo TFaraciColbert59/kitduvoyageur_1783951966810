@@ -92,7 +92,7 @@ export function HubSidebarLeft({ adventure, profile, counts, onOpenPicker, statu
               <span className="flex-1 truncate text-left">{def.label}</span>
               {count !== null && count > 0 && (
                 <span
-                  className={`text-[9.5px] font-mono font-bold px-1.5 py-0.5 rounded-full ${
+                  className={`text-[10.5px] font-mono font-bold px-1.5 py-0.5 rounded-full ${
                     active ? 'bg-white/20 text-white' : 'bg-black/5 text-[var(--lkv-text-secondary)]'
                   }`}
                 >

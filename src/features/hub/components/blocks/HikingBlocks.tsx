@@ -1,4 +1,4 @@
-import Link from 'next/link';
+﻿import Link from 'next/link';
 import type { ReactNode } from 'react';
 import { ArrowRight, CloudSun, Droplets, Footprints, Mountain, Play, Route as RouteIcon } from 'lucide-react';
 import { tripSectionHref } from '@/features/trips/registry/tripSectionRegistry';
@@ -75,7 +75,7 @@ function Stat({ icon, label, value }: { icon: ReactNode; label: string; value: s
     <div className="rounded-lg bg-[var(--lkv-surface-raised)] p-2">
       <div className="flex items-center gap-1 text-[var(--lkv-text-muted)]">
         {icon}
-        <span className="text-[9px] font-mono uppercase tracking-wide">{label}</span>
+        <span className="text-[10px] font-mono uppercase tracking-wide">{label}</span>
       </div>
       <p className="text-xs font-bold text-[var(--lkv-text-primary)] mt-1">{value}</p>
     </div>
@@ -125,10 +125,10 @@ export function MeteoBlock({ hiking }: { hiking: HubHikingContext | null }) {
       <div className="grid grid-cols-5 gap-1 mt-3">
         {days.map((d) => (
           <div key={d.date} className="rounded-lg bg-[var(--lkv-surface-raised)] p-1.5 text-center">
-            <p className="text-[9px] font-mono text-[var(--lkv-text-muted)]">{d.day}</p>
-            <p className="text-[11px] font-bold text-[var(--lkv-text-primary)]">{Math.round(d.tempMaxC)}°</p>
-            <p className="text-[9px] text-[var(--lkv-text-secondary)]">{Math.round(d.tempMinC)}°</p>
-            <p className="text-[9px] text-[var(--lkv-text-secondary)]">{d.precipPct}%</p>
+            <p className="text-[10px] font-mono text-[var(--lkv-text-muted)]">{d.day}</p>
+            <p className="text-[12px] font-bold text-[var(--lkv-text-primary)]">{Math.round(d.tempMaxC)}°</p>
+            <p className="text-[10.5px] text-[var(--lkv-text-secondary)]">{Math.round(d.tempMinC)}°</p>
+            <p className="text-[10.5px] text-[var(--lkv-text-secondary)]">{d.precipPct}%</p>
           </div>
         ))}
       </div>

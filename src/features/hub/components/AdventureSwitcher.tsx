@@ -7,6 +7,7 @@ import * as Dialog from '@radix-ui/react-dialog';
 import { ChevronsUpDown, Compass, Package, Users, Search, Check, RefreshCw, Sparkles, AlertTriangle } from 'lucide-react';
 import { GlassSheet } from '@/components/ui/GlassSheet';
 import { useActiveAdventure } from '../context/ActiveAdventureContext';
+import { useHapticFeedback } from '@/hooks/useHapticFeedback';
 import {
   adventureKey,
   consumeSwitcherAutoOpen,
@@ -65,6 +66,7 @@ export function AdventureSwitcher({
   } = useActiveAdventure();
   const router = useRouter();
   const isMobile = useIsMobileViewport();
+  const { triggerHaptic } = useHapticFeedback();
 
   const [open, setOpen] = useState(false);
   const [sheetOpen, setSheetOpen] = useState(false);
@@ -169,6 +171,7 @@ export function AdventureSwitcher({
   const activate = useCallback(
     async (entry: AdventureEntry): Promise<void> => {
       setSwitchError(false);
+      triggerHaptic('selection');
       let ok: boolean;
       if (entry.nature === 'possession') {
         ok = await setActiveAdventure({ nature: 'possession' });
@@ -185,9 +188,8 @@ export function AdventureSwitcher({
       }
       goToAdventure(entry);
     },
-    [goToAdventure, setActiveAdventure],
+    [goToAdventure, setActiveAdventure, triggerHaptic],
   );
-
   const activateByKey = useCallback(
     async (key: string) => {
       setSwitchError(false);

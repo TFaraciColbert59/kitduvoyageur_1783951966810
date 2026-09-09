@@ -1,4 +1,5 @@
 import { BookOpen } from 'lucide-react';
+import { EmptyState } from '@/components/ui/EmptyState';
 import type { TripFull } from '@/features/trips/types/trip.types';
 import { hubSectionHref, type HubAdventureRef } from '../../registry/hubSectionRegistry';
 
@@ -33,7 +34,12 @@ export function JournalApercuBlock({ trip, slug }: { trip: TripFull; slug: strin
       </div>
 
       {notes.length === 0 ? (
-        <p className="text-sm text-[var(--lkv-text-secondary)]">Aucune note encore.</p>
+        <EmptyState
+          compact
+          icon={<BookOpen size={22} aria-hidden="true" />}
+          title="Aucune note"
+          description="Racontez vos journées au fil du voyage."
+        />
       ) : (
         <ul className="space-y-2">
           {notes.map((n) => (

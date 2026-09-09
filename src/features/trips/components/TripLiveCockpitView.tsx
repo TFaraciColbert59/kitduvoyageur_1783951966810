@@ -1,4 +1,4 @@
-'use client';
+﻿'use client';
 
 import React, { useState, useTransition } from 'react';
 import { GlassCard } from '@/components/ui/GlassCard';
@@ -160,7 +160,7 @@ export function TripLiveCockpitView({
       <div className="flex items-center justify-between gap-3">
         <div className="flex items-center gap-2.5">
           <span className="relative flex h-3 w-3">
-            <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-[var(--lkv-success)]/80 opacity-75" />
+            <span className="animate-ping absolute inline-flex h-full w-full rounded-full [animation-iteration-count:3] bg-[var(--lkv-success)]/80 opacity-75" />
             <span className="relative inline-flex rounded-full h-3 w-3 bg-[var(--lkv-success)]" />
           </span>
           <span
@@ -178,8 +178,8 @@ export function TripLiveCockpitView({
           onClick={() => setIsSunMode(!isSunMode)}
           className={`flex items-center gap-2 px-3.5 py-2 rounded-full text-xs font-bold transition-all min-h-[44px] ${
             isSunMode
-              ? 'bg-[var(--lkv-warning)] text-black shadow-lg'
-              : 'glass-sub-card border border-white/60 hover:bg-white text-lkv-primary shadow-2xs'
+              ? 'bg-[var(--lkv-warning)] text-black shadow-lg active:scale-95'
+              : 'glass-sub-card border border-white/60 hover:bg-white text-lkv-primary shadow-2xs active:scale-95'
           }`}
           title="Bascule en contraste élevé plein soleil pour consultation sous forte luminosité"
         >
@@ -204,8 +204,8 @@ export function TripLiveCockpitView({
               activeDay <= 1
                 ? 'opacity-30 cursor-not-allowed'
                 : isSunMode
-                ? 'bg-white/10 hover:bg-white/20 text-white'
-                : 'glass-sub-card border border-white/60 hover:bg-white shadow-2xs'
+                ? 'bg-white/10 hover:bg-white/20 text-white active:scale-95'
+                            : 'glass-sub-card border border-white/60 hover:bg-white shadow-2xs'
             }`}
           >
             <ChevronLeft size={16} />
@@ -239,8 +239,8 @@ export function TripLiveCockpitView({
               activeDay >= calculatedTotalDays
                 ? 'opacity-30 cursor-not-allowed'
                 : isSunMode
-                ? 'bg-white/10 hover:bg-white/20 text-white'
-                : 'glass-sub-card border border-white/60 hover:bg-white shadow-2xs'
+                ? 'bg-white/10 hover:bg-white/20 text-white active:scale-95'
+                            : 'glass-sub-card border border-white/60 hover:bg-white shadow-2xs'
             }`}
           >
             <span className="hidden sm:inline">Jour suivant</span>
@@ -579,7 +579,7 @@ export function TripLiveCockpitView({
                 type="button"
                 onClick={handleCopyCoordinates}
                 disabled={!isEmergencyCoordsVerified}
-                className="min-h-[44px] min-w-[44px] flex items-center justify-center rounded-full glass-sub-card border border-white/60 hover:bg-white text-lkv-primary shadow-2xs cursor-pointer"
+                className="min-h-[44px] min-w-[44px] flex items-center justify-center rounded-full glass-sub-card border border-white/60 hover:bg-white text-lkv-primary shadow-2xs active:scale-95 cursor-pointer"
                 title="Copier les coordonnées pour les secours"
               >
                 {copiedCoords ? (
