@@ -1,4 +1,4 @@
-'use client';
+﻿'use client';
 
 import React, { useState } from 'react';
 import { HumanParticipant } from '../types/participant.types';
@@ -40,19 +40,19 @@ export const HumanParticipantCard: React.FC<HumanParticipantCardProps> = ({
         {/* Top Info */}
         <div className="flex items-start justify-between gap-3">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-2xl bg-[#17402C] text-white font-bold flex items-center justify-center text-sm shadow-sm">
+            <div className="w-10 h-10 rounded-2xl bg-[var(--lkv-forest-900)] text-white font-bold flex items-center justify-center text-sm shadow-sm">
               {publicData.firstName[0]}
             </div>
             <div>
               <div className="flex items-center gap-2">
-                <h4 className="text-sm font-bold text-[#17402C] dark:text-[#E7E3D6]">
+                <h4 className="text-sm font-bold text-[var(--lkv-forest-900)] dark:text-[var(--lkv-text-primary)]">
                   {publicData.firstName}
                 </h4>
                 <span className={`text-[10px] font-semibold px-2 py-0.5 rounded-full ${role.bg}`}>
                   {role.label}
                 </span>
               </div>
-              <span className="text-[11px] text-[#5A7064] dark:text-[#9AAD9E] font-mono">
+              <span className="text-[11px] text-[var(--lkv-text-muted)] font-mono">
                 🎒 Sac : {publicData.packWeightKg} kg · Forme : {publicData.fitnessScore}%
               </span>
             </div>
@@ -71,13 +71,13 @@ export const HumanParticipantCard: React.FC<HumanParticipantCardProps> = ({
 
         {/* Action Button */}
         <div className="flex items-center justify-between pt-2 border-t border-black/5 dark:border-white/5">
-          <span className="text-[10px] font-mono text-[#5A7064] dark:text-[#9AAD9E]">
+          <span className="text-[10px] font-mono text-[var(--lkv-text-muted)]">
             Matrice Privée
           </span>
 
           <button
             onClick={() => setIsModalOpen(true)}
-            className="px-3 py-1.5 rounded-xl bg-black/5 dark:bg-white/10 hover:bg-black/10 text-xs font-semibold text-[#17402C] dark:text-[#E7E3D6] transition-all flex items-center gap-1.5"
+            className="px-3 py-1.5 rounded-xl bg-black/5 dark:bg-white/10 hover:bg-black/10 text-xs font-semibold text-[var(--lkv-forest-900)] dark:text-[var(--lkv-text-primary)] transition-all flex items-center gap-1.5"
           >
             <span>🛡️ Fiche Médicale / ICE</span>
             <span aria-hidden="true">→</span>

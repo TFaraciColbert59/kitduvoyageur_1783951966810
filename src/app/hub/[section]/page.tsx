@@ -23,6 +23,7 @@ import { getTripDurationDays } from '@/features/trips/engine/contextualKitEngine
 import ItineraryPlannerClient from '@/features/trips/planner/ItineraryPlannerClient';
 import type { PlannerStep } from '@/features/trips/planner/plannerEngine';
 import { TripTeamView } from '@/features/trips/components/TripTeamView';
+import { ParticipantsManager } from '@/features/participants/components/ParticipantsManager';
 import { TripBudgetView } from '@/features/trips/components/TripBudgetView';
 import { TripDocumentsView } from '@/features/trips/components/TripDocumentsView';
 import { TripChecklistView } from '@/features/trips/components/TripChecklistView';
@@ -155,7 +156,18 @@ async function SortieSection({ sectionId, slug }: { sectionId: string; slug: str
       );
     }
     case 'team':
-      return <TripTeamView trip={trip} />;
+      return (
+        <div className="space-y-4">
+          <TripTeamView trip={trip} />
+          {/* Carnet des participants (humains + chiens) — legacy réintégré */}
+          <section aria-label="Carnet des participants">
+            <h2 className="text-xs font-mono font-bold uppercase tracking-widest text-[var(--lkv-text-muted)] px-1 pb-1">
+              Carnet des participants
+            </h2>
+            <ParticipantsManager />
+          </section>
+        </div>
+      );
     case 'budget':
       if (!trip.permissions.canManageBudget) notFound();
       return <TripBudgetView trip={trip} />;

@@ -1,4 +1,4 @@
-'use client';
+﻿'use client';
 
 import React, { useState } from 'react';
 import { useParticipantsStore } from '../stores/useParticipantsStore';
@@ -85,9 +85,9 @@ export const ParticipantsManager: React.FC = () => {
   return (
     <div className="space-y-6 pb-24 animate-in fade-in duration-300">
       {/* Group Telemetry Summary Banner */}
-      <div className="p-6 rounded-3xl bg-gradient-to-br from-[#17402C] to-[#2D5A40] text-white shadow-xl shadow-md/10 relative overflow-hidden">
+      <div className="p-6 rounded-3xl bg-gradient-to-br from-[var(--lkv-forest-900)] to-[var(--lkv-forest-700)] text-white shadow-xl shadow-md/10 relative overflow-hidden">
         <div className="flex items-center justify-between gap-2 mb-2">
-          <span className="text-[10px] font-mono uppercase tracking-[0.2em] text-[#A6C1A0]">
+          <span className="text-[10px] font-mono uppercase tracking-[0.2em] text-[var(--lkv-sage-300)]">
             MATRICE DE GROUPE & LOGISTIQUE
           </span>
           <span className="px-2.5 py-0.5 rounded-full text-[11px] font-mono font-semibold bg-white/15 text-white backdrop-blur-md">
@@ -98,7 +98,7 @@ export const ParticipantsManager: React.FC = () => {
         <h2 className="text-2xl font-extrabold tracking-tight font-display mb-1">
           Équipiers & Compagnons
         </h2>
-        <p className="text-xs text-[#C5D0C7]">
+        <p className="text-xs text-[var(--lkv-sage-200)]">
           Répartition des charges, autonomie hydrique et sécurisation des fiches médicales ICE.
         </p>
 
@@ -117,7 +117,7 @@ export const ParticipantsManager: React.FC = () => {
           </div>
           <div className="p-2 rounded-xl bg-white/5">
             <span className="text-[9px] uppercase font-mono opacity-75 block">Sécurité ICE</span>
-            <span className="text-base font-extrabold font-mono text-[#4ADE80]">
+            <span className="text-base font-extrabold font-mono text-[var(--lkv-success)]">
               Verrouillée
             </span>
           </div>
@@ -127,7 +127,7 @@ export const ParticipantsManager: React.FC = () => {
       {/* Human Participants Section */}
       <div className="space-y-3">
         <div className="flex items-center justify-between">
-          <h3 className="text-xs font-mono uppercase tracking-widest text-[#5A7064] dark:text-[#9AAD9E]">
+          <h3 className="text-xs font-mono uppercase tracking-widest text-[var(--lkv-text-muted)]">
             Participants Humains ({humans.length})
           </h3>
           <button
@@ -154,7 +154,7 @@ export const ParticipantsManager: React.FC = () => {
       {/* Dog Companions Section */}
       <div className="space-y-3 pt-2">
         <div className="flex items-center justify-between">
-          <h3 className="text-xs font-mono uppercase tracking-widest text-[#5A7064] dark:text-[#9AAD9E]">
+          <h3 className="text-xs font-mono uppercase tracking-widest text-[var(--lkv-text-muted)]">
             Compagnons Canins ({dogs.length})
           </h3>
           <button
@@ -166,7 +166,7 @@ export const ParticipantsManager: React.FC = () => {
         </div>
 
         {dogs.length === 0 ? (
-          <div className="p-4 rounded-2xl bg-black/[0.02] dark:bg-white/[0.02] border border-black/5 dark:border-white/5 text-center text-xs text-[#5A7064] dark:text-[#9AAD9E]">
+          <div className="p-4 rounded-2xl bg-black/[0.02] dark:bg-white/[0.02] border border-black/5 dark:border-white/5 text-center text-xs text-[var(--lkv-text-muted)]">
             Aucun chien de randonnée enregistré pour cette expédition.
           </div>
         ) : (
@@ -190,12 +190,12 @@ export const ParticipantsManager: React.FC = () => {
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 backdrop-blur-md">
           <form
             onSubmit={handleCreateHuman}
-            className="w-full max-w-sm rounded-3xl p-6 bg-[#17402C] text-[#E7E3D6] border border-white/20 shadow-2xl space-y-4"
+            className="w-full max-w-sm rounded-3xl p-6 bg-[var(--lkv-forest-900)] text-[var(--lkv-text-primary)] border border-white/20 shadow-2xl space-y-4"
           >
             <h3 className="text-lg font-bold text-white">Ajouter un équipier</h3>
             <div className="space-y-3 text-xs">
               <div>
-                <label className="block text-[#A6C1A0] mb-1 font-mono">Prénom</label>
+                <label className="block text-[var(--lkv-sage-300)] mb-1 font-mono">Prénom</label>
                 <input
                   type="text"
                   required
@@ -207,7 +207,7 @@ export const ParticipantsManager: React.FC = () => {
               </div>
               <div className="grid grid-cols-2 gap-2">
                 <div>
-                  <label className="block text-[#A6C1A0] mb-1 font-mono">Poids du sac (kg)</label>
+                  <label className="block text-[var(--lkv-sage-300)] mb-1 font-mono">Poids du sac (kg)</label>
                   <input
                     type="number"
                     step="0.5"
@@ -217,7 +217,7 @@ export const ParticipantsManager: React.FC = () => {
                   />
                 </div>
                 <div>
-                  <label className="block text-[#A6C1A0] mb-1 font-mono">Groupe Sanguin</label>
+                  <label className="block text-[var(--lkv-sage-300)] mb-1 font-mono">Groupe Sanguin</label>
                   <select
                     value={newBloodType}
                     onChange={(e) => setNewBloodType(e.target.value as any)}
@@ -236,7 +236,7 @@ export const ParticipantsManager: React.FC = () => {
                 </div>
               </div>
               <div>
-                <label className="block text-[#A6C1A0] mb-1 font-mono">Contact ICE (Nom & Tel)</label>
+                <label className="block text-[var(--lkv-sage-300)] mb-1 font-mono">Contact ICE (Nom & Tel)</label>
                 <input
                   type="text"
                   value={newIceName}
@@ -277,12 +277,12 @@ export const ParticipantsManager: React.FC = () => {
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 backdrop-blur-md">
           <form
             onSubmit={handleCreateDog}
-            className="w-full max-w-sm rounded-3xl p-6 bg-[#17402C] text-[#E7E3D6] border border-white/20 shadow-2xl space-y-4"
+            className="w-full max-w-sm rounded-3xl p-6 bg-[var(--lkv-forest-900)] text-[var(--lkv-text-primary)] border border-white/20 shadow-2xl space-y-4"
           >
             <h3 className="text-lg font-bold text-white">Ajouter un compagnon canin</h3>
             <div className="space-y-3 text-xs">
               <div>
-                <label className="block text-[#A6C1A0] mb-1 font-mono">Nom du Chien</label>
+                <label className="block text-[var(--lkv-sage-300)] mb-1 font-mono">Nom du Chien</label>
                 <input
                   type="text"
                   required
@@ -293,7 +293,7 @@ export const ParticipantsManager: React.FC = () => {
                 />
               </div>
               <div>
-                <label className="block text-[#A6C1A0] mb-1 font-mono">Race</label>
+                <label className="block text-[var(--lkv-sage-300)] mb-1 font-mono">Race</label>
                 <input
                   type="text"
                   value={newDogBreed}
@@ -303,7 +303,7 @@ export const ParticipantsManager: React.FC = () => {
                 />
               </div>
               <div>
-                <label className="block text-[#A6C1A0] mb-1 font-mono">Poids corporel (kg)</label>
+                <label className="block text-[var(--lkv-sage-300)] mb-1 font-mono">Poids corporel (kg)</label>
                 <input
                   type="number"
                   step="1"
@@ -312,7 +312,7 @@ export const ParticipantsManager: React.FC = () => {
                   onChange={(e) => setNewDogWeight(Number(e.target.value))}
                   className="w-full p-2.5 rounded-xl bg-black/30 border border-white/20 text-white font-mono"
                 />
-                <span className="text-[10px] text-[#A6C1A0] mt-1 block">
+                <span className="text-[10px] text-[var(--lkv-sage-300)] mt-1 block">
                   Capacité portage max calculée automatiquement : {(Number(newDogWeight) * 0.15).toFixed(1)} kg.
                 </span>
               </div>

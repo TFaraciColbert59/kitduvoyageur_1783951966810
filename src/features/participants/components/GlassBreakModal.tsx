@@ -1,4 +1,4 @@
-'use client';
+﻿'use client';
 
 import React, { useState, useEffect } from 'react';
 import { HumanParticipant } from '../types/participant.types';
@@ -59,7 +59,7 @@ export const GlassBreakModal: React.FC<GlassBreakModalProps> = ({
       className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4 bg-black/70 backdrop-blur-md animate-in fade-in duration-200"
     >
       <div
-        className="w-full max-w-lg rounded-t-3xl sm:rounded-3xl p-6 bg-[#17402C] text-[#E7E3D6] border border-white/20 shadow-2xl space-y-5 max-h-[90vh] overflow-y-auto"
+        className="w-full max-w-lg rounded-t-3xl sm:rounded-3xl p-6 bg-[var(--lkv-forest-900)] text-[var(--lkv-text-primary)] border border-white/20 shadow-2xl space-y-5 max-h-[90vh] overflow-y-auto"
         style={{
           paddingBottom: 'calc(1.5rem + env(safe-area-inset-bottom, 16px))',
         }}
@@ -71,7 +71,7 @@ export const GlassBreakModal: React.FC<GlassBreakModalProps> = ({
               {publicData.firstName[0]}
             </div>
             <div>
-              <span className="text-[10px] font-mono uppercase tracking-widest text-[#A6C1A0]">
+              <span className="text-[10px] font-mono uppercase tracking-widest text-[var(--lkv-sage-300)]">
                 FICHE PARTICIPANT
               </span>
               <h3 id="modal-title" className="text-xl font-bold text-white leading-tight">
@@ -92,13 +92,13 @@ export const GlassBreakModal: React.FC<GlassBreakModalProps> = ({
         {/* Public Summary */}
         <div className="grid grid-cols-2 gap-2 text-xs">
           <div className="p-3 rounded-xl bg-black/20 border border-white/10">
-            <span className="text-[#9AAD9E] block text-[10px] uppercase font-mono">Poids du Sac</span>
+            <span className="text-[var(--lkv-text-muted)] block text-[10px] uppercase font-mono">Poids du Sac</span>
             <span className="text-base font-extrabold font-mono text-white">
               {publicData.packWeightKg} kg
             </span>
           </div>
           <div className="p-3 rounded-xl bg-black/20 border border-white/10">
-            <span className="text-[#9AAD9E] block text-[10px] uppercase font-mono">Score Forme</span>
+            <span className="text-[var(--lkv-text-muted)] block text-[10px] uppercase font-mono">Score Forme</span>
             <span className="text-base font-extrabold font-mono text-white">
               {publicData.fitnessScore} / 100
             </span>
@@ -117,7 +117,7 @@ export const GlassBreakModal: React.FC<GlassBreakModalProps> = ({
                 <h4 className="text-sm font-bold text-white">
                   Données Médicales & ICE Verrouillées
                 </h4>
-                <p className="text-xs text-[#9AAD9E] mt-1 max-w-xs mx-auto leading-relaxed">
+                <p className="text-xs text-[var(--lkv-text-muted)] mt-1 max-w-xs mx-auto leading-relaxed">
                   Conformément au protocole de sécurité LKDV, les données médicales ne sont pas envoyées au DOM public sans action explicite.
                 </p>
               </div>
@@ -140,7 +140,7 @@ export const GlassBreakModal: React.FC<GlassBreakModalProps> = ({
               {/* Medical Information Cards */}
               <div className="space-y-2.5">
                 <div className="p-3.5 rounded-xl bg-black/30 border border-white/15">
-                  <span className="text-[10px] font-mono uppercase text-[#A6C1A0] block">
+                  <span className="text-[10px] font-mono uppercase text-[var(--lkv-sage-300)] block">
                     Groupe Sanguin
                   </span>
                   <span className="text-lg font-mono font-extrabold text-white">
@@ -149,7 +149,7 @@ export const GlassBreakModal: React.FC<GlassBreakModalProps> = ({
                 </div>
 
                 <div className="p-3.5 rounded-xl bg-black/30 border border-white/15">
-                  <span className="text-[10px] font-mono uppercase text-[#A6C1A0] block">
+                  <span className="text-[10px] font-mono uppercase text-[var(--lkv-sage-300)] block">
                     Allergies & Intolérances
                   </span>
                   <div className="flex flex-wrap gap-1.5 mt-1.5">
@@ -169,7 +169,7 @@ export const GlassBreakModal: React.FC<GlassBreakModalProps> = ({
                 </div>
 
                 <div className="p-3.5 rounded-xl bg-black/30 border border-white/15">
-                  <span className="text-[10px] font-mono uppercase text-[#A6C1A0] block">
+                  <span className="text-[10px] font-mono uppercase text-[var(--lkv-sage-300)] block">
                     Contact d'Urgence (ICE)
                   </span>
                   <div className="mt-1 flex items-center justify-between">
@@ -177,7 +177,7 @@ export const GlassBreakModal: React.FC<GlassBreakModalProps> = ({
                       <span className="text-sm font-bold text-white block">
                         {privateData.iceContact.name} ({privateData.iceContact.relationship})
                       </span>
-                      <span className="text-xs font-mono text-[#A6C1A0]">
+                      <span className="text-xs font-mono text-[var(--lkv-sage-300)]">
                         {privateData.iceContact.phone}
                       </span>
                     </div>
@@ -193,7 +193,7 @@ export const GlassBreakModal: React.FC<GlassBreakModalProps> = ({
 
                 {privateData.medications && privateData.medications.length > 0 && (
                   <div className="p-3.5 rounded-xl bg-black/30 border border-white/15">
-                    <span className="text-[10px] font-mono uppercase text-[#A6C1A0] block">
+                    <span className="text-[10px] font-mono uppercase text-[var(--lkv-sage-300)] block">
                       Traitements / Médicaments
                     </span>
                     <ul className="list-disc list-inside text-xs mt-1 text-white/90 space-y-0.5">

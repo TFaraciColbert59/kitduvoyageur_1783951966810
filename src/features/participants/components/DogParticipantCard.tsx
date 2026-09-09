@@ -1,4 +1,4 @@
-'use client';
+﻿'use client';
 
 import React from 'react';
 import { DogParticipant } from '../types/participant.types';
@@ -29,14 +29,14 @@ export const DogParticipantCard: React.FC<DogParticipantCardProps> = ({
           </div>
           <div>
             <div className="flex items-center gap-2">
-              <h4 className="text-sm font-bold text-[#17402C] dark:text-[#E7E3D6]">
+              <h4 className="text-sm font-bold text-[var(--lkv-forest-900)] dark:text-[var(--lkv-text-primary)]">
                 {dog.name}
               </h4>
               <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-sand-500/20 text-sand-800 dark:text-sand-300">
                 {dog.breed}
               </span>
             </div>
-            <span className="text-[11px] text-[#5A7064] dark:text-[#9AAD9E] font-mono">
+            <span className="text-[11px] text-[var(--lkv-text-muted)] font-mono">
               Poids : {dog.weightKg} kg · Capacité max (15%) : {dog.maxCarryingCapacityKg} kg
             </span>
           </div>
@@ -56,7 +56,7 @@ export const DogParticipantCard: React.FC<DogParticipantCardProps> = ({
       {/* Portage Status & Gauge */}
       <div className="p-3 rounded-2xl bg-black/[0.02] dark:bg-white/[0.02] border border-black/5 dark:border-white/5 space-y-2">
         <div className="flex items-center justify-between text-xs">
-          <span className="font-semibold text-[#17402C] dark:text-[#E7E3D6]">
+          <span className="font-semibold text-[var(--lkv-forest-900)] dark:text-[var(--lkv-text-primary)]">
             Sac de bât canin :
           </span>
           <div className="flex items-center gap-2">
@@ -99,14 +99,14 @@ export const DogParticipantCard: React.FC<DogParticipantCardProps> = ({
       {/* Daily Needs Grid */}
       <div className="grid grid-cols-2 gap-2 text-xs pt-1">
         <div className="p-2 rounded-xl bg-black/[0.02] dark:bg-white/[0.02] flex items-center justify-between">
-          <span className="text-[11px] text-[#5A7064] dark:text-[#9AAD9E]">💧 Eau / jour</span>
-          <span className="font-mono font-bold text-[#17402C] dark:text-[#E7E3D6]">
+          <span className="text-[11px] text-[var(--lkv-text-muted)]">💧 Eau / jour</span>
+          <span className="font-mono font-bold text-[var(--lkv-forest-900)] dark:text-[var(--lkv-text-primary)]">
             {dog.waterRationLitersPerDay} L
           </span>
         </div>
         <div className="p-2 rounded-xl bg-black/[0.02] dark:bg-white/[0.02] flex items-center justify-between">
-          <span className="text-[11px] text-[#5A7064] dark:text-[#9AAD9E]">🍖 Croquettes</span>
-          <span className="font-mono font-bold text-[#17402C] dark:text-[#E7E3D6]">
+          <span className="text-[11px] text-[var(--lkv-text-muted)]">🍖 Croquettes</span>
+          <span className="font-mono font-bold text-[var(--lkv-forest-900)] dark:text-[var(--lkv-text-primary)]">
             {dog.foodRationGramsPerDay} g
           </span>
         </div>

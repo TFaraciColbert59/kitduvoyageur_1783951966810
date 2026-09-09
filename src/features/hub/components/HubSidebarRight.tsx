@@ -7,6 +7,7 @@ import { getTripPhaseDetails } from '@/features/trips/engine/temporalPhaseEngine
 import { sectionIdFromPathname } from '@/features/trips/registry/tripSectionRegistry';
 import TripSidebarRight from '@/features/trips/components/TripSidebarRight';
 import { selectHubWidgets } from '../engine/selectHubWidgets';
+import type { HubWidgetId } from '../engine/hubProfileEngine';
 import type { AdventureProfile } from '../engine/hubProfileEngine';
 import type { TripFull } from '@/features/trips/types/trip.types';
 import type { HubAdventureRef, HubCounters } from '../registry/hubSectionRegistry';
@@ -32,6 +33,17 @@ export interface HubSidebarRightProps {
  */
 const NATURE_LABELS = { possession: 'Matériel', sortie: 'Voyage', collectif: 'Groupe' } as const;
 const PARTY_LABELS = { solo: 'Solo', duo: 'Duo', group: 'Groupe' } as const;
+
+/** Les 7 ids hub ont de vrais corps (H4) — rendus réels dans la bande mobile. */
+const HUB_REAL_WIDGET_IDS = new Set<HubWidgetId>([
+  'stock-apercu',
+  'alertes-materiel',
+  'dispo-apercu',
+  'prochain-depart',
+  'invitations-apercu',
+  'presence-groupe',
+  'entrer-voyage',
+]);
 
 export function HubSidebarRight({
   profile,
@@ -77,6 +89,27 @@ export function HubSidebarRight({
   }
 
   if (variant === 'band') {
+    const BAND_LABELS: Record<string, string> = {
+      countdown: 'Compte à rebours',
+      'primary-action': 'Action',
+      alerts: 'Alertes',
+      'next-step': 'Prochaine étape',
+      'safety-next': 'Sécurité',
+      'kit-balance': 'Équipement',
+      'budget-burn': 'Budget',
+      'group-presence': 'Équipage',
+      'trip-context': 'Contexte',
+      'country-card': 'Pays',
+      'docs-expiry': 'Documents',
+      'offline-toggle': 'Hors-ligne',
+      'alertes-materiel': 'Alertes matériel',
+      'prochain-depart': 'Prochain départ',
+      'stock-apercu': 'Stock',
+      'dispo-apercu': 'Prêts',
+      'invitations-apercu': 'Invitations',
+      'entrer-voyage': 'Voyage',
+      'presence-groupe': 'Groupe',
+    };
     return (
       <div
         aria-label="Widgets de l'aventure"
@@ -87,18 +120,24 @@ export function HubSidebarRight({
             {NATURE_LABELS[profile.nature]} · {PARTY_LABELS[profile.party]}
           </span>
         </div>
-        {shown.map((w) => (
-          <div
-            key={w.id}
-            data-hub-widget={w.id}
-            className="glass px-3 py-2 rounded-full shrink-0 flex items-center min-h-[44px]"
-          >
-            <span className="text-[10px] font-mono uppercase tracking-widest text-[var(--lkv-text-secondary)] whitespace-nowrap">
-              {w.id}
-            </span>
-            <span className="sr-only">Widget {w.id} — contenu livré en H4</span>
-          </div>
-        ))}
+        {shown.map((w) => {
+          const real = HUB_REAL_WIDGET_IDS.has(w.id as HubWidgetId);
+          return (
+            <div
+              key={w.id}
+              data-hub-widget={w.id}
+              className={real ? 'shrink-0 min-w-[190px] max-w-[240px]' : 'glass px-3 py-2 rounded-full shrink-0 flex items-center min-h-[44px]'}
+            >
+              {real ? (
+                <HubWidgetBody id={w.id as HubWidgetId} adventure={adventure} data={data} />
+              ) : (
+                <span className="text-[10px] font-mono uppercase tracking-widest text-[var(--lkv-text-secondary)] whitespace-nowrap">
+                  {BAND_LABELS[w.id] ?? w.id}
+                </span>
+              )}
+            </div>
+          );
+        })}
       </div>
     );
   }
