@@ -13,6 +13,8 @@ import { BentoGrid } from '@/components/ui-layouts/bento-grid';
 import { MenuCard } from './MenuCard';
 import { QuickActions, type QuickAction } from './QuickActions';
 import { NumberStat } from '@/components/ui-layouts/number-stat';
+import { ActivityIdentityBar } from './ActivityIdentityBar';
+import { NextActionCard, type NextActionSignal } from './NextActionCard';
 import type { MaterielSummary } from '@/features/materiel/services/getMaterielSummary';
 
 export interface PossessionMenuProps {
@@ -41,6 +43,39 @@ export function PossessionMenu({ summary }: PossessionMenuProps) {
     { href: hubSectionHref(ref, 'depart'), label: 'Départ', icon: Footprints },
     { href: hubSectionHref(ref, 'inventaire'), label: 'Inventaire', icon: Package },
   ];
+
+  // ── FIL D'ACTION (règles déterministes, ordonnées par priorité) ──
+  const nextActions: NextActionSignal[] = [];
+  if (summary.alertes.criticalCount > 0) {
+    nextActions.push({
+      kind: 'safety',
+      href: hubSectionHref(ref, 'alertes'),
+      title: `${summary.alertes.criticalCount} alerte(s) critique(s)`,
+      description: 'Équipement à vérifier avant de partir.',
+    });
+  }
+  if (summary.forget.forgetRemaining > 0) {
+    nextActions.push({
+      kind: 'checklist',
+      href: hubSectionHref(ref, 'oublis'),
+      title: `${summary.forget.forgetRemaining} oubli(s) à cocher`,
+      description: 'Finalisez la checklist de départ.',
+    });
+  }
+  if (departDays && summary.depart.readinessPct < 100) {
+    nextActions.push({
+      kind: 'cockpit',
+      href: hubSectionHref(ref, 'depart'),
+      title: `Départ ${departDays} — ${summary.depart.readinessPct}% prêt`,
+      description: 'Complétez le sac du départ.',
+    });
+  }
+  nextActions.push({
+    kind: 'all-clear',
+    href: hubSectionHref(ref, 'kit'),
+    title: 'Tout est à jour',
+    description: 'Matériel prêt — consultez vos kits.',
+  });
 
   const cells = [
     {
@@ -194,6 +229,8 @@ export function PossessionMenu({ summary }: PossessionMenuProps) {
 
   return (
     <div className="space-y-4">
+      <ActivityIdentityBar nature="possession" name="Mon matériel" />
+      <NextActionCard actions={nextActions} />
       <QuickActions actions={actions} />
       <BentoGrid cells={cells} />
     </div>

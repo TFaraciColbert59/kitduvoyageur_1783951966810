@@ -11,11 +11,14 @@
   Users,
 } from 'lucide-react';
 import { hubSectionHref, HUB_HOME_HREF, type HubAdventureRef } from '../../registry/hubSectionRegistry';
-import { BentoGrid } from '@/components/ui-layouts/bento-grid';
 import { MenuCard } from './MenuCard';
 import { QuickActions, type QuickAction } from './QuickActions';
 import { NumberStat } from '@/components/ui-layouts/number-stat';
 import { ChecklistCardBody } from './ChecklistCardBody';
+import { ActivityIdentityBar } from './ActivityIdentityBar';
+import { NextActionCard, type NextActionSignal } from './NextActionCard';
+import { MoreSectionsGrid } from './MoreSectionsGrid';
+import { SosFloatingButton } from './SosFloatingButton';
 import { getTripDuration } from '@/features/trips/hooks/useTripDuration';
 import { getKitCounters } from '@/features/trips/hooks/useKitCounters';
 import { getTripDistance } from '@/features/trips/hooks/useTripDistance';
@@ -53,10 +56,40 @@ function shortDate(iso: string | null | undefined): string {
   return d.toLocaleDateString('fr-FR', { day: 'numeric', month: 'short' });
 }
 
+/** Ordre + spans des cartes par phase (contextualisation V4). */
+const ORDER: Record<TripPhase, Array<[string, 3 | 4 | 6]>> = {
+  prepare: [
+    ['itinerary', 6], ['gear', 6], ['budget', 4], ['team', 4], ['checklist', 4],
+    ['docs', 3], ['safety', 3], ['journal', 3], ['export', 3],
+  ],
+  live: [
+    ['cockpit', 6], ['safety', 6], ['journal', 4], ['team', 4], ['budget', 4],
+    ['itinerary', 6], ['gear', 6], ['checklist', 3], ['docs', 3], ['export', 3],
+  ],
+  recount: [
+    ['raconter', 6], ['journal', 6], ['export', 4], ['budget', 4], ['itinerary', 4],
+    ['team', 4], ['gear', 6], ['docs', 3], ['safety', 3], ['checklist', 3],
+  ],
+};
+
+/** Cartes secondaires : hors bento mobile, regroupées dans « Plus de sections ». */
+const MOBILE_SECONDARY: Record<TripPhase, string[]> = {
+  prepare: ['safety', 'journal', 'docs', 'export'],
+  live: ['checklist', 'docs', 'export'],
+  recount: ['docs', 'safety', 'checklist'],
+};
+
+const PHASE_LABELS: Record<TripPhase, string> = {
+  prepare: 'Préparer',
+  live: 'En cours',
+  recount: 'Raconter',
+};
+
 /**
  * Hub V4 — MENU d'une SORTIE en disposition BENTO (racine /hub).
- * [Itinéraire 6, Équipement 6] → [Budget 4, Équipage 4, Checklist 4] →
- * [Documents 3, Sécurité 3, Journal 3, Export 3]. Contenus enrichis au max.
+ * 1. Fil d'action (prochaine action déterministe) · 2. Bandeau d'identité ·
+ * 3. Bento contextualisé par phase (desktop complet / mobile + « Plus de
+ * sections ») · 4. SOS flottant si phase live.
  */
 export function SortieMenu({
   trip,
@@ -80,8 +113,10 @@ export function SortieMenu({
   const crewCount = crew?.memberCount ?? 0;
   const collabs = trip.collaborators ?? [];
   const collabCount = collabs.length;
-  const pendingSafety = (trip.safety_checkpoints ?? []).filter((c) => c.status === 'pending').length;
-  const nextCheckpoint = [...(trip.safety_checkpoints ?? [])].filter((cc) => cc.status === 'pending').sort((a, b) => a.scheduled_at.localeCompare(b.scheduled_at))[0] ?? null;
+  const pendingList = (trip.safety_checkpoints ?? []).filter((c) => c.status === 'pending');
+  const pendingSafety = pendingList.length;
+  const nextCheckpoint =
+    [...pendingList].sort((a, b) => a.scheduled_at.localeCompare(b.scheduled_at))[0] ?? null;
   const exp = soonestExpiry(trip.documents);
   const notes = [...(trip.notes ?? [])].sort(
     (a, b) => (b.day_number ?? 0) - (a.day_number ?? 0) || b.created_at.localeCompare(a.created_at),
@@ -94,6 +129,47 @@ export function SortieMenu({
   }
   const topCats = [...catTotals.entries()].sort((a, b) => b[1] - a[1]).slice(0, 2);
 
+  // ── FIL D'ACTION (règles déterministes, ordonnées par priorité) ──
+  const nextActions: NextActionSignal[] = [];
+  if (phase === 'live') {
+    nextActions.push({
+      kind: 'cockpit',
+      href: `${HUB_HOME_HREF}?phase=live`,
+      title: `Cockpit terrain${daysUntil != null && daysUntil < 0 ? ` — jour ${Math.abs(daysUntil) + 1}` : ''}`,
+      description: 'Étape du jour, secours 112, dépense express.',
+    });
+  }
+  if (pendingSafety > 0 && nextCheckpoint) {
+    nextActions.push({
+      kind: 'safety',
+      href: hubSectionHref(ref, 'safety'),
+      title: `Point de contrôle : ${nextCheckpoint.label}`,
+      description: `Prévu le ${shortDate(nextCheckpoint.scheduled_at)} — à confirmer.`,
+    });
+  }
+  if (daysUntil != null && daysUntil >= 0 && daysUntil <= 14) {
+    nextActions.push({
+      kind: 'checklist',
+      href: hubSectionHref(ref, 'checklist'),
+      title: 'Terminer la checklist de départ',
+      description: `J-${daysUntil} — les essentiels J-7/J-1 se débloquent.`,
+    });
+  }
+  if (exp && exp.inDays <= 30) {
+    nextActions.push({
+      kind: 'documents',
+      href: hubSectionHref(ref, 'docs'),
+      title: `${exp.label} expire dans ${exp.inDays} j`,
+      description: 'Vérifiez ou renouvelez ce document.',
+    });
+  }
+  nextActions.push({
+    kind: 'all-clear',
+    href: hubSectionHref(ref, 'journal'),
+    title: 'Tout est à jour',
+    description: 'Profite — ou raconte le voyage dans le journal.',
+  });
+
   const actions: QuickAction[] = [
     { href: hubSectionHref(ref, 'itinerary'), label: 'Itinéraire', icon: Navigation },
     { href: hubSectionHref(ref, 'budget'), label: 'Budget', icon: CreditCard },
@@ -101,23 +177,26 @@ export function SortieMenu({
     { href: hubSectionHref(ref, 'journal'), label: 'Journal', icon: Calendar },
   ];
 
-  const cells = [
-    ...(phase === 'live'
-      ? [{ key: 'phase-live', span: 6 as const, node: (
-          <MenuCard href={`${HUB_HOME_HREF}?phase=live`} icon={Play} label="Cockpit terrain" tone="accent">
-            <p className="text-xs text-[var(--lkv-text-secondary)] mt-0.5">Jour en cours, secours 112, dépense express.</p>
-          </MenuCard>
-        ) }]
-      : []),
-    ...(phase === 'recount'
-      ? [{ key: 'phase-recount', span: 6 as const, node: (
-          <MenuCard href={`${HUB_HOME_HREF}?phase=recount`} icon={Share2} label="Raconter" tone="accent">
-            <p className="text-xs text-[var(--lkv-text-secondary)] mt-0.5">Bilan, carnet de bord et partage.</p>
-          </MenuCard>
-        ) }]
-      : []),
-    {
-      key: 'itinerary', span: 6 as const,
+  // ── CELLULES PAR CLÉ (contenus enrichis) ──
+  const byKey: Record<string, { span: 3 | 4 | 6; node: React.ReactNode }> = {
+    cockpit: {
+      span: 6,
+      node: (
+        <MenuCard href={`${HUB_HOME_HREF}?phase=live`} icon={Play} label="Cockpit terrain" tone="accent">
+          <p className="text-xs text-[var(--lkv-text-secondary)] mt-0.5">Jour en cours, secours 112, dépense express.</p>
+        </MenuCard>
+      ),
+    },
+    raconter: {
+      span: 6,
+      node: (
+        <MenuCard href={`${HUB_HOME_HREF}?phase=recount`} icon={Share2} label="Raconter" tone="accent">
+          <p className="text-xs text-[var(--lkv-text-secondary)] mt-0.5">Bilan, carnet de bord et partage.</p>
+        </MenuCard>
+      ),
+    },
+    itinerary: {
+      span: 6,
       node: (
         <MenuCard href={hubSectionHref(ref, 'itinerary')} icon={Navigation} label="Itinéraire">
           <p className="mt-1 text-2xl font-extrabold text-[var(--lkv-text-primary)]">
@@ -141,8 +220,8 @@ export function SortieMenu({
         </MenuCard>
       ),
     },
-    {
-      key: 'gear', span: 6 as const,
+    gear: {
+      span: 6,
       node: (
         <MenuCard href={hubSectionHref(ref, 'gear')} icon={Package} label="Équipement">
           <p className="mt-1 text-2xl font-extrabold text-[var(--lkv-text-primary)]">
@@ -157,8 +236,8 @@ export function SortieMenu({
         </MenuCard>
       ),
     },
-    {
-      key: 'budget', span: 4 as const,
+    budget: {
+      span: 4,
       node: (
         <MenuCard href={hubSectionHref(ref, 'budget')} icon={CreditCard} label="Budget">
           <p className="mt-1 text-2xl font-extrabold text-[var(--lkv-text-primary)]">
@@ -186,8 +265,8 @@ export function SortieMenu({
         </MenuCard>
       ),
     },
-    {
-      key: 'team', span: 4 as const,
+    team: {
+      span: 4,
       node: (
         <MenuCard href={hubSectionHref(ref, 'team')} icon={Users} label="Équipage & compagnons">
           <p className="mt-1 text-2xl font-extrabold text-[var(--lkv-text-primary)]">
@@ -217,16 +296,16 @@ export function SortieMenu({
         </MenuCard>
       ),
     },
-    {
-      key: 'checklist', span: 4 as const,
+    checklist: {
+      span: 4,
       node: (
         <MenuCard href={hubSectionHref(ref, 'checklist')} icon={CheckSquare} label="Checklist">
           <ChecklistCardBody tripId={trip.id} daysUntil={daysUntil} countryCode={trip.destination_country_code} />
         </MenuCard>
       ),
     },
-    {
-      key: 'docs', span: 3 as const,
+    docs: {
+      span: 3,
       node: (
         <MenuCard href={hubSectionHref(ref, 'docs')} icon={FileText} label="Documents">
           <p className="mt-1 text-2xl font-extrabold text-[var(--lkv-text-primary)]">
@@ -256,8 +335,8 @@ export function SortieMenu({
         </MenuCard>
       ),
     },
-    {
-      key: 'safety', span: 3 as const,
+    safety: {
+      span: 3,
       node: (
         <MenuCard href={hubSectionHref(ref, 'safety')} icon={Shield} label="Sécurité">
           <p className="mt-1 text-2xl font-extrabold text-[var(--lkv-text-primary)]">
@@ -275,8 +354,8 @@ export function SortieMenu({
         </MenuCard>
       ),
     },
-    {
-      key: 'journal', span: 3 as const,
+    journal: {
+      span: 3,
       node: (
         <MenuCard href={hubSectionHref(ref, 'journal')} icon={Calendar} label="Journal">
           {lastNote ? (
@@ -294,8 +373,8 @@ export function SortieMenu({
         </MenuCard>
       ),
     },
-    {
-      key: 'export', span: 3 as const,
+    export: {
+      span: 3,
       node: (
         <MenuCard href={hubSectionHref(ref, 'export')} icon={Share2} label="Export">
           <div className="mt-2 flex gap-2">
@@ -306,12 +385,30 @@ export function SortieMenu({
         </MenuCard>
       ),
     },
-  ];
+  };
+
+  const orderedCells = ORDER[phase]
+    .filter(([key]) => byKey[key])
+    .map(([key, span]) => ({ key, span, node: byKey[key].node }));
+  const secondaryKeys = MOBILE_SECONDARY[phase];
+  const primaryCells = orderedCells.filter((c) => !secondaryKeys.includes(c.key ?? ''));
+  const secondaryCells = orderedCells.filter((c) => secondaryKeys.includes(c.key ?? ''));
 
   return (
     <div className="space-y-4">
+      <ActivityIdentityBar
+        nature="sortie"
+        name={trip.title}
+        phaseLabel={PHASE_LABELS[phase]}
+        daysUntil={daysUntil}
+      />
+      <NextActionCard
+        actions={nextActions}
+        checklist={{ tripId: trip.id, daysUntil, countryCode: trip.destination_country_code }}
+      />
       <QuickActions actions={actions} />
-      <BentoGrid cells={cells} />
+      <MoreSectionsGrid cells={primaryCells} moreCells={secondaryCells} />
+      {phase === 'live' && <SosFloatingButton safetyHref={hubSectionHref(ref, 'safety')} />}
     </div>
   );
 }

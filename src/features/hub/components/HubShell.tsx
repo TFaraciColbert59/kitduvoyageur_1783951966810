@@ -22,6 +22,7 @@ import { AdventureSwitcher } from './AdventureSwitcher';
 import HubSidebarLeft from './HubSidebarLeft';
 import HubSidebarRight from './HubSidebarRight';
 import { HubNetworkStatus } from './HubNetworkStatus';
+import { HubRealtimeRefresh } from './HubRealtimeRefresh';
 
 export interface HubShellProps {
   adventure: ActiveAdventureData;
@@ -94,6 +95,15 @@ export function HubShell({
   const key = adventureKey(entryOf(adventure, counts));
   const ref = refOf(adventure);
 
+  // Hub temps réel : les compteurs se rafraîchissent quand l'équipage bouge.
+  const realtime = (
+    <HubRealtimeRefresh
+      nature={adventure.nature}
+      tripId={adventure.nature === 'sortie' ? adventure.id : null}
+      groupId={adventure.nature === 'collectif' ? adventure.id : null}
+    />
+  );
+
   const effectiveProfile: AdventureProfile = useMemo(() => {
     const sections = mergeEnabledSections(profile.sections, baseEnabled);
     return { ...profile, sections };
@@ -123,6 +133,7 @@ export function HubShell({
       groupLabel={groupLabel}
       linkedTripSlug={linkedTripSlug}
       pendingInvites={pendingInvites}
+      activeSection={activeSection}
     />
   );
 
@@ -132,6 +143,7 @@ export function HubShell({
       sidebarRight={sidebarRight}
       mobileSlot={
         <MobilePageShell safeTop={true} hasBottomNav={true}>
+          {realtime}
           <div className="px-4 pt-4 pb-32 text-[var(--lkv-text-primary)]">
             <div className="flex items-center justify-between gap-2 mb-3 min-w-0">
               <AdventureSwitcher forceOpenSignal={switcherSignal} variant="mobile" />

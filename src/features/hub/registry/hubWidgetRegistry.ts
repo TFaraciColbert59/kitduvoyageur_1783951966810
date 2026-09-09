@@ -92,3 +92,30 @@ export function hubWidgetsForNature(nature: AdventureNature): HubWidgetId[] {
 export function hubEstimatedHeight(ids: readonly HubWidgetId[]): number {
   return ids.reduce((sum, id) => sum + (hubWidgetDef(id)?.estimatedHeight ?? 0), 0);
 }
+
+/**
+ * Hub V4 — Rail droit CONTEXTUEL : widgets à afficher par section active.
+ * Clés = HubSectionId ; absences = affichage par défaut (selectHubWidgets).
+ * Fichier allowlisté R14 (littéraux de segments/ids hub autorisés ici).
+ */
+export const SECTION_WIDGET_MAP: Partial<Record<string, readonly HubWidgetId[]>> = {
+  itinerary: ['next-step', 'countdown', 'trip-context'],
+  gear: ['kit-balance', 'primary-action', 'offline-toggle'],
+  budget: ['budget-burn', 'primary-action'],
+  docs: ['docs-expiry', 'trip-context'],
+  checklist: ['primary-action', 'offline-toggle'],
+  safety: ['safety-next', 'alerts', 'offline-toggle'],
+  journal: ['countdown', 'group-presence'],
+  export: ['trip-context', 'country-card'],
+  inventaire: ['stock-apercu', 'alertes-materiel'],
+  kit: ['stock-apercu'],
+  preparation: ['primary-action'],
+  depart: ['prochain-depart', 'primary-action'],
+  disponibilite: ['dispo-apercu'],
+  alertes: ['alertes-materiel'],
+  oublis: ['stock-apercu'],
+  groupe: ['presence-groupe', 'invitations-apercu'],
+  team: ['presence-groupe', 'invitations-apercu'],
+  invitations: ['invitations-apercu'],
+  'voyages-lies': ['entrer-voyage'],
+} as const;

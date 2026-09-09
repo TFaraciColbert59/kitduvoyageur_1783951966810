@@ -1,0 +1,37 @@
+[
+  {
+    "name": "v4c-hub-possession-desktop",
+    "status": "ok",
+    "shot": "docs/h-captures/v4c-hub-possession-desktop.png"
+  },
+  {
+    "name": "v4c-hub-sortie-desktop",
+    "status": "ok",
+    "shot": "docs/h-captures/v4c-hub-sortie-desktop.png"
+  },
+  {
+    "name": "v4c-hub-sortie-mobile",
+    "status": "ok",
+    "shot": "docs/h-captures/v4c-hub-sortie-mobile.png"
+  },
+  {
+    "name": "v4c-hub-sortie-mobile-live-sos",
+    "status": "ok",
+    "shot": "docs/h-captures/v4c-hub-sortie-mobile-live-sos.png"
+  },
+  {
+    "name": "v4c-hub-sortie-mobile-plus-sections",
+    "status": "ok",
+    "shot": "docs/h-captures/v4c-hub-sortie-mobile-plus-sections.png"
+  },
+  {
+    "name": "v4c-rail-contextuel-budget",
+    "status": "ok",
+    "shot": "docs/h-captures/v4c-rail-contextuel-budget.png"
+  },
+  {
+    "name": "v4c-rail-contextuel-securite",
+    "status": "ok",
+    "shot": "docs/h-captures/v4c-rail-contextuel-securite.png"
+  }
+]

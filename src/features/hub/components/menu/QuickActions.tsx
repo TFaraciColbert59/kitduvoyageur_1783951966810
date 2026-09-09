@@ -1,5 +1,5 @@
-import Link from 'next/link';
 import type { LucideIcon } from 'lucide-react';
+import { HapticLink } from './HapticLink';
 
 export interface QuickAction {
   href: string;
@@ -10,6 +10,7 @@ export interface QuickAction {
 /**
  * Hub V4 — Rangée de 4 ACTIONS RAPIDES (mobile uniquement, sous le bento).
  * Pastille 44px + label : les onglets les plus utilisés de la nature active.
+ * Server component : les icônes passent en payload RSC via HapticLink.
  */
 export function QuickActions({ actions }: { actions: QuickAction[] }) {
   return (
@@ -17,9 +18,10 @@ export function QuickActions({ actions }: { actions: QuickAction[] }) {
       {actions.map((a) => {
         const Icon = a.icon;
         return (
-          <Link
+          <HapticLink
             key={a.href}
             href={a.href}
+            ariaLabel={a.label}
             className="flex flex-col items-center justify-center gap-1.5 min-h-[72px] px-1 rounded-2xl glass border border-white/60 shadow-sm active:scale-[0.97] transition-transform"
           >
             <span className="flex h-9 w-9 items-center justify-center rounded-full bg-white/70 border border-white/70 text-[var(--lkv-secondary)] shadow-2xs">
@@ -28,7 +30,7 @@ export function QuickActions({ actions }: { actions: QuickAction[] }) {
             <span className="text-[11px] font-semibold leading-tight text-center text-[var(--lkv-text-primary)]">
               {a.label}
             </span>
-          </Link>
+          </HapticLink>
         );
       })}
     </div>

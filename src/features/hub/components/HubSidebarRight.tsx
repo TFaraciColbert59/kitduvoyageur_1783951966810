@@ -7,9 +7,15 @@ import { getTripPhaseDetails } from '@/features/trips/engine/temporalPhaseEngine
 import { sectionIdFromPathname } from '@/features/trips/registry/tripSectionRegistry';
 import TripSidebarRight from '@/features/trips/components/TripSidebarRight';
 import { selectHubWidgets } from '../engine/selectHubWidgets';
-import { HUB_REAL_WIDGET_IDS, HUB_WIDGET_LABELS } from '../registry/hubWidgetRegistry';
+import {
+  HUB_REAL_WIDGET_IDS,
+  HUB_WIDGET_LABELS,
+  SECTION_WIDGET_MAP,
+  hubWidgetDef,
+} from '../registry/hubWidgetRegistry';
 import type { AdventureProfile } from '../engine/hubProfileEngine';
 import type { TripFull } from '@/features/trips/types/trip.types';
+import type { HubSectionId } from '../engine/hubProfileEngine';
 import type { HubAdventureRef, HubCounters } from '../registry/hubSectionRegistry';
 import { HubWidgetBody, type HubWidgetData } from './HubWidgets';
 
@@ -24,6 +30,8 @@ export interface HubSidebarRightProps {
   groupLabel?: string | null;
   linkedTripSlug?: string | null;
   pendingInvites?: number;
+  /** Section active (segment hub) pour le rail contextuel possession/collectif. */
+  activeSection?: HubSectionId | null;
 }
 
 /**
@@ -43,9 +51,21 @@ export function HubSidebarRight({
   groupLabel,
   linkedTripSlug,
   pendingInvites = 0,
+  activeSection = null,
 }: HubSidebarRightProps) {
   const pathname = usePathname();
-  const { shown } = selectHubWidgets(profile);
+  const { shown: profileShown } = selectHubWidgets(profile);
+
+  // Rail contextuel (colonne desktop seulement) : la section active priorise
+  // les widgets qui la concernent. La band mobile garde l'affichage complet.
+  const mapped = activeSection ? SECTION_WIDGET_MAP[activeSection] : undefined;
+  const contextualShown = mapped
+    ? mapped
+        .filter((id) => HUB_REAL_WIDGET_IDS.has(id))
+        .map((id) => hubWidgetDef(id))
+        .filter((d): d is NonNullable<ReturnType<typeof hubWidgetDef>> => d !== undefined)
+    : null;
+  const shown = contextualShown && contextualShown.length > 0 ? contextualShown : profileShown;
 
   const data: HubWidgetData = {
     items: counts.items ?? 0,

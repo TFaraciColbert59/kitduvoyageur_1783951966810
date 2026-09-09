@@ -15,6 +15,8 @@ import { BentoGrid } from '@/components/ui-layouts/bento-grid';
 import { MenuCard } from './MenuCard';
 import { QuickActions, type QuickAction } from './QuickActions';
 import { NumberStat } from '@/components/ui-layouts/number-stat';
+import { ActivityIdentityBar } from './ActivityIdentityBar';
+import { NextActionCard, type NextActionSignal } from './NextActionCard';
 import type { GroupeMenuSummary } from '../../server/getGroupeMenu';
 
 export interface CollectifMenuProps {
@@ -42,6 +44,21 @@ export function CollectifMenu({ summary, linkedTripSlug }: CollectifMenuProps) {
       { href: hubSectionHref(collectifRef, 'invitations'), label: 'Invitations', icon: MailPlus },
       { href: hubSectionHref(collectifRef, 'voyages-lies'), label: 'Voyages', icon: MapIcon },
     ];
+    const equipageNext: NextActionSignal[] = [];
+    if (summary.pendingInvites > 0) {
+      equipageNext.push({
+        kind: 'invitations',
+        href: hubSectionHref(collectifRef, 'invitations'),
+        title: `${summary.pendingInvites} invitation(s) en attente`,
+        description: 'Relancez vos invités.',
+      });
+    }
+    equipageNext.push({
+      kind: 'all-clear',
+      href: hubSectionHref(collectifRef, 'groupe'),
+      title: 'Tout est à jour',
+      description: 'Équipage rodé — préparez la prochaine expédition.',
+    });
     const cells = [
       {
         key: 'groupe', span: 6 as const,
@@ -103,6 +120,8 @@ export function CollectifMenu({ summary, linkedTripSlug }: CollectifMenuProps) {
     ];
     return (
       <div className="space-y-4">
+        <ActivityIdentityBar nature="collectif" name={name} />
+        <NextActionCard actions={equipageNext} />
         <QuickActions actions={actions} />
         <BentoGrid cells={cells} />
       </div>
@@ -116,6 +135,39 @@ export function CollectifMenu({ summary, linkedTripSlug }: CollectifMenuProps) {
     { href: onglet('tasks'), label: 'Tâches', icon: CheckSquare },
     { href: onglet('discussion'), label: 'Discussion', icon: MessageSquare },
   ];
+
+  // ── FIL D'ACTION (règles déterministes, ordonnées par priorité) ──
+  const nextActions: NextActionSignal[] = [];
+  if (summary.tasksOpen > 0) {
+    nextActions.push({
+      kind: 'tasks',
+      href: onglet('tasks'),
+      title: `${summary.tasksOpen} tâche(s) à faire`,
+      description: 'Répartissez et cochez les tâches du groupe.',
+    });
+  }
+  if (summary.pollsOpen > 0) {
+    nextActions.push({
+      kind: 'discussion',
+      href: onglet('decisions'),
+      title: `${summary.pollsOpen} décision(s) à voter`,
+      description: 'Votre vote compte — clôturez les sondages.',
+    });
+  }
+  if (summary.pendingInvites > 0) {
+    nextActions.push({
+      kind: 'invitations',
+      href: hubSectionHref(collectifRef, 'invitations'),
+      title: `${summary.pendingInvites} invitation(s) en attente`,
+      description: 'Relancez vos invités.',
+    });
+  }
+  nextActions.push({
+    kind: 'all-clear',
+    href: onglet('discussion'),
+    title: 'Tout est à jour',
+    description: 'Le groupe est rodé — lancez la discussion.',
+  });
 
   const cells = [
     {
@@ -237,6 +289,8 @@ export function CollectifMenu({ summary, linkedTripSlug }: CollectifMenuProps) {
 
   return (
     <div className="space-y-4">
+      <ActivityIdentityBar nature="collectif" name={name} />
+      <NextActionCard actions={nextActions} />
       <QuickActions actions={actions} />
       <BentoGrid cells={cells} />
     </div>
