@@ -19,6 +19,10 @@ import { ActivityIdentityBar } from './ActivityIdentityBar';
 import { NextActionCard, type NextActionSignal } from './NextActionCard';
 import { MoreSectionsGrid } from './MoreSectionsGrid';
 import { SosFloatingButton } from './SosFloatingButton';
+import { BudgetDonut } from './BudgetDonut';
+import { TraceMiniMap } from '@/features/trips/components/TraceMiniMap';
+import { ElevationSparkline } from '@/features/trips/components/ElevationSparkline';
+import { getTripElevationProfile } from '@/features/trips/lib/elevation';
 import { getTripDuration } from '@/features/trips/hooks/useTripDuration';
 import { getKitCounters } from '@/features/trips/hooks/useKitCounters';
 import { getTripDistance } from '@/features/trips/hooks/useTripDistance';
@@ -128,6 +132,7 @@ export function SortieMenu({
     catTotals.set(e.category ?? 'Autre', (catTotals.get(e.category ?? 'Autre') ?? 0) + Number(e.amount || 0));
   }
   const topCats = [...catTotals.entries()].sort((a, b) => b[1] - a[1]).slice(0, 2);
+  const elevationProfile = getTripElevationProfile(trip);
 
   // ── FIL D'ACTION (règles déterministes, ordonnées par priorité) ──
   const nextActions: NextActionSignal[] = [];
@@ -207,6 +212,29 @@ export function SortieMenu({
             {steps.length} étapes · +{dist.dPlus}m / -{dist.dMinus}m
             {weather ? ` · ${Math.round(weather.tempC)}°C` : ''}
           </p>
+          {/* Cartes vivantes : mini-trace + profil d'élévation (décoratifs). */}
+          <div className="mt-2 flex flex-wrap items-center gap-3">
+            {steps.some((s) => s.latitude != null && s.longitude != null) && (
+              <div className="flex-1 min-w-[150px] rounded-xl border border-white/70 bg-white/40 p-1.5">
+                <TraceMiniMap steps={steps} width={240} height={72} className="w-full h-auto" />
+              </div>
+            )}
+            {steps.some((s) => (s.elevation_gain_m ?? 0) > 0 || (s.elevation_loss_m ?? 0) > 0) && (
+              <div className="shrink-0 w-24 rounded-xl border border-white/70 bg-white/40 p-1.5">
+                <ElevationSparkline
+                  steps={steps}
+                  bounds={
+                    Number.isFinite(elevationProfile.minM) && Number.isFinite(elevationProfile.maxM)
+                      ? { minM: elevationProfile.minM, maxM: elevationProfile.maxM }
+                      : null
+                  }
+                  width={120}
+                  height={44}
+                  className="w-full h-auto"
+                />
+              </div>
+            )}
+          </div>
           {steps.length > 0 && (
             <ul className="mt-2 space-y-1.5 border-l-2 border-[var(--lkv-secondary)]/30 ml-1 pl-3">
               {steps.slice(0, 3).map((s) => (
@@ -247,14 +275,26 @@ export function SortieMenu({
             {stats.estimated_budget > 0 ? `sur ${stats.estimated_budget} ${currency} · ${budgetPct}%` : 'estimation non définie'}
           </p>
           {topCats.length > 0 ? (
-            <ul className="mt-2 space-y-1">
-              {topCats.map(([cat, sum]) => (
-                <li key={cat} className="flex items-center justify-between text-xs">
-                  <span className="truncate text-[var(--lkv-text-secondary)]">{cat}</span>
-                  <span className="font-bold text-[var(--lkv-text-primary)] ml-2 shrink-0">{Math.round(sum)} {currency}</span>
-                </li>
-              ))}
-            </ul>
+            <div className="mt-2 flex items-center gap-3">
+              <BudgetDonut
+                categories={topCats.map(([label, value]) => ({ label, value }))}
+                size={72}
+                stroke={9}
+                className="shrink-0"
+              />
+              <ul className="min-w-0 flex-1 space-y-1">
+                {topCats.map(([cat, sum], i) => (
+                  <li key={cat} className="flex items-center gap-2 text-xs">
+                    <span
+                      className="h-2 w-2 shrink-0 rounded-full"
+                      style={{ background: i === 0 ? 'var(--lkv-primary)' : 'var(--lkv-secondary)' }}
+                    />
+                    <span className="truncate text-[var(--lkv-text-secondary)]">{cat}</span>
+                    <span className="font-bold text-[var(--lkv-text-primary)] ml-auto shrink-0">{Math.round(sum)} {currency}</span>
+                  </li>
+                ))}
+              </ul>
+            </div>
           ) : (
             budgetPct !== null && (
               <div className="mt-2 h-2 w-full overflow-hidden rounded-full bg-black/5">
