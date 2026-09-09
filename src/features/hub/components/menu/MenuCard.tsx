@@ -1,67 +1,73 @@
 ﻿// UI Layouts (MIT) — carte-onglet du MENU Hub, habillée Liquid Glass.
-// Composant SERVEUR : les icônes sont passées ici-même (pas vers un client).
-// Le spotlight (halo souris) est appliqué par BentoGrid (client).
+// Composant SERVEUR. V5e : zéro icône (typographie seule), micro-label
+// uppercase, densification p-3, variante `media` (fond plein, contenu
+// posé sur un scrim — le média reste 100% visible au-dessus du texte).
 import Link from 'next/link';
-import { ArrowRight, type LucideIcon } from 'lucide-react';
 import { LiquidGlassCard } from '@/components/ui-layouts/liquid-glass';
 
 export interface MenuCardProps {
   href: string;
-  icon: LucideIcon;
   label: string;
   /** Micro-contenu de la carte (résumé de la section). */
   children?: React.ReactNode;
-  /** Priorité visuelle (pastille accent vert foncé). */
+  /** Priorité visuelle (label en accent vert foncé). */
   tone?: 'default' | 'accent';
+  /** Média plein fond (trace SVG…) — contenu posé sur un scrim dégradé. */
+  media?: React.ReactNode;
   className?: string;
 }
 
 /**
- * Hub V4 — Carte-onglet du MENU : toute la carte est un lien vers la section.
- * Remplissage frosted (bg-white/60) pour une lecture franche sur fond uni,
- * typographie 12px minimum, pastille 40px, hauteur min 150px.
+ * Hub V5e — Carte-onglet du MENU : toute la carte est un lien vers la
+ * section. Zéro icône (clarté), micro-label uppercase 11px, p-3.
+ * `media` : le média couvre la carte ; le contenu s'arrête sur le scrim
+ * bas (from-white/85) — jamais de texte sur le média.
  */
 export function MenuCard({
   href,
-  icon: Icon,
   label,
   children,
   tone = 'default',
+  media,
   className = '',
 }: MenuCardProps) {
   return (
     <Link
       href={href}
-      className={`group relative block h-full focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--lkv-primary)] rounded-[var(--lkv-radius-card)] ${className}`}
+      className={`group relative block h-full focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--lkv-primary)] rounded-[var(--lkv-radius-card)] transition-transform active:scale-[0.99] ${className}`}
     >
       <LiquidGlassCard
-        className="h-full min-h-[150px]"
+        className={`h-full ${media ? 'min-h-[500px]' : 'min-h-[150px]'}`}
         glowIntensity="sm"
         shadowIntensity="md"
         borderRadius="var(--lkv-radius-card)"
       >
-        <div className="relative z-30 flex h-full min-h-[150px] flex-col justify-between rounded-[var(--lkv-radius-card)] border border-white/60 bg-white/55 p-4">
-          <div className="flex items-start justify-between gap-2">
-            <span
-              className={`flex h-10 w-10 items-center justify-center rounded-full border border-white/60 shadow-2xs ${
+        {media && (
+          <div data-media-root className="absolute inset-0 z-10 overflow-hidden rounded-[var(--lkv-radius-card)]">
+            {media}
+          </div>
+        )}
+        <div
+          className={`relative z-30 flex ${media ? 'min-h-[500px]' : 'h-full min-h-[150px]'} flex-col justify-end rounded-[var(--lkv-radius-card)] p-3`}
+        >
+          <div
+            data-media-content-panel
+            className={`min-w-0 ${
+              media
+                ? 'rounded-2xl border border-white/60 bg-white/95 p-3 shadow-sm backdrop-blur-sm'
+                : ''
+            } ${media ? '' : 'flex h-full min-h-[150px] flex-col justify-end rounded-[var(--lkv-radius-card)] border border-white/60 bg-white/55'}`}
+          >
+            <p
+              className={`text-[11px] font-bold uppercase tracking-widest leading-tight ${
                 tone === 'accent'
-                  ? 'bg-[var(--lkv-forest-900)] text-sage-300'
-                  : 'bg-white/70 text-[var(--lkv-secondary)]'
+                  ? 'text-[var(--lkv-primary)]'
+                  : 'text-[var(--lkv-text-secondary)]'
               }`}
             >
-              <Icon size={17} aria-hidden="true" />
-            </span>
-            <ArrowRight
-              size={16}
-              className="shrink-0 text-[var(--lkv-text-muted)] transition-transform group-hover:translate-x-0.5"
-              aria-hidden="true"
-            />
-          </div>
-          <div className="mt-3 min-w-0">
-            <p className="text-sm font-bold leading-tight text-[var(--lkv-text-primary)]">
               {label}
             </p>
-            {children}
+            {children && <div className="mt-1.5 min-w-0">{children}</div>}
           </div>
         </div>
       </LiquidGlassCard>

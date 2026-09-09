@@ -1,14 +1,8 @@
-﻿import {
+import {
   Calendar,
   CheckSquare,
   CreditCard,
-  FileText,
   Navigation,
-  Package,
-  Play,
-  Share2,
-  Shield,
-  Users,
 } from 'lucide-react';
 import { hubSectionHref, HUB_HOME_HREF, type HubAdventureRef } from '../../registry/hubSectionRegistry';
 import { MenuCard } from './MenuCard';
@@ -20,9 +14,8 @@ import { NextActionCard, type NextActionSignal } from './NextActionCard';
 import { MoreSectionsGrid } from './MoreSectionsGrid';
 import { SosFloatingButton } from './SosFloatingButton';
 import { BudgetDonut } from './BudgetDonut';
-import { TraceMiniMap } from '@/features/trips/components/TraceMiniMap';
-import { ElevationSparkline } from '@/features/trips/components/ElevationSparkline';
-import { getTripElevationProfile } from '@/features/trips/lib/elevation';
+import { WeatherStrip } from '../weather/WeatherStrip';
+import HubMiniMap from '@/components/hub/HubMiniMap';
 import { getTripDuration } from '@/features/trips/hooks/useTripDuration';
 import { getKitCounters } from '@/features/trips/hooks/useKitCounters';
 import { getTripDistance } from '@/features/trips/hooks/useTripDistance';
@@ -126,13 +119,13 @@ export function SortieMenu({
     (a, b) => (b.day_number ?? 0) - (a.day_number ?? 0) || b.created_at.localeCompare(a.created_at),
   );
   const lastNote = notes[0] ?? null;
-  const weather = hiking?.weather?.current;
+  const weatherCtx = hiking?.weather ?? null;
+  const weather = weatherCtx?.current ?? null;
   const catTotals = new Map<string, number>();
   for (const e of trip.expenses ?? []) {
     catTotals.set(e.category ?? 'Autre', (catTotals.get(e.category ?? 'Autre') ?? 0) + Number(e.amount || 0));
   }
   const topCats = [...catTotals.entries()].sort((a, b) => b[1] - a[1]).slice(0, 2);
-  const elevationProfile = getTripElevationProfile(trip);
 
   // ── FIL D'ACTION (règles déterministes, ordonnées par priorité) ──
   const nextActions: NextActionSignal[] = [];
@@ -187,7 +180,7 @@ export function SortieMenu({
     cockpit: {
       span: 6,
       node: (
-        <MenuCard href={`${HUB_HOME_HREF}?phase=live`} icon={Play} label="Cockpit terrain" tone="accent">
+        <MenuCard href={`${HUB_HOME_HREF}?phase=live`} label="Cockpit terrain" tone="accent">
           <p className="text-xs text-[var(--lkv-text-secondary)] mt-0.5">Jour en cours, secours 112, dépense express.</p>
         </MenuCard>
       ),
@@ -195,7 +188,7 @@ export function SortieMenu({
     raconter: {
       span: 6,
       node: (
-        <MenuCard href={`${HUB_HOME_HREF}?phase=recount`} icon={Share2} label="Raconter" tone="accent">
+        <MenuCard href={`${HUB_HOME_HREF}?phase=recount`} label="Raconter" tone="accent">
           <p className="text-xs text-[var(--lkv-text-secondary)] mt-0.5">Bilan, carnet de bord et partage.</p>
         </MenuCard>
       ),
@@ -203,40 +196,30 @@ export function SortieMenu({
     itinerary: {
       span: 6,
       node: (
-        <MenuCard href={hubSectionHref(ref, 'itinerary')} icon={Navigation} label="Itinéraire">
-          <p className="mt-1 text-2xl font-extrabold text-[var(--lkv-text-primary)]">
+        <MenuCard
+          href={hubSectionHref(ref, 'itinerary')}
+          label="Itinéraire"
+          media={<HubMiniMap steps={steps} distanceKm={dist.totalKm} />}
+        >
+          <p className="text-3xl font-extrabold tracking-tight text-[var(--lkv-text-primary)]">
             <NumberStat value={duration.durationDays} /> j ·{' '}
             <NumberStat value={dist.totalKm} decimals={dist.totalKm % 1 === 0 ? 0 : 1} suffix=" km" />
           </p>
-          <p className="text-xs text-[var(--lkv-text-secondary)] font-mono">
+          <p className="text-[11px] text-[var(--lkv-text-secondary)] font-mono">
             {steps.length} étapes · +{dist.dPlus}m / -{dist.dMinus}m
             {weather ? ` · ${Math.round(weather.tempC)}°C` : ''}
           </p>
-          {/* Cartes vivantes : mini-trace + profil d'élévation (décoratifs). */}
-          <div className="mt-2 flex flex-wrap items-center gap-3">
-            {steps.some((s) => s.latitude != null && s.longitude != null) && (
-              <div className="flex-1 min-w-[150px] rounded-xl border border-white/70 bg-white/40 p-1.5">
-                <TraceMiniMap steps={steps} width={240} height={72} className="w-full h-auto" />
-              </div>
-            )}
-            {steps.some((s) => (s.elevation_gain_m ?? 0) > 0 || (s.elevation_loss_m ?? 0) > 0) && (
-              <div className="shrink-0 w-24 rounded-xl border border-white/70 bg-white/40 p-1.5">
-                <ElevationSparkline
-                  steps={steps}
-                  bounds={
-                    Number.isFinite(elevationProfile.minM) && Number.isFinite(elevationProfile.maxM)
-                      ? { minM: elevationProfile.minM, maxM: elevationProfile.maxM }
-                      : null
-                  }
-                  width={120}
-                  height={44}
-                  className="w-full h-auto"
-                />
-              </div>
-            )}
-          </div>
+          {weatherCtx && (
+            <div className="mt-1.5">
+              <WeatherStrip
+                current={weatherCtx.current}
+                days={weatherCtx.days}
+                locationLabel={weatherCtx.locationLabel}
+              />
+            </div>
+          )}
           {steps.length > 0 && (
-            <ul className="mt-2 space-y-1.5 border-l-2 border-[var(--lkv-secondary)]/30 ml-1 pl-3">
+            <ul className="mt-1.5 space-y-1 border-l-2 border-[var(--lkv-secondary)]/30 ml-1 pl-2.5">
               {steps.slice(0, 3).map((s) => (
                 <li key={s.id} className="flex items-center gap-2 text-xs">
                   <span className="font-mono text-[var(--lkv-text-muted)] shrink-0">J{s.day_number}</span>
@@ -251,8 +234,8 @@ export function SortieMenu({
     gear: {
       span: 6,
       node: (
-        <MenuCard href={hubSectionHref(ref, 'gear')} icon={Package} label="Équipement">
-          <p className="mt-1 text-2xl font-extrabold text-[var(--lkv-text-primary)]">
+        <MenuCard href={hubSectionHref(ref, 'gear')} label="Équipement">
+          <p className="mt-1 text-3xl font-extrabold tracking-tight text-[var(--lkv-text-primary)]">
             <NumberStat value={packedPercent} suffix="%" />
             <span className="ml-2 text-xs font-semibold text-[var(--lkv-text-secondary)]">
               {kit.ready}/{kit.total} prêts{weightKg > 0 ? ` · ${weightKg.toFixed(1)} kg` : ''}
@@ -267,8 +250,8 @@ export function SortieMenu({
     budget: {
       span: 4,
       node: (
-        <MenuCard href={hubSectionHref(ref, 'budget')} icon={CreditCard} label="Budget">
-          <p className="mt-1 text-2xl font-extrabold text-[var(--lkv-text-primary)]">
+        <MenuCard href={hubSectionHref(ref, 'budget')} label="Budget">
+          <p className="mt-1 text-3xl font-extrabold tracking-tight text-[var(--lkv-text-primary)]">
             <NumberStat value={stats.total_spent} suffix={` ${currency}`} />
           </p>
           <p className="text-xs text-[var(--lkv-text-secondary)]">
@@ -308,8 +291,8 @@ export function SortieMenu({
     team: {
       span: 4,
       node: (
-        <MenuCard href={hubSectionHref(ref, 'team')} icon={Users} label="Équipage & compagnons">
-          <p className="mt-1 text-2xl font-extrabold text-[var(--lkv-text-primary)]">
+        <MenuCard href={hubSectionHref(ref, 'team')} label="Équipage & compagnons">
+          <p className="mt-1 text-3xl font-extrabold tracking-tight text-[var(--lkv-text-primary)]">
             <NumberStat value={collabCount + crewCount} />
             <span className="ml-2 text-xs font-semibold text-[var(--lkv-text-secondary)]">
               compagnon{(collabCount + crewCount) > 1 ? 's' : ''}
@@ -339,7 +322,7 @@ export function SortieMenu({
     checklist: {
       span: 4,
       node: (
-        <MenuCard href={hubSectionHref(ref, 'checklist')} icon={CheckSquare} label="Checklist">
+        <MenuCard href={hubSectionHref(ref, 'checklist')} label="Checklist">
           <ChecklistCardBody tripId={trip.id} daysUntil={daysUntil} countryCode={trip.destination_country_code} />
         </MenuCard>
       ),
@@ -347,8 +330,8 @@ export function SortieMenu({
     docs: {
       span: 3,
       node: (
-        <MenuCard href={hubSectionHref(ref, 'docs')} icon={FileText} label="Documents">
-          <p className="mt-1 text-2xl font-extrabold text-[var(--lkv-text-primary)]">
+        <MenuCard href={hubSectionHref(ref, 'docs')} label="Documents">
+          <p className="mt-1 text-3xl font-extrabold tracking-tight text-[var(--lkv-text-primary)]">
             <NumberStat value={trip.documents?.length ?? 0} />
           </p>
           {(trip.documents ?? []).length > 0 ? (
@@ -378,8 +361,8 @@ export function SortieMenu({
     safety: {
       span: 3,
       node: (
-        <MenuCard href={hubSectionHref(ref, 'safety')} icon={Shield} label="Sécurité">
-          <p className="mt-1 text-2xl font-extrabold text-[var(--lkv-text-primary)]">
+        <MenuCard href={hubSectionHref(ref, 'safety')} label="Sécurité">
+          <p className="mt-1 text-3xl font-extrabold tracking-tight text-[var(--lkv-text-primary)]">
             <NumberStat value={pendingSafety} />
             <span className="ml-2 text-xs font-semibold text-[var(--lkv-text-secondary)]">point{pendingSafety > 1 ? 's' : ''} en attente</span>
           </p>
@@ -397,7 +380,7 @@ export function SortieMenu({
     journal: {
       span: 3,
       node: (
-        <MenuCard href={hubSectionHref(ref, 'journal')} icon={Calendar} label="Journal">
+        <MenuCard href={hubSectionHref(ref, 'journal')} label="Journal">
           {lastNote ? (
             <div className="mt-1">
               {lastNote.day_number != null && (
@@ -416,7 +399,7 @@ export function SortieMenu({
     export: {
       span: 3,
       node: (
-        <MenuCard href={hubSectionHref(ref, 'export')} icon={Share2} label="Export">
+        <MenuCard href={hubSectionHref(ref, 'export')} label="Export">
           <div className="mt-2 flex gap-2">
             <span className="rounded-full bg-[var(--lkv-primary)]/10 px-2.5 py-1 text-[11px] font-bold text-[var(--lkv-primary)]">GPX</span>
             <span className="rounded-full bg-[var(--lkv-primary)]/10 px-2.5 py-1 text-[11px] font-bold text-[var(--lkv-primary)]">Feuille de route</span>

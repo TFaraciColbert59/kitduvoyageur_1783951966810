@@ -1,9 +1,6 @@
 import {
   BellRing,
-  CalendarCheck,
   Check,
-  ClipboardList,
-  FlaskConical,
   Footprints,
   Package,
   Backpack,
@@ -83,11 +80,11 @@ export function PossessionMenu({ summary }: PossessionMenuProps) {
       node: (
         <MenuCard
           href={hubSectionHref(ref, 'depart')}
-          icon={Footprints}
+         
           label={summary.depart.destination === 'Aucun départ planifié' ? 'Prochain départ' : summary.depart.destination}
           tone="accent"
         >
-          <p className="mt-1 text-2xl font-extrabold text-[var(--lkv-text-primary)]">
+          <p className="mt-1 text-3xl font-extrabold tracking-tight text-[var(--lkv-text-primary)]">
             {departDays ?? '—'}
             <span className="ml-2 text-xs font-semibold text-[var(--lkv-text-secondary)]">
               <NumberStat value={summary.depart.readinessPct} suffix="%" /> prêt
@@ -104,8 +101,8 @@ export function PossessionMenu({ summary }: PossessionMenuProps) {
     {
       key: 'alertes', span: 6 as const,
       node: (
-        <MenuCard href={hubSectionHref(ref, 'alertes')} icon={BellRing} label="Alertes">
-          <p className="mt-1 text-2xl font-extrabold text-[var(--lkv-text-primary)]">
+        <MenuCard href={hubSectionHref(ref, 'alertes')} label="Alertes">
+          <p className="mt-1 text-3xl font-extrabold tracking-tight text-[var(--lkv-text-primary)]">
             <NumberStat value={summary.alertes.count} />
             <span className="ml-2 text-xs font-semibold text-[var(--lkv-text-secondary)]">
               alerte{summary.alertes.count > 1 ? 's' : ''}
@@ -125,8 +122,8 @@ export function PossessionMenu({ summary }: PossessionMenuProps) {
     {
       key: 'inventaire', span: 4 as const,
       node: (
-        <MenuCard href={hubSectionHref(ref, 'inventaire')} icon={Package} label="Inventaire">
-          <p className="mt-1 text-2xl font-extrabold text-[var(--lkv-text-primary)]">
+        <MenuCard href={hubSectionHref(ref, 'inventaire')} label="Inventaire">
+          <p className="mt-1 text-3xl font-extrabold tracking-tight text-[var(--lkv-text-primary)]">
             <NumberStat value={summary.inventaire.count} />
             <span className="ml-2 text-xs font-semibold text-[var(--lkv-text-secondary)]">
               objet{summary.inventaire.count > 1 ? 's' : ''}
@@ -145,8 +142,8 @@ export function PossessionMenu({ summary }: PossessionMenuProps) {
     {
       key: 'kits', span: 4 as const,
       node: (
-        <MenuCard href={hubSectionHref(ref, 'kit')} icon={Backpack} label="Kits">
-          <p className="mt-1 text-2xl font-extrabold text-[var(--lkv-text-primary)]">
+        <MenuCard href={hubSectionHref(ref, 'kit')} label="Kits">
+          <p className="mt-1 text-3xl font-extrabold tracking-tight text-[var(--lkv-text-primary)]">
             <NumberStat value={summary.kits.count} />
             <span className="ml-2 text-xs font-semibold text-[var(--lkv-text-secondary)]">
               kit{summary.kits.count > 1 ? 's' : ''} · <NumberStat value={summary.kits.totalWeightKg} decimals={1} suffix=" kg" />
@@ -170,8 +167,8 @@ export function PossessionMenu({ summary }: PossessionMenuProps) {
     {
       key: 'preparation', span: 4 as const,
       node: (
-        <MenuCard href={hubSectionHref(ref, 'preparation')} icon={FlaskConical} label="Préparation">
-          <p className="mt-1 text-2xl font-extrabold text-[var(--lkv-text-primary)]">
+        <MenuCard href={hubSectionHref(ref, 'preparation')} label="Préparation">
+          <p className="mt-1 text-3xl font-extrabold tracking-tight text-[var(--lkv-text-primary)]">
             <NumberStat value={summary.kits.avgCompletionPct} suffix="%" />
           </p>
           <p className="text-xs text-[var(--lkv-text-secondary)]">complétion moyenne des kits</p>
@@ -184,8 +181,8 @@ export function PossessionMenu({ summary }: PossessionMenuProps) {
     {
       key: 'disponibilite', span: 6 as const,
       node: (
-        <MenuCard href={hubSectionHref(ref, 'disponibilite')} icon={CalendarCheck} label="Disponibilité">
-          <p className="mt-1 text-2xl font-extrabold text-[var(--lkv-text-primary)]">
+        <MenuCard href={hubSectionHref(ref, 'disponibilite')} label="Disponibilité">
+          <p className="mt-1 text-3xl font-extrabold tracking-tight text-[var(--lkv-text-primary)]">
             <NumberStat value={summary.dispo.availableCount} />
             <span className="ml-2 text-xs font-semibold text-[var(--lkv-text-secondary)]">
               disponible{summary.dispo.availableCount > 1 ? 's' : ''} / {summary.dispo.total}
@@ -201,8 +198,8 @@ export function PossessionMenu({ summary }: PossessionMenuProps) {
     {
       key: 'oublis', span: 6 as const,
       node: (
-        <MenuCard href={hubSectionHref(ref, 'oublis')} icon={ClipboardList} label="À ne pas oublier">
-          <p className="mt-1 text-2xl font-extrabold text-[var(--lkv-text-primary)]">
+        <MenuCard href={hubSectionHref(ref, 'oublis')} label="À ne pas oublier">
+          <p className="mt-1 text-3xl font-extrabold tracking-tight text-[var(--lkv-text-primary)]">
             <NumberStat value={summary.forget.forgetRemaining} />
             <span className="ml-2 text-xs font-semibold text-[var(--lkv-text-secondary)]">
               restant{summary.forget.forgetRemaining > 1 ? 's' : ''} · {summary.forget.checkedItems}/{summary.forget.totalItems} cochés

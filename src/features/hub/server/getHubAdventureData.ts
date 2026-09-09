@@ -71,7 +71,11 @@ export interface HubHikingContext {
   durationMin: number | null;
   waterPointsCount: number;
   coords: { lat: number; lon: number } | null;
-  weather: { current: { tempC: number; weathercode: number; precipPct: number }; days: WeatherDay[] } | null;
+  weather: {
+    current: { tempC: number; weathercode: number; precipPct: number };
+    days: WeatherDay[];
+    locationLabel: string | null;
+  } | null;
 }
 
 export interface HubAdventureData extends HubAdventureLists {
@@ -300,7 +304,11 @@ async function loadHikingContext(
   let weather: HubHikingContext['weather'] = null;
   try {
     const forecast = await getWeather(coords?.lat ?? null, coords?.lon ?? null, trip.destination_name);
-    weather = { current: forecast.current, days: forecast.days };
+    weather = {
+      current: forecast.current,
+      days: forecast.days,
+      locationLabel: forecast.location.label ?? null,
+    };
   } catch (err) {
     console.error('[LKDV hub] weather error:', err);
   }

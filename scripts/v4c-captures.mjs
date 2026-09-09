@@ -104,8 +104,8 @@ const mobile = { width: 390, height: 844 };
 
 await capture('v4c-hub-possession-desktop', { path: '/hub', viewport: desktop });
 if (sortie) {
-  await capture('v5d-hub-sortie-desktop', { path: '/hub', viewport: desktop });
-  await capture('v5d-hub-sortie-mobile', { path: '/hub', viewport: mobile, fullPage: true });
+  await capture('v5e-hub-sortie-desktop', { path: '/hub', viewport: desktop });
+  await capture('v5e-hub-sortie-mobile', { path: '/hub', viewport: mobile, fullPage: true });
   await capture('v4c-hub-sortie-mobile', { path: '/hub', viewport: mobile, fullPage: true });
   await capture('v4c-hub-sortie-mobile-live-sos', { path: '/hub?phase=live', viewport: mobile });
   await capture('v4c-hub-sortie-mobile-plus-sections', { path: '/hub', viewport: mobile, clickText: 'Plus de sections' });

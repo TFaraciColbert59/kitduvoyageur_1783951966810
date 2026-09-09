@@ -27,7 +27,8 @@ export function SosFloatingButton({ safetyHref }: SosFloatingButtonProps) {
           setOpen(true);
         }}
         aria-label="Urgence — secours et contacts"
-        className="fixed bottom-[calc(88px+env(safe-area-inset-bottom,0px))] right-4 z-[900] md:bottom-6 md:right-6 flex h-14 w-14 items-center justify-center rounded-full bg-[var(--lkv-danger)] text-white shadow-xl border-2 border-white/70 transition-transform active:scale-90 cursor-pointer"
+        style={{ bottom: 'calc(var(--bottom-nav-height, 52px) + 12px + env(safe-area-inset-bottom, 0px))' }} // lkdv-safe-area-ok
+        className="fixed right-4 z-[900] md:bottom-6 md:right-6 md:!bottom-6 flex h-14 w-14 items-center justify-center rounded-full bg-[var(--lkv-danger)] text-white shadow-xl border-2 border-white/70 transition-transform active:scale-90 cursor-pointer"
       >
         <Siren size={24} aria-hidden="true" />
       </button>
