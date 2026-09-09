@@ -189,17 +189,21 @@ export function AdventureSwitcher({
     );
   };
 
+  // H-AUTO-42 — Groupes cmdk natifs (jamais de wrapper <div> autour des
+  // CommandItem dans CommandList) : cmdk 1.x + React 19 crashait au filtrage
+  // (« appendChild … not of type Node ») quand la structure de la liste
+  // changeait sous des divs non managés.
+  const GROUP_HEADING_CLASS =
+    '[&_[cmdk-group-heading]]:px-3 [&_[cmdk-group-heading]]:pt-2 [&_[cmdk-group-heading]]:pb-1 [&_[cmdk-group-heading]]:text-[10px] [&_[cmdk-group-heading]]:font-mono [&_[cmdk-group-heading]]:uppercase [&_[cmdk-group-heading]]:tracking-widest [&_[cmdk-group-heading]]:text-[var(--lkv-text-muted)]';
+
   const renderGroup = (title: string, entries: AdventureEntry[], emptyLabel: string) => (
-    <div>
-      <p className="px-3 pt-2 pb-1 text-[10px] font-mono uppercase tracking-widest text-[var(--lkv-text-muted)]">
-        {title} · {entries.length}
-      </p>
+    <Cmd.CommandGroup heading={`${title} · ${entries.length}`} className={GROUP_HEADING_CLASS}>
       {entries.length === 0 ? (
         <p className="px-3 py-2 text-xs text-[var(--lkv-text-muted)]">{emptyLabel}</p>
       ) : (
         entries.map(renderEntry)
       )}
-    </div>
+    </Cmd.CommandGroup>
   );
 
   const listContent = (
@@ -217,10 +221,7 @@ export function AdventureSwitcher({
       </Cmd.CommandEmpty>
       <Cmd.CommandList className="mt-1 flex flex-col gap-1 max-h-[340px] overflow-y-auto no-scrollbar">
         {suggestedEntry && suggestion && (
-          <div>
-            <p className="px-3 pt-2 pb-1 text-[10px] font-mono uppercase tracking-widest text-[var(--lkv-text-muted)]">
-              Suggestion
-            </p>
+          <Cmd.CommandGroup heading="Suggestion" className={GROUP_HEADING_CLASS}>
             <Cmd.CommandItem
               key={`suggest-${adventureKey(suggestedEntry)}`}
               value={`suggestion ${suggestion.reason}`}
@@ -237,7 +238,7 @@ export function AdventureSwitcher({
                 </span>
               </span>
             </Cmd.CommandItem>
-          </div>
+          </Cmd.CommandGroup>
         )}
         {renderGroup('Mon matériel', filtered.possession, 'Aucun matériel.')}
         {renderGroup('Mes voyages', filtered.sorties, 'Aucun voyage pour cette recherche.')}
