@@ -1,6 +1,7 @@
 import { notFound } from 'next/navigation';
 import { createClient } from '@/lib/supabase/server';
 import { getHubAdventureData } from '@/features/hub/server/getHubAdventureData';
+import { MenuBack } from '@/features/hub/components/menu/MenuBack';
 import { hubSectionRegistry } from '@/features/hub/registry/hubSectionRegistry';
 import { HubInventaireSection } from '@/features/hub/components/possession/HubInventaireSection';
 import { HubKitSection } from '@/features/hub/components/possession/HubKitSection';
@@ -42,7 +43,7 @@ export default async function HubSectionPage({
   searchParams,
 }: {
   params: Promise<{ section: string }>;
-  searchParams: Promise<{ id?: string; route?: string }>;
+  searchParams: Promise<{ id?: string; route?: string; onglet?: string }>;
 }) {
   const [{ section }, sp] = await Promise.all([params, searchParams]);
   const def = hubSectionRegistry.find((d) => d.segment === section);
@@ -53,6 +54,7 @@ export default async function HubSectionPage({
 
   return (
     <div className="space-y-4">
+      <MenuBack />
       <h1 className="font-display font-bold text-2xl text-[var(--lkv-text-primary)] px-1 pt-1">
         {def.label}
       </h1>
@@ -69,7 +71,7 @@ export default async function HubSectionPage({
       )}
       {def.id === 'groupe' && data.adventure.nature === 'collectif' && (
         data.adventure.kind === 'groupe' ? (
-          <HubGroupeCockpit groupId={data.adventure.id} />
+          <HubGroupeCockpit groupId={data.adventure.id} initialTab={sp.onglet} />
         ) : (
           <HubGroupeSection adventure={data.adventure} />
         )

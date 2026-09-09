@@ -21,9 +21,7 @@ import { useAndroidHubBackNav } from '../hooks/useAndroidHubBackNav';
 import { AdventureSwitcher } from './AdventureSwitcher';
 import HubSidebarLeft from './HubSidebarLeft';
 import HubSidebarRight from './HubSidebarRight';
-import { HubMobileSectionsSheet } from './HubMobileSectionsSheet';
 import { HubNetworkStatus } from './HubNetworkStatus';
-import { HubSectionPicker } from './HubSectionPicker';
 
 export interface HubShellProps {
   adventure: ActiveAdventureData;
@@ -57,10 +55,9 @@ function refOf(adventure: ActiveAdventureData): HubAdventureRef {
 }
 
 /**
- * H3.4 — Coquille unique du hub voyageur (généralisation de TripHubShell).
- * Montée UNE fois par le layout /hub : chrome 3 colonnes desktop, plein écran
- * mobile, navigation URL-driven lue des registres, mémoire de section par
- * aventure, customs du picker fusionnés au profil serveur.
+ * Hub V4 — Coquille unique du hub : sidebar = activités, rail droit = widgets,
+ * centre = MENU de cartes (racine) ou contenu de section. Mobile : pastille
+ * d'activité + contenu (le MENU est la navigation des sections).
  */
 export function HubShell({
   adventure,
@@ -75,9 +72,7 @@ export function HubShell({
 }: HubShellProps) {
   const pathname = usePathname();
   const activeSection = hubSectionFromPathname(pathname);
-  const [isPickerOpen, setIsPickerOpen] = useState(false);
-  const [customs, setCustoms] = useState<HubSectionId[]>([]);
-  // H6.1 — Pilotage sélecteur (retour Android) : signal + état suivi.
+  // H6.1 — le sélecteur mobile reste piloté par signal (retour Android).
   const [switcherSignal, setSwitcherSignal] = useState(0);
   const [switcherOpen, setSwitcherOpen] = useState(false);
   useEffect(() => {
@@ -99,55 +94,26 @@ export function HubShell({
   const key = adventureKey(entryOf(adventure, counts));
   const ref = refOf(adventure);
 
-  // Customs persistés (HubSectionPicker) — lus une fois au montage.
-  useEffect(() => {
-    try {
-      const raw = localStorage.getItem(`lkdv_hub_sections_${key}`);
-      if (raw) {
-        const parsed = JSON.parse(raw) as HubSectionId[];
-        if (Array.isArray(parsed)) setCustoms(parsed);
-      }
-    } catch {
-      /* ignoré */
-    }
-  }, [key]);
-
   const effectiveProfile: AdventureProfile = useMemo(() => {
-    const sections = mergeEnabledSections(profile.sections, [...baseEnabled, ...customs]);
-    const reason = { ...profile.reason };
-    for (const id of customs) {
-      reason[id] = 'affiché : activé manuellement (HubSectionPicker)';
-    }
-    return { ...profile, sections, reason };
-  }, [profile, baseEnabled, customs]);
+    const sections = mergeEnabledSections(profile.sections, baseEnabled);
+    return { ...profile, sections };
+  }, [profile, baseEnabled]);
 
-  // Mémoire de la dernière section visitée pour cette aventure (miroir Y5.2).
+  // Mémoire de la dernière section visitée pour cette aventure.
   useEffect(() => {
     if (activeSection) setLastSection(key, activeSection);
   }, [key, activeSection, setLastSection]);
 
-  // Thème de barre d'état natif (miroir Y7.5).
   useEffect(() => {
     applyLKDVStatusBarTheme();
   }, []);
 
-  // Capteurs live (D1 — GPS/batterie/ultra-save migrés, actifs en mode trek).
   useHubLiveSensors(isTrekActive);
 
-  // Retour matériel Android : section → aperçu → sélecteur (H6.1).
   useAndroidHubBackNav(activeSection, switcherOpen);
 
   const networkStatus = <HubNetworkStatus />;
-  const sidebarLeft = (
-    <HubSidebarLeft
-      adventure={ref}
-      profile={effectiveProfile}
-      counts={counts}
-      onOpenPicker={() => setIsPickerOpen(true)}
-      statusSlot={networkStatus}
-      switcherSignal={switcherSignal}
-    />
-  );
+  const sidebarLeft = <HubSidebarLeft statusSlot={networkStatus} />;
   const sidebarRight = (
     <HubSidebarRight
       profile={effectiveProfile}
@@ -157,18 +123,6 @@ export function HubShell({
       groupLabel={groupLabel}
       linkedTripSlug={linkedTripSlug}
       pendingInvites={pendingInvites}
-    />
-  );
-  const mobileWidgetBand = (
-    <HubSidebarRight
-      profile={effectiveProfile}
-      adventure={ref}
-      counts={counts}
-      trip={trip}
-      groupLabel={groupLabel}
-      linkedTripSlug={linkedTripSlug}
-      pendingInvites={pendingInvites}
-      variant="band"
     />
   );
 
@@ -181,34 +135,14 @@ export function HubShell({
           <div className="px-4 pt-4 pb-32 text-[var(--lkv-text-primary)]">
             <div className="flex items-center justify-between gap-2 mb-3 min-w-0">
               <AdventureSwitcher forceOpenSignal={switcherSignal} variant="mobile" />
-              <div className="flex items-center gap-2 shrink-0">
-                <HubMobileSectionsSheet
-                  adventure={ref}
-                  profile={effectiveProfile}
-                  counts={counts}
-                  activeSection={activeSection}
-                  onOpenPicker={() => setIsPickerOpen(true)}
-                />
-                {networkStatus}
-              </div>
+              <div className="flex items-center gap-2 shrink-0">{networkStatus}</div>
             </div>
             {children}
-            <div className="mt-4">
-              {mobileWidgetBand}
-            </div>
           </div>
         </MobilePageShell>
       }
     >
       {children}
-      <HubSectionPicker
-        adventureKey={key}
-        profile={effectiveProfile}
-        serverEnabled={baseEnabled}
-        isOpen={isPickerOpen}
-        onClose={() => setIsPickerOpen(false)}
-        onChange={setCustoms}
-      />
     </AppShellDesktop>
   );
 }

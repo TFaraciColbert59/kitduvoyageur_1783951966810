@@ -1,20 +1,17 @@
 import { getHubAdventureData } from '@/features/hub/server/getHubAdventureData';
-import { deriveHubProfile } from '@/features/hub/engine/hubProfileEngine';
 import { getTripStats } from '@/lib/queries-trips';
 import { getMaterielSummary } from '@/features/materiel/services/getMaterielSummary';
-import { HubOverviewPossession } from '@/features/hub/components/HubOverviewPossession';
-import { HubOverviewSortie } from '@/features/hub/components/HubOverviewSortie';
-import { HubOverviewCollectif } from '@/features/hub/components/HubOverviewCollectif';
+import { getGroupeMenuSummary } from '@/features/hub/server/getGroupeMenu';
+import { getTripPhaseDetails } from '@/features/trips/engine/temporalPhaseEngine';
+import { SortieMenu } from '@/features/hub/components/menu/SortieMenu';
+import { PossessionMenu } from '@/features/hub/components/menu/PossessionMenu';
+import { CollectifMenu } from '@/features/hub/components/menu/CollectifMenu';
+import { PhaseLiveView, PhaseRecountView } from '@/features/hub/components/menu/PhaseViews';
 
 export const metadata = {
   title: 'Hub — Le Kit du Voyageur',
   description: 'Votre aventure active : matériel, voyage et groupe au même endroit.',
 };
-
-/**
- * H3.4 — Aperçu de l'aventure active (jamais une liste d'abord).
- * Une seule vue par nature (1 h1 par fichier, H-D85 R9).
- */
 
 function daysUntil(dateStr: string | null | undefined, now: number): number | null {
   if (!dateStr) return null;
@@ -23,42 +20,52 @@ function daysUntil(dateStr: string | null | undefined, now: number): number | nu
   return Math.round((t - now) / 86400000);
 }
 
-export default async function HubPage() {
+/**
+ * Hub V4 — RACINE = MENU de cartes-onglets (remplace l'aperçu hero).
+ * ?phase=live|recount → surfaces de phase (cockpit terrain / raconter).
+ */
+export default async function HubPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ phase?: string }>;
+}) {
+  const { phase } = await searchParams;
   const data = await getHubAdventureData();
-  const profile = deriveHubProfile(data.input, new Date());
 
   if (data.input.kind === 'sortie' && data.trip) {
     const stats = await getTripStats(data.trip.id);
+    const phaseDetails = getTripPhaseDetails(data.trip);
+    if (phase === 'live') {
+      return (
+        <PhaseLiveView
+          trip={data.trip}
+          stats={stats}
+          dayIndex={phaseDetails.dayIndex}
+          totalDays={phaseDetails.totalDays}
+        />
+      );
+    }
+    if (phase === 'recount') {
+      return <PhaseRecountView trip={data.trip} />;
+    }
     return (
-      <HubOverviewSortie
-        profile={profile}
+      <SortieMenu
         trip={data.trip}
         stats={stats}
-        countdown={daysUntil(data.trip.start_date, Date.now())}
-        group={data.group}
+        crew={data.group}
+        pendingInvites={data.pendingInvites}
+        daysUntil={daysUntil(data.trip.start_date, Date.now())}
+        phase={phaseDetails.phase}
         hiking={data.hiking}
       />
     );
   }
 
-  if (data.input.kind === 'collectif') {
-    return (
-      <HubOverviewCollectif
-        groupLabel={data.groupLabel ?? 'Mon groupe'}
-        members={data.input.membersCount}
-        pendingInvites={data.pendingInvites}
-        linkedTripSlug={data.linkedTripSlug}
-      />
-    );
+  if (data.input.kind === 'collectif' && data.adventure.nature === 'collectif') {
+    const summary = await getGroupeMenuSummary(data.adventure.id, data.adventure.kind);
+    return <CollectifMenu summary={summary} linkedTripSlug={data.linkedTripSlug} />;
   }
 
-  const materielSummary = await getMaterielSummary();
-  return (
-    <HubOverviewPossession
-      items={data.possession.items}
-      loans={data.possession.loans}
-      alerts={data.possession.alerts}
-      summary={materielSummary}
-    />
-  );
+  const summary = await getMaterielSummary();
+  return <PossessionMenu summary={summary} />;
 }

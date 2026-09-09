@@ -1239,3 +1239,11 @@
 }
 
 
+
+/* UI Layouts (MIT) — shimmer skeleton, adapté LKDV */
+@keyframes shimmer {
+  100% { transform: translateX(100%); }
+}
+@media (prefers-reduced-motion: reduce) {
+  [class*='shimmer'] { animation: none !important; }
+}

@@ -1,0 +1,14 @@
+UI Layouts — composants adaptés (licence MIT)
+
+Les composants du dossier src/components/ui-layouts/ sont adaptés depuis la
+bibliothèque open-source « UI Layouts » (https://github.com/ui-layouts/uilayouts),
+publiée sous licence MIT (voir fichier LICENSE du dépôt d'origine).
+
+Adaptations réalisées pour LKDV (Le Kit du Voyageur) :
+- Imports `motion/react` -> `framer-motion` (API v12 identique, déjà installé).
+- Classes Tailwind v4 -> v3 et couleurs remplacées par les tokens LKDV (--lkv-*).
+- `cn()` résolu vers src/lib/utils.ts (déjà présent).
+- `sonner` remplacé par le système de toast LKDV ; `vaul` utilisé tel quel.
+
+Dépendances ajoutées au projet pour ces composants : @number-flow/react,
+swapy, vaul (toutes MIT).

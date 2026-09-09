@@ -80,6 +80,7 @@
     "@dhiwise/component-tagger": "^1.0.15",
     "@headlessui/react": "^2.2.10",
     "@heroicons/react": "^2.2.0",
+    "@number-flow/react": "^0.6.2",
     "@omniroute/opencode-plugin": "^0.2.1",
     "@radix-ui/react-dialog": "^1.1.23",
     "@radix-ui/react-toast": "^1.2.23",
@@ -112,8 +113,10 @@
     "recharts": "^2.15.2",
     "server-only": "^0.0.1",
     "stripe": "^17.7.0",
+    "swapy": "^1.0.5",
     "tailwind-merge": "^3.6.0",
     "three": "^0.185.1",
+    "vaul": "^1.1.2",
     "web-push": "^3.6.7",
     "zod": "^4.4.3",
     "zustand": "^5.0.15"

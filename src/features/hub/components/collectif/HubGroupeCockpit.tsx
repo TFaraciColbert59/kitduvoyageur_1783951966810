@@ -20,6 +20,8 @@ const DecisionsCard = nextDynamic(() => import('@/components/groupes/DecisionsCa
 const DiscussionCard = nextDynamic(() => import('@/components/groupes/DiscussionCard'), { ssr: false });
 const MobileGroupeView = nextDynamic(() => import('@/components/groupes/MobileGroupeView'), { ssr: false });
 
+const VALID_TABS = ['overview', 'parcours', 'tasks', 'equipment', 'expenses', 'decisions', 'discussion', 'members'];
+
 /**
  * Étape UX — Cockpit Groupe du hub (réintégration de l'ancien cockpit
  * /groupes/[id] supprimé). Les 7 onglets du widget legacy (Vue d'ensemble,
@@ -27,13 +29,20 @@ const MobileGroupeView = nextDynamic(() => import('@/components/groupes/MobileGr
  * par getGroupeComplet() — mobile en accordéon (MobileGroupeView),
  * desktop en onglets horizontaux dans la colonne du hub.
  */
-export function HubGroupeCockpit({ groupId }: { groupId: string }) {
+export function HubGroupeCockpit({ groupId, initialTab }: { groupId: string; initialTab?: string }) {
   const { user } = useAuth();
-  const [activeTab, setActiveTab] = useState('overview');
+  const [activeTab, setActiveTab] = useState(initialTab && VALID_TABS.includes(initialTab) ? initialTab : 'overview');
   const [loading, setLoading] = useState(true);
   const [data, setData] = useState<any>(null);
   const [linkedTrip, setLinkedTrip] = useState<{ id: string; slug: string; title: string } | null>(null);
   const loadedRef = useRef(false);
+
+  // Mobile : le cockpit écoute l'événement onglet (MobileGroupeView).
+  useEffect(() => {
+    if (initialTab && VALID_TABS.includes(initialTab)) {
+      window.dispatchEvent(new CustomEvent('groupe-cockpit-tab-change', { detail: initialTab }));
+    }
+  }, [initialTab]);
 
   const loadData = useCallback(async () => {
     const isFirstLoad = !loadedRef.current;

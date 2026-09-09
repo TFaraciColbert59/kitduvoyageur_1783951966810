@@ -114,6 +114,9 @@ const RULE14_ALLOWLIST = [
   'src/features/hub/components/HubWidgets.tsx',
   // Dispatcher de route /hub/[section] (mapping id→composant centralisé et typé — l'unique endroit sanctionné).
   'src/app/hub/[section]/page.tsx',
+  // Cartes du MENU hub (mapping carte→section via hubSectionHref typé, zéro littéral d'URL — R13 intacte).
+  'src/features/hub/components/menu/CollectifMenu.tsx',
+  'src/features/hub/components/menu/PossessionMenu.tsx',
   'tests/design/h-d85-guard.spec.ts',
 ];
 

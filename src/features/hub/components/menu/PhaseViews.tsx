@@ -1,0 +1,34 @@
+import { MenuBack } from './MenuBack';
+import { TripLiveCockpitView } from '@/features/trips/components/TripLiveCockpitView';
+import { TripPhaseRecountView } from '@/features/trips/components/TripPhaseRecountView';
+import type { TripFull, TripStats } from '@/features/trips/types/trip.types';
+
+/** Vue de phase « En cours » (cockpit terrain) — accès depuis le MENU. */
+export function PhaseLiveView({
+  trip,
+  stats,
+  dayIndex,
+  totalDays,
+}: {
+  trip: TripFull;
+  stats: TripStats;
+  dayIndex: number | null;
+  totalDays: number | null;
+}) {
+  return (
+    <div className="space-y-3">
+      <MenuBack />
+      <TripLiveCockpitView trip={trip} stats={stats} dayIndex={dayIndex} totalDays={totalDays} />
+    </div>
+  );
+}
+
+/** Vue de phase « Raconter » — accès depuis le MENU. */
+export function PhaseRecountView({ trip }: { trip: TripFull }) {
+  return (
+    <div className="space-y-3">
+      <MenuBack />
+      <TripPhaseRecountView trip={trip} />
+    </div>
+  );
+}
