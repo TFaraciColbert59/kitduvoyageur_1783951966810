@@ -159,6 +159,18 @@ export function HubShell({
       pendingInvites={pendingInvites}
     />
   );
+  const mobileWidgetBand = (
+    <HubSidebarRight
+      profile={effectiveProfile}
+      adventure={ref}
+      counts={counts}
+      trip={trip}
+      groupLabel={groupLabel}
+      linkedTripSlug={linkedTripSlug}
+      pendingInvites={pendingInvites}
+      variant="band"
+    />
+  );
 
   return (
     <AppShellDesktop
@@ -181,6 +193,9 @@ export function HubShell({
               </div>
             </div>
             {children}
+            <div className="mt-4">
+              {mobileWidgetBand}
+            </div>
           </div>
         </MobilePageShell>
       }

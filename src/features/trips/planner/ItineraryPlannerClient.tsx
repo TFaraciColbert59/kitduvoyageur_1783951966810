@@ -1,8 +1,8 @@
-'use client';
+﻿'use client';
 
 import React, { useState, useTransition, useMemo } from 'react';
 import { AlertCircle, CheckCircle2, Map } from 'lucide-react';
-import { GlassCapsuleBtn } from '@/components/ui';
+import { GlassCapsuleBtn, GlassModal } from '@/components/ui';
 import type { TripFull } from '@/features/trips/types/trip.types';
 import {
   type PlannerStep,
@@ -450,45 +450,48 @@ export default function ItineraryPlannerClient({
       />
 
       {/* Dialogue accessible de confirmation de suppression */}
-      {dayPendingDeletion !== null && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm animate-in fade-in">
-          <div className="w-full max-w-md glass border border-white/60 rounded-[var(--lkv-radius-card)] p-6 shadow-2xl space-y-4">
-            <div className="flex items-center gap-3 text-[var(--lkv-danger)]">
-              <AlertCircle className="w-6 h-6 shrink-0" />
-              <h3 className="font-semibold text-base text-[var(--lkv-text-primary)]">
-                Supprimer le Jour {dayPendingDeletion} ?
-              </h3>
-            </div>
-            <p className="text-sm text-[var(--lkv-text-muted)] leading-relaxed">
-              Cette journée contient {steps.filter((s) => s.day_number === dayPendingDeletion).length} étape(s).
-              Confirmez-vous la suppression intégrale de la journée et de ses étapes ?
-            </p>
-            <div className="flex items-center justify-end gap-3 pt-2">
-              <GlassCapsuleBtn
-                type="button"
-                variant="default"
-                size="sm"
-                onClick={() => setDayPendingDeletion(null)}
-              >
-                Annuler
-              </GlassCapsuleBtn>
-              <GlassCapsuleBtn
-                type="button"
-                variant="primary"
-                size="sm"
-                onClick={() => {
-                  const day = dayPendingDeletion;
-                  setDayPendingDeletion(null);
-                  if (day !== null) executeDeleteDay(day);
-                }}
-                className="bg-[var(--lkv-danger)] hover:bg-[var(--lkv-danger)]/90 text-white border-[var(--lkv-danger)]"
-              >
-                Supprimer définitivement
-              </GlassCapsuleBtn>
-            </div>
+      <GlassModal
+        open={dayPendingDeletion !== null}
+        onOpenChange={(v: boolean) => { if (!v) setDayPendingDeletion(null); }}
+        title="Supprimer le jour ?"
+        hideTitle
+      >
+        <div className="space-y-4">
+          <div className="flex items-center gap-3 text-[var(--lkv-danger)]">
+            <AlertCircle className="w-6 h-6 shrink-0" aria-hidden="true" />
+            <h3 className="font-semibold text-base text-[var(--lkv-text-primary)]">
+              Supprimer le Jour {dayPendingDeletion} ?
+            </h3>
+          </div>
+          <p className="text-sm text-[var(--lkv-text-secondary)] leading-relaxed">
+            Cette journée contient {steps.filter((s) => s.day_number === dayPendingDeletion).length} étape(s).
+            Confirmez-vous la suppression intégrale de la journée et de ses étapes ?
+          </p>
+          <div className="flex items-center justify-end gap-3 pt-2">
+            <GlassCapsuleBtn
+              type="button"
+              variant="default"
+              size="sm"
+              onClick={() => setDayPendingDeletion(null)}
+            >
+              Annuler
+            </GlassCapsuleBtn>
+            <GlassCapsuleBtn
+              type="button"
+              variant="primary"
+              size="sm"
+              onClick={() => {
+                const day = dayPendingDeletion;
+                setDayPendingDeletion(null);
+                if (day !== null) executeDeleteDay(day);
+              }}
+              className="bg-[var(--lkv-danger)] hover:bg-[var(--lkv-danger)]/90 text-white border-[var(--lkv-danger)]"
+            >
+              Supprimer définitivement
+            </GlassCapsuleBtn>
           </div>
         </div>
-      )}
+      </GlassModal>
     </div>
   );
 }

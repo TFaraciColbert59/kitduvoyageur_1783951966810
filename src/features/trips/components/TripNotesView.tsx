@@ -1,4 +1,4 @@
-'use client';
+﻿'use client';
 
 import React, { useState, useTransition } from 'react';
 import {
@@ -6,14 +6,13 @@ import {
   BookOpen,
   Calendar,
   CheckCircle2,
-  Edit3,
   Pin,
   Plus,
   Trash2,
   User,
-  X,
 } from 'lucide-react';
 import { GlassCard } from '@/components/ui/GlassCard';
+import { GlassModal } from '@/components/ui/GlassModal';
 import { GlassCapsuleBtn } from '@/components/ui/GlassCapsuleBtn';
 import { EmptyState } from '@/components/ui/EmptyState';
 import { TripCompletionModal } from './TripCompletionModal';
@@ -228,33 +227,13 @@ export function TripNotesView({ trip }: TripNotesViewProps) {
       )}
 
       {/* Modal d'ajout de note */}
-      {isAddOpen && (
-        <div
-          role="dialog"
-          aria-modal="true"
-          aria-labelledby="add-note-title"
-          className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm animate-fadeIn"
-        >
-          <div className="glass rounded-[var(--lkv-radius-xl)] border border-white/60 max-w-lg w-full p-6 shadow-2xl space-y-4">
-            <div className="flex items-center justify-between border-b border-white/40 pb-3">
-              <h3 id="add-note-title" className="text-base font-bold text-lkv-primary flex items-center gap-2">
-                <Edit3 size={18} />
-                Nouvelle page du carnet de bord
-              </h3>
-              <button
-                onClick={() => setIsAddOpen(false)}
-                className="min-h-[44px] min-w-[44px] flex items-center justify-center rounded-full glass-sub-card border border-white/60 text-[var(--lkv-text-muted)] hover:bg-white transition-all shadow-2xs"
-                aria-label="Fermer"
-              >
-                <X size={18} />
-              </button>
+      <GlassModal open={isAddOpen} onOpenChange={setIsAddOpen} title="Nouvelle page du carnet de bord" variant="sheet">
+        <div className="pb-2 space-y-4">
+          {errorMessage && (
+            <div className="p-3 rounded-xl glass tone-danger text-[var(--lkv-danger)] text-xs border">
+              {errorMessage}
             </div>
-
-            {errorMessage && (
-              <div className="p-3 rounded-xl glass tone-danger text-[var(--lkv-danger)] text-xs border">
-                {errorMessage}
-              </div>
-            )}
+          )}
 
             <form onSubmit={handleAddSubmit} className="space-y-4">
               <div>
@@ -330,9 +309,8 @@ export function TripNotesView({ trip }: TripNotesViewProps) {
                 </GlassCapsuleBtn>
               </div>
             </form>
-          </div>
         </div>
-      )}
+      </GlassModal>
 
       {/* Modal de rétrospective & clôture */}
       <TripCompletionModal

@@ -10,10 +10,10 @@ import {
   EyeOff,
   Download,
   Printer,
-  X,
   ShieldAlert,
 } from 'lucide-react';
-import { GlassCard, GlassCapsuleBtn } from '@/components/ui';
+import { GlassModal } from '@/components/ui/GlassModal';
+import { GlassCapsuleBtn } from '@/components/ui/GlassCapsuleBtn';
 import { formatTripShareUrl } from '../engine/exportEngine';
 import { tripSectionHref } from '../registry/tripSectionRegistry';
 import { updateTripVisibilityAction } from '@/app/voyages/share-actions';
@@ -61,25 +61,8 @@ export function TripShareModal({ trip, isOpen, onClose }: TripShareModalProps) {
   const isOwner = trip.permissions.canInvite;
 
   return (
-    <div className="fixed inset-0 z-[10001] flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm animate-in fade-in">
-      <GlassCard
-        tone="neutral"
-        className="w-full max-w-lg p-6 rounded-[var(--lkv-radius-xl)] border border-white/80 shadow-2xl space-y-5"
-      >
-        {/* En-tête */}
-        <div className="flex items-center justify-between pb-3 border-b border-white/40">
-          <h3 className="text-lg font-bold text-lkv-primary flex items-center gap-2">
-            <Share2 size={20} className="text-lkv-secondary" />
-            <span>Partager &amp; Exporter l&apos;Expédition</span>
-          </h3>
-          <button
-            onClick={onClose}
-            aria-label="Fermer"
-            className="w-8 h-8 rounded-full glass-sub-card border border-white/60 flex items-center justify-center text-[var(--lkv-text-secondary)] hover:text-[var(--lkv-text-primary)] hover:bg-white transition-all cursor-pointer shadow-2xs"
-          >
-            <X size={18} />
-          </button>
-        </div>
+    <GlassModal open={isOpen} onOpenChange={(v) => { if (!v) onClose(); }} title="Partager &amp; Exporter l'Expédition" variant="sheet">
+      <div className="space-y-5 pb-2">
 
         {/* 1. Visibilité du voyage */}
         <div className="space-y-2">
@@ -185,12 +168,11 @@ export function TripShareModal({ trip, isOpen, onClose }: TripShareModalProps) {
 
         {/* 3. Exports disponibles */}
         <div className="space-y-2 pt-2 border-t border-white/40">
-          <div className="text-xs font-semibold text-lkv-primary">Exports de terrain</div>
-          <div className="grid grid-cols-2 gap-3">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <a
               href={`/api/voyages/${trip.slug}/gpx?token=${trip.share_token}`}
               download={`${trip.slug}.gpx`}
-              className="flex items-center justify-center gap-2 p-3 rounded-full glass-capsule-btn text-xs font-semibold text-lkv-primary"
+              className="flex items-center justify-center gap-2 p-3 rounded-full glass-capsule-btn text-xs font-semibold text-lkv-primary min-h-[44px]"
             >
               <Download size={15} className="text-lkv-secondary" />
               <span>Trace GPX 1.1</span>
@@ -200,14 +182,14 @@ export function TripShareModal({ trip, isOpen, onClose }: TripShareModalProps) {
               href={tripSectionHref(trip.slug, 'export')}
               target="_blank"
               rel="noopener noreferrer"
-              className="glass-capsule-btn w-full flex items-center gap-1.5"
+              className="glass-capsule-btn w-full flex items-center gap-1.5 min-h-[44px]"
             >
               <Printer size={15} className="text-lkv-secondary" />
               <span>Feuille de Route / PDF</span>
             </a>
           </div>
         </div>
-      </GlassCard>
-    </div>
+      </div>
+    </GlassModal>
   );
 }

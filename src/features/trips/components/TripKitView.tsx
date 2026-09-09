@@ -5,6 +5,7 @@ import { useVirtualizer } from '@tanstack/react-virtual';
 import Link from 'next/link';
 import { GlassCard } from '@/components/ui/GlassCard';
 import { GlassCapsuleBtn } from '@/components/ui/GlassCapsuleBtn';
+import { GlassModal } from '@/components/ui/GlassModal';
 import { EmptyState } from '@/components/ui/EmptyState';
 import {
   Package,
@@ -585,14 +586,9 @@ export function TripKitView({ trip, analysis, showBackLink: _showBackLink = fals
       </GlassCard>
 
       {/* Modal Ajout Rapide d'Équipement */}
-      {isAddModalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm animate-fade-in">
-          <div className="w-full max-w-md glass border border-white/60 rounded-[var(--lkv-radius-card)] p-6 shadow-2xl">
-            <h3 className="text-base font-bold text-[var(--lkv-text-primary)] mb-4">
-              Ajouter un équipement au sac
-            </h3>
-
-            <form
+      <GlassModal open={isAddModalOpen} onOpenChange={setIsAddModalOpen} title="Ajouter un équipement au sac" variant="sheet">
+        <div className="pb-2">
+          <form
               action={(formData) => {
                 startTransition(async () => {
                   await addCustomTripItemAction(trip.id, trip.slug, formData);
@@ -681,59 +677,40 @@ export function TripKitView({ trip, analysis, showBackLink: _showBackLink = fals
                 </GlassCapsuleBtn>
               </div>
             </form>
-          </div>
         </div>
-      )}
+      </GlassModal>
 
       {/* Modal Configurateur IA en panneau (Y6.1) */}
-      {isConfiguratorOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-2 sm:p-4 bg-black/60 backdrop-blur-md animate-fade-in">
-          <div className="w-full max-w-6xl h-[92vh] max-h-[960px] bg-white/90 rounded-[2rem] border border-white/80 shadow-2xl overflow-hidden flex flex-col p-3 sm:p-6 relative">
-            <KitConfiguratorWizard
-              tripContext={{
-                tripId: trip.id,
-                tripSlug: trip.slug,
-                title: trip.title,
-                activity: trip.primary_activity || undefined,
-                difficulty: trip.difficulty || undefined,
-                scale: deriveScale(trip.start_date, trip.end_date),
-                destination: trip.destination_name || undefined,
-                maxAltitudeM: analysis.maxAltitudeM || undefined,
-                days: tripDuration.durationDays,
-                countryCode: trip.destination_country_code || undefined,
-              }}
-              onClose={() => setIsConfiguratorOpen(false)}
-              onApplied={() => {
-                setIsConfiguratorOpen(false);
-              }}
-            />
-          </div>
+      <GlassModal open={isConfiguratorOpen} onOpenChange={setIsConfiguratorOpen} title="Configurateur de kit IA" variant="sheet" hideTitle>
+        <div className="h-[80vh] max-h-[960px]">
+          <KitConfiguratorWizard
+            tripContext={{
+              tripId: trip.id,
+              tripSlug: trip.slug,
+              title: trip.title,
+              activity: trip.primary_activity || undefined,
+              difficulty: trip.difficulty || undefined,
+              scale: deriveScale(trip.start_date, trip.end_date),
+              destination: trip.destination_name || undefined,
+              maxAltitudeM: analysis.maxAltitudeM || undefined,
+              days: tripDuration.durationDays,
+              countryCode: trip.destination_country_code || undefined,
+            }}
+            onClose={() => setIsConfiguratorOpen(false)}
+            onApplied={() => {
+              setIsConfiguratorOpen(false);
+            }}
+          />
         </div>
-      )}
+      </GlassModal>
 
       {/* Modal Sélecteur d'inventaire personnel (Y6.3 — Pont matériel) */}
-      {isInventoryModalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm animate-fade-in">
-          <div className="w-full max-w-2xl glass border border-white/70 rounded-[var(--lkv-radius-card)] p-6 shadow-2xl max-h-[85vh] flex flex-col">
-            <div className="flex items-center justify-between pb-4 border-b border-white/40 shrink-0">
-              <div>
-                <h3 className="text-base font-bold text-[var(--lkv-text-primary)] flex items-center gap-2">
-                  <Package className="w-5 h-5 text-lkv-secondary" />
-                  Importer depuis Mon Matériel
-                </h3>
-                <p className="text-xs text-[var(--lkv-text-muted)] mt-0.5">
-                  Associez un équipement personnel à ce voyage.
-                </p>
-              </div>
-              <button
-                type="button"
-                onClick={() => setIsInventoryModalOpen(false)}
-                className="text-xs text-[var(--lkv-text-muted)] hover:text-[var(--lkv-text-primary)] px-2 py-1 rounded-lg hover:bg-white/60 min-h-[44px] min-w-[44px] flex items-center justify-center cursor-pointer"
-                aria-label="Fermer"
-              >
-                ✕
-              </button>
-            </div>
+      <GlassModal open={isInventoryModalOpen} onOpenChange={setIsInventoryModalOpen} title="Importer depuis Mon Matériel" variant="sheet" hideTitle>
+        <div className="pb-2">
+          <div className="flex items-center gap-2 mb-1">
+            <Package className="w-5 h-5 text-lkv-secondary shrink-0" aria-hidden="true" />
+            <h3 className="text-base font-bold text-[var(--lkv-text-primary)]">Importer depuis Mon Matériel</h3>
+          </div>
 
             {/* Règle Y6.3 : Le stock n'est jamais consommé ni altéré */}
             <div className="mt-3 p-3 rounded-xl bg-white/70 border border-white/60 text-xs text-[var(--lkv-text-secondary)] flex items-center gap-2 shrink-0">
@@ -819,18 +796,9 @@ export function TripKitView({ trip, analysis, showBackLink: _showBackLink = fals
               <Link href="/hub" className="text-xs text-lkv-secondary hover:underline font-medium">
                 Ouvrir l'inventaire complet →
               </Link>
-              <GlassCapsuleBtn
-                type="button"
-                variant="default"
-                size="sm"
-                onClick={() => setIsInventoryModalOpen(false)}
-              >
-                Fermer
-              </GlassCapsuleBtn>
             </div>
-          </div>
         </div>
-      )}
+      </GlassModal>
     </div>
   );
 }

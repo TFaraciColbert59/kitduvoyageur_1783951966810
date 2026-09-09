@@ -1,4 +1,4 @@
-'use client';
+﻿'use client';
 
 import React, { useState, useTransition } from 'react';
 import {
@@ -10,10 +10,10 @@ import {
   AlertTriangle,
   Clock,
   CheckCircle2,
-  X,
   FileCheck,
 } from 'lucide-react';
 import { GlassCard } from '@/components/ui/GlassCard';
+import { GlassModal } from '@/components/ui/GlassModal';
 import { GlassCapsuleBtn } from '@/components/ui/GlassCapsuleBtn';
 import { EmptyState } from '@/components/ui/EmptyState';
 import { checkDocumentExpiry } from '../engine/exportEngine';
@@ -191,31 +191,13 @@ export function TripDocumentsView({ trip }: TripDocumentsViewProps) {
       )}
 
       {/* Modal d'ajout de document */}
-      {isAddOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm animate-in fade-in">
-          <GlassCard
-            tone="neutral"
-            className="w-full max-w-md p-6 rounded-[var(--lkv-radius-xl)] border border-white/80 shadow-2xl space-y-4"
-          >
-            <div className="flex items-center justify-between pb-3 border-b border-white/40">
-              <h4 className="text-base font-bold text-lkv-primary flex items-center gap-2">
-                <FileText size={18} className="text-lkv-secondary" />
-                <span>Attacher un document sécurisé</span>
-              </h4>
-              <button
-                onClick={() => setIsAddOpen(false)}
-                aria-label="Fermer"
-                className="w-8 h-8 rounded-full glass-sub-card border border-white/60 flex items-center justify-center text-[var(--lkv-text-secondary)] hover:text-[var(--lkv-text-primary)] hover:bg-white transition-all cursor-pointer shadow-2xs"
-              >
-                <X size={18} />
-              </button>
+      <GlassModal open={isAddOpen} onOpenChange={setIsAddOpen} title="Attacher un document sécurisé" variant="sheet">
+        <div className="pb-2">
+          {errorMsg && (
+            <div className="p-3 rounded-xl glass tone-danger text-[var(--lkv-danger)] text-xs mb-4">
+              {errorMsg}
             </div>
-
-            {errorMsg && (
-              <div className="p-3 rounded-xl glass tone-danger text-[var(--lkv-danger)] text-xs">
-                {errorMsg}
-              </div>
-            )}
+          )}
 
             <form onSubmit={handleAddSubmit} className="space-y-4">
               <div>
@@ -306,9 +288,8 @@ export function TripDocumentsView({ trip }: TripDocumentsViewProps) {
                 </GlassCapsuleBtn>
               </div>
             </form>
-          </GlassCard>
         </div>
-      )}
+      </GlassModal>
 
       {/* Modale de confirmation de suppression */}
       <ConfirmDialog

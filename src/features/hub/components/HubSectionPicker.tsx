@@ -1,7 +1,8 @@
 'use client';
 
 import React, { useState, useTransition } from 'react';
-import { X, Check, Plus, AlertCircle, Sparkles } from 'lucide-react';
+import { Check, Plus, Sparkles } from 'lucide-react';
+import { GlassModal } from '@/components/ui/GlassModal';
 import { GlassCapsuleBtn, GlassPill } from '@/components/ui';
 import { useHapticFeedback } from '@/hooks/useHapticFeedback';
 import { hubSectionRegistry } from '../registry/hubSectionRegistry';
@@ -49,8 +50,6 @@ export function HubSectionPicker({
   const [isPending, startTransition] = useTransition();
   const [customSections, setCustomSections] = useState<HubSectionId[]>(() => readCustom(adventureKey));
 
-  if (!isOpen) return null;
-
   const defs = hubSectionRegistry.filter((d) => d.natures.includes(profile.nature));
 
   const isActive = (id: HubSectionId): boolean =>
@@ -77,37 +76,13 @@ export function HubSectionPicker({
   };
 
   return (
-    <div
-      className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40 backdrop-blur-xs animate-in fade-in duration-200"
-      role="dialog"
-      aria-modal="true"
-      aria-labelledby="hub-section-picker-title"
-    >
-      <div className="w-full max-w-lg max-h-[85vh] flex flex-col glass rounded-[var(--lkv-radius-card)] border border-white/60 shadow-xl overflow-hidden text-[var(--lkv-text-primary)]">
-        <div className="flex items-center justify-between p-4 border-b border-[var(--lkv-border-subtle)] shrink-0">
-          <div>
-            <h3
-              id="hub-section-picker-title"
-              className="text-base font-bold font-display flex items-center gap-2 text-[var(--lkv-text-primary)]"
-            >
-              <Sparkles size={16} className="text-[var(--lkv-secondary)]" />
-              <span>Personnaliser les sections</span>
-            </h3>
-            <p className="text-xs text-[var(--lkv-text-secondary)] mt-0.5">
-              Aucune section n&apos;est jamais verrouillée. Activez ce dont vous avez besoin.
-            </p>
-          </div>
-          <button
-            type="button"
-            onClick={() => {
-              triggerHaptic('light');
-              onClose();
-            }}
-            aria-label="Fermer"
-            className="p-2 rounded-full hover:bg-black/5 active:scale-95 transition-transform min-h-[44px] min-w-[44px] flex items-center justify-center cursor-pointer"
-          >
-            <X size={18} />
-          </button>
+    <GlassModal open={isOpen} onOpenChange={(v) => { if (!v) onClose(); }} title="Personnaliser les sections" variant="sheet" hideTitle>
+      <div className="pb-2">
+        <div className="flex items-center gap-2 mb-3">
+          <Sparkles size={16} className="text-[var(--lkv-secondary)] shrink-0" aria-hidden="true" />
+          <h3 className="text-base font-bold font-display text-[var(--lkv-text-primary)]">
+            Personnaliser les sections
+          </h3>
         </div>
 
         <div className="flex-1 overflow-y-auto p-4 space-y-2.5 no-scrollbar">
@@ -199,11 +174,7 @@ export function HubSectionPicker({
           })}
         </div>
 
-        <div className="p-3.5 border-t border-[var(--lkv-border-subtle)] shrink-0 flex items-center justify-between gap-3 bg-white/40">
-          <div className="flex items-center gap-1.5 text-[11px] text-[var(--lkv-text-secondary)]">
-            <AlertCircle size={13} />
-            <span>Changements appliqués immédiatement au hub.</span>
-          </div>
+        <div className="p-3 border-t border-[var(--lkv-border-subtle)] shrink-0 flex items-center justify-end bg-white/40 rounded-2xl mt-3">
           <GlassCapsuleBtn
             variant="primary"
             size="sm"
@@ -217,7 +188,7 @@ export function HubSectionPicker({
           </GlassCapsuleBtn>
         </div>
       </div>
-    </div>
+    </GlassModal>
   );
 }
 

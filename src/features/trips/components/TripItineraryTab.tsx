@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import type { TripFull, TripStats } from '../types/trip.types';
 import { GlassCard } from '@/components/ui/GlassCard';
 import { GlassCapsuleBtn } from '@/components/ui/GlassCapsuleBtn';
+import { GlassModal } from '@/components/ui/GlassModal';
 import { EmptyState } from '@/components/ui/EmptyState';
 import { checkSeasonalityForDates } from '../engine/seasonality';
 import { getCanonicalTripSteps } from '../hooks/useTripCounters';
@@ -186,46 +187,36 @@ export function TripItineraryTab({ trip }: TripItineraryTabProps) {
       )}
 
       {/* Modal de confirmation régénération */}
-      {confirmOpen && (
-        <div className="fixed inset-0 z-50 bg-black/40 backdrop-blur-sm flex items-center justify-center p-4">
-          <div className="glass border border-white/60 rounded-3xl p-6 max-w-md w-full space-y-4 shadow-xl">
-            <div className="flex items-center gap-3">
-              <div className="glass-sub-card w-10 h-10 rounded-full text-[var(--lkv-warning)] flex items-center justify-center border border-white/60 shadow-2xs">
-                <RotateCcw size={20} />
-              </div>
-              <h3 className="text-base font-bold text-lkv-primary">
-                Régénérer cet itinéraire ?
-              </h3>
-            </div>
-            <p className="text-xs text-[var(--lkv-text-muted)] leading-relaxed">
-              Le moteur déterministe recalculera les étapes journalières selon les dates et le pays.
-              <br />
-              <strong className="text-lkv-primary">Vos articles de matériel ajoutés manuellement seront scrupuleusement conservés.</strong>
-            </p>
-            <div className="flex items-center justify-end gap-2 pt-2">
-              <GlassCapsuleBtn
-                type="button"
-                onClick={() => setConfirmOpen(false)}
-                disabled={isRegenerating}
-                size="sm"
-                variant="default"
-              >
-                Annuler
-              </GlassCapsuleBtn>
-              <GlassCapsuleBtn
-                type="button"
-                onClick={handleRegenerate}
-                disabled={isRegenerating}
-                size="sm"
-                variant="primary"
-                icon={<RotateCcw size={14} className={isRegenerating ? 'animate-spin' : ''} />}
-              >
-                {isRegenerating ? 'Calcul...' : 'Confirmer le recalcul'}
-              </GlassCapsuleBtn>
-            </div>
+      <GlassModal open={confirmOpen} onOpenChange={setConfirmOpen} title="Régénérer cet itinéraire ?">
+        <div className="space-y-4">
+          <p className="text-xs text-[var(--lkv-text-secondary)] leading-relaxed">
+            Le moteur déterministe recalculera les étapes journalières selon les dates et le pays.
+            <br />
+            <strong className="text-lkv-primary">Vos articles de matériel ajoutés manuellement seront scrupuleusement conservés.</strong>
+          </p>
+          <div className="flex items-center justify-end gap-2 pt-2">
+            <GlassCapsuleBtn
+              type="button"
+              onClick={() => setConfirmOpen(false)}
+              disabled={isRegenerating}
+              size="sm"
+              variant="default"
+            >
+              Annuler
+            </GlassCapsuleBtn>
+            <GlassCapsuleBtn
+              type="button"
+              onClick={handleRegenerate}
+              disabled={isRegenerating}
+              size="sm"
+              variant="primary"
+              icon={<RotateCcw size={14} className={isRegenerating ? 'animate-spin' : ''} />}
+            >
+              {isRegenerating ? 'Calcul...' : 'Confirmer le recalcul'}
+            </GlassCapsuleBtn>
           </div>
         </div>
-      )}
+      </GlassModal>
 
       {/* 3. Liste détaillée des étapes */}
       {canonicalSteps.length > 0 ? (

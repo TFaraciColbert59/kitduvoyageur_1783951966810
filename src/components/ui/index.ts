@@ -1,4 +1,5 @@
-export { GlassCard } from './GlassCard';
+﻿export { GlassCard } from './GlassCard';
+export { GlassModal, type GlassModalProps } from './GlassModal';
 export { GlassSubCard, type GlassSubCardProps } from './GlassSubCard';
 export { GlassPill, type GlassPillProps, type GlassPillTone } from './GlassPill';
 export { GlassCapsuleBtn, type GlassCapsuleBtnProps, type GlassCapsuleBtnVariant, type GlassCapsuleBtnSize } from './GlassCapsuleBtn';

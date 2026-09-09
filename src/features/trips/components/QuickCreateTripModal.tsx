@@ -2,10 +2,10 @@
 
 import React, { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { GlassCard } from '@/components/ui/GlassCard';
+import { GlassModal } from '@/components/ui/GlassModal';
 import { GlassCapsuleBtn } from '@/components/ui/GlassCapsuleBtn';
 import { LkvInput } from '@/components/ui/LkvInput';
-import { Compass, X, AlertCircle } from 'lucide-react';
+import { Compass, AlertCircle } from 'lucide-react';
 import { tripSectionHref } from '../registry/tripSectionRegistry';
 import { setActiveAdventureAction } from '@/features/hub/context/activeAdventureServer';
 import {
@@ -107,35 +107,15 @@ export function QuickCreateTripModal({
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm animate-fade-in">
-      <div className="relative w-full max-w-lg">
-        <GlassCard tone="neutral" blur="lg" className="p-6 rounded-[var(--lkv-radius-2xl)] border border-white/80 shadow-2xl">
-          {/* Header */}
-          <div className="flex items-center justify-between pb-4 border-b border-white/40 mb-4">
-            <div className="flex items-center gap-2">
-              <div className="p-2 rounded-xl bg-lkv-secondary/15 text-lkv-primary">
-                <Compass size={20} />
-              </div>
-              <h2 className="text-lg font-bold text-lkv-primary">
-                Créer un nouveau voyage
-              </h2>
-            </div>
-            <button
-              onClick={onClose}
-              className="min-h-[44px] min-w-[44px] flex items-center justify-center rounded-full glass-sub-card border border-white/60 text-[var(--lkv-text-muted)] hover:bg-white transition-all shadow-2xs"
-              aria-label="Fermer"
-            >
-              <X size={18} />
-            </button>
+    <GlassModal open={isOpen} onOpenChange={(v) => { if (!v) onClose(); }} title="Créer un nouveau voyage" variant="sheet">
+      <div className="pb-2">
+        {/* Error alert */}
+        {formError && (
+          <div className="p-3 mb-4 rounded-xl glass tone-danger border text-xs text-[var(--lkv-danger)] flex items-center gap-2">
+            <AlertCircle size={16} />
+            <span>{formError}</span>
           </div>
-
-          {/* Error alert */}
-          {formError && (
-            <div className="p-3 mb-4 rounded-xl glass tone-danger border text-xs text-[var(--lkv-danger)] flex items-center gap-2">
-              <AlertCircle size={16} />
-              <span>{formError}</span>
-            </div>
-          )}
+        )}
 
           {/* Form */}
           <form onSubmit={handleSubmit} className="space-y-4">
@@ -259,8 +239,7 @@ export function QuickCreateTripModal({
               </GlassCapsuleBtn>
             </div>
           </form>
-        </GlassCard>
       </div>
-    </div>
+    </GlassModal>
   );
 }

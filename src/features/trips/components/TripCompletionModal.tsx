@@ -1,4 +1,4 @@
-'use client';
+﻿'use client';
 
 import React, { useState, useTransition } from 'react';
 import {
@@ -10,9 +10,9 @@ import {
   Navigation,
   Package,
   Star,
-  X,
 } from 'lucide-react';
 import { GlassCard } from '@/components/ui/GlassCard';
+import { GlassModal } from '@/components/ui/GlassModal';
 import { GlassCapsuleBtn } from '@/components/ui/GlassCapsuleBtn';
 import {
   calculateTripRetrospectiveMetrics,
@@ -119,37 +119,8 @@ export function TripCompletionModal({ trip, isOpen, onClose }: TripCompletionMod
   };
 
   return (
-    <div
-      role="dialog"
-      aria-modal="true"
-      aria-labelledby="completion-modal-title"
-      className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm animate-fadeIn"
-    >
-      <div className="glass rounded-[var(--lkv-radius-card)] border border-white/60 max-w-2xl w-full p-6 sm:p-8 max-h-[90vh] overflow-y-auto shadow-2xl space-y-6">
-        {/* En-tête modal */}
-        <div className="flex items-center justify-between border-b border-white/40 pb-4">
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-full bg-lkv-primary/10 flex items-center justify-center text-lkv-primary">
-              <Award size={22} />
-            </div>
-            <div>
-              <h3 id="completion-modal-title" className="text-xl font-bold text-lkv-primary">
-                Rétrospective & Carnet de Voyage
-              </h3>
-              <p className="text-xs text-lkv-secondary">
-                Clôturez votre aventure, célébrez vos kilomètres et inspirez la communauté.
-              </p>
-            </div>
-          </div>
-          <button
-            onClick={onClose}
-            className="min-h-[44px] min-w-[44px] flex items-center justify-center rounded-full glass-sub-card border border-white/60 text-[var(--lkv-text-muted)] hover:bg-white transition-all shadow-2xs"
-            aria-label="Fermer"
-          >
-            <X size={20} />
-          </button>
-        </div>
-
+    <GlassModal open={isOpen} onOpenChange={(v) => { if (!v) onClose(); }} title="Rétrospective & Carnet de Voyage" variant="sheet">
+      <div className="pb-2 space-y-6">
         {/* Messages de retour */}
         {successMessage && (
           <div className="p-4 rounded-2xl glass tone-sage border text-sm text-[var(--lkv-success)] flex items-center gap-2">
@@ -335,6 +306,6 @@ export function TripCompletionModal({ trip, isOpen, onClose }: TripCompletionMod
           </div>
         </form>
       </div>
-    </div>
+    </GlassModal>
   );
 }

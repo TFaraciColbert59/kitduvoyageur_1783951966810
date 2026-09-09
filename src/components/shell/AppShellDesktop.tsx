@@ -55,7 +55,7 @@ export function AppShellDesktop({
   background = <CompteBackground />,
   backgroundVideo = false,
   leftWidth = 'w-[260px]',
-  rightWidth = 'w-[300px]',
+  rightWidth = 'w-[300px] hidden lg:block',
   maxWidth = 'max-w-[1680px]',
   gap = 'gap-5',
 }: AppShellDesktopProps) {

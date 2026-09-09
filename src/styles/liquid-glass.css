@@ -870,7 +870,8 @@
   color: var(--label);
   backdrop-filter: blur(var(--glass-blur-sm)) saturate(var(--glass-sat));
   -webkit-backdrop-filter: blur(var(--glass-blur-sm)) saturate(var(--glass-sat));
-  font-size: 14px;
+  /* 16px : anti-zoom iOS sur focus (Safari auto-zoom < 16px). */
+  font-size: 16px;
   transition:
     border-color var(--dur-fast) ease,
     box-shadow var(--dur-fast) ease;
