@@ -1,4 +1,4 @@
-import React from 'react';
+﻿import React from 'react';
 import { describe, it, expect, vi } from 'vitest';
 import { renderToStaticMarkup } from 'react-dom/server';
 import { TripBadge } from '@/features/trips/components/TripBadge';
@@ -254,7 +254,6 @@ describe('Trips UI Components', () => {
         React.createElement(TripSafetyView, { trip: tripWithCheckpoints })
       );
 
-      expect(html).toContain('Points de contrôle &amp; Copilote');
       expect(html).toContain('Refuge du Goûter - Check in');
       expect(html).toContain('Secours Haute Montagne');
       expect(html).toContain('112');

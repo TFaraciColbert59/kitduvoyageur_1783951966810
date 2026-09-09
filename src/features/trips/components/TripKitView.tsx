@@ -261,10 +261,7 @@ export function TripKitView({ trip, analysis, showBackLink: _showBackLink = fals
         {/* Carte Complétude */}
         <GlassCard tone="sage" blur="md" className="p-5 rounded-3xl border border-white/70">
           <div className="flex items-center justify-between mb-2">
-            <span className="text-xs font-bold uppercase tracking-wider text-lkv-secondary flex items-center gap-1.5">
-              <CheckCircle2 className="w-4 h-4" />
-              Préparation du Sac
-            </span>
+            <CheckCircle2 className="w-4 h-4 text-lkv-secondary" aria-hidden="true" />
             <span className="text-sm font-black text-lkv-primary">{progressPct}%</span>
           </div>
           <div className="text-2xl font-black text-lkv-primary mb-1">
@@ -281,10 +278,7 @@ export function TripKitView({ trip, analysis, showBackLink: _showBackLink = fals
         {/* Carte Poids (Résolution D3, D4) */}
         <GlassCard tone="neutral" blur="md" className="p-5 rounded-3xl border border-white/70">
           <div className="flex items-center justify-between mb-2">
-            <span className="text-xs font-bold uppercase tracking-wider text-lkv-secondary flex items-center gap-1.5">
-              <Scale className="w-4 h-4" />
-              Bilan de Pesée
-            </span>
+            <Scale className="w-4 h-4 text-lkv-secondary" aria-hidden="true" />
             <span
               className={`text-[10px] font-bold px-2 py-0.5 rounded-full uppercase ${
                 analysis.weightCategory === 'none'
@@ -318,10 +312,7 @@ export function TripKitView({ trip, analysis, showBackLink: _showBackLink = fals
         {/* Carte Audit Shakedown Canonique */}
         <GlassCard tone="neutral" blur="md" className="p-5 rounded-3xl border border-white/70">
           <div className="flex items-center justify-between mb-2">
-            <span className="text-xs font-bold uppercase tracking-wider text-lkv-secondary flex items-center gap-1.5">
-              <Sparkles className="w-4 h-4" />
-              Audit Shakedown
-            </span>
+            <Sparkles className="w-4 h-4 text-lkv-secondary" aria-hidden="true" />
             <span
               className={`text-[10px] font-bold px-2 py-0.5 rounded-full uppercase ${
                 shakedownReport.score >= 80
@@ -356,12 +347,11 @@ export function TripKitView({ trip, analysis, showBackLink: _showBackLink = fals
 
         {/* Carte Contexte Expédition (Résolution D2) */}
         <GlassCard tone="neutral" blur="md" className="p-5 rounded-3xl border border-white/70">
-          <span className="text-xs font-bold uppercase tracking-wider text-lkv-secondary flex items-center gap-1.5 mb-2">
-            <Compass className="w-4 h-4" />
-            Contexte Itinéraire
-          </span>
-          <div className="text-base font-bold text-lkv-primary line-clamp-1">
-            {trip.destination_name || 'Expédition Outdoor'}
+          <div className="flex items-center gap-1.5 mb-2">
+            <Compass className="w-4 h-4 text-lkv-secondary shrink-0" aria-hidden="true" />
+            <span className="text-base font-bold text-lkv-primary line-clamp-1">
+              {trip.destination_name || 'Expédition Outdoor'}
+            </span>
           </div>
           <div className="text-xs text-stone-600 mt-1 space-y-0.5">
             <div>
@@ -394,23 +384,14 @@ export function TripKitView({ trip, analysis, showBackLink: _showBackLink = fals
       {(analysis.vitalGaps.length > 0 || analysis.recommendedGaps.length > 0) && (
         <GlassCard tone="sage" blur="md" className="p-6 rounded-3xl border border-white/80 shadow-sm space-y-4">
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pb-3 border-b border-stone-200/60">
-            <div>
-              <span className="text-xs font-bold text-lkv-secondary uppercase tracking-wider flex items-center gap-1.5">
-                <Sparkles className="w-3.5 h-3.5 text-lkv-secondary" />
-                Équipements Manquants Détectés (Gear Gap)
-              </span>
-              <h3 className="text-lg font-black text-[var(--lkv-text-primary)] mt-0.5">
-                Recommandations contextuelles certifiées LKDV
-              </h3>
-            </div>
+            <h3 className="text-base font-black text-[var(--lkv-text-primary)] flex items-center gap-1.5">
+              <Sparkles className="w-3.5 h-3.5 text-lkv-secondary shrink-0" aria-hidden="true" />
+              <span>Il manque dans votre sac</span>
+            </h3>
             <span className="text-xs font-semibold px-3 py-1 rounded-full bg-lkv-primary/10 text-lkv-primary self-start sm:self-auto">
               {analysis.vitalGaps.length + analysis.recommendedGaps.length} équipements conseillés
             </span>
           </div>
-
-          <p className="text-xs text-[var(--lkv-text-secondary)] leading-relaxed">
-            Notre moteur analyse vos étapes de trek, l’altitude maximale et la météo saisonnière pour identifier les manques critiques dans votre sac avant le départ.
-          </p>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-2">
             {(() => {

@@ -1,4 +1,4 @@
-import React from 'react';
+﻿import React from 'react';
 import { describe, it, expect, vi } from 'vitest';
 import { renderToStaticMarkup } from 'react-dom/server';
 import { TripNotesView } from '@/features/trips/components/TripNotesView';
@@ -136,7 +136,6 @@ describe('TripNotesView & TripCompletionModal — Chantier 8 UI', () => {
   it('1. rend TripNotesView avec le titre du carnet, les boutons d\'action et la note épinglée', () => {
     const html = renderToStaticMarkup(React.createElement(TripNotesView, { trip: mockTripFull }));
 
-    expect(html).toContain('Carnet de bord &amp; Récits de voyage');
     expect(html).toContain('Arrivée sous la pluie');
     expect(html).toContain('Sentier boueux mais accueil chaleureux au refuge.');
     expect(html).toContain('Alice Alpiniste');
@@ -159,7 +158,7 @@ describe('TripNotesView & TripCompletionModal — Chantier 8 UI', () => {
     const completedTrip = { ...mockTripFull, status: 'completed' as const };
     const html = renderToStaticMarkup(React.createElement(TripNotesView, { trip: completedTrip }));
 
-    expect(html).toContain('Expédition terminée · Carnet de bord clôturé');
+    expect(html).toContain('Expédition terminée');
     expect(html).toContain('Bilan &amp; Rétrospective');
   });
 

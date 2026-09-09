@@ -1,8 +1,7 @@
-'use client';
+﻿'use client';
 import Link from 'next/link';
 import { Plus, CheckCircle2 } from 'lucide-react';
 import { GlassCard } from '@/components/ui/GlassCard';
-import { Eyebrow } from '@/components/ui/Eyebrow';
 import { ProgressBar } from '@/components/ui/ProgressBar';
 
 interface InventaireData {
@@ -22,7 +21,6 @@ export function GearCardInventaire({ data, className }: { data: InventaireData; 
         {/* Header with Title & Large Metric */}
         <div className="flex items-start justify-between">
           <div className="space-y-1">
-            <Eyebrow>Catalogue personnel</Eyebrow>
             <h2 id="inv-title" className="text-[20px] font-display font-bold text-[var(--lkv-primary)]">
               Inventaire
             </h2>

@@ -49,7 +49,6 @@ export async function HubInvitationsSection() {
         >
           <span className="flex-1 min-w-0">
             <span className="block text-sm font-bold text-[var(--lkv-text-primary)] truncate">{inv.name}</span>
-            <span className="block text-[11px] text-[var(--lkv-text-secondary)]">Invitation à rejoindre</span>
           </span>
           <HubInviteButtons groupId={inv.group_id} />
         </li>

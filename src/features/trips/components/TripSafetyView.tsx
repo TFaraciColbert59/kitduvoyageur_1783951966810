@@ -57,45 +57,24 @@ export function TripSafetyView({ trip }: TripSafetyViewProps) {
   return (
     <div className="space-y-6">
       {/* En-tête Sécurité & Checkpoints */}
-      <GlassCard tone="sage" blur="md" className="p-6 rounded-[var(--lkv-radius-card)] border border-white/70">
-        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-          <div className="flex items-start gap-4">
-            <div className="p-3.5 rounded-2xl bg-[var(--lkv-primary)]/10 text-[var(--lkv-primary)]">
-              <Shield size={24} />
-            </div>
-            <div>
-              <div className="flex items-center gap-2">
-                <span className="text-xs font-semibold text-lkv-secondary uppercase tracking-wider">
-                  Sécurité & Prévention
-                </span>
-              </div>
-              <h2 className="text-xl font-bold text-lkv-primary mt-1">
-                Points de contrôle & Copilote
-              </h2>
-              <p className="text-sm text-lkv-secondary mt-1 max-w-2xl leading-relaxed">
-                Configurez des jalons horaires sur vos étapes clés afin de suivre votre progression
-                et rassurer vos contacts d&apos;urgence.
-              </p>
-            </div>
-          </div>
-          {trip.permissions.canEdit && (
-            <GlassCapsuleBtn
-              variant="secondary"
-              size="sm"
-              icon={<Plus size={16} />}
-              onClick={() => setInfoNote(true)}
-            >
-              Nouveau point
-            </GlassCapsuleBtn>
-          )}
-        </div>
-        {infoNote && (
-          <div className="mt-3 p-3 rounded-2xl glass tone-info text-xs text-[var(--lkv-info)] flex items-center gap-2">
-            <Shield size={16} className="shrink-0" />
-            <span>La configuration de nouveaux points de contrôle sera disponible prochainement.</span>
-          </div>
+      <div className="flex items-center justify-between gap-4">
+        {trip.permissions.canEdit && (
+          <GlassCapsuleBtn
+            variant="secondary"
+            size="sm"
+            icon={<Plus size={16} />}
+            onClick={() => setInfoNote(true)}
+          >
+            Nouveau point
+          </GlassCapsuleBtn>
         )}
-      </GlassCard>
+      </div>
+      {infoNote && (
+        <div className="p-3 rounded-2xl glass tone-info text-xs text-[var(--lkv-info)] flex items-center gap-2">
+          <Shield size={16} className="shrink-0" />
+          <span>La configuration de nouveaux points de contrôle sera disponible prochainement.</span>
+        </div>
+      )}
 
       {/* Liste des checkpoints ou état vide */}
       {checkpoints.length > 0 ? (

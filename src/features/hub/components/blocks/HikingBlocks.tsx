@@ -45,12 +45,11 @@ export function ParcoursBlock({
   return (
     <section className="glass p-4 rounded-[var(--lkv-radius-card)]" aria-label="Parcours">
       <div className="flex items-center gap-2">
-        <RouteIcon size={16} className="text-[var(--lkv-text-secondary)]" aria-hidden="true" />
-        <p className="text-[10px] font-mono uppercase tracking-widest text-[var(--lkv-text-muted)]">Parcours</p>
+        <RouteIcon size={15} className="shrink-0 text-[var(--lkv-text-secondary)]" aria-hidden="true" />
+        <p className="text-sm font-semibold text-[var(--lkv-text-primary)] truncate">
+          {hiking?.routeName ?? 'Itinéraire à composer'}
+        </p>
       </div>
-      <p className="text-sm font-semibold text-[var(--lkv-text-primary)] mt-2 truncate">
-        {hiking?.routeName ?? 'Itinéraire à composer'}
-      </p>
       <div className="grid grid-cols-3 gap-2 mt-3">
         <Stat icon={<Footprints size={13} aria-hidden="true" />} label="Distance" value={fmt(hiking?.distanceKm, 'km')} />
         <Stat
@@ -113,15 +112,16 @@ export function MeteoBlock({ hiking }: { hiking: HubHikingContext | null }) {
   return (
     <section className="glass p-4 rounded-[var(--lkv-radius-card)]" aria-label="Météo">
       <div className="flex items-center gap-2">
-        <CloudSun size={16} className="text-[var(--lkv-text-secondary)]" aria-hidden="true" />
-        <p className="text-[10px] font-mono uppercase tracking-widest text-[var(--lkv-text-muted)]">Météo</p>
+        <CloudSun size={15} className="shrink-0 text-[var(--lkv-text-secondary)]" aria-hidden="true" />
+        {current ? (
+          <p className="text-sm font-semibold text-[var(--lkv-text-primary)] truncate">
+            {Math.round(current.tempC)}°C · {weatherLabel(current.weathercode)}
+            {current.precipPct > 0 ? ` · ${Math.round(current.precipPct)}%` : ''}
+          </p>
+        ) : (
+          <p className="text-sm font-semibold text-[var(--lkv-text-primary)]">Météo</p>
+        )}
       </div>
-      {current ? (
-        <p className="text-sm font-semibold text-[var(--lkv-text-primary)] mt-2">
-          {Math.round(current.tempC)}°C · {weatherLabel(current.weathercode)}
-          {current.precipPct > 0 ? ` · ${Math.round(current.precipPct)}% precip.` : ''}
-        </p>
-      ) : null}
       <div className="grid grid-cols-5 gap-1 mt-3">
         {days.map((d) => (
           <div key={d.date} className="rounded-lg bg-[var(--lkv-surface-raised)] p-1.5 text-center">
@@ -182,14 +182,13 @@ export function PointsEauBlock({ count }: { count: number }) {
   return (
     <section className="glass p-4 rounded-[var(--lkv-radius-card)]" aria-label="Points d'eau">
       <div className="flex items-center gap-2">
-        <Droplets size={16} className="text-[var(--lkv-text-secondary)]" aria-hidden="true" />
-        <p className="text-[10px] font-mono uppercase tracking-widest text-[var(--lkv-text-muted)]">Points d’eau</p>
+        <Droplets size={15} className="shrink-0 text-[var(--lkv-text-secondary)]" aria-hidden="true" />
+        <p className="text-sm font-semibold text-[var(--lkv-text-primary)]">
+          {count} point{count > 1 ? 's' : ''} d’eau
+        </p>
       </div>
-      <p className="text-sm font-semibold text-[var(--lkv-text-primary)] mt-2">
-        {count} point(s) d’eau répertorié(s)
-      </p>
-      <p className="text-xs text-[var(--lkv-text-secondary)] mt-1">
-        Prévoyez une capacité d’hydratation adaptée entre deux ravitaillements.
+      <p className="text-xs text-[var(--lkv-text-secondary)] mt-1.5">
+        Prévoyez une capacité adaptée entre deux ravitaillements.
       </p>
     </section>
   );

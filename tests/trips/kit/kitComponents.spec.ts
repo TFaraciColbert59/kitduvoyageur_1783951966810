@@ -1,4 +1,4 @@
-import React from 'react';
+﻿import React from 'react';
 import { describe, it, expect, vi } from 'vitest';
 import { renderToStaticMarkup } from 'react-dom/server';
 import { TripKitView } from '@/features/trips/components/TripKitView';
@@ -113,10 +113,8 @@ describe('TripKitView Component (Apple HIG & Core Business Monetization)', () =>
       React.createElement(TripKitView, { trip: dummyTrip, analysis: dummyAnalysis })
     );
 
-    expect(html).toContain('Préparation du Sac');
     expect(html).toContain('100%');
     expect(html).toContain('1 / 1');
-    expect(html).toContain('Bilan de Pesée');
     expect(html).toContain('2.0 kg');
     expect(html).toContain('ultralight');
   });
@@ -135,7 +133,7 @@ describe('TripKitView Component (Apple HIG & Core Business Monetization)', () =>
       React.createElement(TripKitView, { trip: dummyTrip, analysis: dummyAnalysis })
     );
 
-    expect(html).toContain('Équipements Manquants Détectés (Gear Gap)');
+    expect(html).toContain('Il manque dans votre sac');
     expect(html).toContain('Poncho Imperméable Pluie');
     expect(html).toContain('12 €');
     expect(html).toContain('150g');

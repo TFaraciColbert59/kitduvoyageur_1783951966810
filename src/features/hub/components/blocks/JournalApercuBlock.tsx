@@ -33,9 +33,7 @@ export function JournalApercuBlock({ trip, slug }: { trip: TripFull; slug: strin
       </div>
 
       {notes.length === 0 ? (
-        <p className="text-sm text-[var(--lkv-text-secondary)]">
-          Aucune note encore — racontez vos journées depuis la section Journal.
-        </p>
+        <p className="text-sm text-[var(--lkv-text-secondary)]">Aucune note encore.</p>
       ) : (
         <ul className="space-y-2">
           {notes.map((n) => (

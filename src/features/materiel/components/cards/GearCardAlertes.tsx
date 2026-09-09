@@ -1,9 +1,8 @@
-'use client';
+﻿'use client';
 import Link from 'next/link';
 import { ShieldCheck, AlertTriangle } from 'lucide-react';
 import { ArrowRightIcon as ArrowRightAnimated } from '@/components/icons/arrow-right';
 import { GlassCard } from '@/components/ui/GlassCard';
-import { Eyebrow } from '@/components/ui/Eyebrow';
 import { Badge } from '@/components/ui/Badge';
 import { ProgressBar } from '@/components/ui/ProgressBar';
 
@@ -30,7 +29,6 @@ export function GearCardAlertes({ data, className }: { data: AlertesData; classN
         {/* Header with Title & Large Metric */}
         <div className="flex items-start justify-between pr-7 md:pr-10">
           <div className="space-y-0.5">
-            <Eyebrow>Diagnostic</Eyebrow>
             <h2 id="alertes-title" className="text-[13px] sm:text-[20px] font-display font-bold text-[var(--lkv-primary)] leading-tight truncate">
               Alertes
             </h2>

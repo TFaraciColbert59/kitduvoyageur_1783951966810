@@ -1,9 +1,8 @@
-'use client';
+﻿'use client';
 import Link from 'next/link';
 import { CheckCircle2, ArrowRight, AlertCircle } from 'lucide-react';
 import { ClockIcon as Clock } from '@/components/icons/clock';
 import { GlassCard } from '@/components/ui/GlassCard';
-import { Eyebrow } from '@/components/ui/Eyebrow';
 import { Badge } from '@/components/ui/Badge';
 import { ProgressBar } from '@/components/ui/ProgressBar';
 
@@ -26,7 +25,6 @@ export function GearCardDispo({ data, className }: { data: DispoData; className?
         {/* Header with Title & KPIs */}
         <div className="flex items-start justify-between pr-7 md:pr-10 gap-1.5">
           <div className="space-y-0.5 min-w-0 flex-1">
-            <Eyebrow>Parc & Prêts</Eyebrow>
             <h2 id="dispo-title" className="text-[12px] sm:text-[18px] font-display font-bold text-[var(--lkv-primary)] leading-tight truncate">
               Dispo parc
             </h2>

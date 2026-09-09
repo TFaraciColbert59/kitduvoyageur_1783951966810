@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useTransition } from 'react';
-import { Users, UserPlus, Trash2, ShieldCheck, Mail, AlertCircle, CheckCircle2, X } from 'lucide-react';
+import { Users, UserPlus, Trash2, Mail, AlertCircle, CheckCircle2, X } from 'lucide-react';
 import { GlassCard } from '@/components/ui/GlassCard';
 import { GlassCapsuleBtn } from '@/components/ui/GlassCapsuleBtn';
 import { EmptyState } from '@/components/ui/EmptyState';
@@ -88,17 +88,7 @@ export function TripTeamView({ trip }: TripTeamViewProps) {
           <span>{actionError}</span>
         </div>
       )}
-      <div className="flex flex-wrap items-center justify-between gap-4">
-        <div>
-          <h3 className="text-xl font-bold text-lkv-primary flex items-center gap-2">
-            <Users size={22} className="text-lkv-secondary" />
-            <span>Équipe & Compagnons de Route</span>
-          </h3>
-          <p className="text-xs text-lkv-secondary mt-1">
-            Gérez les participants, attribuez les rôles (organisateur, éditeur, lecteur) et coordonnez votre expédition.
-          </p>
-        </div>
-
+      <div className="flex items-center justify-end">
         {isOwner && (
           <GlassCapsuleBtn
             variant="primary"
@@ -110,27 +100,6 @@ export function TripTeamView({ trip }: TripTeamViewProps) {
           </GlassCapsuleBtn>
         )}
       </div>
-
-      {/* Explication des rôles */}
-      <GlassCard tone="neutral" className="p-4 rounded-[var(--lkv-radius-lg)] border border-white/60 text-xs text-[var(--lkv-text-muted)]">
-        <div className="flex items-start gap-3">
-          <ShieldCheck size={18} className="text-lkv-secondary shrink-0 mt-0.5" />
-          <div className="space-y-1">
-            <div className="font-semibold text-lkv-primary">Droits &amp; Rôles sur l&apos;expédition</div>
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 pt-1 text-[11px]">
-              <div>
-                <strong className="text-lkv-primary">Organisateur (Owner) :</strong> Contrôle total, invitation/retrait, suppression, budget.
-              </div>
-              <div>
-                <strong className="text-lkv-primary">Éditeur :</strong> Modification de l&apos;itinéraire, matériel, saisie des dépenses et documents.
-              </div>
-              <div>
-                <strong className="text-lkv-primary">Lecteur :</strong> Consultation de l&apos;itinéraire et du kit en lecture seule.
-              </div>
-            </div>
-          </div>
-        </div>
-      </GlassCard>
 
       {/* Liste des membres */}
       {trip.collaborators.length === 0 ? (

@@ -1,8 +1,7 @@
 'use client';
 
 import React, { useState, useTransition, useMemo } from 'react';
-import Link from 'next/link';
-import { ArrowLeft, AlertCircle, CheckCircle2, Map } from 'lucide-react';
+import { AlertCircle, CheckCircle2, Map } from 'lucide-react';
 import { GlassCapsuleBtn } from '@/components/ui';
 import type { TripFull } from '@/features/trips/types/trip.types';
 import {
@@ -352,31 +351,14 @@ export default function ItineraryPlannerClient({
   return (
     <div className="space-y-4 pb-16">
       {/* Header Navigation Glass */}
-      <div className="glass rounded-[var(--lkv-radius-card)] border border-white/60 shadow-sm p-4">
+      <div className="glass rounded-[var(--lkv-radius-card)] border border-white/60 shadow-sm p-3">
         <div className="flex items-center justify-between gap-4">
-          <div className="flex items-center gap-3 min-w-0">
-            <Link
-              href={tripSectionHref(trip.slug, 'overview')}
-              className="w-11 h-11 min-w-[44px] min-h-[44px] rounded-full glass-sub-card border border-white/60 flex items-center justify-center text-[var(--lkv-text-primary)] hover:bg-white transition-all active:scale-95 cursor-pointer shadow-2xs"
-              aria-label="Retour au cockpit du voyage"
-            >
-              <ArrowLeft className="w-4 h-4" />
-            </Link>
-            <div className="min-w-0">
-              <div className="flex items-center gap-2">
-                <span className="text-[9.5px] font-mono font-bold uppercase tracking-wider text-[var(--lkv-text-secondary)]">
-                  Planificateur d'Itinéraire
-                </span>
-                {isPending && (
-                  <span className="text-[10px] text-[var(--lkv-text-secondary)] animate-pulse font-mono">
-                    Enregistrement...
-                  </span>
-                )}
-              </div>
-              <h2 className="text-base sm:text-lg font-bold text-[var(--lkv-text-primary)] truncate font-display">
-                {trip.title}
-              </h2>
-            </div>
+          <div className="flex items-center gap-2 min-w-0">
+            {isPending && (
+              <span className="text-[11px] text-[var(--lkv-text-secondary)] animate-pulse font-mono">
+                Enregistrement...
+              </span>
+            )}
           </div>
 
           <div className="flex items-center gap-2">

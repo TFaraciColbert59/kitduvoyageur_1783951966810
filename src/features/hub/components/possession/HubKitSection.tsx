@@ -40,9 +40,7 @@ export async function HubKitSection() {
 
       {/* Atelier kits (legacy réintégré) */}
       <section aria-label="Atelier kits" className="shrink-0 space-y-3 px-1 py-4">
-        <h2 className="text-xs font-mono font-bold uppercase tracking-widest text-[var(--lkv-text-muted)]">
-          Atelier kits
-        </h2>
+        <h2 className="sr-only">Atelier kits</h2>
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-3">
           <KitManager kits={kits} inventory={inventory} />
           <KitComparator kits={kits} />

@@ -71,26 +71,6 @@ export function TripMetricsBlock({ trip, stats, slug }: { trip: TripFull; stats:
           </div>
         </a>
       </div>
-
-      {kit.total > 0 && (
-        <a
-          href={hubSectionHref(ref, 'gear')}
-          className="glass p-4 rounded-[var(--lkv-radius-card)] border border-white/60 shadow-sm block cursor-pointer hover:bg-white/60 transition-colors"
-        >
-          <div className="flex items-center justify-between mb-2">
-            <span className="text-sm font-semibold text-[var(--lkv-text-primary)]">Préparation de l&apos;équipement</span>
-            <span className="text-xs font-medium text-[var(--lkv-text-secondary)]">
-              {kit.ready} sur {kit.total} emballés ({packedPercent}%)
-            </span>
-          </div>
-          <div className="w-full h-2.5 bg-black/5 rounded-full overflow-hidden">
-            <div
-              className="h-full bg-gradient-to-r from-[var(--lkv-secondary)] to-[var(--lkv-primary)] transition-all duration-500 rounded-full"
-              style={{ width: `${packedPercent}%` }}
-            />
-          </div>
-        </a>
-      )}
     </div>
   );
 }

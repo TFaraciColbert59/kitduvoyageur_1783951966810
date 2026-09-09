@@ -49,9 +49,7 @@ export async function HubVoyagesLiesSection({ adventure, crews }: HubVoyagesLies
   if (trips.length === 0) {
     return (
       <div className="glass p-4 rounded-[var(--lkv-radius-card)]">
-        <p className="text-sm text-[var(--lkv-text-secondary)]">
-          Aucun voyage lié pour le moment — il apparaîtra ici dès qu&apos;un voyage sera rattaché.
-        </p>
+        <p className="text-sm text-[var(--lkv-text-secondary)]">Aucun voyage lié.</p>
       </div>
     );
   }

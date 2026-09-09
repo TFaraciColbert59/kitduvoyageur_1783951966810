@@ -95,48 +95,34 @@ export function TripNotesView({ trip }: TripNotesViewProps) {
   return (
     <div className="space-y-6">
       {/* Bannière de statut & Action Clôture */}
-      <GlassCard tone="sage" className="p-5 rounded-[var(--lkv-radius-xl)] border border-white/60 shadow-sm">
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-          <div className="flex items-start sm:items-center gap-3">
-            <div className="w-10 h-10 rounded-full bg-[var(--lkv-primary)]/10 flex items-center justify-center text-[var(--lkv-primary)] shrink-0">
-              {trip.status === 'completed' ? <CheckCircle2 size={22} /> : <BookOpen size={22} />}
-            </div>
-            <div>
-              <h3 className="font-semibold text-[var(--lkv-text-primary)] text-base">
-                {trip.status === 'completed'
-                  ? 'Expédition terminée · Carnet de bord clôturé'
-                  : 'Carnet de bord & Récits de voyage'}
-              </h3>
-              <p className="text-xs text-[var(--lkv-text-secondary)]">
-                {trip.status === 'completed'
-                  ? 'Votre rétrospective est enregistrée et prête à inspirer les futurs trekkeurs.'
-                  : 'Immortalisez vos journées, conditions météo, topos et anecdotes au jour le jour.'}
-              </p>
-            </div>
+      <div className="flex items-center justify-between gap-4 flex-wrap">
+        {trip.status === 'completed' && (
+          <span className="inline-flex items-center gap-1.5 text-[11px] px-2.5 py-1 rounded-full bg-[var(--lkv-primary)]/10 text-lkv-primary font-semibold">
+            <CheckCircle2 size={13} aria-hidden="true" />
+            <span>Expédition terminée</span>
+          </span>
+        )}
+        {canEdit && (
+          <div className="flex items-center gap-2 shrink-0">
+            <GlassCapsuleBtn
+              variant="secondary"
+              size="sm"
+              onClick={() => setIsCompletionOpen(true)}
+              icon={<Award size={16} />}
+            >
+              {trip.status === 'completed' ? 'Bilan & Rétrospective' : 'Clôturer le voyage'}
+            </GlassCapsuleBtn>
+            <GlassCapsuleBtn
+              variant="primary"
+              size="sm"
+              onClick={() => setIsAddOpen(true)}
+              icon={<Plus size={16} />}
+            >
+              Ajouter un récit
+            </GlassCapsuleBtn>
           </div>
-
-          {canEdit && (
-            <div className="flex items-center gap-2 shrink-0">
-              <GlassCapsuleBtn
-                variant="secondary"
-                size="sm"
-                onClick={() => setIsCompletionOpen(true)}
-                icon={<Award size={16} />}
-              >
-                {trip.status === 'completed' ? 'Bilan & Rétrospective' : 'Clôturer le voyage'}
-              </GlassCapsuleBtn>
-              <GlassCapsuleBtn
-                variant="primary"
-                size="sm"
-                onClick={() => setIsAddOpen(true)}
-                icon={<Plus size={16} />}
-              >
-                Ajouter un récit
-              </GlassCapsuleBtn>
-            </div>
-          )}
-        </div>
-      </GlassCard>
+        )}
+      </div>
 
       {/* Barre de filtres par jour */}
       {availableDays.length > 0 && (

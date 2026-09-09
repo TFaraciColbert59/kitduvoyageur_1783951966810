@@ -1,8 +1,6 @@
-import Link from 'next/link';
 import { notFound } from 'next/navigation';
-import { ArrowLeft } from 'lucide-react';
 import { createClient } from '@/lib/supabase/server';
-import { getHubAdventureData, buildHubCounts } from '@/features/hub/server/getHubAdventureData';
+import { getHubAdventureData } from '@/features/hub/server/getHubAdventureData';
 import { hubSectionRegistry } from '@/features/hub/registry/hubSectionRegistry';
 import { HubInventaireSection } from '@/features/hub/components/possession/HubInventaireSection';
 import { HubKitSection } from '@/features/hub/components/possession/HubKitSection';
@@ -19,7 +17,6 @@ import { getTripStats } from '@/lib/queries-trips';
 import { getTripKitDetails } from '@/lib/queries-trip-kit';
 import { calculateBudgetSummary } from '@/features/trips/engine/budgetEngine';
 import { getTripPhaseDetails } from '@/features/trips/engine/temporalPhaseEngine';
-import { getTripDurationDays } from '@/features/trips/engine/contextualKitEngine';
 import ItineraryPlannerClient from '@/features/trips/planner/ItineraryPlannerClient';
 import type { PlannerStep } from '@/features/trips/planner/plannerEngine';
 import { TripTeamView } from '@/features/trips/components/TripTeamView';
@@ -52,34 +49,11 @@ export default async function HubSectionPage({
   const data = await getHubAdventureData();
   if (!def.natures.includes(data.adventure.nature)) notFound();
 
-  const counts = buildHubCounts(data);
-  const count = def.counter(counts);
-  const Icon = def.icon;
-
   return (
     <div className="space-y-4">
-      <Link
-        href="/hub"
-        className="inline-flex items-center gap-1.5 text-xs font-semibold text-[var(--lkv-text-secondary)] hover:text-[var(--lkv-text-primary)] min-h-[44px]"
-      >
-        <ArrowLeft size={14} aria-hidden="true" />
-        Aperçu
-      </Link>
-      <header className="flex items-center gap-3">
-        <span className="w-10 h-10 rounded-full bg-[var(--lkv-primary)] text-white flex items-center justify-center shrink-0">
-          <Icon size={18} aria-hidden="true" />
-        </span>
-        <div>
-          <h1 className="font-display font-bold text-2xl text-[var(--lkv-text-primary)]">
-            {def.label}
-          </h1>
-          {count !== null && (
-            <p className="text-sm text-[var(--lkv-text-secondary)]">
-              {count} élément(s)
-            </p>
-          )}
-        </div>
-      </header>
+      <h1 className="font-display font-bold text-2xl text-[var(--lkv-text-primary)] px-1 pt-1">
+        {def.label}
+      </h1>
       {def.id === 'inventaire' && <HubInventaireSection />}
       {def.id === 'kit' && <HubKitSection />}
       {def.id === 'preparation' && <HubPreparationSection />}
@@ -141,31 +115,15 @@ async function SortieSection({ sectionId, slug }: { sectionId: string; slug: str
       const result = await getTripKitDetails(slug);
       if (!result) notFound();
       const { analysis } = result;
-      return (
-        <div className="space-y-4">
-          <div className="mb-2">
-            <div className="flex items-center gap-2 text-[var(--lkv-text-secondary)] text-xs font-bold uppercase tracking-wider mb-1">
-              Kit &amp; Sac à dos
-            </div>
-            <p className="text-xs sm:text-sm text-[var(--lkv-text-secondary)]">
-              Recommandations contextuelles basées sur le climat, l’altitude ({analysis.maxAltitudeM}m) et la durée ({getTripDurationDays(trip)}j).
-            </p>
-          </div>
-          <TripKitView trip={trip} analysis={analysis} showBackLink={false} />
-        </div>
-      );
+      return <TripKitView trip={trip} analysis={analysis} showBackLink={false} />;
     }
     case 'team':
       return (
         <div className="space-y-4">
           <TripTeamView trip={trip} />
-          {/* Carnet des participants (humains + chiens) — legacy réintégré */}
-          <section aria-label="Carnet des participants">
-            <h2 className="text-xs font-mono font-bold uppercase tracking-widest text-[var(--lkv-text-muted)] px-1 pb-1">
-              Carnet des participants
-            </h2>
+          <div aria-label="Carnet des participants">
             <ParticipantsManager />
-          </section>
+          </div>
         </div>
       );
     case 'budget':

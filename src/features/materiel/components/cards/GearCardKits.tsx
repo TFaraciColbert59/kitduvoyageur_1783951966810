@@ -1,8 +1,7 @@
-'use client';
+﻿'use client';
 import Link from 'next/link';
 import { Package, ArrowRight, Check } from 'lucide-react';
 import { GlassCard } from '@/components/ui/GlassCard';
-import { Eyebrow } from '@/components/ui/Eyebrow';
 import { ProgressBar } from '@/components/ui/ProgressBar';
 
 interface KitsData {
@@ -27,7 +26,6 @@ export function GearCardKits({ data, className }: { data: KitsData; className?: 
         {/* Header with Title & Large Metric */}
         <div className="flex items-start justify-between pr-7 md:pr-10">
           <div className="space-y-0.5">
-            <Eyebrow>Configuration</Eyebrow>
             <h2 id="kits-title" className="text-[13px] sm:text-[20px] font-display font-bold text-[var(--lkv-primary)] leading-tight truncate">
               Mes kits
             </h2>

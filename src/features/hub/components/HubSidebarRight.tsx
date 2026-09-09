@@ -116,10 +116,7 @@ export function HubSidebarRight({
       className="hub-rail w-full h-full overflow-y-auto no-scrollbar flex flex-col gap-3 pb-6"
     >
       <div className="glass p-3.5 rounded-2xl border border-white/70 shadow-xs">
-        <p className="text-[9.5px] font-mono font-bold uppercase tracking-widest text-[var(--lkv-text-secondary)]">
-          Aventure active
-        </p>
-        <p className="text-sm font-bold text-[var(--lkv-text-primary)] mt-1">
+        <p className="text-sm font-bold text-[var(--lkv-text-primary)]">
           {NATURE_LABELS[profile.nature]} · {PARTY_LABELS[profile.party]}
           {profile.scale ? ` · ${profile.scale}` : ''}
         </p>

@@ -35,7 +35,7 @@ export function ReservationsBlock({
         ) : null}
       </div>
       {stays.length > 0 ? (
-        <ul className="mt-2 space-y-1.5">
+        <ul className="mt-2.5 space-y-1.5">
           {stays.slice(0, 4).map((s) => (
             <li key={s.id} className="flex items-center gap-2 text-sm">
               <span className="text-[10px] font-mono text-[var(--lkv-text-muted)] shrink-0">J{s.day_number}</span>
@@ -47,8 +47,8 @@ export function ReservationsBlock({
           ))}
         </ul>
       ) : (
-        <p className="text-xs text-[var(--lkv-text-secondary)] mt-2">
-          Aucun hébergement réservé — ajoutez-en sur les étapes de l’itinéraire.
+        <p className="text-xs text-[var(--lkv-text-secondary)] mt-2.5">
+          Aucun hébergement réservé.
         </p>
       )}
       <Link

@@ -48,7 +48,6 @@ export function HubOverviewPossession({ items, loans, alerts, summary }: HubOver
     <div className="space-y-4">
       <HubActivityHero
         title="Mon matériel"
-        subtitle="Inventaire, kits, prêts et préparation"
         coverUrl={null}
         badgeLabel="Matériel"
         assistantContextLabel="Conseils matériel et préparation"
@@ -100,7 +99,6 @@ export function HubOverviewPossession({ items, loans, alerts, summary }: HubOver
           <Sparkles size={18} className="shrink-0 text-[var(--lkv-text-secondary)]" aria-hidden="true" />
           <span className="flex-1 min-w-0">
             <span className="block text-sm font-semibold text-[var(--lkv-text-primary)]">Assistant IA</span>
-            <span className="block text-[11px] text-[var(--lkv-text-secondary)] truncate">Conseils matériel et préparation</span>
           </span>
           <ArrowRight size={14} className="text-[var(--lkv-text-muted)] shrink-0" aria-hidden="true" />
         </Link>

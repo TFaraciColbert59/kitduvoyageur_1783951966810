@@ -84,33 +84,17 @@ export const ParticipantsManager: React.FC = () => {
 
   return (
     <div className="space-y-6 pb-24 animate-in fade-in duration-300">
-      {/* Group Telemetry Summary Banner */}
-      <div className="p-6 rounded-3xl bg-gradient-to-br from-[var(--lkv-forest-900)] to-[var(--lkv-forest-700)] text-white shadow-xl shadow-md/10 relative overflow-hidden">
-        <div className="flex items-center justify-between gap-2 mb-2">
-          <span className="text-[10px] font-mono uppercase tracking-[0.2em] text-[var(--lkv-sage-300)]">
-            MATRICE DE GROUPE & LOGISTIQUE
-          </span>
-          <span className="px-2.5 py-0.5 rounded-full text-[11px] font-mono font-semibold bg-white/15 text-white backdrop-blur-md">
-            {stats.totalHumans} 👤 · {stats.totalDogs} 🐾
-          </span>
-        </div>
-
-        <h2 className="text-2xl font-extrabold tracking-tight font-display mb-1">
-          Équipiers & Compagnons
-        </h2>
-        <p className="text-xs text-[var(--lkv-sage-200)]">
-          Répartition des charges, autonomie hydrique et sécurisation des fiches médicales ICE.
-        </p>
-
-        <div className="grid grid-cols-3 gap-2 mt-4 pt-4 border-t border-white/10 text-center">
+      {/* Télémétrie de groupe */}
+      <div className="p-4 rounded-3xl bg-gradient-to-br from-[var(--lkv-forest-900)] to-[var(--lkv-forest-700)] text-white shadow-xl shadow-md/10 relative overflow-hidden">
+        <div className="grid grid-cols-3 gap-2 text-center">
           <div className="p-2 rounded-xl bg-white/5">
-            <span className="text-[9px] uppercase font-mono opacity-75 block">Poids Portage</span>
+            <span className="text-[9px] uppercase font-mono opacity-75 block">Poids portage</span>
             <span className="text-base font-extrabold font-mono text-white">
               {stats.totalPackWeightKg} kg
             </span>
           </div>
           <div className="p-2 rounded-xl bg-white/5">
-            <span className="text-[9px] uppercase font-mono opacity-75 block">Eau / Jour</span>
+            <span className="text-[9px] uppercase font-mono opacity-75 block">Eau / jour</span>
             <span className="text-base font-extrabold font-mono text-white">
               {stats.totalWaterDailyLiters} L
             </span>

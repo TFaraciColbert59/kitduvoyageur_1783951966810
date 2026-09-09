@@ -110,14 +110,11 @@ export function HubActivityHero({
           </div>
           {daysUntil !== null && daysUntil !== undefined && (
             <span
-              className="rounded-2xl bg-white/15 backdrop-blur-sm border border-white/25 px-3 py-1 text-center"
+              className="rounded-2xl bg-white/15 backdrop-blur-sm border border-white/25 px-3 py-1.5 text-center"
               aria-label={daysUntil >= 0 ? `Départ dans ${daysUntil} jours` : 'Activité en cours ou passée'}
             >
-              <span className="block text-base font-extrabold font-mono leading-none">
+              <span className="block text-lg font-extrabold font-mono leading-none">
                 {daysUntil >= 0 ? `J-${daysUntil}` : 'En cours'}
-              </span>
-              <span className="block text-[8.5px] uppercase tracking-widest opacity-80 mt-0.5">
-                {daysUntil >= 0 ? 'Avant départ' : 'Suivi'}
               </span>
             </span>
           )}

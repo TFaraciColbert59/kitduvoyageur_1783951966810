@@ -78,18 +78,7 @@ export function TripDocumentsView({ trip }: TripDocumentsViewProps) {
 
   return (
     <div className="space-y-6">
-      {/* En-tête de section */}
-      <div className="flex flex-wrap items-center justify-between gap-4">
-        <div>
-          <h3 className="text-xl font-bold text-lkv-primary flex items-center gap-2">
-            <FileText size={22} className="text-lkv-secondary" />
-            <span>Papiers & Documents Sécurisés</span>
-          </h3>
-          <p className="text-xs text-lkv-secondary mt-1">
-            Coffre-fort chiffré des réservations, passeports et attestations avec surveillance automatique des échéances.
-          </p>
-        </div>
-
+      <div className="flex items-center justify-end">
         {canEdit && (
           <GlassCapsuleBtn
             variant="primary"
@@ -102,23 +91,15 @@ export function TripDocumentsView({ trip }: TripDocumentsViewProps) {
         )}
       </div>
 
-      {/* Garantie RGPD */}
       {errorMsg && (
         <div className="p-3 rounded-xl glass tone-danger text-[var(--lkv-danger)] text-xs">
           {errorMsg}
         </div>
       )}
-      <GlassCard tone="neutral" className="p-4 rounded-[var(--lkv-radius-lg)] border border-white/60 text-xs text-[var(--lkv-text-muted)]">
-        <div className="flex items-start gap-3">
-          <ShieldCheck size={18} className="text-lkv-secondary shrink-0 mt-0.5" />
-          <div className="space-y-1">
-            <div className="font-semibold text-lkv-primary">Protection RGPD & Chiffrement de vos documents</div>
-            <p className="text-[11px] text-lkv-secondary leading-relaxed">
-              Ces documents ne sont jamais exposés aux visiteurs anonymes ni sur les liens publics de partage. Seuls les organisateurs et éditeurs authentifiés peuvent les consulter.
-            </p>
-          </div>
-        </div>
-      </GlassCard>
+      <p className="flex items-center gap-2 text-[11px] text-[var(--lkv-text-muted)] px-1">
+        <ShieldCheck size={14} className="text-lkv-secondary shrink-0" aria-hidden="true" />
+        <span>Chiffrés, jamais exposés aux visiteurs anonymes.</span>
+      </p>
 
       {/* Liste des documents */}
       {trip.documents.length === 0 ? (

@@ -1,8 +1,7 @@
-'use client';
+﻿'use client';
 import Link from 'next/link';
 import { Check, ArrowRight } from 'lucide-react';
 import { GlassCard } from '@/components/ui/GlassCard';
-import { Eyebrow } from '@/components/ui/Eyebrow';
 import { ProgressBar } from '@/components/ui/ProgressBar';
 
 interface ForgetData {
@@ -27,7 +26,6 @@ export function GearCardForget({ data, className }: { data: ForgetData; classNam
         {/* Header with Title & Large Metric */}
         <div className="flex items-start justify-between pr-7 md:pr-10 gap-1">
           <div className="space-y-0.5 min-w-0 flex-1">
-            <Eyebrow>Checklist</Eyebrow>
             <h2 id="forget-title" className="text-[12px] sm:text-[17px] font-display font-bold text-[var(--lkv-primary)] leading-tight truncate">
               À emporter
             </h2>

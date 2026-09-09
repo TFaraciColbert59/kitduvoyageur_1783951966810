@@ -23,20 +23,16 @@ export function GroupeBloc({ trip, group }: { trip: { slug: string; collaborator
   if (!collective) {
     return (
       <section className="glass p-4 rounded-[var(--lkv-radius-card)]" aria-label="Groupe">
-        <div className="flex items-center gap-2">
-          <UserPlus size={16} className="text-[var(--lkv-text-secondary)]" aria-hidden="true" />
-          <p className="text-[10px] font-mono uppercase tracking-widest text-[var(--lkv-text-muted)]">Groupe</p>
+        <div className="flex items-center justify-between gap-2">
+          <p className="text-sm font-semibold text-[var(--lkv-text-primary)]">Sortie en solo</p>
+          <UserPlus size={15} className="shrink-0 text-[var(--lkv-text-secondary)]" aria-hidden="true" />
         </div>
-        <p className="text-sm font-semibold text-[var(--lkv-text-primary)] mt-2">Sortie en solo</p>
-        <p className="text-xs text-[var(--lkv-text-secondary)] mt-1">
-          Invitez des compagnons — l’équipage s’active dès le deuxième participant.
-        </p>
         <Link
           href={equipageHref}
           className="glass-capsule-btn primary inline-flex items-center gap-2 mt-3 min-h-[44px] px-4"
         >
           <MailPlus size={14} aria-hidden="true" />
-          <span>Inviter</span>
+          <span>Inviter un compagnon</span>
         </Link>
       </section>
     );
@@ -46,17 +42,14 @@ export function GroupeBloc({ trip, group }: { trip: { slug: string; collaborator
   return (
     <section className="glass p-4 rounded-[var(--lkv-radius-card)]" aria-label="Groupe">
       <div className="flex items-center justify-between">
-        <div className="flex items-center gap-2">
-          <Users size={16} className="text-[var(--lkv-text-secondary)]" aria-hidden="true" />
-          <p className="text-[10px] font-mono uppercase tracking-widest text-[var(--lkv-text-muted)]">Groupe</p>
-        </div>
+        <Users size={15} className="shrink-0 text-[var(--lkv-text-secondary)]" aria-hidden="true" />
         {group?.pendingInvites ? (
           <span className="text-[10px] font-mono text-[var(--lkv-text-secondary)]">
-            {group.pendingInvites} invitation(s) en attente
+            {group.pendingInvites} invitation(s)
           </span>
         ) : null}
       </div>
-      <ul className="mt-2 space-y-1.5">
+      <ul className="mt-2.5 space-y-1.5">
         {members.slice(0, 6).map((m) => (
           <li key={m.userId} className="flex items-center gap-2 text-sm">
             <span className="w-6 h-6 rounded-full bg-[var(--lkv-surface-raised)] flex items-center justify-center text-[10px] font-bold text-[var(--lkv-text-secondary)] shrink-0">
@@ -66,11 +59,6 @@ export function GroupeBloc({ trip, group }: { trip: { slug: string; collaborator
             <span className="text-[10px] font-mono text-[var(--lkv-text-muted)]">{ROLE_LABELS[m.role] ?? m.role}</span>
           </li>
         ))}
-        {members.length === 0 ? (
-          <li className="text-sm text-[var(--lkv-text-secondary)]">
-            Aucun compagnon pour l&apos;instant — invitez-en un.
-          </li>
-        ) : null}
       </ul>
       <Link
         href={equipageHref}

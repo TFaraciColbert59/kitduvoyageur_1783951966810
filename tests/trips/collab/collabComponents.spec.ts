@@ -1,4 +1,4 @@
-import React from 'react';
+﻿import React from 'react';
 import { describe, it, expect, vi } from 'vitest';
 import { renderToStaticMarkup } from 'react-dom/server';
 import { TripTeamView } from '@/features/trips/components/TripTeamView';
@@ -135,7 +135,6 @@ describe('UI Components — Chantier 7', () => {
   it('affiche TripTeamView avec les membres et le bouton d\'invitation pour l\'owner', () => {
     const html = renderToStaticMarkup(React.createElement(TripTeamView, { trip: dummyTrip }));
 
-    expect(html).toContain('Équipe &amp; Compagnons de Route');
     expect(html).toContain('Alice Alpiniste');
     expect(html).toContain('Bob Bivouac');
     expect(html).toContain('Inviter un voyageur');
@@ -144,7 +143,6 @@ describe('UI Components — Chantier 7', () => {
   it('affiche TripBudgetView avec le total dépensé et les règlements de compte', () => {
     const html = renderToStaticMarkup(React.createElement(TripBudgetView, { trip: dummyTrip }));
 
-    expect(html).toContain('Budget &amp; Partage des Dépenses');
     expect(html).toContain('140 EUR');
     expect(html).toContain('800 EUR');
     expect(html).toContain('Nuitée Refuge Bonatti');
@@ -153,9 +151,7 @@ describe('UI Components — Chantier 7', () => {
   it('affiche TripDocumentsView avec les alertes d\'échéance et le respect RGPD', () => {
     const html = renderToStaticMarkup(React.createElement(TripDocumentsView, { trip: dummyTrip }));
 
-    expect(html).toContain('Papiers &amp; Documents Sécurisés');
     expect(html).toContain('Passeport biométrique');
-    expect(html).toContain('Protection RGPD');
   });
 
   it('affiche TripShareModal avec le lien de partage et la sélection de visibilité', () => {

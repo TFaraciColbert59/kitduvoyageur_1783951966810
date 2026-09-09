@@ -1,11 +1,10 @@
-'use client';
+﻿'use client';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { Backpack } from 'lucide-react';
 import { ClockIcon as Clock } from '@/components/icons/clock';
 import { ArrowRightIcon as ArrowRightAnimated } from '@/components/icons/arrow-right';
 import { GlassCard } from '@/components/ui/GlassCard';
-import { Eyebrow } from '@/components/ui/Eyebrow';
 import { Badge } from '@/components/ui/Badge';
 import { ProgressBar } from '@/components/ui/ProgressBar';
 import { CountdownLive } from './CountdownLive';
@@ -44,7 +43,6 @@ export function GearCardDepart({ data, className }: { data: DepartData; classNam
         {/* Top Header */}
         <div className="flex items-start justify-between gap-2 pr-8 md:pr-12">
           <div className="space-y-0.5">
-            <Eyebrow>Prochain départ</Eyebrow>
             <h2 id="depart-title" className="text-[18px] sm:text-[32px] leading-tight font-display font-bold tracking-tight text-[var(--lkv-primary)]">
               {data.destination}
             </h2>

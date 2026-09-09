@@ -30,10 +30,10 @@ export function HubOverviewCollectif({
   pendingInvites,
   linkedTripSlug,
 }: HubOverviewCollectifProps) {
-  const cards: Array<{ href: string; label: string; sub: string; Icon: typeof Users; count?: number }> = [
-    { href: hubSectionHref({ nature: 'collectif' }, 'groupe'), label: 'Groupe', sub: 'Membres & rôles', Icon: Users, count: members },
-    { href: hubSectionHref({ nature: 'collectif' }, 'invitations'), label: 'Invitations', sub: 'En attente', Icon: MailPlus, count: pendingInvites },
-    { href: HUB_COLLECTIF_HREFS.voyagesLies, label: 'Voyages liés', sub: 'Itinéraires partagés', Icon: MapIcon },
+  const cards: Array<{ href: string; label: string; Icon: typeof Users; count?: number }> = [
+    { href: hubSectionHref({ nature: 'collectif' }, 'groupe'), label: 'Groupe', Icon: Users, count: members },
+    { href: hubSectionHref({ nature: 'collectif' }, 'invitations'), label: 'Invitations', Icon: MailPlus, count: pendingInvites },
+    { href: HUB_COLLECTIF_HREFS.voyagesLies, label: 'Voyages liés', Icon: MapIcon },
   ];
 
   return (
@@ -75,7 +75,6 @@ export function HubOverviewCollectif({
                     {c.label}
                     {c.count !== undefined && c.count > 0 ? ` · ${c.count}` : ''}
                   </span>
-                  <span className="block text-[11px] text-[var(--lkv-text-secondary)] truncate">{c.sub}</span>
                 </span>
                 <ArrowRight size={14} className="text-[var(--lkv-text-muted)] shrink-0" aria-hidden="true" />
               </Link>
@@ -93,7 +92,6 @@ export function HubOverviewCollectif({
           <Sparkles size={18} className="shrink-0 text-[var(--lkv-text-secondary)]" aria-hidden="true" />
           <span className="flex-1 min-w-0">
             <span className="block text-sm font-semibold text-[var(--lkv-text-primary)]">Assistant IA</span>
-            <span className="block text-[11px] text-[var(--lkv-text-secondary)] truncate">Coordination {groupLabel}</span>
           </span>
           <ArrowRight size={14} className="text-[var(--lkv-text-muted)] shrink-0" aria-hidden="true" />
         </Link>

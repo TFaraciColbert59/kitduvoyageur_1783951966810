@@ -73,17 +73,7 @@ export function TripBudgetView({ trip }: TripBudgetViewProps) {
           {errorMsg}
         </div>
       )}
-      <div className="flex flex-wrap items-center justify-between gap-4">
-        <div>
-          <h3 className="text-xl font-bold text-lkv-primary flex items-center gap-2">
-            <CreditCard size={22} className="text-lkv-secondary" />
-            <span>Budget & Partage des Dépenses</span>
-          </h3>
-          <p className="text-xs text-lkv-secondary mt-1">
-            Suivi des dépenses en temps réel, répartition équitable entre membres et simplification des remboursements.
-          </p>
-        </div>
-
+      <div className="flex items-center justify-end">
         {canManage && (
           <GlassCapsuleBtn
             variant="primary"
