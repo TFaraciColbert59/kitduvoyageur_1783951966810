@@ -1,6 +1,7 @@
 import { getHubAdventureData, buildHubCounts } from '@/features/hub/server/getHubAdventureData';
 import { deriveHubProfile, type HubSectionId } from '@/features/hub/engine/hubProfileEngine';
 import { HubShell } from '@/features/hub/components/HubShell';
+import { LiquidGlassDefs } from '@/components/ui-layouts/liquid-glass';
 
 /**
  * H3.4 — Layout de segment du hub voyageur (miroir voyages/[slug]/layout).
@@ -16,17 +17,20 @@ export default async function HubLayout({ children }: { children: React.ReactNod
     data.input.kind === 'sortie' ? (data.input.enabledSections ?? []) : [];
 
   return (
-    <HubShell
-      adventure={data.adventure}
-      profile={profile}
-      baseEnabled={baseEnabled}
-      counts={counts}
-      trip={data.trip}
-      groupLabel={data.groupLabel}
-      linkedTripSlug={data.linkedTripSlug}
-      pendingInvites={data.pendingInvites}
-    >
-      {children}
-    </HubShell>
+    <>
+      <LiquidGlassDefs />
+      <HubShell
+        adventure={data.adventure}
+        profile={profile}
+        baseEnabled={baseEnabled}
+        counts={counts}
+        trip={data.trip}
+        groupLabel={data.groupLabel}
+        linkedTripSlug={data.linkedTripSlug}
+        pendingInvites={data.pendingInvites}
+      >
+        {children}
+      </HubShell>
+    </>
   );
 }

@@ -35,6 +35,8 @@ const SPAN_CLASS: Record<BentoSpan, string> = {
  */
 export function BentoGrid({ cells, className }: BentoGridProps) {
   const reduceMotion = useReducedMotion();
+  // Les defs du filtre verre sont rendues UNE SEULE fois dans /hub/layout
+  // (les deux shells desktop/mobile partagent la même page).
   return (
     <div className={cn('grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-12 gap-3', className)}>
       {cells.map((cell, i) => (

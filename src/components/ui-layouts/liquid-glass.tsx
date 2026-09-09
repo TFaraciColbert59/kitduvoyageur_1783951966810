@@ -22,6 +22,8 @@ export interface LiquidGlassCardProps {
   /** Reflets internes (défaut md). */
   shadowIntensity?: 'none' | 'xs' | 'sm' | 'md' | 'lg' | 'xl';
   borderRadius?: string;
+  /** Id du filtre SVG (défauts partagés). Doit matcher un <LiquidGlassDefs id/>. */
+  filterId?: string;
 }
 
 const BLUR = {
@@ -67,6 +69,7 @@ export function LiquidGlassCard({
   borderRadius = '24px',
   glowIntensity = 'sm',
   shadowIntensity = 'md',
+  filterId = 'lkdv-glass-blur',
 }: LiquidGlassCardProps) {
   const reduceMotion = useReducedMotion();
   const [isExpanded, setIsExpanded] = useState(false);
@@ -112,48 +115,21 @@ export function LiquidGlassCard({
       : {};
 
   return (
-    <>
-      <svg className="hidden" aria-hidden="true">
-        <defs>
-          <filter
-            id="lkdv-glass-blur"
-            x="0"
-            y="0"
-            width="100%"
-            height="100%"
-            filterUnits="objectBoundingBox"
-          >
-            <feTurbulence
-              type="fractalNoise"
-              baseFrequency="0.003 0.007"
-              numOctaves="1"
-              result="turbulence"
-            />
-            <feDisplacementMap
-              in="SourceGraphic"
-              in2="turbulence"
-              scale="200"
-              xChannelSelector="R"
-              yChannelSelector="G"
-            />
-          </filter>
-        </defs>
-      </svg>
-      <MotionComponent
-        className={cn(
-          `relative ${draggable ? 'cursor-grab active:cursor-grabbing' : ''} ${expandable ? 'cursor-pointer' : ''}`,
-          className
-        )}
-        style={{
-          borderRadius,
-          ...(width && !expandable && { width }),
-          ...(height && !expandable && { height }),
-        }}
-        {...(motionProps as object)}
-      >
+    <MotionComponent
+      className={cn(
+        `relative ${draggable ? 'cursor-grab active:cursor-grabbing' : ''} ${expandable ? 'cursor-pointer' : ''}`,
+        className
+      )}
+      style={{
+        borderRadius,
+        ...(width && !expandable && { width }),
+        ...(height && !expandable && { height }),
+      }}
+      {...(motionProps as object)}
+    >
         <div
           className={`pointer-events-none absolute inset-0 z-0 ${BLUR[blurIntensity]}`}
-          style={{ borderRadius, filter: 'url(#lkdv-glass-blur)' }}
+          style={{ borderRadius, filter: `url(#${filterId})` }}
         />
         <div
           className="pointer-events-none absolute inset-0 z-10"
@@ -165,7 +141,42 @@ export function LiquidGlassCard({
         />
         {children}
       </MotionComponent>
-    </>
+  );
+}
+
+/**
+ * Defs SVG du filtre de distorsion — UNE SEULE instance par id dans le DOM
+ * (les ids dupliqués sont invalides et gonflent le DOM). Rendre via
+ * <LiquidGlassDefs id={même id que filterId} /> une fois par conteneur.
+ */
+export function LiquidGlassDefs({ id = 'lkdv-glass-blur' }: { id?: string }) {
+  return (
+    <svg className="hidden" aria-hidden="true">
+      <defs>
+        <filter
+          id={id}
+          x="0"
+          y="0"
+          width="100%"
+          height="100%"
+          filterUnits="objectBoundingBox"
+        >
+          <feTurbulence
+            type="fractalNoise"
+            baseFrequency="0.003 0.007"
+            numOctaves="1"
+            result="turbulence"
+          />
+          <feDisplacementMap
+            in="SourceGraphic"
+            in2="turbulence"
+            scale="200"
+            xChannelSelector="R"
+            yChannelSelector="G"
+          />
+        </filter>
+      </defs>
+    </svg>
   );
 }
 

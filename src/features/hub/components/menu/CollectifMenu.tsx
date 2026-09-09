@@ -47,9 +47,12 @@ export function CollectifMenu({ summary, linkedTripSlug }: CollectifMenuProps) {
         key: 'groupe', span: 6 as const,
         node: (
           <MenuCard href={hubSectionHref(collectifRef, 'groupe')} icon={Users} label={name} tone="accent">
-            <p className="mt-0.5 text-[11px] text-[var(--lkv-text-secondary)]">
-              <NumberStat value={summary.members} /> membre{summary.members > 1 ? 's' : ''}
-              {summary.pendingInvites > 0 ? ` · ${summary.pendingInvites} invitation(s)` : ''}
+            <p className="mt-1 text-2xl font-extrabold text-[var(--lkv-text-primary)]">
+              <NumberStat value={summary.members} />
+              <span className="ml-2 text-xs font-semibold text-[var(--lkv-text-secondary)]">
+                membre{summary.members > 1 ? 's' : ''}
+                {summary.pendingInvites > 0 ? ` · ${summary.pendingInvites} invitation(s)` : ''}
+              </span>
             </p>
           </MenuCard>
         ),
@@ -58,9 +61,10 @@ export function CollectifMenu({ summary, linkedTripSlug }: CollectifMenuProps) {
         key: 'membres', span: 6 as const,
         node: (
           <MenuCard href={hubSectionHref(collectifRef, 'groupe')} icon={Users} label="Membres">
-            <p className="mt-0.5 text-[11px] text-[var(--lkv-text-secondary)]">
-              <NumberStat value={summary.members} /> membre{summary.members > 1 ? 's' : ''}
+            <p className="mt-1 text-2xl font-extrabold text-[var(--lkv-text-primary)]">
+              <NumberStat value={summary.members} />
             </p>
+            <p className="text-xs text-[var(--lkv-text-secondary)]">Rôles et invitations dans le groupe.</p>
           </MenuCard>
         ),
       },
@@ -68,9 +72,10 @@ export function CollectifMenu({ summary, linkedTripSlug }: CollectifMenuProps) {
         key: 'invitations', span: 4 as const,
         node: (
           <MenuCard href={hubSectionHref(collectifRef, 'invitations')} icon={MailPlus} label="Invitations">
-            <p className="mt-0.5 text-[11px] text-[var(--lkv-text-secondary)]">
-              <NumberStat value={summary.pendingInvites} /> en attente
+            <p className="mt-1 text-2xl font-extrabold text-[var(--lkv-text-primary)]">
+              <NumberStat value={summary.pendingInvites} />
             </p>
+            <p className="text-xs text-[var(--lkv-text-secondary)]">en attente de réponse.</p>
           </MenuCard>
         ),
       },
@@ -78,9 +83,10 @@ export function CollectifMenu({ summary, linkedTripSlug }: CollectifMenuProps) {
         key: 'voyages-lies', span: 4 as const,
         node: (
           <MenuCard href={hubSectionHref(collectifRef, 'voyages-lies')} icon={MapIcon} label="Voyages liés">
-            <p className="mt-0.5 text-[11px] text-[var(--lkv-text-secondary)]">
-              <NumberStat value={summary.linkedTrips} /> expédition{summary.linkedTrips > 1 ? 's' : ''}
+            <p className="mt-1 text-2xl font-extrabold text-[var(--lkv-text-primary)]">
+              <NumberStat value={summary.linkedTrips} />
             </p>
+            <p className="text-xs text-[var(--lkv-text-secondary)]">expédition{summary.linkedTrips > 1 ? 's' : ''} rattachée{summary.linkedTrips > 1 ? 's' : ''}.</p>
           </MenuCard>
         ),
       },
@@ -89,7 +95,7 @@ export function CollectifMenu({ summary, linkedTripSlug }: CollectifMenuProps) {
             key: 'entrer', span: 6 as const,
             node: (
               <MenuCard href={tripSwitchHref(linkedTripSlug)} icon={ArrowUpRight} label="Entrer dans le voyage">
-                <p className="mt-0.5 text-[11px] text-[var(--lkv-text-secondary)]">Ouvrir l&apos;expédition liée.</p>
+                <p className="mt-1 text-xs text-[var(--lkv-text-secondary)]">Ouvrir l&apos;expédition liée.</p>
               </MenuCard>
             ),
           }]
@@ -103,6 +109,7 @@ export function CollectifMenu({ summary, linkedTripSlug }: CollectifMenuProps) {
     );
   }
 
+  const perPerson = summary.members > 0 ? Math.round(summary.expensesTotal / summary.members) : summary.expensesTotal;
   const actions: QuickAction[] = [
     { href: onglet('members'), label: 'Membres', icon: Users },
     { href: onglet('expenses'), label: 'Dépenses', icon: CreditCard },
@@ -115,16 +122,20 @@ export function CollectifMenu({ summary, linkedTripSlug }: CollectifMenuProps) {
       key: 'groupe', span: 6 as const,
       node: (
         <MenuCard href={hubSectionHref(collectifRef, 'groupe')} icon={Users} label={name} tone="accent">
-          <p className="mt-0.5 text-[11px] text-[var(--lkv-text-secondary)]">
-            <NumberStat value={summary.members} /> membre{summary.members > 1 ? 's' : ''}
-            {summary.departureLabel ? ` · ${summary.departureLabel}` : ''}
+          <p className="mt-1 text-2xl font-extrabold text-[var(--lkv-text-primary)]">
+            <NumberStat value={summary.members} />
+            <span className="ml-2 text-xs font-semibold text-[var(--lkv-text-secondary)]">
+              membre{summary.members > 1 ? 's' : ''}
+              {summary.departureLabel ? ` · départ ${summary.departureLabel}` : ''}
+            </span>
           </p>
           {summary.inviteCode && (
-            <p className="text-[11px] font-mono text-[var(--lkv-text-secondary)]">Code {summary.inviteCode}</p>
+            <p className="font-mono text-xs text-[var(--lkv-text-secondary)]">Code {summary.inviteCode}</p>
           )}
-          <div className="mt-1.5 h-1.5 w-full overflow-hidden rounded-full bg-black/5">
+          <div className="mt-2 h-2 w-full overflow-hidden rounded-full bg-black/5">
             <div className="h-full rounded-full bg-gradient-to-r from-[var(--lkv-secondary)] to-[var(--lkv-primary)]" style={{ width: `${summary.progression}%` }} />
           </div>
+          <p className="mt-1 text-xs text-[var(--lkv-text-secondary)]">Préparation : {summary.progression}%</p>
         </MenuCard>
       ),
     },
@@ -132,8 +143,12 @@ export function CollectifMenu({ summary, linkedTripSlug }: CollectifMenuProps) {
       key: 'membres', span: 6 as const,
       node: (
         <MenuCard href={onglet('members')} icon={Users} label="Membres">
-          <p className="mt-0.5 text-[11px] text-[var(--lkv-text-secondary)]">
-            <NumberStat value={summary.members} /> membre{summary.members > 1 ? 's' : ''}
+          <p className="mt-1 text-2xl font-extrabold text-[var(--lkv-text-primary)]">
+            <NumberStat value={summary.members} />
+            <span className="ml-2 text-xs font-semibold text-[var(--lkv-text-secondary)]">
+              membre{summary.members > 1 ? 's' : ''}
+              {summary.pendingInvites > 0 ? ` · ${summary.pendingInvites} en attente` : ' · rôles à jour'}
+            </span>
           </p>
         </MenuCard>
       ),
@@ -142,8 +157,9 @@ export function CollectifMenu({ summary, linkedTripSlug }: CollectifMenuProps) {
       key: 'tasks', span: 4 as const,
       node: (
         <MenuCard href={onglet('tasks')} icon={CheckSquare} label="Tâches">
-          <p className="mt-0.5 text-[11px] text-[var(--lkv-text-secondary)]">
-            <NumberStat value={summary.tasksOpen} /> à faire
+          <p className="mt-1 text-2xl font-extrabold text-[var(--lkv-text-primary)]">
+            <NumberStat value={summary.tasksOpen} />
+            <span className="ml-2 text-xs font-semibold text-[var(--lkv-text-secondary)]">à faire</span>
           </p>
         </MenuCard>
       ),
@@ -152,8 +168,11 @@ export function CollectifMenu({ summary, linkedTripSlug }: CollectifMenuProps) {
       key: 'equipment', span: 4 as const,
       node: (
         <MenuCard href={onglet('equipment')} icon={ListChecks} label="Équipement">
-          <p className="mt-0.5 text-[11px] text-[var(--lkv-text-secondary)]">
-            <NumberStat value={summary.equipmentCount} /> objet{summary.equipmentCount > 1 ? 's' : ''} partagé{summary.equipmentCount > 1 ? 's' : ''}
+          <p className="mt-1 text-2xl font-extrabold text-[var(--lkv-text-primary)]">
+            <NumberStat value={summary.equipmentCount} />
+            <span className="ml-2 text-xs font-semibold text-[var(--lkv-text-secondary)]">
+              objet{summary.equipmentCount > 1 ? 's' : ''} partagé{summary.equipmentCount > 1 ? 's' : ''}
+            </span>
           </p>
         </MenuCard>
       ),
@@ -162,9 +181,10 @@ export function CollectifMenu({ summary, linkedTripSlug }: CollectifMenuProps) {
       key: 'expenses', span: 4 as const,
       node: (
         <MenuCard href={onglet('expenses')} icon={CreditCard} label="Dépenses">
-          <p className="mt-0.5 text-[11px] text-[var(--lkv-text-secondary)]">
-            <NumberStat value={summary.expensesTotal} suffix=" €" /> engagés
+          <p className="mt-1 text-2xl font-extrabold text-[var(--lkv-text-primary)]">
+            <NumberStat value={summary.expensesTotal} suffix=" €" />
           </p>
+          <p className="text-xs text-[var(--lkv-text-secondary)]">engagés · ≈ {perPerson} €/pers.</p>
         </MenuCard>
       ),
     },
@@ -172,9 +192,10 @@ export function CollectifMenu({ summary, linkedTripSlug }: CollectifMenuProps) {
       key: 'decisions', span: 3 as const,
       node: (
         <MenuCard href={onglet('decisions')} icon={Vote} label="Décisions">
-          <p className="mt-0.5 text-[11px] text-[var(--lkv-text-secondary)]">
-            <NumberStat value={summary.pollsOpen} /> vote{summary.pollsOpen > 1 ? 's' : ''} ouvert{summary.pollsOpen > 1 ? 's' : ''}
+          <p className="mt-1 text-2xl font-extrabold text-[var(--lkv-text-primary)]">
+            <NumberStat value={summary.pollsOpen} />
           </p>
+          <p className="text-xs text-[var(--lkv-text-secondary)]">vote{summary.pollsOpen > 1 ? 's' : ''} ouvert{summary.pollsOpen > 1 ? 's' : ''}.</p>
         </MenuCard>
       ),
     },
@@ -183,9 +204,9 @@ export function CollectifMenu({ summary, linkedTripSlug }: CollectifMenuProps) {
       node: (
         <MenuCard href={onglet('discussion')} icon={MessageSquare} label="Discussion">
           {summary.lastMessage ? (
-            <p className="mt-0.5 line-clamp-2 text-[11px] text-[var(--lkv-text-secondary)]">{summary.lastMessage}</p>
+            <p className="mt-1 line-clamp-3 text-xs text-[var(--lkv-text-secondary)]">« {summary.lastMessage} »</p>
           ) : (
-            <p className="mt-0.5 text-[11px] text-[var(--lkv-text-secondary)]">Aucun message.</p>
+            <p className="mt-1 text-xs text-[var(--lkv-text-secondary)]">Lancez la conversation.</p>
           )}
         </MenuCard>
       ),
@@ -194,9 +215,10 @@ export function CollectifMenu({ summary, linkedTripSlug }: CollectifMenuProps) {
       key: 'invitations', span: 3 as const,
       node: (
         <MenuCard href={hubSectionHref(collectifRef, 'invitations')} icon={MailPlus} label="Invitations">
-          <p className="mt-0.5 text-[11px] text-[var(--lkv-text-secondary)]">
-            <NumberStat value={summary.pendingInvites} /> en attente
+          <p className="mt-1 text-2xl font-extrabold text-[var(--lkv-text-primary)]">
+            <NumberStat value={summary.pendingInvites} />
           </p>
+          <p className="text-xs text-[var(--lkv-text-secondary)]">en attente de réponse.</p>
         </MenuCard>
       ),
     },
@@ -204,9 +226,10 @@ export function CollectifMenu({ summary, linkedTripSlug }: CollectifMenuProps) {
       key: 'voyages-lies', span: 3 as const,
       node: (
         <MenuCard href={hubSectionHref(collectifRef, 'voyages-lies')} icon={MapIcon} label="Voyages liés">
-          <p className="mt-0.5 text-[11px] text-[var(--lkv-text-secondary)]">
-            <NumberStat value={summary.linkedTrips} /> expédition{summary.linkedTrips > 1 ? 's' : ''}
+          <p className="mt-1 text-2xl font-extrabold text-[var(--lkv-text-primary)]">
+            <NumberStat value={summary.linkedTrips} />
           </p>
+          <p className="text-xs text-[var(--lkv-text-secondary)]">expédition{summary.linkedTrips > 1 ? 's' : ''} rattachée{summary.linkedTrips > 1 ? 's' : ''}.</p>
         </MenuCard>
       ),
     },

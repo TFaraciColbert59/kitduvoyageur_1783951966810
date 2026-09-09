@@ -1,4 +1,4 @@
-import {
+﻿import {
   Calendar,
   CheckSquare,
   CreditCard,
@@ -46,10 +46,17 @@ function soonestExpiry(docs: TripFull['documents']): { label: string; inDays: nu
   return best;
 }
 
+function shortDate(iso: string | null | undefined): string {
+  if (!iso) return '';
+  const d = new Date(iso);
+  if (isNaN(d.getTime())) return '';
+  return d.toLocaleDateString('fr-FR', { day: 'numeric', month: 'short' });
+}
+
 /**
  * Hub V4 — MENU d'une SORTIE en disposition BENTO (racine /hub).
- * Sans tuile héros : [Itinéraire 6, Équipement 6] → [Budget 4, Équipage 4,
- * Checklist 4] → [Documents 3, Sécurité 3, Journal 3, Export 3].
+ * [Itinéraire 6, Équipement 6] → [Budget 4, Équipage 4, Checklist 4] →
+ * [Documents 3, Sécurité 3, Journal 3, Export 3]. Contenus enrichis au max.
  */
 export function SortieMenu({
   trip,
@@ -69,14 +76,23 @@ export function SortieMenu({
   const weightKg = (trip.items ?? []).reduce((s, i) => s + (i.weight_grams ?? 0), 0) / 1000;
   const budgetPct =
     stats.estimated_budget > 0 ? Math.round((stats.total_spent / stats.estimated_budget) * 100) : null;
+  const currency = trip.budget_currency || 'EUR';
   const crewCount = crew?.memberCount ?? 0;
-  const collabCount = trip.collaborators?.length ?? 0;
-  const pendingSafety = trip.safety_checkpoints?.filter((c) => c.status === 'pending').length ?? 0;
+  const collabs = trip.collaborators ?? [];
+  const collabCount = collabs.length;
+  const pendingSafety = (trip.safety_checkpoints ?? []).filter((c) => c.status === 'pending').length;
+  const nextCheckpoint = [...(trip.safety_checkpoints ?? [])].filter((cc) => cc.status === 'pending').sort((a, b) => a.scheduled_at.localeCompare(b.scheduled_at))[0] ?? null;
   const exp = soonestExpiry(trip.documents);
-  const lastNote = [...(trip.notes ?? [])]
-    .sort((a, b) => (a.day_number ?? 0) - (b.day_number ?? 0) || a.created_at.localeCompare(b.created_at))
-    .pop();
+  const notes = [...(trip.notes ?? [])].sort(
+    (a, b) => (b.day_number ?? 0) - (a.day_number ?? 0) || b.created_at.localeCompare(a.created_at),
+  );
+  const lastNote = notes[0] ?? null;
   const weather = hiking?.weather?.current;
+  const catTotals = new Map<string, number>();
+  for (const e of trip.expenses ?? []) {
+    catTotals.set(e.category ?? 'Autre', (catTotals.get(e.category ?? 'Autre') ?? 0) + Number(e.amount || 0));
+  }
+  const topCats = [...catTotals.entries()].sort((a, b) => b[1] - a[1]).slice(0, 2);
 
   const actions: QuickAction[] = [
     { href: hubSectionHref(ref, 'itinerary'), label: 'Itinéraire', icon: Navigation },
@@ -104,15 +120,23 @@ export function SortieMenu({
       key: 'itinerary', span: 6 as const,
       node: (
         <MenuCard href={hubSectionHref(ref, 'itinerary')} icon={Navigation} label="Itinéraire">
-          <p className="mt-0.5 text-[11px] text-[var(--lkv-text-secondary)]">
-            {duration.durationDays} jours · {steps.length} étapes ·{' '}
+          <p className="mt-1 text-2xl font-extrabold text-[var(--lkv-text-primary)]">
+            <NumberStat value={duration.durationDays} /> j ·{' '}
             <NumberStat value={dist.totalKm} decimals={dist.totalKm % 1 === 0 ? 0 : 1} suffix=" km" />
           </p>
-          <p className="text-[11px] text-[var(--lkv-text-secondary)] font-mono">
-            +{dist.dPlus}m / -{dist.dMinus}m{weather ? ` · ${Math.round(weather.tempC)}°C` : ''}
+          <p className="text-xs text-[var(--lkv-text-secondary)] font-mono">
+            {steps.length} étapes · +{dist.dPlus}m / -{dist.dMinus}m
+            {weather ? ` · ${Math.round(weather.tempC)}°C` : ''}
           </p>
           {steps.length > 0 && (
-            <p className="mt-1 text-[11px] text-[var(--lkv-text-primary)] truncate">{steps[0].title}</p>
+            <ul className="mt-2 space-y-1.5 border-l-2 border-[var(--lkv-secondary)]/30 ml-1 pl-3">
+              {steps.slice(0, 3).map((s) => (
+                <li key={s.id} className="flex items-center gap-2 text-xs">
+                  <span className="font-mono text-[var(--lkv-text-muted)] shrink-0">J{s.day_number}</span>
+                  <span className="truncate text-[var(--lkv-text-primary)] font-medium">{s.title}</span>
+                </li>
+              ))}
+            </ul>
           )}
         </MenuCard>
       ),
@@ -121,11 +145,13 @@ export function SortieMenu({
       key: 'gear', span: 6 as const,
       node: (
         <MenuCard href={hubSectionHref(ref, 'gear')} icon={Package} label="Équipement">
-          <p className="mt-0.5 text-[11px] text-[var(--lkv-text-secondary)]">
-            <NumberStat value={packedPercent} suffix="%" /> prêt · {kit.ready}/{kit.total}
-            {weightKg > 0 ? ` · ${weightKg.toFixed(1)} kg` : ''}
+          <p className="mt-1 text-2xl font-extrabold text-[var(--lkv-text-primary)]">
+            <NumberStat value={packedPercent} suffix="%" />
+            <span className="ml-2 text-xs font-semibold text-[var(--lkv-text-secondary)]">
+              {kit.ready}/{kit.total} prêts{weightKg > 0 ? ` · ${weightKg.toFixed(1)} kg` : ''}
+            </span>
           </p>
-          <div className="mt-1.5 h-1.5 w-full overflow-hidden rounded-full bg-black/5">
+          <div className="mt-2 h-2 w-full overflow-hidden rounded-full bg-black/5">
             <div className="h-full rounded-full bg-gradient-to-r from-[var(--lkv-secondary)] to-[var(--lkv-primary)]" style={{ width: `${packedPercent}%` }} />
           </div>
         </MenuCard>
@@ -135,14 +161,27 @@ export function SortieMenu({
       key: 'budget', span: 4 as const,
       node: (
         <MenuCard href={hubSectionHref(ref, 'budget')} icon={CreditCard} label="Budget">
-          <p className="mt-0.5 text-[11px] text-[var(--lkv-text-secondary)]">
-            <NumberStat value={stats.total_spent} suffix={` ${trip.budget_currency || 'EUR'}`} />
-            {stats.estimated_budget > 0 && <span> sur {stats.estimated_budget}</span>}
+          <p className="mt-1 text-2xl font-extrabold text-[var(--lkv-text-primary)]">
+            <NumberStat value={stats.total_spent} suffix={` ${currency}`} />
           </p>
-          {budgetPct !== null && (
-            <div className="mt-1.5 h-1.5 w-full overflow-hidden rounded-full bg-black/5">
-              <div className={`h-full rounded-full ${budgetPct > 100 ? 'bg-[var(--lkv-danger)]' : 'bg-gradient-to-r from-[var(--lkv-secondary)] to-[var(--lkv-primary)]'}`} style={{ width: `${Math.min(100, budgetPct)}%` }} />
-            </div>
+          <p className="text-xs text-[var(--lkv-text-secondary)]">
+            {stats.estimated_budget > 0 ? `sur ${stats.estimated_budget} ${currency} · ${budgetPct}%` : 'estimation non définie'}
+          </p>
+          {topCats.length > 0 ? (
+            <ul className="mt-2 space-y-1">
+              {topCats.map(([cat, sum]) => (
+                <li key={cat} className="flex items-center justify-between text-xs">
+                  <span className="truncate text-[var(--lkv-text-secondary)]">{cat}</span>
+                  <span className="font-bold text-[var(--lkv-text-primary)] ml-2 shrink-0">{Math.round(sum)} {currency}</span>
+                </li>
+              ))}
+            </ul>
+          ) : (
+            budgetPct !== null && (
+              <div className="mt-2 h-2 w-full overflow-hidden rounded-full bg-black/5">
+                <div className={`h-full rounded-full ${budgetPct > 100 ? 'bg-[var(--lkv-danger)]' : 'bg-gradient-to-r from-[var(--lkv-secondary)] to-[var(--lkv-primary)]'}`} style={{ width: `${Math.min(100, budgetPct)}%` }} />
+              </div>
+            )
           )}
         </MenuCard>
       ),
@@ -151,17 +190,30 @@ export function SortieMenu({
       key: 'team', span: 4 as const,
       node: (
         <MenuCard href={hubSectionHref(ref, 'team')} icon={Users} label="Équipage & compagnons">
-          <p className="mt-0.5 text-[11px] text-[var(--lkv-text-secondary)]">
-            {collabCount + crewCount} compagnon{(collabCount + crewCount) > 1 ? 's' : ''}
-            {pendingInvites > 0 ? ` · ${pendingInvites} invitation(s)` : ''}
+          <p className="mt-1 text-2xl font-extrabold text-[var(--lkv-text-primary)]">
+            <NumberStat value={collabCount + crewCount} />
+            <span className="ml-2 text-xs font-semibold text-[var(--lkv-text-secondary)]">
+              compagnon{(collabCount + crewCount) > 1 ? 's' : ''}
+              {pendingInvites > 0 ? ` · ${pendingInvites} invitation(s)` : ''}
+            </span>
           </p>
-          <div className="mt-1.5 flex items-center">
-            {[...(trip.collaborators ?? [])].slice(0, 4).map((c) => (
-              <span key={c.id} className="flex h-6 w-6 items-center justify-center rounded-full border-2 border-white bg-[var(--lkv-surface-raised)] text-[10px] font-bold text-[var(--lkv-text-secondary)] -ml-1 first:ml-0">
-                {(c.profile?.full_name ?? '?').slice(0, 1).toUpperCase()}
-              </span>
-            ))}
-          </div>
+          {collabs.length > 0 ? (
+            <ul className="mt-2 space-y-1.5">
+              {collabs.slice(0, 3).map((c) => (
+                <li key={c.id} className="flex items-center gap-2">
+                  <span className="flex h-6 w-6 items-center justify-center rounded-full bg-[var(--lkv-surface-raised)] text-[10px] font-bold text-[var(--lkv-text-secondary)] shrink-0">
+                    {(c.profile?.full_name ?? '?').slice(0, 1).toUpperCase()}
+                  </span>
+                  <span className="truncate text-xs font-medium text-[var(--lkv-text-primary)]">
+                    {c.profile?.full_name ?? 'Compagnon'}
+                  </span>
+                  <span className="ml-auto text-[10px] font-mono uppercase text-[var(--lkv-text-muted)] shrink-0">{c.role}</span>
+                </li>
+              ))}
+            </ul>
+          ) : (
+            <p className="mt-1 text-xs text-[var(--lkv-text-secondary)]">Sortie en solo — invitez un compagnon.</p>
+          )}
         </MenuCard>
       ),
     },
@@ -169,7 +221,7 @@ export function SortieMenu({
       key: 'checklist', span: 4 as const,
       node: (
         <MenuCard href={hubSectionHref(ref, 'checklist')} icon={CheckSquare} label="Checklist">
-          <ChecklistCardBody tripId={trip.id} href={hubSectionHref(ref, 'checklist')} />
+          <ChecklistCardBody tripId={trip.id} daysUntil={daysUntil} countryCode={trip.destination_country_code} />
         </MenuCard>
       ),
     },
@@ -177,10 +229,30 @@ export function SortieMenu({
       key: 'docs', span: 3 as const,
       node: (
         <MenuCard href={hubSectionHref(ref, 'docs')} icon={FileText} label="Documents">
-          <p className="mt-0.5 text-[11px] text-[var(--lkv-text-secondary)]">
-            {trip.documents?.length ?? 0} document{(trip.documents?.length ?? 0) > 1 ? 's' : ''}
+          <p className="mt-1 text-2xl font-extrabold text-[var(--lkv-text-primary)]">
+            <NumberStat value={trip.documents?.length ?? 0} />
           </p>
-          {exp && <p className="text-[11px] text-[var(--lkv-danger)]">{exp.label} — exp. J{exp.inDays}</p>}
+          {(trip.documents ?? []).length > 0 ? (
+            <ul className="mt-1.5 space-y-1">
+              {(trip.documents ?? []).slice(0, 3).map((d) => (
+                <li key={d.id} className="flex items-center justify-between gap-2 text-xs">
+                  <span className="truncate text-[var(--lkv-text-primary)] font-medium">{d.title}</span>
+                  {d.expires_at && (
+                    <span className="shrink-0 rounded-full bg-[var(--lkv-danger)]/10 px-1.5 py-0.5 text-[10px] font-bold text-[var(--lkv-danger)]">
+                      exp. {shortDate(d.expires_at)}
+                    </span>
+                  )}
+                </li>
+              ))}
+            </ul>
+          ) : (
+            <p className="mt-1 text-xs text-[var(--lkv-text-secondary)]">Aucun document.</p>
+          )}
+          {exp && (
+            <p className="mt-1 text-xs font-semibold text-[var(--lkv-danger)]">
+              {exp.label} — expire dans {exp.inDays} j
+            </p>
+          )}
         </MenuCard>
       ),
     },
@@ -188,9 +260,18 @@ export function SortieMenu({
       key: 'safety', span: 3 as const,
       node: (
         <MenuCard href={hubSectionHref(ref, 'safety')} icon={Shield} label="Sécurité">
-          <p className="mt-0.5 text-[11px] text-[var(--lkv-text-secondary)]">
-            {pendingSafety} point{pendingSafety > 1 ? 's' : ''} de contrôle en attente
+          <p className="mt-1 text-2xl font-extrabold text-[var(--lkv-text-primary)]">
+            <NumberStat value={pendingSafety} />
+            <span className="ml-2 text-xs font-semibold text-[var(--lkv-text-secondary)]">point{pendingSafety > 1 ? 's' : ''} en attente</span>
           </p>
+          {nextCheckpoint ? (
+            <p className="mt-1 text-xs text-[var(--lkv-text-primary)] truncate font-medium">
+              {nextCheckpoint.label}
+              <span className="ml-1.5 font-mono text-[var(--lkv-text-muted)]">{shortDate(nextCheckpoint.scheduled_at)}</span>
+            </p>
+          ) : (
+            <p className="mt-1 text-xs text-[var(--lkv-text-secondary)]">Aucun point programmé.</p>
+          )}
         </MenuCard>
       ),
     },
@@ -199,11 +280,16 @@ export function SortieMenu({
       node: (
         <MenuCard href={hubSectionHref(ref, 'journal')} icon={Calendar} label="Journal">
           {lastNote ? (
-            <p className="mt-0.5 line-clamp-2 text-[11px] text-[var(--lkv-text-secondary)]">
-              {lastNote.title || lastNote.content}
-            </p>
+            <div className="mt-1">
+              {lastNote.day_number != null && (
+                <span className="text-[10px] font-mono uppercase text-[var(--lkv-text-muted)]">Jour {lastNote.day_number}</span>
+              )}
+              <p className="truncate text-sm font-semibold text-[var(--lkv-text-primary)]">{lastNote.title || 'Sans titre'}</p>
+              <p className="line-clamp-2 text-xs text-[var(--lkv-text-secondary)]">{lastNote.content}</p>
+              <p className="mt-1 text-[11px] font-mono text-[var(--lkv-text-muted)]">{notes.length} note{notes.length > 1 ? 's' : ''}</p>
+            </div>
           ) : (
-            <p className="mt-0.5 text-[11px] text-[var(--lkv-text-secondary)]">Aucune note encore.</p>
+            <p className="mt-1 text-xs text-[var(--lkv-text-secondary)]">Aucune note encore.</p>
           )}
         </MenuCard>
       ),
@@ -212,7 +298,11 @@ export function SortieMenu({
       key: 'export', span: 3 as const,
       node: (
         <MenuCard href={hubSectionHref(ref, 'export')} icon={Share2} label="Export">
-          <p className="mt-0.5 text-[11px] text-[var(--lkv-text-secondary)]">GPX · Feuille de route</p>
+          <div className="mt-2 flex gap-2">
+            <span className="rounded-full bg-[var(--lkv-primary)]/10 px-2.5 py-1 text-[11px] font-bold text-[var(--lkv-primary)]">GPX</span>
+            <span className="rounded-full bg-[var(--lkv-primary)]/10 px-2.5 py-1 text-[11px] font-bold text-[var(--lkv-primary)]">Feuille de route</span>
+          </div>
+          <p className="mt-1.5 text-xs text-[var(--lkv-text-secondary)]">Trace + document prêts à partager.</p>
         </MenuCard>
       ),
     },

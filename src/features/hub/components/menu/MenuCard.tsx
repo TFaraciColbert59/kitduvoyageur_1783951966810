@@ -1,4 +1,4 @@
-// UI Layouts (MIT) — carte-onglet du MENU Hub, habillée Liquid Glass.
+﻿// UI Layouts (MIT) — carte-onglet du MENU Hub, habillée Liquid Glass.
 // Composant SERVEUR : les icônes sont passées ici-même (pas vers un client).
 // Le spotlight (halo souris) est appliqué par BentoGrid (client).
 import Link from 'next/link';
@@ -18,7 +18,8 @@ export interface MenuCardProps {
 
 /**
  * Hub V4 — Carte-onglet du MENU : toute la carte est un lien vers la section.
- * Halo spotlight au survol (desktop), états cliquables Apple (scale, focus).
+ * Remplissage frosted (bg-white/60) pour une lecture franche sur fond uni,
+ * typographie 12px minimum, pastille 40px, hauteur min 150px.
  */
 export function MenuCard({
   href,
@@ -31,39 +32,39 @@ export function MenuCard({
   return (
     <Link
       href={href}
-      className={`group relative block h-full focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--lkv-primary)] rounded-3xl ${className}`}
+      className={`group relative block h-full focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--lkv-primary)] rounded-[var(--lkv-radius-card)] ${className}`}
     >
       <LiquidGlassCard
-        className="h-full min-h-[120px]"
+        className="h-full min-h-[150px]"
         glowIntensity="sm"
         shadowIntensity="md"
-        borderRadius="24px"
+        borderRadius="var(--lkv-radius-card)"
       >
-        <div className="relative z-30 flex h-full min-h-[120px] flex-col justify-between p-4">
-            <div className="flex items-start justify-between gap-2">
-              <span
-                className={`flex h-9 w-9 items-center justify-center rounded-full border border-white/60 shadow-2xs ${
-                  tone === 'accent'
-                    ? 'bg-[var(--lkv-forest-900)] text-sage-300'
-                    : 'bg-white/70 text-[var(--lkv-secondary)]'
-                }`}
-              >
-                <Icon size={16} aria-hidden="true" />
-              </span>
-              <ArrowRight
-                size={15}
-                className="shrink-0 text-[var(--lkv-text-muted)] transition-transform group-hover:translate-x-0.5"
-                aria-hidden="true"
-              />
-            </div>
-            <div className="mt-3 min-w-0">
-              <p className="text-[13px] font-bold leading-tight text-[var(--lkv-text-primary)]">
-                {label}
-              </p>
-              {children}
-            </div>
+        <div className="relative z-30 flex h-full min-h-[150px] flex-col justify-between rounded-[var(--lkv-radius-card)] border border-white/60 bg-white/55 p-4">
+          <div className="flex items-start justify-between gap-2">
+            <span
+              className={`flex h-10 w-10 items-center justify-center rounded-full border border-white/60 shadow-2xs ${
+                tone === 'accent'
+                  ? 'bg-[var(--lkv-forest-900)] text-sage-300'
+                  : 'bg-white/70 text-[var(--lkv-secondary)]'
+              }`}
+            >
+              <Icon size={17} aria-hidden="true" />
+            </span>
+            <ArrowRight
+              size={16}
+              className="shrink-0 text-[var(--lkv-text-muted)] transition-transform group-hover:translate-x-0.5"
+              aria-hidden="true"
+            />
           </div>
-        </LiquidGlassCard>
+          <div className="mt-3 min-w-0">
+            <p className="text-sm font-bold leading-tight text-[var(--lkv-text-primary)]">
+              {label}
+            </p>
+            {children}
+          </div>
+        </div>
+      </LiquidGlassCard>
     </Link>
   );
 }
