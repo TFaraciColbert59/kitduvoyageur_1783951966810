@@ -128,11 +128,11 @@ describe('H2 — resolveAdventureHref : restauration dernière section', () => {
     expect(resolveAdventureHref(c, () => 'inventaire')).toBe('/hub/groupe');
   });
 
-  it('HREF-4: sortie = registre voyage + mémoire', () => {
+  it('HREF-4: sortie = sections hub + mémoire (Étape 2 — hub unique)', () => {
     const e: AdventureEntry = { nature: 'sortie', id: 't1', slug: 'gr20', title: 'x' };
-    expect(resolveAdventureHref(e, none)).toBe('/voyages/gr20');
-    expect(resolveAdventureHref(e, () => 'itinerary')).toBe('/voyages/gr20/itineraire');
-    expect(resolveAdventureHref(e, () => 'inventaire')).toBe('/voyages/gr20');
+    expect(resolveAdventureHref(e, none)).toBe('/hub');
+    expect(resolveAdventureHref(e, () => 'itinerary')).toBe('/hub/itineraire');
+    expect(resolveAdventureHref(e, () => 'inventaire')).toBe('/hub');
   });
 
   it('HREF-5: collectif avec mémoire valide', () => {

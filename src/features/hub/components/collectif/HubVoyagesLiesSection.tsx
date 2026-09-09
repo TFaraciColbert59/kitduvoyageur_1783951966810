@@ -1,7 +1,7 @@
 import Link from 'next/link';
 import { ArrowUpRight } from 'lucide-react';
 import { createClient } from '@/lib/supabase/server';
-import { tripSectionHref } from '@/features/trips/registry/tripSectionRegistry';
+import { tripSwitchHref } from '@/features/trips/registry/tripSectionRegistry';
 import type { ActiveAdventureData } from '../../context/adventureSchema';
 import type { HubCrewLite } from '../../server/getHubAdventureData';
 
@@ -61,7 +61,7 @@ export async function HubVoyagesLiesSection({ adventure, crews }: HubVoyagesLies
       {trips.map((t) => (
         <li key={t.id}>
           <Link
-            href={tripSectionHref(t.slug, 'overview')}
+            href={tripSwitchHref(t.slug)}
             className="glass p-4 rounded-[var(--lkv-radius-card)] flex items-center gap-3 min-h-[44px]"
           >
             <span className="flex-1 min-w-0">

@@ -199,9 +199,11 @@ describe('Chantier Y7 — App-First, Cibles Tactiles, Haptique et Offline Dexie'
 
   // ── Y7.2 : CIBLES TACTILES ─────────────────────────────────────────────────
   describe('Y7.2 — Cibles Tactiles >= 44px (Apple HIG)', () => {
-    it('TripSidebarLeft et TripMobileSectionsSheet garantissent des cibles tactiles >= 44px', () => {
-      const sidebarLeftPath = path.join(process.cwd(), 'src', 'features', 'trips', 'components', 'TripSidebarLeft.tsx');
-      const sheetPath = path.join(process.cwd(), 'src', 'features', 'trips', 'components', 'TripMobileSectionsSheet.tsx');
+    it('HubSidebarLeft et HubMobileSectionsSheet garantissent des cibles tactiles >= 44px', () => {
+      // Étape 2 — Hub unique : les coquilles TripSidebarLeft/TripMobileSectionsSheet
+      // sont remplacées par leurs miroirs du hub.
+      const sidebarLeftPath = path.join(process.cwd(), 'src', 'features', 'hub', 'components', 'HubSidebarLeft.tsx');
+      const sheetPath = path.join(process.cwd(), 'src', 'features', 'hub', 'components', 'HubMobileSectionsSheet.tsx');
 
       const sidebarContent = fs.readFileSync(sidebarLeftPath, 'utf8');
       const sheetContent = fs.readFileSync(sheetPath, 'utf8');

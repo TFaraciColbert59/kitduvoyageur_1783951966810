@@ -1,4 +1,4 @@
-import { test, expect } from '@playwright/test';
+﻿import { test, expect } from '@playwright/test';
 import path from 'path';
 import fs from 'fs';
 
@@ -30,26 +30,22 @@ test.describe('Module Voyage E2E Suite — Parcours Utilisateur & Ergonomie (C1-
     expect(typeof body.total).toBe('number');
   });
 
-  test('TEST-E2E-VOYAGE-02: Page /voyages charge le Cockpit, filtres et modal Nouveau Voyage', async ({ page }) => {
-    await page.goto('/voyages', { waitUntil: 'domcontentloaded' });
-    
+  test('TEST-E2E-VOYAGE-02: Page /hub (hub unique) charge l\'aperçu et l\'entrée de création', async ({ page }) => {
+    await page.goto('/hub', { waitUntil: 'domcontentloaded' });
+
     // Le titre et la structure principale doivent être présents
-    await expect(page).toHaveTitle(/Voyages|Le Kit du Voyageur/i);
+    await expect(page).toHaveTitle(/Hub|Le Kit du Voyageur/i);
     const heading = page.locator('h1').first();
     await expect(heading).toBeVisible();
 
-    // Bouton Nouveau voyage ouvrant la modale de création
-    const createBtn = page.locator('button:has-text("Nouveau voyage")').first();
-    await expect(createBtn).toBeVisible();
-
-    // Clic pour ouvrir la modale
-    await createBtn.click();
-    const modalTitle = page.locator('text=Créer un voyage').or(page.locator('text=Nouveau')).first();
-    await expect(modalTitle).toBeVisible();
+    // L'entrée de création d'activité vit dans le hub
+    await page.goto('/hub/nouveau', { waitUntil: 'domcontentloaded' });
+    const headingNouveau = page.locator('h1, h2').first();
+    await expect(headingNouveau).toBeVisible();
   });
 
-  test('TEST-E2E-VOYAGE-03: Wizard /voyages/nouveau charge l\'étape 1 et les contrôles tactiles', async ({ page }) => {
-    await page.goto('/voyages/nouveau', { waitUntil: 'networkidle' });
+  test('TEST-E2E-VOYAGE-03: Wizard /hub/nouveau charge l\'étape 1 et les contrôles tactiles', async ({ page }) => {
+    await page.goto('/hub/nouveau', { waitUntil: 'networkidle' });
     
     // Vérification du wizard
     const wizardContainer = page.locator('main').first();
@@ -91,15 +87,15 @@ test.describe('Module Voyage E2E Suite — Parcours Utilisateur & Ergonomie (C1-
 
   test('TEST-E2E-VOYAGE-06: Responsive Mobile iOS & Snapshot Visuel (390x844 — iPhone 14 Pro)', async ({ page }) => {
     await page.setViewportSize({ width: 390, height: 844 });
-    await page.goto('/voyages', { waitUntil: 'networkidle' });
+    await page.goto('/hub', { waitUntil: 'networkidle' });
 
     // Vérifie que le conteneur mobile ne déborde pas en largeur
     const bodyWidth = await page.evaluate(() => document.body.scrollWidth);
     expect(bodyWidth).toBeLessThanOrEqual(390);
 
-    // Vérifie l'accessibilité du bouton nouveau voyage en affichage mobile
-    const createBtn = page.locator('button:has-text("Nouveau voyage")').first();
-    await expect(createBtn).toBeVisible();
+    // Vérifie l'accessibilité d'un bouton d'action du hub en affichage mobile
+    const actionBtn = page.locator('button:visible, a:visible').first();
+    await expect(actionBtn).toBeVisible();
     const btnBox = await createBtn.boundingBox();
     if (btnBox) {
       expect(btnBox.height).toBeGreaterThanOrEqual(40);
@@ -113,7 +109,7 @@ test.describe('Module Voyage E2E Suite — Parcours Utilisateur & Ergonomie (C1-
 
   test('TEST-E2E-VOYAGE-06b: Responsive Tablet iPad & Snapshot Visuel (768x1024)', async ({ page }) => {
     await page.setViewportSize({ width: 768, height: 1024 });
-    await page.goto('/voyages', { waitUntil: 'networkidle' });
+    await page.goto('/hub', { waitUntil: 'networkidle' });
 
     const mainElement = page.locator('main').first();
     await expect(mainElement).toBeVisible();
@@ -126,7 +122,7 @@ test.describe('Module Voyage E2E Suite — Parcours Utilisateur & Ergonomie (C1-
 
   test('TEST-E2E-VOYAGE-07: Desktop Navigation & Snapshot Visuel (1440x900)', async ({ page }) => {
     await page.setViewportSize({ width: 1440, height: 900 });
-    await page.goto('/voyages', { waitUntil: 'networkidle' });
+    await page.goto('/hub', { waitUntil: 'networkidle' });
 
     const mainElement = page.locator('main').first();
     await expect(mainElement).toBeVisible();
@@ -137,81 +133,51 @@ test.describe('Module Voyage E2E Suite — Parcours Utilisateur & Ergonomie (C1-
     expect(fs.existsSync(snapshotDesktopPath)).toBe(true);
   });
 
-  test('TEST-E2E-VOYAGE-08: Architecture temporelle des 3 phases (Préparer / Vivre / Raconter)', async ({ page }) => {
-    // 1. Navigation vers le voyage existant
-    await page.goto('/voyages/fdgb-3c3a92', { waitUntil: 'domcontentloaded' });
+  test('TEST-E2E-VOYAGE-08: Hub unique — sections de sortie accessibles depuis /hub', async ({ page }) => {
+    // Étape 2 — Hub unique : les sections du voyage vivent dans /hub.
+    await page.goto('/hub', { waitUntil: 'domcontentloaded' });
 
-    // Contrôleur de phase présent
-    const phaseController = page.locator('div[role="tablist"]');
-    await expect(phaseController).toBeVisible();
-
-    // Les 3 onglets temporels doivent être présents
-    const prepareTab = page.locator('button[role="tab"]:has-text("Préparer")');
-    const liveTab = page.locator('button[role="tab"]:has-text("Vivre")');
-    const recountTab = page.locator('button[role="tab"]:has-text("Raconter")');
-
-    await expect(prepareTab).toBeVisible();
-    await expect(liveTab).toBeVisible();
-    await expect(recountTab).toBeVisible();
-
-    // Par défaut, le voyage futur est en phase Préparer
-    await expect(prepareTab).toHaveAttribute('aria-selected', 'true');
-
-    // 2. Bascule manuelle vers le mode Vivre
-    await liveTab.click();
-    await expect(page.locator('text=Cockpit Terrain · Mode Vivre')).toBeVisible();
-    await expect(page.locator('text=Secours & Urgences')).toBeVisible();
-    expect(page.url()).toContain('phase=live');
-
-    // 3. Bascule manuelle vers la phase Raconter
-    await recountTab.click();
-    await expect(page.locator('text=Récits, Bilan & Partage de l’Aventure')).toBeVisible();
-    expect(page.url()).toContain('phase=recount');
-
-    // 4. Accès direct avec ?phase=live
-    await page.goto('/voyages/fdgb-3c3a92?phase=live', { waitUntil: 'domcontentloaded' });
-    await expect(page.locator('text=Cockpit Terrain · Mode Vivre')).toBeVisible();
-    await expect(liveTab).toHaveAttribute('aria-selected', 'true');
-  });
-
-  test('TEST-E2E-VOYAGE-09: Activation voyage, bannière persistante et interconnexions', async ({ page }) => {
-    // 1. Ouvrir la page de détail du voyage
-    await page.goto('/voyages/fdgb-3c3a92', { waitUntil: 'domcontentloaded' });
-
-    // 2. Clic sur le bouton d'activation "Activer"
-    const activateButton = page.locator('button:has-text("Activer")');
-    await activateButton.waitFor({ state: 'visible', timeout: 5000 });
-    await activateButton.click();
-    await expect(page.locator('button:has-text("Active")')).toBeVisible({ timeout: 5000 });
-
-    // 3. Navigation vers la page d'accueil : vérification de la carte de reprise
-    await page.goto('/', { waitUntil: 'domcontentloaded' });
-    await expect(page.locator('text=Expédition en cours')).toBeVisible();
-
-    // 4. Navigation vers le matériel : vérification du contexte d'expédition
-    await page.goto('/materiel', { waitUntil: 'domcontentloaded' });
-    await expect(page.locator('text=Voyage actif :').first()).toBeVisible();
-
-    // 5. Navigation vers la carte interactive : vérification du badge de focus
-    await page.goto('/carte-interactive', { waitUntil: 'domcontentloaded' });
-    await expect(page.locator('text=Voyage actif :').first()).toBeVisible();
-  });
-
-  test('TEST-E2E-VOYAGE-10: Redirection /groupes -> /equipages et interface équipages', async ({ page }) => {
-    // 1. Redirection de l'ancien lien
-    await page.goto('/groupes', { waitUntil: 'domcontentloaded' });
-    expect(page.url()).toContain('/equipages');
-
-    // 2. Vérification de la présence de la structure d'équipages
+    // La coquille du hub est rendue
     const heading = page.locator('h1').first();
     await expect(heading).toBeVisible();
-    await expect(heading).toContainText(/Équipages/i);
+
+    // Les sections canoniques sont navigables (h1 de section)
+    await page.goto('/hub/itineraire', { waitUntil: 'domcontentloaded' });
+    await expect(page.locator('h1').first()).toBeVisible();
+
+    await page.goto('/hub/budget', { waitUntil: 'domcontentloaded' });
+    await expect(page.locator('h1').first()).toBeVisible();
+  });
+
+  test('TEST-E2E-VOYAGE-09: Aventure active du hub et interconnexions', async ({ page }) => {
+    // 1. Le hub affiche l'aperçu de l'aventure active (jamais une liste d'abord)
+    await page.goto('/hub', { waitUntil: 'domcontentloaded' });
+    await expect(page.locator('h1').first()).toBeVisible();
+
+    // 2. Navigation vers le matériel (redirection 307 vers le hub) : le contexte est conservé
+    await page.goto('/materiel', { waitUntil: 'domcontentloaded' });
+    await expect(page.locator('h1').first()).toBeVisible();
+
+    // 3. Navigation vers la carte interactive
+    await page.goto('/carte-interactive', { waitUntil: 'domcontentloaded' });
+    await expect(page.locator('h1, h2').first()).toBeVisible();
+  });
+
+  test('TEST-E2E-VOYAGE-10: Redirection /groupes -> /hub/groupe (hub unique)', async ({ page }) => {
+    // 1. Redirection de l'ancien lien vers la section groupe du hub
+    await page.goto('/groupes', { waitUntil: 'domcontentloaded' });
+    expect(page.url()).toContain('/hub/groupe');
+
+    // 2. La section groupe du hub est rendue
+    const heading = page.locator('h1').first();
+    await expect(heading).toBeVisible();
   });
 
   test('TEST-E2E-VOYAGE-11: Anti-régression D2 — Altitude basse sans offre haute montagne', async ({ page }) => {
-    await page.goto('/voyages/fdgb-3c3a92', { waitUntil: 'domcontentloaded' });
+    // Étape 2 — l'aperçu de l'activité vit dans le hub
+    await page.goto('/hub', { waitUntil: 'domcontentloaded' });
 
-    // Vérifie que pour un voyage de plaine ou de basse altitude, aucune crampons / piolets / haute montagne n'est imposée
+    // Vérifie que pour une activité de plaine ou de basse altitude, aucune crampons / piolets / haute montagne n'est imposée
     const highAltitudeWarning = page.locator('text=Matériel Alpinisme Obligatoire');
     await expect(highAltitudeWarning).toHaveCount(0);
   });

@@ -1,4 +1,4 @@
-import { test, expect } from '@playwright/test';
+﻿import { test, expect } from '@playwright/test';
 import { prepareVisualPage, expectVisualSnapshot } from './_helpers/prepareVisualPage';
 import { createServerClient } from '@supabase/ssr';
 import fs from 'node:fs';
@@ -60,56 +60,56 @@ test.beforeEach(async ({ context }) => {
 
 test.describe('Profils Y — Decoupage & fidelite visuelle du Hub', () => {
   test('y-day-solo — Cockpit journee solo', async ({ page }) => {
-    await prepareVisualPage(page, '/voyages/y-day-solo');
+    await prepareVisualPage(page, '/hub');
     const main = page.locator('main').first();
     await expect(main).toBeVisible();
     await expectVisualSnapshot(page, 'y-day-solo-overview.png');
   });
 
   test('y-day-solo — Itineraire simplifie', async ({ page }) => {
-    await prepareVisualPage(page, '/voyages/y-day-solo/itineraire');
+    await prepareVisualPage(page, '/hub/itineraire');
     const content = page.locator('main').first();
     await expect(content).toBeVisible();
     await expectVisualSnapshot(page, 'y-day-solo-itineraire.png');
   });
 
   test('y-long-group — Cockpit itinerance groupe avec equipage et budget', async ({ page }) => {
-    await prepareVisualPage(page, '/voyages/y-long-group');
+    await prepareVisualPage(page, '/hub');
     const main = page.locator('main').first();
     await expect(main).toBeVisible();
     await expectVisualSnapshot(page, 'y-long-group-overview.png');
   });
 
   test('y-long-group — Synthese budget & balances', async ({ page }) => {
-    await prepareVisualPage(page, '/voyages/y-long-group/budget');
+    await prepareVisualPage(page, '/hub/budget');
     const main = page.locator('main').first();
     await expect(main).toBeVisible();
     await expectVisualSnapshot(page, 'y-long-group-budget.png');
   });
 
   test('y-long-group — Equipage & roles', async ({ page }) => {
-    await prepareVisualPage(page, '/voyages/y-long-group/equipage');
+    await prepareVisualPage(page, '/hub/equipage');
     const main = page.locator('main').first();
     await expect(main).toBeVisible();
     await expectVisualSnapshot(page, 'y-long-group-equipage.png');
   });
 
   test('y-exped-solo — Expedition solo & checkpoints de securite', async ({ page }) => {
-    await prepareVisualPage(page, '/voyages/y-exped-solo');
+    await prepareVisualPage(page, '/hub');
     const main = page.locator('main').first();
     await expect(main).toBeVisible();
     await expectVisualSnapshot(page, 'y-exped-solo-overview.png');
   });
 
   test('y-exped-solo — Securite & points de passage', async ({ page }) => {
-    await prepareVisualPage(page, '/voyages/y-exped-solo/securite');
+    await prepareVisualPage(page, '/hub/securite');
     const main = page.locator('main').first();
     await expect(main).toBeVisible();
     await expectVisualSnapshot(page, 'y-exped-solo-securite.png');
   });
 
   test('y-exped-solo — Journal de bord & notes', async ({ page }) => {
-    await prepareVisualPage(page, '/voyages/y-exped-solo/journal');
+    await prepareVisualPage(page, '/hub/journal');
     const main = page.locator('main').first();
     await expect(main).toBeVisible();
     await expectVisualSnapshot(page, 'y-exped-solo-journal.png');
@@ -119,44 +119,45 @@ test.describe('Profils Y — Decoupage & fidelite visuelle du Hub', () => {
   // baselines X-era « bugs compris ») : couverture rétablie sur slugs seedés. ———
 
   test('y-long-group — Section kit & sac a dos', async ({ page }) => {
-    await prepareVisualPage(page, '/voyages/y-long-group/kit');
+    await prepareVisualPage(page, '/hub/kit-voyage');
     const main = page.locator('main').first();
     await expect(main).toBeVisible();
     await expectVisualSnapshot(page, 'y-long-group-kit.png');
   });
 
   test('y-long-group — Feuille de route export', async ({ page }) => {
-    await prepareVisualPage(page, '/voyages/y-long-group/export');
+    await prepareVisualPage(page, '/hub/export');
     const main = page.locator('main').first();
     await expect(main).toBeVisible();
     await expectVisualSnapshot(page, 'y-long-group-export.png');
   });
 
   test('y-long-group — Checklist de depart', async ({ page }) => {
-    await prepareVisualPage(page, '/voyages/y-long-group/checklist');
+    await prepareVisualPage(page, '/hub/checklist');
     const main = page.locator('main').first();
     await expect(main).toBeVisible();
     await expectVisualSnapshot(page, 'y-long-group-checklist.png');
   });
 
   test('y-long-group — Documents de voyage', async ({ page }) => {
-    await prepareVisualPage(page, '/voyages/y-long-group/documents');
+    await prepareVisualPage(page, '/hub/documents');
     const main = page.locator('main').first();
     await expect(main).toBeVisible();
     await expectVisualSnapshot(page, 'y-long-group-documents.png');
   });
 
   test('liste /voyages — catalogue cockpit et filtres profil', async ({ page }) => {
-    await prepareVisualPage(page, '/voyages');
+    await prepareVisualPage(page, '/hub');
     const main = page.locator('main').first();
     await expect(main).toBeVisible();
     await expectVisualSnapshot(page, 'voyages-liste.png');
   });
 
   test('wizard /voyages/nouveau — creation guidee', async ({ page }) => {
-    await prepareVisualPage(page, '/voyages/nouveau');
+    await prepareVisualPage(page, '/hub/nouveau');
     const main = page.locator('main').first();
     await expect(main).toBeVisible();
     await expectVisualSnapshot(page, 'voyages-nouveau.png');
   });
 });
+

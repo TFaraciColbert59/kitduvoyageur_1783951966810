@@ -32,6 +32,11 @@ export const LEGACY_REDIRECTS: Record<string, string> = {
   '/materiel/disponibilite': '/hub/disponibilite',
   '/materiel/alertes': '/hub/alertes',
   '/materiel/forget': '/hub/oublis',
+  // ── Étape 2 — Hub unique : les pages séparées disparaissent ──
+  '/voyages': '/hub',
+  '/voyages/nouveau': '/hub/nouveau',
+  '/groupes': '/hub/groupe',
+  '/equipages': '/hub/equipage',
   // ── Racines absorbées (H5) ──
   '/preparation': '/hub/preparation',
   '/alertes': '/hub/alertes',
@@ -51,8 +56,12 @@ export const LEGACY_REDIRECTS: Record<string, string> = {
 
 /**
  * Résout un pathname hérité. Retourne null si le pathname n'est pas concerné.
- * Cas dynamique : /materiel/depart/[id] → /hub/depart?id=[id] (l'id 'none'
- * = cockpit vitrine, il est préservé tel quel pour une sémantique identique).
+ * Cas dynamiques :
+ * - /materiel/depart/[id] → /hub/depart?id=[id] (l'id 'none' = cockpit vitrine,
+ *   il est préservé tel quel pour une sémantique identique) ;
+ * - /groupes/[id] et /equipages/[slug] → sections hub correspondantes ;
+ * - /voyages/[slug] et /voyages/[slug]/[section] restent des SHIMS serveur
+ *   (changement d'aventure active puis redirection) — non gérés ici.
  */
 export function resolveLegacyRedirect(pathname: string): LegacyRedirect | null {
   const staticTarget = LEGACY_REDIRECTS[pathname];
@@ -65,6 +74,9 @@ export function resolveLegacyRedirect(pathname: string): LegacyRedirect | null {
     if (!id) return null;
     return { destination: '/hub/depart', setParams: { id } };
   }
+
+  if (pathname.startsWith('/groupes/')) return { destination: '/hub/groupe' };
+  if (pathname.startsWith('/equipages/')) return { destination: '/hub/equipage' };
 
   return null;
 }

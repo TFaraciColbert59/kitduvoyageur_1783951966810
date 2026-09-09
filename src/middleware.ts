@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createServerClient } from '@supabase/ssr';
 import { getCountryCodeByName, getCountryByCode } from '@/lib/countries';
-import { resolveLegacyRedirect, LEGACY_REDIRECTS } from '@/lib/hub/hubRedirects';
+import { resolveLegacyRedirect } from '@/lib/hub/hubRedirects';
 
 const PROTECTED_ROUTES = ['/admin', '/checkout'];
 const ADMIN_ROUTES = ['/admin'];
@@ -148,6 +148,13 @@ export const config = {
     '/materiel/disponibilite',
     '/materiel/alertes',
     '/materiel/forget',
+    // Étape 2 — Hub unique : pages séparées supprimées
+    '/voyages',
+    '/voyages/nouveau',
+    '/groupes',
+    '/groupes/:path*',
+    '/equipages',
+    '/equipages/:path*',
     '/preparation',
     '/alertes',
     '/terrain',

@@ -21,7 +21,14 @@ describe('H-AUTO-42 — resolveLegacyRedirect : table statique', () => {
     expect(resolveLegacyRedirect('/materiel/forget')?.destination).toBe('/hub/oublis');
   });
 
-  it('RED-2: racines absorbées (H5) et mode live (D2)', () => {
+  it('RED-2b: Étape 2 — les pages séparées voyages/groupes/équipages disparaissent', () => {
+    expect(resolveLegacyRedirect('/voyages')?.destination).toBe('/hub');
+    expect(resolveLegacyRedirect('/voyages/nouveau')?.destination).toBe('/hub/nouveau');
+    expect(resolveLegacyRedirect('/groupes')?.destination).toBe('/hub/groupe');
+    expect(resolveLegacyRedirect('/equipages')?.destination).toBe('/hub/equipage');
+  });
+
+  it('RED-2c: racines absorbées (H5) et mode live (D2)', () => {
     expect(resolveLegacyRedirect('/preparation')?.destination).toBe('/hub/preparation');
     expect(resolveLegacyRedirect('/alertes')?.destination).toBe('/hub/alertes');
     expect(resolveLegacyRedirect('/terrain')?.destination).toBe('/hub');
@@ -49,6 +56,22 @@ describe('H-AUTO-42 — resolveLegacyRedirect : table statique', () => {
     expect(resolveLegacyRedirect('/explorer')).toBeNull();
     expect(resolveLegacyRedirect('/materielxyz')).toBeNull();
     expect(resolveLegacyRedirect('/')).toBeNull();
+  });
+});
+
+describe('Étape 2 — cas dynamiques groupes/équipages', () => {
+  it('DYN-1: /groupes/[id] → /hub/groupe', () => {
+    expect(resolveLegacyRedirect('/groupes/abc123')).toEqual({ destination: '/hub/groupe' });
+    expect(resolveLegacyRedirect('/groupes/abc/extra')).toEqual({ destination: '/hub/groupe' });
+  });
+
+  it('DYN-2: /equipages/[slug] → /hub/equipage', () => {
+    expect(resolveLegacyRedirect('/equipages/mon-equipage')).toEqual({ destination: '/hub/equipage' });
+  });
+
+  it('DYN-3: /voyages/[slug] reste un shim serveur (bascule aventure active)', () => {
+    expect(resolveLegacyRedirect('/voyages/mon-voyage')).toBeNull();
+    expect(resolveLegacyRedirect('/voyages/mon-voyage/itineraire')).toBeNull();
   });
 });
 
@@ -94,8 +117,11 @@ describe('H-AUTO-42 — invariants de la matrice (chaînes, boucles, registre)',
 
   it('INV-3: destinations /hub/* cohérentes avec le registre (segment existant)', () => {
     const segments = new Set(hubSectionRegistry.map((d) => d.segment));
+    // /hub/nouveau : page de création (hors registre de sections).
+    const pageExceptions = new Set(['/hub/nouveau']);
     for (const destination of Object.values(LEGACY_REDIRECTS)) {
       if (!destination.startsWith('/hub') || destination === '/hub') continue;
+      if (pageExceptions.has(destination)) continue;
       const segment = destination.slice('/hub/'.length);
       expect(segments.has(segment)).toBe(true);
     }
@@ -121,5 +147,7 @@ describe('H-AUTO-42 — invariants de la matrice (chaînes, boucles, registre)',
       expect(matcherSet.has(source), `matcher couvre ${source}`).toBe(true);
     }
     expect(matcherSet.has('/materiel/depart/:path*')).toBe(true);
+    expect(matcherSet.has('/groupes/:path*')).toBe(true);
+    expect(matcherSet.has('/equipages/:path*')).toBe(true);
   });
 });

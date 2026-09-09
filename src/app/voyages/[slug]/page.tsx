@@ -6,13 +6,14 @@ import { getAffiliateLinks } from '@/lib/queries-affiliation';
 import { getTripKitDetails } from '@/lib/queries-trip-kit';
 import { getTripElevationProfile } from '@/features/trips/lib/elevation';
 import { TripOverviewClient } from '@/features/trips/components/TripOverviewClient';
+import { TripSwitchBootstrap } from '@/features/hub/components/TripSwitchBootstrap';
 import type { TripPhase } from '@/features/trips/engine/temporalPhaseEngine';
 
 export const dynamic = 'force-dynamic';
 
 interface PageProps {
   params: Promise<{ slug: string }>;
-  searchParams?: Promise<{ phase?: string }>;
+  searchParams?: Promise<{ phase?: string; token?: string }>;
 }
 
 export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
@@ -36,64 +37,83 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
   };
 }
 
+/**
+ * Étape 2 — Hub unique. Cette route n'est plus une interface concurrente :
+ * - lien de partage public (`?token=`) → vue lecture seule préservée ;
+ * - tout autre accès → l'aventure devient active et le hub prend le relais.
+ */
 export default async function TripDetailPage({ params, searchParams }: PageProps) {
   const { slug } = await params;
   const resolvedSearchParams = searchParams ? await searchParams : undefined;
-  const initialPhase = resolvedSearchParams?.phase as TripPhase | undefined;
-  const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  const token = resolvedSearchParams?.token;
 
-  const trip = await getTripBySlug(slug, user?.id);
+  const trip = await getTripBySlug(slug);
   if (!trip) notFound();
 
-  const stats = await getTripStats(trip.id);
-  const elevationProfile = getTripElevationProfile(trip);
+  if (token) {
+    const initialPhase = resolvedSearchParams?.phase as TripPhase | undefined;
+    const supabase = await createClient();
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
 
-  const countryCode = trip.destination_country_code || undefined;
-  const affiliateLinks = await getAffiliateLinks({ countryCode, maxAltitudeM: elevationProfile.maxM, limit: 6 });
-  const kitResult = await getTripKitDetails(slug, user?.id);
+    const fullTrip = await getTripBySlug(slug, user?.id, { shareToken: token });
+    if (!fullTrip) notFound();
 
-  const jsonLd = {
-    '@context': 'https://schema.org',
-    '@type': 'TouristTrip',
-    name: trip.title,
-    description: trip.description || trip.title,
-    touristType: trip.primary_activity,
-    startDate: trip.start_date || undefined,
-    endDate: trip.end_date || undefined,
-    itinerary: {
-      '@type': 'ItemList',
-      numberOfItems: trip.steps.length,
-      itemListElement: trip.steps.map((step) => ({
-        '@type': 'ListItem',
-        position: step.day_number,
-        item: {
-          '@type': 'TouristAttraction',
-          name: step.title,
-          description: step.description || step.title,
-        },
-      })),
-    },
-  };
+    const stats = await getTripStats(fullTrip.id);
+    const elevationProfile = getTripElevationProfile(fullTrip);
+
+    const countryCode = fullTrip.destination_country_code || undefined;
+    const affiliateLinks = await getAffiliateLinks({ countryCode, maxAltitudeM: elevationProfile.maxM, limit: 6 });
+    const kitResult = await getTripKitDetails(slug, user?.id);
+
+    const jsonLd = {
+      '@context': 'https://schema.org',
+      '@type': 'TouristTrip',
+      name: fullTrip.title,
+      description: fullTrip.description || fullTrip.title,
+      touristType: fullTrip.primary_activity,
+      startDate: fullTrip.start_date || undefined,
+      endDate: fullTrip.end_date || undefined,
+      itinerary: {
+        '@type': 'ItemList',
+        numberOfItems: fullTrip.steps.length,
+        itemListElement: fullTrip.steps.map((step) => ({
+          '@type': 'ListItem',
+          position: step.day_number,
+          item: {
+            '@type': 'TouristAttraction',
+            name: step.title,
+            description: step.description || step.title,
+          },
+        })),
+      },
+    };
+
+    return (
+      <>
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{
+            // Échappement < : un titre/étape utilisateur ne peut pas sortir du bloc script.
+            __html: JSON.stringify(jsonLd).replace(/</g, '\\u003c'),
+          }}
+        />
+        <TripOverviewClient
+          trip={fullTrip}
+          stats={stats}
+          affiliateLinks={affiliateLinks}
+          kitAnalysis={kitResult?.analysis}
+          initialPhase={initialPhase}
+        />
+      </>
+    );
+  }
 
   return (
-    <>
-      <script
-        type="application/ld+json"
-        dangerouslySetInnerHTML={{
-          // Échappement < : un titre/étape utilisateur ne peut pas sortir du bloc script.
-          __html: JSON.stringify(jsonLd).replace(/</g, '\\u003c'),
-        }}
-      />
-      <TripOverviewClient
-        trip={trip}
-        stats={stats}
-        affiliateLinks={affiliateLinks}
-        kitAnalysis={kitResult?.analysis}
-        initialPhase={initialPhase}
-      />
-    </>
+    <TripSwitchBootstrap
+      adventure={{ nature: 'sortie', id: trip.id, slug: trip.slug, title: trip.title }}
+      target="/hub"
+    />
   );
 }

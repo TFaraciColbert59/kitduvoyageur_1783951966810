@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { useTripDraft } from './useTripDraft';
 import { tripSectionHref } from '../registry/tripSectionRegistry';
+import { setActiveAdventureAction } from '@/features/hub/context/activeAdventureServer';
 import { Step1Destinations } from './Step1Destinations';
 import { Step2Dates } from './Step2Dates';
 import { Step3StylePace } from './Step3StylePace';
@@ -73,8 +74,16 @@ export function TripWizard() {
     }
   };
 
-  const handleComplete = (slug: string) => {
+  const handleComplete = async (slug: string) => {
     resetDraft();
+    // Étape 2 — Hub unique : le voyage créé devient l'aventure active, la
+    // destination est la section Aperçu du hub (jamais une page concurrente).
+    await setActiveAdventureAction({
+      nature: 'sortie',
+      id: slug,
+      slug,
+      title: state.title.trim() || defaultSuggestedTitle,
+    });
     router.push(tripSectionHref(slug, 'overview'));
   };
 

@@ -1,14 +1,12 @@
-'use client';
+﻿'use client';
 
 import React from 'react';
 import Link from 'next/link';
 import AppImage from '@/components/ui/AppImage';
 import { GlassCard } from '@/components/ui/GlassCard';
 import { TripBadge } from './TripBadge';
-import { tripSectionHref, TRIP_SECTION_ORDER } from '../registry/tripSectionRegistry';
+import { tripSwitchHref } from '../registry/tripSectionRegistry';
 import { deriveScale, deriveParty, getProfileBadgeLabel } from '../engine/tripProfileEngine';
-import type { TripSectionId } from '../engine/tripProfileEngine';
-import { useActiveTrip } from '../context/ActiveTripContext';
 import { MapPin, Calendar, Navigation, Users } from 'lucide-react';
 import type { TripSummary, TripWithDetails } from '../types/trip.types';
 
@@ -30,12 +28,6 @@ export function TripCard({ trip, showRole = true }: TripCardProps) {
   const imageUrl = trip.cover_image_url || '/assets/images/no_image.png';
   const role = 'user_role' in trip ? trip.user_role : undefined;
 
-  const { getLastSection } = useActiveTrip();
-  const lastSection = getLastSection(trip.slug);
-  const targetSection = (lastSection && (TRIP_SECTION_ORDER as readonly string[]).includes(lastSection)
-    ? lastSection
-    : 'overview') as TripSectionId;
-
   const scale = deriveScale(trip.start_date, trip.end_date);
   const party = deriveParty(
     'collaborators' in trip && Array.isArray((trip as any).collaborators)
@@ -45,7 +37,7 @@ export function TripCard({ trip, showRole = true }: TripCardProps) {
   const profileLabel = getProfileBadgeLabel(scale, party);
 
   return (
-    <Link href={tripSectionHref(trip.slug, targetSection)} className="block group">
+    <Link href={tripSwitchHref(trip.slug)} className="block group">
       <GlassCard
         tone="neutral"
         blur="md"

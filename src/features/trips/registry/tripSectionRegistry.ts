@@ -19,11 +19,17 @@ import {
   type TripSectionId,
 } from '../engine/tripProfileEngine';
 import type { TripFull } from '../types/trip.types';
+import { hubSectionRegistry, hubSectionHref } from '@/features/hub/registry/hubSectionRegistry';
+import type { HubSectionId } from '@/features/hub/engine/hubProfileEngine';
 
 /**
  * Y1.3 — Registre des sections du hub voyage (source unique de la navigation).
  * La sidebar, le fil d'Ariane, le sélecteur mobile et les tests lisent TOUS
- * ce registre. Aucune route /voyages littérale hors d'ici (règle Y-D80 n°11).
+ * ce registre.
+ *
+ * Étape 2 — Hub unique : les sections sortie vivent DANS /hub. `tripSectionHref`
+ * délègue au registre du hub (mêmes identifiants de section) — les anciennes
+ * URLs /voyages/* sont des shims de redirection, plus des destinations.
  */
 
 export interface TripSectionDef {
@@ -124,18 +130,36 @@ export const tripSectionRegistry: readonly TripSectionDef[] = [
   },
 ] as const;
 
-/** Constructeur d'URL typé — LE seul point du code qui écrit /voyages/. */
+/** Constructeur d'URL typé — délègue au registre du hub (URLs canoniques /hub). */
 export function tripSectionHref(slug: string, sectionId: TripSectionId): string {
-  const def = tripSectionRegistry.find((s) => s.id === sectionId);
-  if (!def) throw new Error(`Section inconnue : ${sectionId}`);
-  const base = `/voyages/${slug}`;
-  return def.segment ? `${base}/${def.segment}` : base;
+  return hubSectionHref({ nature: 'sortie', slug }, sectionId as HubSectionId);
 }
 
-/** Retrouve la section active depuis un pathname (état actif de la sidebar). */
+/**
+ * Étape 2 — URL de bascule : active ce voyage comme aventure active puis
+ * atterrit sur le hub. L'unique shim /voyages/[slug] restant (rule Y-D80 :
+ * littéral écrit uniquement ici).
+ */
+export function tripSwitchHref(slug: string): string {
+  return `/voyages/${slug}`;
+}
+
+/**
+ * Retrouve la section active depuis un pathname (état actif de la sidebar).
+ * Accepte les URLs canoniques /hub/<segment> et l'héritage /voyages/<slug>/<segment>.
+ */
 export function sectionIdFromPathname(pathname: string | null): TripSectionId | null {
   if (!pathname) return null;
-  const match = pathname.match(/^\/voyages\/[^/]+(?:\/([^/?#]+))?/);
+  const clean = pathname.split(/[?#]/)[0];
+  const hubMatch = clean.match(/^\/hub(?:\/([^/]+))?\/?$/);
+  if (hubMatch) {
+    const segment = hubMatch[1] ?? '';
+    if (!segment) return 'overview';
+    const hubDef = hubSectionRegistry.find((s) => s.segment === segment);
+    if (!hubDef) return null;
+    return (tripSectionRegistry.find((s) => s.id === hubDef.id)?.id ?? null) as TripSectionId | null;
+  }
+  const match = clean.match(/^\/voyages\/[^/]+(?:\/([^/?#]+))?/);
   if (!match) return null;
   const segment = match[1] ?? '';
   const def = tripSectionRegistry.find((s) => s.segment === segment);

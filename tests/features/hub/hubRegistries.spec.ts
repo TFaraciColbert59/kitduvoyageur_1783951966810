@@ -38,11 +38,11 @@ describe('H1 — hubSectionRegistry : source unique des sections', () => {
     expect(hubSectionHref({ nature: 'possession' }, 'inventaire')).toBe('/hub/inventaire');
   });
 
-  it('REG-4: href sortie délègue au registre voyage (zéro duplication)', () => {
+  it('REG-4: href sortie = sections hub (Étape 2 — plus de délégation /voyages)', () => {
     expect(hubSectionHref({ nature: 'sortie', slug: 'gr20' }, 'itinerary')).toBe(
-      '/voyages/gr20/itineraire',
+      '/hub/itineraire',
     );
-    expect(hubSectionHref({ nature: 'sortie', slug: 'gr20' }, 'overview')).toBe('/voyages/gr20');
+    expect(hubSectionHref({ nature: 'sortie', slug: 'gr20' }, 'overview')).toBe('/hub');
   });
 
   it('REG-5: href sortie sans slug = erreur explicite', () => {
@@ -62,7 +62,7 @@ describe('H1 — hubSectionRegistry : source unique des sections', () => {
   it('REG-8: team partagée sortie+collectif (une seule source)', () => {
     const team = hubSectionRegistry.find((s) => s.id === 'team');
     expect(team?.natures).toEqual(['sortie', 'collectif']);
-    expect(hubSectionHref({ nature: 'sortie', slug: 'x' }, 'team')).toBe('/voyages/x/equipage');
+    expect(hubSectionHref({ nature: 'sortie', slug: 'x' }, 'team')).toBe('/hub/equipage');
     expect(hubSectionHref({ nature: 'collectif' }, 'team')).toBe('/hub/equipage');
   });
 

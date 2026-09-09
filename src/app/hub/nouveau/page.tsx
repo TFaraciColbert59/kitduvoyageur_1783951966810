@@ -3,12 +3,16 @@ import type { Metadata } from 'next';
 import { TripWizard } from '@/features/trips/wizard/TripWizard';
 
 export const metadata: Metadata = {
-  title: 'Nouveau Voyage | Planificateur d’Expédition | Le Kit du Voyageur',
+  title: 'Nouvelle aventure | Création | Hub — Le Kit du Voyageur',
   description:
     'Créez votre expédition sur-mesure en 5 étapes simples : étapes GPS réelles, saisonnalité, profil altimétrique et matériel optimisé.',
 };
 
-export default function NouveauVoyagePage() {
+/**
+ * Étape 2 — La création d'activité vit dans le hub. Les anciennes routes
+ * /voyages/nouveau et /voyage-ia redirigent ici.
+ */
+export default function HubNouveauPage() {
   return (
     <Suspense
       fallback={

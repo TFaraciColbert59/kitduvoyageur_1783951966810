@@ -12,7 +12,7 @@ import { test, expect } from '@playwright/test';
 const ROUTES = [
   { path: '/materiel', name: 'materiel' },
   { path: '/compte', name: 'compte' },
-  { path: '/voyages', name: 'voyages' },
+  { path: '/hub', name: 'hub' },
   { path: '/pays/fr', name: 'pays-fr' },
 ];
 

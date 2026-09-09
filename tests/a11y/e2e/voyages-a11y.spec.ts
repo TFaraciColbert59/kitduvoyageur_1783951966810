@@ -52,19 +52,19 @@ async function getDemoAuthCookie(): Promise<{ name: string; value: string; domai
 }
 
 const SURFACES: Array<{ id: string; url: string }> = [
-  { id: 'voyages-liste', url: '/voyages' },
-  { id: 'voyages-nouveau', url: '/voyages/nouveau' },
-  { id: 'voyage-overview', url: '/voyages/y-exped-group' },
-  { id: 'voyage-itineraire', url: '/voyages/y-exped-group/itineraire' },
-  { id: 'voyage-kit', url: '/voyages/y-exped-group/kit' },
-  { id: 'voyage-equipage', url: '/voyages/y-exped-group/equipage' },
-  { id: 'voyage-budget', url: '/voyages/y-exped-group/budget' },
-  { id: 'voyage-documents', url: '/voyages/y-exped-group/documents' },
-  { id: 'voyage-checklist', url: '/voyages/y-exped-group/checklist' },
-  { id: 'voyage-securite', url: '/voyages/y-exped-group/securite' },
-  { id: 'voyage-journal', url: '/voyages/y-exped-group/journal' },
-  { id: 'voyage-carte', url: '/voyages/y-exped-group/carte' },
-  { id: 'voyage-export', url: '/voyages/y-exped-group/export' },
+  // Étape 2 — Hub unique : les surfaces voyages vivent dans /hub.
+  { id: 'hub-apercu', url: '/hub' },
+  { id: 'hub-nouveau', url: '/hub/nouveau' },
+  { id: 'hub-itineraire', url: '/hub/itineraire' },
+  { id: 'hub-kit-voyage', url: '/hub/kit-voyage' },
+  { id: 'hub-equipage', url: '/hub/equipage' },
+  { id: 'hub-budget', url: '/hub/budget' },
+  { id: 'hub-documents', url: '/hub/documents' },
+  { id: 'hub-checklist', url: '/hub/checklist' },
+  { id: 'hub-securite', url: '/hub/securite' },
+  { id: 'hub-journal', url: '/hub/journal' },
+  { id: 'hub-export', url: '/hub/export' },
+  { id: 'hub-groupe', url: '/hub/groupe' },
 ];
 
 test.beforeEach(async ({ context }) => {

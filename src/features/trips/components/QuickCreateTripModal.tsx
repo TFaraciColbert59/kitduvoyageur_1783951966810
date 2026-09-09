@@ -7,6 +7,7 @@ import { GlassCapsuleBtn } from '@/components/ui/GlassCapsuleBtn';
 import { LkvInput } from '@/components/ui/LkvInput';
 import { Compass, X, AlertCircle } from 'lucide-react';
 import { tripSectionHref } from '../registry/tripSectionRegistry';
+import { setActiveAdventureAction } from '@/features/hub/context/activeAdventureServer';
 import {
   createTripSchema,
   type CreateTripInput,
@@ -44,6 +45,17 @@ export function QuickCreateTripModal({
 
   if (!isOpen) return null;
 
+  /** Étape 2 — Hub unique : le voyage créé devient l'aventure active du hub. */
+  const activateAndOpen = async (slug: string) => {
+    await setActiveAdventureAction({
+      nature: 'sortie',
+      id: slug,
+      slug,
+      title: title.trim() || 'Nouvelle aventure',
+    });
+    router.push(tripSectionHref(slug, 'overview'));
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setFormError(null);
@@ -71,7 +83,7 @@ export function QuickCreateTripModal({
       if (onSubmitTrip) {
         const res = await onSubmitTrip(validation.data as CreateTripInput);
         onClose();
-        router.push(tripSectionHref(res.slug, 'overview'));
+        await activateAndOpen(res.slug);
       } else {
         // Envoi vers l'API de création
         const response = await fetch('/api/voyages', {
@@ -85,7 +97,7 @@ export function QuickCreateTripModal({
         }
         const created = await response.json();
         onClose();
-        router.push(tripSectionHref(created.slug, 'overview'));
+        await activateAndOpen(created.slug);
       }
     } catch (err: any) {
       setFormError(err.message || 'Une erreur est survenue');

@@ -1,5 +1,5 @@
 import Link from 'next/link';
-import { ArrowRight, ArrowUpRight } from 'lucide-react';
+import { ArrowRight } from 'lucide-react';
 import { HubAssistantCta } from './HubAssistantCta';
 import { OverviewBlocks } from './blocks';
 import {
@@ -7,7 +7,6 @@ import {
   visibleHubSections,
   type HubAdventureRef,
 } from '../registry/hubSectionRegistry';
-import { tripSectionHref } from '@/features/trips/registry/tripSectionRegistry';
 import { activitySectionLabel } from '../engine/activityProfiles';
 import { selectOverviewBlocks } from '../engine/widgetContext';
 import type { AdventureProfile } from '../engine/hubProfileEngine';
@@ -65,14 +64,6 @@ export function HubOverviewSortie({ profile, trip, countdown, group, hiking }: H
           )}
         </div>
       ) : null}
-
-      <Link
-        href={tripSectionHref(trip.slug, 'overview')}
-        className="glass-capsule-btn primary inline-flex items-center gap-2 min-h-[44px] px-5"
-      >
-        <span>Ouvrir le voyage</span>
-        <ArrowUpRight size={14} aria-hidden="true" />
-      </Link>
 
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
         <HubAssistantCta contextLabel={`Conseils pour ${trip.title}`} />

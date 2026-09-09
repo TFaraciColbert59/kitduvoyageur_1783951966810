@@ -30,8 +30,8 @@ function stripComments(code: string): string {
 describe('Anti-Jargon Validation (D9 & Règle R0)', () => {
   const dirsToScan = [
     path.resolve(process.cwd(), 'src/features/trips'),
-    path.resolve(process.cwd(), 'src/app/voyages'),
-    path.resolve(process.cwd(), 'src/components/groupes'),
+    path.resolve(process.cwd(), 'src/features/hub'),
+    path.resolve(process.cwd(), 'src/app/hub'),
   ];
 
   const allFiles = dirsToScan.flatMap(dir => findFiles(dir, ['.tsx']));

@@ -2,9 +2,11 @@ import { describe, it, expect } from 'vitest';
 import {
   tripSectionRegistry,
   tripSectionHref,
+  tripSwitchHref,
   sectionIdFromPathname,
   visibleSections,
 } from '@/features/trips/registry/tripSectionRegistry';
+import { hubSectionRegistry } from '@/features/hub/registry/hubSectionRegistry';
 import {
   tripWidgetRegistry,
   widgetDef,
@@ -43,36 +45,37 @@ describe('Y1.3 — registre des sections', () => {
     }
   });
 
-  // Y2 : toutes les routes de sections existent désormais (layout de segment).
-  // Cette liste doit rester VIDE — elle documentait le contrat pré-Y2.
-  const PENDING_ROUTE_SEGMENTS: string[] = [];
-
-  it('segments cohérents avec les dossiers de routes réels (ou en attente Y2/Y4)', () => {
-    const slugsDir = path.join(process.cwd(), 'src', 'app', 'voyages', '[slug]');
-    const realSegments = fs
-      .readdirSync(slugsDir, { withFileTypes: true })
-      .filter((e) => e.isDirectory())
-      .map((e) => e.name);
+  // Étape 2 — Hub unique : les sections sortie vivent dans /hub. Le shim
+  // /voyages/[slug]/[section] est le SEUL dossier de route restant.
+  it('segments cohérents avec le registre hub (rendu canonique /hub)', () => {
+    const hubDir = path.join(process.cwd(), 'src', 'app', 'hub', '[section]');
+    expect(fs.existsSync(path.join(hubDir, 'page.tsx'))).toBe(true);
+    const shimDir = path.join(process.cwd(), 'src', 'app', 'voyages', '[slug]', '[section]');
+    expect(fs.existsSync(path.join(shimDir, 'page.tsx'))).toBe(true);
+    // Chaque segment du registre voyage correspond au segment hub de même id.
     for (const s of tripSectionRegistry) {
-      if (s.segment === '') continue; // racine = page.tsx
-      if (PENDING_ROUTE_SEGMENTS.includes(s.segment)) continue; // créé en Y2/Y4
-      expect(realSegments, `segment ${s.segment} doit exister comme route`).toContain(s.segment);
-    }
-    // La liste des en attente ne référence que des segments du registre.
-    const registrySegments = tripSectionRegistry.map((s) => s.segment);
-    for (const pending of PENDING_ROUTE_SEGMENTS) {
-      expect(registrySegments).toContain(pending);
+      if (s.segment === '') continue; // racine = /hub
+      const hubDef = hubSectionRegistry.find((h) => h.id === s.id);
+      expect(hubDef, `section ${s.id} doit exister dans le registre hub`).toBeDefined();
+      expect(hubDef?.segment).toBe(s.segment === 'kit' ? 'kit-voyage' : s.segment);
     }
   });
 
-  it('tripSectionHref : racine, segment, et rejet d’une section inconnue', () => {
-    expect(tripSectionHref('abc', 'overview')).toBe('/voyages/abc');
-    expect(tripSectionHref('abc', 'itinerary')).toBe('/voyages/abc/itineraire');
-    expect(tripSectionHref('abc', 'safety')).toBe('/voyages/abc/securite');
+  it('tripSectionHref : racine hub, segment hub, rejet d’une section inconnue', () => {
+    expect(tripSectionHref('abc', 'overview')).toBe('/hub');
+    expect(tripSectionHref('abc', 'itinerary')).toBe('/hub/itineraire');
+    expect(tripSectionHref('abc', 'safety')).toBe('/hub/securite');
     expect(() => tripSectionHref('abc', 'inconnu' as never)).toThrow();
   });
 
-  it('sectionIdFromPathname : racine, segments, sous-chemins, hors hub', () => {
+  it('tripSwitchHref : URL de bascule vers un voyage précis (shim /voyages/[slug])', () => {
+    expect(tripSwitchHref('abc')).toBe('/voyages/abc');
+  });
+
+  it('sectionIdFromPathname : hub canonique + héritage /voyages, hors hub = null', () => {
+    expect(sectionIdFromPathname('/hub')).toBe('overview');
+    expect(sectionIdFromPathname('/hub/itineraire')).toBe('itinerary');
+    expect(sectionIdFromPathname('/hub/kit-voyage')).toBe('gear');
     expect(sectionIdFromPathname('/voyages/abc')).toBe('overview');
     expect(sectionIdFromPathname('/voyages/abc/itineraire')).toBe('itinerary');
     expect(sectionIdFromPathname('/voyages/abc/kit')).toBe('gear');

@@ -19,7 +19,6 @@ import {
   Users,
   type LucideIcon,
 } from 'lucide-react';
-import { tripSectionHref } from '@/features/trips/registry/tripSectionRegistry';
 import {
   HUB_SECTION_ORDER,
   type AdventureNature,
@@ -32,8 +31,9 @@ import {
  * HubShell, AdventureSwitcher, HubSectionPicker, fil d'Ariane et tests lisent
  * TOUS ce registre. Aucun littéral /hub/ hors d'ici (règle H-D85 n°13).
  *
- * Composition : les sections sortie DÉLÈGUENT à `tripSectionHref` (zéro
- * duplication des segments voyage). `team` est partagée sortie+collectif.
+ * Étape 2 — Hub unique : les sections sortie sont rendues DANS le hub.
+ * `/hub/<segment>` est l'URL canonique pour toutes les natures ; les anciennes
+ * routes /voyages/* redirigent vers ces sections (hubRedirects).
  */
 
 /** Compteurs affichés dans la navigation (champs tous optionnels — jamais de throw). */
@@ -110,7 +110,6 @@ export function hubSectionHref(adventure: HubAdventureRef, sectionId: HubSection
   }
   if (adventure.nature === 'sortie') {
     if (!adventure.slug) throw new Error('hubSectionHref sortie requiert un slug de voyage');
-    return tripSectionHref(adventure.slug, sectionId as Parameters<typeof tripSectionHref>[1]);
   }
   return def.segment ? `/hub/${def.segment}` : '/hub';
 }

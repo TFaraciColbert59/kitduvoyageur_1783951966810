@@ -1,7 +1,7 @@
 import Link from 'next/link';
 import { ArrowRight, ArrowUpRight } from 'lucide-react';
 import { hubSectionHref, type HubAdventureRef } from '../registry/hubSectionRegistry';
-import { tripSectionHref } from '@/features/trips/registry/tripSectionRegistry';
+import { tripSwitchHref } from '@/features/trips/registry/tripSectionRegistry';
 import type { HubWidgetId } from '../engine/hubProfileEngine';
 
 export interface HubWidgetData {
@@ -87,7 +87,7 @@ export function HubWidgetBody({
       if (!data.linkedTripSlug) return null;
       return (
         <Link
-          href={tripSectionHref(data.linkedTripSlug, 'overview')}
+          href={tripSwitchHref(data.linkedTripSlug)}
           className="glass-capsule-btn primary inline-flex items-center justify-center gap-2 min-h-[44px] px-4 w-full"
         >
           <span>Entrer dans le voyage</span>

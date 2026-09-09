@@ -21,8 +21,8 @@ function findFilesWithExtensions(dir: string, extensions: string[]): string[] {
 describe('Sous-phase 2.2 — Anti-Hexadécimal JSX & Design Tokens Strictness (TDD)', () => {
   const targetDirs = [
     path.resolve(process.cwd(), 'src/features/trips'),
-    path.resolve(process.cwd(), 'src/components/groupes'),
-    path.resolve(process.cwd(), 'src/app/voyages'),
+    path.resolve(process.cwd(), 'src/features/hub'),
+    path.resolve(process.cwd(), 'src/app/hub'),
   ];
 
   it('TEST-DESIGN-01: zero occurrence of rogue green #5C6B5E in JSX files', () => {

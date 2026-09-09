@@ -51,7 +51,7 @@ export function HubMobileSectionsSheet({
           triggerHaptic('light');
           setIsOpen(true);
         }}
-        className="glass-capsule-btn flex items-center gap-1.5 min-h-[44px] px-3.5 text-xs font-semibold cursor-pointer shadow-sm active:scale-95 transition-transform"
+        className="glass-capsule-btn flex items-center gap-1.5 min-h-[48px] px-3.5 text-xs font-semibold cursor-pointer shadow-sm active:scale-95 transition-transform"
         aria-label="Ouvrir les sections du hub"
       >
         <Layers size={14} className="text-[var(--lkv-secondary)]" />

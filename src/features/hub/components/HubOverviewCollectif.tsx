@@ -6,7 +6,7 @@ import {
   visibleHubSections,
   type HubAdventureRef,
 } from '../registry/hubSectionRegistry';
-import { tripSectionHref } from '@/features/trips/registry/tripSectionRegistry';
+import { tripSwitchHref } from '@/features/trips/registry/tripSectionRegistry';
 import type { AdventureProfile } from '../engine/hubProfileEngine';
 
 export interface HubOverviewCollectifProps {
@@ -43,7 +43,7 @@ export function HubOverviewCollectif({
       </header>
       {linkedTripSlug && (
         <Link
-          href={tripSectionHref(linkedTripSlug, 'overview')}
+          href={tripSwitchHref(linkedTripSlug)}
           className="glass-capsule-btn primary inline-flex items-center gap-2 min-h-[44px] px-5"
         >
           <span>Entrer dans le voyage</span>
