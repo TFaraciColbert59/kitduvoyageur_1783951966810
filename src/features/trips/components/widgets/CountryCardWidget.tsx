@@ -3,7 +3,6 @@
 import React from 'react';
 import Link from 'next/link';
 import { MapPin } from 'lucide-react';
-import { GlassCard } from '@/components/ui/GlassCard';
 
 export interface CountryCardWidgetProps {
   countryCode?: string | null;
@@ -26,14 +25,14 @@ export function CountryCardWidget({ countryCode, countryName }: CountryCardWidge
   if (!countryCode) return null;
 
   return (
-    <GlassCard tone="neutral" className="p-3.5 space-y-1.5 rounded-[var(--lkv-radius-card)] border border-white/60">
-      <span className="text-[9.5px] font-mono font-bold uppercase tracking-widest text-[var(--lkv-text-secondary)] flex items-center gap-1.5">
-        <MapPin size={12} />
-        Destination
-      </span>
+    <div className="glass p-3.5 space-y-2.5 rounded-2xl border border-white/70 shadow-xs font-sans">
+      <div className="flex items-center gap-1.5">
+        <MapPin size={13} aria-hidden="true" />
+        <h3 className="font-display font-bold text-xs text-[var(--lkv-primary)]">Destination</h3>
+      </div>
       <Link
         href={`/pays/${countryCode.toLowerCase()}`}
-        className="flex items-center gap-2.5 rounded-[var(--lkv-radius-md)] px-1 py-1 hover:bg-white/40 transition-colors group min-h-[44px] cursor-pointer"
+        className="flex items-center gap-2.5 rounded-xl px-1 py-1 hover:bg-white/60 transition-colors group min-h-[44px] cursor-pointer"
         aria-label={`Ouvrir la fiche pays ${countryName ?? countryCode}`}
       >
         <span
@@ -43,15 +42,15 @@ export function CountryCardWidget({ countryCode, countryName }: CountryCardWidge
           {flagEmoji(countryCode)}
         </span>
         <span className="min-w-0">
-          <span className="block text-sm font-semibold text-[var(--lkv-text-primary)] truncate">
+          <span className="block text-sm font-bold text-[var(--lkv-text-primary)] truncate">
             {countryName ?? countryCode}
           </span>
-          <span className="block text-[10px] font-mono uppercase tracking-widest text-[var(--lkv-text-secondary)]">
+          <span className="glass-pill text-[9px] font-bold text-[var(--lkv-text-secondary)] mt-0.5">
             {countryCode} · fiche pays
           </span>
         </span>
       </Link>
-    </GlassCard>
+    </div>
   );
 }
 

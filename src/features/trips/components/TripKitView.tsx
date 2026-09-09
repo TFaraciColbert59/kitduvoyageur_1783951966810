@@ -30,6 +30,7 @@ import {
 } from 'lucide-react';
 import type { TripFull, TripItem } from '../types/trip.types';
 import type { TripKitAnalysis, ContextualGearRecommendation } from '../types/kit.types';
+import { cleanItemName } from '@/lib/cleanItemName';
 import { getTripDuration } from '../hooks/useTripDuration';
 import { deriveScale } from '../engine/tripProfileEngine';
 import { useHapticFeedback } from '@/hooks/useHapticFeedback';
@@ -493,16 +494,17 @@ export function TripKitView({ trip, analysis, showBackLink: _showBackLink = fals
       </GlassCard>
       )}
 
-      {/* 3. Check-list des Objets du Sac & Filtrage */}
+      {/* 3. Sac & inventaire du voyage (le PACK — distinct de la check-list de préparation) */}
       <GlassCard tone="neutral" blur="md" className="p-6 rounded-3xl border border-white/70 shadow-sm space-y-5">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
           <div>
             <h3 className="text-lg font-black text-lkv-primary flex items-center gap-2">
               <Package className="w-5 h-5 text-lkv-secondary" />
-              Check-list & Inventaire de l’Expédition
+              Sac &amp; inventaire du voyage
             </h3>
             <p className="text-xs text-stone-500">
-              Cochez les équipements au fur et à mesure du chargement de votre sac.
+              Le contenu réel de votre sac — cochez les objets au fur et à mesure du chargement. La
+              check-list de préparation avant-départ vit dans sa propre section.
             </p>
           </div>
 
@@ -811,17 +813,18 @@ interface ItemRowProps {
 
 function TripKitItemRow({ item, onTogglePacked, onDeleteItem }: ItemRowProps) {
   const Icon = CATEGORY_ICONS[item.category || 'misc'] || Package;
+  const displayName = cleanItemName(item.item_name);
 
   return (
     <div
       className={`py-3 flex items-center justify-between gap-3 transition-colors ${
-        item.is_packed ? 'opacity-60' : 'opacity-100'
+        item.is_packed ? 'opacity-70' : 'opacity-100'
       }`}
     >
       <div className="flex items-center gap-3 min-w-0">
         <button
           onClick={() => onTogglePacked(item)}
-          className="p-1 text-lkv-primary hover:scale-110 transition-transform shrink-0"
+          className="min-h-[44px] min-w-[44px] flex items-center justify-center text-lkv-primary hover:scale-110 transition-transform shrink-0"
           aria-label={item.is_packed ? 'Décocher' : 'Cocher comme emballé'}
         >
           {item.is_packed ? (
@@ -832,14 +835,21 @@ function TripKitItemRow({ item, onTogglePacked, onDeleteItem }: ItemRowProps) {
         </button>
 
         <div className="min-w-0">
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2 flex-wrap">
             <span
               className={`text-sm font-medium truncate ${
-                item.is_packed ? 'line-through text-[var(--lkv-text-muted)]' : 'text-[var(--lkv-text-primary)]'
+                item.is_packed
+                  ? 'line-through decoration-[var(--lkv-text-muted)]/60 text-[var(--lkv-text-secondary)]'
+                  : 'text-[var(--lkv-text-primary)]'
               }`}
             >
-              {item.item_name}
+              {displayName}
             </span>
+            {item.is_packed && (
+              <span className="text-[10px] font-semibold px-1.5 py-0.5 rounded-full bg-[var(--lkv-success)]/10 text-[var(--lkv-success)] border border-[var(--lkv-success)]/20 shrink-0">
+                emballé
+              </span>
+            )}
             {item.quantity > 1 && (
               <span className="text-[10px] font-bold px-1.5 py-0.2 rounded glass-sub-card border border-white/60 text-[var(--lkv-text-secondary)]">
                 ×{item.quantity}

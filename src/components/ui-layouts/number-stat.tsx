@@ -39,7 +39,7 @@ export function NumberStat({
       }}
       prefix={prefix}
       suffix={suffix}
-      className={cn('font-mono tabular-nums', className)}
+      className={cn('font-sans tabular-nums', className)}
       aria-label={ariaLabel}
     />
   );

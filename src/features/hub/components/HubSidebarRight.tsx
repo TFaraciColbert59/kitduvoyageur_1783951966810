@@ -125,7 +125,7 @@ export function HubSidebarRight({
               {real ? (
                 <HubWidgetBody id={w.id} adventure={adventure} data={data} />
               ) : (
-                <span className="text-[10px] font-mono uppercase tracking-widest text-[var(--lkv-text-secondary)] whitespace-nowrap">
+                <span className="text-[10px] font-medium uppercase tracking-[0.14em] text-[var(--lkv-text-secondary)] whitespace-nowrap">
                   {HUB_WIDGET_LABELS[w.id] ?? w.id}
                 </span>
               )}

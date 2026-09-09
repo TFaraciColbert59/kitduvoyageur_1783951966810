@@ -24,12 +24,12 @@ export function ReservationsBlock({
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2">
           <BedDouble size={16} className="text-[var(--lkv-text-secondary)]" aria-hidden="true" />
-          <p className="text-[10px] font-mono uppercase tracking-widest text-[var(--lkv-text-muted)]">
+          <p className="text-[10px] font-medium uppercase tracking-[0.14em] text-[var(--lkv-text-muted)]">
             Réservations
           </p>
         </div>
         {documentsCount > 0 ? (
-          <span className="text-[10px] font-mono text-[var(--lkv-text-muted)]">
+          <span className="text-[10px] font-semibold tabular-nums text-[var(--lkv-text-muted)]">
             {documentsCount} document(s)
           </span>
         ) : null}
@@ -38,7 +38,7 @@ export function ReservationsBlock({
         <ul className="mt-2.5 space-y-1.5">
           {stays.slice(0, 4).map((s) => (
             <li key={s.id} className="flex items-center gap-2 text-sm">
-              <span className="text-[10px] font-mono text-[var(--lkv-text-muted)] shrink-0">J{s.day_number}</span>
+              <span className="text-[10px] font-bold tabular-nums text-[var(--lkv-text-muted)] shrink-0">J{s.day_number}</span>
               <span className="flex-1 truncate text-[var(--lkv-text-primary)]">{s.accommodation_name}</span>
               {s.location_name ? (
                 <span className="text-[10px] text-[var(--lkv-text-muted)] truncate max-w-[100px]">{s.location_name}</span>

@@ -124,7 +124,6 @@ const always = () => true;
 
 /** Widgets de sidebar réservés au profil Voyage. */
 const TRAVEL_ONLY_SIDEBAR: ReadonlySet<HubWidgetId> = new Set([
-  'budget-burn',
   'trip-context',
   'country-card',
   'docs-expiry',
@@ -132,13 +131,10 @@ const TRAVEL_ONLY_SIDEBAR: ReadonlySet<HubWidgetId> = new Set([
 
 const SIDEBAR_LABELS: Record<string, string> = {
   countdown: 'Compte à rebours',
-  'primary-action': 'Action',
   alerts: 'Alertes',
   'next-step': 'Prochaine étape',
   'safety-next': 'Sécurité',
-  'kit-balance': 'Équipement',
-  'budget-burn': 'Budget',
-  'group-presence': 'Équipage',
+  'steps-timeline': 'Déroulé du jour',
   'trip-context': 'Contexte',
   'country-card': 'Pays',
   'docs-expiry': 'Documents',
@@ -156,9 +152,8 @@ const SIDEBAR_LABELS: Record<string, string> = {
 const SIDEBAR_REQUIRED: Partial<Record<HubWidgetId, DataKey[]>> = {
   countdown: ['dates'],
   'next-step': ['trip.steps'],
+  'steps-timeline': ['trip.steps'],
   'safety-next': ['trip.safety'],
-  'kit-balance': ['trip.items'],
-  'budget-burn': ['budget'],
   'country-card': ['country'],
   'docs-expiry': ['trip.documents'],
 };

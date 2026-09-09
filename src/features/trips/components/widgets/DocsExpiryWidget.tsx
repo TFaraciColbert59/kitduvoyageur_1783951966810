@@ -1,7 +1,7 @@
 'use client';
 
 import React from 'react';
-import { GlassCard } from '@/components/ui/GlassCard';
+import { FileText } from 'lucide-react';
 import type { TripFull } from '../../types/trip.types';
 
 export interface DocsExpiryWidgetProps {
@@ -23,19 +23,22 @@ export function DocsExpiryWidget({ trip }: DocsExpiryWidgetProps) {
   if (expiring.length === 0) return null;
 
   return (
-    <GlassCard tone="neutral" className="p-3.5 space-y-1.5 rounded-[var(--lkv-radius-card)] border border-white/60">
-      <span className="text-[9.5px] font-mono font-bold uppercase tracking-widest text-[var(--lkv-text-secondary)] flex items-center gap-1.5">
-        <span aria-hidden="true">🗂️</span> Documents à renouveler
-      </span>
-      {expiring.map((d) => (
-        <div key={d.id} className="flex items-center justify-between gap-2 text-xs text-[var(--lkv-text-primary)]">
-          <span className="truncate">{d.title}</span>
-          <span className="shrink-0 text-[10px] font-mono text-[var(--lkv-warning-dark)]">
-            exp. {d.expires_at ? new Date(d.expires_at).toLocaleDateString('fr-FR') : ''}
-          </span>
-        </div>
-      ))}
-    </GlassCard>
+    <div className="glass p-3.5 space-y-2.5 rounded-2xl border border-white/70 shadow-xs font-sans">
+      <div className="flex items-center gap-1.5">
+        <FileText size={13} aria-hidden="true" />
+        <h3 className="font-display font-bold text-xs text-[var(--lkv-primary)]">Documents à renouveler</h3>
+      </div>
+      <div className="space-y-1.5">
+        {expiring.map((d) => (
+          <div key={d.id} className="flex items-center justify-between gap-2 text-xs text-[var(--lkv-text-primary)]">
+            <span className="truncate">{d.title}</span>
+            <span className="glass-pill pill-warn text-[9px] font-bold shrink-0 tabular-nums">
+              exp. {d.expires_at ? new Date(d.expires_at).toLocaleDateString('fr-FR') : ''}
+            </span>
+          </div>
+        ))}
+      </div>
+    </div>
   );
 }
 

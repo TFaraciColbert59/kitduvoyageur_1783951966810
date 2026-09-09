@@ -117,17 +117,17 @@ export function HubSectionPicker({
                         {section.label}
                       </span>
                       {coreSection ? (
-                        <GlassPill className="text-[9px] font-mono">Fondamental</GlassPill>
+                        <GlassPill className="text-[9px] font-medium">Fondamental</GlassPill>
                       ) : manual || serverEnabled.includes(section.id) ? (
-                        <GlassPill className="text-[9px] font-mono font-bold bg-[var(--lkv-secondary)]/20 text-[var(--lkv-text-primary)]">
+                        <GlassPill className="text-[9px] font-semibold bg-[var(--lkv-secondary)]/20 text-[var(--lkv-text-primary)]">
                           Activé manuellement
                         </GlassPill>
                       ) : active ? (
-                        <GlassPill className="text-[9px] font-mono text-[var(--lkv-text-secondary)]">
+                        <GlassPill className="text-[9px] font-medium text-[var(--lkv-text-secondary)]">
                           Recommandé
                         </GlassPill>
                       ) : (
-                        <GlassPill className="text-[9px] font-mono text-[var(--lkv-text-muted)]">
+                        <GlassPill className="text-[9px] font-medium text-[var(--lkv-text-muted)]">
                           Masqué
                         </GlassPill>
                       )}
@@ -165,7 +165,7 @@ export function HubSectionPicker({
                     )}
                   </button>
                 ) : (
-                  <span className="text-[10px] font-mono text-[var(--lkv-text-muted)] px-2 py-1">
+                  <span className="text-[10px] font-semibold text-[var(--lkv-text-muted)] px-2 py-1">
                     Requis
                   </span>
                 )}

@@ -47,6 +47,7 @@ export interface HubCounters {
   expenses?: number;
   documents?: number;
   unpacked?: number;
+  checklistPending?: number;
   pendingSafety?: number;
   notes?: number;
   members?: number;
@@ -86,7 +87,7 @@ export const hubSectionRegistry: readonly HubSectionDef[] = [
   { id: 'team', label: 'Équipage', segment: 'equipage', icon: Users, natures: ['sortie', 'collectif'], coreNatures: [], counter: (d) => num(d.collaborators ?? d.members) },
   { id: 'budget', label: 'Budget', segment: 'budget', icon: CreditCard, natures: ['sortie'], coreNatures: [], counter: (d) => num(d.expenses) },
   { id: 'docs', label: 'Documents', segment: 'documents', icon: FileText, natures: ['sortie'], coreNatures: [], counter: (d) => num(d.documents) },
-  { id: 'checklist', label: 'Checklist', segment: 'checklist', icon: CheckSquare, natures: ['sortie'], coreNatures: [], counter: (d) => num(d.unpacked) },
+  { id: 'checklist', label: 'Checklist', segment: 'checklist', icon: CheckSquare, natures: ['sortie'], coreNatures: [], counter: (d) => num(d.checklistPending) },
   { id: 'safety', label: 'Sécurité', segment: 'securite', icon: Shield, natures: ['sortie'], coreNatures: ['sortie'], counter: (d) => num(d.pendingSafety) },
   { id: 'journal', label: 'Journal', segment: 'journal', icon: BookOpen, natures: ['sortie'], coreNatures: [], counter: (d) => num(d.notes) },
   { id: 'export', label: 'Export', segment: 'export', icon: Share2, natures: ['sortie'], coreNatures: [], counter: () => null },

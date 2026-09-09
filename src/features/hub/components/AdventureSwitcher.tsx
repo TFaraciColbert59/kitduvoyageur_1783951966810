@@ -239,7 +239,7 @@ export function AdventureSwitcher({
           <span className="block text-sm font-semibold text-[var(--lkv-text-primary)] truncate">
             {entry.nature === 'possession' ? 'Mon matériel' : entry.title}
           </span>
-          <span className="block text-[10px] font-mono uppercase tracking-widest text-[var(--lkv-text-secondary)] truncate">
+          <span className="block text-[10px] font-medium uppercase tracking-[0.14em] text-[var(--lkv-text-secondary)] truncate">
             {entrySubtitle(entry)}
           </span>
         </span>
@@ -253,7 +253,7 @@ export function AdventureSwitcher({
   // (« appendChild … not of type Node ») quand la structure de la liste
   // changeait sous des divs non managés.
   const GROUP_HEADING_CLASS =
-    '[&_[cmdk-group-heading]]:px-3 [&_[cmdk-group-heading]]:pt-2 [&_[cmdk-group-heading]]:pb-1 [&_[cmdk-group-heading]]:text-[10px] [&_[cmdk-group-heading]]:font-mono [&_[cmdk-group-heading]]:uppercase [&_[cmdk-group-heading]]:tracking-widest [&_[cmdk-group-heading]]:text-[var(--lkv-text-muted)]';
+    '[&_[cmdk-group-heading]]:px-3 [&_[cmdk-group-heading]]:pt-2 [&_[cmdk-group-heading]]:pb-1 [&_[cmdk-group-heading]]:text-[10px] [&_[cmdk-group-heading]]:font-medium [&_[cmdk-group-heading]]:uppercase [&_[cmdk-group-heading]]:tracking-[0.14em] [&_[cmdk-group-heading]]:text-[var(--lkv-text-muted)]';
 
   const renderGroup = (title: string, entries: AdventureEntry[], emptyLabel: string) => (
     <Cmd.CommandGroup heading={`${title} · ${entries.length}`} className={GROUP_HEADING_CLASS}>
@@ -331,7 +331,7 @@ export function AdventureSwitcher({
                 <span className="block text-sm font-semibold text-[var(--lkv-text-primary)] truncate">
                   {suggestedEntry.nature === 'possession' ? 'Mon matériel' : suggestedEntry.title}
                 </span>
-                <span className="block text-[10px] font-mono uppercase tracking-widest text-[var(--lkv-text-secondary)] truncate">
+                <span className="block text-[10px] font-medium uppercase tracking-[0.14em] text-[var(--lkv-text-secondary)] truncate">
                   {suggestion.reason}
                 </span>
               </span>

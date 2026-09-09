@@ -31,13 +31,10 @@ export type TripSectionId =
 
 export type TripWidgetId =
   | 'countdown'
-  | 'primary-action'
   | 'alerts'
   | 'next-step'
   | 'safety-next'
-  | 'kit-balance'
-  | 'budget-burn'
-  | 'group-presence'
+  | 'steps-timeline'
   | 'trip-context'
   | 'country-card'
   | 'docs-expiry'
@@ -165,13 +162,10 @@ interface ProfileContext {
 
 const WIDGETS: WidgetDef[] = [
   { id: 'countdown', priority: 100, included: (c) => c.hasDates, motive: 'dates définies' },
-  { id: 'primary-action', priority: 95, included: () => true, motive: 'toujours' },
   { id: 'alerts', priority: 90, included: () => true, motive: 'toujours' },
   { id: 'next-step', priority: 85, included: (c) => c.stepsCount > 0, motive: 'étapes présentes' },
   { id: 'safety-next', priority: 84, included: (c) => c.autonomy !== 'serviced', motive: 'autonomie ≠ serviced' },
-  { id: 'kit-balance', priority: 80, included: (c) => c.itemsCount > 0, motive: 'objets présents' },
-  { id: 'budget-burn', priority: 75, included: (c) => c.hasBudget, motive: 'budget défini' },
-  { id: 'group-presence', priority: 70, included: (c) => c.party !== 'solo', motive: 'équipage présent' },
+  { id: 'steps-timeline', priority: 62, included: (c) => c.stepsCount > 0, motive: 'étapes présentes' },
   { id: 'trip-context', priority: 65, included: (c) => c.scale !== 'day' && c.activity !== 'cultural', motive: 'échelle ≠ day et activité ≠ cultural' },
   { id: 'country-card', priority: 60, included: (c) => c.hasCountry, motive: 'code pays défini' },
   { id: 'docs-expiry', priority: 58, included: (c) => c.docsCount > 0, motive: 'documents présents' },

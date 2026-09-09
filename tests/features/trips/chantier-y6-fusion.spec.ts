@@ -80,8 +80,7 @@ describe('Chantier Y6 — Fusion des Modules', () => {
       });
 
       expect(rendered).not.toBeNull();
-      expect(rendered?.props.tone).toBe('neutral');
-      expect(rendered?.props.className).toContain('rounded-[var(--lkv-radius-card)]');
+      expect(rendered?.props.className).toContain('rounded-2xl');
     });
 
     it('retourne null si aucun code pays n’est fourni', () => {

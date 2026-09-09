@@ -44,7 +44,7 @@ export function TripMetricsBlock({ trip, stats, slug }: { trip: TripFull; stats:
             <span>Distance</span>
           </div>
           <div className="text-xl sm:text-2xl font-bold text-[var(--lkv-text-primary)]">{dist.totalKm} km</div>
-          <div className="text-xs text-[var(--lkv-text-secondary)] mt-0.5 font-mono">
+          <div className="text-xs text-[var(--lkv-text-secondary)] mt-0.5 tabular-nums">
             +{dist.dPlus}m / -{dist.dMinus}m D±
           </div>
         </a>

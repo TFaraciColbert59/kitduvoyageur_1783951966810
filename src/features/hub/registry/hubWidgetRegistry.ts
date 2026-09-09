@@ -56,13 +56,10 @@ export const HUB_REAL_WIDGET_IDS: ReadonlySet<HubWidgetId> = new Set([
 /** Libellés FR des widgets (bande mobile & relevés) — source unique. */
 export const HUB_WIDGET_LABELS: Readonly<Record<string, string>> = {
   countdown: 'Compte à rebours',
-  'primary-action': 'Action',
   alerts: 'Alertes',
   'next-step': 'Prochaine étape',
   'safety-next': 'Sécurité',
-  'kit-balance': 'Équipement',
-  'budget-burn': 'Budget',
-  'group-presence': 'Équipage',
+  'steps-timeline': 'Déroulé du jour',
   'trip-context': 'Contexte',
   'country-card': 'Pays',
   'docs-expiry': 'Documents',
@@ -99,18 +96,16 @@ export function hubEstimatedHeight(ids: readonly HubWidgetId[]): number {
  * Fichier allowlisté R14 (littéraux de segments/ids hub autorisés ici).
  */
 export const SECTION_WIDGET_MAP: Partial<Record<string, readonly HubWidgetId[]>> = {
-  itinerary: ['next-step', 'countdown', 'trip-context'],
-  gear: ['kit-balance', 'primary-action', 'offline-toggle'],
-  budget: ['budget-burn', 'primary-action'],
+  itinerary: ['next-step', 'countdown', 'steps-timeline'],
+  gear: ['offline-toggle'],
   docs: ['docs-expiry', 'trip-context'],
-  checklist: ['primary-action', 'offline-toggle'],
+  checklist: ['offline-toggle'],
   safety: ['safety-next', 'alerts', 'offline-toggle'],
-  journal: ['countdown', 'group-presence'],
+  journal: ['countdown'],
   export: ['trip-context', 'country-card'],
   inventaire: ['stock-apercu', 'alertes-materiel'],
   kit: ['stock-apercu'],
-  preparation: ['primary-action'],
-  depart: ['prochain-depart', 'primary-action'],
+  depart: ['prochain-depart'],
   disponibilite: ['dispo-apercu'],
   alertes: ['alertes-materiel'],
   oublis: ['stock-apercu'],

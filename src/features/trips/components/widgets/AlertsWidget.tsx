@@ -1,7 +1,7 @@
 'use client';
 
 import React from 'react';
-import { GlassCard } from '@/components/ui/GlassCard';
+import { TriangleAlert } from 'lucide-react';
 import type { TripFull } from '../../types/trip.types';
 
 export interface AlertsWidgetProps {
@@ -24,20 +24,25 @@ export function AlertsWidget({ trip }: AlertsWidgetProps) {
   if (expiring.length === 0) return null;
 
   return (
-    <GlassCard
-      tone="warn"
+    <div
       role="status"
       aria-live="polite"
-      className="p-3.5 space-y-1.5 rounded-[var(--lkv-radius-card)] border border-[var(--lkv-warning)]/30"
+      className="glass p-3.5 space-y-2.5 rounded-2xl border border-[var(--lkv-warning)]/40 shadow-xs font-sans"
     >
-      <span className="text-[9.5px] font-mono font-bold uppercase tracking-widest text-[var(--lkv-warning-dark)] flex items-center gap-1.5">
-        <span aria-hidden="true">⚠️</span> Alertes
-      </span>
+      <div className="flex items-center justify-between">
+        <div className="flex items-center gap-1.5">
+          <TriangleAlert size={13} className="text-[var(--lkv-warning-dark)]" aria-hidden="true" />
+          <h3 className="font-display font-bold text-xs text-[var(--lkv-warning-dark)]">Alertes</h3>
+        </div>
+        <span className="glass-pill pill-warn text-[9px] font-bold tabular-nums">
+          {expiring.length}
+        </span>
+      </div>
       <p className="text-xs text-[var(--lkv-text-primary)]">
         {expiring.length} document{expiring.length > 1 ? 's' : ''} expiré{expiring.length > 1 ? 's' : ''}:{' '}
         {expiring.map((d) => d.title).join(', ')}
       </p>
-    </GlassCard>
+    </div>
   );
 }
 

@@ -553,6 +553,7 @@ export function buildHubCounts(data: HubAdventureData): HubCounters {
     expenses: trip?.expenses?.length ?? 0,
     documents: trip?.documents?.length ?? 0,
     unpacked: trip?.items?.filter((i) => !i.is_packed).length ?? 0,
+    checklistPending: data.checklist?.filter((i) => !i.done).length ?? 0,
     pendingSafety: trip?.safety_checkpoints?.filter((c) => c.status === 'pending').length ?? 0,
     notes: trip?.notes?.length ?? 0,
     pois: trip?.pois?.length ?? 0,

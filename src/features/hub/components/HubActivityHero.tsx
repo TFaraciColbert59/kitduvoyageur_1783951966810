@@ -98,12 +98,12 @@ export function HubActivityHero({
         <div className="flex items-center justify-between gap-2 flex-wrap">
           <div className="flex items-center gap-1.5 flex-wrap">
             {badgeLabel && (
-              <span className="glass-pill text-[9px] font-mono font-bold uppercase tracking-widest text-white">
+              <span className="glass-pill text-[10px] font-semibold uppercase tracking-[0.14em] text-white">
                 {badgeLabel}
               </span>
             )}
             {phaseLabel && (
-              <span className="rounded-full bg-white/20 backdrop-blur-sm border border-white/30 px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-wider">
+              <span className="rounded-full bg-white/20 backdrop-blur-sm border border-white/30 px-2.5 py-0.5 text-[10px] font-semibold uppercase tracking-[0.14em]">
                 {phaseLabel}
               </span>
             )}
@@ -113,7 +113,7 @@ export function HubActivityHero({
               className="rounded-2xl bg-white/15 backdrop-blur-sm border border-white/25 px-3 py-1.5 text-center"
               aria-label={daysUntil >= 0 ? `Départ dans ${daysUntil} jours` : 'Activité en cours ou passée'}
             >
-              <span className="block text-lg font-extrabold font-mono leading-none">
+              <span className="block text-lg font-extrabold tabular-nums leading-none">
                 {daysUntil >= 0 ? `J-${daysUntil}` : 'En cours'}
               </span>
             </span>

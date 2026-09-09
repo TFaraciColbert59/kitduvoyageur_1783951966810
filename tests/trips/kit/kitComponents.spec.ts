@@ -147,8 +147,9 @@ describe('TripKitView Component (Apple HIG & Core Business Monetization)', () =>
       React.createElement(TripKitView, { trip: dummyTrip, analysis: dummyAnalysis })
     );
 
-    expect(html).toContain('Check-list &amp; Inventaire de l’Expédition');
+    expect(html).toContain('Sac &amp; inventaire du voyage');
     expect(html).toContain('Sac de couchage -10°C');
+    expect(html).toContain('emballé');
     expect(html).toContain('Sommeil');
     expect(html).toContain('950 g');
   });

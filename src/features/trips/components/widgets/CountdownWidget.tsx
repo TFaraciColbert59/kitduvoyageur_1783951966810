@@ -2,7 +2,6 @@
 
 import React, { useEffect, useState } from 'react';
 import { CalendarClock } from 'lucide-react';
-import { GlassCard } from '@/components/ui/GlassCard';
 
 export interface CountdownWidgetProps {
   startDate?: string | null;
@@ -42,18 +41,20 @@ export function CountdownWidget({ startDate, endDate, status, totalDays }: Count
   }, [startDate, status, totalDays]);
 
   return (
-    <GlassCard tone="sage" className="p-3.5 space-y-1.5 rounded-[var(--lkv-radius-card)] border border-white/60">
-      <span className="text-[9.5px] font-mono font-bold uppercase tracking-widest text-[var(--lkv-text-secondary)] flex items-center gap-1.5">
-        <CalendarClock size={12} />
-        Échéance
-      </span>
-      <div className="text-2xl font-extrabold text-[var(--lkv-text-primary)] font-mono" aria-live="polite">
-        {label ? label.label : '—'}
+    <div className="glass p-3.5 space-y-2.5 rounded-2xl border border-white/70 shadow-xs font-sans">
+      <div className="flex items-center justify-between">
+        <h3 className="font-display font-bold text-xs text-[var(--lkv-primary)] flex items-center gap-1.5">
+          <CalendarClock size={13} aria-hidden="true" />
+          Compte à rebours
+        </h3>
+        <span className="glass-pill text-[9.5px] font-bold text-[var(--lkv-text-primary)]" aria-live="polite">
+          {label ? label.label : '—'}
+        </span>
       </div>
-      <div className="text-[11px] text-[var(--lkv-text-secondary)]">
+      <div className="text-sm font-bold text-[var(--lkv-text-primary)] tabular-nums">
         {label ? label.sub : 'Dates à définir'}
       </div>
-    </GlassCard>
+    </div>
   );
 }
 

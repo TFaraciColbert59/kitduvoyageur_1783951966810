@@ -2,7 +2,6 @@
 
 import React, { useState, useTransition } from 'react';
 import { WifiOff, Trash2, Check } from 'lucide-react';
-import { GlassCard } from '@/components/ui/GlassCard';
 import { useHapticFeedback } from '@/hooks/useHapticFeedback';
 import { saveTripOffline, isTripAvailableOffline, removeOfflineTrip } from '../../offline/tripOfflineStorage';
 import type { TripFull } from '../../types/trip.types';
@@ -41,11 +40,19 @@ export function OfflineToggleWidget({ trip }: OfflineToggleWidgetProps) {
   };
 
   return (
-    <GlassCard tone="neutral" className="p-3.5 space-y-2 rounded-[var(--lkv-radius-card)] border border-white/60">
-      <span className="text-[9.5px] font-mono font-bold uppercase tracking-widest text-[var(--lkv-text-secondary)] flex items-center gap-1.5">
-        <WifiOff size={12} />
-        Hors-ligne
-      </span>
+    <div className="glass p-3.5 space-y-2.5 rounded-2xl border border-white/70 shadow-xs font-sans">
+      <div className="flex items-center justify-between">
+        <div className="flex items-center gap-1.5">
+          <WifiOff size={13} aria-hidden="true" />
+          <h3 className="font-display font-bold text-xs text-[var(--lkv-primary)]">Hors-ligne</h3>
+        </div>
+        {available && (
+          <span className="glass-pill text-[9px] font-bold text-[var(--lkv-success)] flex items-center gap-1">
+            <Check size={10} aria-hidden="true" />
+            Disponible
+          </span>
+        )}
+      </div>
       <button
         type="button"
         onClick={toggle}
@@ -68,7 +75,7 @@ export function OfflineToggleWidget({ trip }: OfflineToggleWidgetProps) {
           <span>Retirer du cache local</span>
         </button>
       )}
-    </GlassCard>
+    </div>
   );
 }
 

@@ -57,7 +57,7 @@ export async function HubDisponibiliteSection() {
         <AvailabilityGauge availableCount={Math.max(0, available)} total={inventory.length} />
         <div>
           <h2 id="hub-gauge-title" className="sr-only">Disponibilité</h2>
-          <p className="text-[10px] font-mono uppercase tracking-widest text-[var(--lkv-text-muted)]">Objets disponibles</p>
+          <p className="text-[10px] font-medium uppercase tracking-[0.14em] text-[var(--lkv-text-muted)]">Objets disponibles</p>
           <p className="text-sm text-[color:var(--label-secondary)]">{active.length} en prêt</p>
         </div>
       </GlassCard>

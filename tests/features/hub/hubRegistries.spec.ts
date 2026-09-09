@@ -104,7 +104,7 @@ describe('H1 — hubWidgetRegistry : budgets de hauteur', () => {
   it('WID-3: widgets sortie importés du registre voyage (mêmes ids, mêmes priorités)', () => {
     const ids = hubWidgetsForNature('sortie');
     expect(ids).toContain('countdown');
-    expect(ids).toContain('primary-action');
+    expect(ids).toContain('steps-timeline');
     expect(ids[0]).toBe('countdown');
   });
 

@@ -17,7 +17,6 @@ import type { AdventureProfile, HubSectionId, HubWidgetId } from './hubProfileEn
 
 /** Widgets de sidebar sans pertinence pour une randonnée. */
 const HIKING_MASKED_WIDGETS: ReadonlySet<HubWidgetId> = new Set([
-  'budget-burn',
   'country-card',
   'docs-expiry',
   'trip-context',
@@ -57,7 +56,7 @@ export function applyActivityProfile(
 ): AdventureProfile {
   if (cancelled) return { ...base, activityType };
 
-  // Widgets masqués pour l'activité (budget/pays/documents pertinents en voyage).
+  // Widgets masqués pour l'activité (pays/documents/contexte pertinents en voyage).
   const widgets: HubWidgetId[] =
     activityType === 'hiking'
       ? base.widgets.filter((w) => !HIKING_MASKED_WIDGETS.has(w))

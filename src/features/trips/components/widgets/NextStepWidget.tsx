@@ -1,7 +1,7 @@
 ﻿'use client';
 
 import React from 'react';
-import { GlassCard } from '@/components/ui/GlassCard';
+import { MapPin } from 'lucide-react';
 import type { TripFull } from '../../types/trip.types';
 
 export interface NextStepWidgetProps {
@@ -18,17 +18,24 @@ export function NextStepWidget({ trip }: NextStepWidgetProps) {
   if (!next) return null;
 
   return (
-    <GlassCard tone="sage" className="p-3.5 space-y-1.5 rounded-[var(--lkv-radius-card)] border border-white/60">
-      <span className="text-[9.5px] font-mono font-bold uppercase tracking-widest text-[var(--lkv-text-secondary)] flex items-center gap-1.5">
-        <span aria-hidden="true">📍</span> Prochaine étape
-      </span>
-      <div className="text-sm font-bold text-[var(--lkv-text-primary)] leading-snug">{next.title}</div>
-      <div className="text-[11px] text-[var(--lkv-text-secondary)]">
-        Jour {next.day_number}
-        {next.transport_mode ? ` · ${next.transport_mode.replace('_', ' ')}` : ''}
-        {next.distance_km ? ` · ${String(next.distance_km).replace('.', ',')} km` : ''}
+    <div className="glass p-3.5 space-y-2.5 rounded-2xl border border-white/70 shadow-xs font-sans">
+      <div className="flex items-center justify-between">
+        <div className="flex items-center gap-1.5">
+          <MapPin size={13} aria-hidden="true" />
+          <h3 className="font-display font-bold text-xs text-[var(--lkv-primary)]">Prochaine étape</h3>
+        </div>
+        <span className="glass-pill text-[9px] font-bold text-[var(--lkv-text-primary)] tabular-nums">
+          J{next.day_number}
+        </span>
       </div>
-    </GlassCard>
+      <div className="text-sm font-bold text-[var(--lkv-text-primary)] leading-snug">{next.title}</div>
+      <div className="text-[11px] text-[var(--lkv-text-secondary)] tabular-nums">
+        {next.transport_mode ? next.transport_mode.replace('_', ' ') : ''}
+        {next.distance_km
+          ? `${next.transport_mode ? ' · ' : ''}${String(next.distance_km).replace('.', ',')} km`
+          : ''}
+      </div>
+    </div>
   );
 }
 

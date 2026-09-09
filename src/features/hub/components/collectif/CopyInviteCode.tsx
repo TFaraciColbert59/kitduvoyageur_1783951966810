@@ -24,11 +24,11 @@ export function CopyInviteCode({ code }: { code: string }) {
 
   return (
     <section className="glass p-4 rounded-[var(--lkv-radius-card)]" aria-label="Code d'invitation">
-      <p className="text-[10px] font-mono uppercase tracking-widest text-[var(--lkv-text-muted)]">
+      <p className="text-[10px] font-medium uppercase tracking-[0.14em] text-[var(--lkv-text-muted)]">
         Code d&apos;invitation
       </p>
       <div className="flex items-center gap-3 mt-2">
-        <p className="font-mono font-bold text-[var(--lkv-text-primary)] text-sm tracking-widest flex-1 min-w-0 truncate">
+        <p className="font-semibold tabular-nums text-[var(--lkv-text-primary)] text-sm tracking-widest flex-1 min-w-0 truncate">
           {code}
         </p>
         <button

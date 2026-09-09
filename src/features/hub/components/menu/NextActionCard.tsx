@@ -115,7 +115,7 @@ export function NextActionCard({ actions, checklist }: NextActionCardProps) {
         </span>
         <span className="min-w-0 flex-1">
           <span
-            className={`block text-[10px] font-mono font-bold uppercase tracking-widest ${
+            className={`block text-[10px] font-medium uppercase tracking-[0.14em] ${
               isAllClear ? 'text-[var(--lkv-text-muted)]' : 'text-sage-300/80'
             }`}
           >

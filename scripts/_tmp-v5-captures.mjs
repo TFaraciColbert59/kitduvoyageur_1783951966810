@@ -49,16 +49,30 @@ async function capture(name, { path, viewport, checkScroll = false, cookie = sor
         const main = document.querySelector('main#main-content') ?? document.querySelector('main');
         const mainR = main ? main.getBoundingClientRect() : null;
         let maxBottom = 0;
+        let clipped = false;
+        const inScrollable = (el) => {
+          let node = el.parentElement;
+          while (node) {
+            const cs = getComputedStyle(node);
+            if ((cs.overflowY === 'auto' || cs.overflowY === 'scroll') && node.scrollHeight > node.clientHeight) return true;
+            node = node.parentElement;
+          }
+          return false;
+        };
         if (main) {
-          for (const c of main.querySelectorAll('a')) maxBottom = Math.max(maxBottom, c.getBoundingClientRect().bottom);
+          for (const c of main.querySelectorAll('a')) {
+            const r = c.getBoundingClientRect();
+            maxBottom = Math.max(maxBottom, r.bottom);
+            if (r.bottom > (mainR ? mainR.bottom : window.innerHeight) + 1 && !inScrollable(c)) clipped = true;
+          }
         }
         const bodyText = document.body.innerText;
         return {
           overflow: main ? main.scrollHeight > main.clientHeight : null,
           lastCardBottom: Math.round(maxBottom),
           mainBottom: mainR ? Math.round(mainR.bottom) : null,
-          clipped: main ? maxBottom > mainR.bottom + 1 : null,
-          hasActivites: /ACTIVITÉS/i.test(bodyText),
+          clipped,
+          hasActivites: /ACTIVITÉS|Activités/i.test(bodyText),
           hasEsriTiles: document.querySelectorAll('img[src*="arcgisonline"]').length,
           meteoIndisponible: bodyText.includes('Météo indisponible'),
         };

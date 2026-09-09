@@ -19,14 +19,11 @@ export interface TripWidgetDef {
 
 export const tripWidgetRegistry: readonly TripWidgetDef[] = [
   { id: 'countdown', priority: 100, estimatedHeight: 90, phases: ['prepare', 'live'] },
-  { id: 'primary-action', priority: 95, estimatedHeight: 72, phases: ['prepare', 'live', 'recount'] },
   { id: 'alerts', priority: 90, estimatedHeight: 64, phases: ['prepare', 'live', 'recount'] },
   { id: 'next-step', priority: 85, estimatedHeight: 120, phases: ['live'] },
   { id: 'safety-next', priority: 84, estimatedHeight: 110, phases: ['prepare', 'live'] },
-  { id: 'kit-balance', priority: 80, estimatedHeight: 140, phases: ['prepare'] },
-  { id: 'budget-burn', priority: 75, estimatedHeight: 120, phases: ['prepare', 'recount'] },
-  { id: 'group-presence', priority: 70, estimatedHeight: 110, phases: ['prepare', 'live'] },
   { id: 'trip-context', priority: 65, estimatedHeight: 130, phases: ['prepare'] },
+  { id: 'steps-timeline', priority: 62, estimatedHeight: 600, phases: ['prepare', 'live', 'recount'] },
   { id: 'country-card', priority: 60, estimatedHeight: 92, phases: ['prepare'] },
   { id: 'docs-expiry', priority: 58, estimatedHeight: 92, phases: ['prepare'] },
   { id: 'offline-toggle', priority: 20, estimatedHeight: 72, phases: ['prepare', 'live', 'recount'] },

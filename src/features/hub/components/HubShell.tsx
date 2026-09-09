@@ -15,6 +15,8 @@ import {
 } from '../registry/hubSectionRegistry';
 import { mergeEnabledSections, type AdventureProfile, type HubSectionId } from '../engine/hubProfileEngine';
 import type { TripFull, TripStats } from '@/features/trips/types/trip.types';
+import type { TripSectionId } from '@/features/trips/engine/tripProfileEngine';
+import { PrimaryActionWidget } from '@/features/trips/components/widgets/PrimaryActionWidget';
 import { useHubStore } from '../stores/useHubStore';
 import { useHubLiveSensors } from '../hooks/useHubLiveSensors';
 import { useAndroidHubBackNav } from '../hooks/useAndroidHubBackNav';
@@ -130,11 +132,33 @@ export function HubShell({
   useAndroidHubBackNav(activeSection, switcherOpen);
 
   const networkStatus = <HubNetworkStatus />;
+  // CTA planificateur en tête de sidebar gauche — nature sortie uniquement.
+  const TRIP_SECTION_IDS = new Set<TripSectionId>([
+    'overview',
+    'itinerary',
+    'gear',
+    'team',
+    'budget',
+    'docs',
+    'checklist',
+    'safety',
+    'journal',
+    'export',
+  ]);
+  const tripSection: TripSectionId =
+    activeSection && TRIP_SECTION_IDS.has(activeSection as TripSectionId)
+      ? (activeSection as TripSectionId)
+      : 'overview';
+  const primaryAction =
+    adventure.nature === 'sortie' && trip ? (
+      <PrimaryActionWidget trip={trip} activeSection={tripSection} />
+    ) : null;
   const sidebarLeft = (
     <HubSidebarLeft
       statusSlot={networkStatus}
       trips={trips}
       activeSlug={adventure.nature === 'sortie' ? adventure.slug ?? null : null}
+      primaryAction={primaryAction}
     />
   );
   const sidebarRight = (

@@ -1,7 +1,7 @@
 ﻿'use client';
 
 import React from 'react';
-import { GlassCard } from '@/components/ui/GlassCard';
+import { LifeBuoy } from 'lucide-react';
 import { useHapticFeedback } from '@/hooks/useHapticFeedback';
 import type { TripFull } from '../../types/trip.types';
 
@@ -29,12 +29,13 @@ export function SafetyNextWidget({ trip }: SafetyNextWidgetProps) {
   };
 
   return (
-    <GlassCard tone="sage" className="p-3.5 space-y-1.5 rounded-[var(--lkv-radius-card)] border border-white/60">
-      <span className="text-[9.5px] font-mono font-bold uppercase tracking-widest text-[var(--lkv-text-secondary)] flex items-center gap-1.5">
-        <span aria-hidden="true">🛟</span> Prochain point de contrôle
-      </span>
+    <div className="glass p-3.5 space-y-2.5 rounded-2xl border border-white/70 shadow-xs font-sans">
+      <div className="flex items-center gap-1.5">
+        <LifeBuoy size={13} aria-hidden="true" />
+        <h3 className="font-display font-bold text-xs text-[var(--lkv-primary)]">Prochain point de contrôle</h3>
+      </div>
       <div className="text-sm font-bold text-[var(--lkv-text-primary)] leading-snug">{next.label}</div>
-      <div className="text-[11px] text-[var(--lkv-text-secondary)]">
+      <div className="text-[11px] text-[var(--lkv-text-secondary)] tabular-nums">
         {next.contact_name ? `${next.contact_name} · ` : ''}
         {next.scheduled_at ? new Date(next.scheduled_at).toLocaleString('fr-FR', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' }) : ''}
       </div>
@@ -42,13 +43,13 @@ export function SafetyNextWidget({ trip }: SafetyNextWidgetProps) {
         <button
           type="button"
           onClick={call}
-          className="inline-flex items-center gap-1.5 text-[10.5px] font-bold text-[var(--lkv-primary)] hover:underline min-h-[44px] cursor-pointer"
+          className="glass-pill min-h-[44px] px-4 text-[11px] font-bold text-[var(--lkv-primary)] hover:bg-white/70 transition-colors cursor-pointer flex items-center gap-1.5"
           aria-label={`Appeler ${next.contact_name || 'le contact'}`}
         >
-          <span aria-hidden="true">📞</span> Appeler le contact
+          <LifeBuoy size={12} aria-hidden="true" /> Appeler le contact
         </button>
       )}
-    </GlassCard>
+    </div>
   );
 }
 

@@ -91,11 +91,11 @@ export async function HubGroupeSection({ adventure }: { adventure: ActiveAdventu
     <div className="space-y-4">
       <section className="glass p-4 rounded-[var(--lkv-radius-card)]" aria-label="Membres">
         <div className="flex items-center justify-between">
-          <p className="text-[10px] font-mono uppercase tracking-widest text-[var(--lkv-text-muted)]">
+          <p className="text-[10px] font-medium uppercase tracking-[0.14em] text-[var(--lkv-text-muted)]">
             Membres · {activeMembers.length}
           </p>
           {pendingCount > 0 && (
-            <p className="text-[10px] font-mono text-[var(--lkv-text-secondary)]">
+            <p className="text-[10px] font-semibold tabular-nums text-[var(--lkv-text-secondary)]">
               {pendingCount} invitation(s) en attente
             </p>
           )}
@@ -109,7 +109,7 @@ export async function HubGroupeSection({ adventure }: { adventure: ActiveAdventu
               <span className="flex-1 min-w-0 truncate text-sm font-semibold text-[var(--lkv-text-primary)]">
                 {m.fullName ?? 'Compagnon'}
               </span>
-              <span className="text-[10px] font-mono uppercase tracking-wider text-[var(--lkv-text-muted)]">
+              <span className="text-[10px] font-medium uppercase tracking-[0.14em] text-[var(--lkv-text-muted)]">
                 {ROLE_LABELS[m.role] ?? m.role}
               </span>
             </li>
@@ -124,7 +124,7 @@ export async function HubGroupeSection({ adventure }: { adventure: ActiveAdventu
 
       {pendingMembers.length > 0 && (
         <section className="glass p-4 rounded-[var(--lkv-radius-card)]" aria-label="Invitations en attente">
-          <p className="text-[10px] font-mono uppercase tracking-widest text-[var(--lkv-text-muted)]">
+          <p className="text-[10px] font-medium uppercase tracking-[0.14em] text-[var(--lkv-text-muted)]">
             Invitations en attente · {pendingMembers.length}
           </p>
           <ul className="mt-3 space-y-2">
@@ -136,7 +136,7 @@ export async function HubGroupeSection({ adventure }: { adventure: ActiveAdventu
                 <span className="flex-1 min-w-0 truncate text-sm text-[var(--lkv-text-secondary)]">
                   {m.fullName ?? 'Invité'}
                 </span>
-                <span className="text-[10px] font-mono uppercase tracking-wider text-[var(--lkv-text-muted)]">
+                <span className="text-[10px] font-medium uppercase tracking-[0.14em] text-[var(--lkv-text-muted)]">
                   En attente
                 </span>
               </li>

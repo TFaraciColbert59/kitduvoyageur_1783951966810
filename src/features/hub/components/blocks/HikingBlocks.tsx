@@ -75,7 +75,7 @@ function Stat({ icon, label, value }: { icon: ReactNode; label: string; value: s
     <div className="rounded-lg bg-[var(--lkv-surface-raised)] p-2">
       <div className="flex items-center gap-1 text-[var(--lkv-text-muted)]">
         {icon}
-        <span className="text-[10px] font-mono uppercase tracking-wide">{label}</span>
+        <span className="text-[10px] font-medium uppercase tracking-[0.14em]">{label}</span>
       </div>
       <p className="text-xs font-bold text-[var(--lkv-text-primary)] mt-1">{value}</p>
     </div>
@@ -131,7 +131,7 @@ export function MeteoBlock({ hiking }: { hiking: HubHikingContext | null }) {
         <div className="grid grid-cols-5 gap-1 mt-3">
           {days.map((d) => (
             <div key={d.date} className="rounded-lg bg-[var(--lkv-surface-raised)] p-1.5 text-center">
-              <p className="text-[10px] font-mono text-[var(--lkv-text-muted)]">{d.day}</p>
+              <p className="text-[10px] font-medium tabular-nums text-[var(--lkv-text-muted)]">{d.day}</p>
               <p className="text-[12px] font-bold text-[var(--lkv-text-primary)]">{Math.round(d.tempMaxC)}°</p>
               <p className="text-[10.5px] text-[var(--lkv-text-secondary)]">{Math.round(d.tempMinC)}°</p>
               <p className="text-[10.5px] text-[var(--lkv-text-secondary)]">{d.precipPct}%</p>
@@ -157,11 +157,11 @@ export function PointsPassageBlock({
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2">
           <RouteIcon size={16} className="text-[var(--lkv-text-secondary)]" aria-hidden="true" />
-          <p className="text-[10px] font-mono uppercase tracking-widest text-[var(--lkv-text-muted)]">
+          <p className="text-[10px] font-medium uppercase tracking-[0.14em] text-[var(--lkv-text-muted)]">
             Points de passage
           </p>
         </div>
-        <span className="text-[10px] font-mono text-[var(--lkv-text-muted)]">{pois.length}</span>
+        <span className="text-[10px] font-semibold tabular-nums text-[var(--lkv-text-muted)]">{pois.length}</span>
       </div>
       <ul className="mt-2 space-y-1.5">
         {shown.map((p) => (

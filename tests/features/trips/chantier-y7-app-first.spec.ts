@@ -199,16 +199,16 @@ describe('Chantier Y7 — App-First, Cibles Tactiles, Haptique et Offline Dexie'
 
   // ── Y7.2 : CIBLES TACTILES ─────────────────────────────────────────────────
   describe('Y7.2 — Cibles Tactiles >= 44px (Apple HIG)', () => {
-    it('HubSidebarLeft (HubActivityNav) et HubMobileSectionsSheet garantissent des cibles tactiles >= 44px', () => {
-      // Hub V4 — la sidebar porte la liste des ACTIVITÉS (HubActivityNav).
-      const sidebarLeftPath = path.join(process.cwd(), 'src', 'features', 'hub', 'components', 'HubActivityNav.tsx');
+    it('HubSidebarLeft (HubSidebarActivities) et HubMobileSectionsSheet garantissent des cibles tactiles >= 44px', () => {
+      // Hub V6 — la sidebar porte la liste des ACTIVITÉS (HubSidebarActivities).
+      const sidebarLeftPath = path.join(process.cwd(), 'src', 'features', 'hub', 'components', 'HubSidebarActivities.tsx');
       const sheetPath = path.join(process.cwd(), 'src', 'features', 'hub', 'components', 'HubMobileSectionsSheet.tsx');
 
       const sidebarContent = fs.readFileSync(sidebarLeftPath, 'utf8');
       const sheetContent = fs.readFileSync(sheetPath, 'utf8');
 
       // Liens de sidebar et boutons de sheet
-      expect(sidebarContent).toContain('min-h-[44px]');
+      expect(sidebarContent).toContain('min-h-[64px]');
       expect(sheetContent).toContain('min-h-[44px]');
       expect(sheetContent).toContain('min-h-[48px]');
     });

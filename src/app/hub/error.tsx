@@ -15,7 +15,7 @@ export default function HubError({
   return (
     <div className="space-y-4" role="alert">
       <header>
-        <p className="text-[10px] font-mono uppercase tracking-widest text-[var(--lkv-text-muted)]">
+        <p className="text-[10px] font-medium uppercase tracking-[0.14em] text-[var(--lkv-text-muted)]">
           Hub indisponible
         </p>
         <h1 className="font-display font-bold text-2xl text-[var(--lkv-text-primary)] mt-1">

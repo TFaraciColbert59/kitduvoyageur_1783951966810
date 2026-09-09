@@ -179,7 +179,7 @@ export function CollectifMenu({ summary, linkedTripSlug }: CollectifMenuProps) {
             </span>
           </p>
           {summary.inviteCode && (
-            <p className="font-mono text-xs text-[var(--lkv-text-secondary)]">Code {summary.inviteCode}</p>
+            <p className="font-semibold tabular-nums text-xs text-[var(--lkv-text-secondary)]">Code {summary.inviteCode}</p>
           )}
           <div className="mt-2 h-2 w-full overflow-hidden rounded-full bg-black/5">
             <div className="h-full rounded-full bg-gradient-to-r from-[var(--lkv-secondary)] to-[var(--lkv-primary)]" style={{ width: `${summary.progression}%` }} />
@@ -276,7 +276,7 @@ export function CollectifMenu({ summary, linkedTripSlug }: CollectifMenuProps) {
             <span className="ml-2 text-xs font-semibold text-[var(--lkv-text-secondary)]">en attente</span>
           </p>
           {summary.inviteCode && (
-            <p className="font-mono text-xs text-[var(--lkv-text-secondary)]">Code {summary.inviteCode}</p>
+            <p className="font-semibold tabular-nums text-xs text-[var(--lkv-text-secondary)]">Code {summary.inviteCode}</p>
           )}
         </MenuCard>
       ),

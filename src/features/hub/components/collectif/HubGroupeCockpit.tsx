@@ -135,7 +135,7 @@ export function HubGroupeCockpit({ groupId, initialTab }: { groupId: string; ini
             className={`${cardClass} p-4 border border-white/70 shadow-sm flex items-center justify-between gap-4`}
           >
             <div className="min-w-0">
-              <span className="text-[10px] font-mono font-bold uppercase tracking-wider text-[var(--lkv-text-secondary)] block">
+              <span className="text-[10px] font-medium uppercase tracking-[0.14em] text-[var(--lkv-text-secondary)] block">
                 Expédition LKDV associée
               </span>
               <h4 className="text-sm font-bold text-[var(--lkv-text-primary)] truncate">{linkedTrip.title}</h4>

@@ -286,29 +286,24 @@ describe('Y1 — modulations par activité', () => {
 });
 
 describe('Y1 — widgets (conditions de profil)', () => {
-  it('day/solo minimal : countdown, primary-action, alerts, safety-next, kit-balance, offline-toggle, country-card', () => {
+  it('day/solo minimal : countdown, alerts, safety-next, offline-toggle, country-card', () => {
     const t = tripWithDuration(1);
     const p = deriveTripProfile(mkTrip({ ...t, estimated_budget: null, items: [{ id: 'i1' } as TripFull['items'][number]] }), NOW);
     expect(p.widgets).toEqual([
-      'countdown', 'primary-action', 'alerts', 'safety-next', 'kit-balance', 'country-card', 'offline-toggle',
+      'countdown', 'alerts', 'safety-next', 'country-card', 'offline-toggle',
     ]);
   });
   it('sans pays → country-card absent', () => {
     const p = deriveTripProfile(mkTrip({ destination_country_code: null }), NOW);
     expect(p.widgets).not.toContain('country-card');
   });
-  it('sans budget → budget-burn absent', () => {
-    const p = deriveTripProfile(mkTrip({ estimated_budget: null }), NOW);
-    expect(p.widgets).not.toContain('budget-burn');
-  });
-  it('budget à 0 → hasBudget false, budget-burn absent', () => {
+  it('budget à 0 → hasBudget false', () => {
     const p = deriveTripProfile(mkTrip({ estimated_budget: 0 }), NOW);
     expect(p.hasBudget).toBe(false);
-    expect(p.widgets).not.toContain('budget-burn');
   });
-  it('sans objets → kit-balance absent', () => {
+  it('sans étapes → steps-timeline absent', () => {
     const p = deriveTripProfile(mkTrip(), NOW);
-    expect(p.widgets).not.toContain('kit-balance');
+    expect(p.widgets).not.toContain('steps-timeline');
   });
   it('sans documents → docs-expiry absent', () => {
     const p = deriveTripProfile(mkTrip(), NOW);
@@ -320,24 +315,16 @@ describe('Y1 — widgets (conditions de profil)', () => {
     });
     expect(deriveTripProfile(trip, NOW).widgets).toContain('docs-expiry');
   });
-  it('avec étapes → next-step présent', () => {
+  it('avec étapes → next-step et steps-timeline présents', () => {
     const trip = mkTrip({ steps: [{ id: 's1' } as TripFull['steps'][number]] });
-    expect(deriveTripProfile(trip, NOW).widgets).toContain('next-step');
-  });
-  it('solo → group-presence absent ; group → présent', () => {
-    expect(deriveTripProfile(mkTrip(), NOW).widgets).not.toContain('group-presence');
-    const trip = mkTrip({
-      collaborators: [
-        { id: 'c1', trip_id: 't-1', user_id: 'u-2', role: 'editor', joined_at: '2026-01-01T00:00:00Z' },
-        { id: 'c2', trip_id: 't-1', user_id: 'u-3', role: 'viewer', joined_at: '2026-01-01T00:00:00Z' },
-      ],
-    } as Partial<TripFull>);
-    expect(deriveTripProfile(trip, NOW).widgets).toContain('group-presence');
+    const p = deriveTripProfile(trip, NOW);
+    expect(p.widgets).toContain('next-step');
+    expect(p.widgets).toContain('steps-timeline');
   });
   it('widgets triés par priorité décroissante', () => {
     const t = tripWithDuration(1);
     const p = deriveTripProfile(mkTrip({ ...t, estimated_budget: null, items: [{ id: 'i1' } as TripFull['items'][number]] }), NOW);
-    const priorities = ['countdown', 'primary-action', 'alerts', 'safety-next', 'kit-balance', 'country-card', 'offline-toggle'];
+    const priorities = ['countdown', 'alerts', 'safety-next', 'country-card', 'offline-toggle'];
     expect(p.widgets).toEqual(priorities);
   });
 });
@@ -357,7 +344,7 @@ describe('Y1 — cas limites divers', () => {
   });
   it('status cancelled → widgets réduits', () => {
     const p = deriveTripProfile(mkTrip({ status: 'cancelled' }), NOW);
-    expect(p.widgets).not.toContain('primary-action');
+    expect(p.widgets).not.toContain('countdown');
   });
   it('density compact si day, comfortable sinon', () => {
     expect(deriveTripProfile(tripWithDuration(1), NOW).density).toBe('compact');

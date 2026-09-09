@@ -106,9 +106,8 @@ describe('H-ACT — profils d\'activité distincts (même coquille)', () => {
     expect(pos.activityType ?? null).toBeNull();
   });
 
-  it('PRF-8: randonnée masque les widgets budget/pays/documents/contexte', () => {
+  it('PRF-8: randonnée masque les widgets pays/documents/contexte', () => {
     const p = deriveHubProfile(sortie(mkTrip()), NOW);
-    expect(p.widgets).not.toContain('budget-burn');
     expect(p.widgets).not.toContain('country-card');
     expect(p.widgets).not.toContain('trip-context');
     expect(p.widgets).not.toContain('docs-expiry');
@@ -116,12 +115,11 @@ describe('H-ACT — profils d\'activité distincts (même coquille)', () => {
     expect(p.widgets).toContain('safety-next');
   });
 
-  it('PRF-9: voyage conserve budget/pays/documents', () => {
+  it('PRF-9: voyage conserve pays/documents/contexte', () => {
     const p = deriveHubProfile(
       sortie(mkTrip({ primary_activity: 'roadtrip', collaborators: [{ id: 'c1' }] as TripFull['collaborators'] })),
       NOW,
     );
-    expect(p.widgets).toContain('budget-burn');
     expect(p.widgets).toContain('country-card');
     expect(p.widgets).toContain('trip-context');
   });

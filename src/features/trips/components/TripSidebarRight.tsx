@@ -3,28 +3,26 @@
 import React, { useState } from 'react';
 import { ChevronDown, ChevronUp } from 'lucide-react';
 import type { TripPhase } from '../engine/temporalPhaseEngine';
-import type { TripProfile, TripWidgetId, TripSectionId } from '../engine/tripProfileEngine';
+import type { TripProfile, TripWidgetId } from '../engine/tripProfileEngine';
 import { tripWidgetRegistry, widgetDef, estimatedHeight, WIDGET_COLUMN_MAX_HEIGHT, widgetsForPhase } from '../registry/tripWidgetRegistry';
 import type { TripFull, TripStats } from '../types/trip.types';
 import { CountdownWidget } from './widgets/CountdownWidget';
 import { OfflineToggleWidget } from './widgets/OfflineToggleWidget';
 import { CountryCardWidget } from './widgets/CountryCardWidget';
-import { PrimaryActionWidget } from './widgets/PrimaryActionWidget';
 import { AlertsWidget } from './widgets/AlertsWidget';
 import { NextStepWidget } from './widgets/NextStepWidget';
 import { SafetyNextWidget } from './widgets/SafetyNextWidget';
-import { KitBalanceWidget } from './widgets/KitBalanceWidget';
-import { BudgetBurnWidget } from './widgets/BudgetBurnWidget';
-import { GroupPresenceWidget } from './widgets/GroupPresenceWidget';
 import { TripContextWidget } from './widgets/TripContextWidget';
 import { DocsExpiryWidget } from './widgets/DocsExpiryWidget';
+import { StepsTimeline } from './widgets/StepsTimeline';
+import { getTripPhaseDetails } from '../engine/temporalPhaseEngine';
 
 export interface TripSidebarRightProps {
   trip: TripFull;
   profile: TripProfile;
   phase: TripPhase;
   activeSection: string;
-  /** Stats serveur (getTripStats) — source unique du budget, identique au menu. */
+  /** Stats serveur (getTripStats) — conservé pour la compatibilité d'appel du hub. */
   stats?: TripStats | null;
 }
 
@@ -38,6 +36,18 @@ function maxDPlus(trip: TripFull): number | undefined {
     .filter((v) => v > 0);
   if (gains.length === 0) return undefined;
   return Math.max(...gains);
+}
+
+/** Jour courant du déroulé : live → jour calendaire borné, prepare → 1, recount → dernier jour. */
+function currentDayIndex(trip: TripFull): number {
+  const sorted = [...(trip.steps || [])].sort(
+    (a, b) => a.day_number - b.day_number || a.order_index - b.order_index
+  );
+  const lastDay = sorted.length > 0 ? sorted[sorted.length - 1].day_number : 1;
+  const phase = getTripPhaseDetails(trip).phase;
+  if (phase === 'recount') return lastDay;
+  const liveDay = getTripPhaseDetails(trip).dayIndex ?? 1;
+  return Math.min(Math.max(1, liveDay), Math.max(1, lastDay));
 }
 
 /**
@@ -69,20 +79,14 @@ export function TripSidebarRight({ trip, profile, phase, activeSection, stats = 
             totalDays={trip.steps?.length ?? null}
           />
         );
-      case 'primary-action':
-        return <PrimaryActionWidget key={id} trip={trip} activeSection={activeSection as TripSectionId} />;
       case 'alerts':
         return <AlertsWidget key={id} trip={trip} />;
       case 'next-step':
         return <NextStepWidget key={id} trip={trip} />;
       case 'safety-next':
         return <SafetyNextWidget key={id} trip={trip} />;
-      case 'kit-balance':
-        return <KitBalanceWidget key={id} trip={trip} />;
-      case 'budget-burn':
-        return <BudgetBurnWidget key={id} trip={trip} stats={stats} />;
-      case 'group-presence':
-        return <GroupPresenceWidget key={id} trip={trip} />;
+      case 'steps-timeline':
+        return <StepsTimeline key={id} steps={trip.steps || []} dayIndex={currentDayIndex(trip)} phase={phase} />;
       case 'trip-context':
         return <TripContextWidget key={id} trip={trip} maxDPlusM={maxDPlus(trip)} />;
       case 'docs-expiry':

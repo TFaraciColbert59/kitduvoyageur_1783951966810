@@ -65,7 +65,7 @@ export async function HubVoyagesLiesSection({ adventure, crews }: HubVoyagesLies
             <span className="flex-1 min-w-0">
               <span className="block text-sm font-bold text-[var(--lkv-text-primary)] truncate">{t.title}</span>
               {t.start_date && (
-                <span className="block text-[11px] font-mono text-[var(--lkv-text-secondary)]">
+                <span className="block text-[11px] font-medium tabular-nums text-[var(--lkv-text-secondary)]">
                   {new Date(`${t.start_date}T00:00:00Z`).toLocaleDateString('fr-FR', { day: 'numeric', month: 'short', year: 'numeric' })}
                 </span>
               )}

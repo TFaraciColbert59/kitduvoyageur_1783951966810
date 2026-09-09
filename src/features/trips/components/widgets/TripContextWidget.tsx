@@ -1,7 +1,7 @@
 ﻿'use client';
 
 import React from 'react';
-import { GlassCard } from '@/components/ui/GlassCard';
+import { Mountain } from 'lucide-react';
 import type { TripFull } from '../../types/trip.types';
 
 export interface TripContextWidgetProps {
@@ -20,31 +20,32 @@ export function TripContextWidget({ trip, maxDPlusM }: TripContextWidgetProps) {
     : null;
 
   return (
-    <GlassCard tone="neutral" className="p-3.5 space-y-1.5 rounded-[var(--lkv-radius-card)] border border-white/60">
-      <span className="text-[9.5px] font-mono font-bold uppercase tracking-widest text-[var(--lkv-text-secondary)] flex items-center gap-1.5">
-        <span aria-hidden="true">⛰️</span> Contexte
-      </span>
+    <div className="glass p-3.5 space-y-2.5 rounded-2xl border border-white/70 shadow-xs font-sans">
+      <div className="flex items-center gap-1.5">
+        <Mountain size={13} aria-hidden="true" />
+        <h3 className="font-display font-bold text-xs text-[var(--lkv-primary)]">Contexte</h3>
+      </div>
       <div className="grid grid-cols-3 gap-2 text-center">
         {maxDPlusM != null && (
           <div>
-            <div className="text-base font-extrabold text-[var(--lkv-text-primary)] font-mono">{maxDPlusM.toLocaleString('fr-FR')} m</div>
-            <div className="text-[11px] uppercase tracking-widest text-[var(--lkv-text-muted)]">D+ MAX</div>
+            <div className="text-base font-extrabold text-[var(--lkv-text-primary)] tabular-nums">{maxDPlusM.toLocaleString('fr-FR')} m</div>
+            <div className="text-[10px] font-bold text-[var(--lkv-text-muted)]">D+ max</div>
           </div>
         )}
         {days != null && (
           <div>
-            <div className="text-base font-extrabold text-[var(--lkv-text-primary)] font-mono">{days} j</div>
-            <div className="text-[11px] uppercase tracking-widest text-[var(--lkv-text-muted)]">durée</div>
+            <div className="text-base font-extrabold text-[var(--lkv-text-primary)] tabular-nums">{days} j</div>
+            <div className="text-[10px] font-bold text-[var(--lkv-text-muted)]">durée</div>
           </div>
         )}
         {trip.difficulty && (
           <div>
             <div className="text-base font-extrabold text-[var(--lkv-text-primary)] capitalize">{trip.difficulty}</div>
-            <div className="text-[11px] uppercase tracking-widest text-[var(--lkv-text-muted)]">difficulté</div>
+            <div className="text-[10px] font-bold text-[var(--lkv-text-muted)]">difficulté</div>
           </div>
         )}
       </div>
-    </GlassCard>
+    </div>
   );
 }
 

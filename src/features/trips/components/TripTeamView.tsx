@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState, useTransition } from 'react';
+import Link from 'next/link';
 import { Users, UserPlus, Trash2, Mail, AlertCircle, CheckCircle2, X } from 'lucide-react';
 import { GlassCard } from '@/components/ui/GlassCard';
 import { GlassCapsuleBtn } from '@/components/ui/GlassCapsuleBtn';
@@ -129,17 +130,21 @@ export function TripTeamView({ trip }: TripTeamViewProps) {
                 className="p-4 rounded-[var(--lkv-radius-lg)] border border-white/60 flex flex-col justify-between gap-4 shadow-sm"
               >
                 <div className="flex items-start justify-between gap-3">
-                  <div className="flex items-center gap-3">
+                  <Link
+                    href={`/profil/${collab.user_id}`}
+                    className="flex items-center gap-3 min-h-[44px] rounded-xl px-1 -mx-1 transition-colors hover:bg-black/5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--lkv-primary)]"
+                    title={`Voir le profil de ${name}`}
+                  >
                     <div className="w-11 h-11 rounded-full bg-lkv-primary text-white flex items-center justify-center font-bold text-sm shadow-inner shrink-0">
                       {initials}
                     </div>
                     <div>
-                      <div className="text-sm font-bold text-lkv-primary">{name}</div>
+                      <div className="text-sm font-bold text-lkv-primary group-hover:underline decoration-[var(--lkv-secondary)]/60 underline-offset-2">{name}</div>
                       <div className="text-xs text-lkv-secondary">
                         Rejoint le {new Date(collab.joined_at).toLocaleDateString('fr-FR')}
                       </div>
                     </div>
-                  </div>
+                  </Link>
 
                   <TripBadge type="role" value={collab.role} size="sm" />
                 </div>

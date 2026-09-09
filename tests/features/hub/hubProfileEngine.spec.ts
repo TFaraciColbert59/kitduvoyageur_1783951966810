@@ -176,7 +176,7 @@ describe('H1 — deriveHubProfile : nature sortie (composition)', () => {
 
   it('SOR-4: widgets repris du moteur Y (composition, pas recopie)', () => {
     const p = deriveHubProfile({ kind: 'sortie', trip: mkTrip() }, NOW);
-    expect(p.widgets).toContain('primary-action');
+    expect(p.widgets).toContain('safety-next');
     expect(p.widgets).toContain('alerts');
     expect(p.widgets).toContain('countdown');
   });

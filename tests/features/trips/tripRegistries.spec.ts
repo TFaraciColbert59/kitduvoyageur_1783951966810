@@ -146,7 +146,7 @@ describe('Y1.4 — registre des widgets', () => {
     expect(widgetDef('countdown')?.priority).toBe(100);
     const live = widgetsForPhase(tripWidgetRegistry.map((w) => w.id), 'live');
     expect(live).toContain('next-step');
-    expect(live).not.toContain('kit-balance'); // prepare uniquement
+    expect(live).not.toContain('trip-context'); // prepare uniquement
     expect(live.indexOf('countdown')).toBeLessThan(live.indexOf('offline-toggle'));
   });
 

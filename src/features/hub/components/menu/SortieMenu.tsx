@@ -1,3 +1,4 @@
+import Link from 'next/link';
 import {
   Calendar,
   CheckSquare,
@@ -21,6 +22,7 @@ import { getKitCounters } from '@/features/trips/hooks/useKitCounters';
 import { getTripDistance } from '@/features/trips/hooks/useTripDistance';
 import { getCanonicalTripSteps } from '@/features/trips/hooks/useTripCounters';
 import type { TripFull, TripStats } from '@/features/trips/types/trip.types';
+import { calculateBudgetSummary } from '@/features/trips/engine/budgetEngine';
 import type { HubHikingContext, HubChecklistItem } from '../../server/getHubAdventureData';
 import type { TripPhase } from '@/features/trips/engine/temporalPhaseEngine';
 
@@ -58,15 +60,15 @@ function shortDate(iso: string | null | undefined): string {
 const ORDER: Record<TripPhase, Array<[string, 3 | 4 | 6 | 8]>> = {
   prepare: [
     ['itinerary', 8], ['gear', 4], ['budget', 4], ['team', 4], ['checklist', 4],
-    ['docs', 3], ['safety', 3], ['journal', 3], ['export', 3],
+    ['docs', 3], ['safety', 3], ['journal', 3], ['context', 3],
   ],
   live: [
     ['cockpit', 8], ['safety', 4], ['itinerary', 8], ['gear', 4],
     ['journal', 4], ['team', 4], ['budget', 4],
-    ['checklist', 3], ['docs', 3], ['export', 3],
+    ['checklist', 3], ['docs', 3], ['context', 3],
   ],
   recount: [
-    ['raconter', 8], ['export', 4], ['itinerary', 8], ['gear', 4],
+    ['raconter', 8], ['context', 4], ['itinerary', 8], ['gear', 4],
     ['journal', 4], ['team', 4], ['budget', 4],
     ['checklist', 3], ['docs', 3], ['safety', 3],
   ],
@@ -81,8 +83,8 @@ const FIT_ROWS: Record<TripPhase, string> = {
 
 /** Cartes secondaires : hors bento mobile, regroupées dans « Plus de sections ». */
 const MOBILE_SECONDARY: Record<TripPhase, string[]> = {
-  prepare: ['safety', 'journal', 'docs', 'export'],
-  live: ['checklist', 'docs', 'export'],
+  prepare: ['safety', 'journal', 'docs', 'context'],
+  live: ['checklist', 'docs', 'context'],
   recount: ['docs', 'safety', 'checklist'],
 };
 
@@ -91,6 +93,18 @@ const PHASE_LABELS: Record<TripPhase, string> = {
   live: 'En cours',
   recount: 'Raconter',
 };
+
+const DIFFICULTY_LABELS: Record<string, string> = {
+  easy: 'Facile',
+  moderate: 'Modéré',
+  hard: 'Difficile',
+  expert: 'Expert',
+};
+
+function fmtAmount(n: number): string {
+  const abs = Math.abs(Math.round(n * 100) / 100);
+  return Number.isInteger(abs) ? String(abs) : abs.toFixed(2);
+}
 
 /**
  * Hub V4 — MENU d'une SORTIE en disposition BENTO (racine /hub).
@@ -134,6 +148,16 @@ export function SortieMenu({
     catTotals.set(e.category ?? 'Autre', (catTotals.get(e.category ?? 'Autre') ?? 0) + Number(e.amount || 0));
   }
   const topCats = [...catTotals.entries()].sort((a, b) => b[1] - a[1]).slice(0, 2);
+  const budgetSummary = calculateBudgetSummary(trip, trip.expenses ?? [], collabs);
+  const balanceRows = budgetSummary.balances
+    .filter((b) => Math.abs(b.net) >= 0.01)
+    .sort((a, b) => Math.abs(b.net) - Math.abs(a.net));
+  const showBalances = collabs.length > 0 && balanceRows.length > 0;
+  const hiddenBalances = balanceRows.length - Math.min(2, balanceRows.length);
+  const maxDPlusM = (trip.steps ?? []).reduce((m, s) => Math.max(m, s.elevation_gain_m ?? 0), 0);
+  const contextCountry = trip.destination_country_code
+    ? `${trip.destination_country_code.toUpperCase()}${trip.destination_name ? ` · ${trip.destination_name}` : ''}`
+    : trip.destination_name ?? null;
 
   // ── FIL D'ACTION (règles déterministes, ordonnées par priorité) ──
   const nextActions: NextActionSignal[] = [];
@@ -244,14 +268,14 @@ export function SortieMenu({
             <NumberStat value={duration.durationDays} /> j ·{' '}
             <NumberStat value={dist.totalKm} decimals={dist.totalKm % 1 === 0 ? 0 : 1} suffix=" km" />
           </p>
-          <p className="text-[10px] text-[var(--lkv-text-secondary)] font-mono leading-tight">
+          <p className="text-[10px] text-[var(--lkv-text-secondary)] font-medium leading-tight">
             {steps.length} étapes · +{dist.dPlus}m / -{dist.dMinus}m
           </p>
           {steps.length > 0 && (
             <ul className="mt-1 space-y-0.5 border-l-2 border-[var(--lkv-secondary)]/30 ml-1 pl-2">
               {steps.slice(0, 4).map((s) => (
                 <li key={s.id} className="flex items-center gap-1.5 text-[11px]">
-                  <span className="font-mono text-[var(--lkv-text-muted)] shrink-0">J{s.day_number}</span>
+                  <span className="font-bold tabular-nums text-[var(--lkv-text-muted)] shrink-0">J{s.day_number}</span>
                   <span className="truncate text-[var(--lkv-text-primary)] font-medium">{s.title}</span>
                 </li>
               ))}
@@ -281,17 +305,17 @@ export function SortieMenu({
       node: (
         <MenuCard href={hubSectionHref(ref, 'budget')} label="Budget">
           <div className="mt-1 flex items-center gap-3">
-            <div className="relative shrink-0" style={{ width: 64, height: 64 }}>
+            <div className="relative shrink-0" style={{ width: 56, height: 56 }}>
               <BudgetDonut
                 categories={topCats.map(([label, value]) => ({ label, value }))}
-                size={64}
-                stroke={8}
+                size={56}
+                stroke={7}
               />
               <div className="absolute inset-0 flex flex-col items-center justify-center">
-                <span className="text-sm font-extrabold tracking-tight text-[var(--lkv-text-primary)]">
+                <span className="text-sm font-serif-lkv italic tracking-tight text-[var(--lkv-text-primary)]">
                   {Math.round(stats.total_spent)}
                 </span>
-                <span className="text-[8px] font-bold uppercase tracking-widest text-[var(--lkv-text-secondary)]">
+                <span className="text-[8px] font-medium uppercase tracking-[0.14em] text-[var(--lkv-text-secondary)]">
                   {currency}
                 </span>
               </div>
@@ -321,13 +345,44 @@ export function SortieMenu({
               <div className={`h-full rounded-full ${budgetPct > 100 ? 'bg-[var(--lkv-danger)]' : 'bg-gradient-to-r from-[var(--lkv-secondary)] to-[var(--lkv-primary)]'}`} style={{ width: `${Math.min(100, budgetPct)}%` }} />
             </div>
           )}
+          {showBalances && (
+            <div className="mt-1.5 min-h-0 border-t border-black/5 pt-1">
+              <ul className="space-y-0.5">
+                {balanceRows.slice(0, 2).map((b) => {
+                  const owes = b.net < 0;
+                  return (
+                    <li key={b.userId} className="flex min-h-0 items-center gap-1.5">
+                      <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-[var(--lkv-surface-raised)] text-[9px] font-bold text-[var(--lkv-text-secondary)]">
+                        {b.name.slice(0, 1).toUpperCase()}
+                      </span>
+                      <span className="truncate text-[11px] font-medium text-[var(--lkv-text-primary)]">{b.name}</span>
+                      <span
+                        className={`ml-auto shrink-0 rounded-full px-1.5 py-0.5 text-[10px] font-bold ${
+                          owes
+                            ? 'bg-[var(--lkv-danger)]/10 text-[var(--lkv-danger)]'
+                            : 'bg-[var(--sage-50)] text-[var(--sage-700)]'
+                        }`}
+                      >
+                        {owes ? `−${fmtAmount(b.net)}` : `+${fmtAmount(b.net)}`} {currency} {owes ? 'doit' : 'reçoit'}
+                      </span>
+                    </li>
+                  );
+                })}
+                {hiddenBalances > 0 && (
+                  <li className="text-right text-[10px] font-semibold text-[var(--lkv-text-muted)]">
+                    +{hiddenBalances}
+                  </li>
+                )}
+              </ul>
+            </div>
+          )}
         </MenuCard>
       ),
     },
     team: {
       span: 4,
       node: (
-        <MenuCard href={hubSectionHref(ref, 'team')} label="Équipage & compagnons">
+        <MenuCard href={hubSectionHref(ref, 'team')} label="Équipage & compagnons" interactiveBody>
           <p className="mt-1 text-2xl font-extrabold tracking-tight text-[var(--lkv-text-primary)]">
             <NumberStat value={teamCount} />
             <span className="ml-2 text-xs font-semibold text-[var(--lkv-text-secondary)]">
@@ -336,21 +391,31 @@ export function SortieMenu({
             </span>
           </p>
           {collabs.length > 0 ? (
-            <ul className="mt-1.5 flex min-h-0 flex-1 flex-col justify-center gap-1.5">
+            <ul className="mt-1.5 flex min-h-0 flex-1 flex-col justify-center gap-1">
               {collabs.slice(0, 1).map((c) => (
-                <li key={c.id} className="flex items-center gap-2">
-                  <span className="flex h-6 w-6 items-center justify-center rounded-full bg-[var(--lkv-surface-raised)] text-[10px] font-bold text-[var(--lkv-text-secondary)] shrink-0">
-                    {(c.profile?.full_name ?? '?').slice(0, 1).toUpperCase()}
-                  </span>
-                  <span className="truncate text-xs font-medium text-[var(--lkv-text-primary)]">
-                    {c.profile?.full_name ?? 'Compagnon'}
-                  </span>
-                  <span className="ml-auto text-[10px] font-mono uppercase text-[var(--lkv-text-muted)] shrink-0">{c.role}</span>
+                <li key={c.id}>
+                  <Link
+                    href={`/profil/${c.user_id}`}
+                    className="-mx-1 flex min-h-[44px] items-center gap-2 rounded-lg px-1 transition-colors hover:bg-black/5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--lkv-primary)]"
+                  >
+                    <span className="flex h-6 w-6 items-center justify-center rounded-full bg-[var(--lkv-surface-raised)] text-[10px] font-bold text-[var(--lkv-text-secondary)] shrink-0">
+                      {(c.profile?.full_name ?? '?').slice(0, 1).toUpperCase()}
+                    </span>
+                    <span className="truncate text-xs font-medium text-[var(--lkv-text-primary)]">
+                      {c.profile?.full_name ?? 'Compagnon'}
+                    </span>
+                    <span className="ml-auto text-[10px] font-semibold uppercase tracking-[0.14em] text-[var(--lkv-text-muted)] shrink-0">{c.role}</span>
+                  </Link>
                 </li>
               ))}
               {collabs.length > 1 && (
-                <li className="text-[10px] font-mono uppercase text-[var(--lkv-text-muted)]">
-                  +{collabs.length - 1} autre{collabs.length - 1 > 1 ? 's' : ''}
+                <li>
+                  <Link
+                    href={hubSectionHref(ref, 'team')}
+                    className="-mx-1 inline-flex min-h-[44px] items-center rounded-full bg-[var(--lkv-primary)]/10 px-3 text-[11px] font-bold text-[var(--lkv-primary)] transition-colors hover:bg-[var(--lkv-primary)]/20 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--lkv-primary)]"
+                  >
+                    +{collabs.length - 1} autre{collabs.length - 1 > 1 ? 's' : ''}
+                  </Link>
                 </li>
               )}
             </ul>
@@ -410,7 +475,7 @@ export function SortieMenu({
           {nextCheckpoint ? (
             <p className="mt-1 text-xs text-[var(--lkv-text-primary)] truncate font-medium">
               {nextCheckpoint.label}
-              <span className="ml-1.5 font-mono text-[var(--lkv-text-muted)]">{shortDate(nextCheckpoint.scheduled_at)}</span>
+              <span className="ml-1.5 text-[var(--lkv-text-muted)]">{shortDate(nextCheckpoint.scheduled_at)}</span>
             </p>
           ) : (
             <p className="mt-1 text-center text-xs text-[var(--lkv-text-secondary)]">Aucun point programmé.</p>
@@ -425,11 +490,11 @@ export function SortieMenu({
           {lastNote ? (
             <div className="mt-1">
               {lastNote.day_number != null && (
-                <span className="text-[10px] font-mono uppercase text-[var(--lkv-text-muted)]">Jour {lastNote.day_number}</span>
+                <span className="text-[10px] font-medium uppercase tracking-[0.14em] text-[var(--lkv-text-muted)]">Jour {lastNote.day_number}</span>
               )}
-              <p className="truncate text-sm font-semibold text-[var(--lkv-text-primary)]">{lastNote.title || 'Sans titre'}</p>
+              <p className="truncate text-sm font-serif-lkv italic text-[var(--lkv-text-primary)]">{lastNote.title || 'Sans titre'}</p>
               <p className="line-clamp-1 text-xs text-[var(--lkv-text-secondary)]">{lastNote.content}</p>
-              <p className="mt-1 text-[11px] font-mono text-[var(--lkv-text-muted)]">{notes.length} note{notes.length > 1 ? 's' : ''}</p>
+              <p className="mt-1 text-[11px] font-medium text-[var(--lkv-text-muted)]">{notes.length} note{notes.length > 1 ? 's' : ''}</p>
             </div>
           ) : (
             <p className="mt-1 text-center text-xs text-[var(--lkv-text-secondary)]">Aucune note encore.</p>
@@ -437,15 +502,34 @@ export function SortieMenu({
         </MenuCard>
       ),
     },
-    export: {
+    context: {
       span: 3,
       node: (
-        <MenuCard href={hubSectionHref(ref, 'export')} label="Export">
-          <div className="mt-2 flex justify-center gap-2">
-            <span className="rounded-full bg-[var(--lkv-primary)]/10 px-2.5 py-1 text-[11px] font-bold text-[var(--lkv-primary)]">GPX</span>
-            <span className="rounded-full bg-[var(--lkv-primary)]/10 px-2.5 py-1 text-[11px] font-bold text-[var(--lkv-primary)]">Feuille de route</span>
-          </div>
-          <p className="mt-1.5 text-center text-xs text-[var(--lkv-text-secondary)]">Trace + document prêts à partager.</p>
+        <MenuCard href={hubSectionHref(ref, 'overview')} label="Contexte">
+          <ul className="mt-1 space-y-0.5 text-xs">
+            {maxDPlusM > 0 && (
+              <li className="flex items-center justify-between gap-2">
+                <span className="text-[var(--lkv-text-secondary)]">D+ max</span>
+                <span className="font-bold text-[var(--lkv-text-primary)]">{maxDPlusM.toLocaleString('fr-FR')} m</span>
+              </li>
+            )}
+            <li className="flex items-center justify-between gap-2">
+              <span className="text-[var(--lkv-text-secondary)]">Durée</span>
+              <span className="font-bold text-[var(--lkv-text-primary)]">{duration.durationDays} j</span>
+            </li>
+            <li className="flex items-center justify-between gap-2">
+              <span className="text-[var(--lkv-text-secondary)]">Difficulté</span>
+              <span className="shrink-0 rounded-full bg-[var(--sage-50)] px-1.5 py-0.5 text-[10px] font-bold capitalize text-[var(--sage-700)]">
+                {DIFFICULTY_LABELS[trip.difficulty] ?? trip.difficulty}
+              </span>
+            </li>
+            {contextCountry && (
+              <li className="flex items-center justify-between gap-2">
+                <span className="text-[var(--lkv-text-secondary)]">Pays</span>
+                <span className="truncate font-bold text-[var(--lkv-text-primary)]">{contextCountry}</span>
+              </li>
+            )}
+          </ul>
         </MenuCard>
       ),
     },

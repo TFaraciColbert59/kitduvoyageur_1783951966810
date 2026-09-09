@@ -308,10 +308,17 @@ async function loadFullTripDetails(
       .order('created_at', { ascending: false }),
   ]);
 
-  // Profils réels des collaborateurs (user_profiles — pas d'embed FK direct :
-  // trip_collaborators.user_id → auth.users). Source unique menu + widgets.
+  // Profils réels des collaborateurs ET des payeurs (user_profiles — pas
+  // d'embed FK direct : *_user_id/payer_id → auth.users). Source unique menu +
+  // widgets : le moteur budget lit exp.payer.full_name pour nommer les balances.
   const collabRows = (collabsRes.data as TripCollaborator[]) || [];
-  const collaboratorUserIds = [...new Set(collabRows.map((c) => c.user_id))];
+  const expenseRows = (expensesRes.data as TripExpense[]) || [];
+  const collaboratorUserIds = [
+    ...new Set([
+      ...collabRows.map((c) => c.user_id),
+      ...expenseRows.map((e) => e.payer_id).filter(Boolean),
+    ]),
+  ];
   const profileMap = new Map<string, { full_name?: string | null; avatar_url?: string | null }>();
   if (collaboratorUserIds.length > 0) {
     try {
@@ -332,7 +339,7 @@ async function loadFullTripDetails(
     collaborators: collabRows.map((c) => ({ ...c, profile: profileMap.get(c.user_id) })),
     steps: (stepsRes.data as TripStep[]) || [],
     items: (itemsRes.data as TripItem[]) || [],
-    expenses: (expensesRes.data as TripExpense[]) || [],
+    expenses: expenseRows.map((e) => ({ ...e, payer: profileMap.get(e.payer_id) })),
     documents: (docsRes.data as TripDocument[]) || [],
     pois: (poisRes.data as TripPoi[]) || [],
     safety_checkpoints: (safetyRes.data as TripSafetyCheckpoint[]) || [],

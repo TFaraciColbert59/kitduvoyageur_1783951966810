@@ -54,11 +54,11 @@ export function ChecklistCardBody({ items }: ChecklistCardBodyProps) {
             const gPct = Math.round((gDone / g.items.length) * 100);
             return (
               <div key={g.key} className="flex items-center gap-2">
-                <span className="w-8 shrink-0 font-mono text-[10px] text-[var(--lkv-text-muted)]">{g.label}</span>
+                <span className="w-8 shrink-0 font-semibold text-[10px] text-[var(--lkv-text-muted)]">{g.label}</span>
                 <div className="h-1.5 flex-1 overflow-hidden rounded-full bg-black/5">
                   <div className="h-full rounded-full bg-gradient-to-r from-[var(--lkv-secondary)] to-[var(--lkv-primary)]" style={{ width: `${gPct}%` }} />
                 </div>
-                <span className="w-8 shrink-0 text-right font-mono text-[10px] text-[var(--lkv-text-muted)]">
+                <span className="w-8 shrink-0 text-right font-semibold text-[10px] text-[var(--lkv-text-muted)]">
                   {gDone}/{g.items.length}
                 </span>
               </div>

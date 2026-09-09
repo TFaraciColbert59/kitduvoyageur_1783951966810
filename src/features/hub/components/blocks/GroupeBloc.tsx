@@ -44,7 +44,7 @@ export function GroupeBloc({ trip, group }: { trip: { slug: string; collaborator
       <div className="flex items-center justify-between">
         <Users size={15} className="shrink-0 text-[var(--lkv-text-secondary)]" aria-hidden="true" />
         {group?.pendingInvites ? (
-          <span className="text-[10px] font-mono text-[var(--lkv-text-secondary)]">
+          <span className="text-[10px] font-semibold tabular-nums text-[var(--lkv-text-secondary)]">
             {group.pendingInvites} invitation(s)
           </span>
         ) : null}
@@ -56,7 +56,7 @@ export function GroupeBloc({ trip, group }: { trip: { slug: string; collaborator
               {(m.fullName ?? '?').slice(0, 1).toUpperCase()}
             </span>
             <span className="flex-1 truncate text-[var(--lkv-text-primary)]">{m.fullName ?? 'Compagnon'}</span>
-            <span className="text-[10px] font-mono text-[var(--lkv-text-muted)]">{ROLE_LABELS[m.role] ?? m.role}</span>
+            <span className="text-[10px] font-medium text-[var(--lkv-text-muted)]">{ROLE_LABELS[m.role] ?? m.role}</span>
           </li>
         ))}
       </ul>

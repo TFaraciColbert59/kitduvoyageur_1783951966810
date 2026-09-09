@@ -170,7 +170,7 @@ export function PossessionMenu({ summary }: PossessionMenuProps) {
               {summary.kits.topKits.slice(0, 3).map((k) => (
                 <li key={k.id} className="flex items-center justify-between gap-2 text-xs">
                   <span className="truncate text-[var(--lkv-text-primary)] font-medium">{k.name}</span>
-                  <span className="shrink-0 font-mono text-[var(--lkv-text-muted)]">{k.weightKg.toFixed(1)} kg · {k.completionPct}%</span>
+                  <span className="shrink-0 font-semibold tabular-nums text-[var(--lkv-text-muted)]">{k.weightKg.toFixed(1)} kg · {k.completionPct}%</span>
                 </li>
               ))}
             </ul>
@@ -194,7 +194,7 @@ export function PossessionMenu({ summary }: PossessionMenuProps) {
                 <li key={k.id} className="space-y-0.5">
                   <div className="flex items-center justify-between gap-2 text-xs">
                     <span className="truncate font-medium text-[var(--lkv-text-primary)]">{k.name}</span>
-                    <span className="shrink-0 font-mono text-[var(--lkv-text-muted)]">{k.completionPct}%</span>
+                    <span className="shrink-0 font-semibold tabular-nums text-[var(--lkv-text-muted)]">{k.completionPct}%</span>
                   </div>
                   <div className="h-1.5 w-full overflow-hidden rounded-full bg-black/5">
                     <div className="h-full rounded-full bg-gradient-to-r from-[var(--lkv-secondary)] to-[var(--lkv-primary)]" style={{ width: `${k.completionPct}%` }} />

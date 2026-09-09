@@ -108,7 +108,7 @@ function WidgetCard({
       className="glass p-4 rounded-[var(--lkv-radius-card)] block cursor-pointer active:scale-[0.98] transition-transform min-h-[44px]"
     >
       <p className="text-sm font-bold text-[var(--lkv-text-primary)] leading-snug">{value}</p>
-      <p className="text-[10px] font-mono uppercase tracking-widest text-[var(--lkv-text-muted)] mt-1 flex items-center gap-1">
+      <p className="text-[10px] font-medium uppercase tracking-[0.14em] text-[var(--lkv-text-muted)] mt-1 flex items-center gap-1">
         <span>{label}</span>
         <ArrowRight size={11} aria-hidden="true" />
       </p>

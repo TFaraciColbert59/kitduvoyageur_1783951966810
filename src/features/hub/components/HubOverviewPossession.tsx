@@ -66,10 +66,10 @@ export function HubOverviewPossession({ items, loans, alerts, summary }: HubOver
                   <Icon size={18} aria-hidden="true" />
                 </span>
                 <span className="flex-1 min-w-0">
-                  <span className="block text-xl font-extrabold font-mono text-[var(--lkv-text-primary)] leading-none">
+                  <span className="block text-xl font-extrabold tabular-nums text-[var(--lkv-text-primary)] leading-none">
                     {s.value}
                   </span>
-                  <span className="block text-[10px] font-mono uppercase tracking-widest text-[var(--lkv-text-muted)] mt-1">
+                  <span className="block text-[10px] font-medium uppercase tracking-[0.14em] text-[var(--lkv-text-muted)] mt-1">
                     {s.label} · {s.unit}
                   </span>
                 </span>

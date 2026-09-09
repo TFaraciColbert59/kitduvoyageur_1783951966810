@@ -104,17 +104,17 @@ export async function GearSection({
 
             <dl className="grid grid-cols-3 gap-2 text-center">
               <div className="glass-sub-card rounded-xl px-2 py-2.5">
-                <dt className="text-[10px] font-mono font-bold uppercase tracking-wider text-[var(--lkv-text-muted)]">Poids</dt>
+                <dt className="text-[10px] font-semibold uppercase tracking-[0.14em] text-[var(--lkv-text-muted)]">Poids</dt>
                 <dd className="text-sm font-bold text-[var(--lkv-text-primary)]">
                   {formatWeight(selectedKit.total_weight_g)}
                 </dd>
               </div>
               <div className="glass-sub-card rounded-xl px-2 py-2.5">
-                <dt className="text-[10px] font-mono font-bold uppercase tracking-wider text-[var(--lkv-text-muted)]">Articles</dt>
+                <dt className="text-[10px] font-semibold uppercase tracking-[0.14em] text-[var(--lkv-text-muted)]">Articles</dt>
                 <dd className="text-sm font-bold text-[var(--lkv-text-primary)]">{selectedKit.item_count}</dd>
               </div>
               <div className="glass-sub-card rounded-xl px-2 py-2.5">
-                <dt className="text-[10px] font-mono font-bold uppercase tracking-wider text-[var(--lkv-text-muted)]">En commande</dt>
+                <dt className="text-[10px] font-semibold uppercase tracking-[0.14em] text-[var(--lkv-text-muted)]">En commande</dt>
                 <dd className="text-sm font-bold text-[var(--lkv-text-primary)]">{enCommande}</dd>
               </div>
             </dl>
@@ -142,43 +142,45 @@ export async function GearSection({
       </GlassCard>
 
       <section aria-label="Infos importantes" className="grid grid-cols-2 lg:grid-cols-4 gap-3">
-        <GlassCard
-          as="article"
-          tone={criticalAlerts > 0 ? 'danger' : 'neutral'}
-          className="rounded-2xl border border-white p-3"
+        {/* Verre simple (pas de GlassCard) : la hauteur suit le contenu, les
+            eyebrows ne sont plus rognés par overflow-hidden sous grid stretch. */}
+        <article
+          className={`glass rounded-2xl border border-white p-3 flex flex-col gap-1 items-start ${
+            criticalAlerts > 0 ? 'tone-danger' : ''
+          }`}
         >
           <Eyebrow>Alertes</Eyebrow>
           <p className="font-display font-semibold text-2xl tabular-nums text-[var(--lkv-text-primary)]">
             {activeAlerts}
           </p>
           {criticalAlerts > 0 && <Badge tone="danger">{criticalAlerts} critiques</Badge>}
-        </GlassCard>
+        </article>
 
-        <GlassCard
-          as="article"
-          tone={loansLate > 0 ? 'warn' : 'neutral'}
-          className="rounded-2xl border border-white p-3"
+        <article
+          className={`glass rounded-2xl border border-white p-3 flex flex-col gap-1 items-start ${
+            loansLate > 0 ? 'tone-warn' : ''
+          }`}
         >
           <Eyebrow>Prêts</Eyebrow>
           <p className="font-display font-semibold text-2xl tabular-nums text-[var(--lkv-text-primary)]">
             {loansActive}
           </p>
           {loansLate > 0 && <Badge tone="warn">{loansLate} en retard</Badge>}
-        </GlassCard>
+        </article>
 
-        <GlassCard
-          as="article"
-          tone={toReplace > 0 ? 'warn' : 'neutral'}
-          className="rounded-2xl border border-white p-3"
+        <article
+          className={`glass rounded-2xl border border-white p-3 flex flex-col gap-1 items-start ${
+            toReplace > 0 ? 'tone-warn' : ''
+          }`}
         >
           <Eyebrow>À remplacer</Eyebrow>
           <p className="font-display font-semibold text-2xl tabular-nums text-[var(--lkv-text-primary)]">
             {toReplace}
           </p>
           {toReplace > 0 && <Badge tone="warn">objets usés</Badge>}
-        </GlassCard>
+        </article>
 
-        <GlassCard as="article" className="rounded-2xl border border-white p-3">
+        <article className="glass rounded-2xl border border-white p-3 flex flex-col gap-1 items-start">
           <Eyebrow>Poids du sac</Eyebrow>
           <p className="font-display font-semibold text-2xl tabular-nums text-[var(--lkv-text-primary)]">
             {formatWeight(analysis.totalWeightGrams)}
@@ -186,7 +188,7 @@ export async function GearSection({
           <p className="text-xs text-[var(--lkv-text-muted)]">
             {analysis.packedItemsCount}/{analysis.totalItemsCount} emballés
           </p>
-        </GlassCard>
+        </article>
       </section>
 
       <section aria-label="Sac du voyage">

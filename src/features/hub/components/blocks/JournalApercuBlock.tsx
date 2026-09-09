@@ -46,7 +46,7 @@ export function JournalApercuBlock({ trip, slug }: { trip: TripFull; slug: strin
             <li key={n.id} className="px-3 py-2.5 rounded-[var(--lkv-radius-md)] bg-white/35 border border-white/50">
               <div className="flex items-center gap-2 mb-0.5">
                 {n.day_number != null && (
-                  <span className="text-[10px] font-mono uppercase tracking-widest text-[var(--lkv-text-secondary)]">
+                  <span className="text-[10px] font-medium uppercase tracking-[0.14em] text-[var(--lkv-text-secondary)]">
                     Jour {n.day_number}
                   </span>
                 )}

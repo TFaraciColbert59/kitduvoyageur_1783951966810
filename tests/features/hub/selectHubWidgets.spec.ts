@@ -33,13 +33,13 @@ describe('H4 — selectHubWidgets : ordre et repli', () => {
     expect(shown.map((w) => w.id)).toEqual(['presence-groupe']);
   });
 
-  it('SEL-3: sortie complète = 12 widgets sans repli (budget registre respecté)', () => {
+  it('SEL-3: sortie complète = 9 widgets sans repli (budget registre respecté)', () => {
     const sortie = profile('sortie', [
-      'countdown', 'primary-action', 'alerts', 'next-step', 'safety-next', 'kit-balance',
-      'budget-burn', 'group-presence', 'trip-context', 'country-card', 'docs-expiry', 'offline-toggle',
+      'countdown', 'alerts', 'next-step', 'safety-next', 'steps-timeline',
+      'trip-context', 'country-card', 'docs-expiry', 'offline-toggle',
     ]);
     const { shown, folded } = selectHubWidgets(sortie);
-    expect(shown).toHaveLength(12);
+    expect(shown).toHaveLength(9);
     expect(folded).toBe(0);
     expect(shown[0].id).toBe('countdown');
   });

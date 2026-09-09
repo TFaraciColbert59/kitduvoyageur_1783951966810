@@ -24,7 +24,7 @@ export function HubNetworkStatus() {
       <p
         role="status"
         aria-label="État réseau en cours de détection"
-        className="inline-flex items-center gap-1.5 whitespace-nowrap text-[10px] font-mono uppercase tracking-widest text-[var(--lkv-text-muted)]"
+        className="inline-flex items-center gap-1.5 whitespace-nowrap text-[10px] font-medium uppercase tracking-[0.14em] text-[var(--lkv-text-muted)]"
       >
         <span
           aria-hidden="true"
@@ -43,7 +43,7 @@ export function HubNetworkStatus() {
     <p
       role="status"
       aria-label={isOnline ? 'En ligne' : 'Hors ligne'}
-      className="inline-flex items-center gap-1.5 whitespace-nowrap text-[10px] font-mono uppercase tracking-widest text-[var(--lkv-text-muted)]"
+      className="inline-flex items-center gap-1.5 whitespace-nowrap text-[10px] font-medium uppercase tracking-[0.14em] text-[var(--lkv-text-muted)]"
     >
       <span
         aria-hidden="true"

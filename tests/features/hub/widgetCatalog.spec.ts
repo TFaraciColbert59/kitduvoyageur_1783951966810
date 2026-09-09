@@ -67,11 +67,11 @@ describe('H-ACT — widgetCatalog : déclarations complètes', () => {
     expect(catalogWidgetDef('nope' as ActivityBlockId)).toBeUndefined();
   });
 
-  it('CAT-5: les 19 widgets de sidebar existants sont déclarés au catalogue central', () => {
+  it('CAT-5: les 16 widgets de sidebar existants sont déclarés au catalogue central', () => {
     const sidebarIds = widgetCatalog.filter((w) => w.position === 'sidebar').map((w) => w.id);
-    // 12 widgets trip + 7 widgets hub = 19
-    expect(sidebarIds.length).toBe(19);
-    expect(sidebarIds).toContain('kit-balance');
+    // 9 widgets trip + 7 widgets hub = 16
+    expect(sidebarIds.length).toBe(16);
+    expect(sidebarIds).toContain('steps-timeline');
     expect(sidebarIds).toContain('alertes-materiel');
     expect(sidebarIds).toContain('presence-groupe');
   });
@@ -138,12 +138,12 @@ describe('H-ACT — selectWidgets : composition par activité', () => {
   });
 
   it('SEL-7: sidebar filtrée par activité + données (catalogue central)', () => {
-    const ids: HubWidgetId[] = ['countdown', 'primary-action', 'budget-burn', 'country-card'];
+    const ids: HubWidgetId[] = ['countdown', 'steps-timeline', 'trip-context', 'country-card'];
     const { sidebar } = selectWidgets(hikingCtx(), ids);
     const sidebarIds = sidebar.map((w) => w.id);
     expect(sidebarIds).toContain('countdown'); // activités toutes
-    expect(sidebarIds).toContain('primary-action');
-    expect(sidebarIds).not.toContain('budget-burn'); // travel uniquement
+    expect(sidebarIds).toContain('steps-timeline'); // activités toutes + hasSteps
+    expect(sidebarIds).not.toContain('trip-context'); // travel uniquement
     expect(sidebarIds).not.toContain('country-card'); // travel uniquement
   });
 

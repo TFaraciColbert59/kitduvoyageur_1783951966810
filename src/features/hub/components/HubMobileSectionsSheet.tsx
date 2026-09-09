@@ -56,7 +56,7 @@ export function HubMobileSectionsSheet({
       >
         <Layers size={14} className="text-[var(--lkv-secondary)]" />
         <span>Sections</span>
-        <span className="text-[10px] font-mono px-1.5 py-0.2 rounded-full bg-black/5 text-[var(--lkv-text-secondary)]">
+        <span className="text-[10px] font-bold tabular-nums px-1.5 py-0.2 rounded-full bg-black/5 text-[var(--lkv-text-secondary)]">
           {sections.length}
         </span>
       </button>
@@ -91,7 +91,7 @@ export function HubMobileSectionsSheet({
                   </span>
                   {count !== null && count > 0 && (
                     <span
-                      className={`text-[10px] font-mono px-1.5 py-0.5 rounded-full ${
+                      className={`text-[10px] font-bold tabular-nums px-1.5 py-0.5 rounded-full ${
                         active ? 'bg-white/20 text-white' : 'bg-black/5 text-[var(--lkv-text-secondary)]'
                       }`}
                     >
@@ -106,7 +106,7 @@ export function HubMobileSectionsSheet({
               <>
                 {core.length > 0 && (
                   <>
-                    <p className="px-3 pt-1 pb-1 text-[10px] font-mono font-bold uppercase tracking-widest text-[var(--lkv-text-muted)]">
+                    <p className="px-3 pt-1 pb-1 text-[10px] font-medium uppercase tracking-[0.14em] text-[var(--lkv-text-muted)]">
                       Essentiel
                     </p>
                     {core.map(renderRow)}
@@ -114,7 +114,7 @@ export function HubMobileSectionsSheet({
                 )}
                 {extra.length > 0 && (
                   <>
-                    <p className="px-3 pt-3 pb-1 text-[10px] font-mono font-bold uppercase tracking-widest text-[var(--lkv-text-muted)]">
+                    <p className="px-3 pt-3 pb-1 text-[10px] font-medium uppercase tracking-[0.14em] text-[var(--lkv-text-muted)]">
                       Compléments
                     </p>
                     {extra.map(renderRow)}

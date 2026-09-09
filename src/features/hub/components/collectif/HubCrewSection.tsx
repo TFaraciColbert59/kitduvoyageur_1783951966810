@@ -32,11 +32,11 @@ export function HubCrewSection({ crew, adventure }: { crew: HubCrewBlock | null;
   return (
     <section className="glass p-4 rounded-[var(--lkv-radius-card)]" aria-label="Membres de l'équipage">
       <div className="flex items-center justify-between">
-        <p className="text-[10px] font-mono uppercase tracking-widest text-[var(--lkv-text-muted)]">
+        <p className="text-[10px] font-medium uppercase tracking-[0.14em] text-[var(--lkv-text-muted)]">
           Membres · {crew.memberCount}
         </p>
         {crew.pendingInvites > 0 && (
-          <p className="text-[10px] font-mono text-[var(--lkv-text-secondary)]">
+          <p className="text-[10px] font-semibold tabular-nums text-[var(--lkv-text-secondary)]">
             {crew.pendingInvites} invitation(s)
           </p>
         )}
@@ -50,7 +50,7 @@ export function HubCrewSection({ crew, adventure }: { crew: HubCrewBlock | null;
             <span className="flex-1 min-w-0 truncate text-sm font-semibold text-[var(--lkv-text-primary)]">
               {m.fullName ?? 'Compagnon'}
             </span>
-            <span className="text-[10px] font-mono uppercase tracking-wider text-[var(--lkv-text-muted)]">
+            <span className="text-[10px] font-medium uppercase tracking-[0.14em] text-[var(--lkv-text-muted)]">
               {m.role === 'owner' ? 'Propriétaire' : m.role === 'organizer' ? 'Organisateur' : 'Membre'}
             </span>
           </li>
