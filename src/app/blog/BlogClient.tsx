@@ -1,4 +1,4 @@
-'use client';
+﻿'use client';
 
 import React, { useState, useMemo } from 'react';
 import Link from 'next/link';
@@ -402,7 +402,7 @@ export default function BlogClient({ posts }: { posts: BlogPost[] }) {
           <input
             type="email"
             placeholder="votre@email.fr"
-            style={{ flex: 1, padding: '10px 14px', borderRadius: '10px', border: '1px solid rgba(23,64,44,0.08)', background: '#FBFAF6', color: '#17402C', fontSize: '13px', outline: 'none' }}
+            style={{ flex: 1, padding: '10px 14px', borderRadius: '10px', border: '1px solid rgba(23,64,44,0.08)', background: '#EEF3EC', color: '#17402C', fontSize: '13px', outline: 'none' }}
           />
           <button style={{ padding: '10px 16px', background: '#17402C', color: '#fff', borderRadius: '10px', fontSize: '13px', fontWeight: 600, border: 'none', cursor: 'pointer', whiteSpace: 'nowrap' }}>
             S&apos;abonner
@@ -415,7 +415,7 @@ export default function BlogClient({ posts }: { posts: BlogPost[] }) {
   return (
     <>
       {/* ── DESKTOP ── fullscreen, scroll interne */}
-      <div className="hidden md:flex flex-col h-[100dvh] overflow-hidden bg-[#FAF8F5]" data-lkv-material-theme="light">
+      <div className="hidden md:flex flex-col h-[100dvh] overflow-hidden bg-[#EEF3EC]" data-lkv-material-theme="light">
         <Header />
         <main className="flex-1 min-h-0 overflow-y-auto">
           <div className="max-w-[1280px] mx-auto px-4 sm:px-6 lg:px-8 pt-24 pb-12">

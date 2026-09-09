@@ -1,4 +1,4 @@
-'use client';
+﻿'use client';
 
 import React from 'react';
 import Link from 'next/link';
@@ -105,9 +105,9 @@ export default function ProductCard({
       <div
         className={`group bg-white rounded-2xl p-3 sm:p-4 border transition-all duration-200 shadow-2xs hover: flex items-center justify-between gap-3 sm:gap-4 font-sans ${
           isInCart
-            ? 'border-[#17402C] bg-[#FBFAF6] ring-1 ring-[#17402C]/20'
+            ? 'border-[#17402C] bg-[#EEF3EC] ring-1 ring-[#17402C]/20'
             : isOwned
-            ? 'border-[#A9C6B0] bg-[#FBFAF6]'
+            ? 'border-[#A9C6B0] bg-[#EEF3EC]'
             : 'border-black/[0.06] hover:border-[#17402C]/30'
         } ${className}`}
       >
@@ -234,9 +234,9 @@ export default function ProductCard({
     <div
       className={`group bg-white rounded-2xl overflow-hidden border transition-all duration-300 shadow-2xs hover: flex flex-col justify-between font-sans ${
         isInCart
-          ? 'border-[#17402C] ring-2 ring-[#17402C]/20 bg-[#FBFAF6]'
+          ? 'border-[#17402C] ring-2 ring-[#17402C]/20 bg-[#EEF3EC]'
           : isOwned
-          ? 'border-[#A9C6B0] ring-1 ring-[#A9C6B0]/30 bg-[#FBFAF6]'
+          ? 'border-[#A9C6B0] ring-1 ring-[#A9C6B0]/30 bg-[#EEF3EC]'
           : 'border-black/[0.06] hover:border-[#17402C]/30'
       } ${className}`}
     >
@@ -255,7 +255,7 @@ export default function ProductCard({
         {/* Top Badges */}
         <div className="absolute top-2.5 left-2.5 right-2.5 flex items-center justify-between gap-1 pointer-events-none">
           {product.category && (
-            <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-[#FBFAF6] backdrop-blur-md text-[#17402C]  truncate max-w-[130px]">
+            <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-[#EEF3EC] backdrop-blur-md text-[#17402C]  truncate max-w-[130px]">
               {getCategoryIcon(product.category)} {product.category}
             </span>
           )}

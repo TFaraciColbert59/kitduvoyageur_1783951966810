@@ -1,4 +1,4 @@
-'use client';
+﻿'use client';
 
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -152,7 +152,7 @@ export default function ShareSheet({
             <button
               type="button"
               onClick={handleCopy}
-              className="flex items-center justify-center gap-2 py-3 px-4 bg-white hover:bg-[#FAF8F5] active:scale-[0.98] border border-[#17402C]/15 rounded-2xl text-xs font-bold text-[#17402C] transition-all "
+              className="flex items-center justify-center gap-2 py-3 px-4 bg-white hover:bg-[#EEF3EC] active:scale-[0.98] border border-[#17402C]/15 rounded-2xl text-xs font-bold text-[#17402C] transition-all "
             >
               <LkvIcon name="bookmark" size={16} color="#17402C" />
               <span>{copied ? '✓ Lien copié !' : 'Copier le lien'}</span>

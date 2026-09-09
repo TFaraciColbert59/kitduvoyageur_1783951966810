@@ -1,4 +1,4 @@
-'use client';
+﻿'use client';
 
 import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
@@ -80,7 +80,7 @@ export default function InscriptionPage() {
   const mobileContent = (
     <div style={{ padding: '16px' }}>
       {success ? (
-        <div style={{ textAlign: 'center', padding: '24px 16px', background: '#FBFAF6', borderRadius: '12px', border: '1px solid rgba(23,64,44,0.06)' }}>
+        <div style={{ textAlign: 'center', padding: '24px 16px', background: '#EEF3EC', borderRadius: '12px', border: '1px solid rgba(23,64,44,0.06)' }}>
           <p style={{ fontSize: '32px', marginBottom: '12px', color: '#5B7F55' }}>✓</p>
           <h2 style={{ fontSize: '20px', fontWeight: 800, color: '#17402C', marginBottom: '8px' }}>Compte créé !</h2>
           <p style={{ fontSize: '13px', color: 'rgba(23,64,44,0.6)', marginBottom: '16px' }}>Un email de confirmation a été envoyé à <strong>{form.email}</strong>.</p>
@@ -92,11 +92,11 @@ export default function InscriptionPage() {
           <h1 style={{ fontSize: '24px', fontWeight: 800, color: '#17402C', textAlign: 'center', marginBottom: '4px' }}>Créer un compte</h1>
           <p style={{ fontSize: '13px', color: 'rgba(23,64,44,0.5)', textAlign: 'center', marginBottom: '24px' }}>Configurez vos kits, sauvegardez vos aventures</p>
           {error && <div style={{ background: 'rgba(168,68,58,0.08)', border: '1px solid rgba(168,68,58,0.25)', borderRadius: '10px', padding: '10px 14px', marginBottom: '16px', fontSize: '13px', color: '#8A241B' }}>{error}</div>}
-          <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '12px', background: '#FBFAF6', padding: '20px', borderRadius: '12px', border: '1px solid rgba(23,64,44,0.06)' }}>
-            <input type="text" required autoComplete="name" value={form.fullName} onChange={(e) => setForm({ ...form, fullName: e.target.value })} placeholder="Nom complet *" style={{ padding: '10px 12px', borderRadius: '10px', border: '1px solid rgba(23,64,44,0.06)', background: '#FBFAF6', fontSize: '14px', color: '#17402C' }} />
-            <input type="email" required autoComplete="email" value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} placeholder="Email *" style={{ padding: '10px 12px', borderRadius: '10px', border: '1px solid rgba(23,64,44,0.06)', background: '#FBFAF6', fontSize: '14px', color: '#17402C' }} />
-            <input type="password" required autoComplete="new-password" value={form.password} onChange={(e) => setForm({ ...form, password: e.target.value })} placeholder="Mot de passe *" style={{ padding: '10px 12px', borderRadius: '10px', border: '1px solid rgba(23,64,44,0.06)', background: '#FBFAF6', fontSize: '14px', color: '#17402C' }} />
-            <input type="password" required autoComplete="new-password" value={form.confirm} onChange={(e) => setForm({ ...form, confirm: e.target.value })} placeholder="Confirmer le mot de passe *" style={{ padding: '10px 12px', borderRadius: '10px', border: '1px solid rgba(23,64,44,0.06)', background: '#FBFAF6', fontSize: '14px', color: '#17402C' }} />
+          <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '12px', background: '#EEF3EC', padding: '20px', borderRadius: '12px', border: '1px solid rgba(23,64,44,0.06)' }}>
+            <input type="text" required autoComplete="name" value={form.fullName} onChange={(e) => setForm({ ...form, fullName: e.target.value })} placeholder="Nom complet *" style={{ padding: '10px 12px', borderRadius: '10px', border: '1px solid rgba(23,64,44,0.06)', background: '#EEF3EC', fontSize: '14px', color: '#17402C' }} />
+            <input type="email" required autoComplete="email" value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} placeholder="Email *" style={{ padding: '10px 12px', borderRadius: '10px', border: '1px solid rgba(23,64,44,0.06)', background: '#EEF3EC', fontSize: '14px', color: '#17402C' }} />
+            <input type="password" required autoComplete="new-password" value={form.password} onChange={(e) => setForm({ ...form, password: e.target.value })} placeholder="Mot de passe *" style={{ padding: '10px 12px', borderRadius: '10px', border: '1px solid rgba(23,64,44,0.06)', background: '#EEF3EC', fontSize: '14px', color: '#17402C' }} />
+            <input type="password" required autoComplete="new-password" value={form.confirm} onChange={(e) => setForm({ ...form, confirm: e.target.value })} placeholder="Confirmer le mot de passe *" style={{ padding: '10px 12px', borderRadius: '10px', border: '1px solid rgba(23,64,44,0.06)', background: '#EEF3EC', fontSize: '14px', color: '#17402C' }} />
             <button type="submit" disabled={loading} style={{ background: '#17402C', color: 'white', border: 'none', padding: '12px', borderRadius: '12px', fontSize: '14px', fontWeight: 600, cursor: loading ? 'not-allowed' : 'pointer', opacity: loading ? 0.6 : 1, marginTop: '4px' }}>
               {loading ? 'Création en cours…' : 'Créer mon compte'}
             </button>

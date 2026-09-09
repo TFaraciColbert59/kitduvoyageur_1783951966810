@@ -1,4 +1,4 @@
-'use client';
+﻿'use client';
 
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import Link from 'next/link';
@@ -138,7 +138,7 @@ export default function KitDetailPage() {
       <>
         {/* ── DESKTOP ── */}
         <div className="hidden md:block">
-          <div data-lkv-material-theme="light" className="h-dvh overflow-hidden bg-[#FAF8F5]">
+          <div data-lkv-material-theme="light" className="h-dvh overflow-hidden bg-[#EEF3EC]">
             <Header />
             <main className="h-full overflow-y-auto pt-20">
               <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
@@ -174,7 +174,7 @@ export default function KitDetailPage() {
       <>
         {/* ── DESKTOP ── */}
         <div className="hidden md:block">
-          <div data-lkv-material-theme="light" className="h-dvh overflow-hidden bg-[#FAF8F5]">
+          <div data-lkv-material-theme="light" className="h-dvh overflow-hidden bg-[#EEF3EC]">
             <Header />
             <main className="h-full overflow-y-auto pt-20">
               <div className="min-h-[60dvh] flex items-center justify-center px-4">
@@ -210,14 +210,14 @@ export default function KitDetailPage() {
     <>
       {/* ── DESKTOP ── */}
       <div className="hidden md:block">
-        <div data-lkv-material-theme="light" className="h-dvh overflow-hidden bg-[#FAF8F5]">
+        <div data-lkv-material-theme="light" className="h-dvh overflow-hidden bg-[#EEF3EC]">
           <Header />
           <main className="h-full overflow-y-auto">
             {/* Hero */}
             <section className="relative h-72 md:h-80 overflow-hidden">
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img src={kit.image} alt={kit.alt} className="w-full h-full object-cover" />
-              <div className="absolute inset-0 bg-gradient-to-t from-[#FAF8F5] via-[#FAF8F5]/25 to-transparent" />
+              <div className="absolute inset-0 bg-gradient-to-t from-[#EEF3EC] via-[#EEF3EC]/25 to-transparent" />
               <div className="absolute bottom-0 left-0 right-0 p-6 md:p-10">
                 <div className="max-w-7xl mx-auto space-y-2">
                   <nav
@@ -421,7 +421,7 @@ export default function KitDetailPage() {
               <div className="relative h-44 w-full">
                 {/* eslint-disable-next-line @next/next/no-img-element */}
                 <img src={kit.image} alt={kit.alt} className="w-full h-full object-cover" />
-                <div className="absolute inset-0 bg-gradient-to-t from-[#FAF8F5]/95 via-[#FAF8F5]/30 to-transparent" />
+                <div className="absolute inset-0 bg-gradient-to-t from-[#EEF3EC]/95 via-[#EEF3EC]/30 to-transparent" />
                 <div className="absolute bottom-3 left-3 right-3">
                   <p className="text-xs font-medium text-[#17402C] bg-[rgba(255,255,255,0.92)] border border-[rgba(255,255,255,0.60)] rounded-sm px-2 py-1 inline-flex">
                     📍 {kit.destination} · 🗓 {kit.saison}

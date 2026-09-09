@@ -1,4 +1,4 @@
-'use client';
+﻿'use client';
 
 import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -196,7 +196,7 @@ export default function EventDetailModal({
             <h4 className="text-xs font-bold uppercase font-mono tracking-wider text-[#17402C] mb-2">
               À propos de la sortie
             </h4>
-            <p className="text-xs sm:text-sm text-[#17402C]/80 leading-relaxed bg-[#FBFAF6] p-4 rounded-2xl border border-[#17402C]/5">
+            <p className="text-xs sm:text-sm text-[#17402C]/80 leading-relaxed bg-[#EEF3EC] p-4 rounded-2xl border border-[#17402C]/5">
               {current.description || "Rejoignez d'autres passionnés pour cette sortie outdoor. Préparez votre sac et votre équipement selon la météo."}
             </p>
           </div>

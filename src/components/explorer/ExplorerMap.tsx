@@ -1,4 +1,4 @@
-'use client';
+﻿'use client';
 import React, { useEffect, useRef, useState, useCallback } from 'react';
 import 'leaflet/dist/leaflet.css';
 import type { Map as LeafletMap } from 'leaflet';
@@ -372,7 +372,7 @@ export default function ExplorerMap({
         ? `<div style="position:relative;width:20px;height:20px">
              <div style="position:absolute;inset:0;background:#17402C;border:3px solid #8BAF7C;border-radius:50%;box-shadow:0 0 0 4px rgba(23,64,44,0.3)"></div>
              <svg width="18" height="18" viewBox="0 0 24 24" style="position:absolute;top:1px;left:1px;transform:rotate(${heading}deg);transform-origin:center">
-               <path d="M12 2 L7 22 L12 17 L17 22 Z" fill="#17402C" stroke="#FBFAF6" stroke-width="1.5"/>
+               <path d="M12 2 L7 22 L12 17 L17 22 Z" fill="#17402C" stroke="#EEF3EC" stroke-width="1.5"/>
              </svg>
            </div>`
         : `<div style="width:16px;height:16px;background:#17402C;border:3px solid #8BAF7C;border-radius:50%;box-shadow:0 0 0 4px rgba(23,64,44,0.3)"></div>`;

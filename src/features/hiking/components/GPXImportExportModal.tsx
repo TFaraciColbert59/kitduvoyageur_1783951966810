@@ -1,4 +1,4 @@
-'use client';
+﻿'use client';
 
 import React, { useState } from 'react';
 import { motion } from 'framer-motion';
@@ -64,7 +64,7 @@ export default function GPXImportExportModal({
         animate={{ y: 0 }}
         exit={{ y: '100%' }}
         transition={{ type: 'spring', damping: 25, stiffness: 200 }}
-        className="w-full max-w-md bg-[#FBFAF6] text-[#17402C] rounded-t-[34px] pt-3 pb-10 px-4  space-y-4"
+        className="w-full max-w-md bg-[#EEF3EC] text-[#17402C] rounded-t-[34px] pt-3 pb-10 px-4  space-y-4"
       >
         {/* Grabber */}
         <div className="w-10 h-1 bg-[#17402C]/14 rounded-full mx-auto" />

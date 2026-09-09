@@ -541,9 +541,9 @@ export default function BouteilleALaMer({ countryIso, countryName }: Props) {
                     onChange={e => setFormData({ ...formData, mixite: e.target.value })}
                     className="glass-input w-full text-xs"
                   >
-                    <option value="all" className="bg-[#FBFAF6]">Tous (Mixte)</option>
-                    <option value="women_only" className="bg-[#FBFAF6]">Entre femmes 👭</option>
-                    <option value="men_only" className="bg-[#FBFAF6]">Entre hommes 👬</option>
+                    <option value="all" className="bg-[#EEF3EC]">Tous (Mixte)</option>
+                    <option value="women_only" className="bg-[#EEF3EC]">Entre femmes 👭</option>
+                    <option value="men_only" className="bg-[#EEF3EC]">Entre hommes 👬</option>
                   </select>
                 </div>
               </div>

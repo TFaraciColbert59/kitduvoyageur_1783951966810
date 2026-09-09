@@ -1,4 +1,4 @@
-import React, { Suspense } from 'react';
+﻿import React, { Suspense } from 'react';
 import type { Metadata, Viewport } from 'next';
 import { DM_Sans, Manrope, IBM_Plex_Mono, Instrument_Serif } from 'next/font/google';
 import { SpeedInsights } from '@vercel/speed-insights/next';
@@ -69,7 +69,7 @@ export const viewport: Viewport = {
   userScalable: false,
   viewportFit: 'cover',
   interactiveWidget: 'resizes-visual',
-  themeColor: '#FBFAF6',
+  themeColor: '#EEF3EC',
 };
 
 const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://lekitduvoyageur.fr';
@@ -165,8 +165,8 @@ export default async function RootLayout({
     <html
       lang="fr"
       suppressHydrationWarning
-      className={`${dmSans.variable} ${manrope.variable} ${ibmPlexMono.variable} bg-[#FBFAF6] text-[#17402C]`}
-      style={{ backgroundColor: '#FBFAF6', colorScheme: 'light' }}
+      className={`${dmSans.variable} ${manrope.variable} ${ibmPlexMono.variable} bg-[#EEF3EC] text-[#17402C]`}
+      style={{ backgroundColor: '#EEF3EC', colorScheme: 'light' }}
     >
       <head>
         {/* Preload critical images for LCP optimization */}
@@ -238,8 +238,8 @@ export default async function RootLayout({
         )}
       </head>
       <body
-        className={`${dmSans.variable} ${manrope.variable} ${ibmPlexMono.variable} ${instrumentSerif.variable} ${dmSans.className} bg-[#FBFAF6] text-[#17402C] min-h-[100dvh]`}
-        style={{ backgroundColor: '#FBFAF6' }}
+        className={`${dmSans.variable} ${manrope.variable} ${ibmPlexMono.variable} ${instrumentSerif.variable} ${dmSans.className} bg-[#EEF3EC] text-[#17402C] min-h-[100dvh]`}
+        style={{ backgroundColor: '#EEF3EC' }}
       >
         <AuthProvider>
           <ActiveTripProvider initialTrip={activeTrip}>

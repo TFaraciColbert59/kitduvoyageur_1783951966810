@@ -1,4 +1,4 @@
-'use client';
+﻿'use client';
 import { lkvPrompt } from '@/components/ui/dialogs';
 
 import React, { useState, useEffect, useMemo } from 'react';
@@ -1677,7 +1677,7 @@ export default function AdminPage() {
 
           {/* Section content */}
           <div style={{
-            backgroundColor: '#FBFAF6',
+            backgroundColor: '#EEF3EC',
             minHeight: 'calc(100vh - 120px)',
             padding: '16px',
           }}>

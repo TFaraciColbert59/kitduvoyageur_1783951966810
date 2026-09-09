@@ -1,4 +1,4 @@
-'use client';
+﻿'use client';
 
 import React, { useState } from 'react';
 import Header from '@/components/Header';
@@ -33,7 +33,7 @@ export default function ContactPage() {
   );
 
   const desktopContent = (
-    <div data-lkv-material-theme="light" className="h-dvh overflow-hidden bg-[#FAF8F5]">
+    <div data-lkv-material-theme="light" className="h-dvh overflow-hidden bg-[#EEF3EC]">
       <Header />
       <main className="h-full overflow-hidden pt-20">
         <div className="w-full max-w-5xl mx-auto px-6 pb-6 h-full flex flex-col gap-5">

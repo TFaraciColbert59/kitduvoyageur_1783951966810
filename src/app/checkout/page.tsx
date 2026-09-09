@@ -1,4 +1,4 @@
-'use client';
+﻿'use client';
 
 import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
@@ -298,7 +298,7 @@ export default function CheckoutPage() {
   return (
     <>
       {/* ── DESKTOP VIEW (fullscreen : page = 100dvh, scroll interne) ── */}
-      <div className="hidden md:flex flex-col h-[100dvh] overflow-hidden bg-[#FAF8F5] text-[#17402C]">
+      <div className="hidden md:flex flex-col h-[100dvh] overflow-hidden bg-[#EEF3EC] text-[#17402C]">
         <Header />
 
         <main id="main-content" className="flex-1 min-h-0 overflow-y-auto w-full pt-24 pb-6">
@@ -658,7 +658,7 @@ export default function CheckoutPage() {
 
       {/* ── MOBILE VIEW (scroll natif) ── */}
       <div className="block md:hidden">
-        <MobilePageShell background="#FAF8F5">
+        <MobilePageShell background="#EEF3EC">
           <div style={{ padding: '12px 16px 20px' }}>
             <div style={{ display: 'flex', gap: '6px', marginBottom: '16px' }}>
               {[0,1,2,3].map(i => (
@@ -673,7 +673,7 @@ export default function CheckoutPage() {
 
           <div className="glass" style={{ margin: '0 16px 12px', padding: '14px', borderRadius: '14px', boxShadow: 'none' }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-              <div style={{ width: '36px', height: '36px', borderRadius: '10px', background: '#FAF8F5', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+              <div style={{ width: '36px', height: '36px', borderRadius: '10px', background: '#EEF3EC', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#17402C" strokeWidth="1.5"><path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z"/><circle cx="12" cy="10" r="3"/></svg>
               </div>
               <div style={{ flex: 1 }}>
@@ -704,7 +704,7 @@ export default function CheckoutPage() {
             <div style={{ fontSize: '11px', fontWeight: 500, color: '#17402C', marginBottom: '10px' }}>Moyen de paiement</div>
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px' }}>
               {['Carte', 'Apple Pay', 'PayPal', "3× sans frais"].map(m => (
-                <button key={m} style={{ padding: '10px', borderRadius: '10px', background: '#FAF8F5', border: 'none', fontSize: '11px', fontWeight: 500, color: '#17402C', cursor: 'pointer', fontFamily: 'inherit', textAlign: 'center' }}>
+                <button key={m} style={{ padding: '10px', borderRadius: '10px', background: '#EEF3EC', border: 'none', fontSize: '11px', fontWeight: 500, color: '#17402C', cursor: 'pointer', fontFamily: 'inherit', textAlign: 'center' }}>
                   {m}
                 </button>
               ))}

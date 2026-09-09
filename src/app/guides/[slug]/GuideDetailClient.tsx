@@ -1,4 +1,4 @@
-'use client';
+﻿'use client';
 
 import React, { useState, useEffect, useMemo } from 'react';
 import Link from 'next/link';
@@ -334,7 +334,7 @@ export default function GuideDetailClient({ slug }: { slug: string }) {
   return (
     <>
       {/* ── DESKTOP ── fullscreen, scroll interne */}
-      <div className="hidden md:flex flex-col h-[100dvh] overflow-hidden bg-[#FAF8F5]" data-lkv-material-theme="light">
+      <div className="hidden md:flex flex-col h-[100dvh] overflow-hidden bg-[#EEF3EC]" data-lkv-material-theme="light">
         <Header />
         <main className="flex-1 min-h-0 overflow-y-auto">
           {loading ? desktopLoading : notFoundState || !guide ? desktopNotFound : desktopDetail}

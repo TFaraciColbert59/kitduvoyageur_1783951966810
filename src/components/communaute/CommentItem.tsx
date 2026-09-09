@@ -1,4 +1,4 @@
-'use client';
+﻿'use client';
 import { lkvConfirm } from '@/components/ui/dialogs';
 
 import React, { useState } from 'react';
@@ -247,7 +247,7 @@ export default function CommentItem({
             <div className="flex items-center gap-2 justify-end">
               <button
                 onClick={() => setIsEditing(false)}
-                className="px-3 py-1 bg-white border border-[#E4E0D4] rounded-full text-[10px] font-bold text-[#5C6B5E] hover:bg-[#FAF8F5]"
+                className="px-3 py-1 bg-white border border-[#E4E0D4] rounded-full text-[10px] font-bold text-[#5C6B5E] hover:bg-[#EEF3EC]"
               >
                 Annuler
               </button>

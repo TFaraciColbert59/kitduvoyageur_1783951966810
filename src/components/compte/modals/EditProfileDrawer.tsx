@@ -94,7 +94,7 @@ export default function EditProfileDrawer({
                 value={firstName}
                 onChange={(e) => setFirstName(e.target.value)}
                 required
-                className="w-full bg-[#FBFAF6] border border-black/[0.08] rounded-xl px-3 py-2 text-xs text-[#17402C] outline-none focus:border-[#17402C]"
+                className="w-full bg-[#EEF3EC] border border-black/[0.08] rounded-xl px-3 py-2 text-xs text-[#17402C] outline-none focus:border-[#17402C]"
               />
             </div>
             <div>
@@ -105,7 +105,7 @@ export default function EditProfileDrawer({
                 type="text"
                 value={lastName}
                 onChange={(e) => setLastName(e.target.value)}
-                className="w-full bg-[#FBFAF6] border border-black/[0.08] rounded-xl px-3 py-2 text-xs text-[#17402C] outline-none focus:border-[#17402C]"
+                className="w-full bg-[#EEF3EC] border border-black/[0.08] rounded-xl px-3 py-2 text-xs text-[#17402C] outline-none focus:border-[#17402C]"
               />
             </div>
           </div>
@@ -119,7 +119,7 @@ export default function EditProfileDrawer({
               value={location}
               onChange={(e) => setLocation(e.target.value)}
               placeholder="Ex: Chamonix, Annecy, Grenoble..."
-              className="w-full bg-[#FBFAF6] border border-black/[0.08] rounded-xl px-3 py-2 text-xs text-[#17402C] outline-none focus:border-[#17402C]"
+              className="w-full bg-[#EEF3EC] border border-black/[0.08] rounded-xl px-3 py-2 text-xs text-[#17402C] outline-none focus:border-[#17402C]"
             />
           </div>
 
@@ -132,7 +132,7 @@ export default function EditProfileDrawer({
               onChange={(e) => setBio(e.target.value)}
               rows={3}
               placeholder="Partagez votre pratique de la randonnée, vos massifs préférés..."
-              className="w-full bg-[#FBFAF6] border border-black/[0.08] rounded-xl px-3 py-2 text-xs text-[#17402C] outline-none focus:border-[#17402C] resize-none"
+              className="w-full bg-[#EEF3EC] border border-black/[0.08] rounded-xl px-3 py-2 text-xs text-[#17402C] outline-none focus:border-[#17402C] resize-none"
             />
           </div>
 

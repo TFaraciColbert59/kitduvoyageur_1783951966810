@@ -1,4 +1,4 @@
-'use client';
+﻿'use client';
 import { useRef, useEffect } from 'react';
 import type { Map as LeafletMap } from 'leaflet';
 import type { MapTrail } from './types';
@@ -235,7 +235,7 @@ export default function TrailLayer({ map, trails, pois, selectedTrailId, onTrail
             const html = `
               <div style="
                 background: ${isSelected ? 'linear-gradient(180deg, rgba(23,64,44,0.92) 0%, rgba(15,43,30,0.96) 100%)' : 'linear-gradient(180deg, rgba(255, 255, 255, 0.88) 0%, rgba(245, 241, 233, 0.75) 100%)'};
-                color: ${isSelected ? '#FAF8F5' : '#17402C'};
+                color: ${isSelected ? '#EEF3EC' : '#17402C'};
                 font-weight: 700;
                 font-size: 11px;
                 padding: 4px 10px;

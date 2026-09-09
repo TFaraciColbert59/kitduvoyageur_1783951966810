@@ -1,4 +1,4 @@
-'use client';
+﻿'use client';
 
 import React from 'react';
 import Link from 'next/link';
@@ -37,7 +37,7 @@ export default function TabVoyages({ prochainVoyage, clubs, loading }: TabVoyage
             </div>
 
             <div className="flex items-center gap-3">
-              <div className="text-center px-4 py-2 bg-[#FBFAF6] rounded-2xl border border-black/[0.06]">
+              <div className="text-center px-4 py-2 bg-[#EEF3EC] rounded-2xl border border-black/[0.06]">
                 <p className="text-2xl font-bold font-mono text-[#17402C] leading-none">
                   {prochainVoyage.days_left}
                 </p>
@@ -112,7 +112,7 @@ export default function TabVoyages({ prochainVoyage, clubs, loading }: TabVoyage
               <Link
                 key={club.id}
                 href={`/clubs/${club.id}`}
-                className="group p-3.5 rounded-2xl bg-[#FBFAF6] border border-black/[0.04] hover:border-[#17402C]/30 flex items-center justify-between gap-3 transition-all"
+                className="group p-3.5 rounded-2xl bg-[#EEF3EC] border border-black/[0.04] hover:border-[#17402C]/30 flex items-center justify-between gap-3 transition-all"
               >
                 <div className="flex items-center gap-3 min-w-0">
                   <div className="w-10 h-10 rounded-xl bg-[#F4F1EB] flex items-center justify-center text-lg shrink-0">

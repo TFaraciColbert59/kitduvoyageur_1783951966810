@@ -1,4 +1,4 @@
-/* ═══════════════════════════════════════════════════════════════
+﻿/* ═══════════════════════════════════════════════════════════════
    PRÉPARER MA RANDONNÉE — styles
    Extends tokens.css (Le Kit du Voyageur)
    ═══════════════════════════════════════════════════════════════ */
@@ -466,13 +466,13 @@
 .gear-item .gear-actions { margin-top: 7px; }
 .gear-item .gear-actions button { padding: 5px 10px; font-size: 10.5px; }
 .gear-item.state-missing {
-  background: #FBFAF6;
+  background: #EEF3EC;
   border-color: rgba(184,88,56,0.18);
   border-left: 3px solid #B85838;
   padding-left: 12px;
 }
 .gear-item.state-partial {
-  background: #FBFAF6;
+  background: #EEF3EC;
   border-color: rgba(200,151,85,0.22);
   border-left: 3px solid #C89755;
   padding-left: 12px;

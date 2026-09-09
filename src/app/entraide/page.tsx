@@ -1,4 +1,4 @@
-'use client';
+﻿'use client';
 
 import React, { useState } from 'react';
 import Header from '@/components/Header';
@@ -38,7 +38,7 @@ export default function EntraidePage() {
     <>
       {/* DESKTOP — fullscreen sans scroll */}
       <div className="hidden md:block">
-        <div data-lkv-material-theme="light" className="h-dvh overflow-hidden bg-[#FAF8F5]">
+        <div data-lkv-material-theme="light" className="h-dvh overflow-hidden bg-[#EEF3EC]">
           <Header />
           <main className="h-full overflow-hidden pt-20 flex items-center justify-center px-6 pb-10">
             <div className="w-full max-w-3xl mx-auto flex flex-col items-center text-center gap-5">

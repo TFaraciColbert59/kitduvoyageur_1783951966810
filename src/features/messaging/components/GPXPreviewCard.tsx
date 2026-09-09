@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import React, { useState, useEffect } from 'react';
 import { MapPin, Navigation, Download } from 'lucide-react';
@@ -138,7 +138,7 @@ export const GPXPreviewCard: React.FC<GPXPreviewCardProps> = ({
     <div
       className={`my-2 p-3 rounded-2xl overflow-hidden border transition-all ${
         isMine
-          ? 'bg-white/10 text-[#FAF8F5] border-white/20'
+          ? 'bg-white/10 text-[#EEF3EC] border-white/20'
           : 'bg-stone-50/95 text-[#14140F] border-stone-200/80 shadow-xs'
       }`}
     >

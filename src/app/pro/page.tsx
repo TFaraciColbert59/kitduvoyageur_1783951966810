@@ -1,4 +1,4 @@
-'use client';
+﻿'use client';
 
 import React, { useState } from 'react';
 import Header from '@/components/Header';
@@ -59,7 +59,7 @@ export default function B2BPage() {
               <button onClick={() => setActiveTab('catalogue')} style={{ padding: '8px 16px', borderRadius: '8px', background: activeTab === 'catalogue' ? '#17402C' : '#F4F1EA', color: activeTab === 'catalogue' ? 'white' : 'rgba(23,64,44,0.6)', border: 'none', fontSize: '12px', fontWeight: 600, cursor: 'pointer' }}>Catalogue</button>
             </div>
             {activeTab === 'plans' && PRO_PLANS.map((plan) => (
-              <div key={plan.id} style={{ background: '#FBFAF6', borderRadius: '12px', border: '1px solid rgba(23,64,44,0.06)', padding: '16px', marginBottom: '12px' }}>
+              <div key={plan.id} style={{ background: '#EEF3EC', borderRadius: '12px', border: '1px solid rgba(23,64,44,0.06)', padding: '16px', marginBottom: '12px' }}>
                 <h3 style={{ fontSize: '16px', fontWeight: 700, color: '#17402C', marginBottom: '4px' }}>{plan.name}</h3>
                 <p style={{ fontSize: '13px', color: 'rgba(23,64,44,0.5)', marginBottom: '8px' }}>{plan.description}</p>
                 <p style={{ fontSize: '28px', fontWeight: 800, color: '#17402C', marginBottom: '12px' }}>{plan.price}€<span style={{ fontSize: '13px', fontWeight: 400 }}>/{plan.period}</span></p>

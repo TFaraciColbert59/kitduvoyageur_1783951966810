@@ -1,4 +1,4 @@
-'use client';
+﻿'use client';
 
 import React, { useState } from 'react';
 import { useRouter } from 'next/navigation';
@@ -239,7 +239,7 @@ export const MobilePreparationView: React.FC<MobilePreparationViewProps> = ({
                 value={targetDate}
                 min={new Date().toISOString().split('T')[0]}
                 onChange={(e) => setTargetDate(e.target.value)}
-                className="w-full bg-[#FBFAF6] border border-black/10 rounded-xl px-3.5 py-2.5 text-xs text-[#17402C] outline-none font-mono focus:border-[#17402C]"
+                className="w-full bg-[#EEF3EC] border border-black/10 rounded-xl px-3.5 py-2.5 text-xs text-[#17402C] outline-none font-mono focus:border-[#17402C]"
               />
             </div>
 

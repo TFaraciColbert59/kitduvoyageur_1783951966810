@@ -1,4 +1,4 @@
-'use client';
+﻿'use client';
 
 import React, { useState } from 'react';
 import { useHapticFeedback } from '@/hooks/useHapticFeedback';
@@ -68,7 +68,7 @@ export default function ProductBuyBar({
             width: '28px',
             height: '28px',
             borderRadius: '999px',
-            background: '#FBFAF6',
+            background: '#EEF3EC',
             border: 'none',
             cursor: 'pointer',
             display: 'flex',
@@ -103,7 +103,7 @@ export default function ProductBuyBar({
             width: '28px',
             height: '28px',
             borderRadius: '999px',
-            background: '#FBFAF6',
+            background: '#EEF3EC',
             border: 'none',
             cursor: 'pointer',
             display: 'flex',

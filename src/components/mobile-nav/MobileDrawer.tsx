@@ -1,4 +1,4 @@
-'use client';
+﻿'use client';
 
 import React, { useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
@@ -110,7 +110,7 @@ const panelStyle: React.CSSProperties = {
   bottom: 0,
   width: '88%',
   maxWidth: '360px',
-  background: '#FBFAF6',
+  background: '#EEF3EC',
   zIndex: 51,
   boxShadow: '20px 0 60px rgba(23,64,44,0.25)',
   display: 'flex',
@@ -458,7 +458,7 @@ export default function MobileDrawer({ isOpen, onClose, onSearchOpen }: MobileDr
                     alignItems: 'center',
                     gap: '12px',
                     padding: '12px',
-                    background: '#FBFAF6',
+                    background: '#EEF3EC',
                     borderRadius: '14px',
                     border: '1px solid rgba(23,64,44,0.05)',
                     textDecoration: 'none',

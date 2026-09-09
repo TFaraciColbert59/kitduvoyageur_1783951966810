@@ -1,4 +1,4 @@
-'use client';
+﻿'use client';
 
 import React, { useState, useEffect, useMemo } from 'react';
 import { useParams, useRouter } from 'next/navigation';
@@ -486,7 +486,7 @@ export default function ClubDetailPage() {
               <button
                 type="button"
                 onClick={() => { setNotFound(false); loadData(); }}
-                style={{ width: '100%', maxWidth: 300, padding: '14px 0', borderRadius: 999, background: '#17402C', color: '#FBFAF6', fontSize: 15, fontWeight: 700, marginBottom: 12 }}
+                style={{ width: '100%', maxWidth: 300, padding: '14px 0', borderRadius: 999, background: '#17402C', color: '#EEF3EC', fontSize: 15, fontWeight: 700, marginBottom: 12 }}
               >
                 Réessayer
               </button>
@@ -787,7 +787,7 @@ export default function ClubDetailPage() {
       <div className="block md:hidden">
         {/* safeTop=false: MobileClubDetailView embarque son propre header sticky (MobileClubDetailView.tsx:89)
             qui calcule top-[calc(max(env(safe-area-inset-top,0px),12px)+6px)] */}
-        <MobilePageShell safeTop={false} videoBackground={false} background="#FAF8F5">
+        <MobilePageShell safeTop={false} videoBackground={false} background="#EEF3EC">
           <MobileClubDetailView
             club={club}
             topics={topics}

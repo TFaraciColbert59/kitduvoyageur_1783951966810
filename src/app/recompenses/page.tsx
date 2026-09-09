@@ -1,4 +1,4 @@
-'use client';
+﻿'use client';
 
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import Link from 'next/link';
@@ -332,7 +332,7 @@ export default function RecompensesPage() {
 
         {/* Dashboard Grid Stats */}
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-          <div className="bg-[#FBFAF6] border border-stone-200/60 rounded-2xl p-4 ">
+          <div className="bg-[#EEF3EC] border border-stone-200/60 rounded-2xl p-4 ">
             <p className="text-[10px] font-mono tracking-wider text-[#6B7A72] uppercase">Mes points actifs</p>
             <p className="text-xl font-display font-900 text-[#17402C] mt-1">
               {account?.eligible_points || 0} pts
@@ -340,7 +340,7 @@ export default function RecompensesPage() {
             <p className="text-[9px] text-[#6B7A72] mt-0.5">Pour la période en cours</p>
           </div>
 
-          <div className="bg-[#FBFAF6] border border-stone-200/60 rounded-2xl p-4 ">
+          <div className="bg-[#EEF3EC] border border-stone-200/60 rounded-2xl p-4 ">
             <p className="text-[10px] font-mono tracking-wider text-[#6B7A72] uppercase">Ma contribution</p>
             <p className="text-sm font-bold text-[#17402C] mt-2 truncate">
               {getContributionRating()}
@@ -348,7 +348,7 @@ export default function RecompensesPage() {
             <p className="text-[9px] text-[#6B7A72] mt-0.5">Score confiance : {profile?.trust_score || 50}/100</p>
           </div>
 
-          <div className="bg-[#FBFAF6] border border-[#A3C4A3]/30 rounded-2xl p-4  relative overflow-hidden">
+          <div className="bg-[#EEF3EC] border border-[#A3C4A3]/30 rounded-2xl p-4  relative overflow-hidden">
             <div className="absolute right-3 top-3 text-[#17402C]/10 text-2xl font-bold">€</div>
             <p className="text-[10px] font-mono tracking-wider text-[#6B7A72] uppercase">Disponibles</p>
             <p className="text-xl font-display font-900 text-[#17402C] mt-1">
@@ -357,7 +357,7 @@ export default function RecompensesPage() {
             <p className="text-[9px] text-[#6B7A72] mt-0.5">Prêts au retrait</p>
           </div>
 
-          <div className="bg-[#FBFAF6] border border-stone-200/60 rounded-2xl p-4 ">
+          <div className="bg-[#EEF3EC] border border-stone-200/60 rounded-2xl p-4 ">
             <p className="text-[10px] font-mono tracking-wider text-[#6B7A72] uppercase">En cours / en attente</p>
             <p className="text-xl font-display font-900 text-[#17402C]/70 mt-1">
               {account?.pending_cash ? account.pending_cash.toFixed(2) : '0.00'} €
@@ -369,7 +369,7 @@ export default function RecompensesPage() {
         {/* Withdrawal Section & Guide */}
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
           {/* Cash-out Form */}
-          <div className="lg:col-span-7 bg-[#FBFAF6] border border-stone-200/60 rounded-[0.75rem] p-6  space-y-6">
+          <div className="lg:col-span-7 bg-[#EEF3EC] border border-stone-200/60 rounded-[0.75rem] p-6  space-y-6">
             <div className="flex items-center justify-between border-b border-stone-200/60 pb-3">
               <h3 className="font-display font-800 text-[#17402C] text-sm tracking-tight flex items-center gap-1.5">
                 <Icon name="CurrencyEuroIcon" size={18} className="text-[#17402C]" />
@@ -391,7 +391,7 @@ export default function RecompensesPage() {
                     id="amount"
                     value={withdrawAmount}
                     onChange={(e) => setWithdrawAmount(e.target.value)}
-                    className="block w-full rounded-xl border border-stone-200/80 pl-4 pr-12 py-2.5 text-xs text-[#17402C] focus:outline-none focus:ring-1 focus:ring-[#17402C] focus:border-[#17402C] bg-[#FBFAF6]"
+                    className="block w-full rounded-xl border border-stone-200/80 pl-4 pr-12 py-2.5 text-xs text-[#17402C] focus:outline-none focus:ring-1 focus:ring-[#17402C] focus:border-[#17402C] bg-[#EEF3EC]"
                     placeholder="20.00"
                     required
                   />
@@ -521,7 +521,7 @@ export default function RecompensesPage() {
         {/* Ledger & Withdrawals lists */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6 pt-4">
           {/* Ledger of points transactions */}
-          <div className="bg-[#FBFAF6] border border-stone-200/60 rounded-[0.75rem] p-6  space-y-4">
+          <div className="bg-[#EEF3EC] border border-stone-200/60 rounded-[0.75rem] p-6  space-y-4">
             <h3 className="font-display font-800 text-[#17402C] text-sm tracking-tight flex items-center gap-1.5">
               <Icon name="ClipboardDocumentListIcon" size={18} className="text-[#17402C]" />
               Historique de points (Ledger)
@@ -557,7 +557,7 @@ export default function RecompensesPage() {
           </div>
 
           {/* History of Cash-out withdrawals */}
-          <div className="bg-[#FBFAF6] border border-stone-200/60 rounded-[0.75rem] p-6  space-y-4">
+          <div className="bg-[#EEF3EC] border border-stone-200/60 rounded-[0.75rem] p-6  space-y-4">
             <h3 className="font-display font-800 text-[#17402C] text-sm tracking-tight flex items-center gap-1.5">
               <Icon name="WrenchScrewdriverIcon" size={18} className="text-[#17402C]" />
               Demandes de virements

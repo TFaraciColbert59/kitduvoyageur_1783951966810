@@ -1,4 +1,4 @@
-'use client';
+﻿'use client';
 
 import React, { useState } from 'react';
 import Link from 'next/link';
@@ -70,7 +70,7 @@ function LoggedOutProfile() {
               justifyContent: 'center',
             }}
           >
-            <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="#FAF8F5" strokeWidth="1.5" strokeLinecap="round" aria-hidden="true">
+            <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="#EEF3EC" strokeWidth="1.5" strokeLinecap="round" aria-hidden="true">
               <circle cx="12" cy="8" r="4" />
               <path d="M4 20c0-4 3.6-7 8-7s8 3 8 7" />
             </svg>
@@ -293,7 +293,7 @@ function LoggedInProfile() {
                 padding: '3px 10px',
               }}
             >
-              <span style={{ fontSize: '10px', color: '#FAF8F5', fontWeight: 600, fontFamily: 'var(--font-mono)' }}>
+              <span style={{ fontSize: '10px', color: '#EEF3EC', fontWeight: 600, fontFamily: 'var(--font-mono)' }}>
                 NIVEAU 1 · EXPLORATEUR
               </span>
             </div>

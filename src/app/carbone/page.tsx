@@ -1,4 +1,4 @@
-'use client';
+﻿'use client';
 
 import React, { useState, useMemo } from 'react';
 import Header from '@/components/Header';
@@ -107,7 +107,7 @@ export default function CarbonePage() {
           <div style={{ padding: '16px' }}>
             <h1 style={{ fontSize: '20px', fontWeight: 800, color: '#17402C', marginBottom: '12px', fontFamily: 'var(--font-display)' }}>Bilan carbone</h1>
             <p style={{ fontSize: '13px', color: 'rgba(23,64,44,0.6)', marginBottom: '16px' }}>Calculez l&apos;impact CO₂ de votre voyage.</p>
-            <div style={{ background: '#FBFAF6', borderRadius: '12px', border: '1px solid rgba(23,64,44,0.06)', padding: '16px', marginBottom: '16px' }}>
+            <div style={{ background: '#EEF3EC', borderRadius: '12px', border: '1px solid rgba(23,64,44,0.06)', padding: '16px', marginBottom: '16px' }}>
               <h2 style={{ fontSize: '14px', fontWeight: 700, color: '#17402C', marginBottom: '12px' }}>Paramètres du voyage</h2>
               <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
                 <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px' }}>
@@ -119,7 +119,7 @@ export default function CarbonePage() {
                 </select>
               </div>
             </div>
-            <div style={{ background: '#FBFAF6', borderRadius: '12px', border: '1px solid rgba(23,64,44,0.06)', padding: '16px', textAlign: 'center' }}>
+            <div style={{ background: '#EEF3EC', borderRadius: '12px', border: '1px solid rgba(23,64,44,0.06)', padding: '16px', textAlign: 'center' }}>
               <p style={{ fontSize: '11px', color: 'rgba(23,64,44,0.5)', marginBottom: '4px' }}>Bilan carbone estimé</p>
               <p style={{ fontSize: '32px', fontWeight: 700, color: '#17402C', fontFamily: 'monospace' }}>{emissions.total}</p>
               <p style={{ fontSize: '12px', color: 'rgba(23,64,44,0.5)' }}>tonnes CO₂e / personne</p>

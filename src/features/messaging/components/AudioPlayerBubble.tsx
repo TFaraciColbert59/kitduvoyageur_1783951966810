@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import React, { useState, useRef, useEffect } from 'react';
 import { Play, Pause, Mic } from 'lucide-react';
@@ -77,7 +77,7 @@ export const AudioPlayerBubble: React.FC<AudioPlayerBubbleProps> = ({ audioUrl, 
 
   return (
     <div className={`flex items-center gap-3 p-2.5 my-1 rounded-2xl max-w-xs ${
-      isMine ? 'bg-white/10 text-[#FAF8F5] border border-white/20' : 'bg-stone-50/95 text-[#14140F] border border-stone-200/80 shadow-2xs'
+      isMine ? 'bg-white/10 text-[#EEF3EC] border border-white/20' : 'bg-stone-50/95 text-[#14140F] border border-stone-200/80 shadow-2xs'
     }`}>
       <button
         type="button"

@@ -1,4 +1,4 @@
-'use client';
+﻿'use client';
 
 import React, { useState } from 'react';
 import Header from '@/components/Header';
@@ -13,7 +13,7 @@ export default function CommunauteProPage() {
     <>
       {/* DESKTOP */}
       <div className="hidden md:block">
-        <div className="min-h-screen bg-[#FBFAF6] text-[#17402C]">
+        <div className="min-h-screen bg-[#EEF3EC] text-[#17402C]">
           <Header />
           <main className="pt-24 pb-20 max-w-4xl mx-auto px-4 text-center">
             <div className="glass p-8 sm:p-12 rounded-3xl">

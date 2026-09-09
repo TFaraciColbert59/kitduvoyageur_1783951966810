@@ -1,4 +1,4 @@
-'use client';
+﻿'use client';
 
 import { useEffect, useState } from 'react';
 import { useKitSheet } from '@/features/kits/KitSheetContext';
@@ -92,7 +92,7 @@ export default function LineageDiscovery() {
                 type="button"
                 onClick={() => openKit(l.kit_id, 'discovery')}
                 className="text-left p-3.5 rounded-2xl border transition-colors hover:border-[#17402C]/40"
-                style={{ background: '#FBFAF6', borderColor: 'rgba(166,193,160,0.5)' }}
+                style={{ background: '#EEF3EC', borderColor: 'rgba(166,193,160,0.5)' }}
               >
                 <div className="text-[14px] font-medium truncate" style={{ color: '#17402C' }}>
                   {l.kit_name}

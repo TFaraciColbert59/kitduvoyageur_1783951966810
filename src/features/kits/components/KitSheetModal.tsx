@@ -1,4 +1,4 @@
-'use client';
+﻿'use client';
 
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
@@ -138,7 +138,7 @@ export default function KitSheetModal({ kitId, context: _context, onClose }: Kit
       <PremiumBottomSheet isOpen={true} onClose={close} title="Lignée de kit">
         <div className="py-8 text-center">
           <p style={{ color: '#17402C' }}>⚠️ {error ?? 'Kit introuvable'}</p>
-          <button onClick={close} className="mt-4 w-full py-3 rounded-xl font-semibold text-sm" style={{ background: '#17402C', color: '#FBFAF6' }}>
+          <button onClick={close} className="mt-4 w-full py-3 rounded-xl font-semibold text-sm" style={{ background: '#17402C', color: '#EEF3EC' }}>
             Fermer
           </button>
         </div>
@@ -263,7 +263,7 @@ export default function KitSheetModal({ kitId, context: _context, onClose }: Kit
           <button
             onClick={carryKit}
             className="py-2.5 px-2 rounded-xl text-[12px] font-semibold"
-            style={{ background: '#17402C', color: '#FBFAF6' }}
+            style={{ background: '#17402C', color: '#EEF3EC' }}
           >
             Emporter
           </button>

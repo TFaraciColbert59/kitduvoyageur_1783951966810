@@ -1,4 +1,4 @@
-'use client';
+﻿'use client';
 
 import React, { useState, useRef, useEffect } from 'react';
 import Link from 'next/link';
@@ -451,7 +451,7 @@ export default function CommunityPostCard({
       {post.image_url && (
         <div
           {...doubleTap}
-          className="relative rounded-2xl overflow-hidden aspect-[16/10] bg-[#FAF8F5] border border-white/80 shadow-2xs select-none cursor-zoom-in"
+          className="relative rounded-2xl overflow-hidden aspect-[16/10] bg-[#EEF3EC] border border-white/80 shadow-2xs select-none cursor-zoom-in"
         >
           <SmartImage
             src={post.image_url}

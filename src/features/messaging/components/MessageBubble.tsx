@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import React, { useState, useEffect } from 'react';
 import Image from 'next/image';
@@ -304,7 +304,7 @@ export const MessageBubble: React.FC<MessageBubbleProps> = ({
                 }}
                 className={`text-xs px-3 py-1.5 rounded-lg mb-2 border-l-2 cursor-pointer transition-opacity hover:opacity-90 ${
                   isMine
-                    ? 'bg-white/10 border-white/80 text-[#FAF8F5]/90'
+                    ? 'bg-white/10 border-white/80 text-[#EEF3EC]/90'
                     : 'bg-white/45 border-[#17402C]/60 text-[#17402C]'
                 }`}
               >
@@ -443,16 +443,16 @@ export const MessageBubble: React.FC<MessageBubbleProps> = ({
             <div className="flex items-center justify-end gap-1.5 mt-1.5">
               <span
                 className={`text-[11px] font-medium ${
-                  isMine ? 'text-[#FAF8F5]/80' : 'text-[#5A574E]'
+                  isMine ? 'text-[#EEF3EC]/80' : 'text-[#5A574E]'
                 }`}
               >
                 {formatMessageDate(message.created_at)}
               </span>
 
               {isMine && (
-                <span className="text-[#FAF8F5] flex items-center gap-1">
+                <span className="text-[#EEF3EC] flex items-center gap-1">
                   {message.status === 'sending' ? (
-                    <span className="w-2.5 h-2.5 rounded-full border-2 border-[#FAF8F5] border-t-transparent animate-spin inline-block" />
+                    <span className="w-2.5 h-2.5 rounded-full border-2 border-[#EEF3EC] border-t-transparent animate-spin inline-block" />
                   ) : message.status === 'error' ? (
                     <span className="bg-[#A8443A] text-white px-1.5 py-0.5 rounded-full text-[10px] font-bold">! Échec</span>
                   ) : isReadByRecipient || (readByCount && readByCount > 0) ? (

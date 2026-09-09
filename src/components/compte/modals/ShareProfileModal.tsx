@@ -51,7 +51,7 @@ export default function ShareProfileModal({
           Partagez vos récits, vos statistiques et votre équipement avec vos amis randonneurs.
         </p>
 
-        <div className="flex items-center gap-2 p-2 bg-[#FBFAF6] rounded-2xl border border-black/[0.06] mb-5">
+        <div className="flex items-center gap-2 p-2 bg-[#EEF3EC] rounded-2xl border border-black/[0.06] mb-5">
           <input
             type="text"
             readOnly

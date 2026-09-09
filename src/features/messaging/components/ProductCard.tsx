@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import React from 'react';
 import Image from 'next/image';
@@ -51,7 +51,7 @@ export const ProductCard: React.FC<ProductCardProps> = ({ meta, isMine }) => {
       </div>
       <div
         className={`px-3 py-2 flex items-center justify-between gap-2 ${
-          isMine ? 'text-[#FAF8F5]' : 'text-[#17402C]'
+          isMine ? 'text-[#EEF3EC]' : 'text-[#17402C]'
         }`}
       >
         <p className="text-[13px] font-bold truncate">{title}</p>

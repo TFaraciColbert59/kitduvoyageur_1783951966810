@@ -1,4 +1,4 @@
-'use client';
+﻿'use client';
 import { lkvAlert } from '@/components/ui/dialogs';
 
 import React, { useState, useEffect, useRef } from 'react';
@@ -326,7 +326,7 @@ export default function HikingCockpitPage() {
 
   return (
     <div className="w-full h-[100dvh] relative overflow-hidden bg-[#EAE6DF] text-[#17402C] select-none font-sans">
-      <div className="relative w-full h-full overflow-hidden bg-[#FBFAF6]">
+      <div className="relative w-full h-full overflow-hidden bg-[#EEF3EC]">
           {showCompletionScreen ? (
             <CompletionView
               routeName={dbRouteData?.name || (routeIdParam ? `Itinéraire #${routeIdParam}` : 'Randonnée')}
@@ -456,7 +456,7 @@ export default function HikingCockpitPage() {
               {/* Confirmation Dialog Modal pour l'Arrêt */}
               {showStopModal && (
                 <div className="fixed inset-0 z-[500] bg-black/60 backdrop-blur-md flex items-center justify-center p-4 animate-in fade-in duration-200">
-                  <div className="bg-[#FBFAF6] border border-[#17402C]/12 rounded-[0.75rem] p-6 max-w-sm w-full  text-center space-y-4">
+                  <div className="bg-[#EEF3EC] border border-[#17402C]/12 rounded-[0.75rem] p-6 max-w-sm w-full  text-center space-y-4">
                     <div className="w-12 h-12 rounded-2xl bg-[#B85838]/10 text-[#B85838] flex items-center justify-center mx-auto text-xl font-bold">
                       🏁
                     </div>

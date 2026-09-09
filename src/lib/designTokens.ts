@@ -1,11 +1,11 @@
-// Design tokens extracted from Design-tokens.md v2.0
+﻿// Design tokens extracted from Design-tokens.md v2.0
 export const COLORS = {
   FOREGROUND_900: '#17402C', // Primary foreground
   FOREGROUND_800: '#17402C', // CTA primary background
   FOREGROUND_700: '#365233',
   SAGE_500: '#5B7F55',
   SAGE_100: '#EDF3ED',
-  STONE: '#FBFAF6',
+  STONE: '#EEF3EC',
   INK_300: '#5A7064',
   INK_TRANSPARENT: 'rgba(23,64,44,0.5)',
 };

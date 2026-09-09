@@ -1,4 +1,4 @@
-'use client';
+﻿'use client';
 import React, { useState } from 'react';
 import { cn } from '@/lib/utils';
 import { colors, transition } from '@/design/tokens';
@@ -37,7 +37,7 @@ const STYLES: Record<LkvButtonVariant, React.CSSProperties> = {
 const HOVER_STYLES: Partial<Record<LkvButtonVariant, React.CSSProperties>> = {
   primary: { background: colors.primaryHover },
   secondary: { background: '#ffffff' },
-  light: { background: '#FAF8F5' },
+  light: { background: '#EEF3EC' },
   'ghost-light': { background: 'rgba(255,255,255,0.12)' },
   ghost: { background: 'rgba(23,64,44,0.06)' },
   danger: { background: '#8A241B' },

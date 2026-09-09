@@ -1,4 +1,4 @@
-'use client';
+﻿'use client';
 
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import Header from '@/components/Header';
@@ -421,7 +421,7 @@ function MobileEventCard({ event, onToggleRegister, onViewDetail }: { event: Eve
   };
 
   return (
-    <div style={{ background: '#FBFAF6', border: '1px solid rgba(23,64,44,0.10)', borderRadius: '12px', overflow: 'hidden', marginBottom: '12px' }}>
+    <div style={{ background: '#EEF3EC', border: '1px solid rgba(23,64,44,0.10)', borderRadius: '12px', overflow: 'hidden', marginBottom: '12px' }}>
       <button onClick={() => onViewDetail(event)} style={{ width: '100%', position: 'relative', height: '160px', overflow: 'hidden', display: 'block', border: 'none', padding: 0, cursor: 'pointer' }}>
         <img src={event.cover_image || '/assets/images/no_image.png'} alt={event.cover_alt} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
         <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(to top, rgba(0,0,0,0.7), transparent)' }} />
@@ -440,18 +440,18 @@ function MobileEventCard({ event, onToggleRegister, onViewDetail }: { event: Eve
       </button>
       <div style={{ padding: '12px' }}>
         <div style={{ display: 'flex', gap: '8px', marginBottom: '10px' }}>
-          <div style={{ flex: 1, padding: '8px', background: '#FAF8F5', borderRadius: '8px', border: '1px solid rgba(23,64,44,0.10)' }}>
+          <div style={{ flex: 1, padding: '8px', background: '#EEF3EC', borderRadius: '8px', border: '1px solid rgba(23,64,44,0.10)' }}>
             <p style={{ fontSize: '9px', color: '#5A7064', textTransform: 'uppercase', letterSpacing: '0.05em', fontWeight: 600, margin: '0 0 2px 0' }}>Date</p>
             <p style={{ fontSize: '13px', fontWeight: 700, color: '#17402C', margin: 0 }}>{formatDate(event.event_date)}</p>
           </div>
-          <div style={{ flex: 1, padding: '8px', background: '#FAF8F5', borderRadius: '8px', border: '1px solid rgba(23,64,44,0.10)' }}>
+          <div style={{ flex: 1, padding: '8px', background: '#EEF3EC', borderRadius: '8px', border: '1px solid rgba(23,64,44,0.10)' }}>
             <p style={{ fontSize: '9px', color: '#5A7064', textTransform: 'uppercase', letterSpacing: '0.05em', fontWeight: 600, margin: '0 0 2px 0' }}>Places</p>
             <p style={{ fontSize: '13px', fontWeight: 700, color: '#17402C', margin: 0 }}>{event.current_participants}/{event.max_participants}</p>
           </div>
         </div>
         <div style={{ display: 'flex', gap: '8px' }}>
           <button onClick={() => onViewDetail(event)}
-            style={{ flex: 1, padding: '10px', borderRadius: '8px', fontSize: '12px', fontWeight: 600, border: '1px solid rgba(23,64,44,0.10)', background: '#FAF8F5', color: '#5A7064', cursor: 'pointer' }}>
+            style={{ flex: 1, padding: '10px', borderRadius: '8px', fontSize: '12px', fontWeight: 600, border: '1px solid rgba(23,64,44,0.10)', background: '#EEF3EC', color: '#5A7064', cursor: 'pointer' }}>
             Details
           </button>
           <button onClick={handleToggle}
@@ -706,7 +706,7 @@ export default function EvenementsPage() {
           <button key={f.id} onClick={() => setFilter(f.id)}
             style={{
               flexShrink: 0, padding: '8px 14px', borderRadius: '20px', fontSize: '12px', fontWeight: 700, border: 'none', cursor: 'pointer',
-              background: filter === f.id ? '#17402C' : '#FAF8F5',
+              background: filter === f.id ? '#17402C' : '#EEF3EC',
               color: filter === f.id ? '#fff' : '#5A7064',
             }}>
             {f.label}

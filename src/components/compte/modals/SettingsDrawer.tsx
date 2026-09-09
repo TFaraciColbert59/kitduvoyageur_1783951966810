@@ -83,7 +83,7 @@ export default function SettingsDrawer({
               <h4 className="text-[11px] font-mono font-bold uppercase tracking-wider text-[#5A7064]">
                 {sec.title}
               </h4>
-              <div className="bg-[#FBFAF6] rounded-2xl border border-black/[0.04] divide-y divide-black/[0.04] overflow-hidden">
+              <div className="bg-[#EEF3EC] rounded-2xl border border-black/[0.04] divide-y divide-black/[0.04] overflow-hidden">
                 {sec.items.map((item, i) => (
                   <div
                     key={i}

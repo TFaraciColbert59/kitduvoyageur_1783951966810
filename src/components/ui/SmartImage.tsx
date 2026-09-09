@@ -1,4 +1,4 @@
-'use client';
+﻿'use client';
 
 import React, { useState, useEffect } from 'react';
 import Image, { ImageProps } from 'next/image';
@@ -57,7 +57,7 @@ export default function SmartImage({
   if (hasError || !imgSrc) {
     return (
       <div
-        className={`relative flex flex-col items-center justify-center bg-gradient-to-br from-[#17402C]/10 via-[#FAF8F5] to-[#5B7F55]/15 border border-white/60 text-[#17402C] overflow-hidden ${className}`}
+        className={`relative flex flex-col items-center justify-center bg-gradient-to-br from-[#17402C]/10 via-[#EEF3EC] to-[#5B7F55]/15 border border-white/60 text-[#17402C] overflow-hidden ${className}`}
         style={aspectRatio ? { aspectRatio } : undefined}
       >
         <div className="w-10 h-10 rounded-full bg-white/70 backdrop-blur-md flex items-center justify-center shadow-2xs mb-1">

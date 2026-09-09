@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import React, { useState, useCallback } from 'react';
 import type { UserProfileSummary, Conversation } from '../types/messaging.types';
@@ -111,7 +111,7 @@ export const MessageInbox: React.FC<MessageInboxProps> = ({
       */}
       {selectedConversation && (
         <div
-          className={`md:hidden fixed inset-0 z-[10000] bg-[#FAF8F5] ${
+          className={`md:hidden fixed inset-0 z-[10000] bg-[#EEF3EC] ${
             isClosing ? 'msg-sheet-out' : 'msg-sheet-in'
           }`}
           style={{

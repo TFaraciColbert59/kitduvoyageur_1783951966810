@@ -1,4 +1,4 @@
-import React from 'react';
+﻿import React from 'react';
 import Link from 'next/link';
 import type { Metadata } from 'next';
 import Header from '@/components/Header';
@@ -399,7 +399,7 @@ export default function OutilsPage() {
                           borderRadius: '4px',
                           border: '1px solid rgba(23,64,44,0.06)',
                           color: '#6B7A72',
-                          background: '#FBFAF6',
+                          background: '#EEF3EC',
                         }}>
                           {tool.categorie.toUpperCase()}
                         </span>

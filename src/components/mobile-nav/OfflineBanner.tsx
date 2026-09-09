@@ -1,4 +1,4 @@
-'use client';
+﻿'use client';
 
 import React, { useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -75,7 +75,7 @@ export default function OfflineBanner() {
               flex: 1,
               fontSize: '13px',
               fontWeight: 600,
-              color: '#FBFAF6',
+              color: '#EEF3EC',
               fontFamily: 'var(--font-sans)',
               lineHeight: 1.35,
             }}
@@ -87,7 +87,7 @@ export default function OfflineBanner() {
             height="16"
             viewBox="0 0 24 24"
             fill="none"
-            stroke="#FBFAF6"
+            stroke="#EEF3EC"
             strokeWidth="1.8"
             strokeLinecap="round"
             strokeLinejoin="round"

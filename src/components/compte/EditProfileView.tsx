@@ -1,4 +1,4 @@
-'use client';
+﻿'use client';
 
 import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
@@ -213,7 +213,7 @@ export default function EditProfileView({ onCloseModal, onSave }: { onCloseModal
   };
 
   return (
-    <div className="min-h-screen bg-[#FAF8F5] font-sans text-[#17402C] pb-28">
+    <div className="min-h-screen bg-[#EEF3EC] font-sans text-[#17402C] pb-28">
       {/* 1. TOP STICKY NAVBAR — desktop uniquement */}
       <header className="hidden md:flex sticky top-0 z-40 glass border-b border-[#17402C]/5 px-4 sm:px-8 py-3.5 items-center justify-between">
         <div className="flex items-center gap-4">

@@ -1,4 +1,4 @@
-'use client';
+﻿'use client';
 
 import React from 'react';
 import Icon from '@/components/ui/AppIcon';
@@ -37,14 +37,14 @@ export default function ClubHero({
   const isOnline = club.active_this_month || 0;
 
   return (
-    <div className="glass bg-gradient-to-br from-[#17402C]/95 via-[#17402C]/85 to-[#33463C]/90 rounded-card p-8 sm:p-10 text-[#FAF8F5] relative overflow-hidden flex flex-col md:flex-row justify-between items-start md:items-end gap-6 border border-white/20">
+    <div className="glass bg-gradient-to-br from-[#17402C]/95 via-[#17402C]/85 to-[#33463C]/90 rounded-card p-8 sm:p-10 text-[#EEF3EC] relative overflow-hidden flex flex-col md:flex-row justify-between items-start md:items-end gap-6 border border-white/20">
       {/* Background Glow */}
       <div className="absolute top-0 right-0 w-[40rem] h-[40rem] bg-white opacity-5 blur-[100px] rounded-full pointer-events-none" />
 
       <div className="relative z-10 max-w-2xl">
         <div className="inline-flex items-center gap-2 px-3 py-1 glass-pill mb-6 text-white border-white/20">
           <span className="w-1.5 h-1.5 rounded-full bg-forest-400 animate-pulse" />
-          <span className="font-mono text-[10px] uppercase tracking-widest text-[#FAF8F5] font-bold">
+          <span className="font-mono text-[10px] uppercase tracking-widest text-[#EEF3EC] font-bold">
             {club.type || 'CLUB'} · {membersCount} MEMBRES · {club.privacy === 'open' ? 'PUBLIC' : 'PRIVÉ'}
           </span>
         </div>

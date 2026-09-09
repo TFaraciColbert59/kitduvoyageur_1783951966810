@@ -1,4 +1,4 @@
-'use client';
+﻿'use client';
 
 import React from 'react';
 import { Icon } from './PreparationIcons';
@@ -47,7 +47,7 @@ export const StartDock: React.FC<StartDockProps> = ({
         {onContinuePreparation && (
           <button
             onClick={onContinuePreparation}
-            className="flex-1 h-10 px-3 rounded-xl bg-white hover:bg-[#FBFAF6] text-[#17402C] text-xs font-bold  border border-black/10 flex items-center justify-center gap-1.5 transition-all active:scale-95 shrink-0"
+            className="flex-1 h-10 px-3 rounded-xl bg-white hover:bg-[#EEF3EC] text-[#17402C] text-xs font-bold  border border-black/10 flex items-center justify-center gap-1.5 transition-all active:scale-95 shrink-0"
           >
             <span>📦 Continuer à préparer</span>
           </button>

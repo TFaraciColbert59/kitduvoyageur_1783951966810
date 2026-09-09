@@ -1,4 +1,4 @@
-'use client';
+﻿'use client';
 
 import React, { useState } from 'react';
 import Link from 'next/link';
@@ -112,7 +112,7 @@ function FAQPageContent() {
   const [activeCategory, setActiveCategory] = useState(0);
 
   return (
-    <div data-lkv-material-theme="light" className="h-dvh overflow-hidden bg-[#FAF8F5]">
+    <div data-lkv-material-theme="light" className="h-dvh overflow-hidden bg-[#EEF3EC]">
       <Header />
       <main className="h-full overflow-hidden pt-20">
         <div className="w-full max-w-4xl mx-auto px-6 pb-6 h-full flex flex-col gap-5">

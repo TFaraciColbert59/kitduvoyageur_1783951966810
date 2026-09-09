@@ -1,4 +1,4 @@
-'use client';
+﻿'use client';
 import { lkvAlert } from '@/components/ui/dialogs';
 
 import React, { useState, useMemo, useRef, useEffect, Suspense } from 'react';
@@ -316,13 +316,13 @@ function PublierPostContent() {
                 <button
                   onClick={() => handlePublish(true)}
                   disabled={isSubmitting}
-                  className="px-4 py-2 bg-white border border-[#E8E4D8] rounded-full text-xs font-bold text-[#3A4A3D] hover:bg-[#FAF8F5] transition-all "
+                  className="px-4 py-2 bg-white border border-[#E8E4D8] rounded-full text-xs font-bold text-[#3A4A3D] hover:bg-[#EEF3EC] transition-all "
                 >
                   Sauvegarder en brouillon
                 </button>
                 <button
                   onClick={() => alert("Aperçu interactif mis à jour sur la droite !")}
-                  className="px-4 py-2 bg-white border border-[#E8E4D8] rounded-full text-xs font-bold text-[#3A4A3D] hover:bg-[#FAF8F5] transition-all "
+                  className="px-4 py-2 bg-white border border-[#E8E4D8] rounded-full text-xs font-bold text-[#3A4A3D] hover:bg-[#EEF3EC] transition-all "
                 >
                   Aperçu
                 </button>
@@ -373,7 +373,7 @@ function PublierPostContent() {
                       className={`flex flex-col items-center justify-center p-4 rounded-2xl border text-center transition-all ${
                         postType === 'photo'
                           ? 'bg-[#EAF0EB] border-[#17402C] text-[#17402C] '
-                          : 'bg-[#FAF8F5] border-[#E8E4D8] text-[#5A6A5D] hover:bg-white'
+                          : 'bg-[#EEF3EC] border-[#E8E4D8] text-[#5A6A5D] hover:bg-white'
                       }`}
                     >
                       <div className={`w-9 h-9 rounded-xl flex items-center justify-center mb-2 text-base ${postType === 'photo' ? 'bg-[#17402C] text-white' : 'bg-[#E8E4D8] text-[#17402C]'}`}>
@@ -389,7 +389,7 @@ function PublierPostContent() {
                       className={`flex flex-col items-center justify-center p-4 rounded-2xl border text-center transition-all ${
                         postType === 'billet'
                           ? 'bg-[#EAF0EB] border-[#17402C] text-[#17402C] '
-                          : 'bg-[#FAF8F5] border-[#E8E4D8] text-[#5A6A5D] hover:bg-white'
+                          : 'bg-[#EEF3EC] border-[#E8E4D8] text-[#5A6A5D] hover:bg-white'
                       }`}
                     >
                       <div className={`w-9 h-9 rounded-xl flex items-center justify-center mb-2 text-base ${postType === 'billet' ? 'bg-[#17402C] text-white' : 'bg-[#E8E4D8] text-[#17402C]'}`}>
@@ -408,7 +408,7 @@ function PublierPostContent() {
                       className={`flex flex-col items-center justify-center p-4 rounded-2xl border text-center transition-all ${
                         postType === 'question'
                           ? 'bg-[#EAF0EB] border-[#17402C] text-[#17402C] '
-                          : 'bg-[#FAF8F5] border-[#E8E4D8] text-[#5A6A5D] hover:bg-white'
+                          : 'bg-[#EEF3EC] border-[#E8E4D8] text-[#5A6A5D] hover:bg-white'
                       }`}
                     >
                       <div className={`w-9 h-9 rounded-xl flex items-center justify-center mb-2 text-base ${postType === 'question' ? 'bg-[#17402C] text-white' : 'bg-[#E8E4D8] text-[#17402C]'}`}>
@@ -424,7 +424,7 @@ function PublierPostContent() {
                       className={`flex flex-col items-center justify-center p-4 rounded-2xl border text-center transition-all ${
                         postType === 'evenement'
                           ? 'bg-[#EAF0EB] border-[#17402C] text-[#17402C] '
-                          : 'bg-[#FAF8F5] border-[#E8E4D8] text-[#5A6A5D] hover:bg-white'
+                          : 'bg-[#EEF3EC] border-[#E8E4D8] text-[#5A6A5D] hover:bg-white'
                       }`}
                     >
                       <div className={`w-9 h-9 rounded-xl flex items-center justify-center mb-2 text-base ${postType === 'evenement' ? 'bg-[#17402C] text-white' : 'bg-[#E8E4D8] text-[#17402C]'}`}>
@@ -641,17 +641,17 @@ function PublierPostContent() {
 
                   <div className="space-y-4">
                     <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-                      <button type="button" onClick={() => setAudience('public')} className={`flex flex-col p-4 rounded-2xl border text-left transition-all ${audience === 'public' ? 'bg-[#EAF0EB] border-[#17402C] text-[#17402C]' : 'bg-[#FAF8F5] border-[#E8E4D8] text-[#5A6A5D]'}`}>
+                      <button type="button" onClick={() => setAudience('public')} className={`flex flex-col p-4 rounded-2xl border text-left transition-all ${audience === 'public' ? 'bg-[#EAF0EB] border-[#17402C] text-[#17402C]' : 'bg-[#EEF3EC] border-[#E8E4D8] text-[#5A6A5D]'}`}>
                         <span className="text-base mb-1">🌐</span>
                         <span className="text-xs font-bold block">Fil public</span>
                         <span className="text-[10px] text-[#7A8A7D] mt-0.5">Communauté + votre profil</span>
                       </button>
-                      <button type="button" onClick={() => setAudience('club')} className={`flex flex-col p-4 rounded-2xl border text-left transition-all ${audience === 'club' ? 'bg-[#EAF0EB] border-[#17402C] text-[#17402C]' : 'bg-[#FAF8F5] border-[#E8E4D8] text-[#5A6A5D]'}`}>
+                      <button type="button" onClick={() => setAudience('club')} className={`flex flex-col p-4 rounded-2xl border text-left transition-all ${audience === 'club' ? 'bg-[#EAF0EB] border-[#17402C] text-[#17402C]' : 'bg-[#EEF3EC] border-[#E8E4D8] text-[#5A6A5D]'}`}>
                         <span className="text-base mb-1">👥</span>
                         <span className="text-xs font-bold block">Un club</span>
                         <span className="text-[10px] text-[#7A8A7D] mt-0.5">Vos clubs uniquement</span>
                       </button>
-                      <button type="button" onClick={() => setAudience('abonnies')} className={`flex flex-col p-4 rounded-2xl border text-left transition-all ${audience === 'abonnies' ? 'bg-[#EAF0EB] border-[#17402C] text-[#17402C]' : 'bg-[#FAF8F5] border-[#E8E4D8] text-[#5A6A5D]'}`}>
+                      <button type="button" onClick={() => setAudience('abonnies')} className={`flex flex-col p-4 rounded-2xl border text-left transition-all ${audience === 'abonnies' ? 'bg-[#EAF0EB] border-[#17402C] text-[#17402C]' : 'bg-[#EEF3EC] border-[#E8E4D8] text-[#5A6A5D]'}`}>
                         <span className="text-base mb-1">🔒</span>
                         <span className="text-xs font-bold block">Abonnés</span>
                         <span className="text-[10px] text-[#7A8A7D] mt-0.5">Vos abonnés uniquement</span>
@@ -827,8 +827,8 @@ function PublierPostContent() {
               </div>
 
               <div className="flex items-center gap-3">
-                <button onClick={() => handlePublish(true)} disabled={isSubmitting} className="px-5 py-2.5 bg-white border border-[#E8E4D8] rounded-full text-xs font-bold text-[#3A4A3D] hover:bg-[#FAF8F5] transition-all">Enregistrer</button>
-                <button onClick={() => handlePublish(true)} disabled={isSubmitting} className="px-5 py-2.5 bg-white border border-[#E8E4D8] rounded-full text-xs font-bold text-[#3A4A3D] hover:bg-[#FAF8F5] transition-all">Planifier</button>
+                <button onClick={() => handlePublish(true)} disabled={isSubmitting} className="px-5 py-2.5 bg-white border border-[#E8E4D8] rounded-full text-xs font-bold text-[#3A4A3D] hover:bg-[#EEF3EC] transition-all">Enregistrer</button>
+                <button onClick={() => handlePublish(true)} disabled={isSubmitting} className="px-5 py-2.5 bg-white border border-[#E8E4D8] rounded-full text-xs font-bold text-[#3A4A3D] hover:bg-[#EEF3EC] transition-all">Planifier</button>
                 <button onClick={() => handlePublish(false)} disabled={isSubmitting} className="px-7 py-2.5 bg-[#17402C] text-white rounded-full text-xs font-bold hover:bg-[#2D3F35] transition-all ">
                   {isSubmitting ? 'Publication...' : 'Publier maintenant'}
                 </button>
@@ -886,7 +886,7 @@ function PublierPostContent() {
                     }}
                     style={{
                       padding: '12px', borderRadius: '12px', border: `1.5px solid ${postType === opt.id ? '#17402C' : '#E8E4D8'}`,
-                      background: postType === opt.id ? '#EAF0EB' : '#FAF8F5',
+                      background: postType === opt.id ? '#EAF0EB' : '#EEF3EC',
                       textAlign: 'center', cursor: 'pointer', fontFamily: 'inherit',
                     }}
                   >
@@ -964,15 +964,15 @@ function PublierPostContent() {
             <div style={{ background: '#fff', borderRadius: '16px', padding: '16px', border: '1px solid #E8E4D8', marginBottom: '12px' }}>
               <div style={{ fontSize: '14px', fontWeight: 700, color: '#17402C', marginBottom: '8px' }}>Audience</div>
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '6px', marginBottom: '12px' }}>
-                <button onClick={() => setAudience('public')} style={{ padding: '10px', borderRadius: '10px', border: `1.5px solid ${audience === 'public' ? '#17402C' : '#E8E4D8'}`, background: audience === 'public' ? '#EAF0EB' : '#FAF8F5', cursor: 'pointer', textAlign: 'center', fontFamily: 'inherit' }}>
+                <button onClick={() => setAudience('public')} style={{ padding: '10px', borderRadius: '10px', border: `1.5px solid ${audience === 'public' ? '#17402C' : '#E8E4D8'}`, background: audience === 'public' ? '#EAF0EB' : '#EEF3EC', cursor: 'pointer', textAlign: 'center', fontFamily: 'inherit' }}>
                   <div style={{ fontSize: '16px' }}>🌐</div>
                   <div style={{ fontSize: '9px', fontWeight: 700, color: '#17402C' }}>Public</div>
                 </button>
-                <button onClick={() => setAudience('club')} style={{ padding: '10px', borderRadius: '10px', border: `1.5px solid ${audience === 'club' ? '#17402C' : '#E8E4D8'}`, background: audience === 'club' ? '#EAF0EB' : '#FAF8F5', cursor: 'pointer', textAlign: 'center', fontFamily: 'inherit' }}>
+                <button onClick={() => setAudience('club')} style={{ padding: '10px', borderRadius: '10px', border: `1.5px solid ${audience === 'club' ? '#17402C' : '#E8E4D8'}`, background: audience === 'club' ? '#EAF0EB' : '#EEF3EC', cursor: 'pointer', textAlign: 'center', fontFamily: 'inherit' }}>
                   <div style={{ fontSize: '16px' }}>👥</div>
                   <div style={{ fontSize: '9px', fontWeight: 700, color: '#17402C' }}>Club</div>
                 </button>
-                <button onClick={() => setAudience('abonnies')} style={{ padding: '10px', borderRadius: '10px', border: `1.5px solid ${audience === 'abonnies' ? '#17402C' : '#E8E4D8'}`, background: audience === 'abonnies' ? '#EAF0EB' : '#FAF8F5', cursor: 'pointer', textAlign: 'center', fontFamily: 'inherit' }}>
+                <button onClick={() => setAudience('abonnies')} style={{ padding: '10px', borderRadius: '10px', border: `1.5px solid ${audience === 'abonnies' ? '#17402C' : '#E8E4D8'}`, background: audience === 'abonnies' ? '#EAF0EB' : '#EEF3EC', cursor: 'pointer', textAlign: 'center', fontFamily: 'inherit' }}>
                   <div style={{ fontSize: '16px' }}>🔒</div>
                   <div style={{ fontSize: '9px', fontWeight: 700, color: '#17402C' }}>Abonnés</div>
                 </button>

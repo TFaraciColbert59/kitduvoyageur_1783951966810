@@ -1,4 +1,4 @@
-'use client';
+﻿'use client';
 
 import React, { useState, useRef } from 'react';
 import { motion } from 'framer-motion';
@@ -78,7 +78,7 @@ export default function CaptureSheet({ isOpen, onClose, onCaptureAction, userLoc
         animate={{ y: 0 }}
         exit={{ y: '100%' }}
         transition={{ type: 'spring', damping: 25, stiffness: 200 }}
-        className="w-full max-w-md bg-[#FBFAF6] text-[#17402C] rounded-t-[34px] pt-3 pb-10 px-4  max-h-[85vh] overflow-y-auto space-y-5"
+        className="w-full max-w-md bg-[#EEF3EC] text-[#17402C] rounded-t-[34px] pt-3 pb-10 px-4  max-h-[85vh] overflow-y-auto space-y-5"
       >
         {/* Grabber */}
         <div className="w-10 h-1 bg-[#17402C]/14 rounded-full mx-auto" />
@@ -195,7 +195,7 @@ export default function CaptureSheet({ isOpen, onClose, onCaptureAction, userLoc
             Captures enregistrées ({captures.length})
           </h3>
           {captures.length === 0 ? (
-            <div className="p-4 bg-[#FBFAF6] border border-[#17402C]/06 rounded-2xl text-center">
+            <div className="p-4 bg-[#EEF3EC] border border-[#17402C]/06 rounded-2xl text-center">
               <p className="text-xs text-[#6B7A72]">
                 Aucune capture enregistrée pour le moment.
               </p>

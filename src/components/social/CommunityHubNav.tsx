@@ -1,4 +1,4 @@
-'use client';
+﻿'use client';
 
 import React from 'react';
 import Link from 'next/link';
@@ -75,7 +75,7 @@ export default function CommunityHubNav({
   }
 
   return (
-    <div className="w-full flex justify-center py-2 sticky top-0 z-30 bg-[#FBFAF6]/80 backdrop-blur-md">
+    <div className="w-full flex justify-center py-2 sticky top-0 z-30 bg-[#EEF3EC]/80 backdrop-blur-md">
       <div className="glass-capsule-bar flex items-center justify-between gap-1 w-full max-w-xl p-1 overflow-x-auto">
         {TABS.map((tab) => {
           const isActive = activeTab === tab.key;

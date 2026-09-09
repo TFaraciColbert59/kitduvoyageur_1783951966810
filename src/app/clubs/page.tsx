@@ -1,4 +1,4 @@
-'use client';
+﻿'use client';
 
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import Link from 'next/link';
@@ -154,7 +154,7 @@ function ClubFormModal({
             </h2>
             <p className="text-[#365233] text-sm mt-1">Configurez l&apos;espace de votre communauté.</p>
           </div>
-          <button onClick={onClose} className="p-3 bg-white/40 rounded-full hover:bg-[#FBFAF6] text-[#17402C] transition-colors self-start">
+          <button onClick={onClose} className="p-3 bg-white/40 rounded-full hover:bg-[#EEF3EC] text-[#17402C] transition-colors self-start">
             <Icon name="XMarkIcon" size={20} />
           </button>
         </div>
@@ -781,7 +781,7 @@ function ClubDetailModal({
 
         {/* Modal Toast Overlay */}
         {toast && (
-          <div className="absolute bottom-6 left-1/2 -translate-x-1/2 z-[100] bg-[#17402C] text-[#FAF8F5] px-6 py-3 rounded-full text-sm font-700  animate-fade-in-up">
+          <div className="absolute bottom-6 left-1/2 -translate-x-1/2 z-[100] bg-[#17402C] text-[#EEF3EC] px-6 py-3 rounded-full text-sm font-700  animate-fade-in-up">
             {toast}
           </div>
         )}
@@ -836,7 +836,7 @@ function ClubCard({
               <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
                 <button 
                   onClick={(e) => { e.stopPropagation(); onEdit(club); }} 
-                  className="p-2 bg-white/40 hover:bg-[#17402C] hover:text-[#FAF8F5] rounded-full transition-colors text-[#5A7064]"
+                  className="p-2 bg-white/40 hover:bg-[#17402C] hover:text-[#EEF3EC] rounded-full transition-colors text-[#5A7064]"
                   title="Modifier"
                 >
                   <Icon name="PencilIcon" size={14} />
@@ -1091,12 +1091,12 @@ export default function ClubsPage() {
     <>
       {/* ── DESKTOP ── */}
       <div className="hidden md:block">
-        <main className="h-dvh overflow-hidden bg-[#FAF8F5] flex flex-col">
+        <main className="h-dvh overflow-hidden bg-[#EEF3EC] flex flex-col">
           <Header />
           <div className="flex-1 min-h-0 overflow-y-auto">
           {/* Immersive Hero Section */}
           <section className="relative pt-32 pb-20 lg:pt-40 lg:pb-32 overflow-hidden border-b border-white/5">
-            <div className="absolute inset-0 bg-[#FAF8F5] pointer-events-none" />
+            <div className="absolute inset-0 bg-[#EEF3EC] pointer-events-none" />
             <div className="absolute top-0 right-0 w-[500px] h-[500px] bg-[#5B7F55]/20 rounded-full blur-[120px] opacity-60 mix-blend-screen pointer-events-none animate-pulse-slow" />
             <div className="absolute -bottom-40 -left-40 w-[600px] h-[600px] bg-[#4B6B7C]/10 rounded-full blur-[120px] opacity-50 mix-blend-screen pointer-events-none" />
 
@@ -1301,8 +1301,8 @@ export default function ClubsPage() {
 
       {/* Global Toast */}
       {toast && (
-        <div className="fixed bottom-10 left-1/2 -translate-x-1/2 z-[110] bg-[#17402C] text-[#FAF8F5] px-8 py-4 rounded-full text-sm font-700  animate-fade-in-up flex items-center gap-3">
-          <Icon name="CheckCircleIcon" size={18} className="text-[#FAF8F5]/70" />
+        <div className="fixed bottom-10 left-1/2 -translate-x-1/2 z-[110] bg-[#17402C] text-[#EEF3EC] px-8 py-4 rounded-full text-sm font-700  animate-fade-in-up flex items-center gap-3">
+          <Icon name="CheckCircleIcon" size={18} className="text-[#EEF3EC]/70" />
           {toast}
         </div>
       )}

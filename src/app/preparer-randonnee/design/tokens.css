@@ -1,4 +1,4 @@
-/* ————— LE KIT DU VOYAGEUR — DESIGN TOKENS ————— */
+﻿/* ————— LE KIT DU VOYAGEUR — DESIGN TOKENS ————— */
 :root {
   /* fonts */
   --lkv-font-sans: "Söhne", "Neue Haas Grotesk", "Inter", -apple-system, BlinkMacSystemFont, "Helvetica Neue", sans-serif;
@@ -32,7 +32,7 @@
   --lkv-ink-300: #AEB7B1;
 
   /* paper */
-  --lkv-paper: #FBFAF6;
+  --lkv-paper: #EEF3EC;
 
   /* motion */
   --lkv-dur: 220ms;

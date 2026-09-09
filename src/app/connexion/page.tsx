@@ -1,4 +1,4 @@
-'use client';
+﻿'use client';
 
 import React, { useState, Suspense } from 'react';
 import Header from '@/components/Header';
@@ -86,13 +86,13 @@ function AuthForm() {
           <p style={{ color: 'rgba(23,64,44,0.5)', fontSize: '14px', marginTop: '4px' }}>{mode === 'connexion' ? 'Connectez-vous pour accéder à vos kits.' : "Créez votre carnet d'expédition numérique."}</p>
         </div>
 
-        <div style={{ display: 'flex', borderRadius: '40px', border: '1px solid rgba(23,64,44,0.06)', background: '#FBFAF6', padding: '4px', marginBottom: '20px' }}>
+        <div style={{ display: 'flex', borderRadius: '40px', border: '1px solid rgba(23,64,44,0.06)', background: '#EEF3EC', padding: '4px', marginBottom: '20px' }}>
           {(['connexion', 'inscription'] as const).map((m) => (
             <button key={m} onClick={() => { setMode(m); setError(''); setConfirmationSent(false); }} style={{ flex: 1, padding: '10px', borderRadius: '40px', border: 'none', fontSize: '14px', fontWeight: 600, cursor: 'pointer', background: mode === m ? '#17402C' : 'transparent', color: mode === m ? 'white' : 'rgba(23,64,44,0.5)' }}>{m === 'connexion' ? 'Connexion' : 'Inscription'}</button>
           ))}
         </div>
 
-        <div style={{ background: '#FBFAF6', borderRadius: '12px', border: '1px solid rgba(23,64,44,0.06)', padding: '24px' }}>
+        <div style={{ background: '#EEF3EC', borderRadius: '12px', border: '1px solid rgba(23,64,44,0.06)', padding: '24px' }}>
           {confirmationSent ? (
             <div style={{ textAlign: 'center' }}>
               <div style={{ width: '48px', height: '48px', borderRadius: '50%', background: 'rgba(16,185,129,0.1)', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 12px' }}><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#10b981" strokeWidth="2"><polyline points="20 6 9 17 4 12" /></svg></div>
@@ -103,10 +103,10 @@ function AuthForm() {
           ) : (
             <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
               {mode === 'inscription' && (
-                <input id="name" type="text" autoComplete="name" value={name} onChange={(e) => setName(e.target.value)} placeholder="Prénom" aria-label="Prénom" style={{ padding: '10px 14px', borderRadius: '10px', border: '1px solid rgba(23,64,44,0.06)', background: '#FBFAF6', fontSize: '14px', color: '#17402C' }} />
+                <input id="name" type="text" autoComplete="name" value={name} onChange={(e) => setName(e.target.value)} placeholder="Prénom" aria-label="Prénom" style={{ padding: '10px 14px', borderRadius: '10px', border: '1px solid rgba(23,64,44,0.06)', background: '#EEF3EC', fontSize: '14px', color: '#17402C' }} />
               )}
-              <input id="email" type="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="Adresse email" autoComplete="email" aria-label="Adresse email" style={{ padding: '10px 14px', borderRadius: '10px', border: '1px solid rgba(23,64,44,0.06)', background: '#FBFAF6', fontSize: '14px', color: '#17402C' }} />
-              <input id="password" type="password" value={password} onChange={(e) => setPassword(e.target.value)} placeholder={mode === 'inscription' ? 'Minimum 8 caractères' : 'Mot de passe'} autoComplete={mode === 'inscription' ? 'new-password' : 'current-password'} aria-label={mode === 'inscription' ? 'Mot de passe' : 'Mot de passe'} style={{ padding: '10px 14px', borderRadius: '10px', border: '1px solid rgba(23,64,44,0.06)', background: '#FBFAF6', fontSize: '14px', color: '#17402C' }} />
+              <input id="email" type="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="Adresse email" autoComplete="email" aria-label="Adresse email" style={{ padding: '10px 14px', borderRadius: '10px', border: '1px solid rgba(23,64,44,0.06)', background: '#EEF3EC', fontSize: '14px', color: '#17402C' }} />
+              <input id="password" type="password" value={password} onChange={(e) => setPassword(e.target.value)} placeholder={mode === 'inscription' ? 'Minimum 8 caractères' : 'Mot de passe'} autoComplete={mode === 'inscription' ? 'new-password' : 'current-password'} aria-label={mode === 'inscription' ? 'Mot de passe' : 'Mot de passe'} style={{ padding: '10px 14px', borderRadius: '10px', border: '1px solid rgba(23,64,44,0.06)', background: '#EEF3EC', fontSize: '14px', color: '#17402C' }} />
               {error && <div style={{ background: '#FEE2E2', border: '1px solid #FECACA', padding: '10px', borderRadius: '10px', fontSize: '13px', color: '#DC2626' }}>{error}</div>}
               <button type="submit" disabled={loading} style={{ background: '#17402C', color: 'white', border: 'none', padding: '14px', borderRadius: '12px', fontSize: '15px', fontWeight: 600, cursor: loading ? 'not-allowed' : 'pointer', opacity: loading ? 0.6 : 1 }}>
                 {loading ? (mode === 'connexion' ? 'Connexion…' : 'Création…') : (mode === 'connexion' ? 'Se connecter' : 'Créer mon compte')}

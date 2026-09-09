@@ -1,4 +1,4 @@
-'use client';
+﻿'use client';
 
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import Link from 'next/link';
@@ -87,7 +87,7 @@ function WriteReviewModal({ onClose, onSubmit }: { onClose: () => void; onSubmit
   const handleSubmit = async () => { if (!rating || !form.title || !form.comment || !form.target_name) return; setSubmitting(true); await onSubmit({ ...form, rating }); setSubmitting(false); setSubmitted(true); setTimeout(() => { onClose(); }, 2000); };
   return (
     <div style={{ position: 'fixed', inset: 0, zIndex: 50, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '16px', backgroundColor: 'rgba(0,0,0,0.6)', backdropFilter: 'blur(4px)' }} onClick={onClose}>
-      <div style={{ backgroundColor: '#FBFAF6', border: '1px solid rgba(23,64,44,0.12)', borderRadius: '16px', padding: '24px', width: '100%', maxWidth: '480px', boxShadow: '0 10px 25px rgba(23,64,44,0.15)', boxSizing: 'border-box' }} onClick={(e) => e.stopPropagation()}>
+      <div style={{ backgroundColor: '#EEF3EC', border: '1px solid rgba(23,64,44,0.12)', borderRadius: '16px', padding: '24px', width: '100%', maxWidth: '480px', boxShadow: '0 10px 25px rgba(23,64,44,0.15)', boxSizing: 'border-box' }} onClick={(e) => e.stopPropagation()}>
         {!submitted ? (
           <>
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '20px' }}>
@@ -226,7 +226,7 @@ export default function AvisPage() {
   return (
     <>
       {/* DESKTOP — fullscreen, scroll interne sur le contenu */}
-      <div className="hidden md:flex flex-col h-[100dvh] overflow-hidden bg-[#FAF8F5]" data-lkv-material-theme="light">
+      <div className="hidden md:flex flex-col h-[100dvh] overflow-hidden bg-[#EEF3EC]" data-lkv-material-theme="light">
         <Header />
         <main className="flex-1 min-h-0 overflow-y-auto">
           <div className="max-w-[1280px] mx-auto px-4 sm:px-6 lg:px-8 pt-24 pb-12">
@@ -293,7 +293,7 @@ export default function AvisPage() {
               : filtered.length === 0 ? <p style={{ textAlign: 'center', color: '#5A7064', padding: '40px 0' }}>Aucun avis pour l&apos;instant</p>
               : <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>{filtered.map((review) => {
                 const authorName = review.author?.full_name ?? 'Membre';
-                return <div key={review.id} style={{ background: '#FBFAF6', borderRadius: '12px', border: '1px solid rgba(23,64,44,0.08)', padding: '14px' }}>
+                return <div key={review.id} style={{ background: '#EEF3EC', borderRadius: '12px', border: '1px solid rgba(23,64,44,0.08)', padding: '14px' }}>
                   <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '8px' }}>
                     <div style={{ width: '32px', height: '32px', borderRadius: '8px', background: '#17402C', color: 'white', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '12px', fontWeight: 700 }}>{authorName[0]}</div>
                     <div><p style={{ fontSize: '13px', fontWeight: 600, color: '#17402C' }}>{authorName}</p><p style={{ fontSize: '11px', color: '#5A7064' }}>⭐ {review.rating}/5</p></div>

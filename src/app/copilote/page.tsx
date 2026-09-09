@@ -1,4 +1,4 @@
-'use client';
+﻿'use client';
 
 import React, { useState, useRef, useEffect } from 'react';
 import Header from '@/components/Header';
@@ -67,7 +67,7 @@ export default function CopilotePage() {
           <div style={{ padding: '16px' }}>
             <h1 style={{ fontSize: '20px', fontWeight: 800, color: '#17402C', marginBottom: '8px' }}>Copilote IA</h1>
             <p style={{ fontSize: '13px', color: 'rgba(23,64,44,0.6)', marginBottom: '16px' }}>Assistant d&apos;expédition intelligent.</p>
-            <div style={{ background: '#FBFAF6', borderRadius: '12px', border: '1px solid rgba(23,64,44,0.06)', marginBottom: '12px', padding: '16px', minHeight: '200px' }}>
+            <div style={{ background: '#EEF3EC', borderRadius: '12px', border: '1px solid rgba(23,64,44,0.06)', marginBottom: '12px', padding: '16px', minHeight: '200px' }}>
               {messages.map((msg, i) => (
                 <div key={i} style={{ display: 'flex', gap: '8px', marginBottom: '10px', flexDirection: msg.role === 'user' ? 'row-reverse' : 'row' }}>
                   <div style={{ width: '28px', height: '28px', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', background: msg.role === 'assistant' ? '#17402C' : '#5C8A3A', color: 'white', fontSize: '10px', fontWeight: 700 }}>{msg.role === 'assistant' ? 'IA' : 'M'}</div>

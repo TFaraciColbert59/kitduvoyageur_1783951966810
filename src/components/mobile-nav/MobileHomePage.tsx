@@ -1,4 +1,4 @@
-'use client';
+﻿'use client';
 
 import React from 'react';
 import HomeHeroSection from '@/components/home/HomeHeroSection';
@@ -9,7 +9,7 @@ import StripCTA from '@/components/home/StripCTA';
 
 export default function MobileHomePage() {
   return (
-    <div style={{ background: '#FBFAF6', minHeight: '100dvh' }}>
+    <div style={{ background: '#EEF3EC', minHeight: '100dvh' }}>
       <HomeHeroSection />
       <QuickGrid />
       <EditorialCard

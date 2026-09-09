@@ -1,4 +1,4 @@
-'use client';
+﻿'use client';
 
 import React from 'react';
 
@@ -38,7 +38,7 @@ export default function DesktopLeftPanel({
   return (
     <div className="hidden md:flex absolute top-[96px] left-5 w-[320px] max-h-[calc(100%-180px)] flex-col gap-3.5 z-30 select-none overflow-y-auto custom-scrollbar">
       {/* 1. Progression Panel */}
-      <div className="bg-[#FBFAF6]/92 backdrop-blur-2xl border border-[#17402C]/07 rounded-2xl shadow-xl overflow-hidden p-4">
+      <div className="bg-[#EEF3EC]/92 backdrop-blur-2xl border border-[#17402C]/07 rounded-2xl shadow-xl overflow-hidden p-4">
         <div className="flex justify-between items-baseline mb-2">
           <span className="text-[11px] uppercase tracking-widest text-[#6B7A72] font-semibold">
             Progression
@@ -77,7 +77,7 @@ export default function DesktopLeftPanel({
       </div>
 
       {/* 2. Waypoints List Panel */}
-      <div className="bg-[#FBFAF6]/92 backdrop-blur-2xl border border-[#17402C]/07 rounded-2xl shadow-xl overflow-hidden p-4 space-y-3">
+      <div className="bg-[#EEF3EC]/92 backdrop-blur-2xl border border-[#17402C]/07 rounded-2xl shadow-xl overflow-hidden p-4 space-y-3">
         <div className="flex justify-between items-baseline">
           <span className="text-[11px] uppercase tracking-widest text-[#6B7A72] font-semibold">
             Itinéraire · {waypoints.length} étapes
@@ -103,7 +103,7 @@ export default function DesktopLeftPanel({
                     ? 'bg-[#17402C] border-[#17402C] text-[#C6DCBE]'
                     : wp.status === 'current'
                     ? 'bg-[#A8C8A0] border-[#17402C] text-[#06120C] shadow-sm'
-                    : 'bg-[#FBFAF6] border-[#17402C]/20 text-[#8B978F]'
+                    : 'bg-[#EEF3EC] border-[#17402C]/20 text-[#8B978F]'
                 }`}
               >
                 {wp.status === 'done' ? (

@@ -1,4 +1,4 @@
-'use client';
+﻿'use client';
 
 import React, { useState, useRef, useEffect, useCallback, useMemo } from 'react';
 import Header from '@/components/Header';
@@ -745,21 +745,21 @@ export default function RapportExpeditionPage() {
 
           {/* Stats */}
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px', padding: '12px 16px' }}>
-            <div style={{ padding: '12px', background: '#FBFAF6', borderRadius: '10px', border: '1px solid rgba(23,64,44,0.06)' }}>
+            <div style={{ padding: '12px', background: '#EEF3EC', borderRadius: '10px', border: '1px solid rgba(23,64,44,0.06)' }}>
               <p style={{ fontSize: '10px', color: '#6B7A72', margin: '0 0 2px 0' }}>Exp&eacute;ditions</p>
               <p style={{ fontSize: '20px', fontWeight: 700, color: '#17402C', margin: 0, fontFamily: 'ui-monospace, monospace' }}>{reports.length}</p>
             </div>
-            <div style={{ padding: '12px', background: '#FBFAF6', borderRadius: '10px', border: '1px solid rgba(23,64,44,0.06)' }}>
+            <div style={{ padding: '12px', background: '#EEF3EC', borderRadius: '10px', border: '1px solid rgba(23,64,44,0.06)' }}>
               <p style={{ fontSize: '10px', color: '#6B7A72', margin: '0 0 2px 0' }}>Score moyen</p>
               <p style={{ fontSize: '20px', fontWeight: 700, color: '#17402C', margin: 0, fontFamily: 'ui-monospace, monospace' }}>{reports.length > 0 ? `${avgScore}/100` : '\u2014'}</p>
             </div>
-            <div style={{ padding: '12px', background: '#FBFAF6', borderRadius: '10px', border: '1px solid rgba(23,64,44,0.06)' }}>
+            <div style={{ padding: '12px', background: '#EEF3EC', borderRadius: '10px', border: '1px solid rgba(23,64,44,0.06)' }}>
               <p style={{ fontSize: '10px', color: '#6B7A72', margin: '0 0 2px 0' }}>Budget total</p>
               <p style={{ fontSize: '20px', fontWeight: 700, color: totalBudgetDelta > 0 ? '#DC2626' : '#059669', margin: 0, fontFamily: 'ui-monospace, monospace' }}>
                 {totalBudgetDelta !== 0 ? `${totalBudgetDelta > 0 ? '+' : ''}${totalBudgetDelta}\u20ac` : '\u2014'}
               </p>
             </div>
-            <div style={{ padding: '12px', background: '#FBFAF6', borderRadius: '10px', border: '1px solid rgba(23,64,44,0.06)' }}>
+            <div style={{ padding: '12px', background: '#EEF3EC', borderRadius: '10px', border: '1px solid rgba(23,64,44,0.06)' }}>
               <p style={{ fontSize: '10px', color: '#6B7A72', margin: '0 0 2px 0' }}>&Eacute;quipements</p>
               <p style={{ fontSize: '20px', fontWeight: 700, color: '#17402C', margin: 0, fontFamily: 'ui-monospace, monospace' }}>
                 {userGear.length > 0 ? `${(totalWeight / 1000).toFixed(1)} kg` : '\u2014'}
@@ -877,7 +877,7 @@ export default function RapportExpeditionPage() {
                       key={report.id}
                       onClick={() => setSelectedReport(report)}
                       style={{
-                        background: '#FBFAF6',
+                        background: '#EEF3EC',
                         borderRadius: '12px',
                         border: '1px solid rgba(23,64,44,0.06)',
                         overflow: 'hidden',
@@ -920,7 +920,7 @@ export default function RapportExpeditionPage() {
           {/* ── IA TAB (Mobile) ── */}
           {activeTab === 'ia' && (
             <div style={{ padding: '16px' }}>
-              <div style={{ background: '#FBFAF6', borderRadius: '12px', border: '1px solid rgba(23,64,44,0.06)', overflow: 'hidden' }}>
+              <div style={{ background: '#EEF3EC', borderRadius: '12px', border: '1px solid rgba(23,64,44,0.06)', overflow: 'hidden' }}>
                 {/* Header */}
                 <div style={{ padding: '12px', borderBottom: '1px solid rgba(23,64,44,0.06)', display: 'flex', alignItems: 'center', gap: '10px' }}>
                   <div style={{ width: '28px', height: '28px', borderRadius: '8px', background: '#17402C', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#fff', fontSize: '13px' }}>

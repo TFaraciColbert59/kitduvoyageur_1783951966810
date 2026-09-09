@@ -1,4 +1,4 @@
-'use client';
+﻿'use client';
 
 import ProductLineageCard from '@/components/kits/ProductLineageCard';
 
@@ -148,7 +148,7 @@ export default function ProductDetailClient({ slug, initialProduct }: { slug: st
 
   if (loading) {
     return (
-      <div className="min-h-dvh bg-[#FAF8F5]">
+      <div className="min-h-dvh bg-[#EEF3EC]">
         <Header />
         <div className="pt-24 max-w-[1120px] mx-auto px-4 flex items-center justify-center min-h-[60vh]">
           <div className="w-8 h-8 rounded-full border-2 border-[#17402C] border-t-transparent animate-spin" />
@@ -159,7 +159,7 @@ export default function ProductDetailClient({ slug, initialProduct }: { slug: st
 
   if (!product && loadError) {
     return (
-      <div className="min-h-dvh bg-[#FAF8F5]">
+      <div className="min-h-dvh bg-[#EEF3EC]">
         <Header />
         <div className="pt-24 pb-16 max-w-[1120px] mx-auto px-4">
           <div className="bg-[rgba(255,255,255,0.92)] border border-[rgba(255,255,255,0.60)] rounded-lg max-w-[32rem] mx-auto p-10 text-center">
@@ -222,7 +222,7 @@ export default function ProductDetailClient({ slug, initialProduct }: { slug: st
     <>
       {/* ── DESKTOP VIEW ── */}
       <div className="hidden md:block">
-        <div data-lkv-material-theme="light" className="h-dvh overflow-hidden bg-[#FAF8F5] text-[#17402C]">
+        <div data-lkv-material-theme="light" className="h-dvh overflow-hidden bg-[#EEF3EC] text-[#17402C]">
           <Header />
 
           <main id="main-content" className="h-full overflow-y-auto pt-20 pb-16">
@@ -323,7 +323,7 @@ export default function ProductDetailClient({ slug, initialProduct }: { slug: st
                           <button
                             key={c.id}
                             onClick={() => setSelectedColor(c.id)}
-                            className={`relative w-8 h-8 rounded-full flex items-center justify-center transition-all ${selectedColor === c.id ? 'ring-2 ring-offset-2 ring-offset-[#FAF8F5] ring-[#17402C]' : 'hover:scale-110'}`}
+                            className={`relative w-8 h-8 rounded-full flex items-center justify-center transition-all ${selectedColor === c.id ? 'ring-2 ring-offset-2 ring-offset-[#EEF3EC] ring-[#17402C]' : 'hover:scale-110'}`}
                           >
                             <span className="w-full h-full rounded-full border border-black/10" style={{ backgroundColor: c.color }}></span>
                           </button>
@@ -553,7 +553,7 @@ export default function ProductDetailClient({ slug, initialProduct }: { slug: st
 
       {/* ── MOBILE VIEW ── */}
       <div className="block md:hidden">
-        <MobilePageShell background="#FBFAF6">
+        <MobilePageShell background="#EEF3EC">
           {/* Gallery */}
           <div style={{ position: 'relative', width: '100%', aspectRatio: '1/1', background: '#E1EBDE', overflow: 'hidden' }}>
             {/* Back button */}
@@ -621,7 +621,7 @@ export default function ProductDetailClient({ slug, initialProduct }: { slug: st
 
           {/* Thumbnails list */}
           {product.images.length > 1 && (
-            <div style={{ display: 'flex', gap: '8px', padding: '8px 16px', overflowX: 'auto', background: '#FAF8F5', scrollbarWidth: 'none' }}>
+            <div style={{ display: 'flex', gap: '8px', padding: '8px 16px', overflowX: 'auto', background: '#EEF3EC', scrollbarWidth: 'none' }}>
               {product.images.map((img, i) => (
                 <button
                   key={i}

@@ -1,4 +1,4 @@
-'use client';
+﻿'use client';
 
 import React from 'react';
 import { usePathname } from 'next/navigation';
@@ -47,7 +47,7 @@ export interface AppShellProps {
  */
 export default function AppShell({
   children,
-  background = '#FBFAF6',
+  background = '#EEF3EC',
   videoBackground = true,
   safeTop = true,
   hasBottomNav = true,
@@ -78,9 +78,9 @@ export default function AppShell({
 
   // Sur mobile, le fond edge-to-edge garantit zéro rebord blanc / jour sous la safe-area.
   // Sur desktop avec videoBackground, on bascule en transparent pour laisser voir CompteBackground.
-  const isDefaultBg = background === '#FBFAF6';
+  const isDefaultBg = background === '#EEF3EC';
   const containerBgStyle = videoBackground && isDefaultBg ? undefined : background;
-  const containerBgClass = videoBackground && isDefaultBg ? 'bg-[#FBFAF6] md:bg-transparent' : '';
+  const containerBgClass = videoBackground && isDefaultBg ? 'bg-[#EEF3EC] md:bg-transparent' : '';
 
   return (
     <div

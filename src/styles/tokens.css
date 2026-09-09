@@ -1,4 +1,4 @@
-/**
+﻿/**
  * LKDV DESIGN SYSTEM — CANONICAL TOKENS (Chantiers U, X & Y)
  *
  * SOURCE UNIQUE DE VÉRITÉ :
@@ -21,8 +21,9 @@
   --lkv-secondary-subtle: #D8E5D5;
   --lkv-secondary-rgb: 91, 127, 85;
 
-  --lkv-surface: #FAF8F5;
-  --lkv-surface-paper: #FBFAF6;
+  /* TOILE UNIQUE LKDV — fond uni plat légèrement teinté vert doux (directive fond) */
+  --lkv-surface: #EEF3EC;
+  --lkv-surface-paper: #EEF3EC;
   --lkv-surface-card: #FFFFFF;
   --lkv-surface-elevated: #FFFFFF;
   --lkv-surface-muted: #F3EFEA;
@@ -67,7 +68,7 @@
   --lkv-sage-500: var(--sage-500);
 
   /* ├─ Stone / Neutres ─────────────────────────────────────── */
-  --stone-50:  #FAF8F5;
+  --stone-50:  #EEF3EC;
   --stone-100: #F3EFEA;
   --stone-200: #E8E2D9;
   --stone-300: #D4CCC0;

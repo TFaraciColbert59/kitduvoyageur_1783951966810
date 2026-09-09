@@ -1,4 +1,4 @@
-'use client';
+﻿'use client';
 
 import React from 'react';
 import Link from 'next/link';
@@ -45,7 +45,7 @@ export default function TabActivite({ activities, badges, loading }: TabActivite
             {earnedBadges.map((b) => (
               <div
                 key={b.id}
-                className="px-3.5 py-2.5 rounded-2xl bg-[#FBFAF6] border border-[#A9C6B0]/40 flex items-center gap-2.5 shrink-0"
+                className="px-3.5 py-2.5 rounded-2xl bg-[#EEF3EC] border border-[#A9C6B0]/40 flex items-center gap-2.5 shrink-0"
               >
                 <span className="text-lg">⭐</span>
                 <div>

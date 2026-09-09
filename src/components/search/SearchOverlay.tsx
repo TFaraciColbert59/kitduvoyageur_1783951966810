@@ -1,4 +1,4 @@
-'use client';
+﻿'use client';
 
 import React, { useEffect, useRef, useState, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
@@ -95,7 +95,7 @@ export default function SearchOverlay() {
               left: 0,
               right: 0,
               zIndex: 99991,
-              background: '#FBFAF6',
+              background: '#EEF3EC',
               paddingTop: 'calc(env(safe-area-inset-top, 0px) + 16px)',
               paddingLeft: '16px',
               paddingRight: '16px',

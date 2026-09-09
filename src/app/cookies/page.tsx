@@ -1,4 +1,4 @@
-'use client';
+﻿'use client';
 
 import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
@@ -160,19 +160,19 @@ export default function CookiesPage() {
         </p>
 
         <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', marginBottom: '16px' }}>
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '10px', background: '#FBFAF6', borderRadius: '12px', border: '1px solid rgba(23,64,44,0.06)' }}>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '10px', background: '#EEF3EC', borderRadius: '12px', border: '1px solid rgba(23,64,44,0.06)' }}>
             <div><p style={{ fontSize: '13px', fontWeight: 500, color: '#17402C' }}>🔒 Cookies nécessaires</p><p style={{ fontSize: '11px', color: 'rgba(23,64,44,0.5)' }}>Toujours actifs</p></div>
             <div style={{ width: '36px', height: '18px', background: '#17402C', borderRadius: '36px', display: 'flex', alignItems: 'center', justifyContent: 'flex-end', paddingRight: '2px', opacity: 0.6 }}>
               <div style={{ width: '14px', height: '14px', background: 'white', borderRadius: '50%' }} />
             </div>
           </div>
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '10px', background: '#FBFAF6', borderRadius: '12px', border: '1px solid rgba(23,64,44,0.06)' }}>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '10px', background: '#EEF3EC', borderRadius: '12px', border: '1px solid rgba(23,64,44,0.06)' }}>
             <div><p style={{ fontSize: '13px', fontWeight: 500, color: '#17402C' }}>📊 Cookies analytiques</p></div>
             <button onClick={() => setAnalytics(!analytics)} style={{ width: '36px', height: '18px', borderRadius: '36px', display: 'flex', alignItems: 'center', transition: 'all 0.2s', background: analytics ? '#17402C' : 'rgba(23,64,44,0.15)', justifyContent: analytics ? 'flex-end' : 'flex-start', padding: analytics ? '0 2px 0 0' : '0 0 0 2px', border: 'none', cursor: 'pointer' }}>
               <div style={{ width: '14px', height: '14px', background: 'white', borderRadius: '50%', boxShadow: '0 1px 2px rgba(0,0,0,0.1)' }} />
             </button>
           </div>
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '10px', background: '#FBFAF6', borderRadius: '12px', border: '1px solid rgba(23,64,44,0.06)' }}>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '10px', background: '#EEF3EC', borderRadius: '12px', border: '1px solid rgba(23,64,44,0.06)' }}>
             <div><p style={{ fontSize: '13px', fontWeight: 500, color: '#17402C' }}>🎯 Cookies marketing</p></div>
             <button onClick={() => setMarketing(!marketing)} style={{ width: '36px', height: '18px', borderRadius: '36px', display: 'flex', alignItems: 'center', transition: 'all 0.2s', background: marketing ? '#17402C' : 'rgba(23,64,44,0.15)', justifyContent: marketing ? 'flex-end' : 'flex-start', padding: marketing ? '0 2px 0 0' : '0 0 0 2px', border: 'none', cursor: 'pointer' }}>
               <div style={{ width: '14px', height: '14px', background: 'white', borderRadius: '50%', boxShadow: '0 1px 2px rgba(0,0,0,0.1)' }} />

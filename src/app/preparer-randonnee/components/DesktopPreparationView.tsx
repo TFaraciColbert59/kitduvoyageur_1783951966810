@@ -1,4 +1,4 @@
-'use client';
+﻿'use client';
 
 import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
@@ -158,7 +158,7 @@ export const DesktopPreparationView: React.FC<DesktopPreparationViewProps> = ({
           <div className="mt-3 pt-2 border-t border-white/20">
              <button
                onClick={() => setShowDateModal(true)}
-               className="w-full bg-white hover:bg-[#FBFAF6] text-[#17402C] py-2 px-3 rounded-xl font-bold text-xs  flex items-center justify-center gap-2 transition-all cursor-pointer border border-black/10 active:scale-98"
+               className="w-full bg-white hover:bg-[#EEF3EC] text-[#17402C] py-2 px-3 rounded-xl font-bold text-xs  flex items-center justify-center gap-2 transition-all cursor-pointer border border-black/10 active:scale-98"
              >
                <span>📦 Continuer à préparer cette randonnée</span>
              </button>
@@ -300,7 +300,7 @@ export const DesktopPreparationView: React.FC<DesktopPreparationViewProps> = ({
             <div className="flex gap-2.5">
               <button
                 onClick={() => setShowDateModal(true)}
-                className="flex-1 bg-[#FBFAF6] hover:bg-white text-[#17402C] py-3.5 rounded-xl font-bold text-xs  flex items-center justify-center gap-2 transition-all cursor-pointer border border-black/10"
+                className="flex-1 bg-[#EEF3EC] hover:bg-white text-[#17402C] py-3.5 rounded-xl font-bold text-xs  flex items-center justify-center gap-2 transition-all cursor-pointer border border-black/10"
               >
                 <span>📦 Continuer à préparer cette randonnée</span>
               </button>
@@ -334,7 +334,7 @@ export const DesktopPreparationView: React.FC<DesktopPreparationViewProps> = ({
                   value={targetDate}
                   min={new Date().toISOString().split('T')[0]}
                   onChange={(e) => setTargetDate(e.target.value)}
-                  className="w-full bg-[#FBFAF6] border border-black/10 rounded-xl px-3.5 py-2.5 text-xs text-[#17402C] outline-none font-mono focus:border-[#17402C]"
+                  className="w-full bg-[#EEF3EC] border border-black/10 rounded-xl px-3.5 py-2.5 text-xs text-[#17402C] outline-none font-mono focus:border-[#17402C]"
                 />
               </div>
 

@@ -1,4 +1,4 @@
-import React from 'react';
+﻿import React from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import Header from '@/components/Header';
@@ -144,7 +144,7 @@ export default function HomePage() {
                   />
                   <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent" />
                   <div className="absolute top-4 left-4 right-4 flex justify-between items-start">
-                    <span className="bg-[#FBFAF6] backdrop-blur-sm px-3 py-1.5 rounded-full text-[10px] font-bold text-[#17402C] tracking-wide uppercase">3 Jours / 50 km</span>
+                    <span className="bg-[#EEF3EC] backdrop-blur-sm px-3 py-1.5 rounded-full text-[10px] font-bold text-[#17402C] tracking-wide uppercase">3 Jours / 50 km</span>
                     <span className="w-8 h-8 rounded-full bg-white/20 backdrop-blur-md flex items-center justify-center text-white"><svg width="14" height="14" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24"><path d="M5 12h14M12 5l7 7-7 7"/></svg></span>
                   </div>
                   <div className="absolute bottom-6 left-6 right-6">
@@ -169,7 +169,7 @@ export default function HomePage() {
                   />
                   <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent" />
                   <div className="absolute top-4 left-4 right-4 flex justify-between items-start">
-                    <span className="bg-[#FBFAF6] backdrop-blur-sm px-3 py-1.5 rounded-full text-[10px] font-bold text-[#17402C] tracking-wide uppercase">2 Jours</span>
+                    <span className="bg-[#EEF3EC] backdrop-blur-sm px-3 py-1.5 rounded-full text-[10px] font-bold text-[#17402C] tracking-wide uppercase">2 Jours</span>
                     <span className="w-8 h-8 rounded-full bg-white/20 backdrop-blur-md flex items-center justify-center text-white"><svg width="14" height="14" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24"><path d="M5 12h14M12 5l7 7-7 7"/></svg></span>
                   </div>
                   <div className="absolute bottom-6 left-6 right-6">
@@ -193,7 +193,7 @@ export default function HomePage() {
                   />
                   <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent" />
                   <div className="absolute top-4 left-4 right-4 flex justify-between items-start">
-                    <span className="bg-[#FBFAF6] backdrop-blur-sm px-3 py-1.5 rounded-full text-[10px] font-bold text-[#17402C] tracking-wide uppercase">1 Jour</span>
+                    <span className="bg-[#EEF3EC] backdrop-blur-sm px-3 py-1.5 rounded-full text-[10px] font-bold text-[#17402C] tracking-wide uppercase">1 Jour</span>
                     <span className="w-8 h-8 rounded-full bg-white/20 backdrop-blur-md flex items-center justify-center text-white"><svg width="14" height="14" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24"><path d="M5 12h14M12 5l7 7-7 7"/></svg></span>
                   </div>
                   <div className="absolute bottom-6 left-6 right-6">
@@ -269,7 +269,7 @@ export default function HomePage() {
                 <div className="relative rounded-[0.75rem] overflow-hidden aspect-square bg-[#E8E4D8]">
                   <img src="https://images.unsplash.com/photo-1550ed4e1b-3b47bd21096a?w=1000&q=80" alt="Sac à dos en toile cirée" className="w-full h-full object-cover" />
                   <div className="absolute top-6 left-6">
-                    <span className="bg-[#FBFAF6] backdrop-blur px-3 py-1.5 rounded-full text-[10px] font-bold text-[#17402C] tracking-wide uppercase ">
+                    <span className="bg-[#EEF3EC] backdrop-blur px-3 py-1.5 rounded-full text-[10px] font-bold text-[#17402C] tracking-wide uppercase ">
                       Édition artisanale
                     </span>
                   </div>

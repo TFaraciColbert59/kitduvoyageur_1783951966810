@@ -1,4 +1,4 @@
-'use client';
+﻿'use client';
 
 import React, { useEffect, useState, useMemo, useRef, useCallback } from 'react';
 import 'leaflet/dist/leaflet.css';
@@ -659,14 +659,14 @@ export default function InteractiveMap() {
   }, [filteredPois, selectedPoiId]);
 
   return (
-    <div className="relative w-full h-full flex overflow-hidden font-sans bg-[#FAF8F5]">
+    <div className="relative w-full h-full flex overflow-hidden font-sans bg-[#EEF3EC]">
       
       {/* ── SIDEBAR PANEL (scroll interne) ── */}
       <div className={`${showMobileFilters ? 'fixed inset-0 z-50 sm:relative sm:inset-auto flex flex-col' : 'hidden'} sm:flex sm:w-[380px] sm:shrink-0 bg-white border-r border-[#E4DED3] overflow-hidden`}>
         <div className="overflow-y-auto min-h-0 flex-1">
         
           {/* Header & Location Banner */}
-          <div className="p-4 border-b border-[#E4DED3] bg-[#FAF8F5] space-y-3">
+          <div className="p-4 border-b border-[#E4DED3] bg-[#EEF3EC] space-y-3">
             <div className="flex items-center justify-between">
               <div>
                 <h2 className="font-display font-bold tracking-tight text-lg text-[#17402C]">Carte Aventure</h2>
@@ -827,7 +827,7 @@ export default function InteractiveMap() {
                   <div
                     key={t.id}
                     onClick={() => handleSelectTrail(t)}
-                    className={`p-4 cursor-pointer transition-colors ${isSelected ? 'bg-[#17402C] text-white' : 'hover:bg-[#FAF8F5] bg-white text-[#17402C]'}`}
+                    className={`p-4 cursor-pointer transition-colors ${isSelected ? 'bg-[#17402C] text-white' : 'hover:bg-[#EEF3EC] bg-white text-[#17402C]'}`}
                   >
                     <div className="flex justify-between items-start mb-1">
                       <h3 className={`font-bold text-xs leading-snug ${isSelected ? 'text-white' : 'text-[#17402C]'}`}>{t.name}</h3>

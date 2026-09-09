@@ -1,4 +1,4 @@
-'use client';
+﻿'use client';
 
 import React from 'react';
 import Link from 'next/link';
@@ -39,7 +39,7 @@ export default function TerrainHub() {
     <div
       style={{
         minHeight: '100dvh',
-        background: '#FBFAF6',
+        background: '#EEF3EC',
         paddingTop: '80px',
         paddingBottom: 'calc(62px + 24px + env(safe-area-inset-bottom))',
       }}

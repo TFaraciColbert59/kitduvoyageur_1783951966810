@@ -1,9 +1,9 @@
-import React from 'react';
+﻿import React from 'react';
 
 export default function EarthLoading() {
   return (
     <div
-      className="fixed inset-0 bg-[#FBFAF6] overflow-hidden select-none"
+      className="fixed inset-0 bg-[#EEF3EC] overflow-hidden select-none"
       aria-busy="true"
       aria-label="Chargement du globe terrestre…"
     >
