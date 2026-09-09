@@ -1,5 +1,6 @@
 import { getHubAdventureData } from '@/features/hub/server/getHubAdventureData';
 import { deriveHubProfile } from '@/features/hub/engine/hubProfileEngine';
+import { getTripStats } from '@/lib/queries-trips';
 import { HubOverviewPossession } from '@/features/hub/components/HubOverviewPossession';
 import { HubOverviewSortie } from '@/features/hub/components/HubOverviewSortie';
 import { HubOverviewCollectif } from '@/features/hub/components/HubOverviewCollectif';
@@ -26,10 +27,12 @@ export default async function HubPage() {
   const profile = deriveHubProfile(data.input, new Date());
 
   if (data.input.kind === 'sortie' && data.trip) {
+    const stats = await getTripStats(data.trip.id);
     return (
       <HubOverviewSortie
         profile={profile}
         trip={data.trip}
+        stats={stats}
         countdown={daysUntil(data.trip.start_date, Date.now())}
         group={data.group}
         hiking={data.hiking}

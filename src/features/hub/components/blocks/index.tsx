@@ -1,8 +1,11 @@
 import { PointsEauBlock, PointsPassageBlock, CtaRandonneeBlock, MeteoBlock, ParcoursBlock } from './HikingBlocks';
 import { ReservationsBlock } from './TravelBlocks';
+import { TripMetricsBlock } from './TripMetricsBlock';
+import { SettlementsBlock } from './SettlementsBlock';
+import { JournalApercuBlock } from './JournalApercuBlock';
 import GroupeBloc from './GroupeBloc';
 import type { WidgetCatalogDef } from '../../registry/widgetCatalog';
-import type { TripFull } from '@/features/trips/types/trip.types';
+import type { TripFull, TripStats } from '@/features/trips/types/trip.types';
 import type { HubCrewBlock, HubHikingContext } from '../../server/getHubAdventureData';
 
 /**
@@ -15,9 +18,11 @@ export interface OverviewBlocksProps {
   trip: TripFull;
   group: HubCrewBlock | null;
   hiking: HubHikingContext | null;
+  /** Stats serveur (budget réel) — requises par le bloc métriques. */
+  stats?: TripStats;
 }
 
-export function OverviewBlocks({ blocks, trip, group, hiking }: OverviewBlocksProps) {
+export function OverviewBlocks({ blocks, trip, group, hiking, stats }: OverviewBlocksProps) {
   const slug = trip.slug;
   return (
     <>
@@ -42,6 +47,14 @@ export function OverviewBlocks({ blocks, trip, group, hiking }: OverviewBlocksPr
                 slug={slug}
               />
             );
+          case 'metriques-voyage':
+            return stats ? (
+              <TripMetricsBlock key={block.id} trip={trip} stats={stats} slug={slug} />
+            ) : null;
+          case 'dettes-groupe':
+            return <SettlementsBlock key={block.id} trip={trip} slug={slug} />;
+          case 'journal-apercu':
+            return <JournalApercuBlock key={block.id} trip={trip} slug={slug} />;
           case 'groupe-bloc':
             return <GroupeBloc key={block.id} trip={trip} group={group} />;
           default:

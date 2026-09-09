@@ -46,6 +46,9 @@ export type ActivityBlockId =
   | 'points-passage'
   | 'points-eau'
   | 'reservations'
+  | 'metriques-voyage'
+  | 'dettes-groupe'
+  | 'journal-apercu'
   | 'groupe-bloc';
 
 /** Id d'un widget du catalogue (bloc d'aperçu OU widget de sidebar existant). */
@@ -251,6 +254,17 @@ export const widgetCatalog: readonly WidgetCatalogDef[] = [
 
   // ── Blocs d'aperçu Voyage ────────────────────────────────────────────────
   {
+    id: 'metriques-voyage',
+    label: 'Métriques vitales',
+    activities: ['travel', 'hiking'],
+    requiredData: [],
+    priority: 96,
+    position: 'overview',
+    estimatedHeight: 220,
+    condition: always,
+    action: { label: 'Voir les détails' },
+  },
+  {
     id: 'reservations',
     label: 'Réservations',
     activities: ['travel'],
@@ -259,6 +273,26 @@ export const widgetCatalog: readonly WidgetCatalogDef[] = [
     position: 'overview',
     estimatedHeight: 110,
     condition: (c) => c.hasSteps,
+  },
+  {
+    id: 'dettes-groupe',
+    label: 'Qui doit quoi',
+    activities: 'all',
+    requiredData: ['trip.expenses'],
+    priority: 66,
+    position: 'overview',
+    estimatedHeight: 110,
+    condition: (c) => c.party !== 'solo',
+  },
+  {
+    id: 'journal-apercu',
+    label: 'Journal récent',
+    activities: 'all',
+    requiredData: ['trip.notes'],
+    priority: 62,
+    position: 'overview',
+    estimatedHeight: 120,
+    condition: always,
   },
 
   // ── Bloc Groupe universel (toutes activités) ─────────────────────────────
