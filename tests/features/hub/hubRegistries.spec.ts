@@ -101,11 +101,9 @@ describe('H1 — hubWidgetRegistry : budgets de hauteur', () => {
     }
   });
 
-  it('WID-3: widgets sortie importés du registre voyage (mêmes ids, mêmes priorités)', () => {
+  it('WID-3: widgets sortie importés du registre voyage (déroulé du jour seul)', () => {
     const ids = hubWidgetsForNature('sortie');
-    expect(ids).toContain('countdown');
-    expect(ids).toContain('steps-timeline');
-    expect(ids[0]).toBe('countdown');
+    expect(ids).toEqual(['steps-timeline']);
   });
 
   it('WID-4: widgets possession/collectif présents avec hauteurs > 0', () => {

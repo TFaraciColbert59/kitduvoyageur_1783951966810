@@ -127,9 +127,9 @@ describe('Y1 — hasDates et cas limites de dates', () => {
     expect(p.hasDates).toBe(false);
     expect(p.scale).toBe('short');
   });
-  it('sans dates → widget countdown absent', () => {
+  it('sans dates → hasDates false (aucun impact rail : déroulé conditionné aux étapes)', () => {
     const p = deriveTripProfile(mkTrip({ start_date: null, end_date: null }), NOW);
-    expect(p.widgets).not.toContain('countdown');
+    expect(p.widgets).toEqual([]);
   });
 });
 
@@ -262,14 +262,10 @@ describe('Y1 — modulations par activité', () => {
     const p = deriveTripProfile(withActivity('roadtrip'), NOW);
     expect(p.sections).toContain('budget');
   });
-  it('cultural masque le widget trip-context', () => {
+  it('cultural : rail inchangé (déroulé du jour seul, indépendant de l’activité)', () => {
     const long = tripWithDuration(9);
     const p = deriveTripProfile(mkTrip({ ...long, primary_activity: 'cultural' }), NOW);
-    expect(p.widgets).not.toContain('trip-context');
-  });
-  it('bivouac élève safety-next (présent même si autonomy serviced exclu — ici autonomous)', () => {
-    const p = deriveTripProfile(withActivity('bivouac'), NOW);
-    expect(p.widgets).toContain('safety-next');
+    expect(p.autonomy).toBe('serviced');
   });
   it('mixed suit sa matrice d’échelle (long/solo)', () => {
     const t = tripWithDuration(9);
@@ -278,54 +274,46 @@ describe('Y1 — modulations par activité', () => {
       'overview', 'itinerary', 'gear', 'budget', 'docs', 'checklist', 'safety', 'journal', 'export',
     ]);
   });
-  it('bushcraft inclut trip-context (scale ≠ day)', () => {
+  it('bushcraft : rail inchangé (déroulé du jour seul)', () => {
     const t = tripWithDuration(9);
     const p = deriveTripProfile(mkTrip({ ...t, primary_activity: 'bushcraft' }), NOW);
-    expect(p.widgets).toContain('trip-context');
+    expect(p.autonomy).toBe('autonomous');
   });
 });
 
-describe('Y1 — widgets (conditions de profil)', () => {
-  it('day/solo minimal : countdown, alerts, safety-next, offline-toggle, country-card', () => {
+describe('Y1 — widgets (rail sortie = déroulé du jour uniquement)', () => {
+  it('day/solo minimal sans étapes : rail vide', () => {
     const t = tripWithDuration(1);
-    const p = deriveTripProfile(mkTrip({ ...t, estimated_budget: null, items: [{ id: 'i1' } as TripFull['items'][number]] }), NOW);
-    expect(p.widgets).toEqual([
-      'countdown', 'alerts', 'safety-next', 'country-card', 'offline-toggle',
-    ]);
+    const p = deriveTripProfile(mkTrip({ ...t, estimated_budget: null }), NOW);
+    expect(p.widgets).toEqual([]);
   });
-  it('sans pays → country-card absent', () => {
-    const p = deriveTripProfile(mkTrip({ destination_country_code: null }), NOW);
-    expect(p.widgets).not.toContain('country-card');
+  it('avec étapes → steps-timeline seul widget du rail', () => {
+    const trip = mkTrip({ steps: [{ id: 's1' } as TripFull['steps'][number]] });
+    const p = deriveTripProfile(trip, NOW);
+    expect(p.widgets).toEqual(['steps-timeline']);
   });
-  it('budget à 0 → hasBudget false', () => {
-    const p = deriveTripProfile(mkTrip({ estimated_budget: 0 }), NOW);
-    expect(p.hasBudget).toBe(false);
+  it('rail identique quel que soit le profil (day/long, solo/group)', () => {
+    const step = { id: 's1' } as TripFull['steps'][number];
+    const t = tripWithDuration(1);
+    const day = deriveTripProfile(mkTrip({ ...t, estimated_budget: null, steps: [step] }), NOW);
+    const long = deriveTripProfile(
+      mkTrip({ ...tripWithDuration(9), estimated_budget: null, steps: [step] }),
+      NOW
+    );
+    expect(day.widgets).toEqual(['steps-timeline']);
+    expect(long.widgets).toEqual(['steps-timeline']);
   });
   it('sans étapes → steps-timeline absent', () => {
     const p = deriveTripProfile(mkTrip(), NOW);
     expect(p.widgets).not.toContain('steps-timeline');
   });
-  it('sans documents → docs-expiry absent', () => {
-    const p = deriveTripProfile(mkTrip(), NOW);
-    expect(p.widgets).not.toContain('docs-expiry');
+  it('sans pays → rail inchangé (pays ne pilote plus de widget)', () => {
+    const p = deriveTripProfile(mkTrip({ destination_country_code: null }), NOW);
+    expect(p.widgets).toEqual([]);
   });
-  it('avec documents → docs-expiry présent', () => {
-    const trip = mkTrip({
-      documents: [{ id: 'd1' } as TripFull['documents'][number]],
-    });
-    expect(deriveTripProfile(trip, NOW).widgets).toContain('docs-expiry');
-  });
-  it('avec étapes → next-step et steps-timeline présents', () => {
-    const trip = mkTrip({ steps: [{ id: 's1' } as TripFull['steps'][number]] });
-    const p = deriveTripProfile(trip, NOW);
-    expect(p.widgets).toContain('next-step');
-    expect(p.widgets).toContain('steps-timeline');
-  });
-  it('widgets triés par priorité décroissante', () => {
-    const t = tripWithDuration(1);
-    const p = deriveTripProfile(mkTrip({ ...t, estimated_budget: null, items: [{ id: 'i1' } as TripFull['items'][number]] }), NOW);
-    const priorities = ['countdown', 'alerts', 'safety-next', 'country-card', 'offline-toggle'];
-    expect(p.widgets).toEqual(priorities);
+  it('budget à 0 → hasBudget false', () => {
+    const p = deriveTripProfile(mkTrip({ estimated_budget: 0 }), NOW);
+    expect(p.hasBudget).toBe(false);
   });
 });
 
@@ -342,9 +330,9 @@ describe('Y1 — cas limites divers', () => {
     const p = deriveTripProfile(mkTrip({ status: 'cancelled' }), NOW);
     expect(p.sections).toEqual(['overview']);
   });
-  it('status cancelled → widgets réduits', () => {
+  it('status cancelled → widgets réduits (rail vide)', () => {
     const p = deriveTripProfile(mkTrip({ status: 'cancelled' }), NOW);
-    expect(p.widgets).not.toContain('countdown');
+    expect(p.widgets).toEqual([]);
   });
   it('density compact si day, comfortable sinon', () => {
     expect(deriveTripProfile(tripWithDuration(1), NOW).density).toBe('compact');

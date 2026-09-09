@@ -29,16 +29,8 @@ export type TripSectionId =
   | 'journal'
   | 'export';
 
-export type TripWidgetId =
-  | 'countdown'
-  | 'alerts'
-  | 'next-step'
-  | 'safety-next'
-  | 'steps-timeline'
-  | 'trip-context'
-  | 'country-card'
-  | 'docs-expiry'
-  | 'offline-toggle';
+/** Rail droit sortie — UNIQUEMENT le déroulé du jour (source unique steps-timeline). */
+export type TripWidgetId = 'steps-timeline';
 
 export interface TripProfile {
   scale: TripScale; // day ≤1j | short 2-4j | long 5-14j | expedition >14j
@@ -161,15 +153,7 @@ interface ProfileContext {
 }
 
 const WIDGETS: WidgetDef[] = [
-  { id: 'countdown', priority: 100, included: (c) => c.hasDates, motive: 'dates définies' },
-  { id: 'alerts', priority: 90, included: () => true, motive: 'toujours' },
-  { id: 'next-step', priority: 85, included: (c) => c.stepsCount > 0, motive: 'étapes présentes' },
-  { id: 'safety-next', priority: 84, included: (c) => c.autonomy !== 'serviced', motive: 'autonomie ≠ serviced' },
   { id: 'steps-timeline', priority: 62, included: (c) => c.stepsCount > 0, motive: 'étapes présentes' },
-  { id: 'trip-context', priority: 65, included: (c) => c.scale !== 'day' && c.activity !== 'cultural', motive: 'échelle ≠ day et activité ≠ cultural' },
-  { id: 'country-card', priority: 60, included: (c) => c.hasCountry, motive: 'code pays défini' },
-  { id: 'docs-expiry', priority: 58, included: (c) => c.docsCount > 0, motive: 'documents présents' },
-  { id: 'offline-toggle', priority: 20, included: () => true, motive: 'toujours' },
 ];
 
 // ── Moteur ──────────────────────────────────────────────────────────────────

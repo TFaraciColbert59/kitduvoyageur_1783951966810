@@ -1,6 +1,4 @@
-import Link from 'next/link';
 import { Compass, Package, Users, type LucideIcon } from 'lucide-react';
-import { HUB_NEW_HREF } from '../../registry/hubSectionRegistry';
 
 export interface ActivityIdentityBarProps {
   nature: 'sortie' | 'possession' | 'collectif';
@@ -39,12 +37,6 @@ export function ActivityIdentityBar({ nature, name, phaseLabel, daysUntil }: Act
           J-{daysUntil}
         </span>
       )}
-      <Link
-        href={HUB_NEW_HREF}
-        className="ml-auto hidden md:inline-flex items-center min-h-[44px] px-2 text-[11px] font-semibold text-[var(--lkv-text-secondary)] hover:text-[var(--lkv-text-primary)]"
-      >
-        Nouvelle activité
-      </Link>
     </div>
   );
 }

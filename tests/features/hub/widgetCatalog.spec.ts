@@ -67,10 +67,10 @@ describe('H-ACT — widgetCatalog : déclarations complètes', () => {
     expect(catalogWidgetDef('nope' as ActivityBlockId)).toBeUndefined();
   });
 
-  it('CAT-5: les 16 widgets de sidebar existants sont déclarés au catalogue central', () => {
+  it('CAT-5: les 8 widgets de sidebar existants sont déclarés au catalogue central', () => {
     const sidebarIds = widgetCatalog.filter((w) => w.position === 'sidebar').map((w) => w.id);
-    // 9 widgets trip + 7 widgets hub = 16
-    expect(sidebarIds.length).toBe(16);
+    // 1 widget trip (déroulé du jour) + 7 widgets hub = 8
+    expect(sidebarIds.length).toBe(8);
     expect(sidebarIds).toContain('steps-timeline');
     expect(sidebarIds).toContain('alertes-materiel');
     expect(sidebarIds).toContain('presence-groupe');
@@ -137,18 +137,16 @@ describe('H-ACT — selectWidgets : composition par activité', () => {
     expect(avec.some((w) => w.id === 'points-eau')).toBe(true);
   });
 
-  it('SEL-7: sidebar filtrée par activité + données (catalogue central)', () => {
-    const ids: HubWidgetId[] = ['countdown', 'steps-timeline', 'trip-context', 'country-card'];
+  it('SEL-7: sidebar filtrée par données (catalogue central)', () => {
+    const ids: HubWidgetId[] = ['steps-timeline', 'alertes-materiel'];
     const { sidebar } = selectWidgets(hikingCtx(), ids);
     const sidebarIds = sidebar.map((w) => w.id);
-    expect(sidebarIds).toContain('countdown'); // activités toutes
-    expect(sidebarIds).toContain('steps-timeline'); // activités toutes + hasSteps
-    expect(sidebarIds).not.toContain('trip-context'); // travel uniquement
-    expect(sidebarIds).not.toContain('country-card'); // travel uniquement
+    expect(sidebarIds).toContain('steps-timeline'); // toutes activités + hasSteps
+    expect(sidebarIds).toContain('alertes-materiel'); // possession/collectif, aucune donnée requise
   });
 
-  it('SEL-9: countdown masqué sans dates (requiredData)', () => {
-    const { sidebar } = selectWidgets(hikingCtx({ hasDates: false }), ['countdown']);
+  it('SEL-9: steps-timeline masqué sans étapes (requiredData)', () => {
+    const { sidebar } = selectWidgets(hikingCtx({ hasSteps: false }), ['steps-timeline']);
     expect(sidebar).toEqual([]);
   });
 });

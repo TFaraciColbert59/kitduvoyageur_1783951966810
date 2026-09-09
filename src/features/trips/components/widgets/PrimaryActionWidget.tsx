@@ -46,7 +46,6 @@ export function PrimaryActionWidget({ trip, activeSection }: PrimaryActionWidget
       onClick={() => haptic('light')}
       className="glass-capsule-btn primary w-full !py-3 min-h-[44px] justify-center flex items-center gap-2 text-xs font-bold"
     >
-      <span aria-hidden="true">{action.emoji}</span>
       <span>{action.label}</span>
     </Link>
   );

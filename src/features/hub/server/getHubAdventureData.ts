@@ -9,6 +9,7 @@ import type { ActiveAdventureData } from '../context/adventureSchema';
 import type { HubAdventureInput, HubSectionId } from '../engine/hubProfileEngine';
 import { deriveActivityType, aggregateHikeStats, estimateHikeDurationMin } from '../engine/activityTypes';
 import type { TripFull } from '@/features/trips/types/trip.types';
+import { getTripItemImages, type TripItemImage } from './getTripItemImages';
 
 /**
  * H3.1 — Chargeur serveur unique de l'aventure du hub (partagé par le layout
@@ -116,6 +117,8 @@ export interface HubAdventureData extends HubAdventureLists {
   hiking: HubHikingContext | null;
   /** Checklist de préparation du voyage actif (trip_checklist_items, [] hors sortie). */
   checklist: HubChecklistItem[];
+  /** Images du kit de la sortie (shop_products.image / product_ownership.photo_url, [] hors sortie). */
+  itemImages: TripItemImage[];
 }
 
 const EMPTY_LISTS: HubAdventureLists = {
@@ -443,12 +446,13 @@ export async function getHubAdventureDataInner(): Promise<HubAdventureData> {
       const hasGeoSteps = (trip.steps ?? []).some(
         (s) => s.latitude != null && s.longitude != null,
       );
-      const [group, hiking, checklist] = await Promise.all([
+      const [group, hiking, checklist, itemImages] = await Promise.all([
         loadCrewBlock(supabase, trip.id),
         activityType === 'hiking' || hasGeoSteps
           ? loadHikingContext(supabase, trip)
           : Promise.resolve(null),
         loadChecklist(supabase, trip.id),
+        getTripItemImages(trip.id),
       ]);
       return {
         ...lists,
@@ -466,10 +470,11 @@ export async function getHubAdventureDataInner(): Promise<HubAdventureData> {
         group,
         hiking,
         checklist,
+        itemImages,
       };
     }
     // Repli possession (aventure périmée — jamais de cul-de-sac).
-    return { ...lists, adventure: { nature: 'possession' }, input: possessionInput(lists), trip: null, groupLabel: null, linkedTripSlug: null, group: null, hiking: null, checklist: [] };
+    return { ...lists, adventure: { nature: 'possession' }, input: possessionInput(lists), trip: null, groupLabel: null, linkedTripSlug: null, group: null, hiking: null, checklist: [], itemImages: [] };
   }
 
   if (adventure.nature === 'collectif') {
@@ -512,6 +517,7 @@ export async function getHubAdventureDataInner(): Promise<HubAdventureData> {
         group: null,
         hiking: null,
         checklist: [],
+        itemImages: [],
       };
     }
     const c = lists.crews.find((x) => x.id === adventure.id);
@@ -531,10 +537,11 @@ export async function getHubAdventureDataInner(): Promise<HubAdventureData> {
       group: null,
       hiking: null,
       checklist: [],
+      itemImages: [],
     };
   }
 
-  return { ...lists, adventure, input: possessionInput(lists), trip: null, groupLabel: null, linkedTripSlug: null, group: null, hiking: null, checklist: [] };
+  return { ...lists, adventure, input: possessionInput(lists), trip: null, groupLabel: null, linkedTripSlug: null, group: null, hiking: null, checklist: [], itemImages: [] };
 }
 
 /**

@@ -122,23 +122,8 @@ const always = () => true;
 
 // ── Widgets de sidebar (déclarés EN RICHISSANT les registres existants) ─────
 
-/** Widgets de sidebar réservés au profil Voyage. */
-const TRAVEL_ONLY_SIDEBAR: ReadonlySet<HubWidgetId> = new Set([
-  'trip-context',
-  'country-card',
-  'docs-expiry',
-]);
-
 const SIDEBAR_LABELS: Record<string, string> = {
-  countdown: 'Compte à rebours',
-  alerts: 'Alertes',
-  'next-step': 'Prochaine étape',
-  'safety-next': 'Sécurité',
   'steps-timeline': 'Déroulé du jour',
-  'trip-context': 'Contexte',
-  'country-card': 'Pays',
-  'docs-expiry': 'Documents',
-  'offline-toggle': 'Hors-ligne',
   'alertes-materiel': 'Alertes matériel',
   'prochain-depart': 'Prochain départ',
   'stock-apercu': 'Stock',
@@ -150,12 +135,7 @@ const SIDEBAR_LABELS: Record<string, string> = {
 
 /** Données requises par widget de sidebar voyage/randonnée. */
 const SIDEBAR_REQUIRED: Partial<Record<HubWidgetId, DataKey[]>> = {
-  countdown: ['dates'],
-  'next-step': ['trip.steps'],
   'steps-timeline': ['trip.steps'],
-  'safety-next': ['trip.safety'],
-  'country-card': ['country'],
-  'docs-expiry': ['trip.documents'],
 };
 
 const ALL_ACTIVITIES: ActivityType[] = ['travel', 'hiking'];
@@ -164,7 +144,7 @@ function sidebarDefsFromRegistries(): WidgetCatalogDef[] {
   const tripDefs: WidgetCatalogDef[] = tripWidgetRegistry.map((w) => ({
     id: w.id,
     label: SIDEBAR_LABELS[w.id] ?? w.id,
-    activities: TRAVEL_ONLY_SIDEBAR.has(w.id) ? (['travel'] as ActivityType[]) : ALL_ACTIVITIES,
+    activities: ALL_ACTIVITIES,
     requiredData: SIDEBAR_REQUIRED[w.id] ?? [],
     priority: w.priority,
     position: 'sidebar',

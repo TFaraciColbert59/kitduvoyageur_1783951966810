@@ -1,9 +1,12 @@
-import { describe, it, expect } from 'vitest';
-import { calculateBudgetSummary, simplifyDebts } from '@/features/trips/engine/budgetEngine';
+﻿import { describe, it, expect } from 'vitest';
+import {
+  calculateBudgetSummary,
+  simplifyDebts,
+  buildBudgetDayPlan,
+} from '@/features/trips/engine/budgetEngine';
 import type { TripExpense, TripCollaborator } from '@/features/trips/types/trip.types';
 
-describe('budgetEngine — Chantier 7', () => {
-  const mockCollaborators: TripCollaborator[] = [
+const mockCollaborators: TripCollaborator[] = [
     {
       id: 'c-1',
       trip_id: 'trip-1',
@@ -39,6 +42,7 @@ describe('budgetEngine — Chantier 7', () => {
     },
   ];
 
+describe('budgetEngine — Chantier 7', () => {
   it('calcule correctement les totaux, le reste et le pourcentage consommé', () => {
     const expenses: TripExpense[] = [
       {
@@ -51,6 +55,7 @@ describe('budgetEngine — Chantier 7', () => {
         category: 'hébergement',
         expense_date: '2026-07-10',
         split_type: 'equal',
+        is_planned: false,
         metadata: null,
         created_at: '2026-07-01T10:00:00Z',
         updated_at: '2026-07-01T10:00:00Z',
@@ -65,6 +70,7 @@ describe('budgetEngine — Chantier 7', () => {
         category: 'nourriture',
         expense_date: '2026-07-11',
         split_type: 'equal',
+        is_planned: false,
         metadata: null,
         created_at: '2026-07-01T10:00:00Z',
         updated_at: '2026-07-01T10:00:00Z',
@@ -96,6 +102,7 @@ describe('budgetEngine — Chantier 7', () => {
         category: 'transport',
         expense_date: '2026-07-10',
         split_type: 'equal',
+        is_planned: false,
         metadata: null,
         created_at: '2026-07-01T10:00:00Z',
         updated_at: '2026-07-01T10:00:00Z',
@@ -126,6 +133,7 @@ describe('budgetEngine — Chantier 7', () => {
         category: 'nourriture',
         expense_date: '2026-07-10',
         split_type: 'equal',
+        is_planned: false,
         metadata: null,
         created_at: '2026-07-01T10:00:00Z',
         updated_at: '2026-07-01T10:00:00Z',
@@ -157,6 +165,7 @@ describe('budgetEngine — Chantier 7', () => {
         category: 'hébergement',
         expense_date: '2026-07-10',
         split_type: 'equal',
+        is_planned: false,
         metadata: null,
         created_at: '2026-07-01T10:00:00Z',
         updated_at: '2026-07-01T10:00:00Z',
@@ -171,6 +180,7 @@ describe('budgetEngine — Chantier 7', () => {
         category: 'hébergement',
         expense_date: '2026-07-11',
         split_type: 'equal',
+        is_planned: false,
         metadata: null,
         created_at: '2026-07-01T10:00:00Z',
         updated_at: '2026-07-01T10:00:00Z',
@@ -185,6 +195,7 @@ describe('budgetEngine — Chantier 7', () => {
         category: 'transport',
         expense_date: '2026-07-12',
         split_type: 'equal',
+        is_planned: false,
         metadata: null,
         created_at: '2026-07-01T10:00:00Z',
         updated_at: '2026-07-01T10:00:00Z',
@@ -213,6 +224,7 @@ describe('budgetEngine — Chantier 7', () => {
         category: 'matériel',
         expense_date: '2026-07-10',
         split_type: 'equal',
+        is_planned: false,
         metadata: null,
         created_at: '2026-07-01T10:00:00Z',
         updated_at: '2026-07-01T10:00:00Z',
@@ -227,6 +239,7 @@ describe('budgetEngine — Chantier 7', () => {
         category: 'nourriture',
         expense_date: '2026-07-11',
         split_type: 'equal',
+        is_planned: false,
         metadata: null,
         created_at: '2026-07-01T10:00:00Z',
         updated_at: '2026-07-01T10:00:00Z',
@@ -279,6 +292,7 @@ describe('budgetEngine — Chantier 7', () => {
         category: 'divers',
         expense_date: '2026-07-10',
         split_type: 'individual',
+        is_planned: false,
         metadata: null,
         created_at: '2026-07-01T10:00:00Z',
         updated_at: '2026-07-01T10:00:00Z',
@@ -298,5 +312,203 @@ describe('budgetEngine — Chantier 7', () => {
     expect(bobBalance?.net).toBe(0);
     expect(aliceBalance?.net).toBe(0);
     expect(result.settlements).toHaveLength(0);
+  });
+});
+
+describe('budgetEngine — dépenses prévues vs réelles', () => {
+  const baseExpense = {
+    trip_id: 'trip-1',
+    currency: 'EUR' as const,
+    metadata: null,
+    created_at: '2026-07-01T10:00:00Z',
+    updated_at: '2026-07-01T10:00:00Z',
+  };
+
+  it('exclut les dépenses prévues des totaux, catégories, balances et règlements', () => {
+    const expenses: TripExpense[] = [
+      {
+        ...baseExpense,
+        id: 'e-real',
+        payer_id: 'user-alice',
+        title: 'Refuge réel',
+        amount: 90,
+        category: 'hébergement',
+        expense_date: '2026-07-10',
+        split_type: 'equal',
+        is_planned: false,
+      },
+      {
+        ...baseExpense,
+        id: 'e-planned',
+        payer_id: 'user-alice',
+        title: 'Refuge prévu (à venir)',
+        amount: 500,
+        category: 'hébergement',
+        expense_date: '2026-07-20',
+        split_type: 'equal',
+        is_planned: true,
+      },
+    ];
+
+    const result = calculateBudgetSummary(
+      { estimated_budget: 500, budget_currency: 'EUR' },
+      expenses,
+      mockCollaborators
+    );
+
+    expect(result.totalSpent).toBe(90);
+    expect(result.plannedTotal).toBe(500);
+    expect(result.categories['hébergement']).toBe(90);
+
+    const alice = result.balances.find(b => b.userId === 'user-alice');
+    const charlie = result.balances.find(b => b.userId === 'user-charlie');
+    expect(alice?.paid).toBe(90);
+    expect(charlie?.net).toBe(-30); // 90 / 3 uniquement
+    expect(result.settlements).toHaveLength(2); // seulement sur les réelles
+  });
+
+  it('retourne des comptes vides sans dépenses réelles (uniquement du prévu)', () => {
+    const expenses: TripExpense[] = [
+      {
+        ...baseExpense,
+        id: 'e-planned',
+        payer_id: 'user-alice',
+        title: 'Bus futur',
+        amount: 40,
+        category: 'transport',
+        expense_date: '2026-07-20',
+        split_type: 'equal',
+        is_planned: true,
+      },
+    ];
+
+    const result = calculateBudgetSummary(
+      { estimated_budget: 200, budget_currency: 'EUR' },
+      expenses,
+      mockCollaborators
+    );
+
+    expect(result.totalSpent).toBe(0);
+    expect(result.plannedTotal).toBe(40);
+    expect(result.settlements).toHaveLength(0);
+    result.balances.forEach(b => expect(b.net).toBe(0));
+  });
+});
+
+describe('budgetEngine — buildBudgetDayPlan', () => {
+  const baseExpense = {
+    trip_id: 'trip-1',
+    currency: 'EUR' as const,
+    category: 'hébergement',
+    split_type: 'equal' as const,
+    metadata: null,
+    created_at: '2026-07-01T10:00:00Z',
+    updated_at: '2026-07-01T10:00:00Z',
+  };
+
+  it('couvre du start_date au end_date et sépare prévu / réel par jour', () => {
+    const expenses: TripExpense[] = [
+      {
+        ...baseExpense,
+        id: 'r1',
+        payer_id: 'user-alice',
+        title: 'Épicerie jour 1',
+        amount: 20,
+        expense_date: '2026-07-01',
+        is_planned: false,
+      },
+      {
+        ...baseExpense,
+        id: 'p1',
+        payer_id: 'user-alice',
+        title: 'Refuge nuit J2',
+        amount: 60,
+        expense_date: '2026-07-02',
+        is_planned: true,
+      },
+    ];
+
+    const plan = buildBudgetDayPlan(
+      { start_date: '2026-07-01', end_date: '2026-07-03' },
+      expenses,
+      '2026-07-02'
+    );
+
+    expect(plan).toHaveLength(3);
+    expect(plan[0].dayNumber).toBe(1);
+    expect(plan[0].realTotal).toBe(20);
+    expect(plan[0].plannedTotal).toBe(0);
+    expect(plan[1].date).toBe('2026-07-02');
+    expect(plan[1].isToday).toBe(true);
+    expect(plan[1].planned).toHaveLength(1);
+    expect(plan[2].realTotal).toBe(0);
+  });
+
+  it('rattache au jour le plus proche une dépense hors plage (clamp)', () => {
+    const expenses: TripExpense[] = [
+      {
+        ...baseExpense,
+        id: 'r-early',
+        payer_id: 'user-alice',
+        title: 'Train avant départ',
+        amount: 45,
+        category: 'transport',
+        expense_date: '2026-06-25',
+        is_planned: false,
+      },
+      {
+        ...baseExpense,
+        id: 'r-late',
+        payer_id: 'user-alice',
+        title: 'Souvenir après retour',
+        amount: 15,
+        category: 'divers',
+        expense_date: '2026-07-15',
+        is_planned: false,
+      },
+    ];
+
+    const plan = buildBudgetDayPlan(
+      { start_date: '2026-07-01', end_date: '2026-07-03' },
+      expenses,
+      '2026-07-01'
+    );
+
+    expect(plan).toHaveLength(3);
+    expect(plan[0].real).toHaveLength(1);
+    expect(plan[0].real[0].title).toBe('Train avant départ');
+    expect(plan[2].real[0].title).toBe('Souvenir après retour');
+  });
+
+  it('dérive les jours des dates de dépenses quand le voyage n\'a pas de dates', () => {
+    const expenses: TripExpense[] = [
+      {
+        ...baseExpense,
+        id: 'p1',
+        payer_id: 'user-alice',
+        title: 'Nuit refuge',
+        amount: 50,
+        expense_date: '2026-08-02',
+        is_planned: true,
+      },
+      {
+        ...baseExpense,
+        id: 'r1',
+        payer_id: 'user-alice',
+        title: 'Café',
+        amount: 3,
+        category: 'nourriture',
+        expense_date: '2026-08-01',
+        is_planned: false,
+      },
+    ];
+
+    const plan = buildBudgetDayPlan({ start_date: null, end_date: null }, expenses, '2026-08-02');
+
+    expect(plan).toHaveLength(2);
+    expect(plan[0].date).toBe('2026-08-01');
+    expect(plan[0].dayNumber).toBe(1);
+    expect(plan[1].isToday).toBe(true);
+    expect(plan[1].plannedTotal).toBe(50);
   });
 });

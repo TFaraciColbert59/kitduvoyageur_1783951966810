@@ -106,22 +106,24 @@ describe('H-ACT — profils d\'activité distincts (même coquille)', () => {
     expect(pos.activityType ?? null).toBeNull();
   });
 
-  it('PRF-8: randonnée masque les widgets pays/documents/contexte', () => {
-    const p = deriveHubProfile(sortie(mkTrip()), NOW);
-    expect(p.widgets).not.toContain('country-card');
-    expect(p.widgets).not.toContain('trip-context');
-    expect(p.widgets).not.toContain('docs-expiry');
-    expect(p.widgets).toContain('countdown');
-    expect(p.widgets).toContain('safety-next');
-  });
-
-  it('PRF-9: voyage conserve pays/documents/contexte', () => {
+  it('PRF-8: randonnée conserve le déroulé du jour (rail sortie unique)', () => {
     const p = deriveHubProfile(
-      sortie(mkTrip({ primary_activity: 'roadtrip', collaborators: [{ id: 'c1' }] as TripFull['collaborators'] })),
+      sortie(mkTrip({ steps: [{ id: 's1' } as TripFull['steps'][number]] })),
       NOW,
     );
-    expect(p.widgets).toContain('country-card');
-    expect(p.widgets).toContain('trip-context');
+    expect(p.widgets).toEqual(['steps-timeline']);
+  });
+
+  it('PRF-9: voyage conserve le déroulé du jour (rail sortie unique)', () => {
+    const p = deriveHubProfile(
+      sortie(mkTrip({
+        primary_activity: 'roadtrip',
+        collaborators: [{ id: 'c1' }] as TripFull['collaborators'],
+        steps: [{ id: 's1' } as TripFull['steps'][number]],
+      })),
+      NOW,
+    );
+    expect(p.widgets).toEqual(['steps-timeline']);
   });
 });
 

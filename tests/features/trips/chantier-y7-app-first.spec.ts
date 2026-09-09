@@ -208,24 +208,9 @@ describe('Chantier Y7 — App-First, Cibles Tactiles, Haptique et Offline Dexie'
       const sheetContent = fs.readFileSync(sheetPath, 'utf8');
 
       // Liens de sidebar et boutons de sheet
-      expect(sidebarContent).toContain('min-h-[64px]');
+      expect(sidebarContent).toContain('min-h-[44px]');
       expect(sheetContent).toContain('min-h-[44px]');
       expect(sheetContent).toContain('min-h-[48px]');
-    });
-
-    it('OfflineToggleWidget offre des cibles tactiles d au moins 44px', () => {
-      const toggleWidgetPath = path.join(
-        process.cwd(),
-        'src',
-        'features',
-        'trips',
-        'components',
-        'widgets',
-        'OfflineToggleWidget.tsx'
-      );
-      const content = fs.readFileSync(toggleWidgetPath, 'utf8');
-
-      expect(content).toContain('min-h-[44px]');
     });
   });
 

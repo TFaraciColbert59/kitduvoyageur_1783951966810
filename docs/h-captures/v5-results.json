@@ -5,7 +5,7 @@
     "shot": "docs/h-captures/v5-hub-sortie-1440.png",
     "checks": {
       "overflow": false,
-      "lastCardBottom": 1056,
+      "lastCardBottom": 869,
       "mainBottom": 900,
       "clipped": false,
       "hasActivites": true,
@@ -19,7 +19,7 @@
     "shot": "docs/h-captures/v5-hub-sortie-1920.png",
     "checks": {
       "overflow": false,
-      "lastCardBottom": 1056,
+      "lastCardBottom": 1049,
       "mainBottom": 1080,
       "clipped": false,
       "hasActivites": true,
@@ -33,8 +33,8 @@
     "shot": "docs/h-captures/v5-hub-sortie-mobile.png",
     "checks": {
       "overflow": false,
-      "lastCardBottom": 1523,
-      "mainBottom": 1759,
+      "lastCardBottom": 1495,
+      "mainBottom": 1731,
       "clipped": false,
       "hasActivites": false,
       "hasEsriTiles": 3,
@@ -47,7 +47,7 @@
     "shot": "docs/h-captures/v5-hub-itineraire.png",
     "checks": {
       "overflow": false,
-      "lastCardBottom": 1056,
+      "lastCardBottom": 869,
       "mainBottom": 900,
       "clipped": false,
       "hasActivites": true,
@@ -61,7 +61,7 @@
     "shot": "docs/h-captures/v5-hub-kit-voyage.png",
     "checks": {
       "overflow": false,
-      "lastCardBottom": 1056,
+      "lastCardBottom": 869,
       "mainBottom": 900,
       "clipped": false,
       "hasActivites": true,
@@ -75,7 +75,7 @@
     "shot": "docs/h-captures/v5-hub-equipage.png",
     "checks": {
       "overflow": false,
-      "lastCardBottom": 1056,
+      "lastCardBottom": 869,
       "mainBottom": 900,
       "clipped": false,
       "hasActivites": true,
@@ -89,7 +89,7 @@
     "shot": "docs/h-captures/v5-hub-budget.png",
     "checks": {
       "overflow": false,
-      "lastCardBottom": 1056,
+      "lastCardBottom": 869,
       "mainBottom": 900,
       "clipped": false,
       "hasActivites": true,
@@ -103,7 +103,7 @@
     "shot": "docs/h-captures/v5-hub-documents.png",
     "checks": {
       "overflow": false,
-      "lastCardBottom": 1056,
+      "lastCardBottom": 869,
       "mainBottom": 900,
       "clipped": false,
       "hasActivites": true,
@@ -117,7 +117,7 @@
     "shot": "docs/h-captures/v5-hub-checklist.png",
     "checks": {
       "overflow": false,
-      "lastCardBottom": 1056,
+      "lastCardBottom": 869,
       "mainBottom": 900,
       "clipped": false,
       "hasActivites": true,
@@ -131,7 +131,7 @@
     "shot": "docs/h-captures/v5-hub-securite.png",
     "checks": {
       "overflow": false,
-      "lastCardBottom": 1056,
+      "lastCardBottom": 869,
       "mainBottom": 900,
       "clipped": false,
       "hasActivites": true,
@@ -145,7 +145,7 @@
     "shot": "docs/h-captures/v5-hub-journal.png",
     "checks": {
       "overflow": false,
-      "lastCardBottom": 1056,
+      "lastCardBottom": 869,
       "mainBottom": 900,
       "clipped": false,
       "hasActivites": true,
@@ -159,7 +159,7 @@
     "shot": "docs/h-captures/v5-hub-export.png",
     "checks": {
       "overflow": false,
-      "lastCardBottom": 1056,
+      "lastCardBottom": 869,
       "mainBottom": 900,
       "clipped": false,
       "hasActivites": true,
@@ -187,7 +187,7 @@
     "shot": "docs/h-captures/v5-hub-inventaire.png",
     "checks": {
       "overflow": false,
-      "lastCardBottom": 1667,
+      "lastCardBottom": 1609,
       "mainBottom": 900,
       "clipped": false,
       "hasActivites": true,

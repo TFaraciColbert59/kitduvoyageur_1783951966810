@@ -1,6 +1,8 @@
 import { z } from 'zod';
 
 export const stepTransportModes = [
+  'foot',
+  'plane',
   'walking',
   'hiking',
   'car',

@@ -451,9 +451,35 @@ export const addTripExpenseSchema = z.object({
     .regex(/^\d{4}-\d{2}-\d{2}$/, 'Format de date invalide (AAAA-MM-JJ)')
     .default(() => new Date().toISOString().slice(0, 10)),
   splitType: z.enum(['equal', 'custom', 'individual']).default('equal'),
+  isPlanned: z.boolean().default(false),
   metadata: z.record(z.string(), z.unknown()).optional(),
 });
 export type AddTripExpenseInput = z.infer<typeof addTripExpenseSchema>;
+
+export const updateTripExpenseSchema = z.object({
+  tripId: z.string().uuid('ID de voyage invalide'),
+  expenseId: z.string().uuid('ID de dépense invalide'),
+  title: z
+    .string()
+    .trim()
+    .min(2, 'Le titre de la dépense doit comporter au moins 2 caractères')
+    .max(100, 'Le titre ne peut pas dépasser 100 caractères')
+    .optional(),
+  amount: z.coerce
+    .number()
+    .positive('Le montant doit être strictement supérieur à 0')
+    .max(100000, 'Le montant maximal est de 100 000 €')
+    .optional(),
+  category: z.string().trim().min(1).optional(),
+  expenseDate: z
+    .string()
+    .regex(/^\d{4}-\d{2}-\d{2}$/, 'Format de date invalide (AAAA-MM-JJ)')
+    .optional(),
+  payerId: z.string().uuid('Payeur invalide').optional(),
+  splitType: z.enum(['equal', 'custom', 'individual']).optional(),
+  isPlanned: z.boolean().optional(),
+});
+export type UpdateTripExpenseInput = z.infer<typeof updateTripExpenseSchema>;
 
 export const deleteTripExpenseSchema = z.object({
   tripId: z.string().uuid('ID de voyage invalide'),

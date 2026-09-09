@@ -7,8 +7,9 @@ import type { AdventureNature, HubWidgetId } from '../engine/hubProfileEngine';
  * (les widgets retenus par deriveHubProfile), ordonne par priorité.
  * Contrainte Y : somme des hauteurs par nature ≤ 2 × fenêtre 1440×900.
  *
- * Composition : les 12 widgets sortie sont IMPORTÉS du tripWidgetRegistry
- * (mêmes ids, mêmes priorités, mêmes hauteurs — jamais recopiés).
+ * Composition : les widgets sortie sont IMPORTÉS du tripWidgetRegistry
+ * (mêmes ids, mêmes priorités, mêmes hauteurs — jamais recopiés). Le rail
+ * sortie est réduit à l'UNIQUE déroulé du jour (`steps-timeline`).
  */
 
 export interface HubWidgetDef {
@@ -55,15 +56,7 @@ export const HUB_REAL_WIDGET_IDS: ReadonlySet<HubWidgetId> = new Set([
 
 /** Libellés FR des widgets (bande mobile & relevés) — source unique. */
 export const HUB_WIDGET_LABELS: Readonly<Record<string, string>> = {
-  countdown: 'Compte à rebours',
-  alerts: 'Alertes',
-  'next-step': 'Prochaine étape',
-  'safety-next': 'Sécurité',
   'steps-timeline': 'Déroulé du jour',
-  'trip-context': 'Contexte',
-  'country-card': 'Pays',
-  'docs-expiry': 'Documents',
-  'offline-toggle': 'Hors-ligne',
   'alertes-materiel': 'Alertes matériel',
   'prochain-depart': 'Prochain départ',
   'stock-apercu': 'Stock',
@@ -96,13 +89,13 @@ export function hubEstimatedHeight(ids: readonly HubWidgetId[]): number {
  * Fichier allowlisté R14 (littéraux de segments/ids hub autorisés ici).
  */
 export const SECTION_WIDGET_MAP: Partial<Record<string, readonly HubWidgetId[]>> = {
-  itinerary: ['next-step', 'countdown', 'steps-timeline'],
-  gear: ['offline-toggle'],
-  docs: ['docs-expiry', 'trip-context'],
-  checklist: ['offline-toggle'],
-  safety: ['safety-next', 'alerts', 'offline-toggle'],
-  journal: ['countdown'],
-  export: ['trip-context', 'country-card'],
+  itinerary: ['steps-timeline'],
+  gear: [],
+  docs: [],
+  checklist: [],
+  safety: [],
+  journal: [],
+  export: [],
   inventaire: ['stock-apercu', 'alertes-materiel'],
   kit: ['stock-apercu'],
   depart: ['prochain-depart'],

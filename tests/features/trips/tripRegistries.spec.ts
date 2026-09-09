@@ -143,11 +143,11 @@ describe('Y1.4 — registre des widgets', () => {
   });
 
   it('widgetDef retrouve chaque définition ; widgetsForPhase filtre et trie', () => {
-    expect(widgetDef('countdown')?.priority).toBe(100);
-    const live = widgetsForPhase(tripWidgetRegistry.map((w) => w.id), 'live');
-    expect(live).toContain('next-step');
-    expect(live).not.toContain('trip-context'); // prepare uniquement
-    expect(live.indexOf('countdown')).toBeLessThan(live.indexOf('offline-toggle'));
+    expect(widgetDef('steps-timeline')?.priority).toBe(62);
+    const all = tripWidgetRegistry.map((w) => w.id);
+    for (const phase of ['prepare', 'live', 'recount'] as const) {
+      expect(widgetsForPhase(all, phase)).toEqual(['steps-timeline']);
+    }
   });
 
   it('visibleSections projette le profil sur le registre, dans l’ordre', () => {

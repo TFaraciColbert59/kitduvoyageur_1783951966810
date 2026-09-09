@@ -104,7 +104,7 @@ export function calculateTripRetrospectiveMetrics(trip: TripFull): TripRetrospec
   const packedWeightKg = Math.round((packedWeightG / 1000) * 100) / 100;
 
   // Dépenses réelles
-  const totalExpensesRaw = expenses.reduce((sum, e) => sum + Number(e.amount || 0), 0);
+  const totalExpensesRaw = expenses.filter((e) => !e.is_planned).reduce((sum, e) => sum + Number(e.amount || 0), 0);
   const totalExpenses = Math.round(totalExpensesRaw * 100) / 100;
 
   // POIs visités

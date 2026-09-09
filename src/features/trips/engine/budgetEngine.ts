@@ -18,6 +18,7 @@ export interface DebtSettlement {
 
 export interface BudgetSummary {
   totalSpent: number;
+  plannedTotal: number;
   estimatedBudget: number | null;
   remainingBudget: number | null;
   spentPercentage: number | null;
@@ -26,6 +27,21 @@ export interface BudgetSummary {
   categories: Record<string, number>;
   balances: ParticipantBalance[];
   settlements: DebtSettlement[];
+}
+
+/**
+ * Dépenses RÉELLES uniquement (is_planned = false).
+ * Les dépenses prévisionnelles ne polluent jamais les comptes.
+ */
+export function getRealExpenses(expenses: TripExpense[]): TripExpense[] {
+  return expenses.filter(exp => !exp.is_planned);
+}
+
+/**
+ * Dépenses PRÉVUES uniquement (is_planned = true).
+ */
+export function getPlannedExpenses(expenses: TripExpense[]): TripExpense[] {
+  return expenses.filter(exp => exp.is_planned);
 }
 
 /**
@@ -93,6 +109,7 @@ export function calculateBudgetSummary(
 ): BudgetSummary {
   const currency = trip.budget_currency || 'EUR';
   let totalSpent = 0;
+  let plannedTotal = 0;
   const categories: Record<string, number> = {};
 
   // Map des participants identifiés
@@ -107,9 +124,17 @@ export function calculateBudgetSummary(
     });
   }
 
-  // 2. Parcourir les dépenses pour agréger catégories et payeurs
+  // 2. Parcourir les dépenses RÉELLES pour agréger catégories, payeurs et balances.
+  //    Les dépenses prévues (is_planned) sont agrégées à part : elles ne font
+  //    jamais partie des totaux réels, des balances ni des règlements.
   for (const exp of expenses) {
     const amount = Number(exp.amount) || 0;
+
+    if (exp.is_planned) {
+      plannedTotal += amount;
+      continue;
+    }
+
     totalSpent += amount;
 
     const cat = exp.category?.trim().toLowerCase() || 'divers';
@@ -144,6 +169,7 @@ export function calculateBudgetSummary(
   }
 
   totalSpent = Math.round(totalSpent * 100) / 100;
+  plannedTotal = Math.round(plannedTotal * 100) / 100;
 
   // 3. Calculer les balances
   const balances: ParticipantBalance[] = [];
@@ -182,6 +208,7 @@ export function calculateBudgetSummary(
 
   return {
     totalSpent,
+    plannedTotal,
     estimatedBudget,
     remainingBudget,
     spentPercentage,
@@ -191,4 +218,112 @@ export function calculateBudgetSummary(
     balances,
     settlements,
   };
+}
+
+// =============================================================================
+// Plan journalier : prévu vs réel, jour par jour
+// =============================================================================
+
+export interface BudgetDayRow {
+  dayNumber: number;
+  date: string | null; // AAAA-MM-JJ quand les dates du voyage sont connues
+  planned: TripExpense[];
+  real: TripExpense[];
+  plannedTotal: number;
+  realTotal: number;
+  isToday: boolean;
+}
+
+const addDays = (date: string, days: number): string => {
+  const d = new Date(`${date}T00:00:00Z`);
+  d.setUTCDate(d.getUTCDate() + days);
+  return d.toISOString().slice(0, 10);
+};
+
+/**
+ * Construit le plan journalier du budget : pour chaque jour du voyage,
+ * les dépenses prévues et les dépenses réelles de ce jour + leurs totaux.
+ *
+ * - Solo : le payeur est implicite (le propriétaire) — aucune distinction ici,
+ *   les lignes restent affichables/éditables de la même façon.
+ * - Multi : les lignes portent leur payer_id, le budgetSummary agrège les
+ *   balances sur les dépenses réelles uniquement.
+ * - Sans dates de voyage : les jours sont dérivés des dates de dépenses
+ *   distinctes (J1..Jn), sinon la journée d'aujourd'hui seule.
+ */
+export function buildBudgetDayPlan(
+  trip: { start_date?: string | null; end_date?: string | null },
+  expenses: TripExpense[],
+  today: string = new Date().toISOString().slice(0, 10)
+): BudgetDayRow[] {
+  const start = trip.start_date?.slice(0, 10) || null;
+  const end = trip.end_date?.slice(0, 10) || null;
+
+  let dates: string[] = [];
+  if (start && end && start <= end) {
+    for (let d = start; d <= end; d = addDays(d, 1)) {
+      dates.push(d);
+      if (dates.length > 365) break; // garde-fou
+    }
+  } else {
+    const uniqueDates = Array.from(
+      new Set(expenses.map(e => e.expense_date?.slice(0, 10)).filter(Boolean) as string[])
+    ).sort();
+    dates = uniqueDates.length > 0 ? uniqueDates : today ? [today] : [];
+  }
+
+  const dayByDate = new Map<string, BudgetDayRow>();
+  const rows: BudgetDayRow[] = dates.map((date, idx) => {
+    const row: BudgetDayRow = {
+      dayNumber: idx + 1,
+      date,
+      planned: [],
+      real: [],
+      plannedTotal: 0,
+      realTotal: 0,
+      isToday: date === today,
+    };
+    dayByDate.set(date, row);
+    return row;
+  });
+
+  const rangeStart = dates[0];
+  const rangeEnd = dates[dates.length - 1];
+
+  for (const exp of expenses) {
+    const raw = exp.expense_date?.slice(0, 10) || '';
+    let date = raw && dayByDate.has(raw) ? raw : null;
+
+    if (!date) {
+      // Dépense hors plage ou entre deux lignes : rattachée au jour le plus proche (clamp)
+      const rawTime = Date.parse(raw || rangeStart);
+      let best = rangeStart;
+      let bestDist = Math.abs(Date.parse(rangeStart) - rawTime);
+      for (const d of dates) {
+        const dist = Math.abs(Date.parse(d) - rawTime);
+        if (dist < bestDist) {
+          best = d;
+          bestDist = dist;
+        }
+      }
+      date = best;
+    }
+
+    const row = dayByDate.get(date);
+    if (!row) continue;
+    if (exp.is_planned) {
+      row.planned.push(exp);
+      row.plannedTotal += Number(exp.amount) || 0;
+    } else {
+      row.real.push(exp);
+      row.realTotal += Number(exp.amount) || 0;
+    }
+  }
+
+  for (const row of rows) {
+    row.plannedTotal = Math.round(row.plannedTotal * 100) / 100;
+    row.realTotal = Math.round(row.realTotal * 100) / 100;
+  }
+
+  return rows;
 }

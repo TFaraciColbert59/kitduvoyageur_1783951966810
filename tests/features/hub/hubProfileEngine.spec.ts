@@ -174,11 +174,12 @@ describe('H1 — deriveHubProfile : nature sortie (composition)', () => {
     expect(p.sections).toEqual(['overview', 'itinerary', 'gear', 'team', 'budget', 'checklist', 'safety', 'export']);
   });
 
-  it('SOR-4: widgets repris du moteur Y (composition, pas recopie)', () => {
-    const p = deriveHubProfile({ kind: 'sortie', trip: mkTrip() }, NOW);
-    expect(p.widgets).toContain('safety-next');
-    expect(p.widgets).toContain('alerts');
-    expect(p.widgets).toContain('countdown');
+  it('SOR-4: widget repris du moteur Y (composition, pas recopie — déroulé du jour seul)', () => {
+    const p = deriveHubProfile(
+      { kind: 'sortie', trip: mkTrip({ steps: [{ id: 's1' } as TripFull['steps'][number]] }) },
+      NOW,
+    );
+    expect(p.widgets).toEqual(['steps-timeline']);
   });
 
   it('SOR-5: voyage annulé = aperçu seul, widgets vides', () => {

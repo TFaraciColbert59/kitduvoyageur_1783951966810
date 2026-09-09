@@ -138,6 +138,7 @@ export interface TripExpense {
   category: string | null;
   expense_date: string;
   split_type: 'equal' | 'custom' | 'individual';
+  is_planned?: boolean;
   metadata: Record<string, unknown> | null;
   created_at: string;
   updated_at: string;

@@ -182,7 +182,7 @@ export function HubShell({
       mobileSlot={
         <MobilePageShell safeTop={true} hasBottomNav={true}>
           {realtime}
-          <div className="px-4 pt-4 pb-32 text-[var(--lkv-text-primary)]">
+          <div className="px-4 pt-2.5 pb-32 text-[var(--lkv-text-primary)]">
             <div className="flex items-center justify-between gap-2 mb-3 min-w-0">
               <AdventureSwitcher forceOpenSignal={switcherSignal} variant="mobile" />
               <div className="flex items-center gap-2 shrink-0">{networkStatus}</div>

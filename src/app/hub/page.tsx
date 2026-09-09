@@ -56,6 +56,8 @@ export default async function HubPage({
         phase={phaseDetails.phase}
         hiking={data.hiking}
         checklist={data.checklist}
+        itemImages={data.itemImages}
+        dayIndex={phaseDetails.dayIndex}
       />
     );
   }

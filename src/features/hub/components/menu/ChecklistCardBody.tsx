@@ -5,6 +5,8 @@ import type { HubChecklistItem } from '../../server/getHubAdventureData';
 export interface ChecklistCardBodyProps {
   /** Items réels de trip_checklist_items (chargés côté serveur). */
   items: HubChecklistItem[];
+  /** Jours avant le départ (null = hors fenêtre de préparation). */
+  daysUntil?: number | null;
 }
 
 /** Buckets de préparation dérivés de due_offset_days (J-30+, J-7+, départ). */
@@ -25,7 +27,7 @@ const BUCKET_LABELS: Record<'j30' | 'j7' | 'start', string> = {
  * 100% données réelles (trip_checklist_items via getHubAdventureData) —
  * plus de localStorage ni de liste fabriquée.
  */
-export function ChecklistCardBody({ items }: ChecklistCardBodyProps) {
+export function ChecklistCardBody({ items, daysUntil = null }: ChecklistCardBodyProps) {
   const groups = (['j30', 'j7', 'start'] as const)
     .map((key) => {
       const bucketItems = items.filter((i) => bucketOf(i.dueOffsetDays) === key);
@@ -36,6 +38,11 @@ export function ChecklistCardBody({ items }: ChecklistCardBodyProps) {
   const total = items.length;
   const done = items.filter((i) => i.done).length;
   const pct = total > 0 ? Math.round((done / total) * 100) : null;
+  const allDone = total > 0 && done === total;
+  const pendingNearest = items
+    .filter((i) => !i.done)
+    .sort((a, b) => a.dueOffsetDays - b.dueOffsetDays)
+    .slice(0, 3);
 
   return (
     <div className="mt-1">
@@ -65,6 +72,21 @@ export function ChecklistCardBody({ items }: ChecklistCardBodyProps) {
             );
           })}
         </div>
+      )}
+      {allDone ? (
+        <p className="mt-1.5 text-[11px] font-bold text-[var(--sage-700)]">
+          Sac prêt{daysUntil != null && daysUntil >= 0 ? ` — J-${daysUntil} avant le départ` : ''}
+        </p>
+      ) : (
+        pendingNearest.length > 0 && (
+          <ul className="mt-1.5 space-y-0.5" aria-label="Prochaines tâches">
+            {pendingNearest.map((i) => (
+              <li key={i.id} className="truncate text-[11px] text-[var(--lkv-text-secondary)]">
+                · {i.label}
+              </li>
+            ))}
+          </ul>
+        )
       )}
     </div>
   );

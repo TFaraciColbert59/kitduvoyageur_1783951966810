@@ -3,6 +3,22 @@
 import { tripSegmentPath } from '@/features/trips/registry/tripPaths';
 import { revalidatePath } from 'next/cache';
 import { createClient } from '@/lib/supabase/server';
+
+const DB_TRANSPORT_MODES = new Set(['foot', 'car', 'bus', 'train', 'plane', 'boat', 'bike', 'other']);
+const TRANSPORT_MODE_ALIASES: Record<string, string> = {
+  walking: 'foot',
+  hike: 'foot',
+  hiking: 'foot',
+  walk: 'foot',
+  flight: 'plane',
+};
+type TransportModeInput = string | null | undefined;
+function normalizeTransportMode(mode: TransportModeInput): TransportModeInput {
+  if (!mode) return null;
+  const lower = mode.toLowerCase();
+  if (DB_TRANSPORT_MODES.has(lower)) return lower;
+  return TRANSPORT_MODE_ALIASES[lower] ?? 'other';
+}
 import { createTrip, getTripById } from '@/lib/queries-trips';
 import { emitEvent } from '@/lib/events/eventBus';
 import { parseTripGpx } from '@/features/trips/engine/exportEngine';
@@ -460,6 +476,7 @@ export async function addTripStepAction(
   rawInput: unknown
 ): Promise<{ success: boolean; stepId: string }> {
   const input = createTripStepSchema.parse(rawInput);
+  input.transport_mode = normalizeTransportMode(input.transport_mode) as typeof input.transport_mode;
   const supabase = await createClient();
   const {
     data: { user },
@@ -514,6 +531,8 @@ export async function addTripStepAction(
 
   revalidatePath(tripSegmentPath(trip.slug, ''));
   revalidatePath(tripSegmentPath(trip.slug, 'itineraire'));
+  revalidatePath('/hub', 'page');
+  revalidatePath('/hub/itineraire', 'page');
 
   return { success: true, stepId: inserted.id };
 }
@@ -549,7 +568,7 @@ export async function updateTripStepAction(
   if (input.latitude !== undefined) patch.latitude = input.latitude;
   if (input.longitude !== undefined) patch.longitude = input.longitude;
   if (input.accommodation_name !== undefined) patch.accommodation_name = input.accommodation_name;
-  if (input.transport_mode !== undefined) patch.transport_mode = input.transport_mode;
+  if (input.transport_mode !== undefined) patch.transport_mode = normalizeTransportMode(input.transport_mode) as typeof input.transport_mode;
   if (input.distance_km !== undefined) patch.distance_km = input.distance_km;
   if (input.elevation_gain_m !== undefined) patch.elevation_gain_m = input.elevation_gain_m;
   if (input.elevation_loss_m !== undefined) patch.elevation_loss_m = input.elevation_loss_m;
@@ -569,6 +588,8 @@ export async function updateTripStepAction(
 
   revalidatePath(tripSegmentPath(trip.slug, ''));
   revalidatePath(tripSegmentPath(trip.slug, 'itineraire'));
+  revalidatePath('/hub', 'page');
+  revalidatePath('/hub/itineraire', 'page');
 
   return { success: true };
 }
@@ -639,6 +660,8 @@ export async function deleteTripStepAction(
 
   revalidatePath(tripSegmentPath(trip.slug, ''));
   revalidatePath(tripSegmentPath(trip.slug, 'itineraire'));
+  revalidatePath('/hub', 'page');
+  revalidatePath('/hub/itineraire', 'page');
 
   return { success: true };
 }
@@ -686,6 +709,8 @@ export async function reorderTripStepsAction(
 
   revalidatePath(tripSegmentPath(trip.slug, ''));
   revalidatePath(tripSegmentPath(trip.slug, 'itineraire'));
+  revalidatePath('/hub', 'page');
+  revalidatePath('/hub/itineraire', 'page');
 
   return { success: true };
 }
@@ -779,6 +804,8 @@ export async function moveStepToDayAction(
 
   revalidatePath(tripSegmentPath(trip.slug, ''));
   revalidatePath(tripSegmentPath(trip.slug, 'itineraire'));
+  revalidatePath('/hub', 'page');
+  revalidatePath('/hub/itineraire', 'page');
 
   return { success: true };
 }
@@ -834,6 +861,8 @@ export async function insertDayAction(
 
   revalidatePath(tripSegmentPath(trip.slug, ''));
   revalidatePath(tripSegmentPath(trip.slug, 'itineraire'));
+  revalidatePath('/hub', 'page');
+  revalidatePath('/hub/itineraire', 'page');
 
   return { success: true };
 }
@@ -908,6 +937,8 @@ export async function deleteDayAction(
 
   revalidatePath(tripSegmentPath(trip.slug, ''));
   revalidatePath(tripSegmentPath(trip.slug, 'itineraire'));
+  revalidatePath('/hub', 'page');
+  revalidatePath('/hub/itineraire', 'page');
 
   return { success: true };
 }
@@ -990,6 +1021,8 @@ export async function duplicateDayAction(
 
   revalidatePath(tripSegmentPath(trip.slug, ''));
   revalidatePath(tripSegmentPath(trip.slug, 'itineraire'));
+  revalidatePath('/hub', 'page');
+  revalidatePath('/hub/itineraire', 'page');
 
   return { success: true };
 }
@@ -1119,6 +1152,8 @@ export async function importGpxToTripAction(
 
   revalidatePath(tripSegmentPath(trip.slug, ''));
   revalidatePath(tripSegmentPath(trip.slug, 'itineraire'));
+  revalidatePath('/hub', 'page');
+  revalidatePath('/hub/itineraire', 'page');
   return { success: true, importedCount: payload.length };
 }
 
@@ -1206,6 +1241,8 @@ export async function insertSegmentToTripAction(
 
   revalidatePath(tripSegmentPath(trip.slug, ''));
   revalidatePath(tripSegmentPath(trip.slug, 'itineraire'));
+  revalidatePath('/hub', 'page');
+  revalidatePath('/hub/itineraire', 'page');
   return { success: true, insertedCount: segment.steps.length };
 }
 

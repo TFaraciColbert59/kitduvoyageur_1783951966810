@@ -1,6 +1,4 @@
 ﻿import { describe, it, expect } from 'vitest';
-import React from 'react';
-import { CountryCardWidget } from '@/features/trips/components/widgets/CountryCardWidget';
 
 describe('Chantier Y6 — Fusion des Modules', () => {
   describe('Y6.1 & Y6.2 — Configurateur IA contextuel', () => {
@@ -69,26 +67,6 @@ describe('Chantier Y6 — Fusion des Modules', () => {
 
       const path = `/voyages/${groupTrip.slug}`;
       expect(path).toBe('/voyages/corsica-gr20-groupe');
-    });
-  });
-
-  describe('Y6.5 — Pont pays', () => {
-    it('rend le widget CountryCardWidget avec le bon code pays et aria-label', () => {
-      const rendered = CountryCardWidget({
-        countryCode: 'FR',
-        countryName: 'France',
-      });
-
-      expect(rendered).not.toBeNull();
-      expect(rendered?.props.className).toContain('rounded-2xl');
-    });
-
-    it('retourne null si aucun code pays n’est fourni', () => {
-      const rendered = CountryCardWidget({
-        countryCode: null,
-      });
-
-      expect(rendered).toBeNull();
     });
   });
 });

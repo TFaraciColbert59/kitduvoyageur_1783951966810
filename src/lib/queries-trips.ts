@@ -90,7 +90,9 @@ export async function getPublicTrips(
   const summaries: TripSummary[] = (data || []).map((row: any) => {
     const collabs = row.trip_collaborators?.[0]?.count ?? 1;
     const steps = row.trip_steps?.[0]?.count ?? 0;
-    const expenses = (row.trip_expenses || []).reduce(
+    const expenses = (row.trip_expenses || [])
+      .filter((e: { is_planned?: boolean }) => !e.is_planned)
+      .reduce(
       (sum: number, e: { amount: number }) => sum + Number(e.amount || 0),
       0
     );
@@ -145,7 +147,7 @@ export async function getUserTrips(
   let query = supabase
     .from('trips')
     .select(
-      '*, trip_collaborators(count), trip_steps(count), trip_items(count), trip_expenses(amount)'
+      '*, trip_collaborators(count), trip_steps(count), trip_items(count), trip_expenses(amount, is_planned)'
     );
 
   if (filters?.status && filters.status !== 'all') {
@@ -177,7 +179,9 @@ export async function getUserTrips(
     const collabs = row.trip_collaborators?.[0]?.count ?? 1;
     const steps = row.trip_steps?.[0]?.count ?? 0;
     const items = row.trip_items?.[0]?.count ?? 0;
-    const totalSpent = (row.trip_expenses || []).reduce(
+    const totalSpent = (row.trip_expenses || [])
+      .filter((e: { is_planned?: boolean }) => !e.is_planned)
+      .reduce(
       (sum: number, e: { amount: number }) => sum + Number(e.amount || 0),
       0
     );
@@ -520,7 +524,7 @@ export async function getTripStats(tripId: string): Promise<TripStats> {
         .eq('trip_id', tripId),
       supabase
         .from('trip_expenses')
-        .select('amount')
+        .select('amount, is_planned')
         .eq('trip_id', tripId),
       supabase
         .from('trip_collaborators')
@@ -567,7 +571,9 @@ export async function getTripStats(tripId: string): Promise<TripStats> {
 
   // Budget
   const estimatedBudget = Number(trip?.estimated_budget || 0);
-  const totalSpent = expenses.reduce(
+  const totalSpent = expenses
+    .filter((e: { is_planned?: boolean }) => !e.is_planned)
+    .reduce(
     (sum: number, e: { amount: number }) => sum + Number(e.amount || 0),
     0
   );

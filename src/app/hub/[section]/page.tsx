@@ -53,11 +53,9 @@ export default async function HubSectionPage({
   if (!def.natures.includes(data.adventure.nature)) notFound();
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-2.5">
       <MenuBack />
-      <h1 className="font-display font-bold text-2xl text-[var(--lkv-text-primary)] px-1 pt-1">
-        {def.label}
-      </h1>
+      <h1 className="sr-only">{def.label}</h1>
       {def.id === 'inventaire' && <HubInventaireSection />}
       {def.id === 'kit' && <HubKitSection />}
       {def.id === 'preparation' && <HubPreparationSection />}

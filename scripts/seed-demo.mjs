@@ -134,6 +134,10 @@ const TRIPS = [
       ['Navette Les Houches → Bellevue', 12.0, 'transport', 0],
       ['Souvenir carte alpine gravée', 19.0, 'other', 5],
     ],
+    planned_expenses: [
+      ['Refuge du Goûter — demi-pension (prévu)', 66.0, 'lodging', 3],
+      ['Épicerie Les Contamines (prévu)', 25.0, 'food', 2],
+    ],
     documents: [
       ['Carte d\'identité', 'passport', 'ci-demo-alpes.pdf'],
       ['Assurance montagne GMF', 'insurance', 'assurance-montagne-demo.pdf'],
@@ -207,6 +211,10 @@ const TRIPS = [
       ['Ferme du Col Fromage — fromages', 24.0, 'food', 12],
       ['Bar de Ceillac — café + tartes', 18.5, 'food', 13],
     ],
+    planned_expenses: [
+      ['Pique-nique du col Fromage (prévu)', 18.5, 'food', 13],
+      ['Restaurant Molines — spécialités (prévu)', 32.0, 'food', 16],
+    ],
     documents: [
       ['Carte d\'identité', 'passport', 'ci-demo-alpes.pdf'],
       ['Attestation gîte Ceillac', 'booking', 'resa-gite-ceillac.pdf'],
@@ -278,6 +286,10 @@ const TRIPS = [
       ['Gîte d\'étape Saint-Germain', 48.0, 'lodging', 36],
       ['Navette retour Florac → Vigan', 25.0, 'transport', 37],
     ],
+    planned_expenses: [
+      ['Épicerie Florac ravito (prévu)', 42.0, 'food', 32],
+      ['Buvette du Mont Lozère (prévu)', 9.5, 'food', 35],
+    ],
     documents: [
       ['Carte d\'identité', 'passport', 'ci-demo-alpes.pdf'],
       ['Réservation gîte d\'étape', 'booking', 'resa-gite-cevennes.pdf'],
@@ -345,6 +357,9 @@ const TRIPS = [
       ['Gîte Autrans — dernière nuit', 52.0, 'lodging', 9],
       ['Taxi Autrans → Grenoble', 38.0, 'transport', 9],
       ['Boisson chaude Corrençon', 9.5, 'food', 7],
+    ],
+    planned_expenses: [
+      ['Ravitaillement bivouac Corrençon (prévu)', 28.0, 'food', 7],
     ],
     documents: [
       ['Carte d\'identité', 'passport', 'ci-demo-alpes.pdf'],
@@ -418,6 +433,9 @@ const TRIPS = [
       ['Essence — demi-plein', 55.0, 'transport', 50],
       ['Campsite Saint-Martin — 2 nuits', 58.0, 'lodging', 51],
       ['Marché de Vallon — tapenades et chèvre', 23.6, 'food', 45],
+    ],
+    planned_expenses: [
+      ['Grotte Chauvet 2 (prévu)', 34.0, 'other', 46],
     ],
     documents: [
       ['Permis de conduire', 'other', 'permis-conduire-demo.pdf'],
@@ -693,6 +711,28 @@ await section('trip_items', async () => {
   ok(`${n} articles de matériel (mix packed/priority/worn/consumable)`);
 });
 
+await section('trip_items → images shop (bande équipement)', async () => {
+  const { data: products, error: pErr } = await sb.from('shop_products')
+    .select('id')
+    .eq('is_active', true)
+    .not('image', 'is', null)
+    .limit(6);
+  if (pErr || !products || products.length === 0) {
+    warn('Aucun shop_products avec image : bande équipement restera en tuiles initiales');
+    return;
+  }
+  const { data: trip, error: tErr } = await sb.from('trips').select('id').eq('slug', 'tour-mont-blanc-refuge').maybeSingle();
+  if (tErr || !trip) throw tErr ?? new Error('trip introuvable');
+  const { data: items, error: iErr } = await sb.from('trip_items')
+    .select('id').eq('trip_id', trip.id).order('created_at', { ascending: true }).limit(products.length);
+  if (iErr || !items) throw iErr ?? new Error('items introuvables');
+  for (let k = 0; k < items.length; k += 1) {
+    const { error } = await sb.from('trip_items').update({ shop_product_id: products[k].id }).eq('id', items[k].id);
+    if (error) throw error;
+  }
+  ok(`${items.length} articles liés à des produits shop (images réelles)`);
+});
+
 // --- 6. Dépenses (dates calées sur les dates réelles du voyage)
 await section('trip_expenses', async () => {
   const titles = [...new Set(TRIPS.flatMap((t) => t.expenses.map((e) => e[0])))];
@@ -709,6 +749,25 @@ await section('trip_expenses', async () => {
     }))
   );
   ok(`${n} dépenses (transport/lodging/food)`);
+});
+
+// --- 6b. Dépenses PRÉVUES (is_planned=true, jours à venir)
+await section('trip_expenses_planned', async () => {
+  const titles = [...new Set(TRIPS.flatMap((t) => (t.planned_expenses ?? []).map((e) => e[0])))];
+  const n = await refreshRows('trip_expenses', 'title', titles, (trip, rec) =>
+    (trip.planned_expenses ?? []).map(([title, amount, category, dayOffset]) => ({
+      trip_id: rec.id,
+      payer_id: UID,
+      title,
+      amount,
+      currency: 'EUR',
+      category,
+      expense_date: offsetDate(trip.start_offset + dayOffset),
+      split_type: 'equal',
+      is_planned: true,
+    }))
+  );
+  ok(`${n} dépenses prévues (is_planned=true, à régler le jour venu)`);
 });
 
 // --- 7. Documents (file_url placeholder non-null, conforme au schéma)
