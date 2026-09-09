@@ -10,7 +10,6 @@ export * from './components/TripCard';
 export * from './components/TripHero';
 export * from './components/TripOverviewTab';
 export * from './components/TripSafetyView';
-export * from './components/TripFiltersBar';
 export * from './components/QuickCreateTripModal';
 export * from './components/TripNotesView';
 export * from './components/TripCompletionModal';

@@ -82,16 +82,21 @@ export function AdventureSwitcher({
   const controlsVariant = variant === 'mobile' ? isMobile : !isMobile;
 
   // H6.1 — Pilotage externe (retour Android) : signal croissant → ouvre.
+  // Le réglage différé de controlsVariant (matchMedia) ne doit PAS rouvrir :
+  // on ne réagit qu'à un CHANGEMENT réel de la valeur du signal.
   const firstSignal = React.useRef(true);
+  const controlsVariantRef = React.useRef(controlsVariant);
   useEffect(() => {
-    if (firstSignal.current) {
-      firstSignal.current = false;
-      return;
-    }
-    if (!controlsVariant) return;
+    controlsVariantRef.current = controlsVariant;
+  }, [controlsVariant]);
+  const lastSignal = React.useRef(forceOpenSignal);
+  useEffect(() => {
+    if (forceOpenSignal === lastSignal.current) return;
+    lastSignal.current = forceOpenSignal;
+    if (!controlsVariantRef.current) return;
     if (variant === 'mobile') setSheetOpen(true);
     else setOpen(true);
-  }, [forceOpenSignal, variant, controlsVariant]);
+  }, [forceOpenSignal, variant]);
 
   // H6.1 — Dialogue d'état (retour Android) : publie ouvert/fermé, écoute la fermeture.
   useEffect(() => {

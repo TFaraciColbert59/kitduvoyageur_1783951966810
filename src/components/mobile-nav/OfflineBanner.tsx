@@ -37,7 +37,7 @@ export default function OfflineBanner() {
           aria-live="polite"
           // H8 (parcours §5) : visible sur tous les viewports — avec le repli
           // du chip hub hors-ligne, la bannière est l'unique indicateur.
-          className="flex"
+          className="flex pointer-events-none"
           style={{
             position: 'fixed',
             top: 'calc(env(safe-area-inset-top, 0px) + 8px)',
