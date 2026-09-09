@@ -18,6 +18,7 @@ import { loadTripSection } from '@/lib/tripSection';
 import { getTripStats } from '@/lib/queries-trips';
 import type { DatabaseTripChecklistItem } from '@/lib/supabase/types';
 import { getTripKitDetails } from '@/lib/queries-trip-kit';
+import { GearSection } from '@/features/hub/components/menu/GearSection';
 import { calculateBudgetSummary } from '@/features/trips/engine/budgetEngine';
 import { getTripPhaseDetails } from '@/features/trips/engine/temporalPhaseEngine';
 import ItineraryPlannerClient from '@/features/trips/planner/ItineraryPlannerClient';
@@ -29,7 +30,6 @@ import { TripDocumentsView } from '@/features/trips/components/TripDocumentsView
 import { TripChecklistView } from '@/features/trips/components/TripChecklistView';
 import { TripSafetyView } from '@/features/trips/components/TripSafetyView';
 import { TripNotesView } from '@/features/trips/components/TripNotesView';
-import { TripKitView } from '@/features/trips/components/TripKitView';
 import TripExportView from '@/features/trips/components/TripExportView';
 
 /**
@@ -124,8 +124,7 @@ async function SortieSection({ sectionId, slug }: { sectionId: string; slug: str
     case 'gear': {
       const result = await getTripKitDetails(slug);
       if (!result) notFound();
-      const { analysis } = result;
-      return <TripKitView trip={trip} analysis={analysis} showBackLink={false} />;
+      return <GearSection trip={result.trip} analysis={result.analysis} />;
     }
     case 'team':
     case 'groupe':

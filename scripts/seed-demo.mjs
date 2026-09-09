@@ -890,9 +890,10 @@ const ownershipIdByName = new Map();
   for (const r of data ?? []) ownershipIdByName.set(r.name, r.id);
 }
 
+const kitIds = new Map(); // nom -> uuid
+
 await section('materiel_kits + materiel_kit_items', async () => {
-  for (const kit of SEED_KITS) {
-    const totalWeight = kit.items.reduce((s, [name, qty]) => {
+  for (const kit of SEED_KITS) {    const totalWeight = kit.items.reduce((s, [name, qty]) => {
       const item = SEED_ITEMS.find((i) => i.name === name);
       return s + (item ? item.weight_g * qty : 0);
     }, 0);
@@ -921,8 +922,28 @@ await section('materiel_kits + materiel_kit_items', async () => {
     });
     const { error: itemErr } = await sb.from('materiel_kit_items').insert(items);
     if (itemErr) throw itemErr;
+    kitIds.set(kit.name, kitId);
   }
   ok(`${SEED_KITS.length} kits (alpinisme / bivouac / GR) + ${SEED_KITS.reduce((s, k) => s + k.items.length, 0)} articles de kit`);
+});
+
+await section('trips.kit_id (kit sélectionné par voyage)', async () => {
+  const kitByTrip = {
+    'tour-mont-blanc-refuge': 'Kit alpinisme',
+    'queyras-etoile': 'Kit GR',
+    'cevennes-rando': 'Kit GR',
+    'bivouac-vercors': 'Kit bivouac',
+  };
+  let linked = 0;
+  for (const [slug, kitName] of Object.entries(kitByTrip)) {
+    const kitId = kitIds.get(kitName);
+    const tripId = seeded.get(slug)?.id;
+    if (!kitId || !tripId) continue;
+    const { error } = await sb.from('trips').update({ kit_id: kitId }).eq('id', tripId);
+    if (error) throw error;
+    linked += 1;
+  }
+  ok(`${linked} voyages liés à leur kit sélectionné`);
 });
 
 await section('materiel_loans (prêts)', async () => {

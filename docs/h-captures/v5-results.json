@@ -173,9 +173,9 @@
     "shot": "docs/h-captures/v5-hub-possession.png",
     "checks": {
       "overflow": false,
-      "lastCardBottom": 917,
+      "lastCardBottom": 869,
       "mainBottom": 900,
-      "clipped": true,
+      "clipped": false,
       "hasActivites": true,
       "hasEsriTiles": 0,
       "meteoIndisponible": false

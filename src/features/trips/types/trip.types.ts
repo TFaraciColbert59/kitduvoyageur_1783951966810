@@ -63,6 +63,7 @@ export interface Trip {
   user_id: string;
   group_id: string | null;
   share_token: string | null;
+  kit_id?: string | null;
   metadata: Record<string, unknown> | null;
   created_at: string;
   updated_at: string;

@@ -130,7 +130,13 @@ export function HubShell({
   useAndroidHubBackNav(activeSection, switcherOpen);
 
   const networkStatus = <HubNetworkStatus />;
-  const sidebarLeft = <HubSidebarLeft statusSlot={networkStatus} />;
+  const sidebarLeft = (
+    <HubSidebarLeft
+      statusSlot={networkStatus}
+      trips={trips}
+      activeSlug={adventure.nature === 'sortie' ? adventure.slug ?? null : null}
+    />
+  );
   const sidebarRight = (
     <HubSidebarRight
       profile={effectiveProfile}
@@ -141,7 +147,6 @@ export function HubShell({
       linkedTripSlug={linkedTripSlug}
       pendingInvites={pendingInvites}
       activeSection={activeSection}
-      trips={trips}
       tripStats={tripStats}
     />
   );
