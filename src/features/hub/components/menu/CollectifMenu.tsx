@@ -116,11 +116,11 @@ export function CollectifMenu({ summary, linkedTripSlug }: CollectifMenuProps) {
         : []),
     ];
     return (
-      <div className="space-y-4">
+      <div className="h-[calc(100%-24px)] min-h-[680px] flex flex-col gap-3 overflow-hidden">
         <ActivityIdentityBar nature="collectif" name={name} />
         <NextActionCard actions={equipageNext} />
         <QuickActions actions={actions} />
-        <BentoGrid cells={cells} />
+        <BentoGrid cells={cells} fitRows="minmax(0,1.1fr) minmax(0,1fr)" />
       </div>
     );
   }
@@ -210,6 +210,9 @@ export function CollectifMenu({ summary, linkedTripSlug }: CollectifMenuProps) {
             <NumberStat value={summary.tasksOpen} />
             <span className="ml-2 text-xs font-semibold text-[var(--lkv-text-secondary)]">à faire</span>
           </p>
+          {summary.tasksOpen > 0 && (
+            <p className="text-xs text-[var(--lkv-text-secondary)]">Répartissez-les dans l&apos;équipage.</p>
+          )}
         </MenuCard>
       ),
     },
@@ -244,7 +247,11 @@ export function CollectifMenu({ summary, linkedTripSlug }: CollectifMenuProps) {
           <p className="mt-1 text-3xl font-extrabold tracking-tight text-[var(--lkv-text-primary)]">
             <NumberStat value={summary.pollsOpen} />
           </p>
-          <p className="text-xs text-[var(--lkv-text-secondary)]">vote{summary.pollsOpen > 1 ? 's' : ''} ouvert{summary.pollsOpen > 1 ? 's' : ''}.</p>
+          <p className="text-xs text-[var(--lkv-text-secondary)]">
+            {summary.pollsOpen > 0
+              ? `vote${summary.pollsOpen > 1 ? 's' : ''} ouvert${summary.pollsOpen > 1 ? 's' : ''} — votez.`
+              : 'Aucun sondage ouvert.'}
+          </p>
         </MenuCard>
       ),
     },
@@ -266,8 +273,11 @@ export function CollectifMenu({ summary, linkedTripSlug }: CollectifMenuProps) {
         <MenuCard href={hubSectionHref(collectifRef, 'invitations')} label="Invitations">
           <p className="mt-1 text-3xl font-extrabold tracking-tight text-[var(--lkv-text-primary)]">
             <NumberStat value={summary.pendingInvites} />
+            <span className="ml-2 text-xs font-semibold text-[var(--lkv-text-secondary)]">en attente</span>
           </p>
-          <p className="text-xs text-[var(--lkv-text-secondary)]">en attente de réponse.</p>
+          {summary.inviteCode && (
+            <p className="font-mono text-xs text-[var(--lkv-text-secondary)]">Code {summary.inviteCode}</p>
+          )}
         </MenuCard>
       ),
     },
@@ -285,11 +295,11 @@ export function CollectifMenu({ summary, linkedTripSlug }: CollectifMenuProps) {
   ];
 
   return (
-    <div className="space-y-4">
+    <div className="h-[calc(100%-24px)] min-h-[680px] flex flex-col gap-3 overflow-hidden">
       <ActivityIdentityBar nature="collectif" name={name} />
       <NextActionCard actions={nextActions} />
       <QuickActions actions={actions} />
-      <BentoGrid cells={cells} />
+      <BentoGrid cells={cells} fitRows="minmax(0,1.1fr) minmax(0,1fr) minmax(0,1fr)" />
     </div>
   );
 }

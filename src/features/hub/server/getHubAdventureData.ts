@@ -339,9 +339,16 @@ export async function getHubAdventureDataInner(): Promise<HubAdventureData> {
     const trip = await getTripBySlug(adventure.slug, user?.id).catch(() => null);
     if (trip) {
       const activityType = deriveActivityType(trip.primary_activity);
+      // Météo/parcours dès qu'une étape est géolocalisée — pas seulement
+      // en activité « randonnée » (tout voyage outdoor mérite la météo).
+      const hasGeoSteps = (trip.steps ?? []).some(
+        (s) => s.latitude != null && s.longitude != null,
+      );
       const [group, hiking] = await Promise.all([
         loadCrewBlock(supabase, trip.id),
-        activityType === 'hiking' ? loadHikingContext(supabase, trip) : Promise.resolve(null),
+        activityType === 'hiking' || hasGeoSteps
+          ? loadHikingContext(supabase, trip)
+          : Promise.resolve(null),
       ]);
       return {
         ...lists,

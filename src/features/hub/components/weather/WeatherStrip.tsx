@@ -6,16 +6,59 @@ export interface WeatherStripProps {
   current: { tempC: number; weathercode: number; precipPct: number };
   days: WeatherDay[];
   locationLabel?: string | null;
+  /** strip = bloc pleine largeur · capsule = flottant compact (coin carte). */
+  variant?: 'strip' | 'capsule';
 }
 
 /**
- * Hub V5e — Bandeau météo réelle (Open-Meteo) : lieu + conditions actuelles,
- * puis les 4 prochains jours (icône, min/max, précip). Server component,
- * tokens uniquement. Placé dans la carte Itinéraire (media scrim).
+ * Hub V3 — Bandeau météo réelle (Open-Meteo). Server component, tokens.
+ * strip : lieu + conditions actuelles + 4 prochains jours.
+ * capsule : flottant compact (coin bas-droit de la carte média).
  */
-export function WeatherStrip({ current, days, locationLabel }: WeatherStripProps) {
+export function WeatherStrip({ current, days, locationLabel, variant = 'strip' }: WeatherStripProps) {
   const CurrentIcon = getWeatherIcon(current.weathercode);
   const upcoming = days.filter((d) => d.day !== 'Auj.').slice(0, 4);
+
+  if (variant === 'capsule') {
+    return (
+      <div className="rounded-2xl border border-white/60 bg-white/95 p-2 shadow-sm backdrop-blur-sm">
+        <div className="flex items-center gap-2">
+          <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-white/80 border border-white/70 text-[var(--lkv-secondary)]">
+            <CurrentIcon size={16} aria-hidden="true" />
+          </span>
+          <div className="min-w-0">
+            <p className="text-[9px] font-bold uppercase tracking-widest text-[var(--lkv-text-secondary)] truncate leading-none">
+              {locationLabel ?? 'Météo'}
+            </p>
+            <p className="text-xs font-bold text-[var(--lkv-text-primary)] leading-tight">
+              {Math.round(current.tempC)}°C
+              <span className="ml-1 font-medium text-[var(--lkv-text-secondary)]">
+                · {current.precipPct}%
+              </span>
+            </p>
+          </div>
+        </div>
+        {upcoming.length > 0 && (
+          <div className="mt-1.5 flex gap-1 border-t border-white/60 pt-1.5">
+            {upcoming.map((d) => {
+              const Icon = getWeatherIcon(d.weathercode);
+              return (
+                <div key={d.date} className="flex flex-1 flex-col items-center">
+                  <p className="text-[8px] font-bold uppercase text-[var(--lkv-text-muted)] leading-none">
+                    {d.day}
+                  </p>
+                  <Icon size={11} className="my-0.5 text-[var(--lkv-secondary)]" aria-hidden="true" />
+                  <p className="text-[9px] font-bold text-[var(--lkv-text-primary)] leading-none">
+                    {Math.round(d.tempMaxC)}°
+                  </p>
+                </div>
+              );
+            })}
+          </div>
+        )}
+      </div>
+    );
+  }
 
   return (
     <div className="rounded-xl border border-white/70 bg-white/55 px-3 py-2">

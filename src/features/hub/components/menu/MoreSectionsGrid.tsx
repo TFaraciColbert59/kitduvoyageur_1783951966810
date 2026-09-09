@@ -13,15 +13,17 @@ import { useHapticFeedback } from '@/hooks/useHapticFeedback';
 export interface MoreSectionsGridProps {
   cells: BentoCell[];
   moreCells: BentoCell[];
+  /** grid-template-rows (desktop plein écran) — repris tel quel. */
+  fitRows?: string;
 }
 
-export function MoreSectionsGrid({ cells, moreCells }: MoreSectionsGridProps) {
+export function MoreSectionsGrid({ cells, moreCells, fitRows }: MoreSectionsGridProps) {
   const isDesktop = useMediaQuery('(min-width: 1024px)');
   const [open, setOpen] = useState(false);
   const { triggerHaptic } = useHapticFeedback();
 
   if (isDesktop) {
-    return <BentoGrid cells={[...cells, ...moreCells]} />;
+    return <BentoGrid cells={[...cells, ...moreCells]} fitRows={fitRows} />;
   }
 
   return (

@@ -37,7 +37,7 @@ export function MenuCard({
       className={`group relative block h-full focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--lkv-primary)] rounded-[var(--lkv-radius-card)] transition-transform active:scale-[0.99] ${className}`}
     >
       <LiquidGlassCard
-        className={`h-full ${media ? 'min-h-[500px]' : 'min-h-[150px]'}`}
+        className="h-full"
         glowIntensity="sm"
         shadowIntensity="md"
         borderRadius="var(--lkv-radius-card)"
@@ -48,15 +48,17 @@ export function MenuCard({
           </div>
         )}
         <div
-          className={`relative z-30 flex ${media ? 'min-h-[500px]' : 'h-full min-h-[150px]'} flex-col justify-end rounded-[var(--lkv-radius-card)] p-3`}
+          className={`relative z-30 flex h-full min-h-0 flex-col justify-end rounded-[var(--lkv-radius-card)] p-3 ${
+            media ? '' : 'border border-white/60 bg-white/55'
+          }`}
         >
           <div
             data-media-content-panel
-            className={`min-w-0 ${
+            className={
               media
-                ? 'rounded-2xl border border-white/60 bg-white/95 p-3 shadow-sm backdrop-blur-sm'
-                : ''
-            } ${media ? '' : 'flex h-full min-h-[150px] flex-col justify-end rounded-[var(--lkv-radius-card)] border border-white/60 bg-white/55'}`}
+                ? 'flex h-full w-[42%] min-w-[230px] max-w-[320px] flex-col rounded-2xl border border-white/60 bg-white/95 p-3 shadow-sm backdrop-blur-sm'
+                : 'flex min-h-0 min-w-0 flex-1 flex-col'
+            }
           >
             <p
               className={`text-[11px] font-bold uppercase tracking-widest leading-tight ${
@@ -67,7 +69,7 @@ export function MenuCard({
             >
               {label}
             </p>
-            {children && <div className="mt-1.5 min-w-0">{children}</div>}
+            {children && <div className="mt-1.5 min-h-0 min-w-0 flex-1 overflow-hidden">{children}</div>}
           </div>
         </div>
       </LiquidGlassCard>

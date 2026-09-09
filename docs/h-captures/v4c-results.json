@@ -5,9 +5,14 @@
     "shot": "docs/h-captures/v4c-hub-possession-desktop.png"
   },
   {
-    "name": "v4c-hub-sortie-desktop",
+    "name": "v5e-hub-sortie-desktop",
     "status": "ok",
-    "shot": "docs/h-captures/v4c-hub-sortie-desktop.png"
+    "shot": "docs/h-captures/v5e-hub-sortie-desktop.png"
+  },
+  {
+    "name": "v5e-hub-sortie-mobile",
+    "status": "ok",
+    "shot": "docs/h-captures/v5e-hub-sortie-mobile.png"
   },
   {
     "name": "v4c-hub-sortie-mobile",

@@ -53,20 +53,29 @@ function shortDate(iso: string | null | undefined): string {
   return d.toLocaleDateString('fr-FR', { day: 'numeric', month: 'short' });
 }
 
-/** Ordre + spans des cartes par phase (contextualisation V4). */
-const ORDER: Record<TripPhase, Array<[string, 3 | 4 | 6]>> = {
+/** Ordre + spans des cartes par phase (contextualisation V3 plein écran). */
+const ORDER: Record<TripPhase, Array<[string, 3 | 4 | 6 | 8]>> = {
   prepare: [
-    ['itinerary', 6], ['gear', 6], ['budget', 4], ['team', 4], ['checklist', 4],
+    ['itinerary', 8], ['gear', 4], ['budget', 4], ['team', 4], ['checklist', 4],
     ['docs', 3], ['safety', 3], ['journal', 3], ['export', 3],
   ],
   live: [
-    ['cockpit', 6], ['safety', 6], ['journal', 4], ['team', 4], ['budget', 4],
-    ['itinerary', 6], ['gear', 6], ['checklist', 3], ['docs', 3], ['export', 3],
+    ['cockpit', 8], ['safety', 4], ['itinerary', 8], ['gear', 4],
+    ['journal', 4], ['team', 4], ['budget', 4],
+    ['checklist', 3], ['docs', 3], ['export', 3],
   ],
   recount: [
-    ['raconter', 6], ['journal', 6], ['export', 4], ['budget', 4], ['itinerary', 4],
-    ['team', 4], ['gear', 6], ['docs', 3], ['safety', 3], ['checklist', 3],
+    ['raconter', 8], ['export', 4], ['itinerary', 8], ['gear', 4],
+    ['journal', 4], ['team', 4], ['budget', 4],
+    ['checklist', 3], ['docs', 3], ['safety', 3],
   ],
+};
+
+/** Lignes proportionnelles (hub plein écran sans scroll, desktop). */
+const FIT_ROWS: Record<TripPhase, string> = {
+  prepare: '200px minmax(0,1.2fr) minmax(0,1fr)',
+  live: 'minmax(0,1fr) 200px minmax(0,1.05fr) minmax(0,1fr)',
+  recount: 'minmax(0,1fr) 200px minmax(0,1.05fr) minmax(0,1fr)',
 };
 
 /** Cartes secondaires : hors bento mobile, regroupées dans « Plus de sections ». */
@@ -120,7 +129,6 @@ export function SortieMenu({
   );
   const lastNote = notes[0] ?? null;
   const weatherCtx = hiking?.weather ?? null;
-  const weather = weatherCtx?.current ?? null;
   const catTotals = new Map<string, number>();
   for (const e of trip.expenses ?? []) {
     catTotals.set(e.category ?? 'Autre', (catTotals.get(e.category ?? 'Autre') ?? 0) + Number(e.amount || 0));
@@ -176,7 +184,7 @@ export function SortieMenu({
   ];
 
   // ── CELLULES PAR CLÉ (contenus enrichis) ──
-  const byKey: Record<string, { span: 3 | 4 | 6; node: React.ReactNode }> = {
+  const byKey: Record<string, { span: 3 | 4 | 6 | 8; node: React.ReactNode }> = {
     cockpit: {
       span: 6,
       node: (
@@ -189,39 +197,52 @@ export function SortieMenu({
       span: 6,
       node: (
         <MenuCard href={`${HUB_HOME_HREF}?phase=recount`} label="Raconter" tone="accent">
-          <p className="text-xs text-[var(--lkv-text-secondary)] mt-0.5">Bilan, carnet de bord et partage.</p>
+          <div className="flex flex-wrap items-center gap-1.5">
+            <span className="rounded-full bg-[var(--lkv-primary)]/10 px-2.5 py-1 text-[11px] font-bold text-[var(--lkv-primary)]">Carnet</span>
+            <span className="rounded-full bg-[var(--lkv-primary)]/10 px-2.5 py-1 text-[11px] font-bold text-[var(--lkv-primary)]">Bilan</span>
+            <span className="rounded-full bg-[var(--lkv-primary)]/10 px-2.5 py-1 text-[11px] font-bold text-[var(--lkv-primary)]">Partage</span>
+          </div>
+          <p className="mt-1.5 text-xs text-[var(--lkv-text-secondary)]">Bilan, carnet de bord et partage d&apos;équipage.</p>
         </MenuCard>
       ),
     },
     itinerary: {
-      span: 6,
+      span: 8,
       node: (
         <MenuCard
           href={hubSectionHref(ref, 'itinerary')}
           label="Itinéraire"
-          media={<HubMiniMap steps={steps} distanceKm={dist.totalKm} />}
+          media={
+            <div className="relative h-full w-full">
+              <HubMiniMap
+                steps={steps}
+                distanceKm={dist.totalKm}
+                reserveBottom={weatherCtx ? 78 : 0}
+              />
+              {weatherCtx && (
+                <div className="absolute bottom-2.5 right-2.5 z-20 w-[210px]">
+                  <WeatherStrip
+                    current={weatherCtx.current}
+                    days={weatherCtx.days}
+                    locationLabel={weatherCtx.locationLabel}
+                    variant="capsule"
+                  />
+                </div>
+              )}
+            </div>
+          }
         >
-          <p className="text-3xl font-extrabold tracking-tight text-[var(--lkv-text-primary)]">
+          <p className="text-2xl font-extrabold tracking-tight text-[var(--lkv-text-primary)]">
             <NumberStat value={duration.durationDays} /> j ·{' '}
             <NumberStat value={dist.totalKm} decimals={dist.totalKm % 1 === 0 ? 0 : 1} suffix=" km" />
           </p>
-          <p className="text-[11px] text-[var(--lkv-text-secondary)] font-mono">
+          <p className="text-[10px] text-[var(--lkv-text-secondary)] font-mono leading-tight">
             {steps.length} étapes · +{dist.dPlus}m / -{dist.dMinus}m
-            {weather ? ` · ${Math.round(weather.tempC)}°C` : ''}
           </p>
-          {weatherCtx && (
-            <div className="mt-1.5">
-              <WeatherStrip
-                current={weatherCtx.current}
-                days={weatherCtx.days}
-                locationLabel={weatherCtx.locationLabel}
-              />
-            </div>
-          )}
           {steps.length > 0 && (
-            <ul className="mt-1.5 space-y-1 border-l-2 border-[var(--lkv-secondary)]/30 ml-1 pl-2.5">
-              {steps.slice(0, 3).map((s) => (
-                <li key={s.id} className="flex items-center gap-2 text-xs">
+            <ul className="mt-1 space-y-0.5 border-l-2 border-[var(--lkv-secondary)]/30 ml-1 pl-2">
+              {steps.slice(0, 4).map((s) => (
+                <li key={s.id} className="flex items-center gap-1.5 text-[11px]">
                   <span className="font-mono text-[var(--lkv-text-muted)] shrink-0">J{s.day_number}</span>
                   <span className="truncate text-[var(--lkv-text-primary)] font-medium">{s.title}</span>
                 </li>
@@ -232,16 +253,16 @@ export function SortieMenu({
       ),
     },
     gear: {
-      span: 6,
+      span: 4,
       node: (
         <MenuCard href={hubSectionHref(ref, 'gear')} label="Équipement">
-          <p className="mt-1 text-3xl font-extrabold tracking-tight text-[var(--lkv-text-primary)]">
+          <p className="text-2xl font-extrabold tracking-tight text-[var(--lkv-text-primary)]">
             <NumberStat value={packedPercent} suffix="%" />
-            <span className="ml-2 text-xs font-semibold text-[var(--lkv-text-secondary)]">
-              {kit.ready}/{kit.total} prêts{weightKg > 0 ? ` · ${weightKg.toFixed(1)} kg` : ''}
+            <span className="ml-1.5 text-[10px] font-semibold text-[var(--lkv-text-secondary)]">
+              {kit.ready}/{kit.total} · {weightKg.toFixed(1)} kg
             </span>
           </p>
-          <div className="mt-2 h-2 w-full overflow-hidden rounded-full bg-black/5">
+          <div className="mt-1.5 h-1.5 w-full overflow-hidden rounded-full bg-black/5">
             <div className="h-full rounded-full bg-gradient-to-r from-[var(--lkv-secondary)] to-[var(--lkv-primary)]" style={{ width: `${packedPercent}%` }} />
           </div>
         </MenuCard>
@@ -251,39 +272,46 @@ export function SortieMenu({
       span: 4,
       node: (
         <MenuCard href={hubSectionHref(ref, 'budget')} label="Budget">
-          <p className="mt-1 text-3xl font-extrabold tracking-tight text-[var(--lkv-text-primary)]">
-            <NumberStat value={stats.total_spent} suffix={` ${currency}`} />
-          </p>
-          <p className="text-xs text-[var(--lkv-text-secondary)]">
-            {stats.estimated_budget > 0 ? `sur ${stats.estimated_budget} ${currency} · ${budgetPct}%` : 'estimation non définie'}
-          </p>
-          {topCats.length > 0 ? (
-            <div className="mt-2 flex items-center gap-3">
+          <div className="mt-1 flex items-center gap-3">
+            <div className="relative shrink-0" style={{ width: 64, height: 64 }}>
               <BudgetDonut
                 categories={topCats.map(([label, value]) => ({ label, value }))}
-                size={72}
-                stroke={9}
-                className="shrink-0"
+                size={64}
+                stroke={8}
               />
-              <ul className="min-w-0 flex-1 space-y-1">
-                {topCats.map(([cat, sum], i) => (
-                  <li key={cat} className="flex items-center gap-2 text-xs">
-                    <span
-                      className="h-2 w-2 shrink-0 rounded-full"
-                      style={{ background: i === 0 ? 'var(--lkv-primary)' : 'var(--lkv-secondary)' }}
-                    />
-                    <span className="truncate text-[var(--lkv-text-secondary)]">{cat}</span>
-                    <span className="font-bold text-[var(--lkv-text-primary)] ml-auto shrink-0">{Math.round(sum)} {currency}</span>
-                  </li>
-                ))}
-              </ul>
-            </div>
-          ) : (
-            budgetPct !== null && (
-              <div className="mt-2 h-2 w-full overflow-hidden rounded-full bg-black/5">
-                <div className={`h-full rounded-full ${budgetPct > 100 ? 'bg-[var(--lkv-danger)]' : 'bg-gradient-to-r from-[var(--lkv-secondary)] to-[var(--lkv-primary)]'}`} style={{ width: `${Math.min(100, budgetPct)}%` }} />
+              <div className="absolute inset-0 flex flex-col items-center justify-center">
+                <span className="text-sm font-extrabold tracking-tight text-[var(--lkv-text-primary)]">
+                  {Math.round(stats.total_spent)}
+                </span>
+                <span className="text-[8px] font-bold uppercase tracking-widest text-[var(--lkv-text-secondary)]">
+                  {currency}
+                </span>
               </div>
-            )
+            </div>
+            <div className="min-w-0 flex-1">
+              <p className="text-[10px] font-semibold text-[var(--lkv-text-secondary)] leading-tight">
+                {stats.estimated_budget > 0 ? `sur ${stats.estimated_budget} ${currency} · ${budgetPct}%` : 'estimation non définie'}
+              </p>
+              {topCats.length > 0 && (
+                <ul className="mt-1 space-y-0.5">
+                  {topCats.map(([cat, sum], i) => (
+                    <li key={cat} className="flex items-center gap-1.5 text-[11px]">
+                      <span
+                        className="h-2 w-2 shrink-0 rounded-full"
+                        style={{ background: i === 0 ? 'var(--lkv-primary)' : 'var(--lkv-secondary)' }}
+                      />
+                      <span className="truncate text-[var(--lkv-text-secondary)]">{cat}</span>
+                      <span className="font-bold text-[var(--lkv-text-primary)] ml-auto shrink-0">{Math.round(sum)} {currency}</span>
+                    </li>
+                  ))}
+                </ul>
+              )}
+            </div>
+          </div>
+          {topCats.length === 0 && budgetPct !== null && (
+            <div className="mt-2 h-2 w-full overflow-hidden rounded-full bg-black/5">
+              <div className={`h-full rounded-full ${budgetPct > 100 ? 'bg-[var(--lkv-danger)]' : 'bg-gradient-to-r from-[var(--lkv-secondary)] to-[var(--lkv-primary)]'}`} style={{ width: `${Math.min(100, budgetPct)}%` }} />
+            </div>
           )}
         </MenuCard>
       ),
@@ -418,7 +446,7 @@ export function SortieMenu({
   const secondaryCells = orderedCells.filter((c) => secondaryKeys.includes(c.key ?? ''));
 
   return (
-    <div className="space-y-4">
+    <div className="h-[calc(100%-24px)] min-h-[680px] flex flex-col gap-3 overflow-hidden">
       <ActivityIdentityBar
         nature="sortie"
         name={trip.title}
@@ -430,7 +458,9 @@ export function SortieMenu({
         checklist={{ tripId: trip.id, daysUntil, countryCode: trip.destination_country_code }}
       />
       <QuickActions actions={actions} />
-      <MoreSectionsGrid cells={primaryCells} moreCells={secondaryCells} />
+      <div className="flex-1 min-h-0">
+        <MoreSectionsGrid cells={primaryCells} moreCells={secondaryCells} fitRows={FIT_ROWS[phase]} />
+      </div>
       {phase === 'live' && <SosFloatingButton safetyHref={hubSectionHref(ref, 'safety')} />}
     </div>
   );

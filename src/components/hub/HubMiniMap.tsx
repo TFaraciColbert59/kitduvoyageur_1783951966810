@@ -18,10 +18,12 @@ export interface HubMiniMapProps {
   steps: HubMiniMapStep[];
   /** Distance totale (km) pour le tracé synthétique de secours. */
   distanceKm?: number;
+  /** Réserve basse supplémentaire (px) — ex. capsule météo flottante. */
+  reserveBottom?: number;
   className?: string;
 }
 
-export default function HubMiniMap({ steps, distanceKm = 0, className }: HubMiniMapProps) {
+export default function HubMiniMap({ steps, distanceKm = 0, reserveBottom = 0, className }: HubMiniMapProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const mapRef = useRef<any>(null);
   const geoKey = steps
@@ -131,17 +133,20 @@ export default function HubMiniMap({ steps, distanceKm = 0, className }: HubMini
         weight: 2.5,
       }).addTo(map);
 
-      // Trace + POIs au-dessus du panneau de contenu : on réserve
-      // exactement la hauteur du panneau (mesurée au mount) + marge.
+      // Trace + POIs à DROITE du panneau d'infos : on réserve la largeur
+      // du panneau (mesurée au mount) + la réserve basse (capsule météo).
       const fitToTrace = () => {
         const root = container.closest('[data-media-root]');
         const panel = root?.parentElement?.querySelector('[data-media-content-panel]');
-        const reserve = panel
-          ? panel.getBoundingClientRect().height + 26
-          : Math.round(container.clientHeight * 0.55);
+        let reserveLeft = Math.round(container.clientWidth * 0.42);
+        if (panel && root) {
+          const panelR = panel.getBoundingClientRect();
+          const rootR = root.getBoundingClientRect();
+          reserveLeft = Math.max(Math.round(panelR.right - rootR.left) + 16, 60);
+        }
         map.fitBounds(polyline.getBounds(), {
-          paddingTopLeft: [12, 10],
-          paddingBottomRight: [12, Math.max(reserve, 40)],
+          paddingTopLeft: [reserveLeft, 10],
+          paddingBottomRight: [12, Math.max(reserveBottom + 10, 12)],
         });
       };
       fitToTrace();
@@ -166,7 +171,7 @@ export default function HubMiniMap({ steps, distanceKm = 0, className }: HubMini
       }
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps -- geoKey (coords sérialisées) pilote le cycle ; steps est re-créé à chaque rendu serveur.
-  }, [geoKey, distanceKm]);
+  }, [geoKey, distanceKm, reserveBottom]);
 
   // pointer-events-none : la carte-menu (lien) reste cliquable partout.
   return (

@@ -1,0 +1,54 @@
+[
+  {
+    "name": "v3-hub-1440x900",
+    "status": "ok",
+    "shot": "docs/h-captures/v3-hub-1440x900.png",
+    "scroll": {
+      "scrollH": 900,
+      "clientH": 900,
+      "overflow": false,
+      "lastCardBottom": 869,
+      "mainBottom": 900,
+      "clipped": false
+    }
+  },
+  {
+    "name": "v3-hub-1920x1080",
+    "status": "ok",
+    "shot": "docs/h-captures/v3-hub-1920x1080.png",
+    "scroll": {
+      "scrollH": 1080,
+      "clientH": 1080,
+      "overflow": false,
+      "lastCardBottom": 1049,
+      "mainBottom": 1080,
+      "clipped": false
+    }
+  },
+  {
+    "name": "v3-hub-mobile",
+    "status": "ok",
+    "shot": "docs/h-captures/v3-hub-mobile.png",
+    "scroll": {
+      "scrollH": 1735,
+      "clientH": 1735,
+      "overflow": false,
+      "lastCardBottom": 1499,
+      "mainBottom": 1735,
+      "clipped": false
+    }
+  },
+  {
+    "name": "v3-hub-possession",
+    "status": "ok",
+    "shot": "docs/h-captures/v3-hub-possession.png",
+    "scroll": {
+      "scrollH": 900,
+      "clientH": 900,
+      "overflow": false,
+      "lastCardBottom": 869,
+      "mainBottom": 900,
+      "clipped": false
+    }
+  }
+]

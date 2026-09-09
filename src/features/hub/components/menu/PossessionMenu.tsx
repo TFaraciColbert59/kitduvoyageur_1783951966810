@@ -25,6 +25,15 @@ function daysLabel(date: string | null | undefined): string | null {
   return `J-${days}`;
 }
 
+const shortDateFmt = new Intl.DateTimeFormat('fr-FR', { day: 'numeric', month: 'short' });
+
+function shortDate(date: string | null | undefined): string | null {
+  if (!date) return null;
+  const d = new Date(date);
+  if (isNaN(d.getTime())) return null;
+  return shortDateFmt.format(d);
+}
+
 /**
  * Hub V4 — MENU POSSESSION en disposition BENTO (racine /hub).
  * [Départ 6, Alertes 6] → [Inventaire 4, Kits 4, Préparation 4] → [Dispo 6, Oublis 6].
@@ -33,6 +42,7 @@ function daysLabel(date: string | null | undefined): string | null {
 export function PossessionMenu({ summary }: PossessionMenuProps) {
   const ref: HubAdventureRef = { nature: 'possession' };
   const departDays = daysLabel(summary.depart.startsAt);
+  const departDate = shortDate(summary.depart.startsAt);
 
   const actions: QuickAction[] = [
     { href: hubSectionHref(ref, 'alertes'), label: 'Alertes', icon: BellRing },
@@ -88,11 +98,14 @@ export function PossessionMenu({ summary }: PossessionMenuProps) {
             {departDays ?? '—'}
             <span className="ml-2 text-xs font-semibold text-[var(--lkv-text-secondary)]">
               <NumberStat value={summary.depart.readinessPct} suffix="%" /> prêt
-              {summary.depart.totalWeightKg ? ` · ${summary.depart.totalWeightKg.toFixed(1)} kg` : ''}
-              {summary.depart.itemsCount ? ` · ${summary.depart.itemsCount} objets` : ''}
             </span>
           </p>
-          <div className="mt-2 h-2 w-full overflow-hidden rounded-full bg-black/5">
+          <p className="text-xs text-[var(--lkv-text-secondary)]">
+            {departDate ? `Départ ${departDate}` : 'Aucune date'}
+            {summary.depart.itemsCount ? ` · ${summary.depart.itemsCount} objets` : ''}
+            {summary.depart.totalWeightKg ? ` · ${summary.depart.totalWeightKg.toFixed(1)} kg` : ''}
+          </p>
+          <div className="mt-1 h-1.5 w-full overflow-hidden rounded-full bg-black/5">
             <div className="h-full rounded-full bg-gradient-to-r from-[var(--lkv-secondary)] to-[var(--lkv-primary)]" style={{ width: `${summary.depart.readinessPct}%` }} />
           </div>
         </MenuCard>
@@ -116,6 +129,9 @@ export function PossessionMenu({ summary }: PossessionMenuProps) {
             {summary.alertes.warningCount > 0 ? ` · ${summary.alertes.warningCount} vigilance` : ''}
             {` · fiabilité ${summary.alertes.reliabilityScore}%`}
           </p>
+          <div className="mt-1 h-1.5 w-full overflow-hidden rounded-full bg-black/5">
+            <div className="h-full rounded-full bg-gradient-to-r from-[var(--lkv-secondary)] to-[var(--lkv-primary)]" style={{ width: `${summary.alertes.reliabilityScore}%` }} />
+          </div>
         </MenuCard>
       ),
     },
@@ -129,7 +145,7 @@ export function PossessionMenu({ summary }: PossessionMenuProps) {
               objet{summary.inventaire.count > 1 ? 's' : ''}
             </span>
           </p>
-          <div className="mt-2 h-2 w-full overflow-hidden rounded-full bg-black/5">
+          <div className="mt-1 h-1.5 w-full overflow-hidden rounded-full bg-black/5">
             <div className="h-full rounded-full bg-gradient-to-r from-[var(--lkv-secondary)] to-[var(--lkv-primary)]" style={{ width: `${summary.inventaire.goodConditionPct}%` }} />
           </div>
           <p className="mt-1 text-xs text-[var(--lkv-text-secondary)]">
@@ -172,9 +188,23 @@ export function PossessionMenu({ summary }: PossessionMenuProps) {
             <NumberStat value={summary.kits.avgCompletionPct} suffix="%" />
           </p>
           <p className="text-xs text-[var(--lkv-text-secondary)]">complétion moyenne des kits</p>
-          <div className="mt-2 h-2 w-full overflow-hidden rounded-full bg-black/5">
-            <div className="h-full rounded-full bg-gradient-to-r from-[var(--lkv-secondary)] to-[var(--lkv-primary)]" style={{ width: `${summary.kits.avgCompletionPct}%` }} />
-          </div>
+          {summary.kits.topKits.length > 0 ? (
+            <ul className="mt-1 space-y-1">
+              {summary.kits.topKits.slice(0, 3).map((k) => (
+                <li key={k.id} className="space-y-0.5">
+                  <div className="flex items-center justify-between gap-2 text-xs">
+                    <span className="truncate font-medium text-[var(--lkv-text-primary)]">{k.name}</span>
+                    <span className="shrink-0 font-mono text-[var(--lkv-text-muted)]">{k.completionPct}%</span>
+                  </div>
+                  <div className="h-1.5 w-full overflow-hidden rounded-full bg-black/5">
+                    <div className="h-full rounded-full bg-gradient-to-r from-[var(--lkv-secondary)] to-[var(--lkv-primary)]" style={{ width: `${k.completionPct}%` }} />
+                  </div>
+                </li>
+              ))}
+            </ul>
+          ) : (
+            <p className="mt-1 text-xs text-[var(--lkv-text-secondary)]">Aucun kit en préparation.</p>
+          )}
         </MenuCard>
       ),
     },
@@ -225,11 +255,11 @@ export function PossessionMenu({ summary }: PossessionMenuProps) {
   ];
 
   return (
-    <div className="space-y-4">
+    <div className="h-[calc(100%-24px)] min-h-[680px] flex flex-col gap-3 overflow-hidden">
       <ActivityIdentityBar nature="possession" name="Mon matériel" />
       <NextActionCard actions={nextActions} />
       <QuickActions actions={actions} />
-      <BentoGrid cells={cells} />
+      <BentoGrid cells={cells} fitRows="minmax(0,1.15fr) minmax(0,1fr) minmax(0,1fr)" />
     </div>
   );
 }
