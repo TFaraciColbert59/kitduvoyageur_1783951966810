@@ -61,7 +61,7 @@ export function TripShareModal({ trip, isOpen, onClose }: TripShareModalProps) {
   const isOwner = trip.permissions.canInvite;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm animate-in fade-in">
+    <div className="fixed inset-0 z-[10001] flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm animate-in fade-in">
       <GlassCard
         tone="neutral"
         className="w-full max-w-lg p-6 rounded-[var(--lkv-radius-xl)] border border-white/80 shadow-2xl space-y-5"

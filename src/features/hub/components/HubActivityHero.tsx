@@ -23,6 +23,8 @@ export interface HubActivityHeroProps {
   /** Libellé du badge de nature (Voyage · Randonnée · Matériel · Groupe). */
   badgeLabel?: string;
   assistantContextLabel?: string;
+  /** Partage réel (TripShareModal) — remplace le Web Share simple si fourni. */
+  onShareClick?: () => void;
 }
 
 export function HubActivityHero({
@@ -33,6 +35,7 @@ export function HubActivityHero({
   phaseLabel,
   badgeLabel,
   assistantContextLabel,
+  onShareClick,
 }: HubActivityHeroProps) {
   const [copied, setCopied] = useState(false);
   const reduceMotion = useReducedMotion();
@@ -40,6 +43,10 @@ export function HubActivityHero({
   const imageUrl = coverUrl || '/assets/images/no_image.png';
 
   const handleShare = async () => {
+    if (onShareClick) {
+      onShareClick();
+      return;
+    }
     const url = window.location.href;
     if (navigator.share) {
       try {

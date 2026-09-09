@@ -10,6 +10,7 @@ import type { TripPhase } from '@/features/trips/engine/temporalPhaseEngine';
 import { TripPhaseController } from '@/features/trips/components/TripPhaseController';
 import { TripLiveCockpitView } from '@/features/trips/components/TripLiveCockpitView';
 import { TripPhaseRecountView } from '@/features/trips/components/TripPhaseRecountView';
+import { TripShareModal } from '@/features/trips/components/TripShareModal';
 import type { AdventureProfile } from '../engine/hubProfileEngine';
 import type { TripFull, TripStats } from '@/features/trips/types/trip.types';
 import type { HubCrewBlock, HubHikingContext } from '../server/getHubAdventureData';
@@ -42,6 +43,7 @@ export function HubOverviewSortie({ profile, trip, stats, countdown, group, hiki
   const phaseDetails = getTripPhaseDetails(trip);
   const naturalPhase = phaseDetails.phase;
   const [activePhase, setActivePhase] = useState<TripPhase>(naturalPhase);
+  const [shareOpen, setShareOpen] = useState(false);
   const blocks = selectOverviewBlocks(trip, activityType, group, hiking);
 
   const badgeLabel = activityType === 'hiking' ? 'Randonnée' : 'Voyage';
@@ -58,6 +60,7 @@ export function HubOverviewSortie({ profile, trip, stats, countdown, group, hiki
         phaseLabel={PHASE_HUB_LABELS[activePhase]}
         badgeLabel={badgeLabel}
         assistantContextLabel={`Conseils pour ${trip.title}`}
+        onShareClick={() => setShareOpen(true)}
       />
 
       <motion.div
@@ -122,6 +125,8 @@ export function HubOverviewSortie({ profile, trip, stats, countdown, group, hiki
           )}
         </div>
       ) : null}
+
+      <TripShareModal trip={trip} isOpen={shareOpen} onClose={() => setShareOpen(false)} />
     </div>
   );
 }
