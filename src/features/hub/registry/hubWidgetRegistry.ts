@@ -42,6 +42,40 @@ export const hubWidgetRegistry: readonly HubWidgetDef[] = [
 /** Limite de hauteur avant repli (contrainte Y : 2 × fenêtre 1440×900). */
 export const HUB_WIDGET_COLUMN_MAX_HEIGHT = 2 * 900;
 
+/** Widgets hub possédant un corps réel rendu par HubWidgetBody (H4 livré). */
+export const HUB_REAL_WIDGET_IDS: ReadonlySet<HubWidgetId> = new Set([
+  'stock-apercu',
+  'alertes-materiel',
+  'dispo-apercu',
+  'prochain-depart',
+  'invitations-apercu',
+  'presence-groupe',
+  'entrer-voyage',
+]);
+
+/** Libellés FR des widgets (bande mobile & relevés) — source unique. */
+export const HUB_WIDGET_LABELS: Readonly<Record<string, string>> = {
+  countdown: 'Compte à rebours',
+  'primary-action': 'Action',
+  alerts: 'Alertes',
+  'next-step': 'Prochaine étape',
+  'safety-next': 'Sécurité',
+  'kit-balance': 'Équipement',
+  'budget-burn': 'Budget',
+  'group-presence': 'Équipage',
+  'trip-context': 'Contexte',
+  'country-card': 'Pays',
+  'docs-expiry': 'Documents',
+  'offline-toggle': 'Hors-ligne',
+  'alertes-materiel': 'Alertes matériel',
+  'prochain-depart': 'Prochain départ',
+  'stock-apercu': 'Stock',
+  'dispo-apercu': 'Prêts',
+  'invitations-apercu': 'Invitations',
+  'entrer-voyage': 'Voyage',
+  'presence-groupe': 'Groupe',
+};
+
 export function hubWidgetDef(id: HubWidgetId): HubWidgetDef | undefined {
   return hubWidgetRegistry.find((w) => w.id === id);
 }
