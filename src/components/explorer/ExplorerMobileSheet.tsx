@@ -1,8 +1,8 @@
 'use client';
 
+import Icon from '@/components/ui/Icon';
 import React, { useCallback } from 'react';
 import { motion } from 'framer-motion';
-import { MapPin } from 'lucide-react';
 import { ChevronDownIcon as ChevronDownAnimated } from '@/components/icons/chevron-down';
 import { ChevronUpIcon as ChevronUpAnimated } from '@/components/icons/chevron-up';
 import type { MapTrail } from './types';
@@ -79,11 +79,13 @@ export default function ExplorerMobileSheet({
       <div
         className="absolute inset-0 rounded-xl overflow-hidden"
         style={{
-          background: 'linear-gradient(180deg, rgba(255, 255, 255, 0.55) 0%, rgba(255, 255, 255, 0.28) 100%)',
+          background:
+            'linear-gradient(180deg, rgba(255, 255, 255, 0.55) 0%, rgba(255, 255, 255, 0.28) 100%)',
           backdropFilter: 'blur(24px) saturate(180%)',
           WebkitBackdropFilter: 'blur(24px) saturate(180%)',
           border: '1px solid rgba(255, 255, 255, 0.60)',
-          boxShadow: '0 20px 50px -12px rgba(23,64,44, 0.20), inset 0 1.5px 1px rgba(255, 255, 255, 0.9)',
+          boxShadow:
+            '0 20px 50px -12px rgba(23,64,44, 0.20), inset 0 1.5px 1px rgba(255, 255, 255, 0.9)',
         }}
       />
 
@@ -101,7 +103,7 @@ export default function ExplorerMobileSheet({
         className="relative z-10 flex items-center justify-between px-3 py-1 shrink-0 touch-none"
       >
         <span className="flex items-center gap-1.5 text-[11px] font-bold text-[#17402C]">
-          <MapPin size={11} className="text-[#17402C]" />
+          <Icon name="map-pin" size={11} className="text-[#17402C]" />
           <span>Sentiers ({count})</span>
         </span>
 
@@ -132,14 +134,16 @@ export default function ExplorerMobileSheet({
             <p className="text-[10px] text-[#5A7064]">Essayez d'élargir vos filtres</p>
           </div>
         ) : (
-          trails.slice(0, 60).map((trail) => (
-            <ExplorerListCard
-              key={trail.id}
-              trail={trail}
-              isSelected={selectedTrailId === trail.id}
-              onClick={() => onTrailClick(trail)}
-            />
-          ))
+          trails
+            .slice(0, 60)
+            .map((trail) => (
+              <ExplorerListCard
+                key={trail.id}
+                trail={trail}
+                isSelected={selectedTrailId === trail.id}
+                onClick={() => onTrailClick(trail)}
+              />
+            ))
         )}
       </div>
     </motion.div>

@@ -1,8 +1,8 @@
 'use client';
 
+import Icon from '@/components/ui/Icon';
 import React, { useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { X } from 'lucide-react';
 
 export interface SheetProps {
   isOpen: boolean;
@@ -83,9 +83,7 @@ export function Sheet({
             {(Boolean(title) || typeof onClose === 'function') && (
               <div className="px-6 py-4 border-b border-stone-100 flex items-center justify-between">
                 <div>
-                  {title && (
-                    <h3 className="text-lg font-bold text-lkv-primary">{title}</h3>
-                  )}
+                  {title && <h3 className="text-lg font-bold text-lkv-primary">{title}</h3>}
                   {description && (
                     <p className="text-xs text-lkv-text-muted mt-0.5">{description}</p>
                   )}
@@ -96,7 +94,7 @@ export function Sheet({
                   className="w-11 h-11 rounded-full bg-stone-100 hover:bg-stone-200 text-stone-600 flex items-center justify-center transition-colors min-h-[44px] min-w-[44px] focus:outline-none focus-visible:ring-2 focus-visible:ring-lkv-primary"
                   aria-label="Fermer"
                 >
-                  <X className="w-5 h-5" />
+                  <Icon name="x" className="w-5 h-5" />
                 </button>
               </div>
             )}

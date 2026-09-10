@@ -11,6 +11,18 @@ import PaysHebergementsView from '@/components/pays/PaysHebergementsView';
 import type { DiscoveryCategory, DiscoveryItem, DiscoveryResponse } from '@/features/discovery/types/discovery.types';
 
 vi.mock('@/features/discovery/hooks/useDiscovery', () => ({ useDiscovery: vi.fn() }));
+vi.mock('@/hooks/useCountryPracticalGuide', () => ({
+  useCountryPracticalGuide: vi.fn(() => ({ data: undefined, isLoading: false, isError: false })),
+}));
+vi.mock('@/features/pays/hooks/usePaysRegions', () => ({
+  usePaysRegions: vi.fn(() => ({ data: undefined, isLoading: false, isError: false })),
+}));
+vi.mock('@/features/pays/hooks/usePaysWeather', () => ({
+  usePaysWeather: vi.fn(() => ({ data: undefined, isLoading: false, isError: false })),
+}));
+vi.mock('@/features/pays/hooks/usePaysTrails', () => ({
+  usePaysTrails: vi.fn(() => ({ data: undefined, isLoading: false, isError: false })),
+}));
 import { useDiscovery } from '@/features/discovery/hooks/useDiscovery';
 
 const hook = vi.mocked(useDiscovery);
@@ -116,30 +128,28 @@ beforeEach(() => {
   respondByCategory();
 });
 
-describe('Rendu des quatre sections Pays avec fixtures Terra normalisées', () => {
-  it('Destinations : cartes Terra + éditorial + attribution', () => {
+describe('Rendu des quatre sections Pays (données dynamiques uniquement)', () => {
+  it('Destinations : cartes dynamiques, AUCUN éditorial statique', () => {
     const html = renderToStaticMarkup(<PaysDestinationsView country={country} />);
-    expect(html).toContain('Jökulsárlón'); // éditorial LKDV conservé
-    expect(html).toContain('Reykjavik Safari'); // carte Terra
-    expect(html).toContain('Voir sur Tripadvisor');
-    expect(html).toContain('Données fournies par Tripadvisor');
-  });
-
-  it('Activités : cartes Terra + éditorial', () => {
-    const html = renderToStaticMarkup(<PaysActivitesView country={country} />);
-    expect(html).toContain('Sentier');
     expect(html).toContain('Reykjavik Safari');
     expect(html).toContain('Voir sur Tripadvisor');
+    expect(html).not.toContain('Jökulsárlón'); // statique supprimé
   });
 
-  it('Gastronomie : cartes Terra + éditorial', () => {
+  it('Activités : cartes dynamiques, AUCUN éditorial statique', () => {
+    const html = renderToStaticMarkup(<PaysActivitesView country={country} />);
+    expect(html).toContain('Reykjavik Safari');
+    expect(html).toContain('Voir sur Tripadvisor');
+    expect(html).not.toContain('Sentier');
+  });
+
+  it('Gastronomie : cartes dynamiques, AUCUN éditorial statique', () => {
     const html = renderToStaticMarkup(<PaysGastronomieView country={country} />);
-    expect(html).toContain('Plokkfiskur');
     expect(html).toContain('Dill');
-    expect(html).toContain('Données fournies par Tripadvisor');
+    expect(html).not.toContain('Plokkfiskur');
   });
 
-  it('Hébergements : cartes Terra', () => {
+  it('Hébergements : cartes dynamiques (ou en-tête seul si provider ne couvre pas)', () => {
     const html = renderToStaticMarkup(<PaysHebergementsView country={country} />);
     expect(html).toContain('Hôtel Borg');
     expect(html).toContain('Voir sur Tripadvisor');

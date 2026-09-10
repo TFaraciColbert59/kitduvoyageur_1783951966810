@@ -1,5 +1,5 @@
 import React from 'react';
-import { ExternalLink } from 'lucide-react';
+import Icon from '@/components/ui/Icon';
 import { cn } from '@/lib/utils';
 import type { KlookBlock } from '../providers/klook/klookTypes';
 
@@ -46,7 +46,7 @@ export function KlookCtaBlock({ block, className }: KlookCtaBlockProps) {
         className="w-full sm:w-auto shrink-0 min-h-[44px] px-5 rounded-xl bg-[#17402C] hover:bg-[#123323] text-white text-xs font-bold transition-all flex items-center justify-center gap-2 shadow-sm"
       >
         <span>{block.ctaLabel}</span>
-        <ExternalLink className="w-3.5 h-3.5 text-white/70" />
+        <Icon name="external-link" className="w-3.5 h-3.5 text-white/70" />
       </a>
     </section>
   );

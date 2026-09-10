@@ -57,7 +57,6 @@ const SURFACES: Array<{ id: string; url: string }> = [
   { id: 'hub-nouveau', url: '/hub/nouveau' },
   { id: 'hub-itineraire', url: '/hub/itineraire' },
   { id: 'hub-kit-voyage', url: '/hub/kit-voyage' },
-  { id: 'hub-equipage', url: '/hub/equipage' },
   { id: 'hub-budget', url: '/hub/budget' },
   { id: 'hub-documents', url: '/hub/documents' },
   { id: 'hub-checklist', url: '/hub/checklist' },

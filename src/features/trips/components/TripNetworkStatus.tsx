@@ -1,5 +1,6 @@
 'use client';
 
+import Icon from '@/components/ui/Icon';
 import React, { useEffect, useState, useTransition } from 'react';
 import {
   getTripOfflineQueue,
@@ -7,7 +8,6 @@ import {
   TripOfflineAction,
 } from '@/features/trips/offline/tripOfflineSyncQueue';
 import { useOnlineStatus } from '@/hooks/useOnlineStatus';
-import { RefreshCw, Cloud, CloudOff, Check } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 interface TripNetworkStatusProps {
@@ -79,7 +79,11 @@ export function TripNetworkStatus({
         aria-live="polite"
         title="Mode hors-ligne actif. Vos modifications sont sauvegardées localement."
       >
-        <CloudOff className="w-3.5 h-3.5 text-[var(--lkv-warning-dark)]" aria-hidden="true" />
+        <Icon
+          name="cloud-off"
+          className="w-3.5 h-3.5 text-[var(--lkv-warning-dark)]"
+          aria-hidden="true"
+        />
         <span>Hors-ligne {queueCount > 0 ? `(${queueCount})` : ''}</span>
       </div>
     );
@@ -101,9 +105,16 @@ export function TripNetworkStatus({
         title="Actions en attente de synchronisation. Cliquez pour synchroniser."
       >
         {isPending ? (
-          <RefreshCw className="w-3.5 h-3.5 animate-spin text-[var(--lkv-warning-dark)]" aria-hidden="true" />
+          <Icon
+            name="refresh-cw"
+            className="w-3.5 h-3.5 animate-spin text-[var(--lkv-warning-dark)]"
+            aria-hidden="true"
+          />
         ) : (
-          <span className="w-2 h-2 rounded-full bg-[var(--lkv-warning)] animate-pulse" aria-hidden="true" />
+          <span
+            className="w-2 h-2 rounded-full bg-[var(--lkv-warning)] animate-pulse"
+            aria-hidden="true"
+          />
         )}
         <span>{isPending ? 'Synchro en cours...' : `${queueCount} en attente`}</span>
       </button>
@@ -121,7 +132,7 @@ export function TripNetworkStatus({
         )}
         role="status"
       >
-        <Check className="w-3.5 h-3.5 text-[var(--lkv-secondary)]" aria-hidden="true" />
+        <Icon name="check" className="w-3.5 h-3.5 text-[var(--lkv-secondary)]" aria-hidden="true" />
         <span>Synchronisé</span>
       </div>
     );
@@ -137,7 +148,7 @@ export function TripNetworkStatus({
       role="status"
       title="Toutes les données sont synchronisées"
     >
-      <Cloud className="w-3.5 h-3.5 text-[var(--lkv-secondary)]" aria-hidden="true" />
+      <Icon name="cloud" className="w-3.5 h-3.5 text-[var(--lkv-secondary)]" aria-hidden="true" />
       <span>À jour</span>
     </div>
   );

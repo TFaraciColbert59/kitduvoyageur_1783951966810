@@ -209,7 +209,7 @@ describe('Sélection Viator (sans fallback Terra)', () => {
     await getDiscovery({ countryCode: 'IS', category: 'restaurants', section: 'gastronomie' });
 
     const body = JSON.parse(String((fetchMock.mock.calls[0][1] as RequestInit).body));
-    expect(body.filtering.tags).toEqual([21567, 13283]);
+    expect(body.filtering.tags).toEqual([21567]);
   });
 
   it('viator : Hébergements → éditorial (aucune carte, aucun appel)', async () => {

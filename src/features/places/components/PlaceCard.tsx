@@ -1,20 +1,11 @@
 'use client';
 
+import Icon from '@/components/ui/Icon';
 import React from 'react';
 import Link from 'next/link';
 import { GlassCard } from '@/components/ui/GlassCard';
 import { LkvButton } from '@/components/ui/LkvButton';
-import {
-  MapPin,
-  Star,
-  ShieldAlert,
-  Plus,
-  Mountain,
-  Tent,
-  Droplet,
-  Compass,
-  CheckCircle2,
-} from 'lucide-react';
+import { MapPin, Mountain, Tent, Droplet, Compass } from 'lucide-react';
 import type { PlaceWithDistance } from '../types/place.types';
 
 export interface PlaceCardProps {
@@ -104,7 +95,7 @@ export function PlaceCard({ place, onAddToTrip }: PlaceCardProps) {
             </h3>
 
             <div className="flex items-center gap-1 text-xs text-stone-500 mb-3">
-              <MapPin className="w-3.5 h-3.5 text-[#5B7F55] shrink-0" />
+              <Icon name="map-pin" className="w-3.5 h-3.5 text-[#5B7F55] shrink-0" />
               <span className="truncate">
                 {place.city ? `${place.city}, ` : ''}
                 {place.region || place.country_code}
@@ -121,7 +112,7 @@ export function PlaceCard({ place, onAddToTrip }: PlaceCardProps) {
             {/* Alerte éthique si floutage */}
             {place.is_blurred && (
               <div className="flex items-center gap-1.5 p-2 rounded-xl bg-sand-500/10 border border-sand-500/20 text-sand-900 text-[11px] mb-3">
-                <ShieldAlert className="w-3.5 h-3.5 text-sand-700 shrink-0" />
+                <Icon name="shield-alert" className="w-3.5 h-3.5 text-sand-700 shrink-0" />
                 <span>Zone fragile : coordonnées floutées à ~500m</span>
               </div>
             )}
@@ -132,7 +123,7 @@ export function PlaceCard({ place, onAddToTrip }: PlaceCardProps) {
             {/* Note bayésienne */}
             <div className="flex items-center gap-1.5">
               <div className="flex items-center gap-1 text-sand-500 font-bold text-sm">
-                <Star className="w-4 h-4 fill-sand-400 text-sand-500" />
+                <Icon name="star" className="w-4 h-4 fill-sand-400 text-sand-500" />
                 <span>
                   {place.bayesian_rating > 0 ? place.bayesian_rating.toFixed(1) : 'Nouveau'}
                 </span>
@@ -144,7 +135,7 @@ export function PlaceCard({ place, onAddToTrip }: PlaceCardProps) {
 
             {place.is_verified && (
               <span className="inline-flex items-center gap-1 text-[11px] font-medium text-[#17402C] bg-[#5B7F55]/15 px-2 py-0.5 rounded-full">
-                <CheckCircle2 className="w-3 h-3 text-[#17402C]" />
+                <Icon name="check-circle2" className="w-3 h-3 text-[#17402C]" />
                 Vérifié
               </span>
             )}
@@ -164,7 +155,7 @@ export function PlaceCard({ place, onAddToTrip }: PlaceCardProps) {
               onAddToTrip(place);
             }}
           >
-            <Plus className="w-4 h-4 text-[#17402C]" />
+            <Icon name="plus" className="w-4 h-4 text-[#17402C]" />
             Ajouter à mon voyage
           </LkvButton>
         </div>

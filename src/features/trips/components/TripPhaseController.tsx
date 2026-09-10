@@ -1,7 +1,7 @@
 'use client';
 
+import Icon from '@/components/ui/Icon';
 import React from 'react';
-import { Compass, Flame, BookOpen } from 'lucide-react';
 import type { TripPhase } from '../engine/temporalPhaseEngine';
 
 export interface TripPhaseControllerProps {
@@ -34,27 +34,30 @@ export function TripPhaseController({
         daysUntilStart !== null && daysUntilStart !== undefined && daysUntilStart > 0
           ? `J-${daysUntilStart}`
           : 'Avant départ',
-      icon: <Compass size={18} />,
+      icon: <Icon name="compass" size={18} />,
     },
     {
       id: 'live',
       label: 'Vivre',
-      subLabel:
-        dayIndex && totalDays ? `Jour ${dayIndex}/${totalDays}` : 'Cockpit terrain',
-      icon: <Flame size={18} />,
+      subLabel: dayIndex && totalDays ? `Jour ${dayIndex}/${totalDays}` : 'Cockpit terrain',
+      icon: <Icon name="flame" size={18} />,
     },
     {
       id: 'recount',
       label: 'Raconter',
       subLabel: 'Récits & bilan',
-      icon: <BookOpen size={18} />,
+      icon: <Icon name="book-open" size={18} />,
     },
   ];
 
   return (
     <div className="w-full glass-sub-card p-1.5 rounded-[var(--lkv-radius-full)] border border-white/60 shadow-2xs backdrop-blur-md">
-      <div className="grid grid-cols-3 gap-1.5" role="tablist" aria-label="Phases temporelles du voyage">
-        {phases.map(p => {
+      <div
+        className="grid grid-cols-3 gap-1.5"
+        role="tablist"
+        aria-label="Phases temporelles du voyage"
+      >
+        {phases.map((p) => {
           const isSelected = activePhase === p.id;
           const isNatural = naturalPhase === p.id;
 
@@ -72,15 +75,15 @@ export function TripPhaseController({
               }`}
             >
               {/* Icône de la phase */}
-              <span className={`z-10 ${isSelected ? 'text-sage-300' : 'text-[var(--lkv-text-secondary)]'}`}>
+              <span
+                className={`z-10 ${isSelected ? 'text-sage-300' : 'text-[var(--lkv-text-secondary)]'}`}
+              >
                 {p.icon}
               </span>
 
               {/* Titre & Sous-titre */}
               <div className="text-center sm:text-left z-10">
-                <div className="text-xs sm:text-sm font-extrabold leading-tight">
-                  {p.label}
-                </div>
+                <div className="text-xs sm:text-sm font-extrabold leading-tight">{p.label}</div>
                 <div
                   className={`text-[10px] hidden sm:block font-medium truncate ${
                     isSelected ? 'text-white/80' : 'text-[var(--lkv-text-secondary)]'
@@ -95,7 +98,9 @@ export function TripPhaseController({
                 <span
                   title="Phase actuelle du voyage"
                   className={`absolute top-1.5 right-1.5 sm:top-2 sm:right-2.5 z-10 flex h-2 w-2 rounded-full ${
-                    isSelected ? 'bg-[var(--lkv-accent)]' : 'bg-[var(--lkv-success)] ring-2 ring-white'
+                    isSelected
+                      ? 'bg-[var(--lkv-accent)]'
+                      : 'bg-[var(--lkv-success)] ring-2 ring-white'
                   }`}
                 />
               )}

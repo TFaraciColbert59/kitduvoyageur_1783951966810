@@ -1,10 +1,16 @@
 'use client';
+import Icon from '@/components/ui/Icon';
 import { motion } from 'framer-motion';
-import { Check } from 'lucide-react';
 
 export function ForgetChecklistItem({
-  label, checked, onToggle,
-}: { label: string; checked: boolean; onToggle: () => void }) {
+  label,
+  checked,
+  onToggle,
+}: {
+  label: string;
+  checked: boolean;
+  onToggle: () => void;
+}) {
   return (
     <motion.button
       onClick={onToggle}
@@ -17,9 +23,11 @@ export function ForgetChecklistItem({
           checked ? 'bg-sage-500' : 'bg-stone-200'
         }`}
       >
-        {checked && <Check size={12} className="text-white" aria-hidden="true" />}
+        {checked && <Icon name="check" size={12} className="text-white" aria-hidden="true" />}
       </span>
-      <span className={`text-sm ${checked ? 'line-through text-[color:var(--label-quaternary)]' : 'text-[color:var(--label)]'}`}>
+      <span
+        className={`text-sm ${checked ? 'line-through text-[color:var(--label-quaternary)]' : 'text-[color:var(--label)]'}`}
+      >
         {label}
       </span>
     </motion.button>

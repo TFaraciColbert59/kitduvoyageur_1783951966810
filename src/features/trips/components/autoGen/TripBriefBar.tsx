@@ -1,7 +1,7 @@
 'use client';
 
+import Icon from '@/components/ui/Icon';
 import React, { useState } from 'react';
-import { Sparkles, Mic, Paperclip, ArrowRight } from 'lucide-react';
 import { useHapticFeedback } from '@/hooks/useHapticFeedback';
 
 export interface TripBriefBarProps {
@@ -11,8 +11,14 @@ export interface TripBriefBarProps {
 }
 
 const SUGGESTIONS = [
-  { label: 'Maroc 10j', query: '10 jours au Maroc en octobre, budget serré, randonnée et bivouac, on est 3' },
-  { label: 'Mont-Blanc 7j', query: '7 jours autour du Mont-Blanc début juillet, en couple, nuits en refuges' },
+  {
+    label: 'Maroc 10j',
+    query: '10 jours au Maroc en octobre, budget serré, randonnée et bivouac, on est 3',
+  },
+  {
+    label: 'Mont-Blanc 7j',
+    query: '7 jours autour du Mont-Blanc début juillet, en couple, nuits en refuges',
+  },
   { label: 'Sancy 3j', query: '3 jours dans le Sancy en train, départ vendredi soir, budget 100€' },
   { label: 'Islande bivouac', query: 'Islande Laugavegur 5 jours en bivouac et autonomie totale' },
 ];
@@ -72,7 +78,7 @@ export const TripBriefBar: React.FC<TripBriefBarProps> = ({
         className="relative flex items-center bg-white/80  backdrop-blur-xl border border-[var(--lkv-stone-200)]  rounded-2xl shadow-lg p-1.5 transition-all focus-within:ring-2 focus-within:ring-[var(--lkv-secondary)]"
       >
         <div className="pl-3 pr-2 text-[var(--lkv-secondary-hover)] ">
-          <Sparkles className="w-5 h-5 animate-pulse" />
+          <Icon name="sparkles" className="w-5 h-5 animate-pulse" />
         </div>
 
         <input
@@ -93,7 +99,7 @@ export const TripBriefBar: React.FC<TripBriefBarProps> = ({
             aria-label="Joindre un tracé GPX ou une photo"
             className="p-2.5 min-w-[44px] min-h-[44px] flex items-center justify-center text-[var(--lkv-text-subtle)] hover:text-[var(--lkv-text-muted)]  rounded-xl hover:bg-[var(--lkv-surface-muted)]  transition-colors"
           >
-            <Paperclip className="w-5 h-5" />
+            <Icon name="paperclip" className="w-5 h-5" />
           </button>
 
           {/* Bouton Dictée vocale (Geste 3) */}
@@ -103,7 +109,7 @@ export const TripBriefBar: React.FC<TripBriefBarProps> = ({
             aria-label="Dicter une consigne vocale"
             className="p-2.5 min-w-[44px] min-h-[44px] flex items-center justify-center text-[var(--lkv-text-subtle)] hover:text-[var(--lkv-secondary-hover)]  rounded-xl hover:bg-[var(--lkv-surface-muted)]  transition-colors"
           >
-            <Mic className="w-5 h-5" />
+            <Icon name="mic" className="w-5 h-5" />
           </button>
 
           {/* Bouton Soumettre / Générer */}
@@ -113,7 +119,7 @@ export const TripBriefBar: React.FC<TripBriefBarProps> = ({
             className="px-4 py-2.5 min-h-[44px] bg-[var(--lkv-secondary-hover)] hover:bg-[var(--lkv-primary-soft)] disabled:opacity-50 text-white font-medium text-sm rounded-xl flex items-center space-x-1.5 shadow-sm transition-transform active:scale-95"
           >
             <span>Générer mon voyage</span>
-            <ArrowRight className="w-4 h-4" />
+            <Icon name="arrow-right" className="w-4 h-4" />
           </button>
         </div>
       </form>

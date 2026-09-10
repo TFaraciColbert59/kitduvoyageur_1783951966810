@@ -1,0 +1,715 @@
+﻿node.exe : npm notice run kitduvoyageur@0.1.0 test
+Au caractère Ligne:1 : 1
++ & "C:\Program Files\nodejs/node.exe" "C:\Users\Tony\.npm-global/node_ ...
++ ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: (npm notice run kitduvoyageur@0.1.0 test:String) [], RemoteException
+    + FullyQualifiedErrorId : NativeCommandError
+ 
+npm notice run vitest run
+
+[1m[30m[46m RUN [49m[39m[22m [36mv4.1.11 [39m[90mC:/Users/Tony/Downloads/LKDV/kitduvoyageur_1783951966810[39m
+
+ [32m✓[39m tests/design-system/antiHexColor.spec.ts [2m([22m[2m2 tests[22m[2m)[22m[32m 50[2mms[22m[39m
+ [32m✓[39m tests/features/discovery/secrets.spec.ts [2m([22m[2m3 tests[22m[2m)[22m[32m 64[2mms[22m[39m
+ [32m✓[39m tests/trips/engine/elevationProfile.spec.ts [2m([22m[2m8 tests[22m[2m)[22m[32m 105[2mms[22m[39m
+ [32m✓[39m tests/design/unification.spec.ts [2m([22m[2m5 tests[22m[2m)[22m[33m 309[2mms[22m[39m
+ [32m✓[39m tests/design/h-d85-guard.spec.ts [2m([22m[2m14 tests[22m[2m)[22m[33m 354[2mms[22m[39m
+ [32m✓[39m tests/design-system/antiJargon.spec.ts [2m([22m[2m3 tests[22m[2m)[22m[32m 49[2mms[22m[39m
+ [32m✓[39m tests/design/y-d80-guard.spec.ts [2m([22m[2m12 tests[22m[2m)[22m[33m 576[2mms[22m[39m
+ [32m✓[39m tests/trips/golden-test-suite.spec.ts [2m([22m[2m11 tests[22m[2m)[22m[32m 39[2mms[22m[39m
+ [32m✓[39m tests/features/hub/mobileHubEngine.spec.ts [2m([22m[2m21 tests[22m[2m)[22m[32m 34[2mms[22m[39m
+ [32m✓[39m tests/trips/chantier-z5.spec.ts [2m([22m[2m3 tests[22m[2m)[22m[33m 1089[2mms[22m[39m
+     [33m[2m✓[22m[39m Z-D32.1 : un voyage sans URL passe le placeholder local à AppImage [33m 1061[2mms[22m[39m
+ [31m❯[39m tests/trips/kit/kitComponents.spec.ts [2m([22m[2m4 tests[22m[2m | [22m[31m3 failed[39m[2m)[22m[32m 34[2mms[22m[39m
+[31m     [31m×[31m renders preparation progress and weight indicators[39m[32m 25[2mms[22m[39m
+     [32m✓[39m renders terrain climate warning banner[32m 1[2mms[22m[39m
+[31m     [31m×[31m renders contextual recommendations and LKDV shop direct conversion buttons[39m[32m 4[2mms[22m[39m
+[31m     [31m×[31m renders trip items checklist with packed toggle and category label[39m[32m 2[2mms[22m[39m
+ [32m✓[39m tests/trips/collab/collabComponents.spec.ts [2m([22m[2m4 tests[22m[2m)[22m[32m 47[2mms[22m[39m
+ [32m✓[39m tests/features/discovery/render.spec.tsx [2m([22m[2m15 tests[22m[2m)[22m[32m 46[2mms[22m[39m
+ [32m✓[39m tests/trips/notes/notesComponents.spec.ts [2m([22m[2m4 tests[22m[2m)[22m[32m 48[2mms[22m[39m
+ [32m✓[39m tests/countries_geo.spec.ts [2m([22m[2m6 tests[22m[2m)[22m[33m 1420[2mms[22m[39m
+     [33m[2m✓[22m[39m should fetch all 195 countries from countries_geo [33m 634[2mms[22m[39m
+ [32m✓[39m tests/trips/trip-components.spec.ts [2m([22m[2m10 tests[22m[2m)[22m[32m 50[2mms[22m[39m
+ [32m✓[39m tests/features/discovery/components.spec.tsx [2m([22m[2m7 tests[22m[2m)[22m[32m 38[2mms[22m[39m
+ [32m✓[39m tests/features/discovery/terra.spec.ts [2m([22m[2m18 tests[22m[2m)[22m[32m 32[2mms[22m[39m
+ [32m✓[39m tests/trips/planner/plannerComponents.spec.ts [2m([22m[2m5 tests[22m[2m)[22m[32m 42[2mms[22m[39m
+ [32m✓[39m tests/features/discovery/viator.spec.ts [2m([22m[2m19 tests[22m[2m)[22m[32m 28[2mms[22m[39m
+ [32m✓[39m tests/trips/dates/tripDates.spec.ts [2m([22m[2m17 tests[22m[2m)[22m[32m 27[2mms[22m[39m
+ [32m✓[39m tests/i18n/formatters.spec.ts [2m([22m[2m6 tests[22m[2m)[22m[32m 29[2mms[22m[39m
+ [32m✓[39m tests/mobile-layout.spec.ts [2m([22m[2m9 tests[22m[2m)[22m[32m 102[2mms[22m[39m
+ [32m✓[39m tests/design/x-d70.spec.ts [2m([22m[2m63 tests[22m[2m)[22m[32m 22[2mms[22m[39m
+ [32m✓[39m tests/trips/degraded-edge-cases.spec.ts [2m([22m[2m13 tests[22m[2m)[22m[32m 25[2mms[22m[39m
+ [32m✓[39m tests/features/trips/chantier-y7-app-first.spec.ts [2m([22m[2m12 tests[22m[2m)[22m[32m 25[2mms[22m[39m
+[90mstderr[2m | tests/materiel/depart-cockpit.spec.ts[2m > [22m[2mDepart Cockpit - Complete V2 Test Suite[2m > 
+[22m[2mModèle de Données & Showcase[2m > [22m[2mfournit des données de showcase complètes avec distinction 
+base/worn/consumables
+[22m[39mgetDepartDetail fallback to showcase Error: [LKDV] Configuration Supabase manquante : 
+NEXT_PUBLIC_SUPABASE_URL et NEXT_PUBLIC_SUPABASE_ANON_KEY sont requis. Copiez .env.example vers .env.local et 
+renseignez-les (jamais commité).
+    at getSupabaseConfig (C:/Users/Tony/Downloads/LKDV/kitduvoyageur_1783951966810/src/lib/supabase/server.ts:14:11)
+    at createClient (C:/Users/Tony/Downloads/LKDV/kitduvoyageur_1783951966810/src/lib/supabase/server.ts:36:28)
+[90m    at processTicksAndRejections (node:internal/process/task_queues:104:5)[39m
+    at getDepartDetail 
+(C:/Users/Tony/Downloads/LKDV/kitduvoyageur_1783951966810/src/features/materiel/services/getDepartDetail.ts:372:22)
+    at C:/Users/Tony/Downloads/LKDV/kitduvoyageur_1783951966810/tests/materiel/depart-cockpit.spec.ts:22:19
+    at [90mfile:///C:/Users/Tony/Downloads/LKDV/kitduvoyageur_1783951966810/[39mnode_modules/[4m@vitest/runner[24m/
+dist/chunk-artifact.js:1903:20
+
+[90mstderr[2m | tests/materiel/depart-cockpit.spec.ts[2m > [22m[2mDepart Cockpit - Complete V2 Test Suite[2m > 
+[22m[2mModèle de Données & Showcase[2m > [22m[2mcharge correctement le showcase vercors-ultra avec des valeurs 
+cohérentes
+[22m[39mgetDepartDetail fallback to showcase Error: [LKDV] Configuration Supabase manquante : 
+NEXT_PUBLIC_SUPABASE_URL et NEXT_PUBLIC_SUPABASE_ANON_KEY sont requis. Copiez .env.example vers .env.local et 
+renseignez-les (jamais commité).
+    at getSupabaseConfig (C:/Users/Tony/Downloads/LKDV/kitduvoyageur_1783951966810/src/lib/supabase/server.ts:14:11)
+    at createClient (C:/Users/Tony/Downloads/LKDV/kitduvoyageur_1783951966810/src/lib/supabase/server.ts:36:28)
+[90m    at processTicksAndRejections (node:internal/process/task_queues:104:5)[39m
+    at getDepartDetail 
+(C:/Users/Tony/Downloads/LKDV/kitduvoyageur_1783951966810/src/features/materiel/services/getDepartDetail.ts:372:22)
+    at C:/Users/Tony/Downloads/LKDV/kitduvoyageur_1783951966810/tests/materiel/depart-cockpit.spec.ts:38:23
+    at [90mfile:///C:/Users/Tony/Downloads/LKDV/kitduvoyageur_1783951966810/[39mnode_modules/[4m@vitest/runner[24m/
+dist/chunk-artifact.js:1903:20
+
+[90mstderr[2m | tests/materiel/depart-cockpit.spec.ts[2m > [22m[2mDepart Cockpit - Complete V2 Test Suite[2m > 
+[22m[2mModèle de Données & Showcase[2m > [22m[2mfournit des métadonnées enrichies de Header (Phase 1) : 
+couverture, activité et horodatage
+[22m[39mgetDepartDetail fallback to showcase Error: [LKDV] Configuration Supabase manquante : 
+NEXT_PUBLIC_SUPABASE_URL et NEXT_PUBLIC_SUPABASE_ANON_KEY sont requis. Copiez .env.example vers .env.local et 
+renseignez-les (jamais commité).
+    at getSupabaseConfig (C:/Users/Tony/Downloads/LKDV/kitduvoyageur_1783951966810/src/lib/supabase/server.ts:14:11)
+    at createClient (C:/Users/Tony/Downloads/LKDV/kitduvoyageur_1783951966810/src/lib/supabase/server.ts:36:28)
+[90m    at processTicksAndRejections (node:internal/process/task_queues:104:5)[39m
+    at getDepartDetail 
+(C:/Users/Tony/Downloads/LKDV/kitduvoyageur_1783951966810/src/features/materiel/services/getDepartDetail.ts:372:22)
+    at C:/Users/Tony/Downloads/LKDV/kitduvoyageur_1783951966810/tests/materiel/depart-cockpit.spec.ts:46:19
+    at [90mfile:///C:/Users/Tony/Downloads/LKDV/kitduvoyageur_1783951966810/[39mnode_modules/[4m@vitest/runner[24m/
+dist/chunk-artifact.js:1903:20
+
+[90mstderr[2m | tests/materiel/depart-cockpit.spec.ts[2m > [22m[2mDepart Cockpit - Complete V2 Test Suite[2m > 
+[22m[2mModèle de Données & Showcase[2m > [22m[2mfournit des métadonnées enrichies de Header (Phase 1) : 
+couverture, activité et horodatage
+[22m[39mgetDepartDetail fallback to showcase Error: [LKDV] Configuration Supabase manquante : 
+NEXT_PUBLIC_SUPABASE_URL et NEXT_PUBLIC_SUPABASE_ANON_KEY sont requis. Copiez .env.example vers .env.local et 
+renseignez-les (jamais commité).
+    at getSupabaseConfig (C:/Users/Tony/Downloads/LKDV/kitduvoyageur_1783951966810/src/lib/supabase/server.ts:14:11)
+    at createClient (C:/Users/Tony/Downloads/LKDV/kitduvoyageur_1783951966810/src/lib/supabase/server.ts:36:28)
+[90m    at processTicksAndRejections (node:internal/process/task_queues:104:5)[39m
+    at getDepartDetail 
+(C:/Users/Tony/Downloads/LKDV/kitduvoyageur_1783951966810/src/features/materiel/services/getDepartDetail.ts:372:22)
+    at C:/Users/Tony/Downloads/LKDV/kitduvoyageur_1783951966810/tests/materiel/depart-cockpit.spec.ts:51:23
+    at [90mfile:///C:/Users/Tony/Downloads/LKDV/kitduvoyageur_1783951966810/[39mnode_modules/[4m@vitest/runner[24m/
+dist/chunk-artifact.js:1903:20
+
+[90mstderr[2m | tests/materiel/depart-cockpit.spec.ts[2m > [22m[2mDepart Cockpit - Complete V2 Test Suite[2m > 
+[22m[2mModèle de Données & Showcase[2m > [22m[2mfournit un fallback sûr en cas d ID inconnu ou none sans tracé 
+fictif forcé
+[22m[39mgetDepartDetail fallback to showcase Error: [LKDV] Configuration Supabase manquante : 
+NEXT_PUBLIC_SUPABASE_URL et NEXT_PUBLIC_SUPABASE_ANON_KEY sont requis. Copiez .env.example vers .env.local et 
+renseignez-les (jamais commité).
+    at getSupabaseConfig (C:/Users/Tony/Downloads/LKDV/kitduvoyageur_1783951966810/src/lib/supabase/server.ts:14:11)
+    at createClient (C:/Users/Tony/Downloads/LKDV/kitduvoyageur_1783951966810/src/lib/supabase/server.ts:36:28)
+[90m    at processTicksAndRejections (node:internal/process/task_queues:104:5)[39m
+    at getDepartDetail 
+(C:/Users/Tony/Downloads/LKDV/kitduvoyageur_1783951966810/src/features/materiel/services/getDepartDetail.ts:372:22)
+    at C:/Users/Tony/Downloads/LKDV/kitduvoyageur_1783951966810/tests/materiel/depart-cockpit.spec.ts:58:24
+    at [90mfile:///C:/Users/Tony/Downloads/LKDV/kitduvoyageur_1783951966810/[39mnode_modules/[4m@vitest/runner[24m/
+dist/chunk-artifact.js:1903:20
+
+[90mstderr[2m | tests/materiel/depart-cockpit.spec.ts[2m > [22m[2mDepart Cockpit - Complete V2 Test Suite[2m > 
+[22m[2mSécurité & Mutations Server Actions[2m > [22m[2mrejette les mutations de statut avec des identifiants 
+invalides
+[22m[39m[updateDepartStatus] unexpected error Error: [LKDV] Configuration Supabase manquante : 
+NEXT_PUBLIC_SUPABASE_URL et NEXT_PUBLIC_SUPABASE_ANON_KEY sont requis. Copiez .env.example vers .env.local et 
+renseignez-les (jamais commité).
+    at getSupabaseConfig (C:/Users/Tony/Downloads/LKDV/kitduvoyageur_1783951966810/src/lib/supabase/server.ts:14:11)
+    at createClient (C:/Users/Tony/Downloads/LKDV/kitduvoyageur_1783951966810/src/lib/supabase/server.ts:36:28)
+[90m    at processTicksAndRejections (node:internal/process/task_queues:104:5)[39m
+    at updateDepartStatus 
+(C:/Users/Tony/Downloads/LKDV/kitduvoyageur_1783951966810/src/features/materiel/actions/updateDepartStatus.ts:8:22)
+    at C:/Users/Tony/Downloads/LKDV/kitduvoyageur_1783951966810/tests/materiel/depart-cockpit.spec.ts:76:19
+    at [90mfile:///C:/Users/Tony/Downloads/LKDV/kitduvoyageur_1783951966810/[39mnode_modules/[4m@vitest/runner[24m/
+dist/chunk-artifact.js:1903:20
+
+ [32m✓[39m tests/materiel/depart-cockpit.spec.ts [2m([22m[2m15 tests[22m[2m)[22m[32m 25[2mms[22m[39m
+ [32m✓[39m tests/materiel/mobile-vital-alert.spec.ts [2m([22m[2m11 tests[22m[2m)[22m[32m 29[2mms[22m[39m
+ [32m✓[39m tests/trips/engine/buildItinerary.spec.ts [2m([22m[2m6 tests[22m[2m)[22m[32m 22[2mms[22m[39m
+ [32m✓[39m tests/materiel/conflicts.spec.ts [2m([22m[2m3 tests[22m[2m)[22m[32m 21[2mms[22m[39m
+ [32m✓[39m tests/features/pays/recommendations-component.spec.tsx [2m([22m[2m4 tests[22m[2m)[22m[32m 16[2mms[22m[39m
+ [32m✓[39m tests/features/pays/section-blocks.spec.tsx [2m([22m[2m4 tests[22m[2m)[22m[32m 18[2mms[22m[39m
+ [32m✓[39m tests/materiel/mobile-floating-island.spec.ts [2m([22m[2m9 tests[22m[2m)[22m[32m 28[2mms[22m[39m
+ [32m✓[39m tests/materiel/mobile-weight-header.spec.ts [2m([22m[2m5 tests[22m[2m)[22m[32m 20[2mms[22m[39m
+ [32m✓[39m tests/features/pays/weather-regions.spec.tsx [2m([22m[2m4 tests[22m[2m)[22m[32m 15[2mms[22m[39m
+ [32m✓[39m tests/materiel/mobile-checklist-item.spec.ts [2m([22m[2m7 tests[22m[2m)[22m[32m 26[2mms[22m[39m
+ [32m✓[39m tests/places/placeComponents.spec.ts [2m([22m[2m6 tests[22m[2m)[22m[32m 27[2mms[22m[39m
+ [32m✓[39m tests/features/pays/structured.spec.tsx [2m([22m[2m5 tests[22m[2m)[22m[32m 18[2mms[22m[39m
+ [32m✓[39m tests/features/discovery/klook.spec.tsx [2m([22m[2m11 tests[22m[2m)[22m[32m 19[2mms[22m[39m
+ [32m✓[39m tests/design-system/primitives.spec.ts [2m([22m[2m5 tests[22m[2m)[22m[32m 23[2mms[22m[39m
+ [32m✓[39m tests/features/pays/components.spec.tsx [2m([22m[2m5 tests[22m[2m)[22m[32m 17[2mms[22m[39m
+ [32m✓[39m tests/trips/engine/antiLlm.spec.ts [2m([22m[2m1 test[22m[2m)[22m[32m 15[2mms[22m[39m
+ [32m✓[39m tests/features/discovery/client.spec.ts [2m([22m[2m7 tests[22m[2m)[22m[32m 24[2mms[22m[39m
+ [32m✓[39m tests/trips/chantier-z4.spec.ts [2m([22m[2m5 tests[22m[2m)[22m[32m 20[2mms[22m[39m
+ [32m✓[39m tests/ai/kitConfigurator.spec.ts [2m([22m[2m10 tests[22m[2m)[22m[32m 11[2mms[22m[39m
+ [32m✓[39m tests/features/trips/tripProfileEngine.spec.ts [2m([22m[2m53 tests[22m[2m)[22m[32m 15[2mms[22m[39m
+ [32m✓[39m tests/trips/auto-gen-ui.spec.ts [2m([22m[2m9 tests[22m[2m)[22m[32m 19[2mms[22m[39m
+ [32m✓[39m tests/features/pays/trails-component.spec.tsx [2m([22m[2m2 tests[22m[2m)[22m[32m 17[2mms[22m[39m
+ [32m✓[39m tests/features/hub/suggestAdventure.spec.ts [2m([22m[2m8 tests[22m[2m)[22m[32m 14[2mms[22m[39m
+ [32m✓[39m tests/kits/kit-ref.spec.ts [2m([22m[2m6 tests[22m[2m)[22m[32m 12[2mms[22m[39m
+[90mstderr[2m | tests/trips/wizard.spec.ts[2m > [22m[2mChantier 2 — Wizard & Itinerary Engine Actions[2m > 
+[22m[2mgenerateAndPersistItinerary[2m > [22m[2mgénère un itinéraire déterministe avec étapes et items matériels
+[22m[39m[EventBus] Validation failed: actor_id: Invalid UUID, entity_id: Invalid UUID
+
+[90mstderr[2m | tests/trips/wizard.spec.ts[2m > [22m[2mChantier 2 — Wizard & Itinerary Engine Actions[2m > 
+[22m[2mregenerateItineraryAction[2m > [22m[2mrecalcule les étapes pour un voyage existant et préserve le matériel 
+utilisateur
+[22m[39m[EventBus] Validation failed: actor_id: Invalid UUID
+
+ [32m✓[39m tests/trips/wizard.spec.ts [2m([22m[2m7 tests[22m[2m)[22m[32m 18[2mms[22m[39m
+[90mstderr[2m | tests/events/eventBus.spec.ts[2m > [22m[2mPhase 7.1 — Fonction d’émission emitEvent et 
+souscriptions in-process[2m > [22m[2mTEST-BUS-07: ne lève jamais d’exception en cas de payload erroné (safe fail)
+[22m[39m[EventBus] Validation failed: event_type: Too small: expected string to have >=1 characters, actor_id: 
+Invalid UUID, entity_id: Invalid UUID
+
+ [32m✓[39m tests/events/eventBus.spec.ts [2m([22m[2m12 tests[22m[2m)[22m[32m 15[2mms[22m[39m
+ [32m✓[39m tests/affiliation/components.spec.ts [2m([22m[2m4 tests[22m[2m)[22m[32m 21[2mms[22m[39m
+ [32m✓[39m tests/features/discovery/provider-selection.spec.ts [2m([22m[2m13 tests[22m[2m)[22m[32m 17[2mms[22m[39m
+[90mstderr[2m | tests/ai/askAI.spec.ts[2m > [22m[2msrc/lib/ai/askAI — point d'entrée unique (port IA + 
+registre)[2m > [22m[2mTEST-ASK-02: échec provider (429) → fallbackResponse de la feature, AUCUN throw
+[22m[39m[askAI] provider openrouter en échec pour diagnostic: OpenRouter HTTP 429
+
+[90mstderr[2m | tests/ai/askAI.spec.ts[2m > [22m[2msrc/lib/ai/askAI — point d'entrée unique (port IA + 
+registre)[2m > [22m[2mTEST-ASK-06: AUCUNE clé ne fuite dans le résultat (succès comme fallback)
+[22m[39m[askAI] provider openrouter en échec pour diagnostic: OpenRouter HTTP 429
+
+[90mstderr[2m | tests/ai/askAI.spec.ts[2m > [22m[2msrc/lib/ai/askAI — point d'entrée unique (port IA + 
+registre)[2m > [22m[2mTEST-ASK-10: provider noop (sans clé) → complete throw → fallback gracieux
+[22m[39m[askAI] provider noop en échec pour chat-completion: IA indisponible
+
+ [32m✓[39m tests/ai/askAI.spec.ts [2m([22m[2m10 tests[22m[2m)[22m[32m 14[2mms[22m[39m
+ [32m✓[39m tests/trips/auto-gen-schemas.spec.ts [2m([22m[2m8 tests[22m[2m)[22m[32m 13[2mms[22m[39m
+ [32m✓[39m tests/features/discovery/terra-semantic.spec.ts [2m([22m[2m7 tests[22m[2m)[22m[32m 13[2mms[22m[39m
+[90mstderr[2m | tests/trips/notes/queries-trip-notes.spec.ts[2m > [22m[2mqueries-trip-notes & 
+queries-trip-completion — Chantier 8[2m > [22m[2mqueries-trip-completion[2m > [22m[2mmet à jour le statut du 
+voyage en completed
+[22m[39m[LKDV TripCompletion] cleanupSoloAutoCrew (non bloquant): TypeError: 
+supabase.from(...).select(...).eq(...).maybeSingle is not a function
+    at cleanupSoloAutoCrew 
+(C:/Users/Tony/Downloads/LKDV/kitduvoyageur_1783951966810/src/lib/queries-trip-completion.ts:48:8)
+    at Module.updateTripStatus 
+(C:/Users/Tony/Downloads/LKDV/kitduvoyageur_1783951966810/src/lib/queries-trip-completion.ts:32:11)
+[90m    at processTicksAndRejections (node:internal/process/task_queues:104:5)[39m
+    at C:/Users/Tony/Downloads/LKDV/kitduvoyageur_1783951966810/tests/trips/notes/queries-trip-notes.spec.ts:168:19
+    at [90mfile:///C:/Users/Tony/Downloads/LKDV/kitduvoyageur_1783951966810/[39mnode_modules/[4m@vitest/runner[24m/
+dist/chunk-artifact.js:1903:20
+
+[90mstderr[2m | tests/trips/notes/queries-trip-notes.spec.ts[2m > [22m[2mqueries-trip-notes & 
+queries-trip-completion — Chantier 8[2m > [22m[2mqueries-trip-completion[2m > [22m[2mpublie un voyage en carnet 
+communautaire (carnet, moments, kitItems)
+[22m[39m[LKDV TripCompletion] cleanupSoloAutoCrew (non bloquant): TypeError: 
+supabase.from(...).select(...).eq(...).maybeSingle is not a function
+    at cleanupSoloAutoCrew 
+(C:/Users/Tony/Downloads/LKDV/kitduvoyageur_1783951966810/src/lib/queries-trip-completion.ts:48:8)
+    at updateTripStatus 
+(C:/Users/Tony/Downloads/LKDV/kitduvoyageur_1783951966810/src/lib/queries-trip-completion.ts:32:11)
+[90m    at processTicksAndRejections (node:internal/process/task_queues:104:5)[39m
+    at Module.publishTripToCarnet 
+(C:/Users/Tony/Downloads/LKDV/kitduvoyageur_1783951966810/src/lib/queries-trip-completion.ts:146:5)
+    at C:/Users/Tony/Downloads/LKDV/kitduvoyageur_1783951966810/tests/trips/notes/queries-trip-notes.spec.ts:225:19
+    at [90mfile:///C:/Users/Tony/Downloads/LKDV/kitduvoyageur_1783951966810/[39mnode_modules/[4m@vitest/runner[24m/
+dist/chunk-artifact.js:1903:20
+
+ [32m✓[39m tests/trips/notes/queries-trip-notes.spec.ts [2m([22m[2m7 tests[22m[2m)[22m[32m 12[2mms[22m[39m
+ [32m✓[39m tests/features/discovery/route.spec.ts [2m([22m[2m7 tests[22m[2m)[22m[32m 16[2mms[22m[39m
+ [32m✓[39m tests/trips/planner/plannerActions.spec.ts [2m([22m[2m8 tests[22m[2m)[22m[32m 14[2mms[22m[39m
+ [32m✓[39m tests/features/pays/trails-route.spec.ts [2m([22m[2m5 tests[22m[2m)[22m[32m 13[2mms[22m[39m
+ [32m✓[39m tests/trips/queries-trips.spec.ts [2m([22m[2m7 tests[22m[2m)[22m[32m 13[2mms[22m[39m
+ [32m✓[39m tests/features/hub/hubProfileEngine.spec.ts [2m([22m[2m28 tests[22m[2m)[22m[32m 12[2mms[22m[39m
+ [32m✓[39m tests/features/pays/recommendations-route.spec.ts [2m([22m[2m5 tests[22m[2m)[22m[32m 12[2mms[22m[39m
+ [32m✓[39m tests/trips/auto-gen-solver.spec.ts [2m([22m[2m6 tests[22m[2m)[22m[32m 11[2mms[22m[39m
+ [32m✓[39m tests/ai/providers.spec.ts [2m([22m[2m9 tests[22m[2m)[22m[32m 11[2mms[22m[39m
+ [32m✓[39m tests/ai/country-content-blocks.spec.ts [2m([22m[2m6 tests[22m[2m)[22m[32m 12[2mms[22m[39m
+ [32m✓[39m tests/features/trips/tripRegistries.spec.ts [2m([22m[2m14 tests[22m[2m)[22m[32m 11[2mms[22m[39m
+ [32m✓[39m tests/trips/engine/allocateDays.spec.ts [2m([22m[2m7 tests[22m[2m)[22m[32m 9[2mms[22m[39m
+ [32m✓[39m tests/places/placesActions.spec.ts [2m([22m[2m4 tests[22m[2m)[22m[32m 7[2mms[22m[39m
+ [32m✓[39m tests/trips/rls-isolation.spec.ts [2m([22m[2m11 tests[22m[2m)[22m[32m 5[2mms[22m[39m
+ [32m✓[39m tests/features/pays/weather-route.spec.ts [2m([22m[2m4 tests[22m[2m)[22m[32m 12[2mms[22m[39m
+ [32m✓[39m tests/supabase/serverConfig.spec.ts [2m([22m[2m5 tests[22m[2m)[22m[32m 9[2mms[22m[39m
+ [32m✓[39m tests/trips/kit/queries-trip-kit.spec.ts [2m([22m[2m8 tests[22m[2m)[22m[32m 10[2mms[22m[39m
+ [32m✓[39m tests/affiliation/engine.spec.ts [2m([22m[2m9 tests[22m[2m)[22m[32m 10[2mms[22m[39m
+ [32m✓[39m tests/features/hub/hubRegistries.spec.ts [2m([22m[2m15 tests[22m[2m)[22m[32m 10[2mms[22m[39m
+ [32m✓[39m tests/schemas/materiel.spec.ts [2m([22m[2m8 tests[22m[2m)[22m[32m 9[2mms[22m[39m
+ [32m✓[39m tests/features/hub/widgetCatalog.spec.ts [2m([22m[2m14 tests[22m[2m)[22m[32m 8[2mms[22m[39m
+ [32m✓[39m tests/schemas/participant.spec.ts [2m([22m[2m4 tests[22m[2m)[22m[32m 5[2mms[22m[39m
+ [32m✓[39m tests/ai/countryGuides.spec.ts [2m([22m[2m9 tests[22m[2m)[22m[32m 10[2mms[22m[39m
+ [32m✓[39m tests/features/discovery/service.spec.ts [2m([22m[2m8 tests[22m[2m)[22m[32m 9[2mms[22m[39m
+ [32m✓[39m tests/places/queries-places.spec.ts [2m([22m[2m6 tests[22m[2m)[22m[32m 10[2mms[22m[39m
+ [32m✓[39m tests/trips/auto-gen-safety-connectors.spec.ts [2m([22m[2m8 tests[22m[2m)[22m[33m 4020[2mms[22m[39m
+       [33m[2m✓[22m[39m TEST-CONNECTOR-02: Retourne des points d’eau réels avec traçabilité et licence ODbL [33m 4007[2mms[22m[39m
+ [32m✓[39m tests/checkout/stripe-metadata.spec.ts [2m([22m[2m9 tests[22m[2m)[22m[32m 8[2mms[22m[39m
+ [32m✓[39m tests/ai/requestMode.spec.ts [2m([22m[2m12 tests[22m[2m)[22m[32m 8[2mms[22m[39m
+ [32m✓[39m tests/features/hub/hubRedirects.spec.ts [2m([22m[2m17 tests[22m[2m)[22m[32m 7[2mms[22m[39m
+ [32m✓[39m tests/ai/trailNarrative.spec.ts [2m([22m[2m5 tests[22m[2m)[22m[32m 11[2mms[22m[39m
+ [32m✓[39m tests/security/rlsMatrix.spec.ts [2m([22m[2m25 tests[22m[2m)[22m[32m 7[2mms[22m[39m
+ [32m✓[39m tests/trips/engine/carnetConversionEngine.spec.ts [2m([22m[2m6 tests[22m[2m)[22m[32m 7[2mms[22m[39m
+ [32m✓[39m tests/features/hub/adventureLists.spec.ts [2m([22m[2m21 tests[22m[2m)[22m[32m 9[2mms[22m[39m
+ [32m✓[39m tests/features/hub/gearEngine.spec.ts [2m([22m[2m10 tests[22m[2m)[22m[32m 7[2mms[22m[39m
+ [32m✓[39m tests/features/pays/regions-route.spec.ts [2m([22m[2m4 tests[22m[2m)[22m[32m 10[2mms[22m[39m
+ [32m✓[39m tests/trips/engine/budgetEngine.spec.ts [2m([22m[2m11 tests[22m[2m)[22m[32m 8[2mms[22m[39m
+ [32m✓[39m tests/trips/trip-schemas.spec.ts [2m([22m[2m20 tests[22m[2m)[22m[32m 15[2mms[22m[39m
+ [32m✓[39m tests/affiliation/queries-affiliation.spec.ts [2m([22m[2m4 tests[22m[2m)[22m[32m 9[2mms[22m[39m
+ [32m✓[39m tests/trips/collab/queries-trip-collab.spec.ts [2m([22m[2m9 tests[22m[2m)[22m[32m 9[2mms[22m[39m
+ [32m✓[39m tests/trips/chantier-z3.spec.ts [2m([22m[2m14 tests[22m[2m)[22m[32m 8[2mms[22m[39m
+ [32m✓[39m tests/trips/planner/plannerEngine.spec.ts [2m([22m[2m13 tests[22m[2m)[22m[32m 7[2mms[22m[39m
+ [32m✓[39m tests/places/scoring.spec.ts [2m([22m[2m13 tests[22m[2m)[22m[32m 12[2mms[22m[39m
+ [32m✓[39m tests/features/hub/activityProfiles.spec.ts [2m([22m[2m11 tests[22m[2m)[22m[32m 7[2mms[22m[39m
+ [32m✓[39m tests/trips/temporalPhaseEngine.spec.ts [2m([22m[2m13 tests[22m[2m)[22m[32m 6[2mms[22m[39m
+ [32m✓[39m tests/trips/engine/contextualKitEngine.spec.ts [2m([22m[2m7 tests[22m[2m)[22m[32m 6[2mms[22m[39m
+ [32m✓[39m tests/design/x6-accessibility.spec.ts [2m([22m[2m10 tests[22m[2m)[22m[32m 4[2mms[22m[39m
+ [32m✓[39m tests/identity/orientation.spec.ts [2m([22m[2m14 tests[22m[2m)[22m[32m 8[2mms[22m[39m
+ [32m✓[39m tests/trips/engine/itineraryFallback.spec.ts [2m([22m[2m9 tests[22m[2m)[22m[32m 8[2mms[22m[39m
+[90mstderr[2m | tests/ai/responseStore.spec.ts[2m > [22m[2msrc/lib/ai/cache — store de réponses IA (service 
+role)[2m > [22m[2mTEST-CACHE-04: sans SUPABASE_SERVICE_ROLE_KEY → cache désactivé sans exception
+[22m[39m[ai/serviceClient] SUPABASE_SERVICE_ROLE_KEY absente — couches IA dégradées
+
+[90mstderr[2m | tests/preparation/preparation-store.spec.ts[2m > [22m[2musePreparationStore — Section 2 
+Préparation[2m > [22m[2majoute, met à jour et supprime un équipement
+[22m[39m[zustand persist middleware] Unable to update item 'lkdv_preparation_state_v2', the given storage is 
+currently unavailable.
+[zustand persist middleware] Unable to update item 'lkdv_preparation_state_v2', the given storage is currently 
+unavailable.
+[zustand persist middleware] Unable to update item 'lkdv_preparation_state_v2', the given storage is currently 
+unavailable.
+
+[90mstderr[2m | tests/preparation/preparation-store.spec.ts[2m > [22m[2musePreparationStore — Section 2 
+Préparation[2m > [22m[2mbascule le statut porté et vérifie l impact sur le Base Weight
+[22m[39m[zustand persist middleware] Unable to update item 'lkdv_preparation_state_v2', the given storage is 
+currently unavailable.
+
+ [32m✓[39m tests/ai/responseStore.spec.ts [2m([22m[2m5 tests[22m[2m)[22m[32m 10[2mms[22m[39m
+[90mstderr[2m | tests/preparation/preparation-store.spec.ts[2m > [22m[2musePreparationStore — Section 2 
+Préparation[2m > [22m[2mgère le déverrouillage sécurisé Glass Break et le reverrouillage
+[22m[39m[zustand persist middleware] Unable to update item 'lkdv_preparation_state_v2', the given storage is 
+currently unavailable.
+[zustand persist middleware] Unable to update item 'lkdv_preparation_state_v2', the given storage is currently 
+unavailable.
+[zustand persist middleware] Unable to update item 'lkdv_preparation_state_v2', the given storage is currently 
+unavailable.
+[zustand persist middleware] Unable to update item 'lkdv_preparation_state_v2', the given storage is currently 
+unavailable.
+
+[90mstderr[2m | tests/preparation/preparation-store.spec.ts[2m > [22m[2musePreparationStore — Section 2 
+Préparation[2m > [22m[2majoute et met à jour un compagnon canin avec recalcul automatique du portage 15%
+[22m[39m[zustand persist middleware] Unable to update item 'lkdv_preparation_state_v2', the given storage is 
+currently unavailable.
+[zustand persist middleware] Unable to update item 'lkdv_preparation_state_v2', the given storage is currently 
+unavailable.
+
+ [32m✓[39m tests/preparation/preparation-store.spec.ts [2m([22m[2m5 tests[22m[2m)[22m[32m 7[2mms[22m[39m
+ [32m✓[39m tests/trips/phase8-features.spec.ts [2m([22m[2m12 tests[22m[2m)[22m[32m 9[2mms[22m[39m
+ [32m✓[39m tests/trips/offline/offlineStorage.spec.ts [2m([22m[2m3 tests[22m[2m)[22m[32m 7[2mms[22m[39m
+ [32m✓[39m tests/kits/kit-lineage.spec.ts [2m([22m[2m14 tests[22m[2m)[22m[32m 7[2mms[22m[39m
+ [32m✓[39m tests/features/hub/adventureSchema.spec.ts [2m([22m[2m6 tests[22m[2m)[22m[32m 7[2mms[22m[39m
+ [32m✓[39m tests/crews/crew-schemas.spec.ts [2m([22m[2m5 tests[22m[2m)[22m[32m 6[2mms[22m[39m
+ [32m✓[39m tests/trips/offline/tripOfflineSyncQueue.spec.ts [2m([22m[2m5 tests[22m[2m)[22m[32m 8[2mms[22m[39m
+ [32m✓[39m tests/ai/country-guide.spec.ts [2m([22m[2m8 tests[22m[2m)[22m[33m 4907[2mms[22m[39m
+     [33m[2m✓[22m[39m TEST-CG-PRACTICAL-06: generateCountryFullGuide génère toutes les 6 sections [33m 4827[2mms[22m[39m
+ [32m✓[39m tests/affiliation/travelpayouts-consent.spec.ts [2m([22m[2m2 tests[22m[2m)[22m[32m 8[2mms[22m[39m
+ [32m✓[39m tests/identity/field-signature.spec.ts [2m([22m[2m13 tests[22m[2m)[22m[32m 7[2mms[22m[39m
+ [32m✓[39m tests/ai/registry.spec.ts [2m([22m[2m4 tests[22m[2m)[22m[32m 6[2mms[22m[39m
+ [32m✓[39m tests/trips/trace-svg.spec.ts [2m([22m[2m6 tests[22m[2m)[22m[32m 6[2mms[22m[39m
+[90mstderr[2m | tests/ai/pushNotify.spec.ts[2m > [22m[2msrc/lib/ai/pushNotify — notification web-push (carnet 
+prêt)[2m > [22m[2mTEST-PUSH-01: VAPID absentes → false, aucun envoi, aucune requête
+[22m[39m[ai/pushNotify] VAPID non configurées — notification ignorée
+
+[90mstderr[2m | tests/ai/pushNotify.spec.ts[2m > [22m[2msrc/lib/ai/pushNotify — notification web-push (carnet 
+prêt)[2m > [22m[2mTEST-PUSH-03: échec d’un envoi → les autres abonnements tentés quand même
+[22m[39m[ai/pushNotify] envoi a échoué: 410 Gone
+
+[90mstderr[2m | tests/ai/pushNotify.spec.ts[2m > [22m[2msrc/lib/ai/pushNotify — notification web-push (carnet 
+prêt)[2m > [22m[2mTEST-PUSH-04: tous les envois échouent → false (jamais de throw)
+[22m[39m[ai/pushNotify] envoi a échoué: boom
+
+ [32m✓[39m tests/ai/pushNotify.spec.ts [2m([22m[2m4 tests[22m[2m)[22m[32m 7[2mms[22m[39m
+ [32m✓[39m tests/materiel/departCalculations.spec.ts [2m([22m[2m10 tests[22m[2m)[22m[32m 6[2mms[22m[39m
+ [32m✓[39m tests/features/discovery/schemas.spec.ts [2m([22m[2m4 tests[22m[2m)[22m[32m 7[2mms[22m[39m
+ [32m✓[39m tests/pois.spec.ts [2m([22m[2m4 tests[22m[2m)[22m[32m 6[2mms[22m[39m
+ [32m✓[39m tests/preparation/preparation-services.spec.ts [2m([22m[2m10 tests[22m[2m)[22m[32m 7[2mms[22m[39m
+ [32m✓[39m tests/trips/activeTrip.spec.ts [2m([22m[2m4 tests[22m[2m)[22m[32m 5[2mms[22m[39m
+ [32m✓[39m tests/features/discovery/adapter.spec.ts [2m([22m[2m4 tests[22m[2m)[22m[32m 6[2mms[22m[39m
+ [32m✓[39m tests/trips/engine/exportEngine.spec.ts [2m([22m[2m8 tests[22m[2m)[22m[32m 6[2mms[22m[39m
+ [32m✓[39m tests/design-system/appShell.spec.ts [2m([22m[2m3 tests[22m[2m)[22m[32m 11[2mms[22m[39m
+ [32m✓[39m tests/features/discovery/wiring.spec.ts [2m([22m[2m4 tests[22m[2m)[22m[32m 5[2mms[22m[39m
+ [32m✓[39m tests/features/trips/chantier-y6-fusion.spec.ts [2m([22m[2m3 tests[22m[2m)[22m[32m 5[2mms[22m[39m
+ [32m✓[39m tests/ai/configuratorCore.spec.ts [2m([22m[2m6 tests[22m[2m)[22m[32m 6[2mms[22m[39m
+ [32m✓[39m tests/security/ethical-legal-security.spec.ts [2m([22m[2m6 tests[22m[2m)[22m[32m 6[2mms[22m[39m
+ [32m✓[39m tests/trips/engine/seasonality.spec.ts [2m([22m[2m8 tests[22m[2m)[22m[32m 6[2mms[22m[39m
+ [32m✓[39m tests/features/pays/recommendation-engine.spec.ts [2m([22m[2m4 tests[22m[2m)[22m[32m 5[2mms[22m[39m
+ [32m✓[39m tests/features/pays/geo-bbox.spec.ts [2m([22m[2m4 tests[22m[2m)[22m[32m 5[2mms[22m[39m
+ [32m✓[39m tests/features/hub/activityTypes.spec.ts [2m([22m[2m8 tests[22m[2m)[22m[32m 4[2mms[22m[39m
+ [32m✓[39m tests/kits/trust.spec.ts [2m([22m[2m15 tests[22m[2m)[22m[32m 5[2mms[22m[39m
+ [32m✓[39m tests/kits/royalty.spec.ts [2m([22m[2m7 tests[22m[2m)[22m[32m 5[2mms[22m[39m
+ [32m✓[39m tests/gestures.spec.ts [2m([22m[2m14 tests[22m[2m)[22m[32m 6[2mms[22m[39m
+ [32m✓[39m tests/features/pays/registry.spec.ts [2m([22m[2m4 tests[22m[2m)[22m[32m 5[2mms[22m[39m
+ [32m✓[39m tests/cart.spec.ts [2m([22m[2m3 tests[22m[2m)[22m[32m 6[2mms[22m[39m
+ [32m✓[39m tests/messaging/messagingUtils.spec.ts [2m([22m[2m7 tests[22m[2m)[22m[32m 5[2mms[22m[39m
+ [32m✓[39m tests/integration/server-actions.spec.ts [2m([22m[2m6 tests[22m[2m)[22m[32m 9[2mms[22m[39m
+[90mstdout[2m | src/features/hiking/safety/__tests__/SafetyEngine.test.ts[2m > [22m[2mhiking[2m > [22m[2mexécute la suite (runAllSafetyEngineTests)
+[22m[39m🧪 Executing SafetyEngine Unit Tests...
+  ✓ Format emergency coordinates string
+  ✓ Low battery warning escalation
+🏁 Safety Test Summary: 2 Passed, 0 Failed.
+
+ [32m✓[39m src/features/hiking/safety/__tests__/SafetyEngine.test.ts [2m([22m[2m1 test[22m[2m)[22m[32m 5[2mms[22m[39m
+ [32m✓[39m tests/trips/chantier-z1.spec.ts [2m([22m[2m13 tests[22m[2m)[22m[33m 4044[2mms[22m[39m
+       [33m[2m✓[22m[39m Z-D14: lookupWaterSources sans points d’eau réels retourne un tableau vide et déclenche l’alerte hydrique vitale [33m 4012[2mms[22m[39m
+ [32m✓[39m tests/gear-shakedown.spec.ts [2m([22m[2m7 tests[22m[2m)[22m[32m 6[2mms[22m[39m
+ [32m✓[39m src/features/hub/engine/__tests__/hubNature.test.ts [2m([22m[2m11 tests[22m[2m)[22m[32m 5[2mms[22m[39m
+ [32m✓[39m tests/hub.spec.ts [2m([22m[2m7 tests[22m[2m)[22m[32m 5[2mms[22m[39m
+ [32m✓[39m tests/materiel/departOfflineQueue.spec.ts [2m([22m[2m4 tests[22m[2m)[22m[32m 5[2mms[22m[39m
+[90mstdout[2m | src/features/hiking/engine/__tests__/TrackingEngine.test.ts[2m > [22m[2mhiking[2m > [22m[2mexécute la suite TrackingEngine
+[22m[39m🧪 Executing TrackingEngine & HikeEngine Unit Tests...
+  ✓ Haversine distance calculation (Paris -> Lyon ~390 km)
+  ✓ Bearing calculation (Paris -> Lyon ~155°)
+  ✓ Outlier filtering: rejects low accuracy (> 50m)
+  ✓ Outlier filtering: rejects impossible speed (> 30 km/h)
+  ✓ Elevation gain smoothing calculation
+  ✓ ETA estimation calculation for remaining distance
+🏁 Test Summary: 6 Passed, 0 Failed.
+
+[90mstderr[2m | src/features/hiking/engine/__tests__/TrackingEngine.test.ts[2m > [22m[2mhiking[2m > 
+[22m[2mexécute la suite TrackingEngine
+[22m[39m[TrackingEngine] Rejected outlier position (speed/jump): { speedKmH: [33m40030.17359204171[39m, 
+distanceDeltaKm: [33m11.11949266445603[39m }
+
+ [32m✓[39m src/features/hiking/engine/__tests__/TrackingEngine.test.ts [2m([22m[2m1 test[22m[2m)[22m[32m 5[2mms[22m[39m
+[90mstdout[2m | src/features/hiking/offline/__tests__/OfflineManager.test.ts[2m > [22m[2mhiking[2m > [22m[2mexécute la suite (runAllOfflineManagerTests)
+[22m[39m🧪 Executing OfflineManager Unit Tests...
+  ✓ OfflineManager queue item addition
+  ✓ Network status subscription
+🏁 Offline Test Summary: 2 Passed, 0 Failed.
+
+ [32m✓[39m src/features/hiking/offline/__tests__/OfflineManager.test.ts [2m([22m[2m1 test[22m[2m)[22m[32m 5[2mms[22m[39m
+ [32m✓[39m tests/features/pays/country-content.spec.ts [2m([22m[2m5 tests[22m[2m)[22m[32m 7[2mms[22m[39m
+[90mstdout[2m | src/features/hiking/journal/__tests__/JournalEventBuilder.test.ts[2m > [22m[2mhiking[2m > [22m[2mexécute la suite (runAllJournalTests)
+[22m[39m🧪 Executing JournalEventBuilder & JournalStore Unit Tests...
+  ✓ Create automatic START event
+  ✓ Create automatic SUMMIT POI event
+  ✓ Create manual PHOTO media event
+  ✓ JournalStore add, update, and delete events
+🏁 Journal Test Summary: 4 Passed, 0 Failed.
+
+ [32m✓[39m src/features/hiking/journal/__tests__/JournalEventBuilder.test.ts [2m([22m[2m1 test[22m[2m)[22m[32m 6[2mms[22m[39m
+ [32m✓[39m tests/features/pays/mapper.spec.ts [2m([22m[2m4 tests[22m[2m)[22m[32m 5[2mms[22m[39m
+[90mstdout[2m | src/features/hiking/intelligence/__tests__/TrailIntelligenceEngine.test.ts[2m > [22m[2mhiking[2m > [22m[2mexécute la suite (runAllTrailIntelligenceEngineTests)
+[22m[39m🧪 Executing TrailIntelligenceEngine Unit Tests...
+  ✓ Pii stripping & session anonymization
+  ✓ Aggregated report & confidence score calculation
+  ✓ Generate proposal for human validation when difficulty diverges
+🏁 Intelligence Test Summary: 3 Passed, 0 Failed.
+
+ [32m✓[39m src/features/hiking/intelligence/__tests__/TrailIntelligenceEngine.test.ts [2m([22m[2m1 test[22m[2m)[22m[32m 6[2mms[22m[39m
+ [32m✓[39m tests/trips/chantier-z8.spec.ts [2m([22m[2m3 tests[22m[2m)[22m[32m 6[2mms[22m[39m
+ [32m✓[39m tests/materiel/optimizer.spec.ts [2m([22m[2m3 tests[22m[2m)[22m[32m 4[2mms[22m[39m
+ [32m✓[39m tests/crews/crew-invitations.spec.ts [2m([22m[2m7 tests[22m[2m)[22m[32m 5[2mms[22m[39m
+[90mstdout[2m | src/features/hiking/copilot/__tests__/CopilotEngine.test.ts[2m > [22m[2mhiking[2m > [22m[2mexécute la suite (runAllCopilotEngineTests)
+[22m[39m🧪 Executing CopilotEngine Unit Tests...
+  ✓ Generate answer for remaining distance
+  ✓ Generate answer for water point lookup
+  ✓ Proactive suggestion on weather alert
+🏁 Copilot Test Summary: 3 Passed, 0 Failed.
+
+ [32m✓[39m src/features/hiking/copilot/__tests__/CopilotEngine.test.ts [2m([22m[2m1 test[22m[2m)[22m[32m 4[2mms[22m[39m
+ [32m✓[39m tests/routes/dead-links-h05.spec.ts [2m([22m[2m5 tests[22m[2m)[22m[32m 5[2mms[22m[39m
+[90mstdout[2m | src/features/hiking/gpx/__tests__/GPXEngine.test.ts[2m > [22m[2mhiking[2m > [22m[2mexécute la suite GPXEngine
+[22m[39m🧪 Executing GPXEngine Unit Tests...
+  ✓ Generate valid GPX 1.1 header
+  ✓ Include hike title in metadata
+  ✓ Include waypoint node
+  ✓ Include track point nodes
+🏁 GPX Test Summary: 4 Passed, 0 Failed.
+
+ [32m✓[39m src/features/hiking/gpx/__tests__/GPXEngine.test.ts [2m([22m[2m1 test[22m[2m)[22m[32m 7[2mms[22m[39m
+ [32m✓[39m tests/participants.spec.ts [2m([22m[2m6 tests[22m[2m)[22m[32m 5[2mms[22m[39m
+ [32m✓[39m tests/features/hub/selectHubWidgets.spec.ts [2m([22m[2m4 tests[22m[2m)[22m[32m 5[2mms[22m[39m
+ [32m✓[39m tests/a11y/a11y-wcag.spec.ts [2m([22m[2m5 tests[22m[2m)[22m[32m 5[2mms[22m[39m
+ [32m✓[39m tests/trips/engine/travelTime.spec.ts [2m([22m[2m5 tests[22m[2m)[22m[32m 4[2mms[22m[39m
+[90mstdout[2m | src/features/hiking/navigation/__tests__/NavigationEngine.test.ts[2m > [22m[2mhiking[2m > [22m[2mexécute la suite (runAllNavigationEngineTests)
+[22m[39m🧪 Executing NavigationEngine Unit Tests...
+  ✓ Multi-level deviation: NORMAL level (< 10m)
+  ✓ Multi-level deviation: WATCH level (10m - 25m)
+  ✓ Multi-level deviation: WARNING level (25m - 50m)
+  ✓ Multi-level deviation: OFF_ROUTE requires debounce (2 consecutive samples > 50m)
+  ✓ Waypoint arrival detection (< 30m)
+🏁 Navigation Test Summary: 5 Passed, 0 Failed.
+
+ [32m✓[39m src/features/hiking/navigation/__tests__/NavigationEngine.test.ts [2m([22m[2m1 test[22m[2m)[22m[32m 5[2mms[22m[39m
+ [32m✓[39m tests/materiel/comparator.spec.ts [2m([22m[2m3 tests[22m[2m)[22m[32m 4[2mms[22m[39m
+ [32m✓[39m tests/materiel/scanner.spec.ts [2m([22m[2m3 tests[22m[2m)[22m[32m 4[2mms[22m[39m
+ [32m✓[39m tests/features/trips/tripShakedownIntegration.spec.ts [2m([22m[2m2 tests[22m[2m)[22m[32m 4[2mms[22m[39m
+ [32m✓[39m tests/trips/engine/kitWeight.spec.ts [2m([22m[2m5 tests[22m[2m)[22m[32m 5[2mms[22m[39m
+ [32m✓[39m tests/design/x5-interactions.spec.ts [2m([22m[2m2 tests[22m[2m)[22m[32m 4[2mms[22m[39m
+ [32m✓[39m tests/features/discovery/errors.spec.ts [2m([22m[2m2 tests[22m[2m)[22m[32m 4[2mms[22m[39m
+ [32m✓[39m tests/kits/field-proof.spec.ts [2m([22m[2m6 tests[22m[2m)[22m[32m 6[2mms[22m[39m
+[90mstdout[2m | src/features/hiking/services/__tests__/HikeNarrativeService.test.ts[2m > [22m[2mhiking[2m > [22m[2mexécute la suite HikeNarrativeService
+[22m[39m🧪 Executing HikeNarrativeService Unit Tests...
+
+[90mstdout[2m | src/features/hiking/services/__tests__/HikeNarrativeService.test.ts[2m > [22m[2mhiking[2m > [22m[2mexécute la suite HikeNarrativeService
+[22m[39m  ✓ Generate journal narrative
+  ✓ Generate epic aventure narrative
+  ✓ Generate sportive analysis narrative
+🏁 Narrative Test Summary: 3 Passed, 0 Failed.
+
+ [32m✓[39m tests/trips/engine/recommendationHierarchy.spec.ts [2m([22m[2m3 tests[22m[2m)[22m[32m 4[2mms[22m[39m
+ [32m✓[39m src/features/hiking/services/__tests__/HikeNarrativeService.test.ts [2m([22m[2m1 test[22m[2m)[22m[32m 5[2mms[22m[39m
+ [32m✓[39m tests/design/tokens-sync.spec.ts [2m([22m[2m3 tests[22m[2m)[22m[32m 4[2mms[22m[39m
+ [32m✓[39m tests/materiel/order.spec.ts [2m([22m[2m3 tests[22m[2m)[22m[32m 3[2mms[22m[39m
+ [32m✓[39m tests/crews/crew-routes.spec.ts [2m([22m[2m3 tests[22m[2m)[22m[32m 3[2mms[22m[39m
+ [32m✓[39m tests/design/x7-bottom-nav-conflict.spec.ts [2m([22m[2m3 tests[22m[2m)[22m[32m 5[2mms[22m[39m
+ [32m✓[39m tests/features/hub/crewVisibility.spec.ts [2m([22m[2m4 tests[22m[2m)[22m[32m 3[2mms[22m[39m
+ [32m✓[39m tests/features/hub/hubBackNav.spec.ts [2m([22m[2m5 tests[22m[2m)[22m[32m 4[2mms[22m[39m
+ [32m✓[39m tests/materiel/history.spec.ts [2m([22m[2m3 tests[22m[2m)[22m[32m 3[2mms[22m[39m
+ [32m✓[39m tests/trips/hooks/useTripCounters.spec.ts [2m([22m[2m3 tests[22m[2m)[22m[32m 4[2mms[22m[39m
+ [32m✓[39m tests/responsive/responsive-breakpoints.spec.ts [2m([22m[2m3 tests[22m[2m)[22m[32m 3[2mms[22m[39m
+ [32m✓[39m tests/crews/crew-queries.spec.ts [2m([22m[2m1 test[22m[2m)[22m[32m 4[2mms[22m[39m
+ [32m✓[39m tests/features/hub/hubPathname.spec.ts [2m([22m[2m4 tests[22m[2m)[22m[32m 3[2mms[22m[39m
+ [32m✓[39m tests/design-system/icons.spec.ts [2m([22m[2m3 tests[22m[2m)[22m[32m 2[2mms[22m[39m
+ [32m✓[39m tests/trips/tripChecklist.spec.ts [2m([22m[2m2 tests[22m[2m)[22m[32m 2[2mms[22m[39m
+ [32m✓[39m tests/trips/tripLiveCockpit.spec.ts [2m([22m[2m2 tests[22m[2m)[22m[32m 2[2mms[22m[39m
+ [32m✓[39m tests/trips/chantier-z6.spec.ts [2m([22m[2m11 tests[22m[2m)[22m[33m 8012[2mms[22m[39m
+       [33m[2m✓[22m[39m Z-BOUNDS.1 : lookupWaterSources ne renvoie que des points à l’intérieur de la boîte [33m 4005[2mms[22m[39m
+       [33m[2m✓[22m[39m Z-BOUNDS.3 : hors zone pilote, lookupWaterSources ne fabrique aucun point hors boîte [33m 4003[2mms[22m[39m
+ [32m✓[39m tests/trips/chantier-z2.spec.ts [2m([22m[2m7 tests[22m[2m)[22m[33m 8031[2mms[22m[39m
+       [33m[2m✓[22m[39m Z-OVERPASS.1 : lookupWaterSources retourne des points avec ID réels et mention ODbL légale [33m 4008[2mms[22m[39m
+       [33m[2m✓[22m[39m Z-OVERPASS.2 : lookupWaterSources sur une boîte hors zone retourne [] sans inventer de point [33m 4010[2mms[22m[39m
+
+[31m⎯⎯⎯⎯⎯⎯⎯[39m[1m[41m Failed Tests 3 [49m[22m[31m⎯⎯⎯⎯⎯⎯⎯[39m
+
+[41m[1m FAIL [22m[49m tests/trips/kit/kitComponents.spec.ts[2m > [22mTripKitView Component (Apple HIG & Core 
+Business Monetization)[2m > [22mrenders preparation progress and weight indicators
+[31m[1mAssertionError[22m: expected '<div class="space-y-6 animate-fade-in…' to contain '100%'[39m
+
+Expected: [32m"100%"[39m
+Received: [31m"<div class="space-y-6 animate-fade-in"><div class="grid grid-cols-1 gap-4"><div class="glass relative 
+overflow-hidden backdrop-blur-[10px] p-5 rounded-3xl border border-white/70"><div class="h-full min-h-0 flex flex-col 
+justify-between"><div class="flex items-center justify-between mb-2"><span role="img" aria-label="scale" 
+class="inline-flex items-center justify-center select-none shrink-0  w-4 h-4 text-lkv-secondary" style="width:24px;heig
+ht:24px;display:inline-flex;background-color:currentColor;mask-image:url(&quot;/icons/sf/scale.svg&quot;);-webkit-mask-
+image:url(&quot;/icons/sf/scale.svg&quot;);mask-size:contain;-webkit-mask-size:contain;mask-repeat:no-repeat;-webkit-ma
+sk-repeat:no-repeat;mask-position:center;-webkit-mask-position:center" aria-hidden="true"></span><span 
+class="text-[10px] font-bold px-2 py-0.5 rounded-full uppercase bg-[var(--lkv-success)]/15 
+text-[var(--lkv-success)]">ultralight</span></div><div class="text-2xl font-black text-lkv-primary mb-1">2.0 kg <span 
+class="text-sm font-medium text-lkv-secondary">total</span></div><p class="text-xs text-stone-500">Poids de base (sac 
+hors eau/vivres) : <strong class="text-stone-800">2.0 kg</strong></p></div></div></div><div class="p-4 rounded-2xl 
+bg-[var(--lkv-warning)]/10 border border-[var(--lkv-warning)]/20 text-text-primary text-xs sm:text-sm 
+space-y-1.5"><div class="font-bold flex items-center gap-2 text-[var(--lkv-warning)]"><span role="img" 
+aria-label="alert-triangle" class="inline-flex items-center justify-center select-none shrink-0  w-4 h-4 shrink-0 
+text-[var(--lkv-warning)]" style="width:24px;height:24px;display:inline-flex;background-color:currentColor;mask-image:u
+rl(&quot;/icons/sf/alert-triangle.svg&quot;);-webkit-mask-image:url(&quot;/icons/sf/alert-triangle.svg&quot;);mask-size
+:contain;-webkit-mask-size:contain;mask-repeat:no-repeat;-webkit-mask-repeat:no-repeat;mask-position:center;-webkit-mas
+k-position:center"></span>Conditions de terrain identifiées pour votre expédition</div><ul class="list-disc 
+list-inside space-y-0.5 pl-1 text-xs text-text-secondary"><li>Islande : Météo hautement imprévisible, vents violents 
+et gués froids.</li></ul></div><div class="glass relative overflow-hidden backdrop-blur-[10px] p-5 rounded-3xl border 
+border-white/70 shadow-sm space-y-4"><div class="h-full min-h-0 flex flex-col justify-between"><div class="flex 
+items-center justify-between gap-3"><h3 class="font-display text-lg font-black text-lkv-primary">Sac &amp; inventaire 
+du voyage</h3><div class="flex shrink-0 items-center gap-2"><button type="button" aria-label="Importer depuis mon 
+matériel" title="Importer depuis mon matériel" class="glass-sub-card flex h-11 w-11 items-center justify-center 
+rounded-full text-lkv-secondary transition-transform active:scale-95"><span role="img" aria-label="package" 
+class="inline-flex items-center justify-center select-none shrink-0  w-4 h-4" style="width:24px;height:24px;display:inl
+ine-flex;background-color:currentColor;mask-image:url(&quot;/icons/sf/package.svg&quot;);-webkit-mask-image:url(&quot;/
+icons/sf/package.svg&quot;);mask-size:contain;-webkit-mask-size:contain;mask-repeat:no-repeat;-webkit-mask-repeat:no-re
+peat;mask-position:center;-webkit-mask-position:center"></span></button><button type="button" aria-label="Ajouter un 
+objet" title="Ajouter un objet" class="flex h-11 w-11 items-center justify-center rounded-full bg-lkv-primary 
+text-white transition-transform active:scale-95"><span role="img" aria-label="plus" class="inline-flex items-center 
+justify-center select-none shrink-0  w-4 h-4" style="width:24px;height:24px;display:inline-flex;background-color:curren
+tColor;mask-image:url(&quot;/icons/sf/plus.svg&quot;);-webkit-mask-image:url(&quot;/icons/sf/plus.svg&quot;);mask-size:
+contain;-webkit-mask-size:contain;mask-repeat:no-repeat;-webkit-mask-repeat:no-repeat;mask-position:center;-webkit-mask
+-position:center"></span></button></div></div><div class="divide-y divide-white/40"><div class="flex items-center 
+justify-between gap-3 py-3 transition-colors opacity-70"><div class="flex min-w-0 items-center gap-3"><span 
+class="flex shrink-0 items-center justify-center rounded-xl border border-white/60 bg-white/70 font-bold 
+text-[var(--lkv-primary)]" style="width:46px;height:46px" aria-hidden="true">S</span><div class="min-w-0"><div 
+class="flex flex-wrap items-center gap-2"><span class="text-sm font-medium truncate line-through 
+decoration-[var(--lkv-text-muted)]/60 text-[var(--lkv-text-secondary)]">Sac de couchage -10°C</span><span 
+class="text-[10px] font-semibold px-1.5 py-0.5 rounded-full bg-[var(--lkv-success)]/10 text-[var(--lkv-success)] 
+border border-[var(--lkv-success)]/20 shrink-0">emballé</span><span class="text-[10px] font-bold 
+text-[var(--lkv-danger)]">Vital</span></div><div class="mt-0.5 text-[11px] text-[var(--lkv-text-secondary)]">950 
+g</div></div></div><div class="flex shrink-0 items-center gap-1.5"><button type="button" class="flex h-11 w-11 
+items-center justify-center rounded-full transition-transform active:scale-90" aria-label="Retirer du sac" 
+title="Retirer du sac"><span role="img" aria-label="check-circle2" class="inline-flex items-center justify-center 
+select-none shrink-0  w-5 h-5 text-lkv-secondary" style="width:24px;height:24px;display:inline-flex;background-color:cu
+rrentColor;mask-image:url(&quot;/icons/sf/check-circle2.svg&quot;);-webkit-mask-image:url(&quot;/icons/sf/check-circle2
+.svg&quot;);mask-size:contain;-webkit-mask-size:contain;mask-repeat:no-repeat;-webkit-mask-repeat:no-repeat;mask-positi
+on:center;-webkit-mask-position:center"></span></button><button type="button" class="flex h-11 w-11 items-center 
+justify-center rounded-full glass-sub-card border border-white/60 text-[var(--lkv-text-muted)] transition-all 
+hover:bg-[var(--lkv-danger)]/10 hover:text-[var(--lkv-danger)] active:scale-90" title="Retirer du sac" 
+aria-label="Retirer du sac"><span role="img" aria-label="trash2" class="inline-flex items-center justify-center 
+select-none shrink-0  w-4 h-4" style="width:24px;height:24px;display:inline-flex;background-color:currentColor;mask-ima
+ge:url(&quot;/icons/sf/trash2.svg&quot;);-webkit-mask-image:url(&quot;/icons/sf/trash2.svg&quot;);mask-size:contain;-we
+bkit-mask-size:contain;mask-repeat:no-repeat;-webkit-mask-repeat:no-repeat;mask-position:center;-webkit-mask-position:c
+enter"></span></button></div></div></div></div></div></div>"[39m
+
+[36m [2m❯[22m tests/trips/kit/kitComponents.spec.ts:[2m116:18[22m[39m
+    [90m114|[39m     )[33m;[39m
+    [90m115|[39m
+    [90m116|[39m     [34mexpect[39m(html)[33m.[39m[34mtoContain[39m([32m'100%'[39m)[33m;[39m
+    [90m   |[39m                  [31m^[39m
+    [90m117|[39m     [34mexpect[39m(html)[33m.[39m[34mtoContain[39m([32m'1 / 1'[39m)[33m;[39m
+    [90m118|[39m     [34mexpect[39m(html)[33m.[39m[34mtoContain[39m([32m'2.0 kg'[39m)[33m;[39m
+
+[31m[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/3]⎯[22m[39m
+
+[41m[1m FAIL [22m[49m tests/trips/kit/kitComponents.spec.ts[2m > [22mTripKitView Component (Apple HIG & Core 
+Business Monetization)[2m > [22mrenders contextual recommendations and LKDV shop direct conversion buttons
+[31m[1mAssertionError[22m: expected '<div class="space-y-6 animate-fade-in…' to contain 'Il manque dans votre 
+sac'[39m
+
+Expected: [32m"Il manque dans votre sac"[39m
+Received: [31m"<div class="space-y-6 animate-fade-in"><div class="grid grid-cols-1 gap-4"><div class="glass relative 
+overflow-hidden backdrop-blur-[10px] p-5 rounded-3xl border border-white/70"><div class="h-full min-h-0 flex flex-col 
+justify-between"><div class="flex items-center justify-between mb-2"><span role="img" aria-label="scale" 
+class="inline-flex items-center justify-center select-none shrink-0  w-4 h-4 text-lkv-secondary" style="width:24px;heig
+ht:24px;display:inline-flex;background-color:currentColor;mask-image:url(&quot;/icons/sf/scale.svg&quot;);-webkit-mask-
+image:url(&quot;/icons/sf/scale.svg&quot;);mask-size:contain;-webkit-mask-size:contain;mask-repeat:no-repeat;-webkit-ma
+sk-repeat:no-repeat;mask-position:center;-webkit-mask-position:center" aria-hidden="true"></span><span 
+class="text-[10px] font-bold px-2 py-0.5 rounded-full uppercase bg-[var(--lkv-success)]/15 
+text-[var(--lkv-success)]">ultralight</span></div><div class="text-2xl font-black text-lkv-primary mb-1">2.0 kg <span 
+class="text-sm font-medium text-lkv-secondary">total</span></div><p class="text-xs text-stone-500">Poids de base (sac 
+hors eau/vivres) : <strong class="text-stone-800">2.0 kg</strong></p></div></div></div><div class="p-4 rounded-2xl 
+bg-[var(--lkv-warning)]/10 border border-[var(--lkv-warning)]/20 text-text-primary text-xs sm:text-sm 
+space-y-1.5"><div class="font-bold flex items-center gap-2 text-[var(--lkv-warning)]"><span role="img" 
+aria-label="alert-triangle" class="inline-flex items-center justify-center select-none shrink-0  w-4 h-4 shrink-0 
+text-[var(--lkv-warning)]" style="width:24px;height:24px;display:inline-flex;background-color:currentColor;mask-image:u
+rl(&quot;/icons/sf/alert-triangle.svg&quot;);-webkit-mask-image:url(&quot;/icons/sf/alert-triangle.svg&quot;);mask-size
+:contain;-webkit-mask-size:contain;mask-repeat:no-repeat;-webkit-mask-repeat:no-repeat;mask-position:center;-webkit-mas
+k-position:center"></span>Conditions de terrain identifiées pour votre expédition</div><ul class="list-disc 
+list-inside space-y-0.5 pl-1 text-xs text-text-secondary"><li>Islande : Météo hautement imprévisible, vents violents 
+et gués froids.</li></ul></div><div class="glass relative overflow-hidden backdrop-blur-[10px] p-5 rounded-3xl border 
+border-white/70 shadow-sm space-y-4"><div class="h-full min-h-0 flex flex-col justify-between"><div class="flex 
+items-center justify-between gap-3"><h3 class="font-display text-lg font-black text-lkv-primary">Sac &amp; inventaire 
+du voyage</h3><div class="flex shrink-0 items-center gap-2"><button type="button" aria-label="Importer depuis mon 
+matériel" title="Importer depuis mon matériel" class="glass-sub-card flex h-11 w-11 items-center justify-center 
+rounded-full text-lkv-secondary transition-transform active:scale-95"><span role="img" aria-label="package" 
+class="inline-flex items-center justify-center select-none shrink-0  w-4 h-4" style="width:24px;height:24px;display:inl
+ine-flex;background-color:currentColor;mask-image:url(&quot;/icons/sf/package.svg&quot;);-webkit-mask-image:url(&quot;/
+icons/sf/package.svg&quot;);mask-size:contain;-webkit-mask-size:contain;mask-repeat:no-repeat;-webkit-mask-repeat:no-re
+peat;mask-position:center;-webkit-mask-position:center"></span></button><button type="button" aria-label="Ajouter un 
+objet" title="Ajouter un objet" class="flex h-11 w-11 items-center justify-center rounded-full bg-lkv-primary 
+text-white transition-transform active:scale-95"><span role="img" aria-label="plus" class="inline-flex items-center 
+justify-center select-none shrink-0  w-4 h-4" style="width:24px;height:24px;display:inline-flex;background-color:curren
+tColor;mask-image:url(&quot;/icons/sf/plus.svg&quot;);-webkit-mask-image:url(&quot;/icons/sf/plus.svg&quot;);mask-size:
+contain;-webkit-mask-size:contain;mask-repeat:no-repeat;-webkit-mask-repeat:no-repeat;mask-position:center;-webkit-mask
+-position:center"></span></button></div></div><div class="divide-y divide-white/40"><div class="flex items-center 
+justify-between gap-3 py-3 transition-colors opacity-70"><div class="flex min-w-0 items-center gap-3"><span 
+class="flex shrink-0 items-center justify-center rounded-xl border border-white/60 bg-white/70 font-bold 
+text-[var(--lkv-primary)]" style="width:46px;height:46px" aria-hidden="true">S</span><div class="min-w-0"><div 
+class="flex flex-wrap items-center gap-2"><span class="text-sm font-medium truncate line-through 
+decoration-[var(--lkv-text-muted)]/60 text-[var(--lkv-text-secondary)]">Sac de couchage -10°C</span><span 
+class="text-[10px] font-semibold px-1.5 py-0.5 rounded-full bg-[var(--lkv-success)]/10 text-[var(--lkv-success)] 
+border border-[var(--lkv-success)]/20 shrink-0">emballé</span><span class="text-[10px] font-bold 
+text-[var(--lkv-danger)]">Vital</span></div><div class="mt-0.5 text-[11px] text-[var(--lkv-text-secondary)]">950 
+g</div></div></div><div class="flex shrink-0 items-center gap-1.5"><button type="button" class="flex h-11 w-11 
+items-center justify-center rounded-full transition-transform active:scale-90" aria-label="Retirer du sac" 
+title="Retirer du sac"><span role="img" aria-label="check-circle2" class="inline-flex items-center justify-center 
+select-none shrink-0  w-5 h-5 text-lkv-secondary" style="width:24px;height:24px;display:inline-flex;background-color:cu
+rrentColor;mask-image:url(&quot;/icons/sf/check-circle2.svg&quot;);-webkit-mask-image:url(&quot;/icons/sf/check-circle2
+.svg&quot;);mask-size:contain;-webkit-mask-size:contain;mask-repeat:no-repeat;-webkit-mask-repeat:no-repeat;mask-positi
+on:center;-webkit-mask-position:center"></span></button><button type="button" class="flex h-11 w-11 items-center 
+justify-center rounded-full glass-sub-card border border-white/60 text-[var(--lkv-text-muted)] transition-all 
+hover:bg-[var(--lkv-danger)]/10 hover:text-[var(--lkv-danger)] active:scale-90" title="Retirer du sac" 
+aria-label="Retirer du sac"><span role="img" aria-label="trash2" class="inline-flex items-center justify-center 
+select-none shrink-0  w-4 h-4" style="width:24px;height:24px;display:inline-flex;background-color:currentColor;mask-ima
+ge:url(&quot;/icons/sf/trash2.svg&quot;);-webkit-mask-image:url(&quot;/icons/sf/trash2.svg&quot;);mask-size:contain;-we
+bkit-mask-size:contain;mask-repeat:no-repeat;-webkit-mask-repeat:no-repeat;mask-position:center;-webkit-mask-position:c
+enter"></span></button></div></div></div></div></div></div>"[39m
+
+[36m [2m❯[22m tests/trips/kit/kitComponents.spec.ts:[2m136:18[22m[39m
+    [90m134|[39m     )[33m;[39m
+    [90m135|[39m
+    [90m136|[39m     [34mexpect[39m(html)[33m.[39m[34mtoContain[39m([32m'Il manque dans votre 
+sac'[39m)[33m;[39m
+    [90m   |[39m                  [31m^[39m
+    [90m137|[39m     [34mexpect[39m(html)[33m.[39m[34mtoContain[39m([32m'Poncho Imperméable 
+Pluie'[39m)[33m;[39m
+    [90m138|[39m     [34mexpect[39m(html)[33m.[39m[34mtoContain[39m([32m'12 €'[39m)[33m;[39m
+
+[31m[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/3]⎯[22m[39m
+
+[41m[1m FAIL [22m[49m tests/trips/kit/kitComponents.spec.ts[2m > [22mTripKitView Component (Apple HIG & Core 
+Business Monetization)[2m > [22mrenders trip items checklist with packed toggle and category label
+[31m[1mAssertionError[22m: expected '<div class="space-y-6 animate-fade-in…' to contain 'Sommeil'[39m
+
+Expected: [32m"Sommeil"[39m
+Received: [31m"<div class="space-y-6 animate-fade-in"><div class="grid grid-cols-1 gap-4"><div class="glass relative 
+overflow-hidden backdrop-blur-[10px] p-5 rounded-3xl border border-white/70"><div class="h-full min-h-0 flex flex-col 
+justify-between"><div class="flex items-center justify-between mb-2"><span role="img" aria-label="scale" 
+class="inline-flex items-center justify-center select-none shrink-0  w-4 h-4 text-lkv-secondary" style="width:24px;heig
+ht:24px;display:inline-flex;background-color:currentColor;mask-image:url(&quot;/icons/sf/scale.svg&quot;);-webkit-mask-
+image:url(&quot;/icons/sf/scale.svg&quot;);mask-size:contain;-webkit-mask-size:contain;mask-repeat:no-repeat;-webkit-ma
+sk-repeat:no-repeat;mask-position:center;-webkit-mask-position:center" aria-hidden="true"></span><span 
+class="text-[10px] font-bold px-2 py-0.5 rounded-full uppercase bg-[var(--lkv-success)]/15 
+text-[var(--lkv-success)]">ultralight</span></div><div class="text-2xl font-black text-lkv-primary mb-1">2.0 kg <span 
+class="text-sm font-medium text-lkv-secondary">total</span></div><p class="text-xs text-stone-500">Poids de base (sac 
+hors eau/vivres) : <strong class="text-stone-800">2.0 kg</strong></p></div></div></div><div class="p-4 rounded-2xl 
+bg-[var(--lkv-warning)]/10 border border-[var(--lkv-warning)]/20 text-text-primary text-xs sm:text-sm 
+space-y-1.5"><div class="font-bold flex items-center gap-2 text-[var(--lkv-warning)]"><span role="img" 
+aria-label="alert-triangle" class="inline-flex items-center justify-center select-none shrink-0  w-4 h-4 shrink-0 
+text-[var(--lkv-warning)]" style="width:24px;height:24px;display:inline-flex;background-color:currentColor;mask-image:u
+rl(&quot;/icons/sf/alert-triangle.svg&quot;);-webkit-mask-image:url(&quot;/icons/sf/alert-triangle.svg&quot;);mask-size
+:contain;-webkit-mask-size:contain;mask-repeat:no-repeat;-webkit-mask-repeat:no-repeat;mask-position:center;-webkit-mas
+k-position:center"></span>Conditions de terrain identifiées pour votre expédition</div><ul class="list-disc 
+list-inside space-y-0.5 pl-1 text-xs text-text-secondary"><li>Islande : Météo hautement imprévisible, vents violents 
+et gués froids.</li></ul></div><div class="glass relative overflow-hidden backdrop-blur-[10px] p-5 rounded-3xl border 
+border-white/70 shadow-sm space-y-4"><div class="h-full min-h-0 flex flex-col justify-between"><div class="flex 
+items-center justify-between gap-3"><h3 class="font-display text-lg font-black text-lkv-primary">Sac &amp; inventaire 
+du voyage</h3><div class="flex shrink-0 items-center gap-2"><button type="button" aria-label="Importer depuis mon 
+matériel" title="Importer depuis mon matériel" class="glass-sub-card flex h-11 w-11 items-center justify-center 
+rounded-full text-lkv-secondary transition-transform active:scale-95"><span role="img" aria-label="package" 
+class="inline-flex items-center justify-center select-none shrink-0  w-4 h-4" style="width:24px;height:24px;display:inl
+ine-flex;background-color:currentColor;mask-image:url(&quot;/icons/sf/package.svg&quot;);-webkit-mask-image:url(&quot;/
+icons/sf/package.svg&quot;);mask-size:contain;-webkit-mask-size:contain;mask-repeat:no-repeat;-webkit-mask-repeat:no-re
+peat;mask-position:center;-webkit-mask-position:center"></span></button><button type="button" aria-label="Ajouter un 
+objet" title="Ajouter un objet" class="flex h-11 w-11 items-center justify-center rounded-full bg-lkv-primary 
+text-white transition-transform active:scale-95"><span role="img" aria-label="plus" class="inline-flex items-center 
+justify-center select-none shrink-0  w-4 h-4" style="width:24px;height:24px;display:inline-flex;background-color:curren
+tColor;mask-image:url(&quot;/icons/sf/plus.svg&quot;);-webkit-mask-image:url(&quot;/icons/sf/plus.svg&quot;);mask-size:
+contain;-webkit-mask-size:contain;mask-repeat:no-repeat;-webkit-mask-repeat:no-repeat;mask-position:center;-webkit-mask
+-position:center"></span></button></div></div><div class="divide-y divide-white/40"><div class="flex items-center 
+justify-between gap-3 py-3 transition-colors opacity-70"><div class="flex min-w-0 items-center gap-3"><span 
+class="flex shrink-0 items-center justify-center rounded-xl border border-white/60 bg-white/70 font-bold 
+text-[var(--lkv-primary)]" style="width:46px;height:46px" aria-hidden="true">S</span><div class="min-w-0"><div 
+class="flex flex-wrap items-center gap-2"><span class="text-sm font-medium truncate line-through 
+decoration-[var(--lkv-text-muted)]/60 text-[var(--lkv-text-secondary)]">Sac de couchage -10°C</span><span 
+class="text-[10px] font-semibold px-1.5 py-0.5 rounded-full bg-[var(--lkv-success)]/10 text-[var(--lkv-success)] 
+border border-[var(--lkv-success)]/20 shrink-0">emballé</span><span class="text-[10px] font-bold 
+text-[var(--lkv-danger)]">Vital</span></div><div class="mt-0.5 text-[11px] text-[var(--lkv-text-secondary)]">950 
+g</div></div></div><div class="flex shrink-0 items-center gap-1.5"><button type="button" class="flex h-11 w-11 
+items-center justify-center rounded-full transition-transform active:scale-90" aria-label="Retirer du sac" 
+title="Retirer du sac"><span role="img" aria-label="check-circle2" class="inline-flex items-center justify-center 
+select-none shrink-0  w-5 h-5 text-lkv-secondary" style="width:24px;height:24px;display:inline-flex;background-color:cu
+rrentColor;mask-image:url(&quot;/icons/sf/check-circle2.svg&quot;);-webkit-mask-image:url(&quot;/icons/sf/check-circle2
+.svg&quot;);mask-size:contain;-webkit-mask-size:contain;mask-repeat:no-repeat;-webkit-mask-repeat:no-repeat;mask-positi
+on:center;-webkit-mask-position:center"></span></button><button type="button" class="flex h-11 w-11 items-center 
+justify-center rounded-full glass-sub-card border border-white/60 text-[var(--lkv-text-muted)] transition-all 
+hover:bg-[var(--lkv-danger)]/10 hover:text-[var(--lkv-danger)] active:scale-90" title="Retirer du sac" 
+aria-label="Retirer du sac"><span role="img" aria-label="trash2" class="inline-flex items-center justify-center 
+select-none shrink-0  w-4 h-4" style="width:24px;height:24px;display:inline-flex;background-color:currentColor;mask-ima
+ge:url(&quot;/icons/sf/trash2.svg&quot;);-webkit-mask-image:url(&quot;/icons/sf/trash2.svg&quot;);mask-size:contain;-we
+bkit-mask-size:contain;mask-repeat:no-repeat;-webkit-mask-repeat:no-repeat;mask-position:center;-webkit-mask-position:c
+enter"></span></button></div></div></div></div></div></div>"[39m
+
+[36m [2m❯[22m tests/trips/kit/kitComponents.spec.ts:[2m153:18[22m[39m
+    [90m151|[39m     [34mexpect[39m(html)[33m.[39m[34mtoContain[39m([32m'Sac de couchage 
+-10°C'[39m)[33m;[39m
+    [90m152|[39m     [34mexpect[39m(html)[33m.[39m[34mtoContain[39m([32m'emballé'[39m)[33m;[39m
+    [90m153|[39m     [34mexpect[39m(html)[33m.[39m[34mtoContain[39m([32m'Sommeil'[39m)[33m;[39m
+    [90m   |[39m                  [31m^[39m
+    [90m154|[39m     [34mexpect[39m(html)[33m.[39m[34mtoContain[39m([32m'950 g'[39m)[33m;[39m
+    [90m155|[39m   })[33m;[39m
+
+[31m[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/3]⎯[22m[39m
+
+
+[2m Test Files [22m [1m[31m1 failed[39m[22m[2m | [22m[1m[32m189 passed[39m[22m[90m (190)[39m
+[2m      Tests [22m [1m[31m3 failed[39m[22m[2m | [22m[1m[32m1454 passed[39m[22m[90m (1457)[39m
+[2m   Start at [22m 21:32:59
+[2m   Duration [22m 8.41s[2m (transform 7.21s, setup 0ms, import 37.15s, tests 35.16s, environment 20ms)[22m
+

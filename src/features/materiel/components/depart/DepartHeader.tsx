@@ -1,9 +1,21 @@
 'use client';
+import Icon from '@/components/ui/Icon';
 import React, { useState, useTransition } from 'react';
 import { useRouter } from 'next/navigation';
 import Image from 'next/image';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Backpack, CheckCircle2, AlertTriangle, Zap, ArrowRight, Check, MapPin, Sun, CloudSun, Cloud, CloudRain, CloudSnow, CloudLightning, CloudFog, Sparkles } from 'lucide-react';
+import {
+  CheckCircle2,
+  AlertTriangle,
+  Zap,
+  ArrowRight,
+  Sun,
+  CloudSun,
+  CloudRain,
+  CloudSnow,
+  CloudLightning,
+  CloudFog,
+} from 'lucide-react';
 import { CompassIcon as Compass } from '@/components/icons/compass';
 import { UsersIcon as Users } from '@/components/icons/users';
 import { CalendarIcon as Calendar } from '@/components/icons/calendar';
@@ -78,7 +90,8 @@ export function DepartHeader({
   const remainingCount = totalCount - checkedCount;
 
   const score = depart.readinessScore;
-  const statusTone = score.status === 'ok' ? 'sage' : score.status === 'warning' ? 'warn' : 'danger';
+  const statusTone =
+    score.status === 'ok' ? 'sage' : score.status === 'warning' ? 'warn' : 'danger';
 
   // Calcul du compte à rebours humain (J-X)
   const targetDate = depart.startsAt ? new Date(depart.startsAt) : null;
@@ -87,21 +100,26 @@ export function DepartHeader({
     : null;
 
   const isLast24Hours = diffDays !== null && diffDays <= 1 && diffDays >= 0;
-  const humanDateText = diffDays === null
-    ? 'Date à définir'
-    : diffDays === 0
-    ? 'Aujourd’hui'
-    : diffDays === 1
-    ? 'Demain (J-1)'
-    : diffDays > 1
-    ? `Dans ${diffDays} jours (J-${diffDays})`
-    : 'Date passée';
+  const humanDateText =
+    diffDays === null
+      ? 'Date à définir'
+      : diffDays === 0
+        ? 'Aujourd’hui'
+        : diffDays === 1
+          ? 'Demain (J-1)'
+          : diffDays > 1
+            ? `Dans ${diffDays} jours (J-${diffDays})`
+            : 'Date passée';
 
   // Météo express pictogramme
-  const currentWeather = weather?.current ?? (weather?.days?.[0] ? {
-    tempC: Math.round((weather.days[0].tempMinC + weather.days[0].tempMaxC) / 2),
-    weathercode: weather.days[0].weathercode,
-  } : null);
+  const currentWeather =
+    weather?.current ??
+    (weather?.days?.[0]
+      ? {
+          tempC: Math.round((weather.days[0].tempMinC + weather.days[0].tempMaxC) / 2),
+          weathercode: weather.days[0].weathercode,
+        }
+      : null);
   const WeatherIconComp = getWeatherIcon(currentWeather?.weathercode);
 
   // Participants & groupe
@@ -189,7 +207,12 @@ export function DepartHeader({
   const totalPackKg = (depart.totalPackWeightG / 1000).toFixed(1);
 
   return (
-    <GlassCard tone="neutral" as="article" ariaLabelledBy="depart-main-heading" className="overflow-hidden relative">
+    <GlassCard
+      tone="neutral"
+      as="article"
+      ariaLabelledBy="depart-main-heading"
+      className="overflow-hidden relative"
+    >
       {/* ════ FOND DE COUVERTURE VISUELLE (PHASE 1) ════ */}
       {depart.coverImageUrl ? (
         <div className="absolute inset-0 h-28 sm:h-32 w-full overflow-hidden pointer-events-none opacity-25 dark:opacity-20 mask-gradient-b">
@@ -231,7 +254,10 @@ export function DepartHeader({
                   {depart.activityType}
                 </span>
               )}
-              <span className="flex items-center gap-1 opacity-80" title="Dernière actualisation des données">
+              <span
+                className="flex items-center gap-1 opacity-80"
+                title="Dernière actualisation des données"
+              >
                 <Clock size={10} />
                 <span>{formatRelativeTime(depart.updatedAt)}</span>
               </span>
@@ -252,7 +278,7 @@ export function DepartHeader({
                   className="p-1.5 rounded-xl bg-[var(--lkv-primary)] text-white hover:bg-[var(--lkv-primary)]/90 cursor-pointer"
                   aria-label="Valider le nom"
                 >
-                  <Check size={14} />
+                  <Icon name="check" size={14} />
                 </button>
                 <button
                   type="button"
@@ -287,8 +313,10 @@ export function DepartHeader({
             <div className="flex items-center gap-2.5 text-xs text-[var(--lkv-text-muted)] flex-wrap">
               {depart.trail ? (
                 <span className="flex items-center gap-1 font-medium text-[var(--lkv-primary)]">
-                  <MapPin size={11} className="text-[var(--lkv-primary-hover)]" />
-                  <span>{depart.trail.name} ({formatDistanceKm(depart.trail.distance_km)})</span>
+                  <Icon name="map-pin" size={11} className="text-[var(--lkv-primary-hover)]" />
+                  <span>
+                    {depart.trail.name} ({formatDistanceKm(depart.trail.distance_km)})
+                  </span>
                 </span>
               ) : (
                 <span className="text-[11.5px] italic text-[var(--lkv-text-muted)] flex items-center gap-1">
@@ -306,9 +334,10 @@ export function DepartHeader({
             {/* Rappel discret de trek comparable (§Phase 1) */}
             {depart.comparableTrip && (
               <div className="pt-0.5 flex items-center gap-1.5 text-[11px] text-[var(--lkv-primary-hover)] font-medium">
-                <Sparkles size={11} className="shrink-0" />
+                <Icon name="sparkles" size={11} className="shrink-0" />
                 <span>
-                  {depart.comparableTrip.name} ({depart.comparableTrip.timeAgo}) · {depart.comparableTrip.similarity}
+                  {depart.comparableTrip.name} ({depart.comparableTrip.timeAgo}) ·{' '}
+                  {depart.comparableTrip.similarity}
                 </span>
               </div>
             )}
@@ -321,8 +350,8 @@ export function DepartHeader({
                 {score.status === 'ok'
                   ? '✓ Prêt pour le départ'
                   : score.status === 'warning'
-                  ? '⚠️ À finaliser'
-                  : '⛔ Critique — Départ déconseillé'}
+                    ? '⚠️ À finaliser'
+                    : '⛔ Critique — Départ déconseillé'}
               </span>
             </Badge>
           </div>
@@ -338,7 +367,9 @@ export function DepartHeader({
                 onClick={() => router.push(`/hub/depart?id=${k.id}`)}
                 className={cn(
                   'h-1.5 rounded-full transition-all cursor-pointer',
-                  k.id === depart.id ? 'w-5 bg-[var(--lkv-primary)]' : 'w-1.5 bg-black/20 hover:bg-black/40'
+                  k.id === depart.id
+                    ? 'w-5 bg-[var(--lkv-primary)]'
+                    : 'w-1.5 bg-black/20 hover:bg-black/40'
                 )}
                 aria-label={`Aller au départ ${cleanText(k.name)}`}
               />
@@ -350,7 +381,9 @@ export function DepartHeader({
         <div className="space-y-1.5 pt-0.5">
           <div className="flex items-center justify-between text-[11px] font-semibold text-[var(--lkv-text-muted)]">
             <span>Préparation du pack</span>
-            <span className="font-mono font-bold text-[var(--lkv-primary)]">{score.percentage}%</span>
+            <span className="font-mono font-bold text-[var(--lkv-primary)]">
+              {score.percentage}%
+            </span>
           </div>
 
           <div className="h-2 w-full rounded-full bg-black/5 dark:bg-white/10 overflow-hidden shadow-inner">
@@ -360,8 +393,8 @@ export function DepartHeader({
                 score.status === 'ok'
                   ? 'bg-[var(--lkv-primary-hover)]'
                   : score.status === 'warning'
-                  ? 'bg-[var(--lkv-warning)]'
-                  : 'bg-[var(--lkv-danger)]'
+                    ? 'bg-[var(--lkv-warning)]'
+                    : 'bg-[var(--lkv-danger)]'
               )}
               style={{ width: `${score.percentage}%` }}
               role="progressbar"
@@ -408,7 +441,7 @@ export function DepartHeader({
                     onClick={handleSaveDate}
                     className="p-1 rounded bg-[var(--lkv-primary)] text-white cursor-pointer"
                   >
-                    <Check size={11} />
+                    <Icon name="check" size={11} />
                   </button>
                 </div>
               ) : (
@@ -434,7 +467,7 @@ export function DepartHeader({
           {/* Métrique 2 : Poids au dos */}
           <div className="glass-sub-card p-3 rounded-2xl flex items-center gap-2.5">
             <div className="w-8 h-8 rounded-xl bg-white/50 border border-white/60 flex items-center justify-center text-[var(--lkv-primary)] shrink-0 shadow-2xs">
-              <Backpack size={15} />
+              <Icon name="backpack" size={15} />
             </div>
             <div className="min-w-0">
               <span className="text-[9.5px] font-semibold uppercase tracking-wider text-[var(--lkv-text-muted)] block">
@@ -452,7 +485,7 @@ export function DepartHeader({
           {/* Métrique 3 : Articles prêts & Autonomie */}
           <div className="glass-sub-card p-3 rounded-2xl flex items-center gap-2.5">
             <div className="w-8 h-8 rounded-xl bg-white/50 border border-white/60 flex items-center justify-center text-[var(--lkv-primary)] shrink-0 shadow-2xs">
-              <CheckCircle2 size={15} />
+              <Icon name="check-circle2" size={15} />
             </div>
             <div className="min-w-0">
               <span className="text-[9.5px] font-semibold uppercase tracking-wider text-[var(--lkv-text-muted)] block">
@@ -478,8 +511,8 @@ export function DepartHeader({
               score.status === 'ok'
                 ? 'bg-[var(--lkv-primary)] text-white hover:bg-[var(--lkv-primary)]/90 hover:scale-[1.005]'
                 : score.status === 'warning'
-                ? 'bg-[var(--lkv-primary-hover)] text-white hover:bg-[var(--lkv-primary-hover)]/90 hover:scale-[1.005]'
-                : 'bg-[var(--lkv-danger)] text-white hover:bg-[var(--lkv-danger)]/90 hover:scale-[1.005]'
+                  ? 'bg-[var(--lkv-primary-hover)] text-white hover:bg-[var(--lkv-primary-hover)]/90 hover:scale-[1.005]'
+                  : 'bg-[var(--lkv-danger)] text-white hover:bg-[var(--lkv-danger)]/90 hover:scale-[1.005]'
             )}
           >
             <CtaIcon size={16} className="shrink-0" />

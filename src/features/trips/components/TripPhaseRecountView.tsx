@@ -1,8 +1,8 @@
 'use client';
 
+import Icon from '@/components/ui/Icon';
 import React, { useState } from 'react';
 import { GlassCard, GlassCapsuleBtn } from '@/components/ui';
-import { BookOpen, CreditCard, Share2, Sparkles } from 'lucide-react';
 import type { TripFull } from '../types/trip.types';
 import { TripNotesView } from './TripNotesView';
 import { TripBudgetView } from './TripBudgetView';
@@ -25,7 +25,7 @@ export function TripPhaseRecountView({ trip }: TripPhaseRecountViewProps) {
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
           <div className="flex items-start sm:items-center gap-3.5">
             <div className="w-12 h-12 rounded-2xl bg-lkv-primary text-white flex items-center justify-center shrink-0 shadow-md">
-              <Sparkles size={24} />
+              <Icon name="sparkles" size={24} />
             </div>
             <div>
               <span className="text-xs font-bold uppercase tracking-wider text-lkv-secondary">
@@ -45,7 +45,7 @@ export function TripPhaseRecountView({ trip }: TripPhaseRecountViewProps) {
             onClick={() => setIsShareModalOpen(true)}
             variant="primary"
             size="sm"
-            icon={<Share2 size={15} />}
+            icon={<Icon name="share2" size={15} />}
           >
             Partager / Exporter GPX
           </GlassCapsuleBtn>
@@ -63,12 +63,14 @@ export function TripPhaseRecountView({ trip }: TripPhaseRecountViewProps) {
               : 'glass-sub-card border border-white/60 text-[var(--lkv-text-primary)] hover:bg-white'
           }`}
         >
-          <BookOpen size={15} />
+          <Icon name="book-open" size={15} />
           <span>Carnet de bord & Notes</span>
           {trip.notes && trip.notes.length > 0 && (
             <span
               className={`text-[10px] px-1.5 py-0.5 rounded-full ${
-                activeSection === 'notes' ? 'bg-white/20 text-white' : 'text-[var(--lkv-text-muted)]'
+                activeSection === 'notes'
+                  ? 'bg-white/20 text-white'
+                  : 'text-[var(--lkv-text-muted)]'
               }`}
             >
               {trip.notes.length}
@@ -85,7 +87,7 @@ export function TripPhaseRecountView({ trip }: TripPhaseRecountViewProps) {
               : 'glass-sub-card border border-white/60 text-[var(--lkv-text-primary)] hover:bg-white'
           }`}
         >
-          <CreditCard size={15} />
+          <Icon name="credit-card" size={15} />
           <span>Bilan Dépenses & Soldes</span>
         </button>
       </div>

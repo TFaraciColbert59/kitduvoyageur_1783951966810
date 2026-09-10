@@ -1,7 +1,7 @@
-﻿"use client";
+﻿'use client';
 
+import Icon from '@/components/ui/Icon';
 import React, { useState, useRef, useEffect } from 'react';
-import { Play, Pause, Mic } from 'lucide-react';
 import { useHapticFeedback } from '@/hooks/useHapticFeedback';
 
 interface AudioPlayerBubbleProps {
@@ -76,26 +76,32 @@ export const AudioPlayerBubble: React.FC<AudioPlayerBubbleProps> = ({ audioUrl, 
   const progressPct = duration > 0 ? (currentTime / duration) * 100 : 0;
 
   return (
-    <div className={`flex items-center gap-3 p-2.5 my-1 rounded-2xl max-w-xs ${
-      isMine ? 'bg-white/10 text-[#EEF3EC] border border-white/20' : 'bg-stone-50/95 text-[#14140F] border border-stone-200/80 shadow-2xs'
-    }`}>
+    <div
+      className={`flex items-center gap-3 p-2.5 my-1 rounded-2xl max-w-xs ${
+        isMine
+          ? 'bg-white/10 text-[#EEF3EC] border border-white/20'
+          : 'bg-stone-50/95 text-[#14140F] border border-stone-200/80 shadow-2xs'
+      }`}
+    >
       <button
         type="button"
         onClick={togglePlay}
         className={`w-9 h-9 rounded-full flex items-center justify-center shrink-0 shadow-xs transition-transform active:scale-95 ${
-          isMine
-            ? 'glass-circle-btn text-[#17402C]'
-            : 'glass-circle-btn primary text-white'
+          isMine ? 'glass-circle-btn text-[#17402C]' : 'glass-circle-btn primary text-white'
         }`}
         title={isPlaying ? 'Pause' : 'Écouter la note vocale'}
       >
-        {isPlaying ? <Pause className="w-4 h-4" /> : <Play className="w-4 h-4 ml-0.5" />}
+        {isPlaying ? (
+          <Icon name="pause" className="w-4 h-4" />
+        ) : (
+          <Icon name="play" className="w-4 h-4 ml-0.5" />
+        )}
       </button>
 
       <div className="flex-1 flex flex-col gap-1">
         <div className="flex items-center justify-between text-[10px] font-semibold opacity-90">
           <span className="flex items-center gap-1">
-            <Mic className="w-3 h-3 text-[#5B7F55]" />
+            <Icon name="mic" className="w-3 h-3 text-[#5B7F55]" />
             Note vocale
           </span>
           <span className="font-mono">

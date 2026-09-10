@@ -4,25 +4,42 @@ import { Eyebrow } from '@/components/ui/Eyebrow';
 import { Badge } from '@/components/ui/Badge';
 import { TripKitSelector } from './TripKitSelector';
 import { TripKitView } from '@/features/trips/components/TripKitView';
-import { getKits, type KitListItem } from '@/features/materiel/services/getKits';
+import { getKits } from '@/features/materiel/services/getKits';
 import { getAlerts } from '@/features/materiel/services/getAlerts';
 import { getLoans } from '@/features/materiel/services/getLoans';
 import { getInventory } from '@/features/materiel/services/getInventory';
+import { resolveGearImage } from '@/features/materiel/services/gearImageResolver';
+import { GearMobileExperience } from '../mobile/gear/GearMobileExperience';
+import { GearCarouselBlock } from '../mobile/gear/GearCarouselBlock';
+import {
+  buildGearCards,
+  buildGearInfoCards,
+  buildMemberResources,
+  buildMissingRows,
+  isSoloTrip,
+} from '../../mobile/gearEngine';
 import { hubSectionHref } from '../../registry/hubSectionRegistry';
 import type { TripFull } from '@/features/trips/types/trip.types';
-import type { TripKitAnalysis } from '@/features/trips/types/kit.types';
+import type { ShopProductReference, TripKitAnalysis } from '@/features/trips/types/kit.types';
+import type { TripItemImage } from '../../server/getTripItemImages';
 
 /**
  * H4.3 — Onglet « Équipement » d'une sortie : cockpit kit sélectionné
  * (persisté via trips.kit_id) + bandeau infos importantes + sac du voyage
  * (TripKitView inchangé). Aucun doublon de widget materiel : composition.
+ * V7 — expérience mobile : carrousel photo, infos sac, ressources par membre
+ * (packed_by) et panneau « ce qui manque » (purchase_state en BDD).
  */
 export async function GearSection({
   trip,
   analysis,
+  itemImages = [],
+  availableProducts = [],
 }: {
   trip: TripFull;
   analysis: TripKitAnalysis;
+  itemImages?: TripItemImage[];
+  availableProducts?: ShopProductReference[];
 }) {
   const [allKits, alerts, loans, inventory] = await Promise.all([
     getKits(),
@@ -57,8 +74,19 @@ export async function GearSection({
     ? Math.round((selectedKit.checked_count / selectedKit.item_count) * 100)
     : 0;
 
+  const gearCards = buildGearCards(trip, itemImages).map((card) => ({
+    ...card,
+    imageUrl: card.imageUrl ?? resolveGearImage(card.name, card.category),
+  }));
+  const gearInfoCards = buildGearInfoCards(analysis);
+  const memberResources = buildMemberResources(trip);
+  const missingRows = buildMissingRows(analysis, trip.items ?? [], itemImages, availableProducts);
+  const solo = isSoloTrip(trip);
+
   return (
     <div className="space-y-4">
+      <div className="hidden lg:block space-y-4">
+      <GearCarouselBlock tripSlug={trip.slug} cards={gearCards} />
       <GlassCard className="rounded-2xl border border-white p-4 sm:p-5">
         <div className="flex items-start justify-between gap-3 flex-wrap">
           <Eyebrow>Kit sélectionné</Eyebrow>
@@ -190,9 +218,29 @@ export async function GearSection({
           </p>
         </article>
       </section>
+      </div>
 
-      <section aria-label="Sac du voyage">
-        <TripKitView trip={trip} analysis={analysis} showBackLink={false} />
+      <div className="lg:hidden">
+        <GearMobileExperience
+          tripId={trip.id}
+          tripSlug={trip.slug}
+          cards={gearCards}
+          infoCards={gearInfoCards}
+          members={memberResources}
+          missing={missingRows}
+          isSolo={solo}
+        />
+      </div>
+
+      <section aria-label="Sac du voyage" id="gear-full-list" className="scroll-mt-4">
+        <TripKitView
+          trip={trip}
+          analysis={analysis}
+          showBackLink={false}
+          availableProducts={availableProducts}
+          itemImages={itemImages}
+          inventoryItems={inventory}
+        />
       </section>
     </div>
   );

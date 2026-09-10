@@ -61,11 +61,11 @@ function sortie(trip: TripFull): HubAdventureInput {
 }
 
 describe('H-ACT — profils d\'activité distincts (même coquille)', () => {
-  it('PRF-1: randonnée -> activityType hiking, onglet Équipage toujours visible', () => {
+  it('PRF-1: randonnée -> activityType hiking, onglet Groupe toujours visible', () => {
     const p = deriveHubProfile(sortie(mkTrip()), NOW);
     expect(p.activityType).toBe('hiking');
-    expect(p.sections).toContain('team');
-    expect(p.reason.team).toMatch(/Équipage/);
+    expect(p.sections).toContain('groupe');
+    expect(p.reason.groupe).toMatch(/[Gg]roupe/);
   });
 
   it('PRF-2: voyage culturel -> activityType travel', () => {
@@ -74,14 +74,14 @@ describe('H-ACT — profils d\'activité distincts (même coquille)', () => {
       NOW,
     );
     expect(p.activityType).toBe('travel');
-    expect(p.sections).toContain('team');
+    expect(p.sections).toContain('groupe');
   });
 
-  it('PRF-3: voyage annulé = aperçu seul (aucun delta, équipage non forcé)', () => {
+  it('PRF-3: voyage annulé = aperçu seul (aucun delta, groupe non forcé)', () => {
     const p = deriveHubProfile(sortie(mkTrip({ status: 'cancelled' })), NOW);
     expect(p.activityType).toBe('hiking');
     expect(p.sections).toEqual(['overview']);
-    expect(p.sections).not.toContain('team');
+    expect(p.sections).not.toContain('groupe');
   });
 
   it('PRF-4: randonnée et voyage produisent des raisons distinctes', () => {
@@ -138,9 +138,9 @@ describe('H-ACT — applyActivityProfile (pure)', () => {
     reason: {} as never,
   };
 
-  it('PRF-6: ajoute team au profil solo', () => {
+  it('PRF-6: ajoute groupe au profil solo', () => {
     const p = applyActivityProfile(base as never, 'hiking', false);
-    expect(p.sections).toContain('team');
+    expect(p.sections).toContain('groupe');
   });
 
   it('PRF-7: annulé = profil inchangé (hormis activityType)', () => {

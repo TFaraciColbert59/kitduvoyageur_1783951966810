@@ -1,8 +1,8 @@
 'use client';
 
+import Icon from '@/components/ui/Icon';
 import React from 'react';
 import Link from 'next/link';
-import { Compass, ArrowRight, Radio, Package, X } from 'lucide-react';
 import { useActiveTrip } from '@/features/trips/context/ActiveTripContext';
 import { tripSectionHref } from '@/features/trips/registry/tripSectionRegistry';
 
@@ -43,16 +43,16 @@ export function ResumeActiveTripCard() {
               href={tripSectionHref(activeTrip.slug, 'overview')}
               className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-[var(--lkv-secondary)] text-[var(--lkv-primary)] font-bold text-xs hover:bg-[var(--lkv-secondary)]/90 transition-transform active:scale-95 shadow-sm"
             >
-              <Compass size={14} />
+              <Icon name="compass" size={14} />
               <span>Reprendre le voyage</span>
-              <ArrowRight size={13} />
+              <Icon name="arrow-right" size={13} />
             </Link>
 
             <Link
               href={`${tripSectionHref(activeTrip.slug, 'overview')}?phase=live`}
               className="inline-flex items-center gap-1.5 px-3.5 py-2.5 rounded-xl bg-white/10 hover:bg-white/15 text-white font-semibold text-xs border border-white/15 transition-all"
             >
-              <Radio size={13} className="text-[var(--lkv-secondary)]" />
+              <Icon name="radio" size={13} className="text-[var(--lkv-secondary)]" />
               <span>Cockpit</span>
             </Link>
 
@@ -60,7 +60,7 @@ export function ResumeActiveTripCard() {
               href="/hub"
               className="inline-flex items-center gap-1.5 px-3.5 py-2.5 rounded-xl bg-white/10 hover:bg-white/15 text-white font-semibold text-xs border border-white/15 transition-all"
             >
-              <Package size={13} className="text-[var(--lkv-secondary)]" />
+              <Icon name="package" size={13} className="text-[var(--lkv-secondary)]" />
               <span>Mon sac</span>
             </Link>
 
@@ -72,7 +72,7 @@ export function ResumeActiveTripCard() {
               title="Désactiver l'expédition active"
               className="p-2.5 rounded-xl bg-white/5 hover:bg-white/15 text-white/60 hover:text-white transition-colors border border-white/10"
             >
-              <X size={14} />
+              <Icon name="x" size={14} />
             </button>
           </div>
         </div>

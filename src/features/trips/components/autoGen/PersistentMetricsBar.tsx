@@ -1,7 +1,7 @@
 'use client';
 
+import Icon from '@/components/ui/Icon';
 import React from 'react';
-import { Euro, Weight, AlertTriangle, CheckCircle2 } from 'lucide-react';
 import { useHapticFeedback } from '@/hooks/useHapticFeedback';
 
 export interface PersistentMetricsBarProps {
@@ -49,7 +49,7 @@ export const PersistentMetricsBar: React.FC<PersistentMetricsBarProps> = ({
                   : 'bg-[var(--lkv-success)]/15 text-[var(--lkv-success)]'
               }`}
             >
-              <Euro className="w-4 h-4" />
+              <Icon name="euro" className="w-4 h-4" />
             </div>
             <div>
               <div className="flex items-baseline space-x-1">
@@ -64,7 +64,7 @@ export const PersistentMetricsBar: React.FC<PersistentMetricsBarProps> = ({
                 <span>Budget estimé</span>
                 {isBudgetOverflow && (
                   <span className="text-[var(--lkv-danger)] font-semibold flex items-center">
-                    <AlertTriangle className="w-3 h-3 inline mr-0.5" />
+                    <Icon name="alert-triangle" className="w-3 h-3 inline mr-0.5" />
                     Dépassement budget
                   </span>
                 )}
@@ -83,7 +83,7 @@ export const PersistentMetricsBar: React.FC<PersistentMetricsBarProps> = ({
                   : 'bg-lkv-primary/15 text-lkv-primary'
               }`}
             >
-              <Weight className="w-4 h-4" />
+              <Icon name="weight" className="w-4 h-4" />
             </div>
             <div>
               <div className="flex items-baseline space-x-1">
@@ -98,7 +98,7 @@ export const PersistentMetricsBar: React.FC<PersistentMetricsBarProps> = ({
                 <span>Poids du sac</span>
                 {isWeightOverflow && (
                   <span className="text-[var(--lkv-warning)] font-semibold flex items-center">
-                    <AlertTriangle className="w-3 h-3 inline mr-0.5" />
+                    <Icon name="alert-triangle" className="w-3 h-3 inline mr-0.5" />
                     Sac trop lourd
                   </span>
                 )}
@@ -115,7 +115,7 @@ export const PersistentMetricsBar: React.FC<PersistentMetricsBarProps> = ({
             disabled={isValidating}
             className="w-full sm:w-auto min-h-[44px] px-6 py-2.5 rounded-xl font-medium text-sm bg-lkv-primary hover:opacity-90 text-white shadow-md transition-all active:scale-95 flex items-center justify-center space-x-2"
           >
-            <CheckCircle2 className="w-4 h-4" />
+            <Icon name="check-circle2" className="w-4 h-4" />
             <span>{isValidating ? 'Génération du carnet...' : 'Valider ce voyage'}</span>
           </button>
         </div>

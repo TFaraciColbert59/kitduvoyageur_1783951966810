@@ -1,9 +1,9 @@
 'use client';
 
+import Icon from '@/components/ui/Icon';
 import React, { useEffect, useState, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import { motion } from 'framer-motion';
-import { MapPin, Backpack, Check, Sparkles } from 'lucide-react';
 import { TrendingUpIcon as TrendingUp } from '@/components/icons/trending-up';
 import { NavigationIcon as Navigation } from '@/components/icons/navigation';
 import { CompassIcon as Compass } from '@/components/icons/compass';
@@ -48,15 +48,7 @@ function ScoreBar({ value }: { value: number }) {
   );
 }
 
-function StatPill({
-  icon,
-  label,
-  value,
-}: {
-  icon: React.ReactNode;
-  label: string;
-  value: string;
-}) {
+function StatPill({ icon, label, value }: { icon: React.ReactNode; label: string; value: string }) {
   return (
     <div
       className="p-2.5 rounded-lg flex flex-col items-center justify-center text-center gap-0.5"
@@ -69,7 +61,9 @@ function StatPill({
       }}
     >
       <div className="text-[#17402C]">{icon}</div>
-      <span className="text-[10px] uppercase tracking-wider text-[#5A7064] font-semibold">{label}</span>
+      <span className="text-[10px] uppercase tracking-wider text-[#5A7064] font-semibold">
+        {label}
+      </span>
       <span className="text-xs sm:text-sm font-mono font-bold text-[#17402C]">{value}</span>
     </div>
   );
@@ -107,11 +101,13 @@ export default function TrailDetailPanel({ trail, onClose }: Props) {
 
   const handleShare = () => {
     if (navigator.share) {
-      navigator.share({
-        title: trail.name,
-        text: `Découvre ce sentier de randonnée sur Le Kit du Voyageur : ${trail.name}`,
-        url: window.location.href,
-      }).catch(() => {});
+      navigator
+        .share({
+          title: trail.name,
+          text: `Découvre ce sentier de randonnée sur Le Kit du Voyageur : ${trail.name}`,
+          url: window.location.href,
+        })
+        .catch(() => {});
     }
   };
 
@@ -135,19 +131,17 @@ export default function TrailDetailPanel({ trail, onClose }: Props) {
         onClick={(e) => e.stopPropagation()}
         className="relative pointer-events-auto w-full max-w-[460px] sm:max-w-[480px] h-[calc(100vh-20px)] sm:h-[calc(100vh-32px)] md:h-[calc(100vh-48px)] flex flex-col justify-between overflow-hidden rounded-xl sm:rounded-2xl border border-white/80 shadow-2xl"
         style={{
-          background: 'linear-gradient(180deg, rgba(255, 255, 255, 0.70) 0%, rgba(251, 250, 246, 0.40) 100%)',
+          background:
+            'linear-gradient(180deg, rgba(255, 255, 255, 0.70) 0%, rgba(251, 250, 246, 0.40) 100%)',
           backdropFilter: 'blur(28px) saturate(190%)',
           WebkitBackdropFilter: 'blur(28px) saturate(190%)',
-          boxShadow: '0 24px 64px -12px rgba(23, 64, 44, 0.25), 0 0 0 1px rgba(255, 255, 255, 0.6), inset 0 1.5px 2px rgba(255, 255, 255, 0.95)',
+          boxShadow:
+            '0 24px 64px -12px rgba(23, 64, 44, 0.25), 0 0 0 1px rgba(255, 255, 255, 0.6), inset 0 1.5px 2px rgba(255, 255, 255, 0.95)',
         }}
       >
         {/* Header Hero Image */}
         <div className="relative w-full h-48 sm:h-56 shrink-0 bg-stone-900 overflow-hidden">
-          <img
-            src={imgUrl}
-            alt={trail.name}
-            className="w-full h-full object-cover"
-          />
+          <img src={imgUrl} alt={trail.name} className="w-full h-full object-cover" />
           <div className="absolute inset-0 bg-gradient-to-t from-black/75 via-black/25 to-transparent" />
 
           {/* Top Actions — Refined Apple Glass Pills */}
@@ -193,7 +187,7 @@ export default function TrailDetailPanel({ trail, onClose }: Props) {
               }}
             >
               <p className="text-[10px] font-semibold uppercase tracking-wider text-[#365233] flex items-center gap-1 mb-0.5">
-                <MapPin size={11} className="text-[#17402C]" />
+                <Icon name="map-pin" size={11} className="text-[#17402C]" />
                 <span>{trail.network || trail.terrain_type || 'Massif Alpin'}</span>
               </p>
               <h2 className="text-lg sm:text-xl font-display font-bold leading-tight line-clamp-2 text-[#17402C]">
@@ -249,7 +243,9 @@ export default function TrailDetailPanel({ trail, onClose }: Props) {
                   <div className="flex items-center justify-between text-xs font-semibold text-[#365233]">
                     <span className="flex items-center gap-1.5">
                       <span>{icon}</span>
-                      <span className="text-[10px] font-semibold uppercase tracking-wider">{label}</span>
+                      <span className="text-[10px] font-semibold uppercase tracking-wider">
+                        {label}
+                      </span>
                     </span>
                     <span className="font-mono text-[#17402C]">{Math.round(val)}/100</span>
                   </div>
@@ -271,7 +267,7 @@ export default function TrailDetailPanel({ trail, onClose }: Props) {
             }}
           >
             <div className="flex items-center gap-1.5 text-[10px] font-semibold uppercase tracking-wider text-[#5A7064]">
-              <Sparkles size={13} className="text-[#17402C]" />
+              <Icon name="sparkles" size={13} className="text-[#17402C]" />
               <span>Guide & Points d'intérêt</span>
             </div>
             <p className="text-xs sm:text-sm text-[#365233] leading-relaxed font-normal">
@@ -293,7 +289,7 @@ export default function TrailDetailPanel({ trail, onClose }: Props) {
           >
             <div className="flex items-center gap-2.5 min-w-0">
               <div className="w-8 h-8 rounded-full bg-[#17402C]/10 flex items-center justify-center text-[#17402C] shrink-0">
-                {isOfflineAvailable ? <Check size={16} /> : <Download size={16} />}
+                {isOfflineAvailable ? <Icon name="check" size={16} /> : <Download size={16} />}
               </div>
               <div className="min-w-0">
                 <p className="font-display font-bold text-[12px] text-[#17402C] truncate">
@@ -325,7 +321,8 @@ export default function TrailDetailPanel({ trail, onClose }: Props) {
         <div
           className="p-3.5 sm:p-4 pb-[calc(env(safe-area-inset-bottom,0px)+16px)] sm:pb-4 flex flex-col sm:flex-row gap-2.5 shrink-0"
           style={{
-            background: 'linear-gradient(180deg, rgba(255, 255, 255, 0.65) 0%, rgba(251, 250, 246, 0.40) 100%)',
+            background:
+              'linear-gradient(180deg, rgba(255, 255, 255, 0.65) 0%, rgba(251, 250, 246, 0.40) 100%)',
             backdropFilter: 'blur(24px) saturate(190%)',
             WebkitBackdropFilter: 'blur(24px) saturate(190%)',
             borderTop: '1px solid rgba(255, 255, 255, 0.70)',

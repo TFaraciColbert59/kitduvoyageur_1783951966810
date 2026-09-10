@@ -1,11 +1,11 @@
-"use client";
+'use client';
 
+import Icon from '@/components/ui/Icon';
 import React, { useState, useMemo, useEffect } from 'react';
 import type { Conversation } from '../types/messaging.types';
 import { ConversationRow, type SwipeAction } from './ConversationRow';
 import { ConversationOptionsSheet } from './ConversationOptionsSheet';
 import { messagingService } from '../services/messagingService';
-import { Plus, Search, MessageSquare, X } from 'lucide-react';
 import { useHapticFeedback } from '@/hooks/useHapticFeedback';
 
 interface ConversationListProps {
@@ -36,7 +36,11 @@ const MESSAGERIE_TAB_STATE = 'messagerie-tab-state';
 const MESSAGERIE_TAB_CHANGE = 'messagerie-tab-change';
 
 export const ConversationListSkeleton = () => (
-  <div className="space-y-2 p-1 animate-pulse" aria-busy="true" aria-label="Chargement des conversations">
+  <div
+    className="space-y-2 p-1 animate-pulse"
+    aria-busy="true"
+    aria-label="Chargement des conversations"
+  >
     {[1, 2, 3, 4, 5].map((i) => (
       <div
         key={i}
@@ -147,7 +151,10 @@ export const ConversationList: React.FC<ConversationListProps> = ({
       <div className="msg-safe-top shrink-0 px-3 md:px-4 pb-3 border-b border-stone-200/60 bg-white/70 backdrop-blur-2xl">
         <div className="flex items-center gap-2">
           <div className="relative flex-1 min-w-0">
-            <Search className="w-4 h-4 text-[#5A574E] absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none" />
+            <Icon
+              name="search"
+              className="w-4 h-4 text-[#5A574E] absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none"
+            />
             <input
               type="search"
               inputMode="search"
@@ -178,7 +185,7 @@ export const ConversationList: React.FC<ConversationListProps> = ({
                 className="absolute right-1 top-1/2 -translate-y-1/2 w-11 h-11 flex items-center justify-center text-[#5A574E]"
               >
                 <span className="glass-circle-btn w-7 h-7 flex items-center justify-center shadow-2xs">
-                  <X className="w-3.5 h-3.5" />
+                  <Icon name="x" className="w-3.5 h-3.5" />
                 </span>
               </button>
             )}
@@ -195,7 +202,7 @@ export const ConversationList: React.FC<ConversationListProps> = ({
             className="glass-circle-btn w-11 h-11 shadow-md active:scale-95 flex items-center justify-center shrink-0"
             title="Nouvelle discussion"
           >
-            <Plus className="w-5 h-5" />
+            <Icon name="plus" className="w-5 h-5" />
           </button>
         </div>
       </div>
@@ -210,21 +217,21 @@ export const ConversationList: React.FC<ConversationListProps> = ({
         ) : filteredConversations.length === 0 ? (
           <div className="text-center py-12 px-6">
             <div className="w-14 h-14 rounded-full bg-[#17402C]/10 text-[#17402C] flex items-center justify-center mx-auto mb-3">
-              <MessageSquare className="w-7 h-7" />
+              <Icon name="message-square" className="w-7 h-7" />
             </div>
             <p className="text-sm font-semibold text-[#17402C]">
               {debouncedSearch
                 ? 'Aucun résultat'
                 : activeTab === 'requests'
-                ? 'Aucune demande en attente'
-                : 'Aucune discussion'}
+                  ? 'Aucune demande en attente'
+                  : 'Aucune discussion'}
             </p>
             <p className="text-[13px] text-[#5A574E] mt-1 leading-relaxed max-w-[240px] mx-auto">
               {debouncedSearch
                 ? 'Essayez un autre nom de voyageur ou de groupe.'
                 : activeTab === 'requests'
-                ? 'Les nouvelles demandes de message apparaîtront ici.'
-                : 'Lancez une discussion avec un membre de la communauté.'}
+                  ? 'Les nouvelles demandes de message apparaîtront ici.'
+                  : 'Lancez une discussion avec un membre de la communauté.'}
             </p>
           </div>
         ) : (

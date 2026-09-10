@@ -1,7 +1,7 @@
 ﻿'use client';
+import Icon from '@/components/ui/Icon';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { Backpack } from 'lucide-react';
 import { ClockIcon as Clock } from '@/components/icons/clock';
 import { ArrowRightIcon as ArrowRightAnimated } from '@/components/icons/arrow-right';
 import { GlassCard } from '@/components/ui/GlassCard';
@@ -43,11 +43,16 @@ export function GearCardDepart({ data, className }: { data: DepartData; classNam
         {/* Top Header */}
         <div className="flex items-start justify-between gap-2 pr-8 md:pr-12">
           <div className="space-y-0.5">
-            <h2 id="depart-title" className="text-[18px] sm:text-[32px] leading-tight font-display font-bold tracking-tight text-[var(--lkv-primary)]">
+            <h2
+              id="depart-title"
+              className="text-[18px] sm:text-[32px] leading-tight font-display font-bold tracking-tight text-[var(--lkv-primary)]"
+            >
               {data.destination}
             </h2>
           </div>
-          <Badge tone={data.status === 'ok' ? 'sage' : data.status === 'warning' ? 'warn' : 'danger'}>
+          <Badge
+            tone={data.status === 'ok' ? 'sage' : data.status === 'warning' ? 'warn' : 'danger'}
+          >
             <span className="text-[9.5px] sm:text-xs font-bold flex items-center gap-1">
               {data.status === 'ok' ? (
                 '✓ Prêt'
@@ -71,7 +76,9 @@ export function GearCardDepart({ data, className }: { data: DepartData; classNam
               <Clock size={18} className="hidden sm:block" />
             </div>
             <div>
-              <span className="text-[9.5px] sm:text-[11px] font-semibold uppercase tracking-wider text-[var(--lkv-text-muted)]">Départ dans</span>
+              <span className="text-[9.5px] sm:text-[11px] font-semibold uppercase tracking-wider text-[var(--lkv-text-muted)]">
+                Départ dans
+              </span>
               <div className="text-[17px] sm:text-[28px] font-mono font-bold leading-tight text-[var(--lkv-primary)]">
                 <CountdownLive target={data.startsAt} />
               </div>
@@ -79,9 +86,11 @@ export function GearCardDepart({ data, className }: { data: DepartData; classNam
           </div>
           {data.totalWeightKg !== undefined && data.totalWeightKg > 0 && (
             <div className="hidden sm:flex flex-col items-end border-l border-white/30 pl-4">
-              <span className="text-[11px] font-semibold uppercase tracking-wider text-[var(--lkv-text-muted)]">Poids du kit</span>
+              <span className="text-[11px] font-semibold uppercase tracking-wider text-[var(--lkv-text-muted)]">
+                Poids du kit
+              </span>
               <div className="flex items-center gap-1.5 text-[18px] font-mono font-bold text-[var(--lkv-primary)]">
-                <Backpack size={16} />
+                <Icon name="backpack" size={16} />
                 <span>{data.totalWeightKg} kg</span>
               </div>
             </div>

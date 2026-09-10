@@ -1,10 +1,10 @@
 'use client';
 
+import Icon from '@/components/ui/Icon';
 import React from 'react';
 import { GlassCard } from '@/components/ui/GlassCard';
 import { AffiliateDisclosure } from './AffiliateDisclosure';
 import { AffiliateLinkCard } from './AffiliateLinkCard';
-import { Compass } from 'lucide-react';
 import type { AffiliateLink } from '../types/affiliate.types';
 
 export interface TripAffiliateSectionProps {
@@ -25,7 +25,10 @@ export function TripAffiliateSection({
   const destinationLabel = countryNames.length > 0 ? countryNames.join(', ') : 'votre voyage';
 
   return (
-    <section className="space-y-4 my-8 animate-fade-in" aria-label="Réservations et services partenaires">
+    <section
+      className="space-y-4 my-8 animate-fade-in"
+      aria-label="Réservations et services partenaires"
+    >
       {/* Disclosure légal obligatoire en amont */}
       <AffiliateDisclosure />
 
@@ -37,7 +40,7 @@ export function TripAffiliateSection({
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pb-4 border-b border-stone-200/60">
           <div>
             <span className="text-xs font-bold text-[#5B7F55] uppercase tracking-wider flex items-center gap-1.5">
-              <Compass className="w-3.5 h-3.5" />
+              <Icon name="compass" className="w-3.5 h-3.5" />
               Réservations & Préparation Logistique
             </span>
             <h3 className="text-lg sm:text-xl font-black text-stone-900 mt-1">

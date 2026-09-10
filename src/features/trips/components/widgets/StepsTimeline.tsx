@@ -1,8 +1,8 @@
 'use client';
 
+import Icon from '@/components/ui/Icon';
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import Link from 'next/link';
-import { MapPin, MoonStar, Mountain, Route } from 'lucide-react';
 import type { TripPhase } from '../../engine/temporalPhaseEngine';
 import type { TripStep } from '../../types/trip.types';
 
@@ -60,7 +60,11 @@ export function StepsTimeline({ steps, dayIndex, phase }: StepsTimelineProps) {
   const daySteps = ordered.filter((s) => s.day_number === clampedDay);
 
   const phasePill =
-    phase === 'live' ? `Jour ${clampedDay} · en direct` : phase === 'recount' ? `Carnet · J${clampedDay}` : `Départ · J${clampedDay}`;
+    phase === 'live'
+      ? `Jour ${clampedDay} · en direct`
+      : phase === 'recount'
+        ? `Carnet · J${clampedDay}`
+        : `Départ · J${clampedDay}`;
 
   // Boucle : nombre de copies calibré pour que l'ancre centrale + la fenêtre
   // de saut (± 1 copie) restent atteignables, même quand une unité est plus
@@ -97,7 +101,7 @@ export function StepsTimeline({ steps, dayIndex, phase }: StepsTimelineProps) {
     <div className="glass glass-pure flex h-full min-h-0 flex-col p-3.5 space-y-2.5 rounded-[1.5rem] font-sans">
       <div className="flex items-center justify-between">
         <h3 className="font-display font-bold text-xs text-[var(--lkv-primary)] flex items-center gap-1.5">
-          <Route size={13} aria-hidden="true" />
+          <Icon name="route" size={13} aria-hidden="true" />
           Déroulé du jour
         </h3>
         <span className="glass-pill text-[9.5px] font-bold text-[var(--lkv-text-primary)]">
@@ -112,7 +116,11 @@ export function StepsTimeline({ steps, dayIndex, phase }: StepsTimelineProps) {
         aria-label="Déroulé des étapes du voyage"
       >
         {Array.from({ length: copies }, (_, copyIndex) => (
-          <div key={copyIndex} ref={copyIndex === 1 ? copyRef : undefined} className="space-y-2 pb-2">
+          <div
+            key={copyIndex}
+            ref={copyIndex === 1 ? copyRef : undefined}
+            className="space-y-2 pb-2"
+          >
             {startStep ? (
               <Link
                 href="/hub/itineraire"
@@ -121,7 +129,7 @@ export function StepsTimeline({ steps, dayIndex, phase }: StepsTimelineProps) {
               >
                 <div className="flex items-center justify-between gap-2">
                   <span className="glass-pill text-[9px] font-bold text-[var(--lkv-primary)] flex items-center gap-1">
-                    <MapPin size={10} aria-hidden="true" />
+                    <Icon name="map-pin" size={10} aria-hidden="true" />
                     Point de départ
                   </span>
                   <span className="glass-pill text-[9px] font-bold text-[var(--lkv-text-muted)] tabular-nums">
@@ -133,7 +141,7 @@ export function StepsTimeline({ steps, dayIndex, phase }: StepsTimelineProps) {
                 </div>
                 {startStep.location_name && (
                   <div className="text-[11px] text-[var(--lkv-text-secondary)] flex items-center gap-1">
-                    <MapPin size={11} aria-hidden="true" />
+                    <Icon name="map-pin" size={11} aria-hidden="true" />
                     {startStep.location_name}
                   </div>
                 )}
@@ -141,19 +149,19 @@ export function StepsTimeline({ steps, dayIndex, phase }: StepsTimelineProps) {
                   <div className="text-[11px] text-[var(--lkv-text-secondary)] flex flex-wrap items-center gap-x-2.5 gap-y-0.5 tabular-nums pt-0.5 border-t border-[var(--lkv-primary)]/10">
                     {totals.km > 0 && (
                       <span className="flex items-center gap-1 whitespace-nowrap">
-                        <Route size={11} aria-hidden="true" />
+                        <Icon name="route" size={11} aria-hidden="true" />
                         {fmtKm(totals.km)}
                       </span>
                     )}
                     {totals.dPlus > 0 && (
                       <span className="flex items-center gap-1 whitespace-nowrap">
-                        <Mountain size={11} aria-hidden="true" />
-                        +{fmtMeters(totals.dPlus)}
+                        <Icon name="mountain" size={11} aria-hidden="true" />+
+                        {fmtMeters(totals.dPlus)}
                       </span>
                     )}
                     {totals.dLoss > 0 && (
                       <span className="flex items-center gap-1 whitespace-nowrap">
-                        <Mountain size={11} className="rotate-180" aria-hidden="true" />
+                        <Icon name="mountain" size={11} className="rotate-180" aria-hidden="true" />
                         −{fmtMeters(totals.dLoss)}
                       </span>
                     )}
@@ -176,7 +184,7 @@ export function StepsTimeline({ steps, dayIndex, phase }: StepsTimelineProps) {
                     </span>
                     {step.accommodation_name && (
                       <span className="text-[10px] text-[var(--lkv-text-muted)] flex items-center gap-1 min-w-0 truncate">
-                        <MoonStar size={10} aria-hidden="true" />
+                        <Icon name="moon-star" size={10} aria-hidden="true" />
                         {step.accommodation_name}
                       </span>
                     )}
@@ -186,7 +194,7 @@ export function StepsTimeline({ steps, dayIndex, phase }: StepsTimelineProps) {
                   </div>
                   {step.location_name && (
                     <div className="text-[11px] text-[var(--lkv-text-secondary)] flex items-center gap-1">
-                      <MapPin size={11} aria-hidden="true" />
+                      <Icon name="map-pin" size={11} aria-hidden="true" />
                       {step.location_name}
                     </div>
                   )}
@@ -194,14 +202,14 @@ export function StepsTimeline({ steps, dayIndex, phase }: StepsTimelineProps) {
                     <div className="text-[11px] text-[var(--lkv-text-muted)] flex items-center gap-2 tabular-nums">
                       {fmtKm(step.distance_km) && (
                         <span className="flex items-center gap-1">
-                          <Route size={11} aria-hidden="true" />
+                          <Icon name="route" size={11} aria-hidden="true" />
                           {fmtKm(step.distance_km)}
                         </span>
                       )}
                       {Number(step.elevation_gain_m) > 0 && (
                         <span className="flex items-center gap-1">
-                          <Mountain size={11} aria-hidden="true" />
-                          +{fmtMeters(step.elevation_gain_m)}
+                          <Icon name="mountain" size={11} aria-hidden="true" />+
+                          {fmtMeters(step.elevation_gain_m)}
                         </span>
                       )}
                     </div>

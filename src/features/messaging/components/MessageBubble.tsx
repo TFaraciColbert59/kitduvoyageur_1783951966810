@@ -1,11 +1,11 @@
-﻿"use client";
+﻿'use client';
 
+import Icon from '@/components/ui/Icon';
 import React, { useState, useEffect } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
 import type { Message } from '../types/messaging.types';
 import { formatMessageDate } from '../lib/messagingUtils';
-import { FileText, Check, CheckCheck, Reply, Smile, Share2 } from 'lucide-react';
 import { useHapticFeedback } from '@/hooks/useHapticFeedback';
 import { useSwipe } from '@/hooks/useSwipe';
 import { useDoubleTap, useLongPress } from '@/hooks/gestures';
@@ -15,7 +15,11 @@ import { GPXPreviewCard } from './GPXPreviewCard';
 import { ProductCard } from './ProductCard';
 import { TrailCard } from './TrailCard';
 import { KitCard } from './KitCard';
-import type { ProductMessageMeta, TrailMessageMeta, KitMessageMeta } from '../types/messaging.types';
+import type {
+  ProductMessageMeta,
+  TrailMessageMeta,
+  KitMessageMeta,
+} from '../types/messaging.types';
 
 // Les six réactions d'iMessage (Compose intégration pomme).
 const REACTION_PALETTE = ['❤️', '👍', '😂', '😮', '😢', '🙏'];
@@ -56,14 +60,17 @@ export const MessageBubble: React.FC<MessageBubbleProps> = ({
   const [showActionMenu, setShowActionMenu] = useState(false);
 
   // Swipe à droite sur un message reçu → répondre (comme Instagram DM)
-  const swipeHandlers = useSwipe({
-    onSwipeRight: () => {
-      if (!isMine) {
-        haptic('light');
-        onReply?.(message);
-      }
+  const swipeHandlers = useSwipe(
+    {
+      onSwipeRight: () => {
+        if (!isMine) {
+          haptic('light');
+          onReply?.(message);
+        }
+      },
     },
-  }, { threshold: 60 });
+    { threshold: 60 }
+  );
 
   const senderName = message.sender_profile?.full_name || 'Voyageur';
   const avatarUrl = message.sender_profile?.avatar_url || '/assets/images/no_image.png';
@@ -131,29 +138,30 @@ export const MessageBubble: React.FC<MessageBubbleProps> = ({
     groupPosition === 'first'
       ? 'mt-2 mb-0.5'
       : groupPosition === 'middle'
-      ? 'my-0.5'
-      : groupPosition === 'last'
-      ? 'mt-0.5 mb-2'
-      : 'my-1.5';
+        ? 'my-0.5'
+        : groupPosition === 'last'
+          ? 'mt-0.5 mb-2'
+          : 'my-1.5';
 
   const bubbleRadiusClass = isMine
     ? groupPosition === 'first'
       ? 'rounded-2xl rounded-tr-xs rounded-br-sm'
       : groupPosition === 'middle'
-      ? 'rounded-2xl rounded-tr-sm rounded-br-sm'
-      : groupPosition === 'last'
-      ? 'rounded-2xl rounded-tr-sm rounded-br-xs'
-      : 'rounded-2xl rounded-tr-xs'
+        ? 'rounded-2xl rounded-tr-sm rounded-br-sm'
+        : groupPosition === 'last'
+          ? 'rounded-2xl rounded-tr-sm rounded-br-xs'
+          : 'rounded-2xl rounded-tr-xs'
     : groupPosition === 'first'
-    ? 'rounded-2xl rounded-tl-xs rounded-bl-sm'
-    : groupPosition === 'middle'
-    ? 'rounded-2xl rounded-tl-sm rounded-bl-sm'
-    : groupPosition === 'last'
-    ? 'rounded-2xl rounded-tl-sm rounded-bl-xs'
-    : 'rounded-2xl rounded-tl-xs';
+      ? 'rounded-2xl rounded-tl-xs rounded-bl-sm'
+      : groupPosition === 'middle'
+        ? 'rounded-2xl rounded-tl-sm rounded-bl-sm'
+        : groupPosition === 'last'
+          ? 'rounded-2xl rounded-tl-sm rounded-bl-xs'
+          : 'rounded-2xl rounded-tl-xs';
 
   const showAvatar = !isMine && (groupPosition === 'last' || groupPosition === 'single');
-  const showHeader = !isMine && showSenderHeader && (groupPosition === 'first' || groupPosition === 'single');
+  const showHeader =
+    !isMine && showSenderHeader && (groupPosition === 'first' || groupPosition === 'single');
 
   return (
     <div
@@ -163,8 +171,8 @@ export const MessageBubble: React.FC<MessageBubbleProps> = ({
         isMine ? 'flex-row-reverse' : 'flex-row'
       }`}
     >
-      {!isMine && (
-        showAvatar ? (
+      {!isMine &&
+        (showAvatar ? (
           <Link
             href={`/profil/${message.sender_profile?.id || ''}`}
             className="w-8 h-8 rounded-full overflow-hidden relative shrink-0 ring-1 ring-white/80 shadow-xs bg-stone-100 mb-0.5 cursor-pointer hover:ring-2 hover:ring-[#A3C4A3] transition-shadow"
@@ -184,10 +192,11 @@ export const MessageBubble: React.FC<MessageBubbleProps> = ({
           </Link>
         ) : (
           <div className="w-8 shrink-0" aria-hidden="true" />
-        )
-      )}
+        ))}
 
-      <div className={`max-w-[78%] sm:max-w-[70%] flex flex-col ${isMine ? 'items-end' : 'items-start'}`}>
+      <div
+        className={`max-w-[78%] sm:max-w-[70%] flex flex-col ${isMine ? 'items-end' : 'items-start'}`}
+      >
         {showHeader && (
           <Link
             href={`/profil/${message.sender_profile?.id || ''}`}
@@ -229,7 +238,7 @@ export const MessageBubble: React.FC<MessageBubbleProps> = ({
               className="glass-circle-btn w-8 h-8 text-[#17402C] text-xs font-semibold flex items-center justify-center shadow-xs"
               title="Répondre"
             >
-              <Reply className="w-3.5 h-3.5" />
+              <Icon name="reply" className="w-3.5 h-3.5" />
             </button>
             <button
               type="button"
@@ -241,7 +250,7 @@ export const MessageBubble: React.FC<MessageBubbleProps> = ({
               className="glass-circle-btn w-8 h-8 text-[#17402C] text-xs font-semibold flex items-center justify-center shadow-xs"
               title="Transférer"
             >
-              <Share2 className="w-3.5 h-3.5" />
+              <Icon name="share2" className="w-3.5 h-3.5" />
             </button>
           </div>
         )}
@@ -268,7 +277,7 @@ export const MessageBubble: React.FC<MessageBubbleProps> = ({
               className="glass-circle-btn w-8 h-8 text-[#5A574E] hover:text-[#17402C] shadow-2xs"
               title="Réagir"
             >
-              <Smile className="w-3.5 h-3.5" />
+              <Icon name="smile" className="w-3.5 h-3.5" />
             </button>
             <button
               type="button"
@@ -280,7 +289,7 @@ export const MessageBubble: React.FC<MessageBubbleProps> = ({
               className="glass-circle-btn w-8 h-8 text-[#5A574E] hover:text-[#17402C] shadow-2xs"
               title="Répondre"
             >
-              <Reply className="w-3.5 h-3.5" />
+              <Icon name="reply" className="w-3.5 h-3.5" />
             </button>
           </div>
 
@@ -288,9 +297,7 @@ export const MessageBubble: React.FC<MessageBubbleProps> = ({
             onClick={doubleTap.onClick}
             {...longPress}
             className={`relative px-4 py-3 transition-all select-none cursor-pointer ${bubbleRadiusClass} ${
-              isMine
-                ? 'msg-bubble--mine'
-                : 'msg-bubble text-[#14140F]'
+              isMine ? 'msg-bubble--mine' : 'msg-bubble text-[#14140F]'
             }`}
           >
             {/* Quoted Message */}
@@ -321,7 +328,9 @@ export const MessageBubble: React.FC<MessageBubbleProps> = ({
                   const isAudio = att.file_type?.startsWith('audio/');
 
                   if (isAudio) {
-                    return <AudioPlayerBubble key={att.id} audioUrl={att.file_url} isMine={isMine} />;
+                    return (
+                      <AudioPlayerBubble key={att.id} audioUrl={att.file_url} isMine={isMine} />
+                    );
                   }
 
                   if (isGpx) {
@@ -336,7 +345,10 @@ export const MessageBubble: React.FC<MessageBubbleProps> = ({
                   }
 
                   return (
-                    <div key={att.id} className="rounded-xl overflow-hidden max-w-sm border border-[#17402C]/10">
+                    <div
+                      key={att.id}
+                      className="rounded-xl overflow-hidden max-w-sm border border-[#17402C]/10"
+                    >
                       {att.file_type.startsWith('image/') ? (
                         <div className="relative w-64 h-48">
                           <Image
@@ -353,8 +365,10 @@ export const MessageBubble: React.FC<MessageBubbleProps> = ({
                           rel="noopener noreferrer"
                           className="flex items-center gap-2 p-2 bg-[#17402C]/5 hover:bg-[#17402C]/10 rounded-lg text-xs"
                         >
-                          <FileText className="w-4 h-4" />
-                          <span className="truncate underline">{att.file_name || 'Télécharger le fichier'}</span>
+                          <Icon name="file-text" className="w-4 h-4" />
+                          <span className="truncate underline">
+                            {att.file_name || 'Télécharger le fichier'}
+                          </span>
                         </a>
                       )}
                     </div>
@@ -407,16 +421,10 @@ export const MessageBubble: React.FC<MessageBubbleProps> = ({
               />
             )}
             {message.message_type === 'trail' && message.metadata && (
-              <TrailCard
-                meta={message.metadata as unknown as TrailMessageMeta}
-                isMine={isMine}
-              />
+              <TrailCard meta={message.metadata as unknown as TrailMessageMeta} isMine={isMine} />
             )}
             {message.message_type === 'kit' && message.metadata && (
-              <KitCard
-                meta={message.metadata as unknown as KitMessageMeta}
-                isMine={isMine}
-              />
+              <KitCard meta={message.metadata as unknown as KitMessageMeta} isMine={isMine} />
             )}
 
             {/* Message Content */}
@@ -435,9 +443,7 @@ export const MessageBubble: React.FC<MessageBubbleProps> = ({
             {firstUrl &&
               message.message_type !== 'audio' &&
               message.message_type !== 'gpx' &&
-              message.message_type !== 'image' && (
-              <OpenGraphCard url={firstUrl} isMine={isMine} />
-            )}
+              message.message_type !== 'image' && <OpenGraphCard url={firstUrl} isMine={isMine} />}
 
             {/* Footer timestamp & status / read receipts */}
             <div className="flex items-center justify-end gap-1.5 mt-1.5">
@@ -454,7 +460,9 @@ export const MessageBubble: React.FC<MessageBubbleProps> = ({
                   {message.status === 'sending' ? (
                     <span className="w-2.5 h-2.5 rounded-full border-2 border-[#EEF3EC] border-t-transparent animate-spin inline-block" />
                   ) : message.status === 'error' ? (
-                    <span className="bg-[#A8443A] text-white px-1.5 py-0.5 rounded-full text-[10px] font-bold">! Échec</span>
+                    <span className="bg-[#A8443A] text-white px-1.5 py-0.5 rounded-full text-[10px] font-bold">
+                      ! Échec
+                    </span>
                   ) : isReadByRecipient || (readByCount && readByCount > 0) ? (
                     <span
                       className="flex items-center gap-0.5 text-[#C8DAC3] text-[10px] font-semibold"
@@ -464,11 +472,11 @@ export const MessageBubble: React.FC<MessageBubbleProps> = ({
                           : 'Vu'
                       }
                     >
-                      <CheckCheck className="w-3.5 h-3.5 inline text-[#C8DAC3]" />
+                      <Icon name="check-check" className="w-3.5 h-3.5 inline text-[#C8DAC3]" />
                       <span>{readByCount && readByCount > 1 ? `Vu par ${readByCount}` : 'Vu'}</span>
                     </span>
                   ) : (
-                    <Check className="w-3.5 h-3.5 inline" />
+                    <Icon name="check" className="w-3.5 h-3.5 inline" />
                   )}
                 </span>
               )}

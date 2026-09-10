@@ -1,8 +1,8 @@
 'use client';
+import Icon from '@/components/ui/Icon';
 import React, { useState, useMemo } from 'react';
 import dynamic from 'next/dynamic';
 import Link from 'next/link';
-import { Handshake, Plus, Trash2, Check, Scale, X, ArrowRight } from 'lucide-react';
 import { ShoppingBagIcon as ShoppingBag } from '@/components/icons/shopping-bag';
 import { ListIcon as List } from '@/components/icons/list';
 import { LayersIcon as Layers } from '@/components/icons/layers';
@@ -86,11 +86,26 @@ const CATEGORIES = [
 ];
 
 const CONDITION_LABELS: Record<string, { label: string; tone: string }> = {
-  neuf: { label: 'Neuf', tone: 'bg-[var(--lkv-success)]/15 text-[var(--lkv-success)] border border-[var(--lkv-success)]/30' },
-  tres_bon: { label: 'Très bon', tone: 'bg-[var(--lkv-success)]/15 text-[var(--lkv-success)] border border-[var(--lkv-success)]/30' },
-  bon: { label: 'Bon', tone: 'bg-[var(--lkv-info)]/15 text-[var(--lkv-info)] border border-[var(--lkv-info)]/30' },
-  moyen: { label: 'Usé', tone: 'bg-[var(--lkv-warning)]/15 text-[var(--lkv-warning)] border border-[var(--lkv-warning)]/30' },
-  a_remplacer: { label: 'À remplacer', tone: 'bg-[var(--lkv-danger)]/15 text-[var(--lkv-danger)] border border-[var(--lkv-danger)]/30' },
+  neuf: {
+    label: 'Neuf',
+    tone: 'bg-[var(--lkv-success)]/15 text-[var(--lkv-success)] border border-[var(--lkv-success)]/30',
+  },
+  tres_bon: {
+    label: 'Très bon',
+    tone: 'bg-[var(--lkv-success)]/15 text-[var(--lkv-success)] border border-[var(--lkv-success)]/30',
+  },
+  bon: {
+    label: 'Bon',
+    tone: 'bg-[var(--lkv-info)]/15 text-[var(--lkv-info)] border border-[var(--lkv-info)]/30',
+  },
+  moyen: {
+    label: 'Usé',
+    tone: 'bg-[var(--lkv-warning)]/15 text-[var(--lkv-warning)] border border-[var(--lkv-warning)]/30',
+  },
+  a_remplacer: {
+    label: 'À remplacer',
+    tone: 'bg-[var(--lkv-danger)]/15 text-[var(--lkv-danger)] border border-[var(--lkv-danger)]/30',
+  },
 };
 
 export function DepartEquipmentHub({
@@ -111,7 +126,9 @@ export function DepartEquipmentHub({
   kitId,
   isRealKit = false,
 }: DepartEquipmentHubProps) {
-  const [statusFilter, setStatusFilter] = useState<'all' | 'in_bag' | 'in_inventory' | 'lent' | 'to_acquire'>('all');
+  const [statusFilter, setStatusFilter] = useState<
+    'all' | 'in_bag' | 'in_inventory' | 'lent' | 'to_acquire'
+  >('all');
   const [selectedCat, setSelectedCat] = useState('Toutes');
   const [searchQuery, setSearchQuery] = useState('');
   const [mobileTab, setMobileTab] = useState<'catalog' | 'bag'>('catalog');
@@ -156,13 +173,18 @@ export function DepartEquipmentHub({
   // ════ CONSOLIDATION UNIFIÉE DES ÉQUIPEMENTS SANS DOUBLON ════
   const unifiedItems: UnifiedEquipmentItem[] = useMemo(() => {
     const map = new Map<string, UnifiedEquipmentItem>();
-    const normalize = (s: string) => s.toLowerCase().trim().replace(/[^a-z0-9]/g, '');
+    const normalize = (s: string) =>
+      s
+        .toLowerCase()
+        .trim()
+        .replace(/[^a-z0-9]/g, '');
 
     // 1. Inventaire utilisateur
     for (const inv of inventoryList) {
       const normName = normalize(inv.name);
       const activeLoan = loanList.find(
-        (l) => l.product_ownership_id === inv.id && (l.status === 'en_cours' || l.status === 'en_retard')
+        (l) =>
+          l.product_ownership_id === inv.id && (l.status === 'en_cours' || l.status === 'en_retard')
       );
       const isOverdue = !!(activeLoan?.due_date && new Date(activeLoan.due_date) < new Date());
       const inBagItem = kitItems.find(
@@ -318,6 +340,7 @@ export function DepartEquipmentHub({
       maintenance_due_at: null,
       expiry_date: null,
       tags: [],
+      quantity: 1,
     };
 
     setInventoryList((prev) => [optimisticItem, ...prev]);
@@ -349,7 +372,9 @@ export function DepartEquipmentHub({
 
   const handleReturnLoan = async (loanId: string, inventoryId?: string | null) => {
     setLoanList((prev) =>
-      prev.map((l) => (l.id === loanId ? { ...l, status: 'rendu', returned_at: new Date().toISOString() } : l))
+      prev.map((l) =>
+        l.id === loanId ? { ...l, status: 'rendu', returned_at: new Date().toISOString() } : l
+      )
     );
     if (inventoryId) {
       setInventoryList((prev) =>
@@ -465,6 +490,7 @@ export function DepartEquipmentHub({
           maintenance_due_at: null,
           expiry_date: null,
           tags: [],
+          quantity: 1,
         },
         ...prev,
       ]);
@@ -499,14 +525,18 @@ export function DepartEquipmentHub({
           )}
         >
           <CheckSquare size={14} />
-          <span>Sac Actif ({kitItems.filter((i) => i.is_checked).length}/{kitItems.length})</span>
+          <span>
+            Sac Actif ({kitItems.filter((i) => i.is_checked).length}/{kitItems.length})
+          </span>
         </button>
       </div>
 
       {/* ════ CONTENU DU PARC MATÉRIEL (Plein format sur Desktop, avec bascule sur Mobile) ════ */}
       <div className="w-full space-y-4">
         {/* Vue Mobile "Sac Actif" */}
-        <div className={cn('w-full min-h-[480px]', mobileTab === 'bag' ? 'block md:hidden' : 'hidden')}>
+        <div
+          className={cn('w-full min-h-[480px]', mobileTab === 'bag' ? 'block md:hidden' : 'hidden')}
+        >
           <DepartChecklist
             items={kitItems}
             consumables={consumables}
@@ -517,7 +547,12 @@ export function DepartEquipmentHub({
         </div>
 
         {/* Vue Catalogue & Poids (Plein format Desktop, masqué sur mobile quand l'onglet sac est actif) */}
-        <div className={cn('space-y-4 min-w-0 w-full', mobileTab === 'bag' ? 'hidden md:block' : 'block')}>
+        <div
+          className={cn(
+            'space-y-4 min-w-0 w-full',
+            mobileTab === 'bag' ? 'hidden md:block' : 'block'
+          )}
+        >
           {/* ════ ANALYSE DU POIDS (Plein format) ════ */}
           {weightBreakdown && weightBreakdown.length > 0 && (
             <div className="w-full">
@@ -553,7 +588,7 @@ export function DepartEquipmentHub({
                 onClick={() => setIsAddModalOpen(true)}
                 className="inline-flex items-center gap-1 px-2.5 py-1 rounded-xl text-[11px] font-bold bg-[var(--lkv-primary)] text-white hover:bg-[var(--lkv-primary)]/90 shadow-2xs cursor-pointer transition-all active:scale-95 shrink-0"
               >
-                <Plus size={12} />
+                <Icon name="plus" size={12} />
                 <span>Ajouter</span>
               </button>
             </div>
@@ -561,7 +596,10 @@ export function DepartEquipmentHub({
             {/* Barre de recherche & Bascule Grille / Liste */}
             <div className="flex items-center gap-2">
               <div className="relative flex-1 min-w-0">
-                <SearchAnimated size={13} className="absolute left-3 top-1/2 -translate-y-1/2 text-[var(--lkv-text-muted)]" />
+                <SearchAnimated
+                  size={13}
+                  className="absolute left-3 top-1/2 -translate-y-1/2 text-[var(--lkv-text-muted)]"
+                />
                 <input
                   type="text"
                   value={searchQuery}
@@ -677,7 +715,9 @@ export function DepartEquipmentHub({
             {filteredItems.length === 0 ? (
               <div className="col-span-full py-12 px-4 text-center bg-white/40 rounded-3xl border border-dashed border-black/10 text-xs text-[var(--lkv-text-muted)] space-y-2">
                 <Boxes size={24} className="mx-auto text-[var(--lkv-text-muted)]/60" />
-                <p className="font-semibold text-[var(--lkv-primary)]">Aucun équipement ne correspond à vos filtres.</p>
+                <p className="font-semibold text-[var(--lkv-primary)]">
+                  Aucun équipement ne correspond à vos filtres.
+                </p>
               </div>
             ) : viewMode === 'grid' ? (
               /* ════ VUE GRILLE 3 COLONNES (Apple Store / Photos Style) ════ */
@@ -707,8 +747,8 @@ export function DepartEquipmentHub({
                         item.isLent
                           ? 'bg-[var(--lkv-warning)]/10 border-[var(--lkv-warning)]/30 text-[var(--lkv-warning)]'
                           : isItemInBag
-                          ? 'bg-[var(--lkv-success)]/10 border-[var(--lkv-success)]/30 text-[var(--lkv-primary)]'
-                          : 'bg-white/85 dark:bg-white/10 border-white/80 text-[var(--lkv-primary)]'
+                            ? 'bg-[var(--lkv-success)]/10 border-[var(--lkv-success)]/30 text-[var(--lkv-primary)]'
+                            : 'bg-white/85 dark:bg-white/10 border-white/80 text-[var(--lkv-primary)]'
                       )}
                     >
                       {/* Image — cliquable uniquement si fiche produit opérationnelle */}
@@ -767,7 +807,9 @@ export function DepartEquipmentHub({
                           )}
                           <div className="flex items-center justify-between text-[10px] font-mono text-[var(--lkv-text-muted)]">
                             <span>{formatWeight(item.weightG)}</span>
-                            {item.brand && <span className="truncate max-w-[70px]">{item.brand}</span>}
+                            {item.brand && (
+                              <span className="truncate max-w-[70px]">{item.brand}</span>
+                            )}
                           </div>
                         </div>
 
@@ -779,7 +821,7 @@ export function DepartEquipmentHub({
                               onClick={() => handleReturnLoan(item.loanId!, item.inventoryId)}
                               className="w-full py-1 rounded-xl text-[10.5px] font-bold bg-[var(--lkv-primary)] text-white hover:bg-[var(--lkv-primary)]/90 shadow-2xs flex items-center justify-center gap-1 cursor-pointer transition-all active:scale-98"
                             >
-                              <Check size={11} />
+                              <Icon name="check" size={11} />
                               <span>Rendu</span>
                             </button>
                           ) : isConsumable ? (
@@ -793,7 +835,7 @@ export function DepartEquipmentHub({
                             </button>
                           ) : isItemInBag ? (
                             <div className="w-full py-1 rounded-xl text-[10.5px] font-bold bg-forest-100 text-forest-900 border border-forest-200 flex items-center justify-center gap-1">
-                              <Check size={11} />
+                              <Icon name="check" size={11} />
                               <span>Dans le sac</span>
                             </div>
                           ) : (
@@ -802,7 +844,7 @@ export function DepartEquipmentHub({
                               onClick={() => handleQuickAddToBag(item)}
                               className="w-full py-1 rounded-xl text-[10.5px] font-bold bg-[var(--lkv-primary)] text-white hover:bg-[var(--lkv-primary)]/90 shadow-2xs flex items-center justify-center gap-1 cursor-pointer transition-all active:scale-98"
                             >
-                              <Plus size={11} />
+                              <Icon name="plus" size={11} />
                               <span>+ Au sac</span>
                             </button>
                           )}
@@ -871,7 +913,9 @@ export function DepartEquipmentHub({
                           )}
                           <div className="flex items-center gap-2 text-[10.5px] font-mono text-[var(--lkv-text-muted)] mt-0.5">
                             <span>{formatWeight(item.weightG)}</span>
-                            <span className="text-[9px] font-sans px-1.5 py-0.2 rounded bg-black/5 dark:bg-white/10">{item.category}</span>
+                            <span className="text-[9px] font-sans px-1.5 py-0.2 rounded bg-black/5 dark:bg-white/10">
+                              {item.category}
+                            </span>
                           </div>
                         </div>
                       </div>
@@ -879,7 +923,7 @@ export function DepartEquipmentHub({
                       <div className="shrink-0">
                         {isItemInBag ? (
                           <div className="px-2.5 py-1 rounded-xl text-[10.5px] font-bold bg-forest-100 text-forest-900 border border-forest-200 flex items-center gap-1">
-                            <Check size={11} />
+                            <Icon name="check" size={11} />
                             <span>Dans le sac</span>
                           </div>
                         ) : (
@@ -888,7 +932,7 @@ export function DepartEquipmentHub({
                             onClick={() => handleQuickAddToBag(item)}
                             className="px-2.5 py-1 rounded-xl text-[10.5px] font-bold bg-[var(--lkv-primary)] text-white hover:bg-[var(--lkv-primary)]/90 shadow-2xs flex items-center gap-1 cursor-pointer"
                           >
-                            <Plus size={11} />
+                            <Icon name="plus" size={11} />
                             <span>+ Sac</span>
                           </button>
                         )}
@@ -922,7 +966,7 @@ export function DepartEquipmentHub({
                   onClick={() => setIsAddModalOpen(false)}
                   className="p-1.5 rounded-xl hover:bg-black/5 text-[var(--lkv-text-muted)] cursor-pointer"
                 >
-                  <X size={16} />
+                  <Icon name="x" size={16} />
                 </button>
               </div>
 
@@ -1053,7 +1097,7 @@ export function DepartEquipmentHub({
             >
               <div className="flex items-center justify-between">
                 <h3 className="font-display font-bold text-base text-[var(--lkv-primary)] flex items-center gap-2">
-                  <Handshake size={18} className="text-[var(--lkv-primary-hover)]" />
+                  <Icon name="handshake" size={18} className="text-[var(--lkv-primary-hover)]" />
                   <span>Prêter un Équipement</span>
                 </h3>
                 <button
@@ -1061,13 +1105,15 @@ export function DepartEquipmentHub({
                   onClick={() => setIsLoanModalOpen(false)}
                   className="p-1.5 rounded-xl hover:bg-black/5 text-[var(--lkv-text-muted)] cursor-pointer"
                 >
-                  <X size={16} />
+                  <Icon name="x" size={16} />
                 </button>
               </div>
 
               <div className="p-3 rounded-2xl bg-black/5 text-xs font-semibold flex items-center gap-2">
                 <Boxes size={14} className="text-[var(--lkv-primary-hover)]" />
-                <span>Objet : <strong>{selectedItemForLoan.name}</strong></span>
+                <span>
+                  Objet : <strong>{selectedItemForLoan.name}</strong>
+                </span>
               </div>
 
               <form onSubmit={handleCreateLoan} className="space-y-3.5">

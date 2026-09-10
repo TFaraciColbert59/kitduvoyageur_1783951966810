@@ -1,7 +1,7 @@
 import { createClient } from '@/lib/supabase/server';
+import { computeGroupeReadiness } from '../mobile/groupeEngine';
 
 export interface GroupeMenuSummary {
-  kind: 'groupe' | 'equipage';
   name: string | null;
   members: number;
   pendingInvites: number;
@@ -17,7 +17,6 @@ export interface GroupeMenuSummary {
 }
 
 const EMPTY: GroupeMenuSummary = {
-  kind: 'groupe',
   name: null,
   members: 0,
   pendingInvites: 0,
@@ -45,18 +44,14 @@ function depLabel(iso: string | null | undefined): string | null {
  * Comptes agrégés : membres, tâches, équipement, dépenses, votes, discussion,
  * voyages liés. Pas de grosse jointure getGroupeComplet.
  */
-export async function getGroupeMenuSummary(
-  id: string,
-  kind: 'groupe' | 'equipage',
-): Promise<GroupeMenuSummary> {
+export async function getGroupeMenuSummary(id: string): Promise<GroupeMenuSummary> {
   const supabase = await createClient();
   try {
-    if (kind === 'groupe') {
-      const [{ data: grp }, { data: members }, { data: tasks }, { data: eq }, { data: exp }, { data: polls }, { data: msgs }, { data: trips }] =
+    const [{ data: grp }, { data: members }, { data: tasks }, { data: eq }, { data: exp }, { data: polls }, { data: msgs }, { data: trips }] =
         await Promise.all([
           supabase
             .from('travel_groups')
-            .select('name, invite_code, optimization_score, departure_date, return_date')
+            .select('name, invite_code, departure_date, return_date')
             .eq('id', id)
             .maybeSingle(),
           supabase
@@ -65,16 +60,15 @@ export async function getGroupeMenuSummary(
             .eq('group_id', id),
           supabase
             .from('group_tasks')
-            .select('id')
-            .eq('group_id', id)
-            .eq('status', 'todo'),
+            .select('id, status')
+            .eq('group_id', id),
           supabase
             .from('group_kit_items')
-            .select('id')
+            .select('id, assigned_to')
             .eq('group_id', id),
           supabase
             .from('group_expenses')
-            .select('amount')
+            .select('amount, status')
             .eq('group_id', id),
           supabase
             .from('group_polls')
@@ -94,51 +88,34 @@ export async function getGroupeMenuSummary(
         ]);
 
       const rows = (members ?? []) as Array<{ status: string }>;
+      const taskRows = (tasks ?? []) as Array<{ status: string }>;
+      const kitRows = (eq ?? []) as Array<{ assigned_to: string | null }>;
+      const expRows = (exp ?? []) as Array<{ amount: number; status: string }>;
+
+      // Préparation = score calculé en direct (même moteur que la page groupe).
+      const readiness = computeGroupeReadiness({
+        tasks: taskRows.map((t, index) => ({ id: String(index), title: '', completed: t.status === 'done' })),
+        kit: kitRows.map((k, index) => ({ id: String(index), assigned: !!k.assigned_to })),
+        expenses: expRows.map((e, index) => ({ id: String(index), amount: Number(e.amount || 0), settled: e.status === 'settled' })),
+        members: rows.map((m, index) => ({ userId: String(index), name: '', status: m.status })),
+      });
+
       return {
         ...EMPTY,
-        kind: 'groupe',
         name: (grp as { name?: string } | null)?.name ?? null,
         members: rows.filter((m) => m.status === 'active').length,
         pendingInvites: rows.filter((m) => m.status === 'pending').length,
-        tasksOpen: (tasks ?? []).length,
-        equipmentCount: (eq ?? []).length,
-        expensesTotal: Math.round((exp ?? []).reduce((s: number, r: { amount: number }) => s + Number(r.amount || 0), 0)),
+        tasksOpen: taskRows.filter((t) => t.status === 'todo').length,
+        equipmentCount: kitRows.length,
+        expensesTotal: Math.round(expRows.reduce((s, r) => s + Number(r.amount || 0), 0)),
         pollsOpen: (polls ?? []).length,
         lastMessage: ((msgs as Array<{ content: string }> | null)?.[0]?.content ?? null),
         inviteCode: (grp as { invite_code?: string | null } | null)?.invite_code ?? null,
-        progression: Math.min(100, Math.max(0, Number((grp as { optimization_score?: number | null } | null)?.optimization_score ?? 0))),
+        progression: readiness.pct,
         linkedTrips: (trips ?? []).length,
         departureLabel: depLabel((grp as { departure_date?: string | null } | null)?.departure_date),
       };
-    }
-
-    // kind === 'equipage'
-    const [{ data: crew }, { data: members }, { data: trips }] = await Promise.all([
-      supabase
-        .from('crews')
-        .select('name, invite_code')
-        .eq('id', id)
-        .maybeSingle(),
-      supabase
-        .from('crew_members')
-        .select('status')
-        .eq('crew_id', id),
-      supabase
-        .from('trips')
-        .select('id')
-        .eq('crew_id', id),
-    ]);
-    const rows = (members ?? []) as Array<{ status: string }>;
-    return {
-      ...EMPTY,
-      kind: 'equipage',
-      name: (crew as { name?: string } | null)?.name ?? null,
-      members: rows.filter((m) => m.status === 'active').length,
-      pendingInvites: rows.filter((m) => m.status === 'pending').length,
-      inviteCode: (crew as { invite_code?: string | null } | null)?.invite_code ?? null,
-      linkedTrips: (trips ?? []).length,
-    };
   } catch {
-    return { ...EMPTY, kind };
+    return { ...EMPTY };
   }
 }

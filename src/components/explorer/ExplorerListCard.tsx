@@ -1,14 +1,20 @@
 'use client';
 
+import Icon from '@/components/ui/Icon';
 import React from 'react';
 import { motion } from 'framer-motion';
-import { MapPin, Star } from 'lucide-react';
 import { TrendingUpIcon as TrendingUp } from '@/components/icons/trending-up';
 import { NavigationIcon as Navigation } from '@/components/icons/navigation';
 import { ClockIcon as Clock } from '@/components/icons/clock';
 import { ChevronRightIcon as ChevronRight } from '@/components/icons/chevron-right';
 import type { MapTrail } from './types';
-import { getTrailImage, getDifficultyColor, getDifficultyLabel, formatDistance, formatDuration } from './types';
+import {
+  getTrailImage,
+  getDifficultyColor,
+  getDifficultyLabel,
+  formatDistance,
+  formatDuration,
+} from './types';
 
 interface Props {
   trail: MapTrail;
@@ -42,7 +48,9 @@ export default function ExplorerListCard({ trail, isSelected, onClick }: Props) 
           : 'linear-gradient(180deg, rgba(255, 255, 255, 0.55) 0%, rgba(251, 250, 246, 0.30) 100%)',
         backdropFilter: 'blur(20px) saturate(180%)',
         WebkitBackdropFilter: 'blur(20px) saturate(180%)',
-        border: isSelected ? '1.5px solid rgba(23, 64, 44, 0.5)' : '1px solid rgba(255, 255, 255, 0.70)',
+        border: isSelected
+          ? '1.5px solid rgba(23, 64, 44, 0.5)'
+          : '1px solid rgba(255, 255, 255, 0.70)',
         boxShadow: isSelected
           ? '0 12px 36px -6px rgba(23, 64, 44, 0.18), inset 0 1px 1.5px rgba(255, 255, 255, 0.95)'
           : '0 4px 16px -2px rgba(23, 64, 44, 0.06), inset 0 1px 1px rgba(255, 255, 255, 0.85)',
@@ -73,7 +81,7 @@ export default function ExplorerListCard({ trail, isSelected, onClick }: Props) 
             {trail.name}
           </h3>
           <p className="text-[10.5px] font-medium text-[#5A7064] truncate flex items-center gap-1 mt-0.5">
-            <MapPin size={9.5} className="shrink-0 text-[#17402C]/80" />
+            <Icon name="map-pin" size={9.5} className="shrink-0 text-[#17402C]/80" />
             <span>{trail.terrain_type || trail.network || 'Massif Alpin'}</span>
           </p>
         </div>
@@ -94,8 +102,7 @@ export default function ExplorerListCard({ trail, isSelected, onClick }: Props) 
               <>
                 <span className="text-[#5A7064]/40">·</span>
                 <span className="flex items-center gap-0.5 font-bold text-[#17402C]">
-                  <TrendingUp size={9} />
-                  +{Math.round(trail.elevation_gain)}m
+                  <TrendingUp size={9} />+{Math.round(trail.elevation_gain)}m
                 </span>
               </>
             )}
@@ -103,7 +110,7 @@ export default function ExplorerListCard({ trail, isSelected, onClick }: Props) 
 
           {score !== null ? (
             <div className="flex items-center gap-0.5 text-[10px] font-mono font-bold text-[#17402C]">
-              <Star size={10} className="text-[#C89A3B] fill-[#C89A3B]" />
+              <Icon name="star" size={10} className="text-[#C89A3B] fill-[#C89A3B]" />
               <span>{score}</span>
             </div>
           ) : (

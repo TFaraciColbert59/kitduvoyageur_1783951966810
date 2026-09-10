@@ -63,7 +63,7 @@ export default async function HubPage({
   }
 
   if (data.input.kind === 'collectif' && data.adventure.nature === 'collectif') {
-    const summary = await getGroupeMenuSummary(data.adventure.id, data.adventure.kind);
+    const summary = await getGroupeMenuSummary(data.adventure.id);
     return <CollectifMenu summary={summary} linkedTripSlug={data.linkedTripSlug} />;
   }
 

@@ -1,19 +1,19 @@
 import Link from 'next/link';
-import { ArrowLeft } from 'lucide-react';
+import Icon from '@/components/ui/Icon';
 import { HUB_HOME_HREF } from '../../registry/hubSectionRegistry';
 
 /**
- * Hub V4 — Retour au MENU (racine /hub). Nav « retour menu uniquement ».
- * Discret, ≥44px, accessible.
+ * Hub V4 — Retour au MENU (racine /hub). Icône seule (V7), ≥44px, accessible.
  */
 export function MenuBack() {
   return (
     <Link
       href={HUB_HOME_HREF}
-      className="inline-flex items-center gap-1.5 min-h-[44px] px-2 -ml-2 text-xs font-semibold text-[var(--lkv-text-secondary)] hover:text-[var(--lkv-text-primary)] active:scale-95 transition-transform"
+      aria-label="Retour au hub"
+      title="Retour au hub"
+      className="inline-flex h-11 w-11 -ml-2 items-center justify-center rounded-full text-[var(--lkv-text-secondary)] transition-transform hover:text-[var(--lkv-text-primary)] active:scale-95"
     >
-      <ArrowLeft size={14} aria-hidden="true" />
-      <span>Menu</span>
+      <Icon name="arrow-left" size={18} aria-hidden="true" />
     </Link>
   );
 }

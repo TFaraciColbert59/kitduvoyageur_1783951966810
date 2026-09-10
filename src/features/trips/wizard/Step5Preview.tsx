@@ -1,18 +1,10 @@
 'use client';
 
+import Icon from '@/components/ui/Icon';
 import React, { useEffect, useState } from 'react';
 import type { TripWizardState } from './wizardTypes';
 import type { PlannerOutput } from '../engine/types';
 import { generateAndPersistItinerary } from '@/app/voyages/actions';
-import {
-  Sparkles,
-  Navigation,
-  Package,
-  AlertTriangle,
-  ArrowRight,
-  RotateCcw,
-  Footprints,
-} from 'lucide-react';
 
 interface Step5PreviewProps {
   state: TripWizardState;
@@ -101,13 +93,14 @@ export function Step5Preview({
     return (
       <div className="py-16 text-center space-y-4">
         <div className="w-16 h-16 mx-auto rounded-full bg-[var(--lkv-success-bg)] text-lkv-primary flex items-center justify-center animate-spin">
-          <Navigation size={28} />
+          <Icon name="navigation" size={28} />
         </div>
         <h3 className="text-xl font-bold text-lkv-primary">
           Calcul déterministe de votre itinéraire...
         </h3>
         <p className="text-xs text-[var(--lkv-text-muted)] max-w-sm mx-auto">
-          Répartition des étapes journalières, calcul altimétrique et sélection du matériel selon les règles de sécurité LKDV.
+          Répartition des étapes journalières, calcul altimétrique et sélection du matériel selon
+          les règles de sécurité LKDV.
         </p>
       </div>
     );
@@ -116,10 +109,8 @@ export function Step5Preview({
   if (error) {
     return (
       <div className="p-6 bg-rose-50 border border-rose-200 rounded-3xl text-center space-y-3">
-        <AlertTriangle size={32} className="text-rose-600 mx-auto" />
-        <h3 className="text-base font-bold text-rose-900">
-          Erreur de planification
-        </h3>
+        <Icon name="alert-triangle" size={32} className="text-rose-600 mx-auto" />
+        <h3 className="text-base font-bold text-rose-900">Erreur de planification</h3>
         <p className="text-xs text-rose-700 max-w-md mx-auto">{error}</p>
         <button
           type="button"
@@ -138,14 +129,13 @@ export function Step5Preview({
     <div className="space-y-6">
       <div>
         <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-wider text-lkv-secondary mb-1">
-          <Sparkles size={14} />
+          <Icon name="sparkles" size={14} />
           <span>Étape 5 sur 5 — Aperçu complet</span>
         </div>
-        <h2 className="text-2xl sm:text-3xl font-bold text-lkv-primary">
-          {finalTitle}
-        </h2>
+        <h2 className="text-2xl sm:text-3xl font-bold text-lkv-primary">{finalTitle}</h2>
         <p className="text-sm text-[var(--lkv-text-muted)] mt-1">
-          Voici votre proposition d&apos;itinéraire détaillée, calculée sans compromis et prête pour l&apos;aventure.
+          Voici votre proposition d&apos;itinéraire détaillée, calculée sans compromis et prête pour
+          l&apos;aventure.
         </p>
       </div>
 
@@ -153,27 +143,27 @@ export function Step5Preview({
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
         <div className="p-3.5 bg-white/80 rounded-2xl border border-black/5 text-center">
           <div className="text-[11px] font-semibold text-lkv-secondary uppercase">Durée</div>
-          <div className="text-xl font-bold text-lkv-primary mt-0.5">
-            {output.total_days} jours
-          </div>
+          <div className="text-xl font-bold text-lkv-primary mt-0.5">{output.total_days} jours</div>
         </div>
         <div className="p-3.5 bg-white/80 rounded-2xl border border-black/5 text-center">
-          <div className="text-[11px] font-semibold text-lkv-secondary uppercase">Distance estimée</div>
+          <div className="text-[11px] font-semibold text-lkv-secondary uppercase">
+            Distance estimée
+          </div>
           <div className="text-xl font-bold text-lkv-primary mt-0.5">
             {output.total_distance_km} km
           </div>
         </div>
         <div className="p-3.5 bg-white/80 rounded-2xl border border-black/5 text-center">
-          <div className="text-[11px] font-semibold text-lkv-secondary uppercase">Dénivelé positif</div>
+          <div className="text-[11px] font-semibold text-lkv-secondary uppercase">
+            Dénivelé positif
+          </div>
           <div className="text-xl font-bold text-lkv-primary mt-0.5">
             +{output.total_elevation_gain_m}m D+
           </div>
         </div>
         <div className="p-3.5 bg-white/80 rounded-2xl border border-black/5 text-center">
           <div className="text-[11px] font-semibold text-lkv-secondary uppercase">Rythme</div>
-          <div className="text-xl font-bold text-lkv-primary mt-0.5 capitalize">
-            {state.pace}
-          </div>
+          <div className="text-xl font-bold text-lkv-primary mt-0.5 capitalize">{state.pace}</div>
         </div>
       </div>
 
@@ -189,9 +179,14 @@ export function Step5Preview({
                   : 'bg-[var(--lkv-warning-bg)] border-[var(--lkv-warning-subtle)] text-[var(--lkv-warning-dark)]'
               }`}
             >
-              <AlertTriangle
+              <Icon
+                name="alert-triangle"
                 size={18}
-                className={w.severity === 'alert' ? 'text-rose-600 shrink-0' : 'text-[var(--lkv-warning-dark)] shrink-0'}
+                className={
+                  w.severity === 'alert'
+                    ? 'text-rose-600 shrink-0'
+                    : 'text-[var(--lkv-warning-dark)] shrink-0'
+                }
               />
               <div className="text-xs leading-relaxed">
                 <span className="font-semibold block mb-0.5">Note du guide :</span>
@@ -206,7 +201,7 @@ export function Step5Preview({
       <div>
         <div className="flex items-center justify-between mb-3">
           <h3 className="text-sm font-bold text-lkv-primary uppercase tracking-wider flex items-center gap-2">
-            <Navigation size={15} />
+            <Icon name="navigation" size={15} />
             <span>Itinéraire jour par jour ({output.steps.length} étapes)</span>
           </h3>
         </div>
@@ -242,7 +237,7 @@ export function Step5Preview({
               <div className="flex items-center gap-4 text-xs font-medium text-[var(--lkv-text-muted)] shrink-0 self-start sm:self-center">
                 {step.distance_km ? (
                   <span className="flex items-center gap-1">
-                    <Footprints size={14} className="text-lkv-secondary" />
+                    <Icon name="footprints" size={14} className="text-lkv-secondary" />
                     {step.distance_km} km
                   </span>
                 ) : null}
@@ -261,7 +256,7 @@ export function Step5Preview({
       <div>
         <div className="flex items-center justify-between mb-3">
           <h3 className="text-sm font-bold text-lkv-primary uppercase tracking-wider flex items-center gap-2">
-            <Package size={15} />
+            <Icon name="package" size={15} />
             <span>Matériel & sac à dos recommandé ({output.items.length} articles)</span>
           </h3>
         </div>
@@ -295,7 +290,7 @@ export function Step5Preview({
           onClick={onBackToEdit}
           className="w-full sm:w-auto px-5 py-3 rounded-xl border border-black/10 text-xs font-semibold text-lkv-primary hover:bg-black/5 flex items-center justify-center gap-2 min-h-[48px]"
         >
-          <RotateCcw size={14} />
+          <Icon name="rotate-ccw" size={14} />
           <span>Modifier les paramètres</span>
         </button>
 
@@ -305,7 +300,7 @@ export function Step5Preview({
           className="w-full sm:w-auto px-7 py-3.5 rounded-xl bg-lkv-primary hover:bg-[var(--lkv-primary-hover)] text-white text-sm font-bold shadow-md flex items-center justify-center gap-2 transition-all min-h-[48px]"
         >
           <span>Enregistrer et ouvrir mon voyage</span>
-          <ArrowRight size={16} />
+          <Icon name="arrow-right" size={16} />
         </button>
       </div>
     </div>

@@ -1,7 +1,7 @@
 'use client';
+import Icon from '@/components/ui/Icon';
 import React from 'react';
 import { motion, useReducedMotion } from 'framer-motion';
-import { Plus } from 'lucide-react';
 import { Volume2Icon as Volume2 } from '@/components/icons/volume-2';
 import { cn } from '@/lib/utils';
 import { useHapticFeedback } from '@/hooks/useHapticFeedback';
@@ -136,9 +136,7 @@ export function MobileFloatingIsland({
       <button
         type="button"
         aria-label={
-          isSpeaking
-            ? 'Arrêter la lecture vocale'
-            : 'Lire à voix haute les articles restants'
+          isSpeaking ? 'Arrêter la lecture vocale' : 'Lire à voix haute les articles restants'
         }
         aria-pressed={isSpeaking}
         onClick={() => {
@@ -173,7 +171,7 @@ export function MobileFloatingIsland({
           'cursor-pointer transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-[var(--lkv-primary)]'
         )}
       >
-        <Plus className="w-5 h-5 text-white" strokeWidth={2.5} />
+        <Icon name="plus" className="w-5 h-5 text-white" strokeWidth={2.5} />
       </button>
     </motion.nav>
   );

@@ -18,9 +18,9 @@ import { HUB_SECTION_ORDER } from '@/features/hub/engine/hubProfileEngine';
  */
 
 describe('H1 — hubSectionRegistry : source unique des sections', () => {
-  it('REG-1: 20 ids uniques, dans l’ordre HUB_SECTION_ORDER', () => {
+  it('REG-1: 19 ids uniques, dans l’ordre HUB_SECTION_ORDER', () => {
     const ids = hubSectionRegistry.map((s) => s.id);
-    expect(new Set(ids).size).toBe(20);
+    expect(new Set(ids).size).toBe(19);
     expect(ids).toEqual([...HUB_SECTION_ORDER]);
   });
 
@@ -59,11 +59,12 @@ describe('H1 — hubSectionRegistry : source unique des sections', () => {
     expect(hubSectionHref({ nature: 'collectif' }, 'invitations')).toBe('/hub/invitations');
   });
 
-  it('REG-8: team partagée sortie+collectif (une seule source)', () => {
-    const team = hubSectionRegistry.find((s) => s.id === 'team');
-    expect(team?.natures).toEqual(['sortie', 'collectif']);
-    expect(hubSectionHref({ nature: 'sortie', slug: 'x' }, 'team')).toBe('/hub/equipage');
-    expect(hubSectionHref({ nature: 'collectif' }, 'team')).toBe('/hub/equipage');
+  it('REG-8: groupe partagée sortie+collectif (sections participants fusionnées)', () => {
+    const groupe = hubSectionRegistry.find((s) => s.id === 'groupe');
+    expect(groupe?.natures).toEqual(['sortie', 'collectif']);
+    expect(hubSectionHref({ nature: 'sortie', slug: 'x' }, 'groupe')).toBe('/hub/groupe');
+    expect(hubSectionHref({ nature: 'collectif' }, 'groupe')).toBe('/hub/groupe');
+    expect(hubSectionRegistry.find((s) => (s.id as string) === 'team')).toBeUndefined();
   });
 
   it('REG-9: visibleHubSections filtre par profil dans l’ordre', () => {    const defs = visibleHubSections({

@@ -1,9 +1,9 @@
 'use client';
 
+import Icon from '@/components/ui/Icon';
 import React, { useState } from 'react';
 import AppImage from '@/components/ui/AppImage';
 import { GlassCapsuleBtn } from '@/components/ui/GlassCapsuleBtn';
-import { MapPin, Calendar, CreditCard, Users, Share2, Check, Edit3 } from 'lucide-react';
 import { TripBadge } from './TripBadge';
 import { getTripCounters } from '../hooks/useTripCounters';
 import type { TripFull } from '../types/trip.types';
@@ -62,9 +62,7 @@ export function TripHero({ trip, onEditClick }: TripHeroProps) {
             <TripBadge type="status" value={trip.status} size="md" />
             <TripBadge type="activity" value={trip.primary_activity} size="md" />
             <TripBadge type="difficulty" value={trip.difficulty} size="md" />
-            {trip.user_role && (
-              <TripBadge type="role" value={trip.user_role} size="md" />
-            )}
+            {trip.user_role && <TripBadge type="role" value={trip.user_role} size="md" />}
           </div>
 
           <div className="flex items-center gap-2">
@@ -72,7 +70,7 @@ export function TripHero({ trip, onEditClick }: TripHeroProps) {
               variant="secondary"
               size="sm"
               onClick={handleShare}
-              icon={copied ? <Check size={15} /> : <Share2 size={15} />}
+              icon={copied ? <Icon name="check" size={15} /> : <Icon name="share2" size={15} />}
             >
               {copied ? 'Lien copié !' : 'Partager'}
             </GlassCapsuleBtn>
@@ -82,7 +80,7 @@ export function TripHero({ trip, onEditClick }: TripHeroProps) {
                 variant="primary"
                 size="sm"
                 onClick={onEditClick}
-                icon={<Edit3 size={15} />}
+                icon={<Icon name="edit3" size={15} />}
               >
                 Modifier
               </GlassCapsuleBtn>
@@ -94,7 +92,7 @@ export function TripHero({ trip, onEditClick }: TripHeroProps) {
         <div className="max-w-4xl space-y-3 mt-8">
           {trip.destination_name && (
             <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-white/15 backdrop-blur-md border border-white/20 text-xs sm:text-sm font-medium text-white/90">
-              <MapPin size={14} className="text-white/80" />
+              <Icon name="map-pin" size={14} className="text-white/80" />
               {trip.destination_name}
               {trip.destination_country_code && ` (${trip.destination_country_code})`}
             </div>
@@ -114,20 +112,20 @@ export function TripHero({ trip, onEditClick }: TripHeroProps) {
           <div className="flex items-center gap-4 pt-2 text-xs sm:text-sm text-white/80 flex-wrap">
             {(trip.start_date || trip.end_date) && (
               <span className="flex items-center gap-1.5 bg-black/30 backdrop-blur-sm px-3 py-1 rounded-full border border-white/10">
-                <Calendar size={14} className="text-white/80" />
+                <Icon name="calendar" size={14} className="text-white/80" />
                 {formatCivilDateRange(trip.start_date, trip.end_date, undefined, 'fr-FR')}
               </span>
             )}
 
             {trip.estimated_budget !== null && trip.estimated_budget !== undefined && (
               <span className="flex items-center gap-1.5 bg-black/30 backdrop-blur-sm px-3 py-1 rounded-full border border-white/10">
-                <CreditCard size={14} className="text-white/80" />
+                <Icon name="credit-card" size={14} className="text-white/80" />
                 Budget prévu : {trip.estimated_budget} {trip.budget_currency}
               </span>
             )}
 
             <span className="flex items-center gap-1.5 bg-black/30 backdrop-blur-sm px-3 py-1 rounded-full border border-white/10">
-              <Users size={14} className="text-white/80" />
+              <Icon name="users" size={14} className="text-white/80" />
               {participantsCount} {participantsCount > 1 ? 'participants' : 'participant'}
             </span>
           </div>

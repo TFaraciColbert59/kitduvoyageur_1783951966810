@@ -73,10 +73,13 @@ export interface NextActionCardProps {
     tripId: string;
     items: HubChecklistItem[];
   };
+  /** compact = bandeau mobile dense (hub V6). */
+  variant?: 'default' | 'compact';
 }
 
-export function NextActionCard({ actions, checklist }: NextActionCardProps) {
+export function NextActionCard({ actions, checklist, variant = 'default' }: NextActionCardProps) {
   const reduceMotion = useReducedMotion();
+  const compact = variant === 'compact';
   const checklistPct = checklist ? checklistPctOf(checklist.items) : null;
 
   const picked =
@@ -92,12 +95,14 @@ export function NextActionCard({ actions, checklist }: NextActionCardProps) {
   return (
     <Link
       href={picked.href}
-      className={`group block focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--lkv-primary)] rounded-[1.5rem] ${
-        isAllClear ? '' : 'ring-1 ring-[var(--lkv-primary)]/20'
-      }`}
+      className={`group block focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--lkv-primary)] ${
+        compact ? 'rounded-[1.25rem]' : 'rounded-[1.5rem]'
+      } ${isAllClear ? '' : 'ring-1 ring-[var(--lkv-primary)]/20'}`}
     >
       <div
-        className={`flex items-center gap-3.5 rounded-[1.5rem] border p-4 min-h-[44px] transition-transform active:scale-[0.99] ${
+        className={`flex items-center border transition-transform active:scale-[0.99] ${
+          compact ? 'gap-3 rounded-[1.25rem] p-3' : 'gap-3.5 rounded-[1.5rem] p-4'
+        } min-h-[44px] ${
           isAllClear
             ? 'border-white/60 bg-white/55'
             : 'border-[var(--lkv-forest-900)]/15 bg-[var(--lkv-forest-900)] text-sage-300 shadow-sm'
@@ -105,31 +110,33 @@ export function NextActionCard({ actions, checklist }: NextActionCardProps) {
         style={reduceMotion ? undefined : { transition: 'transform 0.15s ease' }}
       >
         <span
-          className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-full border ${
+          className={`flex shrink-0 items-center justify-center rounded-full border ${
+            compact ? 'h-9 w-9' : 'h-11 w-11'
+          } ${
             isAllClear
               ? 'border-white/60 bg-white/70 text-[var(--lkv-secondary)]'
               : 'border-white/20 bg-white/10 text-sage-300'
           }`}
         >
-          <Icon size={19} aria-hidden="true" />
+          <Icon size={compact ? 16 : 19} aria-hidden="true" />
         </span>
         <span className="min-w-0 flex-1">
           <span
-            className={`block text-[10px] font-medium uppercase tracking-[0.14em] ${
-              isAllClear ? 'text-[var(--lkv-text-muted)]' : 'text-sage-300/80'
-            }`}
+            className={`block font-medium uppercase tracking-[0.14em] ${
+              compact ? 'text-[9px]' : 'text-[10px]'
+            } ${isAllClear ? 'text-[var(--lkv-text-muted)]' : 'text-sage-300/80'}`}
           >
             {isAllClear ? 'À jour' : 'Prochaine action'}
           </span>
           <span
-            className={`block truncate text-sm font-bold ${
+            className={`block truncate font-bold ${compact ? 'text-[13px]' : 'text-sm'} ${
               isAllClear ? 'text-[var(--lkv-text-primary)]' : 'text-white'
             }`}
           >
             {picked.title}
           </span>
           <span
-            className={`block truncate text-xs ${
+            className={`block truncate ${compact ? 'text-[11px]' : 'text-xs'} ${
               isAllClear ? 'text-[var(--lkv-text-secondary)]' : 'text-white/70'
             }`}
           >
@@ -137,7 +144,7 @@ export function NextActionCard({ actions, checklist }: NextActionCardProps) {
           </span>
         </span>
         <ArrowRight
-          size={17}
+          size={compact ? 15 : 17}
           className={`shrink-0 transition-transform group-hover:translate-x-0.5 ${
             isAllClear ? 'text-[var(--lkv-text-muted)]' : 'text-white/80'
           }`}

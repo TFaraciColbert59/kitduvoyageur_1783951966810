@@ -1,16 +1,7 @@
 ﻿'use client';
 
+import Icon from '@/components/ui/Icon';
 import React, { useState, useTransition } from 'react';
-import {
-  Award,
-  BookOpen,
-  Calendar,
-  CheckCircle2,
-  Pin,
-  Plus,
-  Trash2,
-  User,
-} from 'lucide-react';
 import { GlassCard } from '@/components/ui/GlassCard';
 import { GlassModal } from '@/components/ui/GlassModal';
 import { GlassCapsuleBtn } from '@/components/ui/GlassCapsuleBtn';
@@ -58,14 +49,14 @@ export function TripNotesView({ trip }: TripNotesViewProps) {
   const notes = trip.notes || [];
 
   // Filtrage des notes
-  const filteredNotes = notes.filter(n => {
+  const filteredNotes = notes.filter((n) => {
     if (selectedDayFilter === 'all') return true;
     return n.day_number === selectedDayFilter;
   });
 
   // Liste des jours disponibles
   const availableDays = Array.from(
-    new Set(notes.map(n => n.day_number).filter((d): d is number => typeof d === 'number'))
+    new Set(notes.map((n) => n.day_number).filter((d): d is number => typeof d === 'number'))
   ).sort((a, b) => a - b);
 
   // ——— Statistiques LIVE du carnet (dérivées des données réelles, zéro mock) ———
@@ -76,14 +67,12 @@ export function TripNotesView({ trip }: TripNotesViewProps) {
     0
   );
   const jourCouvert = maxNoteDay > 0 ? maxNoteDay : tripDuration.currentDay;
-  const notesDuJour = jourCouvert
-    ? notes.filter(n => n.day_number === jourCouvert).length
-    : 0;
-  const notesCreatedToday = notes.filter(n => isSameDay(new Date(n.created_at), now)).length;
+  const notesDuJour = jourCouvert ? notes.filter((n) => n.day_number === jourCouvert).length : 0;
+  const notesCreatedToday = notes.filter((n) => isSameDay(new Date(n.created_at), now)).length;
   const lastNote = [...notes].sort(
     (a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
   )[0];
-  const pinnedNote = notes.find(n => n.is_pinned);
+  const pinnedNote = notes.find((n) => n.is_pinned);
   const daysTold = availableDays.length;
   const totalTripDays = tripDuration.durationDays;
   const progressPct =
@@ -127,7 +116,7 @@ export function TripNotesView({ trip }: TripNotesViewProps) {
         setIsAddOpen(false);
         form.reset();
       } else {
-        setErrorMessage(res.error || 'Erreur lors de l\'ajout de la note');
+        setErrorMessage(res.error || "Erreur lors de l'ajout de la note");
       }
     });
   };
@@ -141,19 +130,23 @@ export function TripNotesView({ trip }: TripNotesViewProps) {
       >
         <div className="flex items-center justify-between gap-2 flex-wrap">
           <h3 className="font-display text-xs font-bold text-lkv-primary flex items-center gap-1.5">
-            <BookOpen size={14} className="text-lkv-secondary shrink-0" aria-hidden="true" />
+            <Icon
+              name="book-open"
+              size={14}
+              className="text-lkv-secondary shrink-0"
+              aria-hidden="true"
+            />
             Carnet en création
           </h3>
           <span className="glass-pill text-[10px] font-semibold text-[var(--lkv-text-secondary)]">
-            {notes.length} {notes.length === 1 ? 'note' : 'notes'} · {notesCreatedToday} aujourd&apos;hui
+            {notes.length} {notes.length === 1 ? 'note' : 'notes'} · {notesCreatedToday}{' '}
+            aujourd&apos;hui
           </span>
         </div>
 
         <dl className="grid grid-cols-2 sm:grid-cols-4 gap-3">
           <div className="glass-sub-card rounded-xl p-3 flex flex-col gap-1">
-            <dt className="text-[10px] font-semibold text-[var(--lkv-text-muted)]">
-              Jour couvert
-            </dt>
+            <dt className="text-[10px] font-semibold text-[var(--lkv-text-muted)]">Jour couvert</dt>
             <dd className="font-display text-sm font-bold text-[var(--lkv-text-primary)]">
               {jourCouvert ? `Jour ${jourCouvert}` : '—'}
             </dd>
@@ -171,7 +164,10 @@ export function TripNotesView({ trip }: TripNotesViewProps) {
             <dd className="font-display text-sm font-bold text-[var(--lkv-text-primary)] truncate">
               {lastNote ? lastNote.title || 'Sans titre' : '—'}
             </dd>
-            <p className="text-[10px] text-[var(--lkv-text-muted)] leading-tight truncate" suppressHydrationWarning>
+            <p
+              className="text-[10px] text-[var(--lkv-text-muted)] leading-tight truncate"
+              suppressHydrationWarning
+            >
               {lastNote ? formatRelativeTime(new Date(lastNote.created_at), now) : 'Carnet vierge'}
             </p>
           </div>
@@ -189,9 +185,7 @@ export function TripNotesView({ trip }: TripNotesViewProps) {
           </div>
 
           <div className="glass-sub-card rounded-xl p-3 flex flex-col gap-1">
-            <dt className="text-[10px] font-semibold text-[var(--lkv-text-muted)]">
-              Progression
-            </dt>
+            <dt className="text-[10px] font-semibold text-[var(--lkv-text-muted)]">Progression</dt>
             <dd className="font-display text-sm font-bold text-[var(--lkv-text-primary)]">
               {daysTold} / {totalTripDays} jours
             </dd>
@@ -213,7 +207,7 @@ export function TripNotesView({ trip }: TripNotesViewProps) {
       <div className="flex items-center justify-between gap-4 flex-wrap">
         {trip.status === 'completed' && (
           <span className="inline-flex items-center gap-1.5 text-[11px] px-2.5 py-1 rounded-full bg-[var(--lkv-primary)]/10 text-lkv-primary font-semibold">
-            <CheckCircle2 size={13} aria-hidden="true" />
+            <Icon name="check-circle2" size={13} aria-hidden="true" />
             <span>Expédition terminée</span>
           </span>
         )}
@@ -223,7 +217,7 @@ export function TripNotesView({ trip }: TripNotesViewProps) {
               variant="secondary"
               size="sm"
               onClick={() => setIsCompletionOpen(true)}
-              icon={<Award size={16} />}
+              icon={<Icon name="award" size={16} />}
             >
               {trip.status === 'completed' ? 'Bilan & Rétrospective' : 'Clôturer le voyage'}
             </GlassCapsuleBtn>
@@ -231,7 +225,7 @@ export function TripNotesView({ trip }: TripNotesViewProps) {
               variant="primary"
               size="sm"
               onClick={() => setIsAddOpen(true)}
-              icon={<Plus size={16} />}
+              icon={<Icon name="plus" size={16} />}
             >
               Ajouter un récit
             </GlassCapsuleBtn>
@@ -252,7 +246,7 @@ export function TripNotesView({ trip }: TripNotesViewProps) {
           >
             Toutes ({notes.length})
           </button>
-          {availableDays.map(day => (
+          {availableDays.map((day) => (
             <button
               key={day}
               onClick={() => setSelectedDayFilter(day)}
@@ -271,7 +265,7 @@ export function TripNotesView({ trip }: TripNotesViewProps) {
       {/* Liste des notes */}
       {filteredNotes.length === 0 ? (
         <EmptyState
-          icon={<BookOpen size={36} className="text-lkv-secondary/40" />}
+          icon={<Icon name="book-open" size={36} className="text-lkv-secondary/40" />}
           title="Aucune note enregistrée"
           description={
             canEdit
@@ -283,14 +277,12 @@ export function TripNotesView({ trip }: TripNotesViewProps) {
         />
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          {filteredNotes.map(note => (
+          {filteredNotes.map((note) => (
             <GlassCard
               key={note.id}
               tone="neutral"
               className={`p-5 rounded-[var(--lkv-radius-lg)] border transition-shadow ${
-                note.is_pinned
-                  ? 'border-lkv-primary/30 shadow-sm'
-                  : 'border-white/60'
+                note.is_pinned ? 'border-lkv-primary/30 shadow-sm' : 'border-white/60'
               }`}
             >
               <div className="flex items-start justify-between gap-3 mb-2">
@@ -302,7 +294,7 @@ export function TripNotesView({ trip }: TripNotesViewProps) {
                   )}
                   {note.is_pinned && (
                     <span className="text-[11px] font-semibold px-2 py-0.5 rounded-full bg-[var(--lkv-warning)]/10 text-[var(--lkv-warning)] border border-[var(--lkv-warning)]/20 flex items-center gap-1">
-                      <Pin size={11} /> Épinglé
+                      <Icon name="pin" size={11} /> Épinglé
                     </span>
                   )}
                 </div>
@@ -314,7 +306,7 @@ export function TripNotesView({ trip }: TripNotesViewProps) {
                     className="min-h-[44px] min-w-[44px] flex items-center justify-center rounded-full glass-sub-card border border-white/60 text-[var(--lkv-text-muted)] hover:text-[var(--lkv-danger)] hover:bg-[var(--lkv-danger)]/10 transition-all shadow-2xs"
                     aria-label="Supprimer la note"
                   >
-                    <Trash2 size={16} />
+                    <Icon name="trash2" size={16} />
                   </button>
                 )}
               </div>
@@ -329,11 +321,11 @@ export function TripNotesView({ trip }: TripNotesViewProps) {
 
               <div className="mt-4 pt-3 border-t border-white/40 flex items-center justify-between text-[11px] text-lkv-secondary">
                 <div className="flex items-center gap-1.5">
-                  <User size={12} />
+                  <Icon name="user" size={12} />
                   <span>{note.author?.full_name || 'Explorateur'}</span>
                 </div>
                 <div className="flex items-center gap-1.5">
-                  <Calendar size={12} />
+                  <Icon name="calendar" size={12} />
                   <span>{new Date(note.created_at).toLocaleDateString('fr-FR')}</span>
                 </div>
               </div>
@@ -343,7 +335,12 @@ export function TripNotesView({ trip }: TripNotesViewProps) {
       )}
 
       {/* Modal d'ajout de note */}
-      <GlassModal open={isAddOpen} onOpenChange={setIsAddOpen} title="Nouvelle page du carnet de bord" variant="sheet">
+      <GlassModal
+        open={isAddOpen}
+        onOpenChange={setIsAddOpen}
+        title="Nouvelle page du carnet de bord"
+        variant="sheet"
+      >
         <div className="pb-2 space-y-4">
           {errorMessage && (
             <div className="p-3 rounded-xl glass tone-danger text-[var(--lkv-danger)] text-xs border">
@@ -351,80 +348,75 @@ export function TripNotesView({ trip }: TripNotesViewProps) {
             </div>
           )}
 
-            <form onSubmit={handleAddSubmit} className="space-y-4">
+          <form onSubmit={handleAddSubmit} className="space-y-4">
+            <div>
+              <label className="block text-xs font-semibold text-lkv-primary mb-1">
+                Titre de la note (optionnel)
+              </label>
+              <input
+                type="text"
+                name="title"
+                placeholder="Ex : Sommet atteint au lever du jour"
+                className="glass-input w-full px-3 py-2 text-sm text-[var(--lkv-text-primary)]"
+              />
+            </div>
+
+            <div className="grid grid-cols-2 gap-3">
               <div>
                 <label className="block text-xs font-semibold text-lkv-primary mb-1">
-                  Titre de la note (optionnel)
+                  Jour de trek (optionnel)
                 </label>
                 <input
-                  type="text"
-                  name="title"
-                  placeholder="Ex : Sommet atteint au lever du jour"
+                  type="number"
+                  name="dayNumber"
+                  min={1}
+                  max={60}
+                  placeholder="Ex : 1"
                   className="glass-input w-full px-3 py-2 text-sm text-[var(--lkv-text-primary)]"
                 />
               </div>
 
-              <div className="grid grid-cols-2 gap-3">
-                <div>
-                  <label className="block text-xs font-semibold text-lkv-primary mb-1">
-                    Jour de trek (optionnel)
-                  </label>
+              <div className="flex items-center pt-5">
+                <label className="flex items-center gap-2 cursor-pointer select-none text-xs text-lkv-primary font-medium">
                   <input
-                    type="number"
-                    name="dayNumber"
-                    min={1}
-                    max={60}
-                    placeholder="Ex : 1"
-                    className="glass-input w-full px-3 py-2 text-sm text-[var(--lkv-text-primary)]"
+                    type="checkbox"
+                    name="isPinned"
+                    value="true"
+                    className="w-4 h-4 rounded text-lkv-primary focus:ring-lkv-primary"
                   />
-                </div>
-
-                <div className="flex items-center pt-5">
-                  <label className="flex items-center gap-2 cursor-pointer select-none text-xs text-lkv-primary font-medium">
-                    <input
-                      type="checkbox"
-                      name="isPinned"
-                      value="true"
-                      className="w-4 h-4 rounded text-lkv-primary focus:ring-lkv-primary"
-                    />
-                    Épingler en haut
-                  </label>
-                </div>
-              </div>
-
-              <div>
-                <label className="block text-xs font-semibold text-lkv-primary mb-1">
-                  Récit & Notes de terrain *
+                  Épingler en haut
                 </label>
-                <textarea
-                  name="content"
-                  required
-                  rows={4}
-                  placeholder="Conditions du sentier, faune observée, sensations, astuces..."
-                  className="glass-input w-full px-3 py-2 text-sm text-[var(--lkv-text-primary)]"
-                />
               </div>
+            </div>
 
-              <div className="flex items-center justify-end gap-2 pt-2 border-t border-white/40">
-                <GlassCapsuleBtn
-                  type="button"
-                  variant="default"
-                  size="sm"
-                  onClick={() => setIsAddOpen(false)}
-                  disabled={isPending}
-                >
-                  Annuler
-                </GlassCapsuleBtn>
-                <GlassCapsuleBtn
-                  type="submit"
-                  variant="primary"
-                  size="sm"
-                  disabled={isPending}
-                >
-                  {isPending ? 'Enregistrement...' : 'Enregistrer la note'}
-                </GlassCapsuleBtn>
-              </div>
-            </form>
+            <div>
+              <label className="block text-xs font-semibold text-lkv-primary mb-1">
+                Récit & Notes de terrain *
+              </label>
+              <textarea
+                name="content"
+                required
+                rows={4}
+                placeholder="Conditions du sentier, faune observée, sensations, astuces..."
+                className="glass-input w-full px-3 py-2 text-sm text-[var(--lkv-text-primary)]"
+              />
+            </div>
+
+            <div className="flex items-center justify-end gap-2 pt-2 border-t border-white/40">
+              <GlassCapsuleBtn
+                type="button"
+                variant="default"
+                size="sm"
+                onClick={() => setIsAddOpen(false)}
+                disabled={isPending}
+              >
+                Annuler
+              </GlassCapsuleBtn>
+              <GlassCapsuleBtn type="submit" variant="primary" size="sm" disabled={isPending}>
+                {isPending ? 'Enregistrement...' : 'Enregistrer la note'}
+              </GlassCapsuleBtn>
+            </div>
+          </form>
         </div>
       </GlassModal>
 
@@ -439,7 +431,9 @@ export function TripNotesView({ trip }: TripNotesViewProps) {
       <ConfirmDialog
         open={confirmState !== null}
         title="Supprimer cette note ?"
-        message={confirmState ? `${confirmState.label} sera supprimée du carnet de bord.` : undefined}
+        message={
+          confirmState ? `${confirmState.label} sera supprimée du carnet de bord.` : undefined
+        }
         confirmLabel="Supprimer"
         cancelLabel="Annuler"
         danger

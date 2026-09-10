@@ -21,16 +21,9 @@ export interface SuggestGroup {
   member_count: number;
 }
 
-export interface SuggestCrew {
-  id: string;
-  name: string;
-  next_trip?: { slug: string; title: string } | null;
-}
-
 export interface SuggestLists {
   trips: SuggestTrip[];
   groups: SuggestGroup[];
-  crews: SuggestCrew[];
   possession: { itemsCount: number; loansCount: number; alertsCount: number };
   pendingInvites: number;
 }
@@ -67,7 +60,7 @@ export function suggestActiveAdventure(lists: SuggestLists, now: Date): Adventur
   if (lists.pendingInvites > 0 && lists.groups.length > 0) {
     const g = lists.groups[0];
     return {
-      key: `collectif:groupe:${g.id}`,
+      key: `collectif:${g.id}`,
       reason: `suggéré : ${lists.pendingInvites} invitation(s) en attente — « ${g.name} »`,
     };
   }

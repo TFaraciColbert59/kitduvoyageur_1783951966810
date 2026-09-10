@@ -1,7 +1,7 @@
 'use client';
 
+import Icon from '@/components/ui/Icon';
 import React from 'react';
-import { X, ArrowRight } from 'lucide-react';
 import type { PlannerStep } from './plannerEngine';
 import { formatCivilDayIndex } from '@/lib/dates/tripDates';
 
@@ -61,7 +61,7 @@ export function MoveStepModal({
             aria-label="Fermer"
             className="w-9 h-9 rounded-full flex items-center justify-center glass-sub-card border border-white/60 text-[var(--lkv-text-muted)] hover:text-[var(--lkv-primary)] transition-all shadow-2xs"
           >
-            <X className="w-5 h-5" />
+            <Icon name="x" className="w-5 h-5" />
           </button>
         </div>
 
@@ -116,7 +116,10 @@ export function MoveStepModal({
                 </div>
 
                 {!isCurrent && (
-                  <ArrowRight className="w-4 h-4 text-[var(--lkv-primary)] shrink-0 mr-1" />
+                  <Icon
+                    name="arrow-right"
+                    className="w-4 h-4 text-[var(--lkv-primary)] shrink-0 mr-1"
+                  />
                 )}
               </button>
             );

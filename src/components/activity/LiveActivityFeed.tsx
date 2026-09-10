@@ -1,11 +1,14 @@
 ﻿'use client';
 
+import Icon from '@/components/ui/Icon';
 import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
-import { Compass, Users, MapPin, BookOpen, Clock, ArrowRight } from 'lucide-react';
 import { fetchRecentEvents } from '@/lib/events/queries';
 import { eventBus } from '@/lib/events/eventBus';
-import { handleActivityFeedEvent, type ActivityFeedItem } from '@/lib/events/handlers/activityFeedHandler';
+import {
+  handleActivityFeedEvent,
+  type ActivityFeedItem,
+} from '@/lib/events/handlers/activityFeedHandler';
 import { GlassCard } from '@/components/ui/GlassCard';
 
 interface LiveActivityFeedProps {
@@ -26,7 +29,11 @@ export function LiveActivityFeed({
     let isMounted = true;
 
     async function loadEvents() {
-      const fetched = await fetchRecentEvents({ limit, crewId, visibility: crewId ? 'crew' : 'public' });
+      const fetched = await fetchRecentEvents({
+        limit,
+        crewId,
+        visibility: crewId ? 'crew' : 'public',
+      });
       if (isMounted) {
         setItems(fetched);
         setLoading(false);
@@ -53,15 +60,15 @@ export function LiveActivityFeed({
     switch (badge) {
       case 'Nouvelle aventure':
       case 'Expédition terminée':
-        return <Compass className="w-4 h-4 text-forest-600 dark:text-forest-400" />;
+        return <Icon name="compass" className="w-4 h-4 text-forest-600 dark:text-forest-400" />;
       case 'Équipage':
-        return <Users className="w-4 h-4 text-sky-600 dark:text-sky-400" />;
+        return <Icon name="users" className="w-4 h-4 text-sky-600 dark:text-sky-400" />;
       case 'Avis sentinelle':
-        return <MapPin className="w-4 h-4 text-sand-600 dark:text-sand-400" />;
+        return <Icon name="map-pin" className="w-4 h-4 text-sand-600 dark:text-sand-400" />;
       case 'Carnet d’expédition':
-        return <BookOpen className="w-4 h-4 text-purple-600 dark:text-purple-400" />;
+        return <Icon name="book-open" className="w-4 h-4 text-purple-600 dark:text-purple-400" />;
       default:
-        return <Compass className="w-4 h-4 text-lkv-secondary" />;
+        return <Icon name="compass" className="w-4 h-4 text-lkv-secondary" />;
     }
   };
 
@@ -73,9 +80,7 @@ export function LiveActivityFeed({
             <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-forest-400 opacity-75" />
             <span className="relative inline-flex rounded-full h-2 w-2 bg-forest-500" />
           </span>
-          <h3 className="font-display font-bold text-sm sm:text-base text-lkv-primary">
-            {title}
-          </h3>
+          <h3 className="font-display font-bold text-sm sm:text-base text-lkv-primary">{title}</h3>
         </div>
         <span className="text-[11px] font-mono uppercase tracking-wider text-lkv-secondary">
           Live Sync
@@ -120,13 +125,21 @@ export function LiveActivityFeed({
                     </span>
                   </div>
                   <div className="flex items-center gap-1 text-[11px] text-lkv-secondary">
-                    <Clock className="w-3 h-3" />
-                    <span>{new Date(item.timestamp).toLocaleDateString('fr-FR', { hour: '2-digit', minute: '2-digit' })}</span>
+                    <Icon name="clock" className="w-3 h-3" />
+                    <span>
+                      {new Date(item.timestamp).toLocaleDateString('fr-FR', {
+                        hour: '2-digit',
+                        minute: '2-digit',
+                      })}
+                    </span>
                   </div>
                 </div>
               </div>
 
-              <ArrowRight className="w-4 h-4 text-lkv-secondary group-hover:text-lkv-primary group-hover:translate-x-0.5 transition-all shrink-0 mt-1" />
+              <Icon
+                name="arrow-right"
+                className="w-4 h-4 text-lkv-secondary group-hover:text-lkv-primary group-hover:translate-x-0.5 transition-all shrink-0 mt-1"
+              />
             </Link>
           ))}
         </div>

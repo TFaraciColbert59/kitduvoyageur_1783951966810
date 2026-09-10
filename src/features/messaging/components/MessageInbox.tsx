@@ -1,5 +1,6 @@
-﻿"use client";
+﻿'use client';
 
+import Icon from '@/components/ui/Icon';
 import React, { useState, useCallback } from 'react';
 import type { UserProfileSummary, Conversation } from '../types/messaging.types';
 import { useConversations } from '../hooks/useConversations';
@@ -8,7 +9,6 @@ import { ConversationList } from './ConversationList';
 import { ConversationView } from './ConversationView';
 import { NewConversationModal } from './NewConversationModal';
 import ReportBlockModal, { ReportTarget } from '@/components/ui/ReportBlockModal';
-import { Send, Plus, AlertTriangle } from 'lucide-react';
 import { useHapticFeedback } from '@/hooks/useHapticFeedback';
 
 interface MessageInboxProps {
@@ -23,8 +23,7 @@ export const MessageInbox: React.FC<MessageInboxProps> = ({
   onActiveConversationChange,
 }) => {
   const { haptic } = useHapticFeedback();
-  const { conversations, loading, error, refreshConversations } =
-    useConversations(currentUserId);
+  const { conversations, loading, error, refreshConversations } = useConversations(currentUserId);
   const [selectedConvId, setSelectedConvId] = useState<string | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isClosing, setIsClosing] = useState(false);
@@ -56,8 +55,7 @@ export const MessageInbox: React.FC<MessageInboxProps> = ({
 
   const requestClose = useBackGuard(selectedConvId !== null, close);
 
-  const selectedConversation =
-    conversations.find((c) => c.id === selectedConvId) || null;
+  const selectedConversation = conversations.find((c) => c.id === selectedConvId) || null;
 
   const handleConversationCreated = async (convId: string) => {
     await refreshConversations();
@@ -67,7 +65,7 @@ export const MessageInbox: React.FC<MessageInboxProps> = ({
   const errorState = (
     <div className="w-full h-full flex flex-col items-center justify-center text-center px-8">
       <div className="w-14 h-14 rounded-full bg-[#F5DDD9] text-[#A8443A] flex items-center justify-center mb-4">
-        <AlertTriangle className="w-7 h-7" />
+        <Icon name="alert-triangle" className="w-7 h-7" />
       </div>
       <h3 className="text-base font-bold text-[#17402C]">Discussions indisponibles</h3>
       <p className="text-sm text-[#5A574E] mt-1.5 max-w-xs leading-relaxed">{error}</p>
@@ -169,12 +167,12 @@ export const MessageInbox: React.FC<MessageInboxProps> = ({
           ) : (
             <div className="w-full h-full glass rounded-3xl flex flex-col items-center justify-center text-center p-8 shadow-xs">
               <div className="w-20 h-20 rounded-full bg-[#17402C]/10 text-[#17402C] flex items-center justify-center mb-4">
-                <Send className="w-10 h-10" />
+                <Icon name="send" className="w-10 h-10" />
               </div>
               <h3 className="text-xl font-bold text-[#17402C]">Vos messages</h3>
               <p className="text-sm text-[#5A574E] max-w-md mt-2 leading-relaxed">
-                Sélectionnez une conversation ou lancez une nouvelle discussion avec un
-                membre de la communauté LKDV.
+                Sélectionnez une conversation ou lancez une nouvelle discussion avec un membre de la
+                communauté LKDV.
               </p>
               <button
                 type="button"
@@ -184,7 +182,7 @@ export const MessageInbox: React.FC<MessageInboxProps> = ({
                 }}
                 className="glass-capsule-btn primary mt-6 px-6 text-sm font-semibold shadow-md flex items-center gap-2 min-h-[48px]"
               >
-                <Plus className="w-4 h-4" />
+                <Icon name="plus" className="w-4 h-4" />
                 Nouvelle discussion
               </button>
             </div>

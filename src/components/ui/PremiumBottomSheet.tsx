@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useEffect, useState, useCallback } from 'react';
+import { createPortal } from 'react-dom';
 import { motion, useReducedMotion } from 'framer-motion';
 import { useDragDismiss } from '@/hooks/gestures';
 import { useHapticFeedback } from '@/hooks/useHapticFeedback';
@@ -14,6 +15,8 @@ interface PremiumBottomSheetProps {
   defaultSnap?: 'peek' | 'half' | 'full';
   showHandle?: boolean;
   className?: string;
+  /** liquid = surface verre liquide (.glass) au lieu du fond opaque historique. */
+  surface?: 'default' | 'liquid';
 }
 
 const SNAP_HEIGHTS = {
@@ -41,10 +44,14 @@ export default function PremiumBottomSheet({
   defaultSnap = 'half',
   showHandle = true,
   className = '',
+  surface = 'default',
 }: PremiumBottomSheetProps) {
   const [currentSnap, setCurrentSnap] = useState(defaultSnap);
+  const [mounted, setMounted] = useState(false);
   const { haptic } = useHapticFeedback();
   const reduceMotion = useReducedMotion();
+
+  useEffect(() => setMounted(true), []);
 
   const onDismiss = useCallback(() => {
     const currentIndex = snapPoints.indexOf(currentSnap);
@@ -82,15 +89,17 @@ export default function PremiumBottomSheet({
     return () => { document.body.style.overflow = ''; };
   }, [isOpen, defaultSnap]);
 
-  if (!isOpen) return null;
+  if (!isOpen || !mounted) return null;
 
   const height = SNAP_HEIGHTS[currentSnap];
 
-  return (
+  const isLiquid = surface === 'liquid';
+
+  return createPortal(
     <>
       {/* Backdrop */}
       <div
-        className="fixed inset-0 z-40"
+        className="fixed inset-0 z-[10000]"
         style={{
           background: 'rgba(14,21,18,0.5)',
           backdropFilter: 'blur(4px)',
@@ -106,16 +115,16 @@ export default function PremiumBottomSheet({
         role="dialog"
         aria-modal="true"
         aria-label={title || 'Panneau'}
-        className={`fixed left-0 right-0 bottom-0 z-50 flex flex-col ${className}`}
+        className={`fixed left-0 right-0 bottom-0 z-[10001] flex flex-col ${className}`}
         style={{
           height,
           y,
-          background: 'rgba(237,234,224,0.96)',
-          backdropFilter: 'blur(32px) saturate(200%)',
-          WebkitBackdropFilter: 'blur(32px) saturate(200%)',
           borderRadius: '28px 28px 0 0',
+          overflow: 'hidden',
+          background: isLiquid ? undefined : 'rgba(237,234,224,0.96)',
+          backdropFilter: isLiquid ? undefined : 'blur(32px) saturate(200%)',
+          WebkitBackdropFilter: isLiquid ? undefined : 'blur(32px) saturate(200%)',
           boxShadow: '0 -4px 40px rgba(14,21,18,0.18), 0 -1px 0 rgba(255,255,255,0.5)',
-          paddingBottom: 'max(16px, env(safe-area-inset-bottom, 16px))',
         }}
         // Entrée via framer-motion (remplace l'animation CSS `slideUp` qui
         // entrait en conflit de cascade avec le transform du drag).
@@ -124,54 +133,60 @@ export default function PremiumBottomSheet({
         transition={{ duration: reduceMotion ? 0 : 0.4, ease: [0.16, 1, 0.3, 1] }}
         {...dragProps}
       >
-        {/* Handle — zone de drag principale */}
-        {showHandle && (
-          <div
-            {...handleProps}
-            className="flex items-center justify-center pt-3 pb-2 flex-shrink-0 cursor-grab active:cursor-grabbing touch-none"
-            aria-hidden="true"
-          >
+        <div
+          className={`pb-safe flex h-full flex-col ${isLiquid ? 'glass rounded-t-[28px]' : ''}`}
+        >
+          {/* Handle — zone de drag principale */}
+          {showHandle && (
             <div
-              style={{
-                width: '36px',
-                height: '4px',
-                borderRadius: '2px',
-                background: 'rgba(23,64,44,0.18)',
-              }}
-            />
-          </div>
-        )}
-
-        {/* Title — draggable également */}
-        {title && (
-          <div
-            {...(showHandle ? handleProps : {})}
-            className="flex items-center justify-between px-5 pb-3 flex-shrink-0 touch-none"
-          >
-            <h2
-              className="font-display font-bold text-[#17402C]"
-              style={{ fontSize: '18px', letterSpacing: '-0.02em' }}
+              {...handleProps}
+              className="flex items-center justify-center pt-3 pb-2 flex-shrink-0 cursor-grab active:cursor-grabbing touch-none"
+              aria-hidden="true"
             >
-              {title}
-            </h2>
-            <button
-              onClick={onClose}
-              aria-label="Fermer"
-              className="flex items-center justify-center w-11 h-11 rounded-full haptic-press cursor-pointer"
-              style={{ background: 'rgba(23,64,44,0.08)' }}
-            >
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#17402C" strokeWidth="2.5" strokeLinecap="round" aria-hidden="true">
-                <path d="M18 6L6 18M6 6l12 12" />
-              </svg>
-            </button>
-          </div>
-        )}
+              <div
+                style={{
+                  width: '36px',
+                  height: '4px',
+                  borderRadius: '2px',
+                  background: isLiquid ? 'rgba(255,255,255,0.9)' : 'rgba(23,64,44,0.18)',
+                  boxShadow: isLiquid ? '0 1px 4px rgba(14,21,18,0.25)' : undefined,
+                }}
+              />
+            </div>
+          )}
 
-        {/* Content */}
-        <div className="flex-1 overflow-y-auto overscroll-contain scrollbar-hide">
-          {children}
+          {/* Title — draggable également */}
+          {title && (
+            <div
+              {...(showHandle ? handleProps : {})}
+              className="flex items-center justify-between px-5 pb-3 flex-shrink-0 touch-none"
+            >
+              <h2
+                className="font-display font-bold text-[#17402C]"
+                style={{ fontSize: '18px', letterSpacing: '-0.02em' }}
+              >
+                {title}
+              </h2>
+              <button
+                onClick={onClose}
+                aria-label="Fermer"
+                className="flex items-center justify-center w-11 h-11 rounded-full haptic-press cursor-pointer"
+                style={{ background: 'rgba(23,64,44,0.08)' }}
+              >
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#17402C" strokeWidth="2.5" strokeLinecap="round" aria-hidden="true">
+                  <path d="M18 6L6 18M6 6l12 12" />
+                </svg>
+              </button>
+            </div>
+          )}
+
+          {/* Content */}
+          <div className="flex-1 overflow-y-auto overscroll-contain scrollbar-hide">
+            {children}
+          </div>
         </div>
       </motion.div>
-    </>
+    </>,
+    document.body,
   );
 }

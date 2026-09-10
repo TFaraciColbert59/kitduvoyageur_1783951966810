@@ -1,8 +1,8 @@
 ﻿'use client';
 
+import Icon from '@/components/ui/Icon';
 import React, { useState, useEffect } from 'react';
 import Image, { ImageProps } from 'next/image';
-import { Mountain, ImageOff } from 'lucide-react';
 
 interface SmartImageProps {
   src?: string | null;
@@ -17,7 +17,8 @@ interface SmartImageProps {
   aspectRatio?: string;
 }
 
-const DEFAULT_OUTDOOR_FALLBACK = 'https://images.unsplash.com/photo-1506744038136-46273834b3fb?w=800&q=80';
+const DEFAULT_OUTDOOR_FALLBACK =
+  'https://images.unsplash.com/photo-1506744038136-46273834b3fb?w=800&q=80';
 
 export default function SmartImage({
   src,
@@ -61,7 +62,7 @@ export default function SmartImage({
         style={aspectRatio ? { aspectRatio } : undefined}
       >
         <div className="w-10 h-10 rounded-full bg-white/70 backdrop-blur-md flex items-center justify-center shadow-2xs mb-1">
-          {fallbackIcon || <Mountain size={18} className="text-[#17402C]" />}
+          {fallbackIcon || <Icon name="mountain" size={18} className="text-[#17402C]" />}
         </div>
         <span className="text-[10px] font-mono font-bold tracking-wider uppercase text-[#5A7064]">
           {alt || 'LKDV Expédition'}

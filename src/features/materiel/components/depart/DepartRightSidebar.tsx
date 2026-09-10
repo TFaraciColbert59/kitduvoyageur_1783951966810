@@ -1,8 +1,8 @@
 'use client';
+import Icon from '@/components/ui/Icon';
 import React from 'react';
 import { DepartAlerts } from './DepartAlerts';
 import { CountdownLive } from '@/features/materiel/components/cards/CountdownLive';
-import { Calendar, ShieldCheck } from 'lucide-react';
 import { CompassIcon as Compass } from '@/components/icons/compass';
 import { DocIcon as FileText } from '@/components/icons/doc';
 import { TimerIcon as Timer } from '@/components/icons/timer';
@@ -30,7 +30,8 @@ export function DepartRightSidebar({
   const readiness = depart?.readinessScore || { status: 'ok', percentage: 100 };
 
   return (
-    <div role="complementary"
+    <div
+      role="complementary"
       className="h-full max-h-full w-full flex-1 flex flex-col justify-between glass rounded-[1.5rem] p-3.5 text-[var(--lkv-primary)] font-sans overflow-hidden border border-white/40 shadow-sm select-none"
       aria-label="Statut du départ et alertes"
     >
@@ -54,7 +55,7 @@ export function DepartRightSidebar({
               {cleanDestination}
             </h4>
             <div className="flex items-center gap-1 text-[10.5px] text-[var(--lkv-text-muted)] font-medium mt-0.5">
-              <Calendar size={11} className="text-[var(--lkv-text-muted)] shrink-0" />
+              <Icon name="calendar" size={11} className="text-[var(--lkv-text-muted)] shrink-0" />
               <span>
                 Départ le{' '}
                 {depart?.startsAt
@@ -99,7 +100,7 @@ export function DepartRightSidebar({
       {/* ── 3. ZONE BASSE FIXE (Statut de préparation & Fiabilité) ── */}
       <div className="shrink-0 pt-2 border-t border-[var(--lkv-primary)]/5 flex items-center justify-between gap-1 px-1">
         <div className="flex items-center gap-1 text-[9px] font-mono text-[var(--lkv-text-muted)]">
-          <ShieldCheck size={11} className="text-[var(--lkv-primary-hover)]" />
+          <Icon name="shield-check" size={11} className="text-[var(--lkv-primary-hover)]" />
           <span>Contrôle de sécurité actif</span>
         </div>
         <span className="text-[8.5px] font-mono font-bold text-[var(--lkv-primary-hover)]">

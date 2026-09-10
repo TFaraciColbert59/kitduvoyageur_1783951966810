@@ -1,6 +1,6 @@
 'use client';
+import Icon from '@/components/ui/Icon';
 import { useState } from 'react';
-import { Sun, CloudSun, Cloud, CloudRain, CloudSnow, CloudLightning, CloudFog, Droplets, CloudDrizzle, Thermometer, Sunrise, Sunset, Wind } from 'lucide-react';
 import { ClockIcon as Clock } from '@/components/icons/clock';
 import { ChevronDownIcon as ChevronDown } from '@/components/icons/chevron-down';
 import { motion, AnimatePresence, useReducedMotion } from 'framer-motion';
@@ -14,15 +14,23 @@ interface DepartWeatherProps {
 }
 
 function getWeatherIcon(code: number, size = 16) {
-  if (code === 0) return <Sun size={size} className="text-sand-500" aria-hidden="true" />;
-  if (code <= 2) return <CloudSun size={size} className="text-sand-600/80" aria-hidden="true" />;
-  if (code === 3) return <Cloud size={size} className="text-stone-500" aria-hidden="true" />;
-  if (code <= 48) return <CloudFog size={size} className="text-stone-400" aria-hidden="true" />;
-  if (code <= 57) return <CloudDrizzle size={size} className="text-sky-600" aria-hidden="true" />;
-  if (code <= 67) return <CloudRain size={size} className="text-sky-600" aria-hidden="true" />;
-  if (code <= 77) return <CloudSnow size={size} className="text-indigo-400" aria-hidden="true" />;
-  if (code <= 86) return <CloudRain size={size} className="text-sky-700" aria-hidden="true" />;
-  return <CloudLightning size={size} className="text-sand-600" aria-hidden="true" />;
+  if (code === 0)
+    return <Icon name="sun" size={size} className="text-sand-500" aria-hidden="true" />;
+  if (code <= 2)
+    return <Icon name="cloud-sun" size={size} className="text-sand-600/80" aria-hidden="true" />;
+  if (code === 3)
+    return <Icon name="cloud" size={size} className="text-stone-500" aria-hidden="true" />;
+  if (code <= 48)
+    return <Icon name="cloud-fog" size={size} className="text-stone-400" aria-hidden="true" />;
+  if (code <= 57)
+    return <Icon name="cloud-drizzle" size={size} className="text-sky-600" aria-hidden="true" />;
+  if (code <= 67)
+    return <Icon name="cloud-rain" size={size} className="text-sky-600" aria-hidden="true" />;
+  if (code <= 77)
+    return <Icon name="cloud-snow" size={size} className="text-indigo-400" aria-hidden="true" />;
+  if (code <= 86)
+    return <Icon name="cloud-rain" size={size} className="text-sky-700" aria-hidden="true" />;
+  return <Icon name="cloud-lightning" size={size} className="text-sand-600" aria-hidden="true" />;
 }
 
 export function DepartWeather({ weather, updatedAt }: DepartWeatherProps) {
@@ -49,7 +57,12 @@ export function DepartWeather({ weather, updatedAt }: DepartWeatherProps) {
               id="weather-heading"
               className="text-xs sm:text-[13px] font-bold text-[var(--lkv-primary)] flex items-center gap-2"
             >
-              <Thermometer size={15} className="text-[var(--lkv-primary-hover)]" aria-hidden="true" />
+              <Icon
+                name="thermometer"
+                size={15}
+                className="text-[var(--lkv-primary-hover)]"
+                aria-hidden="true"
+              />
               <span>Météo du secteur</span>
             </h2>
             <p className="text-[11px] text-[var(--lkv-text-muted)] truncate">{locationLabel}</p>
@@ -88,11 +101,14 @@ export function DepartWeather({ weather, updatedAt }: DepartWeatherProps) {
                 {getWeatherIcon(day.weathercode, 16)}
               </div>
               <div className="text-[10.5px] font-mono font-bold text-[var(--lkv-primary)]">
-                {day.tempMaxC}° <span className="text-[9.5px] text-[var(--lkv-text-muted)] font-normal">{day.tempMinC}°</span>
+                {day.tempMaxC}°{' '}
+                <span className="text-[9.5px] text-[var(--lkv-text-muted)] font-normal">
+                  {day.tempMinC}°
+                </span>
               </div>
               {day.precipPct > 0 && (
                 <div className="flex items-center justify-center gap-0.5 text-[9px] text-sky-700 dark:text-sky-400 font-medium">
-                  <Droplets size={8.5} />
+                  <Icon name="droplets" size={8.5} />
                   <span>{day.precipPct}%</span>
                 </div>
               )}
@@ -102,7 +118,7 @@ export function DepartWeather({ weather, updatedAt }: DepartWeatherProps) {
           {/* Éphéméride du jour */}
           <div className="shrink-0 p-2 rounded-xl bg-white/30 dark:bg-white/5 border border-white/40 flex flex-col items-center justify-between w-[80px]">
             <span className="text-[9px] uppercase tracking-wider text-[var(--lkv-text-muted)] flex items-center gap-1 font-semibold">
-              <Sunrise size={10} className="text-sand-600" />
+              <Icon name="sunrise" size={10} className="text-sand-600" />
               <span>Lever</span>
             </span>
             <span className="font-mono font-bold text-[var(--lkv-primary)] text-[11px] my-auto">
@@ -112,7 +128,7 @@ export function DepartWeather({ weather, updatedAt }: DepartWeatherProps) {
 
           <div className="shrink-0 p-2 rounded-xl bg-white/30 dark:bg-white/5 border border-white/40 flex flex-col items-center justify-between w-[80px]">
             <span className="text-[9px] uppercase tracking-wider text-[var(--lkv-text-muted)] flex items-center gap-1 font-semibold">
-              <Sunset size={10} className="text-sand-700" />
+              <Icon name="sunset" size={10} className="text-sand-700" />
               <span>Coucher</span>
             </span>
             <span className="font-mono font-bold text-[var(--lkv-primary)] text-[11px] my-auto">
@@ -122,7 +138,7 @@ export function DepartWeather({ weather, updatedAt }: DepartWeatherProps) {
 
           <div className="shrink-0 p-2 rounded-xl bg-white/30 dark:bg-white/5 border border-white/40 flex flex-col items-center justify-between w-[80px]">
             <span className="text-[9px] uppercase tracking-wider text-[var(--lkv-text-muted)] flex items-center gap-1 font-semibold">
-              <Sun size={10} className="text-forest-700" />
+              <Icon name="sun" size={10} className="text-forest-700" />
               <span>Jour</span>
             </span>
             <span className="font-mono font-bold text-[var(--lkv-primary)] text-[11px] my-auto">
@@ -131,16 +147,19 @@ export function DepartWeather({ weather, updatedAt }: DepartWeatherProps) {
           </div>
 
           {/* Heures de la journée si disponibles */}
-          {weather.cells && weather.cells.slice(0, 8).map((cell) => (
-            <div
-              key={cell.hour}
-              className="shrink-0 p-2 rounded-xl bg-white/20 dark:bg-white/5 border border-white/30 text-center w-[68px] space-y-0.5 flex flex-col justify-between"
-            >
-              <p className="text-[9px] font-mono text-[var(--lkv-text-muted)]">{cell.hour}</p>
-              <div className="flex justify-center">{getWeatherIcon(cell.weathercode, 14)}</div>
-              <p className="text-[10.5px] font-mono font-bold text-[var(--lkv-primary)]">{cell.tempC}°</p>
-            </div>
-          ))}
+          {weather.cells &&
+            weather.cells.slice(0, 8).map((cell) => (
+              <div
+                key={cell.hour}
+                className="shrink-0 p-2 rounded-xl bg-white/20 dark:bg-white/5 border border-white/30 text-center w-[68px] space-y-0.5 flex flex-col justify-between"
+              >
+                <p className="text-[9px] font-mono text-[var(--lkv-text-muted)]">{cell.hour}</p>
+                <div className="flex justify-center">{getWeatherIcon(cell.weathercode, 14)}</div>
+                <p className="text-[10.5px] font-mono font-bold text-[var(--lkv-primary)]">
+                  {cell.tempC}°
+                </p>
+              </div>
+            ))}
         </div>
       </div>
     </GlassCard>

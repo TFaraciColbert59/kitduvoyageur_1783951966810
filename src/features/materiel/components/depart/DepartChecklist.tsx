@@ -1,7 +1,14 @@
 'use client';
-import React, { useOptimistic, useTransition, useState, useCallback, useEffect, useMemo } from 'react';
+import Icon from '@/components/ui/Icon';
+import React, {
+  useOptimistic,
+  useTransition,
+  useState,
+  useCallback,
+  useEffect,
+  useMemo,
+} from 'react';
 import Link from 'next/link';
-import { Check, Package, AlertCircle, Zap, Droplets, Sparkles, Plus, Trash2 } from 'lucide-react';
 import { Volume2Icon as Volume2 } from '@/components/icons/volume-2';
 import { VolumeXIcon as VolumeX } from '@/components/icons/volume-x';
 import { ShoppingBagIcon as ShoppingBag } from '@/components/icons/shopping-bag';
@@ -179,8 +186,7 @@ export function DepartChecklist({
       if (searchQuery.trim() === '') return true;
       const q = searchQuery.toLowerCase();
       return (
-        i.name.toLowerCase().includes(q) ||
-        (i.category && i.category.toLowerCase().includes(q))
+        i.name.toLowerCase().includes(q) || (i.category && i.category.toLowerCase().includes(q))
       );
     });
   }, [optimisticItems, filterMode, searchQuery]);
@@ -211,9 +217,7 @@ export function DepartChecklist({
         addOptimistic({ id: itemKey, checked: nextChecked });
 
         setLocalItems((prev) =>
-          prev.map((i) =>
-            (i.id ?? i.name) === itemKey ? { ...i, is_checked: nextChecked } : i
-          )
+          prev.map((i) => ((i.id ?? i.name) === itemKey ? { ...i, is_checked: nextChecked } : i))
         );
 
         if (!isRealKit || !item.id || item.id.startsWith('consumable-')) return;
@@ -251,7 +255,9 @@ export function DepartChecklist({
     if (nextQty === currentQty) return;
 
     setLocalItems((prev) =>
-      prev.map((i) => ((i.id ?? i.name) === (item.id ?? item.name) ? { ...i, quantity: nextQty } : i))
+      prev.map((i) =>
+        (i.id ?? i.name) === (item.id ?? item.name) ? { ...i, quantity: nextQty } : i
+      )
     );
 
     if (isRealKit && item.id && !item.id.startsWith('consumable-')) {
@@ -352,7 +358,9 @@ export function DepartChecklist({
 
     const remaining = localItems.filter((i) => !i.is_checked);
     if (remaining.length === 0) {
-      const u = new SpeechSynthesisUtterance('Bravo ! Tous vos équipements sont prêts dans votre sac.');
+      const u = new SpeechSynthesisUtterance(
+        'Bravo ! Tous vos équipements sont prêts dans votre sac.'
+      );
       u.lang = 'fr-FR';
       window.speechSynthesis.speak(u);
       return;
@@ -470,7 +478,8 @@ export function DepartChecklist({
   const remaining = total - done;
 
   return (
-    <div role="complementary"
+    <div
+      role="complementary"
       aria-label="Checklist du Sac en Direct"
       className={cn(
         'relative h-full max-h-full w-full flex-1 flex flex-col justify-between glass rounded-[1.5rem] p-3.5 text-[var(--lkv-primary)] font-sans overflow-hidden border border-white/40 shadow-sm select-none',
@@ -481,8 +490,15 @@ export function DepartChecklist({
         {/* ════ HEADER CHECKLIST FIXE IMMOBILE SUR UNE SEULE LIGNE ════ */}
         <div className="shrink-0 flex items-center justify-between gap-2 pb-2 border-b border-black/5 dark:border-white/10">
           <div className="flex items-center gap-1.5 min-w-0">
-            <CheckSquare size={14} className="text-[var(--lkv-primary-hover)] shrink-0" aria-hidden="true" />
-            <h2 id="depart-checklist-heading" className="text-xs sm:text-[13px] font-bold text-[var(--lkv-primary)] truncate">
+            <CheckSquare
+              size={14}
+              className="text-[var(--lkv-primary-hover)] shrink-0"
+              aria-hidden="true"
+            />
+            <h2
+              id="depart-checklist-heading"
+              className="text-xs sm:text-[13px] font-bold text-[var(--lkv-primary)] truncate"
+            >
               Checklist du Sac en Direct
             </h2>
             <span className="text-[9.5px] font-mono font-bold px-2 py-0.5 rounded-full bg-[var(--lkv-primary)]/10 text-[var(--lkv-primary)] shrink-0">
@@ -499,7 +515,9 @@ export function DepartChecklist({
                 onClick={() => setFilterMode('all')}
                 className={cn(
                   'px-1.5 py-0.5 rounded-lg transition-colors cursor-pointer',
-                  filterMode === 'all' ? 'bg-[var(--lkv-primary)] text-white shadow-2xs' : 'text-[var(--lkv-text-muted)] hover:text-[var(--lkv-primary)]'
+                  filterMode === 'all'
+                    ? 'bg-[var(--lkv-primary)] text-white shadow-2xs'
+                    : 'text-[var(--lkv-text-muted)] hover:text-[var(--lkv-primary)]'
                 )}
               >
                 Tous
@@ -509,7 +527,9 @@ export function DepartChecklist({
                 onClick={() => setFilterMode('remaining')}
                 className={cn(
                   'px-1.5 py-0.5 rounded-lg transition-colors cursor-pointer',
-                  filterMode === 'remaining' ? 'bg-[var(--lkv-primary)] text-white shadow-2xs' : 'text-[var(--lkv-text-muted)] hover:text-[var(--lkv-primary)]'
+                  filterMode === 'remaining'
+                    ? 'bg-[var(--lkv-primary)] text-white shadow-2xs'
+                    : 'text-[var(--lkv-text-muted)] hover:text-[var(--lkv-primary)]'
                 )}
               >
                 Restants
@@ -527,7 +547,9 @@ export function DepartChecklist({
                   : 'bg-white/60 dark:bg-white/10 text-[var(--lkv-primary)] hover:bg-white'
               )}
               title={isSpeaking ? 'Arrêter la lecture' : 'Lire les articles restants à voix haute'}
-              aria-label={isSpeaking ? 'Arrêter la lecture audio' : 'Lire la checklist à voix haute'}
+              aria-label={
+                isSpeaking ? 'Arrêter la lecture audio' : 'Lire la checklist à voix haute'
+              }
             >
               {isSpeaking ? <VolumeX size={12} /> : <Volume2 size={12} />}
             </button>
@@ -540,7 +562,7 @@ export function DepartChecklist({
               title="Ajouter un équipement au sac"
               aria-label="Ajouter un équipement au sac"
             >
-              <Plus size={13} strokeWidth={2.5} />
+              <Icon name="plus" size={13} strokeWidth={2.5} />
             </button>
           </div>
         </div>
@@ -549,8 +571,10 @@ export function DepartChecklist({
         {failedItem && (
           <div className="p-2.5 rounded-xl bg-[var(--lkv-danger)]/10 border border-[var(--lkv-danger)]/20 text-[var(--lkv-danger)] text-xs flex items-center justify-between gap-2">
             <div className="flex items-center gap-1.5">
-              <AlertCircle size={14} className="text-[var(--lkv-danger)] shrink-0" />
-              <span>Échec de synchronisation pour <strong>{failedItem.name}</strong></span>
+              <Icon name="alert-circle" size={14} className="text-[var(--lkv-danger)] shrink-0" />
+              <span>
+                Échec de synchronisation pour <strong>{failedItem.name}</strong>
+              </span>
             </div>
             <button
               type="button"
@@ -564,11 +588,18 @@ export function DepartChecklist({
         )}
 
         {/* ════ GROUPES PAR CATÉGORIE (SEUL CET INTÉRIEUR EST SCROLLABLE) ════ */}
-        <div className="flex-1 min-h-0 overflow-y-auto no-scrollbar space-y-1.5 pr-0.5" role="list" aria-label="Catégories du matériel">
+        <div
+          className="flex-1 min-h-0 overflow-y-auto no-scrollbar space-y-1.5 pr-0.5"
+          role="list"
+          aria-label="Catégories du matériel"
+        >
           {groups.map((group) => {
             const isOpen = openCats.has(group.name);
             const allDone = group.done === group.items.length;
-            const isFoodWater = group.name === 'Vivres & Eau' || group.name === 'Hydratation' || group.name === 'Nutrition';
+            const isFoodWater =
+              group.name === 'Vivres & Eau' ||
+              group.name === 'Hydratation' ||
+              group.name === 'Nutrition';
 
             return (
               <div
@@ -589,8 +620,8 @@ export function DepartChecklist({
                     allDone
                       ? 'bg-black/4 dark:bg-white/5 text-[var(--lkv-primary)]/80 hover:bg-black/6'
                       : isFoodWater
-                      ? 'bg-[var(--lkv-success)]/10 text-[var(--lkv-primary)] font-semibold border border-[var(--lkv-success)]/20 shadow-2xs'
-                      : 'bg-white/50 dark:bg-white/10 text-[var(--lkv-primary)] font-semibold shadow-2xs'
+                        ? 'bg-[var(--lkv-success)]/10 text-[var(--lkv-primary)] font-semibold border border-[var(--lkv-success)]/20 shadow-2xs'
+                        : 'bg-white/50 dark:bg-white/10 text-[var(--lkv-primary)] font-semibold shadow-2xs'
                   )}
                   aria-expanded={isOpen}
                   aria-controls={`checklist-cat-${group.name}`}
@@ -599,12 +630,22 @@ export function DepartChecklist({
                     <span
                       className={cn(
                         'w-2 h-2 rounded-full shrink-0',
-                        allDone ? 'bg-[var(--lkv-primary-hover)]' : isFoodWater ? 'bg-[var(--lkv-primary-hover)]' : 'bg-[var(--lkv-warning)]'
+                        allDone
+                          ? 'bg-[var(--lkv-primary-hover)]'
+                          : isFoodWater
+                            ? 'bg-[var(--lkv-primary-hover)]'
+                            : 'bg-[var(--lkv-warning)]'
                       )}
                       aria-hidden="true"
                     />
                     <span className="text-xs sm:text-[13px] font-semibold truncate flex items-center gap-1.5">
-                      {isFoodWater && <Droplets size={12} className="text-[var(--lkv-primary-hover)]" />}
+                      {isFoodWater && (
+                        <Icon
+                          name="droplets"
+                          size={12}
+                          className="text-[var(--lkv-primary-hover)]"
+                        />
+                      )}
                       <span>{group.name}</span>
                     </span>
                   </div>
@@ -624,7 +665,11 @@ export function DepartChecklist({
                       animate={shouldReduceMotion ? {} : { rotate: isOpen ? 180 : 0 }}
                       transition={{ duration: 0.18, ease: 'easeInOut' }}
                     >
-                      <ChevronDown size={13} className="text-[var(--lkv-text-muted)]" aria-hidden="true" />
+                      <ChevronDown
+                        size={13}
+                        className="text-[var(--lkv-text-muted)]"
+                        aria-hidden="true"
+                      />
                     </motion.span>
                   </div>
                 </button>
@@ -669,7 +714,8 @@ export function DepartChecklist({
                                 className={cn(
                                   'hidden md:flex items-center justify-between gap-2.5 px-3 py-2.5 rounded-xl transition-all',
                                   'min-h-[44px]',
-                                  isHighlighted && 'ring-2 ring-[var(--lkv-danger)] bg-[var(--lkv-danger)]/15',
+                                  isHighlighted &&
+                                    'ring-2 ring-[var(--lkv-danger)] bg-[var(--lkv-danger)]/15',
                                   item.is_checked
                                     ? 'bg-black/2 hover:bg-black/4 opacity-75 hover:opacity-100'
                                     : 'bg-white/40 hover:bg-white/60 shadow-2xs'
@@ -690,8 +736,8 @@ export function DepartChecklist({
                                       hasError
                                         ? 'border-[var(--lkv-danger)]/40 bg-[var(--lkv-danger)]/10'
                                         : item.is_checked
-                                        ? 'bg-[var(--lkv-primary)] border-[var(--lkv-primary)]'
-                                        : 'border-[var(--lkv-text-muted)]/50 bg-white/40'
+                                          ? 'bg-[var(--lkv-primary)] border-[var(--lkv-primary)]'
+                                          : 'border-[var(--lkv-text-muted)]/50 bg-white/40'
                                     )}
                                     aria-hidden="true"
                                   >
@@ -701,10 +747,21 @@ export function DepartChecklist({
                                         animate={{ scale: 1 }}
                                         transition={{ type: 'spring', stiffness: 500, damping: 20 }}
                                       >
-                                        <Check size={9} className="text-white" strokeWidth={3} />
+                                        <Icon
+                                          name="check"
+                                          size={9}
+                                          className="text-white"
+                                          strokeWidth={3}
+                                        />
                                       </motion.span>
                                     )}
-                                    {hasError && <AlertCircle size={9} className="text-[var(--lkv-danger)]" />}
+                                    {hasError && (
+                                      <Icon
+                                        name="alert-circle"
+                                        size={9}
+                                        className="text-[var(--lkv-danger)]"
+                                      />
+                                    )}
                                   </span>
 
                                   <div className="min-w-0 flex-1">
@@ -721,7 +778,7 @@ export function DepartChecklist({
                                       </span>
                                       {item.is_vital && (
                                         <span className="text-[9px] font-bold px-1.5 py-0.2 rounded-full bg-[var(--lkv-danger)]/15 text-[var(--lkv-danger)] flex items-center gap-0.5">
-                                          <Zap size={8} />
+                                          <Icon name="zap" size={8} />
                                           Vital
                                         </span>
                                       )}
@@ -732,7 +789,7 @@ export function DepartChecklist({
                                       )}
                                       {item.is_consumable && (
                                         <span className="text-[9px] font-medium px-1.5 py-0.2 rounded-full bg-forest-100/80 text-forest-900 flex items-center gap-0.5">
-                                          <Sparkles size={8} />
+                                          <Icon name="sparkles" size={8} />
                                           Consommable
                                         </span>
                                       )}
@@ -754,7 +811,9 @@ export function DepartChecklist({
                                       >
                                         -
                                       </button>
-                                      <span className="px-1 font-bold text-[11px] text-[var(--lkv-primary)]">{qty}</span>
+                                      <span className="px-1 font-bold text-[11px] text-[var(--lkv-primary)]">
+                                        {qty}
+                                      </span>
                                       <button
                                         type="button"
                                         onClick={() => handleQuantityChange(item, 1)}
@@ -771,7 +830,9 @@ export function DepartChecklist({
                                     <span
                                       className={cn(
                                         'text-[11px] font-mono tabular-nums w-[42px] text-right',
-                                        item.is_checked ? 'text-[var(--lkv-text-muted)]/60' : 'text-[var(--lkv-text-muted)]'
+                                        item.is_checked
+                                          ? 'text-[var(--lkv-text-muted)]/60'
+                                          : 'text-[var(--lkv-text-muted)]'
                                       )}
                                     >
                                       {item.weight_g * qty < 1000
@@ -799,7 +860,7 @@ export function DepartChecklist({
                                       className="p-1 rounded-lg text-[var(--lkv-text-muted)]/50 hover:text-[var(--lkv-danger)] hover:bg-[var(--lkv-danger)]/10 cursor-pointer"
                                       title="Supprimer de ce départ"
                                     >
-                                      <Trash2 size={12} />
+                                      <Icon name="trash2" size={12} />
                                     </button>
                                   )}
                                 </div>
@@ -820,7 +881,11 @@ export function DepartChecklist({
         <div className="shrink-0 pt-2 border-t border-[var(--lkv-primary)]/5 flex items-center justify-between gap-1 px-1">
           <div className="flex items-center gap-1 text-[9px] font-mono text-[var(--lkv-text-muted)]">
             <CheckSquare size={11} className="text-[var(--lkv-primary-hover)]" />
-            <span>{done === total ? 'Sac 100% prêt' : `${remaining} article${remaining > 1 ? 's' : ''} restant${remaining > 1 ? 's' : ''}`}</span>
+            <span>
+              {done === total
+                ? 'Sac 100% prêt'
+                : `${remaining} article${remaining > 1 ? 's' : ''} restant${remaining > 1 ? 's' : ''}`}
+            </span>
           </div>
           <span className="text-[8.5px] font-mono font-bold text-[var(--lkv-primary-hover)]">
             {total > 0 ? Math.round((done / total) * 100) : 100}% PRÊT

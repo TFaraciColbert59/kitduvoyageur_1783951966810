@@ -1,7 +1,7 @@
 'use client';
 
+import Icon from '@/components/ui/Icon';
 import React, { useState } from 'react';
-import { Mountain, MapPin, ExternalLink } from 'lucide-react';
 import { TripRatingBadge } from './TripRatingBadge';
 import type { DiscoveryItem } from '../types/discovery.types';
 
@@ -61,7 +61,7 @@ export function DiscoveryCard({ item }: DiscoveryCardProps) {
         ) : (
           <div className="w-full h-full flex flex-col items-center justify-center gap-1.5 text-[#5A7064]">
             <div className="w-9 h-9 rounded-full bg-white/70 backdrop-blur-md flex items-center justify-center shadow-2xs">
-              <Mountain size={16} className="text-[#17402C]" />
+              <Icon name="mountain" size={16} className="text-[#17402C]" />
             </div>
             <span className="text-[9.5px] font-mono uppercase tracking-wider">Sans photo</span>
           </div>
@@ -99,7 +99,7 @@ export function DiscoveryCard({ item }: DiscoveryCardProps) {
           </h4>
           {location ? (
             <p className="flex items-center gap-1 text-[11px] text-[#5A7064] font-mono truncate">
-              <MapPin size={12} className="shrink-0 text-[#5B7F55]" />
+              <Icon name="map-pin" size={12} className="shrink-0 text-[#5B7F55]" />
               <span className="truncate">{location}</span>
             </p>
           ) : null}
@@ -151,7 +151,7 @@ export function DiscoveryCard({ item }: DiscoveryCardProps) {
               className="w-full min-h-[44px] px-4 rounded-xl bg-[#17402C] hover:bg-[#123323] text-white text-xs font-bold transition-all flex items-center justify-center gap-2 shadow-sm"
             >
               <span>{ctaLabel}</span>
-              <ExternalLink className="w-3.5 h-3.5 text-white/70" />
+              <Icon name="external-link" className="w-3.5 h-3.5 text-white/70" />
             </a>
           ) : null}
         </div>

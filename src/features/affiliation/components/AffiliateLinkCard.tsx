@@ -1,5 +1,6 @@
 'use client';
 
+import Icon from '@/components/ui/Icon';
 import React from 'react';
 import { GlassCard } from '@/components/ui/GlassCard';
 import { Plane, Building2, Ticket, Shield, Wifi, ExternalLink } from 'lucide-react';
@@ -75,9 +76,7 @@ export function AffiliateLinkCard({ link, tripId }: AffiliateLinkCardProps) {
           </div>
         </div>
 
-        <h4 className="text-sm font-bold text-stone-900 line-clamp-2 mb-1">
-          {link.title}
-        </h4>
+        <h4 className="text-sm font-bold text-stone-900 line-clamp-2 mb-1">{link.title}</h4>
 
         {link.destination_name && (
           <p className="text-xs text-stone-500 mb-3 truncate">
@@ -94,7 +93,7 @@ export function AffiliateLinkCard({ link, tripId }: AffiliateLinkCardProps) {
           className="w-full min-h-[44px] px-4 rounded-xl bg-[#17402C] hover:bg-[#123323] text-white text-xs font-bold transition-all flex items-center justify-center gap-2 shadow-sm"
         >
           <span>Consulter l’offre</span>
-          <ExternalLink className="w-3.5 h-3.5 text-stone-300" />
+          <Icon name="external-link" className="w-3.5 h-3.5 text-stone-300" />
         </a>
       </div>
     </GlassCard>

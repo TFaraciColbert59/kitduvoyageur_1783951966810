@@ -1,10 +1,10 @@
 'use client';
 
+import Icon from '@/components/ui/Icon';
 import React, { useState, useTransition } from 'react';
 import Link from 'next/link';
 import { GlassCard } from '@/components/ui/GlassCard';
 import { LkvButton } from '@/components/ui/LkvButton';
-import { X, CheckCircle2, AlertCircle, Plus, ArrowRight } from 'lucide-react';
 import { addPlaceToTripAction } from '@/app/lieux/actions';
 import type { PlaceWithDistance } from '../types/place.types';
 
@@ -90,7 +90,7 @@ export function AddPlaceToTripModal({
             className="absolute top-5 right-5 p-2 rounded-full text-stone-500 hover:text-stone-900 hover:bg-stone-100 transition-colors min-h-[44px] min-w-[44px] flex items-center justify-center"
             aria-label="Fermer"
           >
-            <X className="w-5 h-5" />
+            <Icon name="x" className="w-5 h-5" />
           </button>
 
           {/* Modal Header */}
@@ -102,7 +102,8 @@ export function AddPlaceToTripModal({
               Ajouter à un Voyage
             </h2>
             <p className="text-sm text-stone-600 mt-1">
-              Intégrez <strong className="text-stone-900">{place.name}</strong> comme étape ou point d’intérêt.
+              Intégrez <strong className="text-stone-900">{place.name}</strong> comme étape ou point
+              d’intérêt.
             </p>
           </div>
 
@@ -110,26 +111,22 @@ export function AddPlaceToTripModal({
           {successResult ? (
             <div className="py-4 text-center">
               <div className="w-12 h-12 rounded-full bg-forest-50 text-forest-700 mx-auto flex items-center justify-center mb-3">
-                <CheckCircle2 className="w-6 h-6" />
+                <Icon name="check-circle2" className="w-6 h-6" />
               </div>
-              <h3 className="text-lg font-bold text-stone-900 mb-1">
-                Lieu ajouté avec succès !
-              </h3>
+              <h3 className="text-lg font-bold text-stone-900 mb-1">Lieu ajouté avec succès !</h3>
               <p className="text-sm text-stone-600 mb-6">
-                Le lieu a été inséré dans votre journée {selectedDay} et ajouté à votre kit de préparation.
+                Le lieu a été inséré dans votre journée {selectedDay} et ajouté à votre kit de
+                préparation.
               </p>
 
               <div className="flex flex-col sm:flex-row gap-3">
-                <Link
-                  href={`/voyages/${successResult.tripSlug}/itineraire`}
-                  className="flex-1"
-                >
+                <Link href={`/voyages/${successResult.tripSlug}/itineraire`} className="flex-1">
                   <LkvButton
                     variant="primary"
                     className="w-full flex items-center justify-center gap-2 min-h-[44px]"
                   >
                     Voir l’itinéraire
-                    <ArrowRight className="w-4 h-4" />
+                    <Icon name="arrow-right" className="w-4 h-4" />
                   </LkvButton>
                 </Link>
                 <LkvButton
@@ -145,7 +142,7 @@ export function AddPlaceToTripModal({
             <form onSubmit={handleSubmit} className="space-y-4">
               {errorMsg && (
                 <div className="p-3.5 rounded-2xl bg-rose-50 border border-rose-200 text-rose-800 text-xs flex items-center gap-2">
-                  <AlertCircle className="w-4 h-4 text-rose-700 shrink-0" />
+                  <Icon name="alert-circle" className="w-4 h-4 text-rose-700 shrink-0" />
                   <span>{errorMsg}</span>
                 </div>
               )}
@@ -223,7 +220,7 @@ export function AddPlaceToTripModal({
                         <span>Ajout en cours...</span>
                       ) : (
                         <>
-                          <Plus className="w-4 h-4" />
+                          <Icon name="plus" className="w-4 h-4" />
                           Confirmer l’ajout au Jour {selectedDay}
                         </>
                       )}

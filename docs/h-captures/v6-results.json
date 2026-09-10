@@ -1,0 +1,242 @@
+[
+  {
+    "name": "v6-hub-sortie-320",
+    "status": "ok",
+    "shot": "docs/h-captures/v6-hub-sortie-320.png",
+    "checks": {
+      "hOverflow": false,
+      "tiles": 30,
+      "chips": 16,
+      "carouselCards": 20,
+      "esriTiles": 11,
+      "hasMoment": true,
+      "hasNextAction": true,
+      "hasNoRoute": false
+    }
+  },
+  {
+    "name": "v6-hub-sortie-390",
+    "status": "ok",
+    "shot": "docs/h-captures/v6-hub-sortie-390.png",
+    "checks": {
+      "hOverflow": false,
+      "tiles": 30,
+      "chips": 16,
+      "carouselCards": 20,
+      "esriTiles": 11,
+      "hasMoment": true,
+      "hasNextAction": true,
+      "hasNoRoute": false
+    }
+  },
+  {
+    "name": "v6-hub-sortie-390-full",
+    "status": "ok",
+    "shot": "docs/h-captures/v6-hub-sortie-390-full.png",
+    "checks": {
+      "hOverflow": false,
+      "tiles": 30,
+      "chips": 16,
+      "carouselCards": 20,
+      "esriTiles": 11,
+      "hasMoment": true,
+      "hasNextAction": true,
+      "hasNoRoute": false
+    }
+  },
+  {
+    "name": "v6-hub-sortie-428",
+    "status": "ok",
+    "shot": "docs/h-captures/v6-hub-sortie-428.png",
+    "checks": {
+      "hOverflow": false,
+      "tiles": 30,
+      "chips": 16,
+      "carouselCards": 20,
+      "esriTiles": 11,
+      "hasMoment": true,
+      "hasNextAction": true,
+      "hasNoRoute": false
+    }
+  },
+  {
+    "name": "v6-hub-sortie-768",
+    "status": "ok",
+    "shot": "docs/h-captures/v6-hub-sortie-768.png",
+    "checks": {
+      "hOverflow": false,
+      "tiles": 30,
+      "chips": 16,
+      "carouselCards": 20,
+      "esriTiles": 11,
+      "hasMoment": true,
+      "hasNextAction": true,
+      "hasNoRoute": false
+    }
+  },
+  {
+    "name": "v6-hub-sortie-1024",
+    "status": "ok",
+    "shot": "docs/h-captures/v6-hub-sortie-1024.png",
+    "checks": {
+      "hOverflow": false,
+      "tiles": 40,
+      "chips": 16,
+      "carouselCards": 20,
+      "esriTiles": 5,
+      "hasMoment": true,
+      "hasNextAction": true,
+      "hasNoRoute": false
+    }
+  },
+  {
+    "name": "v6-hub-sortie-1440",
+    "status": "ok",
+    "shot": "docs/h-captures/v6-hub-sortie-1440.png",
+    "checks": {
+      "hOverflow": false,
+      "tiles": 40,
+      "chips": 16,
+      "carouselCards": 20,
+      "esriTiles": 3,
+      "hasMoment": true,
+      "hasNextAction": true,
+      "hasNoRoute": false
+    }
+  },
+  {
+    "name": "v6-hub-sortie-map-sheet",
+    "status": "ok",
+    "shot": "docs/h-captures/v6-hub-sortie-map-sheet.png",
+    "checks": {
+      "hOverflow": false,
+      "tiles": 30,
+      "chips": 16,
+      "carouselCards": 20,
+      "esriTiles": 17,
+      "hasMoment": true,
+      "hasNextAction": true,
+      "hasNoRoute": false
+    }
+  },
+  {
+    "name": "v6-hub-possession-390",
+    "status": "ok",
+    "shot": "docs/h-captures/v6-hub-possession-390.png",
+    "checks": {
+      "hOverflow": false,
+      "tiles": 20,
+      "chips": 16,
+      "carouselCards": 14,
+      "esriTiles": 0,
+      "hasMoment": true,
+      "hasNextAction": true,
+      "hasNoRoute": false
+    }
+  },
+  {
+    "name": "v6-hub-possession-1440",
+    "status": "ok",
+    "shot": "docs/h-captures/v6-hub-possession-1440.png",
+    "checks": {
+      "hOverflow": false,
+      "tiles": 20,
+      "chips": 16,
+      "carouselCards": 14,
+      "esriTiles": 0,
+      "hasMoment": true,
+      "hasNextAction": true,
+      "hasNoRoute": false
+    }
+  },
+  {
+    "name": "v6-hub-collectif-390",
+    "status": "ok",
+    "shot": "docs/h-captures/v6-hub-collectif-390.png",
+    "checks": {
+      "hOverflow": false,
+      "tiles": 20,
+      "chips": 12,
+      "carouselCards": 16,
+      "esriTiles": 0,
+      "hasMoment": true,
+      "hasNextAction": true,
+      "hasNoRoute": false
+    }
+  },
+  {
+    "name": "v6-hub-collectif-1440",
+    "status": "ok",
+    "shot": "docs/h-captures/v6-hub-collectif-1440.png",
+    "checks": {
+      "hOverflow": false,
+      "tiles": 20,
+      "chips": 12,
+      "carouselCards": 16,
+      "esriTiles": 0,
+      "hasMoment": true,
+      "hasNextAction": true,
+      "hasNoRoute": false
+    }
+  },
+  {
+    "name": "v6-hub-equipage-390",
+    "status": "ok",
+    "shot": "docs/h-captures/v6-hub-equipage-390.png",
+    "checks": {
+      "hOverflow": false,
+      "tiles": 10,
+      "chips": 6,
+      "carouselCards": 6,
+      "esriTiles": 0,
+      "hasMoment": true,
+      "hasNextAction": true,
+      "hasNoRoute": false
+    }
+  },
+  {
+    "name": "v6-hub-itineraire-390",
+    "status": "ok",
+    "shot": "docs/h-captures/v6-hub-itineraire-390.png",
+    "checks": {
+      "hOverflow": false,
+      "tiles": 8,
+      "chips": 0,
+      "carouselCards": 0,
+      "esriTiles": 0,
+      "hasMoment": false,
+      "hasNextAction": false,
+      "hasNoRoute": false
+    }
+  },
+  {
+    "name": "v6-hub-checklist-390",
+    "status": "ok",
+    "shot": "docs/h-captures/v6-hub-checklist-390.png",
+    "checks": {
+      "hOverflow": false,
+      "tiles": 8,
+      "chips": 0,
+      "carouselCards": 0,
+      "esriTiles": 0,
+      "hasMoment": true,
+      "hasNextAction": false,
+      "hasNoRoute": false
+    }
+  },
+  {
+    "name": "v6-hub-budget-390",
+    "status": "ok",
+    "shot": "docs/h-captures/v6-hub-budget-390.png",
+    "checks": {
+      "hOverflow": false,
+      "tiles": 8,
+      "chips": 0,
+      "carouselCards": 0,
+      "esriTiles": 0,
+      "hasMoment": true,
+      "hasNextAction": false,
+      "hasNoRoute": false
+    }
+  }
+]

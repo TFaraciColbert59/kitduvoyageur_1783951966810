@@ -53,11 +53,13 @@ export const VIATOR_DESTINATION_IDS: Record<string, string> = {
 
 // Tags Viator OFFICIELS par section (résolus via GET /products/tags).
 //   destinations = Attractions et musées (12716)
-//   gastronomie  = Circuits gastronomiques (21567) + Cours de cuisine (13283)
+//   gastronomie  = Circuits gastronomiques (21567)
+// Un seul tag par section : Viator combine plusieurs `tags` en ET (aucun produit
+// ne cumule plusieurs tags → résultat vide). Ne passer qu'un tag large.
 export const VIATOR_SECTION_TAGS: Record<DiscoverySectionName, number[]> = {
   destinations: [12716],
   activites: [],
-  gastronomie: [21567, 13283],
+  gastronomie: [21567],
   hebergements: [],
 };
 

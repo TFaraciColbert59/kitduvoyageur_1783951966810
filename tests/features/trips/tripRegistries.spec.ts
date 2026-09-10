@@ -52,19 +52,22 @@ describe('Y1.3 — registre des sections', () => {
     expect(fs.existsSync(path.join(hubDir, 'page.tsx'))).toBe(true);
     const shimDir = path.join(process.cwd(), 'src', 'app', 'voyages', '[slug]', '[section]');
     expect(fs.existsSync(path.join(shimDir, 'page.tsx'))).toBe(true);
-    // Chaque segment du registre voyage correspond au segment hub de même id.
+    // Chaque segment du registre voyage correspond au segment hub de même id
+    // (team fusionné dans la section hub « groupe »).
     for (const s of tripSectionRegistry) {
       if (s.segment === '') continue; // racine = /hub
-      const hubDef = hubSectionRegistry.find((h) => h.id === s.id);
+      const hubId = s.id === 'team' ? 'groupe' : s.id;
+      const hubDef = hubSectionRegistry.find((h) => h.id === hubId);
       expect(hubDef, `section ${s.id} doit exister dans le registre hub`).toBeDefined();
-      expect(hubDef?.segment).toBe(s.segment === 'kit' ? 'kit-voyage' : s.segment);
+      expect(hubDef?.segment).toBe(s.segment === 'kit' ? 'kit-voyage' : s.segment === 'equipage' ? 'groupe' : s.segment);
     }
   });
 
-  it('tripSectionHref : racine hub, segment hub, rejet d’une section inconnue', () => {
+  it('tripSectionHref : racine hub, segment hub, « team » fusionné en groupe', () => {
     expect(tripSectionHref('abc', 'overview')).toBe('/hub');
     expect(tripSectionHref('abc', 'itinerary')).toBe('/hub/itineraire');
     expect(tripSectionHref('abc', 'safety')).toBe('/hub/securite');
+    expect(tripSectionHref('abc', 'team')).toBe('/hub/groupe');
     expect(() => tripSectionHref('abc', 'inconnu' as never)).toThrow();
   });
 

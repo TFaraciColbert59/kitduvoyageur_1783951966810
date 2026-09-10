@@ -12,12 +12,12 @@ import { HubAlertesSection } from '@/features/hub/components/possession/HubAlert
 import { HubOublisSection } from '@/features/hub/components/possession/HubOublisSection';
 import { HubInvitationsSection } from '@/features/hub/components/collectif/HubInvitationsSection';
 import { HubVoyagesLiesSection } from '@/features/hub/components/collectif/HubVoyagesLiesSection';
-import { HubGroupeSection } from '@/features/hub/components/collectif/HubGroupeSection';
 import { HubGroupeCockpit } from '@/features/hub/components/collectif/HubGroupeCockpit';
 import { loadTripSection } from '@/lib/tripSection';
 import { getTripStats } from '@/lib/queries-trips';
 import type { DatabaseTripChecklistItem } from '@/lib/supabase/types';
 import { getTripKitDetails } from '@/lib/queries-trip-kit';
+import { getTripItemImages } from '@/features/hub/server/getTripItemImages';
 import { GearSection } from '@/features/hub/components/menu/GearSection';
 import { calculateBudgetSummary } from '@/features/trips/engine/budgetEngine';
 import { getTripPhaseDetails } from '@/features/trips/engine/temporalPhaseEngine';
@@ -25,6 +25,11 @@ import ItineraryPlannerClient from '@/features/trips/planner/ItineraryPlannerCli
 import type { PlannerStep } from '@/features/trips/planner/plannerEngine';
 import { TripTeamView } from '@/features/trips/components/TripTeamView';
 import { ParticipantsManager } from '@/features/participants/components/ParticipantsManager';
+import { TeamMobileExperience } from '@/features/hub/components/mobile/team/TeamMobileExperience';
+import { ChecklistMobileExperience } from '@/features/hub/components/mobile/checklist/ChecklistMobileExperience';
+import { DocsMobileExperience } from '@/features/hub/components/mobile/docs/DocsMobileExperience';
+import { SafetyMobileExperience } from '@/features/hub/components/mobile/safety/SafetyMobileExperience';
+import { JournalMobileExperience } from '@/features/hub/components/mobile/journal/JournalMobileExperience';
 import { TripBudgetView } from '@/features/trips/components/TripBudgetView';
 import { TripDocumentsView } from '@/features/trips/components/TripDocumentsView';
 import { TripChecklistView } from '@/features/trips/components/TripChecklistView';
@@ -65,14 +70,10 @@ export default async function HubSectionPage({
       {def.id === 'oublis' && <HubOublisSection />}
       {def.id === 'invitations' && <HubInvitationsSection />}
       {def.id === 'voyages-lies' && data.adventure.nature === 'collectif' && (
-        <HubVoyagesLiesSection adventure={data.adventure} crews={data.crews} />
+        <HubVoyagesLiesSection adventure={data.adventure} />
       )}
-      {data.adventure.nature === 'collectif' && (def.id === 'groupe' || def.id === 'team') && (
-        data.adventure.kind === 'groupe' ? (
-          <HubGroupeCockpit groupId={data.adventure.id} initialTab={sp.onglet} />
-        ) : (
-          <HubGroupeSection adventure={data.adventure} />
-        )
+      {data.adventure.nature === 'collectif' && def.id === 'groupe' && (
+        <HubGroupeCockpit groupId={data.adventure.id} initialTab={sp.onglet} />
       )}
       {data.adventure.nature === 'sortie' && data.trip && (
         <SortieSection sectionId={def.id} slug={data.trip.slug} />
@@ -122,24 +123,46 @@ async function SortieSection({ sectionId, slug }: { sectionId: string; slug: str
     case 'gear': {
       const result = await getTripKitDetails(slug);
       if (!result) notFound();
-      return <GearSection trip={result.trip} analysis={result.analysis} />;
+      const itemImages = await getTripItemImages(result.trip.id);
+      return (
+        <GearSection
+          trip={result.trip}
+          analysis={result.analysis}
+          itemImages={itemImages}
+          availableProducts={result.availableProducts}
+        />
+      );
     }
-    case 'team':
     case 'groupe':
       return (
-        <div className="space-y-4">
-          <TripTeamView trip={trip} />
-          <div aria-label="Carnet des participants">
-            <ParticipantsManager />
+        <>
+          {/* Desktop : équipiers (comptes) + carnet local — inchangé */}
+          <div className="hidden lg:block space-y-4">
+            <TripTeamView trip={trip} />
+            <div aria-label="Carnet des participants">
+              <ParticipantsManager />
+            </div>
           </div>
-        </div>
-      );
-    case 'budget':
+          {/* Mobile / tablette : expérience rails + tiroirs */}
+          <div className="lg:hidden">
+            <TeamMobileExperience trip={trip} />
+          </div>
+        </>
+      );    case 'budget':
       if (!trip.permissions.canManageBudget) notFound();
       return <TripBudgetView trip={trip} />;
     case 'docs':
       if (!trip.permissions.canViewDocuments) notFound();
-      return <TripDocumentsView trip={trip} />;
+      return (
+        <>
+          <div className="hidden lg:block">
+            <TripDocumentsView trip={trip} />
+          </div>
+          <div className="lg:hidden">
+            <DocsMobileExperience trip={trip} />
+          </div>
+        </>
+      );
     case 'checklist': {
       const phaseDetails = getTripPhaseDetails(trip);
       const { data: checklistRows } = await supabase
@@ -150,17 +173,46 @@ async function SortieSection({ sectionId, slug }: { sectionId: string; slug: str
         .order('position', { ascending: true });
       const checklistItems = (checklistRows ?? []) as DatabaseTripChecklistItem[];
       return (
-        <TripChecklistView
-          tripId={trip.id}
-          daysUntilStart={phaseDetails.daysUntilStart}
-          items={checklistItems}
-        />
+        <>
+          <div className="hidden lg:block">
+            <TripChecklistView
+              tripId={trip.id}
+              daysUntilStart={phaseDetails.daysUntilStart}
+              items={checklistItems}
+            />
+          </div>
+          <div className="lg:hidden">
+            <ChecklistMobileExperience
+              tripId={trip.id}
+              daysUntilStart={phaseDetails.daysUntilStart}
+              items={checklistItems}
+            />
+          </div>
+        </>
       );
     }
     case 'safety':
-      return <TripSafetyView trip={trip} />;
+      return (
+        <>
+          <div className="hidden lg:block">
+            <TripSafetyView trip={trip} />
+          </div>
+          <div className="lg:hidden">
+            <SafetyMobileExperience trip={trip} />
+          </div>
+        </>
+      );
     case 'journal':
-      return <TripNotesView trip={trip} />;
+      return (
+        <>
+          <div className="hidden lg:block">
+            <TripNotesView trip={trip} />
+          </div>
+          <div className="lg:hidden">
+            <JournalMobileExperience trip={trip} />
+          </div>
+        </>
+      );
     case 'export': {
       const stats = await getTripStats(trip.id);
       const budgetSummary = calculateBudgetSummary(

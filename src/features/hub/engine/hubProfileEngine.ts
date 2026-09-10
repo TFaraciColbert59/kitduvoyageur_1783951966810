@@ -2,8 +2,7 @@ import {
   deriveTripProfile,
   type TripSectionId,
   type TripWidgetId,
-} from '@/features/trips/engine/tripProfileEngine';
-import { deriveActivityType, type ActivityType } from './activityTypes';
+} from '@/features/trips/engine/tripProfileEngine';import { deriveActivityType, type ActivityType } from './activityTypes';
 import { applyActivityProfile } from './activityProfiles';
 import type { TripFull } from '@/features/trips/types/trip.types';
 
@@ -33,8 +32,14 @@ export type PossessionSectionId =
 
 export type CollectifSectionId = 'groupe' | 'invitations' | 'voyages-lies';
 
-/** Union des 3 natures — les ids Y sont réutilisés tels quels (composition). */
-export type HubSectionId = PossessionSectionId | CollectifSectionId | TripSectionId;
+/**
+ * Union des 3 natures — les ids Y sont réutilisés tels quels (composition),
+ * sauf « team » (registre voyage) fusionné dans la section « groupe ».
+ */
+export type HubSectionId =
+  | PossessionSectionId
+  | CollectifSectionId
+  | Exclude<TripSectionId, 'team'>;
 
 export type PossessionWidgetId =
   | 'stock-apercu'
@@ -75,14 +80,13 @@ export const HUB_SECTION_ORDER: HubSectionId[] = [
   'overview',
   'itinerary',
   'gear',
-  'team',
+  'groupe',
   'budget',
   'docs',
   'checklist',
   'safety',
   'journal',
   'export',
-  'groupe',
   'invitations',
   'voyages-lies',
 ];
@@ -131,6 +135,11 @@ const COLLECTIF_WIDGETS: HubWidgetRule<CollectifWidgetId>[] = [
 function sortByRegistry(sections: HubSectionId[]): HubSectionId[] {
   const rank = new Map<HubSectionId, number>(HUB_SECTION_ORDER.map((id, i) => [id, i]));
   return [...new Set(sections)].sort((a, b) => (rank.get(a) ?? 99) - (rank.get(b) ?? 99));
+}
+
+/** Couche hub : « team » (registre voyage) devient la section « groupe ». */
+function toHubSections(sections: TripSectionId[]): HubSectionId[] {
+  return [...new Set(sections.map((s) => (s === 'team' ? 'groupe' : s)))];
 }
 
 /** Fusionne les sections activées manuellement (HubSectionPicker, jamais verrouillé). */
@@ -233,7 +242,7 @@ function deriveSortie(
       scale: trip.scale,
       party: trip.party,
       density: trip.density,
-      sections: [...trip.sections],
+      sections: toHubSections(trip.sections),
       widgets: [...trip.widgets],
       reason: trip.reason as unknown as Record<HubSectionId, string>,
     },
@@ -250,8 +259,8 @@ function deriveSortie(
     if (id === 'overview' && (trip.sections as HubSectionId[]).includes('overview')) {
       return 'affiché : nature sortie (composition tripProfileEngine, zéro duplication)';
     }
-    if (id === 'team' && !withActivity.reason[id]?.includes('masqué')) {
-      return withActivity.reason[id] ?? 'affiché : onglet Équipage toujours visible';
+    if (id === 'groupe' && !withActivity.reason[id]?.includes('masqué')) {
+      return withActivity.reason[id] ?? 'affiché : onglet Groupe toujours visible (participants)';
     }
     if (shown) return (trip.reason as Record<string, string>)[id] ?? `affiché : ${id}`;
     return (trip.reason as Record<string, string>)[id] ?? 'masqué : profil sortie';

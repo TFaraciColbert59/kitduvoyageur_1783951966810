@@ -1,11 +1,11 @@
-"use client";
+'use client';
 
+import Icon from '@/components/ui/Icon';
 import React, { useState, useEffect, useMemo } from 'react';
 import Image from 'next/image';
 import type { Conversation, Message } from '../types/messaging.types';
 import { messagingService } from '../services/messagingService';
 import { MobileSheet } from './MobileSheet';
-import { Search, Send } from 'lucide-react';
 import { useHapticFeedback } from '@/hooks/useHapticFeedback';
 
 interface ForwardMessageSheetProps {
@@ -79,7 +79,10 @@ export const ForwardMessageSheet: React.FC<ForwardMessageSheetProps> = ({
       title={message ? 'Transférer le message' : 'Transférer'}
     >
       <div className="relative">
-        <Search className="w-4 h-4 text-[#5A574E] absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none" />
+        <Icon
+          name="search"
+          className="w-4 h-4 text-[#5A574E] absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none"
+        />
         <input
           type="search"
           inputMode="search"
@@ -113,8 +116,7 @@ export const ForwardMessageSheet: React.FC<ForwardMessageSheetProps> = ({
         ) : (
           candidates.map((conv) => {
             const isGroup = conv.type === 'group';
-            const title =
-              conv.title || (isGroup ? "Groupe d'expédition" : 'Voyageur LKDV');
+            const title = conv.title || (isGroup ? "Groupe d'expédition" : 'Voyageur LKDV');
             return (
               <button
                 key={conv.id}
@@ -140,10 +142,13 @@ export const ForwardMessageSheet: React.FC<ForwardMessageSheetProps> = ({
                     {title}
                   </p>
                   <p className="text-[13px] text-[#5A574E] truncate">
-                    {isGroup ? 'Groupe de voyage' : (conv.other_member?.full_name || 'Voyageur LKDV')}
+                    {isGroup ? 'Groupe de voyage' : conv.other_member?.full_name || 'Voyageur LKDV'}
                   </p>
                 </div>
-                <Send className="w-4 h-4 text-[#5A574E] group-hover:text-[#17402C] shrink-0" />
+                <Icon
+                  name="send"
+                  className="w-4 h-4 text-[#5A574E] group-hover:text-[#17402C] shrink-0"
+                />
               </button>
             );
           })

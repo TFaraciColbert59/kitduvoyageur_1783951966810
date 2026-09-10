@@ -1,7 +1,7 @@
 'use client';
+import Icon from '@/components/ui/Icon';
 import React from 'react';
 import Link from 'next/link';
-import { Zap, Wifi, WifiOff, Layers } from 'lucide-react';
 import { PrinterIcon as Printer } from '@/components/icons/printer';
 import { Share2Icon as Share2 } from '@/components/icons/share-2';
 import { ChevronRightIcon as ChevronRightAnimated } from '@/components/icons/chevron-right';
@@ -59,7 +59,10 @@ export function DepartLeftSidebar({
   ];
 
   return (
-    <div role="complementary" className="h-full max-h-full w-full flex-1 flex flex-col justify-between glass rounded-[1.5rem] p-3.5 text-[var(--lkv-primary)] font-sans overflow-hidden border border-white/40 shadow-sm select-none">
+    <div
+      role="complementary"
+      className="h-full max-h-full w-full flex-1 flex flex-col justify-between glass rounded-[1.5rem] p-3.5 text-[var(--lkv-primary)] font-sans overflow-hidden border border-white/40 shadow-sm select-none"
+    >
       {/* ── 1. ZONE HAUTE FIXE (Identité du trek, Switcher & Actions) ── */}
       <div className="shrink-0 space-y-2.5">
         <div className="p-3 rounded-2xl glass-sub-card space-y-2 relative overflow-hidden border border-white/50">
@@ -80,8 +83,15 @@ export function DepartLeftSidebar({
 
           {/* Statut réseau & Ultra-Save toggle */}
           <div className="pt-1.5 border-t border-white/30 flex items-center justify-between gap-1.5">
-            <span className={cn('flex items-center gap-1 text-[9px] font-mono font-bold px-2 py-0.5 rounded-full', isOnline ? 'bg-[var(--lkv-success)]/20 text-[var(--lkv-success)]' : 'bg-[var(--lkv-warning)]/20 text-[var(--lkv-warning)]')}>
-              {isOnline ? <Wifi size={9} /> : <WifiOff size={9} />}
+            <span
+              className={cn(
+                'flex items-center gap-1 text-[9px] font-mono font-bold px-2 py-0.5 rounded-full',
+                isOnline
+                  ? 'bg-[var(--lkv-success)]/20 text-[var(--lkv-success)]'
+                  : 'bg-[var(--lkv-warning)]/20 text-[var(--lkv-warning)]'
+              )}
+            >
+              {isOnline ? <Icon name="wifi" size={9} /> : <Icon name="wifi-off" size={9} />}
               {isOnline ? 'En ligne' : 'Hors-ligne'}
             </span>
 
@@ -98,7 +108,7 @@ export function DepartLeftSidebar({
                 title="Mode Éco Batterie Ultra-Save"
                 aria-pressed={isUltraSave}
               >
-                <Zap size={9} />
+                <Icon name="zap" size={9} />
                 <span>{isUltraSave ? 'ECO' : 'ÉCO'}</span>
                 {batteryLevel !== null && (
                   <span className="font-mono text-[8px] opacity-80">
@@ -123,7 +133,7 @@ export function DepartLeftSidebar({
             href="/hub/kit"
             className="glass-capsule-btn text-[10.5px] font-bold !py-1.5 !px-2 flex items-center justify-center gap-1 shadow-none cursor-pointer"
           >
-            <Layers size={12} />
+            <Icon name="layers" size={12} />
             <span>Mes Kits</span>
           </Link>
 
@@ -139,7 +149,10 @@ export function DepartLeftSidebar({
       </div>
 
       {/* ── 2. ZONE CENTRALE SCROLLABLE À L'INTÉRIEUR (Navigation simplifiée) ── */}
-      <nav className="flex-1 min-h-0 overflow-y-auto no-scrollbar py-2 space-y-1.5" aria-label="Navigation du départ">
+      <nav
+        className="flex-1 min-h-0 overflow-y-auto no-scrollbar py-2 space-y-1.5"
+        aria-label="Navigation du départ"
+      >
         <p className="text-[9.5px] font-mono font-bold uppercase tracking-widest text-[var(--lkv-text-muted)] px-2 mb-1">
           Navigation
         </p>
@@ -171,11 +184,13 @@ export function DepartLeftSidebar({
           type="button"
           onClick={() => {
             if (navigator.share) {
-              navigator.share({
-                title: cleanDestination,
-                text: `Fiche de départ : ${cleanDestination}`,
-                url: window.location.href,
-              }).catch(() => {});
+              navigator
+                .share({
+                  title: cleanDestination,
+                  text: `Fiche de départ : ${cleanDestination}`,
+                  url: window.location.href,
+                })
+                .catch(() => {});
             } else {
               navigator.clipboard?.writeText(window.location.href);
             }

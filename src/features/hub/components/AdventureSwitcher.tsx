@@ -1,10 +1,11 @@
 ﻿'use client';
 
+import Icon from '@/components/ui/Icon';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import * as Cmd from 'cmdk';
 import * as Dialog from '@radix-ui/react-dialog';
-import { ChevronsUpDown, Compass, Package, Users, Search, Check, RefreshCw, Sparkles, AlertTriangle } from 'lucide-react';
+import { Compass, Package, Users } from 'lucide-react';
 import { GlassSheet } from '@/components/ui/GlassSheet';
 import { useActiveAdventure } from '../context/ActiveAdventureContext';
 import { useHapticFeedback } from '@/hooks/useHapticFeedback';
@@ -47,10 +48,13 @@ function useIsMobileViewport(): boolean {
 export function AdventureSwitcher({
   forceOpenSignal = 0,
   variant = 'desktop',
+  hideTrigger = false,
 }: {
   forceOpenSignal?: number;
   /** Quel dialog cette instance contrôle (un seul Root Radix ouvert à la fois). */
   variant?: 'mobile' | 'desktop';
+  /** Ne pas rendre les boutons déclencheurs (ouverture pilotée par le titre mobile). */
+  hideTrigger?: boolean;
 }) {
   const {
     activeAdventure,
@@ -100,9 +104,14 @@ export function AdventureSwitcher({
   }, [forceOpenSignal, variant]);
 
   // H6.1 — Dialogue d'état (retour Android) : publie ouvert/fermé, écoute la fermeture.
+  // Seule l'instance qui contrôle le viewport courant publie (évite qu'une
+  // instance sœur fermée n'écrase l'état ouvert).
   useEffect(() => {
-    window.dispatchEvent(new CustomEvent('hub:switcher-state', { detail: { open: open || sheetOpen } }));
-  }, [open, sheetOpen]);
+    if (!controlsVariant) return;
+    window.dispatchEvent(
+      new CustomEvent('hub:switcher-state', { detail: { open: open || sheetOpen } })
+    );
+  }, [open, sheetOpen, controlsVariant]);
   useEffect(() => {
     const close = () => {
       setOpen(false);
@@ -164,7 +173,7 @@ export function AdventureSwitcher({
       router.push(href);
       router.refresh();
     },
-    [closeAll, getLastSection, router],
+    [closeAll, getLastSection, router]
   );
 
   const activate = useCallback(
@@ -175,9 +184,18 @@ export function AdventureSwitcher({
       if (entry.nature === 'possession') {
         ok = await setActiveAdventure({ nature: 'possession' });
       } else if (entry.nature === 'sortie') {
-        ok = await setActiveAdventure({ nature: 'sortie', id: entry.id, slug: entry.slug, title: entry.title });
+        ok = await setActiveAdventure({
+          nature: 'sortie',
+          id: entry.id,
+          slug: entry.slug,
+          title: entry.title,
+        });
       } else {
-        ok = await setActiveAdventure({ nature: 'collectif', kind: entry.kind, id: entry.id, title: entry.title });
+        ok = await setActiveAdventure({
+          nature: 'collectif',
+          id: entry.id,
+          title: entry.title,
+        });
       }
       if (!ok) {
         // Échec (offline / serveur) : le dialog reste ouvert, l'optimisme a été
@@ -187,7 +205,7 @@ export function AdventureSwitcher({
       }
       goToAdventure(entry);
     },
-    [goToAdventure, setActiveAdventure, triggerHaptic],
+    [goToAdventure, setActiveAdventure, triggerHaptic]
   );
   const activateByKey = useCallback(
     async (key: string) => {
@@ -201,7 +219,7 @@ export function AdventureSwitcher({
       const entry = all.find((e) => adventureKey(e) === key);
       if (entry) goToAdventure(entry);
     },
-    [goToAdventure, groups, setActiveAdventureByKey],
+    [goToAdventure, groups, setActiveAdventureByKey]
   );
 
   const entrySubtitle = (entry: AdventureEntry): string => {
@@ -220,7 +238,8 @@ export function AdventureSwitcher({
     const isCurrent =
       isCurrentAdventure(key) ||
       (activeAdventure?.nature === 'possession' && entry.nature === 'possession');
-    const Icon = entry.nature === 'possession' ? Package : entry.nature === 'sortie' ? Compass : Users;
+    const Icon =
+      entry.nature === 'possession' ? Package : entry.nature === 'sortie' ? Compass : Users;
     const value =
       entry.nature === 'possession'
         ? 'mon materiel possession inventaire'
@@ -243,7 +262,14 @@ export function AdventureSwitcher({
             {entrySubtitle(entry)}
           </span>
         </span>
-        {isCurrent && <Check size={14} className="shrink-0 text-[var(--lkv-secondary)]" aria-hidden="true" />}
+        {isCurrent && (
+          <Icon
+            name="check"
+            size={14}
+            className="shrink-0 text-[var(--lkv-secondary)]"
+            aria-hidden="true"
+          />
+        )}
       </Cmd.CommandItem>
     );
   };
@@ -269,8 +295,11 @@ export function AdventureSwitcher({
     <>
       <Cmd.CommandSeparator className="my-2 border-t border-[var(--lkv-border-subtle)]" />
       {switchError && (
-        <p className="flex items-center gap-1.5 px-2 pb-1 text-[10.5px] font-semibold text-[var(--lkv-danger)]" role="alert">
-          <AlertTriangle size={11} aria-hidden="true" />
+        <p
+          className="flex items-center gap-1.5 px-2 pb-1 text-[10.5px] font-semibold text-[var(--lkv-danger)]"
+          role="alert"
+        >
+          <Icon name="alert-triangle" size={11} aria-hidden="true" />
           Impossible de changer d&apos;aventure — vérifiez la connexion puis réessayez.
         </p>
       )}
@@ -278,7 +307,10 @@ export function AdventureSwitcher({
         {activeAdventure ? (
           <button
             type="button"
-            onClick={() => { clearActiveAdventure(); closeAll(); }}
+            onClick={() => {
+              clearActiveAdventure();
+              closeAll();
+            }}
             disabled={isPending}
             className="text-[10.5px] font-semibold text-[var(--lkv-danger)] hover:underline cursor-pointer"
           >
@@ -293,7 +325,7 @@ export function AdventureSwitcher({
           className="inline-flex items-center gap-1 text-[10.5px] font-semibold text-[var(--lkv-text-secondary)] hover:text-[var(--lkv-text-primary)] cursor-pointer"
           aria-label="Recharger la liste des aventures"
         >
-          <RefreshCw size={11} />
+          <Icon name="refresh-cw" size={11} />
           Recharger
         </button>
       </div>
@@ -304,7 +336,14 @@ export function AdventureSwitcher({
   const listContent = (withSearchIcon: boolean) => (
     <Cmd.CommandRoot loop onValueChange={() => {}}>
       <div className="flex items-center gap-2 px-3 h-11 rounded-[var(--lkv-radius-md)] bg-white/35">
-        {withSearchIcon && <Search size={16} className="shrink-0 text-[var(--lkv-text-secondary)]" aria-hidden="true" />}
+        {withSearchIcon && (
+          <Icon
+            name="search"
+            size={16}
+            className="shrink-0 text-[var(--lkv-text-secondary)]"
+            aria-hidden="true"
+          />
+        )}
         <Cmd.CommandInput
           value={query}
           onValueChange={setQuery}
@@ -326,7 +365,12 @@ export function AdventureSwitcher({
               onSelect={() => activateByKey(suggestion.key)}
               className="flex items-center gap-2 px-3 py-2.5 rounded-[var(--lkv-radius-md)] text-left cursor-pointer aria-selected:bg-white/40 aria-selected:text-[var(--lkv-text-primary)]"
             >
-              <Sparkles size={14} className="shrink-0 text-[var(--lkv-text-secondary)]" aria-hidden="true" />
+              <Icon
+                name="sparkles"
+                size={14}
+                className="shrink-0 text-[var(--lkv-text-secondary)]"
+                aria-hidden="true"
+              />
               <span className="flex-1 min-w-0">
                 <span className="block text-sm font-semibold text-[var(--lkv-text-primary)] truncate">
                   {suggestedEntry.nature === 'possession' ? 'Mon matériel' : suggestedEntry.title}
@@ -353,25 +397,34 @@ export function AdventureSwitcher({
 
   return (
     <>
-      {/* Desktop : bouton déclencheur + palette cmdk (PORTAL — la palette ne
-          doit jamais être enfant du panneau .glass : backdrop-filter = block
-          contenant pour position:fixed, overflow:hidden la clippait). */}
-      <div className="hidden md:block">
-        <button
-          type="button"
-          onClick={() => {
-            if (!isMobile) setOpen((v) => !v);
-          }}
-          className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full glass-capsule-btn text-xs font-semibold text-[var(--lkv-text-primary)] min-h-[44px] cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--lkv-primary)]"
-          aria-haspopup="dialog"
-          aria-expanded={open}
-          title="Changer d'aventure (Ctrl/Cmd+K ou J)"
-        >
-          <Compass size={14} className="text-[var(--lkv-secondary)]" aria-hidden="true" />
-          <span className="max-w-[160px] truncate hidden sm:inline">{triggerLabel}</span>
-          <ChevronsUpDown size={12} className="text-[var(--lkv-text-muted)]" aria-hidden="true" />
-        </button>
-      </div>
+      {!hideTrigger && (
+        <div className="hidden md:block">
+          <button
+            type="button"
+            onClick={() => {
+              if (!isMobile) setOpen((v) => !v);
+            }}
+            className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full glass-capsule-btn text-xs font-semibold text-[var(--lkv-text-primary)] min-h-[44px] cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--lkv-primary)]"
+            aria-haspopup="dialog"
+            aria-expanded={open}
+            title="Changer d'aventure (Ctrl/Cmd+K ou J)"
+          >
+            <Icon
+              name="compass"
+              size={14}
+              className="text-[var(--lkv-secondary)]"
+              aria-hidden="true"
+            />
+            <span className="max-w-[160px] truncate hidden sm:inline">{triggerLabel}</span>
+            <Icon
+              name="chevrons-up-down"
+              size={12}
+              className="text-[var(--lkv-text-muted)]"
+              aria-hidden="true"
+            />
+          </button>
+        </div>
+      )}
 
       {/* Palette desktop — Dialog Radix portal (focus trap + Escape gérés). */}
       {mounted && (
@@ -397,23 +450,36 @@ export function AdventureSwitcher({
         </Dialog.Root>
       )}
 
-      {/* Mobile : déclencheur -> GlassSheet (wrapper responsive, cf. H-AUTO-19) */}
-      <div className="md:hidden min-w-0">
-        <button
-          type="button"
-          onClick={() => {
-            if (variant === 'mobile' && isMobile) setSheetOpen(true);
-          }}
-          className="inline-flex items-center gap-1.5 px-3 py-2 rounded-full glass-capsule-btn text-xs font-semibold text-[var(--lkv-text-primary)] min-h-[44px] cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--lkv-primary)] max-w-full"
-          aria-haspopup="dialog"
-          aria-expanded={sheetOpen}
-        >
-          <Compass size={14} className="shrink-0 text-[var(--lkv-secondary)]" aria-hidden="true" />
-          <span className="max-w-[110px] truncate">{triggerLabel}</span>
-        </button>
-      </div>
+      {!hideTrigger && (
+        <div className="md:hidden min-w-0">
+          <button
+            type="button"
+            onClick={() => {
+              if (variant === 'mobile' && isMobile) setSheetOpen(true);
+            }}
+            className="inline-flex items-center gap-1.5 px-3 py-2 rounded-full glass-capsule-btn text-xs font-semibold text-[var(--lkv-text-primary)] min-h-[44px] cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--lkv-primary)] max-w-full"
+            aria-haspopup="dialog"
+            aria-expanded={sheetOpen}
+          >
+            <Icon
+              name="compass"
+              size={14}
+              className="shrink-0 text-[var(--lkv-secondary)]"
+              aria-hidden="true"
+            />
+            <span className="max-w-[110px] truncate">{triggerLabel}</span>
+          </button>
+        </div>
+      )}
 
-      <GlassSheet open={variant === 'mobile' && isMobile && sheetOpen} onOpenChange={(v) => { setSheetOpen(v); if (!v) setSwitchError(false); }} title="Changer d'aventure">
+      <GlassSheet
+        open={variant === 'mobile' && isMobile && sheetOpen}
+        onOpenChange={(v) => {
+          setSheetOpen(v);
+          if (!v) setSwitchError(false);
+        }}
+        title="Changer d'aventure"
+      >
         <div className="glass p-2 rounded-[var(--lkv-radius-card)]">{listContent(false)}</div>
       </GlassSheet>
     </>

@@ -1,7 +1,7 @@
 import React, { Suspense } from 'react';
+import Icon from '@/components/ui/Icon';
 import type { Metadata } from 'next';
 import Link from 'next/link';
-import { Sparkles, Compass } from 'lucide-react';
 import { TripWizard } from '@/features/trips/wizard/TripWizard';
 import { AutoGenTripCreateView } from '@/features/trips/components/autoGen/AutoGenTripCreateView';
 import { HUB_NEW_HREF, HUB_NEW_IA_HREF } from '@/features/hub/registry/hubSectionRegistry';
@@ -33,7 +33,10 @@ export default async function HubNouveauPage({
   return (
     <div>
       {/* Sélecteur de mode de création */}
-      <nav aria-label="Mode de création" className="flex items-center justify-center gap-2 py-4 px-4">
+      <nav
+        aria-label="Mode de création"
+        className="flex items-center justify-center gap-2 py-4 px-4"
+      >
         <Link
           href={HUB_NEW_HREF}
           aria-current={isIa ? undefined : 'page'}
@@ -43,7 +46,7 @@ export default async function HubNouveauPage({
               : 'glass text-[var(--lkv-text-primary)] border-white/60'
           }`}
         >
-          <Compass size={14} aria-hidden="true" />
+          <Icon name="compass" size={14} aria-hidden="true" />
           <span>Assistant guidé</span>
         </Link>
         <Link
@@ -55,7 +58,7 @@ export default async function HubNouveauPage({
               : 'glass text-[var(--lkv-text-primary)] border-white/60'
           }`}
         >
-          <Sparkles size={14} aria-hidden="true" />
+          <Icon name="sparkles" size={14} aria-hidden="true" />
           <span>Génération IA</span>
         </Link>
       </nav>

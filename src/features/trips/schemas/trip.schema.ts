@@ -181,6 +181,7 @@ export const tripItemSchema = z.object({
   is_packed: z.boolean().default(false).optional(),
   status: tripItemStatusEnum.default('needed').optional(),
   packed_by: z.string().uuid().nullable().optional(),
+  purchase_state: z.enum(['needed', 'added', 'in_cart', 'shipping']).optional(),
   inventory_item_id: z.string().uuid().nullable().optional(),
   affiliate_link_id: z.string().uuid().nullable().optional(),
 });

@@ -1,0 +1,39 @@
+﻿[
+  {
+    "width": 390,
+    "surface": "gear",
+    "blocking": [
+      {
+        "id": "color-contrast",
+        "nodes": [
+          {
+            "target": ".pt-2\\.5 > .space-y-2\\.5 > .space-y-4 > .scroll-mt-4[aria-label=\"Sac du voyage\"] > .space-y-6.animate-fade-in > .bg-\\[var\\(--lkv-warning\\)\\]\\/10.border-\\[var\\(--lkv-warning\\)\\]\\/20.text-text-primary > .text-\\[var\\(--lkv-warning\\)\\].gap-2.font-bold",
+            "summary": "Fix any of the following:\n  Element has insufficient color contrast of 2.29 (foreground color: #c89a3b, background color: #eef3ec, font size: 9.0pt (12px), font",
+            "html": "<div class=\"font-bold flex items-center gap-2 text-[var(--lkv-warning)]\">"
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "width": 390,
+    "surface": "gear-missing-drawer",
+    "blocking": [
+      {
+        "id": "color-contrast",
+        "nodes": [
+          {
+            "target": ".pt-2\\.5 > .space-y-2\\.5 > .space-y-4 > .scroll-mt-4[aria-label=\"Sac du voyage\"] > .space-y-6.animate-fade-in > .bg-\\[var\\(--lkv-warning\\)\\]\\/10.border-\\[var\\(--lkv-warning\\)\\]\\/20.text-text-primary > .text-\\[var\\(--lkv-warning\\)\\].gap-2.font-bold",
+            "summary": "Fix any of the following:\n  Element has insufficient color contrast of 2.29 (foreground color: #c89a3b, background color: #eef3ec, font size: 9.0pt (12px), font",
+            "html": "<div class=\"font-bold flex items-center gap-2 text-[var(--lkv-warning)]\">"
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "width": 1440,
+    "surface": "gear",
+    "blocking": []
+  }
+]

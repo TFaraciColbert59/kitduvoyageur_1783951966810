@@ -1,8 +1,8 @@
-"use client";
+'use client';
 
+import Icon from '@/components/ui/Icon';
 import React, { useState, useEffect } from 'react';
 import Image from 'next/image';
-import { Bell, BellOff, Archive, ShieldAlert, Check, X } from 'lucide-react';
 import type { Conversation } from '../types/messaging.types';
 import { messagingService } from '../services/messagingService';
 import { MobileSheet } from './MobileSheet';
@@ -142,7 +142,7 @@ export const ConversationOptionsSheet: React.FC<ConversationOptionsSheetProps> =
             disabled={loading}
             className={`${menuItemClass} bg-[#EDF3ED] border-[#A3C4A3]/40`}
           >
-            <Check className="w-5 h-5 text-[#2D6B4A]" />
+            <Icon name="check" className="w-5 h-5 text-[#2D6B4A]" />
             Accepter la demande
           </button>
           <button
@@ -151,7 +151,7 @@ export const ConversationOptionsSheet: React.FC<ConversationOptionsSheetProps> =
             disabled={loading}
             className={menuItemClass}
           >
-            <X className="w-5 h-5 text-[#8A241B]" />
+            <Icon name="x" className="w-5 h-5 text-[#8A241B]" />
             Refuser la demande
           </button>
           {onReport && (
@@ -163,7 +163,7 @@ export const ConversationOptionsSheet: React.FC<ConversationOptionsSheetProps> =
               }}
               className="w-full p-3.5 rounded-2xl bg-[#F5DDD9]/70 hover:bg-[#F5DDD9]/90 border border-[#A8443A]/30 flex items-center gap-3 text-[15px] font-semibold text-[#8A241B] transition-colors min-h-[52px]"
             >
-              <ShieldAlert className="w-5 h-5 text-[#8A241B]" />
+              <Icon name="shield-alert" className="w-5 h-5 text-[#8A241B]" />
               Signaler ou bloquer
             </button>
           )}
@@ -221,13 +221,13 @@ export const ConversationOptionsSheet: React.FC<ConversationOptionsSheetProps> =
           >
             <span className="flex items-center gap-3">
               {isMuted ? (
-                <Bell className="w-5 h-5 text-[#5B7F55]" />
+                <Icon name="bell" className="w-5 h-5 text-[#5B7F55]" />
               ) : (
-                <BellOff className="w-5 h-5 text-[#5A574E]" />
+                <Icon name="bell-off" className="w-5 h-5 text-[#5A574E]" />
               )}
               {isMuted ? 'Réactiver les notifications' : 'Masquer les notifications'}
             </span>
-            {isMuted && <Check className="w-5 h-5 text-[#5B7F55]" />}
+            {isMuted && <Icon name="check" className="w-5 h-5 text-[#5B7F55]" />}
           </button>
 
           <button
@@ -237,10 +237,10 @@ export const ConversationOptionsSheet: React.FC<ConversationOptionsSheetProps> =
             className={`${menuItemClass} justify-between`}
           >
             <span className="flex items-center gap-3">
-              <Archive className="w-5 h-5 text-[#5A574E]" />
+              <Icon name="archive" className="w-5 h-5 text-[#5A574E]" />
               {isArchived ? 'Désarchiver la conversation' : 'Archiver la conversation'}
             </span>
-            {isArchived && <Check className="w-5 h-5 text-[#5B7F55]" />}
+            {isArchived && <Icon name="check" className="w-5 h-5 text-[#5B7F55]" />}
           </button>
 
           {onReport && (
@@ -252,7 +252,7 @@ export const ConversationOptionsSheet: React.FC<ConversationOptionsSheetProps> =
               }}
               className="w-full p-3.5 rounded-2xl bg-[#F5DDD9]/70 hover:bg-[#F5DDD9]/90 border border-[#A8443A]/30 flex items-center gap-3 text-[15px] font-semibold text-[#8A241B] transition-colors min-h-[52px]"
             >
-              <ShieldAlert className="w-5 h-5 text-[#8A241B]" />
+              <Icon name="shield-alert" className="w-5 h-5 text-[#8A241B]" />
               Signaler ou bloquer {member?.full_name || ''}
             </button>
           )}

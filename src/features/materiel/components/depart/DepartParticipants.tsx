@@ -1,6 +1,6 @@
 'use client';
+import Icon from '@/components/ui/Icon';
 import { useState } from 'react';
-import { ShieldCheck, Check, PhoneCall } from 'lucide-react';
 import { UsersIcon as Users } from '@/components/icons/users';
 import { AlertOctagonIcon as AlertOctagon } from '@/components/icons/alert-octagon';
 import { RadioIcon as Radio } from '@/components/icons/radio';
@@ -14,10 +14,7 @@ interface DepartParticipantsProps {
   emergencyContact: string | null;
 }
 
-export function DepartParticipants({
-  participants,
-  emergencyContact,
-}: DepartParticipantsProps) {
+export function DepartParticipants({ participants, emergencyContact }: DepartParticipantsProps) {
   const [copied, setCopied] = useState(false);
 
   if ((!participants || participants.length === 0) && !emergencyContact) return null;
@@ -67,7 +64,7 @@ export function DepartParticipants({
               className="text-[11px] font-bold text-[var(--lkv-primary-hover)] hover:underline flex items-center gap-1 cursor-pointer"
               title="Partager les coordonnées d’urgence"
             >
-              {copied ? <Check size={11} /> : <Share2 size={11} />}
+              {copied ? <Icon name="check" size={11} /> : <Share2 size={11} />}
               <span>{copied ? 'Copié !' : 'Partager'}</span>
             </button>
           </div>
@@ -76,10 +73,7 @@ export function DepartParticipants({
         {/* Liste des participants */}
         <div className="flex flex-wrap gap-2">
           {participants.map((p, idx) => (
-            <div
-              key={p.name || idx}
-              className="glass-sub-card px-3 py-1.5 flex items-center gap-2"
-            >
+            <div key={p.name || idx} className="glass-sub-card px-3 py-1.5 flex items-center gap-2">
               <div
                 className="w-6 h-6 rounded-full flex items-center justify-center text-white text-[10.5px] font-bold shadow-2xs shrink-0"
                 style={{ backgroundColor: p.color || 'var(--lkv-primary)' }}
@@ -99,7 +93,7 @@ export function DepartParticipants({
           <div className="glass-sub-card p-3 flex items-center justify-between gap-3 bg-[rgba(168,68,58,0.06)] border-[rgba(168,68,58,0.20)]">
             <div className="flex items-center gap-2.5 min-w-0">
               <div className="w-8 h-8 rounded-full bg-[rgba(168,68,58,0.12)] text-[var(--lkv-danger)] flex items-center justify-center shrink-0">
-                <ShieldCheck size={16} aria-hidden="true" />
+                <Icon name="shield-check" size={16} aria-hidden="true" />
               </div>
               <div className="min-w-0">
                 <p className="text-[10px] font-semibold uppercase tracking-wider text-[var(--lkv-danger)]">
@@ -136,7 +130,7 @@ export function DepartParticipants({
                 <AlertOctagon size={13} className="text-[var(--lkv-danger)]" />
                 <span>112 (Europe)</span>
               </div>
-              <PhoneCall size={11} className="text-[var(--lkv-text-muted)]" />
+              <Icon name="phone-call" size={11} className="text-[var(--lkv-text-muted)]" />
             </a>
 
             <a
@@ -147,7 +141,7 @@ export function DepartParticipants({
                 <Radio size={13} className="text-[var(--lkv-primary-hover)]" />
                 <span>15 (SAMU / Urgence)</span>
               </div>
-              <PhoneCall size={11} className="text-[var(--lkv-text-muted)]" />
+              <Icon name="phone-call" size={11} className="text-[var(--lkv-text-muted)]" />
             </a>
           </div>
         </div>

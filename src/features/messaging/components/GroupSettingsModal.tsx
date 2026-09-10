@@ -1,4 +1,5 @@
-"use client";
+'use client';
+import Icon from '@/components/ui/Icon';
 import { lkvConfirm } from '@/components/ui/dialogs';
 
 import React, { useState, useEffect } from 'react';
@@ -8,7 +9,6 @@ import type { Conversation, ConversationMember } from '../types/messaging.types'
 import { messagingService } from '../services/messagingService';
 import { MobileSheet } from './MobileSheet';
 import { useHapticFeedback } from '@/hooks/useHapticFeedback';
-import { Crown, Shield, User, UserMinus, LogOut, Edit2, Check, ExternalLink } from 'lucide-react';
 
 interface GroupSettingsModalProps {
   isOpen: boolean;
@@ -30,7 +30,7 @@ export const GroupSettingsModal: React.FC<GroupSettingsModalProps> = ({
   const { haptic } = useHapticFeedback();
   const [members, setMembers] = useState<ConversationMember[]>([]);
   const [loading, setLoading] = useState(false);
-  const [title, setTitle] = useState(conversation.title || 'Groupe d\'expédition');
+  const [title, setTitle] = useState(conversation.title || "Groupe d'expédition");
   const [avatarUrl, setAvatarUrl] = useState(conversation.avatar_url || '');
   const [isEditingTitle, setIsEditingTitle] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
@@ -111,7 +111,7 @@ export const GroupSettingsModal: React.FC<GroupSettingsModalProps> = ({
   };
 
   const handleLeaveGroup = async () => {
-    if (!lkvConfirm('Voulez-vous vraiment quitter ce groupe d\'expédition ?')) return;
+    if (!lkvConfirm("Voulez-vous vraiment quitter ce groupe d'expédition ?")) return;
 
     haptic('medium');
     setErrorMessage(null);
@@ -128,7 +128,8 @@ export const GroupSettingsModal: React.FC<GroupSettingsModalProps> = ({
   };
 
   // Linked Expedition Departure Cockpit URL for expedition groups
-  const expeditionUrl = conversation.id === 'demo-conv-2' ? '/hub/depart?id=demo-expedition' : '/hub/depart';
+  const expeditionUrl =
+    conversation.id === 'demo-conv-2' ? '/hub/depart?id=demo-expedition' : '/hub/depart';
 
   // Bottom sheet Liquid Glass (MobileSheet) : pattern canonique des modales
   // messagerie mobile (drag-to-dismiss, z-[10010], scrim), au lieu d'une
@@ -142,183 +143,193 @@ export const GroupSettingsModal: React.FC<GroupSettingsModalProps> = ({
       )}
 
       <div className="flex flex-col gap-4">
-          {/* Group Header Info Edit */}
-          <div className="p-3.5 bg-white/70 rounded-2xl border border-stone-200/60 flex flex-col gap-3 shadow-2xs">
-            <div className="flex items-center gap-3">
-              <div className="w-12 h-12 rounded-full overflow-hidden relative ring-2 ring-[#17402C]/20 bg-stone-200 shrink-0">
-                <Image
-                  src={avatarUrl || conversation.avatar_url || '/assets/images/no_image.png'}
-                  alt={title}
-                  fill
-                  className="object-cover"
-                  sizes="48px"
-                  onError={(e) => {
-                    (e.target as HTMLImageElement).src = '/assets/images/no_image.png';
-                  }}
-                />
-              </div>
-
-              <div className="flex-1 overflow-hidden">
-                {isEditingTitle && isAdmin ? (
-                  <div className="flex items-center gap-1.5">
-                    <input
-                      type="text"
-                      value={title}
-                      onChange={(e) => setTitle(e.target.value)}
-                      className="w-full px-2.5 py-1.5 text-[16px] md:text-xs rounded-xl border border-[#17402C]/50 bg-white font-bold text-[#17402C] shadow-inner-xs"
-                    />
-                    <button
-                      onClick={handleSaveGroupInfo}
-                      className="glass-circle-btn primary w-8 h-8 shrink-0 flex items-center justify-center"
-                    >
-                      <Check className="w-3.5 h-3.5" />
-                    </button>
-                  </div>
-                ) : (
-                  <div className="flex items-center justify-between gap-1">
-                    <h4 className="font-bold text-sm text-[#17402C] truncate">{title}</h4>
-                    {isAdmin && (
-                      <button
-                        onClick={() => setIsEditingTitle(true)}
-                        className="glass-circle-btn w-8 h-8 text-[#5A574E] hover:text-[#17402C] shrink-0"
-                        title="Modifier le nom"
-                      >
-                        <Edit2 className="w-3.5 h-3.5" />
-                      </button>
-                    )}
-                  </div>
-                )}
-                <p className="text-[11px] text-[#5A574E] font-medium">{members.length} membres inscrits</p>
-              </div>
+        {/* Group Header Info Edit */}
+        <div className="p-3.5 bg-white/70 rounded-2xl border border-stone-200/60 flex flex-col gap-3 shadow-2xs">
+          <div className="flex items-center gap-3">
+            <div className="w-12 h-12 rounded-full overflow-hidden relative ring-2 ring-[#17402C]/20 bg-stone-200 shrink-0">
+              <Image
+                src={avatarUrl || conversation.avatar_url || '/assets/images/no_image.png'}
+                alt={title}
+                fill
+                className="object-cover"
+                sizes="48px"
+                onError={(e) => {
+                  (e.target as HTMLImageElement).src = '/assets/images/no_image.png';
+                }}
+              />
             </div>
 
-            {/* Pinned Expedition Link Card */}
-            <Link
-              href={expeditionUrl}
-              onClick={onClose}
-              className="flex items-center justify-between p-2.5 bg-[#5B7F55]/10 hover:bg-[#5B7F55]/20 border border-[#5B7F55]/30 rounded-2xl text-xs text-[#17402C] font-bold transition-all group shadow-2xs"
-            >
-              <div className="flex items-center gap-2">
-                <span className="text-base">🎒</span>
-                <span>Fiche Cockpit / Matériel Partagé</span>
-              </div>
-              <ExternalLink className="w-3.5 h-3.5 text-[#17402C] group-hover:translate-x-0.5 transition-transform" />
-            </Link>
+            <div className="flex-1 overflow-hidden">
+              {isEditingTitle && isAdmin ? (
+                <div className="flex items-center gap-1.5">
+                  <input
+                    type="text"
+                    value={title}
+                    onChange={(e) => setTitle(e.target.value)}
+                    className="w-full px-2.5 py-1.5 text-[16px] md:text-xs rounded-xl border border-[#17402C]/50 bg-white font-bold text-[#17402C] shadow-inner-xs"
+                  />
+                  <button
+                    onClick={handleSaveGroupInfo}
+                    className="glass-circle-btn primary w-8 h-8 shrink-0 flex items-center justify-center"
+                  >
+                    <Icon name="check" className="w-3.5 h-3.5" />
+                  </button>
+                </div>
+              ) : (
+                <div className="flex items-center justify-between gap-1">
+                  <h4 className="font-bold text-sm text-[#17402C] truncate">{title}</h4>
+                  {isAdmin && (
+                    <button
+                      onClick={() => setIsEditingTitle(true)}
+                      className="glass-circle-btn w-8 h-8 text-[#5A574E] hover:text-[#17402C] shrink-0"
+                      title="Modifier le nom"
+                    >
+                      <Icon name="edit2" className="w-3.5 h-3.5" />
+                    </button>
+                  )}
+                </div>
+              )}
+              <p className="text-[11px] text-[#5A574E] font-medium">
+                {members.length} membres inscrits
+              </p>
+            </div>
           </div>
 
-          {/* Members List */}
-          <div>
-            <h4 className="text-xs font-bold text-[#5A574E] uppercase tracking-wider mb-2">
-              Membres de l&apos;Expédition ({members.length})
-            </h4>
+          {/* Pinned Expedition Link Card */}
+          <Link
+            href={expeditionUrl}
+            onClick={onClose}
+            className="flex items-center justify-between p-2.5 bg-[#5B7F55]/10 hover:bg-[#5B7F55]/20 border border-[#5B7F55]/30 rounded-2xl text-xs text-[#17402C] font-bold transition-all group shadow-2xs"
+          >
+            <div className="flex items-center gap-2">
+              <span className="text-base">🎒</span>
+              <span>Fiche Cockpit / Matériel Partagé</span>
+            </div>
+            <Icon
+              name="external-link"
+              className="w-3.5 h-3.5 text-[#17402C] group-hover:translate-x-0.5 transition-transform"
+            />
+          </Link>
+        </div>
 
-            {loading ? (
-              <div className="space-y-2">
-                {[1, 2, 3].map((i) => (
-                  <div key={i} className="h-12 bg-stone-100/80 animate-pulse rounded-2xl" />
-                ))}
-              </div>
-            ) : (
-              <div className="space-y-2">
-                {members.map((mem) => {
-                  const isMe = mem.user_id === currentUserId;
-                  const name = mem.profile?.full_name || (isMe ? 'Vous' : 'Voyageur LKDV');
-                  const avatar = mem.profile?.avatar_url || '/assets/images/no_image.png';
+        {/* Members List */}
+        <div>
+          <h4 className="text-xs font-bold text-[#5A574E] uppercase tracking-wider mb-2">
+            Membres de l&apos;Expédition ({members.length})
+          </h4>
 
-                  return (
-                    <div
-                      key={mem.id}
-                      className="p-2.5 bg-white/70 hover:bg-white/90 border border-stone-200/60 rounded-2xl flex items-center justify-between gap-2 shadow-2xs"
-                    >
-                      <div className="flex items-center gap-2.5 overflow-hidden">
+          {loading ? (
+            <div className="space-y-2">
+              {[1, 2, 3].map((i) => (
+                <div key={i} className="h-12 bg-stone-100/80 animate-pulse rounded-2xl" />
+              ))}
+            </div>
+          ) : (
+            <div className="space-y-2">
+              {members.map((mem) => {
+                const isMe = mem.user_id === currentUserId;
+                const name = mem.profile?.full_name || (isMe ? 'Vous' : 'Voyageur LKDV');
+                const avatar = mem.profile?.avatar_url || '/assets/images/no_image.png';
+
+                return (
+                  <div
+                    key={mem.id}
+                    className="p-2.5 bg-white/70 hover:bg-white/90 border border-stone-200/60 rounded-2xl flex items-center justify-between gap-2 shadow-2xs"
+                  >
+                    <div className="flex items-center gap-2.5 overflow-hidden">
+                      <Link
+                        href={`/profil/${mem.user_id}`}
+                        className="w-8 h-8 rounded-full overflow-hidden relative shrink-0 bg-stone-200 ring-1 ring-white cursor-pointer hover:ring-2 hover:ring-[#A3C4A3] transition-shadow"
+                        title={`Voir le profil de ${name}`}
+                        aria-label={`Voir le profil de ${name}`}
+                      >
+                        <Image
+                          src={avatar}
+                          alt={name}
+                          fill
+                          className="object-cover"
+                          sizes="32px"
+                          onError={(e) => {
+                            (e.target as HTMLImageElement).src = '/assets/images/no_image.png';
+                          }}
+                        />
+                      </Link>
+
+                      <div className="overflow-hidden">
                         <Link
                           href={`/profil/${mem.user_id}`}
-                          className="w-8 h-8 rounded-full overflow-hidden relative shrink-0 bg-stone-200 ring-1 ring-white cursor-pointer hover:ring-2 hover:ring-[#A3C4A3] transition-shadow"
+                          className="font-bold text-xs text-[#17402C] truncate flex items-center gap-1 hover:underline decoration-[#A3C4A3] underline-offset-2"
                           title={`Voir le profil de ${name}`}
-                          aria-label={`Voir le profil de ${name}`}
                         >
-                          <Image
-                            src={avatar}
-                            alt={name}
-                            fill
-                            className="object-cover"
-                            sizes="32px"
-                            onError={(e) => {
-                              (e.target as HTMLImageElement).src = '/assets/images/no_image.png';
-                            }}
-                          />
+                          <span>{name}</span>
+                          {isMe && (
+                            <span className="text-[10px] text-[#5A574E] font-normal">(Vous)</span>
+                          )}
                         </Link>
-
-                        <div className="overflow-hidden">
-                          <Link
-                            href={`/profil/${mem.user_id}`}
-                            className="font-bold text-xs text-[#17402C] truncate flex items-center gap-1 hover:underline decoration-[#A3C4A3] underline-offset-2"
-                            title={`Voir le profil de ${name}`}
-                          >
-                            <span>{name}</span>
-                            {isMe && <span className="text-[10px] text-[#5A574E] font-normal">(Vous)</span>}
-                          </Link>
-                          <span
-                            className={`inline-flex items-center gap-1 text-[10px] font-semibold px-2 py-0.5 rounded-full ${
-                              mem.role === 'owner'
-                                ? 'bg-[#FBF1DC] text-[#8C6418] border border-[#C89A3B]/35'
-                                : mem.role === 'admin'
+                        <span
+                          className={`inline-flex items-center gap-1 text-[10px] font-semibold px-2 py-0.5 rounded-full ${
+                            mem.role === 'owner'
+                              ? 'bg-[#FBF1DC] text-[#8C6418] border border-[#C89A3B]/35'
+                              : mem.role === 'admin'
                                 ? 'bg-[#5B7F55]/15 text-[#17402C] border border-[#5B7F55]/40'
                                 : 'bg-stone-100 text-[#5A574E]'
-                            }`}
-                          >
-                            {mem.role === 'owner' ? (
-                              <>
-                                <Crown className="w-2.5 h-2.5 text-[#C89A3B]" /> Organisateur
-                              </>
-                            ) : mem.role === 'admin' ? (
-                              <>
-                                <Shield className="w-2.5 h-2.5 text-[#5B7F55]" /> Admin
-                              </>
-                            ) : (
-                              <>
-                                <User className="w-2.5 h-2.5 text-[#5A574E]" /> Membre
-                              </>
-                            )}
-                          </span>
-                        </div>
-                      </div>
-
-                      {/* Admin Controls */}
-                      {isAdmin && !isMe && (
-                        <div className="flex items-center gap-1 shrink-0">
-                          {isOwner && (
-                            <button
-                              type="button"
-                              onClick={() =>
-                                handleRoleChange(
-                                  mem.user_id,
-                                  mem.role === 'admin' ? 'member' : 'admin'
-                                )
-                              }
-                              className="glass-capsule-btn xs text-[#17402C]"
-                              title={mem.role === 'admin' ? 'Rétrograder en membre' : 'Promouvoir en Admin'}
-                            >
-                              {mem.role === 'admin' ? 'Rétrograder' : 'Promouvoir'}
-                            </button>
+                          }`}
+                        >
+                          {mem.role === 'owner' ? (
+                            <>
+                              <Icon name="crown" className="w-2.5 h-2.5 text-[#C89A3B]" />{' '}
+                              Organisateur
+                            </>
+                          ) : mem.role === 'admin' ? (
+                            <>
+                              <Icon name="shield" className="w-2.5 h-2.5 text-[#5B7F55]" /> Admin
+                            </>
+                          ) : (
+                            <>
+                              <Icon name="user" className="w-2.5 h-2.5 text-[#5A574E]" /> Membre
+                            </>
                           )}
+                        </span>
+                      </div>
+                    </div>
+
+                    {/* Admin Controls */}
+                    {isAdmin && !isMe && (
+                      <div className="flex items-center gap-1 shrink-0">
+                        {isOwner && (
                           <button
                             type="button"
-                            onClick={() => handleRemoveMember(mem.user_id, name)}
-                            className="glass-circle-btn w-8 h-8 text-[#A8443A] hover:bg-[#F5DDD9]/60"
-                            title="Retirer du groupe"
+                            onClick={() =>
+                              handleRoleChange(
+                                mem.user_id,
+                                mem.role === 'admin' ? 'member' : 'admin'
+                              )
+                            }
+                            className="glass-capsule-btn xs text-[#17402C]"
+                            title={
+                              mem.role === 'admin' ? 'Rétrograder en membre' : 'Promouvoir en Admin'
+                            }
                           >
-                            <UserMinus className="w-3.5 h-3.5" />
+                            {mem.role === 'admin' ? 'Rétrograder' : 'Promouvoir'}
                           </button>
-                        </div>
-                      )}
-                    </div>
-                  );
-                })}
-              </div>
-            )}
-          </div>
+                        )}
+                        <button
+                          type="button"
+                          onClick={() => handleRemoveMember(mem.user_id, name)}
+                          className="glass-circle-btn w-8 h-8 text-[#A8443A] hover:bg-[#F5DDD9]/60"
+                          title="Retirer du groupe"
+                        >
+                          <Icon name="user-minus" className="w-3.5 h-3.5" />
+                        </button>
+                      </div>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
+          )}
         </div>
+      </div>
 
       {/* Footer Leave Group */}
       <div className="pt-3 border-t border-stone-200/60 mt-3 shrink-0">
@@ -327,7 +338,7 @@ export const GroupSettingsModal: React.FC<GroupSettingsModalProps> = ({
           disabled={loading}
           className="w-full min-h-[44px] py-2.5 px-4 bg-[#F5DDD9]/70 hover:bg-[#F5DDD9]/90 text-[#8A241B] border border-[#A8443A]/30 rounded-2xl text-xs font-bold transition-all flex items-center justify-center gap-2 active:scale-95"
         >
-          <LogOut className="w-4 h-4 text-[#8A241B]" />
+          <Icon name="log-out" className="w-4 h-4 text-[#8A241B]" />
           Quitter le groupe d&apos;expédition
         </button>
       </div>

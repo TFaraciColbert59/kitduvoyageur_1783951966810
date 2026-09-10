@@ -54,7 +54,7 @@ export function KitComparator({ kits }: { kits: KitListItem[] }) {
           </div>
           <div>
             <p className="text-xs font-semibold text-[var(--lkv-primary-soft)] mb-1.5">Poids par catégorie</p>
-            <ul className="flex flex-col gap-1 max-h-40 overflow-y-auto">
+            <ul tabIndex={0} className="flex flex-col gap-1 max-h-40 overflow-y-auto rounded-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--lkv-primary)]">
               {result.categories.map((c) => (
                 <li key={c.category} className="glass-sub-card p-2 flex items-center justify-between text-xs">
                   <span className="font-medium text-[var(--lkv-primary)]">{c.category}</span>

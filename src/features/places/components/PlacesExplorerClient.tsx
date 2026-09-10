@@ -1,9 +1,9 @@
 'use client';
 
+import Icon from '@/components/ui/Icon';
 import React, { useState, useMemo } from 'react';
 import { PlaceCard } from './PlaceCard';
 import { AddPlaceToTripModal, type UserTripOption } from './AddPlaceToTripModal';
-import { Search, MapPin, X } from 'lucide-react';
 import type { PlaceWithDistance, PlaceCategory } from '../types/place.types';
 
 export interface PlacesExplorerClientProps {
@@ -31,10 +31,7 @@ const CATEGORIES: Array<{ id: 'ALL' | PlaceCategory; label: string }> = [
   { id: 'campground', label: 'Campements' },
 ];
 
-export function PlacesExplorerClient({
-  initialPlaces,
-  userTrips,
-}: PlacesExplorerClientProps) {
+export function PlacesExplorerClient({ initialPlaces, userTrips }: PlacesExplorerClientProps) {
   const [selectedCountry, setSelectedCountry] = useState<string>('ALL');
   const [selectedCategory, setSelectedCategory] = useState<'ALL' | PlaceCategory>('ALL');
   const [searchQuery, setSearchQuery] = useState<string>('');
@@ -68,7 +65,10 @@ export function PlacesExplorerClient({
       <div className="bg-white/80 backdrop-blur-md border border-stone-200/80 rounded-xl p-4 sm:p-5 shadow-sm space-y-4">
         {/* Champ de recherche */}
         <div className="relative">
-          <Search className="w-5 h-5 text-stone-600 absolute left-4 top-1/2 -translate-y-1/2" />
+          <Icon
+            name="search"
+            className="w-5 h-5 text-stone-600 absolute left-4 top-1/2 -translate-y-1/2"
+          />
           <input
             type="text"
             value={searchQuery}
@@ -81,7 +81,7 @@ export function PlacesExplorerClient({
               onClick={() => setSearchQuery('')}
               className="absolute right-3.5 top-1/2 -translate-y-1/2 p-1 text-stone-600 hover:text-stone-700"
             >
-              <X className="w-4 h-4" />
+              <Icon name="x" className="w-4 h-4" />
             </button>
           )}
         </div>
@@ -124,19 +124,18 @@ export function PlacesExplorerClient({
       {/* Résumé des résultats */}
       <div className="flex items-center justify-between text-xs text-stone-600 px-1">
         <span>
-          <strong className="text-stone-900 font-bold">{filteredPlaces.length}</strong> lieux répertoriés
+          <strong className="text-stone-900 font-bold">{filteredPlaces.length}</strong> lieux
+          répertoriés
         </span>
         {filteredPlaces.length > 0 && (
-          <span className="text-stone-600">
-            Triés par score bayésien & preuve terrain
-          </span>
+          <span className="text-stone-600">Triés par score bayésien & preuve terrain</span>
         )}
       </div>
 
       {/* Grille des Lieux */}
       {filteredPlaces.length === 0 ? (
         <div className="p-12 text-center bg-white/70 border border-stone-200/80 rounded-card">
-          <MapPin className="w-8 h-8 text-stone-600 mx-auto mb-2" />
+          <Icon name="map-pin" className="w-8 h-8 text-stone-600 mx-auto mb-2" />
           <h3 className="text-base font-bold text-stone-900">
             Aucun lieu ne correspond à ces critères
           </h3>

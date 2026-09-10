@@ -1,6 +1,6 @@
 ﻿'use client';
+import Icon from '@/components/ui/Icon';
 import Link from 'next/link';
-import { ShieldCheck, AlertTriangle } from 'lucide-react';
 import { ArrowRightIcon as ArrowRightAnimated } from '@/components/icons/arrow-right';
 import { GlassCard } from '@/components/ui/GlassCard';
 import { Badge } from '@/components/ui/Badge';
@@ -29,12 +29,17 @@ export function GearCardAlertes({ data, className }: { data: AlertesData; classN
         {/* Header with Title & Large Metric */}
         <div className="flex items-start justify-between pr-7 md:pr-10">
           <div className="space-y-0.5">
-            <h2 id="alertes-title" className="text-[13px] sm:text-[20px] font-display font-bold text-[var(--lkv-primary)] leading-tight truncate">
+            <h2
+              id="alertes-title"
+              className="text-[13px] sm:text-[20px] font-display font-bold text-[var(--lkv-primary)] leading-tight truncate"
+            >
               Alertes
             </h2>
           </div>
           <div className="text-right shrink-0">
-            <span className={`text-[18px] sm:text-[36px] font-mono font-bold leading-none ${data.count > 0 ? (data.criticalCount > 0 ? 'text-[var(--lkv-danger)]' : 'text-[var(--lkv-warning)]') : 'text-[var(--lkv-primary)]'}`}>
+            <span
+              className={`text-[18px] sm:text-[36px] font-mono font-bold leading-none ${data.count > 0 ? (data.criticalCount > 0 ? 'text-[var(--lkv-danger)]' : 'text-[var(--lkv-warning)]') : 'text-[var(--lkv-primary)]'}`}
+            >
               {data.count}
             </span>
             <span className="block text-[8px] sm:text-[10.5px] font-semibold uppercase tracking-wider text-[var(--lkv-text-muted)]">
@@ -48,7 +53,7 @@ export function GearCardAlertes({ data, className }: { data: AlertesData; classN
           {data.criticalCount > 0 && (
             <Badge tone="danger">
               <span className="flex items-center gap-1 text-[8.5px] sm:text-[10px]">
-                <AlertTriangle size={9} />
+                <Icon name="alert-triangle" size={9} />
                 <span>{data.criticalCount} critique</span>
               </span>
             </Badge>
@@ -61,7 +66,7 @@ export function GearCardAlertes({ data, className }: { data: AlertesData; classN
           {data.count === 0 && (
             <Badge tone="sage">
               <span className="flex items-center gap-1 text-[8.5px] sm:text-[10px]">
-                <ShieldCheck size={9} />
+                <Icon name="shield-check" size={9} />
                 <span>Parc 100% fiable</span>
               </span>
             </Badge>
@@ -82,7 +87,10 @@ export function GearCardAlertes({ data, className }: { data: AlertesData; classN
           <span className="text-[9.5px] sm:text-xs text-[var(--lkv-text-muted)] truncate max-w-[80px] sm:max-w-[140px]">
             {data.lastAlertLabel ?? 'Tout est sain'}
           </span>
-          <Link href="/hub/alertes" className="glass-capsule-btn secondary text-[9.5px] sm:text-xs !h-6 sm:!h-7 !px-2 sm:!px-2.5">
+          <Link
+            href="/hub/alertes"
+            className="glass-capsule-btn secondary text-[9.5px] sm:text-xs !h-6 sm:!h-7 !px-2 sm:!px-2.5"
+          >
             <span>Détails</span>
             <ArrowRightAnimated size={10} />
           </Link>

@@ -1,8 +1,8 @@
 'use client';
 
+import Icon from '@/components/ui/Icon';
 import React, { useState } from 'react';
 import Link from 'next/link';
-import { Plus } from 'lucide-react';
 import { QuickCreateTripModal } from '@/features/trips/components/QuickCreateTripModal';
 import { HUB_NEW_HREF } from '../registry/hubSectionRegistry';
 
@@ -21,7 +21,7 @@ export function HubQuickCreate() {
         onClick={() => setOpen(true)}
         className="glass-capsule-btn primary w-full min-h-[44px] !px-3 flex items-center justify-center gap-1.5 text-xs font-bold cursor-pointer active:scale-[0.98]"
       >
-        <Plus size={14} aria-hidden="true" />
+        <Icon name="plus" size={14} aria-hidden="true" />
         <span>Nouvelle activité</span>
       </button>
       <Link

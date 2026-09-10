@@ -1,9 +1,9 @@
 ﻿'use client';
 
+import Icon from '@/components/ui/Icon';
 import React from 'react';
 import * as Dialog from '@radix-ui/react-dialog';
 import { motion, AnimatePresence, useReducedMotion } from 'framer-motion';
-import { X } from 'lucide-react';
 
 export interface GlassModalProps {
   open: boolean;
@@ -62,7 +62,9 @@ export function GlassModal({
                 exit={reduceMotion ? undefined : { opacity: 0, y: isSheet ? '100%' : 8 }}
                 transition={{ duration: reduceMotion ? 0 : 0.28, ease: [0.32, 0.72, 0, 1] }}
               >
-                <div className={`flex items-center justify-between gap-3 ${isSheet ? 'px-5 pt-4 sticky top-0 z-10 bg-[color:var(--glass-bg-strong)]/90 backdrop-blur-xl pb-3' : 'pb-3'}`}>
+                <div
+                  className={`flex items-center justify-between gap-3 ${isSheet ? 'px-5 pt-4 sticky top-0 z-10 bg-[color:var(--glass-bg-strong)]/90 backdrop-blur-xl pb-3' : 'pb-3'}`}
+                >
                   <Dialog.Title
                     className={
                       hideTitle
@@ -78,7 +80,7 @@ export function GlassModal({
                       aria-label="Fermer"
                       className="h-11 w-11 min-w-[44px] rounded-full glass-sub-card border border-white/60 flex items-center justify-center text-[var(--lkv-text-secondary)] hover:text-[var(--lkv-text-primary)] hover:bg-white transition-all cursor-pointer shadow-2xs active:scale-95"
                     >
-                      <X size={18} aria-hidden="true" />
+                      <Icon name="x" size={18} aria-hidden="true" />
                     </button>
                   </Dialog.Close>
                 </div>

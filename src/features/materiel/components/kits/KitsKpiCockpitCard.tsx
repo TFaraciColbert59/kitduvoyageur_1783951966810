@@ -1,8 +1,8 @@
 'use client';
 
+import Icon from '@/components/ui/Icon';
 import { motion } from 'framer-motion';
 import { GlassCard } from '@/components/ui/GlassCard';
-import { Package, Scale } from 'lucide-react';
 import { ShoppingBagIcon as ShoppingBag } from '@/components/icons/shopping-bag';
 import { LayersIcon as Layers } from '@/components/icons/layers';
 
@@ -31,9 +31,24 @@ export function KitsKpiCockpitCard({
   }
 
   const TILES: TileItem[] = [
-    { label: 'Prêts', value: activeCount, unit: 'nb', icon: <Package size={10} aria-hidden="true" /> },
-    { label: 'Poids', value: weightKg, unit: 'kg', icon: <Scale size={10} aria-hidden="true" /> },
-    { label: 'Articles', value: totalItemsCount, unit: 'art.', icon: <Layers size={10} aria-hidden="true" /> },
+    {
+      label: 'Prêts',
+      value: activeCount,
+      unit: 'nb',
+      icon: <Icon name="package" size={10} aria-hidden="true" />,
+    },
+    {
+      label: 'Poids',
+      value: weightKg,
+      unit: 'kg',
+      icon: <Icon name="scale" size={10} aria-hidden="true" />,
+    },
+    {
+      label: 'Articles',
+      value: totalItemsCount,
+      unit: 'art.',
+      icon: <Layers size={10} aria-hidden="true" />,
+    },
     {
       label: 'Commande',
       value: shopItemsCount,
@@ -44,7 +59,12 @@ export function KitsKpiCockpitCard({
   ];
 
   return (
-    <GlassCard as="article" tone="sage" ariaLabelledBy="kpi-title" className="p-2 sm:p-3 flex flex-col justify-between h-full min-h-0">
+    <GlassCard
+      as="article"
+      tone="sage"
+      ariaLabelledBy="kpi-title"
+      className="p-2 sm:p-3 flex flex-col justify-between h-full min-h-0"
+    >
       <div className="flex items-center justify-between gap-1 pr-7 md:pr-14 shrink-0 mb-1">
         <p className="truncate text-[10px] md:text-xs font-semibold text-[var(--lkv-primary)] font-body">
           <span className="sm:hidden">Indicateurs</span>
@@ -54,7 +74,9 @@ export function KitsKpiCockpitCard({
           Synthèse
         </span>
       </div>
-      <h3 id="kpi-title" className="sr-only">Indicateurs clés du matériel</h3>
+      <h3 id="kpi-title" className="sr-only">
+        Indicateurs clés du matériel
+      </h3>
 
       {/* Métriques en grille 2x2 sur mobile et 4 colonnes sur desktop */}
       <div className="flex-1 grid grid-cols-2 md:grid-cols-4 gap-1 items-stretch min-h-0">

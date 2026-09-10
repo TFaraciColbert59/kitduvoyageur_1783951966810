@@ -158,7 +158,8 @@ describe('queries-trip-kit (Chantier 6 — Service Layer)', () => {
   });
 
   it('toggles item packed state', async () => {
-    mockFrom.mockReturnValue(createMockChain());
+    // .select('id') renvoie la ligne modifiée — 0 ligne = échec explicite (RLS).
+    mockFrom.mockReturnValue(createMockChain([{ id: 'item-1' }]));
 
     const ok = await toggleTripItemPacked('item-1', true);
 
@@ -166,8 +167,18 @@ describe('queries-trip-kit (Chantier 6 — Service Layer)', () => {
     expect(ok).toBe(true);
   });
 
+  it('retourne false quand 0 ligne est modifiée (RLS bloque l’écriture)', async () => {
+    mockFrom.mockReturnValue(createMockChain([]));
+
+    const packed = await toggleTripItemPacked('item-1', true);
+    const deleted = await deleteTripItem('item-1');
+
+    expect(packed).toBe(false);
+    expect(deleted).toBe(false);
+  });
+
   it('deletes an item from trip_items', async () => {
-    mockFrom.mockReturnValue(createMockChain());
+    mockFrom.mockReturnValue(createMockChain([{ id: 'item-1' }]));
 
     const ok = await deleteTripItem('item-1');
 

@@ -159,9 +159,16 @@ for (const pat of secretPatterns) {
 }
 ok('Invariant 5b : Aucun secret en dur détecté dans src/');
 
+// 6. NOMS D'ICÔNES RÉSOLUS VIA LE REGISTRE CANONIQUE
+try {
+  execSync('node scripts/verify/icon-names.mjs', { stdio: 'inherit' });
+  ok('Invariant 6 : Tous les noms d\'icônes canoniques sont résolus');
+} catch {
+  fail('Invariant 6 : scripts/verify/icon-names.mjs a échoué');
+}
+
 // RÉSULTAT GLOBAL
-console.log('\n----------------------------------------');
-if (failures > 0) {
+console.log('\n----------------------------------------');if (failures > 0) {
   console.error(`✗ ÉCHEC : ${failures} violation(s) des invariants détectée(s).`);
   process.exit(1);
 } else {

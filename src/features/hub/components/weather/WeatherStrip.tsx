@@ -1,4 +1,4 @@
-import { CloudOff, Droplets } from 'lucide-react';
+import Icon from '@/components/ui/Icon';
 import { weatherLabel, type WeatherDay } from '@/features/materiel/services/getWeather';
 import { getWeatherIcon } from './getWeatherIcon';
 
@@ -18,14 +18,19 @@ export interface WeatherStripProps {
  * Météo null : coquille conservée (géométrie/reserveBottom stables) avec
  * « Météo indisponible » — aucune donnée fabriquée.
  */
-export function WeatherStrip({ current, days = [], locationLabel, variant = 'strip' }: WeatherStripProps) {
+export function WeatherStrip({
+  current,
+  days = [],
+  locationLabel,
+  variant = 'strip',
+}: WeatherStripProps) {
   if (!current) {
     if (variant === 'capsule') {
       return (
         <div className="glass backdrop-blur-lg rounded-2xl p-2">
           <div className="flex items-center gap-2 min-h-[44px]">
             <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-white/80 border border-white/70 text-[var(--lkv-text-muted)]">
-              <CloudOff size={16} aria-hidden="true" />
+              <Icon name="cloud-off" size={16} aria-hidden="true" />
             </span>
             <p className="text-[9px] font-medium uppercase tracking-[0.14em] text-[var(--lkv-text-secondary)] truncate leading-none">
               Météo indisponible
@@ -38,7 +43,7 @@ export function WeatherStrip({ current, days = [], locationLabel, variant = 'str
       <div className="glass rounded-xl px-3 py-2">
         <div className="flex items-center gap-2.5 min-h-[44px]">
           <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-white/80 border border-white/70 text-[var(--lkv-text-muted)]">
-            <CloudOff size={18} aria-hidden="true" />
+            <Icon name="cloud-off" size={18} aria-hidden="true" />
           </span>
           <p className="text-sm font-bold text-[var(--lkv-text-primary)]">Météo indisponible</p>
         </div>
@@ -77,7 +82,11 @@ export function WeatherStrip({ current, days = [], locationLabel, variant = 'str
                   <p className="text-[8px] font-bold uppercase text-[var(--lkv-text-muted)] leading-none">
                     {d.day}
                   </p>
-                  <Icon size={11} className="my-0.5 text-[var(--lkv-secondary)]" aria-hidden="true" />
+                  <Icon
+                    size={11}
+                    className="my-0.5 text-[var(--lkv-secondary)]"
+                    aria-hidden="true"
+                  />
                   <p className="text-[9px] font-bold text-[var(--lkv-text-primary)] leading-none">
                     {Math.round(d.tempMaxC)}°
                   </p>
@@ -105,7 +114,7 @@ export function WeatherStrip({ current, days = [], locationLabel, variant = 'str
           </p>
         </div>
         <p className="shrink-0 flex items-center gap-1 text-[11px] font-semibold text-[var(--lkv-text-secondary)]">
-          <Droplets size={12} aria-hidden="true" />
+          <Icon name="droplets" size={12} aria-hidden="true" />
           {current.precipPct}%
         </p>
       </div>
@@ -122,7 +131,11 @@ export function WeatherStrip({ current, days = [], locationLabel, variant = 'str
                 <p className="text-[9px] font-medium uppercase tracking-[0.14em] text-[var(--lkv-text-muted)]">
                   {d.day}
                 </p>
-                <Icon size={14} className="mx-auto my-0.5 text-[var(--lkv-secondary)]" aria-hidden="true" />
+                <Icon
+                  size={14}
+                  className="mx-auto my-0.5 text-[var(--lkv-secondary)]"
+                  aria-hidden="true"
+                />
                 <p className="text-[10px] font-bold text-[var(--lkv-text-primary)] leading-none">
                   {Math.round(d.tempMaxC)}°
                   <span className="ml-1 font-medium text-[var(--lkv-text-muted)]">
@@ -130,7 +143,7 @@ export function WeatherStrip({ current, days = [], locationLabel, variant = 'str
                   </span>
                 </p>
                 <p className="mt-0.5 flex items-center justify-center gap-0.5 text-[9px] font-semibold text-[var(--lkv-text-secondary)] leading-none">
-                  <Droplets size={9} aria-hidden="true" />
+                  <Icon name="droplets" size={9} aria-hidden="true" />
                   {d.precipPct}%
                 </p>
               </div>

@@ -1,5 +1,7 @@
 'use client';
+
 import React from 'react';
+
 import { HomeIcon as HomeAnimated } from '@/components/icons/home';
 import { MountainIcon as MountainAnimated } from '@/components/icons/mountain';
 import { CompassIcon as CompassAnimated } from '@/components/icons/compass';
@@ -28,112 +30,90 @@ import { FilterIcon as FilterAnimated } from '@/components/icons/filter';
 import { MinusIcon as MinusAnimated } from '@/components/icons/minus';
 import { PlusIcon as PlusAnimated } from '@/components/icons/plus';
 
+import Icon from './Icon';
+import type { IconGlyphProps } from './Icon';
+
+export type LkvIconName =
+  | 'home'
+  | 'mountain'
+  | 'bag'
+  | 'doc'
+  | 'user'
+  | 'search'
+  | 'chevron-left'
+  | 'chevron-right'
+  | 'heart'
+  | 'bookmark'
+  | 'bell'
+  | 'map-pin'
+  | 'star'
+  | 'minus'
+  | 'plus'
+  | 'close'
+  | 'menu'
+  | 'arrow-right'
+  | 'arrow-left'
+  | 'lock'
+  | 'filter'
+  | 'users'
+  | 'compass'
+  | 'box'
+  | 'sparkles'
+  | 'tent'
+  | 'book';
+
+const ANIMATED_ICONS: Record<LkvIconName, React.ComponentType<IconGlyphProps>> = {
+  home: HomeAnimated,
+  mountain: MountainAnimated,
+  compass: CompassAnimated,
+  box: BoxAnimated,
+  users: UsersAnimated,
+  user: UserAnimated,
+  sparkles: SparklesAnimated,
+  tent: TentAnimated,
+  book: BookAnimated,
+  bag: ShoppingBagAnimated,
+  doc: DocAnimated,
+  search: SearchAnimated,
+  'chevron-left': ChevronLeftAnimated,
+  'chevron-right': ChevronRightAnimated,
+  'arrow-right': ArrowRightAnimated,
+  'arrow-left': ArrowLeftAnimated,
+  close: XAnimated,
+  menu: MenuAnimated,
+  bell: BellAnimated,
+  heart: HeartAnimated,
+  bookmark: BookmarkAnimated,
+  'map-pin': MapPinAnimated,
+  star: StarAnimated,
+  lock: LockAnimated,
+  filter: FilterAnimated,
+  minus: MinusAnimated,
+  plus: PlusAnimated,
+};
+
 export interface LkvIconProps {
-  name:
-    | 'home'
-    | 'mountain'
-    | 'bag'
-    | 'doc'
-    | 'user'
-    | 'search'
-    | 'chevron-left'
-    | 'chevron-right'
-    | 'heart'
-    | 'bookmark'
-    | 'bell'
-    | 'map-pin'
-    | 'star'
-    | 'minus'
-    | 'plus'
-    | 'close'
-    | 'menu'
-    | 'arrow-right'
-    | 'arrow-left'
-    | 'lock'
-    | 'filter'
-    | 'users'
-    | 'compass'
-    | 'box'
-    | 'sparkles'
-    | 'tent'
-    | 'book';
+  name: LkvIconName;
   size?: number;
   color?: string;
   className?: string;
   style?: React.CSSProperties;
 }
 
-export default function LkvIcon({
-  name,
-  size = 20,
-  color = 'currentColor',
-  className = '',
-  style,
-}: LkvIconProps) {
-  const mergedStyle: React.CSSProperties = {
-    color: color === 'currentColor' ? 'currentColor' : color,
-    display: 'inline-flex',
-    alignItems: 'center',
-    justifyContent: 'center',
-    ...style,
-  };
+/**
+ * Legacy adapter — delegates to the canonical `Icon` primitive using the local
+ * animated SVG set. The animated components are imported here (not in `Icon`)
+ * so the PNG/Heroicons consumers never pull them into their bundle.
+ */
+export default function LkvIcon({ name, size = 20, color = 'currentColor', className = '', style }: LkvIconProps) {
+  const component = ANIMATED_ICONS[name];
 
-  switch (name) {
-    case 'home':
-      return <HomeAnimated size={size} className={className} style={mergedStyle} />;
-    case 'mountain':
-      return <MountainAnimated size={size} className={className} style={mergedStyle} />;
-    case 'compass':
-      return <CompassAnimated size={size} className={className} style={mergedStyle} />;
-    case 'box':
-      return <BoxAnimated size={size} className={className} style={mergedStyle} />;
-    case 'users':
-      return <UsersAnimated size={size} className={className} style={mergedStyle} />;
-    case 'user':
-      return <UserAnimated size={size} className={className} style={mergedStyle} />;
-    case 'sparkles':
-      return <SparklesAnimated size={size} className={className} style={mergedStyle} />;
-    case 'tent':
-      return <TentAnimated size={size} className={className} style={mergedStyle} />;
-    case 'book':
-      return <BookAnimated size={size} className={className} style={mergedStyle} />;
-    case 'bag':
-      return <ShoppingBagAnimated size={size} className={className} style={mergedStyle} />;
-    case 'doc':
-      return <DocAnimated size={size} className={className} style={mergedStyle} />;
-    case 'search':
-      return <SearchAnimated size={size} className={className} style={mergedStyle} />;
-    case 'chevron-left':
-      return <ChevronLeftAnimated size={size} className={className} style={mergedStyle} />;
-    case 'chevron-right':
-      return <ChevronRightAnimated size={size} className={className} style={mergedStyle} />;
-    case 'arrow-right':
-      return <ArrowRightAnimated size={size} className={className} style={mergedStyle} />;
-    case 'arrow-left':
-      return <ArrowLeftAnimated size={size} className={className} style={mergedStyle} />;
-    case 'close':
-      return <XAnimated size={size} className={className} style={mergedStyle} />;
-    case 'menu':
-      return <MenuAnimated size={size} className={className} style={mergedStyle} />;
-    case 'bell':
-      return <BellAnimated size={size} className={className} style={mergedStyle} />;
-    case 'heart':
-      return <HeartAnimated size={size} className={className} style={mergedStyle} />;
-    case 'bookmark':
-      return <BookmarkAnimated size={size} className={className} style={mergedStyle} />;
-    case 'map-pin':
-      return <MapPinAnimated size={size} className={className} style={mergedStyle} />;
-    case 'star':
-      return <StarAnimated size={size} className={className} style={mergedStyle} />;
-    case 'lock':
-      return <LockAnimated size={size} className={className} style={mergedStyle} />;
-    case 'filter':
-      return <FilterAnimated size={size} className={className} style={mergedStyle} />;
-    case 'minus':
-      return <MinusAnimated size={size} className={className} style={mergedStyle} />;
-    case 'plus':
-      return <PlusAnimated size={size} className={className} style={mergedStyle} />;
-    default:
-      return null;
+  if (!component) {
+    if (process.env.NODE_ENV !== 'production') {
+      console.warn(`[LkvIcon] Unknown animated icon "${name}".`);
+    }
+    return null;
   }
+
+  return <Icon name={name} source="animated" component={component} size={size} color={color} className={className} style={style} />;
 }

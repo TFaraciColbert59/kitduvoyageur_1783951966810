@@ -1,26 +1,23 @@
 'use client';
 
+import Icon from '@/components/ui/Icon';
 import React from 'react';
 import Link from 'next/link';
-import { Sparkles, Scale, CheckCircle2, ShieldAlert } from 'lucide-react';
 import { ChevronLeftIcon as ChevronLeftAnimated } from '@/components/icons/chevron-left';
 import { usePreparationStore } from '../stores/usePreparationStore';
 import { useHapticFeedback } from '@/hooks/useHapticFeedback';
 
 export function PreparationHeader() {
-  const {
-    trekName,
-    destination,
-    getPreparationStats,
-    getWeightBreakdown,
-  } = usePreparationStore();
+  const { trekName, destination, getPreparationStats, getWeightBreakdown } = usePreparationStore();
   const { triggerHaptic } = useHapticFeedback();
 
   const stats = getPreparationStats();
   const breakdown = getWeightBreakdown();
   const totalPackKg = (breakdown.totalPackWeightGrams / 1000).toFixed(1);
 
-  const cleanDestination = trekName ? trekName.replace(/\s*\(copie\)/gi, '').trim() : 'Préparation Trek';
+  const cleanDestination = trekName
+    ? trekName.replace(/\s*\(copie\)/gi, '').trim()
+    : 'Préparation Trek';
 
   return (
     <header className="w-full flex flex-col gap-2 shrink-0">
@@ -51,7 +48,9 @@ export function PreparationHeader() {
         </div>
 
         <div className="flex items-center gap-1.5 shrink-0">
-          <span className={`px-2.5 py-1 rounded-full text-xs font-bold border shadow-xs backdrop-blur-md ${stats.statusColor}`}>
+          <span
+            className={`px-2.5 py-1 rounded-full text-xs font-bold border shadow-xs backdrop-blur-md ${stats.statusColor}`}
+          >
             {stats.statusLabel}
           </span>
         </div>
@@ -61,7 +60,7 @@ export function PreparationHeader() {
       <div className="w-full bg-white/90 dark:bg-[#17402C]/90 p-3.5 rounded-3xl border border-white/80 dark:border-white/20 shadow-sm space-y-2.5 backdrop-blur-xl">
         <div className="flex items-center justify-between text-xs font-bold text-[#17402C] dark:text-[#E7E3D6]">
           <div className="flex items-center gap-1.5">
-            <Sparkles size={15} className="text-forest-700 dark:text-forest-400" />
+            <Icon name="sparkles" size={15} className="text-forest-700 dark:text-forest-400" />
             <span>Complétude globale</span>
           </div>
           <span className="font-mono font-bold text-sm text-[#17402C] dark:text-white">
@@ -80,19 +79,29 @@ export function PreparationHeader() {
         {/* 4 Micro-Pillules d'état */}
         <div className="grid grid-cols-4 gap-1.5 pt-0.5 text-center text-[10px] font-mono font-semibold">
           <div className="p-1.5 rounded-xl bg-white/80 dark:bg-white/10 border border-white/60 dark:border-white/10 shadow-2xs flex flex-col items-center">
-            <span className="text-[#5A7064] dark:text-[#9AAD9E] text-[9px] uppercase">Sac (Dos)</span>
+            <span className="text-[#5A7064] dark:text-[#9AAD9E] text-[9px] uppercase">
+              Sac (Dos)
+            </span>
             <span className="text-[#17402C] dark:text-white font-bold">{totalPackKg} kg</span>
           </div>
           <div className="p-1.5 rounded-xl bg-white/80 dark:bg-white/10 border border-white/60 dark:border-white/10 shadow-2xs flex flex-col items-center">
-            <span className="text-[#5A7064] dark:text-[#9AAD9E] text-[9px] uppercase">Dans le sac</span>
-            <span className="text-[#17402C] dark:text-white font-bold">{stats.packedCount}/{stats.totalCount}</span>
+            <span className="text-[#5A7064] dark:text-[#9AAD9E] text-[9px] uppercase">
+              Dans le sac
+            </span>
+            <span className="text-[#17402C] dark:text-white font-bold">
+              {stats.packedCount}/{stats.totalCount}
+            </span>
           </div>
           <div className="p-1.5 rounded-xl bg-white/80 dark:bg-white/10 border border-white/60 dark:border-white/10 shadow-2xs flex flex-col items-center">
             <span className="text-[#5A7064] dark:text-[#9AAD9E] text-[9px] uppercase">Vitaux</span>
-            <span className="text-[#17402C] dark:text-white font-bold">{stats.vitalPackedCount}/{stats.vitalCount}</span>
+            <span className="text-[#17402C] dark:text-white font-bold">
+              {stats.vitalPackedCount}/{stats.vitalCount}
+            </span>
           </div>
           <div className="p-1.5 rounded-xl bg-white/80 dark:bg-white/10 border border-white/60 dark:border-white/10 shadow-2xs flex flex-col items-center">
-            <span className="text-[#5A7064] dark:text-[#9AAD9E] text-[9px] uppercase">À acheter</span>
+            <span className="text-[#5A7064] dark:text-[#9AAD9E] text-[9px] uppercase">
+              À acheter
+            </span>
             <span className="text-sand-800 dark:text-sand-300 font-bold">{stats.toBuyCount}</span>
           </div>
         </div>

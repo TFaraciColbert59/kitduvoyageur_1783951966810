@@ -1,12 +1,12 @@
 'use client';
 
+import Icon from '@/components/ui/Icon';
 import React, { useState } from 'react';
 import type { HumanParticipant, DogParticipant } from '../../types/preparation.types';
 import { usePreparationStore } from '../../stores/usePreparationStore';
 import { GlassBreakModal } from '../modals/GlassBreakModal';
 import { AddParticipantModal } from '../modals/AddParticipantModal';
 import { useHapticFeedback } from '@/hooks/useHapticFeedback';
-import { Plus, Shield, HeartPulse, Trash2, AlertTriangle, CheckCircle2 } from 'lucide-react';
 import { UsersIcon as Users } from '@/components/icons/users';
 
 export function TeamTab() {
@@ -72,16 +72,28 @@ export function TeamTab() {
 
         <div className="grid grid-cols-3 gap-2 text-center text-xs">
           <div className="p-2 rounded-2xl bg-white/80 dark:bg-white/10 border border-white/60 dark:border-white/10 shadow-2xs">
-            <span className="text-[9px] uppercase font-mono text-[#5A7064] dark:text-[#9AAD9E] block">Portage Total</span>
-            <span className="text-sm font-extrabold font-mono text-[#17402C] dark:text-white">{totalPayloadKg} kg</span>
+            <span className="text-[9px] uppercase font-mono text-[#5A7064] dark:text-[#9AAD9E] block">
+              Portage Total
+            </span>
+            <span className="text-sm font-extrabold font-mono text-[#17402C] dark:text-white">
+              {totalPayloadKg} kg
+            </span>
           </div>
           <div className="p-2 rounded-2xl bg-white/80 dark:bg-white/10 border border-white/60 dark:border-white/10 shadow-2xs">
-            <span className="text-[9px] uppercase font-mono text-[#5A7064] dark:text-[#9AAD9E] block">Eau / Jour</span>
-            <span className="text-sm font-extrabold font-mono text-[#17402C] dark:text-white">{totalWaterLiters} L</span>
+            <span className="text-[9px] uppercase font-mono text-[#5A7064] dark:text-[#9AAD9E] block">
+              Eau / Jour
+            </span>
+            <span className="text-sm font-extrabold font-mono text-[#17402C] dark:text-white">
+              {totalWaterLiters} L
+            </span>
           </div>
           <div className="p-2 rounded-2xl bg-white/80 dark:bg-white/10 border border-white/60 dark:border-white/10 shadow-2xs">
-            <span className="text-[9px] uppercase font-mono text-[#5A7064] dark:text-[#9AAD9E] block">Fiches ICE</span>
-            <span className="text-sm font-extrabold font-mono text-forest-700 dark:text-forest-400">Sécurisées 🔒</span>
+            <span className="text-[9px] uppercase font-mono text-[#5A7064] dark:text-[#9AAD9E] block">
+              Fiches ICE
+            </span>
+            <span className="text-sm font-extrabold font-mono text-forest-700 dark:text-forest-400">
+              Sécurisées 🔒
+            </span>
           </div>
         </div>
       </div>
@@ -90,7 +102,9 @@ export function TeamTab() {
       <div className="p-4 rounded-3xl bg-white/90 dark:bg-[#17402C]/90 backdrop-blur-xl border border-white/80 dark:border-white/20 shadow-xs space-y-2.5">
         <h4 className="text-xs font-bold text-[#17402C] dark:text-white flex items-center justify-between">
           <span>Équilibre des Charges & Limites Sécuritaires</span>
-          <span className="text-[10px] text-[#5A7064] dark:text-[#9AAD9E] font-normal">Max : 20% humain / 15% chien</span>
+          <span className="text-[10px] text-[#5A7064] dark:text-[#9AAD9E] font-normal">
+            Max : 20% humain / 15% chien
+          </span>
         </h4>
 
         <div className="space-y-2">
@@ -100,13 +114,19 @@ export function TeamTab() {
                 <div className="flex items-center gap-1.5">
                   <span className="text-xs">{load.type === 'human' ? '👤' : '🐾'}</span>
                   <span className="font-bold text-[#17402C] dark:text-white">{load.name}</span>
-                  <span className="text-[10px] text-[#5A7064] dark:text-[#9AAD9E]">({load.roleOrBreed})</span>
+                  <span className="text-[10px] text-[#5A7064] dark:text-[#9AAD9E]">
+                    ({load.roleOrBreed})
+                  </span>
                 </div>
                 <div className="flex items-center gap-1 font-mono text-[10px]">
-                  <span className={`font-bold ${load.isOverloaded ? 'text-red-700' : 'text-[#17402C] dark:text-white'}`}>
+                  <span
+                    className={`font-bold ${load.isOverloaded ? 'text-red-700' : 'text-[#17402C] dark:text-white'}`}
+                  >
                     {load.allocatedWeightKg} kg
                   </span>
-                  <span className="text-[#5A7064] dark:text-[#9AAD9E]">/ max {load.maxSafeWeightKg} kg</span>
+                  <span className="text-[#5A7064] dark:text-[#9AAD9E]">
+                    / max {load.maxSafeWeightKg} kg
+                  </span>
                   {load.isOverloaded ? (
                     <span className="text-red-600 font-bold ml-1">⚠️ Surcharge!</span>
                   ) : (
@@ -122,8 +142,8 @@ export function TeamTab() {
                     load.isOverloaded
                       ? 'bg-red-500'
                       : load.loadPercentage > 85
-                      ? 'bg-amber-500'
-                      : 'bg-emerald-600'
+                        ? 'bg-amber-500'
+                        : 'bg-emerald-600'
                   }`}
                   style={{ width: `${Math.min(100, Math.max(5, load.loadPercentage))}%` }}
                 />
@@ -144,7 +164,7 @@ export function TeamTab() {
             onClick={() => handleOpenAdd('human')}
             className="px-3.5 py-1 rounded-full bg-[#17402C] hover:bg-[#1f543a] text-white font-bold text-xs shadow-xs flex items-center gap-1 active:scale-95 transition-all"
           >
-            <Plus size={13} />
+            <Icon name="plus" size={13} />
             <span>Ajouter un équipier</span>
           </button>
         </div>
@@ -168,12 +188,15 @@ export function TeamTab() {
                         <h4 className="text-xs sm:text-sm font-bold text-[#17402C] dark:text-white">
                           {human.publicData.firstName}
                         </h4>
-                        <span className={`text-[9px] font-bold px-2 py-0.5 rounded-full border ${role.bg}`}>
+                        <span
+                          className={`text-[9px] font-bold px-2 py-0.5 rounded-full border ${role.bg}`}
+                        >
                           {role.label}
                         </span>
                       </div>
                       <p className="text-[11px] text-[#365233] dark:text-[#9AAD9E] font-mono mt-0.5">
-                        🎒 Sac : {human.publicData.packWeightKg} kg · Forme : {human.publicData.fitnessScore}%
+                        🎒 Sac : {human.publicData.packWeightKg} kg · Forme :{' '}
+                        {human.publicData.fitnessScore}%
                       </p>
                     </div>
                   </div>
@@ -188,7 +211,7 @@ export function TeamTab() {
                       className="text-[#5A7064] hover:text-red-600 p-1 text-xs"
                       title="Supprimer l'équipier"
                     >
-                      <Trash2 size={14} />
+                      <Icon name="trash2" size={14} />
                     </button>
                   )}
                 </div>
@@ -196,7 +219,12 @@ export function TeamTab() {
                 {/* Bottom Action: Glass Break ICE */}
                 <div className="flex items-center justify-between pt-2 border-t border-black/5 dark:border-white/10">
                   <span className="text-[10px] font-mono text-[#5A7064] dark:text-[#9AAD9E] flex items-center gap-1">
-                    <Shield size={11} className="text-forest-700 dark:text-forest-400" /> Matrice Médicale Privée
+                    <Icon
+                      name="shield"
+                      size={11}
+                      className="text-forest-700 dark:text-forest-400"
+                    />{' '}
+                    Matrice Médicale Privée
                   </span>
 
                   <button
@@ -207,7 +235,7 @@ export function TeamTab() {
                     }}
                     className="px-3 py-1 rounded-xl bg-white hover:bg-white/90 text-xs font-bold text-[#17402C] border border-white/80 shadow-2xs flex items-center gap-1 active:scale-95 transition-all"
                   >
-                    <HeartPulse size={12} className="text-red-600" />
+                    <Icon name="heart-pulse" size={12} className="text-red-600" />
                     <span>Fiche ICE d'urgence →</span>
                   </button>
                 </div>
@@ -228,7 +256,7 @@ export function TeamTab() {
             onClick={() => handleOpenAdd('dog')}
             className="px-3.5 py-1 rounded-full bg-sand-800 hover:bg-sand-700 text-white font-bold text-xs shadow-xs flex items-center gap-1 active:scale-95 transition-all"
           >
-            <Plus size={13} />
+            <Icon name="plus" size={13} />
             <span>Ajouter un chien</span>
           </button>
         </div>
@@ -251,7 +279,9 @@ export function TeamTab() {
                     </div>
                     <div>
                       <div className="flex items-center gap-1.5">
-                        <h4 className="text-xs sm:text-sm font-bold text-[#17402C] dark:text-white">{dog.name}</h4>
+                        <h4 className="text-xs sm:text-sm font-bold text-[#17402C] dark:text-white">
+                          {dog.name}
+                        </h4>
                         <span className="text-[9px] font-bold px-2 py-0.5 rounded-full bg-sand-100 text-sand-900 border border-sand-300">
                           {dog.breed}
                         </span>
@@ -271,18 +301,24 @@ export function TeamTab() {
                     className="text-[#5A7064] hover:text-red-600 p-1 text-xs"
                     title="Supprimer le chien"
                   >
-                    <Trash2 size={14} />
+                    <Icon name="trash2" size={14} />
                   </button>
                 </div>
 
                 <div className="grid grid-cols-2 gap-2 text-[10px] font-mono pt-2 border-t border-black/5 dark:border-white/10">
                   <div className="p-2 rounded-xl bg-white/80 dark:bg-white/10 text-center border border-white/60">
                     <span className="text-[#5A7064] dark:text-[#9AAD9E] block">Ration Eau</span>
-                    <span className="font-bold text-[#17402C] dark:text-white">{dog.waterRationLitersPerDay} L / jour</span>
+                    <span className="font-bold text-[#17402C] dark:text-white">
+                      {dog.waterRationLitersPerDay} L / jour
+                    </span>
                   </div>
                   <div className="p-2 rounded-xl bg-white/80 dark:bg-white/10 text-center border border-white/60">
-                    <span className="text-[#5A7064] dark:text-[#9AAD9E] block">Ration Croquettes</span>
-                    <span className="font-bold text-[#17402C] dark:text-white">{dog.foodRationGramsPerDay} g / jour</span>
+                    <span className="text-[#5A7064] dark:text-[#9AAD9E] block">
+                      Ration Croquettes
+                    </span>
+                    <span className="font-bold text-[#17402C] dark:text-white">
+                      {dog.foodRationGramsPerDay} g / jour
+                    </span>
                   </div>
                 </div>
               </div>

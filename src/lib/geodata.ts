@@ -95,6 +95,29 @@ export async function fetchPlaces(
   return (data ?? []) as PlaceGeo[];
 }
 
+/**
+ * Retourne les lieux géolocalisés d'un pays (coordonnées non nulles).
+ * Utile pour dériver une emprise (bbox) quand `countries_geo.geometry` est vide.
+ */
+export async function fetchPlacesByCountry(
+  isoA2: string,
+  limit = 200
+): Promise<Pick<PlaceGeo, "name" | "latitude" | "longitude" | "population">[]> {
+  const { data, error } = await supabase
+    .from("places_geo")
+    .select("name, latitude, longitude, population")
+    .eq("country_iso_a2", isoA2.toUpperCase())
+    .not("latitude", "is", null)
+    .not("longitude", "is", null)
+    .order("population", { ascending: false })
+    .limit(limit);
+  if (error) {
+    console.warn(`[geodata] fetchPlacesByCountry(${isoA2}):`, error.message);
+    return [];
+  }
+  return data ?? [];
+}
+
 /** Retourne les noms alternatifs d'un lieu (par id UUID). */
 export async function fetchPlaceNames(placeId: string): Promise<PlaceNameGeo[]> {
   const { data, error } = await supabase

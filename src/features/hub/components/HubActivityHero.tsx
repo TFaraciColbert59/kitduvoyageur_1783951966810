@@ -1,10 +1,10 @@
 'use client';
 
+import Icon from '@/components/ui/Icon';
 import React, { useState } from 'react';
 import Link from 'next/link';
 import AppImage from '@/components/ui/AppImage';
 import { GlassCapsuleBtn } from '@/components/ui/GlassCapsuleBtn';
-import { Check, MapPin, Share2, Sparkles } from 'lucide-react';
 import { motion, useReducedMotion } from 'framer-motion';
 
 /**
@@ -111,7 +111,9 @@ export function HubActivityHero({
           {daysUntil !== null && daysUntil !== undefined && (
             <span
               className="rounded-2xl bg-white/15 backdrop-blur-sm border border-white/25 px-3 py-1.5 text-center"
-              aria-label={daysUntil >= 0 ? `Départ dans ${daysUntil} jours` : 'Activité en cours ou passée'}
+              aria-label={
+                daysUntil >= 0 ? `Départ dans ${daysUntil} jours` : 'Activité en cours ou passée'
+              }
             >
               <span className="block text-lg font-extrabold tabular-nums leading-none">
                 {daysUntil >= 0 ? `J-${daysUntil}` : 'En cours'}
@@ -128,7 +130,7 @@ export function HubActivityHero({
             </h1>
             {subtitle && (
               <p className="text-xs sm:text-sm text-white/85 mt-0.5 flex items-center gap-1.5">
-                <MapPin size={13} aria-hidden="true" />
+                <Icon name="map-pin" size={13} aria-hidden="true" />
                 <span className="truncate">{subtitle}</span>
               </p>
             )}
@@ -140,7 +142,7 @@ export function HubActivityHero({
                 aria-label={`Assistant IA — ${assistantContextLabel}`}
                 className="inline-flex items-center gap-1.5 min-h-[44px] px-3.5 rounded-full bg-white/15 border border-white/30 backdrop-blur-sm text-xs font-bold text-white cursor-pointer active:scale-95 transition-transform"
               >
-                <Sparkles size={14} aria-hidden="true" />
+                <Icon name="sparkles" size={14} aria-hidden="true" />
                 <span className="truncate max-w-[140px]">Assistant IA</span>
               </Link>
             )}
@@ -148,7 +150,7 @@ export function HubActivityHero({
               variant="secondary"
               size="sm"
               onClick={handleShare}
-              icon={copied ? <Check size={15} /> : <Share2 size={15} />}
+              icon={copied ? <Icon name="check" size={15} /> : <Icon name="share2" size={15} />}
               className="!bg-white/15 !border-white/30 !text-white"
             >
               {copied ? 'Copié !' : 'Partager'}

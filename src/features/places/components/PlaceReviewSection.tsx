@@ -1,17 +1,9 @@
 'use client';
 
+import Icon from '@/components/ui/Icon';
 import React, { useState, useTransition } from 'react';
 import { GlassCard } from '@/components/ui/GlassCard';
 import { LkvButton } from '@/components/ui/LkvButton';
-import {
-  Star,
-  ShieldCheck,
-  Calendar,
-  AlertCircle,
-  CheckCircle2,
-  MessageSquarePlus,
-  Compass,
-} from 'lucide-react';
 import { addPlaceReviewAction } from '@/app/lieux/actions';
 import type { PlaceReview } from '../types/place.types';
 
@@ -97,13 +89,12 @@ export function PlaceReviewSection({
           </div>
 
           <div>
-            <h3 className="text-lg font-bold text-stone-900">
-              Évaluation Communautaire
-            </h3>
+            <h3 className="text-lg font-bold text-stone-900">Évaluation Communautaire</h3>
             <div className="flex items-center gap-2 mt-1">
               <div className="flex items-center text-sand-500">
                 {[1, 2, 3, 4, 5].map((star) => (
-                  <Star
+                  <Icon
+                    name="star"
                     key={star}
                     className={`w-4 h-4 ${
                       star <= Math.round(bayesianRating)
@@ -118,7 +109,8 @@ export function PlaceReviewSection({
               </span>
             </div>
             <p className="text-xs text-stone-600 mt-1">
-              Moyenne bayésienne pondérée avec doublement du score pour les retours terrain certifiés.
+              Moyenne bayésienne pondérée avec doublement du score pour les retours terrain
+              certifiés.
             </p>
           </div>
         </div>
@@ -129,7 +121,7 @@ export function PlaceReviewSection({
           className="min-h-[44px] flex items-center gap-2 shrink-0"
           onClick={() => setShowForm(!showForm)}
         >
-          <MessageSquarePlus className="w-4 h-4" />
+          <Icon name="message-square-plus" className="w-4 h-4" />
           {showForm ? 'Masquer le formulaire' : 'Donner mon avis'}
         </LkvButton>
       </GlassCard>
@@ -142,14 +134,14 @@ export function PlaceReviewSection({
           className="p-6 rounded-card border border-white/80 animate-fade-in"
         >
           <h4 className="text-base font-bold text-stone-900 mb-4 flex items-center gap-2">
-            <Compass className="w-4 h-4 text-[#17402C]" />
+            <Icon name="compass" className="w-4 h-4 text-[#17402C]" />
             Votre retour d’expérience terrain
           </h4>
 
           <form onSubmit={handleSubmitReview} className="space-y-4">
             {errorMsg && (
               <div className="p-3.5 rounded-2xl bg-rose-50 border border-rose-200 text-rose-800 text-xs flex items-center gap-2">
-                <AlertCircle className="w-4 h-4 text-rose-700 shrink-0" />
+                <Icon name="alert-circle" className="w-4 h-4 text-rose-700 shrink-0" />
                 <span>{errorMsg}</span>
               </div>
             )}
@@ -167,7 +159,8 @@ export function PlaceReviewSection({
                     onClick={() => setRating(s)}
                     className="p-2 min-h-[44px] min-w-[44px] flex items-center justify-center rounded-xl hover:bg-stone-100 transition-colors"
                   >
-                    <Star
+                    <Icon
+                      name="star"
                       className={`w-6 h-6 ${
                         s <= rating ? 'fill-amber-400 text-amber-500' : 'text-stone-300'
                       }`}
@@ -226,7 +219,8 @@ export function PlaceReviewSection({
                 <strong className="text-stone-900 font-semibold block">
                   Preuve de passage sur le terrain
                 </strong>
-                J’atteste m’être rendu personnellement sur ce site. Mon avis aura un coefficient double dans le calcul bayésien du lieu.
+                J’atteste m’être rendu personnellement sur ce site. Mon avis aura un coefficient
+                double dans le calcul bayésien du lieu.
               </label>
             </div>
 
@@ -256,7 +250,7 @@ export function PlaceReviewSection({
 
       {successMsg && (
         <div className="p-4 rounded-2xl bg-forest-50 border border-forest-200 text-forest-900 text-xs flex items-center gap-2">
-          <CheckCircle2 className="w-4 h-4 text-forest-600 shrink-0" />
+          <Icon name="check-circle2" className="w-4 h-4 text-forest-600 shrink-0" />
           <span>{successMsg}</span>
         </div>
       )}
@@ -285,7 +279,8 @@ export function PlaceReviewSection({
                 <div className="flex items-center gap-2">
                   <div className="flex items-center text-sand-500">
                     {[1, 2, 3, 4, 5].map((s) => (
-                      <Star
+                      <Icon
+                        name="star"
                         key={s}
                         className={`w-3.5 h-3.5 ${
                           s <= rev.rating ? 'fill-amber-400 text-amber-500' : 'text-stone-300'
@@ -296,7 +291,7 @@ export function PlaceReviewSection({
 
                   {rev.has_field_proof && (
                     <span className="inline-flex items-center gap-1 text-[11px] font-bold text-[#17402C] bg-[#5B7F55]/15 px-2.5 py-0.5 rounded-full border border-[#5B7F55]/20">
-                      <ShieldCheck className="w-3.5 h-3.5 text-[#17402C]" />
+                      <Icon name="shield-check" className="w-3.5 h-3.5 text-[#17402C]" />
                       Preuve terrain certifiée
                     </span>
                   )}
@@ -304,7 +299,7 @@ export function PlaceReviewSection({
 
                 {rev.visit_date && (
                   <span className="text-[11px] text-stone-500 flex items-center gap-1">
-                    <Calendar className="w-3 h-3 text-stone-400" />
+                    <Icon name="calendar" className="w-3 h-3 text-stone-400" />
                     Visité le {rev.visit_date}
                   </span>
                 )}

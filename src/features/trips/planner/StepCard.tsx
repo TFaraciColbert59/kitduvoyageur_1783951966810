@@ -1,23 +1,8 @@
 'use client';
 
+import Icon from '@/components/ui/Icon';
 import React from 'react';
-import {
-  Footprints,
-  Car,
-  Bus,
-  Train,
-  Plane,
-  Ship,
-  Bike,
-  Compass,
-  ChevronUp,
-  ChevronDown,
-  ArrowRightLeft,
-  Pencil,
-  Trash2,
-  MapPin,
-  BedDouble,
-} from 'lucide-react';
+import { Footprints, Car, Bus, Train, Plane, Ship, Bike, Compass } from 'lucide-react';
 import type { PlannerStep } from './plannerEngine';
 
 export interface StepCardProps {
@@ -113,7 +98,7 @@ export function StepCard({
               </span>
               {step.location_name && (
                 <span className="text-xs text-[var(--lkv-text-muted)] flex items-center gap-1 truncate max-w-[200px]">
-                  <MapPin className="w-3.5 h-3.5 text-[var(--lkv-primary)] shrink-0" />
+                  <Icon name="map-pin" className="w-3.5 h-3.5 text-[var(--lkv-primary)] shrink-0" />
                   {step.location_name}
                 </span>
               )}
@@ -148,7 +133,10 @@ export function StepCard({
               )}
               {step.accommodation_name && (
                 <span className="inline-flex items-center gap-1 glass-sub-card px-2.5 py-1 rounded-full border border-white/60 text-xs text-[var(--lkv-primary)] font-medium shadow-2xs truncate max-w-[200px]">
-                  <BedDouble className="w-3.5 h-3.5 text-[var(--lkv-primary)] shrink-0" />
+                  <Icon
+                    name="bed-double"
+                    className="w-3.5 h-3.5 text-[var(--lkv-primary)] shrink-0"
+                  />
                   {step.accommodation_name}
                 </span>
               )}
@@ -172,7 +160,7 @@ export function StepCard({
                     : 'glass-sub-card border border-white/60 text-[var(--lkv-text-muted)] hover:text-[var(--lkv-primary)] hover:bg-white/90 active:scale-95'
                 }`}
               >
-                <ChevronUp className="w-4 h-4" />
+                <Icon name="chevron-up" className="w-4 h-4" />
               </button>
               <button
                 type="button"
@@ -185,7 +173,7 @@ export function StepCard({
                     : 'glass-sub-card border border-white/60 text-[var(--lkv-text-muted)] hover:text-[var(--lkv-primary)] hover:bg-white/90 active:scale-95'
                 }`}
               >
-                <ChevronDown className="w-4 h-4" />
+                <Icon name="chevron-down" className="w-4 h-4" />
               </button>
             </div>
 
@@ -197,7 +185,7 @@ export function StepCard({
               title="Déplacer vers un autre jour"
               className="w-9 h-9 sm:w-8 sm:h-8 rounded-full glass-sub-card border border-white/60 flex items-center justify-center text-[var(--lkv-text-muted)] hover:text-[var(--lkv-primary)] hover:bg-white/90 active:scale-95 transition-all shadow-2xs"
             >
-              <ArrowRightLeft className="w-4 h-4" />
+              <Icon name="arrow-right-left" className="w-4 h-4" />
             </button>
 
             {/* Modifier */}
@@ -208,7 +196,7 @@ export function StepCard({
               title="Modifier"
               className="w-9 h-9 sm:w-8 sm:h-8 rounded-full glass-sub-card border border-white/60 flex items-center justify-center text-[var(--lkv-text-muted)] hover:text-[var(--lkv-primary)] hover:bg-white/90 active:scale-95 transition-all shadow-2xs"
             >
-              <Pencil className="w-4 h-4" />
+              <Icon name="pencil" className="w-4 h-4" />
             </button>
 
             {/* Supprimer */}
@@ -219,7 +207,7 @@ export function StepCard({
               title="Supprimer"
               className="w-9 h-9 sm:w-8 sm:h-8 rounded-full glass-sub-card border border-white/60 flex items-center justify-center text-[var(--lkv-text-muted)] hover:text-[var(--lkv-danger)] hover:bg-[var(--lkv-danger)]/10 active:scale-95 transition-all shadow-2xs"
             >
-              <Trash2 className="w-4 h-4" />
+              <Icon name="trash2" className="w-4 h-4" />
             </button>
           </div>
         )}

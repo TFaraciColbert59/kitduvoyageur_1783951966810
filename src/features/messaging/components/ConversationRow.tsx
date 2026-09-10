@@ -1,11 +1,11 @@
-"use client";
+'use client';
 
+import Icon from '@/components/ui/Icon';
 import React, { useRef, useState } from 'react';
 import Image from 'next/image';
 import { useRouter } from 'next/navigation';
 import type { Conversation } from '../types/messaging.types';
 import { formatConversationTimestamp } from '../lib/messagingUtils';
-import { Users, BellOff, Bell, Archive, Check, X, ArchiveRestore } from 'lucide-react';
 import { useHapticFeedback } from '@/hooks/useHapticFeedback';
 import { useLongPress } from '@/hooks/gestures';
 
@@ -142,65 +142,72 @@ export const ConversationRow: React.FC<ConversationRowProps> = ({
           Rendu conditionnel : hors geste, la couche n'existe pas dans le DOM —
           elle ne peut donc pas transparaître derrière la carte translucide. */}
       {(dx < 0 || snappedOpen) && (
-      <div className="absolute inset-y-0 right-0 flex items-stretch" style={{ width: REVEAL_WIDTH }}>
-        <div className="flex-1 flex items-center justify-center gap-0">
-          {isPending ? (
-            <>
-              <button
-                type="button"
-                onClick={() => fire('accept')}
-                aria-label="Accepter la demande"
-                className="h-full flex-1 bg-[#2D6B4A] text-white flex flex-col items-center justify-center gap-1 active:opacity-85"
-              >
-                <Check className="w-5 h-5" />
-                <span className="text-[9px] font-bold">Accepter</span>
-              </button>
-              <button
-                type="button"
-                onClick={() => fire('decline')}
-                aria-label="Refuser la demande"
-                className="h-full flex-1 bg-[#8A241B] text-white flex flex-col items-center justify-center gap-1 active:opacity-85"
-              >
-                <X className="w-5 h-5" />
-                <span className="text-[9px] font-bold">Refuser</span>
-              </button>
-            </>
-          ) : (
-            <>
-              <button
-                type="button"
-                onClick={() => fire('archive')}
-                aria-label={conversation.is_archived ? 'Désarchiver' : 'Archiver'}
-                className="h-full flex-1 bg-[#17402C] text-white flex flex-col items-center justify-center gap-1 active:opacity-85"
-              >
-                {conversation.is_archived ? (
-                  <ArchiveRestore className="w-5 h-5" />
-                ) : (
-                  <Archive className="w-5 h-5" />
-                )}
-                <span className="text-[9px] font-bold">
-                  {conversation.is_archived ? 'Restaurer' : 'Archiver'}
-                </span>
-              </button>
-              <button
-                type="button"
-                onClick={() => fire('mute')}
-                aria-label={conversation.is_muted ? 'Réactiver les notifications' : 'Masquer les notifications'}
-                className="h-full flex-1 bg-[#C89A3B] text-white flex flex-col items-center justify-center gap-1 active:opacity-85"
-              >
-                {conversation.is_muted ? (
-                  <Bell className="w-5 h-5" />
-                ) : (
-                  <BellOff className="w-5 h-5" />
-                )}
-                <span className="text-[9px] font-bold">
-                  {conversation.is_muted ? 'Son' : 'Muet'}
-                </span>
-              </button>
-            </>
-          )}
+        <div
+          className="absolute inset-y-0 right-0 flex items-stretch"
+          style={{ width: REVEAL_WIDTH }}
+        >
+          <div className="flex-1 flex items-center justify-center gap-0">
+            {isPending ? (
+              <>
+                <button
+                  type="button"
+                  onClick={() => fire('accept')}
+                  aria-label="Accepter la demande"
+                  className="h-full flex-1 bg-[#2D6B4A] text-white flex flex-col items-center justify-center gap-1 active:opacity-85"
+                >
+                  <Icon name="check" className="w-5 h-5" />
+                  <span className="text-[9px] font-bold">Accepter</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => fire('decline')}
+                  aria-label="Refuser la demande"
+                  className="h-full flex-1 bg-[#8A241B] text-white flex flex-col items-center justify-center gap-1 active:opacity-85"
+                >
+                  <Icon name="x" className="w-5 h-5" />
+                  <span className="text-[9px] font-bold">Refuser</span>
+                </button>
+              </>
+            ) : (
+              <>
+                <button
+                  type="button"
+                  onClick={() => fire('archive')}
+                  aria-label={conversation.is_archived ? 'Désarchiver' : 'Archiver'}
+                  className="h-full flex-1 bg-[#17402C] text-white flex flex-col items-center justify-center gap-1 active:opacity-85"
+                >
+                  {conversation.is_archived ? (
+                    <Icon name="archive-restore" className="w-5 h-5" />
+                  ) : (
+                    <Icon name="archive" className="w-5 h-5" />
+                  )}
+                  <span className="text-[9px] font-bold">
+                    {conversation.is_archived ? 'Restaurer' : 'Archiver'}
+                  </span>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => fire('mute')}
+                  aria-label={
+                    conversation.is_muted
+                      ? 'Réactiver les notifications'
+                      : 'Masquer les notifications'
+                  }
+                  className="h-full flex-1 bg-[#C89A3B] text-white flex flex-col items-center justify-center gap-1 active:opacity-85"
+                >
+                  {conversation.is_muted ? (
+                    <Icon name="bell" className="w-5 h-5" />
+                  ) : (
+                    <Icon name="bell-off" className="w-5 h-5" />
+                  )}
+                  <span className="text-[9px] font-bold">
+                    {conversation.is_muted ? 'Son' : 'Muet'}
+                  </span>
+                </button>
+              </>
+            )}
+          </div>
         </div>
-      </div>
       )}
 
       {/* Carte de la conversation (se translate) */}
@@ -233,9 +240,9 @@ export const ConversationRow: React.FC<ConversationRowProps> = ({
           isSelected
             ? 'bg-[#17402C]/10 border-[#17402C]/30 shadow-xs ring-1 ring-[#17402C]/20'
             : unreadCount > 0
-            ? // Conversation avec messages non lus : ombre portée douce (pas de compteur).
-              'bg-white/95 border-white/90 shadow-md'
-            : 'bg-white/95 border-white/85 shadow-2xs'
+              ? // Conversation avec messages non lus : ombre portée douce (pas de compteur).
+                'bg-white/95 border-white/90 shadow-md'
+              : 'bg-white/95 border-white/85 shadow-2xs'
         }`}
         style={{
           transform: `translate3d(${dx}px,0,0)`,
@@ -271,7 +278,7 @@ export const ConversationRow: React.FC<ConversationRowProps> = ({
           </span>
           {isGroup && (
             <span className="absolute -bottom-1 -right-1 bg-[#17402C] text-white rounded-full p-1 shadow-xs border border-white">
-              <Users className="w-3 h-3" />
+              <Icon name="users" className="w-3 h-3" />
             </span>
           )}
         </div>
@@ -294,7 +301,11 @@ export const ConversationRow: React.FC<ConversationRowProps> = ({
                       }
                     : undefined
                 }
-                className={profileId ? 'cursor-pointer hover:underline decoration-[#A3C4A3] underline-offset-2' : ''}
+                className={
+                  profileId
+                    ? 'cursor-pointer hover:underline decoration-[#A3C4A3] underline-offset-2'
+                    : ''
+                }
               >
                 {title}
               </span>
@@ -315,7 +326,9 @@ export const ConversationRow: React.FC<ConversationRowProps> = ({
             </p>
 
             <span className="flex items-center gap-1.5 shrink-0">
-              {conversation.is_muted && <BellOff className="w-3.5 h-3.5 text-[#8C8779]" />}
+              {conversation.is_muted && (
+                <Icon name="bell-off" className="w-3.5 h-3.5 text-[#8C8779]" />
+              )}
             </span>
           </div>
         </div>

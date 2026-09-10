@@ -1,5 +1,5 @@
 import Link from 'next/link';
-import { ArrowRight, ArrowUpRight } from 'lucide-react';
+import Icon from '@/components/ui/Icon';
 import { hubSectionHref, type HubAdventureRef } from '../registry/hubSectionRegistry';
 import { tripSwitchHref } from '@/features/trips/registry/tripSectionRegistry';
 import type { HubWidgetId } from '../engine/hubProfileEngine';
@@ -65,7 +65,9 @@ export function HubWidgetBody({
       return (
         <WidgetCard
           label="Invitations"
-          value={data.pendingInvites === 0 ? 'Aucune en attente' : `${data.pendingInvites} en attente`}
+          value={
+            data.pendingInvites === 0 ? 'Aucune en attente' : `${data.pendingInvites} en attente`
+          }
           href={hubSectionHref(adventure, 'invitations')}
         />
       );
@@ -85,7 +87,7 @@ export function HubWidgetBody({
           className="glass-capsule-btn primary inline-flex items-center justify-center gap-2 min-h-[44px] px-4 w-full"
         >
           <span>Entrer dans le voyage</span>
-          <ArrowUpRight size={14} aria-hidden="true" />
+          <Icon name="arrow-up-right" size={14} aria-hidden="true" />
         </Link>
       );
     default:
@@ -93,15 +95,7 @@ export function HubWidgetBody({
   }
 }
 
-function WidgetCard({
-  label,
-  value,
-  href,
-}: {
-  label: string;
-  value: string;
-  href: string;
-}) {
+function WidgetCard({ label, value, href }: { label: string; value: string; href: string }) {
   return (
     <Link
       href={href}
@@ -110,7 +104,7 @@ function WidgetCard({
       <p className="text-sm font-bold text-[var(--lkv-text-primary)] leading-snug">{value}</p>
       <p className="text-[10px] font-medium uppercase tracking-[0.14em] text-[var(--lkv-text-muted)] mt-1 flex items-center gap-1">
         <span>{label}</span>
-        <ArrowRight size={11} aria-hidden="true" />
+        <Icon name="arrow-right" size={11} aria-hidden="true" />
       </p>
     </Link>
   );

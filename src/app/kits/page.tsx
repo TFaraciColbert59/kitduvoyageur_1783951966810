@@ -1,23 +1,25 @@
 import { Metadata } from 'next';
+import Icon from '@/components/ui/Icon';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
 import MobilePageShell from '@/components/mobile-nav/MobilePageShell';
 import Link from 'next/link';
 import { GlassCard } from '@/components/ui/GlassCard';
 import { Eyebrow } from '@/components/ui/Eyebrow';
-import { ArrowRight, Backpack } from 'lucide-react';
 
 const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://lekitduvoyageur.fr';
 
 export const metadata: Metadata = {
   title: 'Kits de voyage prêts à partir — Le Kit du Voyageur',
-  description: 'Découvrez nos kits de voyage complets et optimisés pour chaque destination. Équipement sélectionné, testé et prêt à partir.',
+  description:
+    'Découvrez nos kits de voyage complets et optimisés pour chaque destination. Équipement sélectionné, testé et prêt à partir.',
   alternates: {
     canonical: `${siteUrl}/kits`,
   },
   openGraph: {
     title: 'Kits de voyage prêts à partir — Le Kit du Voyageur',
-    description: 'Découvrez nos kits de voyage complets et optimisés pour chaque destination. Équipement sélectionné, testé et prêt à partir.',
+    description:
+      'Découvrez nos kits de voyage complets et optimisés pour chaque destination. Équipement sélectionné, testé et prêt à partir.',
     url: `${siteUrl}/kits`,
     type: 'website',
   },
@@ -34,14 +36,14 @@ const KITS = [
   {
     slug: 'gr20-corse',
     nom: 'Kit GR20 — Corse Intégrale',
-    description: 'Le kit optimisé pour le GR20, l\'un des sentiers les plus exigeants d\'Europe',
+    description: "Le kit optimisé pour le GR20, l'un des sentiers les plus exigeants d'Europe",
     weight: '11.8 kg',
     itemsCount: 15,
   },
   {
     slug: 'vanlife-europe',
     nom: 'Kit Vanlife — Europe',
-    description: 'Tout ce qu\'il faut pour vivre et dormir dans son van à travers l\'Europe',
+    description: "Tout ce qu'il faut pour vivre et dormir dans son van à travers l'Europe",
     weight: '22.5 kg',
     itemsCount: 24,
   },
@@ -52,7 +54,8 @@ export default function KitsPage() {
     '@context': 'https://schema.org',
     '@type': 'CollectionPage',
     name: 'Kits de voyage prêts à partir — Le Kit du Voyageur',
-    description: 'Découvrez nos kits de voyage complets et optimisés pour chaque destination. Équipement sélectionné, testé et prêt à partir.',
+    description:
+      'Découvrez nos kits de voyage complets et optimisés pour chaque destination. Équipement sélectionné, testé et prêt à partir.',
     url: `${siteUrl}/kits`,
     isPartOf: {
       '@type': 'WebSite',
@@ -104,7 +107,8 @@ export default function KitsPage() {
                 Kits de voyage
               </h1>
               <p className="text-[#5A7064] max-w-2xl text-base">
-                Découvrez nos kits complets et optimisés pour chaque destination. Équipement sélectionné, testé et prêt à partir.
+                Découvrez nos kits complets et optimisés pour chaque destination. Équipement
+                sélectionné, testé et prêt à partir.
               </p>
             </header>
 
@@ -118,9 +122,7 @@ export default function KitsPage() {
                   className="p-6 flex flex-col justify-between gap-4"
                 >
                   <div className="space-y-2">
-                    <h2 className="font-display font-bold text-xl text-[#17402C]">
-                      {kit.nom}
-                    </h2>
+                    <h2 className="font-display font-bold text-xl text-[#17402C]">{kit.nom}</h2>
                     <p className="text-sm text-[#365233] leading-relaxed">{kit.description}</p>
                   </div>
 
@@ -128,12 +130,9 @@ export default function KitsPage() {
                     <span className="text-xs font-mono font-medium text-[#5A7064]">
                       {kit.weight} · {kit.itemsCount} articles
                     </span>
-                    <Link
-                      href={`/kits/${kit.slug}`}
-                      className="glass-capsule-btn secondary"
-                    >
+                    <Link href={`/kits/${kit.slug}`} className="glass-capsule-btn secondary">
                       <span>Voir le kit</span>
-                      <ArrowRight size={14} />
+                      <Icon name="arrow-right" size={14} />
                     </Link>
                   </div>
                 </GlassCard>
@@ -164,7 +163,8 @@ export default function KitsPage() {
             </header>
 
             <p className="text-xs text-[#5A7064] leading-relaxed">
-              Kits complets et optimisés pour chaque destination. Équipement sélectionné, testé et prêt à partir.
+              Kits complets et optimisés pour chaque destination. Équipement sélectionné, testé et
+              prêt à partir.
             </p>
 
             <div className="flex flex-col gap-3">
@@ -177,9 +177,7 @@ export default function KitsPage() {
                   className="p-4 flex flex-col gap-3"
                 >
                   <div className="flex items-start justify-between gap-2">
-                    <h2 className="font-display font-bold text-[17px] text-[#17402C]">
-                      {kit.nom}
-                    </h2>
+                    <h2 className="font-display font-bold text-[17px] text-[#17402C]">{kit.nom}</h2>
                   </div>
                   <p className="text-xs text-[#365233] leading-relaxed">{kit.description}</p>
 
@@ -187,12 +185,9 @@ export default function KitsPage() {
                     <span className="text-[11px] font-mono text-[#5A7064]">
                       {kit.weight} · {kit.itemsCount} articles
                     </span>
-                    <Link
-                      href={`/kits/${kit.slug}`}
-                      className="glass-capsule-btn primary"
-                    >
+                    <Link href={`/kits/${kit.slug}`} className="glass-capsule-btn primary">
                       <span>Explorer</span>
-                      <ArrowRight size={13} />
+                      <Icon name="arrow-right" size={13} />
                     </Link>
                   </div>
                 </GlassCard>

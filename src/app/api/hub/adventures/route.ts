@@ -6,7 +6,7 @@ export const dynamic = 'force-dynamic';
 /**
  * H2.2/H3.1 — Aventures de l'utilisateur pour le sélecteur (`AdventureSwitcher`).
  * Délègue à `getHubAdventureData` (source unique, partagée avec le layout /hub).
- * Payload inchangé : groupes, invitations, équipages, compteurs possession.
+ * Payload : groupes, invitations, compteurs possession.
  * Non connecté → zéros/vides (jamais 401, miroir /api/voyages/mine).
  */
 export async function GET() {
@@ -15,14 +15,12 @@ export async function GET() {
     return NextResponse.json({
       groups: data.groups,
       pendingInvites: data.pendingInvites,
-      crews: data.crews,
       possession: data.possession,
     });
   } catch (err: unknown) {
     return NextResponse.json({
       groups: [],
       pendingInvites: 0,
-      crews: [],
       possession: { items: 0, loans: 0, alerts: 0 },
       error: err instanceof Error ? err.message : 'unknown',
     });

@@ -1,8 +1,8 @@
 'use client';
 
+import Icon from '@/components/ui/Icon';
 import { motion, useDragControls } from 'framer-motion';
 import type { Variants } from 'framer-motion';
-import { GripVertical } from 'lucide-react';
 import { useRef, useState } from 'react';
 import Link from 'next/link';
 import { useKitsOrder } from '@/features/materiel/store/useKitsOrder';
@@ -58,12 +58,7 @@ interface Props {
   products: ProductSuggestion[];
 }
 
-export function KitsCockpit({
-  kits = [],
-  inventory = [],
-  publicKits = [],
-  products = [],
-}: Props) {
+export function KitsCockpit({ kits = [], inventory = [], publicKits = [], products = [] }: Props) {
   const { order, setOrder } = useKitsOrder();
   const refs = useRef<Record<string, HTMLDivElement | null>>({});
 
@@ -248,8 +243,8 @@ function DraggableCard({
         className="!absolute top-1.5 right-1.5 md:top-2 md:right-2 z-20 h-6 w-6 md:h-8 md:w-8 !rounded-full glass interactive flex items-center justify-center text-[var(--lkv-primary)] cursor-grab touch-none focus-visible:ring-2 focus-visible:ring-[var(--lkv-primary)]"
         aria-label={`Déplacer le widget ${LABEL[id] ?? id}`}
       >
-        <GripVertical size={12} className="md:hidden" aria-hidden="true" />
-        <GripVertical size={16} className="hidden md:block" aria-hidden="true" />
+        <Icon name="grip-vertical" size={12} className="md:hidden" aria-hidden="true" />
+        <Icon name="grip-vertical" size={16} className="hidden md:block" aria-hidden="true" />
       </button>
       <div className="h-full min-h-0 overflow-hidden [&>article]:h-full [&>article]:min-h-0 [&>article]:flex [&>article]:flex-col">
         {children}

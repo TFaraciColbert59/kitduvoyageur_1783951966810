@@ -1,8 +1,8 @@
 'use client';
 
+import Icon from '@/components/ui/Icon';
 import React from 'react';
 import { useRouter } from 'next/navigation';
-import { Check, Compass } from 'lucide-react';
 import { useActiveAdventure } from '../context/ActiveAdventureContext';
 import { adventureKey, resolveAdventureHref } from '../context/adventureLists';
 import type { HubUserTripLite } from '../server/getHubAdventureData';
@@ -26,20 +26,34 @@ export function HubSidebarActivities({ trips, activeSlug = null }: HubSidebarAct
   if (trips.length === 0) return null;
 
   const open = async (t: HubUserTripLite): Promise<void> => {
-    const ok = await setActiveAdventure({ nature: 'sortie', id: t.id, slug: t.slug, title: t.title });
+    const ok = await setActiveAdventure({
+      nature: 'sortie',
+      id: t.id,
+      slug: t.slug,
+      title: t.title,
+    });
     if (!ok) return;
-    router.push(resolveAdventureHref({ nature: 'sortie', id: t.id, slug: t.slug, title: t.title }, getLastSection));
+    router.push(
+      resolveAdventureHref(
+        { nature: 'sortie', id: t.id, slug: t.slug, title: t.title },
+        getLastSection
+      )
+    );
     router.refresh();
   };
 
   return (
     <nav aria-label="Activités" className="flex flex-col">
-      <p className="text-[10px] font-semibold uppercase tracking-[0.14em] text-[var(--lkv-text-muted)] pb-1">Activités</p>
+      <p className="text-[10px] font-semibold uppercase tracking-[0.14em] text-[var(--lkv-text-muted)] pb-1">
+        Activités
+      </p>
       <ul className="space-y-0.5">
         {trips.slice(0, 5).map((t) => {
           const current = activeSlug
             ? t.slug === activeSlug
-            : isCurrentAdventure(adventureKey({ nature: 'sortie', id: t.id, slug: t.slug, title: t.title }));
+            : isCurrentAdventure(
+                adventureKey({ nature: 'sortie', id: t.id, slug: t.slug, title: t.title })
+              );
           return (
             <li key={t.id}>
               <button
@@ -54,7 +68,7 @@ export function HubSidebarActivities({ trips, activeSlug = null }: HubSidebarAct
                   aria-hidden="true"
                   className={`shrink-0 ${current ? 'text-[var(--lkv-primary)]' : 'text-[var(--lkv-text-muted)]'}`}
                 >
-                  <Compass size={16} />
+                  <Icon name="compass" size={16} />
                 </span>
                 <span
                   className={`flex-1 min-w-0 truncate text-[13px] font-semibold ${
@@ -63,7 +77,14 @@ export function HubSidebarActivities({ trips, activeSlug = null }: HubSidebarAct
                 >
                   {t.title}
                 </span>
-                {current && <Check size={12} className="shrink-0 text-[var(--lkv-primary)]" aria-label="Aventure active" />}
+                {current && (
+                  <Icon
+                    name="check"
+                    size={12}
+                    className="shrink-0 text-[var(--lkv-primary)]"
+                    aria-label="Aventure active"
+                  />
+                )}
               </button>
             </li>
           );

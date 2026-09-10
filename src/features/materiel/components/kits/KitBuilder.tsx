@@ -1,5 +1,6 @@
 'use client';
 
+import Icon from '@/components/ui/Icon';
 import React, { useState, useMemo } from 'react';
 import Image from 'next/image';
 import { useRouter } from 'next/navigation';
@@ -8,7 +9,6 @@ import { GlassCard } from '@/components/ui/GlassCard';
 import { Badge } from '@/components/ui/Badge';
 import { useToast } from '@/contexts/ToastContext';
 import { addToCart } from '@/lib/cart';
-import { Plus, Check, Trash2, Sparkles } from 'lucide-react';
 import { ChevronDownIcon as ChevronDown } from '@/components/icons/chevron-down';
 import type { InventoryItem } from '@/features/materiel/services/getInventory';
 import type { ProductSuggestion } from '@/features/materiel/services/getProductSuggestions';
@@ -71,7 +71,13 @@ const CANONICAL_CATEGORIES = [
 function normalizeCategory(cat: string | null | undefined): string {
   if (!cat) return 'Accessoires & Outils';
   const c = cat.toLowerCase();
-  if (c.includes('bivouac') || c.includes('couchage') || c.includes('tente') || c.includes('matelas') || c.includes('duvet')) {
+  if (
+    c.includes('bivouac') ||
+    c.includes('couchage') ||
+    c.includes('tente') ||
+    c.includes('matelas') ||
+    c.includes('duvet')
+  ) {
     return 'Bivouac & Tentes';
   }
   if (c.includes('portage') || c.includes('sac')) {
@@ -86,7 +92,13 @@ function normalizeCategory(cat: string | null | undefined): string {
   if (c.includes('vêt') || c.includes('veste') || c.includes('textile') || c.includes('habit')) {
     return 'Vêtements & Vestes';
   }
-  if (c.includes('lampe') || c.includes('eclair') || c.includes('gps') || c.includes('navig') || c.includes('frontale')) {
+  if (
+    c.includes('lampe') ||
+    c.includes('eclair') ||
+    c.includes('gps') ||
+    c.includes('navig') ||
+    c.includes('frontale')
+  ) {
     return 'Lampes & Navigation';
   }
   if (c.includes('secu') || c.includes('soin') || c.includes('secours') || c.includes('pharma')) {
@@ -96,40 +108,91 @@ function normalizeCategory(cat: string | null | undefined): string {
 }
 
 /** Résolveur d'images réelles haute définition selon la nature du produit */
-function getEquipmentImageUrl(name: string, category?: string | null, photoUrl?: string | null): string {
+function getEquipmentImageUrl(
+  name: string,
+  category?: string | null,
+  photoUrl?: string | null
+): string {
   if (photoUrl && photoUrl.startsWith('http')) return photoUrl;
   const n = name.toLowerCase();
   const c = (category || '').toLowerCase();
 
   // Bivouac / Tentes / Couchage
-  if (n.includes('tente') || n.includes('abri')) return 'https://images.unsplash.com/photo-1504280390367-361c6d9f38f4?q=80&w=400&auto=format&fit=crop';
-  if (n.includes('matelas') || n.includes('tapis')) return 'https://images.unsplash.com/photo-1510312305653-8ed496efae75?q=80&w=400&auto=format&fit=crop';
-  if (n.includes('duvet') || n.includes('couchage') || n.includes('sac de couchage')) return 'https://images.unsplash.com/photo-1517824806704-9040b037703b?q=80&w=400&auto=format&fit=crop';
+  if (n.includes('tente') || n.includes('abri'))
+    return 'https://images.unsplash.com/photo-1504280390367-361c6d9f38f4?q=80&w=400&auto=format&fit=crop';
+  if (n.includes('matelas') || n.includes('tapis'))
+    return 'https://images.unsplash.com/photo-1510312305653-8ed496efae75?q=80&w=400&auto=format&fit=crop';
+  if (n.includes('duvet') || n.includes('couchage') || n.includes('sac de couchage'))
+    return 'https://images.unsplash.com/photo-1517824806704-9040b037703b?q=80&w=400&auto=format&fit=crop';
 
   // Portage / Sacs
-  if (n.includes('sac à dos') || n.includes('sac a dos') || n.includes('portage') || c.includes('portage') || n.includes('sac')) return 'https://images.unsplash.com/photo-1553062407-98eeb64c6a62?q=80&w=400&auto=format&fit=crop';
+  if (
+    n.includes('sac à dos') ||
+    n.includes('sac a dos') ||
+    n.includes('portage') ||
+    c.includes('portage') ||
+    n.includes('sac')
+  )
+    return 'https://images.unsplash.com/photo-1553062407-98eeb64c6a62?q=80&w=400&auto=format&fit=crop';
 
   // Eau / Filtres / Gourde
-  if (n.includes('gourde') || n.includes('filtre') || n.includes('eau') || n.includes('flasque')) return 'https://images.unsplash.com/photo-1544816155-12df9643f363?q=80&w=400&auto=format&fit=crop';
+  if (n.includes('gourde') || n.includes('filtre') || n.includes('eau') || n.includes('flasque'))
+    return 'https://images.unsplash.com/photo-1544816155-12df9643f363?q=80&w=400&auto=format&fit=crop';
 
   // Cuisine / Réchauds
-  if (n.includes('rechaud') || n.includes('réchaud') || n.includes('gaz') || n.includes('popote') || n.includes('cuis')) return 'https://images.unsplash.com/photo-1526778548025-fa2f459cd5c1?q=80&w=400&auto=format&fit=crop';
+  if (
+    n.includes('rechaud') ||
+    n.includes('réchaud') ||
+    n.includes('gaz') ||
+    n.includes('popote') ||
+    n.includes('cuis')
+  )
+    return 'https://images.unsplash.com/photo-1526778548025-fa2f459cd5c1?q=80&w=400&auto=format&fit=crop';
 
   // Lampes / Éclairage
-  if (n.includes('lampe') || n.includes('frontale') || n.includes('eclair') || n.includes('lumiere')) return 'https://images.unsplash.com/photo-1508873696983-2df5293cb32b?q=80&w=400&auto=format&fit=crop';
+  if (
+    n.includes('lampe') ||
+    n.includes('frontale') ||
+    n.includes('eclair') ||
+    n.includes('lumiere')
+  )
+    return 'https://images.unsplash.com/photo-1508873696983-2df5293cb32b?q=80&w=400&auto=format&fit=crop';
 
   // GPS / Navigation
-  if (n.includes('gps') || n.includes('garmin') || n.includes('boussole') || n.includes('montre') || n.includes('navig')) return 'https://images.unsplash.com/photo-1523275335684-37898b6baf30?q=80&w=400&auto=format&fit=crop';
+  if (
+    n.includes('gps') ||
+    n.includes('garmin') ||
+    n.includes('boussole') ||
+    n.includes('montre') ||
+    n.includes('navig')
+  )
+    return 'https://images.unsplash.com/photo-1523275335684-37898b6baf30?q=80&w=400&auto=format&fit=crop';
 
   // Vêtements / Vestes
-  if (n.includes('veste') || n.includes('doudoune') || n.includes('polaire') || n.includes('pantalon') || c.includes('vêtement')) return 'https://images.unsplash.com/photo-1551028719-00167b16eac5?q=80&w=400&auto=format&fit=crop';
+  if (
+    n.includes('veste') ||
+    n.includes('doudoune') ||
+    n.includes('polaire') ||
+    n.includes('pantalon') ||
+    c.includes('vêtement')
+  )
+    return 'https://images.unsplash.com/photo-1551028719-00167b16eac5?q=80&w=400&auto=format&fit=crop';
 
   // Sécurité / Soins
-  if (n.includes('secours') || n.includes('trousse') || n.includes('soin') || n.includes('survie') || n.includes('pharma')) return 'https://images.unsplash.com/photo-1603398938378-e54eab446dde?q=80&w=400&auto=format&fit=crop';
+  if (
+    n.includes('secours') ||
+    n.includes('trousse') ||
+    n.includes('soin') ||
+    n.includes('survie') ||
+    n.includes('pharma')
+  )
+    return 'https://images.unsplash.com/photo-1603398938378-e54eab446dde?q=80&w=400&auto=format&fit=crop';
 
   // Bâtons / Outils / Accessoires
-  if (n.includes('baton') || n.includes('bâton')) return 'https://images.unsplash.com/photo-1486915309851-b0cc1f8a0084?q=80&w=400&auto=format&fit=crop';
-  if (n.includes('couteau') || n.includes('outil') || n.includes('multifonction')) return 'https://images.unsplash.com/photo-1589782182703-2aaa69037b5b?q=80&w=400&auto=format&fit=crop';
+  if (n.includes('baton') || n.includes('bâton'))
+    return 'https://images.unsplash.com/photo-1486915309851-b0cc1f8a0084?q=80&w=400&auto=format&fit=crop';
+  if (n.includes('couteau') || n.includes('outil') || n.includes('multifonction'))
+    return 'https://images.unsplash.com/photo-1589782182703-2aaa69037b5b?q=80&w=400&auto=format&fit=crop';
 
   return 'https://images.unsplash.com/photo-1504280390367-361c6d9f38f4?q=80&w=400&auto=format&fit=crop';
 }
@@ -139,7 +202,8 @@ const FALLBACK_SHOP_PRODUCTS: ProductSuggestion[] = [
     id: 'shop-fb-1',
     name: 'Tente Dôme Ultralight 2P',
     slug: 'tente-dome-ultralight-2p',
-    image: 'https://images.unsplash.com/photo-1504280390367-361c6d9f38f4?q=80&w=400&auto=format&fit=crop',
+    image:
+      'https://images.unsplash.com/photo-1504280390367-361c6d9f38f4?q=80&w=400&auto=format&fit=crop',
     priceEur: 189.0,
     category: 'Bivouac & Tentes',
     weightG: 1250,
@@ -148,7 +212,8 @@ const FALLBACK_SHOP_PRODUCTS: ProductSuggestion[] = [
     id: 'shop-fb-2',
     name: 'Matelas Autogonflant R3.5',
     slug: 'matelas-autogonflant-r3-5',
-    image: 'https://images.unsplash.com/photo-1510312305653-8ed496efae75?q=80&w=400&auto=format&fit=crop',
+    image:
+      'https://images.unsplash.com/photo-1510312305653-8ed496efae75?q=80&w=400&auto=format&fit=crop',
     priceEur: 85.0,
     category: 'Bivouac & Tentes',
     weightG: 490,
@@ -157,7 +222,8 @@ const FALLBACK_SHOP_PRODUCTS: ProductSuggestion[] = [
     id: 'shop-fb-3',
     name: 'Sac à Dos Expédition 45+10L',
     slug: 'sac-a-dos-expedition-45-10l',
-    image: 'https://images.unsplash.com/photo-1553062407-98eeb64c6a62?q=80&w=400&auto=format&fit=crop',
+    image:
+      'https://images.unsplash.com/photo-1553062407-98eeb64c6a62?q=80&w=400&auto=format&fit=crop',
     priceEur: 145.0,
     category: 'Portage & Sacs',
     weightG: 1100,
@@ -166,7 +232,8 @@ const FALLBACK_SHOP_PRODUCTS: ProductSuggestion[] = [
     id: 'shop-fb-4',
     name: 'Gourde Filtrante 1L PureFlow',
     slug: 'gourde-filtrante-1l-pureflow',
-    image: 'https://images.unsplash.com/photo-1544816155-12df9643f363?q=80&w=400&auto=format&fit=crop',
+    image:
+      'https://images.unsplash.com/photo-1544816155-12df9643f363?q=80&w=400&auto=format&fit=crop',
     priceEur: 42.5,
     category: 'Hydratation & Eau',
     weightG: 220,
@@ -175,7 +242,8 @@ const FALLBACK_SHOP_PRODUCTS: ProductSuggestion[] = [
     id: 'shop-fb-5',
     name: 'Réchaud Titane Micro-Burner',
     slug: 'rechaud-titane-micro-burner',
-    image: 'https://images.unsplash.com/photo-1526778548025-fa2f459cd5c1?q=80&w=400&auto=format&fit=crop',
+    image:
+      'https://images.unsplash.com/photo-1526778548025-fa2f459cd5c1?q=80&w=400&auto=format&fit=crop',
     priceEur: 29.9,
     category: 'Cuisine & Réchauds',
     weightG: 48,
@@ -184,7 +252,8 @@ const FALLBACK_SHOP_PRODUCTS: ProductSuggestion[] = [
     id: 'shop-fb-6',
     name: 'Lampe Frontale 450 Lumens USB-C',
     slug: 'lampe-frontale-450-lumens',
-    image: 'https://images.unsplash.com/photo-1508873696983-2df5293cb32b?q=80&w=400&auto=format&fit=crop',
+    image:
+      'https://images.unsplash.com/photo-1508873696983-2df5293cb32b?q=80&w=400&auto=format&fit=crop',
     priceEur: 34.9,
     category: 'Lampes & Navigation',
     weightG: 85,
@@ -193,7 +262,8 @@ const FALLBACK_SHOP_PRODUCTS: ProductSuggestion[] = [
     id: 'shop-fb-7',
     name: 'Trousse de Premiers Soins Trekking',
     slug: 'trousse-premiers-soins-trekking',
-    image: 'https://images.unsplash.com/photo-1603398938378-e54eab446dde?q=80&w=400&auto=format&fit=crop',
+    image:
+      'https://images.unsplash.com/photo-1603398938378-e54eab446dde?q=80&w=400&auto=format&fit=crop',
     priceEur: 24.5,
     category: 'Sécurité & Soins',
     weightG: 180,
@@ -202,7 +272,8 @@ const FALLBACK_SHOP_PRODUCTS: ProductSuggestion[] = [
     id: 'shop-fb-8',
     name: 'Bâtons de Randonnée Carbone (Paire)',
     slug: 'batons-randonnee-carbone',
-    image: 'https://images.unsplash.com/photo-1486915309851-b0cc1f8a0084?q=80&w=400&auto=format&fit=crop',
+    image:
+      'https://images.unsplash.com/photo-1486915309851-b0cc1f8a0084?q=80&w=400&auto=format&fit=crop',
     priceEur: 69.0,
     category: 'Accessoires & Outils',
     weightG: 340,
@@ -475,8 +546,8 @@ export function KitBuilder({
         className="!absolute top-1.5 right-8 md:top-2 md:right-11 z-10 glass interactive h-6 w-6 md:h-8 md:w-8 !rounded-full flex items-center justify-center text-[var(--lkv-primary)] focus-visible:ring-2 focus-visible:ring-[var(--lkv-primary)] focus-visible:ring-offset-1"
         aria-label={showAi ? 'Fermer l’assistant IA' : 'Ouvrir l’assistant IA'}
       >
-        <Sparkles size={12} className="md:hidden" aria-hidden="true" />
-        <Sparkles size={15} className="hidden md:block" aria-hidden="true" />
+        <Icon name="sparkles" size={12} className="md:hidden" aria-hidden="true" />
+        <Icon name="sparkles" size={15} className="hidden md:block" aria-hidden="true" />
       </motion.button>
 
       {/* En-tête compact */}
@@ -530,7 +601,9 @@ export function KitBuilder({
                 <div className="flex items-center justify-between gap-1 flex-wrap">
                   <div className="flex items-center gap-1">
                     <Badge tone="sage">Score {aiResult.score}/100</Badge>
-                    <Badge tone="info">Poids optimisé : {aiResult.after_weight_kg.toFixed(1)} kg</Badge>
+                    <Badge tone="info">
+                      Poids optimisé : {aiResult.after_weight_kg.toFixed(1)} kg
+                    </Badge>
                   </div>
                   {aiResult.co2_kg_saved_estimate > 0 && (
                     <span className="text-[9px] font-mono text-[var(--lkv-primary-soft)]">
@@ -539,17 +612,26 @@ export function KitBuilder({
                   )}
                 </div>
 
-                <p className="text-[9px] text-[var(--lkv-primary)] leading-relaxed">{aiResult.analysis}</p>
+                <p className="text-[9px] text-[var(--lkv-primary)] leading-relaxed">
+                  {aiResult.analysis}
+                </p>
 
                 {(aiResult.removals.length > 0 || aiResult.replacements.length > 0) && (
                   <div className="flex flex-col gap-1 pt-1 border-t border-white/10">
                     {aiResult.removals.map((r, i) => (
-                      <div key={`rem-${i}`} className="flex items-center justify-between gap-1 text-[9px] text-[var(--lkv-danger)]">
-                        <span className="truncate">⚠️ À retirer : <b>{r.item}</b> ({r.reason})</span>
+                      <div
+                        key={`rem-${i}`}
+                        className="flex items-center justify-between gap-1 text-[9px] text-[var(--lkv-danger)]"
+                      >
+                        <span className="truncate">
+                          ⚠️ À retirer : <b>{r.item}</b> ({r.reason})
+                        </span>
                         <button
                           type="button"
                           onClick={() => {
-                            const match = kitItems.find((k) => k.name.toLowerCase().includes(r.item.toLowerCase()));
+                            const match = kitItems.find((k) =>
+                              k.name.toLowerCase().includes(r.item.toLowerCase())
+                            );
                             if (match) removeItem(match.id);
                           }}
                           className="px-1.5 py-0.5 rounded bg-[var(--lkv-danger)]/10 hover:bg-[var(--lkv-danger)]/20 font-bold shrink-0 text-[8.5px]"
@@ -560,8 +642,13 @@ export function KitBuilder({
                     ))}
 
                     {aiResult.replacements.map((rep, i) => (
-                      <div key={`rep-${i}`} className="flex items-center justify-between gap-1 text-[9px] text-[var(--lkv-primary-soft)]">
-                        <span className="truncate">💡 Remplacer <b>{rep.item}</b> par <i>{rep.with}</i></span>
+                      <div
+                        key={`rep-${i}`}
+                        className="flex items-center justify-between gap-1 text-[9px] text-[var(--lkv-primary-soft)]"
+                      >
+                        <span className="truncate">
+                          💡 Remplacer <b>{rep.item}</b> par <i>{rep.with}</i>
+                        </span>
                       </div>
                     ))}
                   </div>
@@ -618,13 +705,16 @@ export function KitBuilder({
               className="flex-1"
             >
               {filteredCatalog.length === 0 ? (
-                <p className="text-[10px] text-[var(--lkv-text-muted)] py-4 text-center">Aucun équipement disponible dans cette catégorie.</p>
+                <p className="text-[10px] text-[var(--lkv-text-muted)] py-4 text-center">
+                  Aucun équipement disponible dans cette catégorie.
+                </p>
               ) : (
                 <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-1.5">
                   {filteredCatalog.map((item) => {
-                    const isAdded = !item.isFromShop && item.inventoryItem
-                      ? kitItems.some((k) => k.id === item.inventoryItem!.id)
-                      : false;
+                    const isAdded =
+                      !item.isFromShop && item.inventoryItem
+                        ? kitItems.some((k) => k.id === item.inventoryItem!.id)
+                        : false;
 
                     return (
                       <div
@@ -651,13 +741,21 @@ export function KitBuilder({
                             <div className="flex items-center gap-1 text-[8px]">
                               {item.isFromShop ? (
                                 <>
-                                  <span className="text-[var(--lkv-primary)] font-bold">🛒 Boutique</span>
-                                  <span className="text-[var(--lkv-text-muted)]">· {item.priceEur?.toFixed(2)}€</span>
+                                  <span className="text-[var(--lkv-primary)] font-bold">
+                                    🛒 Boutique
+                                  </span>
+                                  <span className="text-[var(--lkv-text-muted)]">
+                                    · {item.priceEur?.toFixed(2)}€
+                                  </span>
                                 </>
                               ) : (
                                 <>
-                                  <span className="text-[var(--lkv-primary-soft)] font-medium">Inventaire</span>
-                                  <span className="text-[var(--lkv-text-muted)]">· {item.weight_g}g</span>
+                                  <span className="text-[var(--lkv-primary-soft)] font-medium">
+                                    Inventaire
+                                  </span>
+                                  <span className="text-[var(--lkv-text-muted)]">
+                                    · {item.weight_g}g
+                                  </span>
                                 </>
                               )}
                             </div>
@@ -679,9 +777,9 @@ export function KitBuilder({
                           }`}
                         >
                           {isAdded ? (
-                            <Check size={11} strokeWidth={2.5} aria-hidden="true" />
+                            <Icon name="check" size={11} strokeWidth={2.5} aria-hidden="true" />
                           ) : (
-                            <Plus size={12} strokeWidth={2.5} aria-hidden="true" />
+                            <Icon name="plus" size={12} strokeWidth={2.5} aria-hidden="true" />
                           )}
                         </motion.button>
                       </div>
@@ -714,11 +812,20 @@ export function KitBuilder({
             aria-label="Articles du kit en cours d'assemblage"
           >
             {kitItems.length === 0 ? (
-              <div role="listitem" className="py-5 text-center text-[10px] text-[var(--lkv-text-muted)] flex flex-col items-center justify-center gap-1.5">
-                <span className="text-xl opacity-30" aria-hidden="true">🎒</span>
-                <span className="font-semibold text-[var(--lkv-primary-soft)] text-[10px]">Kit vide</span>
+              <div
+                role="listitem"
+                className="py-5 text-center text-[10px] text-[var(--lkv-text-muted)] flex flex-col items-center justify-center gap-1.5"
+              >
+                <span className="text-xl opacity-30" aria-hidden="true">
+                  🎒
+                </span>
+                <span className="font-semibold text-[var(--lkv-primary-soft)] text-[10px]">
+                  Kit vide
+                </span>
                 <span className="text-[8.5px] text-[var(--lkv-text-muted)]/80 leading-relaxed">
-                  Cliquez sur « <Plus size={9} className="inline align-baseline" aria-hidden="true" /> » à gauche pour assembler.
+                  Cliquez sur «{' '}
+                  <Icon name="plus" size={9} className="inline align-baseline" aria-hidden="true" />{' '}
+                  » à gauche pour assembler.
                 </span>
               </div>
             ) : (
@@ -743,10 +850,16 @@ export function KitBuilder({
                       />
                     </div>
                     <div className="min-w-0 flex-1">
-                      <p className="font-semibold text-[var(--lkv-primary)] truncate leading-tight">{item.name}</p>
+                      <p className="font-semibold text-[var(--lkv-primary)] truncate leading-tight">
+                        {item.name}
+                      </p>
                       <div className="flex items-center gap-1 text-[8.5px] text-[var(--lkv-text-muted)]">
                         <span>{item.weight_g}g</span>
-                        {item.isFromShop && <span className="text-[var(--lkv-primary)] font-bold">· 🛒 À commander</span>}
+                        {item.isFromShop && (
+                          <span className="text-[var(--lkv-primary)] font-bold">
+                            · 🛒 À commander
+                          </span>
+                        )}
                       </div>
                     </div>
                   </div>
@@ -758,7 +871,7 @@ export function KitBuilder({
                     aria-label={`Retirer ${item.name}`}
                     className="text-[var(--lkv-text-muted)] hover:text-[var(--lkv-danger)] p-0.5 shrink-0 focus-visible:ring-1 focus-visible:ring-[var(--lkv-danger)] rounded"
                   >
-                    <Trash2 size={10} aria-hidden="true" />
+                    <Icon name="trash2" size={10} aria-hidden="true" />
                   </motion.button>
                 </motion.div>
               ))
@@ -788,7 +901,10 @@ export function KitBuilder({
             <option value="automne">🍂 Automne</option>
             <option value="hiver">❄️ Hiver</option>
           </select>
-          <ChevronDown size={10} className="absolute right-2 top-2.5 pointer-events-none text-[var(--lkv-primary)]" />
+          <ChevronDown
+            size={10}
+            className="absolute right-2 top-2.5 pointer-events-none text-[var(--lkv-primary)]"
+          />
         </div>
         <motion.button
           type="button"

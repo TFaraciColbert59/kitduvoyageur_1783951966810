@@ -1,23 +1,26 @@
 import { Metadata } from 'next';
+import Icon from '@/components/ui/Icon';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
 import MobilePageShell from '@/components/mobile-nav/MobilePageShell';
 import Link from 'next/link';
 import { GlassCard } from '@/components/ui/GlassCard';
 import { Eyebrow } from '@/components/ui/Eyebrow';
-import { ArrowRight, Backpack, Recycle, KeyRound } from 'lucide-react';
+import { Backpack, Recycle, KeyRound } from 'lucide-react';
 
 const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://lekitduvoyageur.fr';
 
 export const metadata: Metadata = {
   title: 'Boutique — Le Kit du Voyageur',
-  description: 'Kits prêts à partir, occasion vérifiée et location : l’équipement testé en conditions réelles.',
+  description:
+    'Kits prêts à partir, occasion vérifiée et location : l’équipement testé en conditions réelles.',
   alternates: {
     canonical: `${siteUrl}/boutique`,
   },
   openGraph: {
     title: 'Boutique — Le Kit du Voyageur',
-    description: 'Kits prêts à partir, occasion vérifiée et location : l’équipement testé en conditions réelles.',
+    description:
+      'Kits prêts à partir, occasion vérifiée et location : l’équipement testé en conditions réelles.',
     url: `${siteUrl}/boutique`,
     type: 'website',
   },
@@ -28,13 +31,15 @@ const RAYONS = [
     href: '/kits',
     icone: Backpack,
     nom: 'Kits prêts à partir',
-    description: 'Le sac, le bivouac, les vêtements : des kits complets, testés six semaines minimum en conditions réelles.',
+    description:
+      'Le sac, le bivouac, les vêtements : des kits complets, testés six semaines minimum en conditions réelles.',
   },
   {
     href: '/occasion',
     icone: Recycle,
     nom: 'Occasion vérifiée',
-    description: 'Du matériel de seconde main contrôlé par la communauté. Moins cher, moins de CO₂, même exigence.',
+    description:
+      'Du matériel de seconde main contrôlé par la communauté. Moins cher, moins de CO₂, même exigence.',
   },
   {
     href: '/location',
@@ -49,7 +54,8 @@ export default function BoutiquePage() {
     '@context': 'https://schema.org',
     '@type': 'CollectionPage',
     name: 'Boutique — Le Kit du Voyageur',
-    description: 'Kits prêts à partir, occasion vérifiée et location : l’équipement testé en conditions réelles.',
+    description:
+      'Kits prêts à partir, occasion vérifiée et location : l’équipement testé en conditions réelles.',
     url: `${siteUrl}/boutique`,
     isPartOf: {
       '@type': 'WebSite',
@@ -77,7 +83,8 @@ export default function BoutiquePage() {
                 La boutique
               </h1>
               <p className="text-[#5A7064] max-w-2xl text-base">
-                Chaque objet est testé en conditions réelles pendant six semaines minimum. Ceux qui restent trouvent leur place ici.
+                Chaque objet est testé en conditions réelles pendant six semaines minimum. Ceux qui
+                restent trouvent leur place ici.
               </p>
             </header>
 
@@ -92,19 +99,14 @@ export default function BoutiquePage() {
                 >
                   <div className="space-y-2">
                     <rayon.icone size={22} className="text-[#17402C]" aria-hidden />
-                    <h2 className="font-display font-bold text-xl text-[#17402C]">
-                      {rayon.nom}
-                    </h2>
+                    <h2 className="font-display font-bold text-xl text-[#17402C]">{rayon.nom}</h2>
                     <p className="text-sm text-[#365233] leading-relaxed">{rayon.description}</p>
                   </div>
 
                   <div className="flex items-center justify-end pt-2 border-t border-white/20">
-                    <Link
-                      href={rayon.href}
-                      className="glass-capsule-btn secondary"
-                    >
+                    <Link href={rayon.href} className="glass-capsule-btn secondary">
                       <span>Explorer</span>
-                      <ArrowRight size={14} />
+                      <Icon name="arrow-right" size={14} />
                     </Link>
                   </div>
                 </GlassCard>
@@ -127,7 +129,8 @@ export default function BoutiquePage() {
             </header>
 
             <p className="text-xs text-[#5A7064] leading-relaxed">
-              Chaque objet est testé en conditions réelles pendant six semaines minimum. Ceux qui restent trouvent leur place ici.
+              Chaque objet est testé en conditions réelles pendant six semaines minimum. Ceux qui
+              restent trouvent leur place ici.
             </p>
 
             <div className="flex flex-col gap-3">
@@ -148,12 +151,9 @@ export default function BoutiquePage() {
                   <p className="text-xs text-[#365233] leading-relaxed">{rayon.description}</p>
 
                   <div className="flex items-center justify-end pt-1">
-                    <Link
-                      href={rayon.href}
-                      className="glass-capsule-btn primary"
-                    >
+                    <Link href={rayon.href} className="glass-capsule-btn primary">
                       <span>Explorer</span>
-                      <ArrowRight size={13} />
+                      <Icon name="arrow-right" size={13} />
                     </Link>
                   </div>
                 </GlassCard>

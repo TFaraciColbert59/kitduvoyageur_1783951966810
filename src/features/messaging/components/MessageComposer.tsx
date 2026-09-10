@@ -1,8 +1,13 @@
-"use client";
+'use client';
 
+import Icon from '@/components/ui/Icon';
 import React, { useState, useRef, useEffect } from 'react';
-import { ImagePlus, Send, X, Reply, Mic, Ellipsis } from 'lucide-react';
-import type { Message, ProductMessageMeta, TrailMessageMeta, KitMessageMeta } from '../types/messaging.types';
+import type {
+  Message,
+  ProductMessageMeta,
+  TrailMessageMeta,
+  KitMessageMeta,
+} from '../types/messaging.types';
 import { VoiceRecorderBar } from './VoiceRecorderBar';
 import { ComposerMenuSheet } from './ComposerMenuSheet';
 import { useHapticFeedback } from '@/hooks/useHapticFeedback';
@@ -107,7 +112,7 @@ export const MessageComposer: React.FC<MessageComposerProps> = ({
         <div className="px-4 py-2 bg-stone-50/95 border-b border-stone-200/60 flex items-center justify-between animate-fade-in">
           <div className="flex items-center gap-2.5 overflow-hidden">
             <div className="w-1 h-8 bg-[#17402C] rounded-full shrink-0" />
-            <Reply className="w-4 h-4 text-[#17402C] shrink-0" />
+            <Icon name="reply" className="w-4 h-4 text-[#17402C] shrink-0" />
             <div className="text-xs overflow-hidden">
               <span className="font-bold text-[#17402C] block truncate">
                 Réponse à {replyToMessage.sender_profile?.full_name || 'un voyageur'}
@@ -126,7 +131,7 @@ export const MessageComposer: React.FC<MessageComposerProps> = ({
             className="glass-circle-btn w-7 h-7 text-[#5A574E] hover:text-[#17402C] shrink-0"
             title="Annuler la réponse"
           >
-            <X className="w-3.5 h-3.5" />
+            <Icon name="x" className="w-3.5 h-3.5" />
           </button>
         </div>
       )}
@@ -152,7 +157,7 @@ export const MessageComposer: React.FC<MessageComposerProps> = ({
           className="glass-circle-btn w-11 h-11 text-[#17402C] shrink-0 active:scale-95 shadow-2xs"
           title="Envoyer une photo"
         >
-          <ImagePlus className="w-5 h-5" />
+          <Icon name="image-plus" className="w-5 h-5" />
         </button>
 
         <div className="flex-1 relative flex items-center min-w-0">
@@ -186,7 +191,7 @@ export const MessageComposer: React.FC<MessageComposerProps> = ({
             className="glass-circle-btn w-11 h-11 text-[#17402C] hover:text-[#A8443A] shrink-0 active:scale-95 shadow-2xs"
             title="Enregistrer une note vocale terrain"
           >
-            <Mic className="w-5 h-5" />
+            <Icon name="mic" className="w-5 h-5" />
           </button>
         )}
 
@@ -202,7 +207,7 @@ export const MessageComposer: React.FC<MessageComposerProps> = ({
           className="glass-circle-btn w-11 h-11 text-[#17402C] shrink-0 active:scale-95 shadow-2xs"
           title="Partager un GPX, un équipement ou une randonnée"
         >
-          <Ellipsis className="w-5 h-5" />
+          <Icon name="ellipsis" className="w-5 h-5" />
         </button>
 
         <button
@@ -216,7 +221,7 @@ export const MessageComposer: React.FC<MessageComposerProps> = ({
           }`}
           title="Envoyer le message"
         >
-          <Send className="w-4 h-4" />
+          <Icon name="send" className="w-4 h-4" />
         </button>
       </form>
 

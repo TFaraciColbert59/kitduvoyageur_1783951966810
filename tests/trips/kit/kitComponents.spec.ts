@@ -11,6 +11,10 @@ vi.mock('next/link', () => ({
     React.createElement('a', { href, className }, children),
 }));
 
+vi.mock('next/navigation', () => ({
+  useRouter: () => ({ refresh: vi.fn(), push: vi.fn(), replace: vi.fn() }),
+}));
+
 describe('TripKitView Component (Apple HIG & Core Business Monetization)', () => {
   const dummyTrip: TripFull = {
     id: 'trip-1',
@@ -108,15 +112,14 @@ describe('TripKitView Component (Apple HIG & Core Business Monetization)', () =>
     unweighedItemsCount: 0,
   };
 
-  it('renders preparation progress and weight indicators', () => {
+  it('ne rend plus les cartes stats (poids / score / contexte retirées)', () => {
     const html = renderToStaticMarkup(
       React.createElement(TripKitView, { trip: dummyTrip, analysis: dummyAnalysis })
     );
 
-    expect(html).toContain('100%');
-    expect(html).toContain('1 / 1');
-    expect(html).toContain('2.0 kg');
-    expect(html).toContain('ultralight');
+    expect(html).not.toContain('Score');
+    expect(html).not.toContain('Poids de base');
+    expect(html).not.toContain('Durée de l’autonomie');
   });
 
   it('renders terrain climate warning banner', () => {
@@ -128,21 +131,55 @@ describe('TripKitView Component (Apple HIG & Core Business Monetization)', () =>
     expect(html).toContain('Islande : Météo hautement imprévisible');
   });
 
-  it('renders contextual recommendations and LKDV shop direct conversion buttons', () => {
+  it('fusionne la boutique dans « Sac & inventaire » avec bouton boîte-flèche unique', () => {
     const html = renderToStaticMarkup(
-      React.createElement(TripKitView, { trip: dummyTrip, analysis: dummyAnalysis })
+      React.createElement(TripKitView, {
+        trip: dummyTrip,
+        analysis: dummyAnalysis,
+        availableProducts: [dummyAnalysis.vitalGaps[0].shopProduct!],
+      })
     );
 
-    expect(html).toContain('Il manque dans votre sac');
+    expect(html).toContain('À ajouter');
     expect(html).toContain('Poncho Imperméable Pluie');
     expect(html).toContain('12 €');
-    expect(html).toContain('150g');
-    expect(html).toContain('Acheter');
-    expect(html).toContain('Dans mon sac');
-    expect(html).toContain('Vital pour la sécurité');
+    expect(html).toContain('150 g');
+    expect(html).toContain('Ajouter Poncho Imperméable Pluie à mon matériel');
+    expect(html).not.toContain('au panier');
+    expect(html).not.toContain('Il manque dans votre sac');
   });
 
-  it('renders trip items checklist with packed toggle and category label', () => {
+  it('inventaire possédé hors sac : bouton + et stock discret pour un consommable', () => {
+    const html = renderToStaticMarkup(
+      React.createElement(TripKitView, {
+        trip: dummyTrip,
+        analysis: dummyAnalysis,
+        inventoryItems: [
+          {
+            id: 'inv-eau',
+            name: 'Bouteille d’eau filtrante',
+            brand: 'Katadyn',
+            category: 'Eau & Filtres',
+            weight_g: 200,
+            price_cents: 2800,
+            condition: 'bon',
+            photo_url: null,
+            is_lent: false,
+            purchase_date: null,
+            maintenance_due_at: null,
+            expiry_date: null,
+            tags: null,
+            quantity: 3,
+          },
+        ],
+      })
+    );
+
+    expect(html).toContain('Ajouter Bouteille d’eau filtrante au sac');
+    expect(html).toContain('×3 en stock');
+  });
+
+  it('renders trip items checklist with packed state and remove button', () => {
     const html = renderToStaticMarkup(
       React.createElement(TripKitView, { trip: dummyTrip, analysis: dummyAnalysis })
     );
@@ -150,7 +187,7 @@ describe('TripKitView Component (Apple HIG & Core Business Monetization)', () =>
     expect(html).toContain('Sac &amp; inventaire du voyage');
     expect(html).toContain('Sac de couchage -10°C');
     expect(html).toContain('emballé');
-    expect(html).toContain('Sommeil');
     expect(html).toContain('950 g');
+    expect(html).toContain('aria-label="Retirer du sac"');
   });
 });

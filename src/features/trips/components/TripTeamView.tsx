@@ -1,15 +1,19 @@
 'use client';
 
+import Icon from '@/components/ui/Icon';
 import React, { useState, useTransition } from 'react';
 import Link from 'next/link';
-import { Users, UserPlus, Trash2, Mail, AlertCircle, CheckCircle2, X } from 'lucide-react';
 import { GlassCard } from '@/components/ui/GlassCard';
 import { GlassCapsuleBtn } from '@/components/ui/GlassCapsuleBtn';
 import { EmptyState } from '@/components/ui/EmptyState';
 import { TripBadge } from './TripBadge';
 import { ConfirmDialog } from './ConfirmDialog';
 import { useHapticFeedback } from '@/hooks/useHapticFeedback';
-import { inviteCollaboratorAction, updateRoleAction, removeCollaboratorAction } from '@/app/voyages/collab-actions';
+import {
+  inviteCollaboratorAction,
+  updateRoleAction,
+  removeCollaboratorAction,
+} from '@/app/voyages/collab-actions';
 import type { TripFull } from '../types/trip.types';
 
 interface TripTeamViewProps {
@@ -21,7 +25,9 @@ export function TripTeamView({ trip }: TripTeamViewProps) {
   const [inviteError, setInviteError] = useState<string | null>(null);
   const [inviteSuccess, setInviteSuccess] = useState<string | null>(null);
   const [actionError, setActionError] = useState<string | null>(null);
-  const [confirmState, setConfirmState] = useState<{ collaboratorId: string; name: string } | null>(null);
+  const [confirmState, setConfirmState] = useState<{ collaboratorId: string; name: string } | null>(
+    null
+  );
   const [isPending, startTransition] = useTransition();
   const { triggerHaptic } = useHapticFeedback();
 
@@ -68,7 +74,7 @@ export function TripTeamView({ trip }: TripTeamViewProps) {
     startTransition(async () => {
       const res = await inviteCollaboratorAction(null, formData);
       if (!res.success) {
-        setInviteError(res.error || 'Erreur lors de l\'invitation');
+        setInviteError(res.error || "Erreur lors de l'invitation");
       } else {
         triggerHaptic('success');
         setInviteSuccess('Invitation envoyée ! Le voyageur a été ajouté.');
@@ -85,7 +91,7 @@ export function TripTeamView({ trip }: TripTeamViewProps) {
       {/* En-tête de section */}
       {actionError && (
         <div className="p-3 rounded-xl glass tone-danger text-xs text-[var(--lkv-danger)] flex items-center gap-2">
-          <AlertCircle size={16} className="shrink-0" />
+          <Icon name="alert-circle" size={16} className="shrink-0" />
           <span>{actionError}</span>
         </div>
       )}
@@ -95,7 +101,7 @@ export function TripTeamView({ trip }: TripTeamViewProps) {
             variant="primary"
             size="sm"
             onClick={() => setIsInviteOpen(true)}
-            icon={<UserPlus size={16} />}
+            icon={<Icon name="user-plus" size={16} />}
           >
             Inviter un voyageur
           </GlassCapsuleBtn>
@@ -105,23 +111,24 @@ export function TripTeamView({ trip }: TripTeamViewProps) {
       {/* Liste des membres */}
       {trip.collaborators.length === 0 ? (
         <EmptyState
-          icon={<Users size={32} className="text-lkv-secondary" />}
+          icon={<Icon name="users" size={32} className="text-lkv-secondary" />}
           title="Aucun compagnon de route"
           description="Vous préparez actuellement cette expédition en solo. Invitez des coéquipiers pour partager l'itinéraire, le matériel et les dépenses."
-          actionLabel={isOwner ? "Inviter un voyageur" : undefined}
+          actionLabel={isOwner ? 'Inviter un voyageur' : undefined}
           onAction={isOwner ? () => setIsInviteOpen(true) : undefined}
         />
       ) : (
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-          {trip.collaborators.map(collab => {
+          {trip.collaborators.map((collab) => {
             const isCollabOwner = collab.role === 'owner';
             const name = collab.profile?.full_name || 'Voyageur LKDV';
-            const initials = name
-              .split(' ')
-              .map(n => n[0])
-              .slice(0, 2)
-              .join('')
-              .toUpperCase() || 'V';
+            const initials =
+              name
+                .split(' ')
+                .map((n) => n[0])
+                .slice(0, 2)
+                .join('')
+                .toUpperCase() || 'V';
 
             return (
               <GlassCard
@@ -139,7 +146,9 @@ export function TripTeamView({ trip }: TripTeamViewProps) {
                       {initials}
                     </div>
                     <div>
-                      <div className="text-sm font-bold text-lkv-primary group-hover:underline decoration-[var(--lkv-secondary)]/60 underline-offset-2">{name}</div>
+                      <div className="text-sm font-bold text-lkv-primary group-hover:underline decoration-[var(--lkv-secondary)]/60 underline-offset-2">
+                        {name}
+                      </div>
                       <div className="text-xs text-lkv-secondary">
                         Rejoint le {new Date(collab.joined_at).toLocaleDateString('fr-FR')}
                       </div>
@@ -157,7 +166,7 @@ export function TripTeamView({ trip }: TripTeamViewProps) {
                       <select
                         value={collab.role}
                         disabled={isPending}
-                        onChange={e => handleRoleChange(collab.id, e.target.value as any)}
+                        onChange={(e) => handleRoleChange(collab.id, e.target.value as any)}
                         aria-label={`Rôle de ${name}`}
                         className="glass-input text-xs font-semibold px-2 py-1 text-[var(--lkv-text-primary)]"
                       >
@@ -172,7 +181,7 @@ export function TripTeamView({ trip }: TripTeamViewProps) {
                       title="Retirer de l'expédition"
                       className="min-h-[44px] min-w-[44px] flex items-center justify-center rounded-full glass-sub-card border border-white/60 text-[var(--lkv-danger)] hover:bg-[var(--lkv-danger)]/10 hover:text-[var(--lkv-danger)] transition-all shadow-2xs"
                     >
-                      <Trash2 size={16} />
+                      <Icon name="trash2" size={16} />
                     </button>
                   </div>
                 )}
@@ -191,7 +200,7 @@ export function TripTeamView({ trip }: TripTeamViewProps) {
           >
             <div className="flex items-center justify-between pb-3 border-b border-white/40">
               <h4 className="text-base font-bold text-lkv-primary flex items-center gap-2">
-                <UserPlus size={18} className="text-lkv-secondary" />
+                <Icon name="user-plus" size={18} className="text-lkv-secondary" />
                 <span>Inviter un compagnon</span>
               </h4>
               <button
@@ -199,20 +208,20 @@ export function TripTeamView({ trip }: TripTeamViewProps) {
                 aria-label="Fermer"
                 className="w-8 h-8 rounded-full glass-sub-card border border-white/60 flex items-center justify-center text-[var(--lkv-text-secondary)] hover:text-[var(--lkv-text-primary)] hover:bg-white transition-all cursor-pointer shadow-2xs"
               >
-                <X size={18} />
+                <Icon name="x" size={18} />
               </button>
             </div>
 
             {inviteError && (
               <div className="p-3 rounded-xl glass tone-danger text-xs text-[var(--lkv-danger)] flex items-center gap-2">
-                <AlertCircle size={16} className="shrink-0" />
+                <Icon name="alert-circle" size={16} className="shrink-0" />
                 <span>{inviteError}</span>
               </div>
             )}
 
             {inviteSuccess && (
               <div className="p-3 rounded-xl glass tone-sage text-xs text-[var(--lkv-success)] flex items-center gap-2">
-                <CheckCircle2 size={16} className="shrink-0" />
+                <Icon name="check-circle2" size={16} className="shrink-0" />
                 <span>{inviteSuccess}</span>
               </div>
             )}
@@ -223,7 +232,11 @@ export function TripTeamView({ trip }: TripTeamViewProps) {
                   Email ou Pseudo LKDV du voyageur
                 </label>
                 <div className="relative">
-                  <Mail size={16} className="absolute left-3.5 top-3 text-[var(--lkv-text-muted)]" />
+                  <Icon
+                    name="mail"
+                    size={16}
+                    className="absolute left-3.5 top-3 text-[var(--lkv-text-muted)]"
+                  />
                   <input
                     type="text"
                     name="identifier"
@@ -243,7 +256,9 @@ export function TripTeamView({ trip }: TripTeamViewProps) {
                   defaultValue="editor"
                   className="glass-input w-full px-3 py-2 text-sm text-[var(--lkv-text-primary)] cursor-pointer"
                 >
-                  <option value="editor">Éditeur (peut modifier l&apos;itinéraire et les listes)</option>
+                  <option value="editor">
+                    Éditeur (peut modifier l&apos;itinéraire et les listes)
+                  </option>
                   <option value="viewer">Lecteur (consultation seule)</option>
                 </select>
               </div>
@@ -257,13 +272,8 @@ export function TripTeamView({ trip }: TripTeamViewProps) {
                 >
                   Annuler
                 </GlassCapsuleBtn>
-                <GlassCapsuleBtn
-                  type="submit"
-                  variant="primary"
-                  size="sm"
-                  disabled={isPending}
-                >
-                  {isPending ? 'Envoi...' : 'Envoyer l\'invitation'}
+                <GlassCapsuleBtn type="submit" variant="primary" size="sm" disabled={isPending}>
+                  {isPending ? 'Envoi...' : "Envoyer l'invitation"}
                 </GlassCapsuleBtn>
               </div>
             </form>
@@ -275,7 +285,9 @@ export function TripTeamView({ trip }: TripTeamViewProps) {
       <ConfirmDialog
         open={confirmState !== null}
         title="Retirer ce membre ?"
-        message={confirmState ? `${confirmState.name} sera retiré(e) de cette expédition.` : undefined}
+        message={
+          confirmState ? `${confirmState.name} sera retiré(e) de cette expédition.` : undefined
+        }
         confirmLabel="Retirer"
         cancelLabel="Annuler"
         danger

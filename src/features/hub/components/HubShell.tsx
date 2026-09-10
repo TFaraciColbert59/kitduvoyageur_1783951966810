@@ -61,7 +61,7 @@ function entryOf(adventure: ActiveAdventureData, counts: HubCounters): Adventure
     case 'sortie':
       return { nature: 'sortie', id: adventure.id, slug: adventure.slug, title: adventure.title };
     case 'collectif':
-      return { nature: 'collectif', kind: adventure.kind, id: adventure.id, title: adventure.title, membersCount: 0, subtitle: '', linkedTripSlug: null };
+      return { nature: 'collectif', id: adventure.id, title: adventure.title, membersCount: 0, subtitle: '', linkedTripSlug: null };
   }
 }
 
@@ -171,7 +171,6 @@ export function HubShell({
     'overview',
     'itinerary',
     'gear',
-    'team',
     'budget',
     'docs',
     'checklist',
@@ -180,9 +179,11 @@ export function HubShell({
     'export',
   ]);
   const tripSection: TripSectionId =
-    activeSection && TRIP_SECTION_IDS.has(activeSection as TripSectionId)
-      ? (activeSection as TripSectionId)
-      : 'overview';
+    activeSection === 'groupe'
+      ? 'team'
+      : activeSection && TRIP_SECTION_IDS.has(activeSection as TripSectionId)
+        ? (activeSection as TripSectionId)
+        : 'overview';
   const primaryAction =
     adventure.nature === 'sortie' && trip ? (
       <PrimaryActionWidget trip={trip} activeSection={tripSection} />
@@ -217,12 +218,8 @@ export function HubShell({
         <MobilePageShell safeTop={true} hasBottomNav={true}>
           {realtime}
           <div className="px-4 pt-2.5 pb-32 text-[var(--lkv-text-primary)]">
-            <div className="flex items-center justify-between gap-2 mb-3 min-w-0">
-              <div className="flex items-center gap-2 min-w-0">
-                <NaturePill nature={displayNature} open={pillOpen} onOpenSwitcher={() => setPillOpen(true)} />
-                <AdventureSwitcher forceOpenSignal={switcherSignal} variant="mobile" />
-              </div>
-              <div className="flex items-center gap-2 shrink-0">{networkStatus}</div>
+            <div className="hidden">
+              <AdventureSwitcher forceOpenSignal={switcherSignal} variant="mobile" hideTrigger />
             </div>
             {children}
           </div>
@@ -232,6 +229,7 @@ export function HubShell({
       <div className="mb-3 md:max-w-xs">
         <NaturePill nature={displayNature} open={pillOpen} onOpenSwitcher={() => setPillOpen(true)} />
       </div>
+      <AdventureSwitcher forceOpenSignal={switcherSignal} variant="desktop" hideTrigger />
       {children}
       <NatureSwitcherSheet
         open={pillOpen}

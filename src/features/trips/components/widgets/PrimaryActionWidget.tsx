@@ -24,7 +24,7 @@ const ACTIONS: Partial<Record<TripSectionId, Action>> = {
   overview: { label: 'Voir le planificateur', section: 'itinerary', emoji: '🗺️' },
   itinerary: { label: 'Ouvrir le planificateur', section: 'itinerary', emoji: '🗺️' },
   gear: { label: 'Composer mon sac', section: 'gear', emoji: '🎒' },
-  team: { label: 'Gérer l’équipage', section: 'team', emoji: '👥' },
+  team: { label: 'Gérer le groupe', section: 'team', emoji: '👥' },
   budget: { label: 'Gérer le budget', section: 'budget', emoji: '💶' },
   docs: { label: 'Gérer les documents', section: 'docs', emoji: '🗂️' },
   checklist: { label: 'Préparer le départ', section: 'checklist', emoji: '✅' },

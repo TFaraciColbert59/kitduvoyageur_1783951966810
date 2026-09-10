@@ -1,5 +1,5 @@
 import Link from 'next/link';
-import { ArrowRight, BedDouble } from 'lucide-react';
+import Icon from '@/components/ui/Icon';
 import { tripSectionHref } from '@/features/trips/registry/tripSectionRegistry';
 import type { TripStep } from '@/features/trips/types/trip.types';
 
@@ -23,7 +23,12 @@ export function ReservationsBlock({
     <section className="glass p-4 rounded-[var(--lkv-radius-card)]" aria-label="Réservations">
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2">
-          <BedDouble size={16} className="text-[var(--lkv-text-secondary)]" aria-hidden="true" />
+          <Icon
+            name="bed-double"
+            size={16}
+            className="text-[var(--lkv-text-secondary)]"
+            aria-hidden="true"
+          />
           <p className="text-[10px] font-medium uppercase tracking-[0.14em] text-[var(--lkv-text-muted)]">
             Réservations
           </p>
@@ -38,10 +43,16 @@ export function ReservationsBlock({
         <ul className="mt-2.5 space-y-1.5">
           {stays.slice(0, 4).map((s) => (
             <li key={s.id} className="flex items-center gap-2 text-sm">
-              <span className="text-[10px] font-bold tabular-nums text-[var(--lkv-text-muted)] shrink-0">J{s.day_number}</span>
-              <span className="flex-1 truncate text-[var(--lkv-text-primary)]">{s.accommodation_name}</span>
+              <span className="text-[10px] font-bold tabular-nums text-[var(--lkv-text-muted)] shrink-0">
+                J{s.day_number}
+              </span>
+              <span className="flex-1 truncate text-[var(--lkv-text-primary)]">
+                {s.accommodation_name}
+              </span>
               {s.location_name ? (
-                <span className="text-[10px] text-[var(--lkv-text-muted)] truncate max-w-[100px]">{s.location_name}</span>
+                <span className="text-[10px] text-[var(--lkv-text-muted)] truncate max-w-[100px]">
+                  {s.location_name}
+                </span>
               ) : null}
             </li>
           ))}
@@ -56,7 +67,7 @@ export function ReservationsBlock({
         className="inline-flex items-center gap-1 mt-3 text-xs font-semibold text-[var(--lkv-text-secondary)] hover:text-[var(--lkv-text-primary)] min-h-[44px]"
       >
         <span>Gérer les réservations</span>
-        <ArrowRight size={13} aria-hidden="true" />
+        <Icon name="arrow-right" size={13} aria-hidden="true" />
       </Link>
     </section>
   );

@@ -1,11 +1,11 @@
 'use client';
 
+import Icon from '@/components/ui/Icon';
 import React, { useState } from 'react';
 import type { GearCategory, GearStatus } from '../../types/preparation.types';
 import { usePreparationStore } from '../../stores/usePreparationStore';
 import { AddGearModal } from '../modals/AddGearModal';
 import { useHapticFeedback } from '@/hooks/useHapticFeedback';
-import { Plus, CheckCircle2, Shield, Flame, Trash2, Shirt } from 'lucide-react';
 
 const CATEGORIES: { key: GearCategory | 'all'; label: string; icon: string }[] = [
   { key: 'all', label: 'Tout', icon: '🎒' },
@@ -150,7 +150,7 @@ export function GearTab() {
           }}
           className="h-8.5 px-4 rounded-full bg-[#17402C] hover:bg-[#1f543a] text-white font-bold text-xs shadow-sm flex items-center justify-center gap-1.5 shrink-0 active:scale-95 transition-all"
         >
-          <Plus size={14} />
+          <Icon name="plus" size={14} />
           <span>Ajouter un équipement</span>
         </button>
       </div>
@@ -186,13 +186,13 @@ export function GearTab() {
 
                     {item.isVital && (
                       <span className="px-1.5 py-0.5 rounded-md bg-red-100 text-red-800 text-[9px] font-bold border border-red-300 flex items-center gap-0.5">
-                        <Shield size={10} /> VITAL
+                        <Icon name="shield" size={10} /> VITAL
                       </span>
                     )}
 
                     {item.isConsumable && (
                       <span className="px-1.5 py-0.5 rounded-md bg-sand-100 text-sand-800 text-[9px] font-bold border border-sand-300 flex items-center gap-0.5">
-                        <Flame size={10} /> VIVRES
+                        <Icon name="flame" size={10} /> VIVRES
                       </span>
                     )}
                   </div>
@@ -202,7 +202,9 @@ export function GearTab() {
                       {item.weightGrams} g
                     </span>
                     {item.brand && <span className="text-[#5A7064]">· {item.brand}</span>}
-                    {item.quantity > 1 && <span className="text-[#5A7064]">· Qté: {item.quantity}</span>}
+                    {item.quantity > 1 && (
+                      <span className="text-[#5A7064]">· Qté: {item.quantity}</span>
+                    )}
                   </div>
                 </div>
 
@@ -244,7 +246,7 @@ export function GearTab() {
                     className="text-[#5A7064] hover:text-red-600 p-1 text-xs transition-colors"
                     title="Supprimer l'équipement"
                   >
-                    <Trash2 size={14} />
+                    <Icon name="trash2" size={14} />
                   </button>
                 </div>
               </div>
@@ -253,10 +255,7 @@ export function GearTab() {
         )}
       </div>
 
-      <AddGearModal
-        isOpen={isAddModalOpen}
-        onClose={() => setIsAddModalOpen(false)}
-      />
+      <AddGearModal isOpen={isAddModalOpen} onClose={() => setIsAddModalOpen(false)} />
     </div>
   );
 }

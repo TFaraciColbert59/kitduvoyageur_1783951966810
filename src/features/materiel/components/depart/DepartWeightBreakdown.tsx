@@ -1,7 +1,7 @@
 'use client';
+import Icon from '@/components/ui/Icon';
 import React, { useState } from 'react';
 import { motion, AnimatePresence, useReducedMotion } from 'framer-motion';
-import { Scale } from 'lucide-react';
 import { ChevronDownIcon as ChevronDown } from '@/components/icons/chevron-down';
 import { formatWeight } from '@/features/materiel/domain/departCalculations';
 import { cn } from '@/lib/utils';
@@ -55,7 +55,8 @@ export function DepartWeightBreakdown({
   const sorted = [...breakdown]
     .map((item) => ({
       ...item,
-      percentage: totalWeightG > 0 ? Math.round((item.value / totalWeightG) * 100) : item.percentage,
+      percentage:
+        totalWeightG > 0 ? Math.round((item.value / totalWeightG) * 100) : item.percentage,
     }))
     .sort((a, b) => b.value - a.value);
 
@@ -75,7 +76,7 @@ export function DepartWeightBreakdown({
       >
         <div className="flex items-center gap-2.5">
           <div className="w-9 h-9 rounded-2xl bg-[var(--lkv-primary-hover)]/10 border border-[var(--lkv-primary-hover)]/20 flex items-center justify-center text-[var(--lkv-primary-hover)] shadow-2xs shrink-0">
-            <Scale size={18} />
+            <Icon name="scale" size={18} />
           </div>
           <div>
             <h3 className="text-xs sm:text-sm font-bold text-[var(--lkv-primary)]">
@@ -135,7 +136,11 @@ export function DepartWeightBreakdown({
         <div className="flex items-center justify-between text-[10.5px]">
           <span className="text-[var(--lkv-text-muted)] font-medium">Échelle de portage :</span>
           <span className="font-bold text-[var(--lkv-primary)]">
-            {effectiveBaseG < 5000 ? 'Ultraléger (< 5 kg)' : effectiveBaseG < 9000 ? 'Standard 3 saisons (5 - 9 kg)' : 'Lourd (> 9 kg)'}
+            {effectiveBaseG < 5000
+              ? 'Ultraléger (< 5 kg)'
+              : effectiveBaseG < 9000
+                ? 'Standard 3 saisons (5 - 9 kg)'
+                : 'Lourd (> 9 kg)'}
           </span>
         </div>
 
@@ -147,8 +152,6 @@ export function DepartWeightBreakdown({
           <div className="h-full bg-[var(--lkv-danger)] w-[15%]" title="Très lourd (>12kg)" />
         </div>
       </div>
-
-
 
       {/* Accordéon détaillé des catégories */}
       <AnimatePresence initial={false}>

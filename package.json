@@ -59,6 +59,10 @@
     "mobile:open:ios": "npx cap open ios",
     "mobile:open:android": "npx cap open android",
     "verify:invariants": "node scripts/verify/ci_invariants.mjs",
+    "verify:icons": "node scripts/verify/icon-names.mjs",
+    "icons:build": "node scripts/icons/build-sprite.mjs",
+    "icons:codemod": "node scripts/icons/codemod-lucide-to-icon.mjs",
+    "prebuild": "node scripts/icons/build-sprite.mjs",
     "test:a11y": "playwright test --config=playwright.a11y.config.ts",
     "visual:sheet": "node scripts/visual/contact-sheet.mjs",
     "seed:y": "node scripts/seed/seed_y_profiles.mjs"
@@ -125,6 +129,7 @@
     "@axe-core/playwright": "^4.13.0",
     "@eslint/eslintrc": "^3",
     "@netlify/plugin-nextjs": "^5.11.1",
+    "@phosphor-icons/core": "^2.1.1",
     "@playwright/test": "^1.51.1",
     "@types/leaflet": "1.9.21",
     "@types/node": "^20",

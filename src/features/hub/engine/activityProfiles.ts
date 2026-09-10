@@ -6,8 +6,8 @@ import type { AdventureProfile, HubSectionId } from './hubProfileEngine';
  *
  * La nature `sortie` COMPOSE déjà `deriveTripProfile` (R2). Cette couche
  * ajoute les deltas propres au type d'activité SANS dupliquer la matrice :
- *   - onglet Équipage (`team`) TOUJOURS visible — ajout et gestion des
- *     participants même en solo (couche groupe universelle) ;
+ *   - onglet Groupe (`groupe`, ex-Équipage) TOUJOURS visible — ajout et
+ *     gestion des participants même en solo (couche groupe universelle) ;
  *   - libellés de sections spécialisés par activité (ex. Itinéraire → Parcours) ;
  *   - `activityType` exposé sur le profil pour la composition de l'aperçu.
  *
@@ -50,14 +50,14 @@ export function applyActivityProfile(
 
   // Rail sortie réduit au déroulé du jour — aucun masque d'activité restant.
 
-  // Onglet Équipage toujours visible (qu'il soit vide ou non).
-  const sections: HubSectionId[] = base.sections.includes('team')
+  // Onglet Groupe toujours visible (qu'il soit vide ou non).
+  const sections: HubSectionId[] = base.sections.includes('groupe')
     ? base.sections
-    : [...base.sections, 'team'];
+    : [...base.sections, 'groupe'];
 
   const reason = { ...base.reason };
-  if (!base.sections.includes('team')) {
-    reason.team = 'affiché : onglet Équipage toujours visible (ajout et gestion des participants)';
+  if (!base.sections.includes('groupe')) {
+    reason.groupe = 'affiché : onglet Groupe toujours visible (ajout et gestion des participants)';
   }
 
   return {

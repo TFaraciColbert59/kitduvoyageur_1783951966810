@@ -1,8 +1,8 @@
 'use client';
 
+import Icon from '@/components/ui/Icon';
 import { motion } from 'framer-motion';
 import { GlassCard } from '@/components/ui/GlassCard';
-import { Check } from 'lucide-react';
 import { ShoppingBagIcon as ShoppingBag } from '@/components/icons/shopping-bag';
 import { ClockIcon as Clock } from '@/components/icons/clock';
 import type { KitListItem } from '@/features/materiel/services/getKits';
@@ -17,7 +17,12 @@ export function KitsActiveCockpitCard({ kit }: Props) {
   const weightKg = kit ? (kit.total_weight_g / 1000).toFixed(1) : '0.0';
 
   return (
-    <GlassCard as="article" tone="sage" ariaLabelledBy="active-kit-title" className="p-3 md:p-4 flex flex-col justify-between h-full min-h-0">
+    <GlassCard
+      as="article"
+      tone="sage"
+      ariaLabelledBy="active-kit-title"
+      className="p-3 md:p-4 flex flex-col justify-between h-full min-h-0"
+    >
       <div className="flex items-center justify-between gap-1.5 pr-12 md:pr-14 shrink-0">
         <p className="truncate text-[10px] md:text-sm font-semibold text-[var(--lkv-primary)] font-body">
           Mon Kit Actif
@@ -46,10 +51,14 @@ export function KitsActiveCockpitCard({ kit }: Props) {
       >
         {items.length === 0 ? (
           <div className="flex flex-col items-center justify-center gap-1.5 py-5">
-            <span className="text-xl opacity-30" aria-hidden="true">🎒</span>
+            <span className="text-xl opacity-30" aria-hidden="true">
+              🎒
+            </span>
             <p className="text-[10px] text-[var(--lkv-text-muted)] font-medium">Kit vide</p>
             <p className="text-[8.5px] text-[var(--lkv-text-muted)]/70 text-center leading-relaxed">
-              Utilisez l'Assembleur ci-dessus<br />pour ajouter des articles.
+              Utilisez l'Assembleur ci-dessus
+              <br />
+              pour ajouter des articles.
             </p>
           </div>
         ) : (
@@ -77,7 +86,11 @@ export function KitsActiveCockpitCard({ kit }: Props) {
                     }`}
                     aria-hidden="true"
                   >
-                    {isUnowned ? <Clock size={9} /> : <Check size={10} strokeWidth={3} />}
+                    {isUnowned ? (
+                      <Clock size={9} />
+                    ) : (
+                      <Icon name="check" size={10} strokeWidth={3} />
+                    )}
                   </div>
                   <span
                     className={`truncate ${isUnowned ? 'text-[var(--lkv-text-muted)] italic' : 'font-semibold text-[var(--lkv-primary)]'}`}

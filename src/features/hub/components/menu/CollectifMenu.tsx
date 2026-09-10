@@ -1,19 +1,16 @@
-import {
-  CheckSquare,
-  CreditCard,
-  MailPlus,
-  Map as MapIcon,
-  MessageSquare,
-  Users,
-} from 'lucide-react';
 import { hubSectionHref, type HubAdventureRef } from '../../registry/hubSectionRegistry';
-import { tripSwitchHref } from '@/features/trips/registry/tripSectionRegistry';
 import { BentoGrid } from '@/components/ui-layouts/bento-grid';
 import { MenuCard } from './MenuCard';
-import { QuickActions, type QuickAction } from './QuickActions';
 import { NumberStat } from '@/components/ui-layouts/number-stat';
 import { ActivityIdentityBar } from './ActivityIdentityBar';
 import { NextActionCard, type NextActionSignal } from './NextActionCard';
+import { MobileAdventureHub } from '../mobile/MobileAdventureHub';
+import { CollectifMoment } from '../mobile/moments/CollectifMoment';
+import {
+  buildCollectifInfoChips,
+  buildCollectifSectionTiles,
+  pluralize,
+} from '../../mobile/mobileHubEngine';
 import type { GroupeMenuSummary } from '../../server/getGroupeMenu';
 
 export interface CollectifMenuProps {
@@ -35,103 +32,9 @@ function onglet(id: string): string {
 export function CollectifMenu({ summary, linkedTripSlug }: CollectifMenuProps) {
   const name = summary.name ?? 'Mon groupe';
 
-  if (summary.kind === 'equipage') {
-    const actions: QuickAction[] = [
-      { href: hubSectionHref(collectifRef, 'groupe'), label: 'Membres', icon: Users },
-      { href: hubSectionHref(collectifRef, 'invitations'), label: 'Invitations', icon: MailPlus },
-      { href: hubSectionHref(collectifRef, 'voyages-lies'), label: 'Voyages', icon: MapIcon },
-    ];
-    const equipageNext: NextActionSignal[] = [];
-    if (summary.pendingInvites > 0) {
-      equipageNext.push({
-        kind: 'invitations',
-        href: hubSectionHref(collectifRef, 'invitations'),
-        title: `${summary.pendingInvites} invitation(s) en attente`,
-        description: 'Relancez vos invités.',
-      });
-    }
-    equipageNext.push({
-      kind: 'all-clear',
-      href: hubSectionHref(collectifRef, 'groupe'),
-      title: 'Tout est à jour',
-      description: `${summary.members} membre(s) · ${summary.linkedTrips} voyage(s) lié(s)`,
-    });
-    const cells = [
-      {
-        key: 'groupe', span: 6 as const,
-        node: (
-          <MenuCard href={hubSectionHref(collectifRef, 'groupe')} label={name} tone="accent">
-            <p className="mt-1 text-3xl font-extrabold tracking-tight text-[var(--lkv-text-primary)]">
-              <NumberStat value={summary.members} />
-              <span className="ml-2 text-xs font-semibold text-[var(--lkv-text-secondary)]">
-                membre{summary.members > 1 ? 's' : ''}
-                {summary.pendingInvites > 0 ? ` · ${summary.pendingInvites} invitation(s)` : ''}
-              </span>
-            </p>
-          </MenuCard>
-        ),
-      },
-      {
-        key: 'membres', span: 6 as const,
-        node: (
-          <MenuCard href={hubSectionHref(collectifRef, 'groupe')} label="Membres">
-            <p className="mt-1 text-3xl font-extrabold tracking-tight text-[var(--lkv-text-primary)]">
-              <NumberStat value={summary.members} />
-            </p>
-            <p className="text-xs text-[var(--lkv-text-secondary)]">Rôles et invitations dans le groupe.</p>
-          </MenuCard>
-        ),
-      },
-      {
-        key: 'invitations', span: 4 as const,
-        node: (
-          <MenuCard href={hubSectionHref(collectifRef, 'invitations')} label="Invitations">
-            <p className="mt-1 text-3xl font-extrabold tracking-tight text-[var(--lkv-text-primary)]">
-              <NumberStat value={summary.pendingInvites} />
-            </p>
-            <p className="text-xs text-[var(--lkv-text-secondary)]">en attente de réponse.</p>
-          </MenuCard>
-        ),
-      },
-      {
-        key: 'voyages-lies', span: 4 as const,
-        node: (
-          <MenuCard href={hubSectionHref(collectifRef, 'voyages-lies')} label="Voyages liés">
-            <p className="mt-1 text-3xl font-extrabold tracking-tight text-[var(--lkv-text-primary)]">
-              <NumberStat value={summary.linkedTrips} />
-            </p>
-            <p className="text-xs text-[var(--lkv-text-secondary)]">expédition{summary.linkedTrips > 1 ? 's' : ''} rattachée{summary.linkedTrips > 1 ? 's' : ''}.</p>
-          </MenuCard>
-        ),
-      },
-      ...(linkedTripSlug
-        ? [{
-            key: 'entrer', span: 6 as const,
-            node: (
-              <MenuCard href={tripSwitchHref(linkedTripSlug)} label="Entrer dans le voyage">
-                <p className="mt-1 text-xs text-[var(--lkv-text-secondary)]">Ouvrir l&apos;expédition liée.</p>
-              </MenuCard>
-            ),
-          }]
-        : []),
-    ];
-    return (
-      <div className="h-[calc(100%-24px)] min-h-[680px] flex flex-col gap-3 overflow-hidden">
-        <ActivityIdentityBar nature="collectif" name={name} />
-        <NextActionCard actions={equipageNext} />
-        <QuickActions actions={actions} />
-        <BentoGrid cells={cells} fitRows="minmax(0,1.1fr) minmax(0,1fr)" />
-      </div>
-    );
-  }
-
   const perPerson = summary.members > 0 ? Math.round(summary.expensesTotal / summary.members) : summary.expensesTotal;
-  const actions: QuickAction[] = [
-    { href: onglet('members'), label: 'Membres', icon: Users },
-    { href: onglet('expenses'), label: 'Dépenses', icon: CreditCard },
-    { href: onglet('tasks'), label: 'Tâches', icon: CheckSquare },
-    { href: onglet('discussion'), label: 'Discussion', icon: MessageSquare },
-  ];
+  const mobileTiles = buildCollectifSectionTiles(collectifRef, summary, linkedTripSlug);
+  const mobileChips = buildCollectifInfoChips(collectifRef, summary);
 
   // ── FIL D'ACTION (règles déterministes, ordonnées par priorité) ──
   const nextActions: NextActionSignal[] = [];
@@ -139,7 +42,7 @@ export function CollectifMenu({ summary, linkedTripSlug }: CollectifMenuProps) {
     nextActions.push({
       kind: 'tasks',
       href: onglet('tasks'),
-      title: `${summary.tasksOpen} tâche(s) à faire`,
+      title: pluralize(summary.tasksOpen, 'tâche à faire', 'tâches à faire'),
       description: 'Répartissez et cochez les tâches du groupe.',
     });
   }
@@ -147,7 +50,7 @@ export function CollectifMenu({ summary, linkedTripSlug }: CollectifMenuProps) {
     nextActions.push({
       kind: 'discussion',
       href: onglet('decisions'),
-      title: `${summary.pollsOpen} décision(s) à voter`,
+      title: pluralize(summary.pollsOpen, 'décision à voter', 'décisions à voter'),
       description: 'Votre vote compte — clôturez les sondages.',
     });
   }
@@ -155,7 +58,7 @@ export function CollectifMenu({ summary, linkedTripSlug }: CollectifMenuProps) {
     nextActions.push({
       kind: 'invitations',
       href: hubSectionHref(collectifRef, 'invitations'),
-      title: `${summary.pendingInvites} invitation(s) en attente`,
+      title: pluralize(summary.pendingInvites, 'invitation en attente', 'invitations en attente'),
       description: 'Relancez vos invités.',
     });
   }
@@ -163,7 +66,7 @@ export function CollectifMenu({ summary, linkedTripSlug }: CollectifMenuProps) {
     kind: 'all-clear',
     href: onglet('discussion'),
     title: 'Tout est à jour',
-    description: `${summary.members} membre(s) · ${summary.tasksOpen} tâche(s) ouverte(s) · progression ${summary.progression}%`,
+    description: `${pluralize(summary.members, 'membre')} · ${pluralize(summary.tasksOpen, 'tâche ouverte', 'tâches ouvertes')} · progression ${summary.progression}%`,
   });
 
   const cells = [
@@ -211,7 +114,7 @@ export function CollectifMenu({ summary, linkedTripSlug }: CollectifMenuProps) {
             <span className="ml-2 text-xs font-semibold text-[var(--lkv-text-secondary)]">à faire</span>
           </p>
           {summary.tasksOpen > 0 && (
-            <p className="text-xs text-[var(--lkv-text-secondary)]">Répartissez-les dans l&apos;équipage.</p>
+            <p className="text-xs text-[var(--lkv-text-secondary)]">Répartissez-les dans le groupe.</p>
           )}
         </MenuCard>
       ),
@@ -295,12 +198,21 @@ export function CollectifMenu({ summary, linkedTripSlug }: CollectifMenuProps) {
   ];
 
   return (
-    <div className="h-[calc(100%-24px)] min-h-[680px] flex flex-col gap-3 overflow-hidden">
-      <ActivityIdentityBar nature="collectif" name={name} />
-      <NextActionCard actions={nextActions} />
-      <QuickActions actions={actions} />
-      <BentoGrid cells={cells} fitRows="minmax(0,1.1fr) minmax(0,1fr) minmax(0,1fr)" />
-    </div>
+    <>
+      <div className="hidden lg:flex h-[calc(100%-24px)] min-h-[680px] flex-col gap-3 overflow-hidden">
+        <ActivityIdentityBar nature="collectif" name={name} />
+        <NextActionCard actions={nextActions} />
+        <BentoGrid cells={cells} fitRows="minmax(0,1.1fr) minmax(0,1fr) minmax(0,1fr)" />
+      </div>
+
+      <MobileAdventureHub
+        action={<NextActionCard actions={nextActions} variant="compact" />}
+        tiles={mobileTiles}
+        chips={mobileChips}
+      >
+        <CollectifMoment summary={summary} />
+      </MobileAdventureHub>
+    </>
   );
 }
 

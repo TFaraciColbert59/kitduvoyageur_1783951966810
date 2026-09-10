@@ -1,11 +1,15 @@
-"use client";
+'use client';
 
+import Icon from '@/components/ui/Icon';
 import React, { useState, useEffect, useRef } from 'react';
 import Image from 'next/image';
-import type { ProductMessageMeta, TrailMessageMeta, KitMessageMeta } from '../types/messaging.types';
+import type {
+  ProductMessageMeta,
+  TrailMessageMeta,
+  KitMessageMeta,
+} from '../types/messaging.types';
 import { messagingService } from '../services/messagingService';
 import { MobileSheet } from './MobileSheet';
-import { Route, MapPin, ArrowLeft, Mountain, Backpack } from 'lucide-react';
 import { useHapticFeedback } from '@/hooks/useHapticFeedback';
 
 type InventoryItem = {
@@ -119,7 +123,15 @@ export const ComposerMenuSheet: React.FC<ComposerMenuSheetProps> = ({
     <MobileSheet
       isOpen={isOpen}
       onClose={onClose}
-      title={view === 'menu' ? 'Partager dans le chat' : view === 'equip' ? 'Équipement' : view === 'kit' ? 'Mes kits' : 'Randonnée'}
+      title={
+        view === 'menu'
+          ? 'Partager dans le chat'
+          : view === 'equip'
+            ? 'Équipement'
+            : view === 'kit'
+              ? 'Mes kits'
+              : 'Randonnée'
+      }
     >
       <input
         ref={gpxInputRef}
@@ -132,20 +144,20 @@ export const ComposerMenuSheet: React.FC<ComposerMenuSheetProps> = ({
       {view === 'menu' && (
         <div className="space-y-2">
           <button type="button" onClick={() => gpxInputRef.current?.click()} className={itemClass}>
-            <Route className="w-5 h-5 text-[#2D6B4A]" />
+            <Icon name="route" className="w-5 h-5 text-[#2D6B4A]" />
             Carte GPX — partager un itinéraire
             <span className="ml-auto text-[13px] font-medium text-[#5A574E]">.gpx</span>
           </button>
           <button type="button" onClick={openEquip} className={itemClass}>
-            <MapPin className="w-5 h-5 text-[#2D6B4A]" />
+            <Icon name="map-pin" className="w-5 h-5 text-[#2D6B4A]" />
             Équipement — depuis mon inventaire
           </button>
           <button type="button" onClick={openTrails} className={itemClass}>
-            <Mountain className="w-5 h-5 text-[#2D6B4A]" />
+            <Icon name="mountain" className="w-5 h-5 text-[#2D6B4A]" />
             Partager une randonnée
           </button>
           <button type="button" onClick={openKits} className={itemClass}>
-            <Backpack className="w-5 h-5 text-[#2D6B4A]" />
+            <Icon name="backpack" className="w-5 h-5 text-[#2D6B4A]" />
             Partager un kit — lignée
           </button>
         </div>
@@ -158,7 +170,7 @@ export const ComposerMenuSheet: React.FC<ComposerMenuSheetProps> = ({
             onClick={() => setView('menu')}
             className="flex items-center gap-2 px-2 py-1 text-[13px] font-semibold text-[#5A574E] hover:text-[#17402C]"
           >
-            <ArrowLeft className="w-4 h-4" />
+            <Icon name="arrow-left" className="w-4 h-4" />
             Retour
           </button>
           {loadingKits ? (
@@ -168,9 +180,7 @@ export const ComposerMenuSheet: React.FC<ComposerMenuSheetProps> = ({
               ))}
             </div>
           ) : kits.length === 0 ? (
-            <p className="text-center text-[14px] text-[#5A574E] py-6">
-              Aucun kit à partager.
-            </p>
+            <p className="text-center text-[14px] text-[#5A574E] py-6">Aucun kit à partager.</p>
           ) : (
             kits.map((kit) => (
               <button
@@ -184,7 +194,7 @@ export const ComposerMenuSheet: React.FC<ComposerMenuSheetProps> = ({
                 className="w-full text-left p-3 rounded-2xl bg-white/70 hover:bg-[#17402C]/10 border border-stone-200/60 flex items-center gap-3 active:scale-[0.98] min-h-[60px]"
               >
                 <div className="w-10 h-10 rounded-xl bg-[#EDF3ED] ring-1 ring-[#A3C4A3]/50 shrink-0 flex items-center justify-center">
-                  <Backpack className="w-5 h-5 text-[#17402C]" />
+                  <Icon name="backpack" className="w-5 h-5 text-[#17402C]" />
                 </div>
                 <span className="text-[15px] font-medium text-[#14140F] flex-1 min-w-0 truncate">
                   {kit.name}
@@ -202,7 +212,7 @@ export const ComposerMenuSheet: React.FC<ComposerMenuSheetProps> = ({
             onClick={() => setView('menu')}
             className="flex items-center gap-2 px-2 py-1 text-[13px] font-semibold text-[#5A574E] hover:text-[#17402C]"
           >
-            <ArrowLeft className="w-4 h-4" />
+            <Icon name="arrow-left" className="w-4 h-4" />
             Retour
           </button>
           {loadingInv ? (
@@ -266,7 +276,7 @@ export const ComposerMenuSheet: React.FC<ComposerMenuSheetProps> = ({
             onClick={() => setView('menu')}
             className="flex items-center gap-2 px-2 py-1 text-[13px] font-semibold text-[#5A574E] hover:text-[#17402C]"
           >
-            <ArrowLeft className="w-4 h-4" />
+            <Icon name="arrow-left" className="w-4 h-4" />
             Retour
           </button>
           {loadingTrails ? (
@@ -299,12 +309,14 @@ export const ComposerMenuSheet: React.FC<ComposerMenuSheetProps> = ({
                 className="w-full text-left p-3.5 rounded-2xl bg-white/70 hover:bg-[#17402C]/10 border border-stone-200/60 flex items-center gap-3 active:scale-[0.98] min-h-[60px]"
               >
                 <div className="w-10 h-10 rounded-full bg-[#17402C]/10 text-[#17402C] flex items-center justify-center shrink-0">
-                  <Mountain className="w-5 h-5" />
+                  <Icon name="mountain" className="w-5 h-5" />
                 </div>
                 <div className="flex-1 min-w-0 overflow-hidden">
                   <p className="font-semibold text-[15px] text-[#17402C] truncate">{t.name}</p>
                   <p className="text-[13px] text-[#5A574E] truncate">
-                    {[t.distance_km != null ? `${t.distance_km} km` : null, t.region].filter(Boolean).join(' · ')}
+                    {[t.distance_km != null ? `${t.distance_km} km` : null, t.region]
+                      .filter(Boolean)
+                      .join(' · ')}
                   </p>
                 </div>
               </button>

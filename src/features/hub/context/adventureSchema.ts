@@ -17,7 +17,6 @@ export const adventureSchema = z.discriminatedUnion('nature', [
   }),
   z.object({
     nature: z.literal('collectif'),
-    kind: z.enum(['groupe', 'equipage']),
     id: z.string().min(1),
     title: z.string().min(1),
   }),

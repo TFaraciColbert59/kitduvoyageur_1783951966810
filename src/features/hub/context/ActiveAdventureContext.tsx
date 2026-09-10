@@ -12,7 +12,6 @@ import {
   groupAdventures,
   type AdventureEntry,
   type AdventureGroups,
-  type CrewLite,
   type GroupLite,
   type PossessionSummary,
 } from './adventureLists';
@@ -24,7 +23,7 @@ import {
 /**
  * H2.2 — Contexte d'aventure active du hub (généralisation d'ActiveTripContext).
  * Union des 3 natures : possession (singleton local), sortie (via le contexte
- * Y existant — jamais re-fetché), collectif (groupes + équipages servis par
+ * Y existant — jamais re-fetché), collectif (groupes servis par
  * /api/hub/adventures, cache localStorage). Mémoire de section par aventure :
  * le hub réinitialise sur la bonne dernière section et survit au rechargement.
  */
@@ -60,14 +59,12 @@ export interface ActiveAdventureProviderProps {
 
 interface AdventuresCache {
   groups: GroupLite[];
-  crews: CrewLite[];
   possession: PossessionSummary;
   pendingInvites: number;
 }
 
 const EMPTY_CACHE: AdventuresCache = {
   groups: [],
-  crews: [],
   possession: { itemsCount: 0, loansCount: 0, alertsCount: 0 },
   pendingInvites: 0,
 };
@@ -94,7 +91,7 @@ function dataToEntry(data: ActiveAdventureData): AdventureEntry {
     case 'sortie':
       return { nature: 'sortie', id: data.id, slug: data.slug, title: data.title };
     case 'collectif':
-      return { nature: 'collectif', kind: data.kind, id: data.id, title: data.title, membersCount: 0, subtitle: '', linkedTripSlug: null };
+      return { nature: 'collectif', id: data.id, title: data.title, membersCount: 0, subtitle: '', linkedTripSlug: null };
   }
 }
 
@@ -124,7 +121,6 @@ export function ActiveAdventureProvider({ initialAdventure = null, children }: A
       const data = await res.json();
       const next: AdventuresCache = {
         groups: Array.isArray(data?.groups) ? data.groups : [],
-        crews: Array.isArray(data?.crews) ? data.crews : [],
         possession: {
           itemsCount: Number(data?.possession?.items ?? 0),
           loansCount: Number(data?.possession?.loans ?? 0),
@@ -145,7 +141,6 @@ export function ActiveAdventureProvider({ initialAdventure = null, children }: A
           const parsed = JSON.parse(cached);
           setCache({
             groups: Array.isArray(parsed?.groups) ? parsed.groups : [],
-            crews: Array.isArray(parsed?.crews) ? parsed.crews : [],
             possession: {
               itemsCount: Number(parsed?.possession?.itemsCount ?? 0),
               loansCount: Number(parsed?.possession?.loansCount ?? 0),
@@ -169,7 +164,6 @@ export function ActiveAdventureProvider({ initialAdventure = null, children }: A
       groupAdventures(
         userTrips.map((t) => ({ id: t.id, slug: t.slug, title: t.title, status: t.status, primary_activity: t.primary_activity })),
         cache.groups,
-        cache.crews,
         cache.possession,
       ),
     [userTrips, cache],
@@ -182,11 +176,6 @@ export function ActiveAdventureProvider({ initialAdventure = null, children }: A
         {
           trips: userTrips.map((t) => ({ id: t.id, slug: t.slug, title: t.title, start_date: t.start_date ?? null })),
           groups: cache.groups.map((g) => ({ id: g.id, name: g.name, member_count: g.member_count })),
-          crews: cache.crews.map((c) => ({
-            id: c.id,
-            name: c.name,
-            next_trip: c.next_trip ?? null,
-          })),
           possession: cache.possession,
           pendingInvites: cache.pendingInvites,
         },
@@ -254,7 +243,7 @@ export function ActiveAdventureProvider({ initialAdventure = null, children }: A
       if (found.nature === 'possession') return persist({ nature: 'possession' });
       if (found.nature === 'sortie')
         return persist({ nature: 'sortie', id: found.id, slug: found.slug, title: found.title });
-      return persist({ nature: 'collectif', kind: found.kind, id: found.id, title: found.title });
+      return persist({ nature: 'collectif', id: found.id, title: found.title });
     },
     [allEntries, persist],
   );

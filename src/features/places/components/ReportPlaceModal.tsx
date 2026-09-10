@@ -1,9 +1,9 @@
 'use client';
 
+import Icon from '@/components/ui/Icon';
 import React, { useState, useTransition } from 'react';
 import { GlassCard } from '@/components/ui/GlassCard';
 import { LkvButton } from '@/components/ui/LkvButton';
-import { X, AlertTriangle, CheckCircle2, AlertCircle } from 'lucide-react';
 import { reportPlaceAction } from '@/app/lieux/actions';
 import type { PlaceReportReason } from '../types/place.types';
 
@@ -14,12 +14,7 @@ export interface ReportPlaceModalProps {
   onClose: () => void;
 }
 
-export function ReportPlaceModal({
-  placeId,
-  placeName,
-  isOpen,
-  onClose,
-}: ReportPlaceModalProps) {
+export function ReportPlaceModal({ placeId, placeName, isOpen, onClose }: ReportPlaceModalProps) {
   const [reason, setReason] = useState<PlaceReportReason>('environmental_damage');
   const [details, setDetails] = useState<string>('');
   const [isPending, startTransition] = useTransition();
@@ -72,17 +67,15 @@ export function ReportPlaceModal({
             className="absolute top-5 right-5 p-2 rounded-full text-stone-500 hover:text-stone-900 hover:bg-stone-100 transition-colors min-h-[44px] min-w-[44px] flex items-center justify-center"
             aria-label="Fermer"
           >
-            <X className="w-5 h-5" />
+            <Icon name="x" className="w-5 h-5" />
           </button>
 
           <div className="mb-4 pr-6">
             <span className="text-xs font-bold text-sand-700 uppercase tracking-wider flex items-center gap-1.5">
-              <AlertTriangle className="w-4 h-4 text-sand-600" />
+              <Icon name="alert-triangle" className="w-4 h-4 text-sand-600" />
               Sécurité & Éthique Outdoor
             </span>
-            <h2 className="text-xl font-black text-stone-900 mt-1">
-              Signaler un problème
-            </h2>
+            <h2 className="text-xl font-black text-stone-900 mt-1">Signaler un problème</h2>
             <p className="text-xs text-stone-600 mt-0.5">
               Lieu concerné : <strong className="text-stone-900">{placeName}</strong>
             </p>
@@ -91,19 +84,14 @@ export function ReportPlaceModal({
           {success ? (
             <div className="py-4 text-center">
               <div className="w-12 h-12 rounded-full bg-forest-50 text-forest-700 mx-auto flex items-center justify-center mb-3">
-                <CheckCircle2 className="w-6 h-6" />
+                <Icon name="check-circle2" className="w-6 h-6" />
               </div>
-              <h3 className="text-base font-bold text-stone-900 mb-1">
-                Signalement bien reçu
-              </h3>
+              <h3 className="text-base font-bold text-stone-900 mb-1">Signalement bien reçu</h3>
               <p className="text-xs text-stone-600 mb-6 leading-relaxed">
-                Notre équipe de modération et les référents parcs examineront ce lieu sous 24h pour adapter le floutage ou la sensibilité.
+                Notre équipe de modération et les référents parcs examineront ce lieu sous 24h pour
+                adapter le floutage ou la sensibilité.
               </p>
-              <LkvButton
-                variant="primary"
-                className="w-full min-h-[44px]"
-                onClick={handleClose}
-              >
+              <LkvButton variant="primary" className="w-full min-h-[44px]" onClick={handleClose}>
                 Compris
               </LkvButton>
             </div>
@@ -111,7 +99,7 @@ export function ReportPlaceModal({
             <form onSubmit={handleSubmit} className="space-y-4">
               {errorMsg && (
                 <div className="p-3 rounded-xl bg-rose-50 border border-rose-200 text-rose-800 text-xs flex items-center gap-2">
-                  <AlertCircle className="w-4 h-4 text-rose-700 shrink-0" />
+                  <Icon name="alert-circle" className="w-4 h-4 text-rose-700 shrink-0" />
                   <span>{errorMsg}</span>
                 </div>
               )}
@@ -129,11 +117,19 @@ export function ReportPlaceModal({
                   onChange={(e) => setReason(e.target.value as PlaceReportReason)}
                   className="w-full h-11 px-3 rounded-xl border border-stone-200 bg-stone-50 text-xs font-medium text-stone-900 focus:outline-none focus:ring-2 focus:ring-[#17402C]/20"
                 >
-                  <option value="environmental_damage">Dégradation environnementale / déchets</option>
+                  <option value="environmental_damage">
+                    Dégradation environnementale / déchets
+                  </option>
                   <option value="overcrowding">Surfréquentation menaçant le site</option>
-                  <option value="safety_hazard">Danger physique (éboulement, crevasse, accès risqué)</option>
-                  <option value="inaccurate_info">Informations erronées (source tarie, refuge fermé)</option>
-                  <option value="private_property">Propriété privée / interdiction de bivouac</option>
+                  <option value="safety_hazard">
+                    Danger physique (éboulement, crevasse, accès risqué)
+                  </option>
+                  <option value="inaccurate_info">
+                    Informations erronées (source tarie, refuge fermé)
+                  </option>
+                  <option value="private_property">
+                    Propriété privée / interdiction de bivouac
+                  </option>
                   <option value="other">Autre motif</option>
                 </select>
               </div>

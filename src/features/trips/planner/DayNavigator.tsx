@@ -1,7 +1,7 @@
 'use client';
 
+import Icon from '@/components/ui/Icon';
 import React, { useRef, useEffect } from 'react';
-import { Plus } from 'lucide-react';
 import type { PlannerStep } from './plannerEngine';
 import { formatCivilDayIndex } from '@/lib/dates/tripDates';
 import { useHapticFeedback } from '@/hooks/useHapticFeedback';
@@ -112,7 +112,7 @@ export function DayNavigator({
             className="flex items-center justify-center gap-1.5 px-3.5 py-2 rounded-[var(--lkv-radius-md)] glass-sub-card border border-dashed border-white/80 text-[var(--lkv-text-secondary)] hover:text-[var(--lkv-text-primary)] hover:bg-white transition-all shrink-0 min-h-[44px] text-xs font-semibold cursor-pointer active:scale-95"
             title="Ajouter un jour supplémentaire"
           >
-            <Plus className="w-3.5 h-3.5" />
+            <Icon name="plus" className="w-3.5 h-3.5" />
             <span>Ajouter jour</span>
           </button>
         )}

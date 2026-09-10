@@ -1,12 +1,12 @@
 'use client';
 
+import Icon from '@/components/ui/Icon';
 import { useRouter } from 'next/navigation';
 import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { GlassCard } from '@/components/ui/GlassCard';
 import { Badge } from '@/components/ui/Badge';
 import { useToast } from '@/contexts/ToastContext';
-import { Check } from 'lucide-react';
 import { ArrowDownIcon as ArrowDown } from '@/components/icons/arrow-down';
 import type { PublicKit } from '@/features/materiel/services/getPublicKits';
 
@@ -141,15 +141,18 @@ export function TemplateStore({ kits = [] }: { kits: PublicKit[] }) {
                   isJustImported
                     ? 'bg-[var(--lkv-primary-soft)]/20 text-[var(--lkv-primary-soft)]'
                     : isImporting
-                    ? 'bg-white/10 text-[var(--lkv-text-muted)]'
-                    : 'glass interactive text-[var(--lkv-primary)] hover:bg-[var(--lkv-primary)] hover:text-white border border-white/40 shadow-inner'
+                      ? 'bg-white/10 text-[var(--lkv-text-muted)]'
+                      : 'glass interactive text-[var(--lkv-primary)] hover:bg-[var(--lkv-primary)] hover:text-white border border-white/40 shadow-inner'
                 }`}
               >
                 <AnimatePresence mode="wait" initial={false}>
                   {isImporting ? (
-                    <span className="w-2 h-2 rounded-full bg-[var(--lkv-primary)] animate-ping" aria-hidden="true" />
+                    <span
+                      className="w-2 h-2 rounded-full bg-[var(--lkv-primary)] animate-ping"
+                      aria-hidden="true"
+                    />
                   ) : isJustImported ? (
-                    <Check size={11} strokeWidth={2.5} aria-hidden="true" />
+                    <Icon name="check" size={11} strokeWidth={2.5} aria-hidden="true" />
                   ) : (
                     <ArrowDown size={12} strokeWidth={2.5} aria-hidden="true" />
                   )}
@@ -165,7 +168,9 @@ export function TemplateStore({ kits = [] }: { kits: PublicKit[] }) {
         <span className="text-[8px] sm:text-[9px] font-semibold uppercase tracking-wider text-[var(--lkv-primary-soft)] truncate">
           Communauté
         </span>
-        <span className="text-[8.5px] sm:text-[9px] font-bold text-[var(--lkv-primary)] shrink-0">1 clic · Import</span>
+        <span className="text-[8.5px] sm:text-[9px] font-bold text-[var(--lkv-primary)] shrink-0">
+          1 clic · Import
+        </span>
       </div>
     </GlassCard>
   );

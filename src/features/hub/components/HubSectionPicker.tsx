@@ -1,12 +1,16 @@
 'use client';
 
+import Icon from '@/components/ui/Icon';
 import React, { useState, useTransition } from 'react';
-import { Check, Plus, Sparkles } from 'lucide-react';
 import { GlassModal } from '@/components/ui/GlassModal';
 import { GlassCapsuleBtn, GlassPill } from '@/components/ui';
 import { useHapticFeedback } from '@/hooks/useHapticFeedback';
 import { hubSectionRegistry } from '../registry/hubSectionRegistry';
-import { HUB_SECTION_ORDER, type AdventureProfile, type HubSectionId } from '../engine/hubProfileEngine';
+import {
+  HUB_SECTION_ORDER,
+  type AdventureProfile,
+  type HubSectionId,
+} from '../engine/hubProfileEngine';
 
 export interface HubSectionPickerProps {
   /** Clé stable de l'aventure (`possession`, `sortie:slug`, `collectif:kind:id`). */
@@ -25,7 +29,7 @@ function readCustom(key: string): HubSectionId[] {
     const parsed: unknown = raw ? JSON.parse(raw) : [];
     return Array.isArray(parsed)
       ? (parsed as string[]).filter((s): s is HubSectionId =>
-          (HUB_SECTION_ORDER as string[]).includes(s),
+          (HUB_SECTION_ORDER as string[]).includes(s)
         )
       : [];
   } catch {
@@ -48,7 +52,9 @@ export function HubSectionPicker({
 }: HubSectionPickerProps) {
   const { triggerHaptic } = useHapticFeedback();
   const [isPending, startTransition] = useTransition();
-  const [customSections, setCustomSections] = useState<HubSectionId[]>(() => readCustom(adventureKey));
+  const [customSections, setCustomSections] = useState<HubSectionId[]>(() =>
+    readCustom(adventureKey)
+  );
 
   const defs = hubSectionRegistry.filter((d) => d.natures.includes(profile.nature));
 
@@ -76,10 +82,23 @@ export function HubSectionPicker({
   };
 
   return (
-    <GlassModal open={isOpen} onOpenChange={(v) => { if (!v) onClose(); }} title="Personnaliser les sections" variant="sheet" hideTitle>
+    <GlassModal
+      open={isOpen}
+      onOpenChange={(v) => {
+        if (!v) onClose();
+      }}
+      title="Personnaliser les sections"
+      variant="sheet"
+      hideTitle
+    >
       <div className="pb-2">
         <div className="flex items-center gap-2 mb-3">
-          <Sparkles size={16} className="text-[var(--lkv-secondary)] shrink-0" aria-hidden="true" />
+          <Icon
+            name="sparkles"
+            size={16}
+            className="text-[var(--lkv-secondary)] shrink-0"
+            aria-hidden="true"
+          />
           <h3 className="text-base font-bold font-display text-[var(--lkv-text-primary)]">
             Personnaliser les sections
           </h3>
@@ -154,12 +173,12 @@ export function HubSectionPicker({
                   >
                     {active ? (
                       <>
-                        <Check size={13} />
+                        <Icon name="check" size={13} />
                         <span>Active</span>
                       </>
                     ) : (
                       <>
-                        <Plus size={13} />
+                        <Icon name="plus" size={13} />
                         <span>Activer</span>
                       </>
                     )}

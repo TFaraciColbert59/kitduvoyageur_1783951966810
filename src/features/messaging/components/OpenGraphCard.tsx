@@ -1,8 +1,8 @@
-"use client";
+'use client';
 
+import Icon from '@/components/ui/Icon';
 import React, { useState, useEffect } from 'react';
 import Image from 'next/image';
-import { ExternalLink, Globe } from 'lucide-react';
 import type { OpenGraphPreviewData } from '../types/messaging.types';
 
 const ogCache = new Map<string, OpenGraphPreviewData | null>();
@@ -74,7 +74,9 @@ export const OpenGraphCard: React.FC<OpenGraphCardProps> = ({ url, isMine }) => 
           target="_blank"
           rel="noopener noreferrer"
           className={`block text-left group ${
-            isMine ? 'bg-white/15 text-white' : 'bg-[#F1EDE6]/90 text-[#17402C] border border-[#E4DED3]/80'
+            isMine
+              ? 'bg-white/15 text-white'
+              : 'bg-[#F1EDE6]/90 text-[#17402C] border border-[#E4DED3]/80'
           }`}
         >
           {ogData.image && (
@@ -93,9 +95,9 @@ export const OpenGraphCard: React.FC<OpenGraphCardProps> = ({ url, isMine }) => 
           )}
           <div className="p-2.5 space-y-1">
             <div className="flex items-center gap-1.5 text-[10px] font-semibold opacity-75">
-              <Globe className="w-3 h-3 shrink-0" />
+              <Icon name="globe" className="w-3 h-3 shrink-0" />
               <span className="truncate">{ogData.domain}</span>
-              <ExternalLink className="w-2.5 h-2.5 shrink-0 ml-auto opacity-60" />
+              <Icon name="external-link" className="w-2.5 h-2.5 shrink-0 ml-auto opacity-60" />
             </div>
             <p className="text-xs font-bold leading-tight line-clamp-1 group-hover:underline">
               {ogData.title}

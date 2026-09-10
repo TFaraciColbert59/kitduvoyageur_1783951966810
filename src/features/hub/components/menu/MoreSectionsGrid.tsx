@@ -3,8 +3,8 @@
 // Hub V4 — Bento « Plus de sections » : sur desktop la grille reste complète ;
 // sur mobile les cartes secondaires quittent le bento pour un tiroir sheet
 // (un clic de plus, identique en contenu — aération sans perte d'accès).
+import Icon from '@/components/ui/Icon';
 import React, { useState } from 'react';
-import { MoreHorizontal } from 'lucide-react';
 import { BentoGrid, type BentoCell } from '@/components/ui-layouts/bento-grid';
 import { GlassModal } from '@/components/ui/GlassModal';
 import { useMediaQuery } from '@/hooks/useMediaQuery';
@@ -37,8 +37,15 @@ export function MoreSectionsGrid({ cells, moreCells, fitRows }: MoreSectionsGrid
         }}
         className="w-full mt-3 flex items-center gap-3 px-4 min-h-[44px] rounded-2xl border border-white/60 bg-white/55 text-left cursor-pointer active:scale-[0.99] transition-transform"
       >
-        <MoreHorizontal size={18} className="text-[var(--lkv-text-secondary)]" aria-hidden="true" />
-        <span className="text-sm font-semibold text-[var(--lkv-text-primary)]">Plus de sections</span>
+        <Icon
+          name="more-horizontal"
+          size={18}
+          className="text-[var(--lkv-text-secondary)]"
+          aria-hidden="true"
+        />
+        <span className="text-sm font-semibold text-[var(--lkv-text-primary)]">
+          Plus de sections
+        </span>
         <span className="ml-auto rounded-full bg-[var(--lkv-primary)]/10 px-2 py-0.5 text-[10px] font-bold text-[var(--lkv-primary)]">
           {moreCells.length}
         </span>

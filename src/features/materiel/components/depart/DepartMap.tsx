@@ -1,8 +1,8 @@
 'use client';
+import Icon from '@/components/ui/Icon';
 import React, { useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
 import 'leaflet/dist/leaflet.css';
-import { MapPin, Check } from 'lucide-react';
 import { CompassIcon as Compass } from '@/components/icons/compass';
 import { NavigationIcon as Navigation } from '@/components/icons/navigation';
 import { LayersIcon as Layers } from '@/components/icons/layers';
@@ -119,7 +119,9 @@ export function DepartMap({ trail, height = '240px', className }: DepartMapProps
           iconSize: [12, 12],
           iconAnchor: [6, 6],
         });
-        L.marker(lines[0][0], { icon: startIcon }).addTo(map).bindPopup('<strong>Point de départ</strong>');
+        L.marker(lines[0][0], { icon: startIcon })
+          .addTo(map)
+          .bindPopup('<strong>Point de départ</strong>');
 
         const lastLine = lines[lines.length - 1];
         const endPt = lastLine[lastLine.length - 1];
@@ -138,7 +140,9 @@ export function DepartMap({ trail, height = '240px', className }: DepartMapProps
           iconSize: [14, 14],
           iconAnchor: [7, 7],
         });
-        L.marker(startPt, { icon: pinIcon }).addTo(map).bindPopup(`<strong>${trail?.name || 'Point de départ'}</strong>`);
+        L.marker(startPt, { icon: pinIcon })
+          .addTo(map)
+          .bindPopup(`<strong>${trail?.name || 'Point de départ'}</strong>`);
       }
 
       mapRef.current = map;
@@ -194,7 +198,9 @@ export function DepartMap({ trail, height = '240px', className }: DepartMapProps
           <Compass size={20} />
         </div>
         <div>
-          <h3 className="text-xs sm:text-[13px] font-bold text-[var(--lkv-primary)]">Aucun tracé associé à ce départ</h3>
+          <h3 className="text-xs sm:text-[13px] font-bold text-[var(--lkv-primary)]">
+            Aucun tracé associé à ce départ
+          </h3>
           <p className="text-[11px] text-[var(--lkv-text-muted)] mt-0.5">
             Liez un itinéraire GPX pour activer la carte interactive.
           </p>
@@ -203,7 +209,7 @@ export function DepartMap({ trail, height = '240px', className }: DepartMapProps
           href="/hub/depart"
           className="glass-capsule-btn primary inline-flex items-center gap-1.5 text-xs py-1.5 px-3 font-semibold mt-1"
         >
-          <MapPin size={12} />
+          <Icon name="map-pin" size={12} />
           <span>Associer une randonnée</span>
         </Link>
       </div>
@@ -228,7 +234,8 @@ export function DepartMap({ trail, height = '240px', className }: DepartMapProps
 
   const handleDownloadGPX = () => {
     if (!trail?.geojson) return;
-    const dataStr = 'data:text/json;charset=utf-8,' + encodeURIComponent(JSON.stringify(trail.geojson));
+    const dataStr =
+      'data:text/json;charset=utf-8,' + encodeURIComponent(JSON.stringify(trail.geojson));
     const a = document.createElement('a');
     a.setAttribute('href', dataStr);
     a.setAttribute('download', `${trail.name || 'trace'}.geojson`);
@@ -252,10 +259,8 @@ export function DepartMap({ trail, height = '240px', className }: DepartMapProps
       {/* ════ HEADER CARTE : NOM DU TRACÉ & DISTANCE ════ */}
       <div className="px-4 py-2.5 border-b border-black/5 dark:border-white/10 flex items-center justify-between gap-2 bg-white/40 dark:bg-white/5 backdrop-blur-md shrink-0">
         <div className="flex items-center gap-2 min-w-0">
-          <MapPin size={14} className="text-[var(--lkv-primary-hover)] shrink-0" />
-          <span className="text-xs font-bold text-[var(--lkv-primary)] truncate">
-            {trail.name}
-          </span>
+          <Icon name="map-pin" size={14} className="text-[var(--lkv-primary-hover)] shrink-0" />
+          <span className="text-xs font-bold text-[var(--lkv-primary)] truncate">{trail.name}</span>
           {trail.distance_km !== null && (
             <span className="text-[11px] font-mono font-semibold text-[var(--lkv-text-muted)] shrink-0 bg-white/50 px-1.5 py-0.2 rounded-md">
               {formatDistanceKm(trail.distance_km)}
@@ -272,14 +277,20 @@ export function DepartMap({ trail, height = '240px', className }: DepartMapProps
             title="Exporter le tracé"
             aria-label="Exporter le tracé"
           >
-            {isOfflineSaved ? <Check size={12} className="text-forest-600" /> : <DownloadAnimated size={12} />}
+            {isOfflineSaved ? (
+              <Icon name="check" size={12} className="text-forest-600" />
+            ) : (
+              <DownloadAnimated size={12} />
+            )}
           </button>
           <button
             type="button"
             onClick={() => setIsFullscreen((v) => !v)}
             className="glass-circle-btn !w-7 !h-7 text-[var(--lkv-primary)] cursor-pointer"
             title={isFullscreen ? 'Réduire' : 'Plein écran'}
-            aria-label={isFullscreen ? 'Quitter le mode plein écran' : 'Afficher la carte en plein écran'}
+            aria-label={
+              isFullscreen ? 'Quitter le mode plein écran' : 'Afficher la carte en plein écran'
+            }
           >
             {isFullscreen ? <Minimize2 size={12} /> : <Maximize2Animated size={12} />}
           </button>
@@ -287,7 +298,10 @@ export function DepartMap({ trail, height = '240px', className }: DepartMapProps
       </div>
 
       {/* ════ ZONE DE RENDU LEAFLET AVEC HAUTEUR PIXEL STRICTE GARANTIE ════ */}
-      <div className="relative w-full overflow-hidden" style={{ height: actualHeight, minHeight: actualHeight }}>
+      <div
+        className="relative w-full overflow-hidden"
+        style={{ height: actualHeight, minHeight: actualHeight }}
+      >
         {!loaded && (
           <div className="absolute inset-0 z-10 flex items-center justify-center bg-black/5">
             <Skeleton className="w-full h-full rounded-none" />
@@ -325,21 +339,30 @@ export function DepartMap({ trail, height = '240px', className }: DepartMapProps
             <button
               type="button"
               onClick={() => handleTileChange('topo')}
-              className={cn('px-2 py-1 rounded-xl text-left cursor-pointer', tileMode === 'topo' && 'bg-[var(--lkv-primary)] text-white')}
+              className={cn(
+                'px-2 py-1 rounded-xl text-left cursor-pointer',
+                tileMode === 'topo' && 'bg-[var(--lkv-primary)] text-white'
+              )}
             >
               IGN Topo
             </button>
             <button
               type="button"
               onClick={() => handleTileChange('osm')}
-              className={cn('px-2 py-1 rounded-xl text-left cursor-pointer', tileMode === 'osm' && 'bg-[var(--lkv-primary)] text-white')}
+              className={cn(
+                'px-2 py-1 rounded-xl text-left cursor-pointer',
+                tileMode === 'osm' && 'bg-[var(--lkv-primary)] text-white'
+              )}
             >
               OpenStreetMap
             </button>
             <button
               type="button"
               onClick={() => handleTileChange('satellite')}
-              className={cn('px-2 py-1 rounded-xl text-left cursor-pointer', tileMode === 'satellite' && 'bg-[var(--lkv-primary)] text-white')}
+              className={cn(
+                'px-2 py-1 rounded-xl text-left cursor-pointer',
+                tileMode === 'satellite' && 'bg-[var(--lkv-primary)] text-white'
+              )}
             >
               Satellite
             </button>

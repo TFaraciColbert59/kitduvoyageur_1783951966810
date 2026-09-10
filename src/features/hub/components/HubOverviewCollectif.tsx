@@ -1,7 +1,8 @@
 ﻿'use client';
 
+import Icon from '@/components/ui/Icon';
 import Link from 'next/link';
-import { ArrowRight, ArrowUpRight, MailPlus, Map as MapIcon, Sparkles, Users } from 'lucide-react';
+import { MailPlus, Map as MapIcon, Users } from 'lucide-react';
 import { motion, useReducedMotion } from 'framer-motion';
 import { HUB_COLLECTIF_HREFS, hubSectionHref } from '../registry/hubSectionRegistry';
 import { tripSwitchHref } from '@/features/trips/registry/tripSectionRegistry';
@@ -32,8 +33,18 @@ export function HubOverviewCollectif({
   };
 
   const cards: Array<{ href: string; label: string; Icon: typeof Users; count?: number }> = [
-    { href: hubSectionHref({ nature: 'collectif' }, 'groupe'), label: 'Groupe', Icon: Users, count: members },
-    { href: hubSectionHref({ nature: 'collectif' }, 'invitations'), label: 'Invitations', Icon: MailPlus, count: pendingInvites },
+    {
+      href: hubSectionHref({ nature: 'collectif' }, 'groupe'),
+      label: 'Groupe',
+      Icon: Users,
+      count: members,
+    },
+    {
+      href: hubSectionHref({ nature: 'collectif' }, 'invitations'),
+      label: 'Invitations',
+      Icon: MailPlus,
+      count: pendingInvites,
+    },
     { href: HUB_COLLECTIF_HREFS.voyagesLies, label: 'Voyages liés', Icon: MapIcon },
   ];
 
@@ -54,7 +65,7 @@ export function HubOverviewCollectif({
             className="glass-capsule-btn primary inline-flex items-center gap-2 min-h-[44px] px-5 active:scale-[0.98] transition-transform"
           >
             <span>Entrer dans le voyage</span>
-            <ArrowUpRight size={14} aria-hidden="true" />
+            <Icon name="arrow-up-right" size={14} aria-hidden="true" />
           </Link>
         </motion.div>
       )}
@@ -77,7 +88,12 @@ export function HubOverviewCollectif({
                     {c.count !== undefined && c.count > 0 ? ` · ${c.count}` : ''}
                   </span>
                 </span>
-                <ArrowRight size={14} className="text-[var(--lkv-text-muted)] shrink-0" aria-hidden="true" />
+                <Icon
+                  name="arrow-right"
+                  size={14}
+                  className="text-[var(--lkv-text-muted)] shrink-0"
+                  aria-hidden="true"
+                />
               </Link>
             </motion.div>
           );
@@ -90,11 +106,23 @@ export function HubOverviewCollectif({
           className="glass p-4 rounded-2xl flex items-center gap-3 min-h-[44px] cursor-pointer active:scale-[0.98] transition-transform"
           aria-label={`Assistant IA — coordination ${groupLabel}`}
         >
-          <Sparkles size={18} className="shrink-0 text-[var(--lkv-text-secondary)]" aria-hidden="true" />
+          <Icon
+            name="sparkles"
+            size={18}
+            className="shrink-0 text-[var(--lkv-text-secondary)]"
+            aria-hidden="true"
+          />
           <span className="flex-1 min-w-0">
-            <span className="block text-sm font-semibold text-[var(--lkv-text-primary)]">Assistant IA</span>
+            <span className="block text-sm font-semibold text-[var(--lkv-text-primary)]">
+              Assistant IA
+            </span>
           </span>
-          <ArrowRight size={14} className="text-[var(--lkv-text-muted)] shrink-0" aria-hidden="true" />
+          <Icon
+            name="arrow-right"
+            size={14}
+            className="text-[var(--lkv-text-muted)] shrink-0"
+            aria-hidden="true"
+          />
         </Link>
       </motion.div>
     </div>

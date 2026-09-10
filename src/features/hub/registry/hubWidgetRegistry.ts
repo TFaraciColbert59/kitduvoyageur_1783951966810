@@ -103,7 +103,6 @@ export const SECTION_WIDGET_MAP: Partial<Record<string, readonly HubWidgetId[]>>
   alertes: ['alertes-materiel'],
   oublis: ['stock-apercu'],
   groupe: ['presence-groupe', 'invitations-apercu'],
-  team: ['presence-groupe', 'invitations-apercu'],
   invitations: ['invitations-apercu'],
   'voyages-lies': ['entrer-voyage'],
 } as const;

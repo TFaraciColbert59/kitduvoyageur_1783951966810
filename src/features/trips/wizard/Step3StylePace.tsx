@@ -1,11 +1,11 @@
 'use client';
 
+import Icon from '@/components/ui/Icon';
 import React from 'react';
 import type { AccommodationType } from './wizardTypes';
 import type { PlannerPace } from '../engine/types';
 import type { TripActivityType, TripDifficulty } from '../types/trip.types';
 import {
-  Compass,
   Tent,
   Home,
   Building,
@@ -15,7 +15,6 @@ import {
   Flame,
   Car,
   BookOpen,
-  Check,
 } from 'lucide-react';
 
 interface Step3StylePaceProps {
@@ -36,7 +35,12 @@ const ACCOMMODATIONS: Array<{
   Icon: React.ElementType;
 }> = [
   { id: 'bivouac', title: 'Bivouac & Tente', desc: '100% autonomie sous les étoiles', Icon: Tent },
-  { id: 'refuge', title: 'Refuges gardés', desc: 'Dortoirs d’altitude et repas chauds', Icon: Home },
+  {
+    id: 'refuge',
+    title: 'Refuges gardés',
+    desc: 'Dortoirs d’altitude et repas chauds',
+    Icon: Home,
+  },
   { id: 'hotel', title: 'Hôtels & Gîtes', desc: 'Chambres confortables et repos', Icon: Building },
   { id: 'mixed', title: 'Mixte équilibré', desc: 'Alternance bivouac et gîte', Icon: Layers },
 ];
@@ -49,9 +53,24 @@ const ACTIVITIES: Array<{
 }> = [
   { id: 'trekking', title: 'Trekking', desc: 'Itinérance alpine avec sac à dos', Icon: Mountain },
   { id: 'hiking', title: 'Randonnée', desc: 'Boucles et sentiers de découverte', Icon: Footprints },
-  { id: 'bivouac', title: 'Bushcraft & Bivouac', desc: 'Vie sauvage et techniques de camp', Icon: Flame },
-  { id: 'roadtrip', title: 'Roadtrip & Camp', desc: 'Aventure itinérante en van ou 4x4', Icon: Car },
-  { id: 'cultural', title: 'Sentiers Culturels', desc: 'Patrimoine, villages et histoire', Icon: BookOpen },
+  {
+    id: 'bivouac',
+    title: 'Bushcraft & Bivouac',
+    desc: 'Vie sauvage et techniques de camp',
+    Icon: Flame,
+  },
+  {
+    id: 'roadtrip',
+    title: 'Roadtrip & Camp',
+    desc: 'Aventure itinérante en van ou 4x4',
+    Icon: Car,
+  },
+  {
+    id: 'cultural',
+    title: 'Sentiers Culturels',
+    desc: 'Patrimoine, villages et histoire',
+    Icon: BookOpen,
+  },
 ];
 
 const PACES: Array<{
@@ -60,9 +79,24 @@ const PACES: Array<{
   kms: string;
   desc: string;
 }> = [
-  { id: 'chill', title: 'Contemplatif (Chill)', kms: '10 - 15 km/jour', desc: 'Rythme doux, pauses baignade ou photo, dénivelé progressif' },
-  { id: 'standard', title: 'Équilibré (Standard)', kms: '15 - 20 km/jour', desc: 'Le tempo idéal du trekkeur : belle journée de marche active' },
-  { id: 'intense', title: 'Soutenu (Intense)', kms: '20 - 30 km/jour', desc: 'Grosses journées, cols engagés, sac allégé et bon dénivelé' },
+  {
+    id: 'chill',
+    title: 'Contemplatif (Chill)',
+    kms: '10 - 15 km/jour',
+    desc: 'Rythme doux, pauses baignade ou photo, dénivelé progressif',
+  },
+  {
+    id: 'standard',
+    title: 'Équilibré (Standard)',
+    kms: '15 - 20 km/jour',
+    desc: 'Le tempo idéal du trekkeur : belle journée de marche active',
+  },
+  {
+    id: 'intense',
+    title: 'Soutenu (Intense)',
+    kms: '20 - 30 km/jour',
+    desc: 'Grosses journées, cols engagés, sac allégé et bon dénivelé',
+  },
 ];
 
 const DIFFICULTIES: Array<{
@@ -90,14 +124,15 @@ export function Step3StylePace({
     <div className="space-y-6">
       <div>
         <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-wider text-lkv-secondary mb-1">
-          <Compass size={14} />
+          <Icon name="compass" size={14} />
           <span>Étape 3 sur 5</span>
         </div>
         <h2 className="text-2xl sm:text-3xl font-bold text-lkv-primary">
           Quel est votre style d&apos;expédition ?
         </h2>
         <p className="text-sm text-[var(--lkv-text-muted)] mt-1">
-          Ces préférences guident le moteur pour sélectionner les étapes adaptées à vos envies et à votre forme physique.
+          Ces préférences guident le moteur pour sélectionner les étapes adaptées à vos envies et à
+          votre forme physique.
         </p>
       </div>
 
@@ -129,11 +164,13 @@ export function Step3StylePace({
                 </div>
                 <div className="flex-1 min-w-0">
                   <div className="text-sm font-semibold">{title}</div>
-                  <div className={`text-xs mt-0.5 ${active ? 'text-[var(--sage-300)]' : 'text-[var(--lkv-text-muted)]'}`}>
+                  <div
+                    className={`text-xs mt-0.5 ${active ? 'text-[var(--sage-300)]' : 'text-[var(--lkv-text-muted)]'}`}
+                  >
                     {desc}
                   </div>
                 </div>
-                {active && <Check size={16} className="text-white shrink-0 mt-1" />}
+                {active && <Icon name="check" size={16} className="text-white shrink-0 mt-1" />}
               </button>
             );
           })}
@@ -161,12 +198,16 @@ export function Step3StylePace({
               >
                 <div className="flex items-center justify-between">
                   <div className="text-sm font-semibold">{title}</div>
-                  {active && <Check size={15} />}
+                  {active && <Icon name="check" size={15} />}
                 </div>
-                <div className={`text-xs font-bold mt-1 ${active ? 'text-[var(--sage-300)]' : 'text-lkv-secondary'}`}>
+                <div
+                  className={`text-xs font-bold mt-1 ${active ? 'text-[var(--sage-300)]' : 'text-lkv-secondary'}`}
+                >
                   {kms}
                 </div>
-                <div className={`text-[11px] mt-1.5 leading-snug ${active ? 'text-white/80' : 'text-[var(--lkv-text-muted)]'}`}>
+                <div
+                  className={`text-[11px] mt-1.5 leading-snug ${active ? 'text-white/80' : 'text-[var(--lkv-text-muted)]'}`}
+                >
                   {desc}
                 </div>
               </button>
@@ -194,7 +235,10 @@ export function Step3StylePace({
                     : 'bg-white/80 hover:bg-white text-lkv-primary border-black/5'
                 }`}
               >
-                <Icon size={18} className={active ? 'text-[var(--sage-300)]' : 'text-lkv-secondary'} />
+                <Icon
+                  size={18}
+                  className={active ? 'text-[var(--sage-300)]' : 'text-lkv-secondary'}
+                />
                 <span className="text-xs font-semibold mt-1.5">{title}</span>
               </button>
             );
@@ -222,7 +266,9 @@ export function Step3StylePace({
                 }`}
               >
                 <div className="text-xs font-semibold">{title}</div>
-                <div className={`text-[10px] mt-0.5 truncate ${active ? 'text-white/80' : 'text-[var(--lkv-text-muted)]'}`}>
+                <div
+                  className={`text-[10px] mt-0.5 truncate ${active ? 'text-white/80' : 'text-[var(--lkv-text-muted)]'}`}
+                >
                   {desc}
                 </div>
               </button>

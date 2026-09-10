@@ -1,7 +1,7 @@
 ﻿'use client';
 
+import Icon from '@/components/ui/Icon';
 import React, { useState, useTransition, useMemo } from 'react';
-import { AlertCircle, CheckCircle2, Map } from 'lucide-react';
 import { GlassCapsuleBtn, GlassModal } from '@/components/ui';
 import type { TripFull } from '@/features/trips/types/trip.types';
 import {
@@ -366,7 +366,7 @@ export default function ItineraryPlannerClient({
               href={tripSectionHref(trip.slug, 'overview')}
               size="sm"
               aria-label="Voir le cockpit du voyage"
-              icon={<Map className="w-3.5 h-3.5" />}
+              icon={<Icon name="map" className="w-3.5 h-3.5" />}
             >
               <span className="hidden sm:inline">Cockpit</span>
             </GlassCapsuleBtn>
@@ -376,13 +376,13 @@ export default function ItineraryPlannerClient({
         {/* Toasts flottants discrets */}
         {errorMessage && (
           <div className="mt-3 bg-[var(--lkv-danger)]/10 text-[var(--lkv-danger)] border border-[var(--lkv-danger)]/20 px-4 py-2 text-xs flex items-center gap-2 rounded-[var(--lkv-radius-md)] animate-in fade-in">
-            <AlertCircle className="w-4 h-4 shrink-0" />
+            <Icon name="alert-circle" className="w-4 h-4 shrink-0" />
             <span>{errorMessage}</span>
           </div>
         )}
         {successMessage && (
           <div className="mt-3 bg-[var(--lkv-success)]/10 text-[var(--lkv-success)] border border-[var(--lkv-success)]/20 px-4 py-2 text-xs flex items-center gap-2 rounded-[var(--lkv-radius-md)] animate-in fade-in">
-            <CheckCircle2 className="w-4 h-4 shrink-0" />
+            <Icon name="check-circle2" className="w-4 h-4 shrink-0" />
             <span>{successMessage}</span>
           </div>
         )}
@@ -452,20 +452,22 @@ export default function ItineraryPlannerClient({
       {/* Dialogue accessible de confirmation de suppression */}
       <GlassModal
         open={dayPendingDeletion !== null}
-        onOpenChange={(v: boolean) => { if (!v) setDayPendingDeletion(null); }}
+        onOpenChange={(v: boolean) => {
+          if (!v) setDayPendingDeletion(null);
+        }}
         title="Supprimer le jour ?"
         hideTitle
       >
         <div className="space-y-4">
           <div className="flex items-center gap-3 text-[var(--lkv-danger)]">
-            <AlertCircle className="w-6 h-6 shrink-0" aria-hidden="true" />
+            <Icon name="alert-circle" className="w-6 h-6 shrink-0" aria-hidden="true" />
             <h3 className="font-semibold text-base text-[var(--lkv-text-primary)]">
               Supprimer le Jour {dayPendingDeletion} ?
             </h3>
           </div>
           <p className="text-sm text-[var(--lkv-text-secondary)] leading-relaxed">
-            Cette journée contient {steps.filter((s) => s.day_number === dayPendingDeletion).length} étape(s).
-            Confirmez-vous la suppression intégrale de la journée et de ses étapes ?
+            Cette journée contient {steps.filter((s) => s.day_number === dayPendingDeletion).length}{' '}
+            étape(s). Confirmez-vous la suppression intégrale de la journée et de ses étapes ?
           </p>
           <div className="flex items-center justify-end gap-3 pt-2">
             <GlassCapsuleBtn

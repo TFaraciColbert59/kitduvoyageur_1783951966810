@@ -1,0 +1,787 @@
+[
+  {
+    "lucide": "AlertCircle",
+    "name": "alert-circle",
+    "slug": "warning-circle"
+  },
+  {
+    "lucide": "AlertTriangle",
+    "name": "alert-triangle",
+    "slug": "warning"
+  },
+  {
+    "lucide": "Archive",
+    "name": "archive",
+    "slug": "archive"
+  },
+  {
+    "lucide": "ArchiveRestore",
+    "name": "archive-restore",
+    "slug": "archive"
+  },
+  {
+    "lucide": "ArrowDown",
+    "name": "arrow-down",
+    "slug": "arrow-down"
+  },
+  {
+    "lucide": "ArrowLeft",
+    "name": "arrow-left",
+    "slug": "arrow-left"
+  },
+  {
+    "lucide": "ArrowRight",
+    "name": "arrow-right",
+    "slug": "arrow-right"
+  },
+  {
+    "lucide": "ArrowRightLeft",
+    "name": "arrow-right-left",
+    "slug": "arrows-left-right"
+  },
+  {
+    "lucide": "ArrowUp",
+    "name": "arrow-up",
+    "slug": "arrow-up"
+  },
+  {
+    "lucide": "ArrowUpRight",
+    "name": "arrow-up-right",
+    "slug": "arrow-up-right"
+  },
+  {
+    "lucide": "Award",
+    "name": "award",
+    "slug": "medal"
+  },
+  {
+    "lucide": "Backpack",
+    "name": "backpack",
+    "slug": "backpack"
+  },
+  {
+    "lucide": "Banknote",
+    "name": "banknote",
+    "slug": "money"
+  },
+  {
+    "lucide": "Battery",
+    "name": "battery",
+    "slug": "battery-full"
+  },
+  {
+    "lucide": "BedDouble",
+    "name": "bed-double",
+    "slug": "bed"
+  },
+  {
+    "lucide": "Bell",
+    "name": "bell",
+    "slug": "bell"
+  },
+  {
+    "lucide": "BellOff",
+    "name": "bell-off",
+    "slug": "bell-slash"
+  },
+  {
+    "lucide": "BellRing",
+    "name": "bell-ring",
+    "slug": "bell-ringing"
+  },
+  {
+    "lucide": "Bike",
+    "name": "bike",
+    "slug": "bicycle"
+  },
+  {
+    "lucide": "BookOpen",
+    "name": "book-open",
+    "slug": "book-open"
+  },
+  {
+    "lucide": "Bookmark",
+    "name": "bookmark",
+    "slug": "bookmark"
+  },
+  {
+    "lucide": "Building",
+    "name": "building",
+    "slug": "building"
+  },
+  {
+    "lucide": "Building2",
+    "name": "building2",
+    "slug": "buildings"
+  },
+  {
+    "lucide": "Bus",
+    "name": "bus",
+    "slug": "bus"
+  },
+  {
+    "lucide": "Calendar",
+    "name": "calendar",
+    "slug": "calendar"
+  },
+  {
+    "lucide": "CalendarCheck",
+    "name": "calendar-check",
+    "slug": "calendar-check"
+  },
+  {
+    "lucide": "CalendarDays",
+    "name": "calendar-days",
+    "slug": "calendar-dots"
+  },
+  {
+    "lucide": "CalendarPlus",
+    "name": "calendar-plus",
+    "slug": "calendar-plus"
+  },
+  {
+    "lucide": "Car",
+    "name": "car",
+    "slug": "car"
+  },
+  {
+    "lucide": "Check",
+    "name": "check",
+    "slug": "check"
+  },
+  {
+    "lucide": "CheckCheck",
+    "name": "check-check",
+    "slug": "checks"
+  },
+  {
+    "lucide": "CheckCircle",
+    "name": "check-circle",
+    "slug": "check-circle"
+  },
+  {
+    "lucide": "CheckCircle2",
+    "name": "check-circle2",
+    "slug": "check-circle"
+  },
+  {
+    "lucide": "CheckSquare",
+    "name": "check-square",
+    "slug": "check-square"
+  },
+  {
+    "lucide": "ChevronDown",
+    "name": "chevron-down",
+    "slug": "caret-down"
+  },
+  {
+    "lucide": "ChevronLeft",
+    "name": "chevron-left",
+    "slug": "caret-left"
+  },
+  {
+    "lucide": "ChevronRight",
+    "name": "chevron-right",
+    "slug": "caret-right"
+  },
+  {
+    "lucide": "ChevronUp",
+    "name": "chevron-up",
+    "slug": "caret-up"
+  },
+  {
+    "lucide": "ChevronsUpDown",
+    "name": "chevrons-up-down",
+    "slug": "caret-up-down"
+  },
+  {
+    "lucide": "Circle",
+    "name": "circle",
+    "slug": "circle"
+  },
+  {
+    "lucide": "ClipboardList",
+    "name": "clipboard-list",
+    "slug": "clipboard-text"
+  },
+  {
+    "lucide": "Clock",
+    "name": "clock",
+    "slug": "clock"
+  },
+  {
+    "lucide": "Cloud",
+    "name": "cloud",
+    "slug": "cloud"
+  },
+  {
+    "lucide": "CloudDrizzle",
+    "name": "cloud-drizzle",
+    "slug": "cloud-rain"
+  },
+  {
+    "lucide": "CloudFog",
+    "name": "cloud-fog",
+    "slug": "cloud-fog"
+  },
+  {
+    "lucide": "CloudLightning",
+    "name": "cloud-lightning",
+    "slug": "cloud-lightning"
+  },
+  {
+    "lucide": "CloudOff",
+    "name": "cloud-off",
+    "slug": "cloud-slash"
+  },
+  {
+    "lucide": "CloudRain",
+    "name": "cloud-rain",
+    "slug": "cloud-rain"
+  },
+  {
+    "lucide": "CloudRainWind",
+    "name": "cloud-rain-wind",
+    "slug": "cloud-rain"
+  },
+  {
+    "lucide": "CloudSnow",
+    "name": "cloud-snow",
+    "slug": "cloud-snow"
+  },
+  {
+    "lucide": "CloudSun",
+    "name": "cloud-sun",
+    "slug": "cloud-sun"
+  },
+  {
+    "lucide": "Coins",
+    "name": "coins",
+    "slug": "coins"
+  },
+  {
+    "lucide": "Compass",
+    "name": "compass",
+    "slug": "compass"
+  },
+  {
+    "lucide": "Copy",
+    "name": "copy",
+    "slug": "copy"
+  },
+  {
+    "lucide": "CreditCard",
+    "name": "credit-card",
+    "slug": "credit-card"
+  },
+  {
+    "lucide": "Crown",
+    "name": "crown",
+    "slug": "crown"
+  },
+  {
+    "lucide": "Download",
+    "name": "download",
+    "slug": "download"
+  },
+  {
+    "lucide": "Droplet",
+    "name": "droplet",
+    "slug": "drop"
+  },
+  {
+    "lucide": "Droplets",
+    "name": "droplets",
+    "slug": "drop-half"
+  },
+  {
+    "lucide": "Edit2",
+    "name": "edit2",
+    "slug": "pencil-simple"
+  },
+  {
+    "lucide": "Edit3",
+    "name": "edit3",
+    "slug": "pencil-simple"
+  },
+  {
+    "lucide": "Ellipsis",
+    "name": "ellipsis",
+    "slug": "dots-three"
+  },
+  {
+    "lucide": "Euro",
+    "name": "euro",
+    "slug": "currency-eur"
+  },
+  {
+    "lucide": "ExternalLink",
+    "name": "external-link",
+    "slug": "arrow-square-out"
+  },
+  {
+    "lucide": "Eye",
+    "name": "eye",
+    "slug": "eye"
+  },
+  {
+    "lucide": "EyeOff",
+    "name": "eye-off",
+    "slug": "eye-slash"
+  },
+  {
+    "lucide": "FileCheck",
+    "name": "file-check",
+    "slug": "file"
+  },
+  {
+    "lucide": "FileText",
+    "name": "file-text",
+    "slug": "file-text"
+  },
+  {
+    "lucide": "Filter",
+    "name": "filter",
+    "slug": "funnel"
+  },
+  {
+    "lucide": "Flame",
+    "name": "flame",
+    "slug": "flame"
+  },
+  {
+    "lucide": "FlaskConical",
+    "name": "flask-conical",
+    "slug": "flask"
+  },
+  {
+    "lucide": "Footprints",
+    "name": "footprints",
+    "slug": "footprints"
+  },
+  {
+    "lucide": "Globe",
+    "name": "globe",
+    "slug": "globe"
+  },
+  {
+    "lucide": "GripVertical",
+    "name": "grip-vertical",
+    "slug": "dots-six-vertical"
+  },
+  {
+    "lucide": "HandCoins",
+    "name": "hand-coins",
+    "slug": "hand-coins"
+  },
+  {
+    "lucide": "Handshake",
+    "name": "handshake",
+    "slug": "handshake"
+  },
+  {
+    "lucide": "Heart",
+    "name": "heart",
+    "slug": "heart"
+  },
+  {
+    "lucide": "HeartPulse",
+    "name": "heart-pulse",
+    "slug": "pulse"
+  },
+  {
+    "lucide": "HelpCircle",
+    "name": "help-circle",
+    "slug": "question"
+  },
+  {
+    "lucide": "Home",
+    "name": "home",
+    "slug": "house"
+  },
+  {
+    "lucide": "ImageOff",
+    "name": "image-off",
+    "slug": "image-broken"
+  },
+  {
+    "lucide": "ImagePlus",
+    "name": "image-plus",
+    "slug": "image-square"
+  },
+  {
+    "lucide": "Info",
+    "name": "info",
+    "slug": "info"
+  },
+  {
+    "lucide": "KeyRound",
+    "name": "key-round",
+    "slug": "key"
+  },
+  {
+    "lucide": "Layers",
+    "name": "layers",
+    "slug": "stack"
+  },
+  {
+    "lucide": "Lock",
+    "name": "lock",
+    "slug": "lock"
+  },
+  {
+    "lucide": "LogOut",
+    "name": "log-out",
+    "slug": "sign-out"
+  },
+  {
+    "lucide": "Mail",
+    "name": "mail",
+    "slug": "envelope"
+  },
+  {
+    "lucide": "MailPlus",
+    "name": "mail-plus",
+    "slug": "envelope"
+  },
+  {
+    "lucide": "Map",
+    "name": "map",
+    "slug": "map-trifold"
+  },
+  {
+    "lucide": "MapPin",
+    "name": "map-pin",
+    "slug": "map-pin"
+  },
+  {
+    "lucide": "MessageSquare",
+    "name": "message-square",
+    "slug": "chat"
+  },
+  {
+    "lucide": "MessageSquarePlus",
+    "name": "message-square-plus",
+    "slug": "chat-circle-dots"
+  },
+  {
+    "lucide": "Mic",
+    "name": "mic",
+    "slug": "microphone"
+  },
+  {
+    "lucide": "Minus",
+    "name": "minus",
+    "slug": "minus"
+  },
+  {
+    "lucide": "Moon",
+    "name": "moon",
+    "slug": "moon"
+  },
+  {
+    "lucide": "MoonStar",
+    "name": "moon-star",
+    "slug": "moon-stars"
+  },
+  {
+    "lucide": "MoreHorizontal",
+    "name": "more-horizontal",
+    "slug": "dots-three"
+  },
+  {
+    "lucide": "MoreVertical",
+    "name": "more-vertical",
+    "slug": "dots-three-vertical"
+  },
+  {
+    "lucide": "Mountain",
+    "name": "mountain",
+    "slug": "mountains"
+  },
+  {
+    "lucide": "Navigation",
+    "name": "navigation",
+    "slug": "navigation-arrow"
+  },
+  {
+    "lucide": "Package",
+    "name": "package",
+    "slug": "package"
+  },
+  {
+    "lucide": "Paperclip",
+    "name": "paperclip",
+    "slug": "paperclip"
+  },
+  {
+    "lucide": "Pause",
+    "name": "pause",
+    "slug": "pause"
+  },
+  {
+    "lucide": "Pencil",
+    "name": "pencil",
+    "slug": "pencil"
+  },
+  {
+    "lucide": "Phone",
+    "name": "phone",
+    "slug": "phone"
+  },
+  {
+    "lucide": "PhoneCall",
+    "name": "phone-call",
+    "slug": "phone-call"
+  },
+  {
+    "lucide": "Pin",
+    "name": "pin",
+    "slug": "push-pin"
+  },
+  {
+    "lucide": "Plane",
+    "name": "plane",
+    "slug": "airplane"
+  },
+  {
+    "lucide": "Play",
+    "name": "play",
+    "slug": "play"
+  },
+  {
+    "lucide": "Plus",
+    "name": "plus",
+    "slug": "plus"
+  },
+  {
+    "lucide": "Printer",
+    "name": "printer",
+    "slug": "printer"
+  },
+  {
+    "lucide": "Radio",
+    "name": "radio",
+    "slug": "radio"
+  },
+  {
+    "lucide": "Recycle",
+    "name": "recycle",
+    "slug": "recycle"
+  },
+  {
+    "lucide": "RefreshCw",
+    "name": "refresh-cw",
+    "slug": "arrows-clockwise"
+  },
+  {
+    "lucide": "Reply",
+    "name": "reply",
+    "slug": "arrow-bend-up-left"
+  },
+  {
+    "lucide": "RotateCcw",
+    "name": "rotate-ccw",
+    "slug": "arrow-counter-clockwise"
+  },
+  {
+    "lucide": "Route",
+    "name": "route",
+    "slug": "path"
+  },
+  {
+    "lucide": "Scale",
+    "name": "scale",
+    "slug": "scales"
+  },
+  {
+    "lucide": "Search",
+    "name": "search",
+    "slug": "magnifying-glass"
+  },
+  {
+    "lucide": "Send",
+    "name": "send",
+    "slug": "paper-plane-tilt"
+  },
+  {
+    "lucide": "Share2",
+    "name": "share2",
+    "slug": "share-network"
+  },
+  {
+    "lucide": "Shield",
+    "name": "shield",
+    "slug": "shield"
+  },
+  {
+    "lucide": "ShieldAlert",
+    "name": "shield-alert",
+    "slug": "shield-warning"
+  },
+  {
+    "lucide": "ShieldCheck",
+    "name": "shield-check",
+    "slug": "shield-check"
+  },
+  {
+    "lucide": "Ship",
+    "name": "ship",
+    "slug": "boat"
+  },
+  {
+    "lucide": "Shirt",
+    "name": "shirt",
+    "slug": "t-shirt"
+  },
+  {
+    "lucide": "ShoppingBag",
+    "name": "shopping-bag",
+    "slug": "shopping-bag"
+  },
+  {
+    "lucide": "ShoppingCart",
+    "name": "shopping-cart",
+    "slug": "shopping-cart"
+  },
+  {
+    "lucide": "Siren",
+    "name": "siren",
+    "slug": "siren"
+  },
+  {
+    "lucide": "Smile",
+    "name": "smile",
+    "slug": "smiley"
+  },
+  {
+    "lucide": "Sparkles",
+    "name": "sparkles",
+    "slug": "sparkle"
+  },
+  {
+    "lucide": "Square",
+    "name": "square",
+    "slug": "square"
+  },
+  {
+    "lucide": "Star",
+    "name": "star",
+    "slug": "star"
+  },
+  {
+    "lucide": "Sun",
+    "name": "sun",
+    "slug": "sun"
+  },
+  {
+    "lucide": "Sunrise",
+    "name": "sunrise",
+    "slug": "sun-horizon"
+  },
+  {
+    "lucide": "Sunset",
+    "name": "sunset",
+    "slug": "sun-horizon"
+  },
+  {
+    "lucide": "Tag",
+    "name": "tag",
+    "slug": "tag"
+  },
+  {
+    "lucide": "Tent",
+    "name": "tent",
+    "slug": "tent"
+  },
+  {
+    "lucide": "Thermometer",
+    "name": "thermometer",
+    "slug": "thermometer"
+  },
+  {
+    "lucide": "Ticket",
+    "name": "ticket",
+    "slug": "ticket"
+  },
+  {
+    "lucide": "Train",
+    "name": "train",
+    "slug": "train"
+  },
+  {
+    "lucide": "Trash2",
+    "name": "trash2",
+    "slug": "trash"
+  },
+  {
+    "lucide": "TrendingDown",
+    "name": "trending-down",
+    "slug": "trend-down"
+  },
+  {
+    "lucide": "TrendingUp",
+    "name": "trending-up",
+    "slug": "trend-up"
+  },
+  {
+    "lucide": "Unlock",
+    "name": "unlock",
+    "slug": "lock-open"
+  },
+  {
+    "lucide": "User",
+    "name": "user",
+    "slug": "user"
+  },
+  {
+    "lucide": "UserMinus",
+    "name": "user-minus",
+    "slug": "user-minus"
+  },
+  {
+    "lucide": "UserPlus",
+    "name": "user-plus",
+    "slug": "user-plus"
+  },
+  {
+    "lucide": "Users",
+    "name": "users",
+    "slug": "users"
+  },
+  {
+    "lucide": "Weight",
+    "name": "weight",
+    "slug": "barbell"
+  },
+  {
+    "lucide": "Wifi",
+    "name": "wifi",
+    "slug": "wifi-high"
+  },
+  {
+    "lucide": "WifiOff",
+    "name": "wifi-off",
+    "slug": "wifi-slash"
+  },
+  {
+    "lucide": "Wind",
+    "name": "wind",
+    "slug": "wind"
+  },
+  {
+    "lucide": "X",
+    "name": "x",
+    "slug": "x"
+  },
+  {
+    "lucide": "XCircle",
+    "name": "x-circle",
+    "slug": "x-circle"
+  },
+  {
+    "lucide": "Zap",
+    "name": "zap",
+    "slug": "lightning"
+  }
+]

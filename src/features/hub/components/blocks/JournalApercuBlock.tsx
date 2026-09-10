@@ -1,4 +1,4 @@
-import { BookOpen } from 'lucide-react';
+import Icon from '@/components/ui/Icon';
 import { EmptyState } from '@/components/ui/EmptyState';
 import type { TripFull } from '@/features/trips/types/trip.types';
 import { hubSectionHref, type HubAdventureRef } from '../../registry/hubSectionRegistry';
@@ -22,7 +22,12 @@ export function JournalApercuBlock({ trip, slug }: { trip: TripFull; slug: strin
     <div className="glass p-5 rounded-[var(--lkv-radius-card)] border border-white/60 shadow-sm">
       <div className="flex items-center justify-between mb-3">
         <h2 className="text-base font-bold text-[var(--lkv-text-primary)] flex items-center gap-2">
-          <BookOpen size={18} className="text-[var(--lkv-text-secondary)]" aria-hidden="true" />
+          <Icon
+            name="book-open"
+            size={18}
+            className="text-[var(--lkv-text-secondary)]"
+            aria-hidden="true"
+          />
           <span>Journal récent</span>
         </h2>
         <a
@@ -36,14 +41,17 @@ export function JournalApercuBlock({ trip, slug }: { trip: TripFull; slug: strin
       {notes.length === 0 ? (
         <EmptyState
           compact
-          icon={<BookOpen size={22} aria-hidden="true" />}
+          icon={<Icon name="book-open" size={22} aria-hidden="true" />}
           title="Aucune note"
           description="Racontez vos journées au fil du voyage."
         />
       ) : (
         <ul className="space-y-2">
           {notes.map((n) => (
-            <li key={n.id} className="px-3 py-2.5 rounded-[var(--lkv-radius-md)] bg-white/35 border border-white/50">
+            <li
+              key={n.id}
+              className="px-3 py-2.5 rounded-[var(--lkv-radius-md)] bg-white/35 border border-white/50"
+            >
               <div className="flex items-center gap-2 mb-0.5">
                 {n.day_number != null && (
                   <span className="text-[10px] font-medium uppercase tracking-[0.14em] text-[var(--lkv-text-secondary)]">
@@ -51,7 +59,9 @@ export function JournalApercuBlock({ trip, slug }: { trip: TripFull; slug: strin
                   </span>
                 )}
                 {n.title && (
-                  <span className="text-sm font-semibold text-[var(--lkv-text-primary)] truncate">{n.title}</span>
+                  <span className="text-sm font-semibold text-[var(--lkv-text-primary)] truncate">
+                    {n.title}
+                  </span>
                 )}
               </div>
               <p className="text-xs text-[var(--lkv-text-secondary)] line-clamp-2">{n.content}</p>

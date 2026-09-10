@@ -1,6 +1,6 @@
 ﻿'use client';
+import Icon from '@/components/ui/Icon';
 import Link from 'next/link';
-import { CheckCircle2, ArrowRight, AlertCircle } from 'lucide-react';
 import { ClockIcon as Clock } from '@/components/icons/clock';
 import { GlassCard } from '@/components/ui/GlassCard';
 import { Badge } from '@/components/ui/Badge';
@@ -15,7 +15,10 @@ interface DispoData {
 }
 
 export function GearCardDispo({ data, className }: { data: DispoData; className?: string }) {
-  const available = data.availableCount !== undefined ? data.availableCount : Math.max(0, data.total - data.unavailableCount);
+  const available =
+    data.availableCount !== undefined
+      ? data.availableCount
+      : Math.max(0, data.total - data.unavailableCount);
   const availablePct = data.total > 0 ? Math.round((available / data.total) * 100) : 100;
   const tone = availablePct === 100 ? 'sage' : data.unavailableCount <= 2 ? 'warn' : 'danger';
 
@@ -25,19 +28,26 @@ export function GearCardDispo({ data, className }: { data: DispoData; className?
         {/* Header with Title & KPIs */}
         <div className="flex items-start justify-between pr-7 md:pr-10 gap-1.5">
           <div className="space-y-0.5 min-w-0 flex-1">
-            <h2 id="dispo-title" className="text-[12px] sm:text-[18px] font-display font-bold text-[var(--lkv-primary)] leading-tight truncate">
+            <h2
+              id="dispo-title"
+              className="text-[12px] sm:text-[18px] font-display font-bold text-[var(--lkv-primary)] leading-tight truncate"
+            >
               Dispo parc
             </h2>
           </div>
 
           <div className="flex items-center gap-1 shrink-0">
             <div className="glass-sub-card px-1.5 py-0.5 flex items-center gap-0.5">
-              <CheckCircle2 size={10} className="text-[var(--lkv-primary)]" />
-              <span className="text-[11px] sm:text-[14px] font-mono font-bold text-[var(--lkv-primary)]">{available}</span>
+              <Icon name="check-circle2" size={10} className="text-[var(--lkv-primary)]" />
+              <span className="text-[11px] sm:text-[14px] font-mono font-bold text-[var(--lkv-primary)]">
+                {available}
+              </span>
             </div>
             <div className="glass-sub-card px-1.5 py-0.5 flex items-center gap-0.5">
               <Clock size={10} className="text-[var(--lkv-warning)]" />
-              <span className="text-[11px] sm:text-[14px] font-mono font-bold text-[var(--lkv-warning)]">{data.unavailableCount}</span>
+              <span className="text-[11px] sm:text-[14px] font-mono font-bold text-[var(--lkv-warning)]">
+                {data.unavailableCount}
+              </span>
             </div>
           </div>
         </div>
@@ -57,14 +67,14 @@ export function GearCardDispo({ data, className }: { data: DispoData; className?
             {data.hasConflict ? (
               <Badge tone="danger">
                 <span className="flex items-center gap-0.5 text-[8.5px] sm:text-[9px]">
-                  <AlertCircle size={9} />
+                  <Icon name="alert-circle" size={9} />
                   <span>Conflit</span>
                 </span>
               </Badge>
             ) : (
               <Badge tone="sage">
                 <span className="flex items-center gap-0.5 text-[8.5px] sm:text-[9px]">
-                  <CheckCircle2 size={9} />
+                  <Icon name="check-circle2" size={9} />
                   <span>0 conflit</span>
                 </span>
               </Badge>
@@ -74,9 +84,12 @@ export function GearCardDispo({ data, className }: { data: DispoData; className?
             </span>
           </div>
 
-          <Link href="/hub/disponibilite" className="glass-capsule-btn secondary text-[9.5px] sm:text-xs !h-6 sm:!h-7 !px-2 sm:!px-2.5 shrink-0">
+          <Link
+            href="/hub/disponibilite"
+            className="glass-capsule-btn secondary text-[9.5px] sm:text-xs !h-6 sm:!h-7 !px-2 sm:!px-2.5 shrink-0"
+          >
             <span>Prêts</span>
-            <ArrowRight size={10} />
+            <Icon name="arrow-right" size={10} />
           </Link>
         </div>
       </div>

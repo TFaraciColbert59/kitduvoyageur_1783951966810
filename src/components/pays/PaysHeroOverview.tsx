@@ -6,6 +6,7 @@ import Link from 'next/link';
 import Icon from '@/components/ui/AppIcon';
 import CountryFlag from '@/components/ui/CountryFlag';
 import { CountryDetail } from '@/lib/countryDetails';
+import { SectionBlocks, PaysWeatherCard, PaysRecommendations } from '@/features/pays';
 
 interface PaysHeroOverviewProps {
   country: CountryDetail;
@@ -243,6 +244,36 @@ export default function PaysHeroOverview({
         </div>
       </div>
       )}
+
+      {/* 5. SYNTHÈSE IA, MÉTÉO RÉELLE & ACCÈS AUX SECTIONS */}
+      <SectionBlocks countryCode={country.code} sectionId="presentation" countryContent={country.country_content ?? null} />
+
+      <PaysWeatherCard countryCode={country.code} />
+
+      <PaysRecommendations countryCode={country.code} />
+
+      <div className="flex flex-wrap gap-2">
+        {[
+          { id: 'destinations', label: 'Destinations' },
+          { id: 'activites', label: 'Activités & Treks' },
+          { id: 'culture', label: 'Culture & Société' },
+        ].map((link) => (
+          <button
+            key={link.id}
+            type="button"
+            onClick={() => onNavigateSection(link.id)}
+            className="glass-capsule-btn !min-h-[36px] !py-1.5 !px-4 !text-xs !font-bold"
+          >
+            {link.label} →
+          </button>
+        ))}
+        <Link
+          href="/hub"
+          className="glass-capsule-btn primary !min-h-[36px] !py-1.5 !px-4 !text-xs !font-bold"
+        >
+          Préparer ce voyage →
+        </Link>
+      </div>
     </div>
   );
 }

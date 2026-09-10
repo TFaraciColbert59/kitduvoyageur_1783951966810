@@ -1,10 +1,10 @@
 'use client';
 
+import Icon from '@/components/ui/Icon';
 import React from 'react';
 import Link from 'next/link';
 import { usePreparationStore } from '../../stores/usePreparationStore';
 import { useHapticFeedback } from '@/hooks/useHapticFeedback';
-import { Sparkles, AlertTriangle, ShieldAlert, Scale, ArrowRight } from 'lucide-react';
 import { ShoppingBagIcon as ShoppingBag } from '@/components/icons/shopping-bag';
 
 export function ShakedownTab() {
@@ -29,7 +29,7 @@ export function ShakedownTab() {
     return 'text-rose-800 bg-rose-100 border-rose-300';
   };
 
-  const handleAddMissingItem = (gap: typeof gearGaps[0]) => {
+  const handleAddMissingItem = (gap: (typeof gearGaps)[0]) => {
     triggerHaptic('success');
     addItem({
       name: gap.suggestedProduct?.name || gap.name,
@@ -88,7 +88,7 @@ export function ShakedownTab() {
       {(missingVitalWarnings.length > 0 || duplicateWarnings.length > 0) && (
         <div className="space-y-2">
           <h4 className="text-xs font-bold uppercase tracking-wider text-red-700 flex items-center gap-1.5 px-1">
-            <ShieldAlert size={14} />
+            <Icon name="shield-alert" size={14} />
             <span>Points d'Attention Prioritaires</span>
           </h4>
 
@@ -123,7 +123,9 @@ export function ShakedownTab() {
         <div className="space-y-2">
           <h4 className="text-xs font-bold uppercase tracking-wider text-[#17402C] dark:text-white flex items-center justify-between px-1">
             <span>Équipements Recommandés Manquants ({gearGaps.length})</span>
-            <span className="text-[10px] text-[#5A7064] dark:text-[#9AAD9E] font-normal">Discret & non intrusif</span>
+            <span className="text-[10px] text-[#5A7064] dark:text-[#9AAD9E] font-normal">
+              Discret & non intrusif
+            </span>
           </h4>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
@@ -145,7 +147,9 @@ export function ShakedownTab() {
                       {gap.priority === 'vital' ? 'VITAL' : 'CONSEILLÉ'}
                     </span>
                   </div>
-                  <p className="text-[11px] text-[#5A7064] dark:text-[#9AAD9E] mt-0.5 leading-tight">{gap.reason}</p>
+                  <p className="text-[11px] text-[#5A7064] dark:text-[#9AAD9E] mt-0.5 leading-tight">
+                    {gap.reason}
+                  </p>
                 </div>
 
                 <div className="flex items-center justify-between pt-1 border-t border-black/5 dark:border-white/10">
@@ -172,7 +176,7 @@ export function ShakedownTab() {
       {heavyItemWarnings.length > 0 && (
         <div className="space-y-2">
           <h4 className="text-xs font-bold uppercase tracking-wider text-[#17402C] dark:text-white flex items-center gap-1.5 px-1">
-            <Scale size={14} />
+            <Icon name="scale" size={14} />
             <span>Postes Lourds Identifiés ({heavyItemWarnings.length})</span>
           </h4>
 
@@ -183,7 +187,9 @@ export function ShakedownTab() {
                 className="p-3.5 rounded-2xl bg-white/90 dark:bg-[#17402C]/90 backdrop-blur-xl border border-white/80 dark:border-white/20 flex items-center justify-between text-xs shadow-xs"
               >
                 <div>
-                  <span className="font-bold text-[#17402C] dark:text-white block truncate">{heavy.name}</span>
+                  <span className="font-bold text-[#17402C] dark:text-white block truncate">
+                    {heavy.name}
+                  </span>
                   <span className="text-[10px] font-mono text-red-700 dark:text-red-400">
                     {heavy.weightGrams} g (Seuil : {heavy.thresholdGrams} g)
                   </span>
@@ -201,7 +207,7 @@ export function ShakedownTab() {
       {recommendations.length > 0 && (
         <div className="space-y-2">
           <h4 className="text-xs font-bold uppercase tracking-wider text-forest-800 dark:text-forest-400 flex items-center gap-1.5 px-1">
-            <Sparkles size={14} />
+            <Icon name="sparkles" size={14} />
             <span>Opportunités d'Allègement Ultra-Light</span>
           </h4>
 
@@ -219,7 +225,9 @@ export function ShakedownTab() {
                     <h5 className="text-xs sm:text-sm font-bold text-[#17402C] dark:text-white mt-0.5">
                       ✨ {rec.suggestedName}
                     </h5>
-                    <p className="text-[11px] text-[#365233] dark:text-[#9AAD9E] mt-0.5">{rec.reason}</p>
+                    <p className="text-[11px] text-[#365233] dark:text-[#9AAD9E] mt-0.5">
+                      {rec.reason}
+                    </p>
                   </div>
 
                   <span className="px-2.5 py-1 rounded-full bg-forest-800 text-white font-mono font-bold text-xs shrink-0">
@@ -239,7 +247,7 @@ export function ShakedownTab() {
                     className="px-3 py-1.5 rounded-xl bg-forest-800 hover:bg-forest-700 text-white font-bold text-[11px] shadow-2xs flex items-center gap-1 transition-all"
                   >
                     <span>Voir l'alternative</span>
-                    <ArrowRight size={12} />
+                    <Icon name="arrow-right" size={12} />
                   </Link>
                 </div>
               </div>

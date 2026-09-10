@@ -1,7 +1,7 @@
 'use client';
+import Icon from '@/components/ui/Icon';
 import React from 'react';
 import { motion, useReducedMotion } from 'framer-motion';
-import { Check, Zap, Sparkles, Trash2 } from 'lucide-react';
 import { formatWeight } from '@/features/materiel/domain/departCalculations';
 import { resolveGearImage } from '@/features/materiel/services/gearImageResolver';
 import { cn } from '@/lib/utils';
@@ -49,17 +49,19 @@ export function MobileChecklistItem({
       <div
         className={cn(
           'absolute inset-0 flex items-center justify-between px-4 rounded-2xl transition-colors',
-          item.is_checked ? 'bg-[var(--lkv-warning)] text-white' : 'bg-[var(--lkv-primary-hover)] text-white'
+          item.is_checked
+            ? 'bg-[var(--lkv-warning)] text-white'
+            : 'bg-[var(--lkv-primary-hover)] text-white'
         )}
         aria-hidden="true"
       >
         <div className="flex items-center gap-2 font-bold text-xs">
-          <Check size={18} strokeWidth={3} />
+          <Icon name="check" size={18} strokeWidth={3} />
           <span>{item.is_checked ? 'Déballer' : 'Packé !'}</span>
         </div>
         {onDelete && (
           <div className="flex items-center gap-1 font-bold text-xs text-rose-100">
-            <Trash2 size={16} />
+            <Icon name="trash2" size={16} />
             <span>Supprimer</span>
           </div>
         )}
@@ -82,7 +84,8 @@ export function MobileChecklistItem({
           'relative z-10 w-full flex items-center justify-between gap-2.5 px-2 py-1.5 rounded-2xl transition-all',
           'bg-white dark:bg-stone-900 border border-white/90 dark:border-white/10 shadow-2xs',
           item.is_checked && 'bg-stone-50/95 dark:bg-stone-900/95 opacity-80 hover:opacity-100',
-          isHighlighted && 'ring-2 ring-[var(--lkv-danger)] bg-rose-50 dark:bg-rose-950/40 border-rose-200 dark:border-rose-900'
+          isHighlighted &&
+            'ring-2 ring-[var(--lkv-danger)] bg-rose-50 dark:bg-rose-950/40 border-rose-200 dark:border-rose-900'
         )}
       >
         {/* ════ GAUCHE : COCHE CIRCULAIRE 32PX DANS HIT-BOX 48PX APPLE HIG ════ */}
@@ -111,7 +114,7 @@ export function MobileChecklistItem({
                 animate={{ scale: 1 }}
                 transition={{ type: 'spring', stiffness: 500, damping: 25 }}
               >
-                <Check size={14} strokeWidth={3} className="text-white" />
+                <Icon name="check" size={14} strokeWidth={3} className="text-white" />
               </motion.span>
             )}
           </div>
@@ -125,7 +128,8 @@ export function MobileChecklistItem({
           <span
             className={cn(
               'text-[13.5px] font-bold tracking-tight text-[var(--lkv-primary)] dark:text-stone-100 truncate leading-snug',
-              item.is_checked && 'line-through text-[var(--lkv-text-muted)] dark:text-stone-400 decoration-[var(--lkv-text-muted)]/60 font-medium'
+              item.is_checked &&
+                'line-through text-[var(--lkv-text-muted)] dark:text-stone-400 decoration-[var(--lkv-text-muted)]/60 font-medium'
             )}
           >
             {item.name}
@@ -141,13 +145,13 @@ export function MobileChecklistItem({
             )}
             {item.is_vital && (
               <span className="inline-flex items-center gap-0.5 text-[9.5px] font-bold px-1.5 py-0.2 rounded-full bg-[var(--lkv-danger)]/15 text-[var(--lkv-danger)] dark:bg-rose-950/50 dark:text-rose-300">
-                <Zap size={8} aria-hidden="true" />
+                <Icon name="zap" size={8} aria-hidden="true" />
                 Vital
               </span>
             )}
             {item.is_consumable && (
               <span className="inline-flex items-center gap-0.5 text-[9.5px] font-semibold px-1.5 py-0.2 rounded-full bg-forest-100/80 text-forest-900 dark:bg-forest-950/50 dark:text-forest-300">
-                <Sparkles size={8} aria-hidden="true" />
+                <Icon name="sparkles" size={8} aria-hidden="true" />
                 Consommable
               </span>
             )}
@@ -171,16 +175,11 @@ export function MobileChecklistItem({
               aria-label={`Supprimer : ${item.name}`}
               className="min-w-[48px] min-h-[48px] w-12 h-12 flex items-center justify-center text-[var(--lkv-text-muted)]/60 hover:text-rose-600 dark:hover:text-rose-400 cursor-pointer transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-rose-500 rounded-full"
             >
-              <Trash2 size={15} aria-hidden="true" />
+              <Icon name="trash2" size={15} aria-hidden="true" />
             </button>
           )}
           <div className="w-9 h-9 shrink-0 rounded-xl overflow-hidden bg-black/5 dark:bg-white/5 border border-black/5 dark:border-white/10 shadow-2xs">
-            <img
-              src={imageUrl}
-              alt={item.name}
-              loading="lazy"
-              className="w-9 h-9 object-cover"
-            />
+            <img src={imageUrl} alt={item.name} loading="lazy" className="w-9 h-9 object-cover" />
           </div>
         </div>
       </motion.div>

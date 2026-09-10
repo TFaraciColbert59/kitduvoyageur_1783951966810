@@ -117,6 +117,8 @@ const RULE14_ALLOWLIST = [
   // Cartes du MENU hub (mapping carte→section via hubSectionHref typé, zéro littéral d'URL — R13 intacte).
   'src/features/hub/components/menu/CollectifMenu.tsx',
   'src/features/hub/components/menu/PossessionMenu.tsx',
+  // Moteur pur du MENU mobile V6 (sections/chips/moment via hubSectionHref typé, testé — même niveau que hubProfileEngine).
+  'src/features/hub/mobile/mobileHubEngine.ts',
   'tests/design/h-d85-guard.spec.ts',
 ];
 

@@ -1,6 +1,6 @@
 ﻿'use client';
+import Icon from '@/components/ui/Icon';
 import Link from 'next/link';
-import { Check, ArrowRight } from 'lucide-react';
 import { GlassCard } from '@/components/ui/GlassCard';
 import { ProgressBar } from '@/components/ui/ProgressBar';
 
@@ -14,11 +14,14 @@ interface ForgetData {
 
 export function GearCardForget({ data, className }: { data: ForgetData; className?: string }) {
   const pct = data.totalItems > 0 ? Math.round((data.checkedItems / data.totalItems) * 100) : 100;
-  const items = data.sampleItems && data.sampleItems.length > 0 ? data.sampleItems : [
-    { name: 'Tente & Bivouac', is_checked: true },
-    { name: 'Gourde filtrante 1L', is_checked: false },
-    { name: 'Trousse de secours', is_checked: false },
-  ];
+  const items =
+    data.sampleItems && data.sampleItems.length > 0
+      ? data.sampleItems
+      : [
+          { name: 'Tente & Bivouac', is_checked: true },
+          { name: 'Gourde filtrante 1L', is_checked: false },
+          { name: 'Trousse de secours', is_checked: false },
+        ];
 
   return (
     <GlassCard as="article" interactive ariaLabelledBy="forget-title" className={className}>
@@ -26,12 +29,17 @@ export function GearCardForget({ data, className }: { data: ForgetData; classNam
         {/* Header with Title & Large Metric */}
         <div className="flex items-start justify-between pr-7 md:pr-10 gap-1">
           <div className="space-y-0.5 min-w-0 flex-1">
-            <h2 id="forget-title" className="text-[12px] sm:text-[17px] font-display font-bold text-[var(--lkv-primary)] leading-tight truncate">
+            <h2
+              id="forget-title"
+              className="text-[12px] sm:text-[17px] font-display font-bold text-[var(--lkv-primary)] leading-tight truncate"
+            >
               À emporter
             </h2>
           </div>
           <div className="text-right shrink-0">
-            <span className={`text-[17px] sm:text-[30px] font-mono font-bold leading-none ${data.forgetRemaining === 0 ? 'text-[var(--lkv-primary)]' : 'text-[var(--lkv-danger)]'}`}>
+            <span
+              className={`text-[17px] sm:text-[30px] font-mono font-bold leading-none ${data.forgetRemaining === 0 ? 'text-[var(--lkv-primary)]' : 'text-[var(--lkv-danger)]'}`}
+            >
               {data.forgetRemaining}
             </span>
             <span className="block text-[8px] sm:text-[9.5px] font-semibold uppercase tracking-wider text-[var(--lkv-text-muted)]">
@@ -43,11 +51,18 @@ export function GearCardForget({ data, className }: { data: ForgetData; classNam
         {/* Mini Checklist List */}
         <div className="glass-sub-card p-1.5 sm:p-2.5 flex flex-col gap-1 sm:gap-2">
           {items.slice(0, 2).map((item, idx) => (
-            <div key={idx} className="flex items-center gap-1.5 px-0.5 py-0.2 rounded-lg text-[10px] sm:text-xs font-medium text-[var(--lkv-primary)]">
-              <span className={`glass-check-circle ${item.is_checked ? 'checked' : ''} !w-3.5 !h-3.5`}>
-                {item.is_checked && <Check size={8} strokeWidth={3} />}
+            <div
+              key={idx}
+              className="flex items-center gap-1.5 px-0.5 py-0.2 rounded-lg text-[10px] sm:text-xs font-medium text-[var(--lkv-primary)]"
+            >
+              <span
+                className={`glass-check-circle ${item.is_checked ? 'checked' : ''} !w-3.5 !h-3.5`}
+              >
+                {item.is_checked && <Icon name="check" size={8} strokeWidth={3} />}
               </span>
-              <span className={`flex-1 truncate ${item.is_checked ? 'line-through opacity-60 text-[var(--lkv-primary-soft)]' : ''}`}>
+              <span
+                className={`flex-1 truncate ${item.is_checked ? 'line-through opacity-60 text-[var(--lkv-primary-soft)]' : ''}`}
+              >
                 {item.name}
               </span>
             </div>
@@ -60,7 +75,11 @@ export function GearCardForget({ data, className }: { data: ForgetData; classNam
             <span>Complétude</span>
             <span className="font-mono text-[var(--lkv-primary)]">{pct}%</span>
           </div>
-          <ProgressBar value={pct} label="Checklist de départ" tone={pct === 100 ? 'sage' : 'warn'} />
+          <ProgressBar
+            value={pct}
+            label="Checklist de départ"
+            tone={pct === 100 ? 'sage' : 'warn'}
+          />
         </div>
 
         {/* Footer */}
@@ -68,9 +87,12 @@ export function GearCardForget({ data, className }: { data: ForgetData; classNam
           <span className="text-[9.5px] sm:text-xs text-[var(--lkv-text-muted)] truncate max-w-[80px] sm:max-w-[140px]">
             {data.nextDepartLabel ?? 'Aucun départ'}
           </span>
-          <Link href="/hub/oublis" className="glass-capsule-btn secondary text-[9.5px] sm:text-xs !h-6 sm:!h-7 !px-2 sm:!px-2.5">
+          <Link
+            href="/hub/oublis"
+            className="glass-capsule-btn secondary text-[9.5px] sm:text-xs !h-6 sm:!h-7 !px-2 sm:!px-2.5"
+          >
             <span>Voir</span>
-            <ArrowRight size={10} />
+            <Icon name="arrow-right" size={10} />
           </Link>
         </div>
       </div>

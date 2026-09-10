@@ -129,7 +129,7 @@ describe('H1 — deriveHubProfile : nature possession', () => {
 });
 
 describe('H1 — deriveHubProfile : nature sortie (composition)', () => {
-  it('SOR-1: rando solo courte = kit + itinéraire + sécurité + équipage, pas de budget', () => {
+  it('SOR-1: rando solo courte = kit + itinéraire + sécurité + groupe, pas de budget', () => {
     const p = deriveHubProfile(
       { kind: 'sortie', trip: mkTrip({ collaborators: [], estimated_budget: null }) },
       NOW,
@@ -142,9 +142,9 @@ describe('H1 — deriveHubProfile : nature sortie (composition)', () => {
     expect(p.sections).toContain('gear');
     expect(p.sections).toContain('safety');
     expect(p.sections).not.toContain('budget');
-    // Couche groupe universelle : onglet Équipage toujours visible.
-    expect(p.sections).toContain('team');
-    expect(p.reason.team).toMatch(/toujours visible/);
+    // Couche groupe universelle : onglet Groupe toujours visible.
+    expect(p.sections).toContain('groupe');
+    expect(p.reason.groupe).toMatch(/toujours visible/);
   });
 
   it('SOR-2: road trip multi-pays en groupe = budget + documents forcés', () => {
@@ -164,14 +164,14 @@ describe('H1 — deriveHubProfile : nature sortie (composition)', () => {
     expect(p.party).toBe('group');
     expect(p.sections).toContain('budget');
     expect(p.sections).toContain('docs');
-    expect(p.sections).toContain('team');
+    expect(p.sections).toContain('groupe');
   });
 
-  it('SOR-3: sections identiques à deriveTripProfile (zéro divergence)', () => {
+  it('SOR-3: sections identiques à deriveTripProfile (team fusionné en groupe)', () => {
     const trip = mkTrip({ collaborators: [{ id: 'c1' }] as TripFull['collaborators'] });
     const p = deriveHubProfile({ kind: 'sortie', trip }, NOW);
-    // matrice Y short/duo->group : overview, itinerary, gear, team, budget, checklist, safety, export
-    expect(p.sections).toEqual(['overview', 'itinerary', 'gear', 'team', 'budget', 'checklist', 'safety', 'export']);
+    // matrice Y short/duo->group : overview, itinerary, gear, team→groupe, budget, checklist, safety, export
+    expect(p.sections).toEqual(['overview', 'itinerary', 'gear', 'groupe', 'budget', 'checklist', 'safety', 'export']);
   });
 
   it('SOR-4: widget repris du moteur Y (composition, pas recopie — déroulé du jour seul)', () => {
@@ -300,7 +300,7 @@ describe('H1 — deriveHubProfile : pureté et déterminisme', () => {
     expect(deriveHubProfile(input, NOW)).toEqual(deriveHubProfile(input, NOW));
   });
 
-  it('PUR-2: natures disjointes (aucune section partagée sauf team/equipage)', () => {
+  it('PUR-2: natures disjointes (aucune section possession partagée avec le collectif)', () => {
     const pos = deriveHubProfile(possession({ itemsCount: 3, loansCount: 1, alertsCount: 1, hasDepartEnCours: true }), NOW);
     const col = deriveHubProfile(
       { kind: 'collectif', membersCount: 3, pendingInvites: 1, linkedTripsCount: 1, hasLinkedTrip: true },

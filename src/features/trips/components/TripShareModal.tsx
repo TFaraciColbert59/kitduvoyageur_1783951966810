@@ -1,16 +1,7 @@
 ﻿'use client';
 
+import Icon from '@/components/ui/Icon';
 import React, { useState, useTransition } from 'react';
-import {
-  Copy,
-  Check,
-  Globe,
-  Lock,
-  EyeOff,
-  Download,
-  Printer,
-  ShieldAlert,
-} from 'lucide-react';
 import { GlassModal } from '@/components/ui/GlassModal';
 import { GlassCapsuleBtn } from '@/components/ui/GlassCapsuleBtn';
 import { formatTripShareUrl } from '../engine/exportEngine';
@@ -32,7 +23,8 @@ export function TripShareModal({ trip, isOpen, onClose }: TripShareModalProps) {
 
   if (!isOpen) return null;
 
-  const origin = typeof window !== 'undefined' ? window.location.origin : 'https://lekitduvoyageur.fr';
+  const origin =
+    typeof window !== 'undefined' ? window.location.origin : 'https://lekitduvoyageur.fr';
   const shareUrl = formatTripShareUrl(trip.slug, trip.share_token, origin);
 
   const handleCopy = async () => {
@@ -60,9 +52,15 @@ export function TripShareModal({ trip, isOpen, onClose }: TripShareModalProps) {
   const isOwner = trip.permissions.canInvite;
 
   return (
-    <GlassModal open={isOpen} onOpenChange={(v) => { if (!v) onClose(); }} title="Partager &amp; Exporter l'Expédition" variant="sheet">
+    <GlassModal
+      open={isOpen}
+      onOpenChange={(v) => {
+        if (!v) onClose();
+      }}
+      title="Partager &amp; Exporter l'Expédition"
+      variant="sheet"
+    >
       <div className="space-y-5 pb-2">
-
         {/* 1. Visibilité du voyage */}
         <div className="space-y-2">
           <label className="block text-xs font-semibold text-lkv-primary">
@@ -80,10 +78,12 @@ export function TripShareModal({ trip, isOpen, onClose }: TripShareModalProps) {
               }`}
             >
               <div className="flex items-center gap-1.5 font-bold text-xs">
-                <Lock size={14} />
+                <Icon name="lock" size={14} />
                 <span>Privé</span>
               </div>
-              <div className={`text-[10px] mt-1 ${visibility === 'private' ? 'text-white/80' : 'text-[var(--lkv-text-muted)]'}`}>
+              <div
+                className={`text-[10px] mt-1 ${visibility === 'private' ? 'text-white/80' : 'text-[var(--lkv-text-muted)]'}`}
+              >
                 Membres seuls
               </div>
             </button>
@@ -99,10 +99,12 @@ export function TripShareModal({ trip, isOpen, onClose }: TripShareModalProps) {
               }`}
             >
               <div className="flex items-center gap-1.5 font-bold text-xs">
-                <EyeOff size={14} />
+                <Icon name="eye-off" size={14} />
                 <span>Lien secret</span>
               </div>
-              <div className={`text-[10px] mt-1 ${visibility === 'unlisted' ? 'text-white/80' : 'text-[var(--lkv-text-muted)]'}`}>
+              <div
+                className={`text-[10px] mt-1 ${visibility === 'unlisted' ? 'text-white/80' : 'text-[var(--lkv-text-muted)]'}`}
+              >
                 Ceux avec le lien
               </div>
             </button>
@@ -118,10 +120,12 @@ export function TripShareModal({ trip, isOpen, onClose }: TripShareModalProps) {
               }`}
             >
               <div className="flex items-center gap-1.5 font-bold text-xs">
-                <Globe size={14} />
+                <Icon name="globe" size={14} />
                 <span>Public</span>
               </div>
-              <div className={`text-[10px] mt-1 ${visibility === 'public' ? 'text-white/80' : 'text-[var(--lkv-text-muted)]'}`}>
+              <div
+                className={`text-[10px] mt-1 ${visibility === 'public' ? 'text-white/80' : 'text-[var(--lkv-text-muted)]'}`}
+              >
                 Visible de tous
               </div>
             </button>
@@ -149,7 +153,7 @@ export function TripShareModal({ trip, isOpen, onClose }: TripShareModalProps) {
               onClick={handleCopy}
               variant="primary"
               size="sm"
-              icon={copied ? <Check size={14} /> : <Copy size={14} />}
+              icon={copied ? <Icon name="check" size={14} /> : <Icon name="copy" size={14} />}
               className="shrink-0"
             >
               {copied ? 'Copié !' : 'Copier'}
@@ -159,9 +163,10 @@ export function TripShareModal({ trip, isOpen, onClose }: TripShareModalProps) {
 
         {/* Règle RGPD Documents */}
         <div className="p-3 rounded-xl glass-sub-card border border-white/60 text-[11px] text-[var(--lkv-text-muted)] flex items-start gap-2 shadow-2xs">
-          <ShieldAlert size={16} className="text-lkv-secondary shrink-0 mt-0.5" />
+          <Icon name="shield-alert" size={16} className="text-lkv-secondary shrink-0 mt-0.5" />
           <span>
-            <strong>Sécurité des documents :</strong> Les pièces sensibles (passeports, attestations) restent protégées et ne sont jamais partagées via ce lien.
+            <strong>Sécurité des documents :</strong> Les pièces sensibles (passeports,
+            attestations) restent protégées et ne sont jamais partagées via ce lien.
           </span>
         </div>
 
@@ -173,7 +178,7 @@ export function TripShareModal({ trip, isOpen, onClose }: TripShareModalProps) {
               download={`${trip.slug}.gpx`}
               className="flex items-center justify-center gap-2 p-3 rounded-full glass-capsule-btn text-xs font-semibold text-lkv-primary min-h-[44px]"
             >
-              <Download size={15} className="text-lkv-secondary" />
+              <Icon name="download" size={15} className="text-lkv-secondary" />
               <span>Trace GPX 1.1</span>
             </a>
 
@@ -183,7 +188,7 @@ export function TripShareModal({ trip, isOpen, onClose }: TripShareModalProps) {
               rel="noopener noreferrer"
               className="glass-capsule-btn w-full flex items-center gap-1.5 min-h-[44px]"
             >
-              <Printer size={15} className="text-lkv-secondary" />
+              <Icon name="printer" size={15} className="text-lkv-secondary" />
               <span>Feuille de Route / PDF</span>
             </a>
           </div>

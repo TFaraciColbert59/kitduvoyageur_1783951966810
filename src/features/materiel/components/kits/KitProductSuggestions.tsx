@@ -1,5 +1,6 @@
 'use client';
 
+import Icon from '@/components/ui/Icon';
 import React, { useState } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
@@ -7,7 +8,6 @@ import { GlassCard } from '@/components/ui/GlassCard';
 import { Eyebrow } from '@/components/ui/Eyebrow';
 import { useToast } from '@/contexts/ToastContext';
 import { addToCart } from '@/lib/cart';
-import { Plus, Sparkles, Check } from 'lucide-react';
 import { ShoppingBagIcon as ShoppingBag } from '@/components/icons/shopping-bag';
 import { ChevronDownIcon as ChevronDown } from '@/components/icons/chevron-down';
 import type { ProductSuggestion } from '@/features/materiel/services/getProductSuggestions';
@@ -17,7 +17,8 @@ const CURATED_SUGGESTIONS: ProductSuggestion[] = [
     id: 'sug-1',
     name: 'Tente Dôme Ultralight 2P',
     slug: 'tente-dome-ultralight-2p',
-    image: 'https://images.unsplash.com/photo-1504280390367-361c6d9f38f4?q=80&w=600&auto=format&fit=crop',
+    image:
+      'https://images.unsplash.com/photo-1504280390367-361c6d9f38f4?q=80&w=600&auto=format&fit=crop',
     priceEur: 189.0,
     category: 'Bivouac',
     weightG: 1250,
@@ -26,7 +27,8 @@ const CURATED_SUGGESTIONS: ProductSuggestion[] = [
     id: 'sug-2',
     name: 'Gourde Filtrante 1L PureFlow',
     slug: 'gourde-filtrante-1l-pureflow',
-    image: 'https://images.unsplash.com/photo-1544816155-12df9643f363?q=80&w=600&auto=format&fit=crop',
+    image:
+      'https://images.unsplash.com/photo-1544816155-12df9643f363?q=80&w=600&auto=format&fit=crop',
     priceEur: 42.5,
     category: 'Hydratation',
     weightG: 220,
@@ -35,7 +37,8 @@ const CURATED_SUGGESTIONS: ProductSuggestion[] = [
     id: 'sug-3',
     name: 'Matelas Autogonflant ThermoLite R3.5',
     slug: 'matelas-autogonflant-thermolite',
-    image: 'https://images.unsplash.com/photo-1510312305653-8ed496efae75?q=80&w=600&auto=format&fit=crop',
+    image:
+      'https://images.unsplash.com/photo-1510312305653-8ed496efae75?q=80&w=600&auto=format&fit=crop',
     priceEur: 85.0,
     category: 'Bivouac',
     weightG: 490,
@@ -44,7 +47,8 @@ const CURATED_SUGGESTIONS: ProductSuggestion[] = [
     id: 'sug-4',
     name: 'Lampe Frontale 450 Lumens USB-C',
     slug: 'lampe-frontale-450-lumens',
-    image: 'https://images.unsplash.com/photo-1508873696983-2df5293cb32b?q=80&w=600&auto=format&fit=crop',
+    image:
+      'https://images.unsplash.com/photo-1508873696983-2df5293cb32b?q=80&w=600&auto=format&fit=crop',
     priceEur: 34.9,
     category: 'Accessoires',
     weightG: 85,
@@ -53,7 +57,8 @@ const CURATED_SUGGESTIONS: ProductSuggestion[] = [
     id: 'sug-5',
     name: 'Sac à Dos Expédition 45+10L',
     slug: 'sac-a-dos-expedition-45-10l',
-    image: 'https://images.unsplash.com/photo-1553062407-98eeb64c6a62?q=80&w=600&auto=format&fit=crop',
+    image:
+      'https://images.unsplash.com/photo-1553062407-98eeb64c6a62?q=80&w=600&auto=format&fit=crop',
     priceEur: 145.0,
     category: 'Portage',
     weightG: 1100,
@@ -62,7 +67,8 @@ const CURATED_SUGGESTIONS: ProductSuggestion[] = [
     id: 'sug-6',
     name: 'Réchaud Titane Micro-Burner',
     slug: 'rechaud-titane-micro-burner',
-    image: 'https://images.unsplash.com/photo-1526778548025-fa2f459cd5c1?q=80&w=600&auto=format&fit=crop',
+    image:
+      'https://images.unsplash.com/photo-1526778548025-fa2f459cd5c1?q=80&w=600&auto=format&fit=crop',
     priceEur: 29.9,
     category: 'Cuisine',
     weightG: 48,
@@ -71,7 +77,8 @@ const CURATED_SUGGESTIONS: ProductSuggestion[] = [
     id: 'sug-7',
     name: 'Duvet Grand Froid -5°C Confort',
     slug: 'duvet-grand-froid-confort',
-    image: 'https://images.unsplash.com/photo-1517824806704-9040b037703b?q=80&w=600&auto=format&fit=crop',
+    image:
+      'https://images.unsplash.com/photo-1517824806704-9040b037703b?q=80&w=600&auto=format&fit=crop',
     priceEur: 210.0,
     category: 'Bivouac',
     weightG: 890,
@@ -80,7 +87,8 @@ const CURATED_SUGGESTIONS: ProductSuggestion[] = [
     id: 'sug-8',
     name: 'Trousse de Premiers Soins Trekking',
     slug: 'trousse-premiers-soins-trekking',
-    image: 'https://images.unsplash.com/photo-1603398938378-e54eab446dde?q=80&w=600&auto=format&fit=crop',
+    image:
+      'https://images.unsplash.com/photo-1603398938378-e54eab446dde?q=80&w=600&auto=format&fit=crop',
     priceEur: 24.5,
     category: 'Accessoires',
     weightG: 180,
@@ -99,9 +107,10 @@ export function KitProductSuggestions({ products = [] }: { products?: ProductSug
 
   const allProducts = products.length > 0 ? products : CURATED_SUGGESTIONS;
 
-  const filtered = selectedCat === 'Tous'
-    ? allProducts
-    : allProducts.filter((p) => p.category?.toLowerCase() === selectedCat.toLowerCase());
+  const filtered =
+    selectedCat === 'Tous'
+      ? allProducts
+      : allProducts.filter((p) => p.category?.toLowerCase() === selectedCat.toLowerCase());
 
   const visibleProducts = filtered.slice(0, visibleCount);
   const hasMore = visibleCount < filtered.length;
@@ -143,17 +152,25 @@ export function KitProductSuggestions({ products = [] }: { products?: ProductSug
   };
 
   return (
-    <GlassCard as="article" tone="sage" ariaLabelledBy="suggestions-title" className="p-4 sm:p-5 flex flex-col gap-3.5">
+    <GlassCard
+      as="article"
+      tone="sage"
+      ariaLabelledBy="suggestions-title"
+      className="p-4 sm:p-5 flex flex-col gap-3.5"
+    >
       {/* En-tête de section */}
       <div className="flex items-center justify-between gap-2 flex-wrap">
         <div>
           <Eyebrow>Boutique & Recommandations</Eyebrow>
-          <h3 id="suggestions-title" className="font-display font-bold text-[20px] text-[var(--lkv-primary)] mt-0.5">
+          <h3
+            id="suggestions-title"
+            className="font-display font-bold text-[20px] text-[var(--lkv-primary)] mt-0.5"
+          >
             Matériel recommandé pour vos kits
           </h3>
         </div>
         <div className="flex items-center gap-1.5 text-xs font-semibold text-[var(--lkv-primary)] bg-[var(--lkv-primary)]/08 px-3 py-1 rounded-full border border-[var(--lkv-primary)]/15">
-          <Sparkles size={13} />
+          <Icon name="sparkles" size={13} />
           <span>Sélection Expert</span>
         </div>
       </div>
@@ -215,8 +232,12 @@ export function KitProductSuggestions({ products = [] }: { products?: ProductSug
 
               <div className="pt-1 border-t border-white/15 flex flex-col gap-1.5">
                 <div className="flex items-center justify-between text-[11px] font-mono">
-                  <span className="font-bold text-[var(--lkv-primary)]">{prod.priceEur.toFixed(2)} €</span>
-                  <span className="text-[var(--lkv-text-muted)]">{prod.weightG ? `${prod.weightG}g` : ''}</span>
+                  <span className="font-bold text-[var(--lkv-primary)]">
+                    {prod.priceEur.toFixed(2)} €
+                  </span>
+                  <span className="text-[var(--lkv-text-muted)]">
+                    {prod.weightG ? `${prod.weightG}g` : ''}
+                  </span>
                 </div>
 
                 <button
@@ -230,12 +251,12 @@ export function KitProductSuggestions({ products = [] }: { products?: ProductSug
                 >
                   {isAdded ? (
                     <>
-                      <Check size={11} strokeWidth={3} />
+                      <Icon name="check" size={11} strokeWidth={3} />
                       <span>Ajouté</span>
                     </>
                   ) : (
                     <>
-                      <Plus size={11} />
+                      <Icon name="plus" size={11} />
                       <span>Au panier</span>
                     </>
                   )}

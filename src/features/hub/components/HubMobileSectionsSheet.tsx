@@ -1,8 +1,8 @@
 'use client';
 
+import Icon from '@/components/ui/Icon';
 import React, { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { Layers, Check } from 'lucide-react';
 import { GlassSheet } from '@/components/ui/GlassSheet';
 import { useHapticFeedback } from '@/hooks/useHapticFeedback';
 import {
@@ -54,7 +54,7 @@ export function HubMobileSectionsSheet({
         className="glass-capsule-btn flex items-center gap-1.5 min-h-[48px] px-3.5 text-xs font-semibold cursor-pointer shadow-sm active:scale-95 transition-transform"
         aria-label="Ouvrir les sections du hub"
       >
-        <Layers size={14} className="text-[var(--lkv-secondary)]" />
+        <Icon name="layers" size={14} className="text-[var(--lkv-secondary)]" />
         <span>Sections</span>
         <span className="text-[10px] font-bold tabular-nums px-1.5 py-0.2 rounded-full bg-black/5 text-[var(--lkv-text-secondary)]">
           {sections.length}
@@ -86,19 +86,23 @@ export function HubMobileSectionsSheet({
                     className={`shrink-0 ${active ? 'text-white' : 'text-[var(--lkv-text-secondary)]'}`}
                     aria-hidden="true"
                   />
-                  <span className={`flex-1 text-sm font-semibold ${active ? 'text-white' : 'text-[var(--lkv-text-primary)]'}`}>
+                  <span
+                    className={`flex-1 text-sm font-semibold ${active ? 'text-white' : 'text-[var(--lkv-text-primary)]'}`}
+                  >
                     {def.label}
                   </span>
                   {count !== null && count > 0 && (
                     <span
                       className={`text-[10px] font-bold tabular-nums px-1.5 py-0.5 rounded-full ${
-                        active ? 'bg-white/20 text-white' : 'bg-black/5 text-[var(--lkv-text-secondary)]'
+                        active
+                          ? 'bg-white/20 text-white'
+                          : 'bg-black/5 text-[var(--lkv-text-secondary)]'
                       }`}
                     >
                       {count}
                     </span>
                   )}
-                  {active && <Check size={14} aria-hidden="true" />}
+                  {active && <Icon name="check" size={14} aria-hidden="true" />}
                 </button>
               );
             };

@@ -1,9 +1,9 @@
 'use client';
+import Icon from '@/components/ui/Icon';
 import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import dynamic from 'next/dynamic';
 import { motion, AnimatePresence, useReducedMotion } from 'framer-motion';
-import { Zap, Wifi, WifiOff, ArrowRight, CheckCircle2, ShieldCheck, CloudSun } from 'lucide-react';
 import { LayersIcon as Layers } from '@/components/icons/layers';
 import { BoxIcon as Boxes } from '@/components/icons/box';
 import { DepartWeather } from './DepartWeather';
@@ -22,7 +22,10 @@ import { resolveGearImage } from '@/features/materiel/services/gearImageResolver
 import { formatWeight } from '@/features/materiel/domain/departCalculations';
 import ScrollableTabs, { type TabOption } from '@/components/ui/ScrollableTabs';
 import { Skeleton } from '@/components/ui/Skeleton';
-import { generateSmartPrompts, type ActionableAlert } from '@/features/materiel/services/generateSmartPrompts';
+import {
+  generateSmartPrompts,
+  type ActionableAlert,
+} from '@/features/materiel/services/generateSmartPrompts';
 import { flushOfflineQueue } from '@/features/materiel/offline/departOfflineQueue';
 import { cn } from '@/lib/utils';
 import type { DepartDetail } from '@/features/materiel/services/getDepartDetail';
@@ -33,25 +36,19 @@ import type { ProductSuggestion } from '@/features/materiel/services/getProductS
 
 const SHOWCASE_IDS = new Set(['tmb-4j', 'vercors-ultra', 'belledonne-winter', 'none']);
 
-const DepartMap = dynamic(
-  () => import('./DepartMap').then((m) => ({ default: m.DepartMap })),
-  {
-    ssr: false,
-    loading: () => (
-      <div className="glass rounded-card overflow-hidden">
-        <div className="px-4 py-2.5 border-b border-white/20">
-          <Skeleton className="h-4 w-40" />
-        </div>
-        <Skeleton className="h-[240px] rounded-none" />
+const DepartMap = dynamic(() => import('./DepartMap').then((m) => ({ default: m.DepartMap })), {
+  ssr: false,
+  loading: () => (
+    <div className="glass rounded-card overflow-hidden">
+      <div className="px-4 py-2.5 border-b border-white/20">
+        <Skeleton className="h-4 w-40" />
       </div>
-    ),
-  }
-);
+      <Skeleton className="h-[240px] rounded-none" />
+    </div>
+  ),
+});
 
-export type DepartSectionId =
-  | 'all'
-  | 'terrain'
-  | 'equipment_hub';
+export type DepartSectionId = 'all' | 'terrain' | 'equipment_hub';
 
 interface DepartCockpitProps {
   depart: DepartDetail;
@@ -197,7 +194,9 @@ export function DepartCockpit({
     const items = depart?.assignedKit?.items || [];
     const remaining = items.filter((i) => !i.is_checked);
     if (remaining.length === 0) {
-      const u = new SpeechSynthesisUtterance('Bravo ! Tous vos équipements sont prêts dans votre sac.');
+      const u = new SpeechSynthesisUtterance(
+        'Bravo ! Tous vos équipements sont prêts dans votre sac.'
+      );
       u.lang = 'fr-FR';
       window.speechSynthesis.speak(u);
       return;
@@ -253,9 +252,10 @@ export function DepartCockpit({
       {!isOnline && (
         <div className="p-3 rounded-2xl bg-sand-500/15 border border-sand-500/30 text-[var(--lkv-primary)] text-xs font-semibold flex items-center justify-between gap-2 shadow-2xs">
           <div className="flex items-center gap-2 min-w-0">
-            <WifiOff size={15} className="text-sand-700 shrink-0" />
+            <Icon name="wifi-off" size={15} className="text-sand-700 shrink-0" />
             <span className="truncate">
-              Mode hors-ligne actif — Fiche de départ et données en cache. Synchronisation automatique dès reconnexion.
+              Mode hors-ligne actif — Fiche de départ et données en cache. Synchronisation
+              automatique dès reconnexion.
             </span>
           </div>
           <span className="text-[10px] font-mono font-bold px-2 py-0.5 rounded-lg bg-sand-600/20 text-sand-900 shrink-0">
@@ -279,7 +279,7 @@ export function DepartCockpit({
             <div className="glass rounded-xl p-2.5 sm:p-3.5 border border-white/80 dark:border-white/10 shadow-xs flex items-center justify-between gap-2 overflow-hidden">
               <div className="flex items-center gap-2 shrink-0">
                 <div className="w-8 h-8 rounded-2xl bg-[var(--lkv-primary-hover)]/10 border border-[var(--lkv-primary-hover)]/20 flex items-center justify-center text-[var(--lkv-primary-hover)] shadow-2xs">
-                  <CloudSun size={16} />
+                  <Icon name="cloud-sun" size={16} />
                 </div>
                 <div className="min-w-0 max-w-[120px] sm:max-w-none">
                   <span className="text-[9px] font-mono font-bold uppercase tracking-wider text-[var(--lkv-text-muted)] block">
@@ -301,7 +301,9 @@ export function DepartCockpit({
                     <span className="text-[8.5px] font-mono font-bold text-[var(--lkv-text-muted)] block uppercase">
                       {idx === 0 ? 'AUJ.' : d.day.slice(0, 3)}
                     </span>
-                    <span className="text-xs font-bold text-[var(--lkv-primary)]">{d.tempMaxC}°</span>
+                    <span className="text-xs font-bold text-[var(--lkv-primary)]">
+                      {d.tempMaxC}°
+                    </span>
                   </div>
                 ))}
               </div>
@@ -334,7 +336,11 @@ export function DepartCockpit({
                     Préparation du Sac & Équipements Indispensables
                   </h3>
                   <p className="text-[11px] text-[var(--lkv-text-muted)]">
-                    {checkedItemsCount} sur {totalItemsCount} équipements prêts ({totalItemsCount > 0 ? Math.round((checkedItemsCount / totalItemsCount) * 100) : 100}% finalisé).
+                    {checkedItemsCount} sur {totalItemsCount} équipements prêts (
+                    {totalItemsCount > 0
+                      ? Math.round((checkedItemsCount / totalItemsCount) * 100)
+                      : 100}
+                    % finalisé).
                   </p>
                 </div>
               </div>
@@ -345,14 +351,16 @@ export function DepartCockpit({
                 onClick={() => {
                   setActiveSection('equipment_hub');
                   if (typeof window !== 'undefined') {
-                    window.dispatchEvent(new CustomEvent('depart-section-change', { detail: 'equipment_hub' }));
+                    window.dispatchEvent(
+                      new CustomEvent('depart-section-change', { detail: 'equipment_hub' })
+                    );
                   }
                 }}
                 className="glass-circle-btn primary !w-8 !h-8 flex items-center justify-center cursor-pointer shrink-0 shadow-2xs hover:scale-105 active:scale-95 transition-transform"
                 title="Gérer le Parc Matériel"
                 aria-label="Gérer le Parc Matériel"
               >
-                <ArrowRight size={14} />
+                <Icon name="arrow-right" size={14} />
               </button>
             </div>
 
@@ -374,7 +382,7 @@ export function DepartCockpit({
                       />
                       {it.is_checked ? (
                         <div className="absolute top-1.5 right-1.5 px-2 py-0.5 rounded-full bg-forest-800 text-white text-[8.5px] font-bold flex items-center gap-1 shadow-xs">
-                          <CheckCircle2 size={9.5} />
+                          <Icon name="check-circle2" size={9.5} />
                           <span>✓ Prêt</span>
                         </div>
                       ) : (
@@ -384,10 +392,14 @@ export function DepartCockpit({
                       )}
                     </div>
                     <div className="space-y-0.5">
-                      <h4 className="text-xs font-bold text-[var(--lkv-primary)] line-clamp-1">{it.name}</h4>
+                      <h4 className="text-xs font-bold text-[var(--lkv-primary)] line-clamp-1">
+                        {it.name}
+                      </h4>
                       <div className="flex items-center justify-between text-[10.5px] font-mono text-[var(--lkv-text-muted)]">
                         <span>{formatWeight(it.weight_g)}</span>
-                        <span className="text-[9px] font-sans font-semibold px-1.5 py-0.2 rounded-md bg-black/5">{it.category}</span>
+                        <span className="text-[9px] font-sans font-semibold px-1.5 py-0.2 rounded-md bg-black/5">
+                          {it.category}
+                        </span>
                       </div>
                     </div>
                   </div>
@@ -444,7 +456,12 @@ export function DepartCockpit({
   );
 
   return (
-    <div className={cn('w-full h-full min-h-0 overflow-hidden', isUltraSave && 'bg-black text-white ultra-save-mode')}>
+    <div
+      className={cn(
+        'w-full h-full min-h-0 overflow-hidden',
+        isUltraSave && 'bg-black text-white ultra-save-mode'
+      )}
+    >
       {/* Modal Fiche de Départ */}
       <DepartureSheetModal
         depart={depart}
@@ -464,9 +481,7 @@ export function DepartCockpit({
         <div
           className={cn(
             'sticky top-0 z-30 pt-1.5 pb-1.5 px-3 backdrop-blur-md rounded-2xl border transition-colors shadow-xs',
-            isUltraSave
-              ? 'bg-black/95 border-white/20 text-white'
-              : 'bg-white/80 border-white/80'
+            isUltraSave ? 'bg-black/95 border-white/20 text-white' : 'bg-white/80 border-white/80'
           )}
         >
           {/* Ligne 1 Unique : Sélecteur de Trek + % Prêt + Statuts Éco / En Ligne */}
@@ -489,8 +504,17 @@ export function DepartCockpit({
                 className="px-2 py-0.5 rounded-full bg-forest-100 dark:bg-forest-950 text-forest-800 dark:text-forest-300 border border-forest-300 dark:border-forest-800 text-[10px] font-bold flex items-center gap-1 cursor-pointer active:scale-95 transition-transform"
                 title="Ouvrir la fiche de départ"
               >
-                <CheckCircle2 size={11} className="text-forest-700 dark:text-forest-400" />
-                <span>{totalItemsCount > 0 ? Math.round((checkedItemsCount / totalItemsCount) * 100) : 100}% Prêt</span>
+                <Icon
+                  name="check-circle2"
+                  size={11}
+                  className="text-forest-700 dark:text-forest-400"
+                />
+                <span>
+                  {totalItemsCount > 0
+                    ? Math.round((checkedItemsCount / totalItemsCount) * 100)
+                    : 100}
+                  % Prêt
+                </span>
               </button>
 
               {/* Bouton Mode Éco */}
@@ -505,7 +529,7 @@ export function DepartCockpit({
                 )}
                 title="Mode Éco Batterie"
               >
-                <Zap size={9} />
+                <Icon name="zap" size={9} />
                 <span>ÉCO</span>
               </button>
 

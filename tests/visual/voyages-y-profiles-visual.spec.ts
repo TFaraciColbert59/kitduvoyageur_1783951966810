@@ -87,11 +87,11 @@ test.describe('Profils Y — Decoupage & fidelite visuelle du Hub', () => {
     await expectVisualSnapshot(page, 'y-long-group-budget.png');
   });
 
-  test('y-long-group — Equipage & roles', async ({ page }) => {
-    await prepareVisualPage(page, '/hub/equipage');
+  test('y-long-group — Groupe & roles (participants)', async ({ page }) => {
+    await prepareVisualPage(page, '/hub/groupe');
     const main = page.locator('main').first();
     await expect(main).toBeVisible();
-    await expectVisualSnapshot(page, 'y-long-group-equipage.png');
+    await expectVisualSnapshot(page, 'y-long-group-groupe.png');
   });
 
   test('y-exped-solo — Expedition solo & checkpoints de securite', async ({ page }) => {

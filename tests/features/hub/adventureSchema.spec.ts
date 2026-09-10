@@ -27,8 +27,8 @@ describe('H2 — adventureSchema : persistance typée', () => {
   });
 
   it('SCH-4: round-trip collectif', () => {
-    const s = serializeActiveAdventure({ nature: 'collectif', kind: 'groupe', id: 'g1', title: 'Alpes' });
-    expect(deserializeActiveAdventure(s)).toEqual({ nature: 'collectif', kind: 'groupe', id: 'g1', title: 'Alpes' });
+    const s = serializeActiveAdventure({ nature: 'collectif', id: 'g1', title: 'Alpes' });
+    expect(deserializeActiveAdventure(s)).toEqual({ nature: 'collectif', id: 'g1', title: 'Alpes' });
   });
 
   it('SCH-5: entrées invalides = null (jamais de throw)', () => {

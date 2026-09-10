@@ -1,22 +1,15 @@
 ﻿'use client';
 
+import Icon from '@/components/ui/Icon';
 import React, { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { GlassModal } from '@/components/ui/GlassModal';
 import { GlassCapsuleBtn } from '@/components/ui/GlassCapsuleBtn';
 import { LkvInput } from '@/components/ui/LkvInput';
-import { AlertCircle } from 'lucide-react';
 import { tripSectionHref } from '../registry/tripSectionRegistry';
 import { setActiveAdventureAction } from '@/features/hub/context/activeAdventureServer';
-import {
-  createTripSchema,
-  type CreateTripInput,
-} from '../schemas/trip.schema';
-import type {
-  TripActivityType,
-  TripDifficulty,
-  TripVisibility,
-} from '../types/trip.types';
+import { createTripSchema, type CreateTripInput } from '../schemas/trip.schema';
+import type { TripActivityType, TripDifficulty, TripVisibility } from '../types/trip.types';
 
 export interface QuickCreateTripModalProps {
   isOpen: boolean;
@@ -24,11 +17,7 @@ export interface QuickCreateTripModalProps {
   onSubmitTrip?: (input: CreateTripInput) => Promise<{ slug: string }>;
 }
 
-export function QuickCreateTripModal({
-  isOpen,
-  onClose,
-  onSubmitTrip,
-}: QuickCreateTripModalProps) {
+export function QuickCreateTripModal({ isOpen, onClose, onSubmitTrip }: QuickCreateTripModalProps) {
   const router = useRouter();
   const [loading, setLoading] = useState(false);
   const [formError, setFormError] = useState<string | null>(null);
@@ -107,138 +96,136 @@ export function QuickCreateTripModal({
   };
 
   return (
-    <GlassModal open={isOpen} onOpenChange={(v) => { if (!v) onClose(); }} title="Créer un nouveau voyage" variant="sheet">
+    <GlassModal
+      open={isOpen}
+      onOpenChange={(v) => {
+        if (!v) onClose();
+      }}
+      title="Créer un nouveau voyage"
+      variant="sheet"
+    >
       <div className="pb-2">
         {/* Error alert */}
         {formError && (
           <div className="p-3 mb-4 rounded-xl glass tone-danger border text-xs text-[var(--lkv-danger)] flex items-center gap-2">
-            <AlertCircle size={16} />
+            <Icon name="alert-circle" size={16} />
             <span>{formError}</span>
           </div>
         )}
 
-          {/* Form */}
-          <form onSubmit={handleSubmit} className="space-y-4">
+        {/* Form */}
+        <form onSubmit={handleSubmit} className="space-y-4">
+          <LkvInput
+            label="Titre de l'expédition *"
+            placeholder="ex: Traversée des Pyrénées en autonomie"
+            value={title}
+            onChange={(e) => setTitle(e.target.value)}
+            required
+          />
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <LkvInput
-              label="Titre de l'expédition *"
-              placeholder="ex: Traversée des Pyrénées en autonomie"
-              value={title}
-              onChange={e => setTitle(e.target.value)}
-              required
+              label="Destination"
+              placeholder="ex: Gavarnie, Hautes-Pyrénées"
+              value={destinationName}
+              onChange={(e) => setDestinationName(e.target.value)}
             />
-
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-              <LkvInput
-                label="Destination"
-                placeholder="ex: Gavarnie, Hautes-Pyrénées"
-                value={destinationName}
-                onChange={e => setDestinationName(e.target.value)}
-              />
-              <LkvInput
-                label="Code Pays (ISO 2 lettres)"
-                placeholder="ex: FR, ES, NO..."
-                maxLength={2}
-                value={countryCode}
-                onChange={e => setCountryCode(e.target.value.toUpperCase())}
-              />
-            </div>
-
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-              <LkvInput
-                type="date"
-                label="Date de début"
-                value={startDate}
-                onChange={e => setStartDate(e.target.value)}
-              />
-              <LkvInput
-                type="date"
-                label="Date de fin"
-                value={endDate}
-                onChange={e => setEndDate(e.target.value)}
-              />
-            </div>
-
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-              <div>
-                <label className="text-xs font-semibold text-lkv-primary block mb-1.5">
-                  Activité
-                </label>
-                <select
-                  value={activity}
-                  onChange={e => setActivity(e.target.value as TripActivityType)}
-                  className="glass-input w-full px-3 py-2.5 text-[16px] sm:text-sm text-[var(--lkv-text-primary)] cursor-pointer"
-                >
-                  <option value="hiking">Randonnée</option>
-                  <option value="trekking">Trek</option>
-                  <option value="bivouac">Bivouac</option>
-                  <option value="roadtrip">Roadtrip</option>
-                  <option value="cultural">Culture</option>
-                  <option value="bushcraft">Bushcraft</option>
-                  <option value="mixed">Mixte</option>
-                </select>
-              </div>
-
-              <div>
-                <label className="text-xs font-semibold text-lkv-primary block mb-1.5">
-                  Difficulté
-                </label>
-                <select
-                  value={difficulty}
-                  onChange={e => setDifficulty(e.target.value as TripDifficulty)}
-                  className="glass-input w-full px-3 py-2.5 text-[16px] sm:text-sm text-[var(--lkv-text-primary)] cursor-pointer"
-                >
-                  <option value="easy">Facile</option>
-                  <option value="moderate">Modéré</option>
-                  <option value="hard">Difficile</option>
-                  <option value="expert">Expert</option>
-                </select>
-              </div>
-
-              <div>
-                <label className="text-xs font-semibold text-lkv-primary block mb-1.5">
-                  Visibilité
-                </label>
-                <select
-                  value={visibility}
-                  onChange={e => setVisibility(e.target.value as TripVisibility)}
-                  className="glass-input w-full px-3 py-2.5 text-[16px] sm:text-sm text-[var(--lkv-text-primary)] cursor-pointer"
-                >
-                  <option value="private">Privé</option>
-                  <option value="unlisted">Lien partagé</option>
-                  <option value="public">Public</option>
-                </select>
-              </div>
-            </div>
-
             <LkvInput
-              type="number"
-              min={0}
-              step="any"
-              label="Budget prévisionnel (€)"
-              placeholder="ex: 350"
-              value={estimatedBudget}
-              onChange={e => setEstimatedBudget(e.target.value)}
+              label="Code Pays (ISO 2 lettres)"
+              placeholder="ex: FR, ES, NO..."
+              maxLength={2}
+              value={countryCode}
+              onChange={(e) => setCountryCode(e.target.value.toUpperCase())}
             />
+          </div>
 
-            {/* Actions */}
-            <div className="flex items-center justify-end gap-3 pt-4 border-t border-white/40">
-              <GlassCapsuleBtn
-                variant="default"
-                type="button"
-                onClick={onClose}
-                disabled={loading}
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <LkvInput
+              type="date"
+              label="Date de début"
+              value={startDate}
+              onChange={(e) => setStartDate(e.target.value)}
+            />
+            <LkvInput
+              type="date"
+              label="Date de fin"
+              value={endDate}
+              onChange={(e) => setEndDate(e.target.value)}
+            />
+          </div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+            <div>
+              <label className="text-xs font-semibold text-lkv-primary block mb-1.5">
+                Activité
+              </label>
+              <select
+                value={activity}
+                onChange={(e) => setActivity(e.target.value as TripActivityType)}
+                className="glass-input w-full px-3 py-2.5 text-[16px] sm:text-sm text-[var(--lkv-text-primary)] cursor-pointer"
               >
-                Annuler
-              </GlassCapsuleBtn>
-              <GlassCapsuleBtn
-                variant="primary"
-                type="submit"
-                disabled={loading}
-              >
-                {loading ? 'Création...' : 'Créer l’expédition'}
-              </GlassCapsuleBtn>
+                <option value="hiking">Randonnée</option>
+                <option value="trekking">Trek</option>
+                <option value="bivouac">Bivouac</option>
+                <option value="roadtrip">Roadtrip</option>
+                <option value="cultural">Culture</option>
+                <option value="bushcraft">Bushcraft</option>
+                <option value="mixed">Mixte</option>
+              </select>
             </div>
-          </form>
+
+            <div>
+              <label className="text-xs font-semibold text-lkv-primary block mb-1.5">
+                Difficulté
+              </label>
+              <select
+                value={difficulty}
+                onChange={(e) => setDifficulty(e.target.value as TripDifficulty)}
+                className="glass-input w-full px-3 py-2.5 text-[16px] sm:text-sm text-[var(--lkv-text-primary)] cursor-pointer"
+              >
+                <option value="easy">Facile</option>
+                <option value="moderate">Modéré</option>
+                <option value="hard">Difficile</option>
+                <option value="expert">Expert</option>
+              </select>
+            </div>
+
+            <div>
+              <label className="text-xs font-semibold text-lkv-primary block mb-1.5">
+                Visibilité
+              </label>
+              <select
+                value={visibility}
+                onChange={(e) => setVisibility(e.target.value as TripVisibility)}
+                className="glass-input w-full px-3 py-2.5 text-[16px] sm:text-sm text-[var(--lkv-text-primary)] cursor-pointer"
+              >
+                <option value="private">Privé</option>
+                <option value="unlisted">Lien partagé</option>
+                <option value="public">Public</option>
+              </select>
+            </div>
+          </div>
+
+          <LkvInput
+            type="number"
+            min={0}
+            step="any"
+            label="Budget prévisionnel (€)"
+            placeholder="ex: 350"
+            value={estimatedBudget}
+            onChange={(e) => setEstimatedBudget(e.target.value)}
+          />
+
+          {/* Actions */}
+          <div className="flex items-center justify-end gap-3 pt-4 border-t border-white/40">
+            <GlassCapsuleBtn variant="default" type="button" onClick={onClose} disabled={loading}>
+              Annuler
+            </GlassCapsuleBtn>
+            <GlassCapsuleBtn variant="primary" type="submit" disabled={loading}>
+              {loading ? 'Création...' : 'Créer l’expédition'}
+            </GlassCapsuleBtn>
+          </div>
+        </form>
       </div>
     </GlassModal>
   );

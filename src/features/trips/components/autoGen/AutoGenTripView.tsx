@@ -1,5 +1,6 @@
 'use client';
 
+import Icon from '@/components/ui/Icon';
 import React, { useState } from 'react';
 import { TripBriefBar } from './TripBriefBar';
 import { ProposalCard } from './ProposalCard';
@@ -7,13 +8,15 @@ import { PersistentMetricsBar } from './PersistentMetricsBar';
 import type { Proposal } from '@/features/trips/schemas/autoGen.schema';
 import { runAutoGenPipeline } from '@/features/trips/engine/autoGenPipeline';
 import type { TripBrief } from '@/features/trips/schemas/autoGen.schema';
-import { Sparkles } from 'lucide-react';
 
 export interface AutoGenTripViewProps {
   initialBriefInput?: string;
   layers?: Record<string, Proposal<any>>;
   tradeoffsLog?: string[];
-  onCompleteTrip?: (tripData: { layers: Record<string, Proposal<any>>; brief?: TripBrief | null }) => void;
+  onCompleteTrip?: (tripData: {
+    layers: Record<string, Proposal<any>>;
+    brief?: TripBrief | null;
+  }) => void;
 }
 
 export const AutoGenTripView: React.FC<AutoGenTripViewProps> = ({
@@ -100,7 +103,7 @@ export const AutoGenTripView: React.FC<AutoGenTripViewProps> = ({
         {tradeoffsLog.length > 0 && (
           <div className="rounded-2xl p-4 bg-[var(--lkv-success-bg)]  border border-[var(--lkv-success-bg)]  text-xs text-[var(--lkv-primary)]  space-y-1.5">
             <div className="flex items-center font-semibold text-[var(--lkv-primary-soft)]  gap-1.5 mb-1">
-              <Sparkles className="w-4 h-4" />
+              <Icon name="sparkles" className="w-4 h-4" />
               <span>Optimisations & Compromis Déterministes Appliqués :</span>
             </div>
             {tradeoffsLog.map((log, idx) => (

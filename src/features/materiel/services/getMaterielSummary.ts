@@ -5,6 +5,8 @@ export interface MaterielSummary {
     id: string;
     destination: string;
     startsAt: string;
+    /** true = départ d'aperçu (aucune date réelle planifiée) — ne jamais l'afficher comme date ferme. */
+    isEstimated?: boolean;
     readinessPct: number;
     status: 'ok' | 'warning' | 'critical';
     totalWeightKg?: number;
@@ -191,6 +193,7 @@ export async function getMaterielSummary(): Promise<MaterielSummary> {
           id: firstKit.id,
           destination: cleanKitName(firstKit.name),
           startsAt: new Date(Date.now() + 3 * 86400000).toISOString(),
+          isEstimated: true,
           readinessPct: readiness,
           status: readiness >= 80 ? 'ok' : readiness >= 40 ? 'warning' : 'critical',
           totalWeightKg: Number(departTotalKg.toFixed(1)),

@@ -23,7 +23,6 @@ export interface TripEntry {
 
 export interface GroupEntry {
   nature: 'collectif';
-  kind: 'groupe' | 'equipage';
   id: string;
   title: string;
   membersCount: number;
@@ -53,15 +52,6 @@ export interface GroupLite {
   my_role?: string | null;
 }
 
-export interface CrewLite {
-  id: string;
-  name: string;
-  slug: string;
-  member_count: number;
-  active_trips_count?: number;
-  next_trip?: { slug: string; title: string } | null;
-}
-
 export interface PossessionSummary {
   itemsCount: number;
   loansCount: number;
@@ -78,7 +68,7 @@ export function adventureKey(entry: AdventureEntry): string {
     case 'sortie':
       return `sortie:${entry.slug}`;
     case 'collectif':
-      return `collectif:${entry.kind}:${entry.id}`;
+      return `collectif:${entry.id}`;
   }
 }
 
@@ -86,29 +76,16 @@ export function adventureKey(entry: AdventureEntry): string {
 export function groupAdventures(
   trips: Array<{ id: string; slug: string; title: string; status?: string; primary_activity?: string }>,
   groups: GroupLite[],
-  crews: CrewLite[],
   possession: PossessionSummary,
 ): AdventureGroups {
-  const collectifs: GroupEntry[] = [
-    ...groups.map((g) => ({
-      nature: 'collectif' as const,
-      kind: 'groupe' as const,
-      id: g.id,
-      title: g.name,
-      membersCount: g.member_count,
-      subtitle: `${g.member_count} membre(s)${g.my_role && g.my_role !== 'member' ? ` · ${g.my_role}` : ''}`,
-      linkedTripSlug: null,
-    })),
-    ...crews.map((c) => ({
-      nature: 'collectif' as const,
-      kind: 'equipage' as const,
-      id: c.id,
-      title: c.name,
-      membersCount: c.member_count,
-      subtitle: `${c.member_count} membre(s)${(c.active_trips_count ?? 0) > 0 ? ` · ${c.active_trips_count} voyage(s)` : ''}`,
-      linkedTripSlug: c.next_trip?.slug ?? null,
-    })),
-  ];
+  const collectifs: GroupEntry[] = groups.map((g) => ({
+    nature: 'collectif' as const,
+    id: g.id,
+    title: g.name,
+    membersCount: g.member_count,
+    subtitle: `${g.member_count} membre(s)${g.my_role && g.my_role !== 'member' ? ` · ${g.my_role}` : ''}`,
+    linkedTripSlug: null,
+  }));
   return {
     possession: [{ nature: 'possession', ...possession }],
     sorties: trips.map((t) => ({ nature: 'sortie' as const, ...t })),

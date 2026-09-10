@@ -1,7 +1,8 @@
 'use client';
 
+import Icon from '@/components/ui/Icon';
 import React, { useState, useEffect } from 'react';
-import { X, Footprints, Car, Bus, Train, Plane, Ship, Bike, Compass } from 'lucide-react';
+import { Footprints, Car, Bus, Train, Plane, Ship, Bike, Compass } from 'lucide-react';
 import { GlassCapsuleBtn } from '@/components/ui/GlassCapsuleBtn';
 import type { PlannerStep } from './plannerEngine';
 
@@ -126,7 +127,7 @@ export function StepEditModal({
             aria-label="Fermer"
             className="min-h-[44px] min-w-[44px] flex items-center justify-center rounded-full glass-sub-card border border-white/60 text-[var(--lkv-text-muted)] hover:text-[var(--lkv-primary)] transition-all shadow-2xs"
           >
-            <X className="w-5 h-5" />
+            <Icon name="x" className="w-5 h-5" />
           </button>
         </div>
 
@@ -268,20 +269,10 @@ export function StepEditModal({
 
           {/* Actions */}
           <div className="flex items-center justify-end gap-2.5 pt-3 border-t border-white/40">
-            <GlassCapsuleBtn
-              variant="default"
-              size="sm"
-              type="button"
-              onClick={onClose}
-            >
+            <GlassCapsuleBtn variant="default" size="sm" type="button" onClick={onClose}>
               Annuler
             </GlassCapsuleBtn>
-            <GlassCapsuleBtn
-              variant="primary"
-              size="sm"
-              type="submit"
-              disabled={isSubmitting}
-            >
+            <GlassCapsuleBtn variant="primary" size="sm" type="submit" disabled={isSubmitting}>
               {isSubmitting ? 'Enregistrement...' : 'Enregistrer'}
             </GlassCapsuleBtn>
           </div>

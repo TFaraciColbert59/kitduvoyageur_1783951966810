@@ -1,5 +1,6 @@
 'use client';
 
+import Icon from '@/components/ui/Icon';
 import React, { useState, useMemo } from 'react';
 import { useRouter } from 'next/navigation';
 import type { TripFull, TripStats } from '../types/trip.types';
@@ -13,17 +14,6 @@ import { getTripDistance } from '../hooks/useTripDistance';
 import { regenerateItineraryAction } from '@/app/voyages/actions';
 import { tripSectionHref } from '../registry/tripSectionRegistry';
 import Link from 'next/link';
-import {
-  Navigation,
-  MapPin,
-  Footprints,
-  RotateCcw,
-  AlertTriangle,
-  CheckCircle2,
-  Home,
-  Sparkles,
-  Calendar,
-} from 'lucide-react';
 
 interface TripItineraryTabProps {
   trip: TripFull;
@@ -39,19 +29,12 @@ export function TripItineraryTab({ trip }: TripItineraryTabProps) {
   // Évaluation de la saisonnalité
   const seasonalityWarnings = useMemo(() => {
     if (!trip.destination_country_code) return [];
-    return checkSeasonalityForDates(
-      trip.destination_country_code,
-      trip.start_date,
-      trip.end_date
-    );
+    return checkSeasonalityForDates(trip.destination_country_code, trip.start_date, trip.end_date);
   }, [trip.destination_country_code, trip.start_date, trip.end_date]);
 
   // Source de vérité unique (Z-R3 / Chantier Z3) : étapes canoniques (dédupliquées
   // par jour) et distances/dénivelés dérivés de trip, cohérents avec l'Aperçu.
-  const canonicalSteps = useMemo(
-    () => getCanonicalTripSteps(trip.steps),
-    [trip.steps]
-  );
+  const canonicalSteps = useMemo(() => getCanonicalTripSteps(trip.steps), [trip.steps]);
   const distance = useMemo(() => getTripDistance(trip.steps), [trip.steps]);
 
   const handleRegenerate = async () => {
@@ -98,10 +81,11 @@ export function TripItineraryTab({ trip }: TripItineraryTabProps) {
       {/* 0. Bandeau d'information squelette si aucune donnée de référence */}
       {provenanceInfo.variant === 'skeleton' && (
         <div className="p-4 glass tone-warn border rounded-2xl flex items-start gap-3 text-[var(--lkv-warning)]">
-          <AlertTriangle size={18} className="shrink-0 mt-0.5" />
+          <Icon name="alert-triangle" size={18} className="shrink-0 mt-0.5" />
           <div className="text-xs leading-relaxed">
             <span className="font-semibold block mb-0.5">Squelette d’itinéraire :</span>
-            Aucun tracé de référence pour cette destination. Ajoute tes étapes, les distances se calculeront automatiquement.
+            Aucun tracé de référence pour cette destination. Ajoute tes étapes, les distances se
+            calculeront automatiquement.
           </div>
         </div>
       )}
@@ -118,10 +102,7 @@ export function TripItineraryTab({ trip }: TripItineraryTabProps) {
                   : 'glass tone-warn text-[var(--lkv-warning)]'
               }`}
             >
-              <AlertTriangle
-                size={18}
-                className="shrink-0"
-              />
+              <Icon name="alert-triangle" size={18} className="shrink-0" />
               <div className="text-xs leading-relaxed">
                 <span className="font-semibold block mb-0.5">Alerte météo & praticabilité :</span>
                 {w.message}
@@ -131,9 +112,10 @@ export function TripItineraryTab({ trip }: TripItineraryTabProps) {
         </div>
       ) : trip.start_date ? (
         <div className="p-3.5 glass tone-sage border rounded-2xl flex items-center gap-3 text-[var(--lkv-success)]">
-          <CheckCircle2 size={16} className="shrink-0" />
+          <Icon name="check-circle2" size={16} className="shrink-0" />
           <div className="text-xs">
-            <span className="font-semibold">Période optimale :</span> les dates prévues correspondent à la meilleure saison pour cette destination.
+            <span className="font-semibold">Période optimale :</span> les dates prévues
+            correspondent à la meilleure saison pour cette destination.
           </div>
         </div>
       ) : null}
@@ -143,7 +125,9 @@ export function TripItineraryTab({ trip }: TripItineraryTabProps) {
         <div className="flex items-center gap-4 text-xs flex-wrap">
           <div>
             <span className="text-[var(--lkv-text-muted)] block">Étapes</span>
-            <span className="font-bold text-lkv-primary text-sm">{canonicalSteps.length} jours</span>
+            <span className="font-bold text-lkv-primary text-sm">
+              {canonicalSteps.length} jours
+            </span>
           </div>
           <div className="h-6 w-px bg-white/30" />
           <div>
@@ -159,7 +143,7 @@ export function TripItineraryTab({ trip }: TripItineraryTabProps) {
           <div>
             <span className="text-[var(--lkv-text-muted)] block">Provenance</span>
             <span className="inline-flex items-center gap-1 font-semibold text-xs text-lkv-primary">
-              <Sparkles size={12} className="text-[var(--lkv-text-secondary)]" />
+              <Icon name="sparkles" size={12} className="text-[var(--lkv-text-secondary)]" />
               {provenanceInfo.label}
             </span>
           </div>
@@ -171,7 +155,7 @@ export function TripItineraryTab({ trip }: TripItineraryTabProps) {
               href={tripSectionHref(trip.slug, 'itinerary')}
               variant="primary"
               size="sm"
-              icon={<Calendar size={15} />}
+              icon={<Icon name="calendar" size={15} />}
             >
               Ouvrir le Planificateur
             </GlassCapsuleBtn>
@@ -187,12 +171,18 @@ export function TripItineraryTab({ trip }: TripItineraryTabProps) {
       )}
 
       {/* Modal de confirmation régénération */}
-      <GlassModal open={confirmOpen} onOpenChange={setConfirmOpen} title="Régénérer cet itinéraire ?">
+      <GlassModal
+        open={confirmOpen}
+        onOpenChange={setConfirmOpen}
+        title="Régénérer cet itinéraire ?"
+      >
         <div className="space-y-4">
           <p className="text-xs text-[var(--lkv-text-secondary)] leading-relaxed">
             Le moteur déterministe recalculera les étapes journalières selon les dates et le pays.
             <br />
-            <strong className="text-lkv-primary">Vos articles de matériel ajoutés manuellement seront scrupuleusement conservés.</strong>
+            <strong className="text-lkv-primary">
+              Vos articles de matériel ajoutés manuellement seront scrupuleusement conservés.
+            </strong>
           </p>
           <div className="flex items-center justify-end gap-2 pt-2">
             <GlassCapsuleBtn
@@ -210,7 +200,13 @@ export function TripItineraryTab({ trip }: TripItineraryTabProps) {
               disabled={isRegenerating}
               size="sm"
               variant="primary"
-              icon={<RotateCcw size={14} className={isRegenerating ? 'animate-spin' : ''} />}
+              icon={
+                <Icon
+                  name="rotate-ccw"
+                  size={14}
+                  className={isRegenerating ? 'animate-spin' : ''}
+                />
+              }
             >
               {isRegenerating ? 'Calcul...' : 'Confirmer le recalcul'}
             </GlassCapsuleBtn>
@@ -222,7 +218,11 @@ export function TripItineraryTab({ trip }: TripItineraryTabProps) {
       {canonicalSteps.length > 0 ? (
         <div className="space-y-3">
           {canonicalSteps.map((step) => (
-            <GlassCard key={step.id} tone="neutral" className="p-4 sm:p-5 rounded-[var(--lkv-radius-lg)] border border-white/60">
+            <GlassCard
+              key={step.id}
+              tone="neutral"
+              className="p-4 sm:p-5 rounded-[var(--lkv-radius-lg)] border border-white/60"
+            >
               <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-3">
                 <div className="space-y-1.5">
                   <div className="flex items-center gap-2">
@@ -231,7 +231,7 @@ export function TripItineraryTab({ trip }: TripItineraryTabProps) {
                     </span>
                     {step.accommodation_name && (
                       <span className="text-[11px] glass-sub-card text-lkv-primary px-2.5 py-1 rounded-full border border-white/60 flex items-center gap-1 shadow-2xs">
-                        <Home size={10} />
+                        <Icon name="home" size={10} />
                         {step.accommodation_name}
                       </span>
                     )}
@@ -241,7 +241,7 @@ export function TripItineraryTab({ trip }: TripItineraryTabProps) {
 
                   {step.location_name && (
                     <div className="text-xs text-lkv-secondary flex items-center gap-1">
-                      <MapPin size={12} />
+                      <Icon name="map-pin" size={12} />
                       {step.location_name}
                     </div>
                   )}
@@ -256,7 +256,7 @@ export function TripItineraryTab({ trip }: TripItineraryTabProps) {
                 <div className="flex items-center sm:flex-col sm:items-end gap-3 sm:gap-1 text-xs text-lkv-secondary shrink-0 self-start">
                   {step.distance_km ? (
                     <div className="flex items-center gap-1">
-                      <Footprints size={13} />
+                      <Icon name="footprints" size={13} />
                       <span>{step.distance_km} km</span>
                     </div>
                   ) : null}
@@ -277,10 +277,16 @@ export function TripItineraryTab({ trip }: TripItineraryTabProps) {
         </div>
       ) : (
         <EmptyState
-          icon={<Navigation size={36} className="text-[var(--lkv-text-muted)]" />}
+          icon={<Icon name="navigation" size={36} className="text-[var(--lkv-text-muted)]" />}
           title="Aucune étape définie"
           description="Ce voyage n'a pas encore d'itinéraire journalier. Vous pouvez le générer automatiquement avec notre moteur de répartition."
-          actionLabel={trip.permissions.canEdit ? (isRegenerating ? 'Calcul...' : 'Générer l’itinéraire maintenant') : undefined}
+          actionLabel={
+            trip.permissions.canEdit
+              ? isRegenerating
+                ? 'Calcul...'
+                : 'Générer l’itinéraire maintenant'
+              : undefined
+          }
           onAction={trip.permissions.canEdit ? handleRegenerate : undefined}
         />
       )}

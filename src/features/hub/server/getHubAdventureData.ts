@@ -1,7 +1,6 @@
 import { cache } from 'react';
 import { createClient } from '@/lib/supabase/server';
 import { getTripBySlug, getTripStats } from '@/lib/queries-trips';
-import { fetchUserCrews } from '@/lib/queries-crews';
 import { getWeather, type WeatherDay } from '@/features/materiel/services/getWeather';
 import { getActiveAdventure } from '../context/activeAdventureServer';
 import type { HubCounters } from '../registry/hubSectionRegistry';
@@ -14,9 +13,9 @@ import { getTripItemImages, type TripItemImage } from './getTripItemImages';
 /**
  * H3.1 — Chargeur serveur unique de l'aventure du hub (partagé par le layout
  * /hub et l'API /api/hub/adventures — une seule source de requêtes).
- * Patterns copiés : groupes/page.tsx (groupes), queries-crews (équipages),
- * getMaterielSummary.ts:135 (prêts actifs = en_cours + en_retard).
- * RLS via le server client. Repli possession si sortie introuvable (H-AUTO-15).
+ * Patterns copiés : groupes/page.tsx (groupes), getMaterielSummary.ts:135
+ * (prêts actifs = en_cours + en_retard). RLS via le server client. Repli
+ * possession si sortie introuvable (H-AUTO-15).
  */
 
 export interface HubGroupLite {
@@ -26,19 +25,9 @@ export interface HubGroupLite {
   my_role: string | null;
 }
 
-export interface HubCrewLite {
-  id: string;
-  name: string;
-  slug: string;
-  member_count: number;
-  active_trips_count: number;
-  next_trip: { slug: string; title: string } | null;
-}
-
 export interface HubAdventureLists {
   groups: HubGroupLite[];
   pendingInvites: number;
-  crews: HubCrewLite[];
   possession: { items: number; loans: number; alerts: number };
   trips: HubUserTripLite[];
 }
@@ -124,7 +113,6 @@ export interface HubAdventureData extends HubAdventureLists {
 const EMPTY_LISTS: HubAdventureLists = {
   groups: [],
   pendingInvites: 0,
-  crews: [],
   possession: { items: 0, loans: 0, alerts: 0 },
   trips: [],
 };
@@ -135,7 +123,6 @@ async function loadLists(userId: string | undefined): Promise<HubAdventureLists>
   const out: HubAdventureLists = {
     groups: [],
     pendingInvites: 0,
-    crews: [],
     possession: { items: 0, loans: 0, alerts: 0 },
     trips: [],
   };
@@ -177,19 +164,6 @@ async function loadLists(userId: string | undefined): Promise<HubAdventureLists>
     out.pendingInvites = invites ?? 0;
   } catch (err) {
     console.error('[LKDV hub] groups error:', err);
-  }
-
-  try {
-    out.crews = (await fetchUserCrews(userId)).map((c) => ({
-      id: c.id,
-      name: (c as { name: string }).name,
-      slug: (c as { slug: string }).slug,
-      member_count: c.member_count,
-      active_trips_count: c.active_trips_count ?? 0,
-      next_trip: c.next_trip ? { slug: c.next_trip.slug, title: c.next_trip.title } : null,
-    }));
-  } catch (err) {
-    console.error('[LKDV hub] crews error:', err);
   }
 
   try {
@@ -478,62 +452,41 @@ export async function getHubAdventureDataInner(): Promise<HubAdventureData> {
   }
 
   if (adventure.nature === 'collectif') {
-    if (adventure.kind === 'groupe') {
-      const g = lists.groups.find((x) => x.id === adventure.id);
-      const membersCount = g?.member_count ?? 1;
-      let linkedTripsCount = 0;
-      try {
-        const { count } = await supabase.from('trips').select('*', { count: 'exact', head: true }).eq('group_id', adventure.id);
-        linkedTripsCount = count ?? 0;
-      } catch {
-        /* ignoré */
-      }
-      let linkedTripSlug: string | null = null;
-      try {
-        const { data } = await supabase
-          .from('trips')
-          .select('slug')
-          .eq('group_id', adventure.id)
-          .order('start_date', { ascending: false, nullsFirst: false })
-          .limit(1)
-          .maybeSingle();
-        linkedTripSlug = (data as { slug: string } | null)?.slug ?? null;
-      } catch {
-        /* ignoré */
-      }
-      return {
-        ...lists,
-        adventure,
-        input: {
-          kind: 'collectif',
-          membersCount,
-          pendingInvites: lists.pendingInvites,
-          linkedTripsCount,
-          hasLinkedTrip: linkedTripSlug !== null,
-        },
-        trip: null,
-        groupLabel: g?.name ?? adventure.title,
-        linkedTripSlug,
-        group: null,
-        hiking: null,
-        checklist: [],
-        itemImages: [],
-      };
+    const g = lists.groups.find((x) => x.id === adventure.id);
+    const membersCount = g?.member_count ?? 1;
+    let linkedTripsCount = 0;
+    try {
+      const { count } = await supabase.from('trips').select('*', { count: 'exact', head: true }).eq('group_id', adventure.id);
+      linkedTripsCount = count ?? 0;
+    } catch {
+      /* ignoré */
     }
-    const c = lists.crews.find((x) => x.id === adventure.id);
+    let linkedTripSlug: string | null = null;
+    try {
+      const { data } = await supabase
+        .from('trips')
+        .select('slug')
+        .eq('group_id', adventure.id)
+        .order('start_date', { ascending: false, nullsFirst: false })
+        .limit(1)
+        .maybeSingle();
+      linkedTripSlug = (data as { slug: string } | null)?.slug ?? null;
+    } catch {
+      /* ignoré */
+    }
     return {
       ...lists,
       adventure,
       input: {
         kind: 'collectif',
-        membersCount: c?.member_count ?? 1,
-        pendingInvites: 0,
-        linkedTripsCount: c?.active_trips_count ?? 0,
-        hasLinkedTrip: (c?.next_trip?.slug ?? null) !== null,
+        membersCount,
+        pendingInvites: lists.pendingInvites,
+        linkedTripsCount,
+        hasLinkedTrip: linkedTripSlug !== null,
       },
       trip: null,
-      groupLabel: c?.name ?? adventure.title,
-      linkedTripSlug: c?.next_trip?.slug ?? null,
+      groupLabel: g?.name ?? adventure.title,
+      linkedTripSlug,
       group: null,
       hiking: null,
       checklist: [],

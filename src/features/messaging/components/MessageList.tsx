@@ -1,10 +1,10 @@
-"use client";
+'use client';
 
+import Icon from '@/components/ui/Icon';
 import React, { useRef, useEffect, useState, useCallback } from 'react';
 import type { Message, ConversationMember } from '../types/messaging.types';
 import { MessageBubble, type BubbleGroupPosition } from './MessageBubble';
 import { TypingIndicator } from './TypingIndicator';
-import { ArrowDown } from 'lucide-react';
 import { useHapticFeedback } from '@/hooks/useHapticFeedback';
 
 interface MessageListProps {
@@ -20,7 +20,11 @@ interface MessageListProps {
 }
 
 export const MessageListSkeleton = () => (
-  <div className="flex-1 p-4 space-y-4 animate-pulse overflow-hidden" aria-busy="true" aria-label="Chargement des messages">
+  <div
+    className="flex-1 p-4 space-y-4 animate-pulse overflow-hidden"
+    aria-busy="true"
+    aria-label="Chargement des messages"
+  >
     <div className="flex items-end gap-2.5">
       <div className="w-8 h-8 rounded-full bg-stone-200/70 shrink-0" />
       <div className="space-y-1.5 max-w-[65%]">
@@ -154,9 +158,12 @@ export const MessageList: React.FC<MessageListProps> = ({
           <div className="w-16 h-16 rounded-full bg-[#17402C]/10 text-[#17402C] flex items-center justify-center mb-3 text-2xl">
             💬
           </div>
-          <h3 className="text-base font-bold text-[#17402C]">C&apos;est le début de votre discussion</h3>
+          <h3 className="text-base font-bold text-[#17402C]">
+            C&apos;est le début de votre discussion
+          </h3>
           <p className="text-xs text-[#5A574E] max-w-xs mt-1">
-            Envoyez un premier message pour échanger vos conseils de voyage ou planifier votre expédition.
+            Envoyez un premier message pour échanger vos conseils de voyage ou planifier votre
+            expédition.
           </p>
         </div>
       ) : (
@@ -257,7 +264,7 @@ export const MessageList: React.FC<MessageListProps> = ({
             }}
             className="pointer-events-auto glass-capsule-btn primary py-2 px-4 text-[13px] font-bold shadow-lg flex items-center gap-1.5 active:scale-95 min-h-[44px] msg-pill-in"
           >
-            <ArrowDown className="w-4 h-4" />
+            <Icon name="arrow-down" className="w-4 h-4" />
             <span>Nouveaux messages</span>
           </button>
         </div>

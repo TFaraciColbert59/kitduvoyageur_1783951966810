@@ -1,16 +1,7 @@
 ﻿'use client';
 
+import Icon from '@/components/ui/Icon';
 import React, { useState, useTransition } from 'react';
-import {
-  Award,
-  BookOpen,
-  CheckCircle2,
-  MapPin,
-  Mountain,
-  Navigation,
-  Package,
-  Star,
-} from 'lucide-react';
 import { GlassCard } from '@/components/ui/GlassCard';
 import { GlassModal } from '@/components/ui/GlassModal';
 import { GlassCapsuleBtn } from '@/components/ui/GlassCapsuleBtn';
@@ -44,13 +35,15 @@ export function TripCompletionModal({ trip, isOpen, onClose }: TripCompletionMod
 
   // Avis certifiés terrain
   const placeCandidates = extractCertifiedPlaceCandidates(trip);
-  const [reviews, setReviews] = useState<Record<string, { rating: number; comment: string }>>(() => {
-    const initial: Record<string, { rating: number; comment: string }> = {};
-    placeCandidates.forEach(p => {
-      initial[p.placeId] = { rating: 5, comment: '' };
-    });
-    return initial;
-  });
+  const [reviews, setReviews] = useState<Record<string, { rating: number; comment: string }>>(
+    () => {
+      const initial: Record<string, { rating: number; comment: string }> = {};
+      placeCandidates.forEach((p) => {
+        initial[p.placeId] = { rating: 5, comment: '' };
+      });
+      return initial;
+    }
+  );
 
   if (!isOpen) return null;
 
@@ -119,12 +112,19 @@ export function TripCompletionModal({ trip, isOpen, onClose }: TripCompletionMod
   };
 
   return (
-    <GlassModal open={isOpen} onOpenChange={(v) => { if (!v) onClose(); }} title="Rétrospective & Carnet de Voyage" variant="sheet">
+    <GlassModal
+      open={isOpen}
+      onOpenChange={(v) => {
+        if (!v) onClose();
+      }}
+      title="Rétrospective & Carnet de Voyage"
+      variant="sheet"
+    >
       <div className="pb-2 space-y-6">
         {/* Messages de retour */}
         {successMessage && (
           <div className="p-4 rounded-2xl glass tone-sage border text-sm text-[var(--lkv-success)] flex items-center gap-2">
-            <CheckCircle2 size={18} className="text-lkv-primary shrink-0" />
+            <Icon name="check-circle2" size={18} className="text-lkv-primary shrink-0" />
             <span>{successMessage}</span>
           </div>
         )}
@@ -137,26 +137,42 @@ export function TripCompletionModal({ trip, isOpen, onClose }: TripCompletionMod
 
         {/* Métriques d'aventure */}
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-          <GlassCard tone="neutral" className="p-3.5 rounded-[var(--lkv-radius-lg)] border border-white/60 text-center">
-            <Navigation size={18} className="mx-auto text-lkv-primary mb-1" />
+          <GlassCard
+            tone="neutral"
+            className="p-3.5 rounded-[var(--lkv-radius-lg)] border border-white/60 text-center"
+          >
+            <Icon name="navigation" size={18} className="mx-auto text-lkv-primary mb-1" />
             <div className="text-lg font-bold text-lkv-primary">{metrics.totalKm} km</div>
             <div className="text-[11px] text-lkv-secondary">Distance totale</div>
           </GlassCard>
 
-          <GlassCard tone="neutral" className="p-3.5 rounded-[var(--lkv-radius-lg)] border border-white/60 text-center">
-            <Mountain size={18} className="mx-auto text-lkv-primary mb-1" />
-            <div className="text-lg font-bold text-lkv-primary">+{metrics.totalElevationGainM} m</div>
+          <GlassCard
+            tone="neutral"
+            className="p-3.5 rounded-[var(--lkv-radius-lg)] border border-white/60 text-center"
+          >
+            <Icon name="mountain" size={18} className="mx-auto text-lkv-primary mb-1" />
+            <div className="text-lg font-bold text-lkv-primary">
+              +{metrics.totalElevationGainM} m
+            </div>
             <div className="text-[11px] text-lkv-secondary">Dénivelé positif</div>
           </GlassCard>
 
-          <GlassCard tone="neutral" className="p-3.5 rounded-[var(--lkv-radius-lg)] border border-white/60 text-center">
-            <Package size={18} className="mx-auto text-lkv-primary mb-1" />
+          <GlassCard
+            tone="neutral"
+            className="p-3.5 rounded-[var(--lkv-radius-lg)] border border-white/60 text-center"
+          >
+            <Icon name="package" size={18} className="mx-auto text-lkv-primary mb-1" />
             <div className="text-lg font-bold text-lkv-primary">{metrics.packedWeightKg} kg</div>
-            <div className="text-[11px] text-lkv-secondary">{metrics.packedGearCount} items emportés</div>
+            <div className="text-[11px] text-lkv-secondary">
+              {metrics.packedGearCount} items emportés
+            </div>
           </GlassCard>
 
-          <GlassCard tone="neutral" className="p-3.5 rounded-[var(--lkv-radius-lg)] border border-white/60 text-center">
-            <Award size={18} className="mx-auto text-lkv-primary mb-1" />
+          <GlassCard
+            tone="neutral"
+            className="p-3.5 rounded-[var(--lkv-radius-lg)] border border-white/60 text-center"
+          >
+            <Icon name="award" size={18} className="mx-auto text-lkv-primary mb-1" />
             <div className="text-lg font-bold text-lkv-primary">{metrics.durationDays} jours</div>
             <div className="text-[11px] text-lkv-secondary">{metrics.nbNuits} nuits vécues</div>
           </GlassCard>
@@ -171,11 +187,11 @@ export function TripCompletionModal({ trip, isOpen, onClose }: TripCompletionMod
                 <input
                   type="checkbox"
                   checked={publishCarnet}
-                  onChange={e => setPublishCarnet(e.target.checked)}
+                  onChange={(e) => setPublishCarnet(e.target.checked)}
                   className="w-4 h-4 rounded text-lkv-primary focus:ring-lkv-primary"
                 />
                 <span className="text-sm font-semibold text-lkv-primary flex items-center gap-1.5">
-                  <BookOpen size={16} /> Publier en carnet de bord communautaire
+                  <Icon name="book-open" size={16} /> Publier en carnet de bord communautaire
                 </span>
               </label>
             </div>
@@ -189,7 +205,7 @@ export function TripCompletionModal({ trip, isOpen, onClose }: TripCompletionMod
                   <input
                     type="text"
                     value={carnetTitle}
-                    onChange={e => setCarnetTitle(e.target.value)}
+                    onChange={(e) => setCarnetTitle(e.target.value)}
                     required
                     className="glass-input w-full px-3 py-2 text-sm text-[var(--lkv-text-primary)]"
                   />
@@ -202,7 +218,7 @@ export function TripCompletionModal({ trip, isOpen, onClose }: TripCompletionMod
                   <textarea
                     rows={3}
                     value={carnetDescription}
-                    onChange={e => setCarnetDescription(e.target.value)}
+                    onChange={(e) => setCarnetDescription(e.target.value)}
                     placeholder="Résumez les moments forts, la météo, l'ambiance..."
                     className="glass-input w-full px-3 py-2 text-sm text-[var(--lkv-text-primary)]"
                   />
@@ -239,7 +255,7 @@ export function TripCompletionModal({ trip, isOpen, onClose }: TripCompletionMod
             <div className="space-y-3">
               <div>
                 <h4 className="text-sm font-semibold text-lkv-primary flex items-center gap-1.5">
-                  <MapPin size={16} /> Certifier vos lieux visités (Preuve terrain)
+                  <Icon name="map-pin" size={16} /> Certifier vos lieux visités (Preuve terrain)
                 </h4>
                 <p className="text-xs text-lkv-secondary">
                   Vos avis sont certifiés réels (pondération x2 dans le scoring communautaire).
@@ -247,30 +263,32 @@ export function TripCompletionModal({ trip, isOpen, onClose }: TripCompletionMod
               </div>
 
               <div className="space-y-3">
-                {placeCandidates.map(candidate => {
+                {placeCandidates.map((candidate) => {
                   const currentRev = reviews[candidate.placeId] || { rating: 5, comment: '' };
                   return (
-                    <div key={candidate.placeId} className="p-3.5 rounded-2xl glass-sub-card border border-white/60 shadow-2xs space-y-2">
+                    <div
+                      key={candidate.placeId}
+                      className="p-3.5 rounded-2xl glass-sub-card border border-white/60 shadow-2xs space-y-2"
+                    >
                       <div className="flex items-center justify-between">
-                        <span className="text-xs font-semibold text-lkv-primary">{candidate.name}</span>
+                        <span className="text-xs font-semibold text-lkv-primary">
+                          {candidate.name}
+                        </span>
                         {/* Note étoiles */}
                         <div className="flex items-center gap-1">
-                          {[1, 2, 3, 4, 5].map(star => (
+                          {[1, 2, 3, 4, 5].map((star) => (
                             <button
                               key={star}
                               type="button"
                               onClick={() =>
-                                setReviews(prev => ({
+                                setReviews((prev) => ({
                                   ...prev,
                                   [candidate.placeId]: { ...currentRev, rating: star },
                                 }))
                               }
                               className="text-[var(--lkv-warning)] hover:scale-110 transition-transform"
                             >
-                              <Star
-                                size={16}
-                                fill={star <= currentRev.rating ? 'currentColor' : 'none'}
-                              />
+                              <Icon name="star" size={16} />
                             </button>
                           ))}
                         </div>
@@ -280,8 +298,8 @@ export function TripCompletionModal({ trip, isOpen, onClose }: TripCompletionMod
                         type="text"
                         placeholder="Votre retour terrain (état du bivouac, source en eau, accueil...)"
                         value={currentRev.comment}
-                        onChange={e =>
-                          setReviews(prev => ({
+                        onChange={(e) =>
+                          setReviews((prev) => ({
                             ...prev,
                             [candidate.placeId]: { ...currentRev, comment: e.target.value },
                           }))
@@ -297,11 +315,17 @@ export function TripCompletionModal({ trip, isOpen, onClose }: TripCompletionMod
 
           {/* Boutons d'action */}
           <div className="flex items-center justify-end gap-3 pt-2 border-t border-white/40">
-            <GlassCapsuleBtn type="button" variant="default" size="sm" onClick={onClose} disabled={isPending}>
+            <GlassCapsuleBtn
+              type="button"
+              variant="default"
+              size="sm"
+              onClick={onClose}
+              disabled={isPending}
+            >
               Annuler
             </GlassCapsuleBtn>
             <GlassCapsuleBtn type="submit" variant="primary" size="sm" disabled={isPending}>
-              {isPending ? 'Enregistrement en cours...' : 'Valider & Clôturer l\'expédition'}
+              {isPending ? 'Enregistrement en cours...' : "Valider & Clôturer l'expédition"}
             </GlassCapsuleBtn>
           </div>
         </form>

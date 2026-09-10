@@ -1,5 +1,6 @@
 ﻿'use client';
 
+import Icon from '@/components/ui/Icon';
 import React from 'react';
 import Link from 'next/link';
 import AppImage from '@/components/ui/AppImage';
@@ -7,7 +8,6 @@ import { GlassCard } from '@/components/ui/GlassCard';
 import { TripBadge } from './TripBadge';
 import { tripSwitchHref } from '../registry/tripSectionRegistry';
 import { deriveScale, deriveParty, getProfileBadgeLabel } from '../engine/tripProfileEngine';
-import { MapPin, Calendar, Navigation, Users } from 'lucide-react';
 import type { TripSummary, TripWithDetails } from '../types/trip.types';
 
 import { formatCivilDate, formatCivilDateRange } from '@/lib/dates/tripDates';
@@ -71,12 +71,10 @@ export function TripCard({ trip, showRole = true }: TripCardProps) {
           {/* Destination Overlay */}
           <div className="absolute bottom-3 left-3 right-3 flex items-center justify-between text-white text-xs">
             <span className="flex items-center gap-1 font-medium drop-shadow">
-              <MapPin size={14} className="text-sage-300" />
+              <Icon name="map-pin" size={14} className="text-sage-300" />
               {trip.destination_name || trip.destination_country_code || 'Destination sauvage'}
             </span>
-            {showRole && role && (
-              <TripBadge type="role" value={role} size="sm" />
-            )}
+            {showRole && role && <TripBadge type="role" value={role} size="sm" />}
           </div>
         </div>
 
@@ -96,20 +94,23 @@ export function TripCard({ trip, showRole = true }: TripCardProps) {
           {/* Bottom Meta */}
           <div className="pt-2 border-t border-black/5 flex items-center justify-between text-xs text-lkv-secondary">
             <span className="flex items-center gap-1">
-              <Calendar size={13} className="text-lkv-secondary" />
+              <Icon name="calendar" size={13} className="text-lkv-secondary" />
               {formatDateRange(trip.start_date, trip.end_date)}
             </span>
 
             <div className="flex items-center gap-3">
               {trip.steps_count !== undefined && trip.steps_count > 0 && (
                 <span className="flex items-center gap-1" title={`${trip.steps_count} étapes`}>
-                  <Navigation size={13} />
+                  <Icon name="navigation" size={13} />
                   {trip.steps_count}
                 </span>
               )}
               {trip.collaborators_count !== undefined && (
-                <span className="flex items-center gap-1" title={`${trip.collaborators_count} participants`}>
-                  <Users size={13} />
+                <span
+                  className="flex items-center gap-1"
+                  title={`${trip.collaborators_count} participants`}
+                >
+                  <Icon name="users" size={13} />
                   {trip.collaborators_count}
                 </span>
               )}

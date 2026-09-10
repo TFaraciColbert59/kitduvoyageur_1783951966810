@@ -1,17 +1,7 @@
 'use client';
 
+import Icon from '@/components/ui/Icon';
 import React, { useState } from 'react';
-import {
-  Lock,
-  Unlock,
-  ChevronLeft,
-  ChevronRight,
-  ShieldCheck,
-  HelpCircle,
-  ExternalLink,
-  Mic,
-  X,
-} from 'lucide-react';
 import type { Proposal, LayerId } from '@/features/trips/schemas/autoGen.schema';
 import { useHapticFeedback } from '@/hooks/useHapticFeedback';
 
@@ -129,8 +119,8 @@ export const ProposalCard: React.FC<ProposalCardProps> = ({
     (currentItem.value?.totalDistanceKm
       ? `${currentItem.value.totalDistanceKm} km · +${currentItem.value.totalGainM} m`
       : currentItem.value?.targetWeightKg
-      ? `Sac de ${currentItem.value.targetWeightKg} kg`
-      : currentItem.rationale);
+        ? `Sac de ${currentItem.value.targetWeightKg} kg`
+        : currentItem.rationale);
 
   const priceEur = currentItem.value?.priceEur ?? currentItem.value?.totalPerPersonEur;
 
@@ -153,25 +143,30 @@ export const ProposalCard: React.FC<ProposalCardProps> = ({
           </span>
           {currentItem.confidence === 'low' || currentItem.provenance?.source === 'estimated' ? (
             <span className="inline-flex items-center gap-1 text-[11px] px-2 py-0.5 rounded-full bg-[var(--lkv-warning)]  text-[var(--lkv-warning-dark)]  border border-[var(--lkv-warning)] ">
-              <HelpCircle className="w-3 h-3 text-[var(--lkv-warning-dark)] " />
+              <Icon name="help-circle" className="w-3 h-3 text-[var(--lkv-warning-dark)] " />
               <span className="font-medium">Estimation</span>
               {currentItem.provenance?.sourceRef && (
-                <span className="text-[var(--lkv-warning-dark)]  hidden sm:inline">· {currentItem.provenance.sourceRef}</span>
+                <span className="text-[var(--lkv-warning-dark)]  hidden sm:inline">
+                  · {currentItem.provenance.sourceRef}
+                </span>
               )}
               <a
-                href={currentItem.verifyUrl || `https://www.google.com/search?q=${encodeURIComponent(`${proposal.layer} ${valueName}`)}`}
+                href={
+                  currentItem.verifyUrl ||
+                  `https://www.google.com/search?q=${encodeURIComponent(`${proposal.layer} ${valueName}`)}`
+                }
                 target="_blank"
                 rel="noopener noreferrer"
                 className="inline-flex items-center text-[10px] font-semibold underline underline-offset-2 ml-1 text-[var(--lkv-warning-dark)]  hover:text-[var(--lkv-warning-dark)]"
                 onClick={(e) => e.stopPropagation()}
               >
                 vérifier
-                <ExternalLink className="w-2.5 h-2.5 ml-0.5" />
+                <Icon name="external-link" className="w-2.5 h-2.5 ml-0.5" />
               </a>
             </span>
           ) : (
             <span className="flex items-center text-[11px] text-[var(--lkv-text-muted)] ">
-              <ShieldCheck className="w-3.5 h-3.5 mr-1 text-[var(--lkv-secondary)]" />
+              <Icon name="shield-check" className="w-3.5 h-3.5 mr-1 text-[var(--lkv-secondary)]" />
               {PROVENANCE_LABELS[currentItem.provenance?.source] || currentItem.provenance?.source}
               {currentItem.provenance?.sourceRef && ` · ${currentItem.provenance.sourceRef}`}
             </span>
@@ -183,9 +178,7 @@ export const ProposalCard: React.FC<ProposalCardProps> = ({
           type="button"
           onClick={toggleLock}
           aria-label={
-            proposal.locked
-              ? 'Déverrouiller cette proposition'
-              : 'Verrouiller cette proposition'
+            proposal.locked ? 'Déverrouiller cette proposition' : 'Verrouiller cette proposition'
           }
           className={`min-w-[44px] min-h-[44px] flex items-center justify-center rounded-xl transition-colors ${
             proposal.locked
@@ -193,7 +186,11 @@ export const ProposalCard: React.FC<ProposalCardProps> = ({
               : 'text-[var(--lkv-text-subtle)] hover:text-[var(--lkv-text-muted)]  hover:bg-[var(--lkv-surface-muted)] '
           }`}
         >
-          {proposal.locked ? <Lock className="w-4 h-4" /> : <Unlock className="w-4 h-4" />}
+          {proposal.locked ? (
+            <Icon name="lock" className="w-4 h-4" />
+          ) : (
+            <Icon name="unlock" className="w-4 h-4" />
+          )}
         </button>
       </div>
 
@@ -225,7 +222,7 @@ export const ProposalCard: React.FC<ProposalCardProps> = ({
             aria-label="Alternative précédente"
             className="p-1.5 min-w-[var(--lkv-touch-min)] min-h-[var(--lkv-touch-min)] flex items-center justify-center rounded-lg hover:bg-[var(--lkv-surface-muted)]  disabled:opacity-30"
           >
-            <ChevronLeft className="w-4 h-4" />
+            <Icon name="chevron-left" className="w-4 h-4" />
           </button>
           <span className="font-mono text-xs px-1">
             {activeAltIndex + 1} / {totalProposals}
@@ -237,7 +234,7 @@ export const ProposalCard: React.FC<ProposalCardProps> = ({
             aria-label="Alternative suivante"
             className="p-1.5 min-w-[var(--lkv-touch-min)] min-h-[var(--lkv-touch-min)] flex items-center justify-center rounded-lg hover:bg-[var(--lkv-surface-muted)]  disabled:opacity-30"
           >
-            <ChevronRight className="w-4 h-4" />
+            <Icon name="chevron-right" className="w-4 h-4" />
           </button>
           <span className="text-[11px] text-[var(--lkv-text-subtle)] ml-1 hidden sm:inline">
             Balayer pour alterner
@@ -251,7 +248,7 @@ export const ProposalCard: React.FC<ProposalCardProps> = ({
           aria-label="Ajuster par commande vocale"
           className="flex items-center space-x-1 px-2.5 py-1.5 min-h-[var(--lkv-touch-min)] text-xs font-medium rounded-lg text-[var(--lkv-text-muted)]  hover:bg-[var(--lkv-surface-muted)] "
         >
-          <Mic className="w-3.5 h-3.5 text-[var(--lkv-secondary)]" />
+          <Icon name="mic" className="w-3.5 h-3.5 text-[var(--lkv-secondary)]" />
           <span>Ajuster</span>
         </button>
       </div>
@@ -259,7 +256,9 @@ export const ProposalCard: React.FC<ProposalCardProps> = ({
       {/* Impact tags */}
       {currentItem.impacts && currentItem.impacts.length > 0 && (
         <div className="mt-2 flex items-center gap-1">
-          <span className="text-[10px] uppercase font-semibold text-[var(--lkv-text-subtle)]">Impact :</span>
+          <span className="text-[10px] uppercase font-semibold text-[var(--lkv-text-subtle)]">
+            Impact :
+          </span>
           {currentItem.impacts.map((imp: string) => (
             <span
               key={imp}
@@ -273,11 +272,16 @@ export const ProposalCard: React.FC<ProposalCardProps> = ({
 
       {/* Modale d'édition rapide (ex-window.prompt, règle Y-D80 n°5) */}
       {editOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm animate-in fade-in" role="dialog" aria-modal="true" aria-label="Ajuster ce composant">
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm animate-in fade-in"
+          role="dialog"
+          aria-modal="true"
+          aria-label="Ajuster ce composant"
+        >
           <div className="glass rounded-[var(--lkv-radius-xl)] border border-white/70 max-w-md w-full p-6 shadow-2xl space-y-4">
             <div className="flex items-center justify-between">
               <h4 className="text-sm font-bold text-[var(--lkv-text-primary)] flex items-center gap-2">
-                <Mic size={16} className="text-[var(--lkv-secondary)]" />
+                <Icon name="mic" size={16} className="text-[var(--lkv-secondary)]" />
                 Ajuster ce composant
               </h4>
               <button
@@ -286,7 +290,7 @@ export const ProposalCard: React.FC<ProposalCardProps> = ({
                 aria-label="Fermer"
                 className="w-9 h-9 min-h-[44px] min-w-[44px] flex items-center justify-center rounded-full glass-sub-card border border-white/60 text-[var(--lkv-text-secondary)] hover:bg-white transition-all cursor-pointer"
               >
-                <X size={18} />
+                <Icon name="x" size={18} />
               </button>
             </div>
             <input

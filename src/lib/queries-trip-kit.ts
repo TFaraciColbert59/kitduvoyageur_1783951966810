@@ -3,7 +3,7 @@ import { createClient } from '@/lib/supabase/server';
 import { getTripBySlug } from '@/lib/queries-trips';
 import { generateTripContextualKit, getTripDurationDays } from '@/features/trips/engine/contextualKitEngine';
 import { getTripElevationProfile } from '@/features/trips/lib/elevation';
-import type { TripFull, TripItem } from '@/features/trips/types/trip.types';
+import type { TripFull, TripItem, TripPurchaseState } from '@/features/trips/types/trip.types';
 import type {
   ShopProductReference,
   ContextualGearRecommendation,
@@ -105,6 +105,7 @@ export async function addTripItem(input: {
   inventoryItemId?: string | null;
   notes?: string;
   source?: string;
+  purchaseState?: TripPurchaseState;
 }): Promise<TripItem | null> {
   const supabase = await createClient();
 
@@ -128,6 +129,7 @@ export async function addTripItem(input: {
       inventory_item_id: input.inventoryItemId || null,
       notes: input.notes || null,
       source: input.source || 'user',
+      purchase_state: input.purchaseState ?? 'needed',
     })
     .select('*')
     .single();
@@ -141,29 +143,55 @@ export async function addTripItem(input: {
 }
 
 /**
- * Bascule l'état emballé d'un équipement
+ * Bascule l'état emballé d'un équipement.
+ * `userId` renseigne packed_by → suivi des ressources par membre (hub Équipement).
+ * `.select('id')` : un update bloqué par la RLS affecte 0 ligne → échec explicite.
  */
 export async function toggleTripItemPacked(
   itemId: string,
-  isPacked: boolean
+  isPacked: boolean,
+  userId?: string | null
 ): Promise<boolean> {
   const supabase = await createClient();
 
-  const { error } = await supabase
+  const { data, error } = await supabase
     .from('trip_items')
     .update({
       is_packed: isPacked,
       status: isPacked ? 'packed' : 'needed',
+      packed_by: isPacked ? userId ?? null : null,
       updated_at: new Date().toISOString(),
     })
-    .eq('id', itemId);
+    .eq('id', itemId)
+    .select('id');
 
   if (error) {
     console.error('[toggleTripItemPacked] Erreur update :', error);
     return false;
   }
 
-  return true;
+  return Array.isArray(data) && data.length > 0;
+}
+
+/** Statut d'achat d'un équipement manquant (cycle du panneau Équipement). */
+export async function setTripItemPurchaseState(
+  itemId: string,
+  state: TripPurchaseState
+): Promise<boolean> {
+  const supabase = await createClient();
+
+  const { data, error } = await supabase
+    .from('trip_items')
+    .update({ purchase_state: state, updated_at: new Date().toISOString() })
+    .eq('id', itemId)
+    .select('id');
+
+  if (error) {
+    console.error('[setTripItemPurchaseState] Erreur update :', error);
+    return false;
+  }
+
+  return Array.isArray(data) && data.length > 0;
 }
 
 /**
@@ -172,17 +200,18 @@ export async function toggleTripItemPacked(
 export async function deleteTripItem(itemId: string): Promise<boolean> {
   const supabase = await createClient();
 
-  const { error } = await supabase
+  const { data, error } = await supabase
     .from('trip_items')
     .delete()
-    .eq('id', itemId);
+    .eq('id', itemId)
+    .select('id');
 
   if (error) {
     console.error('[deleteTripItem] Erreur delete :', error);
     return false;
   }
 
-  return true;
+  return Array.isArray(data) && data.length > 0;
 }
 
 /**
@@ -203,5 +232,6 @@ export async function addRecommendedItemToTrip(
     shopProductId: rec.shopProduct?.id,
     notes: rec.reason,
     source: 'contextual_kit',
+    purchaseState: 'added',
   });
 }

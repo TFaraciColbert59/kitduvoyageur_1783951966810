@@ -1,7 +1,7 @@
-"use client";
+'use client';
 
+import Icon from '@/components/ui/Icon';
 import React, { useState } from 'react';
-import { Bell, BellOff, Archive, ShieldAlert, Check } from 'lucide-react';
 import type { Conversation } from '../types/messaging.types';
 import { messagingService } from '../services/messagingService';
 import { MobileSheet } from './MobileSheet';
@@ -120,13 +120,15 @@ export const ConversationOptionsMenuModal: React.FC<ConversationOptionsMenuModal
           >
             <div className="flex items-center gap-3">
               {isMuted ? (
-                <Bell className="w-4 h-4 text-[#5B7F55]" />
+                <Icon name="bell" className="w-4 h-4 text-[#5B7F55]" />
               ) : (
-                <BellOff className="w-4 h-4 text-[#5A574E]" />
+                <Icon name="bell-off" className="w-4 h-4 text-[#5A574E]" />
               )}
-              <span>{isMuted ? 'Réactiver les notifications' : 'Masquer les notifications (Mute)'}</span>
+              <span>
+                {isMuted ? 'Réactiver les notifications' : 'Masquer les notifications (Mute)'}
+              </span>
             </div>
-            {isMuted && <Check className="w-4 h-4 text-[#5B7F55]" />}
+            {isMuted && <Icon name="check" className="w-4 h-4 text-[#5B7F55]" />}
           </button>
 
           {/* Archive Button */}
@@ -136,10 +138,10 @@ export const ConversationOptionsMenuModal: React.FC<ConversationOptionsMenuModal
             className="w-full p-3.5 rounded-2xl bg-white/70 hover:bg-[#17402C]/10 border border-stone-200/50 flex items-center justify-between text-[15px] font-semibold text-[#17402C] transition-colors min-h-[52px]"
           >
             <div className="flex items-center gap-3">
-              <Archive className="w-4 h-4 text-[#5A574E]" />
+              <Icon name="archive" className="w-4 h-4 text-[#5A574E]" />
               <span>{isArchived ? 'Désarchiver la conversation' : 'Archiver la conversation'}</span>
             </div>
-            {isArchived && <Check className="w-4 h-4 text-[#5B7F55]" />}
+            {isArchived && <Icon name="check" className="w-4 h-4 text-[#5B7F55]" />}
           </button>
 
           {/* Report & Block Button */}
@@ -151,7 +153,7 @@ export const ConversationOptionsMenuModal: React.FC<ConversationOptionsMenuModal
               }}
               className="w-full p-3.5 rounded-2xl bg-[#F5DDD9]/70 hover:bg-[#F5DDD9]/90 border border-[#A8443A]/30 flex items-center gap-3 text-[15px] font-semibold text-[#8A241B] transition-colors mt-2 min-h-[52px]"
             >
-              <ShieldAlert className="w-4 h-4 text-[#8A241B]" />
+              <Icon name="shield-alert" className="w-4 h-4 text-[#8A241B]" />
               <span>Signaler ou Bloquer {conversation.other_member.full_name}</span>
             </button>
           )}

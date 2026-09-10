@@ -1,5 +1,6 @@
 'use client';
 
+import Icon from '@/components/ui/Icon';
 import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
@@ -10,7 +11,6 @@ import GlobalSearchModal from '@/components/ui/GlobalSearchModal';
 import { createClient } from '@/lib/supabase/client';
 import { useCartCount } from '@/hooks/useCartCount';
 import { useConversations } from '@/features/messaging/hooks/useConversations';
-import { MessageSquare } from 'lucide-react';
 
 const NAV_LINKS = [
   { label: 'Aventures', href: '/explorer' },
@@ -90,11 +90,13 @@ export default function Header() {
               scrolled ? 'shadow-md bg-white/90' : 'shadow-xs'
             }`}
             style={{
-              background: 'linear-gradient(180deg, rgba(255, 255, 255, 0.35) 0%, rgba(255, 255, 255, 0.15) 100%)',
+              background:
+                'linear-gradient(180deg, rgba(255, 255, 255, 0.35) 0%, rgba(255, 255, 255, 0.15) 100%)',
               backdropFilter: 'blur(16px) saturate(170%)',
               WebkitBackdropFilter: 'blur(16px) saturate(170%)',
               border: '1px solid rgba(255, 255, 255, 0.50)',
-              boxShadow: 'inset 0 1px 1.5px rgba(255, 255, 255, 0.85), 0 8px 24px -6px rgba(23, 64, 44, 0.10)',
+              boxShadow:
+                'inset 0 1px 1.5px rgba(255, 255, 255, 0.85), 0 8px 24px -6px rgba(23, 64, 44, 0.10)',
             }}
           >
             {/* Left: Logo Liquid Glass (Icon Only — Sans texte) */}
@@ -123,7 +125,12 @@ export default function Header() {
                 { label: 'Communauté', href: '/communaute' },
                 { label: 'Mon compte', href: user ? '/compte' : '/connexion' },
               ].map((link) => {
-                const isActive = pathname === link.href || (link.href !== '/' && link.href !== '/compte' && pathname?.startsWith(link.href)) || (link.href === '/compte' && pathname?.startsWith('/compte'));
+                const isActive =
+                  pathname === link.href ||
+                  (link.href !== '/' &&
+                    link.href !== '/compte' &&
+                    pathname?.startsWith(link.href)) ||
+                  (link.href === '/compte' && pathname?.startsWith('/compte'));
                 return (
                   <Link
                     key={link.label}
@@ -139,7 +146,9 @@ export default function Header() {
                     )}
                     <span
                       className={`relative z-10 transition-colors ${
-                        isActive ? 'text-[#17402C] font-extrabold' : 'text-[#365233]/80 hover:text-[#17402C]'
+                        isActive
+                          ? 'text-[#17402C] font-extrabold'
+                          : 'text-[#365233]/80 hover:text-[#17402C]'
                       }`}
                     >
                       {link.label}
@@ -157,7 +166,11 @@ export default function Header() {
                   href="/panier"
                   className="w-7 h-7 rounded-full hover:bg-white/30 text-[#17402C] active:opacity-70 transition-colors flex items-center justify-center relative cursor-pointer touch-manipulation"
                   aria-label="Panier"
-                  title={cartCount > 0 ? `Panier (${cartCount} article${cartCount > 1 ? 's' : ''})` : 'Panier'}
+                  title={
+                    cartCount > 0
+                      ? `Panier (${cartCount} article${cartCount > 1 ? 's' : ''})`
+                      : 'Panier'
+                  }
                 >
                   <LkvIcon name="bag" size={14} />
                   {cartCount > 0 && (
@@ -173,7 +186,11 @@ export default function Header() {
                   href="/hub/alertes"
                   className="w-7 h-7 rounded-full hover:bg-white/30 text-[#17402C] active:opacity-70 transition-colors flex items-center justify-center cursor-pointer touch-manipulation relative"
                   aria-label="Notifications"
-                  title={unreadCount > 0 ? `Notifications (${unreadCount} non lue${unreadCount > 1 ? 's' : ''})` : 'Notifications'}
+                  title={
+                    unreadCount > 0
+                      ? `Notifications (${unreadCount} non lue${unreadCount > 1 ? 's' : ''})`
+                      : 'Notifications'
+                  }
                 >
                   <LkvIcon name="bell" size={14} />
                   {unreadCount > 0 && (
@@ -189,9 +206,13 @@ export default function Header() {
                   href="/messagerie"
                   className="w-7 h-7 rounded-full hover:bg-white/30 text-[#17402C] active:opacity-70 transition-colors flex items-center justify-center cursor-pointer touch-manipulation relative"
                   aria-label="Messagerie"
-                  title={unreadMessagesCount > 0 ? `Messagerie (${unreadMessagesCount} non lu${unreadMessagesCount > 1 ? 's' : ''})` : 'Messagerie'}
+                  title={
+                    unreadMessagesCount > 0
+                      ? `Messagerie (${unreadMessagesCount} non lu${unreadMessagesCount > 1 ? 's' : ''})`
+                      : 'Messagerie'
+                  }
                 >
-                  <MessageSquare className="w-[14px] h-[14px]" />
+                  <Icon name="message-square" className="w-[14px] h-[14px]" />
                   {unreadMessagesCount > 0 && (
                     <span
                       className="absolute top-1 right-1 w-2 h-2 rounded-full bg-forest-600 ring-2 ring-white animate-pulse"

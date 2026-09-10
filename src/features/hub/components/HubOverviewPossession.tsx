@@ -1,7 +1,8 @@
 ﻿'use client';
 
+import Icon from '@/components/ui/Icon';
 import Link from 'next/link';
-import { ArrowRight, BellRing, CalendarCheck, Package, Sparkles } from 'lucide-react';
+import { BellRing, CalendarCheck, Package } from 'lucide-react';
 import { motion, useReducedMotion } from 'framer-motion';
 import { HUB_POSSESSION_HREFS } from '../registry/hubSectionRegistry';
 import { HubActivityHero } from './HubActivityHero';
@@ -24,7 +25,12 @@ export interface HubOverviewPossessionProps {
  * UX Hub — Aperçu matériel : hero d'identité + 3 cartes vitales lisant les
  * compteurs réels. La navigation complète vit dans la sidebar.
  */
-export function HubOverviewPossession({ items, loans, alerts, summary }: HubOverviewPossessionProps) {
+export function HubOverviewPossession({
+  items,
+  loans,
+  alerts,
+  summary,
+}: HubOverviewPossessionProps) {
   const reduceMotion = useReducedMotion();
   const fade = {
     initial: reduceMotion ? false : { opacity: 0, y: 6 },
@@ -39,9 +45,30 @@ export function HubOverviewPossession({ items, loans, alerts, summary }: HubOver
     Icon: typeof Package;
     tone: string;
   }> = [
-    { href: HUB_POSSESSION_HREFS.inventaire, label: 'Inventaire', value: items, unit: 'objet(s)', Icon: Package, tone: 'text-[var(--lkv-text-secondary)]' },
-    { href: HUB_POSSESSION_HREFS.disponibilite, label: 'Disponibilité', value: loans, unit: 'prêt(s)', Icon: CalendarCheck, tone: 'text-[var(--lkv-text-secondary)]' },
-    { href: HUB_POSSESSION_HREFS.alertes, label: 'Alertes', value: alerts, unit: 'à traiter', Icon: BellRing, tone: alerts > 0 ? 'text-[rgba(168,68,58,0.9)]' : 'text-[var(--lkv-text-secondary)]' },
+    {
+      href: HUB_POSSESSION_HREFS.inventaire,
+      label: 'Inventaire',
+      value: items,
+      unit: 'objet(s)',
+      Icon: Package,
+      tone: 'text-[var(--lkv-text-secondary)]',
+    },
+    {
+      href: HUB_POSSESSION_HREFS.disponibilite,
+      label: 'Disponibilité',
+      value: loans,
+      unit: 'prêt(s)',
+      Icon: CalendarCheck,
+      tone: 'text-[var(--lkv-text-secondary)]',
+    },
+    {
+      href: HUB_POSSESSION_HREFS.alertes,
+      label: 'Alertes',
+      value: alerts,
+      unit: 'à traiter',
+      Icon: BellRing,
+      tone: alerts > 0 ? 'text-[rgba(168,68,58,0.9)]' : 'text-[var(--lkv-text-secondary)]',
+    },
   ];
 
   return (
@@ -62,7 +89,9 @@ export function HubOverviewPossession({ items, loans, alerts, summary }: HubOver
                 href={s.href}
                 className="glass p-4 rounded-2xl flex items-center gap-3 min-h-[44px] cursor-pointer active:scale-[0.98] transition-transform"
               >
-                <span className={`w-10 h-10 rounded-full bg-white/70 border border-white/80 flex items-center justify-center shrink-0 ${s.tone}`}>
+                <span
+                  className={`w-10 h-10 rounded-full bg-white/70 border border-white/80 flex items-center justify-center shrink-0 ${s.tone}`}
+                >
                   <Icon size={18} aria-hidden="true" />
                 </span>
                 <span className="flex-1 min-w-0">
@@ -73,7 +102,12 @@ export function HubOverviewPossession({ items, loans, alerts, summary }: HubOver
                     {s.label} · {s.unit}
                   </span>
                 </span>
-                <ArrowRight size={14} className="text-[var(--lkv-text-muted)] shrink-0" aria-hidden="true" />
+                <Icon
+                  name="arrow-right"
+                  size={14}
+                  className="text-[var(--lkv-text-muted)] shrink-0"
+                  aria-hidden="true"
+                />
               </Link>
             </motion.div>
           );
@@ -96,11 +130,23 @@ export function HubOverviewPossession({ items, loans, alerts, summary }: HubOver
           className="glass p-4 rounded-2xl flex items-center gap-3 min-h-[44px] cursor-pointer active:scale-[0.98] transition-transform"
           aria-label="Assistant IA — conseils matériel"
         >
-          <Sparkles size={18} className="shrink-0 text-[var(--lkv-text-secondary)]" aria-hidden="true" />
+          <Icon
+            name="sparkles"
+            size={18}
+            className="shrink-0 text-[var(--lkv-text-secondary)]"
+            aria-hidden="true"
+          />
           <span className="flex-1 min-w-0">
-            <span className="block text-sm font-semibold text-[var(--lkv-text-primary)]">Assistant IA</span>
+            <span className="block text-sm font-semibold text-[var(--lkv-text-primary)]">
+              Assistant IA
+            </span>
           </span>
-          <ArrowRight size={14} className="text-[var(--lkv-text-muted)] shrink-0" aria-hidden="true" />
+          <Icon
+            name="arrow-right"
+            size={14}
+            className="text-[var(--lkv-text-muted)] shrink-0"
+            aria-hidden="true"
+          />
         </Link>
       </motion.div>
     </div>

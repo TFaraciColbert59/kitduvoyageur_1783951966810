@@ -1,17 +1,7 @@
 ﻿'use client';
 
+import Icon from '@/components/ui/Icon';
 import React, { useState, useTransition } from 'react';
-import {
-  FileText,
-  Plus,
-  Trash2,
-  ExternalLink,
-  ShieldCheck,
-  AlertTriangle,
-  Clock,
-  CheckCircle2,
-  FileCheck,
-} from 'lucide-react';
 import { GlassModal } from '@/components/ui/GlassModal';
 import { GlassCapsuleBtn } from '@/components/ui/GlassCapsuleBtn';
 import { EmptyState } from '@/components/ui/EmptyState';
@@ -26,7 +16,7 @@ interface TripDocumentsViewProps {
 }
 
 const CATEGORY_LABELS: Record<TripDocumentCategory, string> = {
-  passport: 'Passeport & Pièce d\'identité',
+  passport: "Passeport & Pièce d'identité",
   insurance: 'Assurance rapatriement & secours',
   booking: 'Réservation (Refuge / Hôtel)',
   ticket: 'Billet de transport (Vol, train, bus)',
@@ -125,7 +115,7 @@ export function TripDocumentsView({ trip }: TripDocumentsViewProps) {
     startTransition(async () => {
       const res = await addTripDocumentAction(null, formData);
       if (!res.success) {
-        setErrorMsg(res.error || 'Erreur lors de l\'enregistrement');
+        setErrorMsg(res.error || "Erreur lors de l'enregistrement");
       } else {
         triggerHaptic('success');
         setIsAddOpen(false);
@@ -141,7 +131,7 @@ export function TripDocumentsView({ trip }: TripDocumentsViewProps) {
             variant="primary"
             size="sm"
             onClick={() => setIsAddOpen(true)}
-            icon={<Plus size={16} />}
+            icon={<Icon name="plus" size={16} />}
           >
             Attacher un document
           </GlassCapsuleBtn>
@@ -154,17 +144,22 @@ export function TripDocumentsView({ trip }: TripDocumentsViewProps) {
         </div>
       )}
       <p className="flex items-center gap-2 text-[11px] text-[var(--lkv-text-muted)] px-1">
-        <ShieldCheck size={14} className="text-lkv-secondary shrink-0" aria-hidden="true" />
+        <Icon
+          name="shield-check"
+          size={14}
+          className="text-lkv-secondary shrink-0"
+          aria-hidden="true"
+        />
         <span>Chiffrés, jamais exposés aux visiteurs anonymes.</span>
       </p>
 
       {/* Bloc « Documents nécessaires » : sous-ensemble requis, importance-first */}
       {trip.documents.length === 0 ? (
         <EmptyState
-          icon={<FileCheck size={32} className="text-lkv-secondary" />}
+          icon={<Icon name="file-check" size={32} className="text-lkv-secondary" />}
           title="Aucun document attaché"
           description="Attachez vos billets d'avion, réservations de refuges, assurances et passeports pour les garder accessibles partout."
-          actionLabel={canEdit ? "Attacher un document" : undefined}
+          actionLabel={canEdit ? 'Attacher un document' : undefined}
           onAction={canEdit ? () => setIsAddOpen(true) : undefined}
         />
       ) : (
@@ -177,7 +172,12 @@ export function TripDocumentsView({ trip }: TripDocumentsViewProps) {
             >
               <div className="flex items-center justify-between gap-2 flex-wrap">
                 <h3 className="font-display text-xs font-bold text-lkv-primary flex items-center gap-1.5">
-                  <ShieldCheck size={14} className="text-lkv-secondary shrink-0" aria-hidden="true" />
+                  <Icon
+                    name="shield-check"
+                    size={14}
+                    className="text-lkv-secondary shrink-0"
+                    aria-hidden="true"
+                  />
                   Documents nécessaires
                 </h3>
                 <span className="glass-pill text-[10px] font-semibold text-[var(--lkv-text-secondary)]">
@@ -185,7 +185,7 @@ export function TripDocumentsView({ trip }: TripDocumentsViewProps) {
                 </span>
               </div>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                {topRequired.map(doc => (
+                {topRequired.map((doc) => (
                   <DocCard
                     key={doc.id}
                     doc={doc}
@@ -208,12 +208,16 @@ export function TripDocumentsView({ trip }: TripDocumentsViewProps) {
           )}
 
           {/* Suite de la liste : requis restants + documents secondaires */}
-          <section id="tous-les-documents" aria-label="Tous les documents" className="space-y-3 scroll-mt-4">
+          <section
+            id="tous-les-documents"
+            aria-label="Tous les documents"
+            className="space-y-3 scroll-mt-4"
+          >
             <h3 className="font-display text-xs font-bold text-lkv-primary px-1">
               Tous les documents ({trip.documents.length})
             </h3>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              {remainingDocs.map(doc => (
+              {remainingDocs.map((doc) => (
                 <DocCard
                   key={doc.id}
                   doc={doc}
@@ -228,7 +232,12 @@ export function TripDocumentsView({ trip }: TripDocumentsViewProps) {
       )}
 
       {/* Modal d'ajout de document */}
-      <GlassModal open={isAddOpen} onOpenChange={setIsAddOpen} title="Attacher un document sécurisé" variant="sheet">
+      <GlassModal
+        open={isAddOpen}
+        onOpenChange={setIsAddOpen}
+        title="Attacher un document sécurisé"
+        variant="sheet"
+      >
         <div className="pb-2">
           {errorMsg && (
             <div className="p-3 rounded-xl glass tone-danger text-[var(--lkv-danger)] text-xs mb-4">
@@ -236,95 +245,90 @@ export function TripDocumentsView({ trip }: TripDocumentsViewProps) {
             </div>
           )}
 
-            <form onSubmit={handleAddSubmit} className="space-y-4">
+          <form onSubmit={handleAddSubmit} className="space-y-4">
+            <div>
+              <label className="block text-xs font-semibold text-lkv-primary mb-1">
+                Nom du document
+              </label>
+              <input
+                type="text"
+                name="title"
+                required
+                placeholder="ex: Passeport biométrique, Billet Vol AR Lima"
+                className="glass-input w-full px-3 py-2 text-sm text-[var(--lkv-text-primary)]"
+              />
+            </div>
+
+            <div className="grid grid-cols-2 gap-3">
               <div>
                 <label className="block text-xs font-semibold text-lkv-primary mb-1">
-                  Nom du document
+                  Catégorie
+                </label>
+                <select
+                  name="category"
+                  defaultValue="passport"
+                  className="glass-input w-full px-3 py-2 text-sm text-[var(--lkv-text-primary)]"
+                >
+                  <option value="passport">Passeport / ID</option>
+                  <option value="insurance">Assurance</option>
+                  <option value="booking">Réservation</option>
+                  <option value="ticket">Billet transport</option>
+                  <option value="medical">Médical / Vaccin</option>
+                  <option value="other">Autre</option>
+                </select>
+              </div>
+
+              <div>
+                <label className="block text-xs font-semibold text-lkv-primary mb-1">
+                  Date d&apos;expiration (optionnelle)
                 </label>
                 <input
-                  type="text"
-                  name="title"
-                  required
-                  placeholder="ex: Passeport biométrique, Billet Vol AR Lima"
+                  type="date"
+                  name="expiresAt"
                   className="glass-input w-full px-3 py-2 text-sm text-[var(--lkv-text-primary)]"
                 />
               </div>
+            </div>
 
-              <div className="grid grid-cols-2 gap-3">
-                <div>
-                  <label className="block text-xs font-semibold text-lkv-primary mb-1">
-                    Catégorie
-                  </label>
-                  <select
-                    name="category"
-                    defaultValue="passport"
-                    className="glass-input w-full px-3 py-2 text-sm text-[var(--lkv-text-primary)]"
-                  >
-                    <option value="passport">Passeport / ID</option>
-                    <option value="insurance">Assurance</option>
-                    <option value="booking">Réservation</option>
-                    <option value="ticket">Billet transport</option>
-                    <option value="medical">Médical / Vaccin</option>
-                    <option value="other">Autre</option>
-                  </select>
-                </div>
+            <div>
+              <label className="block text-xs font-semibold text-lkv-primary mb-1">
+                Lien sécurisé (URL Cloud / Drive)
+              </label>
+              <input
+                type="url"
+                name="fileUrl"
+                required
+                placeholder="https://..."
+                className="glass-input w-full px-3 py-2 text-sm text-[var(--lkv-text-primary)]"
+              />
+            </div>
 
-                <div>
-                  <label className="block text-xs font-semibold text-lkv-primary mb-1">
-                    Date d&apos;expiration (optionnelle)
-                  </label>
-                  <input
-                    type="date"
-                    name="expiresAt"
-                    className="glass-input w-full px-3 py-2 text-sm text-[var(--lkv-text-primary)]"
-                  />
-                </div>
-              </div>
+            <div>
+              <label className="block text-xs font-semibold text-lkv-primary mb-1">
+                Notes ou consignes particulières
+              </label>
+              <textarea
+                name="notes"
+                rows={2}
+                placeholder="ex: N° d'assuré 12345, contact d'urgence 24/7"
+                className="glass-input w-full px-3 py-2 text-sm text-[var(--lkv-text-primary)]"
+              />
+            </div>
 
-              <div>
-                <label className="block text-xs font-semibold text-lkv-primary mb-1">
-                  Lien sécurisé (URL Cloud / Drive)
-                </label>
-                <input
-                  type="url"
-                  name="fileUrl"
-                  required
-                  placeholder="https://..."
-                  className="glass-input w-full px-3 py-2 text-sm text-[var(--lkv-text-primary)]"
-                />
-              </div>
-
-              <div>
-                <label className="block text-xs font-semibold text-lkv-primary mb-1">
-                  Notes ou consignes particulières
-                </label>
-                <textarea
-                  name="notes"
-                  rows={2}
-                  placeholder="ex: N° d'assuré 12345, contact d'urgence 24/7"
-                  className="glass-input w-full px-3 py-2 text-sm text-[var(--lkv-text-primary)]"
-                />
-              </div>
-
-              <div className="flex items-center justify-end gap-3 pt-2">
-                <GlassCapsuleBtn
-                  type="button"
-                  variant="default"
-                  size="sm"
-                  onClick={() => setIsAddOpen(false)}
-                >
-                  Annuler
-                </GlassCapsuleBtn>
-                <GlassCapsuleBtn
-                  type="submit"
-                  variant="primary"
-                  size="sm"
-                  disabled={isPending}
-                >
-                  {isPending ? 'Enregistrement...' : 'Attacher le document'}
-                </GlassCapsuleBtn>
-              </div>
-            </form>
+            <div className="flex items-center justify-end gap-3 pt-2">
+              <GlassCapsuleBtn
+                type="button"
+                variant="default"
+                size="sm"
+                onClick={() => setIsAddOpen(false)}
+              >
+                Annuler
+              </GlassCapsuleBtn>
+              <GlassCapsuleBtn type="submit" variant="primary" size="sm" disabled={isPending}>
+                {isPending ? 'Enregistrement...' : 'Attacher le document'}
+              </GlassCapsuleBtn>
+            </div>
+          </form>
         </div>
       </GlassModal>
 
@@ -332,7 +336,11 @@ export function TripDocumentsView({ trip }: TripDocumentsViewProps) {
       <ConfirmDialog
         open={confirmState !== null}
         title="Supprimer ce document ?"
-        message={confirmState ? `Le document « ${confirmState.title} » sera définitivement supprimé.` : undefined}
+        message={
+          confirmState
+            ? `Le document « ${confirmState.title} » sera définitivement supprimé.`
+            : undefined
+        }
         confirmLabel="Supprimer"
         cancelLabel="Annuler"
         danger
@@ -360,7 +368,7 @@ function DocCard({ doc, required = false, canEdit, isPending, onDelete }: DocCar
         <div className="flex items-start justify-between gap-2">
           <div className="flex items-center gap-2.5">
             <div className="w-9 h-9 rounded-xl bg-lkv-primary/10 text-lkv-primary flex items-center justify-center shrink-0">
-              <FileText size={18} />
+              <Icon name="file-text" size={18} />
             </div>
             <div>
               <div className="text-sm font-bold text-lkv-primary leading-snug">{doc.title}</div>
@@ -377,13 +385,13 @@ function DocCard({ doc, required = false, canEdit, isPending, onDelete }: DocCar
                 expiryCheck.status === 'expired'
                   ? 'bg-[var(--lkv-danger)]/10 text-[var(--lkv-danger)] border-[var(--lkv-danger)]/20'
                   : expiryCheck.status === 'warning'
-                  ? 'bg-[var(--lkv-warning)]/10 text-[var(--lkv-warning)] border-[var(--lkv-warning)]/20'
-                  : 'bg-[var(--lkv-success)]/10 text-[var(--lkv-success)] border-[var(--lkv-success)]/20'
+                    ? 'bg-[var(--lkv-warning)]/10 text-[var(--lkv-warning)] border-[var(--lkv-warning)]/20'
+                    : 'bg-[var(--lkv-success)]/10 text-[var(--lkv-success)] border-[var(--lkv-success)]/20'
               }`}
             >
-              {expiryCheck.status === 'expired' && <AlertTriangle size={10} />}
-              {expiryCheck.status === 'warning' && <Clock size={10} />}
-              {expiryCheck.status === 'valid' && <CheckCircle2 size={10} />}
+              {expiryCheck.status === 'expired' && <Icon name="alert-triangle" size={10} />}
+              {expiryCheck.status === 'warning' && <Icon name="clock" size={10} />}
+              {expiryCheck.status === 'valid' && <Icon name="check-circle2" size={10} />}
               <span>{expiryCheck.label}</span>
             </span>
           )}
@@ -391,7 +399,7 @@ function DocCard({ doc, required = false, canEdit, isPending, onDelete }: DocCar
 
         {required && (
           <span className="glass-pill text-[10px] font-bold text-lkv-primary inline-flex items-center gap-1">
-            <ShieldCheck size={11} aria-hidden="true" />
+            <Icon name="shield-check" size={11} aria-hidden="true" />
             requis
           </span>
         )}
@@ -412,7 +420,7 @@ function DocCard({ doc, required = false, canEdit, isPending, onDelete }: DocCar
           className="inline-flex items-center gap-1.5 font-semibold text-lkv-primary hover:text-lkv-secondary transition-colors py-1"
         >
           <span>Ouvrir le document</span>
-          <ExternalLink size={13} />
+          <Icon name="external-link" size={13} />
         </a>
 
         {canEdit && (
@@ -422,7 +430,7 @@ function DocCard({ doc, required = false, canEdit, isPending, onDelete }: DocCar
             className="min-h-[44px] min-w-[44px] rounded-full flex items-center justify-center glass-sub-card border border-white/60 text-[var(--lkv-text-muted)] hover:text-[var(--lkv-danger)] hover:bg-[var(--lkv-danger)]/10 transition-all shadow-2xs"
             title="Supprimer ce document"
           >
-            <Trash2 size={15} />
+            <Icon name="trash2" size={15} />
           </button>
         )}
       </div>

@@ -2,6 +2,7 @@ import type { AIRequest, AIResponse } from '../providers/types';
 import * as kitConfigurator from './kitConfigurator';
 import * as trailNarrative from './trailNarrative';
 import * as countryGuides from './countryGuides';
+import * as paysRecommendations from './paysRecommendations';
 
 /**
  * Registre des features IA — ajouter une feature IA = ajouter UN fichier
@@ -50,6 +51,13 @@ export const FEATURES: Record<string, FeatureSpec> = {
     cacheTtlSeconds: countryGuides.COUNTRY_GUIDES_SPEC.cacheTtlSeconds,
     maxPerUserPerDay: countryGuides.COUNTRY_GUIDES_SPEC.maxPerUserPerDay,
     fallbackResponse: countryGuides.fallbackResponse,
+  },
+  'pays-recommendations': {
+    tier: paysRecommendations.PAYS_RECOMMENDATIONS_SPEC.tier,
+    maxReasoningBudget: paysRecommendations.PAYS_RECOMMENDATIONS_SPEC.maxReasoningBudget,
+    cacheTtlSeconds: paysRecommendations.PAYS_RECOMMENDATIONS_SPEC.cacheTtlSeconds,
+    maxPerUserPerDay: paysRecommendations.PAYS_RECOMMENDATIONS_SPEC.maxPerUserPerDay,
+    fallbackResponse: paysRecommendations.fallbackResponse,
   },
   'country-practical-guide': {
     tier: 'fast',

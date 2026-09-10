@@ -1,7 +1,7 @@
-"use client";
+'use client';
 
+import Icon from '@/components/ui/Icon';
 import React, { useState, useEffect, useRef } from 'react';
-import { Mic, Square, Trash2, Send, AlertCircle } from 'lucide-react';
 import { useHapticFeedback } from '@/hooks/useHapticFeedback';
 
 interface VoiceRecorderBarProps {
@@ -29,12 +29,12 @@ export const VoiceRecorderBar: React.FC<VoiceRecorderBarProps> = ({
       try {
         setPermissionError(null);
         stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-        
+
         const mimeType = MediaRecorder.isTypeSupported('audio/webm')
           ? 'audio/webm'
           : MediaRecorder.isTypeSupported('audio/ogg')
-          ? 'audio/ogg'
-          : 'audio/mp4';
+            ? 'audio/ogg'
+            : 'audio/mp4';
 
         const recorder = new MediaRecorder(stream, { mimeType });
         mediaRecorderRef.current = recorder;
@@ -100,7 +100,7 @@ export const VoiceRecorderBar: React.FC<VoiceRecorderBarProps> = ({
     return (
       <div className="p-3 bg-[#F5DDD9]/90 border-t border-[#A8443A]/20 flex items-center justify-between gap-3 text-xs text-[#8A241B] font-medium">
         <div className="flex items-center gap-2">
-          <AlertCircle className="w-4 h-4 shrink-0 text-[#A8443A]" />
+          <Icon name="alert-circle" className="w-4 h-4 shrink-0 text-[#A8443A]" />
           <span>{permissionError}</span>
         </div>
         <button
@@ -118,8 +118,7 @@ export const VoiceRecorderBar: React.FC<VoiceRecorderBarProps> = ({
     <div
       className="p-3 glass border-t border-white/40 flex items-center justify-between gap-3 msg-sheet-in"
       style={{
-        paddingBottom:
-          'max(calc(env(safe-area-inset-bottom, 0px) - var(--kb-inset, 0px)), 12px)',
+        paddingBottom: 'max(calc(env(safe-area-inset-bottom, 0px) - var(--kb-inset, 0px)), 12px)',
       }}
     >
       <div className="flex items-center gap-3">
@@ -127,7 +126,7 @@ export const VoiceRecorderBar: React.FC<VoiceRecorderBarProps> = ({
           <span className="w-3 h-3 bg-[#A8443A] rounded-full animate-ping absolute" />
           <span className="w-3 h-3 bg-[#A8443A] rounded-full relative" />
         </div>
-        <Mic className="w-4 h-4 text-[#A8443A]" />
+        <Icon name="mic" className="w-4 h-4 text-[#A8443A]" />
         <span className="font-mono font-bold text-sm text-[#17402C] tracking-wider">
           {formatTimer(seconds)}
         </span>
@@ -147,7 +146,7 @@ export const VoiceRecorderBar: React.FC<VoiceRecorderBarProps> = ({
           className="glass-circle-btn w-10 h-10 text-[#A8443A] active:scale-95"
           title="Annuler"
         >
-          <Trash2 className="w-4 h-4" />
+          <Icon name="trash2" className="w-4 h-4" />
         </button>
 
         <button
@@ -158,7 +157,7 @@ export const VoiceRecorderBar: React.FC<VoiceRecorderBarProps> = ({
             seconds >= 1 ? 'primary shadow-md active:scale-95' : 'opacity-40 cursor-not-allowed'
           }`}
         >
-          <Send className="w-3.5 h-3.5" />
+          <Icon name="send" className="w-3.5 h-3.5" />
           Envoyer
         </button>
       </div>

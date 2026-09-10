@@ -1,7 +1,7 @@
 'use client';
+import Icon from '@/components/ui/Icon';
 import { GlassCard } from '@/components/ui/GlassCard';
 import { Eyebrow } from '@/components/ui/Eyebrow';
-import { Package, Scale } from 'lucide-react';
 
 export interface KitsKpi {
   active: number;
@@ -15,7 +15,7 @@ export function KitsKpiBar({ kpi }: { kpi: KitsKpi }) {
       <GlassCard tone="sage" className="p-3.5 sm:p-4 flex items-center justify-between gap-4">
         <div className="flex items-center gap-3">
           <div className="w-10 h-10 rounded-2xl bg-[var(--lkv-primary)]/10 border border-[var(--lkv-primary)]/20 flex items-center justify-center text-[var(--lkv-primary)]">
-            <Package size={20} />
+            <Icon name="package" size={20} />
           </div>
           <div>
             <Eyebrow>Matériel préparé</Eyebrow>
@@ -29,13 +29,15 @@ export function KitsKpiBar({ kpi }: { kpi: KitsKpi }) {
 
         <div className="flex items-center gap-2 pl-4 border-l border-white/20 text-right">
           <div>
-            <span className="text-[10px] uppercase font-bold text-[var(--lkv-text-muted)] block">Poids cumulé</span>
+            <span className="text-[10px] uppercase font-bold text-[var(--lkv-text-muted)] block">
+              Poids cumulé
+            </span>
             <span className="font-mono font-bold text-base sm:text-lg text-[var(--lkv-primary)]">
               {(kpi.totalWeightG / 1000).toFixed(1)} kg
             </span>
           </div>
           <div className="w-8 h-8 rounded-xl bg-white/10 flex items-center justify-center text-[var(--lkv-text-muted)] shrink-0">
-            <Scale size={16} />
+            <Icon name="scale" size={16} />
           </div>
         </div>
       </GlassCard>

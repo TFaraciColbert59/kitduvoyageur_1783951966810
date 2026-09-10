@@ -1,11 +1,11 @@
 ﻿'use client';
 
+import Icon from '@/components/ui/Icon';
 import React, { useState } from 'react';
 import { GlassCard } from '@/components/ui/GlassCard';
 import { useHapticFeedback } from '@/hooks/useHapticFeedback';
 import { createClient } from '@/lib/supabase/client';
 import type { DatabaseTripChecklistItem } from '@/lib/supabase/types';
-import { CheckCircle2, Circle, Calendar, ShieldCheck } from 'lucide-react';
 
 let checklistClient: ReturnType<typeof createClient> | null = null;
 function supabaseChecklistClient() {
@@ -39,8 +39,32 @@ export interface CountryFormalities {
 }
 
 const EU_EEA_COUNTRIES = new Set([
-  'FR', 'DE', 'IT', 'ES', 'PT', 'BE', 'NL', 'LU', 'CH', 'AT', 'SE', 'NO', 'FI',
-  'DK', 'IE', 'GR', 'PL', 'CZ', 'SK', 'HU', 'SI', 'HR', 'EE', 'LV', 'LT', 'IS',
+  'FR',
+  'DE',
+  'IT',
+  'ES',
+  'PT',
+  'BE',
+  'NL',
+  'LU',
+  'CH',
+  'AT',
+  'SE',
+  'NO',
+  'FI',
+  'DK',
+  'IE',
+  'GR',
+  'PL',
+  'CZ',
+  'SK',
+  'HU',
+  'SI',
+  'HR',
+  'EE',
+  'LV',
+  'LT',
+  'IS',
 ]);
 
 const DEFAULT_VACCINE_NOTICE =
@@ -89,7 +113,8 @@ export function getCountrySpecificFormalities(countryCode?: string | null): Coun
       vaccineRecommendations: [],
       vaccineNotice: DEFAULT_VACCINE_NOTICE,
       visaRequired: false,
-      notes: 'Passeport valide obligatoire pour le Maroc. Pas de visa pour les séjours de moins de 90 jours.',
+      notes:
+        'Passeport valide obligatoire pour le Maroc. Pas de visa pour les séjours de moins de 90 jours.',
     };
   }
 
@@ -280,11 +305,7 @@ export function TripChecklistView({ tripId, daysUntilStart, items }: TripCheckli
 
   const progress = totalCount > 0 ? Math.min(100, Math.round((doneCount / totalCount) * 100)) : 0;
 
-  const renderSection = (
-    title: string,
-    badgeText: string,
-    items: DatabaseTripChecklistItem[]
-  ) => {
+  const renderSection = (title: string, badgeText: string, items: DatabaseTripChecklistItem[]) => {
     return (
       <div className="space-y-3">
         <div className="flex items-center gap-2 px-1">
@@ -297,7 +318,7 @@ export function TripChecklistView({ tripId, daysUntilStart, items }: TripCheckli
         </div>
 
         <div className="space-y-2">
-          {items.map(item => {
+          {items.map((item) => {
             const isChecked = item.done;
             return (
               <button
@@ -312,9 +333,9 @@ export function TripChecklistView({ tripId, daysUntilStart, items }: TripCheckli
               >
                 <div className="mt-0.5 shrink-0">
                   {isChecked ? (
-                    <CheckCircle2 size={20} className="text-lkv-primary" />
+                    <Icon name="check-circle2" size={20} className="text-lkv-primary" />
                   ) : (
-                    <Circle size={20} className="text-lkv-secondary/50" />
+                    <Icon name="circle" size={20} className="text-lkv-secondary/50" />
                   )}
                 </div>
                 <div className="flex-1 min-w-0">
@@ -343,7 +364,7 @@ export function TripChecklistView({ tripId, daysUntilStart, items }: TripCheckli
       {/* Barre de progression */}
       <GlassCard tone="sage" className="p-5 rounded-[var(--lkv-radius-xl)] border border-white/70">
         <div className="flex items-center justify-between gap-4 mb-2">
-          <ShieldCheck className="w-5 h-5 text-lkv-primary" aria-hidden="true" />
+          <Icon name="shield-check" className="w-5 h-5 text-lkv-primary" aria-hidden="true" />
           <div className="text-xs font-semibold text-lkv-primary">
             {doneCount} / {totalCount} ({progress}%)
           </div>
@@ -359,7 +380,7 @@ export function TripChecklistView({ tripId, daysUntilStart, items }: TripCheckli
 
         {daysUntilStart !== null && daysUntilStart !== undefined && (
           <div className="flex items-center gap-1.5 text-xs text-lkv-secondary mt-3">
-            <Calendar size={13} />
+            <Icon name="calendar" size={13} />
             <span>
               {daysUntilStart > 0
                 ? `Départ prévu dans ${daysUntilStart} jour${daysUntilStart > 1 ? 's' : ''}`

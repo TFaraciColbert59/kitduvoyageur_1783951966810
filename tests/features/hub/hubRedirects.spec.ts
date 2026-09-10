@@ -25,7 +25,7 @@ describe('H-AUTO-42 — resolveLegacyRedirect : table statique', () => {
     expect(resolveLegacyRedirect('/voyages')?.destination).toBe('/hub');
     expect(resolveLegacyRedirect('/voyages/nouveau')?.destination).toBe('/hub/nouveau');
     expect(resolveLegacyRedirect('/groupes')?.destination).toBe('/hub/groupe');
-    expect(resolveLegacyRedirect('/equipages')?.destination).toBe('/hub/equipage');
+    expect(resolveLegacyRedirect('/equipages')?.destination).toBe('/hub/groupe');
   });
 
   it('RED-2c: racines absorbées (H5) et mode live (D2)', () => {
@@ -65,8 +65,8 @@ describe('Étape 2 — cas dynamiques groupes/équipages', () => {
     expect(resolveLegacyRedirect('/groupes/abc/extra')).toEqual({ destination: '/hub/groupe' });
   });
 
-  it('DYN-2: /equipages/[slug] → /hub/equipage', () => {
-    expect(resolveLegacyRedirect('/equipages/mon-equipage')).toEqual({ destination: '/hub/equipage' });
+  it('DYN-2: /equipages/[slug] → /hub/groupe (équipage fusionné)', () => {
+    expect(resolveLegacyRedirect('/equipages/mon-equipage')).toEqual({ destination: '/hub/groupe' });
   });
 
   it('DYN-3: /voyages/[slug] reste un shim serveur (bascule aventure active)', () => {

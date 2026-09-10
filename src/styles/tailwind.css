@@ -633,4 +633,17 @@ html, body {
 .top-safe { top: max(12px, env(safe-area-inset-top, 0px)); }
 .bottom-safe { bottom: max(12px, env(safe-area-inset-bottom, 0px)); }
 
+/* 6. Hub mobile — rail horizontal à snap natif (carrousel sections / chips) */
+.hub-hscroll {
+  scroll-snap-type: x proximity;
+  scroll-padding-left: 1rem;
+  scroll-padding-right: 1rem;
+  -webkit-overflow-scrolling: touch;
+  overscroll-behavior-x: contain;
+}
+
+.hub-hscroll::-webkit-scrollbar {
+  display: none !important;
+}
+
 

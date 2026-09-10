@@ -1,0 +1,17 @@
+﻿[
+  {
+    "width": 390,
+    "surface": "gear",
+    "blocking": []
+  },
+  {
+    "width": 390,
+    "surface": "gear-missing-drawer",
+    "blocking": []
+  },
+  {
+    "width": 1440,
+    "surface": "gear",
+    "blocking": []
+  }
+]

@@ -130,9 +130,11 @@ export const tripSectionRegistry: readonly TripSectionDef[] = [
   },
 ] as const;
 
-/** Constructeur d'URL typé — délègue au registre du hub (URLs canoniques /hub). */
+/** Constructeur d'URL typé — délègue au registre du hub (URLs canoniques /hub).
+ *  « team » (registre voyage) est fusionné dans la section hub « groupe ». */
 export function tripSectionHref(slug: string, sectionId: TripSectionId): string {
-  return hubSectionHref({ nature: 'sortie', slug }, sectionId as HubSectionId);
+  const hubId = (sectionId === 'team' ? 'groupe' : sectionId) as HubSectionId;
+  return hubSectionHref({ nature: 'sortie', slug }, hubId);
 }
 
 /**

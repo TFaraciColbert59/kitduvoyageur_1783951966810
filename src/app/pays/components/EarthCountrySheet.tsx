@@ -1,9 +1,9 @@
 'use client';
 
+import Icon from '@/components/ui/Icon';
 import React, { useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useRouter } from 'next/navigation';
-import { MapPin, Calendar, Coins, Tag, Sparkles } from 'lucide-react';
 import { XIcon as XAnimated } from '@/components/icons/x';
 import { ChevronRightIcon as ChevronRightAnimated } from '@/components/icons/chevron-right';
 import type { Country } from '@/lib/countries';
@@ -18,7 +18,10 @@ interface EarthCountrySheetProps {
 }
 
 function flagEmoji(code: string): string {
-  const cps = code.toUpperCase().split('').map((c) => 127397 + c.charCodeAt(0));
+  const cps = code
+    .toUpperCase()
+    .split('')
+    .map((c) => 127397 + c.charCodeAt(0));
   return String.fromCodePoint(...cps);
 }
 
@@ -80,13 +83,15 @@ export default function EarthCountrySheet({ country, onClose }: EarthCountryShee
             <div className="px-4 pb-4 overflow-y-auto flex flex-col gap-3">
               {/* Header */}
               <div className="flex items-center gap-3">
-                <span className="text-4xl leading-none flex-shrink-0 drop-shadow-xs">{flagEmoji(country.code)}</span>
+                <span className="text-4xl leading-none flex-shrink-0 drop-shadow-xs">
+                  {flagEmoji(country.code)}
+                </span>
                 <div className="flex-1 min-w-0">
                   <h2 className="font-display font-bold text-[#17402C] text-lg leading-tight truncate">
                     {country.nom}
                   </h2>
                   <p className="text-[11.5px] text-[#5A7064] flex items-center gap-1 truncate font-medium">
-                    <MapPin size={11} className="text-[#5B7F55]" />
+                    <Icon name="map-pin" size={11} className="text-[#5B7F55]" />
                     {country.capital} · {country.continent}
                   </p>
                 </div>
@@ -115,18 +120,26 @@ export default function EarthCountrySheet({ country, onClose }: EarthCountryShee
               {/* Meta rows */}
               <div className="grid grid-cols-2 gap-2">
                 <div className="p-2.5 rounded-2xl bg-white/80 border border-white/90 shadow-2xs flex items-center gap-2.5">
-                  <Calendar size={14} className="text-[#17402C] flex-shrink-0" />
+                  <Icon name="calendar" size={14} className="text-[#17402C] flex-shrink-0" />
                   <div className="min-w-0">
-                    <p className="text-[9.5px] uppercase tracking-wider text-[#5A7064] font-bold">Saison idéale</p>
-                    <p className="text-[11.5px] font-mono font-bold text-[#17402C] truncate">{country.meilleure_saison}</p>
+                    <p className="text-[9.5px] uppercase tracking-wider text-[#5A7064] font-bold">
+                      Saison idéale
+                    </p>
+                    <p className="text-[11.5px] font-mono font-bold text-[#17402C] truncate">
+                      {country.meilleure_saison}
+                    </p>
                   </div>
                 </div>
 
                 <div className="p-2.5 rounded-2xl bg-white/80 border border-white/90 shadow-2xs flex items-center gap-2.5">
-                  <Coins size={14} className="text-[#17402C] flex-shrink-0" />
+                  <Icon name="coins" size={14} className="text-[#17402C] flex-shrink-0" />
                   <div className="min-w-0">
-                    <p className="text-[9.5px] uppercase tracking-wider text-[#5A7064] font-bold">Monnaie</p>
-                    <p className="text-[11.5px] font-mono font-bold text-[#17402C] truncate">{country.monnaie}</p>
+                    <p className="text-[9.5px] uppercase tracking-wider text-[#5A7064] font-bold">
+                      Monnaie
+                    </p>
+                    <p className="text-[11.5px] font-mono font-bold text-[#17402C] truncate">
+                      {country.monnaie}
+                    </p>
                   </div>
                 </div>
               </div>
@@ -157,7 +170,7 @@ export default function EarthCountrySheet({ country, onClose }: EarthCountryShee
                   variant="secondary"
                   size="md"
                   onClick={handleOpenKitConfigurator}
-                  icon={<Sparkles size={14} className="text-[#5B7F55]" />}
+                  icon={<Icon name="sparkles" size={14} className="text-[#5B7F55]" />}
                   title="Générer un kit pour ce pays"
                 >
                   Kit IA

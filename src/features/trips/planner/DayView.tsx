@@ -1,17 +1,7 @@
 'use client';
 
+import Icon from '@/components/ui/Icon';
 import React, { useState } from 'react';
-import {
-  Plus,
-  Clock,
-  TrendingUp,
-  MapPin,
-  MoreVertical,
-  Copy,
-  CalendarPlus,
-  Trash2,
-  Footprints,
-} from 'lucide-react';
 import { StepCard } from './StepCard';
 import { recalculateDayMetrics, type PlannerStep } from './plannerEngine';
 import { GlassCapsuleBtn, GlassSubCard } from '@/components/ui';
@@ -52,7 +42,11 @@ export function DayView({
   const metrics = recalculateDayMetrics(steps);
 
   function formatFullDate(dayIndex: number): string | null {
-    return formatCivilDayIndex(startDate, dayIndex, { weekday: 'long', month: 'long', includeYear: true });
+    return formatCivilDayIndex(startDate, dayIndex, {
+      weekday: 'long',
+      month: 'long',
+      includeYear: true,
+    });
   }
 
   function formatDuration(minutes: number): string {
@@ -91,7 +85,7 @@ export function DayView({
               <GlassCapsuleBtn
                 size="sm"
                 onClick={() => onAddStep(dayNumber)}
-                icon={<Plus className="w-3.5 h-3.5" />}
+                icon={<Icon name="plus" className="w-3.5 h-3.5" />}
                 className="hidden sm:inline-flex"
               >
                 <span>Ajouter étape</span>
@@ -103,16 +97,13 @@ export function DayView({
                 aria-label="Options de la journée"
                 className="w-8 h-8 rounded-full glass-sub-card border border-white/60 flex items-center justify-center text-[var(--lkv-text-secondary)] hover:text-[var(--lkv-text-primary)] hover:bg-white transition-all cursor-pointer shadow-2xs"
               >
-                <MoreVertical className="w-4 h-4" />
+                <Icon name="more-vertical" className="w-4 h-4" />
               </button>
 
               {/* Menu contextuel de la journée */}
               {showMenu && (
                 <>
-                  <div
-                    className="fixed inset-0 z-30"
-                    onClick={() => setShowMenu(false)}
-                  />
+                  <div className="fixed inset-0 z-30" onClick={() => setShowMenu(false)} />
                   <div className="absolute right-0 top-11 z-40 w-56 glass rounded-[var(--lkv-radius-md)] border border-white/80 shadow-xl py-1.5 text-xs text-[var(--lkv-text-primary)] animate-in fade-in zoom-in-95">
                     <button
                       type="button"
@@ -122,7 +113,7 @@ export function DayView({
                       }}
                       className="w-full flex items-center gap-2.5 px-3.5 py-2 hover:bg-white/60 text-left cursor-pointer"
                     >
-                      <Plus className="w-4 h-4 text-[var(--lkv-primary)]" />
+                      <Icon name="plus" className="w-4 h-4 text-[var(--lkv-primary)]" />
                       <span>Ajouter une étape</span>
                     </button>
                     <button
@@ -133,7 +124,7 @@ export function DayView({
                       }}
                       className="w-full flex items-center gap-2.5 px-3.5 py-2 hover:bg-white/60 text-left cursor-pointer"
                     >
-                      <CalendarPlus className="w-4 h-4 text-[var(--lkv-primary)]" />
+                      <Icon name="calendar-plus" className="w-4 h-4 text-[var(--lkv-primary)]" />
                       <span>Insérer un jour après</span>
                     </button>
                     <button
@@ -144,7 +135,7 @@ export function DayView({
                       }}
                       className="w-full flex items-center gap-2.5 px-3.5 py-2 hover:bg-white/60 text-left cursor-pointer"
                     >
-                      <Copy className="w-4 h-4 text-[var(--lkv-primary)]" />
+                      <Icon name="copy" className="w-4 h-4 text-[var(--lkv-primary)]" />
                       <span>Dupliquer la journée</span>
                     </button>
                     <div className="my-1 border-t border-white/40" />
@@ -156,7 +147,7 @@ export function DayView({
                       }}
                       className="w-full flex items-center gap-2.5 px-3.5 py-2 hover:bg-[var(--lkv-danger)]/10 text-left text-[var(--lkv-danger)] font-medium cursor-pointer"
                     >
-                      <Trash2 className="w-4 h-4 text-[var(--lkv-danger)]" />
+                      <Icon name="trash2" className="w-4 h-4 text-[var(--lkv-danger)]" />
                       <span>Supprimer la journée</span>
                     </button>
                   </div>
@@ -170,7 +161,7 @@ export function DayView({
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5 sm:gap-3 mt-4 pt-3 border-t border-white/40">
           <div className="glass-sub-card rounded-[var(--lkv-radius-md)] p-2.5 flex items-center gap-2.5 border border-white/50 shadow-2xs">
             <div className="w-8 h-8 rounded-full bg-[var(--lkv-primary)]/10 text-[var(--lkv-primary)] flex items-center justify-center shrink-0">
-              <MapPin className="w-4 h-4" />
+              <Icon name="map-pin" className="w-4 h-4" />
             </div>
             <div>
               <span className="text-[9.5px] font-mono uppercase tracking-wider text-[var(--lkv-text-secondary)] block">
@@ -184,7 +175,7 @@ export function DayView({
 
           <div className="glass-sub-card rounded-[var(--lkv-radius-md)] p-2.5 flex items-center gap-2.5 border border-white/50 shadow-2xs">
             <div className="w-8 h-8 rounded-full bg-[var(--lkv-primary)]/10 text-[var(--lkv-primary)] flex items-center justify-center shrink-0">
-              <TrendingUp className="w-4 h-4" />
+              <Icon name="trending-up" className="w-4 h-4" />
             </div>
             <div>
               <span className="text-[9.5px] font-mono uppercase tracking-wider text-[var(--lkv-text-secondary)] block">
@@ -198,7 +189,7 @@ export function DayView({
 
           <div className="glass-sub-card rounded-[var(--lkv-radius-md)] p-2.5 flex items-center gap-2.5 border border-white/50 shadow-2xs">
             <div className="w-8 h-8 rounded-full bg-[var(--lkv-primary)]/10 text-[var(--lkv-primary)] flex items-center justify-center shrink-0">
-              <Clock className="w-4 h-4" />
+              <Icon name="clock" className="w-4 h-4" />
             </div>
             <div>
               <span className="text-[9.5px] font-mono uppercase tracking-wider text-[var(--lkv-text-secondary)] block">
@@ -212,7 +203,7 @@ export function DayView({
 
           <div className="glass-sub-card rounded-[var(--lkv-radius-md)] p-2.5 flex items-center gap-2.5 border border-white/50 shadow-2xs">
             <div className="w-8 h-8 rounded-full bg-[var(--lkv-primary)]/10 text-[var(--lkv-primary)] flex items-center justify-center shrink-0">
-              <Footprints className="w-4 h-4" />
+              <Icon name="footprints" className="w-4 h-4" />
             </div>
             <div>
               <span className="text-[9.5px] font-mono uppercase tracking-wider text-[var(--lkv-text-secondary)] block">
@@ -230,7 +221,7 @@ export function DayView({
       {steps.length === 0 ? (
         <div className="text-center py-12 px-4 rounded-[var(--lkv-radius-card)] glass border border-dashed border-white/60 shadow-sm">
           <div className="w-12 h-12 rounded-full glass-sub-card text-[var(--lkv-primary)] flex items-center justify-center mx-auto mb-3 shadow-2xs">
-            <Footprints className="w-6 h-6" />
+            <Icon name="footprints" className="w-6 h-6" />
           </div>
           <h3 className="font-bold text-[var(--lkv-text-primary)] text-base font-display">
             Aucune étape pour cette journée
@@ -243,7 +234,7 @@ export function DayView({
               variant="primary"
               size="sm"
               onClick={() => onAddStep(dayNumber)}
-              icon={<Plus className="w-3.5 h-3.5" />}
+              icon={<Icon name="plus" className="w-3.5 h-3.5" />}
             >
               <span>Ajouter la première étape</span>
             </GlassCapsuleBtn>
@@ -271,7 +262,7 @@ export function DayView({
             <GlassCapsuleBtn
               size="sm"
               onClick={() => onAddStep(dayNumber)}
-              icon={<Plus className="w-3.5 h-3.5" />}
+              icon={<Icon name="plus" className="w-3.5 h-3.5" />}
               className="sm:hidden w-full !py-2.5"
             >
               <span>Ajouter une étape au Jour {dayNumber}</span>

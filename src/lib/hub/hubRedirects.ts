@@ -36,7 +36,7 @@ export const LEGACY_REDIRECTS: Record<string, string> = {
   '/voyages': '/hub',
   '/voyages/nouveau': '/hub/nouveau',
   '/groupes': '/hub/groupe',
-  '/equipages': '/hub/equipage',
+  '/equipages': '/hub/groupe',
   // ── Racines absorbées (H5) ──
   '/preparation': '/hub/preparation',
   '/alertes': '/hub/alertes',
@@ -59,7 +59,7 @@ export const LEGACY_REDIRECTS: Record<string, string> = {
  * Cas dynamiques :
  * - /materiel/depart/[id] → /hub/depart?id=[id] (l'id 'none' = cockpit vitrine,
  *   il est préservé tel quel pour une sémantique identique) ;
- * - /groupes/[id] et /equipages/[slug] → sections hub correspondantes ;
+ * - /groupes/[id] et /equipages/[slug] → /hub/groupe ;
  * - /voyages/[slug] et /voyages/[slug]/[section] restent des SHIMS serveur
  *   (changement d'aventure active puis redirection) — non gérés ici.
  */
@@ -76,7 +76,7 @@ export function resolveLegacyRedirect(pathname: string): LegacyRedirect | null {
   }
 
   if (pathname.startsWith('/groupes/')) return { destination: '/hub/groupe' };
-  if (pathname.startsWith('/equipages/')) return { destination: '/hub/equipage' };
+  if (pathname.startsWith('/equipages/')) return { destination: '/hub/groupe' };
 
   return null;
 }

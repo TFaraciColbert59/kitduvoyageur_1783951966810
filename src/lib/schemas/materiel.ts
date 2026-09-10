@@ -46,6 +46,7 @@ export const productOwnershipSchema = z.object({
   maintenance_due_at: dateString,
   expiry_date: dateString,
   tags: z.array(z.string().max(40)).max(20).nullable().optional(),
+  quantity: z.number().int().min(1).max(999).default(1),
 });
 
 export type ProductOwnershipInput = z.infer<typeof productOwnershipSchema>;

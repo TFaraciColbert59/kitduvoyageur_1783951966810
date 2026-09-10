@@ -1,8 +1,8 @@
 'use client';
 
+import Icon from '@/components/ui/Icon';
 import { motion, useDragControls } from 'framer-motion';
 import type { Variants } from 'framer-motion';
-import { GripVertical } from 'lucide-react';
 import { useRef, useState } from 'react';
 import { useMaterielOrder } from '@/features/materiel/store/useMaterielOrder';
 import type { MaterielSummary } from '@/features/materiel/services/getMaterielSummary';
@@ -172,7 +172,7 @@ function DraggableCard({
         className="hidden md:flex !absolute top-2 right-2 z-20 h-8 w-8 !rounded-full glass interactive items-center justify-center text-[var(--lkv-primary)] cursor-grab touch-none border border-white/40 focus-visible:ring-2 focus-visible:ring-[var(--lkv-primary)]"
         aria-label={`Déplacer la carte ${LABEL[id] ?? id}`}
       >
-        <GripVertical size={16} aria-hidden="true" />
+        <Icon name="grip-vertical" size={16} aria-hidden="true" />
       </button>
       <div className="h-full min-h-0 overflow-hidden [&>article]:h-full [&>article]:min-h-0 [&>article]:flex [&>article]:flex-col">
         {children}

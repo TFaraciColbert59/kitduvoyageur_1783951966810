@@ -1,13 +1,6 @@
 import Link from 'next/link';
-import {
-  Calendar,
-  CheckSquare,
-  CreditCard,
-  Navigation,
-} from 'lucide-react';
 import { hubSectionHref, HUB_HOME_HREF, type HubAdventureRef } from '../../registry/hubSectionRegistry';
 import { MenuCard } from './MenuCard';
-import { QuickActions, type QuickAction } from './QuickActions';
 import { NumberStat } from '@/components/ui-layouts/number-stat';
 import { ChecklistCardBody } from './ChecklistCardBody';
 import { ActivityIdentityBar } from './ActivityIdentityBar';
@@ -19,6 +12,12 @@ import { WeatherStrip } from '../weather/WeatherStrip';
 import { getWeatherIcon } from '../weather/getWeatherIcon';
 import { weatherLabel } from '@/features/materiel/services/getWeather';
 import HubMiniMap from '@/components/hub/HubMiniMap';
+import { MobileAdventureHub } from '../mobile/MobileAdventureHub';
+import { SortieMoment } from '../mobile/moments/SortieMoment';
+import {
+  buildSortieInfoChips,
+  buildSortieSectionTiles,
+} from '../../mobile/mobileHubEngine';
 import { getTripDuration } from '@/features/trips/hooks/useTripDuration';
 import { getKitCounters } from '@/features/trips/hooks/useKitCounters';
 import { getTripDistance } from '@/features/trips/hooks/useTripDistance';
@@ -66,17 +65,17 @@ function shortDate(iso: string | null | undefined): string {
 /** Ordre + spans des cartes par phase (contextualisation V3 plein écran). */
 const ORDER: Record<TripPhase, Array<[string, 3 | 4 | 6 | 8]>> = {
   prepare: [
-    ['itinerary', 8], ['gear', 4], ['budget', 4], ['team', 4], ['checklist', 4],
+    ['itinerary', 8], ['gear', 4], ['budget', 4], ['groupe', 4], ['checklist', 4],
     ['docs', 3], ['safety', 3], ['journal', 3], ['context', 3],
   ],
   live: [
     ['cockpit', 8], ['safety', 4], ['itinerary', 8], ['gear', 4],
-    ['journal', 4], ['team', 4], ['budget', 4],
+    ['journal', 4], ['groupe', 4], ['budget', 4],
     ['checklist', 3], ['docs', 3], ['context', 3],
   ],
   recount: [
     ['raconter', 8], ['context', 4], ['itinerary', 8], ['gear', 4],
-    ['journal', 4], ['team', 4], ['budget', 4],
+    ['journal', 4], ['groupe', 4], ['budget', 4],
     ['checklist', 3], ['docs', 3], ['safety', 3],
   ],
 };
@@ -303,12 +302,40 @@ export function SortieMenu({
     description: allClearDescription,
   });
 
-  const actions: QuickAction[] = [
-    { href: hubSectionHref(ref, 'itinerary'), label: 'Itinéraire', icon: Navigation },
-    { href: hubSectionHref(ref, 'budget'), label: 'Budget', icon: CreditCard },
-    { href: hubSectionHref(ref, 'checklist'), label: 'Checklist', icon: CheckSquare },
-    { href: hubSectionHref(ref, 'journal'), label: 'Journal', icon: Calendar },
-  ];
+  // ── MOBILE V6 — sections + chips + moment (données réelles) ──
+  const momentContext = {
+    phase,
+    dayIndex,
+    totalDays: duration.durationDays,
+    daysUntil,
+  };
+  const checklistDone = checklist.filter((i) => i.done).length;
+  const mobileTiles = buildSortieSectionTiles(ref, phase, {
+    steps: steps.length,
+    packedPct: packedPercent,
+    team: teamCount,
+    docs: (trip.documents ?? []).length,
+    checklistLabel: checklist.length > 0 ? `${checklistDone}/${checklist.length}` : null,
+    safetyPending: pendingSafety,
+    notes: (trip.notes ?? []).length,
+    budgetLabel:
+      stats.total_spent > 0 ? `${Math.round(stats.total_spent)}€` : null,
+  });
+  const mobileChips = buildSortieInfoChips({
+    trip,
+    ref,
+    stats,
+    hiking,
+    context: momentContext,
+    metrics: {
+      stepsCount: steps.length,
+      totalKm: dist.totalKm,
+      dPlus: dist.dPlus,
+      packedPct: packedPercent,
+      readyItems: kit.ready,
+      totalItems: kit.total,
+    },
+  });
 
   // ── CELLULES PAR CLÉ (contenus enrichis) ──
   const byKey: Record<string, { span: 3 | 4 | 6 | 8; node: React.ReactNode }> = {
@@ -329,7 +356,7 @@ export function SortieMenu({
             <span className="rounded-full bg-[var(--lkv-primary)]/10 px-2.5 py-1 text-[11px] font-bold text-[var(--lkv-primary)]">Bilan</span>
             <span className="rounded-full bg-[var(--lkv-primary)]/10 px-2.5 py-1 text-[11px] font-bold text-[var(--lkv-primary)]">Partage</span>
           </div>
-          <p className="mt-1.5 text-center text-xs text-[var(--lkv-text-secondary)]">Bilan, carnet de bord et partage d&apos;équipage.</p>
+          <p className="mt-1.5 text-center text-xs text-[var(--lkv-text-secondary)]">Bilan, carnet de bord et partage du groupe.</p>
         </MenuCard>
       ),
     },
@@ -533,10 +560,10 @@ export function SortieMenu({
         </MenuCard>
       ),
     },
-    team: {
+    groupe: {
       span: 4,
       node: (
-        <MenuCard href={hubSectionHref(ref, 'team')} label="Équipage & compagnons" interactiveBody>
+        <MenuCard href={hubSectionHref(ref, 'groupe')} label="Groupe & compagnons" interactiveBody>
           <p className="mt-1 text-2xl font-extrabold tracking-tight text-[var(--lkv-text-primary)]">
             <NumberStat value={teamCount} />
             <span className="ml-2 text-xs font-semibold text-[var(--lkv-text-secondary)]">
@@ -765,23 +792,39 @@ export function SortieMenu({
   const secondaryCells = orderedCells.filter((c) => secondaryKeys.includes(c.key ?? ''));
 
   return (
-    <div className="h-[calc(100%-24px)] min-h-[680px] flex flex-col gap-3 overflow-hidden">
-      <ActivityIdentityBar
-        nature="sortie"
-        name={trip.title}
-        phaseLabel={PHASE_LABELS[phase]}
-        daysUntil={daysUntil}
-      />
-      <NextActionCard
-        actions={nextActions}
-        checklist={{ tripId: trip.id, items: checklist }}
-      />
-      <QuickActions actions={actions} />
-      <div className="flex-1 min-h-0">
-        <MoreSectionsGrid cells={primaryCells} moreCells={secondaryCells} fitRows={FIT_ROWS[phase]} />
+    <>
+      <div className="hidden lg:flex h-[calc(100%-24px)] min-h-[680px] flex-col gap-3 overflow-hidden">
+        <ActivityIdentityBar
+          nature="sortie"
+          name={trip.title}
+          phaseLabel={PHASE_LABELS[phase]}
+          daysUntil={daysUntil}
+        />
+        <NextActionCard
+          actions={nextActions}
+          checklist={{ tripId: trip.id, items: checklist }}
+        />
+        <div className="flex-1 min-h-0">
+          <MoreSectionsGrid cells={primaryCells} moreCells={secondaryCells} fitRows={FIT_ROWS[phase]} />
+        </div>
+        {phase === 'live' && <SosFloatingButton safetyHref={hubSectionHref(ref, 'safety')} />}
       </div>
-      {phase === 'live' && <SosFloatingButton safetyHref={hubSectionHref(ref, 'safety')} />}
-    </div>
+
+      <MobileAdventureHub
+        action={
+          <NextActionCard
+            actions={nextActions}
+            checklist={{ tripId: trip.id, items: checklist }}
+            variant="compact"
+          />
+        }
+        tiles={mobileTiles}
+        chips={mobileChips}
+      >
+        <SortieMoment trip={trip} context={momentContext} hiking={hiking} />
+        {phase === 'live' && <SosFloatingButton safetyHref={hubSectionHref(ref, 'safety')} />}
+      </MobileAdventureHub>
+    </>
   );
 }
 

@@ -1,10 +1,10 @@
-"use client";
+'use client';
 
+import Icon from '@/components/ui/Icon';
 import React, { useState, useEffect } from 'react';
 import Image from 'next/image';
 import { createClient } from '@/lib/supabase/client';
 import { messagingService } from '../services/messagingService';
-import { Search } from 'lucide-react';
 import { MobileSheet } from './MobileSheet';
 
 interface Traveler {
@@ -86,7 +86,10 @@ export const NewConversationModal: React.FC<NewConversationModalProps> = ({
   return (
     <MobileSheet isOpen={isOpen} onClose={onClose} title="Nouvelle Discussion">
       <div className="relative">
-        <Search className="w-4 h-4 text-[#5A574E] absolute left-3.5 top-1/2 -translate-y-1/2" />
+        <Icon
+          name="search"
+          className="w-4 h-4 text-[#5A574E] absolute left-3.5 top-1/2 -translate-y-1/2"
+        />
         <input
           type="search"
           inputMode="search"
@@ -108,9 +111,7 @@ export const NewConversationModal: React.FC<NewConversationModalProps> = ({
             ))}
           </div>
         ) : travelers.length === 0 ? (
-          <p className="text-[15px] text-center text-[#5A574E] py-8">
-            Aucun voyageur trouvé.
-          </p>
+          <p className="text-[15px] text-center text-[#5A574E] py-8">Aucun voyageur trouvé.</p>
         ) : (
           travelers.map((traveler) => (
             <button

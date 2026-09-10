@@ -1,7 +1,7 @@
 'use client';
+import Icon from '@/components/ui/Icon';
 import React from 'react';
 import { motion, AnimatePresence, useReducedMotion } from 'framer-motion';
-import { AlertTriangle } from 'lucide-react';
 import { ArrowRightIcon as ArrowRightAnimated } from '@/components/icons/arrow-right';
 import { XIcon as XAnimated } from '@/components/icons/x';
 import { cn } from '@/lib/utils';
@@ -98,7 +98,7 @@ export function MobileVitalAlertBanner({
         <div className="flex items-center justify-between gap-2">
           <div className="flex items-center gap-2 min-w-0 flex-1">
             <div className="w-7 h-7 rounded-xl bg-rose-200/80 dark:bg-rose-900/60 text-[var(--lkv-danger)] dark:text-rose-300 flex items-center justify-center shrink-0 shadow-2xs">
-              <AlertTriangle size={14} aria-hidden="true" />
+              <Icon name="alert-triangle" size={14} aria-hidden="true" />
             </div>
 
             <div className="min-w-0 flex-1">
@@ -119,7 +119,7 @@ export function MobileVitalAlertBanner({
               onClick={handleAction}
               className="px-2.5 py-1 rounded-full text-[10.5px] font-bold bg-[var(--lkv-danger)] hover:bg-[var(--lkv-danger)] text-white shadow-2xs flex items-center gap-1 cursor-pointer transition-transform active:scale-95 shrink-0 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--lkv-danger)]"
             >
-              <span>{currentAlert.actionLabel || "Régler"}</span>
+              <span>{currentAlert.actionLabel || 'Régler'}</span>
               <ArrowRightAnimated size={10} aria-hidden="true" />
             </button>
 

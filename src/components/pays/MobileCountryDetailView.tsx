@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -16,6 +16,7 @@ import { useCountryPracticalGuide } from '@/hooks/useCountryPracticalGuide';
 import PaysPratiqueView from '@/components/pays/PaysPratiqueView';
 import { DiscoverySection } from '@/features/discovery/components/DiscoverySection';
 import { KlookCtaBlock } from '@/features/discovery/components/KlookCtaBlock';
+import { SectionBlocks, PaysWeatherCard, PaysRegionsList, PaysTrailsList, PaysRecommendations } from '@/features/pays';
 import type { KlookBlock } from '@/features/discovery/providers/klook/klookTypes';
 import type { PracticalSection } from '@/lib/ai/jobs/generateCountryGuide';
 
@@ -23,6 +24,7 @@ export type MobilePaysSection =
   | 'presentation'
   | 'destinations'
   | 'activites'
+  | 'culture'
   | 'gastronomie'
   | 'hebergements'
   | 'pratique'
@@ -43,7 +45,6 @@ export default function MobileCountryDetailView({
   const { triggerHaptic } = useHapticFeedback();
 
   const [activeSection, setActiveSection] = useState<MobilePaysSection>('presentation');
-  const [activeCat, setActiveCat] = useState<'all' | 'nature' | 'aqua' | 'rand' | 'cult'>('all');
   const { data: guideData, isLoading: isGuidesLoading } = useCountryPracticalGuide(country.code);
 
   // Synchronisation avec le plateau supérieur de la BottomTabBar
@@ -61,11 +62,6 @@ export default function MobileCountryDetailView({
     triggerHaptic('selection');
     setActiveSection(sectionId);
   };
-
-  const filteredActivities = useMemo(() => {
-    if (activeCat === 'all') return country.activites;
-    return country.activites.filter((a) => a.categorie === activeCat);
-  }, [country, activeCat]);
 
   const heroImage =
     country.destinations?.[0]?.image_url ||
@@ -205,6 +201,12 @@ export default function MobileCountryDetailView({
             {/* ── SECTION 1: APERÇU / PANORAMA ── */}
             {activeSection === 'presentation' && (
               <div className="space-y-3">
+                <SectionBlocks countryCode={country.code} sectionId="presentation" countryContent={country.country_content ?? null} />
+
+                <PaysWeatherCard countryCode={country.code} />
+
+                <PaysRecommendations countryCode={country.code} />
+
                 <div className="glass p-4 sm:p-5 rounded-xl border border-white/80 shadow-xs bg-white/85 space-y-3">
                   <div className="flex items-center justify-between">
                     <span className="glass-pill text-[9.5px] font-mono font-bold text-[#5B7F55] bg-white/90 border border-white">
@@ -362,47 +364,9 @@ export default function MobileCountryDetailView({
             {/* ── SECTION 2: DESTINATIONS / INCONTOURNABLES ── */}
             {activeSection === 'destinations' && (
               <div className="space-y-3">
-                <div className="px-1 flex items-center justify-between">
-                  <h3 className="font-display font-bold text-sm text-[#17402C] uppercase tracking-wider">
-                    Destinations & Spots ({country.destinations.length})
-                  </h3>
-                </div>
+                <PaysRegionsList countryCode={country.code} />
 
-                <div className="space-y-3">
-                  {country.destinations.map((dest, i) => (
-                    <div
-                      key={i}
-                      className="glass rounded-xl overflow-hidden border border-white/80 shadow-xs bg-white/85"
-                    >
-                      <div className="h-40 relative overflow-hidden bg-[#17402C]">
-                        <img
-                          src={dest.image_url}
-                          alt={dest.titre}
-                          className="w-full h-full object-cover"
-                          loading="lazy"
-                        />
-                        <div className="absolute inset-0 bg-gradient-to-t from-black/75 via-black/20 to-transparent" />
-                        <span className="absolute top-2.5 left-2.5 glass-pill text-white text-[9.5px] font-mono bg-black/40">
-                          📍 {dest.categorie}
-                        </span>
-
-                        <div className="absolute bottom-2.5 left-3 right-3 text-white">
-                          <h4 className="font-display font-bold text-base leading-snug">
-                            {dest.titre} {dest.titre_em && <em className="font-serif font-normal text-forest-200">({dest.titre_em})</em>}
-                          </h4>
-                        </div>
-                      </div>
-
-                      {(dest.meta_1 || dest.meta_2 || dest.meta_3) && (
-                        <div className="p-3 flex flex-wrap gap-1.5 border-t border-[#17402C]/5 bg-white/40">
-                          {dest.meta_1 && <span className="glass-pill text-[9.5px] font-mono text-[#17402C] bg-white/80">{dest.meta_1}</span>}
-                          {dest.meta_2 && <span className="glass-pill text-[9.5px] font-mono text-[#17402C] bg-white/80">{dest.meta_2}</span>}
-                          {dest.meta_3 && <span className="glass-pill text-[9.5px] font-mono text-[#17402C] bg-white/80">{dest.meta_3}</span>}
-                        </div>
-                      )}
-                    </div>
-                  ))}
-                </div>
+                <SectionBlocks countryCode={country.code} sectionId="destinations" countryContent={country.country_content ?? null} />
 
                 <DiscoverySection
                   countryCode={country.code}
@@ -421,78 +385,9 @@ export default function MobileCountryDetailView({
             {/* ── SECTION 3: ACTIVITÉS ── */}
             {activeSection === 'activites' && (
               <div className="space-y-3">
-                <div className="px-1 flex items-center justify-between">
-                  <h3 className="font-display font-bold text-sm text-[#17402C] uppercase tracking-wider">
-                    Activités de Terrain
-                  </h3>
-                  <span className="text-[10px] font-mono text-[#5A7064]">
-                    {filteredActivities.length} expériences
-                  </span>
-                </div>
+                <SectionBlocks countryCode={country.code} sectionId="activites" countryContent={country.country_content ?? null} />
 
-                {/* Category filters */}
-                <div className="flex items-center gap-1.5 overflow-x-auto no-scrollbar pb-1">
-                  {[
-                    { id: 'all', label: 'Toutes' },
-                    { id: 'rand', label: '🥾 Randonnée' },
-                    { id: 'nature', label: '🌿 Nature' },
-                    { id: 'aqua', label: '🌊 Eau' },
-                    { id: 'cult', label: '🏛️ Culture' },
-                  ].map((cat) => {
-                    const isSelected = activeCat === cat.id;
-                    return (
-                      <button
-                        key={cat.id}
-                        type="button"
-                        onClick={() => {
-                          triggerHaptic('light');
-                          setActiveCat(cat.id as any);
-                        }}
-                        className={`glass-capsule-btn !min-h-[30px] !py-1 !px-3.5 !text-xs !font-bold whitespace-nowrap active:scale-95 transition-all cursor-pointer ${
-                          isSelected ? 'primary shadow-sm' : 'shadow-2xs'
-                        }`}
-                      >
-                        <span>{cat.label}</span>
-                      </button>
-                    );
-                  })}
-                </div>
-
-                {/* Activities Cards */}
-                <div className="space-y-2.5">
-                  {filteredActivities.map((act, i) => (
-                    <div
-                      key={i}
-                      className="glass p-3.5 rounded-lg border border-white/80 shadow-xs bg-white/85 flex gap-3 items-center"
-                    >
-                      <div
-                        className="w-20 h-20 rounded-2xl bg-cover bg-center shrink-0 shadow-2xs relative overflow-hidden"
-                        style={{ backgroundImage: `url('${act.image_url}')` }}
-                      >
-                        <span className="absolute bottom-1 left-1 glass-pill text-[8px] font-mono text-white bg-black/50 px-1.5 py-0.5">
-                          {act.tag}
-                        </span>
-                      </div>
-
-                      <div className="flex-1 min-w-0 space-y-1">
-                        <h4 className="text-xs font-bold text-[#17402C] leading-snug truncate">
-                          {act.titre} {act.titre_em && <span className="font-serif italic font-normal text-[#5B7F55]">{act.titre_em}</span>}
-                        </h4>
-                        <p className="text-[11px] text-[#5A7064] line-clamp-2 leading-relaxed">
-                          {act.description}
-                        </p>
-                        <div className="flex items-center justify-between pt-0.5">
-                          <span className="font-mono text-[10px] text-[#17402C] font-semibold">
-                            ⏱ {act.duree}
-                          </span>
-                          <span className="font-mono text-[10.5px] font-bold text-[#5B7F55] bg-white px-2 py-0.5 rounded-full border border-white/90 shadow-2xs">
-                            dès {act.prix}
-                          </span>
-                        </div>
-                      </div>
-                    </div>
-                  ))}
-                </div>
+                <PaysTrailsList countryCode={country.code} />
 
                 <DiscoverySection
                   countryCode={country.code}
@@ -505,6 +400,22 @@ export default function MobileCountryDetailView({
                 />
 
                 <KlookCtaBlock block={klookBlock} />
+              </div>
+            )}
+
+            {/* ── SECTION 3bis: CULTURE & SOCIÉTÉ (blocs IA) ── */}
+            {activeSection === 'culture' && (
+              <div className="space-y-3">
+                <div className="px-1">
+                  <h3 className="font-display font-bold text-sm text-[#17402C] uppercase tracking-wider">
+                    Culture &amp; Société
+                  </h3>
+                  <p className="text-[10.5px] text-[#5A7064]">
+                    Usages, traditions et savoir-vivre en {country.nom}
+                  </p>
+                </div>
+
+                <SectionBlocks countryCode={country.code} sectionId="culture" countryContent={country.country_content ?? null} />
               </div>
             )}
 

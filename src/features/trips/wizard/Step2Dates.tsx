@@ -1,5 +1,6 @@
 'use client';
 
+import Icon from '@/components/ui/Icon';
 import React, { useMemo } from 'react';
 import type { SelectedCountry, DatesChoice } from './wizardTypes';
 import {
@@ -7,12 +8,6 @@ import {
   checkSeasonality,
   getSeasonalityAdvice,
 } from '../engine/seasonality';
-import {
-  Calendar,
-  Clock,
-  AlertTriangle,
-  CheckCircle2,
-} from 'lucide-react';
 
 interface Step2DatesProps {
   countries: SelectedCountry[];
@@ -58,7 +53,8 @@ export function Step2Dates({
   const handleStartDate = (d: string) => {
     onStartDateChange(d);
     if (d && endDate) {
-      const diff = Math.round((new Date(endDate).getTime() - new Date(d).getTime()) / (1000 * 3600 * 24)) + 1;
+      const diff =
+        Math.round((new Date(endDate).getTime() - new Date(d).getTime()) / (1000 * 3600 * 24)) + 1;
       if (diff > 0) onDurationChange(diff);
     }
   };
@@ -66,7 +62,9 @@ export function Step2Dates({
   const handleEndDate = (d: string) => {
     onEndDateChange(d);
     if (startDate && d) {
-      const diff = Math.round((new Date(d).getTime() - new Date(startDate).getTime()) / (1000 * 3600 * 24)) + 1;
+      const diff =
+        Math.round((new Date(d).getTime() - new Date(startDate).getTime()) / (1000 * 3600 * 24)) +
+        1;
       if (diff > 0) onDurationChange(diff);
     }
   };
@@ -98,14 +96,15 @@ export function Step2Dates({
     <div className="space-y-6">
       <div>
         <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-wider text-lkv-secondary mb-1">
-          <Calendar size={14} />
+          <Icon name="calendar" size={14} />
           <span>Étape 2 sur 5</span>
         </div>
         <h2 className="text-2xl sm:text-3xl font-bold text-lkv-primary">
           Quand et combien de temps partez-vous ?
         </h2>
         <p className="text-sm text-[var(--lkv-text-muted)] mt-1">
-          Définissez vos dates précises ou indiquez simplement la durée souhaitée si vos billets ne sont pas encore pris.
+          Définissez vos dates précises ou indiquez simplement la durée souhaitée si vos billets ne
+          sont pas encore pris.
         </p>
       </div>
 
@@ -121,7 +120,7 @@ export function Step2Dates({
           }`}
         >
           <div className="flex items-center justify-center gap-1.5">
-            <Clock size={14} />
+            <Icon name="clock" size={14} />
             <span>Durée seule</span>
           </div>
         </button>
@@ -135,7 +134,7 @@ export function Step2Dates({
           }`}
         >
           <div className="flex items-center justify-center gap-1.5">
-            <Calendar size={14} />
+            <Icon name="calendar" size={14} />
             <span>Dates précises</span>
           </div>
         </button>
@@ -225,9 +224,12 @@ export function Step2Dates({
                   : 'bg-[var(--lkv-warning-bg)] border-[var(--lkv-warning-subtle)] text-[var(--lkv-warning-dark)]'
               }`}
             >
-              <AlertTriangle
+              <Icon
+                name="alert-triangle"
                 size={18}
-                className={w.severity === 'alert' ? 'text-rose-600' : 'text-[var(--lkv-warning-dark)]'}
+                className={
+                  w.severity === 'alert' ? 'text-rose-600' : 'text-[var(--lkv-warning-dark)]'
+                }
               />
               <div className="text-xs leading-relaxed">
                 <span className="font-semibold block mb-0.5">
@@ -240,9 +242,16 @@ export function Step2Dates({
         </div>
       ) : (
         <div className="p-3.5 bg-[var(--lkv-success-bg)] border border-[var(--lkv-success-bg)] rounded-2xl flex items-center gap-3 text-[var(--lkv-primary)]">
-          <CheckCircle2 size={16} className="text-[var(--lkv-secondary-hover)] shrink-0" />
+          <Icon
+            name="check-circle2"
+            size={16}
+            className="text-[var(--lkv-secondary-hover)] shrink-0"
+          />
           <div className="text-xs">
-            <span className="font-semibold">Période favorable pour {countries[0]?.name || 'cette destination'} :</span> les conditions de praticabilité et de météo sont adaptées aux sentiers.
+            <span className="font-semibold">
+              Période favorable pour {countries[0]?.name || 'cette destination'} :
+            </span>{' '}
+            les conditions de praticabilité et de météo sont adaptées aux sentiers.
           </div>
         </div>
       )}

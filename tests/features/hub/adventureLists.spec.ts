@@ -21,16 +21,6 @@ const TRIPS = [
   { id: 't2', slug: 'vanlife', title: 'Vanlife Portugal', status: 'done', primary_activity: 'roadtrip' },
 ];
 const GROUPS = [{ id: 'g1', name: 'Alpes Team', member_count: 4, my_role: 'owner' }];
-const CREWS = [
-  {
-    id: 'c1',
-    name: 'Équipage Sud',
-    slug: 'equipage-sud',
-    member_count: 3,
-    active_trips_count: 1,
-    next_trip: { slug: 'mercanteur', title: 'Mercantour' },
-  },
-];
 const POSSESSION = { itemsCount: 12, loansCount: 1, alertsCount: 2 };
 
 describe('H2 — adventureKey : identité stable', () => {
@@ -42,47 +32,38 @@ describe('H2 — adventureKey : identité stable', () => {
     expect(adventureKey({ nature: 'sortie', id: 't1', slug: 'gr20', title: 'x' })).toBe('sortie:gr20');
   });
 
-  it('KEY-3: collectif = collectif:kind:id', () => {
+  it('KEY-3: collectif = collectif:id', () => {
     expect(
-      adventureKey({ nature: 'collectif', kind: 'groupe', id: 'g1', title: 'x', membersCount: 1, subtitle: '', linkedTripSlug: null }),
-    ).toBe('collectif:groupe:g1');
-    expect(
-      adventureKey({ nature: 'collectif', kind: 'equipage', id: 'c1', title: 'x', membersCount: 1, subtitle: '', linkedTripSlug: null }),
-    ).toBe('collectif:equipage:c1');
+      adventureKey({ nature: 'collectif', id: 'g1', title: 'x', membersCount: 1, subtitle: '', linkedTripSlug: null }),
+    ).toBe('collectif:g1');
   });
 });
 
 describe('H2 — groupAdventures : 3 natures groupées', () => {
   it('GRP-1: possession toujours présente même à zéro', () => {
-    const g = groupAdventures([], [], [], { itemsCount: 0, loansCount: 0, alertsCount: 0 });
+    const g = groupAdventures([], [], { itemsCount: 0, loansCount: 0, alertsCount: 0 });
     expect(g.possession).toHaveLength(1);
     expect(g.sorties).toEqual([]);
     expect(g.collectifs).toEqual([]);
   });
 
   it('GRP-2: sorties dans l’ordre reçu', () => {
-    const g = groupAdventures(TRIPS, [], [], POSSESSION);
+    const g = groupAdventures(TRIPS, [], POSSESSION);
     expect(g.sorties.map((s) => s.slug)).toEqual(['gr20', 'vanlife']);
   });
 
-  it('GRP-3: groupes puis équipages, sous-titres de contexte', () => {
-    const g = groupAdventures([], GROUPS, CREWS, POSSESSION);
-    expect(g.collectifs.map((c) => c.kind)).toEqual(['groupe', 'equipage']);
+  it('GRP-3: groupes avec sous-titre de contexte', () => {
+    const g = groupAdventures([], GROUPS, POSSESSION);
+    expect(g.collectifs).toHaveLength(1);
+    expect(g.collectifs[0].title).toBe('Alpes Team');
     expect(g.collectifs[0].subtitle).toMatch(/4 membre/);
-    expect(g.collectifs[1].subtitle).toMatch(/3 membre/);
-    expect(g.collectifs[1].subtitle).toMatch(/1 voyage/);
-    expect(g.collectifs[1].linkedTripSlug).toBe('mercanteur');
-  });
-
-  it('GRP-4: équipage sans voyage lié = linkedTripSlug null', () => {
-    const g = groupAdventures([], [], [{ ...CREWS[0], active_trips_count: 0, next_trip: null }], POSSESSION);
+    expect(g.collectifs[0].subtitle).toMatch(/owner/);
     expect(g.collectifs[0].linkedTripSlug).toBeNull();
-    expect(g.collectifs[0].subtitle).not.toMatch(/voyage/);
   });
 });
 
 describe('H2 — filterAdventures : recherche', () => {
-  const full = groupAdventures(TRIPS, GROUPS, CREWS, POSSESSION);
+  const full = groupAdventures(TRIPS, GROUPS, POSSESSION);
 
   it('FIL-1: query vide = identité', () => {
     expect(filterAdventures(full, '')).toEqual(full);
@@ -103,7 +84,7 @@ describe('H2 — filterAdventures : recherche', () => {
 
   it('FIL-4: cap 8 par groupe', () => {
     const many = Array.from({ length: 20 }, (_, i) => ({ id: `t${i}`, slug: `s${i}`, title: `Voyage ${i}` }));
-    const g = groupAdventures(many, [], [], POSSESSION);
+    const g = groupAdventures(many, [], POSSESSION);
     expect(filterAdventures(g, 'voyage').sorties).toHaveLength(8);
   });
 });
@@ -124,7 +105,7 @@ describe('H2 — resolveAdventureHref : restauration dernière section', () => {
   it('HREF-3: mémoire d’une autre nature = fallback (jamais d’URL cassée)', () => {
     const e: AdventureEntry = { nature: 'possession', itemsCount: 1, loansCount: 0, alertsCount: 0 };
     expect(resolveAdventureHref(e, () => 'budget')).toBe('/hub/inventaire');
-    const c: AdventureEntry = { nature: 'collectif', kind: 'groupe', id: 'g', title: 't', membersCount: 1, subtitle: '', linkedTripSlug: null };
+    const c: AdventureEntry = { nature: 'collectif', id: 'g', title: 't', membersCount: 1, subtitle: '', linkedTripSlug: null };
     expect(resolveAdventureHref(c, () => 'inventaire')).toBe('/hub/groupe');
   });
 
@@ -136,7 +117,7 @@ describe('H2 — resolveAdventureHref : restauration dernière section', () => {
   });
 
   it('HREF-5: collectif avec mémoire valide', () => {
-    const e: AdventureEntry = { nature: 'collectif', kind: 'equipage', id: 'c', title: 't', membersCount: 1, subtitle: '', linkedTripSlug: null };
+    const e: AdventureEntry = { nature: 'collectif', id: 'c', title: 't', membersCount: 1, subtitle: '', linkedTripSlug: null };
     expect(resolveAdventureHref(e, none)).toBe('/hub/groupe');
     expect(resolveAdventureHref(e, () => 'invitations')).toBe('/hub/invitations');
   });

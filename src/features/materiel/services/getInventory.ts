@@ -15,6 +15,7 @@ export interface InventoryItem {
   maintenance_due_at: string | null;
   expiry_date: string | null;
   tags: string[] | null;
+  quantity: number;
 }
 
 /** getInventory — inventaire de l'utilisateur (Server-only, RLS). */

@@ -1,35 +1,18 @@
 'use client';
 
+import Icon from '@/components/ui/Icon';
 import React, { useState } from 'react';
-import {
-  type SelectedCountry,
-  CURATED_COUNTRIES,
-  OTHER_COUNTRIES,
-} from './wizardTypes';
-import {
-  MapPin,
-  ArrowUp,
-  ArrowDown,
-  Trash2,
-  Plus,
-  Check,
-  Sparkles,
-  Search,
-} from 'lucide-react';
+import { type SelectedCountry, CURATED_COUNTRIES, OTHER_COUNTRIES } from './wizardTypes';
 
 interface Step1DestinationsProps {
   selectedCountries: SelectedCountry[];
   onChange: (countries: SelectedCountry[]) => void;
 }
 
-export function Step1Destinations({
-  selectedCountries,
-  onChange,
-}: Step1DestinationsProps) {
+export function Step1Destinations({ selectedCountries, onChange }: Step1DestinationsProps) {
   const [search, setSearch] = useState('');
 
-  const isSelected = (code: string) =>
-    selectedCountries.some((c) => c.code === code);
+  const isSelected = (code: string) => selectedCountries.some((c) => c.code === code);
 
   const toggleCountry = (country: SelectedCountry) => {
     if (isSelected(country.code)) {
@@ -79,21 +62,22 @@ export function Step1Destinations({
     <div className="space-y-6">
       <div>
         <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-wider text-lkv-secondary mb-1">
-          <MapPin size={14} />
+          <Icon name="map-pin" size={14} />
           <span>Étape 1 sur 5</span>
         </div>
         <h2 className="text-2xl sm:text-3xl font-bold text-lkv-primary">
           Où partez-vous à l&apos;aventure ?
         </h2>
         <p className="text-sm text-[var(--lkv-text-muted)] mt-1">
-          Choisissez un ou plusieurs pays. Le moteur de répartition distribuera vos journées de marche de manière cohérente.
+          Choisissez un ou plusieurs pays. Le moteur de répartition distribuera vos journées de
+          marche de manière cohérente.
         </p>
       </div>
 
       {/* Destinations phares curées (5 pays réels) */}
       <div>
         <div className="flex items-center gap-1.5 text-xs font-semibold text-lkv-primary mb-3">
-          <Sparkles size={14} className="text-lkv-secondary" />
+          <Icon name="sparkles" size={14} className="text-lkv-secondary" />
           <span>Destinations phares (itinéraires réels sourcés)</span>
         </div>
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
@@ -125,12 +109,10 @@ export function Step1Destinations({
                 </div>
                 <div
                   className={`w-5 h-5 rounded-full flex items-center justify-center text-xs font-bold ${
-                    active
-                      ? 'bg-white text-lkv-primary'
-                      : 'border border-black/20 text-transparent'
+                    active ? 'bg-white text-lkv-primary' : 'border border-black/20 text-transparent'
                   }`}
                 >
-                  <Check size={12} />
+                  <Icon name="check" size={12} />
                 </div>
               </button>
             );
@@ -144,7 +126,8 @@ export function Step1Destinations({
           Ajouter une autre destination
         </div>
         <div className="relative">
-          <Search
+          <Icon
+            name="search"
             size={16}
             className="absolute left-3.5 top-1/2 -translate-y-1/2 text-[var(--lkv-text-subtle)]"
           />
@@ -170,7 +153,9 @@ export function Step1Destinations({
                     setSearch('');
                   }}
                   className={`w-full flex items-center justify-between px-3 py-2 rounded-lg text-left text-xs transition-colors min-h-[44px] ${
-                    active ? 'bg-[var(--lkv-success-bg)] text-lkv-primary font-semibold' : 'hover:bg-[var(--lkv-surface-paper)] text-[var(--lkv-text-secondary)]'
+                    active
+                      ? 'bg-[var(--lkv-success-bg)] text-lkv-primary font-semibold'
+                      : 'hover:bg-[var(--lkv-surface-paper)] text-[var(--lkv-text-secondary)]'
                   }`}
                 >
                   <span className="flex items-center gap-2">
@@ -180,7 +165,7 @@ export function Step1Destinations({
                   {active ? (
                     <span className="text-[11px] text-lkv-secondary">Sélectionné</span>
                   ) : (
-                    <Plus size={14} className="text-[var(--lkv-text-subtle)]" />
+                    <Icon name="plus" size={14} className="text-[var(--lkv-text-subtle)]" />
                   )}
                 </button>
               );
@@ -205,9 +190,7 @@ export function Step1Destinations({
                   {idx + 1}
                 </span>
                 <span className="text-xl">{country.flag}</span>
-                <span className="text-sm font-medium text-lkv-primary">
-                  {country.name}
-                </span>
+                <span className="text-sm font-medium text-lkv-primary">{country.name}</span>
                 {country.isCurated && (
                   <span className="text-[10px] bg-[var(--lkv-success-bg)] text-lkv-primary px-2 py-0.5 rounded-full font-medium hidden sm:inline">
                     Curé
@@ -225,7 +208,7 @@ export function Step1Destinations({
                       aria-label="Monter ce pays"
                       className="p-2 rounded-lg text-[var(--lkv-text-muted)] hover:bg-black/5 disabled:opacity-30 disabled:hover:bg-transparent min-w-[var(--lkv-touch-min)] min-h-[var(--lkv-touch-min)] flex items-center justify-center"
                     >
-                      <ArrowUp size={14} />
+                      <Icon name="arrow-up" size={14} />
                     </button>
                     <button
                       type="button"
@@ -234,7 +217,7 @@ export function Step1Destinations({
                       aria-label="Descendre ce pays"
                       className="p-2 rounded-lg text-[var(--lkv-text-muted)] hover:bg-black/5 disabled:opacity-30 disabled:hover:bg-transparent min-w-[var(--lkv-touch-min)] min-h-[var(--lkv-touch-min)] flex items-center justify-center"
                     >
-                      <ArrowDown size={14} />
+                      <Icon name="arrow-down" size={14} />
                     </button>
                     <button
                       type="button"
@@ -242,7 +225,7 @@ export function Step1Destinations({
                       aria-label="Retirer ce pays"
                       className="p-2 rounded-lg text-rose-600 hover:bg-rose-50 min-w-[var(--lkv-touch-min)] min-h-[var(--lkv-touch-min)] flex items-center justify-center"
                     >
-                      <Trash2 size={14} />
+                      <Icon name="trash2" size={14} />
                     </button>
                   </>
                 )}

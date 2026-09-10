@@ -1,6 +1,6 @@
 ﻿'use client';
+import Icon from '@/components/ui/Icon';
 import Link from 'next/link';
-import { Plus, CheckCircle2 } from 'lucide-react';
 import { GlassCard } from '@/components/ui/GlassCard';
 import { ProgressBar } from '@/components/ui/ProgressBar';
 
@@ -12,8 +12,17 @@ interface InventaireData {
   goodCount?: number;
 }
 
-export function GearCardInventaire({ data, className }: { data: InventaireData; className?: string }) {
-  const goodItems = data.goodCount !== undefined ? data.goodCount : Math.round((data.goodConditionPct / 100) * data.count);
+export function GearCardInventaire({
+  data,
+  className,
+}: {
+  data: InventaireData;
+  className?: string;
+}) {
+  const goodItems =
+    data.goodCount !== undefined
+      ? data.goodCount
+      : Math.round((data.goodConditionPct / 100) * data.count);
 
   return (
     <GlassCard as="article" interactive ariaLabelledBy="inv-title" className={className}>
@@ -21,7 +30,10 @@ export function GearCardInventaire({ data, className }: { data: InventaireData; 
         {/* Header with Title & Large Metric */}
         <div className="flex items-start justify-between">
           <div className="space-y-1">
-            <h2 id="inv-title" className="text-[20px] font-display font-bold text-[var(--lkv-primary)]">
+            <h2
+              id="inv-title"
+              className="text-[20px] font-display font-bold text-[var(--lkv-primary)]"
+            >
               Inventaire
             </h2>
           </div>
@@ -39,11 +51,15 @@ export function GearCardInventaire({ data, className }: { data: InventaireData; 
         <div className="grid grid-cols-2 gap-2">
           <div className="glass-sub-card p-2.5 flex items-center gap-2">
             <div className="w-7 h-7 rounded-full bg-white/[0.08] border border-white/25 flex items-center justify-center text-[var(--lkv-primary)] flex-shrink-0 shadow-inner">
-              <CheckCircle2 size={15} />
+              <Icon name="check-circle2" size={15} />
             </div>
             <div className="truncate">
-              <span className="block text-[10px] uppercase font-semibold text-[var(--lkv-text-muted)]">En bon état</span>
-              <span className="text-[13px] font-mono font-bold text-[var(--lkv-primary)]">{goodItems}</span>
+              <span className="block text-[10px] uppercase font-semibold text-[var(--lkv-text-muted)]">
+                En bon état
+              </span>
+              <span className="text-[13px] font-mono font-bold text-[var(--lkv-primary)]">
+                {goodItems}
+              </span>
             </div>
           </div>
           <div className="glass-sub-card p-2.5 flex items-center gap-2">
@@ -51,8 +67,12 @@ export function GearCardInventaire({ data, className }: { data: InventaireData; 
               <span className="text-[10px] font-bold font-mono">0</span>
             </div>
             <div className="truncate">
-              <span className="block text-[10px] uppercase font-semibold text-[var(--lkv-text-muted)]">En commande</span>
-              <span className="text-[13px] font-mono font-bold text-[var(--lkv-primary-soft)]">{data.orderedCount || 0}</span>
+              <span className="block text-[10px] uppercase font-semibold text-[var(--lkv-text-muted)]">
+                En commande
+              </span>
+              <span className="text-[13px] font-mono font-bold text-[var(--lkv-primary-soft)]">
+                {data.orderedCount || 0}
+              </span>
             </div>
           </div>
         </div>
@@ -63,7 +83,11 @@ export function GearCardInventaire({ data, className }: { data: InventaireData; 
             <span>Santé de l&apos;inventaire</span>
             <span className="font-mono text-[var(--lkv-primary)]">{data.goodConditionPct}%</span>
           </div>
-          <ProgressBar value={data.goodConditionPct} label="Objets en bon état" tone={data.goodConditionPct >= 80 ? 'sage' : 'warn'} />
+          <ProgressBar
+            value={data.goodConditionPct}
+            label="Objets en bon état"
+            tone={data.goodConditionPct >= 80 ? 'sage' : 'warn'}
+          />
         </div>
 
         {/* Footer */}
@@ -72,7 +96,7 @@ export function GearCardInventaire({ data, className }: { data: InventaireData; 
             {data.lastAddedLabel ?? 'Inventaire opérationnel'}
           </span>
           <Link href="/hub/inventaire" className="glass-capsule-btn secondary">
-            <Plus size={14} />
+            <Icon name="plus" size={14} />
             <span>Ajouter</span>
           </Link>
         </div>

@@ -84,7 +84,7 @@ export async function getGroupeComplet(groupeId: string) {
     { data: votes, error: votesErr },
   ] = await Promise.all([
     supabase.from('group_members').select('id, user_id, role, status, joined_at, profile:user_profiles!group_members_user_id_fkey(full_name, avatar_url)').eq('group_id', realGroupId).order('joined_at', { ascending: true }),
-    supabase.from('group_tasks').select('id, title, description, status, assigned_to, created_at, assigne:user_profiles!group_tasks_assigned_to_fkey(full_name)').eq('group_id', realGroupId).order('created_at', { ascending: false }),
+    supabase.from('group_tasks').select('id, title, description, status, assigned_to, due_date, created_at, assigne:user_profiles!group_tasks_assigned_to_fkey(full_name)').eq('group_id', realGroupId).order('created_at', { ascending: false }),
     supabase.from('group_kit_items').select('id, name, weight_grams, category, quantity, is_shared, notes, assigned_to, apporte:user_profiles!group_kit_items_assigned_to_fkey(full_name)').eq('group_id', realGroupId).order('created_at', { ascending: false }),
     supabase.from('group_expenses').select('id, title, amount, category, split_between, status, created_at, paid_by, payeur:user_profiles!group_expenses_paid_by_fkey(full_name)').eq('group_id', realGroupId).order('created_at', { ascending: false }),
     supabase.from('group_messages').select('id, content, media_url, created_at, user_id, auteur:user_profiles!group_messages_user_id_fkey(full_name)').eq('group_id', realGroupId).order('created_at', { ascending: false }).limit(200),
@@ -116,6 +116,8 @@ export async function getGroupeComplet(groupeId: string) {
     assignee: displayName(t.assigne, 'Non attribué'),
     tags: t.status === 'done' ? ['Fait', 'Terminée'] : ['À faire'],
     completed: t.status === 'done',
+    statusCode: t.status || 'todo',
+    dueDate: t.due_date || null,
     details: t.description || '',
   }));
 
@@ -150,6 +152,9 @@ export async function getGroupeComplet(groupeId: string) {
       payer: `${displayName(d.payeur, 'Anonyme')} · ${d.status === 'settled' ? 'réglée' : 'en attente'}`,
       parts: (d.split_between && d.split_between.length ? d.split_between.length : nbMembers),
       amount: Math.round(Number(d.amount || 0)),
+      paidBy: d.paid_by || null,
+      splitBetween: Array.isArray(d.split_between) ? d.split_between : [],
+      statusCode: d.status === 'settled' ? 'settled' : 'pending',
     })),
   };
 
@@ -180,6 +185,7 @@ export async function getGroupeComplet(groupeId: string) {
       meta: `Vote actif — ${totalChoices} vote(s)`,
       question: v.question,
       options,
+      votesDetail: pollVotes.map((c: any) => ({ userId: c.user_id, optionIndex: c.option_index })),
       footer: `${totalChoices} votes exprimés`,
     };
   });
@@ -212,6 +218,21 @@ export async function getGroupeComplet(groupeId: string) {
       status_code: m.status,
     };
   });
+
+  // Invitations en attente (non affichées sur le desktop, utilisées par le mobile)
+  const pendingTravelers = membres
+    .filter((m: any) => m.status === 'pending')
+    .map((m: any) => ({
+      id: m.id,
+      user_id: m.user_id,
+      name: displayName(m.profile, 'Invité'),
+      role: 'INVITÉ',
+      status: 'En attente',
+      progress: 0,
+      user_profiles: m.profile,
+      role_code: m.role,
+      status_code: m.status,
+    }));
 
   const departure = groupe.departure_date ? new Date(groupe.departure_date) : null;
   const returnd = groupe.return_date ? new Date(groupe.return_date) : null;
@@ -269,6 +290,7 @@ export async function getGroupeComplet(groupeId: string) {
     decisions: formattedDecisions,
     discussions: formattedDiscussions,
     travelers: formattedTravelers,
+    pendingTravelers,
     activities: groupe.destination?.toLowerCase().includes('islande') || groupe.destination?.toLowerCase().includes('landmann') ? [
       { id: 'act-1', content: '🌋 **Jour 1** — Landmannalaugar → Hrafntinnusker · 12 km · +550m · Sources chaudes géothermiques et champs de rhyolite multicolores', time: formatDateShort(groupe.departure_date) || 'Jour 1' },
       { id: 'act-2', content: '🏔️ **Jour 2** — Hrafntinnusker → Álftavatn · 22 km · Traversée de glaciers noirs et lac turquoise', time: 'Jour 2' },
@@ -310,4 +332,38 @@ export async function addGroupeMessage(groupeId: string, contenu: string, auteur
   return supabase
     .from('group_messages')
     .insert({ group_id: groupeId, content: contenu, user_id: auteurId || null });
+}
+
+/**
+ * Marque une dépense de la caisse commune comme remboursée (RLS : tout membre
+ * du groupe peut mettre à jour une dépense — migration group_rls_and_replies).
+ */
+export async function settleGroupeExpense(expenseId: string) {
+  const supabase = createClient();
+  return supabase
+    .from('group_expenses')
+    .update({ status: 'settled' })
+    .eq('id', expenseId);
+}
+
+/**
+ * Définit (ou efface) l'échéance d'une tâche du groupe. Une date vide → null.
+ */
+export async function updateGroupeTaskDueDate(taskId: string, dueDate: string | null) {
+  const supabase = createClient();
+  return supabase
+    .from('group_tasks')
+    .update({ due_date: dueDate || null })
+    .eq('id', taskId);
+}
+
+/**
+ * Assigne (ou désassigne) un objet partagé du groupe à un membre.
+ */
+export async function assignGroupeKitItem(itemId: string, userId: string | null) {
+  const supabase = createClient();
+  return supabase
+    .from('group_kit_items')
+    .update({ assigned_to: userId })
+    .eq('id', itemId);
 }

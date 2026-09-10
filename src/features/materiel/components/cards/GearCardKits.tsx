@@ -1,6 +1,6 @@
 ﻿'use client';
+import Icon from '@/components/ui/Icon';
 import Link from 'next/link';
-import { Package, ArrowRight, Check } from 'lucide-react';
 import { GlassCard } from '@/components/ui/GlassCard';
 import { ProgressBar } from '@/components/ui/ProgressBar';
 
@@ -14,11 +14,20 @@ interface KitsData {
 }
 
 export function GearCardKits({ data, className }: { data: KitsData; className?: string }) {
-  const cleanName = (n: string | null) => (n ? n.replace(/\s*\(copie\)/gi, '').trim() : 'Trek Jura 2 jours');
-  const kits = data.topKits && data.topKits.length > 0 ? data.topKits : [
-    { id: '1', name: cleanName(data.assignedKitName), weightKg: 12.4, completionPct: data.avgCompletionPct || 100 },
-    { id: '2', name: 'Bivouac Été Express', weightKg: 7.8, completionPct: 85 },
-  ];
+  const cleanName = (n: string | null) =>
+    n ? n.replace(/\s*\(copie\)/gi, '').trim() : 'Trek Jura 2 jours';
+  const kits =
+    data.topKits && data.topKits.length > 0
+      ? data.topKits
+      : [
+          {
+            id: '1',
+            name: cleanName(data.assignedKitName),
+            weightKg: 12.4,
+            completionPct: data.avgCompletionPct || 100,
+          },
+          { id: '2', name: 'Bivouac Été Express', weightKg: 7.8, completionPct: 85 },
+        ];
 
   return (
     <GlassCard as="article" interactive ariaLabelledBy="kits-title" className={className}>
@@ -26,7 +35,10 @@ export function GearCardKits({ data, className }: { data: KitsData; className?: 
         {/* Header with Title & Large Metric */}
         <div className="flex items-start justify-between pr-7 md:pr-10">
           <div className="space-y-0.5">
-            <h2 id="kits-title" className="text-[13px] sm:text-[20px] font-display font-bold text-[var(--lkv-primary)] leading-tight truncate">
+            <h2
+              id="kits-title"
+              className="text-[13px] sm:text-[20px] font-display font-bold text-[var(--lkv-primary)] leading-tight truncate"
+            >
               Mes kits
             </h2>
           </div>
@@ -43,18 +55,23 @@ export function GearCardKits({ data, className }: { data: KitsData; className?: 
         {/* Top Kits Preview Cards */}
         <div className="flex flex-col gap-1 sm:gap-1.5">
           {kits.slice(0, 2).map((k) => (
-            <div key={k.id} className="glass-sub-card px-2 py-1 sm:px-2.5 sm:py-1.5 flex items-center justify-between gap-1 text-[10px] sm:text-xs">
+            <div
+              key={k.id}
+              className="glass-sub-card px-2 py-1 sm:px-2.5 sm:py-1.5 flex items-center justify-between gap-1 text-[10px] sm:text-xs"
+            >
               <div className="flex items-center gap-1.5 truncate">
                 <div className="w-4 h-4 sm:w-5 sm:h-5 rounded bg-white/40 border border-white/60 flex items-center justify-center text-[var(--lkv-primary)] flex-shrink-0">
-                  <Package size={9} />
+                  <Icon name="package" size={9} />
                 </div>
                 <span className="font-semibold text-[var(--lkv-primary)] truncate">{k.name}</span>
               </div>
               <div className="flex items-center gap-1 shrink-0">
-                <span className="text-[9.5px] font-mono text-[var(--lkv-text-muted)]">{k.weightKg}kg</span>
+                <span className="text-[9.5px] font-mono text-[var(--lkv-text-muted)]">
+                  {k.weightKg}kg
+                </span>
                 {k.completionPct === 100 && (
                   <span className="glass-check-circle checked !w-3 !h-3 flex items-center justify-center">
-                    <Check size={7} strokeWidth={3} />
+                    <Icon name="check" size={7} strokeWidth={3} />
                   </span>
                 )}
               </div>
@@ -75,13 +92,22 @@ export function GearCardKits({ data, className }: { data: KitsData; className?: 
         <div className="flex items-center justify-between gap-1.5 pt-0.5 min-w-0">
           <span
             className="text-[9.5px] sm:text-xs text-[var(--lkv-text-muted)] truncate font-medium flex-1 min-w-0"
-            title={data.totalWeightKg > 0 ? `Poids total du parc (${data.count} kits) : ${data.totalWeightKg} kg` : `${data.count} kits configurés`}
+            title={
+              data.totalWeightKg > 0
+                ? `Poids total du parc (${data.count} kits) : ${data.totalWeightKg} kg`
+                : `${data.count} kits configurés`
+            }
           >
-            {data.totalWeightKg > 0 ? `Total parc (${data.count}) : ${data.totalWeightKg} kg` : `${data.count} kits prêts`}
+            {data.totalWeightKg > 0
+              ? `Total parc (${data.count}) : ${data.totalWeightKg} kg`
+              : `${data.count} kits prêts`}
           </span>
-          <Link href="/hub/kit" className="glass-capsule-btn secondary text-[9.5px] sm:text-xs !h-6 sm:!h-7 !px-2 sm:!px-2.5 shrink-0">
+          <Link
+            href="/hub/kit"
+            className="glass-capsule-btn secondary text-[9.5px] sm:text-xs !h-6 sm:!h-7 !px-2 sm:!px-2.5 shrink-0"
+          >
             <span>Ouvrir</span>
-            <ArrowRight size={10} />
+            <Icon name="arrow-right" size={10} />
           </Link>
         </div>
       </div>

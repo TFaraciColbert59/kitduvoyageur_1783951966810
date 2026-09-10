@@ -1,9 +1,18 @@
-"use client";
+'use client';
 
+import Icon from '@/components/ui/Icon';
 import React, { useState, useEffect } from 'react';
 import Image from 'next/image';
 import { useRouter } from 'next/navigation';
-import type { Conversation, UserProfileSummary, Message, ConversationMember, ProductMessageMeta, TrailMessageMeta, KitMessageMeta } from '../types/messaging.types';
+import type {
+  Conversation,
+  UserProfileSummary,
+  Message,
+  ConversationMember,
+  ProductMessageMeta,
+  TrailMessageMeta,
+  KitMessageMeta,
+} from '../types/messaging.types';
 import { useMessages } from '../hooks/useMessages';
 import { useRealtimeMessaging } from '../hooks/useRealtimeMessaging';
 import { messagingService } from '../services/messagingService';
@@ -13,7 +22,6 @@ import { ForwardMessageSheet } from './ForwardMessageSheet';
 import { ConversationOptionsMenuModal } from './ConversationOptionsMenuModal';
 import { GroupSettingsModal } from './GroupSettingsModal';
 import ReportBlockModal, { ReportTarget } from '@/components/ui/ReportBlockModal';
-import { ArrowLeft, MoreVertical, ShieldAlert, Check, X, Users } from 'lucide-react';
 import { useHapticFeedback } from '@/hooks/useHapticFeedback';
 
 interface ConversationViewProps {
@@ -34,7 +42,7 @@ export const ConversationView: React.FC<ConversationViewProps> = ({
   const { haptic } = useHapticFeedback();
   const router = useRouter();
   const isGroup = conversation.type === 'group';
-  const title = conversation.title || (isGroup ? 'Groupe d\'expédition' : 'Voyageur LKDV');
+  const title = conversation.title || (isGroup ? "Groupe d'expédition" : 'Voyageur LKDV');
   const avatarUrl = conversation.avatar_url || '/assets/images/no_image.png';
   // Convention app : photo de profil / nom -> fiche profil (/profil/<id>).
   const otherProfileId = conversation.other_member?.id || null;
@@ -221,7 +229,7 @@ export const ConversationView: React.FC<ConversationViewProps> = ({
               className="glass-circle-btn w-10 h-10 text-[#17402C] shadow-xs active:scale-95 shrink-0"
               title="Retour aux conversations"
             >
-              <ArrowLeft className="w-5 h-5" />
+              <Icon name="arrow-left" className="w-5 h-5" />
             </button>
           )}
 
@@ -257,7 +265,7 @@ export const ConversationView: React.FC<ConversationViewProps> = ({
           >
             <h3 className="text-sm font-bold text-[#17402C] leading-tight truncate flex items-center gap-1.5">
               <span className="truncate">{title}</span>
-              {isGroup && <Users className="w-3.5 h-3.5 text-[#5A574E] shrink-0" />}
+              {isGroup && <Icon name="users" className="w-3.5 h-3.5 text-[#5A574E] shrink-0" />}
             </h3>
             <p className="text-[11px] text-[#486944] font-medium truncate">
               {isGroup ? 'Groupe de Voyage' : 'Membre LKDV'}
@@ -277,7 +285,7 @@ export const ConversationView: React.FC<ConversationViewProps> = ({
               className="glass-circle-btn w-10 h-10 text-[#17402C] shadow-xs active:scale-95"
               title="Gérer le groupe"
             >
-              <Users className="w-5 h-5" />
+              <Icon name="users" className="w-5 h-5" />
             </button>
           )}
 
@@ -291,7 +299,7 @@ export const ConversationView: React.FC<ConversationViewProps> = ({
             className="glass-circle-btn w-10 h-10 text-[#17402C] shadow-xs active:scale-95"
             title="Options de conversation"
           >
-            <MoreVertical className="w-5 h-5" />
+            <Icon name="more-vertical" className="w-5 h-5" />
           </button>
         </div>
       </div>
@@ -314,12 +322,13 @@ export const ConversationView: React.FC<ConversationViewProps> = ({
         <div className="p-4 glass border-t border-white/40 flex flex-col gap-3 animate-slide-up shrink-0 pb-[calc(env(safe-area-inset-bottom,0px)+12px)]">
           <div className="flex items-center gap-2.5">
             <div className="w-9 h-9 rounded-full bg-[#C89A3B]/15 text-[#C89A3B] flex items-center justify-center shrink-0">
-              <ShieldAlert className="w-5 h-5" />
+              <Icon name="shield-alert" className="w-5 h-5" />
             </div>
             <div>
               <p className="text-xs font-bold text-[#17402C]">Demande de message</p>
               <p className="text-[11px] text-[#5A7064]">
-                Souhaitez-vous autoriser {conversation.other_member?.full_name || 'ce voyageur'} à échanger avec vous ?
+                Souhaitez-vous autoriser {conversation.other_member?.full_name || 'ce voyageur'} à
+                échanger avec vous ?
               </p>
             </div>
           </div>
@@ -331,20 +340,24 @@ export const ConversationView: React.FC<ConversationViewProps> = ({
               onClick={handleAcceptRequest}
               className="flex-1 glass-capsule-btn primary text-xs font-bold min-h-[44px] flex items-center justify-center gap-1.5 active:scale-95"
             >
-              <Check className="w-4 h-4" />
+              <Icon name="check" className="w-4 h-4" />
               Accepter
             </button>
             <button
               onClick={handleDeclineRequest}
               className="flex-1 glass-capsule-btn text-xs font-semibold min-h-[44px] flex items-center justify-center gap-1.5 active:scale-95"
             >
-              <X className="w-4 h-4" />
+              <Icon name="x" className="w-4 h-4" />
               Refuser
             </button>
             <button
               onClick={handleOpenReportBlock}
               className="glass-capsule-btn px-4 text-xs font-semibold min-h-[44px] flex items-center justify-center gap-1.5 active:scale-95"
-              style={{ background: 'color-mix(in oklab, var(--danger) 14%, transparent)', color: 'var(--danger)', borderColor: 'color-mix(in oklab, var(--danger) 35%, transparent)' }}
+              style={{
+                background: 'color-mix(in oklab, var(--danger) 14%, transparent)',
+                color: 'var(--danger)',
+                borderColor: 'color-mix(in oklab, var(--danger) 35%, transparent)',
+              }}
             >
               Bloquer
             </button>

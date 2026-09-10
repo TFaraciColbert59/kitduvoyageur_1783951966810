@@ -1,10 +1,10 @@
 'use client';
 
+import Icon from '@/components/ui/Icon';
 import { useState } from 'react';
 import { GlassCard } from '@/components/ui/GlassCard';
 import { Eyebrow } from '@/components/ui/Eyebrow';
 import { Badge } from '@/components/ui/Badge';
-import { Check } from 'lucide-react';
 import { ShoppingBagIcon as ShoppingBag } from '@/components/icons/shopping-bag';
 import { ClockIcon as Clock } from '@/components/icons/clock';
 import type { KitListItem } from '@/features/materiel/services/getKits';
@@ -26,7 +26,8 @@ export function KitsGrid({ kits, onSelect }: Props) {
       <GlassCard tone="sage" className="p-5 text-center">
         <Eyebrow>Mon Kit</Eyebrow>
         <p className="text-sm text-[var(--lkv-text-muted)] mt-2 mb-3">
-          Aucun kit créé pour le moment. Utilisez l&apos;assembleur ci-dessous pour composer votre premier kit sur-mesure.
+          Aucun kit créé pour le moment. Utilisez l&apos;assembleur ci-dessous pour composer votre
+          premier kit sur-mesure.
         </p>
       </GlassCard>
     );
@@ -78,19 +79,25 @@ export function KitsGrid({ kits, onSelect }: Props) {
       {/* Résumé des indicateurs du kit */}
       <div className="grid grid-cols-3 gap-2 p-2.5 rounded-2xl bg-white/[0.06] border border-white/20">
         <div className="text-center">
-          <span className="text-[10px] uppercase font-bold text-[var(--lkv-text-muted)]">Poids</span>
+          <span className="text-[10px] uppercase font-bold text-[var(--lkv-text-muted)]">
+            Poids
+          </span>
           <p className="font-mono font-bold text-xs sm:text-sm text-[var(--lkv-primary)]">
             {(currentKit.total_weight_g / 1000).toFixed(1)} kg
           </p>
         </div>
         <div className="text-center border-x border-white/15">
-          <span className="text-[10px] uppercase font-bold text-[var(--lkv-text-muted)]">Articles</span>
+          <span className="text-[10px] uppercase font-bold text-[var(--lkv-text-muted)]">
+            Articles
+          </span>
           <p className="font-mono font-bold text-xs sm:text-sm text-[var(--lkv-primary)]">
             {currentKit.item_count}
           </p>
         </div>
         <div className="text-center">
-          <span className="text-[10px] uppercase font-bold text-[var(--lkv-text-muted)]">Complétude</span>
+          <span className="text-[10px] uppercase font-bold text-[var(--lkv-text-muted)]">
+            Complétude
+          </span>
           <p className="font-mono font-bold text-xs sm:text-sm text-[var(--lkv-primary)]">
             {completionPct}%
           </p>
@@ -115,7 +122,9 @@ export function KitsGrid({ kits, onSelect }: Props) {
         </div>
 
         {currentKit.items.length === 0 ? (
-          <p className="text-xs text-[var(--lkv-text-muted)] p-3 text-center">Aucun article dans ce kit.</p>
+          <p className="text-xs text-[var(--lkv-text-muted)] p-3 text-center">
+            Aucun article dans ce kit.
+          </p>
         ) : (
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 max-h-72 overflow-y-auto pr-1">
             {currentKit.items.map((item, idx) => {
@@ -137,18 +146,25 @@ export function KitsGrid({ kits, onSelect }: Props) {
                           : 'bg-[var(--lkv-primary)]/10 border-[var(--lkv-primary)]/20 text-[var(--lkv-primary)]'
                       }`}
                     >
-                      {isUnowned ? <Clock size={11} /> : <Check size={12} strokeWidth={3} />}
+                      {isUnowned ? (
+                        <Clock size={11} />
+                      ) : (
+                        <Icon name="check" size={12} strokeWidth={3} />
+                      )}
                     </div>
                     <div className="min-w-0">
                       <p
                         className={`text-xs font-semibold truncate ${
-                          isUnowned ? 'text-[var(--lkv-text-muted)] italic line-through' : 'text-[var(--lkv-primary)]'
+                          isUnowned
+                            ? 'text-[var(--lkv-text-muted)] italic line-through'
+                            : 'text-[var(--lkv-primary)]'
                         }`}
                       >
                         {item.name}
                       </p>
                       <p className="text-[10px] text-[var(--lkv-text-muted)]">
-                        {item.category || 'Équipement'} · {item.weight_g ? `${item.weight_g}g` : '0g'}
+                        {item.category || 'Équipement'} ·{' '}
+                        {item.weight_g ? `${item.weight_g}g` : '0g'}
                       </p>
                     </div>
                   </div>

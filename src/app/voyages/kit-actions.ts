@@ -2,6 +2,7 @@
 
 import { revalidatePath } from 'next/cache';
 import { tripSegmentPath } from '@/features/trips/registry/tripPaths';
+import { HUB_HOME_HREF, hubSectionHref } from '@/features/hub/registry/hubSectionRegistry';
 import { z } from 'zod';
 import { createClient } from '@/lib/supabase/server';
 import {
@@ -9,6 +10,7 @@ import {
   addTripItem,
   deleteTripItem,
   addRecommendedItemToTrip,
+  setTripItemPurchaseState,
 } from '@/lib/queries-trip-kit';
 import { getTripById } from '@/lib/queries-trips';
 import type { ContextualGearRecommendation } from '@/features/trips/types/kit.types';
@@ -24,6 +26,12 @@ const slugSchema = z
 const togglePackedSchema = z.object({
   itemId: uuidSchema,
   isPacked: z.boolean(),
+  tripSlug: slugSchema,
+});
+
+const purchaseStateSchema = z.object({
+  itemId: uuidSchema,
+  state: z.enum(['needed', 'added', 'in_cart', 'shipping']),
   tripSlug: slugSchema,
 });
 
@@ -49,11 +57,27 @@ const addRecommendedSchema = z.object({
   tripSlug: slugSchema,
   recommendation: z.object({
     id: z.string().max(160),
+    key: z.string().max(160).optional(),
     name: z.string().max(160),
     category: z.string().max(40),
     reason: z.string().max(600).optional(),
     weightGrams: z.number().int().min(0).max(1_000_000).optional(),
     priority: z.enum(['vital', 'recommended']).optional(),
+    shopProduct: z
+      .object({
+        id: uuidSchema,
+        slug: z.string().max(160),
+        name: z.string().max(160),
+        brand: z.string().max(120),
+        price_eur: z.number().min(0).max(1_000_000),
+        weight_g: z.number().min(0).max(1_000_000),
+        category_main: z.string().max(80),
+        image: z.string().max(1000).nullable().optional(),
+        image_alt: z.string().max(300).nullable().optional(),
+        score_kdv: z.number().nullable().optional(),
+      })
+      .nullable()
+      .optional(),
   }).passthrough(),
 });
 
@@ -92,14 +116,45 @@ export async function togglePackedAction(
 
     // Autorisation d'écriture portée par la RLS (can_edit_trip) : un update
     // bloqué affecte 0 ligne et remonte en échec explicite.
-    const ok = await toggleTripItemPacked(parsed.data.itemId, parsed.data.isPacked);
+    const ok = await toggleTripItemPacked(parsed.data.itemId, parsed.data.isPacked, user.id);
     if (!ok) return { success: false, error: 'Impossible de modifier le statut de l’équipement' };
 
     revalidatePath(tripSegmentPath(parsed.data.tripSlug, ''));
     revalidatePath(tripSegmentPath(parsed.data.tripSlug, 'kit'));
+    revalidatePath(HUB_HOME_HREF);
+    revalidatePath(hubSectionHref({ nature: 'sortie', slug: parsed.data.tripSlug }, 'gear'));
     return { success: true };
   } catch (err) {
     console.error('[LKDV Action] togglePackedAction error:', err);
+    return { success: false, error: 'Erreur serveur' };
+  }
+}
+
+export async function setPurchaseStateAction(
+  itemId: string,
+  state: 'needed' | 'added' | 'in_cart' | 'shipping',
+  tripSlug: string
+): Promise<{ success: boolean; error?: string }> {
+  try {
+    const parsed = purchaseStateSchema.safeParse({ itemId, state, tripSlug });
+    if (!parsed.success) {
+      return { success: false, error: 'Requête invalide' };
+    }
+
+    const supabase = await createClient();
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
+    if (!user) return { success: false, error: 'Vous devez être connecté' };
+
+    const ok = await setTripItemPurchaseState(parsed.data.itemId, parsed.data.state);
+    if (!ok) return { success: false, error: 'Impossible de mettre à jour le statut d’achat' };
+
+    revalidatePath(HUB_HOME_HREF);
+    revalidatePath(hubSectionHref({ nature: 'sortie', slug: parsed.data.tripSlug }, 'gear'));
+    return { success: true };
+  } catch (err) {
+    console.error('[LKDV Action] setPurchaseStateAction error:', err);
     return { success: false, error: 'Erreur serveur' };
   }
 }
@@ -197,9 +252,11 @@ export async function addRecommendedItemAction(
     const auth = await requireTripEditor(parsed.data.tripId);
     if ('error' in auth) return { success: false, error: auth.error };
 
-    // L'objet d'origine est déjà typé ContextualGearRecommendation ; le schéma
-    // zod ci-dessus a validé les champs critiques (id/nom/catégorie/poids).
-    const item = await addRecommendedItemToTrip(parsed.data.tripId, recommendation);
+    // Données validées par zod (shopProduct compris) — jamais l'objet client brut.
+    const item = await addRecommendedItemToTrip(
+      parsed.data.tripId,
+      parsed.data.recommendation as ContextualGearRecommendation
+    );
     if (!item) return { success: false, error: 'Erreur lors de l’ajout de la recommandation' };
 
     revalidatePath(tripSegmentPath(parsed.data.tripSlug, ''));

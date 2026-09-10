@@ -13,7 +13,6 @@ function lists(overrides = {}) {
   return {
     trips: [],
     groups: [],
-    crews: [],
     possession: { itemsCount: 0, loansCount: 0, alertsCount: 0 },
     pendingInvites: 0,
     ...overrides,
@@ -46,7 +45,7 @@ describe('H5 — suggestActiveAdventure : règles déterministes', () => {
       }),
       NOW,
     );
-    expect(s?.key).toBe('collectif:groupe:g1');
+    expect(s?.key).toBe('collectif:g1');
     expect(s?.reason).toMatch(/invitation/);
   });
 
@@ -90,15 +89,16 @@ describe('H5 — suggestActiveAdventure : règles déterministes', () => {
     expect(s?.reason).toMatch(/récent/);
   });
 
-  it('SUG-7: équipage suggéré si voyage lié imminent (via crews)', () => {
+  it('SUG-7: voyage imminent prime sur le groupe (règle 1 > collectif)', () => {
     const s = suggestActiveAdventure(
       lists({
-        crews: [{ id: 'c1', name: 'Sud', next_trip: { slug: 'merc', title: 'Merc' } }],
+        groups: [{ id: 'g1', name: 'Sud', member_count: 3 }],
+        pendingInvites: 1,
         trips: [{ id: 't9', slug: 'merc', title: 'Merc', start_date: '2026-09-09' }],
       }),
       NOW,
     );
-    // Le voyage imminent prime sur l'équipage (règle 1 > collectif).
+    // Le voyage imminent prime sur le groupe (règle 1 > collectif).
     expect(s?.key).toBe('sortie:merc');
   });
 

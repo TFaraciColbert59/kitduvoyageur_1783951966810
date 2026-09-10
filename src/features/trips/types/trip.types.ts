@@ -16,6 +16,9 @@ export type TripActivityType =
   | 'mixed';
 export type TripDifficulty = 'easy' | 'moderate' | 'hard' | 'expert';
 export type TripItemStatus = 'packed' | 'needed' | 'optional' | 'missing';
+
+/** Cycle d'achat d'un équipement manquant (menu Équipement mobile). */
+export type TripPurchaseState = 'needed' | 'added' | 'in_cart' | 'shipping';
 export type TripBudgetCurrency = 'EUR' | 'USD' | 'GBP' | 'CHF' | 'CAD' | 'JPY';
 export type TripDocumentCategory =
   | 'passport'
@@ -115,6 +118,7 @@ export interface TripItem {
   is_packed: boolean;
   status: TripItemStatus;
   packed_by: string | null;
+  purchase_state?: TripPurchaseState;
   inventory_item_id: string | null;
   affiliate_link_id: string | null;
   shop_product_id?: string | null;

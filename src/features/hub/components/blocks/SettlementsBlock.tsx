@@ -1,4 +1,4 @@
-import { HandCoins, CheckCircle2 } from 'lucide-react';
+import Icon from '@/components/ui/Icon';
 import { calculateBudgetSummary } from '@/features/trips/engine/budgetEngine';
 import type { TripFull } from '@/features/trips/types/trip.types';
 import { hubSectionHref, type HubAdventureRef } from '../../registry/hubSectionRegistry';
@@ -12,7 +12,7 @@ export function SettlementsBlock({ trip, slug }: { trip: TripFull; slug: string 
   const summary = calculateBudgetSummary(
     { estimated_budget: trip.estimated_budget, budget_currency: trip.budget_currency },
     trip.expenses ?? [],
-    trip.collaborators ?? [],
+    trip.collaborators ?? []
   );
   const currency = summary.currency || 'EUR';
   const settlements = summary.settlements.slice(0, 3);
@@ -22,7 +22,12 @@ export function SettlementsBlock({ trip, slug }: { trip: TripFull; slug: string 
     <div className="glass p-5 rounded-[var(--lkv-radius-card)] border border-white/60 shadow-sm">
       <div className="flex items-center justify-between mb-3">
         <h2 className="text-base font-bold text-[var(--lkv-text-primary)] flex items-center gap-2">
-          <HandCoins size={18} className="text-[var(--lkv-text-secondary)]" aria-hidden="true" />
+          <Icon
+            name="hand-coins"
+            size={18}
+            className="text-[var(--lkv-text-secondary)]"
+            aria-hidden="true"
+          />
           <span>Qui doit quoi</span>
         </h2>
         <a
@@ -35,7 +40,12 @@ export function SettlementsBlock({ trip, slug }: { trip: TripFull; slug: string 
 
       {settlements.length === 0 ? (
         <div className="flex items-center gap-2.5 text-sm text-[var(--lkv-text-secondary)]">
-          <CheckCircle2 size={18} className="text-[var(--lkv-success)] shrink-0" aria-hidden="true" />
+          <Icon
+            name="check-circle2"
+            size={18}
+            className="text-[var(--lkv-success)] shrink-0"
+            aria-hidden="true"
+          />
           <span>Comptes équilibrés — personne ne doit rien.</span>
         </div>
       ) : (

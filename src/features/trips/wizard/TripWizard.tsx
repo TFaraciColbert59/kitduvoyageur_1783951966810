@@ -1,5 +1,6 @@
 'use client';
 
+import Icon from '@/components/ui/Icon';
 import React, { useMemo } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
@@ -14,18 +15,7 @@ import { Step5Preview } from './Step5Preview';
 import AppShellDesktop from '@/components/shell/AppShellDesktop';
 import MobilePageShell from '@/components/mobile-nav/MobilePageShell';
 import { GlassCard, GlassSubCard, GlassPill, GlassCapsuleBtn } from '@/components/ui';
-import {
-  ChevronLeft,
-  ChevronRight,
-  MapPin,
-  Calendar,
-  Compass,
-  Users,
-  Eye,
-  Check,
-  ArrowLeft,
-  Sparkles,
-} from 'lucide-react';
+import { MapPin, Calendar, Compass, Users, Eye } from 'lucide-react';
 
 const STEP_LABELS = [
   { step: 1, label: 'Destinations', Icon: MapPin, desc: 'Choix des pays et territoires' },
@@ -37,14 +27,8 @@ const STEP_LABELS = [
 
 export function TripWizard() {
   const router = useRouter();
-  const {
-    state,
-    isInitialized,
-    setStep,
-    updateDraft,
-    saveDraftToDatabase,
-    resetDraft,
-  } = useTripDraft();
+  const { state, isInitialized, setStep, updateDraft, saveDraftToDatabase, resetDraft } =
+    useTripDraft();
 
   // Titre suggéré automatiquement
   const defaultSuggestedTitle = useMemo(() => {
@@ -161,7 +145,7 @@ export function TripWizard() {
           href="/voyages"
           className="inline-flex items-center gap-1.5 text-xs text-forest-800 hover:underline font-medium"
         >
-          <ArrowLeft size={13} />
+          <Icon name="arrow-left" size={13} />
           <span>Annuler la création</span>
         </Link>
 
@@ -188,8 +172,8 @@ export function TripWizard() {
                   isCurrent
                     ? 'bg-[var(--lkv-primary)] text-white shadow-sm'
                     : isDone
-                    ? 'hover:bg-white/60 text-forest-900 cursor-pointer'
-                    : 'text-sage-400 cursor-default opacity-60'
+                      ? 'hover:bg-white/60 text-forest-900 cursor-pointer'
+                      : 'text-sage-400 cursor-default opacity-60'
                 }`}
               >
                 <div
@@ -197,11 +181,11 @@ export function TripWizard() {
                     isCurrent
                       ? 'bg-white text-[var(--lkv-primary)]'
                       : isDone
-                      ? 'bg-[var(--lkv-success)] text-white'
-                      : 'bg-white/40 border border-black/10 text-sage-400'
+                        ? 'bg-[var(--lkv-success)] text-white'
+                        : 'bg-white/40 border border-black/10 text-sage-400'
                   }`}
                 >
-                  {isDone ? <Check size={12} /> : step}
+                  {isDone ? <Icon name="check" size={12} /> : step}
                 </div>
                 <div className="min-w-0 flex-1">
                   <div className="text-xs font-bold leading-tight truncate">{label}</div>
@@ -231,7 +215,7 @@ export function TripWizard() {
     <div className="w-full shrink-0 h-full overflow-y-auto custom-scrollbar flex flex-col gap-3 pb-6 font-sans">
       <GlassCard className="p-3.5 space-y-2.5 text-forest-900">
         <span className="text-xs font-bold uppercase tracking-wider text-sage-800 flex items-center gap-1.5">
-          <Sparkles size={13} />
+          <Icon name="sparkles" size={13} />
           <span>Brouillon en cours</span>
         </span>
         <div className="space-y-2 text-xs">
@@ -295,7 +279,7 @@ export function TripWizard() {
                 onClick={handlePrev}
                 disabled={state.step === 1}
                 variant="default"
-                icon={<ChevronLeft size={16} />}
+                icon={<Icon name="chevron-left" size={16} />}
                 className="flex-1 justify-center"
               >
                 Précédent
@@ -305,7 +289,7 @@ export function TripWizard() {
                 type="button"
                 onClick={handleNext}
                 variant="primary"
-                icon={<ChevronRight size={16} />}
+                icon={<Icon name="chevron-right" size={16} />}
                 className="flex-1 justify-center"
               >
                 Continuer

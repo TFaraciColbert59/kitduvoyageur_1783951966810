@@ -216,6 +216,7 @@ export default function TachesCard({ tasks: initialTasks, groupId, onRefresh, us
           <select 
             value={filter}
             onChange={(e) => setFilter(e.target.value as any)}
+            aria-label="Filtrer les tâches"
             className="glass-input py-1.5 px-3 text-xs font-semibold cursor-pointer min-h-[36px]"
           >
             <option value="all">Filtrer (Tout)</option>
@@ -276,6 +277,7 @@ export default function TachesCard({ tasks: initialTasks, groupId, onRefresh, us
               type="button"
               onClick={() => toggleTask(task.id, task.completed)}
               disabled={togglingId === task.id}
+              aria-label={task.completed ? `Rouvrir la tâche ${task.title}` : `Marquer la tâche ${task.title} comme terminée`}
               className={`glass-check-circle ${task.completed ? 'checked' : ''} disabled:opacity-50`}
             >
               {togglingId === task.id ? (
@@ -300,6 +302,7 @@ export default function TachesCard({ tasks: initialTasks, groupId, onRefresh, us
                     onClick={() => handleDeleteTask(task.id)}
                     className="p-1 text-lkv-text-muted hover:text-red-600 transition-colors ml-2 opacity-0 group-hover:opacity-100"
                     title="Supprimer la tâche"
+                    aria-label={`Supprimer la tâche ${task.title}`}
                   >
                     <Icon name="TrashIcon" size={14} className="relative z-10" />
                   </button>

@@ -18,7 +18,10 @@ import VoyageursCard from '@/components/groupes/VoyageursCard';
 const DepensesCard = nextDynamic(() => import('@/components/groupes/DepensesCard'), { ssr: false });
 const DecisionsCard = nextDynamic(() => import('@/components/groupes/DecisionsCard'), { ssr: false });
 const DiscussionCard = nextDynamic(() => import('@/components/groupes/DiscussionCard'), { ssr: false });
-const MobileGroupeView = nextDynamic(() => import('@/components/groupes/MobileGroupeView'), { ssr: false });
+const GroupeMobileExperience = nextDynamic(
+  () => import('@/features/hub/components/mobile/groupe/GroupeMobileExperience'),
+  { ssr: false }
+);
 
 const VALID_TABS = ['overview', 'parcours', 'tasks', 'equipment', 'expenses', 'decisions', 'discussion', 'members'];
 
@@ -36,13 +39,6 @@ export function HubGroupeCockpit({ groupId, initialTab }: { groupId: string; ini
   const [data, setData] = useState<any>(null);
   const [linkedTrip, setLinkedTrip] = useState<{ id: string; slug: string; title: string } | null>(null);
   const loadedRef = useRef(false);
-
-  // Mobile : le cockpit écoute l'événement onglet (MobileGroupeView).
-  useEffect(() => {
-    if (initialTab && VALID_TABS.includes(initialTab)) {
-      window.dispatchEvent(new CustomEvent('groupe-cockpit-tab-change', { detail: initialTab }));
-    }
-  }, [initialTab]);
 
   const loadData = useCallback(async () => {
     const isFirstLoad = !loadedRef.current;
@@ -108,20 +104,21 @@ export function HubGroupeCockpit({ groupId, initialTab }: { groupId: string; ini
 
   return (
     <>
-      {/* ── MOBILE : accordéon legacy complet ── */}
-      <div className="md:hidden -mx-4">
-        <MobileGroupeView
+      {/* ── MOBILE / TABLETTE : expérience collectif pleine page ── */}
+      <div className="lg:hidden -mx-4">
+        <GroupeMobileExperience
           data={data}
           groupId={data.id}
           user={user}
           members={members}
           onRefresh={refreshData}
           linkedTrip={linkedTrip}
+          initialTab={initialTab}
         />
       </div>
 
       {/* ── DESKTOP : cockpit à onglets dans la colonne du hub ── */}
-      <div className="hidden md:block space-y-4">
+      <div className="hidden lg:block space-y-4">
         <TabsGroupe
           layoutVariant="horizontal"
           activeTab={activeTab}

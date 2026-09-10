@@ -1,8 +1,8 @@
 'use client';
+import Icon from '@/components/ui/Icon';
 import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { motion, AnimatePresence, useReducedMotion } from 'framer-motion';
-import { AlertTriangle, AlertCircle, ShieldCheck } from 'lucide-react';
 import { HelpCircleIcon as HelpCircle } from '@/components/icons/help-circle';
 import { ClockIcon as Clock } from '@/components/icons/clock';
 import { ExternalLinkIcon as ExternalLink } from '@/components/icons/external-link';
@@ -10,7 +10,10 @@ import { ChevronDownIcon as ChevronDown } from '@/components/icons/chevron-down'
 import { ArrowRightIcon as ArrowRightAnimated } from '@/components/icons/arrow-right';
 import { XIcon as XAnimated } from '@/components/icons/x';
 import { cn } from '@/lib/utils';
-import type { ActionableAlert, SmartPromptsInput } from '@/features/materiel/services/generateSmartPrompts';
+import type {
+  ActionableAlert,
+  SmartPromptsInput,
+} from '@/features/materiel/services/generateSmartPrompts';
 import { generateSmartPrompts } from '@/features/materiel/services/generateSmartPrompts';
 
 const DISMISS_STORAGE_KEY = 'lkdv_dismissed_depart_alerts_v2';
@@ -103,14 +106,10 @@ export function DepartAlerts({ input }: { input: SmartPromptsInput }) {
     return (
       <div className="p-3.5 rounded-2xl bg-white/70 dark:bg-stone-900/60 border border-white/80 text-center space-y-1.5 shadow-2xs">
         <div className="w-8 h-8 rounded-xl bg-forest-100 dark:bg-forest-900/40 text-[var(--lkv-primary-hover)] dark:text-forest-400 flex items-center justify-center mx-auto shadow-2xs">
-          <ShieldCheck size={16} />
+          <Icon name="shield-check" size={16} />
         </div>
-        <h4 className="text-xs font-bold text-[var(--lkv-primary)]">
-          Aucun point bloquant
-        </h4>
-        <p className="text-[10.5px] text-[var(--lkv-text-muted)]">
-          Équipements et sécurité prêts.
-        </p>
+        <h4 className="text-xs font-bold text-[var(--lkv-primary)]">Aucun point bloquant</h4>
+        <p className="text-[10.5px] text-[var(--lkv-text-muted)]">Équipements et sécurité prêts.</p>
       </div>
     );
   }
@@ -165,10 +164,16 @@ export function DepartAlerts({ input }: { input: SmartPromptsInput }) {
                     <div
                       className={cn(
                         'w-5.5 h-5.5 rounded-lg flex items-center justify-center shrink-0 shadow-2xs mt-0.5',
-                        isCritical ? 'bg-rose-200/80 text-[var(--lkv-danger)]' : 'bg-[var(--lkv-primary-hover)]/10 text-[var(--lkv-primary-hover)]'
+                        isCritical
+                          ? 'bg-rose-200/80 text-[var(--lkv-danger)]'
+                          : 'bg-[var(--lkv-primary-hover)]/10 text-[var(--lkv-primary-hover)]'
                       )}
                     >
-                      {isCritical ? <AlertTriangle size={11} /> : <AlertCircle size={11} />}
+                      {isCritical ? (
+                        <Icon name="alert-triangle" size={11} />
+                      ) : (
+                        <Icon name="alert-circle" size={11} />
+                      )}
                     </div>
 
                     <h5 className="text-[11.5px] font-bold leading-tight text-[var(--lkv-primary)] break-words line-clamp-2">

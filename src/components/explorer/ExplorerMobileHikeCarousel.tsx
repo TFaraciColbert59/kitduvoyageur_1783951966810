@@ -1,8 +1,8 @@
 'use client';
 
+import Icon from '@/components/ui/Icon';
 import React, { useEffect, useRef, useState, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { MapPin, Backpack } from 'lucide-react';
 import { TrendingUpIcon as TrendingUp } from '@/components/icons/trending-up';
 import { NavigationIcon as Navigation } from '@/components/icons/navigation';
 import { DocIcon as FileText } from '@/components/icons/doc';
@@ -69,7 +69,9 @@ export default function ExplorerMobileHikeCarousel({
   // Auto-scroll the horizontal carousel to center the selected trail card
   useEffect(() => {
     if (!selectedTrailId || viewMode !== 'carousel' || !carouselScrollRef.current) return;
-    const activeEl = carouselScrollRef.current.querySelector<HTMLElement>(`[data-trail-id="${selectedTrailId}"]`);
+    const activeEl = carouselScrollRef.current.querySelector<HTMLElement>(
+      `[data-trail-id="${selectedTrailId}"]`
+    );
     if (activeEl) {
       programmaticUntilRef.current = Date.now() + 700;
       activeEl.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' });
@@ -91,7 +93,7 @@ export default function ExplorerMobileHikeCarousel({
       {/* ── TOP FLOATING PILL (Mode Switch & Counter) ── */}
       <div className="flex items-center justify-between px-3.5 mb-1.5 pointer-events-auto">
         <div className="glass-capsule-btn text-xs font-bold !py-1 !px-3">
-          <MapPin size={12} className="text-[#17402C]" />
+          <Icon name="map-pin" size={12} className="text-[#17402C]" />
           <span>{count} randonnées</span>
         </div>
 
@@ -145,7 +147,9 @@ export default function ExplorerMobileHikeCarousel({
                     : 'linear-gradient(180deg, rgba(255, 255, 255, 0.65) 0%, rgba(251, 250, 246, 0.38) 100%)',
                   backdropFilter: 'blur(20px) saturate(180%)',
                   WebkitBackdropFilter: 'blur(20px) saturate(180%)',
-                  border: isSelected ? '1.5px solid rgba(255, 255, 255, 0.95)' : '1px solid rgba(255, 255, 255, 0.70)',
+                  border: isSelected
+                    ? '1.5px solid rgba(255, 255, 255, 0.95)'
+                    : '1px solid rgba(255, 255, 255, 0.70)',
                   boxShadow: isSelected
                     ? '0 12px 36px -6px rgba(23, 64, 44, 0.20), inset 0 1.5px 2px rgba(255, 255, 255, 0.95)'
                     : '0 8px 24px -4px rgba(23, 64, 44, 0.10), inset 0 1px 1px rgba(255, 255, 255, 0.85)',
@@ -193,8 +197,7 @@ export default function ExplorerMobileHikeCarousel({
                       <>
                         <span className="text-[#5A7064]/40">·</span>
                         <span className="flex items-center gap-0.5 font-bold text-[#17402C]">
-                          <TrendingUp size={9} />
-                          +{Math.round(trail.elevation_gain)}m
+                          <TrendingUp size={9} />+{Math.round(trail.elevation_gain)}m
                         </span>
                       </>
                     )}
@@ -245,11 +248,13 @@ export default function ExplorerMobileHikeCarousel({
           exit={{ opacity: 0, y: 16 }}
           className="mx-3 rounded-xl p-3 pointer-events-auto max-h-[50vh] flex flex-col shadow-2xl"
           style={{
-            background: 'linear-gradient(180deg, rgba(255, 255, 255, 0.70) 0%, rgba(251, 250, 246, 0.40) 100%)',
+            background:
+              'linear-gradient(180deg, rgba(255, 255, 255, 0.70) 0%, rgba(251, 250, 246, 0.40) 100%)',
             backdropFilter: 'blur(24px) saturate(180%)',
             WebkitBackdropFilter: 'blur(24px) saturate(180%)',
             border: '1px solid rgba(255, 255, 255, 0.75)',
-            boxShadow: '0 20px 50px -12px rgba(23, 64, 44, 0.2), inset 0 1.5px 2px rgba(255, 255, 255, 0.95)',
+            boxShadow:
+              '0 20px 50px -12px rgba(23, 64, 44, 0.2), inset 0 1.5px 2px rgba(255, 255, 255, 0.95)',
           }}
         >
           <div className="flex items-center justify-between pb-2 mb-1 px-1 border-b border-[#17402C]/5">
