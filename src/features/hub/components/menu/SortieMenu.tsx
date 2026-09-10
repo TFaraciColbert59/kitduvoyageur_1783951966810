@@ -820,8 +820,10 @@ export function SortieMenu({
         }
         tiles={mobileTiles}
         chips={mobileChips}
+        fill
       >
-        <SortieMoment trip={trip} context={momentContext} hiking={hiking} />
+        <SortieMoment trip={trip} context={momentContext} hiking={hiking} fillViewport />
+
         {phase === 'live' && <SosFloatingButton safetyHref={hubSectionHref(ref, 'safety')} />}
       </MobileAdventureHub>
     </>

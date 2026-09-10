@@ -517,6 +517,7 @@ export async function addTripStepAction(
       longitude: input.longitude ?? null,
       accommodation_name: input.accommodation_name ?? null,
       transport_mode: input.transport_mode ?? null,
+      start_time: input.start_time ?? null,
       distance_km: input.distance_km ?? null,
       elevation_gain_m: input.elevation_gain_m ?? null,
       elevation_loss_m: input.elevation_loss_m ?? null,
@@ -569,6 +570,7 @@ export async function updateTripStepAction(
   if (input.longitude !== undefined) patch.longitude = input.longitude;
   if (input.accommodation_name !== undefined) patch.accommodation_name = input.accommodation_name;
   if (input.transport_mode !== undefined) patch.transport_mode = normalizeTransportMode(input.transport_mode) as typeof input.transport_mode;
+  if (input.start_time !== undefined) patch.start_time = input.start_time;
   if (input.distance_km !== undefined) patch.distance_km = input.distance_km;
   if (input.elevation_gain_m !== undefined) patch.elevation_gain_m = input.elevation_gain_m;
   if (input.elevation_loss_m !== undefined) patch.elevation_loss_m = input.elevation_loss_m;
@@ -642,11 +644,11 @@ export async function deleteTripStepAction(
     .order('order_index', { ascending: true });
 
   if (remaining && remaining.length > 0) {
-    // Phase 1 : indices négatifs
+    // Phase 1 : indices temporaires hauts (CHECK order_index >= 0)
     for (let i = 0; i < remaining.length; i++) {
       await supabase
         .from('trip_steps')
-        .update({ order_index: -1000 - i })
+        .update({ order_index: 1000000 + i })
         .eq('id', remaining[i].id);
     }
     // Phase 2 : indices 0..N
@@ -692,7 +694,7 @@ export async function reorderTripStepsAction(
     const id = input.step_ids_in_order[i];
     await supabase
       .from('trip_steps')
-      .update({ order_index: -1000 - i })
+      .update({ order_index: 1000000 + i })
       .eq('id', id)
       .eq('trip_id', input.trip_id);
   }
@@ -758,16 +760,16 @@ export async function moveStepToDayAction(
     .from('trip_steps')
     .update({
       day_number: input.to_day_number,
-      order_index: -9999,
+      order_index: 2000000,
     })
     .eq('id', input.step_id)
     .eq('trip_id', input.trip_id);
 
-  // 3. Réindexer le jour cible (indices négatifs puis 0..N)
+  // 3. Réindexer le jour cible (temporaires hauts puis 0..N)
   for (let i = 0; i < existingTargetIds.length; i++) {
     await supabase
       .from('trip_steps')
-      .update({ order_index: -1000 - i })
+      .update({ order_index: 1000000 + i })
       .eq('id', existingTargetIds[i]);
   }
   for (let i = 0; i < existingTargetIds.length; i++) {
@@ -790,7 +792,7 @@ export async function moveStepToDayAction(
       for (let i = 0; i < sourceSteps.length; i++) {
         await supabase
           .from('trip_steps')
-          .update({ order_index: -1000 - i })
+          .update({ order_index: 1000000 + i })
           .eq('id', sourceSteps[i].id);
       }
       for (let i = 0; i < sourceSteps.length; i++) {
@@ -1127,6 +1129,7 @@ export async function importGpxToTripAction(
     elevation_loss_m: step.elevation_loss_m || null,
     distance_km: step.distance_km || null,
     transport_mode: 'foot',
+    start_time: step.start_time ?? null,
   }));
 
   const { error: insertErr } = await supabase.from('trip_steps').insert(payload);

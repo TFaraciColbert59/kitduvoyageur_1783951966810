@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useMemo, useState, useTransition, type FormEvent } from 'react';
+import { useEffect, useMemo, useRef, useState, useTransition, type FormEvent } from 'react';
 import { GlassCapsuleBtn } from '@/components/ui/GlassCapsuleBtn';
 import { GlassModal } from '@/components/ui/GlassModal';
 import { ConfirmDialog } from '@/features/trips/components/ConfirmDialog';
@@ -21,6 +21,7 @@ import {
   buildBudgetCategoryRows,
   buildBudgetChips,
   buildBudgetDaySlides,
+  findDaySlide,
   type BudgetFilter,
 } from '../../../mobile/budgetEngine';
 import { BudgetHeroCard } from './BudgetHeroCard';
@@ -34,9 +35,11 @@ import { BudgetSideTrigger } from './BudgetSideTrigger';
 
 export interface BudgetMobileExperienceProps {
   trip: TripFull;
+  /** Deep-link roadbook : ouvre directement le tiroir du jour N (?jour=N). */
+  initialDay?: number;
 }
 
-export function BudgetMobileExperience({ trip }: BudgetMobileExperienceProps) {
+export function BudgetMobileExperience({ trip, initialDay }: BudgetMobileExperienceProps) {
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
   const [isPending, startTransition] = useTransition();
   const [confirmState, setConfirmState] = useState<{ expenseId: string; title: string } | null>(null);
@@ -105,6 +108,17 @@ export function BudgetMobileExperience({ trip }: BudgetMobileExperienceProps) {
     () => slides.find((slide) => slide.key === dayKey) ?? null,
     [slides, dayKey]
   );
+
+  // Deep-link roadbook (?jour=N) : ouvre une seule fois le tiroir du jour visé.
+  const openedDayRef = useRef<number | null>(null);
+  useEffect(() => {
+    if (!initialDay || openedDayRef.current === initialDay) return;
+    const slide = findDaySlide(slides, initialDay);
+    if (!slide) return;
+    openedDayRef.current = initialDay;
+    setDayKey(slide.key);
+    setDayOpen(true);
+  }, [initialDay, slides]);
 
   const categoryRows = useMemo(() => buildBudgetCategoryRows(budgetSummary), [budgetSummary]);
   const balances = useMemo(() => buildBudgetBalances(budgetSummary), [budgetSummary]);

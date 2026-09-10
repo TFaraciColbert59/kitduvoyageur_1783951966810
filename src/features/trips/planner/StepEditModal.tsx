@@ -37,6 +37,7 @@ export function StepEditModal({
   const [locationName, setLocationName] = useState('');
   const [description, setDescription] = useState('');
   const [transportMode, setTransportMode] = useState<string>('walking');
+  const [startTime, setStartTime] = useState<string>('');
   const [accommodationName, setAccommodationName] = useState('');
   const [distanceKm, setDistanceKm] = useState<string>('');
   const [elevationGainM, setElevationGainM] = useState<string>('');
@@ -50,6 +51,7 @@ export function StepEditModal({
       setLocationName(initialStep.location_name || '');
       setDescription(initialStep.description || '');
       setTransportMode(initialStep.transport_mode || 'walking');
+      setStartTime(initialStep.start_time ? initialStep.start_time.slice(0, 5) : '');
       setAccommodationName(initialStep.accommodation_name || '');
       setDistanceKm(initialStep.distance_km != null ? String(initialStep.distance_km) : '');
       setElevationGainM(
@@ -63,6 +65,7 @@ export function StepEditModal({
       setLocationName('');
       setDescription('');
       setTransportMode('walking');
+      setStartTime('');
       setAccommodationName('');
       setDistanceKm('');
       setElevationGainM('');
@@ -91,6 +94,7 @@ export function StepEditModal({
         location_name: locationName.trim() || null,
         description: description.trim() || null,
         transport_mode: transportMode || null,
+        start_time: startTime || null,
         accommodation_name: accommodationName.trim() || null,
         distance_km: distanceKm ? parseFloat(distanceKm) : null,
         elevation_gain_m: elevationGainM ? parseInt(elevationGainM, 10) : null,
@@ -179,6 +183,20 @@ export function StepEditModal({
                 );
               })}
             </div>
+          </div>
+
+          {/* Horaires */}
+          <div>
+            <label className="block text-xs font-semibold text-[var(--lkv-text-primary)] mb-1.5">
+              Heure de passage (roadbook)
+            </label>
+            <input
+              type="time"
+              value={startTime}
+              onChange={(e) => setStartTime(e.target.value)}
+              aria-label="Heure de passage de l'étape"
+              className="glass-input w-full px-3.5 py-2.5 text-sm text-[var(--lkv-text-primary)]"
+            />
           </div>
 
           {/* Lieu & Hébergement */}

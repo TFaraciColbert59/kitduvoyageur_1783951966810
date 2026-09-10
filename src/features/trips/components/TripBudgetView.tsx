@@ -23,9 +23,11 @@ import type { TripFull, TripExpense } from '../types/trip.types';
 
 interface TripBudgetViewProps {
   trip: TripFull;
+  /** Deep-link roadbook : jour à ouvrir dans le budget mobile (?jour=N). */
+  initialDay?: number;
 }
 
-export function TripBudgetView({ trip }: TripBudgetViewProps) {
+export function TripBudgetView({ trip, initialDay }: TripBudgetViewProps) {
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
   const [isPending, startTransition] = useTransition();
   const [confirmState, setConfirmState] = useState<{ expenseId: string; title: string } | null>(
@@ -700,7 +702,7 @@ export function TripBudgetView({ trip }: TripBudgetViewProps) {
       />
       </div>
 
-      <BudgetMobileExperience trip={trip} />
+      <BudgetMobileExperience trip={trip} initialDay={initialDay} />
     </>
   );
 }

@@ -14,6 +14,12 @@ export const stepTransportModes = [
   'other',
 ] as const;
 
+export const stepTimeSchema = z
+  .string()
+  .regex(/^([01]\d|2[0-3]):[0-5]\d(:[0-5]\d)?$/, 'Heure invalide (HH:MM)')
+  .optional()
+  .nullable();
+
 export const createTripStepSchema = z.object({
   trip_id: z.string().uuid('ID de voyage invalide'),
   day_number: z.number().int().min(1, 'Le jour doit être au moins 1'),
@@ -25,6 +31,7 @@ export const createTripStepSchema = z.object({
   longitude: z.number().min(-180).max(180).optional().nullable(),
   accommodation_name: z.string().max(150).optional().nullable(),
   transport_mode: z.enum(stepTransportModes).optional().nullable(),
+  start_time: stepTimeSchema,
   distance_km: z.number().min(0).max(2000).optional().nullable(),
   elevation_gain_m: z.number().int().min(0).max(9000).optional().nullable(),
   elevation_loss_m: z.number().int().min(0).max(9000).optional().nullable(),
@@ -42,6 +49,7 @@ export const updateTripStepSchema = z.object({
   longitude: z.number().min(-180).max(180).optional().nullable(),
   accommodation_name: z.string().max(150).optional().nullable(),
   transport_mode: z.enum(stepTransportModes).optional().nullable(),
+  start_time: stepTimeSchema,
   distance_km: z.number().min(0).max(2000).optional().nullable(),
   elevation_gain_m: z.number().int().min(0).max(9000).optional().nullable(),
   elevation_loss_m: z.number().int().min(0).max(9000).optional().nullable(),

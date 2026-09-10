@@ -208,7 +208,7 @@ describe('Chantier 3 — Planner Server Actions (TDD)', () => {
       });
 
       expect(result.success).toBe(true);
-      // Phase 1 : indices temporaires négatifs (2 appels) + Phase 2 : indices finaux (2 appels) = 4 updates
+      // Phase 1 : indices temporaires hauts (2 appels) + Phase 2 : indices finaux (2 appels) = 4 updates
       expect(mockUpdate).toHaveBeenCalledTimes(4);
     });
   });

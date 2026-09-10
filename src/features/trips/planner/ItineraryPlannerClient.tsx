@@ -212,6 +212,7 @@ export default function ItineraryPlannerClient({
         latitude: stepData.latitude,
         longitude: stepData.longitude,
         transport_mode: (stepData.transport_mode as any) || 'walking',
+        start_time: stepData.start_time ?? null,
         accommodation_name: stepData.accommodation_name,
         distance_km: stepData.distance_km,
         elevation_gain_m: stepData.elevation_gain_m,

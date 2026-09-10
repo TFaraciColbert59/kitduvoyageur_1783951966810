@@ -19,6 +19,8 @@ export interface MomentMapCardProps {
   cta: { href: string; label: string };
   sheetTitle: string;
   reserveFabSpace?: boolean;
+  /** Plein écran vertical : carte jusqu'en bas, panneau juste au-dessus de la tab bar. */
+  fillViewport?: boolean;
 }
 
 export function MomentMapCard({
@@ -34,13 +36,15 @@ export function MomentMapCard({
   cta,
   sheetTitle,
   reserveFabSpace = false,
+  fillViewport = false,
 }: MomentMapCardProps) {
   const [open, setOpen] = useState(false);
+  const heightClass = fillViewport ? 'h-full min-h-0' : 'min-h-[26rem] sm:min-h-[30rem]';
 
   return (
     <section
       aria-label={sheetTitle}
-      className="relative min-h-[26rem] overflow-hidden rounded-[1.75rem] border border-white/50 bg-[var(--lkv-forest-50)] shadow-sm sm:min-h-[30rem]"
+      className={`relative ${heightClass} overflow-hidden rounded-[1.75rem] border border-white/50 bg-[var(--lkv-forest-50)] shadow-sm`}
     >
       <div className="absolute inset-0 z-0">
         <HubRouteMap
@@ -55,7 +59,11 @@ export function MomentMapCard({
         aria-hidden="true"
       />
 
-      <div className="relative z-20 flex h-full min-h-[26rem] flex-col justify-between p-3.5 sm:min-h-[30rem]">
+      <div
+        className={`relative z-20 flex h-full ${heightClass} flex-col justify-between p-3.5 ${
+          fillViewport ? 'pb-[calc(var(--bottom-nav-height,52px)+16px)]' : ''
+        }`}
+      >
         <header className="flex items-start justify-between gap-2">
           <div className="min-w-0">
             <p className="inline-flex items-center rounded-full bg-black/35 px-2.5 py-1 text-[10px] font-semibold uppercase tracking-[0.14em] text-white/95 backdrop-blur-sm">

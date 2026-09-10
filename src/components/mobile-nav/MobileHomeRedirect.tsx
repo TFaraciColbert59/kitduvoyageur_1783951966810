@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation';
 import MobilePageShell from '@/components/mobile-nav/MobilePageShell';
 
 /**
- * Touch-device landing: the app opens directly on the Aventures (Explorer) screen.
+ * Touch-device landing: the app opens directly on the HUB (aventure active).
  * Desktop (pointer: fine) and narrow desktop windows are not redirected —
  * the full homepage remains available for marketing/SEO.
  * Renders nothing visible on touch devices apart from a safe loading shell.
@@ -16,7 +16,7 @@ export default function MobileHomeRedirect() {
   useEffect(() => {
     const isTouchDevice = window.matchMedia('(pointer: coarse)').matches;
     if (isTouchDevice) {
-      router.replace('/explorer');
+      router.replace('/hub');
     }
   }, [router]);
 
@@ -44,7 +44,7 @@ export default function MobileHomeRedirect() {
           }}
         />
         <p style={{ fontSize: '12px', color: '#6B7A72', fontFamily: 'ui-monospace, monospace', letterSpacing: '0.1em', textTransform: 'uppercase' }}>
-          Aventures
+          Hub
         </p>
         <style jsx>{`
           @keyframes lkdv-spin {

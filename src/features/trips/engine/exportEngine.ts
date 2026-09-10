@@ -210,6 +210,7 @@ export interface ParsedWaypoint {
   ele?: number;
   desc?: string;
   type?: string;
+  time?: string;
 }
 
 export interface ParsedTrackPoint {
@@ -227,6 +228,25 @@ export interface SuggestedTripStep {
   elevation_gain_m?: number;
   elevation_loss_m?: number;
   distance_km?: number;
+  /** Heure locale extraite du GPX (<time>) — 'HH:MM:SS' ou null. */
+  start_time?: string | null;
+}
+
+/**
+ * Extrait l'heure d'un timestamp GPX (chaîne, déterministe — aucune TZ device).
+ * Accepte '2026-06-10T05:30:00Z' → '05:30:00' ; déjà 'HH:MM' → normalisé.
+ */
+export function gpxTimeToLocalTime(value?: string | null): string | null {
+  if (!value) return null;
+  const match = value.match(/(?:T|\s)(\d{2}):(\d{2})(?::(\d{2}))?/);
+  if (match) {
+    return `${match[1]}:${match[2]}:${match[3] ?? '00'}`;
+  }
+  const bare = value.match(/^(\d{2}):(\d{2})(?::(\d{2}))?$/);
+  if (bare) {
+    return `${bare[1]}:${bare[2]}:${bare[3] ?? '00'}`;
+  }
+  return null;
 }
 
 export interface ParsedTripGpx {
@@ -308,6 +328,7 @@ export function parseTripGpx(xmlString: string): ParsedTripGpx {
       const descM = body.match(/<desc>(.*?)<\/desc>/i);
       const typeM = body.match(/<type>(.*?)<\/type>/i);
       const eleM = body.match(/<ele>(.*?)<\/ele>/i);
+      const wptTimeM = body.match(/<time>(.*?)<\/time>/i);
 
       if (!isNaN(lat) && !isNaN(lon)) {
         waypoints.push({
@@ -317,6 +338,7 @@ export function parseTripGpx(xmlString: string): ParsedTripGpx {
           desc: descM ? descM[1].trim() : undefined,
           type: typeM ? typeM[1].trim() : undefined,
           ele: eleM ? parseFloat(eleM[1]) : undefined,
+          time: wptTimeM ? wptTimeM[1].trim() : undefined,
         });
       }
     }
@@ -380,6 +402,7 @@ export function parseTripGpx(xmlString: string): ParsedTripGpx {
           description: wpt.desc,
           latitude: wpt.lat,
           longitude: wpt.lon,
+          start_time: gpxTimeToLocalTime(wpt.time),
         });
       });
     } else if (trackPoints.length > 0) {
@@ -390,6 +413,7 @@ export function parseTripGpx(xmlString: string): ParsedTripGpx {
         longitude: trackPoints[0].lon,
         elevation_gain_m: totalElevationGainM,
         distance_km: totalDistanceKm,
+        start_time: gpxTimeToLocalTime(trackPoints[0].time),
       });
 
       if (trackPoints.length > 1) {
@@ -398,6 +422,7 @@ export function parseTripGpx(xmlString: string): ParsedTripGpx {
           title: `${title} - Arrivée`,
           latitude: last.lat,
           longitude: last.lon,
+          start_time: gpxTimeToLocalTime(last.time),
         });
       }
     }

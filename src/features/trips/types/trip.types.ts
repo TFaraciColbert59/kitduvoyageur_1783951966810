@@ -101,6 +101,8 @@ export interface TripStep {
   longitude: number | null;
   accommodation_name: string | null;
   transport_mode: TripStepTransport | null;
+  /** Heure locale de passage/arrivée (roadbook) — 'HH:MM:SS' ou null. */
+  start_time?: string | null;
   distance_km: number | null;
   elevation_gain_m: number | null;
   elevation_loss_m: number | null;
@@ -128,6 +130,8 @@ export interface TripItem {
   is_consumable?: boolean;
   notes?: string | null;
   source?: string | null;
+  /** Jour du voyage pour lequel ce matériel est requis (roadbook) — null = voyage entier. */
+  day_number?: number | null;
   created_at: string;
   updated_at: string;
 }

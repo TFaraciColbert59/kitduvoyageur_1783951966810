@@ -20,7 +20,7 @@ const REFRESH_DEBOUNCE_MS = 1200;
 
 /** Tables vivantes par nature (noms réels du schéma public). */
 const TABLES: Record<HubRealtimeRefreshProps['nature'], string[]> = {
-  sortie: ['trip_expenses', 'trip_safety_checkpoints', 'trip_notes', 'trip_collaborators', 'trip_items'],
+  sortie: ['trip_expenses', 'trip_safety_checkpoints', 'trip_notes', 'trip_collaborators', 'trip_items', 'trip_steps', 'trip_pois'],
   possession: ['materiel_kits', 'materiel_kit_items', 'materiel_loans', 'alerts'],
   collectif: ['group_tasks', 'group_polls', 'group_messages', 'group_members', 'group_expenses'],
 };

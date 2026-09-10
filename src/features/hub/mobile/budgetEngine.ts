@@ -126,6 +126,11 @@ export interface BudgetDaySlide {
   expenseIds: string[];
 }
 
+/** Deep-link roadbook : retrouve le slide d'un jour précis. */
+export function findDaySlide(slides: BudgetDaySlide[], day: number): BudgetDaySlide | null {
+  return slides.find((slide) => slide.dayNumber === day) ?? null;
+}
+
 export function buildBudgetDaySlides(args: {
   trip: Pick<TripFull, 'start_date' | 'end_date'>;
   expenses: TripExpense[];

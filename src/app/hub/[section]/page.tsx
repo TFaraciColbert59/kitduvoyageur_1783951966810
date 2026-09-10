@@ -30,6 +30,7 @@ import { ChecklistMobileExperience } from '@/features/hub/components/mobile/chec
 import { DocsMobileExperience } from '@/features/hub/components/mobile/docs/DocsMobileExperience';
 import { SafetyMobileExperience } from '@/features/hub/components/mobile/safety/SafetyMobileExperience';
 import { JournalMobileExperience } from '@/features/hub/components/mobile/journal/JournalMobileExperience';
+import { ItineraryMobileExperience } from '@/features/hub/components/mobile/itinerary/ItineraryMobileExperience';
 import { TripBudgetView } from '@/features/trips/components/TripBudgetView';
 import { TripDocumentsView } from '@/features/trips/components/TripDocumentsView';
 import { TripChecklistView } from '@/features/trips/components/TripChecklistView';
@@ -48,7 +49,7 @@ export default async function HubSectionPage({
   searchParams,
 }: {
   params: Promise<{ section: string }>;
-  searchParams: Promise<{ id?: string; route?: string; onglet?: string }>;
+  searchParams: Promise<{ id?: string; route?: string; onglet?: string; jour?: string }>;
 }) {
   const [{ section }, sp] = await Promise.all([params, searchParams]);
   const def = hubSectionRegistry.find((d) => d.segment === section);
@@ -76,7 +77,7 @@ export default async function HubSectionPage({
         <HubGroupeCockpit groupId={data.adventure.id} initialTab={sp.onglet} />
       )}
       {data.adventure.nature === 'sortie' && data.trip && (
-        <SortieSection sectionId={def.id} slug={data.trip.slug} />
+        <SortieSection sectionId={def.id} slug={data.trip.slug} jour={sp.jour} />
       )}
     </div>
   );
@@ -87,7 +88,7 @@ export default async function HubSectionPage({
  * dans le hub. Les vues clientes sont les mêmes que celles des anciennes
  * pages /voyages/[slug]/* (supprimées — shims de redirection).
  */
-async function SortieSection({ sectionId, slug }: { sectionId: string; slug: string }) {
+async function SortieSection({ sectionId, slug, jour }: { sectionId: string; slug: string; jour?: string }) {
   const trip = await loadTripSection(slug);
   const supabase = await createClient();
 
@@ -113,12 +114,22 @@ async function SortieSection({ sectionId, slug }: { sectionId: string; slug: str
         longitude: s.longitude ? Number(s.longitude) : null,
         accommodation_name: s.accommodation_name,
         transport_mode: s.transport_mode,
+        start_time: s.start_time ?? null,
         distance_km: s.distance_km ? Number(s.distance_km) : null,
         elevation_gain_m: s.elevation_gain_m ? Number(s.elevation_gain_m) : null,
         elevation_loss_m: s.elevation_loss_m ? Number(s.elevation_loss_m) : null,
       }));
 
-      return <ItineraryPlannerClient trip={trip} initialSteps={initialSteps} />;
+      return (
+        <>
+          <div className="hidden lg:block">
+            <ItineraryPlannerClient trip={trip} initialSteps={initialSteps} />
+          </div>
+          <div className="lg:hidden">
+            <ItineraryMobileExperience trip={trip} initialSteps={initialSteps} />
+          </div>
+        </>
+      );
     }
     case 'gear': {
       const result = await getTripKitDetails(slug);
@@ -150,7 +161,12 @@ async function SortieSection({ sectionId, slug }: { sectionId: string; slug: str
         </>
       );    case 'budget':
       if (!trip.permissions.canManageBudget) notFound();
-      return <TripBudgetView trip={trip} />;
+      return (
+        <TripBudgetView
+          trip={trip}
+          initialDay={jour && Number.isFinite(Number(jour)) ? Number(jour) : undefined}
+        />
+      );
     case 'docs':
       if (!trip.permissions.canViewDocuments) notFound();
       return (

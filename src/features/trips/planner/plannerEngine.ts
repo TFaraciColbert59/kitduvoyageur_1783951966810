@@ -12,6 +12,8 @@ export interface PlannerStep {
   longitude?: number | null;
   accommodation_name?: string | null;
   transport_mode?: string | null;
+  /** Heure locale de passage/arrivée (roadbook) — 'HH:MM:SS' ou null. */
+  start_time?: string | null;
   distance_km?: number | null;
   elevation_gain_m?: number | null;
   elevation_loss_m?: number | null;

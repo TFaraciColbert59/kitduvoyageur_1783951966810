@@ -10,10 +10,13 @@ import { adventureKey, type AdventureEntry } from '../context/adventureLists';
 import type { ActiveAdventureData } from '../context/adventureSchema';
 import {
   hubSectionFromPathname,
+  visibleHubSections,
   type HubAdventureRef,
   type HubCounters,
 } from '../registry/hubSectionRegistry';
 import { mergeEnabledSections, type AdventureProfile, type HubSectionId } from '../engine/hubProfileEngine';
+import { swipeNavSections } from '../mobile/hubSwipeEngine';
+import { useHubSwipeNav } from '../hooks/useHubSwipeNav';
 import type { TripFull, TripStats } from '@/features/trips/types/trip.types';
 import type { TripSectionId } from '@/features/trips/engine/tripProfileEngine';
 import { PrimaryActionWidget } from '@/features/trips/components/widgets/PrimaryActionWidget';
@@ -152,6 +155,30 @@ export function HubShell({
     return { ...profile, sections };
   }, [profile, baseEnabled]);
 
+  // Navigation par swipe (mobile) : ordre du registre, racine exclue, sections
+  // sous permission filtrées (jamais de 404 en swipant).
+  const swipeSections = useMemo(() => {
+    const ids = visibleHubSections(effectiveProfile)
+      .map((def) => def.id)
+      .filter((id) => {
+        if (id === 'docs') return !!trip?.permissions?.canViewDocuments;
+        if (id === 'budget') return !!trip?.permissions?.canManageBudget;
+        return true;
+      });
+    return swipeNavSections(ids) as HubSectionId[];
+  }, [effectiveProfile, trip]);
+
+  useHubSwipeNav({
+    enabled: true,
+    sections: swipeSections,
+    activeSection,
+    ref,
+  });
+
+  // Racine sortie mobile : expérience plein écran SANS scroll vertical —
+  // la carte occupe jusqu'au pied de l'écran, sa card flotte au-dessus de la tab bar.
+  const isHubRootFilled = activeSection === null && adventure.nature === 'sortie';
+
   // Mémoire de la dernière section visitée pour cette aventure.
   useEffect(() => {
     if (activeSection) setLastSection(key, activeSection);
@@ -217,7 +244,13 @@ export function HubShell({
       mobileSlot={
         <MobilePageShell safeTop={true} hasBottomNav={true}>
           {realtime}
-          <div className="px-4 pt-2.5 pb-32 text-[var(--lkv-text-primary)]">
+          <div
+            className={
+              isHubRootFilled
+                ? 'flex h-[calc(100dvh-var(--shell-top-padding,0px))] -mb-[var(--bottom-nav-height)] flex-col overflow-hidden px-4 pt-2.5 text-[var(--lkv-text-primary)]'
+                : 'px-4 pt-2.5 pb-32 text-[var(--lkv-text-primary)]'
+            }
+          >
             <div className="hidden">
               <AdventureSwitcher forceOpenSignal={switcherSignal} variant="mobile" hideTrigger />
             </div>

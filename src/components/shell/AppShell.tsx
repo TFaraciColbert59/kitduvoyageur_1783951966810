@@ -87,6 +87,9 @@ export default function AppShell({
       className={`app-shell mobile-page-shell ${containerBgClass} ${className}`}
       style={{
         ['--bottom-nav-height' as any]: bottomNavHeight,
+        ['--shell-top-padding' as any]: safeTop
+          ? 'calc(env(safe-area-inset-top, 0px) + 8px)'
+          : '0px',
         ...(containerBgStyle ? { background: containerBgStyle } : {}),
         paddingTop: safeTop ? 'calc(env(safe-area-inset-top, 0px) + 8px)' : '0px',
         // Quand bottomExtra est présent, pas de padding-bottom sur le conteneur principal

@@ -24,6 +24,8 @@ export interface SortieMomentProps {
   trip: TripFull;
   context: SortieContext;
   hiking?: HubHikingContext | null;
+  /** Carte plein écran vertical sur la racine du hub (mobile). */
+  fillViewport?: boolean;
 }
 
 function MomentRow({ icon: Icon, label, value }: { icon: LucideIcon; label: string; value: string }) {
@@ -36,7 +38,7 @@ function MomentRow({ icon: Icon, label, value }: { icon: LucideIcon; label: stri
   );
 }
 
-export function SortieMoment({ trip, context, hiking }: SortieMomentProps) {
+export function SortieMoment({ trip, context, hiking, fillViewport = false }: SortieMomentProps) {
   const moment = selectSortieMoment({ trip, context });
   const ref: HubAdventureRef = { nature: 'sortie', slug: trip.slug };
 
@@ -242,6 +244,7 @@ export function SortieMoment({ trip, context, hiking }: SortieMomentProps) {
       sheetTitle={sheetTitle}
       sheetContent={sheetContent}
       reserveFabSpace={context.phase === 'live'}
+      fillViewport={fillViewport}
     />
   );
 }

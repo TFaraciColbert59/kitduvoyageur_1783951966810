@@ -21,13 +21,13 @@ function isAdmin(pathname: string) {
 export async function middleware(request: NextRequest) {
   const pathname = request.nextUrl.pathname;
 
-  // ─── Mobile landing redirect to /explorer ──────────────────────────────────
+  // ─── Mobile landing redirect to the hub ────────────────────────────────────
   if (pathname === '/') {
     const userAgent = request.headers.get('user-agent') || '';
     const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(userAgent);
     if (isMobile) {
       const url = request.nextUrl.clone();
-      url.pathname = '/explorer';
+      url.pathname = '/hub';
       return NextResponse.redirect(url, { status: 302 });
     }
   }

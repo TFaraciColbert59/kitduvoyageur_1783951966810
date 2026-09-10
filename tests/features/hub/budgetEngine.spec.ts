@@ -6,6 +6,7 @@ import {
   buildBudgetCategoryRows,
   buildBudgetChips,
   buildBudgetDaySlides,
+  findDaySlide,
 } from '@/features/hub/mobile/budgetEngine';
 import type { TripExpense } from '@/features/trips/types/trip.types';
 
@@ -133,5 +134,15 @@ describe('budget engine (mobile)', () => {
       buildBudgetBalances({ balances: [{ userId: 'a', name: 'A', paid: 10, share: 10, net: 0 }], settlements: [] } as never)
         .balanced
     ).toBe(true);
+  });
+
+  it('findDaySlide : retrouve le slide d’un jour pour le deep-link', () => {
+    const slides = [
+      { key: 'd1-2026-09-07', dayNumber: 1 },
+      { key: 'd2-2026-09-08', dayNumber: 2 },
+      { key: 'd3-2026-09-09', dayNumber: 3 },
+    ] as never;
+    expect(findDaySlide(slides, 2)?.key).toBe('d2-2026-09-08');
+    expect(findDaySlide(slides, 9)).toBeNull();
   });
 });

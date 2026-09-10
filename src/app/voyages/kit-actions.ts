@@ -386,3 +386,55 @@ export async function applyConfiguratorKitToTripAction(
     return { success: false, error: 'Erreur serveur' };
   }
 }
+
+// ── Roadbook : matériel rattaché à un jour du voyage ─────────────────────────
+
+const assignItemDaySchema = z.object({
+  itemId: uuidSchema,
+  dayNumber: z.number().int().min(1).nullable(),
+  tripSlug: slugSchema,
+});
+
+/**
+ * Rattache (ou détache) un équipement du voyage à un jour précis du roadbook.
+ * `dayNumber = null` → matériel valable pour tout le voyage.
+ */
+export async function assignTripItemDayAction(
+  itemId: string,
+  dayNumber: number | null,
+  tripSlug: string
+): Promise<{ success: boolean; error?: string }> {
+  try {
+    const parsed = assignItemDaySchema.safeParse({ itemId, dayNumber, tripSlug });
+    if (!parsed.success) {
+      return { success: false, error: 'Requête invalide' };
+    }
+
+    const supabase = await createClient();
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
+    if (!user) return { success: false, error: 'Vous devez être connecté' };
+
+    // RLS can_edit_trip : update sans ligne retournée = échec explicite.
+    const { data, error } = await supabase
+      .from('trip_items')
+      .update({ day_number: parsed.data.dayNumber })
+      .eq('id', parsed.data.itemId)
+      .select('id')
+      .single();
+
+    if (error || !data) {
+      return { success: false, error: 'Impossible de rattacher cet équipement au jour' };
+    }
+
+    revalidatePath(tripSegmentPath(parsed.data.tripSlug, ''));
+    revalidatePath(tripSegmentPath(parsed.data.tripSlug, 'kit'));
+    revalidatePath(HUB_HOME_HREF);
+    revalidatePath(hubSectionHref({ nature: 'sortie', slug: parsed.data.tripSlug }, 'itinerary'));
+    return { success: true };
+  } catch (err) {
+    console.error('[LKDV Action] assignTripItemDayAction error:', err);
+    return { success: false, error: 'Erreur serveur' };
+  }
+}

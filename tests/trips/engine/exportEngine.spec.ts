@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { generateTripGpx, checkDocumentExpiry } from '@/features/trips/engine/exportEngine';
+import { generateTripGpx, checkDocumentExpiry, gpxTimeToLocalTime } from '@/features/trips/engine/exportEngine';
 import type { TripFull, TripDocument } from '@/features/trips/types/trip.types';
 
 describe('exportEngine — Chantier 7', () => {
@@ -155,8 +155,7 @@ describe('exportEngine — Chantier 7', () => {
     });
   });
 
-  describe('checkDocumentExpiry', () => {
-    const refDate = new Date('2026-06-01T12:00:00Z');
+  describe('checkDocumentExpiry', () => {    const refDate = new Date('2026-06-01T12:00:00Z');
 
     it('retourne "none" si aucune date d\'expiration n\'est renseignée', () => {
       const doc: TripDocument = {
@@ -248,6 +247,23 @@ describe('exportEngine — Chantier 7', () => {
       expect(res.status).toBe('valid');
       expect(res.daysRemaining).toBeGreaterThan(180);
       expect(res.label).toContain('Valide');
+    });
+  });
+
+  describe('gpxTimeToLocalTime (roadbook)', () => {
+    it('extrait HH:MM:SS d’un timestamp GPX ISO', () => {
+      expect(gpxTimeToLocalTime('2026-06-10T05:30:00Z')).toBe('05:30:00');
+      expect(gpxTimeToLocalTime('2026-06-10 14:05:59')).toBe('14:05:59');
+    });
+
+    it('accepte HH:MM et complète les secondes', () => {
+      expect(gpxTimeToLocalTime('07:45')).toBe('07:45:00');
+    });
+
+    it('valeur absente ou illisible → null', () => {
+      expect(gpxTimeToLocalTime(undefined)).toBeNull();
+      expect(gpxTimeToLocalTime(null)).toBeNull();
+      expect(gpxTimeToLocalTime('pas-une-heure')).toBeNull();
     });
   });
 });

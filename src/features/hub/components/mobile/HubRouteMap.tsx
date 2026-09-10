@@ -19,6 +19,8 @@ export interface HubRouteMapProps {
   reserveBottom?: number;
   className?: string;
   emptyLabel?: string;
+  /** Clic sur la carte (mode interactif) — utilisé pour poser un POI. */
+  onMapClick?: (lat: number, lon: number) => void;
 }
 
 const TILE_URL =
@@ -32,11 +34,17 @@ export default function HubRouteMap({
   reserveBottom = 0,
   className,
   emptyLabel = 'Trace non géolocalisée',
+  onMapClick,
 }: HubRouteMapProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const mapRef = useRef<any>(null);
+  const onMapClickRef = useRef(onMapClick);
   const [visible, setVisible] = useState(false);
   const [ready, setReady] = useState(false);
+
+  useEffect(() => {
+    onMapClickRef.current = onMapClick;
+  }, [onMapClick]);
 
   const hasRoute = routeCoords.length >= 1 || highlightCoords.length >= 1;
   const geoKey = useMemo(
@@ -124,6 +132,9 @@ export default function HubRouteMap({
 
       if (interactive) {
         L.control.zoom({ position: 'bottomright' }).addTo(map);
+        map.on('click', (event: { latlng: { lat: number; lng: number } }) => {
+          onMapClickRef.current?.(event.latlng.lat, event.latlng.lng);
+        });
       }
 
       const highlight = highlightCoords.length >= 2 ? highlightCoords : [];
