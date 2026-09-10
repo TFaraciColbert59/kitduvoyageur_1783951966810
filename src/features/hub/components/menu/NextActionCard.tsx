@@ -92,12 +92,12 @@ export function NextActionCard({ actions, checklist }: NextActionCardProps) {
   return (
     <Link
       href={picked.href}
-      className={`group block focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--lkv-primary)] rounded-2xl ${
+      className={`group block focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--lkv-primary)] rounded-[1.5rem] ${
         isAllClear ? '' : 'ring-1 ring-[var(--lkv-primary)]/20'
       }`}
     >
       <div
-        className={`flex items-center gap-3.5 rounded-2xl border p-4 min-h-[44px] transition-transform active:scale-[0.99] ${
+        className={`flex items-center gap-3.5 rounded-[1.5rem] border p-4 min-h-[44px] transition-transform active:scale-[0.99] ${
           isAllClear
             ? 'border-white/60 bg-white/55'
             : 'border-[var(--lkv-forest-900)]/15 bg-[var(--lkv-forest-900)] text-sage-300 shadow-sm'

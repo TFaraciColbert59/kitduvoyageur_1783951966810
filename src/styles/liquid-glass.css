@@ -186,10 +186,15 @@
 
 /* Hub — lisibilité du rail contextuel et des widgets sur fond photo immersif.
    Les widgets héritent d'un verre renforcé (62 % de blanc) : le texte reste
-   lisible quelle que soit la photo de fond, sans casser la transparence. */
+   lisible quelle que soit la photo de fond, sans casser la transparence.
+   Exception : `.glass-pure` garde la recette canonique du site (identique à la
+   sidebar gauche) quand une grande carte du rail doit matcher exactement. */
 .hub-rail .glass,
 .hub-rail [data-hub-widget] .glass {
   background: var(--glass-sheen), rgba(255, 255, 255, 0.62);
+}
+.hub-rail .glass.glass-pure {
+  background: var(--glass-sheen), var(--glass-bg-medium);
 }
 .hub-rail .glass.tone-sage,
 .hub-rail .glass.tone-warn,

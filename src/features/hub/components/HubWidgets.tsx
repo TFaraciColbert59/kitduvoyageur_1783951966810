@@ -1,4 +1,4 @@
-﻿import Link from 'next/link';
+import Link from 'next/link';
 import { ArrowRight, ArrowUpRight } from 'lucide-react';
 import { hubSectionHref, type HubAdventureRef } from '../registry/hubSectionRegistry';
 import { tripSwitchHref } from '@/features/trips/registry/tripSectionRegistry';
@@ -105,7 +105,7 @@ function WidgetCard({
   return (
     <Link
       href={href}
-      className="glass p-4 rounded-[var(--lkv-radius-card)] block cursor-pointer active:scale-[0.98] transition-transform min-h-[44px]"
+      className="glass p-4 rounded-[1.5rem] block cursor-pointer active:scale-[0.98] transition-transform min-h-[44px]"
     >
       <p className="text-sm font-bold text-[var(--lkv-text-primary)] leading-snug">{value}</p>
       <p className="text-[10px] font-medium uppercase tracking-[0.14em] text-[var(--lkv-text-muted)] mt-1 flex items-center gap-1">

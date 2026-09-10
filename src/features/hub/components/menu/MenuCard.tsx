@@ -1,4 +1,4 @@
-﻿// UI Layouts (MIT) — carte-onglet du MENU Hub, habillée recette verre du site.
+// UI Layouts (MIT) — carte-onglet du MENU Hub, habillée recette verre du site.
 // Composant SERVEUR. V5e : zéro icône (typographie seule), micro-label
 // uppercase, densification p-3, variante `media` (fond plein, contenu
 // posé sur un panneau verre — le média reste 100% visible au-dessus du texte).
@@ -38,22 +38,18 @@ export function MenuCard({
   className = '',
 }: MenuCardProps) {
   const content = (
-    <div className="glass relative h-full overflow-hidden rounded-[var(--lkv-radius-card)]">
+    <div className="glass relative h-full overflow-hidden rounded-[1.5rem]">
       {media && (
-        <div data-media-root className="absolute inset-0 z-10 overflow-hidden rounded-[var(--lkv-radius-card)]">
+        <div data-media-root className="absolute inset-0 z-10 overflow-hidden rounded-[1.5rem]">
           {media}
         </div>
       )}
-      <div
-        className={`relative z-30 flex h-full min-h-0 flex-col justify-end rounded-[var(--lkv-radius-card)] p-3 ${
-          media ? '' : 'bg-white/55'
-        }`}
-      >
+      <div className="relative z-30 flex h-full min-h-0 flex-col justify-end rounded-[1.5rem] p-3">
         <div
           data-media-content-panel
           className={
             media
-              ? 'glass flex h-full w-[42%] min-w-[230px] max-w-[320px] flex-col rounded-2xl bg-white/90 backdrop-blur-lg p-3'
+              ? 'glass-sub-card flex h-full w-[42%] min-w-[230px] max-w-[320px] flex-col rounded-xl p-3'
               : 'flex min-h-0 min-w-0 flex-1 flex-col justify-center'
           }
         >
@@ -89,7 +85,7 @@ export function MenuCard({
 
   if (interactiveBody) {
     return (
-      <div className="group relative block h-full rounded-[var(--lkv-radius-card)] transition-transform active:scale-[0.99]">
+      <div className="group relative block h-full rounded-[1.5rem] transition-transform active:scale-[0.99]">
         {content}
       </div>
     );
@@ -98,7 +94,7 @@ export function MenuCard({
   return (
     <Link
       href={href}
-      className={`group relative block h-full focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--lkv-primary)] rounded-[var(--lkv-radius-card)] transition-transform active:scale-[0.99] ${className}`}
+      className={`group relative block h-full focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--lkv-primary)] rounded-[1.5rem] transition-transform active:scale-[0.99] ${className}`}
     >
       {content}
     </Link>

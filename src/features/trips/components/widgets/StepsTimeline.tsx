@@ -94,7 +94,7 @@ export function StepsTimeline({ steps, dayIndex, phase }: StepsTimelineProps) {
   };
 
   return (
-    <div className="glass flex h-full min-h-0 flex-col p-3.5 space-y-2.5 rounded-2xl border border-white/70 shadow-xs font-sans">
+    <div className="glass glass-pure flex h-full min-h-0 flex-col p-3.5 space-y-2.5 rounded-[1.5rem] font-sans">
       <div className="flex items-center justify-between">
         <h3 className="font-display font-bold text-xs text-[var(--lkv-primary)] flex items-center gap-1.5">
           <Route size={13} aria-hidden="true" />
@@ -116,7 +116,7 @@ export function StepsTimeline({ steps, dayIndex, phase }: StepsTimelineProps) {
             {startStep ? (
               <Link
                 href="/hub/itineraire"
-                className="glass rounded-2xl border-2 border-[var(--lkv-primary)]/35 bg-white/85 p-3 space-y-1.5 block hover:bg-white transition-colors cursor-pointer"
+                className="glass-sub-card rounded-xl border-2 border-[var(--lkv-primary)]/35 p-3 space-y-1.5 block hover:bg-white transition-colors cursor-pointer"
                 aria-label={`Point de départ : ${startStep.location_name ?? startStep.title}`}
               >
                 <div className="flex items-center justify-between gap-2">
@@ -167,7 +167,7 @@ export function StepsTimeline({ steps, dayIndex, phase }: StepsTimelineProps) {
                 <Link
                   key={`${copyIndex}-${step.id}`}
                   href="/hub/itineraire"
-                  className="glass rounded-2xl border border-white/70 p-3 space-y-1.5 block hover:bg-white/80 transition-colors cursor-pointer"
+                  className="glass-sub-card rounded-xl border border-white/40 p-3 space-y-1.5 block hover:bg-white/80 transition-colors cursor-pointer"
                   aria-label={`Étape ${step.order_index + 1} du jour ${step.day_number} : ${step.title}`}
                 >
                   <div className="flex items-center justify-between gap-2">
@@ -209,7 +209,7 @@ export function StepsTimeline({ steps, dayIndex, phase }: StepsTimelineProps) {
                 </Link>
               ))
             ) : (
-              <div className="glass rounded-2xl border border-white/70 p-4 space-y-1 text-center">
+              <div className="glass-sub-card rounded-xl border border-white/40 p-4 space-y-1 text-center">
                 <p className="text-xs font-bold text-[var(--lkv-text-primary)]">
                   Aucune étape pour le jour {clampedDay}
                 </p>
