@@ -3,6 +3,9 @@ import { deriveHubProfile, type HubSectionId } from '@/features/hub/engine/hubPr
 import { HubShell } from '@/features/hub/components/HubShell';
 import { LiquidGlassDefs } from '@/components/ui-layouts/liquid-glass';
 
+// Hub auth/cookie-driven : jamais prerenderee statiquement au build.
+export const dynamic = 'force-dynamic';
+
 /**
  * H3.4 — Layout de segment du hub voyageur (miroir voyages/[slug]/layout).
  * Charge l'aventure active UNE fois (helper caché partagé), dérive le profil

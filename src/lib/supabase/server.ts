@@ -21,41 +21,45 @@ function getSupabaseConfig() {
 }
 
 export async function createClient() {
+  // cookies() D'ABORD : pendant un prerender de build, l'accès aux cookies
+  // bascule la page en dynamique AVANT la validation de config — un build
+  // sans env-vars ne casse plus jamais la génération statique.
+  if (typeof window === 'undefined') {
+    try {
+      const { cookies } = await import('next/headers');
+      await cookies();
+    } catch {
+      /* ignoré */
+    }
+  }
+
   const { url, anonKey } = getSupabaseConfig();
 
   if (typeof window !== 'undefined') {
     return createBrowserClient(url, anonKey);
   }
 
-  try {
-    const { cookies } = await import('next/headers');
-    const cookieStore = await cookies();
+  const { cookies } = await import('next/headers');
+  const cookieStore = await cookies();
 
-    return createServerClient(
-      url,
-      anonKey,
-      {
-        cookies: {
-          getAll() {
-            return cookieStore.getAll();
-          },
-          setAll(cookiesToSet: { name: string; value: string; options?: Record<string, unknown> }[]) {
-            try {
-              cookiesToSet.forEach(({ name, value, options }) =>
-                cookieStore.set(name, value, {
-                  ...options,
-                  sameSite: 'none',
-                  secure: true,
-                })
-              );
-            } catch {
-              // Server Component read-only context — expected
-            }
-          },
-        },
-      }
-    );
-  } catch {
-    return createBrowserClient(url, anonKey);
-  }
+  return createServerClient(url, anonKey, {
+    cookies: {
+      getAll() {
+        return cookieStore.getAll();
+      },
+      setAll(cookiesToSet: { name: string; value: string; options?: Record<string, unknown> }[]) {
+        try {
+          cookiesToSet.forEach(({ name, value, options }) =>
+            cookieStore.set(name, value, {
+              ...options,
+              sameSite: 'none',
+              secure: true,
+            })
+          );
+        } catch {
+          // Server Component read-only context — expected
+        }
+      },
+    },
+  });
 }
