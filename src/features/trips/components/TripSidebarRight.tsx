@@ -48,7 +48,7 @@ export function TripSidebarRight({ trip, profile, phase }: TripSidebarRightProps
 
   return (
     <aside
-      className="w-full shrink-0 h-full overflow-y-auto no-scrollbar flex flex-col gap-3 font-sans select-none"
+      className="w-full shrink-0 h-full overflow-hidden flex flex-col gap-3 font-sans select-none"
       aria-label="Contexte du voyage"
       data-testid="trip-sidebar-right"
     >

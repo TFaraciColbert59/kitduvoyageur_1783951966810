@@ -88,9 +88,9 @@ export function HubSidebarRight({
     return (
       <aside
         aria-label="Widgets du voyage"
-        className="hub-rail w-full h-full overflow-y-auto no-scrollbar flex flex-col gap-3 pr-0.5"
+        className="hub-rail w-full h-full overflow-hidden flex flex-col gap-3 pr-0.5"
       >
-        <div className="shrink-0">
+        <div className="flex min-h-0 flex-1 flex-col">
           <TripSidebarRight
             trip={trip}
             profile={tripProfile}

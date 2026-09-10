@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useEffect, useMemo, useRef } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import Link from 'next/link';
 import { MapPin, MoonStar, Mountain, Route } from 'lucide-react';
 import type { TripPhase } from '../../engine/temporalPhaseEngine';
@@ -13,8 +13,6 @@ export interface StepsTimelineProps {
 }
 
 /** 3 copies empilées : copie du milieu affichée au départ, saut modulo sur le scroll. */
-const LOOP_COPIES = 3;
-
 function fmtKm(km: number | null): string {
   if (!km || km <= 0) return '';
   return `${(Math.round(km * 10) / 10).toLocaleString('fr-FR', { maximumFractionDigits: 1 })} km`;
@@ -28,12 +26,14 @@ function fmtMeters(m: number | null, unit = 'm'): string {
 /**
  * Widget `steps-timeline` — déroulé des étapes du jour (boucle circulaire).
  * La carte « Point de départ » ouvre la boucle, suivie des étapes du jour
- * courant ; le conteneur rend le contenu en boucle infinie (3 copies, saut
- * modulo sans animation — respect de prefers-reduced-motion).
+ * courant ; le conteneur boucle à l'infini : le nombre de copies est calibré
+ * pour que la fenêtre de saut modulo reste toujours accessible (saut
+ * instantané — respect de prefers-reduced-motion).
  */
 export function StepsTimeline({ steps, dayIndex, phase }: StepsTimelineProps) {
   const scrollRef = useRef<HTMLDivElement>(null);
   const copyRef = useRef<HTMLDivElement>(null);
+  const [copies, setCopies] = useState(3);
 
   const ordered = useMemo(
     () => [...steps].sort((a, b) => a.day_number - b.day_number || a.order_index - b.order_index),
@@ -62,15 +62,25 @@ export function StepsTimeline({ steps, dayIndex, phase }: StepsTimelineProps) {
   const phasePill =
     phase === 'live' ? `Jour ${clampedDay} · en direct` : phase === 'recount' ? `Carnet · J${clampedDay}` : `Départ · J${clampedDay}`;
 
-  // Boucle : ancre le scroll sur la copie du milieu, puis saut modulo d'une
-  // copie quand on approche des bornes (ajustement instantané, jamais smooth).
+  // Boucle : nombre de copies calibré pour que l'ancre centrale + la fenêtre
+  // de saut (± 1 copie) restent atteignables, même quand une unité est plus
+  // courte que la fenêtre. Ancre = copie centrale, saut modulo instantané.
   useEffect(() => {
     const el = scrollRef.current;
     const copy = copyRef.current;
     if (!el || !copy) return;
-    if (el.scrollHeight <= el.clientHeight) return;
-    el.scrollTop = copy.offsetHeight;
-  }, [ordered, clampedDay]);
+    const h = copy.offsetHeight;
+    const c = el.clientHeight;
+    if (h <= 0 || c <= 0) return;
+    const needed = Math.max(3, 2 * (Math.ceil(c / h) + 1));
+    if (needed !== copies) {
+      setCopies(needed);
+      return;
+    }
+    const anchor = Math.floor(copies / 2) * h;
+    el.scrollTop = anchor;
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- copies est recalculé ci-dessus ; ordered/clampedDay pilotent le recalage
+  }, [ordered, clampedDay, copies]);
 
   const handleScroll = () => {
     const el = scrollRef.current;
@@ -78,8 +88,9 @@ export function StepsTimeline({ steps, dayIndex, phase }: StepsTimelineProps) {
     if (!el || !copy) return;
     const h = copy.offsetHeight;
     if (h <= 0) return;
-    if (el.scrollTop > h * 1.5) el.scrollTop -= h;
-    else if (el.scrollTop < h * 0.5) el.scrollTop += h;
+    const anchor = Math.floor(copies / 2) * h;
+    if (el.scrollTop > anchor + h) el.scrollTop -= h;
+    else if (el.scrollTop < anchor - h) el.scrollTop += h;
   };
 
   return (
@@ -100,7 +111,7 @@ export function StepsTimeline({ steps, dayIndex, phase }: StepsTimelineProps) {
         className="flex min-h-0 flex-1 flex-col overflow-y-auto no-scrollbar scroll-auto"
         aria-label="Déroulé des étapes du voyage"
       >
-        {Array.from({ length: LOOP_COPIES }, (_, copyIndex) => (
+        {Array.from({ length: copies }, (_, copyIndex) => (
           <div key={copyIndex} ref={copyIndex === 1 ? copyRef : undefined} className="space-y-2 pb-2">
             {startStep ? (
               <Link
