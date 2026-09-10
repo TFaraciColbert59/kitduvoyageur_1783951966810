@@ -6,6 +6,10 @@ import { TripWizard } from '@/features/trips/wizard/TripWizard';
 import { AutoGenTripCreateView } from '@/features/trips/components/autoGen/AutoGenTripCreateView';
 import { HUB_NEW_HREF, HUB_NEW_IA_HREF } from '@/features/hub/registry/hubSectionRegistry';
 
+// Page serveur (wizard + mode IA) : dépend des cookies/aventure active —
+// jamais prerenderee statiquement (le client Supabase est évalué au runtime).
+export const dynamic = 'force-dynamic';
+
 export const metadata: Metadata = {
   title: 'Nouvelle aventure | Création | Hub — Le Kit du Voyageur',
   description:
