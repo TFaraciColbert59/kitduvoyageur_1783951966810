@@ -83,7 +83,7 @@ export function AppShellDesktop({
         {topNav ? topNav : (showHeader && <Header />)}
 
         {/* Main 3-Column Cockpit Container */}
-        <div className={`flex-1 overflow-hidden pt-14 sm:pt-[62px] pb-4 px-4 sm:px-6 lg:px-8 ${maxWidth} w-full mx-auto`}>
+        <div className={`flex-1 overflow-hidden pt-14 sm:pt-[62px] pb-0 px-4 sm:px-6 lg:px-8 ${maxWidth} w-full mx-auto`}>
           <div className={`flex items-start ${gap} h-full`}>
 
             {/* LEFT COLUMN: NAVIGATION TABS SIDEBAR */}

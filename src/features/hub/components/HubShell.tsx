@@ -19,8 +19,17 @@ import type { TripSectionId } from '@/features/trips/engine/tripProfileEngine';
 import { PrimaryActionWidget } from '@/features/trips/components/widgets/PrimaryActionWidget';
 import { useHubStore } from '../stores/useHubStore';
 import { useHubLiveSensors } from '../hooks/useHubLiveSensors';
+import { pageViewPayload, useHubTelemetry } from '../hooks/useHubTelemetry';
 import { useAndroidHubBackNav } from '../hooks/useAndroidHubBackNav';
 import { AdventureSwitcher } from './AdventureSwitcher';
+import { NaturePill } from './NaturePill';
+import { NatureSwitcherSheet } from './NatureSwitcherSheet';
+import {
+  readNaturePref,
+  writeNaturePref,
+  type HubNaturePref,
+  type Nature,
+} from '../engine/hubNature';
 import HubSidebarLeft from './HubSidebarLeft';
 import HubSidebarRight from './HubSidebarRight';
 import { HubNetworkStatus } from './HubNetworkStatus';
@@ -98,8 +107,33 @@ export function HubShell({
       window.removeEventListener('hub:switcher-state', onState);
     };
   }, []);
-  const { setLastSection } = useActiveAdventure();
+  const { setLastSection, setActiveAdventure } = useActiveAdventure();
   const isTrekActive = useHubStore((s) => s.isTrekActive);
+  // H3.2 — Pill nature : pref locale (lue une fois au montage) prime,
+  // sinon nature de l'aventure active. Sortie/collectif sans aventure
+  // concrète : seule la pref est mémorisée (appliquée à l'activation).
+  const [naturePref, setNaturePref] = useState<HubNaturePref>(null);
+  const [pillOpen, setPillOpen] = useState(false);
+  useEffect(() => {
+    setNaturePref(readNaturePref());
+  }, []);
+  const displayNature: Nature = naturePref ?? adventure.nature;
+  const { track } = useHubTelemetry();
+  // H7.3 — Instrumentation : page vue au montage, section à chaque navigation.
+  useEffect(() => {
+    track('hub_page_view', pageViewPayload(displayNature));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+  useEffect(() => {
+    if (activeSection) track('hub_section_visited', { nature: displayNature, section: activeSection });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [activeSection]);
+  const selectNature = (nature: Nature) => {
+    track('hub_nature_changed', { from: displayNature, to: nature, method: 'sheet' });
+    writeNaturePref(nature);
+    setNaturePref(nature);
+    if (nature === 'possession') void setActiveAdventure({ nature: 'possession' });
+  };
 
   const key = adventureKey(entryOf(adventure, counts));
   const ref = refOf(adventure);
@@ -184,7 +218,10 @@ export function HubShell({
           {realtime}
           <div className="px-4 pt-2.5 pb-32 text-[var(--lkv-text-primary)]">
             <div className="flex items-center justify-between gap-2 mb-3 min-w-0">
-              <AdventureSwitcher forceOpenSignal={switcherSignal} variant="mobile" />
+              <div className="flex items-center gap-2 min-w-0">
+                <NaturePill nature={displayNature} open={pillOpen} onOpenSwitcher={() => setPillOpen(true)} />
+                <AdventureSwitcher forceOpenSignal={switcherSignal} variant="mobile" />
+              </div>
               <div className="flex items-center gap-2 shrink-0">{networkStatus}</div>
             </div>
             {children}
@@ -192,7 +229,16 @@ export function HubShell({
         </MobilePageShell>
       }
     >
+      <div className="mb-3 md:max-w-xs">
+        <NaturePill nature={displayNature} open={pillOpen} onOpenSwitcher={() => setPillOpen(true)} />
+      </div>
       {children}
+      <NatureSwitcherSheet
+        open={pillOpen}
+        onOpenChange={setPillOpen}
+        current={displayNature}
+        onSelect={selectNature}
+      />
     </AppShellDesktop>
   );
 }

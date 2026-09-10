@@ -109,8 +109,7 @@ const DIFFICULTY_LABELS: Record<string, string> = {
 };
 
 function fmtAmount(n: number): string {
-  const abs = Math.abs(Math.round(n * 100) / 100);
-  return Number.isInteger(abs) ? String(abs) : abs.toFixed(2);
+  return String(Math.round(Math.abs(n)));
 }
 
 /**
@@ -169,9 +168,17 @@ export function SortieMenu({
     ? `${trip.destination_country_code.toUpperCase()}${trip.destination_name ? ` · ${trip.destination_name}` : ''}`
     : trip.destination_name ?? null;
 
-  // ── Miniatures du kit (images réelles : boutique puis inventaire photographié) ──
+  // ── Mini-cartes du kit (image + badge état + poids + catégorie) ──
   const urlByItemId = new Map(itemImages.map((i) => [i.itemId, i.url] as const));
-  const kitThumbs: Array<{ key: string; url: string | null; initial: string; name: string }> = [];
+  const kitThumbs: Array<{
+    key: string;
+    url: string | null;
+    initial: string;
+    name: string;
+    packed: boolean;
+    weight: number | null;
+    category: string | null;
+  }> = [];
   const seenThumbUrls = new Set<string>();
   const sortedKitItems = [...(trip.items ?? [])].sort(
     (a, b) => Number(b.is_packed) - Number(a.is_packed),
@@ -185,8 +192,11 @@ export function SortieMenu({
       url,
       initial: (item.item_name || '?').slice(0, 1).toUpperCase(),
       name: item.item_name,
+      packed: Boolean(item.is_packed),
+      weight: item.weight_grams != null ? Number(item.weight_grams) : null,
+      category: item.category,
     });
-    if (kitThumbs.length >= 10) break;
+    if (kitThumbs.length >= 8) break;
   }
 
   // ── Dépense du jour (somme réelle des dépenses datées d'aujourd'hui) ──
@@ -382,29 +392,51 @@ export function SortieMenu({
           </div>
           {kitThumbs.length > 0 && (
             <ul
-              className="mt-2 flex min-h-0 gap-1.5 overflow-x-auto no-scrollbar"
+              className="mt-2 flex min-h-0 gap-2 overflow-x-auto no-scrollbar"
               aria-label="Aperçu du kit"
             >
-              {kitThumbs.map((t) =>
-                t.url ? (
-                  <li key={t.key} className="shrink-0">
-                    <img
-                      src={t.url}
-                      alt={t.name}
-                      loading="lazy"
-                      className="h-10 w-10 rounded-lg object-cover"
-                    />
-                  </li>
-                ) : (
-                  <li
-                    key={t.key}
-                    aria-hidden="true"
-                    className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-[var(--lkv-surface-raised)] text-xs font-bold text-[var(--lkv-text-secondary)]"
-                  >
-                    {t.initial}
-                  </li>
-                ),
-              )}
+              {kitThumbs.map((t) => (
+                <li
+                  key={t.key}
+                  className="group/thumb w-[104px] shrink-0 overflow-hidden rounded-xl border border-white bg-white shadow-2xs"
+                >
+                  <div className="relative h-14 w-full overflow-hidden bg-[var(--lkv-surface-raised)]">
+                    {t.url ? (
+                      <img src={t.url} alt={t.name} loading="lazy" className="h-full w-full object-cover" />
+                    ) : (
+                      <span aria-hidden="true" className="flex h-full w-full items-center justify-center text-base font-bold text-[var(--lkv-text-secondary)]">
+                        {t.initial}
+                      </span>
+                    )}
+                    {t.packed ? (
+                      <span className="absolute right-1 top-1 inline-flex items-center gap-0.5 rounded-full bg-white/95 px-1.5 py-0.5 text-[8px] font-bold text-[var(--lkv-primary)] shadow-2xs">
+                        ✓ Prêt
+                      </span>
+                    ) : (
+                      <span className="absolute right-1 top-1 rounded-full bg-black/55 px-1.5 py-0.5 text-[8px] font-bold text-white shadow-2xs">
+                        À ajouter
+                      </span>
+                    )}
+                  </div>
+                  <div className="space-y-0.5 p-1.5">
+                    <p className="truncate text-[10px] font-bold leading-tight text-[var(--lkv-text-primary)]">{t.name}</p>
+                    <div className="flex items-center justify-between gap-1">
+                      <span className="text-[9px] font-semibold tabular-nums text-[var(--lkv-text-secondary)]">
+                        {t.weight != null && t.weight > 0
+                          ? t.weight >= 1000
+                            ? `${(Math.round(t.weight / 10) / 100).toFixed(1).replace('.', ',')} kg`
+                            : `${Math.round(t.weight)} g`
+                          : '—'}
+                      </span>
+                      {t.category && (
+                        <span className="truncate rounded-full bg-[var(--lkv-surface-raised)] px-1 py-0.5 text-[8px] font-semibold text-[var(--lkv-text-secondary)]">
+                          {t.category}
+                        </span>
+                      )}
+                    </div>
+                  </div>
+                </li>
+              ))}
             </ul>
           )}
         </MenuCard>
@@ -456,7 +488,7 @@ export function SortieMenu({
             </div>
           )}
           {showBalances && (
-            <div className="mt-1.5 min-h-0 border-t border-black/5 pt-1">
+            <div className="mt-1 min-h-0 border-t border-black/5 pt-0.5">
               <ul className="space-y-0.5">
                 {balanceRows.slice(0, 2).map((b) => {
                   const owes = b.net < 0;
@@ -486,7 +518,7 @@ export function SortieMenu({
               </ul>
             </div>
           )}
-          <p className="mt-1 flex min-h-0 items-center gap-2 border-t border-black/5 pt-1 text-[11px]">
+          <p className="mt-0.5 flex min-h-0 items-center gap-2 border-t border-black/5 pt-0.5 text-[10px]">
             <span className="truncate font-medium text-[var(--lkv-text-secondary)]">
               Dépense du jour · {todayLabel}
             </span>

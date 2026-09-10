@@ -83,7 +83,7 @@ export function StepsTimeline({ steps, dayIndex, phase }: StepsTimelineProps) {
   };
 
   return (
-    <div className="glass p-3.5 space-y-2.5 rounded-2xl border border-white/70 shadow-xs font-sans">
+    <div className="glass flex h-full min-h-0 flex-col p-3.5 space-y-2.5 rounded-2xl border border-white/70 shadow-xs font-sans">
       <div className="flex items-center justify-between">
         <h3 className="font-display font-bold text-xs text-[var(--lkv-primary)] flex items-center gap-1.5">
           <Route size={13} aria-hidden="true" />
@@ -97,7 +97,7 @@ export function StepsTimeline({ steps, dayIndex, phase }: StepsTimelineProps) {
       <div
         ref={scrollRef}
         onScroll={handleScroll}
-        className="max-h-[560px] overflow-y-auto no-scrollbar scroll-auto"
+        className="flex min-h-0 flex-1 flex-col overflow-y-auto no-scrollbar scroll-auto"
         aria-label="Déroulé des étapes du voyage"
       >
         {Array.from({ length: LOOP_COPIES }, (_, copyIndex) => (

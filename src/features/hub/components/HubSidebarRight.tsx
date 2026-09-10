@@ -88,7 +88,7 @@ export function HubSidebarRight({
     return (
       <aside
         aria-label="Widgets du voyage"
-        className="hub-rail w-full h-full overflow-y-auto no-scrollbar flex flex-col gap-3 pb-6 pr-0.5"
+        className="hub-rail w-full h-full overflow-y-auto no-scrollbar flex flex-col gap-3 pr-0.5"
       >
         <div className="shrink-0">
           <TripSidebarRight
@@ -139,7 +139,7 @@ export function HubSidebarRight({
   return (
     <aside
       aria-label="Contexte de l'aventure"
-      className="hub-rail w-full h-full overflow-y-auto no-scrollbar flex flex-col gap-3 pb-6"
+      className="hub-rail w-full h-full overflow-y-auto no-scrollbar flex flex-col gap-3"
     >
       <div className="glass shrink-0 p-3.5 rounded-2xl border border-white/70 shadow-xs">
         <p className="text-sm font-bold text-[var(--lkv-text-primary)]">

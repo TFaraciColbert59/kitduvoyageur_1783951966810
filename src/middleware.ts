@@ -100,7 +100,11 @@ export async function middleware(request: NextRequest) {
     for (const [key, value] of Object.entries(legacy.setParams ?? {})) {
       url.searchParams.set(key, value);
     }
-    return NextResponse.redirect(url, { status: 307 });
+    // H5.3 — Télémétrie héritage : source + cible sur chaque 307.
+    const redirect = NextResponse.redirect(url, { status: 307 });
+    redirect.headers.set('x-hub-redirect-source', pathname);
+    redirect.headers.set('x-hub-redirect-target', `${url.pathname}${url.search}`);
+    return redirect;
   }
 
   // ─── Country redirect logic ───────────────────────────────────────────────
