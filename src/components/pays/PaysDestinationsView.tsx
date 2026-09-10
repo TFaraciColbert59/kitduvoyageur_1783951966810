@@ -4,15 +4,20 @@ import React from 'react';
 import Image from 'next/image';
 import Icon from '@/components/ui/AppIcon';
 import { CountryDetail } from '@/lib/countryDetails';
+import { DiscoverySection } from '@/features/discovery/components/DiscoverySection';
+import { KlookCtaBlock } from '@/features/discovery/components/KlookCtaBlock';
+import type { KlookBlock } from '@/features/discovery/providers/klook/klookTypes';
 
 interface PaysDestinationsViewProps {
   country: CountryDetail;
   onSelectDestination?: (dest: any) => void;
+  klookBlock?: KlookBlock | null;
 }
 
 export default function PaysDestinationsView({
   country,
   onSelectDestination,
+  klookBlock,
 }: PaysDestinationsViewProps) {
   return (
     <div className="space-y-4 font-sans text-[#17402C]">
@@ -68,6 +73,18 @@ export default function PaysDestinationsView({
           </div>
         ))}
       </div>
+
+      <DiscoverySection
+        countryCode={country.code}
+        category="attractions"
+        section="destinations"
+        limit={6}
+        title="Attractions populaires"
+        subtitle="Attractions et expériences locales"
+        emptyLabel="Aucune attraction disponible pour cette destination."
+      />
+
+      <KlookCtaBlock block={klookBlock} />
     </div>
   );
 }

@@ -740,6 +740,8 @@ function BottomTabBar() {
         { id: 'presentation', label: 'Aperçu' },
         { id: 'destinations', label: 'Incontournables' },
         { id: 'activites', label: 'Activités' },
+        { id: 'gastronomie', label: 'Gastronomie' },
+        { id: 'hebergements', label: 'Hébergements' },
         { id: 'pratique', label: 'Météo & Pratique' },
         { id: 'communaute', label: 'Communauté' },
       ];

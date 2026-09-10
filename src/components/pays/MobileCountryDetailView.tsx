@@ -14,23 +14,30 @@ import CountryFlag from '@/components/ui/CountryFlag';
 import SmartImage from '@/components/ui/SmartImage';
 import { useCountryPracticalGuide } from '@/hooks/useCountryPracticalGuide';
 import PaysPratiqueView from '@/components/pays/PaysPratiqueView';
+import { DiscoverySection } from '@/features/discovery/components/DiscoverySection';
+import { KlookCtaBlock } from '@/features/discovery/components/KlookCtaBlock';
+import type { KlookBlock } from '@/features/discovery/providers/klook/klookTypes';
 import type { PracticalSection } from '@/lib/ai/jobs/generateCountryGuide';
 
 export type MobilePaysSection =
   | 'presentation'
   | 'destinations'
   | 'activites'
+  | 'gastronomie'
+  | 'hebergements'
   | 'pratique'
   | 'communaute';
 
 interface MobileCountryDetailViewProps {
   country: CountryDetail;
   flagEmoji: string;
+  klookBlock?: KlookBlock | null;
 }
 
 export default function MobileCountryDetailView({
   country,
   flagEmoji,
+  klookBlock,
 }: MobileCountryDetailViewProps) {
   const router = useRouter();
   const { triggerHaptic } = useHapticFeedback();
@@ -396,6 +403,18 @@ export default function MobileCountryDetailView({
                     </div>
                   ))}
                 </div>
+
+                <DiscoverySection
+                  countryCode={country.code}
+                  category="attractions"
+                  section="destinations"
+                  limit={6}
+                  title="Attractions populaires"
+                  subtitle="Attractions et expériences locales"
+                  emptyLabel="Aucune attraction disponible pour cette destination."
+                />
+
+                <KlookCtaBlock block={klookBlock} />
               </div>
             )}
 
@@ -474,6 +493,66 @@ export default function MobileCountryDetailView({
                     </div>
                   ))}
                 </div>
+
+                <DiscoverySection
+                  countryCode={country.code}
+                  category="attractions"
+                  section="activites"
+                  limit={6}
+                  title="Activités & lieux d’intérêt"
+                  subtitle="Activités et expériences locales"
+                  emptyLabel="Aucune activité disponible pour cette destination."
+                />
+
+                <KlookCtaBlock block={klookBlock} />
+              </div>
+            )}
+
+            {/* ── SECTION 3bis: GASTRONOMIE (Tripadvisor) ── */}
+            {activeSection === 'gastronomie' && (
+              <div className="space-y-3">
+                <div className="px-1">
+                  <h3 className="font-display font-bold text-sm text-[#17402C] uppercase tracking-wider">
+                    Gastronomie & Restaurants
+                  </h3>
+                  <p className="text-[10.5px] text-[#5A7064]">
+                    Adresses et avis de voyageurs en {country.nom}
+                  </p>
+                </div>
+
+                <DiscoverySection
+                  countryCode={country.code}
+                  category="restaurants"
+                  section="gastronomie"
+                  limit={6}
+                  title="Restaurants"
+                  subtitle="Expériences culinaires locales"
+                  emptyLabel="Aucune expérience culinaire disponible pour cette destination."
+                />
+              </div>
+            )}
+
+            {/* ── SECTION 3ter: HÉBERGEMENTS (Tripadvisor) ── */}
+            {activeSection === 'hebergements' && (
+              <div className="space-y-3">
+                <div className="px-1">
+                  <h3 className="font-display font-bold text-sm text-[#17402C] uppercase tracking-wider">
+                    Hébergements
+                  </h3>
+                  <p className="text-[10.5px] text-[#5A7064]">
+                    Hôtels et hébergements notés par les voyageurs
+                  </p>
+                </div>
+
+                <DiscoverySection
+                  countryCode={country.code}
+                  category="hotels"
+                  section="hebergements"
+                  limit={4}
+                  title="Hôtels & hébergements"
+                  subtitle="Sélection éditoriale"
+                  emptyLabel="Aucun hébergement disponible pour cette destination."
+                />
               </div>
             )}
 

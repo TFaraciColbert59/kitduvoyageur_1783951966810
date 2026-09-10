@@ -4,12 +4,16 @@ import React, { useState, useMemo } from 'react';
 import Image from 'next/image';
 import Icon from '@/components/ui/AppIcon';
 import { CountryDetail } from '@/lib/countryDetails';
+import { DiscoverySection } from '@/features/discovery/components/DiscoverySection';
+import { KlookCtaBlock } from '@/features/discovery/components/KlookCtaBlock';
+import type { KlookBlock } from '@/features/discovery/providers/klook/klookTypes';
 
 interface PaysActivitesViewProps {
   country: CountryDetail;
+  klookBlock?: KlookBlock | null;
 }
 
-export default function PaysActivitesView({ country }: PaysActivitesViewProps) {
+export default function PaysActivitesView({ country, klookBlock }: PaysActivitesViewProps) {
   const [activeCat, setActiveCat] = useState<'all' | 'nature' | 'aqua' | 'rand' | 'cult'>('all');
 
   const filteredActivities = useMemo(() => {
@@ -191,6 +195,18 @@ export default function PaysActivitesView({ country }: PaysActivitesViewProps) {
           </div>
         </div>
       )}
+
+      <DiscoverySection
+        countryCode={country.code}
+        category="attractions"
+        section="activites"
+        limit={6}
+        title="Activités & lieux d’intérêt"
+        subtitle="Activités et expériences locales à réserver"
+        emptyLabel="Aucune activité disponible pour cette destination."
+      />
+
+      <KlookCtaBlock block={klookBlock} />
     </div>
   );
 }

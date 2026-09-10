@@ -1,6 +1,8 @@
 import { describe, it, expect } from 'vitest';
 import React from 'react';
 import { renderToStaticMarkup } from 'react-dom/server';
+import { readFileSync } from 'node:fs';
+import path from 'node:path';
 import TravelpayoutsDrive from '@/components/TravelpayoutsDrive';
 
 /**
@@ -16,5 +18,11 @@ describe('Travelpayouts Drive — garde de consentement (Z7)', () => {
     expect(html).toBe('');
     expect(html).not.toContain('tpembars');
     expect(html).not.toContain('NTYxMTY5');
+  });
+
+  it('Z7-TPD.2 : aucun tag tpembars inconditionnel dans layout.tsx', () => {
+    const layout = readFileSync(path.join(process.cwd(), 'src/app/layout.tsx'), 'utf8');
+    expect(layout).not.toContain('tpembars');
+    expect(layout).not.toContain('NTcxMjgw');
   });
 });

@@ -12,6 +12,7 @@ export type PaysSection =
   | 'activites'
   | 'culture'
   | 'gastronomie'
+  | 'hebergements'
   | 'pratique'
   | 'communaute';
 
@@ -50,6 +51,10 @@ export default function PaysLeftSidebar({
     {
       id: 'gastronomie',
       label: 'Gastronomie',
+    },
+    {
+      id: 'hebergements',
+      label: 'Hébergements',
     },
     {
       id: 'pratique',

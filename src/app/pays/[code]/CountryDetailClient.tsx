@@ -12,9 +12,11 @@ import PaysDestinationsView from '@/components/pays/PaysDestinationsView';
 import PaysActivitesView from '@/components/pays/PaysActivitesView';
 import PaysCultureView from '@/components/pays/PaysCultureView';
 import PaysGastronomieView from '@/components/pays/PaysGastronomieView';
+import PaysHebergementsView from '@/components/pays/PaysHebergementsView';
 import PaysPratiqueView from '@/components/pays/PaysPratiqueView';
 import PaysCommunauteView from '@/components/pays/PaysCommunauteView';
 import MobileCountryDetailView from '@/components/pays/MobileCountryDetailView';
+import type { KlookBlock } from '@/features/discovery/providers/klook/klookTypes';
 
 function getFlagEmoji(code: string): string {
   if (!code) return '🌐';
@@ -27,9 +29,10 @@ function getFlagEmoji(code: string): string {
 
 interface CountryDetailClientProps {
   country: CountryDetail;
+  klookBlock?: KlookBlock | null;
 }
 
-export default function CountryDetailClient({ country }: CountryDetailClientProps) {
+export default function CountryDetailClient({ country, klookBlock }: CountryDetailClientProps) {
   const router = useRouter();
   const [activeSection, setActiveSection] = useState<PaysSection>('presentation');
 
@@ -50,15 +53,18 @@ export default function CountryDetailClient({ country }: CountryDetailClientProp
         return (
           <PaysDestinationsView
             country={country}
+            klookBlock={klookBlock}
             onSelectDestination={() => setActiveSection('activites')}
           />
         );
       case 'activites':
-        return <PaysActivitesView country={country} />;
+        return <PaysActivitesView country={country} klookBlock={klookBlock} />;
       case 'culture':
         return <PaysCultureView country={country} />;
       case 'gastronomie':
         return <PaysGastronomieView country={country} />;
+      case 'hebergements':
+        return <PaysHebergementsView country={country} />;
       case 'pratique':
         return <PaysPratiqueView country={country} />;
       case 'communaute':
@@ -79,7 +85,7 @@ export default function CountryDetailClient({ country }: CountryDetailClientProp
     <AppShellDesktop
       mobileSlot={
         <MobilePageShell videoBackground={true}>
-          <MobileCountryDetailView country={country} flagEmoji={flagEmoji} />
+          <MobileCountryDetailView country={country} flagEmoji={flagEmoji} klookBlock={klookBlock} />
         </MobilePageShell>
       }
       sidebarLeft={

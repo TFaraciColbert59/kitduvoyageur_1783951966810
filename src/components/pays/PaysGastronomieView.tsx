@@ -3,6 +3,7 @@
 import React from 'react';
 import Image from 'next/image';
 import { CountryDetail } from '@/lib/countryDetails';
+import { DiscoverySection } from '@/features/discovery/components/DiscoverySection';
 
 interface PaysGastronomieViewProps {
   country: CountryDetail;
@@ -60,6 +61,16 @@ export default function PaysGastronomieView({ country }: PaysGastronomieViewProp
           </div>
         ))}
       </div>
+
+      <DiscoverySection
+        countryCode={country.code}
+        category="restaurants"
+        section="gastronomie"
+        limit={6}
+        title="Restaurants"
+        subtitle="Expériences culinaires locales"
+        emptyLabel="Aucune expérience culinaire disponible pour cette destination."
+      />
     </div>
   );
 }

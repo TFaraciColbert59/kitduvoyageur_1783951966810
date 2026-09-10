@@ -218,28 +218,6 @@ export default async function RootLayout({
         {/* Travelpayouts Drive — chargé uniquement après consentement (Z7) */}
         <TravelpayoutsDrive />
 
-        {/* Travelpayouts Drive — tag #2 (NTcxMjgw), toujours actif (validé utilisateur) */}
-        <script
-          suppressHydrationWarning
-          {...{
-            nowprocket: '',
-            'data-noptimize': '1',
-            'data-cfasync': 'false',
-            'data-wpfc-render': 'false',
-            'seraph-accel-crit': '1',
-            'data-no-defer': '1',
-            'data-cmp-ab': '2',
-          }}
-          dangerouslySetInnerHTML={{
-            __html: `(function () {
-                  var script = document.createElement("script");
-                  script.async = 1;
-                  script.setAttribute("data-cmp-ab","2");
-                  script.src = 'https://tpembars.com/NTcxMjgw.js?t=571280';
-                  document.head.appendChild(script);
-              })();`,
-          }}
-        />
         {process.env.NODE_ENV === 'production' && (
           <script
             id="service-worker-registration"

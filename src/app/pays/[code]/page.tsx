@@ -2,6 +2,7 @@ import { Metadata } from 'next';
 import { notFound } from 'next/navigation';
 import { fetchCountryByIso, fetchCountryContentByIso, fetchAllCountrySlugs } from '@/lib/geodata';
 import { getCompleteCountryDetail } from '@/lib/countryDetails';
+import { getKlookBlock } from '@/features/discovery/providers/klook/klookAdapter';
 import CountryDetailClient from './CountryDetailClient';
 
 interface Props {
@@ -68,6 +69,10 @@ export default async function CountryPage({ params }: Props) {
 
   const country = getCompleteCountryDetail(code, geoCountry, contentCountry);
 
+  // Bloc Klook éditorial (mode sans product feed) — lien statique validé,
+  // calculé côté serveur. Aucun appel réseau, aucun script tiers.
+  const klookBlock = getKlookBlock({ countryCode: country.code, destination: country.nom });
+
   const schemaOrg = {
     '@context': 'https://schema.org',
     '@graph': [
@@ -109,7 +114,7 @@ export default async function CountryPage({ params }: Props) {
         dangerouslySetInnerHTML={{ __html: JSON.stringify(schemaOrg) }}
         suppressHydrationWarning
       />
-      <CountryDetailClient country={country} />
+      <CountryDetailClient country={country} klookBlock={klookBlock} />
     </>
   );
 }
