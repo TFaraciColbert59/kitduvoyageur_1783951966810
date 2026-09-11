@@ -33,14 +33,14 @@ VALUES ('00000000-0000-0000-0000-000000000002', 'bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbb
 
 -- Une route de randonnée avec massif (région), pour le journal
 INSERT INTO public.hiking_routes (id, osm_relation_id, name, region, distance_km)
-VALUES (90001, 10090001, 'GR20 Corse', 'Corse', 180.0)
+VALUES (99009001, 10099009001, 'GR20 Corse', 'Corse', 180.0)
 ON CONFLICT (id) DO UPDATE SET region = EXCLUDED.region;
 
 -- ----------------------------------------------------------------------------
 -- Test 1 : session >= 1 km rattachée au kit → field_proven_count = 1
 -- ----------------------------------------------------------------------------
 INSERT INTO public.hike_sessions (id, user_id, kit_id, route_id, started_at, ended_at, distance_km, duration_seconds)
-VALUES ('10000000-0000-0000-0000-000000000001', 'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa', '00000000-0000-0000-0000-000000000001', 90001, now() - interval '2 days', now() - interval '2 days' + interval '6 hours', 12.5, 21600);
+VALUES ('10000000-0000-0000-0000-000000000001', 'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa', '00000000-0000-0000-0000-000000000001', 99009001, now() - interval '2 days', now() - interval '2 days' + interval '6 hours', 12.5, 21600);
 
 SELECT is(
   (SELECT field_proven_count FROM public.materiel_kits WHERE id = '00000000-0000-0000-0000-000000000001'),
@@ -179,6 +179,12 @@ SELECT ok(
      ::text NOT LIKE '%field_a@test.local%'),
   '13. Le journal d''un kit d''autrui ne contient aucun nom ni email'
 );
+
+-- Session dédiée pour l'assertion de granularité (les sessions précédentes
+-- sont supprimées par les tests 7/8 ; ne pas dépendre d'elles).
+INSERT INTO public.hike_sessions (id, user_id, kit_id, route_id, started_at, ended_at, distance_km, duration_seconds)
+VALUES ('10000000-0000-0000-0000-000000000009', 'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa', '00000000-0000-0000-0000-000000000001', 99009001, now() - interval '1 day', now() - interval '1 day' + interval '3 hours', 7.5, 10800)
+ON CONFLICT (id) DO UPDATE SET route_id = EXCLUDED.route_id;
 
 SELECT is(
   (SELECT public.get_kit_journal('00000000-0000-0000-0000-000000000001')->'field'->'regions'->0->>'region'),
