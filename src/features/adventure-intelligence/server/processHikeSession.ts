@@ -59,21 +59,28 @@ export interface ProcessHikeSessionResult {
   reason?: string;
 }
 
+const MAX_TRACK_POINTS = 50_000;
+
 const lineStringSchema = z.object({
   type: z.literal('LineString'),
-  coordinates: z.array(z.array(z.number()).min(2)).min(2, 'Une trace requiert au moins 2 points'),
+  coordinates: z
+    .array(z.array(z.number()).min(2))
+    .min(2, 'Une trace requiert au moins 2 points')
+    .max(MAX_TRACK_POINTS, `Une trace ne peut pas dépasser ${MAX_TRACK_POINTS} points`),
 });
 
-const trackPointArraySchema = z.array(
-  z.object({
-    lat: z.number(),
-    lng: z.number(),
-    ele: z.number().optional(),
-    timestamp: z.string(),
-    accuracyM: z.number().optional(),
-    speedMps: z.number().optional(),
-  })
-);
+const trackPointArraySchema = z
+  .array(
+    z.object({
+      lat: z.number(),
+      lng: z.number(),
+      ele: z.number().optional(),
+      timestamp: z.string(),
+      accuracyM: z.number().optional(),
+      speedMps: z.number().optional(),
+    })
+  )
+  .max(MAX_TRACK_POINTS, `Une trace ne peut pas dépasser ${MAX_TRACK_POINTS} points`);
 
 /** Deux formats acceptés : GeoJSON LineString (prod) ou points explicites (interne). */
 const positionsPayloadSchema = z.union([lineStringSchema, trackPointArraySchema]).nullable();
