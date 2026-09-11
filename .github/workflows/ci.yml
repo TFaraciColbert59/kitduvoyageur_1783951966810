@@ -37,6 +37,11 @@ jobs:
 
       - name: Gate 4 — Next.js Production Build
         run: npm run build
+        env:
+          # Build CI : JAMAIS la production. Placeholder documenté par défaut ;
+          # remplacé automatiquement par le projet de test si les secrets existent.
+          NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.SUPABASE_TEST_URL || 'https://ci-build-placeholder.supabase.co' }}
+          NEXT_PUBLIC_SUPABASE_ANON_KEY: ${{ secrets.SUPABASE_TEST_ANON_KEY || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJjaS1idWlsZC1wbGFjZWhvbGRlciIsInJvbGUiOiJhbm9uIiwiaWF0IjowfQ.cGxhY2Vob2xkZXI' }}
 
       # ── Portes dépendant d'une base Supabase (opt-in via variable de dépôt) ──
       # Pour les activer : définir la variable de dépôt LKDV_E2E_ENABLED=true et
