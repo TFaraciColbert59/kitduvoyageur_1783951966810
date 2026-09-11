@@ -12,6 +12,7 @@ import {
   getAdventurePlan,
   getStoredPerformanceProfile,
 } from '@/features/adventure-intelligence/server/generateAdventure';
+import { createSupabaseLiveSourcesClient } from '@/features/adventure-intelligence/server/liveSources';
 import { MAX_ROUTE_POLYLINE_POINTS } from '@/features/adventure-intelligence/server/routePrediction';
 import { currentAdventureFeatureFlags } from '@/features/adventure-intelligence/server/featureFlags';
 import {
@@ -271,6 +272,8 @@ export async function POST(request: NextRequest) {
             createSupabaseAdventurePredictionPersistence(supabase),
           // A13 (S1) — ETA réelle : map-matching + géométries OSM + profil.
           routePredictionClient: createSupabaseRoutePredictionClient(supabase),
+          // A13 (S4) — sources vivantes : Terrain Live + POI OSM eau/refuges.
+          liveSourcesClient: createSupabaseLiveSourcesClient(supabase),
         }
       );
     } catch (error) {

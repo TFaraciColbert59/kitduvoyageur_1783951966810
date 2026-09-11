@@ -31,7 +31,7 @@ import {
   type AdventureCandidateComparison,
 } from '../domain/candidatePlans';
 import { COLD_CONFIDENCE, type Confidence } from '../domain/confidence';
-import type { EngineResult } from '../domain/engine';
+import type { EngineResult, EngineWarning } from '../domain/engine';
 import {
   type EngineRegistry,
   type EngineRunRecord,
@@ -57,6 +57,10 @@ import {
   type RoutePredictionClient,
   type RoutePredictionResult,
 } from './routePrediction';
+import {
+  resolveLiveSources,
+  type LiveSourcesClient,
+} from './liveSources';
 import type { TripKitAnalysis } from '@/features/trips/types/kit.types';
 
 /** Bundle atomique plan + version + runs + décisions (A10 — 10.4). */
@@ -155,6 +159,12 @@ export interface AdventureGenerationResult {
   runs: EngineRunRecord[];
   explanation: string;
   aiUsed: boolean;
+  /**
+   * A13 (S4) — avertissements des sources vivantes : sections laissées vides
+   * faute de source déterministe (jamais de donnée inventée). Toujours fourni
+   * par `generateAdventure` ; optionnel pour les résultats simulés.
+   */
+  liveSourceWarnings?: EngineWarning[];
 }
 
 export interface AdventureGenerationDeps {
@@ -176,6 +186,12 @@ export interface AdventureGenerationDeps {
    * `uniform_from_blueprint` (A10) reste utilisé tel quel.
    */
   routePredictionClient?: RoutePredictionClient;
+  /**
+   * A13 (S4) — client des sources vivantes : Terrain Live autour de la route
+   * (`a5_terrain_reports_near`) et POI OSM eau/refuges (`get_trail_pois_bbox`).
+   * Absent : les sections restent dans leur état calculé, sans invention.
+   */
+  liveSourcesClient?: LiveSourcesClient;
 }
 
 type Layers = Record<string, Proposal<unknown>>;
@@ -812,6 +828,19 @@ export async function generateAdventure(
     }
   }
 
+  // A13 (S4) — sources vivantes : Terrain Live autour de la route et POI OSM
+  // eau/refuges sur la bbox. Chaque source absente laisse la section `null` (ou
+  // son état calculé) avec un warning explicite ; jamais de valeur inventée.
+  const liveSources = await resolveLiveSources({
+    polyline: routePolyline(input),
+    weatherSection: sections.liveConditions,
+    fallbackFoodWater: sections.foodAndWater,
+    now,
+    client: deps.liveSourcesClient ?? null,
+  });
+  sections.liveConditions = liveSources.liveConditions;
+  sections.foodAndWater = liveSources.foodAndWater;
+
   const plan: AdventurePlan = {
     id: planId,
     ownerId: input.ownerId,
@@ -907,7 +936,16 @@ export async function generateAdventure(
     localExplanation
   );
 
-  return { plan, candidates, candidatePlans, candidateComparison, runs, explanation, aiUsed };
+  return {
+    plan,
+    candidates,
+    candidatePlans,
+    candidateComparison,
+    runs,
+    explanation,
+    aiUsed,
+    liveSourceWarnings: liveSources.warnings,
+  };
 }
 
 // ── Persistance Supabase (lecture seule côté client) ─────────────────────────
