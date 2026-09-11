@@ -75,33 +75,39 @@ SELECT public.refresh_kit_conservation();
 -- ----------------------------------------------------------------------------
 
 -- Test 1 : le réchaud est conservé par 1 fork externe sur 3 → 33.3 %
+-- Fixture : la clé réelle de « Réchaud » est l'item_key généré 'r-chaud'
+-- (lower + non [a-z0-9] → '-'), cf. materiel_kit_items et lineage.test.sql 8a.
 SELECT is(
   (SELECT round((kept_count::numeric / total_pairs) * 100, 1)
-     FROM public.kit_item_survival WHERE item_key = 'rchaud'),
+     FROM public.kit_item_survival WHERE item_key = 'r-chaud'),
   33.3,
   '1. Item abandonné par 2 forks sur 3 → conservation 33,3 %'
 );
 
 -- Test 2 : la tente (product_id) est conservée par les 3 forks externes → 100 %
+-- pgTAP 1.3.3 : is(anyelement, anyelement) exige des types identiques
+-- (round(...) est numeric) → cast explicite.
 SELECT is(
   (SELECT round((kept_count::numeric / total_pairs) * 100, 0)
      FROM public.kit_item_survival
      WHERE item_key = 'dddddddd-dddd-dddd-dddd-dddddddddddd'),
-  100,
+  100::numeric,
   '2. Item conservé partout → conservation 100 %'
 );
 
 -- Test 3 : les AUTO-forks sont exclus → total_pairs de la tente = 3 (pas 5)
+-- Cast ::int (total_pairs est bigint, pgTAP exige des types identiques).
 SELECT is(
-  (SELECT total_pairs FROM public.kit_item_survival
+  (SELECT total_pairs::int FROM public.kit_item_survival
      WHERE item_key = 'dddddddd-dddd-dddd-dddd-dddddddddddd'),
   3,
   '3. Les auto-forks ne comptent pas dans les paires de conservation'
 );
 
 -- Test 4 : axe propagation — forks avec session : B1, B2(exclu: sans session), C → 2 users uniques
+-- Cast ::int (fork_users_unique est bigint, pgTAP exige des types identiques).
 SELECT is(
-  (SELECT fork_users_unique FROM public.kit_trust_scores
+  (SELECT fork_users_unique::int FROM public.kit_trust_scores
      WHERE kit_id = '00000000-0000-0000-0000-000000000001'),
   2,
   '4. Uniquement les forks avec session et à user distinct comptent (B et C)'
