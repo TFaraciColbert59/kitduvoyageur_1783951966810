@@ -38,13 +38,23 @@ jobs:
       - name: Gate 4 — Next.js Production Build
         run: npm run build
 
+      # ── Portes dépendant d'une base Supabase (opt-in via variable de dépôt) ──
+      # Pour les activer : définir la variable de dépôt LKDV_E2E_ENABLED=true et
+      # les secrets SUPABASE_TEST_URL / SUPABASE_TEST_ANON_KEY (projet de test).
+      # Sans base de test, ces portes échouent par construction : elles restent
+      # donc conditionnelles pour garder la CI des invariants de code verte.
+
       - name: Install Playwright Browsers
+        if: ${{ vars.LKDV_E2E_ENABLED == 'true' }}
         run: npx playwright install --with-deps chromium
 
       - name: Gate 5 — End-to-End Playwright Suite
+        if: ${{ vars.LKDV_E2E_ENABLED == 'true' }}
         run: npx playwright test scripts/e2e/voyage.spec.ts scripts/e2e/adventure-intelligence.spec.ts
         env:
           CI: true
+          NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.SUPABASE_TEST_URL }}
+          NEXT_PUBLIC_SUPABASE_ANON_KEY: ${{ secrets.SUPABASE_TEST_ANON_KEY }}
 
       # ── Chantier Y (Y0.6) — portes additionnelles ──
 
@@ -55,12 +65,17 @@ jobs:
         run: npm run verify:icons
 
       - name: Gate G6 — Accessibilité axe (zéro critical/serious)
+        if: ${{ vars.LKDV_E2E_ENABLED == 'true' }}
         run: npm run test:a11y
         env:
           CI: true
+          NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.SUPABASE_TEST_URL }}
+          NEXT_PUBLIC_SUPABASE_ANON_KEY: ${{ secrets.SUPABASE_TEST_ANON_KEY }}
 
     # Gate G5 — Régression visuelle : job séparé, rapport en artefact téléchargeable.
+    # Même opt-in que Gate 5/G6 (base de test requise pour rendre les pages).
   visual-gates:
+    if: ${{ vars.LKDV_E2E_ENABLED == 'true' }}
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
@@ -82,6 +97,8 @@ jobs:
         run: npx playwright test --config=playwright.visual.config.ts
         env:
           CI: true
+          NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.SUPABASE_TEST_URL }}
+          NEXT_PUBLIC_SUPABASE_ANON_KEY: ${{ secrets.SUPABASE_TEST_ANON_KEY }}
 
       - name: Upload rapport visuel (artefact)
         if: always()
@@ -90,3 +107,24 @@ jobs:
           name: playwright-visual-report
           path: playwright-report/
           retention-days: 14
+
+  # Audit #39 — suites pgTAP + migrations sur une base de test dédiée.
+  # Opt-in : variable de dépôt LKDV_DB_TESTS_ENABLED=true + secret LKDV_TEST_DATABASE_URL.
+  database-gates:
+    if: ${{ vars.LKDV_DB_TESTS_ENABLED == 'true' }}
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
+        with:
+          node-version: 22
+          cache: 'npm'
+
+      - name: Gate DB.1 — Migrations additives sur base de test
+        run: npx --yes supabase@2 db push --db-url "${{ secrets.LKDV_TEST_DATABASE_URL }}"
+
+      - name: Gate DB.2 — Suites pgTAP
+        run: npx --yes supabase@2 test db --db-url "${{ secrets.LKDV_TEST_DATABASE_URL }}"
