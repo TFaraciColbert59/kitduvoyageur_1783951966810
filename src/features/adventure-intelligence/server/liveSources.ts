@@ -100,6 +100,13 @@ export const TERRAIN_LIVE_UNAVAILABLE_WARNING: EngineWarning = {
   severity: 'warning',
 };
 
+export const TERRAIN_LIVE_PARTIAL_WARNING: EngineWarning = {
+  code: 'terrain_live_partial',
+  message:
+    'Signalements Terrain Live lus partiellement autour de la route (certains points en échec) — seuls les signalements réellement reçus sont inclus.',
+  severity: 'info',
+};
+
 /** Réexportés pour une surface unique des avertissements sans source. */
 export const REGULATIONS_NO_DETERMINISTIC_SOURCE_WARNING = regulationsAdapter.skipReason;
 export const DOCUMENTS_NO_DETERMINISTIC_SOURCE_WARNING = documentsAdapter.skipReason;
@@ -425,8 +432,12 @@ export async function resolveLiveSources(
       }
     }
     terrainReports = [...byId.values()];
-    if (failures > 0 && failures === points.length) {
-      warnings.push(TERRAIN_LIVE_UNAVAILABLE_WARNING);
+    if (failures > 0) {
+      warnings.push(
+        failures === points.length
+          ? TERRAIN_LIVE_UNAVAILABLE_WARNING
+          : TERRAIN_LIVE_PARTIAL_WARNING
+      );
     }
   }
 

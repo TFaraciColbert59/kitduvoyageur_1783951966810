@@ -177,6 +177,47 @@ describe('A13 — Sources vivantes (TEST-A13-SRC)', () => {
     expect(resolved.warnings.some((warning) => warning.code === 'terrain_live_unavailable')).toBe(
       false
     );
+
+    // Échec partiel : les points réussis sont conservés, l'échec est explicite.
+    const partial = makeClient({ reports: [duplicated] });
+    let calls = 0;
+    const originalList = partial.listTerrainReportsNear.bind(partial);
+    partial.listTerrainReportsNear = async (query) => {
+      calls += 1;
+      if (calls === 2) throw new Error('point indisponible');
+      return originalList(query);
+    };
+    const partialResolved = await resolveLiveSources({
+      polyline: polyline(9),
+      weatherSection: null,
+      fallbackFoodWater: null,
+      now: NOW,
+      client: partial,
+    });
+    const partialValue = partialResolved.liveConditions?.value as {
+      terrainReports: TerrainLiveReport[];
+    };
+    expect(partialValue.terrainReports).toHaveLength(1);
+    expect(
+      partialResolved.warnings.find((warning) => warning.code === 'terrain_live_partial')?.severity
+    ).toBe('info');
+
+    // Échec total : aucune donnée, warning explicite.
+    const failing = makeClient({ reportsError: true });
+    const failedResolved = await resolveLiveSources({
+      polyline: polyline(9),
+      weatherSection: null,
+      fallbackFoodWater: null,
+      now: NOW,
+      client: failing,
+    });
+    expect(failedResolved.liveConditions).toBeNull();
+    expect(
+      failedResolved.warnings.some(
+        (warning) =>
+          warning.code === 'terrain_live_unavailable' && warning.severity === 'warning'
+      )
+    ).toBe(true);
   });
 
   it('TEST-A13-SRC-03: foodAndWater construit depuis trail_pois (eau/refuges) sur la bbox route, provenance OSM', async () => {
