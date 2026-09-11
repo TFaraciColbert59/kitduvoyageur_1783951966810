@@ -29,6 +29,7 @@ import CaptureSheet from './sheets/CaptureSheet';
 import CopilotSheet from './sheets/CopilotSheet';
 import MoreSheet from './sheets/MoreSheet';
 import { TerrainLiveCockpitControl, useTerrainReports } from '@/features/terrain-live';
+import AdventureCockpitControl from '@/features/adventure-intelligence/ui/AdventureCockpitControl';
 
 export interface HikingCockpitPageProps {
   /** A13 (S7) — flag `terrain_live` résolu côté serveur (défaut : inactif). */
@@ -39,6 +40,8 @@ export default function HikingCockpitPage({ terrainEnabled = false }: HikingCock
   const router = useRouter();
   const searchParams = useSearchParams();
   const routeIdParam = searchParams?.get('routeId');
+  // A13 (S5) — plan aventure actif passé par l'entrée du cockpit.
+  const adventureIdParam = searchParams?.get('adventureId');
 
   const hikingStore = useHikingStore();
   const [activeTab, setActiveTab] = useState<DesktopDockTab | null>(null);
@@ -580,6 +583,13 @@ export default function HikingCockpitPage({ terrainEnabled = false }: HikingCock
                     : null
                 }
                 gpsAccuracyM={currentPos?.accuracy ?? null}
+              />
+
+              {/* A13 (S5) — Cockpit live : assemblage réel, recalcul via evaluateRecalc. */}
+              <AdventureCockpitControl
+                adventureId={adventureIdParam}
+                fixes={hikingStore.positions}
+                batteryLevel={hikingStore.batteryLevel}
               />
 
               {/* Geolocation Permission Request Modal */}
