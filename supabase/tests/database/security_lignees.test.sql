@@ -10,7 +10,7 @@ SET LOCAL search_path = public;
 SELECT plan(10);
 
 INSERT INTO auth.users (id, aud, role, email, encrypted_password, raw_app_meta_data, raw_user_meta_data, created_at, updated_at)
-SELECT x.id, 'authenticated', 'authenticated', x.e, 'x', '{}', '{}', now(), now()
+SELECT x.id::uuid, 'authenticated', 'authenticated', x.e, 'x', '{}', '{}', now(), now()
 FROM (VALUES
   ('aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa', 'sec_a@test.local'),
   ('bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb', 'sec_b@test.local')

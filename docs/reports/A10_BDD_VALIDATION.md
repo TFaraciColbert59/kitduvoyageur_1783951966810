@@ -1,79 +1,85 @@
-# A10 — Validation BDD (Étape 0-B) — preuve d'exécution
+# A10 — Validation BDD (Étape 0-B) — rapport corrigé (méthodologie stricte)
 
-Date : 2026-09-11 · Environnement : Docker Desktop rétabli + Supabase CLI 2.117 local
-(`supabase_db_ai-finalization`, PostgreSQL 17.6.1.141) · Dump prod : schema-only, hors dépôt.
+Date : 2026-09-11 (révision suite à revue indépendante) · Environnement : Docker Desktop +
+Supabase CLI 2.117 local (PostgreSQL 17.6.1.141) · Dump prod : **schema-only**, hors données.
 
-## 1. Replay base vide — ✅ SUCCÈS
+> Correctif de la revue : le harnais initial (2 passes tolérantes) n'était pas une preuve
+> stricte et le « replay historique intégral » revendiqué n'en était pas un. La stratégie
+> officielle est désormais **BASELINE + migrations post-baseline**, avec `ON_ERROR_STOP=1`
+> sur toutes les phases certifiantes. L'ancien harnais est supprimé.
 
-Procédure reproductible : `pwsh scripts/db/replay-from-empty.ps1`
-(bootstrap replay → passe tolérante 173 fichiers → alignement prod→replay → passe stricte).
-
-Résultat frais (schéma public recréé à zéro) :
-
-```text
-[replay] Passe A (tolérante) : 173 fichiers
-[replay] Passe B (alignement prod→replay)
-[replay] Passe C (stricte) sur 0 fichier(s) en échec
-[replay] SUCCÈS : chaîne complète appliquée (2 passes + alignement).
-```
-
-Réparations committées rendant ce replay possible (toutes additives, déjà incluses dans la chaîne) :
-- **Bootstrap de replay** `20260710000000_a10_replay_bootstrap.sql` : types enum de production,
-  194 tables prod (sans FK), contraintes PK/UNIQUE gardées — généré depuis le dump **schema-only**
-  (aucune donnée).
-- **Alignement** `supabase/replay/a10_replay_alignment.sql` : colonnes prod absentes du dépôt.
-- Réordonnancements `ALTER avant CREATE` (products, kits, kit_items, listings, shop_products,
-  travel_groups/group_*) + `conversation_participants` avant policy.
-- Idempotence : `DROP POLICY IF EXISTS` (22 fichiers), `CREATE TABLE/INDEX IF NOT EXISTS` (5 fichiers),
-  réparation lots 7-10 (`\$\$`, `PRIMARY DEFAULT`, `profiles`→`user_profiles`, variables plpgsql,
-  blocs de validation non bloquants en replay), PostGIS/tables distantes en amont
-  (`trail_metadata/trail_scores/trail_pois` stand-ins, geodata place_names/geo up-front),
-  restauration des colonnes après `DROP TYPE ... CASCADE`.
-
-## 2. F1 — ✅ FERMÉ, vérifié après migration
-
-`pg_policies` sur `user_profiles` (base rejouée) : **aucune** policy de lecture large.
-Restantes : `users_read_own_profile`, `users_manage_own_profiles`, `users_update_own_profile`,
-`profile_read_own_visibility`, `profile_update_own_visibility`, `profile_select_public_subset`
-(anon/false), `user_profiles_select_admin` (is_admin), `Users insert own profile`
-(auth.uid()=id). Vue `public.public_profiles` présente. Les trois policies larges
-(`public_read_user_profiles`, `anon_read_profiles_basic`, dérive prod `Public read user_profiles`)
-sont supprimées par la migration F1 (les deux premières existent en replay ; la dérive est
-traitée sur la copie historique).
-
-## 3. pgTAP — partiel (résultats réels)
-
-| Suite | Résultat |
-|---|---|
-| `a1_domain_security` | ✅ toutes assertions |
-| `a10_session_lease` | ✅ 12/12 (attendu DB-01 ajusté au comportement dead-letter) |
-| `a2_segment_processing` | 🟠 13/14 — `DB-03` attend 1, obtient 2 (investigation en cours) |
-| 6 suites historiques (attributions, conservation, field_proof, lineage, messaging_security, security_lignees) | ❌ échec à l'exécution (dette préexistante : hypothèses prod/données) — hors périmètre A1-A12 |
-| Extension `pgtap` | installée localement (absent de l'instance par défaut) |
-
-## 4. EXPLAIN (ANALYZE, BUFFERS) — proximité
+## 1. Stratégie officielle (ruling)
 
 ```text
-Function Scan on a5_terrain_reports_near(44.0, 6.0, 5000)
-  actual time=19.392..19.392 rows=0
-  Buffers: shared hit=695
-Planning Time: 0.103 ms ; Execution Time: 19.448 ms
+Baseline = snapshot schema-only de la production au cutoff 20260911120000
+           (143 migrations prod déjà appliquées → intégrées, jamais rejouées)
+install : PostgreSQL vide → baseline → 33 migrations post-baseline (strictes) → pgTAP → F1 → EXPLAIN
+upgrade : baseline (= snapshot historique au cutoff) → ledger initialisé (143 versions prod)
+          → 33 migrations post-baseline (strictes) → pgTAP → F1 → EXPLAIN
 ```
 
-Acceptable sur base vide (index GiST `idx_terrain_reports_geog` en place, filtre statuts/site).
+Harnais unique : `scripts/db/install-from-baseline.ps1 -Mode install|upgrade`
+(`psql -X -v ON_ERROR_STOP=1` partout ; toute erreur SQL = échec).
+
+Artefacts de baseline (schema-only, **aucune donnée**) :
+`supabase/baseline/prod_schema_20260911.sql`, `applied_migrations.txt` (143),
+`auth_integration.sql` (trigger `auth.users` non capturé par un dump public),
+`grants.sql` (GRANTs absents du dump + default privileges).
+
+## 2. Résultats d'exécution (preuves réelles)
+
+| Mode | Migrations strictes | F1 | EXPLAIN | Verdict |
+|---|---|---|---|---|
+| `install` | ✅ 33/33 (0 erreur) | ✅ (0 policy large, vue présente) | ✅ 17,7 ms | échecs = pgTAP uniquement |
+| `upgrade` | ✅ 33/33 après ledger 143 | ✅ | ✅ 17,6 ms | échecs = pgTAP uniquement |
+
+**Aucune erreur SQL de migration dans les deux modes.** Les échecs restants sont des suites
+pgTAP (tests), pas des migrations.
+
+## 3. pgTAP — état réel
+
+| Suite | Statut | Détail |
+|---|---|---|
+| `a1_domain_security` | ✅ | consentements, passages, profils, seuils, plans, events |
+| `a2_segment_processing` | ✅ | contrat de claim réécrit **par IDs** (gate utilisateur) |
+| `a10_session_lease` | ✅ 12/12 | |
+| `a10_consent_enforcement` | ✅ | |
+| `messaging_security` | ✅ 15/15 | |
+| `lineage` | ✅ 24/24 | |
+| `field_proof` | ✅ (mode upgrade) | 1 réserve locale en mode install (collision de fixtures route prod) |
+| `conservation` | ❌ **ouvert** | `could not create unique index "kit_trust_scores_kit_id_key"` au premier refresh non concurrent : la matview produit des doublons de `kit_id` avec les fixtures — défaut de définition/agrégation à instruire |
+| `attributions` | 🟠 **quarantaine** | la migration `20260903050000_kit_attributions.sql` est **gelée** (`migrations_frozen/`) et **absente du ledger prod** ET de la baseline : fonctionnalité jamais déployée. Reproduction : `insert_kit_attribution` inexistante. Échec antérieur à A10 (mêmes traces lors du replay historique). A10 n'aggrave pas : aucun objet attributions n'est créé/modifié par les migrations A. |
+| `security_lignees` | 🟠 **quarantaine** | même cause : table `kit_attributions` absente (migration gelée non déployée). |
+
+**Quarantaines** : conformes au ruling (cause exacte + reproduction + preuve d'absence prod
+`applied_migrations.txt` + preuve d'échec pré-A10 + A10 neutre). Propriétaire : humain ;
+cible : décision produit sur la fonctionnalité attributions (dégeler ou retirer les suites).
+
+## 4. Défauts réels découverts et corrigés par cette validation
+
+1. **Claim de sessions** : `UPDATE … WHERE id IN (SELECT … LIMIT n FOR UPDATE)` ne plafonnait
+   pas le lot → corrigé en CTE `MATERIALIZED` (migration `20260911230000` modifiée).
+2. **Anti-cycle filiation** : `NEW.forked_from = ANY(ancestors)` bloquait **tout fork** →
+   condition correcte `NEW.id = ANY(ancestors)` (`20260911350000`).
+3. **Immuabilité contournable** : trigger limité à `UPDATE OF forked_from` → élargi aux 4
+   champs + message de cycle explicite (`20260911380000`).
+4. **Refresh matviews** : `CONCURRENTLY` sur matview non peuplée → repli non concurrent
+   (`20260911360000`).
+5. **Révocations messagerie** : `anon` pouvait exécuter `is_conversation_member` et
+   `get_or_create_direct_conversation` (drift GRANTs prod) → réappliquées (`20260911370000`).
 
 ## 5. Hygiène
 
-- Dump prod : **schema-only**, fichier temporaire hors dépôt, jamais commité ni copié en cloud,
-  supprimé après usage (vérifié : absent de `git status`).
-- Aucune écriture en production (connexion prod utilisée uniquement pour `db dump` schema-only).
-- Flags de domaine : toujours OFF.
+- Dump prod : schema-only uniquement, hors dépôt, supprimé après usage ; aucune donnée en Git.
+- **Aucune écriture en production** (lectures seules : policies, ledger, dump schema-only).
+- Flags de domaine toujours OFF.
 
-## 6. Reste à faire pour clore la gate B
+## 6. Reste pour clore la gate B (et poser les tags)
 
-1. `a2 DB-03` : trancher l'écart (2 vs 1) — comportement claim vs attente de test.
-2. Suites historiques : soit les adapter aux hypothèses de replay (comme a1/a2/a10 : grants
-   explicites, fixtures robustes), soit documenter leur dette.
-3. Scénario **copie historique** : restaurer le dump schema-only + données synthétiques,
-   appliquer la chaîne, rejouer F1 + pgTAP (le harnais est prêt : bootstrap/alignement).
-4. Re-run CI HEAD après commits (Gate 4 build).
+1. `conservation` : instruire les doublons `kit_trust_scores` (définition matview vs fixtures).
+2. `field_proof` en mode install : collision d'IDs de fixtures avec la prod (route 90001) —
+   rendre la fixture insensible (IDs improbables) pour que les deux modes soient identiques.
+3. Décision sur les quarantaines attributions/security_lignees (dégeler la migration ou retirer
+   les suites du périmètre, avec ticket).
+4. Re-run `install` + `upgrade` complets verts → CI verte sur le HEAD → **alors seulement**
+   `a10-code-done` / `a11-code-done` (sur commit à CI verte).

@@ -74,7 +74,7 @@ LANGUAGE sql
 SECURITY DEFINER
 SET search_path = public, pg_temp
 AS $$
-  WITH expired AS (
+  WITH expired AS MATERIALIZED (
     SELECT id FROM public.hike_sessions
     WHERE processing_status = 'processing'
       AND processing_started_at IS NOT NULL
@@ -92,14 +92,10 @@ AS $$
         updated_at = now()
     WHERE hs.id IN (SELECT id FROM expired)
     RETURNING hs.id
-  )
-  UPDATE public.hike_sessions
-  SET processing_status = 'processing',
-      processing_attempts = processing_attempts + 1,
-      processing_started_at = now(),
-      next_retry_at = NULL,
-      updated_at = now()
-  WHERE id IN (
+  ),
+  -- MATERIALIZED : borne dure du lot (sans cela, la sous-requête peut être
+  -- aplatie par le planificateur et le LIMIT ne plafonne plus l'UPDATE).
+  candidates AS MATERIALIZED (
     SELECT id FROM public.hike_sessions
     WHERE processing_attempts < 5
       AND (
@@ -117,7 +113,15 @@ AS $$
     LIMIT greatest(p_limit, 1)
     FOR UPDATE SKIP LOCKED
   )
-  RETURNING *;
+  UPDATE public.hike_sessions hs
+  SET processing_status = 'processing',
+      processing_attempts = processing_attempts + 1,
+      processing_started_at = now(),
+      next_retry_at = NULL,
+      updated_at = now()
+  FROM candidates c
+  WHERE hs.id = c.id
+  RETURNING hs.*;
 $$;
 
 COMMENT ON FUNCTION public.a2_claim_pending_sessions(integer) IS

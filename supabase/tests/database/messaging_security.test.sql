@@ -1,6 +1,14 @@
 BEGIN;
 SELECT plan(15);
 
+-- Replay : `user_profiles.id` référence `auth.users` — créer d'abord les comptes
+-- (le trigger on_auth_user_created alimentera ensuite les profils).
+INSERT INTO auth.users (id, aud, role, email, encrypted_password, raw_app_meta_data, raw_user_meta_data, created_at, updated_at) VALUES
+  ('11111111-1111-1111-1111-111111111111', 'authenticated', 'authenticated', 'user_a@test.local', 'x', '{}', '{}', now(), now()),
+  ('22222222-2222-2222-2222-222222222222', 'authenticated', 'authenticated', 'user_b@test.local', 'x', '{}', '{}', now(), now()),
+  ('33333333-3333-3333-3333-333333333333', 'authenticated', 'authenticated', 'user_c@test.local', 'x', '{}', '{}', now(), now())
+ON CONFLICT (id) DO NOTHING;
+
 -- ----------------------------------------------------------------------------
 -- FIXTURES TEMPORAIRES (ISOLÉES DANS LA TRANSACTION DU TEST)
 -- ----------------------------------------------------------------------------
@@ -10,21 +18,21 @@ INSERT INTO public.user_profiles (id, full_name, email) VALUES
     ('33333333-3333-3333-3333-333333333333', 'Utilisateur C (Tiers)', 'user_c@test.local')
 ON CONFLICT (id) DO NOTHING;
 
-INSERT INTO public.conversations (id, type, title, created_by, direct_pair_key) VALUES
-    ('c1111111-1111-1111-1111-111111111111', 'direct', 'DM A-B', '11111111-1111-1111-1111-111111111111', '11111111-1111-1111-1111-111111111111:22222222-2222-2222-2222-222222222222')
+INSERT INTO public.conversations (id, type, name, title, created_by, direct_pair_key) VALUES
+    ('c1111111-1111-1111-1111-111111111111', 'direct', 'DM A-B', 'DM A-B', '11111111-1111-1111-1111-111111111111', '11111111-1111-1111-1111-111111111111:22222222-2222-2222-2222-222222222222')
 ON CONFLICT (id) DO NOTHING;
 
 INSERT INTO public.conversation_members (id, conversation_id, user_id, role) VALUES
-    ('cm111111-1111-1111-1111-111111111111', 'c1111111-1111-1111-1111-111111111111', '11111111-1111-1111-1111-111111111111', 'owner'),
-    ('cm222222-2222-2222-2222-222222222222', 'c1111111-1111-1111-1111-111111111111', '22222222-2222-2222-2222-222222222222', 'member')
+    ('c3111111-1111-1111-1111-111111111111', 'c1111111-1111-1111-1111-111111111111', '11111111-1111-1111-1111-111111111111', 'owner'),
+    ('c3222222-2222-2222-2222-222222222222', 'c1111111-1111-1111-1111-111111111111', '22222222-2222-2222-2222-222222222222', 'member')
 ON CONFLICT (id) DO NOTHING;
 
 INSERT INTO public.messages (id, conversation_id, sender_id, content) VALUES
-    ('m1111111-1111-1111-1111-111111111111', 'c1111111-1111-1111-1111-111111111111', '11111111-1111-1111-1111-111111111111', 'Message de A')
+    ('c1111111-1111-1111-1111-111111111111', 'c1111111-1111-1111-1111-111111111111', '11111111-1111-1111-1111-111111111111', 'Message de A')
 ON CONFLICT (id) DO NOTHING;
 
 INSERT INTO public.message_reactions (id, message_id, user_id, reaction_value) VALUES
-    ('r1111111-1111-1111-1111-111111111111', 'm1111111-1111-1111-1111-111111111111', '22222222-2222-2222-2222-222222222222', '👍')
+    ('c1111111-1111-1111-1111-111111111111', 'c1111111-1111-1111-1111-111111111111', '22222222-2222-2222-2222-222222222222', '👍')
 ON CONFLICT (id) DO NOTHING;
 
 -- ----------------------------------------------------------------------------
@@ -63,7 +71,7 @@ SELECT throws_ok(
 
 -- Test 5 : Déplacement de conversation_id bloqué par Trigger
 SELECT throws_ok(
-    $$ UPDATE public.messages SET conversation_id = 'c2222222-2222-2222-2222-222222222222' WHERE id = 'm1111111-1111-1111-1111-111111111111' $$,
+    $$ UPDATE public.messages SET conversation_id = 'c2222222-2222-2222-2222-222222222222' WHERE id = 'c1111111-1111-1111-1111-111111111111' $$,
     'Impossible de déplacer un message vers une autre conversation',
     '5. Auteur A ne peut pas déplacer son message vers une autre conversation'
 );
@@ -90,26 +98,34 @@ SELECT throws_ok(
     '8. Membre B ne peut pas s auto-promouvoir owner'
 );
 
--- Test 9 : Modification de membre tiers par un membre simple refusée
-SELECT throws_ok(
-    $$ UPDATE public.conversation_members SET is_muted = true WHERE user_id = '11111111-1111-1111-1111-111111111111' $$,
-    'new row violates row-level security policy for table "conversation_members"',
-    '9. Membre B ne peut pas modifier la ligne de A'
+-- Test 9 : Modification de la ligne de A par B sans effet (USING filtre, 0 ligne)
+SET LOCAL "request.jwt.claim.sub" = '22222222-2222-2222-2222-222222222222';
+UPDATE public.conversation_members SET is_muted = true WHERE user_id = '11111111-1111-1111-1111-111111111111';
+RESET ROLE;
+SET LOCAL ROLE authenticated;
+SELECT is(
+    (SELECT is_muted FROM public.conversation_members WHERE user_id = '11111111-1111-1111-1111-111111111111'),
+    false,
+    '9. Membre B ne peut pas modifier la ligne de A (valeur inchangée)'
 );
 
 -- Test 10 : DELETE non autorisé sur message affecte 0 ligne
 SET LOCAL "request.jwt.claim.sub" = '33333333-3333-3333-3333-333333333333';
-DELETE FROM public.messages WHERE id = 'm1111111-1111-1111-1111-111111111111';
+DELETE FROM public.messages WHERE id = 'c1111111-1111-1111-1111-111111111111';
+RESET ROLE;
 SELECT ok(
-    EXISTS (SELECT 1 FROM public.messages WHERE id = 'm1111111-1111-1111-1111-111111111111'),
+    EXISTS (SELECT 1 FROM public.messages WHERE id = 'c1111111-1111-1111-1111-111111111111'),
     '10. Tentative de DELETE par non-membre C laisse le message intact'
 );
 
 -- Test 11 : DELETE non autorisé sur réaction affecte 0 ligne
-SELECT throws_ok(
-    $$ DELETE FROM public.message_reactions WHERE id = 'r1111111-1111-1111-1111-111111111111' $$,
-    'new row violates row-level security policy for table "message_reactions"',
-    '11. Utilisateur C ne peut pas supprimer la réaction de B'
+SET LOCAL ROLE authenticated;
+SET LOCAL "request.jwt.claim.sub" = '33333333-3333-3333-3333-333333333333';
+DELETE FROM public.message_reactions WHERE id = 'c1111111-1111-1111-1111-111111111111';
+RESET ROLE;
+SELECT ok(
+    EXISTS (SELECT 1 FROM public.message_reactions WHERE id = 'c1111111-1111-1111-1111-111111111111'),
+    '11. Utilisateur C ne peut pas supprimer la réaction de B (toujours présente)'
 );
 
 -- Test 12 : RPC is_conversation_member refusé pour anon

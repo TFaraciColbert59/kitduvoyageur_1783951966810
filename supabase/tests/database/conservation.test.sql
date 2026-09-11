@@ -25,6 +25,11 @@ ON CONFLICT (id) DO NOTHING;
 INSERT INTO public.materiel_kits (id, user_id, name, is_souche, origin)
 VALUES ('00000000-0000-0000-0000-000000000001', 'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa', 'Souche', true, 'souche_editoriale');
 
+-- Replay : le produit référencé par l'item doit exister dans shop_products (FK).
+INSERT INTO public.shop_products (id, slug, name, price_eur, available, is_active, stock)
+VALUES ('dddddddd-dddd-dddd-dddd-dddddddddddd', 'cons-produit-test', 'Produit test conservation', 0, true, true, 0)
+ON CONFLICT (id) DO NOTHING;
+
 -- Items de la souche : tente (clé produit), réchaud (clé nom)
 INSERT INTO public.materiel_kit_items (id, kit_id, user_id, name, category, weight_g, product_id)
 VALUES

@@ -29,7 +29,7 @@ INSERT INTO public.materiel_kits (id, user_id, name)
 VALUES ('00000000-0000-0000-0000-000000000001', 'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa', 'Kit souche A');
 
 SELECT is(
-  (SELECT generation FROM public.materiel_kits WHERE id = '00000000-0000-0000-0000-000000000001'),
+  (SELECT generation FROM public.materiel_kits WHERE id = '00000000-0000-0000-0000-000000000001')::int,
   0,
   '1a. Un kit sans parent est à la génération 0'
 );
@@ -50,7 +50,7 @@ INSERT INTO public.materiel_kits (id, user_id, name, forked_from)
 VALUES ('00000000-0000-0000-0000-000000000002', 'bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb', 'Fork de A', '00000000-0000-0000-0000-000000000001');
 
 SELECT is(
-  (SELECT generation FROM public.materiel_kits WHERE id = '00000000-0000-0000-0000-000000000002'),
+  (SELECT generation FROM public.materiel_kits WHERE id = '00000000-0000-0000-0000-000000000002')::int,
   1,
   '2a. Un fork est à la génération 1'
 );
@@ -71,7 +71,7 @@ INSERT INTO public.materiel_kits (id, user_id, name, forked_from)
 VALUES ('00000000-0000-0000-0000-000000000003', 'cccccccc-cccc-cccc-cccc-cccccccccccc', 'Fork du fork', '00000000-0000-0000-0000-000000000002');
 
 SELECT is(
-  (SELECT generation FROM public.materiel_kits WHERE id = '00000000-0000-0000-0000-000000000003'),
+  (SELECT generation FROM public.materiel_kits WHERE id = '00000000-0000-0000-0000-000000000003')::int,
   2,
   '3a. Le fork de fork est à la génération 2'
 );
@@ -92,7 +92,7 @@ INSERT INTO public.materiel_kits (id, user_id, name, generation, ancestors)
 VALUES ('00000000-0000-0000-0000-000000000004', 'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa', 'Tentative client', 99, ARRAY['00000000-0000-0000-0000-000000000099']::uuid[]);
 
 SELECT is(
-  (SELECT generation FROM public.materiel_kits WHERE id = '00000000-0000-0000-0000-000000000004'),
+  (SELECT generation FROM public.materiel_kits WHERE id = '00000000-0000-0000-0000-000000000004')::int,
   0,
   '4a. generation=99 envoyé par le client est écrasé à 0'
 );
@@ -151,7 +151,7 @@ SELECT is(
   '6a. La suppression du parent met forked_from à NULL'
 );
 SELECT is(
-  (SELECT generation FROM public.materiel_kits WHERE id = '00000000-0000-0000-0000-000000000003'),
+  (SELECT generation FROM public.materiel_kits WHERE id = '00000000-0000-0000-0000-000000000003')::int,
   2,
   '6b. La génération du descendant est conservée (pas de ré-encrage)'
 );

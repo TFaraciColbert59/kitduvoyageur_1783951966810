@@ -34,7 +34,7 @@ VALUES ('00000000-0000-0000-0000-000000000002', 'bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbb
 -- Une route de randonnée avec massif (région), pour le journal
 INSERT INTO public.hiking_routes (id, osm_relation_id, name, region, distance_km)
 VALUES (90001, 10090001, 'GR20 Corse', 'Corse', 180.0)
-ON CONFLICT (id) DO NOTHING;
+ON CONFLICT (id) DO UPDATE SET region = EXCLUDED.region;
 
 -- ----------------------------------------------------------------------------
 -- Test 1 : session >= 1 km rattachée au kit → field_proven_count = 1
@@ -109,7 +109,7 @@ INSERT INTO public.kit_field_reports (kit_id, hike_session_id, user_id, item_key
 VALUES ('00000000-0000-0000-0000-000000000001', '10000000-0000-0000-0000-000000000003', 'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa', 'tente-msr-hubba', 'essentiel');
 
 SELECT is(
-  (SELECT count(*) FROM public.kit_field_reports
+  (SELECT count(*)::int FROM public.kit_field_reports
     WHERE hike_session_id = '10000000-0000-0000-0000-000000000003' AND item_key = 'tente-msr-hubba'),
   1,
   '6. Un premier débriefing crée la ligne'
@@ -139,8 +139,8 @@ SELECT is(
 SELECT throws_ok(
   $$ INSERT INTO public.kit_field_reports (kit_id, hike_session_id, user_id, item_key, verdict, note)
      VALUES ('00000000-0000-0000-0000-000000000001', '10000000-0000-0000-0000-000000000003', 'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa', 'sac-40l', 'jamais_servi', repeat('x', 501)) $$,
-  'new row for relation "kit_field_reports" violates check constraint "kit_field_reports_note_chk"',
-  '9. Une note de plus de 500 caractères est refusée'
+  '23514', NULL,
+  '9. Une note de plus de 500 caractères est refusée (SQLSTATE 23514)'
 );
 
 -- ----------------------------------------------------------------------------
@@ -149,8 +149,8 @@ SELECT throws_ok(
 SELECT throws_ok(
   $$ INSERT INTO public.kit_field_reports (kit_id, hike_session_id, user_id, item_key, verdict)
      VALUES ('00000000-0000-0000-0000-000000000001', '10000000-0000-0000-0000-000000000003', 'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa', 'sac-40l', 'superflu') $$,
-  'new row for relation "kit_field_reports" violates check constraint "kit_field_reports_verdict_chk"',
-  '10. Un verdict hors vocabulaire (essentiel|utile|jamais_servi|defaillant|manquait) est refusé'
+  '23514', NULL,
+  '10. Un verdict hors vocabulaire (essentiel|utile|jamais_servi|defaillant|manquait) est refusé (SQLSTATE 23514)'
 );
 
 -- ----------------------------------------------------------------------------

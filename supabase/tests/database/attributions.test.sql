@@ -12,7 +12,7 @@ SET LOCAL search_path = public;
 SELECT plan(7);
 
 INSERT INTO auth.users (id, aud, role, email, encrypted_password, raw_app_meta_data, raw_user_meta_data, created_at, updated_at)
-SELECT x.id, 'authenticated', 'authenticated', x.e, 'x', '{}', '{}', now(), now()
+SELECT x.id::uuid, 'authenticated', 'authenticated', x.e, 'x', '{}', '{}', now(), now()
 FROM (VALUES
   ('aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa', 'attr_a@test.local'),
   ('bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb', 'attr_b@test.local'),
@@ -21,7 +21,7 @@ FROM (VALUES
 ON CONFLICT (id) DO NOTHING;
 
 INSERT INTO public.user_profiles (id, full_name, email)
-SELECT x.id, x.n, x.e FROM (VALUES
+SELECT x.id::uuid, x.n, x.e FROM (VALUES
   ('aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa', 'Attrib A', 'attr_a@test.local'),
   ('bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb', 'Attrib B', 'attr_b@test.local')
 ) AS x(id, n, e)
