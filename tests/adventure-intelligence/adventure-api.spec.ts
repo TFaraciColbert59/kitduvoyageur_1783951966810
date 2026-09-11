@@ -1,11 +1,23 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { NextRequest } from 'next/server';
 
+const storeMock = vi.hoisted(() => ({
+  findByKey: vi.fn(),
+  hasActivePending: vi.fn(),
+  countRecent: vi.fn(),
+  createPending: vi.fn(),
+  markDone: vi.fn(),
+  markFailed: vi.fn(),
+}));
+
 vi.mock('@/lib/supabase/server', () => ({
   createClient: vi.fn(),
 }));
 vi.mock('@/lib/ai/serviceClient', () => ({
   getServiceSupabase: vi.fn(() => ({})),
+}));
+vi.mock('@/features/adventure-intelligence/server/generationRequests', () => ({
+  createSupabaseGenerationRequestStore: vi.fn(() => storeMock),
 }));
 vi.mock('@/features/adventure-intelligence/server/adapters', () => ({
   createDefaultRegistry: vi.fn(() => ({ registry: true })),
@@ -41,7 +53,11 @@ function generateRequest(body: unknown): NextRequest {
   return new NextRequest('http://localhost/api/adventure/generate', {
     method: 'POST',
     body: JSON.stringify(body),
-    headers: { 'content-type': 'application/json' },
+    headers: {
+      'content-type': 'application/json',
+      // A10 (10.8) : l'idempotence exige désormais cet en-tête.
+      'idempotency-key': 'a6-api-test-key',
+    },
   });
 }
 
@@ -55,6 +71,12 @@ describe('A6 — API génération et lecture (TEST-A6-API)', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     mockedService.mockReturnValue({} as never);
+    storeMock.findByKey.mockResolvedValue(null);
+    storeMock.hasActivePending.mockResolvedValue(false);
+    storeMock.countRecent.mockResolvedValue(0);
+    storeMock.createPending.mockResolvedValue({ id: 'req-a6' });
+    storeMock.markDone.mockResolvedValue(undefined);
+    storeMock.markFailed.mockResolvedValue(undefined);
   });
 
   it('TEST-A6-API-01: POST generate exige une session (401)', async () => {
