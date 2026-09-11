@@ -125,6 +125,7 @@ export function AdventureCockpit({
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: reduceMotion ? 0 : 0.22, ease: [0.22, 1, 0.36, 1] }}
       className={`space-y-3 pb-[env(safe-area-inset-bottom)] ${className}`}
+      role="group"
       aria-label="Cockpit aventure"
     >
       <header className="flex items-start justify-between gap-3">
