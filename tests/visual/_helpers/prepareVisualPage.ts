@@ -89,7 +89,14 @@ export async function waitForVisualReady(page: Page): Promise<void> {
  * data-visual-mask dans son JSX, avec un commentaire justifiant le masque.
  */
 export function visualMasks(page: Page): Locator[] {
-  return [page.locator('[data-visual-mask]'), page.locator('nextjs-portal')];
+  return [
+    page.locator('[data-visual-mask]'),
+    // Tuiles OSM Leaflet : chargement réseau non déterministe (une tuile
+    // peut manquer ou se peindre après la capture → diff ~1 tuile). Seul le
+    // pane de tuiles est masqué ; marqueurs et contrôles restent vérifiés.
+    page.locator('.leaflet-tile-pane'),
+    page.locator('nextjs-portal'),
+  ];
 }
 
 /** Capture de référence avec les tolérances canoniques du chantier. */
