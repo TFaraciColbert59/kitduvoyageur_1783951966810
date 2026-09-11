@@ -100,10 +100,9 @@ export async function POST(
       return NextResponse.json({ error: 'Signalement clos' }, { status: 409 });
     }
     if (result.status === 'duplicate') {
-      return NextResponse.json({
-        duplicate: true,
-        message: 'Confirmation déjà enregistrée pour cet utilisateur',
-      });
+      // Réponse métier idempotente : une confirmation unique par utilisateur,
+      // jamais une 500 sur la course d'insertion (contrainte 23505).
+      return NextResponse.json({ status: 'duplicate' }, { status: 200 });
     }
     if (result.status === 'rate_limited') {
       return NextResponse.json(

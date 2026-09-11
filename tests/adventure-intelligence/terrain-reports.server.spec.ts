@@ -10,6 +10,7 @@ import {
   type TerrainReportRow,
   type TerrainReportsClient,
   type NearbyTerrainReport,
+  type MergeTerrainReportInput,
 } from '@/features/adventure-intelligence/server/terrainReports';
 import type { TerrainReportPublic } from '@/features/adventure-intelligence/schemas/live.schema';
 
@@ -60,7 +61,7 @@ function publicReport(overrides: Partial<NearbyTerrainReport> = {}): NearbyTerra
 
 function makeClient(overrides: Partial<TerrainReportsClient> = {}) {
   const inserted: Record<string, unknown>[] = [];
-  const merged: Array<{ id: string; patch: Record<string, unknown> }> = [];
+  const merges: MergeTerrainReportInput[] = [];
   const confirmations: Record<string, unknown>[] = [];
   const updates: Array<{ id: string; patch: Record<string, unknown> }> = [];
 
@@ -69,8 +70,9 @@ function makeClient(overrides: Partial<TerrainReportsClient> = {}) {
     countConfirmationsSince: vi.fn(async () => 0),
     getUserModerationContext: vi.fn(async () => ({ accountAgeDays: 30, reputation: 50 })),
     findDedupCandidates: vi.fn(async () => []),
-    mergeIntoReport: vi.fn(async (id: string, patch: Record<string, unknown>) => {
-      merged.push({ id, patch });
+    mergeReport: vi.fn(async (input: MergeTerrainReportInput) => {
+      merges.push(input);
+      return { merged: true, reportCount: 2 };
     }),
     insertReport: vi.fn(async (row: Record<string, unknown>) => {
       inserted.push(row);
@@ -89,7 +91,7 @@ function makeClient(overrides: Partial<TerrainReportsClient> = {}) {
     ...overrides,
   };
 
-  return { client, inserted, merged, confirmations, updates };
+  return { client, inserted, merges, confirmations, updates };
 }
 
 describe('Serveur Terrain Live — création (TEST-A5-SRV-01)', () => {
@@ -163,8 +165,8 @@ describe('Serveur Terrain Live — création (TEST-A5-SRV-01)', () => {
 });
 
 describe('Serveur Terrain Live — fusion (TEST-A5-SRV-02)', () => {
-  it('TEST-A5-SRV-02: un doublon est fusionné avec le signalement existant, jamais réinséré', async () => {
-    const { client, inserted, merged } = makeClient({
+  it('TEST-A5-SRV-02: un doublon est fusionné via la RPC atomique, jamais réinséré', async () => {
+    const { client, inserted, merges } = makeClient({
       findDedupCandidates: vi.fn(async () => [
         {
           id: 'existant-42',
@@ -189,10 +191,12 @@ describe('Serveur Terrain Live — fusion (TEST-A5-SRV-02)', () => {
       reason: 'doublon_meme_segment',
     });
     expect(inserted).toHaveLength(0);
-    expect(merged).toHaveLength(1);
-    expect(merged[0].id).toBe('existant-42');
-    expect(merged[0].patch).toMatchObject({ updated_at: NOW, report_count: 2 });
-    expect(client.getReport).toHaveBeenCalledWith('existant-42');
+    expect(merges).toHaveLength(1);
+    expect(merges[0]).toMatchObject({
+      reportId: 'existant-42',
+      contributorId: USER_ID,
+      now: NOW,
+    });
   });
 });
 

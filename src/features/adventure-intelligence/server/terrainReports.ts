@@ -91,6 +91,47 @@ export type ConfirmTerrainReportResult =
   | { status: 'closed' }
   | { status: 'rate_limited'; reason: 'confirmation_cooldown' };
 
+/** Entrée de fusion atomique (RPC A11) : contributeur + éventuelle escalade. */
+export interface MergeTerrainReportInput {
+  reportId: string;
+  contributorId: string;
+  severity?: TerrainSeverity | null;
+  passability?: TerrainPassability | null;
+  now: string;
+}
+
+/** Résultat de la fusion atomique A11 : compte consolidé côté base. */
+export interface MergeTerrainReportResult {
+  merged: boolean;
+  reportCount: number;
+}
+
+/** Code PostgreSQL d'une violation de contrainte unique. */
+export const UNIQUE_VIOLATION_CODE = '23505';
+
+/**
+ * Violation d'unicité PostgreSQL (ex. confirmation déjà enregistrée). Les
+ * adaptateurs la lèvent pour que l'orchestrateur la convertisse en réponse
+ * métier idempotente plutôt qu'en erreur 500.
+ */
+export class UniqueViolationError extends Error {
+  readonly code = UNIQUE_VIOLATION_CODE;
+
+  constructor(message = 'violation_unicite') {
+    super(message);
+    this.name = 'UniqueViolationError';
+  }
+}
+
+/** Vrai si l'erreur est une violation d'unicité PostgreSQL (code 23505). */
+export function isUniqueViolation(error: unknown): boolean {
+  return (
+    typeof error === 'object' &&
+    error !== null &&
+    (error as { code?: unknown }).code === UNIQUE_VIOLATION_CODE
+  );
+}
+
 /** Ligne interne d'un signalement (jamais exposée telle quelle). */
 export interface TerrainReportRow {
   id: string;
@@ -124,7 +165,7 @@ export interface TerrainReportsClient {
     userId: string
   ): Promise<{ accountAgeDays: number; reputation: number }>;
   findDedupCandidates(category: TerrainReportCategory, sinceIso: string): Promise<DedupCandidate[]>;
-  mergeIntoReport(existingId: string, patch: Record<string, unknown>): Promise<void>;
+  mergeReport(input: MergeTerrainReportInput): Promise<MergeTerrainReportResult>;
   insertReport(row: Record<string, unknown>): Promise<TerrainReportRow>;
   getReport(id: string): Promise<TerrainReportRow | null>;
   confirmationExists(reportId: string, userId: string): Promise<boolean>;
@@ -198,15 +239,16 @@ export async function createTerrainReport(
   );
 
   if (dedup.mergedWith !== null) {
-    const existing = await client.getReport(dedup.mergedWith);
-    const currentCount = Math.max(1, existing?.reportCount ?? 1);
-    const patch: Record<string, unknown> = {
-      updated_at: now,
-      report_count: currentCount + 1,
-    };
-    if (input.severity) patch.severity = input.severity;
-    if (input.passability) patch.passability = input.passability;
-    await client.mergeIntoReport(dedup.mergedWith, patch);
+    // Fusion atomique (RPC A11) : plus de lecture/écriture concurrente côté
+    // serveur. La corroboration unique par utilisateur et l'escalade sont
+    // garanties par la transaction PostgreSQL.
+    await client.mergeReport({
+      reportId: dedup.mergedWith,
+      contributorId: input.userId,
+      severity: input.severity ?? null,
+      passability: input.passability ?? null,
+      now,
+    });
     return {
       status: 'merged',
       mergedWith: dedup.mergedWith,
@@ -273,14 +315,21 @@ export async function confirmTerrainReport(
     return { status: 'rate_limited', reason: 'confirmation_cooldown' };
   }
 
-  await client.insertConfirmation({
-    report_id: input.reportId,
-    user_id: input.userId,
-    confirmation: input.confirmation,
-    location_distance_m: input.locationDistanceM ?? null,
-    gps_quality: input.gpsQuality ?? null,
-    created_at: now,
-  });
+  try {
+    await client.insertConfirmation({
+      report_id: input.reportId,
+      user_id: input.userId,
+      confirmation: input.confirmation,
+      location_distance_m: input.locationDistanceM ?? null,
+      gps_quality: input.gpsQuality ?? null,
+      created_at: now,
+    });
+  } catch (error) {
+    // Course entre la vérification et l'insertion : la contrainte unique A1 a
+    // déjà la bonne réponse métier (doublon idempotent, jamais un 500).
+    if (isUniqueViolation(error)) return { status: 'duplicate' };
+    throw error;
+  }
 
   const confirmationsPresent =
     report.presentCount + (input.confirmation === 'present' ? 1 : 0);
@@ -486,12 +535,20 @@ export function createSupabaseTerrainReportsClient(
       }));
     },
 
-    async mergeIntoReport(existingId, patch) {
-      const { error } = await supabase
-        .from('terrain_reports')
-        .update(patch)
-        .eq('id', existingId);
+    async mergeReport({ reportId, contributorId, severity, passability, now }) {
+      const { data, error } = await supabase.rpc('a11_merge_terrain_report', {
+        p_report_id: reportId,
+        p_contributor_id: contributorId,
+        p_severity: severity ?? null,
+        p_passability: passability ?? null,
+        p_now: now,
+      });
       if (error) throw new Error(error.message);
+      const payload = (data ?? {}) as { merged?: unknown; report_count?: unknown };
+      return {
+        merged: payload.merged === true,
+        reportCount: Math.max(1, Number(payload.report_count ?? 1)),
+      };
     },
 
     async insertReport(row) {
@@ -527,7 +584,13 @@ export function createSupabaseTerrainReportsClient(
 
     async insertConfirmation(row) {
       const { error } = await supabase.from('terrain_report_confirmations').insert(row);
-      if (error) throw new Error(error.message);
+      if (error == null) return;
+      // 23505 : confirmation déjà enregistrée pour cet utilisateur (course ou
+      // réémission). L'orchestrateur la convertit en `duplicate` idempotent.
+      if (error.code === UNIQUE_VIOLATION_CODE) {
+        throw new UniqueViolationError(error.message);
+      }
+      throw new Error(error.message);
     },
 
     async updateReport(id, patch) {
