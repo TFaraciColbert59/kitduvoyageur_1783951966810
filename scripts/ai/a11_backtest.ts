@@ -142,23 +142,55 @@ function isBacktestSample(value: unknown): value is BacktestSample {
   );
 }
 
-function parseSamplesFile(raw: string): { samples: BacktestSample[] } | { error: string } {
-  let parsed: unknown;
-  try {
-    parsed = JSON.parse(raw);
-  } catch {
-    return { error: 'JSON illisible — un tableau d’échantillons BacktestSample est attendu.' };
-  }
-  if (!Array.isArray(parsed)) {
-    return { error: 'Format invalide — le fichier doit contenir un tableau JSON.' };
-  }
-  const invalidIndex = parsed.findIndex((entry) => !isBacktestSample(entry));
+function validateSampleList(candidates: unknown[]): { samples: BacktestSample[] } | { error: string } {
+  const invalidIndex = candidates.findIndex((entry) => !isBacktestSample(entry));
   if (invalidIndex >= 0) {
     return {
       error: `Échantillon invalide à l’index ${invalidIndex} — champs prédits/réels numériques requis.`,
     };
   }
-  return { samples: parsed };
+  return { samples: candidates as BacktestSample[] };
+}
+
+/**
+ * Lit un fichier d'échantillons : tableau JSON (héritage A11) **ou** JSONL
+ * (une ligne = un `BacktestSample`, format de l'export anonymisé A13). Un JSONL
+ * dont une ligne est illisible ou invalide est refusé avec le numéro de ligne —
+ * aucune donnée n'est inventée ni ignorée silencieusement.
+ */
+export function parseSamplesFile(raw: string): { samples: BacktestSample[] } | { error: string } {
+  const trimmed = raw.trim();
+  if (trimmed.length === 0) {
+    return {
+      error: 'Fichier vide — un tableau JSON ou un JSONL d’échantillons BacktestSample est attendu.',
+    };
+  }
+
+  try {
+    const parsed: unknown = JSON.parse(trimmed);
+    if (Array.isArray(parsed)) return validateSampleList(parsed);
+    if (parsed !== null && typeof parsed === 'object') return validateSampleList([parsed]);
+    return { error: 'Format invalide — le fichier doit contenir un tableau JSON ou un objet par ligne.' };
+  } catch {
+    // Repli JSONL : une ligne = un objet JSON.
+    const lines = trimmed.split(/\r?\n/).map((line) => line.trim()).filter((line) => line.length > 0);
+    const candidates: unknown[] = [];
+    for (const [index, line] of lines.entries()) {
+      try {
+        candidates.push(JSON.parse(line) as unknown);
+      } catch {
+        return { error: `Ligne ${index + 1} illisible — JSON attendu (une ligne = un échantillon).` };
+      }
+    }
+    if (candidates.length === 0) {
+      return { error: 'Fichier vide — un tableau JSON ou un JSONL d’échantillons est attendu.' };
+    }
+    const validated = validateSampleList(candidates);
+    if ('error' in validated) {
+      return { error: validated.error.replace('à l’index', 'à la ligne') };
+    }
+    return validated;
+  }
 }
 
 async function main(argv: string[]): Promise<number> {
