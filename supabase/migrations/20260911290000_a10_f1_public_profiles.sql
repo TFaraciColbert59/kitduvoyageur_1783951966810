@@ -39,8 +39,14 @@ COMMENT ON VIEW public.public_profiles IS
 GRANT SELECT ON public.public_profiles TO anon, authenticated;
 GRANT SELECT ON public.public_profiles TO service_role;
 
--- Fermeture F1 : suppression de la policy legacy de lecture publique totale.
+-- Fermeture F1 : suppression des policies legacy de lecture publique totale.
+-- (audit 31bdb279 + vérification de toute la timeline RLS : `public_read_profiles`
+-- a été supprimée en 20260729110000 ; `users_read_all_profiles` en 20260713150000 ;
+-- `users_manage_own_profiles` est bornée à auth.uid() ; `profile_select_public_subset`
+-- est anon/false. Seules restaient ouvertes : public_read_user_profiles et
+-- anon_read_profiles_basic — les deux sont supprimées ci-dessous.)
 DROP POLICY IF EXISTS "public_read_user_profiles" ON public.user_profiles;
+DROP POLICY IF EXISTS "anon_read_profiles_basic" ON public.user_profiles;
 
 -- Lecture administrateur (écrans /admin : comptage, profils + emails) : la
 -- policy legacy couvrait implicitement ce besoin ; il devient explicite et
