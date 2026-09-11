@@ -19,9 +19,21 @@ export const DECISION_STATUSES = ['proposed', 'confirmed', 'rejected', 'expired'
 
 export type DecisionStatus = (typeof DECISION_STATUSES)[number];
 
-/** Toutes les décisions exigent une confirmation, sauf `other` (non structurante). */
+/**
+ * Confirmation requise par type de décision — mapping exhaustif.
+ * `other` est non structurante : elle ne requiert pas de confirmation.
+ */
+export const REQUIRES_CONFIRMATION_BY_TYPE: Record<DecisionType, boolean> = {
+  payment: true,
+  cancellation: true,
+  safety_change: true,
+  location_share: true,
+  group_change: true,
+  other: false,
+};
+
 export function requiresConfirmation(type: DecisionType): boolean {
-  return type !== 'other';
+  return REQUIRES_CONFIRMATION_BY_TYPE[type];
 }
 
 export interface AdventureDecision {

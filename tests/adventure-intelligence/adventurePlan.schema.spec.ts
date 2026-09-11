@@ -15,6 +15,7 @@ import {
 import {
   requiresConfirmation,
   DECISION_TYPES,
+  REQUIRES_CONFIRMATION_BY_TYPE,
 } from '@/features/adventure-intelligence/domain/decisions';
 import type { AdventurePlan } from '@/features/adventure-intelligence/domain/adventurePlan';
 
@@ -75,6 +76,7 @@ describe('AdventurePlan — schéma et types (TEST-A1-PLAN)', () => {
     expect(parsed.dates.flexible).toBe(false);
     expect(parsed.confidence.level).toBe('low');
     expect(parsed.confidence.score).toBe(0);
+    expect(parsed.confidence.reasons.length).toBeGreaterThan(0);
     expect(parsed.intent.activities).toEqual([]);
     expect(parsed.intent.constraints).toEqual([]);
 
@@ -152,6 +154,14 @@ describe('AdventurePlan — schéma et types (TEST-A1-PLAN)', () => {
 
   it('TEST-A1-PLAN-04: toute décision non "other" exige une confirmation', () => {
     expect(DECISION_TYPES).toHaveLength(6);
+    expect(REQUIRES_CONFIRMATION_BY_TYPE).toEqual({
+      payment: true,
+      cancellation: true,
+      safety_change: true,
+      location_share: true,
+      group_change: true,
+      other: false,
+    });
     for (const type of DECISION_TYPES) {
       expect(requiresConfirmation(type)).toBe(type !== 'other');
     }
@@ -173,7 +183,6 @@ describe('AdventurePlan — schéma et types (TEST-A1-PLAN)', () => {
       decisionType: 'other',
       proposal: 'Renommer une étape',
       status: 'proposed',
-      requiresConfirmation: false,
       createdAt: COMPUTED_AT,
     });
     expect(other.requiresConfirmation).toBe(false);

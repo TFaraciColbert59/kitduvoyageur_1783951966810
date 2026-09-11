@@ -5,6 +5,12 @@
 import { z } from 'zod';
 import { ProvenanceTypeEnum } from '@/features/trips/schemas/autoGen.schema';
 import type { AdventurePlanSections } from '../domain/adventurePlan';
+import { COLD_CONFIDENCE } from '../domain/confidence';
+import {
+  DECISION_STATUSES,
+  DECISION_TYPES,
+  requiresConfirmation,
+} from '../domain/decisions';
 
 /** Date ISO 8601 complète (avec fuseau `Z` ou décalage) — en français. */
 export const isoDateTimeSchema = z
@@ -179,41 +185,37 @@ export const adventurePlanSchema = z.object({
   dates: adventureDatesSchema.default({ flexible: false }),
   destinations: z.array(adventureDestinationSchema).default([]),
   sections: adventurePlanSectionsSchema.default(FULL_NULL_SECTIONS),
-  confidence: confidenceSchema.default({
-    score: 0,
-    level: 'low',
-    sampleCount: 0,
-    method: 'cold',
-    reasons: [],
-  }),
+  confidence: confidenceSchema.default(() => ({
+    ...COLD_CONFIDENCE,
+    reasons: [...COLD_CONFIDENCE.reasons],
+  })),
   monitoringRules: z.array(monitoringRuleSchema).default([]),
   createdAt: isoDateTimeSchema.default(() => new Date().toISOString()),
   updatedAt: isoDateTimeSchema.default(() => new Date().toISOString()),
 });
 
-export const decisionTypeSchema = z.enum([
-  'payment',
-  'cancellation',
-  'safety_change',
-  'location_share',
-  'group_change',
-  'other',
-]);
+export const decisionTypeSchema = z.enum(DECISION_TYPES);
 
-export const decisionStatusSchema = z.enum(['proposed', 'confirmed', 'rejected', 'expired']);
+export const decisionStatusSchema = z.enum(DECISION_STATUSES);
 
-export const adventureDecisionSchema = z.object({
-  id: z.string().uuid('id doit être un UUID'),
-  planId: z.string().uuid('planId doit être un UUID'),
-  decisionType: decisionTypeSchema,
-  proposal: z.string().min(1, 'proposal est requis'),
-  impact: z.array(planImpactSchema).default([]),
-  requiresConfirmation: z.boolean().default(true),
-  status: decisionStatusSchema.default('proposed'),
-  decidedBy: z.string().uuid('decidedBy doit être un UUID').optional(),
-  decidedAt: isoDateTimeSchema.optional(),
-  createdAt: isoDateTimeSchema,
-});
+export const adventureDecisionSchema = z
+  .object({
+    id: z.string().uuid('id doit être un UUID'),
+    planId: z.string().uuid('planId doit être un UUID'),
+    decisionType: decisionTypeSchema,
+    proposal: z.string().min(1, 'proposal est requis'),
+    impact: z.array(planImpactSchema).default([]),
+    requiresConfirmation: z.boolean().optional(),
+    status: decisionStatusSchema.default('proposed'),
+    decidedBy: z.string().uuid('decidedBy doit être un UUID').optional(),
+    decidedAt: isoDateTimeSchema.optional(),
+    createdAt: isoDateTimeSchema,
+  })
+  .transform((decision) => ({
+    ...decision,
+    requiresConfirmation:
+      decision.requiresConfirmation ?? requiresConfirmation(decision.decisionType),
+  }));
 
 export const planVersionMetaSchema = z.object({
   planId: z.string().uuid('planId doit être un UUID'),
