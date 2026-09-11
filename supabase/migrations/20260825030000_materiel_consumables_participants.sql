@@ -17,9 +17,12 @@ create index if not exists idx_depart_participants_user_id on public.depart_part
 
 alter table public.depart_participants enable row level security;
 
+DROP POLICY IF EXISTS "depart_participants_select_own" ON public.depart_participants;-- A10 replay idempotence
 create policy "depart_participants_select_own" on public.depart_participants
   for select using (auth.uid() = user_id);
+DROP POLICY IF EXISTS "depart_participants_insert_own" ON public.depart_participants;-- A10 replay idempotence
 create policy "depart_participants_insert_own" on public.depart_participants
   for insert with check (auth.uid() = user_id);
+DROP POLICY IF EXISTS "depart_participants_delete_own" ON public.depart_participants;-- A10 replay idempotence
 create policy "depart_participants_delete_own" on public.depart_participants
   for delete using (auth.uid() = user_id);

@@ -4,9 +4,13 @@
 -- ─── Types ────────────────────────────────────────────────────────────────────
 DROP TYPE IF EXISTS public.admin_role CASCADE;
 CREATE TYPE public.admin_role AS ENUM ('super_admin', 'admin', 'moderateur');
+-- A10 replay : restauration des colonnes dépendantes (DROP TYPE ... CASCADE)
+DO $$ BEGIN ALTER TABLE public.admin_roles ADD COLUMN IF NOT EXISTS role public.admin_role; EXCEPTION WHEN others THEN NULL; END $$;
 
 DROP TYPE IF EXISTS public.audit_action CASCADE;
 CREATE TYPE public.audit_action AS ENUM ('CREATE', 'UPDATE', 'DELETE', 'APPROVE', 'REJECT', 'REFUND', 'ROLE_CHANGE', 'SUSPEND', 'REACTIVATE');
+-- A10 replay : restauration des colonnes dépendantes (DROP TYPE ... CASCADE)
+DO $$ BEGIN ALTER TABLE public.admin_audit_log ADD COLUMN IF NOT EXISTS action public.audit_action; EXCEPTION WHEN others THEN NULL; END $$;
 
 DROP TYPE IF EXISTS public.sync_status CASCADE;
 CREATE TYPE public.sync_status AS ENUM ('success', 'failed', 'pending');

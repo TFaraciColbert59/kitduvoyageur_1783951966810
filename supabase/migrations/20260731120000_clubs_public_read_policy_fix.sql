@@ -7,6 +7,7 @@
 DROP POLICY IF EXISTS "clubs_read" ON public.clubs;
 DROP POLICY IF EXISTS "public_read_clubs" ON public.clubs;
 
+DROP POLICY IF EXISTS "clubs_read" ON public.clubs;-- A10 replay idempotence
 CREATE POLICY "clubs_read" ON public.clubs
   FOR SELECT TO public
   USING (true);

@@ -10,6 +10,9 @@
 -- ============================================================================
 BEGIN;
 SET LOCAL search_path = public;
+-- Replay local : grants service_role/authenticated explicites (défauts prod non garantis).
+GRANT SELECT, INSERT, UPDATE, DELETE ON public.hike_sessions, public.session_segment_passages, public.performance_observations, public.user_performance_profiles, public.user_performance_profile_versions, public.adventure_plans, public.adventure_plan_versions, public.adventure_plan_decisions, public.adventure_engine_runs, public.trail_segments, public.trail_segment_features, public.segment_collective_aggregates, public.segment_condition_buckets, public.terrain_reports, public.terrain_report_confirmations, public.terrain_events, public.adventure_domain_events, public.adventure_data_consents, public.trips, public.trip_collaborators TO service_role, authenticated;
+GRANT USAGE, SELECT ON ALL SEQUENCES IN SCHEMA public TO service_role, authenticated;
 SELECT plan(14);
 
 -- ----------------------------------------------------------------------------

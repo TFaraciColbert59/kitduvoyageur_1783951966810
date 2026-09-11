@@ -1,6 +1,6 @@
 -- Migration: Affiliate Programs
 
-CREATE TABLE public.affiliate_programs (
+CREATE TABLE IF NOT EXISTS public.affiliate_programs (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     partner_id UUID REFERENCES public.affiliate_partners(id) ON DELETE CASCADE,
     program_identifier TEXT NOT NULL,
@@ -24,9 +24,11 @@ ALTER TABLE public.affiliate_programs ENABLE ROW LEVEL SECURITY;
 DROP POLICY IF EXISTS "affiliate_programs_public_read" ON public.affiliate_programs;
 DROP POLICY IF EXISTS "affiliate_programs_service_write" ON public.affiliate_programs;
 
+DROP POLICY IF EXISTS "affiliate_programs_public_read" ON public.affiliate_programs;-- A10 replay idempotence
 CREATE POLICY "affiliate_programs_public_read" ON public.affiliate_programs
     USING (true);
 
+DROP POLICY IF EXISTS "affiliate_programs_service_write" ON public.affiliate_programs;-- A10 replay idempotence
 CREATE POLICY "affiliate_programs_service_write" ON public.affiliate_programs
     FOR ALL TO service_role USING (true) WITH CHECK (true);
 

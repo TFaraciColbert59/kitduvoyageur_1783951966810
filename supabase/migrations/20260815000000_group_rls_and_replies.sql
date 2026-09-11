@@ -145,6 +145,7 @@ ALTER TABLE public.group_expenses ENABLE ROW LEVEL SECURITY;
 DROP POLICY IF EXISTS "expenses_member_all" ON public.group_expenses;
 -- Tout membre peut consulter/ajouter/modifier/supprimer la caisse commune.
 -- Le payeur peut être n'importe quel membre (pas seulement auth.uid()).
+DROP POLICY IF EXISTS "expenses_member_all" ON public.group_expenses;-- A10 replay idempotence
 CREATE POLICY "expenses_member_all" ON public.group_expenses
   FOR ALL TO authenticated
   USING (public.is_group_member(group_id, auth.uid()))

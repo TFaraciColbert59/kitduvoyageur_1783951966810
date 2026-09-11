@@ -13,6 +13,9 @@
 -- ============================================================================
 BEGIN;
 SET LOCAL search_path = public;
+-- Replay local : grants service_role/authenticated explicites (défauts prod non garantis).
+GRANT SELECT, INSERT, UPDATE, DELETE ON public.hike_sessions, public.session_segment_passages, public.performance_observations, public.user_performance_profiles, public.user_performance_profile_versions, public.adventure_plans, public.adventure_plan_versions, public.adventure_plan_decisions, public.adventure_engine_runs, public.trail_segments, public.trail_segment_features, public.segment_collective_aggregates, public.segment_condition_buckets, public.terrain_reports, public.terrain_report_confirmations, public.terrain_events, public.adventure_domain_events, public.adventure_data_consents, public.trips, public.trip_collaborators TO service_role, authenticated;
+GRANT USAGE, SELECT ON ALL SEQUENCES IN SCHEMA public TO service_role, authenticated;
 SELECT plan(22);
 
 -- ----------------------------------------------------------------------------
@@ -89,7 +92,7 @@ SELECT is_empty(
 
 SET LOCAL "request.jwt.claim.sub" = 'a1111111-1111-1111-1111-111111111111';
 SELECT is(
-  (SELECT count(*) FROM public.adventure_data_consents),
+  (SELECT count(*)::int FROM public.adventure_data_consents),
   1,
   '2. RLS-01. A voit son propre consentement (fixture valide)'
 );
@@ -118,7 +121,7 @@ SELECT throws_ok(
 SET LOCAL ROLE authenticated;
 SET LOCAL "request.jwt.claim.sub" = 'a1111111-1111-1111-1111-111111111111';
 SELECT is(
-  (SELECT count(*) FROM public.session_segment_passages),
+  (SELECT count(*)::int FROM public.session_segment_passages),
   1,
   '5. RLS-03. A (propriétaire de la session) lit son passage'
 );
@@ -134,7 +137,7 @@ SELECT is_empty(
 -- ----------------------------------------------------------------------------
 SET LOCAL "request.jwt.claim.sub" = 'a1111111-1111-1111-1111-111111111111';
 SELECT is(
-  (SELECT count(*) FROM public.user_performance_profiles),
+  (SELECT count(*)::int FROM public.user_performance_profiles),
   1,
   '7. RLS-04. A lit son propre profil de performance'
 );
@@ -154,7 +157,7 @@ SELECT is_empty(
   '9. RLS-05. Un agrégat à 4 utilisateurs distincts est invisible en lecture publique'
 );
 SELECT is(
-  (SELECT count(*) FROM public.segment_collective_aggregates WHERE id = '75000000-0000-4000-8000-000000000002'),
+  (SELECT count(*)::int FROM public.segment_collective_aggregates WHERE id = '75000000-0000-4000-8000-000000000002'),
   1,
   '10. RLS-05. Un agrégat à 5 utilisateurs distincts est visible en lecture publique'
 );
@@ -201,7 +204,7 @@ SELECT is_empty(
 -- ----------------------------------------------------------------------------
 SET LOCAL "request.jwt.claim.sub" = 'a1111111-1111-1111-1111-111111111111';
 SELECT is(
-  (SELECT count(*) FROM public.adventure_plans),
+  (SELECT count(*)::int FROM public.adventure_plans),
   1,
   '17. RLS-07. Le propriétaire A lit son plan'
 );
@@ -214,7 +217,7 @@ SELECT is_empty(
 
 SET LOCAL "request.jwt.claim.sub" = 'c1111111-1111-1111-1111-111111111111';
 SELECT is(
-  (SELECT count(*) FROM public.adventure_plans),
+  (SELECT count(*)::int FROM public.adventure_plans),
   1,
   '19. RLS-07. C, collaborateur du trip lié, lit le plan via can_read_trip'
 );
@@ -224,14 +227,14 @@ SELECT is(
 -- ----------------------------------------------------------------------------
 SET LOCAL "request.jwt.claim.sub" = 'a1111111-1111-1111-1111-111111111111';
 SELECT is(
-  (SELECT count(*) FROM public.adventure_domain_events),
+  (SELECT count(*)::int FROM public.adventure_domain_events),
   1,
   '20. RLS-08. A ne voit que son événement (ni celui de B, ni l''événement système)'
 );
 
 SET LOCAL "request.jwt.claim.sub" = 'b1111111-1111-1111-1111-111111111111';
 SELECT is(
-  (SELECT count(*) FROM public.adventure_domain_events),
+  (SELECT count(*)::int FROM public.adventure_domain_events),
   1,
   '21. RLS-08. B ne voit que son propre événement'
 );

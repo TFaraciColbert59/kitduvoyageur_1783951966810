@@ -1,6 +1,6 @@
 -- Migration: Affiliate Clicks
 
-CREATE TABLE public.affiliate_clicks (
+CREATE TABLE IF NOT EXISTS public.affiliate_clicks (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     user_id UUID, -- optional, reference to auth.users if available
     session_id UUID,
@@ -26,9 +26,11 @@ ALTER TABLE public.affiliate_clicks ENABLE ROW LEVEL SECURITY;
 DROP POLICY IF EXISTS "affiliate_clicks_public_read" ON public.affiliate_clicks;
 DROP POLICY IF EXISTS "affiliate_clicks_service_write" ON public.affiliate_clicks;
 
+DROP POLICY IF EXISTS "affiliate_clicks_public_read" ON public.affiliate_clicks;-- A10 replay idempotence
 CREATE POLICY "affiliate_clicks_public_read" ON public.affiliate_clicks
     USING (true);
 
+DROP POLICY IF EXISTS "affiliate_clicks_service_write" ON public.affiliate_clicks;-- A10 replay idempotence
 CREATE POLICY "affiliate_clicks_service_write" ON public.affiliate_clicks
     FOR ALL TO service_role USING (true) WITH CHECK (true);
 

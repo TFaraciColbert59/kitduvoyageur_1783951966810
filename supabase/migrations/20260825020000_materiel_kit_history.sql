@@ -14,9 +14,12 @@ create index if not exists idx_materiel_kit_history_user_id on public.materiel_k
 
 alter table public.materiel_kit_history enable row level security;
 
+DROP POLICY IF EXISTS "materiel_kit_history_select_own" ON public.materiel_kit_history;-- A10 replay idempotence
 create policy "materiel_kit_history_select_own" on public.materiel_kit_history
   for select using (auth.uid() = user_id);
+DROP POLICY IF EXISTS "materiel_kit_history_insert_own" ON public.materiel_kit_history;-- A10 replay idempotence
 create policy "materiel_kit_history_insert_own" on public.materiel_kit_history
   for insert with check (auth.uid() = user_id);
+DROP POLICY IF EXISTS "materiel_kit_history_delete_own" ON public.materiel_kit_history;-- A10 replay idempotence
 create policy "materiel_kit_history_delete_own" on public.materiel_kit_history
   for delete using (auth.uid() = user_id);

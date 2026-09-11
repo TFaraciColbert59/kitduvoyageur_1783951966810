@@ -71,12 +71,16 @@ DROP POLICY IF EXISTS "auth_insert_groupes" ON public.groupes;
 DROP POLICY IF EXISTS "auth_update_groupes" ON public.groupes;
 DROP POLICY IF EXISTS "auth_delete_groupes" ON public.groupes;
 
+DROP POLICY IF EXISTS "public_read_groupes" ON public.groupes;-- A10 replay idempotence
 CREATE POLICY "public_read_groupes" ON public.groupes
   FOR SELECT TO public USING (true);
+DROP POLICY IF EXISTS "auth_insert_groupes" ON public.groupes;-- A10 replay idempotence
 CREATE POLICY "auth_insert_groupes" ON public.groupes
   FOR INSERT TO authenticated WITH CHECK (auth.uid() = created_by);
+DROP POLICY IF EXISTS "auth_update_groupes" ON public.groupes;-- A10 replay idempotence
 CREATE POLICY "auth_update_groupes" ON public.groupes
   FOR UPDATE TO authenticated USING (auth.uid() = created_by OR public.is_admin());
+DROP POLICY IF EXISTS "auth_delete_groupes" ON public.groupes;-- A10 replay idempotence
 CREATE POLICY "auth_delete_groupes" ON public.groupes
   FOR DELETE TO authenticated USING (auth.uid() = created_by OR public.is_admin());
 
@@ -85,12 +89,16 @@ DROP POLICY IF EXISTS "auth_join_groupe" ON public.groupe_membres;
 DROP POLICY IF EXISTS "auth_leave_groupe" ON public.groupe_membres;
 DROP POLICY IF EXISTS "auth_update_own_membership" ON public.groupe_membres;
 
+DROP POLICY IF EXISTS "public_read_groupe_membres" ON public.groupe_membres;-- A10 replay idempotence
 CREATE POLICY "public_read_groupe_membres" ON public.groupe_membres
   FOR SELECT TO public USING (true);
+DROP POLICY IF EXISTS "auth_join_groupe" ON public.groupe_membres;-- A10 replay idempotence
 CREATE POLICY "auth_join_groupe" ON public.groupe_membres
   FOR INSERT TO authenticated WITH CHECK (auth.uid() = user_id);
+DROP POLICY IF EXISTS "auth_leave_groupe" ON public.groupe_membres;-- A10 replay idempotence
 CREATE POLICY "auth_leave_groupe" ON public.groupe_membres
   FOR DELETE TO authenticated USING (auth.uid() = user_id);
+DROP POLICY IF EXISTS "auth_update_own_membership" ON public.groupe_membres;-- A10 replay idempotence
 CREATE POLICY "auth_update_own_membership" ON public.groupe_membres
   FOR UPDATE TO authenticated USING (auth.uid() = user_id);
 
@@ -98,13 +106,16 @@ DROP POLICY IF EXISTS "public_read_groupe_activites" ON public.groupe_activites;
 DROP POLICY IF EXISTS "auth_insert_groupe_activites" ON public.groupe_activites;
 DROP POLICY IF EXISTS "auth_delete_own_groupe_activites" ON public.groupe_activites;
 
+DROP POLICY IF EXISTS "public_read_groupe_activites" ON public.groupe_activites;-- A10 replay idempotence
 CREATE POLICY "public_read_groupe_activites" ON public.groupe_activites
   FOR SELECT TO public USING (true);
+DROP POLICY IF EXISTS "auth_insert_groupe_activites" ON public.groupe_activites;-- A10 replay idempotence
 CREATE POLICY "auth_insert_groupe_activites" ON public.groupe_activites
   FOR INSERT TO authenticated WITH CHECK (
     auth.uid() = membre_id
     AND EXISTS (SELECT 1 FROM public.groupe_membres WHERE groupe_id = groupe_activites.groupe_id AND user_id = auth.uid())
   );
+DROP POLICY IF EXISTS "auth_delete_own_groupe_activites" ON public.groupe_activites;-- A10 replay idempotence
 CREATE POLICY "auth_delete_own_groupe_activites" ON public.groupe_activites
   FOR DELETE TO authenticated USING (auth.uid() = membre_id);
 
@@ -113,15 +124,19 @@ DROP POLICY IF EXISTS "auth_insert_groupe_depenses" ON public.groupe_depenses;
 DROP POLICY IF EXISTS "auth_update_own_groupe_depenses" ON public.groupe_depenses;
 DROP POLICY IF EXISTS "auth_delete_own_groupe_depenses" ON public.groupe_depenses;
 
+DROP POLICY IF EXISTS "public_read_groupe_depenses" ON public.groupe_depenses;-- A10 replay idempotence
 CREATE POLICY "public_read_groupe_depenses" ON public.groupe_depenses
   FOR SELECT TO public USING (true);
+DROP POLICY IF EXISTS "auth_insert_groupe_depenses" ON public.groupe_depenses;-- A10 replay idempotence
 CREATE POLICY "auth_insert_groupe_depenses" ON public.groupe_depenses
   FOR INSERT TO authenticated WITH CHECK (
     auth.uid() = payeur_id
     AND EXISTS (SELECT 1 FROM public.groupe_membres WHERE groupe_id = groupe_depenses.groupe_id AND user_id = auth.uid())
   );
+DROP POLICY IF EXISTS "auth_update_own_groupe_depenses" ON public.groupe_depenses;-- A10 replay idempotence
 CREATE POLICY "auth_update_own_groupe_depenses" ON public.groupe_depenses
   FOR UPDATE TO authenticated USING (auth.uid() = payeur_id);
+DROP POLICY IF EXISTS "auth_delete_own_groupe_depenses" ON public.groupe_depenses;-- A10 replay idempotence
 CREATE POLICY "auth_delete_own_groupe_depenses" ON public.groupe_depenses
   FOR DELETE TO authenticated USING (auth.uid() = payeur_id);
 
@@ -129,10 +144,13 @@ DROP POLICY IF EXISTS "public_read_groupe_depense_parts" ON public.groupe_depens
 DROP POLICY IF EXISTS "auth_insert_groupe_depense_parts" ON public.groupe_depense_parts;
 DROP POLICY IF EXISTS "auth_delete_own_groupe_depense_parts" ON public.groupe_depense_parts;
 
+DROP POLICY IF EXISTS "public_read_groupe_depense_parts" ON public.groupe_depense_parts;-- A10 replay idempotence
 CREATE POLICY "public_read_groupe_depense_parts" ON public.groupe_depense_parts
   FOR SELECT TO public USING (true);
+DROP POLICY IF EXISTS "auth_insert_groupe_depense_parts" ON public.groupe_depense_parts;-- A10 replay idempotence
 CREATE POLICY "auth_insert_groupe_depense_parts" ON public.groupe_depense_parts
   FOR INSERT TO authenticated WITH CHECK (auth.uid() = membre_id);
+DROP POLICY IF EXISTS "auth_delete_own_groupe_depense_parts" ON public.groupe_depense_parts;-- A10 replay idempotence
 CREATE POLICY "auth_delete_own_groupe_depense_parts" ON public.groupe_depense_parts
   FOR DELETE TO authenticated USING (auth.uid() = membre_id);
 
@@ -141,15 +159,19 @@ DROP POLICY IF EXISTS "auth_insert_groupe_equipement" ON public.groupe_equipemen
 DROP POLICY IF EXISTS "auth_update_own_groupe_equipement" ON public.groupe_equipement;
 DROP POLICY IF EXISTS "auth_delete_own_groupe_equipement" ON public.groupe_equipement;
 
+DROP POLICY IF EXISTS "public_read_groupe_equipement" ON public.groupe_equipement;-- A10 replay idempotence
 CREATE POLICY "public_read_groupe_equipement" ON public.groupe_equipement
   FOR SELECT TO public USING (true);
+DROP POLICY IF EXISTS "auth_insert_groupe_equipement" ON public.groupe_equipement;-- A10 replay idempotence
 CREATE POLICY "auth_insert_groupe_equipement" ON public.groupe_equipement
   FOR INSERT TO authenticated WITH CHECK (
     auth.uid() = apporte_par
     AND EXISTS (SELECT 1 FROM public.groupe_membres WHERE groupe_id = groupe_equipement.groupe_id AND user_id = auth.uid())
   );
+DROP POLICY IF EXISTS "auth_update_own_groupe_equipement" ON public.groupe_equipement;-- A10 replay idempotence
 CREATE POLICY "auth_update_own_groupe_equipement" ON public.groupe_equipement
   FOR UPDATE TO authenticated USING (auth.uid() = apporte_par);
+DROP POLICY IF EXISTS "auth_delete_own_groupe_equipement" ON public.groupe_equipement;-- A10 replay idempotence
 CREATE POLICY "auth_delete_own_groupe_equipement" ON public.groupe_equipement
   FOR DELETE TO authenticated USING (auth.uid() = apporte_par);
 
@@ -158,16 +180,20 @@ DROP POLICY IF EXISTS "auth_insert_groupe_etapes" ON public.groupe_etapes;
 DROP POLICY IF EXISTS "auth_update_groupe_etapes" ON public.groupe_etapes;
 DROP POLICY IF EXISTS "auth_delete_groupe_etapes" ON public.groupe_etapes;
 
+DROP POLICY IF EXISTS "public_read_groupe_etapes" ON public.groupe_etapes;-- A10 replay idempotence
 CREATE POLICY "public_read_groupe_etapes" ON public.groupe_etapes
   FOR SELECT TO public USING (true);
+DROP POLICY IF EXISTS "auth_insert_groupe_etapes" ON public.groupe_etapes;-- A10 replay idempotence
 CREATE POLICY "auth_insert_groupe_etapes" ON public.groupe_etapes
   FOR INSERT TO authenticated WITH CHECK (
     EXISTS (SELECT 1 FROM public.groupe_membres WHERE groupe_id = groupe_etapes.groupe_id AND user_id = auth.uid())
   );
+DROP POLICY IF EXISTS "auth_update_groupe_etapes" ON public.groupe_etapes;-- A10 replay idempotence
 CREATE POLICY "auth_update_groupe_etapes" ON public.groupe_etapes
   FOR UPDATE TO authenticated USING (
     EXISTS (SELECT 1 FROM public.groupe_membres WHERE groupe_id = groupe_etapes.groupe_id AND user_id = auth.uid())
   );
+DROP POLICY IF EXISTS "auth_delete_groupe_etapes" ON public.groupe_etapes;-- A10 replay idempotence
 CREATE POLICY "auth_delete_groupe_etapes" ON public.groupe_etapes
   FOR DELETE TO authenticated USING (
     EXISTS (SELECT 1 FROM public.groupe_membres WHERE groupe_id = groupe_etapes.groupe_id AND user_id = auth.uid())
@@ -178,16 +204,20 @@ DROP POLICY IF EXISTS "auth_insert_groupe_hebergements" ON public.groupe_heberge
 DROP POLICY IF EXISTS "auth_update_groupe_hebergements" ON public.groupe_hebergements;
 DROP POLICY IF EXISTS "auth_delete_groupe_hebergements" ON public.groupe_hebergements;
 
+DROP POLICY IF EXISTS "public_read_groupe_hebergements" ON public.groupe_hebergements;-- A10 replay idempotence
 CREATE POLICY "public_read_groupe_hebergements" ON public.groupe_hebergements
   FOR SELECT TO public USING (true);
+DROP POLICY IF EXISTS "auth_insert_groupe_hebergements" ON public.groupe_hebergements;-- A10 replay idempotence
 CREATE POLICY "auth_insert_groupe_hebergements" ON public.groupe_hebergements
   FOR INSERT TO authenticated WITH CHECK (
     EXISTS (SELECT 1 FROM public.groupe_membres WHERE groupe_id = groupe_hebergements.groupe_id AND user_id = auth.uid())
   );
+DROP POLICY IF EXISTS "auth_update_groupe_hebergements" ON public.groupe_hebergements;-- A10 replay idempotence
 CREATE POLICY "auth_update_groupe_hebergements" ON public.groupe_hebergements
   FOR UPDATE TO authenticated USING (
     EXISTS (SELECT 1 FROM public.groupe_membres WHERE groupe_id = groupe_hebergements.groupe_id AND user_id = auth.uid())
   );
+DROP POLICY IF EXISTS "auth_delete_groupe_hebergements" ON public.groupe_hebergements;-- A10 replay idempotence
 CREATE POLICY "auth_delete_groupe_hebergements" ON public.groupe_hebergements
   FOR DELETE TO authenticated USING (
     EXISTS (SELECT 1 FROM public.groupe_membres WHERE groupe_id = groupe_hebergements.groupe_id AND user_id = auth.uid())
@@ -197,13 +227,16 @@ DROP POLICY IF EXISTS "public_read_groupe_messages" ON public.groupe_messages;
 DROP POLICY IF EXISTS "auth_insert_groupe_messages" ON public.groupe_messages;
 DROP POLICY IF EXISTS "auth_delete_own_groupe_messages" ON public.groupe_messages;
 
+DROP POLICY IF EXISTS "public_read_groupe_messages" ON public.groupe_messages;-- A10 replay idempotence
 CREATE POLICY "public_read_groupe_messages" ON public.groupe_messages
   FOR SELECT TO public USING (true);
+DROP POLICY IF EXISTS "auth_insert_groupe_messages" ON public.groupe_messages;-- A10 replay idempotence
 CREATE POLICY "auth_insert_groupe_messages" ON public.groupe_messages
   FOR INSERT TO authenticated WITH CHECK (
     auth.uid() = auteur_id
     AND EXISTS (SELECT 1 FROM public.groupe_membres WHERE groupe_id = groupe_messages.groupe_id AND user_id = auth.uid())
   );
+DROP POLICY IF EXISTS "auth_delete_own_groupe_messages" ON public.groupe_messages;-- A10 replay idempotence
 CREATE POLICY "auth_delete_own_groupe_messages" ON public.groupe_messages
   FOR DELETE TO authenticated USING (auth.uid() = auteur_id);
 
@@ -212,16 +245,20 @@ DROP POLICY IF EXISTS "auth_insert_groupe_taches" ON public.groupe_taches;
 DROP POLICY IF EXISTS "auth_update_groupe_taches" ON public.groupe_taches;
 DROP POLICY IF EXISTS "auth_delete_groupe_taches" ON public.groupe_taches;
 
+DROP POLICY IF EXISTS "public_read_groupe_taches" ON public.groupe_taches;-- A10 replay idempotence
 CREATE POLICY "public_read_groupe_taches" ON public.groupe_taches
   FOR SELECT TO public USING (true);
+DROP POLICY IF EXISTS "auth_insert_groupe_taches" ON public.groupe_taches;-- A10 replay idempotence
 CREATE POLICY "auth_insert_groupe_taches" ON public.groupe_taches
   FOR INSERT TO authenticated WITH CHECK (
     EXISTS (SELECT 1 FROM public.groupe_membres WHERE groupe_id = groupe_taches.groupe_id AND user_id = auth.uid())
   );
+DROP POLICY IF EXISTS "auth_update_groupe_taches" ON public.groupe_taches;-- A10 replay idempotence
 CREATE POLICY "auth_update_groupe_taches" ON public.groupe_taches
   FOR UPDATE TO authenticated USING (
     EXISTS (SELECT 1 FROM public.groupe_membres WHERE groupe_id = groupe_taches.groupe_id AND user_id = auth.uid())
   );
+DROP POLICY IF EXISTS "auth_delete_groupe_taches" ON public.groupe_taches;-- A10 replay idempotence
 CREATE POLICY "auth_delete_groupe_taches" ON public.groupe_taches
   FOR DELETE TO authenticated USING (
     EXISTS (SELECT 1 FROM public.groupe_membres WHERE groupe_id = groupe_taches.groupe_id AND user_id = auth.uid())
@@ -232,22 +269,28 @@ DROP POLICY IF EXISTS "auth_insert_groupe_votes" ON public.groupe_votes;
 DROP POLICY IF EXISTS "auth_update_own_groupe_votes" ON public.groupe_votes;
 DROP POLICY IF EXISTS "auth_delete_own_groupe_votes" ON public.groupe_votes;
 
+DROP POLICY IF EXISTS "public_read_groupe_votes" ON public.groupe_votes;-- A10 replay idempotence
 CREATE POLICY "public_read_groupe_votes" ON public.groupe_votes
   FOR SELECT TO public USING (true);
+DROP POLICY IF EXISTS "auth_insert_groupe_votes" ON public.groupe_votes;-- A10 replay idempotence
 CREATE POLICY "auth_insert_groupe_votes" ON public.groupe_votes
   FOR INSERT TO authenticated WITH CHECK (
     EXISTS (SELECT 1 FROM public.groupe_membres WHERE groupe_id = groupe_votes.groupe_id AND user_id = auth.uid())
   );
+DROP POLICY IF EXISTS "auth_update_own_groupe_votes" ON public.groupe_votes;-- A10 replay idempotence
 CREATE POLICY "auth_update_own_groupe_votes" ON public.groupe_votes
   FOR UPDATE TO authenticated USING (auth.uid() = lance_par);
+DROP POLICY IF EXISTS "auth_delete_own_groupe_votes" ON public.groupe_votes;-- A10 replay idempotence
 CREATE POLICY "auth_delete_own_groupe_votes" ON public.groupe_votes
   FOR DELETE TO authenticated USING (auth.uid() = lance_par);
 
 DROP POLICY IF EXISTS "public_read_groupe_vote_options" ON public.groupe_vote_options;
 DROP POLICY IF EXISTS "auth_insert_groupe_vote_options" ON public.groupe_vote_options;
 
+DROP POLICY IF EXISTS "public_read_groupe_vote_options" ON public.groupe_vote_options;-- A10 replay idempotence
 CREATE POLICY "public_read_groupe_vote_options" ON public.groupe_vote_options
   FOR SELECT TO public USING (true);
+DROP POLICY IF EXISTS "auth_insert_groupe_vote_options" ON public.groupe_vote_options;-- A10 replay idempotence
 CREATE POLICY "auth_insert_groupe_vote_options" ON public.groupe_vote_options
   FOR INSERT TO authenticated WITH CHECK (
     EXISTS (
@@ -265,10 +308,13 @@ DROP POLICY IF EXISTS "public_read_groupe_vote_choix" ON public.groupe_vote_choi
 DROP POLICY IF EXISTS "auth_insert_groupe_vote_choix" ON public.groupe_vote_choix;
 DROP POLICY IF EXISTS "auth_delete_own_groupe_vote_choix" ON public.groupe_vote_choix;
 
+DROP POLICY IF EXISTS "public_read_groupe_vote_choix" ON public.groupe_vote_choix;-- A10 replay idempotence
 CREATE POLICY "public_read_groupe_vote_choix" ON public.groupe_vote_choix
   FOR SELECT TO public USING (true);
+DROP POLICY IF EXISTS "auth_insert_groupe_vote_choix" ON public.groupe_vote_choix;-- A10 replay idempotence
 CREATE POLICY "auth_insert_groupe_vote_choix" ON public.groupe_vote_choix
   FOR INSERT TO authenticated WITH CHECK (auth.uid() = membre_id);
+DROP POLICY IF EXISTS "auth_delete_own_groupe_vote_choix" ON public.groupe_vote_choix;-- A10 replay idempotence
 CREATE POLICY "auth_delete_own_groupe_vote_choix" ON public.groupe_vote_choix
   FOR DELETE TO authenticated USING (auth.uid() = membre_id);
 
@@ -278,6 +324,7 @@ DROP POLICY IF EXISTS "public_read_carnet_kit_items" ON public.carnet_kit_items;
 DROP POLICY IF EXISTS "auth_manage_carnet_kit_items" ON public.carnet_kit_items;
 CREATE POLICY "public_read_carnet_kit_items" ON public.carnet_kit_items
   FOR SELECT TO public USING (true);
+DROP POLICY IF EXISTS "auth_manage_carnet_kit_items" ON public.carnet_kit_items;-- A10 replay idempotence
 CREATE POLICY "auth_manage_carnet_kit_items" ON public.carnet_kit_items
   FOR ALL TO authenticated
   USING (
@@ -293,6 +340,7 @@ DROP POLICY IF EXISTS "public_read_carnet_moments" ON public.carnet_moments;
 DROP POLICY IF EXISTS "auth_manage_carnet_moments" ON public.carnet_moments;
 CREATE POLICY "public_read_carnet_moments" ON public.carnet_moments
   FOR SELECT TO public USING (true);
+DROP POLICY IF EXISTS "auth_manage_carnet_moments" ON public.carnet_moments;-- A10 replay idempotence
 CREATE POLICY "auth_manage_carnet_moments" ON public.carnet_moments
   FOR ALL TO authenticated
   USING (auth.uid() = auteur_id)
@@ -330,6 +378,7 @@ DROP POLICY IF EXISTS "auth_delete_clubs" ON public.clubs;
 CREATE POLICY "auth_update_clubs" ON public.clubs
   FOR UPDATE TO authenticated
   USING (auth.uid() = created_by OR public.is_admin());
+DROP POLICY IF EXISTS "auth_delete_clubs" ON public.clubs;-- A10 replay idempotence
 CREATE POLICY "auth_delete_clubs" ON public.clubs
   FOR DELETE TO authenticated
   USING (auth.uid() = created_by OR public.is_admin());
@@ -394,6 +443,7 @@ DROP POLICY IF EXISTS "admin_read_audit_logs" ON public.admin_audit_logs;
 CREATE POLICY "admin_insert_audit_logs" ON public.admin_audit_logs
   FOR INSERT TO authenticated
   WITH CHECK (public.is_admin());
+DROP POLICY IF EXISTS "admin_read_audit_logs" ON public.admin_audit_logs;-- A10 replay idempotence
 CREATE POLICY "admin_read_audit_logs" ON public.admin_audit_logs
   FOR SELECT TO authenticated
   USING (public.is_admin());

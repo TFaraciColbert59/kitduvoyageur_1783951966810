@@ -1,4 +1,4 @@
-CREATE TABLE public.countries_geo (
+CREATE TABLE IF NOT EXISTS public.countries_geo (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   iso_a2 TEXT NOT NULL UNIQUE,
   name TEXT NOT NULL,
@@ -10,7 +10,7 @@ CREATE TABLE public.countries_geo (
   created_at TIMESTAMPTZ DEFAULT now()
 );
 
-CREATE TABLE public.admin_regions_geo (
+CREATE TABLE IF NOT EXISTS public.admin_regions_geo (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   country_id UUID REFERENCES public.countries_geo(id),
   admin_code TEXT,
@@ -21,7 +21,7 @@ CREATE TABLE public.admin_regions_geo (
   created_at TIMESTAMPTZ DEFAULT now()
 );
 
-CREATE TABLE public.places_geo (
+CREATE TABLE IF NOT EXISTS public.places_geo (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   admin_region_id UUID REFERENCES public.admin_regions_geo(id),
   name TEXT NOT NULL,
@@ -33,7 +33,7 @@ CREATE TABLE public.places_geo (
   created_at TIMESTAMPTZ DEFAULT now()
 );
 
-CREATE TABLE public.place_names_geo (
+CREATE TABLE IF NOT EXISTS public.place_names_geo (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   place_id UUID REFERENCES public.places_geo(id),
   name TEXT NOT NULL,
@@ -43,12 +43,12 @@ CREATE TABLE public.place_names_geo (
 );
 
 -- Spatial indexes
-CREATE INDEX idx_countries_geo_geom ON public.countries_geo USING GIST (geometry);
-CREATE INDEX idx_admin_regions_geo_geom ON public.admin_regions_geo USING GIST (geometry);
-CREATE INDEX idx_places_geo_geom ON public.places_geo USING GIST (geometry);
+CREATE INDEX IF NOT EXISTS idx_countries_geo_geom ON public.countries_geo USING GIST (geometry);
+CREATE INDEX IF NOT EXISTS idx_admin_regions_geo_geom ON public.admin_regions_geo USING GIST (geometry);
+CREATE INDEX IF NOT EXISTS idx_places_geo_geom ON public.places_geo USING GIST (geometry);
 
 -- Full‑text search indexes on name fields
-CREATE INDEX idx_countries_geo_name ON public.countries_geo USING GIN (to_tsvector('simple', name));
-CREATE INDEX idx_admin_regions_geo_name ON public.admin_regions_geo USING GIN (to_tsvector('simple', name));
-CREATE INDEX idx_places_geo_name ON public.places_geo USING GIN (to_tsvector('simple', name));
-CREATE INDEX idx_place_names_geo_name ON public.place_names_geo USING GIN (to_tsvector('simple', name));
+CREATE INDEX IF NOT EXISTS idx_countries_geo_name ON public.countries_geo USING GIN (to_tsvector('simple', name));
+CREATE INDEX IF NOT EXISTS idx_admin_regions_geo_name ON public.admin_regions_geo USING GIN (to_tsvector('simple', name));
+CREATE INDEX IF NOT EXISTS idx_places_geo_name ON public.places_geo USING GIN (to_tsvector('simple', name));
+CREATE INDEX IF NOT EXISTS idx_place_names_geo_name ON public.place_names_geo USING GIN (to_tsvector('simple', name));

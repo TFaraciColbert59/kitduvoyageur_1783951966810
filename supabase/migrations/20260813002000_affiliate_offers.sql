@@ -1,6 +1,6 @@
 -- Migration: Affiliate Offers
 
-CREATE TABLE public.affiliate_offers (
+CREATE TABLE IF NOT EXISTS public.affiliate_offers (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     program_id UUID REFERENCES public.affiliate_programs(id) ON DELETE CASCADE,
     destination TEXT,
@@ -33,9 +33,11 @@ ALTER TABLE public.affiliate_offers ENABLE ROW LEVEL SECURITY;
 DROP POLICY IF EXISTS "affiliate_offers_public_read" ON public.affiliate_offers;
 DROP POLICY IF EXISTS "affiliate_offers_service_write" ON public.affiliate_offers;
 
+DROP POLICY IF EXISTS "affiliate_offers_public_read" ON public.affiliate_offers;-- A10 replay idempotence
 CREATE POLICY "affiliate_offers_public_read" ON public.affiliate_offers
     USING (true);
 
+DROP POLICY IF EXISTS "affiliate_offers_service_write" ON public.affiliate_offers;-- A10 replay idempotence
 CREATE POLICY "affiliate_offers_service_write" ON public.affiliate_offers
     FOR ALL TO service_role USING (true) WITH CHECK (true);
 

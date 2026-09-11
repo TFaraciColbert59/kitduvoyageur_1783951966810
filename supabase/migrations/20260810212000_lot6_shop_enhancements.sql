@@ -13,6 +13,7 @@ CREATE TABLE IF NOT EXISTS public.cart_items (
   UNIQUE(user_id, product_id) -- Un produit par utilisateur dans le panier
 );
 ALTER TABLE public.cart_items ENABLE ROW LEVEL SECURITY;
+DROP POLICY IF EXISTS "Users manage own cart" ON public.cart_items;-- A10 replay idempotence
 CREATE POLICY "Users manage own cart" ON public.cart_items FOR ALL USING (
   user_id = auth.uid() OR (user_id IS NULL AND session_id IS NOT NULL)
 );
@@ -26,6 +27,7 @@ CREATE TABLE IF NOT EXISTS public.wishlist_items (
   UNIQUE(user_id, product_id)
 );
 ALTER TABLE public.wishlist_items ENABLE ROW LEVEL SECURITY;
+DROP POLICY IF EXISTS "Users manage own wishlist" ON public.wishlist_items;-- A10 replay idempotence
 CREATE POLICY "Users manage own wishlist" ON public.wishlist_items FOR ALL USING (user_id = auth.uid());
 
 -- 3. Table pour les catégories de produits hiérarchiques
@@ -40,6 +42,7 @@ CREATE TABLE IF NOT EXISTS public.product_categories (
   created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP
 );
 ALTER TABLE public.product_categories ENABLE ROW LEVEL SECURITY;
+DROP POLICY IF EXISTS "Public read product categories" ON public.product_categories;-- A10 replay idempotence
 CREATE POLICY "Public read product categories" ON public.product_categories FOR SELECT USING (true);
 
 -- 4. Table pour les variantes de produits (tailles, couleurs, etc.)
@@ -56,6 +59,7 @@ CREATE TABLE IF NOT EXISTS public.product_variants (
   created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP
 );
 ALTER TABLE public.product_variants ENABLE ROW LEVEL SECURITY;
+DROP POLICY IF EXISTS "Public read product variants" ON public.product_variants;-- A10 replay idempotence
 CREATE POLICY "Public read product variants" ON public.product_variants FOR SELECT USING (true);
 
 -- 5. Table pour les images supplémentaires des produits
@@ -68,6 +72,7 @@ CREATE TABLE IF NOT EXISTS public.product_images (
   created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP
 );
 ALTER TABLE public.product_images ENABLE ROW LEVEL SECURITY;
+DROP POLICY IF EXISTS "Public read product images" ON public.product_images;-- A10 replay idempotence
 CREATE POLICY "Public read product images" ON public.product_images FOR SELECT USING (true);
 
 -- 6. Table pour les méthodes de livraison
@@ -84,6 +89,7 @@ CREATE TABLE IF NOT EXISTS public.shipping_methods (
   created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP
 );
 ALTER TABLE public.shipping_methods ENABLE ROW LEVEL SECURITY;
+DROP POLICY IF EXISTS "Public read shipping methods" ON public.shipping_methods;-- A10 replay idempotence
 CREATE POLICY "Public read shipping methods" ON public.shipping_methods FOR SELECT USING (true);
 
 -- 7. Table pour les codes promotionnels
@@ -102,6 +108,7 @@ CREATE TABLE IF NOT EXISTS public.discount_codes (
   created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP
 );
 ALTER TABLE public.discount_codes ENABLE ROW LEVEL SECURITY;
+DROP POLICY IF EXISTS "Public read active discount codes" ON public.discount_codes;-- A10 replay idempotence
 CREATE POLICY "Public read active discount codes" ON public.discount_codes FOR SELECT USING (active = true);
 
 -- 8. Table pour les taux de taxe
@@ -116,6 +123,7 @@ CREATE TABLE IF NOT EXISTS public.tax_rates (
   UNIQUE(country_code)
 );
 ALTER TABLE public.tax_rates ENABLE ROW LEVEL SECURITY;
+DROP POLICY IF EXISTS "Public read tax rates" ON public.tax_rates;-- A10 replay idempotence
 CREATE POLICY "Public read tax rates" ON public.tax_rates FOR SELECT USING (true);
 
 -- 9. Mise à jour de la table orders existante avec colonnes manquantes

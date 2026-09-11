@@ -3,8 +3,9 @@
 
 DROP TYPE IF EXISTS public.shop_transaction_type CASCADE;
 CREATE TYPE public.shop_transaction_type AS ENUM ('achat', 'location', 'occasion', 'enchere');
+-- A10 replay : restauration des colonnes dépendantes (DROP TYPE ... CASCADE)
+DO $$ BEGIN ALTER TABLE public.shop_products ADD COLUMN IF NOT EXISTS transaction_type public.shop_transaction_type; EXCEPTION WHEN others THEN NULL; END $$;
 
-ALTER TABLE public.shop_products ADD COLUMN IF NOT EXISTS transaction_type public.shop_transaction_type NOT NULL DEFAULT 'achat';
 
 CREATE TABLE IF NOT EXISTS public.shop_products (
   id                UUID PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -29,6 +30,7 @@ CREATE TABLE IF NOT EXISTS public.shop_products (
   created_at        TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP,
   updated_at        TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP
 );
+ALTER TABLE public.shop_products ADD COLUMN IF NOT EXISTS transaction_type public.shop_transaction_type NOT NULL DEFAULT 'achat';
 
 CREATE INDEX IF NOT EXISTS idx_shop_products_transaction_type ON public.shop_products(transaction_type);
 CREATE INDEX IF NOT EXISTS idx_shop_products_category ON public.shop_products(category);

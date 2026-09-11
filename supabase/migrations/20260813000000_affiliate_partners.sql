@@ -1,6 +1,6 @@
 -- Migration: Affiliate Partners
 
-CREATE TABLE public.affiliate_partners (
+CREATE TABLE IF NOT EXISTS public.affiliate_partners (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     name TEXT NOT NULL,
     slug TEXT NOT NULL UNIQUE,
@@ -24,9 +24,11 @@ ALTER TABLE public.affiliate_partners ENABLE ROW LEVEL SECURITY;
 DROP POLICY IF EXISTS "affiliate_partners_public_read" ON public.affiliate_partners;
 DROP POLICY IF EXISTS "affiliate_partners_service_write" ON public.affiliate_partners;
 
+DROP POLICY IF EXISTS "affiliate_partners_public_read" ON public.affiliate_partners;-- A10 replay idempotence
 CREATE POLICY "affiliate_partners_public_read" ON public.affiliate_partners
     USING (true);
 
+DROP POLICY IF EXISTS "affiliate_partners_service_write" ON public.affiliate_partners;-- A10 replay idempotence
 CREATE POLICY "affiliate_partners_service_write" ON public.affiliate_partners
     FOR ALL TO service_role USING (true) WITH CHECK (true);
 

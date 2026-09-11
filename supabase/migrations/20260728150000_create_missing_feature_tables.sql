@@ -48,12 +48,15 @@ DROP POLICY IF EXISTS "auth_insert_conversations" ON public.conversations;
 DROP POLICY IF EXISTS "auth_update_conversations" ON public.conversations;
 
 -- Public read / authenticated write for conversations
+DROP POLICY IF EXISTS "public_read_conversations" ON public.conversations;-- A10 replay idempotence
 CREATE POLICY "public_read_conversations" ON public.conversations
   FOR SELECT TO public USING (true);
 
+DROP POLICY IF EXISTS "auth_insert_conversations" ON public.conversations;-- A10 replay idempotence
 CREATE POLICY "auth_insert_conversations" ON public.conversations
   FOR INSERT TO authenticated WITH CHECK (auth.uid() = created_by);
 
+DROP POLICY IF EXISTS "auth_update_conversations" ON public.conversations;-- A10 replay idempotence
 CREATE POLICY "auth_update_conversations" ON public.conversations
   FOR UPDATE TO authenticated USING (auth.uid() = created_by);
 
@@ -61,9 +64,11 @@ DROP POLICY IF EXISTS "public_read_messages" ON public.messages;
 DROP POLICY IF EXISTS "auth_insert_messages" ON public.messages;
 
 -- Public read / authenticated write for messages
+DROP POLICY IF EXISTS "public_read_messages" ON public.messages;-- A10 replay idempotence
 CREATE POLICY "public_read_messages" ON public.messages
   FOR SELECT TO public USING (true);
 
+DROP POLICY IF EXISTS "auth_insert_messages" ON public.messages;-- A10 replay idempotence
 CREATE POLICY "auth_insert_messages" ON public.messages
   FOR INSERT TO authenticated WITH CHECK (auth.uid() = sender_id);
 
@@ -116,8 +121,11 @@ DROP POLICY IF EXISTS "public_read_events" ON public.events;
 DROP POLICY IF EXISTS "auth_insert_events" ON public.events;
 DROP POLICY IF EXISTS "auth_update_events" ON public.events;
 
+DROP POLICY IF EXISTS "public_read_events" ON public.events;-- A10 replay idempotence
 CREATE POLICY "public_read_events" ON public.events FOR SELECT TO public USING (true);
+DROP POLICY IF EXISTS "auth_insert_events" ON public.events;-- A10 replay idempotence
 CREATE POLICY "auth_insert_events" ON public.events FOR INSERT TO authenticated WITH CHECK (auth.uid() = organizer_id);
+DROP POLICY IF EXISTS "auth_update_events" ON public.events;-- A10 replay idempotence
 CREATE POLICY "auth_update_events" ON public.events FOR UPDATE TO authenticated
   USING (auth.uid() = organizer_id OR public.is_admin());
 
@@ -125,12 +133,16 @@ DROP POLICY IF EXISTS "public_read_event_participants" ON public.event_participa
 DROP POLICY IF EXISTS "auth_insert_event_participants" ON public.event_participants;
 DROP POLICY IF EXISTS "auth_delete_event_participants" ON public.event_participants;
 
+DROP POLICY IF EXISTS "public_read_event_participants" ON public.event_participants;-- A10 replay idempotence
 CREATE POLICY "public_read_event_participants" ON public.event_participants FOR SELECT TO public USING (true);
+DROP POLICY IF EXISTS "auth_insert_event_participants" ON public.event_participants;-- A10 replay idempotence
 CREATE POLICY "auth_insert_event_participants" ON public.event_participants FOR INSERT TO authenticated WITH CHECK (auth.uid() = user_id);
+DROP POLICY IF EXISTS "auth_delete_event_participants" ON public.event_participants;-- A10 replay idempotence
 CREATE POLICY "auth_delete_event_participants" ON public.event_participants FOR DELETE TO authenticated USING (auth.uid() = user_id);
 
 DROP POLICY IF EXISTS "public_read_event_expenses" ON public.event_expenses;
 
+DROP POLICY IF EXISTS "public_read_event_expenses" ON public.event_expenses;-- A10 replay idempotence
 CREATE POLICY "public_read_event_expenses" ON public.event_expenses FOR SELECT TO public USING (true);
 
 -- ── 3. Avis ──────────────────────────────────────────────────────────────────
@@ -154,8 +166,11 @@ DROP POLICY IF EXISTS "public_read_reviews" ON public.reviews;
 DROP POLICY IF EXISTS "auth_insert_reviews" ON public.reviews;
 DROP POLICY IF EXISTS "auth_update_reviews" ON public.reviews;
 
+DROP POLICY IF EXISTS "public_read_reviews" ON public.reviews;-- A10 replay idempotence
 CREATE POLICY "public_read_reviews" ON public.reviews FOR SELECT TO public USING (true);
+DROP POLICY IF EXISTS "auth_insert_reviews" ON public.reviews;-- A10 replay idempotence
 CREATE POLICY "auth_insert_reviews" ON public.reviews FOR INSERT TO authenticated WITH CHECK (auth.uid() = user_id);
+DROP POLICY IF EXISTS "auth_update_reviews" ON public.reviews;-- A10 replay idempotence
 CREATE POLICY "auth_update_reviews" ON public.reviews FOR UPDATE TO authenticated USING (auth.uid() = user_id);
 
 -- ── 4. Ambassadeurs & Codes Promo ────────────────────────────────────────────
@@ -194,8 +209,11 @@ DROP POLICY IF EXISTS "public_read_ambassadors" ON public.ambassadors;
 DROP POLICY IF EXISTS "auth_insert_ambassadors" ON public.ambassadors;
 DROP POLICY IF EXISTS "public_read_promo_codes" ON public.promo_codes;
 
+DROP POLICY IF EXISTS "public_read_ambassadors" ON public.ambassadors;-- A10 replay idempotence
 CREATE POLICY "public_read_ambassadors" ON public.ambassadors FOR SELECT TO public USING (true);
+DROP POLICY IF EXISTS "auth_insert_ambassadors" ON public.ambassadors;-- A10 replay idempotence
 CREATE POLICY "auth_insert_ambassadors" ON public.ambassadors FOR INSERT TO authenticated WITH CHECK (auth.uid() = user_id);
+DROP POLICY IF EXISTS "public_read_promo_codes" ON public.promo_codes;-- A10 replay idempotence
 CREATE POLICY "public_read_promo_codes" ON public.promo_codes FOR SELECT TO public USING (true);
 
 -- ── 5. Experts ───────────────────────────────────────────────────────────────
@@ -238,8 +256,11 @@ DROP POLICY IF EXISTS "public_read_experts" ON public.experts;
 DROP POLICY IF EXISTS "auth_insert_expert_bookings" ON public.expert_bookings;
 DROP POLICY IF EXISTS "auth_read_expert_bookings" ON public.expert_bookings;
 
+DROP POLICY IF EXISTS "public_read_experts" ON public.experts;-- A10 replay idempotence
 CREATE POLICY "public_read_experts" ON public.experts FOR SELECT TO public USING (true);
+DROP POLICY IF EXISTS "auth_insert_expert_bookings" ON public.expert_bookings;-- A10 replay idempotence
 CREATE POLICY "auth_insert_expert_bookings" ON public.expert_bookings FOR INSERT TO authenticated WITH CHECK (auth.uid() = user_id);
+DROP POLICY IF EXISTS "auth_read_expert_bookings" ON public.expert_bookings;-- A10 replay idempotence
 CREATE POLICY "auth_read_expert_bookings" ON public.expert_bookings FOR SELECT TO authenticated USING (auth.uid() = user_id);
 
 -- ── 6. Rapports d'Expédition ────────────────────────────────────────────────
@@ -268,8 +289,11 @@ DROP POLICY IF EXISTS "public_read_expedition_reports" ON public.expedition_repo
 DROP POLICY IF EXISTS "auth_insert_expedition_reports" ON public.expedition_reports;
 DROP POLICY IF EXISTS "auth_manage_expedition_reports" ON public.expedition_reports;
 
+DROP POLICY IF EXISTS "public_read_expedition_reports" ON public.expedition_reports;-- A10 replay idempotence
 CREATE POLICY "public_read_expedition_reports" ON public.expedition_reports FOR SELECT TO public USING (true);
+DROP POLICY IF EXISTS "auth_insert_expedition_reports" ON public.expedition_reports;-- A10 replay idempotence
 CREATE POLICY "auth_insert_expedition_reports" ON public.expedition_reports FOR INSERT TO authenticated WITH CHECK (auth.uid() = user_id);
+DROP POLICY IF EXISTS "auth_manage_expedition_reports" ON public.expedition_reports;-- A10 replay idempotence
 CREATE POLICY "auth_manage_expedition_reports" ON public.expedition_reports FOR ALL TO authenticated
   USING (auth.uid() = user_id) WITH CHECK (auth.uid() = user_id);
 
@@ -296,7 +320,9 @@ ALTER TABLE public.products ENABLE ROW LEVEL SECURITY;
 DROP POLICY IF EXISTS "public_read_products" ON public.products;
 DROP POLICY IF EXISTS "admin_write_products" ON public.products;
 
+DROP POLICY IF EXISTS "public_read_products" ON public.products;-- A10 replay idempotence
 CREATE POLICY "public_read_products" ON public.products FOR SELECT TO public USING (true);
+DROP POLICY IF EXISTS "admin_write_products" ON public.products;-- A10 replay idempotence
 CREATE POLICY "admin_write_products" ON public.products FOR ALL TO authenticated
   USING (public.is_admin()) WITH CHECK (public.is_admin());
 
@@ -316,7 +342,9 @@ ALTER TABLE public.listings ENABLE ROW LEVEL SECURITY;
 DROP POLICY IF EXISTS "public_read_listings" ON public.listings;
 DROP POLICY IF EXISTS "admin_write_listings" ON public.listings;
 
+DROP POLICY IF EXISTS "public_read_listings" ON public.listings;-- A10 replay idempotence
 CREATE POLICY "public_read_listings" ON public.listings FOR SELECT TO public USING (true);
+DROP POLICY IF EXISTS "admin_write_listings" ON public.listings;-- A10 replay idempotence
 CREATE POLICY "admin_write_listings" ON public.listings FOR ALL TO authenticated
   USING (public.is_admin()) WITH CHECK (public.is_admin());
 
@@ -339,7 +367,9 @@ ALTER TABLE public.club_challenges ENABLE ROW LEVEL SECURITY;
 DROP POLICY IF EXISTS "public_read_club_challenges" ON public.club_challenges;
 DROP POLICY IF EXISTS "auth_insert_club_challenges" ON public.club_challenges;
 
+DROP POLICY IF EXISTS "public_read_club_challenges" ON public.club_challenges;-- A10 replay idempotence
 CREATE POLICY "public_read_club_challenges" ON public.club_challenges FOR SELECT TO public USING (true);
+DROP POLICY IF EXISTS "auth_insert_club_challenges" ON public.club_challenges;-- A10 replay idempotence
 CREATE POLICY "auth_insert_club_challenges" ON public.club_challenges FOR INSERT TO authenticated WITH CHECK (true);
 
 -- ── 10. Inventaire — tables auxiliaires ──────────────────────────────────────
@@ -378,6 +408,9 @@ DROP POLICY IF EXISTS "auth_read_gear_images" ON public.gear_images;
 DROP POLICY IF EXISTS "auth_read_loans" ON public.loans;
 DROP POLICY IF EXISTS "auth_read_gear_history" ON public.gear_history;
 
+DROP POLICY IF EXISTS "auth_read_gear_images" ON public.gear_images;-- A10 replay idempotence
 CREATE POLICY "auth_read_gear_images" ON public.gear_images FOR SELECT TO authenticated USING (true);
+DROP POLICY IF EXISTS "auth_read_loans" ON public.loans;-- A10 replay idempotence
 CREATE POLICY "auth_read_loans" ON public.loans FOR SELECT TO authenticated USING (true);
+DROP POLICY IF EXISTS "auth_read_gear_history" ON public.gear_history;-- A10 replay idempotence
 CREATE POLICY "auth_read_gear_history" ON public.gear_history FOR SELECT TO authenticated USING (true);

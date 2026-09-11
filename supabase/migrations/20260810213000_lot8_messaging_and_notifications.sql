@@ -1,4 +1,4 @@
-﻿-- LOT 8: Messagerie & Notifications
+-- LOT 8: Messagerie & Notifications
 -- Migration: 20260810213000_lot8_messaging_and_notifications.sql
 -- Auteur: LKDV Interconnectivity Repair
 -- Description: Complétion du système de messagerie et amélioration des notifications
@@ -43,6 +43,17 @@ CREATE TABLE IF NOT EXISTS public.conversation_members (
     CHECK (unread_count >= 0),
     CHECK (total_messages_sent >= 0)
 );
+
+-- Replay base vide : colonnes référencées par les index mais absentes de la
+-- création (la production les avait — drift).
+ALTER TABLE public.conversation_members ADD COLUMN IF NOT EXISTS last_read_at TIMESTAMPTZ;
+ALTER TABLE public.conversation_members ADD COLUMN IF NOT EXISTS is_archived BOOLEAN DEFAULT false;
+ALTER TABLE public.conversation_members ADD COLUMN IF NOT EXISTS role TEXT DEFAULT 'member';
+ALTER TABLE public.conversation_members ADD COLUMN IF NOT EXISTS is_muted BOOLEAN DEFAULT false;
+ALTER TABLE public.conversation_members ADD COLUMN IF NOT EXISTS unread_count INTEGER DEFAULT 0;
+ALTER TABLE public.conversation_members ADD COLUMN IF NOT EXISTS left_at TIMESTAMPTZ;
+ALTER TABLE public.conversation_members ADD COLUMN IF NOT EXISTS created_at TIMESTAMPTZ DEFAULT now();
+ALTER TABLE public.conversation_members ADD COLUMN IF NOT EXISTS updated_at TIMESTAMPTZ DEFAULT now();
 
 -- Index pour les performances
 CREATE INDEX IF NOT EXISTS idx_conversation_members_conversation_id ON public.conversation_members(conversation_id);
@@ -237,59 +248,70 @@ DROP POLICY IF EXISTS "users_manage_own_notification_preferences" ON public.noti
 DROP POLICY IF EXISTS "users_manage_own_push_tokens" ON public.push_notification_tokens;
 
 -- 3.1 Politiques pour conversation_members
+DROP POLICY IF EXISTS "users_read_own_conversation_members" ON public.conversation_members;-- A10 replay idempotence
 CREATE POLICY "users_read_own_conversation_members" ON public.conversation_members
     FOR SELECT TO authenticated
     USING (user_id = auth.uid());
 
+DROP POLICY IF EXISTS "users_manage_own_conversation_members" ON public.conversation_members;-- A10 replay idempotence
 CREATE POLICY "users_manage_own_conversation_members" ON public.conversation_members
     FOR ALL TO authenticated
     USING (user_id = auth.uid())
     WITH CHECK (user_id = auth.uid());
 
 -- 3.2 Politiques pour message_reactions
+DROP POLICY IF EXISTS "users_read_message_reactions" ON public.message_reactions;-- A10 replay idempotence
 CREATE POLICY "users_read_message_reactions" ON public.message_reactions
     FOR SELECT TO authenticated
     USING (true); -- Tout le monde peut voir les réactions
 
+DROP POLICY IF EXISTS "users_manage_own_message_reactions" ON public.message_reactions;-- A10 replay idempotence
 CREATE POLICY "users_manage_own_message_reactions" ON public.message_reactions
     FOR ALL TO authenticated
     USING (user_id = auth.uid())
     WITH CHECK (user_id = auth.uid());
 
 -- 3.3 Politiques pour message_mentions
+DROP POLICY IF EXISTS "users_read_own_mentions" ON public.message_mentions;-- A10 replay idempotence
 CREATE POLICY "users_read_own_mentions" ON public.message_mentions
     FOR SELECT TO authenticated
     USING (mentioned_user_id = auth.uid());
 
+DROP POLICY IF EXISTS "system_insert_message_mentions" ON public.message_mentions;-- A10 replay idempotence
 CREATE POLICY "system_insert_message_mentions" ON public.message_mentions
     FOR INSERT TO authenticated
     WITH CHECK (true); -- Le système peut insérer des mentions
 
+DROP POLICY IF EXISTS "users_update_own_mentions" ON public.message_mentions;-- A10 replay idempotence
 CREATE POLICY "users_update_own_mentions" ON public.message_mentions
     FOR UPDATE TO authenticated
     USING (mentioned_user_id = auth.uid())
     WITH CHECK (mentioned_user_id = auth.uid());
 
 -- 3.4 Politiques pour deleted_messages (admin seulement)
+DROP POLICY IF EXISTS "admins_read_deleted_messages" ON public.deleted_messages;-- A10 replay idempotence
 CREATE POLICY "admins_read_deleted_messages" ON public.deleted_messages
     FOR SELECT TO authenticated
     USING (EXISTS (
-        SELECT 1 FROM public.profiles p
+        SELECT 1 FROM public.user_profiles p
         WHERE p.id = auth.uid()
         AND p.role IN ('admin', 'super_admin')
     ));
 
+DROP POLICY IF EXISTS "system_insert_deleted_messages" ON public.deleted_messages;-- A10 replay idempotence
 CREATE POLICY "system_insert_deleted_messages" ON public.deleted_messages
     FOR INSERT TO authenticated
     WITH CHECK (true); -- Le système peut insérer
 
 -- 3.5 Politiques pour notification_preferences
+DROP POLICY IF EXISTS "users_manage_own_notification_preferences" ON public.notification_preferences;-- A10 replay idempotence
 CREATE POLICY "users_manage_own_notification_preferences" ON public.notification_preferences
     FOR ALL TO authenticated
     USING (user_id = auth.uid())
     WITH CHECK (user_id = auth.uid());
 
 -- 3.6 Politiques pour push_notification_tokens
+DROP POLICY IF EXISTS "users_manage_own_push_tokens" ON public.push_notification_tokens;-- A10 replay idempotence
 CREATE POLICY "users_manage_own_push_tokens" ON public.push_notification_tokens
     FOR ALL TO authenticated
     USING (user_id = auth.uid())
@@ -391,7 +413,7 @@ BEGIN
             'conversation_id', (SELECT conversation_id FROM public.messages WHERE id = NEW.message_id)
         )
     WHERE EXISTS (
-        SELECT 1 FROM public.profiles p
+        SELECT 1 FROM public.user_profiles p
         WHERE p.id = NEW.mentioned_user_id
     );
     

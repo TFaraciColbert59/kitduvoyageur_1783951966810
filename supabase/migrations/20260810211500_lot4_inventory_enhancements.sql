@@ -12,11 +12,12 @@ CREATE TABLE IF NOT EXISTS public.gear_categories (
   created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP
 );
 ALTER TABLE public.gear_categories ENABLE ROW LEVEL SECURITY;
+DROP POLICY IF EXISTS "Users manage own categories" ON public.gear_categories;-- A10 replay idempotence
 CREATE POLICY "Users manage own categories" ON public.gear_categories FOR ALL USING (user_id = auth.uid());
 
 -- 2. Table pour les emplacements de stockage
 CREATE TABLE IF NOT EXISTS public.gear_locations (
-  id UUID PRIMARY DEFAULT gen_random_uuid(),
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   user_id UUID REFERENCES public.user_profiles(id) ON DELETE CASCADE,
   name TEXT NOT NULL,
   description TEXT DEFAULT '',
@@ -25,6 +26,7 @@ CREATE TABLE IF NOT EXISTS public.gear_locations (
   created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP
 );
 ALTER TABLE public.gear_locations ENABLE ROW LEVEL SECURITY;
+DROP POLICY IF EXISTS "Users manage own locations" ON public.gear_locations;-- A10 replay idempotence
 CREATE POLICY "Users manage own locations" ON public.gear_locations FOR ALL USING (user_id = auth.uid());
 
 -- 3. Ajout des colonnes manquantes à gear_items
@@ -44,6 +46,7 @@ CREATE TABLE IF NOT EXISTS public.gear_checklists (
   created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP
 );
 ALTER TABLE public.gear_checklists ENABLE ROW LEVEL SECURITY;
+DROP POLICY IF EXISTS "Users manage own checklists" ON public.gear_checklists;-- A10 replay idempotence
 CREATE POLICY "Users manage own checklists" ON public.gear_checklists FOR ALL USING (user_id = auth.uid());
 
 CREATE TABLE IF NOT EXISTS public.gear_checklist_items (
@@ -55,6 +58,7 @@ CREATE TABLE IF NOT EXISTS public.gear_checklist_items (
   PRIMARY KEY (checklist_id, gear_item_id)
 );
 ALTER TABLE public.gear_checklist_items ENABLE ROW LEVEL SECURITY;
+DROP POLICY IF EXISTS "Users manage own checklist items" ON public.gear_checklist_items;-- A10 replay idempotence
 CREATE POLICY "Users manage own checklist items" ON public.gear_checklist_items FOR ALL USING (
   checklist_id IN (SELECT id FROM public.gear_checklists WHERE user_id = auth.uid())
 );
@@ -70,6 +74,7 @@ CREATE TABLE IF NOT EXISTS public.custom_kits (
   created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP
 );
 ALTER TABLE public.custom_kits ENABLE ROW LEVEL SECURITY;
+DROP POLICY IF EXISTS "Users manage own kits" ON public.custom_kits;-- A10 replay idempotence
 CREATE POLICY "Users manage own kits" ON public.custom_kits FOR ALL USING (user_id = auth.uid());
 
 CREATE TABLE IF NOT EXISTS public.custom_kit_items (
@@ -80,6 +85,7 @@ CREATE TABLE IF NOT EXISTS public.custom_kit_items (
   PRIMARY KEY (kit_id, gear_item_id)
 );
 ALTER TABLE public.custom_kit_items ENABLE ROW LEVEL SECURITY;
+DROP POLICY IF EXISTS "Users manage own kit items" ON public.custom_kit_items;-- A10 replay idempotence
 CREATE POLICY "Users manage own kit items" ON public.custom_kit_items FOR ALL USING (
   kit_id IN (SELECT id FROM public.custom_kits WHERE user_id = auth.uid())
 );

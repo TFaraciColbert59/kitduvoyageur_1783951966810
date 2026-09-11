@@ -41,7 +41,46 @@ BEGIN
 EXCEPTION WHEN duplicate_object THEN NULL;
 END $$;
 
--- ── 3. countries_geo ──────────────────────────────────────────
+-- ── 3. Référentiel géo (replay base vide) ─────────────────────
+-- Ces tables n'étaient créées que par un fichier POSTÉRIEUR
+-- (20260811134114) ; création amont idempotente avec les contraintes du
+-- dépôt (PK/UNIQUE nécessaires aux ON CONFLICT du seed Natural Earth).
+CREATE TABLE IF NOT EXISTS public.countries_geo (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  iso_a2 TEXT NOT NULL UNIQUE,
+  name TEXT NOT NULL,
+  continent TEXT,
+  geometry GEOMETRY(POLYGON, 4326),
+  population INTEGER,
+  capital TEXT,
+  currency TEXT,
+  created_at TIMESTAMPTZ DEFAULT now()
+);
+
+CREATE TABLE IF NOT EXISTS public.admin_regions_geo (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  country_id UUID REFERENCES public.countries_geo(id),
+  admin_code TEXT,
+  name TEXT NOT NULL,
+  level INTEGER,
+  geometry GEOMETRY(POLYGON, 4326),
+  population INTEGER,
+  created_at TIMESTAMPTZ DEFAULT now()
+);
+
+CREATE TABLE IF NOT EXISTS public.places_geo (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  admin_region_id UUID REFERENCES public.admin_regions_geo(id),
+  name TEXT NOT NULL,
+  feature_code TEXT,
+  geometry GEOMETRY(POINT, 4326),
+  elevation INTEGER,
+  population INTEGER,
+  timezone TEXT,
+  created_at TIMESTAMPTZ DEFAULT now()
+);
+
+-- ── 3bis. countries_geo : colonnes GeoNames ───────────────────
 ALTER TABLE public.countries_geo
   ADD COLUMN IF NOT EXISTS geoname_id bigint UNIQUE,
   ADD COLUMN IF NOT EXISTS iso_a3 text,
@@ -61,7 +100,11 @@ ALTER TABLE public.countries_geo
   ADD COLUMN IF NOT EXISTS name_short text,
   ADD COLUMN IF NOT EXISTS geometry_source public.geo_country_geometry_source NOT NULL DEFAULT 'manual',
   ADD COLUMN IF NOT EXISTS is_sovereign boolean NOT NULL DEFAULT true,
-  ADD COLUMN IF NOT EXISTS updated_at timestamptz NOT NULL DEFAULT now();
+  ADD COLUMN IF NOT EXISTS updated_at timestamptz NOT NULL DEFAULT now(),
+  -- Replay : colonnes présentes en production (drift) référencées plus tard.
+  ADD COLUMN IF NOT EXISTS timezone text,
+  ADD COLUMN IF NOT EXISTS subregion text,
+  ADD COLUMN IF NOT EXISTS sources text;
 
 CREATE INDEX IF NOT EXISTS idx_countries_geo_iso_a3 ON public.countries_geo (iso_a3);
 CREATE INDEX IF NOT EXISTS idx_countries_geo_continent ON public.countries_geo (continent);
@@ -115,7 +158,18 @@ CREATE INDEX IF NOT EXISTS idx_places_geo_geoname_id ON public.places_geo (geona
 CREATE INDEX IF NOT EXISTS idx_places_geo_name_trgm ON public.places_geo USING GIN (name gin_trgm_ops);
 CREATE INDEX IF NOT EXISTS idx_places_geo_capital ON public.places_geo (is_capital) WHERE is_capital = true;
 
--- ── 6. place_names_geo = alternateNamesV2.txt ────────────────
+-- ── 6bis. place_names_geo = alternateNamesV2.txt ────────────────
+-- Replay base vide : la table n'était créée que par un fichier POSTÉRIEUR
+-- (20260811134114) ; création amont idempotente (drift d'ordre historique).
+CREATE TABLE IF NOT EXISTS public.place_names_geo (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  place_id UUID,
+  name TEXT NOT NULL,
+  lang TEXT,
+  is_preferred BOOLEAN,
+  created_at TIMESTAMPTZ DEFAULT now()
+);
+
 ALTER TABLE public.place_names_geo
   ADD COLUMN IF NOT EXISTS alternate_name_id bigint,
   ADD COLUMN IF NOT EXISTS geoname_id bigint,
@@ -145,23 +199,31 @@ DROP POLICY IF EXISTS "geo_places_service_write" ON public.places_geo;
 DROP POLICY IF EXISTS "geo_place_names_public_read" ON public.place_names_geo;
 DROP POLICY IF EXISTS "geo_place_names_service_write" ON public.place_names_geo;
 
+DROP POLICY IF EXISTS "geo_countries_public_read" ON public.countries_geo;-- A10 replay idempotence
 CREATE POLICY "geo_countries_public_read" ON public.countries_geo
   FOR SELECT USING (true);
+DROP POLICY IF EXISTS "geo_countries_service_write" ON public.countries_geo;-- A10 replay idempotence
 CREATE POLICY "geo_countries_service_write" ON public.countries_geo
   FOR ALL USING (auth.role() = 'service_role') WITH CHECK (auth.role() = 'service_role');
 
+DROP POLICY IF EXISTS "geo_admin_regions_public_read" ON public.admin_regions_geo;-- A10 replay idempotence
 CREATE POLICY "geo_admin_regions_public_read" ON public.admin_regions_geo
   FOR SELECT USING (true);
+DROP POLICY IF EXISTS "geo_admin_regions_service_write" ON public.admin_regions_geo;-- A10 replay idempotence
 CREATE POLICY "geo_admin_regions_service_write" ON public.admin_regions_geo
   FOR ALL USING (auth.role() = 'service_role') WITH CHECK (auth.role() = 'service_role');
 
+DROP POLICY IF EXISTS "geo_places_public_read" ON public.places_geo;-- A10 replay idempotence
 CREATE POLICY "geo_places_public_read" ON public.places_geo
   FOR SELECT USING (true);
+DROP POLICY IF EXISTS "geo_places_service_write" ON public.places_geo;-- A10 replay idempotence
 CREATE POLICY "geo_places_service_write" ON public.places_geo
   FOR ALL USING (auth.role() = 'service_role') WITH CHECK (auth.role() = 'service_role');
 
+DROP POLICY IF EXISTS "geo_place_names_public_read" ON public.place_names_geo;-- A10 replay idempotence
 CREATE POLICY "geo_place_names_public_read" ON public.place_names_geo
   FOR SELECT USING (true);
+DROP POLICY IF EXISTS "geo_place_names_service_write" ON public.place_names_geo;-- A10 replay idempotence
 CREATE POLICY "geo_place_names_service_write" ON public.place_names_geo
   FOR ALL USING (auth.role() = 'service_role') WITH CHECK (auth.role() = 'service_role');
 

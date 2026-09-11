@@ -64,12 +64,16 @@ create trigger trg_materiel_kits_updated_at before update on public.materiel_kit
 
 alter table public.materiel_kits enable row level security;
 
+DROP POLICY IF EXISTS "materiel_kits_select_own_or_public" ON public.materiel_kits;-- A10 replay idempotence
 create policy "materiel_kits_select_own_or_public" on public.materiel_kits
   for select using (auth.uid() = user_id or is_public = true);
+DROP POLICY IF EXISTS "materiel_kits_insert_own" ON public.materiel_kits;-- A10 replay idempotence
 create policy "materiel_kits_insert_own" on public.materiel_kits
   for insert with check (auth.uid() = user_id);
+DROP POLICY IF EXISTS "materiel_kits_update_own" ON public.materiel_kits;-- A10 replay idempotence
 create policy "materiel_kits_update_own" on public.materiel_kits
   for update using (auth.uid() = user_id) with check (auth.uid() = user_id);
+DROP POLICY IF EXISTS "materiel_kits_delete_own" ON public.materiel_kits;-- A10 replay idempotence
 create policy "materiel_kits_delete_own" on public.materiel_kits
   for delete using (auth.uid() = user_id);
 
@@ -121,12 +125,16 @@ create trigger trg_product_ownership_updated_at before update on public.product_
 
 alter table public.product_ownership enable row level security;
 
+DROP POLICY IF EXISTS "product_ownership_select_own" ON public.product_ownership;-- A10 replay idempotence
 create policy "product_ownership_select_own" on public.product_ownership
   for select using (auth.uid() = user_id);
+DROP POLICY IF EXISTS "product_ownership_insert_own" ON public.product_ownership;-- A10 replay idempotence
 create policy "product_ownership_insert_own" on public.product_ownership
   for insert with check (auth.uid() = user_id);
+DROP POLICY IF EXISTS "product_ownership_update_own" ON public.product_ownership;-- A10 replay idempotence
 create policy "product_ownership_update_own" on public.product_ownership
   for update using (auth.uid() = user_id) with check (auth.uid() = user_id);
+DROP POLICY IF EXISTS "product_ownership_delete_own" ON public.product_ownership;-- A10 replay idempotence
 create policy "product_ownership_delete_own" on public.product_ownership
   for delete using (auth.uid() = user_id);
 
@@ -155,12 +163,16 @@ create trigger trg_materiel_kit_items_updated_at before update on public.materie
 
 alter table public.materiel_kit_items enable row level security;
 
+DROP POLICY IF EXISTS "materiel_kit_items_select_own" ON public.materiel_kit_items;-- A10 replay idempotence
 create policy "materiel_kit_items_select_own" on public.materiel_kit_items
   for select using (auth.uid() = user_id);
+DROP POLICY IF EXISTS "materiel_kit_items_insert_own" ON public.materiel_kit_items;-- A10 replay idempotence
 create policy "materiel_kit_items_insert_own" on public.materiel_kit_items
   for insert with check (auth.uid() = user_id);
+DROP POLICY IF EXISTS "materiel_kit_items_update_own" ON public.materiel_kit_items;-- A10 replay idempotence
 create policy "materiel_kit_items_update_own" on public.materiel_kit_items
   for update using (auth.uid() = user_id) with check (auth.uid() = user_id);
+DROP POLICY IF EXISTS "materiel_kit_items_delete_own" ON public.materiel_kit_items;-- A10 replay idempotence
 create policy "materiel_kit_items_delete_own" on public.materiel_kit_items
   for delete using (auth.uid() = user_id);
 
@@ -190,12 +202,16 @@ create trigger trg_alerts_updated_at before update on public.alerts
 
 alter table public.alerts enable row level security;
 
+DROP POLICY IF EXISTS "alerts_select_own" ON public.alerts;-- A10 replay idempotence
 create policy "alerts_select_own" on public.alerts
   for select using (auth.uid() = user_id);
+DROP POLICY IF EXISTS "alerts_insert_own" ON public.alerts;-- A10 replay idempotence
 create policy "alerts_insert_own" on public.alerts
   for insert with check (auth.uid() = user_id);
+DROP POLICY IF EXISTS "alerts_update_own" ON public.alerts;-- A10 replay idempotence
 create policy "alerts_update_own" on public.alerts
   for update using (auth.uid() = user_id) with check (auth.uid() = user_id);
+DROP POLICY IF EXISTS "alerts_delete_own" ON public.alerts;-- A10 replay idempotence
 create policy "alerts_delete_own" on public.alerts
   for delete using (auth.uid() = user_id);
 
@@ -228,13 +244,17 @@ create trigger trg_materiel_loans_updated_at before update on public.materiel_lo
 
 alter table public.materiel_loans enable row level security;
 
+DROP POLICY IF EXISTS "materiel_loans_select_involved" ON public.materiel_loans;-- A10 replay idempotence
 create policy "materiel_loans_select_involved" on public.materiel_loans
   for select using (auth.uid() = lender_id or auth.uid() = borrower_id);
+DROP POLICY IF EXISTS "materiel_loans_insert_lender" ON public.materiel_loans;-- A10 replay idempotence
 create policy "materiel_loans_insert_lender" on public.materiel_loans
   for insert with check (auth.uid() = lender_id);
+DROP POLICY IF EXISTS "materiel_loans_update_involved" ON public.materiel_loans;-- A10 replay idempotence
 create policy "materiel_loans_update_involved" on public.materiel_loans
   for update using (auth.uid() = lender_id or auth.uid() = borrower_id)
   with check (auth.uid() = lender_id or auth.uid() = borrower_id);
+DROP POLICY IF EXISTS "materiel_loans_delete_lender" ON public.materiel_loans;-- A10 replay idempotence
 create policy "materiel_loans_delete_lender" on public.materiel_loans
   for delete using (auth.uid() = lender_id);
 
@@ -256,10 +276,13 @@ create index if not exists idx_share_tokens_kit_id on public.share_tokens(kit_id
 
 alter table public.share_tokens enable row level security;
 
+DROP POLICY IF EXISTS "share_tokens_select_owner" ON public.share_tokens;-- A10 replay idempotence
 create policy "share_tokens_select_owner" on public.share_tokens
   for select using (auth.uid() = owner_id);
+DROP POLICY IF EXISTS "share_tokens_insert_owner" ON public.share_tokens;-- A10 replay idempotence
 create policy "share_tokens_insert_owner" on public.share_tokens
   for insert with check (auth.uid() = owner_id);
+DROP POLICY IF EXISTS "share_tokens_delete_owner" ON public.share_tokens;-- A10 replay idempotence
 create policy "share_tokens_delete_owner" on public.share_tokens
   for delete using (auth.uid() = owner_id);
 

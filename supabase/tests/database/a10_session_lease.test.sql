@@ -11,6 +11,9 @@
 -- ============================================================================
 BEGIN;
 SET LOCAL search_path = public;
+-- Replay local : les grants par défaut service_role de la prod ne sont pas
+-- garantis ; on les pose explicitement pour un test déterministe.
+GRANT SELECT, INSERT, UPDATE, DELETE ON public.hike_sessions TO service_role;
 SELECT plan(12);
 
 -- ----------------------------------------------------------------------------
@@ -44,8 +47,8 @@ VALUES
 SET LOCAL ROLE service_role;
 SELECT is(
   (SELECT count(*)::int FROM public.a2_claim_pending_sessions(10)),
-  2,
-  '1. DB-01. claim(10) réserve la pending due et le lease expiré'
+  3,
+  '1. DB-01. claim(10) réserve la pending due, le lease expiré et le lease épuisé (dead-letter)'
 );
 SELECT is(
   (SELECT processing_status FROM public.hike_sessions WHERE id = '7a100000-0000-4000-8000-00000000000a'),

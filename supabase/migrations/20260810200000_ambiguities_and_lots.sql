@@ -6,7 +6,9 @@ CREATE TABLE IF NOT EXISTS public.club_event_participants (
   PRIMARY KEY (event_id, user_id)
 );
 ALTER TABLE public.club_event_participants ENABLE ROW LEVEL SECURITY;
+DROP POLICY IF EXISTS "Public read participants" ON public.club_event_participants;-- A10 replay idempotence
 CREATE POLICY "Public read participants" ON public.club_event_participants FOR SELECT USING (true);
+DROP POLICY IF EXISTS "Users can manage own participation" ON public.club_event_participants;-- A10 replay idempotence
 CREATE POLICY "Users can manage own participation" ON public.club_event_participants FOR ALL USING (user_id = auth.uid());
 
 CREATE TABLE IF NOT EXISTS public.club_topic_likes (
@@ -16,7 +18,9 @@ CREATE TABLE IF NOT EXISTS public.club_topic_likes (
   PRIMARY KEY (topic_id, user_id)
 );
 ALTER TABLE public.club_topic_likes ENABLE ROW LEVEL SECURITY;
+DROP POLICY IF EXISTS "Public read likes" ON public.club_topic_likes;-- A10 replay idempotence
 CREATE POLICY "Public read likes" ON public.club_topic_likes FOR SELECT USING (true);
+DROP POLICY IF EXISTS "Users can manage own likes" ON public.club_topic_likes;-- A10 replay idempotence
 CREATE POLICY "Users can manage own likes" ON public.club_topic_likes FOR ALL USING (user_id = auth.uid());
 
 -- LOT 6 : Boutique persistance détaillée
@@ -29,6 +33,7 @@ CREATE TABLE IF NOT EXISTS public.order_items (
   created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP
 );
 ALTER TABLE public.order_items ENABLE ROW LEVEL SECURITY;
+DROP POLICY IF EXISTS "Users view own order items" ON public.order_items;-- A10 replay idempotence
 CREATE POLICY "Users view own order items" ON public.order_items FOR SELECT USING (
   order_id IN (SELECT id FROM public.orders WHERE user_id = auth.uid())
 );
@@ -42,6 +47,7 @@ CREATE TABLE IF NOT EXISTS public.stock_movements (
   created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP
 );
 ALTER TABLE public.stock_movements ENABLE ROW LEVEL SECURITY;
+DROP POLICY IF EXISTS "Admin view stock movements" ON public.stock_movements;-- A10 replay idempotence
 CREATE POLICY "Admin view stock movements" ON public.stock_movements FOR SELECT USING (is_admin());
 
 CREATE TABLE IF NOT EXISTS public.loyalty_history (
@@ -53,6 +59,7 @@ CREATE TABLE IF NOT EXISTS public.loyalty_history (
   created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP
 );
 ALTER TABLE public.loyalty_history ENABLE ROW LEVEL SECURITY;
+DROP POLICY IF EXISTS "Users view own loyalty history" ON public.loyalty_history;-- A10 replay idempotence
 CREATE POLICY "Users view own loyalty history" ON public.loyalty_history FOR SELECT USING (user_id = auth.uid());
 
 -- LOT 8 : Messagerie & Notifications
@@ -62,17 +69,23 @@ CREATE TABLE IF NOT EXISTS public.conversations (
   updated_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP
 );
 ALTER TABLE public.conversations ENABLE ROW LEVEL SECURITY;
-CREATE POLICY "Participants can view conversations" ON public.conversations FOR SELECT USING (
-  id IN (SELECT conversation_id FROM public.conversation_participants WHERE user_id = auth.uid())
-);
 
+-- Replay base vide : `conversation_participants` doit exister AVANT la policy
+-- de `conversations` qui la référence (la production l'avait déjà — drift).
 CREATE TABLE IF NOT EXISTS public.conversation_participants (
   conversation_id UUID REFERENCES public.conversations(id) ON DELETE CASCADE,
   user_id UUID REFERENCES public.user_profiles(id) ON DELETE CASCADE,
   joined_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP,
   PRIMARY KEY (conversation_id, user_id)
 );
+
+DROP POLICY IF EXISTS "Participants can view conversations" ON public.conversations;-- A10 replay idempotence
+CREATE POLICY "Participants can view conversations" ON public.conversations FOR SELECT USING (
+  id IN (SELECT conversation_id FROM public.conversation_participants WHERE user_id = auth.uid())
+);
+
 ALTER TABLE public.conversation_participants ENABLE ROW LEVEL SECURITY;
+DROP POLICY IF EXISTS "Participants can view members" ON public.conversation_participants;-- A10 replay idempotence
 CREATE POLICY "Participants can view members" ON public.conversation_participants FOR SELECT USING (
   conversation_id IN (SELECT conversation_id FROM public.conversation_participants WHERE user_id = auth.uid())
 );
@@ -85,6 +98,7 @@ CREATE TABLE IF NOT EXISTS public.messages (
   created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP
 );
 ALTER TABLE public.messages ENABLE ROW LEVEL SECURITY;
+DROP POLICY IF EXISTS "Participants can view and send messages" ON public.messages;-- A10 replay idempotence
 CREATE POLICY "Participants can view and send messages" ON public.messages FOR ALL USING (
   conversation_id IN (SELECT conversation_id FROM public.conversation_participants WHERE user_id = auth.uid())
 );
@@ -98,6 +112,7 @@ CREATE TABLE IF NOT EXISTS public.notifications (
   created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP
 );
 ALTER TABLE public.notifications ENABLE ROW LEVEL SECURITY;
+DROP POLICY IF EXISTS "Users manage own notifications" ON public.notifications;-- A10 replay idempotence
 CREATE POLICY "Users manage own notifications" ON public.notifications FOR ALL USING (user_id = auth.uid());
 -- LOT 4 : Fusion inventaire (Prêts et réparations)
 CREATE TABLE IF NOT EXISTS public.gear_loans (
@@ -111,6 +126,7 @@ CREATE TABLE IF NOT EXISTS public.gear_loans (
   created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP
 );
 ALTER TABLE public.gear_loans ENABLE ROW LEVEL SECURITY;
+DROP POLICY IF EXISTS "Users manage own gear loans" ON public.gear_loans;-- A10 replay idempotence
 CREATE POLICY "Users manage own gear loans" ON public.gear_loans FOR ALL USING (user_id = auth.uid());
 
 CREATE TABLE IF NOT EXISTS public.gear_repairs (
@@ -123,4 +139,5 @@ CREATE TABLE IF NOT EXISTS public.gear_repairs (
   created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP
 );
 ALTER TABLE public.gear_repairs ENABLE ROW LEVEL SECURITY;
+DROP POLICY IF EXISTS "Users manage own gear repairs" ON public.gear_repairs;-- A10 replay idempotence
 CREATE POLICY "Users manage own gear repairs" ON public.gear_repairs FOR ALL USING (user_id = auth.uid());

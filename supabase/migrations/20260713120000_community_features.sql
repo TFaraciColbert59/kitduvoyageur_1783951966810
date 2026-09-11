@@ -98,6 +98,15 @@ CREATE TABLE IF NOT EXISTS public.clubs (
   updated_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP
 );
 
+-- Replay base vide : `clubs` est créée plus tôt (20260712210000) SANS ces
+-- colonnes ; la production les possédait (drift). ALTERs idempotents.
+ALTER TABLE public.clubs ADD COLUMN IF NOT EXISTS cover_image TEXT DEFAULT '';
+ALTER TABLE public.clubs ADD COLUMN IF NOT EXISTS category TEXT DEFAULT '';
+ALTER TABLE public.clubs ADD COLUMN IF NOT EXISTS rules TEXT DEFAULT '';
+ALTER TABLE public.clubs ADD COLUMN IF NOT EXISTS privacy TEXT DEFAULT 'open';
+ALTER TABLE public.clubs ADD COLUMN IF NOT EXISTS is_verified BOOLEAN DEFAULT false;
+ALTER TABLE public.clubs ADD COLUMN IF NOT EXISTS updated_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP;
+
 CREATE TABLE IF NOT EXISTS public.club_members (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   club_id UUID REFERENCES public.clubs(id) ON DELETE CASCADE,
@@ -144,6 +153,12 @@ CREATE TABLE IF NOT EXISTS public.club_topic_replies (
   likes_count INTEGER DEFAULT 0,
   created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP
 );
+
+-- Replay base vide : `club_topics`/`club_topic_replies` sont créées plus tôt
+-- (20260712210000) SANS `is_approved` ; la production possédait la colonne
+-- (drift). Colonnes additives idempotentes pour aligner le replay.
+ALTER TABLE public.club_topics ADD COLUMN IF NOT EXISTS is_approved BOOLEAN DEFAULT true;
+ALTER TABLE public.club_topic_replies ADD COLUMN IF NOT EXISTS is_approved BOOLEAN DEFAULT true;
 
 CREATE TABLE IF NOT EXISTS public.club_reports (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -333,6 +348,53 @@ CREATE INDEX IF NOT EXISTS idx_user_follows_follower ON public.user_follows(foll
 CREATE INDEX IF NOT EXISTS idx_user_follows_following ON public.user_follows(following_id);
 
 -- ─── 7. RLS ───────────────────────────────────────────────────────────────────
+
+
+-- ── Alignement replay (Étape 0-B) — voir bloc généré ──
+-- A10 — Alignement replay base vide : colonnes presentes en production (drift) mais absentes des premieres creations. Genere en union des definitions tardives.
+
+-- auction_items (1 colonne(s))
+ALTER TABLE public.auction_items ADD COLUMN IF NOT EXISTS description TEXT DEFAULT '';
+
+-- club_challenges (3 colonne(s))
+ALTER TABLE public.club_challenges ADD COLUMN IF NOT EXISTS xp_reward integer DEFAULT 0;
+ALTER TABLE public.club_challenges ADD COLUMN IF NOT EXISTS start_date timestamptz;
+ALTER TABLE public.club_challenges ADD COLUMN IF NOT EXISTS end_date timestamptz;
+
+-- club_members (1 colonne(s))
+ALTER TABLE public.club_members ADD COLUMN IF NOT EXISTS status TEXT DEFAULT 'active';
+
+-- club_topics (6 colonne(s))
+ALTER TABLE public.club_topics ADD COLUMN IF NOT EXISTS is_pinned BOOLEAN DEFAULT false;
+ALTER TABLE public.club_topics ADD COLUMN IF NOT EXISTS is_announcement BOOLEAN DEFAULT false;
+ALTER TABLE public.club_topics ADD COLUMN IF NOT EXISTS likes_count INTEGER DEFAULT 0;
+ALTER TABLE public.club_topics ADD COLUMN IF NOT EXISTS replies_count INTEGER DEFAULT 0;
+ALTER TABLE public.club_topics ADD COLUMN IF NOT EXISTS reports_count INTEGER DEFAULT 0;
+ALTER TABLE public.club_topics ADD COLUMN IF NOT EXISTS updated_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP;
+
+-- event_participants (1 colonne(s))
+ALTER TABLE public.event_participants ADD COLUMN IF NOT EXISTS created_at timestamptz DEFAULT now();
+
+-- kit_items (1 colonne(s))
+ALTER TABLE public.kit_items ADD COLUMN IF NOT EXISTS created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP;
+
+-- occasion_items (1 colonne(s))
+ALTER TABLE public.occasion_items ADD COLUMN IF NOT EXISTS description TEXT DEFAULT '';
+
+-- products (1 colonne(s))
+ALTER TABLE public.products ADD COLUMN IF NOT EXISTS is_active boolean DEFAULT true;
+
+-- promo_codes (3 colonne(s))
+ALTER TABLE public.promo_codes ADD COLUMN IF NOT EXISTS discount_pct numeric;
+ALTER TABLE public.promo_codes ADD COLUMN IF NOT EXISTS max_uses integer;
+ALTER TABLE public.promo_codes ADD COLUMN IF NOT EXISTS expires_at timestamptz;
+
+-- rental_items (4 colonne(s))
+ALTER TABLE public.rental_items ADD COLUMN IF NOT EXISTS description TEXT DEFAULT '';
+ALTER TABLE public.rental_items ADD COLUMN IF NOT EXISTS available_from DATE;
+ALTER TABLE public.rental_items ADD COLUMN IF NOT EXISTS available_to DATE;
+ALTER TABLE public.rental_items ADD COLUMN IF NOT EXISTS status TEXT DEFAULT 'available';
+
 
 ALTER TABLE public.carnets ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.carnet_likes ENABLE ROW LEVEL SECURITY;

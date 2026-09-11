@@ -15,6 +15,48 @@
 --     --style=lkdv_trails.lua france-latest.osm.pbf
 -- ============================================================
 
+-- ── 0. PostGIS (replay base vide) ───
+-- La production disposait de l'extension dès l'origine (drift) ; le replay
+-- base vide l'active ici, avant le premier usage du type geometry.
+CREATE EXTENSION IF NOT EXISTS postgis;
+
+-- ── 0bis. Stand-ins replay (tables distantes obsolètes) ───
+-- `trail_metadata`, `trail_scores` et `trail_pois` apparaissent dans des vues
+-- et fonctions historiques du dépôt mais ne sont créées par aucune migration
+-- (et n'existent plus dans la production actuelle — vérifié par dump
+-- schema-only le 2026-09-11). Stand-ins minimaux pour permettre le replay ;
+-- ils ne sont PAS utilisés par le domaine Adventure Intelligence.
+CREATE TABLE IF NOT EXISTS public.trail_metadata (
+  trail_id BIGINT PRIMARY KEY,
+  difficulty TEXT,
+  duration_hours NUMERIC(6,2),
+  elevation_gain INTEGER,
+  elevation_loss INTEGER,
+  terrain_type TEXT,
+  family_friendly BOOLEAN DEFAULT false,
+  season TEXT,
+  ai_description TEXT
+);
+
+CREATE TABLE IF NOT EXISTS public.trail_scores (
+  trail_id BIGINT PRIMARY KEY,
+  adventure_score NUMERIC(4,1),
+  nature_score NUMERIC(4,1),
+  panorama_score NUMERIC(4,1),
+  accessibility_score NUMERIC(4,1),
+  challenge_score NUMERIC(4,1),
+  services_score NUMERIC(4,1)
+);
+
+CREATE TABLE IF NOT EXISTS public.trail_pois (
+  id BIGSERIAL PRIMARY KEY,
+  name TEXT,
+  category TEXT,
+  description TEXT,
+  tags JSONB DEFAULT '{}'::jsonb,
+  geom geometry(Point, 4326)
+);
+
 -- ── 1. trails_raw_v1 — Placeholder for original trails data ───
 -- NOTE: The original trails table was dropped before renaming was
 -- possible. This table preserves the schema for reference.

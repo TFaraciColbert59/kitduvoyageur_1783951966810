@@ -1,4 +1,4 @@
-﻿-- LOT 7: Calculs poids & optimisation
+-- LOT 7: Calculs poids & optimisation
 -- Migration: 20260810212500_lot7_weight_calculations_and_optimizations.sql
 -- Auteur: LKDV Interconnectivity Repair
 -- Description: Création des tables pour le calcul et l'optimisation des poids des kits de randonnée
@@ -211,12 +211,14 @@ DROP POLICY IF EXISTS "public_read_weight_profiles" ON public.weight_profiles;
 DROP POLICY IF EXISTS "admins_manage_weight_profiles" ON public.weight_profiles;
 
 -- Politiques pour weight_calculations
+DROP POLICY IF EXISTS "users_crud_own_weight_calculations" ON public.weight_calculations;-- A10 replay idempotence
 CREATE POLICY "users_crud_own_weight_calculations" ON public.weight_calculations
     FOR ALL TO authenticated
     USING (auth.uid() = user_id)
     WITH CHECK (auth.uid() = user_id);
 
 -- Politiques pour weight_optimizations (liées aux calculs de l'utilisateur)
+DROP POLICY IF EXISTS "users_read_own_weight_optimizations" ON public.weight_optimizations;-- A10 replay idempotence
 CREATE POLICY "users_read_own_weight_optimizations" ON public.weight_optimizations
     FOR SELECT TO authenticated
     USING (EXISTS (
@@ -226,19 +228,21 @@ CREATE POLICY "users_read_own_weight_optimizations" ON public.weight_optimizatio
     ));
 
 -- Politiques pour weight_profiles (lecture publique, gestion admin)
+DROP POLICY IF EXISTS "public_read_weight_profiles" ON public.weight_profiles;-- A10 replay idempotence
 CREATE POLICY "public_read_weight_profiles" ON public.weight_profiles
     FOR SELECT TO public
     USING (is_active = true);
 
+DROP POLICY IF EXISTS "admins_manage_weight_profiles" ON public.weight_profiles;-- A10 replay idempotence
 CREATE POLICY "admins_manage_weight_profiles" ON public.weight_profiles
     FOR ALL TO authenticated
     USING (EXISTS (
-        SELECT 1 FROM public.profiles p
+        SELECT 1 FROM public.user_profiles p
         WHERE p.id = auth.uid()
         AND p.role IN ('admin', 'super_admin')
     ))
     WITH CHECK (EXISTS (
-        SELECT 1 FROM public.profiles p
+        SELECT 1 FROM public.user_profiles p
         WHERE p.id = auth.uid()
         AND p.role IN ('admin', 'super_admin')
     ));

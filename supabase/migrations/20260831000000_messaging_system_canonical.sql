@@ -282,42 +282,51 @@ ALTER TABLE public.message_reactions ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.message_mentions ENABLE ROW LEVEL SECURITY;
 
 -- Conversations
+DROP POLICY IF EXISTS "members_select_conversations" ON public.conversations;-- A10 replay idempotence
 CREATE POLICY "members_select_conversations" ON public.conversations
     FOR SELECT TO authenticated
     USING (public.is_conversation_member(id, auth.uid()));
 
+DROP POLICY IF EXISTS "admin_update_conversations" ON public.conversations;-- A10 replay idempotence
 CREATE POLICY "admin_update_conversations" ON public.conversations
     FOR UPDATE TO authenticated
     USING (public.is_conv_admin(id, auth.uid()))
     WITH CHECK (public.is_conv_admin(id, auth.uid()));
 
+DROP POLICY IF EXISTS "owners_delete_conversations" ON public.conversations;-- A10 replay idempotence
 CREATE POLICY "owners_delete_conversations" ON public.conversations
     FOR DELETE TO authenticated
     USING (created_by = auth.uid() OR public.is_conv_owner(id, auth.uid()));
 
 -- Members
+DROP POLICY IF EXISTS "members_select_conversation_members" ON public.conversation_members;-- A10 replay idempotence
 CREATE POLICY "members_select_conversation_members" ON public.conversation_members
     FOR SELECT TO authenticated
     USING (public.is_conversation_member(conversation_id, auth.uid()));
 
+DROP POLICY IF EXISTS "admin_insert_conversation_members" ON public.conversation_members;-- A10 replay idempotence
 CREATE POLICY "admin_insert_conversation_members" ON public.conversation_members
     FOR INSERT TO authenticated
     WITH CHECK (public.is_conv_admin(conversation_id, auth.uid()));
 
+DROP POLICY IF EXISTS "members_update_own_preferences" ON public.conversation_members;-- A10 replay idempotence
 CREATE POLICY "members_update_own_preferences" ON public.conversation_members
     FOR UPDATE TO authenticated
     USING (user_id = auth.uid() OR public.is_conv_admin(conversation_id, auth.uid()))
     WITH CHECK (user_id = auth.uid() OR public.is_conv_admin(conversation_id, auth.uid()));
 
+DROP POLICY IF EXISTS "members_delete_conversation_members" ON public.conversation_members;-- A10 replay idempotence
 CREATE POLICY "members_delete_conversation_members" ON public.conversation_members
     FOR DELETE TO authenticated
     USING (user_id = auth.uid() OR public.is_conv_admin(conversation_id, auth.uid()));
 
 -- Messages
+DROP POLICY IF EXISTS "members_select_messages" ON public.messages;-- A10 replay idempotence
 CREATE POLICY "members_select_messages" ON public.messages
     FOR SELECT TO authenticated
     USING (public.is_conversation_member(conversation_id, auth.uid()));
 
+DROP POLICY IF EXISTS "members_insert_messages" ON public.messages;-- A10 replay idempotence
 CREATE POLICY "members_insert_messages" ON public.messages
     FOR INSERT TO authenticated
     WITH CHECK (
@@ -325,6 +334,7 @@ CREATE POLICY "members_insert_messages" ON public.messages
         AND public.is_conversation_member(conversation_id, auth.uid())
     );
 
+DROP POLICY IF EXISTS "senders_update_messages" ON public.messages;-- A10 replay idempotence
 CREATE POLICY "senders_update_messages" ON public.messages
     FOR UPDATE TO authenticated
     USING (
@@ -336,6 +346,7 @@ CREATE POLICY "senders_update_messages" ON public.messages
         AND public.is_conversation_member(conversation_id, auth.uid())
     );
 
+DROP POLICY IF EXISTS "senders_delete_messages" ON public.messages;-- A10 replay idempotence
 CREATE POLICY "senders_delete_messages" ON public.messages
     FOR DELETE TO authenticated
     USING (
@@ -344,6 +355,7 @@ CREATE POLICY "senders_delete_messages" ON public.messages
     );
 
 -- Attachments, Reactions & Mentions
+DROP POLICY IF EXISTS "members_select_attachments" ON public.message_attachments;-- A10 replay idempotence
 CREATE POLICY "members_select_attachments" ON public.message_attachments
     FOR SELECT TO authenticated
     USING (
@@ -354,6 +366,7 @@ CREATE POLICY "members_select_attachments" ON public.message_attachments
         )
     );
 
+DROP POLICY IF EXISTS "senders_insert_attachments" ON public.message_attachments;-- A10 replay idempotence
 CREATE POLICY "senders_insert_attachments" ON public.message_attachments
     FOR INSERT TO authenticated
     WITH CHECK (
@@ -365,6 +378,7 @@ CREATE POLICY "senders_insert_attachments" ON public.message_attachments
         )
     );
 
+DROP POLICY IF EXISTS "members_select_reactions" ON public.message_reactions;-- A10 replay idempotence
 CREATE POLICY "members_select_reactions" ON public.message_reactions
     FOR SELECT TO authenticated
     USING (
@@ -375,6 +389,7 @@ CREATE POLICY "members_select_reactions" ON public.message_reactions
         )
     );
 
+DROP POLICY IF EXISTS "users_insert_reactions" ON public.message_reactions;-- A10 replay idempotence
 CREATE POLICY "users_insert_reactions" ON public.message_reactions
     FOR INSERT TO authenticated
     WITH CHECK (
@@ -386,6 +401,7 @@ CREATE POLICY "users_insert_reactions" ON public.message_reactions
         )
     );
 
+DROP POLICY IF EXISTS "users_delete_reactions" ON public.message_reactions;-- A10 replay idempotence
 CREATE POLICY "users_delete_reactions" ON public.message_reactions
     FOR DELETE TO authenticated
     USING (user_id = auth.uid());
@@ -405,6 +421,7 @@ ON CONFLICT (id) DO UPDATE SET
     public = false,
     file_size_limit = 26214400;
 
+DROP POLICY IF EXISTS "storage_select_message_attachments" ON storage.objects;-- A10 replay idempotence
 CREATE POLICY "storage_select_message_attachments" ON storage.objects
     FOR SELECT TO authenticated
     USING (
@@ -412,6 +429,7 @@ CREATE POLICY "storage_select_message_attachments" ON storage.objects
         AND public.is_conversation_member((storage.foldername(name))[1]::uuid, auth.uid())
     );
 
+DROP POLICY IF EXISTS "storage_insert_message_attachments" ON storage.objects;-- A10 replay idempotence
 CREATE POLICY "storage_insert_message_attachments" ON storage.objects
     FOR INSERT TO authenticated
     WITH CHECK (
@@ -420,6 +438,7 @@ CREATE POLICY "storage_insert_message_attachments" ON storage.objects
         AND public.is_conversation_member((storage.foldername(name))[1]::uuid, auth.uid())
     );
 
+DROP POLICY IF EXISTS "storage_delete_message_attachments" ON storage.objects;-- A10 replay idempotence
 CREATE POLICY "storage_delete_message_attachments" ON storage.objects
     FOR DELETE TO authenticated
     USING (

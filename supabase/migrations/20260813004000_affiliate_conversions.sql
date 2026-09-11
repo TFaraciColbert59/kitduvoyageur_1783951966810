@@ -1,6 +1,6 @@
 -- Migration: Affiliate Conversions
 
-CREATE TABLE public.affiliate_conversions (
+CREATE TABLE IF NOT EXISTS public.affiliate_conversions (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     partner_id UUID REFERENCES public.affiliate_partners(id) ON DELETE SET NULL,
     offer_id UUID REFERENCES public.affiliate_offers(id) ON DELETE SET NULL,
@@ -23,9 +23,11 @@ ALTER TABLE public.affiliate_conversions ENABLE ROW LEVEL SECURITY;
 DROP POLICY IF EXISTS "affiliate_conversions_public_read" ON public.affiliate_conversions;
 DROP POLICY IF EXISTS "affiliate_conversions_service_write" ON public.affiliate_conversions;
 
+DROP POLICY IF EXISTS "affiliate_conversions_public_read" ON public.affiliate_conversions;-- A10 replay idempotence
 CREATE POLICY "affiliate_conversions_public_read" ON public.affiliate_conversions
     USING (true);
 
+DROP POLICY IF EXISTS "affiliate_conversions_service_write" ON public.affiliate_conversions;-- A10 replay idempotence
 CREATE POLICY "affiliate_conversions_service_write" ON public.affiliate_conversions
     FOR ALL TO service_role USING (true) WITH CHECK (true);
 

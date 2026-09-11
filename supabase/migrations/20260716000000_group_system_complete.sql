@@ -8,28 +8,34 @@
 -- 1. ENUMS
 DROP TYPE IF EXISTS public.group_visibility CASCADE;
 CREATE TYPE public.group_visibility AS ENUM ('public', 'private', 'invite_only');
+-- A10 replay : restauration des colonnes dépendantes (DROP TYPE ... CASCADE)
+DO $$ BEGIN ALTER TABLE public.travel_groups ADD COLUMN IF NOT EXISTS visibility public.group_visibility; EXCEPTION WHEN others THEN NULL; END $$;
 
 DROP TYPE IF EXISTS public.group_member_role CASCADE;
 CREATE TYPE public.group_member_role AS ENUM ('organizer', 'co_organizer', 'member', 'observer');
+-- A10 replay : restauration des colonnes dépendantes (DROP TYPE ... CASCADE)
+DO $$ BEGIN ALTER TABLE public.group_members ADD COLUMN IF NOT EXISTS role public.group_member_role; EXCEPTION WHEN others THEN NULL; END $$;
 
 DROP TYPE IF EXISTS public.group_member_status CASCADE;
 CREATE TYPE public.group_member_status AS ENUM ('pending', 'active', 'left', 'removed');
+-- A10 replay : restauration des colonnes dépendantes (DROP TYPE ... CASCADE)
+DO $$ BEGIN ALTER TABLE public.group_members ADD COLUMN IF NOT EXISTS status public.group_member_status; EXCEPTION WHEN others THEN NULL; END $$;
 
 DROP TYPE IF EXISTS public.group_expense_status CASCADE;
 CREATE TYPE public.group_expense_status AS ENUM ('pending', 'settled');
+-- A10 replay : restauration des colonnes dépendantes (DROP TYPE ... CASCADE)
+DO $$ BEGIN ALTER TABLE public.group_expenses ADD COLUMN IF NOT EXISTS status public.group_expense_status; EXCEPTION WHEN others THEN NULL; END $$;
 
 DROP TYPE IF EXISTS public.group_task_status CASCADE;
 CREATE TYPE public.group_task_status AS ENUM ('todo', 'in_progress', 'done');
+-- A10 replay : restauration des colonnes dépendantes (DROP TYPE ... CASCADE)
+DO $$ BEGIN ALTER TABLE public.group_tasks ADD COLUMN IF NOT EXISTS status public.group_task_status; EXCEPTION WHEN others THEN NULL; END $$;
 
 DROP TYPE IF EXISTS public.group_poll_status CASCADE;
 CREATE TYPE public.group_poll_status AS ENUM ('open', 'closed');
+-- A10 replay : restauration des colonnes dépendantes (DROP TYPE ... CASCADE)
+DO $$ BEGIN ALTER TABLE public.group_polls ADD COLUMN IF NOT EXISTS status public.group_poll_status; EXCEPTION WHEN others THEN NULL; END $$;
 
-ALTER TABLE public.travel_groups ADD COLUMN IF NOT EXISTS visibility public.group_visibility DEFAULT 'public'::public.group_visibility;
-ALTER TABLE public.group_members ADD COLUMN IF NOT EXISTS role public.group_member_role DEFAULT 'member'::public.group_member_role;
-ALTER TABLE public.group_members ADD COLUMN IF NOT EXISTS status public.group_member_status DEFAULT 'active'::public.group_member_status;
-ALTER TABLE public.group_expenses ADD COLUMN IF NOT EXISTS status public.group_expense_status DEFAULT 'pending'::public.group_expense_status;
-ALTER TABLE public.group_tasks ADD COLUMN IF NOT EXISTS status public.group_task_status DEFAULT 'todo'::public.group_task_status;
-ALTER TABLE public.group_polls ADD COLUMN IF NOT EXISTS status public.group_poll_status DEFAULT 'open'::public.group_poll_status;
 
 -- 2. CORE TABLES
 
@@ -54,6 +60,7 @@ CREATE TABLE IF NOT EXISTS public.travel_groups (
     created_at TIMESTAMPTZ DEFAULT now(),
     updated_at TIMESTAMPTZ DEFAULT now()
 );
+ALTER TABLE public.travel_groups ADD COLUMN IF NOT EXISTS visibility public.group_visibility DEFAULT 'public'::public.group_visibility;
 
 -- Group Members
 CREATE TABLE IF NOT EXISTS public.group_members (
@@ -66,6 +73,8 @@ CREATE TABLE IF NOT EXISTS public.group_members (
     joined_at TIMESTAMPTZ DEFAULT now(),
     UNIQUE(group_id, user_id)
 );
+ALTER TABLE public.group_members ADD COLUMN IF NOT EXISTS role public.group_member_role DEFAULT 'member'::public.group_member_role;
+ALTER TABLE public.group_members ADD COLUMN IF NOT EXISTS status public.group_member_status DEFAULT 'active'::public.group_member_status;
 
 -- Group Messages (Chat)
 CREATE TABLE IF NOT EXISTS public.group_messages (
@@ -91,6 +100,7 @@ CREATE TABLE IF NOT EXISTS public.group_expenses (
     receipt_url TEXT,
     created_at TIMESTAMPTZ DEFAULT now()
 );
+ALTER TABLE public.group_expenses ADD COLUMN IF NOT EXISTS status public.group_expense_status DEFAULT 'pending'::public.group_expense_status;
 
 -- Group Kit Items (Shared Equipment)
 CREATE TABLE IF NOT EXISTS public.group_kit_items (
@@ -118,6 +128,7 @@ CREATE TABLE IF NOT EXISTS public.group_tasks (
     due_date DATE,
     created_at TIMESTAMPTZ DEFAULT now()
 );
+ALTER TABLE public.group_tasks ADD COLUMN IF NOT EXISTS status public.group_task_status DEFAULT 'todo'::public.group_task_status;
 
 -- Group Polls (Votes)
 CREATE TABLE IF NOT EXISTS public.group_polls (
@@ -130,6 +141,7 @@ CREATE TABLE IF NOT EXISTS public.group_polls (
     ends_at TIMESTAMPTZ,
     created_at TIMESTAMPTZ DEFAULT now()
 );
+ALTER TABLE public.group_polls ADD COLUMN IF NOT EXISTS status public.group_poll_status DEFAULT 'open'::public.group_poll_status;
 
 -- Group Poll Votes
 CREATE TABLE IF NOT EXISTS public.group_poll_votes (

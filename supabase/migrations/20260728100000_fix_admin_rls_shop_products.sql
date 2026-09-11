@@ -32,6 +32,7 @@ DROP POLICY IF EXISTS "auth_admin_write_shop_products" ON public.shop_products;
 DROP POLICY IF EXISTS "admin_write_shop_products" ON public.shop_products;
 
 -- Re-create admin-only write policy
+DROP POLICY IF EXISTS "admin_write_shop_products" ON public.shop_products;-- A10 replay idempotence
 CREATE POLICY "admin_write_shop_products" ON public.shop_products
   FOR ALL
   TO authenticated
@@ -44,6 +45,7 @@ ALTER TABLE public.carnet_gear_links ENABLE ROW LEVEL SECURITY;
 DROP POLICY IF EXISTS "public_read_carnet_gear_links" ON public.carnet_gear_links;
 
 -- Public read policy for carnet_gear_links (matching other content tables)
+DROP POLICY IF EXISTS "public_read_carnet_gear_links" ON public.carnet_gear_links;-- A10 replay idempotence
 CREATE POLICY "public_read_carnet_gear_links" ON public.carnet_gear_links
   FOR SELECT
   TO public

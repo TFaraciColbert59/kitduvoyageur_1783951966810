@@ -1,4 +1,4 @@
-﻿-- LOT 10: Validations globales
+-- LOT 10: Validations globales
 -- Migration: 20260810214000_lot10_global_validations.sql
 -- Auteur: LKDV Interconnectivity Repair
 -- Description: Validations finales et vérifications de cohérence après application de tous les lots
@@ -127,6 +127,7 @@ AS $$
 DECLARE
     integrity_issues text[] := '{}';
     constraint_record RECORD;
+    broken_links_count integer; -- Replay : variable référencée mais non déclarée (bug d'origine)
 BEGIN
     -- Vérifier les références cassées dans les tables principales
     FOR constraint_record IN
@@ -349,6 +350,7 @@ AS $$
 DECLARE
     missing_indexes text[] := '{}';
     index_record RECORD;
+    index_count integer; -- Replay : variable référencée mais non déclarée (bug d'origine)
 BEGIN
     -- Index critiques requis
     FOR index_record IN
@@ -604,14 +606,26 @@ DECLARE
     validation_results json;
     summary_report json;
 BEGIN
-    -- Exécuter les validations
-    validation_results := public.execute_global_validations();
-    
-    -- Générer le rapport
-    summary_report := public.generate_validation_summary();
-    
+    -- Replay base vide : validations de diagnostic non bloquantes (elles
+    -- supposent des données/objets de production).
+    BEGIN
+        validation_results := public.execute_global_validations();
+    EXCEPTION WHEN OTHERS THEN
+        RAISE NOTICE '[A10 replay] execute_global_validations ignoré : %', SQLERRM;
+        validation_results := NULL;
+    END;
+
+    BEGIN
+        summary_report := public.generate_validation_summary();
+    EXCEPTION WHEN OTHERS THEN
+        RAISE NOTICE '[A10 replay] generate_validation_summary ignoré : %', SQLERRM;
+        summary_report := NULL;
+    END;
+
     -- Log du résultat
     RAISE NOTICE 'LOT 10: Validations globales exécutées. Résumé: %', summary_report;
+EXCEPTION WHEN OTHERS THEN
+    RAISE NOTICE '[A10 replay] Bloc de validations LOT 10 ignoré : %', SQLERRM;
 END;
 $$;
 
@@ -798,9 +812,11 @@ ALTER TABLE public.global_validation_results ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.lkdv_lot_completion ENABLE ROW LEVEL SECURITY;
 
 -- Politiques RLS
+DROP POLICY IF EXISTS "public_read_global_validation_results" ON public.global_validation_results;-- A10 replay idempotence
 CREATE POLICY "public_read_global_validation_results" ON public.global_validation_results
     FOR SELECT TO public USING (true);
 
+DROP POLICY IF EXISTS "admins_read_lkdv_lot_completion" ON public.lkdv_lot_completion;-- A10 replay idempotence
 CREATE POLICY "admins_read_lkdv_lot_completion" ON public.lkdv_lot_completion
     FOR SELECT TO authenticated USING (public.is_admin());
 
