@@ -46,6 +46,8 @@ export interface OfflineOperation {
   idempotencyKey: string;
   createdAt: string;
   attempts: number;
+  /** Entité métier visée (uuid de décision, id de session…) si connue. */
+  entityId?: string;
   /** Propriétaire de l'opération (partition Dexie par utilisateur, A11 #26). */
   userId?: string;
   /** Priorité de synchronisation : plus grand = plus urgent (défaut 0). */
@@ -166,6 +168,7 @@ export async function createOfflineOperation(
     idempotencyKey,
     createdAt: input.createdAt ?? new Date().toISOString(),
     attempts: Math.max(0, Math.trunc(input.attempts ?? 0)),
+    entityId: input.entityId,
     userId: input.userId,
     priority: Math.trunc(input.priority ?? 0),
     expiresAt: input.expiresAt,
@@ -396,6 +399,7 @@ export async function planLegacyGlobalMigration(
       idempotencyKey,
       createdAt: nonEmptyString(record.createdAt) ?? new Date().toISOString(),
       attempts: Math.max(0, Math.trunc(finiteNumberOr(record.attempts, 0))),
+      entityId,
       userId,
       priority: Math.trunc(finiteNumberOr(record.priority, 0)),
       expiresAt: nonEmptyString(record.expiresAt) ?? undefined,

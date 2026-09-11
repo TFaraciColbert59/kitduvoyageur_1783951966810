@@ -123,6 +123,55 @@ export interface SyncTransport {
   send(operation: OfflineOperation): Promise<void>;
 }
 
+/** Endpoint serveur réel du batch hors-ligne (A13 S6). */
+export const ADVENTURE_SYNC_ENDPOINT = '/api/adventure/offline/sync';
+
+export type SyncFetch = (input: string, init?: RequestInit) => Promise<Response>;
+
+export interface HttpSyncTransportOptions {
+  endpoint?: string;
+  fetchImpl?: SyncFetch;
+  /** En-têtes supplémentaires (CSRF, locale…) résolus à chaque envoi. */
+  headers?: Record<string, string> | (() => Record<string, string> | Promise<Record<string, string>>);
+}
+
+/**
+ * Transport réel du worker : `POST /api/adventure/offline/sync` avec le lot
+ * `{ operations: [opération] }`. Un statut HTTP non-2xx ou un résultat
+ * `failed` lève (le worker applique backoff/dead-letter) ; `applied`,
+ * `duplicate` et `rejected` acquittent l'opération — jamais de boucle sur un
+ * refus métier définitif.
+ */
+export function createAdventureSyncTransport(
+  options: HttpSyncTransportOptions = {}
+): SyncTransport {
+  const endpoint = options.endpoint ?? ADVENTURE_SYNC_ENDPOINT;
+  const fetchImpl = options.fetchImpl ?? fetch;
+  return {
+    async send(operation) {
+      const extraHeaders =
+        typeof options.headers === 'function' ? await options.headers() : options.headers;
+      const response = await fetchImpl(endpoint, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', ...(extraHeaders ?? {}) },
+        body: JSON.stringify({ operations: [operation] }),
+      });
+      if (!response.ok) {
+        throw new Error(`sync_http_${response.status}`);
+      }
+      const payload = (await response.json().catch(() => null)) as {
+        results?: { idempotencyKey?: unknown; status?: unknown }[];
+      } | null;
+      const result = payload?.results?.find(
+        (entry) => entry.idempotencyKey === operation.idempotencyKey
+      );
+      if (result?.status === 'failed') {
+        throw new Error('sync_operation_failed');
+      }
+    },
+  };
+}
+
 /** Stockage injecté (Dexie en production, mémoire en test). */
 export interface SyncWorkerStorage {
   loadPending(): Promise<OfflineOperation[]>;
