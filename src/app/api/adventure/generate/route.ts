@@ -97,6 +97,9 @@ async function reuseResponse(supabase: SupabaseClient, planId: string): Promise<
           version: stored.plan.currentVersion,
           candidates: Array.isArray(alternatives) ? alternatives : [],
           candidatePlans: stored.candidates ?? [],
+          ...(stored.candidateComparison
+            ? { candidateComparison: stored.candidateComparison }
+            : {}),
           explanation: 'Génération réutilisée (Idempotency-Key déjà traitée).',
           aiUsed: false,
           reused: true,
@@ -275,6 +278,8 @@ export async function POST(request: NextRequest) {
         candidates: result.candidates,
         // A11 #14 — trois plans complets en plus des deltas légers.
         candidatePlans: result.candidatePlans ?? [],
+        // A13 (S2) — tableau comparatif réellement comparable.
+        candidateComparison: result.candidateComparison,
         explanation: result.explanation,
         aiUsed: result.aiUsed,
       },

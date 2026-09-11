@@ -210,6 +210,7 @@ describe('A10 — Route generate durcie (TEST-A10-GEN, route mockée)', () => {
       version: null,
       decisions: [],
       candidates: [],
+      candidateComparison: null,
     });
 
     const response = await generatePOST(generateRequest({ text: TEXT }));
@@ -227,6 +228,16 @@ describe('A10 — Route generate durcie (TEST-A10-GEN, route mockée)', () => {
       plan: { id: PLAN_ID, currentVersion: 1 } as never,
       candidates: [{ id: 'comfort' }, { id: 'balanced' }, { id: 'adventure' }] as never,
       candidatePlans: [],
+      candidateComparison: {
+        planId: PLAN_ID,
+        sharedRoute: true,
+        sharedDates: true,
+        sharedAccommodations: true,
+        segmentation: 'uniform_from_blueprint',
+        routeTotalDistanceKm: null,
+        rows: [],
+        generatedAt: new Date().toISOString(),
+      },
       runs: [],
       explanation: 'Résumé déterministe.',
       aiUsed: false,

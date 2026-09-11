@@ -44,6 +44,8 @@ export async function GET(
       ...(stored.candidates && stored.candidates.length > 0
         ? { candidates: stored.candidates }
         : {}),
+      // A13 (S2) — le tableau comparatif n'est exposé que si la version le porte.
+      ...(stored.candidateComparison ? { candidateComparison: stored.candidateComparison } : {}),
     });
   } catch (error) {
     console.error(

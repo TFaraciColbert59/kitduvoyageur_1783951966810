@@ -25,7 +25,11 @@ import {
   type PlanValue,
 } from '../domain/adventurePlan';
 import { buildCandidates, type AdventureCandidate } from '../domain/candidates';
-import { buildCandidatePlans } from '../domain/candidatePlans';
+import {
+  buildCandidateComparison,
+  buildCandidatePlans,
+  type AdventureCandidateComparison,
+} from '../domain/candidatePlans';
 import { COLD_CONFIDENCE, type Confidence } from '../domain/confidence';
 import type { EngineResult } from '../domain/engine';
 import {
@@ -33,7 +37,7 @@ import {
   type EngineRunRecord,
 } from '../domain/engineRegistry';
 import { buildLockConfirmationDecisions } from '../domain/locks';
-import { adventurePlanSchema } from '../schemas/adventurePlan.schema';
+import { adventurePlanSchema, candidateComparisonSchema } from '../schemas/adventurePlan.schema';
 import {
   performanceProfileSchema,
   type PerformanceProfile,
@@ -146,6 +150,8 @@ export interface AdventureGenerationResult {
   candidates: AdventureCandidate[];
   /** A11 #14 — trois plans candidats complets (confort / équilibré / aventure). */
   candidatePlans: AdventurePlan[];
+  /** A13 (S2) — tableau comparatif réellement comparable des trois candidats. */
+  candidateComparison: AdventureCandidateComparison;
   runs: EngineRunRecord[];
   explanation: string;
   aiUsed: boolean;
@@ -484,15 +490,22 @@ function versionRow(
   plan: AdventurePlan,
   reason: string,
   generatedBy: string,
-  candidates?: AdventurePlan[]
+  candidates?: AdventurePlan[],
+  candidateComparison?: AdventureCandidateComparison
 ): Record<string, unknown> {
   return {
     plan_id: plan.id,
     version: plan.currentVersion,
-    // A11 #14 — les trois plans candidats voyagent dans le snapshot initial,
-    // sans changement de schéma de table (`snapshot.candidates`).
+    // A11 #14 / A13 (S2) — les trois plans candidats et leur tableau comparatif
+    // voyagent dans le snapshot initial, sans changement de schéma de table.
     snapshot:
-      candidates && candidates.length > 0 ? { ...plan, candidates } : plan,
+      candidates && candidates.length > 0
+        ? {
+            ...plan,
+            candidates,
+            ...(candidateComparison ? { candidateComparison } : {}),
+          }
+        : plan,
     reason,
     generated_by: generatedBy,
     confidence: plan.confidence,
@@ -826,10 +839,25 @@ export async function generateAdventure(
     strategyInputs: { candidates, now },
   });
 
+  // A13 (S2) — tableau comparatif dérivé des prédictions S1 quand la route a
+  // été map-matchée, sinon estimations explicites (repli uniforme documenté).
+  const candidateComparison = buildCandidateComparison({
+    planId: plan.id,
+    candidatePlans,
+    candidates,
+    now,
+  });
+
   // A10 (10.4) : un seul appel atomique — un échec ne laisse aucun plan partiel.
   const bundle: AdventurePlanBundle = {
     plan: planRow(plan),
-    version: versionRow(plan, 'Génération initiale (A6)', 'a6-orchestrator', candidatePlans),
+    version: versionRow(
+      plan,
+      'Génération initiale (A6)',
+      'a6-orchestrator',
+      candidatePlans,
+      candidateComparison
+    ),
     runs: runs.map((run) => runRow(plan.id, run, correlationId)),
     decisions: decisions.map((decision) => decisionRow(plan.id, decision)),
   };
@@ -837,6 +865,9 @@ export async function generateAdventure(
   plan.id = inserted.id;
   for (const decision of decisions) decision.planId = plan.id;
   for (const candidatePlan of candidatePlans) candidatePlan.id = plan.id;
+  // A13 (S2) — la comparaison est référencée par le snapshot : un seul planId
+  // à corriger, celui de l'objet partagé.
+  candidateComparison.planId = plan.id;
   // L'identifiant canonique est celui renvoyé par la RPC : le snapshot (copie
   // superficielle du plan) et ses candidats doivent rester cohérents.
   const snapshot = bundle.version.snapshot as { id?: string } | null | undefined;
@@ -876,7 +907,7 @@ export async function generateAdventure(
     localExplanation
   );
 
-  return { plan, candidates, candidatePlans, runs, explanation, aiUsed };
+  return { plan, candidates, candidatePlans, candidateComparison, runs, explanation, aiUsed };
 }
 
 // ── Persistance Supabase (lecture seule côté client) ─────────────────────────
@@ -1041,6 +1072,8 @@ export interface StoredAdventurePlan {
   decisions: AdventureDecision[];
   /** A11 #14 — plans candidats du snapshot initial, quand ils existent. */
   candidates: AdventurePlan[];
+  /** A13 (S2) — tableau comparatif des candidats, quand la version le contient. */
+  candidateComparison: AdventureCandidateComparison | null;
 }
 
 /**
@@ -1054,6 +1087,18 @@ function candidatePlansFromSnapshot(snapshot: unknown): AdventurePlan[] {
   if (!Array.isArray(raw)) return [];
   const parsed = adventurePlanSchema.array().safeParse(raw);
   return parsed.success ? (parsed.data as AdventurePlan[]) : [];
+}
+
+/**
+ * A13 (S2) — relit `snapshot.candidateComparison` : un lot non conforme est
+ * ignoré (jamais de comparaison partielle présentée comme valide).
+ */
+function candidateComparisonFromSnapshot(snapshot: unknown): AdventureCandidateComparison | null {
+  if (snapshot === null || typeof snapshot !== 'object') return null;
+  const raw = (snapshot as { candidateComparison?: unknown }).candidateComparison;
+  if (raw === undefined || raw === null) return null;
+  const parsed = candidateComparisonSchema.safeParse(raw);
+  return parsed.success ? (parsed.data as AdventureCandidateComparison) : null;
 }
 
 function planFromRow(row: Record<string, unknown>): AdventurePlan {
@@ -1146,5 +1191,6 @@ export async function getAdventurePlan(
     version,
     decisions,
     candidates: candidatePlansFromSnapshot(versionData?.snapshot),
+    candidateComparison: candidateComparisonFromSnapshot(versionData?.snapshot),
   };
 }

@@ -226,6 +226,44 @@ export const planVersionMetaSchema = z.object({
   createdAt: isoDateTimeSchema,
 });
 
+export const candidateComparisonSourceSchema = z.enum(['computed', 'estimated']);
+
+export const candidateComparisonRowSchema = z.object({
+  candidateId: z.string().min(1, 'candidateId est requis'),
+  label: z.string().min(1, 'label est requis'),
+  paceStrategy: z.enum(['comfort', 'recommended', 'fast']),
+  durationP50Seconds: z.number().nullable(),
+  durationP90Seconds: z.number().nullable(),
+  pausesSeconds: z.number().nullable(),
+  durationSource: candidateComparisonSourceSchema,
+  durationNotes: z.string(),
+  budgetTotalEur: z.number().nullable(),
+  budgetDeltaPct: z.number(),
+  budgetSource: candidateComparisonSourceSchema,
+  budgetNotes: z.string(),
+  personalDifficulty: z.number().nullable(),
+  effortDeltaPct: z.number(),
+  marginPct: z.number(),
+  difficultySource: candidateComparisonSourceSchema,
+  difficultyNotes: z.string(),
+  comfortScore: z.number(),
+  riskScore: z.number(),
+  uncertainty: z.number(),
+  reasons: z.array(z.string()).default([]),
+});
+
+/** A13 (S2) — tableau comparatif des trois variantes réellement comparables. */
+export const candidateComparisonSchema = z.object({
+  planId: z.string().uuid('planId doit être un UUID'),
+  sharedRoute: z.boolean(),
+  sharedDates: z.boolean(),
+  sharedAccommodations: z.boolean(),
+  segmentation: z.enum(['map_matched', 'uniform_from_blueprint']),
+  routeTotalDistanceKm: z.number().nullable(),
+  rows: z.array(candidateComparisonRowSchema),
+  generatedAt: isoDateTimeSchema,
+});
+
 export type ConfidenceSchema = z.infer<typeof confidenceSchema>;
 export type ProvenanceSchema = z.infer<typeof provenanceSchema>;
 export type AssumptionSchema = z.infer<typeof assumptionSchema>;

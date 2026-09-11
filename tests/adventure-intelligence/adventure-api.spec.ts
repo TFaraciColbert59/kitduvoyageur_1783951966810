@@ -114,6 +114,16 @@ describe('A6 — API génération et lecture (TEST-A6-API)', () => {
       plan: { id: PLAN_ID, currentVersion: 1 } as never,
       candidates: [{ id: 'comfort' }, { id: 'balanced' }, { id: 'adventure' }] as never,
       candidatePlans: [],
+      candidateComparison: {
+        planId: PLAN_ID,
+        sharedRoute: true,
+        sharedDates: true,
+        sharedAccommodations: true,
+        segmentation: 'uniform_from_blueprint',
+        routeTotalDistanceKm: null,
+        rows: [],
+        generatedAt: NOW,
+      },
       runs: [],
       explanation: 'Résumé déterministe.',
       aiUsed: false,
@@ -150,6 +160,7 @@ describe('A6 — API génération et lecture (TEST-A6-API)', () => {
       version: { version: 1 } as never,
       decisions: [{ id: 'decision-1' }] as never,
       candidates: [],
+      candidateComparison: null,
     });
     const response = await planGET(planRequest(PLAN_ID), params(PLAN_ID));
     expect(response.status).toBe(200);

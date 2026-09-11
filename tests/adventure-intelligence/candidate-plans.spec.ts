@@ -217,15 +217,14 @@ describe('A11 — plans candidats complets (TEST-A11-CAND)', () => {
     expect(comfort.sections.safetyPlan).not.toBe(base.sections.safetyPlan);
   });
 
-  it('TEST-A11-CAND-02: les totaux distance/durée sont ordonnés confort ≤ équilibré ≤ aventure', () => {
-    const plans = materialize(makeBasePlan());
+  it('TEST-A11-CAND-02: route partagée ; seules l’allure et les marges différencient', () => {
+    const base = makeBasePlan();
+    const plans = materialize(base);
 
     const distances = plans.map(
       (plan) => sectionValue<{ totalDistanceKm: number }>(plan, 'terrainAnalysis').totalDistanceKm
     );
-    expect(distances[0]).toBeLessThan(distances[1]);
-    expect(distances[1]).toBeLessThan(distances[2]);
-    expect(distances[1]).toBeCloseTo(BASE_DISTANCE_KM, 5);
+    expect(distances).toEqual([BASE_DISTANCE_KM, BASE_DISTANCE_KM, BASE_DISTANCE_KM]);
 
     const durations = plans.map(
       (plan) =>
@@ -234,14 +233,17 @@ describe('A11 — plans candidats complets (TEST-A11-CAND)', () => {
           'paceStrategies'
         ).primary.totalDurationP50Seconds
     );
-    expect(durations[0]).toBeLessThan(durations[1]);
-    expect(durations[1]).toBeLessThan(durations[2]);
+    expect(durations[0]).toBeGreaterThan(durations[1]);
+    expect(durations[1]).toBeGreaterThan(durations[2]);
 
-    const stageDistances = plans.map(
-      (plan) => sectionValue<{ stageDistanceKm: number }>(plan, 'dailyStages').stageDistanceKm
+    const stageValues = plans.map((plan) =>
+      sectionValue<Record<string, unknown>>(plan, 'dailyStages')
     );
-    expect(stageDistances[0]).toBeLessThan(stageDistances[1]);
-    expect(stageDistances[1]).toBeLessThan(stageDistances[2]);
+    expect(stageValues).toEqual([
+      base.sections.dailyStages?.value,
+      base.sections.dailyStages?.value,
+      base.sections.dailyStages?.value,
+    ]);
   });
 
   it('TEST-A11-CAND-03: chaque variante est différenciée (allure, budget, annotations)', () => {
@@ -277,14 +279,7 @@ describe('A11 — plans candidats complets (TEST-A11-CAND)', () => {
 
   it('TEST-A11-CAND-04: les sections modifiées portent provenance estimated, confiance et computedAt', () => {
     const plans = materialize(makeBasePlan());
-    const modifiedKeys = [
-      'dailyStages',
-      'activityRoutes',
-      'terrainAnalysis',
-      'paceStrategies',
-      'budget',
-      'alternatives',
-    ] as const;
+    const modifiedKeys = ['personalDifficulty', 'paceStrategies', 'budget', 'alternatives'] as const;
 
     for (const plan of plans) {
       for (const key of modifiedKeys) {
