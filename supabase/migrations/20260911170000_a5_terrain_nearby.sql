@@ -9,9 +9,10 @@
 --   • `terrain_reports.geog` : geography(Point,4326) STORED, dérivée de
 --     (lng, lat) — jamais écrite par les clients.
 --   • Index GiST `idx_terrain_reports_geog` pour les recherches de proximité.
---   • RPC `a5_terrain_reports_near(lat, lng, radius_m)` : lecture de la vue
---     `terrain_reports_public` uniquement (jamais `reporter_id`), statuts et
---     expiration déjà filtrés par la vue A1.
+--   • RPC `a5_terrain_reports_near(lat, lng, radius_m)` : filtres de la vue
+--     publique appliqués en local (statuts `confirmed`/`active` non expirés),
+--     colonnes publiques uniquement — jamais `reporter_id` — et `ST_DWithin`
+--     sur la colonne générée `geog` (index GiST utilisé).
 --   • Droits : anon/authenticated peuvent EXÉCUTER la fonction en lecture
 --     seule ; aucune écriture n'est accordée. service_role inchangé.
 -- ==============================================================================
@@ -88,17 +89,16 @@ AS $$
       r.created_at,
       r.updated_at,
       r.expires_at,
-      ST_Distance(
-        ST_SetSRID(ST_MakePoint(r.lng::float8, r.lat::float8), 4326)::geography,
-        sp.geog
-      ) AS distance_m
-    FROM public.terrain_reports_public r
+      ST_Distance(r.geog, sp.geog) AS distance_m
+    FROM public.terrain_reports r
     CROSS JOIN search_point sp
-    WHERE ST_DWithin(
-      ST_SetSRID(ST_MakePoint(r.lng::float8, r.lat::float8), 4326)::geography,
-      sp.geog,
-      least(greatest(p_radius_m, 1), 50000)
-    )
+    WHERE r.status IN ('confirmed', 'active')
+      AND (r.expires_at IS NULL OR r.expires_at > now())
+      AND ST_DWithin(
+        r.geog,
+        sp.geog,
+        least(greatest(p_radius_m, 1), 50000)
+      )
   )
   SELECT * FROM nearest
   ORDER BY distance_m
@@ -107,9 +107,10 @@ $$;
 
 COMMENT ON FUNCTION public.a5_terrain_reports_near(float8, float8, float8) IS
   'A5 — signalements Terrain Live confirmés/actifs non expirés autour d''un '
-  'point (rayon borné 1 m – 50 km, max 200), lus depuis '
-  'terrain_reports_public : aucune identité de contributeur (jamais '
-  'reporter_id), triés par distance croissante. STABLE, SECURITY INVOKER.';
+  'point (rayon borné 1 m – 50 km, max 200), colonnes publiques uniquement : '
+  'aucune identité de contributeur (jamais reporter_id), triés par distance '
+  'croissante, recherche indexée via terrain_reports.geog (GiST). '
+  'STABLE, SECURITY INVOKER.';
 
 -- ── 4. Droits explicites : lecture via la fonction uniquement ────────────────
 REVOKE ALL ON FUNCTION public.a5_terrain_reports_near(float8, float8, float8) FROM public;
@@ -129,3 +130,8 @@ GRANT EXECUTE ON FUNCTION public.a5_terrain_reports_near(float8, float8, float8)
   TO anon, authenticated;
 GRANT EXECUTE ON FUNCTION public.a5_terrain_reports_near(float8, float8, float8)
   TO service_role;
+
+-- ── 5. Flag shadow — détection automatique jamais publiée en Phase 5 ─────────
+INSERT INTO public.feature_flags (id, enabled)
+VALUES ('terrain_auto_detection_shadow', false)
+ON CONFLICT (id) DO NOTHING;
