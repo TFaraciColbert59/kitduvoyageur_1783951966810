@@ -1,11 +1,23 @@
-import { describe, it, expect } from 'vitest';
-import { fetchCountries, fetchCountryByIso, fetchCountryContentByIso, fetchAllCountrySlugs } from '@/lib/geodata';
+import { describe, it, expect, beforeAll } from 'vitest';
 import { getCompleteCountryDetail } from '@/lib/countryDetails';
 import { countryGeoToCountry } from '@/lib/countries';
 
-describe('countries_geo & countries_content Supabase Integration (195 Pays)', () => {
+// A11 #36 — ce test d'intégration nécessitait le fallback de clé en dur.
+// Il ne s'exécute désormais que si l'environnement Supabase est explicitement
+// fourni ; sinon la suite est ignorée (jamais de cible de production implicite).
+const hasSupabaseEnv = Boolean(
+  process.env.NEXT_PUBLIC_SUPABASE_URL && process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
+);
+
+describe.skipIf(!hasSupabaseEnv)('countries_geo & countries_content Supabase Integration (195 Pays)', () => {
+  let geodata!: typeof import('@/lib/geodata');
+
+  beforeAll(async () => {
+    geodata = await import('@/lib/geodata');
+  });
+
   it('should fetch all 195 countries from countries_geo', async () => {
-    const countries = await fetchCountries();
+    const countries = await geodata.fetchCountries();
     expect(countries).toBeDefined();
     expect(countries.length).toBeGreaterThanOrEqual(195);
 
@@ -20,7 +32,7 @@ describe('countries_geo & countries_content Supabase Integration (195 Pays)', ()
   });
 
   it('should fetch all 195 country slugs for static generation', async () => {
-    const slugs = await fetchAllCountrySlugs();
+    const slugs = await geodata.fetchAllCountrySlugs();
     expect(slugs.length).toBeGreaterThanOrEqual(195);
     // Every slug should be 2 lowercase letters
     for (const slug of slugs) {
@@ -29,7 +41,7 @@ describe('countries_geo & countries_content Supabase Integration (195 Pays)', ()
   });
 
   it('should fetch single country by ISO code and format correctly', async () => {
-    const afghanistan = await fetchCountryByIso('AF');
+    const afghanistan = await geodata.fetchCountryByIso('AF');
     expect(afghanistan).not.toBeNull();
     if (!afghanistan) return;
 
@@ -53,8 +65,8 @@ describe('countries_geo & countries_content Supabase Integration (195 Pays)', ()
 
   it('should fetch country_content for DE and AF with all 7 sheets fields populated', async () => {
     const [deContent, afContent] = await Promise.all([
-      fetchCountryContentByIso('DE'),
-      fetchCountryContentByIso('AF'),
+      geodata.fetchCountryContentByIso('DE'),
+      geodata.fetchCountryContentByIso('AF'),
     ]);
 
     expect(deContent).not.toBeNull();
@@ -74,8 +86,8 @@ describe('countries_geo & countries_content Supabase Integration (195 Pays)', ()
 
   it('should populate rich real data in CountryDetail when contentCountry is provided', async () => {
     const [deGeo, deContent] = await Promise.all([
-      fetchCountryByIso('DE'),
-      fetchCountryContentByIso('DE'),
+      geodata.fetchCountryByIso('DE'),
+      geodata.fetchCountryContentByIso('DE'),
     ]);
 
     expect(deGeo).not.toBeNull();
@@ -95,7 +107,7 @@ describe('countries_geo & countries_content Supabase Integration (195 Pays)', ()
   });
 
   it('should handle NULL currency_code gracefully (PS — Palestine)', async () => {
-    const ps = await fetchCountryByIso('PS');
+    const ps = await geodata.fetchCountryByIso('PS');
     expect(ps).not.toBeNull();
     if (!ps) return;
 
@@ -106,4 +118,3 @@ describe('countries_geo & countries_content Supabase Integration (195 Pays)', ()
     expect(String(detail.monnaie_code)).not.toContain('NaN');
   });
 });
-
