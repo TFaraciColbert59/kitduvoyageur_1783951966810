@@ -4,10 +4,7 @@
  */
 import { z } from 'zod';
 import { ProvenanceTypeEnum } from '@/features/trips/schemas/autoGen.schema';
-import {
-  ADVENTURE_PLAN_SECTION_KEYS,
-  type AdventurePlanSections,
-} from '../domain/adventurePlan';
+import type { AdventurePlanSections } from '../domain/adventurePlan';
 
 /** Date ISO 8601 complète (avec fuseau `Z` ou décalage) — en français. */
 export const isoDateTimeSchema = z
@@ -241,5 +238,3 @@ export type AdventurePlanOutput = z.infer<typeof adventurePlanSchema>;
 export type AdventurePlanInput = z.input<typeof adventurePlanSchema>;
 export type AdventureDecisionOutput = z.infer<typeof adventureDecisionSchema>;
 export type PlanVersionMetaOutput = z.infer<typeof planVersionMetaSchema>;
-
-export { ADVENTURE_PLAN_SECTION_KEYS };

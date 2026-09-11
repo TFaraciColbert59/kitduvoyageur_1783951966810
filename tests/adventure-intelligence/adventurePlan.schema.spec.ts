@@ -5,9 +5,9 @@ import {
   adventureDecisionSchema,
   planValueSchema,
   planVersionMetaSchema,
-  ADVENTURE_PLAN_SECTION_KEYS,
   type AdventurePlanInput,
 } from '@/features/adventure-intelligence/schemas/adventurePlan.schema';
+import { ADVENTURE_PLAN_SECTION_KEYS } from '@/features/adventure-intelligence/domain/adventurePlan';
 import {
   assertNoSilentLockOverride,
   type AdventureConstraint,
