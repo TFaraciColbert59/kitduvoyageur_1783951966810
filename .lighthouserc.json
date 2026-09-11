@@ -1,0 +1,22 @@
+{
+  "ci": {
+    "collect": {
+      "url": ["http://localhost:4028/"],
+      "numberOfRuns": 1,
+      "settings": {
+        "chromeFlags": "--no-sandbox --disable-dev-shm-usage"
+      }
+    },
+    "assert": {
+      "assertions": {
+        "categories:performance": "off",
+        "categories:accessibility": "off",
+        "categories:best-practices": "off",
+        "categories:seo": "off"
+      }
+    },
+    "upload": {
+      "target": "temporary-public-storage"
+    }
+  }
+}
