@@ -18,6 +18,8 @@ import {
   evaluateGenerationRequest,
   GENERATION_QUOTA_WINDOW_S,
 } from '@/features/adventure-intelligence/domain/generationLimits';
+import { requiredPlanFor } from '@/features/adventure-intelligence/domain/entitlements';
+import { resolveUserEntitlements, generationQuotaFor } from '@/lib/entitlements/server';
 import { createSupabaseGenerationRequestStore } from '@/features/adventure-intelligence/server/generationRequests';
 
 export const dynamic = 'force-dynamic';
@@ -172,6 +174,11 @@ export async function POST(request: NextRequest) {
     }
 
     const store = createSupabaseGenerationRequestStore(supabase);
+    // A13 (S3) — gating `full_generation` : les usages gratuits ne sont pas
+    // bloqués, seulement limités à un quota réduit explicite.
+    const entitlements = await resolveUserEntitlements(supabase, user.id);
+    const quotaPerHour = generationQuotaFor(entitlements);
+    const fullGeneration = entitlements.entitlements.includes('full_generation');
     const sinceIso = new Date(Date.now() - GENERATION_QUOTA_WINDOW_S * 1000).toISOString();
     const [existing, activePending, recentCount] = await Promise.all([
       store.findByKey(user.id, idempotencyKey),
@@ -179,7 +186,12 @@ export async function POST(request: NextRequest) {
       store.countRecent(user.id, sinceIso),
     ]);
 
-    const evaluation = evaluateGenerationRequest({ existing, activePending, recentCount });
+    const evaluation = evaluateGenerationRequest({
+      existing,
+      activePending,
+      recentCount,
+      quotaPerHour,
+    });
 
     if (evaluation.decision === 'reuse' && evaluation.planId) {
       return await reuseResponse(supabase, evaluation.planId);
@@ -198,8 +210,12 @@ export async function POST(request: NextRequest) {
       return NextResponse.json(
         {
           error: 'Quota de génération atteint',
-          details: `Maximum 5 générations par heure et par utilisateur — réessayez dans ${retryAfterS} s.`,
+          details: fullGeneration
+            ? `Maximum ${quotaPerHour} générations par heure et par utilisateur — réessayez dans ${retryAfterS} s.`
+            : `Quota gratuit : ${quotaPerHour} générations par heure. Passez au plan ${requiredPlanFor('full_generation')} pour un quota étendu — réessayez dans ${retryAfterS} s.`,
           retryAfterS,
+          quotaPerHour,
+          ...(fullGeneration ? {} : { requiredPlan: requiredPlanFor('full_generation') }),
         },
         { status: 429, headers: { 'Retry-After': String(retryAfterS) } }
       );

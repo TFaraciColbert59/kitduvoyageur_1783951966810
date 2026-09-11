@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
 import { parseMetadataItems, StripeCartItemRef } from '@/features/checkout/stripeMetadata';
+import { grantEntitlementsFromMetadata } from '@/lib/entitlements/server';
 import {
   computeRoyaltyShares,
   MAX_ROYALTY_GENERATIONS,
@@ -75,6 +76,17 @@ export async function POST(request: NextRequest) {
 
       // ── Attribution depuis les metadata posées par /api/checkout ──
       const userId = (expandedSession.metadata?.user_id as string) || null;
+
+      // A13 (S3) — plan/pass éventuels portés par les métadonnées Stripe
+      // existantes : grant d'entitlements best-effort, jamais bloquant (sans
+      // plan/pass reconnu, aucune lecture ni écriture).
+      if (userId && userId !== 'anonymous') {
+        try {
+          await grantEntitlementsFromMetadata(supabase, userId, expandedSession.metadata);
+        } catch (grantError) {
+          console.error('⚠️ Webhook: grant entitlements échoué', grantError);
+        }
+      }
 
       let items: StripeCartItemRef[] = parseMetadataItems(
         expandedSession.metadata?.items as string | undefined

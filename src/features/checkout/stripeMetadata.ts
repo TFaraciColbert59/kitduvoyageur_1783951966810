@@ -8,6 +8,11 @@
  * validé est stocké dans `checkout_intents` et seul son uuid passe en metadata.
  */
 
+import type {
+  PassId,
+  PlanId,
+} from '@/features/adventure-intelligence/domain/entitlements';
+
 /** Plafond interne (marge de sécurité sous les 500 caractères Stripe). */
 export const STRIPE_METADATA_LIMIT_CHARS = 480;
 
@@ -15,6 +20,16 @@ export interface StripeCartItemRef {
   id: string;
   name: string;
   quantity: number;
+}
+
+/**
+ * A13 (S3) — grant d'entitlement transporté par les métadonnées Stripe.
+ * Toujours construit côté serveur (produit/prix au catalogue existant) ;
+ * jamais déduit d'un prix inventé.
+ */
+export interface StripeEntitlementRef {
+  plan?: PlanId;
+  pass?: PassId;
 }
 
 export interface StripeMetadataPlan {
@@ -28,7 +43,8 @@ export interface StripeMetadataPlan {
 
 export function buildStripeCheckoutMetadata(
   userId: string | null,
-  items: StripeCartItemRef[]
+  items: StripeCartItemRef[],
+  entitlement?: StripeEntitlementRef
 ): StripeMetadataPlan {
   const refs: StripeCartItemRef[] = items.map((i) => ({
     id: i.id,
@@ -38,6 +54,10 @@ export function buildStripeCheckoutMetadata(
 
   const metadata: Record<string, string> = {};
   if (userId) metadata.user_id = userId;
+  // A13 (S3) — plan/pass optionnels : le webhook les résout via le domaine
+  // d'entitlements. Sans grant fourni, les métadonnées restent inchangées.
+  if (entitlement?.plan) metadata.plan = entitlement.plan;
+  if (entitlement?.pass) metadata.pass = entitlement.pass;
 
   const itemsJson = JSON.stringify(refs);
   if (itemsJson.length <= STRIPE_METADATA_LIMIT_CHARS) {
