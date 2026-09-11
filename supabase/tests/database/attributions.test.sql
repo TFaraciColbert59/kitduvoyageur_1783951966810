@@ -6,6 +6,16 @@
 --   • somme des parts = commission (invariant strict)
 --   • reversal par session (refund) → status reversed
 -- Exécution : pgTAP, transaction annulée.
+--
+-- Adaptations de fixtures lors de la réactivation post-baseline (A11) :
+--   1. casts `::int` sur count(*)/sum() : pgTAP 1.3 ne résout pas anyelement
+--      entre bigint et integer (mêmes casts que les autres suites actives) ;
+--   2. l'auto-achat utilise un order_item dédié (ATTR-003) : l'original
+--      rejouait l'order_item du test 1, l'idempotence court-circuitait l'appel
+--      avant la règle « aucune part pour l'acheteur ». L'assertion 5 est en
+--      outre scopée à cette attribution : comptée globalement, elle incluait
+--      la part légitime du forkeur créée par le test 1 (achat par un tiers) et
+--      était donc insatisfiable.
 -- ============================================================================
 BEGIN;
 SET LOCAL search_path = public;
@@ -64,12 +74,12 @@ SELECT public.insert_kit_attribution(
 
 SELECT is(
   (SELECT count(*) FROM public.kit_attributions
-    WHERE order_item_id = '60000000-0000-0000-0000-000000000001'),
+    WHERE order_item_id = '60000000-0000-0000-0000-000000000001')::int,
   1,
   '1. L''attribution est créée'
 );
 SELECT is(
-  (SELECT count(*) FROM public.kit_royalty_shares),
+  (SELECT count(*) FROM public.kit_royalty_shares)::int,
   2,
   '2. Deux parts créées (forkeur + parent)'
 );
@@ -85,20 +95,27 @@ SELECT public.insert_kit_attribution(
 
 SELECT is(
   (SELECT count(*) FROM public.kit_attributions
-    WHERE order_item_id = '60000000-0000-0000-0000-000000000001'),
+    WHERE order_item_id = '60000000-0000-0000-0000-000000000001')::int,
   1,
   '3. Le rejeu du webhook ne crée pas de doublon (UNIQUE order_item_id)'
 );
 SELECT is(
-  (SELECT count(*) FROM public.kit_royalty_shares),
+  (SELECT count(*) FROM public.kit_royalty_shares)::int,
   2,
   '4. Les parts ne sont pas dupliquées non plus'
 );
 
--- Test 3 : achat de son propre kit (buyer = forkeur B) → aucune part pour l''acheteur
+-- Test 3 : achat de son propre kit (buyer = forkeur B) → aucune part pour l''acheteur.
+-- Order_item dédié (ATTR-003) : un rejeu du même order_item serait court-circuité
+-- par l'idempotence avant la règle d'auto-achat.
+INSERT INTO public.orders (id, user_id, order_number, status, total_eur)
+VALUES ('70000000-0000-0000-0000-000000000003', 'bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb', 'ATTR-003', 'confirmed', 300.00);
+INSERT INTO public.order_items (id, order_id, product_id, product_slug, product_name, quantity, unit_price_eur, total_price_eur, transaction_type)
+VALUES ('60000000-0000-0000-0000-000000000003', '70000000-0000-0000-0000-000000000003', 'dddddddd-dddd-dddd-dddd-dddddddddddd', 'tente-attr', 'Tente', 1, 300.00, 300.00, 'achat');
+
 SELECT public.insert_kit_attribution(
   '00000000-0000-0000-0000-000000000002'::uuid,
-  '60000000-0000-0000-0000-000000000001'::uuid,
+  '60000000-0000-0000-0000-000000000003'::uuid,
   'dddddddd-dddd-dddd-dddd-dddddddddddd'::uuid,
   30000, 300,
   '[{"beneficiary_id":"bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb","generation_gap":0,"share_cents":700},
@@ -106,8 +123,10 @@ SELECT public.insert_kit_attribution(
   'bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb'::uuid);
 
 SELECT is(
-  (SELECT count(*) FROM public.kit_royalty_shares
-    WHERE beneficiary_id = 'bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb'),
+  (SELECT count(*) FROM public.kit_royalty_shares s
+    JOIN public.kit_attributions a ON a.id = s.attribution_id
+    WHERE a.order_item_id = '60000000-0000-0000-0000-000000000003'
+      AND s.beneficiary_id = 'bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb')::int,
   0,
   '5. Aucune part pour le forkeur qui achète son propre kit'
 );
@@ -116,7 +135,7 @@ SELECT is(
 SELECT is(
   (SELECT sum(share_cents) FROM public.kit_royalty_shares s
     JOIN public.kit_attributions a ON a.id = s.attribution_id
-    WHERE a.order_item_id = '60000000-0000-0000-0000-000000000001'),
+    WHERE a.order_item_id = '60000000-0000-0000-0000-000000000001')::int,
   900,
   '6. La somme des parts vaut la commission (900 cts = 3 % de 30000)'
 );
@@ -141,7 +160,7 @@ SELECT is(
   (SELECT count(*) FROM public.kit_royalty_shares s
     JOIN public.kit_attributions a ON a.id = s.attribution_id
     WHERE a.order_item_id = '60000000-0000-0000-0000-000000000002'
-      AND s.status = 'reversed'),
+      AND s.status = 'reversed')::int,
   1,
   '7. Le remboursement reverse la part (statut reversed)'
 );

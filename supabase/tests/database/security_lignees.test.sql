@@ -4,6 +4,10 @@
 --   • un utilisateur ne voit pas les données d'un autre
 --   • les agrégats publics (matviews) restent lisibles (découverte)
 -- Exécution : pgTAP, transaction annulée.
+--
+-- Adaptation de fixtures lors de la réactivation post-baseline (A11) :
+--   casts `::int` sur count(*) (pgTAP 1.3 ne résout pas anyelement entre
+--   bigint et integer — mêmes casts que les autres suites actives).
 -- ============================================================================
 BEGIN;
 SET LOCAL search_path = public;
@@ -65,7 +69,7 @@ SELECT is_empty(
 -- 8 : A voit SES parts (RLS own)
 SET LOCAL "request.jwt.claim.sub" = 'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa';
 SELECT is(
-  (SELECT count(*) FROM public.kit_royalty_shares),
+  (SELECT count(*) FROM public.kit_royalty_shares)::int,
   1,
   '8. A voit ses propres parts'
 );
@@ -73,7 +77,7 @@ SELECT is(
 -- 9 : B ne peut pas lire le débriefing de A (path RLS)
 SET LOCAL "request.jwt.claim.sub" = 'bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb';
 SELECT is(
-  (SELECT count(*) FROM public.kit_field_reports WHERE item_key = 'tente'),
+  (SELECT count(*) FROM public.kit_field_reports WHERE item_key = 'tente')::int,
   0,
   '9. B ne peut pas filtrer les débriefings de A'
 );
