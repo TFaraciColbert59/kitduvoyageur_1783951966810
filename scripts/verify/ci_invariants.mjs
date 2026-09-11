@@ -107,11 +107,16 @@ const migrationsFrozenDir = path.join(supabaseDir, 'migrations_frozen');
 
 if (fs.existsSync(migrationsDir)) {
   const activeFiles = fs.readdirSync(migrationsDir);
-  const leakedAttributions = activeFiles.filter((f) => f.toLowerCase().includes('attributions'));
+  // Seule la réintroduction de la migration HISTORIQUE gelée est interdite.
+  // Une réimplémentation additive post-baseline (ex. 20260911400000_a11_kit_attributions.sql)
+  // est légitime (ruling Étape 0 — attributions reprises proprement).
+  const leakedAttributions = activeFiles.filter((f) =>
+    /^20260903050000_kit_attributions\.sql$/i.test(f)
+  );
   if (leakedAttributions.length > 0) {
-    fail(`Migration Lot 6 présente dans supabase/migrations/ : ${leakedAttributions.join(', ')} (doit être déplacée dans supabase/migrations_frozen/)`);
+    fail(`Migration Lot 6 gelée réintroduite dans supabase/migrations/ : ${leakedAttributions.join(', ')} (doit rester dans supabase/migrations_frozen/)`);
   } else {
-    ok('Invariant 4a : Aucune migration d\'attribution présente dans supabase/migrations/');
+    ok('Invariant 4a : La migration gelée 20260903050000_kit_attributions.sql n\'est pas réintroduite');
   }
 }
 
