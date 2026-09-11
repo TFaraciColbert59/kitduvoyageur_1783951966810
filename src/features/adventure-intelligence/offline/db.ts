@@ -19,6 +19,7 @@ import {
   type OfflineQueueStore,
   type OfflineStoreRef,
 } from './operations';
+import type { SyncWorkerStorage } from './syncWorker';
 
 /** Préfixe des bases V2 partitionnées (une base par utilisateur). */
 export const ADVENTURE_OFFLINE_DB_PREFIX = 'lkdv-adventure-offline-v2-';
@@ -238,4 +239,23 @@ export async function metadata(
   const entry: SyncMetadataEntry = { key, value, updatedAt: new Date().toISOString() };
   await db.sync_metadata.put(entry);
   return entry;
+}
+
+/**
+ * Adaptateur de stockage pour `syncPendingOperations` : expose la base Dexie
+ * d'un utilisateur sous l'interface injectée du worker (aucune logique ici).
+ */
+export function createDexieSyncStorage(db: AdventureOfflineDb): SyncWorkerStorage {
+  return {
+    loadPending: () => pending(db),
+    removeOperations: (entries) => markSynced(db, entries),
+    saveOperation: (operation) => updateOperation(db, operation),
+    readMetadata: async (key) => (await metadata(db, key))?.value,
+    writeMetadata: async (key, value) => {
+      await metadata(db, key, value);
+    },
+    clearMetadata: async (key) => {
+      await db.sync_metadata.delete(key);
+    },
+  };
 }
