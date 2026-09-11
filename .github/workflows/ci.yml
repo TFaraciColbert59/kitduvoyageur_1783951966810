@@ -42,7 +42,7 @@ jobs:
         run: npx playwright install --with-deps chromium
 
       - name: Gate 5 — End-to-End Playwright Suite
-        run: npx playwright test scripts/e2e/voyage.spec.ts
+        run: npx playwright test scripts/e2e/voyage.spec.ts scripts/e2e/adventure-intelligence.spec.ts
         env:
           CI: true
 

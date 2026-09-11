@@ -9,6 +9,7 @@ import { useActiveAdventure } from '../context/ActiveAdventureContext';
 import { adventureKey, type AdventureEntry } from '../context/adventureLists';
 import type { ActiveAdventureData } from '../context/adventureSchema';
 import {
+  HUB_HOME_HREF,
   hubSectionFromPathname,
   visibleHubSections,
   type HubAdventureRef,
@@ -53,6 +54,11 @@ export interface HubShellProps {
   trips?: HubUserTripLite[];
   /** Stats serveur du voyage actif (source unique budget rail/menu). */
   tripStats?: TripStats | null;
+  /**
+   * A10 (10.11) — Montage Adventure Intelligence rendu par le serveur, monté
+   * à la racine /hub uniquement (jamais sur les sections, jamais sur /hub/nouveau).
+   */
+  adventureIntelligence?: React.ReactNode;
   /** Contenu de section (rendu au centre desktop et dans le shell mobile). */
   children: React.ReactNode;
 }
@@ -90,10 +96,13 @@ export function HubShell({
   pendingInvites = 0,
   trips,
   tripStats = null,
+  adventureIntelligence,
   children,
 }: HubShellProps) {
   const pathname = usePathname();
   const activeSection = hubSectionFromPathname(pathname);
+  // A10 (10.11) — montage Adventure Intelligence réservé à la RACINE du hub.
+  const isHubRoot = pathname === HUB_HOME_HREF;
   // H6.1 — le sélecteur mobile reste piloté par signal (retour Android).
   const [switcherSignal, setSwitcherSignal] = useState(0);
   const [switcherOpen, setSwitcherOpen] = useState(false);
@@ -256,6 +265,17 @@ export function HubShell({
             </div>
             {children}
           </div>
+          {isHubRoot && adventureIntelligence ? (
+            <div
+              className={
+                isHubRootFilled
+                  ? 'mt-[var(--bottom-nav-height)] px-4 pt-3'
+                  : 'px-4 pt-3'
+              }
+            >
+              {adventureIntelligence}
+            </div>
+          ) : null}
         </MobilePageShell>
       }
     >
@@ -264,6 +284,7 @@ export function HubShell({
       </div>
       <AdventureSwitcher forceOpenSignal={switcherSignal} variant="desktop" hideTrigger />
       {children}
+      {isHubRoot && adventureIntelligence ? adventureIntelligence : null}
       <NatureSwitcherSheet
         open={pillOpen}
         onOpenChange={setPillOpen}
