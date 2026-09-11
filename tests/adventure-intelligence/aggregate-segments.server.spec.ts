@@ -4,6 +4,7 @@ import {
   hashUserId,
   AGGREGATE_PROCESSOR_VERSION,
   AGGREGATION_WINDOW_DAYS,
+  type AggregateKey,
   type AggregateSegmentsClient,
   type ConsentGrant,
   type EligiblePassageRow,
@@ -66,6 +67,8 @@ interface FakeCalls {
 
 function makeClient(rows: EligiblePassageRow[], consents: ConsentGrant[]) {
   const upserted: unknown[][] = [];
+  const deleted: AggregateKey[][] = [];
+  const purged: Array<{ segmentIds: number[]; beforeIso: string }> = [];
   const calls: FakeCalls = { segments: [], consents: [], expected: [] };
   const client: AggregateSegmentsClient = {
     getEligiblePassages: vi.fn(async (segmentIds: number[], sinceDays: number) => {
@@ -86,8 +89,15 @@ function makeClient(rows: EligiblePassageRow[], consents: ConsentGrant[]) {
     upsertAggregates: vi.fn(async (aggregateRows: unknown[]) => {
       upserted.push(aggregateRows);
     }),
+    deleteAggregates: vi.fn(async (keys: AggregateKey[]) => {
+      deleted.push(keys);
+    }),
+    deleteStaleAggregates: vi.fn(async (segmentIds: number[], beforeIso: string) => {
+      purged.push({ segmentIds, beforeIso });
+      return 0;
+    }),
   };
-  return { client, upserted, calls };
+  return { client, upserted, deleted, purged, calls };
 }
 
 describe('Orchestrateur collectif serveur — TEST-A4-SRV (client factice)', () => {

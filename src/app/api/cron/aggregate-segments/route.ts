@@ -8,6 +8,7 @@ import {
 import {
   aggregateSegments,
   AGGREGATION_WINDOW_DAYS,
+  type AggregateKey,
   type AggregateSegmentsClient,
   type ConsentGrant,
   type EligiblePassageRow,
@@ -268,6 +269,49 @@ export async function POST(request: NextRequest) {
       });
       if (error) throw new Error(error.message);
     },
+
+    /**
+     * Invalidation A11 (#23) : supprime les lignes persistées des clés
+     * recalculées sous le seuil. `condition_bucket`/`direction` proviennent de
+     * la base (valeurs contraintes), jamais d'une entrée utilisateur : aucun
+     * risque d'injection PostgREST dans le filtre `.or()`.
+     */
+    async deleteAggregates(keys: AggregateKey[]) {
+      if (keys.length === 0) return;
+      const bySegment = new Map<number, AggregateKey[]>();
+      for (const key of keys) {
+        const list = bySegment.get(key.segmentId);
+        if (list) list.push(key);
+        else bySegment.set(key.segmentId, [key]);
+      }
+
+      for (const [segmentId, segmentKeys] of bySegment) {
+        const filter = segmentKeys
+          .map(
+            (key) =>
+              `and(condition_bucket.eq.${key.conditionBucket},direction.eq.${key.direction})`
+          )
+          .join(',');
+        const { error } = await supabase
+          .from('segment_collective_aggregates')
+          .delete()
+          .eq('segment_id', segmentId)
+          .or(filter);
+        if (error) throw new Error(error.message);
+      }
+    },
+
+    /** Purge A11 (#23) : agrégats persistés plus vieux que la garde de récence. */
+    async deleteStaleAggregates(segmentIds: number[], beforeIso: string) {
+      if (segmentIds.length === 0) return 0;
+      const { count, error } = await supabase
+        .from('segment_collective_aggregates')
+        .delete({ count: 'exact' })
+        .in('segment_id', segmentIds)
+        .lt('computed_at', beforeIso);
+      if (error) throw new Error(error.message);
+      return count ?? 0;
+    },
   };
 
   const result = await aggregateSegments(segmentIds, client);
@@ -277,5 +321,6 @@ export async function POST(request: NextRequest) {
     passages: result.passagesConsidered,
     aggregates: result.aggregatesWritten,
     suppressed: result.aggregatesSuppressed,
+    invalidated: result.aggregatesInvalidated,
   });
 }
