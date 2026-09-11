@@ -40,6 +40,10 @@ export async function GET(
       plan: stored.plan,
       version: stored.version,
       decisions: stored.decisions,
+      // A11 #14 — les plans candidats ne sont renvoyés que s'ils existent.
+      ...(stored.candidates && stored.candidates.length > 0
+        ? { candidates: stored.candidates }
+        : {}),
     });
   } catch (error) {
     console.error(

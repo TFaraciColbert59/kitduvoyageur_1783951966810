@@ -24,6 +24,7 @@ import {
   type PlanValue,
 } from '../domain/adventurePlan';
 import { buildCandidates, type AdventureCandidate } from '../domain/candidates';
+import { buildCandidatePlans } from '../domain/candidatePlans';
 import { COLD_CONFIDENCE, type Confidence } from '../domain/confidence';
 import type { EngineResult } from '../domain/engine';
 import {
@@ -124,6 +125,8 @@ export interface AdventureExplainContext {
 export interface AdventureGenerationResult {
   plan: AdventurePlan;
   candidates: AdventureCandidate[];
+  /** A11 #14 — trois plans candidats complets (confort / équilibré / aventure). */
+  candidatePlans: AdventurePlan[];
   runs: EngineRunRecord[];
   explanation: string;
   aiUsed: boolean;
@@ -448,11 +451,19 @@ function planRow(plan: AdventurePlan): Record<string, unknown> {
   };
 }
 
-function versionRow(plan: AdventurePlan, reason: string, generatedBy: string): Record<string, unknown> {
+function versionRow(
+  plan: AdventurePlan,
+  reason: string,
+  generatedBy: string,
+  candidates?: AdventurePlan[]
+): Record<string, unknown> {
   return {
     plan_id: plan.id,
     version: plan.currentVersion,
-    snapshot: plan,
+    // A11 #14 — les trois plans candidats voyagent dans le snapshot initial,
+    // sans changement de schéma de table (`snapshot.candidates`).
+    snapshot:
+      candidates && candidates.length > 0 ? { ...plan, candidates } : plan,
     reason,
     generated_by: generatedBy,
     confidence: plan.confidence,
@@ -689,15 +700,28 @@ export async function generateAdventure(
   const lockReport = engineResultOf<CoherenceAdapterOutput>(outputs, 'coherence')?.value.lockReport;
   const decisions = buildRequiredDecisions(plan, now, lockReport);
 
+  // A11 #14 — trois plans candidats complets, clonés depuis le plan de
+  // référence (jamais muté), persistés dans le snapshot de la version initiale.
+  const candidatePlans = buildCandidatePlans({
+    plan,
+    strategyInputs: { candidates, now },
+  });
+
   // A10 (10.4) : un seul appel atomique — un échec ne laisse aucun plan partiel.
-  const inserted = await deps.persistence.persistPlanBundle({
+  const bundle: AdventurePlanBundle = {
     plan: planRow(plan),
-    version: versionRow(plan, 'Génération initiale (A6)', 'a6-orchestrator'),
+    version: versionRow(plan, 'Génération initiale (A6)', 'a6-orchestrator', candidatePlans),
     runs: runs.map((run) => runRow(plan.id, run, correlationId)),
     decisions: decisions.map((decision) => decisionRow(plan.id, decision)),
-  });
+  };
+  const inserted = await deps.persistence.persistPlanBundle(bundle);
   plan.id = inserted.id;
   for (const decision of decisions) decision.planId = plan.id;
+  for (const candidatePlan of candidatePlans) candidatePlan.id = plan.id;
+  // L'identifiant canonique est celui renvoyé par la RPC : le snapshot (copie
+  // superficielle du plan) et ses candidats doivent rester cohérents.
+  const snapshot = bundle.version.snapshot as { id?: string } | null | undefined;
+  if (snapshot) snapshot.id = plan.id;
 
   // A10 (10.9) — prédictions segment + route persistées par RPC dédiée.
   // Best-effort assumé : le plan est déjà persisté, un échec de persistance
@@ -720,7 +744,7 @@ export async function generateAdventure(
     localExplanation
   );
 
-  return { plan, candidates, runs, explanation, aiUsed };
+  return { plan, candidates, candidatePlans, runs, explanation, aiUsed };
 }
 
 // ── Persistance Supabase (lecture seule côté client) ─────────────────────────
@@ -813,6 +837,21 @@ export interface StoredAdventurePlan {
   plan: AdventurePlan;
   version: AdventurePlanVersionRecord | null;
   decisions: AdventureDecision[];
+  /** A11 #14 — plans candidats du snapshot initial, quand ils existent. */
+  candidates: AdventurePlan[];
+}
+
+/**
+ * A11 #14 — relit `snapshot.candidates` sans changer le schéma de table :
+ * chaque candidat est revalidé par le schéma du plan, un lot non conforme est
+ * ignoré (jamais de plan partiel présenté comme complet).
+ */
+function candidatePlansFromSnapshot(snapshot: unknown): AdventurePlan[] {
+  if (snapshot === null || typeof snapshot !== 'object') return [];
+  const raw = (snapshot as { candidates?: unknown }).candidates;
+  if (!Array.isArray(raw)) return [];
+  const parsed = adventurePlanSchema.array().safeParse(raw);
+  return parsed.success ? (parsed.data as AdventurePlan[]) : [];
 }
 
 function planFromRow(row: Record<string, unknown>): AdventurePlan {
@@ -900,5 +939,10 @@ export async function getAdventurePlan(
     createdAt: String(row.created_at),
   }));
 
-  return { plan, version, decisions };
+  return {
+    plan,
+    version,
+    decisions,
+    candidates: candidatePlansFromSnapshot(versionData?.snapshot),
+  };
 }

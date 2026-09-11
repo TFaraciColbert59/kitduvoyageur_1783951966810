@@ -112,6 +112,7 @@ describe('A6 — API génération et lecture (TEST-A6-API)', () => {
     mockedGenerate.mockResolvedValue({
       plan: { id: PLAN_ID, currentVersion: 1 } as never,
       candidates: [{ id: 'comfort' }, { id: 'balanced' }, { id: 'adventure' }] as never,
+      candidatePlans: [],
       runs: [],
       explanation: 'Résumé déterministe.',
       aiUsed: false,
@@ -147,6 +148,7 @@ describe('A6 — API génération et lecture (TEST-A6-API)', () => {
       plan: { id: PLAN_ID } as never,
       version: { version: 1 } as never,
       decisions: [{ id: 'decision-1' }] as never,
+      candidates: [],
     });
     const response = await planGET(planRequest(PLAN_ID), params(PLAN_ID));
     expect(response.status).toBe(200);

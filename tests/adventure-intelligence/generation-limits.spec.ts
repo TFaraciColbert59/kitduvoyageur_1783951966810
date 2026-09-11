@@ -208,6 +208,7 @@ describe('A10 — Route generate durcie (TEST-A10-GEN, route mockée)', () => {
       } as never,
       version: null,
       decisions: [],
+      candidates: [],
     });
 
     const response = await generatePOST(generateRequest({ text: TEXT }));
@@ -224,6 +225,7 @@ describe('A10 — Route generate durcie (TEST-A10-GEN, route mockée)', () => {
     mockedGenerate.mockResolvedValue({
       plan: { id: PLAN_ID, currentVersion: 1 } as never,
       candidates: [{ id: 'comfort' }, { id: 'balanced' }, { id: 'adventure' }] as never,
+      candidatePlans: [],
       runs: [],
       explanation: 'Résumé déterministe.',
       aiUsed: false,

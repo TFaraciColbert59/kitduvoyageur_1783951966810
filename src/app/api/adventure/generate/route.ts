@@ -61,6 +61,7 @@ async function reuseResponse(supabase: SupabaseClient, planId: string): Promise<
           planId,
           version: stored.plan.currentVersion,
           candidates: Array.isArray(alternatives) ? alternatives : [],
+          candidatePlans: stored.candidates ?? [],
           explanation: 'Génération réutilisée (Idempotency-Key déjà traitée).',
           aiUsed: false,
           reused: true,
@@ -233,6 +234,8 @@ export async function POST(request: NextRequest) {
         planId: result.plan.id,
         version: result.plan.currentVersion,
         candidates: result.candidates,
+        // A11 #14 — trois plans complets en plus des deltas légers.
+        candidatePlans: result.candidatePlans ?? [],
         explanation: result.explanation,
         aiUsed: result.aiUsed,
       },
