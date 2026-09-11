@@ -15,7 +15,9 @@ import 'server-only';
 import type { SupabaseClient } from '@supabase/supabase-js';
 import {
   DEDUP_WINDOW_HOURS,
+  MAX_CONFIRMATIONS_COOLDOWN,
   TERMINAL_REPORT_STATUSES,
+  defaultExpiryHours,
   deduplicateReports,
   moderationDecision,
   nextReportStatus,
@@ -44,6 +46,8 @@ export const MAX_NEARBY_RADIUS_M = 50000;
 export const MAX_NEARBY_RESULTS = 200;
 /** Réputation de repli quand le profil est absent. */
 export const DEFAULT_REPUTATION = 50;
+/** Fenêtre de cooldown des confirmations (minutes) : max 2 par utilisateur. */
+export const CONFIRMATION_COOLDOWN_MINUTES = 5;
 
 export interface CreateTerrainReportInput {
   userId: string;
@@ -84,7 +88,8 @@ export type ConfirmTerrainReportResult =
   | { status: 'confirmed'; reportStatus: TerrainReportStatus }
   | { status: 'duplicate' }
   | { status: 'not_found' }
-  | { status: 'closed' };
+  | { status: 'closed' }
+  | { status: 'rate_limited'; reason: 'confirmation_cooldown' };
 
 /** Ligne interne d'un signalement (jamais exposée telle quelle). */
 export interface TerrainReportRow {
@@ -96,6 +101,8 @@ export interface TerrainReportRow {
   presentCount: number;
   goneCount: number;
   unknownCount: number;
+  /** Nombre de signalements fusionnés dans cette entrée (≥ 1). */
+  reportCount: number;
 }
 
 /** Signalement public proche : vue A1 sans identité + distance calculée. */
@@ -191,7 +198,12 @@ export async function createTerrainReport(
   );
 
   if (dedup.mergedWith !== null) {
-    const patch: Record<string, unknown> = { updated_at: now };
+    const existing = await client.getReport(dedup.mergedWith);
+    const currentCount = Math.max(1, existing?.reportCount ?? 1);
+    const patch: Record<string, unknown> = {
+      updated_at: now,
+      report_count: currentCount + 1,
+    };
     if (input.severity) patch.severity = input.severity;
     if (input.passability) patch.passability = input.passability;
     await client.mergeIntoReport(dedup.mergedWith, patch);
@@ -218,8 +230,10 @@ export async function createTerrainReport(
     segment_id: input.segmentId ?? null,
     source_type: isOfficial ? 'official' : 'user',
     status: isOfficial ? 'active' : 'pending',
+    report_count: 1,
     created_at: now,
     updated_at: now,
+    expires_at: isoBefore(now, -defaultExpiryHours(input.category)),
   });
 
   return {
@@ -232,9 +246,10 @@ export async function createTerrainReport(
 
 /**
  * Confirmation d'un signalement : une seule par utilisateur (vérifiée
- * explicitement puis garantie par la contrainte unique A1). Les compteurs
- * dénormalisés sont maintenus par le trigger A1 ; le statut est recalculé par
- * le cycle de vie (`confirm`). Aucune confirmation sur un rapport terminal.
+ * explicitement puis garantie par la contrainte unique A1) et cooldown de
+ * 2 confirmations / 5 min. Les compteurs dénormalisés sont maintenus par le
+ * trigger A1 ; le statut est recalculé par le cycle de vie (`confirm`).
+ * Aucune confirmation sur un rapport terminal.
  */
 export async function confirmTerrainReport(
   input: ConfirmTerrainReportInput,
@@ -248,6 +263,14 @@ export async function confirmTerrainReport(
 
   if (await client.confirmationExists(input.reportId, input.userId)) {
     return { status: 'duplicate' };
+  }
+
+  // Cooldown : au plus MAX_CONFIRMATIONS_COOLDOWN confirmations par fenêtre
+  // de CONFIRMATION_COOLDOWN_MINUTES (5 min) et par utilisateur.
+  const cooldownSince = isoBefore(now, CONFIRMATION_COOLDOWN_MINUTES / 60);
+  const recentConfirmations = await client.countConfirmationsSince(input.userId, cooldownSince);
+  if (recentConfirmations >= MAX_CONFIRMATIONS_COOLDOWN) {
+    return { status: 'rate_limited', reason: 'confirmation_cooldown' };
   }
 
   await client.insertConfirmation({
@@ -365,6 +388,7 @@ function toReportRow(raw: Record<string, unknown>): TerrainReportRow {
     presentCount: Number(raw.present_count ?? 0),
     goneCount: Number(raw.gone_count ?? 0),
     unknownCount: Number(raw.unknown_count ?? 0),
+    reportCount: Math.max(1, Number(raw.report_count ?? 1)),
   };
 }
 
@@ -386,6 +410,7 @@ function toNearbyReport(raw: Record<string, unknown>): NearbyTerrainReport {
     presentCount: Number(raw.present_count ?? 0),
     goneCount: Number(raw.gone_count ?? 0),
     unknownCount: Number(raw.unknown_count ?? 0),
+    reportCount: Math.max(1, Number(raw.report_count ?? 1)),
     createdAt: String(raw.created_at ?? ''),
     updatedAt: raw.updated_at == null ? undefined : String(raw.updated_at),
     expiresAt: raw.expires_at == null ? undefined : String(raw.expires_at),
@@ -528,7 +553,7 @@ export function createSupabaseTerrainReportsClient(
       const { data, error } = await supabase
         .from('terrain_reports')
         .select(
-          'id, status, expires_at, created_at, updated_at, present_count, gone_count, unknown_count'
+          'id, status, expires_at, created_at, updated_at, present_count, gone_count, unknown_count, report_count'
         )
         .in('status', ['pending', 'confirmed', 'active', 'stale', 'verify'])
         .or(`expires_at.lte.${nowIso},updated_at.lte.${staleBefore}`)

@@ -10,10 +10,12 @@ import {
   MAX_CONFIRMATIONS_COOLDOWN,
   MODERATION_REASONS,
   REPORT_CONFIDENCE_METHOD,
+  DEFAULT_EXPIRY_HOURS,
   shouldExpire,
   nextReportStatus,
   computeReportConfidence,
   deduplicateReports,
+  defaultExpiryHours,
   moderationDecision,
   type DedupCandidate,
   type LifecycleContext,
@@ -437,6 +439,19 @@ describe('Terrain Live — modération (TEST-A5-MOD)', () => {
       descriptionLength: MAX_DESCRIPTION_LENGTH + 1,
     });
     expect(invalidOfficial.allowed).toBe(false);
+  });
+});
+
+describe('Terrain Live — expiration par défaut (TEST-A5-LIFE-09)', () => {
+  it('TEST-A5-LIFE-09: chaque catégorie MVP a sa durée de validité, les étendues retombent sur 72 h', () => {
+    expect(defaultExpiryHours('obstacle')).toBe(72);
+    expect(defaultExpiryHours('closure')).toBe(168);
+    expect(defaultExpiryHours('mud')).toBe(24);
+    expect(defaultExpiryHours('snow_ice')).toBe(72);
+    expect(defaultExpiryHours('water')).toBe(72);
+    expect(defaultExpiryHours('danger')).toBe(48);
+    expect(defaultExpiryHours('rockfall')).toBe(DEFAULT_EXPIRY_HOURS);
+    expect(DEFAULT_EXPIRY_HOURS).toBe(72);
   });
 });
 

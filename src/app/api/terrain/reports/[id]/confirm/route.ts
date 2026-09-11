@@ -99,6 +99,12 @@ export async function POST(
         message: 'Confirmation déjà enregistrée pour cet utilisateur',
       });
     }
+    if (result.status === 'rate_limited') {
+      return NextResponse.json(
+        { error: 'Trop de confirmations récentes', details: 'confirmation_cooldown' },
+        { status: 429 }
+      );
+    }
 
     return NextResponse.json({ status: 'confirmed', reportStatus: result.reportStatus });
   } catch (err) {

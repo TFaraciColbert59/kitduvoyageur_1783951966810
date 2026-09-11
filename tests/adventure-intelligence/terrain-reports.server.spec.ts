@@ -6,6 +6,7 @@ import {
   expireStaleReports,
   DEFAULT_NEARBY_RADIUS_M,
   STALE_AFTER_HOURS,
+  CONFIRMATION_COOLDOWN_MINUTES,
   type TerrainReportRow,
   type TerrainReportsClient,
   type NearbyTerrainReport,
@@ -32,6 +33,7 @@ function reportRow(overrides: Partial<TerrainReportRow> = {}): TerrainReportRow 
     presentCount: 1,
     goneCount: 0,
     unknownCount: 0,
+    reportCount: 1,
     ...overrides,
   };
 }
@@ -49,6 +51,7 @@ function publicReport(overrides: Partial<NearbyTerrainReport> = {}): NearbyTerra
     presentCount: 2,
     goneCount: 0,
     unknownCount: 0,
+    reportCount: 1,
     createdAt: hoursAgo(1),
     distanceM: 100,
     ...overrides,
@@ -115,6 +118,8 @@ describe('Serveur Terrain Live — création (TEST-A5-SRV-01)', () => {
       source_type: 'user',
       status: 'pending',
       created_at: NOW,
+      expires_at: hoursAgo(-72),
+      report_count: 1,
     });
 
     const official = makeClient();
@@ -131,7 +136,11 @@ describe('Serveur Terrain Live — création (TEST-A5-SRV-01)', () => {
     );
 
     expect(officialResult.status).toBe('created');
-    expect(official.inserted[0]).toMatchObject({ source_type: 'official', status: 'active' });
+    expect(official.inserted[0]).toMatchObject({
+      source_type: 'official',
+      status: 'active',
+      expires_at: hoursAgo(-168),
+    });
   });
 
   it('TEST-A5-SRV-01b: la modération refuse un signalement abusif', async () => {
@@ -182,7 +191,8 @@ describe('Serveur Terrain Live — fusion (TEST-A5-SRV-02)', () => {
     expect(inserted).toHaveLength(0);
     expect(merged).toHaveLength(1);
     expect(merged[0].id).toBe('existant-42');
-    expect(merged[0].patch).toMatchObject({ updated_at: NOW });
+    expect(merged[0].patch).toMatchObject({ updated_at: NOW, report_count: 2 });
+    expect(client.getReport).toHaveBeenCalledWith('existant-42');
   });
 });
 
@@ -244,6 +254,41 @@ describe('Serveur Terrain Live — confirmation (TEST-A5-SRV-03)', () => {
       )
     ).toEqual({ status: 'closed' });
     expect(closed.confirmations).toHaveLength(0);
+  });
+});
+
+describe('Serveur Terrain Live — cooldown de confirmation (TEST-A5-SRV-06)', () => {
+  it('TEST-A5-SRV-06: une 3ᵉ confirmation en 5 minutes est refusée sans écriture', async () => {
+    const throttled = makeClient({
+      countConfirmationsSince: vi.fn(async () => 2),
+    });
+
+    const result = await confirmTerrainReport(
+      { reportId: 'report-1', userId: USER_ID, confirmation: 'present' },
+      throttled.client,
+      { now: NOW }
+    );
+
+    expect(result).toEqual({ status: 'rate_limited', reason: 'confirmation_cooldown' });
+    expect(throttled.confirmations).toHaveLength(0);
+    expect(throttled.updates).toHaveLength(0);
+    expect(throttled.client.countConfirmationsSince).toHaveBeenCalledWith(
+      USER_ID,
+      hoursAgo(CONFIRMATION_COOLDOWN_MINUTES / 60)
+    );
+    expect(CONFIRMATION_COOLDOWN_MINUTES).toBe(5);
+
+    const allowed = makeClient({
+      countConfirmationsSince: vi.fn(async () => 1),
+      getReport: vi.fn(async () => reportRow({ status: 'confirmed', presentCount: 1 })),
+    });
+    const confirmed = await confirmTerrainReport(
+      { reportId: 'report-1', userId: USER_ID, confirmation: 'present' },
+      allowed.client,
+      { now: NOW }
+    );
+    expect(confirmed).toEqual({ status: 'confirmed', reportStatus: 'active' });
+    expect(allowed.confirmations).toHaveLength(1);
   });
 });
 

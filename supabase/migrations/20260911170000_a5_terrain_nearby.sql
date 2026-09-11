@@ -8,6 +8,8 @@
 --
 --   • `terrain_reports.geog` : geography(Point,4326) STORED, dérivée de
 --     (lng, lat) — jamais écrite par les clients.
+--   • `terrain_reports.report_count` : corroboration de fusion (≥ 1), jamais
+--     écrite par les clients.
 --   • Index GiST `idx_terrain_reports_geog` pour les recherches de proximité.
 --   • RPC `a5_terrain_reports_near(lat, lng, radius_m)` : filtres de la vue
 --     publique appliqués en local (statuts `confirmed`/`active` non expirés),
@@ -28,11 +30,36 @@ COMMENT ON COLUMN public.terrain_reports.geog IS
   'A5 — position générée (lng, lat) en geography(Point,4326) STORED ; '
   'support des recherches de proximité (index GiST), jamais exposée directement.';
 
+-- ── 1bis. Corroboration de fusion : nombre de signalements fusionnés ─────────
+ALTER TABLE public.terrain_reports
+  ADD COLUMN IF NOT EXISTS report_count integer NOT NULL DEFAULT 1;
+
+DO $$
+BEGIN
+  IF NOT EXISTS (
+    SELECT 1 FROM pg_constraint
+    WHERE conname = 'terrain_reports_report_count_positive'
+      AND conrelid = 'public.terrain_reports'::regclass
+  ) THEN
+    ALTER TABLE public.terrain_reports
+      ADD CONSTRAINT terrain_reports_report_count_positive CHECK (report_count >= 1);
+  END IF;
+END $$;
+
+COMMENT ON COLUMN public.terrain_reports.report_count IS
+  'A5 — nombre de signalements fusionnés dans cette entrée (déduplication), '
+  'toujours ≥ 1 ; incrémenté par le serveur lors d''une fusion.';
+
 -- ── 2. Index GiST de proximité ───────────────────────────────────────────────
 CREATE INDEX IF NOT EXISTS idx_terrain_reports_geog
   ON public.terrain_reports USING gist (geog);
 
 -- ── 3. RPC de proximité — vue publique sans identité ─────────────────────────
+-- Le type de retour change (ajout `report_count`) : DROP indispensable pour
+-- que la migration reste rejouable (CREATE OR REPLACE interdit de changer la
+-- signature de sortie).
+DROP FUNCTION IF EXISTS public.a5_terrain_reports_near(float8, float8, float8);
+
 CREATE OR REPLACE FUNCTION public.a5_terrain_reports_near(
   p_lat float8,
   p_lng float8,
@@ -55,6 +82,7 @@ RETURNS TABLE (
   present_count integer,
   gone_count integer,
   unknown_count integer,
+  report_count integer,
   created_at timestamptz,
   updated_at timestamptz,
   expires_at timestamptz,
@@ -86,6 +114,7 @@ AS $$
       r.present_count,
       r.gone_count,
       r.unknown_count,
+      r.report_count,
       r.created_at,
       r.updated_at,
       r.expires_at,

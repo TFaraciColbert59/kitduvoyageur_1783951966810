@@ -19,6 +19,7 @@ function makeReport(overrides: Partial<TerrainLiveReport> = {}): TerrainLiveRepo
     presentCount: 3,
     goneCount: 0,
     unknownCount: 1,
+    reportCount: 1,
     createdAt: '2026-09-11T08:00:00.000Z',
     updatedAt: '2026-09-11T08:00:00.000Z',
     expiresAt: '2026-09-13T08:00:00.000Z',

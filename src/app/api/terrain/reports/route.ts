@@ -18,7 +18,7 @@ export const dynamic = 'force-dynamic';
 
 const createReportSchema = z.object({
   category: terrainReportCategorySchema,
-  severity: terrainSeveritySchema.optional(),
+  severity: terrainSeveritySchema,
   passability: terrainPassabilitySchema.optional(),
   description: z
     .string()

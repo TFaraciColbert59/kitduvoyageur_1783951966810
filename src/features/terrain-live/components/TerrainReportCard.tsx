@@ -33,7 +33,12 @@ export default function TerrainReportCard({
 }: TerrainReportCardProps) {
   const display = categoryDisplay(report.category);
   const color = SEVERITY_COLORS[report.severity] ?? SEVERITY_COLORS.warning;
-  const confirmations = report.presentCount + report.goneCount + report.unknownCount;
+  const corroboration =
+    report.reportCount > 1
+      ? ` · signalé ${report.reportCount} fois`
+      : report.presentCount > 0
+        ? ` · confirmé par ${report.presentCount} personne${report.presentCount > 1 ? 's' : ''}`
+        : '';
 
   return (
     <article
@@ -54,7 +59,7 @@ export default function TerrainReportCard({
           </h3>
           <p className="mt-0.5 text-[12px] text-[var(--lkv-text-secondary,#4A5D52)]">
             {relativeAgeFr(report.createdAt)}
-            {confirmations > 0 ? ` · confirmé par ${report.presentCount} personne${report.presentCount > 1 ? 's' : ''}` : ''}
+            {corroboration}
             {report.distanceM >= 0 ? ` · à ${Math.round(report.distanceM)} m` : ''}
           </p>
           {report.description ? (

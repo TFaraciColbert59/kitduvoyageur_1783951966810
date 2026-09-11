@@ -27,6 +27,26 @@ export const MVP_TERRAIN_CATEGORIES = [
 
 export type MvpTerrainCategory = (typeof MVP_TERRAIN_CATEGORIES)[number];
 
+/** Durée de validité par défaut (heures) des catégories MVP. */
+export const DEFAULT_EXPIRY_HOURS_BY_CATEGORY: Record<MvpTerrainCategory, number> = {
+  obstacle: 72,
+  closure: 168,
+  mud: 24,
+  snow_ice: 72,
+  water: 72,
+  danger: 48,
+};
+
+/** Durée de validité de repli (heures) — catégories étendues. */
+export const DEFAULT_EXPIRY_HOURS = 72;
+
+/** Durée de validité par défaut (heures) d'un signalement selon sa catégorie. */
+export function defaultExpiryHours(category: TerrainReportCategory): number {
+  return (
+    DEFAULT_EXPIRY_HOURS_BY_CATEGORY[category as MvpTerrainCategory] ?? DEFAULT_EXPIRY_HOURS
+  );
+}
+
 /** Événements normatifs du cycle de vie d'un signalement. */
 export type TerrainLifecycleEvent =
   | 'confirm'

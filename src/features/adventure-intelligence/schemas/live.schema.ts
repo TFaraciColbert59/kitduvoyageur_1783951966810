@@ -89,6 +89,7 @@ export const terrainReportSchema = z.object({
   presentCount: z.number().int('presentCount doit être un entier').min(0).default(0),
   goneCount: z.number().int('goneCount doit être un entier').min(0).default(0),
   unknownCount: z.number().int('unknownCount doit être un entier').min(0).default(0),
+  reportCount: z.number().int('reportCount doit être un entier').min(1).default(1),
   createdAt: isoDateTimeSchema.default(() => new Date().toISOString()),
   updatedAt: isoDateTimeSchema.optional(),
   expiresAt: isoDateTimeSchema.optional(),
