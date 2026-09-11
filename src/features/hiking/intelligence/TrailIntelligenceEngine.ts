@@ -1,4 +1,22 @@
+/**
+ * A4 — Façade d'intelligence des sentiers (migration du prototype).
+ *
+ * Le prototype était route-level, non déterministe (`Math.random()`) et
+ * sans persistance. La migration conserve une façade rétrocompatible pour
+ * les appelants existants (moyennes observées, propositions de validation
+ * humaine) et ajoute une entrée par segment qui délègue au moteur pur A4
+ * `aggregateCollective` quand des passages sont fournis.
+ *
+ * Aucun appel à `Math.random()` : les identifiants anonymisés et les
+ * propositions sont dérivés par hash stable des entrées.
+ */
 import { HikeSession, GPSPosition, Trail } from '../types';
+import {
+  aggregateCollective,
+  type AggregateOptions,
+  type CollectiveAggregate,
+  type CollectivePassage,
+} from '@/features/adventure-intelligence/domain/collectiveIntelligence';
 
 export interface AnonymizedHikeSample {
   routeId: string | number;
@@ -21,6 +39,8 @@ export interface TrailIntelligenceReport {
   slowZonesCount: number;
   gpsQualityScorePercent: number;
   proposedCorrections: TrailIntelligenceProposal[];
+  /** Agrégats collectifs A4, présents seulement si des passages sont fournis. */
+  collectiveAggregates?: CollectiveAggregate[];
 }
 
 export interface TrailIntelligenceProposal {
@@ -36,9 +56,28 @@ export interface TrailIntelligenceProposal {
   createdAt: string;
 }
 
+export interface TrailIntelligenceOptions {
+  /** Instant de référence des propositions (défaut : maintenant). */
+  now?: string;
+  /** Passages collectifs à déléguer au moteur pur A4. */
+  passages?: CollectivePassage[];
+}
+
+/** Hash FNV-1a 32 bits — déterministe, aucun aléa. */
+function stableHash(input: string): string {
+  let hash = 2166136261;
+  for (let index = 0; index < input.length; index += 1) {
+    hash ^= input.charCodeAt(index);
+    hash = Math.imul(hash, 16777619);
+  }
+  return (hash >>> 0).toString(16).padStart(8, '0');
+}
+
 export class TrailIntelligenceEngine {
   /**
    * Strip all PII (user ID, exact personal timestamps) to produce an anonymized telemetry sample.
+   * L'identifiant anonymisé est un hash stable des entrées : deux appels identiques
+   * produisent le même identifiant, sans jamais contenir l'identité d'origine.
    */
   public static anonymizeHikeSession(session: HikeSession): AnonymizedHikeSample {
     const rawPos = session.positions || [];
@@ -59,7 +98,9 @@ export class TrailIntelligenceEngine {
 
     return {
       routeId: session.routeId || 'unknown',
-      anonymizedSessionId: `anon-${Math.random().toString(36).substr(2, 9)}`,
+      anonymizedSessionId: `anon-${stableHash(
+        `${session.id}|${session.userId}|${session.startedAt}`
+      )}`,
       totalDistanceKm: session.distanceKm,
       durationSeconds: session.durationSeconds,
       averagePaceMinPerKm: Math.round(averagePaceMinPerKm * 10) / 10,
@@ -70,14 +111,35 @@ export class TrailIntelligenceEngine {
   }
 
   /**
+   * Entrée par segment (A4) : agrège les passages d'un segment avec le moteur
+   * pur et retourne l'agrégat publié du segment demandé (ou null).
+   */
+  public static processSegmentAggregates(
+    segmentId: number,
+    passages: CollectivePassage[],
+    options: AggregateOptions = {}
+  ): CollectiveAggregate | null {
+    const aggregates = aggregateCollective(passages, options);
+    return aggregates.find((aggregate) => aggregate.segmentId === segmentId) ?? null;
+  }
+
+  /**
    * Process a collection of anonymized samples to generate a Trail Intelligence Report.
+   * Lorsque `options.passages` est fourni, délègue aussi au moteur A4 et expose
+   * les agrégats collectifs correspondants.
    */
   public static processTrailTelemetry(
     routeId: string | number,
     officialTrail: Trail | null,
-    samples: AnonymizedHikeSample[]
+    samples: AnonymizedHikeSample[],
+    options: TrailIntelligenceOptions = {}
   ): TrailIntelligenceReport {
+    const now = options.now ?? new Date().toISOString();
     const sampleCount = samples.length;
+    const collectiveAggregates =
+      options.passages && options.passages.length > 0
+        ? aggregateCollective(options.passages, { now })
+        : undefined;
 
     if (sampleCount === 0) {
       return {
@@ -90,6 +152,7 @@ export class TrailIntelligenceEngine {
         slowZonesCount: 0,
         gpsQualityScorePercent: 100,
         proposedCorrections: [],
+        ...(collectiveAggregates ? { collectiveAggregates } : {}),
       };
     }
 
@@ -120,24 +183,29 @@ export class TrailIntelligenceEngine {
     if (officialTrail && officialTrail.duration_hours != null) {
       const officialMin = officialTrail.duration_hours * 60;
       if (Math.abs(avgDurationMin - officialMin) > 30 && sampleCount >= 5) {
+        const proposedObservedValue = Math.round((avgDurationMin / 60) * 10) / 10;
         proposedCorrections.push({
-          id: `prop-dur-${routeId}-${Date.now()}`,
+          id: `prop-dur-${routeId}-${stableHash(
+            `${routeId}|DURATION_ADJUSTMENT|${proposedObservedValue}|${sampleCount}`
+          )}`,
           routeId,
           type: 'DURATION_ADJUSTMENT',
           field: 'duration_hours',
           currentOfficialValue: officialTrail.duration_hours,
-          proposedObservedValue: Math.round((avgDurationMin / 60) * 10) / 10,
+          proposedObservedValue,
           confidenceScorePercent,
           sampleSize: sampleCount,
           status: 'pending_review',
-          createdAt: new Date().toISOString(),
+          createdAt: now,
         });
       }
     }
 
     if (officialTrail && officialTrail.difficulty && officialTrail.difficulty !== observedDifficulty && sampleCount >= 10) {
       proposedCorrections.push({
-        id: `prop-diff-${routeId}-${Date.now()}`,
+        id: `prop-diff-${routeId}-${stableHash(
+          `${routeId}|DIFFICULTY_CORRECTION|${observedDifficulty}|${sampleCount}`
+        )}`,
         routeId,
         type: 'DIFFICULTY_CORRECTION',
         field: 'difficulty',
@@ -146,7 +214,7 @@ export class TrailIntelligenceEngine {
         confidenceScorePercent,
         sampleSize: sampleCount,
         status: 'pending_review',
-        createdAt: new Date().toISOString(),
+        createdAt: now,
       });
     }
 
@@ -160,6 +228,7 @@ export class TrailIntelligenceEngine {
       slowZonesCount: totalSlowZones,
       gpsQualityScorePercent,
       proposedCorrections,
+      ...(collectiveAggregates ? { collectiveAggregates } : {}),
     };
   }
 }
