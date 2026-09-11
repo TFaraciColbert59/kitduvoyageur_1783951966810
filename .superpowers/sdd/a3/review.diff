@@ -1,0 +1,2164 @@
+﻿diff --git a/src/features/adventure-intelligence/domain/fatigue.ts b/src/features/adventure-intelligence/domain/fatigue.ts
+new file mode 100644
+index 00000000..bf16966e
+--- /dev/null
++++ b/src/features/adventure-intelligence/domain/fatigue.ts
+@@ -0,0 +1,69 @@
++/**
++ * A3 — Fatigue intra-journée sans données de santé (moteur pur).
++ *
++ * Modèle additif simple et explicable : durée active, D+/D-, technicité,
++ * portage, charge récente LKDV, pauses et fatigue déclarée. Toute valeur est
++ * bornée et le score final est ramené dans [0, 100].
++ * Aucune donnée santé connectée : uniquement GPS dérivé + déclaratif.
++ */
++
++export interface FatigueInput {
++  activeDurationS: number;
++  gainM: number;
++  lossM: number;
++  technicalClass?: number | null;
++  packWeightKg?: number | null;
++  pausesCount?: number;
++  recentLoadS?: number | null;
++  declaredFatigue?: number | null;
++}
++
++export interface FatigueComponent {
++  label: string;
++  value: number;
++}
++
++export interface FatigueResult {
++  score: number;
++  components: FatigueComponent[];
++}
++
++/** Borne les entrées non finies/négatives pour un modèle robuste. */
++function positive(value: number | null | undefined, max: number): number {
++  if (value == null || !Number.isFinite(value)) return 0;
++  return Math.min(max, Math.max(0, value));
++}
++
++/**
++ * Calcule un score de fatigue 0..100 (0 = frais, 100 = épuisé).
++ * Chaque composante est documentée et peut être affichée à l'utilisateur.
++ */
++export function computeFatigue(input: FatigueInput): FatigueResult {
++  const hours = positive(input.activeDurationS, 24 * 3600) / 3600;
++  const gain = positive(input.gainM, 10000);
++  const loss = positive(input.lossM, 10000);
++  const technicalClass = positive(input.technicalClass, 5);
++  const packWeight = positive(input.packWeightKg, 50);
++  const recentLoadHours = positive(input.recentLoadS, 24 * 3600) / 3600;
++  const declaredFatigue = positive(input.declaredFatigue, 10);
++  const pausesCount = positive(input.pausesCount, 100);
++
++  const components: FatigueComponent[] = [
++    { label: 'Durée active', value: Math.min(35, hours * 7) },
++    { label: 'Dénivelé positif', value: Math.min(25, gain / 50) },
++    { label: 'Dénivelé négatif', value: Math.min(15, loss / 100) },
++    { label: 'Technicité', value: Math.min(15, technicalClass * 3) },
++    { label: 'Portage', value: Math.min(10, packWeight) },
++    { label: 'Charge récente', value: Math.min(10, recentLoadHours * 2) },
++    { label: 'Fatigue déclarée', value: Math.min(20, declaredFatigue * 2) },
++    { label: 'Pauses', value: -Math.min(10, pausesCount * 2.5) },
++  ];
++
++  const raw = components.reduce((sum, component) => sum + component.value, 0);
++  const score = Math.min(100, Math.max(0, raw));
++
++  return {
++    score: Math.round(score * 100) / 100,
++    components,
++  };
++}
+diff --git a/src/features/adventure-intelligence/domain/paceResolver.ts b/src/features/adventure-intelligence/domain/paceResolver.ts
+new file mode 100644
+index 00000000..bfcbaf07
+--- /dev/null
++++ b/src/features/adventure-intelligence/domain/paceResolver.ts
+@@ -0,0 +1,107 @@
++/**
++ * A3 — Résolution d'allure : profil → générique → standard (moteur pur).
++ *
++ * Cascade explicite et sûre :
++ * - `profile` : flag actif + profil non froid + confiance ≥ 0.5 ;
++ * - `generic` : des données de profil existent (même froides/incertaines) ;
++ * - `standard` : aucun profil, allure historique 15 min/km.
++ * Le flag désactivé interdit le niveau personnalisé mais conserve le repli sûr.
++ */
++import {
++  COLD_CONFIDENCE,
++  MEDIUM_CONFIDENCE_THRESHOLD,
++  type Confidence,
++} from './confidence';
++import type { PerformanceProfile } from '../schemas/performance.schema';
++
++/** Allure standard historique (15 min/km) — défaut rétrocompatible. */
++export const STANDARD_PACE_MIN_PER_KM = 15;
++/** Allure générique (population) utilisée quand un profil existe mais reste froid. */
++export const GENERIC_PACE_MIN_PER_KM = 13.5;
++
++/** Majoration de pente : min/km par 100 m de D+ par km. */
++export const PROFILE_ASCENT_MIN_PER_100M_PER_KM = 1;
++export const GENERIC_ASCENT_MIN_PER_100M_PER_KM = 0.8;
++/** Majoration d'une descente technique (surface rocheuse/raide). */
++export const TECHNICAL_DESCENT_MIN_PER_KM = 0.4;
++
++const TECHNICAL_DESCENT_SURFACES = [
++  'rock',
++  'scree',
++  'stone',
++  'boulder',
++  'steps',
++  'via',
++  'cable',
++] as const;
++
++export interface ResolvedPace {
++  paceMinPerKm: number;
++  source: 'profile' | 'generic' | 'standard';
++  personalized: boolean;
++  confidence: Confidence;
++}
++
++export interface ResolvePaceInput {
++  distanceM: number;
++  gainM: number;
++  lossM: number;
++  surface?: string | null;
++  profile?: PerformanceProfile | null;
++  confidence?: Confidence | null;
++  flagEnabled: boolean;
++}
++
++function isTechnicalDescentSurface(surface: string | null | undefined): boolean {
++  if (!surface) return false;
++  const key = surface.toLowerCase();
++  return TECHNICAL_DESCENT_SURFACES.some((token) => key.includes(token));
++}
++
++export function resolvePace(input: ResolvePaceInput): ResolvedPace {
++  const profile = input.profile ?? null;
++  const confidence = input.confidence ?? profile?.confidence ?? COLD_CONFIDENCE;
++
++  const usableProfile =
++    input.flagEnabled &&
++    profile !== null &&
++    profile.calibrationLevel !== 'cold' &&
++    confidence.score >= MEDIUM_CONFIDENCE_THRESHOLD;
++
++  let source: ResolvedPace['source'];
++  let basePaceMinPerKm: number;
++  let ascentFactor: number;
++
++  if (usableProfile && profile) {
++    source = 'profile';
++    basePaceMinPerKm =
++      profile.flatSpeedKmH > 0 ? 60 / profile.flatSpeedKmH : STANDARD_PACE_MIN_PER_KM;
++    ascentFactor = PROFILE_ASCENT_MIN_PER_100M_PER_KM;
++  } else if (profile !== null) {
++    source = 'generic';
++    basePaceMinPerKm = GENERIC_PACE_MIN_PER_KM;
++    ascentFactor = GENERIC_ASCENT_MIN_PER_100M_PER_KM;
++  } else {
++    source = 'standard';
++    basePaceMinPerKm = STANDARD_PACE_MIN_PER_KM;
++    ascentFactor = GENERIC_ASCENT_MIN_PER_100M_PER_KM;
++  }
++
++  const distanceKm = Math.max(0, Number.isFinite(input.distanceM) ? input.distanceM : 0) / 1000;
++  const gainM = Math.max(0, Number.isFinite(input.gainM) ? input.gainM : 0);
++  const lossM = Math.max(0, Number.isFinite(input.lossM) ? input.lossM : 0);
++  const ascentPer100mPerKm = distanceKm > 0 ? gainM / distanceKm / 100 : 0;
++  const technicalDescent = lossM > 0 && isTechnicalDescentSurface(input.surface);
++
++  const paceMinPerKm =
++    basePaceMinPerKm +
++    ascentPer100mPerKm * ascentFactor +
++    (technicalDescent ? TECHNICAL_DESCENT_MIN_PER_KM : 0);
++
++  return {
++    paceMinPerKm: Math.round(paceMinPerKm * 1000) / 1000,
++    source,
++    personalized: source === 'profile',
++    confidence,
++  };
++}
+diff --git a/src/features/adventure-intelligence/domain/performanceProfile.ts b/src/features/adventure-intelligence/domain/performanceProfile.ts
+new file mode 100644
+index 00000000..cf714478
+--- /dev/null
++++ b/src/features/adventure-intelligence/domain/performanceProfile.ts
+@@ -0,0 +1,448 @@
++/**
++ * A3 — Profil Terrain appris (moteur pur).
++ *
++ * Construit un `PerformanceProfile` à partir d'observations GPS dérivées
++ * (Phase 2) + déclaratif, sans aucune donnée de santé connectée :
++ * médiane pondérée (récence × qualité), rejet d'anomalies MAD, calibrations
++ * séparées plat / montée / descente, courbe de fatigue, modèle de pauses,
++ * réponse au portage et niveaux de calibration.
++ *
++ * Aucune I/O : uniquement des nombres et des chaînes. La persistance est
++ * laissée à `server/buildUserProfile.ts`.
++ */
++import { clamp01, makeConfidence, type Confidence } from './confidence';
++import type {
++  CalibrationLevel,
++  FatigueCurve,
++  PauseModel,
++  PerformanceProfile,
++  ResponseCurve,
++} from '../schemas/performance.schema';
++
++export interface ProfileObservation {
++  observedAt: string;
++  distanceM: number;
++  durationS: number;
++  movingS?: number | null;
++  gainM?: number | null;
++  lossM?: number | null;
++  meanGradePct?: number | null;
++  surface?: string | null;
++  packWeightKg?: number | null;
++  quality?: number | null;
++  declaredFatigue?: number | null;
++  perceivedDifficulty?: number | null;
++}
++
++export interface BuildProfileOptions {
++  now?: string;
++  halfLifeDays?: number;
++  minQuality?: number;
++}
++
++/**
++ * Profil appris sans `userId` : le moteur pur ne connaît pas l'utilisateur.
++ * `server/buildUserProfile.ts` ajoute l'identité avant persistance (la forme
++ * persistée reste celle du schéma A1 `PerformanceProfile`).
++ */
++export type LearnedPerformanceProfile = Omit<PerformanceProfile, 'userId'> & {
++  personalized: boolean;
++};
++
++/** Seuils normatifs des niveaux de calibration (spec Phase 3). */
++export const CALIBRATION_THRESHOLDS = {
++  calibration: 3,
++  personalization: 10,
++  contextualization: 20,
++} as const;
++
++/** Version de modèle persistée (idempotence de `buildUserProfile`). */
++export const PERFORMANCE_PROFILE_MODEL_VERSION = 'a3-v1';
++
++export const DEFAULT_HALF_LIFE_DAYS = 90;
++export const DEFAULT_MIN_QUALITY = 0.5;
++
++/** Borne d'un nombre dans [min, max] ; non fini ⇒ min. */
++function clamp(value: number, min: number, max: number): number {
++  if (!Number.isFinite(value)) return min;
++  return Math.min(max, Math.max(min, value));
++}
++
++/** Vitesses neutres de repli (standards randonnée) quand une catégorie est vide. */
++const FALLBACK_FLAT_SPEED_KMH = 4;
++const FALLBACK_ASCENT_SPEED_M_PER_HOUR = 300;
++const FALLBACK_DESCENT_SPEED_M_PER_HOUR = 500;
++
++/** Bornes de pente (%) : [-3, 3] = plat, > 3 = montée, < -3 = descente. */
++const FLAT_GRADE_BOUND_PCT = 3;
++
++/** Médiane pondérée ; ignore poids nuls/négatifs et valeurs non finies. */
++export function weightedMedian(entries: { value: number; weight: number }[]): number | null {
++  const valid = entries.filter(
++    (entry) => Number.isFinite(entry.value) && Number.isFinite(entry.weight) && entry.weight > 0
++  );
++  if (valid.length === 0) return null;
++
++  const sorted = [...valid].sort((a, b) => a.value - b.value);
++  const totalWeight = sorted.reduce((sum, entry) => sum + entry.weight, 0);
++  if (!(totalWeight > 0)) return null;
++
++  const half = totalWeight / 2;
++  let cumulative = 0;
++  for (const entry of sorted) {
++    cumulative += entry.weight;
++    if (cumulative >= half) return entry.value;
++  }
++  return sorted[sorted.length - 1]?.value ?? null;
++}
++
++/**
++ * Rejette les anomalies par MAD (score z modifié standard 0.6745 · |x − médiane| / MAD).
++ * Si MAD = 0, seules les valeurs strictement égales à la médiane sont conservées.
++ */
++export function rejectOutliersMAD(
++  entries: { value: number; weight: number }[],
++  threshold = 3.5
++): { value: number; weight: number }[] {
++  const valid = entries.filter(
++    (entry) => Number.isFinite(entry.value) && Number.isFinite(entry.weight) && entry.weight > 0
++  );
++  if (valid.length < 3) return valid;
++
++  const median = weightedMedian(valid);
++  if (median === null) return [];
++
++  const mad = weightedMedian(
++    valid.map((entry) => ({ value: Math.abs(entry.value - median), weight: entry.weight }))
++  );
++  if (mad === null || mad === 0) {
++    return valid.filter((entry) => entry.value === median);
++  }
++
++  // Score z modifié standard : 0.6745 · |x − médiane| / MAD.
++  return valid.filter((entry) => (0.6745 * Math.abs(entry.value - median)) / mad <= threshold);
++}
++
++type TerrainClass = 'flat' | 'ascent' | 'descent';
++
++interface ExploitableObservation {
++  observation: ProfileObservation;
++  weight: number;
++  movingS: number;
++  speedKmH: number;
++  gradePct: number;
++  terrain: TerrainClass;
++}
++
++interface WeightedValue {
++  value: number;
++  weight: number;
++}
++
++function medianOrFallback(entries: WeightedValue[], fallback: number): number {
++  const median = weightedMedian(rejectOutliersMAD(entries));
++  if (median === null || !Number.isFinite(median)) return fallback;
++  return median;
++}
++
++function toExploitable(observation: ProfileObservation, options: Required<BuildProfileOptions>): ExploitableObservation | null {
++  if (!Number.isFinite(observation.distanceM) || observation.distanceM <= 0) return null;
++  if (!Number.isFinite(observation.durationS) || observation.durationS <= 0) return null;
++
++  const movingS =
++    observation.movingS != null && Number.isFinite(observation.movingS) && observation.movingS > 0
++      ? observation.movingS
++      : observation.durationS;
++
++  const quality = Number.isFinite(observation.quality ?? Number.NaN)
++    ? (observation.quality as number)
++    : 0.5;
++  if (quality < options.minQuality) return null;
++
++  const referenceMs = Date.parse(options.now);
++  const observedMs = Date.parse(observation.observedAt);
++  const ageDays =
++    Number.isFinite(referenceMs) && Number.isFinite(observedMs)
++      ? Math.max(0, (referenceMs - observedMs) / 86400000)
++      : 0;
++  const recency =
++    Number.isFinite(options.halfLifeDays) && options.halfLifeDays > 0
++      ? Math.pow(0.5, ageDays / options.halfLifeDays)
++      : 1;
++  const weight = recency * quality;
++  if (!(weight > 0)) return null;
++
++  const gainM = Number.isFinite(observation.gainM ?? Number.NaN)
++    ? Math.max(0, observation.gainM as number)
++    : null;
++  const lossM = Number.isFinite(observation.lossM ?? Number.NaN)
++    ? Math.max(0, observation.lossM as number)
++    : null;
++
++  const gradePct = Number.isFinite(observation.meanGradePct ?? Number.NaN)
++    ? (observation.meanGradePct as number)
++    : gainM !== null || lossM !== null
++      ? ((gainM ?? 0) - (lossM ?? 0)) / observation.distanceM * 100
++      : 0;
++
++  const terrain: TerrainClass =
++    gradePct > FLAT_GRADE_BOUND_PCT
++      ? 'ascent'
++      : gradePct < -FLAT_GRADE_BOUND_PCT
++        ? 'descent'
++        : 'flat';
++
++  const speedKmH = (observation.distanceM / movingS) * 3.6;
++
++  return { observation, weight, movingS, speedKmH, gradePct, terrain };
++}
++
++/** Courbe de vitesse relative en fonction de la pente (x = % de pente). */
++function buildGradeResponse(
++  flatSpeedKmH: number,
++  exploitable: ExploitableObservation[]
++): ResponseCurve {
++  const points: { x: number; value: number }[] = [{ x: 0, value: 1 }];
++  const reference = flatSpeedKmH > 0 ? flatSpeedKmH : FALLBACK_FLAT_SPEED_KMH;
++
++  for (const terrain of ['ascent', 'descent'] as const) {
++    const bucket = exploitable.filter((entry) => entry.terrain === terrain);
++    if (bucket.length === 0) continue;
++    const grade = weightedMedian(bucket.map((entry) => ({ value: entry.gradePct, weight: entry.weight })));
++    const speed = weightedMedian(bucket.map((entry) => ({ value: entry.speedKmH, weight: entry.weight })));
++    if (grade === null || speed === null) continue;
++    points.push({ x: Number(grade.toFixed(2)), value: Number((speed / reference).toFixed(4)) });
++  }
++
++  return { points: points.sort((a, b) => a.x - b.x), interpolate: 'linear' };
++}
++
++/** Indice ordinal de rugosité de surface (0 = lisse, 4 = très accidenté). */
++function surfaceRoughness(surface: string): number {
++  const key = surface.toLowerCase();
++  if (key.includes('pav') || key.includes('asphalt') || key.includes('concrete')) return 0;
++  if (key.includes('gravel') || key.includes('path') || key.includes('foot')) return 1;
++  if (key.includes('ground') || key.includes('dirt') || key.includes('earth')) return 1.5;
++  if (key.includes('grass')) return 2;
++  if (key.includes('sand')) return 2.5;
++  if (key.includes('rock') || key.includes('scree') || key.includes('stone')) return 3;
++  if (key.includes('snow')) return 4;
++  return 1;
++}
++
++/** Courbe de vitesse relative par rugosité de surface (données déclarées). */
++function buildSurfaceResponse(
++  flatSpeedKmH: number,
++  exploitable: ExploitableObservation[]
++): ResponseCurve {
++  const reference = flatSpeedKmH > 0 ? flatSpeedKmH : FALLBACK_FLAT_SPEED_KMH;
++  const byRoughness = new Map<number, WeightedValue[]>();
++
++  for (const entry of exploitable) {
++    const surface = entry.observation.surface;
++    if (surface == null || surface.trim() === '') continue;
++    const roughness = surfaceRoughness(surface);
++    const bucket = byRoughness.get(roughness) ?? [];
++    bucket.push({ value: entry.speedKmH, weight: entry.weight });
++    byRoughness.set(roughness, bucket);
++  }
++
++  if (byRoughness.size === 0) return { points: [{ x: 0, value: 1 }], interpolate: 'linear' };
++
++  const points = [...byRoughness.entries()]
++    .map(([roughness, bucket]) => {
++      const speed = weightedMedian(bucket) ?? reference;
++      return { x: roughness, value: Number(clamp(speed / reference, 0, 2).toFixed(4)) };
++    })
++    .sort((a, b) => a.x - b.x);
++
++  return { points, interpolate: 'linear' };
++}
++
++/** Décroissance exponentielle horaire estimée sur les vitesses observées. */
++function buildFatigueCurve(exploitable: ExploitableObservation[]): FatigueCurve {
++  const usable = exploitable.filter((entry) => entry.observation.durationS > 0 && entry.speedKmH > 0);
++  if (usable.length < 5) {
++    return { points: [{ x: 0, value: 1 }], decayPerHour: 0 };
++  }
++
++  const hours = usable.map((entry) => entry.observation.durationS / 3600);
++  const logSpeeds = usable.map((entry) => Math.log(entry.speedKmH));
++  const meanX = hours.reduce((sum, value) => sum + value, 0) / hours.length;
++  const meanY = logSpeeds.reduce((sum, value) => sum + value, 0) / logSpeeds.length;
++  let covariance = 0;
++  let variance = 0;
++  for (let index = 0; index < hours.length; index += 1) {
++    covariance += (hours[index] - meanX) * (logSpeeds[index] - meanY);
++    variance += (hours[index] - meanX) ** 2;
++  }
++
++  const slope = variance > 0 ? covariance / variance : 0;
++  const decayPerHour = clamp(-slope, 0, 0.2);
++  const points = Array.from({ length: 7 }, (_, hour) => ({
++    x: hour,
++    value: Number(Math.exp(-decayPerHour * hour).toFixed(4)),
++  }));
++
++  return { points, decayPerHour: Number(decayPerHour.toFixed(4)) };
++}
++
++/** Pauses médianes (minutes par heure active) observées sur durationS − movingS. */
++function buildPauseModel(exploitable: ExploitableObservation[]): PauseModel {
++  const entries = exploitable
++    .filter((entry) => entry.observation.durationS > 0)
++    .map((entry) => {
++      const stoppedS = Math.max(0, entry.observation.durationS - entry.movingS);
++      const hours = entry.observation.durationS / 3600;
++      return { value: stoppedS / 60 / hours, weight: entry.weight };
++    });
++
++  const pauseMinutesPerHour = medianOrFallback(entries, 0);
++  return {
++    pauseMinutesPerHour: Number(clamp(pauseMinutesPerHour, 0, 240).toFixed(2)),
++    pauseMinutesPerAscentM: 0,
++    minPauseMinutes: 0,
++  };
++}
++
++/** Régression linéaire vitesse ~ poids déclaré (≥ 5 points) sinon neutre. */
++function buildPackResponse(exploitable: ExploitableObservation[]): ResponseCurve {
++  const entries = exploitable.filter(
++    (entry) =>
++      entry.observation.packWeightKg != null &&
++      Number.isFinite(entry.observation.packWeightKg) &&
++      (entry.observation.packWeightKg as number) > 0
++  );
++
++  if (entries.length >= 5) {
++    const weights = entries.map((entry) => entry.observation.packWeightKg as number);
++    const speeds = entries.map((entry) => entry.speedKmH);
++    const meanWeight = weights.reduce((sum, value) => sum + value, 0) / weights.length;
++    const meanSpeed = speeds.reduce((sum, value) => sum + value, 0) / speeds.length;
++
++    let covariance = 0;
++    let variance = 0;
++    for (let index = 0; index < weights.length; index += 1) {
++      covariance += (weights[index] - meanWeight) * (speeds[index] - meanSpeed);
++      variance += (weights[index] - meanWeight) ** 2;
++    }
++
++    const slope = variance > 0 ? covariance / variance : 0;
++    const intercept = meanSpeed - slope * meanWeight;
++
++    if (intercept > 0 && slope < 0) {
++      const points = [0, 5, 10, 15, 20].map((x) => ({
++        x,
++        value: Number(clamp((intercept + slope * x) / intercept, 0, 2).toFixed(4)),
++      }));
++      return { points, interpolate: 'linear' };
++    }
++  }
++
++  return { points: [{ x: 0, value: 1 }], interpolate: 'linear' };
++}
++
++/** Calibration : froide sous 3, calibration < 10, personnalisation ≤ 20, contextuelle > 20 diversifiée. */
++function calibrationLevelFor(sampleCount: number, diversified: boolean): CalibrationLevel {
++  if (sampleCount < CALIBRATION_THRESHOLDS.calibration) return 'cold';
++  if (sampleCount < CALIBRATION_THRESHOLDS.personalization) return 'calibration';
++  if (sampleCount > CALIBRATION_THRESHOLDS.contextualization && diversified) {
++    return 'contextualization';
++  }
++  return 'personalization';
++}
++
++/** Confiance = couverture d'échantillon × pénalité de dispersion (plafond 0.95). */
++function confidenceFor(exploitable: ExploitableObservation[], sampleCount: number): Confidence {
++  if (sampleCount < CALIBRATION_THRESHOLDS.calibration) {
++    return makeConfidence({ score: 0, sampleCount, method: 'weighted_median_a3' });
++  }
++
++  const flatSpeeds = exploitable
++    .filter((entry) => entry.terrain === 'flat')
++    .map((entry) => ({ value: entry.speedKmH, weight: entry.weight }));
++  const samples = flatSpeeds.length >= 2 ? flatSpeeds : exploitable.map((entry) => ({
++    value: entry.speedKmH,
++    weight: entry.weight,
++  }));
++
++  const medianSpeed = weightedMedian(samples);
++  const totalWeight = samples.reduce((sum, entry) => sum + entry.weight, 0);
++  const meanAbsoluteDeviation =
++    medianSpeed !== null && totalWeight > 0
++      ? samples.reduce((sum, entry) => sum + entry.weight * Math.abs(entry.value - medianSpeed), 0) /
++        totalWeight
++      : 0;
++  const relativeDispersion =
++    medianSpeed !== null && medianSpeed > 0 ? meanAbsoluteDeviation / medianSpeed : 0;
++
++  const sampleScore = Math.min(1, sampleCount / CALIBRATION_THRESHOLDS.contextualization);
++  const score = Math.min(0.95, sampleScore * (1 - 0.7 * clamp01(relativeDispersion)));
++
++  return makeConfidence({ score, sampleCount, method: 'weighted_median_a3' });
++}
++
++/**
++ * Construit le profil appris à partir d'observations terrain.
++ * Moins de 3 observations exploitables ⇒ profil froid explicitement non personnalisé.
++ */
++export function buildPerformanceProfile(
++  observations: ProfileObservation[],
++  options: BuildProfileOptions = {}
++): LearnedPerformanceProfile {
++  const resolvedOptions: Required<BuildProfileOptions> = {
++    now: options.now ?? new Date().toISOString(),
++    halfLifeDays: options.halfLifeDays ?? DEFAULT_HALF_LIFE_DAYS,
++    minQuality: options.minQuality ?? DEFAULT_MIN_QUALITY,
++  };
++
++  const exploitable = observations
++    .map((observation) => toExploitable(observation, resolvedOptions))
++    .filter((entry): entry is ExploitableObservation => entry !== null);
++
++  const flatEntries = exploitable
++    .filter((entry) => entry.terrain === 'flat')
++    .map((entry) => ({ value: entry.speedKmH, weight: entry.weight }));
++  const ascentEntries = exploitable
++    .filter((entry) => entry.terrain === 'ascent' && (entry.observation.gainM ?? 0) > 0)
++    .map((entry) => ({
++      value: ((entry.observation.gainM as number) / entry.movingS) * 3600,
++      weight: entry.weight,
++    }));
++  const descentEntries = exploitable
++    .filter((entry) => entry.terrain === 'descent' && (entry.observation.lossM ?? 0) > 0)
++    .map((entry) => ({
++      value: ((entry.observation.lossM as number) / entry.movingS) * 3600,
++      weight: entry.weight,
++    }));
++
++  const flatSpeedKmH = medianOrFallback(flatEntries, FALLBACK_FLAT_SPEED_KMH);
++  const ascentSpeedMPerHour = medianOrFallback(ascentEntries, FALLBACK_ASCENT_SPEED_M_PER_HOUR);
++  const descentSpeedMPerHour = medianOrFallback(descentEntries, FALLBACK_DESCENT_SPEED_M_PER_HOUR);
++
++  const sampleCount = exploitable.length;
++  const distinctTerrains = new Set(exploitable.map((entry) => entry.terrain));
++  const distinctSurfaces = new Set(
++    exploitable.map((entry) => entry.observation.surface).filter((surface): surface is string => Boolean(surface))
++  );
++  const diversified = distinctTerrains.size >= 2 || distinctSurfaces.size >= 2;
++  const calibrationLevel = calibrationLevelFor(sampleCount, diversified);
++
++  return {
++    activityType: 'hiking',
++    flatSpeedKmH,
++    ascentSpeedMPerHour,
++    descentSpeedMPerHour,
++    gradeResponse: buildGradeResponse(flatSpeedKmH, exploitable),
++    surfaceResponse: buildSurfaceResponse(flatSpeedKmH, exploitable),
++    fatigueCurve: buildFatigueCurve(exploitable),
++    pauseModel: buildPauseModel(exploitable),
++    packResponse: buildPackResponse(exploitable),
++    confidence: confidenceFor(exploitable, sampleCount),
++    sampleCount,
++    calibrationLevel,
++    modelVersion: PERFORMANCE_PROFILE_MODEL_VERSION,
++    computedAt: resolvedOptions.now,
++    personalized: calibrationLevel !== 'cold',
++  };
++}
+diff --git a/src/features/adventure-intelligence/domain/prediction.ts b/src/features/adventure-intelligence/domain/prediction.ts
+new file mode 100644
+index 00000000..8d066e27
+--- /dev/null
++++ b/src/features/adventure-intelligence/domain/prediction.ts
+@@ -0,0 +1,334 @@
++/**
++ * A3 — Prédiction personnelle segment et route (moteur pur).
++ *
++ * P50 = durée via `resolvePace` ; P90 = P50 × facteur d'incertitude qui
++ * augmente quand la confiance baisse. La fatigue cumulée dégrade l'allure au
++ * fil de la route (`computeFatigue` par segment), les stratégies multiplient
++ * la vitesse (confort 0.92, recommandée 1.0, rapide 1.12) et les facteurs
++ * restent explicables (`PredictionFactor[]`).
++ */
++import { clamp01, COLD_CONFIDENCE, type Confidence } from './confidence';
++import { computeFatigue } from './fatigue';
++import { resolvePace, type ResolvedPace } from './paceResolver';
++import { PERFORMANCE_PROFILE_MODEL_VERSION } from './performanceProfile';
++import type { PauseModel, PerformanceProfile } from '../schemas/performance.schema';
++import type {
++  EngineWarningSchema,
++} from '../schemas/adventurePlan.schema';
++import type {
++  PredictionFactor,
++  RoutePrediction,
++  RouteStrategy,
++  SegmentPrediction,
++} from '../schemas/prediction.schema';
++
++export const STRATEGIES = ['comfort', 'recommended', 'fast'] as const;
++
++/** Facteurs de vitesse par stratégie (confort plus lent, rapide plus vite). */
++export const STRATEGY_SPEED_FACTORS: Record<RouteStrategy, number> = {
++  comfort: 0.92,
++  recommended: 1,
++  fast: 1.12,
++};
++
++export const BASE_UNCERTAINTY_FACTOR = 1.05;
++export const UNCERTAINTY_PER_MISSING_CONFIDENCE = 0.35;
++/** Effet maximal de la fatigue cumulée sur l'allure (+30 % de durée à 100). */
++export const FATIGUE_PACE_IMPACT = 0.3;
++
++/** Modèle de pauses de repli (profil absent) : 5 min/h, 2 min/100 m D+. */
++export const GENERIC_PAUSE_MODEL: PauseModel = {
++  pauseMinutesPerHour: 5,
++  pauseMinutesPerAscentM: 0.02,
++  minPauseMinutes: 0,
++};
++
++export interface SegmentPredictionInput {
++  segmentId: number;
++  distanceM: number;
++  gainM: number;
++  lossM: number;
++  meanGradePct?: number | null;
++  technicalClass?: number | null;
++  surface?: string | null;
++  packWeightKg?: number | null;
++  fatigueBefore?: number | null;
++}
++
++export interface RouteSegmentInput {
++  segmentId: number;
++  distanceM: number;
++  gainM: number;
++  lossM: number;
++  technicalClass?: number | null;
++}
++
++export interface RoutePredictionInput {
++  segments: RouteSegmentInput[];
++  startAt: string;
++  profile: PerformanceProfile | null;
++  confidence: Confidence | null;
++  packWeightKg?: number | null;
++  turnaroundAfterS?: number | null;
++}
++
++/** Prédiction de route sans `userId` : l'identité est ajoutée par le serveur. */
++export type LearnedRoutePrediction = Omit<RoutePrediction, 'userId'>;
++
++function round3(value: number): number {
++  return Math.round(value * 1000) / 1000;
++}
++
++/** Facteur d'incertitude P90/P50 : 1.05 à confiance 1, +0.35 à confiance 0. */
++function uncertaintyFactor(score: number): number {
++  return BASE_UNCERTAINTY_FACTOR + UNCERTAINTY_PER_MISSING_CONFIDENCE * (1 - clamp01(score));
++}
++
++function clampNumber(value: number, min: number, max: number): number {
++  if (!Number.isFinite(value)) return min;
++  return Math.min(max, Math.max(min, value));
++}
++
++function buildFactors(
++  input: SegmentPredictionInput,
++  confidence: Confidence,
++  effortScore: number
++): PredictionFactor[] {
++  const distanceKm = Math.max(0, input.distanceM) / 1000;
++  const gainPerKm = distanceKm > 0 ? Math.max(0, input.gainM) / distanceKm : 0;
++  const technicalClass = input.technicalClass ?? 0;
++  const packWeightKg = input.packWeightKg ?? 0;
++  const fatigueBefore = input.fatigueBefore ?? 0;
++
++  return [
++    {
++      code: 'slope',
++      label: 'Pente',
++      impact: gainPerKm > 0 ? 'increase' : 'neutral',
++      weight: clamp01(gainPerKm / 500),
++    },
++    {
++      code: 'technical',
++      label: 'Technicité',
++      impact: technicalClass >= 3 ? 'increase' : 'neutral',
++      weight: clamp01(technicalClass / 5),
++    },
++    {
++      code: 'pack',
++      label: 'Portage',
++      impact: packWeightKg >= 5 ? 'increase' : 'neutral',
++      weight: clamp01(packWeightKg / 20),
++    },
++    {
++      code: 'fatigue',
++      label: 'Fatigue',
++      impact: fatigueBefore > 0 || effortScore >= 50 ? 'increase' : 'neutral',
++      weight: clamp01(fatigueBefore / 100),
++    },
++    {
++      code: 'confidence',
++      label: 'Confiance',
++      impact: confidence.score < 0.5 ? 'increase' : 'neutral',
++      weight: clamp01(1 - confidence.score),
++    },
++  ];
++}
++
++/**
++ * Prédit un segment : durée P50/P90, fourchette d'allure, effort, difficulté
++ * personnelle, pause recommandée et facteurs explicables.
++ */
++export function predictSegment(
++  input: SegmentPredictionInput,
++  profile: PerformanceProfile | null,
++  confidence: Confidence | null,
++  options?: { pace?: ResolvedPace }
++): SegmentPrediction {
++  const pace =
++    options?.pace ??
++    resolvePace({
++      distanceM: input.distanceM,
++      gainM: input.gainM,
++      lossM: input.lossM,
++      surface: input.surface,
++      profile,
++      confidence,
++      flagEnabled: true,
++    });
++  const effectiveConfidence = pace.confidence;
++
++  const distanceKm = Math.max(0, input.distanceM) / 1000;
++  const durationP50Seconds = Math.max(1, Math.round(distanceKm * pace.paceMinPerKm * 60));
++  const uncertainty = uncertaintyFactor(effectiveConfidence.score);
++  const durationP90Seconds = Math.max(
++    durationP50Seconds,
++    Math.round(durationP50Seconds * uncertainty)
++  );
++
++  const fatigueBefore = input.fatigueBefore != null ? clampNumber(input.fatigueBefore, 0, 100) : null;
++  const fatigue = computeFatigue({
++    activeDurationS: durationP50Seconds,
++    gainM: input.gainM,
++    lossM: input.lossM,
++    technicalClass: input.technicalClass ?? null,
++    packWeightKg: input.packWeightKg ?? null,
++    declaredFatigue: fatigueBefore != null ? fatigueBefore / 10 : null,
++  });
++  const effortScore = clampNumber(Math.round(fatigue.score), 0, 100);
++
++  const slopeIntensity = distanceKm > 0 ? Math.min(20, Math.max(0, input.gainM) / distanceKm / 50) : 0;
++  const technicalContribution = Math.min(15, Math.max(0, input.technicalClass ?? 0) * 3);
++  const personalDifficulty = clampNumber(
++    Math.round(effortScore * 0.7 + slopeIntensity + technicalContribution),
++    0,
++    100
++  );
++
++  const pauseModel = profile?.pauseModel ?? GENERIC_PAUSE_MODEL;
++  const pauseMinutes =
++    pauseModel.minPauseMinutes +
++    pauseModel.pauseMinutesPerHour * (durationP50Seconds / 3600) +
++    pauseModel.pauseMinutesPerAscentM * Math.max(0, input.gainM);
++  const recommendedPauseSeconds = Math.max(0, Math.round(pauseMinutes * 60));
++
++  return {
++    segmentId: input.segmentId,
++    durationP50Seconds,
++    durationP90Seconds,
++    paceRangeMinPerKm: [round3(pace.paceMinPerKm), round3(pace.paceMinPerKm * uncertainty)],
++    effortScore,
++    personalDifficulty,
++    recommendedPauseSeconds,
++    confidence: effectiveConfidence,
++    factors: buildFactors(input, effectiveConfidence, effortScore),
++  };
++}
++
++/**
++ * Prédit une route complète pour une stratégie : P50/P90, ETA, pauses,
++ * fatigue max, heure de demi-tour et segments critiques (top 3 difficulté).
++ */
++export function predictRoute(
++  input: RoutePredictionInput,
++  strategy: RouteStrategy
++): LearnedRoutePrediction {
++  const parsedStartMs = Date.parse(input.startAt);
++  const startMs = Number.isFinite(parsedStartMs) ? parsedStartMs : Date.now();
++  const speedFactor = STRATEGY_SPEED_FACTORS[strategy];
++  const durationFactor = speedFactor > 0 ? 1 / speedFactor : 1;
++
++  const effectiveConfidence = input.confidence ?? input.profile?.confidence ?? COLD_CONFIDENCE;
++  const uncertainty = uncertaintyFactor(effectiveConfidence.score);
++
++  let cumulativeFatigue = 0;
++  let totalP50MovingSeconds = 0;
++  let totalP90MovingSeconds = 0;
++  let pausesSeconds = 0;
++  let personalDifficultyWeighted = 0;
++  let totalDistanceM = 0;
++  let maxFatigue = 0;
++  const difficulties: { segmentId: number; difficulty: number }[] = [];
++
++  for (const segment of input.segments) {
++    const segmentPrediction = predictSegment(
++      {
++        segmentId: segment.segmentId,
++        distanceM: segment.distanceM,
++        gainM: segment.gainM,
++        lossM: segment.lossM,
++        technicalClass: segment.technicalClass ?? null,
++        packWeightKg: input.packWeightKg ?? null,
++        fatigueBefore: cumulativeFatigue,
++      },
++      input.profile,
++      effectiveConfidence
++    );
++
++    const fatigueMultiplier = 1 + FATIGUE_PACE_IMPACT * clamp01(cumulativeFatigue / 100);
++    const p50Seconds = Math.max(
++      1,
++      Math.round(segmentPrediction.durationP50Seconds * fatigueMultiplier * durationFactor)
++    );
++    const p90Seconds = Math.max(
++      p50Seconds,
++      Math.round(segmentPrediction.durationP90Seconds * fatigueMultiplier * durationFactor)
++    );
++
++    totalP50MovingSeconds += p50Seconds;
++    totalP90MovingSeconds += p90Seconds;
++    pausesSeconds += segmentPrediction.recommendedPauseSeconds;
++    totalDistanceM += Math.max(0, segment.distanceM);
++    personalDifficultyWeighted +=
++      segmentPrediction.personalDifficulty * Math.max(0, segment.distanceM);
++    difficulties.push({
++      segmentId: segment.segmentId,
++      difficulty: segmentPrediction.personalDifficulty,
++    });
++
++    const fatigue = computeFatigue({
++      activeDurationS: p50Seconds,
++      gainM: segment.gainM,
++      lossM: segment.lossM,
++      technicalClass: segment.technicalClass ?? null,
++      packWeightKg: input.packWeightKg ?? null,
++      declaredFatigue: clamp01(cumulativeFatigue / 100) * 10,
++    });
++    cumulativeFatigue = fatigue.score;
++    maxFatigue = Math.max(maxFatigue, cumulativeFatigue);
++  }
++
++  const totalDurationP50Seconds = Math.max(1, totalP50MovingSeconds + pausesSeconds);
++  const totalDurationP90Seconds = Math.max(
++    totalDurationP50Seconds,
++    totalP90MovingSeconds + pausesSeconds
++  );
++
++  const totalDistanceKm = totalDistanceM / 1000;
++  const movingPaceP50 = totalDistanceKm > 0 ? totalP50MovingSeconds / 60 / totalDistanceKm : 0;
++
++  const warnings: EngineWarningSchema[] = [];
++  if (input.profile == null || input.profile.calibrationLevel === 'cold') {
++    warnings.push({
++      code: 'cold_profile',
++      message:
++        'Profil froid — prédiction non personnalisée (allure générique ou standard appliquée).',
++      severity: 'info',
++    });
++  }
++  if (effectiveConfidence.score < 0.5) {
++    warnings.push({
++      code: 'low_confidence',
++      message: 'Confiance faible — fourchette P50–P90 élargie.',
++      severity: 'warning',
++    });
++  }
++
++  const criticalSegmentIds = [...difficulties]
++    .sort((a, b) => b.difficulty - a.difficulty)
++    .slice(0, 3)
++    .map((entry) => entry.segmentId);
++
++  return {
++    strategy,
++    etaP50: new Date(startMs + totalDurationP50Seconds * 1000).toISOString(),
++    etaP90: new Date(startMs + totalDurationP90Seconds * 1000).toISOString(),
++    totalDurationP50Seconds,
++    totalDurationP90Seconds,
++    paceP25MinPerKm: round3(movingPaceP50 / uncertainty),
++    paceP50MinPerKm: round3(movingPaceP50),
++    paceP75MinPerKm: round3(movingPaceP50 * uncertainty),
++    pausesSeconds,
++    personalDifficulty:
++      totalDistanceM > 0 ? Math.round(personalDifficultyWeighted / totalDistanceM) : 0,
++    maxFatigue: Math.round(maxFatigue),
++    turnaroundTime:
++      input.turnaroundAfterS != null
++        ? new Date(startMs + Math.max(0, input.turnaroundAfterS) * 1000).toISOString()
++        : undefined,
++    criticalSegmentIds,
++    warnings,
++    confidence: effectiveConfidence,
++    modelVersion: PERFORMANCE_PROFILE_MODEL_VERSION,
++    computedAt: new Date().toISOString(),
++  };
++}
+diff --git a/src/features/adventure-intelligence/server/buildUserProfile.ts b/src/features/adventure-intelligence/server/buildUserProfile.ts
+new file mode 100644
+index 00000000..9bd5928f
+--- /dev/null
++++ b/src/features/adventure-intelligence/server/buildUserProfile.ts
+@@ -0,0 +1,83 @@
++/**
++ * A3 — Orchestrateur serveur de construction du Profil Terrain.
++ *
++ * Client injecté (`ProfileBuildClient`) : aucune dépendance Supabase ici,
++ * testable sans réseau. Idempotent par `modelVersion` (`a3-v1`) : le profil
++ * est upserté sur `(user_id, activity_type)` puis un snapshot immuable est
++ * inséré sur `(profile_id, model_version)` (contrainte unique A1).
++ * Aucune donnée de santé : uniquement les observations GPS Phase 2.
++ */
++import 'server-only';
++import {
++  buildPerformanceProfile,
++  type LearnedPerformanceProfile,
++  type ProfileObservation,
++} from '../domain/performanceProfile';
++
++/** Plafond d'observations lues par recalcul (historique récent). */
++export const PROFILE_BUILD_LIMIT = 500;
++export const ACTIVITY_TYPE = 'hiking';
++export const PROFILE_VERSION_REASON = 'recompute';
++
++export interface ProfileBuildClient {
++  getObservations(userId: string, limit?: number): Promise<ProfileObservation[]>;
++  upsertProfile(row: unknown): Promise<{ id: string }>;
++  insertProfileVersion(row: unknown): Promise<void>;
++}
++
++export interface BuildUserProfileResult {
++  status: 'built' | 'cold';
++  sampleCount: number;
++}
++
++/** Mapping domaine → colonnes `user_performance_profiles` (schéma A1/M3). */
++function toProfileRow(userId: string, profile: LearnedPerformanceProfile): Record<string, unknown> {
++  return {
++    user_id: userId,
++    activity_type: ACTIVITY_TYPE,
++    model_version: profile.modelVersion,
++    flat_speed_kmh: profile.flatSpeedKmH,
++    ascent_speed_m_per_h: profile.ascentSpeedMPerHour,
++    descent_speed_m_per_h: profile.descentSpeedMPerHour,
++    grade_response: profile.gradeResponse,
++    surface_response: profile.surfaceResponse,
++    fatigue_curve: profile.fatigueCurve,
++    pause_model: profile.pauseModel,
++    pack_response: profile.packResponse,
++    calibration_level: profile.calibrationLevel,
++    confidence: profile.confidence,
++    sample_count: profile.sampleCount,
++    computed_at: profile.computedAt,
++  };
++}
++
++/**
++ * Reconstruit le profil d'un utilisateur à partir de ses observations privées,
++ * puis persiste le profil courant et son snapshot versionné.
++ * Profil sans échantillon exploitable ⇒ statut `cold` (profil neutre écrit).
++ */
++export async function buildUserProfile(
++  userId: string,
++  client: ProfileBuildClient
++): Promise<BuildUserProfileResult> {
++  const observations = await client.getObservations(userId, PROFILE_BUILD_LIMIT);
++  const profile = buildPerformanceProfile(observations);
++
++  const saved = await client.upsertProfile(toProfileRow(userId, profile));
++
++  await client.insertProfileVersion({
++    profile_id: saved.id,
++    user_id: userId,
++    activity_type: ACTIVITY_TYPE,
++    model_version: profile.modelVersion,
++    snapshot: { ...profile, userId },
++    confidence: profile.confidence,
++    sample_count: profile.sampleCount,
++    reason: PROFILE_VERSION_REASON,
++  });
++
++  return {
++    status: profile.personalized ? 'built' : 'cold',
++    sampleCount: profile.sampleCount,
++  };
++}
+diff --git a/src/features/adventure-intelligence/server/featureFlags.ts b/src/features/adventure-intelligence/server/featureFlags.ts
+new file mode 100644
+index 00000000..b98e04dd
+--- /dev/null
++++ b/src/features/adventure-intelligence/server/featureFlags.ts
+@@ -0,0 +1,32 @@
++import 'server-only';
++
++import { createClient } from '@/lib/supabase/server';
++
++/** Défauts sûrs des flags A3 (migration 20260911150000, tous désactivés). */
++export const A3_FLAGS = {
++  performance_profile_v2: false,
++  route_prediction_v2: false,
++};
++
++/**
++ * Lit les flags A3 via la RPC `current_feature_flags()` (SECURITY DEFINER).
++ * Jamais de throw : repli fail-safe sur `A3_FLAGS` (tout désactivé).
++ */
++export async function currentAdventureFeatureFlags(): Promise<typeof A3_FLAGS> {
++  try {
++    const supabase = await createClient();
++    const { data, error } = await supabase.rpc('current_feature_flags');
++    if (error || !Array.isArray(data)) return { ...A3_FLAGS };
++
++    const byId = new Map(
++      (data as { id: string; enabled: boolean }[]).map((row) => [row.id, row.enabled])
++    );
++
++    return {
++      performance_profile_v2: byId.get('performance_profile_v2') ?? false,
++      route_prediction_v2: byId.get('route_prediction_v2') ?? false,
++    };
++  } catch {
++    return { ...A3_FLAGS };
++  }
++}
+diff --git a/src/features/hiking/copilot/CopilotEngine.ts b/src/features/hiking/copilot/CopilotEngine.ts
+index b1433186..1361f5fe 100644
+--- a/src/features/hiking/copilot/CopilotEngine.ts
++++ b/src/features/hiking/copilot/CopilotEngine.ts
+@@ -14,11 +14,24 @@ export interface HikeContextSummary {
+   userStats?: HikingStatistics | null;
+ }
+ 
++/** Résolution d'allure injectable (ex. `resolvePace` A3) — optionnelle. */
++export interface CopilotPaceResolution {
++  paceMinPerKm: number;
++}
++
++export type CopilotPaceResolver = (context: HikeContextSummary) => CopilotPaceResolution | null;
++
+ export class CopilotEngine {
+   /**
+    * Generates a context-aware answer for a hiker's question.
++   * `paceResolver` optionnel : sans lui, la référence historique de 15 min/km
++   * reste strictement inchangée (rétrocompatibilité).
+    */
+-  public static generateAnswer(question: string, context: HikeContextSummary): string {
++  public static generateAnswer(
++    question: string,
++    context: HikeContextSummary,
++    paceResolver?: CopilotPaceResolver | null
++  ): string {
+     const qLower = question.toLowerCase();
+ 
+     if (qLower.includes('reste') || qLower.includes('combien')) {
+@@ -38,7 +51,11 @@ export class CopilotEngine {
+ 
+     if (qLower.includes('temps') || qLower.includes('retard') || qLower.includes('estimation')) {
+       if (context.paceMinPerKm > 0) {
+-        const expectedPace = 15; // standard 15 min/km for hiking
++        const resolvedPace = paceResolver?.(context)?.paceMinPerKm;
++        const expectedPace =
++          resolvedPace != null && Number.isFinite(resolvedPace) && resolvedPace > 0
++            ? resolvedPace
++            : 15; // standard 15 min/km for hiking (historique, sans résolveur)
+         const diffPace = context.paceMinPerKm - expectedPace;
+         if (diffPace > 5) {
+           return `Votre allure actuelle est de ${context.paceMinPerKm.toFixed(1)} min/km. Vous êtes légèrement en dessous de l'allure estimée, prévoyez un peu plus de temps.`;
+diff --git a/supabase/migrations/20260911150000_a3_feature_flags.sql b/supabase/migrations/20260911150000_a3_feature_flags.sql
+new file mode 100644
+index 00000000..511abdd8
+--- /dev/null
++++ b/supabase/migrations/20260911150000_a3_feature_flags.sql
+@@ -0,0 +1,10 @@
++-- ==============================================================================
++-- A3 — Feature flags Phase 3 : Profil Terrain et prédictions personnelles
++-- Insertion idempotente uniquement ; les deux flags restent désactivés par
++-- défaut (ADR-AI-008, fallback sûr). Aucun autre changement.
++-- ==============================================================================
++
++INSERT INTO public.feature_flags(id, enabled) VALUES
++  ('performance_profile_v2', false),
++  ('route_prediction_v2', false)
++ON CONFLICT (id) DO NOTHING;
+diff --git a/tests/adventure-intelligence/build-profile.server.spec.ts b/tests/adventure-intelligence/build-profile.server.spec.ts
+new file mode 100644
+index 00000000..5cbc1f9e
+--- /dev/null
++++ b/tests/adventure-intelligence/build-profile.server.spec.ts
+@@ -0,0 +1,191 @@
++import { describe, it, expect, vi, beforeEach } from 'vitest';
++
++vi.mock('@/lib/supabase/server', () => ({
++  createClient: vi.fn(),
++}));
++
++import { createClient } from '@/lib/supabase/server';
++import {
++  A3_FLAGS,
++  currentAdventureFeatureFlags,
++} from '@/features/adventure-intelligence/server/featureFlags';
++import {
++  PROFILE_BUILD_LIMIT,
++  buildUserProfile,
++  type ProfileBuildClient,
++} from '@/features/adventure-intelligence/server/buildUserProfile';
++import type { ProfileObservation } from '@/features/adventure-intelligence/domain/performanceProfile';
++
++const USER_ID = '66666666-6666-4666-8666-666666666666';
++const PROFILE_ID = '77777777-7777-4777-8777-777777777777';
++const NOW = new Date().toISOString();
++
++function observation(overrides: Partial<ProfileObservation> = {}): ProfileObservation {
++  return {
++    observedAt: NOW,
++    distanceM: 5000,
++    durationS: 3600,
++    movingS: 3600,
++    gainM: 0,
++    lossM: 0,
++    meanGradePct: 0,
++    quality: 0.9,
++    ...overrides,
++  };
++}
++
++function makeClient(observations: ProfileObservation[] | Error) {
++  const upserts: unknown[] = [];
++  const versions: unknown[] = [];
++  const calls: Array<{ userId: string; limit?: number }> = [];
++  const client: ProfileBuildClient = {
++    getObservations: vi.fn(async (userId: string, limit?: number) => {
++      calls.push({ userId, limit });
++      if (observations instanceof Error) throw observations;
++      return observations;
++    }),
++    upsertProfile: vi.fn(async (row: unknown) => {
++      upserts.push(row);
++      return { id: PROFILE_ID };
++    }),
++    insertProfileVersion: vi.fn(async (row: unknown) => {
++      versions.push(row);
++    }),
++  };
++  return { client, calls, upserts, versions };
++}
++
++describe('Flags A3 — TEST-A3-FLAG', () => {
++  beforeEach(() => {
++    vi.clearAllMocks();
++  });
++
++  it('TEST-A3-FLAG-01: lit les flags via RPC et complète les manquants à false', async () => {
++    const rpc = vi.fn().mockResolvedValue({
++      data: [
++        { id: 'performance_profile_v2', enabled: true },
++        { id: 'route_prediction_v2', enabled: false },
++        { id: 'hub_all_enabled', enabled: true },
++      ],
++      error: null,
++    });
++    (createClient as ReturnType<typeof vi.fn>).mockResolvedValue({ rpc });
++
++    const flags = await currentAdventureFeatureFlags();
++
++    expect(rpc).toHaveBeenCalledWith('current_feature_flags');
++    expect(flags).toEqual({ performance_profile_v2: true, route_prediction_v2: false });
++
++    rpc.mockResolvedValue({ data: [{ id: 'performance_profile_v2', enabled: false }], error: null });
++    const partial = await currentAdventureFeatureFlags();
++    expect(partial).toEqual({ performance_profile_v2: false, route_prediction_v2: false });
++  });
++
++  it('TEST-A3-FLAG-02: erreur ou exception ⇒ repli fail-safe tout désactivé', async () => {
++    (createClient as ReturnType<typeof vi.fn>).mockResolvedValue({
++      rpc: vi.fn().mockResolvedValue({ data: null, error: { message: 'rpc absente' } }),
++    });
++    await expect(currentAdventureFeatureFlags()).resolves.toEqual({
++      performance_profile_v2: false,
++      route_prediction_v2: false,
++    });
++
++    (createClient as ReturnType<typeof vi.fn>).mockRejectedValue(new Error('supabase down'));
++    await expect(currentAdventureFeatureFlags()).resolves.toEqual(A3_FLAGS);
++
++    expect(A3_FLAGS).toEqual({ performance_profile_v2: false, route_prediction_v2: false });
++  });
++});
++
++describe('Construction du profil serveur — TEST-A3-BUILD', () => {
++  beforeEach(() => {
++    vi.clearAllMocks();
++  });
++
++  it('TEST-A3-BUILD-01: profil construit, upsert profil puis snapshot versionné', async () => {
++    const observations = Array.from({ length: 10 }, () => observation());
++    const { client, calls, upserts, versions } = makeClient(observations);
++
++    const result = await buildUserProfile(USER_ID, client);
++
++    expect(result).toEqual({ status: 'built', sampleCount: 10 });
++    expect(calls).toEqual([{ userId: USER_ID, limit: PROFILE_BUILD_LIMIT }]);
++
++    expect(upserts).toHaveLength(1);
++    const row = upserts[0] as Record<string, unknown>;
++    expect(row).toMatchObject({
++      user_id: USER_ID,
++      activity_type: 'hiking',
++      model_version: 'a3-v1',
++      flat_speed_kmh: 5,
++      calibration_level: 'personalization',
++      sample_count: 10,
++    });
++    expect(row.confidence).toMatchObject({ method: 'weighted_median_a3' });
++    expect(row.grade_response).toMatchObject({ points: expect.any(Array) });
++    expect(row.pause_model).toMatchObject({ pauseMinutesPerHour: expect.any(Number) });
++
++    expect(versions).toHaveLength(1);
++    const version = versions[0] as Record<string, unknown>;
++    expect(version).toMatchObject({
++      profile_id: PROFILE_ID,
++      user_id: USER_ID,
++      activity_type: 'hiking',
++      model_version: 'a3-v1',
++      sample_count: 10,
++      reason: 'recompute',
++    });
++    const snapshot = version.snapshot as Record<string, unknown>;
++    expect(snapshot.userId).toBe(USER_ID);
++    expect(snapshot.modelVersion).toBe('a3-v1');
++    expect(snapshot.personalized).toBe(true);
++
++    // L'ordre est normatif : profil d'abord (id), version ensuite.
++    const upsertOrder = (client.upsertProfile as ReturnType<typeof vi.fn>).mock.invocationCallOrder[0];
++    const versionOrder = (client.insertProfileVersion as ReturnType<typeof vi.fn>).mock.invocationCallOrder[0];
++    expect(upsertOrder).toBeLessThan(versionOrder);
++  });
++
++  it('TEST-A3-BUILD-02: profil vide ⇒ statut cold mais profil persistant', async () => {
++    const { client, upserts, versions } = makeClient([]);
++
++    const result = await buildUserProfile(USER_ID, client);
++
++    expect(result).toEqual({ status: 'cold', sampleCount: 0 });
++    const row = upserts[0] as Record<string, unknown>;
++    expect(row.calibration_level).toBe('cold');
++    expect(Number(row.flat_speed_kmh)).toBeGreaterThan(0);
++    expect(versions).toHaveLength(1);
++    const version = versions[0] as Record<string, unknown>;
++    expect(version.model_version).toBe('a3-v1');
++    expect((version.snapshot as Record<string, unknown>).personalized).toBe(false);
++  });
++
++  it('TEST-A3-BUILD-03: idempotence par modelVersion a3-v1 (recalculs successifs)', async () => {
++    const observations = Array.from({ length: 10 }, () => observation());
++    const { client, upserts, versions } = makeClient(observations);
++
++    await buildUserProfile(USER_ID, client);
++    await buildUserProfile(USER_ID, client);
++
++    expect(upserts).toHaveLength(2);
++    expect(versions).toHaveLength(2);
++    for (const row of upserts) {
++      expect((row as Record<string, unknown>).model_version).toBe('a3-v1');
++      expect((row as Record<string, unknown>).user_id).toBe(USER_ID);
++      expect((row as Record<string, unknown>).activity_type).toBe('hiking');
++    }
++    for (const row of versions) {
++      expect((row as Record<string, unknown>).model_version).toBe('a3-v1');
++      expect((row as Record<string, unknown>).profile_id).toBe(PROFILE_ID);
++    }
++  });
++
++  it('TEST-A3-BUILD-04: une erreur de lecture remonte sans écriture partielle', async () => {
++    const { client, upserts, versions } = makeClient(new Error('observations indisponibles'));
++
++    await expect(buildUserProfile(USER_ID, client)).rejects.toThrow('observations indisponibles');
++    expect(upserts).toHaveLength(0);
++    expect(versions).toHaveLength(0);
++  });
++});
+diff --git a/tests/adventure-intelligence/copilot-pace.spec.ts b/tests/adventure-intelligence/copilot-pace.spec.ts
+new file mode 100644
+index 00000000..bba210c6
+--- /dev/null
++++ b/tests/adventure-intelligence/copilot-pace.spec.ts
+@@ -0,0 +1,56 @@
++import { describe, it, expect, vi } from 'vitest';
++import { CopilotEngine, type HikeContextSummary } from '@/features/hiking/copilot/CopilotEngine';
++
++function context(paceMinPerKm: number): HikeContextSummary {
++  return {
++    distanceKm: 6.5,
++    durationSeconds: 5400,
++    paceMinPerKm,
++  };
++}
++
++describe('Copilote — résolveur d’allure optionnel (TEST-A3-COP)', () => {
++  it('TEST-A3-COP-01: sans résolveur, le comportement historique 15 min/km reste identique', () => {
++    const slow = CopilotEngine.generateAnswer('Est-ce que je suis en retard ?', context(21));
++    expect(slow).toContain('prévoyez un peu plus de temps');
++
++    const fast = CopilotEngine.generateAnswer('Est-ce que je suis en retard ?', context(12));
++    expect(fast).toContain('Excellente allure');
++
++    // Référence historique exacte : 20 − 15 = 5, pas > 5 ⇒ pas d'alerte.
++    const boundary = CopilotEngine.generateAnswer('Est-ce que je suis en retard ?', context(20));
++    expect(boundary).toContain('Excellente allure');
++    expect(boundary).toContain('20.0 min/km');
++  });
++
++  it('TEST-A3-COP-02: résolveur injecté utilisé, repli sûr sur 15 si null/invalide', () => {
++    const resolver = vi.fn(() => ({ paceMinPerKm: 25 }));
++    const personalized = CopilotEngine.generateAnswer(
++      'Est-ce que je suis en retard ?',
++      context(21),
++      resolver
++    );
++
++    expect(resolver).toHaveBeenCalledTimes(1);
++    expect(resolver).toHaveBeenCalledWith(expect.objectContaining({ distanceKm: 6.5 }));
++    // 21 − 25 = −4 ⇒ dans les temps selon le profil appris.
++    expect(personalized).toContain('Excellente allure');
++
++    const nullResolver = vi.fn(() => null);
++    const fallback = CopilotEngine.generateAnswer(
++      'Est-ce que je suis en retard ?',
++      context(21),
++      nullResolver
++    );
++    expect(nullResolver).toHaveBeenCalledTimes(1);
++    expect(fallback).toContain('prévoyez un peu plus de temps');
++
++    const invalidResolver = vi.fn(() => ({ paceMinPerKm: 0 }));
++    const invalid = CopilotEngine.generateAnswer(
++      'Est-ce que je suis en retard ?',
++      context(21),
++      invalidResolver
++    );
++    expect(invalid).toContain('prévoyez un peu plus de temps');
++  });
++});
+diff --git a/tests/adventure-intelligence/pace-resolver.spec.ts b/tests/adventure-intelligence/pace-resolver.spec.ts
+new file mode 100644
+index 00000000..5205ef80
+--- /dev/null
++++ b/tests/adventure-intelligence/pace-resolver.spec.ts
+@@ -0,0 +1,195 @@
++import { describe, it, expect } from 'vitest';
++import {
++  GENERIC_PACE_MIN_PER_KM,
++  STANDARD_PACE_MIN_PER_KM,
++  resolvePace,
++} from '@/features/adventure-intelligence/domain/paceResolver';
++import { computeFatigue } from '@/features/adventure-intelligence/domain/fatigue';
++import { makeConfidence } from '@/features/adventure-intelligence/domain/confidence';
++import { performanceProfileSchema, type PerformanceProfile } from '@/features/adventure-intelligence/schemas/performance.schema';
++
++const USER_ID = '44444444-4444-4444-8444-444444444444';
++const NOW = '2026-09-11T12:00:00.000Z';
++
++function profile(overrides: Record<string, unknown> = {}): PerformanceProfile {
++  return performanceProfileSchema.parse({
++    userId: USER_ID,
++    activityType: 'hiking',
++    flatSpeedKmH: 4.5,
++    ascentSpeedMPerHour: 400,
++    descentSpeedMPerHour: 600,
++    gradeResponse: { points: [{ x: 0, value: 1 }] },
++    surfaceResponse: { points: [{ x: 0, value: 1 }] },
++    fatigueCurve: { points: [{ x: 0, value: 1 }] },
++    pauseModel: { pauseMinutesPerHour: 0 },
++    packResponse: { points: [{ x: 0, value: 1 }] },
++    confidence: makeConfidence({ score: 0.8, sampleCount: 30, method: 'test' }),
++    sampleCount: 30,
++    calibrationLevel: 'personalization',
++    modelVersion: 'a3-v1',
++    computedAt: NOW,
++    ...overrides,
++  });
++}
++
++const flatInput = {
++  distanceM: 10000,
++  gainM: 0,
++  lossM: 0,
++  profile: null,
++  confidence: null,
++  flagEnabled: true,
++};
++
++describe('Cascade d’allure — TEST-A3-PACE', () => {
++  it('TEST-A3-PACE-01: profil chaud + flag actif ⇒ source profile personnalisée', () => {
++    const warm = profile({ flatSpeedKmH: 4.5 });
++    const resolved = resolvePace({ ...flatInput, profile: warm });
++
++    expect(resolved.source).toBe('profile');
++    expect(resolved.personalized).toBe(true);
++    expect(resolved.paceMinPerKm).toBeCloseTo(60 / 4.5, 2);
++    expect(resolved.confidence).toEqual(warm.confidence);
++  });
++
++  it('TEST-A3-PACE-02: profil froid ⇒ générique explicitement non personnalisé', () => {
++    const cold = profile({
++      calibrationLevel: 'cold',
++      sampleCount: 1,
++      confidence: makeConfidence({ score: 0, sampleCount: 1, method: 'weighted_median_a3' }),
++    });
++    const resolved = resolvePace({ ...flatInput, profile: cold });
++
++    expect(resolved.source).toBe('generic');
++    expect(resolved.personalized).toBe(false);
++    expect(resolved.paceMinPerKm).toBeCloseTo(GENERIC_PACE_MIN_PER_KM, 5);
++  });
++
++  it('TEST-A3-PACE-03: profil absent ⇒ standard 15 min/km', () => {
++    const resolved = resolvePace({ ...flatInput, profile: null });
++
++    expect(resolved.source).toBe('standard');
++    expect(resolved.personalized).toBe(false);
++    expect(resolved.paceMinPerKm).toBeCloseTo(STANDARD_PACE_MIN_PER_KM, 5);
++    expect(resolved.confidence.score).toBe(0);
++    expect(STANDARD_PACE_MIN_PER_KM).toBe(15);
++    expect(GENERIC_PACE_MIN_PER_KM).toBe(13.5);
++  });
++
++  it('TEST-A3-PACE-04: flag désactivé ⇒ jamais personnalisé (générique si données, sinon standard)', () => {
++    const warm = profile();
++    const withData = resolvePace({ ...flatInput, profile: warm, flagEnabled: false });
++    expect(withData.source).toBe('generic');
++    expect(withData.personalized).toBe(false);
++
++    const withoutData = resolvePace({ ...flatInput, profile: null, flagEnabled: false });
++    expect(withoutData.source).toBe('standard');
++    expect(withoutData.personalized).toBe(false);
++  });
++
++  it('TEST-A3-PACE-05: confiance faible propagée ⇒ repli générique sans personnalisation', () => {
++    const warm = profile();
++    const low = makeConfidence({ score: 0.3, sampleCount: 30, method: 'test' });
++    const resolved = resolvePace({ ...flatInput, profile: warm, confidence: low });
++
++    expect(resolved.source).toBe('generic');
++    expect(resolved.personalized).toBe(false);
++    expect(resolved.confidence).toBe(low);
++
++    const high = makeConfidence({ score: 0.6, sampleCount: 30, method: 'test' });
++    const personalized = resolvePace({ ...flatInput, profile: warm, confidence: high });
++    expect(personalized.source).toBe('profile');
++    expect(personalized.confidence).toBe(high);
++  });
++
++  it('TEST-A3-PACE-06: plus de D+ ⇒ allure et temps jamais inférieurs', () => {
++    const warm = profile({ flatSpeedKmH: 4.5 });
++    const flat = resolvePace({ ...flatInput, profile: warm });
++    const hilly = resolvePace({ ...flatInput, gainM: 1000, profile: warm });
++    const genericHilly = resolvePace({
++      ...flatInput,
++      gainM: 1000,
++      profile: profile({ calibrationLevel: 'cold' }),
++    });
++
++    expect(hilly.paceMinPerKm).toBeGreaterThan(flat.paceMinPerKm);
++    expect(hilly.paceMinPerKm).toBeCloseTo(60 / 4.5 + 1, 2);
++    expect(hilly.paceMinPerKm * 10).toBeGreaterThan(flat.paceMinPerKm * 10);
++    expect(genericHilly.paceMinPerKm).toBeCloseTo(GENERIC_PACE_MIN_PER_KM + 0.8, 2);
++  });
++
++  it('TEST-A3-PACE-07: descente technique majorée, source et confiance explicites', () => {
++    const warm = profile({ flatSpeedKmH: 4.5 });
++    const nonTechnical = resolvePace({ ...flatInput, lossM: 500, surface: 'gravel', profile: warm });
++    const technical = resolvePace({ ...flatInput, lossM: 500, surface: 'scree', profile: warm });
++
++    expect(technical.paceMinPerKm).toBeCloseTo(nonTechnical.paceMinPerKm + 0.4, 2);
++    expect(nonTechnical.paceMinPerKm).toBeCloseTo(technical.paceMinPerKm - 0.4, 2);
++
++    const standard = resolvePace({ ...flatInput, profile: null });
++    expect(standard.source).toBe('standard');
++    expect(standard.confidence.method).toBe('cold');
++    expect(standard.personalized).toBe(false);
++  });
++});
++
++describe('Fatigue sans santé — TEST-A3-FATIGUE', () => {
++  it('TEST-A3-FATIGUE-01: entrée nulle ⇒ score 0 et composantes explicites', () => {
++    const result = computeFatigue({
++      activeDurationS: 0,
++      gainM: 0,
++      lossM: 0,
++    });
++
++    expect(result.score).toBe(0);
++    expect(result.components.length).toBeGreaterThan(0);
++    for (const component of result.components) {
++      expect(typeof component.label).toBe('string');
++      expect(Number.isFinite(component.value)).toBe(true);
++    }
++  });
++
++  it('TEST-A3-FATIGUE-02: durée, D+, technicité, portage et fatigue déclarée augmentent le score', () => {
++    const base = computeFatigue({ activeDurationS: 3600, gainM: 200, lossM: 100 });
++    const more = computeFatigue({
++      activeDurationS: 7200,
++      gainM: 1400,
++      lossM: 900,
++      technicalClass: 4,
++      packWeightKg: 12,
++      recentLoadS: 5400,
++      declaredFatigue: 7,
++    });
++
++    expect(more.score).toBeGreaterThan(base.score);
++    expect(more.score).toBeLessThanOrEqual(100);
++    expect(base.score).toBeGreaterThanOrEqual(0);
++
++    const max = computeFatigue({
++      activeDurationS: 43200,
++      gainM: 3000,
++      lossM: 3000,
++      technicalClass: 5,
++      packWeightKg: 30,
++      recentLoadS: 21600,
++      declaredFatigue: 10,
++    });
++    expect(max.score).toBeLessThanOrEqual(100);
++    expect(max.score).toBeGreaterThanOrEqual(more.score);
++  });
++
++  it('TEST-A3-FATIGUE-03: plus de D+ ⇒ effort jamais inférieur (monotonie)', () => {
++    const low = computeFatigue({ activeDurationS: 3600, gainM: 100, lossM: 0 });
++    const high = computeFatigue({ activeDurationS: 3600, gainM: 1200, lossM: 0 });
++
++    expect(high.score).toBeGreaterThanOrEqual(low.score);
++
++    const paused = computeFatigue({
++      activeDurationS: 3600,
++      gainM: 100,
++      lossM: 0,
++      pausesCount: 4,
++    });
++    expect(paused.score).toBeLessThanOrEqual(low.score);
++  });
++});
+diff --git a/tests/adventure-intelligence/performance-profile.spec.ts b/tests/adventure-intelligence/performance-profile.spec.ts
+new file mode 100644
+index 00000000..d2dc5182
+--- /dev/null
++++ b/tests/adventure-intelligence/performance-profile.spec.ts
+@@ -0,0 +1,250 @@
++import { describe, it, expect } from 'vitest';
++import {
++  CALIBRATION_THRESHOLDS,
++  buildPerformanceProfile,
++  rejectOutliersMAD,
++  weightedMedian,
++  type ProfileObservation,
++} from '@/features/adventure-intelligence/domain/performanceProfile';
++import { performanceProfileSchema } from '@/features/adventure-intelligence/schemas/performance.schema';
++
++const USER_ID = '33333333-3333-4333-8333-333333333333';
++const NOW = '2026-09-11T12:00:00.000Z';
++
++function daysAgo(days: number): string {
++  return new Date(Date.parse(NOW) - days * 86400000).toISOString();
++}
++
++function observation(overrides: Partial<ProfileObservation> = {}): ProfileObservation {
++  return {
++    observedAt: daysAgo(1),
++    distanceM: 4000,
++    durationS: 3600,
++    movingS: 3000,
++    gainM: 0,
++    lossM: 0,
++    meanGradePct: 0,
++    quality: 0.9,
++    ...overrides,
++  };
++}
++
++describe('Profil de performance appris — TEST-A3-PROF', () => {
++  it('TEST-A3-PROF-01: la médiane pondérée reflète les poids et ignore les entrées invalides', () => {
++    expect(weightedMedian([])).toBeNull();
++    expect(
++      weightedMedian([
++        { value: 10, weight: 1 },
++        { value: 20, weight: 1 },
++        { value: 30, weight: 1 },
++      ])
++    ).toBe(20);
++
++    // Le poids fort fait basculer la médiane sur la valeur haute.
++    expect(
++      weightedMedian([
++        { value: 10, weight: 1 },
++        { value: 30, weight: 9 },
++      ])
++    ).toBe(30);
++
++    expect(weightedMedian([{ value: 5, weight: 0 }])).toBeNull();
++    expect(
++      weightedMedian([
++        { value: Number.NaN, weight: 1 },
++        { value: 8, weight: 1 },
++      ])
++    ).toBe(8);
++  });
++
++  it('TEST-A3-PROF-02: le rejet MAD écarte les anomalies et respecte le seuil', () => {
++    const entries = [
++      { value: 10, weight: 1 },
++      { value: 10, weight: 1 },
++      { value: 11, weight: 1 },
++      { value: 12, weight: 1 },
++      { value: 100, weight: 1 },
++    ];
++
++    const kept = rejectOutliersMAD(entries);
++    expect(kept).toHaveLength(4);
++    expect(kept.map((entry) => entry.value)).not.toContain(100);
++
++    expect(rejectOutliersMAD(entries, 100)).toHaveLength(5);
++
++    // MAD = 0 : les valeurs identiques restent, rien d'autre ne rentre.
++    const identical = [
++      { value: 10, weight: 1 },
++      { value: 10, weight: 1 },
++      { value: 10, weight: 1 },
++    ];
++    expect(rejectOutliersMAD(identical)).toHaveLength(3);
++  });
++
++  it('TEST-A3-PROF-03: sépare plat, montée et descente (allure et m/h)', () => {
++    const flat = [
++      observation({ distanceM: 4000, movingS: 3000, gainM: 0, lossM: 0, meanGradePct: 0 }),
++      observation({ distanceM: 4000, movingS: 3000, gainM: 0, lossM: 0, meanGradePct: 1 }),
++      observation({ distanceM: 4000, movingS: 3000, gainM: 0, lossM: 0, meanGradePct: -1 }),
++    ];
++    const ascent = [
++      observation({ distanceM: 2000, movingS: 1800, gainM: 400, lossM: 0, meanGradePct: 20 }),
++      observation({ distanceM: 2000, movingS: 1800, gainM: 400, lossM: 0, meanGradePct: 20 }),
++      observation({ distanceM: 2000, movingS: 1800, gainM: 400, lossM: 0, meanGradePct: 20 }),
++    ];
++    const descent = [
++      observation({ distanceM: 2000, movingS: 1500, gainM: 0, lossM: 500, meanGradePct: -25 }),
++      observation({ distanceM: 2000, movingS: 1500, gainM: 0, lossM: 500, meanGradePct: -25 }),
++      observation({ distanceM: 2000, movingS: 1500, gainM: 0, lossM: 500, meanGradePct: -25 }),
++    ];
++
++    const profile = buildPerformanceProfile([...flat, ...ascent, ...descent], { now: NOW });
++
++    expect(profile.flatSpeedKmH).toBeCloseTo(4.8, 5);
++    expect(profile.ascentSpeedMPerHour).toBeCloseTo(800, 5);
++    expect(profile.descentSpeedMPerHour).toBeCloseTo(1200, 5);
++    expect(profile.sampleCount).toBe(9);
++  });
++
++  it('TEST-A3-PROF-04: la récence pondère les observations récentes', () => {
++    const recentFast = observation({
++      observedAt: daysAgo(0),
++      distanceM: 6000,
++      movingS: 3000,
++      meanGradePct: 0,
++    });
++    const oldSlow = observation({
++      observedAt: daysAgo(365),
++      distanceM: 3000,
++      movingS: 3000,
++      meanGradePct: 0,
++    });
++
++    const withRecency = buildPerformanceProfile([recentFast, oldSlow], {
++      now: NOW,
++      halfLifeDays: 90,
++    });
++    const withoutRecency = buildPerformanceProfile([recentFast, oldSlow], {
++      now: NOW,
++      halfLifeDays: Number.POSITIVE_INFINITY,
++    });
++
++    expect(withRecency.flatSpeedKmH).toBeCloseTo(7.2, 5);
++    expect(withoutRecency.flatSpeedKmH).toBeCloseTo(3.6, 5);
++  });
++
++  it('TEST-A3-PROF-05: profil froid sous 3 observations exploitables', () => {
++    const two = [observation(), observation({ observedAt: daysAgo(2) })];
++    const cold = buildPerformanceProfile(two, { now: NOW });
++
++    expect(cold.calibrationLevel).toBe('cold');
++    expect(cold.personalized).toBe(false);
++    expect(cold.sampleCount).toBe(2);
++    expect(cold.confidence.score).toBe(0);
++    expect(cold.flatSpeedKmH).toBeGreaterThan(0);
++
++    // minQuality écarte les observations peu fiables.
++    const lowQuality = [
++      observation({ quality: 0.1 }),
++      observation({ quality: 0.2 }),
++      observation({ quality: 0.3 }),
++    ];
++    const filtered = buildPerformanceProfile(lowQuality, { now: NOW, minQuality: 0.5 });
++    expect(filtered.calibrationLevel).toBe('cold');
++    expect(filtered.sampleCount).toBe(0);
++
++    const parsed = performanceProfileSchema.parse({ ...cold, userId: USER_ID });
++    expect(parsed.calibrationLevel).toBe('cold');
++    expect(parsed.modelVersion).toBe('a3-v1');
++  });
++
++  it('TEST-A3-PROF-06: niveaux de calibration à 3, 10 et 20+ observations diversifiées', () => {
++    const three = buildPerformanceProfile(
++      [observation(), observation({ observedAt: daysAgo(2) }), observation({ observedAt: daysAgo(3) })],
++      { now: NOW }
++    );
++    expect(three.calibrationLevel).toBe('calibration');
++    expect(three.personalized).toBe(true);
++
++    const ten = buildPerformanceProfile(
++      Array.from({ length: 10 }, (_, index) => observation({ observedAt: daysAgo(index) })),
++      { now: NOW }
++    );
++    expect(ten.calibrationLevel).toBe('personalization');
++
++    const diverse = Array.from({ length: 21 }, (_, index) =>
++      index % 2 === 0
++        ? observation({ observedAt: daysAgo(index), meanGradePct: 0 })
++        : observation({
++            observedAt: daysAgo(index),
++            gainM: 300,
++            lossM: 0,
++            meanGradePct: 15,
++            distanceM: 2000,
++            movingS: 1800,
++          })
++    );
++    const contextual = buildPerformanceProfile(diverse, { now: NOW });
++    expect(contextual.sampleCount).toBe(21);
++    expect(contextual.calibrationLevel).toBe('contextualization');
++
++    // 21 observations non diversifiées : pas de contextualisation.
++    const monotone = Array.from({ length: 21 }, (_, index) =>
++      observation({ observedAt: daysAgo(index), meanGradePct: 0 })
++    );
++    expect(buildPerformanceProfile(monotone, { now: NOW }).calibrationLevel).toBe('personalization');
++    expect(CALIBRATION_THRESHOLDS).toEqual({ calibration: 3, personalization: 10, contextualization: 20 });
++  });
++
++  it('TEST-A3-PROF-07: réponse au portage neutre sans données puis régressive', () => {
++    const neutral = buildPerformanceProfile(
++      [observation(), observation({ observedAt: daysAgo(2) }), observation({ observedAt: daysAgo(3) })],
++      { now: NOW }
++    );
++    expect(neutral.packResponse.points).toEqual([{ x: 0, value: 1 }]);
++
++    const weighted = Array.from({ length: 6 }, (_, index) =>
++      observation({
++        observedAt: daysAgo(index),
++        packWeightKg: 5 + index,
++        distanceM: (5.2 - index * 0.2) * 1000,
++        movingS: 3600,
++        meanGradePct: 0,
++      })
++    );
++    const learned = buildPerformanceProfile(weighted, { now: NOW });
++
++    expect(learned.packResponse.points.length).toBeGreaterThan(1);
++    const first = learned.packResponse.points[0];
++    const last = learned.packResponse.points[learned.packResponse.points.length - 1];
++    expect(last.value).toBeLessThan(first.value);
++  });
++
++  it('TEST-A3-PROF-08: confiance bornée à 0.95 et pénalisée par la dispersion', () => {
++    const tight = Array.from({ length: 25 }, (_, index) =>
++      observation({ observedAt: daysAgo(index), distanceM: 5000, movingS: 3600, meanGradePct: 0 })
++    );
++    const tightProfile = buildPerformanceProfile(tight, { now: NOW });
++
++    expect(tightProfile.sampleCount).toBe(25);
++    expect(tightProfile.confidence.score).toBeLessThanOrEqual(0.95);
++    expect(tightProfile.confidence.score).toBeGreaterThan(0);
++    expect(tightProfile.confidence.method).toBe('weighted_median_a3');
++    expect(tightProfile.modelVersion).toBe('a3-v1');
++
++    const wild = Array.from({ length: 25 }, (_, index) =>
++      observation({
++        observedAt: daysAgo(index),
++        distanceM: (index % 5 === 0 ? 1500 : 8000) * 1,
++        movingS: 3600,
++        meanGradePct: 0,
++      })
++    );
++    const wildProfile = buildPerformanceProfile(wild, { now: NOW });
++
++    expect(wildProfile.confidence.score).toBeLessThan(tightProfile.confidence.score);
++    expect(wildProfile.confidence.score).toBeGreaterThanOrEqual(0);
++    expect(tightProfile.fatigueCurve.points.length).toBeGreaterThanOrEqual(1);
++    expect(tightProfile.pauseModel.minPauseMinutes).toBeGreaterThanOrEqual(0);
++  });
++});
+diff --git a/tests/adventure-intelligence/prediction-a3.spec.ts b/tests/adventure-intelligence/prediction-a3.spec.ts
+new file mode 100644
+index 00000000..a98de377
+--- /dev/null
++++ b/tests/adventure-intelligence/prediction-a3.spec.ts
+@@ -0,0 +1,274 @@
++import { describe, it, expect } from 'vitest';
++import {
++  STRATEGIES,
++  predictRoute,
++  predictSegment,
++} from '@/features/adventure-intelligence/domain/prediction';
++import { makeConfidence } from '@/features/adventure-intelligence/domain/confidence';
++import {
++  performanceProfileSchema,
++  type PerformanceProfile,
++} from '@/features/adventure-intelligence/schemas/performance.schema';
++import { routePredictionSchema, segmentPredictionSchema } from '@/features/adventure-intelligence/schemas/prediction.schema';
++
++const USER_ID = '55555555-5555-4555-8555-555555555555';
++const START_AT = '2026-09-11T12:00:00.000Z';
++
++function profile(overrides: Record<string, unknown> = {}): PerformanceProfile {
++  return performanceProfileSchema.parse({
++    userId: USER_ID,
++    activityType: 'hiking',
++    flatSpeedKmH: 5,
++    ascentSpeedMPerHour: 400,
++    descentSpeedMPerHour: 600,
++    gradeResponse: { points: [{ x: 0, value: 1 }] },
++    surfaceResponse: { points: [{ x: 0, value: 1 }] },
++    fatigueCurve: { points: [{ x: 0, value: 1 }] },
++    pauseModel: { pauseMinutesPerHour: 0 },
++    packResponse: { points: [{ x: 0, value: 1 }] },
++    confidence: makeConfidence({ score: 0.9, sampleCount: 30, method: 'test' }),
++    sampleCount: 30,
++    calibrationLevel: 'personalization',
++    modelVersion: 'a3-v1',
++    computedAt: START_AT,
++    ...overrides,
++  });
++}
++
++function segmentInput(overrides: Record<string, unknown> = {}) {
++  return {
++    segmentId: 1,
++    distanceM: 10000,
++    gainM: 0,
++    lossM: 0,
++    meanGradePct: 0,
++    technicalClass: 0,
++    surface: null,
++    packWeightKg: null,
++    fatigueBefore: null,
++    ...overrides,
++  };
++}
++
++describe('Prédiction segment et route — TEST-A3-PRED', () => {
++  it('TEST-A3-PRED-01: invariant 1 — plus de distance ⇒ jamais moins de temps', () => {
++    const warm = profile();
++    const short = predictSegment(segmentInput({ distanceM: 10000 }), warm, warm.confidence);
++    const long = predictSegment(segmentInput({ distanceM: 15000 }), warm, warm.confidence);
++
++    expect(long.durationP50Seconds).toBeGreaterThanOrEqual(short.durationP50Seconds);
++    expect(long.durationP90Seconds).toBeGreaterThanOrEqual(short.durationP90Seconds);
++
++    const routeShort = predictRoute(
++      { segments: [{ segmentId: 1, distanceM: 10000, gainM: 0, lossM: 0 }], startAt: START_AT, profile: warm, confidence: warm.confidence },
++      'recommended'
++    );
++    const routeLong = predictRoute(
++      { segments: [{ segmentId: 1, distanceM: 15000, gainM: 0, lossM: 0 }], startAt: START_AT, profile: warm, confidence: warm.confidence },
++      'recommended'
++    );
++    expect(routeLong.totalDurationP50Seconds).toBeGreaterThanOrEqual(routeShort.totalDurationP50Seconds);
++  });
++
++  it('TEST-A3-PRED-02: invariant 2 — plus de D+ ⇒ effort jamais inférieur', () => {
++    const warm = profile();
++    const low = predictSegment(segmentInput({ gainM: 100 }), warm, warm.confidence);
++    const high = predictSegment(segmentInput({ gainM: 1500 }), warm, warm.confidence);
++
++    expect(high.effortScore).toBeGreaterThanOrEqual(low.effortScore);
++    expect(high.personalDifficulty).toBeGreaterThanOrEqual(low.personalDifficulty);
++    expect(high.effortScore).toBeGreaterThan(0);
++  });
++
++  it('TEST-A3-PRED-03: invariant 3 — confiance faible ⇒ intervalle P50–P90 plus large', () => {
++    const warm = profile();
++    const highConfidence = makeConfidence({ score: 0.9, sampleCount: 30, method: 'test' });
++    const lowConfidence = makeConfidence({ score: 0.2, sampleCount: 3, method: 'test' });
++
++    const high = predictSegment(segmentInput(), warm, highConfidence);
++    const low = predictSegment(segmentInput(), warm, lowConfidence);
++    const highRatio = high.durationP90Seconds / high.durationP50Seconds;
++    const lowRatio = low.durationP90Seconds / low.durationP50Seconds;
++
++    expect(lowRatio).toBeGreaterThan(highRatio);
++
++    const highRoute = predictRoute(
++      { segments: [{ segmentId: 1, distanceM: 10000, gainM: 300, lossM: 300 }], startAt: START_AT, profile: warm, confidence: highConfidence },
++      'recommended'
++    );
++    const lowRoute = predictRoute(
++      { segments: [{ segmentId: 1, distanceM: 10000, gainM: 300, lossM: 300 }], startAt: START_AT, profile: warm, confidence: lowConfidence },
++      'recommended'
++    );
++    expect(lowRoute.totalDurationP90Seconds / lowRoute.totalDurationP50Seconds).toBeGreaterThan(
++      highRoute.totalDurationP90Seconds / highRoute.totalDurationP50Seconds
++    );
++  });
++
++  it('TEST-A3-PRED-04: invariant 4 — stratégie rapide jamais plus lente que confort', () => {
++    const warm = profile();
++    const input = {
++      segments: [
++        { segmentId: 1, distanceM: 6000, gainM: 400, lossM: 200, technicalClass: 2 },
++        { segmentId: 2, distanceM: 5000, gainM: 700, lossM: 100, technicalClass: 3 },
++      ],
++      startAt: START_AT,
++      profile: warm,
++      confidence: warm.confidence,
++    };
++
++    const comfort = predictRoute(input, 'comfort');
++    const recommended = predictRoute(input, 'recommended');
++    const fast = predictRoute(input, 'fast');
++
++    expect(fast.totalDurationP50Seconds).toBeLessThanOrEqual(comfort.totalDurationP50Seconds);
++    expect(recommended.totalDurationP50Seconds).toBeLessThanOrEqual(comfort.totalDurationP50Seconds);
++    expect(fast.totalDurationP50Seconds).toBeLessThanOrEqual(recommended.totalDurationP50Seconds);
++    expect(STRATEGIES).toEqual(['comfort', 'recommended', 'fast']);
++  });
++
++  it('TEST-A3-PRED-05: invariant 5 — profil froid explicitement non personnalisé', () => {
++    const cold = profile({
++      calibrationLevel: 'cold',
++      sampleCount: 0,
++      flatSpeedKmH: 5,
++      confidence: makeConfidence({ score: 0, sampleCount: 0, method: 'cold' }),
++    });
++
++    const coldSegment = predictSegment(segmentInput({ distanceM: 10000 }), cold, cold.confidence);
++    const warmSegment = predictSegment(segmentInput({ distanceM: 10000 }), profile(), profile().confidence);
++    expect(coldSegment.durationP50Seconds).toBeCloseTo(10000 * 0.0135 * 60, 0);
++    expect(coldSegment.durationP50Seconds).toBeGreaterThan(warmSegment.durationP50Seconds);
++
++    const route = predictRoute(
++      { segments: [{ segmentId: 1, distanceM: 10000, gainM: 0, lossM: 0 }], startAt: START_AT, profile: cold, confidence: cold.confidence },
++      'recommended'
++    );
++    expect(route.warnings.some((warning) => warning.code === 'cold_profile')).toBe(true);
++
++    const warmRoute = predictRoute(
++      { segments: [{ segmentId: 1, distanceM: 10000, gainM: 0, lossM: 0 }], startAt: START_AT, profile: profile(), confidence: profile().confidence },
++      'recommended'
++    );
++    expect(warmRoute.warnings.some((warning) => warning.code === 'cold_profile')).toBe(false);
++  });
++
++  it('TEST-A3-PRED-06: P90 toujours supérieur ou égal à P50 (segment et route)', () => {
++    const warm = profile();
++    const segment = predictSegment(segmentInput({ gainM: 800, lossM: 600 }), warm, warm.confidence);
++    expect(segment.durationP90Seconds).toBeGreaterThanOrEqual(segment.durationP50Seconds);
++    expect(segment.paceRangeMinPerKm[1]).toBeGreaterThanOrEqual(segment.paceRangeMinPerKm[0]);
++
++    const route = predictRoute(
++      {
++        segments: [
++          { segmentId: 1, distanceM: 4000, gainM: 300, lossM: 100 },
++          { segmentId: 2, distanceM: 7000, gainM: 500, lossM: 900 },
++        ],
++        startAt: START_AT,
++        profile: warm,
++        confidence: warm.confidence,
++      },
++      'recommended'
++    );
++    expect(route.totalDurationP90Seconds).toBeGreaterThanOrEqual(route.totalDurationP50Seconds);
++    expect(Date.parse(route.etaP90)).toBeGreaterThanOrEqual(Date.parse(route.etaP50));
++  });
++
++  it('TEST-A3-PRED-07: segments critiques = top 3 difficulté', () => {
++    const warm = profile();
++    const route = predictRoute(
++      {
++        segments: [
++          { segmentId: 11, distanceM: 2000, gainM: 100, lossM: 0 },
++          { segmentId: 22, distanceM: 2000, gainM: 800, lossM: 0 },
++          { segmentId: 33, distanceM: 2000, gainM: 1500, lossM: 0 },
++          { segmentId: 44, distanceM: 2000, gainM: 300, lossM: 0 },
++        ],
++        startAt: START_AT,
++        profile: warm,
++        confidence: warm.confidence,
++      },
++      'recommended'
++    );
++
++    expect(route.criticalSegmentIds).toHaveLength(3);
++    expect(route.criticalSegmentIds).toContain(33);
++    expect(route.criticalSegmentIds).toContain(22);
++    expect(route.criticalSegmentIds).toContain(44);
++    expect(route.criticalSegmentIds).not.toContain(11);
++  });
++
++  it('TEST-A3-PRED-08: facteurs explicables présents et bornés', () => {
++    const warm = profile();
++    const segment = predictSegment(
++      segmentInput({ gainM: 900, lossM: 400, technicalClass: 4, packWeightKg: 12, fatigueBefore: 55 }),
++      warm,
++      warm.confidence
++    );
++
++    const codes = segment.factors.map((factor) => factor.code);
++    for (const expected of ['slope', 'technical', 'pack', 'fatigue', 'confidence']) {
++      expect(codes).toContain(expected);
++    }
++    for (const factor of segment.factors) {
++      expect(factor.label.length).toBeGreaterThan(0);
++      expect(['increase', 'decrease', 'neutral']).toContain(factor.impact);
++      if (factor.weight != null) {
++        expect(factor.weight).toBeGreaterThanOrEqual(0);
++        expect(factor.weight).toBeLessThanOrEqual(1);
++      }
++    }
++  });
++
++  it('TEST-A3-PRED-09: pause recommandée proportionnelle à la durée et au profil', () => {
++    const warm = profile({ pauseModel: { pauseMinutesPerHour: 6 } });
++    const short = predictSegment(segmentInput({ distanceM: 5000 }), warm, warm.confidence);
++    const long = predictSegment(segmentInput({ distanceM: 15000 }), warm, warm.confidence);
++
++    expect(short.recommendedPauseSeconds).toBeGreaterThan(0);
++    expect(long.recommendedPauseSeconds).toBeGreaterThan(short.recommendedPauseSeconds);
++    expect(short.recommendedPauseSeconds).toBeCloseTo(360, 0);
++
++    const withoutProfile = predictSegment(segmentInput({ distanceM: 10000 }), null, null);
++    expect(withoutProfile.recommendedPauseSeconds).toBeGreaterThan(0);
++  });
++
++  it('TEST-A3-PRED-10: half-turn horodaté et prédictions conformes au schéma A1', () => {
++    const warm = profile();
++    const route = predictRoute(
++      {
++        segments: [
++          { segmentId: 7, distanceM: 8000, gainM: 600, lossM: 400 },
++          { segmentId: 8, distanceM: 6000, gainM: 300, lossM: 700 },
++        ],
++        startAt: START_AT,
++        profile: warm,
++        confidence: warm.confidence,
++        packWeightKg: 9,
++        turnaroundAfterS: 3600,
++      },
++      'fast'
++    );
++
++    expect(route.turnaroundTime).toBe('2026-09-11T13:00:00.000Z');
++    expect(route.pausesSeconds).toBeGreaterThanOrEqual(0);
++    expect(route.maxFatigue).toBeGreaterThanOrEqual(0);
++    expect(route.personalDifficulty).toBeGreaterThanOrEqual(0);
++    expect(route.modelVersion).toBe('a3-v1');
++    expect(routePaceOrdered(route.paceP25MinPerKm, route.paceP50MinPerKm, route.paceP75MinPerKm)).toBe(true);
++
++    const parsedRoute = routePredictionSchema.parse({ ...route, userId: USER_ID });
++    expect(parsedRoute.criticalSegmentIds.length).toBeLessThanOrEqual(3);
++
++    const segment = predictSegment(segmentInput({ gainM: 500, lossM: 500 }), warm, warm.confidence);
++    const parsedSegment = segmentPredictionSchema.parse(segment);
++    expect(parsedSegment.durationP50Seconds).toBe(segment.durationP50Seconds);
++    expect(parsedSegment.factors.length).toBeGreaterThan(0);
++  });
++});
++
++function routePaceOrdered(p25?: number, p50?: number, p75?: number): boolean {
++  if (p25 == null || p50 == null || p75 == null) return false;
++  return p25 <= p50 && p50 <= p75;
++}

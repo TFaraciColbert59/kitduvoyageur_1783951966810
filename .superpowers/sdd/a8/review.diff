@@ -1,0 +1,1675 @@
+﻿diff --git a/src/features/adventure-intelligence/domain/affiliationRanking.ts b/src/features/adventure-intelligence/domain/affiliationRanking.ts
+new file mode 100644
+index 00000000..32133999
+--- /dev/null
++++ b/src/features/adventure-intelligence/domain/affiliationRanking.ts
+@@ -0,0 +1,90 @@
++/**
++ * A8 — Classement d'affiliation transparent (domaine pur).
++ *
++ * Le classement est d'abord fondé sur la pertinence pour le voyageur
++ * (équipement manquant, budget restant, disponibilité). La commission
++ * n'est **jamais** lue : deux offres identiques à la commission près
++ * gardent exactement le même score et le même ordre.
++ */
++import { clamp01 } from './confidence';
++
++export interface AffiliationOffer {
++  id: string;
++  title: string;
++  category: 'gear' | 'stay' | 'activity' | 'transport' | 'rental';
++  relevanceScore: number;
++  commissionPct: number;
++  priceEur: number;
++  availability: 'available' | 'unknown' | 'unavailable';
++}
++
++export interface AffiliationContext {
++  missingGearCategories: string[];
++  budgetRemainingEur: number | null;
++}
++
++export interface RankedAffiliationOffer {
++  offerId: string;
++  score: number;
++  reasons: string[];
++}
++
++/** Amplitude maximale des ajustements de contexte (la pertinence reste reine). */
++export const MAX_CONTEXT_BOOST = 0.05;
++
++/** Bonus/malus de contexte, volontairement petits devant la pertinence. */
++export const MISSING_GEAR_BOOST = 0.03;
++export const BUDGET_FIT_BOOST = 0.02;
++export const BUDGET_OVER_PENALTY = -0.04;
++export const UNKNOWN_AVAILABILITY_PENALTY = -0.02;
++
++function clamp(value: number, min: number, max: number): number {
++  if (!Number.isFinite(value)) return 0;
++  return Math.min(max, Math.max(min, value));
++}
++
++function scoreOffer(offer: AffiliationOffer, context: AffiliationContext): RankedAffiliationOffer {
++  const relevance = clamp01(offer.relevanceScore);
++  const reasons: string[] = [`Pertinence ${Math.round(relevance * 100)}/100.`];
++  let boost = 0;
++
++  if (context.missingGearCategories.length > 0 && offer.category === 'gear') {
++    boost += MISSING_GEAR_BOOST;
++    reasons.push('Équipement manquant priorisé.');
++  }
++
++  if (context.budgetRemainingEur != null) {
++    if (offer.priceEur > context.budgetRemainingEur) {
++      boost += BUDGET_OVER_PENALTY;
++      reasons.push('Dépasse le budget restant — à arbitrer.');
++    } else {
++      boost += BUDGET_FIT_BOOST;
++      reasons.push('Dans le budget restant.');
++    }
++  }
++
++  if (offer.availability === 'unknown') {
++    boost += UNKNOWN_AVAILABILITY_PENALTY;
++    reasons.push('Disponibilité à confirmer.');
++  } else if (offer.availability === 'available') {
++    reasons.push('Disponibilité confirmée.');
++  }
++
++  const score = clamp01(relevance + clamp(boost, -MAX_CONTEXT_BOOST, MAX_CONTEXT_BOOST));
++  return { offerId: offer.id, score, reasons };
++}
++
++/**
++ * Classe les offres par pertinence contextualisée, du meilleur au moins bon.
++ * Les offres indisponibles sont exclues. `commissionPct` n'est jamais lu :
++ * le tri est stable, donc des scores égaux conservent l'ordre d'entrée.
++ */
++export function rankAffiliationOffers(
++  offers: AffiliationOffer[],
++  context: AffiliationContext
++): RankedAffiliationOffer[] {
++  return offers
++    .filter((offer) => offer.availability !== 'unavailable')
++    .map((offer) => scoreOffer(offer, context))
++    .sort((a, b) => b.score - a.score);
++}
+diff --git a/src/features/adventure-intelligence/domain/b2bContracts.ts b/src/features/adventure-intelligence/domain/b2bContracts.ts
+new file mode 100644
+index 00000000..258d9e1b
+--- /dev/null
++++ b/src/features/adventure-intelligence/domain/b2bContracts.ts
+@@ -0,0 +1,119 @@
++/**
++ * A8 — Contrats B2B futurs (types et catalogue uniquement).
++ *
++ * Aucune implémentation, aucun endpoint, aucun accès base : seuls les
++ * contrats d'interface et leurs descripteurs sont exposés pour préparer
++ * l'ouverture API. **Aucune monétisation de données de santé** : les
++ * contrats ne comportent aucun champ médical, physiologique ou identifiant.
++ * Toute implémentation future passera par une couche serveur dédiée.
++ */
++import type { Confidence } from './confidence';
++
++export const B2B_CONTRACT_VERSION = 'v1' as const;
++export type B2bContractVersion = typeof B2B_CONTRACT_VERSION;
++
++export const B2B_CONTRACT_NAMES = ['difficulty', 'eta', 'conditions'] as const;
++export type B2bContractName = (typeof B2B_CONTRACT_NAMES)[number];
++
++export interface DifficultyApiContract {
++  version: 'v1';
++  getSegmentDifficulty(
++    segmentId: number,
++    direction: 'forward' | 'reverse'
++  ): Promise<{ difficulty: number; confidence: Confidence } | null>;
++}
++
++export interface EtaApiContract {
++  version: 'v1';
++  predictRoute(input: {
++    segmentIds: number[];
++    profileRef?: string;
++  }): Promise<{ etaP50: string; etaP90: string; confidence: Confidence } | null>;
++}
++
++export interface ConditionsApiContract {
++  version: 'v1';
++  getConditions(bbox: {
++    minLat: number;
++    minLng: number;
++    maxLat: number;
++    maxLng: number;
++  }): Promise<{ activeEvents: number; confidence: Confidence } | null>;
++}
++
++export interface B2bContractMap {
++  difficulty: DifficultyApiContract;
++  eta: EtaApiContract;
++  conditions: ConditionsApiContract;
++}
++
++export interface B2bContractField {
++  name: string;
++  type: string;
++}
++
++export interface B2bContractDescriptor {
++  name: B2bContractName;
++  version: B2bContractVersion;
++  methods: string[];
++  inputFields: B2bContractField[];
++  outputFields: B2bContractField[];
++}
++
++export interface B2bVersionCatalog {
++  version: B2bContractVersion;
++  contracts: B2bContractDescriptor[];
++}
++
++/**
++ * Catalogue des versions de contrats disponibles. Fabrique pure et statique :
++ * elle ne contacte aucun service et ne persiste rien.
++ */
++export function b2bContractCatalog(): B2bVersionCatalog[] {
++  return [
++    {
++      version: B2B_CONTRACT_VERSION,
++      contracts: [
++        {
++          name: 'difficulty',
++          version: B2B_CONTRACT_VERSION,
++          methods: ['getSegmentDifficulty'],
++          inputFields: [
++            { name: 'segmentId', type: 'number' },
++            { name: 'direction', type: "'forward' | 'reverse'" },
++          ],
++          outputFields: [
++            { name: 'difficulty', type: 'number' },
++            { name: 'confidence', type: 'Confidence' },
++          ],
++        },
++        {
++          name: 'eta',
++          version: B2B_CONTRACT_VERSION,
++          methods: ['predictRoute'],
++          inputFields: [
++            { name: 'segmentIds', type: 'number[]' },
++            { name: 'profileRef', type: 'string?' },
++          ],
++          outputFields: [
++            { name: 'etaP50', type: 'string' },
++            { name: 'etaP90', type: 'string' },
++            { name: 'confidence', type: 'Confidence' },
++          ],
++        },
++        {
++          name: 'conditions',
++          version: B2B_CONTRACT_VERSION,
++          methods: ['getConditions'],
++          inputFields: [
++            { name: 'bbox', type: '{ minLat, minLng, maxLat, maxLng }' },
++          ],
++          outputFields: [
++            { name: 'activeEvents', type: 'number' },
++            { name: 'confidence', type: 'Confidence' },
++          ],
++        },
++      ],
++    },
++  ];
++}
+diff --git a/src/features/adventure-intelligence/domain/entitlements.ts b/src/features/adventure-intelligence/domain/entitlements.ts
+new file mode 100644
+index 00000000..bd929f2d
+--- /dev/null
++++ b/src/features/adventure-intelligence/domain/entitlements.ts
+@@ -0,0 +1,108 @@
++/**
++ * A8 — Entitlements, plans et passes (domaine pur).
++ *
++ * Source de vérité unique du paywall : un plan donne un ensemble
++ * d'entitlements, un passe actif en ajoute pour une durée limitée.
++ * Un entitlement inconnu ne donne **jamais** accès, et `requiredPlanFor`
++ * reste cohérent avec `PLAN_ENTITLEMENTS` (premier plan de la hiérarchie
++ * qui le débloque).
++ */
++
++export const PLANS = ['free', 'explorer', 'expedition', 'group'] as const;
++export type PlanId = (typeof PLANS)[number];
++
++export const PASSES = ['weekend', 'trip', 'expedition'] as const;
++export type PassId = (typeof PASSES)[number];
++
++export const ENTITLEMENTS = [
++  'full_generation',
++  'offline',
++  'advanced_profile',
++  'live_eta',
++  'history',
++  'terrain_live_advanced',
++  'group',
++  'trek',
++  'monitoring',
++] as const;
++export type Entitlement = (typeof ENTITLEMENTS)[number];
++
++/** Entitlements permanents par plan (hiérarchie croissante, sans fuite). */
++export const PLAN_ENTITLEMENTS: Record<PlanId, Entitlement[]> = {
++  free: [],
++  explorer: ['full_generation', 'advanced_profile', 'history'],
++  expedition: [
++    'full_generation',
++    'offline',
++    'advanced_profile',
++    'live_eta',
++    'history',
++    'terrain_live_advanced',
++    'trek',
++  ],
++  group: [
++    'full_generation',
++    'offline',
++    'advanced_profile',
++    'live_eta',
++    'history',
++    'terrain_live_advanced',
++    'group',
++    'trek',
++    'monitoring',
++  ],
++};
++
++/** Entitlements temporaires apportés par chaque passe. */
++export const PASS_ENTITLEMENTS: Record<PassId, Entitlement[]> = {
++  weekend: ['full_generation', 'offline'],
++  trip: ['full_generation', 'live_eta'],
++  expedition: ['full_generation', 'live_eta', 'trek', 'monitoring'],
++};
++
++/**
++ * Vrai si le plan débloque l'entitlement. Un entitlement (ou un plan)
++ * inconnu ne donne jamais accès.
++ */
++export function hasEntitlement(plan: PlanId, entitlement: Entitlement): boolean {
++  const entitlements: Entitlement[] | undefined = PLAN_ENTITLEMENTS[plan];
++  if (!entitlements) return false;
++  return (entitlements as readonly string[]).includes(entitlement);
++}
++
++/**
++ * Premier plan de la hiérarchie qui débloque l'entitlement. Un entitlement
++ * inconnu retombe sur le plan le plus restrictif (`group`), qui ne le
++ * débloque pas : il ne peut donc jamais être accordé par erreur.
++ */
++export function requiredPlanFor(entitlement: Entitlement): PlanId {
++  for (const plan of PLANS) {
++    if (hasEntitlement(plan, entitlement)) return plan;
++  }
++  return PLANS[PLANS.length - 1];
++}
++
++/**
++ * Entitlements effectifs = plan + passes actifs, dédupliqués et ordonnés
++ * selon le catalogue canonique. Les passes inconnus sont ignorés.
++ */
++export function effectiveEntitlements(input: {
++  plan: PlanId;
++  activePasses: PassId[];
++}): Entitlement[] {
++  const granted = new Set<Entitlement>();
++
++  for (const entitlement of PLAN_ENTITLEMENTS[input.plan] ?? []) {
++    granted.add(entitlement);
++  }
++
++  for (const pass of input.activePasses) {
++    const passEntitlements: Entitlement[] | undefined = PASS_ENTITLEMENTS[pass];
++    if (!passEntitlements) continue;
++    for (const entitlement of passEntitlements) {
++      granted.add(entitlement);
++    }
++  }
++
++  return ENTITLEMENTS.filter((entitlement) => granted.has(entitlement));
++}
+diff --git a/src/features/adventure-intelligence/domain/groupIntelligence.ts b/src/features/adventure-intelligence/domain/groupIntelligence.ts
+new file mode 100644
+index 00000000..4a277be0
+--- /dev/null
++++ b/src/features/adventure-intelligence/domain/groupIntelligence.ts
+@@ -0,0 +1,426 @@
++/**
++ * A8 — Intelligence de groupe (moteur pur).
++ *
++ * Le groupe est dimensionné par son **membre dimensionnant** (le plus lent,
++ * pondéré descente technique et enfants), jamais par une moyenne. La
++ * difficulté est calculée membre par membre via le moteur de fatigue A3,
++ * le risque de séparation combine écart d'allure et composition du groupe,
++ * et la redistribution du portage excessif est plafonnée.
++ *
++ * Privacy (ADR-AI-003) : `projectGroupPlanPublic` ne contient ni identité,
++ * ni vitesse individuelle, ni aucune donnée de santé. Aucune I/O.
++ */
++import { computeFatigue } from './fatigue';
++import { STRATEGY_SPEED_FACTORS } from './prediction';
++
++export type GroupMemberRole = 'owner' | 'member' | 'guest';
++export type GroupExperienceLevel = 'beginner' | 'intermediate' | 'advanced';
++export type GroupStrategy = 'comfort' | 'recommended' | 'fast';
++
++export interface GroupMemberInput {
++  memberId: string;
++  displayName: string;
++  role: GroupMemberRole;
++  flatSpeedKmH: number | null;
++  ascentSpeedMPerHour: number | null;
++  descentSpeedMPerHour: number | null;
++  packWeightKg: number | null;
++  maxCarryKg: number | null;
++  experienceLevel: GroupExperienceLevel;
++  limitations?: string[];
++  isChild?: boolean;
++}
++
++export interface GroupSegment {
++  segmentId: number;
++  distanceM: number;
++  gainM: number;
++  lossM: number;
++}
++
++export interface GroupPlan {
++  memberPacesKmH: { memberId: string; paceKmH: number }[];
++  groupPaceKmH: number;
++  limitingMemberId: string | null;
++  limitingReason: string | null;
++  perMemberDifficulty: { memberId: string; difficulty: number }[];
++  groupDifficulty: number;
++  pauseEveryMinutes: number;
++  separationRisk: { level: 'low' | 'medium' | 'high'; spreadKmH: number; reasons: string[] };
++  gearRedistribution: {
++    fromMemberId: string;
++    toMemberId: string;
++    weightKg: number;
++    reason: string;
++  }[];
++}
++
++export interface GroupPlanOptions {
++  strategy?: GroupStrategy;
++}
++
++/** Vitesses de repli d'un membre sans mesure déclarée. */
++export const DEFAULT_MEMBER_FLAT_SPEED_KMH = 4;
++export const DEFAULT_MEMBER_ASCENT_SPEED_M_PER_HOUR = 300;
++export const DEFAULT_MEMBER_DESCENT_SPEED_M_PER_HOUR = 500;
++
++/** Un enfant avance prudemment : facteur appliqué à toutes ses vitesses. */
++export const CHILD_SPEED_FACTOR = 0.85;
++/** Pente moyenne de descente (%) à partir de laquelle la descente est technique. */
++export const TECHNICAL_DESCENT_GRADE_PCT = 12;
++/** Majoration du temps de descente technique (adulte / enfant). */
++export const TECHNICAL_DESCENT_FACTOR = 1.25;
++export const CHILD_TECHNICAL_DESCENT_FACTOR = 1.4;
++
++/** Facteurs appliqués aux seules vitesses de repli selon le niveau déclaré. */
++export const EXPERIENCE_SPEED_FACTORS: Record<GroupExperienceLevel, number> = {
++  beginner: 0.9,
++  intermediate: 1,
++  advanced: 1.08,
++};
++
++/** Seuils d'écart d'allure (km/h) pour qualifier la séparation. */
++export const SEPARATION_SPREAD_MEDIUM_KMH = 1.5;
++export const SEPARATION_SPREAD_HIGH_KMH = 2.5;
++/** Tailles de groupe à partir desquelles la dispersion est plus probable. */
++export const GROUP_SIZE_RISK_THRESHOLD = 6;
++export const LARGE_GROUP_RISK_THRESHOLD = 9;
++/** Points de risque ajoutés par la présence d'un enfant. */
++export const CHILD_SEPARATION_RISK_POINTS = 3;
++
++/** Plafond de transfert de portage par membre receveur (kg). */
++export const MAX_GEAR_TRANSFER_KG = 5;
++
++/** Pause de référence, resserrée quand la difficulté groupe monte. */
++export const BASE_PAUSE_EVERY_MINUTES = 60;
++export const HARD_PAUSE_EVERY_MINUTES = 40;
++export const MODERATE_PAUSE_EVERY_MINUTES = 50;
++export const MIN_PAUSE_EVERY_MINUTES = 20;
++export const MAX_PAUSE_EVERY_MINUTES = 90;
++
++function clamp(value: number, min: number, max: number): number {
++  if (!Number.isFinite(value)) return min;
++  return Math.min(max, Math.max(min, value));
++}
++
++function positive(value: number | null | undefined): number {
++  if (value == null || !Number.isFinite(value) || value <= 0) return 0;
++  return value;
++}
++
++function round(value: number, decimals: number): number {
++  const factor = 10 ** decimals;
++  return Math.round(value * factor) / factor;
++}
++
++interface RouteInfo {
++  totalDistanceM: number;
++  totalGainM: number;
++  totalLossM: number;
++  technicalClass: number;
++}
++
++function routeInfo(segments: GroupSegment[]): RouteInfo {
++  let totalDistanceM = 0;
++  let totalGainM = 0;
++  let totalLossM = 0;
++  let technicalClass = 0;
++
++  for (const segment of segments) {
++    const distanceM = positive(segment.distanceM);
++    const gainM = positive(segment.gainM);
++    const lossM = positive(segment.lossM);
++    totalDistanceM += distanceM;
++    totalGainM += gainM;
++    totalLossM += lossM;
++
++    if (distanceM > 0) {
++      const descentGradePct = (lossM / distanceM) * 100;
++      const ascentGradePct = (gainM / distanceM) * 100;
++      if (descentGradePct >= 20) technicalClass = Math.max(technicalClass, 4);
++      else if (descentGradePct >= TECHNICAL_DESCENT_GRADE_PCT) {
++        technicalClass = Math.max(technicalClass, 3);
++      } else if (descentGradePct >= 8) technicalClass = Math.max(technicalClass, 2);
++      if (ascentGradePct >= 35) technicalClass = Math.max(technicalClass, 3);
++      else if (ascentGradePct >= 25) technicalClass = Math.max(technicalClass, 2);
++    }
++  }
++
++  return { totalDistanceM, totalGainM, totalLossM, technicalClass };
++}
++
++interface EffectiveSpeeds {
++  flatSpeedKmH: number;
++  ascentSpeedMPerHour: number;
++  descentSpeedMPerHour: number;
++}
++
++function effectiveSpeeds(member: GroupMemberInput): EffectiveSpeeds {
++  const experienceFactor = EXPERIENCE_SPEED_FACTORS[member.experienceLevel] ?? 1;
++  const childFactor = member.isChild === true ? CHILD_SPEED_FACTOR : 1;
++
++  return {
++    flatSpeedKmH:
++      (positive(member.flatSpeedKmH) || DEFAULT_MEMBER_FLAT_SPEED_KMH * experienceFactor) *
++      childFactor,
++    ascentSpeedMPerHour:
++      (positive(member.ascentSpeedMPerHour) ||
++        DEFAULT_MEMBER_ASCENT_SPEED_M_PER_HOUR * experienceFactor) * childFactor,
++    descentSpeedMPerHour:
++      (positive(member.descentSpeedMPerHour) ||
++        DEFAULT_MEMBER_DESCENT_SPEED_M_PER_HOUR * experienceFactor) * childFactor,
++  };
++}
++
++interface MemberMetrics {
++  member: GroupMemberInput;
++  speedKmH: number;
++  paceMinPerKm: number;
++  durationS: number;
++}
++
++function memberMetrics(
++  member: GroupMemberInput,
++  segments: GroupSegment[],
++  strategy: GroupStrategy
++): MemberMetrics {
++  const speeds = effectiveSpeeds(member);
++  let hours = 0;
++  let totalDistanceM = 0;
++
++  for (const segment of segments) {
++    const distanceM = positive(segment.distanceM);
++    const gainM = positive(segment.gainM);
++    const lossM = positive(segment.lossM);
++    totalDistanceM += distanceM;
++    hours += distanceM / 1000 / speeds.flatSpeedKmH;
++    hours += gainM / speeds.ascentSpeedMPerHour;
++
++    const descentGradePct = distanceM > 0 ? (lossM / distanceM) * 100 : 0;
++    const technical = descentGradePct >= TECHNICAL_DESCENT_GRADE_PCT;
++    const descentFactor = technical
++      ? member.isChild === true
++        ? CHILD_TECHNICAL_DESCENT_FACTOR
++        : TECHNICAL_DESCENT_FACTOR
++      : 1;
++    hours += (lossM / speeds.descentSpeedMPerHour) * descentFactor;
++  }
++
++  const speedFactor = STRATEGY_SPEED_FACTORS[strategy] ?? 1;
++  const durationHours = hours / speedFactor;
++  const durationS = Math.max(1, Math.round(durationHours * 3600));
++  const totalDistanceKm = totalDistanceM / 1000;
++
++  const speedKmH =
++    durationHours > 0 && totalDistanceKm > 0 ? totalDistanceKm / durationHours : speeds.flatSpeedKmH;
++  const paceMinPerKm =
++    durationHours > 0 && totalDistanceKm > 0
++      ? (durationHours * 60) / totalDistanceKm
++      : 60 / speeds.flatSpeedKmH;
++
++  return { member, speedKmH, paceMinPerKm, durationS };
++}
++
++function memberDifficulty(metrics: MemberMetrics, route: RouteInfo): number {
++  const fatigue = computeFatigue({
++    activeDurationS: metrics.durationS,
++    gainM: route.totalGainM,
++    lossM: route.totalLossM,
++    technicalClass: route.technicalClass,
++    packWeightKg: metrics.member.packWeightKg,
++  });
++  return clamp(Math.round(fatigue.score), 0, 100);
++}
++
++function buildLimitingReason(member: GroupMemberInput, route: RouteInfo): string {
++  const reasons = ['Allure la plus lente du groupe'];
++  if (member.isChild === true) reasons.push('enfant — allure prudente appliquée');
++  if (member.experienceLevel === 'beginner') reasons.push('niveau débutant');
++  if (
++    member.packWeightKg != null &&
++    member.maxCarryKg != null &&
++    member.packWeightKg > member.maxCarryKg
++  ) {
++    reasons.push('portage excédentaire à redistribuer');
++  }
++  if (route.technicalClass >= 3) reasons.push('descente technique pénalisante');
++  return reasons.join(' ; ');
++}
++
++function buildSeparationRisk(
++  metrics: MemberMetrics[],
++  members: GroupMemberInput[]
++): GroupPlan['separationRisk'] {
++  const speeds = metrics.map((entry) => entry.speedKmH);
++  const fastest = Math.max(...speeds);
++  const slowest = Math.min(...speeds);
++  const spreadKmH = round(Math.max(0, fastest - slowest), 2);
++
++  let points = 1;
++  if (spreadKmH >= SEPARATION_SPREAD_HIGH_KMH) points = 7;
++  else if (spreadKmH >= SEPARATION_SPREAD_MEDIUM_KMH) points = 5;
++  else if (spreadKmH >= 0.8) points = 3;
++
++  if (members.length >= LARGE_GROUP_RISK_THRESHOLD) points += 4;
++  else if (members.length >= GROUP_SIZE_RISK_THRESHOLD) points += 2;
++
++  const hasChild = members.some((member) => member.isChild === true);
++  if (hasChild) points += CHILD_SEPARATION_RISK_POINTS;
++
++  const reasons = [
++    `Écart d'allure de ${spreadKmH.toFixed(2)} km/h entre le plus rapide et le plus lent.`,
++  ];
++  if (members.length >= GROUP_SIZE_RISK_THRESHOLD) {
++    reasons.push(`Groupe de ${members.length} membres — dispersion plus probable.`);
++  }
++  if (hasChild) {
++    reasons.push('Enfant dans le groupe — encadrement renforcé recommandé.');
++  }
++
++  const level: GroupPlan['separationRisk']['level'] =
++    points >= 7 ? 'high' : points >= 4 ? 'medium' : 'low';
++
++  return { level, spreadKmH, reasons };
++}
++
++function buildGearRedistribution(
++  members: GroupMemberInput[],
++  limiting: MemberMetrics | null
++): GroupPlan['gearRedistribution'] {
++  if (limiting === null) return [];
++  const packWeightKg = limiting.member.packWeightKg;
++  const maxCarryKg = limiting.member.maxCarryKg;
++  if (packWeightKg == null || maxCarryKg == null) return [];
++  if (!Number.isFinite(packWeightKg) || !Number.isFinite(maxCarryKg)) return [];
++
++  let remaining = packWeightKg - maxCarryKg;
++  if (!(remaining > 0)) return [];
++
++  const recipients = members
++    .filter(
++      (member) =>
++        member.memberId !== limiting.member.memberId &&
++        member.isChild !== true &&
++        member.packWeightKg != null &&
++        member.maxCarryKg != null &&
++        Number.isFinite(member.packWeightKg) &&
++        Number.isFinite(member.maxCarryKg)
++    )
++    .map((member) => ({
++      member,
++      margin: (member.maxCarryKg as number) - (member.packWeightKg as number),
++    }))
++    .filter((entry) => entry.margin > 0)
++    .sort((a, b) => b.margin - a.margin);
++
++  const transfers: GroupPlan['gearRedistribution'] = [];
++  for (const recipient of recipients) {
++    if (remaining <= 0) break;
++    const amount = Math.min(remaining, recipient.margin, MAX_GEAR_TRANSFER_KG);
++    if (!(amount > 0)) continue;
++    transfers.push({
++      fromMemberId: limiting.member.memberId,
++      toMemberId: recipient.member.memberId,
++      weightKg: round(amount, 2),
++      reason: 'Allègement du membre limitant pour préserver l’allure collective.',
++    });
++    remaining -= amount;
++  }
++
++  return transfers;
++}
++
++function pauseEveryMinutesFor(
++  groupDifficulty: number,
++  members: GroupMemberInput[],
++  strategy: GroupStrategy
++): number {
++  let minutes = BASE_PAUSE_EVERY_MINUTES;
++  if (groupDifficulty >= 75) minutes = HARD_PAUSE_EVERY_MINUTES;
++  else if (groupDifficulty >= 60) minutes = MODERATE_PAUSE_EVERY_MINUTES;
++  if (members.some((member) => member.isChild === true)) minutes -= 10;
++  if (strategy === 'comfort') minutes -= 10;
++  else if (strategy === 'fast') minutes += 10;
++  return clamp(minutes, MIN_PAUSE_EVERY_MINUTES, MAX_PAUSE_EVERY_MINUTES);
++}
++
++/**
++ * Construit le plan collectif : allure du membre dimensionnant, difficultés
++ * par membre (moteur A3), risque de séparation, pauses et redistribution.
++ */
++export function buildGroupPlan(
++  members: GroupMemberInput[],
++  segments: GroupSegment[],
++  options: GroupPlanOptions = {}
++): GroupPlan {
++  const strategy = options.strategy ?? 'recommended';
++  const route = routeInfo(segments);
++  const metrics = members.map((member) => memberMetrics(member, segments, strategy));
++
++  if (metrics.length === 0) {
++    return {
++      memberPacesKmH: [],
++      groupPaceKmH: 0,
++      limitingMemberId: null,
++      limitingReason: null,
++      perMemberDifficulty: [],
++      groupDifficulty: 0,
++      pauseEveryMinutes: pauseEveryMinutesFor(0, members, strategy),
++      separationRisk: {
++        level: 'low',
++        spreadKmH: 0,
++        reasons: ['Aucun membre — risque de séparation non applicable.'],
++      },
++      gearRedistribution: [],
++    };
++  }
++
++  const limiting = metrics.reduce((slowest, entry) =>
++    entry.speedKmH < slowest.speedKmH ? entry : slowest
++  );
++
++  const perMemberDifficulty = metrics.map((entry) => ({
++    memberId: entry.member.memberId,
++    difficulty: memberDifficulty(entry, route),
++  }));
++  const groupDifficulty = Math.max(...perMemberDifficulty.map((entry) => entry.difficulty));
++
++  return {
++    memberPacesKmH: metrics.map((entry) => ({
++      memberId: entry.member.memberId,
++      paceKmH: round(entry.speedKmH, 3),
++    })),
++    groupPaceKmH: round(limiting.speedKmH, 3),
++    limitingMemberId: limiting.member.memberId,
++    limitingReason: buildLimitingReason(limiting.member, route),
++    perMemberDifficulty,
++    groupDifficulty,
++    pauseEveryMinutes: pauseEveryMinutesFor(groupDifficulty, members, strategy),
++    separationRisk: buildSeparationRisk(metrics, members),
++    gearRedistribution: buildGearRedistribution(members, limiting),
++  };
++}
++
++/**
++ * Projection publique d'un plan de groupe : uniquement les éléments
++ * partageables. Aucune identité, aucune vitesse individuelle, aucune
++ * donnée de santé ne franchit cette frontière normative.
++ */
++export function projectGroupPlanPublic(plan: GroupPlan): {
++  groupPaceKmH: number;
++  groupDifficulty: number;
++  limitingReason: string | null;
++  separationRisk: { level: string; reasons: string[] };
++  memberCount: number;
++} {
++  return {
++    groupPaceKmH: plan.groupPaceKmH,
++    groupDifficulty: plan.groupDifficulty,
++    limitingReason: plan.limitingReason,
++    separationRisk: {
++      level: plan.separationRisk.level,
++      reasons: [...plan.separationRisk.reasons],
++    },
++    memberCount: plan.memberPacesKmH.length,
++  };
++}
+diff --git a/src/features/adventure-intelligence/domain/multiDayTrek.ts b/src/features/adventure-intelligence/domain/multiDayTrek.ts
+new file mode 100644
+index 00000000..1b97e594
+--- /dev/null
++++ b/src/features/adventure-intelligence/domain/multiDayTrek.ts
+@@ -0,0 +1,261 @@
++/**
++ * A8 — Trek multi-jours (moteur pur).
++ *
++ * Capacité J1 = 100 % ; chaque journée consomme une part de la capacité
++ * (charge A3 : durée estimée, D+, D−, technicité, portage) puis une
++ * récupération nocturne paramétrique la restaure. Une nuit courte réduit
++ * la récupération, une journée courte l'améliore. La dérive est la baisse
++ * cumulée non récupérée ; au-delà des seuils, des ajustements explicables
++ * sont proposés.
++ *
++ * Aucune I/O, aucune donnée de santé connectée.
++ */
++import { clamp01 } from './confidence';
++import { computeFatigue } from './fatigue';
++
++export interface TrekDayInput {
++  dayNumber: number;
++  distanceM: number;
++  gainM: number;
++  lossM: number;
++  packWeightKg: number | null;
++  technicalClass?: number | null;
++  sleepQuality?: number | null;
++}
++
++export interface TrekAdjustment {
++  kind: 'shorten' | 'move_km' | 'change_refuge' | 'add_night' | 'transfer_gear' | 'recovery_day';
++  label: string;
++  reason: string;
++}
++
++export interface TrekDayResult {
++  dayNumber: number;
++  capacityPct: number;
++  loadScore: number;
++  difficulty: number;
++  driftRisk: number;
++  adjustments: TrekAdjustment[];
++}
++
++export interface MultiDayTrekResult {
++  daily: TrekDayResult[];
++  worstDay: number;
++  totalDriftRisk: number;
++}
++
++export interface MultiDayTrekOptions {
++  initialCapacityPct?: number;
++  recoveryPerNight?: number;
++  heavyPackKg?: number;
++}
++
++/** Vitesses de repli pour estimer la durée active d'une journée. */
++export const TREK_FLAT_SPEED_KMH = 4;
++export const TREK_ASCENT_SPEED_M_PER_HOUR = 300;
++export const TREK_DESCENT_SPEED_M_PER_HOUR = 500;
++
++export const DEFAULT_INITIAL_CAPACITY_PCT = 100;
++export const DEFAULT_RECOVERY_PER_NIGHT = 20;
++export const DEFAULT_HEAVY_PACK_KG = 8;
++
++/** Part de la charge consommée dans la journée. */
++export const DEPLETION_RATE = 0.5;
++/** Nuit courte : seuil de qualité et facteur de récupération associé. */
++export const SHORT_SLEEP_QUALITY_THRESHOLD = 0.5;
++export const SHORT_SLEEP_RECOVERY_FACTOR = 0.5;
++/** Journée courte : ratio à la médiane des distances et bonus de récupération. */
++export const SHORT_DAY_MEDIAN_RATIO = 0.6;
++export const SHORT_DAY_RECOVERY_BONUS = 1.5;
++/** Seuils d'alerte déclenchant les ajustements. */
++export const DIFFICULTY_ALERT_THRESHOLD = 75;
++export const DRIFT_ALERT_THRESHOLD = 0.5;
++
++function clamp(value: number, min: number, max: number): number {
++  if (!Number.isFinite(value)) return min;
++  return Math.min(max, Math.max(min, value));
++}
++
++function positive(value: number | null | undefined): number {
++  if (value == null || !Number.isFinite(value) || value <= 0) return 0;
++  return value;
++}
++
++function round(value: number, decimals: number): number {
++  const factor = 10 ** decimals;
++  return Math.round(value * factor) / factor;
++}
++
++function median(values: number[]): number {
++  if (values.length === 0) return 0;
++  const sorted = [...values].sort((a, b) => a - b);
++  const middle = Math.floor(sorted.length / 2);
++  if (sorted.length % 2 === 1) return sorted[middle];
++  return (sorted[middle - 1] + sorted[middle]) / 2;
++}
++
++function estimatedActiveSeconds(day: TrekDayInput): number {
++  const distanceKm = positive(day.distanceM) / 1000;
++  return Math.max(
++    1,
++    Math.round(
++      (distanceKm / TREK_FLAT_SPEED_KMH +
++        positive(day.gainM) / TREK_ASCENT_SPEED_M_PER_HOUR +
++        positive(day.lossM) / TREK_DESCENT_SPEED_M_PER_HOUR) *
++        3600
++    )
++  );
++}
++
++function loadScoreFor(day: TrekDayInput): number {
++  const fatigue = computeFatigue({
++    activeDurationS: estimatedActiveSeconds(day),
++    gainM: positive(day.gainM),
++    lossM: positive(day.lossM),
++    technicalClass: day.technicalClass ?? null,
++    packWeightKg: day.packWeightKg,
++  });
++  return round(fatigue.score, 2);
++}
++
++function isShortDay(day: TrekDayInput, medianDistanceM: number): boolean {
++  if (!(medianDistanceM > 0)) return false;
++  return positive(day.distanceM) < medianDistanceM * SHORT_DAY_MEDIAN_RATIO;
++}
++
++function nextCapacity(
++  capacityPct: number,
++  loadScore: number,
++  day: TrekDayInput,
++  isShort: boolean,
++  recoveryPerNight: number
++): number {
++  let recovery = recoveryPerNight;
++  const sleepQuality = day.sleepQuality;
++  if (
++    sleepQuality != null &&
++    Number.isFinite(sleepQuality) &&
++    sleepQuality < SHORT_SLEEP_QUALITY_THRESHOLD
++  ) {
++    recovery *= SHORT_SLEEP_RECOVERY_FACTOR;
++  }
++  if (isShort) recovery *= SHORT_DAY_RECOVERY_BONUS;
++
++  const depletion = loadScore * DEPLETION_RATE;
++  return clamp(capacityPct - depletion + recovery, 0, 100);
++}
++
++function buildAdjustments(
++  day: TrekDayInput,
++  difficulty: number,
++  driftRisk: number,
++  heavyPackKg: number
++): TrekAdjustment[] {
++  const adjustments: TrekAdjustment[] = [];
++
++  if (difficulty > DIFFICULTY_ALERT_THRESHOLD) {
++    adjustments.push({
++      kind: 'shorten',
++      label: 'Raccourcir l’étape',
++      reason: `Difficulté estimée ${difficulty}/100 — réduire le kilométrage protège le rythme du groupe.`,
++    });
++    if (day.packWeightKg != null && day.packWeightKg > heavyPackKg) {
++      adjustments.push({
++        kind: 'transfer_gear',
++        label: 'Répartir le portage',
++        reason: `Portage de ${day.packWeightKg} kg supérieur au seuil de ${heavyPackKg} kg — alléger le sac réduit la charge.`,
++      });
++    }
++    if (positive(day.gainM) >= 1000) {
++      adjustments.push({
++        kind: 'move_km',
++        label: 'Déplacer des kilomètres',
++        reason: `Dénivelé positif de ${positive(day.gainM)} m — basculer une partie de l’étape vers un terrain plus doux.`,
++      });
++    }
++  }
++
++  if (driftRisk > DRIFT_ALERT_THRESHOLD) {
++    adjustments.push({
++      kind: 'recovery_day',
++      label: 'Insérer une journée de récupération',
++      reason: `Dérive cumulée ${(driftRisk * 100).toFixed(0)} % — la capacité ne se reconstitue plus assez entre les étapes.`,
++    });
++    adjustments.push({
++      kind: 'add_night',
++      label: 'Ajouter une nuit',
++      reason: 'Allonger le repos nocturne pour enrayer la dérive cumulée.',
++    });
++  }
++
++  const sleepQuality = day.sleepQuality;
++  if (
++    sleepQuality != null &&
++    Number.isFinite(sleepQuality) &&
++    sleepQuality < SHORT_SLEEP_QUALITY_THRESHOLD
++  ) {
++    adjustments.push({
++      kind: 'change_refuge',
++      label: 'Changer de refuge',
++      reason: `Qualité de nuit ${sleepQuality} — viser un hébergement plus calme pour restaurer la capacité.`,
++    });
++  }
++
++  return adjustments;
++}
++
++/**
++ * Simule un trek multi-jours : capacité au départ de chaque journée, charge,
++ * difficulté, dérive cumulée et ajustements proposés. `worstDay` est la
++ * journée de difficulté maximale (première en cas d'égalité).
++ */
++export function simulateMultiDayTrek(
++  days: TrekDayInput[],
++  options: MultiDayTrekOptions = {}
++): MultiDayTrekResult {
++  if (days.length === 0) {
++    return { daily: [], worstDay: 0, totalDriftRisk: 0 };
++  }
++
++  const initialCapacityPct = clamp(
++    options.initialCapacityPct ?? DEFAULT_INITIAL_CAPACITY_PCT,
++    0,
++    100
++  );
++  const recoveryPerNight = Math.max(0, options.recoveryPerNight ?? DEFAULT_RECOVERY_PER_NIGHT);
++  const heavyPackKg = Math.max(0, options.heavyPackKg ?? DEFAULT_HEAVY_PACK_KG);
++  const medianDistanceM = median(days.map((day) => positive(day.distanceM)));
++
++  const daily: TrekDayResult[] = [];
++  let capacityPct = initialCapacityPct;
++
++  for (const day of days) {
++    const loadScore = loadScoreFor(day);
++    const difficulty = clamp(Math.round(loadScore * (2 - capacityPct / 100)), 0, 100);
++    const driftRisk = round(clamp01((initialCapacityPct - capacityPct) / 100), 4);
++    const adjustments = buildAdjustments(day, difficulty, driftRisk, heavyPackKg);
++
++    daily.push({ dayNumber: day.dayNumber, capacityPct, loadScore, difficulty, driftRisk, adjustments });
++
++    capacityPct = nextCapacity(
++      capacityPct,
++      loadScore,
++      day,
++      isShortDay(day, medianDistanceM),
++      recoveryPerNight
++    );
++  }
++
++  let worstDay = daily[0].dayNumber;
++  let worstDifficulty = daily[0].difficulty;
++  for (const entry of daily) {
++    if (entry.difficulty > worstDifficulty) {
++      worstDifficulty = entry.difficulty;
++      worstDay = entry.dayNumber;
++    }
++  }
++
++  const totalDriftRisk = Math.max(...daily.map((entry) => entry.driftRisk));
++
++  return { daily, worstDay, totalDriftRisk };
++}
+diff --git a/tests/adventure-intelligence/affiliation-ranking.spec.ts b/tests/adventure-intelligence/affiliation-ranking.spec.ts
+new file mode 100644
+index 00000000..ae181d9c
+--- /dev/null
++++ b/tests/adventure-intelligence/affiliation-ranking.spec.ts
+@@ -0,0 +1,88 @@
++import { describe, it, expect } from 'vitest';
++import {
++  rankAffiliationOffers,
++  type AffiliationContext,
++  type AffiliationOffer,
++} from '@/features/adventure-intelligence/domain/affiliationRanking';
++
++const NO_CONTEXT: AffiliationContext = { missingGearCategories: [], budgetRemainingEur: null };
++
++function offer(overrides: Partial<AffiliationOffer> & { id: string }): AffiliationOffer {
++  return {
++    title: `Offre ${overrides.id}`,
++    category: 'gear',
++    relevanceScore: 0.7,
++    commissionPct: 10,
++    priceEur: 100,
++    availability: 'available',
++    ...overrides,
++  };
++}
++
++describe('A8 — classement d’affiliation transparent (TEST-A8-AFF)', () => {
++  it('TEST-A8-AFF-01: la pertinence prime sur le contexte et le budget', () => {
++    const high = offer({ id: 'high', relevanceScore: 0.9, priceEur: 200 });
++    const low = offer({ id: 'low', relevanceScore: 0.4, priceEur: 20 });
++
++    const ranked = rankAffiliationOffers([low, high], {
++      missingGearCategories: ['tente'],
++      budgetRemainingEur: 30,
++    });
++
++    expect(ranked[0].offerId).toBe('high');
++    expect(ranked[0].score).toBeGreaterThan(ranked[1].score);
++    expect(ranked[0].reasons.join(' ').toLowerCase()).toContain('pertinence');
++  });
++
++  it('TEST-A8-AFF-02: la commission n’influence jamais le score ni l’ordre', () => {
++    const first = rankAffiliationOffers(
++      [
++        offer({ id: 'a', commissionPct: 2, relevanceScore: 0.7 }),
++        offer({ id: 'b', commissionPct: 45, relevanceScore: 0.7 }),
++      ],
++      NO_CONTEXT
++    );
++    const flipped = rankAffiliationOffers(
++      [
++        offer({ id: 'a', commissionPct: 45, relevanceScore: 0.7 }),
++        offer({ id: 'b', commissionPct: 2, relevanceScore: 0.7 }),
++      ],
++      NO_CONTEXT
++    );
++
++    expect(first.map((entry) => entry.offerId)).toEqual(['a', 'b']);
++    expect(flipped.map((entry) => entry.offerId)).toEqual(['a', 'b']);
++    expect(first.find((entry) => entry.offerId === 'a')?.score).toBe(
++      flipped.find((entry) => entry.offerId === 'a')?.score
++    );
++    expect(first.find((entry) => entry.offerId === 'b')?.score).toBe(
++      flipped.find((entry) => entry.offerId === 'b')?.score
++    );
++
++    for (const entry of first) {
++      expect(Object.keys(entry).sort()).toEqual(['offerId', 'reasons', 'score']);
++    }
++  });
++
++  it('TEST-A8-AFF-03: une offre indisponible est exclue du classement', () => {
++    const ranked = rankAffiliationOffers(
++      [
++        offer({ id: 'available', availability: 'available' }),
++        offer({ id: 'unknown', availability: 'unknown' }),
++        offer({ id: 'unavailable', availability: 'unavailable' }),
++      ],
++      NO_CONTEXT
++    );
++
++    const ids = ranked.map((entry) => entry.offerId);
++    expect(ids).toContain('available');
++    expect(ids).toContain('unknown');
++    expect(ids).not.toContain('unavailable');
++    expect(ranked).toHaveLength(2);
++    for (const entry of ranked) {
++      expect(entry.score).toBeGreaterThanOrEqual(0);
++      expect(entry.score).toBeLessThanOrEqual(1);
++      expect(entry.reasons.length).toBeGreaterThan(0);
++    }
++  });
++});
+diff --git a/tests/adventure-intelligence/b2b-contracts.spec.ts b/tests/adventure-intelligence/b2b-contracts.spec.ts
+new file mode 100644
+index 00000000..f5060ec6
+--- /dev/null
++++ b/tests/adventure-intelligence/b2b-contracts.spec.ts
+@@ -0,0 +1,78 @@
++import { describe, it, expect } from 'vitest';
++import {
++  B2B_CONTRACT_VERSION,
++  b2bContractCatalog,
++} from '@/features/adventure-intelligence/domain/b2bContracts';
++
++describe('A8 — contrats B2B futurs (TEST-A8-B2B)', () => {
++  it('TEST-A8-B2B-01: le catalogue expose les versions et contrats disponibles', () => {
++    const catalog = b2bContractCatalog();
++
++    expect(catalog.length).toBeGreaterThan(0);
++    expect(catalog.map((entry) => entry.version)).toEqual(['v1']);
++    expect(catalog[0].version).toBe(B2B_CONTRACT_VERSION);
++    expect(catalog[0].contracts.map((contract) => contract.name)).toEqual([
++      'difficulty',
++      'eta',
++      'conditions',
++    ]);
++
++    for (const contract of catalog[0].contracts) {
++      expect(contract.version).toBe(B2B_CONTRACT_VERSION);
++      expect(contract.methods.length).toBeGreaterThan(0);
++      expect(contract.inputFields.length).toBeGreaterThan(0);
++      expect(contract.outputFields.length).toBeGreaterThan(0);
++      for (const field of [...contract.inputFields, ...contract.outputFields]) {
++        expect(field.name.trim().length).toBeGreaterThan(0);
++        expect(field.type.trim().length).toBeGreaterThan(0);
++      }
++    }
++  });
++
++  it('TEST-A8-B2B-02: les contrats ne transportent aucune donnée de santé', () => {
++    const catalog = b2bContractCatalog();
++    const serialized = JSON.stringify(catalog).toLowerCase();
++
++    for (const forbidden of [
++      'health',
++      'santé',
++      'sante',
++      'heart',
++      'cardio',
++      'blood',
++      'medical',
++      'allerg',
++      'bpm',
++      'vo2',
++      'poids',
++      'userid',
++      'memberid',
++      'displayname',
++    ]) {
++      expect(serialized).not.toContain(forbidden);
++    }
++
++    const byName = new Map(catalog[0].contracts.map((contract) => [contract.name, contract]));
++    expect(byName.get('difficulty')?.inputFields.map((field) => field.name)).toEqual([
++      'segmentId',
++      'direction',
++    ]);
++    expect(byName.get('difficulty')?.outputFields.map((field) => field.name)).toEqual([
++      'difficulty',
++      'confidence',
++    ]);
++    expect(byName.get('eta')?.inputFields.map((field) => field.name)).toEqual([
++      'segmentIds',
++      'profileRef',
++    ]);
++    expect(byName.get('eta')?.outputFields.map((field) => field.name)).toEqual([
++      'etaP50',
++      'etaP90',
++      'confidence',
++    ]);
++    expect(byName.get('conditions')?.outputFields.map((field) => field.name)).toEqual([
++      'activeEvents',
++      'confidence',
++    ]);
++  });
++});
+diff --git a/tests/adventure-intelligence/entitlements.spec.ts b/tests/adventure-intelligence/entitlements.spec.ts
+new file mode 100644
+index 00000000..959e0fe8
+--- /dev/null
++++ b/tests/adventure-intelligence/entitlements.spec.ts
+@@ -0,0 +1,111 @@
++import { describe, it, expect } from 'vitest';
++import {
++  ENTITLEMENTS,
++  PASSES,
++  PLAN_ENTITLEMENTS,
++  PLANS,
++  effectiveEntitlements,
++  hasEntitlement,
++  requiredPlanFor,
++  type Entitlement,
++  type PassId,
++  type PlanId,
++} from '@/features/adventure-intelligence/domain/entitlements';
++
++describe('A8 — entitlements et passes (TEST-A8-ENT)', () => {
++  it('TEST-A8-ENT-01: l’accès est gouverné par le plan, du gratuit au groupe', () => {
++    expect(hasEntitlement('free', 'full_generation')).toBe(false);
++    expect(hasEntitlement('explorer', 'full_generation')).toBe(true);
++    expect(hasEntitlement('explorer', 'advanced_profile')).toBe(true);
++    expect(hasEntitlement('explorer', 'group')).toBe(false);
++    expect(hasEntitlement('expedition', 'live_eta')).toBe(true);
++    expect(hasEntitlement('expedition', 'trek')).toBe(true);
++    expect(hasEntitlement('expedition', 'group')).toBe(false);
++    expect(hasEntitlement('group', 'group')).toBe(true);
++    expect(hasEntitlement('group', 'monitoring')).toBe(true);
++  });
++
++  it('TEST-A8-ENT-02: les passes effectifs ajoutent leurs entitlements sans doublon', () => {
++    const weekend = effectiveEntitlements({ plan: 'free', activePasses: ['weekend'] });
++    expect(weekend).toContain('full_generation');
++    expect(weekend).toContain('offline');
++    expect(weekend).not.toContain('live_eta');
++
++    const trip = effectiveEntitlements({ plan: 'free', activePasses: ['trip'] });
++    expect(trip).toContain('full_generation');
++    expect(trip).toContain('live_eta');
++    expect(trip).not.toContain('trek');
++
++    const expedition = effectiveEntitlements({ plan: 'free', activePasses: ['expedition'] });
++    expect(expedition).toContain('trek');
++    expect(expedition).toContain('monitoring');
++
++    const stacked = effectiveEntitlements({
++      plan: 'explorer',
++      activePasses: ['weekend', 'trip'],
++    });
++    for (const entitlement of PLAN_ENTITLEMENTS.explorer) {
++      expect(stacked).toContain(entitlement);
++    }
++    expect(new Set(stacked).size).toBe(stacked.length);
++
++    for (const pass of PASSES) {
++      const passEntitlements = effectiveEntitlements({ plan: 'free', activePasses: [pass] });
++      for (const entitlement of passEntitlements) {
++        expect(ENTITLEMENTS).toContain(entitlement);
++      }
++    }
++  });
++
++  it('TEST-A8-ENT-03: un entitlement inconnu ne donne jamais accès', () => {
++    const unknown = 'entitlement_inexistant' as Entitlement;
++    expect(hasEntitlement('group', unknown)).toBe(false);
++    expect(hasEntitlement('expedition', unknown)).toBe(false);
++    expect(hasEntitlement('unknown_plan' as PlanId, 'full_generation')).toBe(false);
++
++    const effective = effectiveEntitlements({
++      plan: 'group',
++      activePasses: ['pass_inconnu' as PassId],
++    });
++    expect(effective).not.toContain(unknown);
++    for (const entitlement of effective) {
++      expect(ENTITLEMENTS).toContain(entitlement);
++    }
++  });
++
++  it('TEST-A8-ENT-04: requiredPlanFor est cohérent avec PLAN_ENTITLEMENTS', () => {
++    for (const entitlement of ENTITLEMENTS) {
++      const plan = requiredPlanFor(entitlement);
++      expect(PLANS).toContain(plan);
++      expect(hasEntitlement(plan, entitlement)).toBe(true);
++
++      const planIndex = PLANS.indexOf(plan);
++      for (const lowerPlan of PLANS.slice(0, planIndex)) {
++        expect(hasEntitlement(lowerPlan, entitlement)).toBe(false);
++      }
++    }
++
++    const unknownPlan = requiredPlanFor('entitlement_inexistant' as Entitlement);
++    expect(PLANS).toContain(unknownPlan);
++    expect(hasEntitlement(unknownPlan, 'entitlement_inexistant' as Entitlement)).toBe(false);
++  });
++
++  it('TEST-A8-ENT-05: aucune fuite entre plans et aucun entitlement hors catalogue', () => {
++    for (const plan of PLANS) {
++      for (const entitlement of ENTITLEMENTS) {
++        expect(hasEntitlement(plan, entitlement)).toBe(
++          PLAN_ENTITLEMENTS[plan].includes(entitlement)
++        );
++      }
++      for (const entitlement of PLAN_ENTITLEMENTS[plan]) {
++        expect(ENTITLEMENTS).toContain(entitlement);
++      }
++    }
++
++    for (let index = 1; index < PLANS.length; index += 1) {
++      for (const inherited of PLAN_ENTITLEMENTS[PLANS[index - 1]]) {
++        expect(hasEntitlement(PLANS[index], inherited)).toBe(true);
++      }
++    }
++  });
++});
+diff --git a/tests/adventure-intelligence/group-intelligence.spec.ts b/tests/adventure-intelligence/group-intelligence.spec.ts
+new file mode 100644
+index 00000000..78cf4e21
+--- /dev/null
++++ b/tests/adventure-intelligence/group-intelligence.spec.ts
+@@ -0,0 +1,209 @@
++import { describe, it, expect } from 'vitest';
++import {
++  MAX_GEAR_TRANSFER_KG,
++  buildGroupPlan,
++  projectGroupPlanPublic,
++  type GroupMemberInput,
++  type GroupSegment,
++} from '@/features/adventure-intelligence/domain/groupIntelligence';
++
++const SEGMENTS: GroupSegment[] = [
++  { segmentId: 1, distanceM: 5000, gainM: 300, lossM: 100 },
++  { segmentId: 2, distanceM: 5000, gainM: 100, lossM: 500 },
++];
++
++const FLAT_SEGMENTS: GroupSegment[] = [
++  { segmentId: 1, distanceM: 5000, gainM: 0, lossM: 0 },
++  { segmentId: 2, distanceM: 5000, gainM: 0, lossM: 0 },
++];
++
++function member(overrides: Partial<GroupMemberInput> & { memberId: string }): GroupMemberInput {
++  return {
++    displayName: overrides.memberId,
++    role: 'member',
++    flatSpeedKmH: 4,
++    ascentSpeedMPerHour: 300,
++    descentSpeedMPerHour: 500,
++    packWeightKg: null,
++    maxCarryKg: null,
++    experienceLevel: 'intermediate',
++    ...overrides,
++  };
++}
++
++describe('A8 — intelligence de groupe (TEST-A8-GRP)', () => {
++  it('TEST-A8-GRP-01: le groupe est dimensionné par le membre le plus lent, jamais par la moyenne', () => {
++    const fast = member({ memberId: 'fast', flatSpeedKmH: 5.5 });
++    const slow = member({ memberId: 'slow', flatSpeedKmH: 3 });
++    const medium = member({ memberId: 'medium', flatSpeedKmH: 4.5 });
++
++    const plan = buildGroupPlan([fast, slow, medium], SEGMENTS);
++    const paces = plan.memberPacesKmH.map((entry) => entry.paceKmH);
++    const slowPace = plan.memberPacesKmH.find((entry) => entry.memberId === 'slow')?.paceKmH;
++    const average = paces.reduce((sum, pace) => sum + pace, 0) / paces.length;
++
++    expect(plan.limitingMemberId).toBe('slow');
++    expect(plan.groupPaceKmH).toBeCloseTo(slowPace as number, 6);
++    expect(plan.groupPaceKmH).toBeLessThan(average);
++    expect(plan.limitingReason).toBeTruthy();
++    expect(plan.limitingReason).not.toContain('slow');
++  });
++
++  it('TEST-A8-GRP-02: la difficulté par membre est calculée et la difficulté groupe est la plus élevée', () => {
++    const plan = buildGroupPlan(
++      [
++        member({ memberId: 'a', flatSpeedKmH: 5 }),
++        member({ memberId: 'b', flatSpeedKmH: 3.5 }),
++        member({ memberId: 'c', flatSpeedKmH: 4.2 }),
++      ],
++      SEGMENTS
++    );
++
++    expect(plan.perMemberDifficulty).toHaveLength(3);
++    for (const entry of plan.perMemberDifficulty) {
++      expect(entry.difficulty).toBeGreaterThanOrEqual(0);
++      expect(entry.difficulty).toBeLessThanOrEqual(100);
++    }
++
++    const difficulties = plan.perMemberDifficulty.map((entry) => entry.difficulty);
++    expect(plan.groupDifficulty).toBe(Math.max(...difficulties));
++    for (const entry of plan.perMemberDifficulty) {
++      expect(plan.groupDifficulty).toBeGreaterThanOrEqual(entry.difficulty);
++    }
++  });
++
++  it('TEST-A8-GRP-03: un enfant ralentit l’allure collective et devient le membre dimensionnant', () => {
++    const adult = member({ memberId: 'adult', flatSpeedKmH: 4.5 });
++    const child = member({ memberId: 'child', flatSpeedKmH: 4.5, isChild: true });
++
++    const withoutChild = buildGroupPlan([adult], SEGMENTS);
++    const withChild = buildGroupPlan([adult, child], SEGMENTS);
++
++    expect(withChild.limitingMemberId).toBe('child');
++    expect(withChild.groupPaceKmH).toBeLessThan(withoutChild.groupPaceKmH);
++    expect(withChild.limitingReason?.toLowerCase()).toContain('enfant');
++    expect(withChild.limitingReason).not.toContain('child');
++  });
++
++  it('TEST-A8-GRP-04: le risque de séparation dépend de l’écart d’allure et de la présence d’un enfant', () => {
++    const even = buildGroupPlan(
++      [
++        member({ memberId: 'x', flatSpeedKmH: 4 }),
++        member({ memberId: 'y', flatSpeedKmH: 4 }),
++      ],
++      FLAT_SEGMENTS
++    );
++    expect(even.separationRisk.level).toBe('low');
++
++    const wide = buildGroupPlan(
++      [
++        member({ memberId: 'speedy', flatSpeedKmH: 6 }),
++        member({ memberId: 'walker', flatSpeedKmH: 3 }),
++      ],
++      FLAT_SEGMENTS
++    );
++    expect(wide.separationRisk.spreadKmH).toBeGreaterThan(2);
++    expect(wide.separationRisk.level).toBe('high');
++    expect(wide.separationRisk.reasons.join(' ').toLowerCase()).toContain('écart');
++
++    const withChild = buildGroupPlan(
++      [
++        member({ memberId: 'p1', flatSpeedKmH: 4 }),
++        member({ memberId: 'p2', flatSpeedKmH: 4 }),
++        member({ memberId: 'kid', flatSpeedKmH: 4, isChild: true }),
++      ],
++      FLAT_SEGMENTS
++    );
++    expect(withChild.separationRisk.level).not.toBe('low');
++    expect(withChild.separationRisk.reasons.join(' ').toLowerCase()).toContain('enfant');
++  });
++
++  it('TEST-A8-GRP-05: la redistribution du portage est plafonnée et épargne les enfants', () => {
++    const limiting = member({
++      memberId: 'limiting',
++      flatSpeedKmH: 2.5,
++      ascentSpeedMPerHour: 180,
++      descentSpeedMPerHour: 260,
++      packWeightKg: 20,
++      maxCarryKg: 8,
++    });
++    const carrier = member({
++      memberId: 'carrier',
++      flatSpeedKmH: 5,
++      packWeightKg: 2,
++      maxCarryKg: 20,
++    });
++    const secondCarrier = member({
++      memberId: 'carrier-2',
++      flatSpeedKmH: 5.2,
++      packWeightKg: 1,
++      maxCarryKg: 20,
++    });
++    const child = member({
++      memberId: 'kid',
++      flatSpeedKmH: 4,
++      packWeightKg: 0,
++      maxCarryKg: 20,
++      isChild: true,
++    });
++
++    const plan = buildGroupPlan([limiting, carrier, secondCarrier, child], SEGMENTS);
++    expect(plan.limitingMemberId).toBe('limiting');
++
++    const excess = 20 - 8;
++    const transferred = plan.gearRedistribution.reduce((sum, entry) => sum + entry.weightKg, 0);
++
++    expect(plan.gearRedistribution.length).toBeGreaterThan(0);
++    expect(transferred).toBeLessThanOrEqual(excess + 0.001);
++    for (const transfer of plan.gearRedistribution) {
++      expect(transfer.fromMemberId).toBe('limiting');
++      expect(transfer.toMemberId).not.toBe('kid');
++      expect(transfer.weightKg).toBeGreaterThan(0);
++      expect(transfer.weightKg).toBeLessThanOrEqual(MAX_GEAR_TRANSFER_KG + 0.001);
++      expect(transfer.reason.trim().length).toBeGreaterThan(0);
++    }
++  });
++
++  it('TEST-A8-GRP-06: la projection publique ne révèle aucune identité, vitesse individuelle ni donnée santé', () => {
++    const members = [
++      member({
++        memberId: 'm-alice',
++        displayName: 'Alice',
++        flatSpeedKmH: 4.8,
++        limitations: ['asthme sévère'],
++      }),
++      member({ memberId: 'm-bob', displayName: 'Bob', flatSpeedKmH: 3.2 }),
++    ];
++
++    const plan = buildGroupPlan(members, SEGMENTS);
++    const publicPlan = projectGroupPlanPublic(plan);
++    const serialized = JSON.stringify(publicPlan);
++    const serializedInternal = JSON.stringify(plan);
++
++    expect(Object.keys(publicPlan).sort()).toEqual([
++      'groupDifficulty',
++      'groupPaceKmH',
++      'limitingReason',
++      'memberCount',
++      'separationRisk',
++    ]);
++    expect(publicPlan.memberCount).toBe(2);
++
++    for (const secret of [
++      'Alice',
++      'Bob',
++      'm-alice',
++      'm-bob',
++      'asthme',
++      'displayName',
++      'memberId',
++      'memberPacesKmH',
++      'perMemberDifficulty',
++      'gearRedistribution',
++      'limitations',
++    ]) {
++      expect(serialized).not.toContain(secret);
++    }
++    expect(serializedInternal).not.toContain('asthme');
++  });
++});
+diff --git a/tests/adventure-intelligence/multi-day-trek.spec.ts b/tests/adventure-intelligence/multi-day-trek.spec.ts
+new file mode 100644
+index 00000000..1121e138
+--- /dev/null
++++ b/tests/adventure-intelligence/multi-day-trek.spec.ts
+@@ -0,0 +1,125 @@
++import { describe, it, expect } from 'vitest';
++import {
++  simulateMultiDayTrek,
++  type TrekDayInput,
++} from '@/features/adventure-intelligence/domain/multiDayTrek';
++
++function day(dayNumber: number, overrides: Partial<TrekDayInput> = {}): TrekDayInput {
++  return {
++    dayNumber,
++    distanceM: 20000,
++    gainM: 1200,
++    lossM: 1200,
++    packWeightKg: 12,
++    ...overrides,
++  };
++}
++
++describe('A8 — trek multi-jours (TEST-A8-TREK)', () => {
++  it('TEST-A8-TREK-01: la capacité cumulée décroît sous des journées lourdes répétées', () => {
++    const result = simulateMultiDayTrek(
++      [day(1), day(2), day(3), day(4)],
++      { recoveryPerNight: 5 }
++    );
++
++    expect(result.daily).toHaveLength(4);
++    expect(result.daily[0].capacityPct).toBe(100);
++
++    for (let index = 1; index < result.daily.length; index += 1) {
++      expect(result.daily[index].capacityPct).toBeLessThan(result.daily[index - 1].capacityPct);
++      expect(result.daily[index].capacityPct).toBeGreaterThanOrEqual(0);
++    }
++
++    expect(result.daily[3].difficulty).toBeGreaterThan(result.daily[0].difficulty);
++    expect(result.totalDriftRisk).toBeGreaterThan(0);
++  });
++
++  it('TEST-A8-TREK-02: une récupération nocturne plus élevée préserve la capacité', () => {
++    const days = [day(1), day(2), day(3)];
++    const lowRecovery = simulateMultiDayTrek(days, { recoveryPerNight: 5 });
++    const highRecovery = simulateMultiDayTrek(days, { recoveryPerNight: 35 });
++
++    expect(highRecovery.daily[1].capacityPct).toBeGreaterThan(lowRecovery.daily[1].capacityPct);
++    expect(highRecovery.daily[2].capacityPct).toBeGreaterThan(lowRecovery.daily[2].capacityPct);
++
++    for (const entry of highRecovery.daily) {
++      expect(entry.capacityPct).toBeLessThanOrEqual(100);
++      expect(entry.capacityPct).toBeGreaterThanOrEqual(0);
++    }
++  });
++
++  it('TEST-A8-TREK-03: une nuit courte réduit la récupération de la capacité suivante', () => {
++    const moderate = day(1, { distanceM: 12000, gainM: 800, lossM: 800, packWeightKg: 8 });
++    const shortNight = simulateMultiDayTrek(
++      [
++        { ...moderate, sleepQuality: 0.2 },
++        day(2, { distanceM: 12000, gainM: 800, lossM: 800, packWeightKg: 8 }),
++        day(3, { distanceM: 12000, gainM: 800, lossM: 800, packWeightKg: 8 }),
++      ],
++      { recoveryPerNight: 20 }
++    );
++    const fullNight = simulateMultiDayTrek(
++      [
++        { ...moderate, sleepQuality: 1 },
++        day(2, { distanceM: 12000, gainM: 800, lossM: 800, packWeightKg: 8 }),
++        day(3, { distanceM: 12000, gainM: 800, lossM: 800, packWeightKg: 8 }),
++      ],
++      { recoveryPerNight: 20 }
++    );
++
++    expect(shortNight.daily[0].capacityPct).toBe(fullNight.daily[0].capacityPct);
++    expect(shortNight.daily[1].capacityPct).toBeLessThan(fullNight.daily[1].capacityPct);
++  });
++
++  it('TEST-A8-TREK-04: une journée courte améliore la capacité de la journée suivante', () => {
++    const shortDay2 = simulateMultiDayTrek(
++      [day(1), day(2, { distanceM: 5000, gainM: 200, lossM: 200, packWeightKg: 6 }), day(3)],
++      { recoveryPerNight: 20 }
++    );
++    const longDay2 = simulateMultiDayTrek([day(1), day(2), day(3)], { recoveryPerNight: 20 });
++
++    expect(shortDay2.daily[2].capacityPct).toBeGreaterThan(longDay2.daily[2].capacityPct);
++  });
++
++  it('TEST-A8-TREK-05: la dérive et les difficultés élevées déclenchent des ajustements expliqués', () => {
++    const result = simulateMultiDayTrek(
++      [
++        day(1, { distanceM: 30000, gainM: 2000, lossM: 2000, packWeightKg: 14, technicalClass: 4 }),
++        day(2, { distanceM: 30000, gainM: 2000, lossM: 2000, packWeightKg: 14, technicalClass: 4 }),
++        day(3, {
++          distanceM: 30000,
++          gainM: 2000,
++          lossM: 2000,
++          packWeightKg: 14,
++          technicalClass: 4,
++          sleepQuality: 0.3,
++        }),
++      ],
++      { recoveryPerNight: 20, heavyPackKg: 8 }
++    );
++
++    for (const entry of result.daily) {
++      expect(entry.adjustments.length).toBeGreaterThan(0);
++      for (const adjustment of entry.adjustments) {
++        expect(adjustment.label.trim().length).toBeGreaterThan(0);
++        expect(adjustment.reason.trim().length).toBeGreaterThan(0);
++      }
++    }
++
++    const firstKinds = result.daily[0].adjustments.map((adjustment) => adjustment.kind);
++    expect(firstKinds).toContain('shorten');
++    expect(firstKinds).toContain('transfer_gear');
++
++    const lastKinds = result.daily[2].adjustments.map((adjustment) => adjustment.kind);
++    expect(lastKinds).toContain('recovery_day');
++    expect(lastKinds).toContain('change_refuge');
++
++    const driftRisks = result.daily.map((entry) => entry.driftRisk);
++    expect(result.totalDriftRisk).toBe(Math.max(...driftRisks));
++    expect(result.totalDriftRisk).toBeGreaterThan(0.5);
++    expect(result.totalDriftRisk).toBeLessThanOrEqual(1);
++
++    const worst = result.daily.find((entry) => entry.dayNumber === result.worstDay);
++    expect(worst?.difficulty).toBe(Math.max(...result.daily.map((entry) => entry.difficulty)));
++  });
++});

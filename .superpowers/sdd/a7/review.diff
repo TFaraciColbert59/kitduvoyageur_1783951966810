@@ -1,0 +1,2025 @@
+﻿diff --git a/src/features/adventure-intelligence/domain/cockpit.ts b/src/features/adventure-intelligence/domain/cockpit.ts
+new file mode 100644
+index 00000000..a43806b9
+--- /dev/null
++++ b/src/features/adventure-intelligence/domain/cockpit.ts
+@@ -0,0 +1,330 @@
++/**
++ * A7 — Cockpit : projection bornée des moteurs (plan A1, prédiction A3,
++ * terrain A5) vers une vue unique, lisible et calme.
++ *
++ * Domaine pur : zéro I/O, zéro Dexie, zéro React. Les bornes UI (max 3
++ * indicateurs, max 3 actions) sont imposées ici, pas dans le composant.
++ */
++import { categoryDisplay } from '@/features/terrain-live/lib/terrainDisplay';
++import type { TerrainReportCategory, TerrainSeverity } from '../schemas/live.schema';
++import { clamp01, type Confidence } from './confidence';
++
++/** Bornes strictes de la vue cockpit (spec A7 §7.2). */
++export const MAX_COCKPIT_INDICATORS = 3;
++export const MAX_COCKPIT_ACTIONS = 3;
++/** Difficulté personnelle : warning au-delà de 75, critical au-delà de 90. */
++export const DIFFICULTY_WARNING_THRESHOLD = 75;
++export const DIFFICULTY_CRITICAL_THRESHOLD = 90;
++/** Batterie : warning à ≤ 20 %, critical à ≤ 10 %. */
++export const BATTERY_WARNING_THRESHOLD = 20;
++export const BATTERY_CRITICAL_THRESHOLD = 10;
++
++export type CockpitTone = 'neutral' | 'positive' | 'warning' | 'critical';
++export type CockpitActionKind = 'decide' | 'navigate' | 'report';
++export type CockpitStrategy = 'comfort' | 'recommended' | 'fast';
++
++export interface CockpitPlanInput {
++  id: string;
++  title?: string | null;
++  status: string;
++  confidence: Confidence;
++  personalDifficulty: number | null;
++  etaP50: string | null;
++  etaP90: string | null;
++}
++
++export interface CockpitCriticalSegment {
++  id: number;
++  label: string;
++  difficulty: number;
++}
++
++export interface CockpitPredictionInput {
++  strategy: CockpitStrategy;
++  paceRangeMinPerKm: [number, number];
++  turnaroundTime: string | null;
++  nextCriticalSegment: CockpitCriticalSegment | null;
++  aheadBehindMinutes?: number | null;
++}
++
++export interface CockpitLiveReportInput {
++  id: string;
++  category: string;
++  severity: TerrainSeverity;
++  distanceM: number;
++}
++
++export interface CockpitDecisionInput {
++  id: string;
++  label: string;
++  requiresConfirmation: boolean;
++}
++
++export interface CockpitInput {
++  plan: CockpitPlanInput | null;
++  prediction: CockpitPredictionInput | null;
++  liveReports: CockpitLiveReportInput[];
++  decisionsRequired: CockpitDecisionInput[];
++  recalcReasons: string[];
++  offline: boolean;
++  batteryLevel?: number | null;
++}
++
++export interface CockpitHero {
++  title: string;
++  subtitle: string;
++  status: string;
++}
++
++export interface CockpitIndicator {
++  id: string;
++  label: string;
++  value: string;
++  tone: CockpitTone;
++}
++
++export interface CockpitPriorityAction {
++  id: string;
++  label: string;
++  kind: CockpitActionKind;
++}
++
++export interface CockpitAlert {
++  id: string;
++  label: string;
++  severity: TerrainSeverity;
++}
++
++export interface CockpitEta {
++  p50: string | null;
++  p90: string | null;
++  aheadBehindMinutes: number | null;
++}
++
++export interface CockpitView {
++  hero: CockpitHero;
++  indicators: CockpitIndicator[];
++  priorityActions: CockpitPriorityAction[];
++  alerts: CockpitAlert[];
++  eta: CockpitEta;
++  difficulty: { value: number | null; label: string };
++  paceStrategy: { id: string; label: string } | null;
++  turnaroundTime: string | null;
++  confidence: Confidence | null;
++  recalcReasons: string[];
++  offline: boolean;
++}
++
++const STATUS_LABELS: Record<string, string> = {
++  draft: 'Brouillon',
++  active: 'En cours',
++  completed: 'Terminée',
++  archived: 'Archivée',
++};
++
++const STRATEGY_LABELS: Record<CockpitStrategy, string> = {
++  comfort: 'Confort',
++  recommended: 'Recommandée',
++  fast: 'Rapide',
++};
++
++const SEVERITY_RANK: Record<TerrainSeverity, number> = {
++  critical: 0,
++  warning: 1,
++  info: 2,
++};
++
++function difficultyLabel(value: number | null): string {
++  if (value == null) return 'Inconnue';
++  if (value <= 40) return 'Facile';
++  if (value <= 60) return 'Modérée';
++  if (value <= DIFFICULTY_WARNING_THRESHOLD) return 'Exigeante';
++  if (value <= DIFFICULTY_CRITICAL_THRESHOLD) return 'Difficile';
++  return 'Très difficile';
++}
++
++function difficultyTone(value: number): CockpitTone {
++  if (value > DIFFICULTY_CRITICAL_THRESHOLD) return 'critical';
++  if (value > DIFFICULTY_WARNING_THRESHOLD) return 'warning';
++  if (value > 50) return 'neutral';
++  return 'positive';
++}
++
++function batteryTone(value: number): CockpitTone {
++  if (value <= BATTERY_CRITICAL_THRESHOLD) return 'critical';
++  if (value <= BATTERY_WARNING_THRESHOLD) return 'warning';
++  return 'neutral';
++}
++
++function confidenceTone(confidence: Confidence): CockpitTone {
++  if (confidence.level === 'high') return 'positive';
++  if (confidence.level === 'medium') return 'neutral';
++  return 'warning';
++}
++
++function validIsoOrNull(value: string | null | undefined): string | null {
++  if (!value) return null;
++  return Number.isFinite(Date.parse(value)) ? value : null;
++}
++
++function buildIndicators(input: CockpitInput): CockpitIndicator[] {
++  const indicators: CockpitIndicator[] = [];
++
++  const difficulty = input.plan?.personalDifficulty;
++  if (typeof difficulty === 'number' && Number.isFinite(difficulty)) {
++    const bounded = Math.min(100, Math.max(0, difficulty));
++    indicators.push({
++      id: 'difficulty',
++      label: 'Difficulté',
++      value: `${Math.round(bounded)}/100`,
++      tone: difficultyTone(bounded),
++    });
++  }
++
++  const reports = input.liveReports ?? [];
++  if (reports.length > 0) {
++    const hasCritical = reports.some((report) => report.severity === 'critical');
++    const hasWarning = reports.some((report) => report.severity === 'warning');
++    indicators.push({
++      id: 'alerts',
++      label: 'Signalements',
++      value: `${reports.length}`,
++      tone: hasCritical ? 'critical' : hasWarning ? 'warning' : 'neutral',
++    });
++  }
++
++  if (input.decisionsRequired.length > 0) {
++    indicators.push({
++      id: 'decisions',
++      label: 'Décisions requises',
++      value: `${input.decisionsRequired.length}`,
++      tone: 'warning',
++    });
++  }
++
++  if (typeof input.batteryLevel === 'number' && Number.isFinite(input.batteryLevel)) {
++    const bounded = Math.min(100, Math.max(0, input.batteryLevel));
++    indicators.push({
++      id: 'battery',
++      label: 'Batterie',
++      value: `${Math.round(bounded)} %`,
++      tone: batteryTone(bounded),
++    });
++  }
++
++  if (input.plan) {
++    indicators.push({
++      id: 'confidence',
++      label: 'Confiance',
++      value: `${Math.round(clamp01(input.plan.confidence.score) * 100)} %`,
++      tone: confidenceTone(input.plan.confidence),
++    });
++  }
++
++  return indicators.slice(0, MAX_COCKPIT_INDICATORS);
++}
++
++function buildActions(input: CockpitInput): CockpitPriorityAction[] {
++  const actions: CockpitPriorityAction[] = [];
++
++  const decisions = [...input.decisionsRequired].sort(
++    (a, b) => Number(b.requiresConfirmation) - Number(a.requiresConfirmation)
++  );
++  for (const decision of decisions) {
++    actions.push({ id: decision.id, label: decision.label, kind: 'decide' });
++  }
++
++  if (input.plan) {
++    actions.push({ id: 'action-report', label: 'Signaler un problème', kind: 'report' });
++  }
++
++  const segment = input.prediction?.nextCriticalSegment;
++  if (segment) {
++    actions.push({ id: 'action-navigate', label: `Aller au segment ${segment.label}`, kind: 'navigate' });
++  }
++
++  return actions.slice(0, MAX_COCKPIT_ACTIONS);
++}
++
++function buildAlerts(input: CockpitInput): CockpitAlert[] {
++  return (input.liveReports ?? [])
++    .map((report) => ({
++      id: report.id,
++      label: `${categoryDisplay(report.category as TerrainReportCategory).label} à ${Math.max(
++        0,
++        Math.round(report.distanceM)
++      )} m`,
++      severity: report.severity,
++      distanceM: report.distanceM,
++    }))
++    .sort(
++      (a, b) =>
++        SEVERITY_RANK[a.severity] - SEVERITY_RANK[b.severity] || a.distanceM - b.distanceM
++    )
++    .map(({ id, label, severity }) => ({ id, label, severity }));
++}
++
++function buildEta(input: CockpitInput): CockpitEta {
++  const p50 = validIsoOrNull(input.plan?.etaP50);
++  let p90 = validIsoOrNull(input.plan?.etaP90);
++  if (p50 && p90 && Date.parse(p90) < Date.parse(p50)) p90 = p50;
++
++  const ahead = input.prediction?.aheadBehindMinutes;
++  return {
++    p50,
++    p90,
++    aheadBehindMinutes: typeof ahead === 'number' && Number.isFinite(ahead) ? ahead : null,
++  };
++}
++
++function buildHero(input: CockpitInput): CockpitHero {
++  const status = input.plan
++    ? STATUS_LABELS[input.plan.status] ?? input.plan.status
++    : 'Aucune aventure';
++  const title = input.plan?.title?.trim() || 'Aventure';
++
++  let subtitle: string;
++  if (input.offline) {
++    subtitle = 'Mode hors-ligne — données locales';
++  } else if (input.prediction?.nextCriticalSegment) {
++    subtitle = `Prochain point critique : ${input.prediction.nextCriticalSegment.label}`;
++  } else if (input.plan?.personalDifficulty != null) {
++    subtitle = `Difficulté personnelle ${Math.round(input.plan.personalDifficulty)}/100`;
++  } else if (input.plan) {
++    subtitle = 'Prêt à consulter';
++  } else {
++    subtitle = 'Aucune aventure active';
++  }
++
++  return { title, subtitle, status };
++}
++
++/**
++ * Construit la vue cockpit : un seul héro, 0-3 indicateurs, 0-3 actions,
++ * alertes verticales triées gravité puis distance, ETA toujours en fourchette.
++ */
++export function buildCockpitView(input: CockpitInput): CockpitView {
++  const difficultyValue =
++    input.plan?.personalDifficulty != null && Number.isFinite(input.plan.personalDifficulty)
++      ? Math.round(Math.min(100, Math.max(0, input.plan.personalDifficulty)))
++      : null;
++
++  return {
++    hero: buildHero(input),
++    indicators: buildIndicators(input),
++    priorityActions: buildActions(input),
++    alerts: buildAlerts(input),
++    eta: buildEta(input),
++    difficulty: { value: difficultyValue, label: difficultyLabel(difficultyValue) },
++    paceStrategy: input.prediction
++      ? {
++          id: input.prediction.strategy,
++          label: STRATEGY_LABELS[input.prediction.strategy] ?? input.prediction.strategy,
++        }
++      : null,
++    turnaroundTime: input.prediction?.turnaroundTime ?? null,
++    confidence: input.plan?.confidence ?? null,
++    recalcReasons: [...input.recalcReasons],
++    offline: input.offline,
++  };
++}
+diff --git a/src/features/adventure-intelligence/domain/recalcTriggers.ts b/src/features/adventure-intelligence/domain/recalcTriggers.ts
+new file mode 100644
+index 00000000..d66e7f2c
+--- /dev/null
++++ b/src/features/adventure-intelligence/domain/recalcTriggers.ts
+@@ -0,0 +1,155 @@
++/**
++ * A7 — Déclencheurs de recalcul live (pur).
++ *
++ * Un recalcul est proposé sur signaux : déplacement ≥ 250 m, reprise après
++ * pause ≥ 2 min, écart d'allure ≥ 15 %, hors-trace, changement de version
++ * des signalements ou de l'itinéraire, batterie ≤ 20 % (une fois).
++ * Anti-rebond : jamais deux recalculs à moins de 60 s.
++ */
++import { haversineM } from './geo';
++
++export const POSITION_THRESHOLD_M = 250;
++export const PAUSE_MIN_MS = 2 * 60_000;
++export const PACE_DEVIATION_THRESHOLD = 0.15;
++export const BATTERY_THRESHOLD_PCT = 20;
++export const RECALC_DEBOUNCE_MS = 60_000;
++
++export const RECALC_REASONS = {
++  position: 'position_250m',
++  pause: 'pause_reprise_2min',
++  pace: 'allure_ecart_15pct',
++  offroute: 'hors_trace',
++  terrain: 'signalements_modifies',
++  battery: 'batterie_faible_20pct',
++  route: 'itineraire_modifie',
++} as const;
++
++export interface RecalcState {
++  lastRecalcAt: string | null;
++  lastPositionAt: string | null;
++  lastPosition: { lat: number; lng: number } | null;
++  lastPaceMinPerKm: number | null;
++  lastReportsVersion: number;
++  lastOffRouteAt: string | null;
++  batteryLevel: number | null;
++  routeVersion: number;
++}
++
++export interface RecalcSignal {
++  kind: 'position' | 'pause' | 'pace' | 'offroute' | 'terrain' | 'battery' | 'route';
++  at: string;
++  detail?: string;
++}
++
++export interface RecalcDecision {
++  shouldRecalculate: boolean;
++  reasons: string[];
++  nextState: RecalcState;
++}
++
++export interface RecalcInput {
++  state: RecalcState;
++  now: string;
++  position?: { lat: number; lng: number } | null;
++  moving?: boolean;
++  paceMinPerKm?: number | null;
++  reportsVersion?: number;
++  offRoute?: boolean;
++  batteryLevel?: number | null;
++  routeVersion?: number;
++}
++
++function parsedMs(iso: string | null): number | null {
++  if (!iso) return null;
++  const ms = Date.parse(iso);
++  return Number.isFinite(ms) ? ms : null;
++}
++
++export function evaluateRecalc(input: RecalcInput): RecalcDecision {
++  const { state, now } = input;
++  const nowMs = Date.parse(now);
++  const reasons: string[] = [];
++  const lastRecalcMs = parsedMs(state.lastRecalcAt);
++  const debounced =
++    lastRecalcMs != null && Number.isFinite(nowMs) && nowMs - lastRecalcMs < RECALC_DEBOUNCE_MS;
++
++  if (input.position && state.lastPosition) {
++    const distanceM = haversineM(state.lastPosition, input.position);
++    if (distanceM >= POSITION_THRESHOLD_M) reasons.push(RECALC_REASONS.position);
++  }
++
++  if (input.moving === true && state.lastPositionAt) {
++    const lastPositionMs = parsedMs(state.lastPositionAt);
++    if (lastPositionMs != null && Number.isFinite(nowMs) && nowMs - lastPositionMs >= PAUSE_MIN_MS) {
++      reasons.push(RECALC_REASONS.pause);
++    }
++  }
++
++  if (
++    typeof input.paceMinPerKm === 'number' &&
++    Number.isFinite(input.paceMinPerKm) &&
++    state.lastPaceMinPerKm != null &&
++    state.lastPaceMinPerKm > 0
++  ) {
++    const deviation =
++      Math.abs(input.paceMinPerKm - state.lastPaceMinPerKm) / state.lastPaceMinPerKm;
++    if (deviation >= PACE_DEVIATION_THRESHOLD) reasons.push(RECALC_REASONS.pace);
++  }
++
++  if (input.offRoute === true && state.lastOffRouteAt == null) {
++    reasons.push(RECALC_REASONS.offroute);
++  }
++
++  if (typeof input.reportsVersion === 'number' && input.reportsVersion !== state.lastReportsVersion) {
++    reasons.push(RECALC_REASONS.terrain);
++  }
++
++  if (
++    typeof input.batteryLevel === 'number' &&
++    Number.isFinite(input.batteryLevel) &&
++    input.batteryLevel <= BATTERY_THRESHOLD_PCT &&
++    (state.batteryLevel == null || state.batteryLevel > BATTERY_THRESHOLD_PCT)
++  ) {
++    reasons.push(RECALC_REASONS.battery);
++  }
++
++  if (typeof input.routeVersion === 'number' && input.routeVersion !== state.routeVersion) {
++    reasons.push(RECALC_REASONS.route);
++  }
++
++  if (reasons.length === 0 || debounced) {
++    return {
++      shouldRecalculate: false,
++      reasons,
++      nextState:
++        input.offRoute === false
++          ? { ...state, lastOffRouteAt: null }
++          : state,
++    };
++  }
++
++  return {
++    shouldRecalculate: true,
++    reasons,
++    nextState: {
++      lastRecalcAt: now,
++      lastPosition: input.position ?? state.lastPosition,
++      lastPositionAt: input.position ? now : state.lastPositionAt,
++      lastPaceMinPerKm:
++        typeof input.paceMinPerKm === 'number' && Number.isFinite(input.paceMinPerKm)
++          ? input.paceMinPerKm
++          : state.lastPaceMinPerKm,
++      lastReportsVersion:
++        typeof input.reportsVersion === 'number'
++          ? input.reportsVersion
++          : state.lastReportsVersion,
++      lastOffRouteAt: input.offRoute === true ? now : null,
++      batteryLevel:
++        typeof input.batteryLevel === 'number' && Number.isFinite(input.batteryLevel)
++          ? input.batteryLevel
++          : state.batteryLevel,
++      routeVersion:
++        typeof input.routeVersion === 'number' ? input.routeVersion : state.routeVersion,
++    },
++  };
++}
+diff --git a/src/features/adventure-intelligence/offline/db.ts b/src/features/adventure-intelligence/offline/db.ts
+new file mode 100644
+index 00000000..caa65932
+--- /dev/null
++++ b/src/features/adventure-intelligence/offline/db.ts
+@@ -0,0 +1,142 @@
++/**
++ * A7 — Offline V2 : base Dexie `lkdv-adventure-offline-v1` (ADR-AI-007).
++ *
++ * Couche fine et typée : aucune logique métier ici (testée dans
++ * `operations.ts`), uniquement la persistance des 10 stores, la file
++ * idempotente et les métadonnées de synchronisation.
++ */
++import Dexie, { type Table } from 'dexie';
++import {
++  OFFLINE_QUEUE_STORES,
++  isOfflineQueueStore,
++  type OfflineOperation,
++  type OfflineQueueStore,
++} from './operations';
++
++export const ADVENTURE_OFFLINE_DB_NAME = 'lkdv-adventure-offline-v1';
++
++/** Entrée de cache d'un store de données (pack, route, segment, POI…). */
++export interface OfflineCacheEntry {
++  id: string;
++  payload: unknown;
++  updatedAt: string;
++}
++
++/** Métadonnée de synchronisation (clé/valeur). */
++export interface SyncMetadataEntry {
++  key: string;
++  value: unknown;
++  updatedAt: string;
++}
++
++export class AdventureOfflineDb extends Dexie {
++  offline_adventures!: Table<OfflineCacheEntry, string>;
++  offline_routes!: Table<OfflineCacheEntry, string>;
++  offline_segments!: Table<OfflineCacheEntry, string>;
++  offline_predictions!: Table<OfflineCacheEntry, string>;
++  offline_pois!: Table<OfflineCacheEntry, string>;
++  offline_terrain_events!: Table<OfflineCacheEntry, string>;
++  offline_reports_queue!: Table<OfflineOperation, string>;
++  offline_sessions_queue!: Table<OfflineOperation, string>;
++  offline_decisions_queue!: Table<OfflineOperation, string>;
++  sync_metadata!: Table<SyncMetadataEntry, string>;
++
++  constructor() {
++    super(ADVENTURE_OFFLINE_DB_NAME);
++    this.version(1).stores({
++      offline_adventures: 'id, updatedAt',
++      offline_routes: 'id, updatedAt',
++      offline_segments: 'id, updatedAt',
++      offline_predictions: 'id, updatedAt',
++      offline_pois: 'id, updatedAt',
++      offline_terrain_events: 'id, updatedAt',
++      offline_reports_queue: 'id, &idempotencyKey, createdAt, store',
++      offline_sessions_queue: 'id, &idempotencyKey, createdAt, store',
++      offline_decisions_queue: 'id, &idempotencyKey, createdAt, store',
++      sync_metadata: 'key',
++    });
++  }
++}
++
++export const adventureOfflineDb = new AdventureOfflineDb();
++
++function queueTable(store: OfflineQueueStore): Table<OfflineOperation, string> {
++  return adventureOfflineDb[store];
++}
++
++function queueTables(): Table<OfflineOperation, string>[] {
++  return OFFLINE_QUEUE_STORES.map((store) => adventureOfflineDb[store]);
++}
++
++/**
++ * Met une opération en file. Retourne `false` si sa clé d'idempotence est
++ * déjà présente (rejoue jamais deux fois la même opération).
++ */
++export async function enqueue(operation: OfflineOperation): Promise<boolean> {
++  if (!isOfflineQueueStore(operation.store)) {
++    throw new Error(`Store non file d'attente : ${operation.store}`);
++  }
++  const table = queueTable(operation.store);
++  return adventureOfflineDb.transaction('rw', table, async () => {
++    const existing = await table
++      .where('idempotencyKey')
++      .equals(operation.idempotencyKey)
++      .first();
++    if (existing) return false;
++    await table.put(operation);
++    return true;
++  });
++}
++
++/** Opérations en attente, triées par date de création (tous stores ou un seul). */
++export async function pending(store?: OfflineQueueStore): Promise<OfflineOperation[]> {
++  if (store) {
++    return queueTable(store).orderBy('createdAt').toArray();
++  }
++  const batches = await Promise.all(
++    OFFLINE_QUEUE_STORES.map((name) => adventureOfflineDb[name].orderBy('createdAt').toArray())
++  );
++  return batches.flat().sort((a, b) => a.createdAt.localeCompare(b.createdAt));
++}
++
++/** Supprime les opérations synchronisées ; retourne le nombre supprimé. */
++export async function markSynced(ids: string[]): Promise<number> {
++  if (ids.length === 0) return 0;
++  const tables = queueTables();
++  return adventureOfflineDb.transaction('rw', tables, async () => {
++    let deleted = 0;
++    for (const table of tables) {
++      deleted += await table.where('id').anyOf(ids).delete();
++    }
++    return deleted;
++  });
++}
++
++/** Incrémente le compteur de tentatives des opérations en échec. */
++export async function markFailed(ids: string[]): Promise<number> {
++  if (ids.length === 0) return 0;
++  const tables = queueTables();
++  return adventureOfflineDb.transaction('rw', tables, async () => {
++    let updated = 0;
++    for (const table of tables) {
++      const operations = await table.where('id').anyOf(ids).toArray();
++      for (const operation of operations) {
++        await table.put({ ...operation, attempts: operation.attempts + 1 });
++        updated += 1;
++      }
++    }
++    return updated;
++  });
++}
++
++/** Lit (`metadata(key)`) ou écrit (`metadata(key, value)`) une métadonnée. */
++export async function metadata(key: string): Promise<SyncMetadataEntry | undefined>;
++export async function metadata(key: string, value: unknown): Promise<SyncMetadataEntry>;
++export async function metadata(key: string, value?: unknown): Promise<SyncMetadataEntry | undefined> {
++  if (arguments.length < 2) {
++    return adventureOfflineDb.sync_metadata.get(key);
++  }
++  const entry: SyncMetadataEntry = { key, value, updatedAt: new Date().toISOString() };
++  await adventureOfflineDb.sync_metadata.put(entry);
++  return entry;
++}
+diff --git a/src/features/adventure-intelligence/offline/operations.ts b/src/features/adventure-intelligence/offline/operations.ts
+new file mode 100644
+index 00000000..a5c9ba09
+--- /dev/null
++++ b/src/features/adventure-intelligence/offline/operations.ts
+@@ -0,0 +1,240 @@
++/**
++ * A7 — Offline V2 : opérations pures, idempotentes et sérialisables.
++ *
++ * Zéro I/O, zéro Dexie : toute la logique testable vit ici (clé d'idempotence,
++ * migration legacy localStorage, taille de pack, déduplication). La base Dexie
++ * (`db.ts`) n'est qu'une façade typée au-dessus de ces opérations.
++ */
++export const OFFLINE_STORES = [
++  'offline_adventures',
++  'offline_routes',
++  'offline_segments',
++  'offline_predictions',
++  'offline_pois',
++  'offline_terrain_events',
++  'offline_reports_queue',
++  'offline_sessions_queue',
++  'offline_decisions_queue',
++  'sync_metadata',
++] as const;
++
++export type OfflineStore = (typeof OFFLINE_STORES)[number];
++
++export const OFFLINE_QUEUE_STORES = [
++  'offline_reports_queue',
++  'offline_sessions_queue',
++  'offline_decisions_queue',
++] as const;
++
++export type OfflineQueueStore = (typeof OFFLINE_QUEUE_STORES)[number];
++
++export function isOfflineQueueStore(store: OfflineStore): store is OfflineQueueStore {
++  return (OFFLINE_QUEUE_STORES as readonly string[]).includes(store);
++}
++
++export interface OfflineOperation {
++  id: string;
++  store: OfflineStore;
++  kind: string;
++  payload: unknown;
++  idempotencyKey: string;
++  createdAt: string;
++  attempts: number;
++}
++
++export interface CreateOfflineOperationInput {
++  store: OfflineStore;
++  kind: string;
++  entityId: string;
++  payload: unknown;
++  createdAt?: string;
++  attempts?: number;
++}
++
++/** Clé d'idempotence stable : type + entité + empreinte du payload. */
++export function makeIdempotencyKey(input: {
++  kind: string;
++  entityId: string;
++  payloadHash: string;
++}): string {
++  return `${input.kind}:${input.entityId}:${input.payloadHash}`;
++}
++
++function stableStringify(value: unknown): string {
++  if (value === null) return 'null';
++  if (value === undefined) return 'undefined';
++  if (typeof value !== 'object') return JSON.stringify(value) ?? 'null';
++  if (Array.isArray(value)) return `[${value.map(stableStringify).join(',')}]`;
++  const record = value as Record<string, unknown>;
++  return `{${Object.keys(record)
++    .sort()
++    .map((key) => `${JSON.stringify(key)}:${stableStringify(record[key])}`)
++    .join(',')}}`;
++}
++
++/** Empreinte FNV-1a 32 bits, stable quelle que soit l'ordre des clés. */
++export function hashPayload(payload: unknown): string {
++  const text = stableStringify(payload);
++  let hash = 0x811c9dc5;
++  for (let i = 0; i < text.length; i += 1) {
++    hash ^= text.charCodeAt(i);
++    hash = Math.imul(hash, 0x01000193);
++  }
++  return (hash >>> 0).toString(16).padStart(8, '0');
++}
++
++export function createOfflineOperation(input: CreateOfflineOperationInput): OfflineOperation {
++  const payloadHash = hashPayload(input.payload);
++  const idempotencyKey = makeIdempotencyKey({
++    kind: input.kind,
++    entityId: input.entityId,
++    payloadHash,
++  });
++  return {
++    id: idempotencyKey,
++    store: input.store,
++    kind: input.kind,
++    payload: input.payload,
++    idempotencyKey,
++    createdAt: input.createdAt ?? new Date().toISOString(),
++    attempts: Math.max(0, Math.trunc(input.attempts ?? 0)),
++  };
++}
++
++/** Première occurrence gagnante, ordre stable — jamais de doublon à synchroniser. */
++export function dedupeOperations(operations: readonly OfflineOperation[]): OfflineOperation[] {
++  const seen = new Set<string>();
++  const result: OfflineOperation[] = [];
++  for (const operation of operations) {
++    if (seen.has(operation.idempotencyKey)) continue;
++    seen.add(operation.idempotencyKey);
++    result.push(operation);
++  }
++  return result;
++}
++
++/** Taille sérialisée du pack en octets (0 pour un pack vide). */
++export function packSizeBytes(operations: readonly OfflineOperation[]): number {
++  let total = 0;
++  for (const operation of operations) {
++    total += new TextEncoder().encode(JSON.stringify(operation)).length;
++  }
++  return total;
++}
++
++/** Clés localStorage legacy connues (migration V1 → Dexie V2). */
++export const LEGACY_SYNC_QUEUE_KEY = 'lkdv_offline_sync_queue';
++export const LEGACY_REPORTS_QUEUE_KEY = 'lkdv_offline_reports_queue';
++export const LEGACY_DECISIONS_QUEUE_KEY = 'lkdv_offline_decisions_queue';
++export const LEGACY_ADVENTURE_PACK_KEY = 'lkdv_offline_adventure_pack';
++export const LEGACY_METADATA_KEYS = [
++  'lkdv_offline_pack_version',
++  'lkdv_offline_last_sync',
++] as const;
++
++const LEGACY_QUEUE_KEYS: Record<string, { store: OfflineQueueStore; defaultKind: string }> = {
++  [LEGACY_SYNC_QUEUE_KEY]: { store: 'offline_sessions_queue', defaultKind: 'hike_session' },
++  [LEGACY_REPORTS_QUEUE_KEY]: { store: 'offline_reports_queue', defaultKind: 'terrain_report' },
++  [LEGACY_DECISIONS_QUEUE_KEY]: { store: 'offline_decisions_queue', defaultKind: 'decision' },
++};
++
++export interface LegacyMigrationPlan {
++  operations: OfflineOperation[];
++  migratedKeys: string[];
++  skipped: string[];
++}
++
++function safeParse(raw: string): { ok: true; value: unknown } | { ok: false } {
++  try {
++    return { ok: true, value: JSON.parse(raw) as unknown };
++  } catch {
++    return { ok: false };
++  }
++}
++
++function asRecord(value: unknown): Record<string, unknown> | null {
++  return typeof value === 'object' && value !== null && !Array.isArray(value)
++    ? (value as Record<string, unknown>)
++    : null;
++}
++
++function nonEmptyString(value: unknown): string | null {
++  return typeof value === 'string' && value.length > 0 ? value : null;
++}
++
++function finiteNumberOr(value: unknown, fallback: number): number {
++  return typeof value === 'number' && Number.isFinite(value) ? value : fallback;
++}
++
++/**
++ * Convertit les clés localStorage V1 connues en opérations idempotentes V2.
++ * Toute clé inconnue ou valeur illisible part dans `skipped` : la migration
++ * ne détruit jamais silencieusement une donnée.
++ */
++export function planLegacyMigration(raw: Record<string, string>): LegacyMigrationPlan {
++  const operations: OfflineOperation[] = [];
++  const migratedKeys: string[] = [];
++  const skipped: string[] = [];
++
++  for (const [key, rawValue] of Object.entries(raw)) {
++    const parsed = safeParse(rawValue);
++    if (!parsed.ok) {
++      skipped.push(key);
++      continue;
++    }
++
++    if ((LEGACY_METADATA_KEYS as readonly string[]).includes(key)) {
++      operations.push(
++        createOfflineOperation({
++          store: 'sync_metadata',
++          kind: 'metadata',
++          entityId: key,
++          payload: { key, value: parsed.value },
++        })
++      );
++      migratedKeys.push(key);
++      continue;
++    }
++
++    const queue = LEGACY_QUEUE_KEYS[key];
++    if (queue) {
++      const items = Array.isArray(parsed.value) ? parsed.value : [parsed.value];
++      items.forEach((item, index) => {
++        const record = asRecord(item);
++        const payload = record && 'payload' in record ? record.payload : item;
++        const entityId = (record && nonEmptyString(record.id)) ?? `${key}:${index}`;
++        const kind = (record && nonEmptyString(record.type)) ?? queue.defaultKind;
++        operations.push(
++          createOfflineOperation({
++            store: queue.store,
++            kind,
++            entityId,
++            payload,
++            createdAt: (record && nonEmptyString(record.createdAt)) ?? undefined,
++            attempts: finiteNumberOr(record?.retryCount, 0),
++          })
++        );
++      });
++      migratedKeys.push(key);
++      continue;
++    }
++
++    if (key === LEGACY_ADVENTURE_PACK_KEY) {
++      const record = asRecord(parsed.value);
++      operations.push(
++        createOfflineOperation({
++          store: 'offline_adventures',
++          kind: 'adventure_pack',
++          entityId: (record && nonEmptyString(record.id)) ?? 'pack',
++          payload: parsed.value,
++        })
++      );
++      migratedKeys.push(key);
++      continue;
++    }
++
++    skipped.push(key);
++  }
++
++  return { operations: dedupeOperations(operations), migratedKeys, skipped };
++}
+diff --git a/src/features/adventure-intelligence/ui/AdventureCockpit.tsx b/src/features/adventure-intelligence/ui/AdventureCockpit.tsx
+new file mode 100644
+index 00000000..594a169a
+--- /dev/null
++++ b/src/features/adventure-intelligence/ui/AdventureCockpit.tsx
+@@ -0,0 +1,339 @@
++'use client';
++
++/**
++ * A7 — Cockpit mobile calme (iOS) : Hero unique → 3 indicateurs → 3 actions →
++ * alertes verticales → ETA P50/P90 → difficulté → allure → demi-tour →
++ * confiance → raisons de recalcul → bandeau offline.
++ *
++ * Vue pure de `buildCockpitView` : le composant ne calcule rien, ne fait
++ * aucune I/O. Cibles ≥ 44 px, safe-area, `prefers-reduced-motion`, animations
++ * transform/opacité ≤ 220 ms, rayons/ombres système uniquement.
++ */
++import { useMemo } from 'react';
++import { motion, useReducedMotion } from 'framer-motion';
++import Icon from '@/components/ui/Icon';
++import {
++  buildCockpitView,
++  type CockpitActionKind,
++  type CockpitInput,
++  type CockpitPriorityAction,
++  type CockpitTone,
++} from '../domain/cockpit';
++import { RECALC_REASONS } from '../domain/recalcTriggers';
++import { SEVERITY_COLORS, SEVERITY_LABELS } from '@/features/terrain-live/lib/terrainDisplay';
++import type { TerrainSeverity } from '@/features/adventure-intelligence/schemas/live.schema';
++import OfflineBanner from './OfflineBanner';
++
++export interface AdventureCockpitProps {
++  input: CockpitInput;
++  pendingSyncCount?: number;
++  onDecide?: (decisionId: string) => void;
++  onReport?: () => void;
++  onNavigate?: () => void;
++  onRecalculate?: () => void;
++  className?: string;
++}
++
++const TONE_TEXT_CLASSES: Record<CockpitTone, string> = {
++  neutral: 'text-[var(--lkv-text-primary)]',
++  positive: 'text-[var(--lkv-success)]',
++  warning: 'text-[var(--lkv-warning-dark)]',
++  critical: 'text-[var(--lkv-danger-dark)]',
++};
++
++const TONE_BAR_CLASSES: Record<CockpitTone, string> = {
++  neutral: 'bg-[var(--lkv-text-subtle)]',
++  positive: 'bg-[var(--lkv-success)]',
++  warning: 'bg-[var(--lkv-warning)]',
++  critical: 'bg-[var(--lkv-danger)]',
++};
++
++const ACTION_ICONS: Record<CockpitActionKind, string> = {
++  decide: 'check-circle',
++  navigate: 'navigation',
++  report: 'alert-triangle',
++};
++
++const SEVERITY_ICONS: Record<TerrainSeverity, string> = {
++  critical: 'alert-triangle',
++  warning: 'alert-circle',
++  info: 'info',
++};
++
++const CONFIDENCE_LABELS: Record<string, string> = {
++  high: 'élevée',
++  medium: 'moyenne',
++  low: 'faible',
++};
++
++const RECALC_REASON_LABELS: Record<string, string> = {
++  [RECALC_REASONS.position]: 'Déplacement significatif',
++  [RECALC_REASONS.pause]: 'Reprise après pause',
++  [RECALC_REASONS.pace]: 'Allure modifiée',
++  [RECALC_REASONS.offroute]: 'Hors trace',
++  [RECALC_REASONS.terrain]: 'Terrain modifié',
++  [RECALC_REASONS.battery]: 'Batterie faible',
++  [RECALC_REASONS.route]: 'Itinéraire modifié',
++};
++
++function formatTime(iso: string | null): string | null {
++  if (!iso) return null;
++  const ms = Date.parse(iso);
++  if (!Number.isFinite(ms)) return null;
++  return new Date(ms).toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' });
++}
++
++function etaText(p50: string | null, p90: string | null): string {
++  const start = formatTime(p50);
++  const end = formatTime(p90);
++  if (start && end) return `${start} – ${end}`;
++  if (start) return `vers ${start}`;
++  if (end) return `avant ${end}`;
++  return '—';
++}
++
++function aheadBehindText(minutes: number | null): string | null {
++  if (minutes == null) return null;
++  if (minutes === 0) return 'À l’heure';
++  return minutes > 0 ? `${minutes} min d’avance` : `${Math.abs(minutes)} min de retard`;
++}
++
++export function AdventureCockpit({
++  input,
++  pendingSyncCount = 0,
++  onDecide,
++  onReport,
++  onNavigate,
++  onRecalculate,
++  className = '',
++}: AdventureCockpitProps) {
++  const reduceMotion = useReducedMotion();
++  const view = useMemo(() => buildCockpitView(input), [input]);
++
++  const handleAction = (action: CockpitPriorityAction) => {
++    if (action.kind === 'decide') onDecide?.(action.id);
++    else if (action.kind === 'report') onReport?.();
++    else onNavigate?.();
++  };
++
++  const etaHint = aheadBehindText(view.eta.aheadBehindMinutes);
++  const turnaround = formatTime(view.turnaroundTime);
++
++  return (
++    <motion.div
++      initial={reduceMotion ? false : { opacity: 0, y: 6 }}
++      animate={{ opacity: 1, y: 0 }}
++      transition={{ duration: reduceMotion ? 0 : 0.22, ease: [0.22, 1, 0.36, 1] }}
++      className={`space-y-3 pb-[env(safe-area-inset-bottom)] ${className}`}
++      aria-label="Cockpit aventure"
++    >
++      <header className="flex items-start justify-between gap-3">
++        <div className="min-w-0">
++          <h2 className="truncate text-[20px] font-semibold text-[var(--lkv-text-primary)]">
++            {view.hero.title}
++          </h2>
++          <p className="mt-0.5 text-[13px] text-[var(--lkv-text-secondary)]">{view.hero.subtitle}</p>
++        </div>
++        <span className="shrink-0 rounded-full bg-[var(--lkv-primary-subtle)] px-2.5 py-1 text-[11px] font-semibold text-[var(--lkv-primary)]">
++          {view.hero.status}
++        </span>
++      </header>
++
++      {view.indicators.length > 0 && (
++        <ul className="grid grid-cols-3 gap-2" aria-label="Indicateurs clés">
++          {view.indicators.map((indicator) => (
++            <li
++              key={indicator.id}
++              className="rounded-2xl bg-[var(--lkv-surface-card)] px-3 py-2.5 shadow-sm"
++            >
++              <p className="text-[10px] font-medium uppercase tracking-[0.12em] text-[var(--lkv-text-muted)]">
++                {indicator.label}
++              </p>
++              <p
++                className={`mt-1 text-[17px] font-semibold tabular-nums ${TONE_TEXT_CLASSES[indicator.tone]}`}
++              >
++                {indicator.value}
++              </p>
++            </li>
++          ))}
++        </ul>
++      )}
++
++      {view.priorityActions.length > 0 && (
++        <ul className="space-y-2" aria-label="Actions prioritaires">
++          {view.priorityActions.map((action) => (
++            <li key={action.id}>
++              <button
++                type="button"
++                onClick={() => handleAction(action)}
++                className={`flex min-h-[48px] w-full items-center gap-3 rounded-2xl px-4 text-left text-[15px] font-semibold active:opacity-80 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--lkv-primary)] ${
++                  action.kind === 'decide'
++                    ? 'bg-[var(--lkv-primary)] text-white'
++                    : 'bg-[var(--lkv-surface-card)] text-[var(--lkv-text-primary)] shadow-sm'
++                }`}
++              >
++                <Icon name={ACTION_ICONS[action.kind]} size={17} aria-hidden="true" />
++                <span className="flex-1">{action.label}</span>
++              </button>
++            </li>
++          ))}
++        </ul>
++      )}
++
++      {view.alerts.length > 0 && (
++        <ul className="space-y-1.5" aria-label="Alertes terrain">
++          {view.alerts.map((alert) => (
++            <li
++              key={alert.id}
++              className="flex items-center gap-2.5 rounded-xl bg-[var(--lkv-surface-card)] px-3 py-2"
++            >
++              <span
++                aria-hidden="true"
++                className="h-2 w-2 shrink-0 rounded-full"
++                style={{ backgroundColor: SEVERITY_COLORS[alert.severity] }}
++              />
++              <Icon
++                name={SEVERITY_ICONS[alert.severity]}
++                size={14}
++                style={{ color: SEVERITY_COLORS[alert.severity] }}
++                aria-hidden="true"
++              />
++              <span className="flex-1 text-[13px] text-[var(--lkv-text-primary)]">
++                {alert.label}
++              </span>
++              <span className="sr-only">{SEVERITY_LABELS[alert.severity]}</span>
++            </li>
++          ))}
++        </ul>
++      )}
++
++      <section
++        aria-label="Heure d’arrivée estimée"
++        className="rounded-2xl bg-[var(--lkv-surface-card)] p-4 shadow-sm"
++      >
++        <p className="text-[10px] font-medium uppercase tracking-[0.12em] text-[var(--lkv-text-muted)]">
++          Arrivée estimée
++        </p>
++        <p
++          className="mt-1 text-[17px] font-semibold tabular-nums text-[var(--lkv-text-primary)]"
++          suppressHydrationWarning
++        >
++          {etaText(view.eta.p50, view.eta.p90)}
++        </p>
++        {etaHint && <p className="mt-0.5 text-[12px] text-[var(--lkv-text-secondary)]">{etaHint}</p>}
++      </section>
++
++      {(view.difficulty.value != null || view.paceStrategy || turnaround) && (
++        <div className="grid grid-cols-2 gap-2">
++          {view.difficulty.value != null && (
++            <section
++              aria-label="Difficulté personnelle"
++              className="rounded-2xl bg-[var(--lkv-surface-card)] px-3 py-2.5 shadow-sm"
++            >
++              <p className="text-[10px] font-medium uppercase tracking-[0.12em] text-[var(--lkv-text-muted)]">
++                Difficulté
++              </p>
++              <p className="mt-1 text-[15px] font-semibold text-[var(--lkv-text-primary)]">
++                {view.difficulty.label}
++                <span className="ml-1 text-[12px] font-medium text-[var(--lkv-text-muted)]">
++                  {view.difficulty.value}/100
++                </span>
++              </p>
++              <div
++                aria-hidden="true"
++                className="mt-2 h-1.5 overflow-hidden rounded-full bg-[var(--lkv-surface)]"
++              >
++                <div
++                  className={`h-full rounded-full ${TONE_BAR_CLASSES[view.indicators.find((i) => i.id === 'difficulty')?.tone ?? 'neutral']}`}
++                  style={{ width: `${view.difficulty.value}%` }}
++                />
++              </div>
++            </section>
++          )}
++          {view.paceStrategy && (
++            <section
++              aria-label="Stratégie d’allure"
++              className="rounded-2xl bg-[var(--lkv-surface-card)] px-3 py-2.5 shadow-sm"
++            >
++              <p className="text-[10px] font-medium uppercase tracking-[0.12em] text-[var(--lkv-text-muted)]">
++                Allure
++              </p>
++              <p className="mt-1 text-[15px] font-semibold text-[var(--lkv-text-primary)]">
++                {view.paceStrategy.label}
++              </p>
++            </section>
++          )}
++          {turnaround && (
++            <section
++              aria-label="Heure de demi-tour"
++              className="col-span-2 rounded-2xl bg-[var(--lkv-surface-card)] px-3 py-2.5 shadow-sm"
++            >
++              <p className="text-[10px] font-medium uppercase tracking-[0.12em] text-[var(--lkv-text-muted)]">
++                Demi-tour
++              </p>
++              <p
++                className="mt-1 text-[15px] font-semibold tabular-nums text-[var(--lkv-text-primary)]"
++                suppressHydrationWarning
++              >
++                {turnaround}
++              </p>
++            </section>
++          )}
++        </div>
++      )}
++
++      {view.confidence && (
++        <section
++          aria-label="Confiance de la prédiction"
++          className="flex items-center justify-between gap-3 rounded-2xl bg-[var(--lkv-surface-card)] px-3 py-2.5 shadow-sm"
++        >
++          <p className="text-[12px] text-[var(--lkv-text-secondary)]">
++            Confiance{' '}
++            <span className="font-semibold text-[var(--lkv-text-primary)]">
++              {CONFIDENCE_LABELS[view.confidence.level] ?? view.confidence.level}
++            </span>
++          </p>
++          <p className="text-[12px] tabular-nums text-[var(--lkv-text-muted)]">
++            {Math.round(view.confidence.score * 100)} % · {view.confidence.sampleCount} obs.
++          </p>
++        </section>
++      )}
++
++      {view.recalcReasons.length > 0 && (
++        <section
++          aria-label="Recalcul suggéré"
++          className="rounded-2xl bg-[var(--lkv-warning-subtle)] p-3"
++        >
++          <div className="flex items-center justify-between gap-2">
++            <p className="text-[12px] font-semibold text-[var(--lkv-warning-dark)]">
++              Mise à jour conseillée
++            </p>
++            {onRecalculate && (
++              <button
++                type="button"
++                onClick={onRecalculate}
++                className="min-h-[44px] rounded-full px-3 text-[12px] font-semibold text-[var(--lkv-primary)] active:opacity-70"
++              >
++                Recalculer
++              </button>
++            )}
++          </div>
++          <ul className="mt-1 flex flex-wrap gap-1.5">
++            {view.recalcReasons.map((reason) => (
++              <li
++                key={reason}
++                className="rounded-full bg-white/60 px-2 py-0.5 text-[11px] text-[var(--lkv-text-secondary)]"
++              >
++                {RECALC_REASON_LABELS[reason] ?? reason}
++              </li>
++            ))}
++          </ul>
++        </section>
++      )}
++
++      <OfflineBanner offline={view.offline} pendingCount={pendingSyncCount} />
++    </motion.div>
++  );
++}
++
++export default AdventureCockpit;
+diff --git a/src/features/adventure-intelligence/ui/AdventureHubSection.tsx b/src/features/adventure-intelligence/ui/AdventureHubSection.tsx
+new file mode 100644
+index 00000000..af8941fb
+--- /dev/null
++++ b/src/features/adventure-intelligence/ui/AdventureHubSection.tsx
+@@ -0,0 +1,176 @@
++'use client';
++
++/**
++ * A7 — Bloc Hub : état global, décisions requises et grille compacte vers les
++ * sections existantes du Hub (ids du registre `hubSectionRegistry`, aucune
++ * route nouvelle). Composant autonome, prêt à être monté en Phase 9.
++ */
++import { motion, useReducedMotion } from 'framer-motion';
++import Icon from '@/components/ui/Icon';
++import type { CockpitTone, CockpitView } from '../domain/cockpit';
++import OfflineBanner from './OfflineBanner';
++
++export interface HubQuickLink {
++  id: string;
++  label: string;
++  icon: string;
++}
++
++/** Miroir des sections cœur d'une sortie (ids registre hub). */
++export const DEFAULT_HUB_QUICK_LINKS: HubQuickLink[] = [
++  { id: 'itinerary', label: 'Itinéraire', icon: 'navigation' },
++  { id: 'safety', label: 'Sécurité', icon: 'shield-alert' },
++  { id: 'checklist', label: 'Checklist', icon: 'check-square' },
++  { id: 'journal', label: 'Journal', icon: 'book-open' },
++];
++
++export interface AdventureHubSectionProps {
++  view: CockpitView;
++  sections?: HubQuickLink[];
++  onSelectSection?: (sectionId: string) => void;
++  onDecide?: (decisionId: string) => void;
++  onOpenCockpit?: () => void;
++  pendingSyncCount?: number;
++  className?: string;
++}
++
++const TONE_TEXT_CLASSES: Record<CockpitTone, string> = {
++  neutral: 'text-[var(--lkv-text-primary)]',
++  positive: 'text-[var(--lkv-success)]',
++  warning: 'text-[var(--lkv-warning-dark)]',
++  critical: 'text-[var(--lkv-danger-dark)]',
++};
++
++export function AdventureHubSection({
++  view,
++  sections = DEFAULT_HUB_QUICK_LINKS,
++  onSelectSection,
++  onDecide,
++  onOpenCockpit,
++  pendingSyncCount = 0,
++  className = '',
++}: AdventureHubSectionProps) {
++  const reduceMotion = useReducedMotion();
++  const pendingDecisions = view.priorityActions.filter((action) => action.kind === 'decide');
++
++  return (
++    <motion.section
++      initial={reduceMotion ? false : { opacity: 0, y: 6 }}
++      animate={{ opacity: 1, y: 0 }}
++      transition={{ duration: reduceMotion ? 0 : 0.22, ease: [0.22, 1, 0.36, 1] }}
++      className={`space-y-3 rounded-[var(--lkv-radius-card)] bg-[var(--lkv-surface-card)] p-4 shadow-sm ${className}`}
++      aria-label="Cockpit de l’aventure"
++    >
++      <header className="flex items-center justify-between gap-3">
++        <div className="min-w-0">
++          <h2 className="truncate text-[17px] font-semibold text-[var(--lkv-text-primary)]">
++            Cockpit aventure
++          </h2>
++          <p className="mt-0.5 truncate text-[12px] text-[var(--lkv-text-secondary)]">
++            {view.hero.title} · {view.hero.status}
++          </p>
++        </div>
++        {onOpenCockpit && (
++          <button
++            type="button"
++            onClick={onOpenCockpit}
++            className="min-h-[44px] shrink-0 rounded-full bg-[var(--lkv-primary)] px-4 text-[13px] font-semibold text-white active:opacity-80 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--lkv-primary)]"
++          >
++            Ouvrir
++          </button>
++        )}
++      </header>
++
++      <div aria-label="État global">
++        {view.indicators.length === 0 ? (
++          <p
++            role="status"
++            className="rounded-2xl bg-[var(--lkv-surface)] px-3 py-3 text-[13px] text-[var(--lkv-text-secondary)]"
++          >
++            Aucune donnée disponible pour le moment.
++          </p>
++        ) : (
++          <ul className="grid grid-cols-3 gap-2">
++            {view.indicators.map((indicator) => (
++              <li key={indicator.id} className="rounded-2xl bg-[var(--lkv-surface)] px-3 py-2.5">
++                <p className="text-[10px] font-medium uppercase tracking-[0.12em] text-[var(--lkv-text-muted)]">
++                  {indicator.label}
++                </p>
++                <p
++                  className={`mt-1 text-[16px] font-semibold tabular-nums ${TONE_TEXT_CLASSES[indicator.tone]}`}
++                >
++                  {indicator.value}
++                </p>
++              </li>
++            ))}
++          </ul>
++        )}
++      </div>
++
++      <section aria-label="Décisions requises">
++        <h3 className="text-[10px] font-medium uppercase tracking-[0.14em] text-[var(--lkv-text-muted)]">
++          Décisions requises
++        </h3>
++        {pendingDecisions.length === 0 ? (
++          <p role="status" className="mt-1 text-[13px] text-[var(--lkv-text-secondary)]">
++            Aucune décision en attente.
++          </p>
++        ) : (
++          <ul className="mt-1 space-y-2">
++            {pendingDecisions.map((decision) => (
++              <li key={decision.id}>
++                <button
++                  type="button"
++                  onClick={() => onDecide?.(decision.id)}
++                  className="flex min-h-[44px] w-full items-center gap-3 rounded-2xl bg-[var(--lkv-surface)] px-3 text-left text-[14px] font-medium text-[var(--lkv-text-primary)] active:opacity-70 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--lkv-primary)]"
++                >
++                  <Icon
++                    name="check-circle"
++                    size={16}
++                    className="shrink-0 text-[var(--lkv-secondary)]"
++                    aria-hidden="true"
++                  />
++                  <span className="flex-1">{decision.label}</span>
++                  <Icon
++                    name="chevron-right"
++                    size={14}
++                    className="shrink-0 text-[var(--lkv-text-muted)]"
++                    aria-hidden="true"
++                  />
++                </button>
++              </li>
++            ))}
++          </ul>
++        )}
++      </section>
++
++      <nav aria-label="Sections du hub">
++        <ul className="grid grid-cols-2 gap-2 sm:grid-cols-4">
++          {sections.map((section) => (
++            <li key={section.id}>
++              <button
++                type="button"
++                onClick={() => onSelectSection?.(section.id)}
++                className="flex min-h-[64px] w-full flex-col items-start justify-center gap-1 rounded-2xl bg-[var(--lkv-surface)] px-3 py-2 text-left active:opacity-70 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--lkv-primary)]"
++              >
++                <Icon
++                  name={section.icon}
++                  size={16}
++                  className="text-[var(--lkv-secondary)]"
++                  aria-hidden="true"
++                />
++                <span className="text-[13px] font-medium text-[var(--lkv-text-primary)]">
++                  {section.label}
++                </span>
++              </button>
++            </li>
++          ))}
++        </ul>
++      </nav>
++
++      <OfflineBanner offline={view.offline} pendingCount={pendingSyncCount} />
++    </motion.section>
++  );
++}
++
++export default AdventureHubSection;
+diff --git a/src/features/adventure-intelligence/ui/OfflineBanner.tsx b/src/features/adventure-intelligence/ui/OfflineBanner.tsx
+new file mode 100644
+index 00000000..4940493b
+--- /dev/null
++++ b/src/features/adventure-intelligence/ui/OfflineBanner.tsx
+@@ -0,0 +1,37 @@
++'use client';
++
++/**
++ * A7 — Bandeau hors-ligne discret : `role="status"`, jamais bloquant.
++ * Ne rend rien en ligne (exactement un indicateur réseau à l'écran).
++ */
++import Icon from '@/components/ui/Icon';
++
++export interface OfflineBannerProps {
++  offline: boolean;
++  /** Opérations en attente de synchronisation (facultatif). */
++  pendingCount?: number;
++  className?: string;
++}
++
++export function OfflineBanner({ offline, pendingCount = 0, className = '' }: OfflineBannerProps) {
++  if (!offline) return null;
++
++  const pending = Math.max(0, Math.trunc(pendingCount));
++  const label =
++    pending > 0
++      ? `Hors ligne — ${pending} action${pending > 1 ? 's' : ''} en attente de synchronisation`
++      : 'Hors ligne — dernières données connues disponibles';
++
++  return (
++    <p
++      role="status"
++      aria-live="polite"
++      className={`inline-flex max-w-full items-center gap-2 rounded-full bg-[var(--lkv-warning-bg)] px-3 py-1.5 text-[12px] font-medium text-[var(--lkv-warning-dark)] ${className}`}
++    >
++      <Icon name="wifi-off" size={13} aria-hidden="true" />
++      <span className="truncate">{label}</span>
++    </p>
++  );
++}
++
++export default OfflineBanner;
+diff --git a/src/features/adventure-intelligence/ui/index.ts b/src/features/adventure-intelligence/ui/index.ts
+new file mode 100644
+index 00000000..f6a09ec1
+--- /dev/null
++++ b/src/features/adventure-intelligence/ui/index.ts
+@@ -0,0 +1,6 @@
++export { default as AdventureCockpit } from './AdventureCockpit';
++export type { AdventureCockpitProps } from './AdventureCockpit';
++export { default as AdventureHubSection, DEFAULT_HUB_QUICK_LINKS } from './AdventureHubSection';
++export type { AdventureHubSectionProps, HubQuickLink } from './AdventureHubSection';
++export { default as OfflineBanner } from './OfflineBanner';
++export type { OfflineBannerProps } from './OfflineBanner';
+diff --git a/tests/adventure-intelligence/cockpit.spec.ts b/tests/adventure-intelligence/cockpit.spec.ts
+new file mode 100644
+index 00000000..1ecedeb1
+--- /dev/null
++++ b/tests/adventure-intelligence/cockpit.spec.ts
+@@ -0,0 +1,205 @@
++import { describe, it, expect } from 'vitest';
++import {
++  buildCockpitView,
++  type CockpitInput,
++} from '@/features/adventure-intelligence/domain/cockpit';
++import { makeConfidence } from '@/features/adventure-intelligence/domain/confidence';
++
++const NOW = '2026-09-11T12:00:00.000Z';
++
++function confidence(score = 0.8) {
++  return makeConfidence({ score, sampleCount: 10, method: 'test' });
++}
++
++function input(overrides: Partial<CockpitInput> = {}): CockpitInput {
++  return {
++    plan: null,
++    prediction: null,
++    liveReports: [],
++    decisionsRequired: [],
++    recalcReasons: [],
++    offline: false,
++    ...overrides,
++  };
++}
++
++function plan(overrides: Partial<NonNullable<CockpitInput['plan']>> = {}) {
++  return {
++    id: 'plan-1',
++    title: 'Tour du Queyras',
++    status: 'active',
++    confidence: confidence(0.9),
++    personalDifficulty: 82,
++    etaP50: '2026-09-11T15:00:00.000Z',
++    etaP90: '2026-09-11T16:00:00.000Z',
++    ...overrides,
++  };
++}
++
++describe('Cockpit — vue bornée (TEST-A7-COCK)', () => {
++  it('TEST-A7-COCK-01: caps stricts — 3 indicateurs et 3 actions au plus, décisions avant signaler/naviguer', () => {
++    const view = buildCockpitView(
++      input({
++        plan: plan(),
++        prediction: {
++          strategy: 'recommended',
++          paceRangeMinPerKm: [4.5, 5.5],
++          turnaroundTime: '2026-09-11T17:00:00.000Z',
++          nextCriticalSegment: { id: 7, label: 'Col de la Moutière', difficulty: 88 },
++        },
++        liveReports: [
++          { id: 'r1', category: 'mud', severity: 'warning', distanceM: 400 },
++          { id: 'r2', category: 'closure', severity: 'critical', distanceM: 900 },
++        ],
++        decisionsRequired: [
++          { id: 'd1', label: 'Valider le refuge', requiresConfirmation: true },
++          { id: 'd2', label: 'Partager la position', requiresConfirmation: true },
++          { id: 'd3', label: 'Annuler le bus', requiresConfirmation: false },
++        ],
++        batteryLevel: 15,
++      })
++    );
++
++    expect(view.indicators).toHaveLength(3);
++    expect(view.priorityActions).toHaveLength(3);
++    expect(view.priorityActions.map((action) => action.kind)).toEqual([
++      'decide',
++      'decide',
++      'decide',
++    ]);
++
++    const lean = buildCockpitView(
++      input({
++        plan: plan(),
++        prediction: {
++          strategy: 'fast',
++          paceRangeMinPerKm: [4, 5],
++          turnaroundTime: null,
++          nextCriticalSegment: { id: 3, label: 'Crête sud', difficulty: 70 },
++        },
++      })
++    );
++    expect(lean.priorityActions.map((action) => action.kind)).toEqual(['report', 'navigate']);
++    expect(lean.indicators.length).toBeLessThanOrEqual(3);
++  });
++
++  it('TEST-A7-COCK-02: alertes triées par gravité puis distance, libellés lisibles', () => {
++    const view = buildCockpitView(
++      input({
++        liveReports: [
++          { id: 'a', category: 'mud', severity: 'warning', distanceM: 500 },
++          { id: 'b', category: 'closure', severity: 'critical', distanceM: 900 },
++          { id: 'c', category: 'danger', severity: 'critical', distanceM: 120 },
++          { id: 'd', category: 'water', severity: 'info', distanceM: 50 },
++        ],
++      })
++    );
++
++    expect(view.alerts.map((alert) => alert.id)).toEqual(['c', 'b', 'a', 'd']);
++    expect(view.alerts[0].label).toContain('Danger');
++    expect(view.alerts[0].label).toContain('120');
++    expect(view.alerts[2].label).toContain('Boue');
++  });
++
++  it('TEST-A7-COCK-03: ton des indicateurs dérivé — difficulté > 75 warning, > 90 critical, batterie ≤ 20 warning', () => {
++    const difficultyTone = (value: number) =>
++      buildCockpitView(input({ plan: plan({ personalDifficulty: value }) })).indicators.find(
++        (indicator) => indicator.id === 'difficulty'
++      )?.tone;
++
++    expect(difficultyTone(95)).toBe('critical');
++    expect(difficultyTone(82)).toBe('warning');
++    expect(difficultyTone(60)).toBe('neutral');
++    expect(difficultyTone(30)).toBe('positive');
++
++    const batteryIndicator = (level: number) =>
++      buildCockpitView(input({ batteryLevel: level })).indicators.find(
++        (indicator) => indicator.id === 'battery'
++      );
++
++    expect(batteryIndicator(15)?.tone).toBe('warning');
++    expect(batteryIndicator(8)?.tone).toBe('critical');
++    expect(batteryIndicator(55)?.tone).toBe('neutral');
++  });
++
++  it('TEST-A7-COCK-04: ETA en fourchette P50–P90, jamais de fausse précision', () => {
++    const view = buildCockpitView(input({ plan: plan() }));
++    expect(view.eta).toEqual({
++      p50: '2026-09-11T15:00:00.000Z',
++      p90: '2026-09-11T16:00:00.000Z',
++      aheadBehindMinutes: null,
++    });
++
++    const inverted = buildCockpitView(
++      input({
++        plan: plan({
++          etaP50: '2026-09-11T16:00:00.000Z',
++          etaP90: '2026-09-11T15:00:00.000Z',
++        }),
++      })
++    );
++    expect(Date.parse(inverted.eta.p90 as string)).toBeGreaterThanOrEqual(
++      Date.parse(inverted.eta.p50 as string)
++    );
++
++    const partial = buildCockpitView(input({ plan: plan({ etaP90: null }) }));
++    expect(partial.eta.p50).toBe('2026-09-11T15:00:00.000Z');
++    expect(partial.eta.p90).toBeNull();
++
++    const delta = buildCockpitView(
++      input({
++        prediction: {
++          strategy: 'comfort',
++          paceRangeMinPerKm: [5, 6],
++          turnaroundTime: null,
++          nextCriticalSegment: null,
++          aheadBehindMinutes: -12,
++        },
++      })
++    );
++    expect(delta.eta.aheadBehindMinutes).toBe(-12);
++  });
++
++  it('TEST-A7-COCK-05: offline, confiance, allure et raisons propagés au héros', () => {
++    const view = buildCockpitView(
++      input({
++        plan: plan(),
++        prediction: {
++          strategy: 'recommended',
++          paceRangeMinPerKm: [4.5, 5.5],
++          turnaroundTime: '2026-09-11T17:00:00.000Z',
++          nextCriticalSegment: null,
++        },
++        recalcReasons: ['allure_ecart_15pct', 'signalements_modifies'],
++        offline: true,
++      })
++    );
++
++    expect(view.offline).toBe(true);
++    expect(view.hero.title).toBe('Tour du Queyras');
++    expect(view.hero.status).toBe('En cours');
++    expect(view.hero.subtitle).toBe('Mode hors-ligne — données locales');
++    expect(view.paceStrategy).toEqual({ id: 'recommended', label: 'Recommandée' });
++    expect(view.turnaroundTime).toBe('2026-09-11T17:00:00.000Z');
++    expect(view.confidence?.score).toBe(0.9);
++    expect(view.recalcReasons).toEqual(['allure_ecart_15pct', 'signalements_modifies']);
++    expect(view.difficulty).toEqual({ value: 82, label: 'Difficile' });
++  });
++
++  it('TEST-A7-COCK-06: entrée vide — aucune exception, vue calme et nulle', () => {
++    const view = buildCockpitView(input());
++
++    expect(view.hero.title).toBe('Aventure');
++    expect(view.hero.status).toBe('Aucune aventure');
++    expect(view.indicators).toEqual([]);
++    expect(view.priorityActions).toEqual([]);
++    expect(view.alerts).toEqual([]);
++    expect(view.eta).toEqual({ p50: null, p90: null, aheadBehindMinutes: null });
++    expect(view.difficulty).toEqual({ value: null, label: 'Inconnue' });
++    expect(view.paceStrategy).toBeNull();
++    expect(view.turnaroundTime).toBeNull();
++    expect(view.confidence).toBeNull();
++    expect(view.recalcReasons).toEqual([]);
++    expect(view.offline).toBe(false);
++  });
++});
+diff --git a/tests/adventure-intelligence/offline-operations.spec.ts b/tests/adventure-intelligence/offline-operations.spec.ts
+new file mode 100644
+index 00000000..06f0fe02
+--- /dev/null
++++ b/tests/adventure-intelligence/offline-operations.spec.ts
+@@ -0,0 +1,160 @@
++import { describe, it, expect } from 'vitest';
++import {
++  LEGACY_ADVENTURE_PACK_KEY,
++  LEGACY_METADATA_KEYS,
++  LEGACY_REPORTS_QUEUE_KEY,
++  LEGACY_SYNC_QUEUE_KEY,
++  OFFLINE_STORES,
++  createOfflineOperation,
++  dedupeOperations,
++  hashPayload,
++  isOfflineQueueStore,
++  makeIdempotencyKey,
++  packSizeBytes,
++  planLegacyMigration,
++} from '@/features/adventure-intelligence/offline/operations';
++
++const NOW = '2026-09-11T12:00:00.000Z';
++
++function operation(entityId: string, payload: unknown) {
++  return createOfflineOperation({
++    store: 'offline_reports_queue',
++    kind: 'terrain_report',
++    entityId,
++    payload,
++    createdAt: NOW,
++  });
++}
++
++describe('Offline V2 — opérations idempotentes (TEST-A7-OFF)', () => {
++  it('TEST-A7-OFF-01: clé d’idempotence stable, sensible au type, à l’entité et au payload', () => {
++    const key = makeIdempotencyKey({
++      kind: 'terrain_report',
++      entityId: 'r1',
++      payloadHash: 'abc',
++    });
++
++    expect(key).toBe(
++      makeIdempotencyKey({ kind: 'terrain_report', entityId: 'r1', payloadHash: 'abc' })
++    );
++    expect(key).not.toBe(
++      makeIdempotencyKey({ kind: 'terrain_report', entityId: 'r2', payloadHash: 'abc' })
++    );
++    expect(key).not.toBe(
++      makeIdempotencyKey({ kind: 'terrain_report', entityId: 'r1', payloadHash: 'def' })
++    );
++    expect(key).not.toBe(
++      makeIdempotencyKey({ kind: 'decision', entityId: 'r1', payloadHash: 'abc' })
++    );
++
++    expect(hashPayload({ a: 1, b: 2 })).toBe(hashPayload({ b: 2, a: 1 }));
++    expect(hashPayload({ a: 1 })).not.toBe(hashPayload({ a: 2 }));
++
++    const op = operation('r1', { note: 'boue' });
++    expect(op.idempotencyKey).toBe(
++      makeIdempotencyKey({
++        kind: 'terrain_report',
++        entityId: 'r1',
++        payloadHash: hashPayload({ note: 'boue' }),
++      })
++    );
++    expect(op.attempts).toBe(0);
++    expect(op.createdAt).toBe(NOW);
++    expect(op.store).toBe('offline_reports_queue');
++
++    expect(OFFLINE_STORES).toHaveLength(10);
++    expect(isOfflineQueueStore('offline_reports_queue')).toBe(true);
++    expect(isOfflineQueueStore('offline_adventures')).toBe(false);
++  });
++
++  it('TEST-A7-OFF-02: migration legacy — clés connues migrées, clés inconnues ignorées', () => {
++    const queue = JSON.stringify([
++      { id: 's1', type: 'hike_session', payload: { distanceM: 1200 }, createdAt: NOW, retryCount: 2 },
++      { id: 's2', type: 'journal_event', payload: { note: 'orage' }, createdAt: NOW, retryCount: 0 },
++    ]);
++
++    const plan = planLegacyMigration({
++      [LEGACY_SYNC_QUEUE_KEY]: queue,
++      lkdv_cle_inconnue: '{"x":1}',
++      lkdv_offline_pack_version: '"3"',
++    });
++
++    expect(plan.migratedKeys).toEqual([LEGACY_SYNC_QUEUE_KEY, 'lkdv_offline_pack_version']);
++    expect(plan.skipped).toEqual(['lkdv_cle_inconnue']);
++    expect(plan.operations).toHaveLength(3);
++
++    const session = plan.operations.find((op) => op.kind === 'hike_session');
++    expect(session?.store).toBe('offline_sessions_queue');
++    expect(session?.payload).toEqual({ distanceM: 1200 });
++    expect(session?.attempts).toBe(2);
++    expect(session?.createdAt).toBe(NOW);
++
++    const invalid = planLegacyMigration({ [LEGACY_SYNC_QUEUE_KEY]: 'pas-du-json' });
++    expect(invalid.operations).toEqual([]);
++    expect(invalid.migratedKeys).toEqual([]);
++    expect(invalid.skipped).toContain(LEGACY_SYNC_QUEUE_KEY);
++
++    const reports = planLegacyMigration({
++      [LEGACY_REPORTS_QUEUE_KEY]: JSON.stringify({
++        id: 'r9',
++        payload: { category: 'mud' },
++      }),
++    });
++    expect(reports.operations[0].store).toBe('offline_reports_queue');
++    expect(reports.operations[0].kind).toBe('terrain_report');
++    expect(LEGACY_METADATA_KEYS.length).toBeGreaterThan(0);
++  });
++
++  it('TEST-A7-OFF-03: taille du pack cumulée, nulle pour un pack vide', () => {
++    expect(packSizeBytes([])).toBe(0);
++
++    const a = operation('a', { note: 'a' });
++    const b = operation('b', { note: 'b' });
++    const bytes = (value: unknown) => new TextEncoder().encode(JSON.stringify(value)).length;
++
++    expect(packSizeBytes([a])).toBe(bytes(a));
++    expect(packSizeBytes([a, b])).toBe(bytes(a) + bytes(b));
++    expect(packSizeBytes([a, b])).toBeGreaterThan(packSizeBytes([a]));
++  });
++
++  it('TEST-A7-OFF-04: aucune opération en double — déduplication par clé d’idempotence', () => {
++    const op = operation('same', { note: 'identique' });
++    const deduped = dedupeOperations([op, { ...op }, op]);
++    expect(deduped).toHaveLength(1);
++    expect(deduped[0]).toEqual(op);
++
++    const plan = planLegacyMigration({
++      [LEGACY_SYNC_QUEUE_KEY]: JSON.stringify([
++        { id: 's1', type: 'hike_session', payload: { distanceM: 1200 } },
++        { id: 's1', type: 'hike_session', payload: { distanceM: 1200 } },
++      ]),
++    });
++    expect(plan.operations).toHaveLength(1);
++  });
++
++  it('TEST-A7-OFF-05: métadonnées et pack d’aventure migrés vers leurs stores', () => {
++    const plan = planLegacyMigration({
++      lkdv_offline_pack_version: '"3"',
++      lkdv_offline_last_sync: '"2026-09-10T00:00:00.000Z"',
++      [LEGACY_ADVENTURE_PACK_KEY]: JSON.stringify({ id: 'pack-1', title: 'Queyras' }),
++    });
++
++    const metadata = plan.operations.filter((op) => op.store === 'sync_metadata');
++    expect(metadata).toHaveLength(2);
++    expect(metadata[0].kind).toBe('metadata');
++    expect(metadata[0].payload).toEqual({ key: 'lkdv_offline_pack_version', value: '3' });
++    expect(metadata[1].payload).toEqual({
++      key: 'lkdv_offline_last_sync',
++      value: '2026-09-10T00:00:00.000Z',
++    });
++
++    const pack = plan.operations.find((op) => op.store === 'offline_adventures');
++    expect(pack?.kind).toBe('adventure_pack');
++    expect(pack?.payload).toEqual({ id: 'pack-1', title: 'Queyras' });
++    expect(plan.migratedKeys).toEqual([
++      'lkdv_offline_pack_version',
++      'lkdv_offline_last_sync',
++      LEGACY_ADVENTURE_PACK_KEY,
++    ]);
++  });
++});
+diff --git a/tests/adventure-intelligence/recalc-triggers.spec.ts b/tests/adventure-intelligence/recalc-triggers.spec.ts
+new file mode 100644
+index 00000000..7bea8028
+--- /dev/null
++++ b/tests/adventure-intelligence/recalc-triggers.spec.ts
+@@ -0,0 +1,169 @@
++import { describe, it, expect } from 'vitest';
++import {
++  BATTERY_THRESHOLD_PCT,
++  PACE_DEVIATION_THRESHOLD,
++  PAUSE_MIN_MS,
++  POSITION_THRESHOLD_M,
++  RECALC_DEBOUNCE_MS,
++  RECALC_REASONS,
++  evaluateRecalc,
++  type RecalcState,
++} from '@/features/adventure-intelligence/domain/recalcTriggers';
++
++const NOW = '2026-09-11T12:00:00.000Z';
++const NOW_MS = Date.parse(NOW);
++
++function iso(offsetMs: number): string {
++  return new Date(NOW_MS + offsetMs).toISOString();
++}
++
++function state(overrides: Partial<RecalcState> = {}): RecalcState {
++  return {
++    lastRecalcAt: iso(-10 * 60_000),
++    lastPositionAt: iso(-5 * 60_000),
++    lastPosition: { lat: 42.8, lng: 0.15 },
++    lastPaceMinPerKm: 5,
++    lastReportsVersion: 3,
++    lastOffRouteAt: null,
++    batteryLevel: 80,
++    routeVersion: 1,
++    ...overrides,
++  };
++}
++
++describe('Recalcul — déclencheurs (TEST-A7-TRIG)', () => {
++  it('TEST-A7-TRIG-01: position ≥ 250 m déclenche, en deçà non', () => {
++    expect(POSITION_THRESHOLD_M).toBe(250);
++
++    const near = evaluateRecalc({
++      state: state(),
++      now: NOW,
++      position: { lat: 42.8005, lng: 0.15 },
++    });
++    expect(near.shouldRecalculate).toBe(false);
++    expect(near.reasons).toEqual([]);
++
++    const far = evaluateRecalc({
++      state: state(),
++      now: NOW,
++      position: { lat: 42.803, lng: 0.15 },
++    });
++    expect(far.shouldRecalculate).toBe(true);
++    expect(far.reasons).toContain(RECALC_REASONS.position);
++    expect(far.nextState.lastPosition).toEqual({ lat: 42.803, lng: 0.15 });
++    expect(far.nextState.lastPositionAt).toBe(NOW);
++
++    const offRoute = evaluateRecalc({ state: state(), now: NOW, offRoute: true });
++    expect(offRoute.shouldRecalculate).toBe(true);
++    expect(offRoute.reasons).toContain(RECALC_REASONS.offroute);
++    expect(offRoute.nextState.lastOffRouteAt).toBe(NOW);
++
++    const backOnRoute = evaluateRecalc({
++      state: state({ lastOffRouteAt: iso(-60_000) }),
++      now: NOW,
++      offRoute: false,
++    });
++    expect(backOnRoute.shouldRecalculate).toBe(false);
++    expect(backOnRoute.nextState.lastOffRouteAt).toBeNull();
++  });
++
++  it('TEST-A7-TRIG-02: pause ≥ 2 min suivie de reprise déclenche', () => {
++    expect(PAUSE_MIN_MS).toBe(2 * 60_000);
++
++    const resumed = evaluateRecalc({
++      state: state({ lastPositionAt: iso(-3 * 60_000) }),
++      now: NOW,
++      moving: true,
++    });
++    expect(resumed.shouldRecalculate).toBe(true);
++    expect(resumed.reasons).toContain(RECALC_REASONS.pause);
++
++    const briefStop = evaluateRecalc({
++      state: state({ lastPositionAt: iso(-60_000) }),
++      now: NOW,
++      moving: true,
++    });
++    expect(briefStop.shouldRecalculate).toBe(false);
++
++    const stillResting = evaluateRecalc({
++      state: state({ lastPositionAt: iso(-3 * 60_000) }),
++      now: NOW,
++      moving: false,
++    });
++    expect(stillResting.shouldRecalculate).toBe(false);
++  });
++
++  it('TEST-A7-TRIG-03: écart d’allure ≥ 15 % déclenche, dans les deux sens', () => {
++    expect(PACE_DEVIATION_THRESHOLD).toBe(0.15);
++
++    const slower = evaluateRecalc({ state: state({ lastPaceMinPerKm: 5 }), now: NOW, paceMinPerKm: 5.8 });
++    expect(slower.shouldRecalculate).toBe(true);
++    expect(slower.reasons).toContain(RECALC_REASONS.pace);
++    expect(slower.nextState.lastPaceMinPerKm).toBe(5.8);
++
++    const stable = evaluateRecalc({ state: state({ lastPaceMinPerKm: 5 }), now: NOW, paceMinPerKm: 5.7 });
++    expect(stable.shouldRecalculate).toBe(false);
++
++    const faster = evaluateRecalc({ state: state({ lastPaceMinPerKm: 5 }), now: NOW, paceMinPerKm: 4.2 });
++    expect(faster.shouldRecalculate).toBe(true);
++    expect(faster.reasons).toContain(RECALC_REASONS.pace);
++  });
++
++  it('TEST-A7-TRIG-04: changement de version des signalements ou de l’itinéraire déclenche', () => {
++    const terrain = evaluateRecalc({ state: state({ lastReportsVersion: 3 }), now: NOW, reportsVersion: 4 });
++    expect(terrain.shouldRecalculate).toBe(true);
++    expect(terrain.reasons).toContain(RECALC_REASONS.terrain);
++    expect(terrain.nextState.lastReportsVersion).toBe(4);
++
++    const sameTerrain = evaluateRecalc({ state: state({ lastReportsVersion: 3 }), now: NOW, reportsVersion: 3 });
++    expect(sameTerrain.shouldRecalculate).toBe(false);
++
++    const route = evaluateRecalc({ state: state({ routeVersion: 1 }), now: NOW, routeVersion: 2 });
++    expect(route.shouldRecalculate).toBe(true);
++    expect(route.reasons).toContain(RECALC_REASONS.route);
++    expect(route.nextState.routeVersion).toBe(2);
++  });
++
++  it('TEST-A7-TRIG-05: batterie ≤ 20 % déclenche une seule fois', () => {
++    expect(BATTERY_THRESHOLD_PCT).toBe(20);
++
++    const first = evaluateRecalc({ state: state({ batteryLevel: 55 }), now: NOW, batteryLevel: 15 });
++    expect(first.shouldRecalculate).toBe(true);
++    expect(first.reasons).toContain(RECALC_REASONS.battery);
++    expect(first.nextState.batteryLevel).toBe(15);
++
++    const second = evaluateRecalc({
++      state: first.nextState,
++      now: iso(61_000),
++      batteryLevel: 14,
++    });
++    expect(second.shouldRecalculate).toBe(false);
++    expect(second.reasons).not.toContain(RECALC_REASONS.battery);
++    expect(second.nextState.batteryLevel).toBe(15);
++
++    const healthy = evaluateRecalc({ state: state({ batteryLevel: 55 }), now: NOW, batteryLevel: 55 });
++    expect(healthy.shouldRecalculate).toBe(false);
++  });
++
++  it('TEST-A7-TRIG-06: anti-rebond — jamais deux recalculs à moins de 60 s', () => {
++    expect(RECALC_DEBOUNCE_MS).toBe(60_000);
++
++    const blocked = evaluateRecalc({
++      state: state({ lastRecalcAt: iso(-30_000) }),
++      now: NOW,
++      reportsVersion: 9,
++    });
++    expect(blocked.shouldRecalculate).toBe(false);
++    expect(blocked.reasons).toContain(RECALC_REASONS.terrain);
++    expect(blocked.nextState).toEqual(state({ lastRecalcAt: iso(-30_000) }));
++
++    const allowed = evaluateRecalc({
++      state: state({ lastRecalcAt: iso(-61_000) }),
++      now: NOW,
++      reportsVersion: 9,
++    });
++    expect(allowed.shouldRecalculate).toBe(true);
++    expect(allowed.reasons).toContain(RECALC_REASONS.terrain);
++    expect(allowed.nextState.lastRecalcAt).toBe(NOW);
++  });
++});

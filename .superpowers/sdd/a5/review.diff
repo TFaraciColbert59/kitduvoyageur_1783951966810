@@ -1,0 +1,3877 @@
+﻿diff --git a/docs/superpowers/specs/2026-09-11-a4-collective-trail-intelligence-design.md b/docs/superpowers/specs/2026-09-11-a4-collective-trail-intelligence-design.md
+new file mode 100644
+index 00000000..182e4e5b
+--- /dev/null
++++ b/docs/superpowers/specs/2026-09-11-a4-collective-trail-intelligence-design.md
+@@ -0,0 +1,115 @@
++# A4 — Intelligence collective des sentiers — Design & Plan
++
++Date : 2026-09-11 · Type : spec + plan combinés
++Contraintes : ADR-AI-003 (4 niveaux), ADR-AI-005 (moteurs purs), ADR-AI-006 (jobs idempotents)
++
++## Vision
++
++Fusionner les passages de plusieurs utilisateurs en difficulté collective par segment,
++**normalisée par personne** (jamais de moyenne de vitesses brutes), avec seuils de
++confidentialité stricts. Migrer le prototype `TrailIntelligenceEngine` (route-level,
++`Math.random()`, client, non persistant) vers le calcul serveur déterministe et versionné.
++
++## Pipeline
++
++```text
++passages éligibles (consentement collectif_terrain actif + session terminée
++  + qualité GPS/map-matching + comportement plausible)
++→ ratio_normalisé = temps_observé / temps_attendu_pour_cette_personne (profil A3)
++→ buckets de conditions (sec/humide/neige/glace/jour/nuit/montée/descente/sac léger/lourd)
++→ agrégation robuste (médiane pondérée, P25/P50/P75/P90, MAD, qualité, récence, diversité)
++→ scores (effort, technicité, fatigue, orientation, ralentissement, difficulté collective, confiance)
++→ seuil de publication : ≥ 5 utilisateurs distincts, confiance suffisante, récence suffisante
++→ upsert segment_collective_aggregates (idempotent, processor_version a4-v1)
++```
++
++## Moteurs purs
++
++`src/features/adventure-intelligence/domain/collectiveIntelligence.ts` :
++
++```ts
++export interface CollectivePassage {
++  passageId: string; userIdHash: string; segmentId: number; direction: 'forward'|'reverse';
++  observedDurationS: number; expectedDurationS: number; quality: number; observedAt: string;
++  conditionBucket: ConditionBucket; uturnDetected: boolean; offRoute: boolean;
++}
++export interface CollectiveAggregate {
++  segmentId: number; conditionBucket: ConditionBucket; direction: 'forward'|'reverse';
++  passageCount: number; distinctUserCount: number;
++  weightedMedianSlowdown: number; p25: number; p50: number; p75: number; p90: number;
++  effortScore: number; technicalScore: number; fatigueScore: number; orientationScore: number;
++  slowdownScore: number; collectiveDifficulty: number; confidence: Confidence;
++}
++export function normalizedSlowdown(observedDurationS: number, expectedDurationS: number): number; // observed/expected, expected<=0 => 1
++export function isPublishable(a: { distinctUserCount: number; confidence: Confidence; computedAt: string }, options?): boolean;
++export function aggregateCollective(passages: CollectivePassage[], options?: AggregateOptions): CollectiveAggregate[];
++export function weightedMedian(values: { value: number; weight: number }[]): number | null;
++export function percentile(values: number[], p: number): number | null;
++export function detectAnomalies(values: { value: number; weight: number }[], madThreshold?: number): { kept: ...; rejected: ... };
++export function assignConditionBucket(input: { surface?: ...; weather?: ...; isNight?: boolean; isAscent?: boolean; packWeightKg?: number | null }): ConditionBucket;
++```
++
++Règles :
++- Pondération : `quality × récence (demi-vie 180 j) × winsorisation [0.25, 4]`.
++- Anomalies : MAD, seuil 3,5 (jamais la médiane seule).
++- `slowdownScore` = clamp((médiane − 1) × 50 + 50, 0, 100) ;
++  `effortScore` = f(médiane, variance) ; `technicalScore` = f(uturns, offRoute, variance) ;
++  `fatigueScore` = f(durée observée > attendue aux heures tardives) ; `orientationScore` = f(offRoute ratio) ;
++  `collectiveDifficulty` = combinaison pondérée (effort 0,4, technique 0,25, fatigue 0,2, orientation 0,15).
++- Confiance : `makeConfidence({ score: f(distinctUsers, passages, dispersion), sampleCount: passages, method: 'collective_weighted_median_a4' })`.
++- **Non publiable** si `distinctUserCount < 5` OU confiance < 0.5 OU dernière observation > 730 j.
++
++`domain/collectiveEligibility.ts` :
++
++```ts
++export interface EligibilityInput { consentCollective: boolean; sessionFinished: boolean;
++  gpsQuality: number; mapMatchQuality: number; plausibleMovement: boolean; passageQuality: number; }
++export function collectiveEligibility(input: EligibilityInput): { eligible: boolean; reasons: string[] };
++```
++Seuils : gps ≥ 0.6, mapMatch ≥ 0.6, plausibleMovement `true`, passageQuality ≥ 0.5 ;
++reasons explicites pour chaque refus.
++
++## Serveur
++
++- `server/aggregateSegments.ts` — client injecté :
++  `getEligiblePassages(segmentIds, sinceDays)`, `getConsents(userIds)`, `getExpectedDurations(passages)`,
++  `upsertAggregates(rows)`. Construit les `CollectivePassage`, agrège, filtre les non publiables,
++  persiste (idempotent `processor_version = 'a4-v1'`, `onConflict: segment_id,condition_bucket,direction,processor_version`).
++- `src/app/api/cron/aggregate-segments/route.ts` — POST, `CRON_SECRET`, `force-dynamic`,
++  lots de segments récents, résumé JSON. Aucune donnée individuelle dans la réponse.
++- Migration `20260911160000_a4_aggregation_support.sql` :
++  index `performance_observations (user_id, observed_at)` déjà présent ;
++  ajout d'un index partiel passages `(segment_id, observed_at)` sur `eligible_for_collective = true` ;
++  RPC `a4_recent_eligible_segments(p_since interval, p_limit int)` (service_role, STABLE) —
++  segments avec passages éligibles récents. Additif, idempotent.
++
++## Migration du prototype
++
++`src/features/hiking/intelligence/TrailIntelligenceEngine.ts` :
++- suppression de `Math.random()` → identifiants déterministes (`segmentId` + hash stable) ;
++- entrée par segment (agrégats A4) au lieu de route-level ;
++- délégation au moteur pur `aggregateCollective` quand des passages sont fournis ;
++- conservation d'une façade rétrocompatible pour les appelants existants (tests hiking verts).
++
++## Tests (IDs)
++
++- `TEST-A4-AGG-01..10` : ratio normalisé (pas de vitesse brute), médiane pondérée vs moyenne,
++  percentiles, MAD (outlier rejeté), buckets de conditions séparés, sens séparés, plancher de
++  publication `< 5` utilisateurs, confiance faible non publiable, ancienneté non publiable, scores bornés.
++- `TEST-A4-ELIG-01..05` : consentement requis, session terminée, qualités minimales, plausible, raisons.
++- `TEST-A4-SRV-01..04` : client factice — passages consentis uniquement, upsert idempotent, filtre seuil, aucune donnée individuelle dans la sortie.
++- `TEST-A4-LEG-01..02` : `TrailIntelligenceEngine` sans `Math.random()` (résultats identiques sur
++  appels répétés), façade rétrocompatible.
++
++## Commits
++
++1. `feat(a4): agregation collective robuste (mediane ponderee, buckets, seuils)`
++2. `feat(a4): eligibilite collective — consentement et qualites`
++3. `feat(db): a4 support d'agregation (index partiel + RPC segments eligibles)`
++4. `feat(a4): orchestrateur serveur + cron d'agregation`
++5. `refactor(a4): TrailIntelligenceEngine deterministe par segment (Math.random supprime)`
++
++## Gate de sortie
++
++- difficulté collective par segment ; seuil de confidentialité ; confiance ; conditions ;
++  aucune donnée individuelle publique ; carte de données agrégées (vue A1) ; prototype migré.
+diff --git a/docs/superpowers/specs/2026-09-11-a5-terrain-live-design.md b/docs/superpowers/specs/2026-09-11-a5-terrain-live-design.md
+new file mode 100644
+index 00000000..a9316cf5
+--- /dev/null
++++ b/docs/superpowers/specs/2026-09-11-a5-terrain-live-design.md
+@@ -0,0 +1,108 @@
++# A5 — Terrain Live — Design & Plan
++
++Date : 2026-09-11 · Type : spec + plan combinés
++Skills appliqués : `apple-ui-designer`, `ux-mobile`, `interaction-design`
++Contraintes : ADR-AI-003 (privacy), ADR-AI-006 (jobs), ADR-AI-008 (flags/shadow)
++
++## Vision
++
++Le « Waze de l'outdoor » : signalement en moins de 5 secondes, confirmations,
++déduplication, modération, expiration, affichage mobile natif. Détection automatique
++uniquement en **shadow mode**.
++
++## Catégories
++
++- MVP actives : `obstacle`, `closure`, `mud`, `snow_ice`, `water`, `danger`.
++- Étendues (schéma A1 complet) : `bridge`, `flood`, `marking`, `shelter`, `crowding`,
++  `animal`, `rockfall` — acceptées côté logique, UI MVP limitée aux 6.
++
++## Moteurs purs — `domain/terrainLive.ts`
++
++```ts
++export const MVP_TERRAIN_CATEGORIES = ['obstacle','closure','mud','snow_ice','water','danger'] as const;
++export type TerrainLifecycleEvent = 'confirm' | 'auto_confirm' | 'age' | 'resolve' | 'reject' | 'expire';
++export function nextReportStatus(current: TerrainReportStatus, event: TerrainLifecycleEvent, ctx: { now: string; expiresAt?: string | null; confirmationsPresent: number; contradicts: number }): TerrainReportStatus;
++export function computeReportConfidence(input: { presentCount: number; goneCount: number; unknownCount: number; distinctUsers: number; ageHours: number; gpsAccuracyM?: number | null; hasPhoto: boolean; officialSource: boolean; traceCorroboration: boolean }): Confidence;
++export function deduplicateReports(candidates: DedupCandidate[], incoming: DedupCandidate, options?: { maxDistanceM?: number; windowHours?: number }): { mergedWith: string | null; reason: string };
++export function moderationDecision(input: { reportsLastHour: number; confirmationsLastHour: number; accountAgeDays: number; reputation: number; hasPhoto: boolean; descriptionLength: number; }): { allowed: boolean; reasons: string[] };
++export function shouldExpire(report: { status: TerrainReportStatus; expiresAt?: string | null }, now: string): boolean;
++```
++
++Cycle : `pending → confirmed → active → stale → verify → resolved | expired | rejected`.
++Confiance : positifs (confirmations distinctes, récence, qualité GPS, cohérence traces,
++photo, source officielle, réputation plafonnée) − négatifs (contradictions `gone`,
++ancienneté, précision faible, doublons). Bornée [0,1] via `makeConfidence`.
++Dédup : même catégorie + même segment (ou ≤ 150 m) + fenêtre ≤ 6 h. Modération :
++rate limit (10 signalements/1 h), cooldown (2 confirmations/5 min), réputation plafonnée
++à 100, description ≤ 1000, upload photo validé (url + taille), source officielle prioritaire.
++
++## Détection automatique (shadow) — `domain/terrainAutoDetection.ts`
++
++```ts
++export function detectAutoCandidates(input: { passages: CollectivePassage[] }): { category: TerrainReportCategory; segmentId: number; reason: string; confidence: number }[];
++```
++Signaux : ralentissement collectif ≥ 1,6× médiane attendue, demi-tours ≥ 3, sorties de
++trace ≥ 3, contournements. **Toujours `shadow: true`** : produit des candidats
++`source_type='auto'` non publiés, journalisés pour comparaison (flag
++`terrain_auto_detection_shadow`).
++
++## Flux de création UI — 3 gestes
++
++`domain/terrainReportFlow.ts` (machine pure, testée) :
++`idle → category → severity → confirm` ; retour arrière, annulation, `canSubmit`
++(catégorie + sévérité choisies). Position/précision/heure/segment/sens capturés
++automatiquement côté client ; photo et commentaire optionnels.
++
++## Serveur
++
++- `server/terrainReports.ts` (client injecté) : `createTerrainReport` (modération +
++  anti-doublon → fusion ou rejet motivé), `confirmTerrainReport` (1 confirmation par
++  utilisateur, compteurs via trigger A1), `listNearbyTerrainReports` (vue publique
++  filtrée), `expireStaleReports` (transition `age`/`expire`).
++- API : `POST /api/terrain/reports`, `POST /api/terrain/reports/[id]/confirm`,
++  `GET /api/terrain/conditions?lat&lng&radius`, `POST /api/cron/expire-terrain-reports`
++  (CRON_SECRET). Zod sur toutes les entrées, `force-dynamic`, erreurs `{ error, details? }`.
++- Migration `20260911170000_a5_terrain_nearby.sql` : colonne générée `geog geography(Point,4326) STORED`
++  + index GiST + RPC `a5_terrain_reports_near(lat,lng,radius_m)` (vue sans identité, seuil
++  statuts A1), `GRANT authenticated`, `REVOKE` d'écriture. Additif, idempotent.
++
++## UI mobile (apple-ui-designer + ux-mobile + interaction-design)
++
++`src/features/terrain-live/` :
++- `components/QuickReportSheet.tsx` — bottom sheet natif (drag-to-dismiss, `vaul`),
++  étape unique par écran (catégorie → gravité/passabilité → confirmation),
++  44 px minimum, safe-area, haptique légère à la sélection, pas d'animation bloquante.
++- `components/TerrainReportCard.tsx` — carte calme iOS : icône système, titre, méta
++  (« signalé il y a 2 h », « confirmé par 14 »), 3 actions `Toujours là / Disparu / Sais pas`.
++- `components/TerrainReportsList.tsx` — liste verticale, états vide/chargement/erreur,
++  skeleton sans CLS.
++- `components/TerrainLiveLayer.tsx` — overlay Leaflet (CircleMarker colorés par gravité)
++  + `toTerrainGeoJson(reports)` pur.
++- `hooks/useTerrainReports.ts` — fetch `/api/terrain/conditions` (état, refetch, offline-safe :
++  erreurs silencieuses, dernière donnée conservée).
++Tokens LKDV (`#0B1F17`, `#17402C`, `#A3C4A3`, `#FBFAF6`), zéro orange `#E4501C`,
++`prefers-reduced-motion`, ARIA live sur la confirmation, focus visibles.
++
++## Tests
++
++- `TEST-A5-LIFE-01..08` : transitions nominales et interdites, expiration, résolution.
++- `TEST-A5-CONF-01..06` : confirmations/récence/contradictions/ancienneté/officiel/photo.
++- `TEST-A5-DEDUP-01..04` : fusion même segment/proche, fenêtre, rejet hors fenêtre.
++- `TEST-A5-MOD-01..06` : rate limit, cooldown, réputation plafonnée, description, photo, officiel prioritaire.
++- `TEST-A5-FLOW-01..04` : machine 3 gestes, retour, annulation, `canSubmit`.
++- `TEST-A5-AUTO-01..04` : détection shadow, jamais publiée, raisons explicites.
++- `TEST-A5-SRV-01..05` : client factice — création, fusion, confirmation unique, liste filtrée, expiration.
++- `TEST-A5-GEO-01..02` : `toTerrainGeoJson` sans reporter_id.
++
++## Commits
++
++1. `feat(a5): cycle de vie, confiance, dedup et moderation Terrain Live`
++2. `feat(a5): detection automatique shadow (ralentissements, demi-tours, sorties)`
++3. `feat(db): a5 proximite terrain (geog generee + index GiST + RPC sans identite)`
++4. `feat(a5): serveur signalements, confirmations, expiration + APIs`
++5. `feat(a5): UI mobile Terrain Live (sheet 3 gestes, liste, carte)`
++
++## Gate de sortie
++
++Création, confirmation, expiration, déduplication, modération, carte, liste verticale,
++API filtrée, file offline (préparée en Phase 7 via hooks offline-safe).
+diff --git a/src/app/api/cron/expire-terrain-reports/route.ts b/src/app/api/cron/expire-terrain-reports/route.ts
+new file mode 100644
+index 00000000..4cc5e7ab
+--- /dev/null
++++ b/src/app/api/cron/expire-terrain-reports/route.ts
+@@ -0,0 +1,38 @@
++import { NextRequest, NextResponse } from 'next/server';
++import { getServiceSupabase } from '@/lib/ai/serviceClient';
++import {
++  createSupabaseTerrainReportsClient,
++  expireStaleReports,
++} from '@/features/adventure-intelligence/server/terrainReports';
++
++export const dynamic = 'force-dynamic';
++
++/**
++ * Cron A5 — expiration et vieillissement des signalements Terrain Live
++ * (`expire` si `expires_at` dépassé, `age` si inactif depuis 24 h).
++ * Déclencheur externe avec `Authorization: Bearer ${CRON_SECRET}`.
++ * La réponse ne contient que des compteurs.
++ */
++export async function POST(request: NextRequest) {
++  const secret = process.env.CRON_SECRET;
++  const authHeader = request.headers.get('authorization');
++  if (!secret || authHeader !== `Bearer ${secret}`) {
++    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
++  }
++
++  const supabase = getServiceSupabase();
++  if (!supabase) {
++    return NextResponse.json({ error: 'Service indisponible' }, { status: 503 });
++  }
++
++  try {
++    const result = await expireStaleReports(createSupabaseTerrainReportsClient(supabase));
++    return NextResponse.json(result);
++  } catch (err) {
++    console.error(
++      '[terrain/cron/expire] erreur inattendue:',
++      err instanceof Error ? err.message : err
++    );
++    return NextResponse.json({ error: 'Expiration indisponible' }, { status: 502 });
++  }
++}
+diff --git a/src/app/api/terrain/conditions/route.ts b/src/app/api/terrain/conditions/route.ts
+new file mode 100644
+index 00000000..0567921f
+--- /dev/null
++++ b/src/app/api/terrain/conditions/route.ts
+@@ -0,0 +1,80 @@
++import { NextRequest, NextResponse } from 'next/server';
++import { z } from 'zod';
++import { getServiceSupabase } from '@/lib/ai/serviceClient';
++import {
++  createSupabaseTerrainReportsClient,
++  listNearbyTerrainReports,
++} from '@/features/adventure-intelligence/server/terrainReports';
++
++export const dynamic = 'force-dynamic';
++
++const nearbyQuerySchema = z.object({
++  lat: z
++    .number()
++    .min(-90, 'lat doit être compris entre -90 et 90')
++    .max(90, 'lat doit être compris entre -90 et 90'),
++  lng: z
++    .number()
++    .min(-180, 'lng doit être compris entre -180 et 180')
++    .max(180, 'lng doit être compris entre -180 et 180'),
++  radius: z
++    .number()
++    .min(1, 'radius doit être au moins 1 mètre')
++    .max(50000, 'radius ne peut pas dépasser 50 000 mètres')
++    .optional(),
++});
++
++function zodDetails(error: z.ZodError): string {
++  return error.issues.map((issue) => issue.path.join('.')).join(', ');
++}
++
++/**
++ * GET /api/terrain/conditions?lat&lng&radius — signalements confirmés/actifs
++ * non expirés autour d'un point. Lecture de la vue publique (aucune identité,
++ * jamais `reporter_id`) via la RPC A5, triée par distance.
++ */
++export async function GET(request: NextRequest) {
++  try {
++    const latRaw = request.nextUrl.searchParams.get('lat');
++    const lngRaw = request.nextUrl.searchParams.get('lng');
++    if (latRaw === null || lngRaw === null || latRaw === '' || lngRaw === '') {
++      return NextResponse.json(
++        { error: 'Paramètres invalides', details: 'lat et lng sont requis' },
++        { status: 400 }
++      );
++    }
++
++    const parsed = nearbyQuerySchema.safeParse({
++      lat: Number(latRaw),
++      lng: Number(lngRaw),
++      radius:
++        request.nextUrl.searchParams.get('radius') === null
++          ? undefined
++          : Number(request.nextUrl.searchParams.get('radius')),
++    });
++    if (!parsed.success) {
++      return NextResponse.json(
++        { error: 'Paramètres invalides', details: zodDetails(parsed.error) },
++        { status: 400 }
++      );
++    }
++
++    const supabase = getServiceSupabase();
++    if (!supabase) {
++      return NextResponse.json({ error: 'Service indisponible' }, { status: 503 });
++    }
++
++    const reports = await listNearbyTerrainReports(
++      { lat: parsed.data.lat, lng: parsed.data.lng, radiusM: parsed.data.radius },
++      createSupabaseTerrainReportsClient(supabase)
++    );
++
++    return NextResponse.json({ reports });
++  } catch (err) {
++    console.error(
++      '[terrain/conditions] erreur inattendue:',
++      err instanceof Error ? err.message : err
++    );
++    return NextResponse.json({ error: 'Erreur serveur' }, { status: 500 });
++  }
++}
+diff --git a/src/app/api/terrain/reports/[id]/confirm/route.ts b/src/app/api/terrain/reports/[id]/confirm/route.ts
+new file mode 100644
+index 00000000..64119a0d
+--- /dev/null
++++ b/src/app/api/terrain/reports/[id]/confirm/route.ts
+@@ -0,0 +1,111 @@
++import { NextRequest, NextResponse } from 'next/server';
++import { z } from 'zod';
++import { getServiceSupabase } from '@/lib/ai/serviceClient';
++import { createClient } from '@/lib/supabase/server';
++import {
++  confirmTerrainReport,
++  createSupabaseTerrainReportsClient,
++} from '@/features/adventure-intelligence/server/terrainReports';
++import { terrainConfirmationSchema } from '@/features/adventure-intelligence/schemas/live.schema';
++
++export const dynamic = 'force-dynamic';
++
++const reportIdSchema = z.string().uuid('id doit être un UUID');
++
++const confirmBodySchema = z.object({
++  confirmation: terrainConfirmationSchema,
++  locationDistanceM: z
++    .number()
++    .min(0, 'locationDistanceM doit être positif ou nul')
++    .optional(),
++  gpsQuality: z
++    .number()
++    .min(0, 'gpsQuality doit être compris entre 0 et 1')
++    .max(1, 'gpsQuality doit être compris entre 0 et 1')
++    .optional(),
++});
++
++function zodDetails(error: z.ZodError): string {
++  return error.issues.map((issue) => issue.path.join('.')).join(', ');
++}
++
++/**
++ * POST /api/terrain/reports/[id]/confirm — confirmation unique par utilisateur
++ * (« toujours présent », « disparu », « sais pas »). L'identité vient de la
++ * session ; les compteurs sont maintenus par le trigger A1.
++ */
++export async function POST(
++  request: NextRequest,
++  { params }: { params: Promise<{ id: string }> }
++) {
++  try {
++    const { id } = await params;
++    const parsedId = reportIdSchema.safeParse(id);
++    if (!parsedId.success) {
++      return NextResponse.json(
++        { error: 'Signalement invalide', details: zodDetails(parsedId.error) },
++        { status: 400 }
++      );
++    }
++
++    const session = await createClient();
++    const {
++      data: { user },
++    } = await session.auth.getUser();
++    if (!user) {
++      return NextResponse.json(
++        { error: 'Unauthorized', details: 'Session requise' },
++        { status: 401 }
++      );
++    }
++
++    let body: unknown;
++    try {
++      body = await request.json();
++    } catch {
++      return NextResponse.json(
++        { error: 'Corps invalide', details: 'JSON attendu' },
++        { status: 400 }
++      );
++    }
++
++    const parsed = confirmBodySchema.safeParse(body);
++    if (!parsed.success) {
++      return NextResponse.json(
++        { error: 'Corps invalide', details: zodDetails(parsed.error) },
++        { status: 400 }
++      );
++    }
++
++    const supabase = getServiceSupabase();
++    if (!supabase) {
++      return NextResponse.json({ error: 'Service indisponible' }, { status: 503 });
++    }
++
++    const result = await confirmTerrainReport(
++      { reportId: parsedId.data, userId: user.id, ...parsed.data },
++      createSupabaseTerrainReportsClient(supabase)
++    );
++
++    if (result.status === 'not_found') {
++      return NextResponse.json({ error: 'Signalement introuvable' }, { status: 404 });
++    }
++    if (result.status === 'closed') {
++      return NextResponse.json({ error: 'Signalement clos' }, { status: 409 });
++    }
++    if (result.status === 'duplicate') {
++      return NextResponse.json({
++        duplicate: true,
++        message: 'Confirmation déjà enregistrée pour cet utilisateur',
++      });
++    }
++
++    return NextResponse.json({ status: 'confirmed', reportStatus: result.reportStatus });
++  } catch (err) {
++    console.error(
++      '[terrain/reports/confirm] erreur inattendue:',
++      err instanceof Error ? err.message : err
++    );
++    return NextResponse.json({ error: 'Erreur serveur' }, { status: 500 });
++  }
++}
+diff --git a/src/app/api/terrain/reports/route.ts b/src/app/api/terrain/reports/route.ts
+new file mode 100644
+index 00000000..852ef279
+--- /dev/null
++++ b/src/app/api/terrain/reports/route.ts
+@@ -0,0 +1,124 @@
++import { NextRequest, NextResponse } from 'next/server';
++import { z } from 'zod';
++import { getServiceSupabase } from '@/lib/ai/serviceClient';
++import { createClient } from '@/lib/supabase/server';
++import {
++  createSupabaseTerrainReportsClient,
++  createTerrainReport,
++} from '@/features/adventure-intelligence/server/terrainReports';
++import {
++  reportDirectionSchema,
++  terrainPassabilitySchema,
++  terrainReportCategorySchema,
++  terrainSeveritySchema,
++} from '@/features/adventure-intelligence/schemas/live.schema';
++import { MAX_PHOTO_BYTES } from '@/features/adventure-intelligence/domain/terrainLive';
++
++export const dynamic = 'force-dynamic';
++
++const createReportSchema = z.object({
++  category: terrainReportCategorySchema,
++  severity: terrainSeveritySchema.optional(),
++  passability: terrainPassabilitySchema.optional(),
++  description: z
++    .string()
++    .max(1000, 'description ne peut pas dépasser 1000 caractères')
++    .optional(),
++  photoUrl: z.string().url('photoUrl doit être une URL valide').optional(),
++  photoSizeBytes: z
++    .number()
++    .int('photoSizeBytes doit être un entier')
++    .min(0, 'photoSizeBytes doit être positif ou nul')
++    .max(MAX_PHOTO_BYTES, 'photoSizeBytes ne peut pas dépasser 5 Mo')
++    .optional(),
++  lat: z
++    .number()
++    .min(-90, 'lat doit être compris entre -90 et 90')
++    .max(90, 'lat doit être compris entre -90 et 90'),
++  lng: z
++    .number()
++    .min(-180, 'lng doit être compris entre -180 et 180')
++    .max(180, 'lng doit être compris entre -180 et 180'),
++  gpsAccuracyM: z.number().min(0, 'gpsAccuracyM doit être positif ou nul').optional(),
++  direction: reportDirectionSchema.optional(),
++  segmentId: z.number().int('segmentId doit être un entier').positive('segmentId doit être positif').optional(),
++});
++
++function zodDetails(error: z.ZodError): string {
++  return error.issues.map((issue) => issue.path.join('.')).join(', ');
++}
++
++/**
++ * POST /api/terrain/reports — création d'un signalement Terrain Live.
++ * Modération puis anti-doublon (fusion ou rejet motivé). L'identité vient
++ * exclusivement de la session ; `source_type` est décidé ici, jamais fourni
++ * par le client. Zod 4 sur toutes les entrées, erreurs `{ error, details? }`.
++ */
++export async function POST(request: NextRequest) {
++  try {
++    const session = await createClient();
++    const {
++      data: { user },
++    } = await session.auth.getUser();
++    if (!user) {
++      return NextResponse.json(
++        { error: 'Unauthorized', details: 'Session requise' },
++        { status: 401 }
++      );
++    }
++
++    let body: unknown;
++    try {
++      body = await request.json();
++    } catch {
++      return NextResponse.json(
++        { error: 'Corps invalide', details: 'JSON attendu' },
++        { status: 400 }
++      );
++    }
++
++    const parsed = createReportSchema.safeParse(body);
++    if (!parsed.success) {
++      return NextResponse.json(
++        { error: 'Corps invalide', details: zodDetails(parsed.error) },
++        { status: 400 }
++      );
++    }
++
++    const supabase = getServiceSupabase();
++    if (!supabase) {
++      return NextResponse.json({ error: 'Service indisponible' }, { status: 503 });
++    }
++
++    const result = await createTerrainReport(
++      { userId: user.id, ...parsed.data },
++      createSupabaseTerrainReportsClient(supabase)
++    );
++
++    if (result.status === 'rejected') {
++      return NextResponse.json(
++        { error: 'Signalement refusé', details: result.reasons.join(', ') },
++        { status: 422 }
++      );
++    }
++
++    if (result.status === 'merged') {
++      return NextResponse.json({
++        merged: true,
++        reportId: result.mergedWith,
++        reason: result.reason,
++      });
++    }
++
++    return NextResponse.json(
++      { reportId: result.reportId, status: result.reportStatus },
++      { status: 201 }
++    );
++  } catch (err) {
++    console.error(
++      '[terrain/reports] erreur inattendue:',
++      err instanceof Error ? err.message : err
++    );
++    return NextResponse.json({ error: 'Erreur serveur' }, { status: 500 });
++  }
++}
+diff --git a/src/features/adventure-intelligence/domain/terrainAutoDetection.ts b/src/features/adventure-intelligence/domain/terrainAutoDetection.ts
+new file mode 100644
+index 00000000..242b48a4
+--- /dev/null
++++ b/src/features/adventure-intelligence/domain/terrainAutoDetection.ts
+@@ -0,0 +1,159 @@
++/**
++ * A5 — Détection automatique Terrain Live (shadow uniquement).
++ *
++ * Signaux collectifs : ralentissement ≥ 1,6× la médiane attendue, demi-tours
++ * répétés, sorties de trace répétées, contournements ralentis. Le moteur est
++ * **toujours shadow** : il produit des candidats `source_type = 'auto'` jamais
++ * publiés (flag `terrain_auto_detection_shadow`, ADR-AI-008), à journaliser
++ * pour comparaison. Aucune I/O, aucune identité.
++ */
++import {
++  normalizedSlowdown,
++  percentile,
++  type CollectivePassage,
++} from './collectiveIntelligence';
++import type { TerrainReportCategory } from '../schemas/live.schema';
++
++/** Garde-fou normatif : aucune détection automatique n'est publiée. */
++export const AUTO_DETECTION_SHADOW = true;
++
++/** Seuil de ralentissement collectif (ratio observé/attendu). */
++export const AUTO_SLOWDOWN_THRESHOLD = 1.6;
++/** Passages valides minimum pour parler de ralentissement collectif. */
++export const AUTO_MIN_COLLECTIVE_PASSAGES = 3;
++/** Demi-tours minimum pour suspecter une fermeture. */
++export const AUTO_MIN_UTURNS = 3;
++/** Sorties de trace minimum pour suspecter un balisage manquant. */
++export const AUTO_MIN_OFF_ROUTE = 3;
++/** Ralentissement minimum d'un contournement. */
++export const AUTO_BYPASS_SLOWDOWN_THRESHOLD = 1.3;
++/** Contournements minimum pour suspecter un obstacle. */
++export const AUTO_MIN_BYPASSES = 3;
++
++export interface TerrainAutoCandidate {
++  category: TerrainReportCategory;
++  segmentId: number;
++  reason: string;
++  confidence: number;
++  /** Toujours `auto` : jamais un signalement utilisateur. */
++  sourceType: 'auto';
++  /** Toujours `true` : candidat non publié (shadow mode). */
++  shadow: true;
++}
++
++function clampScore(value: number): number {
++  if (!Number.isFinite(value)) return 0;
++  return Math.max(0, Math.min(1, value));
++}
++
++function formatRatio(value: number): string {
++  return (Math.round(value * 100) / 100).toFixed(2);
++}
++
++function hasUsableDurations(passage: CollectivePassage): boolean {
++  return (
++    Number.isFinite(passage.observedDurationS) &&
++    passage.observedDurationS > 0 &&
++    Number.isFinite(passage.expectedDurationS) &&
++    passage.expectedDurationS > 0
++  );
++}
++
++/**
++ * Détecte les candidats automatiques par segment. Sortie déterministe (triée
++ * par segment puis catégorie), raisons explicites et chiffrées. Aucun candidat
++ * n'est publié : tous portent `shadow: true` et `sourceType: 'auto'`.
++ */
++export function detectAutoCandidates(input: {
++  passages: CollectivePassage[];
++}): TerrainAutoCandidate[] {
++  const groups = new Map<number, CollectivePassage[]>();
++  for (const passage of input.passages) {
++    if (!Number.isFinite(passage.segmentId)) continue;
++    const bucket = groups.get(passage.segmentId);
++    if (bucket) bucket.push(passage);
++    else groups.set(passage.segmentId, [passage]);
++  }
++
++  const candidates = new Map<string, TerrainAutoCandidate>();
++  const addCandidate = (
++    segmentId: number,
++    category: TerrainReportCategory,
++    reason: string,
++    confidence: number
++  ): void => {
++    const key = `${segmentId}::${category}`;
++    const existing = candidates.get(key);
++    if (existing) {
++      existing.reason = `${existing.reason}; ${reason}`;
++      existing.confidence = clampScore(Math.max(existing.confidence, confidence));
++      return;
++    }
++    candidates.set(key, {
++      category,
++      segmentId,
++      reason,
++      confidence: clampScore(confidence),
++      sourceType: 'auto',
++      shadow: true,
++    });
++  };
++
++  for (const [segmentId, passages] of groups) {
++    const ratios = passages
++      .filter(hasUsableDurations)
++      .map((passage) => normalizedSlowdown(passage.observedDurationS, passage.expectedDurationS));
++
++    if (ratios.length >= AUTO_MIN_COLLECTIVE_PASSAGES) {
++      const median = percentile(ratios, 0.5);
++      if (median !== null && median >= AUTO_SLOWDOWN_THRESHOLD) {
++        addCandidate(
++          segmentId,
++          'obstacle',
++          `ralentissement_collectif_x${formatRatio(median)}`,
++          0.4 +
++            (median - AUTO_SLOWDOWN_THRESHOLD) * 0.3 +
++            Math.min(1, ratios.length / 10) * 0.2
++        );
++      }
++    }
++
++    const uturns = passages.filter((passage) => passage.uturnDetected === true).length;
++    if (uturns >= AUTO_MIN_UTURNS) {
++      addCandidate(segmentId, 'closure', `demi_tours_repetes_${uturns}`, 0.35 + uturns * 0.08);
++    }
++
++    const offRouteCount = passages.filter((passage) => passage.offRoute === true).length;
++    if (offRouteCount >= AUTO_MIN_OFF_ROUTE) {
++      addCandidate(
++        segmentId,
++        'marking',
++        `sorties_de_trace_repetees_${offRouteCount}`,
++        0.3 + offRouteCount * 0.07
++      );
++    }
++
++    const bypasses = passages.filter(
++      (passage) =>
++        passage.offRoute === true &&
++        passage.uturnDetected !== true &&
++        hasUsableDurations(passage) &&
++        normalizedSlowdown(passage.observedDurationS, passage.expectedDurationS) >=
++          AUTO_BYPASS_SLOWDOWN_THRESHOLD
++    ).length;
++    if (bypasses >= AUTO_MIN_BYPASSES) {
++      addCandidate(
++        segmentId,
++        'obstacle',
++        `contournements_repetes_${bypasses}`,
++        0.3 + bypasses * 0.07
++      );
++    }
++  }
++
++  return [...candidates.values()].sort((a, b) => {
++    if (a.segmentId !== b.segmentId) return a.segmentId - b.segmentId;
++    if (a.category === b.category) return 0;
++    return a.category < b.category ? -1 : 1;
++  });
++}
+diff --git a/src/features/adventure-intelligence/domain/terrainLive.ts b/src/features/adventure-intelligence/domain/terrainLive.ts
+new file mode 100644
+index 00000000..7418f4d2
+--- /dev/null
++++ b/src/features/adventure-intelligence/domain/terrainLive.ts
+@@ -0,0 +1,445 @@
++/**
++ * A5 — Terrain Live (Phase 5) — moteurs purs.
++ *
++ * Cycle de vie des signalements, confiance collective, déduplication et
++ * modération. Aucune I/O : les accès base de données appartiennent à
++ * `server/terrainReports.ts` (client injecté). Aucune identité : le domaine
++ * ne manipule que des identifiants opaques.
++ *
++ * L'autorité DDL reste `supabase/migrations/20260911134000_a1_terrain_live.sql`.
++ */
++import { makeConfidence, type Confidence } from './confidence';
++import { haversineM } from './geo';
++import type { TerrainReportCategory, TerrainReportStatus } from '../schemas/live.schema';
++
++/**
++ * Catégories MVP actives (UI limitée à ces six) — les treize catégories du
++ * schéma A1 restent acceptées côté logique.
++ */
++export const MVP_TERRAIN_CATEGORIES = [
++  'obstacle',
++  'closure',
++  'mud',
++  'snow_ice',
++  'water',
++  'danger',
++] as const;
++
++export type MvpTerrainCategory = (typeof MVP_TERRAIN_CATEGORIES)[number];
++
++/** Événements normatifs du cycle de vie d'un signalement. */
++export type TerrainLifecycleEvent =
++  | 'confirm'
++  | 'auto_confirm'
++  | 'age'
++  | 'resolve'
++  | 'reject'
++  | 'expire';
++
++/** Statuts finaux : aucune transition ne les quitte. */
++export const TERMINAL_REPORT_STATUSES: readonly TerrainReportStatus[] = [
++  'resolved',
++  'expired',
++  'rejected',
++];
++
++/** Confirmations présentes nécessaires pour passer de `confirmed` à `active`. */
++export const CONFIRMATIONS_TO_ACTIVATE = 2;
++/** Contradictions « disparu » nécessaires pour résoudre un signalement. */
++export const CONTRADICTIONS_TO_RESOLVE = 3;
++
++export interface LifecycleContext {
++  /** Instant de référence ISO 8601. */
++  now: string;
++  /** Fin de validité du signalement (ISO 8601), si connue. */
++  expiresAt?: string | null;
++  /** Nombre de confirmations « toujours présent » connues. */
++  confirmationsPresent: number;
++  /** Nombre de confirmations « disparu » connues. */
++  contradicts: number;
++}
++
++function isTerminal(status: TerrainReportStatus): boolean {
++  return TERMINAL_REPORT_STATUSES.includes(status);
++}
++
++function isPastExpiry(ctx: LifecycleContext): boolean {
++  if (ctx.expiresAt == null) return false;
++  const expiry = Date.parse(ctx.expiresAt);
++  const now = Date.parse(ctx.now);
++  return Number.isFinite(expiry) && Number.isFinite(now) && now >= expiry;
++}
++
++/**
++ * `true` si le rapport est expiré à `now` : statut non terminal, `expiresAt`
++ * présent et dépassé. Un `expiresAt` illisible ne périme jamais.
++ */
++export function shouldExpire(
++  report: { status: TerrainReportStatus; expiresAt?: string | null },
++  now: string
++): boolean {
++  if (isTerminal(report.status)) return false;
++  return isPastExpiry({
++    now,
++    expiresAt: report.expiresAt ?? null,
++    confirmationsPresent: 0,
++    contradicts: 0,
++  });
++}
++
++/**
++ * Transition normative du cycle de vie :
++ * `pending → confirmed → active → stale → verify → resolved | expired | rejected`.
++ *
++ * Règles structurantes :
++ * - les statuts terminaux sont immuables ;
++ * - `confirm`/`auto_confirm` publient (`active`) à partir de
++ *   `CONFIRMATIONS_TO_ACTIVATE` présents et raniment `stale`/`verify` ;
++ * - `resolve` exige ≥ `CONTRADICTIONS_TO_RESOLVE` « disparu » **et** plus de
++ *   disparus que de présents (jamais depuis `pending`) ;
++ * - `age` constate l'expiration dépassée puis fait vieillir `active → stale →
++ *   verify` ;
++ * - `expire` est refusé avant `expiresAt` (ou autorisé sans expiration connue),
++ *   sinon `expired`.
++ */
++export function nextReportStatus(
++  current: TerrainReportStatus,
++  event: TerrainLifecycleEvent,
++  ctx: LifecycleContext
++): TerrainReportStatus {
++  if (isTerminal(current)) return current;
++
++  switch (event) {
++    case 'reject':
++      return 'rejected';
++
++    case 'expire':
++      return isPastExpiry(ctx) || ctx.expiresAt == null ? 'expired' : current;
++
++    case 'resolve':
++      if (!['confirmed', 'active', 'stale', 'verify'].includes(current)) return current;
++      if (ctx.contradicts < CONTRADICTIONS_TO_RESOLVE) return current;
++      if (ctx.contradicts <= ctx.confirmationsPresent) return current;
++      return 'resolved';
++
++    case 'age':
++      if (isPastExpiry(ctx)) return 'expired';
++      if (current === 'confirmed' || current === 'active') return 'stale';
++      if (current === 'stale') return 'verify';
++      return current;
++
++    case 'confirm':
++    case 'auto_confirm':
++      if (isPastExpiry(ctx)) return 'expired';
++      if (current === 'pending') return 'confirmed';
++      if (current === 'confirmed') {
++        return ctx.confirmationsPresent >= CONFIRMATIONS_TO_ACTIVATE ? 'active' : 'confirmed';
++      }
++      if (current === 'stale' || current === 'verify') return 'active';
++      return current;
++
++    default:
++      return current;
++  }
++}
++
++/** Méthode de confiance normative d'un signalement Terrain Live. */
++export const REPORT_CONFIDENCE_METHOD = 'terrain_report_confidence_a5';
++/** Au-delà de cet âge, le bonus de récence est nul (heures). */
++export const REPORT_CONFIDENCE_MAX_AGE_HOURS = 72;
++/** Précision GPS considérée comme bonne (mètres). */
++export const GOOD_GPS_ACCURACY_M = 15;
++/** Précision GPS au-delà de laquelle le signal est pénalisé (mètres). */
++export const POOR_GPS_ACCURACY_M = 100;
++
++export interface ReportConfidenceInput {
++  presentCount: number;
++  goneCount: number;
++  unknownCount: number;
++  distinctUsers: number;
++  ageHours: number;
++  gpsAccuracyM?: number | null;
++  hasPhoto: boolean;
++  officialSource: boolean;
++  traceCorroboration: boolean;
++}
++
++function nonNegative(value: number): number {
++  return Number.isFinite(value) ? Math.max(0, value) : 0;
++}
++
++/**
++ * Confiance d'un signalement, bornée [0,1] via `makeConfidence`.
++ *
++ * Positifs : part de « toujours présent », utilisateurs distincts, récence,
++ * précision GPS, photo, source officielle, corroboration de trace.
++ * Négatifs : part de « disparu », ancienneté, GPS imprécis.
++ * « Sais pas » reste neutre (jamais pénalisé).
++ */
++export function computeReportConfidence(input: ReportConfidenceInput): Confidence {
++  const present = nonNegative(input.presentCount);
++  const gone = nonNegative(input.goneCount);
++  const unknown = nonNegative(input.unknownCount);
++  const votes = present + gone + unknown;
++  const distinctUsers = nonNegative(input.distinctUsers);
++  const ageHours = nonNegative(input.ageHours);
++  const reasons: string[] = [];
++
++  let score = 0.2;
++
++  if (votes > 0 && present > 0) {
++    score += 0.25 * (present / votes);
++    reasons.push(`confirmations_presentes_${Math.trunc(present)}`);
++  }
++
++  if (distinctUsers > 0) {
++    score += 0.15 * Math.min(1, distinctUsers / 5);
++    if (distinctUsers >= 2) {
++      reasons.push(`utilisateurs_distincts_${Math.trunc(distinctUsers)}`);
++    }
++  }
++
++  if (ageHours <= REPORT_CONFIDENCE_MAX_AGE_HOURS) {
++    score += 0.1 * (1 - ageHours / REPORT_CONFIDENCE_MAX_AGE_HOURS);
++    if (ageHours <= 6) reasons.push('signalement_recent');
++  } else {
++    score -= 0.1 * Math.min(1, (ageHours - REPORT_CONFIDENCE_MAX_AGE_HOURS) / 168);
++    reasons.push('signalement_ancien');
++  }
++
++  const accuracy = input.gpsAccuracyM;
++  if (accuracy != null && Number.isFinite(accuracy)) {
++    if (accuracy <= GOOD_GPS_ACCURACY_M) {
++      score += 0.1;
++      reasons.push('gps_precis');
++    } else if (accuracy <= 50) {
++      score += 0.05;
++    } else if (accuracy <= POOR_GPS_ACCURACY_M) {
++      score += 0.02;
++    } else {
++      score -= 0.05;
++      reasons.push('gps_imprecis');
++    }
++  }
++
++  if (input.hasPhoto) {
++    score += 0.05;
++    reasons.push('photo_fournie');
++  }
++  if (input.officialSource) {
++    score += 0.1;
++    reasons.push('source_officielle');
++  }
++  if (input.traceCorroboration) {
++    score += 0.1;
++    reasons.push('corroboration_trace');
++  }
++
++  if (gone > 0 && votes > 0) {
++    score -= 0.35 * (gone / votes);
++    reasons.push(`contradictions_disparu_${Math.trunc(gone)}`);
++  }
++
++  return makeConfidence({
++    score,
++    sampleCount: votes,
++    method: REPORT_CONFIDENCE_METHOD,
++    reasons,
++  });
++}
++
++/** Candidat de fusion : signalement existant ou entrant. */
++export interface DedupCandidate {
++  id: string;
++  category: TerrainReportCategory;
++  segmentId?: number | null;
++  lat: number;
++  lng: number;
++  createdAt: string;
++}
++
++export interface DedupOptions {
++  /** Distance maximale de fusion sans segment commun (défaut 150 m). */
++  maxDistanceM?: number;
++  /** Fenêtre temporelle de fusion (défaut 6 h). */
++  windowHours?: number;
++}
++
++export interface DedupResult {
++  mergedWith: string | null;
++  reason: string;
++}
++
++export const DEDUP_MAX_DISTANCE_M = 150;
++export const DEDUP_WINDOW_HOURS = 6;
++
++/**
++ * Déduplication : même catégorie **et** (même segment **ou** ≤ 150 m) **et**
++ * fenêtre ≤ 6 h. Le candidat le plus proche gagne ; les raisons sont
++ * explicites (`doublon_meme_segment`, `doublon_proximite`,
++ * `aucun_doublon_hors_fenetre`, `aucun_doublon_hors_distance`,
++ * `aucun_doublon_categorie_differente`).
++ */
++export function deduplicateReports(
++  candidates: DedupCandidate[],
++  incoming: DedupCandidate,
++  options: DedupOptions = {}
++): DedupResult {
++  const maxDistanceM = options.maxDistanceM ?? DEDUP_MAX_DISTANCE_M;
++  const windowHours = options.windowHours ?? DEDUP_WINDOW_HOURS;
++  const incomingAt = Date.parse(incoming.createdAt);
++  const windowMs = nonNegative(windowHours) * 3600000;
++
++  const sameCategory = candidates.filter((entry) => entry.category === incoming.category);
++  if (sameCategory.length === 0) {
++    return { mergedWith: null, reason: 'aucun_doublon_categorie_differente' };
++  }
++
++  let closest: { id: string; distanceM: number; sameSegment: boolean } | null = null;
++  let outOfWindow = false;
++
++  for (const entry of sameCategory) {
++    const entryAt = Date.parse(entry.createdAt);
++    const withinWindow =
++      Number.isFinite(incomingAt) &&
++      Number.isFinite(entryAt) &&
++      Math.abs(incomingAt - entryAt) <= windowMs;
++    if (!withinWindow) {
++      outOfWindow = true;
++      continue;
++    }
++
++    const sameSegment =
++      incoming.segmentId != null &&
++      entry.segmentId != null &&
++      incoming.segmentId === entry.segmentId;
++    const distanceM = haversineM(incoming, entry);
++    const withinDistance = Number.isFinite(distanceM) && distanceM <= maxDistanceM;
++
++    if (!sameSegment && !withinDistance) continue;
++    if (closest === null || distanceM < closest.distanceM) {
++      closest = { id: entry.id, distanceM, sameSegment };
++    }
++  }
++
++  if (closest === null) {
++    return {
++      mergedWith: null,
++      reason: outOfWindow ? 'aucun_doublon_hors_fenetre' : 'aucun_doublon_hors_distance',
++    };
++  }
++
++  return {
++    mergedWith: closest.id,
++    reason: closest.sameSegment ? 'doublon_meme_segment' : 'doublon_proximite',
++  };
++}
++
++/** Rate limit : signalements par heure avant blocage. */
++export const MAX_REPORTS_PER_HOUR = 10;
++/** Cooldown : confirmations avant blocage temporaire. */
++export const MAX_CONFIRMATIONS_COOLDOWN = 2;
++/** Longueur maximale d'une description. */
++export const MAX_DESCRIPTION_LENGTH = 1000;
++/** Réputation plafonnée (jamais au-dessus). */
++export const MAX_REPUTATION = 100;
++/** Taille maximale d'une photo téléversée (5 Mo). */
++export const MAX_PHOTO_BYTES = 5 * 1024 * 1024;
++/** Comptes de moins d'un jour limités à 3 signalements/heure. */
++export const NEW_ACCOUNT_MAX_REPORTS = 3;
++/** En dessous, la réputation est signalée (informative) mais ne bloque pas seule. */
++export const LOW_REPUTATION_THRESHOLD = 10;
++
++export interface ModerationInput {
++  reportsLastHour: number;
++  confirmationsLastHour: number;
++  accountAgeDays: number;
++  reputation: number;
++  hasPhoto: boolean;
++  descriptionLength: number;
++  /** Extension additive : source officielle (prioritaire, non bloquée). */
++  officialSource?: boolean;
++  /** Extension additive : URL du téléversement à valider. */
++  photoUrl?: string | null;
++  /** Extension additive : taille du téléversement à valider (octets). */
++  photoSizeBytes?: number | null;
++}
++
++export interface ModerationDecision {
++  allowed: boolean;
++  reasons: string[];
++}
++
++export const MODERATION_REASONS = {
++  rateLimit: 'limite_signalements_atteinte',
++  cooldown: 'cooldown_confirmations_actif',
++  description: 'description_trop_longue',
++  photo: 'photo_invalide',
++  official: 'source_officielle_prioritaire',
++  lowReputation: 'reputation_faible',
++} as const;
++
++function isValidPhotoUrl(url: string): boolean {
++  try {
++    const parsed = new URL(url);
++    return parsed.protocol === 'https:' || parsed.protocol === 'http:';
++  } catch {
++    return false;
++  }
++}
++
++/** Réputation normalisée : plafonnée à 100 et jamais négative. */
++export function cappedReputation(value: number): number {
++  if (!Number.isFinite(value)) return 0;
++  return Math.max(0, Math.min(MAX_REPUTATION, value));
++}
++
++/**
++ * Modération d'un signalement :
++ * - rate limit 10/h (3/h pour un compte de moins d'un jour) ;
++ * - cooldown de 2 confirmations récentes ;
++ * - réputation normalisée sur [0, 100] ;
++ * - description ≤ 1000 caractères ;
++ * - photo déclarée : URL http(s) **et** taille bornée (5 Mo) ;
++ * - source officielle prioritaire : neutralise rate limit/cooldown, mais reste
++ *   soumise à la validation de contenu.
++ */
++export function moderationDecision(input: ModerationInput): ModerationDecision {
++  const blocking: string[] = [];
++  const notes: string[] = [];
++  const descriptionLength = nonNegative(input.descriptionLength);
++  const accountAgeDays = nonNegative(input.accountAgeDays);
++  const reputation = cappedReputation(input.reputation);
++
++  if (descriptionLength > MAX_DESCRIPTION_LENGTH) {
++    blocking.push(MODERATION_REASONS.description);
++  }
++
++  if (input.hasPhoto) {
++    const photoUrl = typeof input.photoUrl === 'string' ? input.photoUrl : null;
++    const size = input.photoSizeBytes;
++    const validUrl = photoUrl !== null && isValidPhotoUrl(photoUrl);
++    const validSize =
++      typeof size === 'number' && Number.isFinite(size) && size > 0 && size <= MAX_PHOTO_BYTES;
++    if (!validUrl || !validSize) blocking.push(MODERATION_REASONS.photo);
++  }
++
++  if (input.officialSource === true) {
++    const allowed = blocking.length === 0;
++    return {
++      allowed,
++      reasons: allowed ? [...blocking, MODERATION_REASONS.official] : blocking,
++    };
++  }
++
++  const reportLimit = accountAgeDays < 1 ? NEW_ACCOUNT_MAX_REPORTS : MAX_REPORTS_PER_HOUR;
++  if (input.reportsLastHour >= reportLimit) blocking.push(MODERATION_REASONS.rateLimit);
++  if (input.confirmationsLastHour >= MAX_CONFIRMATIONS_COOLDOWN) {
++    blocking.push(MODERATION_REASONS.cooldown);
++  }
++  // La réputation est normalisée (plafond 100, plancher 0) ; une réputation
++  // faible est signalée mais ne bloque jamais seule.
++  if (reputation < LOW_REPUTATION_THRESHOLD) notes.push(MODERATION_REASONS.lowReputation);
++
++  return { allowed: blocking.length === 0, reasons: [...blocking, ...notes] };
++}
+diff --git a/src/features/adventure-intelligence/domain/terrainReportFlow.ts b/src/features/adventure-intelligence/domain/terrainReportFlow.ts
+new file mode 100644
+index 00000000..715ba11a
+--- /dev/null
++++ b/src/features/adventure-intelligence/domain/terrainReportFlow.ts
+@@ -0,0 +1,102 @@
++/**
++ * A5 — Flux de création « 3 gestes » (machine pure).
++ *
++ * `idle → category → severity → confirm` avec retour arrière et annulation.
++ * Position, précision, heure, segment et sens sont capturés côté client par
++ * la couche UI ; cette machine ne porte que le parcours de saisie.
++ */
++import type {
++  TerrainPassability,
++  TerrainReportCategory,
++  TerrainSeverity,
++} from '../schemas/live.schema';
++
++export type TerrainFlowStep = 'idle' | 'category' | 'severity' | 'confirm';
++
++export interface TerrainFlowState {
++  step: TerrainFlowStep;
++  category: TerrainReportCategory | null;
++  severity: TerrainSeverity | null;
++  passability: TerrainPassability | null;
++  description: string;
++  hasPhoto: boolean;
++}
++
++export type TerrainFlowAction =
++  | { type: 'start' }
++  | { type: 'select_category'; category: TerrainReportCategory }
++  | { type: 'select_severity'; severity: TerrainSeverity }
++  | { type: 'set_passability'; passability: TerrainPassability }
++  | { type: 'set_description'; description: string }
++  | { type: 'set_photo'; hasPhoto: boolean }
++  | { type: 'back' }
++  | { type: 'cancel' };
++
++/** Même borne que la modération et le schéma A1. */
++export const TERRAIN_FLOW_MAX_DESCRIPTION_LENGTH = 1000;
++
++export function createTerrainFlowState(): TerrainFlowState {
++  return {
++    step: 'idle',
++    category: null,
++    severity: null,
++    passability: null,
++    description: '',
++    hasPhoto: false,
++  };
++}
++
++/** Soumission possible dès que catégorie et gravité sont choisies. */
++export function canSubmit(state: TerrainFlowState): boolean {
++  return state.category !== null && state.severity !== null;
++}
++
++/**
++ * Réducteur pur du flux. Les actions reçues hors de leur étape sont ignorées
++ * (aucun saut d'écran). `back` remonte d'un cran sans effacer la saisie ;
++ * `cancel` réinitialise tout.
++ */
++export function terrainFlowReducer(
++  state: TerrainFlowState,
++  action: TerrainFlowAction
++): TerrainFlowState {
++  switch (action.type) {
++    case 'start':
++      return { ...createTerrainFlowState(), step: 'category' };
++
++    case 'cancel':
++      return createTerrainFlowState();
++
++    case 'select_category':
++      if (state.step !== 'category') return state;
++      return { ...state, category: action.category, step: 'severity' };
++
++    case 'select_severity':
++      if (state.step !== 'severity') return state;
++      return { ...state, severity: action.severity, step: 'confirm' };
++
++    case 'set_passability':
++      if (state.step !== 'severity' && state.step !== 'confirm') return state;
++      return { ...state, passability: action.passability };
++
++    case 'set_description':
++      if (state.step !== 'confirm') return state;
++      return {
++        ...state,
++        description: action.description.slice(0, TERRAIN_FLOW_MAX_DESCRIPTION_LENGTH),
++      };
++
++    case 'set_photo':
++      if (state.step !== 'confirm') return state;
++      return { ...state, hasPhoto: action.hasPhoto };
++
++    case 'back':
++      if (state.step === 'confirm') return { ...state, step: 'severity' };
++      if (state.step === 'severity') return { ...state, step: 'category' };
++      if (state.step === 'category') return { ...state, step: 'idle' };
++      return state;
++
++    default:
++      return state;
++  }
++}
+diff --git a/src/features/adventure-intelligence/server/terrainReports.ts b/src/features/adventure-intelligence/server/terrainReports.ts
+new file mode 100644
+index 00000000..21c5f9e2
+--- /dev/null
++++ b/src/features/adventure-intelligence/server/terrainReports.ts
+@@ -0,0 +1,540 @@
++/**
++ * A5 — Orchestrateur serveur Terrain Live.
++ *
++ * Client injecté (`TerrainReportsClient`) : aucune dépendance Supabase dans
++ * les fonctions, testables sans réseau. Les identités ne sortent jamais :
++ * le domaine ne reçoit que des identifiants opaques et les surfaces publiques
++ * passent par la vue `terrain_reports_public` (jamais `reporter_id`).
++ *
++ * Périmètre : création (modération + anti-doublon → fusion ou rejet motivé),
++ * confirmation unique par utilisateur, liste proche filtrée et expiration
++ * (`age`/`expire`). Aucune détection automatique n'est écrite ici : elle reste
++ * en shadow mode (`domain/terrainAutoDetection.ts`).
++ */
++import 'server-only';
++import type { SupabaseClient } from '@supabase/supabase-js';
++import {
++  DEDUP_WINDOW_HOURS,
++  TERMINAL_REPORT_STATUSES,
++  deduplicateReports,
++  moderationDecision,
++  nextReportStatus,
++  shouldExpire,
++  type DedupCandidate,
++  type DedupOptions,
++} from '../domain/terrainLive';
++import type {
++  ReportDirection,
++  TerrainConfirmation,
++  TerrainPassability,
++  TerrainReportCategory,
++  TerrainReportPublic,
++  TerrainReportStatus,
++  TerrainSeverity,
++  TerrainSourceType,
++} from '../schemas/live.schema';
++
++/** Au-delà de cette inactivité, un rapport vieillit (`age`). */
++export const STALE_AFTER_HOURS = 24;
++/** Rayon par défaut de la liste proche (mètres). */
++export const DEFAULT_NEARBY_RADIUS_M = 2000;
++/** Rayon maximal accepté par la liste proche (mètres). */
++export const MAX_NEARBY_RADIUS_M = 50000;
++/** Nombre maximal de rapports retournés par la liste proche. */
++export const MAX_NEARBY_RESULTS = 200;
++/** Réputation de repli quand le profil est absent. */
++export const DEFAULT_REPUTATION = 50;
++
++export interface CreateTerrainReportInput {
++  userId: string;
++  category: TerrainReportCategory;
++  severity?: TerrainSeverity;
++  passability?: TerrainPassability;
++  description?: string;
++  photoUrl?: string;
++  photoSizeBytes?: number | null;
++  lat: number;
++  lng: number;
++  gpsAccuracyM?: number;
++  direction?: ReportDirection;
++  segmentId?: number;
++  officialSource?: boolean;
++  hasPhoto?: boolean;
++}
++
++export type CreateTerrainReportResult =
++  | {
++      status: 'created';
++      reportId: string;
++      reportStatus: TerrainReportStatus;
++      moderationReasons: string[];
++    }
++  | { status: 'merged'; mergedWith: string; reason: string; moderationReasons: string[] }
++  | { status: 'rejected'; reasons: string[] };
++
++export interface ConfirmTerrainReportInput {
++  reportId: string;
++  userId: string;
++  confirmation: TerrainConfirmation;
++  locationDistanceM?: number;
++  gpsQuality?: number;
++}
++
++export type ConfirmTerrainReportResult =
++  | { status: 'confirmed'; reportStatus: TerrainReportStatus }
++  | { status: 'duplicate' }
++  | { status: 'not_found' }
++  | { status: 'closed' };
++
++/** Ligne interne d'un signalement (jamais exposée telle quelle). */
++export interface TerrainReportRow {
++  id: string;
++  status: TerrainReportStatus;
++  expiresAt: string | null;
++  createdAt: string;
++  updatedAt: string;
++  presentCount: number;
++  goneCount: number;
++  unknownCount: number;
++}
++
++/** Signalement public proche : vue A1 sans identité + distance calculée. */
++export interface NearbyTerrainReport extends TerrainReportPublic {
++  distanceM: number;
++}
++
++export interface ExpireStaleResult {
++  scanned: number;
++  aged: number;
++  expired: number;
++}
++
++/** Client de données injecté — chaque méthode est en lecture ou idempotente. */
++export interface TerrainReportsClient {
++  countReportsSince(userId: string, sinceIso: string): Promise<number>;
++  countConfirmationsSince(userId: string, sinceIso: string): Promise<number>;
++  getUserModerationContext(
++    userId: string
++  ): Promise<{ accountAgeDays: number; reputation: number }>;
++  findDedupCandidates(category: TerrainReportCategory, sinceIso: string): Promise<DedupCandidate[]>;
++  mergeIntoReport(existingId: string, patch: Record<string, unknown>): Promise<void>;
++  insertReport(row: Record<string, unknown>): Promise<TerrainReportRow>;
++  getReport(id: string): Promise<TerrainReportRow | null>;
++  confirmationExists(reportId: string, userId: string): Promise<boolean>;
++  insertConfirmation(row: Record<string, unknown>): Promise<void>;
++  updateReport(id: string, patch: Record<string, unknown>): Promise<void>;
++  listPublicNearby(lat: number, lng: number, radiusM: number): Promise<NearbyTerrainReport[]>;
++  listExpirationCandidates(nowIso: string): Promise<TerrainReportRow[]>;
++}
++
++export interface TerrainReportOptions {
++  now?: string;
++}
++
++function isoBefore(now: string, hours: number): string {
++  const parsed = Date.parse(now);
++  const base = Number.isFinite(parsed) ? parsed : Date.now();
++  return new Date(base - hours * 3600000).toISOString();
++}
++
++/**
++ * Création d'un signalement : modération (rate limit, cooldown, réputation,
++ * description, photo) puis anti-doublon (`deduplicateReports`). Un doublon est
++ * fusionné dans l'existant ; un refus est motivé. Un signalement officiel est
++ * publié immédiatement (`active`, `official`), un signalement utilisateur reste
++ * `pending` jusqu'à confirmation.
++ */
++export async function createTerrainReport(
++  input: CreateTerrainReportInput,
++  client: TerrainReportsClient,
++  options: TerrainReportOptions & { dedup?: DedupOptions } = {}
++): Promise<CreateTerrainReportResult> {
++  const now = options.now ?? new Date().toISOString();
++  const hourAgo = isoBefore(now, 1);
++
++  const [reportsLastHour, confirmationsLastHour, context] = await Promise.all([
++    client.countReportsSince(input.userId, hourAgo),
++    client.countConfirmationsSince(input.userId, hourAgo),
++    client.getUserModerationContext(input.userId),
++  ]);
++
++  const description = input.description ?? '';
++  const moderation = moderationDecision({
++    reportsLastHour,
++    confirmationsLastHour,
++    accountAgeDays: context.accountAgeDays,
++    reputation: context.reputation,
++    hasPhoto: input.hasPhoto ?? input.photoUrl != null,
++    descriptionLength: description.length,
++    officialSource: input.officialSource,
++    photoUrl: input.photoUrl ?? null,
++    photoSizeBytes: input.photoSizeBytes ?? null,
++  });
++
++  if (!moderation.allowed) {
++    return { status: 'rejected', reasons: moderation.reasons };
++  }
++
++  const dedupSince = isoBefore(now, DEDUP_WINDOW_HOURS);
++  const candidates = await client.findDedupCandidates(input.category, dedupSince);
++  const dedup = deduplicateReports(
++    candidates,
++    {
++      id: 'incoming',
++      category: input.category,
++      segmentId: input.segmentId ?? null,
++      lat: input.lat,
++      lng: input.lng,
++      createdAt: now,
++    },
++    options.dedup
++  );
++
++  if (dedup.mergedWith !== null) {
++    const patch: Record<string, unknown> = { updated_at: now };
++    if (input.severity) patch.severity = input.severity;
++    if (input.passability) patch.passability = input.passability;
++    await client.mergeIntoReport(dedup.mergedWith, patch);
++    return {
++      status: 'merged',
++      mergedWith: dedup.mergedWith,
++      reason: dedup.reason,
++      moderationReasons: moderation.reasons,
++    };
++  }
++
++  const isOfficial = input.officialSource === true;
++  const inserted = await client.insertReport({
++    reporter_id: input.userId,
++    category: input.category,
++    severity: input.severity ?? 'warning',
++    passability: input.passability ?? 'unknown',
++    description: input.description ?? null,
++    photo_url: input.photoUrl ?? null,
++    lat: input.lat,
++    lng: input.lng,
++    gps_accuracy_m: input.gpsAccuracyM ?? null,
++    direction: input.direction ?? null,
++    segment_id: input.segmentId ?? null,
++    source_type: isOfficial ? 'official' : 'user',
++    status: isOfficial ? 'active' : 'pending',
++    created_at: now,
++    updated_at: now,
++  });
++
++  return {
++    status: 'created',
++    reportId: inserted.id,
++    reportStatus: inserted.status,
++    moderationReasons: moderation.reasons,
++  };
++}
++
++/**
++ * Confirmation d'un signalement : une seule par utilisateur (vérifiée
++ * explicitement puis garantie par la contrainte unique A1). Les compteurs
++ * dénormalisés sont maintenus par le trigger A1 ; le statut est recalculé par
++ * le cycle de vie (`confirm`). Aucune confirmation sur un rapport terminal.
++ */
++export async function confirmTerrainReport(
++  input: ConfirmTerrainReportInput,
++  client: TerrainReportsClient,
++  options: TerrainReportOptions = {}
++): Promise<ConfirmTerrainReportResult> {
++  const now = options.now ?? new Date().toISOString();
++  const report = await client.getReport(input.reportId);
++  if (report === null) return { status: 'not_found' };
++  if (TERMINAL_REPORT_STATUSES.includes(report.status)) return { status: 'closed' };
++
++  if (await client.confirmationExists(input.reportId, input.userId)) {
++    return { status: 'duplicate' };
++  }
++
++  await client.insertConfirmation({
++    report_id: input.reportId,
++    user_id: input.userId,
++    confirmation: input.confirmation,
++    location_distance_m: input.locationDistanceM ?? null,
++    gps_quality: input.gpsQuality ?? null,
++    created_at: now,
++  });
++
++  const confirmationsPresent =
++    report.presentCount + (input.confirmation === 'present' ? 1 : 0);
++  const contradicts = report.goneCount + (input.confirmation === 'gone' ? 1 : 0);
++  const reportStatus = nextReportStatus(report.status, 'confirm', {
++    now,
++    expiresAt: report.expiresAt,
++    confirmationsPresent,
++    contradicts,
++  });
++
++  if (reportStatus !== report.status) {
++    await client.updateReport(input.reportId, { status: reportStatus, updated_at: now });
++  }
++
++  return { status: 'confirmed', reportStatus };
++}
++
++/**
++ * Liste des signalements proches : lecture de la vue publique (déjà filtrée
++ * par statut/expiration côté A1), filtre défensif statuts terminaux/expirés,
++ * tri par distance croissante et plafond de résultats. Aucune identité.
++ */
++export async function listNearbyTerrainReports(
++  query: { lat: number; lng: number; radiusM?: number },
++  client: TerrainReportsClient,
++  options: TerrainReportOptions & { limit?: number } = {}
++): Promise<NearbyTerrainReport[]> {
++  const now = options.now ?? new Date().toISOString();
++  const requestedRadius = query.radiusM ?? DEFAULT_NEARBY_RADIUS_M;
++  const radiusM = Number.isFinite(requestedRadius)
++    ? Math.min(MAX_NEARBY_RADIUS_M, Math.max(1, requestedRadius))
++    : DEFAULT_NEARBY_RADIUS_M;
++  const limit = options.limit ?? MAX_NEARBY_RESULTS;
++
++  const rows = await client.listPublicNearby(query.lat, query.lng, radiusM);
++
++  return rows
++    .filter((row) => !TERMINAL_REPORT_STATUSES.includes(row.status))
++    .filter((row) => !shouldExpire({ status: row.status, expiresAt: row.expiresAt ?? null }, now))
++    .sort((a, b) => a.distanceM - b.distanceM)
++    .slice(0, limit);
++}
++
++/**
++ * Expiration/vieillissement hors trafic : `expire` pour les rapports dont
++ * `expiresAt` est dépassé, `age` pour les rapports inactifs depuis
++ * `staleAfterHours`. Les transitions sans effet ne sont pas écrites.
++ */
++export async function expireStaleReports(
++  client: TerrainReportsClient,
++  options: TerrainReportOptions & { staleAfterHours?: number } = {}
++): Promise<ExpireStaleResult> {
++  const now = options.now ?? new Date().toISOString();
++  const staleAfterHours = options.staleAfterHours ?? STALE_AFTER_HOURS;
++  const parsedNow = Date.parse(now);
++
++  const candidates = await client.listExpirationCandidates(now);
++  let aged = 0;
++  let expired = 0;
++
++  for (const report of candidates) {
++    const ctx = {
++      now,
++      expiresAt: report.expiresAt,
++      confirmationsPresent: report.presentCount,
++      contradicts: report.goneCount,
++    };
++
++    if (shouldExpire({ status: report.status, expiresAt: report.expiresAt }, now)) {
++      const next = nextReportStatus(report.status, 'expire', ctx);
++      if (next !== report.status) {
++        await client.updateReport(report.id, { status: next, updated_at: now });
++        expired += 1;
++      }
++      continue;
++    }
++
++    const updatedMs = Date.parse(report.updatedAt);
++    if (
++      Number.isFinite(parsedNow) &&
++      Number.isFinite(updatedMs) &&
++      parsedNow - updatedMs >= staleAfterHours * 3600000
++    ) {
++      const next = nextReportStatus(report.status, 'age', ctx);
++      if (next !== report.status) {
++        await client.updateReport(report.id, { status: next, updated_at: now });
++        aged += 1;
++      }
++    }
++  }
++
++  return { scanned: candidates.length, aged, expired };
++}
++
++// ── Adaptateur Supabase (service_role) ───────────────────────────────────────
++
++function toReportRow(raw: Record<string, unknown>): TerrainReportRow {
++  return {
++    id: String(raw.id),
++    status: raw.status as TerrainReportStatus,
++    expiresAt: raw.expires_at == null ? null : String(raw.expires_at),
++    createdAt: String(raw.created_at ?? ''),
++    updatedAt: String(raw.updated_at ?? raw.created_at ?? ''),
++    presentCount: Number(raw.present_count ?? 0),
++    goneCount: Number(raw.gone_count ?? 0),
++    unknownCount: Number(raw.unknown_count ?? 0),
++  };
++}
++
++function toNearbyReport(raw: Record<string, unknown>): NearbyTerrainReport {
++  return {
++    id: String(raw.id),
++    segmentId: raw.segment_id == null ? undefined : Number(raw.segment_id),
++    category: raw.category as TerrainReportCategory,
++    severity: raw.severity as TerrainSeverity,
++    passability: raw.passability as TerrainPassability,
++    description: raw.description == null ? undefined : String(raw.description),
++    photoUrl: raw.photo_url == null ? undefined : String(raw.photo_url),
++    lat: Number(raw.lat),
++    lng: Number(raw.lng),
++    gpsAccuracyM: raw.gps_accuracy_m == null ? undefined : Number(raw.gps_accuracy_m),
++    direction: raw.direction == null ? undefined : (raw.direction as ReportDirection),
++    sourceType: raw.source_type as TerrainSourceType,
++    status: raw.status as TerrainReportStatus,
++    presentCount: Number(raw.present_count ?? 0),
++    goneCount: Number(raw.gone_count ?? 0),
++    unknownCount: Number(raw.unknown_count ?? 0),
++    createdAt: String(raw.created_at ?? ''),
++    updatedAt: raw.updated_at == null ? undefined : String(raw.updated_at),
++    expiresAt: raw.expires_at == null ? undefined : String(raw.expires_at),
++    distanceM: Number(raw.distance_m ?? 0),
++  };
++}
++
++/**
++ * Adaptateur service_role pour les routes. Il contourne volontairement la RLS
++ * (modération multi-utilisateurs, fusion, vue publique) : l'identité appelante
++ * doit toujours venir de la session, jamais du corps de requête.
++ */
++export function createSupabaseTerrainReportsClient(
++  supabase: SupabaseClient
++): TerrainReportsClient {
++  return {
++    async countReportsSince(userId, sinceIso) {
++      const { count, error } = await supabase
++        .from('terrain_reports')
++        .select('id', { count: 'exact', head: true })
++        .eq('reporter_id', userId)
++        .gte('created_at', sinceIso);
++      if (error) throw new Error(error.message);
++      return count ?? 0;
++    },
++
++    async countConfirmationsSince(userId, sinceIso) {
++      const { count, error } = await supabase
++        .from('terrain_report_confirmations')
++        .select('id', { count: 'exact', head: true })
++        .eq('user_id', userId)
++        .gte('created_at', sinceIso);
++      if (error) throw new Error(error.message);
++      return count ?? 0;
++    },
++
++    async getUserModerationContext(userId) {
++      const { data, error } = await supabase
++        .from('user_profiles')
++        .select('trust_score, created_at')
++        .eq('id', userId)
++        .maybeSingle();
++      if (error) throw new Error(error.message);
++
++      const trust = Number((data as { trust_score?: unknown } | null)?.trust_score);
++      const createdMs = Date.parse(String((data as { created_at?: unknown } | null)?.created_at ?? ''));
++      const accountAgeDays = Number.isFinite(createdMs)
++        ? Math.max(0, (Date.now() - createdMs) / 86400000)
++        : 0;
++
++      return {
++        accountAgeDays,
++        reputation: Number.isFinite(trust) ? trust : DEFAULT_REPUTATION,
++      };
++    },
++
++    async findDedupCandidates(category, sinceIso) {
++      const { data, error } = await supabase
++        .from('terrain_reports')
++        .select('id, category, segment_id, lat, lng, created_at')
++        .eq('category', category)
++        .gte('created_at', sinceIso)
++        .not('status', 'in', '(resolved,expired,rejected)')
++        .limit(200);
++      if (error) throw new Error(error.message);
++      return ((data ?? []) as Record<string, unknown>[]).map((raw) => ({
++        id: String(raw.id),
++        category: raw.category as TerrainReportCategory,
++        segmentId: raw.segment_id == null ? null : Number(raw.segment_id),
++        lat: Number(raw.lat),
++        lng: Number(raw.lng),
++        createdAt: String(raw.created_at),
++      }));
++    },
++
++    async mergeIntoReport(existingId, patch) {
++      const { error } = await supabase
++        .from('terrain_reports')
++        .update(patch)
++        .eq('id', existingId);
++      if (error) throw new Error(error.message);
++    },
++
++    async insertReport(row) {
++      const { data, error } = await supabase
++        .from('terrain_reports')
++        .insert(row)
++        .select('*')
++        .single();
++      if (error) throw new Error(error.message);
++      return toReportRow(data as Record<string, unknown>);
++    },
++
++    async getReport(id) {
++      const { data, error } = await supabase
++        .from('terrain_reports')
++        .select('*')
++        .eq('id', id)
++        .maybeSingle();
++      if (error) throw new Error(error.message);
++      return data == null ? null : toReportRow(data as Record<string, unknown>);
++    },
++
++    async confirmationExists(reportId, userId) {
++      const { data, error } = await supabase
++        .from('terrain_report_confirmations')
++        .select('id')
++        .eq('report_id', reportId)
++        .eq('user_id', userId)
++        .maybeSingle();
++      if (error) throw new Error(error.message);
++      return data != null;
++    },
++
++    async insertConfirmation(row) {
++      const { error } = await supabase.from('terrain_report_confirmations').insert(row);
++      if (error) throw new Error(error.message);
++    },
++
++    async updateReport(id, patch) {
++      const { error } = await supabase.from('terrain_reports').update(patch).eq('id', id);
++      if (error) throw new Error(error.message);
++    },
++
++    async listPublicNearby(lat, lng, radiusM) {
++      const { data, error } = await supabase.rpc('a5_terrain_reports_near', {
++        p_lat: lat,
++        p_lng: lng,
++        p_radius_m: radiusM,
++      });
++      if (error) throw new Error(error.message);
++      return ((data ?? []) as Record<string, unknown>[]).map(toNearbyReport);
++    },
++
++    async listExpirationCandidates(nowIso) {
++      const staleBefore = new Date(
++        (Number.isFinite(Date.parse(nowIso)) ? Date.parse(nowIso) : Date.now()) -
++          STALE_AFTER_HOURS * 3600000
++      ).toISOString();
++      const { data, error } = await supabase
++        .from('terrain_reports')
++        .select(
++          'id, status, expires_at, created_at, updated_at, present_count, gone_count, unknown_count'
++        )
++        .in('status', ['pending', 'confirmed', 'active', 'stale', 'verify'])
++        .or(`expires_at.lte.${nowIso},updated_at.lte.${staleBefore}`)
++        .limit(500);
++      if (error) throw new Error(error.message);
++      return ((data ?? []) as Record<string, unknown>[]).map(toReportRow);
++    },
++  };
++}
+diff --git a/src/features/terrain-live/components/QuickReportSheet.tsx b/src/features/terrain-live/components/QuickReportSheet.tsx
+new file mode 100644
+index 00000000..9bf596e2
+--- /dev/null
++++ b/src/features/terrain-live/components/QuickReportSheet.tsx
+@@ -0,0 +1,252 @@
++'use client';
++
++/**
++ * A5 — Création d'un signalement en 3 gestes.
++ *
++ * Bottom sheet iOS : catégorie → gravité/passabilité → confirmation.
++ * Un seul choix par écran, 44 px minimum, drag-to-dismiss, animation
++ * limitée à `transform`/`opacity`, `prefers-reduced-motion` honoré.
++ */
++import { useCallback, useEffect, useReducer } from 'react';
++import { AnimatePresence, motion, useReducedMotion } from 'framer-motion';
++import Icon from '@/components/ui/Icon';
++import type {
++  TerrainPassability,
++  TerrainReportCategory,
++  TerrainSeverity,
++} from '@/features/adventure-intelligence/schemas/live.schema';
++import {
++  canSubmit,
++  createTerrainFlowState,
++  terrainFlowReducer,
++} from '@/features/adventure-intelligence/domain/terrainReportFlow';
++import {
++  MVP_TERRAIN_CATEGORIES,
++  PASSABILITY_LABELS,
++  SEVERITY_LABELS,
++  categoryDisplay,
++} from '../lib/terrainDisplay';
++
++export interface QuickReportSubmission {
++  category: TerrainReportCategory;
++  severity: TerrainSeverity;
++  passability: TerrainPassability | null;
++  description: string;
++  hasPhoto: boolean;
++}
++
++export interface QuickReportSheetProps {
++  open: boolean;
++  onOpenChange: (open: boolean) => void;
++  onSubmit: (submission: QuickReportSubmission) => void;
++  busy?: boolean;
++}
++
++const SEVERITIES: TerrainSeverity[] = ['info', 'warning', 'critical'];
++const PASSABILITIES: TerrainPassability[] = ['passable', 'difficult', 'impassable', 'unknown'];
++
++export default function QuickReportSheet({
++  open,
++  onOpenChange,
++  onSubmit,
++  busy = false,
++}: QuickReportSheetProps) {
++  const reduceMotion = useReducedMotion();
++  const [state, dispatch] = useReducer(terrainFlowReducer, undefined, createTerrainFlowState);
++
++  useEffect(() => {
++    if (!open) dispatch({ type: 'cancel' });
++  }, [open]);
++
++  const close = useCallback(() => onOpenChange(false), [onOpenChange]);
++
++  const submit = useCallback(() => {
++    if (!state.category || !state.severity || busy) return;
++    onSubmit({
++      category: state.category,
++      severity: state.severity,
++      passability: state.passability,
++      description: state.description,
++      hasPhoto: state.hasPhoto,
++    });
++  }, [busy, onSubmit, state]);
++
++  const sheetMotion = reduceMotion
++    ? { initial: { opacity: 0 }, animate: { opacity: 1 }, exit: { opacity: 0 } }
++    : {
++        initial: { y: '100%', opacity: 0.6 },
++        animate: { y: 0, opacity: 1 },
++        exit: { y: '100%', opacity: 0 },
++      };
++
++  return (
++    <AnimatePresence>
++      {open && (
++        <motion.div
++          className="fixed inset-0 z-50 flex items-end justify-center"
++          initial={{ opacity: 0 }}
++          animate={{ opacity: 1 }}
++          exit={{ opacity: 0 }}
++          transition={{ duration: reduceMotion ? 0 : 0.2 }}
++        >
++          <button
++            type="button"
++            aria-label="Fermer le signalement"
++            className="absolute inset-0 bg-[var(--lkv-overlay,rgba(11,31,23,0.4))]"
++            onClick={close}
++          />
++          <motion.section
++            role="dialog"
++            aria-modal="true"
++            aria-label="Signaler un problème sur le sentier"
++            className="relative w-full max-w-lg rounded-t-3xl bg-[var(--lkv-surface,#FBFAF6)] pb-[calc(env(safe-area-inset-bottom)+16px)] shadow-2xl"
++            drag={reduceMotion ? false : 'y'}
++            dragConstraints={{ top: 0, bottom: 0 }}
++            dragElastic={0.15}
++            onDragEnd={(_event, info) => {
++              if (info.offset.y > 120) close();
++            }}
++            {...sheetMotion}
++            transition={{ duration: reduceMotion ? 0 : 0.32, ease: [0.16, 1, 0.3, 1] }}
++          >
++            <div className="mx-auto mt-2 h-1 w-9 rounded-full bg-[var(--lkv-border-subtle,#D8D2C4)]" aria-hidden="true" />
++
++            <div className="flex items-center justify-between px-5 pt-3">
++              <h2 className="text-[17px] font-semibold text-[var(--lkv-text-primary,#0B1F17)]">
++                {state.step === 'category' && 'Que se passe-t-il ?'}
++                {state.step === 'severity' && 'C’est important ?'}
++                {state.step === 'confirm' && 'Vérifie et envoie'}
++              </h2>
++              <button
++                type="button"
++                onClick={close}
++                className="flex h-11 w-11 items-center justify-center rounded-full text-[var(--lkv-text-secondary,#4A5D52)] active:opacity-60"
++                aria-label="Annuler"
++              >
++                <Icon name="x" size={18} aria-hidden="true" />
++              </button>
++            </div>
++
++            {state.step === 'category' && (
++              <ul className="grid grid-cols-2 gap-2 px-5 py-4">
++                {MVP_TERRAIN_CATEGORIES.map((category) => {
++                  const display = categoryDisplay(category);
++                  return (
++                    <li key={category}>
++                      <button
++                        type="button"
++                        onClick={() => dispatch({ type: 'select_category', category })}
++                        className="flex min-h-[72px] w-full flex-col items-start justify-center gap-1 rounded-xl bg-[var(--lkv-surface-raised,#FFFFFF)] px-4 py-3 text-left active:opacity-70"
++                      >
++                        <Icon
++                          name={display.icon}
++                          size={20}
++                          className="text-[var(--lkv-secondary,#17402C)]"
++                          aria-hidden="true"
++                        />
++                        <span className="text-sm font-medium text-[var(--lkv-text-primary,#0B1F17)]">
++                          {display.label}
++                        </span>
++                      </button>
++                    </li>
++                  );
++                })}
++              </ul>
++            )}
++
++            {state.step === 'severity' && (
++              <div className="px-5 py-4">
++                <ul className="space-y-2">
++                  {SEVERITIES.map((severity) => (
++                    <li key={severity}>
++                      <button
++                        type="button"
++                        onClick={() => dispatch({ type: 'select_severity', severity })}
++                        className="flex min-h-[48px] w-full items-center justify-between rounded-xl bg-[var(--lkv-surface-raised,#FFFFFF)] px-4 py-2.5 text-left active:opacity-70"
++                      >
++                        <span className="text-sm font-medium text-[var(--lkv-text-primary,#0B1F17)]">
++                          {SEVERITY_LABELS[severity]}
++                        </span>
++                        {state.severity === severity && (
++                          <Icon name="check" size={16} className="text-[var(--lkv-secondary,#17402C)]" aria-hidden="true" />
++                        )}
++                      </button>
++                    </li>
++                  ))}
++                </ul>
++                <div className="mt-3 flex flex-wrap gap-2" role="group" aria-label="Passabilité">
++                  {PASSABILITIES.map((passability) => (
++                    <button
++                      key={passability}
++                      type="button"
++                      onClick={() => dispatch({ type: 'set_passability', passability })}
++                      aria-pressed={state.passability === passability}
++                      className={`min-h-[44px] rounded-full px-4 text-[13px] ${
++                        state.passability === passability
++                          ? 'bg-[var(--lkv-secondary,#17402C)] text-white'
++                          : 'bg-[var(--lkv-surface-raised,#FFFFFF)] text-[var(--lkv-text-secondary,#4A5D52)]'
++                      }`}
++                    >
++                      {PASSABILITY_LABELS[passability]}
++                    </button>
++                  ))}
++                </div>
++              </div>
++            )}
++
++            {state.step === 'confirm' && (
++              <div className="px-5 py-4">
++                <p className="text-sm text-[var(--lkv-text-secondary,#4A5D52)]">
++                  {state.category && categoryDisplay(state.category).label}
++                  {state.severity ? ` · ${SEVERITY_LABELS[state.severity]}` : ''}
++                  {state.passability ? ` · ${PASSABILITY_LABELS[state.passability]}` : ''}
++                </p>
++                <label
++                  htmlFor="terrain-report-description"
++                  className="mt-4 block text-xs font-medium uppercase tracking-[0.12em] text-[var(--lkv-text-muted,#6B7A70)]"
++                >
++                  Commentaire (optionnel)
++                </label>
++                <textarea
++                  id="terrain-report-description"
++                  value={state.description}
++                  onChange={(event) =>
++                    dispatch({ type: 'set_description', description: event.target.value })
++                  }
++                  maxLength={1000}
++                  rows={2}
++                  className="mt-2 w-full resize-none rounded-xl bg-[var(--lkv-surface-raised,#FFFFFF)] px-4 py-3 text-sm text-[var(--lkv-text-primary,#0B1F17)] outline-none focus-visible:ring-2 focus-visible:ring-[var(--lkv-secondary,#17402C)]"
++                />
++                <button
++                  type="button"
++                  onClick={submit}
++                  disabled={busy || !canSubmit(state)}
++                  className="mt-4 min-h-[50px] w-full rounded-xl bg-[var(--lkv-secondary,#17402C)] text-[15px] font-semibold text-white active:opacity-80 disabled:opacity-50"
++                >
++                  {busy ? 'Envoi…' : 'Signaler'}
++                </button>
++                <button
++                  type="button"
++                  onClick={() => dispatch({ type: 'back' })}
++                  className="mt-2 min-h-[44px] w-full text-sm text-[var(--lkv-text-secondary,#4A5D52)]"
++                >
++                  Retour
++                </button>
++              </div>
++            )}
++
++            {state.step === 'severity' && (
++              <button
++                type="button"
++                onClick={() => dispatch({ type: 'back' })}
++                className="mx-5 mb-2 min-h-[44px] w-[calc(100%-40px)] text-sm text-[var(--lkv-text-secondary,#4A5D52)]"
++              >
++                Retour
++              </button>
++            )}
++          </motion.section>
++        </motion.div>
++      )}
++    </AnimatePresence>
++  );
++}
+diff --git a/src/features/terrain-live/components/TerrainLiveLayer.tsx b/src/features/terrain-live/components/TerrainLiveLayer.tsx
+new file mode 100644
+index 00000000..7d9317eb
+--- /dev/null
++++ b/src/features/terrain-live/components/TerrainLiveLayer.tsx
+@@ -0,0 +1,48 @@
++'use client';
++
++/**
++ * A5 — Couche Leaflet des signalements Terrain Live.
++ * À monter à l'intérieur d'un `<MapContainer>` existant ; client uniquement.
++ */
++import { CircleMarker, Tooltip } from 'react-leaflet';
++import { SEVERITY_COLORS, categoryDisplay } from '../lib/terrainDisplay';
++import type { TerrainLiveReport } from '../lib/terrainDisplay';
++
++export interface TerrainLiveLayerProps {
++  reports: TerrainLiveReport[];
++  onSelect?: (reportId: string) => void;
++}
++
++export default function TerrainLiveLayer({ reports, onSelect }: TerrainLiveLayerProps) {
++  return (
++    <>
++      {reports.map((report) => {
++        const color = SEVERITY_COLORS[report.severity] ?? SEVERITY_COLORS.warning;
++        return (
++          <CircleMarker
++            key={report.id}
++            center={[report.lat, report.lng]}
++            radius={9}
++            pathOptions={{
++              color,
++              fillColor: color,
++              fillOpacity: 0.35,
++              weight: 2,
++            }}
++            eventHandlers={
++              onSelect
++                ? {
++                    click: () => onSelect(report.id),
++                  }
++                : undefined
++            }
++          >
++            <Tooltip direction="top" offset={[0, -8]} opacity={1}>
++              {categoryDisplay(report.category).label}
++            </Tooltip>
++          </CircleMarker>
++        );
++      })}
++    </>
++  );
++}
+diff --git a/src/features/terrain-live/components/TerrainReportCard.tsx b/src/features/terrain-live/components/TerrainReportCard.tsx
+new file mode 100644
+index 00000000..7abe6304
+--- /dev/null
++++ b/src/features/terrain-live/components/TerrainReportCard.tsx
+@@ -0,0 +1,83 @@
++'use client';
++
++/**
++ * A5 — Carte de signalement (calme, iOS) avec 3 réponses rapides.
++ * Un utilisateur ne compte qu'une fois côté serveur ; l'UI ne montre jamais
++ * l'identité d'un contributeur.
++ */
++import Icon from '@/components/ui/Icon';
++import type { TerrainConfirmation } from '@/features/adventure-intelligence/schemas/live.schema';
++import {
++  SEVERITY_COLORS,
++  categoryDisplay,
++  relativeAgeFr,
++} from '../lib/terrainDisplay';
++import type { TerrainLiveReport } from '../lib/terrainDisplay';
++
++export interface TerrainReportCardProps {
++  report: TerrainLiveReport;
++  onConfirm: (confirmation: TerrainConfirmation) => void;
++  busy?: boolean;
++}
++
++const CONFIRM_ACTIONS: { value: TerrainConfirmation; label: string }[] = [
++  { value: 'present', label: 'Toujours là' },
++  { value: 'gone', label: 'Disparu' },
++  { value: 'unknown', label: 'Je ne sais pas' },
++];
++
++export default function TerrainReportCard({
++  report,
++  onConfirm,
++  busy = false,
++}: TerrainReportCardProps) {
++  const display = categoryDisplay(report.category);
++  const color = SEVERITY_COLORS[report.severity] ?? SEVERITY_COLORS.warning;
++  const confirmations = report.presentCount + report.goneCount + report.unknownCount;
++
++  return (
++    <article
++      className="rounded-2xl bg-[var(--lkv-surface-raised,#FFFFFF)] p-4 shadow-sm"
++      aria-label={`Signalement ${display.label}`}
++    >
++      <header className="flex items-start gap-3">
++        <span
++          className="mt-0.5 flex h-9 w-9 shrink-0 items-center justify-center rounded-full"
++          style={{ backgroundColor: `${color}1A`, color }}
++          aria-hidden="true"
++        >
++          <Icon name={display.icon} size={17} />
++        </span>
++        <div className="min-w-0 flex-1">
++          <h3 className="text-[15px] font-semibold text-[var(--lkv-text-primary,#0B1F17)]">
++            {display.label}
++          </h3>
++          <p className="mt-0.5 text-[12px] text-[var(--lkv-text-secondary,#4A5D52)]">
++            {relativeAgeFr(report.createdAt)}
++            {confirmations > 0 ? ` · confirmé par ${report.presentCount} personne${report.presentCount > 1 ? 's' : ''}` : ''}
++            {report.distanceM >= 0 ? ` · à ${Math.round(report.distanceM)} m` : ''}
++          </p>
++          {report.description ? (
++            <p className="mt-1 line-clamp-2 text-[13px] text-[var(--lkv-text-secondary,#4A5D52)]">
++              {report.description}
++            </p>
++          ) : null}
++        </div>
++      </header>
++
++      <div className="mt-3 flex gap-2" role="group" aria-label="Confirmer ce signalement">
++        {CONFIRM_ACTIONS.map((action) => (
++          <button
++            key={action.value}
++            type="button"
++            disabled={busy}
++            onClick={() => onConfirm(action.value)}
++            className="min-h-[44px] flex-1 rounded-xl bg-[var(--lkv-surface,#FBFAF6)] px-2 text-[13px] font-medium text-[var(--lkv-text-primary,#0B1F17)] active:opacity-70 disabled:opacity-50"
++          >
++            {action.label}
++          </button>
++        ))}
++      </div>
++    </article>
++  );
++}
+diff --git a/src/features/terrain-live/components/TerrainReportsList.tsx b/src/features/terrain-live/components/TerrainReportsList.tsx
+new file mode 100644
+index 00000000..39ee26f1
+--- /dev/null
++++ b/src/features/terrain-live/components/TerrainReportsList.tsx
+@@ -0,0 +1,100 @@
++'use client';
++
++/**
++ * A5 — Liste verticale des conditions Terrain Live.
++ * États vides/chargement/erreur soignés ; skeleton sans CLS ; jamais d'écran blanc.
++ */
++import Icon from '@/components/ui/Icon';
++import type { TerrainConfirmation } from '@/features/adventure-intelligence/schemas/live.schema';
++import TerrainReportCard from './TerrainReportCard';
++import type { TerrainLiveReport } from '../lib/terrainDisplay';
++
++export interface TerrainReportsListProps {
++  reports: TerrainLiveReport[];
++  loading: boolean;
++  error: string | null;
++  onConfirm: (reportId: string, confirmation: TerrainConfirmation) => void;
++  onRefresh?: () => void;
++  confirmingId?: string | null;
++}
++
++function ReportSkeleton() {
++  return (
++    <div className="animate-pulse rounded-2xl bg-[var(--lkv-surface-raised,#FFFFFF)] p-4">
++      <div className="flex items-start gap-3">
++        <div className="h-9 w-9 rounded-full bg-[var(--lkv-surface,#FBFAF6)]" />
++        <div className="flex-1 space-y-2">
++          <div className="h-4 w-1/3 rounded bg-[var(--lkv-surface,#FBFAF6)]" />
++          <div className="h-3 w-2/3 rounded bg-[var(--lkv-surface,#FBFAF6)]" />
++        </div>
++      </div>
++      <div className="mt-3 h-11 rounded-xl bg-[var(--lkv-surface,#FBFAF6)]" />
++    </div>
++  );
++}
++
++export default function TerrainReportsList({
++  reports,
++  loading,
++  error,
++  onConfirm,
++  onRefresh,
++  confirmingId = null,
++}: TerrainReportsListProps) {
++  if (loading && reports.length === 0) {
++    return (
++      <div className="space-y-3" aria-busy="true" aria-label="Chargement des conditions">
++        <ReportSkeleton />
++        <ReportSkeleton />
++      </div>
++    );
++  }
++
++  if (!loading && reports.length === 0) {
++    return (
++      <div className="flex flex-col items-center gap-2 rounded-2xl bg-[var(--lkv-surface-raised,#FFFFFF)] px-6 py-8 text-center">
++        <Icon name="check-circle" size={22} className="text-[var(--lkv-secondary,#17402C)]" aria-hidden="true" />
++        <p className="text-[15px] font-medium text-[var(--lkv-text-primary,#0B1F17)]">
++          Aucun signalement récent
++        </p>
++        <p className="text-[13px] text-[var(--lkv-text-secondary,#4A5D52)]">
++          Le sentier est calme autour de vous.
++        </p>
++      </div>
++    );
++  }
++
++  return (
++    <div className="space-y-3">
++      {error ? (
++        <div
++          role="status"
++          className="flex items-center justify-between rounded-xl bg-[var(--lkv-surface,#FBFAF6)] px-3 py-2 text-[12px] text-[var(--lkv-text-secondary,#4A5D52)]"
++        >
++          <span>Connexion instable — dernières données connues.</span>
++          {onRefresh ? (
++            <button
++              type="button"
++              onClick={onRefresh}
++              className="min-h-[44px] px-2 font-medium text-[var(--lkv-secondary,#17402C)]"
++            >
++              Réessayer
++            </button>
++          ) : null}
++        </div>
++      ) : null}
++
++      <ul className="space-y-3" aria-live="polite">
++        {reports.map((report) => (
++          <li key={report.id}>
++            <TerrainReportCard
++              report={report}
++              busy={confirmingId === report.id}
++              onConfirm={(confirmation) => onConfirm(report.id, confirmation)}
++            />
++          </li>
++        ))}
++      </ul>
++    </div>
++  );
++}
+diff --git a/src/features/terrain-live/hooks/useTerrainReports.ts b/src/features/terrain-live/hooks/useTerrainReports.ts
+new file mode 100644
+index 00000000..89cf80d4
+--- /dev/null
++++ b/src/features/terrain-live/hooks/useTerrainReports.ts
+@@ -0,0 +1,76 @@
++'use client';
++
++/**
++ * A5 — Chargement des conditions Terrain Live autour d'un point.
++ *
++ * Hors-ligne : en cas d'erreur réseau, la dernière liste connue est conservée
++ * (l'utilisateur ne perd jamais l'information déjà affichée).
++ */
++import { useCallback, useEffect, useRef, useState } from 'react';
++import type { TerrainLiveReport } from '../lib/terrainDisplay';
++
++export interface UseTerrainReportsInput {
++  lat: number | null;
++  lng: number | null;
++  radiusM?: number;
++}
++
++export interface UseTerrainReportsResult {
++  reports: TerrainLiveReport[];
++  loading: boolean;
++  error: string | null;
++  refresh: () => void;
++}
++
++export function useTerrainReports({
++  lat,
++  lng,
++  radiusM = 5000,
++}: UseTerrainReportsInput): UseTerrainReportsResult {
++  const [reports, setReports] = useState<TerrainLiveReport[]>([]);
++  const [loading, setLoading] = useState(false);
++  const [error, setError] = useState<string | null>(null);
++  const [tick, setTick] = useState(0);
++  const abortRef = useRef<AbortController | null>(null);
++
++  const refresh = useCallback(() => setTick((value) => value + 1), []);
++
++  useEffect(() => {
++    if (lat === null || lng === null) return;
++
++    abortRef.current?.abort();
++    const controller = new AbortController();
++    abortRef.current = controller;
++    setLoading(true);
++
++    const query = new URLSearchParams({
++      lat: String(lat),
++      lng: String(lng),
++      radius: String(radiusM),
++    });
++
++    fetch(`/api/terrain/conditions?${query.toString()}`, {
++      signal: controller.signal,
++    })
++      .then(async (response) => {
++        if (!response.ok) throw new Error(`HTTP ${response.status}`);
++        return (await response.json()) as { reports?: TerrainLiveReport[] };
++      })
++      .then((payload) => {
++        setReports(Array.isArray(payload.reports) ? payload.reports : []);
++        setError(null);
++      })
++      .catch((err: unknown) => {
++        if (err instanceof DOMException && err.name === 'AbortError') return;
++        // Hors-ligne : conserver la dernière liste connue.
++        setError(err instanceof Error ? err.message : 'network_error');
++      })
++      .finally(() => {
++        if (!controller.signal.aborted) setLoading(false);
++      });
++
++    return () => controller.abort();
++  }, [lat, lng, radiusM, tick]);
++
++  return { reports, loading, error, refresh };
++}
+diff --git a/src/features/terrain-live/index.ts b/src/features/terrain-live/index.ts
+new file mode 100644
+index 00000000..e3a157c6
+--- /dev/null
++++ b/src/features/terrain-live/index.ts
+@@ -0,0 +1,19 @@
++export { default as QuickReportSheet } from './components/QuickReportSheet';
++export type { QuickReportSheetProps, QuickReportSubmission } from './components/QuickReportSheet';
++export { default as TerrainReportCard } from './components/TerrainReportCard';
++export type { TerrainReportCardProps } from './components/TerrainReportCard';
++export { default as TerrainReportsList } from './components/TerrainReportsList';
++export type { TerrainReportsListProps } from './components/TerrainReportsList';
++export { default as TerrainLiveLayer } from './components/TerrainLiveLayer';
++export type { TerrainLiveLayerProps } from './components/TerrainLiveLayer';
++export { useTerrainReports } from './hooks/useTerrainReports';
++export type { UseTerrainReportsInput, UseTerrainReportsResult } from './hooks/useTerrainReports';
++export { toTerrainGeoJson } from './lib/terrainGeoJson';
++export type { TerrainGeoJsonCollection, TerrainGeoJsonFeature } from './lib/terrainGeoJson';
++export {
++  MVP_TERRAIN_CATEGORIES,
++  SEVERITY_COLORS,
++  categoryDisplay,
++  relativeAgeFr,
++} from './lib/terrainDisplay';
++export type { TerrainLiveReport } from './lib/terrainDisplay';
+diff --git a/src/features/terrain-live/lib/terrainDisplay.ts b/src/features/terrain-live/lib/terrainDisplay.ts
+new file mode 100644
+index 00000000..838b9b7e
+--- /dev/null
++++ b/src/features/terrain-live/lib/terrainDisplay.ts
+@@ -0,0 +1,86 @@
++import type {
++  TerrainPassability,
++  TerrainReportCategory,
++  TerrainReportPublic,
++  TerrainSeverity,
++} from '@/features/adventure-intelligence/schemas/live.schema';
++
++/** Signalement public enrichi de sa distance au point de recherche. */
++export interface TerrainLiveReport extends TerrainReportPublic {
++  distanceM: number;
++}
++
++export interface TerrainDisplayInfo {
++  label: string;
++  icon: string;
++}
++
++/** Libellés français des 6 catégories MVP (Phase 5). */
++export const MVP_CATEGORY_DISPLAY: Record<string, TerrainDisplayInfo> = {
++  obstacle: { label: 'Obstacle', icon: 'alert-triangle' },
++  closure: { label: 'Chemin fermé', icon: 'x-circle' },
++  mud: { label: 'Boue', icon: 'droplet' },
++  snow_ice: { label: 'Neige / glace', icon: 'cloud-snow' },
++  water: { label: 'Eau', icon: 'droplet' },
++  danger: { label: 'Danger', icon: 'shield-alert' },
++};
++
++/** Libellés français des catégories étendues (schéma complet A1). */
++export const EXTENDED_CATEGORY_DISPLAY: Record<string, TerrainDisplayInfo> = {
++  bridge: { label: 'Pont', icon: 'route' },
++  flood: { label: 'Crue', icon: 'droplet' },
++  marking: { label: 'Balisage', icon: 'map-pin' },
++  shelter: { label: 'Refuge', icon: 'home' },
++  crowding: { label: 'Affluence', icon: 'users' },
++  animal: { label: 'Animal', icon: 'alert-circle' },
++  rockfall: { label: 'Chutes de pierres', icon: 'mountain' },
++};
++
++export const MVP_TERRAIN_CATEGORIES: TerrainReportCategory[] = [
++  'obstacle',
++  'closure',
++  'mud',
++  'snow_ice',
++  'water',
++  'danger',
++];
++
++export function categoryDisplay(category: TerrainReportCategory): TerrainDisplayInfo {
++  return (
++    MVP_CATEGORY_DISPLAY[category] ??
++    EXTENDED_CATEGORY_DISPLAY[category] ?? { label: category, icon: 'info' }
++  );
++}
++
++export const SEVERITY_LABELS: Record<TerrainSeverity, string> = {
++  info: 'Info',
++  warning: 'Attention',
++  critical: 'Critique',
++};
++
++export const PASSABILITY_LABELS: Record<TerrainPassability, string> = {
++  passable: 'Passable',
++  difficult: 'Difficile',
++  impassable: 'Impassable',
++  unknown: 'Inconnu',
++};
++
++/** Couleurs calmées, hors palette orange (interdite par le design system). */
++export const SEVERITY_COLORS: Record<TerrainSeverity, string> = {
++  info: '#2D6B4A',
++  warning: '#8A6D1F',
++  critical: '#7A2E2E',
++};
++
++/** Âge relatif compact en français : « il y a 18 min », « il y a 2 h », « il y a 3 j ». */
++export function relativeAgeFr(iso: string, now: Date = new Date()): string {
++  const then = Date.parse(iso);
++  if (!Number.isFinite(then)) return '';
++  const minutes = Math.max(0, Math.round((now.getTime() - then) / 60000));
++  if (minutes < 1) return "à l'instant";
++  if (minutes < 60) return `il y a ${minutes} min`;
++  const hours = Math.round(minutes / 60);
++  if (hours < 24) return `il y a ${hours} h`;
++  const days = Math.round(hours / 24);
++  return `il y a ${days} j`;
++}
+diff --git a/src/features/terrain-live/lib/terrainGeoJson.ts b/src/features/terrain-live/lib/terrainGeoJson.ts
+new file mode 100644
+index 00000000..0ef2ba5b
+--- /dev/null
++++ b/src/features/terrain-live/lib/terrainGeoJson.ts
+@@ -0,0 +1,53 @@
++/**
++ * A5 — Projection GeoJSON des signalements Terrain Live (pure).
++ *
++ * Aucune identité de contributeur ne traverse cette projection : seuls les
++ * champs publics de `terrain_reports_public` (+ distance) sont exposés.
++ */
++import type { TerrainLiveReport } from './terrainDisplay';
++
++export interface TerrainGeoJsonFeature {
++  type: 'Feature';
++  geometry: { type: 'Point'; coordinates: [number, number] };
++  properties: {
++    id: string;
++    category: string;
++    severity: string;
++    passability: string;
++    status: string;
++    segmentId: number | null;
++    distanceM: number;
++    presentCount: number;
++    goneCount: number;
++    unknownCount: number;
++    createdAt: string;
++  };
++}
++
++export interface TerrainGeoJsonCollection {
++  type: 'FeatureCollection';
++  features: TerrainGeoJsonFeature[];
++}
++
++export function toTerrainGeoJson(reports: TerrainLiveReport[]): TerrainGeoJsonCollection {
++  return {
++    type: 'FeatureCollection',
++    features: reports.map((report) => ({
++      type: 'Feature',
++      geometry: { type: 'Point', coordinates: [report.lng, report.lat] },
++      properties: {
++        id: report.id,
++        category: report.category,
++        severity: report.severity,
++        passability: report.passability,
++        status: report.status,
++        segmentId: report.segmentId ?? null,
++        distanceM: report.distanceM,
++        presentCount: report.presentCount,
++        goneCount: report.goneCount,
++        unknownCount: report.unknownCount,
++        createdAt: report.createdAt,
++      },
++    })),
++  };
++}
+diff --git a/supabase/migrations/20260911170000_a5_terrain_nearby.sql b/supabase/migrations/20260911170000_a5_terrain_nearby.sql
+new file mode 100644
+index 00000000..471b03da
+--- /dev/null
++++ b/supabase/migrations/20260911170000_a5_terrain_nearby.sql
+@@ -0,0 +1,137 @@
++-- ==============================================================================
++-- A5 — Terrain Live (Phase 5)
++-- M10 : proximité terrain — colonne géographique générée, index GiST et RPC
++-- de lecture publique sans identité.
++--
++-- Additif et idempotent. Aucune table, policy ou vue n'est recréée :
++-- l'autorité DDL reste `20260911134000_a1_terrain_live.sql`.
++--
++--   • `terrain_reports.geog` : geography(Point,4326) STORED, dérivée de
++--     (lng, lat) — jamais écrite par les clients.
++--   • Index GiST `idx_terrain_reports_geog` pour les recherches de proximité.
++--   • RPC `a5_terrain_reports_near(lat, lng, radius_m)` : filtres de la vue
++--     publique appliqués en local (statuts `confirmed`/`active` non expirés),
++--     colonnes publiques uniquement — jamais `reporter_id` — et `ST_DWithin`
++--     sur la colonne générée `geog` (index GiST utilisé).
++--   • Droits : anon/authenticated peuvent EXÉCUTER la fonction en lecture
++--     seule ; aucune écriture n'est accordée. service_role inchangé.
++-- ==============================================================================
++
++-- ── 1. Colonne géographique générée (jamais exposée par la vue A1) ───────────
++ALTER TABLE public.terrain_reports
++  ADD COLUMN IF NOT EXISTS geog geography(Point, 4326)
++  GENERATED ALWAYS AS (
++    ST_SetSRID(ST_MakePoint(lng::float8, lat::float8), 4326)::geography
++  ) STORED;
++
++COMMENT ON COLUMN public.terrain_reports.geog IS
++  'A5 — position générée (lng, lat) en geography(Point,4326) STORED ; '
++  'support des recherches de proximité (index GiST), jamais exposée directement.';
++
++-- ── 2. Index GiST de proximité ───────────────────────────────────────────────
++CREATE INDEX IF NOT EXISTS idx_terrain_reports_geog
++  ON public.terrain_reports USING gist (geog);
++
++-- ── 3. RPC de proximité — vue publique sans identité ─────────────────────────
++CREATE OR REPLACE FUNCTION public.a5_terrain_reports_near(
++  p_lat float8,
++  p_lng float8,
++  p_radius_m float8 DEFAULT 2000
++)
++RETURNS TABLE (
++  id uuid,
++  segment_id bigint,
++  category text,
++  severity text,
++  passability text,
++  description text,
++  photo_url text,
++  lat numeric,
++  lng numeric,
++  gps_accuracy_m numeric,
++  direction text,
++  source_type text,
++  status text,
++  present_count integer,
++  gone_count integer,
++  unknown_count integer,
++  created_at timestamptz,
++  updated_at timestamptz,
++  expires_at timestamptz,
++  distance_m float8
++)
++LANGUAGE sql
++STABLE
++SECURITY INVOKER
++SET search_path = public, pg_temp
++AS $$
++  WITH search_point AS (
++    SELECT ST_SetSRID(ST_MakePoint(p_lng, p_lat), 4326)::geography AS geog
++  ),
++  nearest AS (
++    SELECT
++      r.id,
++      r.segment_id,
++      r.category,
++      r.severity,
++      r.passability,
++      r.description,
++      r.photo_url,
++      r.lat,
++      r.lng,
++      r.gps_accuracy_m,
++      r.direction,
++      r.source_type,
++      r.status,
++      r.present_count,
++      r.gone_count,
++      r.unknown_count,
++      r.created_at,
++      r.updated_at,
++      r.expires_at,
++      ST_Distance(r.geog, sp.geog) AS distance_m
++    FROM public.terrain_reports r
++    CROSS JOIN search_point sp
++    WHERE r.status IN ('confirmed', 'active')
++      AND (r.expires_at IS NULL OR r.expires_at > now())
++      AND ST_DWithin(
++        r.geog,
++        sp.geog,
++        least(greatest(p_radius_m, 1), 50000)
++      )
++  )
++  SELECT * FROM nearest
++  ORDER BY distance_m
++  LIMIT 200;
++$$;
++
++COMMENT ON FUNCTION public.a5_terrain_reports_near(float8, float8, float8) IS
++  'A5 — signalements Terrain Live confirmés/actifs non expirés autour d''un '
++  'point (rayon borné 1 m – 50 km, max 200), colonnes publiques uniquement : '
++  'aucune identité de contributeur (jamais reporter_id), triés par distance '
++  'croissante, recherche indexée via terrain_reports.geog (GiST). '
++  'STABLE, SECURITY INVOKER.';
++
++-- ── 4. Droits explicites : lecture via la fonction uniquement ────────────────
++REVOKE ALL ON FUNCTION public.a5_terrain_reports_near(float8, float8, float8) FROM public;
++DO $$
++BEGIN
++  IF EXISTS (SELECT 1 FROM pg_roles WHERE rolname = 'anon') THEN
++    REVOKE ALL ON FUNCTION public.a5_terrain_reports_near(float8, float8, float8) FROM anon;
++  END IF;
++  IF EXISTS (SELECT 1 FROM pg_roles WHERE rolname = 'authenticated') THEN
++    REVOKE ALL ON FUNCTION public.a5_terrain_reports_near(float8, float8, float8) FROM authenticated;
++  END IF;
++  IF EXISTS (SELECT 1 FROM pg_roles WHERE rolname = 'service_role') THEN
++    REVOKE ALL ON FUNCTION public.a5_terrain_reports_near(float8, float8, float8) FROM service_role;
++  END IF;
++END $$;
++GRANT EXECUTE ON FUNCTION public.a5_terrain_reports_near(float8, float8, float8)
++  TO anon, authenticated;
++GRANT EXECUTE ON FUNCTION public.a5_terrain_reports_near(float8, float8, float8)
++  TO service_role;
++
++-- ── 5. Flag shadow — détection automatique jamais publiée en Phase 5 ─────────
++INSERT INTO public.feature_flags (id, enabled)
++VALUES ('terrain_auto_detection_shadow', false)
++ON CONFLICT (id) DO NOTHING;
+diff --git a/tests/adventure-intelligence/terrain-auto-detection.spec.ts b/tests/adventure-intelligence/terrain-auto-detection.spec.ts
+new file mode 100644
+index 00000000..462b6574
+--- /dev/null
++++ b/tests/adventure-intelligence/terrain-auto-detection.spec.ts
+@@ -0,0 +1,151 @@
++import { describe, it, expect } from 'vitest';
++import {
++  AUTO_DETECTION_SHADOW,
++  AUTO_MIN_COLLECTIVE_PASSAGES,
++  AUTO_MIN_OFF_ROUTE,
++  AUTO_MIN_UTURNS,
++  AUTO_SLOWDOWN_THRESHOLD,
++  detectAutoCandidates,
++} from '@/features/adventure-intelligence/domain/terrainAutoDetection';
++import type { CollectivePassage } from '@/features/adventure-intelligence/domain/collectiveIntelligence';
++
++const NOW = '2026-09-11T12:00:00.000Z';
++
++function hoursAgo(hours: number): string {
++  return new Date(Date.parse(NOW) - hours * 3600000).toISOString();
++}
++
++function passage(overrides: Partial<CollectivePassage> = {}): CollectivePassage {
++  return {
++    passageId: `p-${overrides.segmentId ?? 10}-${overrides.userIdHash ?? 'u1'}`,
++    userIdHash: 'u1',
++    segmentId: 10,
++    direction: 'forward',
++    observedDurationS: 100,
++    expectedDurationS: 100,
++    quality: 0.9,
++    observedAt: hoursAgo(2),
++    conditionBucket: 'dry',
++    uturnDetected: false,
++    offRoute: false,
++    ...overrides,
++  };
++}
++
++function slowPassages(segmentId: number, count: number, ratio: number): CollectivePassage[] {
++  return Array.from({ length: count }, (_, index) =>
++    passage({
++      passageId: `p-${segmentId}-${index}`,
++      userIdHash: `user-${index}`,
++      segmentId,
++      observedDurationS: 100 * ratio,
++      expectedDurationS: 100,
++    })
++  );
++}
++
++describe('Terrain Live — détection automatique shadow (TEST-A5-AUTO)', () => {
++  it('TEST-A5-AUTO-01: un ralentissement collectif ≥ 1,6× produit un candidat obstacle motivé', () => {
++    const candidates = detectAutoCandidates({
++      passages: [
++        ...slowPassages(10, 3, 1.8),
++        ...slowPassages(20, 3, 1.1),
++      ],
++    });
++
++    const segment10 = candidates.filter((entry) => entry.segmentId === 10);
++    expect(segment10).toHaveLength(1);
++    expect(segment10[0].category).toBe('obstacle');
++    expect(segment10[0].reason).toContain('ralentissement_collectif');
++    expect(segment10[0].reason).toContain('1.80');
++    expect(segment10[0].confidence).toBeGreaterThan(0);
++    expect(segment10[0].confidence).toBeLessThanOrEqual(1);
++
++    expect(candidates.some((entry) => entry.segmentId === 20)).toBe(false);
++    expect(AUTO_SLOWDOWN_THRESHOLD).toBe(1.6);
++    expect(AUTO_MIN_COLLECTIVE_PASSAGES).toBe(3);
++  });
++
++  it('TEST-A5-AUTO-02: demi-tours, sorties de trace et contournements sont détectés et motivés', () => {
++    const candidates = detectAutoCandidates({
++      passages: [
++        // 3 demi-tours ⇒ fermeture probable.
++        ...Array.from({ length: 3 }, (_, index) =>
++          passage({
++            passageId: `uturn-${index}`,
++            segmentId: 31,
++            userIdHash: `user-${index}`,
++            uturnDetected: true,
++          })
++        ),
++        // 3 sorties de trace ⇒ balisage manquant.
++        ...Array.from({ length: 3 }, (_, index) =>
++          passage({
++            passageId: `offroute-${index}`,
++            segmentId: 32,
++            userIdHash: `user-${index}`,
++            offRoute: true,
++          })
++        ),
++        // 3 contournements ralentis (off-route, sans demi-tour) ⇒ obstacle.
++        ...Array.from({ length: 3 }, (_, index) =>
++          passage({
++            passageId: `bypass-${index}`,
++            segmentId: 33,
++            userIdHash: `user-${index}`,
++            offRoute: true,
++            observedDurationS: 150,
++            expectedDurationS: 100,
++          })
++        ),
++      ],
++    });
++
++    const closure = candidates.find((entry) => entry.segmentId === 31);
++    expect(closure?.category).toBe('closure');
++    expect(closure?.reason).toContain('demi_tours_repetes_3');
++
++    const marking = candidates.find((entry) => entry.segmentId === 32);
++    expect(marking?.category).toBe('marking');
++    expect(marking?.reason).toContain('sorties_de_trace_repetees_3');
++
++    const obstacle = candidates.find(
++      (entry) => entry.segmentId === 33 && entry.category === 'obstacle'
++    );
++    expect(obstacle?.category).toBe('obstacle');
++    expect(obstacle?.reason).toContain('contournements_repetes_3');
++
++    expect(AUTO_MIN_UTURNS).toBe(3);
++    expect(AUTO_MIN_OFF_ROUTE).toBe(3);
++  });
++
++  it('TEST-A5-AUTO-03: toute détection reste en shadow, jamais publiée', () => {
++    const candidates = detectAutoCandidates({ passages: slowPassages(10, 4, 2) });
++
++    expect(AUTO_DETECTION_SHADOW).toBe(true);
++    expect(candidates.length).toBeGreaterThan(0);
++    for (const candidate of candidates) {
++      expect(candidate.sourceType).toBe('auto');
++      expect(candidate.shadow).toBe(true);
++      expect(candidate).not.toHaveProperty('status');
++      expect(candidate.sourceType).not.toBe('user');
++      expect(JSON.stringify(candidate)).not.toContain('reporter');
++    }
++  });
++
++  it('TEST-A5-AUTO-04: sous les seuils, aucun candidat n’est produit', () => {
++    const candidates = detectAutoCandidates({
++      passages: [
++        ...slowPassages(10, 2, 2),
++        ...Array.from({ length: 2 }, (_, index) =>
++          passage({ passageId: `uturn-${index}`, segmentId: 11, uturnDetected: true })
++        ),
++        ...Array.from({ length: 2 }, (_, index) =>
++          passage({ passageId: `off-${index}`, segmentId: 12, offRoute: true })
++        ),
++      ],
++    });
++
++    expect(candidates).toEqual([]);
++  });
++});
+diff --git a/tests/adventure-intelligence/terrain-geojson.spec.ts b/tests/adventure-intelligence/terrain-geojson.spec.ts
+new file mode 100644
+index 00000000..f8364356
+--- /dev/null
++++ b/tests/adventure-intelligence/terrain-geojson.spec.ts
+@@ -0,0 +1,57 @@
++import { describe, expect, it } from 'vitest';
++import { toTerrainGeoJson } from '@/features/terrain-live/lib/terrainGeoJson';
++import type { TerrainLiveReport } from '@/features/terrain-live/lib/terrainDisplay';
++
++function makeReport(overrides: Partial<TerrainLiveReport> = {}): TerrainLiveReport {
++  return {
++    id: '76000000-0000-4000-8000-000000000001',
++    segmentId: 8800001,
++    category: 'mud',
++    severity: 'warning',
++    passability: 'difficult',
++    description: 'Sentier boueux après la pluie',
++    lat: 44.1234,
++    lng: 6.5678,
++    gpsAccuracyM: 8,
++    direction: 'forward',
++    sourceType: 'user',
++    status: 'confirmed',
++    presentCount: 3,
++    goneCount: 0,
++    unknownCount: 1,
++    createdAt: '2026-09-11T08:00:00.000Z',
++    updatedAt: '2026-09-11T08:00:00.000Z',
++    expiresAt: '2026-09-13T08:00:00.000Z',
++    distanceM: 420,
++    ...overrides,
++  };
++}
++
++describe('A5 — projection GeoJSON Terrain Live', () => {
++  it('TEST-A5-GEO-01: aucune identité de contributeur ne traverse la projection', () => {
++    const collection = toTerrainGeoJson([makeReport()]);
++    const serialized = JSON.stringify(collection);
++
++    expect(serialized).not.toContain('reporter');
++    expect(serialized).not.toContain('userId');
++    expect(serialized).not.toContain('user_id');
++    expect(Object.keys(collection.features[0].properties)).not.toContain('reporterId');
++  });
++
++  it('TEST-A5-GEO-02: une feature par signalement, coordonnées [lng, lat], entrée vide gérée', () => {
++    const reports = [
++      makeReport(),
++      makeReport({ id: '76000000-0000-4000-8000-000000000002', lat: 45.0, lng: 7.0 }),
++    ];
++
++    const collection = toTerrainGeoJson(reports);
++    expect(collection.type).toBe('FeatureCollection');
++    expect(collection.features).toHaveLength(2);
++    expect(collection.features[0].geometry.coordinates).toEqual([6.5678, 44.1234]);
++    expect(collection.features[1].geometry.coordinates).toEqual([7.0, 45.0]);
++    expect(collection.features[0].properties.distanceM).toBe(420);
++    expect(collection.features[0].properties.presentCount).toBe(3);
++
++    expect(toTerrainGeoJson([]).features).toEqual([]);
++  });
++});
+diff --git a/tests/adventure-intelligence/terrain-live.spec.ts b/tests/adventure-intelligence/terrain-live.spec.ts
+new file mode 100644
+index 00000000..220c198a
+--- /dev/null
++++ b/tests/adventure-intelligence/terrain-live.spec.ts
+@@ -0,0 +1,442 @@
++import { describe, it, expect } from 'vitest';
++import {
++  TERMINAL_REPORT_STATUSES,
++  CONFIRMATIONS_TO_ACTIVATE,
++  CONTRADICTIONS_TO_RESOLVE,
++  DEDUP_MAX_DISTANCE_M,
++  DEDUP_WINDOW_HOURS,
++  MAX_DESCRIPTION_LENGTH,
++  MAX_REPORTS_PER_HOUR,
++  MAX_CONFIRMATIONS_COOLDOWN,
++  MODERATION_REASONS,
++  REPORT_CONFIDENCE_METHOD,
++  shouldExpire,
++  nextReportStatus,
++  computeReportConfidence,
++  deduplicateReports,
++  moderationDecision,
++  type DedupCandidate,
++  type LifecycleContext,
++  type ModerationInput,
++  type ReportConfidenceInput,
++} from '@/features/adventure-intelligence/domain/terrainLive';
++
++const NOW = '2026-09-11T12:00:00.000Z';
++
++function hoursAgo(hours: number): string {
++  return new Date(Date.parse(NOW) - hours * 3600000).toISOString();
++}
++
++function context(overrides: Partial<LifecycleContext> = {}): LifecycleContext {
++  return {
++    now: NOW,
++    expiresAt: hoursAgo(-24),
++    confirmationsPresent: 0,
++    contradicts: 0,
++    ...overrides,
++  };
++}
++
++function confidenceInput(overrides: Partial<ReportConfidenceInput> = {}): ReportConfidenceInput {
++  return {
++    presentCount: 3,
++    goneCount: 0,
++    unknownCount: 0,
++    distinctUsers: 3,
++    ageHours: 2,
++    gpsAccuracyM: 10,
++    hasPhoto: false,
++    officialSource: false,
++    traceCorroboration: false,
++    ...overrides,
++  };
++}
++
++function candidate(overrides: Partial<DedupCandidate> = {}): DedupCandidate {
++  return {
++    id: 'candidat-1',
++    category: 'obstacle',
++    segmentId: 42,
++    lat: 42.8,
++    lng: 0.15,
++    createdAt: hoursAgo(1),
++    ...overrides,
++  };
++}
++
++function moderationInput(overrides: Partial<ModerationInput> = {}): ModerationInput {
++  return {
++    reportsLastHour: 0,
++    confirmationsLastHour: 0,
++    accountAgeDays: 30,
++    reputation: 50,
++    hasPhoto: false,
++    descriptionLength: 100,
++    ...overrides,
++  };
++}
++
++describe('Terrain Live — cycle de vie (TEST-A5-LIFE)', () => {
++  it('TEST-A5-LIFE-01: le cycle nominal pending → confirmed → active', () => {
++    expect(nextReportStatus('pending', 'confirm', context({ confirmationsPresent: 1 }))).toBe(
++      'confirmed'
++    );
++    expect(
++      nextReportStatus(
++        'confirmed',
++        'confirm',
++        context({ confirmationsPresent: CONFIRMATIONS_TO_ACTIVATE })
++      )
++    ).toBe('active');
++    // Une confirmation insuffisante ne publie pas encore.
++    expect(nextReportStatus('confirmed', 'confirm', context({ confirmationsPresent: 1 }))).toBe(
++      'confirmed'
++    );
++  });
++
++  it('TEST-A5-LIFE-02: auto_confirm suit le même chemin que confirm', () => {
++    expect(
++      nextReportStatus('pending', 'auto_confirm', context({ confirmationsPresent: 1 }))
++    ).toBe('confirmed');
++    expect(
++      nextReportStatus('confirmed', 'auto_confirm', context({ confirmationsPresent: 2 }))
++    ).toBe('active');
++    expect(nextReportStatus('active', 'auto_confirm', context())).toBe('active');
++  });
++
++  it('TEST-A5-LIFE-03: age fait vieillir active → stale → verify, jamais un pending', () => {
++    expect(nextReportStatus('active', 'age', context())).toBe('stale');
++    expect(nextReportStatus('stale', 'age', context())).toBe('verify');
++    expect(nextReportStatus('verify', 'age', context())).toBe('verify');
++    expect(nextReportStatus('pending', 'age', context())).toBe('pending');
++    expect(nextReportStatus('confirmed', 'age', context())).toBe('stale');
++  });
++
++  it('TEST-A5-LIFE-04: une confirmation ranime stale et verify', () => {
++    expect(nextReportStatus('stale', 'confirm', context({ confirmationsPresent: 3 }))).toBe(
++      'active'
++    );
++    expect(nextReportStatus('verify', 'confirm', context({ confirmationsPresent: 4 }))).toBe(
++      'active'
++    );
++    expect(nextReportStatus('verify', 'auto_confirm', context({ confirmationsPresent: 4 }))).toBe(
++      'active'
++    );
++  });
++
++  it('TEST-A5-LIFE-05: resolve exige au moins 3 contradictions « disparu » et plus que de présents', () => {
++    expect(
++      nextReportStatus(
++        'active',
++        'resolve',
++        context({ confirmationsPresent: 5, contradicts: CONTRADICTIONS_TO_RESOLVE - 1 })
++      )
++    ).toBe('active');
++    expect(
++      nextReportStatus(
++        'active',
++        'resolve',
++        context({ confirmationsPresent: 5, contradicts: CONTRADICTIONS_TO_RESOLVE })
++      )
++    ).toBe('active');
++    expect(
++      nextReportStatus(
++        'active',
++        'resolve',
++        context({ confirmationsPresent: 2, contradicts: CONTRADICTIONS_TO_RESOLVE })
++      )
++    ).toBe('resolved');
++    // Un pending non publié ne peut pas être résolu.
++    expect(
++      nextReportStatus('pending', 'resolve', context({ confirmationsPresent: 0, contradicts: 9 }))
++    ).toBe('pending');
++  });
++
++  it('TEST-A5-LIFE-06: reject est immédiat et terminal', () => {
++    expect(nextReportStatus('pending', 'reject', context())).toBe('rejected');
++    expect(nextReportStatus('active', 'reject', context())).toBe('rejected');
++    expect(nextReportStatus('verify', 'reject', context())).toBe('rejected');
++    expect(nextReportStatus('rejected', 'reject', context())).toBe('rejected');
++  });
++
++  it('TEST-A5-LIFE-07: l’expiration est interdite avant expiresAt, effective après', () => {
++    const report = { status: 'active' as const, expiresAt: hoursAgo(-1) };
++
++    expect(shouldExpire(report, NOW)).toBe(false);
++    expect(
++      nextReportStatus(
++        'active',
++        'expire',
++        context({ expiresAt: hoursAgo(-1) })
++      )
++    ).toBe('active');
++
++    expect(shouldExpire(report, hoursAgo(-2))).toBe(true);
++    expect(
++      nextReportStatus('active', 'expire', context({ expiresAt: hoursAgo(-1), now: hoursAgo(-2) }))
++    ).toBe('expired');
++    // age constate aussi l'expiration dépassée.
++    expect(
++      nextReportStatus('active', 'age', context({ expiresAt: hoursAgo(-1), now: hoursAgo(-2) }))
++    ).toBe('expired');
++    // Un rapport sans expiration ne peut expirer que sur événement explicite.
++    expect(shouldExpire({ status: 'active', expiresAt: null }, NOW)).toBe(false);
++    expect(nextReportStatus('active', 'expire', context({ expiresAt: null }))).toBe('expired');
++  });
++
++  it('TEST-A5-LIFE-08: les statuts terminaux sont immuables', () => {
++    expect([...TERMINAL_REPORT_STATUSES]).toEqual(['resolved', 'expired', 'rejected']);
++    for (const terminal of TERMINAL_REPORT_STATUSES) {
++      expect(nextReportStatus(terminal, 'confirm', context({ confirmationsPresent: 9 }))).toBe(
++        terminal
++      );
++      expect(nextReportStatus(terminal, 'age', context({ now: hoursAgo(-48) }))).toBe(terminal);
++      expect(
++        nextReportStatus(terminal, 'resolve', context({ contradicts: 9, confirmationsPresent: 0 }))
++      ).toBe(terminal);
++      expect(nextReportStatus(terminal, 'expire', context())).toBe(terminal);
++      expect(shouldExpire({ status: terminal, expiresAt: hoursAgo(1) }, NOW)).toBe(false);
++    }
++  });
++});
++
++describe('Terrain Live — confiance (TEST-A5-CONF)', () => {
++  it('TEST-A5-CONF-01: plus de confirmations et d’utilisateurs distincts élèvent la confiance', () => {
++    const single = computeReportConfidence(
++      confidenceInput({ presentCount: 1, distinctUsers: 1 })
++    );
++    const collective = computeReportConfidence(
++      confidenceInput({ presentCount: 6, distinctUsers: 6 })
++    );
++
++    expect(collective.score).toBeGreaterThan(single.score);
++    expect(collective.sampleCount).toBe(6);
++    expect(collective.method).toBe(REPORT_CONFIDENCE_METHOD);
++    expect(collective.reasons).toContain('confirmations_presentes_6');
++    expect(collective.reasons).toContain('utilisateurs_distincts_6');
++  });
++
++  it('TEST-A5-CONF-02: la récence augmente la confiance', () => {
++    const fresh = computeReportConfidence(confidenceInput({ ageHours: 1 }));
++    const old = computeReportConfidence(confidenceInput({ ageHours: 100 }));
++
++    expect(fresh.score).toBeGreaterThan(old.score);
++    expect(fresh.reasons).toContain('signalement_recent');
++  });
++
++  it('TEST-A5-CONF-03: les contradictions « disparu » font chuter la confiance', () => {
++    const consistent = computeReportConfidence(
++      confidenceInput({ presentCount: 5, goneCount: 0, distinctUsers: 5 })
++    );
++    const contradicted = computeReportConfidence(
++      confidenceInput({ presentCount: 5, goneCount: 5, distinctUsers: 10 })
++    );
++
++    expect(contradicted.score).toBeLessThan(consistent.score);
++    expect(contradicted.reasons).toContain('contradictions_disparu_5');
++  });
++
++  it('TEST-A5-CONF-04: l’ancienneté pénalise au-delà de trois jours', () => {
++    const recent = computeReportConfidence(confidenceInput({ ageHours: 10 }));
++    const ancient = computeReportConfidence(confidenceInput({ ageHours: 300 }));
++
++    expect(recent.score).toBeGreaterThan(ancient.score);
++    expect(ancient.reasons).toContain('signalement_ancien');
++  });
++
++  it('TEST-A5-CONF-05: une source officielle est plus fiable qu’un signalement utilisateur', () => {
++    const user = computeReportConfidence(confidenceInput({ officialSource: false }));
++    const official = computeReportConfidence(confidenceInput({ officialSource: true }));
++
++    expect(official.score).toBeGreaterThan(user.score);
++    expect(official.reasons).toContain('source_officielle');
++  });
++
++  it('TEST-A5-CONF-06: photo, GPS précis et corroboration de trace consolident le score, borné [0,1]', () => {
++    const weak = computeReportConfidence(
++      confidenceInput({ hasPhoto: false, gpsAccuracyM: 150, traceCorroboration: false })
++    );
++    const strong = computeReportConfidence(
++      confidenceInput({ hasPhoto: true, gpsAccuracyM: 8, traceCorroboration: true })
++    );
++
++    expect(strong.score).toBeGreaterThan(weak.score);
++    expect(strong.reasons).toContain('photo_fournie');
++    expect(strong.reasons).toContain('gps_precis');
++    expect(strong.reasons).toContain('corroboration_trace');
++    expect(weak.reasons).toContain('gps_imprecis');
++
++    const bounded = computeReportConfidence(
++      confidenceInput({
++        presentCount: 500,
++        distinctUsers: 500,
++        ageHours: 0,
++        hasPhoto: true,
++        officialSource: true,
++        traceCorroboration: true,
++      })
++    );
++    expect(bounded.score).toBeLessThanOrEqual(1);
++    expect(bounded.score).toBeGreaterThanOrEqual(0);
++    expect(bounded.sampleCount).toBe(500);
++  });
++});
++
++describe('Terrain Live — déduplication (TEST-A5-DEDUP)', () => {
++  it('TEST-A5-DEDUP-01: fusionne un signalement du même segment dans la fenêtre', () => {
++    const result = deduplicateReports(
++      [candidate({ id: 'existant', segmentId: 42, createdAt: hoursAgo(2) })],
++      candidate({ id: 'nouveau', segmentId: 42, createdAt: NOW })
++    );
++
++    expect(result.mergedWith).toBe('existant');
++    expect(result.reason).toBe('doublon_meme_segment');
++  });
++
++  it('TEST-A5-DEDUP-02: fusionne à moins de 150 m même sans segment identique', () => {
++    const result = deduplicateReports(
++      [candidate({ id: 'existant-proche', segmentId: null, lat: 42.8005, lng: 0.1505 })],
++      candidate({ id: 'nouveau', segmentId: null, lat: 42.8, lng: 0.15 })
++    );
++
++    expect(result.mergedWith).toBe('existant-proche');
++    expect(result.reason).toBe('doublon_proximite');
++  });
++
++  it('TEST-A5-DEDUP-03: rejette la fusion hors de la fenêtre de 6 h', () => {
++    const result = deduplicateReports(
++      [candidate({ id: 'vieux', segmentId: 42, createdAt: hoursAgo(DEDUP_WINDOW_HOURS + 2) })],
++      candidate({ id: 'nouveau', segmentId: 42, createdAt: NOW })
++    );
++
++    expect(result.mergedWith).toBeNull();
++    expect(result.reason).toBe('aucun_doublon_hors_fenetre');
++  });
++
++  it('TEST-A5-DEDUP-04: jamais de fusion entre catégories différentes ni au-delà de 150 m', () => {
++    const otherCategory = deduplicateReports(
++      [candidate({ id: 'boue', category: 'mud', segmentId: 42, createdAt: hoursAgo(1) })],
++      candidate({ id: 'nouveau', category: 'obstacle', createdAt: NOW })
++    );
++    expect(otherCategory.mergedWith).toBeNull();
++    expect(otherCategory.reason).toBe('aucun_doublon_categorie_differente');
++
++    const tooFar = deduplicateReports(
++      [candidate({ id: 'loin', segmentId: null, lat: 43.5, lng: 1.2, createdAt: hoursAgo(1) })],
++      candidate({ id: 'nouveau', segmentId: null, createdAt: NOW })
++    );
++    expect(tooFar.mergedWith).toBeNull();
++    expect(tooFar.reason).toBe('aucun_doublon_hors_distance');
++    expect(DEDUP_MAX_DISTANCE_M).toBe(150);
++  });
++});
++
++describe('Terrain Live — modération (TEST-A5-MOD)', () => {
++  it('TEST-A5-MOD-01: rate limit de 10 signalements par heure', () => {
++    const blocked = moderationDecision(moderationInput({ reportsLastHour: MAX_REPORTS_PER_HOUR }));
++    expect(blocked.allowed).toBe(false);
++    expect(blocked.reasons).toContain(MODERATION_REASONS.rateLimit);
++
++    const allowed = moderationDecision(
++      moderationInput({ reportsLastHour: MAX_REPORTS_PER_HOUR - 1 })
++    );
++    expect(allowed.allowed).toBe(true);
++    expect(allowed.reasons).toHaveLength(0);
++  });
++
++  it('TEST-A5-MOD-02: cooldown de 2 confirmations par fenêtre courte', () => {
++    const blocked = moderationDecision(
++      moderationInput({ confirmationsLastHour: MAX_CONFIRMATIONS_COOLDOWN })
++    );
++    expect(blocked.allowed).toBe(false);
++    expect(blocked.reasons).toContain(MODERATION_REASONS.cooldown);
++
++    const allowed = moderationDecision(moderationInput({ confirmationsLastHour: 1 }));
++    expect(allowed.allowed).toBe(true);
++  });
++
++  it('TEST-A5-MOD-03: la réputation est plafonnée à 100 et plancher à 0', () => {
++    const low = moderationDecision(moderationInput({ reputation: 5 }));
++    expect(low.allowed).toBe(true);
++    expect(low.reasons).toContain(MODERATION_REASONS.lowReputation);
++
++    const capped = moderationDecision(moderationInput({ reputation: 100 }));
++    const beyond = moderationDecision(moderationInput({ reputation: 10_000 }));
++    expect(beyond).toEqual(capped);
++    expect(capped.reasons).toHaveLength(0);
++
++    const floor = moderationDecision(moderationInput({ reputation: 0 }));
++    const negative = moderationDecision(moderationInput({ reputation: -50 }));
++    expect(negative).toEqual(floor);
++    expect(floor.reasons).toContain(MODERATION_REASONS.lowReputation);
++  });
++
++  it('TEST-A5-MOD-04: description limitée à 1000 caractères', () => {
++    const blocked = moderationDecision(
++      moderationInput({ descriptionLength: MAX_DESCRIPTION_LENGTH + 1 })
++    );
++    expect(blocked.allowed).toBe(false);
++    expect(blocked.reasons).toContain(MODERATION_REASONS.description);
++
++    const allowed = moderationDecision(
++      moderationInput({ descriptionLength: MAX_DESCRIPTION_LENGTH })
++    );
++    expect(allowed.allowed).toBe(true);
++  });
++
++  it('TEST-A5-MOD-05: une photo déclarée doit avoir une URL valide et une taille bornée', () => {
++    const missing = moderationDecision(moderationInput({ hasPhoto: true }));
++    expect(missing.allowed).toBe(false);
++    expect(missing.reasons).toContain(MODERATION_REASONS.photo);
++
++    const invalidUrl = moderationDecision(
++      moderationInput({
++        hasPhoto: true,
++        photoUrl: 'pas-une-url',
++        photoSizeBytes: 1024,
++      })
++    );
++    expect(invalidUrl.allowed).toBe(false);
++
++    const tooBig = moderationDecision(
++      moderationInput({
++        hasPhoto: true,
++        photoUrl: 'https://exemple.test/photo.jpg',
++        photoSizeBytes: 20 * 1024 * 1024,
++      })
++    );
++    expect(tooBig.allowed).toBe(false);
++
++    const valid = moderationDecision(
++      moderationInput({
++        hasPhoto: true,
++        photoUrl: 'https://exemple.test/photo.jpg',
++        photoSizeBytes: 1024 * 1024,
++      })
++    );
++    expect(valid.allowed).toBe(true);
++  });
++
++  it('TEST-A5-MOD-06: une source officielle est prioritaire mais reste validée', () => {
++    const stressed = moderationInput({
++      reportsLastHour: 99,
++      confirmationsLastHour: 99,
++      reputation: 0,
++      officialSource: true,
++    });
++
++    const official = moderationDecision(stressed);
++    expect(official.allowed).toBe(true);
++    expect(official.reasons).toContain(MODERATION_REASONS.official);
++
++    const user = moderationDecision({ ...stressed, officialSource: false });
++    expect(user.allowed).toBe(false);
++
++    const invalidOfficial = moderationDecision({
++      ...stressed,
++      descriptionLength: MAX_DESCRIPTION_LENGTH + 1,
++    });
++    expect(invalidOfficial.allowed).toBe(false);
++  });
++});
++
+diff --git a/tests/adventure-intelligence/terrain-report-flow.spec.ts b/tests/adventure-intelligence/terrain-report-flow.spec.ts
+new file mode 100644
+index 00000000..5f5435cd
+--- /dev/null
++++ b/tests/adventure-intelligence/terrain-report-flow.spec.ts
+@@ -0,0 +1,100 @@
++import { describe, it, expect } from 'vitest';
++import {
++  TERRAIN_FLOW_MAX_DESCRIPTION_LENGTH,
++  canSubmit,
++  createTerrainFlowState,
++  terrainFlowReducer,
++  type TerrainFlowState,
++} from '@/features/adventure-intelligence/domain/terrainReportFlow';
++
++function reduce(
++  state: TerrainFlowState,
++  ...actions: Parameters<typeof terrainFlowReducer>[1][]
++): TerrainFlowState {
++  return actions.reduce(terrainFlowReducer, state);
++}
++
++describe('Terrain Live — flux de création 3 gestes (TEST-A5-FLOW)', () => {
++  it('TEST-A5-FLOW-01: parcours nominal catégorie → gravité → confirmation', () => {
++    const initial = createTerrainFlowState();
++    expect(initial.step).toBe('idle');
++
++    const state = reduce(
++      initial,
++      { type: 'start' },
++      { type: 'select_category', category: 'obstacle' },
++      { type: 'select_severity', severity: 'critical' }
++    );
++
++    expect(state.step).toBe('confirm');
++    expect(state.category).toBe('obstacle');
++    expect(state.severity).toBe('critical');
++    expect(canSubmit(state)).toBe(true);
++  });
++
++  it('TEST-A5-FLOW-02: le retour arrière revient écran par écran sans perdre la saisie', () => {
++    const state = reduce(
++      createTerrainFlowState(),
++      { type: 'start' },
++      { type: 'select_category', category: 'mud' },
++      { type: 'select_severity', severity: 'warning' }
++    );
++
++    const severity = terrainFlowReducer(state, { type: 'back' });
++    expect(severity.step).toBe('severity');
++    expect(severity.category).toBe('mud');
++    expect(severity.severity).toBe('warning');
++
++    const category = terrainFlowReducer(severity, { type: 'back' });
++    expect(category.step).toBe('category');
++    expect(category.category).toBe('mud');
++
++    const idle = terrainFlowReducer(category, { type: 'back' });
++    expect(idle.step).toBe('idle');
++  });
++
++  it('TEST-A5-FLOW-03: l’annulation réinitialise complètement le flux', () => {
++    const state = reduce(
++      createTerrainFlowState(),
++      { type: 'start' },
++      { type: 'select_category', category: 'water' },
++      { type: 'select_severity', severity: 'info' },
++      { type: 'set_description', description: 'gué impraticable' },
++      { type: 'set_photo', hasPhoto: true }
++    );
++
++    const cancelled = terrainFlowReducer(state, { type: 'cancel' });
++    expect(cancelled).toEqual(createTerrainFlowState());
++  });
++
++  it('TEST-A5-FLOW-04: canSubmit n’est vrai qu’avec catégorie ET gravité', () => {
++    const initial = createTerrainFlowState();
++    expect(canSubmit(initial)).toBe(false);
++
++    const started = terrainFlowReducer(initial, { type: 'start' });
++    expect(canSubmit(started)).toBe(false);
++
++    const categorised = terrainFlowReducer(started, {
++      type: 'select_category',
++      category: 'danger',
++    });
++    expect(canSubmit(categorised)).toBe(false);
++
++    const complete = terrainFlowReducer(categorised, {
++      type: 'select_severity',
++      severity: 'warning',
++    });
++    expect(canSubmit(complete)).toBe(true);
++
++    // Les actions hors étape sont ignorées (pas de saut d'écran).
++    expect(
++      terrainFlowReducer(started, { type: 'select_severity', severity: 'critical' }).step
++    ).toBe('category');
++
++    const longText = terrainFlowReducer(complete, {
++      type: 'set_description',
++      description: 'x'.repeat(TERRAIN_FLOW_MAX_DESCRIPTION_LENGTH + 50),
++    });
++    expect(longText.description).toHaveLength(TERRAIN_FLOW_MAX_DESCRIPTION_LENGTH);
++  });
++});
+diff --git a/tests/adventure-intelligence/terrain-reports.server.spec.ts b/tests/adventure-intelligence/terrain-reports.server.spec.ts
+new file mode 100644
+index 00000000..97e2d87d
+--- /dev/null
++++ b/tests/adventure-intelligence/terrain-reports.server.spec.ts
+@@ -0,0 +1,307 @@
++import { describe, it, expect, vi } from 'vitest';
++import {
++  createTerrainReport,
++  confirmTerrainReport,
++  listNearbyTerrainReports,
++  expireStaleReports,
++  DEFAULT_NEARBY_RADIUS_M,
++  STALE_AFTER_HOURS,
++  type TerrainReportRow,
++  type TerrainReportsClient,
++  type NearbyTerrainReport,
++} from '@/features/adventure-intelligence/server/terrainReports';
++import type { TerrainReportPublic } from '@/features/adventure-intelligence/schemas/live.schema';
++
++vi.mock('server-only', () => ({}));
++
++const NOW = '2026-09-11T12:00:00.000Z';
++const USER_ID = 'a5000000-0000-4000-8000-000000000001';
++const OTHER_USER_ID = 'a5000000-0000-4000-8000-000000000002';
++
++function hoursAgo(hours: number): string {
++  return new Date(Date.parse(NOW) - hours * 3600000).toISOString();
++}
++
++function reportRow(overrides: Partial<TerrainReportRow> = {}): TerrainReportRow {
++  return {
++    id: 'report-1',
++    status: 'active',
++    expiresAt: hoursAgo(-24),
++    createdAt: hoursAgo(2),
++    updatedAt: hoursAgo(1),
++    presentCount: 1,
++    goneCount: 0,
++    unknownCount: 0,
++    ...overrides,
++  };
++}
++
++function publicReport(overrides: Partial<NearbyTerrainReport> = {}): NearbyTerrainReport {
++  return {
++    id: 'public-1',
++    category: 'obstacle',
++    severity: 'warning',
++    passability: 'unknown',
++    lat: 42.8,
++    lng: 0.15,
++    sourceType: 'user',
++    status: 'active',
++    presentCount: 2,
++    goneCount: 0,
++    unknownCount: 0,
++    createdAt: hoursAgo(1),
++    distanceM: 100,
++    ...overrides,
++  };
++}
++
++function makeClient(overrides: Partial<TerrainReportsClient> = {}) {
++  const inserted: Record<string, unknown>[] = [];
++  const merged: Array<{ id: string; patch: Record<string, unknown> }> = [];
++  const confirmations: Record<string, unknown>[] = [];
++  const updates: Array<{ id: string; patch: Record<string, unknown> }> = [];
++
++  const client: TerrainReportsClient = {
++    countReportsSince: vi.fn(async () => 0),
++    countConfirmationsSince: vi.fn(async () => 0),
++    getUserModerationContext: vi.fn(async () => ({ accountAgeDays: 30, reputation: 50 })),
++    findDedupCandidates: vi.fn(async () => []),
++    mergeIntoReport: vi.fn(async (id: string, patch: Record<string, unknown>) => {
++      merged.push({ id, patch });
++    }),
++    insertReport: vi.fn(async (row: Record<string, unknown>) => {
++      inserted.push(row);
++      return reportRow({ id: 'nouveau-rapport', status: (row.status as TerrainReportRow['status']) ?? 'pending' });
++    }),
++    getReport: vi.fn(async () => reportRow()),
++    confirmationExists: vi.fn(async () => false),
++    insertConfirmation: vi.fn(async (row: Record<string, unknown>) => {
++      confirmations.push(row);
++    }),
++    updateReport: vi.fn(async (id: string, patch: Record<string, unknown>) => {
++      updates.push({ id, patch });
++    }),
++    listPublicNearby: vi.fn(async () => []),
++    listExpirationCandidates: vi.fn(async () => []),
++    ...overrides,
++  };
++
++  return { client, inserted, merged, confirmations, updates };
++}
++
++describe('Serveur Terrain Live — création (TEST-A5-SRV-01)', () => {
++  it('TEST-A5-SRV-01: crée un signalement utilisateur pending et un signalement officiel active', async () => {
++    const { client, inserted } = makeClient();
++
++    const userResult = await createTerrainReport(
++      {
++        userId: USER_ID,
++        category: 'obstacle',
++        severity: 'critical',
++        lat: 42.8,
++        lng: 0.15,
++        description: 'arbre tombé en travers',
++      },
++      client,
++      { now: NOW }
++    );
++
++    expect(userResult.status).toBe('created');
++    expect(inserted).toHaveLength(1);
++    expect(inserted[0]).toMatchObject({
++      reporter_id: USER_ID,
++      category: 'obstacle',
++      severity: 'critical',
++      source_type: 'user',
++      status: 'pending',
++      created_at: NOW,
++    });
++
++    const official = makeClient();
++    const officialResult = await createTerrainReport(
++      {
++        userId: OTHER_USER_ID,
++        category: 'closure',
++        lat: 42.9,
++        lng: 0.2,
++        officialSource: true,
++      },
++      official.client,
++      { now: NOW }
++    );
++
++    expect(officialResult.status).toBe('created');
++    expect(official.inserted[0]).toMatchObject({ source_type: 'official', status: 'active' });
++  });
++
++  it('TEST-A5-SRV-01b: la modération refuse un signalement abusif', async () => {
++    const { client, inserted } = makeClient({
++      countReportsSince: vi.fn(async () => 10),
++    });
++
++    const result = await createTerrainReport(
++      { userId: USER_ID, category: 'obstacle', lat: 42.8, lng: 0.15 },
++      client,
++      { now: NOW }
++    );
++
++    expect(result).toEqual({
++      status: 'rejected',
++      reasons: ['limite_signalements_atteinte'],
++    });
++    expect(inserted).toHaveLength(0);
++  });
++});
++
++describe('Serveur Terrain Live — fusion (TEST-A5-SRV-02)', () => {
++  it('TEST-A5-SRV-02: un doublon est fusionné avec le signalement existant, jamais réinséré', async () => {
++    const { client, inserted, merged } = makeClient({
++      findDedupCandidates: vi.fn(async () => [
++        {
++          id: 'existant-42',
++          category: 'obstacle' as const,
++          segmentId: 42,
++          lat: 42.8001,
++          lng: 0.1501,
++          createdAt: hoursAgo(1),
++        },
++      ]),
++    });
++
++    const result = await createTerrainReport(
++      { userId: USER_ID, category: 'obstacle', segmentId: 42, lat: 42.8, lng: 0.15 },
++      client,
++      { now: NOW }
++    );
++
++    expect(result).toMatchObject({
++      status: 'merged',
++      mergedWith: 'existant-42',
++      reason: 'doublon_meme_segment',
++    });
++    expect(inserted).toHaveLength(0);
++    expect(merged).toHaveLength(1);
++    expect(merged[0].id).toBe('existant-42');
++    expect(merged[0].patch).toMatchObject({ updated_at: NOW });
++  });
++});
++
++describe('Serveur Terrain Live — confirmation (TEST-A5-SRV-03)', () => {
++  it('TEST-A5-SRV-03: une seule confirmation par utilisateur, compteurs et statut mis à jour', async () => {
++    let alreadyConfirmed = false;
++    const { client, confirmations, updates } = makeClient({
++      getReport: vi.fn(async () => reportRow({ status: 'confirmed', presentCount: 1 })),
++      confirmationExists: vi.fn(async () => alreadyConfirmed),
++    });
++
++    const first = await confirmTerrainReport(
++      { reportId: 'report-1', userId: USER_ID, confirmation: 'present', gpsQuality: 0.8 },
++      client,
++      { now: NOW }
++    );
++
++    expect(first).toEqual({ status: 'confirmed', reportStatus: 'active' });
++    expect(confirmations).toHaveLength(1);
++    expect(confirmations[0]).toMatchObject({
++      report_id: 'report-1',
++      user_id: USER_ID,
++      confirmation: 'present',
++      created_at: NOW,
++    });
++    expect(updates).toEqual([{ id: 'report-1', patch: { status: 'active', updated_at: NOW } }]);
++
++    alreadyConfirmed = true;
++    const second = await confirmTerrainReport(
++      { reportId: 'report-1', userId: USER_ID, confirmation: 'present' },
++      client,
++      { now: NOW }
++    );
++
++    expect(second).toEqual({ status: 'duplicate' });
++    expect(confirmations).toHaveLength(1);
++    expect(updates).toHaveLength(1);
++  });
++
++  it('TEST-A5-SRV-03b: rapport inconnu ou terminal jamais confirmé', async () => {
++    const missing = makeClient({ getReport: vi.fn(async () => null) });
++    expect(
++      await confirmTerrainReport(
++        { reportId: 'inconnu', userId: USER_ID, confirmation: 'present' },
++        missing.client,
++        { now: NOW }
++      )
++    ).toEqual({ status: 'not_found' });
++    expect(missing.confirmations).toHaveLength(0);
++
++    const closed = makeClient({
++      getReport: vi.fn(async () => reportRow({ status: 'resolved' })),
++    });
++    expect(
++      await confirmTerrainReport(
++        { reportId: 'report-1', userId: USER_ID, confirmation: 'gone' },
++        closed.client,
++        { now: NOW }
++      )
++    ).toEqual({ status: 'closed' });
++    expect(closed.confirmations).toHaveLength(0);
++  });
++});
++
++describe('Serveur Terrain Live — liste filtrée (TEST-A5-SRV-04)', () => {
++  it('TEST-A5-SRV-04: la liste proche filtre statuts/expiration, trie par distance et n’expose aucune identité', async () => {
++    const rows: NearbyTerrainReport[] = [
++      publicReport({ id: 'proche', distanceM: 120, status: 'confirmed' }),
++      publicReport({ id: 'loin', distanceM: 900 }),
++      publicReport({ id: 'expire', distanceM: 40, expiresAt: hoursAgo(1) }),
++      publicReport({ id: 'rejete', distanceM: 10, status: 'rejected' }),
++    ];
++    const { client } = makeClient({ listPublicNearby: vi.fn(async () => rows) });
++
++    const result = await listNearbyTerrainReports({ lat: 42.8, lng: 0.15 }, client, { now: NOW });
++
++    expect(result.map((row) => row.id)).toEqual(['proche', 'loin']);
++    expect(result[0].distanceM).toBeLessThan(result[1].distanceM);
++    expect(JSON.stringify(result)).not.toContain('reporter');
++    expect(JSON.stringify(result)).not.toContain('reporterId');
++    expect(DEFAULT_NEARBY_RADIUS_M).toBe(2000);
++
++    const withoutRadius = makeClient({ listPublicNearby: vi.fn(async () => rows) });
++    await listNearbyTerrainReports({ lat: 42.8, lng: 0.15 }, withoutRadius.client, { now: NOW });
++    expect(withoutRadius.client.listPublicNearby).toHaveBeenCalledWith(
++      42.8,
++      0.15,
++      DEFAULT_NEARBY_RADIUS_M
++    );
++  });
++
++  it('TEST-A5-SRV-04b: le type public de la vue ne porte jamais reporterId', () => {
++    const sample: TerrainReportPublic = publicReport();
++    expect(Object.keys(sample)).not.toContain('reporterId');
++    expect(Object.keys(sample)).not.toContain('reporter_id');
++  });
++});
++
++describe('Serveur Terrain Live — expiration (TEST-A5-SRV-05)', () => {
++  it('TEST-A5-SRV-05: expire les rapports périmés et fait vieillir les inactifs', async () => {
++    const candidates: TerrainReportRow[] = [
++      reportRow({ id: 'perime', status: 'active', expiresAt: hoursAgo(2) }),
++      reportRow({ id: 'inactif', status: 'active', expiresAt: hoursAgo(-48), updatedAt: hoursAgo(30) }),
++      reportRow({ id: 'recent', status: 'active', expiresAt: hoursAgo(-48), updatedAt: hoursAgo(1) }),
++      reportRow({ id: 'pending-vieux', status: 'pending', expiresAt: hoursAgo(-48), updatedAt: hoursAgo(30) }),
++      reportRow({ id: 'verify-perime', status: 'verify', expiresAt: hoursAgo(1) }),
++    ];
++    const { client, updates } = makeClient({
++      listExpirationCandidates: vi.fn(async () => candidates),
++    });
++
++    const result = await expireStaleReports(client, { now: NOW });
++
++    expect(result).toEqual({ scanned: 5, aged: 1, expired: 2 });
++    expect(updates).toEqual([
++      { id: 'perime', patch: { status: 'expired', updated_at: NOW } },
++      { id: 'inactif', patch: { status: 'stale', updated_at: NOW } },
++      { id: 'verify-perime', patch: { status: 'expired', updated_at: NOW } },
++    ]);
++    expect(STALE_AFTER_HOURS).toBe(24);
++  });
++});

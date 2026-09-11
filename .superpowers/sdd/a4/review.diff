@@ -1,0 +1,2032 @@
+﻿diff --git a/src/app/api/cron/aggregate-segments/route.ts b/src/app/api/cron/aggregate-segments/route.ts
+new file mode 100644
+index 00000000..632be246
+--- /dev/null
++++ b/src/app/api/cron/aggregate-segments/route.ts
+@@ -0,0 +1,260 @@
++import { NextRequest, NextResponse } from 'next/server';
++import { getServiceSupabase } from '@/lib/ai/serviceClient';
++import { predictSegment } from '@/features/adventure-intelligence/domain/prediction';
++import {
++  performanceProfileSchema,
++  type PerformanceProfile,
++} from '@/features/adventure-intelligence/schemas/performance.schema';
++import {
++  aggregateSegments,
++  AGGREGATION_WINDOW_DAYS,
++  type AggregateSegmentsClient,
++  type ConsentGrant,
++  type EligiblePassageRow,
++  type ExpectedDuration,
++} from '@/features/adventure-intelligence/server/aggregateSegments';
++
++export const dynamic = 'force-dynamic';
++
++/** Plafonds d'une exécution de cron (les lots suivants passent au prochain run). */
++const SEGMENT_LIMIT = 200;
++const PASSAGE_LIMIT = 5000;
++
++interface SegmentRow {
++  segment_id: number | string;
++}
++
++/** Heures UTC considérées comme nocturnes (approximation serveur). */
++function isNightAt(iso: string): boolean {
++  const parsed = Date.parse(iso);
++  if (!Number.isFinite(parsed)) return false;
++  const hour = new Date(parsed).getUTCHours();
++  return hour < 6 || hour >= 21;
++}
++
++function toFiniteNumber(value: unknown): number | null {
++  if (value === null || value === undefined) return null;
++  const num = Number(value);
++  return Number.isFinite(num) ? num : null;
++}
++
++/**
++ * Cron A4 — agrège les passages collectifs récents par segment.
++ * Déclencheur externe avec `Authorization: Bearer ${CRON_SECRET}`.
++ * La réponse ne contient que des compteurs agrégés, jamais d'identité.
++ */
++export async function POST(request: NextRequest) {
++  const secret = process.env.CRON_SECRET;
++  const authHeader = request.headers.get('authorization');
++  if (!secret || authHeader !== `Bearer ${secret}`) {
++    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
++  }
++
++  const supabase = getServiceSupabase();
++  if (!supabase) {
++    return NextResponse.json({ error: 'Service indisponible' }, { status: 503 });
++  }
++
++  const { data: segmentRows, error: segmentsError } = await supabase.rpc(
++    'a4_recent_eligible_segments',
++    {
++      p_since: `${AGGREGATION_WINDOW_DAYS} days`,
++      p_limit: SEGMENT_LIMIT,
++    }
++  );
++  if (segmentsError) {
++    console.error('[adventure-intelligence/cron/a4] segments en échec:', segmentsError.message);
++    return NextResponse.json({ error: 'Segments indisponibles' }, { status: 502 });
++  }
++
++  const segmentIds = ((segmentRows ?? []) as SegmentRow[])
++    .map((row) => Number(row.segment_id))
++    .filter((id) => Number.isFinite(id));
++
++  const client: AggregateSegmentsClient = {
++    async getEligiblePassages(segmentIdsToLoad: number[], sinceDays: number) {
++      if (segmentIdsToLoad.length === 0) return [];
++      const sinceIso = new Date(Date.now() - sinceDays * 86400000).toISOString();
++
++      const { data, error } = await supabase
++        .from('session_segment_passages')
++        .select(
++          'id, user_id, segment_id, direction, duration_s, distance_m, gain_m, loss_m, ' +
++            'gps_quality, map_match_quality, uturn_detected, off_route, exited_at, ' +
++            'session:hike_sessions!session_id(processing_status, track_quality, ended_at)'
++        )
++        .in('segment_id', segmentIdsToLoad)
++        .eq('eligible_for_collective', true)
++        .gte('exited_at', sinceIso)
++        .order('exited_at', { ascending: false })
++        .limit(PASSAGE_LIMIT);
++      if (error) throw new Error(error.message);
++
++      const { data: featureRows } = await supabase
++        .from('trail_segment_features')
++        .select('segment_id, surface')
++        .in('segment_id', segmentIdsToLoad);
++      const surfaceBySegment = new Map<number, string | null>(
++        ((featureRows ?? []) as { segment_id: number | string; surface: string | null }[]).map(
++          (row) => [Number(row.segment_id), row.surface ?? null]
++        )
++      );
++
++      return ((data ?? []) as unknown as Record<string, unknown>[]).map(
++        (raw): EligiblePassageRow => {
++        const session = Array.isArray(raw.session)
++          ? (raw.session[0] as Record<string, unknown> | undefined)
++          : (raw.session as Record<string, unknown> | null | undefined);
++        const trackQuality = (session?.track_quality ?? {}) as { plausibleMovement?: unknown };
++        const plausibleMovement =
++          typeof trackQuality.plausibleMovement === 'number'
++            ? trackQuality.plausibleMovement >= 0.5
++            : false;
++
++        const gpsQuality = toFiniteNumber(raw.gps_quality);
++        const mapMatchQuality = toFiniteNumber(raw.map_match_quality);
++        const gainM = toFiniteNumber(raw.gain_m);
++        const lossM = toFiniteNumber(raw.loss_m);
++        const segmentId = Number(raw.segment_id);
++        const exitedAt = String(raw.exited_at ?? '');
++
++        return {
++          passageId: String(raw.id),
++          userId: String(raw.user_id),
++          segmentId,
++          direction: raw.direction === 'reverse' ? 'reverse' : 'forward',
++          observedDurationS: toFiniteNumber(raw.duration_s) ?? 0,
++          observedAt: exitedAt,
++          gpsQuality,
++          mapMatchQuality,
++          passageQuality:
++            gpsQuality !== null && mapMatchQuality !== null
++              ? Math.min(gpsQuality, mapMatchQuality)
++              : null,
++          plausibleMovement,
++          sessionFinished: session?.processing_status === 'processed' && session?.ended_at != null,
++          uturnDetected: raw.uturn_detected === true,
++          offRoute: raw.off_route === true,
++          distanceM: toFiniteNumber(raw.distance_m) ?? 0,
++          gainM,
++          lossM,
++          surface: surfaceBySegment.get(segmentId) ?? null,
++          weather: null,
++          isNight: isNightAt(exitedAt),
++          isAscent: gainM !== null || lossM !== null ? (gainM ?? 0) > (lossM ?? 0) : null,
++          packWeightKg: null,
++        };
++      });
++    },
++
++    async getConsents(userIds: string[]): Promise<ConsentGrant[]> {
++      if (userIds.length === 0) return [];
++      const { data, error } = await supabase
++        .from('adventure_data_consents')
++        .select('user_id, granted, revoked_at')
++        .eq('purpose', 'collective_terrain')
++        .in('user_id', userIds);
++      if (error) throw new Error(error.message);
++
++      const grantedByUser = new Map<string, boolean>();
++      for (const raw of (data ?? []) as {
++        user_id: string;
++        granted: boolean;
++        revoked_at: string | null;
++      }[]) {
++        const active = raw.granted === true && raw.revoked_at == null;
++        grantedByUser.set(raw.user_id, grantedByUser.get(raw.user_id) === true || active);
++      }
++      return userIds.map((userId) => ({ userId, granted: grantedByUser.get(userId) === true }));
++    },
++
++    async getExpectedDurations(passages: EligiblePassageRow[]): Promise<ExpectedDuration[]> {
++      const userIds = [...new Set(passages.map((passage) => passage.userId))];
++      const profiles = new Map<string, PerformanceProfile | null>();
++
++      if (userIds.length > 0) {
++        const { data, error } = await supabase
++          .from('user_performance_profiles')
++          .select('*')
++          .eq('activity_type', 'hiking')
++          .in('user_id', userIds);
++        if (error) {
++          console.error(
++            '[adventure-intelligence/cron/a4] profils indisponibles:',
++            error.message
++          );
++        } else {
++          for (const raw of (data ?? []) as Record<string, unknown>[]) {
++            const parsed = performanceProfileSchema.safeParse({
++              userId: raw.user_id,
++              activityType: 'hiking',
++              flatSpeedKmH: Number(raw.flat_speed_kmh),
++              ascentSpeedMPerHour: Number(raw.ascent_speed_m_per_h ?? 0),
++              descentSpeedMPerHour: Number(raw.descent_speed_m_per_h ?? 0),
++              gradeResponse: raw.grade_response,
++              surfaceResponse: raw.surface_response,
++              fatigueCurve: raw.fatigue_curve,
++              pauseModel: raw.pause_model,
++              packResponse: raw.pack_response,
++              confidence: raw.confidence,
++              sampleCount: Number(raw.sample_count ?? 0),
++              calibrationLevel: raw.calibration_level,
++              modelVersion: raw.model_version,
++              computedAt: raw.computed_at,
++            });
++            profiles.set(String(raw.user_id), parsed.success ? parsed.data : null);
++          }
++        }
++      }
++
++      return passages.map((passage): ExpectedDuration => {
++        const profile = profiles.get(passage.userId) ?? null;
++        try {
++          const prediction = predictSegment(
++            {
++              segmentId: passage.segmentId,
++              distanceM: passage.distanceM,
++              gainM: passage.gainM ?? 0,
++              lossM: passage.lossM ?? 0,
++              surface: passage.surface ?? null,
++              packWeightKg: passage.packWeightKg ?? null,
++            },
++            profile,
++            profile?.confidence ?? null
++          );
++          return { passageId: passage.passageId, expectedDurationS: prediction.durationP50Seconds };
++        } catch {
++          // Profil illisible : repli générique sûr (allure standard), jamais d'échec du lot.
++          const fallback = predictSegment(
++            {
++              segmentId: passage.segmentId,
++              distanceM: passage.distanceM,
++              gainM: passage.gainM ?? 0,
++              lossM: passage.lossM ?? 0,
++            },
++            null,
++            null
++          );
++          return { passageId: passage.passageId, expectedDurationS: fallback.durationP50Seconds };
++        }
++      });
++    },
++
++    async upsertAggregates(rows: unknown[]) {
++      if (rows.length === 0) return;
++      const { error } = await supabase.from('segment_collective_aggregates').upsert(rows, {
++        onConflict: 'segment_id,condition_bucket,direction,processor_version',
++      });
++      if (error) throw new Error(error.message);
++    },
++  };
++
++  const result = await aggregateSegments(segmentIds, client);
++
++  return NextResponse.json({
++    segments: result.segmentsProcessed,
++    passages: result.passagesConsidered,
++    aggregates: result.aggregatesWritten,
++    suppressed: result.aggregatesSuppressed,
++  });
++}
+diff --git a/src/features/adventure-intelligence/domain/collectiveEligibility.ts b/src/features/adventure-intelligence/domain/collectiveEligibility.ts
+new file mode 100644
+index 00000000..f0bef88a
+--- /dev/null
++++ b/src/features/adventure-intelligence/domain/collectiveEligibility.ts
+@@ -0,0 +1,62 @@
++/**
++ * A4 — Éligibilité collective d'un passage (moteur pur).
++ *
++ * Un passage ne rejoint l'agrégat collectif que si l'utilisateur y a consenti,
++ * que la session est terminée, que la qualité GPS / map-matching / passage est
++ * suffisante et que le déplacement est plausible. Chaque refus produit une
++ * raison explicite, sans jamais exposer d'identité.
++ */
++export interface EligibilityInput {
++  consentCollective: boolean;
++  sessionFinished: boolean;
++  gpsQuality: number;
++  mapMatchQuality: number;
++  plausibleMovement: boolean;
++  passageQuality: number;
++}
++
++/** Seuils normatifs d'éligibilité (spec A4). */
++export const ELIGIBILITY_THRESHOLDS = {
++  gpsQuality: 0.6,
++  mapMatchQuality: 0.6,
++  passageQuality: 0.5,
++} as const;
++
++/** Raisons de refus, stables et ordonnées. */
++export const ELIGIBILITY_REASONS = {
++  consent: 'consentement_collectif_absent',
++  session: 'session_non_terminee',
++  gps: 'qualite_gps_insuffisante',
++  mapMatch: 'qualite_map_matching_insuffisante',
++  movement: 'mouvement_non_plausible',
++  passage: 'qualite_passage_insuffisante',
++} as const;
++
++export interface EligibilityResult {
++  eligible: boolean;
++  reasons: string[];
++}
++
++function belowThreshold(value: number, threshold: number): boolean {
++  return !Number.isFinite(value) || value < threshold;
++}
++
++/** Évalue l'éligibilité collective d'un passage et explique chaque refus. */
++export function collectiveEligibility(input: EligibilityInput): EligibilityResult {
++  const reasons: string[] = [];
++
++  if (!input.consentCollective) reasons.push(ELIGIBILITY_REASONS.consent);
++  if (!input.sessionFinished) reasons.push(ELIGIBILITY_REASONS.session);
++  if (belowThreshold(input.gpsQuality, ELIGIBILITY_THRESHOLDS.gpsQuality)) {
++    reasons.push(ELIGIBILITY_REASONS.gps);
++  }
++  if (belowThreshold(input.mapMatchQuality, ELIGIBILITY_THRESHOLDS.mapMatchQuality)) {
++    reasons.push(ELIGIBILITY_REASONS.mapMatch);
++  }
++  if (!input.plausibleMovement) reasons.push(ELIGIBILITY_REASONS.movement);
++  if (belowThreshold(input.passageQuality, ELIGIBILITY_THRESHOLDS.passageQuality)) {
++    reasons.push(ELIGIBILITY_REASONS.passage);
++  }
++
++  return { eligible: reasons.length === 0, reasons };
++}
+diff --git a/src/features/adventure-intelligence/domain/collectiveIntelligence.ts b/src/features/adventure-intelligence/domain/collectiveIntelligence.ts
+new file mode 100644
+index 00000000..a4ce431f
+--- /dev/null
++++ b/src/features/adventure-intelligence/domain/collectiveIntelligence.ts
+@@ -0,0 +1,436 @@
++/**
++ * A4 — Intelligence collective des sentiers (moteur pur).
++ *
++ * Fusionne les passages de plusieurs utilisateurs en difficulté collective
++ * par segment, **normalisée par personne** : jamais de moyenne de vitesses
++ * brutes, uniquement un ratio observé/attendu (profil A3). Agrégation
++ * robuste : médiane pondérée (qualité × récence), rejet d'anomalies MAD,
++ * percentiles, scores bornés et seuils de publication stricts.
++ *
++ * Aucune I/O : uniquement des nombres et des chaînes. La construction des
++ * passages et la persistance appartiennent à `server/aggregateSegments.ts`.
++ */
++import { clamp01, makeConfidence, type Confidence } from './confidence';
++import { weightedMedian } from './performanceProfile';
++import type { ConditionBucket } from '../schemas/live.schema';
++
++export { weightedMedian } from './performanceProfile';
++
++/** Version de traitement persistée (idempotence de l'agrégation). */
++export const A4_PROCESSOR_VERSION = 'a4-v1';
++
++/** Méthode de confiance normative des agrégats collectifs. */
++export const COLLECTIVE_CONFIDENCE_METHOD = 'collective_weighted_median_a4';
++
++/** Plancher de publication : nombre d'utilisateurs distincts. */
++export const MIN_DISTINCT_USERS = 5;
++/** Confiance minimale de publication. */
++export const MIN_PUBLISH_CONFIDENCE = 0.5;
++/** Âge maximal d'une agrégation publiable (2 ans). */
++export const MAX_AGGREGATE_AGE_DAYS = 730;
++/** Âge maximal d'une observation intégrée à l'agrégation (2 ans). */
++export const MAX_OBSERVATION_AGE_DAYS = 730;
++/** Demi-vie de récence des passages (jours). */
++export const DEFAULT_HALF_LIFE_DAYS = 180;
++/** Seuil du score z modifié pour le rejet d'anomalies. */
++export const MAD_THRESHOLD = 3.5;
++/** Bornes de winsorisation du ratio de ralentissement. */
++export const WINSORIZE_BOUNDS: readonly [number, number] = [0.25, 4];
++/** Poids de sac (kg) à partir duquel le sac est considéré lourd. */
++export const HEAVY_PACK_KG = 8;
++
++/** Combinaison pondérée de la difficulté collective (spec A4). */
++export const COLLECTIVE_DIFFICULTY_WEIGHTS = {
++  effort: 0.4,
++  technical: 0.25,
++  fatigue: 0.2,
++  orientation: 0.15,
++} as const;
++
++export interface CollectivePassage {
++  passageId: string;
++  userIdHash: string;
++  segmentId: number;
++  direction: 'forward' | 'reverse';
++  observedDurationS: number;
++  expectedDurationS: number;
++  quality: number;
++  observedAt: string;
++  conditionBucket: ConditionBucket;
++  uturnDetected: boolean;
++  offRoute: boolean;
++}
++
++export interface CollectiveAggregate {
++  segmentId: number;
++  conditionBucket: ConditionBucket;
++  direction: 'forward' | 'reverse';
++  passageCount: number;
++  distinctUserCount: number;
++  weightedMedianSlowdown: number;
++  p25: number;
++  p50: number;
++  p75: number;
++  p90: number;
++  effortScore: number;
++  technicalScore: number;
++  fatigueScore: number;
++  orientationScore: number;
++  slowdownScore: number;
++  collectiveDifficulty: number;
++  confidence: Confidence;
++}
++
++export interface AggregateOptions {
++  /** Instant de référence (récence, `computedAt`) — défaut : maintenant. */
++  now?: string;
++  halfLifeDays?: number;
++  madThreshold?: number;
++  winsorize?: readonly [number, number];
++}
++
++export interface PublishableOptions {
++  now?: string;
++  minDistinctUsers?: number;
++  minConfidence?: number;
++  maxAgeDays?: number;
++  /** Dernière observation connue ; sinon `computedAt` sert de référence. */
++  lastObservedAt?: string;
++}
++
++export interface WeightedValue {
++  value: number;
++  weight: number;
++}
++
++export interface AnomalyDetection<T extends WeightedValue = WeightedValue> {
++  kept: T[];
++  rejected: T[];
++}
++
++/** Borne un nombre dans [min, max] ; non fini ⇒ min. */
++function clamp(value: number, min: number, max: number): number {
++  if (!Number.isFinite(value)) return min;
++  return Math.min(max, Math.max(min, value));
++}
++
++/** Arrondit à 4 décimales pour des sorties stables entre exécutions. */
++function round4(value: number): number {
++  if (!Number.isFinite(value)) return 0;
++  return Math.round(value * 10000) / 10000;
++}
++
++/**
++ * Ratio de ralentissement observé/attendu. Toute durée attendue absente ou
++ * non positive retombe sur un ratio neutre de 1 (jamais de division folle).
++ */
++export function normalizedSlowdown(observedDurationS: number, expectedDurationS: number): number {
++  if (!Number.isFinite(observedDurationS) || observedDurationS <= 0) return 1;
++  if (!Number.isFinite(expectedDurationS) || expectedDurationS <= 0) return 1;
++  return observedDurationS / expectedDurationS;
++}
++
++/** Percentile interpolé (p ∈ [0,1]) d'une série non pondérée. */
++export function percentile(values: number[], p: number): number | null {
++  const valid = values.filter((value) => Number.isFinite(value)).sort((a, b) => a - b);
++  if (valid.length === 0) return null;
++  if (valid.length === 1) return valid[0];
++
++  const bounded = clamp(Number.isFinite(p) ? p : 0, 0, 1);
++  const rank = bounded * (valid.length - 1);
++  const lower = Math.floor(rank);
++  const upper = Math.ceil(rank);
++  if (lower === upper) return valid[lower];
++  const fraction = rank - lower;
++  return valid[lower] + (valid[upper] - valid[lower]) * fraction;
++}
++
++/**
++ * Rejette les anomalies par MAD (score z modifié 0.6745 · |x − médiane| / MAD).
++ * Moins de 3 entrées valides ⇒ tout est conservé ; MAD = 0 ⇒ seules les valeurs
++ * strictement égales à la médiane sont conservées.
++ */
++export function detectAnomalies<T extends WeightedValue>(
++  values: T[],
++  madThreshold = MAD_THRESHOLD
++): AnomalyDetection<T> {
++  const threshold =
++    Number.isFinite(madThreshold) && madThreshold >= 0 ? madThreshold : MAD_THRESHOLD;
++  const valid: T[] = [];
++  const rejected: T[] = [];
++
++  for (const entry of values) {
++    if (Number.isFinite(entry.value) && Number.isFinite(entry.weight) && entry.weight > 0) {
++      valid.push(entry);
++    } else {
++      rejected.push(entry);
++    }
++  }
++
++  if (valid.length < 3) {
++    return { kept: [...valid], rejected };
++  }
++
++  const median = weightedMedian(valid);
++  if (median === null) {
++    return { kept: [], rejected: [...rejected, ...valid] };
++  }
++
++  const mad = weightedMedian(
++    valid.map((entry) => ({ value: Math.abs(entry.value - median), weight: entry.weight }))
++  );
++
++  if (mad === null || mad === 0) {
++    const kept = valid.filter((entry) => entry.value === median);
++    const dropped = valid.filter((entry) => entry.value !== median);
++    return { kept, rejected: [...rejected, ...dropped] };
++  }
++
++  const kept: T[] = [];
++  for (const entry of valid) {
++    if ((0.6745 * Math.abs(entry.value - median)) / mad <= threshold) {
++      kept.push(entry);
++    } else {
++      rejected.push(entry);
++    }
++  }
++  return { kept, rejected };
++}
++
++export interface ConditionBucketInput {
++  surface?: string | null;
++  weather?: string | null;
++  isNight?: boolean | null;
++  isAscent?: boolean | null;
++  packWeightKg?: number | null;
++}
++
++const ICE_HINTS = ['ice', 'glace', 'verglas'];
++const SNOW_HINTS = ['snow', 'neige'];
++const WET_HINTS = ['wet', 'humide', 'rain', 'pluie', 'mud', 'boue', 'water', 'flood'];
++
++function matchesHint(text: string | null | undefined, hints: string[]): boolean {
++  const normalized = (text ?? '').trim().toLowerCase();
++  if (normalized === '') return false;
++  return hints.some((hint) => normalized.includes(hint));
++}
++
++/**
++ * Bucket de conditions dominant d'un passage. Une seule dimension est
++ * retenue : la plus contraignante (glace > neige > humide > nuit >
++ * montée > descente > sac lourd > sac léger > sec).
++ */
++export function assignConditionBucket(input: ConditionBucketInput): ConditionBucket {
++  const { surface, weather } = input;
++  if (matchesHint(surface, ICE_HINTS) || matchesHint(weather, ICE_HINTS)) return 'ice';
++  if (matchesHint(surface, SNOW_HINTS) || matchesHint(weather, SNOW_HINTS)) return 'snow';
++  if (matchesHint(surface, WET_HINTS) || matchesHint(weather, WET_HINTS)) return 'wet';
++  if (input.isNight === true) return 'night';
++  if (input.isAscent === true) return 'ascent';
++  if (input.isAscent === false) return 'descent';
++
++  const packWeight = input.packWeightKg;
++  if (packWeight != null && Number.isFinite(packWeight)) {
++    if (packWeight >= HEAVY_PACK_KG) return 'heavy_pack';
++    if (packWeight > 0) return 'light_pack';
++  }
++  return 'dry';
++}
++
++interface ExploitedPassage extends WeightedValue {
++  passage: CollectivePassage;
++  ageDays: number;
++  slowdown: number;
++  late: boolean;
++}
++
++function groupKey(passage: CollectivePassage): string {
++  return `${passage.segmentId}::${passage.conditionBucket}::${passage.direction}`;
++}
++
++function toExploitedPassage(
++  passage: CollectivePassage,
++  nowMs: number,
++  halfLifeDays: number,
++  bounds: readonly [number, number]
++): ExploitedPassage | null {
++  if (!Number.isFinite(passage.observedDurationS) || passage.observedDurationS <= 0) return null;
++
++  const observedMs = Date.parse(passage.observedAt);
++  const ageDays = Number.isFinite(observedMs) ? Math.max(0, (nowMs - observedMs) / 86400000) : 0;
++  if (ageDays > MAX_OBSERVATION_AGE_DAYS) return null;
++
++  const recency =
++    Number.isFinite(halfLifeDays) && halfLifeDays > 0
++      ? Math.pow(0.5, ageDays / halfLifeDays)
++      : 1;
++  const weight = clamp01(passage.quality) * recency;
++  if (!(weight > 0)) return null;
++
++  const winsorized = clamp(
++    normalizedSlowdown(passage.observedDurationS, passage.expectedDurationS),
++    bounds[0],
++    bounds[1]
++  );
++  const observedDate = new Date(observedMs);
++  const late = Number.isFinite(observedMs) && observedDate.getUTCHours() >= 18;
++
++  return { value: winsorized, weight, passage, ageDays, slowdown: winsorized, late };
++}
++
++function weightedMean(entries: WeightedValue[]): number {
++  const total = entries.reduce((sum, entry) => sum + entry.weight, 0);
++  if (!(total > 0)) return 0;
++  return entries.reduce((sum, entry) => sum + entry.value * entry.weight, 0) / total;
++}
++
++function weightedVariance(entries: WeightedValue[], mean: number): number {
++  const total = entries.reduce((sum, entry) => sum + entry.weight, 0);
++  if (!(total > 0)) return 0;
++  return entries.reduce((sum, entry) => sum + entry.weight * (entry.value - mean) ** 2, 0) / total;
++}
++
++function weightedShare(entries: ExploitedPassage[], predicate: (entry: ExploitedPassage) => boolean): number {
++  const total = entries.reduce((sum, entry) => sum + entry.weight, 0);
++  if (!(total > 0)) return 0;
++  const selected = entries.reduce(
++    (sum, entry) => sum + (predicate(entry) ? entry.weight : 0),
++    0
++  );
++  return selected / total;
++}
++
++/**
++ * Agrège les passages collectifs par `(segment, bucket, sens)`.
++ *
++ * La difficulté est calculée sur le ratio normalisé par personne, pondéré par
++ * qualité × récence, après winsorisation et rejet des anomalies MAD. Les
++ * agrégats sont rendus triés (segment, bucket, sens) pour être déterministes.
++ * Le filtre de publication n'est pas appliqué ici : il appartient au serveur.
++ */
++export function aggregateCollective(
++  passages: CollectivePassage[],
++  options: AggregateOptions = {}
++): CollectiveAggregate[] {
++  const nowIso = options.now ?? new Date().toISOString();
++  const parsedNow = Date.parse(nowIso);
++  const nowMs = Number.isFinite(parsedNow) ? parsedNow : Date.now();
++  const halfLifeDays = options.halfLifeDays ?? DEFAULT_HALF_LIFE_DAYS;
++  const madThreshold = options.madThreshold ?? MAD_THRESHOLD;
++  const bounds: readonly [number, number] = options.winsorize ?? WINSORIZE_BOUNDS;
++
++  const groups = new Map<string, ExploitedPassage[]>();
++  for (const passage of passages) {
++    const exploited = toExploitedPassage(passage, nowMs, halfLifeDays, bounds);
++    if (exploited === null) continue;
++    const key = groupKey(passage);
++    const bucket = groups.get(key);
++    if (bucket) bucket.push(exploited);
++    else groups.set(key, [exploited]);
++  }
++
++  const aggregates: CollectiveAggregate[] = [];
++
++  for (const group of groups.values()) {
++    const { kept } = detectAnomalies(group, madThreshold);
++    if (kept.length === 0) continue;
++
++    const slowdowns = kept.map((entry) => entry.value);
++    const median = weightedMedian(kept) ?? 1;
++    const p25 = percentile(slowdowns, 0.25) ?? median;
++    const p50 = percentile(slowdowns, 0.5) ?? median;
++    const p75 = percentile(slowdowns, 0.75) ?? median;
++    const p90 = percentile(slowdowns, 0.9) ?? median;
++
++    const mean = weightedMean(kept);
++    const variance = weightedVariance(kept, mean);
++    const relativeDispersion = median > 0 ? Math.sqrt(variance) / median : 0;
++
++    const passageCount = kept.length;
++    const distinctUserCount = new Set(kept.map((entry) => entry.passage.userIdHash)).size;
++
++    const uturnShare = weightedShare(kept, (entry) => entry.passage.uturnDetected);
++    const offRouteShare = weightedShare(kept, (entry) => entry.passage.offRoute);
++    const lateSlowShare = weightedShare(kept, (entry) => entry.late && entry.slowdown > 1);
++
++    const slowdownScore = clamp((median - 1) * 50 + 50, 0, 100);
++    const effortScore = clamp(slowdownScore + Math.min(20, variance * 20), 0, 100);
++    const technicalScore = clamp(
++      uturnShare * 40 + offRouteShare * 40 + Math.min(20, variance * 20),
++      0,
++      100
++    );
++    const fatigueScore = clamp(lateSlowShare * 100, 0, 100);
++    const orientationScore = clamp(offRouteShare * 100, 0, 100);
++    const collectiveDifficulty = clamp(
++      effortScore * COLLECTIVE_DIFFICULTY_WEIGHTS.effort +
++        technicalScore * COLLECTIVE_DIFFICULTY_WEIGHTS.technical +
++        fatigueScore * COLLECTIVE_DIFFICULTY_WEIGHTS.fatigue +
++        orientationScore * COLLECTIVE_DIFFICULTY_WEIGHTS.orientation,
++      0,
++      100
++    );
++
++    const userScore = Math.min(1, distinctUserCount / MIN_DISTINCT_USERS);
++    const sampleScore = Math.min(1, passageCount / 15);
++    const agreement = 1 - clamp01(relativeDispersion);
++    const confidence = makeConfidence({
++      score: 0.5 * userScore + 0.3 * sampleScore + 0.2 * agreement,
++      sampleCount: passageCount,
++      method: COLLECTIVE_CONFIDENCE_METHOD,
++    });
++
++    const sample = kept[0].passage;
++    aggregates.push({
++      segmentId: sample.segmentId,
++      conditionBucket: sample.conditionBucket,
++      direction: sample.direction,
++      passageCount,
++      distinctUserCount,
++      weightedMedianSlowdown: round4(median),
++      p25: round4(p25),
++      p50: round4(p50),
++      p75: round4(p75),
++      p90: round4(p90),
++      effortScore: round4(effortScore),
++      technicalScore: round4(technicalScore),
++      fatigueScore: round4(fatigueScore),
++      orientationScore: round4(orientationScore),
++      slowdownScore: round4(slowdownScore),
++      collectiveDifficulty: round4(collectiveDifficulty),
++      confidence,
++    });
++  }
++
++  aggregates.sort((a, b) => {
++    if (a.segmentId !== b.segmentId) return a.segmentId - b.segmentId;
++    if (a.conditionBucket !== b.conditionBucket) {
++      return a.conditionBucket < b.conditionBucket ? -1 : 1;
++    }
++    return a.direction < b.direction ? -1 : a.direction > b.direction ? 1 : 0;
++  });
++
++  return aggregates;
++}
++
++/**
++ * Seuil de publication : ≥ 5 utilisateurs distincts, confiance ≥ 0.5 et
++ * agrégation (ou dernière observation) vieille de moins de 730 jours.
++ */
++export function isPublishable(
++  aggregate: { distinctUserCount: number; confidence: Confidence; computedAt: string },
++  options: PublishableOptions = {}
++): boolean {
++  const minDistinctUsers = options.minDistinctUsers ?? MIN_DISTINCT_USERS;
++  if (aggregate.distinctUserCount < minDistinctUsers) return false;
++
++  const minConfidence = options.minConfidence ?? MIN_PUBLISH_CONFIDENCE;
++  if (clamp01(aggregate.confidence.score) < minConfidence) return false;
++
++  const reference = Date.parse(options.lastObservedAt ?? aggregate.computedAt);
++  const now = Date.parse(options.now ?? new Date().toISOString());
++  if (!Number.isFinite(reference) || !Number.isFinite(now)) return false;
++
++  const maxAgeDays = options.maxAgeDays ?? MAX_AGGREGATE_AGE_DAYS;
++  return (now - reference) / 86400000 <= maxAgeDays;
++}
+diff --git a/src/features/adventure-intelligence/server/aggregateSegments.ts b/src/features/adventure-intelligence/server/aggregateSegments.ts
+new file mode 100644
+index 00000000..ec39b52a
+--- /dev/null
++++ b/src/features/adventure-intelligence/server/aggregateSegments.ts
+@@ -0,0 +1,226 @@
++/**
++ * A4 — Orchestrateur serveur de l'agrégation collective.
++ *
++ * Client injecté (`AggregateSegmentsClient`) : aucune dépendance Supabase ici,
++ * testable sans réseau. Le flux est idempotent via
++ * `processor_version = 'a4-v1'` (ADR-AI-006).
++ *
++ * Pipeline : passages éligibles → consentement + qualités (moteur pur) →
++ * durées attendues (profil A3) → agrégation robuste par segment/bucket/sens →
++ * seuil de publication (≥ 5 utilisateurs, confiance, récence) → upsert.
++ *
++ * Aucune identité ne sort de cet orchestrateur : les utilisateurs sont
++ * remplacés par un hash stable avant d'entrer dans le moteur, et le résumé
++ * ne contient que des compteurs.
++ */
++import 'server-only';
++import { createHash } from 'node:crypto';
++import {
++  aggregateCollective,
++  assignConditionBucket,
++  isPublishable,
++  A4_PROCESSOR_VERSION,
++  type CollectiveAggregate,
++  type CollectivePassage,
++} from '../domain/collectiveIntelligence';
++import { collectiveEligibility } from '../domain/collectiveEligibility';
++
++/** Fenêtre d'observation par défaut des passages à agréger (jours). */
++export const AGGREGATION_WINDOW_DAYS = 90;
++
++export { A4_PROCESSOR_VERSION as AGGREGATE_PROCESSOR_VERSION };
++
++/** Passage brut éligible fourni par l'adaptateur de données. */
++export interface EligiblePassageRow {
++  passageId: string;
++  userId: string;
++  segmentId: number;
++  direction: 'forward' | 'reverse';
++  observedDurationS: number;
++  observedAt: string;
++  gpsQuality: number | null;
++  mapMatchQuality: number | null;
++  passageQuality: number | null;
++  plausibleMovement: boolean;
++  sessionFinished: boolean;
++  uturnDetected: boolean;
++  offRoute: boolean;
++  distanceM: number;
++  gainM: number | null;
++  lossM: number | null;
++  surface?: string | null;
++  weather?: string | null;
++  isNight?: boolean | null;
++  isAscent?: boolean | null;
++  packWeightKg?: number | null;
++}
++
++export interface ConsentGrant {
++  userId: string;
++  granted: boolean;
++}
++
++export interface ExpectedDuration {
++  passageId: string;
++  expectedDurationS: number;
++}
++
++/**
++ * Client de données injecté. Chaque méthode est idempotente ou en lecture
++ * seule ; `upsertAggregates` DOIT être un upsert `onConflict:
++ * 'segment_id,condition_bucket,direction,processor_version'` côté adaptateur
++ * Supabase.
++ */
++export interface AggregateSegmentsClient {
++  getEligiblePassages(segmentIds: number[], sinceDays: number): Promise<EligiblePassageRow[]>;
++  getConsents(userIds: string[]): Promise<ConsentGrant[]>;
++  getExpectedDurations(passages: EligiblePassageRow[]): Promise<ExpectedDuration[]>;
++  upsertAggregates(rows: unknown[]): Promise<void>;
++}
++
++export interface AggregateSegmentsOptions {
++  /** Instant de référence (computed_at, récence, publication). */
++  now?: string;
++  sinceDays?: number;
++}
++
++export interface AggregateSegmentsResult {
++  status: 'aggregated';
++  segmentsProcessed: number;
++  passagesConsidered: number;
++  aggregatesComputed: number;
++  aggregatesWritten: number;
++  aggregatesSuppressed: number;
++}
++
++/** Hash stable et non inversible d'un identifiant utilisateur (32 hex). */
++export function hashUserId(userId: string): string {
++  return createHash('sha256').update(userId).digest('hex').slice(0, 32);
++}
++
++function resolvedPassageQuality(row: EligiblePassageRow): number {
++  if (row.passageQuality != null && Number.isFinite(row.passageQuality)) {
++    return row.passageQuality;
++  }
++  const gps = row.gpsQuality ?? 0;
++  const mapMatch = row.mapMatchQuality ?? 0;
++  return Math.min(gps, mapMatch);
++}
++
++function toAggregateRow(aggregate: CollectiveAggregate, computedAt: string): Record<string, unknown> {
++  return {
++    segment_id: aggregate.segmentId,
++    condition_bucket: aggregate.conditionBucket,
++    direction: aggregate.direction,
++    passage_count: aggregate.passageCount,
++    distinct_user_count: aggregate.distinctUserCount,
++    weighted_median_slowdown: aggregate.weightedMedianSlowdown,
++    p25_slowdown: aggregate.p25,
++    p50_slowdown: aggregate.p50,
++    p75_slowdown: aggregate.p75,
++    p90_slowdown: aggregate.p90,
++    effort_score: aggregate.effortScore,
++    technical_score: aggregate.technicalScore,
++    fatigue_score: aggregate.fatigueScore,
++    orientation_score: aggregate.orientationScore,
++    slowdown_score: aggregate.slowdownScore,
++    collective_difficulty: aggregate.collectiveDifficulty,
++    confidence: aggregate.confidence,
++    processor_version: A4_PROCESSOR_VERSION,
++    computed_at: computedAt,
++  };
++}
++
++function emptyResult(segmentsProcessed: number): AggregateSegmentsResult {
++  return {
++    status: 'aggregated',
++    segmentsProcessed,
++    passagesConsidered: 0,
++    aggregatesComputed: 0,
++    aggregatesWritten: 0,
++    aggregatesSuppressed: 0,
++  };
++}
++
++/**
++ * Agrège les passages collectifs de segments donnés puis persiste les
++ * agrégats publiables. Les agrégats sous le seuil sont comptés mais jamais
++ * écrits (aucune donnée sous 5 utilisateurs distincts ne peut être exposée).
++ */
++export async function aggregateSegments(
++  segmentIds: number[],
++  client: AggregateSegmentsClient,
++  options: AggregateSegmentsOptions = {}
++): Promise<AggregateSegmentsResult> {
++  const requestedSegments = [...new Set(segmentIds.filter((id) => Number.isFinite(id)))];
++  const now = options.now ?? new Date().toISOString();
++  const sinceDays = options.sinceDays ?? AGGREGATION_WINDOW_DAYS;
++
++  const rows = await client.getEligiblePassages(requestedSegments, sinceDays);
++  if (rows.length === 0) return emptyResult(requestedSegments.length);
++
++  const userIds = [...new Set(rows.map((row) => row.userId))];
++  const consentByUser = new Map(
++    (await client.getConsents(userIds)).map((consent) => [consent.userId, consent.granted])
++  );
++
++  const eligibleRows = rows.filter(
++    (row) =>
++      collectiveEligibility({
++        consentCollective: consentByUser.get(row.userId) === true,
++        sessionFinished: row.sessionFinished,
++        gpsQuality: row.gpsQuality ?? 0,
++        mapMatchQuality: row.mapMatchQuality ?? 0,
++        plausibleMovement: row.plausibleMovement,
++        passageQuality: resolvedPassageQuality(row),
++      }).eligible
++  );
++
++  if (eligibleRows.length === 0) {
++    return { ...emptyResult(requestedSegments.length), passagesConsidered: 0 };
++  }
++
++  const expectedByPassage = new Map(
++    (await client.getExpectedDurations(eligibleRows)).map((entry) => [
++      entry.passageId,
++      entry.expectedDurationS,
++    ])
++  );
++
++  const passages: CollectivePassage[] = eligibleRows.map((row) => ({
++    passageId: row.passageId,
++    userIdHash: hashUserId(row.userId),
++    segmentId: row.segmentId,
++    direction: row.direction,
++    observedDurationS: row.observedDurationS,
++    expectedDurationS: expectedByPassage.get(row.passageId) ?? 0,
++    quality: resolvedPassageQuality(row),
++    observedAt: row.observedAt,
++    conditionBucket: assignConditionBucket({
++      surface: row.surface ?? null,
++      weather: row.weather ?? null,
++      isNight: row.isNight ?? null,
++      isAscent: row.isAscent ?? null,
++      packWeightKg: row.packWeightKg ?? null,
++    }),
++    uturnDetected: row.uturnDetected,
++    offRoute: row.offRoute,
++  }));
++
++  const aggregates = aggregateCollective(passages, { now });
++  const publishable = aggregates.filter((aggregate) => isPublishable({ ...aggregate, computedAt: now }, { now }));
++  const rowsToUpsert = publishable.map((aggregate) => toAggregateRow(aggregate, now));
++
++  if (rowsToUpsert.length > 0) {
++    await client.upsertAggregates(rowsToUpsert);
++  }
++
++  return {
++    status: 'aggregated',
++    segmentsProcessed: requestedSegments.length,
++    passagesConsidered: eligibleRows.length,
++    aggregatesComputed: aggregates.length,
++    aggregatesWritten: rowsToUpsert.length,
++    aggregatesSuppressed: aggregates.length - rowsToUpsert.length,
++  };
++}
+diff --git a/src/features/hiking/intelligence/TrailIntelligenceEngine.ts b/src/features/hiking/intelligence/TrailIntelligenceEngine.ts
+index caeaf286..ec4e90d4 100644
+--- a/src/features/hiking/intelligence/TrailIntelligenceEngine.ts
++++ b/src/features/hiking/intelligence/TrailIntelligenceEngine.ts
+@@ -1,4 +1,22 @@
++/**
++ * A4 — Façade d'intelligence des sentiers (migration du prototype).
++ *
++ * Le prototype était route-level, non déterministe (`Math.random()`) et
++ * sans persistance. La migration conserve une façade rétrocompatible pour
++ * les appelants existants (moyennes observées, propositions de validation
++ * humaine) et ajoute une entrée par segment qui délègue au moteur pur A4
++ * `aggregateCollective` quand des passages sont fournis.
++ *
++ * Aucun appel à `Math.random()` : les identifiants anonymisés et les
++ * propositions sont dérivés par hash stable des entrées.
++ */
+ import { HikeSession, GPSPosition, Trail } from '../types';
++import {
++  aggregateCollective,
++  type AggregateOptions,
++  type CollectiveAggregate,
++  type CollectivePassage,
++} from '@/features/adventure-intelligence/domain/collectiveIntelligence';
+ 
+ export interface AnonymizedHikeSample {
+   routeId: string | number;
+@@ -21,6 +39,8 @@ export interface TrailIntelligenceReport {
+   slowZonesCount: number;
+   gpsQualityScorePercent: number;
+   proposedCorrections: TrailIntelligenceProposal[];
++  /** Agrégats collectifs A4, présents seulement si des passages sont fournis. */
++  collectiveAggregates?: CollectiveAggregate[];
+ }
+ 
+ export interface TrailIntelligenceProposal {
+@@ -36,9 +56,28 @@ export interface TrailIntelligenceProposal {
+   createdAt: string;
+ }
+ 
++export interface TrailIntelligenceOptions {
++  /** Instant de référence des propositions (défaut : maintenant). */
++  now?: string;
++  /** Passages collectifs à déléguer au moteur pur A4. */
++  passages?: CollectivePassage[];
++}
++
++/** Hash FNV-1a 32 bits — déterministe, aucun aléa. */
++function stableHash(input: string): string {
++  let hash = 2166136261;
++  for (let index = 0; index < input.length; index += 1) {
++    hash ^= input.charCodeAt(index);
++    hash = Math.imul(hash, 16777619);
++  }
++  return (hash >>> 0).toString(16).padStart(8, '0');
++}
++
+ export class TrailIntelligenceEngine {
+   /**
+    * Strip all PII (user ID, exact personal timestamps) to produce an anonymized telemetry sample.
++   * L'identifiant anonymisé est un hash stable des entrées : deux appels identiques
++   * produisent le même identifiant, sans jamais contenir l'identité d'origine.
+    */
+   public static anonymizeHikeSession(session: HikeSession): AnonymizedHikeSample {
+     const rawPos = session.positions || [];
+@@ -59,7 +98,9 @@ export class TrailIntelligenceEngine {
+ 
+     return {
+       routeId: session.routeId || 'unknown',
+-      anonymizedSessionId: `anon-${Math.random().toString(36).substr(2, 9)}`,
++      anonymizedSessionId: `anon-${stableHash(
++        `${session.id}|${session.userId}|${session.startedAt}`
++      )}`,
+       totalDistanceKm: session.distanceKm,
+       durationSeconds: session.durationSeconds,
+       averagePaceMinPerKm: Math.round(averagePaceMinPerKm * 10) / 10,
+@@ -69,15 +110,36 @@ export class TrailIntelligenceEngine {
+     };
+   }
+ 
++  /**
++   * Entrée par segment (A4) : agrège les passages d'un segment avec le moteur
++   * pur et retourne l'agrégat publié du segment demandé (ou null).
++   */
++  public static processSegmentAggregates(
++    segmentId: number,
++    passages: CollectivePassage[],
++    options: AggregateOptions = {}
++  ): CollectiveAggregate | null {
++    const aggregates = aggregateCollective(passages, options);
++    return aggregates.find((aggregate) => aggregate.segmentId === segmentId) ?? null;
++  }
++
+   /**
+    * Process a collection of anonymized samples to generate a Trail Intelligence Report.
++   * Lorsque `options.passages` est fourni, délègue aussi au moteur A4 et expose
++   * les agrégats collectifs correspondants.
+    */
+   public static processTrailTelemetry(
+     routeId: string | number,
+     officialTrail: Trail | null,
+-    samples: AnonymizedHikeSample[]
++    samples: AnonymizedHikeSample[],
++    options: TrailIntelligenceOptions = {}
+   ): TrailIntelligenceReport {
++    const now = options.now ?? new Date().toISOString();
+     const sampleCount = samples.length;
++    const collectiveAggregates =
++      options.passages && options.passages.length > 0
++        ? aggregateCollective(options.passages, { now })
++        : undefined;
+ 
+     if (sampleCount === 0) {
+       return {
+@@ -90,6 +152,7 @@ export class TrailIntelligenceEngine {
+         slowZonesCount: 0,
+         gpsQualityScorePercent: 100,
+         proposedCorrections: [],
++        ...(collectiveAggregates ? { collectiveAggregates } : {}),
+       };
+     }
+ 
+@@ -120,24 +183,29 @@ export class TrailIntelligenceEngine {
+     if (officialTrail && officialTrail.duration_hours != null) {
+       const officialMin = officialTrail.duration_hours * 60;
+       if (Math.abs(avgDurationMin - officialMin) > 30 && sampleCount >= 5) {
++        const proposedObservedValue = Math.round((avgDurationMin / 60) * 10) / 10;
+         proposedCorrections.push({
+-          id: `prop-dur-${routeId}-${Date.now()}`,
++          id: `prop-dur-${routeId}-${stableHash(
++            `${routeId}|DURATION_ADJUSTMENT|${proposedObservedValue}|${sampleCount}`
++          )}`,
+           routeId,
+           type: 'DURATION_ADJUSTMENT',
+           field: 'duration_hours',
+           currentOfficialValue: officialTrail.duration_hours,
+-          proposedObservedValue: Math.round((avgDurationMin / 60) * 10) / 10,
++          proposedObservedValue,
+           confidenceScorePercent,
+           sampleSize: sampleCount,
+           status: 'pending_review',
+-          createdAt: new Date().toISOString(),
++          createdAt: now,
+         });
+       }
+     }
+ 
+     if (officialTrail && officialTrail.difficulty && officialTrail.difficulty !== observedDifficulty && sampleCount >= 10) {
+       proposedCorrections.push({
+-        id: `prop-diff-${routeId}-${Date.now()}`,
++        id: `prop-diff-${routeId}-${stableHash(
++          `${routeId}|DIFFICULTY_CORRECTION|${observedDifficulty}|${sampleCount}`
++        )}`,
+         routeId,
+         type: 'DIFFICULTY_CORRECTION',
+         field: 'difficulty',
+@@ -146,7 +214,7 @@ export class TrailIntelligenceEngine {
+         confidenceScorePercent,
+         sampleSize: sampleCount,
+         status: 'pending_review',
+-        createdAt: new Date().toISOString(),
++        createdAt: now,
+       });
+     }
+ 
+@@ -160,6 +228,7 @@ export class TrailIntelligenceEngine {
+       slowZonesCount: totalSlowZones,
+       gpsQualityScorePercent,
+       proposedCorrections,
++      ...(collectiveAggregates ? { collectiveAggregates } : {}),
+     };
+   }
+ }
+diff --git a/supabase/migrations/20260911160000_a4_aggregation_support.sql b/supabase/migrations/20260911160000_a4_aggregation_support.sql
+new file mode 100644
+index 00000000..f71fcefe
+--- /dev/null
++++ b/supabase/migrations/20260911160000_a4_aggregation_support.sql
+@@ -0,0 +1,71 @@
++-- ==============================================================================
++-- A4 — Intelligence collective des sentiers (Phase 4)
++-- Support d'agrégation : index partiel passages + RPC segments éligibles.
++-- Migration additive et idempotente. Aucune donnée individuelle exposée.
++--
++--   • idx_session_segment_passages_collective_recent : accélère la lecture des
++--     passages éligibles récents par segment. `exited_at` est l'horodatage
++--     d'observation retenu pour un passage (aligné sur
++--     performance_observations.observed_at via passage_id).
++--   • a4_recent_eligible_segments(since, limit) : segments portant des passages
++--     éligibles récents, sessions terminées. RPC STABLE, SECURITY DEFINER avec
++--     search_path verrouillé, réservée à service_role (REVOKE anon/authenticated).
++-- L'index performance_observations(user_id, observed_at) existe déjà (A1).
++-- ==============================================================================
++
++-- ── 1. Index partiel des passages éligibles récents ──────────────────────────
++CREATE INDEX IF NOT EXISTS idx_session_segment_passages_collective_recent
++  ON public.session_segment_passages(segment_id, exited_at DESC)
++  WHERE eligible_for_collective = true;
++
++COMMENT ON INDEX public.idx_session_segment_passages_collective_recent IS
++  'A4 — passages éligibles au collectif, par segment, du plus récent au plus '
++  'ancien (exited_at = horodatage d''observation du passage).';
++
++-- ── 2. Segments à agréger (passages éligibles récents) ───────────────────────
++CREATE OR REPLACE FUNCTION public.a4_recent_eligible_segments(
++  p_since interval DEFAULT '90 days',
++  p_limit integer DEFAULT 500
++)
++RETURNS TABLE (
++  segment_id bigint,
++  last_exited_at timestamptz,
++  eligible_passage_count bigint
++)
++LANGUAGE sql
++STABLE
++SECURITY DEFINER
++SET search_path = public, pg_temp
++AS $$
++  SELECT
++    p.segment_id,
++    max(p.exited_at) AS last_exited_at,
++    count(*) AS eligible_passage_count
++  FROM public.session_segment_passages p
++  JOIN public.hike_sessions hs ON hs.id = p.session_id
++  WHERE p.eligible_for_collective = true
++    AND hs.processing_status = 'processed'
++    AND p.exited_at >= now() - coalesce(p_since, interval '90 days')
++  GROUP BY p.segment_id
++  ORDER BY max(p.exited_at) DESC
++  LIMIT least(greatest(coalesce(p_limit, 500), 1), 2000);
++$$;
++
++COMMENT ON FUNCTION public.a4_recent_eligible_segments(interval, integer) IS
++  'A4 — segments portant des passages éligibles récents (eligible_for_collective, '
++  'session traitée), avec dernier horodatage d''observation et volume de passages. '
++  'Agrégats uniquement, jamais d''identité. Réservé au traitement serveur '
++  '(service_role), search_path verrouillé.';
++
++REVOKE ALL ON FUNCTION public.a4_recent_eligible_segments(interval, integer) FROM public;
++DO $$
++BEGIN
++  IF EXISTS (SELECT 1 FROM pg_roles WHERE rolname = 'anon') THEN
++    REVOKE ALL ON FUNCTION public.a4_recent_eligible_segments(interval, integer) FROM anon;
++  END IF;
++  IF EXISTS (SELECT 1 FROM pg_roles WHERE rolname = 'authenticated') THEN
++    REVOKE ALL ON FUNCTION public.a4_recent_eligible_segments(interval, integer) FROM authenticated;
++  END IF;
++END $$;
++GRANT EXECUTE ON FUNCTION public.a4_recent_eligible_segments(interval, integer)
++  TO service_role;
+diff --git a/tests/adventure-intelligence/aggregate-segments.server.spec.ts b/tests/adventure-intelligence/aggregate-segments.server.spec.ts
+new file mode 100644
+index 00000000..8c3bc647
+--- /dev/null
++++ b/tests/adventure-intelligence/aggregate-segments.server.spec.ts
+@@ -0,0 +1,191 @@
++import { describe, it, expect, vi } from 'vitest';
++import {
++  aggregateSegments,
++  hashUserId,
++  AGGREGATE_PROCESSOR_VERSION,
++  AGGREGATION_WINDOW_DAYS,
++  type AggregateSegmentsClient,
++  type ConsentGrant,
++  type EligiblePassageRow,
++} from '@/features/adventure-intelligence/server/aggregateSegments';
++
++const NOW = '2026-09-11T12:00:00.000Z';
++
++const USER_IDS = [
++  'a4000000-0000-4000-8000-000000000001',
++  'a4000000-0000-4000-8000-000000000002',
++  'a4000000-0000-4000-8000-000000000003',
++  'a4000000-0000-4000-8000-000000000004',
++  'a4000000-0000-4000-8000-000000000005',
++  'a4000000-0000-4000-8000-000000000006',
++];
++
++function recent(days: number): string {
++  return new Date(Date.parse(NOW) - days * 86400000).toISOString();
++}
++
++function row(overrides: Partial<EligiblePassageRow> = {}): EligiblePassageRow {
++  return {
++    passageId: `passage-${Math.abs(
++      overrides.observedDurationS ?? 120
++    )}-${overrides.userId ?? USER_IDS[0]}`,
++    userId: USER_IDS[0],
++    segmentId: 42,
++    direction: 'forward',
++    observedDurationS: 120,
++    observedAt: recent(1),
++    gpsQuality: 0.9,
++    mapMatchQuality: 0.9,
++    passageQuality: 0.9,
++    plausibleMovement: true,
++    sessionFinished: true,
++    uturnDetected: false,
++    offRoute: false,
++    distanceM: 1000,
++    gainM: 0,
++    lossM: 0,
++    ...overrides,
++  };
++}
++
++function fiveUsers(overrides: Partial<EligiblePassageRow> = {}): EligiblePassageRow[] {
++  return USER_IDS.slice(0, 5).map((userId, index) =>
++    row({ passageId: `passage-${index}`, userId, ...overrides })
++  );
++}
++
++function consentsFor(userIds: string[], granted = true): ConsentGrant[] {
++  return userIds.map((userId) => ({ userId, granted }));
++}
++
++interface FakeCalls {
++  segments: Array<[number[], number]>;
++  consents: string[][];
++  expected: string[][];
++}
++
++function makeClient(rows: EligiblePassageRow[], consents: ConsentGrant[]) {
++  const upserted: unknown[][] = [];
++  const calls: FakeCalls = { segments: [], consents: [], expected: [] };
++  const client: AggregateSegmentsClient = {
++    getEligiblePassages: vi.fn(async (segmentIds: number[], sinceDays: number) => {
++      calls.segments.push([segmentIds, sinceDays]);
++      return rows;
++    }),
++    getConsents: vi.fn(async (userIds: string[]) => {
++      calls.consents.push(userIds);
++      return consents;
++    }),
++    getExpectedDurations: vi.fn(async (passages: EligiblePassageRow[]) => {
++      calls.expected.push(passages.map((passage) => passage.passageId));
++      return passages.map((passage) => ({
++        passageId: passage.passageId,
++        expectedDurationS: 100,
++      }));
++    }),
++    upsertAggregates: vi.fn(async (aggregateRows: unknown[]) => {
++      upserted.push(aggregateRows);
++    }),
++  };
++  return { client, upserted, calls };
++}
++
++describe('Orchestrateur collectif serveur — TEST-A4-SRV (client factice)', () => {
++  it('TEST-A4-SRV-01: seuls les passages consentis sont agrégés', async () => {
++    const rows = [
++      ...fiveUsers(),
++      row({ passageId: 'sans-consentement', userId: USER_IDS[5] }),
++      row({ passageId: 'sans-consentement-2', userId: USER_IDS[5] }),
++    ];
++    const consents = [
++      ...consentsFor(USER_IDS.slice(0, 5)),
++      { userId: USER_IDS[5], granted: false },
++    ];
++    const { client, upserted, calls } = makeClient(rows, consents);
++
++    const result = await aggregateSegments([42], client, { now: NOW });
++
++    expect(calls.segments).toEqual([[[42], AGGREGATION_WINDOW_DAYS]]);
++    expect(calls.consents).toHaveLength(1);
++    expect([...calls.consents[0]].sort()).toEqual([...USER_IDS].sort());
++    expect(result.passagesConsidered).toBe(5);
++    expect(upserted).toHaveLength(1);
++    const [aggregateRow] = upserted[0] as Record<string, unknown>[];
++    expect(aggregateRow.distinct_user_count).toBe(5);
++    expect(aggregateRow.passage_count).toBe(5);
++  });
++
++  it('TEST-A4-SRV-02: l’upsert est idempotent pour un même jeu d’entrées', async () => {
++    const rows = fiveUsers();
++    const first = makeClient(rows, consentsFor(USER_IDS.slice(0, 5)));
++    const second = makeClient(rows, consentsFor(USER_IDS.slice(0, 5)));
++
++    await aggregateSegments([42], first.client, { now: NOW });
++    await aggregateSegments([42], second.client, { now: NOW });
++
++    expect(first.upserted).toHaveLength(1);
++    expect(second.upserted).toHaveLength(1);
++    const firstRows = first.upserted[0] as Record<string, unknown>[];
++    const secondRows = second.upserted[0] as Record<string, unknown>[];
++
++    expect(firstRows).toEqual(secondRows);
++    for (const aggregateRow of firstRows) {
++      expect(aggregateRow.processor_version).toBe(AGGREGATE_PROCESSOR_VERSION);
++      expect(AGGREGATE_PROCESSOR_VERSION).toBe('a4-v1');
++      expect(aggregateRow.computed_at).toBe(NOW);
++      expect(aggregateRow.segment_id).toBe(42);
++      expect(aggregateRow.condition_bucket).toBe('dry');
++      expect(aggregateRow.direction).toBe('forward');
++      expect(aggregateRow.confidence).toMatchObject({
++        method: 'collective_weighted_median_a4',
++      });
++    }
++  });
++
++  it('TEST-A4-SRV-03: sous le seuil, l’agrégat est filtré (non publié)', async () => {
++    const under = makeClient(
++      fiveUsers().slice(0, 4),
++      consentsFor(USER_IDS.slice(0, 4))
++    );
++    const underResult = await aggregateSegments([42], under.client, { now: NOW });
++
++    expect(underResult.aggregatesComputed).toBe(1);
++    expect(underResult.aggregatesWritten).toBe(0);
++    expect(underResult.aggregatesSuppressed).toBe(1);
++    expect(under.upserted).toHaveLength(0);
++
++    const enough = makeClient(fiveUsers(), consentsFor(USER_IDS.slice(0, 5)));
++    const enoughResult = await aggregateSegments([42], enough.client, { now: NOW });
++
++    expect(enoughResult.aggregatesWritten).toBe(1);
++    expect(enough.upserted).toHaveLength(1);
++    const [aggregateRow] = enough.upserted[0] as Record<string, unknown>[];
++    expect(Number(aggregateRow.distinct_user_count)).toBeGreaterThanOrEqual(5);
++  });
++
++  it('TEST-A4-SRV-04: aucune identité individuelle dans les lignes ni dans le résumé', async () => {
++    const rows = [
++      ...fiveUsers(),
++      row({ passageId: 'autre-segment', userId: USER_IDS[5], segmentId: 77 }),
++    ];
++    const consents = consentsFor(USER_IDS);
++    const { client, upserted } = makeClient(rows, consents);
++
++    const result = await aggregateSegments([42, 77], client, { now: NOW });
++    const serializedResult = JSON.stringify(result);
++    const serializedRows = JSON.stringify(upserted);
++
++    for (const userId of USER_IDS) {
++      expect(serializedResult).not.toContain(userId);
++      expect(serializedRows).not.toContain(userId);
++      expect(serializedRows).not.toContain(hashUserId(userId));
++    }
++    expect(serializedRows).not.toContain('passage-0');
++
++    for (const aggregateRow of upserted[0] as Record<string, unknown>[]) {
++      for (const forbidden of ['user_id', 'userId', 'userIdHash', 'passage_id', 'passageId']) {
++        expect(Object.keys(aggregateRow)).not.toContain(forbidden);
++      }
++    }
++  });
++});
+diff --git a/tests/adventure-intelligence/collective-eligibility.spec.ts b/tests/adventure-intelligence/collective-eligibility.spec.ts
+new file mode 100644
+index 00000000..208a1b55
+--- /dev/null
++++ b/tests/adventure-intelligence/collective-eligibility.spec.ts
+@@ -0,0 +1,112 @@
++import { describe, it, expect } from 'vitest';
++import {
++  collectiveEligibility,
++  ELIGIBILITY_REASONS,
++  ELIGIBILITY_THRESHOLDS,
++  type EligibilityInput,
++} from '@/features/adventure-intelligence/domain/collectiveEligibility';
++
++function input(overrides: Partial<EligibilityInput> = {}): EligibilityInput {
++  return {
++    consentCollective: true,
++    sessionFinished: true,
++    gpsQuality: 0.9,
++    mapMatchQuality: 0.8,
++    plausibleMovement: true,
++    passageQuality: 0.7,
++    ...overrides,
++  };
++}
++
++describe('Éligibilité collective — TEST-A4-ELIG', () => {
++  it('TEST-A4-ELIG-01: le consentement collectif est requis', () => {
++    expect(collectiveEligibility(input({ consentCollective: false }))).toEqual({
++      eligible: false,
++      reasons: [ELIGIBILITY_REASONS.consent],
++    });
++
++    const granted = collectiveEligibility(input());
++    expect(granted).toEqual({ eligible: true, reasons: [] });
++  });
++
++  it('TEST-A4-ELIG-02: la session doit être terminée', () => {
++    expect(collectiveEligibility(input({ sessionFinished: false }))).toEqual({
++      eligible: false,
++      reasons: [ELIGIBILITY_REASONS.session],
++    });
++  });
++
++  it('TEST-A4-ELIG-03: qualités GPS, map-matching et passage minimales', () => {
++    expect(ELIGIBILITY_THRESHOLDS).toEqual({
++      gpsQuality: 0.6,
++      mapMatchQuality: 0.6,
++      passageQuality: 0.5,
++    });
++
++    expect(
++      collectiveEligibility(input({ gpsQuality: ELIGIBILITY_THRESHOLDS.gpsQuality - 0.01 })).eligible
++    ).toBe(false);
++    expect(
++      collectiveEligibility(input({ gpsQuality: ELIGIBILITY_THRESHOLDS.gpsQuality })).eligible
++    ).toBe(true);
++
++    expect(
++      collectiveEligibility(
++        input({ mapMatchQuality: ELIGIBILITY_THRESHOLDS.mapMatchQuality - 0.01 })
++      ).eligible
++    ).toBe(false);
++    expect(
++      collectiveEligibility(
++        input({ mapMatchQuality: ELIGIBILITY_THRESHOLDS.mapMatchQuality })
++      ).eligible
++    ).toBe(true);
++
++    expect(
++      collectiveEligibility(
++        input({ passageQuality: ELIGIBILITY_THRESHOLDS.passageQuality - 0.01 })
++      ).eligible
++    ).toBe(false);
++    expect(
++      collectiveEligibility(input({ passageQuality: ELIGIBILITY_THRESHOLDS.passageQuality })).eligible
++    ).toBe(true);
++
++    // Qualité non finie ⇒ refus prudente.
++    expect(collectiveEligibility(input({ gpsQuality: Number.NaN })).eligible).toBe(false);
++  });
++
++  it('TEST-A4-ELIG-04: un déplacement non plausible est refusé', () => {
++    expect(collectiveEligibility(input({ plausibleMovement: false }))).toEqual({
++      eligible: false,
++      reasons: [ELIGIBILITY_REASONS.movement],
++    });
++  });
++
++  it('TEST-A4-ELIG-05: chaque refus produit une raison explicite et ordonnée', () => {
++    const result = collectiveEligibility({
++      consentCollective: false,
++      sessionFinished: false,
++      gpsQuality: 0.2,
++      mapMatchQuality: 0.1,
++      plausibleMovement: false,
++      passageQuality: 0.1,
++    });
++
++    expect(result.eligible).toBe(false);
++    expect(result.reasons).toEqual([
++      ELIGIBILITY_REASONS.consent,
++      ELIGIBILITY_REASONS.session,
++      ELIGIBILITY_REASONS.gps,
++      ELIGIBILITY_REASONS.mapMatch,
++      ELIGIBILITY_REASONS.movement,
++      ELIGIBILITY_REASONS.passage,
++    ]);
++
++    const partial = collectiveEligibility(
++      input({ mapMatchQuality: 0.3, passageQuality: 0.2 })
++    );
++    expect(partial.reasons).toEqual([
++      ELIGIBILITY_REASONS.mapMatch,
++      ELIGIBILITY_REASONS.passage,
++    ]);
++  });
++});
+diff --git a/tests/adventure-intelligence/collective-intelligence.spec.ts b/tests/adventure-intelligence/collective-intelligence.spec.ts
+new file mode 100644
+index 00000000..4b3a0ce1
+--- /dev/null
++++ b/tests/adventure-intelligence/collective-intelligence.spec.ts
+@@ -0,0 +1,326 @@
++import { describe, it, expect } from 'vitest';
++import {
++  aggregateCollective,
++  assignConditionBucket,
++  detectAnomalies,
++  isPublishable,
++  normalizedSlowdown,
++  percentile,
++  weightedMedian,
++  MAX_AGGREGATE_AGE_DAYS,
++  MIN_DISTINCT_USERS,
++  type CollectiveAggregate,
++  type CollectivePassage,
++} from '@/features/adventure-intelligence/domain/collectiveIntelligence';
++import { makeConfidence } from '@/features/adventure-intelligence/domain/confidence';
++import type { ConditionBucket } from '@/features/adventure-intelligence/schemas/live.schema';
++
++const NOW = '2026-09-11T12:00:00.000Z';
++
++function daysAgo(days: number): string {
++  return new Date(Date.parse(NOW) - days * 86400000).toISOString();
++}
++
++function passage(overrides: Partial<CollectivePassage> = {}): CollectivePassage {
++  return {
++    passageId: `p-${Math.abs(overrides.observedDurationS ?? 120)}-${overrides.userIdHash ?? 'u1'}`,
++    userIdHash: 'u1',
++    segmentId: 10,
++    direction: 'forward',
++    observedDurationS: 120,
++    expectedDurationS: 100,
++    quality: 0.9,
++    observedAt: daysAgo(1),
++    conditionBucket: 'dry' as ConditionBucket,
++    uturnDetected: false,
++    offRoute: false,
++    ...overrides,
++  };
++}
++
++/** Cinq utilisateurs distincts, ratio identique (1.2), qualité maximale. */
++function fiveUsers(overrides: Partial<CollectivePassage> = {}): CollectivePassage[] {
++  return Array.from({ length: 5 }, (_, index) =>
++    passage({
++      passageId: `p-${index}`,
++      userIdHash: `user-${index}`,
++      observedDurationS: 120,
++      expectedDurationS: 100,
++      ...overrides,
++    })
++  );
++}
++
++describe('Agrégation collective robuste — TEST-A4-AGG', () => {
++  it('TEST-A4-AGG-01: normalise par le ratio observé/attendu, jamais par une vitesse brute', () => {
++    expect(normalizedSlowdown(120, 100)).toBeCloseTo(1.2, 6);
++    expect(normalizedSlowdown(80, 100)).toBeCloseTo(0.8, 6);
++    expect(normalizedSlowdown(100, 0)).toBe(1);
++    expect(normalizedSlowdown(100, -5)).toBe(1);
++    expect(normalizedSlowdown(Number.NaN, 100)).toBe(1);
++
++    // Mêmes ratios, durées absolues très différentes ⇒ mêmes agrégats.
++    const slow = aggregateCollective(
++      fiveUsers({ observedDurationS: 240, expectedDurationS: 200 }),
++      { now: NOW }
++    );
++    const fast = aggregateCollective(
++      fiveUsers({ observedDurationS: 24, expectedDurationS: 20 }),
++      { now: NOW }
++    );
++
++    expect(slow).toHaveLength(1);
++    expect(fast).toHaveLength(1);
++    expect(slow[0].weightedMedianSlowdown).toBeCloseTo(1.2, 6);
++    expect(fast[0].weightedMedianSlowdown).toBeCloseTo(1.2, 6);
++    expect(slow[0].p50).toBeCloseTo(fast[0].p50, 6);
++  });
++
++  it('TEST-A4-AGG-02: la médiane pondérée résiste aux extrêmes, contrairement à la moyenne', () => {
++    expect(
++      weightedMedian([
++        { value: 10, weight: 1 },
++        { value: 30, weight: 9 },
++      ])
++    ).toBe(30);
++    expect(weightedMedian([])).toBeNull();
++
++    // Quatre passages à ratio 1 et un à ratio 3 : la médiane pondérée reste 1.
++    const passages = [
++      ...fiveUsers({ observedDurationS: 100, expectedDurationS: 100 })
++        .slice(0, 4)
++        .map((entry, index) => ({
++          ...entry,
++          passageId: `median-${index}`,
++        })),
++      passage({ passageId: 'median-out', userIdHash: 'user-4', observedDurationS: 300 }),
++    ];
++
++    const [aggregate] = aggregateCollective(passages, { now: NOW });
++    const ratios = passages.map(
++      (entry) => entry.observedDurationS / entry.expectedDurationS
++    );
++    const arithmeticMean = ratios.reduce((sum, ratio) => sum + ratio, 0) / ratios.length;
++
++    expect(arithmeticMean).toBeGreaterThan(1.3);
++    expect(aggregate.weightedMedianSlowdown).toBeCloseTo(1, 6);
++    expect(aggregate.weightedMedianSlowdown).not.toBeCloseTo(arithmeticMean, 1);
++  });
++
++  it('TEST-A4-AGG-03: percentiles interpolés et ordonnés', () => {
++    expect(percentile([], 0.5)).toBeNull();
++    expect(percentile([2], 0.9)).toBe(2);
++    expect(percentile([1, 2, 3, 4], 0.25)).toBeCloseTo(1.75, 6);
++    expect(percentile([1, 2, 3, 4], 0.5)).toBeCloseTo(2.5, 6);
++    expect(percentile([1, 2, 3, 4], 0.75)).toBeCloseTo(3.25, 6);
++    expect(percentile([1, 2, 3, 4], 0.9)).toBeCloseTo(3.7, 6);
++    expect(percentile([1, 2, 3, 4], 2)).toBe(4);
++
++    const [aggregate] = aggregateCollective(
++      fiveUsers({
++        observedDurationS: 100,
++        expectedDurationS: 100,
++        userIdHash: 'user-shared',
++        passageId: 'p-shared',
++      }).map((entry, index) => ({
++        ...entry,
++        userIdHash: `user-${index}`,
++        observedDurationS: 100 + index * 10,
++      })),
++      { now: NOW }
++    );
++
++    expect(aggregate.p25).toBeLessThanOrEqual(aggregate.p50);
++    expect(aggregate.p50).toBeLessThanOrEqual(aggregate.p75);
++    expect(aggregate.p75).toBeLessThanOrEqual(aggregate.p90);
++  });
++
++  it('TEST-A4-AGG-04: le rejet MAD écarte une anomalie sans déplacer la médiane', () => {
++    const entries = [
++      { value: 10, weight: 1 },
++      { value: 10, weight: 1 },
++      { value: 11, weight: 1 },
++      { value: 12, weight: 1 },
++      { value: 100, weight: 1 },
++    ];
++
++    const { kept, rejected } = detectAnomalies(entries);
++    expect(kept).toHaveLength(4);
++    expect(kept.map((entry) => entry.value)).not.toContain(100);
++    expect(rejected).toHaveLength(1);
++    expect(rejected[0].value).toBe(100);
++
++    // Seuil très large : l'anomalie est conservée.
++    const loose = detectAnomalies(entries, 100);
++    expect(loose.kept).toHaveLength(5);
++    expect(loose.rejected).toHaveLength(0);
++
++    const clean = fiveUsers({ observedDurationS: 100, expectedDurationS: 100 });
++    const withOutlier = [
++      ...clean,
++      passage({ passageId: 'outlier', userIdHash: 'user-out', observedDurationS: 1000 }),
++    ];
++
++    const [withoutAggregate] = aggregateCollective(clean, { now: NOW });
++    const [withAggregate] = aggregateCollective(withOutlier, { now: NOW });
++
++    expect(withoutAggregate.weightedMedianSlowdown).toBeCloseTo(1, 6);
++    expect(withAggregate.weightedMedianSlowdown).toBeCloseTo(1, 6);
++    expect(withAggregate.passageCount).toBe(5);
++  });
++
++  it('TEST-A4-AGG-05: chaque bucket de conditions est agrégé séparément', () => {
++    expect(assignConditionBucket({ surface: 'snow', weather: null })).toBe('snow');
++    expect(assignConditionBucket({ surface: null, weather: 'verglas' })).toBe('ice');
++    expect(assignConditionBucket({ surface: null, weather: 'pluie' })).toBe('wet');
++    expect(assignConditionBucket({ isNight: true })).toBe('night');
++    expect(assignConditionBucket({ isAscent: true })).toBe('ascent');
++    expect(assignConditionBucket({ isAscent: false })).toBe('descent');
++    expect(assignConditionBucket({ packWeightKg: 12 })).toBe('heavy_pack');
++    expect(assignConditionBucket({ packWeightKg: 3 })).toBe('light_pack');
++    expect(assignConditionBucket({})).toBe('dry');
++    // La condition la plus contraignante gagne.
++    expect(assignConditionBucket({ surface: 'glace', weather: 'neige' })).toBe('ice');
++
++    const buckets: ConditionBucket[] = ['dry', 'wet', 'snow'];
++    const aggregates = aggregateCollective(
++      buckets.map((bucket, index) =>
++        passage({
++          passageId: `bucket-${bucket}`,
++          userIdHash: `user-${index}`,
++          conditionBucket: bucket,
++        })
++      ),
++      { now: NOW }
++    );
++
++    expect(aggregates).toHaveLength(3);
++    expect(aggregates.map((entry) => entry.conditionBucket)).toEqual(['dry', 'snow', 'wet']);
++    for (const aggregate of aggregates) {
++      expect(aggregate.passageCount).toBe(1);
++      expect(aggregate.distinctUserCount).toBe(1);
++    }
++  });
++
++  it('TEST-A4-AGG-06: les sens forward et reverse sont agrégés séparément', () => {
++    const aggregates = aggregateCollective(
++      [
++        passage({ passageId: 'fwd-1', userIdHash: 'u1', direction: 'forward' }),
++        passage({ passageId: 'rev-1', userIdHash: 'u2', direction: 'reverse' }),
++      ],
++      { now: NOW }
++    );
++
++    expect(aggregates).toHaveLength(2);
++    const byDirection = new Map(aggregates.map((entry) => [entry.direction, entry]));
++    expect(byDirection.get('forward')?.passageCount).toBe(1);
++    expect(byDirection.get('reverse')?.passageCount).toBe(1);
++  });
++
++  it('TEST-A4-AGG-07: plancher de publication à 5 utilisateurs distincts', () => {
++    const [four] = aggregateCollective(
++      Array.from({ length: 4 }, (_, index) =>
++        passage({ passageId: `p-${index}`, userIdHash: `user-${index}` })
++      ),
++      { now: NOW }
++    );
++    const [five] = aggregateCollective(fiveUsers(), { now: NOW });
++
++    expect(MIN_DISTINCT_USERS).toBe(5);
++    expect(four.distinctUserCount).toBe(4);
++    expect(five.distinctUserCount).toBe(5);
++    expect(isPublishable({ ...four, computedAt: NOW }, { now: NOW })).toBe(false);
++    expect(isPublishable({ ...five, computedAt: NOW }, { now: NOW })).toBe(true);
++
++    // Plusieurs passages d'un même utilisateur ne comptent qu'une fois.
++    const [repeated] = aggregateCollective(
++      Array.from({ length: 8 }, (_, index) =>
++        passage({ passageId: `rep-${index}`, userIdHash: 'user-0' })
++      ),
++      { now: NOW }
++    );
++    expect(repeated.passageCount).toBe(8);
++    expect(repeated.distinctUserCount).toBe(1);
++    expect(isPublishable({ ...repeated, computedAt: NOW }, { now: NOW })).toBe(false);
++  });
++
++  it('TEST-A4-AGG-08: une confiance faible rend l’agrégat non publiable', () => {
++    const [aggregate] = aggregateCollective(fiveUsers(), { now: NOW });
++    const lowConfidence: CollectiveAggregate = {
++      ...aggregate,
++      confidence: makeConfidence({
++        score: 0.3,
++        sampleCount: aggregate.passageCount,
++        method: 'collective_weighted_median_a4',
++      }),
++    };
++
++    expect(aggregate.confidence.score).toBeGreaterThanOrEqual(0.5);
++    expect(isPublishable({ ...aggregate, computedAt: NOW }, { now: NOW })).toBe(true);
++    expect(isPublishable({ ...lowConfidence, computedAt: NOW }, { now: NOW })).toBe(false);
++    expect(
++      isPublishable({ ...lowConfidence, computedAt: NOW }, { now: NOW, minConfidence: 0.2 })
++    ).toBe(true);
++  });
++
++  it('TEST-A4-AGG-09: une agrégation ancienne n’est plus publiable', () => {
++    const [aggregate] = aggregateCollective(fiveUsers(), { now: NOW });
++
++    const staleComputedAt = daysAgo(MAX_AGGREGATE_AGE_DAYS + 10);
++    expect(isPublishable({ ...aggregate, computedAt: staleComputedAt }, { now: NOW })).toBe(false);
++    expect(
++      isPublishable({ ...aggregate, computedAt: daysAgo(10) }, { now: NOW })
++    ).toBe(true);
++
++    // Dernière observation trop vieille : explicitement non publiable.
++    const staleObservation = daysAgo(MAX_AGGREGATE_AGE_DAYS + 10);
++    const freshAggregate = { ...aggregate, computedAt: NOW };
++    expect(
++      isPublishable(freshAggregate, { now: NOW, lastObservedAt: staleObservation })
++    ).toBe(false);
++    expect(isPublishable(freshAggregate, { now: NOW, lastObservedAt: daysAgo(30) })).toBe(true);
++
++    // Les passages plus vieux que 730 j sont exclus de l'agrégation.
++    const tooOld = fiveUsers({ observedAt: daysAgo(MAX_AGGREGATE_AGE_DAYS + 1) });
++    expect(aggregateCollective(tooOld, { now: NOW })).toEqual([]);
++  });
++
++  it('TEST-A4-AGG-10: scores bornés et agrégation déterministe', () => {
++    const passages = Array.from({ length: 12 }, (_, index) =>
++      passage({
++        passageId: `mix-${index}`,
++        userIdHash: `user-${index % 6}`,
++        observedDurationS: 90 + (index % 5) * 30,
++        expectedDurationS: 100,
++        quality: 0.6 + (index % 4) * 0.1,
++        observedAt: daysAgo(index),
++        conditionBucket: index % 2 === 0 ? 'dry' : 'wet',
++        uturnDetected: index % 3 === 0,
++        offRoute: index % 4 === 0,
++      })
++    );
++
++    const first = aggregateCollective(passages, { now: NOW });
++    const second = aggregateCollective(passages, { now: NOW });
++
++    expect(first).toEqual(second);
++    expect(first.length).toBeGreaterThan(0);
++
++    for (const aggregate of first) {
++      for (const score of [
++        aggregate.slowdownScore,
++        aggregate.effortScore,
++        aggregate.technicalScore,
++        aggregate.fatigueScore,
++        aggregate.orientationScore,
++        aggregate.collectiveDifficulty,
++      ]) {
++        expect(score).toBeGreaterThanOrEqual(0);
++        expect(score).toBeLessThanOrEqual(100);
++      }
++      expect(aggregate.confidence.method).toBe('collective_weighted_median_a4');
++      expect(Number.isFinite(aggregate.weightedMedianSlowdown)).toBe(true);
++      expect(Number.isFinite(aggregate.p90)).toBe(true);
++    }
++  });
++});
+diff --git a/tests/adventure-intelligence/trail-intelligence-legacy.spec.ts b/tests/adventure-intelligence/trail-intelligence-legacy.spec.ts
+new file mode 100644
+index 00000000..1039428c
+--- /dev/null
++++ b/tests/adventure-intelligence/trail-intelligence-legacy.spec.ts
+@@ -0,0 +1,121 @@
++import { describe, it, expect, vi, afterEach } from 'vitest';
++import {
++  TrailIntelligenceEngine,
++  type AnonymizedHikeSample,
++} from '@/features/hiking/intelligence/TrailIntelligenceEngine';
++import type { CollectivePassage } from '@/features/adventure-intelligence/domain/collectiveIntelligence';
++import type { HikeSession, Trail } from '@/features/hiking/types';
++
++const NOW = '2026-09-11T12:00:00.000Z';
++
++function session(overrides: Partial<HikeSession> = {}): HikeSession {
++  return {
++    id: 'session-legacy-1',
++    userId: 'user-legacy-1',
++    routeId: 'route-77',
++    startedAt: '2026-09-01T08:00:00.000Z',
++    distanceKm: 12,
++    durationSeconds: 7200,
++    positions: [
++      { latitude: 45, longitude: 6, speed: 0.1, timestamp: 1000 },
++      { latitude: 45.001, longitude: 6, accuracy: 40, timestamp: 2000 },
++    ],
++    poiEvents: [],
++    ...overrides,
++  };
++}
++
++function samples(count: number, paceMinPerKm = 20): AnonymizedHikeSample[] {
++  return Array.from({ length: count }, (_, index) => ({
++    routeId: 'trail-1',
++    anonymizedSessionId: `anon-${index}`,
++    totalDistanceKm: 12,
++    durationSeconds: paceMinPerKm * 60 * 12,
++    averagePaceMinPerKm: paceMinPerKm,
++    slowZonesCount: 5,
++    gpsWeakPointsCount: 1,
++  }));
++}
++
++function passage(overrides: Partial<CollectivePassage> = {}): CollectivePassage {
++  return {
++    passageId: `legacy-passage-${overrides.userIdHash ?? 'u0'}`,
++    userIdHash: 'u0',
++    segmentId: 77,
++    direction: 'forward',
++    observedDurationS: 120,
++    expectedDurationS: 100,
++    quality: 0.9,
++    observedAt: '2026-09-10T10:00:00.000Z',
++    conditionBucket: 'dry',
++    uturnDetected: false,
++    offRoute: false,
++    ...overrides,
++  };
++}
++
++describe('Migration du prototype TrailIntelligenceEngine — TEST-A4-LEG', () => {
++  afterEach(() => {
++    vi.restoreAllMocks();
++  });
++
++  it('TEST-A4-LEG-01: plus de Math.random, résultats identiques sur appels répétés', () => {
++    const randomSpy = vi.spyOn(Math, 'random');
++
++    const first = TrailIntelligenceEngine.anonymizeHikeSession(session());
++    const second = TrailIntelligenceEngine.anonymizeHikeSession(session());
++
++    expect(randomSpy).not.toHaveBeenCalled();
++    expect(first).toEqual(second);
++    expect(first.anonymizedSessionId).toMatch(/^anon-[0-9a-f]+$/);
++    expect(first.anonymizedSessionId).not.toContain('user-legacy-1');
++
++    const trail: Trail = { id: 'trail-1', name: 'Lac', difficulty: 'Facile', duration_hours: 2 };
++    const reportA = TrailIntelligenceEngine.processTrailTelemetry('trail-1', trail, samples(12), {
++      now: NOW,
++    });
++    const reportB = TrailIntelligenceEngine.processTrailTelemetry('trail-1', trail, samples(12), {
++      now: NOW,
++    });
++
++    expect(reportA).toEqual(reportB);
++    expect(reportA.proposedCorrections).toEqual(reportB.proposedCorrections);
++    expect(reportA.proposedCorrections[0].createdAt).toBe(NOW);
++  });
++
++  it('TEST-A4-LEG-02: façade rétrocompatible et entrée par segment (moteur A4)', () => {
++    const trail: Trail = { id: 'trail-1', name: 'Lac', difficulty: 'Facile', duration_hours: 2 };
++    const report = TrailIntelligenceEngine.processTrailTelemetry('trail-1', trail, samples(12));
++
++    // Façade route-level historique inchangée.
++    expect(report.sampleCount).toBe(12);
++    expect(report.observedAveragePaceMinPerKm).toBe(20);
++    expect(report.observedDifficulty).toBe('Difficile');
++    expect(report.proposedCorrections.length).toBeGreaterThanOrEqual(1);
++    expect(report.proposedCorrections[0].status).toBe('pending_review');
++    expect(report.proposedCorrections[0].id).toContain('trail-1');
++
++    // Entrée par segment : délégation directe au moteur pur A4.
++    const passages = Array.from({ length: 6 }, (_, index) =>
++      passage({ passageId: `p-${index}`, userIdHash: `user-${index}` })
++    );
++    const aggregate = TrailIntelligenceEngine.processSegmentAggregates(77, passages, { now: NOW });
++
++    expect(aggregate).not.toBeNull();
++    expect(aggregate).toMatchObject({ segmentId: 77, distinctUserCount: 6, direction: 'forward' });
++    expect(aggregate?.confidence.method).toBe('collective_weighted_median_a4');
++    expect(
++      TrailIntelligenceEngine.processSegmentAggregates(999, passages, { now: NOW })
++    ).toBeNull();
++
++    // Quand des passages sont fournis, la façade délègue aussi au moteur A4.
++    const withCollective = TrailIntelligenceEngine.processTrailTelemetry(
++      'trail-1',
++      trail,
++      samples(12),
++      { now: NOW, passages }
++    );
++    expect(withCollective.collectiveAggregates).toHaveLength(1);
++    expect(withCollective.collectiveAggregates?.[0].passageCount).toBe(6);
++  });
++});

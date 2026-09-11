@@ -1,0 +1,3901 @@
+﻿diff --git a/src/app/api/adventure/[id]/route.ts b/src/app/api/adventure/[id]/route.ts
+new file mode 100644
+index 00000000..11c8a5d4
+--- /dev/null
++++ b/src/app/api/adventure/[id]/route.ts
+@@ -0,0 +1,51 @@
++import { NextRequest, NextResponse } from 'next/server';
++import { z } from 'zod';
++import { createClient } from '@/lib/supabase/server';
++import { getAdventurePlan } from '@/features/adventure-intelligence/server/generateAdventure';
++
++export const dynamic = 'force-dynamic';
++
++const planIdSchema = z.string().uuid('id doit être un UUID');
++
++/**
++ * GET /api/adventure/[id] — lecture du plan + version courante + décisions.
++ * Le client de session applique les policies A1 (propriétaire ou
++ * collaborateur du voyage) : tout plan inaccessible est un 404.
++ */
++export async function GET(
++  _request: NextRequest,
++  { params }: { params: Promise<{ id: string }> }
++) {
++  try {
++    const session = await createClient();
++    const {
++      data: { user },
++    } = await session.auth.getUser();
++
++    const { id } = await params;
++    const parsedId = planIdSchema.safeParse(id);
++    if (!parsedId.success) {
++      return NextResponse.json({ error: 'Plan introuvable' }, { status: 404 });
++    }
++    if (!user) {
++      return NextResponse.json({ error: 'Plan introuvable' }, { status: 404 });
++    }
++
++    const stored = await getAdventurePlan(session, parsedId.data);
++    if (!stored) {
++      return NextResponse.json({ error: 'Plan introuvable' }, { status: 404 });
++    }
++
++    return NextResponse.json({
++      plan: stored.plan,
++      version: stored.version,
++      decisions: stored.decisions,
++    });
++  } catch (error) {
++    console.error(
++      '[adventure/[id]] erreur inattendue:',
++      error instanceof Error ? error.message : error
++    );
++    return NextResponse.json({ error: 'Erreur serveur' }, { status: 500 });
++  }
++}
+diff --git a/src/app/api/adventure/generate/route.ts b/src/app/api/adventure/generate/route.ts
+new file mode 100644
+index 00000000..8cb4f9c3
+--- /dev/null
++++ b/src/app/api/adventure/generate/route.ts
+@@ -0,0 +1,107 @@
++import { NextRequest, NextResponse } from 'next/server';
++import { z } from 'zod';
++import { getServiceSupabase } from '@/lib/ai/serviceClient';
++import { createClient } from '@/lib/supabase/server';
++import { createDefaultRegistry } from '@/features/adventure-intelligence/server/adapters';
++import {
++  createSupabaseAdventurePersistence,
++  generateAdventure,
++} from '@/features/adventure-intelligence/server/generateAdventure';
++
++export const dynamic = 'force-dynamic';
++
++const adventureConstraintSchema = z.object({
++  id: z.string().min(1, 'locks[].id est requis'),
++  kind: z.enum(['hard', 'soft']),
++  label: z.string().min(1, 'locks[].label est requis'),
++  value: z.unknown(),
++  locked: z.boolean(),
++  source: z.enum(['user', 'system', 'safety']),
++});
++
++const generateSchema = z.object({
++  text: z
++    .string()
++    .min(10, 'Le texte doit contenir au moins 10 caractères')
++    .max(2000, 'Le texte ne peut pas dépasser 2000 caractères'),
++  locks: z
++    .array(adventureConstraintSchema)
++    .max(50, 'Maximum 50 verrous par génération')
++    .optional(),
++});
++
++function zodDetails(error: z.ZodError): string {
++  return error.issues.map((issue) => issue.path.join('.')).join(', ');
++}
++
++/**
++ * POST /api/adventure/generate — une phrase → AdventurePlan complet.
++ * Auth obligatoire (401), validation zod française (400), service requis (503).
++ * La persistance et le registre sont injectés côté serveur uniquement.
++ */
++export async function POST(request: NextRequest) {
++  try {
++    const session = await createClient();
++    const {
++      data: { user },
++    } = await session.auth.getUser();
++    if (!user) {
++      return NextResponse.json(
++        { error: 'Unauthorized', details: 'Session requise' },
++        { status: 401 }
++      );
++    }
++
++    let body: unknown;
++    try {
++      body = await request.json();
++    } catch {
++      return NextResponse.json(
++        { error: 'Corps invalide', details: 'JSON attendu' },
++        { status: 400 }
++      );
++    }
++
++    const parsed = generateSchema.safeParse(body);
++    if (!parsed.success) {
++      return NextResponse.json(
++        { error: 'Corps invalide', details: zodDetails(parsed.error) },
++        { status: 400 }
++      );
++    }
++
++    const supabase = getServiceSupabase();
++    if (!supabase) {
++      return NextResponse.json({ error: 'Service indisponible' }, { status: 503 });
++    }
++
++    const result = await generateAdventure(
++      {
++        ownerId: user.id,
++        text: parsed.data.text,
++        locks: parsed.data.locks,
++      },
++      {
++        registry: createDefaultRegistry(),
++        persistence: createSupabaseAdventurePersistence(supabase),
++      }
++    );
++
++    return NextResponse.json(
++      {
++        planId: result.plan.id,
++        version: result.plan.currentVersion,
++        candidates: result.candidates,
++        explanation: result.explanation,
++        aiUsed: result.aiUsed,
++      },
++      { status: 201 }
++    );
++  } catch (error) {
++    console.error(
++      '[adventure/generate] erreur inattendue:',
++      error instanceof Error ? error.message : error
++    );
++    return NextResponse.json({ error: 'Erreur serveur' }, { status: 500 });
++  }
++}
+diff --git a/src/features/adventure-intelligence/domain/autonomy.ts b/src/features/adventure-intelligence/domain/autonomy.ts
+new file mode 100644
+index 00000000..5e67df8e
+--- /dev/null
++++ b/src/features/adventure-intelligence/domain/autonomy.ts
+@@ -0,0 +1,36 @@
++/**
++ * A6 — Niveaux d'autonomie.
++ *
++ * L'autonomie ne contourne jamais une confirmation requise (A1) : paiement,
++ * annulation, changement sécurité, partage de position et changement de
++ * groupe restent toujours confirmés par l'utilisateur.
++ */
++import { requiresConfirmation, type DecisionType } from './decisions';
++
++export const AUTONOMY_LEVELS = ['advisor', 'copilot', 'guided_autopilot'] as const;
++
++export type AutonomyLevel = (typeof AUTONOMY_LEVELS)[number];
++
++/** Actions qui exigent une confirmation quel que soit le niveau d'autonomie. */
++export const AUTONOMY_CONFIRMATION_ACTIONS: readonly DecisionType[] = [
++  'payment',
++  'cancellation',
++  'safety_change',
++  'location_share',
++  'group_change',
++];
++
++/** Réutilise le mapping A1 `requiresConfirmation` — aucune duplication. */
++export function requiredConfirmations(action: DecisionType): boolean {
++  return requiresConfirmation(action);
++}
++
++/**
++ * `advisor` propose uniquement ; `copilot` et `guided_autopilot` exécutent
++ * automatiquement les actions non structurantes (`other`). Les actions à
++ * confirmation ne sont jamais auto-exécutées.
++ */
++export function canAutoExecute(level: AutonomyLevel, action: DecisionType): boolean {
++  if (requiredConfirmations(action)) return false;
++  return level !== 'advisor';
++}
+diff --git a/src/features/adventure-intelligence/domain/candidates.ts b/src/features/adventure-intelligence/domain/candidates.ts
+new file mode 100644
+index 00000000..507c657e
+--- /dev/null
++++ b/src/features/adventure-intelligence/domain/candidates.ts
+@@ -0,0 +1,118 @@
++/**
++ * A6 — Variantes d'aventure (comfort / balanced / adventure).
++ *
++ * Construction pure et déterministe : les deltas sont des écarts bornés par
++ * rapport à la variante de référence `balanced`, jamais des données inventées.
++ * `adventure` pousse l'autonomie et le risque, `comfort` les marges et les
++ * pauses, `balanced` reste intermédiaire.
++ */
++
++export const CANDIDATE_IDS = ['comfort', 'balanced', 'adventure'] as const;
++
++export type AdventureCandidateId = (typeof CANDIDATE_IDS)[number];
++
++export interface AdventureCandidate {
++  id: AdventureCandidateId;
++  label: string;
++  budgetDeltaPct: number;
++  effortDeltaPct: number;
++  durationDeltaPct: number;
++  comfortScore: number;
++  riskScore: number;
++  uncertainty: number;
++  reasons: string[];
++}
++
++export interface BuildCandidatesInput {
++  days?: number;
++  participantsCount?: number;
++  budgetTier?: 'shoestring' | 'moderate' | 'comfort';
++  month?: number;
++}
++
++type CandidateProfile = Omit<AdventureCandidate, 'reasons' | 'id'> & { reasons: string[] };
++
++const PROFILES: Record<AdventureCandidateId, CandidateProfile> = {
++  comfort: {
++    label: 'Confort',
++    budgetDeltaPct: 18,
++    effortDeltaPct: -12,
++    durationDeltaPct: 8,
++    comfortScore: 0.85,
++    riskScore: 0.2,
++    uncertainty: 0.15,
++    reasons: [
++      'Marges quotidiennes augmentées : pauses, récupération et jours tampon.',
++      'Hébergement et transferts privilégiés pour réduire l’effort ressenti.',
++      'Budget majoré pour absorber les imprévus logistiques.',
++    ],
++  },
++  balanced: {
++    label: 'Équilibré',
++    budgetDeltaPct: 0,
++    effortDeltaPct: 0,
++    durationDeltaPct: 0,
++    comfortScore: 0.6,
++    riskScore: 0.45,
++    uncertainty: 0.25,
++    reasons: [
++      'Compromis effort / confort aligné sur l’intention déclarée.',
++      'Budget et durée de référence, sans arbitrage extrême.',
++      'Variante recommandée par défaut en cas de doute.',
++    ],
++  },
++  adventure: {
++    label: 'Aventure',
++    budgetDeltaPct: -12,
++    effortDeltaPct: 22,
++    durationDeltaPct: -6,
++    comfortScore: 0.35,
++    riskScore: 0.72,
++    uncertainty: 0.4,
++    reasons: [
++      'Autonomie renforcée : nuits sauvages et ravitaillement espacé.',
++      'Effort quotidien majoré et durée compressée.',
++      'Risques et incertitude assumés, marge de repli réduite.',
++    ],
++  },
++};
++
++function positiveInteger(value: number | undefined, fallback: number): number {
++  if (typeof value !== 'number' || !Number.isFinite(value) || value < 1) return fallback;
++  return Math.trunc(value);
++}
++
++function contextReasons(input: BuildCandidatesInput): string[] {
++  const reasons: string[] = [];
++  const days = positiveInteger(input.days, 0);
++  if (days > 0) reasons.push(`Calibré pour ${days} jour${days > 1 ? 's' : ''}.`);
++  const participants = positiveInteger(input.participantsCount, 1);
++  if (participants > 1) {
++    reasons.push(`Variante groupe (${participants} participants) : logistique partagée.`);
++  }
++  if (input.budgetTier === 'shoestring') {
++    reasons.push('Budget serré : arbitrages économiques prioritaires.');
++  } else if (input.budgetTier === 'comfort') {
++    reasons.push('Budget confort : arbitrages en faveur de la marge.');
++  }
++  return reasons;
++}
++
++export function buildCandidates(input: BuildCandidatesInput = {}): AdventureCandidate[] {
++  const context = contextReasons(input);
++
++  return CANDIDATE_IDS.map((id) => {
++    const profile = PROFILES[id];
++    return {
++      id,
++      label: profile.label,
++      budgetDeltaPct: profile.budgetDeltaPct,
++      effortDeltaPct: profile.effortDeltaPct,
++      durationDeltaPct: profile.durationDeltaPct,
++      comfortScore: profile.comfortScore,
++      riskScore: profile.riskScore,
++      uncertainty: profile.uncertainty,
++      reasons: [...profile.reasons, ...context],
++    };
++  });
++}
+diff --git a/src/features/adventure-intelligence/domain/engineRegistry.ts b/src/features/adventure-intelligence/domain/engineRegistry.ts
+new file mode 100644
+index 00000000..2d34ac64
+--- /dev/null
++++ b/src/features/adventure-intelligence/domain/engineRegistry.ts
+@@ -0,0 +1,204 @@
++/**
++ * A6 — Registre de moteurs (ADR-AI-005).
++ *
++ * Orchestre des `AdventureEngine` purs dans l'ordre topologique de leurs
++ * dépendances. Règles :
++ * - `canRun` faux → run `skipped` avec un warning explicite (le warning du
++ *   moteur via `skipReason` est préféré au warning générique) ;
++ * - `EngineSkipSignal` → `skipped` motivé (source absente), jamais un échec ;
++ * - exception → run `failed` + warning ; un moteur non critique n'interrompt
++ *   pas le pipeline, un moteur critique jette `CriticalEngineError` ;
++ * - `outputs` contient le `EngineResult` complet de chaque moteur ayant
++ *   produit (valeur + confiance + provenance) pour l'assemblage du plan ;
++ * - confiance du plan = `combineConfidence` des moteurs ayant produit ;
++ * - `durationMs` mesuré ; zéro I/O dans le domaine.
++ */
++import { combineConfidence, COLD_CONFIDENCE, type Confidence } from './confidence';
++import type {
++  AdventureEngine,
++  AdventureExecutionContext,
++  EngineResult,
++  EngineWarning,
++} from './engine';
++import { isCriticalEngine } from './orchestratorGraph';
++
++export interface EngineRunRecord {
++  engineId: string;
++  engineVersion: string;
++  status: 'succeeded' | 'skipped' | 'failed';
++  durationMs: number;
++  warnings: EngineWarning[];
++  error?: string;
++}
++
++/** Un moteur peut déclarer en amont pourquoi il sera skippé (source absente). */
++export interface SkippableEngine extends AdventureEngine<unknown, unknown> {
++  readonly skipReason?: EngineWarning;
++}
++
++/** Signal pur : le moteur ne peut pas produire faute de source déterministe. */
++export class EngineSkipSignal extends Error {
++  readonly warning: EngineWarning;
++
++  constructor(warning: EngineWarning) {
++    super(warning.message);
++    this.name = 'EngineSkipSignal';
++    this.warning = warning;
++  }
++}
++
++/** Échec d'un moteur critique : interrompt le pipeline et porte les runs déjà calculés. */
++export class CriticalEngineError extends Error {
++  readonly engineId: string;
++  readonly runs: EngineRunRecord[];
++
++  constructor(engineId: string, message: string, runs: EngineRunRecord[]) {
++    super(`Moteur critique ${engineId} en échec : ${message}`);
++    this.name = 'CriticalEngineError';
++    this.engineId = engineId;
++    this.runs = runs;
++  }
++}
++
++export interface EnginePipelineResult {
++  outputs: Map<string, unknown>;
++  runs: EngineRunRecord[];
++  planConfidence: Confidence;
++}
++
++function errorMessage(error: unknown): string {
++  return error instanceof Error ? error.message : String(error);
++}
++
++export class EngineRegistry {
++  private readonly engines: SkippableEngine[] = [];
++
++  register(engine: AdventureEngine<unknown, unknown>): void {
++    if (this.has(engine.id)) {
++      throw new Error(`Moteur déjà enregistré : ${engine.id}`);
++    }
++    this.engines.push(engine as SkippableEngine);
++  }
++
++  has(id: string): boolean {
++    return this.engines.some((engine) => engine.id === id);
++  }
++
++  /**
++   * Ordre d'exécution : dépendances d'abord, à index d'enregistrement égal
++   * pour les nœuds prêts. Les dépendances non enregistrées ne contraignent pas
++   * (le résolveur d'entrée peut les ignorer).
++   */
++  private orderedEngines(): SkippableEngine[] {
++    const registered = new Set(this.engines.map((engine) => engine.id));
++    const emitted = new Set<string>();
++    const ordered: SkippableEngine[] = [];
++
++    while (ordered.length < this.engines.length) {
++      const ready = this.engines.filter(
++        (engine) =>
++          !emitted.has(engine.id) &&
++          engine.dependencies.every(
++            (dependency) => !registered.has(dependency) || emitted.has(dependency)
++          )
++      );
++      if (ready.length === 0) {
++        const cycle = this.engines
++          .filter((engine) => !emitted.has(engine.id))
++          .map((engine) => engine.id)
++          .join(' → ');
++        throw new Error(`Cycle de dépendances entre moteurs enregistrés : ${cycle}`);
++      }
++      const next = ready[0];
++      emitted.add(next.id);
++      ordered.push(next);
++    }
++
++    return ordered;
++  }
++
++  async runPipeline(
++    context: AdventureExecutionContext,
++    initial: unknown,
++    resolveInput: (id: string, outputs: Map<string, unknown>) => unknown
++  ): Promise<EnginePipelineResult> {
++    const outputs = new Map<string, unknown>();
++    const runs: EngineRunRecord[] = [];
++    const confidences: Confidence[] = [];
++
++    for (const engine of this.orderedEngines()) {
++      if (!engine.canRun(context)) {
++        runs.push({
++          engineId: engine.id,
++          engineVersion: engine.version,
++          status: 'skipped',
++          durationMs: 0,
++          warnings: [
++            engine.skipReason ?? {
++              code: 'can_run_false',
++              message: `Moteur ${engine.id} non applicable dans ce contexte.`,
++              severity: 'warning',
++            },
++          ],
++        });
++        continue;
++      }
++
++      let input = resolveInput(engine.id, outputs);
++      if (input === undefined) input = initial;
++
++      const startedAt = Date.now();
++      try {
++        const result: EngineResult<unknown> = await engine.run(input, context);
++        const durationMs = Math.max(0, Date.now() - startedAt);
++        outputs.set(engine.id, result);
++        confidences.push(result.confidence);
++        runs.push({
++          engineId: engine.id,
++          engineVersion: engine.version,
++          status: 'succeeded',
++          durationMs,
++          warnings: [...result.warnings],
++        });
++      } catch (error) {
++        const durationMs = Math.max(0, Date.now() - startedAt);
++        if (error instanceof EngineSkipSignal) {
++          runs.push({
++            engineId: engine.id,
++            engineVersion: engine.version,
++            status: 'skipped',
++            durationMs,
++            warnings: [error.warning],
++          });
++          continue;
++        }
++
++        const message = errorMessage(error);
++        runs.push({
++          engineId: engine.id,
++          engineVersion: engine.version,
++          status: 'failed',
++          durationMs,
++          warnings: [
++            {
++              code: 'engine_failed',
++              message: `Moteur ${engine.id} en échec : ${message}`,
++              severity: 'critical',
++            },
++          ],
++          error: message,
++        });
++        if (isCriticalEngine(engine.id)) {
++          throw new CriticalEngineError(engine.id, message, runs);
++        }
++      }
++    }
++
++    const planConfidence =
++      confidences.length > 0
++        ? combineConfidence(...confidences)
++        : { ...COLD_CONFIDENCE, reasons: [...COLD_CONFIDENCE.reasons] };
++
++    return { outputs, runs, planConfidence };
++  }
++}
+diff --git a/src/features/adventure-intelligence/domain/locks.ts b/src/features/adventure-intelligence/domain/locks.ts
+new file mode 100644
+index 00000000..dc09994c
+--- /dev/null
++++ b/src/features/adventure-intelligence/domain/locks.ts
+@@ -0,0 +1,113 @@
++/**
++ * A6 — Verrous de contraintes.
++ *
++ * Un verrou n'est jamais remplacé silencieusement : toute violation est
++ * détectée, l'appelant restaure la valeur verrouillée et journalise une
++ * décision `requiresConfirmation`.
++ */
++import type { AdventureConstraint } from './constraints';
++import type { AdventureDecision } from './decisions';
++import type { PlanImpact } from './engine';
++
++function deepEqual(a: unknown, b: unknown): boolean {
++  if (Object.is(a, b)) return true;
++  if (typeof a !== 'object' || typeof b !== 'object' || a === null || b === null) return false;
++
++  if (Array.isArray(a) || Array.isArray(b)) {
++    if (!Array.isArray(a) || !Array.isArray(b) || a.length !== b.length) return false;
++    return a.every((item, index) => deepEqual(item, b[index]));
++  }
++
++  const aRecord = a as Record<string, unknown>;
++  const bRecord = b as Record<string, unknown>;
++  const aKeys = Object.keys(aRecord);
++  const bKeys = Object.keys(bRecord);
++  if (aKeys.length !== bKeys.length) return false;
++  return aKeys.every((key) => deepEqual(aRecord[key], bRecord[key]));
++}
++
++/**
++ * Retourne les identifiants des verrous violés : valeur modifiée, verrou
++ * retiré ou contrainte disparue. Les contraintes non verrouillées restent
++ * librement ajustables.
++ */
++export function detectLockViolations(
++  before: readonly AdventureConstraint[],
++  after: readonly AdventureConstraint[],
++  locks: readonly AdventureConstraint[] = before.filter((constraint) => constraint.locked)
++): string[] {
++  const afterById = new Map(after.map((constraint) => [constraint.id, constraint]));
++  const violations: string[] = [];
++
++  for (const lock of locks) {
++    const next = afterById.get(lock.id);
++    if (!next || !next.locked || !deepEqual(lock.value, next.value)) {
++      violations.push(lock.id);
++    }
++  }
++
++  return violations;
++}
++
++/**
++ * Restaure les verrous violés dans `after` (valeur et drapeau `locked`), sans
++ * toucher aux contraintes non verrouillées ni aux ajouts légitimes.
++ */
++export function restoreLockedConstraints(
++  before: readonly AdventureConstraint[],
++  after: readonly AdventureConstraint[],
++  violations?: readonly string[]
++): AdventureConstraint[] {
++  const violationIds = new Set(violations ?? detectLockViolations(before, after));
++  const lockById = new Map(before.filter((constraint) => constraint.locked).map((lock) => [lock.id, lock]));
++  const restored: AdventureConstraint[] = [];
++
++  for (const constraint of after) {
++    const lock = violationIds.has(constraint.id) ? lockById.get(constraint.id) : undefined;
++    restored.push(lock ? { ...lock } : constraint);
++  }
++
++  const restoredIds = new Set(restored.map((constraint) => constraint.id));
++  for (const [id, lock] of lockById) {
++    if (violationIds.has(id) && !restoredIds.has(id)) restored.push({ ...lock });
++  }
++
++  return restored;
++}
++
++/**
++ * Journalise une décision `proposed` à confirmer pour chaque verrou violé.
++ * ID déterministe (testable) ; la persistance génère l'UUID final.
++ */
++export function buildLockConfirmationDecisions(
++  planId: string,
++  before: readonly AdventureConstraint[],
++  violations: readonly string[],
++  now: string
++): AdventureDecision[] {
++  const lockById = new Map(before.map((constraint) => [constraint.id, constraint]));
++
++  return violations.map((constraintId) => {
++    const lock = lockById.get(constraintId);
++    const label = lock?.label ?? constraintId;
++    const impact: PlanImpact[] = [
++      {
++        id: `lock-${constraintId}`,
++        section: 'coherence',
++        label: `Verrou « ${label} » non respecté`,
++        severity: 'warning',
++      },
++    ];
++
++    return {
++      id: `lock-decision-${constraintId}`,
++      planId,
++      decisionType: 'other',
++      proposal: `Le verrou « ${label} » a été modifié par le solveur — confirmation requise pour appliquer la nouvelle valeur.`,
++      impact,
++      requiresConfirmation: true,
++      status: 'proposed',
++      createdAt: now,
++    };
++  });
++}
+diff --git a/src/features/adventure-intelligence/domain/orchestratorGraph.ts b/src/features/adventure-intelligence/domain/orchestratorGraph.ts
+new file mode 100644
+index 00000000..bcbceca4
+--- /dev/null
++++ b/src/features/adventure-intelligence/domain/orchestratorGraph.ts
+@@ -0,0 +1,122 @@
++/**
++ * A6 — Graphe de dépendances des moteurs (roadmap 6.3, normatif).
++ *
++ * Domaine pur : aucune I/O, aucun import runtime. L'ordre déclaré de
++ * `ENGINE_NODES` est l'ordre roadmap ; `topologicalOrder` le respecte à
++ * l'identique (tri stable des nœuds prêts par index de déclaration) et jette
++ * sur cycle ou dépendance manquante.
++ */
++
++export type EngineNodeId =
++  | 'intent'
++  | 'destination'
++  | 'dates'
++  | 'participants'
++  | 'constraints'
++  | 'route'
++  | 'transport'
++  | 'accommodations'
++  | 'weather'
++  | 'regulations'
++  | 'profile'
++  | 'terrain'
++  | 'prediction'
++  | 'difficulty'
++  | 'food_water'
++  | 'gear'
++  | 'budget'
++  | 'safety'
++  | 'coherence'
++  | 'adventure_plan';
++
++export interface EngineNode {
++  id: EngineNodeId;
++  dependencies: EngineNodeId[];
++  critical: boolean;
++}
++
++/**
++ * Ordre roadmap (normatif) :
++ * intent → destination|dates|participants|constraints → route|transport|accommodations
++ * → weather|regulations → profile|terrain → prediction|difficulty → food_water|gear|budget
++ * → safety → coherence → adventure_plan
++ */
++export const ENGINE_NODES: readonly EngineNode[] = [
++  { id: 'intent', dependencies: [], critical: true },
++  { id: 'destination', dependencies: ['intent'], critical: true },
++  { id: 'dates', dependencies: ['intent'], critical: true },
++  { id: 'participants', dependencies: ['intent'], critical: false },
++  { id: 'constraints', dependencies: ['intent'], critical: false },
++  { id: 'route', dependencies: ['destination', 'dates'], critical: true },
++  { id: 'transport', dependencies: ['route'], critical: false },
++  { id: 'accommodations', dependencies: ['route'], critical: false },
++  { id: 'weather', dependencies: ['destination', 'dates'], critical: false },
++  { id: 'regulations', dependencies: ['destination'], critical: false },
++  { id: 'profile', dependencies: ['participants'], critical: false },
++  { id: 'terrain', dependencies: ['route'], critical: false },
++  { id: 'prediction', dependencies: ['profile', 'terrain'], critical: false },
++  { id: 'difficulty', dependencies: ['prediction'], critical: false },
++  { id: 'food_water', dependencies: ['route'], critical: false },
++  { id: 'gear', dependencies: ['route'], critical: false },
++  { id: 'budget', dependencies: ['transport', 'accommodations', 'food_water', 'gear'], critical: false },
++  { id: 'safety', dependencies: ['weather', 'difficulty', 'budget'], critical: false },
++  { id: 'coherence', dependencies: ['food_water', 'gear', 'budget', 'safety', 'difficulty'], critical: true },
++  { id: 'adventure_plan', dependencies: ['coherence'], critical: true },
++];
++
++/** Dépendances référencées mais absentes du graphe (triées, déduplicées). */
++export function missingDependencies(nodes: readonly EngineNode[] = ENGINE_NODES): string[] {
++  const known = new Set<string>(nodes.map((node) => node.id));
++  const missing = new Set<string>();
++  for (const node of nodes) {
++    for (const dependency of node.dependencies) {
++      if (!known.has(dependency)) missing.add(dependency);
++    }
++  }
++  return [...missing].sort();
++}
++
++/** Un moteur inconnu du graphe n'est jamais critique par défaut. */
++export function isCriticalEngine(id: string): boolean {
++  return ENGINE_NODES.find((node) => node.id === id)?.critical === true;
++}
++
++/**
++ * Tri topologique stable : parmi les nœuds prêts, le plus petit index de
++ * déclaration gagne, ce qui garantit exactement l'ordre roadmap.
++ * Jette sur dépendance manquante puis sur cycle.
++ */
++export function topologicalOrder(nodes: readonly EngineNode[] = ENGINE_NODES): EngineNodeId[] {
++  const missing = missingDependencies(nodes);
++  if (missing.length > 0) {
++    throw new Error(`Dépendances manquantes dans le graphe des moteurs : ${missing.join(', ')}`);
++  }
++
++  const indexById = new Map<string, number>();
++  nodes.forEach((node, index) => indexById.set(node.id, index));
++
++  const remaining = new Set<string>(nodes.map((node) => node.id));
++  const emitted = new Set<string>();
++  const order: EngineNodeId[] = [];
++
++  while (remaining.size > 0) {
++    const ready = nodes
++      .filter((node) => remaining.has(node.id))
++      .filter((node) => node.dependencies.every((dependency) => emitted.has(dependency)));
++
++    if (ready.length === 0) {
++      const cycle = [...remaining].sort(
++        (a, b) => (indexById.get(a) ?? 0) - (indexById.get(b) ?? 0)
++      );
++      throw new Error(`Cycle détecté dans le graphe des moteurs : ${cycle.join(' → ')}`);
++    }
++
++    ready.sort((a, b) => (indexById.get(a.id) ?? 0) - (indexById.get(b.id) ?? 0));
++    const next = ready[0];
++    remaining.delete(next.id);
++    emitted.add(next.id);
++    order.push(next.id);
++  }
++
++  return order;
++}
+diff --git a/src/features/adventure-intelligence/domain/versioning.ts b/src/features/adventure-intelligence/domain/versioning.ts
+new file mode 100644
+index 00000000..2b773331
+--- /dev/null
++++ b/src/features/adventure-intelligence/domain/versioning.ts
+@@ -0,0 +1,147 @@
++/**
++ * A6 — Versionnement du plan.
++ *
++ * `diffPlanVersions` compare section par section et expose impacts + gravités ;
++ * les sections sensibles (sécurité, budget, réservations, réglementation)
++ * exigent une confirmation. `nextVersionMeta` produit les métadonnées de la
++ * version suivante (le planId est ajouté par l'appelant).
++ */
++import {
++  ADVENTURE_PLAN_SECTION_KEYS,
++  type AdventurePlan,
++  type AdventurePlanSectionKey,
++  type PlanVersionMeta,
++} from './adventurePlan';
++import type { Confidence } from './confidence';
++import type { EngineSeverity, PlanImpact } from './engine';
++
++export interface PlanChange {
++  path: string;
++  before: unknown;
++  after: unknown;
++  requiresConfirmation: boolean;
++}
++
++export interface PlanDiff {
++  reason: string;
++  changes: PlanChange[];
++  impacts: PlanImpact[];
++}
++
++const CONFIRMATION_SECTIONS = new Set<AdventurePlanSectionKey>([
++  'safetyPlan',
++  'budget',
++  'bookings',
++  'regulations',
++]);
++
++const CRITICAL_SECTIONS = new Set<AdventurePlanSectionKey>(['safetyPlan']);
++
++const SECTION_LABELS: Record<AdventurePlanSectionKey, string> = {
++  transport: 'Transport',
++  localMobility: 'Mobilité locale',
++  accommodations: 'Hébergements',
++  dailyStages: 'Étapes quotidiennes',
++  activityRoutes: 'Itinéraires d’activité',
++  terrainAnalysis: 'Analyse du terrain',
++  personalDifficulty: 'Difficulté personnelle',
++  groupDifficulty: 'Difficulté du groupe',
++  paceStrategies: 'Stratégies d’allure',
++  foodAndWater: 'Alimentation et eau',
++  gearPlan: 'Plan d’équipement',
++  budget: 'Budget',
++  bookings: 'Réservations',
++  documents: 'Documents',
++  regulations: 'Réglementation',
++  safetyPlan: 'Plan de sécurité',
++  offlinePackage: 'Pack hors-ligne',
++  liveConditions: 'Conditions en direct',
++  alternatives: 'Alternatives',
++};
++
++function deepEqual(a: unknown, b: unknown): boolean {
++  if (Object.is(a, b)) return true;
++  if (typeof a !== 'object' || typeof b !== 'object' || a === null || b === null) return false;
++
++  if (Array.isArray(a) || Array.isArray(b)) {
++    if (!Array.isArray(a) || !Array.isArray(b) || a.length !== b.length) return false;
++    return a.every((item, index) => deepEqual(item, b[index]));
++  }
++
++  const aRecord = a as Record<string, unknown>;
++  const bRecord = b as Record<string, unknown>;
++  const aKeys = Object.keys(aRecord);
++  const bKeys = Object.keys(bRecord);
++  if (aKeys.length !== bKeys.length) return false;
++  return aKeys.every((key) => deepEqual(aRecord[key], bRecord[key]));
++}
++
++function sectionOf(path: string): AdventurePlanSectionKey | null {
++  const prefix = 'sections.';
++  if (!path.startsWith(prefix)) return null;
++  const key = path.slice(prefix.length) as AdventurePlanSectionKey;
++  return (ADVENTURE_PLAN_SECTION_KEYS as readonly string[]).includes(key) ? key : null;
++}
++
++function severityFor(key: AdventurePlanSectionKey): EngineSeverity {
++  if (CRITICAL_SECTIONS.has(key)) return 'critical';
++  if (CONFIRMATION_SECTIONS.has(key)) return 'warning';
++  return 'info';
++}
++
++export function diffPlanVersions(prev: AdventurePlan, next: AdventurePlan): PlanDiff {
++  const changes: PlanChange[] = [];
++
++  for (const key of ADVENTURE_PLAN_SECTION_KEYS) {
++    const before = prev.sections[key];
++    const after = next.sections[key];
++    if (deepEqual(before, after)) continue;
++    changes.push({
++      path: `sections.${key}`,
++      before,
++      after,
++      requiresConfirmation: CONFIRMATION_SECTIONS.has(key),
++    });
++  }
++
++  const impacts: PlanImpact[] = changes.flatMap((change) => {
++    const key = sectionOf(change.path);
++    if (key === null) return [];
++    return [
++      {
++        id: `impact-${change.path}`,
++        section: change.path,
++        label: `${SECTION_LABELS[key]} mis à jour`,
++        severity: severityFor(key),
++      },
++    ];
++  });
++
++  const reason =
++    changes.length === 0
++      ? 'Aucun changement détecté'
++      : `Mise à jour : ${changes
++          .map((change) => {
++            const key = sectionOf(change.path);
++            return key ? SECTION_LABELS[key] : change.path;
++          })
++          .join(', ')}`;
++
++  return { reason, changes, impacts };
++}
++
++/** Métadonnées de la version suivante : `planId` doit être ajouté par l'appelant. */
++export function nextVersionMeta(
++  version: number,
++  reason: string,
++  generatedBy: string,
++  confidence: Confidence
++): Omit<PlanVersionMeta, 'planId'> {
++  return {
++    version: Math.trunc(version) + 1,
++    reason,
++    generatedBy,
++    confidence,
++    createdAt: new Date().toISOString(),
++  };
++}
+diff --git a/src/features/adventure-intelligence/server/adapters/adapterSupport.ts b/src/features/adventure-intelligence/server/adapters/adapterSupport.ts
+new file mode 100644
+index 00000000..87b36114
+--- /dev/null
++++ b/src/features/adventure-intelligence/server/adapters/adapterSupport.ts
+@@ -0,0 +1,76 @@
++/**
++ * A6 — Support commun des adaptateurs (serveur).
++ *
++ * Conversions honnêtes entre les moteurs existants (trips/A3) et le contrat
++ * `AdventureEngine` : la confiance et la provenance ne sont jamais inventées,
++ * elles sont dérivées des propositions du catalogue ou déclarées `computed`.
++ */
++import { makeConfidence, type Confidence } from '@/features/adventure-intelligence/domain/confidence';
++import type { DataProvenance } from '@/features/adventure-intelligence/domain/provenance';
++import type { RouteSegmentInput } from '@/features/adventure-intelligence/domain/prediction';
++import type { Proposal } from '@/features/trips/schemas/autoGen.schema';
++
++/** Version commune des adaptateurs A6 (observabilité `adventure_engine_runs`). */
++export const ADAPTER_VERSION = 'a6-v1';
++
++const PROPOSAL_LEVEL_SCORES: Record<Proposal['confidence'], number> = {
++  high: 0.8,
++  medium: 0.6,
++  low: 0.35,
++};
++
++export function confidenceFromProposal(proposal: Pick<Proposal, 'confidence'>): Confidence {
++  const score = PROPOSAL_LEVEL_SCORES[proposal.confidence] ?? 0.35;
++  return makeConfidence({
++    score,
++    sampleCount: 0,
++    method: 'autogen_blueprint',
++    reasons: ['Blueprint du catalogue LKDV (estimations non vérifiées sur le terrain)'],
++  });
++}
++
++export function provenanceFromProposal(
++  proposal: Pick<Proposal, 'provenance'>,
++  fallbackSourceRef: string
++): DataProvenance[] {
++  const provenance = proposal.provenance;
++  if (!provenance) {
++    return [{ source: 'estimated', sourceRef: fallbackSourceRef }];
++  }
++  return [
++    {
++      source: provenance.source,
++      sourceRef: provenance.sourceRef ?? fallbackSourceRef,
++      observedAt: provenance.observedAt,
++    },
++  ];
++}
++
++function finiteNumber(value: unknown, fallback: number): number {
++  return typeof value === 'number' && Number.isFinite(value) ? value : fallback;
++}
++
++/**
++ * Découpe déterministe des agrégats du blueprint en étapes uniformes.
++ * Hypothèse explicite : aucune géométrie de trace n'est disponible à ce stade.
++ */
++export function uniformSegmentsFromItinerary(itineraryValue: unknown): {
++  count: number;
++  segments: RouteSegmentInput[];
++} {
++  const record = (itineraryValue ?? {}) as Record<string, unknown>;
++  const totalDistanceKm = Math.max(0, finiteNumber(record.totalDistanceKm, 0));
++  const totalGainM = Math.max(0, finiteNumber(record.totalGainM, 0));
++  const totalLossM = Math.max(0, finiteNumber(record.totalLossM, totalGainM));
++  const count = Math.max(1, Math.round(finiteNumber(record.stagesCount, 1)));
++
++  const segments: RouteSegmentInput[] = Array.from({ length: count }, (_, index) => ({
++    segmentId: index + 1,
++    distanceM: (totalDistanceKm * 1000) / count,
++    gainM: totalGainM / count,
++    lossM: totalLossM / count,
++    technicalClass: null,
++  }));
++
++  return { count, segments };
++}
+diff --git a/src/features/adventure-intelligence/server/adapters/budgetAdapter.ts b/src/features/adventure-intelligence/server/adapters/budgetAdapter.ts
+new file mode 100644
+index 00000000..8c40956e
+--- /dev/null
++++ b/src/features/adventure-intelligence/server/adapters/budgetAdapter.ts
+@@ -0,0 +1,79 @@
++/**
++ * A6 — Adaptateur budget : `budgetEngine.calculateBudgetSummary`.
++ *
++ * Le budget prévisionnel provient de la couche `budget` du blueprint ;
++ * le moteur existant calcule le résumé (dépenses réelles vides, reste à
++ * engager). Aucune dépense n'est inventée.
++ */
++import {
++  calculateBudgetSummary,
++  type BudgetSummary,
++} from '@/features/trips/engine/budgetEngine';
++import type { Proposal } from '@/features/trips/schemas/autoGen.schema';
++import type { AdventureEngine, EngineWarning } from '@/features/adventure-intelligence/domain/engine';
++import { makeEngineResult } from '@/features/adventure-intelligence/domain/engine';
++import { EngineSkipSignal } from '@/features/adventure-intelligence/domain/engineRegistry';
++import type { RouteAdapterOutput } from './routeAdapter';
++import { ADAPTER_VERSION, confidenceFromProposal, provenanceFromProposal } from './adapterSupport';
++
++export interface BudgetAdapterInput {
++  route?: RouteAdapterOutput | null;
++  participantsCount?: number;
++}
++
++export interface BudgetAdapterOutput {
++  perPersonEur: number | null;
++  totalEur: number | null;
++  currency: string;
++  summary: BudgetSummary;
++}
++
++export const budgetAdapter: AdventureEngine<BudgetAdapterInput, BudgetAdapterOutput> = {
++  id: 'budget',
++  version: ADAPTER_VERSION,
++  dependencies: ['route'],
++  canRun: () => true,
++  async run(input, context) {
++    const proposal = input?.route?.layers?.budget as Proposal<Record<string, unknown>> | undefined;
++    const rawPerPerson = proposal?.value?.totalPerPersonEur;
++    if (!proposal || typeof rawPerPerson !== 'number' || !Number.isFinite(rawPerPerson)) {
++      throw new EngineSkipSignal({
++        code: 'budget_no_source',
++        message:
++          'Aucune couche budget exploitable dans le blueprint — section budget laissée vide (aucune donnée inventée).',
++        severity: 'warning',
++      });
++    }
++
++    const participants = Math.max(1, Math.trunc(input.participantsCount ?? 1));
++    const perPersonEur = Math.max(0, rawPerPerson);
++    const totalEur = Math.round(perPersonEur * participants * 100) / 100;
++    const currency =
++      typeof proposal.value.currency === 'string' && proposal.value.currency.length > 0
++        ? proposal.value.currency
++        : 'EUR';
++
++    const summary = calculateBudgetSummary(
++      { estimated_budget: totalEur, budget_currency: currency },
++      []
++    );
++
++    const warnings: EngineWarning[] = [];
++    if (proposal.confidence === 'low') {
++      warnings.push({
++        code: 'budget_estimate',
++        message:
++          'Budget prévisionnel issu du catalogue (estimation) — les dépenses réelles restent à saisir.',
++        severity: 'info',
++      });
++    }
++
++    return makeEngineResult({
++      value: { perPersonEur, totalEur, currency, summary },
++      confidence: confidenceFromProposal(proposal),
++      provenance: provenanceFromProposal(proposal, 'Catalogue de référence LKDV (budget)'),
++      warnings,
++      computedAt: context.nowIso,
++    });
++  },
++};
+diff --git a/src/features/adventure-intelligence/server/adapters/coherenceAdapter.ts b/src/features/adventure-intelligence/server/adapters/coherenceAdapter.ts
+new file mode 100644
+index 00000000..ed6f977d
+--- /dev/null
++++ b/src/features/adventure-intelligence/server/adapters/coherenceAdapter.ts
+@@ -0,0 +1,157 @@
++/**
++ * A6 — Adaptateur de cohérence : `coherenceSolver.solveCoherence`.
++ *
++ * Les verrous fournis par l'utilisateur sont liés aux propositions par
++ * identifiant de proposition, de slot ou de couche ; le solveur ne peut jamais
++ * les modifier silencieusement. Toute violation résiduelle est détectée,
++ * restaurée et exposée dans `lockReport` (décision à confirmer côté appelant).
++ */
++import { solveCoherence } from '@/features/trips/engine/coherenceSolver';
++import type { Proposal } from '@/features/trips/schemas/autoGen.schema';
++import type { AdventureConstraint } from '@/features/adventure-intelligence/domain/constraints';
++import { makeConfidence } from '@/features/adventure-intelligence/domain/confidence';
++import { makeEngineResult, type AdventureEngine, type EngineWarning } from '@/features/adventure-intelligence/domain/engine';
++import { detectLockViolations } from '@/features/adventure-intelligence/domain/locks';
++import { EngineSkipSignal } from '@/features/adventure-intelligence/domain/engineRegistry';
++import type { RouteAdapterOutput } from './routeAdapter';
++import { ADAPTER_VERSION } from './adapterSupport';
++
++export interface CoherenceAdapterInput {
++  route?: RouteAdapterOutput | null;
++  locks?: AdventureConstraint[] | null;
++}
++
++export interface CoherenceLockReport {
++  before: AdventureConstraint[];
++  after: AdventureConstraint[];
++  violations: string[];
++}
++
++export interface CoherenceAdapterOutput {
++  resolvedLayers: Record<string, Proposal<unknown>>;
++  tradeoffsLog: string[];
++  lockReport: CoherenceLockReport;
++}
++
++const LEVEL_SCORES = { high: 0.8, medium: 0.6, low: 0.35 } as const;
++
++function isNumeric(value: unknown): value is number {
++  return typeof value === 'number' && Number.isFinite(value);
++}
++
++function lockMatchesLayer(lock: AdventureConstraint, layerKey: string, proposal: Proposal<unknown>): boolean {
++  return (
++    lock.id === proposal.id ||
++    lock.id === proposal.slotId ||
++    lock.id === proposal.layer ||
++    lock.id === layerKey
++  );
++}
++
++function lockedConstraints(layers: Record<string, Proposal<unknown>>): AdventureConstraint[] {
++  return Object.entries(layers)
++    .filter(([, proposal]) => proposal.locked)
++    .map(([key, proposal]) => ({
++      id: proposal.id,
++      kind: 'hard' as const,
++      label: `${key} verrouillé`,
++      value: proposal.value,
++      locked: true,
++      source: proposal.editedByUser ? ('user' as const) : ('system' as const),
++    }));
++}
++
++export const coherenceAdapter: AdventureEngine<CoherenceAdapterInput, CoherenceAdapterOutput> = {
++  id: 'coherence',
++  version: ADAPTER_VERSION,
++  dependencies: ['route'],
++  canRun: () => true,
++  async run(input, context) {
++    const route = input?.route;
++    if (!route) {
++      throw new EngineSkipSignal({
++        code: 'coherence_no_source',
++        message: 'Aucun itinéraire amont — cohérence non calculable.',
++        severity: 'warning',
++      });
++    }
++
++    const layers = JSON.parse(JSON.stringify(route.layers)) as Record<string, Proposal<unknown>>;
++    const locks = input.locks ?? [];
++
++    for (const [key, proposal] of Object.entries(layers)) {
++      if (locks.some((lock) => lock.locked && lockMatchesLayer(lock, key, proposal))) {
++        proposal.locked = true;
++      }
++    }
++
++    const budgetLock = locks.find((lock) => lock.locked && lock.id === 'budget' && isNumeric(lock.value));
++    const briefBudget = route.brief.budget.value.totalEur;
++    const maxBudgetEur = budgetLock
++      ? (budgetLock.value as number)
++      : isNumeric(briefBudget)
++        ? briefBudget
++        : undefined;
++
++    const before = lockedConstraints(layers);
++    const { resolvedLayers, tradeoffsLog } = solveCoherence({
++      layers,
++      maxBudgetEur,
++      userBodyWeightKg: 70,
++      intensity: route.brief.intensity.value,
++    });
++
++    const resolved = resolvedLayers as Record<string, Proposal<unknown>>;
++    const violations = detectLockViolations(before, lockedConstraints(resolved));
++
++    if (violations.length > 0) {
++      for (const constraint of before) {
++        if (!violations.includes(constraint.id)) continue;
++        const originalEntry = Object.entries(layers).find(
++          ([, proposal]) => proposal.id === constraint.id
++        );
++        const resolvedEntry = Object.entries(resolved).find(
++          ([, proposal]) => proposal.id === constraint.id
++        );
++        if (originalEntry && resolvedEntry) resolved[resolvedEntry[0]] = originalEntry[1];
++      }
++      tradeoffsLog.push(
++        `Verrou(s) restauré(s) après modification par le solveur : ${violations.join(', ')}.`
++      );
++    }
++
++    const scores = Object.values(resolved)
++      .map((proposal) => LEVEL_SCORES[proposal.confidence] ?? 0.35)
++      .filter((score) => Number.isFinite(score));
++    const score = scores.length > 0 ? Math.min(...scores) : 0.35;
++
++    const warnings: EngineWarning[] = tradeoffsLog.map((tradeoff, index) => ({
++      code: `tradeoff_${index + 1}`,
++      message: tradeoff,
++      severity: 'info',
++    }));
++
++    return makeEngineResult({
++      value: {
++        resolvedLayers: resolved,
++        tradeoffsLog: [...tradeoffsLog],
++        lockReport: { before, after: lockedConstraints(resolved), violations },
++      },
++      confidence: makeConfidence({
++        score,
++        sampleCount: 0,
++        method: 'coherence_solver',
++        reasons: ['Arbitrage déterministe budget / portage / ravitaillement'],
++      }),
++      provenance: [
++        {
++          source: 'computed',
++          sourceRef: 'a6:coherenceAdapter',
++          notes: 'Arbitrage issu du solveur de cohérence (verrous respectés)',
++        },
++      ],
++      warnings,
++      computedAt: context.nowIso,
++    });
++  },
++};
+diff --git a/src/features/adventure-intelligence/server/adapters/difficultyAdapter.ts b/src/features/adventure-intelligence/server/adapters/difficultyAdapter.ts
+new file mode 100644
+index 00000000..070d3e6e
+--- /dev/null
++++ b/src/features/adventure-intelligence/server/adapters/difficultyAdapter.ts
+@@ -0,0 +1,133 @@
++/**
++ * A6 — Adaptateur de difficulté : A3 `predictSegment` agrégé par étape.
++ *
++ * La difficulté personnelle est la moyenne pondérée par la distance des
++ * difficultés de segment. Sans profils des participants, la difficulté groupe
++ * n'est calculée que pour un participant unique — sinon `null` explicite.
++ */
++import { predictSegment } from '@/features/adventure-intelligence/domain/prediction';
++import type { SegmentPrediction } from '@/features/adventure-intelligence/schemas/prediction.schema';
++import { combineConfidence, COLD_CONFIDENCE } from '@/features/adventure-intelligence/domain/confidence';
++import {
++  makeEngineResult,
++  type AdventureEngine,
++  type Assumption,
++  type EngineWarning,
++} from '@/features/adventure-intelligence/domain/engine';
++import { EngineSkipSignal } from '@/features/adventure-intelligence/domain/engineRegistry';
++import type { PerformanceProfile } from '@/features/adventure-intelligence/schemas/performance.schema';
++import type { RouteAdapterOutput } from './routeAdapter';
++import { ADAPTER_VERSION, uniformSegmentsFromItinerary } from './adapterSupport';
++
++export interface DifficultyAdapterInput {
++  route?: RouteAdapterOutput | null;
++  profile?: PerformanceProfile | null;
++  participantsCount?: number;
++}
++
++export interface DifficultyAdapterOutput {
++  personalDifficulty: number;
++  maxEffortScore: number;
++  hardestSegmentIds: number[];
++  groupDifficulty: number | null;
++  segmentation: 'uniform_from_blueprint';
++  segmentCount: number;
++}
++
++export const difficultyAdapter: AdventureEngine<DifficultyAdapterInput, DifficultyAdapterOutput> = {
++  id: 'difficulty',
++  version: ADAPTER_VERSION,
++  dependencies: ['prediction'],
++  canRun: () => true,
++  async run(input, context) {
++    const route = input?.route;
++    if (!route) {
++      throw new EngineSkipSignal({
++        code: 'difficulty_no_source',
++        message: 'Aucun itinéraire amont — difficulté non calculable.',
++        severity: 'warning',
++      });
++    }
++
++    const { count, segments } = uniformSegmentsFromItinerary(route.layers.itinerary?.value);
++    const profile = input.profile ?? null;
++    const participants = Math.max(1, Math.trunc(input.participantsCount ?? 1));
++
++    const predictions: SegmentPrediction[] = segments.map((segment) =>
++      predictSegment(
++        {
++          segmentId: segment.segmentId,
++          distanceM: segment.distanceM,
++          gainM: segment.gainM,
++          lossM: segment.lossM,
++          technicalClass: segment.technicalClass ?? null,
++          packWeightKg: null,
++        },
++        profile,
++        profile?.confidence ?? null
++      )
++    );
++
++    const totalDistance = segments.reduce((sum, segment) => sum + Math.max(0, segment.distanceM), 0);
++    const weightedDifficulty = predictions.reduce(
++      (sum, prediction, index) =>
++        sum + prediction.personalDifficulty * Math.max(0, segments[index].distanceM),
++      0
++    );
++    const personalDifficulty =
++      totalDistance > 0 ? Math.round(weightedDifficulty / totalDistance) : 0;
++    const maxEffortScore = predictions.reduce(
++      (max, prediction) => Math.max(max, prediction.effortScore),
++      0
++    );
++    const hardestSegmentIds = [...predictions]
++      .sort((a, b) => b.personalDifficulty - a.personalDifficulty)
++      .slice(0, 3)
++      .map((prediction) => prediction.segmentId);
++
++    const groupDifficulty = participants <= 1 ? personalDifficulty : null;
++
++    const warnings: EngineWarning[] = [];
++    if (groupDifficulty === null) {
++      warnings.push({
++        code: 'group_profiles_missing',
++        message:
++          'Profils des participants indisponibles — difficulté groupe laissée vide (aucune moyenne inventée).',
++        severity: 'info',
++      });
++    }
++
++    const assumptions: Assumption[] = [
++      {
++        id: 'uniform_segmentation',
++        label: 'Découpage uniforme des étapes',
++        detail: `${count} étape(s) moyennes issues du blueprint.`,
++      },
++    ];
++
++    return makeEngineResult({
++      value: {
++        personalDifficulty,
++        maxEffortScore,
++        hardestSegmentIds,
++        groupDifficulty,
++        segmentation: 'uniform_from_blueprint',
++        segmentCount: count,
++      },
++      confidence:
++        predictions.length > 0
++          ? combineConfidence(...predictions.map((prediction) => prediction.confidence))
++          : { ...COLD_CONFIDENCE, reasons: [...COLD_CONFIDENCE.reasons] },
++      provenance: [
++        {
++          source: 'computed',
++          sourceRef: 'a6:difficultyAdapter',
++          notes: 'Agrégation A3 (predictSegment) pondérée par la distance',
++        },
++      ],
++      assumptions,
++      warnings,
++      computedAt: context.nowIso,
++    });
++  },
++};
+diff --git a/src/features/adventure-intelligence/server/adapters/gearAdapter.ts b/src/features/adventure-intelligence/server/adapters/gearAdapter.ts
+new file mode 100644
+index 00000000..eba29365
+--- /dev/null
++++ b/src/features/adventure-intelligence/server/adapters/gearAdapter.ts
+@@ -0,0 +1,97 @@
++/**
++ * A6 — Adaptateur équipement : `contextualKitEngine.generateTripContextualKit`.
++ *
++ * Le moteur existant applique ses règles contextuelles (pays, saison, durée)
++ * sans inventer d'inventaire : l'absence d'inventaire utilisateur est déclarée
++ * en warning et en hypothèse.
++ */
++import {
++  generateTripContextualKit,
++  type ContextualKitInput,
++} from '@/features/trips/engine/contextualKitEngine';
++import type { TripKitAnalysis } from '@/features/trips/types/kit.types';
++import { makeConfidence } from '@/features/adventure-intelligence/domain/confidence';
++import {
++  makeEngineResult,
++  type AdventureEngine,
++  type Assumption,
++  type EngineWarning,
++} from '@/features/adventure-intelligence/domain/engine';
++import { EngineSkipSignal } from '@/features/adventure-intelligence/domain/engineRegistry';
++import type { RouteAdapterOutput } from './routeAdapter';
++import { ADAPTER_VERSION } from './adapterSupport';
++
++export interface GearAdapterInput {
++  route?: RouteAdapterOutput | null;
++}
++
++export const gearAdapter: AdventureEngine<GearAdapterInput, TripKitAnalysis> = {
++  id: 'gear',
++  version: ADAPTER_VERSION,
++  dependencies: ['route'],
++  canRun: () => true,
++  async run(input, context) {
++    const route = input?.route;
++    if (!route) {
++      throw new EngineSkipSignal({
++        code: 'gear_no_source',
++        message: 'Aucun itinéraire amont — section équipement laissée vide.',
++        severity: 'warning',
++      });
++    }
++
++    const brief = route.brief;
++    const countryCode = brief.destinations.value[0]?.country ?? null;
++    const durationDays = Math.max(1, Math.trunc(brief.duration.value.days));
++    const seasonMonth = brief.window.value.month;
++
++    const kitInput: ContextualKitInput = {
++      countryCode,
++      activity: brief.style.value[0] ?? 'hiking',
++      durationDays,
++      seasonMonth,
++    };
++
++    const analysis = generateTripContextualKit(kitInput);
++
++    const warnings: EngineWarning[] = [
++      {
++        code: 'inventory_missing',
++        message:
++          'Inventaire utilisateur non fourni : les écarts d’équipement sont calculés à vide.',
++        severity: 'info',
++      },
++    ];
++
++    const assumptions: Assumption[] = [
++      {
++        id: 'empty_inventory',
++        label: 'Inventaire vide',
++        detail: 'Les recommandations partent d’un inventaire vide, sans supposer de matériel possédé.',
++      },
++    ];
++
++    return makeEngineResult({
++      value: analysis,
++      confidence: makeConfidence({
++        score: 0.5,
++        sampleCount: 0,
++        method: 'contextual_kit_rules',
++        reasons: [
++          'Règles contextuelles déterministes du catalogue LKDV',
++          'Inventaire utilisateur absent — complétude non garantie',
++        ],
++      }),
++      provenance: [
++        {
++          source: 'computed',
++          sourceRef: 'a6:gearAdapter',
++          notes: 'Recommandations issues des règles contextuelles LKDV',
++        },
++      ],
++      assumptions,
++      warnings,
++      computedAt: context.nowIso,
++    });
++  },
++};
+diff --git a/src/features/adventure-intelligence/server/adapters/index.ts b/src/features/adventure-intelligence/server/adapters/index.ts
+new file mode 100644
+index 00000000..6619bea0
+--- /dev/null
++++ b/src/features/adventure-intelligence/server/adapters/index.ts
+@@ -0,0 +1,55 @@
++/**
++ * A6 — Registre par défaut des adaptateurs.
++ *
++ * Ordre de la roadmap : intent → route → budget|gear → coherence →
++ * prediction → difficulty → safety → weather|regulations|documents.
++ * Les moteurs sans source déterministe sont enregistrés pour apparaître en
++ * `skipped` motivé dans les runs (observabilité honnête).
++ */
++import type { AdventureEngine } from '@/features/adventure-intelligence/domain/engine';
++import { EngineRegistry } from '@/features/adventure-intelligence/domain/engineRegistry';
++import { intentAdapter } from './intentAdapter';
++import { routeAdapter } from './routeAdapter';
++import { budgetAdapter } from './budgetAdapter';
++import { gearAdapter } from './gearAdapter';
++import { coherenceAdapter } from './coherenceAdapter';
++import { predictionAdapter } from './predictionAdapter';
++import { difficultyAdapter } from './difficultyAdapter';
++import { safetyAdapter } from './safetyAdapter';
++import {
++  documentsAdapter,
++  regulationsAdapter,
++  weatherAdapter,
++} from './skippedAdapters';
++
++export * from './intentAdapter';
++export * from './routeAdapter';
++export * from './budgetAdapter';
++export * from './gearAdapter';
++export * from './coherenceAdapter';
++export * from './predictionAdapter';
++export * from './difficultyAdapter';
++export * from './safetyAdapter';
++export * from './skippedAdapters';
++
++export const DEFAULT_ADAPTERS: AdventureEngine<unknown, unknown>[] = [
++  intentAdapter,
++  routeAdapter,
++  budgetAdapter,
++  gearAdapter,
++  coherenceAdapter,
++  predictionAdapter,
++  difficultyAdapter,
++  safetyAdapter,
++  weatherAdapter,
++  regulationsAdapter,
++  documentsAdapter,
++];
++
++export function createDefaultRegistry(): EngineRegistry {
++  const registry = new EngineRegistry();
++  for (const adapter of DEFAULT_ADAPTERS) {
++    registry.register(adapter);
++  }
++  return registry;
++}
+diff --git a/src/features/adventure-intelligence/server/adapters/intentAdapter.ts b/src/features/adventure-intelligence/server/adapters/intentAdapter.ts
+new file mode 100644
+index 00000000..0584d259
+--- /dev/null
++++ b/src/features/adventure-intelligence/server/adapters/intentAdapter.ts
+@@ -0,0 +1,86 @@
++/**
++ * A6 — Adaptateur d'intention : `tripBriefExtractor` (déterministe, sans LLM).
++ */
++import { extractTripBrief } from '@/features/trips/engine/tripBriefExtractor';
++import type { TripBrief } from '@/features/trips/schemas/autoGen.schema';
++import { makeConfidence } from '@/features/adventure-intelligence/domain/confidence';
++import {
++  makeEngineResult,
++  type AdventureEngine,
++  type Assumption,
++  type EngineWarning,
++} from '@/features/adventure-intelligence/domain/engine';
++import { ADAPTER_VERSION } from './adapterSupport';
++
++export interface IntentAdapterInput {
++  text?: string | null;
++}
++
++const INTAKE_SCORES = { stated: 0.85, inferred: 0.6, defaulted: 0.3 } as const;
++
++export const intentAdapter: AdventureEngine<IntentAdapterInput, TripBrief> = {
++  id: 'intent',
++  version: ADAPTER_VERSION,
++  dependencies: [],
++  canRun: () => true,
++  async run(input, context) {
++    const text = typeof input?.text === 'string' ? input.text.trim() : '';
++    if (text.length === 0) {
++      throw new Error('Texte d’intention vide — extraction impossible');
++    }
++
++    const brief = extractTripBrief(text);
++    const destinationConfidence = brief.destinations.confidence;
++    const durationConfidence = brief.duration.confidence;
++    const windowConfidence = brief.window.confidence;
++    const score = Math.min(
++      INTAKE_SCORES[destinationConfidence],
++      INTAKE_SCORES[durationConfidence],
++      INTAKE_SCORES[windowConfidence]
++    );
++
++    const warnings: EngineWarning[] = [];
++    if (destinationConfidence === 'defaulted') {
++      warnings.push({
++        code: 'destination_default',
++        message: 'Destination par défaut (France) — à confirmer par l’utilisateur.',
++        severity: 'warning',
++      });
++    }
++    if (durationConfidence === 'defaulted') {
++      warnings.push({
++        code: 'duration_default',
++        message: 'Durée déduite des règles par défaut — à confirmer.',
++        severity: 'info',
++      });
++    }
++
++    const assumptions: Assumption[] = [
++      {
++        id: 'deterministic_extraction',
++        label: 'Extraction déterministe du texte',
++        detail: 'Aucun LLM n’intervient dans l’extraction d’intention.',
++      },
++    ];
++
++    return makeEngineResult({
++      value: brief,
++      confidence: makeConfidence({
++        score,
++        sampleCount: 0,
++        method: 'trip_brief_extractor',
++        reasons: ['Extraction par dictionnaire et expressions régulières du catalogue LKDV'],
++      }),
++      provenance: [
++        {
++          source: 'computed',
++          sourceRef: 'a6:intentAdapter',
++          notes: 'Extraction déterministe (tripBriefExtractor)',
++        },
++      ],
++      assumptions,
++      warnings,
++      computedAt: context.nowIso,
++    });
++  },
++};
+diff --git a/src/features/adventure-intelligence/server/adapters/predictionAdapter.ts b/src/features/adventure-intelligence/server/adapters/predictionAdapter.ts
+new file mode 100644
+index 00000000..9d15e10c
+--- /dev/null
++++ b/src/features/adventure-intelligence/server/adapters/predictionAdapter.ts
+@@ -0,0 +1,116 @@
++/**
++ * A6 — Adaptateur de prédiction : A3 `predictRoute` (profil fourni, sinon repli standard).
++ *
++ * Les agrégats du blueprint sont découpés en étapes uniformes (hypothèse
++ * explicite) ; sans profil personnel, `resolvePace` retombe sur l'allure
++ * standard et l'incertitude est élargie par le moteur A3.
++ */
++import {
++  predictRoute,
++  STRATEGIES,
++  type LearnedRoutePrediction,
++} from '@/features/adventure-intelligence/domain/prediction';
++import { combineConfidence } from '@/features/adventure-intelligence/domain/confidence';
++import {
++  makeEngineResult,
++  type AdventureEngine,
++  type Assumption,
++  type EngineWarning,
++} from '@/features/adventure-intelligence/domain/engine';
++import { EngineSkipSignal } from '@/features/adventure-intelligence/domain/engineRegistry';
++import type { PerformanceProfile } from '@/features/adventure-intelligence/schemas/performance.schema';
++import type { RouteAdapterOutput } from './routeAdapter';
++import { ADAPTER_VERSION, uniformSegmentsFromItinerary } from './adapterSupport';
++
++export interface PredictionAdapterInput {
++  route?: RouteAdapterOutput | null;
++  profile?: PerformanceProfile | null;
++  startAt?: string;
++}
++
++export interface PredictionAdapterOutput {
++  strategies: LearnedRoutePrediction[];
++  primary: LearnedRoutePrediction;
++  segmentation: 'uniform_from_blueprint';
++  segmentCount: number;
++}
++
++export const predictionAdapter: AdventureEngine<PredictionAdapterInput, PredictionAdapterOutput> = {
++  id: 'prediction',
++  version: ADAPTER_VERSION,
++  dependencies: ['route'],
++  canRun: () => true,
++  async run(input, context) {
++    const route = input?.route;
++    if (!route) {
++      throw new EngineSkipSignal({
++        code: 'prediction_no_source',
++        message: 'Aucun itinéraire amont — prédiction impossible.',
++        severity: 'warning',
++      });
++    }
++
++    const itinerary = route.layers.itinerary;
++    const { count, segments } = uniformSegmentsFromItinerary(itinerary?.value);
++    const profile = input.profile ?? null;
++    const startAt = input.startAt ?? context.nowIso;
++
++    const strategies = STRATEGIES.map((strategy) =>
++      predictRoute(
++        {
++          segments,
++          startAt,
++          profile,
++          confidence: profile?.confidence ?? null,
++          packWeightKg: null,
++        },
++        strategy
++      )
++    );
++
++    const primary = strategies.find((strategy) => strategy.strategy === 'recommended') ?? strategies[0];
++
++    const warnings: EngineWarning[] = [...primary.warnings];
++    warnings.push({
++      code: 'uniform_segmentation',
++      message:
++        'Étapes découpées uniformément à partir des agrégats du blueprint — aucune géométrie de trace.',
++      severity: 'info',
++    });
++
++    const assumptions: Assumption[] = [
++      {
++        id: 'uniform_segmentation',
++        label: 'Découpage uniforme des étapes',
++        detail: `${count} étape(s) de longueur et de dénivelé moyens issus du blueprint.`,
++      },
++      {
++        id: profile ? 'provided_profile' : 'standard_pace',
++        label: profile ? 'Profil de performance fourni' : 'Allure standard (aucun profil)',
++        detail: profile
++          ? `Profil ${profile.calibrationLevel} — ${profile.sampleCount} observation(s).`
++          : 'Cascade A3 : profil absent → allure standard de 15 min/km.',
++      },
++    ];
++
++    return makeEngineResult({
++      value: {
++        strategies,
++        primary,
++        segmentation: 'uniform_from_blueprint',
++        segmentCount: count,
++      },
++      confidence: combineConfidence(...strategies.map((strategy) => strategy.confidence)),
++      provenance: [
++        {
++          source: 'computed',
++          sourceRef: 'a6:predictionAdapter',
++          notes: 'Prédiction A3 (predictRoute) sur étapes moyennes du blueprint',
++        },
++      ],
++      assumptions,
++      warnings,
++      computedAt: context.nowIso,
++    });
++  },
++};
+diff --git a/src/features/adventure-intelligence/server/adapters/routeAdapter.ts b/src/features/adventure-intelligence/server/adapters/routeAdapter.ts
+new file mode 100644
+index 00000000..6d5a600d
+--- /dev/null
++++ b/src/features/adventure-intelligence/server/adapters/routeAdapter.ts
+@@ -0,0 +1,90 @@
++/**
++ * A6 — Adaptateur d'itinéraire : `autoGenPipeline` (blueprint + couches + solveur).
++ *
++ * Aucune donnée inventée : tout provient du catalogue de blueprints existant,
++ * la confiance reste celle de la proposition (catalogue = estimations).
++ */
++import { runAutoGenPipeline } from '@/features/trips/engine/autoGenPipeline';
++import type { Proposal, TripBrief } from '@/features/trips/schemas/autoGen.schema';
++import type { AdventureEngine, Assumption, EngineWarning } from '@/features/adventure-intelligence/domain/engine';
++import { makeEngineResult } from '@/features/adventure-intelligence/domain/engine';
++import type { DataProvenance } from '@/features/adventure-intelligence/domain/provenance';
++import { ADAPTER_VERSION, confidenceFromProposal, provenanceFromProposal } from './adapterSupport';
++
++export interface RouteAdapterInput {
++  text?: string | null;
++}
++
++export interface RouteAdapterOutput {
++  blueprintId: string;
++  layers: Record<string, Proposal<unknown>>;
++  tradeoffsLog: string[];
++  executionTimeMs: number;
++  brief: TripBrief;
++}
++
++function collectProvenance(layers: Record<string, Proposal<unknown>>): DataProvenance[] {
++  const seen = new Set<string>();
++  const provenance: DataProvenance[] = [];
++
++  for (const layer of Object.values(layers)) {
++    for (const entry of provenanceFromProposal(layer, 'Catalogue de référence LKDV')) {
++      const key = `${entry.source}:${entry.sourceRef ?? ''}:${entry.observedAt ?? ''}`;
++      if (seen.has(key)) continue;
++      seen.add(key);
++      provenance.push(entry);
++    }
++  }
++
++  return provenance.length > 0
++    ? provenance
++    : [{ source: 'estimated', sourceRef: 'Catalogue de référence LKDV' }];
++}
++
++export const routeAdapter: AdventureEngine<RouteAdapterInput, RouteAdapterOutput> = {
++  id: 'route',
++  version: ADAPTER_VERSION,
++  dependencies: ['intent'],
++  canRun: () => true,
++  async run(input, context) {
++    const text = typeof input?.text === 'string' ? input.text.trim() : '';
++    if (text.length === 0) {
++      throw new Error('Texte d’intention vide — pipeline impossible');
++    }
++
++    const pipeline = await runAutoGenPipeline(text);
++    const layers = pipeline.layers as Record<string, Proposal<unknown>>;
++    const itinerary = layers.itinerary;
++
++    const warnings: EngineWarning[] = pipeline.tradeoffsLog.map((tradeoff, index) => ({
++      code: `tradeoff_${index + 1}`,
++      message: tradeoff,
++      severity: 'info',
++    }));
++
++    const assumptions: Assumption[] = [
++      {
++        id: 'blueprint_catalogue',
++        label: 'Blueprint du catalogue LKDV',
++        detail: `Blueprint ${pipeline.blueprintId} — valeurs estimées, à confirmer.`,
++      },
++    ];
++
++    return makeEngineResult({
++      value: {
++        blueprintId: pipeline.blueprintId,
++        layers,
++        tradeoffsLog: [...pipeline.tradeoffsLog],
++        executionTimeMs: pipeline.executionTimeMs,
++        brief: pipeline.brief,
++      },
++      confidence: itinerary
++        ? confidenceFromProposal(itinerary)
++        : { score: 0.35, level: 'low', sampleCount: 0, method: 'autogen_blueprint', reasons: ['Couches blueprint indisponibles'] },
++      provenance: collectProvenance(layers),
++      assumptions,
++      warnings,
++      computedAt: context.nowIso,
++    });
++  },
++};
+diff --git a/src/features/adventure-intelligence/server/adapters/safetyAdapter.ts b/src/features/adventure-intelligence/server/adapters/safetyAdapter.ts
+new file mode 100644
+index 00000000..e8d66469
+--- /dev/null
++++ b/src/features/adventure-intelligence/server/adapters/safetyAdapter.ts
+@@ -0,0 +1,84 @@
++/**
++ * A6 — Adaptateur sécurité : couche `safety` du blueprint (source déterministe).
++ *
++ * Les numéros et unités de secours proviennent du catalogue LKDV (provenance
++ * `estimated`) et sont explicitement marqués « à vérifier avant départ ».
++ * Sans couche `safety`, l'adaptateur skippe — aucune coordonnée inventée.
++ */
++import type { Proposal } from '@/features/trips/schemas/autoGen.schema';
++import {
++  makeEngineResult,
++  type AdventureEngine,
++  type Assumption,
++  type EngineWarning,
++  type PlanImpact,
++} from '@/features/adventure-intelligence/domain/engine';
++import { EngineSkipSignal } from '@/features/adventure-intelligence/domain/engineRegistry';
++import type { RouteAdapterOutput } from './routeAdapter';
++import { ADAPTER_VERSION, confidenceFromProposal, provenanceFromProposal } from './adapterSupport';
++
++export interface SafetyAdapterInput {
++  route?: RouteAdapterOutput | null;
++}
++
++export interface SafetyAdapterOutput {
++  rescuePhone?: string;
++  rescueUnit?: string;
++  primaryHazard?: string;
++  [key: string]: unknown;
++}
++
++export const safetyAdapter: AdventureEngine<SafetyAdapterInput, SafetyAdapterOutput> = {
++  id: 'safety',
++  version: ADAPTER_VERSION,
++  dependencies: ['route'],
++  canRun: () => true,
++  async run(input, context) {
++    const proposal = input?.route?.layers?.safety as Proposal<SafetyAdapterOutput> | undefined;
++    if (!proposal) {
++      throw new EngineSkipSignal({
++        code: 'safety_no_source',
++        message:
++          'Aucune couche sécurité dans le blueprint — section safetyPlan laissée vide (aucune donnée inventée).',
++        severity: 'warning',
++      });
++    }
++
++    const warnings: EngineWarning[] = [];
++    if (proposal.confidence === 'low') {
++      warnings.push({
++        code: 'safety_estimate',
++        message:
++          'Plan de sécurité issu du catalogue LKDV (estimation) — numéros et unités à vérifier avant départ.',
++        severity: 'warning',
++      });
++    }
++
++    const assumptions: Assumption[] = [
++      {
++        id: 'safety_catalogue',
++        label: 'Plan de sécurité issu du catalogue LKDV',
++        detail: 'À vérifier avant le départ : coordonnées et couverture de secours locales.',
++      },
++    ];
++
++    const impacts: PlanImpact[] = [
++      {
++        id: 'safety-plan',
++        section: 'safetyPlan',
++        label: 'Plan de sécurité proposé',
++        severity: 'warning',
++      },
++    ];
++
++    return makeEngineResult({
++      value: { ...proposal.value },
++      confidence: confidenceFromProposal(proposal),
++      provenance: provenanceFromProposal(proposal, 'Catalogue de référence LKDV (sécurité)'),
++      assumptions,
++      warnings,
++      impacts,
++      computedAt: context.nowIso,
++    });
++  },
++};
+diff --git a/src/features/adventure-intelligence/server/adapters/skippedAdapters.ts b/src/features/adventure-intelligence/server/adapters/skippedAdapters.ts
+new file mode 100644
+index 00000000..6383ac69
+--- /dev/null
++++ b/src/features/adventure-intelligence/server/adapters/skippedAdapters.ts
+@@ -0,0 +1,67 @@
++/**
++ * A6 — Adaptateurs sans source déterministe : weather, regulations, documents.
++ *
++ * Ces trois domaines exigent des données vivantes ou officielles. En l'absence
++ * de source déterministe injectée, l'adaptateur retourne un skip explicite :
++ * aucune donnée météo, réglementaire ou documentaire n'est jamais inventée.
++ */
++import type { AdventureEngine, EngineWarning } from '@/features/adventure-intelligence/domain/engine';
++import { EngineSkipSignal } from '@/features/adventure-intelligence/domain/engineRegistry';
++import { ADAPTER_VERSION } from './adapterSupport';
++
++export interface SkippedAdapterOptions {
++  id: string;
++  dependencies: string[];
++  skipReason: EngineWarning;
++}
++
++export type SkippedAdapter = AdventureEngine<unknown, null> & {
++  readonly skipReason: EngineWarning;
++};
++
++export function createSkippedAdapter(options: SkippedAdapterOptions): SkippedAdapter {
++  const engine: SkippedAdapter = {
++    id: options.id,
++    version: ADAPTER_VERSION,
++    dependencies: options.dependencies,
++    skipReason: options.skipReason,
++    canRun: () => false,
++    async run() {
++      throw new EngineSkipSignal(options.skipReason);
++    },
++  };
++  return engine;
++}
++
++export const weatherAdapter = createSkippedAdapter({
++  id: 'weather',
++  dependencies: ['route'],
++  skipReason: {
++    code: 'weather_no_deterministic_source',
++    message:
++      'Aucune source météo déterministe n’est injectée — section liveConditions laissée vide (aucune donnée inventée).',
++    severity: 'warning',
++  },
++});
++
++export const regulationsAdapter = createSkippedAdapter({
++  id: 'regulations',
++  dependencies: ['route'],
++  skipReason: {
++    code: 'regulations_no_deterministic_source',
++    message:
++      'Aucune source réglementaire déterministe n’est injectée — section regulations laissée vide (aucune donnée inventée).',
++    severity: 'warning',
++  },
++});
++
++export const documentsAdapter = createSkippedAdapter({
++  id: 'documents',
++  dependencies: ['route'],
++  skipReason: {
++    code: 'documents_no_deterministic_source',
++    message:
++      'Aucune source documentaire déterministe n’est injectée — section documents laissée vide (aucune donnée inventée).',
++    severity: 'warning',
++  },
++});
+diff --git a/src/features/adventure-intelligence/server/generateAdventure.ts b/src/features/adventure-intelligence/server/generateAdventure.ts
+new file mode 100644
+index 00000000..a76b481a
+--- /dev/null
++++ b/src/features/adventure-intelligence/server/generateAdventure.ts
+@@ -0,0 +1,698 @@
++/**
++ * A6 — Orchestrateur de génération d'aventure complète.
++ *
++ * Une phrase + un registre de moteurs → un `AdventurePlan` versionné, trois
++ * variantes, décisions requises, explication (IA injectée sinon résumé local
++ * déterministe). L'échec de l'IA ne rend jamais le plan inutilisable.
++ *
++ * Le client de persistance est injecté (`AdventureEnginePersistence`) :
++ * aucune dépendance Supabase dans la logique, testable sans réseau.
++ */
++import 'server-only';
++import { randomUUID } from 'node:crypto';
++import type { SupabaseClient } from '@supabase/supabase-js';
++import type { AdventureConstraint } from '../domain/constraints';
++import type { AdventureDecision } from '../domain/decisions';
++import {
++  ADVENTURE_PLAN_SECTION_KEYS,
++  type AdventureDates,
++  type AdventureDestination,
++  type AdventureIntent,
++  type AdventurePlan,
++  type AdventurePlanSections,
++  type PlanParticipant,
++  type PlanValue,
++} from '../domain/adventurePlan';
++import { buildCandidates, type AdventureCandidate } from '../domain/candidates';
++import { COLD_CONFIDENCE, type Confidence } from '../domain/confidence';
++import type { EngineResult } from '../domain/engine';
++import {
++  type EngineRegistry,
++  type EngineRunRecord,
++} from '../domain/engineRegistry';
++import { buildLockConfirmationDecisions } from '../domain/locks';
++import { adventurePlanSchema } from '../schemas/adventurePlan.schema';
++import type { Proposal, TripBrief } from '@/features/trips/schemas/autoGen.schema';
++import { confidenceFromProposal, provenanceFromProposal } from './adapters/adapterSupport';
++import type { CoherenceAdapterOutput, CoherenceLockReport } from './adapters/coherenceAdapter';
++import type { DifficultyAdapterOutput } from './adapters/difficultyAdapter';
++import type { RouteAdapterOutput } from './adapters/routeAdapter';
++import type { SafetyAdapterOutput } from './adapters/safetyAdapter';
++import type { BudgetAdapterOutput } from './adapters/budgetAdapter';
++import type { PredictionAdapterOutput } from './adapters/predictionAdapter';
++import type { TripKitAnalysis } from '@/features/trips/types/kit.types';
++
++/** Persistance injectée : chaque méthode écrit une ligne déjà mise en forme. */
++export interface AdventureEnginePersistence {
++  insertPlan(row: unknown): Promise<{ id: string }>;
++  insertPlanVersion(row: unknown): Promise<void>;
++  insertEngineRun(row: unknown): Promise<void>;
++  insertDecisions(rows: unknown[]): Promise<void>;
++}
++
++export interface AdventureGenerationInput {
++  ownerId: string;
++  text: string;
++  locks?: AdventureConstraint[];
++  participantsCount?: number;
++  now?: string;
++}
++
++export interface AdventureExplainContext {
++  plan: AdventurePlan;
++  candidates: AdventureCandidate[];
++  runs: EngineRunRecord[];
++}
++
++export interface AdventureGenerationResult {
++  plan: AdventurePlan;
++  candidates: AdventureCandidate[];
++  runs: EngineRunRecord[];
++  explanation: string;
++  aiUsed: boolean;
++}
++
++export interface AdventureGenerationDeps {
++  registry: EngineRegistry;
++  persistence: AdventureEnginePersistence;
++  explain?: (context: AdventureExplainContext) => Promise<string>;
++}
++
++type Layers = Record<string, Proposal<unknown>>;
++
++function engineResultOf<T>(outputs: Map<string, unknown>, id: string): EngineResult<T> | undefined {
++  return outputs.get(id) as EngineResult<T> | undefined;
++}
++
++function finiteNumber(value: unknown): number | null {
++  return typeof value === 'number' && Number.isFinite(value) ? value : null;
++}
++
++function planValueFromResult<T, V = T>(
++  result: EngineResult<T>,
++  value: V = result.value as unknown as V
++): PlanValue<V> {
++  return {
++    value,
++    confidence: result.confidence,
++    provenance: [...result.provenance],
++    assumptions: [...result.assumptions],
++    warnings: [...result.warnings],
++    impacts: [...result.impacts],
++    computedAt: result.computedAt,
++    validUntil: result.validUntil,
++  };
++}
++
++function planValueFromProposal(
++  proposal: Proposal<unknown>,
++  routeResult: EngineResult<RouteAdapterOutput> | undefined,
++  now: string
++): PlanValue<unknown> {
++  return {
++    value: proposal.value,
++    confidence: confidenceFromProposal(proposal),
++    provenance: provenanceFromProposal(proposal, 'Catalogue de référence LKDV'),
++    assumptions: [],
++    warnings: routeResult ? [...routeResult.warnings] : [],
++    impacts: [],
++    computedAt: routeResult?.computedAt ?? now,
++  };
++}
++
++function buildIntent(brief: TripBrief | undefined, text: string): AdventureIntent {
++  if (!brief) {
++    return { rawInput: text, activities: [], constraints: [] };
++  }
++  const destinations = brief.destinations.value
++    .map((destination) => destination.region ?? destination.country)
++    .join(', ');
++  return {
++    rawInput: brief.rawInput,
++    summary: `${brief.duration.value.days} jours · ${destinations || 'destination à préciser'}`,
++    activities: [...brief.style.value],
++    constraints: [...brief.constraints.value],
++  };
++}
++
++function buildDestinations(brief: TripBrief | undefined): AdventureDestination[] {
++  if (!brief) return [];
++  return brief.destinations.value.map((destination) => ({
++    label: destination.region ?? destination.country,
++    countryCode: /^[A-Za-z]{2}$/.test(destination.country) ? destination.country.toUpperCase() : undefined,
++  }));
++}
++
++function buildDates(brief: TripBrief | undefined): AdventureDates {
++  return {
++    start: brief?.window.value.start,
++    end: brief?.window.value.end,
++    flexible: brief?.duration.value.flexible ?? true,
++  };
++}
++
++function buildParticipants(ownerId: string, count: number): PlanParticipant[] {
++  const participants: PlanParticipant[] = [
++    { id: ownerId, displayName: 'Propriétaire', role: 'owner' },
++  ];
++  for (let index = 2; index <= Math.max(1, count); index += 1) {
++    participants.push({ id: `participant-${index}`, displayName: `Participant ${index}`, role: 'member' });
++  }
++  return participants;
++}
++
++/**
++ * Assemble les 19 sections normatives : chaque section calculée est un
++ * `PlanValue` (confiance + provenance + hypothèses), une section sans source
++ * reste `null` — jamais implicite, jamais inventée.
++ */
++export function buildPlanSections(
++  outputs: Map<string, unknown>,
++  now: string,
++  planConfidence: Confidence,
++  candidates: AdventureCandidate[]
++): AdventurePlanSections {
++  const routeResult = engineResultOf<RouteAdapterOutput>(outputs, 'route');
++  const coherenceResult = engineResultOf<CoherenceAdapterOutput>(outputs, 'coherence');
++  const budgetResult = engineResultOf<BudgetAdapterOutput>(outputs, 'budget');
++  const gearResult = engineResultOf<TripKitAnalysis>(outputs, 'gear');
++  const predictionResult = engineResultOf<PredictionAdapterOutput>(outputs, 'prediction');
++  const difficultyResult = engineResultOf<DifficultyAdapterOutput>(outputs, 'difficulty');
++  const safetyResult = engineResultOf<SafetyAdapterOutput>(outputs, 'safety');
++
++  const layers: Layers = (coherenceResult?.value.resolvedLayers ??
++    routeResult?.value.layers ??
++    {}) as Layers;
++  const skeleton = layers.skeleton as Proposal<Record<string, unknown>> | undefined;
++  const itinerary = layers.itinerary as Proposal<Record<string, unknown>> | undefined;
++
++  const itineraryValue = itinerary?.value ?? {};
++  const dailyStagesValue = {
++    days: finiteNumber(skeleton?.value?.days) ?? routeResult?.value.brief.duration.value.days ?? null,
++    stagesCount: finiteNumber(itineraryValue.stagesCount) ?? null,
++    phases: Array.isArray(skeleton?.value?.phases) ? skeleton?.value?.phases : [],
++  };
++  const terrainValue = {
++    totalDistanceKm: finiteNumber(itineraryValue.totalDistanceKm),
++    totalGainM: finiteNumber(itineraryValue.totalGainM),
++    totalLossM: finiteNumber(itineraryValue.totalLossM),
++    difficulty: typeof itineraryValue.difficulty === 'string' ? itineraryValue.difficulty : null,
++  };
++
++  const majorTransport = layers.major_transport as Proposal<unknown> | undefined;
++  const localTransport = layers.local_transport as Proposal<unknown> | undefined;
++  const accommodations = layers.accommodations as Proposal<unknown> | undefined;
++  const foodWater = layers.food_water as Proposal<unknown> | undefined;
++
++  const groupDifficulty = difficultyResult?.value.groupDifficulty ?? null;
++
++  return {
++    transport: majorTransport
++      ? planValueFromProposal(majorTransport, routeResult, now)
++      : null,
++    localMobility: localTransport ? planValueFromProposal(localTransport, routeResult, now) : null,
++    accommodations: accommodations
++      ? planValueFromProposal(accommodations, routeResult, now)
++      : null,
++    dailyStages:
++      routeResult && itinerary ? planValueFromResult(routeResult, dailyStagesValue) : null,
++    activityRoutes: itinerary ? planValueFromProposal(itinerary, routeResult, now) : null,
++    terrainAnalysis:
++      routeResult && itinerary ? planValueFromResult(routeResult, terrainValue) : null,
++    personalDifficulty: difficultyResult
++      ? planValueFromResult(difficultyResult, {
++          personalDifficulty: difficultyResult.value.personalDifficulty,
++          maxEffortScore: difficultyResult.value.maxEffortScore,
++          hardestSegmentIds: difficultyResult.value.hardestSegmentIds,
++          segmentCount: difficultyResult.value.segmentCount,
++        })
++      : null,
++    groupDifficulty:
++      difficultyResult && groupDifficulty !== null
++        ? planValueFromResult(difficultyResult, { groupDifficulty })
++        : null,
++    paceStrategies: predictionResult ? planValueFromResult(predictionResult) : null,
++    foodAndWater: foodWater ? planValueFromProposal(foodWater, routeResult, now) : null,
++    gearPlan: gearResult ? planValueFromResult(gearResult) : null,
++    budget: budgetResult ? planValueFromResult(budgetResult) : null,
++    bookings: null,
++    documents: null,
++    regulations: null,
++    safetyPlan: safetyResult ? planValueFromResult(safetyResult) : null,
++    offlinePackage: null,
++    liveConditions: null,
++    alternatives: {
++      value: candidates.map((candidate) => ({
++        id: candidate.id,
++        label: candidate.label,
++        budgetDeltaPct: candidate.budgetDeltaPct,
++        effortDeltaPct: candidate.effortDeltaPct,
++        durationDeltaPct: candidate.durationDeltaPct,
++        comfortScore: candidate.comfortScore,
++        riskScore: candidate.riskScore,
++        uncertainty: candidate.uncertainty,
++        reasons: [...candidate.reasons],
++      })),
++      confidence: planConfidence,
++      provenance: [{ source: 'computed', sourceRef: 'a6:candidates' }],
++      assumptions: [],
++      warnings: [],
++      impacts: [],
++      computedAt: now,
++    },
++  };
++}
++
++/**
++ * Décisions requises : verrous violés (déjà restaurés, à confirmer) et
++ * confirmations structurelles (paiement du budget, validation du plan de
++ * sécurité). Aucune action coûteuse ou de sécurité n'est silencieuse.
++ */
++export function buildRequiredDecisions(
++  plan: AdventurePlan,
++  now: string,
++  lockReport?: CoherenceLockReport | null
++): AdventureDecision[] {
++  const decisions: AdventureDecision[] = [];
++
++  if (lockReport && lockReport.violations.length > 0) {
++    decisions.push(
++      ...buildLockConfirmationDecisions(plan.id, lockReport.before, lockReport.violations, now)
++    );
++  }
++
++  const budget = plan.sections.budget?.value as
++    | { totalEur?: number | null; currency?: string }
++    | undefined;
++  if (plan.sections.budget) {
++    const amount =
++      typeof budget?.totalEur === 'number'
++        ? ` de ${budget.totalEur} ${budget.currency ?? 'EUR'}`
++        : '';
++    decisions.push({
++      id: 'decision-payment-budget',
++      planId: plan.id,
++      decisionType: 'payment',
++      proposal: `Confirmer le budget prévisionnel${amount} avant toute dépense.`,
++      impact: [
++        {
++          id: 'decision-payment-budget-impact',
++          section: 'sections.budget',
++          label: 'Budget prévisionnel à confirmer',
++          severity: 'warning',
++        },
++      ],
++      requiresConfirmation: true,
++      status: 'proposed',
++      createdAt: now,
++    });
++  }
++
++  if (plan.sections.safetyPlan) {
++    decisions.push({
++      id: 'decision-safety-plan',
++      planId: plan.id,
++      decisionType: 'safety_change',
++      proposal:
++        'Valider le plan de sécurité (consignes, moyens d’alerte et itinéraire de repli) avant le départ.',
++      impact: [
++        {
++          id: 'decision-safety-plan-impact',
++          section: 'sections.safetyPlan',
++          label: 'Plan de sécurité à valider',
++          severity: 'critical',
++        },
++      ],
++      requiresConfirmation: true,
++      status: 'proposed',
++      createdAt: now,
++    });
++  }
++
++  return decisions;
++}
++
++/** Résumé local déterministe — utilisé sans IA ou en repli si l'IA échoue. */
++export function buildLocalExplanation(
++  plan: AdventurePlan,
++  candidates: AdventureCandidate[],
++  runs: EngineRunRecord[],
++  aiUsed: boolean
++): string {
++  const destination =
++    plan.destinations.map((entry) => entry.label).join(', ') || 'destination à préciser';
++  const dailyStages = plan.sections.dailyStages?.value as { days?: number | null } | null | undefined;
++  const days = typeof dailyStages?.days === 'number' ? `de ${dailyStages.days} jours ` : '';
++  const emptySections = ADVENTURE_PLAN_SECTION_KEYS.filter((key) => plan.sections[key] === null);
++  const skipped = runs
++    .filter((run) => run.status === 'skipped')
++    .map((run) => run.engineId);
++
++  const parts = [
++    `Plan d’aventure ${days}proposé pour ${destination}.`,
++    `Trois variantes : ${candidates.map((candidate) => candidate.label).join(', ')}.`,
++    `Confiance globale ${Math.round(plan.confidence.score * 100)} % (${plan.confidence.level}).`,
++  ];
++  if (skipped.length > 0) {
++    parts.push(`Moteurs sans source déterministe : ${skipped.join(', ')}.`);
++  }
++  if (emptySections.length > 0) {
++    parts.push(`Sections laissées vides faute de source : ${emptySections.join(', ')}.`);
++  }
++  parts.push(
++    aiUsed
++      ? 'Résumé assisté par IA.'
++      : 'Brouillon déterministe (sans IA) — les hypothèses restent à confirmer.'
++  );
++  return parts.join(' ');
++}
++
++function planRow(plan: AdventurePlan): Record<string, unknown> {
++  return {
++    id: plan.id,
++    owner_id: plan.ownerId,
++    title: plan.title ?? null,
++    intent: plan.intent,
++    status: plan.status,
++    current_version: plan.currentVersion,
++    confidence: plan.confidence,
++    monitoring_rules: plan.monitoringRules,
++    created_at: plan.createdAt,
++    updated_at: plan.updatedAt,
++  };
++}
++
++function versionRow(plan: AdventurePlan, reason: string, generatedBy: string): Record<string, unknown> {
++  return {
++    plan_id: plan.id,
++    version: plan.currentVersion,
++    snapshot: plan,
++    reason,
++    generated_by: generatedBy,
++    confidence: plan.confidence,
++    created_at: plan.updatedAt,
++  };
++}
++
++function runRow(planId: string | null, run: EngineRunRecord, now: string): Record<string, unknown> {
++  return {
++    plan_id: planId,
++    engine_id: run.engineId,
++    engine_version: run.engineVersion,
++    status: run.status,
++    duration_ms: run.durationMs,
++    warnings: run.warnings,
++    error: run.error ?? null,
++    started_at: now,
++    finished_at: now,
++  };
++}
++
++function decisionRow(planId: string, decision: AdventureDecision): Record<string, unknown> {
++  return {
++    plan_id: planId,
++    decision_type: decision.decisionType,
++    proposal: decision.proposal,
++    impact: decision.impact,
++    requires_confirmation: decision.requiresConfirmation,
++    status: decision.status,
++    created_at: decision.createdAt,
++  };
++}
++
++async function resolveExplanation(
++  deps: AdventureGenerationDeps,
++  context: AdventureExplainContext,
++  localExplanation: string
++): Promise<{ explanation: string; aiUsed: boolean }> {
++  if (!deps.explain) {
++    return { explanation: localExplanation, aiUsed: false };
++  }
++  try {
++    const text = await deps.explain(context);
++    if (typeof text === 'string' && text.trim().length > 0) {
++      return { explanation: text.trim(), aiUsed: true };
++    }
++  } catch {
++    // L'échec de l'IA ne doit jamais rendre le plan inutilisable.
++  }
++  return { explanation: localExplanation, aiUsed: false };
++}
++
++/** Génère l'aventure complète : brief → moteurs → plan → candidats → persistance → explication. */
++export async function generateAdventure(
++  input: AdventureGenerationInput,
++  deps: AdventureGenerationDeps
++): Promise<AdventureGenerationResult> {
++  const now = input.now ?? new Date().toISOString();
++
++  const valueOf = <T>(outputs: Map<string, unknown>, id: string): T | undefined =>
++    engineResultOf<T>(outputs, id)?.value;
++
++  const resolvedPartySize = (outputs: Map<string, unknown>): number => {
++    if (input.participantsCount !== undefined) {
++      return Math.max(1, Math.trunc(input.participantsCount));
++    }
++    const brief = valueOf<TripBrief>(outputs, 'intent');
++    return Math.max(1, Math.trunc(brief?.party.value.adults ?? 1));
++  };
++
++  const resolveInput = (id: string, outputs: Map<string, unknown>): unknown => {
++    switch (id) {
++      case 'intent':
++      case 'route':
++        return { text: input.text };
++      case 'budget':
++      case 'gear':
++      case 'coherence':
++      case 'prediction':
++      case 'difficulty':
++      case 'safety':
++      case 'weather':
++      case 'regulations':
++      case 'documents':
++        return {
++          route: valueOf<RouteAdapterOutput>(outputs, 'route'),
++          locks: input.locks ?? [],
++          participantsCount: resolvedPartySize(outputs),
++        };
++      default:
++        return undefined;
++    }
++  };
++
++  let pipeline: Awaited<ReturnType<EngineRegistry['runPipeline']>>;
++  try {
++    pipeline = await deps.registry.runPipeline(
++      { userId: input.ownerId, nowIso: now },
++      { text: input.text },
++      resolveInput
++    );
++  } catch (error) {
++    const runs =
++      typeof (error as { runs?: unknown }).runs === 'object' &&
++      Array.isArray((error as { runs?: unknown }).runs)
++        ? ((error as { runs: EngineRunRecord[] }).runs)
++        : [];
++    for (const run of runs) {
++      try {
++        await deps.persistence.insertEngineRun(runRow(null, run, now));
++      } catch {
++        // L'observabilité ne doit jamais masquer l'échec critique d'origine.
++      }
++    }
++    throw error;
++  }
++
++  const { outputs, runs, planConfidence } = pipeline;
++
++  const brief = engineResultOf<TripBrief>(outputs, 'intent')?.value;
++  const participantsCount = resolvedPartySize(outputs);
++  const candidates = buildCandidates({
++    days: brief?.duration.value.days,
++    participantsCount,
++    budgetTier: brief?.budget.value.tier,
++    month: brief?.window.value.month,
++  });
++
++  const sections = buildPlanSections(outputs, now, planConfidence, candidates);
++  const destinations = buildDestinations(brief);
++
++  const plan: AdventurePlan = {
++    id: randomUUID(),
++    ownerId: input.ownerId,
++    title: destinations[0] ? `Aventure — ${destinations[0].label}` : 'Aventure à composer',
++    status: 'draft',
++    currentVersion: 1,
++    intent: buildIntent(brief, input.text),
++    participants: buildParticipants(input.ownerId, participantsCount),
++    dates: buildDates(brief),
++    destinations,
++    sections,
++    confidence: planConfidence,
++    monitoringRules: [],
++    createdAt: now,
++    updatedAt: now,
++  };
++
++  const lockReport = engineResultOf<CoherenceAdapterOutput>(outputs, 'coherence')?.value.lockReport;
++  const decisions = buildRequiredDecisions(plan, now, lockReport);
++
++  const inserted = await deps.persistence.insertPlan(planRow(plan));
++  plan.id = inserted.id;
++  for (const decision of decisions) decision.planId = plan.id;
++
++  await deps.persistence.insertPlanVersion(
++    versionRow(plan, 'Génération initiale (A6)', 'a6-orchestrator')
++  );
++  for (const run of runs) {
++    await deps.persistence.insertEngineRun(runRow(plan.id, run, now));
++  }
++  if (decisions.length > 0) {
++    await deps.persistence.insertDecisions(decisions.map((decision) => decisionRow(plan.id, decision)));
++  }
++
++  const localExplanation = buildLocalExplanation(plan, candidates, runs, false);
++  const { explanation, aiUsed } = await resolveExplanation(
++    deps,
++    { plan, candidates, runs },
++    localExplanation
++  );
++
++  return { plan, candidates, runs, explanation, aiUsed };
++}
++
++// ── Persistance Supabase (lecture seule côté client) ─────────────────────────
++
++/** Adaptateur Supabase service-role : les lignes sont déjà mises en forme. */
++export function createSupabaseAdventurePersistence(
++  client: SupabaseClient
++): AdventureEnginePersistence {
++  return {
++    async insertPlan(row: unknown) {
++      const { data, error } = await client
++        .from('adventure_plans')
++        .insert(row as never)
++        .select('id')
++        .single();
++      if (error) throw new Error(error.message);
++      return { id: String((data as { id: unknown }).id) };
++    },
++    async insertPlanVersion(row: unknown) {
++      const { error } = await client.from('adventure_plan_versions').insert(row as never);
++      if (error) throw new Error(error.message);
++    },
++    async insertEngineRun(row: unknown) {
++      const { error } = await client.from('adventure_engine_runs').insert(row as never);
++      if (error) throw new Error(error.message);
++    },
++    async insertDecisions(rows: unknown[]) {
++      if (rows.length === 0) return;
++      const { error } = await client.from('adventure_plan_decisions').insert(rows as never);
++      if (error) throw new Error(error.message);
++    },
++  };
++}
++
++export interface AdventurePlanVersionRecord {
++  version: number;
++  snapshot: unknown;
++  reason: string;
++  generatedBy: string;
++  confidence: Confidence;
++  createdAt: string;
++}
++
++export interface StoredAdventurePlan {
++  plan: AdventurePlan;
++  version: AdventurePlanVersionRecord | null;
++  decisions: AdventureDecision[];
++}
++
++function planFromRow(row: Record<string, unknown>): AdventurePlan {
++  const base = {
++    id: String(row.id),
++    ownerId: String(row.owner_id),
++    tripId: row.trip_id == null ? undefined : String(row.trip_id),
++    title: row.title == null ? undefined : String(row.title),
++    status: row.status ?? 'draft',
++    currentVersion: Number(row.current_version ?? 0),
++    intent: row.intent ?? { rawInput: '', activities: [], constraints: [] },
++    participants: [],
++    dates: { flexible: true },
++    destinations: [],
++    sections: Object.fromEntries(
++      ADVENTURE_PLAN_SECTION_KEYS.map((key) => [key, null])
++    ) as AdventurePlanSections,
++    confidence: row.confidence ?? COLD_CONFIDENCE,
++    monitoringRules: Array.isArray(row.monitoring_rules) ? row.monitoring_rules : [],
++    createdAt: String(row.created_at ?? new Date().toISOString()),
++    updatedAt: String(row.updated_at ?? new Date().toISOString()),
++  };
++  const parsed = adventurePlanSchema.safeParse(base);
++  return parsed.success ? (parsed.data as AdventurePlan) : (base as unknown as AdventurePlan);
++}
++
++/**
++ * Lecture d'un plan accessible (propriétaire ou collaborateur via policy A1) :
++ * plan + version courante + décisions. `null` si le plan n'existe pas.
++ */
++export async function getAdventurePlan(
++  client: SupabaseClient,
++  planId: string
++): Promise<StoredAdventurePlan | null> {
++  const { data: planData, error: planError } = await client
++    .from('adventure_plans')
++    .select('*')
++    .eq('id', planId)
++    .maybeSingle();
++  if (planError) throw new Error(planError.message);
++  if (!planData) return null;
++
++  const { data: versionData } = await client
++    .from('adventure_plan_versions')
++    .select('version, snapshot, reason, generated_by, confidence, created_at')
++    .eq('plan_id', planId)
++    .order('version', { ascending: false })
++    .limit(1)
++    .maybeSingle();
++
++  const { data: decisionRows } = await client
++    .from('adventure_plan_decisions')
++    .select('*')
++    .eq('plan_id', planId)
++    .order('created_at', { ascending: true });
++
++  const snapshotParsed = versionData?.snapshot
++    ? adventurePlanSchema.safeParse(versionData.snapshot)
++    : null;
++  const plan = snapshotParsed?.success
++    ? (snapshotParsed.data as AdventurePlan)
++    : planFromRow(planData as Record<string, unknown>);
++
++  const version: AdventurePlanVersionRecord | null = versionData
++    ? {
++        version: Number(versionData.version),
++        snapshot: versionData.snapshot,
++        reason: String(versionData.reason),
++        generatedBy: String(versionData.generated_by),
++        confidence: versionData.confidence as Confidence,
++        createdAt: String(versionData.created_at),
++      }
++    : null;
++
++  const decisions = ((decisionRows ?? []) as Record<string, unknown>[]).map((row) => ({
++    id: String(row.id),
++    planId: String(row.plan_id),
++    decisionType: row.decision_type as AdventureDecision['decisionType'],
++    proposal: String(row.proposal),
++    impact: Array.isArray(row.impact) ? (row.impact as AdventureDecision['impact']) : [],
++    requiresConfirmation: row.requires_confirmation === true,
++    status: row.status as AdventureDecision['status'],
++    decidedBy: row.decided_by == null ? undefined : String(row.decided_by),
++    decidedAt: row.decided_at == null ? undefined : String(row.decided_at),
++    createdAt: String(row.created_at),
++  }));
++
++  return { plan, version, decisions };
++}
+diff --git a/supabase/migrations/20260911180000_a6_engine_runs_skipped.sql b/supabase/migrations/20260911180000_a6_engine_runs_skipped.sql
+new file mode 100644
+index 00000000..ee7afddc
+--- /dev/null
++++ b/supabase/migrations/20260911180000_a6_engine_runs_skipped.sql
+@@ -0,0 +1,15 @@
++-- ==============================================================================
++-- A6 — Runs moteurs : autorise le statut 'skipped' (observabilité honnête)
++-- Un moteur sans source déterministe (weather/regulations/documents) n'est ni
++-- un succès ni un échec : il est journalisé comme ignoré.
++-- ==============================================================================
++
++ALTER TABLE public.adventure_engine_runs
++  DROP CONSTRAINT IF EXISTS adventure_engine_runs_status_check;
++
++ALTER TABLE public.adventure_engine_runs
++  ADD CONSTRAINT adventure_engine_runs_status_check
++  CHECK (status IN ('running', 'succeeded', 'skipped', 'failed'));
++
++COMMENT ON COLUMN public.adventure_engine_runs.status IS
++  'Statut du run moteur : running | succeeded | skipped (source absente) | failed.';
+diff --git a/tests/adventure-intelligence/adapters.spec.ts b/tests/adventure-intelligence/adapters.spec.ts
+new file mode 100644
+index 00000000..ab8bc946
+--- /dev/null
++++ b/tests/adventure-intelligence/adapters.spec.ts
+@@ -0,0 +1,236 @@
++import { describe, it, expect } from 'vitest';
++import type { Proposal, TripBrief } from '@/features/trips/schemas/autoGen.schema';
++import type { AdventureExecutionContext } from '@/features/adventure-intelligence/domain/engine';
++import { EngineSkipSignal } from '@/features/adventure-intelligence/domain/engineRegistry';
++import { intentAdapter } from '@/features/adventure-intelligence/server/adapters/intentAdapter';
++import { routeAdapter, type RouteAdapterOutput } from '@/features/adventure-intelligence/server/adapters/routeAdapter';
++import { budgetAdapter } from '@/features/adventure-intelligence/server/adapters/budgetAdapter';
++import { gearAdapter } from '@/features/adventure-intelligence/server/adapters/gearAdapter';
++import { coherenceAdapter } from '@/features/adventure-intelligence/server/adapters/coherenceAdapter';
++import { predictionAdapter } from '@/features/adventure-intelligence/server/adapters/predictionAdapter';
++import { difficultyAdapter } from '@/features/adventure-intelligence/server/adapters/difficultyAdapter';
++import { safetyAdapter } from '@/features/adventure-intelligence/server/adapters/safetyAdapter';
++import { weatherAdapter, regulationsAdapter, documentsAdapter } from '@/features/adventure-intelligence/server/adapters/skippedAdapters';
++
++const CONTEXT: AdventureExecutionContext = {
++  userId: 'a6000000-0000-4000-8000-000000000001',
++  nowIso: '2026-09-11T10:00:00.000Z',
++};
++
++function proposal<T>(
++  id: string,
++  layer: string,
++  value: T,
++  options: { confidence?: 'high' | 'medium' | 'low'; alternatives?: Proposal<T>[]; locked?: boolean } = {}
++): Proposal<T> {
++  return {
++    id,
++    layer: layer as Proposal['layer'],
++    slotId: `slot-${id}`,
++    value,
++    provenance: { source: 'estimated', sourceRef: 'Catalogue de référence LKDV (estimation)' },
++    confidence: options.confidence ?? 'low',
++    rationale: 'test',
++    alternatives: options.alternatives ?? [],
++    locked: options.locked ?? false,
++    editedByUser: false,
++    impacts: [],
++  };
++}
++
++function routeOutput(overrides: Partial<RouteAdapterOutput> = {}): RouteAdapterOutput {
++  const brief = {
++    rawInput: 'trek test',
++    destinations: { value: [{ country: 'FR', region: 'Massif du Sancy' }], confidence: 'stated' },
++    duration: { value: { days: 4, flexible: false }, confidence: 'stated' },
++    window: { value: { month: 7 }, confidence: 'defaulted' },
++    party: { value: { adults: 2, minors: 0 }, confidence: 'stated' },
++    budget: { value: { totalEur: 2000, tier: 'moderate' }, confidence: 'stated' },
++    style: { value: ['hiking'], confidence: 'stated' },
++    intensity: { value: { dailyKmMax: 20, dailyGainMax: 800, restEvery: 4 }, confidence: 'defaulted' },
++    constraints: { value: [], confidence: 'defaulted' },
++    mobility: { value: { modes: ['foot'], ownsVehicle: false, licence: false }, confidence: 'defaulted' },
++    departure: { value: {}, confidence: 'defaulted' },
++    fromProfile: { ownedGear: [], pastTrips: [], crews: [], units: 'metric', homeAirports: ['PAR'] },
++  } as TripBrief;
++
++  return {
++    blueprintId: 'bp-test',
++    layers: {
++      itinerary: proposal('prop-itin-test', 'itinerary', {
++        totalDistanceKm: 60,
++        totalGainM: 2400,
++        totalLossM: 2400,
++        stagesCount: 4,
++        difficulty: 'moderate',
++      }),
++      budget: proposal('prop-budg-test', 'budget', {
++        totalPerPersonEur: 800,
++        dailyAverageEur: 200,
++        currency: 'EUR',
++      }),
++      accommodations: proposal(
++        'prop-accom-test',
++        'accommodations',
++        { name: 'Refuge cher', priceEur: 3000 },
++        { alternatives: [proposal('prop-accom-alt', 'accommodations', { name: 'Bivouac', priceEur: 0 })] }
++      ),
++      safety: proposal('prop-safe-test', 'safety', {
++        rescuePhone: '112',
++        rescueUnit: 'PGM Le Mont-Dore',
++      }),
++      food_water: proposal('prop-food-test', 'food_water', { resupplyEveryDays: 2 }),
++      kit: proposal('prop-kit-test', 'kit', { targetWeightKg: 7.2, packVolumeL: 40 }),
++    },
++    tradeoffsLog: [],
++    executionTimeMs: 1,
++    brief,
++    ...overrides,
++  };
++}
++
++describe('A6 — adaptateurs des moteurs existants (TEST-A6-ADP)', () => {
++  it('TEST-A6-ADP-01: intentAdapter extrait l’intention avec confiance et provenance', async () => {
++    const result = await intentAdapter.run(
++      { text: 'Trek de 7 jours au Tour du Mont-Blanc en juillet en refuge' },
++      CONTEXT
++    );
++
++    expect(result.value.destinations.value[0]).toMatchObject({ country: 'FR' });
++    expect(result.value.duration.value.days).toBe(7);
++    expect(result.value.style.value).toContain('trekking');
++    expect(result.provenance.length).toBeGreaterThan(0);
++    expect(result.provenance[0].source).toBe('computed');
++    expect(result.confidence.score).toBeGreaterThan(0.5);
++    expect(result.computedAt).toBe(CONTEXT.nowIso);
++    expect(result.warnings).toEqual([]);
++  });
++
++  it('TEST-A6-ADP-02: routeAdapter enveloppe le pipeline blueprints sans invention', async () => {
++    const result = await routeAdapter.run(
++      { text: 'Trek de 7 jours au Tour du Mont-Blanc en refuge' },
++      CONTEXT
++    );
++
++    expect(result.value.blueprintId.length).toBeGreaterThan(0);
++    expect(Object.keys(result.value.layers).length).toBeGreaterThan(0);
++    expect(result.value.brief.rawInput).toContain('Mont-Blanc');
++    expect(result.provenance.length).toBeGreaterThan(0);
++    expect(result.confidence.score).toBeLessThanOrEqual(0.8);
++    expect(result.computedAt).toBe(CONTEXT.nowIso);
++  });
++
++  it('TEST-A6-ADP-03: budgetAdapter calcule le budget via le moteur existant, sinon skip motivé', async () => {
++    const result = await budgetAdapter.run(
++      { route: routeOutput(), participantsCount: 2 },
++      CONTEXT
++    );
++
++    expect(result.value.perPersonEur).toBe(800);
++    expect(result.value.totalEur).toBe(1600);
++    expect(result.value.currency).toBe('EUR');
++    expect(result.value.summary.estimatedBudget).toBe(1600);
++    expect(result.provenance.length).toBeGreaterThan(0);
++
++    const withoutBudget = routeOutput({
++      layers: { itinerary: routeOutput().layers.itinerary },
++    });
++    await expect(budgetAdapter.run({ route: withoutBudget }, CONTEXT)).rejects.toBeInstanceOf(
++      EngineSkipSignal
++    );
++  });
++
++  it('TEST-A6-ADP-04: gearAdapter produit l’analyse du kit contextuel', async () => {
++    const result = await gearAdapter.run({ route: routeOutput() }, CONTEXT);
++
++    expect(result.value.gearGaps.length).toBeGreaterThan(0);
++    expect(result.value.maxAltitudeM).toBeGreaterThanOrEqual(0);
++    expect(result.provenance[0].source).toBe('computed');
++    expect(result.warnings.some((warning) => warning.code === 'inventory_missing')).toBe(true);
++  });
++
++  it('TEST-A6-ADP-05: coherenceAdapter arbitre et respecte les verrous sans violation silencieuse', async () => {
++    const unlocked = await coherenceAdapter.run({ route: routeOutput() }, CONTEXT);
++    const swapped = unlocked.value.resolvedLayers.accommodations as Proposal<{ priceEur: number }>;
++    expect(swapped.value.priceEur).toBe(0);
++    expect(unlocked.value.tradeoffsLog.length).toBeGreaterThan(0);
++    expect(unlocked.value.lockReport.violations).toEqual([]);
++
++    const locked = await coherenceAdapter.run(
++      {
++        route: routeOutput(),
++        locks: [
++          {
++            id: 'accommodations',
++            kind: 'hard',
++            label: 'Hébergement imposé',
++            value: { name: 'Refuge cher' },
++            locked: true,
++            source: 'user',
++          },
++        ],
++      },
++      CONTEXT
++    );
++    const kept = locked.value.resolvedLayers.accommodations as Proposal<{ priceEur: number }>;
++    expect(kept.value.priceEur).toBe(3000);
++    expect(locked.value.lockReport.before.length).toBe(1);
++    expect(locked.value.lockReport.after.length).toBe(1);
++    expect(locked.value.lockReport.violations).toEqual([]);
++  });
++
++  it('TEST-A6-ADP-06: predictionAdapter prédit les trois stratégies en repli standard', async () => {
++    const result = await predictionAdapter.run({ route: routeOutput() }, CONTEXT);
++
++    expect(result.value.strategies.map((strategy) => strategy.strategy)).toEqual([
++      'comfort',
++      'recommended',
++      'fast',
++    ]);
++    expect(result.value.primary.strategy).toBe('recommended');
++    for (const strategy of result.value.strategies) {
++      expect(strategy.totalDurationP50Seconds).toBeLessThanOrEqual(
++        strategy.totalDurationP90Seconds
++      );
++    }
++    expect(result.value.segmentation).toBe('uniform_from_blueprint');
++    expect(result.assumptions.some((assumption) => assumption.id === 'uniform_segmentation')).toBe(true);
++  });
++
++  it('TEST-A6-ADP-07: difficultyAdapter agrège la difficulté personnelle et groupe', async () => {
++    const solo = await difficultyAdapter.run(
++      { route: routeOutput(), participantsCount: 1 },
++      CONTEXT
++    );
++    expect(solo.value.personalDifficulty).toBeGreaterThanOrEqual(0);
++    expect(solo.value.personalDifficulty).toBeLessThanOrEqual(100);
++    expect(solo.value.segmentCount).toBe(4);
++    expect(solo.value.groupDifficulty).toBe(solo.value.personalDifficulty);
++
++    const group = await difficultyAdapter.run(
++      { route: routeOutput(), participantsCount: 3 },
++      CONTEXT
++    );
++    expect(group.value.groupDifficulty).toBeNull();
++    expect(group.warnings.some((warning) => warning.code === 'group_profiles_missing')).toBe(true);
++  });
++
++  it('TEST-A6-ADP-08: safetyAdapter expose les données du blueprint, weather/regulations/documents skippent', async () => {
++    const safety = await safetyAdapter.run({ route: routeOutput() }, CONTEXT);
++    expect(safety.value).toMatchObject({ rescuePhone: '112', rescueUnit: 'PGM Le Mont-Dore' });
++    expect(safety.provenance[0].source).toBe('estimated');
++    expect(safety.warnings.some((warning) => warning.code === 'safety_estimate')).toBe(true);
++    expect(safety.assumptions.some((assumption) => assumption.id === 'safety_catalogue')).toBe(true);
++
++    const withoutSafety = routeOutput({ layers: { itinerary: routeOutput().layers.itinerary } });
++    await expect(safetyAdapter.run({ route: withoutSafety }, CONTEXT)).rejects.toBeInstanceOf(
++      EngineSkipSignal
++    );
++
++    for (const adapter of [weatherAdapter, regulationsAdapter, documentsAdapter]) {
++      expect(adapter.canRun(CONTEXT)).toBe(false);
++      expect(adapter.skipReason?.code).toMatch(/_no_deterministic_source$/);
++      await expect(adapter.run({}, CONTEXT)).rejects.toBeInstanceOf(EngineSkipSignal);
++    }
++  });
++});
+diff --git a/tests/adventure-intelligence/adventure-api.spec.ts b/tests/adventure-intelligence/adventure-api.spec.ts
+new file mode 100644
+index 00000000..55720020
+--- /dev/null
++++ b/tests/adventure-intelligence/adventure-api.spec.ts
+@@ -0,0 +1,134 @@
++import { describe, it, expect, vi, beforeEach } from 'vitest';
++import { NextRequest } from 'next/server';
++
++vi.mock('@/lib/supabase/server', () => ({
++  createClient: vi.fn(),
++}));
++vi.mock('@/lib/ai/serviceClient', () => ({
++  getServiceSupabase: vi.fn(() => ({})),
++}));
++vi.mock('@/features/adventure-intelligence/server/adapters', () => ({
++  createDefaultRegistry: vi.fn(() => ({ registry: true })),
++}));
++vi.mock('@/features/adventure-intelligence/server/generateAdventure', () => ({
++  generateAdventure: vi.fn(),
++  createSupabaseAdventurePersistence: vi.fn(() => ({ persistence: true })),
++  getAdventurePlan: vi.fn(),
++}));
++
++import { createClient } from '@/lib/supabase/server';
++import { getServiceSupabase } from '@/lib/ai/serviceClient';
++import { generateAdventure, getAdventurePlan } from '@/features/adventure-intelligence/server/generateAdventure';
++import { POST as generatePOST } from '@/app/api/adventure/generate/route';
++import { GET as planGET } from '@/app/api/adventure/[id]/route';
++
++const USER_ID = 'a6000000-0000-4000-8000-0000000000dd';
++const PLAN_ID = 'a6000000-0000-4000-8000-0000000000ee';
++const NOW = '2026-09-11T10:00:00.000Z';
++
++const mockedCreateClient = vi.mocked(createClient);
++const mockedService = vi.mocked(getServiceSupabase);
++const mockedGenerate = vi.mocked(generateAdventure);
++const mockedGetPlan = vi.mocked(getAdventurePlan);
++
++function sessionClient(user: { id: string } | null) {
++  return {
++    auth: { getUser: async () => ({ data: { user } }) },
++  } as never;
++}
++
++function generateRequest(body: unknown): NextRequest {
++  return new NextRequest('http://localhost/api/adventure/generate', {
++    method: 'POST',
++    body: JSON.stringify(body),
++    headers: { 'content-type': 'application/json' },
++  });
++}
++
++function planRequest(id: string): NextRequest {
++  return new NextRequest(`http://localhost/api/adventure/${id}`, { method: 'GET' });
++}
++
++const params = (id: string) => ({ params: Promise.resolve({ id }) });
++
++describe('A6 — API génération et lecture (TEST-A6-API)', () => {
++  beforeEach(() => {
++    vi.clearAllMocks();
++    mockedService.mockReturnValue({} as never);
++  });
++
++  it('TEST-A6-API-01: POST generate exige une session (401)', async () => {
++    mockedCreateClient.mockResolvedValue(sessionClient(null));
++
++    const response = await generatePOST(generateRequest({ text: 'Un trek de sept jours au Mont-Blanc' }));
++
++    expect(response.status).toBe(401);
++    const body = await response.json();
++    expect(body.error).toBe('Unauthorized');
++    expect(mockedGenerate).not.toHaveBeenCalled();
++  });
++
++  it('TEST-A6-API-02: POST generate valide l’entrée zod et le service (400/503)', async () => {
++    mockedCreateClient.mockResolvedValue(sessionClient({ id: USER_ID }));
++
++    const short = await generatePOST(generateRequest({ text: 'court' }));
++    expect(short.status).toBe(400);
++    const shortBody = await short.json();
++    expect(shortBody.error).toBe('Corps invalide');
++    expect(String(shortBody.details)).toContain('text');
++
++    mockedService.mockReturnValue(null as never);
++    const unavailable = await generatePOST(generateRequest({ text: 'Un trek de sept jours au Mont-Blanc' }));
++    expect(unavailable.status).toBe(503);
++    expect(mockedGenerate).not.toHaveBeenCalled();
++  });
++
++  it('TEST-A6-API-03: POST generate retourne 201 avec plan, variantes et explication', async () => {
++    mockedCreateClient.mockResolvedValue(sessionClient({ id: USER_ID }));
++    mockedGenerate.mockResolvedValue({
++      plan: { id: PLAN_ID, currentVersion: 1 } as never,
++      candidates: [{ id: 'comfort' }, { id: 'balanced' }, { id: 'adventure' }] as never,
++      runs: [],
++      explanation: 'Résumé déterministe.',
++      aiUsed: false,
++    });
++
++    const response = await generatePOST(generateRequest({ text: 'Un trek de sept jours au Mont-Blanc en juillet' }));
++
++    expect(response.status).toBe(201);
++    const body = await response.json();
++    expect(body).toMatchObject({
++      planId: PLAN_ID,
++      version: 1,
++      explanation: 'Résumé déterministe.',
++      aiUsed: false,
++    });
++    expect(body.candidates).toHaveLength(3);
++    expect(mockedGenerate).toHaveBeenCalledTimes(1);
++    expect(mockedGenerate.mock.calls[0][0]).toMatchObject({
++      ownerId: USER_ID,
++      text: 'Un trek de sept jours au Mont-Blanc en juillet',
++    });
++  });
++
++  it('TEST-A6-API-04: GET lit plan + version + décisions, 404 sinon', async () => {
++    mockedCreateClient.mockResolvedValue(sessionClient(null));
++    expect((await planGET(planRequest(PLAN_ID), params(PLAN_ID))).status).toBe(404);
++
++    mockedCreateClient.mockResolvedValue(sessionClient({ id: USER_ID }));
++    mockedGetPlan.mockResolvedValue(null);
++    expect((await planGET(planRequest(PLAN_ID), params(PLAN_ID))).status).toBe(404);
++
++    mockedGetPlan.mockResolvedValue({
++      plan: { id: PLAN_ID } as never,
++      version: { version: 1 } as never,
++      decisions: [{ id: 'decision-1' }] as never,
++    });
++    const response = await planGET(planRequest(PLAN_ID), params(PLAN_ID));
++    expect(response.status).toBe(200);
++    const body = await response.json();
++    expect(body.plan.id).toBe(PLAN_ID);
++    expect(body.version.version).toBe(1);
++    expect(body.decisions).toHaveLength(1);
++  });
++});
+diff --git a/tests/adventure-intelligence/autonomy.spec.ts b/tests/adventure-intelligence/autonomy.spec.ts
+new file mode 100644
+index 00000000..dedea72d
+--- /dev/null
++++ b/tests/adventure-intelligence/autonomy.spec.ts
+@@ -0,0 +1,44 @@
++import { describe, it, expect } from 'vitest';
++import {
++  AUTONOMY_CONFIRMATION_ACTIONS,
++  AUTONOMY_LEVELS,
++  canAutoExecute,
++  requiredConfirmations,
++} from '@/features/adventure-intelligence/domain/autonomy';
++import { DECISION_TYPES } from '@/features/adventure-intelligence/domain/decisions';
++
++describe('A6 — autonomie et confirmations (TEST-A6-AUTO)', () => {
++  it('TEST-A6-AUTO-01: les actions à confirmation couvrent exactement les types structurants', () => {
++    expect([...AUTONOMY_CONFIRMATION_ACTIONS]).toEqual([
++      'payment',
++      'cancellation',
++      'safety_change',
++      'location_share',
++      'group_change',
++    ]);
++    expect([...AUTONOMY_CONFIRMATION_ACTIONS]).toEqual(
++      DECISION_TYPES.filter((type) => type !== 'other')
++    );
++
++    for (const action of AUTONOMY_CONFIRMATION_ACTIONS) {
++      expect(requiredConfirmations(action)).toBe(true);
++    }
++    expect(requiredConfirmations('other')).toBe(false);
++  });
++
++  it('TEST-A6-AUTO-02: les niveaux d’autonomie bornent l’exécution automatique', () => {
++    expect([...AUTONOMY_LEVELS]).toEqual(['advisor', 'copilot', 'guided_autopilot']);
++
++    expect(canAutoExecute('advisor', 'other')).toBe(false);
++    expect(canAutoExecute('copilot', 'other')).toBe(true);
++    expect(canAutoExecute('guided_autopilot', 'other')).toBe(true);
++
++    for (const level of AUTONOMY_LEVELS) {
++      expect(canAutoExecute(level, 'payment')).toBe(false);
++      expect(canAutoExecute(level, 'cancellation')).toBe(false);
++      expect(canAutoExecute(level, 'safety_change')).toBe(false);
++      expect(canAutoExecute(level, 'location_share')).toBe(false);
++      expect(canAutoExecute(level, 'group_change')).toBe(false);
++    }
++  });
++});
+diff --git a/tests/adventure-intelligence/candidates.spec.ts b/tests/adventure-intelligence/candidates.spec.ts
+new file mode 100644
+index 00000000..e33b84f8
+--- /dev/null
++++ b/tests/adventure-intelligence/candidates.spec.ts
+@@ -0,0 +1,54 @@
++import { describe, it, expect } from 'vitest';
++import {
++  CANDIDATE_IDS,
++  buildCandidates,
++} from '@/features/adventure-intelligence/domain/candidates';
++
++describe('A6 — candidats de variantes (TEST-A6-CAND)', () => {
++  it('TEST-A6-CAND-01: buildCandidates produit exactement trois variantes nommées', () => {
++    const candidates = buildCandidates({ days: 7, participantsCount: 2, month: 7 });
++
++    expect(candidates).toHaveLength(3);
++    expect(candidates.map((candidate) => candidate.id)).toEqual([...CANDIDATE_IDS]);
++    expect(candidates.map((candidate) => candidate.id)).toEqual([
++      'comfort',
++      'balanced',
++      'adventure',
++    ]);
++    for (const candidate of candidates) {
++      expect(candidate.label.trim().length).toBeGreaterThan(0);
++      expect(candidate.uncertainty).toBeGreaterThanOrEqual(0);
++      expect(candidate.uncertainty).toBeLessThanOrEqual(1);
++    }
++  });
++
++  it('TEST-A6-CAND-02: chaque variante est justifiée par des raisons non vides', () => {
++    const candidates = buildCandidates();
++
++    for (const candidate of candidates) {
++      expect(Array.isArray(candidate.reasons)).toBe(true);
++      expect(candidate.reasons.length).toBeGreaterThan(0);
++      for (const reason of candidate.reasons) {
++        expect(reason.trim().length).toBeGreaterThan(0);
++      }
++    }
++
++    const adventure = candidates.find((candidate) => candidate.id === 'adventure');
++    expect(adventure?.reasons.join(' ').toLowerCase()).toContain('autonomie');
++  });
++
++  it('TEST-A6-CAND-03: effort et risque croissent de comfort à adventure, le confort décroît', () => {
++    const [comfort, balanced, adventure] = buildCandidates({ days: 10, participantsCount: 3 });
++
++    expect(comfort.effortDeltaPct).toBeLessThan(balanced.effortDeltaPct);
++    expect(balanced.effortDeltaPct).toBeLessThan(adventure.effortDeltaPct);
++
++    expect(comfort.riskScore).toBeLessThan(balanced.riskScore);
++    expect(balanced.riskScore).toBeLessThan(adventure.riskScore);
++
++    expect(comfort.comfortScore).toBeGreaterThan(balanced.comfortScore);
++    expect(balanced.comfortScore).toBeGreaterThan(adventure.comfortScore);
++
++    expect(comfort.budgetDeltaPct).toBeGreaterThan(adventure.budgetDeltaPct);
++  });
++});
+diff --git a/tests/adventure-intelligence/engine-registry.spec.ts b/tests/adventure-intelligence/engine-registry.spec.ts
+new file mode 100644
+index 00000000..512a2e6b
+--- /dev/null
++++ b/tests/adventure-intelligence/engine-registry.spec.ts
+@@ -0,0 +1,171 @@
++import { describe, it, expect, vi } from 'vitest';
++import {
++  EngineRegistry,
++  EngineSkipSignal,
++  type EngineRunRecord,
++} from '@/features/adventure-intelligence/domain/engineRegistry';
++import {
++  makeEngineResult,
++  type AdventureEngine,
++  type AdventureExecutionContext,
++} from '@/features/adventure-intelligence/domain/engine';
++import { makeConfidence } from '@/features/adventure-intelligence/domain/confidence';
++
++const CONTEXT: AdventureExecutionContext = {
++  userId: 'a6000000-0000-4000-8000-000000000001',
++  nowIso: '2026-09-11T10:00:00.000Z',
++};
++
++type TestEngine = AdventureEngine<unknown, unknown>;
++
++function engine(
++  id: string,
++  overrides: Partial<TestEngine> = {}
++): TestEngine {
++  return {
++    id,
++    version: 'a6-test',
++    dependencies: [],
++    canRun: () => true,
++    run: async () => makeEngineResult({ value: { engine: id } }),
++    ...overrides,
++  };
++}
++
++describe('A6 — registre de moteurs (TEST-A6-REG)', () => {
++  it('TEST-A6-REG-01: un canRun faux produit un skip motivé, sans exécution ni sortie', async () => {
++    const run = vi.fn(async () => makeEngineResult({ value: 'jamais' }));
++    const registry = new EngineRegistry();
++    registry.register(
++      Object.assign(engine('weather', { run, canRun: () => false }), {
++        skipReason: {
++          code: 'weather_no_deterministic_source',
++          message: 'Aucune source météo déterministe — section laissée vide.',
++          severity: 'warning' as const,
++        },
++      })
++    );
++
++    const result = await registry.runPipeline(CONTEXT, { text: 'test' }, () => undefined);
++
++    expect(run).not.toHaveBeenCalled();
++    expect(result.outputs.has('weather')).toBe(false);
++    expect(result.runs).toHaveLength(1);
++    expect(result.runs[0]).toMatchObject({
++      engineId: 'weather',
++      engineVersion: 'a6-test',
++      status: 'skipped',
++    });
++    expect(result.runs[0].warnings[0].code).toBe('weather_no_deterministic_source');
++    expect(Number.isFinite(result.runs[0].durationMs)).toBe(true);
++
++    const signaled = new EngineRegistry();
++    signaled.register(
++      engine('regulations', {
++        run: async () => {
++          throw new EngineSkipSignal({
++            code: 'regulations_no_source',
++            message: 'Source réglementaire absente.',
++            severity: 'warning',
++          });
++        },
++      })
++    );
++    const signaledResult = await signaled.runPipeline(CONTEXT, {}, () => undefined);
++    expect(signaledResult.runs[0].status).toBe('skipped');
++    expect(signaledResult.runs[0].warnings[0].code).toBe('regulations_no_source');
++  });
++
++  it('TEST-A6-REG-02: un échec non critique est isolé et n’interrompt pas le pipeline', async () => {
++    const registry = new EngineRegistry();
++    registry.register(
++      engine('weather', {
++        canRun: () => true,
++      })
++    );
++    registry.register(
++      engine('regulations', {
++        dependencies: ['weather'],
++        run: async () => {
++          throw new Error('source corrompue');
++        },
++      })
++    );
++    registry.register(engine('documents', { dependencies: ['regulations'] }));
++
++    const result = await registry.runPipeline(CONTEXT, {}, () => undefined);
++    const runs: EngineRunRecord[] = result.runs;
++    const byId = new Map(runs.map((record) => [record.engineId, record]));
++
++    expect(byId.get('regulations')?.status).toBe('failed');
++    expect(byId.get('regulations')?.error).toContain('source corrompue');
++    expect(byId.get('regulations')?.warnings[0].code).toBe('engine_failed');
++    expect(byId.get('documents')?.status).toBe('succeeded');
++    expect(result.outputs.has('documents')).toBe(true);
++  });
++
++  it('TEST-A6-REG-03: la confiance du plan est la combinaison prudente des moteurs ayant produit', async () => {
++    const registry = new EngineRegistry();
++    registry.register(
++      engine('intent', {
++        run: async () =>
++          makeEngineResult({
++            value: 'brief',
++            confidence: makeConfidence({ score: 0.9, sampleCount: 2, method: 'a' }),
++          }),
++      })
++    );
++    registry.register(
++      engine('route', {
++        dependencies: ['intent'],
++        run: async () =>
++          makeEngineResult({
++            value: 'route',
++            confidence: makeConfidence({ score: 0.4, sampleCount: 3, method: 'b' }),
++          }),
++      })
++    );
++
++    const result = await registry.runPipeline(CONTEXT, {}, () => undefined);
++
++    expect(result.planConfidence.score).toBe(0.4);
++    expect(result.planConfidence.sampleCount).toBe(5);
++    expect(result.planConfidence.method).toBe('combined:min');
++  });
++
++  it('TEST-A6-REG-04: les runs sont enregistrés dans l’ordre topologique avec version et durée', async () => {
++    const registry = new EngineRegistry();
++    registry.register(engine('route', { dependencies: ['intent'] }));
++    registry.register(engine('intent'));
++
++    const result = await registry.runPipeline(CONTEXT, { text: 'ok' }, () => undefined);
++
++    expect(result.runs.map((record) => record.engineId)).toEqual(['intent', 'route']);
++    for (const record of result.runs) {
++      expect(record.engineVersion).toBe('a6-test');
++      expect(record.status).toBe('succeeded');
++      expect(record.durationMs).toBeGreaterThanOrEqual(0);
++      expect(Array.isArray(record.warnings)).toBe(true);
++    }
++    const intentOutput = result.outputs.get('intent') as { value: { engine: string } };
++    expect(intentOutput.value).toEqual({ engine: 'intent' });
++  });
++
++  it('TEST-A6-REG-05: canRun reçoit le contexte et bloque l’exécution quand faux', async () => {
++    const canRun = vi.fn(() => false);
++    const run = vi.fn();
++    const registry = new EngineRegistry();
++    registry.register({
++      id: 'weather',
++      version: 'a6-test',
++      dependencies: [],
++      canRun,
++      run: run as unknown as TestEngine['run'],
++    });
++
++    await registry.runPipeline(CONTEXT, {}, () => undefined);
++
++    expect(canRun).toHaveBeenCalledWith(CONTEXT);
++    expect(run).not.toHaveBeenCalled();
++  });
++});
+diff --git a/tests/adventure-intelligence/generate-adventure.spec.ts b/tests/adventure-intelligence/generate-adventure.spec.ts
+new file mode 100644
+index 00000000..302c6fe8
+--- /dev/null
++++ b/tests/adventure-intelligence/generate-adventure.spec.ts
+@@ -0,0 +1,191 @@
++import { describe, it, expect, vi } from 'vitest';
++import {
++  generateAdventure,
++  type AdventureEnginePersistence,
++} from '@/features/adventure-intelligence/server/generateAdventure';
++import { createDefaultRegistry } from '@/features/adventure-intelligence/server/adapters';
++import { ADVENTURE_PLAN_SECTION_KEYS } from '@/features/adventure-intelligence/domain/adventurePlan';
++import { adventurePlanSchema } from '@/features/adventure-intelligence/schemas/adventurePlan.schema';
++
++const OWNER_ID = 'a6000000-0000-4000-8000-0000000000dd';
++const PLAN_ID = 'a6000000-0000-4000-8000-0000000000ee';
++const NOW = '2026-09-11T10:00:00.000Z';
++const TEXT = 'Trek de 7 jours au Tour du Mont-Blanc en juillet en refuge avec un budget de 800 €';
++
++function makePersistence() {
++  const plans: Record<string, unknown>[] = [];
++  const versions: Record<string, unknown>[] = [];
++  const runs: Record<string, unknown>[] = [];
++  const decisions: Record<string, unknown>[] = [];
++
++  const persistence: AdventureEnginePersistence = {
++    insertPlan: vi.fn(async (row: unknown) => {
++      plans.push(row as Record<string, unknown>);
++      return { id: PLAN_ID };
++    }),
++    insertPlanVersion: vi.fn(async (row: unknown) => {
++      versions.push(row as Record<string, unknown>);
++    }),
++    insertEngineRun: vi.fn(async (row: unknown) => {
++      runs.push(row as Record<string, unknown>);
++    }),
++    insertDecisions: vi.fn(async (rows: unknown[]) => {
++      decisions.push(...(rows as Record<string, unknown>[]));
++    }),
++  };
++
++  return { persistence, plans, versions, runs, decisions };
++}
++
++function deps(
++  persistence: AdventureEnginePersistence,
++  overrides: Partial<Parameters<typeof generateAdventure>[1]> = {}
++): Parameters<typeof generateAdventure>[1] {
++  return {
++    registry: createDefaultRegistry(),
++    persistence,
++    ...overrides,
++  };
++}
++
++describe('A6 — orchestrateur de génération (TEST-A6-GEN)', () => {
++  it('TEST-A6-GEN-01: une phrase produit un plan complet et valide, version 1 persistée', async () => {
++    const { persistence, versions } = makePersistence();
++
++    const result = await generateAdventure(
++      { ownerId: OWNER_ID, text: TEXT, now: NOW },
++      deps(persistence)
++    );
++
++    for (const key of ADVENTURE_PLAN_SECTION_KEYS) {
++      expect(result.plan.sections).toHaveProperty(key);
++    }
++    expect(result.plan.sections.dailyStages).not.toBeNull();
++    expect(result.plan.sections.budget).not.toBeNull();
++    expect(result.plan.sections.gearPlan).not.toBeNull();
++    expect(result.plan.sections.safetyPlan).not.toBeNull();
++    expect(result.plan.sections.personalDifficulty).not.toBeNull();
++    expect(result.plan.sections.paceStrategies).not.toBeNull();
++    expect(result.plan.sections.regulations).toBeNull();
++    expect(result.plan.sections.documents).toBeNull();
++    expect(result.plan.sections.liveConditions).toBeNull();
++
++    expect(result.plan.id).toBe(PLAN_ID);
++    expect(result.plan.ownerId).toBe(OWNER_ID);
++    expect(result.plan.currentVersion).toBe(1);
++    expect(result.plan.status).toBe('draft');
++    expect(result.plan.destinations.length).toBeGreaterThan(0);
++
++    const parsed = adventurePlanSchema.safeParse(result.plan);
++    expect(parsed.success).toBe(true);
++
++    expect(versions).toHaveLength(1);
++    expect(versions[0]).toMatchObject({ plan_id: PLAN_ID, version: 1 });
++    expect((versions[0].snapshot as { id: string }).id).toBe(PLAN_ID);
++  });
++
++  it('TEST-A6-GEN-02: chaque section calculée porte provenance, confiance et horodatage', async () => {
++    const { persistence } = makePersistence();
++    const result = await generateAdventure(
++      { ownerId: OWNER_ID, text: TEXT, now: NOW },
++      deps(persistence)
++    );
++
++    const sections = Object.entries(result.plan.sections);
++    const computed = sections.filter(([, section]) => section !== null);
++    expect(computed.length).toBeGreaterThanOrEqual(10);
++
++    for (const [key, section] of computed) {
++      expect(section, key).not.toBeNull();
++      const value = section as NonNullable<typeof section>;
++      expect(value.provenance.length, key).toBeGreaterThan(0);
++      expect(value.confidence.score, key).toBeGreaterThanOrEqual(0);
++      expect(value.confidence.score, key).toBeLessThanOrEqual(1);
++      expect(Number.isNaN(Date.parse(value.computedAt)), key).toBe(false);
++      expect(Array.isArray(value.warnings), key).toBe(true);
++    }
++
++    expect(result.plan.confidence.method).toBe('combined:min');
++    expect(result.plan.confidence.score).toBeGreaterThanOrEqual(0);
++  });
++
++  it('TEST-A6-GEN-03: trois candidats sont produits avec leurs variantes', async () => {
++    const { persistence } = makePersistence();
++    const result = await generateAdventure(
++      { ownerId: OWNER_ID, text: TEXT, now: NOW },
++      deps(persistence)
++    );
++
++    expect(result.candidates.map((candidate) => candidate.id)).toEqual([
++      'comfort',
++      'balanced',
++      'adventure',
++    ]);
++    expect(result.plan.sections.alternatives).not.toBeNull();
++  });
++
++  it('TEST-A6-GEN-04: les décisions requises et les runs sont persistés', async () => {
++    const { persistence, runs, decisions } = makePersistence();
++    const result = await generateAdventure(
++      { ownerId: OWNER_ID, text: TEXT, now: NOW },
++      deps(persistence)
++    );
++
++    expect(runs.length).toBeGreaterThan(0);
++    expect(runs.map((run) => run.engine_id)).toContain('intent');
++    expect(runs.some((run) => run.status === 'skipped')).toBe(true);
++    expect(runs.some((run) => run.status === 'succeeded')).toBe(true);
++    expect(runs.every((run) => typeof run.duration_ms === 'number')).toBe(true);
++
++    expect(decisions.length).toBeGreaterThan(0);
++    expect(
++      decisions.some(
++        (decision) => decision.decision_type === 'payment' && decision.requires_confirmation === true
++      )
++    ).toBe(true);
++    expect(
++      decisions.some(
++        (decision) =>
++          decision.decision_type === 'safety_change' && decision.requires_confirmation === true
++      )
++    ).toBe(true);
++    expect(result.runs.some((run) => run.engineId === 'weather' && run.status === 'skipped')).toBe(
++      true
++    );
++  });
++
++  it('TEST-A6-GEN-05: l’échec de explain ne bloque jamais le plan (aiUsed=false)', async () => {
++    const { persistence } = makePersistence();
++    const explain = vi.fn(async () => {
++      throw new Error('fournisseur IA indisponible');
++    });
++
++    const result = await generateAdventure(
++      { ownerId: OWNER_ID, text: TEXT, now: NOW },
++      deps(persistence, { explain })
++    );
++
++    expect(explain).toHaveBeenCalledTimes(1);
++    expect(result.aiUsed).toBe(false);
++    expect(result.explanation.trim().length).toBeGreaterThan(0);
++    expect(result.plan.sections.budget).not.toBeNull();
++
++    const withoutExplain = makePersistence();
++    const noAi = await generateAdventure(
++      { ownerId: OWNER_ID, text: TEXT, now: NOW },
++      deps(withoutExplain.persistence)
++    );
++    expect(noAi.aiUsed).toBe(false);
++    expect(noAi.explanation.trim().length).toBeGreaterThan(0);
++
++    const withAi = makePersistence();
++    const ai = await generateAdventure(
++      { ownerId: OWNER_ID, text: TEXT, now: NOW },
++      deps(withAi.persistence, {
++        explain: async () => 'Résumé IA du plan.',
++      })
++    );
++    expect(ai.aiUsed).toBe(true);
++    expect(ai.explanation).toBe('Résumé IA du plan.');
++  });
++});
+diff --git a/tests/adventure-intelligence/locks.spec.ts b/tests/adventure-intelligence/locks.spec.ts
+new file mode 100644
+index 00000000..0fe732d4
+--- /dev/null
++++ b/tests/adventure-intelligence/locks.spec.ts
+@@ -0,0 +1,84 @@
++import { describe, it, expect } from 'vitest';
++import {
++  detectLockViolations,
++  restoreLockedConstraints,
++  buildLockConfirmationDecisions,
++} from '@/features/adventure-intelligence/domain/locks';
++import type { AdventureConstraint } from '@/features/adventure-intelligence/domain/constraints';
++
++const PLAN_ID = 'a6000000-0000-4000-8000-0000000000aa';
++const NOW = '2026-09-11T12:00:00.000Z';
++
++function constraint(overrides: Partial<AdventureConstraint> = {}): AdventureConstraint {
++  return {
++    id: 'budget-max',
++    kind: 'hard',
++    label: 'Budget maximum',
++    value: 800,
++    locked: true,
++    source: 'user',
++    ...overrides,
++  };
++}
++
++describe('A6 — verrous (TEST-A6-LOCK)', () => {
++  it('TEST-A6-LOCK-01: toute violation d’un verrou est détectée (valeur, déverrouillage, disparition)', () => {
++    const before = [
++      constraint({ id: 'budget-max', value: 800 }),
++      constraint({ id: 'safety-level', value: 'prudent', source: 'safety' }),
++      constraint({ id: 'gear-weight', value: 8, label: 'Poids max', source: 'system' }),
++      constraint({ id: 'free-choice', value: 'nord', locked: false, source: 'user' }),
++    ];
++    const after = [
++      constraint({ id: 'budget-max', value: 950 }),
++      constraint({ id: 'safety-level', value: 'prudent', locked: false, source: 'safety' }),
++      constraint({ id: 'free-choice', value: 'sud', locked: false, source: 'user' }),
++    ];
++
++    const violations = detectLockViolations(before, after);
++
++    expect(violations).toEqual(['budget-max', 'safety-level', 'gear-weight']);
++    expect(violations).not.toContain('free-choice');
++
++    const intact = detectLockViolations(before, before);
++    expect(intact).toEqual([]);
++  });
++
++  it('TEST-A6-LOCK-02: la restauration réapplique la valeur verrouillée sans toucher au reste', () => {
++    const before = [
++      constraint({ id: 'budget-max', value: 800 }),
++      constraint({ id: 'gear-weight', value: 8, label: 'Poids max', source: 'system' }),
++    ];
++    const after = [
++      constraint({ id: 'budget-max', value: 950 }),
++      constraint({ id: 'free-choice', value: 'sud', locked: false, source: 'user' }),
++    ];
++
++    const violations = detectLockViolations(before, after);
++    const restored = restoreLockedConstraints(before, after, violations);
++    const byId = new Map(restored.map((item) => [item.id, item]));
++
++    expect(byId.get('budget-max')).toMatchObject({ value: 800, locked: true, source: 'user' });
++    expect(byId.get('gear-weight')).toMatchObject({ value: 8, locked: true, source: 'system' });
++    expect(byId.get('free-choice')).toMatchObject({ value: 'sud', locked: false });
++
++    const untouched = restoreLockedConstraints(before, before, []);
++    expect(untouched).toHaveLength(2);
++    expect(detectLockViolations(before, restored)).toEqual([]);
++  });
++
++  it('TEST-A6-LOCK-03: une violation journalise une décision à confirmer', () => {
++    const before = [constraint({ id: 'budget-max', value: 800 })];
++    const decisions = buildLockConfirmationDecisions(PLAN_ID, before, ['budget-max'], NOW);
++
++    expect(decisions).toHaveLength(1);
++    const decision = decisions[0];
++    expect(decision.planId).toBe(PLAN_ID);
++    expect(decision.requiresConfirmation).toBe(true);
++    expect(decision.status).toBe('proposed');
++    expect(decision.proposal).toContain('Budget maximum');
++    expect(decision.impact.length).toBeGreaterThan(0);
++    expect(decision.impact[0].severity).toBe('warning');
++    expect(decision.createdAt).toBe(NOW);
++  });
++});
+diff --git a/tests/adventure-intelligence/orchestrator-graph.spec.ts b/tests/adventure-intelligence/orchestrator-graph.spec.ts
+new file mode 100644
+index 00000000..d38383ef
+--- /dev/null
++++ b/tests/adventure-intelligence/orchestrator-graph.spec.ts
+@@ -0,0 +1,47 @@
++import { describe, it, expect } from 'vitest';
++import {
++  ENGINE_NODES,
++  missingDependencies,
++  topologicalOrder,
++  type EngineNode,
++} from '@/features/adventure-intelligence/domain/orchestratorGraph';
++
++describe('A6 — graphe de dépendances des moteurs (TEST-A6-GRAPH)', () => {
++  it('TEST-A6-GRAPH-01: ordre topologique conforme à la roadmap et dépendances respectées', () => {
++    const order = topologicalOrder();
++
++    expect(order).toEqual(ENGINE_NODES.map((node) => node.id));
++    expect(order).toContain('intent');
++    expect(order.indexOf('coherence')).toBeGreaterThan(order.indexOf('budget'));
++    expect(order.indexOf('adventure_plan')).toBe(order.length - 1);
++
++    const position = new Map(order.map((id, index) => [id, index]));
++    for (const node of ENGINE_NODES) {
++      for (const dependency of node.dependencies) {
++        const dependencyIndex = position.get(dependency) as number;
++        const nodeIndex = position.get(node.id) as number;
++        expect(dependencyIndex).toBeLessThan(nodeIndex);
++      }
++    }
++  });
++
++  it('TEST-A6-GRAPH-02: un cycle est détecté et rejeté', () => {
++    const cyclic: EngineNode[] = [
++      { id: 'route', dependencies: ['coherence'], critical: true },
++      { id: 'coherence', dependencies: ['route'], critical: true },
++    ];
++
++    expect(() => topologicalOrder(cyclic)).toThrow(/cycle/i);
++  });
++
++  it('TEST-A6-GRAPH-03: une dépendance manquante est signalée explicitement', () => {
++    const broken: EngineNode[] = [
++      { id: 'intent', dependencies: [], critical: true },
++      { id: 'route', dependencies: ['warp_drive' as EngineNode['id']], critical: true },
++    ];
++
++    expect(missingDependencies(broken)).toContain('warp_drive');
++    expect(() => topologicalOrder(broken)).toThrow(/manquante/i);
++    expect(missingDependencies()).toEqual([]);
++  });
++});
+diff --git a/tests/adventure-intelligence/versioning.spec.ts b/tests/adventure-intelligence/versioning.spec.ts
+new file mode 100644
+index 00000000..0b249007
+--- /dev/null
++++ b/tests/adventure-intelligence/versioning.spec.ts
+@@ -0,0 +1,109 @@
++import { describe, it, expect } from 'vitest';
++import {
++  diffPlanVersions,
++  nextVersionMeta,
++} from '@/features/adventure-intelligence/domain/versioning';
++import type {
++  AdventurePlan,
++  AdventurePlanSections,
++  PlanValue,
++} from '@/features/adventure-intelligence/domain/adventurePlan';
++import { ADVENTURE_PLAN_SECTION_KEYS } from '@/features/adventure-intelligence/domain/adventurePlan';
++import { makeConfidence } from '@/features/adventure-intelligence/domain/confidence';
++
++const NOW = '2026-09-11T12:00:00.000Z';
++
++function nullSections(): AdventurePlanSections {
++  return Object.fromEntries(
++    ADVENTURE_PLAN_SECTION_KEYS.map((key) => [key, null])
++  ) as AdventurePlanSections;
++}
++
++function planValue(value: unknown): PlanValue<unknown> {
++  return {
++    value,
++    confidence: makeConfidence({ score: 0.5, sampleCount: 0, method: 'test' }),
++    provenance: [{ source: 'computed', sourceRef: 'test' }],
++    assumptions: [],
++    warnings: [],
++    impacts: [],
++    computedAt: NOW,
++  };
++}
++
++function planWithSections(sections: Partial<AdventurePlanSections>): AdventurePlan {
++  return {
++    id: 'a6000000-0000-4000-8000-0000000000bb',
++    ownerId: 'a6000000-0000-4000-8000-0000000000cc',
++    status: 'draft',
++    currentVersion: 1,
++    intent: { rawInput: 'test', activities: [], constraints: [] },
++    participants: [],
++    dates: { flexible: true },
++    destinations: [],
++    sections: { ...nullSections(), ...sections },
++    confidence: makeConfidence({ score: 0.5, sampleCount: 0, method: 'test' }),
++    monitoringRules: [],
++    createdAt: NOW,
++    updatedAt: NOW,
++  };
++}
++
++describe('A6 — versionnement du plan (TEST-A6-VER)', () => {
++  it('TEST-A6-VER-01: le diff est calculé section par section', () => {
++    const prev = planWithSections({ budget: planValue({ totalEur: 800 }) });
++    const next = planWithSections({
++      budget: planValue({ totalEur: 950 }),
++      gearPlan: planValue({ items: ['drap'] }),
++      safetyPlan: planValue({ rescueUnit: 'PGHM' }),
++    });
++
++    const diff = diffPlanVersions(prev, next);
++
++    expect(diff.changes.map((change) => change.path)).toEqual([
++      'sections.gearPlan',
++      'sections.budget',
++      'sections.safetyPlan',
++    ]);
++    const budget = diff.changes.find((change) => change.path === 'sections.budget');
++    expect(budget?.before).toEqual(planValue({ totalEur: 800 }));
++    expect(budget?.after).toEqual(planValue({ totalEur: 950 }));
++    expect(budget?.requiresConfirmation).toBe(true);
++    expect(diff.changes.find((change) => change.path === 'sections.gearPlan')?.requiresConfirmation).toBe(false);
++
++    const noChange = diffPlanVersions(prev, prev);
++    expect(noChange.changes).toEqual([]);
++    expect(noChange.reason).toContain('Aucun');
++  });
++
++  it('TEST-A6-VER-02: chaque changement produit un impact avec section et gravité', () => {
++    const prev = planWithSections({});
++    const next = planWithSections({
++      budget: planValue({ totalEur: 950 }),
++      safetyPlan: planValue({ rescueUnit: 'PGHM' }),
++    });
++
++    const diff = diffPlanVersions(prev, next);
++    const byId = new Map(diff.impacts.map((impact) => [impact.section, impact]));
++
++    expect(diff.impacts).toHaveLength(2);
++    expect(byId.get('sections.safetyPlan')?.severity).toBe('critical');
++    expect(byId.get('sections.budget')?.severity).toBe('warning');
++    for (const impact of diff.impacts) {
++      expect(impact.label.trim().length).toBeGreaterThan(0);
++      expect(impact.id.trim().length).toBeGreaterThan(0);
++    }
++  });
++
++  it('TEST-A6-VER-03: nextVersionMeta incrémente la version et horodate', () => {
++    const confidence = makeConfidence({ score: 0.7, sampleCount: 4, method: 'test' });
++    const meta = nextVersionMeta(2, 'Budget ajusté', 'a6-orchestrator', confidence);
++
++    expect(meta.version).toBe(3);
++    expect(meta.reason).toBe('Budget ajusté');
++    expect(meta.generatedBy).toBe('a6-orchestrator');
++    expect(meta.confidence).toBe(confidence);
++    expect(Number.isNaN(Date.parse(meta.createdAt))).toBe(false);
++    expect(Object.keys(meta)).not.toContain('planId');
++  });
++});

@@ -1,0 +1,2515 @@
+﻿diff --git a/src/features/adventure-intelligence/domain/adventurePlan.ts b/src/features/adventure-intelligence/domain/adventurePlan.ts
+new file mode 100644
+index 00000000..cafcef89
+--- /dev/null
++++ b/src/features/adventure-intelligence/domain/adventurePlan.ts
+@@ -0,0 +1,119 @@
++/**
++ * AdventurePlan — source de vérité de l'aventure complète (ADR-AI-001).
++ *
++ * Chaque valeur significative porte provenance, date de calcul, validité,
++ * confiance, hypothèses et impacts. Les sections sont typées `PlanValue<T> | null` :
++ * une section non calculée est `null`, jamais implicite.
++ */
++import type { Assumption, EngineWarning, PlanImpact } from './engine';
++import type { Confidence } from './confidence';
++import type { DataProvenance } from './provenance';
++
++export type AdventurePlanStatus = 'draft' | 'active' | 'completed' | 'archived';
++
++export interface AdventureIntent {
++  rawInput: string;
++  summary?: string;
++  activities: string[];
++  constraints: string[];
++}
++
++export const PARTICIPANT_ROLES = ['owner', 'member', 'guest'] as const;
++
++export type ParticipantRole = (typeof PARTICIPANT_ROLES)[number];
++
++export interface PlanParticipant {
++  id: string;
++  displayName: string;
++  role: ParticipantRole;
++  profileId?: string;
++}
++
++export interface AdventureDates {
++  start?: string;
++  end?: string;
++  flexible: boolean;
++}
++
++export interface AdventureDestination {
++  label: string;
++  countryCode?: string;
++  latitude?: number;
++  longitude?: number;
++}
++
++/** Valeur de plan complète : toute sortie de moteur intégrée au plan. */
++export interface PlanValue<T> {
++  value: T;
++  confidence: Confidence;
++  provenance: DataProvenance[];
++  assumptions: Assumption[];
++  warnings: EngineWarning[];
++  impacts: PlanImpact[];
++  computedAt: string;
++  validUntil?: string;
++}
++
++/** Les 19 sections normatives d'un AdventurePlan. */
++export const ADVENTURE_PLAN_SECTION_KEYS = [
++  'transport',
++  'localMobility',
++  'accommodations',
++  'dailyStages',
++  'activityRoutes',
++  'terrainAnalysis',
++  'personalDifficulty',
++  'groupDifficulty',
++  'paceStrategies',
++  'foodAndWater',
++  'gearPlan',
++  'budget',
++  'bookings',
++  'documents',
++  'regulations',
++  'safetyPlan',
++  'offlinePackage',
++  'liveConditions',
++  'alternatives',
++] as const;
++
++export type AdventurePlanSectionKey = (typeof ADVENTURE_PLAN_SECTION_KEYS)[number];
++
++export type AdventurePlanSections = {
++  [K in AdventurePlanSectionKey]: PlanValue<unknown> | null;
++};
++
++export interface MonitoringRule {
++  id: string;
++  label: string;
++  kind: string;
++  enabled: boolean;
++}
++
++export interface AdventurePlan {
++  id: string;
++  ownerId: string;
++  tripId?: string;
++  title?: string;
++  status: AdventurePlanStatus;
++  currentVersion: number;
++  intent: AdventureIntent;
++  participants: PlanParticipant[];
++  dates: AdventureDates;
++  destinations: AdventureDestination[];
++  sections: AdventurePlanSections;
++  confidence: Confidence;
++  monitoringRules: MonitoringRule[];
++  createdAt: string;
++  updatedAt: string;
++}
++
++/** Métadonnées d'une version immuable du plan (`adventure_plan_versions`). */
++export interface PlanVersionMeta {
++  planId: string;
++  version: number;
++  reason: string;
++  generatedBy: string;
++  confidence: Confidence;
++  createdAt: string;
++}
+diff --git a/src/features/adventure-intelligence/domain/confidence.ts b/src/features/adventure-intelligence/domain/confidence.ts
+new file mode 100644
+index 00000000..b8a4977f
+--- /dev/null
++++ b/src/features/adventure-intelligence/domain/confidence.ts
+@@ -0,0 +1,103 @@
++/**
++ * Confiance — objet normatif du domaine Adventure Intelligence.
++ *
++ * Aucune collision avec `ConfidenceLevelEnum` (trips) : `Confidence` est
++ * l'objet enrichi { score, level, sampleCount, method, reasons }.
++ * Domaine pur : zéro I/O, zéro dépendance runtime.
++ */
++
++export type ConfidenceLevel = 'high' | 'medium' | 'low';
++
++export interface Confidence {
++  score: number;
++  level: ConfidenceLevel;
++  sampleCount: number;
++  method: string;
++  reasons: string[];
++}
++
++export interface MakeConfidenceInput {
++  score: number;
++  sampleCount: number;
++  method: string;
++  reasons?: string[];
++}
++
++/** Seuil haut (inclus) : à partir de 0.75 la confiance est `high`. */
++export const HIGH_CONFIDENCE_THRESHOLD = 0.75;
++/** Seuil médian (inclus) : à partir de 0.5 la confiance est `medium`. */
++export const MEDIUM_CONFIDENCE_THRESHOLD = 0.5;
++/** Nombre minimal d'observations pour parler de personnalisation. */
++export const MIN_PERSONALIZED_SAMPLES = 3;
++
++export const LOW_CONFIDENCE_FALLBACK_REASON =
++  'Confiance faible — échantillon insuffisant ou incertitude non documentée';
++
++/** Confiance froide : profil sans aucune donnée personnelle. */
++export const COLD_CONFIDENCE: Confidence = {
++  score: 0,
++  level: 'low',
++  sampleCount: 0,
++  method: 'cold',
++  reasons: ['Profil froid — aucune donnée personnelle disponible'],
++};
++
++/** Borne un nombre dans [0,1] ; toute valeur non finie retombe à 0. */
++export function clamp01(value: number): number {
++  if (!Number.isFinite(value)) return 0;
++  if (value < 0) return 0;
++  if (value > 1) return 1;
++  return value;
++}
++
++export function confidenceLevelFromScore(score: number): ConfidenceLevel {
++  const bounded = clamp01(score);
++  if (bounded >= HIGH_CONFIDENCE_THRESHOLD) return 'high';
++  if (bounded >= MEDIUM_CONFIDENCE_THRESHOLD) return 'medium';
++  return 'low';
++}
++
++export function makeConfidence(input: MakeConfidenceInput): Confidence {
++  const score = clamp01(input.score);
++  const level = confidenceLevelFromScore(score);
++  const reasons = [...(input.reasons ?? [])];
++  if (level === 'low' && reasons.length === 0) {
++    reasons.push(LOW_CONFIDENCE_FALLBACK_REASON);
++  }
++  return {
++    score,
++    level,
++    sampleCount: Math.max(0, Math.trunc(input.sampleCount)),
++    method: input.method,
++    reasons,
++  };
++}
++
++/**
++ * Combine plusieurs confiances : la plus prudente gagne (min), les
++ * échantillons s'additionnent, les raisons se concatènent dans l'ordre.
++ */
++export function combineConfidence(...parts: Confidence[]): Confidence {
++  if (parts.length === 0) {
++    return makeConfidence({
++      score: 0,
++      sampleCount: 0,
++      method: 'combined:min',
++      reasons: ['Aucune composante de confiance fournie'],
++    });
++  }
++
++  const score = Math.min(...parts.map((part) => clamp01(part.score)));
++  const sampleCount = parts.reduce((sum, part) => sum + Math.max(0, part.sampleCount), 0);
++  const reasons = parts.flatMap((part) => part.reasons);
++
++  return makeConfidence({ score, sampleCount, method: 'combined:min', reasons });
++}
++
++/** Une confiance est personnalisée si elle s'appuie sur assez d'observations fiables. */
++export function isPersonalized(confidence: Confidence): boolean {
++  return (
++    confidence.sampleCount >= MIN_PERSONALIZED_SAMPLES &&
++    clamp01(confidence.score) >= MEDIUM_CONFIDENCE_THRESHOLD
++  );
++}
+diff --git a/src/features/adventure-intelligence/domain/constraints.ts b/src/features/adventure-intelligence/domain/constraints.ts
+new file mode 100644
+index 00000000..6858ba97
+--- /dev/null
++++ b/src/features/adventure-intelligence/domain/constraints.ts
+@@ -0,0 +1,56 @@
++/**
++ * Contraintes d'aventure — niveaux `hard` / `soft`, verrous non modifiables
++ * silencieusement (le solveur ne modifie jamais un verrou sans trace).
++ */
++
++export type AdventureConstraintKind = 'hard' | 'soft';
++
++export type AdventureConstraintSource = 'user' | 'system' | 'safety';
++
++export interface AdventureConstraint<T = unknown> {
++  id: string;
++  kind: AdventureConstraintKind;
++  label: string;
++  value: T;
++  locked: boolean;
++  source: AdventureConstraintSource;
++}
++
++function deepEqual(a: unknown, b: unknown): boolean {
++  if (Object.is(a, b)) return true;
++  if (typeof a !== 'object' || typeof b !== 'object' || a === null || b === null) return false;
++
++  if (Array.isArray(a) || Array.isArray(b)) {
++    if (!Array.isArray(a) || !Array.isArray(b) || a.length !== b.length) return false;
++    return a.every((item, index) => deepEqual(item, b[index]));
++  }
++
++  const aRecord = a as Record<string, unknown>;
++  const bRecord = b as Record<string, unknown>;
++  const aKeys = Object.keys(aRecord);
++  const bKeys = Object.keys(bRecord);
++  if (aKeys.length !== bKeys.length) return false;
++  return aKeys.every((key) => deepEqual(aRecord[key], bRecord[key]));
++}
++
++/**
++ * Vrai si aucun verrou présent dans `before` n'a été remplacé silencieusement
++ * dans `after` : il doit encore exister, rester verrouillé et porter la même
++ * valeur. Les contraintes non verrouillées restent librement ajustables.
++ */
++export function assertNoSilentLockOverride(
++  before: readonly AdventureConstraint[],
++  after: readonly AdventureConstraint[]
++): boolean {
++  const afterById = new Map(after.map((constraint) => [constraint.id, constraint]));
++
++  for (const previous of before) {
++    if (!previous.locked) continue;
++    const next = afterById.get(previous.id);
++    if (!next) return false;
++    if (!next.locked) return false;
++    if (!deepEqual(previous.value, next.value)) return false;
++  }
++
++  return true;
++}
+diff --git a/src/features/adventure-intelligence/domain/decisions.ts b/src/features/adventure-intelligence/domain/decisions.ts
+new file mode 100644
+index 00000000..aeb0ef99
+--- /dev/null
++++ b/src/features/adventure-intelligence/domain/decisions.ts
+@@ -0,0 +1,38 @@
++/**
++ * Décisions — toute action coûteuse, irréversible ou de sécurité exige une
++ * confirmation explicite de l'utilisateur (cf. master plan §24).
++ */
++import type { PlanImpact } from './engine';
++
++export const DECISION_TYPES = [
++  'payment',
++  'cancellation',
++  'safety_change',
++  'location_share',
++  'group_change',
++  'other',
++] as const;
++
++export type DecisionType = (typeof DECISION_TYPES)[number];
++
++export const DECISION_STATUSES = ['proposed', 'confirmed', 'rejected', 'expired'] as const;
++
++export type DecisionStatus = (typeof DECISION_STATUSES)[number];
++
++/** Toutes les décisions exigent une confirmation, sauf `other` (non structurante). */
++export function requiresConfirmation(type: DecisionType): boolean {
++  return type !== 'other';
++}
++
++export interface AdventureDecision {
++  id: string;
++  planId: string;
++  decisionType: DecisionType;
++  proposal: string;
++  impact: PlanImpact[];
++  requiresConfirmation: boolean;
++  status: DecisionStatus;
++  decidedBy?: string;
++  decidedAt?: string;
++  createdAt: string;
++}
+diff --git a/src/features/adventure-intelligence/domain/engine.ts b/src/features/adventure-intelligence/domain/engine.ts
+new file mode 100644
+index 00000000..aa398a53
+--- /dev/null
++++ b/src/features/adventure-intelligence/domain/engine.ts
+@@ -0,0 +1,128 @@
++/**
++ * Contrat moteur — ADR-AI-005.
++ *
++ * Les moteurs du domaine sont purs, identifiés et versionnés. `EngineResult<T>`
++ * porte valeur, confiance, provenance, hypothèses, warnings, alternatives,
++ * impacts, date de calcul et durée de validité.
++ */
++import { COLD_CONFIDENCE, type Confidence } from './confidence';
++import type { DataProvenance } from './provenance';
++
++export type EngineSeverity = 'info' | 'warning' | 'critical';
++
++export interface Assumption {
++  id: string;
++  label: string;
++  detail?: string;
++  confidence?: Confidence;
++}
++
++export interface EngineWarning {
++  code: string;
++  message: string;
++  severity: EngineSeverity;
++}
++
++export interface PlanImpact {
++  id: string;
++  section: string;
++  label: string;
++  severity: EngineSeverity;
++}
++
++export interface Alternative<T> {
++  id: string;
++  label: string;
++  value: T;
++  tradeoffs: string[];
++  impacts: PlanImpact[];
++}
++
++export interface AdventureExecutionContext {
++  userId: string;
++  nowIso: string;
++  locale?: string;
++  planId?: string;
++  /** Feature flags (ADR-AI-008) : le comportement par défaut reste le fallback sûr. */
++  featureFlags?: Record<string, boolean>;
++}
++
++export interface EngineResult<T> {
++  value: T;
++  confidence: Confidence;
++  provenance: DataProvenance[];
++  assumptions: Assumption[];
++  warnings: EngineWarning[];
++  alternatives: Alternative<T>[];
++  impacts: PlanImpact[];
++  computedAt: string;
++  validUntil?: string;
++}
++
++export interface AdventureEngine<I, O> {
++  readonly id: string;
++  readonly version: string;
++  readonly dependencies: string[];
++  canRun(context: AdventureExecutionContext): boolean;
++  run(input: I, context: AdventureExecutionContext): Promise<EngineResult<O>>;
++}
++
++export interface MakeEngineResultInput<T> {
++  value: T;
++  confidence?: Confidence;
++  provenance?: DataProvenance[];
++  assumptions?: Assumption[];
++  warnings?: EngineWarning[];
++  alternatives?: Alternative<T>[];
++  impacts?: PlanImpact[];
++  computedAt?: string;
++  validUntil?: string;
++}
++
++const ISO_DATE_TIME_PATTERN =
++  /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(?:\.\d{1,3})?(?:Z|[+-]\d{2}:\d{2})$/;
++
++export function isIsoDateTime(value: string): boolean {
++  return ISO_DATE_TIME_PATTERN.test(value) && !Number.isNaN(Date.parse(value));
++}
++
++/** Applique les défauts sûrs : confiance froide, tableaux vides, computedAt = maintenant. */
++export function makeEngineResult<T>(partial: MakeEngineResultInput<T>): EngineResult<T> {
++  return {
++    value: partial.value,
++    confidence: partial.confidence ?? { ...COLD_CONFIDENCE, reasons: [...COLD_CONFIDENCE.reasons] },
++    provenance: partial.provenance ?? [],
++    assumptions: partial.assumptions ?? [],
++    warnings: partial.warnings ?? [],
++    alternatives: partial.alternatives ?? [],
++    impacts: partial.impacts ?? [],
++    computedAt: partial.computedAt ?? new Date().toISOString(),
++    validUntil: partial.validUntil,
++  };
++}
++
++/** Contrôles d'intégrité d'un résultat moteur — liste d'erreurs en français (vide si valide). */
++export function validateEngineResult<T>(result: EngineResult<T>): string[] {
++  const errors: string[] = [];
++
++  const score = result.confidence?.score;
++  if (typeof score !== 'number' || !Number.isFinite(score) || score < 0 || score > 1) {
++    errors.push('confidence.score hors bornes [0,1]');
++  }
++
++  if (!isIsoDateTime(result.computedAt)) {
++    errors.push('computedAt doit être une date ISO 8601 valide');
++  }
++
++  if (result.validUntil !== undefined) {
++    if (!isIsoDateTime(result.validUntil)) {
++      errors.push('validUntil doit être une date ISO 8601 valide');
++    } else if (isIsoDateTime(result.computedAt)) {
++      if (Date.parse(result.validUntil) < Date.parse(result.computedAt)) {
++        errors.push('validUntil doit être postérieur ou égal à computedAt');
++      }
++    }
++  }
++
++  return errors;
++}
+diff --git a/src/features/adventure-intelligence/domain/events.ts b/src/features/adventure-intelligence/domain/events.ts
+new file mode 100644
+index 00000000..08c42b26
+--- /dev/null
++++ b/src/features/adventure-intelligence/domain/events.ts
+@@ -0,0 +1,66 @@
++/**
++ * Événements de domaine — ADR-AI-006.
++ *
++ * `adventure_domain_events` est une file idempotente : la clé d'idempotence
++ * reprend `event_type + entity_id + processor_version` (unicité en base).
++ * `lkv_events` reste réservé aux événements visibles utilisateur.
++ */
++
++export const ADVENTURE_DOMAIN_EVENT_TYPES = [
++  'adventure.created',
++  'adventure.plan.generated',
++  'adventure.plan.recalculated',
++  'weather.changed',
++  'price.changed',
++  'booking.unavailable',
++  'trail.report.created',
++  'trail.report.confirmed',
++  'trail.condition.changed',
++  'hike.started',
++  'hike.position.recorded',
++  'hike.offroute.detected',
++  'hike.pace.deviation',
++  'hike.completed',
++  'performance.profile.updated',
++  'gear.inventory.changed',
++  'decision.confirmation.required',
++] as const;
++
++export type AdventureDomainEventType = (typeof ADVENTURE_DOMAIN_EVENT_TYPES)[number];
++
++export type AdventureDomainEventStatus = 'pending' | 'processing' | 'processed' | 'failed';
++
++export interface AdventureDomainEvent {
++  type: AdventureDomainEventType;
++  entityType: string;
++  entityId: string;
++  actorId?: string;
++  payload: Record<string, unknown>;
++  processorVersion: string;
++  idempotencyKey: string;
++  createdAt: string;
++}
++
++export interface BuildDomainEventInput {
++  type: AdventureDomainEventType;
++  entityType: string;
++  entityId: string;
++  processorVersion: string;
++  payload?: Record<string, unknown>;
++  actorId?: string;
++  createdAt?: string;
++}
++
++/** Construit l'événement et sa clé d'idempotence stable. */
++export function buildDomainEvent(input: BuildDomainEventInput): AdventureDomainEvent {
++  return {
++    type: input.type,
++    entityType: input.entityType,
++    entityId: input.entityId,
++    actorId: input.actorId,
++    payload: input.payload ?? {},
++    processorVersion: input.processorVersion,
++    idempotencyKey: `${input.type}:${input.entityId}:${input.processorVersion}`,
++    createdAt: input.createdAt ?? new Date().toISOString(),
++  };
++}
+diff --git a/src/features/adventure-intelligence/domain/health.ts b/src/features/adventure-intelligence/domain/health.ts
+new file mode 100644
+index 00000000..8b4df52d
+--- /dev/null
++++ b/src/features/adventure-intelligence/domain/health.ts
+@@ -0,0 +1,50 @@
++/**
++ * Contrats santé futurs (Phase 1) — AUCUN connecteur réel.
++ *
++ * `ExternalReadinessProvider` fige l'interface qu'un futur connecteur
++ * (HealthKit, Health Connect, etc.) devrait respecter. En Phase 1, seul le
++ * `NoopReadinessProvider` existe : aucune lecture, aucun stockage, aucune
++ * transmission de donnée de santé. `external_readiness` reste non octroyable.
++ */
++import type { Confidence } from './confidence';
++
++export const READINESS_DATA_CATEGORIES = [
++  'sleep',
++  'recovery',
++  'resting_heart_rate',
++  'hrv',
++  'activity',
++  'workout',
++] as const;
++
++export type ReadinessDataCategory = (typeof READINESS_DATA_CATEGORIES)[number];
++
++export interface AuthorizationResult {
++  granted: boolean;
++  categories: ReadinessDataCategory[];
++  reason?: string;
++}
++
++/** Instantané de forme de jour agrégé — jamais une donnée brute de capteur. */
++export interface ExternalReadinessSnapshot {
++  date: string;
++  readinessScore: number;
++  sleepScore?: number;
++  recoveryScore?: number;
++  recentLoad?: number;
++  restingHeartRateDelta?: number;
++  hrvDelta?: number;
++  fatigueDeclared?: number;
++  painDeclared?: number;
++  confidence: Confidence;
++  sourceProviderId: string;
++  sourceSummary: string;
++  computedAt: string;
++}
++
++export interface ExternalReadinessProvider {
++  readonly providerId: string;
++  isAvailable(): Promise<boolean>;
++  requestAuthorization(categories: ReadinessDataCategory[]): Promise<AuthorizationResult>;
++  getDailyReadiness(date: string): Promise<ExternalReadinessSnapshot | null>;
++}
+diff --git a/src/features/adventure-intelligence/domain/provenance.ts b/src/features/adventure-intelligence/domain/provenance.ts
+new file mode 100644
+index 00000000..3756c6ab
+--- /dev/null
++++ b/src/features/adventure-intelligence/domain/provenance.ts
+@@ -0,0 +1,51 @@
++/**
++ * Provenance des données — taxonomie alignée sur
++ * `src/features/trips/schemas/autoGen.schema.ts` (ProvenanceTypeEnum).
++ *
++ * Parité garantie par le type (aucun import runtime) et vérifiée par le test
++ * TEST-A1-PROV-01 entre `PROVENANCE_SOURCES` et `ProvenanceTypeEnum.options`.
++ */
++import type { ProvenanceType } from '@/features/trips/schemas/autoGen.schema';
++
++export type ProvenanceSource = ProvenanceType;
++
++export interface DataProvenance {
++  source: ProvenanceSource;
++  sourceRef?: string;
++  observedAt?: string;
++  freshnessSeconds?: number;
++  notes?: string;
++}
++
++/** Liste normative des sources, dans l'ordre de la taxonomie existante. */
++export const PROVENANCE_SOURCES = [
++  'measured',
++  'official',
++  'community',
++  'computed',
++  'estimated',
++  'suggested',
++] as const satisfies readonly ProvenanceSource[];
++
++/** Sources qui engagent une résolution vérifiable (référence ou observation). */
++export const REQUIRES_RESOLUTION_SOURCES = ['measured', 'official', 'community'] as const;
++
++export function isResolvableProvenance(provenance: DataProvenance): boolean {
++  if (!(REQUIRES_RESOLUTION_SOURCES as readonly string[]).includes(provenance.source)) {
++    return true;
++  }
++  return Boolean(provenance.sourceRef || provenance.observedAt);
++}
++
++/**
++ * Une provenance est périmée si son horodatage d'observation dépasse
++ * `maxAgeSeconds`, ou si aucun horodatage exploitable n'est présent
++ * (fraîcheur indéterminable ⇒ prudence).
++ */
++export function isStale(provenance: DataProvenance, nowIso: string, maxAgeSeconds: number): boolean {
++  if (!provenance.observedAt) return true;
++  const observedMs = Date.parse(provenance.observedAt);
++  const nowMs = Date.parse(nowIso);
++  if (Number.isNaN(observedMs) || Number.isNaN(nowMs)) return true;
++  return (nowMs - observedMs) / 1000 > maxAgeSeconds;
++}
+diff --git a/src/features/adventure-intelligence/index.ts b/src/features/adventure-intelligence/index.ts
+new file mode 100644
+index 00000000..52842d44
+--- /dev/null
++++ b/src/features/adventure-intelligence/index.ts
+@@ -0,0 +1,16 @@
++/**
++ * Barrel public du domaine Adventure Intelligence (domain + schemas + providers).
++ *
++ * N'exporte JAMAIS `server/consents.ts` (`import 'server-only'`) : un composant
++ * client qui importe ce barrel ne doit tirer aucun code serveur.
++ */
++export * from './domain/confidence';
++export * from './domain/provenance';
++export * from './domain/engine';
++export * from './domain/events';
++export * from './domain/constraints';
++export * from './domain/decisions';
++export * from './domain/adventurePlan';
++export * from './domain/health';
++export * from './schemas';
++export * from './providers/noopReadinessProvider';
+diff --git a/src/features/adventure-intelligence/providers/noopReadinessProvider.ts b/src/features/adventure-intelligence/providers/noopReadinessProvider.ts
+new file mode 100644
+index 00000000..da690cfc
+--- /dev/null
++++ b/src/features/adventure-intelligence/providers/noopReadinessProvider.ts
+@@ -0,0 +1,38 @@
++/**
++ * NoopReadinessProvider — contrats futurs uniquement.
++ *
++ * Aucun connecteur HealthKit / Health Connect / Garmin / Fitbit / BLE :
++ * contrats futurs uniquement. Aucune donnée de santé n'est lue, stockée ou
++ * transmise, et `external_readiness` reste désactivé (contrainte SQL + double
++ * barrière serveur). Ce provider existe pour figer le contrat de la Phase 1.
++ */
++import type {
++  AuthorizationResult,
++  ExternalReadinessProvider,
++  ExternalReadinessSnapshot,
++  ReadinessDataCategory,
++} from '../domain/health';
++
++export const NOOP_READINESS_PROVIDER_ID = 'noop';
++
++export const NOOP_READINESS_REASON = 'not_implemented_phase1';
++
++export class NoopReadinessProvider implements ExternalReadinessProvider {
++  readonly providerId = NOOP_READINESS_PROVIDER_ID;
++
++  async isAvailable(): Promise<boolean> {
++    return false;
++  }
++
++  async requestAuthorization(_categories: ReadinessDataCategory[]): Promise<AuthorizationResult> {
++    return {
++      granted: false,
++      categories: [],
++      reason: NOOP_READINESS_REASON,
++    };
++  }
++
++  async getDailyReadiness(_date: string): Promise<ExternalReadinessSnapshot | null> {
++    return null;
++  }
++}
+diff --git a/src/features/adventure-intelligence/schemas/adventurePlan.schema.ts b/src/features/adventure-intelligence/schemas/adventurePlan.schema.ts
+new file mode 100644
+index 00000000..d5c4d5fc
+--- /dev/null
++++ b/src/features/adventure-intelligence/schemas/adventurePlan.schema.ts
+@@ -0,0 +1,240 @@
++/**
++ * Schémas Zod de l'AdventurePlan (source de vérité, ADR-AI-001).
++ * Zod 4 — messages d'erreur en français, types inférés exportés.
++ */
++import { z } from 'zod';
++import { ProvenanceTypeEnum } from '@/features/trips/schemas/autoGen.schema';
++import type { AdventurePlanSections } from '../domain/adventurePlan';
++
++/** Date ISO 8601 complète (avec fuseau `Z` ou décalage) — en français. */
++export const isoDateTimeSchema = z
++  .string()
++  .regex(
++    /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(?:\.\d{1,3})?(?:Z|[+-]\d{2}:\d{2})$/,
++    'Date ISO 8601 invalide (attendu : AAAA-MM-JJTHH:MM:SSZ)'
++  );
++
++export const confidenceSchema = z.object({
++  score: z
++    .number()
++    .min(0, 'score doit être compris entre 0 et 1')
++    .max(1, 'score doit être compris entre 0 et 1'),
++  level: z.enum(['high', 'medium', 'low']),
++  sampleCount: z.number().int('sampleCount doit être un entier').min(0, 'sampleCount doit être positif ou nul'),
++  method: z.string().min(1, 'method est requis'),
++  reasons: z.array(z.string()).default([]),
++});
++
++export const provenanceSchema = z.object({
++  source: ProvenanceTypeEnum,
++  sourceRef: z.string().min(1, 'sourceRef ne peut pas être vide').optional(),
++  observedAt: isoDateTimeSchema.optional(),
++  freshnessSeconds: z.number().int('freshnessSeconds doit être un entier').min(0).optional(),
++  notes: z.string().optional(),
++});
++
++export const assumptionSchema = z.object({
++  id: z.string().min(1, 'assumption.id est requis'),
++  label: z.string().min(1, 'assumption.label est requis'),
++  detail: z.string().optional(),
++  confidence: confidenceSchema.optional(),
++});
++
++export const engineWarningSchema = z.object({
++  code: z.string().min(1, 'warning.code est requis'),
++  message: z.string().min(1, 'warning.message est requis'),
++  severity: z.enum(['info', 'warning', 'critical']),
++});
++
++export const planImpactSchema = z.object({
++  id: z.string().min(1, 'impact.id est requis'),
++  section: z.string().min(1, 'impact.section est requis'),
++  label: z.string().min(1, 'impact.label est requis'),
++  severity: z.enum(['info', 'warning', 'critical']),
++});
++
++export function alternativeSchema<T extends z.ZodType>(inner: T) {
++  return z.object({
++    id: z.string().min(1, 'alternative.id est requis'),
++    label: z.string().min(1, 'alternative.label est requis'),
++    value: inner,
++    tradeoffs: z.array(z.string()).default([]),
++    impacts: z.array(planImpactSchema).default([]),
++  });
++}
++
++/** `PlanValue<T>` : valeur + confiance + provenance + cycle de vie. */
++export function planValueSchema<T extends z.ZodType>(inner: T) {
++  return z
++    .object({
++      value: inner,
++      confidence: confidenceSchema,
++      provenance: z.array(provenanceSchema).default([]),
++      assumptions: z.array(assumptionSchema).default([]),
++      warnings: z.array(engineWarningSchema).default([]),
++      impacts: z.array(planImpactSchema).default([]),
++      computedAt: isoDateTimeSchema,
++      validUntil: isoDateTimeSchema.optional(),
++    })
++    .refine(
++      (planValue) =>
++        planValue.validUntil === undefined ||
++        Date.parse(planValue.validUntil) >= Date.parse(planValue.computedAt),
++      {
++        message: 'validUntil doit être postérieur ou égal à computedAt',
++        path: ['validUntil'],
++      }
++    );
++}
++
++export const adventureIntentSchema = z.object({
++  rawInput: z.string().min(1, 'L’intention brute est requise'),
++  summary: z.string().optional(),
++  activities: z.array(z.string()).default([]),
++  constraints: z.array(z.string()).default([]),
++});
++
++export const planParticipantSchema = z.object({
++  id: z.string().min(1, 'participant.id est requis'),
++  displayName: z.string().min(1, 'participant.displayName est requis'),
++  role: z.enum(['owner', 'member', 'guest']).default('member'),
++  profileId: z.string().uuid('participant.profileId doit être un UUID').optional(),
++});
++
++export const adventureDatesSchema = z.object({
++  start: isoDateTimeSchema.optional(),
++  end: isoDateTimeSchema.optional(),
++  flexible: z.boolean().default(false),
++});
++
++export const adventureDestinationSchema = z.object({
++  label: z.string().min(1, 'destination.label est requis'),
++  countryCode: z.string().length(2, 'destination.countryCode doit contenir 2 lettres').optional(),
++  latitude: z.number().min(-90).max(90).optional(),
++  longitude: z.number().min(-180).max(180).optional(),
++});
++
++export const monitoringRuleSchema = z.object({
++  id: z.string().min(1, 'monitoringRule.id est requis'),
++  label: z.string().min(1, 'monitoringRule.label est requis'),
++  kind: z.string().min(1, 'monitoringRule.kind est requis'),
++  enabled: z.boolean().default(true),
++});
++
++const nullablePlanValueSchema = planValueSchema(z.unknown()).nullable().default(null);
++
++export const adventurePlanSectionsSchema = z.object({
++  transport: nullablePlanValueSchema,
++  localMobility: nullablePlanValueSchema,
++  accommodations: nullablePlanValueSchema,
++  dailyStages: nullablePlanValueSchema,
++  activityRoutes: nullablePlanValueSchema,
++  terrainAnalysis: nullablePlanValueSchema,
++  personalDifficulty: nullablePlanValueSchema,
++  groupDifficulty: nullablePlanValueSchema,
++  paceStrategies: nullablePlanValueSchema,
++  foodAndWater: nullablePlanValueSchema,
++  gearPlan: nullablePlanValueSchema,
++  budget: nullablePlanValueSchema,
++  bookings: nullablePlanValueSchema,
++  documents: nullablePlanValueSchema,
++  regulations: nullablePlanValueSchema,
++  safetyPlan: nullablePlanValueSchema,
++  offlinePackage: nullablePlanValueSchema,
++  liveConditions: nullablePlanValueSchema,
++  alternatives: nullablePlanValueSchema,
++});
++
++const FULL_NULL_SECTIONS: AdventurePlanSections = {
++  transport: null,
++  localMobility: null,
++  accommodations: null,
++  dailyStages: null,
++  activityRoutes: null,
++  terrainAnalysis: null,
++  personalDifficulty: null,
++  groupDifficulty: null,
++  paceStrategies: null,
++  foodAndWater: null,
++  gearPlan: null,
++  budget: null,
++  bookings: null,
++  documents: null,
++  regulations: null,
++  safetyPlan: null,
++  offlinePackage: null,
++  liveConditions: null,
++  alternatives: null,
++};
++
++export const adventurePlanSchema = z.object({
++  id: z.string().uuid('id doit être un UUID'),
++  ownerId: z.string().uuid('ownerId doit être un UUID'),
++  tripId: z.string().uuid('tripId doit être un UUID').optional(),
++  title: z.string().min(1, 'title ne peut pas être vide').optional(),
++  status: z.enum(['draft', 'active', 'completed', 'archived']).default('draft'),
++  currentVersion: z.number().int('currentVersion doit être un entier').min(0).default(0),
++  intent: adventureIntentSchema,
++  participants: z.array(planParticipantSchema).default([]),
++  dates: adventureDatesSchema.default({ flexible: false }),
++  destinations: z.array(adventureDestinationSchema).default([]),
++  sections: adventurePlanSectionsSchema.default(FULL_NULL_SECTIONS),
++  confidence: confidenceSchema.default({
++    score: 0,
++    level: 'low',
++    sampleCount: 0,
++    method: 'cold',
++    reasons: [],
++  }),
++  monitoringRules: z.array(monitoringRuleSchema).default([]),
++  createdAt: isoDateTimeSchema.default(() => new Date().toISOString()),
++  updatedAt: isoDateTimeSchema.default(() => new Date().toISOString()),
++});
++
++export const decisionTypeSchema = z.enum([
++  'payment',
++  'cancellation',
++  'safety_change',
++  'location_share',
++  'group_change',
++  'other',
++]);
++
++export const decisionStatusSchema = z.enum(['proposed', 'confirmed', 'rejected', 'expired']);
++
++export const adventureDecisionSchema = z.object({
++  id: z.string().uuid('id doit être un UUID'),
++  planId: z.string().uuid('planId doit être un UUID'),
++  decisionType: decisionTypeSchema,
++  proposal: z.string().min(1, 'proposal est requis'),
++  impact: z.array(planImpactSchema).default([]),
++  requiresConfirmation: z.boolean().default(true),
++  status: decisionStatusSchema.default('proposed'),
++  decidedBy: z.string().uuid('decidedBy doit être un UUID').optional(),
++  decidedAt: isoDateTimeSchema.optional(),
++  createdAt: isoDateTimeSchema,
++});
++
++export const planVersionMetaSchema = z.object({
++  planId: z.string().uuid('planId doit être un UUID'),
++  version: z.number().int('version doit être un entier').min(1, 'version doit être supérieure ou égale à 1'),
++  reason: z.string().min(1, 'reason est requis'),
++  generatedBy: z.string().min(1, 'generatedBy est requis'),
++  confidence: confidenceSchema,
++  createdAt: isoDateTimeSchema,
++});
++
++export type ConfidenceSchema = z.infer<typeof confidenceSchema>;
++export type ProvenanceSchema = z.infer<typeof provenanceSchema>;
++export type AssumptionSchema = z.infer<typeof assumptionSchema>;
++export type EngineWarningSchema = z.infer<typeof engineWarningSchema>;
++export type PlanImpactSchema = z.infer<typeof planImpactSchema>;
++export type AdventureIntentSchema = z.infer<typeof adventureIntentSchema>;
++export type PlanParticipantSchema = z.infer<typeof planParticipantSchema>;
++export type AdventureDatesSchema = z.infer<typeof adventureDatesSchema>;
++export type AdventureDestinationSchema = z.infer<typeof adventureDestinationSchema>;
++export type MonitoringRuleSchema = z.infer<typeof monitoringRuleSchema>;
++export type AdventurePlanOutput = z.infer<typeof adventurePlanSchema>;
++export type AdventurePlanInput = z.input<typeof adventurePlanSchema>;
++export type AdventureDecisionOutput = z.infer<typeof adventureDecisionSchema>;
++export type PlanVersionMetaOutput = z.infer<typeof planVersionMetaSchema>;
+diff --git a/src/features/adventure-intelligence/schemas/index.ts b/src/features/adventure-intelligence/schemas/index.ts
+new file mode 100644
+index 00000000..492b53e6
+--- /dev/null
++++ b/src/features/adventure-intelligence/schemas/index.ts
+@@ -0,0 +1,9 @@
++/**
++ * Barrel des schémas Zod du domaine Adventure Intelligence :
++ * plan, performance, terrain, prédiction, live.
++ */
++export * from './adventurePlan.schema';
++export * from './performance.schema';
++export * from './terrain.schema';
++export * from './prediction.schema';
++export * from './live.schema';
+diff --git a/src/features/adventure-intelligence/schemas/live.schema.ts b/src/features/adventure-intelligence/schemas/live.schema.ts
+new file mode 100644
+index 00000000..2630ffe1
+--- /dev/null
++++ b/src/features/adventure-intelligence/schemas/live.schema.ts
+@@ -0,0 +1,148 @@
++/**
++ * Schémas Terrain Live (Phase 5) — signalements, confirmations et événements.
++ * Les valeurs proviennent de la migration `20260911134000_a1_terrain_live.sql`
++ * (autorité DDL) ; aucune identité de contributeur dans les surfaces publiques.
++ */
++import { z } from 'zod';
++import { isoDateTimeSchema } from './adventurePlan.schema';
++
++export const TERRAIN_REPORT_CATEGORIES = [
++  'obstacle',
++  'closure',
++  'mud',
++  'snow_ice',
++  'water',
++  'danger',
++  'bridge',
++  'flood',
++  'marking',
++  'shelter',
++  'crowding',
++  'animal',
++  'rockfall',
++] as const;
++
++export const terrainReportCategorySchema = z.enum(TERRAIN_REPORT_CATEGORIES);
++
++export const TERRAIN_REPORT_STATUSES = [
++  'pending',
++  'confirmed',
++  'active',
++  'stale',
++  'verify',
++  'resolved',
++  'expired',
++  'rejected',
++] as const;
++
++export const terrainReportStatusSchema = z.enum(TERRAIN_REPORT_STATUSES);
++
++/** Réponses possibles à « Toujours présent ? » — présent / disparu / inconnu. */
++export const TERRAIN_CONFIRMATIONS = ['present', 'gone', 'unknown'] as const;
++
++export const terrainConfirmationSchema = z.enum(TERRAIN_CONFIRMATIONS);
++
++export const CONDITION_BUCKETS = [
++  'dry',
++  'wet',
++  'snow',
++  'ice',
++  'day',
++  'night',
++  'ascent',
++  'descent',
++  'light_pack',
++  'heavy_pack',
++] as const;
++
++export const conditionBucketSchema = z.enum(CONDITION_BUCKETS);
++
++export const terrainSeveritySchema = z.enum(['info', 'warning', 'critical']);
++
++export const terrainPassabilitySchema = z.enum(['passable', 'difficult', 'impassable', 'unknown']);
++
++export const reportDirectionSchema = z.enum(['forward', 'reverse', 'unknown']);
++
++export const terrainSourceTypeSchema = z.enum(['user', 'official', 'auto']);
++
++export const terrainReportSchema = z.object({
++  id: z.string().uuid('id doit être un UUID'),
++  segmentId: z.number().int('segmentId doit être un entier').positive().optional(),
++  reporterId: z.string().uuid('reporterId doit être un UUID'),
++  category: terrainReportCategorySchema,
++  severity: terrainSeveritySchema.default('warning'),
++  passability: terrainPassabilitySchema.default('unknown'),
++  description: z
++    .string()
++    .max(1000, 'description ne peut pas dépasser 1000 caractères')
++    .optional(),
++  photoUrl: z.string().url('photoUrl doit être une URL valide').optional(),
++  lat: z.number().min(-90, 'lat doit être compris entre -90 et 90').max(90, 'lat doit être compris entre -90 et 90'),
++  lng: z
++    .number()
++    .min(-180, 'lng doit être compris entre -180 et 180')
++    .max(180, 'lng doit être compris entre -180 et 180'),
++  gpsAccuracyM: z.number().min(0, 'gpsAccuracyM doit être positif ou nul').optional(),
++  direction: reportDirectionSchema.optional(),
++  sourceType: terrainSourceTypeSchema.default('user'),
++  status: terrainReportStatusSchema.default('pending'),
++  presentCount: z.number().int('presentCount doit être un entier').min(0).default(0),
++  goneCount: z.number().int('goneCount doit être un entier').min(0).default(0),
++  unknownCount: z.number().int('unknownCount doit être un entier').min(0).default(0),
++  createdAt: isoDateTimeSchema.default(() => new Date().toISOString()),
++  updatedAt: isoDateTimeSchema.optional(),
++  expiresAt: isoDateTimeSchema.optional(),
++});
++
++/** Surface publique : jamais `reporter_id` (vue `terrain_reports_public`). */
++export const terrainReportPublicSchema = terrainReportSchema.omit({ reporterId: true });
++
++export const terrainReportConfirmationSchema = z.object({
++  id: z.string().uuid('id doit être un UUID').optional(),
++  reportId: z.string().uuid('reportId doit être un UUID'),
++  userId: z.string().uuid('userId doit être un UUID'),
++  confirmation: terrainConfirmationSchema,
++  locationDistanceM: z.number().min(0, 'locationDistanceM doit être positif ou nul').optional(),
++  gpsQuality: z
++    .number()
++    .min(0, 'gpsQuality doit être compris entre 0 et 1')
++    .max(1, 'gpsQuality doit être compris entre 0 et 1')
++    .optional(),
++  createdAt: isoDateTimeSchema.optional(),
++});
++
++export const TERRAIN_EVENT_STATUSES = ['active', 'resolved', 'expired'] as const;
++
++export const terrainEventStatusSchema = z.enum(TERRAIN_EVENT_STATUSES);
++
++export const terrainEventSchema = z.object({
++  id: z.string().uuid('id doit être un UUID'),
++  segmentId: z.number().int('segmentId doit être un entier').positive().optional(),
++  category: terrainReportCategorySchema,
++  status: terrainEventStatusSchema.default('active'),
++  mergedReportIds: z.array(z.string().uuid('mergedReportIds doit contenir des UUID')).default([]),
++  confidenceScore: z
++    .number()
++    .min(0, 'confidenceScore doit être compris entre 0 et 1')
++    .max(1, 'confidenceScore doit être compris entre 0 et 1')
++    .optional(),
++  firstReportedAt: isoDateTimeSchema,
++  lastConfirmedAt: isoDateTimeSchema.optional(),
++  expiresAt: isoDateTimeSchema.optional(),
++  createdAt: isoDateTimeSchema.default(() => new Date().toISOString()),
++  updatedAt: isoDateTimeSchema.optional(),
++});
++
++export type TerrainReportCategory = z.infer<typeof terrainReportCategorySchema>;
++export type TerrainReportStatus = z.infer<typeof terrainReportStatusSchema>;
++export type TerrainConfirmation = z.infer<typeof terrainConfirmationSchema>;
++export type Confirmation = TerrainConfirmation;
++export type ConditionBucket = z.infer<typeof conditionBucketSchema>;
++export type TerrainSeverity = z.infer<typeof terrainSeveritySchema>;
++export type TerrainPassability = z.infer<typeof terrainPassabilitySchema>;
++export type ReportDirection = z.infer<typeof reportDirectionSchema>;
++export type TerrainSourceType = z.infer<typeof terrainSourceTypeSchema>;
++export type TerrainReport = z.infer<typeof terrainReportSchema>;
++export type TerrainReportPublic = z.infer<typeof terrainReportPublicSchema>;
++export type TerrainReportConfirmation = z.infer<typeof terrainReportConfirmationSchema>;
++export type TerrainEvent = z.infer<typeof terrainEventSchema>;
+diff --git a/src/features/adventure-intelligence/schemas/performance.schema.ts b/src/features/adventure-intelligence/schemas/performance.schema.ts
+new file mode 100644
+index 00000000..a870b1f4
+--- /dev/null
++++ b/src/features/adventure-intelligence/schemas/performance.schema.ts
+@@ -0,0 +1,91 @@
++/**
++ * Schémas du Profil Terrain et de la qualité de trace (Phase 3).
++ * Le profil est privé, versionné et calculé sans aucune donnée de santé connectée.
++ */
++import { z } from 'zod';
++import { confidenceSchema, isoDateTimeSchema } from './adventurePlan.schema';
++
++export const responseCurvePointSchema = z.object({
++  x: z.number(),
++  value: z.number(),
++});
++
++export const responseCurveSchema = z.object({
++  points: z
++    .array(responseCurvePointSchema)
++    .min(1, 'Une courbe de réponse requiert au moins un point'),
++  interpolate: z.enum(['linear', 'monotone']).default('linear'),
++});
++
++export const fatigueCurveSchema = z.object({
++  points: z
++    .array(responseCurvePointSchema)
++    .min(1, 'Une courbe de fatigue requiert au moins un point'),
++  decayPerHour: z
++    .number()
++    .min(0, 'decayPerHour doit être compris entre 0 et 1')
++    .max(1, 'decayPerHour doit être compris entre 0 et 1')
++    .default(0),
++});
++
++export const pauseModelSchema = z.object({
++  pauseMinutesPerHour: z.number().min(0, 'pauseMinutesPerHour doit être positif ou nul').default(0),
++  pauseMinutesPerAscentM: z.number().min(0, 'pauseMinutesPerAscentM doit être positif ou nul').default(0),
++  minPauseMinutes: z.number().min(0, 'minPauseMinutes doit être positif ou nul').default(0),
++});
++
++export const CALIBRATION_LEVELS = [
++  'cold',
++  'calibration',
++  'personalization',
++  'contextualization',
++] as const;
++
++export const calibrationLevelSchema = z.enum(CALIBRATION_LEVELS);
++
++export const performanceProfileSchema = z.object({
++  userId: z.string().uuid('userId doit être un UUID'),
++  activityType: z.literal('hiking').default('hiking'),
++  flatSpeedKmH: z.number().positive('flatSpeedKmH doit être strictement positif'),
++  ascentSpeedMPerHour: z
++    .number()
++    .min(0, 'ascentSpeedMPerHour doit être positif ou nul'),
++  descentSpeedMPerHour: z
++    .number()
++    .min(0, 'descentSpeedMPerHour doit être positif ou nul'),
++  gradeResponse: responseCurveSchema,
++  surfaceResponse: responseCurveSchema,
++  fatigueCurve: fatigueCurveSchema,
++  pauseModel: pauseModelSchema,
++  packResponse: responseCurveSchema,
++  confidence: confidenceSchema,
++  sampleCount: z.number().int('sampleCount doit être un entier').min(0, 'sampleCount doit être positif ou nul').default(0),
++  calibrationLevel: calibrationLevelSchema.default('cold'),
++  modelVersion: z.string().min(1, 'modelVersion est requis'),
++  computedAt: isoDateTimeSchema,
++  validUntil: isoDateTimeSchema.optional(),
++});
++
++function unitIntervalSchema(name: string) {
++  return z
++    .number()
++    .min(0, `${name} doit être compris entre 0 et 1`)
++    .max(1, `${name} doit être compris entre 0 et 1`);
++}
++
++export const trackQualitySchema = z.object({
++  overall: unitIntervalSchema('overall'),
++  gpsAccuracy: unitIntervalSchema('gpsAccuracy'),
++  temporalContinuity: unitIntervalSchema('temporalContinuity'),
++  altitudeReliability: unitIntervalSchema('altitudeReliability'),
++  plausibleMovement: unitIntervalSchema('plausibleMovement'),
++  reasons: z.array(z.string()).default([]),
++});
++
++export type ResponseCurvePoint = z.infer<typeof responseCurvePointSchema>;
++export type ResponseCurve = z.infer<typeof responseCurveSchema>;
++export type FatigueCurve = z.infer<typeof fatigueCurveSchema>;
++export type PauseModel = z.infer<typeof pauseModelSchema>;
++export type CalibrationLevel = z.infer<typeof calibrationLevelSchema>;
++export type PerformanceProfile = z.infer<typeof performanceProfileSchema>;
++export type TrackQuality = z.infer<typeof trackQualitySchema>;
+diff --git a/src/features/adventure-intelligence/schemas/prediction.schema.ts b/src/features/adventure-intelligence/schemas/prediction.schema.ts
+new file mode 100644
+index 00000000..ddf6f16e
+--- /dev/null
++++ b/src/features/adventure-intelligence/schemas/prediction.schema.ts
+@@ -0,0 +1,82 @@
++/**
++ * Schémas de prédiction personnelle (Phase 3) — segment et route.
++ * P50/P90 toujours ordonnés ; aucune précision trompeuse (ADR-AI-004).
++ */
++import { z } from 'zod';
++import { confidenceSchema, engineWarningSchema, isoDateTimeSchema } from './adventurePlan.schema';
++
++export const predictionFactorSchema = z.object({
++  code: z.string().min(1, 'factor.code est requis'),
++  label: z.string().min(1, 'factor.label est requis'),
++  impact: z.enum(['increase', 'decrease', 'neutral']),
++  weight: z
++    .number()
++    .min(0, 'factor.weight doit être compris entre 0 et 1')
++    .max(1, 'factor.weight doit être compris entre 0 et 1')
++    .optional(),
++});
++
++export const segmentPredictionSchema = z
++  .object({
++    segmentId: z.number().int('segmentId doit être un entier').positive('segmentId doit être positif'),
++    durationP50Seconds: z.number().positive('durationP50Seconds doit être strictement positif'),
++    durationP90Seconds: z.number().positive('durationP90Seconds doit être strictement positif'),
++    paceRangeMinPerKm: z.tuple([
++      z.number().min(0, 'paceRangeMinPerKm doit être positif ou nul'),
++      z.number().min(0, 'paceRangeMinPerKm doit être positif ou nul'),
++    ]),
++    effortScore: z.number().min(0).max(100),
++    personalDifficulty: z.number().min(0).max(100),
++    recommendedPauseSeconds: z.number().int('recommendedPauseSeconds doit être un entier').min(0),
++    confidence: confidenceSchema,
++    factors: z.array(predictionFactorSchema).default([]),
++  })
++  .refine((prediction) => prediction.durationP50Seconds <= prediction.durationP90Seconds, {
++    message: 'P50 doit être inférieur ou égal à P90',
++    path: ['durationP90Seconds'],
++  })
++  .refine((prediction) => prediction.paceRangeMinPerKm[0] <= prediction.paceRangeMinPerKm[1], {
++    message: 'paceRangeMinPerKm doit être croissant ([0] <= [1])',
++    path: ['paceRangeMinPerKm'],
++  });
++
++export const routeStrategySchema = z.enum(['comfort', 'recommended', 'fast']);
++
++export const routePredictionSchema = z
++  .object({
++    userId: z.string().uuid('userId doit être un UUID'),
++    planId: z.string().uuid('planId doit être un UUID').optional(),
++    routeId: z.number().int('routeId doit être un entier').positive().optional(),
++    strategy: routeStrategySchema,
++    etaP50: isoDateTimeSchema,
++    etaP90: isoDateTimeSchema,
++    totalDurationP50Seconds: z.number().positive('totalDurationP50Seconds doit être strictement positif'),
++    totalDurationP90Seconds: z.number().positive('totalDurationP90Seconds doit être strictement positif'),
++    paceP25MinPerKm: z.number().min(0).optional(),
++    paceP50MinPerKm: z.number().min(0).optional(),
++    paceP75MinPerKm: z.number().min(0).optional(),
++    pausesSeconds: z.number().int('pausesSeconds doit être un entier').min(0).default(0),
++    personalDifficulty: z.number().min(0).max(100).optional(),
++    maxFatigue: z.number().min(0).max(100).optional(),
++    turnaroundTime: isoDateTimeSchema.optional(),
++    criticalSegmentIds: z
++      .array(z.number().int('criticalSegmentIds doit contenir des entiers').positive())
++      .default([]),
++    warnings: z.array(engineWarningSchema).default([]),
++    confidence: confidenceSchema,
++    modelVersion: z.string().min(1, 'modelVersion est requis'),
++    computedAt: isoDateTimeSchema,
++  })
++  .refine((prediction) => Date.parse(prediction.etaP50) <= Date.parse(prediction.etaP90), {
++    message: 'etaP50 doit être antérieur ou égal à etaP90',
++    path: ['etaP90'],
++  })
++  .refine((prediction) => prediction.totalDurationP50Seconds <= prediction.totalDurationP90Seconds, {
++    message: 'totalDurationP50Seconds doit être inférieur ou égal à totalDurationP90Seconds',
++    path: ['totalDurationP90Seconds'],
++  });
++
++export type PredictionFactor = z.infer<typeof predictionFactorSchema>;
++export type SegmentPrediction = z.infer<typeof segmentPredictionSchema>;
++export type RouteStrategy = z.infer<typeof routeStrategySchema>;
++export type RoutePrediction = z.infer<typeof routePredictionSchema>;
+diff --git a/src/features/adventure-intelligence/schemas/terrain.schema.ts b/src/features/adventure-intelligence/schemas/terrain.schema.ts
+new file mode 100644
+index 00000000..f47ed969
+--- /dev/null
++++ b/src/features/adventure-intelligence/schemas/terrain.schema.ts
+@@ -0,0 +1,38 @@
++/**
++ * Schémas d'enrichissement des segments (Phase 2).
++ * `trail_segments` reste l'unique réseau (ADR-AI-002) ; les features vivent en 1:1.
++ */
++import { z } from 'zod';
++import { ProvenanceTypeEnum } from '@/features/trips/schemas/autoGen.schema';
++import { isoDateTimeSchema } from './adventurePlan.schema';
++
++export const segmentDirectionSchema = z.enum(['forward', 'reverse', 'both']);
++
++export const segmentDifficultyClassSchema = z
++  .number()
++  .int('La classe doit être un entier')
++  .min(0, 'La classe doit être comprise entre 0 et 5')
++  .max(5, 'La classe doit être comprise entre 0 et 5');
++
++export const trailSegmentFeatureSchema = z.object({
++  segmentId: z.number().int('segmentId doit être un entier').positive('segmentId doit être positif'),
++  lengthM: z.number().min(0, 'lengthM doit être positif ou nul').default(0),
++  direction: segmentDirectionSchema.default('both'),
++  meanGradePct: z.number().optional(),
++  maxGradePct: z.number().optional(),
++  gainM: z.number().min(0, 'gainM doit être positif ou nul').optional(),
++  lossM: z.number().min(0, 'lossM doit être positif ou nul').optional(),
++  altitudeMinM: z.number().optional(),
++  altitudeMaxM: z.number().optional(),
++  surface: z.string().min(1, 'surface ne peut pas être vide').optional(),
++  technicalClass: segmentDifficultyClassSchema.optional(),
++  exposureClass: segmentDifficultyClassSchema.optional(),
++  isolationClass: segmentDifficultyClassSchema.optional(),
++  source: ProvenanceTypeEnum.default('computed'),
++  computedAt: isoDateTimeSchema.default(() => new Date().toISOString()),
++  updatedAt: isoDateTimeSchema.optional(),
++});
++
++export type SegmentDirection = z.infer<typeof segmentDirectionSchema>;
++export type SegmentDifficultyClass = z.infer<typeof segmentDifficultyClassSchema>;
++export type TrailSegmentFeature = z.infer<typeof trailSegmentFeatureSchema>;
+diff --git a/src/features/adventure-intelligence/server/consents.ts b/src/features/adventure-intelligence/server/consents.ts
+new file mode 100644
+index 00000000..4af14a99
+--- /dev/null
++++ b/src/features/adventure-intelligence/server/consents.ts
+@@ -0,0 +1,110 @@
++/**
++ * Consentements serveur (RGPD) — list/set par finalité.
++ *
++ * `external_readiness` est refusé par double barrière : ici côté serveur, en
++ * plus de la contrainte SQL `adventure_data_consents_external_readiness_disabled`
++ * (M1). Aucun connecteur santé réel en Phase 1.
++ */
++import 'server-only';
++import { z } from 'zod';
++import { createClient } from '@/lib/supabase/server';
++
++export const CONSENT_PURPOSES = [
++  'personal_performance',
++  'collective_terrain',
++  'live_location',
++  'group_location',
++  'external_readiness',
++] as const;
++
++export type ConsentPurpose = (typeof CONSENT_PURPOSES)[number];
++
++export const consentPurposeSchema = z.enum(CONSENT_PURPOSES);
++
++export const CONSENT_POLICY_VERSION = 'a1-v1';
++
++/** Finalités désactivées en Phase 1 — non octroyables même côté serveur. */
++export const DISABLED_CONSENT_PURPOSES: readonly ConsentPurpose[] = ['external_readiness'];
++
++export interface ConsentRow {
++  id: string;
++  user_id: string;
++  purpose: ConsentPurpose;
++  granted: boolean;
++  policy_version: string;
++  granted_at: string | null;
++  revoked_at: string | null;
++  created_at: string;
++  updated_at: string;
++}
++
++export interface SetConsentResult {
++  ok: boolean;
++  error?: string;
++}
++
++/** Liste les consentements du propriétaire courant ; toute erreur → []. */
++export async function listConsents(): Promise<ConsentRow[]> {
++  const supabase = await createClient();
++
++  const {
++    data: { user },
++  } = await supabase.auth.getUser();
++
++  if (!user) return [];
++
++  const { data, error } = await supabase
++    .from('adventure_data_consents')
++    .select('*')
++    .eq('user_id', user.id);
++
++  if (error) {
++    console.error('[LKDV AdventureIntelligence] Erreur listConsents:', error);
++    return [];
++  }
++
++  return (data ?? []) as ConsentRow[];
++}
++
++/** Accorde ou retire une finalité ; `external_readiness` est toujours refusé. */
++export async function setConsent(purpose: string, granted: boolean): Promise<SetConsentResult> {
++  const parsed = consentPurposeSchema.safeParse(purpose);
++  if (!parsed.success) {
++    return { ok: false, error: 'invalid_purpose' };
++  }
++
++  if (DISABLED_CONSENT_PURPOSES.includes(parsed.data)) {
++    return { ok: false, error: 'external_readiness_disabled' };
++  }
++
++  const supabase = await createClient();
++
++  const {
++    data: { user },
++  } = await supabase.auth.getUser();
++
++  if (!user) {
++    return { ok: false, error: 'unauthenticated' };
++  }
++
++  const now = new Date().toISOString();
++
++  const { error } = await supabase.from('adventure_data_consents').upsert(
++    {
++      user_id: user.id,
++      purpose: parsed.data,
++      granted,
++      policy_version: CONSENT_POLICY_VERSION,
++      granted_at: granted ? now : null,
++      revoked_at: granted ? null : now,
++    },
++    { onConflict: 'user_id,purpose,policy_version' }
++  );
++
++  if (error) {
++    console.error('[LKDV AdventureIntelligence] Erreur setConsent:', error);
++    return { ok: false, error: error.message };
++  }
++
++  return { ok: true };
++}
+diff --git a/tests/adventure-intelligence/adventurePlan.schema.spec.ts b/tests/adventure-intelligence/adventurePlan.schema.spec.ts
+new file mode 100644
+index 00000000..f1e0d7c0
+--- /dev/null
++++ b/tests/adventure-intelligence/adventurePlan.schema.spec.ts
+@@ -0,0 +1,261 @@
++import { describe, it, expect } from 'vitest';
++import { z } from 'zod';
++import {
++  adventurePlanSchema,
++  adventureDecisionSchema,
++  planValueSchema,
++  planVersionMetaSchema,
++  type AdventurePlanInput,
++} from '@/features/adventure-intelligence/schemas/adventurePlan.schema';
++import { ADVENTURE_PLAN_SECTION_KEYS } from '@/features/adventure-intelligence/domain/adventurePlan';
++import {
++  assertNoSilentLockOverride,
++  type AdventureConstraint,
++} from '@/features/adventure-intelligence/domain/constraints';
++import {
++  requiresConfirmation,
++  DECISION_TYPES,
++} from '@/features/adventure-intelligence/domain/decisions';
++import type { AdventurePlan } from '@/features/adventure-intelligence/domain/adventurePlan';
++
++const PLAN_ID = '11111111-1111-4111-8111-111111111111';
++const OWNER_ID = '22222222-2222-4222-8222-222222222222';
++const DECISION_ID = '33333333-3333-4333-8333-333333333333';
++const COMPUTED_AT = '2026-09-11T10:00:00.000Z';
++
++const COLD_CONFIDENCE = {
++  score: 0,
++  level: 'low' as const,
++  sampleCount: 0,
++  method: 'cold',
++  reasons: ['Profil froid — aucune donnée personnelle disponible'],
++};
++
++function emptySections(): AdventurePlan['sections'] {
++  return {
++    transport: null,
++    localMobility: null,
++    accommodations: null,
++    dailyStages: null,
++    activityRoutes: null,
++    terrainAnalysis: null,
++    personalDifficulty: null,
++    groupDifficulty: null,
++    paceStrategies: null,
++    foodAndWater: null,
++    gearPlan: null,
++    budget: null,
++    bookings: null,
++    documents: null,
++    regulations: null,
++    safetyPlan: null,
++    offlinePackage: null,
++    liveConditions: null,
++    alternatives: null,
++  };
++}
++
++const minimalPlanInput: AdventurePlanInput = {
++  id: PLAN_ID,
++  ownerId: OWNER_ID,
++  intent: { rawInput: 'Un trek de cinq jours dans les Pyrénées' },
++};
++
++describe('AdventurePlan — schéma et types (TEST-A1-PLAN)', () => {
++  it('TEST-A1-PLAN-01: un plan minimal est valide et applique les défauts sûrs', () => {
++    const parsed = adventurePlanSchema.parse(minimalPlanInput);
++
++    expect(parsed.id).toBe(PLAN_ID);
++    expect(parsed.ownerId).toBe(OWNER_ID);
++    expect(parsed.status).toBe('draft');
++    expect(parsed.currentVersion).toBe(0);
++    expect(parsed.participants).toEqual([]);
++    expect(parsed.destinations).toEqual([]);
++    expect(parsed.monitoringRules).toEqual([]);
++    expect(parsed.dates.flexible).toBe(false);
++    expect(parsed.confidence.level).toBe('low');
++    expect(parsed.confidence.score).toBe(0);
++    expect(parsed.intent.activities).toEqual([]);
++    expect(parsed.intent.constraints).toEqual([]);
++
++    expect([...ADVENTURE_PLAN_SECTION_KEYS]).toHaveLength(19);
++    expect(Object.keys(parsed.sections)).toHaveLength(19);
++    for (const key of ADVENTURE_PLAN_SECTION_KEYS) {
++      expect(parsed.sections[key]).toBeNull();
++    }
++  });
++
++  it('TEST-A1-PLAN-02: une section complète PlanValue<T> est valide', () => {
++    const parsed = adventurePlanSchema.parse({
++      ...minimalPlanInput,
++      sections: {
++        transport: {
++          value: { modes: ['train'], note: 'TGV Paris → Luchon' },
++          confidence: { score: 0.8, level: 'high', sampleCount: 4, method: 'transport-v1' },
++          provenance: [{ source: 'official', sourceRef: 'sncf' }],
++          assumptions: [{ id: 'a-1', label: 'Horaires stables' }],
++          warnings: [{ code: 'W-1', message: 'Correspondance courte', severity: 'warning' }],
++          impacts: [{ id: 'i-1', section: 'budget', label: 'Coût transport', severity: 'warning' }],
++          computedAt: COMPUTED_AT,
++          validUntil: '2026-09-12T10:00:00.000Z',
++        },
++      },
++    });
++
++    const transport = parsed.sections.transport;
++    expect(transport).not.toBeNull();
++    expect(transport?.confidence.level).toBe('high');
++    expect(transport?.provenance[0].source).toBe('official');
++    expect(transport?.assumptions).toHaveLength(1);
++    expect(transport?.warnings[0].code).toBe('W-1');
++    expect(transport?.impacts[0].section).toBe('budget');
++    expect(transport?.validUntil).toBe('2026-09-12T10:00:00.000Z');
++    expect(parsed.sections.budget).toBeNull();
++  });
++
++  it('TEST-A1-PLAN-03: validUntil antérieur à computedAt est rejeté par refine', () => {
++    const result = adventurePlanSchema.safeParse({
++      ...minimalPlanInput,
++      sections: {
++        budget: {
++          value: 1200,
++          confidence: COLD_CONFIDENCE,
++          provenance: [],
++          assumptions: [],
++          warnings: [],
++          impacts: [],
++          computedAt: COMPUTED_AT,
++          validUntil: '2026-09-11T09:00:00.000Z',
++        },
++      },
++    });
++
++    expect(result.success).toBe(false);
++    if (!result.success) {
++      const issue = result.error.issues.find((i) => i.path.join('.').includes('validUntil'));
++      expect(issue).toBeDefined();
++      expect(issue?.message).toContain('validUntil');
++    }
++
++    const direct = planValueSchema(z.string()).safeParse({
++      value: 'x',
++      confidence: COLD_CONFIDENCE,
++      provenance: [],
++      assumptions: [],
++      warnings: [],
++      impacts: [],
++      computedAt: COMPUTED_AT,
++      validUntil: '2026-09-11T09:00:00.000Z',
++    });
++    expect(direct.success).toBe(false);
++  });
++
++  it('TEST-A1-PLAN-04: toute décision non "other" exige une confirmation', () => {
++    expect(DECISION_TYPES).toHaveLength(6);
++    for (const type of DECISION_TYPES) {
++      expect(requiresConfirmation(type)).toBe(type !== 'other');
++    }
++
++    const payment = adventureDecisionSchema.parse({
++      id: DECISION_ID,
++      planId: PLAN_ID,
++      decisionType: 'payment',
++      proposal: 'Payer l’hébergement',
++      status: 'proposed',
++      createdAt: COMPUTED_AT,
++    });
++    expect(payment.requiresConfirmation).toBe(true);
++    expect(payment.impact).toEqual([]);
++
++    const other = adventureDecisionSchema.parse({
++      id: DECISION_ID,
++      planId: PLAN_ID,
++      decisionType: 'other',
++      proposal: 'Renommer une étape',
++      status: 'proposed',
++      requiresConfirmation: false,
++      createdAt: COMPUTED_AT,
++    });
++    expect(other.requiresConfirmation).toBe(false);
++  });
++
++  it('TEST-A1-PLAN-05: un verrou ne peut pas être remplacé silencieusement', () => {
++    const before: AdventureConstraint[] = [
++      {
++        id: 'c-dates',
++        kind: 'hard',
++        label: 'Dates fixées',
++        value: { start: '2026-09-20', end: '2026-09-25' },
++        locked: true,
++        source: 'user',
++      },
++      {
++        id: 'c-budget',
++        kind: 'soft',
++        label: 'Budget indicatif',
++        value: 900,
++        locked: false,
++        source: 'user',
++      },
++    ];
++
++    expect(assertNoSilentLockOverride(before, before)).toBe(true);
++
++    const changedLockedValue = [
++      { ...before[0], value: { start: '2026-09-21', end: '2026-09-25' } },
++      before[1],
++    ];
++    expect(assertNoSilentLockOverride(before, changedLockedValue)).toBe(false);
++
++    const unlockedSilently = [{ ...before[0], locked: false }, before[1]];
++    expect(assertNoSilentLockOverride(before, unlockedSilently)).toBe(false);
++
++    const removed = [before[1]];
++    expect(assertNoSilentLockOverride(before, removed)).toBe(false);
++
++    const unlockedSoftChanged = [before[0], { ...before[1], value: 1200 }];
++    expect(assertNoSilentLockOverride(before, unlockedSoftChanged)).toBe(true);
++  });
++
++  it('TEST-A1-PLAN-06: audit sémantique — un littéral satisfies AdventurePlan est validé', () => {
++    const candidate = {
++      id: PLAN_ID,
++      ownerId: OWNER_ID,
++      tripId: undefined,
++      title: 'Trek des lacs',
++      status: 'active',
++      currentVersion: 1,
++      intent: {
++        rawInput: 'Un trek de cinq jours dans les Pyrénées',
++        summary: 'Boucle des lacs',
++        activities: ['trek'],
++        constraints: ['pas de bivouac'],
++      },
++      participants: [{ id: 'p-1', displayName: 'Tony', role: 'owner' }],
++      dates: { start: '2026-09-20T00:00:00.000Z', end: '2026-09-25T00:00:00.000Z', flexible: false },
++      destinations: [{ label: 'Pyrénées', countryCode: 'FR' }],
++      sections: emptySections(),
++      confidence: COLD_CONFIDENCE,
++      monitoringRules: [
++        { id: 'm-1', label: 'Météo J-3', kind: 'weather', enabled: true },
++      ],
++      createdAt: COMPUTED_AT,
++      updatedAt: COMPUTED_AT,
++    } satisfies AdventurePlan;
++
++    const parsed = adventurePlanSchema.parse(candidate);
++    const audited: AdventurePlan = parsed;
++
++    expect(audited.title).toBe('Trek des lacs');
++    expect(audited.participants[0].role).toBe('owner');
++    expect(audited.sections.terrainAnalysis).toBeNull();
++    expect(planVersionMetaSchema.safeParse({
++      planId: PLAN_ID,
++      version: 1,
++      reason: 'generation initiale',
++      generatedBy: 'orchestrator',
++      confidence: COLD_CONFIDENCE,
++      createdAt: COMPUTED_AT,
++    }).success).toBe(true);
++  });
++});
+diff --git a/tests/adventure-intelligence/consents.server.spec.ts b/tests/adventure-intelligence/consents.server.spec.ts
+new file mode 100644
+index 00000000..006174af
+--- /dev/null
++++ b/tests/adventure-intelligence/consents.server.spec.ts
+@@ -0,0 +1,131 @@
++import { describe, it, expect, vi, beforeEach } from 'vitest';
++
++vi.mock('@/lib/supabase/server', () => ({
++  createClient: vi.fn(),
++}));
++
++import { createClient } from '@/lib/supabase/server';
++import {
++  listConsents,
++  setConsent,
++  CONSENT_POLICY_VERSION,
++} from '@/features/adventure-intelligence/server/consents';
++
++const USER_ID = '22222222-2222-4222-8222-222222222222';
++const ISO = '2026-09-11T10:00:00.000Z';
++
++function authenticatedClient(options: { from?: unknown } = {}) {
++  return {
++    auth: {
++      getUser: vi.fn().mockResolvedValue({ data: { user: { id: USER_ID } }, error: null }),
++    },
++    from: options.from ?? vi.fn(),
++  };
++}
++
++describe('Consentements serveur — listConsents / setConsent (TEST-A1-CONSENT)', () => {
++  beforeEach(() => {
++    vi.clearAllMocks();
++    vi.spyOn(console, 'error').mockImplementation(() => {});
++  });
++
++  it('TEST-A1-CONSENT-01: liste les consentements de l’utilisateur courant', async () => {
++    const rows = [
++      {
++        id: 'c-1',
++        user_id: USER_ID,
++        purpose: 'personal_performance',
++        granted: true,
++        policy_version: CONSENT_POLICY_VERSION,
++        granted_at: ISO,
++        revoked_at: null,
++        created_at: ISO,
++        updated_at: ISO,
++      },
++    ];
++
++    const eq = vi.fn().mockResolvedValue({ data: rows, error: null });
++    const mockSupabase = authenticatedClient({
++      from: vi.fn(() => ({
++        select: vi.fn().mockReturnThis(),
++        eq,
++      })),
++    });
++    (createClient as ReturnType<typeof vi.fn>).mockResolvedValue(mockSupabase);
++
++    const consents = await listConsents();
++
++    expect(createClient).toHaveBeenCalledTimes(1);
++    expect(mockSupabase.auth.getUser).toHaveBeenCalledTimes(1);
++    expect(eq).toHaveBeenCalledWith('user_id', USER_ID);
++    expect(consents).toEqual(rows);
++  });
++
++  it('TEST-A1-CONSENT-02: une erreur de lecture ou une absence d’utilisateur renvoie []', async () => {
++    const errorClient = authenticatedClient({
++      from: vi.fn(() => ({
++        select: vi.fn().mockReturnThis(),
++        eq: vi.fn().mockResolvedValue({ data: null, error: { message: 'boom' } }),
++      })),
++    });
++    (createClient as ReturnType<typeof vi.fn>).mockResolvedValue(errorClient);
++    await expect(listConsents()).resolves.toEqual([]);
++
++    const anonymousClient = {
++      auth: {
++        getUser: vi.fn().mockResolvedValue({ data: { user: null }, error: null }),
++      },
++      from: vi.fn(),
++    };
++    (createClient as ReturnType<typeof vi.fn>).mockResolvedValue(anonymousClient);
++    await expect(listConsents()).resolves.toEqual([]);
++    expect(anonymousClient.from).not.toHaveBeenCalled();
++  });
++
++  it('TEST-A1-CONSENT-03: accord et retrait d’une finalité autorisée via upsert', async () => {
++    const upsert = vi.fn().mockResolvedValue({ error: null });
++    const mockSupabase = authenticatedClient({ from: vi.fn(() => ({ upsert })) });
++    (createClient as ReturnType<typeof vi.fn>).mockResolvedValue(mockSupabase);
++
++    await expect(setConsent('personal_performance', true)).resolves.toEqual({ ok: true });
++
++    expect(upsert).toHaveBeenCalledTimes(1);
++    const [grantPayload, grantOptions] = upsert.mock.calls[0];
++    expect(grantPayload.user_id).toBe(USER_ID);
++    expect(grantPayload.purpose).toBe('personal_performance');
++    expect(grantPayload.granted).toBe(true);
++    expect(grantPayload.policy_version).toBe(CONSENT_POLICY_VERSION);
++    expect(typeof grantPayload.granted_at).toBe('string');
++    expect(grantPayload.revoked_at).toBeNull();
++    expect(grantOptions).toEqual({ onConflict: 'user_id,purpose,policy_version' });
++
++    await expect(setConsent('personal_performance', false)).resolves.toEqual({ ok: true });
++    const [revokePayload] = upsert.mock.calls[1];
++    expect(revokePayload.granted).toBe(false);
++    expect(revokePayload.granted_at).toBeNull();
++    expect(typeof revokePayload.revoked_at).toBe('string');
++
++    vi.clearAllMocks();
++    const refused = await setConsent('external_readiness', true);
++    expect(refused).toEqual({ ok: false, error: 'external_readiness_disabled' });
++    expect(createClient).not.toHaveBeenCalled();
++  });
++
++  it('TEST-A1-CONSENT-04: finalité inconnue et utilisateur non authentifié refusés', async () => {
++    const invalid = await setConsent('tracking', true);
++    expect(invalid).toEqual({ ok: false, error: 'invalid_purpose' });
++    expect(createClient).not.toHaveBeenCalled();
++
++    const anonymousClient = {
++      auth: {
++        getUser: vi.fn().mockResolvedValue({ data: { user: null }, error: null }),
++      },
++      from: vi.fn(),
++    };
++    (createClient as ReturnType<typeof vi.fn>).mockResolvedValue(anonymousClient);
++
++    const unauthenticated = await setConsent('live_location', true);
++    expect(unauthenticated).toEqual({ ok: false, error: 'unauthenticated' });
++    expect(anonymousClient.from).not.toHaveBeenCalled();
++  });
++});
+diff --git a/tests/adventure-intelligence/domain-core.spec.ts b/tests/adventure-intelligence/domain-core.spec.ts
+new file mode 100644
+index 00000000..66f8501c
+--- /dev/null
++++ b/tests/adventure-intelligence/domain-core.spec.ts
+@@ -0,0 +1,217 @@
++import { describe, it, expect } from 'vitest';
++import {
++  makeConfidence,
++  combineConfidence,
++  isPersonalized,
++  confidenceLevelFromScore,
++  COLD_CONFIDENCE,
++} from '@/features/adventure-intelligence/domain/confidence';
++import {
++  PROVENANCE_SOURCES,
++  isResolvableProvenance,
++  isStale,
++} from '@/features/adventure-intelligence/domain/provenance';
++import { makeEngineResult, validateEngineResult } from '@/features/adventure-intelligence/domain/engine';
++import {
++  ADVENTURE_DOMAIN_EVENT_TYPES,
++  buildDomainEvent,
++} from '@/features/adventure-intelligence/domain/events';
++import { ProvenanceTypeEnum } from '@/features/trips/schemas/autoGen.schema';
++
++describe('Domaine noyau — confidence (TEST-A1-CONF)', () => {
++  it('TEST-A1-CONF-01: makeConfidence borne le score dans [0,1] et dérive le niveau', () => {
++    const high = makeConfidence({ score: 1.4, sampleCount: 10, method: 'test' });
++    expect(high.score).toBe(1);
++    expect(high.level).toBe('high');
++
++    const low = makeConfidence({ score: -0.2, sampleCount: 0, method: 'test' });
++    expect(low.score).toBe(0);
++    expect(low.level).toBe('low');
++    expect(low.reasons.length).toBeGreaterThan(0);
++  });
++
++  it('TEST-A1-CONF-02: seuils de niveau — 0.75 high, 0.5 medium, sinon low', () => {
++    expect(confidenceLevelFromScore(0.75)).toBe('high');
++    expect(confidenceLevelFromScore(0.749)).toBe('medium');
++    expect(confidenceLevelFromScore(0.5)).toBe('medium');
++    expect(confidenceLevelFromScore(0.499)).toBe('low');
++
++    expect(makeConfidence({ score: 0.75, sampleCount: 3, method: 'm' }).level).toBe('high');
++    expect(makeConfidence({ score: 0.5, sampleCount: 3, method: 'm' }).level).toBe('medium');
++    expect(makeConfidence({ score: 0.49, sampleCount: 3, method: 'm' }).level).toBe('low');
++  });
++
++  it('TEST-A1-CONF-03: une confiance faible porte toujours des raisons', () => {
++    const low = makeConfidence({ score: 0.2, sampleCount: 1, method: 'test', reasons: [] });
++    expect(low.reasons.length).toBeGreaterThan(0);
++
++    const medium = makeConfidence({ score: 0.6, sampleCount: 5, method: 'test' });
++    expect(medium.reasons).toEqual([]);
++  });
++
++  it('TEST-A1-CONF-04: combineConfidence prend le min, somme les échantillons et concatène les raisons', () => {
++    const a = makeConfidence({ score: 0.9, sampleCount: 4, method: 'a', reasons: ['r-a'] });
++    const b = makeConfidence({ score: 0.4, sampleCount: 6, method: 'b', reasons: ['r-b'] });
++    const combined = combineConfidence(a, b);
++
++    expect(combined.score).toBe(0.4);
++    expect(combined.sampleCount).toBe(10);
++    expect(combined.method).toBe('combined:min');
++    expect(combined.reasons).toEqual(['r-a', 'r-b']);
++    expect(combined.level).toBe('low');
++
++    const empty = combineConfidence();
++    expect(empty.sampleCount).toBe(0);
++    expect(empty.score).toBe(0);
++    expect(empty.level).toBe('low');
++    expect(empty.reasons.length).toBeGreaterThan(0);
++  });
++
++  it('TEST-A1-CONF-05: isPersonalized exige sampleCount >= 3 et score >= 0.5', () => {
++    expect(isPersonalized(makeConfidence({ score: 0.6, sampleCount: 3, method: 'm' }))).toBe(true);
++    expect(isPersonalized(makeConfidence({ score: 0.5, sampleCount: 2, method: 'm' }))).toBe(false);
++    expect(isPersonalized(makeConfidence({ score: 0.49, sampleCount: 10, method: 'm' }))).toBe(false);
++  });
++});
++
++describe('Domaine noyau — provenance (TEST-A1-PROV)', () => {
++  it('TEST-A1-PROV-01: parité de taxonomie avec ProvenanceTypeEnum (trips)', () => {
++    expect([...PROVENANCE_SOURCES]).toEqual(ProvenanceTypeEnum.options);
++  });
++
++  it('TEST-A1-PROV-02: official, community et measured exigent sourceRef ou observedAt', () => {
++    expect(isResolvableProvenance({ source: 'official', sourceRef: 'IGN' })).toBe(true);
++    expect(isResolvableProvenance({ source: 'official' })).toBe(false);
++    expect(isResolvableProvenance({ source: 'community', observedAt: '2026-09-11T10:00:00.000Z' })).toBe(true);
++    expect(isResolvableProvenance({ source: 'measured' })).toBe(false);
++    expect(isResolvableProvenance({ source: 'computed' })).toBe(true);
++    expect(isResolvableProvenance({ source: 'estimated' })).toBe(true);
++    expect(isResolvableProvenance({ source: 'suggested' })).toBe(true);
++  });
++
++  it('TEST-A1-PROV-03: isStale compare observedAt à la fenêtre maxAgeSeconds', () => {
++    const now = '2026-09-11T12:00:00.000Z';
++    expect(isStale({ source: 'community', observedAt: '2026-09-11T10:00:00.000Z' }, now, 3600)).toBe(true);
++    expect(isStale({ source: 'community', observedAt: '2026-09-11T11:30:00.000Z' }, now, 3600)).toBe(false);
++  });
++
++  it('TEST-A1-PROV-04: une provenance sans horodatage est considérée périmée', () => {
++    const now = '2026-09-11T12:00:00.000Z';
++    expect(isStale({ source: 'community', observedAt: '2026-09-11T11:00:00.000Z' }, now, 3600)).toBe(false);
++    expect(isStale({ source: 'official', sourceRef: 'ref-1' }, now, 3600)).toBe(true);
++    expect(isStale({ source: 'community', observedAt: 'date-invalide' }, now, 3600)).toBe(true);
++  });
++});
++
++describe('Domaine noyau — contrat moteur (TEST-A1-ENG)', () => {
++  it('TEST-A1-ENG-01: makeEngineResult applique les défauts et un computedAt ISO', () => {
++    const before = Date.now();
++    const result = makeEngineResult({ value: { days: 3 } });
++    const after = Date.now();
++
++    expect(result.value).toEqual({ days: 3 });
++    expect(result.confidence).toEqual(COLD_CONFIDENCE);
++    expect(result.provenance).toEqual([]);
++    expect(result.assumptions).toEqual([]);
++    expect(result.warnings).toEqual([]);
++    expect(result.alternatives).toEqual([]);
++    expect(result.impacts).toEqual([]);
++    expect(result.validUntil).toBeUndefined();
++
++    const parsed = Date.parse(result.computedAt);
++    expect(Number.isNaN(parsed)).toBe(false);
++    expect(parsed).toBeGreaterThanOrEqual(before);
++    expect(parsed).toBeLessThanOrEqual(after);
++  });
++
++  it('TEST-A1-ENG-02: makeEngineResult conserve valeur, confiance, provenance et validité fournies', () => {
++    const computedAt = '2026-09-11T10:00:00.000Z';
++    const result = makeEngineResult({
++      value: 42,
++      confidence: makeConfidence({ score: 0.8, sampleCount: 5, method: 'm' }),
++      provenance: [{ source: 'measured', observedAt: computedAt }],
++      warnings: [{ code: 'W-1', message: 'Hypothèse fragile', severity: 'warning' }],
++      computedAt,
++      validUntil: '2026-09-11T12:00:00.000Z',
++    });
++
++    expect(result.confidence.score).toBe(0.8);
++    expect(result.provenance).toHaveLength(1);
++    expect(result.warnings[0].code).toBe('W-1');
++    expect(result.computedAt).toBe(computedAt);
++    expect(result.validUntil).toBe('2026-09-11T12:00:00.000Z');
++  });
++
++  it('TEST-A1-ENG-03: validateEngineResult accepte un résultat cohérent', () => {
++    const result = makeEngineResult({
++      value: 'ok',
++      computedAt: '2026-09-11T10:00:00.000Z',
++      validUntil: '2026-09-11T11:00:00.000Z',
++    });
++    expect(validateEngineResult(result)).toEqual([]);
++  });
++
++  it('TEST-A1-ENG-04: validateEngineResult signale score hors bornes et computedAt non ISO', () => {
++    const result = makeEngineResult({
++      value: 1,
++      computedAt: 'pas-une-date',
++      confidence: makeConfidence({ score: 0.5, sampleCount: 1, method: 'm' }),
++    });
++    const invalid = {
++      ...result,
++      confidence: { ...result.confidence, score: 1.2 },
++    };
++    const errors = validateEngineResult(invalid);
++
++    expect(errors.some((e) => e.includes('score'))).toBe(true);
++    expect(errors.some((e) => e.includes('computedAt'))).toBe(true);
++  });
++
++  it('TEST-A1-ENG-05: validateEngineResult rejette validUntil antérieur à computedAt', () => {
++    const result = makeEngineResult({
++      value: 1,
++      computedAt: '2026-09-11T10:00:00.000Z',
++      validUntil: '2026-09-11T09:00:00.000Z',
++    });
++    const errors = validateEngineResult(result);
++    expect(errors.some((e) => e.includes('validUntil'))).toBe(true);
++  });
++});
++
++describe('Domaine noyau — événements (TEST-A1-EVT)', () => {
++  it('TEST-A1-EVT-01: ADVENTURE_DOMAIN_EVENT_TYPES liste la taxonomie du master plan', () => {
++    expect(ADVENTURE_DOMAIN_EVENT_TYPES).toHaveLength(17);
++    expect(ADVENTURE_DOMAIN_EVENT_TYPES).toContain('adventure.plan.generated');
++    expect(ADVENTURE_DOMAIN_EVENT_TYPES).toContain('trail.report.created');
++    expect(ADVENTURE_DOMAIN_EVENT_TYPES).toContain('decision.confirmation.required');
++    expect(new Set(ADVENTURE_DOMAIN_EVENT_TYPES).size).toBe(ADVENTURE_DOMAIN_EVENT_TYPES.length);
++  });
++
++  it('TEST-A1-EVT-02: buildDomainEvent calcule la clé d’idempotence et les défauts', () => {
++    const event = buildDomainEvent({
++      type: 'trail.report.created',
++      entityType: 'terrain_report',
++      entityId: 'report-1',
++      processorVersion: 'a1-v1',
++    });
++
++    expect(event.idempotencyKey).toBe('trail.report.created:report-1:a1-v1');
++    expect(event.payload).toEqual({});
++    expect(event.actorId).toBeUndefined();
++    expect(Number.isNaN(Date.parse(event.createdAt))).toBe(false);
++  });
++
++  it('TEST-A1-EVT-03: la clé d’idempotence est stable et dépend de la version de traitement', () => {
++    const base = {
++      type: 'hike.completed' as const,
++      entityType: 'hike_session',
++      entityId: 'session-1',
++    };
++    const first = buildDomainEvent({ ...base, processorVersion: 'v1' });
++    const second = buildDomainEvent({ ...base, processorVersion: 'v1' });
++    const otherVersion = buildDomainEvent({ ...base, processorVersion: 'v2' });
++
++    expect(first.idempotencyKey).toBe(second.idempotencyKey);
++    expect(otherVersion.idempotencyKey).not.toBe(first.idempotencyKey);
++  });
++});
+diff --git a/tests/adventure-intelligence/readiness.spec.ts b/tests/adventure-intelligence/readiness.spec.ts
+new file mode 100644
+index 00000000..28ef5ffb
+--- /dev/null
++++ b/tests/adventure-intelligence/readiness.spec.ts
+@@ -0,0 +1,40 @@
++import { describe, it, expect } from 'vitest';
++import { NoopReadinessProvider } from '@/features/adventure-intelligence/providers/noopReadinessProvider';
++import type {
++  ExternalReadinessProvider,
++  ReadinessDataCategory,
++} from '@/features/adventure-intelligence/domain/health';
++import * as adventureIntelligence from '@/features/adventure-intelligence';
++
++describe('Contrat santé futur — ExternalReadinessProvider (TEST-A1-HEALTH)', () => {
++  it('TEST-A1-HEALTH-01: le NoopReadinessProvider n’est jamais disponible', async () => {
++    const provider: ExternalReadinessProvider = new NoopReadinessProvider();
++
++    expect(provider.providerId).toBe('noop');
++    await expect(provider.isAvailable()).resolves.toBe(false);
++
++    expect(adventureIntelligence.PROVENANCE_SOURCES).toContain('measured');
++    expect('listConsents' in adventureIntelligence).toBe(false);
++    expect('setConsent' in adventureIntelligence).toBe(false);
++  });
++
++  it('TEST-A1-HEALTH-02: requestAuthorization ne donne accès à aucune catégorie', async () => {
++    const provider = new NoopReadinessProvider();
++    const categories: ReadinessDataCategory[] = ['sleep', 'hrv', 'resting_heart_rate'];
++    const result = await provider.requestAuthorization(categories);
++
++    expect(result.granted).toBe(false);
++    expect(result.categories).toEqual([]);
++    expect(result.reason).toBe('not_implemented_phase1');
++  });
++
++  it('TEST-A1-HEALTH-03: getDailyReadiness ne renvoie aucun snapshot de santé', async () => {
++    const provider = new NoopReadinessProvider();
++
++    await expect(provider.getDailyReadiness('2026-09-11')).resolves.toBeNull();
++
++    const fromBarrel: ExternalReadinessProvider = new adventureIntelligence.NoopReadinessProvider();
++    expect(fromBarrel.providerId).toBe('noop');
++    expect(adventureIntelligence.ADVENTURE_DOMAIN_EVENT_TYPES.length).toBeGreaterThan(0);
++  });
++});
+diff --git a/tests/adventure-intelligence/schemas.spec.ts b/tests/adventure-intelligence/schemas.spec.ts
+new file mode 100644
+index 00000000..926a95fd
+--- /dev/null
++++ b/tests/adventure-intelligence/schemas.spec.ts
+@@ -0,0 +1,351 @@
++import { describe, it, expect } from 'vitest';
++import {
++  performanceProfileSchema,
++  trackQualitySchema,
++  calibrationLevelSchema,
++  CALIBRATION_LEVELS,
++} from '@/features/adventure-intelligence/schemas/performance.schema';
++import {
++  trailSegmentFeatureSchema,
++  segmentDifficultyClassSchema,
++} from '@/features/adventure-intelligence/schemas/terrain.schema';
++import {
++  segmentPredictionSchema,
++  routePredictionSchema,
++} from '@/features/adventure-intelligence/schemas/prediction.schema';
++import {
++  terrainReportSchema,
++  terrainReportConfirmationSchema,
++  terrainReportCategorySchema,
++  terrainReportStatusSchema,
++  conditionBucketSchema,
++  TERRAIN_REPORT_CATEGORIES,
++  TERRAIN_REPORT_STATUSES,
++  CONDITION_BUCKETS,
++} from '@/features/adventure-intelligence/schemas/live.schema';
++import * as schemasBarrel from '@/features/adventure-intelligence/schemas';
++
++const USER_ID = '22222222-2222-4222-8222-222222222222';
++const REPORT_ID = '44444444-4444-4444-8444-444444444444';
++const COMPUTED_AT = '2026-09-11T10:00:00.000Z';
++
++const CONFIDENCE = {
++  score: 0.6,
++  level: 'medium' as const,
++  sampleCount: 5,
++  method: 'test-v1',
++};
++
++describe('Schémas performance (TEST-A1-PERF)', () => {
++  it('TEST-A1-PERF-01: un PerformanceProfile complet est valide', () => {
++    const profile = performanceProfileSchema.parse({
++      userId: USER_ID,
++      activityType: 'hiking',
++      flatSpeedKmH: 4.2,
++      ascentSpeedMPerHour: 380,
++      descentSpeedMPerHour: 520,
++      gradeResponse: { points: [{ x: 0.1, value: 0.9 }] },
++      surfaceResponse: { points: [{ x: 0, value: 1 }] },
++      fatigueCurve: { points: [{ x: 1, value: 0.8 }], decayPerHour: 0.05 },
++      pauseModel: { pauseMinutesPerHour: 6, pauseMinutesPerAscentM: 0.02, minPauseMinutes: 2 },
++      packResponse: { points: [{ x: 8, value: 0.85 }] },
++      confidence: CONFIDENCE,
++      sampleCount: 12,
++      calibrationLevel: 'personalization',
++      modelVersion: 'profile-v2',
++      computedAt: COMPUTED_AT,
++    });
++
++    expect(profile.flatSpeedKmH).toBe(4.2);
++    expect(profile.calibrationLevel).toBe('personalization');
++    expect(profile.gradeResponse.points).toHaveLength(1);
++  });
++
++  it('TEST-A1-PERF-02: flatSpeedKmH > 0 et vitesses de dénivelé >= 0', () => {
++    const base = {
++      userId: USER_ID,
++      flatSpeedKmH: 4,
++      ascentSpeedMPerHour: 350,
++      descentSpeedMPerHour: 500,
++      gradeResponse: { points: [{ x: 0, value: 1 }] },
++      surfaceResponse: { points: [{ x: 0, value: 1 }] },
++      fatigueCurve: { points: [{ x: 0, value: 1 }] },
++      pauseModel: { pauseMinutesPerHour: 5 },
++      packResponse: { points: [{ x: 0, value: 1 }] },
++      confidence: CONFIDENCE,
++      modelVersion: 'profile-v2',
++      computedAt: COMPUTED_AT,
++    };
++
++    expect(performanceProfileSchema.safeParse(base).success).toBe(true);
++    expect(performanceProfileSchema.safeParse({ ...base, flatSpeedKmH: 0 }).success).toBe(false);
++    expect(performanceProfileSchema.safeParse({ ...base, flatSpeedKmH: -1 }).success).toBe(false);
++    expect(performanceProfileSchema.safeParse({ ...base, ascentSpeedMPerHour: -0.1 }).success).toBe(false);
++    expect(performanceProfileSchema.safeParse({ ...base, descentSpeedMPerHour: -5 }).success).toBe(false);
++  });
++
++  it('TEST-A1-PERF-03: TrackQuality borne chaque indicateur dans [0,1]', () => {
++    const quality = trackQualitySchema.parse({
++      overall: 0.8,
++      gpsAccuracy: 0.9,
++      temporalContinuity: 1,
++      altitudeReliability: 0.5,
++      plausibleMovement: 0.7,
++    });
++    expect(quality.reasons).toEqual([]);
++
++    expect(
++      trackQualitySchema.safeParse({
++        overall: 1.2,
++        gpsAccuracy: 0.9,
++        temporalContinuity: 1,
++        altitudeReliability: 0.5,
++        plausibleMovement: 0.7,
++      }).success
++    ).toBe(false);
++    expect(
++      trackQualitySchema.safeParse({
++        overall: 0.8,
++        gpsAccuracy: -0.1,
++        temporalContinuity: 1,
++        altitudeReliability: 0.5,
++        plausibleMovement: 0.7,
++      }).success
++    ).toBe(false);
++  });
++
++  it('TEST-A1-PERF-04: CALIBRATION_LEVELS expose les quatre niveaux normatifs', () => {
++    expect([...CALIBRATION_LEVELS]).toEqual([
++      'cold',
++      'calibration',
++      'personalization',
++      'contextualization',
++    ]);
++    for (const level of CALIBRATION_LEVELS) {
++      expect(calibrationLevelSchema.safeParse(level).success).toBe(true);
++    }
++    expect(calibrationLevelSchema.safeParse('expert').success).toBe(false);
++  });
++});
++
++describe('Schémas terrain (TEST-A1-TER)', () => {
++  it('TEST-A1-TER-01: un enrichissement de segment complet est valide', () => {
++    const feature = trailSegmentFeatureSchema.parse({
++      segmentId: 42,
++      lengthM: 512.5,
++      direction: 'forward',
++      meanGradePct: 4.2,
++      maxGradePct: 12,
++      gainM: 30,
++      lossM: 2,
++      altitudeMinM: 1200,
++      altitudeMaxM: 1230,
++      surface: 'gravel',
++      technicalClass: 3,
++      exposureClass: 2,
++      isolationClass: 1,
++      source: 'computed',
++      computedAt: COMPUTED_AT,
++    });
++
++    expect(feature.segmentId).toBe(42);
++    expect(feature.technicalClass).toBe(3);
++    expect(feature.direction).toBe('forward');
++    expect(feature.source).toBe('computed');
++  });
++
++  it('TEST-A1-TER-02: les classes de difficulté sont bornées 0..5', () => {
++    expect(segmentDifficultyClassSchema.safeParse(0).success).toBe(true);
++    expect(segmentDifficultyClassSchema.safeParse(5).success).toBe(true);
++    expect(segmentDifficultyClassSchema.safeParse(6).success).toBe(false);
++    expect(segmentDifficultyClassSchema.safeParse(-1).success).toBe(false);
++    expect(segmentDifficultyClassSchema.safeParse(2.5).success).toBe(false);
++
++    const base = { segmentId: 1, computedAt: COMPUTED_AT };
++    expect(trailSegmentFeatureSchema.safeParse({ ...base, technicalClass: 6 }).success).toBe(false);
++    expect(trailSegmentFeatureSchema.safeParse({ ...base, exposureClass: -1 }).success).toBe(false);
++    expect(trailSegmentFeatureSchema.safeParse({ ...base, isolationClass: 9 }).success).toBe(false);
++  });
++
++  it('TEST-A1-TER-03: une direction de segment inconnue est rejetée', () => {
++    const base = { segmentId: 1, computedAt: COMPUTED_AT };
++    expect(trailSegmentFeatureSchema.safeParse({ ...base, direction: 'backward' }).success).toBe(false);
++    expect(trailSegmentFeatureSchema.safeParse({ ...base, direction: 'both' }).success).toBe(true);
++  });
++
++  it('TEST-A1-TER-04: la source d’un enrichissement suit la taxonomie de provenance', () => {
++    const base = { segmentId: 1, computedAt: COMPUTED_AT };
++    for (const source of ['measured', 'official', 'community', 'computed', 'estimated', 'suggested']) {
++      expect(trailSegmentFeatureSchema.safeParse({ ...base, source }).success).toBe(true);
++    }
++    expect(trailSegmentFeatureSchema.safeParse({ ...base, source: 'guessed' }).success).toBe(false);
++  });
++});
++
++describe('Schémas prédiction (TEST-A1-PRED)', () => {
++  it('TEST-A1-PRED-01: une SegmentPrediction complète est valide', () => {
++    const prediction = segmentPredictionSchema.parse({
++      segmentId: 42,
++      durationP50Seconds: 1200,
++      durationP90Seconds: 1800,
++      paceRangeMinPerKm: [12, 18],
++      effortScore: 65,
++      personalDifficulty: 58,
++      recommendedPauseSeconds: 300,
++      confidence: CONFIDENCE,
++      factors: [{ code: 'slope', label: 'Montée soutenue', impact: 'increase', weight: 0.4 }],
++    });
++
++    expect(prediction.durationP90Seconds).toBe(1800);
++    expect(prediction.paceRangeMinPerKm).toEqual([12, 18]);
++    expect(prediction.factors[0].code).toBe('slope');
++  });
++
++  it('TEST-A1-PRED-02: P90 inférieur à P50 est rejeté', () => {
++    const result = segmentPredictionSchema.safeParse({
++      segmentId: 42,
++      durationP50Seconds: 2000,
++      durationP90Seconds: 1800,
++      paceRangeMinPerKm: [12, 18],
++      effortScore: 65,
++      personalDifficulty: 58,
++      recommendedPauseSeconds: 300,
++      confidence: CONFIDENCE,
++      factors: [],
++    });
++
++    expect(result.success).toBe(false);
++    if (!result.success) {
++      expect(result.error.issues.some((issue) => issue.message.includes('P50'))).toBe(true);
++    }
++  });
++
++  it('TEST-A1-PRED-03: une fourchette d’allure décroissante est rejetée', () => {
++    const result = segmentPredictionSchema.safeParse({
++      segmentId: 42,
++      durationP50Seconds: 1200,
++      durationP90Seconds: 1800,
++      paceRangeMinPerKm: [18, 12],
++      effortScore: 65,
++      personalDifficulty: 58,
++      recommendedPauseSeconds: 300,
++      confidence: CONFIDENCE,
++      factors: [],
++    });
++    expect(result.success).toBe(false);
++  });
++
++  it('TEST-A1-PRED-04: RoutePrediction exige etaP50 <= etaP90 et une stratégie connue', () => {
++    const route = {
++      userId: USER_ID,
++      strategy: 'recommended',
++      etaP50: '2026-09-20T15:00:00.000Z',
++      etaP90: '2026-09-20T16:30:00.000Z',
++      totalDurationP50Seconds: 28800,
++      totalDurationP90Seconds: 34200,
++      pausesSeconds: 3600,
++      criticalSegmentIds: [42, 77],
++      confidence: CONFIDENCE,
++      modelVersion: 'route-v2',
++      computedAt: COMPUTED_AT,
++    };
++
++    const parsed = routePredictionSchema.parse(route);
++    expect(parsed.strategy).toBe('recommended');
++    expect(parsed.criticalSegmentIds).toEqual([42, 77]);
++
++    expect(
++      routePredictionSchema.safeParse({
++        ...route,
++        etaP50: '2026-09-20T17:00:00.000Z',
++      }).success
++    ).toBe(false);
++    expect(routePredictionSchema.safeParse({ ...route, strategy: 'sprint' }).success).toBe(false);
++  });
++});
++
++describe('Schémas live (TEST-A1-LIVE)', () => {
++  it('TEST-A1-LIVE-01: TerrainReportCategory expose les 13 valeurs de la migration', () => {
++    expect([...TERRAIN_REPORT_CATEGORIES]).toEqual([
++      'obstacle',
++      'closure',
++      'mud',
++      'snow_ice',
++      'water',
++      'danger',
++      'bridge',
++      'flood',
++      'marking',
++      'shelter',
++      'crowding',
++      'animal',
++      'rockfall',
++    ]);
++    expect(terrainReportCategorySchema.safeParse('volcano').success).toBe(false);
++  });
++
++  it('TEST-A1-LIVE-02: TerrainReportStatus expose les 8 statuts du cycle de vie', () => {
++    expect([...TERRAIN_REPORT_STATUSES]).toEqual([
++      'pending',
++      'confirmed',
++      'active',
++      'stale',
++      'verify',
++      'resolved',
++      'expired',
++      'rejected',
++    ]);
++    expect(terrainReportStatusSchema.safeParse('unknown').success).toBe(false);
++  });
++
++  it('TEST-A1-LIVE-03: CONDITION_BUCKETS expose les 10 conditions et rejette un bucket inconnu', () => {
++    expect([...CONDITION_BUCKETS]).toEqual([
++      'dry',
++      'wet',
++      'snow',
++      'ice',
++      'day',
++      'night',
++      'ascent',
++      'descent',
++      'light_pack',
++      'heavy_pack',
++    ]);
++    for (const bucket of CONDITION_BUCKETS) {
++      expect(conditionBucketSchema.safeParse(bucket).success).toBe(true);
++    }
++    expect(conditionBucketSchema.safeParse('hail').success).toBe(false);
++  });
++
++  it('TEST-A1-LIVE-04: un signalement et sa confirmation sont valides ; le barrel expose les schémas', () => {
++    const report = terrainReportSchema.parse({
++      id: REPORT_ID,
++      reporterId: USER_ID,
++      category: 'snow_ice',
++      lat: 42.8,
++      lng: 0.15,
++    });
++
++    expect(report.severity).toBe('warning');
++    expect(report.status).toBe('pending');
++    expect(report.sourceType).toBe('user');
++    expect(report.presentCount).toBe(0);
++    expect(report.goneCount).toBe(0);
++    expect(report.unknownCount).toBe(0);
++
++    const confirmation = terrainReportConfirmationSchema.parse({
++      reportId: REPORT_ID,
++      userId: USER_ID,
++      confirmation: 'present',
++      locationDistanceM: 12,
++      gpsQuality: 0.8,
++    });
++    expect(confirmation.confirmation).toBe('present');
++    expect(terrainReportConfirmationSchema.safeParse({ ...confirmation, confirmation: 'maybe' }).success).toBe(false);
++
++    expect(schemasBarrel.terrainReportSchema).toBe(terrainReportSchema);
++    expect(schemasBarrel.performanceProfileSchema).toBe(performanceProfileSchema);
++    expect(schemasBarrel.segmentPredictionSchema).toBe(segmentPredictionSchema);
++    expect(schemasBarrel.adventurePlanSchema).toBeDefined();
++  });
++});
