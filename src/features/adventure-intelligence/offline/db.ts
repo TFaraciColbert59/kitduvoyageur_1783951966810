@@ -1,19 +1,39 @@
 /**
- * A7 — Offline V2 : base Dexie `lkdv-adventure-offline-v1` (ADR-AI-007).
+ * A7/A11 — Offline V2 : base Dexie partitionnée par utilisateur (ADR-AI-007).
  *
- * Couche fine et typée : aucune logique métier ici (testée dans
- * `operations.ts`), uniquement la persistance des 10 stores, la file
- * idempotente et les métadonnées de synchronisation.
+ * Audit #26 : la base globale `lkdv-adventure-offline-v1` laissait les données
+ * d'un utilisateur visibles après changement de compte sur un appareil partagé.
+ * Chaque utilisateur possède désormais SA base `lkdv-adventure-offline-v2-<userId>`,
+ * les opérations portent un champ `userId` indexé (défense en profondeur) et
+ * `purgeOfflineData(userId)` supprime la base à la déconnexion.
+ *
+ * Couche fine et typée : la logique pure (planner de migration, regroupement,
+ * clés d'idempotence) vit dans `operations.ts`, testée séparément.
  */
 import Dexie, { type Table } from 'dexie';
 import {
   OFFLINE_QUEUE_STORES,
+  groupOperationsByStore,
   isOfflineQueueStore,
   type OfflineOperation,
   type OfflineQueueStore,
+  type OfflineStoreRef,
 } from './operations';
 
-export const ADVENTURE_OFFLINE_DB_NAME = 'lkdv-adventure-offline-v1';
+/** Préfixe des bases V2 partitionnées (une base par utilisateur). */
+export const ADVENTURE_OFFLINE_DB_PREFIX = 'lkdv-adventure-offline-v2-';
+
+/** Base globale héritée V1 : source de la migration vers les bases par utilisateur. */
+export const LEGACY_ADVENTURE_OFFLINE_DB_NAME = 'lkdv-adventure-offline-v1';
+
+/** Nom de base pur, déterministe, à partir de l'identifiant utilisateur. */
+export function offlineDbNameForUser(userId: string): string {
+  const trimmed = typeof userId === 'string' ? userId.trim() : '';
+  if (trimmed.length === 0) {
+    throw new Error('offlineDbNameForUser : userId requis pour partitionner la base locale.');
+  }
+  return `${ADVENTURE_OFFLINE_DB_PREFIX}${trimmed}`;
+}
 
 /** Entrée de cache d'un store de données (pack, route, segment, POI…). */
 export interface OfflineCacheEntry {
@@ -41,8 +61,8 @@ export class AdventureOfflineDb extends Dexie {
   offline_decisions_queue!: Table<OfflineOperation, string>;
   sync_metadata!: Table<SyncMetadataEntry, string>;
 
-  constructor() {
-    super(ADVENTURE_OFFLINE_DB_NAME);
+  constructor(name: string) {
+    super(name);
     this.version(1).stores({
       offline_adventures: 'id, updatedAt',
       offline_routes: 'id, updatedAt',
@@ -50,34 +70,39 @@ export class AdventureOfflineDb extends Dexie {
       offline_predictions: 'id, updatedAt',
       offline_pois: 'id, updatedAt',
       offline_terrain_events: 'id, updatedAt',
-      offline_reports_queue: 'id, &idempotencyKey, createdAt, store',
-      offline_sessions_queue: 'id, &idempotencyKey, createdAt, store',
-      offline_decisions_queue: 'id, &idempotencyKey, createdAt, store',
+      offline_reports_queue: 'id, &idempotencyKey, createdAt, store, userId',
+      offline_sessions_queue: 'id, &idempotencyKey, createdAt, store, userId',
+      offline_decisions_queue: 'id, &idempotencyKey, createdAt, store, userId',
       sync_metadata: 'key',
     });
   }
 }
 
-export const adventureOfflineDb = new AdventureOfflineDb();
+const offlineDbs = new Map<string, AdventureOfflineDb>();
 
-function queueTable(store: OfflineQueueStore): Table<OfflineOperation, string> {
-  return adventureOfflineDb[store];
-}
-
-function queueTables(): Table<OfflineOperation, string>[] {
-  return OFFLINE_QUEUE_STORES.map((store) => adventureOfflineDb[store]);
+/** Ouvre (ou réutilise) la base Dexie de `userId` — jamais une base partagée. */
+export function getOfflineDb(userId: string): AdventureOfflineDb {
+  const name = offlineDbNameForUser(userId);
+  const existing = offlineDbs.get(name);
+  if (existing) return existing;
+  const db = new AdventureOfflineDb(name);
+  offlineDbs.set(name, db);
+  return db;
 }
 
 /**
  * Met une opération en file. Retourne `false` si sa clé d'idempotence est
  * déjà présente (rejoue jamais deux fois la même opération).
  */
-export async function enqueue(operation: OfflineOperation): Promise<boolean> {
+export async function enqueue(
+  db: AdventureOfflineDb,
+  operation: OfflineOperation
+): Promise<boolean> {
   if (!isOfflineQueueStore(operation.store)) {
     throw new Error(`Store non file d'attente : ${operation.store}`);
   }
-  const table = queueTable(operation.store);
-  return adventureOfflineDb.transaction('rw', table, async () => {
+  const table = db[operation.store];
+  return db.transaction('rw', table, async () => {
     const existing = await table
       .where('idempotencyKey')
       .equals(operation.idempotencyKey)
@@ -89,39 +114,54 @@ export async function enqueue(operation: OfflineOperation): Promise<boolean> {
 }
 
 /** Opérations en attente, triées par date de création (tous stores ou un seul). */
-export async function pending(store?: OfflineQueueStore): Promise<OfflineOperation[]> {
+export async function pending(
+  db: AdventureOfflineDb,
+  store?: OfflineQueueStore
+): Promise<OfflineOperation[]> {
   if (store) {
-    return queueTable(store).orderBy('createdAt').toArray();
+    return db[store].orderBy('createdAt').toArray();
   }
   const batches = await Promise.all(
-    OFFLINE_QUEUE_STORES.map((name) => adventureOfflineDb[name].orderBy('createdAt').toArray())
+    OFFLINE_QUEUE_STORES.map((name) => db[name].orderBy('createdAt').toArray())
   );
   return batches.flat().sort((a, b) => a.createdAt.localeCompare(b.createdAt));
 }
 
-/** Supprime les opérations synchronisées ; retourne le nombre supprimé. */
-export async function markSynced(ids: string[]): Promise<number> {
-  if (ids.length === 0) return 0;
-  const tables = queueTables();
-  return adventureOfflineDb.transaction('rw', tables, async () => {
+/**
+ * Supprime les opérations synchronisées : UNIQUEMENT dans les stores nommés
+ * par `{ store, id }` (audit #28 — plus jamais de suppression à l'aveugle
+ * dans les trois files). Retourne le nombre de lignes supprimées.
+ */
+export async function markSynced(
+  db: AdventureOfflineDb,
+  entries: readonly OfflineStoreRef[]
+): Promise<number> {
+  const grouped = groupOperationsByStore(entries);
+  if (grouped.size === 0) return 0;
+  const tables = [...grouped.keys()].map((store) => db[store]);
+  return db.transaction('rw', tables, async () => {
     let deleted = 0;
-    for (const table of tables) {
-      deleted += await table.where('id').anyOf(ids).delete();
+    for (const [store, ids] of grouped) {
+      deleted += await db[store].where('id').anyOf(ids).delete();
     }
     return deleted;
   });
 }
 
-/** Incrémente le compteur de tentatives des opérations en échec. */
-export async function markFailed(ids: string[]): Promise<number> {
-  if (ids.length === 0) return 0;
-  const tables = queueTables();
-  return adventureOfflineDb.transaction('rw', tables, async () => {
+/** Incrémente le compteur de tentatives des opérations en échec (stores nommés). */
+export async function markFailed(
+  db: AdventureOfflineDb,
+  entries: readonly OfflineStoreRef[]
+): Promise<number> {
+  const grouped = groupOperationsByStore(entries);
+  if (grouped.size === 0) return 0;
+  const tables = [...grouped.keys()].map((store) => db[store]);
+  return db.transaction('rw', tables, async () => {
     let updated = 0;
-    for (const table of tables) {
-      const operations = await table.where('id').anyOf(ids).toArray();
+    for (const [store, ids] of grouped) {
+      const operations = await db[store].where('id').anyOf(ids).toArray();
       for (const operation of operations) {
-        await table.put({ ...operation, attempts: operation.attempts + 1 });
+        await db[store].put({ ...operation, attempts: operation.attempts + 1 });
         updated += 1;
       }
     }
@@ -129,14 +169,73 @@ export async function markFailed(ids: string[]): Promise<number> {
   });
 }
 
-/** Lit (`metadata(key)`) ou écrit (`metadata(key, value)`) une métadonnée. */
-export async function metadata(key: string): Promise<SyncMetadataEntry | undefined>;
-export async function metadata(key: string, value: unknown): Promise<SyncMetadataEntry>;
-export async function metadata(key: string, value?: unknown): Promise<SyncMetadataEntry | undefined> {
-  if (arguments.length < 2) {
-    return adventureOfflineDb.sync_metadata.get(key);
+/** Réécrit une opération après une tentative (backoff, erreur, dead-letter). */
+export async function updateOperation(
+  db: AdventureOfflineDb,
+  operation: OfflineOperation
+): Promise<void> {
+  if (!isOfflineQueueStore(operation.store)) {
+    throw new Error(`Store non file d'attente : ${operation.store}`);
+  }
+  await db[operation.store].put(operation);
+}
+
+/**
+ * Purge locale d'un utilisateur (déconnexion, RLS, changement de compte) :
+ * ferme puis supprime sa base Dexie. `deleteDatabase` est injectable pour
+ * rester testable sans IndexedDB réel.
+ */
+export interface PurgeOfflineDeps {
+  deleteDatabase?: (name: string) => Promise<void>;
+}
+
+function defaultDeleteDatabase(name: string): Promise<void> {
+  return new Promise((resolve, reject) => {
+    const indexedDb = globalThis.indexedDB;
+    if (!indexedDb) {
+      reject(new Error('purgeOfflineData : IndexedDB indisponible.'));
+      return;
+    }
+    const request = indexedDb.deleteDatabase(name);
+    request.onsuccess = () => resolve();
+    request.onerror = () => reject(request.error ?? new Error('suppression IndexedDB en échec'));
+    request.onblocked = () => resolve();
+  });
+}
+
+export async function purgeOfflineData(
+  userId: string,
+  deps: PurgeOfflineDeps = {}
+): Promise<void> {
+  const name = offlineDbNameForUser(userId);
+  const cached = offlineDbs.get(name);
+  if (cached) {
+    cached.close();
+    offlineDbs.delete(name);
+  }
+  const deleteDatabase = deps.deleteDatabase ?? defaultDeleteDatabase;
+  await deleteDatabase(name);
+}
+
+/** Lit (`metadata(db, key)`) ou écrit (`metadata(db, key, value)`) une métadonnée. */
+export async function metadata(
+  db: AdventureOfflineDb,
+  key: string
+): Promise<SyncMetadataEntry | undefined>;
+export async function metadata(
+  db: AdventureOfflineDb,
+  key: string,
+  value: unknown
+): Promise<SyncMetadataEntry>;
+export async function metadata(
+  db: AdventureOfflineDb,
+  key: string,
+  value?: unknown
+): Promise<SyncMetadataEntry | undefined> {
+  if (arguments.length < 3) {
+    return db.sync_metadata.get(key);
   }
   const entry: SyncMetadataEntry = { key, value, updatedAt: new Date().toISOString() };
-  await adventureOfflineDb.sync_metadata.put(entry);
+  await db.sync_metadata.put(entry);
   return entry;
 }

@@ -1,9 +1,15 @@
 /**
- * A7 — Offline V2 : opérations pures, idempotentes et sérialisables.
+ * A7/A11 — Offline V2 : opérations pures, idempotentes et sérialisables.
  *
- * Zéro I/O, zéro Dexie : toute la logique testable vit ici (clé d'idempotence,
- * migration legacy localStorage, taille de pack, déduplication). La base Dexie
- * (`db.ts`) n'est qu'une façade typée au-dessus de ces opérations.
+ * Zéro I/O, zéro Dexie pour les planners : toute la logique testable vit ici
+ * (clé d'idempotence SHA-256, migration legacy localStorage, réattribution des
+ * lignes globales par utilisateur, déduplication, regroupement par store). La
+ * base Dexie (`db.ts`) n'est qu'une façade typée au-dessus de ces opérations.
+ *
+ * Audit #27 : la clé d'idempotence est désormais un SHA-256 (hex 64) via Web
+ * Crypto (`crypto.subtle.digest`). FNV-1a n'est conservé que comme repli
+ * explicitement NON SÉCURISÉ pour les environnements sans `crypto.subtle`
+ * (32 bits → collisions possibles) ; il ne doit jamais être choisi sciemment.
  */
 export const OFFLINE_STORES = [
   'offline_adventures',
@@ -40,6 +46,18 @@ export interface OfflineOperation {
   idempotencyKey: string;
   createdAt: string;
   attempts: number;
+  /** Propriétaire de l'opération (partition Dexie par utilisateur, A11 #26). */
+  userId?: string;
+  /** Priorité de synchronisation : plus grand = plus urgent (défaut 0). */
+  priority?: number;
+  /** Au-delà de cette date, l'opération expire et n'est plus synchronisée. */
+  expiresAt?: string;
+  /** Dernière erreur de synchronisation constatée (dead-letter incluse). */
+  lastError?: string;
+  /** Prochaine tentative planifiée (backoff exponentiel + jitter). */
+  nextAttemptAt?: string;
+  /** Horodatage de mise en dead-letter (nombre max de tentatives épuisé). */
+  deadLetteredAt?: string;
 }
 
 export interface CreateOfflineOperationInput {
@@ -49,6 +67,9 @@ export interface CreateOfflineOperationInput {
   payload: unknown;
   createdAt?: string;
   attempts?: number;
+  userId?: string;
+  priority?: number;
+  expiresAt?: string;
 }
 
 /** Clé d'idempotence stable : type + entité + empreinte du payload. */
@@ -72,7 +93,11 @@ function stableStringify(value: unknown): string {
     .join(',')}}`;
 }
 
-/** Empreinte FNV-1a 32 bits, stable quelle que soit l'ordre des clés. */
+/**
+ * Empreinte FNV-1a 32 bits, stable quelle que soit l'ordre des clés.
+ * NON SÉCURISÉE : repli uniquement quand `crypto.subtle` est indisponible.
+ * Toute nouvelle opération doit passer par `hashPayloadSha256`.
+ */
 export function hashPayload(payload: unknown): string {
   const text = stableStringify(payload);
   let hash = 0x811c9dc5;
@@ -83,12 +108,55 @@ export function hashPayload(payload: unknown): string {
   return (hash >>> 0).toString(16).padStart(8, '0');
 }
 
-export function createOfflineOperation(input: CreateOfflineOperationInput): OfflineOperation {
-  const payloadHash = hashPayload(input.payload);
-  const idempotencyKey = makeIdempotencyKey({
+/** `crypto.subtle` présent et exploitable (Node ≥ 20 ou navigateur sécurisé). */
+export function isWebCryptoAvailable(): boolean {
+  return typeof globalThis.crypto?.subtle?.digest === 'function';
+}
+
+function bytesToHex(bytes: Uint8Array): string {
+  let hex = '';
+  for (const byte of bytes) hex += byte.toString(16).padStart(2, '0');
+  return hex;
+}
+
+/**
+ * Empreinte SHA-256 du payload, hex 64. Repli FNV-1a 32 bits (non sécurisé)
+ * uniquement si `crypto.subtle` est absent : les clés restent stables, mais
+ * une collision devient possible et doit être considérée comme un défaut.
+ */
+export async function hashPayloadSha256(payload: unknown): Promise<string> {
+  if (!isWebCryptoAvailable()) return hashPayload(payload);
+  const digest = await globalThis.crypto.subtle.digest(
+    'SHA-256',
+    new TextEncoder().encode(stableStringify(payload))
+  );
+  return bytesToHex(new Uint8Array(digest));
+}
+
+/**
+ * Clé d'idempotence robuste : SHA-256 du payload (hex 64) par défaut.
+ * Le segment d'empreinte est exactement 64 caractères hexadécimaux.
+ */
+export async function makeIdempotencyKeySha256(input: {
+  kind: string;
+  entityId: string;
+  payload: unknown;
+}): Promise<string> {
+  const payloadHash = await hashPayloadSha256(input.payload);
+  return makeIdempotencyKey({
     kind: input.kind,
     entityId: input.entityId,
     payloadHash,
+  });
+}
+
+export async function createOfflineOperation(
+  input: CreateOfflineOperationInput
+): Promise<OfflineOperation> {
+  const idempotencyKey = await makeIdempotencyKeySha256({
+    kind: input.kind,
+    entityId: input.entityId,
+    payload: input.payload,
   });
   return {
     id: idempotencyKey,
@@ -98,6 +166,9 @@ export function createOfflineOperation(input: CreateOfflineOperationInput): Offl
     idempotencyKey,
     createdAt: input.createdAt ?? new Date().toISOString(),
     attempts: Math.max(0, Math.trunc(input.attempts ?? 0)),
+    userId: input.userId,
+    priority: Math.trunc(input.priority ?? 0),
+    expiresAt: input.expiresAt,
   };
 }
 
@@ -120,6 +191,33 @@ export function packSizeBytes(operations: readonly OfflineOperation[]): number {
     total += new TextEncoder().encode(JSON.stringify(operation)).length;
   }
   return total;
+}
+
+/** Référence minimale `{ store, id }` d'une opération à supprimer (A11 #28). */
+export interface OfflineStoreRef {
+  store: OfflineQueueStore;
+  id: string;
+}
+
+/**
+ * Regroupe les références par store pour ne supprimer QUE les files nommées
+ * (audit #28 : l'ancien `markSynced(ids)` cherchait dans les trois files et
+ * pouvait supprimer une opération homonyme d'une autre file). Pur, testé.
+ */
+export function groupOperationsByStore(
+  entries: readonly OfflineStoreRef[]
+): Map<OfflineQueueStore, string[]> {
+  const grouped = new Map<OfflineQueueStore, string[]>();
+  for (const entry of entries) {
+    if (!entry.id) continue;
+    const ids = grouped.get(entry.store);
+    if (ids) {
+      ids.push(entry.id);
+    } else {
+      grouped.set(entry.store, [entry.id]);
+    }
+  }
+  return grouped;
 }
 
 /** Clés localStorage legacy connues (migration V1 → Dexie V2). */
@@ -169,9 +267,13 @@ function finiteNumberOr(value: unknown, fallback: number): number {
 /**
  * Convertit les clés localStorage V1 connues en opérations idempotentes V2.
  * Toute clé inconnue ou valeur illisible part dans `skipped` : la migration
- * ne détruit jamais silencieusement une donnée.
+ * ne détruit jamais silencieusement une donnée. `userId` (optionnel) rattache
+ * les opérations à la partition de l'utilisateur (A11 #26).
  */
-export function planLegacyMigration(raw: Record<string, string>): LegacyMigrationPlan {
+export async function planLegacyMigration(
+  raw: Record<string, string>,
+  userId?: string
+): Promise<LegacyMigrationPlan> {
   const operations: OfflineOperation[] = [];
   const migratedKeys: string[] = [];
   const skipped: string[] = [];
@@ -185,11 +287,12 @@ export function planLegacyMigration(raw: Record<string, string>): LegacyMigratio
 
     if ((LEGACY_METADATA_KEYS as readonly string[]).includes(key)) {
       operations.push(
-        createOfflineOperation({
+        await createOfflineOperation({
           store: 'sync_metadata',
           kind: 'metadata',
           entityId: key,
           payload: { key, value: parsed.value },
+          userId,
         })
       );
       migratedKeys.push(key);
@@ -199,22 +302,23 @@ export function planLegacyMigration(raw: Record<string, string>): LegacyMigratio
     const queue = LEGACY_QUEUE_KEYS[key];
     if (queue) {
       const items = Array.isArray(parsed.value) ? parsed.value : [parsed.value];
-      items.forEach((item, index) => {
+      for (const [index, item] of items.entries()) {
         const record = asRecord(item);
         const payload = record && 'payload' in record ? record.payload : item;
         const entityId = (record && nonEmptyString(record.id)) ?? `${key}:${index}`;
         const kind = (record && nonEmptyString(record.type)) ?? queue.defaultKind;
         operations.push(
-          createOfflineOperation({
+          await createOfflineOperation({
             store: queue.store,
             kind,
             entityId,
             payload,
             createdAt: (record && nonEmptyString(record.createdAt)) ?? undefined,
             attempts: finiteNumberOr(record?.retryCount, 0),
+            userId,
           })
         );
-      });
+      }
       migratedKeys.push(key);
       continue;
     }
@@ -222,11 +326,12 @@ export function planLegacyMigration(raw: Record<string, string>): LegacyMigratio
     if (key === LEGACY_ADVENTURE_PACK_KEY) {
       const record = asRecord(parsed.value);
       operations.push(
-        createOfflineOperation({
+        await createOfflineOperation({
           store: 'offline_adventures',
           kind: 'adventure_pack',
           entityId: (record && nonEmptyString(record.id)) ?? 'pack',
           payload: parsed.value,
+          userId,
         })
       );
       migratedKeys.push(key);
@@ -237,4 +342,68 @@ export function planLegacyMigration(raw: Record<string, string>): LegacyMigratio
   }
 
   return { operations: dedupeOperations(operations), migratedKeys, skipped };
+}
+
+export interface LegacyGlobalMigrationPlan {
+  operations: OfflineOperation[];
+  skipped: number;
+}
+
+/**
+ * Réattribue à `userId` les lignes de l'ancienne base GLOBALE `v1` (A11 #26).
+ * Les lignes sont des opérations déjà formées (ou proches) : la clé
+ * d'idempotence existante est conservée telle quelle pour ne jamais rejouer une
+ * opération déjà acquittée ; à défaut elle est recalculée en SHA-256. Les
+ * entrées non exploitables sont comptées dans `skipped`, jamais devinées.
+ */
+export async function planLegacyGlobalMigration(
+  raw: readonly unknown[],
+  userId: string
+): Promise<LegacyGlobalMigrationPlan> {
+  if (!userId || userId.trim().length === 0) {
+    throw new Error('planLegacyGlobalMigration : userId requis');
+  }
+  const operations: OfflineOperation[] = [];
+  let skipped = 0;
+
+  for (const entry of raw) {
+    const record = asRecord(entry);
+    if (!record) {
+      skipped += 1;
+      continue;
+    }
+    const store = record.store;
+    if (typeof store !== 'string' || !isOfflineQueueStore(store as OfflineStore)) {
+      skipped += 1;
+      continue;
+    }
+    const kind = nonEmptyString(record.kind);
+    const entityId = nonEmptyString(record.entityId) ?? nonEmptyString(record.id);
+    if (!kind || !entityId || !('payload' in record)) {
+      skipped += 1;
+      continue;
+    }
+
+    const payload = record.payload;
+    const idempotencyKey =
+      nonEmptyString(record.idempotencyKey) ??
+      (await makeIdempotencyKeySha256({ kind, entityId, payload }));
+    operations.push({
+      id: nonEmptyString(record.id) ?? idempotencyKey,
+      store: store as OfflineQueueStore,
+      kind,
+      payload,
+      idempotencyKey,
+      createdAt: nonEmptyString(record.createdAt) ?? new Date().toISOString(),
+      attempts: Math.max(0, Math.trunc(finiteNumberOr(record.attempts, 0))),
+      userId,
+      priority: Math.trunc(finiteNumberOr(record.priority, 0)),
+      expiresAt: nonEmptyString(record.expiresAt) ?? undefined,
+      lastError: nonEmptyString(record.lastError) ?? undefined,
+      nextAttemptAt: nonEmptyString(record.nextAttemptAt) ?? undefined,
+      deadLetteredAt: nonEmptyString(record.deadLetteredAt) ?? undefined,
+    });
+  }
+
+  return { operations: dedupeOperations(operations), skipped };
 }
