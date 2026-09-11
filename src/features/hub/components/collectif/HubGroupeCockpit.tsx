@@ -14,6 +14,7 @@ import ParcoursCard from '@/components/groupes/ParcoursCard';
 import TachesCard from '@/components/groupes/TachesCard';
 import EquipementCard from '@/components/groupes/EquipementCard';
 import VoyageursCard from '@/components/groupes/VoyageursCard';
+import { GroupTrekPanel } from '@/features/adventure-intelligence/ui/GroupTrekPanel';
 
 const DepensesCard = nextDynamic(() => import('@/components/groupes/DepensesCard'), { ssr: false });
 const DecisionsCard = nextDynamic(() => import('@/components/groupes/DecisionsCard'), { ssr: false });
@@ -164,6 +165,12 @@ export function HubGroupeCockpit({ groupId, initialTab }: { groupId: string; ini
             <VoyageursCard travelers={data.travelers} groupId={data.id} onRefresh={refreshData} user={user} members={members} group={data} isOrganizer={isCurrentUserOrganizer} />
           </div>
         )}
+      </div>
+
+      {/* A13 (S3) — analyse collective persistée (groupe + trek), montée dans
+          le cockpit existant sans toucher la page [section]. */}
+      <div className="mt-4">
+        <GroupTrekPanel tripId={linkedTrip?.id ?? null} />
       </div>
     </>
   );
