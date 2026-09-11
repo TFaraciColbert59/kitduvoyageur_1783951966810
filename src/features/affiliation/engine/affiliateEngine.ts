@@ -137,19 +137,41 @@ export function maskSensitiveIdentityNumber(idNumber: string): string {
   return '•'.repeat(maskedCount) + visible;
 }
 
-const DEFAULT_DOC_SECRET = process.env.SUPABASE_SERVICE_ROLE_KEY || 'lkdv-doc-secret-2026';
+/**
+ * A14 — plus aucun secret en dur : la clé HMAC des documents signés vient de
+ * `DOC_SIGNING_SECRET`, avec repli sur `SUPABASE_SERVICE_ROLE_KEY`. Sans
+ * configuration, la génération échoue explicitement et la vérification refuse
+ * l'URL (fail-closed).
+ */
+function resolveDocSecret(): string | null {
+  for (const candidate of [process.env.DOC_SIGNING_SECRET, process.env.SUPABASE_SERVICE_ROLE_KEY]) {
+    if (typeof candidate === 'string' && candidate.trim().length >= 16) return candidate;
+  }
+  return null;
+}
 
 /**
- * Génère une URL signée HMAC à durée limitée pour accéder à un document sensible
+ * Génère une URL signée HMAC à durée limitée pour accéder à un document sensible.
+ * Un `secret` explicite reste accepté (tests/outillage) ; sinon la clé
+ * d'environnement est exigée.
  */
 export function generateSignedDocumentUrl(
   filePath: string,
   expiresInSeconds = 900, // 15 minutes par défaut
-  secret = DEFAULT_DOC_SECRET
+  secret?: string
 ): string {
+  const signingSecret = secret ?? resolveDocSecret();
+  if (!signingSecret) {
+    throw new Error(
+      'Document sécurisé indisponible : DOC_SIGNING_SECRET (ou SUPABASE_SERVICE_ROLE_KEY) requis.'
+    );
+  }
   const expires = Math.floor(Date.now() / 1000) + expiresInSeconds;
   const dataToSign = `${filePath}|${expires}`;
-  const signature = crypto.createHmac('sha256', secret).update(dataToSign).digest('hex');
+  const signature = crypto
+    .createHmac('sha256', signingSecret)
+    .update(dataToSign)
+    .digest('hex');
   const encodedPath = encodeURIComponent(filePath);
   return `/api/documents/secure?file=${encodedPath}&expires=${expires}&sig=${signature}`;
 }
@@ -161,12 +183,17 @@ export interface VerifySignedDocResult {
 }
 
 /**
- * Vérifie l'authenticité et l'expiration d'une URL signée pour un document sensible
+ * Vérifie l'authenticité et l'expiration d'une URL signée pour un document
+ * sensible. Fail-closed : sans clé configurée, l'URL est refusée.
  */
 export function verifySignedDocumentUrl(
   signedUrl: string,
-  secret = DEFAULT_DOC_SECRET
+  secret?: string
 ): VerifySignedDocResult {
+  const signingSecret = secret ?? resolveDocSecret();
+  if (!signingSecret) {
+    return { isValid: false, error: 'INVALID_SIGNATURE' };
+  }
   try {
     const url = new URL(signedUrl, 'https://lekitduvoyageur.fr');
     const file = url.searchParams.get('file');
@@ -185,7 +212,10 @@ export function verifySignedDocumentUrl(
     }
 
     const dataToSign = `${file}|${expires}`;
-    const expectedSig = crypto.createHmac('sha256', secret).update(dataToSign).digest('hex');
+    const expectedSig = crypto
+      .createHmac('sha256', signingSecret)
+      .update(dataToSign)
+      .digest('hex');
 
     const expectedBuf = Buffer.from(expectedSig, 'utf8');
     const receivedBuf = Buffer.from(sig, 'utf8');

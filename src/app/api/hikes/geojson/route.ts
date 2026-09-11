@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
+import { parseBboxQuery } from '@/lib/geo/bbox';
 
 export const revalidate = 120;
 export const dynamic = 'force-dynamic';
@@ -9,16 +10,21 @@ export const dynamic = 'force-dynamic';
  *
  * Retourne les tracés réels des sentiers de randonnée (FeatureCollection GeoJSON)
  * filtrés par bounding box ou pour toute la France, simplifiés pour une haute performance 60fps.
+ *
+ * A14 — anti-abus : emprise bornée (10°/axe, recentrage) et tolérance bornée
+ * via `parseBboxQuery` ; paramètres invalides ⇒ 400 (aucune RPC lancée).
  */
 export async function GET(request: NextRequest) {
   try {
-    const searchParams = request.nextUrl.searchParams;
-    const minLng = searchParams.has('min_lng') ? Number(searchParams.get('min_lng')) : -5.5;
-    const minLat = searchParams.has('min_lat') ? Number(searchParams.get('min_lat')) : 41.0;
-    const maxLng = searchParams.has('max_lng') ? Number(searchParams.get('max_lng')) : 10.0;
-    const maxLat = searchParams.has('max_lat') ? Number(searchParams.get('max_lat')) : 52.0;
-    const tolerance = searchParams.has('tolerance') ? Number(searchParams.get('tolerance')) : 0.0008;
+    const parsed = parseBboxQuery(request.nextUrl.searchParams);
+    if (!parsed.ok) {
+      return NextResponse.json(
+        { type: 'FeatureCollection', features: [], error: 'Paramètres invalides', details: parsed.error },
+        { status: 400 }
+      );
+    }
 
+    const { minLng, minLat, maxLng, maxLat, tolerance } = parsed.bbox;
     const supabase = await createClient();
 
     const { data, error } = await supabase.rpc('get_routes_for_map', {
@@ -36,6 +42,9 @@ export async function GET(request: NextRequest) {
 
     const response = NextResponse.json(data || { type: 'FeatureCollection', features: [] });
     response.headers.set('Cache-Control', 'public, max-age=120, stale-while-revalidate=600');
+    if (parsed.clamped) {
+      response.headers.set('x-lkdv-bbox-clamped', '1');
+    }
     return response;
   } catch (err: any) {
     console.error('API /api/hikes/geojson error:', err);
