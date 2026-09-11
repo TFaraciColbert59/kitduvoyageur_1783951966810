@@ -3,8 +3,8 @@
  *
  * Client injecté (`ProfileBuildClient`) : aucune dépendance Supabase ici,
  * testable sans réseau. Idempotent par `modelVersion` (`a3-v1`) : le profil
- * est upserté sur `(user_id, activity_type)` puis un snapshot immuable est
- * inséré sur `(profile_id, model_version)` (contrainte unique A1).
+ * est upserté sur `(user_id, activity_type)` puis un snapshot versionné est
+ * upserté sur `(profile_id, model_version)` (contrainte unique A1).
  * Aucune donnée de santé : uniquement les observations GPS Phase 2.
  */
 import 'server-only';
@@ -22,7 +22,14 @@ export const PROFILE_VERSION_REASON = 'recompute';
 export interface ProfileBuildClient {
   getObservations(userId: string, limit?: number): Promise<ProfileObservation[]>;
   upsertProfile(row: unknown): Promise<{ id: string }>;
-  insertProfileVersion(row: unknown): Promise<void>;
+  /**
+   * Persiste le snapshot versionné. DOIT être idempotent sur
+   * `(profile_id, model_version)` : un recalcul du même `model_version`
+   * écrase le snapshot existant au lieu d'insérer une ligne en double
+   * (contrainte `UNIQUE (profile_id, model_version)`), c.-à-d. un upsert
+   * `onConflict: 'profile_id,model_version'` côté adaptateur Supabase.
+   */
+  upsertProfileVersion(row: unknown): Promise<void>;
 }
 
 export interface BuildUserProfileResult {
@@ -65,7 +72,7 @@ export async function buildUserProfile(
 
   const saved = await client.upsertProfile(toProfileRow(userId, profile));
 
-  await client.insertProfileVersion({
+  await client.upsertProfileVersion({
     profile_id: saved.id,
     user_id: userId,
     activity_type: ACTIVITY_TYPE,

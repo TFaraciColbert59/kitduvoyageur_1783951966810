@@ -266,6 +266,21 @@ describe('Prédiction segment et route — TEST-A3-PRED', () => {
     expect(parsedSegment.durationP50Seconds).toBe(segment.durationP50Seconds);
     expect(parsedSegment.factors.length).toBeGreaterThan(0);
   });
+
+  it('TEST-A3-PRED-11: flag route_prediction_v2 désactivé ⇒ repli sûr non personnalisé', () => {
+    const warm = profile();
+    const personalized = predictSegment(segmentInput({ distanceM: 10000 }), warm, warm.confidence);
+    const explicitOn = predictSegment(segmentInput({ distanceM: 10000 }), warm, warm.confidence, {
+      flagEnabled: true,
+    });
+    const flaggedOff = predictSegment(segmentInput({ distanceM: 10000 }), warm, warm.confidence, {
+      flagEnabled: false,
+    });
+
+    expect(explicitOn.durationP50Seconds).toBe(personalized.durationP50Seconds);
+    expect(flaggedOff.durationP50Seconds).toBeCloseTo(10000 * 0.0135 * 60, 0);
+    expect(flaggedOff.durationP50Seconds).toBeGreaterThan(personalized.durationP50Seconds);
+  });
 });
 
 function routePaceOrdered(p25?: number, p50?: number, p75?: number): boolean {

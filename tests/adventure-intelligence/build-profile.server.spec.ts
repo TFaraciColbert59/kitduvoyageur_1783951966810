@@ -36,7 +36,8 @@ function observation(overrides: Partial<ProfileObservation> = {}): ProfileObserv
 
 function makeClient(observations: ProfileObservation[] | Error) {
   const upserts: unknown[] = [];
-  const versions: unknown[] = [];
+  const callCounts = { profileVersionUpserts: 0 };
+  const versionStore = new Map<string, unknown>();
   const calls: Array<{ userId: string; limit?: number }> = [];
   const client: ProfileBuildClient = {
     getObservations: vi.fn(async (userId: string, limit?: number) => {
@@ -48,11 +49,13 @@ function makeClient(observations: ProfileObservation[] | Error) {
       upserts.push(row);
       return { id: PROFILE_ID };
     }),
-    insertProfileVersion: vi.fn(async (row: unknown) => {
-      versions.push(row);
+    upsertProfileVersion: vi.fn(async (row: unknown) => {
+      const version = row as { profile_id: string; model_version: string };
+      callCounts.profileVersionUpserts += 1;
+      versionStore.set(`${version.profile_id}:${version.model_version}`, row);
     }),
   };
-  return { client, calls, upserts, versions };
+  return { client, calls, upserts, callCounts, versions: versionStore };
 }
 
 describe('Flags A3 — TEST-A3-FLAG', () => {
@@ -125,8 +128,8 @@ describe('Construction du profil serveur — TEST-A3-BUILD', () => {
     expect(row.grade_response).toMatchObject({ points: expect.any(Array) });
     expect(row.pause_model).toMatchObject({ pauseMinutesPerHour: expect.any(Number) });
 
-    expect(versions).toHaveLength(1);
-    const version = versions[0] as Record<string, unknown>;
+    expect(versions.size).toBe(1);
+    const version = versions.get(`${PROFILE_ID}:a3-v1`) as Record<string, unknown>;
     expect(version).toMatchObject({
       profile_id: PROFILE_ID,
       user_id: USER_ID,
@@ -142,7 +145,7 @@ describe('Construction du profil serveur — TEST-A3-BUILD', () => {
 
     // L'ordre est normatif : profil d'abord (id), version ensuite.
     const upsertOrder = (client.upsertProfile as ReturnType<typeof vi.fn>).mock.invocationCallOrder[0];
-    const versionOrder = (client.insertProfileVersion as ReturnType<typeof vi.fn>).mock.invocationCallOrder[0];
+    const versionOrder = (client.upsertProfileVersion as ReturnType<typeof vi.fn>).mock.invocationCallOrder[0];
     expect(upsertOrder).toBeLessThan(versionOrder);
   });
 
@@ -155,30 +158,35 @@ describe('Construction du profil serveur — TEST-A3-BUILD', () => {
     const row = upserts[0] as Record<string, unknown>;
     expect(row.calibration_level).toBe('cold');
     expect(Number(row.flat_speed_kmh)).toBeGreaterThan(0);
-    expect(versions).toHaveLength(1);
-    const version = versions[0] as Record<string, unknown>;
+    expect(versions.size).toBe(1);
+    const version = versions.get(`${PROFILE_ID}:a3-v1`) as Record<string, unknown>;
     expect(version.model_version).toBe('a3-v1');
     expect((version.snapshot as Record<string, unknown>).personalized).toBe(false);
   });
 
   it('TEST-A3-BUILD-03: idempotence par modelVersion a3-v1 (recalculs successifs)', async () => {
     const observations = Array.from({ length: 10 }, () => observation());
-    const { client, upserts, versions } = makeClient(observations);
+    const { client, upserts, callCounts, versions } = makeClient(observations);
 
     await buildUserProfile(USER_ID, client);
     await buildUserProfile(USER_ID, client);
 
     expect(upserts).toHaveLength(2);
-    expect(versions).toHaveLength(2);
     for (const row of upserts) {
       expect((row as Record<string, unknown>).model_version).toBe('a3-v1');
       expect((row as Record<string, unknown>).user_id).toBe(USER_ID);
       expect((row as Record<string, unknown>).activity_type).toBe('hiking');
     }
-    for (const row of versions) {
-      expect((row as Record<string, unknown>).model_version).toBe('a3-v1');
-      expect((row as Record<string, unknown>).profile_id).toBe(PROFILE_ID);
-    }
+
+    // Deux upserts appelés, mais sémantique idempotente : une seule ligne
+    // stockée sur la clé (profile_id, model_version).
+    expect(callCounts.profileVersionUpserts).toBe(2);
+    expect(versions.size).toBe(1);
+    const version = versions.get(`${PROFILE_ID}:a3-v1`) as Record<string, unknown>;
+    expect(version).toMatchObject({
+      profile_id: PROFILE_ID,
+      model_version: 'a3-v1',
+    });
   });
 
   it('TEST-A3-BUILD-04: une erreur de lecture remonte sans écriture partielle', async () => {
@@ -186,6 +194,6 @@ describe('Construction du profil serveur — TEST-A3-BUILD', () => {
 
     await expect(buildUserProfile(USER_ID, client)).rejects.toThrow('observations indisponibles');
     expect(upserts).toHaveLength(0);
-    expect(versions).toHaveLength(0);
+    expect(versions.size).toBe(0);
   });
 });

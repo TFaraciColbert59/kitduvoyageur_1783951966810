@@ -137,12 +137,16 @@ function buildFactors(
 /**
  * Prédit un segment : durée P50/P90, fourchette d'allure, effort, difficulté
  * personnelle, pause recommandée et facteurs explicables.
+ *
+ * `options.flagEnabled` transmet le flag `route_prediction_v2` (défaut `true`,
+ * rétrocompatible) : désactivé, `resolvePace` interdit la source `profile` et
+ * retombe sur la cascade sûre générique/standard.
  */
 export function predictSegment(
   input: SegmentPredictionInput,
   profile: PerformanceProfile | null,
   confidence: Confidence | null,
-  options?: { pace?: ResolvedPace }
+  options?: { pace?: ResolvedPace; flagEnabled?: boolean }
 ): SegmentPrediction {
   const pace =
     options?.pace ??
@@ -153,7 +157,7 @@ export function predictSegment(
       surface: input.surface,
       profile,
       confidence,
-      flagEnabled: true,
+      flagEnabled: options?.flagEnabled ?? true,
     });
   const effectiveConfidence = pace.confidence;
 
