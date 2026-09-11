@@ -7,6 +7,7 @@ import {
   createSupabaseAdventurePersistence,
   generateAdventure,
 } from '@/features/adventure-intelligence/server/generateAdventure';
+import { currentAdventureFeatureFlags } from '@/features/adventure-intelligence/server/featureFlags';
 
 export const dynamic = 'force-dynamic';
 
@@ -75,11 +76,19 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Service indisponible' }, { status: 503 });
     }
 
+    const flags = await currentAdventureFeatureFlags();
+
     const result = await generateAdventure(
       {
         ownerId: user.id,
         text: parsed.data.text,
         locks: parsed.data.locks,
+        featureFlags: {
+          performance_profile_v2: flags.performance_profile_v2,
+          route_prediction_v2: flags.route_prediction_v2,
+          collective_intelligence: flags.collective_intelligence === true,
+          terrain_live: flags.terrain_live === true,
+        },
       },
       {
         registry: createDefaultRegistry(),

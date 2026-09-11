@@ -5,6 +5,7 @@
  * le moteur existant calcule le résumé (dépenses réelles vides, reste à
  * engager). Aucune dépense n'est inventée.
  */
+import 'server-only';
 import {
   calculateBudgetSummary,
   type BudgetSummary,

@@ -5,6 +5,7 @@
  * sans inventer d'inventaire : l'absence d'inventaire utilisateur est déclarée
  * en warning et en hypothèse.
  */
+import 'server-only';
 import {
   generateTripContextualKit,
   type ContextualKitInput,

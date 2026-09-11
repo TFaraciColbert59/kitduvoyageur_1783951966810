@@ -5,6 +5,7 @@ import {
   createSupabaseTerrainReportsClient,
   listNearbyTerrainReports,
 } from '@/features/adventure-intelligence/server/terrainReports';
+import { currentAdventureFeatureFlags } from '@/features/adventure-intelligence/server/featureFlags';
 
 export const dynamic = 'force-dynamic';
 
@@ -57,6 +58,11 @@ export async function GET(request: NextRequest) {
         { error: 'Paramètres invalides', details: zodDetails(parsed.error) },
         { status: 400 }
       );
+    }
+
+    const flags = await currentAdventureFeatureFlags();
+    if (flags.terrain_live !== true) {
+      return NextResponse.json({ error: 'Fonctionnalité non activée' }, { status: 503 });
     }
 
     const supabase = getServiceSupabase();

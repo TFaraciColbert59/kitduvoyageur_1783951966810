@@ -6,6 +6,7 @@
  * les modifier silencieusement. Toute violation résiduelle est détectée,
  * restaurée et exposée dans `lockReport` (décision à confirmer côté appelant).
  */
+import 'server-only';
 import { solveCoherence } from '@/features/trips/engine/coherenceSolver';
 import type { Proposal } from '@/features/trips/schemas/autoGen.schema';
 import type { AdventureConstraint } from '@/features/adventure-intelligence/domain/constraints';

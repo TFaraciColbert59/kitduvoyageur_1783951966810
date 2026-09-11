@@ -13,6 +13,7 @@ import {
   type EligiblePassageRow,
   type ExpectedDuration,
 } from '@/features/adventure-intelligence/server/aggregateSegments';
+import { currentAdventureFeatureFlags } from '@/features/adventure-intelligence/server/featureFlags';
 
 export const dynamic = 'force-dynamic';
 
@@ -48,6 +49,11 @@ export async function POST(request: NextRequest) {
   const authHeader = request.headers.get('authorization');
   if (!secret || authHeader !== `Bearer ${secret}`) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+  }
+
+  const flags = await currentAdventureFeatureFlags();
+  if (flags.collective_intelligence !== true) {
+    return NextResponse.json({ skipped: 'flag_disabled' }, { status: 200 });
   }
 
   const supabase = getServiceSupabase();

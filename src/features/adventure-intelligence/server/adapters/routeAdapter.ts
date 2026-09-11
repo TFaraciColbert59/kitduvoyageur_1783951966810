@@ -4,6 +4,7 @@
  * Aucune donnée inventée : tout provient du catalogue de blueprints existant,
  * la confiance reste celle de la proposition (catalogue = estimations).
  */
+import 'server-only';
 import { runAutoGenPipeline } from '@/features/trips/engine/autoGenPipeline';
 import type { Proposal, TripBrief } from '@/features/trips/schemas/autoGen.schema';
 import type { AdventureEngine, Assumption, EngineWarning } from '@/features/adventure-intelligence/domain/engine';

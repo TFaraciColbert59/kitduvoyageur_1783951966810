@@ -16,13 +16,26 @@ Date : 2026-09-11 · Réf. : ADR-AI-008, `docs/reports/A9_SECURITY_AUDIT.md`
 Règle : un palier ne passe au suivant qu'après **7 jours** sans déclencheur d'arrêt et
 revue du tableau de bord (erreurs, ETA, terrain, coûts, batterie).
 
+## Flags consommés (état à la livraison A9)
+
+| Flag | Consommé par | Effet quand désactivé (fail-safe) |
+|---|---|---|
+| `terrain_live` | `GET /api/terrain/conditions`, `POST /api/terrain/reports`, `POST /api/terrain/reports/[id]/confirm` | `503 { error: 'Fonctionnalité non activée' }`, aucun traitement |
+| `collective_intelligence` | `POST /api/cron/aggregate-segments` | `200 { skipped: 'flag_disabled' }`, aucune agrégation |
+| `route_prediction_v2` | `POST /api/adventure/generate` → contexte moteur injecté → `predictionAdapter`/`difficultyAdapter` | profil ignoré : repli générique (profil existant) ou standard (aucun profil) |
+| `performance_profile_v2` | Déclaré et transmis dans le contexte de génération | Aucun consommateur moteur câblé à ce stade : sans effet runtime |
+| `*_shadow` (4 flags) | Déclarés pour de futurs jobs shadow | Aucun runner shadow n'est livré : sans effet runtime |
+
+`process-hike-sessions` et `expire-terrain-reports` sont des maintenances privées :
+volontairement non gatées par ces flags.
+
 ## Shadow mode (avant palier 1)
 
 Flags : `performance_profile_v2_shadow`, `route_prediction_v2_shadow`,
 `collective_intelligence_shadow`, `terrain_auto_detection_shadow`.
-Les moteurs s'exécutent silencieusement et `compareShadow`/`summarizeShadow` mesurent
-l'écart V1/V2 sans aucun effet utilisateur. Aucun affichage tant que `agreementRate`
-n'est pas jugé suffisant par la revue humaine.
+Les moteurs d'exécution silencieuse (`compareShadow`/`summarizeShadow`) existent côté domaine,
+mais **aucun runner shadow n'est câblé à ce stade** : ces flags n'ont aucun effet runtime.
+Aucun affichage tant que `agreementRate` n'est pas jugé suffisant par la revue humaine.
 
 ## Critères d'arrêt (rollback immédiat)
 
@@ -38,10 +51,15 @@ n'est pas jugé suffisant par la revue humaine.
 
 ```text
 1. feature_flags : enabled = false (UPDATE ciblé, immédiat, sans déploiement)
-2. Vérifier la reprise du comportement V1 (fallbacks 15 min/km + plan sans personnalisation)
+2. Vérifier la reprise du comportement V1 sur les chemins réellement câblés
+   (terrain 503, cron sauté, repli générique/standard des prédictions)
 3. Aucun DROP : les migrations sont additives, la base reste compatible
 4. Consigner l'incident + mesures dans docs/reports/
 ```
+
+Le rollback par flag n'a d'effet que sur les flags **consommés** listés ci-dessus :
+`performance_profile_v2` (sans consommateur moteur) et les `*_shadow` (sans runner shadow)
+restent inertes tant que leur câblage n'est pas livré.
 
 ## Observabilité minimale
 

@@ -56,6 +56,8 @@ export interface AdventureGenerationInput {
   locks?: AdventureConstraint[];
   participantsCount?: number;
   now?: string;
+  /** Flags de domaine A9 (ADR-AI-008) : injectés dans le contexte des moteurs. */
+  featureFlags?: Record<string, boolean>;
 }
 
 export interface AdventureExplainContext {
@@ -484,7 +486,7 @@ export async function generateAdventure(
   let pipeline: Awaited<ReturnType<EngineRegistry['runPipeline']>>;
   try {
     pipeline = await deps.registry.runPipeline(
-      { userId: input.ownerId, nowIso: now },
+      { userId: input.ownerId, nowIso: now, featureFlags: input.featureFlags },
       { text: input.text },
       resolveInput
     );

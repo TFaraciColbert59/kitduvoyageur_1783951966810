@@ -5,6 +5,7 @@
  * de source déterministe injectée, l'adaptateur retourne un skip explicite :
  * aucune donnée météo, réglementaire ou documentaire n'est jamais inventée.
  */
+import 'server-only';
 import type { AdventureEngine, EngineWarning } from '@/features/adventure-intelligence/domain/engine';
 import { EngineSkipSignal } from '@/features/adventure-intelligence/domain/engineRegistry';
 import { ADAPTER_VERSION } from './adapterSupport';

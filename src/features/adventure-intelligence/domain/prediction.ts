@@ -70,6 +70,8 @@ export interface RoutePredictionInput {
   confidence: Confidence | null;
   packWeightKg?: number | null;
   turnaroundAfterS?: number | null;
+  /** Flag `route_prediction_v2` transmis à `predictSegment` (défaut `true`). */
+  flagEnabled?: boolean;
 }
 
 /** Prédiction de route sans `userId` : l'identité est ajoutée par le serveur. */
@@ -245,7 +247,8 @@ export function predictRoute(
         fatigueBefore: cumulativeFatigue,
       },
       input.profile,
-      effectiveConfidence
+      effectiveConfidence,
+      { flagEnabled: input.flagEnabled ?? true }
     );
 
     const fatigueMultiplier = 1 + FATIGUE_PACE_IMPACT * clamp01(cumulativeFatigue / 100);

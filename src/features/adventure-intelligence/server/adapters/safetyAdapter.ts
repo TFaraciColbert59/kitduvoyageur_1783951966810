@@ -5,6 +5,7 @@
  * `estimated`) et sont explicitement marqués « à vérifier avant départ ».
  * Sans couche `safety`, l'adaptateur skippe — aucune coordonnée inventée.
  */
+import 'server-only';
 import type { Proposal } from '@/features/trips/schemas/autoGen.schema';
 import {
   makeEngineResult,

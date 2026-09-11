@@ -6,6 +6,7 @@
  * Les moteurs sans source déterministe sont enregistrés pour apparaître en
  * `skipped` motivé dans les runs (observabilité honnête).
  */
+import 'server-only';
 import type { AdventureEngine } from '@/features/adventure-intelligence/domain/engine';
 import { EngineRegistry } from '@/features/adventure-intelligence/domain/engineRegistry';
 import { intentAdapter } from './intentAdapter';

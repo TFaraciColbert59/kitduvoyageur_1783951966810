@@ -13,6 +13,7 @@ import {
   terrainSeveritySchema,
 } from '@/features/adventure-intelligence/schemas/live.schema';
 import { MAX_PHOTO_BYTES } from '@/features/adventure-intelligence/domain/terrainLive';
+import { currentAdventureFeatureFlags } from '@/features/adventure-intelligence/server/featureFlags';
 
 export const dynamic = 'force-dynamic';
 
@@ -65,6 +66,11 @@ export async function POST(request: NextRequest) {
         { error: 'Unauthorized', details: 'Session requise' },
         { status: 401 }
       );
+    }
+
+    const flags = await currentAdventureFeatureFlags();
+    if (flags.terrain_live !== true) {
+      return NextResponse.json({ error: 'Fonctionnalité non activée' }, { status: 503 });
     }
 
     let body: unknown;

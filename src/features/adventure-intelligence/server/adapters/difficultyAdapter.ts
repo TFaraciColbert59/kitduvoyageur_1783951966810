@@ -5,6 +5,7 @@
  * difficultés de segment. Sans profils des participants, la difficulté groupe
  * n'est calculée que pour un participant unique — sinon `null` explicite.
  */
+import 'server-only';
 import { predictSegment } from '@/features/adventure-intelligence/domain/prediction';
 import type { SegmentPrediction } from '@/features/adventure-intelligence/schemas/prediction.schema';
 import { combineConfidence, COLD_CONFIDENCE } from '@/features/adventure-intelligence/domain/confidence';
@@ -17,7 +18,7 @@ import {
 import { EngineSkipSignal } from '@/features/adventure-intelligence/domain/engineRegistry';
 import type { PerformanceProfile } from '@/features/adventure-intelligence/schemas/performance.schema';
 import type { RouteAdapterOutput } from './routeAdapter';
-import { ADAPTER_VERSION, uniformSegmentsFromItinerary } from './adapterSupport';
+import { ADAPTER_VERSION, routePredictionEnabled, uniformSegmentsFromItinerary } from './adapterSupport';
 
 export interface DifficultyAdapterInput {
   route?: RouteAdapterOutput | null;
@@ -52,6 +53,7 @@ export const difficultyAdapter: AdventureEngine<DifficultyAdapterInput, Difficul
     const { count, segments } = uniformSegmentsFromItinerary(route.layers.itinerary?.value);
     const profile = input.profile ?? null;
     const participants = Math.max(1, Math.trunc(input.participantsCount ?? 1));
+    const flagEnabled = routePredictionEnabled(context);
 
     const predictions: SegmentPrediction[] = segments.map((segment) =>
       predictSegment(
@@ -64,7 +66,8 @@ export const difficultyAdapter: AdventureEngine<DifficultyAdapterInput, Difficul
           packWeightKg: null,
         },
         profile,
-        profile?.confidence ?? null
+        profile?.confidence ?? null,
+        { flagEnabled }
       )
     );
 

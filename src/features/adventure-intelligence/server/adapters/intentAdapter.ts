@@ -1,6 +1,7 @@
 /**
  * A6 — Adaptateur d'intention : `tripBriefExtractor` (déterministe, sans LLM).
  */
+import 'server-only';
 import { extractTripBrief } from '@/features/trips/engine/tripBriefExtractor';
 import type { TripBrief } from '@/features/trips/schemas/autoGen.schema';
 import { makeConfidence } from '@/features/adventure-intelligence/domain/confidence';

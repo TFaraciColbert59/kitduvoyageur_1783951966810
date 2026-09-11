@@ -5,6 +5,7 @@
  * explicite) ; sans profil personnel, `resolvePace` retombe sur l'allure
  * standard et l'incertitude est élargie par le moteur A3.
  */
+import 'server-only';
 import {
   predictRoute,
   STRATEGIES,
@@ -20,7 +21,7 @@ import {
 import { EngineSkipSignal } from '@/features/adventure-intelligence/domain/engineRegistry';
 import type { PerformanceProfile } from '@/features/adventure-intelligence/schemas/performance.schema';
 import type { RouteAdapterOutput } from './routeAdapter';
-import { ADAPTER_VERSION, uniformSegmentsFromItinerary } from './adapterSupport';
+import { ADAPTER_VERSION, routePredictionEnabled, uniformSegmentsFromItinerary } from './adapterSupport';
 
 export interface PredictionAdapterInput {
   route?: RouteAdapterOutput | null;
@@ -54,6 +55,7 @@ export const predictionAdapter: AdventureEngine<PredictionAdapterInput, Predicti
     const { count, segments } = uniformSegmentsFromItinerary(itinerary?.value);
     const profile = input.profile ?? null;
     const startAt = input.startAt ?? context.nowIso;
+    const flagEnabled = routePredictionEnabled(context);
 
     const strategies = STRATEGIES.map((strategy) =>
       predictRoute(
@@ -63,6 +65,7 @@ export const predictionAdapter: AdventureEngine<PredictionAdapterInput, Predicti
           profile,
           confidence: profile?.confidence ?? null,
           packWeightKg: null,
+          flagEnabled,
         },
         strategy
       )

@@ -5,13 +5,25 @@
  * `AdventureEngine` : la confiance et la provenance ne sont jamais inventées,
  * elles sont dérivées des propositions du catalogue ou déclarées `computed`.
  */
+import 'server-only';
 import { makeConfidence, type Confidence } from '@/features/adventure-intelligence/domain/confidence';
+import type { AdventureExecutionContext } from '@/features/adventure-intelligence/domain/engine';
 import type { DataProvenance } from '@/features/adventure-intelligence/domain/provenance';
 import type { RouteSegmentInput } from '@/features/adventure-intelligence/domain/prediction';
 import type { Proposal } from '@/features/trips/schemas/autoGen.schema';
 
 /** Version commune des adaptateurs A6 (observabilité `adventure_engine_runs`). */
 export const ADAPTER_VERSION = 'a6-v1';
+
+/**
+ * Flag `route_prediction_v2` dans le contexte moteur : absent (appels internes,
+ * tests) ⇒ activé par défaut, rétrocompatible ; présent ⇒ strictement `true`
+ * (toute autre valeur, y compris absente de la RPC, désactive le profil).
+ */
+export function routePredictionEnabled(context: AdventureExecutionContext): boolean {
+  if (!context.featureFlags) return true;
+  return context.featureFlags.route_prediction_v2 === true;
+}
 
 const PROPOSAL_LEVEL_SCORES: Record<Proposal['confidence'], number> = {
   high: 0.8,
