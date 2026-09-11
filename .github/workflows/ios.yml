@@ -5,6 +5,11 @@ on:
   push:
     branches:
       - main
+  # Requis pour que le check `build-ios` (status requis de la protection
+  # de branche `main`) se déclenche aussi sur les pull requests.
+  pull_request:
+    branches:
+      - main
 
 jobs:
   build-ios:
