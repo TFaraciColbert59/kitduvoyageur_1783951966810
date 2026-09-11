@@ -8,6 +8,7 @@
 import 'server-only';
 import { z } from 'zod';
 import { createClient } from '@/lib/supabase/server';
+import { buildDomainEvent } from '../domain/events';
 
 export const CONSENT_PURPOSES = [
   'personal_performance',
@@ -22,6 +23,13 @@ export type ConsentPurpose = (typeof CONSENT_PURPOSES)[number];
 export const consentPurposeSchema = z.enum(CONSENT_PURPOSES);
 
 export const CONSENT_POLICY_VERSION = 'a1-v1';
+
+/**
+ * Version de traitement de l'événement `consent.revoked` (purge 10.7).
+ * La clé d'idempotence embarque l'instant de révocation : chaque nouvelle
+ * révocation après un regrant produit un nouvel événement de purge.
+ */
+export const CONSENT_REVOCATION_PROCESSOR_VERSION = 'a10-consent-v1';
 
 /** Finalités désactivées en Phase 1 — non octroyables même côté serveur. */
 export const DISABLED_CONSENT_PURPOSES: readonly ConsentPurpose[] = ['external_readiness'];
@@ -106,5 +114,67 @@ export async function setConsent(purpose: string, granted: boolean): Promise<Set
     return { ok: false, error: error.message };
   }
 
+  if (!granted) {
+    await emitConsentRevokedEvent(supabase, user.id, parsed.data, now);
+  }
+
   return { ok: true };
+}
+
+/**
+ * Émet `consent.revoked` dans `adventure_domain_events`, best effort :
+ * la purge est déclenchée par le cron `process-adventure-events`. Une panne
+ * de la file ne doit jamais bloquer la révocation côté utilisateur (RGPD :
+ * le retrait de consentement est immédiat).
+ */
+async function emitConsentRevokedEvent(
+  supabase: Awaited<ReturnType<typeof createClient>>,
+  userId: string,
+  purpose: ConsentPurpose,
+  revokedAt: string
+): Promise<void> {
+  try {
+    const base = buildDomainEvent({
+      type: 'consent.revoked',
+      entityType: 'adventure_data_consent',
+      entityId: `${userId}:${purpose}`,
+      actorId: userId,
+      processorVersion: CONSENT_REVOCATION_PROCESSOR_VERSION,
+      payload: {
+        userId,
+        purpose,
+        policyVersion: CONSENT_POLICY_VERSION,
+        revokedAt,
+      },
+      createdAt: revokedAt,
+    });
+    // Clé stable pour CETTE révocation (regrant + nouvelle révocation ⇒
+    // nouvelle purge), tout en restant idempotente sur un rejeu du même appel.
+    const event = {
+      ...base,
+      idempotencyKey: `${base.type}:${base.entityId}:${revokedAt}`,
+    };
+
+    const { error } = await supabase.from('adventure_domain_events').insert({
+      event_type: event.type,
+      entity_type: event.entityType,
+      entity_id: event.entityId,
+      actor_id: event.actorId ?? null,
+      payload: event.payload,
+      status: 'pending',
+      processor_version: event.processorVersion,
+      idempotency_key: event.idempotencyKey,
+      created_at: event.createdAt,
+    });
+
+    if (error) {
+      // Doublon d'idempotence ou file indisponible : jamais bloquant.
+      console.error('[LKDV AdventureIntelligence] consent.revoked non journalisé:', error.message);
+    }
+  } catch (error) {
+    console.error(
+      '[LKDV AdventureIntelligence] consent.revoked non journalisé:',
+      error instanceof Error ? error.message : error
+    );
+  }
 }

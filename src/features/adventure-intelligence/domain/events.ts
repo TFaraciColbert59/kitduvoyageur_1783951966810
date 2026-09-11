@@ -24,6 +24,7 @@ export const ADVENTURE_DOMAIN_EVENT_TYPES = [
   'performance.profile.updated',
   'gear.inventory.changed',
   'decision.confirmation.required',
+  'consent.revoked',
 ] as const;
 
 export type AdventureDomainEventType = (typeof ADVENTURE_DOMAIN_EVENT_TYPES)[number];

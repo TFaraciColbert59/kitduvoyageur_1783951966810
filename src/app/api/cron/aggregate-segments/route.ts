@@ -157,21 +157,36 @@ export async function POST(request: NextRequest) {
       if (userIds.length === 0) return [];
       const { data, error } = await supabase
         .from('adventure_data_consents')
-        .select('user_id, granted, revoked_at')
+        .select('user_id, granted, revoked_at, policy_version')
         .eq('purpose', 'collective_terrain')
         .in('user_id', userIds);
       if (error) throw new Error(error.message);
 
-      const grantedByUser = new Map<string, boolean>();
+      // A10 (10.7) — aligné sur `has_active_consent` : seule la dernière
+      // policy_version compte, une ancienne ligne active ne suffit jamais (#25).
+      const latestByUser = new Map<
+        string,
+        { policyVersion: string; granted: boolean; revokedAt: string | null }
+      >();
       for (const raw of (data ?? []) as {
         user_id: string;
+        policy_version: string;
         granted: boolean;
         revoked_at: string | null;
       }[]) {
-        const active = raw.granted === true && raw.revoked_at == null;
-        grantedByUser.set(raw.user_id, grantedByUser.get(raw.user_id) === true || active);
+        const current = latestByUser.get(raw.user_id);
+        if (current === undefined || raw.policy_version > current.policyVersion) {
+          latestByUser.set(raw.user_id, {
+            policyVersion: raw.policy_version,
+            granted: raw.granted,
+            revokedAt: raw.revoked_at,
+          });
+        }
       }
-      return userIds.map((userId) => ({ userId, granted: grantedByUser.get(userId) === true }));
+      return userIds.map((userId) => {
+        const latest = latestByUser.get(userId);
+        return { userId, granted: latest?.granted === true && latest.revokedAt == null };
+      });
     },
 
     async getExpectedDurations(passages: EligiblePassageRow[]): Promise<ExpectedDuration[]> {

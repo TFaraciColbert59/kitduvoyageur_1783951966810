@@ -180,10 +180,12 @@ describe('Domaine noyau — contrat moteur (TEST-A1-ENG)', () => {
 
 describe('Domaine noyau — événements (TEST-A1-EVT)', () => {
   it('TEST-A1-EVT-01: ADVENTURE_DOMAIN_EVENT_TYPES liste la taxonomie du master plan', () => {
-    expect(ADVENTURE_DOMAIN_EVENT_TYPES).toHaveLength(17);
+    // A10 (10.7) : `consent.revoked` étend la taxonomie (purge RGPD).
+    expect(ADVENTURE_DOMAIN_EVENT_TYPES).toHaveLength(18);
     expect(ADVENTURE_DOMAIN_EVENT_TYPES).toContain('adventure.plan.generated');
     expect(ADVENTURE_DOMAIN_EVENT_TYPES).toContain('trail.report.created');
     expect(ADVENTURE_DOMAIN_EVENT_TYPES).toContain('decision.confirmation.required');
+    expect(ADVENTURE_DOMAIN_EVENT_TYPES).toContain('consent.revoked');
     expect(new Set(ADVENTURE_DOMAIN_EVENT_TYPES).size).toBe(ADVENTURE_DOMAIN_EVENT_TYPES.length);
   });
 

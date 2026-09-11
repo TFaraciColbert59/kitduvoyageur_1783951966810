@@ -61,7 +61,11 @@ const candidateNorth: SegmentCandidate = { segmentId: 777, distanceM: 5, bearing
 function makeClient(
   session: HikeSessionRow | null,
   candidateBatchFor?: (points: GpsPoint[], radiusM: number) => SegmentCandidate[][] | never,
-  options: { persistError?: Error } = {}
+  options: {
+    persistError?: Error;
+    personalConsent?: boolean;
+    collectiveConsent?: boolean;
+  } = {}
 ): { client: HikeProcessingClient; calls: FakeCalls; store: FakeStore } {
   const calls: FakeCalls = { candidateBatches: [], transcripts: [], marks: [] };
   const store: FakeStore = { passages: new Map(), observations: new Map() };
@@ -69,6 +73,13 @@ function makeClient(
 
   const client: HikeProcessingClient = {
     getSession: vi.fn().mockResolvedValue(session),
+    // A10 (10.7) : consentements actifs par défaut pour préserver les
+    // scénarios historiques ; les tests de consentement les désactivent.
+    hasActiveConsent: vi.fn().mockImplementation(async (_userId: string, purpose: string) => {
+      if (purpose === 'personal_performance') return options.personalConsent !== false;
+      if (purpose === 'collective_terrain') return options.collectiveConsent !== false;
+      return false;
+    }),
     getCandidatesBatch: vi.fn().mockImplementation(async (points: GpsPoint[], radiusM: number) => {
       calls.candidateBatches.push({ points, radiusM });
       if (!candidateBatchFor) return points.map(() => [candidateNorth]);

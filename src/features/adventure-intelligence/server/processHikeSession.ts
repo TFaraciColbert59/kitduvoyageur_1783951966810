@@ -13,6 +13,11 @@
  * de temps. Sans horodatage exploitable (legacy LineString seul), les passages
  * sont produits mais restent privés : `eligible_for_collective = false`,
  * aucune observation, avertissement `timed_samples_missing`.
+ *
+ * A10 (10.7) : aucune dérivation sans consentement vérifié — observations
+ * seulement si `personal_performance` actif, inclusion collective seulement si
+ * `collective_terrain` actif. Contrôle fail-safe : une erreur du consentement
+ * vaut refus.
  */
 import 'server-only';
 import { z } from 'zod';
@@ -26,6 +31,7 @@ import {
 import { planSessionFailure } from '../domain/sessionRetry';
 import { expandSampleCandidates, selectMatchingPoints } from '../domain/trackSampling';
 import { normalizeTrack, type NormalizedTrack, type TrackPoint } from '../domain/trackNormalization';
+import type { ConsentPurpose } from './consents';
 
 export const PROCESSOR_VERSION = 'a2-v1';
 
@@ -68,6 +74,13 @@ export interface PersistTranscriptInput {
 
 export interface HikeProcessingClient {
   getSession(id: string): Promise<HikeSessionRow | null>;
+  /**
+   * A10 (10.7) — consentement courant de l'utilisateur pour une finalité.
+   * Le traitement GPS ne dérive des données personnelles qu'avec
+   * `personal_performance` et n'inclut au collectif qu'avec
+   * `collective_terrain` (double barrière serveur, audit #11).
+   */
+  hasActiveConsent(userId: string, purpose: ConsentPurpose): Promise<boolean>;
   /** Candidats par point, alignés sur l'ordre des points envoyés (un seul batch). */
   getCandidatesBatch(points: GpsPoint[], radiusM: number): Promise<SegmentCandidate[][]>;
   /** Persistance atomique : passages + observations + session `processed`. */
@@ -241,6 +254,22 @@ function isEligible(quality: number, mapMatchQuality: number): boolean {
   return quality >= ELIGIBILITY_MIN_QUALITY && mapMatchQuality >= ELIGIBILITY_MIN_QUALITY;
 }
 
+/**
+ * Consentement fail-safe : toute erreur du contrôle est traitée comme un
+ * refus (aucune donnée dérivée sans consentement vérifié, audit #11).
+ */
+async function consentGranted(
+  client: HikeProcessingClient,
+  userId: string,
+  purpose: ConsentPurpose
+): Promise<boolean> {
+  try {
+    return (await client.hasActiveConsent(userId, purpose)) === true;
+  } catch {
+    return false;
+  }
+}
+
 function buildPassageRows(
   session: HikeSessionRow,
   normalized: NormalizedTrack,
@@ -345,6 +374,14 @@ export async function processHikeSession(
 
     const timedSamples = positions.kind === 'timed';
 
+    // A10 (10.7) : le consentement est vérifié AVANT toute dérivation.
+    // `personal_performance` commande les observations privées ;
+    // `collective_terrain` commande l'éligibilité collective (indépendants).
+    const [personalConsent, collectiveConsent] = await Promise.all([
+      consentGranted(client, session.user_id, 'personal_performance'),
+      consentGranted(client, session.user_id, 'collective_terrain'),
+    ]);
+
     // A10 (10.6) : échantillonnage borné (pas régulier ~25 m, plafond 2 000
     // points, premier/dernier conservés) puis UN SEUL appel batch PostGIS ;
     // les candidats du point échantillonné sont étendus à toute la trace.
@@ -365,10 +402,16 @@ export async function processHikeSession(
     );
     const passages = buildPassages(matches, normalized.points, normalized.pauses);
 
-    const passageRows = buildPassageRows(session, normalized, passages, timedSamples);
-    const observationRows = timedSamples
-      ? buildObservationRows(session, normalized, passages, passageRows)
-      : [];
+    const passageRows = buildPassageRows(
+      session,
+      normalized,
+      passages,
+      timedSamples && collectiveConsent
+    );
+    const observationRows =
+      timedSamples && personalConsent
+        ? buildObservationRows(session, normalized, passages, passageRows)
+        : [];
 
     // Persistance atomique : passages + observations + session `processed`.
     await client.persistTranscript({

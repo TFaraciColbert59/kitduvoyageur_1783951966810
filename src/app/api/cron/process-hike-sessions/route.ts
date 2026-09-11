@@ -65,6 +65,17 @@ export async function POST(request: NextRequest) {
       return (row as HikeSessionRow | null) ?? null;
     },
 
+    // A10 (10.7) : consentement courant via la RPC `has_active_consent`
+    // (dernière policy_version uniquement). Fail-safe côté processHikeSession.
+    async hasActiveConsent(userId, purpose) {
+      const { data, error: consentError } = await supabase.rpc('has_active_consent', {
+        p_user_id: userId,
+        p_purpose: purpose,
+      });
+      if (consentError) throw new Error(consentError.message);
+      return data === true;
+    },
+
     // A10 (10.6) : un seul appel PostGIS pour toute la trace échantillonnée.
     async getCandidatesBatch(points: GpsPoint[], radiusM: number): Promise<SegmentCandidate[][]> {
       if (points.length === 0) return [];
