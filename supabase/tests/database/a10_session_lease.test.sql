@@ -47,8 +47,8 @@ VALUES
 SET LOCAL ROLE service_role;
 SELECT is(
   (SELECT count(*)::int FROM public.a2_claim_pending_sessions(10)),
-  3,
-  '1. DB-01. claim(10) réserve la pending due, le lease expiré et le lease épuisé (dead-letter)'
+  2,
+  '1. DB-01. claim(10) réserve la pending due et le lease expiré (le lease épuisé est dead-letter, non retourné)'
 );
 SELECT is(
   (SELECT processing_status FROM public.hike_sessions WHERE id = '7a100000-0000-4000-8000-00000000000a'),
