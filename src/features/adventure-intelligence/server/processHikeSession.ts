@@ -23,6 +23,7 @@ import {
   type MatchedPassage,
   type SegmentCandidate,
 } from '../domain/mapMatching';
+import { planSessionFailure } from '../domain/sessionRetry';
 import { normalizeTrack, type NormalizedTrack, type TrackPoint } from '../domain/trackNormalization';
 
 export const PROCESSOR_VERSION = 'a2-v1';
@@ -42,6 +43,8 @@ export interface HikeSessionRow {
   processing_status: string;
   processor_version: string | null;
   ended_at: string;
+  /** A10 (10.5) — tentatives de traitement (incrementées par le claim). */
+  processing_attempts?: number | null;
 }
 
 /** Point envoyé au map-matching batch (A10 — 10.4/10.6). */
@@ -71,10 +74,12 @@ export interface HikeProcessingClient {
   markSession(
     id: string,
     patch: {
-      processing_status: 'processing' | 'processed' | 'failed';
-      processor_version: string;
+      processing_status: 'pending' | 'processing' | 'processed' | 'failed' | 'dead_letter';
+      processor_version?: string;
       processed_at?: string;
       track_quality?: unknown;
+      next_retry_at?: string | null;
+      last_processing_error?: string | null;
     }
   ): Promise<void>;
 }
@@ -202,6 +207,7 @@ function roundedKey(lat: number, lng: number): string {
   return `${lat.toFixed(4)},${lng.toFixed(4)}`;
 }
 
+/** Échec terminal de validation (payload définitif : aucune reprise utile). */
 async function markFailed(
   client: HikeProcessingClient,
   session: HikeSessionRow,
@@ -210,7 +216,26 @@ async function markFailed(
   await client.markSession(session.id, {
     processing_status: 'failed',
     processor_version: PROCESSOR_VERSION,
-    processed_at: new Date().toISOString(),
+    last_processing_error: reason,
+  });
+  return { status: 'failed', passages: 0, reason };
+}
+
+/**
+ * Échec d'exécution (client, moteur) : reprise programmée avec backoff
+ * `2^attempts` minutes, ou dead-letter au-delà de 5 tentatives (A10 — 10.5).
+ */
+async function markRetryableFailure(
+  client: HikeProcessingClient,
+  session: HikeSessionRow,
+  reason: string
+): Promise<ProcessHikeSessionResult> {
+  const failure = planSessionFailure(session.processing_attempts ?? 0, new Date().toISOString());
+  await client.markSession(session.id, {
+    processing_status: failure.status,
+    processor_version: PROCESSOR_VERSION,
+    next_retry_at: failure.nextRetryAt,
+    last_processing_error: reason,
   });
   return { status: 'failed', passages: 0, reason };
 }
@@ -367,9 +392,9 @@ export async function processHikeSession(
   } catch (error) {
     const reason = error instanceof Error ? error.message : 'processing_error';
     try {
-      await markFailed(client, session, reason);
+      await markRetryableFailure(client, session, reason);
     } catch {
-      console.error('[adventure-intelligence] markSession(failed) en échec pour', sessionId);
+      console.error('[adventure-intelligence] markSession(failure) en échec pour', sessionId);
     }
     return { status: 'failed', passages: 0, reason };
   }

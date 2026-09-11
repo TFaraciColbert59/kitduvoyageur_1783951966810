@@ -66,7 +66,7 @@ export async function POST(request: NextRequest) {
       const { data: row, error: sessionError } = await supabase
         .from('hike_sessions')
         .select(
-          'id, user_id, positions_geojson, positions_timed, processing_status, processor_version, ended_at'
+          'id, user_id, positions_geojson, positions_timed, processing_status, processor_version, ended_at, processing_attempts'
         )
         .eq('id', id)
         .maybeSingle();

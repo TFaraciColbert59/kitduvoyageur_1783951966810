@@ -261,7 +261,12 @@ describe('Orchestrateur de session — TEST-A2-PROC (client factice)', () => {
     expect(calls.transcripts).toHaveLength(0);
     expect(store.passages.size).toBe(0);
     expect(store.observations.size).toBe(0);
-    expect(calls.marks[0][1].processing_status).toBe('failed');
+    expect(calls.marks[0][1]).toMatchObject({
+      processing_status: 'pending',
+      last_processing_error: 'postgis indisponible',
+      processor_version: PROCESSOR_VERSION,
+    });
+    expect(typeof calls.marks[0][1].next_retry_at).toBe('string');
   });
 
   it('TEST-A2-PROC-06: un GeoJSON LineString legacy produit un passage privé sans observation', async () => {
@@ -461,7 +466,10 @@ describe('A10 — RPC transactionnelles (TEST-A10-TX)', () => {
     expect(result.reason).toBe('transaction annulée');
     expect(store.passages.size).toBe(0);
     expect(store.observations.size).toBe(0);
-    expect(calls.marks[0][1].processing_status).toBe('failed');
+    expect(calls.marks[0][1]).toMatchObject({
+      processing_status: 'pending',
+      last_processing_error: 'transaction annulée',
+    });
   });
 
   it('TEST-A10-TX-04: chaque observation porte une clé complète, jamais un segment nu', async () => {
@@ -483,5 +491,40 @@ describe('A10 — RPC transactionnelles (TEST-A10-TX)', () => {
       expect(observation.passage_id).toBeUndefined();
       expect(observation.segment_id).toBeUndefined();
     }
+  });
+});
+
+describe('A10 — Lease et dead-letter (TEST-A10-LEASE)', () => {
+  it('TEST-A10-LEASE-04: le chemin d’échec applique le backoff puis dead-letter', async () => {
+    const retrySession = sessionRow({ positions_geojson: northTrack(4), processing_attempts: 1 });
+    const { client: retryClient, calls: retryCalls } = makeClient(retrySession, () => {
+      throw new Error('worker interrompu');
+    });
+
+    const before = Date.now();
+    const result = await processHikeSession(SESSION_ID, retryClient);
+    const after = Date.now();
+
+    expect(result.status).toBe('failed');
+    const retryMark = retryCalls.marks[0][1];
+    expect(retryMark.processing_status).toBe('pending');
+    expect(retryMark.last_processing_error).toBe('worker interrompu');
+    const nextRetryMs = Date.parse(String(retryMark.next_retry_at));
+    expect(Number.isNaN(nextRetryMs)).toBe(false);
+    // attempts = 1 ⇒ backoff 2^1 = 2 minutes.
+    expect(nextRetryMs).toBeGreaterThanOrEqual(before + 2 * 60_000);
+    expect(nextRetryMs).toBeLessThanOrEqual(after + 2 * 60_000);
+
+    const deadSession = sessionRow({ positions_geojson: northTrack(4), processing_attempts: 5 });
+    const { client: deadClient, calls: deadCalls } = makeClient(deadSession, () => {
+      throw new Error('échec définitif');
+    });
+    await processHikeSession(SESSION_ID, deadClient);
+
+    expect(deadCalls.marks[0][1]).toMatchObject({
+      processing_status: 'dead_letter',
+      next_retry_at: null,
+      last_processing_error: 'échec définitif',
+    });
   });
 });
