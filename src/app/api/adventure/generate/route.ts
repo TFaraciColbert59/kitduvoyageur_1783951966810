@@ -6,8 +6,10 @@ import { createClient } from '@/lib/supabase/server';
 import { createDefaultRegistry } from '@/features/adventure-intelligence/server/adapters';
 import {
   createSupabaseAdventurePersistence,
+  createSupabaseAdventurePredictionPersistence,
   generateAdventure,
   getAdventurePlan,
+  getStoredPerformanceProfile,
 } from '@/features/adventure-intelligence/server/generateAdventure';
 import { currentAdventureFeatureFlags } from '@/features/adventure-intelligence/server/featureFlags';
 import {
@@ -194,6 +196,22 @@ export async function POST(request: NextRequest) {
         {
           registry: createDefaultRegistry(),
           persistence: createSupabaseAdventurePersistence(supabase),
+          // A10 (10.9) : consentement vérifié côté serveur, puis profil réel
+          // (service_role) injecté dans les adaptateurs ; sinon repli standard.
+          hasActiveConsent: async (userId, purpose) => {
+            const { data, error } = await supabase.rpc('has_active_consent', {
+              p_user_id: userId,
+              p_purpose: purpose,
+            });
+            if (error) {
+              console.error('[adventure/generate] has_active_consent en échec:', error.message);
+              return false;
+            }
+            return data === true;
+          },
+          getCurrentProfile: (userId) => getStoredPerformanceProfile(supabase, userId),
+          persistAdventurePredictions:
+            createSupabaseAdventurePredictionPersistence(supabase),
         }
       );
     } catch (error) {

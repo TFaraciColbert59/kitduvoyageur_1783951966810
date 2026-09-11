@@ -32,6 +32,10 @@ import {
 } from '../domain/engineRegistry';
 import { buildLockConfirmationDecisions } from '../domain/locks';
 import { adventurePlanSchema } from '../schemas/adventurePlan.schema';
+import {
+  performanceProfileSchema,
+  type PerformanceProfile,
+} from '../schemas/performance.schema';
 import type { Proposal, TripBrief } from '@/features/trips/schemas/autoGen.schema';
 import { confidenceFromProposal, provenanceFromProposal } from './adapters/adapterSupport';
 import type { CoherenceAdapterOutput, CoherenceLockReport } from './adapters/coherenceAdapter';
@@ -48,6 +52,23 @@ export interface AdventurePlanBundle {
   version: Record<string, unknown>;
   runs: Record<string, unknown>[];
   decisions: Record<string, unknown>[];
+}
+
+/** Version de modèle des prédictions persistées (A10 — 10.9). */
+export const ADVENTURE_PREDICTION_MODEL_VERSION = 'a10-v1';
+
+/**
+ * Contexte de prédiction : découpage uniforme des agrégats du blueprint tant
+ * que le routage réel (segments map-matchés) n'est pas branché — note a11.
+ */
+export const PREDICTION_CONTEXT_HASH = 'uniform_from_blueprint';
+
+/** Prédictions prêtes à persister (RPC `persist_adventure_predictions`). */
+export interface AdventurePredictionBundle {
+  planId: string;
+  userId: string;
+  segments: Record<string, unknown>[];
+  route: Record<string, unknown>[];
 }
 
 /**
@@ -88,6 +109,15 @@ export interface AdventureGenerationDeps {
   registry: EngineRegistry;
   persistence: AdventureEnginePersistence;
   explain?: (context: AdventureExplainContext) => Promise<string>;
+  /**
+   * A10 (10.9) — profil Terrain courant (null si froid ou absent). Appelé
+   * UNIQUEMENT si `hasActiveConsent('personal_performance')` est vrai.
+   */
+  getCurrentProfile: (userId: string) => Promise<PerformanceProfile | null>;
+  /** A10 (10.7/10.9) — consentement courant pour la performance personnelle. */
+  hasActiveConsent: (userId: string, purpose: 'personal_performance') => Promise<boolean>;
+  /** A10 (10.9) — persistance des prédictions segment + route. */
+  persistAdventurePredictions: (bundle: AdventurePredictionBundle) => Promise<void>;
 }
 
 type Layers = Record<string, Proposal<unknown>>;
@@ -432,6 +462,59 @@ function decisionRow(planId: string, decision: AdventureDecision): Record<string
   };
 }
 
+/**
+ * A10 (10.9) — lignes de prédiction persistables : segments (P50/P90, effort,
+ * difficulté, pause) et routes (trois stratégies, ETA, fatigue). Le contexte
+ * reste `uniform_from_blueprint` tant que le routage réel n'est pas branché.
+ */
+function buildPredictionBundle(
+  planId: string,
+  userId: string,
+  outputs: Map<string, unknown>,
+  now: string
+): AdventurePredictionBundle {
+  const difficulty = engineResultOf<DifficultyAdapterOutput>(outputs, 'difficulty')?.value;
+  const prediction = engineResultOf<PredictionAdapterOutput>(outputs, 'prediction')?.value;
+
+  const segments = (difficulty?.segmentPredictions ?? []).map((segment) => ({
+    user_id: userId,
+    segment_id: segment.segmentId,
+    context_hash: PREDICTION_CONTEXT_HASH,
+    predicted_duration_p50: segment.durationP50Seconds,
+    predicted_duration_p90: segment.durationP90Seconds,
+    predicted_effort: segment.effortScore,
+    personal_difficulty: segment.personalDifficulty,
+    recommended_pause_s: segment.recommendedPauseSeconds,
+    confidence: segment.confidence,
+    model_version: ADVENTURE_PREDICTION_MODEL_VERSION,
+    computed_at: now,
+  }));
+
+  const route = (prediction?.strategies ?? []).map((strategy) => ({
+    user_id: userId,
+    plan_id: planId,
+    strategy: strategy.strategy,
+    eta_p50: strategy.etaP50,
+    eta_p90: strategy.etaP90,
+    total_duration_p50_s: strategy.totalDurationP50Seconds,
+    total_duration_p90_s: strategy.totalDurationP90Seconds,
+    pace_p25_min_per_km: strategy.paceP25MinPerKm,
+    pace_p50_min_per_km: strategy.paceP50MinPerKm,
+    pace_p75_min_per_km: strategy.paceP75MinPerKm,
+    pauses_s: strategy.pausesSeconds,
+    personal_difficulty: strategy.personalDifficulty,
+    max_fatigue: strategy.maxFatigue,
+    turnaround_time: strategy.turnaroundTime ?? null,
+    critical_segment_ids: strategy.criticalSegmentIds,
+    warnings: strategy.warnings,
+    confidence: strategy.confidence,
+    model_version: ADVENTURE_PREDICTION_MODEL_VERSION,
+    computed_at: now,
+  }));
+
+  return { planId, userId, segments, route };
+}
+
 async function resolveExplanation(
   deps: AdventureGenerationDeps,
   context: AdventureExplainContext,
@@ -457,6 +540,24 @@ export async function generateAdventure(
   deps: AdventureGenerationDeps
 ): Promise<AdventureGenerationResult> {
   const now = input.now ?? new Date().toISOString();
+
+  // A10 (10.9) — le consentement est vérifié AVANT tout chargement de profil :
+  // sans `personal_performance`, aucun profil n'est lu et les adaptateurs
+  // retombent explicitement sur l'allure standard (avertissement cold_profile).
+  let personalConsent = false;
+  try {
+    personalConsent = (await deps.hasActiveConsent(input.ownerId, 'personal_performance')) === true;
+  } catch {
+    personalConsent = false;
+  }
+  let personalProfile: PerformanceProfile | null = null;
+  if (personalConsent) {
+    try {
+      personalProfile = await deps.getCurrentProfile(input.ownerId);
+    } catch {
+      personalProfile = null;
+    }
+  }
 
   const valueOf = <T>(outputs: Map<string, unknown>, id: string): T | undefined =>
     engineResultOf<T>(outputs, id)?.value;
@@ -487,6 +588,9 @@ export async function generateAdventure(
           route: valueOf<RouteAdapterOutput>(outputs, 'route'),
           locks: input.locks ?? [],
           participantsCount: resolvedPartySize(outputs),
+          // A10 (10.9) : profil réel si consentement, sinon null explicite.
+          profile: personalProfile,
+          startAt: now,
         };
       default:
         return undefined;
@@ -560,6 +664,20 @@ export async function generateAdventure(
   plan.id = inserted.id;
   for (const decision of decisions) decision.planId = plan.id;
 
+  // A10 (10.9) — prédictions segment + route persistées par RPC dédiée.
+  // Best-effort assumé : le plan est déjà persisté, un échec de persistance
+  // des prédictions est journalisé mais ne rend jamais le plan inutilisable.
+  try {
+    await deps.persistAdventurePredictions(
+      buildPredictionBundle(plan.id, input.ownerId, outputs, now)
+    );
+  } catch (error) {
+    console.error(
+      '[adventure-intelligence] persistAdventurePredictions en échec:',
+      error instanceof Error ? error.message : error
+    );
+  }
+
   const localExplanation = buildLocalExplanation(plan, candidates, runs, false);
   const { explanation, aiUsed } = await resolveExplanation(
     deps,
@@ -591,6 +709,59 @@ export function createSupabaseAdventurePersistence(
       const { error } = await client.from('adventure_engine_runs').insert(row as never);
       if (error) throw new Error(error.message);
     },
+  };
+}
+
+/**
+ * A10 (10.9) — lecture du profil Terrain courant (service_role).
+ * Toute erreur ou ligne non conforme retombe sur `null` (repli standard
+ * explicite côté adaptateurs), jamais sur un profil inventé.
+ */
+export async function getStoredPerformanceProfile(
+  client: SupabaseClient,
+  userId: string
+): Promise<PerformanceProfile | null> {
+  const { data, error } = await client
+    .from('user_performance_profiles')
+    .select('*')
+    .eq('user_id', userId)
+    .eq('activity_type', 'hiking')
+    .maybeSingle();
+  if (error || !data) return null;
+
+  const row = data as Record<string, unknown>;
+  const parsed = performanceProfileSchema.safeParse({
+    userId: row.user_id,
+    activityType: 'hiking',
+    flatSpeedKmH: Number(row.flat_speed_kmh),
+    ascentSpeedMPerHour: Number(row.ascent_speed_m_per_h ?? 0),
+    descentSpeedMPerHour: Number(row.descent_speed_m_per_h ?? 0),
+    gradeResponse: row.grade_response,
+    surfaceResponse: row.surface_response,
+    fatigueCurve: row.fatigue_curve,
+    pauseModel: row.pause_model,
+    packResponse: row.pack_response,
+    confidence: row.confidence,
+    sampleCount: Number(row.sample_count ?? 0),
+    calibrationLevel: row.calibration_level,
+    modelVersion: row.model_version,
+    computedAt: row.computed_at,
+  });
+  return parsed.success ? parsed.data : null;
+}
+
+/** A10 (10.9) — persistance des prédictions via RPC service_role dédiée. */
+export function createSupabaseAdventurePredictionPersistence(
+  client: SupabaseClient
+): (bundle: AdventurePredictionBundle) => Promise<void> {
+  return async (bundle) => {
+    const { error } = await client.rpc('persist_adventure_predictions', {
+      p_plan_id: bundle.planId,
+      p_user_id: bundle.userId,
+      p_segments: bundle.segments,
+      p_route: bundle.route,
+    });
+    if (error) throw new Error(error.message);
   };
 }
 

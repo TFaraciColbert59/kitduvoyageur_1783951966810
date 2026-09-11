@@ -27,7 +27,9 @@ vi.mock('@/features/adventure-intelligence/server/adapters', () => ({
 vi.mock('@/features/adventure-intelligence/server/generateAdventure', () => ({
   generateAdventure: vi.fn(),
   createSupabaseAdventurePersistence: vi.fn(() => ({ persistence: true })),
+  createSupabaseAdventurePredictionPersistence: vi.fn(() => vi.fn()),
   getAdventurePlan: vi.fn(),
+  getStoredPerformanceProfile: vi.fn(async () => null),
 }));
 vi.mock('@/features/adventure-intelligence/server/featureFlags', () => ({
   currentAdventureFeatureFlags: vi.fn(async () => ({

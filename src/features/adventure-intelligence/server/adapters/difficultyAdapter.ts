@@ -33,6 +33,11 @@ export interface DifficultyAdapterOutput {
   groupDifficulty: number | null;
   segmentation: 'uniform_from_blueprint';
   segmentCount: number;
+  /**
+   * A10 (10.9) — prédictions par segment (stratégie recommandée) exposées pour
+   * la persistance `segment_predictions` (P50/P90, effort, pause).
+   */
+  segmentPredictions: SegmentPrediction[];
 }
 
 export const difficultyAdapter: AdventureEngine<DifficultyAdapterInput, DifficultyAdapterOutput> = {
@@ -116,6 +121,7 @@ export const difficultyAdapter: AdventureEngine<DifficultyAdapterInput, Difficul
         groupDifficulty,
         segmentation: 'uniform_from_blueprint',
         segmentCount: count,
+        segmentPredictions: predictions,
       },
       confidence:
         predictions.length > 0

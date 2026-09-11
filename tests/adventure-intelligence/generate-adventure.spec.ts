@@ -50,6 +50,11 @@ function deps(
   return {
     registry: createDefaultRegistry(),
     persistence,
+    // A10 (10.9) : sans consentement ni profil ni persistance de prédictions,
+    // la génération suit le repli standard explicite (comportement A6).
+    hasActiveConsent: async () => false,
+    getCurrentProfile: async () => null,
+    persistAdventurePredictions: async () => {},
     ...overrides,
   };
 }
