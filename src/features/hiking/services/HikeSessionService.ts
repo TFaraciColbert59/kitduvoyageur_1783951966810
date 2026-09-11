@@ -1,8 +1,21 @@
 import { HikeSession, GPSPosition, HikingStatistics } from '../types';
 
+export interface PersistedGpsTimedSample {
+  lat: number;
+  lng: number;
+  timestamp: string;
+  elevationM?: number;
+  accuracyM?: number;
+  speedMps?: number;
+}
+
 export class HikeSessionService {
   /**
    * Persist a finished hike session to Supabase backend API.
+   *
+   * A10 (10.3) : les échantillons GPS horodatés sont envoyés en plus dans
+   * `positionsTimed` (source unique de temps du traitement) ; la forme de
+   * `positions` / `positions_geojson` reste inchangée.
    */
   public static async saveSession(params: {
     routeId?: string | number | null;
@@ -20,10 +33,27 @@ export class HikeSessionService {
       ? ''
       : (process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:4028');
 
+    const positionsTimed = params.positions
+      .filter((position) => Number.isFinite(position.timestamp))
+      .map<PersistedGpsTimedSample>((position) => {
+        const sample: PersistedGpsTimedSample = {
+          lat: position.latitude,
+          lng: position.longitude,
+          timestamp: new Date(position.timestamp).toISOString(),
+        };
+        if (typeof position.altitude === 'number') sample.elevationM = position.altitude;
+        if (typeof position.accuracy === 'number') sample.accuracyM = position.accuracy;
+        if (typeof position.speed === 'number') sample.speedMps = position.speed;
+        return sample;
+      });
+
     const res = await fetch(`${baseUrl}/api/hike-sessions`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(params),
+      body: JSON.stringify({
+        ...params,
+        positionsTimed: positionsTimed.length >= 2 ? positionsTimed : undefined,
+      }),
     });
 
     if (!res.ok) {

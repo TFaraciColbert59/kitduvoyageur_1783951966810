@@ -8,6 +8,11 @@
  * Pipeline : validation Zod → normalisation → candidats (cache ~11 m) →
  * map-matching → passages → persistance + statut session.
  * Aucun agrégat collectif n'est publié (Phase 4).
+ *
+ * A10 (10.3) : `positions_timed` (échantillons horodatés) est la source unique
+ * de temps. Sans horodatage exploitable (legacy LineString seul), les passages
+ * sont produits mais restent privés : `eligible_for_collective = false`,
+ * aucune observation, avertissement `timed_samples_missing`.
  */
 import 'server-only';
 import { z } from 'zod';
@@ -32,6 +37,8 @@ export interface HikeSessionRow {
   id: string;
   user_id: string;
   positions_geojson: unknown;
+  /** A10 (10.3) — échantillons horodatés ; source unique de temps si présents. */
+  positions_timed?: unknown;
   processing_status: string;
   processor_version: string | null;
   ended_at: string;
@@ -57,9 +64,33 @@ export interface ProcessHikeSessionResult {
   status: 'processed' | 'skipped' | 'failed';
   passages: number;
   reason?: string;
+  /** Avertissement non bloquant (ex. `timed_samples_missing` en mode legacy). */
+  warning?: string;
 }
 
 const MAX_TRACK_POINTS = 50_000;
+
+/** Plafond des échantillons GPS horodatés persistés (A10 — 10.3). */
+export const MAX_TIMED_SAMPLES = 50_000;
+
+const persistedGpsSampleSchema = z.object({
+  lat: z.number(),
+  lng: z.number(),
+  timestamp: z.string().min(1),
+  elevationM: z.number().nullish(),
+  accuracyM: z.number().nullish(),
+  speedMps: z.number().nullish(),
+});
+
+/** Schéma public des échantillons horodatés `hike_sessions.positions_timed`. */
+export const persistedGpsSamplesSchema = z
+  .array(persistedGpsSampleSchema)
+  .max(
+    MAX_TIMED_SAMPLES,
+    `Une trace ne peut pas dépasser ${MAX_TIMED_SAMPLES} échantillons horodatés`
+  );
+
+type PersistedGpsSample = z.infer<typeof persistedGpsSampleSchema>;
 
 const lineStringSchema = z.object({
   type: z.literal('LineString'),
@@ -104,6 +135,50 @@ function toTrackPoints(payload: PositionsPayload, endedAt: string): TrackPoint[]
   });
 }
 
+function timedSampleToTrackPoint(sample: PersistedGpsSample): TrackPoint {
+  const point: TrackPoint = {
+    lat: sample.lat,
+    lng: sample.lng,
+    timestamp: sample.timestamp,
+  };
+  if (typeof sample.elevationM === 'number') point.ele = sample.elevationM;
+  if (typeof sample.accuracyM === 'number') point.accuracyM = sample.accuracyM;
+  if (typeof sample.speedMps === 'number') point.speedMps = sample.speedMps;
+  return point;
+}
+
+type PositionsResolution =
+  | { kind: 'timed'; points: TrackPoint[] }
+  | { kind: 'legacy'; points: TrackPoint[] }
+  | { kind: 'invalid'; reason: 'invalid_timed_samples' | 'invalid_payload' };
+
+/**
+ * Source de positions : `positions_timed` prioritaire (source unique de temps),
+ * sinon tableau de points explicites historique, sinon LineString legacy
+ * (timestamps synthétiques, passages non éligibles au collectif).
+ */
+function resolvePositions(session: HikeSessionRow): PositionsResolution {
+  const rawTimed = session.positions_timed;
+  if (rawTimed !== null && rawTimed !== undefined) {
+    const parsedTimed = persistedGpsSamplesSchema.safeParse(rawTimed);
+    if (!parsedTimed.success) {
+      return { kind: 'invalid', reason: 'invalid_timed_samples' };
+    }
+    if (parsedTimed.data.length > 0) {
+      return { kind: 'timed', points: parsedTimed.data.map(timedSampleToTrackPoint) };
+    }
+  }
+
+  const parsed = positionsPayloadSchema.safeParse(session.positions_geojson);
+  if (!parsed.success || parsed.data === null) {
+    return { kind: 'invalid', reason: 'invalid_payload' };
+  }
+  if (Array.isArray(parsed.data)) {
+    return { kind: 'timed', points: parsed.data };
+  }
+  return { kind: 'legacy', points: toTrackPoints(parsed.data, session.ended_at) };
+}
+
 function roundedKey(lat: number, lng: number): string {
   return `${lat.toFixed(4)},${lng.toFixed(4)}`;
 }
@@ -128,7 +203,8 @@ function isEligible(quality: number, mapMatchQuality: number): boolean {
 function buildPassageRows(
   session: HikeSessionRow,
   normalized: NormalizedTrack,
-  passages: MatchedPassage[]
+  passages: MatchedPassage[],
+  collectiveEligible: boolean
 ): Record<string, unknown>[] {
   const gpsQuality = normalized.quality.overall;
   return passages.map((passage) => ({
@@ -152,7 +228,7 @@ function buildPassageRows(
     map_match_quality: passage.mapMatchQuality,
     uturn_detected: passage.uturnDetected,
     off_route: passage.offRoute,
-    eligible_for_collective: isEligible(gpsQuality, passage.mapMatchQuality),
+    eligible_for_collective: collectiveEligible && isEligible(gpsQuality, passage.mapMatchQuality),
     processor_version: PROCESSOR_VERSION,
   }));
 }
@@ -218,15 +294,17 @@ export async function processHikeSession(
   }
 
   try {
-    const parsed = positionsPayloadSchema.safeParse(session.positions_geojson);
-    if (!parsed.success || parsed.data === null) {
-      return await markFailed(client, session, 'invalid_payload');
+    const positions = resolvePositions(session);
+    if (positions.kind === 'invalid') {
+      return await markFailed(client, session, positions.reason);
     }
 
-    const normalized = normalizeTrack(toTrackPoints(parsed.data, session.ended_at));
+    const normalized = normalizeTrack(positions.points);
     if (normalized.points.length < 2) {
       return await markFailed(client, session, 'insufficient_points');
     }
+
+    const timedSamples = positions.kind === 'timed';
 
     const coordinatesByKey = new Map<string, { lat: number; lng: number }>();
     for (const point of normalized.points) {
@@ -249,12 +327,14 @@ export async function processHikeSession(
     );
     const passages = buildPassages(matches, normalized.points, normalized.pauses);
 
-    const passageRows = buildPassageRows(session, normalized, passages);
+    const passageRows = buildPassageRows(session, normalized, passages, timedSamples);
     if (passageRows.length > 0) {
       const persistedPassages = await client.upsertPassages(passageRows);
-      await client.insertObservations(
-        buildObservationRows(session, normalized, passages, passageRows, persistedPassages)
-      );
+      if (timedSamples) {
+        await client.insertObservations(
+          buildObservationRows(session, normalized, passages, passageRows, persistedPassages)
+        );
+      }
     }
 
     await client.markSession(session.id, {
@@ -264,7 +344,9 @@ export async function processHikeSession(
       track_quality: normalized.quality,
     });
 
-    return { status: 'processed', passages: passages.length };
+    return timedSamples
+      ? { status: 'processed', passages: passages.length }
+      : { status: 'processed', passages: passages.length, warning: 'timed_samples_missing' };
   } catch (error) {
     const reason = error instanceof Error ? error.message : 'processing_error';
     try {

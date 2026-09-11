@@ -2,6 +2,8 @@ import { describe, it, expect, vi } from 'vitest';
 import {
   processHikeSession,
   PROCESSOR_VERSION,
+  MAX_TIMED_SAMPLES,
+  persistedGpsSamplesSchema,
   type HikeProcessingClient,
   type HikeSessionRow,
 } from '@/features/adventure-intelligence/server/processHikeSession';
@@ -238,7 +240,7 @@ describe('Orchestrateur de session — TEST-A2-PROC (client factice)', () => {
     expect(calls.marks[0][1].processing_status).toBe('failed');
   });
 
-  it('TEST-A2-PROC-06: convertit un GeoJSON LineString en points horodatés', async () => {
+  it('TEST-A2-PROC-06: un GeoJSON LineString legacy produit un passage privé sans observation', async () => {
     const geojson = {
       type: 'LineString',
       coordinates: [
@@ -255,7 +257,11 @@ describe('Orchestrateur de session — TEST-A2-PROC (client factice)', () => {
 
     const result = await processHikeSession(SESSION_ID, client);
 
-    expect(result).toEqual({ status: 'processed', passages: 1 });
+    expect(result).toEqual({
+      status: 'processed',
+      passages: 1,
+      warning: 'timed_samples_missing',
+    });
     expect(calls.candidates[0][0]).toBeCloseTo(44, 6);
     expect(calls.candidates[0][1]).toBeCloseTo(6, 6);
 
@@ -265,5 +271,118 @@ describe('Orchestrateur de session — TEST-A2-PROC (client factice)', () => {
     expect(typeof passages[0].gain_m).toBe('number');
     expect(passages[0].entered_at).toBe(at(0));
     expect(passages[0].exited_at).toBe(at(30));
+    expect(passages[0].eligible_for_collective).toBe(false);
+    expect(calls.observations).toHaveLength(0);
+  });
+});
+
+describe('A10 — GPS horodaté (TEST-A10-GPS)', () => {
+  const timedSamples = Array.from({ length: 5 }, (_, index) => ({
+    lat: 44 + index * 0.0001,
+    lng: 6,
+    timestamp: at(100 + index * 10),
+    elevationM: 1000 + index,
+  }));
+
+  it('TEST-A10-GPS-01: positions_timed est la source unique de temps (geojson ignoré)', async () => {
+    const geojson = {
+      type: 'LineString',
+      coordinates: [
+        [6, 45, 0],
+        [6, 45.0001, 0],
+        [6, 45.0002, 0],
+        [6, 45.0003, 0],
+      ],
+    };
+    const { client, calls } = makeClient(
+      sessionRow({
+        positions_geojson: geojson,
+        positions_timed: timedSamples,
+        ended_at: at(999),
+      }),
+      () => [candidateNorth]
+    );
+
+    const result = await processHikeSession(SESSION_ID, client);
+
+    expect(result).toEqual({ status: 'processed', passages: 1 });
+    const passages = calls.upserted[0] as Record<string, unknown>[];
+    expect(passages[0].entered_at).toBe(at(100));
+    expect(passages[0].exited_at).toBe(at(140));
+    expect(passages[0].eligible_for_collective).toBe(true);
+    expect(calls.observations).toHaveLength(1);
+    expect(calls.observations[0]).toHaveLength(1);
+  });
+
+  it('TEST-A10-GPS-02: legacy sans horodatage ⇒ privé, aucune observation, avertissement', async () => {
+    const geojson = {
+      type: 'LineString',
+      coordinates: [
+        [6, 44, 1000],
+        [6, 44.0003, 1005],
+        [6, 44.0006, 1010],
+        [6, 44.0009, 1015],
+      ],
+    };
+    const { client, calls } = makeClient(
+      sessionRow({ positions_geojson: geojson, ended_at: at(30) }),
+      () => [candidateNorth]
+    );
+
+    const result = await processHikeSession(SESSION_ID, client);
+
+    expect(result).toEqual({
+      status: 'processed',
+      passages: 1,
+      warning: 'timed_samples_missing',
+    });
+    const passages = calls.upserted[0] as Record<string, unknown>[];
+    expect(passages[0].eligible_for_collective).toBe(false);
+    expect(calls.observations).toHaveLength(0);
+    expect(calls.marks[0][1].processing_status).toBe('processed');
+  });
+
+  it('TEST-A10-GPS-03: positions_timed invalide ⇒ failed sans écriture', async () => {
+    const { client, calls } = makeClient(
+      sessionRow({ positions_timed: { not: 'an-array' } }),
+      () => [candidateNorth]
+    );
+
+    const result = await processHikeSession(SESSION_ID, client);
+
+    expect(result).toEqual({
+      status: 'failed',
+      passages: 0,
+      reason: 'invalid_timed_samples',
+    });
+    expect(calls.upserted).toHaveLength(0);
+    expect(calls.observations).toHaveLength(0);
+    expect(calls.marks[0][1].processing_status).toBe('failed');
+  });
+
+  it('TEST-A10-GPS-04: le schéma rejette plus de 50 000 échantillons', () => {
+    const sample = { lat: 44, lng: 6, timestamp: at(0) };
+    const tooMany = Array.from({ length: MAX_TIMED_SAMPLES + 1 }, () => sample);
+    expect(persistedGpsSamplesSchema.safeParse(tooMany).success).toBe(false);
+
+    const withinCap = Array.from({ length: MAX_TIMED_SAMPLES }, () => sample);
+    expect(persistedGpsSamplesSchema.safeParse(withinCap).success).toBe(true);
+
+    expect(
+      persistedGpsSamplesSchema.safeParse([{ lat: 44, lng: null, timestamp: at(0) }]).success
+    ).toBe(false);
+  });
+
+  it('TEST-A10-GPS-05: aucun horodatage exploitable (timed vide + geojson null) ⇒ failed', async () => {
+    const { client, calls } = makeClient(
+      sessionRow({ positions_geojson: null, positions_timed: [] }),
+      () => [candidateNorth]
+    );
+
+    const result = await processHikeSession(SESSION_ID, client);
+
+    expect(result).toEqual({ status: 'failed', passages: 0, reason: 'invalid_payload' });
+    expect(calls.upserted).toHaveLength(0);
+    expect(calls.observations).toHaveLength(0);
   });
 });

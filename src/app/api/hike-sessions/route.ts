@@ -11,6 +11,15 @@ interface PoiEvent {
   lon: number;
 }
 
+interface TimedSample {
+  lat: number;
+  lng: number;
+  timestamp: string;
+  elevationM?: number | null;
+  accuracyM?: number | null;
+  speedMps?: number | null;
+}
+
 interface SaveHikeSessionBody {
   routeId?: string | null;
   kitId?: string | null;
@@ -20,8 +29,45 @@ interface SaveHikeSessionBody {
   distanceKm: number;
   durationSeconds: number;
   elevationGainM?: number | null;
-  positions: { latitude: number; longitude: number; altitude?: number }[];
+  positions: {
+    latitude: number;
+    longitude: number;
+    altitude?: number;
+    accuracy?: number;
+    speed?: number;
+    timestamp?: number;
+  }[];
+  /** A10 (10.3) — échantillons horodatés, source unique de temps du traitement. */
+  positionsTimed?: TimedSample[];
   poiEvents: PoiEvent[];
+}
+
+/** Reconstruit les échantillons horodatés depuis les positions brutes si besoin. */
+function deriveTimedPositions(positions: SaveHikeSessionBody['positions']): TimedSample[] {
+  const timed = positions.filter((position) => Number.isFinite(position.timestamp));
+  if (timed.length < 2) return [];
+  return timed.map((position) => {
+    const sample: TimedSample = {
+      lat: position.latitude,
+      lng: position.longitude,
+      timestamp: new Date(position.timestamp as number).toISOString(),
+    };
+    if (typeof position.altitude === 'number') sample.elevationM = position.altitude;
+    if (typeof position.accuracy === 'number') sample.accuracyM = position.accuracy;
+    if (typeof position.speed === 'number') sample.speedMps = position.speed;
+    return sample;
+  });
+}
+
+function sanitizeTimedPositions(samples: TimedSample[] | undefined): TimedSample[] {
+  if (!Array.isArray(samples)) return [];
+  return samples.filter(
+    (sample) =>
+      Number.isFinite(sample?.lat) &&
+      Number.isFinite(sample?.lng) &&
+      typeof sample?.timestamp === 'string' &&
+      sample.timestamp.length > 0
+  );
 }
 
 /**
@@ -60,6 +106,14 @@ export async function POST(req: NextRequest) {
           coordinates: simplified.map((p) => [p.longitude, p.latitude]),
         }
       : null;
+
+    // A10 (10.3) — positions_geojson reste la géométrie ; positions_timed est
+    // la source unique de temps (envoyée par le client, sinon dérivée des
+    // horodatages bruts). Les positions simplifiées conservent `timestamp`.
+    const timedCandidates = sanitizeTimedPositions(body.positionsTimed);
+    const positionsTimed = timedCandidates.length >= 2
+      ? timedCandidates
+      : deriveTimedPositions(simplified);
 
     // 1. Check idempotency (prevent duplicate session creation)
     let query = supabase
@@ -131,6 +185,7 @@ export async function POST(req: NextRequest) {
         duration_seconds: body.durationSeconds,
         elevation_gain_m: body.elevationGainM ?? null,
         positions_geojson: positionsGeojson,
+        positions_timed: positionsTimed.length >= 2 ? positionsTimed : null,
         poi_events: body.poiEvents || [],
       })
       .select('id')
