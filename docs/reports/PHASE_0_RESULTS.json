@@ -1,0 +1,68 @@
+{
+  "phase": 0,
+  "phase_name": "Reparer et figer la base de livraison",
+  "date": "2026-09-11",
+  "tested_sha": "cf9a1c79e3093a25097a23656beaf5aef51a2f25",
+  "tested_sha_short": "cf9a1c79",
+  "branch": "audit/adventure-intelligence == main",
+  "environment": {
+    "ci": "GitHub Actions ubuntu-latest (Node 22)",
+    "local": "Windows, Node 24.18.0, npm 12.0.2",
+    "repo": "TFaraciColbert59/kitduvoyageur_1783951966810"
+  },
+  "gates": {
+    "quality_gates": { "status": "PASS", "conclusion": "success" },
+    "lighthouse": { "status": "PASS", "conclusion": "success" },
+    "bundle_analysis": { "status": "PASS", "conclusion": "success" },
+    "build_ios": { "status": "PASS", "conclusion": "success" },
+    "visual_tests": { "status": "PASS", "conclusion": "success", "note": "69 snapshots Linux generes et approuves (baseline hermetique CI)" },
+    "database_gates": { "status": "SKIPPED", "reason": "activation Phase 1 (secrets SUPABASE_TEST_* / LKDV_TEST_DATABASE_URL)" },
+    "visual_gates": { "status": "SKIPPED", "reason": "opt-in conditionnel non active" },
+    "pages_build": { "status": "REMOVED", "reason": "GitHub Pages desactive (DELETE /pages, 204)" }
+  },
+  "local_verification": {
+    "type_check": { "command": "npm run type-check", "exit": 0 },
+    "lint": { "command": "npm run lint", "exit": 0, "note": "warnings preexistants uniquement" },
+    "tests": { "command": "npm run test", "exit": 0, "files": "281 passed | 3 skipped", "tests": "2027 passed | 20 skipped" },
+    "invariants": { "command": "npm run verify:invariants", "exit": 0 },
+    "build": { "command": "npm run build (env CI placeholder)", "exit": 0 }
+  },
+  "security": {
+    "npm_audit_prod_before": { "critical": 1, "high": 7, "moderate": 4, "low": 1, "total": 13 },
+    "npm_audit_prod_after": { "critical": 0, "high": 1, "moderate": 4, "low": 0, "total": 5 },
+    "fixes_applied": [
+      "next 15.5.18 -> 15.5.25 (critique DoS/SSRF App Router + cache confusion)",
+      "retrait swapy (GPL-3.0, aucun import)",
+      "npm audit fix non-major (transitifs)"
+    ],
+    "remaining": "postcss high (correction via next@16 majeur, planifie), xmldom/brace-expansion/fast-uri/playwright (dev/transitifs) resolus ou documentes",
+    "secrets_scan": "PASS (aucun secret dans les fichiers trackes)",
+    "jwt_service_role_tracked": 0
+  },
+  "artifacts": {
+    "sbom": "docs/reports/sbom-cyclonedx-20260911.json",
+    "licenses": "docs/reports/licenses-summary-20260911.txt",
+    "audits": [
+      "docs/reports/npm-audit-prod-20260911.json",
+      "docs/reports/npm-audit-prod-20260911-post-next.json",
+      "docs/reports/npm-audit-prod-20260911-final.json",
+      "docs/reports/npm-audit-all-20260911.json"
+    ],
+    "secret_scan_report": "docs/reports/PHASE_0_SECRET_SCAN.md",
+    "rollback_plan": "docs/reports/PHASE_0_ROLLBACK.md",
+    "chantier_doc": "docs/architecture/CHANTIER_LANCEMENT_MONDIAL.md"
+  },
+  "limitations": [
+    "Snapshots visuels Linux captures en mode hermetique (Supabase placeholder) : etats vides/repli, pas de donnees reelles. Amelioration prevue apres Phase 1 (projet de test).",
+    "GitHub Secret Scanning natif indisponible (GHAS payant, API 404) ; compense par invariant CI + scan manuel.",
+    "Scan secrets limite aux fichiers trackes du SHA (pas l'historique complet).",
+    "database-gates non actif tant que les secrets du projet de test ne sont pas cables (Phase 1)."
+  ],
+  "residual_risks": [
+    "postcss high via next@16 majeur : a planifier (Phase 10/hardening).",
+    "Token GitHub local (credential store) utilise pour les operations API : rotation recommandee en fin de chantier.",
+    "PAT Supabase fourni initialement sans scope projects:write : nouveau PAT complet requis pour Phase 1."
+  ],
+  "decision": "PASS",
+  "responsible": "agent ORCHESTRATOR (autonome, carte blanche utilisateur)"
+}
