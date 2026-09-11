@@ -13,6 +13,7 @@ import { randomUUID } from 'node:crypto';
 import type { SupabaseClient } from '@supabase/supabase-js';
 import type { AdventureConstraint } from '../domain/constraints';
 import type { AdventureDecision } from '../domain/decisions';
+import type { SegmentCandidate } from '../domain/mapMatching';
 import {
   ADVENTURE_PLAN_SECTION_KEYS,
   type AdventureDates,
@@ -46,6 +47,12 @@ import type { SafetyAdapterOutput } from './adapters/safetyAdapter';
 import type { WeatherAdapterOutput } from './adapters/weatherAdapter';
 import type { BudgetAdapterOutput } from './adapters/budgetAdapter';
 import type { PredictionAdapterOutput } from './adapters/predictionAdapter';
+import {
+  buildRoutePrediction,
+  persistRoutePredictions,
+  type RoutePredictionClient,
+  type RoutePredictionResult,
+} from './routePrediction';
 import type { TripKitAnalysis } from '@/features/trips/types/kit.types';
 
 /** Bundle atomique plan + version + runs + décisions (A10 — 10.4). */
@@ -70,6 +77,8 @@ export const ADVENTURE_PIPELINE_VERSION = 'a11-v1';
  */
 export const FALLBACK_WARNING_CODES = [
   'cold_profile',
+  'personal_profile_unavailable',
+  'route_geometry_missing',
   'prediction_no_source',
   'difficulty_no_source',
   'budget_no_source',
@@ -116,8 +125,12 @@ export interface AdventureGenerationInput {
   now?: string;
   /** Flags de domaine A9 (ADR-AI-008) : injectés dans le contexte des moteurs. */
   featureFlags?: Record<string, boolean>;
-  /** A11 #15 — coordonnées réelles : déclenchent la météo officielle si fournies. */
-  coordinates?: { lat: number; lng: number };
+  /**
+   * A11 #15 / A13 (S1) — coordonnées réelles : un point unique alimente la
+   * météo officielle ; une polyline (≥ 2 points) active en plus l'ETA réelle
+   * map-matchée (`routePrediction`).
+   */
+  coordinates?: { lat: number; lng: number } | { lat: number; lng: number }[];
   /** A11 #15 — horizon de prévision demandé (1..7, défaut 3). */
   weatherDays?: number;
 }
@@ -151,6 +164,12 @@ export interface AdventureGenerationDeps {
   hasActiveConsent: (userId: string, purpose: 'personal_performance') => Promise<boolean>;
   /** A10 (10.9) — persistance des prédictions segment + route. */
   persistAdventurePredictions: (bundle: AdventurePredictionBundle) => Promise<void>;
+  /**
+   * A13 (S1) — client du moteur d'ETA réelle (map-matching OSM, géométries,
+   * consentement, profil, persistance `a13-v1`). Absent : le flux historique
+   * `uniform_from_blueprint` (A10) reste utilisé tel quel.
+   */
+  routePredictionClient?: RoutePredictionClient;
 }
 
 type Layers = Record<string, Proposal<unknown>>;
@@ -568,6 +587,52 @@ function buildPredictionBundle(
   return { planId, userId, segments, route };
 }
 
+/** A13 (S1) — point météo unique quand une polyline de route est fournie. */
+function weatherCoordinates(
+  input: AdventureGenerationInput
+): { lat: number; lng: number } | null {
+  const coordinates = input.coordinates;
+  if (!coordinates) return null;
+  if (Array.isArray(coordinates)) return coordinates[0] ?? null;
+  return coordinates;
+}
+
+/** A13 (S1) — polyline de route (≥ 2 points) ou null. */
+function routePolyline(input: AdventureGenerationInput): { lat: number; lng: number }[] | null {
+  return Array.isArray(input.coordinates) ? input.coordinates : null;
+}
+
+/**
+ * A13 (S1) — remplace la section `paceStrategies` uniforme par l'ETA réelle
+ * (P50/P90, segments critiques, provenance `computed`/`measured`). La section
+ * d'origine n'est jamais mutée.
+ */
+function applyRoutePredictionSection(
+  sections: AdventurePlanSections,
+  result: RoutePredictionResult,
+  now: string
+): void {
+  const existing = sections.paceStrategies;
+  sections.paceStrategies = {
+    value: {
+      strategies: result.strategies,
+      primary: result.primary,
+      segmentation: result.segmentation,
+      segmentCount: result.segments.length,
+      segmentsCritical: result.segmentsCritical,
+      stepSources: result.stepSources,
+      profileSource: result.profileSource,
+    },
+    confidence: result.confidence,
+    provenance: [result.provenance],
+    assumptions: result.assumptions,
+    warnings: result.warnings,
+    impacts: existing?.impacts ?? [],
+    computedAt: result.computedAt || now,
+    validUntil: existing?.validUntil,
+  };
+}
+
 async function resolveExplanation(
   deps: AdventureGenerationDeps,
   context: AdventureExplainContext,
@@ -652,7 +717,7 @@ export async function generateAdventure(
       case 'weather':
         return {
           route: valueOf<RouteAdapterOutput>(outputs, 'route'),
-          coordinates: input.coordinates ?? null,
+          coordinates: weatherCoordinates(input),
           weatherDays: input.weatherDays,
           label:
             valueOf<TripBrief>(outputs, 'intent')?.destinations.value[0]?.region ??
@@ -700,8 +765,42 @@ export async function generateAdventure(
   const sections = buildPlanSections(outputs, now, planConfidence, candidates);
   const destinations = buildDestinations(brief);
 
+  // A13 (S1) — si un client d'ETA réelle est injecté, la route du brief
+  // (polyline) est map-matchée et remplace le découpage uniforme ; sans route
+  // exploitable, le client produit le repli explicite `uniform_from_blueprint`.
+  const planId = randomUUID();
+  const routeClient = deps.routePredictionClient;
+  let routePredictionResult: RoutePredictionResult | null = null;
+  if (routeClient) {
+    try {
+      routePredictionResult = await buildRoutePrediction(
+        {
+          userId: input.ownerId,
+          planId,
+          polyline: routePolyline(input),
+          itinerary:
+            engineResultOf<RouteAdapterOutput>(outputs, 'route')?.value.layers.itinerary?.value ??
+            null,
+          startAt: now,
+          featureFlags: input.featureFlags,
+        },
+        routeClient
+      );
+      applyRoutePredictionSection(sections, routePredictionResult, now);
+    } catch (error) {
+      // L'échec de l'ETA réelle ne doit jamais rendre le plan inutilisable :
+      // la section uniforme du blueprint reste en place et les prédictions A10
+      // sont persistées comme avant.
+      routePredictionResult = null;
+      console.error(
+        '[adventure-intelligence] routePrediction en échec — repli uniforme:',
+        error instanceof Error ? error.message : error
+      );
+    }
+  }
+
   const plan: AdventurePlan = {
-    id: randomUUID(),
+    id: planId,
     ownerId: input.ownerId,
     title: destinations[0] ? `Aventure — ${destinations[0].label}` : 'Aventure à composer',
     status: 'draft',
@@ -743,18 +842,31 @@ export async function generateAdventure(
   const snapshot = bundle.version.snapshot as { id?: string } | null | undefined;
   if (snapshot) snapshot.id = plan.id;
 
-  // A10 (10.9) — prédictions segment + route persistées par RPC dédiée.
-  // Best-effort assumé : le plan est déjà persisté, un échec de persistance
-  // des prédictions est journalisé mais ne rend jamais le plan inutilisable.
-  try {
-    await deps.persistAdventurePredictions(
-      buildPredictionBundle(plan.id, input.ownerId, outputs, now)
-    );
-  } catch (error) {
-    console.error(
-      '[adventure-intelligence] persistAdventurePredictions en échec:',
-      error instanceof Error ? error.message : error
-    );
+  // A10 (10.9) / A13 (S1) — prédictions segment + route persistées par RPC
+  // dédiée. Le flux réel (a13-v1) prime quand il a produit un résultat ; sinon
+  // le bundle uniforme historique (a10-v1) est persisté. Best-effort assumé :
+  // le plan est déjà persisté, un échec de persistance des prédictions est
+  // journalisé mais ne rend jamais le plan inutilisable.
+  if (routePredictionResult && routeClient) {
+    try {
+      await persistRoutePredictions(routePredictionResult, plan.id, routeClient);
+    } catch (error) {
+      console.error(
+        '[adventure-intelligence] persistRoutePredictions en échec:',
+        error instanceof Error ? error.message : error
+      );
+    }
+  } else {
+    try {
+      await deps.persistAdventurePredictions(
+        buildPredictionBundle(plan.id, input.ownerId, outputs, now)
+      );
+    } catch (error) {
+      console.error(
+        '[adventure-intelligence] persistAdventurePredictions en échec:',
+        error instanceof Error ? error.message : error
+      );
+    }
   }
 
   const localExplanation = buildLocalExplanation(plan, candidates, runs, false);
@@ -841,6 +953,76 @@ export function createSupabaseAdventurePredictionPersistence(
       p_route: bundle.route,
     });
     if (error) throw new Error(error.message);
+  };
+}
+
+/**
+ * A13 (S1) — client Supabase du moteur d'ETA réelle : map-matching batch
+ * (`a2_match_track_candidates`), géométries bornées (`a13_segment_geometries`),
+ * consentement (`has_active_consent`), profil Terrain et persistance
+ * (`persist_adventure_predictions`, model_version `a13-v1`).
+ * Les données OSM sont publiques ; profil et consentement restent
+ * fail-safe (toute erreur ⇒ repli standard explicite côté module).
+ */
+export function createSupabaseRoutePredictionClient(
+  client: SupabaseClient
+): RoutePredictionClient {
+  return {
+    async matchTrackCandidates(points, radiusM) {
+      const { data, error } = await client.rpc('a2_match_track_candidates', {
+        p_points: points,
+        p_radius_m: radiusM,
+      });
+      if (error) throw new Error(error.message);
+
+      const grouped: SegmentCandidate[][] = points.map(() => []);
+      for (const row of (data ?? []) as Record<string, unknown>[]) {
+        const index = Number(row.point_index);
+        if (!Number.isInteger(index) || index < 0 || index >= grouped.length) continue;
+        grouped[index].push({
+          segmentId: Number(row.segment_id),
+          distanceM: Number(row.distance_m),
+          bearingDeg: row.bearing_deg == null ? undefined : Number(row.bearing_deg),
+          highway: row.highway == null ? null : String(row.highway),
+          surface: row.surface == null ? null : String(row.surface),
+          sacScale: row.sac_scale == null ? null : String(row.sac_scale),
+        });
+      }
+      return grouped;
+    },
+
+    async getSegmentGeometries(ids) {
+      const { data, error } = await client.rpc('a13_segment_geometries', { p_ids: ids });
+      if (error) throw new Error(error.message);
+      return ((data ?? []) as Record<string, unknown>[]).map((row) => ({
+        id: Number(row.id),
+        geojson: row.geojson,
+        surface: row.surface == null ? null : String(row.surface),
+        sacScale: row.sac_scale == null ? null : String(row.sac_scale),
+        highway: row.highway == null ? null : String(row.highway),
+      }));
+    },
+
+    async hasActiveConsent(userId, purpose) {
+      const { data, error } = await client.rpc('has_active_consent', {
+        p_user_id: userId,
+        p_purpose: purpose,
+      });
+      if (error) throw new Error(error.message);
+      return data === true;
+    },
+
+    getCurrentProfile: (userId) => getStoredPerformanceProfile(client, userId),
+
+    async persistPredictions(bundle) {
+      const { error } = await client.rpc('persist_adventure_predictions', {
+        p_plan_id: bundle.planId,
+        p_user_id: bundle.userId,
+        p_segments: bundle.segments,
+        p_route: bundle.route,
+      });
+      if (error) throw new Error(error.message);
+    },
   };
 }
 

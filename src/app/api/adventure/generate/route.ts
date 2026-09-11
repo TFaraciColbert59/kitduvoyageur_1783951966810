@@ -7,10 +7,12 @@ import { createDefaultRegistry } from '@/features/adventure-intelligence/server/
 import {
   createSupabaseAdventurePersistence,
   createSupabaseAdventurePredictionPersistence,
+  createSupabaseRoutePredictionClient,
   generateAdventure,
   getAdventurePlan,
   getStoredPerformanceProfile,
 } from '@/features/adventure-intelligence/server/generateAdventure';
+import { MAX_ROUTE_POLYLINE_POINTS } from '@/features/adventure-intelligence/server/routePrediction';
 import { currentAdventureFeatureFlags } from '@/features/adventure-intelligence/server/featureFlags';
 import {
   evaluateGenerationRequest,
@@ -54,8 +56,20 @@ const generateSchema = z.object({
     .array(adventureConstraintSchema)
     .max(50, 'Maximum 50 verrous par génération')
     .optional(),
-  // A11 #15 — coordonnées réelles optionnelles (météo officielle si fournies).
-  coordinates: coordinatesSchema.optional(),
+  // A11 #15 / A13 (S1) — un point unique alimente la météo officielle ; une
+  // polyline (≥ 2 points) active en plus l'ETA réelle map-matchée.
+  coordinates: z
+    .union([
+      coordinatesSchema,
+      z
+        .array(coordinatesSchema)
+        .min(2, 'coordinates (polyline) doit contenir au moins 2 points')
+        .max(
+          MAX_ROUTE_POLYLINE_POINTS,
+          `coordinates (polyline) ne peut pas dépasser ${MAX_ROUTE_POLYLINE_POINTS} points`
+        ),
+    ])
+    .optional(),
   weatherDays: z
     .number()
     .int('weatherDays doit être un entier')
@@ -236,6 +250,8 @@ export async function POST(request: NextRequest) {
           getCurrentProfile: (userId) => getStoredPerformanceProfile(supabase, userId),
           persistAdventurePredictions:
             createSupabaseAdventurePredictionPersistence(supabase),
+          // A13 (S1) — ETA réelle : map-matching + géométries OSM + profil.
+          routePredictionClient: createSupabaseRoutePredictionClient(supabase),
         }
       );
     } catch (error) {
