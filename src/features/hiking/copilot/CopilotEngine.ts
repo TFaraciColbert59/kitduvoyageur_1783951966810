@@ -14,11 +14,24 @@ export interface HikeContextSummary {
   userStats?: HikingStatistics | null;
 }
 
+/** Résolution d'allure injectable (ex. `resolvePace` A3) — optionnelle. */
+export interface CopilotPaceResolution {
+  paceMinPerKm: number;
+}
+
+export type CopilotPaceResolver = (context: HikeContextSummary) => CopilotPaceResolution | null;
+
 export class CopilotEngine {
   /**
    * Generates a context-aware answer for a hiker's question.
+   * `paceResolver` optionnel : sans lui, la référence historique de 15 min/km
+   * reste strictement inchangée (rétrocompatibilité).
    */
-  public static generateAnswer(question: string, context: HikeContextSummary): string {
+  public static generateAnswer(
+    question: string,
+    context: HikeContextSummary,
+    paceResolver?: CopilotPaceResolver | null
+  ): string {
     const qLower = question.toLowerCase();
 
     if (qLower.includes('reste') || qLower.includes('combien')) {
@@ -38,7 +51,11 @@ export class CopilotEngine {
 
     if (qLower.includes('temps') || qLower.includes('retard') || qLower.includes('estimation')) {
       if (context.paceMinPerKm > 0) {
-        const expectedPace = 15; // standard 15 min/km for hiking
+        const resolvedPace = paceResolver?.(context)?.paceMinPerKm;
+        const expectedPace =
+          resolvedPace != null && Number.isFinite(resolvedPace) && resolvedPace > 0
+            ? resolvedPace
+            : 15; // standard 15 min/km for hiking (historique, sans résolveur)
         const diffPace = context.paceMinPerKm - expectedPace;
         if (diffPace > 5) {
           return `Votre allure actuelle est de ${context.paceMinPerKm.toFixed(1)} min/km. Vous êtes légèrement en dessous de l'allure estimée, prévoyez un peu plus de temps.`;
