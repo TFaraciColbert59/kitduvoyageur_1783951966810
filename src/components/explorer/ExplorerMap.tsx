@@ -7,6 +7,8 @@ import { toValidLatLng } from './types';
 import TrailLayer from './TrailLayer';
 
 import type { UnifiedPOI } from '@/lib/queries/pois';
+import TerrainLiveLayer from '@/features/terrain-live/components/TerrainLiveLayer';
+import type { TerrainLiveReport } from '@/features/terrain-live/lib/terrainDisplay';
 
 interface ExplorerMapProps {
   trails: MapTrail[];
@@ -34,6 +36,10 @@ interface ExplorerMapProps {
    * la liste flottante desktop. Mobile → haut sous le header ; desktop → colonne droite.
    */
   safeControls?: boolean;
+  /** A13 (S7) — signalements Terrain Live réels à monter sur la carte. */
+  terrainReports?: TerrainLiveReport[];
+  /** A13 (S7) — sélection d'un signalement (ouverture de sa fiche). */
+  onTerrainReportSelect?: (reportId: string) => void;
 }
 
 const TOPO_TILE = {
@@ -74,6 +80,8 @@ export default function ExplorerMap({
   compact = false,
   disableGeolocate = false,
   safeControls = false,
+  terrainReports,
+  onTerrainReportSelect,
 }: ExplorerMapProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const mapRef = useRef<LeafletMap | null>(null);
@@ -524,6 +532,15 @@ export default function ExplorerMap({
 
       {mapReady && mapInstance && (trails.length > 0 || (pois && pois.length > 0)) && (
         <TrailLayer map={mapInstance} trails={trails} pois={pois} selectedTrailId={selectedTrailId} onTrailClick={onTrailClick} onPoiClick={onPoiClick} />
+      )}
+
+      {/* A13 (S7) — Terrain Live monté sur la carte existante (vanilla Leaflet). */}
+      {mapReady && mapInstance && terrainReports && terrainReports.length > 0 && (
+        <TerrainLiveLayer
+          map={mapInstance}
+          reports={terrainReports}
+          onSelect={onTerrainReportSelect}
+        />
       )}
 
       {/* 1. Sélecteur de Calques — capsule bar Liquid Glass (comme le reste du site).

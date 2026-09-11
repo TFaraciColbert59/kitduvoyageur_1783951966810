@@ -28,8 +28,14 @@ import StatsSheet from './sheets/StatsSheet';
 import CaptureSheet from './sheets/CaptureSheet';
 import CopilotSheet from './sheets/CopilotSheet';
 import MoreSheet from './sheets/MoreSheet';
+import { TerrainLiveCockpitControl, useTerrainReports } from '@/features/terrain-live';
 
-export default function HikingCockpitPage() {
+export interface HikingCockpitPageProps {
+  /** A13 (S7) — flag `terrain_live` résolu côté serveur (défaut : inactif). */
+  terrainEnabled?: boolean;
+}
+
+export default function HikingCockpitPage({ terrainEnabled = false }: HikingCockpitPageProps) {
   const router = useRouter();
   const searchParams = useSearchParams();
   const routeIdParam = searchParams?.get('routeId');
@@ -266,6 +272,14 @@ export default function HikingCockpitPage() {
     ? hikingStore.positions[hikingStore.positions.length - 1]
     : null;
 
+  // A13 (S7) — Terrain Live : une seule source de données pour la carte ET le
+  // panneau du cockpit. Flag OFF ⇒ aucune requête, liste vide.
+  const terrain = useTerrainReports({
+    lat: currentPos?.latitude ?? null,
+    lng: currentPos?.longitude ?? null,
+    enabled: terrainEnabled,
+  });
+
   const userLoc: [number, number] | null = currentPos
     ? [currentPos.latitude, currentPos.longitude]
     : null;
@@ -378,6 +392,7 @@ export default function HikingCockpitPage() {
                 autoFollow={autoFollow}
                 onAutoFollowChange={setAutoFollow}
                 onRecentre={() => setAutoFollow(true)}
+                terrainReports={terrain.reports}
               />
 
               {/* Sélecteur « Emporter un kit ? » — posé avant le départ, jamais rejoué */}
@@ -550,6 +565,21 @@ export default function HikingCockpitPage() {
                 onImportParsedGPX={(parsed) => {
                   console.info('[Cockpit] GPX Imported:', parsed.title, parsed.positions.length);
                 }}
+              />
+
+              {/* A13 (S7) — Terrain Live : panneau + signalement 3 gestes. */}
+              <TerrainLiveCockpitControl
+                enabled={terrainEnabled}
+                reports={terrain.reports}
+                loading={terrain.loading}
+                error={terrain.error}
+                onRefresh={terrain.refresh}
+                position={
+                  currentPos
+                    ? { lat: currentPos.latitude, lng: currentPos.longitude }
+                    : null
+                }
+                gpsAccuracyM={currentPos?.accuracy ?? null}
               />
 
               {/* Geolocation Permission Request Modal */}

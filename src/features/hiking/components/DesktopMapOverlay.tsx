@@ -5,6 +5,7 @@ import ExplorerMap from '@/components/explorer/ExplorerMap';
 import { MapTrail } from '@/components/explorer/types';
 import { POI } from '../types';
 import { RouteTurnEvent } from '../services/RouteGeom';
+import type { TerrainLiveReport } from '@/features/terrain-live/lib/terrainDisplay';
 
 interface DesktopMapOverlayProps {
   userLoc: [number, number] | null;
@@ -24,6 +25,9 @@ interface DesktopMapOverlayProps {
   onRecentre?: () => void;
   onZoomIn?: () => void;
   onZoomOut?: () => void;
+  /** A13 (S7) — signalements Terrain Live réels (flag `terrain_live` respecté en amont). */
+  terrainReports?: TerrainLiveReport[];
+  onTerrainReportSelect?: (reportId: string) => void;
 }
 
 export default function DesktopMapOverlay({
@@ -39,6 +43,8 @@ export default function DesktopMapOverlay({
   progressFrac = null,
   autoFollow = true,
   onAutoFollowChange,
+  terrainReports,
+  onTerrainReportSelect,
 }: DesktopMapOverlayProps) {
   const showTurn = nextTurn && (!nextPoi || nextTurn.distanceRemainingM < 150 || nextTurn.distanceRemainingM < nextPoi.distanceRemainingM);
   const activeGuidePoi = !showTurn ? nextPoi : null;
@@ -61,6 +67,8 @@ export default function DesktopMapOverlay({
             progressFrac={progressFrac}
             autoFollow={autoFollow}
             onAutoFollowChange={onAutoFollowChange}
+            terrainReports={terrainReports}
+            onTerrainReportSelect={onTerrainReportSelect}
           />
         </div>
       </div>

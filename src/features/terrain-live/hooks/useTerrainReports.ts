@@ -7,12 +7,18 @@
  * (l'utilisateur ne perd jamais l'information déjà affichée).
  */
 import { useCallback, useEffect, useRef, useState } from 'react';
+import { shouldFetchTerrainReports } from '../lib/terrainMap';
 import type { TerrainLiveReport } from '../lib/terrainDisplay';
 
 export interface UseTerrainReportsInput {
   lat: number | null;
   lng: number | null;
   radiusM?: number;
+  /**
+   * A13 (S7) — garde du flag `terrain_live` : désactivé, aucune requête n'est
+   * émise et la liste reste vide (« rien » plutôt qu'un état d'erreur).
+   */
+  enabled?: boolean;
 }
 
 export interface UseTerrainReportsResult {
@@ -26,6 +32,7 @@ export function useTerrainReports({
   lat,
   lng,
   radiusM = 5000,
+  enabled = true,
 }: UseTerrainReportsInput): UseTerrainReportsResult {
   const [reports, setReports] = useState<TerrainLiveReport[]>([]);
   const [loading, setLoading] = useState(false);
@@ -36,7 +43,14 @@ export function useTerrainReports({
   const refresh = useCallback(() => setTick((value) => value + 1), []);
 
   useEffect(() => {
-    if (lat === null || lng === null) return;
+    if (!shouldFetchTerrainReports({ enabled, lat, lng })) {
+      abortRef.current?.abort();
+      abortRef.current = null;
+      setReports([]);
+      setError(null);
+      setLoading(false);
+      return;
+    }
 
     abortRef.current?.abort();
     const controller = new AbortController();
@@ -70,7 +84,7 @@ export function useTerrainReports({
       });
 
     return () => controller.abort();
-  }, [lat, lng, radiusM, tick]);
+  }, [enabled, lat, lng, radiusM, tick]);
 
   return { reports, loading, error, refresh };
 }
