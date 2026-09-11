@@ -55,11 +55,14 @@ jobs:
 
       - name: Gate 5 — End-to-End Playwright Suite
         if: ${{ vars.LKDV_E2E_ENABLED == 'true' }}
-        run: npx playwright test scripts/e2e/voyage.spec.ts scripts/e2e/adventure-intelligence.spec.ts
+        run: npx playwright test scripts/e2e/voyage.spec.ts scripts/e2e/adventure-intelligence.spec.ts scripts/e2e/a13-journey.spec.ts
         env:
           CI: true
           NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.SUPABASE_TEST_URL }}
           NEXT_PUBLIC_SUPABASE_ANON_KEY: ${{ secrets.SUPABASE_TEST_ANON_KEY }}
+          # A13 (S9) : utilisateur E2E créé/nettoyé via l'API admin du projet
+          # de TEST. Absent ⇒ le scénario A13 est ignoré (jamais la prod).
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_TEST_SERVICE_ROLE_KEY }}
 
       # ── Chantier Y (Y0.6) — portes additionnelles ──
 
