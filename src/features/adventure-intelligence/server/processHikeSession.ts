@@ -44,11 +44,30 @@ export interface HikeSessionRow {
   ended_at: string;
 }
 
+/** Point envoyé au map-matching batch (A10 — 10.4/10.6). */
+export interface GpsPoint {
+  lat: number;
+  lng: number;
+}
+
+/**
+ * Contrat transactionnel A10 (10.4) : passages, observations et statut session
+ * sont persistés par un seul appel atomique côté client.
+ */
+export interface PersistTranscriptInput {
+  sessionId: string;
+  passages: Record<string, unknown>[];
+  observations: Record<string, unknown>[];
+  processorVersion: string;
+  trackQuality: unknown;
+}
+
 export interface HikeProcessingClient {
   getSession(id: string): Promise<HikeSessionRow | null>;
-  getCandidates(lat: number, lng: number, radiusM: number): Promise<SegmentCandidate[]>;
-  upsertPassages(rows: unknown[]): Promise<{ id: string; segment_id: number }[]>;
-  insertObservations(rows: unknown[]): Promise<void>;
+  /** Candidats par point, alignés sur l'ordre des points envoyés (un seul batch). */
+  getCandidatesBatch(points: GpsPoint[], radiusM: number): Promise<SegmentCandidate[][]>;
+  /** Persistance atomique : passages + observations + session `processed`. */
+  persistTranscript(input: PersistTranscriptInput): Promise<void>;
   markSession(
     id: string,
     patch: {
@@ -233,27 +252,25 @@ function buildPassageRows(
   }));
 }
 
+/**
+ * Clé de rattachement déterministe d'une observation à son passage :
+ * `segmentId|direction|enteredAt` (résolue vers l'id persisté par la RPC).
+ */
+function passageKey(segmentId: number, direction: string, enteredAt: string): string {
+  return `${segmentId}|${direction}|${enteredAt}`;
+}
+
 function buildObservationRows(
   session: HikeSessionRow,
   normalized: NormalizedTrack,
   passages: MatchedPassage[],
-  passageRows: Record<string, unknown>[],
-  persistedPassages: { id: string; segment_id: number }[]
+  passageRows: Record<string, unknown>[]
 ): Record<string, unknown>[] {
-  const idsBySegment = new Map<number, string[]>();
-  for (const persisted of persistedPassages) {
-    const queue = idsBySegment.get(Number(persisted.segment_id)) ?? [];
-    queue.push(persisted.id);
-    idsBySegment.set(Number(persisted.segment_id), queue);
-  }
-
   return passages.map((passage, index) => {
-    const queue = idsBySegment.get(passage.segmentId);
-    const passageId = queue && queue.length > 0 ? queue.shift() ?? null : null;
     return {
       user_id: session.user_id,
       session_id: session.id,
-      passage_id: passageId,
+      passage_key: passageKey(passage.segmentId, passage.direction, passage.enteredAt),
       observed_at: passage.exitedAt,
       distance_m: passage.distanceM,
       duration_s: Math.max(1, Math.round(passage.durationS)),
@@ -306,7 +323,7 @@ export async function processHikeSession(
 
     const timedSamples = positions.kind === 'timed';
 
-    const coordinatesByKey = new Map<string, { lat: number; lng: number }>();
+    const coordinatesByKey = new Map<string, GpsPoint>();
     for (const point of normalized.points) {
       const key = roundedKey(point.lat, point.lng);
       if (!coordinatesByKey.has(key)) {
@@ -314,13 +331,16 @@ export async function processHikeSession(
       }
     }
 
+    // A10 (10.4) : un seul appel batch, candidats alignés sur l'ordre envoyé.
+    const batchPoints = [...coordinatesByKey.values()];
+    const batchCandidates = await client.getCandidatesBatch(
+      batchPoints,
+      MATCH_DEFAULTS.maxDistanceM
+    );
     const candidatesByKey = new Map<string, SegmentCandidate[]>();
-    for (const [key, coordinates] of coordinatesByKey) {
-      candidatesByKey.set(
-        key,
-        await client.getCandidates(coordinates.lat, coordinates.lng, MATCH_DEFAULTS.maxDistanceM)
-      );
-    }
+    batchPoints.forEach((point, index) => {
+      candidatesByKey.set(roundedKey(point.lat, point.lng), batchCandidates[index] ?? []);
+    });
 
     const matches = matchTrackToSegments(normalized.points, (point) =>
       candidatesByKey.get(roundedKey(point.lat, point.lng)) ?? []
@@ -328,20 +348,17 @@ export async function processHikeSession(
     const passages = buildPassages(matches, normalized.points, normalized.pauses);
 
     const passageRows = buildPassageRows(session, normalized, passages, timedSamples);
-    if (passageRows.length > 0) {
-      const persistedPassages = await client.upsertPassages(passageRows);
-      if (timedSamples) {
-        await client.insertObservations(
-          buildObservationRows(session, normalized, passages, passageRows, persistedPassages)
-        );
-      }
-    }
+    const observationRows = timedSamples
+      ? buildObservationRows(session, normalized, passages, passageRows)
+      : [];
 
-    await client.markSession(session.id, {
-      processing_status: 'processed',
-      processor_version: PROCESSOR_VERSION,
-      processed_at: new Date().toISOString(),
-      track_quality: normalized.quality,
+    // Persistance atomique : passages + observations + session `processed`.
+    await client.persistTranscript({
+      sessionId: session.id,
+      passages: passageRows,
+      observations: observationRows,
+      processorVersion: PROCESSOR_VERSION,
+      trackQuality: normalized.quality,
     });
 
     return timedSamples

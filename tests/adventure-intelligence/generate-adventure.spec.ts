@@ -2,6 +2,7 @@ import { describe, it, expect, vi } from 'vitest';
 import {
   generateAdventure,
   type AdventureEnginePersistence,
+  type AdventurePlanBundle,
 } from '@/features/adventure-intelligence/server/generateAdventure';
 import { createDefaultRegistry } from '@/features/adventure-intelligence/server/adapters';
 import { ADVENTURE_PLAN_SECTION_KEYS } from '@/features/adventure-intelligence/domain/adventurePlan';
@@ -12,25 +13,30 @@ const PLAN_ID = 'a6000000-0000-4000-8000-0000000000ee';
 const NOW = '2026-09-11T10:00:00.000Z';
 const TEXT = 'Trek de 7 jours au Tour du Mont-Blanc en juillet en refuge avec un budget de 800 €';
 
-function makePersistence() {
+function makePersistence(options: { bundleError?: Error } = {}) {
   const plans: Record<string, unknown>[] = [];
   const versions: Record<string, unknown>[] = [];
   const runs: Record<string, unknown>[] = [];
   const decisions: Record<string, unknown>[] = [];
 
   const persistence: AdventureEnginePersistence = {
-    insertPlan: vi.fn(async (row: unknown) => {
-      plans.push(row as Record<string, unknown>);
+    persistPlanBundle: vi.fn(async (bundle: AdventurePlanBundle) => {
+      // Transaction simulée : un échec n'écrit rien du tout.
+      if (options.bundleError) throw options.bundleError;
+      // La RPC réimpose le plan_id persisté à toutes les lignes filles.
+      plans.push(bundle.plan);
+      versions.push({ ...bundle.version, plan_id: PLAN_ID });
+      runs.push(...bundle.runs.map((row) => ({ ...row, plan_id: PLAN_ID })));
+      decisions.push(
+        ...(bundle.decisions as Record<string, unknown>[]).map((row) => ({
+          ...row,
+          plan_id: PLAN_ID,
+        }))
+      );
       return { id: PLAN_ID };
-    }),
-    insertPlanVersion: vi.fn(async (row: unknown) => {
-      versions.push(row as Record<string, unknown>);
     }),
     insertEngineRun: vi.fn(async (row: unknown) => {
       runs.push(row as Record<string, unknown>);
-    }),
-    insertDecisions: vi.fn(async (rows: unknown[]) => {
-      decisions.push(...(rows as Record<string, unknown>[]));
     }),
   };
 
@@ -187,5 +193,43 @@ describe('A6 — orchestrateur de génération (TEST-A6-GEN)', () => {
     );
     expect(ai.aiUsed).toBe(true);
     expect(ai.explanation).toBe('Résumé IA du plan.');
+  });
+});
+
+describe('A10 — Bundle de plan transactionnel (TEST-A10-TX)', () => {
+  it('TEST-A10-TX-05: un échec du bundle ne laisse aucun plan partiel', async () => {
+    const { persistence, plans, versions, runs, decisions } = makePersistence({
+      bundleError: new Error('bundle indisponible'),
+    });
+
+    await expect(
+      generateAdventure({ ownerId: OWNER_ID, text: TEXT, now: NOW }, deps(persistence))
+    ).rejects.toThrow('bundle indisponible');
+
+    expect(plans).toHaveLength(0);
+    expect(versions).toHaveLength(0);
+    expect(runs).toHaveLength(0);
+    expect(decisions).toHaveLength(0);
+  });
+
+  it('TEST-A10-TX-06: plan, version, runs et décisions partent dans un seul appel', async () => {
+    const { persistence } = makePersistence();
+
+    const result = await generateAdventure(
+      { ownerId: OWNER_ID, text: TEXT, now: NOW },
+      deps(persistence)
+    );
+
+    expect(persistence.persistPlanBundle).toHaveBeenCalledTimes(1);
+    expect(persistence.insertEngineRun).not.toHaveBeenCalled();
+
+    const bundle = vi.mocked(persistence.persistPlanBundle).mock.calls[0][0];
+    expect(bundle.plan).toMatchObject({ owner_id: OWNER_ID, current_version: 1 });
+    expect(bundle.version).toMatchObject({ plan_id: bundle.plan.id, version: 1 });
+    expect(bundle.runs.length).toBeGreaterThan(0);
+    expect(bundle.decisions.length).toBeGreaterThan(0);
+    expect(bundle.runs.every((row) => row.plan_id === bundle.plan.id)).toBe(true);
+    expect(bundle.decisions.every((row) => row.plan_id === bundle.plan.id)).toBe(true);
+    expect(result.plan.id).toBe(PLAN_ID);
   });
 });

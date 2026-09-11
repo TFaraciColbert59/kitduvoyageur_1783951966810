@@ -42,12 +42,22 @@ import type { BudgetAdapterOutput } from './adapters/budgetAdapter';
 import type { PredictionAdapterOutput } from './adapters/predictionAdapter';
 import type { TripKitAnalysis } from '@/features/trips/types/kit.types';
 
-/** Persistance injectée : chaque méthode écrit une ligne déjà mise en forme. */
+/** Bundle atomique plan + version + runs + décisions (A10 — 10.4). */
+export interface AdventurePlanBundle {
+  plan: Record<string, unknown>;
+  version: Record<string, unknown>;
+  runs: Record<string, unknown>[];
+  decisions: Record<string, unknown>[];
+}
+
+/**
+ * Persistance injectée : le bundle principal est écrit par un seul appel
+ * transactionnel ; `insertEngineRun` ne sert qu'aux runs orphelins d'un échec
+ * de pipeline (plan jamais créé).
+ */
 export interface AdventureEnginePersistence {
-  insertPlan(row: unknown): Promise<{ id: string }>;
-  insertPlanVersion(row: unknown): Promise<void>;
+  persistPlanBundle(bundle: AdventurePlanBundle): Promise<{ id: string }>;
   insertEngineRun(row: unknown): Promise<void>;
-  insertDecisions(rows: unknown[]): Promise<void>;
 }
 
 export interface AdventureGenerationInput {
@@ -540,19 +550,15 @@ export async function generateAdventure(
   const lockReport = engineResultOf<CoherenceAdapterOutput>(outputs, 'coherence')?.value.lockReport;
   const decisions = buildRequiredDecisions(plan, now, lockReport);
 
-  const inserted = await deps.persistence.insertPlan(planRow(plan));
+  // A10 (10.4) : un seul appel atomique — un échec ne laisse aucun plan partiel.
+  const inserted = await deps.persistence.persistPlanBundle({
+    plan: planRow(plan),
+    version: versionRow(plan, 'Génération initiale (A6)', 'a6-orchestrator'),
+    runs: runs.map((run) => runRow(plan.id, run, now)),
+    decisions: decisions.map((decision) => decisionRow(plan.id, decision)),
+  });
   plan.id = inserted.id;
   for (const decision of decisions) decision.planId = plan.id;
-
-  await deps.persistence.insertPlanVersion(
-    versionRow(plan, 'Génération initiale (A6)', 'a6-orchestrator')
-  );
-  for (const run of runs) {
-    await deps.persistence.insertEngineRun(runRow(plan.id, run, now));
-  }
-  if (decisions.length > 0) {
-    await deps.persistence.insertDecisions(decisions.map((decision) => decisionRow(plan.id, decision)));
-  }
 
   const localExplanation = buildLocalExplanation(plan, candidates, runs, false);
   const { explanation, aiUsed } = await resolveExplanation(
@@ -571,26 +577,18 @@ export function createSupabaseAdventurePersistence(
   client: SupabaseClient
 ): AdventureEnginePersistence {
   return {
-    async insertPlan(row: unknown) {
-      const { data, error } = await client
-        .from('adventure_plans')
-        .insert(row as never)
-        .select('id')
-        .single();
+    async persistPlanBundle(bundle) {
+      const { data, error } = await client.rpc('create_adventure_plan_bundle', {
+        p_plan: bundle.plan,
+        p_version: bundle.version,
+        p_runs: bundle.runs,
+        p_decisions: bundle.decisions,
+      });
       if (error) throw new Error(error.message);
-      return { id: String((data as { id: unknown }).id) };
-    },
-    async insertPlanVersion(row: unknown) {
-      const { error } = await client.from('adventure_plan_versions').insert(row as never);
-      if (error) throw new Error(error.message);
+      return { id: String(data) };
     },
     async insertEngineRun(row: unknown) {
       const { error } = await client.from('adventure_engine_runs').insert(row as never);
-      if (error) throw new Error(error.message);
-    },
-    async insertDecisions(rows: unknown[]) {
-      if (rows.length === 0) return;
-      const { error } = await client.from('adventure_plan_decisions').insert(rows as never);
       if (error) throw new Error(error.message);
     },
   };

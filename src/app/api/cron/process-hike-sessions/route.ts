@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getServiceSupabase } from '@/lib/ai/serviceClient';
 import {
   processHikeSession,
+  type GpsPoint,
   type HikeProcessingClient,
   type HikeSessionRow,
 } from '@/features/adventure-intelligence/server/processHikeSession';
@@ -50,53 +51,55 @@ export async function POST(request: NextRequest) {
 
   const sessions = (data ?? []) as HikeSessionRow[];
 
+  const mapCandidates = (rows: unknown[] | null): SegmentCandidate[] =>
+    ((rows ?? []) as CandidateRow[]).map((row) => ({
+      segmentId: Number(row.segment_id),
+      distanceM: Number(row.distance_m),
+      bearingDeg: row.bearing_deg === null ? undefined : Number(row.bearing_deg),
+      highway: row.highway,
+      surface: row.surface,
+      sacScale: row.sac_scale,
+    }));
+
   const client: HikeProcessingClient = {
     async getSession(id: string) {
       const { data: row, error: sessionError } = await supabase
         .from('hike_sessions')
-        .select('id, user_id, positions_geojson, processing_status, processor_version, ended_at')
+        .select(
+          'id, user_id, positions_geojson, positions_timed, processing_status, processor_version, ended_at'
+        )
         .eq('id', id)
         .maybeSingle();
       if (sessionError) throw new Error(sessionError.message);
       return (row as HikeSessionRow | null) ?? null;
     },
 
-    async getCandidates(lat: number, lng: number, radiusM: number): Promise<SegmentCandidate[]> {
-      const { data: rows, error: candidatesError } = await supabase.rpc('a2_segment_candidates', {
-        p_lat: lat,
-        p_lng: lng,
-        p_radius_m: radiusM,
+    // Remplacement N+1 à venir (lot 10.6) : le contrat est déjà batch, la RPC
+    // batch `a2_match_track_candidates` arrive dans la migration suivante.
+    async getCandidatesBatch(points: GpsPoint[], radiusM: number): Promise<SegmentCandidate[][]> {
+      const results: SegmentCandidate[][] = [];
+      for (const point of points) {
+        const { data: rows, error: candidatesError } = await supabase.rpc('a2_segment_candidates', {
+          p_lat: point.lat,
+          p_lng: point.lng,
+          p_radius_m: radiusM,
+        });
+        if (candidatesError) throw new Error(candidatesError.message);
+        results.push(mapCandidates(rows));
+      }
+      return results;
+    },
+
+    async persistTranscript(input) {
+      // A10 (10.4) : une seule RPC transactionnelle (passages + observations + session).
+      const { error: persistError } = await supabase.rpc('persist_processed_hike_session', {
+        p_session_id: input.sessionId,
+        p_passages: input.passages,
+        p_observations: input.observations,
+        p_processor_version: input.processorVersion,
+        p_track_quality: input.trackQuality,
       });
-      if (candidatesError) throw new Error(candidatesError.message);
-      return ((rows ?? []) as CandidateRow[]).map((row) => ({
-        segmentId: Number(row.segment_id),
-        distanceM: Number(row.distance_m),
-        bearingDeg: row.bearing_deg === null ? undefined : Number(row.bearing_deg),
-        highway: row.highway,
-        surface: row.surface,
-        sacScale: row.sac_scale,
-      }));
-    },
-
-    async upsertPassages(rows: unknown[]) {
-      // Upsert (ON CONFLICT DO UPDATE via la clé d'idempotence) puis retour des
-      // id persistés : indispensable pour relier chaque observation à son passage.
-      const { data: persisted, error: upsertError } = await supabase
-        .from('session_segment_passages')
-        .upsert(rows, {
-          onConflict: 'session_id,segment_id,direction,entered_at,processor_version',
-        })
-        .select('id, segment_id');
-      if (upsertError) throw new Error(upsertError.message);
-      return ((persisted ?? []) as { id: string; segment_id: number | string }[]).map((row) => ({
-        id: row.id,
-        segment_id: Number(row.segment_id),
-      }));
-    },
-
-    async insertObservations(rows: unknown[]) {
-      const { error: insertError } = await supabase.from('performance_observations').insert(rows);
-      if (insertError) throw new Error(insertError.message);
+      if (persistError) throw new Error(persistError.message);
     },
 
     async markSession(id, patch) {
