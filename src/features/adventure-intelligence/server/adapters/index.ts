@@ -17,11 +17,8 @@ import { coherenceAdapter } from './coherenceAdapter';
 import { predictionAdapter } from './predictionAdapter';
 import { difficultyAdapter } from './difficultyAdapter';
 import { safetyAdapter } from './safetyAdapter';
-import {
-  documentsAdapter,
-  regulationsAdapter,
-  weatherAdapter,
-} from './skippedAdapters';
+import { weatherAdapter } from './weatherAdapter';
+import { documentsAdapter, regulationsAdapter } from './skippedAdapters';
 
 export * from './intentAdapter';
 export * from './routeAdapter';
@@ -31,6 +28,7 @@ export * from './coherenceAdapter';
 export * from './predictionAdapter';
 export * from './difficultyAdapter';
 export * from './safetyAdapter';
+export * from './weatherAdapter';
 export * from './skippedAdapters';
 
 export const DEFAULT_ADAPTERS: AdventureEngine<unknown, unknown>[] = [

@@ -43,6 +43,7 @@ import type { CoherenceAdapterOutput, CoherenceLockReport } from './adapters/coh
 import type { DifficultyAdapterOutput } from './adapters/difficultyAdapter';
 import type { RouteAdapterOutput } from './adapters/routeAdapter';
 import type { SafetyAdapterOutput } from './adapters/safetyAdapter';
+import type { WeatherAdapterOutput } from './adapters/weatherAdapter';
 import type { BudgetAdapterOutput } from './adapters/budgetAdapter';
 import type { PredictionAdapterOutput } from './adapters/predictionAdapter';
 import type { TripKitAnalysis } from '@/features/trips/types/kit.types';
@@ -75,6 +76,7 @@ export const FALLBACK_WARNING_CODES = [
   'gear_no_source',
   'safety_no_source',
   'coherence_no_source',
+  'weather_provider_unavailable',
 ] as const;
 
 function countFallbacks(run: EngineRunRecord): number {
@@ -114,6 +116,10 @@ export interface AdventureGenerationInput {
   now?: string;
   /** Flags de domaine A9 (ADR-AI-008) : injectés dans le contexte des moteurs. */
   featureFlags?: Record<string, boolean>;
+  /** A11 #15 — coordonnées réelles : déclenchent la météo officielle si fournies. */
+  coordinates?: { lat: number; lng: number };
+  /** A11 #15 — horizon de prévision demandé (1..7, défaut 3). */
+  weatherDays?: number;
 }
 
 export interface AdventureExplainContext {
@@ -248,6 +254,7 @@ export function buildPlanSections(
   const predictionResult = engineResultOf<PredictionAdapterOutput>(outputs, 'prediction');
   const difficultyResult = engineResultOf<DifficultyAdapterOutput>(outputs, 'difficulty');
   const safetyResult = engineResultOf<SafetyAdapterOutput>(outputs, 'safety');
+  const weatherResult = engineResultOf<WeatherAdapterOutput>(outputs, 'weather');
 
   const layers: Layers = (coherenceResult?.value.resolvedLayers ??
     routeResult?.value.layers ??
@@ -309,7 +316,10 @@ export function buildPlanSections(
     regulations: null,
     safetyPlan: safetyResult ? planValueFromResult(safetyResult) : null,
     offlinePackage: null,
-    liveConditions: null,
+    // A11 #15 — météo officielle quand des coordonnées ont permis la prévision ;
+    // la 19-sections normative ne comporte pas de clé `weather`, les conditions
+    // vivantes sont donc portées par `liveConditions`.
+    liveConditions: weatherResult ? planValueFromResult(weatherResult) : null,
     alternatives: {
       value: candidates.map((candidate) => ({
         id: candidate.id,
@@ -627,7 +637,6 @@ export async function generateAdventure(
       case 'prediction':
       case 'difficulty':
       case 'safety':
-      case 'weather':
       case 'regulations':
       case 'documents':
         return {
@@ -637,6 +646,17 @@ export async function generateAdventure(
           // A10 (10.9) : profil réel si consentement, sinon null explicite.
           profile: personalProfile,
           startAt: now,
+        };
+      // A11 #15 — la météo ne reçoit des coordonnées que si le client en a
+      // fourni ; sinon l'adaptateur skippe explicitement (aucune invention).
+      case 'weather':
+        return {
+          route: valueOf<RouteAdapterOutput>(outputs, 'route'),
+          coordinates: input.coordinates ?? null,
+          weatherDays: input.weatherDays,
+          label:
+            valueOf<TripBrief>(outputs, 'intent')?.destinations.value[0]?.region ??
+            null,
         };
       default:
         return undefined;

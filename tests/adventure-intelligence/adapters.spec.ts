@@ -10,7 +10,8 @@ import { coherenceAdapter } from '@/features/adventure-intelligence/server/adapt
 import { predictionAdapter } from '@/features/adventure-intelligence/server/adapters/predictionAdapter';
 import { difficultyAdapter } from '@/features/adventure-intelligence/server/adapters/difficultyAdapter';
 import { safetyAdapter } from '@/features/adventure-intelligence/server/adapters/safetyAdapter';
-import { weatherAdapter, regulationsAdapter, documentsAdapter } from '@/features/adventure-intelligence/server/adapters/skippedAdapters';
+import { weatherAdapter } from '@/features/adventure-intelligence/server/adapters/weatherAdapter';
+import { regulationsAdapter, documentsAdapter } from '@/features/adventure-intelligence/server/adapters/skippedAdapters';
 
 const CONTEXT: AdventureExecutionContext = {
   userId: 'a6000000-0000-4000-8000-000000000001',
@@ -215,7 +216,7 @@ describe('A6 — adaptateurs des moteurs existants (TEST-A6-ADP)', () => {
     expect(group.warnings.some((warning) => warning.code === 'group_profiles_missing')).toBe(true);
   });
 
-  it('TEST-A6-ADP-08: safetyAdapter expose les données du blueprint, weather/regulations/documents skippent', async () => {
+  it('TEST-A6-ADP-08: safetyAdapter expose les données du blueprint, regulations/documents skippent', async () => {
     const safety = await safetyAdapter.run({ route: routeOutput() }, CONTEXT);
     expect(safety.value).toMatchObject({ rescuePhone: '112', rescueUnit: 'PGM Le Mont-Dore' });
     expect(safety.provenance[0].source).toBe('estimated');
@@ -227,10 +228,15 @@ describe('A6 — adaptateurs des moteurs existants (TEST-A6-ADP)', () => {
       EngineSkipSignal
     );
 
-    for (const adapter of [weatherAdapter, regulationsAdapter, documentsAdapter]) {
+    for (const adapter of [regulationsAdapter, documentsAdapter]) {
       expect(adapter.canRun(CONTEXT)).toBe(false);
       expect(adapter.skipReason?.code).toMatch(/_no_deterministic_source$/);
       await expect(adapter.run({}, CONTEXT)).rejects.toBeInstanceOf(EngineSkipSignal);
     }
+
+    // A11 #15 — la météo dispose désormais d'une source réelle ; sans
+    // coordonnées, elle skippe explicitement (aucune donnée inventée).
+    expect(weatherAdapter.canRun(CONTEXT)).toBe(true);
+    await expect(weatherAdapter.run({}, CONTEXT)).rejects.toBeInstanceOf(EngineSkipSignal);
   });
 });

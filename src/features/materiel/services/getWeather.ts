@@ -34,19 +34,25 @@ export function weatherLabel(code: number): string {
 const DAY_LABELS = ['Dim', 'Lun', 'Mar', 'Mer', 'Jeu', 'Ven', 'Sam'];
 
 /**
- * getWeather — prévisions Open-Meteo (gratuit, sans clé) : 24h + 5 prochains jours.
+ * getWeather — prévisions Open-Meteo (gratuit, sans clé) : 24h + jours suivants
+ * (`forecastDays`, 5 par défaut, borné 1..16 côté fournisseur).
  * Zéro donnée fabriquée : sans coordonnées réelles ou en cas d'échec/timeout API,
  * retourne null (état « indisponible » honnête, jamais de fausses prévisions).
  */
 export async function getWeather(
   latitude?: number | null,
   longitude?: number | null,
-  label?: string | null
+  label?: string | null,
+  forecastDays = 5
 ): Promise<WeatherForecast | null> {
   if (latitude == null || longitude == null) return null;
 
+  const requestedDays = Number.isFinite(forecastDays)
+    ? Math.min(16, Math.max(1, Math.trunc(forecastDays)))
+    : 5;
+
   try {
-    const url = `https://api.open-meteo.com/v1/forecast?latitude=${latitude}&longitude=${longitude}&hourly=temperature_2m,precipitation_probability,weathercode&daily=weathercode,temperature_2m_max,temperature_2m_min,precipitation_probability_max&current_weather=true&forecast_days=5&timezone=auto`;
+    const url = `https://api.open-meteo.com/v1/forecast?latitude=${latitude}&longitude=${longitude}&hourly=temperature_2m,precipitation_probability,weathercode&daily=weathercode,temperature_2m_max,temperature_2m_min,precipitation_probability_max&current_weather=true&forecast_days=${requestedDays}&timezone=auto`;
     const res = await fetch(url, { next: { revalidate: 900 }, signal: AbortSignal.timeout(1500) });
     if (!res.ok) return null;
     const data = await res.json();
@@ -69,7 +75,7 @@ export async function getWeather(
     const dayMin: number[] = data.daily?.temperature_2m_min ?? [];
     const dayPrecip: number[] = data.daily?.precipitation_probability_max ?? [];
 
-    const days: WeatherDay[] = dayTimes.slice(0, 5).map((t: string, i: number) => {
+    const days: WeatherDay[] = dayTimes.slice(0, requestedDays).map((t: string, i: number) => {
       const d = new Date(t);
       return {
         date: t,

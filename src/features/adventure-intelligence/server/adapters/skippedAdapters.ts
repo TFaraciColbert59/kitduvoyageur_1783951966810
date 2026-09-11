@@ -1,9 +1,10 @@
 /**
- * A6 — Adaptateurs sans source déterministe : weather, regulations, documents.
+ * A6 — Adaptateurs sans source déterministe : regulations, documents.
  *
- * Ces trois domaines exigent des données vivantes ou officielles. En l'absence
- * de source déterministe injectée, l'adaptateur retourne un skip explicite :
- * aucune donnée météo, réglementaire ou documentaire n'est jamais inventée.
+ * Ces deux domaines exigent des données officielles. En l'absence de source
+ * déterministe injectée, l'adaptateur retourne un skip explicite : aucune
+ * donnée réglementaire ou documentaire n'est jamais inventée.
+ * (La météo dispose désormais d'un adaptateur réel — voir `weatherAdapter`.)
  */
 import 'server-only';
 import type { AdventureEngine, EngineWarning } from '@/features/adventure-intelligence/domain/engine';
@@ -33,17 +34,6 @@ export function createSkippedAdapter(options: SkippedAdapterOptions): SkippedAda
   };
   return engine;
 }
-
-export const weatherAdapter = createSkippedAdapter({
-  id: 'weather',
-  dependencies: ['route'],
-  skipReason: {
-    code: 'weather_no_deterministic_source',
-    message:
-      'Aucune source météo déterministe n’est injectée — section liveConditions laissée vide (aucune donnée inventée).',
-    severity: 'warning',
-  },
-});
 
 export const regulationsAdapter = createSkippedAdapter({
   id: 'regulations',

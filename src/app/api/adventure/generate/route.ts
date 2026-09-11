@@ -32,6 +32,19 @@ const adventureConstraintSchema = z.object({
   source: z.enum(['user', 'system', 'safety']),
 });
 
+const coordinatesSchema = z
+  .object({
+    lat: z
+      .number()
+      .min(-90, 'coordinates.lat doit être compris entre -90 et 90')
+      .max(90, 'coordinates.lat doit être compris entre -90 et 90'),
+    lng: z
+      .number()
+      .min(-180, 'coordinates.lng doit être compris entre -180 et 180')
+      .max(180, 'coordinates.lng doit être compris entre -180 et 180'),
+  })
+  .strict();
+
 const generateSchema = z.object({
   text: z
     .string()
@@ -40,6 +53,14 @@ const generateSchema = z.object({
   locks: z
     .array(adventureConstraintSchema)
     .max(50, 'Maximum 50 verrous par génération')
+    .optional(),
+  // A11 #15 — coordonnées réelles optionnelles (météo officielle si fournies).
+  coordinates: coordinatesSchema.optional(),
+  weatherDays: z
+    .number()
+    .int('weatherDays doit être un entier')
+    .min(1, 'weatherDays doit être compris entre 1 et 7')
+    .max(7, 'weatherDays doit être compris entre 1 et 7')
     .optional(),
 });
 
@@ -187,6 +208,8 @@ export async function POST(request: NextRequest) {
           ownerId: user.id,
           text: parsed.data.text,
           locks: parsed.data.locks,
+          coordinates: parsed.data.coordinates,
+          weatherDays: parsed.data.weatherDays,
           featureFlags: {
             performance_profile_v2: flags.performance_profile_v2,
             route_prediction_v2: flags.route_prediction_v2,
