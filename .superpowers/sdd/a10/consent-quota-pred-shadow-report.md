@@ -235,3 +235,43 @@ GRANT SELECT/INSERT/UPDATE/DELETE TO service_role
    journalisé) pour ne pas bloquer la file ; à revoir si d'autres handlers arrivent.
 5. Tests 10.9/10.10 écrits avant implémentation mais sans capture rouge propre
    (contrairement à 10.7/10.8) ; le vert a été obtenu après corrections de harness.
+
+---
+
+## Correctifs de revue — purge sécurisée et file fiable
+
+Commit : `fix(a10): purge sur revocation securisee et file evenements fiable`.
+
+| # | Constat | Correctif |
+| --- | --- | --- |
+| 1 | **Critique** — `consent.revoked` dérivait la cible de `payload.userId` : un payload forgé (acteur A, `userId` B) pouvait purger B (insert authentifié A1). | `processAdventureEvents` dérive la cible **exclusivement** de `actor_id` : absent → `missing_actor_id`, `payload.userId` divergent → `actor_mismatch` (refus tracé, aucune purge). |
+| 2 | **Important** — `claim_pending_adventure_events` ne réclamait que `pending`, n'incrémentait pas `attempts` ; `markEventFailed` terminal ⇒ purge RGPD pouvait ne jamais aboutir. | `CREATE OR REPLACE` dans `20260911250000_a10_consent_enforcement.sql` : réclame `pending` + `failed` tant que `attempts < 5`, incrémente `attempts` dans le claim, grants re-verrouillés service_role. À 5 tentatives : ligne `failed` terminale (documentée). Échec applicatif → `status='failed'` + `error`, réessayable. |
+| 3 | **Important** — backfill de lease manquant : les `hike_sessions` en `processing` sans `processing_started_at` restaient invisibles au claim. | Backfill idempotent ajouté à `20260911230000_a10_session_lease.sql` (lease à `now()`). |
+| 4 | **Mineur** — déduplication avant index unique partiel : `created_at` seul laissait survivre des doublons à timestamp égal. | Départage déterministe `OR (a.created_at = b.created_at AND a.id < b.id)` dans `20260911220000_a10_transactional_rpcs.sql`. |
+
+### Fichiers
+
+- `src/features/adventure-intelligence/server/processAdventureEvents.ts` (cible = acteur, raisons explicites)
+- `src/app/api/cron/process-adventure-events/route.ts` (sémantique failed réessayable documentée + log)
+- `supabase/migrations/20260911250000_a10_consent_enforcement.sql` (claim `pending`+`failed`)
+- `supabase/migrations/20260911230000_a10_session_lease.sql` (backfill)
+- `supabase/migrations/20260911220000_a10_transactional_rpcs.sql` (départage `id`)
+- `tests/adventure-intelligence/consent-enforcement.spec.ts` (`missing_actor_id`, TEST-A10-CONS-06)
+- `supabase/tests/database/a10_consent_enforcement.test.sql` (21 assertions, DB-08..12 retry/cap/terminal)
+
+### Tests
+
+- TEST-A10-CONS-06 : acteur A + `payload.userId` B ⇒ `actor_mismatch`, aucune
+  suppression (ni B, ni A), `markEventFailed` appelé, `processed` non appelé.
+- pgTAP DB-08..12 : claim `pending`+`failed`, attempts incrémenté, processing en vol
+  ignoré, rejeu d'un échec transitoire, montée jusqu'au cap 5, état terminal `failed`
+  avec erreur conservée (purge non silencieusement impossible).
+- pgTAP **non exécutés** localement (Docker/base absents, contrainte déjà documentée
+  lot 10.2) : à lancer sur la copie avec les autres suites.
+
+### Gates
+
+- `npx vitest run tests/adventure-intelligence` : 49 fichiers / **313 tests verts**.
+- `npm run type-check` : exit 0.
+- `npm run lint` : exit 0, warnings préexistants uniquement.
+- `npm run test` (complet) : 248 fichiers / **1834 tests verts** (exit 0).

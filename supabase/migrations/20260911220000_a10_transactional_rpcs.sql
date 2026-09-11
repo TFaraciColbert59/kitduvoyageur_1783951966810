@@ -22,14 +22,19 @@
 -- ── 1. Idempotence des observations par passage + version de traitement ──────
 -- Réparation préalable : d'éventuels doublons stricts sur la clé d'idempotence
 -- (mêmes passage_id + processor_version) sont réduits à la ligne la plus
--- récente avant la création de l'index unique partiel.
+-- récente avant la création de l'index unique partiel. `created_at` peut être
+-- identique : le départage par `id` garantit l'ordre total (sinon des doublons
+-- à timestamp égal survivraient et casseraient la création de l'index).
 DELETE FROM public.performance_observations a
 USING public.performance_observations b
 WHERE a.passage_id IS NOT NULL
   AND a.passage_id = b.passage_id
   AND a.processor_version = b.processor_version
   AND a.id <> b.id
-  AND a.created_at < b.created_at;
+  AND (
+    a.created_at < b.created_at
+    OR (a.created_at = b.created_at AND a.id < b.id)
+  );
 
 CREATE UNIQUE INDEX IF NOT EXISTS idx_performance_observations_passage_version
   ON public.performance_observations(passage_id, processor_version)

@@ -282,7 +282,7 @@ describe('A10 — Révocation : événement et purge (TEST-A10-CONS)', () => {
     expect(deletedAggregates).toEqual([[10, 20]]);
   });
 
-  it('TEST-A10-CONS-05c: événement inexploitable marqué en échec, jamais traité silencieusement', async () => {
+  it('TEST-A10-CONS-05c: événement sans acteur marqué en échec, jamais traité silencieusement', async () => {
     const event: AdventureEventRow = {
       id: 'evt-2',
       event_type: 'consent.revoked',
@@ -309,8 +309,52 @@ describe('A10 — Révocation : événement et purge (TEST-A10-CONS)', () => {
     const result = await processAdventureEvents(client);
 
     expect(result).toEqual({ processed: 0, failed: 1, skipped: 0 });
-    expect(client.markEventFailed).toHaveBeenCalledWith('evt-2', 'missing_user_id');
+    expect(client.markEventFailed).toHaveBeenCalledWith('evt-2', 'missing_actor_id');
     expect(client.markEventProcessed).not.toHaveBeenCalled();
+  });
+
+  it('TEST-A10-CONS-06: payload forgé (acteur A, userId B) ⇒ refus actor_mismatch, aucune purge de B', async () => {
+    const USER_B = 'b2222222-2222-2222-2222-222222222222';
+    const event: AdventureEventRow = {
+      id: 'evt-forge',
+      event_type: 'consent.revoked',
+      entity_type: 'adventure_data_consent',
+      entity_id: `${USER_B}:personal_performance`,
+      actor_id: USER_ID,
+      payload: { userId: USER_B, purpose: 'personal_performance' },
+      status: 'processing',
+      attempts: 1,
+    };
+    const client: AdventureEventProcessingClient = {
+      claimPendingEvents: vi.fn().mockResolvedValue([event]),
+      listContributedSegmentIds: vi.fn(),
+      deleteObservations: vi.fn(),
+      deleteProfileVersions: vi.fn(),
+      deleteProfile: vi.fn(),
+      deleteSegmentPredictions: vi.fn(),
+      deleteRoutePredictions: vi.fn(),
+      deleteCollectiveAggregates: vi.fn(),
+      markEventProcessed: vi.fn(),
+      markEventFailed: vi.fn(),
+    };
+
+    const result = await processAdventureEvents(client);
+
+    expect(result).toEqual({ processed: 0, failed: 1, skipped: 0 });
+    expect(client.markEventFailed).toHaveBeenCalledWith('evt-forge', 'actor_mismatch');
+    expect(client.markEventProcessed).not.toHaveBeenCalled();
+    // Aucune cible n'est purgée : ni B (payload forgé), ni A (refus explicite).
+    for (const deletion of [
+      client.deleteObservations,
+      client.deleteProfileVersions,
+      client.deleteProfile,
+      client.deleteSegmentPredictions,
+      client.deleteRoutePredictions,
+      client.deleteCollectiveAggregates,
+    ]) {
+      expect(deletion).not.toHaveBeenCalled();
+    }
+    expect(client.listContributedSegmentIds).not.toHaveBeenCalled();
   });
 
   it('TEST-A10-CONS-05d: aucun événement à traiter ⇒ aucun effet', async () => {

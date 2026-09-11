@@ -138,3 +138,12 @@ BEGIN
   END IF;
 END $$;
 GRANT EXECUTE ON FUNCTION public.a2_claim_pending_sessions(integer) TO service_role;
+
+-- ── 3. Backfill idempotent : sessions `processing` antérieures au lease ───────
+-- Les sessions passées en `processing` avant l'introduction du lease n'ont pas
+-- de `processing_started_at` : sans ce rattrapage elles resteraient invisibles
+-- au claim (ni reprises, ni dead-letter). On leur pose un lease à now().
+UPDATE public.hike_sessions
+SET processing_started_at = now()
+WHERE processing_status = 'processing'
+  AND processing_started_at IS NULL;

@@ -10,8 +10,19 @@
  *   4. suppression des agrégats collectifs des segments contribués
  *      (recalcul ultérieur par le cron collectif, sans l'utilisateur) ;
  *   5. marquage de l'événement `processed`.
- * L'opération est idempotente (rejouable sans erreur) et une erreur marque
- * l'événement `failed` sans interrompre le lot.
+ *
+ * Sécurité : la cible de la purge est dérivée EXCLUSIVEMENT de `actor_id`,
+ * jamais de `payload.userId`. La policy d'insertion A1 garantit que seul
+ * l'acteur lui-même peut créer un événement à son nom ; un payload forgé
+ * (acteur A, `userId` B) ne peut donc jamais purger B :
+ *   • `actor_id` absent → refus `missing_actor_id` ;
+ *   • `payload.userId` présent et différent de `actor_id` → refus
+ *     `actor_mismatch`.
+ *
+ * Fiabilité : l'opération est idempotente (rejouable sans erreur) et une erreur
+ * marque l'événement `failed` avec son message sans interrompre le lot. Le claim
+ * SQL réclame `pending` ET `failed` tant que `attempts < 5` ; à 5 tentatives
+ * l'événement reste `failed` (terminal).
  */
 import 'server-only';
 
@@ -35,7 +46,7 @@ export interface AdventureEventRow {
 }
 
 export interface AdventureEventProcessingClient {
-  /** Réclame atomiquement des événements `pending` (SKIP LOCKED côté SQL). */
+  /** Réclame atomiquement `pending` + `failed` < 5 tentatives (SKIP LOCKED SQL). */
   claimPendingEvents(limit: number): Promise<AdventureEventRow[]>;
   /** Segments auxquels l'utilisateur a contribué (pour invalider les agrégats). */
   listContributedSegmentIds(userId: string): Promise<number[]>;
@@ -59,11 +70,31 @@ export interface ProcessAdventureEventsResult {
   skipped: number;
 }
 
-function eventUserId(event: AdventureEventRow): string | null {
+const MISSING_ACTOR_ID_REASON = 'missing_actor_id';
+const ACTOR_MISMATCH_REASON = 'actor_mismatch';
+
+type PurgeTarget = { ok: true; userId: string } | { ok: false; reason: string };
+
+/**
+ * Cible de la purge : `actor_id` uniquement. `payload.userId` n'est lu que
+ * pour détecter une incohérence (événement forgé) et refuse alors la purge.
+ */
+function resolvePurgeTarget(event: AdventureEventRow): PurgeTarget {
+  const actorId = typeof event.actor_id === 'string' ? event.actor_id.trim() : '';
+  if (actorId.length === 0) {
+    return { ok: false, reason: MISSING_ACTOR_ID_REASON };
+  }
+
   const payloadUserId = event.payload?.userId;
-  if (typeof payloadUserId === 'string' && payloadUserId.length > 0) return payloadUserId;
-  if (typeof event.actor_id === 'string' && event.actor_id.length > 0) return event.actor_id;
-  return null;
+  if (
+    typeof payloadUserId === 'string' &&
+    payloadUserId.length > 0 &&
+    payloadUserId !== actorId
+  ) {
+    return { ok: false, reason: ACTOR_MISMATCH_REASON };
+  }
+
+  return { ok: true, userId: actorId };
 }
 
 async function handleConsentRevoked(
@@ -106,15 +137,15 @@ export async function processAdventureEvents(
       continue;
     }
 
-    const userId = eventUserId(event);
-    if (!userId) {
-      await client.markEventFailed(event.id, 'missing_user_id');
+    const target = resolvePurgeTarget(event);
+    if (!target.ok) {
+      await client.markEventFailed(event.id, target.reason);
       failed += 1;
       continue;
     }
 
     try {
-      await handleConsentRevoked(client, userId);
+      await handleConsentRevoked(client, target.userId);
       await client.markEventProcessed(event.id);
       processed += 1;
     } catch (error) {

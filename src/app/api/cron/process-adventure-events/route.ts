@@ -21,6 +21,11 @@ function message(error: unknown): string {
  * Déclencheur externe avec `Authorization: Bearer ${CRON_SECRET}`.
  * Réclamation atomique via `claim_pending_adventure_events`, traitement
  * séquentiel, une erreur n'interrompt jamais le lot.
+ *
+ * La cible de purge est calculée côté `processAdventureEvents` à partir du seul
+ * `actor_id` (jamais de `payload.userId`). Un échec repasse l'événement
+ * `failed` avec son erreur : le claim le réclame de nouveau tant que
+ * `attempts < 5`, puis il reste `failed` (état terminal).
  */
 export async function POST(request: NextRequest) {
   const secret = process.env.CRON_SECRET;
@@ -87,7 +92,13 @@ export async function POST(request: NextRequest) {
       if (error) throw new Error(error.message);
     },
 
+    /**
+     * Échec (ou refus) d'un événement : `failed` + `error` le rend réessayable
+     * par le claim (attempts < 5) ; passé le cap, la ligne reste `failed`
+     * (terminal, cf. migration 20260911250000).
+     */
     async markEventFailed(eventId: string, failure: string) {
+      console.warn('[adventure-intelligence/cron/events] événement en échec:', eventId, failure);
       const { error } = await supabase
         .from('adventure_domain_events')
         .update({ status: 'failed', error: failure, processed_at: new Date().toISOString() })
