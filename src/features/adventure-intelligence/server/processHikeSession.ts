@@ -40,7 +40,7 @@ export interface HikeSessionRow {
 export interface HikeProcessingClient {
   getSession(id: string): Promise<HikeSessionRow | null>;
   getCandidates(lat: number, lng: number, radiusM: number): Promise<SegmentCandidate[]>;
-  upsertPassages(rows: unknown[]): Promise<void>;
+  upsertPassages(rows: unknown[]): Promise<{ id: string; segment_id: number }[]>;
   insertObservations(rows: unknown[]): Promise<void>;
   markSession(
     id: string,
@@ -154,31 +154,43 @@ function buildObservationRows(
   session: HikeSessionRow,
   normalized: NormalizedTrack,
   passages: MatchedPassage[],
-  passageRows: Record<string, unknown>[]
+  passageRows: Record<string, unknown>[],
+  persistedPassages: { id: string; segment_id: number }[]
 ): Record<string, unknown>[] {
-  return passages.map((passage, index) => ({
-    user_id: session.user_id,
-    session_id: session.id,
-    passage_id: null,
-    observed_at: passage.exitedAt,
-    distance_m: passage.distanceM,
-    duration_s: Math.max(1, Math.round(passage.durationS)),
-    moving_s: Math.max(0, Math.round(passage.movingS)),
-    gain_m: passage.gainM,
-    loss_m: passage.lossM,
-    mean_grade_pct: null,
-    max_grade_pct: null,
-    altitude_mean_m: null,
-    surface: null,
-    pack_weight_kg: null,
-    temperature_c: null,
-    weather: null,
-    declared_fatigue: null,
-    perceived_difficulty: null,
-    pace_min_per_km: passageRows[index].pace_min_per_km,
-    quality: normalized.quality.overall,
-    processor_version: PROCESSOR_VERSION,
-  }));
+  const idsBySegment = new Map<number, string[]>();
+  for (const persisted of persistedPassages) {
+    const queue = idsBySegment.get(Number(persisted.segment_id)) ?? [];
+    queue.push(persisted.id);
+    idsBySegment.set(Number(persisted.segment_id), queue);
+  }
+
+  return passages.map((passage, index) => {
+    const queue = idsBySegment.get(passage.segmentId);
+    const passageId = queue && queue.length > 0 ? queue.shift() ?? null : null;
+    return {
+      user_id: session.user_id,
+      session_id: session.id,
+      passage_id: passageId,
+      observed_at: passage.exitedAt,
+      distance_m: passage.distanceM,
+      duration_s: Math.max(1, Math.round(passage.durationS)),
+      moving_s: Math.max(0, Math.round(passage.movingS)),
+      gain_m: passage.gainM,
+      loss_m: passage.lossM,
+      mean_grade_pct: null,
+      max_grade_pct: null,
+      altitude_mean_m: null,
+      surface: null,
+      pack_weight_kg: null,
+      temperature_c: null,
+      weather: null,
+      declared_fatigue: null,
+      perceived_difficulty: null,
+      pace_min_per_km: passageRows[index].pace_min_per_km,
+      quality: normalized.quality.overall,
+      processor_version: PROCESSOR_VERSION,
+    };
+  });
 }
 
 /**
@@ -232,9 +244,9 @@ export async function processHikeSession(
 
     const passageRows = buildPassageRows(session, normalized, passages);
     if (passageRows.length > 0) {
-      await client.upsertPassages(passageRows);
+      const persistedPassages = await client.upsertPassages(passageRows);
       await client.insertObservations(
-        buildObservationRows(session, normalized, passages, passageRows)
+        buildObservationRows(session, normalized, passages, passageRows, persistedPassages)
       );
     }
 

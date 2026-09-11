@@ -44,7 +44,8 @@ interface FakeCalls {
 
 function makeClient(
   session: HikeSessionRow | null,
-  candidateFor: (lat: number, lng: number, radiusM: number) => SegmentCandidate[] | never
+  candidateFor: (lat: number, lng: number, radiusM: number) => SegmentCandidate[] | never,
+  persistedFor?: (rows: unknown[]) => { id: string; segment_id: number }[]
 ): { client: HikeProcessingClient; calls: FakeCalls } {
   const calls: FakeCalls = { candidates: [], upserted: [], observations: [], marks: [] };
   const client: HikeProcessingClient = {
@@ -55,6 +56,11 @@ function makeClient(
     }),
     upsertPassages: vi.fn().mockImplementation(async (rows: unknown[]) => {
       calls.upserted.push(rows);
+      if (persistedFor) return persistedFor(rows);
+      return rows.map((row, index) => ({
+        id: `passage-${index + 1}`,
+        segment_id: Number((row as Record<string, unknown>).segment_id),
+      }));
     }),
     insertObservations: vi.fn().mockImplementation(async (rows: unknown[]) => {
       calls.observations.push(rows);
@@ -156,13 +162,15 @@ describe('Orchestrateur de session — TEST-A2-PROC (client factice)', () => {
     expect(observations[0]).toMatchObject({
       session_id: SESSION_ID,
       user_id: USER_ID,
-      passage_id: null,
+      passage_id: 'passage-1',
       observed_at: at(40),
       declared_fatigue: null,
       perceived_difficulty: null,
       pack_weight_kg: null,
       processor_version: PROCESSOR_VERSION,
     });
+    expect(passages[0].segment_id).toBe(777);
+    expect(observations[0].passage_id).not.toBeNull();
     expect(Number(observations[0].duration_s)).toBeGreaterThan(0);
     expect(typeof observations[0].quality).toBe('number');
 
@@ -172,6 +180,33 @@ describe('Orchestrateur de session — TEST-A2-PROC (client factice)', () => {
     expect(calls.marks[0][1].processor_version).toBe(PROCESSOR_VERSION);
     expect(typeof calls.marks[0][1].processed_at).toBe('string');
     expect(calls.marks[0][1].track_quality).toMatchObject({ overall: expect.any(Number) });
+
+    // Deux passages sur le même segment (aller/retour) : ids distincts remappés en ordre.
+    const backAndForth = [
+      ...northTrack(4),
+      { lat: 44.0002, lng: 6, timestamp: at(40) },
+      { lat: 44.0001, lng: 6, timestamp: at(50) },
+      { lat: 44, lng: 6, timestamp: at(60) },
+    ];
+    const { client: loopClient, calls: loopCalls } = makeClient(
+      sessionRow({ positions_geojson: backAndForth }),
+      () => [candidateNorth]
+    );
+    await processHikeSession(SESSION_ID, loopClient);
+    const loopObservations = loopCalls.observations[0] as Record<string, unknown>[];
+    expect(loopObservations).toHaveLength(2);
+    expect(loopObservations.map((row) => row.passage_id)).toEqual(['passage-1', 'passage-2']);
+
+    // Duplicate-skip côté base (aucune ligne retournée) : repli null, aucune perte du reste.
+    const { client: dupClient, calls: dupCalls } = makeClient(
+      sessionRow({ positions_geojson: points }),
+      () => [candidateNorth],
+      () => []
+    );
+    const dupResult = await processHikeSession(SESSION_ID, dupClient);
+    expect(dupResult).toEqual({ status: 'processed', passages: 1 });
+    const dupObservations = dupCalls.observations[0] as Record<string, unknown>[];
+    expect(dupObservations[0].passage_id).toBeNull();
   });
 
   it('TEST-A2-PROC-04: sous le seuil de map-matching, le passage n’est pas collectif', async () => {

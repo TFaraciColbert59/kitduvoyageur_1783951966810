@@ -79,11 +79,19 @@ export async function POST(request: NextRequest) {
     },
 
     async upsertPassages(rows: unknown[]) {
-      const { error: upsertError } = await supabase.from('session_segment_passages').upsert(rows, {
-        onConflict: 'session_id,segment_id,direction,entered_at,processor_version',
-        ignoreDuplicates: true,
-      });
+      // Upsert (ON CONFLICT DO UPDATE via la clé d'idempotence) puis retour des
+      // id persistés : indispensable pour relier chaque observation à son passage.
+      const { data: persisted, error: upsertError } = await supabase
+        .from('session_segment_passages')
+        .upsert(rows, {
+          onConflict: 'session_id,segment_id,direction,entered_at,processor_version',
+        })
+        .select('id, segment_id');
       if (upsertError) throw new Error(upsertError.message);
+      return ((persisted ?? []) as { id: string; segment_id: number | string }[]).map((row) => ({
+        id: row.id,
+        segment_id: Number(row.segment_id),
+      }));
     },
 
     async insertObservations(rows: unknown[]) {
