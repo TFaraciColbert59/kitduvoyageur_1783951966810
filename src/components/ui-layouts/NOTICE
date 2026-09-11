@@ -11,4 +11,7 @@ Adaptations réalisées pour LKDV (Le Kit du Voyageur) :
 - `sonner` remplacé par le système de toast LKDV ; `vaul` utilisé tel quel.
 
 Dépendances ajoutées au projet pour ces composants : @number-flow/react,
-swapy, vaul (toutes MIT).
+vaul (MIT).
+
+NB (audit Phase 0, 2026-09-11) : swapy a été retiré — licence GPL-3.0
+contraire à l'usage prévu, et aucun import dans le code.
