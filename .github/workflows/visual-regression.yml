@@ -5,6 +5,12 @@ on:
     branches: [main]
   push:
     branches: [main]
+  workflow_dispatch:
+    inputs:
+      update_snapshots:
+        description: "Régénérer les snapshots Linux dans l'environnement CI"
+        type: boolean
+        default: false
 
 jobs:
   visual-tests:
@@ -42,9 +48,20 @@ jobs:
         run: npx wait-on http://localhost:4028 --timeout 60000
 
       - name: Run visual regression tests
-        run: npm run test:visual
+        run: ${{ inputs.update_snapshots && 'npm run test:visual:update' || 'npm run test:visual' }}
         env:
           PW_BASE_URL: http://localhost:4028
+          # Même mode hermétique pour l'update et le check : les snapshots
+          # générés correspondent exactement à ce que voit le check CI.
+          NEXT_PUBLIC_CI: 'true'
+
+      - name: Upload updated snapshots
+        if: ${{ inputs.update_snapshots }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: visual-snapshots-linux
+          path: tests/visual/**/*-snapshots/*.png
+          retention-days: 7
 
       - name: Upload Playwright report on failure
         if: failure()

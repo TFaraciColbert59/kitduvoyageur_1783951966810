@@ -14,6 +14,10 @@ let cachedAuthCookie: { name: string; value: string; domain: string; path: strin
 
 async function getDemoAuthCookie(): Promise<{ name: string; value: string; domain: string; path: string } | null> {
   if (cachedAuthCookie) return cachedAuthCookie;
+  // CI hermétique (Supabase placeholder, pas de .env) : sortie immédiate.
+  // Sans ce garde-fou, chaque test tentait ENOENT puis une auth réseau en
+  // échec (~50 tests x retries), allongeant le job de plus de 10 minutes.
+  if (process.env.NEXT_PUBLIC_CI === 'true') return null;
   try {
     let url = process.env.NEXT_PUBLIC_SUPABASE_URL;
     let anonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
