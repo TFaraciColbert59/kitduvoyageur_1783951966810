@@ -13,6 +13,7 @@ import CarnetHubHero from '@/components/carnets/CarnetHubHero';
 import CarnetHubCard from '@/components/carnets/CarnetHubCard';
 import CarnetRightSidebar from '@/components/carnets/CarnetRightSidebar';
 import { createClient } from '@/lib/supabase/client';
+import { fetchPublicProfilesWith } from '@/lib/queries/publicProfilesCore';
 import { useAuth } from '@/contexts/AuthContext';
 import CommentItem from '@/components/communaute/CommentItem';
 import MobilePageShell from '@/components/mobile-nav/MobilePageShell';
@@ -258,11 +259,21 @@ function CarnetDetailModal({
 
     supabase
       .from('carnet_comments')
-      .select('id, carnet_id, author_id, content, created_at, author:user_profiles(full_name, avatar_url)')
+      .select('id, carnet_id, author_id, content, created_at')
       .eq('carnet_id', carnet.id)
       .order('created_at', { ascending: true })
-      .then(({ data }) => {
-        const list = (data as unknown as Comment[]) ?? [];
+      .then(async ({ data }) => {
+        const rows = (data as unknown as Array<Omit<Comment, 'author'>>) ?? [];
+        const profiles = await fetchPublicProfilesWith(supabase, rows.map((r) => r.author_id));
+        const list = rows.map((r) => ({
+          ...r,
+          author: profiles[r.author_id]
+            ? {
+                full_name: profiles[r.author_id].full_name ?? '',
+                avatar_url: profiles[r.author_id].avatar_url ?? '',
+              }
+            : undefined,
+        })) as Comment[];
         setComments(list);
         setLoadingComments(false);
         // Sync counter with the real comment count loaded from DB
@@ -277,10 +288,21 @@ function CarnetDetailModal({
     const { data } = await supabase
       .from('carnet_comments')
       .insert({ carnet_id: carnet.id, author_id: user.id, content: newComment.trim() })
-      .select('id, carnet_id, author_id, content, created_at, author:user_profiles(full_name, avatar_url)')
+      .select('id, carnet_id, author_id, content, created_at')
       .single();
     if (data) {
-      setComments((prev) => [...prev, data as unknown as Comment]);
+      const row = data as unknown as Omit<Comment, 'author'>;
+      const profiles = await fetchPublicProfilesWith(supabase, [row.author_id]);
+      const profile = profiles[row.author_id];
+      setComments((prev) => [
+        ...prev,
+        {
+          ...row,
+          author: profile
+            ? { full_name: profile.full_name ?? '', avatar_url: profile.avatar_url ?? '' }
+            : undefined,
+        } as Comment,
+      ]);
       setCommentCount((prev) => prev + 1);
       onCommentCountChange(carnet.id, 1);
     }
@@ -811,7 +833,7 @@ export default function CarnetsPage() {
     try {
       let query = supabase
         .from('carnets')
-        .select('id,author_id,title,destination,description,cover_image,cover_image_alt,start_date,end_date,weather,route_rating,visibility,tags,map_points,is_collaborative,likes_count,comments_count,favorites_count,views_count,verified,created_at,author:user_profiles(full_name,avatar_url,trust_score)')
+        .select('id,author_id,title,destination,description,cover_image,cover_image_alt,start_date,end_date,weather,route_rating,visibility,tags,map_points,is_collaborative,likes_count,comments_count,favorites_count,views_count,verified,created_at')
         .order('created_at', { ascending: false });
 
       if (filter === 'mine' && user) {
@@ -827,6 +849,9 @@ export default function CarnetsPage() {
 
       const { data, error: qErr } = await query;
       if (qErr) throw qErr;
+
+      const rows = (data ?? []) as Carnet[];
+      const profiles = await fetchPublicProfilesWith(supabase, rows.map((c) => c.author_id));
 
       let likedIds: string[] = [];
       let favIds: string[] = [];
@@ -845,9 +870,15 @@ export default function CarnetsPage() {
       }
 
       setCarnets(
-        (data ?? []).map((c) => ({
+        rows.map((c) => ({
           ...c,
-          author: Array.isArray(c.author) ? c.author[0] : c.author,
+          author: profiles[c.author_id]
+            ? {
+                full_name: profiles[c.author_id].full_name ?? '',
+                avatar_url: profiles[c.author_id].avatar_url ?? '',
+                trust_score: profiles[c.author_id].trust_score ?? 0,
+              }
+            : undefined,
           map_points: Array.isArray(c.map_points) ? c.map_points : [],
           user_liked: likedIds.includes(c.id),
           user_favorited: favIds.includes(c.id),

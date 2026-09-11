@@ -253,7 +253,7 @@ RETURNS numeric
 LANGUAGE plpgsql
 SECURITY DEFINER
 SET search_path = public
-AS \$\$
+AS $$
 DECLARE
     total_weight numeric := 0;
 BEGIN
@@ -267,7 +267,7 @@ BEGIN
     
     RETURN total_weight;
 END;
-\$\$;
+$$;
 
 -- Fonction pour générer des suggestions d'optimisation
 CREATE OR REPLACE FUNCTION public.generate_weight_optimizations(
@@ -288,7 +288,7 @@ RETURNS TABLE (
 LANGUAGE plpgsql
 SECURITY DEFINER
 SET search_path = public
-AS \$\$
+AS $$
 BEGIN
     -- Cette fonction analyse le calcul de poids et génère des suggestions
     -- Pour l'instant, retourne des résultats vides comme squelette
@@ -306,7 +306,7 @@ BEGIN
         'Implementation pending in LOT 9'::text as reason
     WHERE false; -- Ne retourne rien pour l'instant
 END;
-\$\$;
+$$;
 
 -- Fonction pour obtenir le profil de poids recommandé
 CREATE OR REPLACE FUNCTION public.get_recommended_weight_profile(
@@ -320,7 +320,7 @@ RETURNS SETOF public.weight_profiles
 LANGUAGE plpgsql
 SECURITY DEFINER
 SET search_path = public
-AS \$\$
+AS $$
 BEGIN
     RETURN QUERY
     SELECT *
@@ -338,7 +338,7 @@ BEGIN
         wp.target_base_weight_g ASC
     LIMIT 1;
 END;
-\$\$;
+$$;
 
 -- ===========================================================================
 -- 6. DONNÉES DE RÉFÉRENCE (Profils par défaut)
@@ -462,12 +462,12 @@ ON CONFLICT (profile_name) DO NOTHING;
 
 -- Trigger pour mettre à jour updated_at
 CREATE OR REPLACE FUNCTION public.update_updated_at_column()
-RETURNS TRIGGER AS \$\$
+RETURNS TRIGGER AS $$
 BEGIN
     NEW.updated_at = now();
     RETURN NEW;
 END;
-\$\$ LANGUAGE plpgsql;
+$$ LANGUAGE plpgsql;
 
 -- Appliquer le trigger à weight_calculations
 DROP TRIGGER IF EXISTS update_weight_calculations_updated_at ON public.weight_calculations;

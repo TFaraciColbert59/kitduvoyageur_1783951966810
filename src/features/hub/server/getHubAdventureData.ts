@@ -9,6 +9,7 @@ import type { HubAdventureInput, HubSectionId } from '../engine/hubProfileEngine
 import { deriveActivityType, aggregateHikeStats, estimateHikeDurationMin } from '../engine/activityTypes';
 import type { TripFull } from '@/features/trips/types/trip.types';
 import { getTripItemImages, type TripItemImage } from './getTripItemImages';
+import { fetchPublicProfiles } from '@/lib/queries/publicProfiles';
 
 /**
  * H3.1 — Chargeur serveur unique de l'aventure du hub (partagé par le layout
@@ -243,7 +244,7 @@ async function loadCrewBlock(
       supabase.from('crews').select('id, name, auto_created').eq('id', crewId).maybeSingle(),
       supabase
         .from('crew_members')
-        .select('user_id, role, status, profile:user_profiles!crew_members_user_id_fkey(full_name, username, avatar_url)')
+        .select('user_id, role, status')
         .eq('crew_id', crewId)
         .order('joined_at', { ascending: true }),
     ]);
@@ -255,8 +256,9 @@ async function loadCrewBlock(
       user_id: string;
       role: string;
       status: string;
-      profile?: { full_name?: string | null; username?: string | null; avatar_url?: string | null } | null;
     }>;
+
+    const profiles = await fetchPublicProfiles(rows.map((m) => m.user_id));
 
     const members: HubCrewMemberLite[] = rows
       .filter((m) => m.status === 'active')
@@ -264,8 +266,8 @@ async function loadCrewBlock(
         userId: m.user_id,
         role: m.role,
         status: m.status,
-        fullName: m.profile?.full_name ?? m.profile?.username ?? null,
-        avatarUrl: m.profile?.avatar_url ?? null,
+        fullName: profiles[m.user_id]?.full_name ?? null,
+        avatarUrl: profiles[m.user_id]?.avatar_url ?? null,
       }));
     const pendingInvites = rows.filter((m) => m.status === 'pending').length;
 

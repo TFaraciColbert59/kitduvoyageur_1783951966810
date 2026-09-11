@@ -7,6 +7,7 @@ import Footer from '@/components/Footer';
 import Icon from '@/components/ui/AppIcon';
 import { GlassCard } from '@/components/ui/GlassCard';
 import { createClient } from '@/lib/supabase/client';
+import { fetchPublicProfilesWith } from '@/lib/queries/publicProfilesCore';
 import { useAuth } from '@/contexts/AuthContext';
 import MobilePageShell from '@/components/mobile-nav/MobilePageShell';
 
@@ -201,9 +202,20 @@ export default function AvisPage() {
   const loadReviews = useCallback(async () => {
     setLoading(true); setError(null);
     try {
-      const { data, error: fetchError } = await supabase.from('reviews').select('*, author:user_profiles!reviews_user_id_fkey(full_name, trust_score)').order('created_at', { ascending: false });
+      const { data, error: fetchError } = await supabase.from('reviews').select('*').order('created_at', { ascending: false });
       if (fetchError) throw fetchError;
-      setReviews(data?.length ? data : FALLBACK_REVIEWS);
+      const rows = (data ?? []) as Review[];
+      const profiles = await fetchPublicProfilesWith(supabase, rows.map((r) => r.user_id ?? ''));
+      const withAuthors = rows.map((r) => {
+        const profile = r.user_id ? profiles[r.user_id] : undefined;
+        return {
+          ...r,
+          author: profile
+            ? { full_name: profile.full_name ?? '', trust_score: profile.trust_score ?? 0 }
+            : undefined,
+        };
+      });
+      setReviews(withAuthors.length ? withAuthors : FALLBACK_REVIEWS);
     } catch (err) { console.error('Error loading reviews:', err); setError('Impossible de charger les avis.'); setReviews(FALLBACK_REVIEWS); } finally { setLoading(false); }
   }, [supabase]);
 

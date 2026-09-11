@@ -485,13 +485,13 @@ CREATE TABLE IF NOT EXISTS public.security_definer_execution_log (
     user_agent text,
     
     -- Audit
-    created_at timestamptz DEFAULT now(),
-    
-    -- Index pour les performances
-    INDEX idx_execution_log_function_name (function_name),
-    INDEX idx_execution_log_execution_timestamp (execution_timestamp DESC),
-    INDEX idx_execution_log_called_by_user (called_by_user)
+    created_at timestamptz DEFAULT now()
 );
+
+-- Index pour les performances
+CREATE INDEX IF NOT EXISTS idx_execution_log_function_name ON public.security_definer_execution_log(function_name);
+CREATE INDEX IF NOT EXISTS idx_execution_log_execution_timestamp ON public.security_definer_execution_log(execution_timestamp DESC);
+CREATE INDEX IF NOT EXISTS idx_execution_log_called_by_user ON public.security_definer_execution_log(called_by_user);
 
 -- 4.2 Fonction pour logger les exécutions (sans données sensibles)
 CREATE OR REPLACE FUNCTION public.log_security_definer_execution(
@@ -509,7 +509,7 @@ RETURNS void
 LANGUAGE plpgsql
 SECURITY DEFINER
 SET search_path = public
-AS \$\$
+AS $$
 BEGIN
     INSERT INTO public.security_definer_execution_log (
         function_name,
@@ -533,7 +533,7 @@ BEGIN
         p_user_agent
     );
 END;
-\$\$;
+$$;
 
 -- ===========================================================================
 -- 5. VÉRIFICATIONS ET VALIDATIONS
@@ -550,7 +550,7 @@ RETURNS TABLE (
 LANGUAGE plpgsql
 SECURITY DEFINER
 SET search_path = public
-AS \$\$
+AS $$
 DECLARE
     func_record RECORD;
     issues_array text[];
@@ -602,7 +602,7 @@ BEGIN
         END;
     END LOOP;
 END;
-\$\$;
+$$;
 
 -- ===========================================================================
 -- 6. OUTILS D''ADMINISTRATION
@@ -646,7 +646,7 @@ RETURNS json
 LANGUAGE plpgsql
 SECURITY DEFINER
 SET search_path = public
-AS \$\$
+AS $$
 DECLARE
     report_json json;
 BEGIN
@@ -684,7 +684,7 @@ BEGIN
     
     RETURN report_json;
 END;
-\$\$;
+$$;
 
 -- ===========================================================================
 -- 7. MIGRATION ET RÉTROCOMPATIBILITÉ
@@ -797,12 +797,12 @@ COMMENT ON FUNCTION public.generate_security_definer_report IS 'Génère un rapp
 
 -- Trigger pour updated_at
 CREATE OR REPLACE FUNCTION public.update_updated_at_column()
-RETURNS TRIGGER AS \$\$
+RETURNS TRIGGER AS $$
 BEGIN
     NEW.updated_at = now();
     RETURN NEW;
 END;
-\$\$ LANGUAGE plpgsql;
+$$ LANGUAGE plpgsql;
 
 -- Appliquer le trigger aux tables d'audit
 DROP TRIGGER IF EXISTS update_security_definer_functions_audit_updated_at ON public.security_definer_functions_audit;
@@ -825,7 +825,7 @@ RETURNS void
 LANGUAGE plpgsql
 SECURITY DEFINER
 SET search_path = public
-AS \$\$
+AS $$
 BEGIN
     -- Exécuter le SQL pour créer la fonction
     EXECUTE p_function_sql;
@@ -874,7 +874,7 @@ BEGIN
         true
     );
 END;
-\$\$;
+$$;
 
 COMMIT;
 

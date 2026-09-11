@@ -22,7 +22,7 @@ CREATE TABLE IF NOT EXISTS public.conversation_members (
     -- Statuts
     is_muted boolean DEFAULT false,
     is_archived boolean DEFAULT false,
-    notification_preferences jsonb DEFAULT '{\"new_messages\": true, \"mentions\": true, \"reactions\": true}'::jsonb,
+    notification_preferences jsonb DEFAULT '{"new_messages": true, "mentions": true, "reactions": true}'::jsonb,
     
     -- Métriques d'engagement
     last_read_at timestamptz,
@@ -152,12 +152,12 @@ CREATE TABLE IF NOT EXISTS public.notification_preferences (
     
     -- Préférences par catégorie
     preferences jsonb DEFAULT '{
-        \"messaging\": {\"email\": true, \"push\": true, \"in_app\": true},
-        \"social\": {\"email\": false, \"push\": true, \"in_app\": true},
-        \"system\": {\"email\": true, \"push\": false, \"in_app\": true},
-        \"security\": {\"email\": true, \"push\": true, \"in_app\": true},
-        \"activity\": {\"email\": false, \"push\": true, \"in_app\": true},
-        \"reminder\": {\"email\": true, \"push\": true, \"in_app\": true}
+        "messaging": {"email": true, "push": true, "in_app": true},
+        "social": {"email": false, "push": true, "in_app": true},
+        "system": {"email": true, "push": false, "in_app": true},
+        "security": {"email": true, "push": true, "in_app": true},
+        "activity": {"email": false, "push": true, "in_app": true},
+        "reminder": {"email": true, "push": true, "in_app": true}
     }'::jsonb,
     
     -- Paramètres globaux
@@ -305,7 +305,7 @@ RETURNS TRIGGER
 LANGUAGE plpgsql
 SECURITY DEFINER
 SET search_path = public
-AS \$\$
+AS $$
 BEGIN
     -- Incrémente le compteur de messages non lus pour tous les membres
     -- sauf l'expéditeur
@@ -319,7 +319,7 @@ BEGIN
     
     RETURN NEW;
 END;
-\$\$;
+$$;
 
 -- Trigger pour incrémenter les messages non lus
 DROP TRIGGER IF EXISTS trigger_increment_unread_count ON public.messages;
@@ -337,7 +337,7 @@ RETURNS void
 LANGUAGE plpgsql
 SECURITY DEFINER
 SET search_path = public
-AS \$\$
+AS $$
 BEGIN
     UPDATE public.conversation_members
     SET unread_count = 0,
@@ -347,7 +347,7 @@ BEGIN
       AND user_id = p_user_id
       AND left_at IS NULL;
 END;
-\$\$;
+$$;
 
 -- 4.3 Fonction pour créer des notifications pour les mentions
 CREATE OR REPLACE FUNCTION public.create_mention_notification()
@@ -355,7 +355,7 @@ RETURNS TRIGGER
 LANGUAGE plpgsql
 SECURITY DEFINER
 SET search_path = public
-AS \$\$
+AS $$
 BEGIN
     -- Crée une notification pour l'utilisateur mentionné
     INSERT INTO public.notifications (
@@ -397,7 +397,7 @@ BEGIN
     
     RETURN NEW;
 END;
-\$\$;
+$$;
 
 -- Trigger pour créer des notifications de mentions
 DROP TRIGGER IF EXISTS trigger_create_mention_notification ON public.message_mentions;
@@ -415,7 +415,7 @@ RETURNS boolean
 LANGUAGE plpgsql
 SECURITY DEFINER
 SET search_path = public
-AS \$\$
+AS $$
 DECLARE
     v_prefs jsonb;
     v_quiet_start time;
@@ -460,7 +460,7 @@ BEGIN
     
     RETURN true;
 END;
-\$\$;
+$$;
 
 -- 4.5 Trigger pour mettre à jour le compteur quotidien
 CREATE OR REPLACE FUNCTION public.update_daily_notification_count()
@@ -468,7 +468,7 @@ RETURNS TRIGGER
 LANGUAGE plpgsql
 SECURITY DEFINER
 SET search_path = public
-AS \$\$
+AS $$
 BEGIN
     -- Réinitialiser le compteur si c'est un nouveau jour
     UPDATE public.notification_preferences
@@ -487,7 +487,7 @@ BEGIN
     
     RETURN NEW;
 END;
-\$\$;
+$$;
 
 -- Trigger pour le compteur quotidien
 DROP TRIGGER IF EXISTS trigger_update_daily_notification_count ON public.notifications;
@@ -514,7 +514,7 @@ RETURNS uuid
 LANGUAGE plpgsql
 SECURITY DEFINER
 SET search_path = public
-AS \$\$
+AS $$
 DECLARE
     v_notification_id uuid;
     v_can_send boolean;
@@ -556,7 +556,7 @@ BEGIN
     
     RETURN v_notification_id;
 END;
-\$\$;
+$$;
 
 -- ===========================================================================
 -- 5. VUES UTILES
@@ -629,12 +629,12 @@ ON CONFLICT (reaction_value) DO NOTHING;
 
 -- Trigger pour updated_at
 CREATE OR REPLACE FUNCTION public.update_updated_at_column()
-RETURNS TRIGGER AS \$\$
+RETURNS TRIGGER AS $$
 BEGIN
     NEW.updated_at = now();
     RETURN NEW;
 END;
-\$\$ LANGUAGE plpgsql;
+$$ LANGUAGE plpgsql;
 
 -- Appliquer les triggers updated_at
 DROP TRIGGER IF EXISTS update_conversation_members_updated_at ON public.conversation_members;

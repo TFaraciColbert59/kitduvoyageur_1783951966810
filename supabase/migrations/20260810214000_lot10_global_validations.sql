@@ -50,13 +50,13 @@ CREATE TABLE IF NOT EXISTS public.global_validation_results (
     severity text DEFAULT 'medium' CHECK (severity IN ('low', 'medium', 'high', 'critical')),
     
     -- Audit
-    created_at timestamptz DEFAULT now(),
-    
-    -- Index pour la recherche
-    INDEX idx_validation_results_category (validation_category),
-    INDEX idx_validation_results_result (validation_result),
-    INDEX idx_validation_results_severity (severity)
+    created_at timestamptz DEFAULT now()
 );
+
+-- Index pour la recherche
+CREATE INDEX IF NOT EXISTS idx_validation_results_category ON public.global_validation_results(validation_category);
+CREATE INDEX IF NOT EXISTS idx_validation_results_result ON public.global_validation_results(validation_result);
+CREATE INDEX IF NOT EXISTS idx_validation_results_severity ON public.global_validation_results(severity);
 
 -- ===========================================================================
 -- 3. VALIDATIONS DE SCHÉMA
@@ -73,7 +73,7 @@ RETURNS TABLE (
 LANGUAGE plpgsql
 SECURITY DEFINER
 SET search_path = public
-AS \$\$
+AS $$
 DECLARE
     critical_tables text[] := ARRAY[
         'profiles', 'user_profiles', 'trails', 'hiking_trails', 'carnets',
@@ -110,7 +110,7 @@ BEGIN
             critical_tables;
     END IF;
 END;
-\$\$;
+$$;
 
 -- 3.2 Fonction pour valider les contraintes d'intégrité référentielle
 CREATE OR REPLACE FUNCTION public.validate_referential_integrity()
@@ -123,7 +123,7 @@ RETURNS TABLE (
 LANGUAGE plpgsql
 SECURITY DEFINER
 SET search_path = public
-AS \$\$
+AS $$
 DECLARE
     integrity_issues text[] := '{}';
     constraint_record RECORD;
@@ -181,7 +181,7 @@ BEGIN
             ARRAY['all_tables']::text[];
     END IF;
 END;
-\$\$;
+$$;
 
 -- ===========================================================================
 -- 4. VALIDATIONS DE DONNÉES
@@ -198,7 +198,7 @@ RETURNS TABLE (
 LANGUAGE plpgsql
 SECURITY DEFINER
 SET search_path = public
-AS \$\$
+AS $$
 DECLARE
     validation_issues text[] := '{}';
     issue_count integer;
@@ -265,7 +265,7 @@ BEGIN
             ARRAY['all_business_tables']::text[];
     END IF;
 END;
-\$\$;
+$$;
 
 -- ===========================================================================
 -- 5. VALIDATIONS DE SÉCURITÉ
@@ -282,7 +282,7 @@ RETURNS TABLE (
 LANGUAGE plpgsql
 SECURITY DEFINER
 SET search_path = public
-AS \$\$
+AS $$
 DECLARE
     rls_issues text[] := '{}';
     table_record RECORD;
@@ -328,7 +328,7 @@ BEGIN
             ARRAY['all_secured_tables']::text[];
     END IF;
 END;
-\$\$;
+$$;
 
 -- ===========================================================================
 -- 6. VALIDATIONS DE PERFORMANCE
@@ -345,7 +345,7 @@ RETURNS TABLE (
 LANGUAGE plpgsql
 SECURITY DEFINER
 SET search_path = public
-AS \$\$
+AS $$
 DECLARE
     missing_indexes text[] := '{}';
     index_record RECORD;
@@ -394,7 +394,7 @@ BEGIN
             ARRAY['all_indexed_tables']::text[];
     END IF;
 END;
-\$\$;
+$$;
 
 -- ===========================================================================
 -- 7. EXÉCUTION DES VALIDATIONS GLOBALES
@@ -406,7 +406,7 @@ RETURNS json
 LANGUAGE plpgsql
 SECURITY DEFINER
 SET search_path = public
-AS \$\$
+AS $$
 DECLARE
     validation_results json;
     validation_record RECORD;
@@ -497,7 +497,7 @@ BEGIN
     
     RETURN validation_results;
 END;
-\$\$;
+$$;
 
 -- ===========================================================================
 -- 8. RAPPORT FINAL DE VALIDATION
@@ -542,7 +542,7 @@ RETURNS json
 LANGUAGE plpgsql
 SECURITY DEFINER
 SET search_path = public
-AS \$\$
+AS $$
 DECLARE
     summary_json json;
 BEGIN
@@ -592,14 +592,14 @@ BEGIN
     
     RETURN summary_json;
 END;
-\$\$;
+$$;
 
 -- ===========================================================================
 -- 9. EXÉCUTION AUTOMATIQUE ET DOCUMENTATION
 -- ===========================================================================
 
 -- 9.1 Exécuter les validations maintenant
-DO \$\$
+DO $$
 DECLARE
     validation_results json;
     summary_report json;
@@ -613,7 +613,7 @@ BEGIN
     -- Log du résultat
     RAISE NOTICE 'LOT 10: Validations globales exécutées. Résumé: %', summary_report;
 END;
-\$\$;
+$$;
 
 -- ===========================================================================
 -- 10. VÉRIFICATION FINALE DES LOTS
@@ -644,12 +644,12 @@ CREATE TABLE IF NOT EXISTS public.lkdv_lot_completion (
     
     -- Audit
     created_at timestamptz DEFAULT now(),
-    updated_at timestamptz DEFAULT now(),
-    
-    -- Index
-    INDEX idx_lot_completion_status (execution_status),
-    INDEX idx_lot_completion_validation (validation_passed)
+    updated_at timestamptz DEFAULT now()
 );
+
+-- Index
+CREATE INDEX IF NOT EXISTS idx_lot_completion_status ON public.lkdv_lot_completion(execution_status);
+CREATE INDEX IF NOT EXISTS idx_lot_completion_validation ON public.lkdv_lot_completion(validation_passed);
 
 -- 10.2 Enregistrer l'état des lots
 INSERT INTO public.lkdv_lot_completion (
@@ -708,7 +708,7 @@ RETURNS json
 LANGUAGE plpgsql
 SECURITY DEFINER
 SET search_path = public
-AS \$\$
+AS $$
 DECLARE
     final_report json;
 BEGIN
@@ -761,14 +761,14 @@ BEGIN
     
     RETURN final_report;
 END;
-\$\$;
+$$;
 
 -- ===========================================================================
 -- 12. FINALISATION
 -- ===========================================================================
 
 -- Exécuter et afficher le rapport final
-DO \$\$
+DO $$
 DECLARE
     final_report json;
 BEGIN
@@ -787,7 +787,7 @@ BEGIN
     RAISE NOTICE 'Ordre d''exécution: 1 → 2 → 3 → 4 → 5 → 6 → 7 → 8 → 9 → 10';
     RAISE NOTICE '========================================';
 END;
-\$\$;
+$$;
 
 -- ===========================================================================
 -- 13. SÉCURITÉ ET AUDIT FINAL
