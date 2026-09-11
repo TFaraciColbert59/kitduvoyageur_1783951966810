@@ -72,8 +72,8 @@ export function hasEntitlement(plan: PlanId, entitlement: Entitlement): boolean 
 
 /**
  * Premier plan de la hiérarchie qui débloque l'entitlement. Un entitlement
- * inconnu retombe sur le plan le plus restrictif (`group`), qui ne le
- * débloque pas : il ne peut donc jamais être accordé par erreur.
+ * inconnu retombe sur le plan le plus élevé (`group`), qui ne le débloque
+ * pas non plus : il ne peut donc jamais être accordé par erreur.
  */
 export function requiredPlanFor(entitlement: Entitlement): PlanId {
   for (const plan of PLANS) {
