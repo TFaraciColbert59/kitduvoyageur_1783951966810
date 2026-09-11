@@ -77,26 +77,60 @@ describe('Flags A3 — TEST-A3-FLAG', () => {
     const flags = await currentAdventureFeatureFlags();
 
     expect(rpc).toHaveBeenCalledWith('current_feature_flags');
-    expect(flags).toEqual({ performance_profile_v2: true, route_prediction_v2: false });
+    expect(flags).toEqual({
+      performance_profile_v2: true,
+      route_prediction_v2: false,
+      collective_intelligence: false,
+      terrain_live: false,
+    });
 
     rpc.mockResolvedValue({ data: [{ id: 'performance_profile_v2', enabled: false }], error: null });
     const partial = await currentAdventureFeatureFlags();
-    expect(partial).toEqual({ performance_profile_v2: false, route_prediction_v2: false });
+    expect(partial).toEqual({
+      performance_profile_v2: false,
+      route_prediction_v2: false,
+      collective_intelligence: false,
+      terrain_live: false,
+    });
+  });
+
+  it('TEST-A11-FLAG-FOR-01: avec userId, lit les flags via la RPC de cohortes', async () => {
+    const rpc = vi.fn().mockResolvedValue({
+      data: [
+        { id: 'performance_profile_v2', enabled: true },
+        { id: 'collective_intelligence', enabled: true },
+        { id: 'terrain_live', enabled: false },
+      ],
+      error: null,
+    });
+    (createClient as ReturnType<typeof vi.fn>).mockResolvedValue({ rpc });
+
+    const flags = await currentAdventureFeatureFlags(USER_ID);
+
+    expect(rpc).toHaveBeenCalledWith('current_feature_flags_for', { p_user_id: USER_ID });
+    expect(flags).toEqual({
+      performance_profile_v2: true,
+      route_prediction_v2: false,
+      collective_intelligence: true,
+      terrain_live: false,
+    });
   });
 
   it('TEST-A3-FLAG-02: erreur ou exception ⇒ repli fail-safe tout désactivé', async () => {
     (createClient as ReturnType<typeof vi.fn>).mockResolvedValue({
       rpc: vi.fn().mockResolvedValue({ data: null, error: { message: 'rpc absente' } }),
     });
-    await expect(currentAdventureFeatureFlags()).resolves.toEqual({
-      performance_profile_v2: false,
-      route_prediction_v2: false,
-    });
+    await expect(currentAdventureFeatureFlags()).resolves.toEqual(A3_FLAGS);
 
     (createClient as ReturnType<typeof vi.fn>).mockRejectedValue(new Error('supabase down'));
     await expect(currentAdventureFeatureFlags()).resolves.toEqual(A3_FLAGS);
 
-    expect(A3_FLAGS).toEqual({ performance_profile_v2: false, route_prediction_v2: false });
+    expect(A3_FLAGS).toEqual({
+      performance_profile_v2: false,
+      route_prediction_v2: false,
+      collective_intelligence: false,
+      terrain_live: false,
+    });
   });
 });
 

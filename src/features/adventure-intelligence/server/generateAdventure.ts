@@ -57,6 +57,30 @@ export interface AdventurePlanBundle {
 /** Version de modèle des prédictions persistées (A10 — 10.9). */
 export const ADVENTURE_PREDICTION_MODEL_VERSION = 'a10-v1';
 
+/** A11 #34 — version globale du pipeline d'orchestration (observabilité). */
+export const ADVENTURE_PIPELINE_VERSION = 'a11-v1';
+
+/**
+ * A11 #34 — codes d'avertissement comptés comme replis explicites dans
+ * `adventure_engine_runs.fallback_count` (allure standard sans profil,
+ * sections sans source déterministe). Volontairement conservateur : seuls les
+ * replis documentés comptent, jamais une estimation normale.
+ */
+export const FALLBACK_WARNING_CODES = [
+  'cold_profile',
+  'prediction_no_source',
+  'difficulty_no_source',
+  'budget_no_source',
+  'gear_no_source',
+  'safety_no_source',
+  'coherence_no_source',
+] as const;
+
+function countFallbacks(run: EngineRunRecord): number {
+  const codes = new Set<string>(FALLBACK_WARNING_CODES);
+  return run.warnings.filter((warning) => codes.has(warning.code)).length;
+}
+
 /**
  * Contexte de prédiction : découpage uniforme des agrégats du blueprint tant
  * que le routage réel (segments map-matchés) n'est pas branché — note a11.
@@ -436,7 +460,11 @@ function versionRow(plan: AdventurePlan, reason: string, generatedBy: string): R
   };
 }
 
-function runRow(planId: string | null, run: EngineRunRecord, now: string): Record<string, unknown> {
+function runRow(
+  planId: string | null,
+  run: EngineRunRecord,
+  correlationId: string
+): Record<string, unknown> {
   return {
     plan_id: planId,
     engine_id: run.engineId,
@@ -445,8 +473,12 @@ function runRow(planId: string | null, run: EngineRunRecord, now: string): Recor
     duration_ms: run.durationMs,
     warnings: run.warnings,
     error: run.error ?? null,
-    started_at: now,
-    finished_at: now,
+    started_at: run.startedAt,
+    finished_at: run.finishedAt,
+    correlation_id: correlationId,
+    pipeline_version: ADVENTURE_PIPELINE_VERSION,
+    external_calls: [],
+    fallback_count: countFallbacks(run),
   };
 }
 
@@ -540,6 +572,9 @@ export async function generateAdventure(
   deps: AdventureGenerationDeps
 ): Promise<AdventureGenerationResult> {
   const now = input.now ?? new Date().toISOString();
+  // A11 #34 — un seul identifiant de corrélation par génération, propagé à
+  // tous les runs (tracés même en cas d'échec critique du pipeline).
+  const correlationId = randomUUID();
 
   // A10 (10.9) — le consentement est vérifié AVANT tout chargement de profil :
   // sans `personal_performance`, aucun profil n'est lu et les adaptateurs
@@ -612,7 +647,7 @@ export async function generateAdventure(
         : [];
     for (const run of runs) {
       try {
-        await deps.persistence.insertEngineRun(runRow(null, run, now));
+        await deps.persistence.insertEngineRun(runRow(null, run, correlationId));
       } catch {
         // L'observabilité ne doit jamais masquer l'échec critique d'origine.
       }
@@ -658,7 +693,7 @@ export async function generateAdventure(
   const inserted = await deps.persistence.persistPlanBundle({
     plan: planRow(plan),
     version: versionRow(plan, 'Génération initiale (A6)', 'a6-orchestrator'),
-    runs: runs.map((run) => runRow(plan.id, run, now)),
+    runs: runs.map((run) => runRow(plan.id, run, correlationId)),
     decisions: decisions.map((decision) => decisionRow(plan.id, decision)),
   });
   plan.id = inserted.id;

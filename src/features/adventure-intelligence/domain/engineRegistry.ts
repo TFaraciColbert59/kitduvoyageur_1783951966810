@@ -29,6 +29,10 @@ export interface EngineRunRecord {
   durationMs: number;
   warnings: EngineWarning[];
   error?: string;
+  /** Horodatage réel de début (ISO), mesuré par le registre (A11 #34). */
+  startedAt: string;
+  /** Horodatage réel de fin (ISO), strictement postérieur si le moteur a tourné. */
+  finishedAt: string;
 }
 
 /** Un moteur peut déclarer en amont pourquoi il sera skippé (source absente). */
@@ -128,6 +132,7 @@ export class EngineRegistry {
 
     for (const engine of this.orderedEngines()) {
       if (!engine.canRun(context)) {
+        const skippedAt = new Date().toISOString();
         runs.push({
           engineId: engine.id,
           engineVersion: engine.version,
@@ -140,6 +145,8 @@ export class EngineRegistry {
               severity: 'warning',
             },
           ],
+          startedAt: skippedAt,
+          finishedAt: skippedAt,
         });
         continue;
       }
@@ -147,10 +154,12 @@ export class EngineRegistry {
       let input = resolveInput(engine.id, outputs);
       if (input === undefined) input = initial;
 
-      const startedAt = Date.now();
+      const startedAtMs = Date.now();
+      const startedAt = new Date(startedAtMs).toISOString();
       try {
         const result: EngineResult<unknown> = await engine.run(input, context);
-        const durationMs = Math.max(0, Date.now() - startedAt);
+        const finishedAtMs = Math.max(Date.now(), startedAtMs + 1);
+        const durationMs = finishedAtMs - startedAtMs;
         outputs.set(engine.id, result);
         confidences.push(result.confidence);
         runs.push({
@@ -159,9 +168,13 @@ export class EngineRegistry {
           status: 'succeeded',
           durationMs,
           warnings: [...result.warnings],
+          startedAt,
+          finishedAt: new Date(finishedAtMs).toISOString(),
         });
       } catch (error) {
-        const durationMs = Math.max(0, Date.now() - startedAt);
+        const finishedAtMs = Math.max(Date.now(), startedAtMs + 1);
+        const durationMs = finishedAtMs - startedAtMs;
+        const finishedAt = new Date(finishedAtMs).toISOString();
         if (error instanceof EngineSkipSignal) {
           runs.push({
             engineId: engine.id,
@@ -169,6 +182,8 @@ export class EngineRegistry {
             status: 'skipped',
             durationMs,
             warnings: [error.warning],
+            startedAt,
+            finishedAt,
           });
           continue;
         }
@@ -187,6 +202,8 @@ export class EngineRegistry {
             },
           ],
           error: message,
+          startedAt,
+          finishedAt,
         });
         if (isCriticalEngine(engine.id)) {
           throw new CriticalEngineError(engine.id, message, runs);
