@@ -1,4 +1,5 @@
 import { createClient } from '@/lib/supabase/client';
+import { fetchPublicProfilesWith } from '@/lib/queries/publicProfilesCore';
 
 const UUID_REGEX = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
@@ -83,11 +84,11 @@ export async function getGroupeComplet(groupeId: string) {
     { data: messages, error: msgErr },
     { data: votes, error: votesErr },
   ] = await Promise.all([
-    supabase.from('group_members').select('id, user_id, role, status, joined_at, profile:user_profiles!group_members_user_id_fkey(full_name, avatar_url)').eq('group_id', realGroupId).order('joined_at', { ascending: true }),
-    supabase.from('group_tasks').select('id, title, description, status, assigned_to, due_date, created_at, assigne:user_profiles!group_tasks_assigned_to_fkey(full_name)').eq('group_id', realGroupId).order('created_at', { ascending: false }),
-    supabase.from('group_kit_items').select('id, name, weight_grams, category, quantity, is_shared, notes, assigned_to, apporte:user_profiles!group_kit_items_assigned_to_fkey(full_name)').eq('group_id', realGroupId).order('created_at', { ascending: false }),
-    supabase.from('group_expenses').select('id, title, amount, category, split_between, status, created_at, paid_by, payeur:user_profiles!group_expenses_paid_by_fkey(full_name)').eq('group_id', realGroupId).order('created_at', { ascending: false }),
-    supabase.from('group_messages').select('id, content, media_url, created_at, user_id, auteur:user_profiles!group_messages_user_id_fkey(full_name)').eq('group_id', realGroupId).order('created_at', { ascending: false }).limit(200),
+    supabase.from('group_members').select('id, user_id, role, status, joined_at').eq('group_id', realGroupId).order('joined_at', { ascending: true }),
+    supabase.from('group_tasks').select('id, title, description, status, assigned_to, due_date, created_at').eq('group_id', realGroupId).order('created_at', { ascending: false }),
+    supabase.from('group_kit_items').select('id, name, weight_grams, category, quantity, is_shared, notes, assigned_to').eq('group_id', realGroupId).order('created_at', { ascending: false }),
+    supabase.from('group_expenses').select('id, title, amount, category, split_between, status, created_at, paid_by').eq('group_id', realGroupId).order('created_at', { ascending: false }),
+    supabase.from('group_messages').select('id, content, media_url, created_at, user_id').eq('group_id', realGroupId).order('created_at', { ascending: false }).limit(200),
     supabase.from('group_polls').select('*').eq('group_id', realGroupId).eq('status', 'open').order('created_at', { ascending: false }),
   ]);
 
@@ -97,6 +98,16 @@ export async function getGroupeComplet(groupeId: string) {
   if (depErr) console.error('[groupe] expenses error:', depErr);
   if (msgErr) console.error('[groupe] messages error:', msgErr);
   if (votesErr) console.error('[groupe] polls error:', votesErr);
+
+  // F1 — profils publics en deux étapes : jamais d'embed FK vers la table
+  // `user_profiles` (RLS fermée), uniquement la vue `public_profiles`.
+  const profileMap = await fetchPublicProfilesWith(supabase, [
+    ...(travelMembers ?? []).map((m: any) => m.user_id as string),
+    ...(taches ?? []).map((t: any) => t.assigned_to as string),
+    ...(equipement ?? []).map((e: any) => e.assigned_to as string),
+    ...(depenses ?? []).map((d: any) => d.paid_by as string),
+    ...(messages ?? []).map((m: any) => m.user_id as string),
+  ]);
 
   const membres = travelMembers || [];
   const activeMembers = membres.filter((m: any) => m.status === 'active' || !m.status);
@@ -113,7 +124,7 @@ export async function getGroupeComplet(groupeId: string) {
     id: t.id,
     title: t.title,
     assigneeId: t.assigned_to || undefined,
-    assignee: displayName(t.assigne, 'Non attribué'),
+    assignee: displayName(profileMap[t.assigned_to], 'Non attribué'),
     tags: t.status === 'done' ? ['Fait', 'Terminée'] : ['À faire'],
     completed: t.status === 'done',
     statusCode: t.status || 'todo',
@@ -126,7 +137,7 @@ export async function getGroupeComplet(groupeId: string) {
     id: e.id,
     item: e.name,
     assigneeId: e.assigned_to || undefined,
-    assignee: displayName(e.apporte, 'Non attribué'),
+    assignee: displayName(profileMap[e.assigned_to], 'Non attribué'),
     weight: `${((e.weight_grams || 0) / 1000).toFixed(1)} kg`,
     weightGrams: e.weight_grams || 0,
     quantity: e.quantity || 1,
@@ -149,7 +160,7 @@ export async function getGroupeComplet(groupeId: string) {
     items: (depenses || []).map((d: any) => ({
       id: d.id,
       title: d.title,
-      payer: `${displayName(d.payeur, 'Anonyme')} · ${d.status === 'settled' ? 'réglée' : 'en attente'}`,
+      payer: `${displayName(profileMap[d.paid_by], 'Anonyme')} · ${d.status === 'settled' ? 'réglée' : 'en attente'}`,
       parts: (d.split_between && d.split_between.length ? d.split_between.length : nbMembers),
       amount: Math.round(Number(d.amount || 0)),
       paidBy: d.paid_by || null,
@@ -193,7 +204,7 @@ export async function getGroupeComplet(groupeId: string) {
   // Format discussions / messages
   const formattedDiscussions = (messages || []).map((m: any) => ({
     id: m.id,
-    author: displayName(m.auteur, 'Membre'),
+    author: displayName(profileMap[m.user_id], 'Membre'),
     time: formatDateTime(m.created_at),
     content: m.content,
     attachment: m.media_url || undefined,
@@ -209,11 +220,11 @@ export async function getGroupeComplet(groupeId: string) {
     return {
       id: m.id,
       user_id: m.user_id,
-      name: displayName(m.profile, 'Membre'),
+      name: displayName(profileMap[m.user_id], 'Membre'),
       role,
       status: 'Prêt',
       progress: 100,
-      user_profiles: m.profile,
+      user_profiles: profileMap[m.user_id] ?? null,
       role_code: m.role,
       status_code: m.status,
     };
@@ -225,11 +236,11 @@ export async function getGroupeComplet(groupeId: string) {
     .map((m: any) => ({
       id: m.id,
       user_id: m.user_id,
-      name: displayName(m.profile, 'Invité'),
+      name: displayName(profileMap[m.user_id], 'Invité'),
       role: 'INVITÉ',
       status: 'En attente',
       progress: 0,
-      user_profiles: m.profile,
+      user_profiles: profileMap[m.user_id] ?? null,
       role_code: m.role,
       status_code: m.status,
     }));

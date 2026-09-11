@@ -5,6 +5,7 @@ import React, { useState } from 'react';
 import Link from 'next/link';
 import Icon from '@/components/ui/AppIcon';
 import { createClient } from '@/lib/supabase/client';
+import { fetchPublicProfilesWith } from '@/lib/queries/publicProfilesCore';
 
 export interface CommentData {
   id: string;
@@ -153,7 +154,7 @@ export default function CommentItem({
         const { data, error } = await supabase
           .from(tableName)
           .insert(payload)
-          .select(`*, author:user_profiles(full_name, avatar_url)`)
+          .select('*')
           .single();
         if (!error && data) { inserted = data; break; }
         const msg = (error as any)?.message || '';
@@ -164,6 +165,15 @@ export default function CommentItem({
       }
 
       if (inserted) {
+        // F1 — auteur via la vue `public_profiles` (jamais d'embed FK).
+        const profiles = await fetchPublicProfilesWith(supabase, [currentUser.id]);
+        const profile = profiles[currentUser.id];
+        inserted = {
+          ...inserted,
+          author: profile
+            ? { id: profile.id, full_name: profile.full_name ?? '', avatar_url: profile.avatar_url ?? '' }
+            : undefined,
+        };
         setReplyText('');
         setIsReplying(false);
         onReply?.(comment.id, inserted as CommentData);

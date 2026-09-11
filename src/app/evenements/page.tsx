@@ -6,6 +6,7 @@ import Footer from '@/components/Footer';
 import MobilePageShell from '@/components/mobile-nav/MobilePageShell';
 import Icon from '@/components/ui/AppIcon';
 import { createClient } from '@/lib/supabase/client';
+import { fetchPublicProfilesWith } from '@/lib/queries/publicProfilesCore';
 import { useAuth } from '@/contexts/AuthContext';
 
 interface EventExpense {
@@ -490,10 +491,17 @@ export default function EvenementsPage() {
     try {
       const { data: eventsData, error: eventsError } = await supabase
         .from('events')
-        .select('*, organizer:user_profiles!events_organizer_id_fkey(full_name, trust_score), expenses:event_expenses(*)')
+        .select('*, expenses:event_expenses(*)')
         .order('event_date', { ascending: true });
 
       if (eventsError) throw eventsError;
+
+      // F1 — organisateurs via la vue `public_profiles` (deux étapes, sans embed).
+      const eventRows = (eventsData ?? []) as Array<{ organizer_id?: string | null }>;
+      const organizerProfiles = await fetchPublicProfilesWith(
+        supabase,
+        eventRows.map((e) => e.organizer_id ?? '')
+      );
 
       let registeredIds: string[] = [];
       if (user) {
@@ -504,7 +512,19 @@ export default function EvenementsPage() {
         registeredIds = participations?.map((p) => p.event_id) ?? [];
       }
 
-      setEvents((eventsData ?? []).map((e) => ({ ...e, is_registered: registeredIds.includes(e.id) })));
+      setEvents(
+        (eventsData ?? []).map((e) => ({
+          ...e,
+          organizer:
+            e.organizer_id && organizerProfiles[e.organizer_id]
+              ? {
+                  full_name: organizerProfiles[e.organizer_id].full_name ?? '',
+                  trust_score: organizerProfiles[e.organizer_id].trust_score ?? 0,
+                }
+              : undefined,
+          is_registered: registeredIds.includes(e.id),
+        }))
+      );
     } catch (err: any) {
       setError(err.message);
     } finally {

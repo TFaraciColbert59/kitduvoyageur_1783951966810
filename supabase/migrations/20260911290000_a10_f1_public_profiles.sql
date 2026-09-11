@@ -22,11 +22,19 @@ SELECT
   id,
   full_name,
   avatar_url,
-  trust_score
+  bio,
+  location,
+  website,
+  trust_score,
+  loyalty_points,
+  loyalty_level,
+  xp,
+  level,
+  created_at
 FROM public.user_profiles;
 
 COMMENT ON VIEW public.public_profiles IS
-  'Vue SECURITY DEFINER volontaire : projection publique minimale des profils (id, full_name, avatar_url, trust_score), sans email/téléphone/rôle/signature_visibility/préférences. La RLS de user_profiles (sans FORCE) est contournée par le propriétaire de la vue ; l''accès public est borné par les GRANT à anon/authenticated.';
+  'Vue SECURITY DEFINER volontaire : projection publique des profils (identité affichable, bio/localisation/site déclarés, gamification) — sans email, téléphone, rôle, signature_visibility ni préférences. La RLS de user_profiles (sans FORCE) est contournée par le propriétaire de la vue ; l''accès public est borné par les GRANT à anon/authenticated.';
 
 GRANT SELECT ON public.public_profiles TO anon, authenticated;
 GRANT SELECT ON public.public_profiles TO service_role;

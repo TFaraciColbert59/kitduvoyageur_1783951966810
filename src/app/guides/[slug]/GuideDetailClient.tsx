@@ -7,6 +7,7 @@ import Footer from '@/components/Footer';
 import MobilePageShell from '@/components/mobile-nav/MobilePageShell';
 import Icon from '@/components/ui/AppIcon';
 import { createClient } from '@/lib/supabase/client';
+import { fetchPublicProfilesWith } from '@/lib/queries/publicProfilesCore';
 
 
 interface Guide {
@@ -45,14 +46,23 @@ export default function GuideDetailClient({ slug }: { slug: string }) {
       try {
         const { data, error } = await supabase
           .from('guides')
-          .select('*, author:user_profiles!guides_author_id_fkey(full_name)')
+          .select('*')
           .eq('slug', slug)
           .single();
 
         if (error || !data) {
           setNotFoundState(true);
         } else {
-          setGuide(data);
+          // F1 — auteur via la vue `public_profiles` (deux étapes, sans embed).
+          const profile = data.author_id
+            ? (await fetchPublicProfilesWith(supabase, [data.author_id as string]))[
+                data.author_id as string
+              ]
+            : undefined;
+          setGuide({
+            ...(data as Guide),
+            author: profile ? { full_name: profile.full_name ?? '' } : undefined,
+          });
         }
       } catch {
         setNotFoundState(true);

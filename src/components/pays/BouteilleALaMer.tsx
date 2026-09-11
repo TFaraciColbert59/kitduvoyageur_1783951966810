@@ -5,6 +5,7 @@ import React, { useEffect, useState, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { createClient } from '@/lib/supabase/client';
+import { fetchPublicProfilesWith } from '@/lib/queries/publicProfilesCore';
 import { useAuth } from '@/contexts/AuthContext';
 import ReportBlockModal, { ReportTarget } from '@/components/ui/ReportBlockModal';
 import { GlassCard } from '@/components/ui/GlassCard';
@@ -72,7 +73,6 @@ export default function BouteilleALaMer({ countryIso, countryName }: Props) {
       .from('travel_groups')
       .select(`
         *,
-        owner:user_profiles!travel_groups_owner_id_fkey(id, full_name, avatar_url, trust_score, created_at),
         members:group_members(id, user_id, status, role),
         expenses:group_expenses(amount)
       `)
@@ -80,8 +80,13 @@ export default function BouteilleALaMer({ countryIso, countryName }: Props) {
       .ilike('country_iso', iso)
       .order('created_at', { ascending: false })
       .limit(2);
-      
+
     if (!error && groupsData) {
+      // F1 — propriétaires via la vue `public_profiles` (deux étapes, sans embed).
+      const ownerProfiles = await fetchPublicProfilesWith(
+        supabase,
+        groupsData.map((g: any) => g.owner_id as string)
+      );
       // Check user blocks if logged in
       let blockedUserIds = new Set<string>();
       if (user) {
@@ -107,6 +112,7 @@ export default function BouteilleALaMer({ countryIso, countryName }: Props) {
 
           return {
             ...g,
+            owner: ownerProfiles[g.owner_id] ?? null,
             activeMembersCount: activeMembers.length,
             pendingCount: pendingMembers.length,
             spotsLeft: Math.max(0, (g.max_members || 12) - activeMembers.length),
@@ -132,25 +138,19 @@ export default function BouteilleALaMer({ countryIso, countryName }: Props) {
     try {
       const { data, error } = await supabase
         .from('group_members')
-        .select(`
-          id,
-          user_id,
-          status,
-          joined_at,
-          profile:user_profiles!group_members_user_id_fkey(
-            id,
-            full_name,
-            avatar_url,
-            trust_score,
-            created_at,
-            bio
-          )
-        `)
+        .select('id, user_id, status, joined_at')
         .eq('group_id', group.id)
         .eq('status', 'pending');
 
       if (!error && data) {
-        setPendingApplicants(data as any[]);
+        // F1 — profils des demandeurs via la vue `public_profiles`.
+        const profiles = await fetchPublicProfilesWith(
+          supabase,
+          data.map((m: any) => m.user_id as string)
+        );
+        setPendingApplicants(
+          data.map((m: any) => ({ ...m, profile: profiles[m.user_id] ?? null }))
+        );
       }
     } catch (err) {
       console.error("Error loading pending applicants:", err);

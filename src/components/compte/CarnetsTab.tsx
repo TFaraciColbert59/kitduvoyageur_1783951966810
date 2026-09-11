@@ -7,6 +7,7 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import Icon from '@/components/ui/AppIcon';
 import { createClient } from '@/lib/supabase/client';
+import { fetchPublicProfilesWith } from '@/lib/queries/publicProfilesCore';
 import { UserProfile } from '@/lib/mock/compte-marceline';
 
 // ─────────────────────────────────────────────
@@ -169,19 +170,27 @@ export default function CarnetsTab({ profile }: CarnetsTabProps) {
       if (user) {
         const { data: followers } = await supabase
           .from('user_follows')
-          .select('follower_id, follower:user_profiles!user_follows_follower_id_fkey(id, full_name, avatar_url, location)')
+          .select('follower_id')
           .eq('following_id', user.id)
           .limit(5);
 
         if (followers) {
-          const mapped: FideleReader[] = followers.map((f: any, i: number) => ({
-            id: f.follower?.id || i,
-            full_name: f.follower?.full_name || 'Voyageur',
-            avatar_url: f.follower?.avatar_url || null,
-            location: f.follower?.location || null,
-            // No read-count column exists: left undefined rather than fabricated
-            carnets_read: undefined,
-          }));
+          // F1 — profils publics via la vue `public_profiles` (deux étapes).
+          const followerProfiles = await fetchPublicProfilesWith(
+            supabase,
+            followers.map((f: any) => f.follower_id as string)
+          );
+          const mapped: FideleReader[] = followers.map((f: any, i: number) => {
+            const profile = followerProfiles[f.follower_id];
+            return {
+              id: profile?.id || f.follower_id || String(i),
+              full_name: profile?.full_name || 'Voyageur',
+              avatar_url: profile?.avatar_url || null,
+              location: profile?.location || null,
+              // No read-count column exists: left undefined rather than fabricated
+              carnets_read: undefined,
+            };
+          });
           setFideles(mapped);
         }
       }

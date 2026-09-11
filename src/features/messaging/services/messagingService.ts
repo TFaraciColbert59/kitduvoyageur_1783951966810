@@ -1,4 +1,5 @@
 import { createClient } from '@/lib/supabase/client';
+import { fetchPublicProfilesWith } from '@/lib/queries/publicProfilesCore';
 import { resolveGearImage } from '@/features/materiel/services/gearImageResolver';
 import type { Conversation, Message, UserProfileSummary, MessageReaction, MessageType, ConversationMember } from '../types/messaging.types';
 
@@ -461,11 +462,11 @@ export const messagingService = {
     }
 
     // 3. Obtenir les interlocuteurs pour les conversations directes (1:1)
-    let allMembers: { conversation_id: string; user_id: string; user_profiles: any }[] = [];
-    
+    let allMembers: { conversation_id: string; user_id: string }[] = [];
+
     const { data: memRes } = await supabase
       .from('conversation_members')
-      .select('conversation_id, user_id, user_profiles(id, full_name, avatar_url, username)')
+      .select('conversation_id, user_id')
       .in('conversation_id', conversationIds)
       .neq('user_id', userId);
 
@@ -474,7 +475,7 @@ export const messagingService = {
     } else {
       const { data: partRes } = await supabase
         .from('conversation_participants')
-        .select('conversation_id, user_id, user_profiles(id, full_name, avatar_url, username)')
+        .select('conversation_id, user_id')
         .in('conversation_id', conversationIds)
         .neq('user_id', userId);
       if (partRes) {
@@ -482,41 +483,42 @@ export const messagingService = {
       }
     }
 
-    const membersByConv = new Map<string, UserProfileSummary>();
-    if (allMembers) {
-      allMembers.forEach((m) => {
-        if (m.user_profiles && typeof m.user_profiles === 'object') {
-          const profile = Array.isArray(m.user_profiles) ? m.user_profiles[0] : m.user_profiles;
-          if (profile) {
-            membersByConv.set(m.conversation_id, {
-              id: profile.id,
-              full_name: profile.full_name || 'Voyageur LKDV',
-              avatar_url: profile.avatar_url || '/assets/images/no_image.png',
-              username: profile.username,
-            });
-          }
-        }
-      });
-    }
-
     // 4. Obtenir le dernier message pour chaque conversation
     const { data: lastMessages } = await supabase
       .from('messages')
-      .select('conversation_id, id, content, message_type, created_at, sender_id, user_profiles(full_name)')
+      .select('conversation_id, id, content, message_type, created_at, sender_id')
       .in('conversation_id', conversationIds)
       .order('created_at', { ascending: false });
+
+    // F1 — profils publics via la vue `public_profiles` (username absent → undefined).
+    const profileById = await fetchPublicProfilesWith(supabase, [
+      ...allMembers.map((m) => m.user_id),
+      ...((lastMessages ?? []) as any[]).map((msg) => msg.sender_id as string),
+    ]);
+
+    const membersByConv = new Map<string, UserProfileSummary>();
+    for (const m of allMembers) {
+      const profile = profileById[m.user_id];
+      if (profile) {
+        membersByConv.set(m.conversation_id, {
+          id: profile.id,
+          full_name: profile.full_name || 'Voyageur LKDV',
+          avatar_url: profile.avatar_url || '/assets/images/no_image.png',
+          username: undefined,
+        });
+      }
+    }
 
     const lastMsgByConv = new Map();
     if (lastMessages) {
       lastMessages.forEach((msg) => {
         if (!lastMsgByConv.has(msg.conversation_id)) {
-          const senderProfile = Array.isArray(msg.user_profiles) ? msg.user_profiles[0] : msg.user_profiles;
           lastMsgByConv.set(msg.conversation_id, {
             id: msg.id,
             content: msg.content,
             message_type: msg.message_type,
             created_at: msg.created_at,
-            sender_name: senderProfile?.full_name || 'Voyageur',
+            sender_name: profileById[(msg as any).sender_id]?.full_name || 'Voyageur',
           });
         }
       });
@@ -603,12 +605,6 @@ export const messagingService = {
         deleted_at,
         created_at,
         updated_at,
-        user_profiles (
-          id,
-          full_name,
-          avatar_url,
-          username
-        ),
         message_reactions (
           id,
           message_id,
@@ -628,10 +624,15 @@ export const messagingService = {
     }
 
     const rawMessages = data as any[];
+    // F1 — profils publics via la vue `public_profiles` (jamais d'embed FK).
+    const profileById = await fetchPublicProfilesWith(
+      supabase,
+      rawMessages.map((msg) => msg.sender_id as string)
+    );
     const messageMap = new Map<string, { id: string; sender_name: string; content: string }>();
 
     rawMessages.forEach((msg) => {
-      const profile = Array.isArray(msg.user_profiles) ? msg.user_profiles[0] : msg.user_profiles;
+      const profile = profileById[msg.sender_id];
       messageMap.set(msg.id, {
         id: msg.id,
         sender_name: profile?.full_name || 'Voyageur',
@@ -640,7 +641,7 @@ export const messagingService = {
     });
 
     return rawMessages.map((msg) => {
-      const profile = Array.isArray(msg.user_profiles) ? msg.user_profiles[0] : msg.user_profiles;
+      const profile = profileById[msg.sender_id];
       const reactions = Array.isArray(msg.message_reactions) ? msg.message_reactions : [];
       const replyToMsg = msg.reply_to_id ? messageMap.get(msg.reply_to_id) || null : null;
 
@@ -661,7 +662,7 @@ export const messagingService = {
               id: profile.id,
               full_name: profile.full_name || 'Voyageur LKDV',
               avatar_url: profile.avatar_url || '/assets/images/no_image.png',
-              username: profile.username,
+              username: undefined,
             }
           : undefined,
         reactions: reactions.map((r: any) => ({
@@ -1212,20 +1213,20 @@ export const messagingService = {
         is_archived,
         last_read_at,
         unread_count,
-        joined_at,
-        user_profiles (
-          id,
-          full_name,
-          avatar_url,
-          username
-        )
+        joined_at
       `)
       .eq('conversation_id', conversationId);
 
     if (error || !data) return [];
 
+    // F1 — profils publics via la vue `public_profiles`.
+    const profileById = await fetchPublicProfilesWith(
+      supabase,
+      (data as any[]).map((m) => m.user_id as string)
+    );
+
     return data.map((m: any) => {
-      const prof = Array.isArray(m.user_profiles) ? m.user_profiles[0] : m.user_profiles;
+      const prof = profileById[m.user_id];
       return {
         id: m.id,
         conversation_id: m.conversation_id,
@@ -1241,7 +1242,7 @@ export const messagingService = {
               id: prof.id,
               full_name: prof.full_name || 'Voyageur LKDV',
               avatar_url: prof.avatar_url || '/assets/images/no_image.png',
-              username: prof.username,
+              username: undefined,
             }
           : undefined,
       };

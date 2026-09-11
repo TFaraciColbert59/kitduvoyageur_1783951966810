@@ -24,6 +24,7 @@ import {
   UpdateTripInput,
   computeTripPermissions,
 } from '@/features/trips/schemas/trip.schema';
+import { fetchPublicProfiles } from '@/lib/queries/publicProfiles';
 
 /**
  * 1.3.1 Récupérer les voyages publics avec filtres et pagination
@@ -312,7 +313,7 @@ async function loadFullTripDetails(
       .order('created_at', { ascending: false }),
   ]);
 
-  // Profils réels des collaborateurs ET des payeurs (user_profiles — pas
+  // Profils réels des collaborateurs ET des payeurs (vue publique — pas
   // d'embed FK direct : *_user_id/payer_id → auth.users). Source unique menu +
   // widgets : le moteur budget lit exp.payer.full_name pour nommer les balances.
   const collabRows = (collabsRes.data as TripCollaborator[]) || [];
@@ -323,27 +324,18 @@ async function loadFullTripDetails(
       ...expenseRows.map((e) => e.payer_id).filter(Boolean),
     ]),
   ];
-  const profileMap = new Map<string, { full_name?: string | null; avatar_url?: string | null }>();
-  if (collaboratorUserIds.length > 0) {
-    try {
-      const { data: profiles } = await supabase
-        .from('user_profiles')
-        .select('id, full_name, avatar_url')
-        .in('id', collaboratorUserIds);
-      for (const p of (profiles ?? []) as Array<{ id: string; full_name?: string | null; avatar_url?: string | null }>) {
-        profileMap.set(p.id, { full_name: p.full_name || null, avatar_url: p.avatar_url || null });
-      }
-    } catch (err) {
-      console.error('[LKDV trips] collaborator profiles error:', err);
-    }
-  }
+  // F1 : lecture publique via `public_profiles` (helper dédup/cap, {} sur erreur).
+  const profileMap = await fetchPublicProfiles(collaboratorUserIds as string[]);
 
   return {
     ...trip,
-    collaborators: collabRows.map((c) => ({ ...c, profile: profileMap.get(c.user_id) })),
+    collaborators: collabRows.map((c) => ({ ...c, profile: profileMap[c.user_id] })),
     steps: (stepsRes.data as TripStep[]) || [],
     items: (itemsRes.data as TripItem[]) || [],
-    expenses: expenseRows.map((e) => ({ ...e, payer: profileMap.get(e.payer_id) })),
+    expenses: expenseRows.map((e) => ({
+      ...e,
+      payer: e.payer_id ? profileMap[e.payer_id] : undefined,
+    })),
     documents: (docsRes.data as TripDocument[]) || [],
     pois: (poisRes.data as TripPoi[]) || [],
     safety_checkpoints: (safetyRes.data as TripSafetyCheckpoint[]) || [],

@@ -4,6 +4,7 @@ import Icon from '@/components/ui/Icon';
 import React, { useState, useEffect } from 'react';
 import Image from 'next/image';
 import { createClient } from '@/lib/supabase/client';
+import { PUBLIC_PROFILES_VIEW } from '@/lib/queries/publicProfilesCore';
 import { messagingService } from '../services/messagingService';
 import { MobileSheet } from './MobileSheet';
 
@@ -38,9 +39,10 @@ export const NewConversationModal: React.FC<NewConversationModalProps> = ({
     const fetchTravelers = async () => {
       setLoading(true);
       const supabase = createClient();
+      // F1 — annuaire via la vue publique (username absent de la projection).
       let query = supabase
-        .from('user_profiles')
-        .select('id, full_name, avatar_url, username')
+        .from(PUBLIC_PROFILES_VIEW)
+        .select('id, full_name, avatar_url')
         .neq('id', currentUserId)
         .limit(20);
 
@@ -55,7 +57,7 @@ export const NewConversationModal: React.FC<NewConversationModalProps> = ({
             id: u.id,
             full_name: u.full_name || 'Voyageur LKDV',
             avatar_url: u.avatar_url || '/assets/images/no_image.png',
-            username: u.username,
+            username: undefined,
           }))
         );
       }

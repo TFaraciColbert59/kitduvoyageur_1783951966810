@@ -3,6 +3,7 @@
 import React, { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { createClient } from '@/lib/supabase/client';
+import { fetchPublicProfilesWith } from '@/lib/queries/publicProfilesCore';
 import Link from 'next/link';
 import { useHapticFeedback } from '@/hooks/useHapticFeedback';
 
@@ -25,14 +26,30 @@ export default function PaysCarnetsList({ countryIso, countryName }: Props) {
 
       const { data, error } = await supabase
         .from('carnets')
-        .select(`*, author:user_profiles(full_name, avatar_url)`)
+        .select('*')
         .eq('visibility', 'public')
         .ilike('country_iso', iso)
         .order('likes_count', { ascending: false })
         .limit(4);
 
       if (!error && data) {
-        setCarnets(data);
+        // F1 — auteurs via la vue `public_profiles` (deux étapes, sans embed).
+        const profiles = await fetchPublicProfilesWith(
+          supabase,
+          data.map((c: any) => c.author_id as string)
+        );
+        setCarnets(
+          data.map((c: any) => ({
+            ...c,
+            author: profiles[c.author_id]
+              ? {
+                  id: profiles[c.author_id].id,
+                  full_name: profiles[c.author_id].full_name,
+                  avatar_url: profiles[c.author_id].avatar_url,
+                }
+              : undefined,
+          }))
+        );
       }
       setLoading(false);
     }

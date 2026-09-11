@@ -2,6 +2,7 @@ import { lkvConfirm } from '@/components/ui/dialogs';
 import React, { useState } from 'react';
 import Link from 'next/link';
 import { createClient } from '@/lib/supabase/client';
+import { PUBLIC_PROFILES_VIEW, fetchPublicProfilesWith } from '@/lib/queries/publicProfilesCore';
 import Icon from '@/components/ui/AppIcon';
 import { useToast } from '@/contexts/ToastContext';
 
@@ -43,10 +44,16 @@ export default function VoyageursCard({ travelers, groupId, onRefresh, user, mem
     if (!groupId) return;
     const { data } = await supabase
       .from('group_members')
-      .select('id, user_id, status, invited_by, profile:user_profiles!group_members_user_id_fkey(full_name, avatar_url)')
+      .select('id, user_id, status, invited_by')
       .eq('group_id', groupId)
       .eq('status', 'pending');
-    setPendingMembers((data as any[]) ?? []);
+    // F1 — profils via la vue `public_profiles` (deux étapes, sans embed).
+    const rows = (data as any[]) ?? [];
+    const profiles = await fetchPublicProfilesWith(
+      supabase,
+      rows.map((m) => m.user_id as string)
+    );
+    setPendingMembers(rows.map((m) => ({ ...m, profile: profiles[m.user_id] ?? null })));
   };
 
   const openManage = () => {
@@ -61,8 +68,9 @@ export default function VoyageursCard({ travelers, groupId, onRefresh, user, mem
     if (!q.trim()) { setMemberResults([]); return; }
     if (!isOrganizer || !user) return;
     setMemberSearchBusy(true);
+    // F1 — annuaire de recherche via la vue `public_profiles`.
     const { data } = await supabase
-      .from('user_profiles')
+      .from(PUBLIC_PROFILES_VIEW)
       .select('id, full_name, avatar_url')
       .or(`full_name.ilike.${q.trim().replace(/'/g, "''")}`)
       .limit(8);

@@ -1,4 +1,5 @@
 import { createClient } from './client';
+import { PUBLIC_PROFILES_VIEW } from '@/lib/queries/publicProfilesCore';
 
 /* ────────────────────────────────────────────
    Types — matching UI expectations
@@ -199,11 +200,18 @@ function formatMemberSince(iso: string | null): string {
 export async function fetchFullProfile(userId: string): Promise<CompteUserProfile | null> {
   const supabase = createClient();
 
-  const { data: profile } = await supabase
-    .from('user_profiles')
-    .select('*')
-    .eq('id', userId)
-    .single();
+  // F1 — soi-même : table brute (policy self, champs privilégiés type role) ;
+  // profil public (/profil/[id]) : vue `public_profiles`, jamais la table.
+  const { data: { user } } = await supabase.auth.getUser();
+  const isSelf = user?.id === userId;
+  const query = isSelf
+    ? supabase.from('user_profiles').select('*').eq('id', userId).single()
+    : supabase
+        .from(PUBLIC_PROFILES_VIEW)
+        .select('id, full_name, avatar_url, bio, location, trust_score, level, xp, created_at')
+        .eq('id', userId)
+        .single();
+  const { data: profile } = await query;
 
   if (!profile) return null;
 

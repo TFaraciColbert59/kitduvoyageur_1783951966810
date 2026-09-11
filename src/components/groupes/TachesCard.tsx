@@ -133,7 +133,7 @@ export default function TachesCard({ tasks: initialTasks, groupId, onRefresh, us
         title: newTaskTitle.trim(),
         status: 'todo'
       })
-      .select('*, user_profiles!group_tasks_assigned_to_fkey(full_name)')
+      .select('*')
       .single();
     
     if (error) {

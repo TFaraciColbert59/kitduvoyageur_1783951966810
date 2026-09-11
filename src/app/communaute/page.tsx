@@ -7,6 +7,7 @@ import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useAuth } from '@/contexts/AuthContext';
 import { createClient } from '@/lib/supabase/client';
+import { fetchPublicProfilesWith } from '@/lib/queries/publicProfilesCore';
 import { CommunityHubTab } from '@/components/social/CommunityHubNav';
 import { CompteBackground } from '@/components/compte/CompteBackground';
 import CarnetHubCard from '@/components/carnets/CarnetHubCard';
@@ -108,25 +109,47 @@ function CommunautePageContent() {
       const [postsRes, carnetsRes, clubsRes, groupsRes] = await Promise.allSettled([
         supabase
           .from('community_posts')
-          .select(`*, author:user_profiles!community_posts_author_id_fkey(full_name, avatar_url, loyalty_level)`)
+          .select('*')
           .order('created_at', { ascending: false })
           .limit(20),
         supabase
           .from('carnets')
-          .select(`*, author:user_profiles!author_id(full_name, avatar_url)`)
+          .select('*')
           .order('created_at', { ascending: false })
           .limit(20),
         supabase.from('clubs').select('*').order('members_count', { ascending: false }),
         supabase.from('groupes').select('*').limit(20),
       ]);
 
-      if (postsRes.status === 'fulfilled' && postsRes.value.data && postsRes.value.data.length > 0) {
-        setPosts(postsRes.value.data);
+      const postsData = postsRes.status === 'fulfilled' ? (postsRes.value.data ?? []) : [];
+      const carnetsData = carnetsRes.status === 'fulfilled' ? (carnetsRes.value.data ?? []) : [];
+
+      // F1 — auteurs via la vue `public_profiles` (deux étapes, jamais d'embed).
+      const authorProfiles = await fetchPublicProfilesWith(supabase, [
+        ...postsData.map((p: any) => p.author_id as string),
+        ...carnetsData.map((c: any) => c.author_id as string),
+      ]);
+      const withAuthor = <T extends { author_id?: string | null }>(row: T) => {
+        const profile = row.author_id ? authorProfiles[row.author_id] : undefined;
+        return {
+          ...row,
+          author: profile
+            ? {
+                id: profile.id,
+                full_name: profile.full_name,
+                avatar_url: profile.avatar_url,
+                loyalty_level: profile.loyalty_level,
+              }
+            : undefined,
+        };
+      };
+
+      if (postsData.length > 0) {
+        setPosts(postsData.map(withAuthor));
       }
 
       if (carnetsRes.status === 'fulfilled') {
-        const carnetsData = carnetsRes.value.data || [];
-        const allCarnets = [...localCarnets, ...carnetsData];
+        const allCarnets = [...localCarnets, ...carnetsData.map(withAuthor)];
         if (allCarnets.length > 0) {
           setCarnets(Array.from(new Map(allCarnets.map((c) => [c.id || c.title, c])).values()));
         }

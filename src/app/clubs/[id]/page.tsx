@@ -20,6 +20,7 @@ import ClubAboutCard from '@/components/clubs/ClubAboutCard';
 import ClubProCard from '@/components/clubs/ClubProCard';
 import MobileClubDetailView from '@/components/clubs/MobileClubDetailView';
 import { createClient } from '@/lib/supabase/client';
+import { fetchPublicProfilesWith } from '@/lib/queries/publicProfilesCore';
 import { useAuth } from '@/contexts/AuthContext';
 import { useHapticFeedback } from '@/hooks/useHapticFeedback';
 
@@ -147,12 +148,40 @@ export default function ClubDetailPage() {
       setClub(clubData as Club);
       try {
         const [topicsRes, membersRes, eventsRes] = await Promise.all([
-          supabase.from('club_topics').select('*, author:user_profiles(full_name, avatar_url)').eq('club_id', clubData.id).order('is_pinned', { ascending: false }).order('created_at', { ascending: false }),
-          supabase.from('club_members').select('*, user:user_profiles(full_name, trust_score)').eq('club_id', clubData.id).eq('status', 'active'),
+          supabase.from('club_topics').select('*').eq('club_id', clubData.id).order('is_pinned', { ascending: false }).order('created_at', { ascending: false }),
+          supabase.from('club_members').select('*').eq('club_id', clubData.id).eq('status', 'active'),
           supabase.from('club_events').select('*').eq('club_id', clubData.id).order('event_date', { ascending: true }),
         ]);
-        setTopics((topicsRes.data as ClubTopic[]) ?? []);
-        setMembers((membersRes.data as ClubMember[]) ?? []);
+        // F1 — auteurs/membres via la vue `public_profiles` (deux étapes).
+        const topicRows = (topicsRes.data as any[]) ?? [];
+        const memberRows = (membersRes.data as any[]) ?? [];
+        const profiles = await fetchPublicProfilesWith(supabase, [
+          ...topicRows.map((t) => t.author_id as string),
+          ...memberRows.map((m) => m.user_id as string),
+        ]);
+        setTopics(
+          topicRows.map((t) => ({
+            ...t,
+            author: profiles[t.author_id]
+              ? {
+                  full_name: profiles[t.author_id].full_name ?? '',
+                  avatar_url: profiles[t.author_id].avatar_url ?? undefined,
+                }
+              : undefined,
+          })) as ClubTopic[]
+        );
+        setMembers(
+          memberRows.map((m) => ({
+            ...m,
+            user: profiles[m.user_id]
+              ? {
+                  full_name: profiles[m.user_id].full_name ?? '',
+                  trust_score: profiles[m.user_id].trust_score ?? 0,
+                  avatar_url: profiles[m.user_id].avatar_url ?? undefined,
+                }
+              : undefined,
+          })) as ClubMember[]
+        );
         setEvents((eventsRes.data as ClubEvent[]) ?? []);
       } catch (err) {
         console.warn('Error loading club relations:', err);
@@ -254,16 +283,21 @@ export default function ClubDetailPage() {
     try {
       const { data } = await supabase
         .from('club_topic_replies')
-        .select('id, content, created_at, author_id, parent_id, author:user_profiles(full_name, avatar_url)')
+        .select('id, content, created_at, author_id, parent_id')
         .eq('topic_id', topic.id)
         .order('created_at', { ascending: true });
 
       if (data) {
+        // F1 — auteurs via la vue `public_profiles` (deux étapes).
+        const profiles = await fetchPublicProfilesWith(
+          supabase,
+          data.map((r: any) => r.author_id as string)
+        );
         const formatted: CommentData[] = data.map((r: any) => ({
           id: r.id,
           author_id: r.author_id,
-          author_name: r.author?.full_name || 'Voyageur',
-          author_avatar: r.author?.avatar_url,
+          author_name: profiles[r.author_id]?.full_name || 'Voyageur',
+          author_avatar: profiles[r.author_id]?.avatar_url ?? undefined,
           created_at: r.created_at,
           content: r.content,
           reply_to_id: r.parent_id,
@@ -308,18 +342,21 @@ export default function ClubDetailPage() {
           content,
           parent_id: replyToId || null,
         })
-        .select('id, content, created_at, author_id, parent_id, author:user_profiles(full_name, avatar_url)')
+        .select('id, content, created_at, author_id, parent_id')
         .single();
 
       if (!error && data) {
+        // F1 — auteur via la vue `public_profiles`.
+        const profiles = await fetchPublicProfilesWith(supabase, [user.id]);
+        const ownProfile = profiles[user.id];
         setCommentsList(prev =>
           prev.map(c =>
             c.id === tempId
               ? {
                   id: (data as any).id,
                   author_id: (data as any).author_id,
-                  author_name: (data as any).author?.full_name || 'Moi',
-                  author_avatar: (data as any).author?.avatar_url,
+                  author_name: ownProfile?.full_name || 'Moi',
+                  author_avatar: ownProfile?.avatar_url ?? undefined,
                   created_at: (data as any).created_at,
                   content: (data as any).content,
                   reply_to_id: (data as any).parent_id || replyToId,
@@ -401,9 +438,25 @@ export default function ClubDetailPage() {
     setSelectedEventId(eventId);
     setParticipantsModalOpen(true);
     setEventParticipants([]); // loading state
-    const { data } = await supabase.from('club_event_participants').select('*, user:user_profiles(full_name, avatar_url, trust_score)').eq('event_id', eventId);
+    const { data } = await supabase.from('club_event_participants').select('*').eq('event_id', eventId);
     if (data) {
-      setEventParticipants(data);
+      // F1 — profils des participants via la vue `public_profiles`.
+      const profiles = await fetchPublicProfilesWith(
+        supabase,
+        data.map((p: any) => p.user_id as string)
+      );
+      setEventParticipants(
+        data.map((p: any) => ({
+          ...p,
+          user: profiles[p.user_id]
+            ? {
+                full_name: profiles[p.user_id].full_name ?? '',
+                trust_score: profiles[p.user_id].trust_score ?? 0,
+                avatar_url: profiles[p.user_id].avatar_url,
+              }
+            : undefined,
+        }))
+      );
     }
   };
 

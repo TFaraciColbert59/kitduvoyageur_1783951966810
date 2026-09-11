@@ -9,6 +9,7 @@ import ReportSheet from './ReportSheet';
 import CommentsSheet, { CommentData } from './CommentsSheet';
 import ShareSheet from './ShareSheet';
 import { createClient } from '@/lib/supabase/client';
+import { fetchPublicProfilesWith } from '@/lib/queries/publicProfilesCore';
 import { useHapticFeedback } from '@/hooks/useHapticFeedback';
 
 export interface PostItem {
@@ -86,17 +87,22 @@ export default function PostCard({
       const supabase = createClient();
       const { data, error } = await supabase
         .from('post_comments')
-        .select('id, content, created_at, author_id, parent_id, author:user_profiles(full_name, avatar_url)')
+        .select('id, content, created_at, author_id, parent_id')
         .eq('post_id', post.id)
         .order('created_at', { ascending: true });
 
       if (!error && data) {
+        // F1 — auteurs via la vue `public_profiles` (deux étapes, sans embed).
+        const profiles = await fetchPublicProfilesWith(
+          supabase,
+          data.map((c: any) => c.author_id as string)
+        );
         setComments(
           data.map((c: any) => ({
             id: c.id,
             author_id: c.author_id,
-            author_name: c.author?.full_name || 'Voyageur LKDV',
-            author_avatar: c.author?.avatar_url,
+            author_name: profiles[c.author_id]?.full_name || 'Voyageur LKDV',
+            author_avatar: profiles[c.author_id]?.avatar_url ?? undefined,
             created_at: c.created_at,
             content: c.content,
             reply_to_id: c.parent_id || undefined,
@@ -165,18 +171,21 @@ export default function PostCard({
       const { data, error } = await supabase
         .from('post_comments')
         .insert(payload)
-        .select('id, content, created_at, author_id, parent_id, author:user_profiles(full_name, avatar_url)')
+        .select('id, content, created_at, author_id, parent_id')
         .single();
 
       if (!error && data) {
+        // F1 — auteur via la vue `public_profiles` (deux étapes, sans embed).
+        const profiles = await fetchPublicProfilesWith(supabase, [currentUserId]);
+        const ownProfile = profiles[currentUserId];
         setComments(prev =>
           prev.map(c =>
             c.id === tempId
               ? {
                   id: (data as any).id,
                   author_id: (data as any).author_id,
-                  author_name: (data as any).author?.full_name || 'Moi',
-                  author_avatar: (data as any).author?.avatar_url,
+                  author_name: ownProfile?.full_name || 'Moi',
+                  author_avatar: ownProfile?.avatar_url ?? undefined,
                   created_at: (data as any).created_at,
                   content: (data as any).content,
                   reply_to_id: (data as any).parent_id || replyToId,

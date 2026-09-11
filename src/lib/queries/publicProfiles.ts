@@ -14,7 +14,9 @@ export {
   limitPublicProfileIds,
 } from './publicProfilesCore';
 
-export async function fetchPublicProfiles(ids: string[]): Promise<Record<string, PublicProfile>> {
+export async function fetchPublicProfiles(
+  ids: Array<string | null | undefined>
+): Promise<Record<string, PublicProfile>> {
   if (limitPublicProfileIds(ids).length === 0) return {};
   try {
     const supabase = await createClient();

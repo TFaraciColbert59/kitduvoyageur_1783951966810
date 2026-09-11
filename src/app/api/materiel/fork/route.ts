@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
 import { z } from 'zod';
+import { fetchPublicProfiles } from '@/lib/queries/publicProfiles';
 import { decideKitFork } from '@/features/kits/lineage';
 
 export const runtime = 'nodejs';
@@ -47,19 +48,17 @@ export async function POST(req: NextRequest) {
       .maybeSingle();
     if (error || !source) return NextResponse.json({ error: 'Kit introuvable' }, { status: 404 });
 
-    // Identité du créateur source (nom d'adaptation, uniquement pour le libellé)
-    const { data: ownerRow } = await supabase
-      .from('user_profiles')
-      .select('full_name')
-      .eq('id', source.user_id)
-      .maybeSingle();
+    // Identité du créateur source (nom d'adaptation, uniquement pour le libellé).
+    // F1 — vue publique `public_profiles`, jamais la table brute.
+    const ownerProfiles = await fetchPublicProfiles([source.user_id]);
+    const sourceOwnerName = ownerProfiles[source.user_id]?.full_name ?? null;
 
     const decision = decideKitFork({
       sourceId: source.id,
       sourceUserId: source.user_id,
       sourceName: source.name ?? 'Kit sans nom',
       currentUserId: user.id,
-      sourceOwnerName: ownerRow?.full_name ?? null,
+      sourceOwnerName,
       requestedName: parsed.data.name ?? null,
     });
 

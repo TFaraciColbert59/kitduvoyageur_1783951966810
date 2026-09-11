@@ -56,7 +56,7 @@ export async function getTrustStats(): Promise<TrustStats> {
     const supabase = await createClient();
 
     const [usersRes, routesRes, kitsRes] = await Promise.all([
-      supabase.from('user_profiles').select('id', { count: 'exact', head: true }),
+      supabase.from('public_profiles').select('id', { count: 'exact', head: true }),
       supabase.from('hiking_routes').select('id', { count: 'exact', head: true }),
       supabase.from('kits').select('id', { count: 'exact', head: true }),
     ]);

@@ -6,6 +6,7 @@
 import { createClient } from '@/lib/supabase/server';
 import type { Crew, CrewMember, CrewSummary, CrewWithDetails } from '@/features/crews/types/crew.types';
 import { isCrewVisible } from '@/features/hub/engine/crewVisibility';
+import { fetchPublicProfiles } from '@/lib/queries/publicProfiles';
 
 export interface RawCrewTrip {
   id: string;
@@ -193,10 +194,10 @@ export async function fetchCrewBySlug(slug: string, currentUserId?: string | nul
 
   if (error || !crew) return null;
 
-  // Récupérer les membres
+  // Récupérer les membres (FK → vue publique deux étapes, cf. F1)
   const { data: members } = await supabase
     .from('crew_members')
-    .select('crew_id, user_id, role, status, joined_at, profile:user_profiles!crew_members_user_id_fkey(full_name, username, avatar_url)')
+    .select('crew_id, user_id, role, status, joined_at')
     .eq('crew_id', crew.id)
     .eq('status', 'active');
 
@@ -207,7 +208,20 @@ export async function fetchCrewBySlug(slug: string, currentUserId?: string | nul
     .eq('crew_id', crew.id)
     .order('start_date', { ascending: false });
 
-  const activeMembers = (members || []) as any[];
+  const memberRows = (members || []) as any[];
+  const profiles = await fetchPublicProfiles(memberRows.map((m: any) => m.user_id as string));
+  // `username` n'existe pas dans public_profiles : null explicite (jamais de
+  // colonne sensible ajoutée à la vue).
+  const activeMembers = memberRows.map((m: any) => ({
+    ...m,
+    profile: profiles[m.user_id]
+      ? {
+          full_name: profiles[m.user_id].full_name,
+          username: null,
+          avatar_url: profiles[m.user_id].avatar_url,
+        }
+      : null,
+  }));
   const userMember = currentUserId ? activeMembers.find(m => m.user_id === currentUserId) : null;
   const isOwner = currentUserId ? crew.created_by === currentUserId : false;
   const isOrganizer = userMember ? userMember.role === 'owner' || userMember.role === 'organizer' : false;

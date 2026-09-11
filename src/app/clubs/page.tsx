@@ -9,6 +9,7 @@ import MobileClubsHub from '@/components/clubs/MobileClubsHub';
 import CompteBackground from '@/components/compte/CompteBackground';
 import Icon from '@/components/ui/AppIcon';
 import { createClient } from '@/lib/supabase/client';
+import { fetchPublicProfilesWith } from '@/lib/queries/publicProfilesCore';
 import { useAuth } from '@/contexts/AuthContext';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
@@ -306,13 +307,38 @@ function ClubDetailModal({
     if (!club) return;
     setLoading(true);
     const [topicsRes, membersRes, challengesRes, eventsRes] = await Promise.all([
-      supabase.from('club_topics').select('*, author:user_profiles(full_name)').eq('club_id', club.id).eq('is_approved', true).order('is_pinned', { ascending: false }).order('created_at', { ascending: false }),
-      supabase.from('club_members').select('*, user:user_profiles(full_name, avatar_url, trust_score)').eq('club_id', club.id).eq('status', 'active'),
+      supabase.from('club_topics').select('*').eq('club_id', club.id).eq('is_approved', true).order('is_pinned', { ascending: false }).order('created_at', { ascending: false }),
+      supabase.from('club_members').select('*').eq('club_id', club.id).eq('status', 'active'),
       supabase.from('club_challenges').select('*').eq('club_id', club.id).eq('active', true),
       supabase.from('club_events').select('*').eq('club_id', club.id).order('event_date', { ascending: true }),
     ]);
-    setTopics((topicsRes.data as ClubTopic[]) ?? []);
-    setMembers((membersRes.data as ClubMember[]) ?? []);
+    // F1 — auteurs/membres via la vue `public_profiles` (deux étapes, sans embed).
+    const topicRows = (topicsRes.data as any[]) ?? [];
+    const memberRows = (membersRes.data as any[]) ?? [];
+    const profiles = await fetchPublicProfilesWith(supabase, [
+      ...topicRows.map((t) => t.author_id as string),
+      ...memberRows.map((m) => m.user_id as string),
+    ]);
+    setTopics(
+      topicRows.map((t) => ({
+        ...t,
+        author: profiles[t.author_id]
+          ? { full_name: profiles[t.author_id].full_name ?? '' }
+          : undefined,
+      })) as ClubTopic[]
+    );
+    setMembers(
+      memberRows.map((m) => ({
+        ...m,
+        user: profiles[m.user_id]
+          ? {
+              full_name: profiles[m.user_id].full_name ?? 'Anonyme',
+              avatar_url: profiles[m.user_id].avatar_url ?? '',
+              trust_score: profiles[m.user_id].trust_score ?? 0,
+            }
+          : undefined,
+      })) as ClubMember[]
+    );
     setChallenges((challengesRes.data as ClubChallenge[]) ?? []);
     setEvents((eventsRes.data as ClubEvent[]) ?? []);
 
@@ -326,8 +352,24 @@ function ClubDetailModal({
     }
 
     if (isAdmin) {
-      const { data: pending } = await supabase.from('club_join_requests').select('*, user:user_profiles(full_name, avatar_url, trust_score)').eq('club_id', club.id).eq('status', 'pending');
-      setPendingRequests((pending as ClubMember[]) ?? []);
+      const { data: pending } = await supabase.from('club_join_requests').select('*').eq('club_id', club.id).eq('status', 'pending');
+      const pendingRows = (pending as any[]) ?? [];
+      const pendingProfiles = await fetchPublicProfilesWith(
+        supabase,
+        pendingRows.map((r) => r.user_id as string)
+      );
+      setPendingRequests(
+        pendingRows.map((r) => ({
+          ...r,
+          user: pendingProfiles[r.user_id]
+            ? {
+                full_name: pendingProfiles[r.user_id].full_name ?? 'Anonyme',
+                avatar_url: pendingProfiles[r.user_id].avatar_url ?? '',
+                trust_score: pendingProfiles[r.user_id].trust_score ?? 0,
+              }
+            : undefined,
+        })) as ClubMember[]
+      );
     }
     setLoading(false);
   }, [club, supabase, isAdmin, currentUserId]);
