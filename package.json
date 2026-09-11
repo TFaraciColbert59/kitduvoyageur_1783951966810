@@ -67,7 +67,9 @@
     "visual:sheet": "node scripts/visual/contact-sheet.mjs",
     "seed:y": "node scripts/seed/seed_y_profiles.mjs",
     "ops:healthcheck": "node scripts/ops/a14_healthcheck.mjs",
-    "ops:backup-restore": "powershell -ExecutionPolicy Bypass -File scripts/ops/a14_backup_restore_test.ps1"
+    "ops:backup-restore": "powershell -ExecutionPolicy Bypass -File scripts/ops/a14_backup_restore_test.ps1",
+    "ops:a15-load": "node scripts/ops/a15_load_test.mjs",
+    "ops:a15-rollout": "node scripts/ops/a15_rollout.mjs"
   },
   "dependencies": {
     "@capacitor/android": "^8.5.0",
@@ -135,11 +137,13 @@
     "@playwright/test": "^1.51.1",
     "@types/leaflet": "1.9.21",
     "@types/node": "^20",
+    "@types/pg": "^8.23.1",
     "@types/react": "19.0.3",
     "@types/react-dom": "19.0.3",
     "@types/three": "^0.185.1",
     "@typescript-eslint/eslint-plugin": "^8.29.0",
     "@typescript-eslint/parser": "^8.29.0",
+    "autocannon": "^8.0.0",
     "autoprefixer": "10.4.2",
     "dotenv": "^17.4.2",
     "eslint": "^9",

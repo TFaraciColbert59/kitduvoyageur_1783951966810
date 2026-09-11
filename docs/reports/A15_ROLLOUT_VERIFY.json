@@ -1,0 +1,89 @@
+{
+  "generatedAt": "2026-09-11T20:55:00.807Z",
+  "flagId": "performance_profile_v2",
+  "verification": {
+    "results": [
+      {
+        "percentage": 1,
+        "ok": true,
+        "verdict": "pass",
+        "observedPct": 1.7,
+        "expectedPct": 1,
+        "deltaPoints": 0.7,
+        "reason": null,
+        "bucketMismatches": 0,
+        "allowChecks": []
+      },
+      {
+        "percentage": 5,
+        "ok": true,
+        "verdict": "pass",
+        "observedPct": 4.9,
+        "expectedPct": 5,
+        "deltaPoints": 0.1,
+        "reason": null,
+        "bucketMismatches": 0,
+        "allowChecks": []
+      },
+      {
+        "percentage": 20,
+        "ok": true,
+        "verdict": "pass",
+        "observedPct": 21.8,
+        "expectedPct": 20,
+        "deltaPoints": 1.8,
+        "reason": null,
+        "bucketMismatches": 0,
+        "allowChecks": []
+      },
+      {
+        "percentage": 50,
+        "ok": true,
+        "verdict": "pass",
+        "observedPct": 50.1,
+        "expectedPct": 50,
+        "deltaPoints": 0.1,
+        "reason": null,
+        "bucketMismatches": 0,
+        "allowChecks": []
+      },
+      {
+        "percentage": 100,
+        "ok": true,
+        "verdict": "pass",
+        "observedPct": 100,
+        "expectedPct": 100,
+        "deltaPoints": 0,
+        "reason": null,
+        "bucketMismatches": 0,
+        "allowChecks": []
+      },
+      {
+        "percentage": 0,
+        "boundary": "allowlist/exclusion",
+        "ok": true,
+        "verdict": "pass",
+        "observedPct": 0,
+        "expectedPct": 0,
+        "deltaPoints": 0,
+        "reason": null,
+        "bucketMismatches": 0,
+        "allowChecks": [
+          {
+            "userId": "5dba4c4c-6579-4716-a711-8ef533e3eed4",
+            "expected": true,
+            "actual": true
+          },
+          {
+            "userId": "c43214e2-d08a-47a5-a46f-32127e52e46c",
+            "expected": false,
+            "actual": false
+          }
+        ]
+      }
+    ],
+    "restored": true,
+    "initialEnabled": false
+  },
+  "exitCode": 0
+}
