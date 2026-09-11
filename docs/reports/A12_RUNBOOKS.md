@@ -40,6 +40,12 @@ Date : 2026-09-11 · Statut : plan opérationnel (exécution humaine requise ave
 4. Documenter RPO/RTO réels observés
 ```
 
+**A14 — exécuté localement** : `npm run ops:backup-restore` (dump complet →
+base jetable `a14_*` → `pg_restore` 0 erreur → comptages → suppression → rollback
+flags). RPO mesuré 0,169 s ; RTO mesuré 3,827 s. Détail : `A14_BACKUP_RESTORE.md`.
+Attention : dans l'image locale, restaurer avec `-U supabase_admin` (le rôle
+`postgres` n'est pas superutilisateur).
+
 ## 5. Rotation des secrets
 
 - `SUPABASE_SERVICE_ROLE_KEY`, `STRIPE_SECRET_KEY`, `CRON_SECRET`, clés IA : rotation trimestrielle,
@@ -53,6 +59,10 @@ Date : 2026-09-11 · Statut : plan opérationnel (exécution humaine requise ave
 - Latence `a5_terrain_reports_near` (p95 < 300 ms sur rayon 5 km).
 - Coût IA : compteur `ai_usage_daily` vs budget ; fallback rate (doit monter, plan doit rester servi).
 - Batterie mobile : temps de recalcul effectif (anti-rebond 60 s respecté).
+
+**A14 — exécutable** : `npm run ops:healthcheck` interroge la base locale et sort
+0/1/2 (files, âge, ratio d'échecs moteurs, latence RPC). Seuils documentés et
+testés : `A14_OBSERVABILITY.md` (§4-5).
 
 ## 7. Incident — procédure courte
 

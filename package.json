@@ -65,7 +65,9 @@
     "prebuild": "node scripts/icons/build-sprite.mjs",
     "test:a11y": "playwright test --config=playwright.a11y.config.ts",
     "visual:sheet": "node scripts/visual/contact-sheet.mjs",
-    "seed:y": "node scripts/seed/seed_y_profiles.mjs"
+    "seed:y": "node scripts/seed/seed_y_profiles.mjs",
+    "ops:healthcheck": "node scripts/ops/a14_healthcheck.mjs",
+    "ops:backup-restore": "powershell -ExecutionPolicy Bypass -File scripts/ops/a14_backup_restore_test.ps1"
   },
   "dependencies": {
     "@capacitor/android": "^8.5.0",
