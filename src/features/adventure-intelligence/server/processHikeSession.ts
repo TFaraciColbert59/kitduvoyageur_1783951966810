@@ -24,6 +24,7 @@ import {
   type SegmentCandidate,
 } from '../domain/mapMatching';
 import { planSessionFailure } from '../domain/sessionRetry';
+import { expandSampleCandidates, selectMatchingPoints } from '../domain/trackSampling';
 import { normalizeTrack, type NormalizedTrack, type TrackPoint } from '../domain/trackNormalization';
 
 export const PROCESSOR_VERSION = 'a2-v1';
@@ -203,10 +204,6 @@ function resolvePositions(session: HikeSessionRow): PositionsResolution {
   return { kind: 'legacy', points: toTrackPoints(parsed.data, session.ended_at) };
 }
 
-function roundedKey(lat: number, lng: number): string {
-  return `${lat.toFixed(4)},${lng.toFixed(4)}`;
-}
-
 /** Échec terminal de validation (payload définitif : aucune reprise utile). */
 async function markFailed(
   client: HikeProcessingClient,
@@ -348,27 +345,23 @@ export async function processHikeSession(
 
     const timedSamples = positions.kind === 'timed';
 
-    const coordinatesByKey = new Map<string, GpsPoint>();
-    for (const point of normalized.points) {
-      const key = roundedKey(point.lat, point.lng);
-      if (!coordinatesByKey.has(key)) {
-        coordinatesByKey.set(key, { lat: point.lat, lng: point.lng });
-      }
-    }
-
-    // A10 (10.4) : un seul appel batch, candidats alignés sur l'ordre envoyé.
-    const batchPoints = [...coordinatesByKey.values()];
+    // A10 (10.6) : échantillonnage borné (pas régulier ~25 m, plafond 2 000
+    // points, premier/dernier conservés) puis UN SEUL appel batch PostGIS ;
+    // les candidats du point échantillonné sont étendus à toute la trace.
+    const sample = selectMatchingPoints(normalized.points);
     const batchCandidates = await client.getCandidatesBatch(
-      batchPoints,
+      sample.points.map((point) => ({ lat: point.lat, lng: point.lng })),
       MATCH_DEFAULTS.maxDistanceM
     );
-    const candidatesByKey = new Map<string, SegmentCandidate[]>();
-    batchPoints.forEach((point, index) => {
-      candidatesByKey.set(roundedKey(point.lat, point.lng), batchCandidates[index] ?? []);
-    });
+    const candidatesPerPoint = expandSampleCandidates(
+      sample,
+      batchCandidates,
+      normalized.points.length
+    );
 
-    const matches = matchTrackToSegments(normalized.points, (point) =>
-      candidatesByKey.get(roundedKey(point.lat, point.lng)) ?? []
+    const matches = matchTrackToSegments(
+      normalized.points,
+      (_point, index) => candidatesPerPoint[index] ?? []
     );
     const passages = buildPassages(matches, normalized.points, normalized.pauses);
 

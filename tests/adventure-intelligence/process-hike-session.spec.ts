@@ -528,3 +528,40 @@ describe('A10 — Lease et dead-letter (TEST-A10-LEASE)', () => {
     });
   });
 });
+
+describe('A10 — Map-matching batch (TEST-A10-BATCH)', () => {
+  it('TEST-A10-BATCH-02: un seul appel batch même pour une longue trace', async () => {
+    const points = Array.from({ length: 5000 }, (_, index) => ({
+      lat: 44 + index * 0.0001,
+      lng: 6,
+      timestamp: at(index * 10),
+    }));
+    const { client, calls } = makeClient(sessionRow({ positions_geojson: points }), (batch) =>
+      batch.map(() => [candidateNorth])
+    );
+
+    const result = await processHikeSession(SESSION_ID, client);
+
+    expect(result.status).toBe('processed');
+    expect(calls.candidateBatches).toHaveLength(1);
+    expect(calls.candidateBatches[0].points.length).toBeGreaterThan(0);
+    expect(calls.candidateBatches[0].points.length).toBeLessThan(5000);
+    expect(calls.candidateBatches[0].points[0].lat).toBeCloseTo(44, 6);
+    const lastPoint = calls.candidateBatches[0].points[calls.candidateBatches[0].points.length - 1];
+    expect(lastPoint.lat).toBeCloseTo(44 + 4999 * 0.0001, 6);
+  });
+
+  it('TEST-A10-BATCH-03: candidats vides ⇒ repli sans erreur, aucun passage', async () => {
+    const { client, calls } = makeClient(sessionRow({ positions_geojson: northTrack(5) }), (batch) =>
+      batch.map(() => [])
+    );
+
+    const result = await processHikeSession(SESSION_ID, client);
+
+    expect(result).toEqual({ status: 'processed', passages: 0 });
+    expect(calls.transcripts).toHaveLength(1);
+    expect(calls.transcripts[0].passages).toHaveLength(0);
+    expect(calls.transcripts[0].observations).toHaveLength(0);
+    expect(calls.marks).toHaveLength(0);
+  });
+});

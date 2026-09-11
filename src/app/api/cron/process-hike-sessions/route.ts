@@ -14,6 +14,7 @@ export const dynamic = 'force-dynamic';
 const CLAIM_LIMIT = 5;
 
 interface CandidateRow {
+  point_index: number | string;
   segment_id: number | string;
   distance_m: number | string;
   bearing_deg: number | string | null;
@@ -51,16 +52,6 @@ export async function POST(request: NextRequest) {
 
   const sessions = (data ?? []) as HikeSessionRow[];
 
-  const mapCandidates = (rows: unknown[] | null): SegmentCandidate[] =>
-    ((rows ?? []) as CandidateRow[]).map((row) => ({
-      segmentId: Number(row.segment_id),
-      distanceM: Number(row.distance_m),
-      bearingDeg: row.bearing_deg === null ? undefined : Number(row.bearing_deg),
-      highway: row.highway,
-      surface: row.surface,
-      sacScale: row.sac_scale,
-    }));
-
   const client: HikeProcessingClient = {
     async getSession(id: string) {
       const { data: row, error: sessionError } = await supabase
@@ -74,18 +65,30 @@ export async function POST(request: NextRequest) {
       return (row as HikeSessionRow | null) ?? null;
     },
 
-    // Remplacement N+1 à venir (lot 10.6) : le contrat est déjà batch, la RPC
-    // batch `a2_match_track_candidates` arrive dans la migration suivante.
+    // A10 (10.6) : un seul appel PostGIS pour toute la trace échantillonnée.
     async getCandidatesBatch(points: GpsPoint[], radiusM: number): Promise<SegmentCandidate[][]> {
-      const results: SegmentCandidate[][] = [];
-      for (const point of points) {
-        const { data: rows, error: candidatesError } = await supabase.rpc('a2_segment_candidates', {
-          p_lat: point.lat,
-          p_lng: point.lng,
+      if (points.length === 0) return [];
+      const { data: rows, error: candidatesError } = await supabase.rpc(
+        'a2_match_track_candidates',
+        {
+          p_points: points.map((point) => ({ lat: point.lat, lng: point.lng })),
           p_radius_m: radiusM,
+        }
+      );
+      if (candidatesError) throw new Error(candidatesError.message);
+
+      const results: SegmentCandidate[][] = points.map(() => []);
+      for (const row of (rows ?? []) as CandidateRow[]) {
+        const index = Number(row.point_index);
+        if (!Number.isInteger(index) || index < 0 || index >= results.length) continue;
+        results[index].push({
+          segmentId: Number(row.segment_id),
+          distanceM: Number(row.distance_m),
+          bearingDeg: row.bearing_deg === null ? undefined : Number(row.bearing_deg),
+          highway: row.highway,
+          surface: row.surface,
+          sacScale: row.sac_scale,
         });
-        if (candidatesError) throw new Error(candidatesError.message);
-        results.push(mapCandidates(rows));
       }
       return results;
     },
