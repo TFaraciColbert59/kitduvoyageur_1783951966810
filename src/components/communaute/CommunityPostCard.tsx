@@ -1,13 +1,15 @@
 ﻿'use client';
 
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef, useEffect, useCallback } from 'react';
 import Link from 'next/link';
 import dynamic from 'next/dynamic';
 import { motion, AnimatePresence } from 'framer-motion';
 import Icon from '@/components/ui/AppIcon';
 import GlassIconButton from '@/components/ui/GlassIconButton';
 import SmartImage from '@/components/ui/SmartImage';
+import ReportSheet from '@/components/social/ReportSheet';
 import { createClient } from '@/lib/supabase/client';
+import { fetchPublicProfilesWith } from '@/lib/queries/publicProfilesCore';
 import { useHapticFeedback } from '@/hooks/useHapticFeedback';
 import { useDoubleTap, useLongPress } from '@/hooks/gestures';
 
@@ -48,6 +50,9 @@ export interface CommunityPostItem {
   created_at?: string;
   user_liked?: boolean;
   user_saved?: boolean;
+  linked_carnet_id?: string | null;
+  snapshot_payload?: Record<string, any> | null;
+  snapshot_at?: string | null;
 }
 
 export const timeAgo = (dateStr: string) => {
@@ -94,9 +99,12 @@ export default function CommunityPostCard({
   user?: any;
 }) {
   const [isLiked, setIsLiked] = useState(Boolean(post.user_liked));
-  const [likesCount, setLikesCount] = useState<number>(post.likes_count || 14);
-  const [commentsCount, setCommentsCount] = useState<number>(post.comments_count || 2);
+  const [likesCount, setLikesCount] = useState<number>(post.likes_count ?? 0);
+  const [commentsCount, setCommentsCount] = useState<number>(post.comments_count ?? 0);
   const [showComments, setShowComments] = useState(false);
+  const [commentsLoading, setCommentsLoading] = useState(false);
+  const [commentsLoaded, setCommentsLoaded] = useState(false);
+  const [reportOpen, setReportOpen] = useState(false);
   const [showMoreMenu, setShowMoreMenu] = useState(false);
   const [isSaved, setIsSaved] = useState(Boolean(post.user_saved));
   const [isHidden, setIsHidden] = useState(false);
@@ -132,27 +140,66 @@ export default function CommunityPostCard({
     };
   }, [showQuickMenu]);
 
-  const [comments, setComments] = useState<PostCommentItem[]>([
-    {
-      id: 'c1',
-      author: { full_name: 'Antoine Duprès', avatar_url: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?q=80&w=200' },
-      content: 'Superbe tracé ! La source sous le col coulait encore ?',
-      created_at: new Date(Date.now() - 3600000).toISOString(),
-      likes: 2,
-      userLiked: false,
-      isOwner: false,
-    },
-    {
-      id: 'c2',
-      parentId: 'c1',
-      author: { full_name: 'Léna Moreau', avatar_url: 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?q=80&w=200' },
-      content: 'Oui un bon filet d’eau très fraîche, compter 2 min pour remplir 1.5L !',
-      created_at: new Date(Date.now() - 1800000).toISOString(),
-      likes: 4,
-      userLiked: true,
-      isOwner: true,
-    },
-  ]);
+  const [comments, setComments] = useState<PostCommentItem[]>([]);
+
+  const loadComments = useCallback(async () => {
+    setCommentsLoading(true);
+    try {
+      const supabase = createClient();
+      const { data, error } = await supabase
+        .from('post_comments')
+        .select('id, post_id, author_id, content, parent_id, created_at')
+        .eq('post_id', post.id)
+        .order('created_at', { ascending: true })
+        .limit(100);
+      if (error) throw error;
+
+      const rows = (data ?? []) as Array<{
+        id: string;
+        author_id: string | null;
+        content: string;
+        parent_id: string | null;
+        created_at: string;
+      }>;
+      const profiles = await fetchPublicProfilesWith(
+        supabase,
+        rows.map((row) => row.author_id).filter(Boolean) as string[]
+      );
+
+      setComments(
+        rows.map((row) => {
+          const profile = row.author_id ? profiles[row.author_id] : undefined;
+          return {
+            id: row.id,
+            parentId: row.parent_id,
+            author: profile
+              ? {
+                  id: profile.id,
+                  full_name: profile.full_name ?? undefined,
+                  avatar_url: profile.avatar_url ?? undefined,
+                }
+              : undefined,
+            content: row.content,
+            created_at: row.created_at,
+            likes: 0,
+            userLiked: false,
+            isOwner: Boolean(user?.id && row.author_id === user.id),
+          };
+        })
+      );
+      setCommentsLoaded(true);
+    } catch (err) {
+      console.error('[CommunityPostCard] Erreur chargement commentaires:', err);
+    } finally {
+      setCommentsLoading(false);
+    }
+  }, [post.id, user?.id]);
+
+  useEffect(() => {
+    if (showComments && !commentsLoaded && !commentsLoading) {
+      loadComments();
+    }
+  }, [showComments, commentsLoaded, commentsLoading, loadComments]);
 
   useEffect(() => {
     function handleClickOutside(event: MouseEvent) {
@@ -250,8 +297,23 @@ export default function CommunityPostCard({
     showToast('Commentaire supprimé');
   };
 
-  const handleReportComment = () => {
-    showToast('Merci, ce commentaire a été signalé à la modération.');
+  const handleReportComment = async (commentId: string) => {
+    if (!user) {
+      showToast('Connectez-vous pour signaler un commentaire.');
+      return;
+    }
+    const supabase = createClient();
+    const { error } = await supabase.from('comment_reports').insert({
+      comment_id: commentId,
+      reporter_id: user.id,
+      reason: 'Signalement depuis le fil communauté',
+      table_name: 'post_comments',
+    });
+    showToast(
+      error
+        ? 'Le signalement n’a pas pu être enregistré.'
+        : 'Merci, ce commentaire a été signalé à la modération.'
+    );
   };
 
   const handleReplyTo = (authorName: string, parentId?: string) => {
@@ -283,7 +345,7 @@ export default function CommunityPostCard({
 
   const handleReport = () => {
     setShowMoreMenu(false);
-    showToast('Merci, ce contenu a été signalé aux modérateurs.');
+    setReportOpen(true);
   };
 
   const handleSendComment = async (
@@ -306,7 +368,7 @@ export default function CommunityPostCard({
       isOwner: true,
       author: {
         full_name: user?.user_metadata?.full_name || 'Moi',
-        avatar_url: user?.user_metadata?.avatar_url || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?q=80&w=200',
+        avatar_url: user?.user_metadata?.avatar_url || undefined,
       },
     };
 
@@ -317,15 +379,17 @@ export default function CommunityPostCard({
     setParentCommentId(null);
 
     const supabase = createClient();
-    try {
-      await supabase.from('post_comments').insert({
-        post_id: post.id,
-        author_id: user?.id,
-        content: newComment.content,
-        parent_id: newComment.parentId,
-      });
-    } catch (err) {
-      console.warn('Comment insert error:', err);
+    const { error } = await supabase.from('post_comments').insert({
+      post_id: post.id,
+      author_id: user?.id,
+      content: newComment.content,
+      parent_id: newComment.parentId,
+    });
+
+    if (error) {
+      setComments(prev => prev.filter(c => c.id !== newComment.id));
+      setCommentsCount((prev: number) => Math.max(0, prev - 1));
+      showToast('Commentaire non enregistré. Réessayez.');
     }
   };
 
@@ -423,17 +487,25 @@ export default function CommunityPostCard({
           href={post.author?.id ? `/profil/${post.author.id}` : post.user_id ? `/profil/${post.user_id}` : '/communaute'}
           className="flex items-center gap-3 group/author cursor-pointer"
         >
-          <img
-            src={post.author?.avatar_url || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?q=80&w=200'}
-            alt="Author"
-            className="w-10 h-10 rounded-full object-cover border border-[#17402C]/10 group-hover/author:scale-105 transition-transform"
-          />
+          {post.author?.avatar_url ? (
+            <img
+              src={post.author.avatar_url}
+              alt={post.author?.full_name || 'Auteur'}
+              className="w-10 h-10 rounded-full object-cover border border-[#17402C]/10 group-hover/author:scale-105 transition-transform"
+            />
+          ) : (
+            <div className="w-10 h-10 rounded-full bg-[#17402C] text-white flex items-center justify-center text-sm font-bold border border-[#17402C]/10 group-hover/author:scale-105 transition-transform">
+              {(post.author?.full_name?.charAt(0) || 'V').toUpperCase()}
+            </div>
+          )}
           <div>
             <div className="flex items-center gap-2">
               <span className="text-xs font-bold text-[#17402C] group-hover/author:underline">{post.author?.full_name || 'Voyageur LKDV'}</span>
-              <span className="bg-[#17402C]/10 text-[#17402C] text-[9px] font-mono font-bold px-1.5 py-0.2 rounded uppercase">
-                {post.author?.loyalty_level || 'EXPLORATEUR'}
-              </span>
+              {post.author?.loyalty_level && (
+                <span className="bg-[#17402C]/10 text-[#17402C] text-[9px] font-mono font-bold px-1.5 py-0.2 rounded uppercase">
+                  {post.author.loyalty_level}
+                </span>
+              )}
             </div>
             <span className="text-[10px] text-[#5C6B5E] font-mono">{timeAgo(post.created_at || new Date().toISOString())}</span>
           </div>
@@ -446,6 +518,39 @@ export default function CommunityPostCard({
       <p className="text-xs sm:text-sm text-[#17402C] leading-relaxed whitespace-pre-line">
         {post.content}
       </p>
+
+      {/* Snapshot figé du carnet lié (Phase 7) — jamais de lecture live */}
+      {post.snapshot_payload && (
+        <div className="rounded-2xl border border-[#17402C]/10 bg-white/70 overflow-hidden">
+          {post.snapshot_payload.cover_image && (
+            <div className="aspect-[16/7] bg-[#EEF3EC]">
+              <SmartImage
+                src={post.snapshot_payload.cover_image}
+                alt={post.snapshot_payload.title || 'Carnet publié'}
+                className="w-full h-full object-cover"
+              />
+            </div>
+          )}
+          <div className="p-3 space-y-1">
+            <div className="flex items-center gap-2">
+              <span className="glass-pill text-[8.5px] font-mono font-bold text-[#17402C]">
+                CARNET · INSTANTANÉ PUBLIÉ
+              </span>
+            </div>
+            <h4 className="font-display font-bold text-sm text-[#17402C]">
+              {post.snapshot_payload.title || 'Carnet de voyage'}
+            </h4>
+            {post.snapshot_payload.destination && (
+              <p className="text-[11px] text-[#5C6B5E]">📍 {post.snapshot_payload.destination}</p>
+            )}
+            {post.snapshot_payload.description && (
+              <p className="text-xs text-[#5C6B5E] leading-relaxed line-clamp-3">
+                {post.snapshot_payload.description}
+              </p>
+            )}
+          </div>
+        </div>
+      )}
 
       {/* Attached Media — tap = visionneuse, double-tap = like + cœur animé (IG) */}
       {post.image_url && (
@@ -597,6 +702,14 @@ export default function CommunityPostCard({
 
             {/* List of comments (Root Comments with Nested Threaded Replies) */}
             <div className="space-y-3 max-h-80 overflow-y-auto custom-scrollbar pr-1">
+              {commentsLoading && comments.length === 0 && (
+                <p className="text-[11px] text-[#5C6B5E] px-1 py-3">Chargement des commentaires...</p>
+              )}
+              {!commentsLoading && commentsLoaded && comments.length === 0 && (
+                <p className="text-[11px] text-[#5C6B5E] px-1 py-3">
+                  Aucun commentaire pour le moment.
+                </p>
+              )}
               {comments
                 .filter((c) => !c.parentId)
                 .map((rootComment) => {
@@ -654,7 +767,7 @@ export default function CommunityPostCard({
                               <GlassIconButton
                                 size="sm"
                                 title="Signaler"
-                                onClick={handleReportComment}
+                                onClick={() => handleReportComment(rootComment.id)}
                                 icon={<Icon name="FlagIcon" size={11} />}
                               />
                             )}
@@ -768,7 +881,7 @@ export default function CommunityPostCard({
                                       <GlassIconButton
                                         size="sm"
                                         title="Signaler"
-                                        onClick={handleReportComment}
+                                        onClick={() => handleReportComment(reply.id)}
                                         icon={<Icon name="FlagIcon" size={11} />}
                                       />
                                     )}
@@ -889,6 +1002,24 @@ export default function CommunityPostCard({
           onClose={() => setViewerOpen(false)}
         />
       )}
+
+      <ReportSheet
+        isOpen={reportOpen}
+        onClose={() => setReportOpen(false)}
+        contentId={post.id}
+        contentType="post"
+        onSubmitReport={async (reason, details) => {
+          if (!user) throw new Error('Authentification requise');
+          const supabase = createClient();
+          const { error } = await supabase.from('comment_reports').insert({
+            comment_id: post.id,
+            reporter_id: user.id,
+            reason: details ? `${reason} — ${details}` : reason,
+            table_name: 'community_posts',
+          });
+          if (error) throw error;
+        }}
+      />
     </div>
   );
 }

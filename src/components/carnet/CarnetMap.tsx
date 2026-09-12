@@ -22,13 +22,14 @@ export default function CarnetMap({
   const containerRef = useRef<HTMLDivElement>(null);
   const mapInstance = useRef<any>(null);
   const [mapLoaded, setMapLoaded] = useState(false);
+  const [hasRoute, setHasRoute] = useState(false);
 
   // Default coordinate centers
   const defaultLat = destination?.toLowerCase().includes('islande') || destination?.toLowerCase().includes('iceland')
     ? 64.96
     : destination?.toLowerCase().includes('vercors')
     ? 44.98
-    : 45.33; // Chartreuse / Alpes
+    : 45.33; // Alpes
   const defaultLng = destination?.toLowerCase().includes('islande') || destination?.toLowerCase().includes('iceland')
     ? -19.02
     : destination?.toLowerCase().includes('vercors')
@@ -79,7 +80,8 @@ export default function CarnetMap({
         keepBuffer: 8,
       }).addTo(map);
 
-      // Extract or synthesize coordinates
+      // Extract coordinates — aucune trace synthétique : sans géométrie
+      // réelle, la carte reste vide et l'indique explicitement.
       let routeCoords: [number, number][] = [];
 
       if (traceGeojson?.geometry?.coordinates && Array.isArray(traceGeojson.geometry.coordinates)) {
@@ -88,20 +90,9 @@ export default function CarnetMap({
         routeCoords = traceGeojson.coordinates.map((pt: [number, number]) => [pt[1], pt[0]]);
       } else if (Array.isArray(traceGeojson) && traceGeojson.length > 0) {
         routeCoords = traceGeojson.map((pt: any) => [pt.lat || pt[1], pt.lng || pt[0]]);
-      } else {
-        const dist = Number(distanceKm) || 27.4;
-        const r = (dist / 111) * 0.4;
-        routeCoords = [
-          [defaultLat, defaultLng],
-          [defaultLat + r * 0.35, defaultLng + r * 0.25],
-          [defaultLat + r * 0.7, defaultLng + r * 0.65],
-          [defaultLat + r * 0.85, defaultLng + r * 0.3],
-          [defaultLat + r * 1.1, defaultLng + r * 0.8],
-          [defaultLat + r * 0.75, defaultLng + r * 1.15],
-          [defaultLat + r * 0.25, defaultLng + r * 0.85],
-          [defaultLat, defaultLng],
-        ];
       }
+
+      setHasRoute(routeCoords.length > 0);
 
       if (routeCoords.length > 0) {
         // Outer glow
@@ -144,7 +135,7 @@ export default function CarnetMap({
             fillColor: '#D97746',
             fillOpacity: 1,
             weight: 2,
-          }).addTo(map).bindPopup(`⛰️ <strong>Point culminant (+${elevationM || 1620}m)</strong>`);
+          }).addTo(map).bindPopup(elevationM ? `⛰️ <strong>Point culminant (+${elevationM}m)</strong>` : '⛰️ <strong>Point culminant</strong>');
         }
 
         // Finish marker
@@ -229,13 +220,22 @@ export default function CarnetMap({
       {/* Map Container with explicit pixel height */}
       <div className="relative w-full h-[360px] bg-[#E7E3D6] overflow-hidden">
         <div ref={containerRef} className="w-full h-full" style={{ width: '100%', height: '100%' }} />
+        {mapLoaded && !hasRoute && (
+          <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+            <span className="glass-pill text-[10px] font-mono font-bold text-[#5C6B5E]">
+              Aucune trace GPS enregistrée
+            </span>
+          </div>
+        )}
       </div>
 
       {/* Footer */}
       <div className="flex items-center justify-between px-4 py-2.5 border-t border-[#17402C]/10 bg-white/80 shrink-0">
         <p className="font-mono text-xs text-[#17402C] font-semibold">
-          {distanceKm != null && distanceKm > 0 ? `${distanceKm} km` : '27.4 km'}
-          {elevationM != null && elevationM > 0 ? ` · ${elevationM} m D+` : ' · 1620 m D+'}
+          {[
+            distanceKm != null && distanceKm > 0 ? `${distanceKm} km` : null,
+            elevationM != null && elevationM > 0 ? `${elevationM} m D+` : null,
+          ].filter(Boolean).join(' · ') || 'Métriques indisponibles'}
         </p>
         {onDownloadGPX && (
           <button

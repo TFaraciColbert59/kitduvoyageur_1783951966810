@@ -168,17 +168,16 @@ export default function NouveauGroupePage() {
         created_at: new Date().toISOString()
       };
 
-      const { data, error } = await supabase.from('groupes').insert([payload]).select().single();
-      const groupId = data?.id || `grp-${Date.now()}`;
+      const { data, error } = await supabase.from('groupes').insert([payload]).select('id').single();
 
-      if (error) {
-        const local = JSON.parse(localStorage.getItem('user_created_groups') || '[]');
-        localStorage.setItem('user_created_groups', JSON.stringify([{ id: groupId, ...payload, requiredGear, level, hebergementType, estimatedBudget }, ...local]));
+      if (error || !data) {
+        toast(error?.message || 'Impossible de créer le groupe pour le moment.', 'error');
+        return;
       }
 
       toast('Expédition créée avec succès ! 🎒', 'success');
       setTimeout(() => {
-        router.push(`/groupes/${groupId}`);
+        router.push(`/groupes/${data.id}`);
       }, 800);
     } catch (err) {
       console.error(err);

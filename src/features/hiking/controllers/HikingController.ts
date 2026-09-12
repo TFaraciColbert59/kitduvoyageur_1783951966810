@@ -41,6 +41,8 @@ export interface HikingControllerState {
   routeName: string | null;
   /** Kit emporté sur le terrain (chantier lignées, Lot 2) — null = aucun kit. */
   kitId: string | null;
+  /** Phase 7 — voyage associé à la sortie (contexte URL), null si inconnu. */
+  tripId: string | null;
 }
 
 interface PoiEvent {
@@ -105,6 +107,7 @@ export class HikingController {
       routeTotalKm: null,
       routeName: null,
       kitId: null,
+      tripId: null,
     };
 
     this.stateMachine.subscribe((nextState) => {
@@ -134,7 +137,7 @@ export class HikingController {
    * restauré) ; kitId explicite = override ponctuel (aucune régression :
    * les appelants existants ne passent que routeId).
    */
-  public async startHike(routeId?: string, kitId?: string | null): Promise<void> {
+  public async startHike(routeId?: string, kitId?: string | null, tripId?: string | null): Promise<void> {
     if (!this.stateMachine.transitionTo('PREPARING')) return;
 
     this.trackingEngine.reset();
@@ -149,6 +152,7 @@ export class HikingController {
     this.updateState({
       routeId: routeId || null,
       kitId: kitId !== undefined ? kitId : this.state.kitId,
+      tripId: tripId !== undefined ? tripId : this.state.tripId,
       routeName: null,
       routeTotalKm: null,
       distanceKm: 0,
@@ -218,6 +222,7 @@ export class HikingController {
           routeId: this.state.routeId,
           kitId: this.state.kitId,
           carnetId: carnetId || null,
+          tripId: this.state.tripId,
           startedAt,
           endedAt,
           distanceKm: this.state.distanceKm,
@@ -232,7 +237,9 @@ export class HikingController {
         // Récit post-randonnée ASYNCHRONE (Chantier C) : on dépose un job IA,
         // jamais d'appel synchrone à la fermeture. Fire-and-forget : un échec
         // d'enfilement ne doit JAMAIS perturber la fin de sortie.
-        this.enqueueTrailNarrativeJob(res.sessionId, startedAt).catch(() => {});
+        if (res.sessionId) {
+          this.enqueueTrailNarrativeJob(res.sessionId, startedAt).catch(() => {});
+        }
       } catch (err) {
         console.error('[HikingController] stopHike save error:', err);
       }
@@ -639,6 +646,7 @@ export class HikingController {
           JSON.stringify({
             routeId: this.state.routeId,
             kitId: this.state.kitId,
+            tripId: this.state.tripId,
             routeName: this.state.routeName,
             routeTotalKm: this.state.routeTotalKm,
             distanceKm: this.state.distanceKm,
@@ -664,6 +672,7 @@ export class HikingController {
           this.updateState({
             routeId: parsed.routeId ?? null,
             kitId: parsed.kitId ?? null,
+            tripId: parsed.tripId ?? null,
             routeName: parsed.routeName ?? null,
             routeTotalKm: parsed.routeTotalKm != null ? Number(parsed.routeTotalKm) : null,
             distanceKm: Number(parsed.distanceKm) || 0,

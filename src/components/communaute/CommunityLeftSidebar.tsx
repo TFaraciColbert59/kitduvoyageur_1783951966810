@@ -53,7 +53,7 @@ export default function CommunityLeftSidebar({
               </span>
             </h4>
             <p className="text-[10px] font-mono text-[#5A7064] truncate mt-0.5">
-              12.4k Voyageurs · Sans algorithme
+              Sans algorithme
             </p>
           </div>
         </div>

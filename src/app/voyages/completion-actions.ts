@@ -191,7 +191,7 @@ export async function publishTripCarnetAction(
       tripId: formData.get('tripId'),
       title: formData.get('title') || undefined,
       description: formData.get('description') || undefined,
-      isPublic: formData.get('isPublic') !== 'false',
+      isPublic: formData.get('isPublic') === 'true',
     };
 
     const parsed = publishTripCarnetSchema.safeParse(rawData);

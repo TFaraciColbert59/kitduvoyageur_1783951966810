@@ -21,27 +21,23 @@ export default function CreateClubView() {
   const router = useRouter();
   const [saving, setSaving] = useState(false);
   const [saveSuccess, setSaveSuccess] = useState(false);
+  const [saveError, setSaveError] = useState<string | null>(null);
   const [user, setUser] = useState<any>(null);
 
-  // Form State
+  // Form State — vide par défaut : aucun contenu fictif.
   const [form, setForm] = useState({
-    title: 'Cimes partagées',
-    slogan: 'Marcher ensemble en Chartreuse, sans se précipiter, avec le temps.',
-    description: 'Un club ouvert aux marcheurs réguliers et curieux, autour du massif de la Chartreuse. Nos sorties sont mensuelles, en petit comité (max 12), avec toujours un temps de contemplation. Nous privilégions les jeunes membres qui débutent, sans négliger les journées d\'itinérance pour les plus expérimentés.',
-    coverImage: 'https://images.unsplash.com/photo-1519681393784-d120267933ba?q=80&w=1200',
-    logoImage: 'https://images.unsplash.com/photo-1506744038136-46273834b3fb?q=80&w=200',
-    location: 'Grenoble · Isère (38)',
-    category: 'Randonnée & bivouac',
+    title: '',
+    slogan: '',
+    description: '',
+    coverImage: '',
+    logoImage: '',
+    location: '',
+    category: '',
     level: 'Tous niveaux bienvenus',
-    rhythm: 'Mensuel - 1 à 2 sorties',
-    maxMembers: 50,
-    zones: ['Chartreuse', 'Vercors', 'Belledonne'] as string[],
-    rules: [
-      { id: 'r1', title: 'Respecter l’esprit du groupe', description: 'Pas de chrono, nous prenons le temps d’apprécier.', icon: 'ShieldCheckIcon' },
-      { id: 'r2', title: 'Prévenir 48h avant en cas d’annulation', description: 'Pour ne pas bloquer les réservations de refuges.', icon: 'ClockIcon' },
-      { id: 'r3', title: 'L’Allure de tous', description: 'Le groupe s’adapte toujours au rythme commun.', icon: 'UserGroupIcon' },
-      { id: 'r4', title: 'Accueillir les nouveaux', description: 'Un accompagnement bienveillant dès la première sortie.', icon: 'UserPlusIcon' }
-    ] as ClubRule[],
+    rhythm: '',
+    maxMembers: 20,
+    zones: [] as string[],
+    rules: [] as ClubRule[],
     membershipType: 'validation', // 'open' | 'validation'
     feeType: 'gratuit', // 'gratuit' | 'annuel'
     feeAmount: 0,
@@ -110,35 +106,46 @@ export default function CreateClubView() {
   };
 
   const handlePublish = async () => {
+    if (!user) {
+      setSaveError('Connectez-vous pour fonder un club.');
+      return;
+    }
     setSaving(true);
+    setSaveError(null);
     try {
       const supabase = createClient();
+      const slugBase = form.title
+        .toLowerCase()
+        .normalize('NFD')
+        .replace(/[\u0300-\u036f]/g, '')
+        .replace(/[^a-z0-9]+/g, '-')
+        .replace(/^-+|-+$/g, '')
+        .slice(0, 60);
+      const slug = slugBase ? `${slugBase}-${Math.random().toString(36).slice(2, 6)}` : `club-${Math.random().toString(36).slice(2, 10)}`;
+
       const payload = {
+        slug,
         name: form.title,
-        description: form.description,
+        description: [form.description, form.location ? `📍 ${form.location}` : ''].filter(Boolean).join('\n\n'),
         cover_image: form.coverImage,
         category: form.category,
-        location: form.location,
-        is_private: form.visibility !== 'public',
-        creator_id: user?.id,
-        created_at: new Date().toISOString()
+        privacy: form.visibility === 'public' ? 'open' : 'closed',
+        rules: (form.rules || []).map((rule: ClubRule) => `${rule.title} : ${rule.description}`).join('\n'),
+        created_by: user.id,
       };
 
-      const { data, error } = await supabase.from('clubs').insert([payload]).select().single();
-      const clubId = data?.id || `club-${Date.now()}`;
-
-      // Local storage backup
-      const local = JSON.parse(localStorage.getItem('user_created_clubs') || '[]');
-      const fullClub = { id: clubId, ...payload, ...form };
-      localStorage.setItem('user_created_clubs', JSON.stringify([fullClub, ...local]));
+      const { data, error } = await supabase.from('clubs').insert([payload]).select('id, slug').single();
+      if (error || !data) {
+        throw new Error(error?.message || 'Création du club refusée');
+      }
 
       setSaveSuccess(true);
       setTimeout(() => {
-        router.push(`/clubs/${clubId}`);
+        router.push(`/clubs/${data.slug || data.id}`);
       }, 800);
     } catch (e) {
       console.error(e);
-      router.push('/communaute?tab=clubs');
+      setSaveError(e instanceof Error ? e.message : 'Erreur lors de la création du club.');
     } finally {
       setSaving(false);
     }
@@ -682,7 +689,7 @@ export default function CreateClubView() {
                 </div>
               </div>
 
-              <div className="flex justify-between pt-2">
+              <div className="flex justify-between items-center gap-3 pt-2">
                 <button
                   type="button"
                   onClick={() => setActiveSection('adhesion')}
@@ -690,15 +697,22 @@ export default function CreateClubView() {
                 >
                   ← Précédent
                 </button>
-                <button
-                  type="button"
-                  onClick={handlePublish}
-                  disabled={saving || !form.title.trim()}
-                  className="glass-capsule-btn primary py-2.5 px-6 text-xs font-bold flex items-center gap-1.5"
-                >
-                  <Icon name="CheckIcon" size={14} className="relative z-10" />
-                  <span className="relative z-10">{saving ? 'Création...' : saveSuccess ? '✓ Créé !' : 'Fonder le club'}</span>
-                </button>
+                <div className="flex items-center gap-3">
+                  {saveError && (
+                    <p role="alert" className="text-[11px] font-semibold text-red-700">
+                      {saveError}
+                    </p>
+                  )}
+                  <button
+                    type="button"
+                    onClick={handlePublish}
+                    disabled={saving || !form.title.trim()}
+                    className="glass-capsule-btn primary py-2.5 px-6 text-xs font-bold flex items-center gap-1.5"
+                  >
+                    <Icon name="CheckIcon" size={14} className="relative z-10" />
+                    <span className="relative z-10">{saving ? 'Création...' : saveSuccess ? '✓ Créé !' : 'Fonder le club'}</span>
+                  </button>
+                </div>
               </div>
             </div>
           )}
@@ -768,7 +782,12 @@ export default function CreateClubView() {
               ))}
             </div>
 
-            <div className="pt-2 border-t border-[#17402C]/10">
+            <div className="pt-2 border-t border-[#17402C]/10 space-y-2">
+              {saveError && (
+                <p role="alert" className="text-[11px] font-semibold text-red-700">
+                  {saveError}
+                </p>
+              )}
               <button
                 type="button"
                 onClick={handlePublish}

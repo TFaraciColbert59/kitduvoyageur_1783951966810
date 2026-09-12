@@ -18,7 +18,7 @@ import CarnetDetailRightSidebar from '@/components/carnet/CarnetDetailRightSideb
 import SpeciesIdentifier from '@/components/carnet/SpeciesIdentifier';
 import MobilePageShell from '@/components/mobile-nav/MobilePageShell';
 import MobileCarnetDetailView from '@/components/carnet/MobileCarnetDetailView';
-import { CarnetData, mockCarnetChartreuse } from '@/lib/mock/carnet-chartreuse';
+import type { CarnetData } from '@/lib/mock/carnet-chartreuse';
 
 function downloadGPX(name: string, traceGeojson?: any) {
   let gpxContent = `<?xml version="1.0" encoding="UTF-8"?>\n<gpx version="1.1" creator="Le Kit du Voyageur"><metadata><name>${name}</name></metadata><trk><name>${name}</name><trkseg>`;
@@ -45,12 +45,12 @@ interface CarnetViewProps {
 export default function CarnetView({ data }: CarnetViewProps) {
   const [activeTab, setActiveTab] = useState('overview');
 
-  // Fallbacks so sections are never empty
-  const moments = (data.moments && data.moments.length > 0) ? data.moments : mockCarnetChartreuse.moments;
-  const kitItems = (data.kit?.items && data.kit.items.length > 0) ? data.kit.items : mockCarnetChartreuse.kit.items;
-  const kitIntro = data.kit?.intro || mockCarnetChartreuse.kit.intro;
-  const jours = (data.jours && data.jours.length > 0) ? data.jours : mockCarnetChartreuse.jours;
-  const hebergements = (data.hebergements && data.hebergements.length > 0) ? data.hebergements : mockCarnetChartreuse.hebergements;
+  // Aucun fallback fictif : les sections vides restent vides.
+  const moments = data.moments ?? [];
+  const kitItems = data.kit?.items ?? [];
+  const kitIntro = data.kit?.intro ?? '';
+  const jours = data.jours ?? [];
+  const hebergements = data.hebergements ?? [];
 
   const handleExport = () => {
     const json = JSON.stringify(data, null, 2);
@@ -67,8 +67,12 @@ export default function CarnetView({ data }: CarnetViewProps) {
     downloadGPX(data.meta?.titleLine1 || 'Carnet', data.traceGeojson);
   };
 
-  const distVal = data.stats?.find((s) => s.label === 'DISTANCE')?.value ? parseFloat(data.stats.find((s) => s.label === 'DISTANCE')!.value) : 27.4;
-  const elevVal = data.stats?.find((s) => s.label === 'DÉNIVELÉ +')?.value ? parseInt(data.stats.find((s) => s.label === 'DÉNIVELÉ +')!.value) : 1620;
+  const distVal = data.stats?.find((s) => s.label === 'DISTANCE')?.value
+    ? parseFloat(data.stats.find((s) => s.label === 'DISTANCE')!.value)
+    : undefined;
+  const elevVal = data.stats?.find((s) => s.label === 'DÉNIVELÉ +')?.value
+    ? parseInt(data.stats.find((s) => s.label === 'DÉNIVELÉ +')!.value)
+    : undefined;
 
   return (
     <>

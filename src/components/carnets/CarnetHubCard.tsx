@@ -84,21 +84,20 @@ export default function CarnetHubCard({
 }: CarnetHubCardProps) {
   const router = useRouter();
   const [isLiked, setIsLiked] = useState(Boolean(carnet.user_liked));
-  const [likesCount, setLikesCount] = useState(carnet.likes_count || 18);
+  const [likesCount, setLikesCount] = useState(carnet.likes_count ?? 0);
   const [isSaved, setIsSaved] = useState(Boolean(carnet.user_favorited));
 
-  const fallbackImage = 'https://images.unsplash.com/photo-1506744038136-46273834b3fb?q=80&w=1000&auto=format&fit=crop';
-  const coverUrl = carnet.cover_image && carnet.cover_image.trim() !== '' ? carnet.cover_image : fallbackImage;
+  const coverUrl = carnet.cover_image && carnet.cover_image.trim() !== '' ? carnet.cover_image : null;
 
   const dateStr = carnet.start_date
     ? new Date(carnet.start_date).toLocaleDateString('fr-FR', { month: 'short', year: 'numeric' })
     : carnet.created_at
     ? new Date(carnet.created_at).toLocaleDateString('fr-FR', { month: 'short', year: 'numeric' })
-    : 'Automne 2026';
+    : '';
 
-  const destinationStr = carnet.destination || 'Massif Alpin';
-  const authorName = carnet.author?.full_name || 'Explorateur';
-  const avatarUrl = carnet.author?.avatar_url || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?q=80&w=200';
+  const destinationStr = carnet.destination || '';
+  const authorName = carnet.author?.full_name || 'Auteur non renseigné';
+  const avatarUrl = carnet.author?.avatar_url || null;
 
   const handleAuthorClick = (e: React.MouseEvent) => {
     e.preventDefault();
@@ -131,21 +130,29 @@ export default function CarnetHubCard({
     >
       {/* Cover Image Container */}
       <div className="w-full aspect-[16/10] relative overflow-hidden bg-[#17402C]">
-        <SmartImage
-          src={coverUrl}
-          alt={carnet.title}
-          className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
-        />
+        {coverUrl ? (
+          <SmartImage
+            src={coverUrl}
+            alt={carnet.title}
+            className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
+          />
+        ) : (
+          <div className="w-full h-full flex items-center justify-center text-4xl text-white/70">📖</div>
+        )}
         <div className="absolute inset-0 bg-gradient-to-t from-black/75 via-black/20 to-transparent pointer-events-none" />
 
         {/* Top Badges */}
         <div className="absolute top-3 left-3 flex items-center gap-1.5 flex-wrap pointer-events-none">
-          <span className="glass-pill px-2.5 py-1 text-[9.5px] font-mono font-bold text-white bg-black/40 backdrop-blur-md border-white/20 flex items-center gap-1">
-            📍 {destinationStr}
-          </span>
-          <span className="glass-pill px-2 py-1 text-[9.5px] font-mono text-white bg-black/40 backdrop-blur-md border-white/20">
-            {dateStr}
-          </span>
+          {destinationStr && (
+            <span className="glass-pill px-2.5 py-1 text-[9.5px] font-mono font-bold text-white bg-black/40 backdrop-blur-md border-white/20 flex items-center gap-1">
+              📍 {destinationStr}
+            </span>
+          )}
+          {dateStr && (
+            <span className="glass-pill px-2 py-1 text-[9.5px] font-mono text-white bg-black/40 backdrop-blur-md border-white/20">
+              {dateStr}
+            </span>
+          )}
         </div>
 
         {/* Top Right Save Action with Image 3 GlassIconButton */}
@@ -205,11 +212,17 @@ export default function CarnetHubCard({
             onClick={handleAuthorClick}
             className="flex items-center gap-2 min-w-0 group/author cursor-pointer hover:opacity-80 transition-opacity"
           >
-            <img
-              src={avatarUrl}
-              alt={authorName}
-              className="w-6 h-6 rounded-full object-cover border border-[#17402C]/15 shrink-0 group-hover/author:scale-105 transition-transform"
-            />
+            {avatarUrl ? (
+              <img
+                src={avatarUrl}
+                alt={authorName}
+                className="w-6 h-6 rounded-full object-cover border border-[#17402C]/15 shrink-0 group-hover/author:scale-105 transition-transform"
+              />
+            ) : (
+              <span className="w-6 h-6 rounded-full bg-[#17402C] text-white flex items-center justify-center text-[10px] font-bold border border-[#17402C]/15 shrink-0">
+                {authorName.charAt(0).toUpperCase()}
+              </span>
+            )}
             <span className="font-bold text-xs text-[#17402C] truncate group-hover/author:underline">{authorName}</span>
           </div>
 

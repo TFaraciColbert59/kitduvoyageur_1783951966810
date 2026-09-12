@@ -93,7 +93,7 @@ export async function publishTripToCarnet(
   const { carnet, moments, kitItems } = convertTripToCarnetData(trip, {
     customTitle: options?.title,
     description: options?.description,
-    isPublic: options?.isPublic !== false,
+    isPublic: options?.isPublic === true,
     authorName: options?.authorName,
   });
 

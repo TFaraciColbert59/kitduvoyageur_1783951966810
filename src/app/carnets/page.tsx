@@ -89,7 +89,7 @@ const EMPTY_FORM: CarnetForm = {
   end_date: '',
   weather: '',
   route_rating: 8,
-  visibility: 'public',
+  visibility: 'private',
   tags: '',
   is_collaborative: false,
 };

@@ -24,6 +24,8 @@ interface SaveHikeSessionBody {
   routeId?: string | null;
   kitId?: string | null;
   carnetId?: string | null;
+  /** Phase 7 — voyage associé à la session, quand le contexte le fournit. */
+  tripId?: string | null;
   /** Phase 2 — corrélation de chaîne propagée à la session et au carnet. */
   correlationId?: string | null;
   startedAt: string;
@@ -79,6 +81,48 @@ function sanitizeCorrelationId(value: unknown): string | null {
   return typeof value === 'string' && UUID_PATTERN.test(value) ? value : null;
 }
 
+/** Phase 7 — identifiant de voyage validé (jamais un identifiant inventé). */
+function sanitizeTripId(value: unknown): string | null {
+  return typeof value === 'string' && UUID_PATTERN.test(value) ? value : null;
+}
+
+/**
+ * Phase 7 — résout le voyage d'une session : le voyage explicite s'il est
+ * lisible par l'utilisateur, sinon le plan réel sélectionné sur la route.
+ * Aucun voyage n'est inventé : si rien n'est disponible, la session reste
+ * simplement sans lien.
+ */
+async function resolveTripId(
+  supabase: Awaited<ReturnType<typeof import('@/lib/supabase/server').createClient>>,
+  userId: string,
+  explicitTripId: string | null,
+  routeId: string | null | undefined
+): Promise<string | null> {
+  if (explicitTripId) {
+    const { data } = await supabase
+      .from('trips')
+      .select('id')
+      .eq('id', explicitTripId)
+      .maybeSingle();
+    if (data?.id) return data.id;
+  }
+
+  if (routeId && !Number.isNaN(Number(routeId))) {
+    const { data } = await supabase
+      .from('adventure_plans')
+      .select('trip_id')
+      .eq('selected_route_id', Number(routeId))
+      .eq('owner_id', userId)
+      .not('trip_id', 'is', null)
+      .order('updated_at', { ascending: false })
+      .limit(1)
+      .maybeSingle();
+    if (data?.trip_id) return data.trip_id;
+  }
+
+  return null;
+}
+
 /**
  * POST /api/hike-sessions
  * Sauvegarde une session de randonnée terminée et génère optionnellement
@@ -90,11 +134,9 @@ export async function POST(req: NextRequest) {
     const { data: { user } } = await supabase.auth.getUser();
 
     if (!user) {
-      const guestSessionId = `guest-session-${Date.now()}`;
-      const guestCarnetId = `guest-carnet-${Date.now()}`;
       return NextResponse.json({
-        sessionId: guestSessionId,
-        carnetId: guestCarnetId,
+        sessionId: null,
+        carnetId: null,
         isGuest: true,
       });
     }
@@ -103,6 +145,12 @@ export async function POST(req: NextRequest) {
 
     const body: SaveHikeSessionBody = await req.json();
     const correlationId = sanitizeCorrelationId(body.correlationId);
+    const tripId = await resolveTripId(
+      supabase,
+      userId,
+      sanitizeTripId(body.tripId),
+      body.routeId
+    );
 
     if (!body.startedAt || !body.endedAt || body.distanceKm == null || body.durationSeconds == null) {
       return NextResponse.json({ error: 'Données de session incomplètes' }, { status: 400 });
@@ -168,7 +216,8 @@ export async function POST(req: NextRequest) {
           elevation_m: body.elevationGainM ?? 0,
           duration: formatDuration(body.durationSeconds),
           author_id: userId,
-          visibility: 'public',
+          visibility: 'private',
+          trip_id: tripId,
           created_at: new Date().toISOString(),
           correlation_id: correlationId,
         })
@@ -190,6 +239,7 @@ export async function POST(req: NextRequest) {
         route_id: body.routeId ? Number(body.routeId) : null,
         kit_id: body.kitId || null,
         carnet_id: carnetId,
+        trip_id: tripId,
         started_at: body.startedAt,
         ended_at: body.endedAt,
         distance_km: body.distanceKm,

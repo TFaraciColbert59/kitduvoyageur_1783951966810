@@ -18,8 +18,7 @@ export default function CommunityHeroOverview({
   onNavigateTab,
 }: CommunityHeroOverviewProps) {
   const stats = [
-    { label: 'VOYAGEURS', val: '12.4k', sub: 'Membres actifs' },
-    { label: 'CARNETS', val: carnetsCount, sub: 'Récits archivés' },
+    { label: 'CARNETS', val: carnetsCount, sub: 'Récits publiés' },
     { label: 'CLUBS', val: clubsCount, sub: 'Collectifs vivants' },
     { label: 'EXPÉDITIONS', val: groupsCount, sub: 'En préparation' },
   ];
@@ -72,7 +71,7 @@ export default function CommunityHeroOverview({
       </div>
 
       {/* Stats Strip */}
-      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 pt-6 mt-6 border-t border-[#17402C]/5">
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 pt-6 mt-6 border-t border-[#17402C]/5">
         {stats.map((s, idx) => (
           <div key={idx} className="glass-sub-card p-3 rounded-xl border border-white/50 space-y-1">
             <span className="text-[9px] font-mono font-bold text-[#5A7064] tracking-widest uppercase block">

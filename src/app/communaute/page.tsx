@@ -20,6 +20,19 @@ import MobileCommunityHub from '@/components/communaute/MobileCommunityHub';
 import CommunityPostCard from '@/components/communaute/CommunityPostCard';
 import LineageDiscovery from '@/components/kits/LineageDiscovery';
 
+function formatEventDate(value?: string | null): string {
+  if (!value) return '';
+  const [y, m, d] = value.split('-').map(Number);
+  if (!y || !m || !d) return value;
+  return new Date(Date.UTC(y, m - 1, d)).toLocaleDateString('fr-FR', {
+    weekday: 'long',
+    day: 'numeric',
+    month: 'long',
+    year: 'numeric',
+    timeZone: 'UTC',
+  });
+}
+
 function CommunautePageContent() {
   const { user } = useAuth();
   const router = useRouter();
@@ -47,44 +60,34 @@ function CommunautePageContent() {
     router.push(`/communaute?tab=${tab}`);
   };
 
-  // Data States
-  const [posts, setPosts] = useState<any[]>([
-    {
-      id: 'p-1',
-      content: '« Traversée des arêtes de Chartreuse bouclée ce matin. Températures parfaites (6°C au lever du jour), sentier sec et vue dégagée sur le Mont-Blanc. Attention, la source sous le col coule très faiblement. »',
-      author: { full_name: 'Marceline Chevrier', avatar_url: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?q=80&w=200', loyalty_level: 'GUIDE CERTIFIÉE' },
-      image_url: 'https://images.unsplash.com/photo-1506744038136-46273834b3fb?q=80&w=1000',
-      likes_count: 28,
-      comments_count: 4,
-      created_at: new Date(Date.now() - 7200000).toISOString(),
-    },
-    {
-      id: 'p-2',
-      content: '« Bivouac au lac Achard : nuit claire, voie lactée spectaculaire. Sac de 45L chargé à 8.2 kg avec autonomie 2 jours. Merci aux membres du club pour le conseil sur le filtre ! »',
-      author: { full_name: 'Antoine Duprès', avatar_url: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?q=80&w=200', loyalty_level: 'MARCHEUR SOLO' },
-      image_url: 'https://images.unsplash.com/photo-1464822759023-fed622ff2c3b?q=80&w=1000',
-      likes_count: 19,
-      comments_count: 2,
-      created_at: new Date(Date.now() - 14400000).toISOString(),
-    },
-  ]);
-
+  // Data States — uniquement alimentés par le serveur (aucune donnée fictive).
+  const [posts, setPosts] = useState<any[]>([]);
   const [carnets, setCarnets] = useState<any[]>([]);
-  const [clubs, setClubs] = useState<any[]>([
-    { id: 'c-1', name: 'Cimes partagées', slogan: 'Marcher ensemble en Chartreuse sans se précipiter.', category: 'Randonnée & bivouac', members_count: 48, emoji: '🏔️', cover_image: 'https://images.unsplash.com/photo-1519681393784-d120267933ba?q=80&w=600' },
-    { id: 'c-2', name: 'Bivouac & Étoiles', slogan: 'Nuits en altitude et photographie nocturne.', category: 'Bivouac sauvage', members_count: 36, emoji: '⛺', cover_image: 'https://images.unsplash.com/photo-1506744038136-46273834b3fb?q=80&w=600' },
-    { id: 'c-3', name: 'Alpinistes du Dauphiné', slogan: 'Courses rocheuses et arêtes alpines.', category: 'Alpinisme', members_count: 29, emoji: '🧗', cover_image: 'https://images.unsplash.com/photo-1464822759023-fed622ff2c3b?q=80&w=600' },
-  ]);
+  const [clubs, setClubs] = useState<any[]>([]);
+  const [groups, setGroups] = useState<any[]>([]);
+  const [events, setEvents] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [joinedEventIds, setJoinedEventIds] = useState<Record<string, boolean>>({});
 
-  const [groups, setGroups] = useState<any[]>([
-    { id: 'grp-1', name: 'Traversée de la Chartreuse', description: '3 jours en autonomie sur les crêtes et bivouacs avec nuit en refuge.', massif: 'Chartreuse', max_members: 6, spots_left: 2, pictogram: '⛺' },
-    { id: 'grp-2', name: 'Tour des Glaciers de la Vanoise', description: 'Itinérance 5 jours sous les dômes glaciaires.', massif: 'Vanoise', max_members: 8, spots_left: 4, pictogram: '🏔️' },
-  ]);
-
-  const [events, setEvents] = useState<any[]>([
-    { id: 'ev-1', title: 'Rando bivouac Charmant Som', date: 'Samedi 17 oct. 2026', time: '09h00', location: 'Saint-Pierre-de-Chartreuse', participants: 8, maxParticipants: 12, guide: 'Marceline' },
-    { id: 'ev-2', title: 'Atelier Sécurité Bivouac & Cartographie', date: 'Dimanche 25 oct. 2026', time: '10h30', location: 'Grenoble', participants: 15, maxParticipants: 20, guide: 'Antoine' },
-  ]);
+  const handleJoinEvent = useCallback(
+    async (eventId: string | number) => {
+      if (!user) {
+        router.push('/connexion');
+        return;
+      }
+      const supabase = createClient();
+      const { error } = await supabase
+        .from('event_participants')
+        .upsert(
+          { event_id: eventId, user_id: user.id },
+          { onConflict: 'event_id,user_id', ignoreDuplicates: true }
+        );
+      if (!error) {
+        setJoinedEventIds((prev) => ({ ...prev, [String(eventId)]: true }));
+      }
+    },
+    [user, router]
+  );
 
   // Filters
   const [carnetFilterCategory, setCarnetFilterCategory] = useState('all');
@@ -96,17 +99,8 @@ function CommunautePageContent() {
     const supabase = createClient();
 
     try {
-      let localCarnets: any[] = [];
-      let localClubs: any[] = [];
-      let localGroups: any[] = [];
-      try {
-        localCarnets = JSON.parse(localStorage.getItem('user_carnets_data') || '[]');
-        localClubs = JSON.parse(localStorage.getItem('user_created_clubs') || '[]');
-        localGroups = JSON.parse(localStorage.getItem('user_created_groups') || '[]');
-      } catch {}
-
-      // Parallel fetch for instant loading
-      const [postsRes, carnetsRes, clubsRes, groupsRes] = await Promise.allSettled([
+      // Parallel fetch — la page n'affiche QUE des données serveur.
+      const [postsRes, carnetsRes, clubsRes, groupsRes, eventsRes] = await Promise.allSettled([
         supabase
           .from('community_posts')
           .select('*')
@@ -119,15 +113,25 @@ function CommunautePageContent() {
           .limit(20),
         supabase.from('clubs').select('*').order('members_count', { ascending: false }),
         supabase.from('groupes').select('*').limit(20),
+        supabase
+          .from('events')
+          .select('*')
+          .neq('status', 'past')
+          .order('event_date', { ascending: true })
+          .limit(20),
       ]);
 
       const postsData = postsRes.status === 'fulfilled' ? (postsRes.value.data ?? []) : [];
       const carnetsData = carnetsRes.status === 'fulfilled' ? (carnetsRes.value.data ?? []) : [];
+      const clubsData = clubsRes.status === 'fulfilled' ? (clubsRes.value.data ?? []) : [];
+      const groupsData = groupsRes.status === 'fulfilled' ? (groupsRes.value.data ?? []) : [];
+      const eventsData = eventsRes.status === 'fulfilled' ? (eventsRes.value.data ?? []) : [];
 
       // F1 — auteurs via la vue `public_profiles` (deux étapes, jamais d'embed).
       const authorProfiles = await fetchPublicProfilesWith(supabase, [
         ...postsData.map((p: any) => p.author_id as string),
         ...carnetsData.map((c: any) => c.author_id as string),
+        ...eventsData.map((e: any) => e.organizer_id as string),
       ]);
       const withAuthor = <T extends { author_id?: string | null }>(row: T) => {
         const profile = row.author_id ? authorProfiles[row.author_id] : undefined;
@@ -144,34 +148,26 @@ function CommunautePageContent() {
         };
       };
 
-      if (postsData.length > 0) {
-        setPosts(postsData.map(withAuthor));
-      }
-
-      if (carnetsRes.status === 'fulfilled') {
-        const allCarnets = [...localCarnets, ...carnetsData.map(withAuthor)];
-        if (allCarnets.length > 0) {
-          setCarnets(Array.from(new Map(allCarnets.map((c) => [c.id || c.title, c])).values()));
-        }
-      }
-
-      if (clubsRes.status === 'fulfilled') {
-        const clubsData = clubsRes.value.data || [];
-        const allClubs = [...localClubs, ...clubsData];
-        if (allClubs.length > 0) {
-          setClubs(Array.from(new Map(allClubs.map((c) => [c.id || c.name || c.title, c])).values()));
-        }
-      }
-
-      if (groupsRes.status === 'fulfilled') {
-        const groupsData = groupsRes.value.data || [];
-        const allGroups = [...localGroups, ...groupsData];
-        if (allGroups.length > 0) {
-          setGroups(Array.from(new Map(allGroups.map((g) => [g.id || g.name, g])).values()));
-        }
-      }
+      setPosts(postsData.map(withAuthor));
+      setCarnets(carnetsData.map(withAuthor));
+      setClubs(clubsData);
+      setGroups(groupsData);
+      setEvents(
+        eventsData.map((ev: any) => {
+          const organizer = ev.organizer_id ? authorProfiles[ev.organizer_id] : undefined;
+          return {
+            ...ev,
+            date: formatEventDate(ev.event_date),
+            participants: ev.current_participants ?? 0,
+            maxParticipants: ev.max_participants ?? 0,
+            guide: organizer?.full_name || null,
+          };
+        })
+      );
     } catch (err) {
       console.error('[CommunautePage] Error loading data:', err);
+    } finally {
+      setLoading(false);
     }
   }, []);
 
@@ -233,9 +229,11 @@ function CommunautePageContent() {
             events={events}
             activeTab={activeTab as any}
             onTabChange={(tab) => handleTabSelect(tab as any)}
-            loading={false}
+            loading={loading}
             user={user}
             onRefresh={fetchData}
+            joinedEventIds={joinedEventIds}
+            onJoinEvent={handleJoinEvent}
           />
         </MobilePageShell>
       </div>
@@ -305,6 +303,15 @@ function CommunautePageContent() {
                     {posts.map((post, i) => (
                       <CommunityPostCard key={post.id || i} post={post} user={user} />
                     ))}
+                    {!loading && posts.length === 0 && (
+                      <div className="glass bg-white/90 rounded-2xl p-10 border border-white text-center space-y-2">
+                        <span className="text-3xl block">🌲</span>
+                        <h4 className="font-display font-bold text-sm text-[#17402C]">Le fil est calme</h4>
+                        <p className="text-xs text-[#5C6B5E]">
+                          Aucune publication pour le moment. Partagez votre première sortie.
+                        </p>
+                      </div>
+                    )}
                   </div>
                 </div>
               )}
@@ -352,6 +359,15 @@ function CommunautePageContent() {
                       <CarnetHubCard key={carnet.id || i} carnet={carnet} currentUserId={user?.id} />
                     ))}
                   </div>
+                  {!loading && filteredCarnets.length === 0 && (
+                    <div className="glass bg-white/90 rounded-2xl p-10 border border-white text-center space-y-2">
+                      <span className="text-3xl block">📖</span>
+                      <h4 className="font-display font-bold text-sm text-[#17402C]">Aucun carnet publié</h4>
+                      <p className="text-xs text-[#5C6B5E]">
+                        Les carnets apparaissent ici une fois partagés explicitement par leurs auteurs.
+                      </p>
+                    </div>
+                  )}
                 </div>
               )}
 
@@ -394,8 +410,8 @@ function CommunautePageContent() {
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     {filteredClubs.map((club, i) => {
                       const clubName = club.name || club.title || 'Club';
-                      const clubDesc = club.description || club.slogan || 'Collectif de montagnards';
-                      const cover = club.coverImage || club.cover_image || 'https://images.unsplash.com/photo-1519681393784-d120267933ba?q=80&w=600';
+                      const clubDesc = club.description || club.slogan || '';
+                      const cover = club.coverImage || club.cover_image || '';
                       const slug = club.slug || club.id || `club-${i}`;
 
                       return (
@@ -405,24 +421,32 @@ function CommunautePageContent() {
                           className="glass bg-white/90 backdrop-blur-xl rounded-2xl overflow-hidden border border-white flex flex-col justify-between group hover:-translate-y-1 hover:shadow-xl transition-all"
                         >
                           <div className="h-32 relative bg-[#17402C] overflow-hidden">
-                            <img src={cover} alt={clubName} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700" />
+                            {cover ? (
+                              <img src={cover} alt={clubName} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700" />
+                            ) : (
+                              <div className="w-full h-full flex items-center justify-center text-4xl">{club.emoji || '🏕️'}</div>
+                            )}
                             <div className="absolute inset-0 bg-gradient-to-t from-black/70 to-transparent" />
-                            <span className="absolute bottom-2 left-3 px-2.5 py-0.5 bg-black/40 backdrop-blur-md rounded-full text-[9px] font-mono text-white font-bold">
-                              {club.category || 'Randonnée'}
-                            </span>
+                            {club.category && (
+                              <span className="absolute bottom-2 left-3 px-2.5 py-0.5 bg-black/40 backdrop-blur-md rounded-full text-[9px] font-mono text-white font-bold">
+                                {club.category}
+                              </span>
+                            )}
                           </div>
                           <div className="p-4 space-y-2 flex-1 flex flex-col justify-between">
                             <div>
                               <h3 className="font-display font-bold text-base text-[#17402C] group-hover:text-forest-800 transition-colors">
                                 {clubName}
                               </h3>
-                              <p className="text-xs text-[#5C6B5E] line-clamp-2 mt-1">
-                                {clubDesc}
-                              </p>
+                              {clubDesc && (
+                                <p className="text-xs text-[#5C6B5E] line-clamp-2 mt-1">
+                                  {clubDesc}
+                                </p>
+                              )}
                             </div>
                             <div className="pt-2 border-t border-[#17402C]/10 flex items-center justify-between text-xs">
                               <span className="text-[10px] font-mono text-[#5C6B5E]">
-                                👥 {club.members_count || 12} membres
+                                👥 {club.members_count ?? 0} membres
                               </span>
                               <span className="glass-capsule-btn text-[10.5px] font-bold !py-1 !px-2.5">
                                 Rejoindre →
@@ -433,6 +457,13 @@ function CommunautePageContent() {
                       );
                     })}
                   </div>
+                  {!loading && filteredClubs.length === 0 && (
+                    <div className="glass bg-white/90 rounded-2xl p-10 border border-white text-center space-y-2">
+                      <span className="text-3xl block">🏔️</span>
+                      <h4 className="font-display font-bold text-sm text-[#17402C]">Aucun club pour le moment</h4>
+                      <p className="text-xs text-[#5C6B5E]">Les collectifs créés apparaîtront ici.</p>
+                    </div>
+                  )}
                 </div>
               )}
 
@@ -457,26 +488,30 @@ function CommunautePageContent() {
                     {groups.map((grp, i) => (
                       <Link
                         key={grp.id || i}
-                        href={`/groupes/${grp.id || 'grp-1'}`}
+                        href={grp.id ? `/groupes/${grp.id}` : '/communaute?tab=groupes'}
                         className="glass bg-white/90 backdrop-blur-xl rounded-2xl p-5 border border-white hover:shadow-xl transition-all group flex flex-col justify-between"
                       >
                         <div className="space-y-2">
                           <div className="flex items-center justify-between">
-                            <span className="text-2xl">{grp.pictogram || '⛺'}</span>
-                            <span className="glass-pill text-[9px] font-mono font-bold text-[#17402C]">
-                              {grp.max_members || 6} PLACES
-                            </span>
+                            <span className="text-2xl">{grp.pictogram || '🏕️'}</span>
+                            {grp.max_members > 0 && (
+                              <span className="glass-pill text-[9px] font-mono font-bold text-[#17402C]">
+                                {grp.max_members} PLACES
+                              </span>
+                            )}
                           </div>
                           <h4 className="font-display font-bold text-base text-[#17402C] group-hover:text-forest-800 transition-colors">
-                            {grp.name || 'Expédition Chartreuse'}
+                            {grp.name}
                           </h4>
-                          <p className="text-xs text-[#5C6B5E] line-clamp-2">
-                            {grp.description || '3 jours de traversée sur les crêtes.'}
-                          </p>
+                          {grp.description && (
+                            <p className="text-xs text-[#5C6B5E] line-clamp-2">
+                              {grp.description}
+                            </p>
+                          )}
                         </div>
 
                         <div className="pt-3 border-t border-[#17402C]/10 flex items-center justify-between text-[10px] font-mono text-[#5C6B5E] mt-3">
-                          <span>📍 {grp.massif || 'Chartreuse'}</span>
+                          <span>📍 {grp.massif || 'Massif non précisé'}</span>
                           <span className="glass-capsule-btn text-[10.5px] font-bold !py-1 !px-2.5">
                             Voir le cockpit →
                           </span>
@@ -484,6 +519,13 @@ function CommunautePageContent() {
                       </Link>
                     ))}
                   </div>
+                  {!loading && groups.length === 0 && (
+                    <div className="glass bg-white/90 rounded-2xl p-10 border border-white text-center space-y-2">
+                      <span className="text-3xl block">⛺</span>
+                      <h4 className="font-display font-bold text-sm text-[#17402C]">Aucune expédition en formation</h4>
+                      <p className="text-xs text-[#5C6B5E]">Créez un groupe pour préparer votre prochaine sortie.</p>
+                    </div>
+                  )}
                 </div>
               )}
 
@@ -498,39 +540,53 @@ function CommunautePageContent() {
                   </div>
 
                   <div className="space-y-3">
-                    {events.map((ev) => (
+                    {events.map((ev) => {
+                      const joined = joinedEventIds[String(ev.id)];
+                      return (
                       <div key={ev.id} className="glass bg-white/90 backdrop-blur-xl p-5 rounded-2xl border border-white flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                         <div className="space-y-1.5">
                           <div className="flex items-center gap-2">
                             <span className="bg-[#17402C] text-white text-[9px] font-mono font-bold px-2 py-0.5 rounded">
-                              {ev.date}
+                              {ev.date || 'Date à confirmer'}
                             </span>
-                            <span className="text-[10px] font-mono text-[#5C6B5E]">
-                              ⏰ {ev.time}
-                            </span>
+                            {ev.duration && (
+                              <span className="text-[10px] font-mono text-[#5C6B5E]">
+                                ⏱ {ev.duration}
+                              </span>
+                            )}
                           </div>
                           <h4 className="font-display font-bold text-base text-[#17402C]">
                             {ev.title}
                           </h4>
                           <p className="text-xs text-[#5C6B5E]">
-                            📍 {ev.location} · Encadré par <strong>{ev.guide}</strong>
+                            📍 {ev.location || 'Lieu à préciser'}
+                            {ev.guide ? <> · Encadré par <strong>{ev.guide}</strong></> : null}
                           </p>
                         </div>
 
                         <div className="flex items-center justify-between sm:justify-end gap-3 pt-2 sm:pt-0 border-t sm:border-t-0 border-[#17402C]/10">
                           <span className="text-[10px] font-mono font-bold text-forest-800">
-                            {ev.participants}/{ev.maxParticipants} inscrits
+                            {ev.participants}{ev.maxParticipants > 0 ? `/${ev.maxParticipants}` : ''} inscrits
                           </span>
                           <button
-                            onClick={() => alert(`Inscription enregistrée pour "${ev.title}" !`)}
-                            className="glass-capsule-btn primary text-[10.5px] font-bold !py-1 !px-3"
+                            onClick={() => handleJoinEvent(ev.id)}
+                            disabled={joined}
+                            className="glass-capsule-btn primary text-[10.5px] font-bold !py-1 !px-3 disabled:opacity-60"
                           >
-                            S'inscrire
+                            {joined ? 'Inscrit ✓' : "S'inscrire"}
                           </button>
                         </div>
                       </div>
-                    ))}
+                      );
+                    })}
                   </div>
+                  {!loading && events.length === 0 && (
+                    <div className="glass bg-white/90 rounded-2xl p-10 border border-white text-center space-y-2">
+                      <span className="text-3xl block">📅</span>
+                      <h4 className="font-display font-bold text-sm text-[#17402C]">Aucune sortie programmée</h4>
+                      <p className="text-xs text-[#5C6B5E]">Les événements à venir apparaîtront ici.</p>
+                    </div>
+                  )}
                 </div>
               )}
 
@@ -556,7 +612,7 @@ function CommunautePageContent() {
 
             {/* RIGHT COLUMN: SIDEBAR WIDGETS (310px) */}
             <div className="w-[310px] shrink-0 h-full overflow-hidden">
-              <CommunityRightSidebar />
+              <CommunityRightSidebar clubs={clubs} events={events} />
             </div>
 
           </div>

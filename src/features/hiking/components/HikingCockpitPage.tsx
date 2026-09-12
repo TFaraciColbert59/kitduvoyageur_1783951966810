@@ -40,6 +40,7 @@ export default function HikingCockpitPage({ terrainEnabled = false }: HikingCock
   const router = useRouter();
   const searchParams = useSearchParams();
   const routeIdParam = searchParams?.get('routeId');
+  const tripIdParam = searchParams?.get('tripId');
   // A13 (S5) — plan aventure actif passé par l'entrée du cockpit.
   const adventureIdParam = searchParams?.get('adventureId');
 
@@ -205,7 +206,7 @@ export default function HikingCockpitPage({ terrainEnabled = false }: HikingCock
           setGeoPermissionState('granted');
           if (!autoStartedRef.current) {
             autoStartedRef.current = true;
-            hikingStore.startHike(routeIdParam);
+            hikingStore.startHike(routeIdParam, undefined, tripIdParam || undefined);
           }
         } else if (status.state === 'denied') {
           setGeoPermissionState('denied');
@@ -218,7 +219,7 @@ export default function HikingCockpitPage({ terrainEnabled = false }: HikingCock
             setGeoPermissionState('granted');
             if (!autoStartedRef.current) {
               autoStartedRef.current = true;
-              hikingStore.startHike(routeIdParam);
+              hikingStore.startHike(routeIdParam, undefined, tripIdParam || undefined);
             }
           } else if (status.state === 'denied') {
             setGeoPermissionState('denied');
@@ -230,12 +231,12 @@ export default function HikingCockpitPage({ terrainEnabled = false }: HikingCock
     } else {
       setGeoPermissionState('prompt');
     }
-  }, [routeIdParam, hikingStore.isActive, hikingStore.state]);
+  }, [routeIdParam, tripIdParam, hikingStore.isActive, hikingStore.state]);
 
   const handleStartHikeWithPermission = async () => {
     try {
       autoStartedRef.current = true;
-      await hikingStore.startHike(routeIdParam || undefined);
+      await hikingStore.startHike(routeIdParam || undefined, undefined, tripIdParam || undefined);
       setGeoPermissionState('granted');
     } catch (err: any) {
       if (err?.code === 1 || err?.message?.toLowerCase().includes('denied')) {
@@ -252,7 +253,7 @@ export default function HikingCockpitPage({ terrainEnabled = false }: HikingCock
     } else if (hikingStore.isPaused) {
       hikingStore.resumeHike();
     } else {
-      hikingStore.startHike(routeIdParam || undefined);
+      hikingStore.startHike(routeIdParam || undefined, undefined, tripIdParam || undefined);
     }
   };
 

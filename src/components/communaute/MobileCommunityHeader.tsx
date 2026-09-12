@@ -36,7 +36,7 @@ export default function MobileCommunityHeader({ onSearchClick }: MobileCommunity
           </h1>
           <div className="flex items-center gap-1">
             <span className="w-1.5 h-1.5 rounded-full bg-[#5B7F55] animate-pulse" />
-            <span className="text-[9.5px] font-mono text-[#5A7064]">12.4k Voyageurs</span>
+            <span className="text-[9.5px] font-mono text-[#5A7064]">Communauté outdoor</span>
           </div>
         </div>
       </div>

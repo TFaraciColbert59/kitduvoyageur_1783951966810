@@ -31,7 +31,7 @@ export function TripCompletionModal({ trip, isOpen, onClose }: TripCompletionMod
   const [publishCarnet, setPublishCarnet] = useState(true);
   const [carnetTitle, setCarnetTitle] = useState(trip.title);
   const [carnetDescription, setCarnetDescription] = useState(trip.description || '');
-  const [isPublic, setIsPublic] = useState(true);
+  const [isPublic, setIsPublic] = useState(false);
 
   // Avis certifiés terrain
   const placeCandidates = extractCertifiedPlaceCandidates(trip);

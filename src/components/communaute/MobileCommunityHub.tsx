@@ -1,5 +1,4 @@
 'use client';
-import { lkvAlert } from '@/components/ui/dialogs';
 
 import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
@@ -24,6 +23,8 @@ interface MobileCommunityHubProps {
   loading?: boolean;
   user?: any;
   onRefresh?: () => Promise<void> | void;
+  joinedEventIds?: Record<string, boolean>;
+  onJoinEvent?: (eventId: string | number) => Promise<void> | void;
 }
 
 export default function MobileCommunityHub({
@@ -37,6 +38,8 @@ export default function MobileCommunityHub({
   loading = false,
   user,
   onRefresh,
+  joinedEventIds = {},
+  onJoinEvent,
 }: MobileCommunityHubProps) {
   const { triggerHaptic } = useHapticFeedback();
   const [currentTab, setCurrentTab] = useState<CommunityMobileTab>(activeTab);
@@ -183,24 +186,28 @@ export default function MobileCommunityHub({
             {clubs.map((c) => (
               <Link
                 key={c.id || c.name}
-                href={`/clubs/${c.id || encodeURIComponent(c.name)}`}
+                href={c.id ? `/clubs/${c.id}` : c.slug ? `/clubs/${c.slug}` : '/communaute?tab=clubs'}
                 className="glass rounded-2xl p-4 border border-white/60 shadow-xs flex items-center justify-between gap-3 block active:scale-[0.98] transition-transform"
               >
                 <div className="flex items-center gap-3 min-w-0">
                   <div className="w-12 h-12 rounded-2xl bg-white/80 border border-white flex items-center justify-center text-2xl shrink-0 shadow-2xs">
-                    {c.emoji || '🏔️'}
+                    {c.emoji || '🏕️'}
                   </div>
                   <div className="min-w-0 space-y-0.5">
                     <div className="flex items-center gap-2">
                       <h4 className="font-display font-bold text-sm text-[#17402C] truncate">{c.name}</h4>
                       <span className="glass-pill text-[8.5px] font-mono font-bold text-[#17402C] shrink-0">
-                        {c.members_count || 32} m.
+                        {c.members_count ?? 0} m.
                       </span>
                     </div>
-                    <p className="text-[11px] text-[#5A7064] line-clamp-1">{c.slogan || c.description}</p>
-                    <span className="text-[9.5px] font-mono text-[#5B7F55] font-semibold block">
-                      📍 {c.category || 'Montagne & Bivouac'}
-                    </span>
+                    {(c.slogan || c.description) && (
+                      <p className="text-[11px] text-[#5A7064] line-clamp-1">{c.slogan || c.description}</p>
+                    )}
+                    {c.category && (
+                      <span className="text-[9.5px] font-mono text-[#5B7F55] font-semibold block">
+                        📍 {c.category}
+                      </span>
+                    )}
                   </div>
                 </div>
 
@@ -209,6 +216,13 @@ export default function MobileCommunityHub({
                 </div>
               </Link>
             ))}
+            {!loading && clubs.length === 0 && (
+              <div className="py-12 text-center glass p-6 rounded-2xl space-y-2">
+                <span className="text-3xl block">🏔️</span>
+                <p className="font-bold text-[#17402C] text-sm">Aucun club pour le moment</p>
+                <p className="text-xs text-[#5A7064]">Les collectifs créés apparaîtront ici.</p>
+              </div>
+            )}
           </div>
         )}
 
@@ -218,63 +232,85 @@ export default function MobileCommunityHub({
             {groups.map((grp) => (
               <Link
                 key={grp.id || grp.name}
-                href={`/groupes/${grp.id || encodeURIComponent(grp.name)}`}
+                href={grp.id ? `/groupes/${grp.id}` : '/communaute?tab=groupes'}
                 className="glass rounded-2xl p-4 border border-white/60 shadow-xs flex flex-col justify-between space-y-3 block active:scale-[0.98] transition-transform"
               >
                 <div className="flex items-start justify-between gap-2">
                   <div className="space-y-1">
                     <span className="glass-pill text-[9px] font-mono font-bold text-[#17402C]">
-                      📍 {grp.massif || 'Alpes'}
+                      📍 {grp.massif || 'Massif non précisé'}
                     </span>
                     <h4 className="font-display font-bold text-sm text-[#17402C]">{grp.name}</h4>
-                    <p className="text-[11px] text-[#5A7064] line-clamp-2 leading-relaxed">{grp.description}</p>
+                    {grp.description && (
+                      <p className="text-[11px] text-[#5A7064] line-clamp-2 leading-relaxed">{grp.description}</p>
+                    )}
                   </div>
                   <div className="w-10 h-10 rounded-xl bg-white/80 border border-white text-xl flex items-center justify-center shrink-0 shadow-2xs">
-                    {grp.pictogram || '⛺'}
+                    {grp.pictogram || '🏕️'}
                   </div>
                 </div>
 
-                <div className="pt-2.5 border-t border-[#17402C]/5 flex items-center justify-between">
-                  <div className="flex items-center gap-1.5 text-[11px] font-mono text-[#5A7064]">
-                    <span className="font-bold text-[#17402C]">{grp.spots_left || 2}</span> places dispo
-                  </div>
+                {grp.max_members > 0 && (
+                  <div className="pt-2.5 border-t border-[#17402C]/5 flex items-center justify-between">
+                    <div className="flex items-center gap-1.5 text-[11px] font-mono text-[#5A7064]">
+                      <span className="font-bold text-[#17402C]">{grp.max_members}</span> places max
+                    </div>
 
-                  <span className="glass-capsule-btn text-[10.5px] font-bold !py-1 !px-2.5">
-                    Voir le cockpit →
-                  </span>
-                </div>
+                    <span className="glass-capsule-btn text-[10.5px] font-bold !py-1 !px-2.5">
+                      Voir le cockpit →
+                    </span>
+                  </div>
+                )}
               </Link>
             ))}
+            {!loading && groups.length === 0 && (
+              <div className="py-12 text-center glass p-6 rounded-2xl space-y-2">
+                <span className="text-3xl block">⛺</span>
+                <p className="font-bold text-[#17402C] text-sm">Aucune expédition en formation</p>
+                <p className="text-xs text-[#5A7064]">Créez un groupe pour préparer votre prochaine sortie.</p>
+              </div>
+            )}
           </div>
         )}
 
         {/* ── TAB 5: ÉVÉNEMENTS & SORTIES ── */}
         {currentTab === 'evenements' && (
           <div className="space-y-3">
-            {events.map((ev) => (
+            {events.map((ev) => {
+              const joined = joinedEventIds[String(ev.id)];
+              return (
               <div
                 key={ev.id || ev.title}
                 className="glass rounded-2xl p-4 border border-white/60 shadow-xs flex items-center justify-between gap-3"
               >
                 <div className="space-y-1 min-w-0">
                   <span className="glass-pill text-[9px] font-mono font-bold text-[#17402C]">
-                    📅 {ev.date}
+                    📅 {ev.date || 'Date à confirmer'}
                   </span>
                   <h4 className="font-display font-bold text-sm text-[#17402C] truncate">{ev.title}</h4>
-                  <p className="text-[11px] text-[#5A7064] font-mono">📍 {ev.location} · Guide : {ev.guide}</p>
+                  <p className="text-[11px] text-[#5A7064] font-mono">
+                    📍 {ev.location || 'Lieu à préciser'}
+                    {ev.guide ? ` · ${ev.guide}` : ''}
+                  </p>
                 </div>
 
                 <button
-                  onClick={() => {
-                    triggerHaptic('success');
-                    lkvAlert(`Inscription confirmée pour "${ev.title}" !`);
-                  }}
-                  className="glass-capsule-btn primary text-[10.5px] font-bold !py-1 !px-2.5 shrink-0"
+                  onClick={() => onJoinEvent?.(ev.id)}
+                  disabled={joined}
+                  className="glass-capsule-btn primary text-[10.5px] font-bold !py-1 !px-2.5 shrink-0 disabled:opacity-60"
                 >
-                  S'inscrire
+                  {joined ? 'Inscrit ✓' : "S'inscrire"}
                 </button>
               </div>
-            ))}
+              );
+            })}
+            {!loading && events.length === 0 && (
+              <div className="py-12 text-center glass p-6 rounded-2xl space-y-2">
+                <span className="text-3xl block">📅</span>
+                <p className="font-bold text-[#17402C] text-sm">Aucune sortie programmée</p>
+                <p className="text-xs text-[#5A7064]">Les événements à venir apparaîtront ici.</p>
+              </div>
+            )}
           </div>
         )}
 
