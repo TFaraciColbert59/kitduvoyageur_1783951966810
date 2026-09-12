@@ -12,6 +12,7 @@ import {
   isHubSurfacePathname,
 } from '@/features/hub/context/adventureLists';
 import { useCartCount } from '@/hooks/useCartCount';
+import { evaluateCurrentPrefetchPolicy } from '@/lib/perf/networkPrefs';
 import { isMoveBeyondTolerance } from '@/hooks/gestures/gestureMath';
 import LkvIcon from '@/components/ui/LkvIcon';
 import { HUB_ALERTES_HREF } from '@/features/hub/registry/hubSectionRegistry';
@@ -167,13 +168,14 @@ const TabLink = memo(function TabLink({
   useEffect(() => clearLongPressTimer, [clearLongPressTimer]);
 
   const prefetchData = useCallback(() => {
-    if (tab.href === '/explorer') {
-      queryClient.prefetchQuery({
-        queryKey: ['hikes'],
-        queryFn: () => fetch('/api/hikes').then((r) => (r.ok ? r.json() : [])),
-        staleTime: 60_000,
-      });
-    } else if (tab.href === '/hub') {
+    // P0 — garde réseau : pas de prefetch de données sur connexion limitée.
+    // L'ancien prefetch `['hikes']` non paramétré a été supprimé (clé jamais lue,
+    // requête gaspillée) : la carte charge ses données par viewport via
+    // `useViewportData` avec ses propres clés.
+    const policy = evaluateCurrentPrefetchPolicy();
+    if (!policy.allow || !policy.allowData) return;
+
+    if (tab.href === '/hub') {
       queryClient.prefetchQuery({
         queryKey: ['hub-adventures'],
         queryFn: () => fetch('/api/hub/adventures').then((r) => (r.ok ? r.json() : null)),

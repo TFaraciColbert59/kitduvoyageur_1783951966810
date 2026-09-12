@@ -1,0 +1,241 @@
+node.exe : npm notice run kitduvoyageur@0.1.0 analyze
+Au caractère Ligne:1 : 1
++ & "C:\Program Files\nodejs/node.exe" "C:\Users\Tony\.npm-global/node_ ...
++ ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: (npm notice run ...r@0.1.0 analyze:String) [], RemoteException
+    + FullyQualifiedErrorId : NativeCommandError
+ 
+npm notice run node scripts/perf/analyze.mjs
+[analyze] build avec ANALYZE=true...
+npm notice run kitduvoyageur@0.1.0 prebuild
+npm notice run node scripts/icons/build-sprite.mjs && node scripts/atlas/copy-maplibre-worker.mjs
+✓ 157 glyphes SF-style générés dans public/icons/sf/
+✓ Manifest : src\components\ui\Icon\registry.generated.ts
+[atlas:worker] maplibre-gl-worker.mjs déjà à jour (18592 octets)
+[atlas:worker] maplibre-gl-shared.mjs déjà à jour (482036 octets)
+npm notice run kitduvoyageur@0.1.0 build
+npm notice run next build
+   ▲ Next.js 15.5.25
+   - Environments: .env.local, .env
+   - Experiments (use with caution):
+     · optimizePackageImports
+
+   Creating an optimized production build ...
+[1mWebpack Bundle Analyzer[22m saved report to [1mC:\Users\Tony\Downloads\LKDV\kitduvoyageur_1783951966810\.next\analyze\nodejs.html[22m
+[1mWebpack Bundle Analyzer[22m saved report to [1mC:\Users\Tony\Downloads\LKDV\kitduvoyageur_1783951966810\.next\analyze\edge.html[22m
+<w> [webpack.cache.PackFileCacheStrategy] Serializing big strings (106kiB) impacts deserialization performance 
+(consider using Buffer instead and decode when needed)
+<w> [webpack.cache.PackFileCacheStrategy] Serializing big strings (254kiB) impacts deserialization performance 
+(consider using Buffer instead and decode when needed)
+[1mWebpack Bundle Analyzer[22m saved report to [1mC:\Users\Tony\Downloads\LKDV\kitduvoyageur_1783951966810\.next\analyze\client.html[22m
+ ✓ Compiled successfully in 45s
+   Skipping linting
+   Checking validity of types ...
+   Collecting page data ...
+ ⚠ Using edge runtime on a page currently disables static generation for that page
+   Generating static pages (0/272) ...
+   Generating static pages (68/272) 
+   Generating static pages (136/272) 
+   Generating static pages (204/272) 
+ ✓ Generating static pages (272/272)
+   Finalizing page optimization ...
+   Collecting build traces ...
+
+Route (app)                                 Size  First Load JS
+┌ ƒ /                                    2.42 kB         336 kB
+├ ƒ /_not-found                            460 B         104 kB
+├ ƒ /abonnements                         8.12 kB         335 kB
+├ ƒ /admin                               14.4 kB         340 kB
+├ ƒ /admin/produits                      19.2 kB         265 kB
+├ ƒ /ai-configurator                     13.7 kB         339 kB
+├ ƒ /ambassadeurs                        4.23 kB         326 kB
+├ ƒ /api/account/delete                    460 B         104 kB
+├ ƒ /api/account/export                    460 B         104 kB
+├ ƒ /api/admin/rewards                     460 B         104 kB
+├ ƒ /api/adventure/[id]                    460 B         104 kB
+├ ƒ /api/adventure/[id]/cockpit            460 B         104 kB
+├ ƒ /api/adventure/[id]/group              460 B         104 kB
+├ ƒ /api/adventure/[id]/monitoring         460 B         104 kB
+├ ƒ /api/adventure/[id]/offline-pack       460 B         104 kB
+├ ƒ /api/adventure/[id]/select             460 B         104 kB
+├ ƒ /api/adventure/[id]/trek               460 B         104 kB
+├ ƒ /api/adventure/generate                460 B         104 kB
+├ ƒ /api/adventure/offline/sync            460 B         104 kB
+├ ƒ /api/affiliate/travelpayouts           460 B         104 kB
+├ ƒ /api/ai/chat-completion                460 B         104 kB
+├ ƒ /api/ai/country-guide/[code]           460 B         104 kB
+├ ƒ /api/ai/jobs                           460 B         104 kB
+├ ƒ /api/ai/ping                           460 B         104 kB
+├ ƒ /api/badges/unread                     460 B         104 kB
+├ ƒ /api/billing/entitlements              460 B         104 kB
+├ ƒ /api/carnet/identify-species           460 B         104 kB
+├ ƒ /api/carnets/[id]                      460 B         104 kB
+├ ƒ /api/checkout                          460 B         104 kB
+├ ƒ /api/cron/aggregate-segments           460 B         104 kB
+├ ƒ /api/cron/cleanup-solo-crews           460 B         104 kB
+├ ƒ /api/cron/expire-terrain-reports       460 B         104 kB
+├ ƒ /api/cron/finalize-kit-attributions    460 B         104 kB
+├ ƒ /api/cron/process-adventure-events     460 B         104 kB
+├ ƒ /api/cron/process-ai-jobs              460 B         104 kB
+├ ƒ /api/cron/process-hike-sessions        460 B         104 kB
+├ ƒ /api/cron/refresh-atlas-density        460 B         104 kB
+├ ƒ /api/cron/refresh-country-guides       460 B         104 kB
+├ ƒ /api/cron/refresh-kit-scores           460 B         104 kB
+├ ƒ /api/cron/run-adventure-shadows        460 B         104 kB
+├ ƒ /api/dev/generate-country-blocks       460 B         104 kB
+├ ƒ /api/discovery/search                  460 B         104 kB
+├ ƒ /api/guides/[country]/ask              460 B         104 kB
+├ ƒ /api/hike-sessions                     460 B         104 kB
+├ ƒ /api/hike-sessions/[id]                460 B         104 kB
+├ ƒ /api/hike-sessions/[id]/narrative      460 B         104 kB
+├ ƒ /api/hikes                             460 B         104 kB
+├ ƒ /api/hikes/[id]                        460 B         104 kB
+├ ƒ /api/hikes/geojson                     460 B         104 kB
+├ ƒ /api/hub/adventures                    460 B         104 kB
+├ ƒ /api/hub/dashboard                     460 B         104 kB
+├ ƒ /api/identity/signature                460 B         104 kB
+├ ƒ /api/indexnow                          460 B         104 kB
+├ ƒ /api/kit-report/convert-inventory      460 B         104 kB
+├ ƒ /api/kit-report/generate               460 B         104 kB
+├ ƒ /api/kit-report/save                   460 B         104 kB
+├ ƒ /api/kits/[id]/field-report            460 B         104 kB
+├ ƒ /api/kits/[id]/refer                   460 B         104 kB
+├ ƒ /api/kits/[id]/sheet                   460 B         104 kB
+├ ƒ /api/kits/discovery                    460 B         104 kB
+├ ƒ /api/kits/my-royalties                 460 B         104 kB
+├ ƒ /api/materiel/alerts/[id]              460 B         104 kB
+├ ƒ /api/materiel/calendar                 460 B         104 kB
+├ ƒ /api/materiel/export                   460 B         104 kB
+├ ƒ /api/materiel/fork                     460 B         104 kB
+├ ƒ /api/materiel/items                    460 B         104 kB
+├ ƒ /api/materiel/items/[id]               460 B         104 kB
+├ ƒ /api/materiel/kit-items/[id]           460 B         104 kB
+├ ƒ /api/materiel/kits                     460 B         104 kB
+├ ƒ /api/materiel/kits/[id]                460 B         104 kB
+├ ƒ /api/materiel/kits/[id]/history        460 B         104 kB
+├ ƒ /api/materiel/loans/[id]               460 B         104 kB
+├ ƒ /api/materiel/optimize                 460 B         104 kB
+├ ƒ /api/materiel/participants             460 B         104 kB
+├ ƒ /api/materiel/scan                     460 B         104 kB
+├ ƒ /api/materiel/search                   460 B         104 kB
+├ ƒ /api/materiel/share                    460 B         104 kB
+├ ƒ /api/notifications/digest              460 B         104 kB
+├ ƒ /api/notifications/process             460 B         104 kB
+├ ƒ /api/notifications/subscribe           460 B         104 kB
+├ ƒ /api/notifications/vapid               460 B         104 kB
+├ ƒ /api/og-preview                        460 B         104 kB
+├ ƒ /api/pays/[code]                       460 B         104 kB
+├ ƒ /api/pays/[code]/recommendations       460 B         104 kB
+├ ƒ /api/pays/[code]/regions               460 B         104 kB
+├ ƒ /api/pays/[code]/trails                460 B         104 kB
+├ ƒ /api/pays/[code]/weather               460 B         104 kB
+├ ƒ /api/pois                              460 B         104 kB
+├ ƒ /api/produit/neuf-check                460 B         104 kB
+├ ƒ /api/produit/occasion-check            460 B         104 kB
+├ ƒ /api/produit/trust-score-check         460 B         104 kB
+├ ƒ /api/rewards/claim                     460 B         104 kB
+├ ƒ /api/rewards/withdraw                  460 B         104 kB
+├ ƒ /api/seed                              460 B         104 kB
+├ ƒ /api/stripe/webhook                    460 B         104 kB
+├ ƒ /api/telemetry/hub                     460 B         104 kB
+├ ƒ /api/terrain/conditions                460 B         104 kB
+├ ƒ /api/terrain/reports                   460 B         104 kB
+├ ƒ /api/terrain/reports/[id]/confirm      460 B         104 kB
+├ ƒ /api/trails                            460 B         104 kB
+├ ƒ /api/trip-assistant                    460 B         104 kB
+├ ƒ /api/voyages                           460 B         104 kB
+├ ƒ /api/voyages/[slug]/gpx                460 B         104 kB
+├ ƒ /api/voyages/mine                      460 B         104 kB
+├ ƒ /auth/callback                         460 B         104 kB
+├ ƒ /avis                                8.07 kB         330 kB
+├ ƒ /blog                                7.62 kB         335 kB
+├ ƒ /boutique                              161 B         326 kB
+├ ƒ /carbone                             5.95 kB         328 kB
+├ ƒ /carnets                             15.5 kB         355 kB
+├ ● /carnets/[id]                        16.1 kB         350 kB
+├ ƒ /carnets/nouveau                     7.34 kB         329 kB
+├ ƒ /carte-interactive                   3.45 kB         325 kB
+├ ƒ /cgu                                   160 B         325 kB
+├ ƒ /cgv                                   160 B         325 kB
+├ ƒ /checkout                            8.83 kB         330 kB
+├ ƒ /clubs                                 15 kB         340 kB
+├ ƒ /clubs/[id]                          15.2 kB         353 kB
+├ ƒ /clubs/nouveau                       7.83 kB         329 kB
+├ ƒ /communaute                            23 kB         375 kB
+├ ƒ /communaute-pro                      4.34 kB         326 kB
+├ ƒ /communaute/publier                    205 B         338 kB
+├ ƒ /compte                              26.1 kB         380 kB
+├ ƒ /compte/[userId]                       635 B         104 kB
+├ ƒ /compte/modifier                     1.35 kB         334 kB
+├ ƒ /connexion                           6.67 kB         328 kB
+├ ƒ /contact                             4.72 kB         326 kB
+├ ƒ /cookies                             6.35 kB         328 kB
+├ ƒ /copilote                            2.83 kB         329 kB
+├ ƒ /createurs                           4.17 kB         326 kB
+├ ƒ /entraide                            4.28 kB         326 kB
+├ ƒ /evenements                          10.3 kB         335 kB
+├ ƒ /experts                             3.97 kB         326 kB
+├ ƒ /explorer                            16.3 kB         265 kB
+├ ƒ /faq                                 5.31 kB         327 kB
+├ ƒ /feed                                6.67 kB         332 kB
+├ ƒ /fidelite                            8.78 kB         330 kB
+├ ƒ /go/[slug]                             460 B         104 kB
+├ ƒ /guides                              3.97 kB         326 kB
+├ ƒ /guides/[slug]                       6.33 kB         328 kB
+├ ƒ /hors-ligne                          5.73 kB         331 kB
+├ ƒ /hub                                 13.6 kB         314 kB
+├ ƒ /hub/[section]                        166 kB         542 kB
+├ ƒ /hub/nouveau                         35.1 kB         408 kB
+├ ƒ /inscription                         5.62 kB         327 kB
+├ ƒ /k/[token]                           2.49 kB         157 kB
+├ ƒ /kits                                3.98 kB         326 kB
+├ ● /kits/[slug]                         4.83 kB         331 kB
+├   ├ /kits/islande-trek
+├   ├ /kits/gr20-corse
+├   └ /kits/vanlife-europe
+├ ƒ /lieux                               1.79 kB         330 kB
+├ ƒ /lieux/[slug]                        5.62 kB         334 kB
+├ ƒ /location                            10.6 kB         332 kB
+├ ƒ /manifeste                             160 B         326 kB
+├ ƒ /mentions-legales                      160 B         325 kB
+├ ƒ /messagerie                          27.4 kB         366 kB
+├ ƒ /nouveau-groupe                      7.85 kB         330 kB
+├ ƒ /occasion                            10.5 kB         332 kB
+├ ƒ /outils                                160 B         325 kB
+├ ƒ /outils/[slug]                       10.5 kB         336 kB
+├ ƒ /panier                              7.24 kB         329 kB
+├ ● /pays/[code]                         36.6 kB         420 kB
+├   ├ /pays/ad
+├   ├ /pays/ae
+├   ├ /pays/af
+├   └ [+193 more paths]
+├ ƒ /politique-confidentialite             160 B         325 kB
+├ ƒ /preparer-randonnee                    460 B         104 kB
+├ ƒ /pro                                 5.33 kB         327 kB
+├ ● /produit/[slug]                      16.8 kB         345 kB
+├ ƒ /profil                                576 B         104 kB
+├ ƒ /profil/[id]                         7.67 kB         350 kB
+├ ƒ /publier                               511 B         338 kB
+├ ƒ /randonnee-active                    37.6 kB         361 kB
+├ ƒ /rapport-expedition                  8.38 kB         334 kB
+├ ƒ /recompenses                         8.42 kB         330 kB
+├ ○ /robots.txt                            460 B         104 kB
+├ ƒ /sitemap.xml                           460 B         104 kB
+├ ƒ /voyages/[slug]                       131 kB         467 kB
+└ ƒ /voyages/[slug]/[section]            1.55 kB         109 kB
++ First Load JS shared by all             104 kB
+  ├ chunks/1255-5677598258169525.js        46 kB
+  ├ chunks/4bd1b696-100b9d70ed4e49c1.js  54.2 kB
+  └ other shared chunks (total)          3.33 kB
+
+
+ƒ Middleware                             98.5 kB
+
+○  (Static)   prerendered as static content
+●  (SSG)      prerendered as static HTML (uses generateStaticParams)
+ƒ  (Dynamic)  server-rendered on demand
+
+[analyze] terminé — rapports : .next/analyze/client.html et .next/analyze/nodejs.html
+(node:30012) [DEP0190] DeprecationWarning: Passing args to a child process with shell option true can lead to security 
+vulnerabilities, as the arguments are not escaped, only concatenated.
+(Use `node --trace-deprecation ...` to show where the warning was created)

@@ -74,7 +74,8 @@
     "ops:a15-load": "node scripts/ops/a15_load_test.mjs",
     "ops:a15-rollout": "node scripts/ops/a15_rollout.mjs",
     "ops:capacity": "node scripts/ops/phase10_capacity.mjs",
-    "ops:slo-check": "tsx scripts/ops/phase10_slo_check.ts"
+    "ops:slo-check": "tsx scripts/ops/phase10_slo_check.ts",
+    "analyze": "node scripts/perf/analyze.mjs"
   },
   "dependencies": {
     "@capacitor/android": "^8.5.0",
@@ -135,6 +136,7 @@
     "@axe-core/playwright": "^4.13.0",
     "@eslint/eslintrc": "^3",
     "@netlify/plugin-nextjs": "^5.11.1",
+    "@next/bundle-analyzer": "^16.3.5",
     "@phosphor-icons/core": "^2.1.1",
     "@playwright/test": "^1.51.1",
     "@types/leaflet": "1.9.21",

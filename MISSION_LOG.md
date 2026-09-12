@@ -924,3 +924,61 @@ Aucune de ces étapes ne doit être improvisée sans le palier 100 % — c'est l
   - Preuves : `pays: HTTP 307`, `pays/fr: HTTP 200` ; suites : **2281 tests**, visuel desktop **6/6** (dont « /pays redirige vers /explorer, /pays/fr garde son globe »), e2e **2/2**, `tsc` 0.
   - Rollback : retirer les deux entrées de redirection (`/pays`, `/carte-interactive`) ; les fichiers supprimés restent récupérables via git.
 
+## 2026-09-12 — AUDIT PERFORMANCE MOBILE — phases P0-P4 (branche `chantier/atlas-perf-mobile`)
+
+> Périmètre GEL respecté : aucun changement caméra, aucun changement de paliers de zoom, flag `explorer_unified_map_enabled` intouché.
+
+### P0 — Prefetch mort supprimé + garde réseau (TDD)
+- **Deux émetteurs trouvés et corrigés** : `PrefetchRoutes.tsx` (blocs `queries ["hikes"]` sur `/` et `/explorer`) **et** `BottomTabBar.tsx` (`prefetchData` sur `onPointerEnter`/`onTouchStart` refaisait le même fetch non paramétré). La clé exacte `['hikes']` n'était lue par aucun `useQuery` → requête 100 % gaspillée.
+- **`src/lib/perf/networkPrefs.ts`** (nouveau, pur) : `saveData` ⇒ tout coupé ; `slow-2g`/`2g` ⇒ tout coupé ; `3g` ⇒ routes autorisées, données refusées ; API absente/4G ⇒ comportement conservé (fail-open). TDD `tests/perf/networkPrefs.spec.ts` rouge→vert (5/5).
+- Preuves brutes :
+```
+$ rg "api/hikes" src/components/PrefetchRoutes.tsx src/components/mobile-nav/BottomTabBar.tsx
+GREP_EXIT=1 (1 = 0 occurrence)
+
+$ node scripts/perf/capture-prefetch.mjs   (docs/perf/prefetch-avant.txt / prefetch-apres.txt)
+AVANT : / → 1 requête http://localhost:4000/api/hikes (sans paramètres)
+        /explorer → 1 requête http://localhost:4000/api/hikes (sans paramètres)
+APRÈS : / → 0 · /explorer → 0
+```
+
+### P1 — Chargement serveur parallèle
+- `src/app/explorer/page.tsx` : `Promise.all([getTrails(...), unifiedMap ? getAtlasDensity() : résolu])`, replis explicites conservés (logs inchangés).
+```
+docs/perf/server-timing.txt
+AVANT (séquentiel) : 240, 251, 245, 249, 248 ms → moyenne 247 ms
+APRÈS (Promise.all): 256, 245, 239, 253, 248 ms → moyenne 248 ms
+Note factuelle : delta dans le bruit en dev local (Supabase distant chaud + overhead Next dev) ;
+le gain structurel vaut min(t_trails, t_density), mesurable sous cache froid / réseau réel.
+```
+
+### P2 — Budget & mesure
+- `@next/bundle-analyzer` ajouté (devDependency), `next.config.mjs` enveloppé (`ANALYZE=true`, `openAnalyzer:false`), script `npm run analyze` → rapports `.next/analyze/{client,nodejs,edge}.html` (build OK, `/explorer` 16.3 kB / 265 kB First Load JS).
+- `scripts/perf/measure-maplibre.mjs` (mesure réelle) :
+```
+maplibre-gl.mjs        554 Ko brut / 139 Ko gzip
+maplibre-gl-shared.mjs 471 Ko brut / 131 Ko gzip
+maplibre-gl-worker.mjs  18 Ko brut /   6 Ko gzip
+maplibre-gl.css         81 Ko brut /  10 Ko gzip
+TOTAL                 1124 Ko brut / 286 Ko gzip
+```
+- `docs/PERFORMANCE_BUDGET.md` : budgets séparés (PERF-R3) — shell 265 Ko (métrique Next, hors `dynamic`) vs moteur carte lazy **286 Ko gzip** ; total « carte utilisable » ≈ 545-550 Ko gzip, assumé et documenté (pas de version allégée de MapLibre pour un globe WebGL).
+- Cache : `Cache-Control: public, max-age=31536000, immutable` vérifié sur `/_next/static/*` après build prod (`npm start`, HEAD réel) — non écrasé par `next.config`.
+
+### P3 — Hygiène dépôt (preuves dans `docs/perf/hygiene.txt` + `duplicates-refs.txt`)
+- `public/assets/videos/mm-ambient.mp4` : 48 007 124 octets, **0 référence** (`rg` exit 1) → supprimé.
+- **43 doublons exacts SHA-256** `public/assets/*.jpg` ↔ `images/*.jpg` : 0 référencé des deux côtés. Seule exception app : `tests/cart.spec.ts:39` référence `/assets/gear-tent-small.jpg` → copie racine conservée, copie `images/` supprimée ; les 42 autres doublons racine supprimés (références restantes = archives `resources/design-mockups/**`, hors build).
+- **Espace libéré : 77,8 Mo** — `public/assets` 138,4 Mo → **60,5 Mo**.
+
+### P4 — Non-régression
+```
+$ npx tsc --noEmit  → TSC_EXIT=0
+$ npm run lint      → LINT_EXIT=0
+$ npm run build     → ✓ Compiled successfully · BUILD_EXIT=0 · /explorer 16.3 kB / 265 kB
+$ npm test          → 2286 passed | 23 skipped (2309)   # +5 tests vs avant
+$ playwright visual (3 projets) → 7 passed, 1 flake environnemental (bandeau « Hors ligne »
+   déclenché par le build concurrent sur le dev-server) — rejoué seul : vert (11.9 s)
+$ e2e atlas → 2 passed (3 × net::ERR_ABORTED)
+```
+Rollback legacy : flag intouché (GEL) ; `ExplorerMap`/Leaflet non modifiés (`git diff` vide sur les fichiers legacy).
+

@@ -3,6 +3,7 @@
 import { useEffect } from "react";
 import { useRouter, usePathname } from "next/navigation";
 import { useQueryClient } from "@tanstack/react-query";
+import { evaluateCurrentPrefetchPolicy } from "@/lib/perf/networkPrefs";
 
 /**
  * PrefetchRoutes — Prefetch predictif base sur la route courante.
@@ -32,23 +33,9 @@ type PrefetchConfig = {
 const PREFETCH_MAP: Record<string, PrefetchConfig> = {
   "/": {
     routes: ["/explorer", "/hub", "/communaute", "/compte"],
-    queries: [
-      {
-        queryKey: ["hikes"],
-        fetcher: () =>
-          fetch("/api/hikes").then((r) => (r.ok ? r.json() : [])),
-      },
-    ],
   },
   "/explorer": {
     routes: ["/hors-ligne", "/hub"],
-    queries: [
-      {
-        queryKey: ["hikes"],
-        fetcher: () =>
-          fetch("/api/hikes").then((r) => (r.ok ? r.json() : [])),
-      },
-    ],
   },
   "/communaute": {
     routes: ["/carnets", "/groupes", "/clubs", "/evenements", "/entraide"],
@@ -80,13 +67,19 @@ export default function PrefetchRoutes() {
   const queryClient = useQueryClient();
 
   useEffect(() => {
+    // P0 — politique réseau : pas de cascade de prefetch quand l'utilisateur a
+    // limité sa connexion (saveData / 2G / 3G → voir networkPrefs).
+    const policy = evaluateCurrentPrefetchPolicy();
+
     // -- 1. Prefetch routes Next.js (JS bundle + RSC payload)
-    const routes = getRoutesToPrefetch(pathname);
-    routes.forEach((r) => router.prefetch(r));
+    if (policy.allow) {
+      const routes = getRoutesToPrefetch(pathname);
+      routes.forEach((r) => router.prefetch(r));
+    }
 
     // -- 2. Prefetch donnees QueryClient de la page courante
     const currentConfig = PREFETCH_MAP[pathname];
-    if (currentConfig?.queries) {
+    if (policy.allowData && currentConfig?.queries) {
       currentConfig.queries.forEach(({ queryKey, fetcher }) => {
         queryClient.prefetchQuery({
           queryKey,
