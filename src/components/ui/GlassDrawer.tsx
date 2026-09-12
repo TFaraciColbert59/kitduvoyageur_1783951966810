@@ -4,13 +4,13 @@ import { motion } from 'framer-motion';
 import { XIcon as X } from '@/components/icons/x';
 
 export function GlassDrawer({
-  open, onOpenChange, title, width = 520, children,
-}: { open: boolean; onOpenChange: (v: boolean) => void; title: string; width?: number; children: React.ReactNode }) {
+  open, onOpenChange, title, titleId, width = 520, children,
+}: { open: boolean; onOpenChange: (v: boolean) => void; title: string; titleId?: string; width?: number; children: React.ReactNode }) {
   return (
     <Dialog.Root open={open} onOpenChange={onOpenChange}>
       <Dialog.Portal>
         <Dialog.Overlay className="fixed inset-0 z-[10000] bg-ink-900/25" />
-        <Dialog.Content asChild aria-label={title}>
+        <Dialog.Content asChild aria-label={title} {...(titleId ? { 'aria-labelledby': titleId } : {})}>
           <motion.div
             className="fixed right-0 top-0 bottom-0 z-[10001] h-full"
             style={{ width: `min(${width}px, 100vw)`, maxWidth: '100vw' }}
@@ -19,7 +19,7 @@ export function GlassDrawer({
           >
             <div className="glass pt-safe pb-safe flex h-full flex-col rounded-l-[var(--r-xl)] rounded-r-none">
               <header className="flex h-14 shrink-0 items-center justify-between border-b border-glass-border px-5">
-                <Dialog.Title className="font-display font-semibold text-[17px]">{title}</Dialog.Title>
+                <Dialog.Title {...(titleId ? { id: titleId } : {})} className="font-display font-semibold text-[17px]">{title}</Dialog.Title>
                 <Dialog.Close asChild>
                   <button aria-label="Fermer" className="glass-sub-card flex h-11 w-11 items-center justify-center rounded-full cursor-pointer">
                     <X size={18} aria-hidden="true" />

@@ -117,14 +117,14 @@ export function DepartParticipants({ participants, emergencyContact }: DepartPar
         )}
 
         {/* ════ NUMÉROS D'URGENCE & SECOURS MONTAGNE (§Phase 5) ════ */}
-        <div className="p-2.5 rounded-xl bg-black/5 dark:bg-white/5 space-y-1.5">
+        <div className="p-2.5 rounded-xl bg-black/5 space-y-1.5">
           <span className="text-[10px] font-bold uppercase tracking-wider text-[var(--lkv-text-muted)] block">
             Secours en Montagne & Territoire
           </span>
           <div className="grid grid-cols-2 gap-2 text-xs">
             <a
               href="tel:112"
-              className="p-2 rounded-xl bg-white/70 dark:bg-white/10 border border-white/60 flex items-center justify-between hover:bg-white text-[var(--lkv-primary)] font-semibold cursor-pointer"
+              className="p-2 rounded-xl bg-white/70 border border-white/60 flex items-center justify-between hover:bg-white text-[var(--lkv-primary)] font-semibold cursor-pointer"
             >
               <div className="flex items-center gap-1.5">
                 <AlertOctagon size={13} className="text-[var(--lkv-danger)]" />
@@ -135,7 +135,7 @@ export function DepartParticipants({ participants, emergencyContact }: DepartPar
 
             <a
               href="tel:15"
-              className="p-2 rounded-xl bg-white/70 dark:bg-white/10 border border-white/60 flex items-center justify-between hover:bg-white text-[var(--lkv-primary)] font-semibold cursor-pointer"
+              className="p-2 rounded-xl bg-white/70 border border-white/60 flex items-center justify-between hover:bg-white text-[var(--lkv-primary)] font-semibold cursor-pointer"
             >
               <div className="flex items-center gap-1.5">
                 <Radio size={13} className="text-[var(--lkv-primary-hover)]" />

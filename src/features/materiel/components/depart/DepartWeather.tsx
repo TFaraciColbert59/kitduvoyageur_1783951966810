@@ -15,9 +15,9 @@ interface DepartWeatherProps {
 
 function getWeatherIcon(code: number, size = 16) {
   if (code === 0)
-    return <Icon name="sun" size={size} className="text-sand-500" aria-hidden="true" />;
+    return <Icon name="sun" size={size} className="text-[var(--lkv-warning)]" aria-hidden="true" />;
   if (code <= 2)
-    return <Icon name="cloud-sun" size={size} className="text-sand-600/80" aria-hidden="true" />;
+    return <Icon name="cloud-sun" size={size} className="text-[var(--lkv-warning)]/80" aria-hidden="true" />;
   if (code === 3)
     return <Icon name="cloud" size={size} className="text-stone-500" aria-hidden="true" />;
   if (code <= 48)
@@ -30,7 +30,7 @@ function getWeatherIcon(code: number, size = 16) {
     return <Icon name="cloud-snow" size={size} className="text-indigo-400" aria-hidden="true" />;
   if (code <= 86)
     return <Icon name="cloud-rain" size={size} className="text-sky-700" aria-hidden="true" />;
-  return <Icon name="cloud-lightning" size={size} className="text-sand-600" aria-hidden="true" />;
+  return <Icon name="cloud-lightning" size={size} className="text-[var(--lkv-warning)]" aria-hidden="true" />;
 }
 
 export function DepartWeather({ weather, updatedAt }: DepartWeatherProps) {
@@ -68,7 +68,7 @@ export function DepartWeather({ weather, updatedAt }: DepartWeatherProps) {
             <p className="text-[11px] text-[var(--lkv-text-muted)] truncate">{locationLabel}</p>
           </div>
 
-          <div className="flex items-center gap-2 bg-white/50 dark:bg-white/10 px-2.5 py-1 rounded-xl border border-white/60 shadow-2xs shrink-0">
+          <div className="flex items-center gap-2 bg-white/50 px-2.5 py-1 rounded-xl border border-white/60 shadow-2xs shrink-0">
             {getWeatherIcon(weather.current.weathercode, 18)}
             <div className="text-right">
               <div className="text-sm sm:text-base font-mono font-bold text-[var(--lkv-primary)] leading-none">
@@ -90,8 +90,8 @@ export function DepartWeather({ weather, updatedAt }: DepartWeatherProps) {
               className={cn(
                 'shrink-0 p-2 rounded-xl text-center space-y-1 transition-colors w-[100px]',
                 idx === 0
-                  ? 'bg-white/60 dark:bg-white/10 border border-white/70 shadow-2xs'
-                  : 'bg-white/25 dark:bg-white/5 border border-white/30'
+                  ? 'bg-white/70 border border-white/70 shadow-2xs'
+                  : 'bg-white/25 border border-white/30'
               )}
             >
               <p className="text-[10px] font-semibold text-[var(--lkv-primary)] truncate">
@@ -107,7 +107,7 @@ export function DepartWeather({ weather, updatedAt }: DepartWeatherProps) {
                 </span>
               </div>
               {day.precipPct > 0 && (
-                <div className="flex items-center justify-center gap-0.5 text-[9px] text-sky-700 dark:text-sky-400 font-medium">
+                <div className="flex items-center justify-center gap-0.5 text-[9px] text-sky-700 font-medium">
                   <Icon name="droplets" size={8.5} />
                   <span>{day.precipPct}%</span>
                 </div>
@@ -116,9 +116,9 @@ export function DepartWeather({ weather, updatedAt }: DepartWeatherProps) {
           ))}
 
           {/* Éphéméride du jour */}
-          <div className="shrink-0 p-2 rounded-xl bg-white/30 dark:bg-white/5 border border-white/40 flex flex-col items-center justify-between w-[80px]">
+          <div className="shrink-0 p-2 rounded-xl bg-white/30 border border-white/40 flex flex-col items-center justify-between w-[80px]">
             <span className="text-[9px] uppercase tracking-wider text-[var(--lkv-text-muted)] flex items-center gap-1 font-semibold">
-              <Icon name="sunrise" size={10} className="text-sand-600" />
+              <Icon name="sunrise" size={10} className="text-[var(--lkv-warning)]" />
               <span>Lever</span>
             </span>
             <span className="font-mono font-bold text-[var(--lkv-primary)] text-[11px] my-auto">
@@ -126,9 +126,9 @@ export function DepartWeather({ weather, updatedAt }: DepartWeatherProps) {
             </span>
           </div>
 
-          <div className="shrink-0 p-2 rounded-xl bg-white/30 dark:bg-white/5 border border-white/40 flex flex-col items-center justify-between w-[80px]">
+          <div className="shrink-0 p-2 rounded-xl bg-white/30 border border-white/40 flex flex-col items-center justify-between w-[80px]">
             <span className="text-[9px] uppercase tracking-wider text-[var(--lkv-text-muted)] flex items-center gap-1 font-semibold">
-              <Icon name="sunset" size={10} className="text-sand-700" />
+              <Icon name="sunset" size={10} className="text-[var(--lkv-warning)]" />
               <span>Coucher</span>
             </span>
             <span className="font-mono font-bold text-[var(--lkv-primary)] text-[11px] my-auto">
@@ -136,9 +136,9 @@ export function DepartWeather({ weather, updatedAt }: DepartWeatherProps) {
             </span>
           </div>
 
-          <div className="shrink-0 p-2 rounded-xl bg-white/30 dark:bg-white/5 border border-white/40 flex flex-col items-center justify-between w-[80px]">
+          <div className="shrink-0 p-2 rounded-xl bg-white/30 border border-white/40 flex flex-col items-center justify-between w-[80px]">
             <span className="text-[9px] uppercase tracking-wider text-[var(--lkv-text-muted)] flex items-center gap-1 font-semibold">
-              <Icon name="sun" size={10} className="text-forest-700" />
+              <Icon name="sun" size={10} className="text-[var(--lkv-forest-700)]" />
               <span>Jour</span>
             </span>
             <span className="font-mono font-bold text-[var(--lkv-primary)] text-[11px] my-auto">
@@ -151,7 +151,7 @@ export function DepartWeather({ weather, updatedAt }: DepartWeatherProps) {
             weather.cells.slice(0, 8).map((cell) => (
               <div
                 key={cell.hour}
-                className="shrink-0 p-2 rounded-xl bg-white/20 dark:bg-white/5 border border-white/30 text-center w-[68px] space-y-0.5 flex flex-col justify-between"
+                className="shrink-0 p-2 rounded-xl bg-white/20 border border-white/30 text-center w-[68px] space-y-0.5 flex flex-col justify-between"
               >
                 <p className="text-[9px] font-mono text-[var(--lkv-text-muted)]">{cell.hour}</p>
                 <div className="flex justify-center">{getWeatherIcon(cell.weathercode, 14)}</div>

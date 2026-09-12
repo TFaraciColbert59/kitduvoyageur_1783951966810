@@ -1,7 +1,7 @@
 import React from 'react';
 import { describe, it, expect, vi } from 'vitest';
 import { renderToStaticMarkup } from 'react-dom/server';
-import { DepartCockpit } from '@/features/materiel/components/depart/DepartCockpit';
+import { DepartMobileExperience } from '@/features/hub/components/mobile/depart/DepartMobileExperience';
 import { DepartChecklist } from '@/features/materiel/components/depart/DepartChecklist';
 import type { DepartDetail } from '@/features/materiel/services/getDepartDetail';
 import type { ChecklistItem } from '@/features/materiel/types/trekHub';
@@ -27,6 +27,11 @@ vi.mock('next/navigation', () => ({
 
 vi.mock('next/dynamic', () => ({
   default: () => () => React.createElement('div', { 'data-testid': 'mock-depart-map' }, 'Carte GPS'),
+}));
+
+const hapticMock = vi.fn();
+vi.mock('@/hooks/useHapticFeedback', () => ({
+  useHapticFeedback: () => ({ haptic: hapticMock, triggerHaptic: hapticMock, vibrate: hapticMock }),
 }));
 
 describe('Mobile Layout & Shell Navigation Architecture', () => {
@@ -92,7 +97,7 @@ describe('Mobile Layout & Shell Navigation Architecture', () => {
   });
 });
 
-describe('Mobile Cockpit Integration & OLED Ultra-Save Mode', () => {
+describe('Mobile Depart Experience Integration (canonical)', () => {
   const mockItems: ChecklistItem[] = [
     {
       id: 'item-tente',
@@ -165,54 +170,39 @@ describe('Mobile Cockpit Integration & OLED Ultra-Save Mode', () => {
     updatedAt: '2026-08-31T08:00:00Z',
   };
 
-  it('renders compact mobile header with % Prêt badge and central weight breakdown', () => {
-    const html = renderToStaticMarkup(
-      React.createElement(DepartCockpit, {
+  const renderMobileExperience = () =>
+    renderToStaticMarkup(
+      React.createElement(DepartMobileExperience, {
         depart: mockDepart,
         weather: null,
         kits: [{ id: 'tmb-4j', name: 'Kit TMB' }],
       })
     );
 
-    // Mobile block presence
-    expect(html).toContain('md:hidden');
+  it('renders the canonical mobile wrapper with readiness and weight chips', () => {
+    const html = renderMobileExperience();
 
-    // Compact header presence
-    expect(html).toContain('67% Prêt');
+    // Canonical mobile experience root (no legacy cockpit shell)
+    expect(html).toContain('data-testid="depart-mobile-experience"');
+    expect(html).toContain('flex min-w-0 flex-col gap-5 pb-1');
+    expect(html).not.toContain('md:hidden');
 
-    // Central DepartWeightBreakdown elements (authoritative location for weights)
-    expect(html).toContain('4.8 kg');
-    expect(html).toContain('1.2 kg');
-    expect(html).toContain('2.5 kg');
+    // Authoritative indicators are the mobile chips
+    expect(html).toContain('8.5 kg — Poids porté');
+    expect(html).toContain('1 — À compléter');
+    expect(html).toContain('67 % — Prêt');
   });
 
-  it('renders MobileFloatingIsland fixed at the bottom with live counts, speech and quick add', () => {
-    const html = renderToStaticMarkup(
-      React.createElement(DepartCockpit, {
-        depart: mockDepart,
-        weather: null,
-        kits: [{ id: 'tmb-4j', name: 'Kit TMB' }],
-      })
-    );
+  it('no longer mounts the legacy fixed-bottom floating island', () => {
+    const html = renderMobileExperience();
 
-    // Liquid Island presence & positioning
-    expect(html).toContain('fixed bottom-4');
-    expect(html).toContain('aria-label="Contrôles mobiles rapides"');
-    expect(html).toContain('Tous');
-    expect(html).toContain('3');
-    expect(html).toContain('Restants');
-    expect(html).toContain('1');
-    expect(html).toContain('Ajouter un équipement');
+    expect(html).not.toContain('fixed bottom-4');
+    expect(html).not.toContain('aria-label="Contrôles mobiles rapides"');
+    expect(html).not.toContain('Ajouter un équipement');
   });
 
-  it('renders MobileVitalAlertBanner when missing vital equipment is detected', () => {
-    const html = renderToStaticMarkup(
-      React.createElement(DepartCockpit, {
-        depart: mockDepart,
-        weather: null,
-        kits: [{ id: 'tmb-4j', name: 'Kit TMB' }],
-      })
-    );
+  it('renders the smart alerts banner when missing vital equipment is detected', () => {
+    const html = renderMobileExperience();
 
     // Vital alert banner
     expect(html).toContain('role="alert"');
@@ -221,18 +211,12 @@ describe('Mobile Cockpit Integration & OLED Ultra-Save Mode', () => {
     expect(html).toContain('Tente Big Agnes Copper Spur HV UL2');
   });
 
-  it('supports OLED pure black mode attributes and styling', () => {
-    const html = renderToStaticMarkup(
-      React.createElement(DepartCockpit, {
-        depart: mockDepart,
-        weather: null,
-        kits: [{ id: 'tmb-4j', name: 'Kit TMB' }],
-      })
-    );
+  it('exposes no legacy OLED toggle nor safe-area hack in the mobile page', () => {
+    const html = renderMobileExperience();
 
-    // Eco toggle button present in header
-    expect(html).toContain('Mode Éco Batterie');
-    expect(html).toContain('ÉCO');
+    expect(html).not.toContain('Mode Éco Batterie');
+    expect(html).not.toContain('env(safe-area-inset');
+    expect(html).not.toContain('fixed bottom-4');
   });
 
   it('integrates MobileChecklistItem with 48px hit-box and swipe-to-pack in DepartChecklist on mobile', () => {

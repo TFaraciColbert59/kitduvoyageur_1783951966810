@@ -488,7 +488,7 @@ export function DepartChecklist({
     >
       <div className="flex flex-col h-full max-h-full min-h-0 justify-between gap-2">
         {/* ════ HEADER CHECKLIST FIXE IMMOBILE SUR UNE SEULE LIGNE ════ */}
-        <div className="shrink-0 flex items-center justify-between gap-2 pb-2 border-b border-black/5 dark:border-white/10">
+        <div className="shrink-0 flex items-center justify-between gap-2 pb-2 border-b border-black/5">
           <div className="flex items-center gap-1.5 min-w-0">
             <CheckSquare
               size={14}
@@ -509,7 +509,7 @@ export function DepartChecklist({
           {/* Barre d actions droite : Filtres + Audio + Bouton Plus Icône Seule */}
           <div className="flex items-center gap-1 shrink-0">
             {/* Bascule Reste à faire / Tous */}
-            <div className="flex items-center bg-black/5 dark:bg-white/10 rounded-xl p-0.5 text-[10px] font-semibold">
+            <div className="flex items-center bg-black/5 rounded-xl p-0.5 text-[10px] font-semibold">
               <button
                 type="button"
                 onClick={() => setFilterMode('all')}
@@ -544,7 +544,7 @@ export function DepartChecklist({
                 'w-6 h-6 rounded-lg flex items-center justify-center transition-all cursor-pointer shadow-2xs shrink-0',
                 isSpeaking
                   ? 'bg-[var(--lkv-primary-hover)] text-white animate-pulse'
-                  : 'bg-white/60 dark:bg-white/10 text-[var(--lkv-primary)] hover:bg-white'
+                  : 'glass-sub-card text-[var(--lkv-primary)] hover:bg-white'
               )}
               title={isSpeaking ? 'Arrêter la lecture' : 'Lire les articles restants à voix haute'}
               aria-label={
@@ -618,10 +618,10 @@ export function DepartChecklist({
                     'w-full flex items-center justify-between gap-2 px-3 py-2.5 rounded-2xl transition-colors text-left cursor-pointer',
                     'focus-visible:outline-2 focus-visible:outline-[var(--lkv-primary)]',
                     allDone
-                      ? 'bg-black/4 dark:bg-white/5 text-[var(--lkv-primary)]/80 hover:bg-black/6'
+                      ? 'bg-black/4 text-[var(--lkv-primary)]/80 hover:bg-black/6'
                       : isFoodWater
                         ? 'bg-[var(--lkv-success)]/10 text-[var(--lkv-primary)] font-semibold border border-[var(--lkv-success)]/20 shadow-2xs'
-                        : 'bg-white/50 dark:bg-white/10 text-[var(--lkv-primary)] font-semibold shadow-2xs'
+                        : 'bg-white/50 text-[var(--lkv-primary)] font-semibold shadow-2xs'
                   )}
                   aria-expanded={isOpen}
                   aria-controls={`checklist-cat-${group.name}`}
@@ -656,7 +656,7 @@ export function DepartChecklist({
                         'text-[10.5px] font-mono tabular-nums px-1.5 py-0.5 rounded-md font-semibold',
                         allDone
                           ? 'bg-[var(--lkv-secondary)]/15 text-[var(--lkv-primary)]'
-                          : 'bg-black/5 dark:bg-white/10 text-[var(--lkv-text-muted)]'
+                          : 'bg-black/5 text-[var(--lkv-text-muted)]'
                       )}
                     >
                       {group.done}/{group.items.length}
@@ -718,7 +718,7 @@ export function DepartChecklist({
                                     'ring-2 ring-[var(--lkv-danger)] bg-[var(--lkv-danger)]/15',
                                   item.is_checked
                                     ? 'bg-black/2 hover:bg-black/4 opacity-75 hover:opacity-100'
-                                    : 'bg-white/40 hover:bg-white/60 shadow-2xs'
+                                    : 'bg-white/40 hover:bg-white/70 shadow-2xs'
                                 )}
                               >
                                 {/* Bouton cocher toggle principal */}
@@ -788,7 +788,7 @@ export function DepartChecklist({
                                         </span>
                                       )}
                                       {item.is_consumable && (
-                                        <span className="text-[9px] font-medium px-1.5 py-0.2 rounded-full bg-forest-100/80 text-forest-900 flex items-center gap-0.5">
+                                        <span className="text-[9px] font-medium px-1.5 py-0.2 rounded-full bg-[var(--lkv-forest-100)]/80 text-[var(--lkv-forest-900)] flex items-center gap-0.5">
                                           <Icon name="sparkles" size={8} />
                                           Consommable
                                         </span>

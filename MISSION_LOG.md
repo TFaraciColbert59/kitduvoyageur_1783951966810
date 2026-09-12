@@ -1036,3 +1036,54 @@ $ e2e atlas        → 2 passed (1er run : ERR_CONNECTION_REFUSED car le webServ
                      s'était arrêté — relancé après redémarrage dev, vert)
 ```
 Rollback : retirer l'appel `computeCountryFlight`/les 3 options dragPan/les listeners `movestart`/`moveend`+règle CSS (`git revert` du merge F0-F4). Aucune migration ni flag touché.
+## 2026-09-12 — REFONTE COCKPIT DÉPART + identité sentier + fiabilité (branche `chantier/depart-refonte`, 13 tasks SDD)
+
+> Spec : `docs/superpowers/specs/2026-09-12-refonte-cockpit-depart-design.md` (D1-D4 validées par le propriétaire) · Plan : `docs/superpowers/plans/2026-09-12-refonte-cockpit-depart.md` · Exécution : subagent-driven-development (implémenteur + revue par task, corrections en boucle, revue finale de branche).
+
+### Résultat
+- **Desktop** : cockpit 3 colonnes dupliqué SUPPRIMÉ → flux canonique `DepartDesktopView` dans la colonne centre du hub (hero identité → alertes → grille Sac|Terrain ≥xl → Équipement → Équipe & fiche). Zéro duplication de shell.
+- **Mobile** : `DepartMobileExperience` canonique (hero glass + BudgetRing, chips, rails `GroupeRail`, drawers `GroupeDrawer`/`GlassDrawer` z-10000, safe-areas gérées par le shell uniquement).
+- **`?route=X`** : l'identité du départ est le SENTIER choisi (nom/tracé réels, gating par id validé), fini le démo « Tour du Mont-Blanc — 4j Bivouac » — y compris dans le sélecteur de kit (2 rounds de fix : id showcase `none` sans option correspondante).
+- **DS** : purge complète `rose/sand/forest/dark/bg-white-60|90` des composants réutilisés (garde-test statique `depart-ds-purge.spec.ts`), overlays migrés `GlassDrawer`/`GlassModal`, `GlassModal` plein écran carte.
+- **Logique extraite** : `departIdentity`/`departAlerts`/`departCache` purs + hooks `useDepartAlerts`/`useDepartOfflineCache` (état hors-ligne réellement transmis au hero + bandeau unique).
+- Suppressions : `DepartCockpit`, `DepartHeader`, `DepartLeft/RightSidebar`, `DepartAlerts`, `MobileFloatingIsland`, `MobileWeightHeader` + 2 specs dédiés + code mort.
+
+### Commits (base main 879820a1)
+```
+da2e1ddd docs(depart): plan d'implementation (16 tasks)
+5e07036d feat(depart): identite liee au sentier choisi (route=X)
+8acd595b fix(depart): identite validee par id + kit de depart (route explicite)
+76aa4f48 feat(depart): hero canonique partage
+d9444936 feat(depart): bandeau d'alertes unique
+aabc876c feat(depart): surface terrain unique + plein ecran GlassModal
+1246ed82 fix(depart): selecteur de tuiles ancre (non clippe en carte 180px)
+7cd02c1f refactor(depart): purge DS des composants reutilises
+d778f059 feat(depart): surface sac unifiee (poids + checklist)
+76537b33 feat(depart): section equipe + fiche en GlassDrawer (titleId)
+75dd190e feat(depart): vue desktop canonique en flux
+bf41a56a feat(depart): experience mobile canonique
+bc29044b refactor(depart): alertes/cache en modules purs + hooks
+fbdb9470 refactor(depart): bascule lg, suppression cockpit legacy
+e06f5763 test(depart): e2e + captures desktop/mobile
+a0c58978 fix(depart): selecteur kit = kit reel courant
+d651ae3b fix(depart): option kit courante prependee (id showcase)
+4eaa3701 test(e2e): garde CTA Prepaer + SW neutralise + captures regenerees
+e5ce410d fix(depart): etat hors-ligne + routage complet des actions d'alerte
+```
+
+### Gates (post-fix final)
+```
+npx tsc --noEmit          → 0
+npm run lint              → 0 (warnings preexistants)
+npx vitest run            → 2341 passed | 23 skipped (2364) ; 4 suites en echec = preexistantes
+                            (a13-backtest-export, a14-healthcheck, a15-rollout, phase10-capacity) — +55 tests vs avant
+npm run build             → ✓ Compiled · /hub/[section] 166 kB (542 kB First Load)
+e2e prod (depart + atlas) → 5/5 passed (scripts/e2e/depart-cockpit.spec.ts + atlas-explorer.spec.ts,
+                            serviceWorkers bloques pour parite dev/prod)
+visuel 3 projets          → 11 passed / 0 failed ; captures docs/depart/depart-{desktop-chrome,iphone-14-pro,ipad-portrait}.png
+                            vérifiées : « KIT DE DÉPART » affiché, AUCUNE fuite TMB
+```
+Revue finale de branche : 2 Important (isOnline non consommé ; routage d'actions d'alerte écrasé) → vague de fix unique `e5ce410d` → re-revue : tout adressé, zéro régression. Minors triés « polish » conservés en dette (liste dans le ledger SDD).
+
+### Rollback
+`git revert -m 1 <merge>` (aucune migration, flag `explorer_unified_map_enabled` intouché) ou rester sur la branche `chantier/depart-refonte`.

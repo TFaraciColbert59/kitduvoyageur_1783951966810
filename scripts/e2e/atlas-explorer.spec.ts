@@ -11,6 +11,11 @@ import { test, expect } from '@playwright/test';
 test.use({
   geolocation: { latitude: 50.784, longitude: 2.666 },
   permissions: ['geolocation'],
+  // Le service worker de prod intercepte les fetch (stale-while-revalidate) et
+  // empêche page.route de simuler la latence → les preuves d'abort deviennent
+  // inobservables. On le neutralise pour que la spec tourne identiquement en
+  // dev (SW absent) et en prod.
+  serviceWorkers: 'block',
 });
 
 async function waitForUnifiedMap(page: import('@playwright/test').Page) {
@@ -75,5 +80,23 @@ test.describe('ATLAS — explorateur unifié, palier local', () => {
     // Fiche complète (panneau existant réutilisé, logique intacte).
     await page.getByRole('button', { name: 'Voir la fiche complète' }).click();
     await expect(page.getByText('Préparer le matériel').first()).toBeVisible({ timeout: 15_000 });
+  });
+
+  test('le CTA Préparer navigue réellement vers le cockpit /hub/depart', async ({ page }) => {
+    await waitForUnifiedMap(page);
+
+    const firstCard = page.locator('article').first();
+    await expect(firstCard).toBeVisible({ timeout: 30_000 });
+    await firstCard.click();
+
+    const prepare = page.getByRole('button', { name: 'Préparer' }).first();
+    await expect(prepare).toBeVisible({ timeout: 15_000 });
+    await prepare.click();
+
+    // Garde anti-régression « le bouton Préparer ne fait rien » : la navigation
+    // DOIT aboutir sur le cockpit départ avec le sentier sélectionné.
+    await page.waitForURL(/\/hub\/depart\?/, { timeout: 20_000 });
+    expect(page.url()).toContain('route=');
+    await expect(page.getByText('Départ', { exact: false }).first()).toBeVisible({ timeout: 30_000 });
   });
 });

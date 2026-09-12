@@ -13,6 +13,7 @@ import {
   calcWeightedReadinessScore,
   type WeightedReadinessResult,
 } from '@/features/materiel/domain/departCalculations';
+import { resolveDepartIdentity } from '@/features/materiel/domain/departIdentity';
 
 export type DepartStatus = 'draft' | 'ready' | 'active' | 'done';
 
@@ -147,7 +148,7 @@ async function resolveTrail(
 }
 
 /** Données modèles pour les démos ou utilisateurs invités */
-function getShowcaseDepart(kitId?: string | null, customTrail?: MapTrail | null): DepartDetail {
+function getShowcaseDepart(kitId?: string, customTrail?: MapTrail | null, destinationOverride?: string | null): DepartDetail {
   const isVercors = kitId === 'vercors-ultra';
   const isBelledonne = kitId === 'belledonne-winter';
 
@@ -271,7 +272,7 @@ function getShowcaseDepart(kitId?: string | null, customTrail?: MapTrail | null)
 
   return {
     id: kitId || 'tmb-4j',
-    destination: isVercors ? 'Grande Traversée du Vercors' : isBelledonne ? 'Traversée hivernale de Belledonne' : 'Tour du Mont-Blanc — 4j Bivouac',
+    destination: destinationOverride ?? (isVercors ? 'Grande Traversée du Vercors' : isBelledonne ? 'Traversée hivernale de Belledonne' : 'Tour du Mont-Blanc — 4j Bivouac'),
     startsAt: new Date(Date.now() + 3 * 86400000).toISOString(),
     endsAt: new Date(Date.now() + 7 * 86400000).toISOString(),
     status: 'draft',
@@ -282,7 +283,7 @@ function getShowcaseDepart(kitId?: string | null, customTrail?: MapTrail | null)
     totalPackWeightG,
     assignedKit: {
       id: kitId || 'tmb-4j',
-      name: isVercors ? 'Kit Vercors Ultra' : isBelledonne ? 'Kit Belledonne Hiver' : 'Kit Tour du Mont-Blanc',
+      name: isVercors ? 'Kit Vercors Ultra' : isBelledonne ? 'Kit Belledonne Hiver' : destinationOverride ? 'Kit de départ' : 'Kit Tour du Mont-Blanc',
       totalWeightG: baseWeightG,
       items: allItems,
     },
@@ -379,7 +380,14 @@ export async function getDepartDetail(id?: string | null, selectedRouteId?: stri
         selectedRouteId,
         id === 'vercors-ultra' ? 'La Transylvestre' : id === 'belledonne-winter' ? 'Littoral' : 'Sambre'
       );
-      return getShowcaseDepart(id, trailData);
+      const explicitRoute = Boolean(selectedRouteId);
+      const requestedTrail =
+        explicitRoute && trailData && String(trailData.id) === String(selectedRouteId) ? trailData : null;
+      const identity = resolveDepartIdentity({
+        destination: id === 'vercors-ultra' ? 'Grande Traversée du Vercors' : id === 'belledonne-winter' ? 'Traversée hivernale de Belledonne' : 'Tour du Mont-Blanc — 4j Bivouac',
+        trailName: requestedTrail?.name ?? null,
+      });
+      return getShowcaseDepart(id ?? undefined, trailData, identity.fromTrail ? identity.title : null);
     }
 
     // Recherche du kit réel de l utilisateur en base
@@ -427,8 +435,15 @@ export async function getDepartDetail(id?: string | null, selectedRouteId?: stri
 
     // Si pas de kit trouvé en base, renvoyer le showcase avec tracé réel
     if (!kit) {
+      const explicitRoute = Boolean(selectedRouteId);
       const trailData = await resolveTrail(supabase, selectedRouteId, 'Sambre');
-      return getShowcaseDepart('tmb-4j', trailData);
+      const requestedTrail =
+        explicitRoute && trailData && String(trailData.id) === String(selectedRouteId) ? trailData : null;
+      const identity = resolveDepartIdentity({
+        destination: 'Tour du Mont-Blanc — 4j Bivouac',
+        trailName: requestedTrail?.name ?? null,
+      });
+      return getShowcaseDepart('tmb-4j', trailData, identity.fromTrail ? identity.title : null);
     }
 
     const cleanDestination = (kit.name || 'Prochain départ').replace(/\s*\((?:copie|copy)\)\s*/gi, '').trim();
@@ -601,6 +616,6 @@ export async function getDepartDetail(id?: string | null, selectedRouteId?: stri
     };
   } catch (err) {
     console.error('getDepartDetail fallback to showcase', err);
-    return getShowcaseDepart(id);
+    return getShowcaseDepart(id ?? undefined);
   }
 }

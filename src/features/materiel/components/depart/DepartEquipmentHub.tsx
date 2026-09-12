@@ -500,7 +500,7 @@ export function DepartEquipmentHub({
   return (
     <div className="w-full space-y-4 font-sans">
       {/* ════ BASCULE MOBILE (Segmented Control iOS) ════ */}
-      <div className="flex md:hidden items-center p-1 bg-black/5 dark:bg-white/10 rounded-2xl gap-1">
+      <div className="flex md:hidden items-center p-1 bg-black/5 rounded-2xl gap-1">
         <button
           type="button"
           onClick={() => setMobileTab('catalog')}
@@ -569,9 +569,9 @@ export function DepartEquipmentHub({
             </div>
           )}
 
-          <div className="glass rounded-2xl sm:rounded-card p-3 sm:p-5 space-y-2.5 sm:space-y-3.5 border border-white/80 dark:border-white/10 shadow-xs backdrop-blur-md">
+          <div className="glass rounded-2xl sm:rounded-card p-3 sm:p-5 space-y-2.5 sm:space-y-3.5 border border-white/80 shadow-xs backdrop-blur-md">
             {/* Top Header Compact Apple */}
-            <div className="flex items-center justify-between gap-2 border-b border-black/5 dark:border-white/10 pb-2">
+            <div className="flex items-center justify-between gap-2 border-b border-black/5 pb-2">
               <div className="flex items-center gap-2 min-w-0">
                 <div className="w-7 h-7 rounded-xl bg-[var(--lkv-primary-hover)]/10 border border-[var(--lkv-primary-hover)]/20 flex items-center justify-center text-[var(--lkv-primary-hover)] shadow-2xs shrink-0">
                   <Boxes size={14} aria-hidden="true" />
@@ -605,7 +605,7 @@ export function DepartEquipmentHub({
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
                   placeholder="Rechercher un équipement..."
-                  className="w-full pl-8 pr-7 py-1.5 rounded-xl text-xs bg-white/70 dark:bg-white/10 border border-white/90 focus:outline-none focus:ring-2 focus:ring-[var(--lkv-primary)]/25 text-[var(--lkv-primary)] placeholder-[var(--lkv-text-muted)]"
+                  className="w-full pl-8 pr-7 py-1.5 rounded-xl text-xs bg-white/70 border border-white/90 focus:outline-none focus:ring-2 focus:ring-[var(--lkv-primary)]/25 text-[var(--lkv-primary)] placeholder-[var(--lkv-text-muted)]"
                 />
                 {searchQuery && (
                   <button
@@ -619,7 +619,7 @@ export function DepartEquipmentHub({
               </div>
 
               {/* Bascule Grille 2 colonnes / Liste */}
-              <div className="flex items-center p-0.5 bg-black/5 dark:bg-white/10 rounded-xl gap-0.5 shrink-0">
+              <div className="flex items-center p-0.5 bg-black/5 rounded-xl gap-0.5 shrink-0">
                 <button
                   type="button"
                   onClick={() => setViewMode('grid')}
@@ -660,7 +660,7 @@ export function DepartEquipmentHub({
                   'px-2.5 py-1 rounded-xl text-[10.5px] font-semibold whitespace-nowrap transition-all cursor-pointer shrink-0',
                   statusFilter === 'all'
                     ? 'bg-[var(--lkv-primary)] text-white shadow-xs'
-                    : 'bg-black/5 dark:bg-white/10 text-[var(--lkv-text-muted)] hover:text-[var(--lkv-primary)]'
+                    : 'bg-black/5 text-[var(--lkv-text-muted)] hover:text-[var(--lkv-primary)]'
                 )}
               >
                 Tous ({stats.totalCount})
@@ -673,7 +673,7 @@ export function DepartEquipmentHub({
                   'px-2.5 py-1 rounded-xl text-[10.5px] font-semibold whitespace-nowrap transition-all cursor-pointer shrink-0',
                   statusFilter === 'in_bag'
                     ? 'bg-[var(--lkv-primary)] text-white shadow-xs'
-                    : 'bg-black/5 dark:bg-white/10 text-[var(--lkv-text-muted)] hover:text-[var(--lkv-primary)]'
+                    : 'bg-black/5 text-[var(--lkv-text-muted)] hover:text-[var(--lkv-primary)]'
                 )}
               >
                 Au sac ({stats.inBagCount})
@@ -686,13 +686,13 @@ export function DepartEquipmentHub({
                   'px-2.5 py-1 rounded-xl text-[10.5px] font-semibold whitespace-nowrap transition-all cursor-pointer shrink-0',
                   statusFilter === 'in_inventory'
                     ? 'bg-[var(--lkv-primary)] text-white shadow-xs'
-                    : 'bg-black/5 dark:bg-white/10 text-[var(--lkv-text-muted)] hover:text-[var(--lkv-primary)]'
+                    : 'bg-black/5 text-[var(--lkv-text-muted)] hover:text-[var(--lkv-primary)]'
                 )}
               >
                 Inventaire ({stats.inInventoryCount})
               </button>
 
-              <div className="h-4 w-px bg-black/10 dark:bg-white/10 shrink-0 mx-0.5" />
+              <div className="h-4 w-px bg-black/10 shrink-0 mx-0.5" />
 
               {CATEGORIES.filter((c) => c !== 'Toutes').map((cat) => (
                 <button
@@ -703,7 +703,7 @@ export function DepartEquipmentHub({
                     'px-2.5 py-1 rounded-xl text-[10.5px] font-semibold whitespace-nowrap transition-all cursor-pointer shrink-0',
                     selectedCat === cat
                       ? 'bg-[var(--lkv-primary)] text-white shadow-2xs'
-                      : 'bg-white/60 dark:bg-white/5 text-[var(--lkv-text-muted)] hover:text-[var(--lkv-primary)]'
+                      : 'bg-white/70 text-[var(--lkv-text-muted)] hover:text-[var(--lkv-primary)]'
                   )}
                 >
                   {cat}
@@ -748,7 +748,7 @@ export function DepartEquipmentHub({
                           ? 'bg-[var(--lkv-warning)]/10 border-[var(--lkv-warning)]/30 text-[var(--lkv-warning)]'
                           : isItemInBag
                             ? 'bg-[var(--lkv-success)]/10 border-[var(--lkv-success)]/30 text-[var(--lkv-primary)]'
-                            : 'bg-white/85 dark:bg-white/10 border-white/80 text-[var(--lkv-primary)]'
+                            : 'bg-white/85 border-white/80 text-[var(--lkv-primary)]'
                       )}
                     >
                       {/* Image — cliquable uniquement si fiche produit opérationnelle */}
@@ -834,7 +834,7 @@ export function DepartEquipmentHub({
                               <span>Recharger</span>
                             </button>
                           ) : isItemInBag ? (
-                            <div className="w-full py-1 rounded-xl text-[10.5px] font-bold bg-forest-100 text-forest-900 border border-forest-200 flex items-center justify-center gap-1">
+                            <div className="w-full py-1 rounded-xl text-[10.5px] font-bold bg-[var(--lkv-forest-100)] text-[var(--lkv-forest-900)] border border-[var(--lkv-primary)]/30 flex items-center justify-center gap-1">
                               <Icon name="check" size={11} />
                               <span>Dans le sac</span>
                             </div>
@@ -872,7 +872,7 @@ export function DepartEquipmentHub({
                         'p-2 rounded-2xl border flex items-center justify-between gap-2.5 transition-all shadow-2xs active:scale-[0.98]',
                         isItemInBag
                           ? 'bg-[var(--lkv-success)]/10 border-[var(--lkv-success)]/30'
-                          : 'bg-white/90 dark:bg-stone-900/90 border-white/90 dark:border-white/10'
+                          : 'glass-sub-card'
                       )}
                     >
                       <div className="flex items-center gap-2.5 min-w-0 flex-1">
@@ -902,18 +902,18 @@ export function DepartEquipmentHub({
                             <Link
                               href={listTargetUrl}
                               title={item.name}
-                              className="text-xs font-bold text-[var(--lkv-primary)] dark:text-white truncate hover:text-[var(--lkv-primary-hover)] transition-colors block cursor-pointer"
+                              className="text-xs font-bold text-[var(--lkv-primary)] truncate hover:text-[var(--lkv-primary-hover)] transition-colors block cursor-pointer"
                             >
                               {item.name}
                             </Link>
                           ) : (
-                            <h4 className="text-xs font-bold text-[var(--lkv-primary)] dark:text-white truncate">
+                            <h4 className="text-xs font-bold text-[var(--lkv-primary)] truncate">
                               {item.name}
                             </h4>
                           )}
                           <div className="flex items-center gap-2 text-[10.5px] font-mono text-[var(--lkv-text-muted)] mt-0.5">
                             <span>{formatWeight(item.weightG)}</span>
-                            <span className="text-[9px] font-sans px-1.5 py-0.2 rounded bg-black/5 dark:bg-white/10">
+                            <span className="text-[9px] font-sans px-1.5 py-0.2 rounded bg-black/5">
                               {item.category}
                             </span>
                           </div>
@@ -922,7 +922,7 @@ export function DepartEquipmentHub({
 
                       <div className="shrink-0">
                         {isItemInBag ? (
-                          <div className="px-2.5 py-1 rounded-xl text-[10.5px] font-bold bg-forest-100 text-forest-900 border border-forest-200 flex items-center gap-1">
+                          <div className="px-2.5 py-1 rounded-xl text-[10.5px] font-bold bg-[var(--lkv-forest-100)] text-[var(--lkv-forest-900)] border border-[var(--lkv-primary)]/30 flex items-center gap-1">
                             <Icon name="check" size={11} />
                             <span>Dans le sac</span>
                           </div>
