@@ -538,19 +538,22 @@ export default function EvenementsPage() {
     if (!user) return;
     const ev = events.find((e) => e.id === eventId);
     if (!ev) return;
+    if (!isRegistered && ev.status === 'full') return;
 
-    if (isRegistered) {
-      await supabase.from('event_participants').delete().eq('event_id', eventId).eq('user_id', user.id);
-      await supabase.from('events').update({ current_participants: ev.current_participants - 1 }).eq('id', eventId);
-      setEvents((prev) => prev.map((e) => e.id === eventId ? { ...e, is_registered: false, current_participants: e.current_participants - 1 } : e));
-    } else {
-      if (ev.status === 'full') return;
-      await supabase.from('event_participants').insert({ event_id: eventId, user_id: user.id });
-      const newCount = ev.current_participants + 1;
-      const newStatus = newCount >= ev.max_participants ? 'full' : 'upcoming';
-      await supabase.from('events').update({ current_participants: newCount, status: newStatus }).eq('id', eventId);
-      setEvents((prev) => prev.map((e) => e.id === eventId ? { ...e, is_registered: true, current_participants: newCount, status: newStatus as 'upcoming' | 'full' | 'past' } : e));
+    const { data, error } = await supabase.rpc(
+      isRegistered ? 'leave_event' : 'join_event',
+      { p_event_id: eventId }
+    );
+    if (error) {
+      setError(error.message);
+      return;
     }
+    const result = (data ?? {}) as { current_participants?: number; status?: string };
+    const currentCount = result.current_participants ?? ev.current_participants;
+    const nextStatus = (result.status ?? ev.status) as 'upcoming' | 'full' | 'past';
+    setEvents((prev) => prev.map((e) => e.id === eventId
+      ? { ...e, is_registered: !isRegistered, current_participants: currentCount, status: nextStatus }
+      : e));
   };
 
   const handleCreateEvent = async () => {

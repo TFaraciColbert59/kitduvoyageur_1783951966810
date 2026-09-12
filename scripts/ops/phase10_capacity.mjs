@@ -1,4 +1,3 @@
-#!/usr/bin/env node
 /**
  * Phase 10 — Capacité : test de charge LOCAL réutilisable (100 / 1 000 / 10 000).
  *
