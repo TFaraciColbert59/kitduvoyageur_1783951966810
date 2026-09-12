@@ -1,0 +1,7 @@
+fichier                                                           brut        gzip
+maplibre-gl.mjs                                                 554 Ko      139 Ko
+maplibre-gl-shared.mjs                                          471 Ko      131 Ko
+maplibre-gl-worker.mjs                                           18 Ko        6 Ko
+maplibre-gl.css                                                  81 Ko       10 Ko
+----------------------------------------------------------------------------------
+TOTAL                                                          1124 Ko      286 Ko

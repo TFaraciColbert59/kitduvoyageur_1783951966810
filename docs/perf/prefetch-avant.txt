@@ -1,0 +1,6 @@
+
+=== / — requêtes /api/hikes : 1 ===
+http://localhost:4000/api/hikes
+
+=== /explorer — requêtes /api/hikes : 1 ===
+http://localhost:4000/api/hikes

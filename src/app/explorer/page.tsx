@@ -25,30 +25,32 @@ export default async function ExplorerPage({ searchParams }: ExplorerPageProps) 
     atlasParam: resolvedSearchParams?.atlas,
   });
 
-  let initialTrails: MapTrail[] = [];
-  try {
-    // Initial 2km bounds around Chamonix [45.9237, 6.8694]
-    initialTrails = await getTrails({
-      minLat: 45.9237 - 0.018,
-      maxLat: 45.9237 + 0.018,
-      minLng: 6.8694 - 0.026,
-      maxLng: 6.8694 + 0.026,
-      limit: 50,
-    });
-  } catch (error) {
+  // P1 — chargement serveur parallèle : sentiers initiaux et densité ATLAS ne
+  // dépendent pas l'un de l'autre. Chaque source garde son propre repli explicite.
+  const initialTrailsPromise = getTrails({
+    minLat: 45.9237 - 0.018,
+    maxLat: 45.9237 + 0.018,
+    minLng: 6.8694 - 0.026,
+    maxLng: 6.8694 + 0.026,
+    limit: 50,
+  }).catch((error) => {
     console.error('[ExplorerPage] Error fetching initial trails:', error);
-  }
+    return [] as MapTrail[];
+  });
 
   // Paliers continent/région : densités matérialisées (Phase 1), uniquement utile
   // au moteur unifié — aucun coût sur le chemin legacy Leaflet.
-  let atlasDensity: AtlasDensity = { countries: [], cells: [] };
-  if (unifiedMap) {
-    try {
-      atlasDensity = await getAtlasDensity();
-    } catch (error) {
-      console.error('[ExplorerPage] Error fetching atlas density:', error);
-    }
-  }
+  const atlasDensityPromise: Promise<AtlasDensity> = unifiedMap
+    ? getAtlasDensity().catch((error) => {
+        console.error('[ExplorerPage] Error fetching atlas density:', error);
+        return { countries: [], cells: [] } satisfies AtlasDensity;
+      })
+    : Promise.resolve({ countries: [], cells: [] });
+
+  const [initialTrails, atlasDensity] = await Promise.all([
+    initialTrailsPromise,
+    atlasDensityPromise,
+  ]);
 
   return (
     <ExplorerClient
