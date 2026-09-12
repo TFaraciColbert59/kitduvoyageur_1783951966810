@@ -77,6 +77,27 @@ const VIEWPORT_BUFFER = 0.25;
 const GLOBE_MIN_ZOOM = 1.2;
 const TILE_MODES: AtlasTileMode[] = ['topo', 'osm', 'satellite'];
 
+/** Clé de la dernière position GPS mémorisée (écrite à chaque fix réussi). */
+const LAST_LOCATION_STORAGE_KEY = 'lkdv_last_location';
+
+/**
+ * Dernière position connue mémorisée par le parent (`ExplorerClient`) lors d'un
+ * fix GPS réussi. Jamais inventée : `null` si absente ou invalide.
+ */
+function readLastKnownLocation(): { lat: number; lng: number } | null {
+  if (typeof window === 'undefined') return null;
+  try {
+    const raw = window.localStorage.getItem(LAST_LOCATION_STORAGE_KEY);
+    if (!raw) return null;
+    const parsed = JSON.parse(raw) as { lat?: unknown; lng?: unknown };
+    const lat = Number(parsed?.lat);
+    const lng = Number(parsed?.lng);
+    return isValidLatLng(lat, lng) ? { lat, lng } : null;
+  } catch {
+    return null;
+  }
+}
+
 function buildTrailsFeatureCollection(trails: MapTrail[]) {
   return {
     type: 'FeatureCollection' as const,
@@ -231,7 +252,8 @@ export default function UnifiedExplorerMap({
   const [tileMode, setTileMode] = useState<AtlasTileMode>('topo');
   const [viewport, setViewport] = useState<ViewportQuery | null>(null);
   const [viewMode, setViewMode] = useState<'local' | 'globe'>('globe');
-  const localViewRef = useRef<{ center: [number, number]; zoom: number } | null>(null);
+  const [globeNotice, setGlobeNotice] = useState<string | null>(null);
+  const globeNoticeTimerRef = useRef<number | null>(null);
   const [selectedCountry, setSelectedCountry] = useState<{
     iso: string;
     name: string;
@@ -959,29 +981,54 @@ export default function UnifiedExplorerMap({
     }
   }, [userLocation, animateOptions]);
 
-  /** Bascule globe ⇄ vue locale (mémorise la dernière vue locale). */
+  /** Message non bloquant : aucune position connue pour « Explorer ma zone ». */
+  const showGlobeNotice = useCallback(() => {
+    setGlobeNotice('Position indisponible — déplacez la carte ou activez la localisation');
+    if (globeNoticeTimerRef.current !== null) window.clearTimeout(globeNoticeTimerRef.current);
+    globeNoticeTimerRef.current = window.setTimeout(() => {
+      globeNoticeTimerRef.current = null;
+      setGlobeNotice(null);
+    }, 6_000);
+  }, []);
+
+  useEffect(
+    () => () => {
+      if (globeNoticeTimerRef.current !== null) window.clearTimeout(globeNoticeTimerRef.current);
+    },
+    []
+  );
+
+  /** Bascule globe ⇄ vue locale. Sans position connue : reste sur le globe + message. */
   const handleToggleGlobe = useCallback(() => {
     const map = mapRef.current;
     if (!map) return;
     if (viewMode === 'globe') {
-      // « Explorer ma zone » : plonge vers la position utilisateur si connue,
-      // sinon vers la dernière vue locale / la vue initiale calculée au montage.
-      const hasUserLocation = userLocation && isValidLatLng(userLocation[0], userLocation[1]);
+      // « Explorer ma zone » : position utilisateur si connue, sinon dernière
+      // position mémorisée (`lkdv_last_location`, écrite à chaque fix réussi).
+      // Jamais de plongée vers la vue Chamonix par défaut (bbox sans sentier) :
+      // sans position, on reste sur le globe et on informe sans bloquer.
+      const hasUserLocation = Boolean(userLocation && isValidLatLng(userLocation[0], userLocation[1]));
+      const lastKnown = hasUserLocation ? null : readLastKnownLocation();
+      if (!hasUserLocation && !lastKnown) {
+        showGlobeNotice();
+        return;
+      }
       const targetCenter: [number, number] = hasUserLocation
         ? [Number(userLocation![1]), Number(userLocation![0])]
-        : localViewRef.current?.center ?? initialView.center;
-      const targetZoom = hasUserLocation
-        ? 12
-        : localViewRef.current?.zoom ?? initialView.zoom;
-      flyToTarget(map, { center: targetCenter, zoom: targetZoom, duration: 1_600 });
+        : [lastKnown!.lng, lastKnown!.lat];
+      flyToTarget(map, { center: targetCenter, zoom: 12, duration: 1_600 });
+      if (!hasUserLocation) {
+        // Position résolue depuis le stockage : remontée au parent pour que le
+        // viewport requêté soit bien centré sur elle (bbox non vide) + marqueur.
+        callbacksRef.current.onLocationUpdate?.([targetCenter[1], targetCenter[0]]);
+      }
       setViewMode('local');
     } else {
       const center = map.getCenter();
-      localViewRef.current = { center: [center.lng, center.lat], zoom: map.getZoom() };
       flyToTarget(map, { center: [center.lng, center.lat], zoom: 1.6, duration: 1_100 });
       setViewMode('globe');
     }
-  }, [viewMode, userLocation, initialView.center, initialView.zoom]);
+  }, [viewMode, userLocation, showGlobeNotice]);
 
   // E1 — `--explorer-carousel-height` est publiée par le carrousel mobile quand
   // il est visible : les contrôles bas (CTA + zoom) remontent au-dessus de lui.
@@ -1033,6 +1080,22 @@ export default function UnifiedExplorerMap({
           </span>
         </button>
       </div>
+
+      {/* Repli sans GPS — message glass non bloquant (la carte reste interactive). */}
+      {globeNotice && (
+        <div
+          className={`absolute left-1/2 -translate-x-1/2 z-[560] pointer-events-none w-max max-w-[calc(100vw-32px)] ${
+            safeControls
+              ? 'bottom-[calc(env(safe-area-inset-bottom,0px)+160px+var(--explorer-carousel-height,0px))]'
+              : 'bottom-[152px]'
+          } md:bottom-24`}
+          data-atlas-geoloc-notice="true"
+          role="status"
+          aria-live="polite"
+        >
+          <div className="glass-pill pill-warn text-center">{globeNotice}</div>
+        </div>
+      )}
 
       {/* Zoom (−/+) + recentrage : mobile = zoom seul ; desktop = colonne complète.
           E1 — sur mobile la colonne est décalée de `right-14` pour rester à

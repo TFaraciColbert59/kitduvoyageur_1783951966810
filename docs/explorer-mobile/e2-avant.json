@@ -1,0 +1,91 @@
+{
+  "phase": "avant",
+  "baseUrl": "http://localhost:4000",
+  "startedAt": "2026-09-12T23:42:44.325Z",
+  "scenarios": [
+    {
+      "scenario": "a-sans-gps",
+      "label": "Sans GPS et sans dernière position — le CTA ne doit pas plonger vers Chamonix",
+      "pageErrors": [],
+      "hikeRequests": [],
+      "beforeTap": {
+        "url": "http://localhost:4000/explorer?atlas=1",
+        "ctaLabel": "Explorer ma zone (vue locale)",
+        "ctaText": "Explorer ma zone",
+        "noticePresent": false,
+        "noticeText": null,
+        "mapCenter": {
+          "lat": 45.9237,
+          "lng": 6.8694
+        },
+        "mapZoom": 1.6,
+        "mapMinZoom": 1.2,
+        "trailCards": 0,
+        "lastLocationStorage": null
+      },
+      "tap": {
+        "ok": true,
+        "error": null
+      },
+      "afterTap": {
+        "url": "http://localhost:4000/explorer?atlas=1",
+        "ctaLabel": "Afficher le globe",
+        "ctaText": "Vue globe",
+        "noticePresent": false,
+        "noticeText": null,
+        "mapCenter": {
+          "lat": 45.9237,
+          "lng": 6.8694
+        },
+        "mapZoom": 6,
+        "mapMinZoom": 1.2,
+        "trailCards": 0,
+        "lastLocationStorage": null
+      },
+      "screenshot": "C:\\Users\\Tony\\Downloads\\LKDV\\kitduvoyageur_1783951966810\\docs\\explorer-mobile\\e2-avant-a-sans-gps.png"
+    },
+    {
+      "scenario": "b-last-known",
+      "label": "Sans GPS mais dernière position en localStorage — le CTA plonge vers elle",
+      "pageErrors": [],
+      "hikeRequests": [],
+      "beforeTap": {
+        "url": "http://localhost:4000/explorer?atlas=1",
+        "ctaLabel": "Explorer ma zone (vue locale)",
+        "ctaText": "Explorer ma zone",
+        "noticePresent": false,
+        "noticeText": null,
+        "mapCenter": {
+          "lat": 45.9237,
+          "lng": 6.8694
+        },
+        "mapZoom": 1.6,
+        "mapMinZoom": 1.2,
+        "trailCards": 0,
+        "lastLocationStorage": "{\"lat\":48.8566,\"lng\":2.3522,\"timestamp\":1789256572063}"
+      },
+      "tap": {
+        "ok": true,
+        "error": null
+      },
+      "afterTap": {
+        "url": "http://localhost:4000/explorer?atlas=1",
+        "ctaLabel": "Afficher le globe",
+        "ctaText": "Vue globe",
+        "noticePresent": false,
+        "noticeText": null,
+        "mapCenter": {
+          "lat": 45.9237,
+          "lng": 6.8694
+        },
+        "mapZoom": 6,
+        "mapMinZoom": 1.2,
+        "trailCards": 0,
+        "lastLocationStorage": "{\"lat\":48.8566,\"lng\":2.3522,\"timestamp\":1789256572063}"
+      },
+      "screenshot": "C:\\Users\\Tony\\Downloads\\LKDV\\kitduvoyageur_1783951966810\\docs\\explorer-mobile\\e2-avant-b-last-known.png",
+      "centerDistanceKm": null
+    }
+  ],
+  "finishedAt": "2026-09-12T23:42:59.600Z"
+}
