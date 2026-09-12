@@ -613,3 +613,47 @@ ok 3 [ipad-portrait]   (19.2s)
 ### Prochaine phase
 Phase 3 — Palier local (`chantier/atlas-3-local`) : `useViewportData` (debounce 200 ms + AbortController + React Query bbox/zoom + LOD), clustering natif POI, panneau détail réutilisé, e2e pan/zoom/selection + preuve d'annulation des requêtes.
 
+## 2026-09-12 — CHANTIER ATLAS Phase 3 — Palier local (branche `chantier/atlas-3-local`)
+
+### Livrables
+- **`src/components/map/hooks/viewportData.ts`** : construction pure des requêtes viewport — `/api/hikes` (LOD 300/150/60/0 par palier), `/api/pois` (LOD aligné serveur 150/80/40/0), clé de viewport stable (3 décimales + zoom entier), aucun fetch au palier monde.
+- **`src/components/map/hooks/useViewportData.ts`** : debounce 200 ms, `AbortController` annulant toute requête en vol au changement de viewport/unmount, gestion d'erreur explicite sans donnée inventée (ATLAS-R9).
+- **`UnifiedExplorerMap`** : émission du viewport réel → hook ; remontée des données (`onViewportData`) vers la page ; **clustering POI natif MapLibre** (`cluster: true`, radius 46, maxZoom 15) avec expansion au tap, popup POI construit en DOM (`textContent`, anti-XSS), points POI colorés palette DS (`getPoiColor`).
+- **`ExplorerClient`** : en mode unifié, la liste et les filtres consomment les données viewport du moteur (sources uniques) ; les React Query legacy sont désactivées (`enabled: !unifiedMap`) ; la restriction spatiale `queriedBbox` ne s'applique plus (le serveur borne déjà) ; carte compacte « Préparer » + fiche complète (`TrailDetailPanel`) inchangées.
+- **Tests** : `tests/map/viewportData.spec.ts` (5, TDD rouge→vert), extension `tests/map/mapTheme.spec.ts` (couleurs POI DS), `scripts/e2e/atlas-explorer.spec.ts` (2), `tests/visual/atlas-explorer.spec.ts` (+ clic direct carte, desktop-only explicite).
+
+### Preuves brutes
+```
+$ npx tsc --noEmit
+TSC_EXIT=0
+
+$ npm test
+Test Files  4 failed | 319 passed | 4 skipped (327)   # 4 suites préexistantes (ops/a13), cf. Phase 1
+Tests  2259 passed | 23 skipped (2282)                # +6 tests vs Phase 2
+
+$ npm run lint
+LINT_EXIT=0 (warnings préexistants uniquement)
+
+$ PW_BASE_URL=http://localhost:4000 npx playwright test --config=playwright.config.ts scripts/e2e/atlas-explorer.spec.ts
+ok 1  pan/zoom annule les requêtes viewport obsolètes (10.4s)
+REQUÊTES ANNULÉES: ["net::ERR_ABORTED","net::ERR_ABORTED","net::ERR_ABORTED","net::ERR_ABORTED","net::ERR_ABORTED"]
+ok 2  la sélection réutilise le panneau de détail existant (CTA /hub/depart) (5.3s)
+2 passed (11.1s)
+
+$ npx playwright test --config=playwright.visual.config.ts tests/visual/atlas-explorer.spec.ts
+ok 1 [desktop-chrome] rendu + zéro pageerror (11.1s)
+ok 2 [desktop-chrome] clic direct carte → panneau détail (9.3s)
+ok 3 [iphone-14-pro] rendu + zéro pageerror (11.8s)
+ok 5 [ipad-portrait] rendu + zéro pageerror (12.1s)
+2 skipped (test clic-carte desktop-only : en mobile le carrousel recouvre la zone centrale,
+           la sélection y est couverte par l'e2e via la liste)
+4 passed, 2 skipped (47.1s)
+```
+
+### Notes
+- Le palier local (z14-18) est branché sur la RPC indexée de la Phase 1 ; les paliers région/continent/monde restent au rendu pays actuel (Phase 4).
+- Popup POI : aucune donnée inventée — nom/catégorie/altitude réels, ligne omise si absente.
+
+### Prochaine phase
+Phase 4 — Paliers Région/Continent/Monde (`chantier/atlas-4-tiers`) : couche fill pays interactive, densités (matviews Phase 1), chorégraphie caméra `flyTo`/`easeTo`, `focusPoint` réparé par `country_centroids`.
+

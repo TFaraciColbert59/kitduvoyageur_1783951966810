@@ -118,6 +118,11 @@ export default function ExplorerClient({ initialTrails, unifiedMap = false }: Ex
 
   const [liveViewportBbox, setLiveViewportBbox] = useState<{ minLat: number; maxLat: number; minLng: number; maxLng: number; zoom: number } | null>(null);
   const [showSearchHereButton, setShowSearchHereButton] = useState(false);
+  // CHANTIER ATLAS — données réelles du viewport remontées par UnifiedExplorerMap.
+  const [unifiedViewportData, setUnifiedViewportData] = useState<{
+    trails: MapTrail[];
+    pois: UnifiedPOI[];
+  } | null>(null);
   const initialGeoAppliedRef = useRef(false);
   const queriedBboxRef = useRef(queriedBbox);
   queriedBboxRef.current = queriedBbox;
@@ -193,6 +198,7 @@ export default function ExplorerClient({ initialTrails, unifiedMap = false }: Ex
       return (await res.json()) as MapTrail[];
     },
     staleTime: 60_000,
+    enabled: !unifiedMap,
   });
 
   // Data - Unified POIs (with Viewport LOD)
@@ -216,6 +222,7 @@ export default function ExplorerClient({ initialTrails, unifiedMap = false }: Ex
       return (await res.json()) as UnifiedPOI[];
     },
     staleTime: 60_000,
+    enabled: !unifiedMap,
   });
 
   // Fetch real GeoJSON GPS track when a hike is selected
@@ -235,12 +242,16 @@ export default function ExplorerClient({ initialTrails, unifiedMap = false }: Ex
     };
   }, [selectedTrailId]);
 
-  const trails = trailsData ?? initialTrails ?? [];
+  const trails =
+    unifiedMap && unifiedViewportData
+      ? unifiedViewportData.trails
+      : trailsData ?? initialTrails ?? [];
 
   const filteredTrails = useMemo(() => {
     return trails.filter((t) => {
-      // Spatial restriction: only show hikes inside the active queried bounding box (e.g. 2km radius)
-      if (queriedBbox) {
+      // Spatial restriction: only show hikes inside the active queried bounding box.
+      // En mode unifié (ATLAS), le serveur a déjà borné au viewport réel de la carte.
+      if (queriedBbox && !unifiedMap) {
         const tLat = t.lat != null ? Number(t.lat) : (t as any).start_lat != null ? Number((t as any).start_lat) : null;
         const tLng = t.lng != null ? Number(t.lng) : (t as any).start_lng != null ? Number((t as any).start_lng) : null;
         if (tLat != null && tLng != null && !isNaN(tLat) && !isNaN(tLng)) {
@@ -345,10 +356,13 @@ export default function ExplorerClient({ initialTrails, unifiedMap = false }: Ex
     );
   }, []);
 
+  const relevantPois =
+    unifiedMap && unifiedViewportData ? unifiedViewportData.pois : poisData;
+
   const visiblePois = useMemo(() => {
-    if (!poisData || activePoiCategories.length === 0) return undefined;
-    return poisData.filter((poi) => activePoiCategories.includes(poi.category));
-  }, [poisData, activePoiCategories]);
+    if (!relevantPois || activePoiCategories.length === 0) return undefined;
+    return relevantPois.filter((poi) => activePoiCategories.includes(poi.category));
+  }, [relevantPois, activePoiCategories]);
 
   const handleSearchChange = useCallback((q: string) => {
     setSearchQuery(q);
@@ -465,11 +479,13 @@ export default function ExplorerClient({ initialTrails, unifiedMap = false }: Ex
         {unifiedMap ? (
           <UnifiedExplorerMap
             trails={filteredTrails}
+            pois={visiblePois}
             selectedTrailId={selectedTrailId}
             onTrailClick={handleTrailClick}
             userLocation={userLocation}
             onLocationUpdate={handleLocationUpdate}
             onViewportChange={handleViewportChange}
+            onViewportData={setUnifiedViewportData}
             safeControls
           />
         ) : (
