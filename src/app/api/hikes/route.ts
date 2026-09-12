@@ -29,6 +29,7 @@ export async function GET(request: NextRequest) {
   const minLng = searchParams.has('min_lng') ? Number(searchParams.get('min_lng')) : null;
   const maxLng = searchParams.has('max_lng') ? Number(searchParams.get('max_lng')) : null;
   const limit = searchParams.has('limit') ? Number(searchParams.get('limit')) : null;
+  const zoom = searchParams.has('zoom') ? Number(searchParams.get('zoom')) : null;
 
   try {
     const deduplicated = await getTrails({
@@ -42,6 +43,7 @@ export async function GET(request: NextRequest) {
       minLng,
       maxLng,
       limit: limit ?? 150,
+      zoom,
     });
 
     const response = NextResponse.json(deduplicated);
