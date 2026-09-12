@@ -47,7 +47,7 @@ import {
 const FEATURE = 'activity-enrichment';
 const ENRICHMENT_VERSION = 'v1';
 const CHECKLIST_IDS_KEY = 'enrichment_checklist_ids';
-/** Corridor réel des POI fournis au prompt (km) — miroir `prepareActivityFromTrail`. */
+/** Corridor réel des POI fournis à la consigne (km) — miroir `prepareActivityFromTrail`. */
 const POI_CORRIDOR_KM = 0.75;
 const POI_BBOX_DEG = 0.01;
 const POI_LIMIT = 200;

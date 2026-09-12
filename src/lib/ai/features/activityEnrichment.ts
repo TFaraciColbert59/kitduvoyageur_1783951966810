@@ -172,7 +172,7 @@ export function sanitizeEnrichmentOutput(
   };
 }
 
-/** POI réel du vivier fourni au prompt (issu de `trail_pois`, corridor ≤ 750 m). */
+/** POI réel du vivier fourni à la consigne (issu de `trail_pois`, corridor ≤ 750 m). */
 export interface ActivityEnrichmentPoi {
   name: string;
   category?: string | null;
