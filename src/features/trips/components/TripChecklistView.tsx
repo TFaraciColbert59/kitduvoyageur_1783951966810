@@ -6,6 +6,8 @@ import { GlassCard } from '@/components/ui/GlassCard';
 import { useHapticFeedback } from '@/hooks/useHapticFeedback';
 import { createClient } from '@/lib/supabase/client';
 import type { DatabaseTripChecklistItem } from '@/lib/supabase/types';
+import { LiveArrivalReveal } from '@/features/hub/components/live/LiveArrivalReveal';
+import { useLiveArrivalReveal } from '@/features/hub/components/live/useLiveArrivalReveal';
 
 let checklistClient: ReturnType<typeof createClient> | null = null;
 function supabaseChecklistClient() {
@@ -281,6 +283,8 @@ interface TripChecklistViewProps {
 export function TripChecklistView({ tripId, daysUntilStart, items }: TripChecklistViewProps) {
   const [rows, setRows] = useState<DatabaseTripChecklistItem[]>(items);
   const { triggerHaptic } = useHapticFeedback();
+  // T10 — reveal des tâches ajoutées en réel (bus live), section visible seulement.
+  const { liveIds, containerRef } = useLiveArrivalReveal<HTMLDivElement>('trip_checklist_items');
 
   const totalCount = rows.length;
   const doneCount = rows.filter((i) => i.done).length;
@@ -318,36 +322,37 @@ export function TripChecklistView({ tripId, daysUntilStart, items }: TripCheckli
         </div>
 
         <div className="space-y-2">
-          {items.map((item) => {
+          {items.map((item, index) => {
             const isChecked = item.done;
             return (
-              <button
-                key={item.id}
-                type="button"
-                onClick={() => toggleItem(item)}
-                className={`w-full text-left p-3.5 sm:p-4 rounded-2xl border transition-all duration-150 flex items-start gap-3 min-h-[44px] ${
-                  isChecked
-                    ? 'bg-lkv-primary/5 border-lkv-primary/30 text-lkv-primary'
-                    : 'glass-sub-card border border-white/60 shadow-2xs hover:bg-white/90 text-lkv-primary active:scale-[0.98]'
-                }`}
-              >
-                <div className="mt-0.5 shrink-0">
-                  {isChecked ? (
-                    <Icon name="check-circle2" size={20} className="text-lkv-primary" />
-                  ) : (
-                    <Icon name="circle" size={20} className="text-lkv-secondary/50" />
-                  )}
-                </div>
-                <div className="flex-1 min-w-0">
-                  <div
-                    className={`text-sm font-medium ${
-                      isChecked ? 'line-through text-lkv-secondary opacity-75' : 'text-lkv-primary'
-                    }`}
-                  >
-                    {item.label}
+              <LiveArrivalReveal key={item.id} id={item.id} liveIds={liveIds} index={index}>
+                <button
+                  type="button"
+                  onClick={() => toggleItem(item)}
+                  className={`w-full text-left p-3.5 sm:p-4 rounded-2xl border transition-all duration-150 flex items-start gap-3 min-h-[44px] ${
+                    isChecked
+                      ? 'bg-lkv-primary/5 border-lkv-primary/30 text-lkv-primary'
+                      : 'glass-sub-card border border-white/60 shadow-2xs hover:bg-white/90 text-lkv-primary active:scale-[0.98]'
+                  }`}
+                >
+                  <div className="mt-0.5 shrink-0">
+                    {isChecked ? (
+                      <Icon name="check-circle2" size={20} className="text-lkv-primary" />
+                    ) : (
+                      <Icon name="circle" size={20} className="text-lkv-secondary/50" />
+                    )}
                   </div>
-                </div>
-              </button>
+                  <div className="flex-1 min-w-0">
+                    <div
+                      className={`text-sm font-medium ${
+                        isChecked ? 'line-through text-lkv-secondary opacity-75' : 'text-lkv-primary'
+                      }`}
+                    >
+                      {item.label}
+                    </div>
+                  </div>
+                </button>
+              </LiveArrivalReveal>
             );
           })}
         </div>
@@ -360,7 +365,7 @@ export function TripChecklistView({ tripId, daysUntilStart, items }: TripCheckli
   const j1 = rows.filter((i) => i.due_offset_days < 8);
 
   return (
-    <div className="space-y-6">
+    <div ref={containerRef} className="space-y-6">
       {/* Barre de progression */}
       <GlassCard tone="sage" className="p-5 rounded-[var(--lkv-radius-xl)] border border-white/70">
         <div className="flex items-center justify-between gap-4 mb-2">

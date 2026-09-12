@@ -16,6 +16,8 @@ import type { InventoryItem } from '@/features/materiel/services/getInventory';
 import { cleanItemName } from '@/lib/cleanItemName';
 import { useHapticFeedback } from '@/hooks/useHapticFeedback';
 import { classifyKitCompleteness } from '../engine/kitCompletenessEngine';
+import { LiveArrivalReveal } from '@/features/hub/components/live/LiveArrivalReveal';
+import { useLiveArrivalReveal } from '@/features/hub/components/live/useLiveArrivalReveal';
 import {
   addCustomTripItemAction,
   deleteTripItemAction,
@@ -92,6 +94,8 @@ export function TripKitView({
   const [editError, setEditError] = useState<string | null>(null);
   const [busyPackedId, setBusyPackedId] = useState<string | null>(null);
   const { triggerHaptic } = useHapticFeedback();
+  // T10 — reveal des objets ajoutés en réel (bus live), section visible seulement.
+  const { liveIds, containerRef } = useLiveArrivalReveal<HTMLDivElement>('trip_items');
 
   // Phase 5 — complétude du kit : personnel / partagé / manquant + poids connus.
   const completeness = useMemo(
@@ -530,19 +534,20 @@ export function TripKitView({
             canEdit={trip.permissions.canEdit}
           />
         ) : (
-          <div className="divide-y divide-white/40">
-            {filteredItems.map((item) => (
-              <TripKitItemRow
-                key={item.id}
-                item={item}
-                imageUrl={imageByItemId.get(item.id) ?? null}
-                onDeleteItem={handleDeleteItem}
-                onTogglePacked={handleTogglePacked}
-                onEdit={setEditingItem}
-                busyPacked={busyPackedId === item.id}
-                ownerLabel={ownerLabel(item.owner_id)}
-                canEdit={trip.permissions.canEdit}
-              />
+          <div ref={containerRef} className="divide-y divide-white/40">
+            {filteredItems.map((item, index) => (
+              <LiveArrivalReveal key={item.id} id={item.id} liveIds={liveIds} index={index}>
+                <TripKitItemRow
+                  item={item}
+                  imageUrl={imageByItemId.get(item.id) ?? null}
+                  onDeleteItem={handleDeleteItem}
+                  onTogglePacked={handleTogglePacked}
+                  onEdit={setEditingItem}
+                  busyPacked={busyPackedId === item.id}
+                  ownerLabel={ownerLabel(item.owner_id)}
+                  canEdit={trip.permissions.canEdit}
+                />
+              </LiveArrivalReveal>
             ))}
           </div>
         )}

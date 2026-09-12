@@ -14,6 +14,7 @@ import { weatherLabel } from '@/features/materiel/services/getWeather';
 import HubMiniMap from '@/components/hub/HubMiniMap';
 import { MobileAdventureHub } from '../mobile/MobileAdventureHub';
 import { SortieMoment } from '../mobile/moments/SortieMoment';
+import { ActivityPreparationStatus } from '../live/ActivityPreparationStatus';
 import {
   buildSortieInfoChips,
   buildSortieSectionTiles,
@@ -814,6 +815,7 @@ export function SortieMenu({
   return (
     <>
       <div className="hidden lg:flex h-[calc(100%-24px)] min-h-[680px] flex-col gap-3 overflow-hidden">
+        <ActivityPreparationStatus className="shrink-0" />
         <ActivityIdentityBar
           nature="sortie"
           name={trip.title}
@@ -844,6 +846,7 @@ export function SortieMenu({
       )}
 
       <MobileAdventureHub
+        rail={<ActivityPreparationStatus />}
         action={
           <NextActionCard
             actions={nextActions}

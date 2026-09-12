@@ -17,6 +17,8 @@ export interface PlannerStep {
   distance_km?: number | null;
   elevation_gain_m?: number | null;
   elevation_loss_m?: number | null;
+  /** Phase enrichissement (§4.3) — kind (moment) / provenance, si mappé. */
+  metadata?: Record<string, unknown> | null;
 }
 
 export interface DayMetrics {
