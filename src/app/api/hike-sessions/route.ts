@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
+import { enforceRateLimit } from '@/lib/rate-limit/routes';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -142,6 +143,15 @@ export async function POST(req: NextRequest) {
     }
 
     const userId = user.id;
+
+    // Phase 8 — écritures GPS volumineuses : 30/min, fail-open.
+    const limited = await enforceRateLimit(userId, {
+      scope: 'hike-sessions-save',
+      limit: 30,
+      windowMs: 60_000,
+      failMode: 'open',
+    });
+    if (limited) return limited;
 
     const body: SaveHikeSessionBody = await req.json();
     const correlationId = sanitizeCorrelationId(body.correlationId);

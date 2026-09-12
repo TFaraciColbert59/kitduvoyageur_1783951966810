@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
+import { enforceRateLimit } from '@/lib/rate-limit/routes';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -16,6 +17,15 @@ export async function POST(req: NextRequest) {
     if (!user) {
       return NextResponse.json({ error: 'Authentification requise' }, { status: 401 });
     }
+
+    // Phase 8 — anti-spam d'abonnements : 20/min, fail-open.
+    const limited = await enforceRateLimit(user.id, {
+      scope: 'notifications-subscribe',
+      limit: 20,
+      windowMs: 60_000,
+      failMode: 'open',
+    });
+    if (limited) return limited;
 
     const { subscription } = await req.json();
     if (!subscription || !subscription.endpoint) {

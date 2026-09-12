@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
+import { enforceRateLimit } from '@/lib/rate-limit/routes';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -16,6 +17,15 @@ export async function POST(req: NextRequest) {
     if (!user) {
       return NextResponse.json({ error: 'Authentification requise' }, { status: 401 });
     }
+
+    // Phase 8 — cash-out : 5 demandes/heure, fail-closed (argent réel).
+    const limited = await enforceRateLimit(user.id, {
+      scope: 'rewards-withdraw',
+      limit: 5,
+      windowMs: 3_600_000,
+      failMode: 'closed',
+    });
+    if (limited) return limited;
 
     const body = await req.json();
     const { amount, payment_provider = 'bank_transfer', idempotency_key, metadata = {} } = body;
