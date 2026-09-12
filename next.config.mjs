@@ -139,8 +139,15 @@ const nextConfig = {
       },
       {
         source: '/carte',
-        destination: '/carte-interactive',
+        destination: '/explorer',
         permanent: true,
+      },
+      {
+        // ATLAS — le nouvel explorateur unifié remplace la carte historique.
+        // 307 temporaire : retirer cette entrée = rollback immédiat vers Leaflet.
+        source: '/carte-interactive',
+        destination: '/explorer',
+        permanent: false,
       },
     ];
   },
