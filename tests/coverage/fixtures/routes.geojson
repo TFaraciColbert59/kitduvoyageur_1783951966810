@@ -1,0 +1,46 @@
+{
+  "type": "FeatureCollection",
+  "features": [
+    {
+      "type": "Feature",
+      "properties": { "id": "r1", "name": "Boucle de test", "source": "fixture" },
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [6.0, 45.0],
+          [6.1, 45.05],
+          [6.2, 45.0]
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": { "id": "r2", "name": "Traversée test", "source": "fixture" },
+      "geometry": {
+        "type": "MultiLineString",
+        "coordinates": [
+          [
+            [6.5, 45.5],
+            [6.6, 45.55],
+            [6.7, 45.6]
+          ],
+          [
+            [7.0, 46.0],
+            [7.1, 46.05]
+          ]
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": { "id": "r3", "name": "Coordonnées invalides" },
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [200.0, 45.0],
+          [6.1, 45.0]
+        ]
+      }
+    }
+  ]
+}

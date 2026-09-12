@@ -60,6 +60,8 @@
     "mobile:open:android": "npx cap open android",
     "verify:invariants": "node scripts/verify/ci_invariants.mjs",
     "verify:icons": "node scripts/verify/icon-names.mjs",
+    "coverage:matrix": "tsx scripts/coverage/generate_matrix.ts docs/coverage/targets.json docs/coverage/coverage-input.json docs/coverage/flags.json docs/coverage/COVERAGE_MATRIX.md",
+    "coverage:pipeline": "tsx scripts/coverage/pipeline.ts",
     "icons:build": "node scripts/icons/build-sprite.mjs",
     "icons:codemod": "node scripts/icons/codemod-lucide-to-icon.mjs",
     "prebuild": "node scripts/icons/build-sprite.mjs",
