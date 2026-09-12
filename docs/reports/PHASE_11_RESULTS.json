@@ -1,0 +1,158 @@
+{
+  "phase": 11,
+  "phase_name": "Mobile natif et terrain (partie autonomisable)",
+  "date": "2026-09-12",
+  "sha_base": "64b225a6 (= origin/main, Phase 4 #45)",
+  "sha_branch": "175ab25e (base 64b225a6) sur feat/phase11-mobile-build",
+  "sha_pushed": "175ab25e -- pousse sur origin/feat/phase11-mobile-build",
+  "sha_merged": "aucun -- pas de PR (consigne), branche poussee pour revue",
+  "environment": {
+    "os": "Windows 11 (win32), session NON administrateur (UAC non interactif)",
+    "node": "v24.18.0",
+    "npm": "12.0.2",
+    "jdk_gradle": "Temurin 21.0.12.1+1 (obligatoire: Capacitor 8 compile en Java 21)",
+    "jdk_sdk_tools": "Temurin 17.0.20.1+1 (sdkmanager/keytool)",
+    "android_sdk": "C:/Users/Tony/AppData/Local/LKDV/android-sdk (cmdline-tools 16.0 win-11076708, platform-tools 37.0.1, platforms;android-36 rev 2, build-tools;36.0.0)",
+    "gradle": "wrapper 8.14.3 (cache ~/.gradle), AGP 8.13.0",
+    "capacitor": "8.5.0 + 9 plugins 8.x",
+    "stores": "INSUFFICIENT_DATA -- aucun compte Play/Apple",
+    "ios": "IMPOSSIBLE sur cette machine -- pas de Mac/Xcode 16+",
+    "physical_devices": "INSUFFICIENT_DATA -- aucun appareil teste",
+    "field_calibration": "INSUFFICIENT_DATA -- aucune paire ETA/reel mesuree"
+  },
+  "audit_existing_a15": {
+    "failure_jdk8": "AGP 8.13 exigeait JVM >= 11, seul Java 1.8.0_401 present -- corrige (JDK 21)",
+    "failure_no_sdk": "ANDROID_HOME/ANDROID_SDK_ROOT vides, adb/sdkmanager absents -- corrige (SDK 36 local)",
+    "failure_no_keystore": "aucun keystore, aucun cablage -- corrige sans secret versionne",
+    "ios_blocked": "pas de Mac/Xcode -- documente, non tente (conforme consigne)"
+  },
+  "toolchain_installed": {
+    "method": "portable (archives officielles Adoptium/Google) car winget MSI bloque par UAC non interactif en session non admin",
+    "winget_attempt": "winget install EclipseAdoptium.Temurin.17.JDK -- timeout sans sortie (UAC)",
+    "licenses": "7/7 acceptees (sdkmanager --licenses, exit 0)",
+    "paths": {
+      "jdk21": "C:/Users/Tony/AppData/Local/LKDV/tools/jdk-21",
+      "jdk17": "C:/Users/Tony/AppData/Local/LKDV/tools/jdk-17",
+      "android_sdk": "C:/Users/Tony/AppData/Local/LKDV/android-sdk"
+    },
+    "persistence_documented": "setx JAVA_HOME/ANDROID_HOME/ANDROID_SDK_ROOT + android/local.properties (ignore git)"
+  },
+  "build": {
+    "sync": {
+      "command": "npx cap sync android",
+      "exit": 0,
+      "duration_ms": 446,
+      "plugins": 9,
+      "assets": "public (134.7 Mo) copies vers android/app/src/main/assets/public"
+    },
+    "gradle": {
+      "command": "gradlew.bat bundleRelease --console=plain",
+      "exit": 0,
+      "result": "BUILD SUCCESSFUL in 12s -- 449 actionable tasks (14 executed, 435 up-to-date)",
+      "tasks_proof": ["app:packageReleaseBundle", "app:signReleaseBundle"],
+      "failures_before_success": [
+        {
+          "attempt": 1,
+          "cause": "JDK 17 insuffisant: Cannot find a Java installation matching {languageVersion=21}",
+          "fix": "installation JDK 21 Temurin et JAVA_HOME=jdk-21"
+        },
+        {
+          "attempt": 2,
+          "cause": "UnrecoverableKeyException: Given final block not properly padded (keyPassword != storePassword en PKCS12)",
+          "fix": "keystore.properties: keyPassword = storePassword"
+        }
+      ]
+    },
+    "aab": {
+      "path_repo": "android/app/build/outputs/bundle/release/app-release.aab",
+      "path_temp_copy": "C:/Users/Tony/AppData/Local/Temp/opencode/lkdv-app-release.aab",
+      "size_bytes": 146405405,
+      "sha256": "C01A9DB0D60DE1B3DF35D69D2A99383DA10BF8B5AA5563374AA604C0E398C5A5",
+      "application_id": "com.lekitduvoyageur.app",
+      "version_code": 1,
+      "version_name": "1.0",
+      "min_sdk": 24,
+      "compile_sdk": 36,
+      "target_sdk": 36,
+      "warning": "proche du plafond Play 150 Mo (a verifier) -- assets web 134.7 Mo a alleger"
+    }
+  },
+  "signature": {
+    "keystore_path": "C:/Users/Tony/AppData/Local/Temp/opencode/lkdv-release.keystore",
+    "keystore_type": "PKCS12",
+    "keystore_size_bytes": 4420,
+    "keystore_sha256": "A79AD1D2655652BD3102B6BA1156C28859946474D97CA579B2C2CB7F0DFC7FC4",
+    "alias": "lkdv-release",
+    "validity_days": 10000,
+    "key": "RSA 4096, SHA384withRSA",
+    "credentials_file": "C:/Users/Tony/AppData/Local/Temp/opencode/lkdv-keystore.txt (avertissement de perte/sauvegarde inclus)",
+    "verify_command": "jarsigner -verify app-release.aab",
+    "verify_exit": 0,
+    "verify_result": "jar verified.",
+    "certificate_owner": "CN=Le Kit du Voyageur, OU=Mobile, O=Le Kit du Voyageur, L=Paris, C=FR",
+    "certificate_sha256": "17:24:D5:3C:CE:38:DC:72:0D:A7:83:23:BE:3E:FC:34:DE:85:4C:25:0E:7B:24:D8:EF:EA:8F:1C:AE:66:78:C0",
+    "certificate_validity": "2026-09-12 -> 2054-01-28",
+    "benign_warnings": [
+      "certificate chain invalid (auto-signe, normal pour une signature d'app)",
+      "entries signed in JarFile but not signed in JarInputStream (JDK, AAB compresse)"
+    ],
+    "zero_secret_in_git": true
+  },
+  "secrets_handling": {
+    "committed": [
+      "android/app/build.gradle (lecture keystore.properties + repli env, signingConfig conditionnelle)",
+      "android/keystore.properties.example (valeurs vides)",
+      "android/.gitignore (*.jks, *.keystore, keystore.properties)"
+    ],
+    "never_committed": [
+      "android/keystore.properties",
+      "android/local.properties",
+      "*.jks / *.keystore",
+      "*.aab / *.apk (deja ignores)"
+    ],
+    "proof": "git check-ignore -v android/keystore.properties android/local.properties -> ignores par android/.gitignore",
+    "env_fallback_ci": ["LKDV_KEYSTORE_FILE", "LKDV_KEYSTORE_STORE_PASSWORD", "LKDV_KEYSTORE_KEY_ALIAS", "LKDV_KEYSTORE_KEY_PASSWORD"],
+    "critical_warning": "perte du keystore/mot de passe = impossibilite de publier des mises a jour sur Google Play"
+  },
+  "documentation": [
+    "docs/mobile/ANDROID_RELEASE.md (procedure reproductible + depannage + etapes humaines)",
+    "docs/mobile/STORES_CHECKLIST.md (Play, Apple/TestFlight, 5 profils d'appareils, batterie/memoire/reseau, 30 paires ETA/reel)"
+  ],
+  "evidence": {
+    "type_check": "exit 0 (0 erreur)",
+    "lint": "exit 0 (0 erreur ; warnings preexistants uniquement)",
+    "vitest_run1": "317 fichiers passes / 4 skipped ; 1 test echoue: tests/trips/chantier-z5.spec.ts > Z-D32.1 -- Test timed out in 5000ms (import dynamique a froid, flaky)",
+    "vitest_run2": "exit 0 -- 318 fichiers passes / 4 skipped ; 2259 tests passes / 27 skipped / 0 echoue",
+    "flaky_test": {
+      "file": "tests/trips/chantier-z5.spec.ts",
+      "test": "Z-D32.1 : un voyage sans URL passe le placeholder local a AppImage",
+      "cause": "timeout 5000ms sur import dynamique de module volumineux sous charge",
+      "verdict": "flaky preexistant, hors perimetre (aucun code TS modifie en Phase 11) ; a stabiliser separement"
+    },
+    "visual_baselines": "aucune UI modifiee -- aucune baseline impactee"
+  },
+  "gate_phase11": {
+    "toolchain_android_local": "PASS",
+    "aab_signe": "PASS (jarsigner exit 0)",
+    "signature_sans_secret_versionne": "PASS",
+    "non_regression_npm": "PASS (type-check, lint, test run 2)",
+    "play_console_et_upload": "INSUFFICIENT_DATA -- humain",
+    "ios_testflight": "INSUFFICIENT_DATA -- Mac/Xcode/compte Apple requis, impossible ici",
+    "appareils_physiques": "INSUFFICIENT_DATA -- humain",
+    "batterie_memoire_reseau": "INSUFFICIENT_DATA -- mesures terrain non faites",
+    "eta_30_paires": "INSUFFICIENT_DATA -- aucune mesure reelle",
+    "calibration_etendue": "INSUFFICIENT_DATA -- non commencee"
+  },
+  "limitations": [
+    "AAB 146.4 Mo proche du plafond Play 150 Mo (a verifier) -- assets web a reduire.",
+    "Aucun compte store, aucun upload, aucune piste de test.",
+    "Aucun build iOS (pas de Mac/Xcode 16+), aucun TestFlight.",
+    "Aucun test appareil physique (permissions, GPS, camera, reseau, notifications).",
+    "Aucune mesure batterie/memoire/temperature/stockage/reseau instable.",
+    "Aucune paire ETA/reel (30 exigees) ni calibration par activite/terrain/climat/saison.",
+    "Test flaky identifie (chantier-z5 Z-D32.1) a stabiliser.",
+    "local.properties contient un chemin machine (ignore git, standard Android)."
+  ],
+  "decision": "PASS_LOCAL_TECHNIQUE (AAB signe prouve) ; STORES_IOS_APPAREILS_CALIBRATION_INSUFFICIENT_DATA",
+  "responsible": "agent MOBILE/QA ; comptes stores, Mac/Xcode, appareils physiques et terrain = humain non saisi"
+}
