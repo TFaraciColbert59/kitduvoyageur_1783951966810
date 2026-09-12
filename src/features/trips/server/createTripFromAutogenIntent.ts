@@ -6,6 +6,7 @@ import type { SupabaseClient } from '@supabase/supabase-js';
 import { createClient } from '@/lib/supabase/server';
 import { getServiceSupabase } from '@/lib/ai/serviceClient';
 import { createTrip } from '@/lib/queries-trips';
+import { getCivilDurationDays } from '@/lib/dates/tripDates';
 import { emitEvent } from '@/lib/events/eventBus';
 import {
   AUTOGEN_TRIP_PIPELINE_VERSION,
@@ -17,10 +18,12 @@ import {
   deriveAutogenTripDraft,
   deriveDifficulty,
   derivePrimaryActivity,
+  flattenPreparationKitItems,
   polylineFromRouteGeom,
   regionSearchTerms,
   type AutogenPreparationPlan,
 } from '../engine/autogenPreparation';
+import { kitItemMatchesOwned } from '../engine/kitCompletenessEngine';
 import {
   createSupabaseAdventurePersistence,
   createSupabaseAdventurePredictionPersistence,
@@ -203,6 +206,62 @@ async function compensate(
   }
 }
 
+interface OwnedItemRow {
+  id: string;
+  name: string;
+  weightGrams: number | null;
+  condition: string | null;
+}
+
+/**
+ * Inventaire personnel de l'utilisateur, lecture bornée (400 lignes max).
+ * Aucune écriture, aucune donnée croisée : sert uniquement à marquer
+ * « possédé » / « manquant » et à reprendre les poids RÉELS connus.
+ */
+async function loadOwnedItems(
+  supabase: SupabaseClient,
+  userId: string
+): Promise<OwnedItemRow[]> {
+  try {
+    const { data, error } = await supabase
+      .from('product_ownership')
+      .select('id, name, weight_g, condition')
+      .eq('user_id', userId)
+      .limit(400);
+    if (error || !Array.isArray(data)) return [];
+    return data
+      .map((row) => {
+        const record = row as Record<string, unknown>;
+        const weight = Number(record.weight_g);
+        return {
+          id: String(record.id),
+          name: typeof record.name === 'string' ? record.name : '',
+          weightGrams: Number.isFinite(weight) && weight > 0 ? weight : null,
+          condition:
+            typeof record.condition === 'string' && record.condition !== ''
+              ? record.condition
+              : null,
+        };
+      })
+      .filter((row) => row.name !== '');
+  } catch (error) {
+    console.error('[LKDV autogen] lecture inventaire en échec:', error);
+    return [];
+  }
+}
+
+function findOwnedMatch(
+  itemName: string,
+  recommendationKey: string | null,
+  ownedItems: OwnedItemRow[]
+): OwnedItemRow | null {
+  return (
+    ownedItems.find((owned) =>
+      kitItemMatchesOwned(itemName, owned.name, recommendationKey)
+    ) ?? null
+  );
+}
+
 /** Persiste kit, budget, checklist et documents attendus (best-effort). */
 async function persistPreparation(
   supabase: SupabaseClient,
@@ -210,11 +269,16 @@ async function persistPreparation(
   tripId: string,
   preparation: AutogenPreparationPlan,
   warnings: string[]
-): Promise<{ kitId: string | null; estimatedBudgetEur: number | null }> {
+): Promise<{ kitId: string | null; estimatedBudgetEur: number | null; ownedItemsCount: number }> {
   let kitId: string | null = null;
+  let ownedItemsCount = 0;
+
+  // Inventaire réel de l'utilisateur : détermine possédé/manquant + poids réels.
+  const ownedItems = await loadOwnedItems(supabase, userId);
 
   if (preparation.kit) {
     try {
+      const preparedItems = flattenPreparationKitItems(preparation.kit);
       const { data: kit, error } = await supabase
         .from('materiel_kits')
         .insert({
@@ -231,40 +295,59 @@ async function persistPreparation(
         warnings.push('Kit matériel non créé (erreur d’enregistrement).');
       } else {
         kitId = String((kit as { id: string }).id);
-        if (preparation.kit.items.length > 0) {
+        if (preparedItems.length > 0) {
           const { error: itemsError } = await supabase.from('materiel_kit_items').insert(
-            preparation.kit.items.map((item) => ({
-              kit_id: kitId,
-              user_id: userId,
-              name: item.name,
-              category: item.category,
-              weight_g: 0,
-              quantity: item.quantity,
-              is_checked: false,
-            }))
+            preparedItems.map((item) => {
+              const owned = findOwnedMatch(item.name, item.recommendationKey, ownedItems);
+              if (owned) ownedItemsCount++;
+              return {
+                kit_id: kitId,
+                user_id: userId,
+                name: item.name,
+                category: item.category,
+                weight_g: owned?.weightGrams ?? 0,
+                quantity: item.quantity,
+                is_checked: false,
+                ownership: item.ownership,
+                owner_id: item.ownership === 'personal' ? userId : null,
+                condition: owned?.condition ?? null,
+                reason: item.reason,
+                priority: item.priority,
+                is_vital: item.isVital,
+              };
+            })
           );
           if (itemsError) {
             warnings.push('Kit créé mais ses articles n’ont pas tous été enregistrés.');
           }
 
-          // Le sac du voyage (section Équipement / checklist) reflète le même
-          // kit : items estimés, poids inconnu ⇒ null (jamais un poids inventé).
+          // Le sac du voyage (section Équipement / checklist) reflète le MÊME
+          // kit : poids repris de l'inventaire réel, sinon null (jamais un
+          // poids inventé) ; `missing` = matériel non possédé à se procurer.
           const { error: tripItemsError } = await supabase.from('trip_items').insert(
-            preparation.kit.items.map((item) => ({
-              trip_id: tripId,
-              item_name: item.name,
-              category: item.category,
-              quantity: item.quantity,
-              weight_grams: null,
-              is_packed: false,
-              status: 'needed',
-              source: 'template',
-              priority: 'recommended',
-              is_vital: false,
-              is_worn: false,
-              is_consumable: false,
-              purchase_state: 'needed',
-            }))
+            preparedItems.map((item) => {
+              const owned = findOwnedMatch(item.name, item.recommendationKey, ownedItems);
+              return {
+                trip_id: tripId,
+                item_name: item.name,
+                category: item.category,
+                quantity: item.quantity,
+                weight_grams: owned?.weightGrams ?? null,
+                is_packed: false,
+                status: owned ? 'needed' : 'missing',
+                source: owned ? 'inventory' : item.source,
+                priority: item.priority,
+                is_vital: item.isVital,
+                is_worn: false,
+                is_consumable: false,
+                purchase_state: owned ? 'added' : 'needed',
+                inventory_item_id: owned?.id ?? null,
+                ownership: item.ownership,
+                owner_id: item.ownership === 'personal' ? userId : null,
+                condition: owned?.condition ?? null,
+                reason: item.reason,
+              };
+            })
           );
           if (tripItemsError) {
             warnings.push('Kit créé mais le sac du voyage n’a pas été garni.');
@@ -291,7 +374,14 @@ async function persistPreparation(
           expense_date: today,
           split_type: 'equal',
           is_planned: true,
-          metadata: { source: 'autogen', estimated: true },
+          metadata: {
+            source: 'autogen',
+            estimated: true,
+            rule: line.provenance.rule,
+            party_size: line.provenance.partySize,
+            days: line.provenance.days,
+            reason: line.reason,
+          },
         }))
       );
       if (error) warnings.push('Ligne budgétaire prévisionnelle non créée.');
@@ -330,6 +420,7 @@ async function persistPreparation(
     kitId,
     estimatedBudgetEur:
       preparation.budgetLines.length > 0 ? preparation.budgetLines[0].amountEur : null,
+    ownedItemsCount,
   };
 }
 
@@ -491,11 +582,31 @@ export async function createTripFromAutogenIntent(
       startDate: input.startDate ?? null,
       endDate: input.endDate ?? null,
     });
+    const tripActivity = derivePrimaryActivity(input.brief ?? null);
+    const routeContext = bestRoute
+      ? {
+          name: bestRoute.name,
+          distanceKm: bestRoute.distanceKm,
+          elevationGainM: bestRoute.elevationGainM,
+          difficulty: bestRoute.difficulty,
+        }
+      : null;
+    const seasonMonth = draft.startDate ? Number(draft.startDate.slice(5, 7)) || null : null;
+    const durationDays =
+      draft.startDate && draft.endDate
+        ? getCivilDurationDays(draft.startDate, draft.endDate)
+        : input.brief?.duration?.value?.days ?? null;
+
     const preparationPreview = buildAutogenPreparation({
       brief: input.brief ?? null,
       layers,
       partySize: draft.partySize,
       routeName: bestRoute?.name ?? null,
+      activity: tripActivity,
+      countryCode: draft.destinationCountryCode,
+      durationDays,
+      seasonMonth,
+      route: routeContext,
     });
 
     const baseMetadata: Record<string, unknown> = {
@@ -667,14 +778,21 @@ export async function createTripFromAutogenIntent(
     }
 
     // ── 7. Kit, budget, checklist, documents attendus (best-effort) ──────────
+    // Cohérence avec le VOYAGE/PLAN/ROUTE réellement retenus : les recommandations
+    // citent les données réelles du parcours sélectionné (distance, D+, difficulté).
     const preparation = buildAutogenPreparation({
       brief: input.brief ?? null,
       layers,
       partySize: draft.partySize,
       routeName: selectedRouteId ? bestRoute?.name ?? null : null,
+      activity: tripActivity,
+      countryCode: draft.destinationCountryCode,
+      durationDays,
+      seasonMonth,
+      route: selectedRouteId ? routeContext : null,
     });
     warnings.push(...preparation.warnings);
-    const { kitId, estimatedBudgetEur } = await persistPreparation(
+    const { kitId, estimatedBudgetEur, ownedItemsCount } = await persistPreparation(
       session,
       user.id,
       tripId,
@@ -695,6 +813,9 @@ export async function createTripFromAutogenIntent(
               plan_id: planId,
               selected_route_id: selectedRouteId,
               kit_id: kitId,
+              kit_owned_items_count: ownedItemsCount,
+              kit_recommendations_count: preparation.kit?.recommendations.length ?? 0,
+              safety_controls_count: preparation.safetyControls.length,
               warnings,
             },
           },

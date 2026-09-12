@@ -106,6 +106,9 @@ export async function addTripItem(input: {
   notes?: string;
   source?: string;
   purchaseState?: TripPurchaseState;
+  ownership?: 'personal' | 'shared';
+  ownerId?: string | null;
+  reason?: string | null;
 }): Promise<TripItem | null> {
   const supabase = await createClient();
 
@@ -130,6 +133,9 @@ export async function addTripItem(input: {
       notes: input.notes || null,
       source: input.source || 'user',
       purchase_state: input.purchaseState ?? 'needed',
+      ownership: input.ownership ?? 'personal',
+      owner_id: input.ownerId ?? null,
+      reason: input.reason ?? null,
     })
     .select('*')
     .single();
@@ -140,6 +146,44 @@ export async function addTripItem(input: {
   }
 
   return data as TripItem;
+}
+
+/** Phase 5 — édition complète d'un item : quantité, poids, partage, état, propriétaire. */
+export async function updateTripItemDetails(
+  itemId: string,
+  input: {
+    quantity?: number;
+    weightGrams?: number | null;
+    ownership?: 'personal' | 'shared';
+    condition?: 'neuf' | 'bon' | 'use' | 'a_remplacer' | 'pour_pieces' | null;
+    ownerId?: string | null;
+    priority?: 'vital' | 'recommended' | 'optional';
+    isVital?: boolean;
+  }
+): Promise<boolean> {
+  const supabase = await createClient();
+
+  const patch: Record<string, unknown> = { updated_at: new Date().toISOString() };
+  if (input.quantity !== undefined) patch.quantity = input.quantity;
+  if (input.weightGrams !== undefined) patch.weight_grams = input.weightGrams;
+  if (input.ownership !== undefined) patch.ownership = input.ownership;
+  if (input.condition !== undefined) patch.condition = input.condition;
+  if (input.ownerId !== undefined) patch.owner_id = input.ownerId;
+  if (input.priority !== undefined) patch.priority = input.priority;
+  if (input.isVital !== undefined) patch.is_vital = input.isVital;
+
+  const { data, error } = await supabase
+    .from('trip_items')
+    .update(patch)
+    .eq('id', itemId)
+    .select('id');
+
+  if (error) {
+    console.error('[updateTripItemDetails] Erreur update :', error);
+    return false;
+  }
+
+  return Array.isArray(data) && data.length > 0;
 }
 
 /**
@@ -231,6 +275,7 @@ export async function addRecommendedItemToTrip(
     isVital: rec.priority === 'vital',
     shopProductId: rec.shopProduct?.id,
     notes: rec.reason,
+    reason: rec.reason,
     source: 'contextual_kit',
     purchaseState: 'added',
   });

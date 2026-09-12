@@ -1,4 +1,14 @@
 import type { TripBrief } from '../schemas/autoGen.schema';
+import {
+  buildKitRecommendations,
+  kitContainsRecommendation,
+  type KitItemOwnership,
+  type KitItemPriority,
+  type KitRecommendation,
+  type KitRecommendationInput,
+  type KitRouteContext,
+} from './kitCompletenessEngine';
+import { buildPreTripSafetyControls, type PreTripSafetyControl } from '../safety/preTripSafetyRules';
 
 /**
  * Phase 3 — Préparation automatique d'un voyage créé depuis l'intention AutoGen.
@@ -30,6 +40,13 @@ export interface AutogenPreparationInput {
   partySize?: number;
   /** Parcours réel retenu (déjà sélectionné en base) — sinon null. */
   routeName?: string | null;
+  /** Phase 5 — contexte réel du voyage pour des recommandations vérifiables. */
+  activity?: string | null;
+  countryCode?: string | null;
+  durationDays?: number | null;
+  seasonMonth?: number | null;
+  /** Données réelles du parcours retenu (distance, D+, difficulté). */
+  route?: KitRouteContext | null;
 }
 
 export interface PreparationKitItem {
@@ -38,17 +55,80 @@ export interface PreparationKitItem {
   quantity: number;
 }
 
+/** Phase 5 — recommandation contextuelle avec raison vérifiable. */
+export type PreparationKitRecommendation = KitRecommendation;
+
 export interface PreparationKit {
   name: string;
   description: string;
   totalWeightGrams: number;
   items: PreparationKitItem[];
+  /** Phase 5 — ajouts contextuels (règles/données réelles), persistés en plus. */
+  recommendations: PreparationKitRecommendation[];
+}
+
+/** Item du kit prêt à persister (couche kit + recommandations dédupliquées). */
+export interface PersistableKitItem extends PreparationKitItem {
+  ownership: KitItemOwnership;
+  priority: KitItemPriority;
+  isVital: boolean;
+  reason: string;
+  source: 'template' | 'contextual_kit';
+  /** Clé de la règle contextuelle (null pour un item de la couche kit). */
+  recommendationKey: string | null;
+}
+
+/** Raison traçable des catégories essentielles issues de la couche kit IA. */
+export const TEMPLATE_KIT_REASON =
+  'Catégorie essentielle issue de la couche kit de la génération AutoGen (provenance estimée, à confirmer).';
+
+/**
+ * Fusionne les items de la couche kit (Phase 3) et les recommandations
+ * contextuelles Phase 5, sans doublon (mots-clés métier), pour persistance
+ * unique dans `materiel_kit_items` et `trip_items`.
+ */
+export function flattenPreparationKitItems(kit: PreparationKit): PersistableKitItem[] {
+  const existingNames = kit.items.map((item) => item.name);
+  const merged: PersistableKitItem[] = kit.items.map((item) => ({
+    ...item,
+    ownership: 'personal' as const,
+    priority: 'recommended' as const,
+    isVital: false,
+    reason: TEMPLATE_KIT_REASON,
+    source: 'template' as const,
+    recommendationKey: null,
+  }));
+
+  for (const recommendation of kit.recommendations) {
+    if (kitContainsRecommendation(existingNames, recommendation)) continue;
+    merged.push({
+      name: recommendation.name,
+      category: recommendation.category,
+      quantity: recommendation.quantity,
+      ownership: recommendation.ownership,
+      priority: recommendation.priority,
+      isVital: recommendation.priority === 'vital',
+      reason: recommendation.reason,
+      source: 'contextual_kit',
+      recommendationKey: recommendation.key,
+    });
+    existingNames.push(recommendation.name);
+  }
+
+  return merged;
 }
 
 export interface PreparationBudgetLine {
   title: string;
   amountEur: number;
   category: string;
+  /** Phase 5 — provenance de l'estimation (jamais un prix partenaire). */
+  provenance: {
+    rule: 'total_per_person' | 'daily_average';
+    partySize: number;
+    days: number | null;
+  };
+  reason: string;
 }
 
 export interface PreparationChecklistItem {
@@ -66,6 +146,8 @@ export interface AutogenPreparationPlan {
   budgetLines: PreparationBudgetLine[];
   checklist: PreparationChecklistItem[];
   documents: PreparationDocumentExpectation[];
+  /** Phase 5 — contrôles sécurité pays/activité (inclus dans `checklist`). */
+  safetyControls: PreTripSafetyControl[];
   warnings: string[];
 }
 
@@ -308,18 +390,29 @@ export function polylineFromRouteGeom(
 function buildKit(
   layers: PreparationLayers,
   title: string,
-  warnings: string[]
+  warnings: string[],
+  recommendationInput: KitRecommendationInput | null
 ): PreparationKit | null {
   const kitValue = layerValue(layers, 'kit');
-  if (!kitValue) {
+  const recommendations = recommendationInput
+    ? buildKitRecommendations(recommendationInput)
+    : [];
+
+  if (!kitValue && recommendations.length === 0) {
     warnings.push('Couche kit absente — aucun kit matériel créé.');
     return null;
   }
+  if (!kitValue) {
+    warnings.push(
+      'Couche kit absente — kit construit à partir des règles contextuelles du voyage (données réelles uniquement).'
+    );
+  }
 
-  const targetWeightKg = numberField(kitValue.targetWeightKg);
-  const rawCategories = Array.isArray(kitValue.essentialCategories)
-    ? kitValue.essentialCategories.filter((entry): entry is string => typeof entry === 'string')
-    : [];
+  const targetWeightKg = kitValue ? numberField(kitValue.targetWeightKg) : null;
+  const rawCategories =
+    kitValue && Array.isArray(kitValue.essentialCategories)
+      ? kitValue.essentialCategories.filter((entry): entry is string => typeof entry === 'string')
+      : [];
 
   const items: PreparationKitItem[] = [];
   const seen = new Set<string>();
@@ -336,8 +429,8 @@ function buildKit(
     if (items.length >= MAX_KIT_ITEMS) break;
   }
 
-  if (items.length === 0) {
-    warnings.push('Couche kit sans catégories essentielles — kit créé vide.');
+  if (kitValue && items.length === 0) {
+    warnings.push('Couche kit sans catégories essentielles — kit complété par les règles contextuelles.');
   }
 
   const weightNote =
@@ -345,10 +438,12 @@ function buildKit(
   return {
     name: clampLabel(`Kit estimé — ${title}`),
     description: clampLabel(
-      `Kit généré depuis le brief AutoGen (provenance : estimation).${weightNote} À ajuster avant départ.`
+      `Kit généré depuis le brief AutoGen (provenance : estimation) et les règles ` +
+        `contextuelles du voyage.${weightNote} À ajuster avant départ.`
     ),
     totalWeightGrams: targetWeightKg != null ? Math.round(targetWeightKg * 1000) : 0,
     items,
+    recommendations,
   };
 }
 
@@ -377,16 +472,28 @@ function buildBudgetLines(
   const dailyAverage = numberField(budgetValue.dailyAverageEur);
 
   let amount = 0;
+  let rule: PreparationBudgetLine['provenance']['rule'] | null = null;
   if (totalPerPerson != null && totalPerPerson > 0) {
     amount = Math.round(totalPerPerson * partySize);
+    rule = 'total_per_person';
   } else if (dailyAverage != null && dailyAverage > 0 && days != null && days > 0) {
     amount = Math.round(dailyAverage * days * partySize);
+    rule = 'daily_average';
   }
 
-  if (amount <= 0) {
+  if (amount <= 0 || !rule) {
     warnings.push('Budget estimé indisponible dans la couche — aucune ligne créée.');
     return [];
   }
+
+  const reason =
+    rule === 'total_per_person'
+      ? `Estimation couche budget : ${totalPerPerson} €/personne × ${partySize} voyageur${
+          partySize > 1 ? 's' : ''
+        } = ${amount} €.`
+      : `Estimation couche budget : ${dailyAverage} €/jour/personne × ${days} jour${
+          (days ?? 0) > 1 ? 's' : ''
+        } × ${partySize} voyageur${partySize > 1 ? 's' : ''} = ${amount} €.`;
 
   return [
     {
@@ -395,6 +502,8 @@ function buildBudgetLines(
       ),
       amountEur: amount,
       category: 'budget_prev',
+      provenance: { rule, partySize, days },
+      reason,
     },
   ];
 }
@@ -454,12 +563,19 @@ function buildComplianceSeeds(compliance: Record<string, unknown> | null): Check
   return seeds;
 }
 
-function buildDocumentSeeds(
-  hasDestination: boolean,
-  compliance: Record<string, unknown> | null,
-  transport: Record<string, unknown> | null,
-  accommodations: Record<string, unknown> | null
-): PreparationDocumentExpectation[] {
+interface DocumentSeedInput {
+  hasDestination: boolean;
+  hasTripContext: boolean;
+  activity: string | null;
+  durationDays: number | null;
+  compliance: Record<string, unknown> | null;
+  transport: Record<string, unknown> | null;
+  accommodations: Record<string, unknown> | null;
+}
+
+function buildDocumentSeeds(input: DocumentSeedInput): PreparationDocumentExpectation[] {
+  const { hasDestination, hasTripContext, activity, durationDays, compliance, transport, accommodations } =
+    input;
   const seeds: PreparationDocumentExpectation[] = [];
   const push = (label: string, dueOffsetDays: number) => {
     if (!seeds.some((seed) => seed.label === label)) {
@@ -475,11 +591,44 @@ function buildDocumentSeeds(
   if (booleanField(compliance?.visaRequired)) {
     push('Document attendu : visa en cours de validité', 30);
   }
-  if (stringField(transport?.mode) === 'plane') {
-    push('Document attendu : billets / réservation de transport', 21);
+  // Billets : dès qu'un mode de transport réel est documenté (avion/train/bus…).
+  const transportMode = stringField(transport?.mode);
+  if (transportMode) {
+    push(
+      transportMode === 'plane'
+        ? 'Document attendu : billets / réservation de transport'
+        : `Document attendu : billets / réservation de transport (${transportMode})`,
+      transportMode === 'plane' ? 21 : 14
+    );
   }
   if (accommodations && (stringField(accommodations.name) || numberField(accommodations.priceEur) != null)) {
     push('Document attendu : confirmation de réservation d’hébergement', 14);
+  }
+  // Assurance : règle LKDV pour tout voyage réel (la police réelle reste à fournir
+  // par le voyageur — aucun contrat n'est inventé).
+  if (hasTripContext) {
+    push(
+      `Document attendu : attestation d’assurance voyage / rapatriement${
+        activity === 'trekking' || activity === 'bivouac'
+          ? ` (activité ${activity}${durationDays ? `, ${durationDays} j` : ''})`
+          : ''
+      }`,
+      30
+    );
+  }
+  // Fiche contacts d'urgence : dès qu'un sécurité/pays réel existe.
+  if (hasDestination || compliance) {
+    push('Document attendu : fiche contacts d’urgence (secours local + proche)', 14);
+  }
+  // Documents locaux : uniquement si la couche conformité les exige réellement.
+  if (
+    booleanField(compliance?.permitsRequired) ||
+    booleanField(compliance?.guideMandatory) ||
+    booleanField(compliance?.timsCard) ||
+    booleanField(compliance?.acapPermit) ||
+    booleanField(compliance?.reservationPNRC)
+  ) {
+    push('Document attendu : permis / autorisations locales obligatoires', 21);
   }
   return seeds;
 }
@@ -562,24 +711,62 @@ export function buildAutogenPreparation(input: AutogenPreparationInput): Autogen
     ? deriveAutogenTripDraft({ rawInput: input.brief.rawInput, brief: input.brief }).title
     : 'Aventure générée';
   const partySize = Math.max(1, Math.trunc(input.partySize ?? 1));
-  const days = input.brief?.duration?.value?.days ?? null;
+  const days = input.durationDays ?? input.brief?.duration?.value?.days ?? null;
 
-  const kit = buildKit(input.layers, title, warnings);
+  const activity = input.activity ?? (input.brief ? derivePrimaryActivity(input.brief) : null);
+  const countryCode =
+    input.countryCode ??
+    (input.brief?.destinations?.value?.[0] &&
+    /^[A-Za-z]{2}$/.test(input.brief.destinations.value[0].country)
+      ? input.brief.destinations.value[0].country.toUpperCase()
+      : null);
+  const route: KitRouteContext | null =
+    input.route ?? (input.routeName ? { name: input.routeName } : null);
+  const hasContext = Boolean(input.brief || route || input.countryCode || input.activity);
+
+  const recommendationInput: KitRecommendationInput | null = hasContext
+    ? {
+        activity,
+        countryCode,
+        durationDays: days,
+        partySize,
+        seasonMonth: input.seasonMonth ?? null,
+        route,
+      }
+    : null;
+
+  const kit = buildKit(input.layers, title, warnings, recommendationInput);
   const budgetLines = buildBudgetLines(input.layers, partySize, days, warnings);
 
   const compliance = layerValue(input.layers, 'compliance');
   const transport = layerValue(input.layers, 'major_transport');
   const accommodations = layerValue(input.layers, 'accommodations');
 
-  const documents = buildDocumentSeeds(
-    input.brief != null,
+  const documents = buildDocumentSeeds({
+    hasDestination: input.brief != null || Boolean(input.countryCode),
+    hasTripContext: hasContext,
+    activity,
+    durationDays: days,
     compliance,
     transport,
-    accommodations
-  );
+    accommodations,
+  });
+
+  // Phase 5 — contrôles sécurité pays/activité, persistés dans la MÊME checklist.
+  const safetyControls = buildPreTripSafetyControls({
+    activity,
+    countryCode,
+    durationDays: days,
+    partySize,
+    route,
+  });
 
   const seeds: ChecklistSeed[] = [
     ...buildComplianceSeeds(compliance),
+    ...safetyControls.map((control) => ({
+      label: control.label,
+      dueOffsetDays: control.dueOffsetDays,
+    })),
     ...buildOperationalSeeds(input.layers, input.routeName ?? null, kit),
   ];
 
@@ -605,6 +792,7 @@ export function buildAutogenPreparation(input: AutogenPreparationInput): Autogen
     budgetLines,
     checklist,
     documents,
+    safetyControls,
     warnings: warnings.slice(0, MAX_PREPARATION_WARNINGS),
   };
 }

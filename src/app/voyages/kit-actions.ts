@@ -11,6 +11,7 @@ import {
   deleteTripItem,
   addRecommendedItemToTrip,
   setTripItemPurchaseState,
+  updateTripItemDetails,
 } from '@/lib/queries-trip-kit';
 import { getTripById } from '@/lib/queries-trips';
 import type { ContextualGearRecommendation } from '@/features/trips/types/kit.types';
@@ -94,7 +95,7 @@ async function requireTripEditor(tripId: string) {
   if (!trip.permissions.canEdit) {
     return { error: 'Seuls les organisateurs et éditeurs peuvent modifier l’équipement' } as const;
   }
-  return { userId: user.id } as const;
+  return { userId: user.id, trip } as const;
 }
 
 export async function togglePackedAction(
@@ -435,6 +436,89 @@ export async function assignTripItemDayAction(
     return { success: true };
   } catch (err) {
     console.error('[LKDV Action] assignTripItemDayAction error:', err);
+    return { success: false, error: 'Erreur serveur' };
+  }
+}
+
+// ── Phase 5 : édition complète d'un item du kit (quantité, poids, partage, état) ─
+
+const updateItemDetailsSchema = z.object({
+  tripId: uuidSchema,
+  tripSlug: slugSchema,
+  itemId: uuidSchema,
+  quantity: z.number().int().min(1).max(999).optional(),
+  weightGrams: z.number().int().min(0).max(1_000_000).nullable().optional(),
+  ownership: z.enum(['personal', 'shared']).optional(),
+  condition: z
+    .enum(['neuf', 'bon', 'use', 'a_remplacer', 'pour_pieces'])
+    .nullable()
+    .optional(),
+  ownerId: uuidSchema.nullable().optional(),
+  priority: z.enum(['vital', 'recommended', 'optional']).optional(),
+  isVital: z.boolean().optional(),
+});
+
+export interface UpdateTripItemDetailsInput {
+  tripId: string;
+  tripSlug: string;
+  itemId: string;
+  quantity?: number;
+  weightGrams?: number | null;
+  ownership?: 'personal' | 'shared';
+  condition?: 'neuf' | 'bon' | 'use' | 'a_remplacer' | 'pour_pieces' | null;
+  ownerId?: string | null;
+  priority?: 'vital' | 'recommended' | 'optional';
+  isVital?: boolean;
+}
+
+/**
+ * Phase 5 — rend le kit entièrement modifiable : quantité, poids réel, personnel
+ * vs partagé, état, propriétaire (soi-même ou un collaborateur du voyage).
+ * RLS `can_edit_trip` + contrôle applicatif ; 0 ligne modifiée = échec explicite.
+ */
+export async function updateTripItemDetailsAction(
+  input: UpdateTripItemDetailsInput
+): Promise<{ success: boolean; error?: string }> {
+  try {
+    const parsed = updateItemDetailsSchema.safeParse(input);
+    if (!parsed.success) {
+      return { success: false, error: parsed.error.issues[0]?.message || 'Requête invalide' };
+    }
+
+    const auth = await requireTripEditor(parsed.data.tripId);
+    if ('error' in auth) return { success: false, error: auth.error };
+
+    // Le propriétaire ne peut être que l'utilisateur ou un collaborateur réel
+    // du voyage : jamais un identifiant arbitraire.
+    if (parsed.data.ownerId) {
+      const allowed =
+        parsed.data.ownerId === auth.userId ||
+        auth.trip.collaborators.some((collab) => collab.user_id === parsed.data.ownerId);
+      if (!allowed) {
+        return { success: false, error: 'Propriétaire non autorisé pour ce voyage' };
+      }
+    }
+
+    const ok = await updateTripItemDetails(parsed.data.itemId, {
+      quantity: parsed.data.quantity,
+      weightGrams: parsed.data.weightGrams,
+      ownership: parsed.data.ownership,
+      condition: parsed.data.condition,
+      ownerId: parsed.data.ownerId,
+      priority: parsed.data.priority,
+      isVital: parsed.data.isVital,
+    });
+    if (!ok) {
+      return { success: false, error: 'Impossible de modifier cet équipement' };
+    }
+
+    revalidatePath(tripSegmentPath(parsed.data.tripSlug, ''));
+    revalidatePath(tripSegmentPath(parsed.data.tripSlug, 'kit'));
+    revalidatePath(HUB_HOME_HREF);
+    revalidatePath(hubSectionHref({ nature: 'sortie', slug: parsed.data.tripSlug }, 'gear'));
+    return { success: true };
+  } catch (err) {
+    console.error('[LKDV Action] updateTripItemDetailsAction error:', err);
     return { success: false, error: 'Erreur serveur' };
   }
 }

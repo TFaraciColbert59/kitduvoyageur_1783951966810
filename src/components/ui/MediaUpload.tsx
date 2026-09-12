@@ -2,6 +2,10 @@
 
 import React, { useState, useRef, useCallback } from 'react';
 import { createClient } from '@/lib/supabase/client';
+import {
+  buildMediaUploadPath,
+  SIGNED_URL_TTL_SECONDS,
+} from './mediaUploadPath';
 
 interface MediaUploadProps {
   bucket: 'carnet-media' | 'gear-photos' | 'user-documents';
@@ -50,7 +54,29 @@ export default function MediaUpload({
 
       try {
         const ext = file.name.split('.').pop();
-        const fileName = `${folder ? folder + '/' : ''}${Date.now()}-${Math.random().toString(36).slice(2)}.${ext}`;
+        const generatedName = `${Date.now()}-${Math.random().toString(36).slice(2)}.${ext}`;
+
+        // Bucket privé : chemin préfixé par le propriétaire (policy RLS) et URL
+        // signée courte. Bucket public : URL publique classique.
+        let userId = '';
+        if (bucket === 'user-documents') {
+          const {
+            data: { user },
+          } = await supabase.auth.getUser();
+          if (!user) {
+            setError('Connexion requise pour déposer un document');
+            setUploading(false);
+            setProgress(0);
+            return;
+          }
+          userId = user.id;
+        }
+        const { path: objectPath, isPrivate } = buildMediaUploadPath({
+          bucket,
+          folder,
+          userId,
+          fileName: generatedName,
+        });
 
         // Simulate progress
         const progressInterval = setInterval(() => {
@@ -59,7 +85,7 @@ export default function MediaUpload({
 
         const { error: uploadError } = await supabase.storage
           .from(bucket)
-          .upload(fileName, file, { upsert: false });
+          .upload(objectPath, file, { upsert: false });
 
         clearInterval(progressInterval);
 
@@ -72,8 +98,21 @@ export default function MediaUpload({
 
         setProgress(100);
 
-        const { data: urlData } = supabase.storage.from(bucket).getPublicUrl(fileName);
-        onUploadComplete(urlData.publicUrl, fileName);
+        if (isPrivate) {
+          const { data: signed, error: signError } = await supabase.storage
+            .from(bucket)
+            .createSignedUrl(objectPath, SIGNED_URL_TTL_SECONDS);
+          if (signError || !signed?.signedUrl) {
+            setError('Document déposé mais URL signée indisponible');
+            setUploading(false);
+            setProgress(0);
+            return;
+          }
+          onUploadComplete(signed.signedUrl, objectPath);
+        } else {
+          const { data: urlData } = supabase.storage.from(bucket).getPublicUrl(objectPath);
+          onUploadComplete(urlData.publicUrl, objectPath);
+        }
 
         setTimeout(() => {
           setUploading(false);
