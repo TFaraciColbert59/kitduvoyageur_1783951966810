@@ -3,7 +3,7 @@ import { test, expect } from '@playwright/test';
 /**
  * CHANTIER ATLAS — Phase 3 (palier local)
  * - preuve d'annulation des requêtes viewport obsolètes (AbortController + debounce) ;
- * - réutilisation du panneau de détail existant (CTA « Préparer le matériel » → /hub/depart).
+ * - réutilisation du panneau de détail existant (CTA « Préparer le matériel » → /preparer-sentier/[id]).
  *
  * Lancement : PW_BASE_URL=http://localhost:4000 npx playwright test --config=playwright.config.ts scripts/e2e/atlas-explorer.spec.ts
  */
@@ -67,36 +67,36 @@ test.describe('ATLAS — explorateur unifié, palier local', () => {
     ).toBeTruthy();
   });
 
-  test('la sélection réutilise le panneau de détail existant (CTA /hub/depart)', async ({ page }) => {
+  test('la sélection réutilise le panneau de détail existant (CTA /preparer-sentier)', async ({ page }) => {
     await waitForUnifiedMap(page);
 
     const firstCard = page.locator('article').first();
     await expect(firstCard).toBeVisible({ timeout: 30_000 });
     await firstCard.click();
 
-    // Carte compacte desktop → CTA réel /hub/depart.
-    await expect(page.getByRole('button', { name: 'Préparer' }).first()).toBeVisible({ timeout: 15_000 });
+    // Carte compacte desktop → CTA réel /preparer-sentier/[id].
+    await expect(page.getByRole('link', { name: 'Préparer' }).first()).toBeVisible({ timeout: 15_000 });
 
     // Fiche complète (panneau existant réutilisé, logique intacte).
     await page.getByRole('button', { name: 'Voir la fiche complète' }).click();
     await expect(page.getByText('Préparer le matériel').first()).toBeVisible({ timeout: 15_000 });
   });
 
-  test('le CTA Préparer navigue réellement vers le cockpit /hub/depart', async ({ page }) => {
+  test('le CTA Préparer navigue réellement vers la route serveur /preparer-sentier', async ({ page }) => {
     await waitForUnifiedMap(page);
 
     const firstCard = page.locator('article').first();
     await expect(firstCard).toBeVisible({ timeout: 30_000 });
     await firstCard.click();
 
-    const prepare = page.getByRole('button', { name: 'Préparer' }).first();
+    const prepare = page.getByRole('link', { name: 'Préparer' }).first();
     await expect(prepare).toBeVisible({ timeout: 15_000 });
     await prepare.click();
 
     // Garde anti-régression « le bouton Préparer ne fait rien » : la navigation
-    // DOIT aboutir sur le cockpit départ avec le sentier sélectionné.
-    await page.waitForURL(/\/hub\/depart\?/, { timeout: 20_000 });
-    expect(page.url()).toContain('route=');
-    await expect(page.getByText('Départ', { exact: false }).first()).toBeVisible({ timeout: 30_000 });
+    // DOIT aboutir sur la route serveur ; visiteur anonyme → connexion avec
+    // reprise `?next=`, jamais une page morte.
+    await page.waitForURL(/\/connexion\?next=%2Fpreparer-sentier%2F/, { timeout: 20_000 });
+    expect(new URL(page.url()).searchParams.get('next')).toMatch(/^\/preparer-sentier\/\d+$/);
   });
 });

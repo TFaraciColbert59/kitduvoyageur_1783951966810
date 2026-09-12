@@ -2,6 +2,7 @@
 
 import Icon from '@/components/ui/Icon';
 import React, { useEffect, useState, useCallback } from 'react';
+import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { motion } from 'framer-motion';
 import { TrendingUpIcon as TrendingUp } from '@/components/icons/trending-up';
@@ -329,15 +330,13 @@ export default function TrailDetailPanel({ trail, onClose }: Props) {
             boxShadow: 'inset 0 1px 0 rgba(255, 255, 255, 0.95)',
           }}
         >
-          <button
-            type="button"
-            onClick={() => {
-              router.push(`/hub/depart?id=none&route=${trail.id}`);
-            }}
+          <Link
+            href={`/preparer-sentier/${trail.id}`}
+            prefetch={false}
             className="flex-1 h-12 glass-capsule-btn text-xs sm:text-sm font-bold shadow-xs active:scale-[0.98] transition-all cursor-pointer"
           >
             <span>Préparer le matériel</span>
-          </button>
+          </Link>
 
           <button
             type="button"
