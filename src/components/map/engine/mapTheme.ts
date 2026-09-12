@@ -56,3 +56,18 @@ export const SIMPLIFY_TOLERANCE: Record<ZoomTier, number> = {
   region: 0.0025,
   local: 0.00015,
 };
+
+/** Couleurs des POI par catégorie (palette DS uniquement). */
+const POI_CATEGORY_COLORS: Record<string, string> = {
+  refuge: MAP_COLORS.ink,
+  summit: MAP_COLORS.warn,
+  water: MAP_COLORS.info,
+  waterfall: MAP_COLORS.info,
+  viewpoint: MAP_COLORS.inkSecondary,
+  col: MAP_COLORS.inkSecondary,
+  camping: MAP_COLORS.sage,
+};
+
+export function getPoiColor(category: string | null | undefined): string {
+  return POI_CATEGORY_COLORS[(category ?? '').toLowerCase()] ?? MAP_COLORS.inkTertiary;
+}

@@ -1,7 +1,13 @@
 'use client';
 
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { Map as MapLibreMap, setWorkerUrl, type GeoJSONSource, type MapLayerMouseEvent } from 'maplibre-gl';
+import {
+  Map as MapLibreMap,
+  Popup,
+  setWorkerUrl,
+  type GeoJSONSource,
+  type MapLayerMouseEvent,
+} from 'maplibre-gl';
 import 'maplibre-gl/dist/maplibre-gl.css';
 import Icon from '@/components/ui/Icon';
 import type { MapTrail } from '@/components/explorer/types';
@@ -9,7 +15,9 @@ import { getDifficultyColor, isValidLatLng } from '@/components/explorer/types';
 import type { UnifiedPOI } from '@/lib/queries/pois';
 import { createMapStyle, type AtlasTileMode } from './engine/createMapStyle';
 import { registerAtlasMapImages } from './engine/icons';
-import { MAP_COLORS } from './engine/mapTheme';
+import { getPoiColor, MAP_COLORS } from './engine/mapTheme';
+import { useViewportData } from './hooks/useViewportData';
+import type { ViewportQuery } from './hooks/viewportData';
 
 /**
  * CHANTIER ATLAS — moteur cartographique unique (MapLibre GL, projection globe).
@@ -37,6 +45,8 @@ export interface UnifiedExplorerMapProps {
   onMapReady?: () => void;
   onLocationUpdate?: (loc: [number, number]) => void;
   onViewportChange?: (bbox: UnifiedViewportBbox) => void;
+  /** Données réelles du viewport courant (sentiers + POI), remontées à la page. */
+  onViewportData?: (data: { trails: MapTrail[]; pois: UnifiedPOI[] }) => void;
   safeControls?: boolean;
   compact?: boolean;
 }
@@ -73,8 +83,74 @@ function buildTrailsFeatureCollection(trails: MapTrail[]) {
   };
 }
 
+function buildPoisFeatureCollection(pois: UnifiedPOI[]) {
+  return {
+    type: 'FeatureCollection' as const,
+    features: pois
+      .filter((poi) => isValidLatLng(poi.lat, poi.lng))
+      .map((poi) => ({
+        type: 'Feature' as const,
+        geometry: {
+          type: 'Point' as const,
+          coordinates: [Number(poi.lng), Number(poi.lat)],
+        },
+        properties: {
+          id: poi.id,
+          name: poi.name,
+          category: poi.category,
+          altitude: poi.altitude_m ?? null,
+          color: getPoiColor(poi.category),
+        },
+      })),
+  };
+}
+
+/**
+ * Popup POI construit en DOM (textContent) — jamais de setHTML avec données
+ * serveur (anti-XSS). Contenu : nom + catégorie + altitude réels, ou rien.
+ */
+function openPoiPopup(
+  map: MapLibreMap,
+  properties: Record<string, unknown>,
+  coordinates: [number, number],
+  popupRef: React.MutableRefObject<Popup | null>
+): void {
+  const container = document.createElement('div');
+  container.className = 'px-1 py-0.5 max-w-[220px]';
+
+  const title = document.createElement('p');
+  title.className = 'text-[13px] font-semibold text-[#17402C]';
+  title.textContent =
+    typeof properties.name === 'string' && properties.name ? properties.name : 'Point d’intérêt';
+  container.append(title);
+
+  const parts: string[] = [];
+  if (typeof properties.category === 'string' && properties.category) parts.push(properties.category);
+  if (typeof properties.altitude === 'number' && Number.isFinite(properties.altitude)) {
+    parts.push(`${properties.altitude} m`);
+  }
+  if (parts.length > 0) {
+    const meta = document.createElement('p');
+    meta.className = 'text-[11px] text-[#5A7064]';
+    meta.textContent = parts.join(' · ');
+    container.append(meta);
+  }
+
+  popupRef.current?.remove();
+  popupRef.current = new Popup({
+    closeButton: true,
+    closeOnClick: true,
+    offset: 12,
+    className: 'atlas-poi-popup',
+  })
+    .setLngLat(coordinates)
+    .setDOMContent(container)
+    .addTo(map);
+}
+
 export default function UnifiedExplorerMap({
   trails,
+  pois,
   selectedTrailId = null,
   onTrailClick,
   onPoiClick,
@@ -82,21 +158,26 @@ export default function UnifiedExplorerMap({
   onMapReady,
   onLocationUpdate,
   onViewportChange,
+  onViewportData,
   safeControls = false,
 }: UnifiedExplorerMapProps) {
   const containerRef = useRef<HTMLDivElement | null>(null);
   const mapRef = useRef<MapLibreMap | null>(null);
   const trailsRef = useRef<MapTrail[]>([]);
+  const poisRef = useRef<UnifiedPOI[]>([]);
+  const poiPopupRef = useRef<Popup | null>(null);
   const callbacksRef = useRef({
     onTrailClick,
     onPoiClick,
     onMapReady,
     onLocationUpdate,
     onViewportChange,
+    onViewportData,
   });
 
   const [ready, setReady] = useState(false);
   const [tileMode, setTileMode] = useState<AtlasTileMode>('topo');
+  const [viewport, setViewport] = useState<ViewportQuery | null>(null);
 
   callbacksRef.current = {
     onTrailClick,
@@ -104,8 +185,17 @@ export default function UnifiedExplorerMap({
     onMapReady,
     onLocationUpdate,
     onViewportChange,
+    onViewportData,
   };
   trailsRef.current = trails ?? [];
+  poisRef.current = pois ?? [];
+
+  // Fetch viewport débouncé + annulation des requêtes obsolètes (Phase 3).
+  const viewportData = useViewportData(viewport, true);
+
+  useEffect(() => {
+    callbacksRef.current.onViewportData?.(viewportData.data);
+  }, [viewportData.data]);
 
   const initialView = useMemo(() => {
     if (userLocation && isValidLatLng(userLocation[0], userLocation[1])) {
@@ -159,17 +249,25 @@ export default function UnifiedExplorerMap({
       map = instance;
       mapRef.current = instance;
 
+      // Hook de test (dev uniquement) : permet aux e2e/visuels de projeter des
+      // coordonnées écran pour cliquer précisément sur un marqueur.
+      if (process.env.NODE_ENV !== 'production') {
+        (window as unknown as { __atlasTestMap?: MapLibreMap }).__atlasTestMap = instance;
+      }
+
       const emitViewport = () => {
         const bounds = instance.getBounds();
         const padLng = (bounds.getEast() - bounds.getWest()) * VIEWPORT_BUFFER;
         const padLat = (bounds.getNorth() - bounds.getSouth()) * VIEWPORT_BUFFER;
-        callbacksRef.current.onViewportChange?.({
+        const buffered = {
           minLat: Math.max(-85, bounds.getSouth() - padLat),
           maxLat: Math.min(85, bounds.getNorth() + padLat),
           minLng: Math.max(-180, bounds.getWest() - padLng),
           maxLng: Math.min(180, bounds.getEast() + padLng),
           zoom: instance.getZoom(),
-        });
+        };
+        setViewport(buffered);
+        callbacksRef.current.onViewportChange?.(buffered);
       };
 
       // Readiness sur `style.load` (déterministe) plutôt que `load` : le rendu
@@ -318,6 +416,93 @@ export default function UnifiedExplorerMap({
     if (!map || !ready || !map.getLayer('atlas-trails-selected')) return;
     map.setFilter('atlas-trails-selected', ['==', ['get', 'id'], selectedTrailId ?? '__none__']);
   }, [selectedTrailId, ready]);
+
+  // ── POI (clustering natif MapLibre) ─────────────────────────────────────────
+  useEffect(() => {
+    const map = mapRef.current;
+    if (!map || !ready) return;
+
+    const data = buildPoisFeatureCollection(pois ?? []);
+    const source = map.getSource('atlas-pois') as GeoJSONSource | undefined;
+    if (source) {
+      source.setData(data);
+      return;
+    }
+
+    map.addSource('atlas-pois', {
+      type: 'geojson',
+      data,
+      cluster: true,
+      clusterRadius: 46,
+      clusterMaxZoom: 15,
+    });
+    map.addLayer({
+      id: 'atlas-pois-clusters',
+      type: 'circle',
+      source: 'atlas-pois',
+      filter: ['has', 'point_count'],
+      paint: {
+        'circle-color': MAP_COLORS.ink,
+        'circle-opacity': 0.92,
+        'circle-radius': ['step', ['get', 'point_count'], 14, 10, 18, 50, 24],
+        'circle-stroke-color': MAP_COLORS.white,
+        'circle-stroke-width': 2.5,
+      },
+    });
+    map.addLayer({
+      id: 'atlas-pois-points',
+      type: 'circle',
+      source: 'atlas-pois',
+      filter: ['!', ['has', 'point_count']],
+      paint: {
+        'circle-color': ['get', 'color'],
+        'circle-radius': 5,
+        'circle-stroke-color': MAP_COLORS.white,
+        'circle-stroke-width': 1.5,
+      },
+    });
+
+    map.on('click', 'atlas-pois-clusters', (event: MapLayerMouseEvent) => {
+      const feature = event.features?.[0];
+      if (!feature || feature.geometry.type !== 'Point') return;
+      const clusterId = feature.properties?.cluster_id;
+      const poiSource = map.getSource('atlas-pois') as GeoJSONSource;
+      const coordinates = feature.geometry.coordinates as [number, number];
+      void poiSource
+        .getClusterExpansionZoom(clusterId)
+        .then((zoom) => {
+          map.easeTo({
+            center: coordinates,
+            zoom,
+            ...(prefersReducedMotion() ? { duration: 0 } : { duration: 400 }),
+          });
+        })
+        .catch((error: unknown) =>
+          console.error('[UnifiedExplorerMap] expansion cluster:', error)
+        );
+    });
+
+    map.on('click', 'atlas-pois-points', (event: MapLayerMouseEvent) => {
+      const feature = event.features?.[0];
+      if (!feature || feature.geometry.type !== 'Point') return;
+      const id = String(feature.properties?.id ?? '');
+      const poi = poisRef.current.find((candidate) => candidate.id === id);
+      const coordinates = feature.geometry.coordinates as [number, number];
+      openPoiPopup(map, (feature.properties ?? {}) as Record<string, unknown>, coordinates, poiPopupRef);
+      if (poi) callbacksRef.current.onPoiClick?.(poi);
+    });
+
+    const setPointer = () => {
+      map.getCanvas().style.cursor = 'pointer';
+    };
+    const clearPointer = () => {
+      map.getCanvas().style.cursor = '';
+    };
+    for (const layer of ['atlas-pois-clusters', 'atlas-pois-points']) {
+      map.on('mouseenter', layer, setPointer);
+      map.on('mouseleave', layer, clearPointer);
+    }
+  }, [pois, ready]);
 
   // ── Position utilisateur ────────────────────────────────────────────────────
   useEffect(() => {
