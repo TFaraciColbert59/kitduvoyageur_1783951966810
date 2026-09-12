@@ -10,6 +10,7 @@ import { Minimize2Icon as Minimize2 } from '@/components/icons/minimize-2';
 import { DownloadIcon as DownloadAnimated } from '@/components/icons/download';
 import { Maximize2Icon as Maximize2Animated } from '@/components/icons/maximize-2';
 import { Skeleton } from '@/components/ui/Skeleton';
+import { GlassModal } from '@/components/ui/GlassModal';
 import { formatDistanceKm } from '@/features/materiel/domain/departCalculations';
 import { cn } from '@/lib/utils';
 import type { MapTrail } from '@/components/explorer/types';
@@ -18,6 +19,8 @@ interface DepartMapProps {
   trail: MapTrail | null;
   height?: string;
   className?: string;
+  /** Rendu embarqué dans la modale plein écran — pas de second plein écran récursif. */
+  embedded?: boolean;
 }
 
 type TileMode = 'topo' | 'osm' | 'satellite';
@@ -60,7 +63,7 @@ function extractCoords(geojson: any): [number, number][][] {
   return [];
 }
 
-export function DepartMap({ trail, height = '240px', className }: DepartMapProps) {
+export function DepartMap({ trail, height = '240px', className, embedded = false }: DepartMapProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const mapRef = useRef<any>(null);
   const polyRef = useRef<any>(null);
@@ -246,13 +249,12 @@ export function DepartMap({ trail, height = '240px', className }: DepartMapProps
     setTimeout(() => setIsOfflineSaved(false), 3000);
   };
 
-  const actualHeight = isFullscreen ? 'calc(100vh - 45px)' : height;
+  const actualHeight = embedded ? 'min(72dvh, 560px)' : height;
 
   return (
     <div
       className={cn(
         'glass rounded-xl overflow-hidden relative border border-white/60 flex flex-col shadow-xs',
-        isFullscreen && 'fixed inset-0 z-50 rounded-none h-screen w-screen',
         className
       )}
     >
@@ -273,27 +275,29 @@ export function DepartMap({ trail, height = '240px', className }: DepartMapProps
           <button
             type="button"
             onClick={handleDownloadGPX}
-            className="glass-circle-btn !w-7 !h-7 text-[var(--lkv-primary)] cursor-pointer"
+            className="glass-circle-btn !w-11 !h-11 text-[var(--lkv-primary)] cursor-pointer"
             title="Exporter le tracé"
             aria-label="Exporter le tracé"
           >
             {isOfflineSaved ? (
-              <Icon name="check" size={12} className="text-forest-600" />
+              <Icon name="check" size={14} className="text-forest-600" />
             ) : (
-              <DownloadAnimated size={12} />
+              <DownloadAnimated size={14} />
             )}
           </button>
-          <button
-            type="button"
-            onClick={() => setIsFullscreen((v) => !v)}
-            className="glass-circle-btn !w-7 !h-7 text-[var(--lkv-primary)] cursor-pointer"
-            title={isFullscreen ? 'Réduire' : 'Plein écran'}
-            aria-label={
-              isFullscreen ? 'Quitter le mode plein écran' : 'Afficher la carte en plein écran'
-            }
-          >
-            {isFullscreen ? <Minimize2 size={12} /> : <Maximize2Animated size={12} />}
-          </button>
+          {!embedded && (
+            <button
+              type="button"
+              onClick={() => setIsFullscreen((v) => !v)}
+              className="glass-circle-btn !w-11 !h-11 text-[var(--lkv-primary)] cursor-pointer"
+              title={isFullscreen ? 'Réduire' : 'Plein écran'}
+              aria-label={
+                isFullscreen ? 'Quitter le mode plein écran' : 'Afficher la carte en plein écran'
+              }
+            >
+              {isFullscreen ? <Minimize2 size={14} /> : <Maximize2Animated size={14} />}
+            </button>
+          )}
         </div>
       </div>
 
@@ -318,24 +322,24 @@ export function DepartMap({ trail, height = '240px', className }: DepartMapProps
           <button
             type="button"
             onClick={handleRecenter}
-            className="glass-circle-btn !w-8 !h-8 text-[var(--lkv-primary)] cursor-pointer shadow-md"
+            className="glass-circle-btn !w-11 !h-11 text-[var(--lkv-primary)] cursor-pointer shadow-md"
             title="Recentrer le tracé"
           >
-            <Navigation size={13} />
+            <Navigation size={15} />
           </button>
           <button
             type="button"
             onClick={() => setShowTilePicker((v) => !v)}
-            className="glass-circle-btn !w-8 !h-8 text-[var(--lkv-primary)] cursor-pointer shadow-md"
+            className="glass-circle-btn !w-11 !h-11 text-[var(--lkv-primary)] cursor-pointer shadow-md"
             title="Changer de fond de carte"
           >
-            <Layers size={13} />
+            <Layers size={15} />
           </button>
         </div>
 
         {/* Sélecteur de tuiles */}
         {showTilePicker && (
-          <div className="absolute top-12 right-2.5 z-[401] p-1.5 rounded-2xl bg-white/95 dark:bg-black/90 shadow-xl border border-black/10 flex flex-col gap-1 text-[11px] font-semibold text-[var(--lkv-primary)]">
+          <div className="absolute top-[6.5rem] right-2.5 z-[401] p-1.5 rounded-2xl bg-white/95 dark:bg-black/90 shadow-xl border border-black/10 flex flex-col gap-1 text-[11px] font-semibold text-[var(--lkv-primary)]">
             <button
               type="button"
               onClick={() => handleTileChange('topo')}
@@ -369,6 +373,17 @@ export function DepartMap({ trail, height = '240px', className }: DepartMapProps
           </div>
         )}
       </div>
+
+      {!embedded && (
+        <GlassModal
+          open={isFullscreen}
+          onOpenChange={setIsFullscreen}
+          title="Carte du tracé"
+          variant="sheet"
+        >
+          <DepartMap trail={trail} embedded />
+        </GlassModal>
+      )}
     </div>
   );
 }
