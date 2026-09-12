@@ -18,6 +18,13 @@ async function waitForUnifiedMap(page: import('@playwright/test').Page) {
   const mapRoot = page.getByTestId('unified-explorer-map');
   await expect(mapRoot).toHaveAttribute('data-atlas-ready', 'true', { timeout: 45_000 });
   await expect(mapRoot.locator('canvas.maplibregl-canvas')).toBeVisible();
+
+  // L'explorateur ouvre sur le globe : on plonge explicitement vers la vue locale.
+  const dive = page.getByRole('button', { name: 'Explorer ma zone (vue locale)' });
+  if (await dive.isVisible().catch(() => false)) {
+    await dive.click();
+    await page.waitForTimeout(4_000);
+  }
 }
 
 test.describe('ATLAS — explorateur unifié, palier local', () => {

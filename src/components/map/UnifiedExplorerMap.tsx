@@ -187,7 +187,7 @@ export default function UnifiedExplorerMap({
   const [ready, setReady] = useState(false);
   const [tileMode, setTileMode] = useState<AtlasTileMode>('topo');
   const [viewport, setViewport] = useState<ViewportQuery | null>(null);
-  const [viewMode, setViewMode] = useState<'local' | 'globe'>('local');
+  const [viewMode, setViewMode] = useState<'local' | 'globe'>('globe');
   const localViewRef = useRef<{ center: [number, number]; zoom: number } | null>(null);
   const [selectedCountry, setSelectedCountry] = useState<{
     iso: string;
@@ -391,20 +391,6 @@ export default function UnifiedExplorerMap({
         setReady(true);
         callbacksRef.current.onMapReady?.();
         emitViewport();
-
-        // Plongée d'ouverture vers la vue locale (saut immédiat si reduced-motion) :
-        // l'utilisateur voit d'abord le globe, puis atterrit sur sa zone.
-        if (prefersReducedMotion()) {
-          instance.jumpTo({ center: initialView.center, zoom: initialView.zoom });
-          emitViewport();
-        } else {
-          instance.flyTo({
-            center: initialView.center,
-            zoom: initialView.zoom,
-            duration: 1_800,
-            essential: true,
-          });
-        }
       });
 
       instance.on('moveend', emitViewport);
@@ -808,22 +794,25 @@ export default function UnifiedExplorerMap({
   const handleToggleGlobe = useCallback(() => {
     const map = mapRef.current;
     if (!map) return;
-    if (viewMode === 'local') {
+    if (viewMode === 'globe') {
+      // « Explorer ma zone » : plonge vers la position utilisateur si connue,
+      // sinon vers la dernière vue locale / la vue initiale calculée au montage.
+      const hasUserLocation = userLocation && isValidLatLng(userLocation[0], userLocation[1]);
+      const targetCenter: [number, number] = hasUserLocation
+        ? [Number(userLocation![1]), Number(userLocation![0])]
+        : localViewRef.current?.center ?? initialView.center;
+      const targetZoom = hasUserLocation
+        ? 12
+        : localViewRef.current?.zoom ?? initialView.zoom;
+      flyToTarget(map, { center: targetCenter, zoom: targetZoom, duration: 1_600 });
+      setViewMode('local');
+    } else {
       const center = map.getCenter();
       localViewRef.current = { center: [center.lng, center.lat], zoom: map.getZoom() };
       flyToTarget(map, { center: [center.lng, center.lat], zoom: 1.6, duration: 1_100 });
       setViewMode('globe');
-    } else {
-      const target = localViewRef.current;
-      if (target) {
-        flyToTarget(map, { center: target.center, zoom: target.zoom, duration: 900 });
-      } else {
-        const center = map.getCenter();
-        flyToTarget(map, { center: [center.lng, center.lat], zoom: 12, duration: 900 });
-      }
-      setViewMode('local');
     }
-  }, [viewMode]);
+  }, [viewMode, userLocation, initialView.center, initialView.zoom]);
 
   const bottomControlsOffset = safeControls
     ? 'bottom-[calc(env(safe-area-inset-bottom,0px)+96px)]'
@@ -878,12 +867,15 @@ export default function UnifiedExplorerMap({
         <button
           type="button"
           onClick={handleToggleGlobe}
-          className="glass-circle-btn w-11 h-11 shadow-lg flex items-center justify-center cursor-pointer active:scale-95"
-          aria-label={viewMode === 'local' ? 'Afficher le globe' : 'Revenir à la vue locale'}
-          title={viewMode === 'local' ? 'Vue globe' : 'Vue locale'}
-          aria-pressed={viewMode === 'globe'}
+          className="glass-capsule-btn min-h-[44px] px-3 flex items-center justify-center gap-1.5 shadow-lg cursor-pointer active:scale-95"
+          aria-label={viewMode === 'globe' ? 'Explorer ma zone (vue locale)' : 'Afficher le globe'}
+          title={viewMode === 'globe' ? 'Explorer ma zone' : 'Vue globe'}
+          aria-pressed={viewMode === 'local'}
         >
-          <Icon name="compass" size={16} />
+          <Icon name="compass" size={14} />
+          <span className="text-[11px] font-bold whitespace-nowrap">
+            {viewMode === 'globe' ? 'Explorer ma zone' : 'Vue globe'}
+          </span>
         </button>
       </div>
 

@@ -82,7 +82,9 @@ test.describe('Explorateur unifié (MapLibre globe)', () => {
     );
     test.skip(!hasTestHook, 'hook __atlasTestMap indisponible (build prod) — vérifié en dev.');
 
-    await page.waitForTimeout(5_000); // viewport data (sentiers) chargés
+    // /explorer ouvre sur le globe : plongée explicite vers la vue locale.
+    await page.getByRole('button', { name: 'Explorer ma zone (vue locale)' }).click();
+    await page.waitForTimeout(6_000); // plongée + fetch viewport (sentiers)
 
     const clickPoint = await page.evaluate(() => {
       const map = (window as unknown as { __atlasTestMap?: any }).__atlasTestMap;
