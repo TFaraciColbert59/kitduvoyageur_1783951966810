@@ -27,20 +27,26 @@ import {
  * Flux : payload → activité (propriétaire vérifié) → idempotence
  * (`trips.metadata.enrichment_version`) → contexte réel (sentier + tracé
  * échantillonné + POI ≤ 750 m + couches blueprint) → quota → `askAI` →
- * sanitizer corridor → écritures.
+ * sanitizer corridor → purge du contenu LLM précédent → écritures.
  *
  * Règles dures :
  * - validation globale AVANT toute écriture (`sanitizeEnrichmentOutput`) :
- *   erreur Zod/provider/JSON → `failed`, zéro écriture de contenu ;
+ *   erreur JSON/Zod → `failed`, zéro écriture de contenu ;
+ * - erreurs provider/transport → `retry` (le cron re-pending avec tentative+1,
+ *   miroir exact de `trail-narrative`) — `failed` définitif réservé au tracé
+ *   absent, à la sortie hors schéma et à l'activité introuvable ;
  * - le LLM n'écrit JAMAIS `trip_expenses` (aucun montant réel → anti-invention) ;
  * - provenance `source='llm_suggestion'` sur `trip_steps`/`trip_pois` et sur
  *   les ajouts kit (`trip_items.source`, colonne texte additive) ;
+ * - rejeu sans doublon : purge du contenu `llm_suggestion` précédent (steps,
+ *   POI, items) + ids checklist suivis dans `metadata.enrichment_checklist_ids` ;
  * - quota épuisé → `deferred` SANS brûler de tentative ni écrire ;
  * - tracé absent → `ActivityEnrichmentNoTraceError` → `failed` tracé.
  */
 
 const FEATURE = 'activity-enrichment';
 const ENRICHMENT_VERSION = 'v1';
+const CHECKLIST_IDS_KEY = 'enrichment_checklist_ids';
 /** Corridor réel des POI fournis au prompt (km) — miroir `prepareActivityFromTrail`. */
 const POI_CORRIDOR_KM = 0.75;
 const POI_BBOX_DEG = 0.01;
@@ -51,8 +57,15 @@ const MAX_ERROR_LENGTH = 500;
 /** Valeurs admises par l'enum SQL `trip_step_transport` (jamais inventées). */
 const TRANSPORT_MODES = new Set(['foot', 'car', 'bus', 'train', 'plane', 'boat', 'bike', 'other']);
 
+/** Matérialisation des moments LLM : titre préfixé + heure de passage réelle. */
+const MOMENT_GROUPS = [
+  { key: 'matin', prefix: 'Matin', startTime: '08:30' },
+  { key: 'apresMidi', prefix: 'Après-midi', startTime: '14:00' },
+  { key: 'soir', prefix: 'Soir', startTime: '19:30' },
+] as const;
+
 export interface ActivityEnrichmentJobResult {
-  outcome: 'done' | 'failed' | 'deferred';
+  outcome: 'done' | 'failed' | 'deferred' | 'retry';
   detail?: string;
 }
 
@@ -125,6 +138,12 @@ function errorDetail(error: unknown): string {
       : error.message;
   }
   return 'erreur inattendue';
+}
+
+/** Ids checklist déjà écrits par le LLM (`metadata.enrichment_checklist_ids`). */
+function extractChecklistIds(value: unknown): string[] {
+  if (!Array.isArray(value)) return [];
+  return value.filter((id): id is string => typeof id === 'string' && id.trim() !== '');
 }
 
 type LoadTripResult = { status: 'ok'; trip: TripRow } | { status: 'failed'; detail: string };
@@ -293,6 +312,20 @@ async function updateTripMetadata(
   }
 }
 
+/** Échec définitif : trace la raison dans `trips.metadata` puis retourne `failed`. */
+async function traceFailure(
+  db: SupabaseClient,
+  trip: TripRow,
+  detail: string
+): Promise<ActivityEnrichmentJobResult> {
+  await updateTripMetadata(db, trip, {
+    enrichment_status: 'failed',
+    enrichment_error: detail,
+    enrichment_at: new Date().toISOString(),
+  });
+  return { outcome: 'failed', detail };
+}
+
 function isAlreadyEnriched(metadata: Record<string, unknown>): boolean {
   const version = metadata.enrichment_version;
   return typeof version === 'string' && version.trim() !== '';
@@ -316,10 +349,48 @@ async function insertRows(
 }
 
 /**
- * Écritures de succès (validation déjà passée) : étapes, POI géolocalisés,
- * ajouts kit et checklist, puis métadonnées `done`. Chaque extension est
- * isolée par table ; une erreur d'écriture remonte en `failed` (métadonnées
- * non marquées `v1`, donc rejouable).
+ * Purge du contenu LLM précédent (rejeu sans doublon) : steps/POI par
+ * `metadata->>'source'`, items par `source`, checklist par ids suivis.
+ * Si aucun id checklist n'est suivi (jamais écrit ou métadonnées perdues),
+ * la suppression est ignorée (ruling).
+ */
+async function purgePreviousLlmContent(db: SupabaseClient, trip: TripRow): Promise<void> {
+  const purgeByMetadata = async (table: string) => {
+    const { error } = await db
+      .from(table)
+      .delete()
+      .eq('trip_id', trip.id)
+      .filter('metadata->>source', 'eq', 'llm_suggestion');
+    if (error) throw new Error(`purge ${table}: ${error.message}`);
+  };
+
+  await purgeByMetadata('trip_steps');
+  await purgeByMetadata('trip_pois');
+
+  const { error: itemsError } = await db
+    .from('trip_items')
+    .delete()
+    .eq('trip_id', trip.id)
+    .eq('source', 'llm_suggestion');
+  if (itemsError) throw new Error(`purge trip_items: ${itemsError.message}`);
+
+  const checklistIds = extractChecklistIds(trip.metadata[CHECKLIST_IDS_KEY]);
+  if (checklistIds.length > 0) {
+    const { error: checklistError } = await db
+      .from('trip_checklist_items')
+      .delete()
+      .eq('trip_id', trip.id)
+      .in('id', checklistIds);
+    if (checklistError) throw new Error(`purge trip_checklist_items: ${checklistError.message}`);
+  }
+}
+
+/**
+ * Écritures de succès (validation déjà passée) : purge du contenu LLM
+ * précédent, puis étapes (roadbook + moments), POI géolocalisés, ajouts kit
+ * et checklist, enfin métadonnées `done` (ids checklist suivis pour le rejeu).
+ * Une erreur d'écriture remonte `retry` (métadonnées `v1` non posées, donc
+ * rejouable sans doublon grâce à la purge).
  */
 async function persistEnrichment(
   db: SupabaseClient,
@@ -328,6 +399,8 @@ async function persistEnrichment(
   model: string,
   processedAt: string
 ): Promise<void> {
+  await purgePreviousLlmContent(db, trip);
+
   const { data: stepData, error: stepError } = await db
     .from('trip_steps')
     .select('day_number, order_index')
@@ -387,6 +460,29 @@ async function persistEnrichment(
         source: 'llm_suggestion',
       });
     });
+
+    // Moments : une ligne roadbook par moment réel, après les étapes du jour.
+    let momentOrder = baseOrder + day.steps.length;
+    for (const group of MOMENT_GROUPS) {
+      for (const label of day.moments[group.key]) {
+        stepRows.push({
+          trip_id: trip.id,
+          day_number: day.day,
+          order_index: momentOrder,
+          title: `${group.prefix} — ${label}`,
+          description: null,
+          start_time: group.startTime,
+          latitude: null,
+          longitude: null,
+          distance_km: null,
+          accommodation_name: null,
+          transport_mode: null,
+          metadata: { ...provenance, kind: 'moment' },
+          source: 'llm_suggestion',
+        });
+        momentOrder += 1;
+      }
+    }
   }
 
   await insertRows(db, 'trip_steps', stepRows);
@@ -404,17 +500,26 @@ async function persistEnrichment(
       source: 'llm_suggestion',
     }))
   );
-  await insertRows(
-    db,
-    'trip_checklist_items',
-    output.checklistAdditions.map((addition, index) => ({
-      trip_id: trip.id,
-      label: addition.label,
-      due_offset_days: addition.dueOffsetDays,
-      done: false,
-      position: basePosition + index,
-    }))
-  );
+
+  const checklistRows = output.checklistAdditions.map((addition, index) => ({
+    trip_id: trip.id,
+    label: addition.label,
+    due_offset_days: addition.dueOffsetDays,
+    done: false,
+    position: basePosition + index,
+  }));
+
+  let checklistIds: string[] = [];
+  if (checklistRows.length > 0) {
+    const { data, error } = await db
+      .from('trip_checklist_items')
+      .insert(checklistRows)
+      .select('id');
+    if (error) throw new Error(`insertion trip_checklist_items: ${error.message}`);
+    checklistIds = ((data ?? []) as Record<string, unknown>[])
+      .map((entry) => (typeof entry.id === 'string' ? entry.id : ''))
+      .filter((id) => id !== '');
+  }
 
   const stored = await updateTripMetadata(db, trip, {
     enrichment_version: ENRICHMENT_VERSION,
@@ -422,6 +527,7 @@ async function persistEnrichment(
     enrichment_model: model,
     enrichment_at: processedAt,
     enrichment_suggestions: output.suggestions,
+    [CHECKLIST_IDS_KEY]: checklistIds,
   });
   if (!stored) throw new Error('métadonnées de succès non persistées');
 }
@@ -429,9 +535,12 @@ async function persistEnrichment(
 /**
  * Traite un job `activity-enrichment` (payload `{ tripId }`).
  *
- * Retourne `done` (enrichi ou déjà enrichi), `failed` (traçé dans
- * `trips.metadata.enrichment_status='failed'`, zéro écriture de contenu) ou
- * `deferred` (quota épuisé, zéro écriture — le cron re-pending sans tentative).
+ * Retourne `done` (enrichi ou déjà enrichi), `failed` (définitif : tracé
+ * absent, sortie hors schéma, activité introuvable — tracé dans
+ * `trips.metadata.enrichment_status='failed'`), `deferred` (quota épuisé,
+ * zéro écriture — le cron re-pending sans tentative) ou `retry` (provider/
+ * transport/écriture : le cron re-pending avec tentative+1, miroir
+ * `trail-narrative`).
  */
 export async function processActivityEnrichmentJob(job: {
   id: string;
@@ -442,7 +551,7 @@ export async function processActivityEnrichmentJob(job: {
   if (!parsed.success) return { outcome: 'failed', detail: 'payload invalide' };
 
   const db = getServiceSupabase();
-  if (!db) return { outcome: 'failed', detail: 'service IA indisponible' };
+  if (!db) return { outcome: 'retry', detail: 'service IA indisponible' };
 
   const loaded = await loadOwnedTrip(db, parsed.data.tripId, job.user_id);
   if (loaded.status === 'failed') return { outcome: 'failed', detail: loaded.detail };
@@ -472,38 +581,71 @@ export async function processActivityEnrichmentJob(job: {
     );
     if (!allowed) return { outcome: 'deferred', detail: 'quota' };
 
-    const result = await askAI({
-      feature: FEATURE,
-      tier: ACTIVITY_ENRICHMENT_SPEC.tier,
-      system,
-      prompt,
-      maxTokens: MAX_ENRICHMENT_TOKENS,
-      reasoningBudget: ACTIVITY_ENRICHMENT_SPEC.maxReasoningBudget,
-      cacheTtlSeconds: ACTIVITY_ENRICHMENT_SPEC.cacheTtlSeconds,
-    });
+    let result;
+    try {
+      result = await askAI({
+        feature: FEATURE,
+        tier: ACTIVITY_ENRICHMENT_SPEC.tier,
+        system,
+        prompt,
+        maxTokens: MAX_ENRICHMENT_TOKENS,
+        reasoningBudget: ACTIVITY_ENRICHMENT_SPEC.maxReasoningBudget,
+        cacheTtlSeconds: ACTIVITY_ENRICHMENT_SPEC.cacheTtlSeconds,
+      });
+    } catch (error) {
+      console.error(
+        '[LKDV activity-enrichment] provider en échec (retry):',
+        errorDetail(error),
+        trip.id
+      );
+      return { outcome: 'retry', detail: 'provider indisponible' };
+    }
 
-    // Le fallback du registre est `degraded` : provider en panne → échec tracé.
-    if (result.degraded) throw new Error('provider IA indisponible (réponse dégradée)');
+    // Le fallback du registre est `degraded` (provider en panne) → réessayable.
+    if (result.degraded) {
+      console.error('[LKDV activity-enrichment] provider dégradé (retry):', trip.id);
+      return { outcome: 'retry', detail: 'provider dégradé' };
+    }
 
     let raw: unknown;
     try {
       raw = JSON.parse(result.text);
     } catch {
-      throw new Error('sortie IA non JSON');
+      return traceFailure(db, trip, 'sortie IA non JSON');
     }
 
-    const output = sanitizeEnrichmentOutput(raw, context.polyline);
-    const processedAt = new Date().toISOString();
-    await persistEnrichment(db, trip, output, result.model, processedAt);
+    let output: ActivityEnrichmentOutput;
+    try {
+      output = sanitizeEnrichmentOutput(raw, context.polyline);
+    } catch (error) {
+      const detail =
+        error instanceof ActivityEnrichmentNoTraceError
+          ? error.message
+          : 'sortie IA invalide (schéma)';
+      return traceFailure(db, trip, detail);
+    }
+
+    try {
+      await persistEnrichment(db, trip, output, result.model, new Date().toISOString());
+    } catch (error) {
+      console.error(
+        '[LKDV activity-enrichment] écriture en échec (retry):',
+        errorDetail(error),
+        trip.id
+      );
+      return { outcome: 'retry', detail: 'écriture en échec' };
+    }
+
     return { outcome: 'done', detail: result.model };
   } catch (error) {
-    const detail = errorDetail(error);
-    console.error('[LKDV activity-enrichment] job en échec:', detail, trip.id);
-    await updateTripMetadata(db, trip, {
-      enrichment_status: 'failed',
-      enrichment_error: detail,
-      enrichment_at: new Date().toISOString(),
-    });
-    return { outcome: 'failed', detail };
+    if (error instanceof ActivityEnrichmentNoTraceError) {
+      return traceFailure(db, trip, error.message);
+    }
+    console.error(
+      '[LKDV activity-enrichment] contexte en échec (retry):',
+      errorDetail(error),
+      trip.id
+    );
+    return { outcome: 'retry', detail: 'contexte indisponible' };
   }
 }

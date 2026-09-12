@@ -25,7 +25,8 @@ export const dynamic = 'force-dynamic';
  * écriture dans hike_sessions.narratives + web-push « carnet prêt ».
  *
  * `activity-enrichment` (Préparer) délègue à `processActivityEnrichmentJob` :
- * quota → `deferred` (re-pending sans tentative), échec → `failed` tracé dans
+ * quota → `deferred` (re-pending sans tentative), provider/transport → `retry`
+ * (re-pending avec tentative+1), échec définitif → `failed` tracé dans
  * `trips.metadata`, succès → `done` + provenance dans les tables du voyage.
  */
 
@@ -80,13 +81,23 @@ export async function POST(request: NextRequest) {
 
         // Quota, écritures et provenance sont gérés par le service (validation
         // globale avant toute écriture) ; `deferred` = quota → re-pending SANS
-        // brûler une tentative, `failed` = échec définitif tracé côté activité.
+        // brûler une tentative, `retry` = provider/transport → tentative+1
+        // puis re-pending (miroir `trail-narrative`), `failed` = définitif
+        // (tracé absent, sortie hors schéma, activité introuvable).
         const enrichment = await processActivityEnrichmentJob(job);
         const enrichmentProcessedAt = new Date().toISOString();
 
         if (enrichment.outcome === 'deferred') {
           await supabase.from('ai_jobs').update({ status: 'pending' }).eq('id', job.id);
           counts.deferredQuota += 1;
+          continue;
+        }
+        if (enrichment.outcome === 'retry') {
+          await supabase
+            .from('ai_jobs')
+            .update({ status: 'pending', attempts: job.attempts + 1, processed_at: enrichmentProcessedAt })
+            .eq('id', job.id);
+          counts.retryFailed += 1;
           continue;
         }
         if (enrichment.outcome === 'failed') {

@@ -3,15 +3,18 @@
  *
  *   (a) sortie LLM valide → inserts `trip_steps` (provenance `llm_suggestion`,
  *       `start_time`, `metadata{source,model,enrichmentVersion}`), `trip_pois`,
- *       `trip_items` (kit) et `trip_checklist_items` (position max+1) + metadata
- *       `enrichment_version='v1'` / `enrichment_status='done'` — zéro
- *       `trip_expenses` (ruling : le LLM n'écrit aucun montant) ;
+ *       `trip_items` (kit) et `trip_checklist_items` (position max+1, ids
+ *       suivis) + metadata `enrichment_version='v1'` / `enrichment_status='done'`
+ *       — zéro `trip_expenses` (ruling : le LLM n'écrit aucun montant) ;
  *   (b) étape hors corridor 3 km → filtrée par le sanitizer, jamais écrite ;
  *   (c) quota épuisé → `deferred`, zéro écriture, provider non appelé ;
  *   (d) JSON invalide → `failed`, zéro écriture, `enrichment_status='failed'` ;
  *   (e) tracé vide (`ActivityEnrichmentNoTraceError`) → `failed` tracé ;
  *   (f) `enrichment_version` déjà présent → `done` (skip), zéro écriture ;
- *   (g) registre : feature résolue + fallback bien formé.
+ *   (g) registre : feature résolue + fallback bien formé ;
+ *   (h) moments LLM matérialisés en `trip_steps` (2 matin + 1 soir) ;
+ *   (i) provider throw/dégradé → `retry` (re-pending tentative+1 côté cron) ;
+ *   (j) rejeu après écriture complète → purge du contenu LLM, zéro doublon.
  *
  * Provider, quota et client service sont mockés : aucun réseau, aucune BDD.
  */
@@ -92,8 +95,8 @@ const VALID_OUTPUT = {
       title: 'Étape 1 — Chamonix → Refuge du Goûter',
       steps: [IN_STEP, OFF_STEP],
       moments: {
-        matin: ['Réveil au village'],
-        apresMidi: ['Montée au refuge'],
+        matin: ['Réveil au village', 'Petit-déjeuner en refuge'],
+        apresMidi: [],
         soir: ['Dîner en refuge'],
       },
     },
@@ -137,18 +140,50 @@ interface ServiceOptions {
   existingSteps?: { day_number: number; order_index: number }[];
   maxChecklistPosition?: number | null;
   insertErrors?: Record<string, ServiceError | null>;
+  deleteErrors?: Record<string, ServiceError | null>;
   updateError?: ServiceError | null;
 }
 
 interface Captures {
   inserts: Array<{ table: string; values: unknown }>;
   updates: Array<{ table: string; values: unknown }>;
+  deletes: Array<{ table: string; filters: Array<{ column: string; value: unknown }> }>;
   rpcCalls: Array<{ fn: string; args: Record<string, unknown> }>;
 }
 
-function createService(options: ServiceOptions): { client: unknown; captures: Captures } {
-  const captures: Captures = { inserts: [], updates: [], rpcCalls: [] };
-  let tripState = options.trip ?? null;
+type Row = Record<string, unknown>;
+
+interface MockState {
+  tables: Record<string, Row[]>;
+  clearEnrichmentVersion: () => void;
+}
+
+function createService(options: ServiceOptions): {
+  client: unknown;
+  captures: Captures;
+  state: MockState;
+} {
+  const captures: Captures = { inserts: [], updates: [], deletes: [], rpcCalls: [] };
+  let tripState = options.trip
+    ? { ...options.trip, metadata: { ...options.trip.metadata } }
+    : null;
+  const tables: Record<string, Row[]> = {
+    trip_steps: [],
+    trip_pois: [],
+    trip_items: [],
+    trip_checklist_items: [],
+  };
+  let idCounter = 0;
+
+  const state: MockState = {
+    tables,
+    clearEnrichmentVersion: () => {
+      if (!tripState) return;
+      const metadata = { ...tripState.metadata };
+      delete metadata.enrichment_version;
+      tripState = { ...tripState, metadata };
+    },
+  };
 
   const client = {
     rpc: async (fn: string, args: Record<string, unknown>) => {
@@ -162,13 +197,40 @@ function createService(options: ServiceOptions): { client: unknown; captures: Ca
       return { data: null, error: null };
     },
     from(table: string) {
-      let op: 'select' | 'insert' | 'update' = 'select';
+      let op: 'select' | 'insert' | 'update' | 'delete' = 'select';
       let pendingUpdateValues: unknown = null;
+      let pendingInsertValues: unknown = null;
+      let returning = false;
+      const eqFilters: Array<{ column: string; value: unknown }> = [];
+      const jsonFilters: Array<{ column: string; value: unknown }> = [];
+      let inFilter: { column: string; values: unknown[] } | null = null;
       const builder: Record<string, unknown> = {};
+
+      const matchesFilters = (row: Row): boolean => {
+        for (const filter of eqFilters) {
+          if (row[filter.column] !== filter.value) return false;
+        }
+        for (const filter of jsonFilters) {
+          const [root, key] = filter.column.split('->>');
+          const container = row[root];
+          if (typeof container !== 'object' || container === null) return false;
+          if ((container as Row)[key] !== filter.value) return false;
+        }
+        if (inFilter && !inFilter.values.includes(row[inFilter.column])) return false;
+        return true;
+      };
 
       const settle = () => {
         if (op === 'insert') {
-          return { data: null, error: options.insertErrors?.[table] ?? null };
+          const error = options.insertErrors?.[table] ?? null;
+          if (error) return { data: null, error };
+          const values = Array.isArray(pendingInsertValues) ? pendingInsertValues : [];
+          const rows = values.map((row) => {
+            idCounter += 1;
+            return { id: `${table}-${idCounter}`, ...(row as Row) };
+          });
+          tables[table] = [...(tables[table] ?? []), ...rows];
+          return { data: returning ? rows.map((row) => ({ id: row.id })) : null, error: null };
         }
         if (op === 'update') {
           if (table === 'trips') {
@@ -181,6 +243,13 @@ function createService(options: ServiceOptions): { client: unknown; captures: Ca
           }
           return { data: null, error: options.updateError ?? null };
         }
+        if (op === 'delete') {
+          captures.deletes.push({ table, filters: eqFilters.slice() });
+          const error = options.deleteErrors?.[table] ?? null;
+          if (error) return { data: null, error };
+          tables[table] = (tables[table] ?? []).filter((row) => !matchesFilters(row));
+          return { data: null, error: null };
+        }
         if (table === 'trips') {
           return options.tripError
             ? { data: null, error: options.tripError }
@@ -192,8 +261,16 @@ function createService(options: ServiceOptions): { client: unknown; captures: Ca
             : { data: options.route ?? null, error: null };
         }
         if (table === 'trail_metadata') return { data: options.meta ?? null, error: null };
-        if (table === 'trip_steps') return { data: options.existingSteps ?? [], error: null };
+        if (table === 'trip_steps') {
+          const rows = tables.trip_steps.filter(matchesFilters);
+          return { data: rows.length > 0 ? rows : options.existingSteps ?? [], error: null };
+        }
         if (table === 'trip_checklist_items') {
+          const rows = tables.trip_checklist_items.filter(matchesFilters);
+          if (rows.length > 0) {
+            const positions = rows.map((row) => Number(row.position) || 0);
+            return { data: { position: Math.max(...positions) }, error: null };
+          }
           return {
             data:
               options.maxChecklistPosition === undefined || options.maxChecklistPosition === null
@@ -205,9 +282,13 @@ function createService(options: ServiceOptions): { client: unknown; captures: Ca
         return { data: null, error: null };
       };
 
-      builder.select = () => builder;
+      builder.select = (columns?: string) => {
+        if (op === 'insert' && columns) returning = true;
+        return builder;
+      };
       builder.insert = (values: unknown) => {
         op = 'insert';
+        pendingInsertValues = values;
         captures.inserts.push({ table, values });
         return builder;
       };
@@ -217,7 +298,22 @@ function createService(options: ServiceOptions): { client: unknown; captures: Ca
         captures.updates.push({ table, values });
         return builder;
       };
-      builder.eq = () => builder;
+      builder.delete = () => {
+        op = 'delete';
+        return builder;
+      };
+      builder.eq = (column: string, value: unknown) => {
+        eqFilters.push({ column, value });
+        return builder;
+      };
+      builder.filter = (column: string, operator: string, value: unknown) => {
+        if (operator === 'eq') jsonFilters.push({ column, value });
+        return builder;
+      };
+      builder.in = (column: string, values: unknown[]) => {
+        inFilter = { column, values };
+        return builder;
+      };
       builder.order = () => builder;
       builder.limit = () => builder;
       builder.maybeSingle = async () => settle();
@@ -230,11 +326,20 @@ function createService(options: ServiceOptions): { client: unknown; captures: Ca
     },
   };
 
-  return { client, captures };
+  return { client, captures, state };
 }
 
 function insertFor(captures: Captures, table: string) {
   return captures.inserts.find((entry) => entry.table === table);
+}
+
+function rowCounts(state: MockState) {
+  return {
+    trip_steps: state.tables.trip_steps.length,
+    trip_pois: state.tables.trip_pois.length,
+    trip_items: state.tables.trip_items.length,
+    trip_checklist_items: state.tables.trip_checklist_items.length,
+  };
 }
 
 function defaultService(overrides: ServiceOptions = {}) {
@@ -248,6 +353,14 @@ function defaultService(overrides: ServiceOptions = {}) {
     maxChecklistPosition: 2,
     ...overrides,
   });
+}
+
+function stepRowsOf(captures: Captures): Row[] {
+  return (insertFor(captures, 'trip_steps')?.values as Row[]) ?? [];
+}
+
+function isMoment(row: Row): boolean {
+  return (row.metadata as Record<string, unknown> | undefined)?.kind === 'moment';
 }
 
 describe('processActivityEnrichmentJob (Task 7)', () => {
@@ -270,7 +383,7 @@ describe('processActivityEnrichmentJob (Task 7)', () => {
 
     const result = await processActivityEnrichmentJob(JOB);
 
-    expect(result.outcome).toBe('done');
+    expect(result).toEqual({ outcome: 'done', detail: 'ultra-model-test' });
 
     // Contexte réel injecté au provider : sentier + POI réels.
     expect(askAIMock).toHaveBeenCalledTimes(1);
@@ -296,9 +409,9 @@ describe('processActivityEnrichmentJob (Task 7)', () => {
 
     const stepsInsert = insertFor(captures, 'trip_steps');
     expect(stepsInsert).toBeDefined();
-    const stepRows = stepsInsert?.values as Record<string, unknown>[];
-    expect(stepRows).toHaveLength(1);
-    expect(stepRows[0]).toMatchObject({
+    const regularSteps = stepRowsOf(captures).filter((row) => !isMoment(row));
+    expect(regularSteps).toHaveLength(1);
+    expect(regularSteps[0]).toMatchObject({
       trip_id: TRIP_ID,
       day_number: 1,
       order_index: 1,
@@ -355,6 +468,36 @@ describe('processActivityEnrichmentJob (Task 7)', () => {
     expect(metadata.enrichment_model).toBe('ultra-model-test');
     expect(typeof metadata.enrichment_at).toBe('string');
     expect(metadata.route_id).toBe(ROUTE_ID);
+    expect(metadata.enrichment_checklist_ids).toEqual([
+      expect.stringMatching(/^trip_checklist_items-/),
+    ]);
+  });
+
+  it('(h) moments matérialisés : 2 matin + 1 soir → 3 steps horodatés kind=moment', async () => {
+    const { client, captures } = defaultService();
+    serviceHolder.client = client;
+
+    const result = await processActivityEnrichmentJob(JOB);
+
+    expect(result.outcome).toBe('done');
+    const momentRows = stepRowsOf(captures).filter(isMoment);
+    expect(momentRows.map((row) => row.title)).toEqual([
+      'Matin — Réveil au village',
+      'Matin — Petit-déjeuner en refuge',
+      'Soir — Dîner en refuge',
+    ]);
+    expect(momentRows.map((row) => row.start_time)).toEqual(['08:30', '08:30', '19:30']);
+    expect(momentRows.map((row) => row.order_index)).toEqual([2, 3, 4]);
+    for (const row of momentRows) {
+      expect(row.day_number).toBe(1);
+      expect(row.source).toBe('llm_suggestion');
+      expect(row.metadata).toMatchObject({
+        source: 'llm_suggestion',
+        kind: 'moment',
+        model: 'ultra-model-test',
+        enrichmentVersion: 'v1',
+      });
+    }
   });
 
   it('(b) étape hors corridor 3 km → filtrée, ni step ni poi inventés', async () => {
@@ -364,11 +507,11 @@ describe('processActivityEnrichmentJob (Task 7)', () => {
     const result = await processActivityEnrichmentJob(JOB);
 
     expect(result.outcome).toBe('done');
-    const stepTitles = (insertFor(captures, 'trip_steps')?.values as Record<string, unknown>[]).map(
-      (row) => row.title
-    );
-    expect(stepTitles).toEqual(['Départ du sentier']);
-    expect(stepTitles).not.toContain('Étape inventée trop loin');
+    const regularTitles = stepRowsOf(captures)
+      .filter((row) => !isMoment(row))
+      .map((row) => row.title);
+    expect(regularTitles).toEqual(['Départ du sentier']);
+    expect(stepRowsOf(captures).map((row) => row.title)).not.toContain('Étape inventée trop loin');
     const poiNames = (insertFor(captures, 'trip_pois')?.values as Record<string, unknown>[]).map(
       (row) => row.name
     );
@@ -386,6 +529,7 @@ describe('processActivityEnrichmentJob (Task 7)', () => {
     expect(askAIMock).not.toHaveBeenCalled();
     expect(captures.inserts).toHaveLength(0);
     expect(captures.updates).toHaveLength(0);
+    expect(captures.deletes).toHaveLength(0);
   });
 
   it('(d) JSON invalide → failed, zéro écriture de contenu + trace enrichissement', async () => {
@@ -439,8 +583,71 @@ describe('processActivityEnrichmentJob (Task 7)', () => {
     expect(result.outcome).toBe('done');
     expect(captures.inserts).toHaveLength(0);
     expect(captures.updates).toHaveLength(0);
+    expect(captures.deletes).toHaveLength(0);
     expect(consumeQuotaMock).not.toHaveBeenCalled();
     expect(askAIMock).not.toHaveBeenCalled();
+  });
+
+  it('(i) provider throw → retry (re-pending tentative+1 côté cron), zéro contenu, pas de trace failed', async () => {
+    const { client, captures } = defaultService();
+    serviceHolder.client = client;
+    askAIMock.mockRejectedValue(new Error('timeout provider'));
+
+    const result = await processActivityEnrichmentJob(JOB);
+
+    expect(result).toEqual({ outcome: 'retry', detail: 'provider indisponible' });
+    expect(consumeQuotaMock).toHaveBeenCalledTimes(1);
+    expect(captures.inserts).toHaveLength(0);
+    expect(captures.updates).toHaveLength(0);
+    expect(captures.deletes).toHaveLength(0);
+  });
+
+  it('(i bis) réponse dégradée (fallback registre) → retry, zéro contenu', async () => {
+    const { client, captures } = defaultService();
+    serviceHolder.client = client;
+    askAIMock.mockResolvedValue({
+      text: '{"days":[],"suggestions":[],"kitAdditions":[],"checklistAdditions":[]}',
+      model: 'fallback-deterministe',
+      degraded: true,
+      cached: false,
+      provider: 'fallback',
+    });
+
+    const result = await processActivityEnrichmentJob(JOB);
+
+    expect(result).toEqual({ outcome: 'retry', detail: 'provider dégradé' });
+    expect(captures.inserts).toHaveLength(0);
+    expect(captures.updates).toHaveLength(0);
+  });
+
+  it('(j) rejeu après écriture complète → purge du LLM précédent, mêmes compteurs (aucun doublon)', async () => {
+    const { client, captures, state } = defaultService();
+    serviceHolder.client = client;
+
+    const first = await processActivityEnrichmentJob(JOB);
+    expect(first.outcome).toBe('done');
+    const countsAfterFirst = rowCounts(state);
+    expect(countsAfterFirst).toEqual({
+      trip_steps: 4,
+      trip_pois: 1,
+      trip_items: 1,
+      trip_checklist_items: 1,
+    });
+
+    // Rejeu forcé (version retirée — reprise opérateur / ré-enfilement).
+    state.clearEnrichmentVersion();
+    const second = await processActivityEnrichmentJob(JOB);
+
+    expect(second.outcome).toBe('done');
+    expect(rowCounts(state)).toEqual(countsAfterFirst);
+    expect(captures.deletes.map((entry) => entry.table)).toEqual(
+      expect.arrayContaining([
+        'trip_steps',
+        'trip_pois',
+        'trip_items',
+        'trip_checklist_items',
+      ])
+    );
   });
 
   it('(g) registre : la feature activity-enrichment est résolue et le fallback est bien formé', async () => {
