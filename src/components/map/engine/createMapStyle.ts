@@ -85,21 +85,23 @@ export function createMapStyle(
         type: 'raster',
         source: 'atlas-topo',
         layout: { visibility: mode === 'topo' ? 'visible' : 'none' },
-        paint: { 'raster-opacity': 0.92 },
+        // FLUIDITÉ F3 : fondu explicitement épinglé (défaut MapLibre 300 ms,
+        // vérifié runtime sur 6.4.1 via scripts/atlas/verify-camera-f0.mjs).
+        paint: { 'raster-opacity': 0.92, 'raster-fade-duration': 300 },
       },
       {
         id: 'atlas-tile-osm',
         type: 'raster',
         source: 'atlas-osm',
         layout: { visibility: mode === 'osm' ? 'visible' : 'none' },
-        paint: { 'raster-opacity': 0.92 },
+        paint: { 'raster-opacity': 0.92, 'raster-fade-duration': 300 },
       },
       {
         id: 'atlas-tile-satellite',
         type: 'raster',
         source: 'atlas-satellite',
         layout: { visibility: mode === 'satellite' ? 'visible' : 'none' },
-        paint: { 'raster-opacity': 0.9 },
+        paint: { 'raster-opacity': 0.9, 'raster-fade-duration': 300 },
       }
     );
   }

@@ -1252,3 +1252,15 @@
 @media (prefers-reduced-motion: reduce) {
   [class*='shimmer'] { animation: none !important; }
 }
+
+/* ============================================================
+   FLUIDITÉ F3 — Pendant un geste/vol caméra (data-atlas-flying),
+   les panneaux secondaires de la carte coupent leur backdrop-filter :
+   le flou animé coûte cher au GPU mobile et ne sert à rien en mouvement.
+   Bascule instantanée (jamais d'animation de backdrop-filter).
+   Spécificité (0,2,0) > .glass (0,1,0) — pas de !important nécessaire.
+   ============================================================ */
+[data-atlas-flying='true'] [data-atlas-glass='secondary'] {
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
+}

@@ -1,0 +1,23 @@
+
+--- FR→DE z5 (plat, 1 387 km) ---
+durée moveend: 482 ms · échantillons: 4
+zoom départ 4.73 · creux 4.60 · sommet 4.73 · fin 4.60
+fin center: 10.38, 51.11 (attendu ≈ 10.4, 51.1 (point tapé))
+atterrissage zoom 4.6 : OK
+série zoom (1 point / 200 ms): 4.73
+
+--- Globe z1.2 → FR (Δzoom 3.4) ---
+durée moveend: 1787 ms · échantillons: 11
+zoom départ 1.26 · creux 1.26 · sommet 4.60 · fin 4.60
+fin center: -2.88, 42.46 (attendu ≈ 2.3, 46.6 (centroïde FR))
+atterrissage zoom 4.6 : OK
+série zoom (1 point / 200 ms): 1.26 → 4.50
+
+--- Pacifique z1.2 → FR (~7 000 km, Δzoom 3.4) ---
+durée moveend: 2219 ms · échantillons: 13
+zoom départ 1.23 · creux 1.23 · sommet 4.59 · fin 4.60
+fin center: -2.88, 42.46 (attendu ≈ 2.3, 46.6 (centroïde FR))
+atterrissage zoom 4.6 : OK
+série zoom (1 point / 200 ms): 1.23 → 4.26
+
+pageErrors: []
