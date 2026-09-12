@@ -2,9 +2,11 @@
 
 // Hub live (§4.5) — bus d'arrivées d'activité. Les événements sont émis par
 // ActivityLiveBridge (canal Supabase dédié `hub-live-bridge`) sur window :
-//   CustomEvent('lkdv:activity-arrival', { detail: { table, id } })
+//   CustomEvent('lkdv:activity-arrival', { detail: { table, id, eventType } })
 // Le hook déduplique par couple table:id (Set) puis dérive la phase de
 // préparation. Aucun abonnement realtime supplémentaire : un seul canal dédié.
+// T10 fix — `eventType` distingue INSERT (reveal de rangée) et UPDATE (écho
+// d'une action locale : compteurs/phase seulement, jamais de reveal).
 import { useEffect, useMemo, useState } from 'react';
 
 export interface ActivityArrival {
@@ -12,7 +14,15 @@ export interface ActivityArrival {
   table: string;
   /** Id de la ligne insérée/mise à jour. */
   id: string;
+  /**
+   * T10 fix — type d'événement realtime. Seuls les INSERT déclenchent un
+   * reveal de rangée ; un UPDATE (écho de sa propre action) met à jour les
+   * compteurs/phase sans animer une rangée déjà à l'écran.
+   */
+  eventType: ActivityArrivalEventType;
 }
+
+export type ActivityArrivalEventType = 'INSERT' | 'UPDATE';
 
 export type ActivityPreparationPhase =
   'waiting' | 'itinerary' | 'moments' | 'affiliation' | 'kit' | 'done';
@@ -91,6 +101,15 @@ export function arrivalKey(arrival: ActivityArrival): string {
   return `${arrival.table}:${arrival.id}`;
 }
 
+/**
+ * T10 fix — seuls les INSERT révèlent une rangée. Un UPDATE doit continuer à
+ * nourrir la phase/les compteurs (arrivée comptée) mais jamais animer une
+ * rangée déjà rendue (écho de l'action locale, focus préservé).
+ */
+export function shouldRevealArrival(arrival: ActivityArrival): boolean {
+  return arrival.eventType === 'INSERT';
+}
+
 export function createArrivalState(): ActivityArrivalState {
   return { seen: new Set<string>(), arrivals: [] };
 }
@@ -113,12 +132,13 @@ export function recordActivityArrival(
 /** Garde de forme pour les détails d'événement window non fiables. */
 export function isActivityArrival(value: unknown): value is ActivityArrival {
   if (!value || typeof value !== 'object') return false;
-  const candidate = value as { table?: unknown; id?: unknown };
+  const candidate = value as { table?: unknown; id?: unknown; eventType?: unknown };
   return (
     typeof candidate.table === 'string' &&
     candidate.table.length > 0 &&
     typeof candidate.id === 'string' &&
-    candidate.id.length > 0
+    candidate.id.length > 0 &&
+    (candidate.eventType === 'INSERT' || candidate.eventType === 'UPDATE')
   );
 }
 

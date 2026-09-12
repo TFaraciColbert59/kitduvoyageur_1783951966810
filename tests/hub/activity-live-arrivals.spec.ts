@@ -90,13 +90,13 @@ describe('derivePreparationPhase — seuils exacts', () => {
 describe('bus d’arrivées — comptage et déduplication', () => {
   it('countArrivals mappe les tables réelles vers les bassins du rail', () => {
     const result = countArrivals([
-      { table: 'trip_steps', id: 's1' },
-      { table: 'trip_steps', id: 's2' },
-      { table: 'trip_pois', id: 'p1' },
-      { table: 'trip_expenses', id: 'e1' },
-      { table: 'trip_items', id: 'i1' },
-      { table: 'trip_checklist_items', id: 'c1' },
-      { table: 'trip_notes', id: 'n1' },
+      { table: 'trip_steps', id: 's1', eventType: 'INSERT' },
+      { table: 'trip_steps', id: 's2', eventType: 'INSERT' },
+      { table: 'trip_pois', id: 'p1', eventType: 'INSERT' },
+      { table: 'trip_expenses', id: 'e1', eventType: 'UPDATE' },
+      { table: 'trip_items', id: 'i1', eventType: 'INSERT' },
+      { table: 'trip_checklist_items', id: 'c1', eventType: 'INSERT' },
+      { table: 'trip_notes', id: 'n1', eventType: 'INSERT' },
     ]);
 
     expect(result).toEqual({ steps: 2, moments: 1, affiliation: 1, kit: 2 });
@@ -104,8 +104,8 @@ describe('bus d’arrivées — comptage et déduplication', () => {
 
   it('ignore un id déjà vu (non ré-émis : même état, pas de doublon)', () => {
     const initial = createArrivalState();
-    const once = recordActivityArrival(initial, { table: 'trip_steps', id: 's1' });
-    const twice = recordActivityArrival(once, { table: 'trip_steps', id: 's1' });
+    const once = recordActivityArrival(initial, { table: 'trip_steps', id: 's1', eventType: 'INSERT' });
+    const twice = recordActivityArrival(once, { table: 'trip_steps', id: 's1', eventType: 'INSERT' });
 
     expect(once.arrivals).toHaveLength(1);
     expect(twice).toBe(once);
@@ -113,14 +113,25 @@ describe('bus d’arrivées — comptage et déduplication', () => {
   });
 
   it('accepte le même id sur une autre table (clé table:id)', () => {
-    const once = recordActivityArrival(createArrivalState(), { table: 'trip_steps', id: 'x1' });
-    const cross = recordActivityArrival(once, { table: 'trip_pois', id: 'x1' });
+    const once = recordActivityArrival(createArrivalState(), {
+      table: 'trip_steps',
+      id: 'x1',
+      eventType: 'INSERT',
+    });
+    const cross = recordActivityArrival(once, {
+      table: 'trip_pois',
+      id: 'x1',
+      eventType: 'INSERT',
+    });
 
     expect(cross.arrivals).toHaveLength(2);
   });
 
   it('isActivityArrival rejette les détails malformés', () => {
-    expect(isActivityArrival({ table: 'trip_steps', id: 's1' })).toBe(true);
+    expect(isActivityArrival({ table: 'trip_steps', id: 's1', eventType: 'INSERT' })).toBe(true);
+    expect(isActivityArrival({ table: 'trip_steps', id: 's1', eventType: 'UPDATE' })).toBe(true);
+    expect(isActivityArrival({ table: 'trip_steps', id: 's1' })).toBe(false);
+    expect(isActivityArrival({ table: 'trip_steps', id: 's1', eventType: 'DELETE' })).toBe(false);
     expect(isActivityArrival({ table: 'trip_steps' })).toBe(false);
     expect(isActivityArrival({ table: '', id: '' })).toBe(false);
     expect(isActivityArrival(null)).toBe(false);

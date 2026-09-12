@@ -1,9 +1,9 @@
 'use client';
 
-// Hub live (§4.5) — wrapper de liste : ArrivalReveal n'est réellement joué
-// que pour un id du seen-set d'arrivées (bus T9). Hors seen-set, même structure
-// de boîte (`div` + className) sans animation ; à l'activation, le remount du
-// wrapper joue le cycle unique d'ArrivalReveal — un id jamais rejoué ensuite.
+// Hub live (§4.5) — wrapper de liste : l'arrivée n'est révélée que pour un id
+// du seen-set (bus T9, INSERT uniquement). T10 fix — un seul type d'élément
+// (`motion.div` via ArrivalReveal) quel que soit l'état : le passage
+// statique → reveal est une animation, jamais un remount (focus préservé).
 import type { ReactNode } from 'react';
 import { ArrivalReveal } from './ArrivalReveal';
 
@@ -25,12 +25,10 @@ export function LiveArrivalReveal({
   className,
   children,
 }: LiveArrivalRevealProps) {
-  if (!liveIds.has(id)) {
-    return <div className={className}>{children}</div>;
-  }
+  const live = liveIds.has(id);
 
   return (
-    <ArrivalReveal index={index} className={className}>
+    <ArrivalReveal active={live} index={live ? index : 0} className={className}>
       {children}
     </ArrivalReveal>
   );

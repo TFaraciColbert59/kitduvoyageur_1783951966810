@@ -5,7 +5,7 @@
 // l'arrivée : rien ne s'anime en arrière-plan ni pendant le scroll, et les
 // ids déjà traités ne sont jamais rejoués (seen-set local).
 import { useEffect, useRef, useState } from 'react';
-import { useActivityLiveArrivals } from './useActivityLiveArrivals';
+import { shouldRevealArrival, useActivityLiveArrivals } from './useActivityLiveArrivals';
 
 export interface LiveArrivalRevealHandle<T extends HTMLElement> {
   /** Ids de la table reçus par le bus pendant que la section était visible. */
@@ -49,6 +49,9 @@ export function useLiveArrivalReveal<T extends HTMLElement = HTMLDivElement>(
     for (const arrival of arrivals) {
       if (arrival.table !== table) continue;
       if (processedRef.current.has(arrival.id)) continue;
+      // T10 fix — un UPDATE (écho de sa propre action) ne révèle jamais et ne
+      // consomme pas l'id : un INSERT ultérieur du même id peut encore révéler.
+      if (!shouldRevealArrival(arrival)) continue;
       processedRef.current.add(arrival.id);
       if (visibleRef.current) {
         liveRef.current.add(arrival.id);

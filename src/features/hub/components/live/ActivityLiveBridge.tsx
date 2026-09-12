@@ -7,7 +7,10 @@
 // Il ne déclenche aucun router.refresh() : zéro doublon de rafraîchissement.
 import { useEffect } from 'react';
 import { createClient } from '@/lib/supabase/client';
-import { ACTIVITY_ARRIVAL_EVENT } from './useActivityLiveArrivals';
+import {
+  ACTIVITY_ARRIVAL_EVENT,
+  type ActivityArrivalEventType,
+} from './useActivityLiveArrivals';
 
 export interface ActivityLiveBridgeProps {
   /** id du voyage actif — filtre les événements de ses tables. */
@@ -24,9 +27,15 @@ export const ACTIVITY_LIVE_TABLES = [
 ] as const;
 
 /** Émet une arrivée sur le bus window (no-op côté serveur). */
-export function emitActivityArrival(table: string, id: string): void {
+export function emitActivityArrival(
+  table: string,
+  id: string,
+  eventType: ActivityArrivalEventType
+): void {
   if (typeof window === 'undefined') return;
-  window.dispatchEvent(new CustomEvent(ACTIVITY_ARRIVAL_EVENT, { detail: { table, id } }));
+  window.dispatchEvent(
+    new CustomEvent(ACTIVITY_ARRIVAL_EVENT, { detail: { table, id, eventType } })
+  );
 }
 
 export function ActivityLiveBridge({ tripId }: ActivityLiveBridgeProps) {
@@ -38,11 +47,13 @@ export function ActivityLiveBridge({ tripId }: ActivityLiveBridgeProps) {
     let cancelled = false;
     let cleanup: (() => void) | null = null;
 
-    const forward = (payload: { table?: string; new?: { id?: unknown } }) => {
+    const forward = (payload: { table?: string; eventType?: string; new?: { id?: unknown } }) => {
       if (cancelled || !payload.table) return;
       const id = payload.new?.id;
       if (id === null || id === undefined) return;
-      emitActivityArrival(payload.table, String(id));
+      const eventType: ActivityArrivalEventType =
+        payload.eventType === 'UPDATE' ? 'UPDATE' : 'INSERT';
+      emitActivityArrival(payload.table, String(id), eventType);
     };
 
     try {
