@@ -8,6 +8,7 @@
 import { categoryDisplay } from '@/features/terrain-live/lib/terrainDisplay';
 import type { TerrainReportCategory, TerrainSeverity } from '../schemas/live.schema';
 import { clamp01, type Confidence } from './confidence';
+import type { CockpitLiveConsumption } from './cockpitLive';
 
 /** Bornes strictes de la vue cockpit (spec A7 §7.2). */
 export const MAX_COCKPIT_INDICATORS = 3;
@@ -68,6 +69,8 @@ export interface CockpitInput {
   recalcReasons: string[];
   offline: boolean;
   batteryLevel?: number | null;
+  /** Consommation live (charge) recalculée sur fixes GPS réels, sinon null. */
+  consumption?: CockpitLiveConsumption | null;
 }
 
 export interface CockpitHero {
@@ -113,6 +116,8 @@ export interface CockpitView {
   confidence: Confidence | null;
   recalcReasons: string[];
   offline: boolean;
+  /** Consommation live (fixes réels) — null quand indisponible. */
+  consumption: CockpitLiveConsumption | null;
 }
 
 const STATUS_LABELS: Record<string, string> = {
@@ -326,5 +331,6 @@ export function buildCockpitView(input: CockpitInput): CockpitView {
     confidence: input.plan?.confidence ?? null,
     recalcReasons: [...input.recalcReasons],
     offline: input.offline,
+    consumption: input.consumption ?? null,
   };
 }

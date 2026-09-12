@@ -8,6 +8,12 @@ import { closestOnRoute, computeRoutePois, haversineMeters, initialBearingDeg, r
 import { getRouteOffline } from '@/lib/offlineStorage';
 import { createClient } from '@/lib/supabase/client';
 import {
+  decryptLocalJson,
+  encryptLocalJson,
+  isLocalVaultEnvelope,
+  type LocalVaultEnvelope,
+} from '@/lib/security/localVault';
+import {
   HikingState,
   GPSPosition,
   POI,
@@ -77,6 +83,9 @@ export class HikingController {
   private offRouteBuffer: number[] = [];
   private offRouteDismissed = false;
   private lastProjectedFrac: number | null = null;
+  /** Séquence d'écriture du brouillon (garde anti-écrasement asynchrone). */
+  private persistSequence = 0;
+  private persistWrittenSequence = 0;
 
   constructor() {
     this.stateMachine = new HikingStateMachine('IDLE');
@@ -640,23 +649,44 @@ export class HikingController {
   private persistSession(): void {
     if (typeof window === 'undefined') return;
     try {
-      if (this.state.isActive) {
-        localStorage.setItem(
-          PERSISTENCE_KEY,
-          JSON.stringify({
-            routeId: this.state.routeId,
-            kitId: this.state.kitId,
-            tripId: this.state.tripId,
-            routeName: this.state.routeName,
-            routeTotalKm: this.state.routeTotalKm,
-            distanceKm: this.state.distanceKm,
-            durationSeconds: this.state.durationSeconds,
-            elevationGainM: this.state.elevationGainM,
-            isPaused: this.state.isPaused,
-            positions: this.state.positions.slice(-200),
-          })
-        );
+      if (!this.state.isActive) return;
+      const snapshot = {
+        routeId: this.state.routeId,
+        kitId: this.state.kitId,
+        tripId: this.state.tripId,
+        routeName: this.state.routeName,
+        routeTotalKm: this.state.routeTotalKm,
+        distanceKm: this.state.distanceKm,
+        durationSeconds: this.state.durationSeconds,
+        elevationGainM: this.state.elevationGainM,
+        isPaused: this.state.isPaused,
+        positions: this.state.positions.slice(-200),
+      };
+      this.persistSequence += 1;
+      const sequence = this.persistSequence;
+      void this.writePersistedSession(snapshot, sequence);
+    } catch {
+      /* ignore storage errors */
+    }
+  }
+
+  /**
+   * Phase 6 — écrit le brouillon de session chiffré (AES-GCM, clé locale non
+   * extractible) ; repli en clair UNIQUEMENT si le coffre WebCrypto/IndexedDB
+   * est indisponible (documenté dans PHASE_6_VERIFICATION.md). Le garde de
+   * séquence empêche une écriture asynchrone ancienne d'écraser la récente.
+   */
+  private async writePersistedSession(snapshot: unknown, sequence: number): Promise<void> {
+    try {
+      const envelope = await encryptLocalJson(snapshot);
+      if (sequence < this.persistWrittenSequence) return;
+      if (envelope) {
+        localStorage.setItem(PERSISTENCE_KEY, JSON.stringify(envelope));
+        this.persistWrittenSequence = sequence;
+        return;
       }
+      localStorage.setItem(PERSISTENCE_KEY, JSON.stringify(snapshot));
+      this.persistWrittenSequence = sequence;
     } catch {
       /* ignore storage errors */
     }
@@ -666,25 +696,57 @@ export class HikingController {
     if (typeof window === 'undefined') return;
     try {
       const saved = localStorage.getItem(PERSISTENCE_KEY);
-      if (saved) {
-        const parsed = JSON.parse(saved);
-        if (parsed && parsed.positions && parsed.positions.length > 0) {
-          this.updateState({
-            routeId: parsed.routeId ?? null,
-            kitId: parsed.kitId ?? null,
-            tripId: parsed.tripId ?? null,
-            routeName: parsed.routeName ?? null,
-            routeTotalKm: parsed.routeTotalKm != null ? Number(parsed.routeTotalKm) : null,
-            distanceKm: Number(parsed.distanceKm) || 0,
-            durationSeconds: Number(parsed.durationSeconds) || 0,
-            elevationGainM: parsed.elevationGainM != null ? Number(parsed.elevationGainM) : null,
-            positions: parsed.positions,
-          });
-        }
+      if (!saved) return;
+      let parsed: unknown;
+      try {
+        parsed = JSON.parse(saved);
+      } catch {
+        return;
       }
+      if (isLocalVaultEnvelope(parsed)) {
+        void this.restoreEncryptedSession(parsed);
+        return;
+      }
+      this.applyRestoredSession(parsed);
     } catch {
       /* ignore restore errors */
     }
+  }
+
+  /** Déchiffre puis applique le brouillon ; une clé perdue ne restaure rien. */
+  private async restoreEncryptedSession(envelope: LocalVaultEnvelope): Promise<void> {
+    try {
+      const decrypted = await decryptLocalJson<unknown>(envelope);
+      if (decrypted) this.applyRestoredSession(decrypted);
+    } catch {
+      /* enveloppe altérée ou clé indisponible : aucune donnée inventée */
+    }
+  }
+
+  private applyRestoredSession(parsed: unknown): void {
+    const record = parsed as {
+      routeId?: unknown;
+      kitId?: unknown;
+      tripId?: unknown;
+      routeName?: unknown;
+      routeTotalKm?: unknown;
+      distanceKm?: unknown;
+      durationSeconds?: unknown;
+      elevationGainM?: unknown;
+      positions?: unknown;
+    } | null;
+    if (!record || !Array.isArray(record.positions) || record.positions.length === 0) return;
+    this.updateState({
+      routeId: typeof record.routeId === 'string' ? record.routeId : null,
+      kitId: typeof record.kitId === 'string' ? record.kitId : null,
+      tripId: typeof record.tripId === 'string' ? record.tripId : null,
+      routeName: typeof record.routeName === 'string' ? record.routeName : null,
+      routeTotalKm: record.routeTotalKm != null ? Number(record.routeTotalKm) : null,
+      distanceKm: Number(record.distanceKm) || 0,
+      durationSeconds: Number(record.durationSeconds) || 0,
+      elevationGainM: record.elevationGainM != null ? Number(record.elevationGainM) : null,
+      positions: record.positions as HikingControllerState['positions'],
+    });
   }
 
   private clearPersistedSession(): void {

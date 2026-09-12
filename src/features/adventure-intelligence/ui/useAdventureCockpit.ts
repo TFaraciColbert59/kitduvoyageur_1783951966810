@@ -14,13 +14,21 @@
  */
 import { useCallback, useEffect, useRef, useState } from 'react';
 import type { CockpitInput } from '../domain/cockpit';
-import { EMPTY_RECALC_STATE, paceFromPositions, validCockpitPositions } from '../domain/cockpitLive';
+import {
+  EMPTY_RECALC_STATE,
+  computeAheadBehindMinutes,
+  consumptionFromPositions,
+  paceFromPositions,
+  validCockpitPositions,
+} from '../domain/cockpitLive';
 import { evaluateRecalc, type RecalcState } from '../domain/recalcTriggers';
 
 export interface AdventureTrackingFix {
   latitude: number;
   longitude: number;
   timestamp: number;
+  /** Altitude GPS réelle (m) quand disponible. */
+  altitude?: number | null;
 }
 
 export interface UseAdventureCockpitOptions {
@@ -29,6 +37,8 @@ export interface UseAdventureCockpitOptions {
   /** Dernières positions GPS réelles (GPSService / TrackingEngine). */
   fixes: readonly AdventureTrackingFix[];
   batteryLevel?: number | null;
+  /** Distance restante réelle (géométrie + progression) pour l'ETA live. */
+  remainingDistanceKm?: number | null;
   /** Faux ⇒ aucun appel réseau (écran sans aventure active). */
   enabled?: boolean;
 }
@@ -56,6 +66,9 @@ function toPositions(fixes: readonly AdventureTrackingFix[]) {
         lat: fix.latitude,
         lng: fix.longitude,
         timestamp: new Date(fix.timestamp).toISOString(),
+        altitudeM: typeof fix.altitude === 'number' && Number.isFinite(fix.altitude)
+          ? fix.altitude
+          : null,
       }))
   );
 }
@@ -67,7 +80,13 @@ function isOffline(): boolean {
 export function useAdventureCockpit(
   options: UseAdventureCockpitOptions
 ): UseAdventureCockpitResult {
-  const { adventureId, fixes, batteryLevel = null, enabled = true } = options;
+  const {
+    adventureId,
+    fixes,
+    batteryLevel = null,
+    remainingDistanceKm = null,
+    enabled = true,
+  } = options;
   const [input, setInput] = useState<CockpitInput | null>(null);
   const [warnings, setWarnings] = useState<string[]>([]);
   const [loading, setLoading] = useState(false);
@@ -113,7 +132,25 @@ export function useAdventureCockpit(
         if (!payload.input) {
           throw new Error('Réponse cockpit incomplète.');
         }
-        setInput(payload.input);
+        // Phase 6 — ETA et consommation recalculées sur les FIXES GPS RÉELS :
+        // projection = maintenant + distance restante réelle × allure mesurée,
+        // charge = durée active + D+ réels (moteur fatigue A3). Sans fixes
+        // suffisants, les champs restent null — jamais une valeur inventée.
+        const pace = paceFromPositions(positions);
+        const aheadBehind = computeAheadBehindMinutes({
+          plannedEtaIso: payload.input.plan?.etaP50 ?? null,
+          paceMinPerKm: pace,
+          remainingDistanceKm,
+          nowIso: new Date().toISOString(),
+        });
+        const consumption = consumptionFromPositions(positions);
+        setInput({
+          ...payload.input,
+          prediction: payload.input.prediction
+            ? { ...payload.input.prediction, aheadBehindMinutes: aheadBehind }
+            : null,
+          consumption,
+        });
         setWarnings(Array.isArray(payload.warnings) ? payload.warnings : []);
         if (payload.recalc?.nextState) recalcStateRef.current = payload.recalc.nextState;
         setLastUpdatedAt(new Date().toISOString());
@@ -126,7 +163,7 @@ export function useAdventureCockpit(
         if (!forced) hasLoadedRef.current = true;
       }
     },
-    [adventureId, batteryLevel]
+    [adventureId, batteryLevel, remainingDistanceKm]
   );
 
   const refresh = useCallback(() => {

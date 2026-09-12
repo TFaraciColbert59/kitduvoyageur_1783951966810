@@ -25,6 +25,8 @@ export interface AdventureCockpitControlProps {
   fixes: readonly AdventureTrackingFix[];
   batteryLevel?: number | null;
   pendingSyncCount?: number;
+  /** Distance restante réelle (géométrie + progression) pour l'ETA live. */
+  remainingDistanceKm?: number | null;
 }
 
 export default function AdventureCockpitControl({
@@ -32,6 +34,7 @@ export default function AdventureCockpitControl({
   fixes,
   batteryLevel = null,
   pendingSyncCount = 0,
+  remainingDistanceKm = null,
 }: AdventureCockpitControlProps) {
   const reduceMotion = useReducedMotion();
   const [open, setOpen] = useState(false);
@@ -39,6 +42,7 @@ export default function AdventureCockpitControl({
     adventureId,
     fixes,
     batteryLevel,
+    remainingDistanceKm,
   });
 
   if (!adventureId) return null;

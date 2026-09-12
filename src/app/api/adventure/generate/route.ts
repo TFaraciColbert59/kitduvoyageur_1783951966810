@@ -22,11 +22,16 @@ import {
 import { requiredPlanFor } from '@/features/adventure-intelligence/domain/entitlements';
 import { resolveUserEntitlements, generationQuotaFor } from '@/lib/entitlements/server';
 import { createSupabaseGenerationRequestStore } from '@/features/adventure-intelligence/server/generationRequests';
+import { rateLimit, rateLimitHeaders } from '@/lib/rate-limit';
 
 export const dynamic = 'force-dynamic';
 
 /** Longueur maximale tolérée d'une clé d'idempotence cliente. */
 const MAX_IDEMPOTENCY_KEY_LENGTH = 200;
+/** Limite anti-rafale distribuée par utilisateur (Phase 6, §9.11). */
+const GENERATE_BURST_LIMIT = 30;
+/** Fenêtre de la limite anti-rafale (5 min). */
+const GENERATE_BURST_WINDOW_MS = 5 * 60_000;
 
 const adventureConstraintSchema = z.object({
   id: z.string().min(1, 'locks[].id est requis'),
@@ -144,6 +149,32 @@ export async function POST(request: NextRequest) {
       return NextResponse.json(
         { error: 'Unauthorized', details: 'Session requise' },
         { status: 401 }
+      );
+    }
+
+    // Phase 6 (§9.11) — limite anti-rafale distribuée AVANT tout travail coûteux.
+    // Route payante : failMode `closed` — si Upstash est configuré mais
+    // injoignable, la génération est refusée (503), jamais laissée passer.
+    const burst = await rateLimit({
+      key: `adventure-generate:${user.id}`,
+      limit: GENERATE_BURST_LIMIT,
+      windowMs: GENERATE_BURST_WINDOW_MS,
+      failMode: 'closed',
+    });
+    if (burst.outcome === 'limited') {
+      return NextResponse.json(
+        {
+          error: 'Trop de requêtes',
+          details: 'adventure_generate_rate_limited',
+          retryAfterS: burst.retryAfterSeconds,
+        },
+        { status: 429, headers: rateLimitHeaders(burst) }
+      );
+    }
+    if (burst.outcome === 'unavailable') {
+      return NextResponse.json(
+        { error: 'Service temporairement indisponible', details: 'rate_limit_indisponible' },
+        { status: 503, headers: rateLimitHeaders(burst) }
       );
     }
 

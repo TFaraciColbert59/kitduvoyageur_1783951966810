@@ -12,6 +12,8 @@ import type { TrailPoiRow } from '../server/liveSources';
 import type { TerrainLiveReport } from '@/features/terrain-live/lib/terrainDisplay';
 
 export const OFFLINE_PACK_VERSION = 1;
+/** Versions de format que ce client sait lire et écrire (Phase 6). */
+export const OFFLINE_PACK_SUPPORTED_VERSIONS: readonly number[] = [1];
 export const MAX_OFFLINE_PACK_SEGMENTS = 500;
 export const MAX_OFFLINE_PACK_POIS = 150;
 export const MAX_OFFLINE_PACK_TERRAIN = 50;
@@ -69,4 +71,70 @@ export interface OfflineAdventurePack {
   pois: TrailPoiRow[];
   terrain: TerrainLiveReport[];
   warnings: string[];
+}
+
+/** Version de pack supportée par ce client (jamais une supposition). */
+export function isOfflinePackVersionSupported(version: unknown): boolean {
+  return (
+    typeof version === 'number' &&
+    Number.isInteger(version) &&
+    OFFLINE_PACK_SUPPORTED_VERSIONS.includes(version)
+  );
+}
+
+export type OfflinePackValidation =
+  | { ok: true; pack: OfflineAdventurePack }
+  | { ok: false; error: string };
+
+/** Erreur de version explicite, jamais silencieuse. */
+export const OFFLINE_PACK_VERSION_UNSUPPORTED_PREFIX = 'offline_pack_version_non_supportee';
+
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return typeof value === 'object' && value !== null && !Array.isArray(value);
+}
+
+function isNonEmptyString(value: unknown): value is string {
+  return typeof value === 'string' && value.trim().length > 0;
+}
+
+/**
+ * Valide un pack hors-ligne reçu ou relu : version supportée, champs racine
+ * présents et typés, tableaux non falsifiés. Aucune réparation implicite :
+ * un pack incompatible est refusé avec une raison explicite.
+ */
+export function validateOfflineAdventurePack(value: unknown): OfflinePackValidation {
+  if (!isRecord(value)) return { ok: false, error: 'pack_non_objet' };
+  if (!isOfflinePackVersionSupported(value.version)) {
+    return {
+      ok: false,
+      error: `${OFFLINE_PACK_VERSION_UNSUPPORTED_PREFIX}:${String(value.version)}`,
+    };
+  }
+  if (!isNonEmptyString(value.adventureId)) return { ok: false, error: 'adventureId_manquant' };
+  if (!isNonEmptyString(value.userId)) return { ok: false, error: 'userId_manquant' };
+  if (!isNonEmptyString(value.generatedAt) || !Number.isFinite(Date.parse(value.generatedAt))) {
+    return { ok: false, error: 'generatedAt_invalide' };
+  }
+  if (typeof value.sizeBytes !== 'number' || !Number.isFinite(value.sizeBytes) || value.sizeBytes < 0) {
+    return { ok: false, error: 'sizeBytes_invalide' };
+  }
+  if (typeof value.capped !== 'boolean') return { ok: false, error: 'capped_invalide' };
+  if (!isRecord(value.plan) || !isNonEmptyString(value.plan.id)) {
+    return { ok: false, error: 'plan_manquant' };
+  }
+  const predictions = value.predictions;
+  if (
+    !isRecord(predictions) ||
+    !Array.isArray(predictions.route) ||
+    !Array.isArray(predictions.segments)
+  ) {
+    return { ok: false, error: 'predictions_manquantes' };
+  }
+  if (!Array.isArray(value.segments)) return { ok: false, error: 'segments_manquants' };
+  if (!Array.isArray(value.pois)) return { ok: false, error: 'pois_manquants' };
+  if (!Array.isArray(value.terrain)) return { ok: false, error: 'terrain_manquant' };
+  if (!Array.isArray(value.warnings) || !value.warnings.every((entry) => typeof entry === 'string')) {
+    return { ok: false, error: 'warnings_invalides' };
+  }
+  return { ok: true, pack: value as unknown as OfflineAdventurePack };
 }

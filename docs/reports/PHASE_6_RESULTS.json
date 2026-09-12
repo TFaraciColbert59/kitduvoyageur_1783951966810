@@ -1,0 +1,119 @@
+{
+  "phase": 6,
+  "phase_name": "Cockpit terrain et hors-ligne",
+  "date": "2026-09-12",
+  "sha_tested": "2e1b7379",
+  "branch": "feat/phase6-cockpit-offline",
+  "base": "fa2042a5 (main)",
+  "environment": {
+    "local": "Windows win32, Node v24.18.0, vitest 4.1.11, Supabase local Docker postgres 127.0.0.1:54322",
+    "ci": "non executee (pas de PR sur cette branche)",
+    "upstash": "INSUFFICIENT_DATA -- compte non provisionne, UPSTASH_REDIS_REST_URL/TOKEN absents ; tests avec fetch mocke",
+    "physique": "INSUFFICIENT_DATA -- tests terrain reels (mode avion, redemarrage app native, batterie faible) non realises"
+  },
+  "audit": {
+    "couvert_a13": [
+      "cockpit relie au plan selectionne (Phase 3 createTripFromAutogenIntent + select_adventure_plan_route + gate phase3_route_navigable)",
+      "GPS fixes reels (GPSService watchPosition, TrackingEngine filtrage outliers, projection closestOnRoute sur geometrie reelle)",
+      "sortie de route via RPC PostGIS get_route_deviation (polling 15 s, debounce 2, 50 m / retour 30 m)",
+      "auto-pause 120 s, GPS_WEAK, batterie faible",
+      "Terrain Live (carte, signalements, meteo, flag terrain_live)",
+      "pack hors-ligne + worker sync (priorite, backoff, dead-letter, reprise crash, navigator.locks, idempotence SHA-256 + registre offline_sync_operations)",
+      "predictions ETA P50/P90 persistees, difficulte personnelle, allure mesuree sur fixes"
+    ],
+    "note_audit": "La mission mentionne une RPC a13_offline_sync : inexistante sous ce nom dans le depot. La synchro passe par POST /api/adventure/offline/sync + table offline_sync_operations (migration 20260911460000).",
+    "manques_traites": [
+      "rate limiting distribue (Upstash REST + repli memoire + fail-safe open/closed) sur 6 routes",
+      "pack hors-ligne versionne : validation structurelle + refus des versions non supportees (save, read, fetch)",
+      "conflits de sync champ par champ (union positions/POI, metriques monotones, identites, statuts terminaux)",
+      "chiffrement local WebCrypto AES-GCM cle non extractible (brouillon session active)",
+      "reroutage sur geometrie reelle uniquement (revérification phase3_route_navigable + select_atomique)",
+      "ETA avance/retard + consommation (charge A3) recalculees sur fixes GPS reels"
+    ],
+    "manques_non_traites": [
+      "detection automatique depart/arrivee de session (depart manuel, arrivee = POI ou arret manuel)",
+      "fournisseur de tuiles commercial avec contrat",
+      "tests terrain physiques"
+    ]
+  },
+  "deliverables": {
+    "rate_limit": [
+      "src/lib/rate-limit/index.ts",
+      "src/lib/rate-limit/memoryStore.ts",
+      "src/lib/rate-limit/upstashStore.ts"
+    ],
+    "rate_limit_routes": [
+      "src/app/api/terrain/conditions/route.ts",
+      "src/app/api/adventure/generate/route.ts",
+      "src/app/api/adventure/offline/sync/route.ts",
+      "src/app/api/ai/jobs/route.ts",
+      "src/app/api/ai/chat-completion/route.ts",
+      "src/app/api/terrain/reports/route.ts"
+    ],
+    "offline": [
+      "src/features/adventure-intelligence/domain/offlinePack.ts",
+      "src/features/adventure-intelligence/offline/pack.ts",
+      "src/features/adventure-intelligence/domain/syncMerge.ts",
+      "src/features/adventure-intelligence/server/offlineSync.ts"
+    ],
+    "crypto": [
+      "src/lib/security/localVault.ts",
+      "src/features/hiking/controllers/HikingController.ts"
+    ],
+    "reroute": [
+      "src/features/adventure-intelligence/domain/reroute.ts",
+      "src/features/adventure-intelligence/actions/rerouteAdventurePlanRoute.ts"
+    ],
+    "eta_consommation": [
+      "src/features/adventure-intelligence/domain/cockpitLive.ts",
+      "src/features/adventure-intelligence/domain/cockpit.ts",
+      "src/features/adventure-intelligence/ui/useAdventureCockpit.ts",
+      "src/features/adventure-intelligence/ui/AdventureCockpit.tsx",
+      "src/features/adventure-intelligence/ui/AdventureCockpitControl.tsx",
+      "src/features/hiking/components/HikingCockpitPage.tsx"
+    ]
+  },
+  "fail_safe_policy": {
+    "non_configure": "repli memoire fenetre fixe (comportement best-effort conserve)",
+    "configure_injoignable_closed": "503 explicite (unavailable), aucune requete laissee passer -- adventure/generate, ai/jobs, ai/chat-completion",
+    "configure_injoignable_open": "repli memoire degrade signale (X-RateLimit-Degraded) -- terrain/conditions, terrain/reports, offline/sync",
+    "timeout_ms": 750,
+    "upstash_commands": ["INCR key", "PEXPIRE key ms NX", "PTTL key"]
+  },
+  "evidence": {
+    "type_check": { "command": "npm run type-check", "result": "0 erreur" },
+    "lint": { "command": "npm run lint", "result": "0 erreur (warnings preexistants)" },
+    "vitest_full": { "command": "npm run test", "result": "303 fichiers (299 passed / 4 skipped), 2125 tests passed / 27 skipped, 0 failed" },
+    "pgtap_full": {
+      "command": "npx supabase test db --db-url postgresql://postgres:postgres@127.0.0.1:54322/postgres",
+      "result": "Files=18, Tests=340, Result: PASS"
+    },
+    "new_tests": {
+      "tests/lib/rate-limit.spec.ts": 8,
+      "tests/lib/local-vault.spec.ts": 6,
+      "tests/adventure-intelligence/offline-pack-version.spec.ts": 6,
+      "tests/adventure-intelligence/sync-merge.spec.ts": 6,
+      "tests/adventure-intelligence/reroute-action.spec.ts": 7,
+      "tests/adventure-intelligence/cockpit-live-eta.spec.ts": 4,
+      "tests/adventure-intelligence/offline-resilience.spec.ts": 4,
+      "total": 41
+    }
+  },
+  "migration": "aucune (toutes les RPC/table requises existent deja : phase3_route_navigable, phase3_search_navigable_routes, select_adventure_plan_route, offline_sync_operations)",
+  "snapshots": "aucun -- aucun spec visuel/a11y ne couvre le cockpit ou la randonnee ; la ligne 'Charge consommee' n'apparait qu'avec des fixes reels",
+  "limitations": [
+    "Upstash non provisionne : integration reseau reelle non testee (fetch mocke uniquement)",
+    "donnees locales encore en clair hors brouillon de session : caches Dexie A13, tripOfflineSyncQueue (localStorage synchrone), OfflineManager legacy",
+    "action de reroutage non branchee dans l'UI hors-trace (serveur teste, aucun bouton ne l'appelle)",
+    "depart/arrivee de session non automatises",
+    "tests terrain physiques et fournisseur de tuiles = humain/externe non realise",
+    "aucun run CI/E2E distant (pas de PR)"
+  ],
+  "residual_risks": [
+    "si Upstash est configure mais tombe, les routes closed renvoient 503 (choix assume) : prevoir alerte observabilite",
+    "un rollback applicatif apres chiffrement rend les brouillons deja chiffres illisibles (purge locale necessaire)",
+    "la qualite du reroutage depend de la couverture hiking_routes (chantier geographique distinct)"
+  ],
+  "decision": "PASS_LOCAL_DISTANT_INSUFFICIENT_DATA",
+  "responsible": "agent autonome Phase 6 (audit/implementation/tests) ; validation humaine requise pour Upstash, tuiles, terrain et juridique"
+}

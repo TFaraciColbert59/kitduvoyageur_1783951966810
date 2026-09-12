@@ -21,6 +21,8 @@ import {
 } from './syncWorker';
 import {
   MAX_OFFLINE_PACK_BYTES,
+  OFFLINE_PACK_VERSION_UNSUPPORTED_PREFIX,
+  validateOfflineAdventurePack,
   type OfflineAdventurePack,
 } from '../domain/offlinePack';
 
@@ -100,27 +102,39 @@ export interface SaveOfflinePackResult {
   stored: boolean;
   entries: number;
   sizeBytes: number;
+  /** Raison explicite d'un refus (`incompatible_pack`, `pack_trop_gros`). */
+  reason?: string;
 }
 
 /**
  * Écrit le pack dans la base Dexie de l'utilisateur (store par store) après
  * avoir retiré les entrées de la même aventure — idempotent, jamais de
- * résidu d'une version précédente.
+ * résidu d'une version précédente. Phase 6 : un pack invalide ou d'une
+ * version non supportée est REFUSÉ avant toute écriture.
  */
 export async function saveOfflinePack(
   db: AdventureOfflineDb,
   pack: OfflineAdventurePack,
   options: { maxBytes?: number } = {}
 ): Promise<SaveOfflinePackResult> {
-  if (!shouldStoreOfflinePack(pack, options.maxBytes)) {
-    return { stored: false, entries: 0, sizeBytes: pack.sizeBytes };
+  const validation = validateOfflineAdventurePack(pack);
+  if (!validation.ok) {
+    return {
+      stored: false,
+      entries: 0,
+      sizeBytes: typeof pack?.sizeBytes === 'number' ? pack.sizeBytes : 0,
+      reason: validation.error,
+    };
   }
-  const caches = packCacheEntries(pack);
-  const prefix = `${pack.adventureId}:`;
+  if (!shouldStoreOfflinePack(validation.pack, options.maxBytes)) {
+    return { stored: false, entries: 0, sizeBytes: validation.pack.sizeBytes, reason: 'pack_trop_gros' };
+  }
+  const caches = packCacheEntries(validation.pack);
+  const prefix = `${validation.pack.adventureId}:`;
   const tables = CACHE_TABLES.map((name) => db[name]);
 
   await db.transaction('rw', tables, async () => {
-    await db.offline_adventures.delete(pack.adventureId);
+    await db.offline_adventures.delete(validation.pack.adventureId);
     for (const table of [
       db.offline_routes,
       db.offline_segments,
@@ -145,7 +159,7 @@ export async function saveOfflinePack(
     caches.predictions.length +
     caches.pois.length +
     caches.terrainEvents.length;
-  return { stored: true, entries, sizeBytes: pack.sizeBytes };
+  return { stored: true, entries, sizeBytes: validation.pack.sizeBytes };
 }
 
 /** Retire du cache toutes les entrées d'une aventure (jamais un autre). */
@@ -170,13 +184,26 @@ export async function clearOfflinePack(
   });
 }
 
-/** Relit un pack complet depuis Dexie (état hors-ligne), `null` si absent. */
-export async function readOfflinePack(
+/** Statut de relecture d'un pack : présent/valide, absent, ou incompatible. */
+export type ReadOfflinePackStatus = 'ok' | 'missing' | 'incompatible';
+
+export interface ReadOfflinePackResult {
+  status: ReadOfflinePackStatus;
+  pack: OfflineAdventurePack | null;
+  /** Raison explicite quand `status === 'incompatible'`. */
+  error?: string;
+}
+
+/**
+ * Relit et VALIDE un pack depuis Dexie (Phase 6). Un pack d'une version non
+ * supportée n'est jamais servi : `status: 'incompatible'` + raison explicite.
+ */
+export async function readOfflinePackValidated(
   db: AdventureOfflineDb,
   adventureId: string
-): Promise<OfflineAdventurePack | null> {
+): Promise<ReadOfflinePackResult> {
   const header = await db.offline_adventures.get(adventureId);
-  if (!header) return null;
+  if (!header) return { status: 'missing', pack: null };
   const prefix = `${adventureId}:`;
   const [routes, segments, predictions, pois, terrainEvents] = await Promise.all([
     db.offline_routes.where('id').startsWith(prefix).toArray(),
@@ -185,19 +212,9 @@ export async function readOfflinePack(
     db.offline_pois.where('id').startsWith(prefix).toArray(),
     db.offline_terrain_events.where('id').startsWith(prefix).toArray(),
   ]);
-  const meta = header.payload as {
-    version: OfflineAdventurePack['version'];
-    adventureId: string;
-    userId: string;
-    generatedAt: string;
-    sizeBytes: number;
-    capped: boolean;
-    plan: OfflineAdventurePack['plan'];
-    planVersion: OfflineAdventurePack['planVersion'];
-    warnings: string[];
-  };
+  const meta = header.payload as Record<string, unknown>;
 
-  return {
+  const candidate = {
     version: meta.version,
     adventureId: meta.adventureId,
     userId: meta.userId,
@@ -205,18 +222,30 @@ export async function readOfflinePack(
     sizeBytes: meta.sizeBytes,
     capped: meta.capped,
     plan: meta.plan,
-    planVersion: meta.planVersion,
-    segments: segments.map((row) => row.payload as OfflineAdventurePack['segments'][number]),
+    planVersion: meta.planVersion ?? null,
+    segments: segments.map((row) => row.payload),
     predictions: {
-      route: routes.map((row) => row.payload as Record<string, unknown>),
-      segments: predictions.map((row) => row.payload as Record<string, unknown>),
+      route: routes.map((row) => row.payload),
+      segments: predictions.map((row) => row.payload),
     },
-    pois: pois.map((row) => row.payload as OfflineAdventurePack['pois'][number]),
-    terrain: terrainEvents.map(
-      (row) => row.payload as OfflineAdventurePack['terrain'][number]
-    ),
+    pois: pois.map((row) => row.payload),
+    terrain: terrainEvents.map((row) => row.payload),
     warnings: meta.warnings,
   };
+
+  const validation = validateOfflineAdventurePack(candidate);
+  if (!validation.ok) return { status: 'incompatible', pack: null, error: validation.error };
+  return { status: 'ok', pack: validation.pack };
+}
+
+/** Relit un pack complet depuis Dexie (état hors-ligne), `null` si absent ou
+ *  incompatible (préférer `readOfflinePackValidated` pour connaître la raison). */
+export async function readOfflinePack(
+  db: AdventureOfflineDb,
+  adventureId: string
+): Promise<OfflineAdventurePack | null> {
+  const result = await readOfflinePackValidated(db, adventureId);
+  return result.pack;
 }
 
 /** Télécharge le pack réel depuis la route dédiée (auth de session). */
@@ -231,11 +260,17 @@ export async function offlinePackRequest(
   if (!response.ok) {
     throw new Error(`Pack hors-ligne indisponible (${response.status}).`);
   }
-  const payload = (await response.json()) as { pack?: OfflineAdventurePack };
-  if (!payload.pack || typeof payload.pack.version !== 'number') {
-    throw new Error('Pack hors-ligne invalide.');
+  const payload = (await response.json()) as { pack?: unknown };
+  const validation = validateOfflineAdventurePack(payload.pack);
+  if (!validation.ok) {
+    if (validation.error.startsWith(OFFLINE_PACK_VERSION_UNSUPPORTED_PREFIX)) {
+      throw new Error(
+        `Pack hors-ligne incompatible (${validation.error}). Mettez l’application à jour.`
+      );
+    }
+    throw new Error(`Pack hors-ligne invalide (${validation.error}).`);
   }
-  return payload.pack;
+  return validation.pack;
 }
 
 /** Télécharge puis stocke le pack dans Dexie (par utilisateur). */

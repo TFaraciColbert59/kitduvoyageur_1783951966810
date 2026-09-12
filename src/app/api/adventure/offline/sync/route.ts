@@ -8,9 +8,14 @@ import {
   syncOfflineBatch,
 } from '@/features/adventure-intelligence/server/offlineSync';
 import type { OfflineOperation } from '@/features/adventure-intelligence/offline/operations';
+import { rateLimit, rateLimitHeaders } from '@/lib/rate-limit';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
+
+/** Phase 6 (§9.11) — limite anti-rafale de synchronisation par utilisateur. */
+const OFFLINE_SYNC_LIMIT = 120;
+const OFFLINE_SYNC_WINDOW_MS = 5 * 60_000;
 
 const queueStores = [
   'offline_reports_queue',
@@ -57,6 +62,22 @@ export async function POST(request: NextRequest) {
       return NextResponse.json(
         { error: 'Unauthorized', details: 'Session requise' },
         { status: 401 }
+      );
+    }
+
+    // Phase 6 (§9.11) — failMode `open` assumé : la synchronisation de données
+    // terrain prime sur la protection anti-abus en cas d'Upstash indisponible
+    // (les écritures restent validées et idempotentes côté serveur).
+    const limit = await rateLimit({
+      key: `offline-sync:${user.id}`,
+      limit: OFFLINE_SYNC_LIMIT,
+      windowMs: OFFLINE_SYNC_WINDOW_MS,
+      failMode: 'open',
+    });
+    if (limit.outcome === 'limited') {
+      return NextResponse.json(
+        { error: 'Trop de requêtes', details: 'offline_sync_rate_limited' },
+        { status: 429, headers: rateLimitHeaders(limit) }
       );
     }
 

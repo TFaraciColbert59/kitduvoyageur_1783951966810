@@ -3,8 +3,13 @@ import { completion } from '@rocketnew/llm-sdk';
 import { createClient } from '@/lib/supabase/server';
 import { askAI } from '@/lib/ai/askAI';
 import { resolveAiMode, derivePromptAndSystem, buildSsePayload } from '@/lib/ai/requestMode';
+import { clientIpFromHeaders, rateLimit, rateLimitHeaders } from '@/lib/rate-limit';
 
 export const dynamic = 'force-dynamic';
+
+/** Phase 6 (§9.11) — limite anti-rafale de la route IA payante (30/h). */
+const CHAT_COMPLETION_LIMIT = 30;
+const CHAT_COMPLETION_WINDOW_MS = 60 * 60_000;
 
 /**
  * Point d'entrée IA unique de LKDV.
@@ -68,6 +73,28 @@ export async function POST(request: NextRequest) {
         );
       }
       userId = user.id;
+    }
+
+    // Phase 6 (§9.11) — route IA payante : limite distribuée fail-closed.
+    // Identité de session en production, IP sinon (développement/tests).
+    const limitIdentifier = userId ?? clientIpFromHeaders(request.headers);
+    const limited = await rateLimit({
+      key: `ai-chat-completion:${limitIdentifier}`,
+      limit: CHAT_COMPLETION_LIMIT,
+      windowMs: CHAT_COMPLETION_WINDOW_MS,
+      failMode: 'closed',
+    });
+    if (limited.outcome === 'limited') {
+      return NextResponse.json(
+        { error: 'Trop de requêtes', details: 'chat_completion_rate_limited' },
+        { status: 429, headers: rateLimitHeaders(limited) }
+      );
+    }
+    if (limited.outcome === 'unavailable') {
+      return NextResponse.json(
+        { error: 'Service temporairement indisponible', details: 'rate_limit_indisponible' },
+        { status: 503, headers: rateLimitHeaders(limited) }
+      );
     }
 
     rawBody = await request.json();
