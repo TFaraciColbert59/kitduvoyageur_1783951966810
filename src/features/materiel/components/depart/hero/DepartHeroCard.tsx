@@ -59,6 +59,12 @@ export function DepartHeroCard({
   const startsAt = depart?.startsAt ?? null;
   const activity = depart?.activityType ?? null;
 
+  const assignedKit = depart?.assignedKit;
+  const selectKits =
+    assignedKit && kits && !kits.some((kit) => kit.id === assignedKit.id)
+      ? [{ id: assignedKit.id, name: assignedKit.name }, ...kits]
+      : kits;
+
   const dateLabel = startsAt
     ? `Départ le ${new Date(startsAt).toLocaleDateString('fr-FR', { day: 'numeric', month: 'short' })}`
     : 'Date à fixer';
@@ -193,11 +199,9 @@ export function DepartHeroCard({
             onChange={(event) => onSelectKit?.(event.target.value)}
             className="glass-sub-card ml-auto max-w-[45%] truncate rounded-full px-2 py-1 text-[10px] font-semibold uppercase tracking-[0.14em] text-[var(--lkv-text-primary)] outline-none"
           >
-            {kits.map((kit) => (
+            {selectKits?.map((kit) => (
               <option key={kit.id} value={kit.id}>
-                {kit.id === depart?.assignedKit?.id && depart.assignedKit.name
-                  ? depart.assignedKit.name
-                  : kit.name}
+                {kit.id === assignedKit?.id && assignedKit.name ? assignedKit.name : kit.name}
               </option>
             ))}
           </select>

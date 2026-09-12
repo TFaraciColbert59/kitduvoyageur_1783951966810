@@ -54,27 +54,34 @@ describe('DepartHeroCard', () => {
 });
 
 describe('DepartHeroCard — sélecteur de kit', () => {
-  const showcaseDepart = {
-    ...depart,
-    assignedKit: { id: 'tmb-4j', name: 'Kit de départ', totalWeightG: 4100, items: [] },
-  } as unknown as DepartDetail;
+  const renderSelector = (assignedKit: { id: string; name: string }) =>
+    renderToStaticMarkup(
+      React.createElement(DepartHeroCard, {
+        depart: {
+          ...depart,
+          assignedKit: { ...assignedKit, totalWeightG: 4100, items: [] },
+        } as unknown as DepartDetail,
+        identity: { title: 'Boucle Val de Sambre et Maroilles', subtitle: null, fromTrail: true },
+        kits: [
+          { id: 'tmb-4j', name: 'Tour du Mont-Blanc — 4j Bivouac' },
+          { id: 'other', name: 'Kit hiver' },
+        ],
+        isOnline: true,
+        onOpenSheet: () => {},
+        onShare: () => {},
+      })
+    );
 
-  const html = renderToStaticMarkup(
-    React.createElement(DepartHeroCard, {
-      depart: showcaseDepart,
-      identity: { title: 'Boucle Val de Sambre et Maroilles', subtitle: null, fromTrail: true },
-      kits: [
-        { id: 'tmb-4j', name: 'Tour du Mont-Blanc — 4j Bivouac' },
-        { id: 'other', name: 'Kit hiver' },
-      ],
-      isOnline: true,
-      onOpenSheet: () => {},
-      onShare: () => {},
-    })
-  );
-
-  it('affiche le nom du kit réellement assigné, pas le libellé showcase', () => {
-    expect(html).toContain('Kit de départ');
+  it('A — option correspondante : libellé remplacé par le nom du kit assigné', () => {
+    const html = renderSelector({ id: 'tmb-4j', name: 'Kit de départ' });
+    expect(html).toContain('<option value="tmb-4j" selected="">Kit de départ</option>');
     expect(html).not.toContain('Tour du Mont-Blanc — 4j Bivouac');
+  });
+
+  it('B — id sans option correspondante : option courante prépendée et sélectionnée', () => {
+    const html = renderSelector({ id: 'none', name: 'Kit de départ' });
+    expect(html).toMatch(/<option value="none" selected[^>]*>Kit de départ/);
+    expect(html).not.toMatch(/<option value="tmb-4j" selected/);
+    expect(html).toContain('Tour du Mont-Blanc — 4j Bivouac');
   });
 });
