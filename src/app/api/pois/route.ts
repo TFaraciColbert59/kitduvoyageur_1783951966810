@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getPois } from '@/lib/queries/pois';
 import { enforceRateLimit } from '@/lib/rate-limit/routes';
 import { clientIpFromHeaders } from '@/lib/rate-limit';
-import { parseOptionalBbox, parseOptionalNumber, VIEWPORT_RATE_LIMIT } from '@/lib/geo/requestViewport';
+import { parseOptionalBbox, parseOptionalNumberInRange, VIEWPORT_PARAM_RANGES, VIEWPORT_RATE_LIMIT } from '@/lib/geo/requestViewport';
 
 export const revalidate = 60;
 
@@ -30,9 +30,9 @@ export async function GET(request: NextRequest) {
   const category = searchParams.get('category');
 
   // Nombres stricts (NaN ⇒ 400, jamais transmis au query builder).
-  const zoomResult = parseOptionalNumber(searchParams, 'zoom');
+  const zoomResult = parseOptionalNumberInRange(searchParams, 'zoom', VIEWPORT_PARAM_RANGES.zoom.min, VIEWPORT_PARAM_RANGES.zoom.max);
   if (!zoomResult.ok) return zoomResult.response;
-  const limitResult = parseOptionalNumber(searchParams, 'limit');
+  const limitResult = parseOptionalNumberInRange(searchParams, 'limit', VIEWPORT_PARAM_RANGES.limit.min, VIEWPORT_PARAM_RANGES.limit.max);
   if (!limitResult.ok) return limitResult.response;
   const zoom = zoomResult.value;
   const limit = limitResult.value;
@@ -56,6 +56,6 @@ export async function GET(request: NextRequest) {
     return response;
   } catch (error: any) {
     console.error('API /api/pois error:', error);
-    return NextResponse.json({ error: error.message || 'Internal Server Error' }, { status: 500 });
+    return NextResponse.json({ error: 'Internal Server Error' }, { status: 500 });
   }
 }

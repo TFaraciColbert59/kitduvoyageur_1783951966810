@@ -72,6 +72,7 @@ export function useViewportData(
         setData(EMPTY_DATA);
         setError(null);
         setHasFetched(true);
+        setIsFetching(false);
         return;
       }
 

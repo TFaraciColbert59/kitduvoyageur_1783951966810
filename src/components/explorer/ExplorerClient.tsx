@@ -306,7 +306,7 @@ export default function ExplorerClient({
       }
       return true;
     });
-  }, [trails, queriedBbox, searchQuery, activeDifficulties, activeDuration, familyOnly, activeCategory]);
+  }, [trails, queriedBbox, unifiedMap, searchQuery, activeDifficulties, activeDuration, familyOnly, activeCategory]);
 
   // Handlers
   const handleTrailClick = useCallback((trail: MapTrail) => {
@@ -453,7 +453,7 @@ export default function ExplorerClient({
                   {isActive && (
                     <motion.div
                       layoutId="explorerNavActive"
-                      className="absolute inset-0 rounded-full bg-white/60 border border-white/80 shadow-2xs -z-0"
+                      className="absolute inset-0 rounded-full bg-[rgba(255,255,255,0.92)] border border-white/80 shadow-2xs -z-0"
                       transition={{ type: 'spring', stiffness: 450, damping: 32 }}
                     />
                   )}
@@ -473,7 +473,7 @@ export default function ExplorerClient({
           <div className="flex items-center gap-2 shrink-0">
             <Link
               href="/randonnee-active"
-              className="inline-flex items-center gap-1.5 bg-gradient-to-b from-[#17402C]/15 to-[#17402C]/06 text-[#17402C] border border-white/40 shadow-inner text-[11px] font-bold px-3.5 py-1.5 rounded-full hover:bg-[#17402C]/20 active:opacity-85 transition-all cursor-pointer select-none"
+              className="glass-capsule-btn inline-flex items-center gap-1.5 text-[11px] font-bold !py-1.5 !px-3.5 cursor-pointer select-none active:opacity-85"
               title="Lancer le mode randonnée GPS"
             >
               <span>🥾</span>
@@ -515,7 +515,7 @@ export default function ExplorerClient({
 
       {/* ── 2B. BOUTON FLOTTANT DYNAMIQUE : « RECHERCHER DANS CETTE ZONE » ── */}
       <AnimatePresence>
-        {showSearchHereButton && (
+        {showSearchHereButton && !unifiedMap && (
           <motion.div
             initial={{ opacity: 0, y: -16, scale: 0.9 }}
             animate={{ opacity: 1, y: 0, scale: 1 }}
@@ -584,7 +584,7 @@ export default function ExplorerClient({
               animate={{ opacity: 1, x: 0 }}
               exit={{ opacity: 0, x: 100 }}
               transition={{ type: 'spring', stiffness: 400, damping: 35 }}
-              className="pointer-events-auto w-[320px] sm:w-[350px] p-4 rounded-l-3xl bg-white/95 border-y border-l border-white/80 shadow-2xl backdrop-blur-xl space-y-3"
+              className="pointer-events-auto w-[320px] sm:w-[350px] p-4 rounded-l-3xl bg-[rgba(255,255,255,0.92)] border-y border-l border-white/80 shadow-2xl backdrop-blur-xl space-y-3"
               style={{
                 boxShadow: '-8px 16px 36px -6px rgba(23, 64, 44, 0.16), inset 0 1px 1.5px rgba(255, 255, 255, 0.95)',
               }}
@@ -660,7 +660,7 @@ export default function ExplorerClient({
               placeholder="Rechercher sentier, massif…"
               value={searchQuery}
               onChange={(e) => handleSearchChange(e.target.value)}
-              className="w-full h-8 pl-8 pr-6 rounded-full text-xs font-semibold text-[#17402C] placeholder:text-[#5A7064]/70 bg-white/60 hover:bg-white/80 focus:bg-white/95 border border-white/70 shadow-2xs outline-none focus-visible:ring-1 focus-visible:ring-[#17402C]/40 transition-all"
+              className="w-full h-8 pl-8 pr-6 rounded-full text-xs font-semibold text-[#17402C] placeholder:text-[#5A7064]/70 bg-[rgba(255,255,255,0.92)] hover:bg-white focus:bg-white border border-white/70 shadow-2xs outline-none focus-visible:ring-1 focus-visible:ring-[#17402C]/40 transition-all"
             />
             {searchQuery && (
               <button

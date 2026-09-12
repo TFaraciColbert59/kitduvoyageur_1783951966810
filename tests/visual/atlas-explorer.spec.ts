@@ -74,6 +74,14 @@ test.describe('Explorateur unifié (MapLibre globe)', () => {
 
     const mapRoot = page.getByTestId('unified-explorer-map');
     await expect(mapRoot).toHaveAttribute('data-atlas-ready', 'true', { timeout: 45_000 });
+
+    // Le hook de test n'existe qu'en dev : en CI (build prod + npm start), ce
+    // test est explicitement ignoré plutôt que d'échouer à tort.
+    const hasTestHook = await page.evaluate(() =>
+      Boolean((window as unknown as { __atlasTestMap?: unknown }).__atlasTestMap)
+    );
+    test.skip(!hasTestHook, 'hook __atlasTestMap indisponible (build prod) — vérifié en dev.');
+
     await page.waitForTimeout(5_000); // viewport data (sentiers) chargés
 
     const clickPoint = await page.evaluate(() => {
@@ -119,6 +127,11 @@ test.describe('Explorateur unifié (MapLibre globe)', () => {
     await expect(mapRoot).toHaveAttribute('data-atlas-ready', 'true', { timeout: 45_000 });
     await page.waitForTimeout(3_000);
 
+    const hasTestHook = await page.evaluate(() =>
+      Boolean((window as unknown as { __atlasTestMap?: unknown }).__atlasTestMap)
+    );
+    test.skip(!hasTestHook, 'hook __atlasTestMap indisponible (build prod) — vérifié en dev.');
+
     // Palier continent : densité par pays (matview Phase 1).
     await page.evaluate(() => {
       const map = (window as unknown as { __atlasTestMap?: any }).__atlasTestMap;
@@ -150,5 +163,30 @@ test.describe('Explorateur unifié (MapLibre globe)', () => {
     await page.waitForTimeout(2_500);
     await page.screenshot({ path: path.join(OUT_DIR, 'atlas-globe-desktop.png') });
     await expect(page.getByTestId('unified-explorer-map')).toHaveAttribute('data-atlas-ready', 'true');
+  });
+
+  test('globe pays MapLibre monté sans pageerror (Earth)', async ({ page }, testInfo) => {
+    test.skip(testInfo.project.name !== 'desktop-chrome', 'smoke desktop');
+
+    const pageErrors: string[] = [];
+    page.on('pageerror', (error) => pageErrors.push(error.message));
+
+    await page.addInitScript(() => {
+      Object.defineProperty(navigator.serviceWorker, 'register', {
+        value: () => new Promise<never>(() => {}),
+        configurable: true,
+      });
+    });
+
+    await prepareVisualPage(page, '/pays');
+
+    // Globe MapLibre monté (même worker public que l'explorateur).
+    await expect(page.locator('canvas.maplibregl-canvas').first()).toBeVisible({ timeout: 45_000 });
+    // Alternative clavier (WCAG 2.1.1) présente.
+    await expect(
+      page.getByRole('combobox', { name: 'Choisir un pays à afficher' })
+    ).toBeAttached();
+
+    expect(pageErrors, pageErrors.join('\n')).toHaveLength(0);
   });
 });

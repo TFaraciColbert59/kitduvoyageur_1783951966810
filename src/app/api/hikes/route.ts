@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getTrails } from '@/lib/queries/trails';
 import { enforceRateLimit } from '@/lib/rate-limit/routes';
 import { clientIpFromHeaders } from '@/lib/rate-limit';
-import { parseOptionalBbox, parseOptionalNumber, VIEWPORT_RATE_LIMIT } from '@/lib/geo/requestViewport';
+import { parseOptionalBbox, parseOptionalNumberInRange, VIEWPORT_PARAM_RANGES, VIEWPORT_RATE_LIMIT } from '@/lib/geo/requestViewport';
 
 export const revalidate = 60;
 export const dynamic = 'force-dynamic';
@@ -34,13 +34,13 @@ export async function GET(request: NextRequest) {
   if (!viewport.ok) return viewport.response;
 
   // Filter params — nombres stricts (NaN ⇒ 400, jamais transmis à la RPC).
-  const minDistResult = parseOptionalNumber(searchParams, 'min_dist');
+  const minDistResult = parseOptionalNumberInRange(searchParams, 'min_dist', VIEWPORT_PARAM_RANGES.minDist.min, VIEWPORT_PARAM_RANGES.minDist.max);
   if (!minDistResult.ok) return minDistResult.response;
-  const maxDistResult = parseOptionalNumber(searchParams, 'max_dist');
+  const maxDistResult = parseOptionalNumberInRange(searchParams, 'max_dist', VIEWPORT_PARAM_RANGES.maxDist.min, VIEWPORT_PARAM_RANGES.maxDist.max);
   if (!maxDistResult.ok) return maxDistResult.response;
-  const limitResult = parseOptionalNumber(searchParams, 'limit');
+  const limitResult = parseOptionalNumberInRange(searchParams, 'limit', VIEWPORT_PARAM_RANGES.limit.min, VIEWPORT_PARAM_RANGES.limit.max);
   if (!limitResult.ok) return limitResult.response;
-  const zoomResult = parseOptionalNumber(searchParams, 'zoom');
+  const zoomResult = parseOptionalNumberInRange(searchParams, 'zoom', VIEWPORT_PARAM_RANGES.zoom.min, VIEWPORT_PARAM_RANGES.zoom.max);
   if (!zoomResult.ok) return zoomResult.response;
 
   const minDist = minDistResult.value ?? 2.0;
@@ -74,6 +74,6 @@ export async function GET(request: NextRequest) {
     return response;
   } catch (error: any) {
     console.error('API /api/hikes error:', error);
-    return NextResponse.json({ error: error.message || 'Internal Server Error' }, { status: 500 });
+    return NextResponse.json({ error: 'Internal Server Error' }, { status: 500 });
   }
 }

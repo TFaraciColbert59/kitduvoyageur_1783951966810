@@ -29,9 +29,10 @@ describe('ATLAS — requêtes viewport (Phase 3)', () => {
     expect(url.searchParams.get('limit')).toBe('300');
   });
 
-  it('applique les limites LOD par palier (région 150 / continent 60)', () => {
+  it('applique les limites LOD par palier (région 150 ; continent = densité seule, 0 fetch sentiers)', () => {
     expect(buildTrailsRequest({ ...LOCAL_VIEWPORT, zoom: 10 })?.limit).toBe(150);
-    expect(buildTrailsRequest({ ...LOCAL_VIEWPORT, zoom: 5 })?.limit).toBe(60);
+    expect(buildTrailsRequest({ ...LOCAL_VIEWPORT, zoom: 5 })).toBeNull();
+    expect(buildPoisRequest({ ...LOCAL_VIEWPORT, zoom: 5 })?.limit).toBe(VIEWPORT_POI_LIMITS.continent);
   });
 
   it('construit la requête POI avec le LOD POI existant (150/80/40)', () => {
