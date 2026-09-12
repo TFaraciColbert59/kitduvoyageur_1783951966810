@@ -47,6 +47,16 @@ const TrailDetailPanel = dynamic(() => import('@/components/explorer/TrailDetail
   ssr: false,
 });
 
+// CHANTIER ATLAS — moteur unique MapLibre (projection globe), activé par ?atlas=1.
+const UnifiedExplorerMap = dynamic(() => import('@/components/map/UnifiedExplorerMap'), {
+  ssr: false,
+  loading: () => (
+    <div className="w-full h-full flex items-center justify-center bg-[#FBFAF6]">
+      <div className="w-8 h-8 border-[3px] border-[#17402C] border-t-transparent rounded-full animate-spin" />
+    </div>
+  ),
+});
+
 // ── Navigation Links (Exactement identiques à la charte LKDV) ──────────────────
 
 const NAV_LINKS = [
@@ -72,11 +82,13 @@ import type { UnifiedPOI } from '@/lib/queries/pois';
 
 interface ExplorerClientProps {
   initialTrails: MapTrail[];
+  /** CHANTIER ATLAS — moteur cartographique unifié (MapLibre globe) au lieu de Leaflet. */
+  unifiedMap?: boolean;
 }
 
 // ── Component ─────────────────────────────────────────────────────────────────
 
-export default function ExplorerClient({ initialTrails }: ExplorerClientProps) {
+export default function ExplorerClient({ initialTrails, unifiedMap = false }: ExplorerClientProps) {
   const router = useRouter();
 
   // State
@@ -450,16 +462,28 @@ export default function ExplorerClient({ initialTrails }: ExplorerClientProps) {
 
       {/* ── 2. CARTE UNIQUE PLEIN ÉCRAN (100% FLUIDE) ── */}
       <div className="absolute inset-0 w-full h-full z-0 pointer-events-auto" style={{ width: '100%', height: '100%' }}>
-        <ExplorerMap
-          trails={filteredTrails}
-          pois={visiblePois}
-          selectedTrailId={selectedTrailId}
-          onTrailClick={handleTrailClick}
-          userLocation={userLocation}
-          onLocationUpdate={handleLocationUpdate}
-          onViewportChange={handleViewportChange}
-          safeControls
-        />
+        {unifiedMap ? (
+          <UnifiedExplorerMap
+            trails={filteredTrails}
+            selectedTrailId={selectedTrailId}
+            onTrailClick={handleTrailClick}
+            userLocation={userLocation}
+            onLocationUpdate={handleLocationUpdate}
+            onViewportChange={handleViewportChange}
+            safeControls
+          />
+        ) : (
+          <ExplorerMap
+            trails={filteredTrails}
+            pois={visiblePois}
+            selectedTrailId={selectedTrailId}
+            onTrailClick={handleTrailClick}
+            userLocation={userLocation}
+            onLocationUpdate={handleLocationUpdate}
+            onViewportChange={handleViewportChange}
+            safeControls
+          />
+        )}
       </div>
 
       {/* ── 2B. BOUTON FLOTTANT DYNAMIQUE : « RECHERCHER DANS CETTE ZONE » ── */}

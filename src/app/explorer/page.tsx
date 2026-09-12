@@ -6,7 +6,15 @@ import type { MapTrail } from '@/components/explorer/types';
 export const revalidate = 60;
 export const dynamic = 'force-dynamic';
 
-export default async function ExplorerPage() {
+interface ExplorerPageProps {
+  searchParams?: Promise<{ atlas?: string }>;
+}
+
+export default async function ExplorerPage({ searchParams }: ExplorerPageProps) {
+  const resolvedSearchParams = searchParams ? await searchParams : undefined;
+  // Switch interne CHANTIER ATLAS (remplacé par le feature flag en Phase 7).
+  const unifiedMap = resolvedSearchParams?.atlas === '1';
+
   let initialTrails: MapTrail[] = [];
   try {
     // Initial 2km bounds around Chamonix [45.9237, 6.8694]
@@ -21,5 +29,5 @@ export default async function ExplorerPage() {
     console.error('[ExplorerPage] Error fetching initial trails:', error);
   }
 
-  return <ExplorerClient initialTrails={initialTrails} />;
+  return <ExplorerClient initialTrails={initialTrails} unifiedMap={unifiedMap} />;
 }
