@@ -591,6 +591,7 @@ export default function HikingCockpitPage({ terrainEnabled = false }: HikingCock
                 adventureId={adventureIdParam}
                 fixes={hikingStore.positions}
                 batteryLevel={hikingStore.batteryLevel}
+                remainingDistanceKm={totalDistanceKm > 0 ? remainingDistanceKm : null}
               />
 
               {/* Geolocation Permission Request Modal */}

@@ -6,9 +6,9 @@
  * `offline_sync_operations` (migration additive A13) mémorise les opérations
  * déjà acquittées : un rejeu retourne `duplicate` sans réappliquer.
  *
- * Par opération : conflit résolu en last-write-wins sur `createdAt` (jamais
- * destructif — aucune suppression, uniquement insert/update), et une erreur
- * de transport/base laisse l'opération `failed` (le worker A11 applique son
+ * Par opération : conflit résolu CHAMP PAR CHAMP (`domain/syncMerge`) — jamais
+ * destructif : aucune suppression, uniquement insert/update. Une erreur de
+ * transport/base laisse l'opération `failed` (le worker A11 applique son
  * backoff puis dead-letter). Une opération invalide est `rejected` et
  * acquittée pour ne jamais boucler.
  */
@@ -26,13 +26,19 @@ import {
   type TerrainReportCategory,
 } from '../schemas/live.schema';
 import { createTerrainReport, createSupabaseTerrainReportsClient } from './terrainReports';
+import {
+  MAX_OFFLINE_SESSION_POSITIONS,
+  mergeDecisionFields,
+  mergeSessionFields,
+  type DecisionStatus,
+} from '../domain/syncMerge';
+
+export { MAX_OFFLINE_SESSION_POSITIONS };
 
 /** Nombre maximal d'opérations traitées par requête. */
 export const MAX_OFFLINE_SYNC_OPERATIONS = 50;
 /** Taille maximale d'un payload d'opération (octets sérialisés). */
 export const MAX_OFFLINE_SYNC_PAYLOAD_BYTES = 64 * 1024;
-/** Longueur maximale des positions horodatées rejouées par session. */
-export const MAX_OFFLINE_SESSION_POSITIONS = 5000;
 
 export type OfflineApplyOutcome = 'applied' | 'rejected' | 'failed';
 
@@ -296,40 +302,64 @@ export function createSupabaseOfflineSyncClient(
 
       const { data: existing, error: lookupError } = await supabase
         .from('hike_sessions')
-        .select('id, created_at')
+        .select(
+          'id, created_at, ended_at, distance_km, duration_seconds, elevation_gain_m, positions_timed, poi_events, route_id, kit_id, carnet_id'
+        )
         .eq('user_id', userId)
         .eq('started_at', startedAt)
         .maybeSingle();
       if (lookupError) throw new Error(lookupError.message);
 
       if (existing) {
-        const existingCreated = Date.parse(String((existing as { created_at?: unknown }).created_at));
-        const incomingCreated = Date.parse(operation.createdAt);
-        if (
-          Number.isFinite(existingCreated) &&
-          Number.isFinite(incomingCreated) &&
-          incomingCreated <= existingCreated
-        ) {
+        // Phase 6 — fusion CHAMP PAR CHAMP : union des positions/POI, maximum
+        // des instants et métriques monotones, identités jamais écrasées par un
+        // rejeu plus pauvre. Aucun écrasement destructeur.
+        const row = existing as Record<string, unknown>;
+        const merge = mergeSessionFields(
+          {
+            startedAt,
+            endedAt: nonEmptyString(row.ended_at),
+            distanceKm: finiteNumber(row.distance_km),
+            durationSeconds: finiteNumber(row.duration_seconds),
+            elevationGainM: finiteNumber(row.elevation_gain_m),
+            positions: Array.isArray(row.positions_timed) ? row.positions_timed : [],
+            poiEvents: Array.isArray(row.poi_events) ? row.poi_events : [],
+            routeId: finiteNumber(row.route_id),
+            kitId: nonEmptyString(row.kit_id),
+            carnetId: nonEmptyString(row.carnet_id),
+          },
+          {
+            createdAt: operation.createdAt,
+            endedAt,
+            distanceKm,
+            durationSeconds,
+            elevationGainM: finiteNumber(payload.elevationGainM),
+            positions: timed ?? [],
+            poiEvents,
+            routeId: routeId != null ? Math.trunc(routeId) : null,
+            kitId: nonEmptyString(payload.kitId),
+            carnetId: nonEmptyString(payload.carnetId),
+          }
+        );
+        const sessionId = String((existing as { id?: unknown }).id);
+        if (merge.changedFields.length === 0) {
           return {
             outcome: 'applied',
-            detail: 'session_conservee_plus_recente',
-            result: { sessionId: String((existing as { id?: unknown }).id) },
+            detail: merge.detail,
+            result: { sessionId },
           };
         }
         const { error: updateError } = await supabase
           .from('hike_sessions')
-          .update({
-            ended_at: endedAt,
-            distance_km: distanceKm,
-            duration_seconds: Math.max(0, Math.trunc(durationSeconds)),
-            elevation_gain_m: finiteNumber(payload.elevationGainM),
-            positions_timed: timed && timed.length >= 2 ? timed : null,
-            poi_events: poiEvents,
-          })
-          .eq('id', String((existing as { id?: unknown }).id))
+          .update(merge.fields)
+          .eq('id', sessionId)
           .eq('user_id', userId);
         if (updateError) throw new Error(updateError.message);
-        return { outcome: 'applied', detail: 'session_mise_a_jour_last_write_wins' };
+        return {
+          outcome: 'applied',
+          detail: merge.detail,
+          result: { sessionId, updatedFields: merge.changedFields },
+        };
       }
 
       const { data: inserted, error: insertError } = await supabase
@@ -434,30 +464,42 @@ export function createSupabaseOfflineSyncClient(
 
       const { data: existing, error: lookupError } = await supabase
         .from('adventure_plan_decisions')
-        .select('id, created_at, status')
+        .select('id, created_at, status, decided_at')
         .eq('id', decisionId)
         .maybeSingle();
       if (lookupError) throw new Error(lookupError.message);
 
       if (existing) {
-        const existingCreated = Date.parse(
-          String((existing as { created_at?: unknown }).created_at)
+        // Phase 6 — fusion champ par champ : le statut le plus récent gagne,
+        // sauf résurrection interdite d'un statut terminal (rejected/expired).
+        const row = existing as Record<string, unknown>;
+        const existingStatus = DECISION_STATUSES.includes(
+          String(row.status) as (typeof DECISION_STATUSES)[number]
+        )
+          ? (String(row.status) as DecisionStatus)
+          : 'proposed';
+        const merge = mergeDecisionFields(
+          {
+            status: existingStatus,
+            decidedAt: nonEmptyString(row.decided_at),
+            createdAt: nonEmptyString(row.created_at),
+          },
+          {
+            status: status as DecisionStatus,
+            decidedAt: operation.createdAt,
+            createdAt: operation.createdAt,
+          }
         );
-        const incomingCreated = Date.parse(operation.createdAt);
-        if (
-          Number.isFinite(existingCreated) &&
-          Number.isFinite(incomingCreated) &&
-          incomingCreated <= existingCreated
-        ) {
+        if (!merge.changed) {
           return {
             outcome: 'applied',
-            detail: 'decision_conservee_plus_recente',
-            result: { status: String((existing as { status?: unknown }).status) },
+            detail: merge.detail,
+            result: { status: merge.status },
           };
         }
         const { error: updateError } = await supabase
           .from('adventure_plan_decisions')
-          .update({ status, decided_by: userId, decided_at: operation.createdAt })
+          .update({ status: merge.status, decided_by: userId, decided_at: merge.decidedAt })
           .eq('id', decisionId);
         if (updateError) {
           if (updateError.code === '42501') {
@@ -465,7 +507,7 @@ export function createSupabaseOfflineSyncClient(
           }
           throw new Error(updateError.message);
         }
-        return { outcome: 'applied', detail: 'decision_mise_a_jour_last_write_wins' };
+        return { outcome: 'applied', detail: merge.detail };
       }
 
       const { error: insertError } = await supabase.from('adventure_plan_decisions').insert({

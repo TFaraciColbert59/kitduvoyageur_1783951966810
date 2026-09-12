@@ -14,8 +14,14 @@ import {
 } from '@/features/adventure-intelligence/schemas/live.schema';
 import { MAX_PHOTO_BYTES } from '@/features/adventure-intelligence/domain/terrainLive';
 import { currentAdventureFeatureFlags } from '@/features/adventure-intelligence/server/featureFlags';
+import { rateLimit, rateLimitHeaders } from '@/lib/rate-limit';
 
 export const dynamic = 'force-dynamic';
+
+/** Phase 6 (§9.11) — limite anti-rafale par utilisateur (la modération DB
+ *  reste l'autorité métier : 10/h, 3/h pour un compte récent). */
+const TERRAIN_REPORTS_LIMIT = 20;
+const TERRAIN_REPORTS_WINDOW_MS = 60 * 60_000;
 
 const createReportSchema = z.object({
   category: terrainReportCategorySchema,
@@ -65,6 +71,23 @@ export async function POST(request: NextRequest) {
       return NextResponse.json(
         { error: 'Unauthorized', details: 'Session requise' },
         { status: 401 }
+      );
+    }
+
+    // Phase 6 (§9.11) — failMode `open` : la modération en base (compteurs
+    // réels par utilisateur) reste l'autorité ; si Upstash est indisponible,
+    // on laisse passer vers cette vérification plutôt que de perdre un
+    // signalement terrain légitime.
+    const limit = await rateLimit({
+      key: `terrain-reports:${user.id}`,
+      limit: TERRAIN_REPORTS_LIMIT,
+      windowMs: TERRAIN_REPORTS_WINDOW_MS,
+      failMode: 'open',
+    });
+    if (limit.outcome === 'limited') {
+      return NextResponse.json(
+        { error: 'Trop de requêtes', details: 'terrain_reports_rate_limited' },
+        { status: 429, headers: rateLimitHeaders(limit) }
       );
     }
 

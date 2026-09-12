@@ -98,6 +98,15 @@ function aheadBehindText(minutes: number | null): string | null {
   return minutes > 0 ? `${minutes} min d’avance` : `${Math.abs(minutes)} min de retard`;
 }
 
+/** Consommation live (charge A3) sur fixes réels — null si indisponible. */
+function consumptionText(view: ReturnType<typeof buildCockpitView>): string | null {
+  const consumption = view.consumption;
+  if (!consumption) return null;
+  return `Charge consommée ${Math.round(consumption.loadScore)}/100 · ${Math.round(
+    consumption.elevationGainM
+  )} m D+`;
+}
+
 export function AdventureCockpit({
   input,
   pendingSyncCount = 0,
@@ -117,6 +126,7 @@ export function AdventureCockpit({
   };
 
   const etaHint = aheadBehindText(view.eta.aheadBehindMinutes);
+  const consumptionHint = consumptionText(view);
   const turnaround = formatTime(view.turnaroundTime);
 
   return (
@@ -222,6 +232,9 @@ export function AdventureCockpit({
           {etaText(view.eta.p50, view.eta.p90)}
         </p>
         {etaHint && <p className="mt-0.5 text-[12px] text-[var(--lkv-text-secondary)]">{etaHint}</p>}
+        {consumptionHint && (
+          <p className="mt-1 text-[11px] text-[var(--lkv-text-muted)]">{consumptionHint}</p>
+        )}
       </section>
 
       {(view.difficulty.value != null || view.paceStrategy || turnaround) && (
