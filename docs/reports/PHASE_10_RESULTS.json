@@ -2,8 +2,8 @@
   "phase": 10,
   "phase_name": "Observabilite et capacite",
   "date": "2026-09-12",
-  "sha_branch": "base 79bb1ca0 (= origin/main, Phase 8) sur feat/phase10-observability",
-  "sha_pushed": "voir git log de feat/phase10-observability (commit final documente dans la reponse de mission)",
+  "sha_branch": "2c43344c (base 79bb1ca0 = origin/main, Phase 8) sur feat/phase10-observability",
+  "sha_pushed": "2c43344c -- pousse sur origin/feat/phase10-observability",
   "sha_merged": "aucun -- pas de PR (consigne), branche poussee pour revue",
   "environment": {
     "local": "Supabase local Docker 127.0.0.1:54322 / PostgREST 127.0.0.1:54321 + vitest + pgTAP + Node v24",
