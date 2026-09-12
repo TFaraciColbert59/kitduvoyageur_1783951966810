@@ -105,8 +105,8 @@ test.describe('Explorateur unifié (MapLibre globe)', () => {
     const box = await page.locator('canvas.maplibregl-canvas').boundingBox();
     await page.mouse.click(box!.x + clickPoint!.x, box!.y + clickPoint!.y);
 
-    // Sélection carte → carte compacte (CTA /hub/depart), puis fiche complète.
-    await expect(page.getByRole('button', { name: 'Préparer' }).first()).toBeVisible({ timeout: 15_000 });
+    // Sélection carte → carte compacte (CTA /preparer-sentier), puis fiche complète.
+    await expect(page.getByRole('link', { name: 'Préparer' }).first()).toBeVisible({ timeout: 15_000 });
     await page.getByRole('button', { name: 'Voir la fiche complète' }).click();
     await expect(page.getByText('Préparer le matériel').first()).toBeVisible({ timeout: 15_000 });
 

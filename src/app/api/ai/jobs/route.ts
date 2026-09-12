@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 import { createClient } from '@/lib/supabase/server';
 import { rateLimit, rateLimitHeaders } from '@/lib/rate-limit';
+import { activityEnrichmentJobSchema } from '@/lib/ai/features/activityEnrichment';
 
 export const dynamic = 'force-dynamic';
 
@@ -10,17 +11,24 @@ const AI_JOBS_LIMIT = 20;
 const AI_JOBS_WINDOW_MS = 60 * 60_000;
 
 /**
- * Enfilement de jobs IA asynchrones (Chantier C — récit post-randonnée).
+ * Enfilement de jobs IA asynchrones (Chantier C — récit post-randonnée ;
+ * Chantier « Préparer » — enrichissement d'activité).
  * Le client n'appelle JAMAIS le routeur IA : il dépose un job, le cron
  * (/api/cron/process-ai-jobs) le traite hors trafic. Échec = silencieux côté
  * randonnée (le job est simplement absent — dégradation gracieuse).
  * RLS : INSERT own (auth.uid() = user_id).
  */
 
-const enqueueJobSchema = z.object({
-  feature: z.literal('trail-narrative'),
-  payload: z.record(z.string(), z.unknown()),
-});
+const enqueueJobSchema = z.union([
+  z.object({
+    feature: z.literal('trail-narrative'),
+    payload: z.record(z.string(), z.unknown()),
+  }),
+  z.object({
+    feature: z.literal('activity-enrichment'),
+    payload: activityEnrichmentJobSchema,
+  }),
+]);
 
 export async function POST(request: NextRequest) {
   try {

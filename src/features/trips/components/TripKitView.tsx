@@ -1,7 +1,7 @@
 'use client';
 
 import Icon from '@/components/ui/Icon';
-import { useMemo, useState, useTransition, useRef } from 'react';
+import { useMemo, useState, useTransition, useRef, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import { useVirtualizer } from '@tanstack/react-virtual';
 import Link from 'next/link';
@@ -16,6 +16,8 @@ import type { InventoryItem } from '@/features/materiel/services/getInventory';
 import { cleanItemName } from '@/lib/cleanItemName';
 import { useHapticFeedback } from '@/hooks/useHapticFeedback';
 import { classifyKitCompleteness } from '../engine/kitCompletenessEngine';
+import { LiveArrivalReveal } from '@/features/hub/components/live/LiveArrivalReveal';
+import { useLiveArrivalReveal } from '@/features/hub/components/live/useLiveArrivalReveal';
 import {
   addCustomTripItemAction,
   deleteTripItemAction,
@@ -92,6 +94,8 @@ export function TripKitView({
   const [editError, setEditError] = useState<string | null>(null);
   const [busyPackedId, setBusyPackedId] = useState<string | null>(null);
   const { triggerHaptic } = useHapticFeedback();
+  // T10 — reveal des objets ajoutés en réel (bus live), section visible seulement.
+  const { liveIds, containerRef } = useLiveArrivalReveal<HTMLDivElement>('trip_items');
 
   // Phase 5 — complétude du kit : personnel / partagé / manquant + poids connus.
   const completeness = useMemo(
@@ -528,21 +532,24 @@ export function TripKitView({
             onEdit={setEditingItem}
             busyPackedId={busyPackedId}
             canEdit={trip.permissions.canEdit}
+            liveIds={liveIds}
+            containerRef={containerRef}
           />
         ) : (
-          <div className="divide-y divide-white/40">
-            {filteredItems.map((item) => (
-              <TripKitItemRow
-                key={item.id}
-                item={item}
-                imageUrl={imageByItemId.get(item.id) ?? null}
-                onDeleteItem={handleDeleteItem}
-                onTogglePacked={handleTogglePacked}
-                onEdit={setEditingItem}
-                busyPacked={busyPackedId === item.id}
-                ownerLabel={ownerLabel(item.owner_id)}
-                canEdit={trip.permissions.canEdit}
-              />
+          <div ref={containerRef} className="divide-y divide-white/40">
+            {filteredItems.map((item, index) => (
+              <LiveArrivalReveal key={item.id} id={item.id} liveIds={liveIds} index={index}>
+                <TripKitItemRow
+                  item={item}
+                  imageUrl={imageByItemId.get(item.id) ?? null}
+                  onDeleteItem={handleDeleteItem}
+                  onTogglePacked={handleTogglePacked}
+                  onEdit={setEditingItem}
+                  busyPacked={busyPackedId === item.id}
+                  ownerLabel={ownerLabel(item.owner_id)}
+                  canEdit={trip.permissions.canEdit}
+                />
+              </LiveArrivalReveal>
             ))}
           </div>
         )}
@@ -1234,6 +1241,8 @@ function VirtualTripKitItemList({
   onEdit,
   busyPackedId,
   canEdit,
+  liveIds,
+  containerRef,
 }: {
   items: TripItem[];
   imageByItemId: Map<string, string | null>;
@@ -1242,6 +1251,8 @@ function VirtualTripKitItemList({
   onEdit: (item: TripItem) => void;
   busyPackedId: string | null;
   canEdit: boolean;
+  liveIds: ReadonlySet<string>;
+  containerRef: (node: HTMLDivElement | null) => void;
 }) {
   const parentRef = useRef<HTMLDivElement>(null);
   const rowVirtualizer = useVirtualizer({
@@ -1250,9 +1261,18 @@ function VirtualTripKitItemList({
     estimateSize: () => 64,
     overscan: 6,
   });
+  // T10 fix — le portail de visibilité s'accroche au parent scrollé du
+  // virtualiseur (même callback ref stable que la liste non virtualisée).
+  const setScrollNode = useCallback(
+    (node: HTMLDivElement | null) => {
+      parentRef.current = node;
+      containerRef(node);
+    },
+    [containerRef]
+  );
 
   return (
-    <div ref={parentRef} className="max-h-[500px] overflow-y-auto no-scrollbar">
+    <div ref={setScrollNode} className="max-h-[500px] overflow-y-auto no-scrollbar">
       <div
         style={{
           height: `${rowVirtualizer.getTotalSize()}px`,
@@ -1274,16 +1294,20 @@ function VirtualTripKitItemList({
               }}
               className="border-b border-white/40"
             >
-              <TripKitItemRow
-                item={item}
-                imageUrl={imageByItemId.get(item.id) ?? null}
-                onDeleteItem={onDeleteItem}
-                onTogglePacked={onTogglePacked}
-                onEdit={onEdit}
-                busyPacked={busyPackedId === item.id}
-                ownerLabel={null}
-                canEdit={canEdit}
-              />
+              {/* Reveal du contenu à l'intérieur du wrapper mesuré : la
+                  géométrie du virtualiseur reste inchangée. */}
+              <LiveArrivalReveal id={item.id} liveIds={liveIds} index={virtualRow.index}>
+                <TripKitItemRow
+                  item={item}
+                  imageUrl={imageByItemId.get(item.id) ?? null}
+                  onDeleteItem={onDeleteItem}
+                  onTogglePacked={onTogglePacked}
+                  onEdit={onEdit}
+                  busyPacked={busyPackedId === item.id}
+                  ownerLabel={null}
+                  canEdit={canEdit}
+                />
+              </LiveArrivalReveal>
             </div>
           );
         })}

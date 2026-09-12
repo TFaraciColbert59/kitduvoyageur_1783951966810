@@ -4,6 +4,8 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import { ArrowLeft, ArrowRight, Check } from 'lucide-react';
 import { useHapticFeedback } from '@/hooks/useHapticFeedback';
 import type { GearCardData } from '../../../mobile/gearEngine';
+import { LiveArrivalReveal } from '../../live/LiveArrivalReveal';
+import { useLiveArrivalReveal } from '../../live/useLiveArrivalReveal';
 
 export interface GearPhotoCarouselProps {
   cards: GearCardData[];
@@ -13,6 +15,8 @@ export interface GearPhotoCarouselProps {
 
 export function GearPhotoCarousel({ cards, onSelect, heading = 'Équipement du sac' }: GearPhotoCarouselProps) {
   const { triggerHaptic } = useHapticFeedback();
+  // T10 — reveal des objets ajoutés en réel (bus live), section visible seulement.
+  const { liveIds, containerRef } = useLiveArrivalReveal<HTMLElement>('trip_items');
   const scrollRef = useRef<HTMLUListElement>(null);
   const [canLeft, setCanLeft] = useState(false);
   const [canRight, setCanRight] = useState(false);
@@ -40,7 +44,7 @@ export function GearPhotoCarousel({ cards, onSelect, heading = 'Équipement du s
   if (cards.length === 0) return null;
 
   return (
-    <section aria-label={heading}>
+    <section ref={containerRef} aria-label={heading}>
       <div className="mb-3 flex items-end justify-between gap-3">
         <div className="min-w-0">
           <p className="text-[10px] font-medium uppercase tracking-[0.14em] text-[var(--lkv-text-primary)]">
@@ -77,13 +81,14 @@ export function GearPhotoCarousel({ cards, onSelect, heading = 'Équipement du s
         onScroll={syncArrows}
         className="hub-hscroll -mx-4 flex list-none snap-x gap-3 overflow-x-auto px-4 pb-1 md:mx-0 md:px-0"
       >
-        {cards.map((card) => (
+        {cards.map((card, index) => (
           <li
             key={card.id}
             className="w-[72vw] max-w-[19rem] shrink-0 snap-start sm:w-[17rem] lg:w-[20rem]"
           >
-            <button
-              type="button"
+            <LiveArrivalReveal id={card.id} liveIds={liveIds} index={index}>
+              <button
+                type="button"
               onClick={() => {
                 triggerHaptic('light');
                 onSelect(card);
@@ -135,7 +140,8 @@ export function GearPhotoCarousel({ cards, onSelect, heading = 'Équipement du s
                 {card.quantity > 1 && <span className="tabular-nums">×{card.quantity}</span>}
                 {card.isConsumable && <span>consommable</span>}
               </span>
-            </button>
+              </button>
+            </LiveArrivalReveal>
           </li>
         ))}
       </ul>

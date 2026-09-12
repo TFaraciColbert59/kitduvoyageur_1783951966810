@@ -2,7 +2,6 @@
 
 import React, { useState, useCallback, useMemo, useRef, useEffect } from 'react';
 import dynamic from 'next/dynamic';
-import { useRouter } from 'next/navigation';
 import { useQuery } from '@tanstack/react-query';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Backpack } from 'lucide-react';
@@ -97,8 +96,6 @@ export default function ExplorerClient({
   unifiedMap = false,
   atlasDensity,
 }: ExplorerClientProps) {
-  const router = useRouter();
-
   // State
   const [selectedTrailId, setSelectedTrailId] = useState<string | null>(null);
   const [selectedTrail, setSelectedTrail] = useState<MapTrail | null>(null);
@@ -805,13 +802,13 @@ export default function ExplorerClient({
                 </div>
 
                 <div className="flex items-center gap-2 pt-1 border-t border-[#17402C]/08">
-                  <button
-                    type="button"
-                    onClick={() => router.push(`/hub/depart?id=none&route=${selectedTrail.id}`)}
+                  <Link
+                    href={`/preparer-sentier/${selectedTrail.id}`}
+                    prefetch={false}
                     className="glass-capsule-btn flex-1 !min-h-[36px] text-xs font-bold shadow-xs active:scale-[0.97] transition-all cursor-pointer"
                   >
                     <span>Préparer</span>
-                  </button>
+                  </Link>
                   <button
                     type="button"
                     onClick={() => setDetailPanelOpen(true)}

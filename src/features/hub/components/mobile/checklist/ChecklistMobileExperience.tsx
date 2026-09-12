@@ -15,6 +15,8 @@ import { BudgetRing } from '../budget/BudgetRing';
 import { GroupeChipsRow, type GroupeChipDef } from '../groupe/GroupeChipsRow';
 import { GroupeDrawer } from '../groupe/GroupeDrawer';
 import { GroupeRail } from '../groupe/GroupeRail';
+import { LiveArrivalReveal } from '../../live/LiveArrivalReveal';
+import { useLiveArrivalReveal } from '../../live/useLiveArrivalReveal';
 
 let checklistClient: ReturnType<typeof createClient> | null = null;
 function supabaseChecklistClient() {
@@ -38,6 +40,8 @@ type ChecklistFilter = 'all' | 'todo' | 'done';
 
 export function ChecklistMobileExperience({ tripId, daysUntilStart, items }: ChecklistMobileExperienceProps) {
   const { triggerHaptic } = useHapticFeedback();
+  // T10 — reveal des tâches ajoutées en réel (bus T9), section visible seulement.
+  const { liveIds, containerRef } = useLiveArrivalReveal<HTMLDivElement>('trip_checklist_items');
   const [rows, setRows] = useState<DatabaseTripChecklistItem[]>(items);
   useEffect(() => {
     setRows(items);
@@ -102,46 +106,48 @@ export function ChecklistMobileExperience({ tripId, daysUntilStart, items }: Che
     return true;
   });
 
-  const renderItem = (item: DatabaseTripChecklistItem) => {
+  const renderItem = (item: DatabaseTripChecklistItem, index: number) => {
     const done = item.done;
     return (
       <li key={item.id} className="shrink-0 snap-start">
-        <button
-          type="button"
-          onClick={() => toggleItem(item)}
-          aria-pressed={done}
-          aria-label={`${done ? 'Décocher' : 'Cocher'} ${item.label}`}
-          className={`flex h-[8.5rem] w-[13rem] flex-col rounded-[1.4rem] p-3 text-left transition-transform active:scale-[0.97] ${
-            done ? 'glass border-2 border-[var(--lkv-primary)]/30' : 'glass'
-          }`}
-        >
-          <span className="flex w-full items-start justify-between gap-2">
-            <span className="rounded-full bg-[var(--lkv-primary)]/10 px-2 py-0.5 text-[10px] font-bold text-[var(--lkv-primary)]">
-              {BUCKET_TITLES[item.due_offset_days >= 30 ? 'j30' : item.due_offset_days >= 8 ? 'j7' : 'j1'].subtitle}
-            </span>
-            {done ? (
-              <CheckCircle2 size={17} className="shrink-0 text-[var(--lkv-primary)]" aria-hidden="true" />
-            ) : (
-              <Circle size={17} className="shrink-0 text-[var(--lkv-text-primary)]/30" aria-hidden="true" />
-            )}
-          </span>
-          <span
-            className={`mt-2 line-clamp-3 text-[12.5px] font-bold leading-snug ${
-              done ? 'text-[var(--lkv-text-primary)]/50 line-through' : 'text-[var(--lkv-text-primary)]'
+        <LiveArrivalReveal id={item.id} liveIds={liveIds} index={index}>
+          <button
+            type="button"
+            onClick={() => toggleItem(item)}
+            aria-pressed={done}
+            aria-label={`${done ? 'Décocher' : 'Cocher'} ${item.label}`}
+            className={`flex h-[8.5rem] w-[13rem] flex-col rounded-[1.4rem] p-3 text-left transition-transform active:scale-[0.97] ${
+              done ? 'glass border-2 border-[var(--lkv-primary)]/30' : 'glass'
             }`}
           >
-            {item.label}
-          </span>
-          <span className="mt-auto text-[10px] font-medium text-[var(--lkv-text-primary)]/60">
-            {item.done ? 'Fait' : `J-${item.due_offset_days}`}
-          </span>
-        </button>
+            <span className="flex w-full items-start justify-between gap-2">
+              <span className="rounded-full bg-[var(--lkv-primary)]/10 px-2 py-0.5 text-[10px] font-bold text-[var(--lkv-primary)]">
+                {BUCKET_TITLES[item.due_offset_days >= 30 ? 'j30' : item.due_offset_days >= 8 ? 'j7' : 'j1'].subtitle}
+              </span>
+              {done ? (
+                <CheckCircle2 size={17} className="shrink-0 text-[var(--lkv-primary)]" aria-hidden="true" />
+              ) : (
+                <Circle size={17} className="shrink-0 text-[var(--lkv-text-primary)]/30" aria-hidden="true" />
+              )}
+            </span>
+            <span
+              className={`mt-2 line-clamp-3 text-[12.5px] font-bold leading-snug ${
+                done ? 'text-[var(--lkv-text-primary)]/50 line-through' : 'text-[var(--lkv-text-primary)]'
+              }`}
+            >
+              {item.label}
+            </span>
+            <span className="mt-auto text-[10px] font-medium text-[var(--lkv-text-primary)]/60">
+              {item.done ? 'Fait' : `J-${item.due_offset_days}`}
+            </span>
+          </button>
+        </LiveArrivalReveal>
       </li>
     );
   };
 
   return (
-    <div className="flex min-w-0 flex-col gap-5 pb-1">
+    <div ref={containerRef} className="flex min-w-0 flex-col gap-5 pb-1">
       <section className="glass relative overflow-hidden rounded-[1.75rem] p-4" aria-label="Checklist de préparation">
         <header className="flex items-start justify-between gap-2">
           <p className="text-[10px] font-medium uppercase tracking-[0.14em] text-[var(--lkv-text-primary)]/70">

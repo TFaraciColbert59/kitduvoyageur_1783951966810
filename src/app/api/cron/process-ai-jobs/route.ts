@@ -9,6 +9,8 @@ import {
   buildNarrativeFallback,
   TRAIL_NARRATIVE_SPEC,
 } from '@/lib/ai/features/trailNarrative';
+import { activityEnrichmentJobSchema } from '@/lib/ai/features/activityEnrichment';
+import { processActivityEnrichmentJob } from '@/features/trips/server/activityEnrichment/service';
 
 export const dynamic = 'force-dynamic';
 
@@ -21,6 +23,11 @@ export const dynamic = 'force-dynamic';
  * tentative (retry jusqu'à minuit, jamais d'erreur visible) ; échec provider →
  * attempts+1 puis re-pending (cap 5 tentatives côté SQL) ; succès → done +
  * écriture dans hike_sessions.narratives + web-push « carnet prêt ».
+ *
+ * `activity-enrichment` (Préparer) délègue à `processActivityEnrichmentJob` :
+ * quota → `deferred` (re-pending sans tentative), provider/transport → `retry`
+ * (re-pending avec tentative+1), échec définitif → `failed` tracé dans
+ * `trips.metadata`, succès → `done` + provenance dans les tables du voyage.
  */
 
 interface ProcessedCounts {
@@ -60,7 +67,65 @@ export async function POST(request: NextRequest) {
       payload: unknown;
       attempts: number;
     }[]) {
-      // 1. Feature inconnue ou payload invalide → failed définitif.
+      // 1. Dispatch par feature ; feature inconnue ou payload invalide → failed.
+      if (job.feature === 'activity-enrichment') {
+        const parsedEnrichment = activityEnrichmentJobSchema.safeParse(job.payload);
+        if (!parsedEnrichment.success) {
+          await supabase
+            .from('ai_jobs')
+            .update({ status: 'failed', result: { error: 'payload invalide' }, processed_at: new Date().toISOString() })
+            .eq('id', job.id);
+          counts.failed += 1;
+          continue;
+        }
+
+        // Quota, écritures et provenance sont gérés par le service (validation
+        // globale avant toute écriture) ; `deferred` = quota → re-pending SANS
+        // brûler une tentative, `retry` = provider/transport → tentative+1
+        // puis re-pending (miroir `trail-narrative`), `failed` = définitif
+        // (tracé absent, sortie hors schéma, activité introuvable).
+        const enrichment = await processActivityEnrichmentJob(job);
+        const enrichmentProcessedAt = new Date().toISOString();
+
+        if (enrichment.outcome === 'deferred') {
+          await supabase.from('ai_jobs').update({ status: 'pending' }).eq('id', job.id);
+          counts.deferredQuota += 1;
+          continue;
+        }
+        if (enrichment.outcome === 'retry') {
+          await supabase
+            .from('ai_jobs')
+            .update({ status: 'pending', attempts: job.attempts + 1, processed_at: enrichmentProcessedAt })
+            .eq('id', job.id);
+          counts.retryFailed += 1;
+          continue;
+        }
+        if (enrichment.outcome === 'failed') {
+          await supabase
+            .from('ai_jobs')
+            .update({
+              status: 'failed',
+              result: { error: enrichment.detail ?? 'enrichissement en échec' },
+              processed_at: enrichmentProcessedAt,
+            })
+            .eq('id', job.id);
+          counts.failed += 1;
+          continue;
+        }
+
+        await supabase
+          .from('ai_jobs')
+          .update({
+            status: 'done',
+            attempts: job.attempts + 1,
+            result: { detail: enrichment.detail ?? null },
+            processed_at: enrichmentProcessedAt,
+          })
+          .eq('id', job.id);
+        counts.done += 1;
+        continue;
+      }
+
       if (job.feature !== 'trail-narrative') {
         await supabase
           .from('ai_jobs')

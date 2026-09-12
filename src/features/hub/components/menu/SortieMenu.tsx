@@ -14,6 +14,7 @@ import { weatherLabel } from '@/features/materiel/services/getWeather';
 import HubMiniMap from '@/components/hub/HubMiniMap';
 import { MobileAdventureHub } from '../mobile/MobileAdventureHub';
 import { SortieMoment } from '../mobile/moments/SortieMoment';
+import { ActivityPreparationStatus } from '../live/ActivityPreparationStatus';
 import {
   buildSortieInfoChips,
   buildSortieSectionTiles,
@@ -28,6 +29,8 @@ import { calculateBudgetSummary } from '@/features/trips/engine/budgetEngine';
 import type { HubHikingContext, HubChecklistItem } from '../../server/getHubAdventureData';
 import type { TripItemImage } from '../../server/getTripItemImages';
 import type { TripPhase } from '@/features/trips/engine/temporalPhaseEngine';
+import { TripAffiliateSection } from '@/features/affiliation/components/TripAffiliateSection';
+import type { AffiliateLink } from '@/features/affiliation/types/affiliate.types';
 
 export interface SortieMenuProps {
   trip: TripFull;
@@ -42,6 +45,8 @@ export interface SortieMenuProps {
   itemImages?: TripItemImage[];
   /** Index du jour en cours (1-based, phase live) — journal & sécurité. */
   dayIndex?: number | null;
+  /** T8 — liens d'affiliation actifs du voyage (hub normal, hors partage token). */
+  affiliateLinks?: AffiliateLink[];
 }
 
 function soonestExpiry(docs: TripFull['documents']): { label: string; inDays: number } | null {
@@ -128,6 +133,7 @@ export function SortieMenu({
   checklist,
   itemImages = [],
   dayIndex = null,
+  affiliateLinks = [],
 }: SortieMenuProps) {
   const ref: HubAdventureRef = { nature: 'sortie', slug: trip.slug };
   const duration = getTripDuration(trip);
@@ -809,6 +815,7 @@ export function SortieMenu({
   return (
     <>
       <div className="hidden lg:flex h-[calc(100%-24px)] min-h-[680px] flex-col gap-3 overflow-hidden">
+        <ActivityPreparationStatus className="shrink-0" />
         <ActivityIdentityBar
           nature="sortie"
           name={trip.title}
@@ -825,7 +832,21 @@ export function SortieMenu({
         {phase === 'live' && <SosFloatingButton safetyHref={hubSectionHref(ref, 'safety')} />}
       </div>
 
+      {/* T8 — Affiliation du hub normal (phase prepare) : le hub desktop est un
+          bento sans scroll, la section est donc rendue sous le bento (le <main>
+          centre scrolle) ; le mobile la porte dans la feuille du moment. */}
+      {phase === 'prepare' && affiliateLinks.length > 0 && (
+        <div className="hidden lg:block">
+          <TripAffiliateSection
+            links={affiliateLinks}
+            tripId={trip.id}
+            countryNames={trip.destination_name ? [trip.destination_name] : []}
+          />
+        </div>
+      )}
+
       <MobileAdventureHub
+        rail={<ActivityPreparationStatus />}
         action={
           <NextActionCard
             actions={nextActions}
@@ -837,7 +858,13 @@ export function SortieMenu({
         chips={mobileChips}
         fill
       >
-        <SortieMoment trip={trip} context={momentContext} hiking={hiking} fillViewport />
+        <SortieMoment
+          trip={trip}
+          context={momentContext}
+          hiking={hiking}
+          fillViewport
+          affiliateLinks={phase === 'prepare' ? affiliateLinks : []}
+        />
 
         {phase === 'live' && <SosFloatingButton safetyHref={hubSectionHref(ref, 'safety')} />}
       </MobileAdventureHub>

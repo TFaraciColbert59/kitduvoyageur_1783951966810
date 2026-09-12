@@ -5,6 +5,8 @@ import type { MobileInfoChip, MobileSectionTile } from '../../mobile/mobileHubEn
 
 export interface MobileAdventureHubProps {
   action?: ReactNode;
+  /** T10 — rail de préparation live (sortie uniquement), en tête de hub. */
+  rail?: ReactNode;
   tiles: MobileSectionTile[];
   chips: MobileInfoChip[];
   children?: ReactNode;
@@ -12,13 +14,14 @@ export interface MobileAdventureHubProps {
   fill?: boolean;
 }
 
-export function MobileAdventureHub({ action, tiles, chips, children, fill = false }: MobileAdventureHubProps) {
+export function MobileAdventureHub({ action, rail, tiles, chips, children, fill = false }: MobileAdventureHubProps) {
   return (
     <div
       className={`flex min-w-0 flex-col gap-4 pt-1 pb-1 lg:hidden ${
         fill ? 'h-full min-h-0 flex-1' : ''
       }`}
     >
+      {rail}
       {action}
       <SectionCarousel tiles={tiles} />
       <InfoChipsRow chips={chips} />

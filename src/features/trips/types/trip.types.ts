@@ -106,6 +106,8 @@ export interface TripStep {
   distance_km: number | null;
   elevation_gain_m: number | null;
   elevation_loss_m: number | null;
+  /** Phase enrichissement (§4.3) — provenance / kind (moment, étape). */
+  metadata?: Record<string, unknown> | null;
   created_at: string;
   updated_at: string;
 }

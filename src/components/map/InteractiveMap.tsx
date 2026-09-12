@@ -1,6 +1,7 @@
 ﻿'use client';
 
 import React, { useEffect, useState, useMemo, useRef, useCallback } from 'react';
+import Link from 'next/link';
 import 'leaflet/dist/leaflet.css';
 import 'leaflet.markercluster/dist/MarkerCluster.css';
 import 'leaflet.markercluster/dist/MarkerCluster.Default.css';
@@ -1011,12 +1012,13 @@ export default function InteractiveMap() {
                   <span>🧭</span>
                   <span>Point de départ</span>
                 </a>
-                <a
-                  href={`/hub/depart?id=none&route=${selectedTrail.id}`}
+                <Link
+                  href={`/preparer-sentier/${selectedTrail.id}`}
+                  prefetch={false}
                   className="glass-capsule-btn flex-1 !min-h-[36px] text-xs font-bold flex items-center justify-center transition-all active:scale-95 no-underline"
                 >
                   Préparer
-                </a>
+                </Link>
               </div>
             </div>
           </div>
