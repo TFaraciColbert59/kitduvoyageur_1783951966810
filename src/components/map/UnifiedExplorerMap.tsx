@@ -272,6 +272,7 @@ export default function UnifiedExplorerMap({
           center: initialView.center,
           zoom: 1.6,
           minZoom: GLOBE_MIN_ZOOM,
+          renderWorldCopies: false,
           attributionControl: false,
           dragRotate: false,
           pitchWithRotate: false,
@@ -284,6 +285,17 @@ export default function UnifiedExplorerMap({
       }
       map = instance;
       mapRef.current = instance;
+
+      // MapLibre v6 (projection globe) n'applique pas `minZoom` au dézoom
+      // molette/pince : sans ce verrou, l'utilisateur descend sous le seuil et
+      // le monde se déplie en bandes répétées (plus de globe). On reclampe.
+      instance.setMinZoom(GLOBE_MIN_ZOOM);
+      instance.on('zoom', () => {
+        if (cancelled) return;
+        if (instance.getZoom() < GLOBE_MIN_ZOOM) {
+          instance.setZoom(GLOBE_MIN_ZOOM);
+        }
+      });
 
       // Hook de test (dev uniquement) : permet aux e2e/visuels de projeter des
       // coordonnées écran pour cliquer précisément sur un marqueur.
