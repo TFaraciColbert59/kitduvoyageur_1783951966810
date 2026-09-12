@@ -1,0 +1,31 @@
+=== F2.1 — inertie dragPan appliquée ===
+{
+  "enabled": true,
+  "options": {
+    "linearity": 0.3,
+    "maxSpeed": 1400,
+    "deceleration": 2500
+  }
+}
+
+=== F3.1 — raster-fade-duration épinglé sur les 3 couches ===
+{
+  "topo": 300,
+  "osm": 300,
+  "satellite": 300
+}
+
+=== F2.2 — haptique palier : zoom molette z1.6 → z5 (franchit world→continent) ===
+{
+  "zoom": 4.873200854233676,
+  "vibrations": [
+    10
+  ]
+}
+
+=== F3.2 — data-atlas-flying + blur carte pays pendant/après gesture ===
+pendant  : {"flying":"true","cardBlur":"none"}
+après    : {"flying":"false","cardBlur":"blur(10px) saturate(1.6)"}
+légende backdrop-filter : none (pas de blur natif sur .glass-pill — rien à couper)
+
+pageErrors: []

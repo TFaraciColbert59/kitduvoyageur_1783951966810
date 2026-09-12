@@ -16,10 +16,16 @@ import type { MapTrail } from '@/components/explorer/types';
 import { getDifficultyColor, isValidLatLng, sanitizeGeoJSON } from '@/components/explorer/types';
 import type { UnifiedPOI } from '@/lib/queries/pois';
 import { createMapStyle, type AtlasTileMode } from './engine/createMapStyle';
-import { prefersReducedMotion, easeToTarget, flyToTarget } from './engine/camera';
+import {
+  computeCountryFlight,
+  prefersReducedMotion,
+  easeToTarget,
+  flyToTarget,
+} from './engine/camera';
 import { resolveCountryName, resolveIsoA2 } from './engine/geo';
 import { registerAtlasMapImages } from './engine/icons';
-import { getPoiColor, MAP_COLORS } from './engine/mapTheme';
+import { getPoiColor, getZoomTier, MAP_COLORS, type ZoomTier } from './engine/mapTheme';
+import { useHapticFeedback } from '@/hooks/useHapticFeedback';
 import { buildCountryDensityFC, buildRegionDensityFC } from './layers/densityLayers';
 import type { CountryDensityRow, RegionDensityCell } from './layers/densityLayers';
 import { useViewportData } from './hooks/useViewportData';
@@ -198,6 +204,8 @@ export default function UnifiedExplorerMap({
   safeControls = false,
 }: UnifiedExplorerMapProps) {
   const containerRef = useRef<HTMLDivElement | null>(null);
+  /** Racine du composant : porte `data-atlas-flying` pendant tout geste caméra. */
+  const rootRef = useRef<HTMLDivElement | null>(null);
   const mapRef = useRef<MapLibreMap | null>(null);
   const trailsRef = useRef<MapTrail[]>([]);
   const poisRef = useRef<UnifiedPOI[]>([]);
@@ -211,6 +219,13 @@ export default function UnifiedExplorerMap({
     onViewportChange,
     onViewportData,
   });
+
+  // FLUIDITÉ F2 : retour haptique `selection` au franchissement de palier de
+  // zoom (world/continent/region/local), débouncé pour ne jamais vibrer en
+  // rafale. La référence garde le hook stable pour l'effet de création carte.
+  const { haptic } = useHapticFeedback();
+  const hapticRef = useRef(haptic);
+  hapticRef.current = haptic;
 
   const [ready, setReady] = useState(false);
   const [tileMode, setTileMode] = useState<AtlasTileMode>('topo');
@@ -281,6 +296,7 @@ export default function UnifiedExplorerMap({
     let cancelled = false;
     let map: MapLibreMap | null = null;
     let countriesAbort: AbortController | null = null;
+    let tierHapticTimer: number | null = null;
 
     const startTimer = window.setTimeout(() => {
       if (cancelled || !containerRef.current) return;
@@ -314,15 +330,48 @@ export default function UnifiedExplorerMap({
       map = instance;
       mapRef.current = instance;
 
+      // FLUIDITÉ F2 : inertie de pan guidée (valeurs officielles du README/d.ts
+      // maplibre : linearity 0.3, maxSpeed 1400, deceleration 2500) — le monde
+      // « glisse » après le geste au lieu de s'arrêter net.
+      instance.dragPan.enable({ linearity: 0.3, maxSpeed: 1400, deceleration: 2500 });
+
       // MapLibre v6 (projection globe) n'applique pas `minZoom` au dézoom
       // molette/pince : sans ce verrou, l'utilisateur descend sous le seuil et
       // le monde se déplie en bandes répétées (plus de globe). On reclampe.
       instance.setMinZoom(GLOBE_MIN_ZOOM);
+      let lastTier: ZoomTier | null = null;
+      let pendingTier: ZoomTier | null = null;
       instance.on('zoom', () => {
         if (cancelled) return;
         if (instance.getZoom() < GLOBE_MIN_ZOOM) {
           instance.setZoom(GLOBE_MIN_ZOOM);
+          return;
         }
+        // Haptique palier : déclenche après 300 ms de stabilisation dans le
+        // nouveau palier ; un aller-retour rapide sur la borne n'émet rien.
+        const tier = getZoomTier(instance.getZoom());
+        if (lastTier === null) {
+          lastTier = tier;
+          return;
+        }
+        if (tier === lastTier) {
+          pendingTier = null;
+          if (tierHapticTimer !== null) {
+            window.clearTimeout(tierHapticTimer);
+            tierHapticTimer = null;
+          }
+          return;
+        }
+        pendingTier = tier;
+        if (tierHapticTimer !== null) window.clearTimeout(tierHapticTimer);
+        tierHapticTimer = window.setTimeout(() => {
+          tierHapticTimer = null;
+          if (!cancelled && pendingTier !== null && pendingTier !== lastTier) {
+            lastTier = pendingTier;
+            hapticRef.current('selection');
+          }
+          pendingTier = null;
+        }, 300);
       });
 
       // Hook de test (dev uniquement) : permet aux e2e/visuels de projeter des
@@ -423,6 +472,15 @@ export default function UnifiedExplorerMap({
 
       instance.on('moveend', emitViewport);
       instance.on('zoomend', emitViewport);
+      // FLUIDITÉ F3 : bascule DOM (sans re-render React) pendant tout
+      // mouvement caméra — le CSS coupe alors le backdrop-filter des panneaux
+      // secondaires (le flou animé coûte cher au GPU mobile).
+      instance.on('movestart', () => {
+        if (rootRef.current) rootRef.current.dataset.atlasFlying = 'true';
+      });
+      instance.on('moveend', () => {
+        if (rootRef.current) rootRef.current.dataset.atlasFlying = 'false';
+      });
       instance.on('error', (event) => {
         console.error('[UnifiedExplorerMap] MapLibre error', event?.error ?? event);
       });
@@ -528,16 +586,32 @@ export default function UnifiedExplorerMap({
                 ? Number(density.trail_count)
                 : null,
           });
-          if (
-            density &&
-            isValidLatLng(density.centroid_lat, density.centroid_lng)
-          ) {
-            flyToTarget(current, {
-              center: [Number(density.centroid_lng), Number(density.centroid_lat)],
-              zoom: 4.6,
-              duration: 900,
-            });
-          }
+          // FLUIDITÉ F1 : toute sélection pays déclenche désormais le vol
+          // courbe (avant, seuls les pays avec centroïde densité — FR/BE —
+          // bougeaient la caméra ; les autres ouvraient la carte sans vol).
+          // Centroïde densité en priorité (cadrage constant), sinon le point
+          // tapé. Un seul appel caméra.
+          const target: [number, number] =
+            density && isValidLatLng(density.centroid_lat, density.centroid_lng)
+              ? [Number(density.centroid_lng), Number(density.centroid_lat)]
+              : [event.lngLat.lng, event.lngLat.lat];
+          const currentCenter = current.getCenter();
+          const flight = computeCountryFlight(
+            {
+              center: [currentCenter.lng, currentCenter.lat],
+              zoom: current.getZoom(),
+            },
+            { center: target, zoom: 4.6 },
+            {
+              isMobile:
+                typeof window !== 'undefined' && window.innerWidth < 768,
+            }
+          );
+          flyToTarget(current, {
+            center: target,
+            zoom: 4.6,
+            ...flight,
+          });
         });
         current.on('mouseenter', 'atlas-country-fill', () => {
           current.getCanvas().style.cursor = 'pointer';
@@ -560,6 +634,7 @@ export default function UnifiedExplorerMap({
     return () => {
       cancelled = true;
       window.clearTimeout(startTimer);
+      if (tierHapticTimer !== null) window.clearTimeout(tierHapticTimer);
       countriesAbort?.abort();
       if (map) {
         map.remove();
@@ -917,6 +992,7 @@ export default function UnifiedExplorerMap({
 
   return (
     <div
+      ref={rootRef}
       className="relative w-full h-full"
       data-testid="unified-explorer-map"
       data-atlas-ready={ready ? 'true' : 'false'}
@@ -1012,7 +1088,7 @@ export default function UnifiedExplorerMap({
           } z-[500] pointer-events-none`}
           data-atlas-density-legend="true"
         >
-          <div className="glass-pill text-[10px] font-semibold">
+          <div className="glass-pill text-[10px] font-semibold" data-atlas-glass="secondary">
             ● Densité de sentiers — taille ∝ nombre
           </div>
         </div>
@@ -1059,7 +1135,7 @@ export default function UnifiedExplorerMap({
           className="absolute left-3 top-[calc(env(safe-area-inset-top,0px)+72px)] md:left-auto md:right-3 md:top-20 z-[550] w-[236px]"
           data-atlas-country-card="true"
         >
-          <div className="glass rounded-2xl p-3.5">
+          <div className="glass rounded-2xl p-3.5" data-atlas-glass="secondary">
             <p className="glass-eyebrow">Pays</p>
             <h3 className="font-display font-bold text-[15px] text-[#17402C] mt-0.5">
               {selectedCountry.name || selectedCountry.iso}

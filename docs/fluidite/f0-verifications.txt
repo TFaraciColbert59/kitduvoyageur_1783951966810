@@ -1,0 +1,15 @@
+◇ injected env (11) from .env.local // tip: ⌘ custom filepath { path: '/custom/path/.env' }
+◇ injected env (1) from .env // tip: ⌘ custom filepath { path: '/custom/path/.env' }
+=== F0.2 — MESURE DES TRAJETS PAYS (centroïdes réels) ===
+trajet | distance km | Δzoom (5→4.6 simulé z5) | durée fixe actuelle | vitesse implicite
+FR→DE | 1387 | 0.4 | 900 ms | 1541 km/s
+FR→NP | 7698 | 0.4 | 900 ms | 8553 km/s
+FR→NZ | 19640 | 0.4 | 900 ms | 21822 km/s
+
+=== F0.1 — raster-fade-duration (maplibre-gl@6.4.1) ===
+{
+  "before": "(défaut implicite)",
+  "afterSet": 1000,
+  "afterSwitch": 1000
+}
+pageErrors: []

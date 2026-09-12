@@ -982,3 +982,57 @@ $ e2e atlas → 2 passed (3 × net::ERR_ABORTED)
 ```
 Rollback legacy : flag intouché (GEL) ; `ExplorerMap`/Leaflet non modifiés (`git diff` vide sur les fichiers legacy).
 
+
+## 2026-09-12 — CHANTIER FLUIDITÉ — phases F0-F4 (branche `chantier/atlas-fluidite`)
+
+> Périmètre GEL respecté : aucune couche, donnée, palette ni palier de zoom modifiés ; flag `explorer_unified_map_enabled` intouché. Un seul appel caméra par interaction (jamais d'enchaînement).
+
+### F0 — Vérifications empiriques AVANT réglage (`docs/fluidite/f0-verifications.txt`)
+- Distances réelles (centroïdes prod, haversine) : FR→DE 1 387 km · FR→NP 7 698 km · FR→NZ 19 640 km. À durée fixe 900 ms ⇒ vitesse implicite **1 541 → 21 822 km/s (14×)** : voilà précisément l'incohérence de perception corrigée en F1.
+- `raster-fade-duration` sur maplibre-gl@6.4.1 : absent par défaut (300 ms implicite), appliqué explicitement (1000) et **persiste après bascule de fond de carte**, zéro pageError ⇒ le bug historique 4.3.0→5.0.0-pre6 n'est pas présent, on peut épingler la valeur.
+
+### F1 — Vol pays courbe Van Wijk (`src/components/map/engine/camera.ts`)
+- TDD : 7 tests rouges → **11/11 verts** (`tests/map/camera.spec.ts`). Nouveaux exports purs : `haversineKm`, `computeCountryFlight`, `buildFlyToParams` (reduced-motion ⇒ `{center, zoom, duration: 0}` sans curve/speed).
+- **Correction de design pilotée par la mesure** : premier jet « bonus de vitesse sur les longues distances » = INVERSION prouvée en réel (vol Pacifique 1 063 ms < vol Atlantique 1 580 ms). Remplacé par : la distance **ralentit** légèrement, bornée [0.8, base] (base 1.2 desktop / 1.0 mobile), `curve 1.42`, `maxDuration 8000`, `minZoom 2`, `essential: true`.
+- **Trou UX comblé au passage (même geste)** : avant, seuls FR/BE (pays avec centroïde densité) déclenchaient un vol ; tous les autres ouvraient la carte sans bouger. Désormais cible = centroïde densité si disponible, sinon **le point tapé** (`event.lngLat`) — chaque sélection pays vole.
+- Preuve runtime (clics souris réels, horodatage `moveend` + série zoom 25 ms, `docs/fluidite/f1-vols-pays.txt` + captures `f1-vol-*.png`) :
+```
+FR→DE z5 (plat, 1 387 km)              : 482 ms   · fin zoom 4.60 · fin center 10.38, 51.11 (point tapé)
+Globe z1.2 → FR (~5 900 km, Δzoom 3.4) : 1 787 ms · fin zoom 4.60 · fin center -2.88, 42.46 (centroïde FR)
+Pacifique z1.2 → FR (~10 900 km)       : 2 219 ms · fin zoom 4.60 · fin center -2.88, 42.46
+```
+⇒ durées 482/1 787/2 219 ms pour 1 387/5 900/10 900 km : les longs trajets durent plus longtemps SANS à-coup, vitesse implicite 2 877→4 912 km/s (1.7× contre 14×), zéro pageError.
+
+### F2 — Inertie de pan + haptique palier
+- `instance.dragPan.enable({ linearity: 0.3, maxSpeed: 1400, deceleration: 2500 })` (valeurs officielles du d.ts maplibre — libellés `@defaultValue` inversés, écart documenté).
+- Haptique `selection` au franchissement des paliers `world/continent/region/local` (`getZoomTier`), débounce 300 ms, aller-retour sur la borne = aucun buzz ; `prefers-reduced-motion` déjà respecté par `src/lib/native/haptics.ts`.
+- Preuve runtime (`docs/fluidite/f2-f3-verifications.txt`) :
+```
+options inertie lues sur le handler : {"linearity":0.3,"maxSpeed":1400,"deceleration":2500} · enabled true
+zoom molette 1.6 → 4.87 (franchit world→continent) : vibrations = [10]  (UNE seule, pas de rafale)
+```
+
+### F3 — Fluidité visuelle pendant le mouvement
+- Bascule DOM `data-atlas-flying` sur la racine (aucun re-render React pendant le geste) ; CSS `src/styles/liquid-glass.css` : `[data-atlas-flying='true'] [data-atlas-glass='secondary'] { backdrop-filter: none }` — panneaux secondaires uniquement (carte pays, légende), les contrôles gardent leur verre.
+- `raster-fade-duration: 300` épinglé sur les 3 couches raster (défaut MapLibre explicité, vérifié F0).
+- Preuve runtime :
+```
+pendant le geste : flying=true  · carte pays backdrop-filter = none
+après le geste   : flying=false · carte pays backdrop-filter = blur(10px) saturate(1.6) (restauré)
+raster-fade-duration lu : topo=300 · osm=300 · satellite=300
+légende : .glass-pill n'a pas de backdrop-filter natif (rien à couper, documenté)
+```
+
+### F4 — Non-régression
+```
+$ npx tsc --noEmit → TSC_EXIT=0
+$ npm run lint     → LINT_EXIT=0 (1 warning préexistant queries-compte.ts)
+$ npx vitest run   → 2294 passed | 23 skipped (2317) ; 4 suites en échec = EXACTEMENT
+                     les 4 préexistantes documentées (a13-backtest-export, a14-healthcheck,
+                     a15-rollout, phase10-capacity) — +8 tests vs avant (caméra)
+$ npm run build    → ✓ Compiled · /explorer 16.3 kB / 265 kB · BUILD_EXIT=0
+$ playwright visuel (3 projets) → 8 passed, 10 skipped (skips par projet), 0 failed
+$ e2e atlas        → 2 passed (1er run : ERR_CONNECTION_REFUSED car le webServer visuel
+                     s'était arrêté — relancé après redémarrage dev, vert)
+```
+Rollback : retirer l'appel `computeCountryFlight`/les 3 options dragPan/les listeners `movestart`/`moveend`+règle CSS (`git revert` du merge F0-F4). Aucune migration ni flag touché.
