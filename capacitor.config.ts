@@ -2,6 +2,15 @@ import type { CapacitorConfig } from "@capacitor/cli";
 
 const serverUrl = process.env.CAPACITOR_SERVER_URL;
 
+if (!serverUrl) {
+  // Avertissement au sync/build Capacitor : sans serveur distant, la coquille
+  // native sert `public/index.html` (placeholder) au lieu de l'app déployée.
+  // Fichier lu uniquement par la CLI Capacitor : aucun effet côté web/client.
+  console.warn(
+    "[capacitor.config] CAPACITOR_SERVER_URL absente — l'app native chargera public/index.html (placeholder). Définir CAPACITOR_SERVER_URL avant `npx cap sync` (voir docs/mobile/ANDROID_RELEASE.md §5.1)."
+  );
+}
+
 const config: CapacitorConfig = {
   appId: "com.lekitduvoyageur.app",
   appName: "Le Kit du Voyageur",

@@ -23,6 +23,7 @@ import PageTransition from '@/components/ui/PageTransition';
 import { ConditionalCursor } from '@/components/ui/CustomCursor';
 import PrefetchRoutes from '@/components/PrefetchRoutes';
 import NativeAppBootstrap from '@/components/NativeAppBootstrap';
+import ServiceWorkerRegistration from '@/components/ServiceWorkerRegistration';
 import { ActiveTripProvider } from '@/features/trips/context/ActiveTripContext';
 import { getActiveTrip } from '@/features/trips/context/activeTripServer';
 import { ActiveAdventureProvider } from '@/features/hub/context/ActiveAdventureContext';
@@ -218,26 +219,6 @@ export default async function RootLayout({
         {/* Travelpayouts Drive — chargé uniquement après consentement (Z7) */}
         <TravelpayoutsDrive />
 
-        {process.env.NODE_ENV === 'production' && (
-          <script
-            id="service-worker-registration"
-            suppressHydrationWarning
-            dangerouslySetInnerHTML={{
-              __html: `
-                if ('serviceWorker' in navigator) {
-                  window.addEventListener('load', function() {
-                    navigator.serviceWorker.register('/sw.js').then(function(registration) {
-                      console.log('ServiceWorker registration successful with scope: ', registration.scope);
-                    }, function(err) {
-                      console.log('ServiceWorker registration failed: ', err);
-                    });
-                  });
-                }
-              `,
-            }}
-          />
-        )}
-
         {process.env.NODE_ENV !== 'production' && (
           // Dev : un service worker résiduel d'un run production peut servir du
           // HTML périmé pendant les redémarrages du serveur (hydratation cassée,
@@ -275,6 +256,9 @@ export default async function RootLayout({
                   <ErrorBoundaryWrapper>
                     <ReactQueryProvider>
                       <NativeAppBootstrap />
+                      {/* Service worker web (production) — jamais enregistré dans
+                          l'app Capacitor (garde `isNative()` côté client). */}
+                      <ServiceWorkerRegistration />
                       <KitSheetProvider>
                       <PrefetchRoutes />
                       <Suspense fallback={null}>
