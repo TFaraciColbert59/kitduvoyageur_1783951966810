@@ -1,0 +1,67 @@
+{
+  "phase": 4,
+  "phase_name": "Couverture mondiale, randonnées et POI",
+  "date": "2026-09-12",
+  "branch": "feat/phase4-coverage",
+  "base": "0a5d861e",
+  "commits": ["a9bc6a29", "b6a869cf", "704bf11d"],
+  "environment": {
+    "local": "Supabase Docker local + vitest (node)",
+    "distant": "INSUFFICIENT_DATA -- aucune donnée sous licence disponible, aucune écriture production"
+  },
+  "decision": "INSUFFICIENT_DATA",
+  "decision_reason": "Structure, pipeline et garde-fous livrés et testés ; données réelles et contrats de licence = décision humaine. Aucune région n'est déclarée couverte.",
+  "deliverables": {
+    "migration_coverage": "supabase/migrations/20260911560000_phase4_coverage.sql",
+    "migration_poi_offers": "supabase/migrations/20260911561000_phase4_poi_offers.sql",
+    "pgtap": "supabase/tests/database/phase4_coverage.test.sql (58 assertions)",
+    "pipeline": [
+      "scripts/coverage/licenseGate.ts",
+      "scripts/coverage/normalize.ts",
+      "scripts/coverage/validateGeo.ts",
+      "scripts/coverage/dedupe.ts",
+      "scripts/coverage/metrics.ts",
+      "scripts/coverage/segmentAttach.ts",
+      "scripts/coverage/poiImport.ts",
+      "scripts/coverage/autoValidate.ts",
+      "scripts/coverage/sampling.ts",
+      "scripts/coverage/publishPlan.ts",
+      "scripts/coverage/pipeline.ts",
+      "scripts/coverage/generate_matrix.ts"
+    ],
+    "tests": "tests/coverage/*.spec.ts (9 fichiers, 70 tests) + fixtures locales",
+    "offers_contract": "src/features/affiliation/engine/offersFreshness.ts + vue public.poi_offers_served",
+    "matrix": "docs/coverage/COVERAGE_MATRIX.md (générable via npm run coverage:matrix)"
+  },
+  "coverage_state": {
+    "regions_covered": 0,
+    "datasets_imported": 0,
+    "licenses_registered": 0,
+    "publication_feature_flag": "coverage_publication_enabled = false",
+    "note": "Aucune donnée géographique insérée par les migrations ; la matrice liste uniquement des not_covered."
+  },
+  "evidence": {
+    "type_check": "exit 0",
+    "lint": "exit 0 (0 erreur)",
+    "vitest_full": { "command": "npm run test", "result": "318 fichiers passés / 4 skipped ; 2259 tests passés / 27 skipped, 0 échec" },
+    "vitest_phase4": { "command": "npx vitest run tests/coverage", "result": "9 fichiers, 70 tests, 0 échec" },
+    "pgtap_full": { "command": "npx supabase test db --db-url postgresql://postgres:postgres@127.0.0.1:54322/postgres", "result": "Files=20, Tests=438, PASS" },
+    "pipeline_cli_dry_run": "11 étapes exécutées, publication refusée (flag désactivé)",
+    "invariants": "npm run verify:invariants : SUCCÈS"
+  },
+  "gates": {
+    "licence_obligatoire": "Import refusé sans licence enregistrée/active/prouvée (trigger coverage_guard_dataset_license).",
+    "covered": "Refusé sans dataset actif licencié, seuils explicites atteints, ruptures sous seuil et 20 parcours échantillonnés (trigger coverage_guard_region_status).",
+    "rollback": "coverage_rollback_region repromeut une version conservée (rolled_back), journalise dans coverage_dataset_events.",
+    "publication_flag": "Désactivé par défaut ; l'activation et la publication sont humaines (service_role/admin).",
+    "gpx_non_couvert": "Import GPX utilisateur possible via trip_steps ; la navigation reste fermée sans géométrie BDD navigable (phase3_route_navigable)."
+  },
+  "limitations": [
+    "Aucune donnée sous licence : aucun dataset importé, aucun seuil décidé par un humain, aucune licence enregistrée.",
+    "Pays cibles (IS/MA/IT/NP) absents de countries_geo local : FK volontairement bloquant tant que le référentiel réel n'est pas chargé.",
+    "La séparation offre/affiliation n'a pas de consommateur UI en Phase 4 : le contrat (vue + projection TS) est prêt, aucun prix/dispo n'est affiché.",
+    "Géométries validées par séquence de points (pas de ST_IsValid bibliothèque côté script) : le pipeline signale, la BDD reste l'autorité PostGIS."
+  ],
+  "snapshots": "Aucun (aucune UI modifiée).",
+  "responsible": "agents DATABASE/BACKEND + agent humain données/licences (contrats et seuils)"
+}
