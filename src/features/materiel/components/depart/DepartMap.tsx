@@ -339,7 +339,7 @@ export function DepartMap({ trail, height = '240px', className, embedded = false
 
         {/* Sélecteur de tuiles */}
         {showTilePicker && (
-          <div className="absolute top-[6.5rem] right-2.5 z-[401] p-1.5 rounded-2xl bg-white/95 dark:bg-black/90 shadow-xl border border-black/10 flex flex-col gap-1 text-[11px] font-semibold text-[var(--lkv-primary)]">
+          <div className="absolute top-2.5 right-14 z-[401] p-1.5 rounded-2xl bg-white/95 dark:bg-black/90 shadow-xl border border-black/10 flex flex-col gap-1 text-[11px] font-semibold text-[var(--lkv-primary)]">
             <button
               type="button"
               onClick={() => handleTileChange('topo')}
