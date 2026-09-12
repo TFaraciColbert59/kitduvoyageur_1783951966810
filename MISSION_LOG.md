@@ -814,3 +814,49 @@ Tests 2277 passed | 23 skipped (2300)
 ### Prochaine phase
 Phase 7 — Rollout mondial progressif (`chantier/atlas-7-rollout`) : flag `explorer_unified_map_enabled` (système existant + cohortes 5 %/25 %/100 %), gating serveur de `/explorer`, preuves de palier et rollback.
 
+## 2026-09-12 — CHANTIER ATLAS Phase 7 — Rollout mondial progressif (branche `chantier/atlas-7-rollout`)
+
+### Livrables
+- **Migration `20260912060000_atlas_rollout_flag.sql`** : flag `explorer_unified_map_enabled` (global, `false` = palier sûr), cohorte `feature_flag_cohorts` à 0 % (prête pour 5/25/100), et `GRANT EXECUTE ON current_feature_flags() TO anon` (le SSR de `/explorer` doit lire le flag sans session — données non sensibles).
+- **Lecture par cohortes** : `currentFeatureFlags()` (`src/features/hub/server/featureFlags.ts`) utilise `current_feature_flags_for(p_user_id)` quand une session existe (paliers 5 %/25 % pour les connectés, pattern adventure-intelligence existant), sinon les flags globaux ; fail-safe inchangé (`DEFAULT_FLAGS`).
+- **Gating serveur `/explorer`** : `resolveUnifiedMapEnabled({ flagEnabled, atlasParam })` (`src/lib/atlas/rollout.ts`, pur, testé) — `?atlas=1` = switch interne (tests/équipe), sinon flag global ; tout ce qui n'est pas exactement `true` garde le moteur legacy (**rollback instantané** sans redéploiement).
+- **Opération des paliers** (sans redéploiement) :
+  ```sql
+  -- 5 %
+  UPDATE public.feature_flag_cohorts SET percentage = 5 WHERE flag_id = 'explorer_unified_map_enabled';
+  -- 25 %
+  UPDATE public.feature_flag_cohorts SET percentage = 25 WHERE flag_id = 'explorer_unified_map_enabled';
+  -- 100 % (global, tous visiteurs)
+  UPDATE public.feature_flags SET enabled = true, updated_at = now() WHERE id = 'explorer_unified_map_enabled';
+  -- Rollback immédiat : repasser enabled = false (les pages legacy sont intactes, ATLAS-R10).
+  ```
+
+### Preuves brutes
+```
+$ supabase db push --linked
+Applying migration 20260912060000_atlas_rollout_flag.sql...  Finished supabase db push.
+
+$ node scripts/atlas/verify-rollout-flag.mjs   (archive : docs/atlas/rollout-flag-20260912.txt)
+anon: {"id":"explorer_unified_map_enabled","enabled":false}
+service_role: {"id":"explorer_unified_map_enabled","enabled":false}
+[rollout] SUCCÈS (flag présent, lecture anonyme opérationnelle)
+
+$ npx tsc --noEmit → TSC_EXIT=0
+$ npm test → Tests 2281 passed | 23 skipped (2304)   # 4 suites préexistantes (ops/a13)
+$ npm run lint → LINT_EXIT=0
+
+$ npx playwright test --config=playwright.visual.config.ts tests/visual/atlas-explorer.spec.ts --project=desktop-chrome
+ok 1 rendu + zéro pageerror
+ok 2 clic direct carte → panneau détail
+ok 3 paliers continent → globe (densité, sélection pays)
+ok 4 globe pays MapLibre (Earth) + combobox clavier + zéro pageerror
+ok 5 sans flag ni switch : moteur legacy conservé (rollback instantané) — .leaflet-container visible, 0 unified
+5 passed (1.4m)
+```
+
+### Notes
+- Le palier public reste à **0 %** (flag global false) : le système est armé, l'avancement 5 % → 25 % → 100 % est une décision d'exploitation fondée sur la surveillance (aucun monitoring de trafic automatisé disponible ici — décision non prise à l'aveugle, conforme au chantier).
+
+### Prochaine phase
+Phase 8 — Décommissionnement (après 100 % stable) : redirections `/carte-interactive`/`/pays` → `/explorer`, retrait des composants legacy, décision Leaflet séparée.
+

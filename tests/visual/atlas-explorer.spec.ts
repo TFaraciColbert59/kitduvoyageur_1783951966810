@@ -189,4 +189,22 @@ test.describe('Explorateur unifié (MapLibre globe)', () => {
 
     expect(pageErrors, pageErrors.join('\n')).toHaveLength(0);
   });
+
+  test('sans flag ni switch : moteur legacy conservé (rollback instantané)', async ({ page }, testInfo) => {
+    test.skip(testInfo.project.name !== 'desktop-chrome', 'rollback vérifié sur desktop');
+
+    await page.addInitScript(() => {
+      Object.defineProperty(navigator.serviceWorker, 'register', {
+        value: () => new Promise<never>(() => {}),
+        configurable: true,
+      });
+    });
+
+    await prepareVisualPage(page, '/explorer');
+
+    // Flag global à false (palier sûr) : le moteur unifié ne doit PAS s'afficher.
+    await expect(page.getByTestId('unified-explorer-map')).toHaveCount(0);
+    // Le moteur legacy Leaflet reste fonctionnel (ATLAS-R10).
+    await expect(page.locator('.leaflet-container').first()).toBeVisible({ timeout: 45_000 });
+  });
 });

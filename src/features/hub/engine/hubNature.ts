@@ -22,6 +22,8 @@ export interface FeatureFlags {
   hub_possession_enabled: boolean;
   hub_sortie_enabled: boolean;
   hub_collectif_enabled: boolean;
+  /** CHANTIER ATLAS — moteur cartographique unifié sur /explorer. */
+  explorer_unified_map_enabled: boolean;
   updatedAt: number;
   source: 'rpc' | 'cache' | 'fallback';
 }
