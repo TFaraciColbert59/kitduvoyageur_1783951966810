@@ -1,5 +1,6 @@
 import React from 'react';
 import { getTrails } from '@/lib/queries/trails';
+import { getAtlasDensity, type AtlasDensity } from '@/lib/queries/atlas';
 import ExplorerClient from '@/components/explorer/ExplorerClient';
 import type { MapTrail } from '@/components/explorer/types';
 
@@ -29,5 +30,22 @@ export default async function ExplorerPage({ searchParams }: ExplorerPageProps) 
     console.error('[ExplorerPage] Error fetching initial trails:', error);
   }
 
-  return <ExplorerClient initialTrails={initialTrails} unifiedMap={unifiedMap} />;
+  // Paliers continent/région : densités matérialisées (Phase 1), uniquement utile
+  // au moteur unifié — aucun coût sur le chemin legacy Leaflet.
+  let atlasDensity: AtlasDensity = { countries: [], cells: [] };
+  if (unifiedMap) {
+    try {
+      atlasDensity = await getAtlasDensity();
+    } catch (error) {
+      console.error('[ExplorerPage] Error fetching atlas density:', error);
+    }
+  }
+
+  return (
+    <ExplorerClient
+      initialTrails={initialTrails}
+      unifiedMap={unifiedMap}
+      atlasDensity={atlasDensity}
+    />
+  );
 }

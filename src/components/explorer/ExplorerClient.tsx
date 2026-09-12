@@ -84,11 +84,20 @@ interface ExplorerClientProps {
   initialTrails: MapTrail[];
   /** CHANTIER ATLAS — moteur cartographique unifié (MapLibre globe) au lieu de Leaflet. */
   unifiedMap?: boolean;
+  /** CHANTIER ATLAS — densités matérialisées (paliers continent/région). */
+  atlasDensity?: {
+    countries: import('@/components/map/layers/densityLayers').CountryDensityRow[];
+    cells: import('@/components/map/layers/densityLayers').RegionDensityCell[];
+  };
 }
 
 // ── Component ─────────────────────────────────────────────────────────────────
 
-export default function ExplorerClient({ initialTrails, unifiedMap = false }: ExplorerClientProps) {
+export default function ExplorerClient({
+  initialTrails,
+  unifiedMap = false,
+  atlasDensity,
+}: ExplorerClientProps) {
   const router = useRouter();
 
   // State
@@ -486,6 +495,8 @@ export default function ExplorerClient({ initialTrails, unifiedMap = false }: Ex
             onLocationUpdate={handleLocationUpdate}
             onViewportChange={handleViewportChange}
             onViewportData={setUnifiedViewportData}
+            countryDensity={atlasDensity?.countries}
+            regionDensity={atlasDensity?.cells}
             safeControls
           />
         ) : (
