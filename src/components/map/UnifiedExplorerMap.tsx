@@ -15,7 +15,7 @@ import type { MapTrail } from '@/components/explorer/types';
 import { getDifficultyColor, isValidLatLng } from '@/components/explorer/types';
 import type { UnifiedPOI } from '@/lib/queries/pois';
 import { createMapStyle, type AtlasTileMode } from './engine/createMapStyle';
-import { prefersReducedMotion, flyToTarget } from './engine/camera';
+import { prefersReducedMotion, easeToTarget, flyToTarget } from './engine/camera';
 import { resolveCountryName, resolveIsoA2 } from './engine/geo';
 import { registerAtlasMapImages } from './engine/icons';
 import { getPoiColor, MAP_COLORS } from './engine/mapTheme';
@@ -64,6 +64,8 @@ export interface UnifiedExplorerMapProps {
 const DEFAULT_CENTER: [number, number] = [6.8694, 45.9237];
 const COUNTRIES_GEOJSON_URL = '/data/countries-110m.geojson';
 const VIEWPORT_BUFFER = 0.25;
+/** Zoom minimal : le globe reste cadré et exploitable (pas de bille minuscule). */
+const GLOBE_MIN_ZOOM = 1.2;
 const TILE_MODES: AtlasTileMode[] = ['topo', 'osm', 'satellite'];
 
 function buildTrailsFeatureCollection(trails: MapTrail[]) {
@@ -185,6 +187,8 @@ export default function UnifiedExplorerMap({
   const [ready, setReady] = useState(false);
   const [tileMode, setTileMode] = useState<AtlasTileMode>('topo');
   const [viewport, setViewport] = useState<ViewportQuery | null>(null);
+  const [viewMode, setViewMode] = useState<'local' | 'globe'>('local');
+  const localViewRef = useRef<{ center: [number, number]; zoom: number } | null>(null);
   const [selectedCountry, setSelectedCountry] = useState<{
     iso: string;
     name: string;
@@ -263,8 +267,11 @@ export default function UnifiedExplorerMap({
         instance = new MapLibreMap({
           container,
           style: createMapStyle('topo'),
+          // Départ « façon Google Earth » : on ouvre sur le globe, puis on
+          // plonge vers la vue locale après le chargement du style.
           center: initialView.center,
-          zoom: initialView.zoom,
+          zoom: 1.6,
+          minZoom: GLOBE_MIN_ZOOM,
           attributionControl: false,
           dragRotate: false,
           pitchWithRotate: false,
@@ -296,6 +303,7 @@ export default function UnifiedExplorerMap({
           zoom: instance.getZoom(),
         };
         setViewport(buffered);
+        setViewMode(instance.getZoom() > 4 ? 'local' : 'globe');
         callbacksRef.current.onViewportChange?.(buffered);
       };
 
@@ -371,6 +379,20 @@ export default function UnifiedExplorerMap({
         setReady(true);
         callbacksRef.current.onMapReady?.();
         emitViewport();
+
+        // Plongée d'ouverture vers la vue locale (saut immédiat si reduced-motion) :
+        // l'utilisateur voit d'abord le globe, puis atterrit sur sa zone.
+        if (prefersReducedMotion()) {
+          instance.jumpTo({ center: initialView.center, zoom: initialView.zoom });
+          emitViewport();
+        } else {
+          instance.flyTo({
+            center: initialView.center,
+            zoom: initialView.zoom,
+            duration: 1_800,
+            essential: true,
+          });
+        }
       });
 
       instance.on('moveend', emitViewport);
@@ -750,8 +772,12 @@ export default function UnifiedExplorerMap({
   }, [animateOptions]);
 
   const handleZoomOut = useCallback(() => {
-    mapRef.current?.zoomOut({ ...animateOptions(200) });
-  }, [animateOptions]);
+    const map = mapRef.current;
+    if (!map) return;
+    const center = map.getCenter();
+    const nextZoom = Math.max(map.getZoom() - 1, GLOBE_MIN_ZOOM);
+    easeToTarget(map, { center: [center.lng, center.lat], zoom: nextZoom, duration: 200 });
+  }, []);
 
   const handleRecenter = useCallback(() => {
     const map = mapRef.current;
@@ -765,6 +791,27 @@ export default function UnifiedExplorerMap({
       callbacksRef.current.onLocationUpdate?.([Number(userLocation[0]), Number(userLocation[1])]);
     }
   }, [userLocation, animateOptions]);
+
+  /** Bascule globe ⇄ vue locale (mémorise la dernière vue locale). */
+  const handleToggleGlobe = useCallback(() => {
+    const map = mapRef.current;
+    if (!map) return;
+    if (viewMode === 'local') {
+      const center = map.getCenter();
+      localViewRef.current = { center: [center.lng, center.lat], zoom: map.getZoom() };
+      flyToTarget(map, { center: [center.lng, center.lat], zoom: 1.6, duration: 1_100 });
+      setViewMode('globe');
+    } else {
+      const target = localViewRef.current;
+      if (target) {
+        flyToTarget(map, { center: target.center, zoom: target.zoom, duration: 900 });
+      } else {
+        const center = map.getCenter();
+        flyToTarget(map, { center: [center.lng, center.lat], zoom: 12, duration: 900 });
+      }
+      setViewMode('local');
+    }
+  }, [viewMode]);
 
   const bottomControlsOffset = safeControls
     ? 'bottom-[calc(env(safe-area-inset-bottom,0px)+96px)]'
@@ -815,6 +862,16 @@ export default function UnifiedExplorerMap({
           title="Me recentrer"
         >
           <Icon name="navigation" size={16} />
+        </button>
+        <button
+          type="button"
+          onClick={handleToggleGlobe}
+          className="glass-circle-btn w-11 h-11 shadow-lg flex items-center justify-center cursor-pointer active:scale-95"
+          aria-label={viewMode === 'local' ? 'Afficher le globe' : 'Revenir à la vue locale'}
+          title={viewMode === 'local' ? 'Vue globe' : 'Vue locale'}
+          aria-pressed={viewMode === 'globe'}
+        >
+          <Icon name="compass" size={16} />
         </button>
       </div>
 
