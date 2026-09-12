@@ -458,20 +458,6 @@ function StepResult({ state }: { state: WizardState }) {
 
       if (kitError || !kit) return;
 
-      const kitItems = result.liste_equipement
-        .filter(i => selected.has(i.id))
-        .map(item => ({
-          kit_id: kit.id,
-          name: item.name,
-          category: item.category,
-          weight_g: item.weightG,
-          price_eur: item.priceEur,
-          essential: item.essential,
-        }));
-
-      if (kitItems.length > 0) {
-        await supabase.from('kit_items').insert(kitItems);
-      }
       setAutoSaved(true);
     } catch (_e) {
       // Silent fail — auto-save is best-effort
