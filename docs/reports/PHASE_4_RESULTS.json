@@ -4,7 +4,7 @@
   "date": "2026-09-12",
   "branch": "feat/phase4-coverage",
   "base": "0a5d861e",
-  "commits": ["a9bc6a29", "b6a869cf", "704bf11d"],
+  "commits": ["a9bc6a29", "b6a869cf", "704bf11d", "ea344784"],
   "environment": {
     "local": "Supabase Docker local + vitest (node)",
     "distant": "INSUFFICIENT_DATA -- aucune donnée sous licence disponible, aucune écriture production"
