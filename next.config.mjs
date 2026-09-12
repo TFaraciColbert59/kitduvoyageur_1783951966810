@@ -149,6 +149,13 @@ const nextConfig = {
         destination: '/explorer',
         permanent: false,
       },
+      {
+        // ATLAS — « Earth » retiré : la racine /pays (globe) est remplacée par
+        // l'explorateur unifié. Les fiches /pays/[code] restent servies.
+        source: '/pays',
+        destination: '/explorer',
+        permanent: false,
+      },
     ];
   },
 

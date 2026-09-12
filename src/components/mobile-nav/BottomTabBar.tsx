@@ -27,18 +27,11 @@ interface Tab {
 
 const DEFAULT_TABS: Tab[] = [
   {
-    href: '/pays',
-    label: 'Earth',
-    iconName: 'compass',
-    ariaLabel: 'Earth, cartographie mondiale',
-    matchPaths: ['/pays'],
-  },
-  {
     href: '/explorer',
-    label: 'Aventures',
+    label: 'Explorer',
     iconName: 'mountain',
-    ariaLabel: 'Explorer les sentiers et destinations',
-    matchPaths: ['/explorer', '/hors-ligne'],
+    ariaLabel: 'Explorer les sentiers, pays et destinations',
+    matchPaths: ['/explorer', '/hors-ligne', '/pays'],
   },
   {
     href: '/hub',

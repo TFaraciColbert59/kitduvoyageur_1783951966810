@@ -140,22 +140,22 @@ export default function PaysLeftSidebar({
         })}
       </nav>
 
-      {/* ── 3. ZONE BASSE FIXE (Raccourci Earth & Footer) ── */}
+      {/* ── 3. ZONE BASSE FIXE (Raccourci carte & Footer) ── */}
       <div className="shrink-0 pt-2 border-t border-[#17402C]/5 space-y-1.5">
         <Link
-          href="/pays"
+          href="/explorer"
           className="w-full glass-sub-card text-xs font-semibold text-[#365233] p-2 rounded-xl flex items-center justify-between hover:bg-white/80 transition-colors cursor-pointer border border-white/40"
         >
           <span className="flex items-center gap-1.5">
             <span>←</span>
             <span>Explorer tous les pays</span>
           </span>
-          <span className="text-[9px] font-mono text-[#5A7064]">Earth LKDV</span>
+          <span className="text-[9px] font-mono text-[#5A7064]">Carte LKDV</span>
         </Link>
 
         <div className="text-center">
           <span className="text-[8.5px] font-mono text-[#5A7064] tracking-wider uppercase">
-            Le Kit du Voyageur · Earth v2.0
+            Le Kit du Voyageur · Pays v2.0
           </span>
         </div>
       </div>

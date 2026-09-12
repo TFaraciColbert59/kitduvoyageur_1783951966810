@@ -28,7 +28,7 @@ const POPULAR_SEARCHES = [
   { label: 'Tente 2 places trekking', category: 'Matériel', url: '/boutique?category=tentes' },
   { label: 'Club Randonnée Alpes', category: 'Communauté', url: '/clubs' },
   { label: 'Sac de couchage -5°C', category: 'Couchage', url: '/boutique?search=sac' },
-  { label: 'Guide Islande & Volcans', category: 'Destination', url: '/pays' },
+  { label: 'Guide Islande & Volcans', category: 'Destination', url: '/pays/is' },
   { label: 'Configurateur IA de Kit', category: 'Outil IA', url: '/ai-configurator' },
 ];
 
@@ -211,10 +211,10 @@ export default function GlobalSearchModal({ isOpen, onClose }: GlobalSearchModal
 
         // 7. Static destinations & guides match
         const destinations = [
-          { name: 'Islande', desc: 'Terres de feu et de glace', url: '/pays', badge: 'Destination' },
-          { name: 'Norvège', desc: 'Fjords & Aurores Boréales', url: '/pays', badge: 'Destination' },
-          { name: 'Nepal', desc: 'Expéditions Himalaya & Annapurna', url: '/pays', badge: 'Destination' },
-          { name: 'Suisse & Alpes', desc: 'Haute Montagne & Earth', url: '/pays', badge: 'Destination' },
+          { name: 'Islande', desc: 'Terres de feu et de glace', url: '/pays/is', badge: 'Destination' },
+          { name: 'Norvège', desc: 'Fjords & Aurores Boréales', url: '/pays/no', badge: 'Destination' },
+          { name: 'Nepal', desc: 'Expéditions Himalaya & Annapurna', url: '/pays/np', badge: 'Destination' },
+          { name: 'Suisse & Alpes', desc: 'Haute Montagne & Sentiers', url: '/pays/ch', badge: 'Destination' },
           { name: 'GR20 Corse', desc: 'Sentier mythique de randonnée', url: '/explorer', badge: 'Aventure' },
         ];
 

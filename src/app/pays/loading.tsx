@@ -1,6 +1,6 @@
 ﻿import React from 'react';
 
-export default function EarthLoading() {
+export default function CountryLoading() {
   return (
     <div
       className="fixed inset-0 bg-[#EEF3EC] overflow-hidden select-none"
