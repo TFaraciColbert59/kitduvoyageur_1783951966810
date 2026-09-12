@@ -8,8 +8,9 @@ import CountryFlag from '@/components/ui/CountryFlag';
 import { CountryDetail } from '@/lib/countryDetails';
 import { ALL_COUNTRIES } from '@/lib/countries';
 
+// ATLAS Phase 5 — globe pays MapLibre (react-globe.gl/three retirés).
 const CountryGlobe = dynamic(
-  () => import('@/components/pays/CountryGlobe'),
+  () => import('@/components/map/UnifiedCountryGlobe'),
   { ssr: false }
 );
 

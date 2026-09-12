@@ -39,9 +39,9 @@ function flagEmoji(code: string): string {
   return String.fromCodePoint(...cps);
 }
 
-// Globe 3D dynamique
+// Globe 3D dynamique — ATLAS Phase 5 : moteur MapLibre (react-globe.gl/three retirés).
 const CountryGlobe = dynamic(
-  () => import("@/components/pays/CountryGlobe"),
+  () => import("@/components/map/UnifiedCountryGlobe"),
   { ssr: false }
 );
 
@@ -140,6 +140,33 @@ export default function EarthPageClient({ initialCountries }: EarthPageClientPro
 
   return (
     <div className="page-background fixed inset-0 overflow-hidden text-[#17402C] font-sans">
+      {/* ATLAS Phase 5 — alternative clavier / lecteur d'écran à la sélection sur
+          globe (WCAG 2.1.1) : invisible mais focusable, révélée au focus. */}
+      <div className="absolute top-2 left-2 z-[70]">
+        <label htmlFor="atlas-country-select" className="sr-only">
+          Choisir un pays à afficher (navigation clavier)
+        </label>
+        <select
+          id="atlas-country-select"
+          value={focusCode ?? ""}
+          onChange={(event) => {
+            const country = countries.find((candidate) => candidate.code === event.target.value);
+            if (country) handleCountrySelect(country);
+          }}
+          className="sr-only focus:not-sr-only focus:rounded-full focus:bg-white/95 focus:px-4 focus:py-2 focus:text-[12px] focus:font-bold focus:text-[#17402C] focus:shadow-lg focus:outline-none focus:ring-2 focus:ring-[#17402C]/40"
+          aria-label="Choisir un pays à afficher"
+        >
+          <option value="">Choisir un pays…</option>
+          {[...countries]
+            .sort((a, b) => a.nom.localeCompare(b.nom))
+            .map((country) => (
+              <option key={country.code} value={country.code}>
+                {country.nom}
+              </option>
+            ))}
+        </select>
+      </div>
+
       {/* ── DESKTOP (plein écran) ── */}
       <div className="hidden md:flex flex-col h-full">
         {/* Header flottant (déjà fixed) */}

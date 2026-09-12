@@ -27,6 +27,9 @@ export interface UseViewportDataResult {
   data: ViewportData;
   isFetching: boolean;
   error: string | null;
+  /** true dès qu'un premier fetch a été tenté (succès ou échec) — évite d'écraser
+   *  les données initiales par un EMPTY avant toute réponse réseau. */
+  hasFetched: boolean;
 }
 
 const EMPTY_DATA: ViewportData = { trails: [], pois: [] };
@@ -44,6 +47,7 @@ export function useViewportData(
   const [data, setData] = useState<ViewportData>(EMPTY_DATA);
   const [isFetching, setIsFetching] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [hasFetched, setHasFetched] = useState(false);
 
   const viewportRef = useRef<ViewportQuery | null>(viewport);
   viewportRef.current = viewport;
@@ -61,14 +65,13 @@ export function useViewportData(
     const controller = new AbortController();
 
     const timer = window.setTimeout(async () => {
-      // Annule toute requête encore en vol avant d'en lancer une nouvelle.
-      lastKeyRef.current = viewportKey;
-
       const trailsRequest = buildTrailsRequest(currentViewport);
       const poisRequest = buildPoisRequest(currentViewport);
       if (!trailsRequest && !poisRequest) {
+        lastKeyRef.current = viewportKey;
         setData(EMPTY_DATA);
         setError(null);
+        setHasFetched(true);
         return;
       }
 
@@ -85,14 +88,27 @@ export function useViewportData(
             : Promise.resolve<UnifiedPOI[]>([]),
         ]);
         if (controller.signal.aborted) return;
+        // Clé mémorisée uniquement en cas de succès : un viewport en échec peut
+        // être retenté au prochain déplacement (jamais de blocage silencieux).
+        lastKeyRef.current = viewportKey;
         setData({
           trails: Array.isArray(trails) ? trails : [],
           pois: Array.isArray(pois) ? pois : [],
         });
+        setHasFetched(true);
       } catch (caught) {
         if (controller.signal.aborted || (caught as Error)?.name === 'AbortError') return;
-        // ATLAS-R9 : une donnée absente reste absente — jamais de valeur inventée.
-        setError((caught as Error)?.message ?? 'Erreur de chargement viewport');
+        // ATLAS-R9 : une donnée absente reste absente — erreur journalisée avec
+        // contexte, AUCUN repli fictif, et retry autorisé au prochain viewport.
+        const message = (caught as Error)?.message ?? 'Erreur de chargement viewport';
+        console.error('[useViewportData] échec du fetch viewport', {
+          viewportKey,
+          trailsUrl: trailsRequest?.url ?? null,
+          poisUrl: poisRequest?.url ?? null,
+          message,
+        });
+        setError(message);
+        setHasFetched(true);
       } finally {
         if (!controller.signal.aborted) setIsFetching(false);
       }
@@ -104,5 +120,5 @@ export function useViewportData(
     };
   }, [viewportKey, enabled]);
 
-  return { data, isFetching, error };
+  return { data, isFetching, error, hasFetched };
 }

@@ -120,8 +120,21 @@ export async function getTrails(options: GetTrailsOptions = {}): Promise<MapTrai
   });
 
   if (error) {
-    console.error("[getTrails] Supabase error:", error);
-    return cached ? cached.data : [];
+    // ATLAS-R9 : jamais d'« empty success » silencieux. Cache frais utilisé
+    // explicitement (log d'âge), sinon erreur propagée (le routeur renvoie 5xx).
+    if (cached) {
+      console.error('[getTrails] RPC en échec — cache servi (stale)', {
+        cacheKey,
+        ageMs: now - cached.timestamp,
+        error: error.message,
+      });
+      return cached.data;
+    }
+    console.error('[getTrails] RPC en échec — aucune donnée à servir', {
+      cacheKey,
+      error: error.message,
+    });
+    throw new Error(`[getTrails] ${error.message}`);
   }
 
   if (!data || data.length === 0) {
@@ -145,11 +158,20 @@ export async function getTrails(options: GetTrailsOptions = {}): Promise<MapTrai
       seenStartCoords.add(coordKey);
     }
 
+    const lat = t.start_lat !== undefined && t.start_lat !== null ? Number(t.start_lat) : null;
+    const lng = t.start_lng !== undefined && t.start_lng !== null ? Number(t.start_lng) : null;
+    if ((lat !== null && !Number.isFinite(lat)) || (lng !== null && !Number.isFinite(lng))) {
+      console.warn('[getTrails] coordonnées invalides ignorées', { id: t.id, lat, lng });
+    }
+
+    const rawName = t.name !== null && t.name !== undefined ? String(t.name).trim() : '';
+
     deduplicated.push({
       id: String(t.id),
-      name: (t.name as string) || `Randonnée #${t.id}`,
-      lat: t.start_lat !== undefined && t.start_lat !== null ? Number(t.start_lat) : null,
-      lng: t.start_lng !== undefined && t.start_lng !== null ? Number(t.start_lng) : null,
+      // ATLAS-R9 : jamais de nom fabriqué depuis l'id — absence explicite.
+      name: rawName !== '' ? rawName : 'Sans nom',
+      lat: lat !== null && Number.isFinite(lat) ? lat : null,
+      lng: lng !== null && Number.isFinite(lng) ? lng : null,
       distance_km: t.distance_km != null ? Number(t.distance_km) : null,
       duration_hours: t.duration_hours != null ? Number(t.duration_hours) : null,
       difficulty: t.difficulty != null ? String(t.difficulty) : null,

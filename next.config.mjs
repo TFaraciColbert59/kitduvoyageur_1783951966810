@@ -29,7 +29,6 @@ const nextConfig = {
     qualities: [75, 80, 85, 90, 95],
   },
 
-  transpilePackages: ['react-globe.gl', 'three'],
   serverExternalPackages: [
     '@capacitor/core',
     '@capacitor/haptics',

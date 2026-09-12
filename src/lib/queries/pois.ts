@@ -147,6 +147,31 @@ export async function getPois(options: GetPoisOptions = {}): Promise<UnifiedPOI[
     trailPoisPromise,
   ]);
 
+  // ATLAS Phase 5 — jamais d'« empty success » silencieux : les erreurs Supabase
+  // sont journalisées avec leur source ; si TOUTES les sources échouent, l'erreur
+  // est propagée (la route répond 5xx sans cacher un résultat dégradé).
+  const sourceErrors = [
+    { source: 'outdoor_points', error: outdoorRes.error },
+    { source: 'map_refuges', error: refugesRes.error },
+    { source: 'map_summits', error: summitsRes.error },
+    { source: 'map_water_points', error: waterRes.error },
+    { source: 'trail_pois', error: trailPoisRes.error },
+  ].filter((entry) => Boolean(entry.error));
+
+  if (sourceErrors.length === 5) {
+    console.error('[getPois] toutes les sources en échec', {
+      bbox: { minLat, maxLat, minLng, maxLng },
+      errors: sourceErrors.map((entry) => `${entry.source}: ${entry.error?.message}`),
+    });
+    throw new Error(`[getPois] sources indisponibles: ${sourceErrors[0].error?.message ?? 'inconnue'}`);
+  }
+  if (sourceErrors.length > 0) {
+    console.error('[getPois] sources partielles en échec', {
+      bbox: { minLat, maxLat, minLng, maxLng },
+      errors: sourceErrors.map((entry) => `${entry.source}: ${entry.error?.message}`),
+    });
+  }
+
   const allPois: UnifiedPOI[] = [];
   const seenCoordinates = new Set<string>();
 
