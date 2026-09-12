@@ -495,3 +495,74 @@ Remote database is up to date.
 ### Prochaine phase
 Phase 1 — Vérité base de données (`chantier/atlas-1-data-layer`) : RPC `trails_in_viewport`, matviews densité, import polygones pays, preuve `EXPLAIN ANALYZE` sur `idx_hiking_routes_geom`.
 
+## 2026-09-12 — CHANTIER ATLAS Phase 1 — Vérité base de données (branche `chantier/atlas-1-data-layer`)
+
+### Migrations appliquées en production (`icxyvwzfjbflcbqukpfz`, via `supabase db push --linked`)
+- `20260912000000_atlas_debug_observability.sql` — fonctions temporaires service-role : `atlas_debug_explain`, `atlas_debug_policies`, `atlas_debug_rls_status`, `atlas_set_country_geometry`.
+- `20260912010000_atlas_trails_viewport.sql` — index expression `idx_hiking_routes_startpoint`, RPC `trails_in_viewport`, matviews `country_centroids` / `country_trail_density` / `trail_density_geohash5` (+ index uniques, grants lecture), `refresh_atlas_density()` (CONCURRENTLY + fallback).
+- `20260912015000_atlas_fix_viewport_inline.sql` — RPC réécrite sans CTE (inlinable) + `atlas_debug_explain(text, boolean)` avec `enable_seqscan=off`.
+- `20260912020000_atlas_drop_debug_functions.sql` — suppression des fonctions temporaires après capture des preuves.
+
+### Preuves brutes (archive complète : `docs/atlas/phase1-proof-20260912.txt`)
+
+RLS réelle (`relrowsecurity`, jamais l'historique de migration) :
+```
+hiking_routes : rls_enabled=true, rls_forced=false
+trail_metadata: rls_enabled=true, rls_forced=false
+trail_scores  : rls_enabled=true, rls_forced=false
+```
+Policies (toutes SELECT public, aucune écriture anon/authenticated) :
+```
+hiking_routes : "Public read hiking_routes" / "public_read_hiking_routes"  -> SELECT, roles={public}, qual=true
+trail_metadata: "Public read trail_metadata"                               -> SELECT, roles={public}, qual=true
+trail_scores  : "Public read trail_scores"                                 -> SELECT, roles={public}, qual=true
+```
+
+`EXPLAIN ANALYZE` — requête viewport (bbox Chamonix z14), plan par défaut :
+```
+Limit  (cost=27.38..27.38 rows=1) (actual time=0.231..0.232 rows=0)
+  ->  Sort  Sort Key: distance_km DESC NULLS LAST
+        ->  Index Scan using idx_hiking_routes_geom on hiking_routes r
+              Index Cond: ((geom IS NOT NULL) AND (geom && '...'::geometry) AND (geom && '...'::geometry))
+              Filter: st_intersects(geom, '...'::geometry)
+Execution Time: 0.318 ms
+```
+→ l'index GIST `idx_hiking_routes_geom` est bien choisi naturellement par le planner ; `enable_seqscan=off` (plan B) confirme la même Index Scan (0.037 ms).
+
+Import polygones pays (`scripts/atlas/import_country_polygons.mjs`) :
+```
+features GeoJSON: 177 ; features indexées: A2=175, A3=177
+cibles (geometry NULL): 196 / 196
+appariées: 166 ; mises à jour: 166
+NON APPARIÉES (30): AD, AG, BB, BH, CV, DM, FM, GD, KI, KM, KN, LC, LI, MC, MH, MT, MU, MV, NR, NU, PW, SC, SG, SM, ST, TO, TV, VA, VC, WS
+refresh_atlas_density(): OK — countries_geo restant sans géométrie: 30
+```
+Comptes finaux : `country_centroids=166`, `country_trail_density=166` (top : FR=962 sentiers / 4226 km, BE=172 / 1188 km), `trail_density_geohash5=329`.
+
+Vérification post-cleanup (`scripts/atlas/verify-phase1-cleanup.mjs`) :
+```
+OK  trails_in_viewport répond — 5 lignes
+OK  matview country_centroids lisible — 166 lignes
+OK  matview country_trail_density lisible — 166 lignes
+OK  matview trail_density_geohash5 lisible — 329 lignes
+OK  fonction atlas_debug_rls_status supprimée
+OK  fonction atlas_debug_policies supprimée
+OK  fonction atlas_set_country_geometry supprimée
+[verify] SUCCÈS
+```
+
+### Tests & build
+- TDD : `tests/queries/trails-viewport.spec.ts` — rouge (4/4 échecs « supabase.from is not a function ») puis vert (4/4) après migration de `getTrails` vers la RPC.
+- `npx tsc --noEmit` → code 0.
+- `npm run lint` → code 0 (warnings préexistants uniquement).
+- `npm test` → **2246 passed / 23 skipped / 4 suites en échec préexistantes** (`tests/ops/a14-healthcheck.spec.ts`, `tests/ops/a15-rollout.spec.ts`, `tests/ops/phase10-capacity.spec.ts`, `tests/adventure-intelligence/a13-backtest-export.spec.ts` — `SyntaxError: Invalid or unexpected token`). Preuve d'indépendance : `git diff --stat HEAD -- tests/ops tests/adventure-intelligence/a13-backtest-export.spec.ts scripts/ops scripts/ai` → **aucun diff** ; ces suites échouent déjà sur `main` sans les changements du chantier.
+
+### Écarts constatés (documentés, non silencieux)
+1. **Volumétrie réelle** : `hiking_routes` contient **1 169 lignes** en prod (pas 115 000) et les données sont concentrées France nord / Belgique (geohash `u11*`), **0 sentier à Chamonix** — la bbox par défaut de `/explorer` (Chamonix) affiche donc une zone vide. L'architecture indexée reste valide pour la montée en charge mondiale ; à traiter en Phase 2/3 pour le centrage initial (géolocalisation utilisateur déjà en place).
+2. **30 micro-états** (Andorre, Monaco, Malte, Singapour…) sont absents du GeoJSON 110m : pas de polygone → pas de centroïde matview. Le fallback existant `getCountryCoordinates` (table statique réelle, 180 pays) reste utilisé — aucune donnée inventée (ATLAS-R9).
+3. **Policies dupliquées** sur `hiking_routes` (`Public read hiking_routes` + `public_read_hiking_routes`, toutes deux SELECT `true`) : sans impact sécurité, nettoyage non inclus (plus petit diff).
+4. `countries_geo` contient **196 lignes** (pas 195).
+
+### Prochaine phase
+Phase 2 — Moteur cartographique unique (`chantier/atlas-2-engine`) : suppression du code mort, `UnifiedExplorerMap` MapLibre globe, style Liquid Glass, captures 390/1440.
+

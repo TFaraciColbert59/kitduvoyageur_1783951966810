@@ -12,6 +12,7 @@ export interface GetTrailsOptions {
   minLng?: number | null;
   maxLng?: number | null;
   limit?: number | null;
+  zoom?: number | null;
 }
 
 // ── In-Memory Cache (TTL: 60 secondes) ──────────────────────────────────────────
@@ -23,9 +24,14 @@ interface CacheEntry {
 const cache = new Map<string, CacheEntry>();
 const CACHE_TTL_MS = 60_000;
 
+const WORLD_BBOX = { minLng: -180, minLat: -85, maxLng: 180, maxLat: 85 };
+
 /**
- * Charge et déduplique les randonnées de manière ultra-rapide (1 seule requête SQL).
- * Intègre un cache en mémoire pour des réponses SSR & API instantanées (< 5ms).
+ * Charge et déduplique les randonnées via la RPC PostGIS indexée
+ * `trails_in_viewport` (ATLAS Phase 1) : filtre viewport sur `hiking_routes.geom`
+ * (index GIST `idx_hiking_routes_geom`) au lieu des colonnes calculées non
+ * indexées de `explore_trails`.
+ * Cache en mémoire pour des réponses SSR & API instantanées (< 5ms).
  */
 export async function getTrails(options: GetTrailsOptions = {}): Promise<MapTrail[]> {
   const {
@@ -39,9 +45,56 @@ export async function getTrails(options: GetTrailsOptions = {}): Promise<MapTrai
     minLng = null,
     maxLng = null,
     limit = 300,
+    zoom = null,
   } = options;
 
-  const cacheKey = JSON.stringify({ minDist, maxDist, difficulty, search, includeShort, minLat, maxLat, minLng, maxLng, limit });
+  const hasViewport =
+    minLat !== null &&
+    maxLat !== null &&
+    minLng !== null &&
+    maxLng !== null &&
+    !isNaN(Number(minLat)) &&
+    !isNaN(Number(maxLat)) &&
+    !isNaN(Number(minLng)) &&
+    !isNaN(Number(maxLng));
+
+  const bbox = hasViewport
+    ? {
+        minLng: Number(minLng),
+        minLat: Number(minLat),
+        maxLng: Number(maxLng),
+        maxLat: Number(maxLat),
+      }
+    : WORLD_BBOX;
+
+  const effectiveZoom =
+    zoom !== null && zoom !== undefined && !isNaN(Number(zoom))
+      ? Math.round(Number(zoom))
+      : 14;
+
+  const effectiveMaxDist =
+    maxDist !== null && maxDist !== undefined && !isNaN(Number(maxDist))
+      ? Number(maxDist)
+      : null;
+
+  const effectiveDifficulty =
+    difficulty && difficulty !== "all" ? difficulty : null;
+
+  const effectiveSearch =
+    search && search.trim() !== "" ? search.trim() : null;
+
+  const effectiveLimit = limit && limit > 0 ? limit : 300;
+
+  const cacheKey = JSON.stringify({
+    ...bbox,
+    minDist,
+    effectiveMaxDist,
+    effectiveDifficulty,
+    effectiveSearch,
+    includeShort,
+    effectiveLimit,
+    effectiveZoom,
+  });
   const cached = cache.get(cacheKey);
   const now = Date.now();
 
@@ -51,53 +104,20 @@ export async function getTrails(options: GetTrailsOptions = {}): Promise<MapTrai
 
   const supabase = await createClient();
 
-  let query = supabase
-    .from("explore_trails")
-    .select(
-      "id, name, start_lat, start_lng, distance_km, duration_hours, difficulty, elevation_gain, adventure_score, nature_score, panorama_score, ref, network, terrain_type, family_friendly, season, ai_description"
-    );
-
-  if (!includeShort && minDist > 0) {
-    query = query.gte("distance_km", minDist);
-  }
-
-  if (maxDist !== null && !isNaN(maxDist)) {
-    query = query.lte("distance_km", maxDist);
-  }
-
-  if (difficulty && difficulty !== "all") {
-    query = query.ilike("difficulty", `%${difficulty}%`);
-  }
-
-  if (search && search.trim() !== "") {
-    query = query.ilike("name", `%${search.trim()}%`);
-  }
-
-  // Filtrage spatial Viewport (Bounding Box)
-  if (
-    minLat !== null &&
-    maxLat !== null &&
-    minLng !== null &&
-    maxLng !== null &&
-    !isNaN(minLat) &&
-    !isNaN(maxLat) &&
-    !isNaN(minLng) &&
-    !isNaN(maxLng)
-  ) {
-    query = query
-      .gte("start_lat", minLat)
-      .lte("start_lat", maxLat)
-      .gte("start_lng", minLng)
-      .lte("start_lng", maxLng);
-  }
-
-  query = query.order("distance_km", { ascending: false });
-
-  if (limit && limit > 0) {
-    query = query.limit(limit);
-  }
-
-  const { data, error } = await query;
+  const { data, error } = await supabase.rpc("trails_in_viewport", {
+    p_min_lng: bbox.minLng,
+    p_min_lat: bbox.minLat,
+    p_max_lng: bbox.maxLng,
+    p_max_lat: bbox.maxLat,
+    p_zoom: effectiveZoom,
+    p_simplify_tolerance: 0,
+    p_min_dist: minDist,
+    p_max_dist: effectiveMaxDist,
+    p_difficulty: effectiveDifficulty,
+    p_search: effectiveSearch,
+    p_include_short: includeShort,
+    p_limit: effectiveLimit,
+  });
 
   if (error) {
     console.error("[getTrails] Supabase error:", error);
@@ -112,7 +132,7 @@ export async function getTrails(options: GetTrailsOptions = {}): Promise<MapTrai
   const seenStartCoords = new Set<string>();
   const deduplicated: MapTrail[] = [];
 
-  for (const t of data) {
+  for (const t of data as Array<Record<string, unknown>>) {
     const latKey = t.start_lat !== null && t.start_lat !== undefined ? Number(t.start_lat).toFixed(3) : "null";
     const lngKey = t.start_lng !== null && t.start_lng !== undefined ? Number(t.start_lng).toFixed(3) : "null";
     const coordKey = `${latKey}_${lngKey}`;
@@ -127,7 +147,7 @@ export async function getTrails(options: GetTrailsOptions = {}): Promise<MapTrai
 
     deduplicated.push({
       id: String(t.id),
-      name: t.name || `Randonnée #${t.id}`,
+      name: (t.name as string) || `Randonnée #${t.id}`,
       lat: t.start_lat !== undefined && t.start_lat !== null ? Number(t.start_lat) : null,
       lng: t.start_lng !== undefined && t.start_lng !== null ? Number(t.start_lng) : null,
       distance_km: t.distance_km != null ? Number(t.distance_km) : null,
@@ -135,12 +155,14 @@ export async function getTrails(options: GetTrailsOptions = {}): Promise<MapTrai
       difficulty: t.difficulty != null ? String(t.difficulty) : null,
       elevation_gain: t.elevation_gain != null ? Number(t.elevation_gain) : null,
       terrain_type: t.terrain_type != null ? String(t.terrain_type) : null,
-      family_friendly: t.family_friendly ?? null,
+      family_friendly: (t.family_friendly as boolean | null) ?? null,
       season: t.season != null ? String(t.season) : null,
       ai_description: t.ai_description != null ? String(t.ai_description) : null,
       adventure_score: t.adventure_score != null ? Number(t.adventure_score) : null,
       nature_score: t.nature_score != null ? Number(t.nature_score) : null,
       panorama_score: t.panorama_score != null ? Number(t.panorama_score) : null,
+      ref: t.ref != null ? String(t.ref) : null,
+      network: t.network != null ? String(t.network) : null,
       geojson: null,
     });
   }
