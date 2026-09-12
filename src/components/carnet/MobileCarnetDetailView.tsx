@@ -25,8 +25,8 @@ interface MobileCarnetDetailViewProps {
   hebergements: any[];
   onDownloadGPX: () => void;
   onExport: () => void;
-  distVal: number;
-  elevVal: number;
+  distVal?: number;
+  elevVal?: number;
 }
 
 const INITIAL_COMMENTS: CommentData[] = [
@@ -298,11 +298,11 @@ export default function MobileCarnetDetailView({
           {/* Quick Metrics Grid */}
           <div className="grid grid-cols-4 gap-1.5 pt-2 border-t border-[#17402C]/10 text-center">
             <div className="p-2 rounded-2xl bg-white/70 border border-white/80">
-              <span className="block font-mono font-bold text-xs text-[#17402C]">{distVal} km</span>
+              <span className="block font-mono font-bold text-xs text-[#17402C]">{distVal != null ? `${distVal} km` : '—'}</span>
               <span className="text-[8.5px] text-[#5C6B5E] uppercase font-mono font-bold">Distance</span>
             </div>
             <div className="p-2 rounded-2xl bg-white/70 border border-white/80">
-              <span className="block font-mono font-bold text-xs text-forest-800">+{elevVal} m</span>
+              <span className="block font-mono font-bold text-xs text-forest-800">{elevVal != null ? `+${elevVal} m` : '—'}</span>
               <span className="text-[8.5px] text-[#5C6B5E] uppercase font-mono font-bold">Dénivelé</span>
             </div>
             <div className="p-2 rounded-2xl bg-white/70 border border-white/80">
@@ -310,7 +310,7 @@ export default function MobileCarnetDetailView({
               <span className="text-[8.5px] text-[#5C6B5E] uppercase font-mono font-bold">Durée</span>
             </div>
             <div className="p-2 rounded-2xl bg-white/70 border border-white/80">
-              <span className="block font-mono font-bold text-xs text-sand-700">★ 9.4</span>
+              <span className="block font-mono font-bold text-xs text-[#5C6B5E]">—</span>
               <span className="text-[8.5px] text-[#5C6B5E] uppercase font-mono font-bold">Note</span>
             </div>
           </div>

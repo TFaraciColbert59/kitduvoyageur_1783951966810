@@ -7,7 +7,7 @@ import { HikingController, HikingControllerState } from '../controllers/HikingCo
 const controllerInstance = new HikingController();
 
 export function useHikingStore(): HikingControllerState & {
-  startHike: (routeId?: string, kitId?: string | null) => Promise<void>;
+  startHike: (routeId?: string, kitId?: string | null, tripId?: string | null) => Promise<void>;
   pauseHike: () => void;
   resumeHike: () => void;
   stopHike: (carnetId?: string) => Promise<{ sessionId: string; carnetId?: string | null } | null>;
@@ -27,8 +27,8 @@ export function useHikingStore(): HikingControllerState & {
 
   return {
     ...state,
-    startHike: (routeId?: string, kitId?: string | null) =>
-      controllerRef.current.startHike(routeId, kitId),
+    startHike: (routeId?: string, kitId?: string | null, tripId?: string | null) =>
+      controllerRef.current.startHike(routeId, kitId, tripId),
     pauseHike: () => controllerRef.current.pauseHike(),
     resumeHike: () => controllerRef.current.resumeHike(),
     stopHike: (carnetId?: string) => controllerRef.current.stopHike(carnetId),

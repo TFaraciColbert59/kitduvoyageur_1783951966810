@@ -21,6 +21,7 @@ export class HikeSessionService {
     routeId?: string | number | null;
     kitId?: string | null;
     carnetId?: string | null;
+    tripId?: string | null;
     startedAt: string;
     endedAt: string;
     distanceKm: number;
@@ -28,7 +29,7 @@ export class HikeSessionService {
     elevationGainM?: number | null;
     positions: GPSPosition[];
     poiEvents: { poiName: string; reachedAt: string; lat: number; lon: number }[];
-  }): Promise<{ sessionId: string; carnetId?: string | null }> {
+  }): Promise<{ sessionId: string | null; carnetId?: string | null; isGuest?: boolean }> {
     const baseUrl = typeof window !== 'undefined'
       ? ''
       : (process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:4028');

@@ -32,6 +32,16 @@ const FREEZE_TRANSITIONS_CSS =
   '*, *::before, *::after { transition-duration: 0s !important; transition-delay: 0s !important; animation-duration: 0s !important; animation-delay: 0s !important; }';
 
 /**
+ * Scrollbars overlay (Chromium Linux) : leur visibilité est transitoire
+ * (fondu d'apparition/disparition) et tombait parfois dans la capture de la
+ * barre `overflow-x-auto` des filtres de /carte-interactive — diff stable de
+ * ~1583 px, une bande pleine largeur en bas du conteneur. Masquées pendant la
+ * capture uniquement : aucun impact sur les états fonctionnels.
+ */
+const HIDE_SCROLLBARS_CSS =
+  '*::-webkit-scrollbar { display: none !important; width: 0 !important; height: 0 !important; } * { scrollbar-width: none !important; }';
+
+/**
  * Prépare la page de façon déterministe puis navigue.
  * À appeler AVANT toute interaction ; l'horloge est figée avant le goto pour
  * que le premier rendu serveur/hydraté voie déjà la date figée (VISUAL_CLOCK).
@@ -90,6 +100,7 @@ export async function waitForVisualReady(page: Page): Promise<void> {
     new Promise<void>((resolve) => setTimeout(resolve, 8_000)),
   ]).catch(() => {});
   await page.addStyleTag({ content: FREEZE_TRANSITIONS_CSS });
+  await page.addStyleTag({ content: HIDE_SCROLLBARS_CSS });
   await page.addStyleTag({ content: DEV_OVERLAY_CSS });
   await page.waitForTimeout(1200);
 }

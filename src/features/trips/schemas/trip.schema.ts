@@ -557,7 +557,7 @@ export const publishTripCarnetSchema = z.object({
   tripId: z.string().uuid('ID de voyage invalide'),
   title: z.string().trim().min(2, 'Le titre doit comporter au moins 2 caractères').max(150).optional(),
   description: z.string().trim().max(1000).optional().nullable(),
-  isPublic: z.boolean().default(true).optional(),
+  isPublic: z.boolean().default(false).optional(),
 });
 export type PublishTripCarnetInput = z.infer<typeof publishTripCarnetSchema>;
 

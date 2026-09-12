@@ -1,0 +1,53 @@
+{
+  "phase": 7,
+  "phase_name": "Carnet et communaute sans demonstrations",
+  "date": "2026-09-11",
+  "sha_branch": "581295be (base 8b79e98c) sur feat/phase7-community-privacy",
+  "sha_merged": "voir PR #40",
+  "environment": {
+    "local": "Supabase local Docker + vitest + pgTAP",
+    "ci": "GitHub Actions via PR #40",
+    "distant": "INSUFFICIENT_DATA -- projet de test Phase 1 non provisionne"
+  },
+  "deliverables": {
+    "migration": "supabase/migrations/20260911530000_phase7_carnet_private_default.sql",
+    "pgtap_gate": "supabase/tests/database/phase7_publication_snapshot.test.sql (24 assertions)",
+    "tests_unit": "tests/community/phase7-private-defaults.spec.ts",
+    "ui_communaute": "src/app/communaute/page.tsx + composants Community* (27 fichiers modifies)"
+  },
+  "changes": {
+    "zero_demo": "Posts/clubs/groupes/evenements codes en dur supprimes; etats vides sobres; evenements branches sur la table serveur events (inscription reelle event_participants); compteurs et commentaires fictifs supprimes.",
+    "zero_localstorage_merge": "Plus aucune lecture/ecriture user_carnets_data/user_created_clubs/user_created_groups/user_community_posts; echecs d'insertion -> erreur affichee, aucun id fantome.",
+    "private_default": "DB SET DEFAULT 'private' + CreateCarnetView, carnets/page, hike-sessions, queries-trip-completion, TripCompletionModal (isPublic opt-in).",
+    "carnet_liaison": "hike_sessions.trip_id (FK additive) ; carnets.trip_id alimente depuis la session/trip quand disponible.",
+    "snapshot_publication": "community_posts.snapshot_payload/snapshot_at/snapshot_exclude_location + trigger BEFORE INSERT/UPDATE: copie figee du carnet (RLS respectee), immuable sur UPDATE, champs sensibles retires, retrait map_points optionnel.",
+    "prepublication": "Consentement explicite + retrait des coordonnees/map_points."
+  },
+  "evidence": {
+    "type_check": "exit 0",
+    "lint": "exit 0",
+    "vitest_full": "288 fichiers passed / 4 skipped ; 2068 tests passed / 27 skipped ; 0 failed",
+    "pgtap_full": "Files=17, Tests=316, PASS",
+    "gate_snapshot": "24/24 ok -- post fige apres publication, modification du carnet prive sans effet, UPDATE du post ne peut pas reecrire le snapshot, suppression du carnet conserve le snapshot, tiers refuse (RLS)"
+  },
+  "gate_phase7": {
+    "modifier_carnet_prive_apres_publication_n_expose_rien": "PASS (pgTAP 24/24)",
+    "aucun_contenu_fictif": "PASS (code + etats vides)",
+    "visibilite_privee_par_defaut": "PASS (DB + UI + API)"
+  },
+  "limitations": [
+    "Aucune table stories serveur : barre remplacee par etat vide.",
+    "Table groupes absente du replay migration pur (drift prod) : cartes -> etats vides, route /groupes/[id] inexistante, non inventee.",
+    "Moderation : signalement post reutilise comment_reports (pas de table dediee) ; pas de file de revue admin ; user_blocks existe mais non integre a la carte post.",
+    "Prepublication partielle : masquage documents/anonymisation non implementes (aucun document/personne structure dans ce flux).",
+    "Sessions invite : sessionId null gere par les appelants (HikeSessionService/Controller) ; plus d'ids fantomes.",
+    "Upload media : seules les URLs http(s) sont persistees (blob: rejete)."
+  ],
+  "snapshots": "6 baselines communaute regenerees via CI (workflow update sur la branche).",
+  "residual_risks": [
+    "Publications historiques sans snapshot_payload (NULL) : a traiter lors d'un backfill dedie ou rester telles quelles (non exposees par le nouveau flux).",
+    "Trigger snapshot non SECURITY DEFINER : depend de la RLS carnets (comportement voulu, teste)."
+  ],
+  "decision": "PASS (perimetre local)",
+  "responsible": "agents FRONTEND/BACKEND/DATABASE + ORCHESTRATOR (revue, PR, merge)"
+}

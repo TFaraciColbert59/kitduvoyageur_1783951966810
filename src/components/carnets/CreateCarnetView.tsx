@@ -34,101 +34,55 @@ export default function CreateCarnetView({ onCloseModal }: { onCloseModal?: () =
   // Stepper state
   const [activeStep, setActiveStep] = useState<'general' | 'etapes' | 'moments' | 'sac' | 'tags'>('general');
 
-  // Form State
+  // Form State — démarre vide : aucun contenu fictif ne peut être publié.
   const [form, setForm] = useState({
     // 1. Général
-    title: 'Trois jours sur les crêtes',
-    subtitle: 'Chartreuse · 27 km à deux',
-    destination: 'Massif de la Chartreuse',
-    chapeau: '« On était deux, un thermos à moitié rempli, et la brume s’est levée au col de la Charmette. »',
-    coverImage: 'https://images.unsplash.com/photo-1519681393784-d120267933ba?q=80&w=1200',
-    startDate: '2026-10-12',
-    endDate: '2026-10-14',
-    voyageurs: 2,
-    difficulty: 'Modéré',
-    weather: 'Ensoleillé & brumes matinales',
-    avgTemp: '12',
-    routeRating: 9,
-    distance_km: 27.4,
-    elevation_m: 1620,
+    title: '',
+    subtitle: '',
+    destination: '',
+    chapeau: '',
+    coverImage: '',
+    startDate: '',
+    endDate: '',
+    voyageurs: 1,
+    difficulty: '',
+    weather: '',
+    avgTemp: '',
+    routeRating: 0,
+    distance_km: 0,
+    elevation_m: 0,
 
     // 2. Étapes / Chapitres
     chapters: [
       {
         id: 'ch-1',
         num: 'I',
-        title: 'Saint-Pierre → Charmant Som',
-        lieu_depart: 'Saint-Pierre-de-Chartreuse',
-        lieu_arrivee: 'Charmant Som',
-        distance_km: 10.4,
-        denivele_m: 620,
-        meteo: 'Ciel bas · 12°C',
-        hebergement_nom: 'Refuge du Charmant Som',
-        hebergement_type: 'Refuge gardé',
-        content: 'On a rangé la voiture derrière l’église à 9h40. Léna marchait devant sur les 5 premiers kilomètres. À midi, casse-croûte contre un mur de pierre sèche.'
-      },
-      {
-        id: 'ch-2',
-        num: 'II',
-        title: 'La traversée du Balcon Est',
-        lieu_depart: 'Charmant Som',
-        lieu_arrivee: 'Cabane du Grand Vaneau',
-        distance_km: 12.8,
-        denivele_m: 720,
-        meteo: 'Brouillard · 6°C',
-        hebergement_nom: 'Cabane du Grand Vaneau',
-        hebergement_type: 'Cabane non gardée',
-        content: 'Départ à 7h20, thé chaud dans les thermos. Le passage du col Vert au petit matin restera gravé. Rien ne bougeait sauf le brouillard qui remontait la vallée.'
-      },
-      {
-        id: 'ch-3',
-        num: 'III',
-        title: 'Descente sur la Charmette',
-        lieu_depart: 'Grand Vaneau',
-        lieu_arrivee: 'Col de la Charmette',
-        distance_km: 4.2,
-        denivele_m: 280,
-        meteo: 'Ensoleillé · 14°C',
-        hebergement_nom: 'Retour vallée',
-        hebergement_type: 'Fin de boucle',
-        content: 'Réveil tôt, ciel parfaitement dégagé. On a longé la crête pendant deux heures presque sans vent avant la descente technique vers la voiture.'
+        title: '',
+        lieu_depart: '',
+        lieu_arrivee: '',
+        distance_km: 0,
+        denivele_m: 0,
+        meteo: '',
+        hebergement_nom: '',
+        hebergement_type: '',
+        content: ''
       }
     ] as ChapterItem[],
 
     // 3. Moments forts & Citations
-    moments: [
-      {
-        id: 'm-1',
-        label: 'JOUR 1 · 18H30',
-        citation: '« Marie a servi la soupe sans dire un mot. On l’a bue debout, appuyés contre la porte du refuge. »',
-        author: 'Marceline',
-        location: 'Charmant Som',
-        imageUrl: 'https://images.unsplash.com/photo-1506744038136-46273834b3fb?q=80&w=800'
-      },
-      {
-        id: 'm-2',
-        label: 'JOUR 2 · 07H50',
-        citation: '« Le brouillard remontait la vallée par vagues. Antoine s’est arrêté : « c’est pour ça qu’on marche ». »',
-        author: 'Antoine',
-        location: 'Col Vert',
-        imageUrl: 'https://images.unsplash.com/photo-1464822759023-fed622ff2c3b?q=80&w=800'
-      }
-    ] as CarnetMoment[],
+    moments: [] as CarnetMoment[],
 
     // 4. Sac & Matériel
-    kitIntro: 'Sac 45L configuré pour l’autonomie en Chartreuse — chargement léger de 4.8 kg.',
-    kitItems: [
-      { id: 'k1', name: 'Duvet plumes 800 cuin', detail: 'Confort -5°C', weight: '920 g', color: '#3A6EA5' },
-      { id: 'k2', name: 'Veste 3 couches Hardshell', detail: 'Portée sous la pluie', weight: '400 g', color: '#33463C' },
-      { id: 'k3', name: 'Réchaud gaz ultra-léger', detail: 'Avec popote titane 800ml', weight: '260 g', color: '#B5652D' },
-      { id: 'k4', name: 'Gourde inox filtrante 1L', detail: 'Remplie à la source', weight: '188 g', color: '#17402C' },
-    ] as CarnetKitItem[],
+    kitIntro: '',
+    kitItems: [] as CarnetKitItem[],
 
     // 5. Thématiques & Visibilité
-    selectedThemes: ['Bivouac', 'Chartreuse', 'Automne', 'Refuge gardé'],
-    customTags: ['Crêtes', 'Alpes'],
-    visibility: 'public', // 'public' | 'private'
+    selectedThemes: [] as string[],
+    customTags: [] as string[],
+    visibility: 'private' as 'public' | 'private',
   });
+
+  const [saveError, setSaveError] = useState<string | null>(null);
 
   const availableThemes = ['Bivouac', 'Chartreuse', 'Solo', 'Refuge gardé', 'Automne', 'Été', 'Alpinisme', 'Traversée', 'Van Life', 'Haute Montagne'];
 
@@ -168,14 +122,14 @@ export default function CreateCarnetView({ onCloseModal }: { onCloseModal?: () =
     const newCh: ChapterItem = {
       id: `ch-${Date.now()}`,
       num: roman,
-      title: `Étape ${nextNum}`,
+      title: '',
       lieu_depart: '',
       lieu_arrivee: '',
-      distance_km: 10,
-      denivele_m: 500,
-      meteo: 'Ensoleillé · 15°C',
+      distance_km: 0,
+      denivele_m: 0,
+      meteo: '',
       hebergement_nom: '',
-      hebergement_type: 'Bivouac',
+      hebergement_type: '',
       content: ''
     };
     setForm(prev => ({ ...prev, chapters: [...prev.chapters, newCh] }));
@@ -190,11 +144,10 @@ export default function CreateCarnetView({ onCloseModal }: { onCloseModal?: () =
   const addMoment = () => {
     const newMoment: CarnetMoment = {
       id: `m-${Date.now()}`,
-      label: `JOUR ${form.moments.length + 1} · 14H00`,
-      citation: '« Un instant suspendu face aux crêtes... »',
-      author: user?.user_metadata?.full_name?.split(' ')[0] || 'Voyageur',
-      location: form.destination || 'Massif',
-      imageUrl: 'https://images.unsplash.com/photo-1464822759023-fed622ff2c3b?q=80&w=800'
+      label: '',
+      citation: '',
+      author: user?.user_metadata?.full_name?.split(' ')[0] || '',
+      location: ''
     };
     setForm(prev => ({ ...prev, moments: [...prev.moments, newMoment] }));
   };
@@ -207,9 +160,9 @@ export default function CreateCarnetView({ onCloseModal }: { onCloseModal?: () =
   const addKitItem = () => {
     const newItem: CarnetKitItem = {
       id: `k-${Date.now()}`,
-      name: 'Nouvel équipement',
-      detail: 'Détail technique',
-      weight: '300 g',
+      name: '',
+      detail: '',
+      weight: '',
       color: '#17402C'
     };
     setForm(prev => ({ ...prev, kitItems: [...prev.kitItems, newItem] }));
@@ -220,50 +173,88 @@ export default function CreateCarnetView({ onCloseModal }: { onCloseModal?: () =
   };
 
   const handlePublish = async () => {
+    if (!user) {
+      setSaveError('Connectez-vous pour créer un carnet.');
+      return;
+    }
     setSaving(true);
+    setSaveError(null);
     try {
       const supabase = createClient();
       const payload = {
-        title: form.title,
-        destination: form.destination,
-        description: form.chapeau,
-        cover_image: form.coverImage,
-        distance_km: form.distance_km,
-        elevation_m: form.elevation_m,
+        title: form.title.trim(),
+        destination: form.destination.trim(),
+        description: form.chapeau.trim(),
+        cover_image: form.coverImage.trim(),
+        start_date: form.startDate || null,
+        end_date: form.endDate || null,
+        weather: form.weather.trim(),
+        route_rating: form.routeRating || 0,
+        distance_km: form.distance_km || 0,
+        elevation_m: form.elevation_m || 0,
+        visibility: form.visibility,
         tags: [...form.selectedThemes, ...form.customTags],
-        author_id: user?.id,
-        created_at: new Date().toISOString()
+        author_id: user.id,
       };
 
-      const { data, error } = await supabase.from('carnets').insert([payload]).select().single();
-      const carnetId = data?.id || `carnet-${Date.now()}`;
+      const { data, error } = await supabase.from('carnets').insert([payload]).select('id').single();
+      if (error || !data) {
+        throw new Error(error?.message || 'Insertion du carnet refusée');
+      }
 
-      // Local storage backup
-      const local = JSON.parse(localStorage.getItem('user_carnets_data') || '[]');
-      const fullCarnet = {
-        id: carnetId,
-        ...payload,
-        jours: form.chapters.map((c, i) => ({
-          id: c.id,
-          dayNumber: i + 1,
-          label: `JOUR ${i + 1}`,
-          title: c.title,
-          titleItalic: c.lieu_arrivee || '',
-          recit: c.content,
-          stats: [
-            { icon: '📏', label: `${c.distance_km || 10} km` },
-            { icon: '⛰', label: `${c.denivele_m || 500} m D+` },
-            { icon: '☀️', label: c.meteo || '' }
-          ]
-        })),
-        moments: form.moments,
-        kit: {
-          intro: form.kitIntro,
-          totalWeight: '4.8 kg',
-          items: form.kitItems
+      const carnetId = data.id;
+      const authorName = user.user_metadata?.full_name || 'Voyageur';
+
+      const chapterMoments = form.chapters
+        .map((c, i) => ({
+          carnet_id: carnetId,
+          jour_numero: i + 1,
+          citation: c.content.trim() || c.title.trim(),
+          auteur_nom: authorName,
+          auteur_id: user.id,
+          lieu: c.lieu_arrivee?.trim() || null,
+        }))
+        .filter((m) => m.citation.length > 0);
+
+      const momentRows = [
+        ...chapterMoments,
+        ...form.moments
+          .filter((m) => m.citation.trim().length > 0)
+          .map((m, i) => ({
+            carnet_id: carnetId,
+            jour_numero: i + 1,
+            citation: m.citation.trim(),
+            auteur_nom: m.author.trim() || authorName,
+            auteur_id: user.id,
+            lieu: m.location.trim() || null,
+            image_url: m.imageUrl || null,
+          })),
+      ];
+
+      if (momentRows.length > 0) {
+        const { error: momentsError } = await supabase.from('carnet_moments').insert(momentRows);
+        if (momentsError) {
+          console.warn('[CreateCarnetView] carnet_moments non enregistrés:', momentsError.message);
         }
-      };
-      localStorage.setItem('user_carnets_data', JSON.stringify([fullCarnet, ...local]));
+      }
+
+      const kitRows = form.kitItems
+        .filter((k) => k.name.trim().length > 0)
+        .map((k, i) => ({
+          carnet_id: carnetId,
+          nom: k.name.trim(),
+          detail: k.detail.trim(),
+          poids_g: Math.max(0, Math.round(parseFloat(k.weight) || 0)),
+          couleur_tag: k.color || null,
+          sort_order: i,
+        }));
+
+      if (kitRows.length > 0) {
+        const { error: kitError } = await supabase.from('carnet_kit_items').insert(kitRows);
+        if (kitError) {
+          console.warn('[CreateCarnetView] carnet_kit_items non enregistrés:', kitError.message);
+        }
+      }
 
       setSaveSuccess(true);
       setTimeout(() => {
@@ -271,7 +262,7 @@ export default function CreateCarnetView({ onCloseModal }: { onCloseModal?: () =
       }, 800);
     } catch (e) {
       console.error(e);
-      router.push('/carnets');
+      setSaveError(e instanceof Error ? e.message : 'Erreur lors de la création du carnet.');
     } finally {
       setSaving(false);
     }
@@ -971,7 +962,7 @@ export default function CreateCarnetView({ onCloseModal }: { onCloseModal?: () =
                 </div>
               </div>
 
-              <div className="flex justify-between pt-2">
+              <div className="flex justify-between items-center gap-3 pt-2">
                 <button
                   type="button"
                   onClick={() => setActiveStep('sac')}
@@ -979,15 +970,22 @@ export default function CreateCarnetView({ onCloseModal }: { onCloseModal?: () =
                 >
                   ← Précédent
                 </button>
-                <button
-                  type="button"
-                  onClick={handlePublish}
-                  disabled={saving || !form.title.trim()}
-                  className="glass-capsule-btn primary py-2.5 px-6 text-xs font-bold flex items-center gap-1.5"
-                >
-                  <Icon name="CheckIcon" size={14} className="relative z-10" />
-                  <span className="relative z-10">{saving ? 'Publication...' : saveSuccess ? '✓ Publié !' : 'Publier le carnet'}</span>
-                </button>
+                <div className="flex items-center gap-3">
+                  {saveError && (
+                    <p role="alert" className="text-[11px] font-semibold text-red-700">
+                      {saveError}
+                    </p>
+                  )}
+                  <button
+                    type="button"
+                    onClick={handlePublish}
+                    disabled={saving || !form.title.trim()}
+                    className="glass-capsule-btn primary py-2.5 px-6 text-xs font-bold flex items-center gap-1.5"
+                  >
+                    <Icon name="CheckIcon" size={14} className="relative z-10" />
+                    <span className="relative z-10">{saving ? 'Publication...' : saveSuccess ? '✓ Publié !' : 'Publier le carnet'}</span>
+                  </button>
+                </div>
               </div>
             </div>
           )}
@@ -1037,9 +1035,14 @@ export default function CreateCarnetView({ onCloseModal }: { onCloseModal?: () =
               Prêt à inspirer la communauté ?
             </h3>
             <p className="text-[11px] text-[#5C6B5E] leading-relaxed">
-              Vos étapes, photos et conseils de sac seront instantanément archivés et partageables.
+              Votre carnet est privé par défaut. Vous pourrez le partager explicitement avec la communauté plus tard.
             </p>
-            <div className="pt-1">
+            <div className="pt-1 space-y-2">
+              {saveError && (
+                <p role="alert" className="text-[11px] font-semibold text-red-700">
+                  {saveError}
+                </p>
+              )}
               <button
                 type="button"
                 onClick={handlePublish}

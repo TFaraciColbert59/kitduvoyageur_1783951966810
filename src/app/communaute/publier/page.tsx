@@ -22,11 +22,14 @@ interface UserCarnetOption {
   correlation_id: string | null;
 }
 
-const SAMPLE_PHOTOS = [
-  'https://images.unsplash.com/photo-1464822759023-fed622ff2c3b?w=800&q=80',
-  'https://images.unsplash.com/photo-1506744038136-46273834b3fb?w=800&q=80',
-  'https://images.unsplash.com/photo-1470071459604-3b5ec3a7fe05?w=800&q=80',
-];
+interface UserCarnetOption {
+  id: string;
+  title: string;
+  correlation_id: string | null;
+  destination?: string | null;
+  description?: string | null;
+  cover_image?: string | null;
+}
 
 function PublierPostContent() {
   const router = useRouter();
@@ -37,34 +40,35 @@ function PublierPostContent() {
   const searchCorrelationId = searchParams?.get('correlationId') || '';
   const { user } = useAuth();
 
-  // Form State
+  // Form State — vide par défaut : rien de fictif n'est pré-rempli.
   const [postType, setPostType] = useState<PostType>('photo');
-  const [title, setTitle] = useState(initialClubName ? `Récit dans ${initialClubName}` : 'Retour du col du Charmant Som — première neige sur les crêtes.');
-  const [content, setContent] = useState(
-    "Trois jours dans le brouillard, et puis ce matin. La lumière est revenue par la face nord, doucement — comme si le col avait attendu qu'on soit prêts pour se montrer.\n\nLe sentier était ouvert jusqu'au col, cuisse par endroits. On a fait demi-tour à 250m du sommet, prudence oblige, mais franchement : quelle 1ère avant-saison... la première neige d'automne, c'est autre chose.\n\n\"Marcher en montagne, c'est apprendre à ne pas insister.\"\n\nProchaine sortie prévue le week-end du 24 — cette fois avec les crampons. Qui vient ?"
-  );
+  const [title, setTitle] = useState(initialClubName ? `Récit dans ${initialClubName}` : '');
+  const [content, setContent] = useState('');
 
   // Event specific state
   const [eventDate, setEventDate] = useState('');
   const [eventMaxParticipants, setEventMaxParticipants] = useState(10);
-  
+
   // Media Files
-  const [photos, setPhotos] = useState<string[]>(SAMPLE_PHOTOS);
+  const [photos, setPhotos] = useState<string[]>([]);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   // Context & Links
-  const [linkedAdventure, setLinkedAdventure] = useState('Arête du Charmant Som - 28 sept');
   const [linkedCarnet, setLinkedCarnet] = useState(
     UUID_PATTERN.test(initialCarnetId) ? initialCarnetId : ''
   );
   const [userCarnets, setUserCarnets] = useState<UserCarnetOption[]>([]);
-  const [location, setLocation] = useState('Col du Charmant Som / Chartreuse (1867 m)');
+  const [location, setLocation] = useState('');
   const [isDetectingLocation, setIsDetectingLocation] = useState(false);
 
+  // Prépublication : consentement explicite + retrait des coordonnées.
+  const [publicationConsent, setPublicationConsent] = useState(false);
+  const [stripCoordinates, setStripCoordinates] = useState(true);
+
   // Tags & Mentions
-  const [tags, setTags] = useState<string[]>(['chartreuse', 'premiere-neige', 'automne']);
+  const [tags, setTags] = useState<string[]>([]);
   const [tagInput, setTagInput] = useState('');
-  const [mentions, setMentions] = useState<string[]>(['antoinec']);
+  const [mentions, setMentions] = useState<string[]>([]);
   const [mentionInput, setMentionInput] = useState('');
 
   // Destination & Timing
@@ -73,17 +77,15 @@ function PublierPostContent() {
   const [selectedClub, setSelectedClub] = useState<string>(initialClubId);
   const [loadingUserClubs, setLoadingUserClubs] = useState(false);
 
-  const [scheduleTime, setScheduleTime] = useState<'maintenant' | '1h' | 'matin' | 'planifier'>('maintenant');
-  const [allowComments, setAllowComments] = useState(true);
-  const [crossPost, setCrossPost] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [toastMessage, setToastMessage] = useState<string | null>(null);
 
-  // Formatting state
+  // Formatting state (mise en forme visuelle du champ texte)
   const [isBold, setIsBold] = useState(false);
   const [isItalic, setIsItalic] = useState(false);
 
-  // Submitting state
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  const [toastMessage, setToastMessage] = useState<string | null>(null);
+  const selectedCarnet = userCarnets.find((c) => c.id === linkedCarnet) ?? null;
+  const requiresCarnetConsent = Boolean(linkedCarnet);
 
   // Fetch Joined Clubs from Supabase
   useEffect(() => {
@@ -124,7 +126,7 @@ function PublierPostContent() {
         const supabase = createClient();
         const { data } = await supabase
           .from('carnets')
-          .select('id, title, correlation_id')
+          .select('id, title, correlation_id, destination, description, cover_image')
           .eq('author_id', user.id)
           .order('created_at', { ascending: false })
           .limit(20);
@@ -147,11 +149,11 @@ function PublierPostContent() {
     let score = 20;
     if (title.trim()) score += 20;
     if (photos.length > 0) score += 25;
-    if (linkedAdventure || linkedCarnet) score += 15;
+    if (linkedCarnet) score += 15;
     if (tags.length >= 2) score += 12;
     if (location.trim()) score += 8;
     return Math.min(100, score);
-  }, [title, photos, linkedAdventure, linkedCarnet, tags, location]);
+  }, [title, photos, linkedCarnet, tags, location]);
 
   // Functional Geolocation Detection
   const handleDetectLocation = () => {
@@ -169,7 +171,7 @@ function PublierPostContent() {
       },
       (error) => {
         console.warn('Geolocation error:', error?.message || `Code ${error?.code}` || error);
-        setLocation('Chartreuse, France (Position approximative)');
+        lkvAlert('Position indisponible. Saisissez le lieu manuellement.');
         setIsDetectingLocation(false);
       },
       { timeout: 8000 }
@@ -218,8 +220,18 @@ function PublierPostContent() {
     setPhotos(photos.filter((_, i) => i !== index));
   };
 
-  // Submit Handler
+  // Submit Handler — publie uniquement des données réelles ; un échec est
+  // affiché et rien n'est simulé localement.
   const handlePublish = async (draft = false) => {
+    if (draft) {
+      lkvAlert('Les brouillons ne sont pas encore disponibles : la publication est directe.');
+      return;
+    }
+    if (requiresCarnetConsent && !publicationConsent) {
+      lkvAlert('Confirmez le consentement de publication avant de publier.');
+      return;
+    }
+
     setIsSubmitting(true);
     try {
       const supabase = createClient();
@@ -229,6 +241,12 @@ function PublierPostContent() {
       if (title.trim() && postType !== 'photo') {
         fullContent = `**${title.trim()}**\n\n${fullContent}`;
       }
+      if (postType === 'evenement' && eventDate) {
+        fullContent += `\n\n📅 ${eventDate}`;
+        if (eventMaxParticipants > 0) {
+          fullContent += ` · ${eventMaxParticipants} places`;
+        }
+      }
       if (location) {
         fullContent += `\n\n📍 ${location}`;
       }
@@ -236,14 +254,18 @@ function PublierPostContent() {
         fullContent += `\n\n` + tags.map((t) => `#${t}`).join(' ');
       }
 
+      // Seules les URLs réellement persistables sont envoyées.
+      const firstPersistableImage = photos.find((photo) => /^https?:\/\//i.test(photo)) || null;
+
       // Target club topic if audience is club
       if (audience === 'club' && selectedClub) {
+        if (!user) throw new Error('Authentification requise');
         const clubPayload = {
           club_id: selectedClub,
-          author_id: user?.id,
+          author_id: user.id,
           title: title.trim() || 'Récit de voyage',
           content: fullContent,
-          image_url: photos[0] || null,
+          image_url: firstPersistableImage,
           likes_count: 0,
           replies_count: 0,
         };
@@ -251,32 +273,34 @@ function PublierPostContent() {
         const { error: clubError } = await supabase.from('club_topics').insert(clubPayload);
         if (clubError) throw clubError;
 
-        setToastMessage(draft ? 'Brouillon sauvegardé !' : 'Discussion publiée dans le club avec succès ! 🏕️');
+        setToastMessage('Discussion publiée dans le club avec succès ! 🏕️');
         setTimeout(() => {
           router.push(`/clubs/${selectedClub}`);
         }, 1200);
         return;
       }
 
+      if (!user) throw new Error('Authentification requise');
+
       // Valid columns matching PostgreSQL community_posts table
       const linkedCarnetId = UUID_PATTERN.test(linkedCarnet) ? linkedCarnet : null;
-      const selectedCarnet = linkedCarnetId
+      const selectedCarnetRow = linkedCarnetId
         ? userCarnets.find((carnet) => carnet.id === linkedCarnetId) ?? null
         : null;
       const correlationId = UUID_PATTERN.test(searchCorrelationId)
         ? searchCorrelationId
-        : selectedCarnet?.correlation_id && UUID_PATTERN.test(selectedCarnet.correlation_id)
-          ? selectedCarnet.correlation_id
+        : selectedCarnetRow?.correlation_id && UUID_PATTERN.test(selectedCarnetRow.correlation_id)
+          ? selectedCarnetRow.correlation_id
           : null;
 
       const payload: Record<string, any> = {
-        author_id: user?.id,
+        author_id: user.id,
         content: fullContent,
         post_type: postType === 'question' ? 'question' : postType === 'evenement' ? 'event' : 'share',
         likes_count: 0,
         comments_count: 0,
-        image_url: photos[0] || null,
-        ...(linkedCarnetId ? { linked_carnet_id: linkedCarnetId } : {}),
+        image_url: firstPersistableImage,
+        ...(linkedCarnetId ? { linked_carnet_id: linkedCarnetId, snapshot_exclude_location: stripCoordinates } : {}),
         ...(correlationId ? { correlation_id: correlationId } : {}),
       };
 
@@ -302,34 +326,13 @@ function PublierPostContent() {
         console.warn('Rewards claim error:', rewardsErr);
       }
 
-      setToastMessage(draft ? 'Brouillon sauvegardé !' : 'Post publié avec succès sur le fil ! 🎉');
+      setToastMessage('Post publié avec succès sur le fil ! 🎉');
       setTimeout(() => {
         router.push('/communaute');
       }, 1500);
     } catch (err: any) {
       console.error('Error creating post:', err);
-      // Local fallback for smooth experience
-      try {
-        const existing = JSON.parse(localStorage.getItem('user_community_posts') || '[]');
-        const localPost = {
-          id: `local-${Date.now()}`,
-          author: {
-            full_name: user?.user_metadata?.full_name || 'Marceline Chevrier',
-            avatar_url: user?.user_metadata?.avatar_url || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150&q=80',
-          },
-          title,
-          content,
-          photos,
-          location,
-          tags,
-          created_at: new Date().toISOString(),
-        };
-        localStorage.setItem('user_community_posts', JSON.stringify([localPost, ...existing]));
-        setToastMessage(draft ? 'Brouillon sauvegardé !' : 'Post publié avec succès ! 🎉');
-        setTimeout(() => router.push('/communaute'), 1500);
-      } catch (e) {
-        lkvAlert('Erreur lors de la publication : ' + (err.message || String(err)));
-      }
+      lkvAlert('Erreur lors de la publication : ' + (err?.message || String(err)));
     } finally {
       setIsSubmitting(false);
     }
@@ -361,22 +364,9 @@ function PublierPostContent() {
 
               <div className="flex items-center gap-3">
                 <button
-                  onClick={() => handlePublish(true)}
-                  disabled={isSubmitting}
-                  className="px-4 py-2 bg-white border border-[#E8E4D8] rounded-full text-xs font-bold text-[#3A4A3D] hover:bg-[#EEF3EC] transition-all "
-                >
-                  Sauvegarder en brouillon
-                </button>
-                <button
-                  onClick={() => alert("Aperçu interactif mis à jour sur la droite !")}
-                  className="px-4 py-2 bg-white border border-[#E8E4D8] rounded-full text-xs font-bold text-[#3A4A3D] hover:bg-[#EEF3EC] transition-all "
-                >
-                  Aperçu
-                </button>
-                <button
                   onClick={() => handlePublish(false)}
-                  disabled={isSubmitting}
-                  className="px-6 py-2 bg-[#17402C] text-white rounded-full text-xs font-bold hover:bg-[#2D3F35] transition-all "
+                  disabled={isSubmitting || (requiresCarnetConsent && !publicationConsent)}
+                  className="px-6 py-2 bg-[#17402C] text-white rounded-full text-xs font-bold hover:bg-[#2D3F35] transition-all disabled:opacity-50"
                 >
                   {isSubmitting ? 'Publication...' : 'Publier'}
                 </button>
@@ -617,33 +607,64 @@ function PublierPostContent() {
                   <p className="text-xs text-[#7A8A7D] mb-5">Rattachez votre post à un contenu existant : le lien apparaîtra en pied de post et enrichira le fil.</p>
 
                   <div className="space-y-4">
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                      <div>
-                        <label className="block text-xs font-semibold text-[#17402C] mb-1.5">Aventure liée</label>
-                        <select value={linkedAdventure} onChange={(e) => setLinkedAdventure(e.target.value)} className="w-full px-4 py-3 bg-[#F5F2EA] border border-[#E4E0D4] rounded-2xl text-xs font-semibold text-[#17402C] focus:outline-none">
-                          <option value="">— Aucune aventure —</option>
-                          <option value="Arête du Charmant Som - 28 sept">Arête du Charmant Som - 28 sept</option>
-                          <option value="Tour du Mont Blanc - Etape 3">Tour du Mont Blanc - Etape 3</option>
-                          <option value="Bivouac au Lac Blanc">Bivouac au Lac Blanc</option>
-                        </select>
-                      </div>
-                      <div>
-                        <label className="block text-xs font-semibold text-[#17402C] mb-1.5">Carnet lié</label>
-                        <select value={linkedCarnet} onChange={(e) => setLinkedCarnet(e.target.value)} className="w-full px-4 py-3 bg-[#F5F2EA] border border-[#E4E0D4] rounded-2xl text-xs font-semibold text-[#17402C] focus:outline-none">
-                          <option value="">— Aucun carnet —</option>
-                          {userCarnets.map((carnet) => (
-                            <option key={carnet.id} value={carnet.id}>
-                              {carnet.title}
-                            </option>
-                          ))}
-                        </select>
-                        {userCarnets.length === 0 && (
-                          <p className="text-[10px] text-[#7A8A7D] mt-1.5">
-                            Aucun carnet disponible — terminez une sortie pour en créer un.
-                          </p>
-                        )}
-                      </div>
+                    <div>
+                      <label className="block text-xs font-semibold text-[#17402C] mb-1.5">Carnet lié</label>
+                      <select value={linkedCarnet} onChange={(e) => { setLinkedCarnet(e.target.value); setPublicationConsent(false); }} className="w-full px-4 py-3 bg-[#F5F2EA] border border-[#E4E0D4] rounded-2xl text-xs font-semibold text-[#17402C] focus:outline-none">
+                        <option value="">— Aucun carnet —</option>
+                        {userCarnets.map((carnet) => (
+                          <option key={carnet.id} value={carnet.id}>
+                            {carnet.title}
+                          </option>
+                        ))}
+                      </select>
+                      {userCarnets.length === 0 && (
+                        <p className="text-[10px] text-[#7A8A7D] mt-1.5">
+                          Aucun carnet disponible — terminez une sortie pour en créer un.
+                        </p>
+                      )}
                     </div>
+
+                    {selectedCarnet && (
+                      <div className="p-4 rounded-2xl bg-[#F5F2EA] border border-[#E4E0D4] space-y-2">
+                        <span className="text-[10px] font-mono font-bold text-[#7A8A7D] uppercase">Aperçu du carnet publié (instantané)</span>
+                        <div className="flex items-center gap-3">
+                          {selectedCarnet.cover_image && (
+                            <img src={selectedCarnet.cover_image} alt="" className="w-14 h-14 rounded-xl object-cover border border-[#E4E0D4]" />
+                          )}
+                          <div className="min-w-0">
+                            <h4 className="text-xs font-bold text-[#17402C] truncate">{selectedCarnet.title}</h4>
+                            {selectedCarnet.destination && (
+                              <p className="text-[10px] text-[#7A8A7D] truncate">📍 {selectedCarnet.destination}</p>
+                            )}
+                          </div>
+                        </div>
+                        <p className="text-[10.5px] text-[#5A6A5D] leading-relaxed">
+                          La publication crée un instantané figé de ce carnet. Vos modifications ultérieures du carnet privé ne seront pas publiées automatiquement.
+                        </p>
+                        <label className="flex items-start gap-2 cursor-pointer pt-1">
+                          <input
+                            type="checkbox"
+                            checked={publicationConsent}
+                            onChange={(e) => setPublicationConsent(e.target.checked)}
+                            className="mt-0.5 accent-[#17402C]"
+                          />
+                          <span className="text-[11px] font-semibold text-[#17402C]">
+                            Je consens à publier cet instantané dans le fil communauté.
+                          </span>
+                        </label>
+                        <label className="flex items-start gap-2 cursor-pointer">
+                          <input
+                            type="checkbox"
+                            checked={stripCoordinates}
+                            onChange={(e) => setStripCoordinates(e.target.checked)}
+                            className="mt-0.5 accent-[#17402C]"
+                          />
+                          <span className="text-[11px] font-semibold text-[#17402C]">
+                            Retirer les coordonnées et points de carte de l&apos;instantané.
+                          </span>
+                        </label>
+                      </div>
+                    )}
 
                     <div>
                       <label className="block text-xs font-semibold text-[#17402C] mb-1.5">Localisation</label>
@@ -735,44 +756,6 @@ function PublierPostContent() {
                         )}
                       </div>
                     )}
-
-                    <div className="pt-2">
-                      <label className="block text-xs font-semibold text-[#17402C] mb-2">Quand publier ?</label>
-                      <div className="flex flex-wrap gap-2">
-                        {[
-                          { id: 'maintenant', label: 'Maintenant' },
-                          { id: '1h', label: 'Dans 1 h' },
-                          { id: 'matin', label: 'Demain matin' },
-                          { id: 'planifier', label: 'Planifier...' },
-                        ].map((st) => (
-                          <button key={st.id} type="button" onClick={() => setScheduleTime(st.id as any)} className={`px-4 py-2 rounded-full text-xs font-semibold border transition-all ${scheduleTime === st.id ? 'bg-[#17402C] text-white border-[#17402C]' : 'bg-[#F5F2EA] text-[#3A4A3D] border-[#E4E0D4] hover:bg-white'}`}>
-                            {st.label}
-                          </button>
-                        ))}
-                      </div>
-                    </div>
-
-                    <div className="pt-4 border-t border-[#F0ECE1] space-y-3">
-                      <div className="flex items-center justify-between">
-                        <div>
-                          <span className="text-xs font-bold text-[#17402C] block">Autoriser les commentaires</span>
-                          <span className="text-[10px] text-[#7A8A7D]">Vous pourrez toujours modifier les échanges</span>
-                        </div>
-                        <button type="button" onClick={() => setAllowComments(!allowComments)} className={`w-11 h-6 rounded-full transition-colors p-1 relative ${allowComments ? 'bg-[#17402C]' : 'bg-gray-300'}`}>
-                          <div className={`w-4 h-4 rounded-full bg-white transition-transform ${allowComments ? 'translate-x-5' : 'translate-x-0'}`} />
-                        </button>
-                      </div>
-
-                      <div className="flex items-center justify-between">
-                        <div>
-                          <span className="text-xs font-bold text-[#17402C] block">Croiser vers mes comptes liés</span>
-                          <span className="text-[10px] text-[#7A8A7D]">Republication automatique sur Strava et Instagram</span>
-                        </div>
-                        <button type="button" onClick={() => setCrossPost(!crossPost)} className={`w-11 h-6 rounded-full transition-colors p-1 relative ${crossPost ? 'bg-[#17402C]' : 'bg-gray-300'}`}>
-                          <div className={`w-4 h-4 rounded-full bg-white transition-transform ${crossPost ? 'translate-x-5' : 'translate-x-0'}`} />
-                        </button>
-                      </div>
-                    </div>
                   </div>
                 </div>
               </div>
@@ -786,10 +769,16 @@ function PublierPostContent() {
 
                   <div className="space-y-3">
                     <div className="flex items-center gap-3">
-                      <img src={user?.user_metadata?.avatar_url || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150&q=80'} alt="Avatar" className="w-9 h-9 rounded-full object-cover border border-[#E4E0D4]" />
+                      {user?.user_metadata?.avatar_url ? (
+                        <img src={user.user_metadata.avatar_url} alt="Avatar" className="w-9 h-9 rounded-full object-cover border border-[#E4E0D4]" />
+                      ) : (
+                        <div className="w-9 h-9 rounded-full bg-[#17402C] text-white flex items-center justify-center text-xs font-bold">
+                          {(user?.user_metadata?.full_name?.charAt(0) || 'V').toUpperCase()}
+                        </div>
+                      )}
                       <div>
-                        <h4 className="text-xs font-bold text-[#17402C]">{user?.user_metadata?.full_name || 'Marceline Chevrier'}</h4>
-                        <p className="text-[10px] text-[#7A8A7D]">À l&apos;instant · {location ? location.split('/')[0] : 'Grenoble'}</p>
+                        <h4 className="text-xs font-bold text-[#17402C]">{user?.user_metadata?.full_name || 'Vous'}</h4>
+                        <p className="text-[10px] text-[#7A8A7D]">À l&apos;instant{location ? ` · ${location.split('/')[0]}` : ''}</p>
                       </div>
                     </div>
 
@@ -808,7 +797,7 @@ function PublierPostContent() {
                     <div className="flex items-center justify-between pt-2 border-t border-[#F0ECE1] text-[11px] text-[#7A8A7D]">
                       <div className="flex items-center gap-3">
                         <span>💬 0</span>
-                        <span>❤️ 3</span>
+                        <span>❤️ 0</span>
                         <span>🚀 0</span>
                       </div>
                       <div className="flex gap-1 text-[10px] text-[#17402C] font-semibold">
@@ -825,23 +814,23 @@ function PublierPostContent() {
 
                   <div className="space-y-2 text-xs">
                     <div className="flex items-center justify-between text-[#17402C] font-semibold">
-                      <span className="flex items-center gap-1.5">✓ Titre rédigé</span>
-                      <span className="text-[10px] text-[#7A8A7D]">FAIT</span>
+                      <span className="flex items-center gap-1.5">{title.trim() ? '✓' : '○'} Titre rédigé</span>
+                      <span className="text-[10px] text-[#7A8A7D]">{title.trim() ? 'FAIT' : 'À FAIRE'}</span>
                     </div>
                     <div className="flex items-center justify-between text-[#17402C] font-semibold">
-                      <span className="flex items-center gap-1.5">✓ {photos.length} photos ajoutées</span>
-                      <span className="text-[10px] text-[#7A8A7D]">FAIT</span>
+                      <span className="flex items-center gap-1.5">{photos.length > 0 ? '✓' : '○'} {photos.length} photos ajoutées</span>
+                      <span className="text-[10px] text-[#7A8A7D]">{photos.length > 0 ? 'FAIT' : 'OPTIONNEL'}</span>
                     </div>
                     <div className="flex items-center justify-between text-[#17402C] font-semibold">
-                      <span className="flex items-center gap-1.5">✓ {linkedAdventure ? 'Aventure liée' : 'Option aventure'}</span>
-                      <span className="text-[10px] text-[#7A8A7D]">{linkedAdventure ? 'FAIT' : 'OPTIONNEL'}</span>
+                      <span className="flex items-center gap-1.5">{linkedCarnet ? '✓ Carnet lié' : '○ Option carnet'}</span>
+                      <span className="text-[10px] text-[#7A8A7D]">{linkedCarnet ? 'FAIT' : 'OPTIONNEL'}</span>
                     </div>
                     <div className="flex items-center justify-between text-[#17402C] font-semibold">
-                      <span className="flex items-center gap-1.5">✓ {tags.length} tags + {mentions.length} mention</span>
-                      <span className="text-[10px] text-[#7A8A7D]">FAIT</span>
+                      <span className="flex items-center gap-1.5">{tags.length > 0 ? '✓' : '○'} {tags.length} tags + {mentions.length} mention</span>
+                      <span className="text-[10px] text-[#7A8A7D]">{tags.length > 0 ? 'FAIT' : 'OPTIONNEL'}</span>
                     </div>
                     <div className="flex items-center justify-between text-[#7A8A7D]">
-                      <span className="flex items-center gap-1.5">○ Ajouter la géolocalisation exacte</span>
+                      <span className="flex items-center gap-1.5">{location ? '✓' : '○'} Ajouter la géolocalisation exacte</span>
                       <span className="text-[10px]">{location ? 'FAIT' : 'OPTIONNEL'}</span>
                     </div>
                   </div>
@@ -855,13 +844,6 @@ function PublierPostContent() {
                       <div className="h-full bg-[#17402C] rounded-full transition-all duration-500" style={{ width: `${qualityScore}%` }} />
                     </div>
                   </div>
-                </div>
-
-                {/* CARD 3: MEILLEUR MOMENT BANNER */}
-                <div className="bg-[#17402C] text-white rounded-[0.75rem] p-5  border border-[#2D3F35]">
-                  <div className="text-[10px] font-mono text-forest-400 uppercase tracking-wider mb-1">MEILLEUR MOMENT</div>
-                  <h4 className="text-base font-bold mb-1">Publier vers 18h.</h4>
-                  <p className="text-xs text-white/70 leading-relaxed font-light">C&apos;est l&apos;heure de votre audience — randonneurs actifs — regarde le fil, entre le trajet retour et le dîner.</p>
                 </div>
               </div>
             </div>
@@ -882,9 +864,7 @@ function PublierPostContent() {
               </div>
 
               <div className="flex items-center gap-3">
-                <button onClick={() => handlePublish(true)} disabled={isSubmitting} className="px-5 py-2.5 bg-white border border-[#E8E4D8] rounded-full text-xs font-bold text-[#3A4A3D] hover:bg-[#EEF3EC] transition-all">Enregistrer</button>
-                <button onClick={() => handlePublish(true)} disabled={isSubmitting} className="px-5 py-2.5 bg-white border border-[#E8E4D8] rounded-full text-xs font-bold text-[#3A4A3D] hover:bg-[#EEF3EC] transition-all">Planifier</button>
-                <button onClick={() => handlePublish(false)} disabled={isSubmitting} className="px-7 py-2.5 bg-[#17402C] text-white rounded-full text-xs font-bold hover:bg-[#2D3F35] transition-all ">
+                <button onClick={() => handlePublish(false)} disabled={isSubmitting || (requiresCarnetConsent && !publicationConsent)} className="px-7 py-2.5 bg-[#17402C] text-white rounded-full text-xs font-bold hover:bg-[#2D3F35] transition-all disabled:opacity-50">
                   {isSubmitting ? 'Publication...' : 'Publier maintenant'}
                 </button>
               </div>
@@ -1032,11 +1012,33 @@ function PublierPostContent() {
                   <div style={{ fontSize: '9px', fontWeight: 700, color: '#17402C' }}>Abonnés</div>
                 </button>
               </div>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', paddingTop: '8px', borderTop: '1px solid #F0ECE1' }}>
-                <span style={{ fontSize: '11px', color: '#17402C', fontWeight: 700 }}>Commentaires</span>
-                <button onClick={() => setAllowComments(!allowComments)} style={{ width: '40px', height: '22px', borderRadius: '999px', background: allowComments ? '#17402C' : '#d1d5db', border: 'none', cursor: 'pointer', padding: '2px', position: 'relative' }}>
-                  <div style={{ width: '18px', height: '18px', borderRadius: '50%', background: '#fff', transition: 'transform 0.2s', transform: allowComments ? 'translateX(18px)' : 'translateX(0)' }} />
-                </button>
+              <div style={{ paddingTop: '8px', borderTop: '1px solid #F0ECE1' }}>
+                <label style={{ display: 'block', fontSize: '11px', fontWeight: 700, color: '#17402C', marginBottom: '6px' }}>Carnet lié</label>
+                <select
+                  value={linkedCarnet}
+                  onChange={(e) => { setLinkedCarnet(e.target.value); setPublicationConsent(false); }}
+                  style={{ width: '100%', padding: '10px', background: '#F5F2EA', border: '1px solid #E4E0D4', borderRadius: '10px', fontSize: '12px', color: '#17402C', fontFamily: 'inherit' }}
+                >
+                  <option value="">— Aucun carnet —</option>
+                  {userCarnets.map((carnet) => (
+                    <option key={carnet.id} value={carnet.id}>{carnet.title}</option>
+                  ))}
+                </select>
+                {selectedCarnet && (
+                  <div style={{ marginTop: '10px', padding: '10px', background: '#F5F2EA', borderRadius: '10px', border: '1px solid #E4E0D4' }}>
+                    <p style={{ margin: 0, fontSize: '10.5px', color: '#5A6A5D', lineHeight: 1.5 }}>
+                      La publication crée un instantané figé de ce carnet ; vos modifications privées ultérieures ne seront pas republiées.
+                    </p>
+                    <label style={{ display: 'flex', gap: '8px', alignItems: 'flex-start', marginTop: '8px' }}>
+                      <input type="checkbox" checked={publicationConsent} onChange={(e) => setPublicationConsent(e.target.checked)} />
+                      <span style={{ fontSize: '11px', fontWeight: 600, color: '#17402C' }}>Je consens à publier cet instantané.</span>
+                    </label>
+                    <label style={{ display: 'flex', gap: '8px', alignItems: 'flex-start', marginTop: '6px' }}>
+                      <input type="checkbox" checked={stripCoordinates} onChange={(e) => setStripCoordinates(e.target.checked)} />
+                      <span style={{ fontSize: '11px', fontWeight: 600, color: '#17402C' }}>Retirer les coordonnées et points de carte.</span>
+                    </label>
+                  </div>
+                )}
               </div>
             </div>
           </div>
@@ -1045,8 +1047,11 @@ function PublierPostContent() {
         {/* Mobile sticky bottom bar */}
         <div style={{ position: 'fixed', bottom: 0, left: 0, right: 0, zIndex: 50, background: 'rgba(255,255,255,0.95)', backdropFilter: 'blur(12px)', borderTop: '1px solid #E8E4D8', padding: '10px 16px', boxShadow: '0 -4px 20px rgba(0,0,0,0.1)' }}>
           <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
-            <button onClick={() => handlePublish(true)} disabled={isSubmitting} style={{ flex: 1, padding: '10px', borderRadius: '999px', border: '1px solid #E8E4D8', background: '#fff', fontSize: '11px', fontWeight: 700, color: '#3A4A3D', cursor: 'pointer', fontFamily: 'inherit' }}>Brouillon</button>
-            <button onClick={() => handlePublish(false)} disabled={isSubmitting} style={{ flex: 2, padding: '10px', borderRadius: '999px', border: 'none', background: '#17402C', color: '#fff', fontSize: '11px', fontWeight: 700, cursor: 'pointer', fontFamily: 'inherit' }}>
+            <button
+              onClick={() => handlePublish(false)}
+              disabled={isSubmitting || (requiresCarnetConsent && !publicationConsent)}
+              style={{ flex: 2, padding: '10px', borderRadius: '999px', border: 'none', background: '#17402C', color: '#fff', fontSize: '11px', fontWeight: 700, cursor: 'pointer', fontFamily: 'inherit', opacity: isSubmitting || (requiresCarnetConsent && !publicationConsent) ? 0.5 : 1 }}
+            >
               {isSubmitting ? 'Publication...' : 'Publier'}
             </button>
           </div>
