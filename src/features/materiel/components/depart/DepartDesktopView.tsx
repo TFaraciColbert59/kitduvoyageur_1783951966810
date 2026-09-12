@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useReducedMotion } from 'framer-motion';
 import { DepartHeroCard } from './hero/DepartHeroCard';
@@ -44,6 +44,7 @@ export function DepartDesktopView({
 }: DepartCockpitProps) {
   const router = useRouter();
   const shouldReduceMotion = useReducedMotion();
+  const rootRef = useRef<HTMLDivElement>(null);
   const [sheetOpen, setSheetOpen] = useState(false);
 
   const isRealKit = !SHOWCASE_IDS.has(depart?.id);
@@ -73,16 +74,53 @@ export function DepartDesktopView({
 
   const smartAlerts = generateSmartPrompts(alertInput);
   const { alerts: visibleAlerts, dismiss: dismissAlert } = useDepartAlerts(smartAlerts);
-  useDepartOfflineCache(depart, weather);
+  const { isOnline } = useDepartOfflineCache(depart, weather);
+
+  const scrollToChecklist = () => {
+    rootRef.current?.querySelector('#depart-checklist-heading')?.scrollIntoView({
+      behavior: shouldReduceMotion ? 'auto' : 'smooth',
+    });
+  };
+
+  const scrollToTerrain = () => {
+    rootRef.current?.querySelector('#depart-terrain')?.scrollIntoView({
+      behavior: shouldReduceMotion ? 'auto' : 'smooth',
+    });
+  };
 
   const handleAlertAction = (alert: ActionableAlert) => {
+    if (alert.targetItemId) {
+      scrollToChecklist();
+      if (typeof window !== 'undefined') {
+        window.setTimeout(() => {
+          window.dispatchEvent(
+            new CustomEvent('highlight-checklist-item', {
+              detail: { id: alert.targetItemId },
+            })
+          );
+        }, 150);
+      }
+      return;
+    }
+    if (alert.actionType === 'scroll_checklist') {
+      scrollToChecklist();
+      return;
+    }
+    if (alert.actionType === 'view_dispo') {
+      rootRef.current?.querySelector('#depart-equipment')?.scrollIntoView({
+        behavior: shouldReduceMotion ? 'auto' : 'smooth',
+      });
+      return;
+    }
+    if (alert.actionType === 'scroll_weather') {
+      scrollToTerrain();
+      return;
+    }
     if (alert.actionType === 'edit_emergency') {
       setSheetOpen(true);
       return;
     }
-    document.getElementById('depart-checklist-heading')?.scrollIntoView({
-      behavior: shouldReduceMotion ? 'auto' : 'smooth',
-    });
+    scrollToChecklist();
   };
 
   const handleAlertDismiss = (alert: ActionableAlert) => {
@@ -108,15 +146,25 @@ export function DepartDesktopView({
   };
 
   return (
-    <div data-testid="depart-cockpit" className="flex min-w-0 flex-col gap-5 pb-4">
+    <div ref={rootRef} data-testid="depart-cockpit" className="flex min-w-0 flex-col gap-5 pb-4">
       <DepartHeroCard
         depart={depart}
         identity={identity}
         kits={kits}
+        isOnline={isOnline}
         onOpenSheet={() => setSheetOpen(true)}
         onShare={handleShare}
         onSelectKit={handleSelectKit}
       />
+
+      {!isOnline && (
+        <p
+          role="status"
+          className="glass-sub-card rounded-2xl px-3 py-2 text-xs font-medium text-[var(--lkv-text-primary)]/70"
+        >
+          Mode hors-ligne — fiche et données en cache, synchronisation automatique.
+        </p>
+      )}
 
       <DepartAlertsBanner
         alerts={visibleAlerts}
@@ -133,7 +181,7 @@ export function DepartDesktopView({
         <DepartTerrainSection trail={depart.trail} weather={weather} updatedAt={depart.updatedAt} />
       </div>
 
-      <section className="glass rounded-[1.75rem] p-4" aria-label="Équipement">
+      <section id="depart-equipment" className="glass rounded-[1.75rem] p-4" aria-label="Équipement">
         <DepartEquipmentHub
           inventory={inventory}
           loans={loans}

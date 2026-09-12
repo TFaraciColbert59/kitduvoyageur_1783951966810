@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useReducedMotion } from 'framer-motion';
 import { AlertTriangle, CheckCircle2, Package, Weight } from 'lucide-react';
@@ -43,6 +43,7 @@ export function DepartMobileExperience({
   const router = useRouter();
   const shouldReduceMotion = useReducedMotion();
   const { triggerHaptic } = useHapticFeedback();
+  const rootRef = useRef<HTMLDivElement>(null);
   const [checklistOpen, setChecklistOpen] = useState(false);
   const [equipmentOpen, setEquipmentOpen] = useState(false);
   const [sheetOpen, setSheetOpen] = useState(false);
@@ -74,20 +75,52 @@ export function DepartMobileExperience({
 
   const smartAlerts = generateSmartPrompts(alertInput);
   const { alerts: visibleAlerts, dismiss: dismissAlert } = useDepartAlerts(smartAlerts);
-  useDepartOfflineCache(depart, weather);
+  const { isOnline } = useDepartOfflineCache(depart, weather);
+
+  const scrollToChecklist = () => {
+    rootRef.current?.querySelector('#depart-checklist-heading')?.scrollIntoView({
+      behavior: shouldReduceMotion ? 'auto' : 'smooth',
+    });
+  };
 
   const handleAlertAction = (alert: ActionableAlert) => {
+    if (alert.targetItemId) {
+      setChecklistOpen(true);
+      if (typeof window !== 'undefined') {
+        window.setTimeout(() => {
+          window.dispatchEvent(
+            new CustomEvent('highlight-checklist-item', {
+              detail: { id: alert.targetItemId },
+            })
+          );
+        }, 150);
+      }
+      return;
+    }
+    if (alert.actionType === 'scroll_checklist') {
+      setChecklistOpen(true);
+      if (typeof window !== 'undefined') {
+        window.setTimeout(scrollToChecklist, 150);
+      }
+      return;
+    }
+    if (alert.actionType === 'view_dispo') {
+      setEquipmentOpen(true);
+      return;
+    }
+    if (alert.actionType === 'scroll_weather') {
+      rootRef.current?.querySelector('#depart-terrain')?.scrollIntoView({
+        behavior: shouldReduceMotion ? 'auto' : 'smooth',
+      });
+      return;
+    }
     if (alert.actionType === 'edit_emergency') {
       setSheetOpen(true);
       return;
     }
     setChecklistOpen(true);
     if (typeof window !== 'undefined') {
-      window.setTimeout(() => {
-        document.getElementById('depart-checklist-heading')?.scrollIntoView({
-          behavior: shouldReduceMotion ? 'auto' : 'smooth',
-        });
-      }, 150);
+      window.setTimeout(scrollToChecklist, 150);
     }
   };
 
@@ -156,15 +189,29 @@ export function DepartMobileExperience({
   const weightBreakdown = (depart?.weightBreakdown ?? []).slice(0, 8);
 
   return (
-    <div data-testid="depart-mobile-experience" className="flex min-w-0 flex-col gap-5 pb-1">
+    <div
+      ref={rootRef}
+      data-testid="depart-mobile-experience"
+      className="flex min-w-0 flex-col gap-5 pb-1"
+    >
       <DepartHeroCard
         depart={depart}
         identity={identity}
         kits={kits}
+        isOnline={isOnline}
         onOpenSheet={() => setSheetOpen(true)}
         onShare={handleShare}
         onSelectKit={handleSelectKit}
       />
+
+      {!isOnline && (
+        <p
+          role="status"
+          className="glass-sub-card rounded-2xl px-3 py-2 text-xs font-medium text-[var(--lkv-text-primary)]/70"
+        >
+          Mode hors-ligne — fiche et données en cache, synchronisation automatique.
+        </p>
+      )}
 
       <DepartAlertsBanner
         alerts={visibleAlerts}

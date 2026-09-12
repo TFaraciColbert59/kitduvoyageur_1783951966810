@@ -51,6 +51,18 @@ describe('DepartHeroCard', () => {
       expect(classAttrs).not.toContain(forbidden);
     }
   });
+  it('n’affiche « Date à fixer » qu’une seule fois sans date de départ', () => {
+    const withoutDate = renderToStaticMarkup(
+      React.createElement(DepartHeroCard, {
+        depart: { ...depart, startsAt: null } as unknown as DepartDetail,
+        identity: { title: 'GR 128 Flandres', subtitle: null, fromTrail: true },
+        isOnline: true,
+        onOpenSheet: () => {},
+        onShare: () => {},
+      })
+    );
+    expect(withoutDate.match(/Date à fixer/g)).toHaveLength(1);
+  });
 });
 
 describe('DepartHeroCard — sélecteur de kit', () => {

@@ -166,8 +166,31 @@ describe('DepartMobileExperience (assemblage canonique mobile)', () => {
     const src = readFileSync(VIEW_PATH, 'utf8');
     expect(src).toContain('generateSmartPrompts');
     expect(src).toContain('useDepartAlerts');
-    expect(src).toContain("getElementById('depart-checklist-heading')");
+    expect(src).toContain("querySelector('#depart-checklist-heading')");
     expect(src).toContain('scrollIntoView');
+  });
+
+  it('transmet l’état hors-ligne au hero et affiche un bandeau unique', () => {
+    const src = readFileSync(VIEW_PATH, 'utf8');
+    expect(src).toContain('const { isOnline } = useDepartOfflineCache(depart, weather)');
+    expect(src).toContain('isOnline={isOnline}');
+    expect(src).toContain('role="status"');
+    expect(src).toContain(
+      'Mode hors-ligne — fiche et données en cache, synchronisation automatique.'
+    );
+  });
+
+  it('route les actions d’alerte (checklist, dispo, météo, fiche) via le rootRef', () => {
+    const src = readFileSync(VIEW_PATH, 'utf8');
+    expect(src).toContain("alert.actionType === 'scroll_checklist'");
+    expect(src).toContain("alert.actionType === 'view_dispo'");
+    expect(src).toContain("alert.actionType === 'scroll_weather'");
+    expect(src).toContain("alert.actionType === 'edit_emergency'");
+    expect(src).toContain("'highlight-checklist-item'");
+    expect(src).toContain('setEquipmentOpen(true)');
+    expect(src).toContain("querySelector('#depart-terrain')");
+    expect(src).toContain('rootRef.current?.querySelector');
+    expect(src).not.toContain("document.getElementById('depart-checklist-heading')");
   });
 
   it('rend une carte unique via DepartTerrainSection', () => {

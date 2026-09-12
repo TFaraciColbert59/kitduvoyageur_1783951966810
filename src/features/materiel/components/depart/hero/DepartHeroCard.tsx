@@ -101,11 +101,15 @@ export function DepartHeroCard({
             <CalendarDays size={12} aria-hidden="true" />
             {dateLabel}
           </span>
-          <span aria-hidden="true">·</span>
-          <span className="inline-flex items-center gap-1 tabular-nums">
-            <Clock size={12} aria-hidden="true" />
-            <CountdownLive target={startsAt} />
-          </span>
+          {startsAt && (
+            <>
+              <span aria-hidden="true">·</span>
+              <span className="inline-flex items-center gap-1 tabular-nums">
+                <Clock size={12} aria-hidden="true" />
+                <CountdownLive target={startsAt} />
+              </span>
+            </>
+          )}
           {activity && (
             <>
               <span aria-hidden="true">·</span>

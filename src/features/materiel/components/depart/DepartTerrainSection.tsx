@@ -19,7 +19,7 @@ export interface DepartTerrainSectionProps {
 
 export function DepartTerrainSection({ trail, weather, updatedAt }: DepartTerrainSectionProps) {
   return (
-    <section className="glass flex flex-col gap-3 rounded-[1.75rem] p-4" aria-label="Terrain">
+    <section id="depart-terrain" className="glass flex flex-col gap-3 rounded-[1.75rem] p-4" aria-label="Terrain">
       <header className="flex items-center justify-between gap-2">
         <p className="text-[10px] font-medium uppercase tracking-[0.14em] text-[var(--lkv-text-primary)]/70">
           Terrain
