@@ -18,6 +18,19 @@ export function modelFor(tier: AITier): string {
   return MODEL_BY_TIER[tier];
 }
 
+/**
+ * Garde-fou « free uniquement » (décision produit 2026-09-11) : aucun appel
+ * OpenRouter ne doit partir sur un modèle payant. Tout identifiant de modèle
+ * qui ne se termine pas par `:free` est refusé AVANT le réseau, même si
+ * MODEL_BY_TIER est modifié par erreur.
+ */
+export function assertFreeModel(model: string): string {
+  if (!model.endsWith(':free')) {
+    throw new ProviderError(`Modèle OpenRouter non gratuit interdit : ${model}`, 400);
+  }
+  return model;
+}
+
 const OPENROUTER_URL = 'https://openrouter.ai/api/v1/chat/completions';
 const TIMEOUT_MS: Record<AITier, number> = { fast: 45_000, heavy: 60_000 };
 /**
@@ -68,13 +81,16 @@ export const openrouterProvider: AIProvider = {
     const controller = new AbortController();
     const timer = setTimeout(() => controller.abort(), TIMEOUT_MS[req.tier]);
 
+    // Free uniquement : refuse tout modèle payant avant l'appel réseau.
+    const model = assertFreeModel(MODEL_BY_TIER[req.tier]);
+
     try {
       const res = await fetch(OPENROUTER_URL, {
         method: 'POST',
         headers: openRouterHeaders(apiKey),
         signal: controller.signal,
         body: JSON.stringify({
-          model: MODEL_BY_TIER[req.tier],
+          model,
           max_tokens: req.maxTokens,
           messages: [
             { role: 'system', content: req.system },
