@@ -31,7 +31,7 @@ type PrefetchConfig = {
 
 const PREFETCH_MAP: Record<string, PrefetchConfig> = {
   "/": {
-    routes: ["/explorer", "/hub", "/communaute", "/pays", "/compte"],
+    routes: ["/explorer", "/hub", "/communaute", "/compte"],
     queries: [
       {
         queryKey: ["hikes"],
@@ -55,9 +55,6 @@ const PREFETCH_MAP: Record<string, PrefetchConfig> = {
   },
   "/hub": {
     routes: ["/kits", "/ai-configurator", "/explorer"],
-  },
-  "/pays": {
-    routes: ["/explorer"],
   },
   "/compte": {
     routes: ["/profil", "/abonnements", "/mes-aventures"],

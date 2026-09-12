@@ -916,4 +916,11 @@ Aucune de ces étapes ne doit être improvisée sans le palier 100 % — c'est l
   - Preuves : test visuel renforcé (`atlas-trail-track-line` présente + `features > 0`), capture `docs/atlas/captures/atlas-trail-track-desktop.png` (zoom cadré 14.98), 6/6 visuel desktop, e2e 2/2.
   - **Routes nettoyées** : liens morts `/carte-interactive` remplacés (`MobileDrawer`, `TerrainHub`, `QuickGrid` → `/explorer`), `PrefetchRoutes` dédupliqué + clé morte supprimée, `BottomTabBar` matchPaths nettoyé, `robots.ts` (3 listes) et `sitemap.ts` sans `/carte-interactive` (canonique = `/explorer`). Redirection 307 conservée et fichiers legacy gardés pour rollback.
   - **Header / bottom bar / footer** : aucun footer sur `/explorer` (vérifié), pas de doublon de header (desktop uniquement, design existant), bottom bar déjà épurée à l'étape précédente — rien de mort restant côté navigation.
+- **« Earth » retiré de partout, remplacé par « Explorer » (demande propriétaire)** :
+  - **Redirection** `/pays` (racine globe) → `/explorer` (307 réversible) ; les **fiches `/pays/[code]` restent servies** (`/pays/fr` → HTTP 200, sidebar globe intacte).
+  - **Écrans Earth supprimés** : `src/app/pays/page.tsx`, `EarthPageClient.tsx`, `components/EarthMobileHeader.tsx`, `components/EarthCountrySheet.tsx`, `styles/earth.css` (le dossier `components/` vidé a été retiré).
+  - **Label « Earth » éliminé de toute l'UI** : Header desktop + mobile, Footer global, footer d'accueil, sidebar pays (« Earth LKDV / Earth v2.0 » → « Carte LKDV / Pays v2.0 »), recherche globale (destinations pointant vers les **vraies fiches** `/pays/is|no|np|ch`, plus de lien racine), tab bar mobile (**onglet Earth supprimé**, « Aventures » renommé « **Explorer** »).
+  - **Routes/SEO** : `/pays` retiré du `sitemap.ts` (canonique = `/explorer`, fiches pays conservées), entrées mortes retirées de `PrefetchRoutes` (clé `/pays` + doublon), `robots.ts` conserve `/pays` pour les fiches.
+  - Preuves : `pays: HTTP 307`, `pays/fr: HTTP 200` ; suites : **2281 tests**, visuel desktop **6/6** (dont « /pays redirige vers /explorer, /pays/fr garde son globe »), e2e **2/2**, `tsc` 0.
+  - Rollback : retirer les deux entrées de redirection (`/pays`, `/carte-interactive`) ; les fichiers supprimés restent récupérables via git.
 

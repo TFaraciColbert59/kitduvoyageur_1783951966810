@@ -180,7 +180,7 @@ test.describe('Explorateur unifié (MapLibre globe)', () => {
     await expect(page.getByTestId('unified-explorer-map')).toHaveAttribute('data-atlas-ready', 'true');
   });
 
-  test('globe pays MapLibre monté sans pageerror (Earth)', async ({ page }, testInfo) => {
+  test('Earth retiré : /pays redirige vers /explorer, /pays/fr garde son globe', async ({ page }, testInfo) => {
     test.skip(testInfo.project.name !== 'desktop-chrome', 'smoke desktop');
 
     const pageErrors: string[] = [];
@@ -193,14 +193,18 @@ test.describe('Explorateur unifié (MapLibre globe)', () => {
       });
     });
 
-    await prepareVisualPage(page, '/pays');
+    // « Earth » retiré : la racine /pays mène à l'explorateur unifié.
+    await page.goto('/pays', { waitUntil: 'domcontentloaded' });
+    await page.waitForURL('**/explorer', { timeout: 60_000 });
+    await expect(page.getByTestId('unified-explorer-map')).toHaveAttribute(
+      'data-atlas-ready',
+      'true',
+      { timeout: 45_000 }
+    );
 
-    // Globe MapLibre monté (même worker public que l'explorateur).
+    // Les fiches pays restent servies avec leur globe MapLibre (sidebar).
+    await prepareVisualPage(page, '/pays/fr');
     await expect(page.locator('canvas.maplibregl-canvas').first()).toBeVisible({ timeout: 45_000 });
-    // Alternative clavier (WCAG 2.1.1) présente.
-    await expect(
-      page.getByRole('combobox', { name: 'Choisir un pays à afficher' })
-    ).toBeAttached();
 
     expect(pageErrors, pageErrors.join('\n')).toHaveLength(0);
   });

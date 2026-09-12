@@ -33,7 +33,7 @@ export const ATLAS_TILES: Record<AtlasTileMode, { tiles: string[]; attribution: 
 export interface CreateMapStyleOptions {
   /** Inclure les tuiles raster (défaut true). */
   withTiles?: boolean;
-  /** Fond transparent (globe pays posé sur la vidéo Earth). */
+  /** Fond transparent (globe pays posé sur la vidéo de fond). */
   transparentBackground?: boolean;
 }
 

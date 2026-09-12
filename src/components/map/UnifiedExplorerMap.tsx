@@ -427,7 +427,7 @@ export default function UnifiedExplorerMap({
         console.error('[UnifiedExplorerMap] MapLibre error', event?.error ?? event);
       });
 
-    // Couche monde : polygones pays (GeoJSON statique réel, déjà utilisé par Earth).
+    // Couche monde : polygones pays (GeoJSON statique réel, déjà utilisé par les fiches pays).
     // La géométrie est enrichie côté client avec `atlas_iso`/`atlas_name` normalisés
     // (même résolution que le référentiel countries_geo) pour filtres et interactions.
     countriesAbort = new AbortController();

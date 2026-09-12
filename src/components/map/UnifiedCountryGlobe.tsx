@@ -20,7 +20,7 @@ import { MAP_COLORS } from '@/components/map/engine/mapTheme';
  * CHANTIER ATLAS — Phase 5
  * Globe pays MapLibre (projection globe) avec la MÊME API de props que
  * `CountryGlobe` (react-globe.gl) : permet de retirer `react-globe.gl`/`three`
- * sans toucher aux pages Earth ni à leur logique.
+ * sans toucher aux fiches pays ni à leur logique.
  *
  * Écarts volontaires documentés :
  *   - auto-rotation supprimée (calme, reduced-motion friendly) ;
@@ -297,7 +297,7 @@ export default function UnifiedCountryGlobe({
   }, []);
 
   // ── Synchronisation des features (GeoJSON brut × filtre pays × mode uniforme)
-  //    Le recolorage suit les sélections de continent de la page Earth. ─────────
+  //    Le recolorage suit les sélections de continent. ─────────
   useEffect(() => {
     const mapped = buildGlobeFeatures(
       rawFeaturesRef.current,

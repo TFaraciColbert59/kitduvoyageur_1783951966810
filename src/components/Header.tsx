@@ -13,8 +13,7 @@ import { useCartCount } from '@/hooks/useCartCount';
 import { useConversations } from '@/features/messaging/hooks/useConversations';
 
 const NAV_LINKS = [
-  { label: 'Aventures', href: '/explorer' },
-  { label: 'Earth', href: '/pays' },
+  { label: 'Explorer', href: '/explorer' },
   { label: 'Matériel', href: '/hub' },
   { label: 'Communauté', href: '/communaute' },
 ];
@@ -119,8 +118,7 @@ export default function Header() {
             {/* Center: Navigation Links with Animated Sliding Pill */}
             <nav className="flex items-center gap-1 p-0.5 rounded-full bg-white/[0.08] border border-white/25 shadow-inner shrink-0">
               {[
-                { label: 'Aventures', href: '/explorer' },
-                { label: 'Earth', href: '/pays' },
+                { label: 'Explorer', href: '/explorer' },
                 { label: 'Matériel', href: '/hub' },
                 { label: 'Communauté', href: '/communaute' },
                 { label: 'Mon compte', href: user ? '/compte' : '/connexion' },

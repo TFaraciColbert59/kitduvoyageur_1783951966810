@@ -60,8 +60,7 @@ const UnifiedExplorerMap = dynamic(() => import('@/components/map/UnifiedExplore
 // ── Navigation Links (Exactement identiques à la charte LKDV) ──────────────────
 
 const NAV_LINKS = [
-  { label: 'Aventures', href: '/explorer' },
-  { label: 'Earth', href: '/pays' },
+  { label: 'Explorer', href: '/explorer' },
   { label: 'Matériel', href: '/hub' },
   { label: 'Communauté', href: '/communaute' },
 ];
