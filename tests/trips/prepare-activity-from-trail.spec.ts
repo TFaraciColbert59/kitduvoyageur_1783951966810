@@ -7,9 +7,13 @@
  *       dressage `trip_steps`/`trip_pois`/`trip_expenses` et enfilage `ai_jobs` ;
  *   (d) usine autogen en échec (exception ou non-ok) → `fallback_created` (trip minimal) ;
  *   (e) sentier sans géométrie → `unavailable/no_geometry` ;
- *   bonus : nom absent, non connecté, course sur l'index unique (23505 → reused).
+ *   bonus : nom absent, non connecté, course sur l'index unique (23505 → reused),
+ *   garantie `route_id` (retry + vérif + compensation `persist_failed`),
+ *   erreur de select idempotence, garde source `next=` de reprise connexion.
  */
 import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { readFileSync } from 'node:fs';
+import path from 'node:path';
 
 const { mockGetUser, serviceHolder } = vi.hoisted(() => ({
   mockGetUser: vi.fn(),
@@ -97,8 +101,14 @@ const mocks = {
 interface Captures {
   inserts: Array<{ table: string; values: unknown }>;
   updates: Array<{ table: string; values: unknown }>;
+  deletes: string[];
   filters: Array<{ table: string; column: string; operator: string; value: unknown }>;
   rpcCalls: Array<{ fn: string; args: Record<string, unknown> }>;
+}
+
+interface ServiceError {
+  message: string;
+  code?: string;
 }
 
 interface ServiceOptions {
@@ -107,13 +117,20 @@ interface ServiceOptions {
   geojson?: unknown;
   /** File des réponses `trips` select « id, slug, title » (consommée une par appel). */
   existingTrips?: Array<Record<string, unknown> | null>;
+  /** File parallèle d'erreurs de select `trips` (entrée non nulle = erreur). */
+  existingTripErrors?: Array<ServiceError | null>;
   tripMetadata?: Record<string, unknown> | null;
+  /** File des erreurs d'update `trips` (entrée nulle = succès, mutation appliquée). */
+  tripUpdateResults?: Array<ServiceError | null>;
   pois?: Record<string, unknown>[];
 }
 
 function createService(options: ServiceOptions): { client: unknown; captures: Captures } {
-  const captures: Captures = { inserts: [], updates: [], filters: [], rpcCalls: [] };
+  const captures: Captures = { inserts: [], updates: [], deletes: [], filters: [], rpcCalls: [] };
   const existingQueue = [...(options.existingTrips ?? [])];
+  const existingErrorQueue = [...(options.existingTripErrors ?? [])];
+  const tripUpdateQueue = [...(options.tripUpdateResults ?? [])];
+  let tripMetadataState: Record<string, unknown> | null = options.tripMetadata ?? null;
 
   const client = {
     rpc: async (fn: string, args: Record<string, unknown>) => {
@@ -123,20 +140,24 @@ function createService(options: ServiceOptions): { client: unknown; captures: Ca
       return { data: null, error: null };
     },
     from(table: string) {
-      let op: 'select' | 'insert' | 'update' = 'select';
+      let op: 'select' | 'insert' | 'update' | 'delete' = 'select';
       let columns = '';
+      let pendingUpdateError: ServiceError | null = null;
       const builder: Record<string, unknown> = {};
 
       const settle = () => {
         if (op === 'insert') return { data: null, error: null };
-        if (op === 'update') return { data: null, error: null };
+        if (op === 'update') return { data: null, error: pendingUpdateError };
+        if (op === 'delete') return { data: null, error: null };
         if (table === 'hiking_routes') return { data: options.route ?? null, error: null };
         if (table === 'trail_metadata') return { data: options.meta ?? null, error: null };
         if (table === 'trips') {
           if (columns.includes('metadata')) {
-            return { data: options.tripMetadata ?? null, error: null };
+            return { data: tripMetadataState, error: null };
           }
           const next = existingQueue.length > 0 ? existingQueue.shift() : null;
+          const nextError = existingErrorQueue.length > 0 ? existingErrorQueue.shift() : null;
+          if (nextError) return { data: null, error: nextError };
           return { data: next ?? null, error: null };
         }
         return { data: null, error: null };
@@ -154,6 +175,17 @@ function createService(options: ServiceOptions): { client: unknown; captures: Ca
       builder.update = (values: unknown) => {
         op = 'update';
         captures.updates.push({ table, values });
+        const nextError = tripUpdateQueue.length > 0 ? tripUpdateQueue.shift() : null;
+        pendingUpdateError = nextError ?? null;
+        const nextMetadata = (values as { metadata?: unknown }).metadata;
+        if (!pendingUpdateError && table === 'trips' && nextMetadata && typeof nextMetadata === 'object') {
+          tripMetadataState = { metadata: nextMetadata };
+        }
+        return builder;
+      };
+      builder.delete = () => {
+        op = 'delete';
+        captures.deletes.push(table);
         return builder;
       };
       builder.eq = () => builder;
@@ -460,5 +492,106 @@ describe('prepareActivityFromTrail (Task 4)', () => {
     );
     expect(captures.inserts).toHaveLength(0);
     expect(mocks.runAutoGenPipeline).not.toHaveBeenCalled();
+  });
+
+  it('(g) route_id non persisté après retry → compensation delete + unavailable/persist_failed', async () => {
+    const { client, captures } = createService({
+      route: ROUTE,
+      meta: META,
+      geojson: GEOJSON,
+      existingTrips: [null],
+      tripMetadata: { metadata: {} },
+      tripUpdateResults: [{ message: 'écriture impossible' }, { message: 'écriture impossible' }],
+    });
+    serviceHolder.client = client;
+
+    const outcome = await prepareActivityFromTrail(String(ROUTE_ID));
+
+    expect(outcome).toEqual({ status: 'unavailable', reason: 'persist_failed' });
+    expect(captures.updates.filter((entry) => entry.table === 'trips')).toHaveLength(2);
+    expect(captures.deletes).toContain('trips');
+    expect(insertFor(captures, 'trip_steps')).toBeUndefined();
+    expect(insertFor(captures, 'trip_expenses')).toBeUndefined();
+    expect(insertFor(captures, 'ai_jobs')).toBeUndefined();
+  });
+
+  it('(g bis) retry metadata réussi → created + socle + job IA', async () => {
+    const { client, captures } = createService({
+      route: ROUTE,
+      meta: META,
+      geojson: GEOJSON,
+      existingTrips: [null],
+      tripMetadata: { metadata: {} },
+      tripUpdateResults: [{ message: 'erreur transitoire' }, null],
+    });
+    serviceHolder.client = client;
+
+    const outcome = await prepareActivityFromTrail(String(ROUTE_ID));
+
+    expect(outcome.status).toBe('created');
+    expect(captures.deletes).toHaveLength(0);
+    expect(insertFor(captures, 'trip_steps')).toBeDefined();
+    expect(insertFor(captures, 'ai_jobs')).toBeDefined();
+  });
+
+  it('(h) 23505 à l’écriture metadata.route_id → reused sans suppression', async () => {
+    const { client, captures } = createService({
+      route: ROUTE,
+      meta: META,
+      geojson: GEOJSON,
+      existingTrips: [null, { id: TRIP.id, slug: TRIP.slug, title: TRIP.title }],
+      tripMetadata: { metadata: {} },
+      tripUpdateResults: [
+        {
+          code: '23505',
+          message: 'duplicate key value violates unique constraint "uniq_trips_user_route"',
+        },
+      ],
+    });
+    serviceHolder.client = client;
+
+    const outcome = await prepareActivityFromTrail(String(ROUTE_ID));
+
+    expect(outcome).toEqual({
+      status: 'reused',
+      tripId: TRIP.id,
+      slug: TRIP.slug,
+      title: TRIP.title,
+    });
+    expect(captures.deletes).toHaveLength(0);
+    expect(insertFor(captures, 'ai_jobs')).toBeUndefined();
+  });
+
+  it('(i) erreur de select idempotence → unavailable/persist_failed, aucune création', async () => {
+    const { client, captures } = createService({
+      route: ROUTE,
+      meta: META,
+      geojson: GEOJSON,
+      existingTrips: [null],
+      existingTripErrors: [{ message: 'base indisponible' }],
+    });
+    serviceHolder.client = client;
+
+    const outcome = await prepareActivityFromTrail(String(ROUTE_ID));
+
+    expect(outcome).toEqual({ status: 'unavailable', reason: 'persist_failed' });
+    expect(mocks.runAutoGenPipeline).not.toHaveBeenCalled();
+    expect(mocks.createTrip).not.toHaveBeenCalled();
+    expect(captures.inserts).toHaveLength(0);
+  });
+});
+
+describe('Reprise connexion — garde source (paramètre `next`)', () => {
+  const read = (relative: string) => readFileSync(path.join(process.cwd(), relative), 'utf8');
+
+  it('page.tsx et activer/route.ts redirigent la connexion avec `next=` (jamais `redirect=`)', () => {
+    for (const file of [
+      'src/app/preparer-sentier/[id]/page.tsx',
+      'src/app/preparer-sentier/[id]/activer/route.ts',
+    ]) {
+      const source = read(file);
+      expect(source).toContain('/connexion?next=');
+      expect(source).not.toContain('?redirect=');
+    }
   });
 });

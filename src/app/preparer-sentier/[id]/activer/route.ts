@@ -34,7 +34,7 @@ export async function GET(
     if (error instanceof PrepareActivityAuthError) {
       return NextResponse.redirect(
         new URL(
-          `/connexion?redirect=${encodeURIComponent(`/preparer-sentier/${id}`)}`,
+          `/connexion?next=${encodeURIComponent(`/preparer-sentier/${id}`)}`,
           request.url
         )
       );

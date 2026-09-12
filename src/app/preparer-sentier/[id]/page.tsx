@@ -35,12 +35,13 @@ export default async function PreparerSentierPage({
     outcome = await prepareActivityFromTrail(id);
   } catch (error) {
     if (error instanceof PrepareActivityAuthError) {
-      redirect('/connexion?redirect=' + encodeURIComponent(`/preparer-sentier/${id}`));
+      redirect('/connexion?next=' + encodeURIComponent(`/preparer-sentier/${id}`));
     }
     throw error;
   }
 
   if (outcome.status === 'unavailable') {
+    const persistFailed = outcome.reason === 'persist_failed';
     return (
       <main
         id="main-content"
@@ -48,10 +49,14 @@ export default async function PreparerSentierPage({
       >
         <div className="w-full max-w-md text-center">
           <h1 className="text-2xl font-bold text-[#17402C]">
-            Données réelles indisponibles pour ce sentier
+            {persistFailed
+              ? 'Préparation momentanément indisponible — réessayez'
+              : 'Données réelles indisponibles pour ce sentier'}
           </h1>
           <p className="mt-4 text-sm leading-relaxed text-[#17402C]/70">
-            {UNAVAILABLE_COPY[outcome.reason]} Aucune activité n&apos;a été créée.
+            {outcome.reason === 'persist_failed'
+              ? "L'activité n'a pas pu être enregistrée. Aucune donnée n'a été inventée : relancez la préparation dans un instant."
+              : `${UNAVAILABLE_COPY[outcome.reason]} Aucune activité n'a été créée.`}
           </p>
           <Link
             href="/explorer"

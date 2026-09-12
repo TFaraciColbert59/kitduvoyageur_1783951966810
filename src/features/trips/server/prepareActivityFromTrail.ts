@@ -39,14 +39,17 @@ import { enqueueActivityEnrichment } from './activityEnrichment/enqueue';
  */
 
 export type PrepareTrailOutcome =
-  | { status: 'unavailable'; reason: 'not_found' | 'no_name' | 'no_geometry' }
+  | {
+      status: 'unavailable';
+      reason: 'not_found' | 'no_name' | 'no_geometry' | 'persist_failed';
+    }
   | { status: 'reused'; tripId: string; slug: string; title: string }
   | { status: 'created'; tripId: string; slug: string; title: string }
   | { status: 'fallback_created'; tripId: string; slug: string; title: string };
 
 /**
  * Signal interne : le sentier est valide mais aucun utilisateur connecté.
- * La route redirige vers `/connexion?redirect=…` ; jamais de levée vers une 500.
+ * La route redirige vers `/connexion?next=…` ; jamais de levée vers une 500.
  */
 export class PrepareActivityAuthError extends Error {
   constructor() {
@@ -247,12 +250,22 @@ async function loadTrailPois(db: SupabaseClient, polyline: TrailPoint[]): Promis
   }
 }
 
+type ExistingTripResult =
+  | { status: 'found'; trip: TripRecord }
+  | { status: 'none' }
+  | { status: 'error' };
+
+type PersistRouteIdResult =
+  | { status: 'ok' }
+  | { status: 'duplicate'; trip: TripRecord }
+  | { status: 'failed' };
+
 /** Réutilisation idempotente par (`user_id`, `metadata->>'route_id'`). */
 async function findExistingTrip(
   db: SupabaseClient,
   userId: string,
   routeId: number
-): Promise<TripRecord | null> {
+): Promise<ExistingTripResult> {
   const { data, error } = await db
     .from('trips')
     .select('id, slug, title')
@@ -263,53 +276,141 @@ async function findExistingTrip(
 
   if (error) {
     console.error('[LKDV preparer-sentier] recherche activité existante en échec:', error.message);
-    return null;
+    return { status: 'error' };
   }
-  if (!data) return null;
+  if (!data) return { status: 'none' };
 
   const row = data as Record<string, unknown>;
-  return { tripId: String(row.id), slug: String(row.slug), title: String(row.title) };
+  return {
+    status: 'found',
+    trip: { tripId: String(row.id), slug: String(row.slug), title: String(row.title) },
+  };
 }
 
-/** Métadonnées de préparation : `route_id` (nombre), provenance, statut job. */
+function routeIdFromMetadata(metadata: unknown): string | null {
+  if (!metadata || typeof metadata !== 'object') return null;
+  const value = (metadata as Record<string, unknown>).route_id;
+  if (value === null || value === undefined) return null;
+  const asString = String(value).trim();
+  return asString === '' ? null : asString;
+}
+
+/**
+ * Persiste `metadata.route_id` (nombre) avec une tentative, un retry, puis une
+ * vérification par relecture. Un conflit 23505 signifie qu'une autre activité
+ * porte déjà ce `route_id` → réutilisation. Tout autre échec persistant est
+ * remonté `failed` (l'appelant compense et sert la page honnête).
+ */
 async function writeTripPrepareMetadata(
   writer: SupabaseClient,
   tripId: string,
   userId: string,
   routeId: number
+): Promise<PersistRouteIdResult> {
+  const attempt = async (): Promise<'ok' | 'duplicate' | 'failed'> => {
+    try {
+      const { data, error: readError } = await writer
+        .from('trips')
+        .select('metadata')
+        .eq('id', tripId)
+        .eq('user_id', userId)
+        .maybeSingle();
+
+      if (readError) {
+        console.error(
+          '[LKDV preparer-sentier] lecture métadonnées route_id en échec:',
+          readError.message
+        );
+        return 'failed';
+      }
+
+      const current =
+        data && typeof (data as { metadata?: unknown }).metadata === 'object' && data.metadata
+          ? ((data as { metadata: Record<string, unknown> }).metadata ?? {})
+          : {};
+
+      const { error } = await writer
+        .from('trips')
+        .update({
+          metadata: {
+            ...current,
+            route_id: routeId,
+            source: PREPARE_SOURCE,
+            enrichment_status: 'pending',
+          },
+          updated_at: new Date().toISOString(),
+        })
+        .eq('id', tripId)
+        .eq('user_id', userId);
+
+      if (error) {
+        if (isUniqueRouteViolation(error)) return 'duplicate';
+        console.error('[LKDV preparer-sentier] écriture route_id en échec:', error.message);
+        return 'failed';
+      }
+      return 'ok';
+    } catch (error) {
+      if (isUniqueRouteViolation(error)) return 'duplicate';
+      console.error('[LKDV preparer-sentier] écriture route_id en erreur inattendue:', error);
+      return 'failed';
+    }
+  };
+
+  let result = await attempt();
+  if (result === 'failed') {
+    console.error('[LKDV preparer-sentier] route_id non persisté — nouvelle tentative:', tripId);
+    result = await attempt();
+  }
+
+  if (result === 'duplicate') {
+    const existing = await findExistingTrip(writer, userId, routeId);
+    if (existing.status === 'found') return { status: 'duplicate', trip: existing.trip };
+    console.error('[LKDV preparer-sentier] conflit route_id sans activité réutilisable:', tripId);
+    return { status: 'failed' };
+  }
+  if (result === 'failed') return { status: 'failed' };
+
+  const { data: verifyRow, error: verifyError } = await writer
+    .from('trips')
+    .select('metadata')
+    .eq('id', tripId)
+    .eq('user_id', userId)
+    .maybeSingle();
+
+  if (verifyError) {
+    console.error(
+      '[LKDV preparer-sentier] vérification route_id en échec:',
+      verifyError.message
+    );
+    return { status: 'failed' };
+  }
+
+  const persisted = routeIdFromMetadata((verifyRow as { metadata?: unknown } | null)?.metadata);
+  if (persisted !== String(routeId)) {
+    console.error('[LKDV preparer-sentier] route_id absent après écriture:', tripId);
+    return { status: 'failed' };
+  }
+
+  return { status: 'ok' };
+}
+
+/** Compensation : supprime l'activité créée (cascades enfants), best-effort. */
+async function compensateCreatedTrip(
+  writer: SupabaseClient,
+  tripId: string,
+  userId: string
 ): Promise<void> {
   try {
-    const { data } = await writer
-      .from('trips')
-      .select('metadata')
-      .eq('id', tripId)
-      .eq('user_id', userId)
-      .maybeSingle();
-
-    const current =
-      data && typeof (data as { metadata?: unknown }).metadata === 'object' && data.metadata
-        ? ((data as { metadata: Record<string, unknown> }).metadata ?? {})
-        : {};
-
     const { error } = await writer
       .from('trips')
-      .update({
-        metadata: {
-          ...current,
-          route_id: routeId,
-          source: PREPARE_SOURCE,
-          enrichment_status: 'pending',
-        },
-        updated_at: new Date().toISOString(),
-      })
+      .delete()
       .eq('id', tripId)
       .eq('user_id', userId);
-
     if (error) {
-      console.error('[LKDV preparer-sentier] métadonnées route_id en échec:', error.message);
+      console.error('[LKDV preparer-sentier] compensation suppression en échec:', error.message);
     }
   } catch (error) {
-    console.error('[LKDV preparer-sentier] métadonnées route_id en erreur inattendue:', error);
+    console.error('[LKDV preparer-sentier] compensation suppression en erreur inattendue:', error);
   }
 }
 
@@ -443,7 +544,10 @@ export async function prepareActivityFromTrail(trailIdRaw: string): Promise<Prep
   if (!user) throw new PrepareActivityAuthError();
 
   const existing = await findExistingTrip(db, user.id, routeId);
-  if (existing) return { status: 'reused', ...existing };
+  if (existing.status === 'error') {
+    return { status: 'unavailable', reason: 'persist_failed' };
+  }
+  if (existing.status === 'found') return { status: 'reused', ...existing.trip };
 
   const { trail, meta, polyline } = loaded;
   const writer: SupabaseClient = service ?? session;
@@ -507,7 +611,10 @@ export async function prepareActivityFromTrail(trailIdRaw: string): Promise<Prep
     } catch (error) {
       if (isUniqueRouteViolation(error)) {
         const raced = await findExistingTrip(db, user.id, routeId);
-        if (raced) return { status: 'reused', ...raced };
+        if (raced.status === 'error') {
+          return { status: 'unavailable', reason: 'persist_failed' };
+        }
+        if (raced.status === 'found') return { status: 'reused', ...raced.trip };
       }
       throw error;
     }
@@ -515,7 +622,14 @@ export async function prepareActivityFromTrail(trailIdRaw: string): Promise<Prep
 
   const tripId = record.tripId;
 
-  await writeTripPrepareMetadata(writer, tripId, user.id, routeId);
+  const persisted = await writeTripPrepareMetadata(writer, tripId, user.id, routeId);
+  if (persisted.status === 'duplicate') {
+    return { status: 'reused', ...persisted.trip };
+  }
+  if (persisted.status === 'failed') {
+    await compensateCreatedTrip(writer, tripId, user.id);
+    return { status: 'unavailable', reason: 'persist_failed' };
+  }
 
   const pois = await loadTrailPois(db, polyline);
   await plateDeterministicContent({
