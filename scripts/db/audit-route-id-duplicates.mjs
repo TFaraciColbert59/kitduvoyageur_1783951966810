@@ -41,8 +41,9 @@ try {
     group.trip_ids.push(row.id);
     byPair.set(pairKey, group);
   }
+  const emptyRouteIds = rows.filter((row) => String(row.metadata?.route_id ?? '').trim() === '').length;
   const duplicates = [...byPair.values()].filter((group) => group.trip_ids.length > 1);
-  console.log(JSON.stringify({ duplicates, count: duplicates.length }, null, 2));
+  console.log(JSON.stringify({ duplicates, count: duplicates.length, empty_route_ids: emptyRouteIds }, null, 2));
 } catch (error) {
   console.error(`Audit failed: ${error.message ?? error}`);
   process.exit(1);
