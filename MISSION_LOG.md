@@ -891,4 +891,5 @@ Aucune de ces étapes ne doit être improvisée sans le palier 100 % — c'est l
 - Vérification : `/explorer` **sans paramètre** sert le moteur unifié — `{"unified":1,"legacy":0,"errors":[]}` (capture `docs/atlas/captures/atlas-explorer-flag-on-desktop.png`).
 - Rollback instantané toujours disponible : `node scripts/atlas/set-rollout-flag.mjs --enabled false` (moteur legacy intact, test visuel adaptatif « jamais d'écran blanc »).
 - Test visuel de rollback rendu flag-aware (le moteur attendu dépend de l'état du flag).
+- **Redirection `/carte-interactive` → `/explorer`** (307 temporaire, `next.config.mjs`) : la page historique mène désormais au nouvel explorateur — anticipation de l'étape 1 de la Phase 8 à la demande du propriétaire (« tout en prod direct »). Vérifié : `{"url":"/explorer","unified":1,"legacy":0,"errors":[]}`. Rollback = retirer l'entrée de redirection (l'ancien moteur Leaflet est intact). `/carte` pointe aussi directement vers `/explorer`.
 
