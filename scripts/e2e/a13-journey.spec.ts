@@ -252,4 +252,202 @@ test.describe('A13 — certification parcours bout-en-bout (S9)', () => {
       }
     }
   });
+
+  /**
+   * Phase 3 — parcours complet de création : connexion → phrase → propositions
+   * → sélection/validation → voyage actif → route réelle affichée → kit →
+   * budget → documents. Un parcours réel navigable est ensemencé par l'API
+   * service (aucune fixture locale) puis supprimé en fin de test.
+   */
+  test('TEST-A13-E2E-02: Phase 3 — brief IA → voyage réel → route → kit → budget → documents', async ({
+    page,
+    request,
+  }) => {
+    test.skip(
+      !HAS_TEST_PROJECT,
+      'Projet Supabase de test requis : NEXT_PUBLIC_SUPABASE_URL, NEXT_PUBLIC_SUPABASE_ANON_KEY et SUPABASE_SERVICE_ROLE_KEY.'
+    );
+    test.setTimeout(300_000);
+
+    const runKey = `${Date.now()}-${randomUUID().slice(0, 8)}`;
+    const email = `phase3-e2e-${runKey}@example.test`;
+    const password = `E2e-${randomUUID()}-Aa1!`;
+    const routeName = `Phase 3 E2E Sancy ${runKey}`;
+    let userId: string | null = null;
+    let routeId: number | null = null;
+
+    try {
+      // 1. Utilisateur réel via l'API admin (aucune fixture).
+      const createUser = await request.post(`${SUPABASE_URL}/auth/v1/admin/users`, {
+        headers: adminHeaders(),
+        data: {
+          email,
+          password,
+          email_confirm: true,
+          user_metadata: { full_name: 'Phase 3 E2E' },
+        },
+      });
+      expect(createUser.ok(), `création utilisateur: ${createUser.status()}`).toBe(true);
+      userId = ((await createUser.json()) as { id: string }).id;
+      expect(userId).toBeTruthy();
+
+      // 2. Parcours réel navigable (géométrie BDD valide). Le brief mentionne
+      //    « Sancy » pour que la recherche Phase 3 le retrouve (nom/ref/région).
+      //    Nettoyage du namespace de test d'abord (runs interrompus).
+      await request.delete(
+        `${SUPABASE_URL}/rest/v1/hiking_routes?name=like.Phase%203%20E2E%20Sancy*`,
+        { headers: adminHeaders() }
+      );
+      const createRoute = await request.post(`${SUPABASE_URL}/rest/v1/hiking_routes`, {
+        headers: {
+          ...adminHeaders(),
+          'content-type': 'application/json',
+          Prefer: 'return=representation',
+        },
+        data: {
+          // `id` explicite : le schéma de test n'a pas de default sur la
+          // colonne (même convention que le test d'intégration Phase 2).
+          id: Number(Date.now()),
+          osm_relation_id: Number(`9${Date.now().toString().slice(-11)}`),
+          name: routeName,
+          ref: 'Sancy',
+          region: 'Sancy',
+          distance_km: 0.5,
+          geom: {
+            type: 'MultiLineString',
+            coordinates: [[[2.8, 45.5], [2.81, 45.51], [2.82, 45.5]]],
+          },
+        },
+      });
+      expect(
+        createRoute.ok(),
+        `seed parcours: ${createRoute.status()} ${await createRoute.text()}`
+      ).toBe(true);
+      const routeRows = (await createRoute.json()) as Array<{ id: number }>;
+      routeId = Number(routeRows[0]?.id);
+      expect(routeId).toBeGreaterThan(0);
+
+      // 3. Session réelle par l'écran de connexion (cookies @supabase/ssr).
+      await page.goto('/connexion', { waitUntil: 'domcontentloaded' });
+      const loginForm = page.locator('main form:visible').first();
+      await loginForm.locator('#email').fill(email);
+      await loginForm.locator('#password').fill(password);
+      await loginForm.locator('button[type="submit"]').click();
+      await expect
+        .poll(
+          async () => (await page.context().cookies()).some((cookie) => /-auth-token/.test(cookie.name)),
+          { message: 'session Supabase attendue après connexion', timeout: 30_000 }
+        )
+        .toBe(true);
+
+      // 4. Mode IA : phrase → pipeline 12 couches → propositions verrouillables.
+      await page.goto('/hub/nouveau?mode=ia', { waitUntil: 'domcontentloaded' });
+      // Le hub rend une instance masquée (shells responsive) : cibler l'unique
+      // instance VISIBLE du mode IA.
+      const briefInput = page.locator('input[aria-label="Décrivez votre voyage"]:visible').first();
+      await briefInput.fill('Week-end de randonnée de 2 jours dans le Sancy avec bivouac');
+      await expect(briefInput).toHaveValue(
+        'Week-end de randonnée de 2 jours dans le Sancy avec bivouac'
+      );
+      const generateButton = page
+        .locator('button:has-text("Générer mon voyage"):visible')
+        .first();
+      await expect(generateButton).toBeEnabled();
+      await generateButton.click();
+      const validateButton = page
+        .locator('button:has-text("Valider ce voyage"):visible')
+        .first();
+      await expect(validateButton).toBeVisible({ timeout: 30_000 });
+
+      // 5. Validation → commande serveur réelle → redirection vers l'aperçu du
+      //    hub (aucun écran parallèle).
+      await validateButton.click();
+      // L'aperçu canonique d'une sortie est la racine du hub.
+      await page.waitForURL((url) => url.pathname === '/hub', { timeout: 120_000 });
+
+      // 6. Chaîne réellement persistée : plan attaché, route sélectionnée, kit.
+      const tripsQuery = await request.get(
+        `${SUPABASE_URL}/rest/v1/trips?user_id=eq.${userId}&select=id,slug,kit_id,metadata&order=created_at.desc&limit=1`,
+        { headers: adminHeaders() }
+      );
+      expect(tripsQuery.ok()).toBe(true);
+      const tripRows = (await tripsQuery.json()) as Array<{
+        id: string;
+        slug: string;
+        kit_id: string | null;
+        metadata: { route_id?: number | string };
+      }>;
+      expect(tripRows[0]?.id).toBeTruthy();
+      expect(tripRows[0]?.kit_id).toBeTruthy();
+      expect(Number(tripRows[0]?.metadata?.route_id)).toBe(routeId);
+
+      const tripId = tripRows[0].id;
+      for (const table of ['trip_items', 'trip_expenses', 'trip_checklist_items'] as const) {
+        const res = await request.get(
+          `${SUPABASE_URL}/rest/v1/${table}?select=id&trip_id=eq.${tripId}`,
+          { headers: adminHeaders() }
+        );
+        expect(res.ok(), `lecture ${table}: ${res.status()}`).toBe(true);
+        expect(((await res.json()) as unknown[]).length, `${table} non vide`).toBeGreaterThan(0);
+      }
+
+      const plansQuery = await request.get(
+        `${SUPABASE_URL}/rest/v1/adventure_plans?trip_id=eq.${tripId}&select=id,selected_route_id`,
+        { headers: adminHeaders() }
+      );
+      expect(plansQuery.ok()).toBe(true);
+      const planRows = (await plansQuery.json()) as Array<{
+        id: string;
+        selected_route_id: number | null;
+      }>;
+      expect(planRows[0]?.id).toBeTruthy();
+      expect(Number(planRows[0]?.selected_route_id)).toBe(routeId);
+
+      // 7. Le parcours réel est sélectionné : l'entrée de navigation du hub
+      //    devient « Démarrer la randonnée » (jamais une estimation).
+      const navigationLink = page.getByRole('link', { name: /Démarrer la randonnée/ });
+      await expect(navigationLink).toBeVisible({ timeout: 30_000 });
+      await expect(navigationLink).toHaveAttribute(
+        'href',
+        `/randonnee-active?routeId=${routeId}`
+      );
+
+      // 8. Kit, budget et documents visibles dans le hub réel (instance visible
+      //    uniquement : le hub rend aussi des shells responsive masqués).
+      await page.goto('/hub/kit-voyage', { waitUntil: 'domcontentloaded' });
+      await expect(
+        page.getByText(/Tente|Rechaud|Réchaud|Gourde/i).filter({ visible: true }).first()
+      ).toBeVisible({ timeout: 30_000 });
+
+      await page.goto('/hub/budget', { waitUntil: 'domcontentloaded' });
+      await expect(
+        page.getByText(/Budget prévisionnel estimé/i).filter({ visible: true }).first()
+      ).toBeVisible({ timeout: 30_000 });
+
+      await page.goto('/hub/checklist', { waitUntil: 'domcontentloaded' });
+      await expect(
+        page.getByText(/Document attendu/i).filter({ visible: true }).first()
+      ).toBeVisible({ timeout: 30_000 });
+    } finally {
+      // Nettoyage réel : parcours ensemencés (namespace du test) puis utilisateur.
+      await request
+        .delete(`${SUPABASE_URL}/rest/v1/hiking_routes?name=like.Phase%203%20E2E%20Sancy*`, {
+          headers: adminHeaders(),
+        })
+        .catch(() => undefined);
+      if (routeId) {
+        await request
+          .delete(`${SUPABASE_URL}/rest/v1/hiking_routes?id=eq.${routeId}`, {
+            headers: adminHeaders(),
+          })
+          .catch(() => undefined);
+      }
+      if (userId) {
+        const cleanup = await request.delete(`${SUPABASE_URL}/auth/v1/admin/users/${userId}`, {
+          headers: adminHeaders(),
+        });
+        expect(cleanup.ok(), `nettoyage utilisateur: ${cleanup.status()}`).toBe(true);
+      }
+    }
+  });
 });

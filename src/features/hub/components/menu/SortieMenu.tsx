@@ -18,6 +18,7 @@ import {
   buildSortieInfoChips,
   buildSortieSectionTiles,
 } from '../../mobile/mobileHubEngine';
+import { decideHikingNavigation } from '../../engine/hikingNavigation';
 import { getTripDuration } from '@/features/trips/hooks/useTripDuration';
 import { getKitCounters } from '@/features/trips/hooks/useKitCounters';
 import { getTripDistance } from '@/features/trips/hooks/useTripDistance';
@@ -253,6 +254,20 @@ export function SortieMenu({
 
   // ── FIL D'ACTION (règles déterministes, ordonnées par priorité) ──
   const nextActions: NextActionSignal[] = [];
+  // Phase 3 — en préparation, un parcours lié n'ouvre la navigation que si sa
+  // géométrie BDD est réelle et navigable ; sinon « Choisir un parcours » avec
+  // explication (jamais de navigation sur une estimation blueprint).
+  if (phase === 'prepare' && hiking?.routeId) {
+    const navigation = decideHikingNavigation(hiking);
+    nextActions.push({
+      kind: 'navigation',
+      href: navigation.href,
+      title: navigation.label,
+      description: navigation.enabled
+        ? `Parcours vérifié${hiking.routeName ? ` — ${hiking.routeName}` : ''}.`
+        : navigation.reason ?? 'Tracé GPS vérifié requis pour naviguer.',
+    });
+  }
   if (phase === 'live') {
     nextActions.push({
       kind: 'cockpit',

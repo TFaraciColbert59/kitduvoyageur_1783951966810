@@ -12,3 +12,4 @@ export * from './buildItinerary';
 export * from './tripBriefExtractor';
 export * from './coherenceSolver';
 export * from './autoGenPipeline';
+export * from './autogenPreparation';

@@ -3,6 +3,7 @@ import Link from 'next/link';
 import type { ReactNode } from 'react';
 import { tripSectionHref } from '@/features/trips/registry/tripSectionRegistry';
 import { formatHikeDuration } from '../../engine/activityTypes';
+import { decideHikingNavigation } from '../../engine/hikingNavigation';
 import type { HubHikingContext } from '../../server/getHubAdventureData';
 import type { TripPoi } from '@/features/trips/types/trip.types';
 
@@ -11,7 +12,12 @@ import type { TripPoi } from '@/features/trips/types/trip.types';
  * (distance, dénivelé, durée estimée), météo, points de passage, points d'eau.
  */
 
-/** CTA principal : démarrer la randonnée depuis /randonnee-active. */
+/**
+ * CTA principal — Phase 3 : « Démarrer la randonnée » exige une géométrie BDD
+ * réelle (`routeNavigable`, même prédicat que la sélection Phase 2). Sans tracé
+ * vérifié, l'entrée devient « Choisir un parcours » avec explication : le repli
+ * `uniform_from_blueprint` (estimation) n'active jamais la navigation.
+ */
 export function CtaRandonneeBlock({
   hiking,
   slug,
@@ -19,20 +25,28 @@ export function CtaRandonneeBlock({
   hiking: HubHikingContext | null;
   slug: string;
 }) {
-  const label = hiking?.routeId ? 'Démarrer la randonnée' : 'Choisir un parcours';
-  const href = hiking?.routeId
-    ? `/randonnee-active?routeId=${encodeURIComponent(hiking.routeId)}`
-    : '/preparer-randonnee';
+  const decision = decideHikingNavigation(hiking);
   return (
-    <Link
-      href={href}
-      className="glass-capsule-btn primary inline-flex items-center justify-center gap-2 min-h-[48px] px-5 w-full"
-      data-testid="hub-cta-randonnee"
-    >
-      <Icon name="play" size={16} aria-hidden="true" />
-      <span>{label}</span>
-      <span className="sr-only">— randonnée {slug}</span>
-    </Link>
+    <div className="space-y-2">
+      <Link
+        href={decision.href}
+        className="glass-capsule-btn primary inline-flex items-center justify-center gap-2 min-h-[48px] px-5 w-full"
+        data-testid="hub-cta-randonnee"
+        data-navigation-ready={decision.enabled ? 'true' : 'false'}
+      >
+        <Icon name={decision.enabled ? 'play' : 'route'} size={16} aria-hidden="true" />
+        <span>{decision.label}</span>
+        <span className="sr-only">— randonnée {slug}</span>
+      </Link>
+      {decision.reason && (
+        <p
+          role="note"
+          className="px-1 text-[11px] leading-snug text-[var(--lkv-text-secondary)]"
+        >
+          {decision.reason}
+        </p>
+      )}
+    </div>
   );
 }
 

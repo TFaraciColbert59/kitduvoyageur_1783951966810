@@ -80,6 +80,12 @@ export interface HubCrewBlock {
 /** Contexte randonnée (H-ACT §3) — parcours, dénivelé, météo, eau. */
 export interface HubHikingContext {
   routeId: string | null;
+  /**
+   * Phase 3 — vrai si le tracé porte une géométrie BDD réelle et navigable
+   * (même prédicat que `select_adventure_plan_route`). Seule condition
+   * d'activation de « Démarrer la randonnée » : jamais une estimation.
+   */
+  routeNavigable: boolean;
   routeName: string | null;
   distanceKm: number | null;
   elevationGainM: number | null;
@@ -326,7 +332,27 @@ async function loadHikingContext(
   trip: TripFull,
 ): Promise<HubHikingContext> {
   const meta = (trip.metadata ?? {}) as { route_id?: string | number | null };
-  const routeId = meta.route_id != null ? String(meta.route_id) : null;
+  let routeId = meta.route_id != null ? String(meta.route_id) : null;
+
+  // Phase 3 — repli canonique : le parcours sélectionné du plan Adventure
+  // (Phase 2). `trips.metadata.route_id` reste prioritaire, mais un voyage
+  // dont le plan porte `selected_route_id` expose le même parcours.
+  if (!routeId) {
+    try {
+      const { data: planRow } = await supabase
+        .from('adventure_plans')
+        .select('selected_route_id')
+        .eq('trip_id', trip.id)
+        .order('updated_at', { ascending: false })
+        .limit(1)
+        .maybeSingle();
+      const selectedRouteId = (planRow as { selected_route_id?: number | null } | null)
+        ?.selected_route_id;
+      if (selectedRouteId != null) routeId = String(selectedRouteId);
+    } catch {
+      /* repli : aucun parcours sélectionné */
+    }
+  }
 
   const stats = aggregateHikeStats(trip.steps ?? []);
   let routeName: string | null = null;
@@ -334,18 +360,23 @@ async function loadHikingContext(
   let elevationGainM = stats.hasData ? stats.elevationGainM : null;
   let elevationLossM = stats.hasData ? stats.elevationLossM : null;
   let durationMin: number | null = null;
+  let routeNavigable = false;
 
   if (routeId) {
     const numericId = Number(routeId);
     if (Number.isFinite(numericId)) {
       try {
-        const [routeRes, metaRes] = await Promise.all([
+        const [routeRes, metaRes, navigableRes] = await Promise.all([
           supabase.from('hiking_routes').select('id, name, distance_km').eq('id', numericId).maybeSingle(),
           supabase
             .from('trail_metadata')
             .select('duration_hours, elevation_gain, elevation_loss')
             .eq('trail_id', numericId)
             .maybeSingle(),
+          // Même prédicat que select_adventure_plan_route : géométrie réelle
+          // (non nulle, non vide, ≥ 2 points, valide). Toute erreur/RPC absente
+          // reste false — jamais de navigation optimiste.
+          supabase.rpc('phase3_route_navigable', { p_route_id: numericId }),
         ]);
         const route = routeRes.data as { name?: string | null; distance_km?: number | null } | null;
         const tm = metaRes.data as { duration_hours?: number | null; elevation_gain?: number | null; elevation_loss?: number | null } | null;
@@ -358,8 +389,11 @@ async function loadHikingContext(
           if (tm.elevation_loss != null) elevationLossM = tm.elevation_loss;
           if (tm.duration_hours != null) durationMin = Math.round(tm.duration_hours * 60);
         }
+        if (!navigableRes.error && navigableRes.data === true) {
+          routeNavigable = true;
+        }
       } catch {
-        /* repli : statistiques des étapes */
+        /* repli : statistiques des étapes, navigation désactivée */
       }
     }
   }
@@ -393,6 +427,7 @@ async function loadHikingContext(
 
   return {
     routeId,
+    routeNavigable,
     routeName,
     distanceKm,
     elevationGainM,

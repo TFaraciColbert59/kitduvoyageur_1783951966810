@@ -17,6 +17,7 @@ import {
 } from '../../../mobile/mobileHubEngine';
 import { HUB_HOME_HREF, hubSectionHref, type HubAdventureRef } from '../../../registry/hubSectionRegistry';
 import { estimateHikeDurationMin, formatHikeDuration } from '../../../engine/activityTypes';
+import { decideHikingNavigation } from '../../../engine/hikingNavigation';
 import type { TripFull } from '@/features/trips/types/trip.types';
 import type { HubHikingContext } from '../../../server/getHubAdventureData';
 
@@ -64,12 +65,19 @@ export function SortieMoment({ trip, context, hiking, fillViewport = false }: So
       ? estimateHikeDurationMin(moment.distanceKm, moment.dPlus)
       : null;
 
+  // Phase 3 — en préparation, un parcours lié n'ouvre la navigation que si sa
+  // géométrie BDD est réelle et navigable ; sinon « Choisir un parcours »
+  // (jamais une navigation sur estimation `uniform_from_blueprint`).
+  const navigation = decideHikingNavigation(hiking ?? null);
+  const hasRoute = Boolean(hiking?.routeId);
   const cta =
     context.phase === 'live'
       ? { href: hubSectionHref(ref, 'itinerary'), label: 'Voir l’itinéraire' }
       : context.phase === 'recount'
         ? { href: `${HUB_HOME_HREF}?phase=recount`, label: 'Voir le bilan' }
-        : { href: hubSectionHref(ref, 'itinerary'), label: 'Voir l’itinéraire' };
+        : hasRoute
+          ? { href: navigation.href, label: navigation.label }
+          : { href: hubSectionHref(ref, 'itinerary'), label: 'Voir l’itinéraire' };
 
   const sheetTitle =
     context.phase === 'live'
@@ -185,6 +193,11 @@ export function SortieMoment({ trip, context, hiking, fillViewport = false }: So
             <MomentRow icon={BedDouble} label="Nuit" value={moment.accommodation} />
           )}
         </ul>
+        {hasRoute && !navigation.enabled && navigation.reason && (
+          <p className="mt-2 border-t border-black/5 pt-2 text-[10.5px] font-medium text-[var(--lkv-text-secondary)]">
+            {navigation.reason}
+          </p>
+        )}
       </>
     );
   }

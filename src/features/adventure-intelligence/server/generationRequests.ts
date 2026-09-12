@@ -30,6 +30,12 @@ export interface GenerationRequestStore {
   createPending(userId: string, idempotencyKey: string): Promise<{ id: string } | null>;
   markDone(requestId: string, planId: string): Promise<void>;
   markFailed(requestId: string): Promise<void>;
+  /**
+   * Reprise après interruption : une requête `failed` repasse `pending` avec
+   * la même clé (la contrainte UNIQUE (user_id, idempotency_key) interdit une
+   * nouvelle ligne). Best-effort assumé par l'appelant.
+   */
+  requeue(requestId: string): Promise<void>;
 }
 
 interface RawRow {
@@ -109,6 +115,14 @@ export function createSupabaseGenerationRequestStore(
       const { error } = await client
         .from(TABLE)
         .update({ status: 'failed' })
+        .eq('id', requestId);
+      if (error) throw new Error(error.message);
+    },
+
+    async requeue(requestId) {
+      const { error } = await client
+        .from(TABLE)
+        .update({ status: 'pending', plan_id: null })
         .eq('id', requestId);
       if (error) throw new Error(error.message);
     },
