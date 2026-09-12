@@ -1087,3 +1087,43 @@ Revue finale de branche : 2 Important (isOnline non consommé ; routage d'action
 
 ### Rollback
 `git revert -m 1 <merge>` (aucune migration, flag `explorer_unified_map_enabled` intouché) ou rester sur la branche `chantier/depart-refonte`.
+## 2026-09-12/13 — CHANTIER « PRÉPARER » → ACTIVITÉ COMPLÈTE (branche `chantier/preparer-activite`, 10 tasks SDD + micro-fix)
+
+> Spec : `docs/superpowers/specs/2026-09-12-preparer-sentier-activite-complete-design.md` · Plan : `docs/superpowers/plans/2026-09-12-preparer-sentier-activite-complete.md` · Décisions propriétaire : réutilisation au 2e clic, reprise connexion auto (`?next=`), tout le contenu (itinéraire, moments, transports/hébergements/restos affiliés, descriptions, kit), atterrissage `/hub` activité active, LLM réel gratuit, arrivée immédiate + enrichissement en direct, animations framer.
+
+### Résultat
+- **Clic « Préparer »** (4 CTAs + héritage `/preparer-randonnee`) → route serveur `/preparer-sentier/[id]` : gate sentier réel (nom + géométrie), reprise connexion `?next=` puis reprise automatique, idempotence par `metadata.route_id` (index unique `uniq_trips_user_route`), création via l'usine déterministe + dressage instantané (étapes J1/multi-jours, POI réels, dépenses prévisionnelles formule documentée), cookie aventure active, `/hub`.
+- **Enrichissement LLM gratuit en direct** : job `activity-enrichment` (infra `ai_jobs` + cron existants), OpenRouter Nemotron `:free` (garde-fou `assertFreeModel` conservé), sortie JSON stricte Zod, **anti-invention** (corridor 3 km, suggestions = intentions de recherche, jamais de prix/nom présenté comme fait), écrit `trip_steps`/`trip_pois` (moments matin/AM/soir horodatés, `kind='moment'`), checklist, kit, provenance `llm_suggestion` + `metadata` (migration additive `20260912200000` puis `20260912201000`), idempotence/replay sans doublons, retry provider miroir `trail-narrative`, aucun `trip_expenses` LLM (contrainte `amount>0` + anti-invention).
+- **Affiliation au hub** : `TripAffiliateSection` visible hors token (desktop sous le bento SortieMenu, mobile dans la feuille du moment), liens de réservation **par étape** résolus côté serveur (destination > catégorie > récence), `/go` tracké conservé (`rel="sponsored nofollow"`).
+- **Animations live (framer-motion)** : rail 6 phases (coches spring + 1 haptique `success` par phase, `aria-live`), reveals inserés sur les **INSERT réels uniquement** (les échos UPDATE de l'utilisateur ne rejouent plus), éléments stables (animation, jamais de remount), squelettes pré-formés, `AnimatedNumber` sans flash, kit virtualisé révélé, respect `prefers-reduced-motion` ; aperçu dev-only `/preparer-sentier/apercu` (notFound en prod).
+
+### Commits
+```
+55f8a7d3 feat(db): migration additive provenance steps/pois + index route_id (audite)      (+ daf259b7 fix index strict)
+29b6e784 feat(trips): domaine trail->activite (brief, difficulte, corridor 3km)
+03e0197d feat(trips): dressage deterministe instantane (etapes, poi, depenses)             (+ e60df6e4 fix bornes + budget)
+4ae9348e feat(trips): prepareActivityFromTrail + route /preparer-sentier/[id]               (+ d404af0e fix ?next + garantie route_id)
+3200163e feat(explorer): CTA Preparer -> route serveur /preparer-sentier (liens partout)
+bd5b8ef9 feat(ai): contrat enrichissement activite (schema strict, prompt, sanitizer)       (+ 24c68bcd fix multi-couches)
+03830e75 feat(ai): job enrichissement activite (service, cron, registre, idempotence)       (+ 74f94420 fix moments/replay/retry)
+bd6b1d0d feat(affiliation): liens reservation par etape + section au hub (hors token)       (+ 8b2dfde8 fix matching serveur)
+fdf29f15 feat(hub): socle animations live (bus realtime, reveal, compteur, squelettes)      (+ e4716b6d fix scope/flash)
+a79dd274 feat(hub): rail de preparation live + reveals itineraire/moments + apercu dev       (+ 94b9d800 fix INSERT-only/kit)
+ddd78f73 fix(ai): reformule commentaires (faux positifs gardes dialogues natifs)
+```
+
+### Gates (finaux, post-fix)
+```
+npx tsc --noEmit → 0 · npm run lint → 0
+npx vitest run   → 2493 passed | 23 skipped ; 4 suites en échec = préexistantes (a13/a14/a15/phase10)
+npm run build    → ✓ Compiled (BUILD=0)
+e2e prod         → 7/7 (preparer-sentier + depart-cockpit + atlas-explorer, SW neutralisé)
+visuel 3 projets → 25 passed / 0 failed ; captures docs/preparer/apercu-*.png validées visuellement
+migration prod   → 20260912200000 + 20260912201000 appliquées (audit doublons 0, colonnes vérifiées)
+```
+
+### Rollback
+`git revert -m 1 <merge>` (aucune donnée détruite : les activités créées sont des données utilisateur légitimes) ; migrations additives réversibles (drop index/colonnes) ; désactiver l'enfilage → retour au socle déterministe pur.
+
+### Actions propriétaire restantes
+`TRAVELPAYOUTS_WEBHOOK_SECRET` (postbacks), `TRAVELPAYOUTS_MARKER` en env, redéploiement Travelpayouts Drive. Reliquats explorer mobile/natif : T12 (géoloc native + repli globe) et T13 (SW natif + server.url) — exécution en cours sur `chantier/explorer-mobile-native`.
