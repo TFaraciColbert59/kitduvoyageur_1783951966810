@@ -860,3 +860,29 @@ ok 5 sans flag ni switch : moteur legacy conservé (rollback instantané) — .l
 ### Prochaine phase
 Phase 8 — Décommissionnement (après 100 % stable) : redirections `/carte-interactive`/`/pays` → `/explorer`, retrait des composants legacy, décision Leaflet séparée.
 
+## 2026-09-12 — CHANTIER ATLAS — Clôture des phases 0-7 (branche `chantier/atlas-8-cloture`)
+
+### État : phases 0 à 7 livrées, vérifiées et mergées sur `main`. Phase 8 **conditionnée** (voir ci-dessous).
+
+### Definition of Done — revue factuelle
+- [x] **4 paliers dans un seul canvas MapLibre, sans coupure visuelle** : moteur `UnifiedExplorerMap` (globe natif) ; séquence capturée continent → sélection pays → globe (`docs/atlas/captures/atlas-continent-desktop.png`, `atlas-france-selected.png`, `atlas-globe-desktop.png`).
+- [x] **`EXPLAIN ANALYZE` prouve l'usage de l'index GIST** : plan `Index Scan using idx_hiking_routes_geom` (Index Cond `geom && envelope`, Filter `st_intersects`) — `docs/atlas/phase1-proof-20260912.txt`. Écart documenté : la RPC n'étant pas inlinable (Function Scan), la preuve porte sur la requête de base équivalente.
+- [x] **RLS explicite vérifiée** : `relrowsecurity=true` sur `hiking_routes`/`trail_metadata`/`trail_scores`, policies SELECT publiques uniquement, écritures verrouillées (même fichier).
+- [x] **0 couleur bannie, `tsc`/`lint`/`build` à 0** : Phase 6, sorties brutes (greps exit 1 = 0 occurrence, TSC_EXIT=0, LINT_EXIT=0, BUILD_EXIT=0).
+- [~] **First Load JS ≤ 170 Ko et LCP ≤ 2.0 s mobile** : **non atteint pour /explorer (265 Ko)** — héritage app partagé 104 Ko + shell explorer ; le retrait three/react-globe a supprimé **2 673 Ko de JS du build** (chunks lazy) mais le First Load des routes est inchangé. Écart documenté, optimisation transverse (hors périmètre cartographique) requise. LCP non mesuré en conditions réelles (pas d'accès aux métriques de terrain).
+- [x] **Rate limiting `/api/hikes` et `/api/pois`** (+ legacy `/api/trails`) : 120 req/min/IP, fail-open journalisé, bbox ≤ 20°/axe, paramètres bornés, borne SQL interne — tests `tests/security/atlas-abuse.spec.ts` (11).
+- [x] **Flag `explorer_unified_map_enabled` créé, rollout documenté, rollback possible** : paliers par cohortes (5 %/25 %) puis global 100 %, rollback instantané à `false` ; preuve de rollback (legacy Leaflet toujours fonctionnel sans flag) dans le spec visuel ; lecture anonyme du flag vérifiée (`docs/atlas/rollout-flag-20260912.txt`).
+- [x] **Synthèse Icon Agents sans blocage critique non résolu** : Security initialement BLOCKED → S1/S2/S3/S4/S5/S6 corrigés et prouvés (grants service-role, clamp SQL, gardes legacy, bornes) ; restent des avertissements de mise à l'échelle documentés (tuiles production/CSP, scheduler du cron, backfill 30 micro-états, a11y carte `/explorer`, First Load JS).
+- [ ] **Anciennes pages Leaflet/react-globe supprimées après 100 % stable** : **condition volontairement non remplie** — le flag est à 0 % public ; supprimer maintenant violerait ATLAS-R10 et le rollback.
+
+### Phase 8 — condition d'exécution
+Déclencher Phase 8 (redirections + suppression `carte-interactive`/moteur Leaflet legacy + décision Leaflet des 11 consommateurs) **uniquement après** : flag à 100 % pendant une période stable (erreurs/perf surveillées), puis :
+1. redirections 308 `/carte-interactive` → `/explorer` et `/pays` (racine) → `/explorer` — `/pays/[code]` conservé ;
+2. suppression `src/components/map/InteractiveMap.tsx`, `src/app/carte-interactive/**`, `ExplorerMap`/`TrailLayer` legacy si plus référencés, docs/redirections SEO ;
+3. décision Leaflet : migrer les consommateurs restants (carnet, hub, groupes, rando, terrain-live…) avant tout retrait de `leaflet`.
+Aucune de ces étapes ne doit être improvisée sans le palier 100 % — c'est le mécanisme de sécurité du chantier.
+
+### Livrable d'exécution continu (pour l'exploitant)
+- Avancer le rollout (SQL prêt, section Phase 7), surveiller les erreurs, puis ouvrir Phase 8.
+- Bloqueurs de mise à l'échelle restants listés en Phase 6, section « Bloqueurs restants documentés ».
+
