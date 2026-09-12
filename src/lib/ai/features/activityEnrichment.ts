@@ -63,8 +63,8 @@ export const suggestionCategoryEnum = z.enum([
 const enrichmentStepSchema = z.object({
   title: z.string().trim().min(1).max(200),
   description: z.string().trim().min(1).max(2000),
-  /** Réparé en `null` par le sanitizer si hors format `HH:MM`. */
-  startTime: z.string().trim().max(20).nullable(),
+  /** Réparé en `null` par le sanitizer si hors format `HH:MM` (même très long). */
+  startTime: z.string().trim().max(64).nullable(),
   lat: z.number().min(-90).max(90),
   lng: z.number().min(-180).max(180),
   distanceKm: z.number().min(0).max(500).nullable(),
@@ -126,17 +126,33 @@ function sanitizeStartTime(value: string | null): string | null {
 }
 
 /**
+ * Signal typé : aucun tracé réel exploitable — impossible de vérifier le
+ * corridor de 3 km, l'appelant (T7) doit traiter le job en échec.
+ */
+export class ActivityEnrichmentNoTraceError extends Error {
+  constructor() {
+    super(
+      'Aucun tracé réel exploitable : les étapes ne peuvent pas être vérifiées (corridor 3 km).'
+    );
+    this.name = 'ActivityEnrichmentNoTraceError';
+  }
+}
+
+/**
  * Valide la sortie LLM contre le schéma complet, puis filtre et borne :
- * - steps hors corridor réel de 3 km supprimés (les autres conservés ;
- *   polyline vide → aucun point vérifiable → tous les steps filtrés) ;
+ * - steps hors corridor réel de 3 km supprimés (les autres conservés) ;
  * - `startTime` hors `HH:MM` réparé en `null` ;
  * - troncature : days ≤ 14, steps/jour ≤ 8, additions ≤ 12.
- * Un JSON hors schéma lève (aucune réparation silencieuse).
+ * Un tracé vide lève `ActivityEnrichmentNoTraceError` (aucun point vérifiable,
+ * jamais de succès silencieux) ; un JSON hors schéma lève aussi (aucune
+ * réparation silencieuse).
  */
 export function sanitizeEnrichmentOutput(
   raw: unknown,
   polyline: { lat: number; lng: number }[]
 ): ActivityEnrichmentOutput {
+  if (polyline.length === 0) throw new ActivityEnrichmentNoTraceError();
+
   const parsed = activityEnrichmentOutputSchema.parse(raw);
 
   const days = parsed.days.slice(0, MAX_ENRICHMENT_DAYS).map((day) => ({
@@ -184,7 +200,15 @@ const MAX_PROMPT_POIS = 60;
 const MAX_LAYER_SUMMARY_LENGTH = 400;
 
 /** Jamais de prix dans le prompt : le contrat suggestions = intentions de recherche. */
-const PRICE_KEY_PATTERN = /price|cost|amount|budget|eur|tarif|prix/i;
+const PRICE_KEY_SEGMENTS = new Set(['price', 'cost', 'amount', 'budget', 'tarif', 'prix', 'eur']);
+
+/** `priceEur`, `price_eur`, `totalEur` → prix ; `heures`, `couleur`, `Europe` → non. */
+function isPriceKey(key: string): boolean {
+  return key
+    .replace(/([a-z0-9])([A-Z])/g, '$1 $2')
+    .split(/[^a-zA-Z0-9]+/)
+    .some((segment) => PRICE_KEY_SEGMENTS.has(segment.toLowerCase()));
+}
 
 function truncate(value: string, max: number): string {
   return value.length > max ? `${value.slice(0, max - 1)}…` : value;
@@ -224,7 +248,7 @@ function summarizeLayerValue(value: unknown): string | null {
 
   const parts: string[] = [];
   for (const [key, entry] of Object.entries(value as Record<string, unknown>)) {
-    if (PRICE_KEY_PATTERN.test(key)) continue;
+    if (isPriceKey(key)) continue;
     if (entry === null || entry === undefined) continue;
     if (typeof entry === 'string') {
       const trimmed = entry.trim();
@@ -236,15 +260,20 @@ function summarizeLayerValue(value: unknown): string | null {
   return parts.length > 0 ? truncate(parts.join('; '), MAX_LAYER_SUMMARY_LENGTH) : null;
 }
 
-function firstLayerSummary(
+/**
+ * Une ligne de prompt par couche réellement fournie (jamais de perte
+ * silencieuse : `major_transport` ET `local_transport` sont rendus).
+ * Section sans couche exploitable → une ligne « non fourni ».
+ */
+function layerSectionLines(
   layers: Record<string, ActivityEnrichmentLayer | undefined> | null | undefined,
-  ids: readonly string[]
-): string {
-  for (const id of ids) {
-    const summary = summarizeLayerValue(layers?.[id]?.value);
-    if (summary !== null) return summary;
-  }
-  return 'non fourni';
+  section: { label: string; ids: readonly string[] }
+): string[] {
+  const lines = section.ids
+    .map((id) => ({ id, summary: summarizeLayerValue(layers?.[id]?.value) }))
+    .filter((entry): entry is { id: string; summary: string } => entry.summary !== null)
+    .map((entry) => `- ${section.label} (${entry.id}) : ${entry.summary}`);
+  return lines.length > 0 ? lines : [`- ${section.label} : non fourni`];
 }
 
 const LAYER_SECTIONS: { label: string; ids: readonly string[] }[] = [
@@ -314,8 +343,8 @@ export function buildActivityEnrichmentPrompt(context: ActivityEnrichmentPromptC
   const poiLines =
     pois.length > 0 ? pois.map((poi) => formatPoi(poi)).join('\n') : '- aucun POI réel disponible';
 
-  const layerLines = LAYER_SECTIONS.map(
-    (section) => `- ${section.label} : ${firstLayerSummary(context.layers, section.ids)}`
+  const layerLines = LAYER_SECTIONS.flatMap((section) =>
+    layerSectionLines(context.layers, section)
   ).join('\n');
 
   const prompt = `Prépare l'enrichissement d'une activité de randonnée à partir de ces données réelles.

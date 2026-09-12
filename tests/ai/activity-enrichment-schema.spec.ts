@@ -2,6 +2,7 @@ import { describe, it, expect } from 'vitest';
 
 import {
   ACTIVITY_ENRICHMENT_SPEC,
+  ActivityEnrichmentNoTraceError,
   MAX_ENRICHMENT_CHECKLIST_ADDITIONS,
   MAX_ENRICHMENT_DAYS,
   MAX_ENRICHMENT_KIT_ADDITIONS,
@@ -132,20 +133,27 @@ describe('src/lib/ai/features/activityEnrichment — contrat d’enrichissement'
     );
   });
 
-  it('TEST-AEN-06: sanitizer — startTime hors HH:MM réparé en null, HH:MM conservé', () => {
+  it('TEST-AEN-06: sanitizer — startTime hors HH:MM réparé en null (même très long), HH:MM conservé', () => {
+    const longMalformed = 'vers neuf heures et demie du matin';
     const raw = outputWith({
       days: [
         {
           ...VALID_DAY,
-          steps: [IN_STEP, { ...IN_STEP, title: 'Étape tardive', startTime: '9h30' }],
+          steps: [
+            IN_STEP,
+            { ...IN_STEP, title: 'Étape tardive', startTime: '9h30' },
+            { ...IN_STEP, title: 'Étape bavarde', startTime: longMalformed },
+          ],
         },
       ],
     });
 
+    expect(activityEnrichmentOutputSchema.safeParse(raw).success).toBe(true);
     const clean = sanitizeEnrichmentOutput(raw, POLYLINE);
 
     expect(clean.days[0].steps[0].startTime).toBe('08:30');
     expect(clean.days[0].steps[1].startTime).toBeNull();
+    expect(clean.days[0].steps[2].startTime).toBeNull();
   });
 
   it('TEST-AEN-07: sanitizer — bornes tronquées (15 jours → 14, 9 étapes → 8, 15 → 12 additions)', () => {
@@ -196,10 +204,26 @@ describe('src/lib/ai/features/activityEnrichment — contrat d’enrichissement'
     ).toThrow();
   });
 
-  it('TEST-AEN-09: prompt — contexte réel injecté, consignes anti-invention, prix hors contrat', () => {
+  it('TEST-AEN-11: sanitizer — tracé vide signalé (erreur typée, jamais de succès silencieux)', () => {
+    expect(() => sanitizeEnrichmentOutput(VALID_OUTPUT, [])).toThrow(
+      ActivityEnrichmentNoTraceError
+    );
+    expect(() => sanitizeEnrichmentOutput(VALID_OUTPUT, [])).toThrow(/tracé/i);
+  });
+
+  it('TEST-AEN-09: prompt — contexte réel multi-couches, consignes anti-invention, prix hors contrat', () => {
     const layers = {
       major_transport: {
-        value: { mode: 'train', from: 'Paris Gare de Lyon', priceEur: 68 },
+        value: {
+          mode: 'train',
+          from: 'Paris Gare de Lyon',
+          priceEur: 68,
+          heures: 6,
+          couleur: 'bleu',
+        },
+      },
+      local_transport: {
+        value: { mode: 'navette', line: 'Chamonix → Les Houches', priceEur: 5 },
       },
       accommodations: {
         value: { name: 'Refuges du Parc National de la Vanoise', type: 'refuge', priceEur: 68 },
@@ -243,6 +267,11 @@ describe('src/lib/ai/features/activityEnrichment — contrat d’enrichissement'
     expect(prompt).toContain('Paris Gare de Lyon');
     expect(prompt).toContain('Refuges du Parc National de la Vanoise');
     expect(prompt).toContain('demi_pension_refuge');
+    expect(prompt).toContain('Transport (major_transport)');
+    expect(prompt).toContain('Transport (local_transport)');
+    expect(prompt).toContain('Chamonix → Les Houches');
+    expect(prompt).toContain('heures: 6'); // `heures` n'est pas une clé de prix
+    expect(prompt).toContain('couleur: bleu'); // ni `couleur`
     expect(prompt).not.toContain('priceEur');
     expect(prompt).not.toContain('68');
 
