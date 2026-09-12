@@ -5,12 +5,13 @@ import { getWeather } from '@/features/materiel/services/getWeather';
 import { getInventory } from '@/features/materiel/services/getInventory';
 import { getLoans } from '@/features/materiel/services/getLoans';
 import { getProductSuggestions } from '@/features/materiel/services/getProductSuggestions';
-import { DepartCockpit } from '@/features/materiel/components/depart/DepartCockpit';
+import { DepartDesktopView } from '@/features/materiel/components/depart/DepartDesktopView';
 import { DepartCockpitSkeleton } from '@/features/materiel/components/depart/DepartCockpitSkeleton';
+import { DepartMobileExperience } from '@/features/hub/components/mobile/depart/DepartMobileExperience';
 
 /**
  * H4.2 — Section départ du hub (composition materiel/depart/page).
- * Cockpit viewport-locked : wrapper hauteur cockpit.
+ * Bascule lg : vue desktop en flux ≥ lg, expérience mobile canonique < lg.
  * H-AUTO-42 : les deep-links hérités sont préservés — /materiel/depart/[id]
  * et ?route= redirigent 307 vers /hub/depart?id=…&route=… (aucune perte).
  */
@@ -40,14 +41,26 @@ export async function HubDepartSection({
   return (
     <div className="md:h-full min-h-[70dvh] flex flex-col min-h-0">
       <Suspense fallback={<DepartCockpitSkeleton />}>
-        <DepartCockpit
-          depart={depart}
-          weather={weather}
-          kits={kitList}
-          inventory={inventory}
-          loans={loans}
-          products={products}
-        />
+        <div className="hidden lg:block">
+          <DepartDesktopView
+            depart={depart}
+            weather={weather}
+            kits={kitList}
+            inventory={inventory}
+            loans={loans}
+            products={products}
+          />
+        </div>
+        <div className="lg:hidden">
+          <DepartMobileExperience
+            depart={depart}
+            weather={weather}
+            kits={kitList}
+            inventory={inventory}
+            loans={loans}
+            products={products}
+          />
+        </div>
       </Suspense>
     </div>
   );
