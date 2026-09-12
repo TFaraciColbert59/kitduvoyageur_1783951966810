@@ -11,6 +11,8 @@ import { DepartEquipmentHub } from './DepartEquipmentHub';
 import { DepartEquipeSection } from './DepartEquipeSection';
 import { DepartureSheetModal } from './DepartureSheetModal';
 import { resolveDepartIdentity } from '@/features/materiel/domain/departIdentity';
+import { useDepartAlerts } from '@/features/materiel/hooks/useDepartAlerts';
+import { useDepartOfflineCache } from '@/features/materiel/hooks/useDepartOfflineCache';
 import {
   generateSmartPrompts,
   type ActionableAlert,
@@ -43,7 +45,6 @@ export function DepartDesktopView({
   const router = useRouter();
   const shouldReduceMotion = useReducedMotion();
   const [sheetOpen, setSheetOpen] = useState(false);
-  const [dismissedAlertIds, setDismissedAlertIds] = useState<string[]>([]);
 
   const isRealKit = !SHOWCASE_IDS.has(depart?.id);
 
@@ -71,7 +72,8 @@ export function DepartDesktopView({
   };
 
   const smartAlerts = generateSmartPrompts(alertInput);
-  const visibleAlerts = smartAlerts.filter((alert) => !dismissedAlertIds.includes(alert.id));
+  const { alerts: visibleAlerts, dismiss: dismissAlert } = useDepartAlerts(smartAlerts);
+  useDepartOfflineCache(depart, weather);
 
   const handleAlertAction = (alert: ActionableAlert) => {
     if (alert.actionType === 'edit_emergency') {
@@ -84,7 +86,7 @@ export function DepartDesktopView({
   };
 
   const handleAlertDismiss = (alert: ActionableAlert) => {
-    setDismissedAlertIds((prev) => [...prev, alert.id]);
+    dismissAlert(alert.id);
   };
 
   const handleShare = () => {

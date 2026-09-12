@@ -165,7 +165,7 @@ describe('DepartMobileExperience (assemblage canonique mobile)', () => {
     expect(html).toContain('Tente 1P Ultralight');
     const src = readFileSync(VIEW_PATH, 'utf8');
     expect(src).toContain('generateSmartPrompts');
-    expect(src).toContain('dismissedAlertIds');
+    expect(src).toContain('useDepartAlerts');
     expect(src).toContain("getElementById('depart-checklist-heading')");
     expect(src).toContain('scrollIntoView');
   });

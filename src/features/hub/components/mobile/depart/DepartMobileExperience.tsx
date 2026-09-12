@@ -14,6 +14,8 @@ import { DepartChecklist } from '@/features/materiel/components/depart/DepartChe
 import { DepartureSheetModal } from '@/features/materiel/components/depart/DepartureSheetModal';
 import { resolveDepartIdentity } from '@/features/materiel/domain/departIdentity';
 import { formatWeight } from '@/features/materiel/domain/departCalculations';
+import { useDepartAlerts } from '@/features/materiel/hooks/useDepartAlerts';
+import { useDepartOfflineCache } from '@/features/materiel/hooks/useDepartOfflineCache';
 import { HUB_DEPART_HREF } from '@/features/hub/registry/hubSectionRegistry';
 import {
   generateSmartPrompts,
@@ -44,7 +46,6 @@ export function DepartMobileExperience({
   const [checklistOpen, setChecklistOpen] = useState(false);
   const [equipmentOpen, setEquipmentOpen] = useState(false);
   const [sheetOpen, setSheetOpen] = useState(false);
-  const [dismissedAlertIds, setDismissedAlertIds] = useState<string[]>([]);
 
   const isRealKit = !SHOWCASE_IDS.has(depart?.id);
 
@@ -72,7 +73,8 @@ export function DepartMobileExperience({
   };
 
   const smartAlerts = generateSmartPrompts(alertInput);
-  const visibleAlerts = smartAlerts.filter((alert) => !dismissedAlertIds.includes(alert.id));
+  const { alerts: visibleAlerts, dismiss: dismissAlert } = useDepartAlerts(smartAlerts);
+  useDepartOfflineCache(depart, weather);
 
   const handleAlertAction = (alert: ActionableAlert) => {
     if (alert.actionType === 'edit_emergency') {
@@ -90,7 +92,7 @@ export function DepartMobileExperience({
   };
 
   const handleAlertDismiss = (alert: ActionableAlert) => {
-    setDismissedAlertIds((prev) => [...prev, alert.id]);
+    dismissAlert(alert.id);
   };
 
   const handleShare = () => {
