@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
+import { enforceRateLimit } from '@/lib/rate-limit/routes';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -16,6 +17,16 @@ export async function POST(req: NextRequest) {
     if (!user) {
       return NextResponse.json({ error: 'Authentification requise' }, { status: 401 });
     }
+
+    // Phase 8 — points = ressource monétaire : fail-closed si le limiteur
+    // distribué est configuré mais injoignable.
+    const limited = await enforceRateLimit(user.id, {
+      scope: 'rewards-claim',
+      limit: 30,
+      windowMs: 60_000,
+      failMode: 'closed',
+    });
+    if (limited) return limited;
 
     const body = await req.json();
     const { action_type, target_id, target_type, metadata = {} } = body;

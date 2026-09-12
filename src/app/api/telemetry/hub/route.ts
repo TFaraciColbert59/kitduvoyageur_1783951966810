@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
+import { enforceRateLimit } from '@/lib/rate-limit/routes';
 
 export const runtime = 'edge';
 export const dynamic = 'force-dynamic';
@@ -33,6 +34,15 @@ export async function POST(req: Request) {
     data: { user },
   } = await supabase.auth.getUser();
   if (!user) return new Response('unauthorized', { status: 401 });
+
+  // Phase 8 — anti-spam télémétrie : 120 batches/min, fail-open.
+  const limited = await enforceRateLimit(user.id, {
+    scope: 'telemetry-hub',
+    limit: 120,
+    windowMs: 60_000,
+    failMode: 'open',
+  });
+  if (limited) return limited;
 
   const sessionId =
     req.headers.get('x-hub-session')?.slice(0, 36) ?? crypto.randomUUID();

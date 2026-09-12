@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { getServiceSupabase } from '@/lib/ai/serviceClient';
 import { createClient } from '@/lib/supabase/server';
+import { enforceRateLimit } from '@/lib/rate-limit/routes';
 import {
   buildGdprExport,
   createSupabaseGdprExportClient,
@@ -25,6 +26,15 @@ export async function GET() {
     if (!user) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
+
+    // Phase 8 — export massif : 10/heure, fail-open (droit à la portabilité).
+    const limited = await enforceRateLimit(user.id, {
+      scope: 'account-export',
+      limit: 10,
+      windowMs: 3_600_000,
+      failMode: 'open',
+    });
+    if (limited) return limited;
 
     const supabase = getServiceSupabase();
     if (!supabase) {

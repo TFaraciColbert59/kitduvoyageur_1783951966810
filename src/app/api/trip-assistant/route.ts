@@ -1,5 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
+import { enforceRateLimit } from '@/lib/rate-limit/routes';
+import { clientIpFromHeaders } from '@/lib/rate-limit';
 import { getChatCompletion } from '@/lib/ai/chatCompletion';
 
 export const runtime = 'nodejs';
@@ -15,6 +17,13 @@ export async function POST(req: NextRequest) {
   try {
     const supabase = await createClient();
     const { data: { user } } = await supabase.auth.getUser();
+
+    // Phase 8 — assistant IA payant : fail-closed, 20/min par utilisateur (ou IP).
+    const limited = await enforceRateLimit(
+      user?.id ?? clientIpFromHeaders(req.headers),
+      { scope: 'trip-assistant', limit: 20, windowMs: 60_000, failMode: 'closed' }
+    );
+    if (limited) return limited;
 
     const body = await req.json();
     const { destination, duration_days, difficulty, season, question } = body;

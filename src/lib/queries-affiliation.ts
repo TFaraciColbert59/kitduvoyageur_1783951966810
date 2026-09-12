@@ -1,5 +1,6 @@
 import 'server-only';
 import { createClient } from '@/lib/supabase/server';
+import { getServiceSupabase } from '@/lib/ai/serviceClient';
 import type {
   AffiliateLink,
   AffiliatePartner,
@@ -176,7 +177,10 @@ export async function logAffiliateClick(
 export async function recordAffiliateConversion(
   payload: AffiliatePostbackPayload
 ): Promise<AffiliateConversion | null> {
-  const supabase = await createClient();
+  // Phase 8 — données financières : client service_role requis (les policies
+  // publiques `affiliate_conversions` ont été retirées). Repli session si la
+  // clé de service est absente (dégradation, la conversion échouera proprement).
+  const supabase = getServiceSupabase() ?? (await createClient());
 
   // Identifier le partenaire
   const { data: partner, error: partErr } = await supabase

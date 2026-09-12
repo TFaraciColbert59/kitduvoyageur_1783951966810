@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getServiceSupabase } from '@/lib/ai/serviceClient';
 import { createClient } from '@/lib/supabase/server';
+import { enforceRateLimit } from '@/lib/rate-limit/routes';
 import {
   createSupabaseGdprDeleteDeps,
   deleteAccountData,
@@ -29,6 +30,15 @@ export async function DELETE(request: NextRequest) {
     if (!user) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
+
+    // Phase 8 — effacement : 5/heure, fail-open (droit à l'effacement).
+    const limited = await enforceRateLimit(user.id, {
+      scope: 'account-delete',
+      limit: 5,
+      windowMs: 3_600_000,
+      failMode: 'open',
+    });
+    if (limited) return limited;
 
     let body: unknown;
     try {

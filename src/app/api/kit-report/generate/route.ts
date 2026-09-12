@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
 import { askAI } from '@/lib/ai/askAI';
+import { enforceRateLimit } from '@/lib/rate-limit/routes';
+import { clientIpFromHeaders } from '@/lib/rate-limit';
 import { KIT_CONFIGURATOR_SPEC, kitReportBodySchema, buildKitPrompt, resolveKitAIOutput } from '@/lib/ai/features/kitConfigurator';
 import { analyzeKit, type RealShopProduct } from '@/lib/ai/configuratorCore';
 import { applyOrientationPrefill, isValidOrientation, type PrefillTarget } from '@/features/identity/orientation';
@@ -43,6 +45,14 @@ export async function POST(req: NextRequest) {
   try {
     const supabase = await createClient();
     const { data: { user } } = await supabase.auth.getUser();
+
+    // Phase 8 — génération IA payante : fail-closed, 10/min par utilisateur
+    // (ou IP anonyme).
+    const limited = await enforceRateLimit(
+      user?.id ?? clientIpFromHeaders(req.headers),
+      { scope: 'kit-report-generate', limit: 10, windowMs: 60_000, failMode: 'closed' }
+    );
+    if (limited) return limited;
 
     const rawBody = await req.json();
     const parsedBody = kitReportBodySchema.safeParse(rawBody);
