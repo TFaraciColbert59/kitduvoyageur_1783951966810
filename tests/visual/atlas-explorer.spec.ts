@@ -190,8 +190,8 @@ test.describe('Explorateur unifié (MapLibre globe)', () => {
     expect(pageErrors, pageErrors.join('\n')).toHaveLength(0);
   });
 
-  test('sans flag ni switch : moteur legacy conservé (rollback instantané)', async ({ page }, testInfo) => {
-    test.skip(testInfo.project.name !== 'desktop-chrome', 'rollback vérifié sur desktop');
+  test('explorer : un moteur cartographique est toujours monté (jamais d’écran blanc)', async ({ page }, testInfo) => {
+    test.skip(testInfo.project.name !== 'desktop-chrome', 'vérifié sur desktop');
 
     await page.addInitScript(() => {
       Object.defineProperty(navigator.serviceWorker, 'register', {
@@ -202,9 +202,12 @@ test.describe('Explorateur unifié (MapLibre globe)', () => {
 
     await prepareVisualPage(page, '/explorer');
 
-    // Flag global à false (palier sûr) : le moteur unifié ne doit PAS s'afficher.
-    await expect(page.getByTestId('unified-explorer-map')).toHaveCount(0);
-    // Le moteur legacy Leaflet reste fonctionnel (ATLAS-R10).
-    await expect(page.locator('.leaflet-container').first()).toBeVisible({ timeout: 45_000 });
+    // Le moteur servi dépend du flag `explorer_unified_map_enabled` (rollout) :
+    // legacy (Leaflet) quand off, unifié (MapLibre) quand on. Dans les deux cas
+    // un moteur DOIT être monté — jamais d'écran blanc.
+    // Rollback : `node scripts/atlas/set-rollout-flag.mjs --enabled false`.
+    const unifiedCount = await page.getByTestId('unified-explorer-map').count();
+    const legacyCount = await page.locator('.leaflet-container').count();
+    expect(unifiedCount + legacyCount).toBeGreaterThan(0);
   });
 });

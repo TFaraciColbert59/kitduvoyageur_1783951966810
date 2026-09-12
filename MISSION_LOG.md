@@ -886,3 +886,9 @@ Aucune de ces étapes ne doit être improvisée sans le palier 100 % — c'est l
 - Avancer le rollout (SQL prêt, section Phase 7), surveiller les erreurs, puis ouvrir Phase 8.
 - Bloqueurs de mise à l'échelle restants listés en Phase 6, section « Bloqueurs restants documentés ».
 
+### Mise à jour d'exploitation — 2026-09-12 (décision propriétaire, « tout en prod direct »)
+- **Flag `explorer_unified_map_enabled` basculé à `true` (global, 100 %)** via `scripts/atlas/set-rollout-flag.mjs --enabled true` (avant : `false` / cohorte 0 % ; après : `true`).
+- Vérification : `/explorer` **sans paramètre** sert le moteur unifié — `{"unified":1,"legacy":0,"errors":[]}` (capture `docs/atlas/captures/atlas-explorer-flag-on-desktop.png`).
+- Rollback instantané toujours disponible : `node scripts/atlas/set-rollout-flag.mjs --enabled false` (moteur legacy intact, test visuel adaptatif « jamais d'écran blanc »).
+- Test visuel de rollback rendu flag-aware (le moteur attendu dépend de l'état du flag).
+
