@@ -31,6 +31,10 @@ export function emitActivityArrival(table: string, id: string): void {
 
 export function ActivityLiveBridge({ tripId }: ActivityLiveBridgeProps) {
   useEffect(() => {
+    // Tant qu'aucun trip actif n'existe, aucun abonnement : jamais de canal
+    // non scopé sur les 5 tables trip_* (les filtres restent par voyage).
+    if (!tripId) return;
+
     let cancelled = false;
     let cleanup: (() => void) | null = null;
 
@@ -44,7 +48,7 @@ export function ActivityLiveBridge({ tripId }: ActivityLiveBridgeProps) {
     try {
       const supabase = createClient();
       const channel = supabase.channel('hub-live-bridge');
-      const filter = tripId ? `trip_id=eq.${tripId}` : undefined;
+      const filter = `trip_id=eq.${tripId}`;
       for (const table of ACTIVITY_LIVE_TABLES) {
         channel.on(
           'postgres_changes',

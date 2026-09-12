@@ -1,4 +1,6 @@
 import React from 'react';
+import fs from 'node:fs';
+import path from 'node:path';
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { renderToStaticMarkup } from 'react-dom/server';
 
@@ -41,6 +43,14 @@ import ActivityLiveBridge from '@/features/hub/components/live/ActivityLiveBridg
 
 function counts(partial: Partial<ActivityArrivalCounts>): ActivityArrivalCounts {
   return { steps: 0, moments: 0, affiliation: 0, kit: 0, ...partial };
+}
+
+/** Garde-fou source (env node sans DOM) pour les invariants d'effet. */
+function readLiveSource(file: string): string {
+  return fs.readFileSync(
+    path.join(process.cwd(), 'src', 'features', 'hub', 'components', 'live', file),
+    'utf8'
+  );
 }
 
 beforeEach(() => {
@@ -127,6 +137,19 @@ describe('ActivityLiveBridge', () => {
     const html = renderToStaticMarkup(React.createElement(ActivityLiveBridge, { tripId: 't1' }));
     expect(html).toBe('');
   });
+
+  it('garde d’entrée : aucun canal ni forward tant qu’aucun trip actif', () => {
+    const source = readLiveSource('ActivityLiveBridge.tsx');
+    const guard = /if\s*\(!tripId\)\s*return;/.exec(source);
+
+    expect(guard).not.toBeNull();
+    const channelIndex = source.indexOf("supabase.channel('hub-live-bridge')");
+    const forwardIndex = source.indexOf('const forward =');
+    expect(channelIndex).toBeGreaterThan(guard!.index);
+    expect(forwardIndex).toBeGreaterThan(guard!.index);
+    // Le filtre trip_id est désormais inconditionnel dans la portée gardée.
+    expect(source).not.toMatch(/tripId\s*\?[^\n]*undefined/);
+  });
 });
 
 describe('ArrivalReveal — reveal canonique', () => {
@@ -194,6 +217,15 @@ describe('AnimatedNumber — compteur tabulaire', () => {
 
     expect(html).toContain('tabular-nums');
     expect(html).toContain('>7<');
+  });
+
+  it('enfants constants : le JSX ne rend jamais la prop value en direct (anti-flash)', () => {
+    const source = readLiveSource('AnimatedNumber.tsx');
+
+    // Valeur initiale capturée une seule fois (useState) et rendue telle quelle.
+    expect(source).toMatch(/const \[initialText\] = useState\(/);
+    expect(source).toMatch(/\{initialText\}/);
+    expect(source).not.toMatch(/\{formatAnimatedNumber\(value/);
   });
 });
 
