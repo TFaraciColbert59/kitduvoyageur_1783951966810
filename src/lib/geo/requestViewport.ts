@@ -66,3 +66,36 @@ export function parseOptionalNumber(
   }
   return { ok: true, value };
 }
+
+/**
+ * Variante bornée : rejette explicitement (400) toute valeur hors `[min, max]`.
+ * Empêche les `limit` géants (dumps massifs) et les zooms absurdes côté public.
+ */
+export function parseOptionalNumberInRange(
+  searchParams: URLSearchParams,
+  key: string,
+  min: number,
+  max: number
+): NumericParseResult {
+  const parsed = parseOptionalNumber(searchParams, key);
+  if (!parsed.ok) return parsed;
+  if (parsed.value === null) return parsed;
+  if (parsed.value < min || parsed.value > max) {
+    return {
+      ok: false,
+      response: NextResponse.json(
+        { error: `${key} hors bornes (${min}..${max})` },
+        { status: 400 }
+      ),
+    };
+  }
+  return parsed;
+}
+
+/** Bornes publiques des paramètres viewport. */
+export const VIEWPORT_PARAM_RANGES = {
+  limit: { min: 1, max: 300 },
+  zoom: { min: 0, max: 22 },
+  minDist: { min: 0, max: 1000 },
+  maxDist: { min: 0, max: 1000 },
+} as const;

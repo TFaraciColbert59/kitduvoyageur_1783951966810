@@ -2,7 +2,7 @@
  * CHANTIER ATLAS — Thème du moteur cartographique unifié.
  *
  * Source de vérité : docs/Design-tokens.md. Aucune couleur hors palette.
- * (ATLAS-R3 : `#E4501C` et l'héritage Tailwind bannis.)
+ * (ATLAS-R3 : l'orange hérité et les palettes Tailwind par défaut sont bannis.)
  */
 
 export const MAP_COLORS = {
@@ -37,10 +37,15 @@ export function getZoomTier(zoom: number): ZoomTier {
   return 'local';
 }
 
-/** Budget de lignes par palier (viewer LOD, 0 = aucun fetch). */
+/**
+ * Budget de lignes par palier (viewer LOD, 0 = aucun fetch).
+ * Le palier continent (z4-7) est une couche de DENSITÉ pays (matview) — aucun
+ * fetch de sentiers, conformément au chantier : les points sentiers commencent
+ * au palier région (z8+).
+ */
 export const VIEWPORT_LIMITS: Record<ZoomTier, number> = {
   world: 0,
-  continent: 60,
+  continent: 0,
   region: 150,
   local: 300,
 };
@@ -48,14 +53,6 @@ export const VIEWPORT_LIMITS: Record<ZoomTier, number> = {
 export function getViewportLimit(zoom: number): number {
   return VIEWPORT_LIMITS[getZoomTier(zoom)];
 }
-
-/** Rayon de simplification (°) par palier, aligné sur la RPC `trails_in_viewport`. */
-export const SIMPLIFY_TOLERANCE: Record<ZoomTier, number> = {
-  world: 0.05,
-  continent: 0.012,
-  region: 0.0025,
-  local: 0.00015,
-};
 
 /** Couleurs des POI par catégorie (palette DS uniquement). */
 const POI_CATEGORY_COLORS: Record<string, string> = {

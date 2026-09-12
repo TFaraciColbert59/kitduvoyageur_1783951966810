@@ -73,6 +73,12 @@ describe('ATLAS Phase 5 — /api/hikes borné et limité', () => {
     expect(mockedGetTrails).not.toHaveBeenCalled();
   });
 
+  it('paramètre hors bornes (limit=100000000) : 400 sans appel données', async () => {
+    const response = await hikesGET(request('/api/hikes?limit=100000000'));
+    expect(response.status).toBe(400);
+    expect(mockedGetTrails).not.toHaveBeenCalled();
+  });
+
   it('rate limit dépassé : 429 sans appel données', async () => {
     mockedEnforceRateLimit.mockResolvedValueOnce(
       NextResponse.json({ error: 'Trop de requêtes' }, { status: 429 })
@@ -109,5 +115,15 @@ describe('ATLAS Phase 5 — /api/pois borné et limité', () => {
     await hikesGET(request('/api/hikes'));
     await poisGET(request('/api/pois'));
     expect(mockedEnforceRateLimit).toHaveBeenCalledTimes(2);
+  });
+
+  it('/api/trails legacy est aussi rate-limité (invariant : toute voie vers la RPC est bornée)', async () => {
+    mockedEnforceRateLimit.mockResolvedValueOnce(
+      NextResponse.json({ error: 'Trop de requêtes' }, { status: 429 })
+    );
+    const { GET: trailsGET } = await import('@/app/api/trails/route');
+    const response = await trailsGET(new NextRequest('http://localhost/api/trails', { method: 'GET' }));
+    expect(response.status).toBe(429);
+    expect(mockedEnforceRateLimit).toHaveBeenCalledTimes(1);
   });
 });

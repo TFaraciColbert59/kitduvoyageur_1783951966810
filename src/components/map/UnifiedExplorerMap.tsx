@@ -818,6 +818,18 @@ export default function UnifiedExplorerMap({
         </button>
       </div>
 
+      {/* Légende densité (paliers continent/région : taille ∝ nombre de sentiers) */}
+      {viewport && viewport.zoom > 2.4 && viewport.zoom < 14.4 && (
+        <div
+          className={`absolute left-3 ${
+            safeControls ? 'bottom-[calc(env(safe-area-inset-bottom,0px)+152px)]' : 'bottom-20'
+          } z-[500] glass-pill text-[10px] font-semibold pointer-events-none`}
+          data-atlas-density-legend="true"
+        >
+          ● Densité de sentiers — taille ∝ nombre
+        </div>
+      )}
+
       {/* Fond de carte (capsule glass) */}
       <div
         className={`absolute left-3 ${bottomControlsOffset} z-[500] glass-capsule-bar flex items-center`}
@@ -830,7 +842,7 @@ export default function UnifiedExplorerMap({
             key={mode}
             type="button"
             onClick={() => setTileMode(mode)}
-            className={`glass-capsule-segment px-3 h-9 text-[11px] font-semibold cursor-pointer ${
+            className={`glass-capsule-segment px-3 min-h-[44px] text-[11px] font-semibold cursor-pointer ${
               tileMode === mode ? 'active' : ''
             }`}
             aria-pressed={tileMode === mode}
@@ -866,14 +878,14 @@ export default function UnifiedExplorerMap({
             <div className="flex items-center gap-2 mt-3">
               <Link
                 href={`/pays/${selectedCountry.iso.toLowerCase()}`}
-                className="glass-capsule-btn primary flex-1 !min-h-[34px] text-[11px] font-bold text-center"
+                className="glass-capsule-btn primary flex-1 !min-h-[44px] text-[11px] font-bold text-center"
               >
                 Explorer le pays
               </Link>
               <button
                 type="button"
                 onClick={() => setSelectedCountry(null)}
-                className="glass-circle-btn w-8 h-8 shrink-0"
+                className="glass-circle-btn w-11 h-11 shrink-0"
                 aria-label="Fermer la sélection pays"
               >
                 ×

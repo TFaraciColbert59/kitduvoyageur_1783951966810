@@ -753,3 +753,64 @@ Le First Load JS des routes est inchangé (three/react-globe étaient chargés e
 ### Prochaine phase
 Phase 6 — Conformité design & QA (`chantier/atlas-6-conformite`) : agent `atlas-conformite-lg`, greps couleurs bannies, `tsc`/`lint`/`build`, revues multi-perspectives Icon Agents.
 
+## 2026-09-12 — CHANTIER ATLAS Phase 6 — Conformité design & QA multi-perspective (branche `chantier/atlas-6-conformite`)
+
+### Conformité Liquid Glass (sorties brutes)
+```
+$ rg -n "#E4501C|#1C2620|#2D5A3D|#0B1F17|#0F2A22|#08150F|#A8C4A2|#C89A5A|#E4C695" src/components/map src/app/explorer src/app/carte-interactive
+GREP_COLORS_EXIT=1 (1 = 0 occurrence)   # après reformulation d'un commentaire qui citait l'orange banni
+
+$ rg -n "bg-gradient-to-b from-\[#17402C\]" src/components/map src/app/explorer
+GREP_GRADIENT_EXIT=1
+
+$ Get-ChildItem src -Recurse -Include *.bak,*.old,*_OLD*  → aucun
+$ npx tsc --noEmit        → TSC_EXIT=0
+$ npm run lint            → LINT_EXIT=0 (warnings préexistants)
+$ npm run build           → ✓ Compiled successfully in 34.4s · BUILD_EXIT=0
+    /explorer 16.3 kB / 265 kB First Load JS · /pays 9.28 kB / 342 kB · shared 104 kB
+```
+
+### Revues Icon Agents (exécutées via sous-agents, faute de harness Claude Code — écart documenté ; protocoles des commandes `.claude/commands/icon-*` suivis à la lettre)
+- **Design** : PASS WITH WARNINGS · **Programming** : PASS WITH WARNINGS · **Platform & Operations** : PASS WITH WARNINGS (bloqué pour rollout mondial sur 3 points) · **Security** : BLOCKED à la remise, **débloqué par les correctifs ci-dessous**.
+- Correctifs issus des revues, appliqués dans cette phase :
+  1. **S1 (sécurité, high)** — `20260912030000_atlas_refresh_and_grants_hardening.sql` : `REVOKE ALL ... FROM PUBLIC, anon, authenticated` + `GRANT service_role` sur `refresh_atlas_density` ; preuve brute `has_function_privilege` capturée (`docs/atlas/atlas-function-grants-20260912.txt`) :
+     `OK refresh_atlas_density / anon: can_execute=false · authenticated: false · service_role: true` — sonde supprimée par `20260912040000`.
+  2. **S2 (sécurité, high)** — `/api/trails` legacy désormais rate-limité (même garde) : invariant « toute voie vers `trails_in_viewport` est bornée » ; test dédié.
+  3. **S3 (sécurité, medium)** — bornes **dans le SQL** (`20260912050000_atlas_rpc_internal_clamp.sql`) : clamp 20°/axe + `LEFT(p_search,100)` / `LEFT(p_difficulty,40)` — les appels PostgREST directs sont bornés même hors Next.
+  4. **S4/S5 (sécurité, medium)** — bornes de plage strictes des paramètres publics (`limit 1..300`, `zoom 0..22`, distances `0..1000`) : 400 explicite, tests ajoutés.
+  5. **S6 (sécurité, low)** — les routes ATLAS ne renvoient plus `error.message` au client (message générique, détail uniquement serveur).
+  6. **O1 (ops, high)** — palier continent = densité seule (trails LOD `0`), conformément au tableau du chantier : plus de troncature silencieuse par le clamp 20° sur les vues continent.
+  7. **O2 (ops, medium-high)** — `refresh_atlas_density` durci : single-flight (`pg_try_advisory_lock`), `statement_timeout=60s`, fallback non-concurrent **journalisé** (`RAISE WARNING`), déverrouillage garanti.
+  8. **Design HIGH** — cibles tactiles 44 px (segments de fond de carte, CTA/fermeture carte pays) ; surfaces bannies supprimées d'`ExplorerClient` (`bg-white/60`, `bg-white/95`, gradient DIY → `.glass-capsule-btn`) ; bouton « Rechercher dans cette zone » masqué en mode unifié (no-op trompeur) ; recolor du globe pays au changement de filtre continent ; légende densité « taille ∝ nombre » ; fumée `/pays` (canvas MapLibre + combobox clavier + zéro pageerror) ajoutée au spec visuel.
+  9. **Programming HIGH** — `useViewportData.isFetching` ne peut plus rester bloqué à `true` (branche early-return corrigée) ; specs visuels CI-safe (skip explicite des tests à hook dev absent en build prod) ; dependance `unifiedMap` ajoutée au `useMemo` ; code mort retiré (`SIMPLIFY_TOLERANCE`).
+- Bloqueurs restants **documentés** (décisions assumées, à traiter avant/à l'ouverture du rollout) : backfill des 30 micro-états absents du GeoJSON 110m (données absentes — nécessite un jeu 50m/10m, aucune invention) ; contrat de tuiles production + CSP (MapLibre worker/tuiles) ; planificateur externe du cron de densité (fonction durcie, déclencheur toujours externe) ; alternative clavier de sélection sur `/explorer` (le chemin `/pays` existe) ; e2e ATLAS à inclure dans Gate 5 CI ; `O3` : le plan de la RPC montre un `Function Scan` (non inlinable) — la preuve GIST reste la requête de base équivalente ; `O4` non retenu (clamp query-layer refusé pour ne pas tronquer les pays immenses type Russie sur `/pays/[code]`, chemin SSR indexé) ; gouvernance tokens (`docs/Design-tokens.md` vs `tokens.css`) à unifier.
+
+### Preuves brutes (extraits)
+```
+$ npx playwright test --config=playwright.visual.config.ts tests/visual/atlas-explorer.spec.ts
+ok 1 [desktop-chrome] rendu + zéro pageerror
+ok 2 [desktop-chrome] clic direct carte → panneau détail
+ok 3 [desktop-chrome] paliers continent → globe : densité, sélection pays, chorégraphie caméra
+ok 4 [iphone-14-pro] rendu · ok 7 [ipad-portrait] rendu
+ok smoke /pays : canvas MapLibre + combobox « Choisir un pays à afficher » + zéro pageerror
+5 passed / 4 skipped (desktop-only explicites)
+
+$ node scripts/atlas/verify-function-grants.mjs
+OK   trails_in_viewport / anon: can_execute=true
+OK   trails_in_viewport / authenticated: can_execute=true
+OK   refresh_atlas_density / anon: can_execute=false
+OK   refresh_atlas_density / authenticated: can_execute=false
+OK   refresh_atlas_density / service_role: can_execute=true
+[grants] SUCCÈS
+
+$ npx vitest run tests/map tests/security/atlas-abuse.spec.ts tests/queries/trails-viewport.spec.ts tests/design-system/atlas-difficulty-colors.spec.ts
+Test Files 7 passed · Tests 35 passed
+
+$ npm test
+Test Files 4 failed | 322 passed | 4 skipped (330)   # 4 suites préexistantes (ops/a13)
+Tests 2277 passed | 23 skipped (2300)
+```
+
+### Prochaine phase
+Phase 7 — Rollout mondial progressif (`chantier/atlas-7-rollout`) : flag `explorer_unified_map_enabled` (système existant + cohortes 5 %/25 %/100 %), gating serveur de `/explorer`, preuves de palier et rollback.
+

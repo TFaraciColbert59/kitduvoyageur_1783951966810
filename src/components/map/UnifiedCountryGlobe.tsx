@@ -55,6 +55,37 @@ interface CountryFeatureProperties extends Record<string, unknown> {
   atlas_fill: string;
 }
 
+/**
+ * Reconstruit les features depuis le GeoJSON brut + le filtre `countries`
+ * courant (le recolorage suit donc les sélections de continent) — jamais de
+ * géométrie inventée, seulement les pays réellement fournis.
+ */
+function buildGlobeFeatures(
+  rawFeatures: Array<Record<string, unknown>>,
+  countries: Country[],
+  uniform: boolean
+): Array<{ properties: CountryFeatureProperties } & Record<string, unknown>> {
+  const byIso = new Map(countries.map((c) => [c.code.toUpperCase(), c]));
+  return rawFeatures.map((feature) => {
+    const properties = (feature.properties ?? {}) as Record<string, unknown>;
+    const iso = resolveIsoA2(properties) ?? '';
+    const country = iso ? byIso.get(iso) : undefined;
+    const danger = country?.danger_level ?? 'low';
+    return {
+      ...feature,
+      properties: {
+        ...properties,
+        atlas_iso: iso,
+        atlas_name: country?.nom ?? '',
+        atlas_continent: country?.continent ?? '',
+        atlas_fill: uniform
+          ? MAP_COLORS.sageLight
+          : DANGER_FILL[danger as keyof typeof DANGER_FILL] ?? MAP_COLORS.inkTertiary,
+      },
+    };
+  });
+}
+
 export default function UnifiedCountryGlobe({
   countries,
   onCountryClick,
@@ -69,6 +100,8 @@ export default function UnifiedCountryGlobe({
   const countriesRef = useRef<Country[]>(countries);
   const callbacksRef = useRef({ onCountryClick, onCountrySelect });
   const featuresRef = useRef<Array<{ properties: CountryFeatureProperties }>>([]);
+  const rawFeaturesRef = useRef<Array<Record<string, unknown>>>([]);
+  const uniformRef = useRef<boolean>(Boolean(uniform));
 
   const [mapReady, setMapReady] = useState(false);
   const [geoLoaded, setGeoLoaded] = useState(false);
@@ -84,6 +117,7 @@ export default function UnifiedCountryGlobe({
 
   callbacksRef.current = { onCountryClick, onCountrySelect };
   countriesRef.current = countries;
+  uniformRef.current = Boolean(uniform);
 
   // ── Chargement GeoJSON — timeout 4 s, état d'erreur explicite (parité CountryGlobe) ──
   useEffect(() => {
@@ -100,26 +134,7 @@ export default function UnifiedCountryGlobe({
         if (!Array.isArray(data?.features)) {
           throw new Error('GeoJSON pays invalide : propriété "features" absente');
         }
-        const byIso = new Map(countriesRef.current.map((c) => [c.code.toUpperCase(), c]));
-        featuresRef.current = (data.features ?? []).map(
-          (feature: { properties?: Record<string, unknown> } & Record<string, unknown>) => {
-            const iso = resolveIsoA2(feature.properties) ?? '';
-            const country = iso ? byIso.get(iso) : undefined;
-            const danger = country?.danger_level ?? 'low';
-            return {
-              ...feature,
-              properties: {
-                ...(feature.properties ?? {}),
-                atlas_iso: iso,
-                atlas_name: country?.nom ?? '',
-                atlas_continent: country?.continent ?? '',
-                atlas_fill: uniform
-                  ? MAP_COLORS.sageLight
-                  : DANGER_FILL[danger as keyof typeof DANGER_FILL] ?? MAP_COLORS.inkTertiary,
-              },
-            };
-          }
-        );
+        rawFeaturesRef.current = data.features;
         setFeaturesVersion((version) => version + 1);
         setGeoLoaded(true);
       })
@@ -193,7 +208,14 @@ export default function UnifiedCountryGlobe({
 
         instance.addSource('globe-countries', {
           type: 'geojson',
-          data: { type: 'FeatureCollection', features: featuresRef.current } as unknown as GeoJSON.GeoJSON,
+          data: {
+            type: 'FeatureCollection',
+            features: buildGlobeFeatures(
+              rawFeaturesRef.current,
+              countriesRef.current,
+              uniformRef.current
+            ),
+          } as unknown as GeoJSON.GeoJSON,
         });
         instance.addLayer({
           id: 'globe-countries-fill',
@@ -274,16 +296,24 @@ export default function UnifiedCountryGlobe({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  // ── Synchronisation des features une fois carte + GeoJSON prêts ─────────────
+  // ── Synchronisation des features (GeoJSON brut × filtre pays × mode uniforme)
+  //    Le recolorage suit les sélections de continent de la page Earth. ─────────
   useEffect(() => {
+    const mapped = buildGlobeFeatures(
+      rawFeaturesRef.current,
+      countries,
+      Boolean(uniform)
+    ) as Array<{ properties: CountryFeatureProperties }>;
+    featuresRef.current = mapped;
+
     const map = mapRef.current;
     if (!map || !mapReady || featuresVersion === 0) return;
     const source = map.getSource('globe-countries') as GeoJSONSource | undefined;
     source?.setData({
       type: 'FeatureCollection',
-      features: featuresRef.current,
+      features: mapped,
     } as unknown as GeoJSON.GeoJSON);
-  }, [mapReady, featuresVersion]);
+  }, [mapReady, featuresVersion, countries, uniform]);
 
   // ── Focus caméra (focusPoint prioritaire sur focusCode) ─────────────────────
   useEffect(() => {
