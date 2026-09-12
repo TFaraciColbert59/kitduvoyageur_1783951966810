@@ -92,5 +92,17 @@ describe('Affiliation Components (Apple HIG & Legal Transparency)', () => {
       expect(html).toContain('Booking.com');
       expect(html).toContain('1 offres disponibles');
     });
+
+    it('rendered hub section exposes the tracking-safe /go href for each partner link', () => {
+      const html = renderToStaticMarkup(
+        React.createElement(TripAffiliateSection, {
+          links: [dummyLink],
+          tripId: 'trip-hub-42',
+        })
+      );
+
+      expect(html).toContain('href="/go/booking-chamonix-hotel?trip_id=trip-hub-42"');
+      expect(html).toContain('rel="sponsored nofollow"');
+    });
   });
 });

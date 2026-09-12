@@ -54,6 +54,7 @@ import { GroupeRail } from '../groupe/GroupeRail';
 import { ItineraryHero } from './ItineraryHero';
 import { ItineraryMapSection } from './ItineraryMapSection';
 import { ItineraryDayTimeline } from './ItineraryDayTimeline';
+import { useTripAffiliate } from '@/features/affiliation/components/TripAffiliateProvider';
 import {
   ItineraryDaysDrawer,
   ItineraryItemsDrawer,
@@ -100,6 +101,9 @@ export function ItineraryMobileExperience({ trip, initialSteps }: ItineraryMobil
   const router = useRouter();
   const { triggerHaptic } = useHapticFeedback();
   const [isPending, startTransition] = useTransition();
+  // T8 — liens d'affiliation + intentions de réservation par étape (hub normal ;
+  // hors provider, le contexte retombe sur vide → aucune sortie /go).
+  const { links: affiliateLinks, bookingByStepId } = useTripAffiliate();
 
   const [steps, setSteps] = useState<PlannerStep[]>(initialSteps);
   useEffect(() => {
@@ -712,6 +716,9 @@ export function ItineraryMobileExperience({ trip, initialSteps }: ItineraryMobil
         <ItineraryDayTimeline
           steps={timelines}
           durations={durations}
+          bookingByStepId={bookingByStepId}
+          affiliateLinks={affiliateLinks}
+          tripId={trip.id}
           onOpen={(step) => {
             triggerHaptic('selection');
             setDetailStepId(step.id);

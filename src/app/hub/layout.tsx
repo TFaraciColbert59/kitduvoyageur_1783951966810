@@ -4,6 +4,7 @@ import { deriveHubProfile, type HubSectionId } from '@/features/hub/engine/hubPr
 import { HubShell } from '@/features/hub/components/HubShell';
 import { AdventureIntelligenceHub } from '@/features/adventure-intelligence/ui';
 import { LiquidGlassDefs } from '@/components/ui-layouts/liquid-glass';
+import { TripAffiliateProvider } from '@/features/affiliation/components/TripAffiliateProvider';
 
 // Hub auth/cookie-driven : jamais prerenderee statiquement au build.
 export const dynamic = 'force-dynamic';
@@ -26,29 +27,33 @@ export default async function HubLayout({ children }: { children: React.ReactNod
   return (
     <>
       <LiquidGlassDefs />
-      <HubShell
-        adventure={data.adventure}
-        profile={profile}
-        baseEnabled={baseEnabled}
-        counts={counts}
-        trip={data.trip}
-        groupLabel={data.groupLabel}
-        linkedTripSlug={data.linkedTripSlug}
-        pendingInvites={data.pendingInvites}
-        trips={data.trips}
-        tripStats={tripStats}
-        adventureIntelligence={
-          <AdventureIntelligenceHub
-            cockpit={intelligence.cockpit}
-            sections={intelligence.sections}
-            sectionHrefs={intelligence.sectionHrefs}
-            terrainEnabled={intelligence.terrainEnabled}
-            terrainReports={intelligence.terrainReports}
-          />
-        }
+      <TripAffiliateProvider
+        value={{ links: data.affiliateLinks, bookingByStepId: data.bookingByStepId }}
       >
-        {children}
-      </HubShell>
+        <HubShell
+          adventure={data.adventure}
+          profile={profile}
+          baseEnabled={baseEnabled}
+          counts={counts}
+          trip={data.trip}
+          groupLabel={data.groupLabel}
+          linkedTripSlug={data.linkedTripSlug}
+          pendingInvites={data.pendingInvites}
+          trips={data.trips}
+          tripStats={tripStats}
+          adventureIntelligence={
+            <AdventureIntelligenceHub
+              cockpit={intelligence.cockpit}
+              sections={intelligence.sections}
+              sectionHrefs={intelligence.sectionHrefs}
+              terrainEnabled={intelligence.terrainEnabled}
+              terrainReports={intelligence.terrainReports}
+            />
+          }
+        >
+          {children}
+        </HubShell>
+      </TripAffiliateProvider>
     </>
   );
 }

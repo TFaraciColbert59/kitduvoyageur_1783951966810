@@ -1,6 +1,7 @@
 import { cache } from 'react';
 import { createClient } from '@/lib/supabase/server';
 import { getTripBySlug, getTripStats } from '@/lib/queries-trips';
+import { getAffiliateLinks } from '@/lib/queries-affiliation';
 import { getWeather, type WeatherDay } from '@/features/materiel/services/getWeather';
 import { getActiveAdventure } from '../context/activeAdventureServer';
 import type { HubCounters } from '../registry/hubSectionRegistry';
@@ -10,6 +11,11 @@ import { deriveActivityType, aggregateHikeStats, estimateHikeDurationMin } from 
 import type { TripFull } from '@/features/trips/types/trip.types';
 import { getTripItemImages, type TripItemImage } from './getTripItemImages';
 import { fetchPublicProfiles } from '@/lib/queries/publicProfiles';
+import type { AffiliateCategory, AffiliateLink } from '@/features/affiliation/types/affiliate.types';
+import {
+  buildBookingByStepId,
+  type StepBookingSuggestion,
+} from '@/features/affiliation/engine/stepBookingLink';
 
 /**
  * H3.1 — Chargeur serveur unique de l'aventure du hub (partagé par le layout
@@ -115,6 +121,13 @@ export interface HubAdventureData extends HubAdventureLists {
   checklist: HubChecklistItem[];
   /** Images du kit de la sortie (shop_products.image / product_ownership.photo_url, [] hors sortie). */
   itemImages: TripItemImage[];
+  /**
+   * T8 — Liens d'affiliation actifs et pertinents du voyage normal (vols,
+   * hébergement, activités, assurance, eSIM). Jamais servis hors hub.
+   */
+  affiliateLinks: AffiliateLink[];
+  /** T8 — Intention de réservation par étape (`trip_steps.id`), sans URL. */
+  bookingByStepId: Record<string, StepBookingSuggestion>;
 }
 
 const EMPTY_LISTS: HubAdventureLists = {
@@ -293,6 +306,53 @@ async function loadCrewBlock(
 
 const WATER_PATTERN = /eau|water|source|riviere|rivière|lac|fontaine|ruisseau/i;
 
+/** T8 — catégories pertinentes pour le voyage normal (spec §4.4). */
+const HUB_AFFILIATE_CATEGORIES: readonly AffiliateCategory[] = [
+  'flight',
+  'hotel',
+  'activity',
+  'insurance',
+  'esim',
+];
+const HUB_AFFILIATE_LIMIT = 8;
+
+/**
+ * T8 — Liens d'affiliation actifs (pays du voyage) filtrés sur les catégories
+ * utiles au hub. Best-effort : une erreur ne casse jamais le rendu du hub.
+ */
+async function loadHubAffiliateLinks(
+  countryCode: string | null | undefined,
+): Promise<AffiliateLink[]> {
+  try {
+    const links = await getAffiliateLinks(countryCode ? { countryCode } : undefined);
+    return links
+      .filter((link) => HUB_AFFILIATE_CATEGORIES.includes(link.category))
+      .slice(0, HUB_AFFILIATE_LIMIT);
+  } catch (err) {
+    console.error('[LKDV hub] affiliate links error:', err);
+    return [];
+  }
+}
+
+/** T8 — Intentions de réservation par étape (pur, dérivé des trip_steps réels). */
+function buildTripBookingByStepId(trip: TripFull): Record<string, StepBookingSuggestion> {
+  return buildBookingByStepId(
+    (trip.steps ?? []).map((step) => ({
+      id: step.id,
+      accommodationName: step.accommodation_name,
+      transportMode: step.transport_mode,
+      latitude: step.latitude,
+      longitude: step.longitude,
+      dayNumber: step.day_number,
+    })),
+    {
+      destinationName: trip.destination_name ?? '',
+      startDate: trip.start_date,
+      endDate: trip.end_date,
+    },
+  );
+}
+
 /** Checklist de préparation réelle du voyage (trip_checklist_items, RLS can_read_trip). */
 async function loadChecklist(
   supabase: Awaited<ReturnType<typeof createClient>>,
@@ -457,13 +517,14 @@ export async function getHubAdventureDataInner(): Promise<HubAdventureData> {
       const hasGeoSteps = (trip.steps ?? []).some(
         (s) => s.latitude != null && s.longitude != null,
       );
-      const [group, hiking, checklist, itemImages] = await Promise.all([
+      const [group, hiking, checklist, itemImages, affiliateLinks] = await Promise.all([
         loadCrewBlock(supabase, trip.id),
         activityType === 'hiking' || hasGeoSteps
           ? loadHikingContext(supabase, trip)
           : Promise.resolve(null),
         loadChecklist(supabase, trip.id),
         getTripItemImages(trip.id),
+        loadHubAffiliateLinks(trip.destination_country_code),
       ]);
       return {
         ...lists,
@@ -482,10 +543,12 @@ export async function getHubAdventureDataInner(): Promise<HubAdventureData> {
         hiking,
         checklist,
         itemImages,
+        affiliateLinks,
+        bookingByStepId: buildTripBookingByStepId(trip),
       };
     }
     // Repli possession (aventure périmée — jamais de cul-de-sac).
-    return { ...lists, adventure: { nature: 'possession' }, input: possessionInput(lists), trip: null, groupLabel: null, linkedTripSlug: null, group: null, hiking: null, checklist: [], itemImages: [] };
+    return { ...lists, adventure: { nature: 'possession' }, input: possessionInput(lists), trip: null, groupLabel: null, linkedTripSlug: null, group: null, hiking: null, checklist: [], itemImages: [], affiliateLinks: [], bookingByStepId: {} };
   }
 
   if (adventure.nature === 'collectif') {
@@ -528,10 +591,12 @@ export async function getHubAdventureDataInner(): Promise<HubAdventureData> {
       hiking: null,
       checklist: [],
       itemImages: [],
+      affiliateLinks: [],
+      bookingByStepId: {},
     };
   }
 
-  return { ...lists, adventure, input: possessionInput(lists), trip: null, groupLabel: null, linkedTripSlug: null, group: null, hiking: null, checklist: [], itemImages: [] };
+  return { ...lists, adventure, input: possessionInput(lists), trip: null, groupLabel: null, linkedTripSlug: null, group: null, hiking: null, checklist: [], itemImages: [], affiliateLinks: [], bookingByStepId: {} };
 }
 
 /**

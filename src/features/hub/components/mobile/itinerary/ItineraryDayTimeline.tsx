@@ -13,11 +13,20 @@ import {
 } from 'lucide-react';
 import type { PlannerStep } from '@/features/trips/planner/plannerEngine';
 import { formatDurationShort, formatStepTime, transportLabel } from '../../../mobile/itineraryEngine';
+import { StepBookingLinkCta } from '@/features/affiliation/components/StepBookingLinkCta';
+import type { AffiliateLink } from '@/features/affiliation/types/affiliate.types';
+import type { StepBookingSuggestion } from '@/features/affiliation/engine/stepBookingLink';
 
 export interface ItineraryDayTimelineProps {
   steps: PlannerStep[];
   durations?: Record<string, number>;
   onOpen: (step: PlannerStep) => void;
+  /** T8 — intention de réservation par id d'étape (calculée côté hub). */
+  bookingByStepId?: Record<string, StepBookingSuggestion>;
+  /** T8 — liens d'affiliation actifs, matchés par catégorie (hotel/flight). */
+  affiliateLinks?: AffiliateLink[];
+  /** T8 — voyage courant pour le suivi `/go/<slug>?trip_id=`. */
+  tripId?: string;
 }
 
 function TransportIcon({ mode }: { mode: string | null | undefined }) {
@@ -44,7 +53,14 @@ function TransportIcon({ mode }: { mode: string | null | undefined }) {
 }
 
 /** Timeline verticale du jour — la feuille de route heure par heure. */
-export function ItineraryDayTimeline({ steps, durations = {}, onOpen }: ItineraryDayTimelineProps) {
+export function ItineraryDayTimeline({
+  steps,
+  durations = {},
+  onOpen,
+  bookingByStepId = {},
+  affiliateLinks = [],
+  tripId,
+}: ItineraryDayTimelineProps) {
   if (steps.length === 0) {
     return (
       <div className="glass-sub-card rounded-2xl p-4">
@@ -61,6 +77,10 @@ export function ItineraryDayTimeline({ steps, durations = {}, onOpen }: Itinerar
       {steps.map((step, index) => {
         const time = formatStepTime(step.start_time);
         const duration = durations[step.id];
+        const booking = bookingByStepId[step.id];
+        const bookingLink = booking
+          ? affiliateLinks.find((link) => link.category === booking.category)
+          : undefined;
         return (
           <li key={step.id} className="flex items-stretch gap-3">
             <div className="flex w-12 shrink-0 flex-col items-center pt-1">
@@ -81,51 +101,62 @@ export function ItineraryDayTimeline({ steps, durations = {}, onOpen }: Itinerar
               />
             </div>
 
-            <button
-              type="button"
-              onClick={() => onOpen(step)}
-              aria-label={`${time ? `${time} · ` : ''}${step.title}`}
-              className="glass mb-1 min-h-[44px] flex-1 rounded-[1.4rem] p-3 text-left transition-transform active:scale-[0.98]"
-            >
-              <span className="flex w-full items-center gap-2">
-                <span className="inline-flex items-center gap-1 rounded-full bg-[var(--lkv-primary)]/10 px-2 py-0.5 text-[9.5px] font-bold uppercase tracking-[0.08em] text-[var(--lkv-primary)]">
-                  <TransportIcon mode={step.transport_mode} />
-                  {transportLabel(step.transport_mode)}
+            <div className="min-w-0 flex-1">
+              <button
+                type="button"
+                onClick={() => onOpen(step)}
+                aria-label={`${time ? `${time} · ` : ''}${step.title}`}
+                className="glass mb-1 min-h-[44px] w-full rounded-[1.4rem] p-3 text-left transition-transform active:scale-[0.98]"
+              >
+                <span className="flex w-full items-center gap-2">
+                  <span className="inline-flex items-center gap-1 rounded-full bg-[var(--lkv-primary)]/10 px-2 py-0.5 text-[9.5px] font-bold uppercase tracking-[0.08em] text-[var(--lkv-primary)]">
+                    <TransportIcon mode={step.transport_mode} />
+                    {transportLabel(step.transport_mode)}
+                  </span>
+                  {duration != null && duration > 0 && (
+                    <span className="ml-auto shrink-0 text-[10px] font-semibold text-[var(--lkv-text-primary)]/60">
+                      {formatDurationShort(duration)}
+                    </span>
+                  )}
                 </span>
-                {duration != null && duration > 0 && (
-                  <span className="ml-auto shrink-0 text-[10px] font-semibold text-[var(--lkv-text-primary)]/60">
-                    {formatDurationShort(duration)}
+
+                <span className="mt-1.5 block text-[13px] font-bold leading-snug text-[var(--lkv-text-primary)]">
+                  {step.title}
+                </span>
+
+                {step.location_name && (
+                  <span className="mt-0.5 block truncate text-[11px] font-medium text-[var(--lkv-text-primary)]/70">
+                    {step.location_name}
                   </span>
                 )}
-              </span>
 
-              <span className="mt-1.5 block text-[13px] font-bold leading-snug text-[var(--lkv-text-primary)]">
-                {step.title}
-              </span>
-
-              {step.location_name && (
-                <span className="mt-0.5 block truncate text-[11px] font-medium text-[var(--lkv-text-primary)]/70">
-                  {step.location_name}
+                <span className="mt-1 flex flex-wrap items-center gap-x-2.5 gap-y-0.5 text-[10.5px] font-semibold tabular-nums text-[var(--lkv-text-primary)]/70">
+                  {step.distance_km != null && <span>{step.distance_km} km</span>}
+                  {step.elevation_gain_m != null && <span>+{step.elevation_gain_m} m</span>}
+                  {step.accommodation_name && (
+                    <span className="inline-flex min-w-0 items-center gap-1 truncate">
+                      <CheckCircle2 size={11} aria-hidden="true" />
+                      {step.accommodation_name}
+                    </span>
+                  )}
                 </span>
-              )}
 
-              <span className="mt-1 flex flex-wrap items-center gap-x-2.5 gap-y-0.5 text-[10.5px] font-semibold tabular-nums text-[var(--lkv-text-primary)]/70">
-                {step.distance_km != null && <span>{step.distance_km} km</span>}
-                {step.elevation_gain_m != null && <span>+{step.elevation_gain_m} m</span>}
-                {step.accommodation_name && (
-                  <span className="inline-flex min-w-0 items-center gap-1 truncate">
-                    <CheckCircle2 size={11} aria-hidden="true" />
-                    {step.accommodation_name}
+                {step.description && (
+                  <span className="mt-1 line-clamp-2 block text-[11px] font-medium leading-snug text-[var(--lkv-text-primary)]/60">
+                    {step.description}
                   </span>
                 )}
-              </span>
+              </button>
 
-              {step.description && (
-                <span className="mt-1 line-clamp-2 block text-[11px] font-medium leading-snug text-[var(--lkv-text-primary)]/60">
-                  {step.description}
-                </span>
+              {booking && bookingLink && (
+                <StepBookingLinkCta
+                  booking={booking}
+                  link={bookingLink}
+                  tripId={tripId}
+                  className="mt-1.5"
+                />
               )}
-            </button>
+            </div>
           </li>
         );
       })}

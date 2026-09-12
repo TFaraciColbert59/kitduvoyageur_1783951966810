@@ -13,6 +13,8 @@ import { getCanonicalTripSteps } from '../hooks/useTripCounters';
 import { getTripDistance } from '../hooks/useTripDistance';
 import { regenerateItineraryAction } from '@/app/voyages/actions';
 import { tripSectionHref } from '../registry/tripSectionRegistry';
+import { useTripAffiliate } from '@/features/affiliation/components/TripAffiliateProvider';
+import { StepBookingLinkCta } from '@/features/affiliation/components/StepBookingLinkCta';
 import Link from 'next/link';
 
 interface TripItineraryTabProps {
@@ -25,6 +27,9 @@ export function TripItineraryTab({ trip }: TripItineraryTabProps) {
   const [isRegenerating, setIsRegenerating] = useState(false);
   const [confirmOpen, setConfirmOpen] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  // T8 — liens d'affiliation + intentions de réservation par étape (hub normal ;
+  // hors provider ou hors hub, le contexte retombe sur vide → aucune sortie /go).
+  const { links: affiliateLinks, bookingByStepId } = useTripAffiliate();
 
   // Évaluation de la saisonnalité
   const seasonalityWarnings = useMemo(() => {
@@ -217,63 +222,75 @@ export function TripItineraryTab({ trip }: TripItineraryTabProps) {
       {/* 3. Liste détaillée des étapes */}
       {canonicalSteps.length > 0 ? (
         <div className="space-y-3">
-          {canonicalSteps.map((step) => (
-            <GlassCard
-              key={step.id}
-              tone="neutral"
-              className="p-4 sm:p-5 rounded-[var(--lkv-radius-lg)] border border-white/60"
-            >
-              <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-3">
-                <div className="space-y-1.5">
-                  <div className="flex items-center gap-2">
-                    <span className="text-xs font-bold text-lkv-secondary uppercase tracking-wider">
-                      Jour {step.day_number}
-                    </span>
-                    {step.accommodation_name && (
-                      <span className="text-[11px] glass-sub-card text-lkv-primary px-2.5 py-1 rounded-full border border-white/60 flex items-center gap-1 shadow-2xs">
-                        <Icon name="home" size={10} />
-                        {step.accommodation_name}
+          {canonicalSteps.map((step) => {
+            const booking = bookingByStepId[step.id];
+            const bookingLink = booking
+              ? affiliateLinks.find((link) => link.category === booking.category)
+              : undefined;
+            return (
+              <GlassCard
+                key={step.id}
+                tone="neutral"
+                className="p-4 sm:p-5 rounded-[var(--lkv-radius-lg)] border border-white/60"
+              >
+                <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-3">
+                  <div className="space-y-1.5">
+                    <div className="flex items-center gap-2">
+                      <span className="text-xs font-bold text-lkv-secondary uppercase tracking-wider">
+                        Jour {step.day_number}
                       </span>
+                      {step.accommodation_name && (
+                        <span className="text-[11px] glass-sub-card text-lkv-primary px-2.5 py-1 rounded-full border border-white/60 flex items-center gap-1 shadow-2xs">
+                          <Icon name="home" size={10} />
+                          {step.accommodation_name}
+                        </span>
+                      )}
+                    </div>
+
+                    <h4 className="font-semibold text-lkv-primary text-base">{step.title}</h4>
+
+                    {step.location_name && (
+                      <div className="text-xs text-lkv-secondary flex items-center gap-1">
+                        <Icon name="map-pin" size={12} />
+                        {step.location_name}
+                      </div>
+                    )}
+
+                    {step.description && (
+                      <p className="text-xs text-[var(--lkv-text-muted)] leading-relaxed max-w-2xl pt-1">
+                        {step.description}
+                      </p>
                     )}
                   </div>
 
-                  <h4 className="font-semibold text-lkv-primary text-base">{step.title}</h4>
-
-                  {step.location_name && (
-                    <div className="text-xs text-lkv-secondary flex items-center gap-1">
-                      <Icon name="map-pin" size={12} />
-                      {step.location_name}
-                    </div>
-                  )}
-
-                  {step.description && (
-                    <p className="text-xs text-[var(--lkv-text-muted)] leading-relaxed max-w-2xl pt-1">
-                      {step.description}
-                    </p>
-                  )}
+                  <div className="flex items-center sm:flex-col sm:items-end gap-3 sm:gap-1 text-xs text-lkv-secondary shrink-0 self-start">
+                    {step.distance_km ? (
+                      <div className="flex items-center gap-1">
+                        <Icon name="footprints" size={13} />
+                        <span>{step.distance_km} km</span>
+                      </div>
+                    ) : null}
+                    {step.elevation_gain_m ? (
+                      <div className="font-semibold text-lkv-primary">
+                        +{step.elevation_gain_m}m D+
+                      </div>
+                    ) : null}
+                    {step.elevation_loss_m ? (
+                      <div className="text-[var(--lkv-text-muted)] text-[11px]">
+                        -{step.elevation_loss_m}m D-
+                      </div>
+                    ) : null}
+                  </div>
                 </div>
 
-                <div className="flex items-center sm:flex-col sm:items-end gap-3 sm:gap-1 text-xs text-lkv-secondary shrink-0 self-start">
-                  {step.distance_km ? (
-                    <div className="flex items-center gap-1">
-                      <Icon name="footprints" size={13} />
-                      <span>{step.distance_km} km</span>
-                    </div>
-                  ) : null}
-                  {step.elevation_gain_m ? (
-                    <div className="font-semibold text-lkv-primary">
-                      +{step.elevation_gain_m}m D+
-                    </div>
-                  ) : null}
-                  {step.elevation_loss_m ? (
-                    <div className="text-[var(--lkv-text-muted)] text-[11px]">
-                      -{step.elevation_loss_m}m D-
-                    </div>
-                  ) : null}
-                </div>
-              </div>
-            </GlassCard>
-          ))}
+                {booking && bookingLink && (
+                  <div className="mt-3 border-t border-black/5 pt-3">
+                    <StepBookingLinkCta booking={booking} link={bookingLink} tripId={trip.id} />
+                  </div>
+                )}
+              </GlassCard>
+            );
+          })}
         </div>
       ) : (
         <EmptyState
