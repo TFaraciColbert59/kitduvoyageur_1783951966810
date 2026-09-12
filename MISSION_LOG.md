@@ -443,5 +443,55 @@ ORDER BY country_code;
   I3.2 rendu par **mask monochrome** (réutilise l'architecture PNG existante) → aucun JS d'icône par route ; `@phosphor-icons/core@2.1.1` ajouté en **devDependency build-time uniquement**, hook `prebuild`, attribution MIT dans `public/icons/sf/LICENSE.txt` ;
   I3.3 axes `weight`/`scale`/`renderingMode` exposés (API SF-`SymbolConfiguration`-like), résolution `regular` par défaut, variantes de poids extensibles via `icon-set.json` ;
   I4.1 **SF Symbols Apple non embarqués** (interdiction de licence hors plateformes Apple) ; l'app Capacitor est un webview pur sans couche native → aucune surface native où les utiliser légalement.
-  Portes : G1 OK (`tsc --noEmit`) · G2 OK (**1425/1425**, 188 suites ; `verify:invariants` SUCCÈS, Invariant 6 résout 1198 usages) · G3 OK (`npm run build`) — **First Load JS shared 104 kB et Middleware 98.5 kB inchangés, aucune route ±1 kB** (diff des tables de build) · ESLint `src` 0 erreur (warnings préexistants uniquement).
+   Portes : G1 OK (`tsc --noEmit`) · G2 OK (**1425/1425**, 188 suites ; `verify:invariants` SUCCÈS, Invariant 6 résout 1198 usages) · G3 OK (`npm run build`) — **First Load JS shared 104 kB et Middleware 98.5 kB inchangés, aucune route ±1 kB** (diff des tables de build) · ESLint `src` 0 erreur (warnings préexistants uniquement).
+
+## 2026-09-12 — CHANTIER ATLAS Phase 0 — Amorçage (branche `chantier/atlas-0-fondations`)
+
+### Livrables
+- `scripts/atlas/install-opencode-agents.mjs` : copie (jamais déplacement) des 8 agents du pack `SkillsForOpenCode` + `pays-conformite-lg` vers `.opencode/agent/`, avec conversion de frontmatter Claude Code (`name`/`model: opus`/`tools`) → OpenCode (`description` + `mode: subagent`), corps inchangé.
+- Agents chantier créés : `.opencode/agent/atlas-data-layer.md`, `atlas-globe-engine.md`, `atlas-conformite-lg.md`.
+- `opencode.json` : `"instructions": ["AGENTS.md"]` ajouté ; bloc plugin `omniroute` inchangé.
+- `docs/architecture/CHANTIER_ATLAS_PLAN.md` écrit (format `writing-plans`, phases 0-8, tâches cochables).
+- Branche `chantier/atlas-0-fondations` créée depuis `main` (`181658d9`).
+
+### Preuves brutes
+```
+$ opencode agent list | listé par nom (subagents)
+build (primary) / plan (primary) / compaction (primary) / summary (primary) / title (primary)
+explore (subagent) / general (subagent)
+a11y-architect (subagent)
+architect (subagent)
+atlas-conformite-lg (subagent)
+atlas-data-layer (subagent)
+atlas-globe-engine (subagent)
+code-reviewer (subagent)
+database-reviewer (subagent)
+pays-conformite-lg (subagent)
+performance-optimizer (subagent)
+security-reviewer (subagent)
+silent-failure-hunter (subagent)
+```
+```
+$ supabase migration list --linked   (projet icxyvwzfjbflcbqukpfz, linked: true)
+[dernières lignes] local=20260911570000 remote=20260911570000
+                  local=20260911561000 remote=20260911561000
+                  local=20260810000000 remote=20260810000000
+$ supabase db push --dry-run --linked
+DRY RUN: migrations will *not* be pushed to the database.
+Remote database is up to date.
+```
+
+### Écarts constatés vs `CHANTIER_ATLAS.md` (documentés, non silencieux)
+1. **Pas de MCP Supabase dans OpenCode ici** → remplacé par Supabase CLI 2.109.1 (authentifié, projet lié) + RPC debug temporaires service-role-only pour `EXPLAIN ANALYZE` et `pg_policies` (créées puis droppées par migration explicite en Phase 1).
+2. **Skills déjà découvertes nativement** depuis `.agents/skills/**` (les 10 skills du chantier invocables dans cette session) → aucune copie de skills (pas de duplication) ; seuls les agents manquaient, ils sont installés.
+3. **`gh` CLI absent** → PR GitHub non automatisable : décision utilisateur = branche par phase + merge `--no-ff` local + push `main` après gates verts (traçable, rollback possible).
+4. **`/explorer` existe déjà** (page Aventures live, `ExplorerClient` + `ExplorerMap` Leaflet + React Query viewport + `TrailDetailPanel`) → cible d'intégration du moteur unifié ; `/carte-interactive` et `/pays` restent fonctionnelles jusqu'à Phase 8 (ATLAS-R10).
+5. **Leaflet utilisé par 11 fichiers hors périmètre** (carnet, hub, groupes, terrain-live, préparer-randonnée…) → `leaflet` conservé ; seul `react-globe.gl` + `three` seront retirés en Phase 5 après remplacement de `CountryGlobe` par un globe MapLibre compatible props.
+6. **CTA "Créer mon aventure avec l'IA"** : présent uniquement dans du code mort sans listener ; le CTA vivant est `/hub/depart?id=none&route=<id>` (`src/components/map/InteractiveMap.tsx:1014-1019`) — c'est lui qui est conservé.
+7. **`trail_metadata`/`trail_scores`** : drift entre migrations (stand-ins) et prod (PK `id` + FK `trail_id`) → RPC jointes sur `trail_id`.
+8. **`MISSION_LOG.md` racine** utilisé pour les rapports de phase (le plus récent).
+9. `@omniroute/opencode-plugin` injoignable (`localhost:20128` ConnectionRefused) — non bloquant pour l'exécution (modèle de session opérationnel), à signaler.
+
+### Prochaine phase
+Phase 1 — Vérité base de données (`chantier/atlas-1-data-layer`) : RPC `trails_in_viewport`, matviews densité, import polygones pays, preuve `EXPLAIN ANALYZE` sur `idx_hiking_routes_geom`.
 
