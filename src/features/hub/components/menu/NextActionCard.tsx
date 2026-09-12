@@ -26,6 +26,7 @@ import type { HubChecklistItem } from '../../server/getHubAdventureData';
 export type NextActionKind =
   | 'cockpit'
   | 'raconter'
+  | 'navigation'
   | 'safety'
   | 'checklist'
   | 'documents'
@@ -45,6 +46,7 @@ export interface NextActionSignal {
 const ICONS: Record<NextActionKind, LucideIcon> = {
   cockpit: Play,
   raconter: Share2,
+  navigation: Play,
   safety: Shield,
   checklist: CheckSquare,
   documents: FileText,
