@@ -3,8 +3,8 @@
   "phase_name": "Mobile natif et terrain (partie autonomisable)",
   "date": "2026-09-12",
   "sha_base": "64b225a6 (= origin/main, Phase 4 #45)",
-  "sha_branch": "a consigner apres le push sur feat/phase11-mobile-build",
-  "sha_pushed": "a consigner",
+  "sha_branch": "175ab25e (base 64b225a6) sur feat/phase11-mobile-build",
+  "sha_pushed": "175ab25e -- pousse sur origin/feat/phase11-mobile-build",
   "sha_merged": "aucun -- pas de PR (consigne), branche poussee pour revue",
   "environment": {
     "os": "Windows 11 (win32), session NON administrateur (UAC non interactif)",
