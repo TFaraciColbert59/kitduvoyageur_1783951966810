@@ -24,6 +24,8 @@ interface SaveHikeSessionBody {
   routeId?: string | null;
   kitId?: string | null;
   carnetId?: string | null;
+  /** Phase 2 — corrélation de chaîne propagée à la session et au carnet. */
+  correlationId?: string | null;
   startedAt: string;
   endedAt: string;
   distanceKm: number;
@@ -70,6 +72,13 @@ function sanitizeTimedPositions(samples: TimedSample[] | undefined): TimedSample
   );
 }
 
+const UUID_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
+/** Phase 2 — corrélation de chaîne validée (jamais un identifiant inventé). */
+function sanitizeCorrelationId(value: unknown): string | null {
+  return typeof value === 'string' && UUID_PATTERN.test(value) ? value : null;
+}
+
 /**
  * POST /api/hike-sessions
  * Sauvegarde une session de randonnée terminée et génère optionnellement
@@ -93,6 +102,7 @@ export async function POST(req: NextRequest) {
     const userId = user.id;
 
     const body: SaveHikeSessionBody = await req.json();
+    const correlationId = sanitizeCorrelationId(body.correlationId);
 
     if (!body.startedAt || !body.endedAt || body.distanceKm == null || body.durationSeconds == null) {
       return NextResponse.json({ error: 'Données de session incomplètes' }, { status: 400 });
@@ -160,6 +170,7 @@ export async function POST(req: NextRequest) {
           author_id: userId,
           visibility: 'public',
           created_at: new Date().toISOString(),
+          correlation_id: correlationId,
         })
         .select('id')
         .single();
@@ -187,6 +198,7 @@ export async function POST(req: NextRequest) {
         positions_geojson: positionsGeojson,
         positions_timed: positionsTimed.length >= 2 ? positionsTimed : null,
         poi_events: body.poiEvents || [],
+        correlation_id: correlationId,
       })
       .select('id')
       .single();

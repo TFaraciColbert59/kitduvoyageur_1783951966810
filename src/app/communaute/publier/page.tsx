@@ -14,6 +14,14 @@ import { createClient } from '@/lib/supabase/client';
 type PostType = 'photo' | 'billet' | 'question' | 'evenement';
 type AudienceType = 'public' | 'club' | 'abonnies';
 
+const UUID_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
+interface UserCarnetOption {
+  id: string;
+  title: string;
+  correlation_id: string | null;
+}
+
 const SAMPLE_PHOTOS = [
   'https://images.unsplash.com/photo-1464822759023-fed622ff2c3b?w=800&q=80',
   'https://images.unsplash.com/photo-1506744038136-46273834b3fb?w=800&q=80',
@@ -25,6 +33,8 @@ function PublierPostContent() {
   const searchParams = useSearchParams();
   const initialClubId = searchParams?.get('clubId') || '';
   const initialClubName = searchParams?.get('clubName') || '';
+  const initialCarnetId = searchParams?.get('carnetId') || '';
+  const searchCorrelationId = searchParams?.get('correlationId') || '';
   const { user } = useAuth();
 
   // Form State
@@ -44,7 +54,10 @@ function PublierPostContent() {
 
   // Context & Links
   const [linkedAdventure, setLinkedAdventure] = useState('Arête du Charmant Som - 28 sept');
-  const [linkedCarnet, setLinkedCarnet] = useState('');
+  const [linkedCarnet, setLinkedCarnet] = useState(
+    UUID_PATTERN.test(initialCarnetId) ? initialCarnetId : ''
+  );
+  const [userCarnets, setUserCarnets] = useState<UserCarnetOption[]>([]);
   const [location, setLocation] = useState('Col du Charmant Som / Chartreuse (1867 m)');
   const [isDetectingLocation, setIsDetectingLocation] = useState(false);
 
@@ -101,6 +114,28 @@ function PublierPostContent() {
 
     fetchUserClubs();
   }, [user, selectedClub]);
+
+  // Phase 2 — carnets réels de l'utilisateur : seuls des ids valides peuvent
+  // être liés à la publication (linked_carnet_id → carnets(id)).
+  useEffect(() => {
+    async function fetchUserCarnets() {
+      if (!user) return;
+      try {
+        const supabase = createClient();
+        const { data } = await supabase
+          .from('carnets')
+          .select('id, title, correlation_id')
+          .eq('author_id', user.id)
+          .order('created_at', { ascending: false })
+          .limit(20);
+        setUserCarnets((data ?? []) as UserCarnetOption[]);
+      } catch (err) {
+        console.error('Error fetching user carnets:', err);
+      }
+    }
+
+    fetchUserCarnets();
+  }, [user]);
 
   // Word count computation
   const wordCount = useMemo(() => {
@@ -224,6 +259,16 @@ function PublierPostContent() {
       }
 
       // Valid columns matching PostgreSQL community_posts table
+      const linkedCarnetId = UUID_PATTERN.test(linkedCarnet) ? linkedCarnet : null;
+      const selectedCarnet = linkedCarnetId
+        ? userCarnets.find((carnet) => carnet.id === linkedCarnetId) ?? null
+        : null;
+      const correlationId = UUID_PATTERN.test(searchCorrelationId)
+        ? searchCorrelationId
+        : selectedCarnet?.correlation_id && UUID_PATTERN.test(selectedCarnet.correlation_id)
+          ? selectedCarnet.correlation_id
+          : null;
+
       const payload: Record<string, any> = {
         author_id: user?.id,
         content: fullContent,
@@ -231,6 +276,8 @@ function PublierPostContent() {
         likes_count: 0,
         comments_count: 0,
         image_url: photos[0] || null,
+        ...(linkedCarnetId ? { linked_carnet_id: linkedCarnetId } : {}),
+        ...(correlationId ? { correlation_id: correlationId } : {}),
       };
 
       const { data, error } = await supabase.from('community_posts').insert(payload).select().single();
@@ -584,9 +631,17 @@ function PublierPostContent() {
                         <label className="block text-xs font-semibold text-[#17402C] mb-1.5">Carnet lié</label>
                         <select value={linkedCarnet} onChange={(e) => setLinkedCarnet(e.target.value)} className="w-full px-4 py-3 bg-[#F5F2EA] border border-[#E4E0D4] rounded-2xl text-xs font-semibold text-[#17402C] focus:outline-none">
                           <option value="">— Aucun carnet —</option>
-                          <option value="c1">Mon premier 3000m en Vanoise</option>
-                          <option value="c2">Traversée de la Chartreuse</option>
+                          {userCarnets.map((carnet) => (
+                            <option key={carnet.id} value={carnet.id}>
+                              {carnet.title}
+                            </option>
+                          ))}
                         </select>
+                        {userCarnets.length === 0 && (
+                          <p className="text-[10px] text-[#7A8A7D] mt-1.5">
+                            Aucun carnet disponible — terminez une sortie pour en créer un.
+                          </p>
+                        )}
                       </div>
                     </div>
 
