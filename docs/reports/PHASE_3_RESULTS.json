@@ -1,0 +1,56 @@
+{
+  "phase": 3,
+  "phase_name": "Finaliser la creation de voyage (AutoGen reel bout-en-bout)",
+  "date": "2026-09-11",
+  "sha_branch": "c0769076 (2 commits: 5d4b1ac0 db, c0769076 serveur/ui) sur feat/phase3-autogen-chain",
+  "sha_merged": "voir PR #39 (squash)",
+  "environment": {
+    "local": "Supabase local Docker + E2E Playwright local (stack locale, cles locales)",
+    "ci": "GitHub Actions (checks requis via PR #39)",
+    "distant": "INSUFFICIENT_DATA -- projet de test Phase 1 non provisionne"
+  },
+  "deliverables": {
+    "migration": "supabase/migrations/20260911520000_phase3_autogen_chain.sql",
+    "pgtap": "supabase/tests/database/phase3_autogen_chain.test.sql (30 assertions)",
+    "commande": "src/features/trips/server/createTripFromAutogenIntent.ts",
+    "schemas": "src/features/trips/schemas/autogenTripCreate.schema.ts",
+    "engines_purs": [
+      "src/features/trips/engine/autogenPreparation.ts",
+      "src/features/hub/engine/hikingNavigation.ts"
+    ],
+    "ui": [
+      "src/features/trips/components/autoGen/AutoGenTripCreateView.tsx",
+      "src/features/hub/components/blocks/HikingBlocks.tsx",
+      "src/features/hub/components/menu/SortieMenu.tsx",
+      "src/features/hub/components/menu/NextActionCard.tsx",
+      "src/features/hub/components/mobile/moments/SortieMoment.tsx"
+    ],
+    "e2e": "scripts/e2e/a13-journey.spec.ts (TEST-A13-E2E-02 ajoute)"
+  },
+  "chain": "brief -> recherche parcours reels (PostGIS borne) -> trip -> plans (1-3) -> attach plan-trip -> selection route navigable -> kit/budget/checklist/documents -> redirection apercu reel",
+  "evidence": {
+    "pgtap_full": { "command": "npx supabase test db --db-url <local>", "result": "Files=16, Tests=292, PASS" },
+    "vitest_full": { "command": "npm run test", "result": "287 files, 2063 passed / 27 skipped, 0 failed" },
+    "type_check": "exit 0",
+    "lint": "exit 0",
+    "build": "exit 0",
+    "e2e_local": { "command": "npx playwright test scripts/e2e/a13-journey.spec.ts (stack locale)", "result": "2 passed / 0 failed" }
+  },
+  "gate_navigation": {
+    "source_unique": "phase3_route_navigable(bigint) -- meme predicat que select_adventure_plan_route (geom non nulle, non vide, >=2 points, ST_IsValid)",
+    "uniform_from_blueprint": "jamais navigable (aucune geometrie de trace)",
+    "comportement_sans_migration": "gate reste FERME (fail-safe)"
+  },
+  "erroneous_handling": "400/401/403/409/429/500/503 typés; idempotence par correlation_id; compensation best-effort voyage+plan sur echec; requeue sur statut failed",
+  "limitations": [
+    "Migration non poussee en distant (Phase 1 bloquee) : sur environnement sans migration le gate reste ferme et la commande cree le voyage sans parcours (fail-safe assume et teste).",
+    "Documents attendus = trip_checklist_items : trip_documents.file_url NOT NULL empeche une ligne document sans fichier reel.",
+    "Brief original persiste dans trips.metadata.autogen (adventure_generation_requests sans colonne texte, non etendue).",
+    "Pas de matérialisation automatique de candidat (a13_materialize_candidate) : le plan porte les 3 candidats; la selection du parcours est automatisee.",
+    "Distance/D+/ETA P50-P90 persistes mais non re-rendus dans le flux de creation (pas d'ecran parallele conformement au chantier).",
+    "E2E execute en local uniquement; countries_geo(FR) ensemence localement pour l'environnement de test."
+  ],
+  "snapshots": "Regeneration CI via workflow update sur la branche (carte Prochaine action / overviews hub potentiellement impactes).",
+  "decision": "PASS (perimetre local)",
+  "responsible": "agents BACKEND/FRONTEND + ORCHESTRATOR (revue, PR, merge)"
+}
