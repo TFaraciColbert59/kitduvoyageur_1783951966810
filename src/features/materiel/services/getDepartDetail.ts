@@ -283,7 +283,7 @@ function getShowcaseDepart(kitId?: string, customTrail?: MapTrail | null, destin
     totalPackWeightG,
     assignedKit: {
       id: kitId || 'tmb-4j',
-      name: isVercors ? 'Kit Vercors Ultra' : isBelledonne ? 'Kit Belledonne Hiver' : customTrail ? 'Kit de départ' : 'Kit Tour du Mont-Blanc',
+      name: isVercors ? 'Kit Vercors Ultra' : isBelledonne ? 'Kit Belledonne Hiver' : destinationOverride ? 'Kit de départ' : 'Kit Tour du Mont-Blanc',
       totalWeightG: baseWeightG,
       items: allItems,
     },
@@ -381,11 +381,13 @@ export async function getDepartDetail(id?: string | null, selectedRouteId?: stri
         id === 'vercors-ultra' ? 'La Transylvestre' : id === 'belledonne-winter' ? 'Littoral' : 'Sambre'
       );
       const explicitRoute = Boolean(selectedRouteId);
+      const requestedTrail =
+        explicitRoute && trailData && String(trailData.id) === String(selectedRouteId) ? trailData : null;
       const identity = resolveDepartIdentity({
         destination: id === 'vercors-ultra' ? 'Grande Traversée du Vercors' : id === 'belledonne-winter' ? 'Traversée hivernale de Belledonne' : 'Tour du Mont-Blanc — 4j Bivouac',
-        trailName: explicitRoute ? trailData?.name ?? null : null,
+        trailName: requestedTrail?.name ?? null,
       });
-      return getShowcaseDepart(id ?? undefined, trailData, identity.title);
+      return getShowcaseDepart(id ?? undefined, trailData, identity.fromTrail ? identity.title : null);
     }
 
     // Recherche du kit réel de l utilisateur en base
@@ -435,11 +437,13 @@ export async function getDepartDetail(id?: string | null, selectedRouteId?: stri
     if (!kit) {
       const explicitRoute = Boolean(selectedRouteId);
       const trailData = await resolveTrail(supabase, selectedRouteId, 'Sambre');
+      const requestedTrail =
+        explicitRoute && trailData && String(trailData.id) === String(selectedRouteId) ? trailData : null;
       const identity = resolveDepartIdentity({
         destination: 'Tour du Mont-Blanc — 4j Bivouac',
-        trailName: explicitRoute ? trailData?.name ?? null : null,
+        trailName: requestedTrail?.name ?? null,
       });
-      return getShowcaseDepart('tmb-4j', trailData, identity.title);
+      return getShowcaseDepart('tmb-4j', trailData, identity.fromTrail ? identity.title : null);
     }
 
     const cleanDestination = (kit.name || 'Prochain départ').replace(/\s*\((?:copie|copy)\)\s*/gi, '').trim();
