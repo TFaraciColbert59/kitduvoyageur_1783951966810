@@ -195,7 +195,9 @@ export function DepartHeroCard({
           >
             {kits.map((kit) => (
               <option key={kit.id} value={kit.id}>
-                {kit.name}
+                {kit.id === depart?.assignedKit?.id && depart.assignedKit.name
+                  ? depart.assignedKit.name
+                  : kit.name}
               </option>
             ))}
           </select>

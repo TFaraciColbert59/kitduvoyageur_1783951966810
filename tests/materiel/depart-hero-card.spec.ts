@@ -52,3 +52,29 @@ describe('DepartHeroCard', () => {
     }
   });
 });
+
+describe('DepartHeroCard — sélecteur de kit', () => {
+  const showcaseDepart = {
+    ...depart,
+    assignedKit: { id: 'tmb-4j', name: 'Kit de départ', totalWeightG: 4100, items: [] },
+  } as unknown as DepartDetail;
+
+  const html = renderToStaticMarkup(
+    React.createElement(DepartHeroCard, {
+      depart: showcaseDepart,
+      identity: { title: 'Boucle Val de Sambre et Maroilles', subtitle: null, fromTrail: true },
+      kits: [
+        { id: 'tmb-4j', name: 'Tour du Mont-Blanc — 4j Bivouac' },
+        { id: 'other', name: 'Kit hiver' },
+      ],
+      isOnline: true,
+      onOpenSheet: () => {},
+      onShare: () => {},
+    })
+  );
+
+  it('affiche le nom du kit réellement assigné, pas le libellé showcase', () => {
+    expect(html).toContain('Kit de départ');
+    expect(html).not.toContain('Tour du Mont-Blanc — 4j Bivouac');
+  });
+});
