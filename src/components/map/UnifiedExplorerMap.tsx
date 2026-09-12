@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import Link from 'next/link';
 import {
   Map as MapLibreMap,
   Popup,
@@ -14,8 +15,12 @@ import type { MapTrail } from '@/components/explorer/types';
 import { getDifficultyColor, isValidLatLng } from '@/components/explorer/types';
 import type { UnifiedPOI } from '@/lib/queries/pois';
 import { createMapStyle, type AtlasTileMode } from './engine/createMapStyle';
+import { prefersReducedMotion, flyToTarget } from './engine/camera';
+import { resolveCountryName, resolveIsoA2 } from './engine/geo';
 import { registerAtlasMapImages } from './engine/icons';
 import { getPoiColor, MAP_COLORS } from './engine/mapTheme';
+import { buildCountryDensityFC, buildRegionDensityFC } from './layers/densityLayers';
+import type { CountryDensityRow, RegionDensityCell } from './layers/densityLayers';
 import { useViewportData } from './hooks/useViewportData';
 import type { ViewportQuery } from './hooks/viewportData';
 
@@ -47,6 +52,10 @@ export interface UnifiedExplorerMapProps {
   onViewportChange?: (bbox: UnifiedViewportBbox) => void;
   /** Données réelles du viewport courant (sentiers + POI), remontées à la page. */
   onViewportData?: (data: { trails: MapTrail[]; pois: UnifiedPOI[] }) => void;
+  /** Densité par pays (matview Phase 1) — palier continent. */
+  countryDensity?: CountryDensityRow[];
+  /** Densité par cellule geohash-5 (matview Phase 1) — palier région. */
+  regionDensity?: RegionDensityCell[];
   safeControls?: boolean;
   compact?: boolean;
 }
@@ -56,11 +65,6 @@ const DEFAULT_CENTER: [number, number] = [6.8694, 45.9237];
 const COUNTRIES_GEOJSON_URL = '/data/countries-110m.geojson';
 const VIEWPORT_BUFFER = 0.25;
 const TILE_MODES: AtlasTileMode[] = ['topo', 'osm', 'satellite'];
-
-function prefersReducedMotion(): boolean {
-  if (typeof window === 'undefined' || !window.matchMedia) return false;
-  return window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-}
 
 function buildTrailsFeatureCollection(trails: MapTrail[]) {
   return {
@@ -159,6 +163,8 @@ export default function UnifiedExplorerMap({
   onLocationUpdate,
   onViewportChange,
   onViewportData,
+  countryDensity,
+  regionDensity,
   safeControls = false,
 }: UnifiedExplorerMapProps) {
   const containerRef = useRef<HTMLDivElement | null>(null);
@@ -166,6 +172,7 @@ export default function UnifiedExplorerMap({
   const trailsRef = useRef<MapTrail[]>([]);
   const poisRef = useRef<UnifiedPOI[]>([]);
   const poiPopupRef = useRef<Popup | null>(null);
+  const countryDensityRef = useRef<CountryDensityRow[]>([]);
   const callbacksRef = useRef({
     onTrailClick,
     onPoiClick,
@@ -178,6 +185,11 @@ export default function UnifiedExplorerMap({
   const [ready, setReady] = useState(false);
   const [tileMode, setTileMode] = useState<AtlasTileMode>('topo');
   const [viewport, setViewport] = useState<ViewportQuery | null>(null);
+  const [selectedCountry, setSelectedCountry] = useState<{
+    iso: string;
+    name: string;
+    count: number | null;
+  } | null>(null);
 
   callbacksRef.current = {
     onTrailClick,
@@ -189,6 +201,7 @@ export default function UnifiedExplorerMap({
   };
   trailsRef.current = trails ?? [];
   poisRef.current = pois ?? [];
+  countryDensityRef.current = countryDensity ?? [];
 
   // Fetch viewport débouncé + annulation des requêtes obsolètes (Phase 3).
   const viewportData = useViewportData(viewport, true);
@@ -345,49 +358,114 @@ export default function UnifiedExplorerMap({
         console.error('[UnifiedExplorerMap] MapLibre error:', message);
       });
 
-      // Couche monde : polygones pays (GeoJSON statique réel, déjà utilisé par Earth).
-      countriesAbort = new AbortController();
-      fetch(COUNTRIES_GEOJSON_URL, { signal: countriesAbort.signal })
-        .then((response) => {
-          if (!response.ok) throw new Error(`HTTP ${response.status}`);
-          return response.json();
-        })
-        .then((geojson) => {
-          if (cancelled || !mapRef.current) return;
-          const current = mapRef.current;
-          if (current.getSource('atlas-countries')) return;
-          const beforeId = current.getLayer('atlas-trails-selected')
-            ? 'atlas-trails-selected'
-            : undefined;
-          current.addSource('atlas-countries', { type: 'geojson', data: geojson });
-          current.addLayer(
-            {
-              id: 'atlas-country-fill',
-              type: 'fill',
-              source: 'atlas-countries',
-              paint: { 'fill-color': MAP_COLORS.sageLight, 'fill-opacity': 0.16 },
-            },
-            beforeId
-          );
-          current.addLayer(
-            {
-              id: 'atlas-country-line',
-              type: 'line',
-              source: 'atlas-countries',
-              paint: {
-                'line-color': MAP_COLORS.inkSecondary,
-                'line-opacity': 0.35,
-                'line-width': 0.6,
+    // Couche monde : polygones pays (GeoJSON statique réel, déjà utilisé par Earth).
+    // La géométrie est enrichie côté client avec `atlas_iso`/`atlas_name` normalisés
+    // (même résolution que le référentiel countries_geo) pour filtres et interactions.
+    countriesAbort = new AbortController();
+    fetch(COUNTRIES_GEOJSON_URL, { signal: countriesAbort.signal })
+      .then((response) => {
+        if (!response.ok) throw new Error(`HTTP ${response.status}`);
+        return response.json();
+      })
+      .then((geojson) => {
+        if (cancelled || !mapRef.current) return;
+        const current = mapRef.current;
+        if (current.getSource('atlas-countries')) return;
+        const beforeId = current.getLayer('atlas-trails-selected')
+          ? 'atlas-trails-selected'
+          : undefined;
+        const collection = {
+          type: 'FeatureCollection',
+          features: (geojson.features ?? []).map(
+            (feature: { properties?: Record<string, unknown> } & Record<string, unknown>) => ({
+              ...feature,
+              properties: {
+                ...(feature.properties ?? {}),
+                atlas_iso: resolveIsoA2(feature.properties) ?? '',
+                atlas_name: resolveCountryName(feature.properties),
               },
+            })
+          ),
+        };
+        current.addSource('atlas-countries', {
+          type: 'geojson',
+          data: collection as unknown as GeoJSON.GeoJSON,
+        });
+        current.addLayer(
+          {
+            id: 'atlas-country-fill',
+            type: 'fill',
+            source: 'atlas-countries',
+            paint: { 'fill-color': MAP_COLORS.sageLight, 'fill-opacity': 0.16 },
+          },
+          beforeId
+        );
+        current.addLayer(
+          {
+            id: 'atlas-country-line',
+            type: 'line',
+            source: 'atlas-countries',
+            paint: {
+              'line-color': MAP_COLORS.inkSecondary,
+              'line-opacity': 0.35,
+              'line-width': 0.6,
             },
-            beforeId
+          },
+          beforeId
+        );
+        current.addLayer(
+          {
+            id: 'atlas-country-selected',
+            type: 'line',
+            source: 'atlas-countries',
+            filter: ['==', ['get', 'atlas_iso'], '__none__'],
+            paint: {
+              'line-color': MAP_COLORS.ink,
+              'line-opacity': 0.9,
+              'line-width': 1.8,
+            },
+          },
+          beforeId
+        );
+
+        current.on('click', 'atlas-country-fill', (event: MapLayerMouseEvent) => {
+          const feature = event.features?.[0];
+          const iso = String(feature?.properties?.atlas_iso ?? '');
+          if (!iso) return;
+          const density = countryDensityRef.current.find(
+            (row) => String(row.iso_a2 ?? '').toUpperCase() === iso
           );
-        })
-        .catch((error: unknown) => {
-          if ((error as Error)?.name !== 'AbortError') {
-            console.error('[UnifiedExplorerMap] GeoJSON pays indisponible:', error);
+          setSelectedCountry({
+            iso,
+            name:
+              String(feature?.properties?.atlas_name ?? '') ||
+              String(density?.name ?? '') ||
+              iso,
+            count:
+              density && Number.isFinite(Number(density.trail_count))
+                ? Number(density.trail_count)
+                : null,
+          });
+          if (density && Number.isFinite(Number(density.centroid_lat))) {
+            flyToTarget(current, {
+              center: [Number(density.centroid_lng), Number(density.centroid_lat)],
+              zoom: 4.6,
+              duration: 900,
+            });
           }
         });
+        current.on('mouseenter', 'atlas-country-fill', () => {
+          current.getCanvas().style.cursor = 'pointer';
+        });
+        current.on('mouseleave', 'atlas-country-fill', () => {
+          current.getCanvas().style.cursor = '';
+        });
+      })
+      .catch((error: unknown) => {
+        if ((error as Error)?.name !== 'AbortError') {
+          console.error('[UnifiedExplorerMap] GeoJSON pays indisponible:', error);
+        }
+      });
     }, 0);
 
     return () => {
@@ -503,6 +581,74 @@ export default function UnifiedExplorerMap({
       map.on('mouseleave', layer, clearPointer);
     }
   }, [pois, ready]);
+
+  // ── Densités matérialisées : continent (pays) + région (geohash5) ───────────
+  useEffect(() => {
+    const map = mapRef.current;
+    if (!map || !ready) return;
+
+    const countryData = buildCountryDensityFC(countryDensity ?? []);
+    const regionData = buildRegionDensityFC(regionDensity ?? []);
+
+    const countrySource = map.getSource('atlas-country-density') as GeoJSONSource | undefined;
+    if (countrySource) {
+      countrySource.setData(countryData as unknown as GeoJSON.GeoJSON);
+    } else {
+      map.addSource('atlas-country-density', {
+        type: 'geojson',
+        data: countryData as unknown as GeoJSON.GeoJSON,
+      });
+      map.addLayer({
+        id: 'atlas-country-density-circles',
+        type: 'circle',
+        source: 'atlas-country-density',
+        minzoom: 2.4,
+        maxzoom: 8.2,
+        paint: {
+          'circle-color': MAP_COLORS.ink,
+          'circle-radius': ['interpolate', ['linear'], ['get', 'count'], 1, 4, 100, 10, 1000, 16],
+          'circle-opacity': ['interpolate', ['linear'], ['zoom'], 2.4, 0, 3.6, 0.65, 6.5, 0.65, 8.2, 0],
+          'circle-stroke-color': MAP_COLORS.white,
+          'circle-stroke-width': 1,
+        },
+      });
+    }
+
+    const regionSource = map.getSource('atlas-region-density') as GeoJSONSource | undefined;
+    if (regionSource) {
+      regionSource.setData(regionData as unknown as GeoJSON.GeoJSON);
+    } else {
+      map.addSource('atlas-region-density', {
+        type: 'geojson',
+        data: regionData as unknown as GeoJSON.GeoJSON,
+      });
+      map.addLayer({
+        id: 'atlas-region-density-circles',
+        type: 'circle',
+        source: 'atlas-region-density',
+        minzoom: 6.8,
+        maxzoom: 14.4,
+        paint: {
+          'circle-color': MAP_COLORS.sage,
+          'circle-radius': ['interpolate', ['linear'], ['get', 'count'], 1, 3.5, 65, 11],
+          'circle-opacity': ['interpolate', ['linear'], ['zoom'], 6.8, 0, 8.5, 0.8, 13, 0.8, 14.4, 0],
+          'circle-stroke-color': MAP_COLORS.white,
+          'circle-stroke-width': 1,
+        },
+      });
+    }
+  }, [countryDensity, regionDensity, ready]);
+
+  // ── Pays sélectionné : contour + carte ──────────────────────────────────────
+  useEffect(() => {
+    const map = mapRef.current;
+    if (!map || !ready || !map.getLayer('atlas-country-selected')) return;
+    map.setFilter('atlas-country-selected', [
+      '==',
+      ['get', 'atlas_iso'],
+      selectedCountry?.iso ?? '__none__',
+    ]);
+  }, [selectedCountry, ready]);
 
   // ── Position utilisateur ────────────────────────────────────────────────────
   useEffect(() => {
@@ -667,6 +813,43 @@ export default function UnifiedExplorerMap({
       <div className="absolute left-1/2 -translate-x-1/2 bottom-[calc(env(safe-area-inset-bottom,0px)+2px)] z-[400] text-[9px] leading-none text-[#5A7064] bg-white/70 px-2 py-1 rounded-full pointer-events-none">
         © OpenStreetMap France · Esri
       </div>
+
+      {/* Sélection pays (couche monde) — données réelles, jamais inventées.
+          Wrapper positionné : la classe `.glass` porte `position: relative`. */}
+      {selectedCountry && (
+        <div
+          className="absolute left-3 top-[calc(env(safe-area-inset-top,0px)+72px)] md:left-auto md:right-3 md:top-20 z-[550] w-[236px]"
+          data-atlas-country-card="true"
+        >
+          <div className="glass rounded-2xl p-3.5">
+            <p className="glass-eyebrow">Pays</p>
+            <h3 className="font-display font-bold text-[15px] text-[#17402C] mt-0.5">
+              {selectedCountry.name || selectedCountry.iso}
+            </h3>
+            <p className="text-[11px] text-[#5A7064] mt-1">
+              {selectedCountry.count != null
+                ? `${selectedCountry.count} itinéraire${selectedCountry.count > 1 ? 's' : ''} référencé${selectedCountry.count > 1 ? 's' : ''}`
+                : 'Densité non disponible'}
+            </p>
+            <div className="flex items-center gap-2 mt-3">
+              <Link
+                href={`/pays/${selectedCountry.iso.toLowerCase()}`}
+                className="glass-capsule-btn primary flex-1 !min-h-[34px] text-[11px] font-bold text-center"
+              >
+                Explorer le pays
+              </Link>
+              <button
+                type="button"
+                onClick={() => setSelectedCountry(null)}
+                className="glass-circle-btn w-8 h-8 shrink-0"
+                aria-label="Fermer la sélection pays"
+              >
+                ×
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

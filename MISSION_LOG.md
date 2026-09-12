@@ -657,3 +657,43 @@ ok 5 [ipad-portrait] rendu + zéro pageerror (12.1s)
 ### Prochaine phase
 Phase 4 — Paliers Région/Continent/Monde (`chantier/atlas-4-tiers`) : couche fill pays interactive, densités (matviews Phase 1), chorégraphie caméra `flyTo`/`easeTo`, `focusPoint` réparé par `country_centroids`.
 
+## 2026-09-12 — CHANTIER ATLAS Phase 4 — Paliers Région / Continent / Monde (branche `chantier/atlas-4-tiers`)
+
+### Livrables
+- **Couche monde interactive** : GeoJSON pays enrichi client (`atlas_iso`/`atlas_name`, même résolution que `countries_geo`), clic → sélection + contour + **carte pays glass** (nom, densité réelle ou « Densité non disponible », lien `/pays/[code]`), `flyTo` vers le centroïde (`country_centroids` Phase 1).
+- **Paliers densité** : `atlas-country-density-circles` (matview `country_trail_density`, z2.4→8.2, rayon ∝ count) et `atlas-region-density-circles` (matview `trail_density_geohash5`, z6.8→14.4) avec fades d'opacité par zoom (interpolations natives, aucune animation JS maison).
+- **SSR** : `src/lib/queries/atlas.ts` (`getAtlasDensity`, cache 60 s, listes vides en cas d'erreur — jamais de donnée inventée) branché dans `src/app/explorer/page.tsx` → `ExplorerClient` → moteur, uniquement en mode unifié.
+- **Engine** : `engine/camera.ts` (`flyToTarget`/`easeToTarget`, reduced-motion → durée 0), `engine/geo.ts` (`resolveIsoA2` porté fidèlement de `CountryGlobe`, `resolveCountryName`), `layers/densityLayers.ts` (constructeurs purs FeatureCollection).
+- **Correctif design** : la classe `.glass` porte `position: relative` — la carte pays est désormais enveloppée dans un wrapper positionné (détecté par mesure `getBoundingClientRect` : carte hors écran à x=-12 en position relative).
+- **Tests** : `tests/map/densityLayers.spec.ts` (4, TDD), `tests/map/camera.spec.ts` (3 : durées reduced-motion + résolution ISO/nom), extension du spec visuel (séquence continent → sélection France → globe) + captures `atlas-continent-desktop.png`, `atlas-france-selected.png`, `atlas-globe-desktop.png`.
+
+### Preuves brutes
+```
+$ npx tsc --noEmit
+TSC_EXIT=0
+
+$ npm test
+Test Files  4 failed | 321 passed | 4 skipped (329)   # 4 suites préexistantes (ops/a13)
+Tests  2266 passed | 23 skipped (2289)                # +7 tests vs Phase 3
+
+$ npm run lint
+LINT_EXIT=0 (warnings préexistants uniquement)
+
+$ npx playwright test --config=playwright.visual.config.ts tests/visual/atlas-explorer.spec.ts
+ok 1 [desktop-chrome] rendu + zéro pageerror
+ok 2 [desktop-chrome] clic direct carte → panneau détail
+ok 3 [desktop-chrome] paliers continent → globe : densité, sélection pays, chorégraphie caméra
+   (carte pays vérifiée : « France » + « 962 itinéraires référencés » — densité matview réelle)
+ok 4,7 rendus iphone-14-pro / ipad-portrait
+4 skipped (tests desktop-only)
+5 passed, 4 skipped (1.5m)
+```
+
+### Notes / écarts
+- Densités : seuls les pays avec `trail_count > 0` sont rendus (aujourd'hui France 962 et Belgique 172) — réalité des données de prod, aucun remplissage fictif.
+- `/pays` legacy (`CountryGlobe`, `focusPoint`) reste inchangé : il sera remplacé en Phase 5 par le globe MapLibre compatible props qui consommera les centroïdes.
+- Le point sombre observé sur le globe côté Niger a été identifié par `queryRenderedFeatures` comme un artefact des tuiles raster Esri (aucune de nos couches) — pas un bug.
+
+### Prochaine phase
+Phase 5 — Nettoyage & durcissement (`chantier/atlas-5-hardening`) : rate limiting `/api/hikes` + `/api/pois`, retrait `react-globe.gl`/`three` après remplacement de `CountryGlobe`, audit `silent-failure-hunter`, accessibilité, budget bundle.
+

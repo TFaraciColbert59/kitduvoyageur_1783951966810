@@ -100,4 +100,55 @@ test.describe('Explorateur unifié (MapLibre globe)', () => {
     await page.getByRole('button', { name: 'Voir la fiche complète' }).click();
     await expect(page.getByText('Préparer le matériel').first()).toBeVisible({ timeout: 15_000 });
   });
+
+  test('paliers continent → globe : densité, sélection pays, chorégraphie caméra', async ({ page }, testInfo) => {
+    test.skip(
+      testInfo.project.name !== 'desktop-chrome',
+      'Séquence de paliers capturée sur desktop (mobile couvert par les captures de rendu).'
+    );
+
+    await page.addInitScript(() => {
+      Object.defineProperty(navigator.serviceWorker, 'register', {
+        value: () => new Promise<never>(() => {}),
+        configurable: true,
+      });
+    });
+
+    await prepareVisualPage(page, '/explorer?atlas=1');
+    const mapRoot = page.getByTestId('unified-explorer-map');
+    await expect(mapRoot).toHaveAttribute('data-atlas-ready', 'true', { timeout: 45_000 });
+    await page.waitForTimeout(3_000);
+
+    // Palier continent : densité par pays (matview Phase 1).
+    await page.evaluate(() => {
+      const map = (window as unknown as { __atlasTestMap?: any }).__atlasTestMap;
+      map?.jumpTo({ center: [2.5, 47.5], zoom: 5 });
+    });
+    await page.waitForTimeout(2_000);
+    await page.screenshot({ path: path.join(OUT_DIR, 'atlas-continent-desktop.png') });
+
+    // Sélection France : clic carte → carte pays avec densité réelle (962).
+    const francePoint = await page.evaluate(() => {
+      const map = (window as unknown as { __atlasTestMap?: any }).__atlasTestMap;
+      if (!map) return null;
+      const point = map.project([2.2, 46.6]);
+      return { x: point.x, y: point.y };
+    });
+    expect(francePoint, 'projection France indisponible').not.toBeNull();
+    const canvasBox = await page.locator('canvas.maplibregl-canvas').boundingBox();
+    await page.mouse.click(canvasBox!.x + francePoint!.x, canvasBox!.y + francePoint!.y);
+    const countryCard = page.locator('[data-atlas-country-card="true"]');
+    await expect(countryCard).toBeVisible({ timeout: 10_000 });
+    await expect(countryCard).toContainText('France');
+    await page.screenshot({ path: path.join(OUT_DIR, 'atlas-france-selected.png') });
+
+    // Palier monde : globe (dézoom continu, atmosphère sage).
+    await page.evaluate(() => {
+      const map = (window as unknown as { __atlasTestMap?: any }).__atlasTestMap;
+      map?.jumpTo({ center: [10, 25], zoom: 2 });
+    });
+    await page.waitForTimeout(2_500);
+    await page.screenshot({ path: path.join(OUT_DIR, 'atlas-globe-desktop.png') });
+    await expect(page.getByTestId('unified-explorer-map')).toHaveAttribute('data-atlas-ready', 'true');
+  });
 });
