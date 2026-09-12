@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import type { AIRequest, AIResponse } from '../providers/types';
 import {
   buildTrailRawInput,
   isWithinCorridor,
@@ -367,4 +368,24 @@ ${OUTPUT_CONTRACT}
 ${CONSIGNES}`;
 
   return { system, prompt };
+}
+
+/**
+ * Fallback déterministe : JSON vide mais schéma-compatible, jamais un throw.
+ * Le job traite `degraded` comme un échec provider (aucune écriture) — ce
+ * fallback n'alimente donc jamais la BDD, il rend seulement `askAI` incassable.
+ */
+export async function fallbackResponse(_req: AIRequest): Promise<AIResponse> {
+  return {
+    text: JSON.stringify({
+      days: [],
+      suggestions: [],
+      kitAdditions: [],
+      checklistAdditions: [],
+    }),
+    model: 'fallback-deterministe',
+    degraded: true,
+    cached: false,
+    provider: 'fallback',
+  };
 }

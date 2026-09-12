@@ -16,6 +16,7 @@ function dummyReq(feature: string): AIRequest {
 const EXPECTED_SPECS: Record<string, { tier: string; maxReasoningBudget: number; cacheTtlSeconds: number; maxPerUserPerDay: number }> = {
   'kit-configurator': { tier: 'heavy', maxReasoningBudget: 4000, cacheTtlSeconds: 0, maxPerUserPerDay: 10 },
   'trail-narrative': { tier: 'heavy', maxReasoningBudget: 6000, cacheTtlSeconds: 31_536_000, maxPerUserPerDay: 5 },
+  'activity-enrichment': { tier: 'heavy', maxReasoningBudget: 8000, cacheTtlSeconds: 0, maxPerUserPerDay: 10 },
   'country-guides': { tier: 'heavy', maxReasoningBudget: 2000, cacheTtlSeconds: 2_592_000, maxPerUserPerDay: 30 },
   'country-practical-guide': { tier: 'fast', maxReasoningBudget: 0, cacheTtlSeconds: 2_592_000, maxPerUserPerDay: 100 },
   'pays-recommendations': { tier: 'fast', maxReasoningBudget: 0, cacheTtlSeconds: 2_592_000, maxPerUserPerDay: 200 },

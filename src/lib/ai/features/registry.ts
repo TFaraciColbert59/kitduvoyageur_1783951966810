@@ -1,6 +1,7 @@
 import type { AIRequest, AIResponse } from '../providers/types';
 import * as kitConfigurator from './kitConfigurator';
 import * as trailNarrative from './trailNarrative';
+import * as activityEnrichment from './activityEnrichment';
 import * as countryGuides from './countryGuides';
 import * as paysRecommendations from './paysRecommendations';
 
@@ -44,6 +45,13 @@ export const FEATURES: Record<string, FeatureSpec> = {
     cacheTtlSeconds: trailNarrative.TRAIL_NARRATIVE_SPEC.cacheTtlSeconds,
     maxPerUserPerDay: trailNarrative.TRAIL_NARRATIVE_SPEC.maxPerUserPerDay,
     fallbackResponse: trailNarrative.fallbackResponse,
+  },
+  'activity-enrichment': {
+    tier: activityEnrichment.ACTIVITY_ENRICHMENT_SPEC.tier,
+    maxReasoningBudget: activityEnrichment.ACTIVITY_ENRICHMENT_SPEC.maxReasoningBudget,
+    cacheTtlSeconds: activityEnrichment.ACTIVITY_ENRICHMENT_SPEC.cacheTtlSeconds,
+    maxPerUserPerDay: activityEnrichment.ACTIVITY_ENRICHMENT_SPEC.maxPerUserPerDay,
+    fallbackResponse: activityEnrichment.fallbackResponse,
   },
   'country-guides': {
     tier: countryGuides.COUNTRY_GUIDES_SPEC.tier,
