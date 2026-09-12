@@ -983,8 +983,11 @@ export default function UnifiedExplorerMap({
     }
   }, [viewMode, userLocation, initialView.center, initialView.zoom]);
 
+  // E1 — `--explorer-carousel-height` est publiée par le carrousel mobile quand
+  // il est visible : les contrôles bas (CTA + zoom) remontent au-dessus de lui.
+  // Absente (desktop, zéro sentier) ⇒ 0px, positions historiques inchangées.
   const bottomControlsOffset = safeControls
-    ? 'bottom-[calc(env(safe-area-inset-bottom,0px)+96px)]'
+    ? 'bottom-[calc(env(safe-area-inset-bottom,0px)+96px+var(--explorer-carousel-height,0px))]'
     : 'bottom-4';
   const desktopTilesOffset = safeControls
     ? 'md:bottom-[calc(env(safe-area-inset-bottom,0px)+96px)]'
@@ -1031,9 +1034,12 @@ export default function UnifiedExplorerMap({
         </button>
       </div>
 
-      {/* Zoom (−/+) + recentrage : mobile = zoom seul ; desktop = colonne complète */}
+      {/* Zoom (−/+) + recentrage : mobile = zoom seul ; desktop = colonne complète.
+          E1 — sur mobile la colonne est décalée de `right-14` pour rester à
+          gauche de l'onglet filtres fixe (`right-0 top-1/2`, z-900) : une fois
+          remontée au-dessus du carrousel, elle croise sa bande verticale. */}
       <div
-        className={`absolute right-3 ${bottomControlsOffset} z-[500] flex flex-col gap-2`}
+        className={`absolute right-14 md:right-3 ${bottomControlsOffset} z-[500] flex flex-col gap-2`}
         data-atlas-controls="right"
       >
         <button

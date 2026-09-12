@@ -1087,3 +1087,19 @@ Revue finale de branche : 2 Important (isOnline non consommé ; routage d'action
 
 ### Rollback
 `git revert -m 1 <merge>` (aucune migration, flag `explorer_unified_map_enabled` intouché) ou rester sur la branche `chantier/depart-refonte`.
+
+---
+
+## Volet 2 — Explorer mobile/natif (branche `chantier/explorer-mobile-native`)
+
+### Task 14 (E1) — Contrôles carte sous le carrousel : zoom/CTA non tapables
+
+**Cause racine (prouvée par `elementFromPoint`, dev 390×844 + 430×932) :** le carrousel `fixed left-0 right-0 z-[800]` (`ExplorerMobileHikeCarousel.tsx:116`) a un scroller pleine largeur `pointer-events-auto` (y 575,5→768) posé au-dessus du stacking context `absolute inset-0 z-0` (`ExplorerClient.tsx:486`) qui plafonne zoom `z-[500]` et CTA `z-[510]` (`UnifiedExplorerMap.tsx:1042/1020`). Zoom+ tombe sur le `H4` de la 2ᵉ carte, zoom− et CTA sur le bouton « Préparer » d'une carte ; taps Playwright en timeout, zoom 12→12. Réduction de zone interactive invalidée (les centres sont sur les cartes) ; relever le z seul invalidé (recouvrirait « Préparer »).
+
+**Correctif :** publication de la hauteur réelle du carrousel en `--explorer-carousel-height` (ResizeObserver, 233 px) ; offset bas des contrôles = 96 px + variable → CTA/zoom 20 px au-dessus du carrousel ; colonne zoom mobile en `right-14` pour rester à gauche de l'onglet filtres `z-[900]` (collision découverte à la re-mesure pour H 713–897).
+
+**Preuves :** `docs/explorer-mobile/e1-{avant,apres}.{json,png}` + variantes 390×844/430×932 ; `hitTestPass=true` sur zoom+/zoom−/CTA/Préparer aux 2 tailles ; taps réels zoom 12→13, CTA globe ⇄ local, « Préparer » → `/hub/depart?id=none&route=215` ; script `scripts/atlas/repro-e1-stacking.mjs`.
+
+**Gates :** e2e atlas-explorer 3/3 ; `npx tsc --noEmit` → 0 ; `npx vitest run` → 333 fichiers OK, 4 suites préexistantes en échec ; `npm run build` ✓. Commit : `fix(explorer): controles carte tapables avec le carrousel mobile visible (stacking)`.
+
+**Réserve :** moteur legacy `ExplorerMap.tsx` (flag off) non couvert — ne lit pas la variable.

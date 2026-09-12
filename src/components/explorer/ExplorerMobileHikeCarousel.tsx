@@ -41,6 +41,7 @@ export default function ExplorerMobileHikeCarousel({
   const router = useRouter();
   const { triggerHaptic } = useHapticFeedback();
   const carouselScrollRef = useRef<HTMLDivElement>(null);
+  const wrapperRef = useRef<HTMLDivElement>(null);
   const [viewMode, setViewMode] = useState<'carousel' | 'list'>('carousel');
 
   // Haptique au changement de carte centrée (mission gestes, Phase 6) —
@@ -83,10 +84,35 @@ export default function ExplorerMobileHikeCarousel({
     setViewMode((prev) => (prev === 'carousel' ? 'list' : 'carousel'));
   }, [triggerHaptic]);
 
+  // E1 — publie la hauteur réelle du carrousel (mode cartes comme liste) dans
+  // `--explorer-carousel-height` : les contrôles carte (CTA/zoom) se placent
+  // AU-DESSUS du carrousel au lieu de rester recouverts par lui.
+  const hasTrails = trails.length > 0;
+
+  useEffect(() => {
+    const el = wrapperRef.current;
+    if (!el) return;
+    const root = document.documentElement;
+    const sync = () => {
+      const height = Math.round(el.getBoundingClientRect().height);
+      root.style.setProperty('--explorer-carousel-height', `${height}px`);
+    };
+    sync();
+    const observer = new ResizeObserver(sync);
+    observer.observe(el);
+    window.addEventListener('resize', sync);
+    return () => {
+      observer.disconnect();
+      window.removeEventListener('resize', sync);
+      root.style.removeProperty('--explorer-carousel-height');
+    };
+  }, [hasTrails]);
+
   if (trails.length === 0) return null;
 
   return (
     <div
+      ref={wrapperRef}
       className="block md:hidden fixed left-0 right-0 z-[800] pointer-events-none"
       style={{ bottom: 'calc(var(--bottom-tab-base-height, 68px) + 8px)' }}
     >
